@@ -9,4 +9,4 @@ or use the executable if it is installed. This has a runtime of roughly 1 minute
 
 schubmult_yz.py is for multiplying double Schubert polynomials in different sets of coefficient variables (labeled y and z), and schubmult_double.py is for multiplying double Schubert polynomials in the same set of coefficient variables. Both have the same command line syntax as schubmult.py. schubmult_double.py displays the result with nonnegative coefficients in terms of the negative simple roots. Both are of course slower than schubmult.py, and expressing the result positively for schubmult_double.py slows it down even more.
 
-Both schubmult_yz.py and schubmult_double.py require symengine, which I have only been able to get to work on Linux. For versions that are much slower but use only sympy, use the _sympy scripts.
+Both schubmult_yz.py and schubmult_double.py require symengine. For versions that are much slower but use only sympy, use the _sympy scripts.
