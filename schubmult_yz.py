@@ -261,39 +261,42 @@ def schubmult(perm_dict,v):
 		ret_dict = add_perm_dict({ep: vpathsums[ep][tuple(vmu)] for ep in vpathsums},ret_dict)
 	return ret_dict
 
-perms=[]
-curperm = []
-
-pr = True
-
-try:
-	for s in sys.argv[1:]:
-		if s == "-np":
-			pr = False
-			continue
-		if s == "-":
-			perms += [tuple(permtrim(curperm))]
-			curperm = []
-			continue
-		curperm += [int(s)]
-except Exception:
-	print("Usage: python3 schubmult_yz.py <-np> <perm1> - <perm2>")
-	exit(1)
-
-perms += [tuple(permtrim(curperm))]
-coeff_dict = {perms[0]: 1}
-
-for perm in perms[1:]:
-	coeff_dict = schubmult(coeff_dict,perm)
+def main():
+	perms=[]
+	curperm = []
 	
-if pr:
-	width = max([len(str(perm)) for perm in coeff_dict.keys()])
+	pr = True
 	
-	coeff_perms = list(coeff_dict.keys())
-	coeff_perms.sort(key=lambda x: (inv(x),*x))
+	try:
+		for s in sys.argv[1:]:
+			if s == "-np":
+				pr = False
+				continue
+			if s == "-":
+				perms += [tuple(permtrim(curperm))]
+				curperm = []
+				continue
+			curperm += [int(s)]
+	except Exception:
+		print("Usage: python3 schubmult_yz.py <-np> <perm1> - <perm2>")
+		exit(1)
 	
-	for perm in coeff_perms:
-		val = coeff_dict[perm]
-		if val != 0:
-			print(f"{str(perm):>{width}}  {str(val).replace('**','^').replace('*',' ')}")
-			
+	perms += [tuple(permtrim(curperm))]
+	coeff_dict = {perms[0]: 1}
+	
+	for perm in perms[1:]:
+		coeff_dict = schubmult(coeff_dict,perm)
+		
+	if pr:
+		width = max([len(str(perm)) for perm in coeff_dict.keys()])
+		
+		coeff_perms = list(coeff_dict.keys())
+		coeff_perms.sort(key=lambda x: (inv(x),*x))
+		
+		for perm in coeff_perms:
+			val = coeff_dict[perm]
+			if val != 0:
+				print(f"{str(perm):>{width}}  {str(val).replace('**','^').replace('*',' ')}")
+				
+if __name__ == "__main__":
+	main()
