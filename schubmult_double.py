@@ -288,7 +288,7 @@ try:
 			continue
 		curperm += [int(s)]
 except Exception:
-	print("Usage: python3 schubmult_yz.py <-np> <perm1> - <perm2>")
+	print("Usage: python3 schubmult_double.py <-np> <perm1> - <perm2>")
 	exit(1)
 
 perms += [tuple(permtrim(curperm))]
