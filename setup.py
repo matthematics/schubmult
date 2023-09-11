@@ -10,7 +10,7 @@ setup(
     description="Computing Littlewood-Richardson coefficients of Schubert polynomials",
 	long_description="""Program for computing Littlewood-Richardson coefficients of Schubert polynomials
 
-This is a python package written by Matt Samuel for computing Littlewood-Richardson coefficients of Schubert polynomials. It has three script installed as executables with the same command line syntax as the program "schubmult" in lrcalc by Anders Buch. The speed of the code is comparable and sometimes better than Buch's schubmult as of the time of this writing, September 10th, 2023. Example:
+This is a python package written by Matt Samuel for computing Littlewood-Richardson coefficients of Schubert polynomials. It has three scripts installed as executables with the same command line syntax as the program "schubmult" in lrcalc by Anders Buch. The speed of the code is comparable and sometimes better than Buch's schubmult as of the time of this writing, September 10th, 2023. Example:
 
 schubmult_py 1 2 4 9 11 6 8 12 3 5 7 10 - 6 8 1 2 3 4 7 10 12 14 5 9 11 13
 
