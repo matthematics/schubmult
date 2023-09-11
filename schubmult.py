@@ -214,15 +214,19 @@ curperm = []
 
 pr = True
 
-for s in sys.argv[1:]:
-	if s == "-np":
-		pr = False
-		continue
-	if s == "-":
-		perms += [tuple(permtrim(curperm))]
-		curperm = []
-		continue
-	curperm += [int(s)]
+try:
+	for s in sys.argv[1:]:
+		if s == "-np":
+			pr = False
+			continue
+		if s == "-":
+			perms += [tuple(permtrim(curperm))]
+			curperm = []
+			continue
+		curperm += [int(s)]
+except Exception:
+	print("Usage: python3 schubmult.py <-np> <perm1> - <perm2>")
+	exit(1)
 
 perms += [tuple(permtrim(curperm))]
 
