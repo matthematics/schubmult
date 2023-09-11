@@ -209,35 +209,39 @@ def schubmult(perm_dict,v):
 		ret_dict = add_perm_dict({ep: vpathsums[ep].get(tuple(vmu),0) for ep in vpathsums},ret_dict)
 	return ret_dict
 
-perms=[]
-curperm = []
-
-pr = True
-
-try:
-	for s in sys.argv[1:]:
-		if s == "-np":
-			pr = False
-			continue
-		if s == "-":
-			perms += [tuple(permtrim(curperm))]
-			curperm = []
-			continue
-		curperm += [int(s)]
-except Exception:
-	print("Usage: python3 schubmult.py <-np> <perm1> - <perm2>")
-	exit(1)
-
-perms += [tuple(permtrim(curperm))]
-
-perms.sort(reverse=True,key=lambda x: sum(theta(inverse(x)))-inv(x))
-
-coeff_dict = {perms[0]: 1}
-
-for perm in perms[1:]:
-	coeff_dict = schubmult(coeff_dict,perm)
+def main():
+	perms=[]
+	curperm = []
 	
-if pr:
-	for perm, val in coeff_dict.items():
-		if val!= 0:
-			print(f"{val}  {perm}")		
+	pr = True
+	
+	try:
+		for s in sys.argv[1:]:
+			if s == "-np":
+				pr = False
+				continue
+			if s == "-":
+				perms += [tuple(permtrim(curperm))]
+				curperm = []
+				continue
+			curperm += [int(s)]
+	except Exception:
+		print("Usage: python3 schubmult_py.py <-np> <perm1> - <perm2>")
+		exit(1)
+	
+	perms += [tuple(permtrim(curperm))]
+	
+	perms.sort(reverse=True,key=lambda x: sum(theta(inverse(x)))-inv(x))
+	
+	coeff_dict = {perms[0]: 1}
+	
+	for perm in perms[1:]:
+		coeff_dict = schubmult(coeff_dict,perm)
+		
+	if pr:
+		for perm, val in coeff_dict.items():
+			if val!= 0:
+				print(f"{val}  {perm}")
+
+if __name__ == "__main__":
+	main()
