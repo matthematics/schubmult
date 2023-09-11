@@ -6,10 +6,22 @@ import schubmult.schubmult_double
 
 setup(
     name="schubmult",
-    version="1.0.0",
+    version="1.0.2",
     description="Computing Littlewood-Richardson coefficients of Schubert polynomials",
-	long_description="""This package is primarily intended for installing the executables schubmult_py, schubmult_yz, and schubmult_double.
-	It exposes some permutation functions as well as three versions of the 'schubmult' function, which are not currently intended for public use.""",
+	long_description="""Program for computing Littlewood-Richardson coefficients of Schubert polynomials
+
+This is a python package written by Matt Samuel for computing Littlewood-Richardson coefficients of Schubert polynomials. It has three script installed as executables with the same command line syntax as the program "schubmult" in lrcalc by Anders Buch. The speed of the code is comparable and sometimes better than Buch's schubmult as of the time of this writing, September 10th, 2023. Example:
+
+schubmult_py 1 2 4 9 11 6 8 12 3 5 7 10 - 6 8 1 2 3 4 7 10 12 14 5 9 11 13
+
+This has a runtime of roughly 1 minute on my machine, whereas schubmult takes 1 minute, 19 seconds. Runtime will vary tremendously by case. This problem is #P-hard. Though the result is always nonnegative and the problem is in GapP, it is not known to be in #P at this time.
+
+Do not try this example with schubmult_yz or schubmult_double, which are the other two scripts, because it is too large for most machines.
+
+schubmult_yz is for multiplying double Schubert polynomials in different sets of coefficient variables (labeled y and z), and schubmult_double is for multiplying double Schubert polynomials in the same set of coefficient variables. Both have the same command line syntax as schubmult. schubmult_double displays the result with nonnegative coefficients in terms of the negative simple roots. Both are of course slower than schubmult_py, and expressing the result positively for schubmult_double slows it down even more.
+
+When imported as a python package, the relevant packages are schubmult.perm_lib, which has various permutation manipulation functions, and three modules that have functions of the same name (function name is "schubmult"): schubmult.schubmult_py, schubmult.schubmult_yz, schubmult.schubmult_double. Function takes a permutation dictionary (keys are tuples of ints, which must be trimmed permutations, and values are either integers or symengine values, which can also be integers) as well as a permutation as its second argument, which is the (double) Schubert polynomial to multiply by. Returns a dictionary of the same form with the coefficients.
+	""",
     url="https://github.com/matthematics/schubmult",
     author="Matt Samuel",
 #    author_email="info@realpython.com",
