@@ -2,6 +2,7 @@ import sys
 from functools import cache
 from itertools import chain
 from schubmult.perm_lib import *
+from more_itertools.more import always_iterable
 
 def schubmult(perm_dict,v):
 	vn1 = inverse(v)
@@ -20,18 +21,23 @@ def schubmult(perm_dict,v):
 	for u,val in perm_dict.items():
 		inv_u = inv(u)
 		vpathsums = {u: {(1,2): val}}
-		for index in range(len(th)):			
+		for index in range(len(th)):
+			mx_th = 0
+			for vp in vpathdicts[index]:
+				for v2,vdiff,s in vpathdicts[index][vp]:
+					if th[index]-vdiff > mx_th:
+						mx_th = th[index] - vdiff			
 			newpathsums = {}
 			for up in vpathsums:
 				inv_up = inv(up)
-				newperms = elem_sym_perms(up,min(th[index],(inv_mu-(inv_up-inv_u))-inv_vmu),th[index])
+				newperms = elem_sym_perms(up,min(mx_th,(inv_mu-(inv_up-inv_u))-inv_vmu),th[index])
 				for up2, udiff in newperms:					
-					for v in vpathsums[up]:
-						for v2,vdiff,s in vpathdicts[index][v]:
+					for vp in vpathsums[up]:
+						for v2,vdiff,s in vpathdicts[index][vp]:
 							if vdiff + udiff == th[index]:								
 								if up2 not in newpathsums:
 									newpathsums[up2]={}
-								newpathsums[up2][v2] = newpathsums[up2].get(v2,0)+s*vpathsums[up][v]
+								newpathsums[up2][v2] = newpathsums[up2].get(v2,0)+s*vpathsums[up][vp]
 			vpathsums = newpathsums
 		ret_dict = add_perm_dict({ep: vpathsums[ep].get(tuple(vmu),0) for ep in vpathsums},ret_dict)
 	return ret_dict

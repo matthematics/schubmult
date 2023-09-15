@@ -32,10 +32,15 @@ def schubmult(perm_dict,v):
 		inv_u = inv(u)
 		vpathsums = {u: {(1,2): val}}
 		for index in range(thL):			
+			mx_th = 0
+			for vp in vpathdicts[index]:
+				for v2,vdiff,s in vpathdicts[index][vp]:
+					if th[index]-vdiff > mx_th:
+						mx_th = th[index] - vdiff
 			newpathsums = {}
 			for up in vpathsums:
 				inv_up = inv(up)
-				newperms = elem_sym_perms(up,min(th[index],(inv_mu-(inv_up-inv_u))-inv_vmu),th[index])
+				newperms = elem_sym_perms(up,min(mx_th,(inv_mu-(inv_up-inv_u))-inv_vmu),th[index])
 				for up2, udiff in newperms:
 					if up2 not in newpathsums:
 						newpathsums[up2]={}
