@@ -74,22 +74,24 @@ def has_bruhat_ascent(perm,i,j):
 
 def elem_sym_perms(orig_perm,p,k):	
 	total_list = [(orig_perm,0)]
-	up_perm_list = [(orig_perm,k)]
+	up_perm_list = [(orig_perm,1000)]
 	for pp in range(p):
 		perm_list = []
-		for up_perm, jj in up_perm_list:	
+		for up_perm, last in up_perm_list:	
 			up_perm2 = list(up_perm) + [len(up_perm)+1]
 			if len(up_perm2) < k + 1:
 				up_perm2 += [i+1 for i in range(len(up_perm2),k+2)]
 			pos_list = [i for i in range(k) if (((i>=len(orig_perm) and up_perm2[i] == i+1) or (i<len(orig_perm) and orig_perm[i] == up_perm[i])))]
-			for j in range(jj,len(up_perm2)):
+			for j in range(k,len(up_perm2)):
+				if up_perm2[j]>=last:
+					continue
 				for i in pos_list:			
 					if has_bruhat_ascent(up_perm2,i,j):
 						up_perm2[i],up_perm2[j] = up_perm2[j],up_perm2[i]
 						new_perm = permtrim(list(up_perm2))
 						up_perm2[i],up_perm2[j] = up_perm2[j],up_perm2[i]
 						new_perm_add = tuple(new_perm)
-						perm_list += [(new_perm_add,j)]
+						perm_list += [(new_perm_add,up_perm2[j])]
 						total_list+=[(new_perm_add,pp+1)]
 		up_perm_list = perm_list
 	return total_list

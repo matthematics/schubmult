@@ -6,7 +6,7 @@ import schubmult.schubmult_double
 
 setup(
     name="schubmult",
-    version="1.0.6",
+    version="1.0.7",
     description="Computing Littlewood-Richardson coefficients of Schubert polynomials",
 	long_description="""Program for computing Littlewood-Richardson coefficients of Schubert polynomials
 
