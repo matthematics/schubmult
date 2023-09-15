@@ -6,15 +6,15 @@ import schubmult.schubmult_double
 
 setup(
     name="schubmult",
-    version="1.0.2",
+    version="1.0.6",
     description="Computing Littlewood-Richardson coefficients of Schubert polynomials",
 	long_description="""Program for computing Littlewood-Richardson coefficients of Schubert polynomials
 
-This is a python package written by Matt Samuel for computing Littlewood-Richardson coefficients of Schubert polynomials. It has three scripts installed as executables with the same command line syntax as the program "schubmult" in lrcalc by Anders Buch. The speed of the code is comparable and sometimes better than Buch's schubmult as of the time of this writing, September 10th, 2023. Example:
+This is a python package written by Matt Samuel for computing Littlewood-Richardson coefficients of Schubert polynomials. It has three scripts installed as executables with the same command line syntax as the program "schubmult" in lrcalc by Anders Buch. Example:
 
 schubmult_py 1 2 4 9 11 6 8 12 3 5 7 10 - 6 8 1 2 3 4 7 10 12 14 5 9 11 13
 
-This has a runtime of roughly 1 minute on my machine, whereas schubmult takes 1 minute, 19 seconds. Runtime will vary tremendously by case. This problem is #P-hard. Though the result is always nonnegative and the problem is in GapP, it is not known to be in #P at this time.
+The general problem is #P-hard. Though the result is always nonnegative and the problem is in GapP, it is not known to be in #P at this time.
 
 Do not try this example with schubmult_yz or schubmult_double, which are the other two scripts, because it is too large for most machines.
 
@@ -24,7 +24,7 @@ When imported as a python package, the relevant packages are schubmult.perm_lib,
 	""",
     url="https://github.com/matthematics/schubmult",
     author="Matt Samuel",
-#    author_email="info@realpython.com",
+    author_email="matthematics@gmail.com",
     license="GNU",
     classifiers=[
         "Programming Language :: Python :: 3",
