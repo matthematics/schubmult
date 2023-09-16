@@ -2,7 +2,6 @@ import sys
 from functools import cache
 from itertools import chain
 from schubmult.perm_lib import *
-from more_itertools.more import always_iterable
 
 def schubmult(perm_dict,v):
 	vn1 = inverse(v)
