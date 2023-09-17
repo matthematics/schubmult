@@ -11,7 +11,7 @@ var2 = symarray('y',n)
 var3 = symarray('z',n)
 
 
-def schubmult(perm_dict,v):
+def schubmult(perm_dict,v,var2=var2,var3=var3):
 	vn1 = inverse(v)
 	th = theta(vn1)
 	if th[0]==0:
