@@ -28,3 +28,5 @@ from schubmult.schubmult_py import schubmult
   
 coeff_dict = schubmult({(1,3,4,6,2,5): 1},(2,1,5,7,3,4,6))
 ```
+
+[Homepage of schubmult](http://schubmult.org/)
