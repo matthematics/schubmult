@@ -25,7 +25,7 @@ def schubmult(perm_dict,v,var2=var2,var3=var3):
 	while th[-1] == 0:
 		th.pop()
 	thL = len(th)
-	vpathdicts = compute_vpathdicts(th,vmu)
+	vpathdicts = compute_vpathdicts(th,vmu,True)
 	for u,val in perm_dict.items():
 		inv_u = inv(u)
 		vpathsums = {u: {(1,2): val}}
@@ -34,7 +34,7 @@ def schubmult(perm_dict,v,var2=var2,var3=var3):
 			for vp in vpathdicts[index]:
 				for v2,vdiff,s in vpathdicts[index][vp]:
 					if th[index]-vdiff > mx_th:
-						mx_th = th[index] - vdiff
+						mx_th = th[index] - vdiff					
 			newpathsums = {}
 			for up in vpathsums:
 				inv_up = inv(up)
@@ -44,7 +44,7 @@ def schubmult(perm_dict,v,var2=var2,var3=var3):
 						newpathsums[up2]={}
 					for v in vpathdicts[index]:
 						for v2,vdiff,s in vpathdicts[index][v]:
-							newpathsums[up2][v2] = newpathsums[up2].get(v2,0)+s*vpathsums[up][v]*elem_sym_func(th[index],index+1,up,up2,v,v2,udiff,vdiff,var2,var3)
+							newpathsums[up2][v2] = newpathsums[up2].get(v2,zero)+s*vpathsums[up][v]*elem_sym_func(th[index],index+1,up,up2,v,v2,udiff,vdiff,var2,var3)
 			vpathsums = newpathsums
 		ret_dict = add_perm_dict({ep: vpathsums[ep][tuple(vmu)] for ep in vpathsums},ret_dict)
 	return ret_dict

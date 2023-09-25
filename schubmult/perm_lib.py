@@ -133,7 +133,7 @@ def kdown_perms(perm,monoperm,p,k):
 		down_perm_list = down_perm_list2
 	return full_perm_list
 	
-def compute_vpathdicts(th,vmu):
+def compute_vpathdicts(th,vmu,smpify=False):
 	vpathdicts = [{} for index in range(len(th))]
 	vpathdicts[-1][tuple(vmu)] = None
 	S = sum(th)
@@ -163,7 +163,10 @@ def compute_vpathdicts(th,vmu):
 				key2 = value[0]
 				if key2 not in vpathdicts2[i]:
 					vpathdicts2[i][key2]=set()
-				vpathdicts2[i][key2].add((key,value[1],value[2]))
+				v2 = value[2]
+				if smpify:
+					v2 = sympify(v2)
+				vpathdicts2[i][key2].add((key,value[1],v2))
 	#print(vpathdicts2)
 	return vpathdicts2
 
@@ -182,11 +185,15 @@ def add_perm_dict(d1,d2):
 		d1[k] = d1.get(k,0)+v
 	return d1
 
+zero = sympify(0)
+one = sympify(1)
+
 def elem_sym_poly(p,k,varl1,varl2,xstart=0,ystart=0):
+	global zero, one
 	if p>k:
-		return 0
+		return zero
 	if p == 0:
-		return 1
+		return one
 	if p == 1:
 		res = varl1[xstart] - varl2[ystart]
 		for i in range(1,k):
@@ -206,18 +213,29 @@ def elem_sym_poly(p,k,varl1,varl2,xstart=0,ystart=0):
 		res += elem_sym_poly(p2,mid,varl1,varl2,xstart,ystart)*elem_sym_poly(p-p2,kmm,varl1,varl2,xsm,ysm-p2)
 	return res
 
+@cache
+def call_zvars(v1,v2,k,i):	
+	v3 = [*v2]+[j for j in range(len(v2)+1,i+1)]	
+	zvars = [v3[i-1]] + \
+			[v3[j] for j in range(len(v1),len(v3)) if v3[j]!=j+1 and j!=i-1] + \
+			[v3[j] for j in range(len(v1)) if v1[j]!=v3[j] and j!=i-1]
+	return zvars
+	
 def elem_sym_func(k,i,u1,u2,v1,v2,udiff,vdiff,varl1,varl2):
+	global zero, one
 	newk = k - udiff
-	p = k-udiff-vdiff
-	if newk<0 or p<0:
-		return 0
-	if p == 0:
-		return 1
-	yvars = [varl1[j+1] for j in range(len(u2),k)] + \
-			[varl1[u2[j]] for j in range(len(u1),len(u2)) if u2[j] == j+1] + \
-			[varl1[u2[j]] for j in range(len(u1)) if u1[j] == u2[j]]
-	v3 = list(v2)+[j+1 for j in range(len(v2),i)]	
-	zvars = [varl2[v3[i-1]]] + \
-			[varl2[v3[j]] for j in range(len(v1),len(v3)) if v3[j]!=j+1 and j!=i-1] + \
-			[varl2[v3[j]] for j in range(len(v1)) if v1[j]!=v3[j] and j!=i-1]
-	return elem_sym_poly(p,newk,yvars,zvars)
+	if newk < vdiff:
+		return zero
+	if newk == vdiff:
+		return one
+	yvars = []
+	for j in range(min(len(u1),k)):
+		if u1[j]==u2[j]:
+			yvars += [varl1[u2[j]]]
+	for j in range(len(u1),min(k,len(u2))):
+		if u2[j]==j+1:
+			yvars += [varl1[u2[j]]]
+	for j in range(len(u2),k):
+		yvars += [varl1[j+1]]
+	zvars = [varl2[i] for i in call_zvars(v1,v2,k,i)]
+	return elem_sym_poly(newk-vdiff,newk,yvars,zvars)
