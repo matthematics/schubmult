@@ -1,2 +1,1 @@
-from __main__ import *
-
+from .schubmult_py import schubmult
