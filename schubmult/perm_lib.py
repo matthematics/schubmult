@@ -80,7 +80,7 @@ def elem_sym_perms(orig_perm,p,k):
 			up_perm2 = [*up_perm,len(up_perm)+1]
 			if len(up_perm2) < k + 1:
 				up_perm2 += [i+1 for i in range(len(up_perm2),k+2)]
-			pos_list = [i for i in range(k) if up_perm2[i] < last - 1]
+			pos_list = [i for i in range(k) if up_perm2[i] < last]
 			for j in range(k,len(up_perm2)):
 				if up_perm2[j]>=last:
 					continue
