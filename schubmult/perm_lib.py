@@ -1,18 +1,17 @@
 from symengine import *
 from functools import cache
 from itertools import chain
+from bisect import bisect_left
 
 def inv(perm):
-	return inv_cache(tuple(perm))
-
-@cache
-def inv_cache(perm):
-	res = 0	
-	for i in range(len(perm)):
-		for j in range(i+1,len(perm)):
-			if perm[i]>perm[j]:
-				res+=1
-	return res
+	L = len(perm)
+	v = [i for i in range(1,L+1)]
+	ans = 0
+	for i in range(L):
+		itr = bisect_left(v, perm[i])
+		ans += itr
+		v = v[:itr] + v[itr + 1 :]
+	return ans
 
 def mulperm(perm1,perm2):
 	if len(perm1)<len(perm2):
@@ -74,14 +73,14 @@ def has_bruhat_ascent(perm,i,j):
 
 def elem_sym_perms(orig_perm,p,k):	
 	total_list = [(orig_perm,0)]
-	up_perm_list = [(orig_perm,1000)]
+	up_perm_list = [(orig_perm,100000000000)]
 	for pp in range(p):
 		perm_list = []
 		for up_perm, last in up_perm_list:	
 			up_perm2 = [*up_perm,len(up_perm)+1]
 			if len(up_perm2) < k + 1:
 				up_perm2 += [i+1 for i in range(len(up_perm2),k+2)]
-			pos_list = [i for i in range(k) if up_perm2[i] < last]
+			pos_list = [i for i in range(k) if up_perm2[i] < last - 1]
 			for j in range(k,len(up_perm2)):
 				if up_perm2[j]>=last:
 					continue
