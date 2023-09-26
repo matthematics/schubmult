@@ -43,10 +43,14 @@ def schubmult(perm_dict,v,var2=var2,var3=var3):
 					if up2 not in newpathsums:
 						newpathsums[up2]={}
 					for v in vpathdicts[index]:
+						sumval = vpathsums[up].get(v,0)
+						if sumval == 0:
+							continue
 						for v2,vdiff,s in vpathdicts[index][v]:
-							newpathsums[up2][v2] = newpathsums[up2].get(v2,zero)+s*vpathsums[up][v]*elem_sym_func(th[index],index+1,up,up2,v,v2,udiff,vdiff,var2,var3)
+							newpathsums[up2][v2] = newpathsums[up2].get(v2,zero)+s*sumval*elem_sym_func(th[index],index+1,up,up2,v,v2,udiff,vdiff,var2,var3)
 			vpathsums = newpathsums
-		ret_dict = add_perm_dict({ep: vpathsums[ep][tuple(vmu)] for ep in vpathsums},ret_dict)
+		toget = tuple(vmu)
+		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
 	return ret_dict
 
 def main():
@@ -60,13 +64,16 @@ def main():
 			if s == "-np":
 				pr = False
 				continue
+			if s == "--version":
+				print(f"Python version {sys.version}")
+				continue
 			if s == "-":
 				perms += [tuple(permtrim(curperm))]
 				curperm = []
 				continue
 			curperm += [int(s)]
 	except Exception:
-		print("Usage: python3 schubmult_yz.py <-np> <perm1> - <perm2>")
+		print("Usage: schubmult_yz <-np> <perm1> - <perm2>")
 		exit(1)
 	
 	perms += [tuple(permtrim(curperm))]

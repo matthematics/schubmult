@@ -62,7 +62,7 @@ def has_bruhat_descent(perm,i,j):
 		if perm[i]>perm[p] and perm[p]>perm[j]:
 			return False
 	return True
-	
+
 def has_bruhat_ascent(perm,i,j):
 	if perm[i]>perm[j]:
 		return False
@@ -73,7 +73,7 @@ def has_bruhat_ascent(perm,i,j):
 
 def elem_sym_perms(orig_perm,p,k):	
 	total_list = [(orig_perm,0)]
-	up_perm_list = [(orig_perm,100000000000)]
+	up_perm_list = [(orig_perm,1000000000)]
 	for pp in range(p):
 		perm_list = []
 		for up_perm, last in up_perm_list:	
@@ -84,12 +84,14 @@ def elem_sym_perms(orig_perm,p,k):
 			for j in range(k,len(up_perm2)):
 				if up_perm2[j]>=last:
 					continue
-				for i in pos_list:			
+				for i in pos_list:								
 					if has_bruhat_ascent(up_perm2,i,j):
 						new_perm = [*up_perm2]
 						new_perm[i],new_perm[j] = new_perm[j],new_perm[i]
-						permtrim(new_perm)
-						new_perm_add = tuple(new_perm)
+						if new_perm[-1] == len(new_perm):
+							new_perm_add = tuple(new_perm[:-1])
+						else:
+							new_perm_add = tuple(new_perm)
 						perm_list += [(new_perm_add,up_perm2[j])]
 						total_list+=[(new_perm_add,pp+1)]
 		up_perm_list = perm_list

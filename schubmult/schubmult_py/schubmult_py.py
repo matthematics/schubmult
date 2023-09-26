@@ -17,28 +17,38 @@ def schubmult(perm_dict,v):
 	while th[-1] == 0:
 		th.pop()
 	vpathdicts = compute_vpathdicts(th,vmu)
+	
+	mx_th = [0 for i in range(len(th))]
+	for index in range(len(th)):
+		for vp in vpathdicts[index]:
+			for v2,vdiff,s in vpathdicts[index][vp]:
+				if th[index]-vdiff > mx_th[index]:
+					mx_th[index] = th[index] - vdiff
+	
 	for u,val in perm_dict.items():
-		inv_u = inv(u)
-		vpathsums = {u: {(1,2): val}}
+		inv_u = inv(u)		
+		vpathsums = {u: {(1,2): val}}		
+		
 		for index in range(len(th)):
-			mx_th = 0
-			for vp in vpathdicts[index]:
-				for v2,vdiff,s in vpathdicts[index][vp]:
-					if th[index]-vdiff > mx_th:
-						mx_th = th[index] - vdiff			
 			newpathsums = {}
 			for up in vpathsums:
 				inv_up = inv(up)
-				newperms = elem_sym_perms(up,min(mx_th,(inv_mu-(inv_up-inv_u))-inv_vmu),th[index])
-				for up2, udiff in newperms:					
-					for vp in vpathsums[up]:
-						for v2,vdiff,s in vpathdicts[index][vp]:
+				newperms = elem_sym_perms(up,min(mx_th[index],inv_mu-inv_vmu-(inv_up-inv_u)),th[index])
+				for vp in vpathsums[up]:
+					sumval = vpathsums[up][vp]
+					if sumval == 0:
+						continue
+					for v2,vdiff,s in vpathdicts[index][vp]:
+						addsumval = s*sumval
+						for up2, udiff in newperms:					
 							if vdiff + udiff == th[index]:								
 								if up2 not in newpathsums:
 									newpathsums[up2]={}
-								newpathsums[up2][v2] = newpathsums[up2].get(v2,0)+s*vpathsums[up][vp]
+								newpathsums[up2][v2] = newpathsums[up2].get(v2,0)+addsumval
+							
 			vpathsums = newpathsums
-		ret_dict = add_perm_dict({ep: vpathsums[ep].get(tuple(vmu),0) for ep in vpathsums},ret_dict)
+		toget = tuple(vmu)
+		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
 	return ret_dict
 
 def main():
