@@ -29,4 +29,6 @@ from schubmult.schubmult_py import schubmult
 coeff_dict = schubmult({(1,3,4,6,2,5): 1},(2,1,5,7,3,4,6))
 ```
 
+Note versions 1.0.15 and prior had a bug that failed to upgrade the executable. The coefficients it computed were correct, but it was not using the updated version.
+
 [Homepage of schubmult](http://schubmult.org/)

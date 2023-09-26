@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 from pathlib import Path
 this_directory = Path(__file__).parent
@@ -6,7 +6,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="schubmult",
-    version="1.0.15",
+    version="1.0.16",
     description="Computing Littlewood-Richardson coefficients of Schubert polynomials",
 	long_description=long_description,
 	long_description_content_type='text/markdown',
@@ -17,7 +17,7 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3",
     ],
-    packages=["schubmult","schubmult.schubmult_py","schubmult.schubmult_double","schubmult.schubmult_yz"],
+    packages=find_packages(),
     include_package_data=True,
     install_requires=[
         "symengine", "numpy"
