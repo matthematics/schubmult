@@ -12,7 +12,7 @@ setup(
 	long_description_content_type='text/markdown',
     url="https://github.com/matthematics/schubmult",
     author="Matt Samuel",
-    author_email="matthematics@gmail.com",
+    author_email="schubmult@gmail.com",
     license="GNU",
     classifiers=[
         "Programming Language :: Python :: 3",
