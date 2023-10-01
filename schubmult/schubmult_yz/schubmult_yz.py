@@ -4,6 +4,7 @@ from functools import cache
 from itertools import chain
 from schubmult.perm_lib import *
 import numpy as np
+import resource
 
 n = 100
 
@@ -75,6 +76,9 @@ dimen = 0
 monom_to_vec = {}
 
 def main():
+	sys.setrecursionlimit(1000000)
+	resource.setrlimit(resource.RLIMIT_STACK, (-1, -1))
+
 	perms=[]
 	curperm = []
 	
