@@ -126,7 +126,6 @@ def main():
 			if val != 0:					
 				if display_positive:
 					notint = False
-					val = expand(val)
 					try:
 						int(val)
 					except Exception:
@@ -146,6 +145,7 @@ def main():
 							exit(1)					
 						
 						sval = str(val)
+						val = expand(val)
 						import re
 						
 						regex = re.compile("y_([0-9]+)")
@@ -182,7 +182,7 @@ def main():
 								monom_to_vec[mn] = index
 								index+=1
 							dimen = index
-						val_poly = sympy.Poly(sval,*var22[1:],*var33[1:])
+						val_poly = sympy.poly(sval,*var22[1:],*var33[1:])
 					
 						test_degree = inv(perms[0])+inv(perms[1])-inv(perm)
 						did = False						
@@ -219,7 +219,7 @@ def main():
 						for index1 in range(1,n1):
 							full_varlist += [[]]
 							for index2 in set2:
-								full_varlist[index1-1] += [var22[index1]-var33[index2]]
+								full_varlist[index1-1] += [var2[index1]-var3[index2]]
 						comblists = []
 						for mn1 in mn1L:				
 							comblistmn1 = [1]
