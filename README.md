@@ -31,4 +31,8 @@ coeff_dict = schubmult({(1,3,4,6,2,5): 1},(2,1,5,7,3,4,6))
 
 Note versions 1.0.15 and prior had a bug that failed to upgrade the executable. The coefficients it computed were correct, but it was not using the updated version.
 
+Version 1.0.17 adds the command line argument --display-positive to schubmult_yz, which displays the result positively (if possible, this is still only always possible conjecturally). This is highly processor intensive.
+
+![](https://raw.githubusercontent.com/matthematics/schubmult/main/positive_image.png)
+
 [Homepage of schubmult](http://schubmult.org/)
