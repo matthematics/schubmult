@@ -143,13 +143,7 @@ def main():
 						except ImportError:
 							print("Package \"sympy\" required for --display-positive",file=sys.stderr)
 							exit(1)					
-							
-						try:
-							import xpress
-						except ImportError:
-							print("Package \"xpress\" required for --display-positive",file=sys.stderr)
-							exit(1)					
-						
+																			
 						sval = str(val)
 						val = expand(val)
 						import re
