@@ -51,6 +51,23 @@ def schubmult(perm_dict,v):
 		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
 	return ret_dict
 
+def will_formula_work(u,v):
+	muv = uncode(theta(v))
+	vn1muv = mulperm(inverse(v),muv)
+	while True:
+		found_one = False
+		for i in range(len(vn1muv)-1):
+			if vn1muv[i]>vn1muv[i+1]:				
+				found_one = True
+				if i<len(u)-1 and u[i]>u[i+1]:
+					return False
+				else:
+					vn1muv[i],vn1muv[i+1] = vn1muv[i+1],vn1muv[i]
+					break
+		if not found_one:
+			return True
+
+
 def main():
 	perms=[]
 	curperm = []
@@ -68,10 +85,35 @@ def main():
 				continue
 			curperm += [int(s)]
 	except Exception:
-		print("Usage: python3 schubmult_py.py <-np> <perm1> - <perm2>")
+		print("Usage: schubmult_py <-np> <perm1> - <perm2>")
 		exit(1)
 	
 	perms += [tuple(permtrim(curperm))]
+	
+	#try:		
+	#	u, v = perms
+	#
+	#	if will_formula_work(u,v) or will_formula_work(v,u):
+	#		if will_formula_work(v,u):
+	#			u, v = v, u
+	#		print("Doing samuel formula",file=sys.stderr)
+	#		inv_u = inv(u)
+	#		inv_v = inv(v)	
+	#		
+	#		th = theta(v)
+	#		muv = uncode(th)
+	#		lm = p_trans(th)
+	#		coeff_dict = schubmult({tuple(u): 1},muv)
+	#		muvn1v = mulperm(inverse(muv),v)
+	#		
+	#		if pr:
+	#			for perm, val in coeff_dict.items():
+	#				w = mulperm(list(perm),muvn1v)
+	#				if inv_u+inv_v == inv(w):
+	#					print(f"{val}  {tuple(permtrim(w))}")
+	#		sys.exit(0)
+	#except Exception:
+	#	pass
 	
 	perms.sort(reverse=True,key=lambda x: sum(theta(inverse(x)))-inv(x))
 	
