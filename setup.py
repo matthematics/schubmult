@@ -22,7 +22,6 @@ setup(
     install_requires=[
         "numpy>=1.26.0",
 		"PuLP>=2.7.0",
-		"setuptools>=59.6.0",
 		"symengine>=0.10.0",
 		"sympy>=1.12"
     ],
