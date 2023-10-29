@@ -44,40 +44,26 @@ def schubmult(perm_dict,v):
 							if vdiff + udiff == th[index]:								
 								if up2 not in newpathsums:
 									newpathsums[up2]={}
-								newpathsums[up2][v2] = newpathsums[up2].get(v2,0)+addsumval
-							
+								newpathsums[up2][v2] = newpathsums[up2].get(v2,0)+addsumval							
 			vpathsums = newpathsums
 		toget = tuple(vmu)
 		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
 	return ret_dict
-
-def will_formula_work(u,v):
-	muv = uncode(theta(v))
-	vn1muv = mulperm(inverse(v),muv)
-	while True:
-		found_one = False
-		for i in range(len(vn1muv)-1):
-			if vn1muv[i]>vn1muv[i+1]:				
-				found_one = True
-				if i<len(u)-1 and u[i]>u[i+1]:
-					return False
-				else:
-					vn1muv[i],vn1muv[i+1] = vn1muv[i+1],vn1muv[i]
-					break
-		if not found_one:
-			return True
-
 
 def main():
 	perms=[]
 	curperm = []
 	
 	pr = True
+	coprod = False
 	
 	try:
 		for s in sys.argv[1:]:
 			if s == "-np":
 				pr = False
+				continue
+			if s == "-coprod":
+				coprod = True
 				continue
 			if s == "-":
 				perms += [tuple(permtrim(curperm))]
@@ -85,47 +71,66 @@ def main():
 				continue
 			curperm += [int(s)]
 	except Exception:
-		print("Usage: schubmult_py <-np> <perm1> - <perm2>")
+		print("Usage: schubmult_py <-np> <perm1> - <perm2> <optional - perm3 - etc.>")
+		print("Alternative usage: schubmult_py -coprod <-np> <perm> - <index list>")
 		exit(1)
 	
-	perms += [tuple(permtrim(curperm))]
+	perms += [tuple(curperm)]
 	
-	#try:		
-	#	u, v = perms
-	#
-	#	if will_formula_work(u,v) or will_formula_work(v,u):
-	#		if will_formula_work(v,u):
-	#			u, v = v, u
-	#		print("Doing samuel formula",file=sys.stderr)
-	#		inv_u = inv(u)
-	#		inv_v = inv(v)	
-	#		
-	#		th = theta(v)
-	#		muv = uncode(th)
-	#		lm = p_trans(th)
-	#		coeff_dict = schubmult({tuple(u): 1},muv)
-	#		muvn1v = mulperm(inverse(muv),v)
-	#		
-	#		if pr:
-	#			for perm, val in coeff_dict.items():
-	#				w = mulperm(list(perm),muvn1v)
-	#				if inv_u+inv_v == inv(w):
-	#					print(f"{val}  {tuple(permtrim(w))}")
-	#		sys.exit(0)
-	#except Exception:
-	#	pass
+	if coprod:
+		pos = [*perms[1]]
+		pos.sort()
+		mperm = perms[0]
+
+		cd = code(mperm)
+		perms[0] = mperm
+
+		while cd[-1] == 0:
+			cd.pop()
+		k = len(pos)
+		n = len(perms[0])
+		kcd = [pos[i]-i-1 for i in range(len(pos))] + [n+1-k for i in range(k,n)]
+		N = len(kcd)
+		kperm = inverse(uncode(kcd))
+		coeff_dict = {tuple(permtrim(kperm)): 1}
+		coeff_dict = schubmult(coeff_dict,tuple(permtrim([*perms[0]])))
 	
-	perms.sort(reverse=True,key=lambda x: sum(theta(inverse(x)))-inv(x))
-	
-	coeff_dict = {perms[0]: 1}
-	
-	for perm in perms[1:]:
-		coeff_dict = schubmult(coeff_dict,perm)
+		inv_perm0 = inv(perms[0])
+		inv_kperm = inv(kperm)
+		inverse_kperm = inverse(kperm)
+		if pr:
+			for perm, val in coeff_dict.items():
+				downperm = mulperm(list(perm),inverse_kperm)
+				if inv(downperm) == inv(perm) - inv_kperm:
+					flag = True			
+					for i in range(N):
+						if downperm[i] > N:
+							flag = False
+							break
+					if not flag:
+						continue
+					firstperm = downperm[0:N]
+					secondperm = [downperm[i]-N for i in range(N,len(downperm))]
+					if val != 0:
+						#firstcode = code(firstperm)
+						#while len(firstcode)>0 and firstcode[-1] == 0:
+						#	firstcode.pop()
+						#secondcode = code(secondperm)
+						#while len(secondcode)>0 and secondcode[-1] == 0:
+						#	secondcode.pop()
+						print(f"{val} {tuple(permtrim(firstperm))} {tuple(permtrim(secondperm))}")
+	else:
+		perms.sort(reverse=True,key=lambda x: sum(theta(inverse(x)))-inv(x))
 		
-	if pr:
-		for perm, val in coeff_dict.items():
-			if val!= 0:
-				print(f"{val}  {perm}")
+		coeff_dict = {tuple(permtrim([*perms[0]])): 1}
+		
+		for perm in perms[1:]:
+			coeff_dict = schubmult(coeff_dict,tuple(permtrim([*perm])))
+			
+		if pr:
+			for perm, val in coeff_dict.items():
+				if val!= 0:
+					print(f"{val}  {perm}")
 
 if __name__ == "__main__":
 	main()
