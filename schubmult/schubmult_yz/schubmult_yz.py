@@ -4,13 +4,18 @@ from functools import cache
 from itertools import chain
 from schubmult.perm_lib import *
 import numpy as np
-import resource
 
 n = 100
 
 var = symarray('x', n)
 var2 = symarray('y',n)
 var3 = symarray('z',n)
+
+def trimcode(perm):
+	cd = code(perm)
+	while len(cd)>0 and cd[-1] == 0:
+		cd.pop()
+	return cd
 
 def will_formula_work(u,v):
 	muv = uncode(theta(v))
@@ -77,13 +82,13 @@ monom_to_vec = {}
 
 def main():
 	sys.setrecursionlimit(1000000)
-	resource.setrlimit(resource.RLIMIT_STACK, (-1, -1))
 
 	perms=[]
 	curperm = []
 	
 	pr = True
 	display_positive = False
+	ascode = False
 	
 	try:
 		for s in sys.argv[1:]:
@@ -96,6 +101,9 @@ def main():
 			if s == "--version":
 				print(f"Python version {sys.version}")
 				exit(0)
+			if s == "-code":
+				ascode = True
+				continue
 			if s == "--usage":
 				print("Usage: schubmult_yz <-np|--no-print> <--display-positive> <perm1> - <perm2>")
 				exit(0)
@@ -110,13 +118,20 @@ def main():
 			
 	perms += [tuple(permtrim(curperm))]
 	
+	if ascode:
+		for i in range(len(perms)):
+			perms[i] = tuple(permtrim(uncode(perms[i])))
+	
 	coeff_dict = {perms[0]: 1}
 	
 	for perm in perms[1:]:
 		coeff_dict = schubmult(coeff_dict,perm)
 		
 	if pr:
-		width = max([len(str(perm)) for perm in coeff_dict.keys()])
+		if ascode:
+			width = max([len(str(trimcode(perm))) for perm in coeff_dict.keys()])
+		else:
+			width = max([len(str(perm)) for perm in coeff_dict.keys()])
 		
 		coeff_perms = list(coeff_dict.keys())
 		coeff_perms.sort(key=lambda x: (inv(x),*x))
@@ -261,6 +276,9 @@ def main():
 							if x!=0:
 								val += int(x)*b1
 				if val!=0:
-					print(f"{str(perm):>{width}}  {str(val).replace('**','^').replace('*',' ')}")	
+					if ascode:
+						print(f"{str(trimcode(perm)):>{width}}  {str(val).replace('**','^').replace('*',' ')}")	
+					else:
+						print(f"{str(perm):>{width}}  {str(val).replace('**','^').replace('*',' ')}")	
 if __name__ == "__main__":
 	main()

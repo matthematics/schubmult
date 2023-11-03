@@ -3,6 +3,12 @@ from functools import cache
 from itertools import chain
 from schubmult.perm_lib import *
 
+def trimcode(perm):
+	cd = code(perm)
+	while len(cd)>0 and cd[-1] == 0:
+		cd.pop()
+	return cd
+
 def schubmult(perm_dict,v):
 	vn1 = inverse(v)
 	th = theta(vn1)
@@ -56,6 +62,7 @@ def main():
 	
 	pr = True
 	coprod = False
+	ascode = False
 	
 	try:
 		for s in sys.argv[1:]:
@@ -64,6 +71,9 @@ def main():
 				continue
 			if s == "-coprod":
 				coprod = True
+				continue
+			if s == "-code":
+				ascode = True
 				continue
 			if s == "-":
 				perms += [tuple(permtrim(curperm))]
@@ -78,6 +88,8 @@ def main():
 	perms += [tuple(curperm)]
 	
 	if coprod:
+		if ascode:
+			perms[0] = tuple(permtrim(uncode(perms[0])))
 		pos = [*perms[1]]
 		pos.sort()
 		mperm = perms[0]
@@ -118,8 +130,22 @@ def main():
 						#secondcode = code(secondperm)
 						#while len(secondcode)>0 and secondcode[-1] == 0:
 						#	secondcode.pop()
-						print(f"{val} {tuple(permtrim(firstperm))} {tuple(permtrim(secondperm))}")
+						if ascode:
+							c1 = code(firstperm)
+							c2 = code(secondperm)
+							while len(c1)>0 and c1[-1] == 0:
+								c1.pop()
+							while len(c2)>0 and c2[-1] == 0:
+								c2.pop()
+							print(f"{val} {tuple(c1)} {tuple(c2)}")
+						else:
+							print(f"{val} {tuple(permtrim(firstperm))} {tuple(permtrim(secondperm))}")
 	else:
+		if ascode:
+			for i in range(len(perms)):
+				perms[i] = tuple(permtrim(uncode(perms[i])))
+	
+	
 		perms.sort(reverse=True,key=lambda x: sum(theta(inverse(x)))-inv(x))
 		
 		coeff_dict = {tuple(permtrim([*perms[0]])): 1}
@@ -130,7 +156,10 @@ def main():
 		if pr:
 			for perm, val in coeff_dict.items():
 				if val!= 0:
-					print(f"{val}  {perm}")
+					if ascode:						
+						print(f"{val}  {trimcode(perm)}")
+					else:
+						print(f"{val}  {perm}")					
 
 if __name__ == "__main__":
 	main()
