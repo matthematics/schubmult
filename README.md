@@ -8,9 +8,26 @@ This is a set of python scripts written by Matt Samuel for computing Littlewood-
 schubmult_py 1 2 4 9 11 6 8 12 3 5 7 10 - 6 8 1 2 3 4 7 10 12 14 5 9 11 13  
 schubmult_double 1 3 4 6 2 5 - 2 1 5 7 3 4 6  
 schubmult_yz 1 3 4 6 2 5 - 2 1 5 7 3 4 6
+```
 
+The same execution with the Lehmer code:
+
+```
+schubmult_py -code 0 0 1 5 6 2 3 4 - 5 6 0 0 0 0 1 2 3 4
+schubmult_double -code 0 1 1 2 - 1 0 2 3
+schubmult_yz -code 0 1 1 2 - 1 0 2 3
+```
+
+For coproducts:
+```
 schubmult_py -coprod 1 3 5 7 2 4 6 - 2 4
 ```
+or
+```
+schubmult_py -code -coprod 0 1 2 3 - 2 4
+```
+
+
 
 Runtime will vary tremendously by case. The general problem is #P-hard. Though the result is always nonnegative and the problem is in GapP, it is not known to be in #P at this time.
 
