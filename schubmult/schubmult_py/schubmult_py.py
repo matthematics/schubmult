@@ -66,7 +66,7 @@ def main():
 	
 	try:
 		for s in sys.argv[1:]:
-			if s == "-np" | s == "--no-print":
+			if s == "-np" or s == "--no-print":
 				pr = False
 				continue
 			if s == "-coprod":
