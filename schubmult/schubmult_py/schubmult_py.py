@@ -66,7 +66,7 @@ def main():
 	
 	try:
 		for s in sys.argv[1:]:
-			if s == "-np":
+			if s == "-np" | s == "--no-print":
 				pr = False
 				continue
 			if s == "-coprod":
@@ -81,7 +81,7 @@ def main():
 				continue
 			curperm += [int(s)]
 	except Exception:
-		print("Usage: schubmult_py <-np> <perm1> - <perm2> <optional - perm3 - etc.>")
+		print("Usage: schubmult_py <-np|--no-print> <-code> perm1 - perm2 <- perm3...>")
 		print("Alternative usage: schubmult_py -coprod <-np> <perm> - <index list>")
 		exit(1)
 	

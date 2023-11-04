@@ -36,7 +36,7 @@ def main():
 	
 	try:
 		for s in sys.argv[1:]:
-			if s == "-np":
+			if s == "-np" or s == "--no-print":
 				pr = False
 				continue
 			if s == "-code":
@@ -48,7 +48,7 @@ def main():
 				continue
 			curperm += [int(s)]
 	except Exception:
-		print("Usage: schubmult_double <-np> <perm1> - <perm2>")
+		print("Usage: schubmult_double <-np|--no-print> <-code> perm1 - perm2 < - perm 3 ... >")
 		exit(1)
 	
 	perms += [curperm]

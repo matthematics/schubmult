@@ -113,7 +113,7 @@ def main():
 				continue
 			curperm += [int(s)]
 	except Exception:
-		print("Usage: schubmult_yz <-np|--no-print> <--display-positive> <perm1> - <perm2>")
+		print("Usage: schubmult_yz <-np|--no-print> <-code> <--display-positive> perm1 - perm2 < - perm3 .. >")
 		exit(1)
 			
 	perms += [tuple(permtrim(curperm))]
