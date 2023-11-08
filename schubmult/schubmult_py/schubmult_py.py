@@ -131,13 +131,7 @@ def main():
 						#while len(secondcode)>0 and secondcode[-1] == 0:
 						#	secondcode.pop()
 						if ascode:
-							c1 = code(firstperm)
-							c2 = code(secondperm)
-							while len(c1)>0 and c1[-1] == 0:
-								c1.pop()
-							while len(c2)>0 and c2[-1] == 0:
-								c2.pop()
-							print(f"{val} {tuple(c1)} {tuple(c2)}")
+							print(f"{val} {trimcode(firstperm)} {trimcode(secondperm)}")
 						else:
 							print(f"{val} {tuple(permtrim(firstperm))} {tuple(permtrim(secondperm))}")
 	else:
