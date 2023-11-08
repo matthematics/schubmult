@@ -21,10 +21,14 @@ schubmult_yz -code 0 1 1 2 - 1 0 2 3
 For coproducts:
 ```
 schubmult_py -coprod 1 3 5 7 2 4 6 - 2 4
+schubmult_double -coprod 1 3 5 7 2 4 6 - 2 4
+schubmult_yz -coprod 1 3 5 7 2 4 6 - 2 4
 ```
 or
 ```
 schubmult_py -code -coprod 0 1 2 3 - 2 4
+schubmult_double -code -coprod 0 1 2 3 - 2 4
+schubmult_yz -code -coprod 0 1 2 3 - 2 4
 ```
 
 
