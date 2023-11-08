@@ -313,12 +313,13 @@ def main():
 					if val != 0:
 						if display_positive:
 							val = compute_positive_rep(val,var2neg,var3neg)
-						if not ascode:
-							width2 = width - len(str(permtrim(firstperm))) - len(str(permtrim(secondperm)))
-							print(f"{tuple(permtrim(firstperm))}{' ':>{width2}}{tuple(permtrim(secondperm))}  {str(val).replace('**','^').replace('*',' ')}")
-						else:
-							width2 = width - len(str(trimcode(firstperm))) - len(str(trimcode(secondperm)))
-							print(f"{trimcode(firstperm)}{' ':>{width2}}{trimcode(secondperm)}  {str(val).replace('**','^').replace('*',' ')}")
+						if val != 0:
+							if not ascode:
+								width2 = width - len(str(permtrim(firstperm))) - len(str(permtrim(secondperm)))
+								print(f"{tuple(permtrim(firstperm))}{' ':>{width2}}{tuple(permtrim(secondperm))}  {str(val).replace('**','^').replace('*',' ')}")
+							else:
+								width2 = width - len(str(trimcode(firstperm))) - len(str(trimcode(secondperm)))
+								print(f"{trimcode(firstperm)}{' ':>{width2}}{trimcode(secondperm)}  {str(val).replace('**','^').replace('*',' ')}")
 	else:
 		if ascode:
 			for i in range(len(perms)):
