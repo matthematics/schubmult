@@ -76,7 +76,7 @@ def main():
 				ascode = True
 				continue
 			if s == "-":
-				perms += [tuple(permtrim(curperm))]
+				perms += [tuple(curperm)]
 				curperm = []
 				continue
 			curperm += [int(s)]
