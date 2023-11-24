@@ -312,7 +312,8 @@ def main():
 										
 					if val != 0:
 						if display_positive:
-							val = compute_positive_rep(val,var2neg,var3neg)
+							if expand(val) != 0:
+								val = compute_positive_rep(val,var2neg,var3neg)
 						if val != 0:
 							if not ascode:
 								width2 = width - len(str(permtrim(firstperm))) - len(str(permtrim(secondperm)))
@@ -346,7 +347,8 @@ def main():
 				val = coeff_dict[perm]
 				if val != 0:					
 					if display_positive:
-						val = compute_positive_rep(val)
+						if expand(val) != 0:
+							val = compute_positive_rep(val)
 					if val!=0:
 						if ascode:
 							print(f"{str(trimcode(perm)):>{width}}  {str(val).replace('**','^').replace('*',' ')}")	
