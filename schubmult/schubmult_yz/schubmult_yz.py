@@ -314,6 +314,8 @@ def main():
 						if display_positive:
 							if expand(val) != 0:
 								val = compute_positive_rep(val,var2neg,var3neg)
+							else:
+								val = 0
 						if val != 0:
 							if not ascode:
 								width2 = width - len(str(permtrim(firstperm))) - len(str(permtrim(secondperm)))
@@ -349,6 +351,8 @@ def main():
 					if display_positive:
 						if expand(val) != 0:
 							val = compute_positive_rep(val)
+						else:
+							val = 0
 					if val!=0:
 						if ascode:
 							print(f"{str(trimcode(perm)):>{width}}  {str(val).replace('**','^').replace('*',' ')}")	
