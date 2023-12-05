@@ -57,103 +57,106 @@ def schubmult(perm_dict,v):
 	return ret_dict
 
 def main():
-	perms=[]
-	curperm = []
-	
-	pr = True
-	coprod = False
-	ascode = False
-	
 	try:
-		for s in sys.argv[1:]:
-			if s == "-np" or s == "--no-print":
-				pr = False
-				continue
-			if s == "-coprod":
-				coprod = True
-				continue
-			if s == "-code":
-				ascode = True
-				continue
-			if s == "-":
-				perms += [tuple(curperm)]
-				curperm = []
-				continue
-			curperm += [int(s)]
-	except Exception:
-		print("Usage: schubmult_py <-np|--no-print> <-code> perm1 - perm2 <- perm3...>")
-		print("Alternative usage: schubmult_py -coprod <-np> <perm> - <index list>")
-		exit(1)
-	
-	perms += [tuple(curperm)]
-	
-	if coprod:
-		if ascode:
-			perms[0] = tuple(permtrim(uncode(perms[0])))
-		pos = [*perms[1]]
-		pos.sort()
-		mperm = perms[0]
-
-		cd = code(mperm)
-		perms[0] = mperm
-
-		while cd[-1] == 0:
-			cd.pop()
-		k = len(pos)
-		n = len(perms[0])
-		kcd = [pos[i]-i-1 for i in range(len(pos))] + [n+1-k for i in range(k,n)]
-		N = len(kcd)
-		kperm = inverse(uncode(kcd))
-		coeff_dict = {tuple(permtrim(kperm)): 1}
-		coeff_dict = schubmult(coeff_dict,tuple(permtrim([*perms[0]])))
-	
-		inv_perm0 = inv(perms[0])
-		inv_kperm = inv(kperm)
-		inverse_kperm = inverse(kperm)
-		if pr:
-			for perm, val in coeff_dict.items():
-				downperm = mulperm(list(perm),inverse_kperm)
-				if inv(downperm) == inv(perm) - inv_kperm:
-					flag = True			
-					for i in range(N):
-						if downperm[i] > N:
-							flag = False
-							break
-					if not flag:
-						continue
-					firstperm = downperm[0:N]
-					secondperm = [downperm[i]-N for i in range(N,len(downperm))]
-					if val != 0:
-						#firstcode = code(firstperm)
-						#while len(firstcode)>0 and firstcode[-1] == 0:
-						#	firstcode.pop()
-						#secondcode = code(secondperm)
-						#while len(secondcode)>0 and secondcode[-1] == 0:
-						#	secondcode.pop()
-						if ascode:
-							print(f"{val} {trimcode(firstperm)} {trimcode(secondperm)}")
-						else:
-							print(f"{val} {tuple(permtrim(firstperm))} {tuple(permtrim(secondperm))}")
-	else:
-		if ascode:
-			for i in range(len(perms)):
-				perms[i] = tuple(permtrim(uncode(perms[i])))
-	
-	
-		perms.sort(reverse=True,key=lambda x: sum(theta(inverse(x)))-inv(x))
+		perms=[]
+		curperm = []
 		
-		coeff_dict = {tuple(permtrim([*perms[0]])): 1}
+		pr = True
+		coprod = False
+		ascode = False
 		
-		for perm in perms[1:]:
-			coeff_dict = schubmult(coeff_dict,tuple(permtrim([*perm])))
+		try:
+			for s in sys.argv[1:]:
+				if s == "-np" or s == "--no-print":
+					pr = False
+					continue
+				if s == "-coprod":
+					coprod = True
+					continue
+				if s == "-code":
+					ascode = True
+					continue
+				if s == "-":
+					perms += [tuple(curperm)]
+					curperm = []
+					continue
+				curperm += [int(s)]
+		except Exception:
+			print("Usage: schubmult_py <-np|--no-print> <-code> perm1 - perm2 <- perm3...>")
+			print("Alternative usage: schubmult_py -coprod <-np> <perm> - <index list>")
+			exit(1)
+		
+		perms += [tuple(curperm)]
+		
+		if coprod:
+			if ascode:
+				perms[0] = tuple(permtrim(uncode(perms[0])))
+			pos = [*perms[1]]
+			pos.sort()
+			mperm = perms[0]
+	
+			cd = code(mperm)
+			perms[0] = mperm
+	
+			while cd[-1] == 0:
+				cd.pop()
+			k = len(pos)
+			n = len(perms[0])
+			kcd = [pos[i]-i-1 for i in range(len(pos))] + [n+1-k for i in range(k,n)]
+			N = len(kcd)
+			kperm = inverse(uncode(kcd))
+			coeff_dict = {tuple(permtrim(kperm)): 1}
+			coeff_dict = schubmult(coeff_dict,tuple(permtrim([*perms[0]])))
+		
+			inv_perm0 = inv(perms[0])
+			inv_kperm = inv(kperm)
+			inverse_kperm = inverse(kperm)
+			if pr:
+				for perm, val in coeff_dict.items():
+					downperm = mulperm(list(perm),inverse_kperm)
+					if inv(downperm) == inv(perm) - inv_kperm:
+						flag = True			
+						for i in range(N):
+							if downperm[i] > N:
+								flag = False
+								break
+						if not flag:
+							continue
+						firstperm = downperm[0:N]
+						secondperm = [downperm[i]-N for i in range(N,len(downperm))]
+						if val != 0:
+							#firstcode = code(firstperm)
+							#while len(firstcode)>0 and firstcode[-1] == 0:
+							#	firstcode.pop()
+							#secondcode = code(secondperm)
+							#while len(secondcode)>0 and secondcode[-1] == 0:
+							#	secondcode.pop()
+							if ascode:
+								print(f"{val} {trimcode(firstperm)} {trimcode(secondperm)}")
+							else:
+								print(f"{val} {tuple(permtrim(firstperm))} {tuple(permtrim(secondperm))}")
+		else:
+			if ascode:
+				for i in range(len(perms)):
+					perms[i] = tuple(permtrim(uncode(perms[i])))
+		
+		
+			perms.sort(reverse=True,key=lambda x: sum(theta(inverse(x)))-inv(x))
 			
-		if pr:
-			for perm, val in coeff_dict.items():
-				if val!= 0:
-					if ascode:						
-						print(f"{val}  {trimcode(perm)}")
-					else:
-						print(f"{val}  {perm}")					
+			coeff_dict = {tuple(permtrim([*perms[0]])): 1}
+			
+			for perm in perms[1:]:
+				coeff_dict = schubmult(coeff_dict,tuple(permtrim([*perm])))
+				
+			if pr:
+				for perm, val in coeff_dict.items():
+					if val!= 0:
+						if ascode:						
+							print(f"{val}  {trimcode(perm)}")
+						else:
+							print(f"{val}  {perm}")					
+	except BrokenPipeError:
+		pass
 
 if __name__ == "__main__":
 	main()

@@ -9,12 +9,14 @@ import itertools as it
 import sympy
 import re
 		
-
 n = 100
 
 var = symarray('x', n)
 var2 = symarray('y',n)
 var3 = symarray('z',n)
+
+dimen = 0
+monom_to_vec = {}
 
 def trimcode(perm):
 	cd = code(perm)
@@ -64,6 +66,35 @@ def schubmult(perm_dict,v,var2=var2,var3=var3):
 		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
 	return ret_dict
 
+def poly_to_vec(poly,vec0=None):	
+	global dimen, monom_to_vec
+	dc = poly.as_coefficients_dict()
+	mn = list(dc.keys())
+	
+	if vec0 is None:
+		init_basevec(mn)
+	vec = np.zeros(dimen)
+	try:
+		for i in range(len(mn)-1,-1,-1):
+			cf = dc[mn[i]]
+			index = monom_to_vec[mn[i]]
+			if vec0 is not None and abs(vec0[index])<abs(cf):
+				return None
+			vec[index] = cf
+	except Exception:
+		return None
+	return vec
+
+def init_basevec(monoms):
+	global dimen, monom_to_vec
+	monom_to_vec = {}
+	index = 0
+	for mn in monoms:
+		monom_to_vec[mn] = index
+		index+=1
+	dimen = index
+		
+
 def compute_positive_rep(val,var2=var2,var3=var3,neg=False):
 	notint = False
 	try:
@@ -79,35 +110,8 @@ def compute_positive_rep(val,var2=var2,var3=var3,neg=False):
 		n1 = max([int(index) for index in regex.findall(sval)])+1
 		n2 = max([int(index) for index in regex2.findall(sval)])+1
 		var22 = sympy.symarray('y',n1)
-		var33 = sympy.symarray('z',n2)
-		
-		def poly_to_vec(poly,vec0=None):	
-			global dimen, monom_to_vec
-			dc = poly.as_coefficients_dict()
-			mn = list(dc.keys())
+		var33 = sympy.symarray('z',n2)			
 			
-			if vec0 is None:
-				init_basevec(mn)
-			vec = np.zeros(dimen)
-			try:
-				for i in range(len(mn)-1,-1,-1):
-					cf = dc[mn[i]]
-					index = monom_to_vec[mn[i]]
-					if vec0 is not None and abs(vec0[index])<abs(cf):
-						return None
-					vec[index] = cf
-			except Exception:
-				return None
-			return vec
-			
-		def init_basevec(monoms):
-			global dimen, monom_to_vec
-			monom_to_vec = {}
-			index = 0
-			for mn in monoms:
-				monom_to_vec[mn] = index
-				index+=1
-			dimen = index
 		val_poly = sympy.poly(sval,*var22[1:],*var33[1:])
 		
 		if val_poly == sympy.sympify(0):
@@ -189,174 +193,174 @@ def compute_positive_rep(val,var2=var2,var3=var3,neg=False):
 	return val
 
 
-
-dimen = 0
-monom_to_vec = {}
-
 def main():
-	sys.setrecursionlimit(1000000)
-
-	perms=[]
-	curperm = []
-	
-	pr = True
-	display_positive = False
-	ascode = False
-	coprod = False
-	
 	try:
-		for s in sys.argv[1:]:
-			if s == "-np" or s == "--no-print":
-				pr = False
-				continue
-			if s == "-coprod":
-				coprod = True
-				continue
-			if s == "--display-positive":
-				display_positive = True
-				continue
-			if s == "--version":
-				print(f"Python version {sys.version}")
-				exit(0)
-			if s == "-code":
-				ascode = True
-				continue
-			if s == "--usage":
-				print("Usage: schubmult_yz <-np|--no-print> <--display-positive> <perm1> - <perm2>")
-				exit(0)
-			if s == "-":
-				perms += [curperm]
-				curperm = []
-				continue
-			curperm += [int(s)]
-	except Exception:
-		print("Usage: schubmult_yz <-np|--no-print> <-code> <--display-positive> perm1 - perm2 < - perm3 .. >")
-		print("Alternative usage: schubmult_yz <-code> <--display-positive> -coprod perm - indexlist")
-		exit(1)
-			
-	perms += [curperm]
+		sys.setrecursionlimit(1000000)
 	
-	if coprod:
-		subs_dict = {}
-		if ascode:
-			mperm = tuple(permtrim(uncode(perms[0])))
-		else:
-			mperm = tuple(permtrim(perms[0]))
-
-		cd = code(mperm)
-		perms[0] = mperm
-		pos = perms[1]
-
-		while cd[-1] == 0:
-			cd.pop()
-		k = len(pos)
-		n = len(perms[0])
-		kcd = [pos[i]-i-1 for i in range(len(pos))] + [n+1-k for i in range(k,n)]
-		N = len(kcd)
+		perms=[]
+		curperm = []
 		
-		var2neg = [-var2[i] for i in range(len(var2))]
-		var3neg = [-var3[i] for i in range(len(var3))]
+		pr = True
+		display_positive = False
+		ascode = False
+		coprod = False
 		
-		for i in range(1,100):
-			if i<=N:
-				subs_dict[var[i]] = var2[i]
-			else:
-				subs_dict[var[i]] = var3[i-N]
+		try:
+			for s in sys.argv[1:]:
+				if s == "-np" or s == "--no-print":
+					pr = False
+					continue
+				if s == "-coprod":
+					coprod = True
+					continue
+				if s == "--display-positive":
+					display_positive = True
+					continue
+				if s == "--version":
+					print(f"Python version {sys.version}")
+					exit(0)
+				if s == "-code":
+					ascode = True
+					continue
+				if s == "--usage":
+					print("Usage: schubmult_yz <-np|--no-print> <--display-positive> <perm1> - <perm2>")
+					exit(0)
+				if s == "-":
+					perms += [curperm]
+					curperm = []
+					continue
+				curperm += [int(s)]
+		except Exception:
+			print("Usage: schubmult_yz <-np|--no-print> <-code> <--display-positive> perm1 - perm2 < - perm3 .. >")
+			print("Alternative usage: schubmult_yz <-code> <--display-positive> -coprod perm - indexlist")
+			exit(1)
+				
+		perms += [curperm]
 		
-		kperm = inverse(uncode(kcd))
-		coeff_dict = {tuple(kperm): 1}
-		coeff_dict = schubmult(coeff_dict,perms[0],var,var2)
-		
-		inv_perm0 = inv(perms[0])
-		inv_kperm = inv(kperm)
-		inverse_kperm = inverse(kperm)
-		if pr:
-			coeff_perms = list(coeff_dict.keys())
-			coeff_perms.sort(key=lambda x: (inv(x),*x))
-		
-			perm_pairs = []
-			
-			for perm in coeff_perms:
-				downperm = mulperm(list(perm),inverse_kperm)
-				if inv(downperm) == inv(perm) - inv_kperm:
-					flag = True			
-					for i in range(N):
-						if downperm[i] > N:
-							flag = False
-							break
-					if not flag:
-						continue
-					firstperm = downperm[0:N]
-					secondperm = [downperm[i]-N for i in range(N,len(downperm))]
-					perm_pairs += [[permtrim(firstperm),permtrim(secondperm)]]
-		
+		if coprod:
+			subs_dict = {}
 			if ascode:
-				width = max([len(str(trimcode(perm[0]))+" "+str(trimcode(perm[1]))) for perm in perm_pairs])
+				mperm = tuple(permtrim(uncode(perms[0])))
 			else:
-				width = max([len(str(perm[0])+" "+str(perm[1])) for perm in perm_pairs])
-		
-			for perm in coeff_perms:
-				val = coeff_dict[perm]
-				downperm = mulperm(list(perm),inverse_kperm)
-				if inv(downperm) == inv(perm) - inv_kperm:
-					flag = True			
-					for i in range(N):
-						if downperm[i] > N:
-							flag = False
-							break
-					if not flag:
-						continue
-					firstperm = downperm[0:N]
-					secondperm = [downperm[i]-N for i in range(N,len(downperm))]
-					val = sympify(val).subs(subs_dict)
-										
-					if val != 0:
+				mperm = tuple(permtrim(perms[0]))
+	
+			cd = code(mperm)
+			perms[0] = mperm
+			pos = perms[1]
+	
+			while cd[-1] == 0:
+				cd.pop()
+			k = len(pos)
+			n = len(perms[0])
+			kcd = [pos[i]-i-1 for i in range(len(pos))] + [n+1-k for i in range(k,n)]
+			N = len(kcd)
+			
+			var2neg = [-var2[i] for i in range(len(var2))]
+			var3neg = [-var3[i] for i in range(len(var3))]
+			
+			for i in range(1,100):
+				if i<=N:
+					subs_dict[var[i]] = var2[i]
+				else:
+					subs_dict[var[i]] = var3[i-N]
+			
+			kperm = inverse(uncode(kcd))
+			coeff_dict = {tuple(kperm): 1}
+			coeff_dict = schubmult(coeff_dict,perms[0],var,var2)
+			
+			inv_perm0 = inv(perms[0])
+			inv_kperm = inv(kperm)
+			inverse_kperm = inverse(kperm)
+			if pr:
+				coeff_perms = list(coeff_dict.keys())
+				coeff_perms.sort(key=lambda x: (inv(x),*x))
+			
+				perm_pairs = []
+				
+				for perm in coeff_perms:
+					downperm = mulperm(list(perm),inverse_kperm)
+					if inv(downperm) == inv(perm) - inv_kperm:
+						flag = True			
+						for i in range(N):
+							if downperm[i] > N:
+								flag = False
+								break
+						if not flag:
+							continue
+						firstperm = downperm[0:N]
+						secondperm = [downperm[i]-N for i in range(N,len(downperm))]
+						perm_pairs += [[permtrim(firstperm),permtrim(secondperm)]]
+			
+				if ascode:
+					width = max([len(str(trimcode(perm[0]))+" "+str(trimcode(perm[1]))) for perm in perm_pairs])
+				else:
+					width = max([len(str(perm[0])+" "+str(perm[1])) for perm in perm_pairs])
+			
+				for perm in coeff_perms:
+					val = coeff_dict[perm]
+					downperm = mulperm(list(perm),inverse_kperm)
+					if inv(downperm) == inv(perm) - inv_kperm:
+						flag = True			
+						for i in range(N):
+							if downperm[i] > N:
+								flag = False
+								break
+						if not flag:
+							continue
+						firstperm = downperm[0:N]
+						secondperm = [downperm[i]-N for i in range(N,len(downperm))]
+						val = sympify(val).subs(subs_dict)
+											
+						if val != 0:
+							if display_positive:
+								if expand(val) != 0:
+									val = compute_positive_rep(val,var2neg,var3neg)
+								else:
+									val = 0
+							if val != 0:
+								if not ascode:
+									width2 = width - len(str(permtrim(firstperm))) - len(str(permtrim(secondperm)))
+									print(f"{tuple(permtrim(firstperm))}{' ':>{width2}}{tuple(permtrim(secondperm))}  {str(val).replace('**','^').replace('*',' ')}")
+								else:
+									width2 = width - len(str(trimcode(firstperm))) - len(str(trimcode(secondperm)))
+									print(f"{trimcode(firstperm)}{' ':>{width2}}{trimcode(secondperm)}  {str(val).replace('**','^').replace('*',' ')}")
+		else:
+			if ascode:
+				for i in range(len(perms)):
+					perms[i] = tuple(permtrim(uncode(perms[i])))
+			else:
+				for i in range(len(perms)):
+					perms[i] = tuple(permtrim([*perms[i]]))
+			
+			coeff_dict = {perms[0]: 1}
+			
+			for perm in perms[1:]:
+				coeff_dict = schubmult(coeff_dict,perm)
+				
+			if pr:
+				if ascode:
+					width = max([len(str(trimcode(perm))) for perm in coeff_dict.keys()])
+				else:
+					width = max([len(str(perm)) for perm in coeff_dict.keys()])
+				
+				coeff_perms = list(coeff_dict.keys())
+				coeff_perms.sort(key=lambda x: (inv(x),*x))
+				
+				for perm in coeff_perms:
+					val = coeff_dict[perm]
+					if val != 0:					
 						if display_positive:
 							if expand(val) != 0:
-								val = compute_positive_rep(val,var2neg,var3neg)
+								val = compute_positive_rep(val)
 							else:
 								val = 0
-						if val != 0:
-							if not ascode:
-								width2 = width - len(str(permtrim(firstperm))) - len(str(permtrim(secondperm)))
-								print(f"{tuple(permtrim(firstperm))}{' ':>{width2}}{tuple(permtrim(secondperm))}  {str(val).replace('**','^').replace('*',' ')}")
+						if val!=0:
+							if ascode:
+								print(f"{str(trimcode(perm)):>{width}}  {str(val).replace('**','^').replace('*',' ')}")	
 							else:
-								width2 = width - len(str(trimcode(firstperm))) - len(str(trimcode(secondperm)))
-								print(f"{trimcode(firstperm)}{' ':>{width2}}{trimcode(secondperm)}  {str(val).replace('**','^').replace('*',' ')}")
-	else:
-		if ascode:
-			for i in range(len(perms)):
-				perms[i] = tuple(permtrim(uncode(perms[i])))
-		else:
-			for i in range(len(perms)):
-				perms[i] = tuple(permtrim([*perms[i]]))
+								print(f"{str(perm):>{width}}  {str(val).replace('**','^').replace('*',' ')}")	
+	except BrokenPipeError:
+		pass
 		
-		coeff_dict = {perms[0]: 1}
-		
-		for perm in perms[1:]:
-			coeff_dict = schubmult(coeff_dict,perm)
-			
-		if pr:
-			if ascode:
-				width = max([len(str(trimcode(perm))) for perm in coeff_dict.keys()])
-			else:
-				width = max([len(str(perm)) for perm in coeff_dict.keys()])
-			
-			coeff_perms = list(coeff_dict.keys())
-			coeff_perms.sort(key=lambda x: (inv(x),*x))
-			
-			for perm in coeff_perms:
-				val = coeff_dict[perm]
-				if val != 0:					
-					if display_positive:
-						if expand(val) != 0:
-							val = compute_positive_rep(val)
-						else:
-							val = 0
-					if val!=0:
-						if ascode:
-							print(f"{str(trimcode(perm)):>{width}}  {str(val).replace('**','^').replace('*',' ')}")	
-						else:
-							print(f"{str(perm):>{width}}  {str(val).replace('**','^').replace('*',' ')}")	
 if __name__ == "__main__":
 	main()
