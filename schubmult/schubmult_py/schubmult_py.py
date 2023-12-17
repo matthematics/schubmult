@@ -3,12 +3,6 @@ from functools import cache
 from itertools import chain
 from schubmult.perm_lib import *
 
-def trimcode(perm):
-	cd = code(perm)
-	while len(cd)>0 and cd[-1] == 0:
-		cd.pop()
-	return cd
-
 def schubmult(perm_dict,v):
 	vn1 = inverse(v)
 	th = theta(vn1)

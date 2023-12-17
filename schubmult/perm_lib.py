@@ -42,6 +42,29 @@ def code(perm):
 			if perm[i]>perm[j]:
 				ret[-1] += 1
 	return ret
+	
+def reversecode(perm):
+	ret = []
+	for i in range(len(perm)-1,0,-1):
+		ret = [0] + ret
+		for j in range(i,-1,-1):
+			if perm[i]>perm[j]:
+				ret[-1] += 1
+	return ret	
+	
+def reverseuncode(cd):
+	cd2 = list(cd)
+	if cd2 == []:
+		return [1,2]
+	#max_required = max([cd2[i]+i for i in range(len(cd2))])
+	#cd2 += [0 for i in range(len(cd2),max_required)]
+	fullperm = [i+1 for i in range(len(cd2)+1)]
+	perm = []
+	for i in range(len(cd2)-1,0,-1):
+		perm = [fullperm[cd2[i]]] + perm
+		fullperm.pop(cd2[i])
+	perm += [fullperm[0]]
+	return perm	
 
 def inverse(perm):
 	retperm = [0 for i in range(len(perm))]
@@ -240,3 +263,268 @@ def elem_sym_func(k,i,u1,u2,v1,v2,udiff,vdiff,varl1,varl2):
 		yvars += [varl1[j+1]]
 	zvars = [varl2[i] for i in call_zvars(v1,v2,k,i)]
 	return elem_sym_poly(newk-vdiff,newk,yvars,zvars)
+
+def trimcode(perm):
+	cd = code(perm)
+	while len(cd)>0 and cd[-1] == 0:
+		cd.pop()
+	return cd
+
+def p_trans(part):
+	newpart = []
+	if len(part)==0 or part[0]==0:
+		return [0]
+	for i in range(1,part[0]+1):
+		cnt = 0
+		for j in range(len(part)):
+			if part[j]>=i:
+				cnt += 1
+		if cnt == 0:
+			break
+		newpart += [cnt]
+	return newpart
+
+def cycle(p,q):
+	return [i for i in range(1,p)] + [i+1 for i in range(p,p+q)] + [p]
+
+def phi1(u):
+	c_star = code(inverse(u))
+	c_star.pop(0)
+	phi_u = inverse(uncode(c_star))
+	return phi_u
+
+def one_dominates(u,w):
+	c_star_u = code(inverse(u))
+	c_star_w = code(inverse(w))
+	
+	a = c_star_u[0]
+	b = c_star_w[0]
+	
+	for i in range(a,b):
+		if i>=len(u)-1:
+			return True
+		if u[i]>u[i+1]:
+			return False
+	return True
+	
+def dominates(u,w):
+	u2 = [*u]
+	w2 = [*w]
+	while u2 != [1,2] and one_dominates(u2,w2):
+		u2 = phi1(u2)
+		w2 = phi1(w2)
+	if u2 == [1,2]:
+		return True
+	return False
+	
+def reduce_coeff(u,v,w):
+	t_mu_u_t = theta(inverse(u))
+	t_mu_v_t = theta(inverse(v))
+	
+	mu_u_inv = uncode(t_mu_u_t)
+	mu_v_inv = uncode(t_mu_v_t)
+	
+	t_mu_u = p_trans(t_mu_u_t)
+	t_mu_v = p_trans(t_mu_v_t)
+		
+	t_mu_u += [0 for i in range(len(t_mu_u),max(len(t_mu_u),len(t_mu_v)))]
+	t_mu_v += [0 for i in range(len(t_mu_v),max(len(t_mu_u),len(t_mu_v)))]
+	
+	t_mu_uv = [t_mu_u[i] + t_mu_v[i] for i in range(len(t_mu_u))]
+	t_mu_uv_t = p_trans(t_mu_uv)
+	
+	mu_uv_inv = uncode(t_mu_uv_t)
+	
+	if inv(mulperm(list(w),mu_uv_inv)) != inv(mu_uv_inv) - inv(w):
+		return u, v, w
+	
+	umu = mulperm(list(u),mu_u_inv)
+	vmu = mulperm(list(v),mu_v_inv)
+	wmu = mulperm(list(w),mu_uv_inv)
+	
+	t_mu_w = theta(inverse(wmu))		
+	
+	mu_w = uncode(t_mu_w)
+
+	w_prime = mulperm(wmu,mu_w)
+
+	if permtrim(list(w)) == permtrim(w_prime):
+		return (permtrim(list(u)),permtrim(list(v)),permtrim(list(w)))
+	
+	A = []
+	B = []
+	indexA = 0
+	
+	while len(t_mu_u_t)>0 and t_mu_u_t[-1] == 0:
+		t_mu_u_t.pop()
+		
+	while len(t_mu_v_t)>0 and t_mu_v_t[-1] == 0:
+		t_mu_v_t.pop()
+		
+	while len(t_mu_uv_t)>0 and t_mu_uv_t[-1] == 0:
+		t_mu_uv_t.pop()
+	
+	for index in range(len(t_mu_uv_t)):
+		if indexA<len(t_mu_u_t) and t_mu_uv_t[index] == t_mu_u_t[indexA]:
+			A += [index]			
+			indexA+=1
+		else:
+			B += [index]			
+
+	mu_w_A = uncode(mu_A(code(mu_w),A))
+	mu_w_B = uncode(mu_A(code(mu_w),B))
+	
+	return (permtrim(mulperm(umu,mu_w_A)),permtrim(mulperm(vmu,mu_w_B)),permtrim(w_prime))
+	
+def mu_A(mu,A):
+	mu_t = p_trans(mu)
+	mu_A_t = []
+	for i in range(len(A)):
+		if A[i]<len(mu_t):
+			mu_A_t += [mu_t[A[i]]]
+	return p_trans(mu_A_t)
+
+def reduce_descents(u,v,w):
+	u2 = [*u]
+	v2 = [*v]
+	w2 = [*w]
+	found_one = True	
+	while found_one:
+		found_one = False
+		if will_formula_work(u2,v2) or will_formula_work(v2,u2) or one_dominates(u2,w2) or is_reducible(v2) or inv(w2) - inv(u2) == 1:
+			break
+		for i in range(len(w2)-2,-1,-1):
+			if w2[i]>w2[i+1] and i<len(v2)-1 and v2[i]>v2[i+1] and (i>=len(u2)-1 or u2[i]<u2[i+1]):
+				w2[i], w2[i+1] = w2[i+1], w2[i]
+				v2[i], v2[i+1] = v2[i+1], v2[i]
+				found_one = True
+			elif w2[i]>w2[i+1] and i<len(u2)-1 and u2[i]>u2[i+1] and (i>=len(v2)-1 or v2[i]<v2[i+1]):
+				w2[i], w2[i+1] = w2[i+1], w2[i]
+				u2[i], u2[i+1] = u2[i+1], u2[i]
+				found_one = True			
+			if found_one:
+				break
+	return permtrim(u2), permtrim(v2), permtrim(w2)
+
+def is_reducible(v):
+	c03 = code(v)
+	found0 = False		
+	good = True
+	for i in range(len(c03)):
+		if c03[i] == 0:
+			found0 = True
+		elif c03[i] != 0 and found0 == True:
+			good = False
+			break
+	return good
+
+def try_reduce_v(u, v, w):
+	if is_reducible(v):
+		return tuple(permtrim([*u])), tuple(permtrim([*v])), tuple(permtrim([*w]))
+	u2 = [*u]
+	v2 = [*v]
+	w2 = [*w]
+	cv = code(v2)
+	for i in range(len(v2)-2,-1,-1):
+		if cv[i] == 0 and i<len(cv)-1 and cv[i+1] != 0:
+			if i>=len(u2)-1 or u2[i] < u2[i+1]:
+				v2[i], v2[i+1] = v2[i+1], v2[i]
+				if i>=len(w2)-1:
+					w2 += [j for j in range(len(w2)+1,i+3)]				
+				w2[i+1], w2[i] = w2[i], w2[i+1]
+				if is_reducible(v2):
+					return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
+				else:
+					return try_reduce_v(u2,v2,w2)
+			elif i<len(w2)-1 and w2[i]>w2[i+1]:
+				u2[i], u2[i+1] = u2[i+1], u2[i]
+				v2[i], v2[i+1] = v2[i+1], v2[i]
+				return try_reduce_v(u2, v2, w2)
+			else:
+				return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
+	return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
+
+def try_reduce_u(u, v, w):
+	if one_dominates(u,w):
+		return u, v, w
+	u2 = [*u]
+	v2 = [*v]
+	w2 = [*w]
+	cu = code(u)
+	for i in range(len(u2)-2,-1,-1):
+		if cu[i] == 0 and i<len(cu)-1 and cu[i+1] != 0:
+			if i>=len(v2)-1 or v2[i] < v2[i+1]:
+				u2[i], u2[i+1] = u2[i+1], u2[i]
+				if i>len(w2)-1:
+					w2 += [j for j in range(len(w2)+1,i+3)]
+				w2[i+1], w2[i] = w2[i], w2[i+1]
+				if one_dominates(u,w):
+					return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
+				else:
+					return try_reduce_u(u2,v2,w2)
+			elif i<len(w2)-1 and w2[i]>w2[i+1]:
+				u2[i], u2[i+1] = u2[i+1], u2[i]
+				v2[i], v2[i+1] = v2[i+1], v2[i]
+				return try_reduce_u(u2, v2, w2)
+			else:
+				return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
+	return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
+
+def pull_out_var(vnum,v):
+	vn1 = inverse(v)
+	th = theta(vn1)
+	if th[0]==0:
+		return [[[],v]]
+	muvn1 = permtrim(uncode(th))
+	lm = p_trans(th)
+	if vnum>len(lm):
+		return [[[],v]]
+	lmpop = [*lm]
+	k = lmpop.pop(vnum-1)
+	inv_v = inv(v)	
+	vmuvn1 = mulperm(v,muvn1)
+	muvn1in1 = permtrim(uncode(lmpop))
+	ret_list = []
+	vpm_list = [(vmuvn1,k)]
+	for p in range(k+1):
+		vpm_list2 = []
+		for vpm, b in vpm_list:
+			vp = permtrim(mulperm(vpm,muvn1in1))
+			
+			pos_list = [i for i in range(k) if ((i<len(vpm) and vmuvn1[i] == vpm[i]) or (i>=len(vpm) and vmuvn1[i] == i+1))]
+			if inv(vp)==inv_v-k+p:				
+				ret_list += [[[vpm[i] for i in pos_list if i<len(vpm)]+[i+1 for i in pos_list if i>=len(vpm) and vmuvn1[i] == i+1],vp]]
+			if len(vpm) < k + 1:
+				continue
+			for j in range(b,len(vpm)):
+				for i in pos_list:
+					if has_bruhat_descent(vpm,i,j):
+						vpm[i],vpm[j] = vpm[j],vpm[i]
+						vpm_list2+=[(permtrim([*vpm]),j)]
+						vpm[i],vpm[j] = vpm[j],vpm[i]												
+		vpm_list = vpm_list2		
+	return ret_list
+
+def divdiffable(v,u):
+	inv_v = inv(v)
+	inv_u = inv(u)
+	perm2 = permtrim(mulperm(v,inverse(u)))
+	if inv(perm2) != inv_v - inv_u:
+		return []
+	return perm2
+
+def will_formula_work(u,v):
+	muv = uncode(theta(v))
+	vn1muv = mulperm(inverse(v),muv)
+	while True:
+		found_one = False
+		for i in range(len(vn1muv)-1):
+			if vn1muv[i]>vn1muv[i+1]:				
+				found_one = True
+				if i<len(u)-1 and u[i]>u[i+1]:
+					return False
+				else:
+					vn1muv[i],vn1muv[i+1] = vn1muv[i+1],vn1muv[i]
+					break					
+		if not found_one:
+			return True	

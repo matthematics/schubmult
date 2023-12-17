@@ -12,12 +12,6 @@ var2 = symarray('y',n)
 var3 = var2
 var_r = symarray('r',n)
 
-def trimcode(perm):
-	cd = code(perm)
-	while len(cd)>0 and cd[-1] == 0:
-		cd.pop()
-	return cd
-
 subs_dict = {}
 
 for i in range(1,n):
@@ -26,9 +20,8 @@ for i in range(1,n):
 		sm += var_r[j]
 	subs_dict[var2[i]] = sm
 
-
 def main():
-	try:
+	try:			
 		perms=[]
 		curperm = []
 		
