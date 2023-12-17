@@ -868,7 +868,7 @@ def main():
 				
 				for perm in coeff_perms:
 					val = coeff_dict[perm]
-					if expand(val) != 0:
+					if val != 0:
 						notint = False
 						try:
 							int(val)
