@@ -470,40 +470,6 @@ def try_reduce_u(u, v, w):
 				return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
 	return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
 
-def pull_out_var(vnum,v):
-	vn1 = inverse(v)
-	th = theta(vn1)
-	if th[0]==0:
-		return [[[],v]]
-	muvn1 = permtrim(uncode(th))
-	lm = p_trans(th)
-	if vnum>len(lm):
-		return [[[],v]]
-	lmpop = [*lm]
-	k = lmpop.pop(vnum-1)
-	inv_v = inv(v)	
-	vmuvn1 = mulperm(v,muvn1)
-	muvn1in1 = permtrim(uncode(lmpop))
-	ret_list = []
-	vpm_list = [(vmuvn1,k)]
-	for p in range(k+1):
-		vpm_list2 = []
-		for vpm, b in vpm_list:
-			vp = permtrim(mulperm(vpm,muvn1in1))
-			
-			pos_list = [i for i in range(k) if ((i<len(vpm) and vmuvn1[i] == vpm[i]) or (i>=len(vpm) and vmuvn1[i] == i+1))]
-			if inv(vp)==inv_v-k+p:				
-				ret_list += [[[vpm[i] for i in pos_list if i<len(vpm)]+[i+1 for i in pos_list if i>=len(vpm) and vmuvn1[i] == i+1],vp]]
-			if len(vpm) < k + 1:
-				continue
-			for j in range(b,len(vpm)):
-				for i in pos_list:
-					if has_bruhat_descent(vpm,i,j):
-						vpm[i],vpm[j] = vpm[j],vpm[i]
-						vpm_list2+=[(permtrim([*vpm]),j)]
-						vpm[i],vpm[j] = vpm[j],vpm[i]												
-		vpm_list = vpm_list2		
-	return ret_list
 
 def divdiffable(v,u):
 	inv_v = inv(v)
@@ -528,3 +494,34 @@ def will_formula_work(u,v):
 					break					
 		if not found_one:
 			return True	
+			
+def pull_out_var(vnum,v):
+	vup = v + [len(v)+1]
+	if vnum>=len(v):
+		return [[[],v]]
+	vpm_list = [(vup,0)]
+	ret_list = []
+	for p in range(len(v)+1-vnum):
+		vpm_list2 = []
+		for vpm, b in vpm_list:
+			if vpm[vnum-1]==len(v)+1:
+				vpm2 = [*vpm]
+				vpm2.pop(vnum-1)
+				vp = permtrim(vpm2)
+				ret_list += [[[v[i] for i in range(vnum,len(v)) if ((i>len(vp) and v[i]==i) or (i<=len(vp) and v[i]==vp[i-1]))],vp]]
+			for j in range(vnum,len(vup)):
+				if vpm[j]<=b:
+					continue
+				for i in range(vnum):
+					if has_bruhat_ascent(vpm,i,j):
+						vpm[i],vpm[j] = vpm[j],vpm[i]
+						vpm_list2+=[([*vpm],vpm[i])]
+						vpm[i],vpm[j] = vpm[j],vpm[i]												
+		vpm_list = vpm_list2
+	for vpm, b in vpm_list:
+		if vpm[vnum-1]==len(v)+1:
+			vpm2 = [*vpm]
+			vpm2.pop(vnum-1)
+			vp = permtrim(vpm2)
+			ret_list += [[[v[i] for i in range(vnum,len(v)) if ((i>len(vp) and v[i]==i) or (i<=len(vp) and v[i]==vp[i-1]))],vp]]
+	return ret_list			
