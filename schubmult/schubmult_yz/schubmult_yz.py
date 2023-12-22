@@ -171,12 +171,11 @@ def poly_to_vec(poly,vec0=None):
 		cf = dc[mn]
 		if cf == 0:
 			continue
-		cf = abs(cf)
 		try:
 			index = monom_to_vec[mn]
 		except KeyError:
 			return None		
-		if vec0 is not None and vec0[index]<cf:
+		if vec0 is not None and abs(vec0[index])<abs(cf):
 			return None
 		vec[index] = cf	
 	return vec
@@ -1002,8 +1001,10 @@ def main():
 							if display_positive:												
 								if expand(val) != 0:
 									val2 = compute_positive_rep(val,var2neg,var3neg,msg)
-									if val2 is not None:
-										val = val2
+									if expand(val - val2) != 0:
+										print(f"error; write to schubmult@gmail.com with the case {perms=} {firstperm=} {secondperm=} {val2=} {val=}")
+										exit(1)
+									val = val2
 								else:
 									val = 0
 							if val != 0:
