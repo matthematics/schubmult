@@ -86,11 +86,9 @@ def dualpieri(mu,v,w):
 		res2 = []	
 		for vlist,vplist in res:
 			vp = vplist
-			# cycle c_{1,lm[i]}^{-1}c_{1,cn1w[i]}
 			vpl = divdiffable(vp,cycle(lm[i]+1,cn1w[i]-lm[i]))
 			if vpl == []:
 				continue
-			# pull out var lm[i]+1
 			vl = pull_out_var(lm[i]+1,vpl)
 			for pw,vpl2 in vl:
 				res2 += [[vlist+[pw],vpl2]]
@@ -293,7 +291,6 @@ def split_mul(arg0):
 		if is_flat_term(arg):
 			if isinstance(arg,Integer) or isinstance(arg,int):
 				continue
-			#print(type(arg))
 			yval = arg.args[0]
 			zval = arg.args[1]
 			if str(yval).find("z")!=-1:
@@ -362,25 +359,6 @@ def compute_positive_rep(val,var2=var2,var3=var3,msg=False):
 	except Exception:
 		notint = True
 	if notint:
-		#smp = val.simplify()
-		#flat, found_one = flatten_factors(smp)
-		#while found_one:
-		#	flat, found_one = flatten_factors(flat)		
-		#flat = flat.simplify()
-		#while found_one:
-		#	flat, found_one = flatten_factors(flat)		
-		#pos_part = 0
-		#neg_part = 0
-		#if isinstance(flat,Add) and not is_flat_term(flat):	
-		#	for arg in flat.args:
-		#		if not is_negative(arg):
-		#			pos_part += arg
-		#		else:
-		#			neg_part -= arg
-		#	if neg_part == 0:
-		#		print("no neg")
-		#		return pos_part
-		
 		frees = val.free_symbols
 		var2list = var2.tolist()
 		var3list = var3.tolist()
@@ -401,7 +379,6 @@ def compute_positive_rep(val,var2=var2,var3=var3,msg=False):
 		varsimp3.sort(key=lambda k: var3list.index(k))
 				
 		
-		#fvar = var2list.index(varsimp2[0])
 		var22 = [sympy.sympify(m) for m in varsimp2]
 		var33 = [sympy.sympify(m) for m in varsimp3]
 		n1 = len(varsimp2)
@@ -415,15 +392,9 @@ def compute_positive_rep(val,var2=var2,var3=var3,msg=False):
 		base_vectors = []
 		base_monoms = []						
 		
-		#t = time.time()
-		#val_poly = sympy.poly(val,*var22,*var33)
 		val_poly = sympy.poly(expand(val),*var22,*var33)
-		#print(f"{time.time()-t} polytime")
-		#t = time.time()
 		vec = poly_to_vec(val)
-		#print(f"{time.time()-t} vectime")
 		mn = val_poly.monoms()
-		#mn = val_poly.keys()
 		L1 = tuple([0 for i in range(n1)])
 		mn1L = []
 		lookup = {}
@@ -433,17 +404,12 @@ def compute_positive_rep(val,var2=var2,var3=var3,msg=False):
 				lookup[key] = []
 			mm0n1 = mm0[:n1]
 			st = set(mm0n1)
-			#if len(st.intersection(set([0,1])))==len(st):
 			if len(st.intersection(set([0,1])))==len(st) and 1 in st:
 				lookup[key]+=[mm0]
 			if mm0n1 == L1:
 				mn1L += [mm0]
-		#vs = [[varsimp2[i] - varsimp3[k] for k in range(n2)] for i in range(n1)]
-		#fooktime = 0
-		#blucktime = 0		
 		for mn1 in mn1L:
 			comblistmn1 = [1]
-			#t = time.time()
 			for i in range(n1,len(mn1)):
 				if mn1[i]!=0:
 					arr = np.array(comblistmn1)
@@ -452,18 +418,12 @@ def compute_positive_rep(val,var2=var2,var3=var3,msg=False):
 					for mm0 in lookup[mn1_2]:												
 						comblistmn12 += (arr*np.prod([varsimp2[k] - varsimp3[i - n1] for k in range(n1) if mm0[k]==1])).tolist()						
 					comblistmn1 = comblistmn12
-			#fooktime += time.time() - t
-			#t = time.time()
 			for i in range(len(comblistmn1)):
 				b1 = comblistmn1[i]
 				vec0 = poly_to_vec(b1,vec)
 				if vec0 is not None:
 					base_vectors += [vec0]
 					base_monoms += [b1]
-			#blucktime+= time.time()-t
-		#print(f"{fooktime=} {blucktime=}")
-		#print(f"{dimen=} {len(base_vectors)=}")
-		#print(f"Time time {time.time()-t}")
 		vrs = [pu.LpVariable(name=f"a{i}",lowBound=0,cat='Integer') for i in range(len(base_vectors))]
 		lp_prob = pu.LpProblem('Problem',pu.LpMinimize)		
 		lp_prob += int(0)
@@ -515,13 +475,6 @@ def is_split_two(u,v,w):
 			if len(cycles)>2:
 				break
 	if len(cycles) == 2:
-		cyclist = list(cycles)
-		cyc1 = sorted(list(cyclist[0]))
-		cyc2 = sorted(list(cyclist[1]))
-		tot_list = sorted(cyc1+cyc2)
-		#if tot_list.index(cyc1[1]) - tot_list.index(cyc1[0]) == 2:
-		#	#print(f"no {cycles}")
-		#	return False, []
 		return True, cycles
 	else:
 		return False, []
@@ -532,7 +485,6 @@ def is_coeff_irreducible(u,v,w):
 def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 	if inv(u2)+inv(v2) - inv(w2)<=1:
 		return expand(val)
-	#valo = expand(val)
 	if expand(val) == 0:
 		return 0
 	
@@ -558,7 +510,6 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 			
 	if is_coeff_irreducible(u,v,w):
 		u3, v3, w3 = try_reduce_v(u, v, w)
-		#split_two_b, split_two = is_split_two(u3,v3,w3)
 		if not is_coeff_irreducible(u3,v3,w3):
 			u, v, w = u3, v3, w3
 		else:
@@ -622,11 +573,9 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 			toadd *= schubpoly(v3,[0,var2[w[a]],var2[w[b]]],var3)
 			val += toadd
 	elif split_two_b:
-		#print(f"split_two {u=} {v=} {w=}")
 		cycles = split_two
 		a1, b1 = cycles[0]
 		a2, b2 = cycles[1]
-		#print(cycles)
 		a1-=1
 		b1-=1
 		a2-=1
@@ -734,10 +683,6 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 			elif (good1 or good2) and (not good1 or not good2):
 				v3[0], v3[1] = v3[1], v3[0]
 			elif not good1 and not good2:
-				# coeff 1 3 2 v_3 2 4 1 4
-				#permify = inverse([2,4,1,3])
-				#permify = [1,3,2]
-				#coeff = permy(posify(schubmult({(1,3,2): 1},tuple(permtrim([*v3]))).get((2,4,1,3),0),(1,3,2),tuple(permtrim([*v3])),(2,4,1,3),var2,var3,msg),2)
 				doschubpoly = False
 				if v3[0] < v3[1]:
 					dual_u = uncode([2,0])
@@ -747,11 +692,11 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 				elif len(v3)<3 or v3[1] < v3[2]:
 					if len(v3)<=3 or v3[2]<v3[3]:
 						coeff = 0
+						continue
 					else:
 						v3[0], v3[1] = v3[1], v3[0]
 						v3[2], v3[3] = v3[3], v3[2]
 						coeff = permy(schubpoly(v3,var2,var3),2)
-					# 2 1 4 3					
 				elif len(v3)<=3 or v3[2] < v3[3]:
 					if len(v3)<=3:
 						v3 += [4]
@@ -759,8 +704,6 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 					coeff = permy(posify(schubmult({(1,3,2): 1},tuple(permtrim([*v3]))).get((2,4,3,1),0),(1,3,2),tuple(permtrim([*v3])),(2,4,3,1),var2,var3,msg),2)					
 				else:
 					coeff = permy(schubmult({(1,3,2): 1},tuple(permtrim([*v3]))).get((2,4,1,3),0),2)
-				#subs_dict = {var2[i]: var2[w[i-1]] for i in range(1,5)}
-				#tomul = coeff.subs(subs_dict)				
 				tomul = sympify(coeff)
 			toadd = 1
 			for i in range(len(L[0])):
