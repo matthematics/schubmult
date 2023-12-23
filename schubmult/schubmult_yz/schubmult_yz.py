@@ -145,7 +145,7 @@ def schubmult(perm_dict,v,var2=var2,var3=var3):
 					if up2 not in newpathsums:
 						newpathsums[up2]={}
 					for v in vpathdicts[index]:
-						sumval = vpathsums[up].get(v,0)
+						sumval = vpathsums[up].get(v,zero)
 						if sumval == 0:
 							continue
 						for v2,vdiff,s in vpathdicts[index][v]:
@@ -417,7 +417,7 @@ def compute_positive_rep(val,var2=var2,var3=var3,msg=False):
 		
 		#t = time.time()
 		#val_poly = sympy.poly(val,*var22,*var33)
-		val_poly = sympy.poly(val,*var22,*var33)
+		val_poly = sympy.poly(expand(val),*var22,*var33)
 		#print(f"{time.time()-t} polytime")
 		#t = time.time()
 		vec = poly_to_vec(val)
@@ -519,9 +519,9 @@ def is_split_two(u,v,w):
 		cyc1 = sorted(list(cyclist[0]))
 		cyc2 = sorted(list(cyclist[1]))
 		tot_list = sorted(cyc1+cyc2)
-		if tot_list.index(cyc1[1]) - tot_list.index(cyc1[0]) == 2:
-			#print(f"no {cycles}")
-			return False, []
+		#if tot_list.index(cyc1[1]) - tot_list.index(cyc1[0]) == 2:
+		#	#print(f"no {cycles}")
+		#	return False, []
 		return True, cycles
 	else:
 		return False, []
@@ -727,10 +727,41 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 		
 		for L in arr:
 			v3 = [*L[-1]]
-			if (not good1 or not good2) and v3[0]<v3[1]:
+			tomul = 1
+			doschubpoly = True
+			if (not good1 or not good2) and v3[0]<v3[1] and (good1 or good2):
 				continue
-			elif not good1 or not good2:
+			elif (good1 or good2) and (not good1 or not good2):
 				v3[0], v3[1] = v3[1], v3[0]
+			elif not good1 and not good2:
+				# coeff 1 3 2 v_3 2 4 1 4
+				#permify = inverse([2,4,1,3])
+				#permify = [1,3,2]
+				#coeff = permy(posify(schubmult({(1,3,2): 1},tuple(permtrim([*v3]))).get((2,4,1,3),0),(1,3,2),tuple(permtrim([*v3])),(2,4,1,3),var2,var3,msg),2)
+				doschubpoly = False
+				if v3[0] < v3[1]:
+					dual_u = uncode([2,0])
+					dual_w = [4,2,1,3]
+					coeff = permy(dualcoeff(dual_u,v3,dual_w,var2,var3),2)
+					
+				elif len(v3)<3 or v3[1] < v3[2]:
+					if len(v3)<=3 or v3[2]<v3[3]:
+						coeff = 0
+					else:
+						v3[0], v3[1] = v3[1], v3[0]
+						v3[2], v3[3] = v3[3], v3[2]
+						coeff = permy(schubpoly(v3,var2,var3),2)
+					# 2 1 4 3					
+				elif len(v3)<=3 or v3[2] < v3[3]:
+					if len(v3)<=3:
+						v3 += [4]
+					v3[2], v3[3] = v3[3], v3[2]
+					coeff = permy(posify(schubmult({(1,3,2): 1},tuple(permtrim([*v3]))).get((2,4,3,1),0),(1,3,2),tuple(permtrim([*v3])),(2,4,3,1),var2,var3,msg),2)					
+				else:
+					coeff = permy(schubmult({(1,3,2): 1},tuple(permtrim([*v3]))).get((2,4,1,3),0),2)
+				#subs_dict = {var2[i]: var2[w[i-1]] for i in range(1,5)}
+				#tomul = coeff.subs(subs_dict)				
+				tomul = sympify(coeff)
 			toadd = 1
 			for i in range(len(L[0])):
 				var_index = L[0][i][1]
@@ -741,11 +772,15 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 					yv = w[var_index-1]
 				for j in range(len(oaf)):				
 					toadd*= var2[yv] - var3[oaf[j]]
-			if not good1 or not good2:
+			if (not good1 or not good2) and (good1 or good2):
 				varo = [0,var2[w[a]],var2[w[b]]]
 			else:
 				varo = [0,*[var2[w[spo[k]]] for k in range(4)]]
-			toadd *= schubpoly(v3,varo,var3)
+			if doschubpoly:
+				toadd *= schubpoly(v3,varo,var3)
+			else:
+				subs_dict3 = {var2[i]: varo[i] for i in range(len(varo))}
+				toadd*=tomul.subs(subs_dict3)
 			val += toadd
 	else:
 		c01 = code(u)
@@ -1088,7 +1123,6 @@ def main():
 								val = compute_positive_rep(val,var2,var3,msg)								
 							if check and expand(val - check_coeff_dict.get(perm,0))!=0:
 								print(f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}")
-								print(f"{perms=},{perm=}")
 								exit(1)
 						if val!=0:
 							if ascode:
