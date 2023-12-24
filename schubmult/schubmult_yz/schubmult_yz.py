@@ -2,6 +2,8 @@ from symengine import *
 import sys
 from functools import cache
 from itertools import chain
+from cachetools import cached
+from cachetools.keys import hashkey
 from schubmult.perm_lib import *
 import numpy as np
 import pulp as pu
@@ -10,9 +12,9 @@ import sympy
 
 n = 100
 
-var = symarray('x',n)
-var2 = symarray('y',n)
-var3 = symarray('z',n)
+var = tuple(symarray('x',n).tolist())
+var2 = tuple(symarray('y',n).tolist())
+var3 = tuple(symarray('z',n).tolist())
 
 
 def forwardcoeff(u,v,perm,var2=var2,var3=var3):
@@ -22,8 +24,8 @@ def forwardcoeff(u,v,perm,var2=var2,var3=var3):
 	
 	w = mulperm(list(perm),vmun1)	
 	if inv(w) == inv(vmun1) + inv(perm):
-		coeff_dict = {tuple(permtrim([*u])): 1}
-		coeff_dict = schubmult(coeff_dict,muv,var2,var3)
+		#coeff_dict = {tuple(permtrim([*u])): 1}
+		coeff_dict = schubmult_one(tuple(permtrim([*u])),tuple(muv),var2,var3)
 		return coeff_dict.get(tuple(permtrim(w)),0)
 	return 0
 
@@ -110,6 +112,9 @@ def dualpieri(mu,v,w):
 dimen = 0
 monom_to_vec = {}
 
+@cache
+def schubmult_one(perm1,perm2,var2=var2,var3=var3):
+	return schubmult({perm1: 1},perm2,var2,var3)
 
 def schubmult(perm_dict,v,var2=var2,var3=var3):
 	vn1 = inverse(v)
@@ -360,8 +365,8 @@ def compute_positive_rep(val,var2=var2,var3=var3,msg=False):
 		notint = True
 	if notint:
 		frees = val.free_symbols
-		var2list = var2.tolist()
-		var3list = var3.tolist()
+		var2list = [*var2]
+		var3list = [*var3]
 		
 		for i in range(len(var2list)):
 			symset = var2list[i].free_symbols
@@ -480,11 +485,34 @@ def is_split_two(u,v,w):
 		return False, []
 
 def is_coeff_irreducible(u,v,w):
-	return not will_formula_work(u,v) and not will_formula_work(v,u) and not one_dominates(u,w) and not is_reducible(v) and inv(w) - inv(u)>1 and not is_split_two(u,v,w)[0]
+	return not will_formula_work(u,v) and not will_formula_work(v,u) and not one_dominates(u,w) and not is_reducible(v) and inv(w) - inv(u)>1 and not is_split_two(u,v,w)[0] and len([i for i in code(v) if i !=0]) > 1
 
+def is_hook(cd):
+	started = False
+	done = False
+	found_zero_after = False
+	for i in range(len(cd)):
+		if (done or found_zero_after) and cd[i]!=0:
+			return False
+		if cd[i] == 1 and not started:
+			started = True
+		if cd[i] > 1:
+			done = True
+		if started and cd[i] == 0:
+			found_zero_after = True
+	if started or done:
+		return True
+	return False
+
+@cached(cache={}, key=lambda val, u2,v2,w2,var2=var2,var3=var3,msg=False: hashkey(u2,v2,w2,var2,var3,msg))
 def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 	if inv(u2)+inv(v2) - inv(w2)<=1:
 		return expand(val)
+	cdv = code(v2)	
+	if set(cdv) == set([0,1]):		
+		return val
+	#if is_hook(cdv):
+	#	print(f"Could've {cdv}")
 	if expand(val) == 0:
 		return 0
 	
@@ -517,7 +545,21 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 			if not is_coeff_irreducible(u3,v3,w3):
 				u, v, w = u3, v3, w3
 	split_two_b, split_two = is_split_two(u,v,w)
-	if (will_formula_work(v,u) or dominates(u,w)):
+
+	if len([i for i in code(v) if i !=0]) == 1:
+		cv = code(v)
+		for i in range(len(cv)):
+			if cv[i]!=0:
+				k = i+1
+				p = cv[i]
+				break					
+		inv_u = inv(u)
+		r = inv(w) - inv_u
+		val = 0
+		w2 = w
+		hvarset = [w2[i] for i in range(min(len(w2),k))]+[i+1 for i in range(len(w2),k)] + [w2[b] for b in range(k,len(u)) if u[b]!=w2[b]]+[w2[b] for b in range(len(u),len(w2))]
+		val = elem_sym_poly(p-r,k+p-1,[-var3[i] for i in range(1,n)],[-var2[i] for i in hvarset])	
+	elif (will_formula_work(v,u) or dominates(u,w)):
 		val = dualcoeff(u,v,w,var2,var3)
 	elif inv(w) - inv(u) == 1:	
 		a, b = -1, -1
@@ -701,9 +743,9 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 					if len(v3)<=3:
 						v3 += [4]
 					v3[2], v3[3] = v3[3], v3[2]
-					coeff = permy(posify(schubmult({(1,3,2): 1},tuple(permtrim([*v3]))).get((2,4,3,1),0),(1,3,2),tuple(permtrim([*v3])),(2,4,3,1),var2,var3,msg),2)					
+					coeff = permy(posify(schubmult_one((1,3,2),tuple(permtrim([*v3]))).get((2,4,3,1),0),(1,3,2),tuple(permtrim([*v3])),(2,4,3,1),var2,var3,msg),2)					
 				else:
-					coeff = permy(schubmult({(1,3,2): 1},tuple(permtrim([*v3]))).get((2,4,1,3),0),2)
+					coeff = permy(schubmult_one((1,3,2),tuple(permtrim([*v3]))).get((2,4,1,3),0),2)
 				tomul = sympify(coeff)
 			toadd = 1
 			for i in range(len(L[0])):
@@ -725,6 +767,8 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 				subs_dict3 = {var2[i]: varo[i] for i in range(len(varo))}
 				toadd*=tomul.subs(subs_dict3)
 			val += toadd
+	elif will_formula_work(u,v):
+		val = forwardcoeff(u,v,w,var2,var3)
 	else:
 		c01 = code(u)
 		c02 = code(w)
@@ -757,26 +801,26 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 				else:
 					break
 			v3 = uncode(newc)
-			coeff_dict = schubmult({u: 1},tuple(permtrim(uncode(elemc))),var2,var3)
+			coeff_dict = schubmult_one(u,tuple(permtrim(uncode(elemc))),var2,var3)
 			val = 0
 			for new_w in coeff_dict:
 				tomul = coeff_dict[new_w]
-				newval = schubmult({new_w: 1},tuple(permtrim(uncode(newc))),var2,var3).get(tuple(permtrim(list(w))),0)
-				newval = posify(newval,new_w,permtrim(uncode(newc)),w,var2,var3,msg)
+				newval = schubmult_one(new_w,tuple(permtrim(uncode(newc))),var2,var3).get(tuple(permtrim(list(w))),0)
+				newval = posify(newval,new_w,tuple(permtrim(uncode(newc))),w,var2,var3,msg)
 				val += tomul*shiftsubz(newval)
 		elif c01[0] == c02[0] and c01[0] != 0:
 			varl = c01[0]
 			u3 = uncode([0] + c01[1:])
 			w3 = uncode([0] + c02[1:])
 			val = 0
-			val = schubmult({tuple(permtrim(u3)): 1},tuple(permtrim(list(v))),var2,var3).get(tuple(permtrim(w3)),0)
-			val = posify(val,u3,v,w3,var2,var3,msg)
+			val = schubmult_one(tuple(permtrim(u3)),tuple(permtrim(list(v))),var2,var3).get(tuple(permtrim(w3)),0)
+			val = posify(val,tuple(permtrim(u3)),tuple(permtrim(list(v))),tuple(permtrim(w3)),var2,var3,msg)
 			for i in range(varl):
 				val = permy(val,i+1)			
 		elif c1[0] == c2[0]:
 			vp = pull_out_var(c1[0]+1,list(v))
-			u3 = phi1(u)
-			w3 = phi1(w)
+			u3 = tuple(permtrim(phi1(u)))
+			w3 = tuple(permtrim(phi1(w)))
 			c3 = code(inverse(u3))
 			c4 = code(inverse(w3))
 			val = 0
@@ -785,8 +829,8 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 				for i in range(len(arr)):
 					tomul*=var2[1] - var3[arr[i]]
 				
-				val2 = schubmult({tuple(permtrim(u3)): 1},tuple(permtrim(v3)),var2,var3).get(tuple(permtrim(w3)),0)
-				val2 = posify(val2,u3,v3,w3,var2,var3,msg)
+				val2 = schubmult_one(tuple(permtrim(u3)),tuple(permtrim(v3)),var2,var3).get(tuple(permtrim(w3)),0)
+				val2 = posify(val2,u3,tuple(permtrim(v3)),w3,var2,var3,msg)
 				val += tomul*shiftsub(val2)
 		else:
 			val2 = compute_positive_rep(val,var2,var3,msg)

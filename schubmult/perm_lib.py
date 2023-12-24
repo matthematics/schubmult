@@ -13,6 +13,17 @@ def inv(perm):
 		v = v[:itr] + v[itr + 1 :]
 	return ans
 
+def code(perm):
+	L = len(perm)
+	ret = []
+	v = [i for i in range(1,L+1)]
+	for i in range(L-1):
+		itr = bisect_left(v, perm[i])
+		ret += [itr]
+		v = v[:itr] + v[itr + 1 :]
+	return ret
+
+
 def mulperm(perm1,perm2):
 	if len(perm1)<len(perm2):
 		return [perm1[perm2[i]-1] if perm2[i]<=len(perm1) else perm2[i] for i in range(len(perm2))]
@@ -20,7 +31,7 @@ def mulperm(perm1,perm2):
 		return [perm1[perm2[i]-1] for i in range(len(perm2))]+perm1[len(perm2):]
 
 def uncode(cd):
-	cd2 = list(cd)
+	cd2 = [*cd]
 	if cd2 == []:
 		return [1,2]
 	max_required = max([cd2[i]+i for i in range(len(cd2))])
@@ -28,20 +39,9 @@ def uncode(cd):
 	fullperm = [i+1 for i in range(len(cd2)+1)]
 	perm = []
 	for i in range(len(cd2)):
-		perm += [fullperm[cd2[i]]]
-		fullperm.pop(cd2[i])
+		perm += [fullperm.pop(cd2[i])]		
 	perm += [fullperm[0]]
 	return perm
-
-
-def code(perm):
-	ret = []
-	for i in range(len(perm)-1):
-		ret += [0]
-		for j in range(i+1,len(perm)):
-			if perm[i]>perm[j]:
-				ret[-1] += 1
-	return ret
 	
 def reversecode(perm):
 	ret = []

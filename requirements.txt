@@ -3,3 +3,4 @@ PuLP>=2.7.0
 symengine>=0.11.0
 sympy>=1.12
 numpy
+cachetools
