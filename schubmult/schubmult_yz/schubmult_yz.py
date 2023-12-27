@@ -9,6 +9,7 @@ import numpy as np
 import pulp as pu
 import itertools as it
 import sympy
+import psutil
 
 n = 100
 
@@ -20,28 +21,33 @@ var3 = tuple(symarray('z',n).tolist())
 def forwardcoeff(u,v,perm,var2=var2,var3=var3):
 	th = theta(v)
 	muv = uncode(th)
-	vmun1 = mulperm(inverse(list(v)),muv)
+	vmun1 = mulperm(inverse([*v]),muv)
 	
-	w = mulperm(list(perm),vmun1)	
+	w = mulperm([*perm],vmun1)	
 	if inv(w) == inv(vmun1) + inv(perm):
-		#coeff_dict = {tuple(permtrim([*u])): 1}
 		coeff_dict = schubmult_one(tuple(permtrim([*u])),tuple(muv),var2,var3)
 		return coeff_dict.get(tuple(permtrim(w)),0)
 	return 0
 
-def dualcoeff(u,v,perm,var2=var2,var3=var3):
-	th = theta(u)
-	muu = uncode(th)
-	umun1 = mulperm(inverse(list(u)),muu)
+def dualcoeff(u,v,perm,var2=var2,var3=var3):	
 	if u == (1,2):
-		vp = mulperm(list(v),inverse(perm))
+		vp = mulperm([*v],inverse(perm))
 		if inv(vp) == inv(v) - inv(perm):
 			val = schubpoly(vp,var2,var3)
 		else:
 			val = 0
-	elif dominates(u,perm):
+	else:
+		dpret = []
+		if dominates(u,perm):
+			dpret = dualpieri([*u],[*v],[*perm])		
+		else:
+			th = theta(u)
+			muu = uncode(th)
+			umun1 = mulperm(inverse([*u]),muu)
+			w = mulperm([*perm],umun1)
+			if inv(w) == inv(umun1) + inv(perm):
+				dpret = dualpieri(muu,[*v],w)
 		ret = 0
-		dpret = dualpieri(list(u),list(v),list(perm))
 		for vlist,vp in dpret:
 			toadd = 1
 			for i in range(len(vlist)):										
@@ -49,20 +55,6 @@ def dualcoeff(u,v,perm,var2=var2,var3=var3):
 					toadd *= var2[i+1]-var3[vlist[i][j]]
 			toadd *= schubpoly(vp,var2,var3,len(vlist)+1)
 			ret += toadd		
-		val = ret
-	else:
-		ret = 0
-		w = mulperm(list(perm),umun1)
-		if inv(w) == inv(umun1) + inv(perm):
-			ret = 0
-			dpret = dualpieri(muu,list(v),w)
-			for vlist,vp in dpret:
-				toadd = 1
-				for i in range(len(vlist)):										
-					for j in range(len(vlist[i])):
-						toadd *= var2[i+1]-var3[vlist[i][j]]
-				toadd *= schubpoly(vp,var2,var3,len(vlist)+1)
-				ret += toadd		
 		val = ret
 	return val
 
@@ -122,7 +114,7 @@ def schubmult(perm_dict,v,var2=var2,var3=var3):
 	if th[0]==0:
 		return perm_dict		
 	mu = permtrim(uncode(th))
-	vmu = permtrim(mulperm(list(v),mu))
+	vmu = permtrim(mulperm([*v],mu))
 	inv_vmu = inv(vmu)
 	inv_mu = inv(mu)
 	ret_dict = {}
@@ -161,26 +153,27 @@ def schubmult(perm_dict,v,var2=var2,var3=var3):
 fvar = 0
 
 def poly_to_vec(poly,vec0=None):	
-	global dimen, monom_to_vec, n1, n2
+	global dimen, monom_to_vec, base_vec
 	poly = expand(poly.xreplace({var3[1]: 0}))
 	
 	dc = poly.as_coefficients_dict()
 	
 	if vec0 is None:
 		init_basevec(dc)
-	vec = np.zeros(dimen)
 	
+	vec = {}
 	for mn in dc:
-		cf = dc[mn]
+		cf = dc[mn]		
 		if cf == 0:
 			continue
+		cf = abs(int(cf))
 		try:
 			index = monom_to_vec[mn]
 		except KeyError:
 			return None		
-		if vec0 is not None and abs(vec0[index])<abs(cf):
+		if vec0 is not None and vec0[index]<cf:
 			return None
-		vec[index] = cf	
+		vec[index] = cf
 	return vec
 
 def shiftsub(pol):
@@ -192,7 +185,7 @@ def shiftsubz(pol):
 	return sympify(pol).subs(subs_dict)	
 
 def init_basevec(dc):
-	global dimen, monom_to_vec
+	global dimen, monom_to_vec, base_vec
 	monom_to_vec = {}
 	index = 0
 	for mn in dc:
@@ -201,6 +194,7 @@ def init_basevec(dc):
 		monom_to_vec[mn] = index
 		index+=1	
 	dimen = index
+	base_vec = [0 for i in range(dimen)]
 	
 
 def split_flat_term(arg):
@@ -419,7 +413,7 @@ def compute_positive_rep(val,var2=var2,var3=var3,msg=False):
 				if mn1[i]!=0:
 					arr = np.array(comblistmn1)
 					comblistmn12 = []
-					mn1_2 = tuple(list(mn1[n1:i])+[0]+list(mn1[i+1:]))
+					mn1_2 = tuple([*mn1[n1:i]]+[0]+[*mn1[i+1:]])
 					for mm0 in lookup[mn1_2]:												
 						comblistmn12 += (arr*np.prod([varsimp2[k] - varsimp3[i - n1] for k in range(n1) if mm0[k]==1])).tolist()						
 					comblistmn1 = comblistmn12
@@ -432,25 +426,27 @@ def compute_positive_rep(val,var2=var2,var3=var3,msg=False):
 		vrs = [pu.LpVariable(name=f"a{i}",lowBound=0,cat='Integer') for i in range(len(base_vectors))]
 		lp_prob = pu.LpProblem('Problem',pu.LpMinimize)		
 		lp_prob += int(0)
+		eqs = [*base_vec]
+		for j in range(len(base_vectors)):
+			for i in base_vectors[j]:
+				bvi = base_vectors[j][i]
+				if bvi == 1:
+					eqs[i] += vrs[j]
+				else:
+					eqs[i] += bvi*vrs[j]
 		for i in range(dimen):
-			eq = pu.lpSum([int(base_vectors[j][i])*vrs[j] for j in range(len(base_vectors)) if base_vectors[j][i]!=0])
-			lp_prob += eq == int(vec[i])			
-
+			lp_prob += eqs[i] == vec[i]
 		try:
-			status = lp_prob.solve(pu.XPRESS_PY(msg=msg))
-		except pu.PulpSolverError:
-			try:
-				solver = pu.PULP_CBC_CMD(msg=msg)
-				status = lp_prob.solve(solver)
-			except KeyboardInterrupt:
-				import psutil
-				current_process = psutil.Process()
-				children = current_process.children(recursive=True)
-				for child in children:
-					child_process = psutil.Process(child.pid)
-					child_process.terminate()
-					child_process.kill()
-				raise KeyboardInterrupt()
+			solver = pu.PULP_CBC_CMD(msg=msg)
+			status = lp_prob.solve(solver)
+		except KeyboardInterrupt:			
+			current_process = psutil.Process()
+			children = current_process.children(recursive=True)
+			for child in children:
+				child_process = psutil.Process(child.pid)
+				child_process.terminate()
+				child_process.kill()
+			raise KeyboardInterrupt()
 
 		val2 = 0
 		for k in range(len(base_vectors)):
@@ -463,7 +459,7 @@ def compute_positive_rep(val,var2=var2,var3=var3,msg=False):
 def is_split_two(u,v,w):
 	if inv(w)-inv(u)!=2:
 		return False, []
-	diff_perm = mulperm(inverse(list(u)),list(w))
+	diff_perm = mulperm(inverse([*u]),[*w])
 	identity = [i+1 for i in range(len(diff_perm))]
 	cycles = []
 	for i in range(len(identity)):
@@ -522,12 +518,12 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 		if is_coeff_irreducible(u,v,w):
 			u, v, w = [*u2], [*v2], [*w2]
 			if is_coeff_irreducible(u,v,w):
-				w0 = list(w)
+				w0 = [*w]
 				u, v, w = reduce_descents(u,v,w)
 				if is_coeff_irreducible(u,v,w):
 					u, v, w = reduce_coeff(u,v,w)
 					if is_coeff_irreducible(u,v,w):
-						while is_coeff_irreducible(u,v,w) and tuple(permtrim(w0))!=tuple(permtrim(list(w))):
+						while is_coeff_irreducible(u,v,w) and tuple(permtrim(w0))!=tuple(permtrim([*w])):
 							w0 = w
 							u, v, w = reduce_descents(u,v,w)						
 							if is_coeff_irreducible(u,v,w):	
@@ -779,8 +775,8 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 		
 		if one_dominates(u,w):
 			while c1[0] != c2[0]:				
-				w = list(w)
-				v = list(v)
+				w = [*w]
+				v = [*v]
 				w[c2[0]-1], w[c2[0]] = w[c2[0]], w[c2[0]-1]
 				v[c2[0]-1], v[c2[0]] = v[c2[0]], v[c2[0]-1]
 				w = tuple(w)
@@ -805,7 +801,7 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 			val = 0
 			for new_w in coeff_dict:
 				tomul = coeff_dict[new_w]
-				newval = schubmult_one(new_w,tuple(permtrim(uncode(newc))),var2,var3).get(tuple(permtrim(list(w))),0)
+				newval = schubmult_one(new_w,tuple(permtrim(uncode(newc))),var2,var3).get(tuple(permtrim([*w])),0)
 				newval = posify(newval,new_w,tuple(permtrim(uncode(newc))),w,var2,var3,msg)
 				val += tomul*shiftsubz(newval)
 		elif c01[0] == c02[0] and c01[0] != 0:
@@ -813,12 +809,12 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 			u3 = uncode([0] + c01[1:])
 			w3 = uncode([0] + c02[1:])
 			val = 0
-			val = schubmult_one(tuple(permtrim(u3)),tuple(permtrim(list(v))),var2,var3).get(tuple(permtrim(w3)),0)
-			val = posify(val,tuple(permtrim(u3)),tuple(permtrim(list(v))),tuple(permtrim(w3)),var2,var3,msg)
+			val = schubmult_one(tuple(permtrim(u3)),tuple(permtrim([*v])),var2,var3).get(tuple(permtrim(w3)),0)
+			val = posify(val,tuple(permtrim(u3)),tuple(permtrim([*v])),tuple(permtrim(w3)),var2,var3,msg)
 			for i in range(varl):
 				val = permy(val,i+1)			
 		elif c1[0] == c2[0]:
-			vp = pull_out_var(c1[0]+1,list(v))
+			vp = pull_out_var(c1[0]+1,[*v])
 			u3 = tuple(permtrim(phi1(u)))
 			w3 = tuple(permtrim(phi1(w)))
 			c3 = code(inverse(u3))
@@ -1064,7 +1060,7 @@ def main():
 				coeff_dict2 = schubmult(coeff_dict2,muv)
 				
 				for perm, val in coeff_dict2.items():		
-					w = mulperm(list(perm),muvn1v)
+					w = mulperm([*perm],muvn1v)
 					if inv(w)+inv(muvn1v) == inv(perm):
 						coeff_dict[tuple(permtrim(w))] = val
 				posified = True
