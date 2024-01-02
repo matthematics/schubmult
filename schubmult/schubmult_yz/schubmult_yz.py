@@ -387,7 +387,6 @@ def is_negative(term):
 	return sign < 0
 
 def find_base_vectors(monom_list,monom_list_neg,var2,var3,depth):
-	print(monom_list)
 	size = 0
 	mn_fullcount = {}
 	#pairs_checked = set()
