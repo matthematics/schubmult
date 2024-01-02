@@ -357,7 +357,8 @@ def split_monoms(pos_part,var2,var3):
 			monoms = split_mul(arg0,var2,var3)			
 			arrs += [monoms]
 	elif isinstance(pos_part,Mul) or isinstance(pos_part,Pow):
-		arrs += [split_mul(pos_part,var2,var3)]		
+		monoms = split_mul(pos_part,var2,var3)
+		arrs += [monoms]		
 	else:
 		return [pos_part]
 	return arrs
@@ -386,6 +387,7 @@ def is_negative(term):
 	return sign < 0
 
 def find_base_vectors(monom_list,monom_list_neg,var2,var3,depth):
+	print(monom_list)
 	size = 0
 	mn_fullcount = {}
 	#pairs_checked = set()
@@ -546,6 +548,8 @@ def compute_positive_rep(val,var2=var2,var3=var3,msg=False,do_pos_neg=True):
 			neg_part = 0
 			if isinstance(flat,Add) and not is_flat_term(flat):	
 				for arg in flat.args:
+					if expand(arg) == 0:
+						continue
 					if not is_negative(arg):
 						pos_part += arg
 					else:
@@ -554,8 +558,7 @@ def compute_positive_rep(val,var2=var2,var3=var3,msg=False,do_pos_neg=True):
 					#print("no neg")
 					return pos_part
 			depth = 1
-		
-		
+					
 			mons = split_monoms(pos_part,varsimp2,varsimp3)
 			mons = set([tuple(mn) for mn in mons])
 			mons2 = split_monoms(neg_part,varsimp2,varsimp3)
