@@ -1,6 +1,7 @@
+cachetools
 psutil
 PuLP>=2.7.0
+sortedcontainers
 symengine>=0.11.0
-sympy>=1.12
 numpy
-cachetools
+sympy>=1.12

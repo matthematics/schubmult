@@ -6,7 +6,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="schubmult",
-    version="1.2.7",
+    version="1.2.8",
     description="Computing Littlewood-Richardson coefficients of Schubert polynomials",
 	long_description=long_description,
 	long_description_content_type='text/markdown',
@@ -25,7 +25,8 @@ setup(
 		"symengine>=0.11.0",
 		"sympy>=1.12",
 		"psutil",
-		"cachetools"
+		"cachetools",
+		"sortedcontainers"
     ],
     entry_points={"console_scripts": ["schubmult_py=schubmult.schubmult_py.__main__:main",
 	"schubmult_double=schubmult.schubmult_double.__main__:main",
