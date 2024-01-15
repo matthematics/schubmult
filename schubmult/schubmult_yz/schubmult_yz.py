@@ -736,8 +736,8 @@ def is_hook(cd):
 		return True
 	return False
 
-@cached(cache={}, key=lambda val, u2,v2,w2,var2=var2,var3=var3,msg=False: hashkey(u2,v2,w2,var2,var3,msg))
-def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
+@cached(cache={}, key=lambda val, u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True: hashkey(u2,v2,w2,var2,var3,msg,do_pos_neg))
+def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True):
 	if inv(u2)+inv(v2) - inv(w2)<=1:
 		return expand(val)
 	cdv = code(v2)	
@@ -975,9 +975,9 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 					if len(v3)<=3:
 						v3 += [4]
 					v3[2], v3[3] = v3[3], v3[2]
-					coeff = permy(posify(schubmult_one((1,3,2),tuple(permtrim([*v3]))).get((2,4,3,1),0),(1,3,2),tuple(permtrim([*v3])),(2,4,3,1),var2,var3,msg),2)					
+					coeff = permy(posify(schubmult_one((1,3,2),tuple(permtrim([*v3])),var2,var3).get((2,4,3,1),0),(1,3,2),tuple(permtrim([*v3])),(2,4,3,1),var2,var3,msg,do_pos_neg),2)					
 				else:
-					coeff = permy(schubmult_one((1,3,2),tuple(permtrim([*v3]))).get((2,4,1,3),0),2)
+					coeff = permy(schubmult_one((1,3,2),tuple(permtrim([*v3])),var2,var3).get((2,4,1,3),0),2)
 				tomul = sympify(coeff)
 			toadd = 1
 			for i in range(len(L[0])):
@@ -1038,7 +1038,7 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 			for new_w in coeff_dict:
 				tomul = coeff_dict[new_w]
 				newval = schubmult_one(new_w,tuple(permtrim(uncode(newc))),var2,var3).get(tuple(permtrim([*w])),0)
-				newval = posify(newval,new_w,tuple(permtrim(uncode(newc))),w,var2,var3,msg)
+				newval = posify(newval,new_w,tuple(permtrim(uncode(newc))),w,var2,var3,msg,do_pos_neg)
 				val += tomul*shiftsubz(newval)
 		elif c01[0] == c02[0] and c01[0] != 0:
 			varl = c01[0]
@@ -1046,7 +1046,7 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 			w3 = uncode([0] + c02[1:])
 			val = 0
 			val = schubmult_one(tuple(permtrim(u3)),tuple(permtrim([*v])),var2,var3).get(tuple(permtrim(w3)),0)
-			val = posify(val,tuple(permtrim(u3)),tuple(permtrim([*v])),tuple(permtrim(w3)),var2,var3,msg)
+			val = posify(val,tuple(permtrim(u3)),tuple(permtrim([*v])),tuple(permtrim(w3)),var2,var3,msg,do_pos_neg)
 			for i in range(varl):
 				val = permy(val,i+1)			
 		elif c1[0] == c2[0]:
@@ -1062,10 +1062,10 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False):
 					tomul*=var2[1] - var3[arr[i]]
 				
 				val2 = schubmult_one(tuple(permtrim(u3)),tuple(permtrim(v3)),var2,var3).get(tuple(permtrim(w3)),0)
-				val2 = posify(val2,u3,tuple(permtrim(v3)),w3,var2,var3,msg)
+				val2 = posify(val2,u3,tuple(permtrim(v3)),w3,var2,var3,msg,do_pos_neg)
 				val += tomul*shiftsub(val2)
 		else:
-			val2 = compute_positive_rep(val,var2,var3,msg)
+			val2 = compute_positive_rep(val,var2,var3,msg,do_pos_neg)
 			if val2 is not None:
 				val = val2
 	return val
@@ -1187,7 +1187,25 @@ def main():
 			cd = code(mperm)
 			perms[0] = mperm
 			pos = perms[1]
+			pos2 = []
+			last_descent = -1
+			poso = []
+			for i in range(len(perms[0])-1):
+				if perms[0][i]>perms[0][i+1]:
+					last_descent = i+1
+			for i in range(1,last_descent+1):
+				if i not in pos:
+					pos2 += [i-1]
+				else:
+					poso += [i-1]
+			
+			mu_W = uncode(theta(inverse(perms[0])))				
 	
+			the_top_perm = tuple(permtrim(mulperm(list(perms[0]),mu_W)))
+	
+			muA = uncode(mu_A(code(mu_W),poso))
+			muB = uncode(mu_A(code(mu_W),pos2))
+			#print(f"{code(mu_W)=},{pos=},{poso=} {pos2=},{p_trans(code(mu_W))=},{p_trans(code(muA))=},{p_trans(code(muB))=},{code(muA)=},{code(muB)=}")
 			while cd[-1] == 0:
 				cd.pop()
 			k = len(pos)
@@ -1253,10 +1271,11 @@ def main():
 											
 						if val != 0:
 							if display_positive:												
-								if expand(val) != 0:
-									val2 = compute_positive_rep(val,var2neg,var3neg,msg,False)
+								if val != 0:
+									val2 = posify(val,tuple(permtrim(mulperm(firstperm,muA))),tuple(permtrim(mulperm(secondperm,muB))),the_top_perm,tuple(var2neg.tolist()),tuple(var3neg.tolist()),msg,False)
 									if expand(val - val2) != 0:
-										print(f"error; write to schubmult@gmail.com with the case {perms=} {firstperm=} {secondperm=} {val2=} {val=}")
+										print(f"error; write to schubmult@gmail.com with the case {perms=}\n{code(firstperm)=} {code(secondperm)=}\n{val2=}\n{val=}")
+										print(f"{code(tuple(permtrim(mulperm(firstperm,muA))))=},{code(tuple(permtrim(mulperm(secondperm,muB))))=},{code(the_top_perm)=}\n{expand(val-val2)=}")
 										exit(1)
 									val = val2
 								else:
