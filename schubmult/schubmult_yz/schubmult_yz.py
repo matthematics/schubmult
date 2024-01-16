@@ -741,7 +741,7 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True):
 	if inv(u2)+inv(v2) - inv(w2)<=1:
 		return expand(val)
 	cdv = code(v2)	
-	if set(cdv) == set([0,1]):		
+	if set(cdv) == set([0,1]) and do_pos_neg:	
 		return val
 	#if is_hook(cdv):
 	#	print(f"Could've {cdv}")
