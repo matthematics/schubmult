@@ -1306,15 +1306,14 @@ def main():
 			check_coeff_dict = {perms[0]: 1}
 			for perm in orig_perms[1:]:
 				check_coeff_dict = schubmult(check_coeff_dict,perm)
-			if display_positive and len(perms)==2 and will_formula_work(perms[0],perms[1]) and perms[0]:
+			if display_positive and len(perms)==2 and will_formula_work(perms[0],perms[1]):
 				coeff_dict = {}
 				th = theta(perms[1])
 				muv = uncode(th)
 				muvn1v = mulperm(inverse(muv),perms[1])
 				coeff_dict2 = {perms[0]: 1}
 				coeff_dict2 = schubmult(coeff_dict2,muv)
-				
-				for perm, val in coeff_dict2.items():		
+				for perm, val in coeff_dict2.items():					
 					w = mulperm([*perm],muvn1v)
 					if inv(w)+inv(muvn1v) == inv(perm):
 						coeff_dict[tuple(permtrim(w))] = val
@@ -1333,7 +1332,7 @@ def main():
 					coeff_dict2 = coeff_dict3
 				coeff_dict = coeff_dict2
 				posified = True
-			else:				
+			elif not posified:	
 				coeff_dict = check_coeff_dict
 					
 			if pr:
