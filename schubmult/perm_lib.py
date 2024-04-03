@@ -99,9 +99,9 @@ def count_bruhat(perm,i,j):
 		up_amount = -1
 	for k in range(i+1,j):
 		if perm[i]<perm[k] and perm[j]>perm[k]:
-			up_amount+=1
+			up_amount+=2
 		elif perm[i]>perm[k] and perm[j]<perm[k]:
-			up_amount-=1
+			up_amount-=2
 	return up_amount
 
 
@@ -150,13 +150,15 @@ def elem_sym_perms_q(orig_perm,p,k):
 			if len(up_perm2) < k + 1:
 				up_perm2 += [i+1 for i in range(len(up_perm2),k+2)]
 			pos_list = [i for i in range(k) if i>=len(orig_perm) or up_perm2[i] == orig_perm[i]]
-			for j in range(min(last_j,len(up_perm2)-1),k-1,-1):
+			for j in range(min(len(up_perm2)-1,last_j),k-1,-1):
 				for i in pos_list:
 					ct = count_bruhat(up_perm2,i,j)
+					#print(f"{up_perm2=} {ct=} {i=} {j=} {k=} {pp=}")
 					if ct == 1 or ct == 2*(i-j)+1:
 						new_perm = [*up_perm2]
 						new_perm[i],new_perm[j] = new_perm[j],new_perm[i]
 						new_perm_add = tuple(permtrim(new_perm))
+						#print(f"{ct=} {i=} {j=} {k=} {last_j=} {pp=} {up_perm2=} {new_perm_add=}")
 						new_last = last
 						if ct<0:
 							new_last *= np.prod([q_var[index] for index in range(i+1,j+1)])

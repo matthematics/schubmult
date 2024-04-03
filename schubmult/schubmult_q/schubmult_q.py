@@ -6,9 +6,10 @@ import sys
 
 def schubmult(perm_dict,v):
 	vn1 = inverse(v)
-	th = [len(v)-i for i in range(1,len(v)+1)]	
+	th = [len(v)-i for i in range(1,len(v))]	
 	mu = permtrim(uncode(th))
 	vmu = permtrim(mulperm([*v],mu))
+	#print(f"{th=} {mu=} {vmu=}")
 	inv_vmu = inv(vmu)
 	inv_mu = inv(mu)
 	ret_dict = {}
