@@ -6,7 +6,7 @@ import sys
 
 def schubmult(perm_dict,v):
 	vn1 = inverse(v)
-	th = [len(v)-i for i in range(1,len(v))]	
+	th = [len(v)-i for i in range(1,len(v)+1)]	
 	mu = permtrim(uncode(th))
 	vmu = permtrim(mulperm([*v],mu))
 	#print(f"{th=} {mu=} {vmu=}")
@@ -30,17 +30,16 @@ def schubmult(perm_dict,v):
 			newpathsums = {}
 			for up in vpathsums:
 				newperms = elem_sym_perms_q(up,mx_th,th[index])
-				for vp in vpathsums[up]:
-					sumval = vpathsums[up][vp]
-					if sumval == 0:
-						continue
-					for v2,vdiff,s in vpathdicts[index][vp]:
-						addsumval = s*sumval
-						for up2, udiff, mul_val in newperms:					
-							if vdiff + udiff == th[index]:								
-								if up2 not in newpathsums:
-									newpathsums[up2]={}
-								newpathsums[up2][v2] = newpathsums[up2].get(v2,0)+mul_val*addsumval
+				for up2, udiff, mul_val in newperms:
+					if up2 not in newpathsums:
+						newpathsums[up2]={}
+					for v in vpathdicts[index]:
+						sumval = vpathsums[up].get(v,zero)
+						if sumval == 0:
+							continue
+						for v2,vdiff,s in vpathdicts[index][v]:
+							if udiff+vdiff==th[index]:
+								newpathsums[up2][v2] = newpathsums[up2].get(v2,zero)+s*sumval*mul_val
 			vpathsums = newpathsums
 		toget = tuple(vmu)
 		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
