@@ -2,6 +2,11 @@ from symengine import *
 from functools import cache
 from itertools import chain
 from bisect import bisect_left
+import numpy as np
+
+n = 100
+
+q_var = symarray("q",n)
 
 def inv(perm):
 	L = len(perm)
@@ -86,6 +91,20 @@ def has_bruhat_descent(perm,i,j):
 			return False
 	return True
 
+def count_bruhat(perm,i,j):
+	up_amount = 0
+	if perm[i]<perm[j]:
+		up_amount = 1
+	else:
+		up_amount = -1
+	for k in range(i+1,j):
+		if perm[i]<perm[k] and perm[j]>perm[k]:
+			up_amount+=1
+		elif perm[i]>perm[k] and perm[j]<perm[k]:
+			up_amount-=1
+	return up_amount
+
+
 def has_bruhat_ascent(perm,i,j):
 	if perm[i]>perm[j]:
 		return False
@@ -119,6 +138,33 @@ def elem_sym_perms(orig_perm,p,k):
 						total_list+=[(new_perm_add,pp+1)]
 		up_perm_list = perm_list
 	return total_list
+
+
+def elem_sym_perms_q(orig_perm,p,k):	
+	total_list = [(orig_perm,0,1)]
+	up_perm_list = [(orig_perm,1,1000)]
+	for pp in range(p):
+		perm_list = []
+		for up_perm, last, last_j in up_perm_list:	
+			up_perm2 = [*up_perm,len(up_perm)+1]
+			if len(up_perm2) < k + 1:
+				up_perm2 += [i+1 for i in range(len(up_perm2),k+2)]
+			pos_list = [i for i in range(k) if i>=len(orig_perm) or up_perm2[i] == orig_perm[i]]
+			for j in range(min(last_j,len(up_perm2)-1),k-1,-1):
+				for i in pos_list:
+					ct = count_bruhat(up_perm2,i,j)
+					if ct == 1 or ct == 2*(i-j)+1:
+						new_perm = [*up_perm2]
+						new_perm[i],new_perm[j] = new_perm[j],new_perm[i]
+						new_perm_add = tuple(permtrim(new_perm))
+						new_last = last
+						if ct<0:
+							new_last *= np.prod([q_var[index] for index in range(i+1,j+1)])
+						perm_list += [(new_perm_add,new_last,j)]
+						total_list+=[(new_perm_add,pp+1,new_last)]
+		up_perm_list = perm_list
+	return total_list
+
 
 # perms and inversion diff
 def kdown_perms(perm,monoperm,p,k):	
