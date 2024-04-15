@@ -12,6 +12,8 @@ var2 = symarray('y',n)
 var3 = var2
 var_r = symarray('r',n)
 
+var_q = Symbol("q")
+
 subs_dict = {}
 
 for i in range(1,n):
@@ -19,6 +21,8 @@ for i in range(1,n):
 	for j in range(1,i):
 		sm += var_r[j]
 	subs_dict[var2[i]] = sm
+
+
 
 def main():
 	try:			
@@ -45,11 +49,14 @@ def main():
 					continue
 				curperm += [int(s)]
 		except Exception:
+			print("**** schubmult_double ****")
+			print("Purpose: Compute products (and coproducts) of double Schubert polynomials in the same set of variables")
 			print("Usage: schubmult_double <-np|--no-print> <-code> perm1 - perm2 < - perm 3 ... >")
 			print("Alternative usage: schubmult_double <-code> -coprod perm - indexlist")
 			exit(1)
 		
 		perms += [curperm]
+		
 		
 		if coprod:
 			subs_dict_coprod = {}

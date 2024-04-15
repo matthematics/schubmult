@@ -112,9 +112,6 @@ def main():
 				if s == "-np" or s == "--no-print":
 					pr = False
 					continue
-				if s == "-coprod":
-					coprod = True
-					continue
 				if s == "-nocheck":
 					check = False
 					continue
@@ -131,8 +128,9 @@ def main():
 					ascode = True
 					continue
 				if s == "--usage":
-					print("Usage: schubmult_yz <-np|--no-print> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. >")
-					print("Alternative usage: schubmult_yz <-code> <--display-positive> -coprod perm - indexlist")
+					print("**** schubmult_q_yz ****")
+					print("Purpose: Compute Molev-Sagan coefficients of quantum double Schubert polynomials")
+					print("Usage: schubmult_q_yz <-np|--no-print> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. >")
 					exit(0)
 				if s == "-":
 					perms += [curperm]
@@ -140,8 +138,9 @@ def main():
 					continue
 				curperm += [int(s)]
 		except Exception:
+			print("**** schubmult_q_yz ****")
+			print("Purpose: Compute Molev-Sagan coefficients of quantum double Schubert polynomials")
 			print("Usage: schubmult_q_yz <-np|--no-print> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. >")
-			print("Alternative usage: schubmult_yz <-code> <--display-positive> <--optimizer-message> -coprod perm - indexlist")
 			exit(1)
 				
 		perms += [curperm]

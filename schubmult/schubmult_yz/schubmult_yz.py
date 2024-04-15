@@ -736,16 +736,43 @@ def is_hook(cd):
 		return True
 	return False
 
-@cached(cache={}, key=lambda val, u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True: hashkey(u2,v2,w2,var2,var3,msg,do_pos_neg))
-def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True):
-	if inv(u2)+inv(v2) - inv(w2)<=1:
-		return expand(val)
+def div_diff(i,poly):
+	return sympify(sympy.div(sympy.sympify(poly - permy(poly,i)),sympy.sympify(var2[i]-var2[i+1]))[0])
+
+def skew_div_diff(u,w,poly):
+	d = -1
+	for i in range(len(w)-1):
+		if w[i]>w[i+1]:
+			d = i
+			break
+	d2 = -1
+	for i in range(len(u)-1):
+		if u[i]>u[i+1]:
+			d2 = i
+			break
+	if d == -1:
+		if d2 == -1:
+			return poly
+		return 0
+	w2 = [*w]
+	w2[d], w2[d+1] = w2[d+1], w2[d]
+	if d<len(u)-1 and u[d]>u[d+1]:		
+		u2 = [*u]		
+		u2[d], u2[d+1] = u2[d+1], u2[d]
+		return skew_div_diff(u2,w2,permy(poly,d+1))
+	else:
+		return skew_div_diff(u,w2,div_diff(d+1,poly))
+
+@cached(cache={}, key=lambda val, u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True,sign_only=False: hashkey(u2,v2,w2,var2,var3,msg,do_pos_neg,sign_only))
+def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True,sign_only=False):
+	if inv(u2)+inv(v2) - inv(w2) == 0:
+		return val
 	cdv = code(v2)	
 	if set(cdv) == set([0,1]) and do_pos_neg:	
 		return val
 	#if is_hook(cdv):
 	#	print(f"Could've {cdv}")
-	if expand(val) == 0:
+	if not sign_only and expand(val) == 0:
 		return 0
 	
 	u, v, w = try_reduce_v(u2, v2, w2)
@@ -767,6 +794,9 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True):
 	u = tuple(u)
 	v = tuple(v)	
 	w = tuple(w)
+	
+	if w != w2 and sign_only:
+		return 0
 			
 	if is_coeff_irreducible(u,v,w):
 		u3, v3, w3 = try_reduce_v(u, v, w)
@@ -777,8 +807,10 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True):
 			if not is_coeff_irreducible(u3,v3,w3):
 				u, v, w = u3, v3, w3
 	split_two_b, split_two = is_split_two(u,v,w)
-
+	
 	if len([i for i in code(v) if i !=0]) == 1:
+		if sign_only:
+			return 0
 		cv = code(v)
 		for i in range(len(cv)):
 			if cv[i]!=0:
@@ -792,8 +824,12 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True):
 		hvarset = [w2[i] for i in range(min(len(w2),k))]+[i+1 for i in range(len(w2),k)] + [w2[b] for b in range(k,len(u)) if u[b]!=w2[b]]+[w2[b] for b in range(len(u),len(w2))]
 		val = elem_sym_poly(p-r,k+p-1,[-var3[i] for i in range(1,n)],[-var2[i] for i in hvarset])	
 	elif (will_formula_work(v,u) or dominates(u,w)):
+		if sign_only:
+			return 0
 		val = dualcoeff(u,v,w,var2,var3)
 	elif inv(w) - inv(u) == 1:	
+		if sign_only:
+			return 0
 		a, b = -1, -1
 		for i in range(len(w)):
 			if a == -1 and u[i] != w[i]:
@@ -847,6 +883,8 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True):
 			toadd *= schubpoly(v3,[0,var2[w[a]],var2[w[b]]],var3)
 			val += toadd
 	elif split_two_b:
+		if sign_only:
+			return 0
 		cycles = split_two
 		a1, b1 = cycles[0]
 		a2, b2 = cycles[1]
@@ -1000,7 +1038,53 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True):
 				toadd*=tomul.subs(subs_dict3)
 			val += toadd
 	elif will_formula_work(u,v):
+		if sign_only:
+			return 0
 		val = forwardcoeff(u,v,w,var2,var3)
+	#elif inv(w) - inv(u) == 2:
+	#	indices = []
+	#	for i in range(len(w)):
+	#		if i>=len(u) or u[i]!=w[i]:
+	#			indices += [i+1]
+	#	arr = [[[],v]]
+	#	d = -1
+	#	for i in range(len(v)-1):
+	#		if v[i]>v[i+1]:
+	#			d = i + 1
+	#	for i in range(d):
+	#		arr2 = []
+	#					
+	#		if i+1 in indices:
+	#			continue
+	#		i2 = 1
+	#		i2 += len([aa for aa in indices if i+1>aa])
+	#		for vr, v2 in arr:
+	#			dpret = pull_out_var(i2,[*v2])
+	#			for v3r, v3 in dpret:
+	#				arr2 += [[vr + [(v3r,i+1)],v3]]
+	#		arr = arr2
+	#	val = 0
+	#	
+	#	for L in arr:
+	#		v3 = [*L[-1]]
+	#		tomul = 1
+	#		pooly = skew_div_diff(u,w,schubpoly(v3,[0,*[var2[a] for a in indices]],var3))
+	#		coeff = compute_positive_rep(pooly,var2,var3,msg,False)
+	#		if coeff == -1:
+	#			return -1
+	#		tomul = sympify(coeff)
+	#		toadd = 1
+	#		for i in range(len(L[0])):
+	#			var_index = L[0][i][1]
+	#			oaf = L[0][i][0]
+	#			if var_index-1>=len(w):
+	#				yv = var_index
+	#			else:
+	#				yv = w[var_index-1]
+	#			for j in range(len(oaf)):				
+	#				toadd*= var2[yv] - var3[oaf[j]]
+	#		toadd*=tomul#.subs(subs_dict3)
+	#		val += toadd		
 	else:
 		c01 = code(u)
 		c02 = code(w)
@@ -1010,6 +1094,8 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True):
 		c2 = code(inverse(w))
 		
 		if one_dominates(u,w):
+			if sign_only:
+				return 0
 			while c1[0] != c2[0]:				
 				w = [*w]
 				v = [*v]
@@ -1024,6 +1110,8 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True):
 				
 		
 		if is_reducible(v):
+			if sign_only:
+				return 0
 			newc = []
 			elemc = []
 			for i in range(len(c03)):
@@ -1041,6 +1129,8 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True):
 				newval = posify(newval,new_w,tuple(permtrim(uncode(newc))),w,var2,var3,msg,do_pos_neg)
 				val += tomul*shiftsubz(newval)
 		elif c01[0] == c02[0] and c01[0] != 0:
+			if sign_only:
+				return 0
 			varl = c01[0]
 			u3 = uncode([0] + c01[1:])
 			w3 = uncode([0] + c02[1:])
@@ -1050,6 +1140,8 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True):
 			for i in range(varl):
 				val = permy(val,i+1)			
 		elif c1[0] == c2[0]:
+			if sign_only:
+				return 0
 			vp = pull_out_var(c1[0]+1,[*v])
 			u3 = tuple(permtrim(phi1(u)))
 			w3 = tuple(permtrim(phi1(w)))
@@ -1064,10 +1156,74 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True):
 				val2 = schubmult_one(tuple(permtrim(u3)),tuple(permtrim(v3)),var2,var3).get(tuple(permtrim(w3)),0)
 				val2 = posify(val2,u3,tuple(permtrim(v3)),w3,var2,var3,msg,do_pos_neg)
 				val += tomul*shiftsub(val2)
+		elif inv(w)-inv(u)==2:
+			indices = []
+			for i in range(len(w)):
+				if i>=len(u) or u[i]!=w[i]:
+					indices += [i+1]
+			arr = [[[],v]]
+			d = -1
+			for i in range(len(v)-1):
+				if v[i]>v[i+1]:
+					d = i + 1
+			for i in range(d):
+				arr2 = []
+							
+				if i+1 in indices:
+					continue
+				i2 = 1
+				i2 += len([aa for aa in indices if i+1>aa])
+				for vr, v2 in arr:
+					dpret = pull_out_var(i2,[*v2])
+					for v3r, v3 in dpret:
+						arr2 += [[vr + [(v3r,i+1)],v3]]
+				arr = arr2
+			val = 0
+			
+			for L in arr:
+				v3 = [*L[-1]]
+				tomul = 1						
+				toadd = 1
+				for i in range(len(L[0])):
+					var_index = L[0][i][1]
+					oaf = L[0][i][0]
+					if var_index-1>=len(w):
+						yv = var_index
+					else:
+						yv = w[var_index-1]
+					for j in range(len(oaf)):				
+						toadd*= var2[yv] - var3[oaf[j]]
+				pooly = skew_div_diff(u,w,schubpoly(v3,[0,*[var2[a] for a in indices]],var3))
+				if toadd == 0:
+					continue
+				if pooly !=0:
+					coeff = compute_positive_rep(pooly,var2,var3,msg,False)
+				else:
+					coeff = 0
+				if coeff == -1:
+					return -1
+				tomul = sympify(coeff)
+				toadd*=tomul#.subs(subs_dict3)
+				val += toadd						
 		else:
-			val2 = compute_positive_rep(val,var2,var3,msg,do_pos_neg)
-			if val2 is not None:
-				val = val2
+			if not sign_only:
+				if inv(u)+inv(v)-inv(w)==1:
+					val2 = compute_positive_rep(val,var2,var3,msg,False)
+				else:
+					val2 = compute_positive_rep(val,var2,var3,msg,do_pos_neg)					
+				if val2 is not None:				
+					val = val2							
+			else:
+				#st = str(expand(val))
+				#if st.find("-")!=-1:
+				#	return -1
+				#else:
+				#	return val
+				d = expand(val).as_coefficients_dict()
+				for v in d.values():
+					if v<0:
+						return -1
+				return 1
 	return val
 
 def split_perms(perms):
@@ -1171,6 +1327,8 @@ def main():
 					continue
 				curperm += [int(s)]
 		except Exception:
+			print("**** schubmult_yz ****")
+			print("Purpose: Compute products (and coproducts) of double Schubert polynomials in different sets of variables")
 			print("Usage: schubmult_yz <-np|--no-print> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. >")
 			print("Alternative usage: schubmult_yz <-code> <--display-positive> <--optimizer-message> -coprod perm - indexlist")
 			exit(1)
@@ -1354,10 +1512,14 @@ def main():
 							notint = True
 						if notint and display_positive:
 							valu = val
-							if len(perms) == 2 and not posified:
-								val = posify(val,perms[0],perms[1],perm,var2,var3,msg)							
-							elif not posified:								
-								val = compute_positive_rep(val,var2,var3,msg)								
+							try:
+								if len(perms) == 2 and not posified:
+									val = posify(val,perms[0],perms[1],perm,var2,var3,msg)							
+								elif not posified:								
+									val = compute_positive_rep(val,var2,var3,msg)
+							except TypeError:
+								print(f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}")
+								exit(1)
 							if check and expand(val - check_coeff_dict.get(perm,0))!=0:
 								print(f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}")
 								exit(1)

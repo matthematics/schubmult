@@ -76,6 +76,8 @@ def main():
 					continue
 				curperm += [int(s)]
 		except Exception:
+			print("**** schubmult_py ****")
+			print("Purpose: Compute products (and coproducts) of ordinary Schubert polynomials")
 			print("Usage: schubmult_py <-np|--no-print> <-code> perm1 - perm2 <- perm3...>")
 			print("Alternative usage: schubmult_py -coprod <-np> <perm> - <index list>")
 			exit(1)
