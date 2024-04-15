@@ -21,7 +21,7 @@ schubmult_double -code 0 1 1 2 - 1 0 2 3
 schubmult_yz -code 0 1 1 2 - 1 0 2 3 --display-positive
 schubmult_q -code 4 0 2 1 - 4 0 1 1
 schubmult_q_double -code 4 0 2 1 - 4 0 1 1
-schubmult_q_yz 4 0 2 1 - 1 3 --display-positive
+schubmult_q_yz -code 4 0 2 1 - 1 3 --display-positive
 ```
 
 For coproducts:
