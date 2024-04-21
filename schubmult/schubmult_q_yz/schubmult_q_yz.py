@@ -15,7 +15,6 @@ var3 = symarray("z",100)
 
 	
 def schubmult(perm_dict,v,var2=var2,var3=var3):
-	vn1 = inverse(v)
 	th = [len(v)-i for i in range(1,len(v))]
 	mu = permtrim(uncode(th))
 	vmu = permtrim(mulperm([*v],mu))
@@ -39,7 +38,7 @@ def schubmult(perm_dict,v,var2=var2,var3=var3):
 			newpathsums = {}
 			for up in vpathsums:
 				inv_up = inv(up)
-				newperms = elem_sym_perms_q(up,mx_th,th[index])
+				newperms = elem_sym_perms_q(up,min(mx_th,(inv_mu-(inv_up-inv_u))-inv_vmu),th[index])
 				for up2, udiff,mul_val in newperms:
 					if up2 not in newpathsums:
 						newpathsums[up2]={}
@@ -93,6 +92,7 @@ def factor_out_q(poly):
 			
 		ret[q_part] = ret.get(q_part,0) + yz_part
 	return ret
+	
 def main():
 	global var2
 	try:
@@ -170,8 +170,8 @@ def main():
 			coeff_perms.sort(key=lambda x: (inv(x),*x))
 			
 			for perm in coeff_perms:
-				val = sympify(coeff_dict[perm]).simplify()
-				if val != 0:
+				val = coeff_dict[perm]
+				if expand(val) != 0:
 					notint = False
 					try:
 						int(val)
