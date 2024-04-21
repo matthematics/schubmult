@@ -45,7 +45,8 @@ def schubmult(perm_dict,v):
 						mx_th = th[index] - vdiff					
 			newpathsums = {}
 			for up in vpathsums:
-				newperms = elem_sym_perms_q(up,mx_th,th[index])
+				inv_up = inv(up)
+				newperms = elem_sym_perms_q(up,min(mx_th,(inv_mu-(inv_up-inv_u))-inv_vmu),th[index])
 				for up2, udiff, mul_val in newperms:
 					if up2 not in newpathsums:
 						newpathsums[up2]={}
