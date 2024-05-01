@@ -145,7 +145,7 @@ def strict_theta(u):
 	while did_one:
 		did_one = False
 		for i in range(len(ret)-2,-1,-1):
-			if ret[i] <= ret[i+1]:
+			if ret[i+1]!=0 and ret[i] <= ret[i+1]:
 				ret[i], ret[i+1] = ret[i+1] + 1, ret[i]
 				did_one = True
 				break
