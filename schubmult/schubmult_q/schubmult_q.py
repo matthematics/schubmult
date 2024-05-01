@@ -21,8 +21,7 @@ for i in range(1,n):
 	subs_dict[var2[i]] = sm
 
 def schubmult(perm_dict,v):
-	vn1 = inverse(v)
-	th = [len(v)-i for i in range(1,len(v)+1)]	
+	th = strict_theta(inverse(v))
 	mu = permtrim(uncode(th))
 	vmu = permtrim(mulperm([*v],mu))
 	#print(f"{th=} {mu=} {vmu=}")

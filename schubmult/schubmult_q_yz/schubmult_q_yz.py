@@ -1,5 +1,5 @@
 from schubmult.perm_lib import *
-from schubmult.schubmult_yz import compute_positive_rep
+from schubmult.schubmult_yz import compute_positive_rep, posify
 from symengine import *
 import sys
 
@@ -15,7 +15,7 @@ var3 = symarray("z",100)
 
 	
 def schubmult(perm_dict,v,var2=var2,var3=var3):
-	th = [len(v)-i for i in range(1,len(v))]
+	th = strict_theta(inverse(v))
 	mu = permtrim(uncode(th))
 	vmu = permtrim(mulperm([*v],mu))
 	inv_vmu = inv(vmu)
