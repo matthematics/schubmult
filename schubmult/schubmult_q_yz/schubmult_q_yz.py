@@ -54,10 +54,64 @@ def schubmult(perm_dict,v,var2=var2,var3=var3):
 		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
 	return ret_dict
 
+q_var2 = q_var.tolist()
+
+def sum_q_dict(q_dict1,q_dict2):
+	ret = {**q_dict1}
+	for key in q_dict2:
+		ret[key] = ret.get(key,0) + q_dict2[key]
+	return ret
+
+def mul_q_dict(q_dict1,q_dict2):
+	ret = {}
+	for key1 in q_dict1:
+		for key2 in q_dict2:
+			key3 = key1*key2
+			ret[key3] = ret.get(key3,0) + q_dict1[key1]*q_dict2[key2]
+	return ret
+
+def factor_out_q_keep_factored(poly):
+	ret = {}
+	if str(poly).find("q") == -1:
+		ret[1] = poly
+		return ret
+	elif poly in q_var2:
+		ret[poly] = 1
+		return ret
+	elif isinstance(poly,Add):
+		ag = poly.args
+		ret = factor_out_q_keep_factored(ag[0])
+		for i in range(1,len(ag)):
+			ret = sum_q_dict(ret,factor_out_q_keep_factored(ag[i]))
+		return ret
+	elif isinstance(poly,Mul):
+		ag = poly.args
+		ret = factor_out_q_keep_factored(ag[0])
+		for i in range(1,len(ag)):
+			ret = mul_q_dict(ret,factor_out_q_keep_factored(ag[i]))
+		return ret
+	elif isinstance(poly,Pow):
+		base = poly.args[0]
+		exponent = int(poly.args[1])
+		#print(f"exponent {exponent}")
+		work_val = factor_out_q_keep_factored(base)
+		ret = {1: 1}
+		while exponent > 0:
+			if exponent % 2 == 1:
+				if ret == {1: 1}:
+					ret = {**work_val}
+				else:
+					ret = mul_q_dict(ret,work_val)
+				exponent -= 1
+			else:
+				work_val = mul_q_dict(work_val,work_val)
+				exponent //= 2
+		return ret
+	return ret
+
 def factor_out_q(poly):
 	coeff_dict = expand(poly).as_coefficients_dict()
-	ret = {}
-	q_var2 = q_var.tolist()
+	ret = {}	
 	for key in coeff_dict:
 		coeff = coeff_dict[key]
 		if coeff == 0:
@@ -92,7 +146,10 @@ def factor_out_q(poly):
 			
 		ret[q_part] = ret.get(q_part,0) + yz_part
 	return ret
-	
+
+var2_t = tuple(var2.tolist())
+var3_t = tuple(var3.tolist())	
+
 def main():
 	global var2
 	try:
@@ -179,19 +236,35 @@ def main():
 						notint = True
 						val2 = 0
 						if display_positive:
-							q_dict = factor_out_q(val)
+							q_dict = factor_out_q_keep_factored(val)
 							for q_part in q_dict:
 								#print(f"{q_part=} {q_dict[q_part]=}")
 								try:
 									val2 += q_part*int(q_dict[q_part])
 								except Exception:
 									try:
-										val2 += q_part*compute_positive_rep(q_dict[q_part],var2,var3,msg,False)
-									except TypeError:
-										print(f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}")
+										if len(perms) == 2 and q_part == 1:
+											u = permtrim([*perms[0]])
+											v = permtrim([*perms[1]])
+											val2 += posify(q_dict[q_part],tuple(u),tuple(v),perm,var2_t,var3_t,msg,False)
+										elif len(perms) == 2 and q_part in q_var2:
+											i = q_var2.index(q_part)
+											u = permtrim([*perms[0]])
+											v = permtrim([*perms[1]])											
+											#print(f"{u=} {v=} {q_part=} {q_dict[q_part]=}")
+											if i<len(u) and i<len(v) and u[i-1]>u[i] and v[i-1]>v[i]:
+												u[i], u[i-1] = u[i-1], u[i]
+												v[i], v[i-1] = v[i-1], v[i]
+												#print(f"new {u=} {v=}")
+												val2 += q_part*posify(q_dict[q_part],tuple(permtrim(u)),tuple(permtrim(v)),perm,var2_t,var3_t,msg,False)
+										else:
+											val2 += q_part*compute_positive_rep(q_dict[q_part],var2_t,var3_t,msg,False)
+									except Exception as e:
+										print(f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {coeff_dict.get(perm,0)=}")
+										print(f"Exception: {e}")
 										exit(1)
 							if check and expand(val - val2)!=0:
-								print(f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}")
+								print(f"error: value not equal; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {coeff_dict.get(perm,0)=}")
 								exit(1)
 							val = val2
 					if val!=0:
