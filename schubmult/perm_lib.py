@@ -181,6 +181,32 @@ def elem_sym_perms_q(orig_perm,p,k):
 	#print(f"{total_list=}")
 	return total_list
 
+def elem_sym_perms_q_op(orig_perm,p,k,n):	
+	total_list = [(orig_perm,0,1)]
+	up_perm_list = [(orig_perm,1,k)]
+	for pp in range(p):
+		perm_list = []
+		for up_perm, val, last_j in up_perm_list:
+			up_perm2 = [*up_perm]
+			if len(up_perm) < n :
+				up_perm2 += [i+1 for i in range(len(up_perm2),n)]
+			pos_list = [i for i in range(k) if (i>=len(orig_perm) and up_perm2[i]==i+1) or (i<len(orig_perm) and up_perm2[i] == orig_perm[i])]
+			for j in range(last_j,n):
+				for i in pos_list:
+					ct = count_bruhat(up_perm2,i,j)
+					#print(f"{up_perm2=} {ct=} {i=} {j=} {k=} {pp=}")
+					if ct == -1 or ct == 2*(j-i)-1:
+						new_perm = [*up_perm2]
+						new_perm[i],new_perm[j] = new_perm[j],new_perm[i]
+						new_perm_add = tuple(permtrim(new_perm))
+						new_val = val
+						if ct>0:
+							new_val *= np.prod([q_var[index] for index in range(i+1,j+1)])
+						perm_list += [(new_perm_add,new_val,j)]
+						total_list+=[(new_perm_add,pp+1,new_val)]
+		up_perm_list = perm_list
+	return total_list
+
 
 # perms and inversion diff
 def kdown_perms(perm,monoperm,p,k):	

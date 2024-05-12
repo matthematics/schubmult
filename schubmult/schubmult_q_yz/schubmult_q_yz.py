@@ -3,15 +3,51 @@ from schubmult.schubmult_yz import compute_positive_rep, posify
 from symengine import *
 import sys
 
-
-#q_var = symarray("q",100)
-
 var2 = symarray("y",100)
 var3 = symarray("z",100)
 
-	
+var_x = symarray("x",100)
 
-	
+def nil_hecke(perm_dict,v,n,var2=var2,var3=var3):
+	th = strict_theta(inverse(v))
+	mu = permtrim(uncode(th))
+	vmu = permtrim(mulperm([*v],mu))
+	inv_vmu = inv(vmu)
+	inv_mu = inv(mu)
+	ret_dict = {}
+	vpaths = [([(vmu,0)],1)]
+	while th[-1] == 0:
+		th.pop()
+	thL = len(th)
+	vpathdicts = compute_vpathdicts(th,vmu,True)
+	for u,val in perm_dict.items():
+		inv_u = inv(u)
+		vpathsums = {u: {(1,2): val}}
+		for index in range(thL):			
+			mx_th = 0
+			for vp in vpathdicts[index]:
+				for v2,vdiff,s in vpathdicts[index][vp]:
+					if th[index]-vdiff > mx_th:
+						mx_th = th[index] - vdiff					
+			newpathsums = {}
+			for up in vpathsums:
+				inv_up = inv(up)
+				newperms = elem_sym_perms_q_op(up,mx_th,th[index],n)
+				for up2, udiff,mul_val in newperms:
+					if up2 not in newpathsums:
+						newpathsums[up2]={}
+					for v in vpathdicts[index]:
+						sumval = vpathsums[up].get(v,zero)*mul_val
+						if sumval == 0:
+							continue
+						for v2,vdiff,s in vpathdicts[index][v]:
+							#print(f"{code(up2)=} {elem_sym_func_q(th[index],index+1,up,up2,v,v2,udiff,vdiff,var2,var3)=} {mul_val=} {sumval=}")							
+							newpathsums[up2][v2] = newpathsums[up2].get(v2,zero)+s*sumval*elem_sym_func_q(th[index],index+1,up2,up,v,v2,udiff,vdiff,var2,var3)
+			vpathsums = newpathsums
+		toget = tuple(vmu)
+		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
+	return ret_dict
+
 
 	
 def schubmult(perm_dict,v,var2=var2,var3=var3):
@@ -150,6 +186,14 @@ def factor_out_q(poly):
 var2_t = tuple(var2.tolist())
 var3_t = tuple(var3.tolist())	
 
+def print_usage():
+	print("**** schubmult_q_yz ****")
+	print("Purpose: Compute Molev-Sagan coefficients of quantum double Schubert polynomials")
+	print("Usage: schubmult_q_yz <-np|--no-print> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. >")
+	print("       *** Computes products")
+	print("Alternative usage: schubmult_q_yz -nil-hecke n <-code> <--display-positive> perm")
+	print("       *** Computes nil-Hecke representation of quantum double Schubert polynomial, limiting to the group S_n")
+
 def main():
 	global var2
 	try:
@@ -162,10 +206,19 @@ def main():
 		display_positive = False
 		ascode = False
 		coprod = False
+		nilhecke = False
 		check = True
 		msg = False
+		just_nil = False
+		
+		nil_N = 0
+		
 		try:
 			for s in sys.argv[1:]:
+				if just_nil:
+					just_nil = False
+					nil_N = int(s)
+					continue
 				if s == "-np" or s == "--no-print":
 					pr = False
 					continue
@@ -178,16 +231,18 @@ def main():
 				if s == "--optimizer-message":
 					msg = True
 					continue
+				if s == "-nil-hecke":
+					nilhecke = True
+					just_nil = True
+					continue
 				if s == "--version":
 					print(f"Python version {sys.version}")
 					exit(0)
 				if s == "-code":
 					ascode = True
 					continue
-				if s == "--usage":
-					print("**** schubmult_q_yz ****")
-					print("Purpose: Compute Molev-Sagan coefficients of quantum double Schubert polynomials")
-					print("Usage: schubmult_q_yz <-np|--no-print> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. >")
+				if s == "--usage" or s == "--help":
+					print_usage()
 					exit(0)
 				if s == "-":
 					perms += [curperm]
@@ -195,9 +250,7 @@ def main():
 					continue
 				curperm += [int(s)]
 		except Exception:
-			print("**** schubmult_q_yz ****")
-			print("Purpose: Compute Molev-Sagan coefficients of quantum double Schubert polynomials")
-			print("Usage: schubmult_q_yz <-np|--no-print> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. >")
+			print_usage()
 			exit(1)
 				
 		perms += [curperm]
@@ -213,9 +266,14 @@ def main():
 		size = 0
 		L = len(perms)
 		
-		coeff_dict = {perms[0]: 1}
-		for perm in perms[1:]:
-			coeff_dict = schubmult(coeff_dict,perm)
+		if nilhecke:
+			coeff_dict = nil_hecke({(1,2): 1},perms[0],nil_N)			
+			rep = ("y","x")
+		else:
+			coeff_dict = {perms[0]: 1}
+			for perm in perms[1:]:
+				coeff_dict = schubmult(coeff_dict,perm)
+			rep = ("","")
 		
 		if pr:
 			if ascode:
@@ -269,9 +327,9 @@ def main():
 							val = val2
 					if val!=0:
 						if ascode:
-							print(f"{str(trimcode(perm)):>{width}}  {str(val).replace('**','^').replace('*',' ')}")	
+							print(f"{str(trimcode(perm)):>{width}}  {str(val).replace('**','^').replace('*',' ').replace(*rep)}")	
 						else:
-							print(f"{str(perm):>{width}}  {str(val).replace('**','^').replace('*',' ')}")	
+							print(f"{str(perm):>{width}}  {str(val).replace('**','^').replace('*',' ').replace(*rep)}")	
 	except BrokenPipeError:
 		pass
 		

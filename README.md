@@ -37,7 +37,10 @@ schubmult_double -code -coprod 0 1 2 3 - 2 4
 schubmult_yz -code -coprod 0 1 2 3 - 2 4 --display-positive
 ```
 
-
+Since version 1.3.7, schubmult_q_yz has a feature for displaying the coefficients of the divided difference operators in the evaluation of the quantum double Schubert polynomials on the commuting difference operators of Fomin, Gelfand, and Postnikov. It is necessary to cap the value of n in the group S_n we are working in because as n increases the expression does not stabilize.
+```
+schubmult_q_yz -nil-hecke 6 -code 2 2 --display-positive
+```
 
 Runtime will vary tremendously by case. The general problem is #P-hard. Though the result is always nonnegative (which at least is known for schubmult_py, schubmult_q, schubmult_double, and schubmult_q_double) and the problem is in GapP, it is not known to be in #P at this time.
 
