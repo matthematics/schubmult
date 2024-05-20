@@ -139,6 +139,28 @@ def elem_sym_perms(orig_perm,p,k):
 		up_perm_list = perm_list
 	return total_list
 
+def elem_sym_perms_op(orig_perm,p,k):	
+	total_list = [(orig_perm,0)]
+	up_perm_list = [(orig_perm,k)]
+	for pp in range(p):
+		perm_list = []
+		for up_perm, last in up_perm_list:	
+			up_perm2 = [*up_perm]
+			if len(up_perm2) < k + 1:
+				up_perm2 += [i+1 for i in range(len(up_perm2),k+2)]
+			pos_list = [i for i in range(k) if up_perm2[i] == orig_perm[i]]
+			for j in range(last,len(up_perm2)):				
+				for i in pos_list:								
+					if has_bruhat_descent(up_perm2,i,j):
+						new_perm = [*up_perm2]
+						new_perm[i],new_perm[j] = new_perm[j],new_perm[i]
+						new_perm_add = tuple(permtrim(new_perm))
+						perm_list += [(new_perm_add,j)]
+						total_list+=[(new_perm_add,pp+1)]
+		up_perm_list = perm_list
+	return total_list
+
+
 def strict_theta(u):
 	ret = [*trimcode(u)]
 	did_one = True
