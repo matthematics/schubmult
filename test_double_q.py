@@ -60,30 +60,35 @@ def double_elem_sym_q(u,p1,p2,k):
 		perms2 = elem_sym_perms_q(perm1,p2,k)
 		#up_ref1 = get_reflections(u,iu,perm1)
 		cycles1 = get_cycles(mulperm(iu,[*perm1]))
-		cycles1_set = [set(c) for c in cycles1]
+		#cycles1.sort(key=lambda c: c[-1])
+		#cycles1_set = [set(c) for c in cycles1]
+		cycles1_dict = {}
+		for c in cycles1:
+			if c[-1] not in cycles1_dict:
+				cycles1_dict[c[-1]] = []
+			cycles1_dict[c[-1]]+= [set(c)]
+		#print(f"{cycles1_dict=}")
 		ip1 = inverse(perm1)
 		tp1 = tuple(permtrim([*perm1]))
 		#perm1i = inverse(perm1)
 		for perm2, udiff2, mul_val2 in perms2:
 			#up_ref2 = get_reflections(perm1,ip1,perm2)
 			cycles2 = get_cycles(mulperm(ip1,[*perm2]))
-			cycles2_set = [set(c) for c in cycles2]
+			#cycles2_set = [set(c) for c in cycles2]
 			good = True
-			for i in range(len(cycles1)):
-				c1 = cycles1[i]
-				c1_s = cycles1_set[i]
-				for j in range(len(cycles2)):
-					c2 = cycles2[j]
-					c2_s = cycles2_set[j]
-					if c1[-1] in c2_s:
-						for a in range(len(c1)-2,-1,-1):
-							if c1[a] in c2_s:
-								good = False
-								break
-						if not good:
-							break											
+			for i in range(len(cycles2)):
+				c2 = cycles2[i]
+				#c1_s = cycles1_set[i]
+				if c2[-1] not in cycles1_dict:
+					continue
+				for c1_s in cycles1_dict[c2[-1]]:
+					#print(f"{c1_s=}")
+					for a in range(len(c2)-2,-1,-1):
+						if c2[a] in c1_s:
+							good = False
+							break
 					if not good:
-						break
+						break														
 				if not good:
 					break
 			
