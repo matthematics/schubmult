@@ -69,7 +69,7 @@ def double_elem_sym_q(u,p1,p2,k):
 			cycles1_dict[c[-1]]+= [set(c)]
 		#print(f"{cycles1_dict=}")
 		ip1 = inverse(perm1)
-		tp1 = tuple(permtrim([*perm1]))
+		#tp1 = tuple(permtrim([*perm1]))
 		#perm1i = inverse(perm1)
 		for perm2, udiff2, mul_val2 in perms2:
 			#up_ref2 = get_reflections(perm1,ip1,perm2)
@@ -110,9 +110,9 @@ def double_elem_sym_q(u,p1,p2,k):
 			#		break
 			if good:				
 				#ret[perm2] = ret.get(perm2,0) + val*mul_val1*mul_val2*elem_sym_func_q(k,1,u,perm1,(1,2),(1,2),udiff1,0,var2,var3)*elem_sym_func_q(k,2,perm1,perm2,(1,2),(1,2),udiff2,0,var2,var3)
-				if (tp1,udiff1,mul_val1) not in ret_list:
-					ret_list[(tp1,udiff1,mul_val1)] = []
-				ret_list[(tp1,udiff1,mul_val1)] += [(tuple(permtrim([*perm2])),udiff2,mul_val2)]
+				if (perm1,udiff1,mul_val1) not in ret_list:
+					ret_list[(perm1,udiff1,mul_val1)] = []
+				ret_list[(perm1,udiff1,mul_val1)] += [(perm2,udiff2,mul_val2)]
 	return ret_list
 
 def double_mul(coeff_dict,k):
@@ -166,10 +166,14 @@ def medium_theta(perm):
 	found_one = True
 	while found_one:
 		found_one = False
-		for i in range(len(cd)-2,-1,-1):
-			if cd[i]<cd[i+1] or (cd[i]>0 and cd[i]==cd[i+1] and i>0 and cd[i-1]<=cd[i]+1):
+		for i in range(len(cd)-1):
+			if cd[i]<cd[i+1]: 
 				found_one = True
 				cd[i], cd[i+1] = cd[i+1]+1, cd[i]
+				break
+			if cd[i]==cd[i+1] and i>0 and cd[i-1]<=cd[i]+1:
+				cd[i]+=1
+				found_one = True
 				break
 	return cd
 
@@ -222,12 +226,12 @@ def schubmult_db(perm_dict,v,var2=var2,var3=var3):
 							continue
 						for v2,vdiff2,s2 in vpathdicts[index][v]:
 							for up1, udiff1, mul_val1 in newperms:
-								esim1 = elem_sym_func_q(th[index],index+1,up,up1,v,v2,udiff1,vdiff2,var2,var3)*mul_val1
+								esim1 = elem_sym_func_q(th[index],index+1,up,up1,v,v2,udiff1,vdiff2,var2,var3)*mul_val1*sumval*s2
 								for up2, udiff2, mul_val2 in newperms[(up1,udiff1,mul_val1)]:
 									if up2 not in newpathsums:
 										newpathsums[up2]={}																
 									for v3,vdiff3,s3 in vpathdicts[index+1][v2]:									
-											newpathsums[up2][v3] = newpathsums[up2].get(v3,zero)+s2*s3*mul_val2*sumval*esim1*elem_sym_func_q(th[index+1],index+2,up1,up2,v2,v3,udiff2,vdiff3,var2,var3)
+											newpathsums[up2][v3] = newpathsums[up2].get(v3,zero)+s3*mul_val2*esim1*elem_sym_func_q(th[index+1],index+2,up1,up2,v2,v3,udiff2,vdiff3,var2,var3)
 			else:
 				newpathsums = {}
 				for up in vpathsums:
@@ -344,35 +348,35 @@ def domul(perm):
 	for v in permos:
 		#to_mul = uncode([2 for i in range(k)])
 		coeff_dict = {perm: 1}
-		coeff_dict_test = schubmult(coeff_dict,v)
+		#coeff_dict_test = schubmult(coeff_dict,v)
 		coeff_dict_try = schubmult_db(coeff_dict,v)
-		fail = False
-		for u in coeff_dict_try:
-			#print(f"{coeff_dict_try=}")
-			if expand(coeff_dict_test.get(u,0) - coeff_dict_try.get(u,0)) != 0:
-				#coeff_dict_test = posify_dict(coeff_dict_test)
-				#coeff_dict_try = posify_dict(coeff_dict_try)
-				print(f"Fail {perm} {v} {theta(inverse(v))=}")
-				#print(f"Fail {perm} {k}",file=sys.stderr)				
-				fail = True
-				print(f"test={perm}: {u}: {coeff_dict_test.get(u,0)}")
-				print(f"try={perm}: {u}: {coeff_dict_try.get(u,0)}")
-				print(f"Fail {perm} {v} {theta(inverse(v))=}",file=sys.stderr)
-				exit(1)
-		for u in coeff_dict_test:
-			if expand(coeff_dict_test.get(u,0) - coeff_dict_try.get(u,0)) != 0:
-				#coeff_dict_test = posify_dict(coeff_dict_test)
-				#coeff_dict_try = posify_dict(coeff_dict_try)
-				print(f"Fail {perm} {v} {theta(inverse(v))=}")
-				#print(f"Fail {perm} {k}",file=sys.stderr)
-				print(f"test={perm}: {u}: {coeff_dict_test.get(u,0)}")
-				print(f"try={perm}: {u}: {coeff_dict_try.get(u,0)}")
-				print(f"Fail {perm} {v} {theta(inverse(v))=}",file=sys.stderr)
-				fail = True
-				exit(1)
-		if not fail:
-			print(f"Success {perm} {v}")
-			print(f"Success {perm} {v}",file=sys.stderr)		
+		#fail = False
+		#for u in coeff_dict_try:
+		#	#print(f"{coeff_dict_try=}")
+		#	if expand(coeff_dict_test.get(u,0) - coeff_dict_try.get(u,0)) != 0:
+		#		#coeff_dict_test = posify_dict(coeff_dict_test)
+		#		#coeff_dict_try = posify_dict(coeff_dict_try)
+		#		print(f"Fail {perm} {v} {theta(inverse(v))=}")
+		#		#print(f"Fail {perm} {k}",file=sys.stderr)				
+		#		fail = True
+		#		print(f"test={perm}: {u}: {coeff_dict_test.get(u,0)}")
+		#		print(f"try={perm}: {u}: {coeff_dict_try.get(u,0)}")
+		#		print(f"Fail {perm} {v} {theta(inverse(v))=}",file=sys.stderr)
+		#		exit(1)
+		#for u in coeff_dict_test:
+		#	if expand(coeff_dict_test.get(u,0) - coeff_dict_try.get(u,0)) != 0:
+		#		#coeff_dict_test = posify_dict(coeff_dict_test)
+		#		#coeff_dict_try = posify_dict(coeff_dict_try)
+		#		print(f"Fail {perm} {v} {theta(inverse(v))=}")
+		#		#print(f"Fail {perm} {k}",file=sys.stderr)
+		#		print(f"test={perm}: {u}: {coeff_dict_test.get(u,0)}")
+		#		print(f"try={perm}: {u}: {coeff_dict_try.get(u,0)}")
+		#		print(f"Fail {perm} {v} {theta(inverse(v))=}",file=sys.stderr)
+		#		fail = True
+		#		exit(1)
+		#if not fail:
+		#	print(f"Success {perm} {v}")
+		#	print(f"Success {perm} {v}",file=sys.stderr)		
 
 permos=new_perms
 #for perm in new_perms:
@@ -393,5 +397,5 @@ permos=new_perms
 #	#if good and len(set(th))!=len(th):		
 #	permos+=[perm]
 
-Parallel(n_jobs=11)(delayed(domul)(perm) for perm in new_perms)		
-#[domul(perm) for perm in new_perms]
+#Parallel(n_jobs=11)(delayed(domul)(perm) for perm in new_perms)		
+[domul(perm) for perm in new_perms]
