@@ -171,7 +171,7 @@ def medium_theta(perm):
 				found_one = True
 				cd[i], cd[i+1] = cd[i+1]+1, cd[i]
 				break
-			if cd[i]==cd[i+1] and i>0 and cd[i-1]<=cd[i]+1:
+			if cd[i]==cd[i+1] and cd[i]!=0 and i>0 and cd[i-1]<=cd[i]+1:
 				cd[i]+=1
 				found_one = True
 				break
