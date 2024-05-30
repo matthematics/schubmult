@@ -86,12 +86,82 @@ def medium_theta(perm):
 				break
 	return cd
 
+#def schubmult_db(perm_dict,v,var2=var2,var3=var3):
+#	if v == (1,2):
+#		return perm_dict
+#	th = medium_theta(inverse(v))
+#	while th[-1] == 0:
+#		th.pop()
+#	mu = permtrim(uncode(th))
+#	vmu = permtrim(mulperm([*v],mu))
+#	inv_vmu = inv(vmu)
+#	inv_mu = inv(mu)
+#	ret_dict = {}
+#	vpaths = [([(vmu,0)],1)]
+#	
+#	thL = len(th)
+#	vpathdicts = compute_vpathdicts(th,vmu,True)
+#	for u,val in perm_dict.items():
+#		inv_u = inv(u)
+#		vpathsums = {u: {(1,2): val}}
+#		for index in range(thL):
+#			if index>0 and th[index-1] == th[index]:
+#				continue				
+#			mx_th = 0
+#			for vp in vpathdicts[index]:
+#				for v2,vdiff,s in vpathdicts[index][vp]:
+#					if th[index]-vdiff > mx_th:
+#						mx_th = th[index] - vdiff
+#			if index<len(th)-1 and th[index] == th[index+1]:
+#				mx_th1 = 0
+#				for vp in vpathdicts[index+1]:
+#					for v2,vdiff,s in vpathdicts[index+1][vp]:
+#						if th[index+1]-vdiff > mx_th1:
+#							mx_th1 = th[index+1] - vdiff
+#				newpathsums = {}
+#				for up in vpathsums:
+#					inv_up = inv(up)
+#					newperms = double_elem_sym_q(up,mx_th,mx_th1,th[index])
+#					for v in vpathdicts[index]:
+#						sumval = vpathsums[up].get(v,zero)
+#						if sumval == 0:
+#							continue
+#						for v2,vdiff2,s2 in vpathdicts[index][v]:
+#							for up1, udiff1, mul_val1 in newperms:
+#								esim1 = elem_sym_func_q(th[index],index+1,up,up1,v,v2,udiff1,vdiff2,var2,var3)*mul_val1*sumval*s2
+#								for up2, udiff2, mul_val2 in newperms[(up1,udiff1,mul_val1)]:
+#									if up2 not in newpathsums:
+#										newpathsums[up2]={}																
+#									for v3,vdiff3,s3 in vpathdicts[index+1][v2]:									
+#											newpathsums[up2][v3] = newpathsums[up2].get(v3,zero)+s3*mul_val2*esim1*elem_sym_func_q(th[index+1],index+2,up1,up2,v2,v3,udiff2,vdiff3,var2,var3)
+#			else:
+#				newpathsums = {}
+#				for up in vpathsums:
+#					inv_up = inv(up)
+#					newperms = elem_sym_perms_q(up,min(mx_th,(inv_mu-(inv_up-inv_u))-inv_vmu),th[index])
+#					for up2, udiff,mul_val in newperms:
+#						if up2 not in newpathsums:
+#							newpathsums[up2]={}
+#						for v in vpathdicts[index]:
+#							sumval = vpathsums[up].get(v,zero)*mul_val
+#							if sumval == 0:
+#								continue
+#							for v2,vdiff,s in vpathdicts[index][v]:
+#								newpathsums[up2][v2] = newpathsums[up2].get(v2,zero)+s*sumval*elem_sym_func_q(th[index],index+1,up,up2,v,v2,udiff,vdiff,var2,var3)
+#			vpathsums = newpathsums
+#		toget = tuple(vmu)
+#		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
+#	return ret_dict
+
 def schubmult_db(perm_dict,v,var2=var2,var3=var3):
 	if v == (1,2):
 		return perm_dict
 	th = medium_theta(inverse(v))
+	#print(f"{th=}")
 	while th[-1] == 0:
 		th.pop()
+	#if len(set(th))!=len(th):
+	#	print(f"medium theta {th=}")
 	mu = permtrim(uncode(th))
 	vmu = permtrim(mulperm([*v],mu))
 	inv_vmu = inv(vmu)
@@ -100,7 +170,10 @@ def schubmult_db(perm_dict,v,var2=var2,var3=var3):
 	vpaths = [([(vmu,0)],1)]
 	
 	thL = len(th)
+	#if thL!=2 and len(set(thL))!=1:
+	#	raise ValueError("Not what I can do")
 	vpathdicts = compute_vpathdicts(th,vmu,True)
+	#print(f"{vpathdicts=}")
 	for u,val in perm_dict.items():
 		inv_u = inv(u)
 		vpathsums = {u: {(1,2): val}}
@@ -117,23 +190,43 @@ def schubmult_db(perm_dict,v,var2=var2,var3=var3):
 				for vp in vpathdicts[index+1]:
 					for v2,vdiff,s in vpathdicts[index+1][vp]:
 						if th[index+1]-vdiff > mx_th1:
-							mx_th1 = th[index+1] - vdiff
+							mx_th1 = th[index+1] - vdiff				
 				newpathsums = {}
 				for up in vpathsums:
+					newpathsums0 = {}
 					inv_up = inv(up)
 					newperms = double_elem_sym_q(up,mx_th,mx_th1,th[index])
+					#for up1, up2, udiff1,udiff2,mul_val1,mul_val2 in newperms:
 					for v in vpathdicts[index]:
 						sumval = vpathsums[up].get(v,zero)
 						if sumval == 0:
 							continue
 						for v2,vdiff2,s2 in vpathdicts[index][v]:
 							for up1, udiff1, mul_val1 in newperms:
-								esim1 = elem_sym_func_q(th[index],index+1,up,up1,v,v2,udiff1,vdiff2,var2,var3)*mul_val1*sumval*s2
+								esim1 = elem_sym_func_q(th[index],index+1,up,up1,v,v2,udiff1,vdiff2,var2,var3)*mul_val1*s2
+								mulfac = sumval*esim1
+								if (up1,udiff1,mul_val1) not in newpathsums0:
+									newpathsums0[(up1,udiff1,mul_val1)] = {}
+								#newpathsums0[(up1, udiff1, mul_val1
+								newpathsums0[(up1,udiff1,mul_val1)][v2] = newpathsums0[(up1,udiff1,mul_val1)].get(v2,0) + mulfac
+					
+					for up1, udiff1, mul_val1 in newpathsums0:
+						for v in vpathdicts[index+1]:
+							sumval = newpathsums0[(up1,udiff1,mul_val1)].get(v,zero)
+							if sumval == 0:
+								continue
+							for v2,vdiff2,s2 in vpathdicts[index+1][v]:
 								for up2, udiff2, mul_val2 in newperms[(up1,udiff1,mul_val1)]:
+									esim1 = elem_sym_func_q(th[index+1],index+2,up1,up2,v,v2,udiff2,vdiff2,var2,var3)*mul_val2*s2
+									mulfac = sumval*esim1
 									if up2 not in newpathsums:
-										newpathsums[up2]={}																
-									for v3,vdiff3,s3 in vpathdicts[index+1][v2]:									
-											newpathsums[up2][v3] = newpathsums[up2].get(v3,zero)+s3*mul_val2*esim1*elem_sym_func_q(th[index+1],index+2,up1,up2,v2,v3,udiff2,vdiff3,var2,var3)
+										newpathsums[up2] = {}
+									newpathsums[up2][v2] = newpathsums[up2].get(v2,0) + mulfac
+											#for up2, udiff2, mul_val2 in newperms[(up1,udiff1,mul_val1)]:
+											#	if up2 not in newpathsums:
+											#		newpathsums[up2]={}
+											#	for v3,vdiff3,s3 in vpathdicts[index+1][v2]:
+											#			newpathsums[up2][v3] = newpathsums[up2].get(v3,zero)+s3*mul_val2*mulfac*elem_sym_func_q(th[index+1],index+2,up1,up2,v2,v3,udiff2,vdiff3,var2,var3)
 			else:
 				newpathsums = {}
 				for up in vpathsums:
@@ -202,35 +295,35 @@ def domul(perm):
 	global permos
 	coeff_dict = {perm: 1}
 	for v in permos:		
-		#coeff_dict_test = schubmult(coeff_dict,v)
+		coeff_dict_test = schubmult(coeff_dict,v)
 		coeff_dict_try = schubmult_db(coeff_dict,v)
-		#fail = False
-		#for u in coeff_dict_try:
-		#	#print(f"{coeff_dict_try=}")
-		#	if expand(coeff_dict_test.get(u,0) - coeff_dict_try.get(u,0)) != 0:
-		#		#coeff_dict_test = posify_dict(coeff_dict_test)
-		#		#coeff_dict_try = posify_dict(coeff_dict_try)
-		#		print(f"Fail {perm} {v} {theta(inverse(v))=}")
-		#		#print(f"Fail {perm} {k}",file=sys.stderr)				
-		#		fail = True
-		#		print(f"test={perm}: {u}: {coeff_dict_test.get(u,0)}")
-		#		print(f"try={perm}: {u}: {coeff_dict_try.get(u,0)}")
-		#		print(f"Fail {perm} {v} {theta(inverse(v))=}",file=sys.stderr)
-		#		exit(1)
-		#for u in coeff_dict_test:
-		#	if expand(coeff_dict_test.get(u,0) - coeff_dict_try.get(u,0)) != 0:
-		#		#coeff_dict_test = posify_dict(coeff_dict_test)
-		#		#coeff_dict_try = posify_dict(coeff_dict_try)
-		#		print(f"Fail {perm} {v} {theta(inverse(v))=}")
-		#		#print(f"Fail {perm} {k}",file=sys.stderr)
-		#		print(f"test={perm}: {u}: {coeff_dict_test.get(u,0)}")
-		#		print(f"try={perm}: {u}: {coeff_dict_try.get(u,0)}")
-		#		print(f"Fail {perm} {v} {theta(inverse(v))=}",file=sys.stderr)
-		#		fail = True
-		#		exit(1)
-		#if not fail:
-		#	print(f"Success {perm} {v}")
-		#	print(f"Success {perm} {v}",file=sys.stderr)		
+		fail = False
+		for u in coeff_dict_try:
+			#print(f"{coeff_dict_try=}")
+			if expand(coeff_dict_test.get(u,0) - coeff_dict_try.get(u,0)) != 0:
+				#coeff_dict_test = posify_dict(coeff_dict_test)
+				#coeff_dict_try = posify_dict(coeff_dict_try)
+				print(f"Fail {perm} {v} {theta(inverse(v))=}")
+				#print(f"Fail {perm} {k}",file=sys.stderr)				
+				fail = True
+				print(f"test={perm}: {u}: {coeff_dict_test.get(u,0)}")
+				print(f"try={perm}: {u}: {coeff_dict_try.get(u,0)}")
+				print(f"Fail {perm} {v} {theta(inverse(v))=}",file=sys.stderr)
+				exit(1)
+		for u in coeff_dict_test:
+			if expand(coeff_dict_test.get(u,0) - coeff_dict_try.get(u,0)) != 0:
+				#coeff_dict_test = posify_dict(coeff_dict_test)
+				#coeff_dict_try = posify_dict(coeff_dict_try)
+				print(f"Fail {perm} {v} {theta(inverse(v))=}")
+				#print(f"Fail {perm} {k}",file=sys.stderr)
+				print(f"test={perm}: {u}: {coeff_dict_test.get(u,0)}")
+				print(f"try={perm}: {u}: {coeff_dict_try.get(u,0)}")
+				print(f"Fail {perm} {v} {theta(inverse(v))=}",file=sys.stderr)
+				fail = True
+				exit(1)
+		if not fail:
+			print(f"Success {perm} {v}")
+			print(f"Success {perm} {v}",file=sys.stderr)		
 
 permos=new_perms
 
