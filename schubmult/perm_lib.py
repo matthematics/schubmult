@@ -8,6 +8,11 @@ n = 100
 
 q_var = symarray("q",n)
 
+def getpermval(perm,index):
+	if index<len(perm):
+		return perm[index]
+	return index+1
+
 def inv(perm):
 	L = len(perm)
 	v = [i for i in range(1,L+1)]
@@ -321,6 +326,13 @@ def add_perm_dict(d1,d2):
 
 zero = sympify(0)
 one = sympify(1)
+
+def elem_sym_poly_q(p,k,varl1,varl2):
+	if p == 0 and k>=0:
+		return one
+	if p<0 or p>k:
+		return zero
+	return (varl1[k-1] - varl2[k-p])*elem_sym_poly_q(p-1,k-1,varl1,varl2)+elem_sym_poly_q(p,k-1,varl1,varl2)+q_var[k-1]*elem_sym_poly_q(p-2,k-2,varl1,varl2)
 
 def elem_sym_poly(p,k,varl1,varl2,xstart=0,ystart=0):
 	global zero, one
