@@ -2,6 +2,50 @@ import sys
 from functools import cache
 from itertools import chain
 from schubmult.perm_lib import *
+from symengine import *
+
+var_x = symarray("x",100).tolist()
+
+def single_variable(coeff_dict,varnum):
+	ret = {}
+	for u in coeff_dict:
+		new_perms_k = elem_sym_perms(u,1,varnum)
+		new_perms_km1 = []
+		if varnum > 1:
+			new_perms_km1 = elem_sym_perms(u,1,varnum-1)
+		for perm, udiff in new_perms_k:
+			if udiff == 1:
+				ret[perm] = ret.get(perm,0) + coeff_dict[u]
+		for perm, udiff in new_perms_km1:
+			if udiff == 1:
+				ret[perm] = ret.get(perm,0) - coeff_dict[u]
+	return ret
+
+def mult_poly(coeff_dict,poly):
+	if poly in var_x:
+		return single_variable(coeff_dict,var_x.index(poly))
+	elif isinstance(poly,Mul):
+		ret = coeff_dict
+		for a in poly.args:
+			ret = mult_poly(ret,a)
+		return ret
+	elif isinstance(poly,Pow):
+		base = poly.args[0]
+		exponent = int(poly.args[1])
+		ret = coeff_dict
+		for i in range(int(exponent)):
+			ret = mult_poly(ret,base)
+		return ret
+	elif isinstance(poly,Add):
+		ret = {}
+		for a in poly.args:
+			ret = add_perm_dict(ret,mult_poly(coeff_dict,a))
+		return ret
+	else:
+		ret = {}
+		for perm in coeff_dict:
+			ret[perm] = poly*coeff_dict[perm]
+		return ret
 
 def schubmult(perm_dict,v):
 	vn1 = inverse(v)
@@ -58,9 +102,17 @@ def main():
 		pr = True
 		coprod = False
 		ascode = False
+		mult = False
+		mulstring = ""
 		
 		try:
 			for s in sys.argv[1:]:
+				if mult:
+					mulstring += s
+					continue
+				if s == "-mult":
+					mult = True
+					continue
 				if s == "-np" or s == "--no-print":
 					pr = False
 					continue
@@ -73,8 +125,9 @@ def main():
 				if s == "-":
 					perms += [tuple(curperm)]
 					curperm = []
-					continue
-				curperm += [int(s)]
+					continue				
+				else:
+					curperm += [int(s)]
 		except Exception:
 			print("**** schubmult_py ****")
 			print("Purpose: Compute products (and coproducts) of ordinary Schubert polynomials")
@@ -138,11 +191,14 @@ def main():
 		
 		
 			perms.sort(reverse=True,key=lambda x: sum(theta(inverse(x)))-inv(x))
-			
+					
 			coeff_dict = {tuple(permtrim([*perms[0]])): 1}
-			
+					
 			for perm in perms[1:]:
 				coeff_dict = schubmult(coeff_dict,tuple(permtrim([*perm])))
+			if mult:
+				mul_exp = sympify(mulstring)
+				coeff_dict = mult_poly(coeff_dict,mul_exp)
 				
 			if pr:
 				for perm, val in coeff_dict.items():

@@ -2,7 +2,7 @@ from symengine import *
 from functools import cache
 from itertools import chain
 from schubmult.perm_lib import *
-from schubmult.schubmult_yz import schubmult
+from schubmult.schubmult_yz import schubmult, mult_poly
 import sys
 
 n = 100
@@ -17,7 +17,7 @@ var_q = Symbol("q")
 subs_dict = {}
 
 for i in range(1,n):
-	sm = var_r[0]
+	sm = var2[1]
 	for j in range(1,i):
 		sm += var_r[j]
 	subs_dict[var2[i]] = sm
@@ -32,10 +32,15 @@ def main():
 		pr = True
 		ascode = False
 		coprod = False
+		mult = False
+		mulstring = ""
 		try:
 			for s in sys.argv[1:]:
 				if s == "-np" or s == "--no-print":
 					pr = False
+					continue
+				if mult:
+					mulstring+=s
 					continue
 				if s == "-code":
 					ascode = True
@@ -47,11 +52,14 @@ def main():
 					perms += [curperm]
 					curperm = []
 					continue
+				if s == "-mult":
+					mult = True
+					continue
 				curperm += [int(s)]
 		except Exception:
 			print("**** schubmult_double ****")
 			print("Purpose: Compute products (and coproducts) of double Schubert polynomials in the same set of variables")
-			print("Usage: schubmult_double <-np|--no-print> <-code> perm1 - perm2 < - perm 3 ... >")
+			print("Usage: schubmult_double <-np|--no-print> <-code> perm1 - perm2 < - perm 3 ... > <-mult poly>")
 			print("Alternative usage: schubmult_double <-code> -coprod perm - indexlist")
 			exit(1)
 		
@@ -145,7 +153,10 @@ def main():
 			
 			for perm in perms[1:]:
 				coeff_dict = schubmult(coeff_dict,tuple(permtrim([*perm])),var2,var2)
-				
+			if mult:
+				mul_exp = sympify(mulstring)
+				coeff_dict = mult_poly(coeff_dict,mul_exp)
+			
 			if pr:
 				if ascode:
 					width = max([len(str(trimcode(perm))) for perm in coeff_dict.keys()])

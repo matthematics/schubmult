@@ -6,9 +6,66 @@ import sys
 var2 = symarray("y",100)
 var3 = symarray("z",100)
 
-var_x = symarray("x",100)
+var_y = var2.tolist()
+var_z = var3.tolist()
+var_x = symarray("x",100).tolist()
+
+x = var_x
+y = var_y
+z = var_z
+
+def E(p,k,varl=var_y[1:]):
+	return elem_sym_poly_q(p,k,var_x[1:],varl)
+
+def single_variable(coeff_dict,varnum):
+	ret = {}
+	for u in coeff_dict:
+		if varnum -1 < len(u):
+			ret[u] = ret.get(u,0) + var2[u[varnum-1]]*coeff_dict[u]
+		else:
+			ret[u] = ret.get(u,0) + var2[varnum]*coeff_dict[u]
+		new_perms_k = elem_sym_perms_q(u,1,varnum)
+		new_perms_km1 = []
+		if varnum > 1:
+			new_perms_km1 = elem_sym_perms_q(u,1,varnum-1)
+		for perm, udiff, mul_val in new_perms_k:
+			if udiff == 1:
+				ret[perm] = ret.get(perm,0) + coeff_dict[u]*mul_val
+		for perm, udiff, mul_val in new_perms_km1:
+			if udiff == 1:
+				ret[perm] = ret.get(perm,0) - coeff_dict[u]*mul_val
+	return ret
+
+def mult_poly(coeff_dict,poly):
+	if poly in var_x:
+		return single_variable(coeff_dict,var_x.index(poly))
+	elif isinstance(poly,Mul):
+		ret = coeff_dict
+		for a in poly.args:
+			ret = mult_poly(ret,a)
+		return ret
+	elif isinstance(poly,Pow):
+		base = poly.args[0]
+		exponent = int(poly.args[1])
+		ret = coeff_dict
+		for i in range(int(exponent)):
+			ret = mult_poly(ret,base)
+		return ret
+	elif isinstance(poly,Add):
+		ret = {}
+		for a in poly.args:
+			ret = add_perm_dict(ret,mult_poly(coeff_dict,a))
+		return ret
+	else:
+		ret = {}
+		for perm in coeff_dict:
+			ret[perm] = poly*coeff_dict[perm]
+		return ret
+		
 
 def nil_hecke(perm_dict,v,n,var2=var2,var3=var3):
+	if v == (1,2):
+		return perm_dict
 	th = strict_theta(inverse(v))
 	mu = permtrim(uncode(th))
 	vmu = permtrim(mulperm([*v],mu))
@@ -51,6 +108,8 @@ def nil_hecke(perm_dict,v,n,var2=var2,var3=var3):
 
 	
 def schubmult(perm_dict,v,var2=var2,var3=var3):
+	if v == (1,2):
+		return perm_dict
 	th = strict_theta(inverse(v))
 	mu = permtrim(uncode(th))
 	vmu = permtrim(mulperm([*v],mu))
@@ -189,7 +248,7 @@ var3_t = tuple(var3.tolist())
 def print_usage():
 	print("**** schubmult_q_yz ****")
 	print("Purpose: Compute Molev-Sagan coefficients of quantum double Schubert polynomials")
-	print("Usage: schubmult_q_yz <-np|--no-print> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. >")
+	print("Usage: schubmult_q_yz <-np|--no-print> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. > <-mult poly_expression>")
 	print("       *** Computes products")
 	print("Alternative usage: schubmult_q_yz -nil-hecke n <-code> <--display-positive> perm")
 	print("       *** Computes nil-Hecke representation of quantum double Schubert polynomial, limiting to the group S_n")
@@ -210,8 +269,13 @@ def main():
 		check = True
 		msg = False
 		just_nil = False
+		mult = False
 		
 		nil_N = 0
+		
+		mulstring = ""
+		norep = False
+		expa = False
 		
 		try:
 			for s in sys.argv[1:]:
@@ -219,8 +283,20 @@ def main():
 					just_nil = False
 					nil_N = int(s)
 					continue
+				if s == "--norep":
+					norep = True
+					continue
+				if s == "--expand":
+					expa = True
+					continue
 				if s == "-np" or s == "--no-print":
 					pr = False
+					continue
+				if mult:
+					mulstring += s
+					continue					
+				if s == "-mult":
+					mult = True
 					continue
 				if s == "-nocheck":
 					check = False
@@ -243,11 +319,11 @@ def main():
 					continue
 				if s == "--usage" or s == "--help":
 					print_usage()
-					exit(0)
+					exit(0)				
 				if s == "-":
 					perms += [curperm]
 					curperm = []
-					continue
+					continue				
 				curperm += [int(s)]
 		except Exception:
 			print_usage()
@@ -261,6 +337,8 @@ def main():
 				perms[i] = tuple(permtrim(uncode(perms[i])))
 		else:
 			for i in range(len(perms)):
+				if len(perms[i])<2 and (len(perms[i])==0 or perms[i][0]==1):
+					perms[i] = (1,2)
 				perms[i] = tuple(permtrim([*perms[i]]))
 		
 		size = 0
@@ -268,12 +346,24 @@ def main():
 		
 		if nilhecke:
 			coeff_dict = nil_hecke({(1,2): 1},perms[0],nil_N)			
-			rep = ("y","x")
+			rep = ("y","x")		
 		else:
 			coeff_dict = {perms[0]: 1}
 			for perm in perms[1:]:
 				coeff_dict = schubmult(coeff_dict,perm)
-			rep = ("","")
+			if mult:
+				for v in var2:
+					globals()[str(v)] = v
+				for v in var3:
+					globals()[str(v)] = v	
+				for v in var_x:
+					globals()[str(v)] = v	
+				for v in q_var:
+					globals()[str(v)] = v
+				q = q_var
+				mul_exp = eval(mulstring)
+				coeff_dict = mult_poly(coeff_dict,mul_exp)
+			rep = ("","")			
 		
 		if pr:
 			if ascode:
@@ -301,11 +391,11 @@ def main():
 									val2 += q_part*int(q_dict[q_part])
 								except Exception:
 									try:
-										if len(perms) == 2 and q_part == 1:
+										if len(perms) == 2 and q_part == 1 and not mult:
 											u = permtrim([*perms[0]])
 											v = permtrim([*perms[1]])
 											val2 += posify(q_dict[q_part],tuple(u),tuple(v),perm,var2_t,var3_t,msg,False)
-										elif len(perms) == 2 and q_part in q_var2:
+										elif len(perms) == 2 and q_part in q_var2 and not mult:
 											i = q_var2.index(q_part)
 											u = permtrim([*perms[0]])
 											v = permtrim([*perms[1]])											
@@ -318,18 +408,34 @@ def main():
 										else:
 											val2 += q_part*compute_positive_rep(q_dict[q_part],var2_t,var3_t,msg,False)
 									except Exception as e:
-										print(f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {coeff_dict.get(perm,0)=}")
-										print(f"Exception: {e}")
-										exit(1)
+										if mult:
+											print("warning; --display-positive is on but result is not positive",file=sys.stderr)
+											val2 = val
+											break
+										else:
+											print(f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {coeff_dict.get(perm,0)=}")
+											print(f"Exception: {e}")
+											exit(1)
 							if check and expand(val - val2)!=0:
-								print(f"error: value not equal; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {coeff_dict.get(perm,0)=}")
-								exit(1)
+								if mult:
+									val2 = val
+								else:
+									print(f"error: value not equal; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {coeff_dict.get(perm,0)=}")
+									exit(1)
 							val = val2
+					if expa:
+						val = expand(val)
 					if val!=0:
 						if ascode:
-							print(f"{str(trimcode(perm)):>{width}}  {str(val).replace('**','^').replace('*',' ').replace(*rep)}")	
+							if norep:
+								print(f"{str(trimcode(perm)):>{width}}  {str(val).replace(*rep)}")	
+							else:
+								print(f"{str(trimcode(perm)):>{width}}  {str(val).replace('**','^').replace('*',' ').replace(*rep)}")	
 						else:
-							print(f"{str(perm):>{width}}  {str(val).replace('**','^').replace('*',' ').replace(*rep)}")	
+							if norep:
+								print(f"{str(perm):>{width}}  {str(val).replace(*rep)}")	
+							else:
+								print(f"{str(perm):>{width}}  {str(val).replace('**','^').replace('*',' ').replace(*rep)}")	
 	except BrokenPipeError:
 		pass
 		

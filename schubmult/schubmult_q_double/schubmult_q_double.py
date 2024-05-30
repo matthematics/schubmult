@@ -1,5 +1,5 @@
 from schubmult.perm_lib import *
-from schubmult.schubmult_q_yz import schubmult
+from schubmult.schubmult_q_yz import schubmult, mult_poly
 from symengine import *
 import sys
 
@@ -15,7 +15,7 @@ var_r = symarray('r',100)
 subs_dict = {}
 
 for i in range(1,100):
-	sm = var_r[0]
+	sm = var2[1]
 	for j in range(1,i):
 		sm += var_r[j]
 	subs_dict[var2[i]] = sm
@@ -36,10 +36,18 @@ def main():
 		coprod = False
 		check = True
 		msg = False
+		mult = False
+		mulstring = ""
 		try:
 			for s in sys.argv[1:]:
 				if s == "-np" or s == "--no-print":
 					pr = False
+					continue
+				if mult:
+					mulstring += s
+					continue
+				if s == "-mult":
+					mult = True
 					continue
 				if s == "-nocheck":
 					check = False
@@ -89,6 +97,9 @@ def main():
 		coeff_dict = {perms[0]: 1}
 		for perm in perms[1:]:
 			coeff_dict = schubmult(coeff_dict,perm,var2,var2)
+		if mult:
+			mul_exp = sympify(mulstring)
+			coeff_dict = mult_poly(coeff_dict,mul_exp)
 		
 		if pr:
 			if ascode:

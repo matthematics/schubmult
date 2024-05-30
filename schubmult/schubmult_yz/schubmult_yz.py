@@ -27,6 +27,108 @@ var = tuple(symarray('x',n).tolist())
 var2 = tuple(symarray('y',n).tolist())
 var3 = tuple(symarray('z',n).tolist())
 
+var_x = symarray("x",100).tolist()
+var_y = var2
+var_z = var3
+
+x = var_x
+y = var_y
+z = var_z
+
+def E(p,k,varl=var_y[1:]):
+	return elem_sym_poly(p,k,var_x[1:],varl)
+
+def single_variable(coeff_dict,varnum):
+	ret = {}
+	for u in coeff_dict:
+		if varnum -1 < len(u):
+			ret[u] = ret.get(u,0) + var2[u[varnum-1]]*coeff_dict[u]
+		else:
+			ret[u] = ret.get(u,0) + var2[varnum]*coeff_dict[u]
+		new_perms_k = elem_sym_perms(u,1,varnum)
+		new_perms_km1 = []
+		if varnum > 1:
+			new_perms_km1 = elem_sym_perms(u,1,varnum-1)
+		for perm, udiff in new_perms_k:
+			if udiff == 1:
+				ret[perm] = ret.get(perm,0) + coeff_dict[u]
+		for perm, udiff in new_perms_km1:
+			if udiff == 1:
+				ret[perm] = ret.get(perm,0) - coeff_dict[u]
+	return ret
+
+def single_variable_down(coeff_dict,varnum):
+	ret = {}
+	for u in coeff_dict:
+		if varnum -1 < len(u):
+			ret[u] = ret.get(u,0) + var2[u[varnum-1]]*coeff_dict[u]
+		else:
+			ret[u] = ret.get(u,0) + var2[varnum]*coeff_dict[u]
+		new_perms_k = elem_sym_perms_op(u,1,varnum)
+		new_perms_km1 = []
+		if varnum > 1:
+			new_perms_km1 = elem_sym_perms_op(u,1,varnum-1)
+		for perm, udiff in new_perms_k:
+			if udiff == 1:
+				ret[perm] = ret.get(perm,0) + coeff_dict[u]
+		for perm, udiff in new_perms_km1:
+			if udiff == 1:
+				ret[perm] = ret.get(perm,0) - coeff_dict[u]
+	return ret
+
+
+def mult_poly(coeff_dict,poly):
+	if poly in var_x:
+		return single_variable(coeff_dict,var_x.index(poly))
+	elif isinstance(poly,Mul):
+		ret = coeff_dict
+		for a in poly.args:
+			ret = mult_poly(ret,a)
+		return ret
+	elif isinstance(poly,Pow):
+		base = poly.args[0]
+		exponent = int(poly.args[1])
+		ret = coeff_dict
+		for i in range(int(exponent)):
+			ret = mult_poly(ret,base)
+		return ret
+	elif isinstance(poly,Add):
+		ret = {}
+		for a in poly.args:
+			ret = add_perm_dict(ret,mult_poly(coeff_dict,a))
+		return ret
+	else:
+		ret = {}
+		for perm in coeff_dict:
+			ret[perm] = poly*coeff_dict[perm]
+		return ret
+
+def mult_poly_down(coeff_dict,poly):
+	if poly in var_x:
+		return single_variable_down(coeff_dict,var_x.index(poly))
+	elif isinstance(poly,Mul):
+		ret = coeff_dict
+		for a in poly.args:
+			ret = mult_poly_down(ret,a)
+		return ret
+	elif isinstance(poly,Pow):
+		base = poly.args[0]
+		exponent = int(poly.args[1])
+		ret = coeff_dict
+		for i in range(int(exponent)):
+			ret = mult_poly_down(ret,base)
+		return ret
+	elif isinstance(poly,Add):
+		ret = {}
+		for a in poly.args:
+			ret = add_perm_dict(ret,mult_poly_down(coeff_dict,a))
+		return ret
+	else:
+		ret = {}
+		for perm in coeff_dict:
+			ret[perm] = poly*coeff_dict[perm]
+		return ret
+
 
 def forwardcoeff(u,v,perm,var2=var2,var3=var3):
 	th = theta(v)
@@ -159,6 +261,49 @@ def schubmult(perm_dict,v,var2=var2,var3=var3):
 		toget = tuple(vmu)
 		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
 	return ret_dict
+
+def schubmult_down(perm_dict,v,var2=var2,var3=var3):
+	vn1 = inverse(v)
+	th = theta(vn1)
+	if th[0]==0:
+		return perm_dict		
+	mu = permtrim(uncode(th))
+	vmu = permtrim(mulperm([*v],mu))
+	inv_vmu = inv(vmu)
+	inv_mu = inv(mu)
+	ret_dict = {}
+	vpaths = [([(vmu,0)],1)]
+	while th[-1] == 0:
+		th.pop()
+	thL = len(th)
+	vpathdicts = compute_vpathdicts(th,vmu,True)
+	for u,val in perm_dict.items():
+		inv_u = inv(u)
+		vpathsums = {u: {(1,2): val}}
+		for index in range(thL):			
+			mx_th = 0
+			for vp in vpathdicts[index]:
+				for v2,vdiff,s in vpathdicts[index][vp]:
+					if th[index]-vdiff > mx_th:
+						mx_th = th[index] - vdiff					
+			newpathsums = {}
+			for up in vpathsums:
+				inv_up = inv(up)
+				newperms = elem_sym_perms_op(up,mx_th,th[index])
+				for up2, udiff in newperms:
+					if up2 not in newpathsums:
+						newpathsums[up2]={}
+					for v in vpathdicts[index]:
+						sumval = vpathsums[up].get(v,zero)
+						if sumval == 0:
+							continue
+						for v2,vdiff,s in vpathdicts[index][v]:
+							newpathsums[up2][v2] = newpathsums[up2].get(v2,zero)+s*sumval*elem_sym_func(th[index],index+1,up2,up,v,v2,udiff,vdiff,var2,var3)
+			vpathsums = newpathsums
+		toget = tuple(vmu)
+		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
+	return ret_dict
+
 
 fvar = 0
 
@@ -1294,10 +1439,23 @@ def main():
 		coprod = False
 		check = True
 		msg = False
+		mult = False
+		mulstring = ""
+		down = False
+		
 		try:
 			for s in sys.argv[1:]:
 				if s == "-np" or s == "--no-print":
 					pr = False
+					continue
+				if mult:
+					mulstring += s
+					continue
+				if s == "-mult":
+					mult = True
+					continue
+				if s == "-down":
+					down = True
 					continue
 				if s == "-coprod":
 					coprod = True
@@ -1318,7 +1476,7 @@ def main():
 					ascode = True
 					continue
 				if s == "--usage":
-					print("Usage: schubmult_yz <-np|--no-print> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. >")
+					print("Usage: schubmult_yz <-np|--no-print> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. > <-mult poly_expression>")					
 					print("Alternative usage: schubmult_yz <-code> <--display-positive> -coprod perm - indexlist")
 					exit(0)
 				if s == "-":
@@ -1451,6 +1609,8 @@ def main():
 					perms[i] = tuple(permtrim(uncode(perms[i])))
 			else:
 				for i in range(len(perms)):
+					if len(perms[i])<2 and (len(perms[i])==0 or perms[i][0]==1):
+						perms[i] = (1,2)
 					perms[i] = tuple(permtrim([*perms[i]]))
 			
 			size = 0
@@ -1462,9 +1622,30 @@ def main():
 			
 			coeff_dict = {perms[0]: 1}
 			check_coeff_dict = {perms[0]: 1}
-			for perm in orig_perms[1:]:
-				check_coeff_dict = schubmult(check_coeff_dict,perm)
-			if display_positive and len(perms)==2 and will_formula_work(perms[0],perms[1]):
+			
+			if mult:
+				for v in var2:
+					globals()[str(v)] = v
+				for v in var3:
+					globals()[str(v)] = v	
+				for v in var_x:
+					globals()[str(v)] = v	
+			
+			if down:
+				for perm in orig_perms[1:]:
+					check_coeff_dict = schubmult_down(check_coeff_dict,perm)
+				if mult:
+					mul_exp = eval(mulstring)
+					check_coeff_dict = mult_poly_down(check_coeff_dict,mul_exp)				
+			else:
+				for perm in orig_perms[1:]:
+					check_coeff_dict = schubmult(check_coeff_dict,perm)
+				if mult:
+					mul_exp = eval(mulstring)
+					check_coeff_dict = mult_poly(check_coeff_dict,mul_exp)
+			
+			
+			if display_positive and len(perms)==2 and will_formula_work(perms[0],perms[1]) and not mult and not down:
 				coeff_dict = {}
 				th = theta(perms[1])
 				muv = uncode(th)
@@ -1477,7 +1658,7 @@ def main():
 						coeff_dict[tuple(permtrim(w))] = val
 				posified = True
 				
-			if display_positive and len(perms)>2:
+			if display_positive and len(perms)>2 and not mult:
 				coeff_dict2 = dict(coeff_dict)
 				for perm in perms[1:]:					
 					coeff_dict3 = {}
@@ -1513,13 +1694,21 @@ def main():
 						if notint and display_positive:
 							valu = val
 							try:
-								if len(perms) == 2 and not posified:
-									val = posify(val,perms[0],perms[1],perm,var2,var3,msg)							
-								elif not posified:								
+								if len(perms) == 2 and not posified and not mult:
+									if not down:
+										val = posify(val,perms[0],perms[1],perm,var2,var3,msg)							
+									else:
+										val = posify(val,perm,perms[1],perms[0],var2,var3,msg)
+								elif not posified and not mult:			
 									val = compute_positive_rep(val,var2,var3,msg)
-							except TypeError:
-								print(f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}")
-								exit(1)
+								elif not posified:
+									val = compute_positive_rep(val,var2,var3,msg,do_pos_neg=False)
+							except Exception:
+								if mult:
+									print(f"warning; --display-positive is on but result is not positive",file=sys.stderr)
+								else:
+									print(f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}")
+									exit(1)
 							if check and expand(val - check_coeff_dict.get(perm,0))!=0:
 								print(f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}")
 								exit(1)
