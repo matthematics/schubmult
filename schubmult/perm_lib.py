@@ -669,3 +669,79 @@ def pull_out_var(vnum,v):
 			vp = permtrim(vpm2)
 			ret_list += [[[v[i] for i in range(vnum,len(v)) if ((i>len(vp) and v[i]==i) or (i<=len(vp) and v[i]==vp[i-1]))],vp]]
 	return ret_list			
+	
+def get_cycles(perm):
+	cycle_set = []
+	done_vals = set()
+	for i in range(len(perm)):
+		p = i + 1
+		if perm[i] == p:
+			continue
+		if p in done_vals:
+			continue
+		cycle = []
+		m = -1
+		max_index = -1
+		while p not in done_vals:
+			cycle += [p]
+			done_vals.add(p)
+			if p>m:
+				m = p
+				max_index = len(cycle) - 1
+			p = perm[p-1]
+		cycle = tuple(cycle[max_index+1:] + cycle[:max_index+1])
+		cycle_set += [cycle]
+	return cycle_set
+	
+def double_elem_sym_q(u,p1,p2,k):
+	ret_list = {}
+	perms1 = elem_sym_perms_q(u,p1,k)
+	iu = inverse(u)
+	for perm1, udiff1, mul_val1 in perms1:
+		perms2 = elem_sym_perms_q(perm1,p2,k)
+		cycles1 = get_cycles(tuple(permtrim(mulperm(iu,[*perm1]))))
+		cycles1_dict = {}
+		for c in cycles1:
+			if c[-1] not in cycles1_dict:
+				cycles1_dict[c[-1]] = []
+			cycles1_dict[c[-1]]+= [set(c)]
+		ip1 = inverse(perm1)
+		for perm2, udiff2, mul_val2 in perms2:
+			cycles2 = get_cycles(tuple(permtrim(mulperm(ip1,[*perm2]))))
+			good = True
+			for i in range(len(cycles2)):
+				c2 = cycles2[i]
+				if c2[-1] not in cycles1_dict:
+					continue
+				for c1_s in cycles1_dict[c2[-1]]:
+					for a in range(len(c2)-2,-1,-1):
+						if c2[a] in c1_s:
+							good = False
+							break
+					if not good:
+						break														
+				if not good:
+					break
+			
+			if good:				
+				if (perm1,udiff1,mul_val1) not in ret_list:
+					ret_list[(perm1,udiff1,mul_val1)] = []
+				ret_list[(perm1,udiff1,mul_val1)] += [(perm2,udiff2,mul_val2)]
+	return ret_list
+
+def medium_theta(perm):
+	cd = code(perm)
+	found_one = True
+	while found_one:
+		found_one = False
+		for i in range(len(cd)-1):
+			if cd[i]<cd[i+1]: 
+				found_one = True
+				cd[i], cd[i+1] = cd[i+1]+1, cd[i]
+				break
+			if cd[i]==cd[i+1] and cd[i]!=0 and i>0 and cd[i-1]<=cd[i]+1:
+			#if cd[i]==cd[i+1] and i>0 and cd[i-1]<=cd[i]+1:
+				cd[i]+=1
+				found_one = True
+				break
+	return cd
