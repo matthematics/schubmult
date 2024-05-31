@@ -1,5 +1,5 @@
 from schubmult.perm_lib import *
-from schubmult.schubmult_q_yz import schubmult, mult_poly
+from schubmult.schubmult_q_yz import schubmult, schubmult_db, mult_poly
 from symengine import *
 import sys
 
