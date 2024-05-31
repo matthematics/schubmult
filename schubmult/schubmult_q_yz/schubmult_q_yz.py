@@ -149,6 +149,99 @@ def schubmult(perm_dict,v,var2=var2,var3=var3):
 		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
 	return ret_dict
 
+def schubmult_db(perm_dict,v,var2=var2,var3=var3):
+	if v == (1,2):
+		return perm_dict
+	th = medium_theta(inverse(v))
+	#print(f"{th=}")
+	while th[-1] == 0:
+		th.pop()
+	#if len(set(th))!=len(th):
+	#	print(f"medium theta {th=}")
+	mu = permtrim(uncode(th))
+	vmu = permtrim(mulperm([*v],mu))
+	inv_vmu = inv(vmu)
+	inv_mu = inv(mu)
+	ret_dict = {}
+	vpaths = [([(vmu,0)],1)]
+	
+	thL = len(th)
+	#if thL!=2 and len(set(thL))!=1:
+	#	raise ValueError("Not what I can do")
+	vpathdicts = compute_vpathdicts(th,vmu,True)
+	#print(f"{vpathdicts=}")
+	for u,val in perm_dict.items():
+		inv_u = inv(u)
+		vpathsums = {u: {(1,2): val}}
+		for index in range(thL):
+			if index>0 and th[index-1] == th[index]:
+				continue				
+			mx_th = 0
+			for vp in vpathdicts[index]:
+				for v2,vdiff,s in vpathdicts[index][vp]:
+					if th[index]-vdiff > mx_th:
+						mx_th = th[index] - vdiff
+			if index<len(th)-1 and th[index] == th[index+1]:
+				mx_th1 = 0
+				for vp in vpathdicts[index+1]:
+					for v2,vdiff,s in vpathdicts[index+1][vp]:
+						if th[index+1]-vdiff > mx_th1:
+							mx_th1 = th[index+1] - vdiff				
+				newpathsums = {}
+				for up in vpathsums:
+					newpathsums0 = {}
+					inv_up = inv(up)
+					newperms = double_elem_sym_q(up,mx_th,mx_th1,th[index])
+					#for up1, up2, udiff1,udiff2,mul_val1,mul_val2 in newperms:
+					for v in vpathdicts[index]:
+						sumval = vpathsums[up].get(v,zero)
+						if sumval == 0:
+							continue
+						for v2,vdiff2,s2 in vpathdicts[index][v]:
+							for up1, udiff1, mul_val1 in newperms:
+								esim1 = elem_sym_func_q(th[index],index+1,up,up1,v,v2,udiff1,vdiff2,var2,var3)*mul_val1*s2
+								mulfac = sumval*esim1
+								if (up1,udiff1,mul_val1) not in newpathsums0:
+									newpathsums0[(up1,udiff1,mul_val1)] = {}
+								#newpathsums0[(up1, udiff1, mul_val1
+								newpathsums0[(up1,udiff1,mul_val1)][v2] = newpathsums0[(up1,udiff1,mul_val1)].get(v2,0) + mulfac
+					
+					for up1, udiff1, mul_val1 in newpathsums0:
+						for v in vpathdicts[index+1]:
+							sumval = newpathsums0[(up1,udiff1,mul_val1)].get(v,zero)
+							if sumval == 0:
+								continue
+							for v2,vdiff2,s2 in vpathdicts[index+1][v]:
+								for up2, udiff2, mul_val2 in newperms[(up1,udiff1,mul_val1)]:
+									esim1 = elem_sym_func_q(th[index+1],index+2,up1,up2,v,v2,udiff2,vdiff2,var2,var3)*mul_val2*s2
+									mulfac = sumval*esim1
+									if up2 not in newpathsums:
+										newpathsums[up2] = {}
+									newpathsums[up2][v2] = newpathsums[up2].get(v2,0) + mulfac
+											#for up2, udiff2, mul_val2 in newperms[(up1,udiff1,mul_val1)]:
+											#	if up2 not in newpathsums:
+											#		newpathsums[up2]={}
+											#	for v3,vdiff3,s3 in vpathdicts[index+1][v2]:
+											#			newpathsums[up2][v3] = newpathsums[up2].get(v3,zero)+s3*mul_val2*mulfac*elem_sym_func_q(th[index+1],index+2,up1,up2,v2,v3,udiff2,vdiff3,var2,var3)
+			else:
+				newpathsums = {}
+				for up in vpathsums:
+					inv_up = inv(up)
+					newperms = elem_sym_perms_q(up,min(mx_th,(inv_mu-(inv_up-inv_u))-inv_vmu),th[index])
+					for up2, udiff,mul_val in newperms:
+						if up2 not in newpathsums:
+							newpathsums[up2]={}
+						for v in vpathdicts[index]:
+							sumval = vpathsums[up].get(v,zero)*mul_val
+							if sumval == 0:
+								continue
+							for v2,vdiff,s in vpathdicts[index][v]:
+								newpathsums[up2][v2] = newpathsums[up2].get(v2,zero)+s*sumval*elem_sym_func_q(th[index],index+1,up,up2,v,v2,udiff,vdiff,var2,var3)
+			vpathsums = newpathsums
+		toget = tuple(vmu)
+		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
+	return ret_dict
+
 q_var2 = q_var.tolist()
 
 def sum_q_dict(q_dict1,q_dict2):
@@ -270,6 +363,7 @@ def main():
 		msg = False
 		just_nil = False
 		mult = False
+		slow = False
 		
 		nil_N = 0
 		
@@ -282,6 +376,9 @@ def main():
 				if just_nil:
 					just_nil = False
 					nil_N = int(s)
+					continue
+				if s == "--slow":
+					slow = True
 					continue
 				if s == "--norep":
 					norep = True
@@ -350,7 +447,10 @@ def main():
 		else:
 			coeff_dict = {perms[0]: 1}
 			for perm in perms[1:]:
-				coeff_dict = schubmult(coeff_dict,perm)
+				if not slow:
+					coeff_dict = schubmult_db(coeff_dict,perm)
+				else:
+					coeff_dict = schubmult(coeff_dict,perm)
 			if mult:
 				for v in var2:
 					globals()[str(v)] = v
@@ -366,10 +466,10 @@ def main():
 			rep = ("","")			
 		
 		if pr:
-			if ascode:
-				width = max([len(str(trimcode(perm))) for perm in coeff_dict.keys() if expand(coeff_dict[perm])!=0])
-			else:
-				width = max([len(str(perm)) for perm in coeff_dict.keys() if expand(coeff_dict[perm])!=0])
+			#if ascode:
+			#	width = max([len(str(trimcode(perm))) for perm in coeff_dict.keys() if expand(coeff_dict[perm])!=0])
+			#else:
+			#	width = max([len(str(perm)) for perm in coeff_dict.keys() if expand(coeff_dict[perm])!=0])
 			
 			coeff_perms = list(coeff_dict.keys())
 			coeff_perms.sort(key=lambda x: (inv(x),*x))
@@ -428,14 +528,14 @@ def main():
 					if val!=0:
 						if ascode:
 							if norep:
-								print(f"{str(trimcode(perm)):>{width}}  {str(val).replace(*rep)}")	
+								print(f"{str(trimcode(perm))}  {str(val).replace(*rep)}")	
 							else:
-								print(f"{str(trimcode(perm)):>{width}}  {str(val).replace('**','^').replace('*',' ').replace(*rep)}")	
+								print(f"{str(trimcode(perm))}  {str(val).replace('**','^').replace('*',' ').replace(*rep)}")	
 						else:
 							if norep:
-								print(f"{str(perm):>{width}}  {str(val).replace(*rep)}")	
+								print(f"{str(perm)}  {str(val).replace(*rep)}")	
 							else:
-								print(f"{str(perm):>{width}}  {str(val).replace('**','^').replace('*',' ').replace(*rep)}")	
+								print(f"{str(perm)}  {str(val).replace('**','^').replace('*',' ').replace(*rep)}")	
 	except BrokenPipeError:
 		pass
 		

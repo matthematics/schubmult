@@ -63,6 +63,92 @@ for i in range(1,n):
 		sm += var_r[j]
 	subs_dict[var2[i]] = sm
 
+def schubmult_db(perm_dict,v,var2=var2,var3=var3):
+	if v == (1,2):
+		return perm_dict
+	th = medium_theta(inverse(v))
+	#print(f"{th=}")
+	while th[-1] == 0:
+		th.pop()
+	#if len(set(th))!=len(th):
+	#	print(f"medium theta {th=}")
+	mu = permtrim(uncode(th))
+	vmu = permtrim(mulperm([*v],mu))
+	inv_vmu = inv(vmu)
+	inv_mu = inv(mu)
+	ret_dict = {}
+	vpaths = [([(vmu,0)],1)]
+	
+	thL = len(th)
+	#if thL!=2 and len(set(thL))!=1:
+	#	raise ValueError("Not what I can do")
+	vpathdicts = compute_vpathdicts(th,vmu,True)
+	#print(f"{vpathdicts=}")
+	for u,val in perm_dict.items():
+		inv_u = inv(u)
+		vpathsums = {u: {(1,2): val}}
+		for index in range(thL):
+			if index>0 and th[index-1] == th[index]:
+				continue				
+			mx_th = 0
+			for vp in vpathdicts[index]:
+				for v2,vdiff,s in vpathdicts[index][vp]:
+					if th[index]-vdiff > mx_th:
+						mx_th = th[index] - vdiff
+			if index<len(th)-1 and th[index] == th[index+1]:
+				mx_th1 = 0
+				for vp in vpathdicts[index+1]:
+					for v2,vdiff,s in vpathdicts[index+1][vp]:
+						if th[index+1]-vdiff > mx_th1:
+							mx_th1 = th[index+1] - vdiff				
+				newpathsums = {}
+				for up in vpathsums:
+					newpathsums0 = {}
+					inv_up = inv(up)
+					newperms = double_elem_sym_q(up,mx_th,mx_th1,th[index])
+					for v in vpathdicts[index]:
+						sumval = vpathsums[up].get(v,zero)
+						if sumval == 0:
+							continue
+						for v2,vdiff2,s2 in vpathdicts[index][v]:
+							for up1, udiff1, mul_val1 in newperms:
+								if (up1,udiff1,mul_val1) not in newpathsums0:
+									newpathsums0[(up1,udiff1,mul_val1)] = {}
+								if udiff1 + vdiff2 == th[index]:
+									newpathsums0[(up1,udiff1,mul_val1)][v2] = newpathsums0[(up1,udiff1,mul_val1)].get(v2,zero)+s2*sumval*mul_val1
+					
+					for up1, udiff1, mul_val1 in newpathsums0:
+						for v in vpathdicts[index+1]:
+							sumval = newpathsums0[(up1,udiff1,mul_val1)].get(v,zero)
+							if sumval == 0:
+								continue
+							for v2,vdiff2,s2 in vpathdicts[index+1][v]:
+								for up2, udiff2, mul_val2 in newperms[(up1,udiff1,mul_val1)]:
+									if up2 not in newpathsums:
+										newpathsums[up2]={}
+									if udiff2 + vdiff2 == th[index+1]:
+										newpathsums[up2][v2] = newpathsums[up2].get(v2,zero)+s2*sumval*mul_val2
+			else:
+				newpathsums = {}
+				for up in vpathsums:
+					inv_up = inv(up)
+					newperms = elem_sym_perms_q(up,min(mx_th,(inv_mu-(inv_up-inv_u))-inv_vmu),th[index])
+					for up2, udiff, mul_val in newperms:
+						if up2 not in newpathsums:
+							newpathsums[up2]={}
+						for v in vpathdicts[index]:
+							sumval = vpathsums[up].get(v,zero)
+							if sumval == 0:
+								continue
+							for v2,vdiff,s in vpathdicts[index][v]:
+								if udiff+vdiff==th[index]:
+									newpathsums[up2][v2] = newpathsums[up2].get(v2,zero)+s*sumval*mul_val
+			vpathsums = newpathsums
+		toget = tuple(vmu)
+		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
+	return ret_dict
+
+
 def schubmult(perm_dict,v):
 	th = strict_theta(inverse(v))
 	mu = permtrim(uncode(th))
@@ -177,11 +263,15 @@ def main():
 		equiv = False
 		mult = False
 		mulstring = ""
+		slow = False
 		
 		try:
 			for s in sys.argv[1:]:
 				if s == "-np" or s == "--no-print":
 					pr = False
+					continue
+				if s == "--slow":
+					slow = True
 					continue
 				if mult:
 					mulstring += s
@@ -344,8 +434,12 @@ def main():
 		
 			coeff_dict = {tuple(permtrim([*perms[0]])): 1}
 			
-			for perm in perms[1:]:
-				coeff_dict = schubmult(coeff_dict,tuple(permtrim([*perm])))
+			if not slow:
+				for perm in perms[1:]:
+					coeff_dict = schubmult_db(coeff_dict,tuple(permtrim([*perm])))
+			else:
+				for perm in perms[1:]:
+					coeff_dict = schubmult(coeff_dict,tuple(permtrim([*perm])))
 			
 			if mult:
 				mul_exp = sympify(mulstring)

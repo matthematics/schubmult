@@ -37,11 +37,15 @@ def main():
 		check = True
 		msg = False
 		mult = False
+		slow = False
 		mulstring = ""
 		try:
 			for s in sys.argv[1:]:
 				if s == "-np" or s == "--no-print":
 					pr = False
+					continue
+				if s == "--slow":
+					slow = True
 					continue
 				if mult:
 					mulstring += s
@@ -96,7 +100,10 @@ def main():
 		
 		coeff_dict = {perms[0]: 1}
 		for perm in perms[1:]:
-			coeff_dict = schubmult(coeff_dict,perm,var2,var2)
+			if slow:
+				coeff_dict = schubmult(coeff_dict,perm,var2,var2)
+			else:
+				coeff_dict = schubmult_db(coeff_dict,perm,var2,var2)
 		if mult:
 			mul_exp = sympify(mulstring)
 			coeff_dict = mult_poly(coeff_dict,mul_exp)
