@@ -129,7 +129,21 @@ def mult_poly_down(coeff_dict,poly):
 			ret[perm] = poly*coeff_dict[perm]
 		return ret
 
-
+def nilhecke_mult(coeff_dict1,coeff_dict2):
+	ret = {}
+	for w in coeff_dict2:
+		w1 = [*w]
+		inv_w1 = inv(w1)
+		poly = coeff_dict2[w]
+		did_mul = mult_poly_down(coeff_dict1,poly)
+		for v in did_mul:
+			v1 = [*v1]
+			addperm = mulperm(v1,w1)
+			if inv(addperm) == inv(v1) + inv_w1:
+				toadd = tuple(permtrim(addperm))
+				ret[toadd] = ret.get(toadd,0) + did_mul[v]
+	return ret
+	
 def forwardcoeff(u,v,perm,var2=var2,var3=var3):
 	th = theta(v)
 	muv = uncode(th)

@@ -1,5 +1,6 @@
 from schubmult.perm_lib import *
 from schubmult.schubmult_yz import compute_positive_rep, posify
+import schubmult.schubmult_yz as norm_yz
 from symengine import *
 import sys
 
@@ -242,6 +243,11 @@ def schubmult_db(perm_dict,v,var2=var2,var3=var3):
 		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
 	return ret_dict
 
+def div_diff(v,w,var2=var2,var3=var3):
+	coeff_dict = {v: 1}
+	coeff_dict = norm_yz.schubmult_down(coeff_dict,w,var2,var3)
+	return coeff_dict.get((1,2),0)
+
 q_var2 = q_var.tolist()
 
 def sum_q_dict(q_dict1,q_dict2):
@@ -359,6 +365,7 @@ def main():
 		ascode = False
 		coprod = False
 		nilhecke = False
+		nilhecke_apply = False
 		check = True
 		msg = False
 		just_nil = False
@@ -408,6 +415,10 @@ def main():
 					nilhecke = True
 					just_nil = True
 					continue
+				if s == "-nil-hecke-apply":
+					nilhecke_apply = True
+					just_nil = True
+					continue
 				if s == "--version":
 					print(f"Python version {sys.version}")
 					exit(0)
@@ -443,7 +454,13 @@ def main():
 		
 		if nilhecke:
 			coeff_dict = nil_hecke({(1,2): 1},perms[0],nil_N)			
-			rep = ("y","x")		
+			rep = ("y","x")
+		elif nilhecke_apply:
+			coeff_dict0 = nil_hecke({(1,2): 1},perms[0],nil_N,var2,var2)
+			coeff_dict = {(1,2): 0}
+			for v in coeff_dict0:
+				coeff_dict[(1,2)] += coeff_dict0[v]*div_diff(v,perms[1],var2,var3)
+			rep = ("y","x")			
 		else:
 			coeff_dict = {perms[0]: 1}
 			for perm in perms[1:]:
@@ -491,11 +508,13 @@ def main():
 									val2 += q_part*int(q_dict[q_part])
 								except Exception:
 									try:
-										if len(perms) == 2 and q_part == 1 and not mult:
+										if len(perms) == 2 and code(inverse(perms[1])) == medium_theta(inverse(perms[1])) and not mult and not slow and not nilhecke_apply:
+											val2 += q_part*q_dict[q_part]
+										elif len(perms) == 2 and q_part == 1 and not mult and not nilhecke_apply:
 											u = permtrim([*perms[0]])
 											v = permtrim([*perms[1]])
 											val2 += posify(q_dict[q_part],tuple(u),tuple(v),perm,var2_t,var3_t,msg,False)
-										elif len(perms) == 2 and q_part in q_var2 and not mult:
+										elif len(perms) == 2 and q_part in q_var2 and not mult and not nilhecke_apply:
 											i = q_var2.index(q_part)
 											u = permtrim([*perms[0]])
 											v = permtrim([*perms[1]])											
@@ -504,7 +523,7 @@ def main():
 												u[i], u[i-1] = u[i-1], u[i]
 												v[i], v[i-1] = v[i-1], v[i]
 												#print(f"new {u=} {v=}")
-												val2 += q_part*posify(q_dict[q_part],tuple(permtrim(u)),tuple(permtrim(v)),perm,var2_t,var3_t,msg,False)
+												val2 += q_part*posify(q_dict[q_part],tuple(permtrim(u)),tuple(permtrim(v)),perm,var2_t,var3_t,msg,False)										
 										else:
 											val2 += q_part*compute_positive_rep(q_dict[q_part],var2_t,var3_t,msg,False)
 									except Exception as e:
