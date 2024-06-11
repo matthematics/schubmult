@@ -153,7 +153,7 @@ def elem_sym_perms_op(orig_perm,p,k):
 			up_perm2 = [*up_perm]
 			if len(up_perm2) < k + 1:
 				up_perm2 += [i+1 for i in range(len(up_perm2),k+2)]
-			pos_list = [i for i in range(k) if up_perm2[i] == orig_perm[i]]
+			pos_list = [i for i in range(k) if getpermval(up_perm2,i) == getpermval(orig_perm,i)]
 			for j in range(last,len(up_perm2)):				
 				for i in pos_list:								
 					if has_bruhat_descent(up_perm2,i,j):
