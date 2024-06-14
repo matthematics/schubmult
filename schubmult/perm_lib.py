@@ -234,7 +234,81 @@ def elem_sym_perms_q_op(orig_perm,p,k,n):
 		up_perm_list = perm_list
 	return total_list
 
+qvar_list = q_var.tolist()
 
+def q_vector(q_exp):
+	ret = []
+	
+	if q_exp == 1:
+		return ret
+	if q_exp in q_var:
+		i = qvar_list.index(q_exp)
+		ret = [0 for j in range(i-1)] + [1]
+		return ret
+	if isinstance(q_exp, Pow):
+		qv = q_exp.args[0]
+		expon = int(q_exp.args[1])
+		i = qvar_list.index(qv)
+		ret = [0 for j in range(i-1)] + [expon]
+		return ret
+	if isinstance(q_exp, Mul):	
+		for a in q_exp.args:
+			v1 = q_vector(a)
+			v1 += [0 for i in range(len(v1),len(ret))]
+			ret += [0 for i in range(len(ret),len(v1))]
+			ret = [ret[i] + v1[i] for i in range(len(ret))]
+		return ret
+		
+	return None
+
+def omega(i,qv):
+	i = i - 1
+	if len(qv) == 0 or i > len(qv):
+		return 0
+	if i == 0:
+		if len(qv) == 1:
+			return 2*qv[0]
+		return 2*qv[0] - qv[1]
+	if i == len(qv):
+		return -qv[-1]
+	if i == len(qv) - 1:
+		return 2*qv[-1] - qv[-2]
+	return 2*qv[i] - qv[i-1] - qv[i+1]
+
+def sg(i,w):
+	if i>=len(w) - 1 or w[i]<w[i+1]:
+		return 0
+	return 1
+
+def reduce_q_coeff(u, v, w, qv):
+	for i in range(len(qv)):
+		if (i<len(u)-1 and u[i]>u[i+1] and (i>=len(v)-1 or v[i]<v[i+1]) and (i>=len(w)-1 or w[i]<w[i+1]) and sg(i,w) + omega(i+1,qv) == 1):
+			ret_u = [*u]
+			ret_u[i], ret_u[i+1] = ret_u[i+1], ret_u[i]
+			ret_w = [*w] + [j+1 for j in range(len(w),i+2)]
+			ret_w[i], ret_w[i+1] = ret_w[i+1], ret_w[i]
+			qv_ret = [*qv]
+			qv_ret[i] -= 1
+			return tuple(permtrim(ret_u)), v, tuple(permtrim(ret_w)), qv_ret, True
+		elif (i<len(v)-1 and v[i]>v[i+1] and (i>=len(u)-1 or u[i]<u[i+1]) and (i>=len(w)-1 or w[i]<w[i+1]) and sg(i,w) + omega(i+1,qv) == 1):
+			ret_v = [*v]
+			ret_v[i], ret_v[i+1] = ret_v[i+1], ret_v[i]
+			ret_w = [*w] + [j+1 for j in range(len(w),i+2)]
+			ret_w[i], ret_w[i+1] = ret_w[i+1], ret_w[i]
+			qv_ret = [*qv]
+			qv_ret[i] -= 1
+			return u, tuple(permtrim(ret_v)), tuple(permtrim(ret_w)), qv_ret, True
+		elif (i<len(u)-1 and u[i]>u[i+1] and i<len(v)-1 and v[i]>v[i+1] and sg(i,w)+omega(i+1,qv)  == 2):
+			ret_u = [*u]
+			ret_u[i], ret_u[i+1] = ret_u[i+1], ret_u[i]
+			ret_w = [*w] + [j+1 for j in range(len(w),i+2)]
+			ret_w[i], ret_w[i+1] = ret_w[i+1], ret_w[i]
+			qv_ret = [*qv]
+			if i>=len(w)-1 or w[i]<w[i+1]:
+				qv_ret[i] -= 1
+			return tuple(permtrim(ret_u)), v, tuple(permtrim(ret_w)), qv_ret, True
+	return u, v, w, qv, False
+		
 # perms and inversion diff
 def kdown_perms(perm,monoperm,p,k):	
 	inv_m = inv(monoperm)

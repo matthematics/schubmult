@@ -508,24 +508,28 @@ def main():
 									val2 += q_part*int(q_dict[q_part])
 								except Exception:
 									try:
+										if len(perms) == 2:
+											u = tuple(permtrim([*perms[0]]))
+											v = tuple(permtrim([*perms[1]]))
 										if len(perms) == 2 and code(inverse(perms[1])) == medium_theta(inverse(perms[1])) and not mult and not slow and not nilhecke_apply:
 											val2 += q_part*q_dict[q_part]
-										elif len(perms) == 2 and q_part == 1 and not mult and not nilhecke_apply:
-											u = permtrim([*perms[0]])
-											v = permtrim([*perms[1]])
-											val2 += posify(q_dict[q_part],tuple(u),tuple(v),perm,var2_t,var3_t,msg,False)
-										elif len(perms) == 2 and q_part in q_var2 and not mult and not nilhecke_apply:
-											i = q_var2.index(q_part)
-											u = permtrim([*perms[0]])
-											v = permtrim([*perms[1]])											
-											#print(f"{u=} {v=} {q_part=} {q_dict[q_part]=}")
-											if i<len(u) and i<len(v) and u[i-1]>u[i] and v[i-1]>v[i]:
-												u[i], u[i-1] = u[i-1], u[i]
-												v[i], v[i-1] = v[i-1], v[i]
-												#print(f"new {u=} {v=}")
-												val2 += q_part*posify(q_dict[q_part],tuple(permtrim(u)),tuple(permtrim(v)),perm,var2_t,var3_t,msg,False)										
 										else:
-											val2 += q_part*compute_positive_rep(q_dict[q_part],var2_t,var3_t,msg,False)
+											q_part2 = q_part
+											if not mult and not nilhecke_apply and len(perms) == 2:
+												qv = q_vector(q_part)
+												u2, v2, w2 = u, v, perm
+												u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+												while did_one:
+													u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+												q_part2 = np.prod([q_var[i+1]**qv[i] for i in range(len(qv))])
+												if q_part2 == 1:												
+													#if q_part != q_part2:
+													#	print("Posified q part")
+													val2 += q_part*posify(q_dict[q_part],u2,v2,w2,var2_t,var3_t,msg,False)
+												else:
+													val2 += q_part*compute_positive_rep(q_dict[q_part],var2_t,var3_t,msg,False)
+											else:
+												val2 += q_part*compute_positive_rep(q_dict[q_part],var2_t,var3_t,msg,False)
 									except Exception as e:
 										if mult:
 											print("warning; --display-positive is on but result is not positive",file=sys.stderr)
@@ -534,12 +538,14 @@ def main():
 										else:
 											print(f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {coeff_dict.get(perm,0)=}")
 											print(f"Exception: {e}")
+											import traceback
+											traceback.print_exc()
 											exit(1)
 							if check and expand(val - val2)!=0:
 								if mult:
 									val2 = val
 								else:
-									print(f"error: value not equal; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {coeff_dict.get(perm,0)=}")
+									print(f"error: value not equal; write to schubmult@gmail.com with the case {perms=} {perm=} {val2=} {coeff_dict.get(perm,0)=}")
 									exit(1)
 							val = val2
 					if expa:
