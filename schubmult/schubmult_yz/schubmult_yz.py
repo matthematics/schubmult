@@ -1315,7 +1315,7 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True,sign_only=
 				val2 = schubmult_one(tuple(permtrim(u3)),tuple(permtrim(v3)),var2,var3).get(tuple(permtrim(w3)),0)
 				val2 = posify(val2,u3,tuple(permtrim(v3)),w3,var2,var3,msg,do_pos_neg)
 				val += tomul*shiftsub(val2)
-		elif inv(w)-inv(u)==2:
+		elif inv(w)-inv(u)==2 and len(trimcode(u)) == len(trimcode(w)):
 			indices = []
 			for i in range(len(w)):
 				if i>=len(u) or u[i]!=w[i]:
