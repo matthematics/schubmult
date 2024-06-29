@@ -1315,55 +1315,55 @@ def posify(val,u2,v2,w2,var2=var2,var3=var3,msg=False,do_pos_neg=True,sign_only=
 				val2 = schubmult_one(tuple(permtrim(u3)),tuple(permtrim(v3)),var2,var3).get(tuple(permtrim(w3)),0)
 				val2 = posify(val2,u3,tuple(permtrim(v3)),w3,var2,var3,msg,do_pos_neg)
 				val += tomul*shiftsub(val2)
-		elif inv(w)-inv(u)==2 and len(trimcode(u)) == len(trimcode(w)):
-			indices = []
-			for i in range(len(w)):
-				if i>=len(u) or u[i]!=w[i]:
-					indices += [i+1]
-			arr = [[[],v]]
-			d = -1
-			for i in range(len(v)-1):
-				if v[i]>v[i+1]:
-					d = i + 1
-			for i in range(d):
-				arr2 = []
-							
-				if i+1 in indices:
-					continue
-				i2 = 1
-				i2 += len([aa for aa in indices if i+1>aa])
-				for vr, v2 in arr:
-					dpret = pull_out_var(i2,[*v2])
-					for v3r, v3 in dpret:
-						arr2 += [[vr + [(v3r,i+1)],v3]]
-				arr = arr2
-			val = 0
-			
-			for L in arr:
-				v3 = [*L[-1]]
-				tomul = 1						
-				toadd = 1
-				for i in range(len(L[0])):
-					var_index = L[0][i][1]
-					oaf = L[0][i][0]
-					if var_index-1>=len(w):
-						yv = var_index
-					else:
-						yv = w[var_index-1]
-					for j in range(len(oaf)):				
-						toadd*= var2[yv] - var3[oaf[j]]
-				pooly = skew_div_diff(u,w,schubpoly(v3,[0,*[var2[a] for a in indices]],var3))
-				if toadd == 0:
-					continue
-				if pooly !=0:
-					coeff = compute_positive_rep(pooly,var2,var3,msg,False)
-				else:
-					coeff = 0
-				if coeff == -1:
-					return -1
-				tomul = sympify(coeff)
-				toadd*=tomul#.subs(subs_dict3)
-				val += toadd						
+		#elif inv(w)-inv(u)==2 and len(trimcode(u)) == len(trimcode(w)):
+		#	indices = []
+		#	for i in range(len(w)):
+		#		if i>=len(u) or u[i]!=w[i]:
+		#			indices += [i+1]
+		#	arr = [[[],v]]
+		#	d = -1
+		#	for i in range(len(v)-1):
+		#		if v[i]>v[i+1]:
+		#			d = i + 1
+		#	for i in range(d):
+		#		arr2 = []
+		#					
+		#		if i+1 in indices:
+		#			continue
+		#		i2 = 1
+		#		i2 += len([aa for aa in indices if i+1>aa])
+		#		for vr, v2 in arr:
+		#			dpret = pull_out_var(i2,[*v2])
+		#			for v3r, v3 in dpret:
+		#				arr2 += [[vr + [(v3r,i+1)],v3]]
+		#		arr = arr2
+		#	val = 0
+		#	
+		#	for L in arr:
+		#		v3 = [*L[-1]]
+		#		tomul = 1						
+		#		toadd = 1
+		#		for i in range(len(L[0])):
+		#			var_index = L[0][i][1]
+		#			oaf = L[0][i][0]
+		#			if var_index-1>=len(w):
+		#				yv = var_index
+		#			else:
+		#				yv = w[var_index-1]
+		#			for j in range(len(oaf)):				
+		#				toadd*= var2[yv] - var3[oaf[j]]
+		#		pooly = skew_div_diff(u,w,schubpoly(v3,[0,*[var2[a] for a in indices]],var3))
+		#		if toadd == 0:
+		#			continue
+		#		if pooly !=0:
+		#			coeff = compute_positive_rep(pooly,var2,var3,msg,False)
+		#		else:
+		#			coeff = 0
+		#		if coeff == -1:
+		#			return -1
+		#		tomul = sympify(coeff)
+		#		toadd*=tomul#.subs(subs_dict3)
+		#		val += toadd						
 		else:
 			if not sign_only:
 				if inv(u)+inv(v)-inv(w)==1:
