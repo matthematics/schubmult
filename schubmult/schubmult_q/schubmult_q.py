@@ -2,6 +2,7 @@ from symengine import *
 from functools import cache
 from itertools import chain
 from schubmult.perm_lib import *
+from schubmult.schubmult_q_yz import factor_out_q_keep_factored
 import schubmult.schubmult_yz as yz
 import sys
 
@@ -15,6 +16,7 @@ var_q = Symbol("q")
 subs_dict = {}
 
 var_x = symarray("x",100).tolist()
+
 
 def single_variable(coeff_dict,varnum):
 	ret = {}
@@ -264,6 +266,9 @@ def main():
 		mult = False
 		mulstring = ""
 		slow = False
+		parabolic = False
+		just_parabolic = False
+		parabolic_index = []
 		
 		try:
 			for s in sys.argv[1:]:
@@ -272,6 +277,15 @@ def main():
 					continue
 				if s == "--slow":
 					slow = True
+					continue
+				if s == "-parabolic":
+					just_parabolic = True
+					parabolic = True
+					continue
+				if just_parabolic:
+					just_parabolic = False
+					parabolic_index = [int(i) for i in s.split(",")]
+					parabolic_index.sort()
 					continue
 				if mult:
 					mulstring += s
@@ -300,12 +314,16 @@ def main():
 		except Exception:
 			print("**** schubmult_q ****")
 			print("Purpose: Compute the structure constants of quantum Schubert polynomials")
-			print("Usage: schubmult_q <-np|--no-print> <-code> <-grass n> <-equiv> perm1 - perm2 < - perm 3 ... >")
-			print("For the -grass option, must use Grassmannian permutations. -equiv only works together with -grass.")
+			print("Usage: schubmult_q <-np|--no-print> <-parabolic descent1,descent2,...> <-code> <-grass n> <-equiv> perm1 - perm2 < - perm 3 ... >")
+			#print("For the -grass option, must use Grassmannian permutations. -equiv only works together with -grass.")			
 			exit(1)
 		
 		perms += [curperm]
 		
+		if parabolic and len(perms) != 2:
+			print("Only two permutations supported for parabolic.")
+			exit(1)
+							
 		
 		if grass:
 			perms_t = []
@@ -432,6 +450,13 @@ def main():
 				for i in range(len(perms)):
 					perms[i] = uncode(perms[i])
 		
+			if parabolic:
+				for i in range(len(parabolic_index)):
+					index = parabolic_index[i] - 1
+					if sg(index,perms[0]) == 1 or sg(index,perms[1]) == 1:
+						print("Parabolic given but elements are not minimal length coset representatives.")
+						exit(1)
+		
 			coeff_dict = {tuple(permtrim([*perms[0]])): 1}
 			
 			if not slow:
@@ -445,11 +470,50 @@ def main():
 				mul_exp = sympify(mulstring)
 				coeff_dict = mult_poly(coeff_dict,mul_exp)
 				
-			if pr:
+			if pr:						
 				if ascode:
 					width = max([len(str(trimcode(perm))) for perm in coeff_dict.keys() if expand(coeff_dict[perm])!=0])
 				else:
 					width = max([len(str(perm)) for perm in coeff_dict.keys() if expand(coeff_dict[perm])!=0])
+				
+				if parabolic:
+					w_P = longest_element(parabolic_index)
+					w_P_prime = [1,2]
+					coeff_dict_update = {}
+					for w_1 in coeff_dict:
+						val = coeff_dict[w_1]
+						q_dict = factor_out_q_keep_factored(val)
+						for q_part in q_dict:
+							qv = q_vector(q_part)
+							w = [*w_1]
+							good = True
+							parabolic_index2 = []
+							for i in range(len(parabolic_index)):							
+								if omega(parabolic_index[i],qv) == 0:
+									parabolic_index2 += [parabolic_index[i]]
+								elif omega(parabolic_index[i],qv) != -1:
+									good = False
+									break
+							if not good:
+								continue
+							w_P_prime = longest_element(parabolic_index2)
+							if not check_blocks(qv,parabolic_index):
+								continue
+							w = permtrim(mulperm(mulperm(w,w_P_prime),w_P))
+							if not is_parabolic(w,parabolic_index):							
+								continue
+					
+							w = tuple(permtrim(w))
+							
+							new_q_part = np.prod([q_var[index+1-count_less_than(parabolic_index,index+1)]**qv[index] for index in range(len(qv)) if index+1 not in parabolic_index])
+							
+							try:
+								new_q_part = int(new_q_part)
+							except Exception:
+								pass
+							q_val_part = q_dict[q_part]
+							coeff_dict_update[w] = coeff_dict_update.get(w,0) + new_q_part*q_val_part
+					coeff_dict = coeff_dict_update
 				
 				coeff_perms = list(coeff_dict.keys())
 				coeff_perms.sort(key=lambda x: (inv(x),*x))
@@ -458,9 +522,9 @@ def main():
 					val = sympify(coeff_dict[perm]).expand()
 					if val != 0:
 						if ascode:					
-							print(f"{str(trimcode(perm)):>{width}}  {str(val).replace('**','^').replace('*',' ')}")
+							print(f"{str(trimcode(perm))}  {str(val).replace('**','^').replace('*',' ')}")
 						else:
-							print(f"{str(perm):>{width}}  {str(val).replace('**','^').replace('*',' ')}")
+							print(f"{str(perm)}  {str(val).replace('**','^').replace('*',' ')}")
 	except BrokenPipeError:
 		pass
 			

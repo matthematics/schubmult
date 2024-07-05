@@ -347,7 +347,7 @@ var3_t = tuple(var3.tolist())
 def print_usage():
 	print("**** schubmult_q_yz ****")
 	print("Purpose: Compute Molev-Sagan coefficients of quantum double Schubert polynomials")
-	print("Usage: schubmult_q_yz <-np|--no-print> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. > <-mult poly_expression>")
+	print("Usage: schubmult_q_yz <-np|--no-print> <-parabolic descent1,descent2,...> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. > <-mult poly_expression>")
 	print("       *** Computes products")
 	print("Alternative usage: schubmult_q_yz -nil-hecke n <-code> <--display-positive> perm")
 	print("       *** Computes nil-Hecke representation of quantum double Schubert polynomial, limiting to the group S_n")
@@ -371,6 +371,9 @@ def main():
 		just_nil = False
 		mult = False
 		slow = False
+		parabolic = False
+		just_parabolic = False
+		parabolic_index = []
 		
 		nil_N = 0
 		
@@ -389,6 +392,14 @@ def main():
 					continue
 				if s == "--norep":
 					norep = True
+					continue
+				if s == "-parabolic":
+					just_parabolic = True
+					parabolic = True
+					continue
+				if just_parabolic:
+					just_parabolic = False
+					parabolic_index = [int(i) for i in s.split(",")]
 					continue
 				if s == "--expand":
 					expa = True
@@ -452,6 +463,17 @@ def main():
 		size = 0
 		L = len(perms)
 		
+		if parabolic and len(perms) != 2:
+			print("Only two permutations supported for parabolic.")
+			exit(1)
+			
+		if parabolic:
+			for i in range(len(parabolic_index)):
+				index = parabolic_index[i] - 1
+				if sg(index,perms[0]) == 1 or sg(index,perms[1]) == 1:
+					print("Parabolic given but elements are not minimal length coset representatives.")
+					exit(1)
+		
 		if nilhecke:
 			coeff_dict = nil_hecke({(1,2): 1},perms[0],nil_N)			
 			rep = ("y","x")
@@ -483,10 +505,72 @@ def main():
 			rep = ("","")			
 		
 		if pr:
-			#if ascode:
-			#	width = max([len(str(trimcode(perm))) for perm in coeff_dict.keys() if expand(coeff_dict[perm])!=0])
-			#else:
-			#	width = max([len(str(perm)) for perm in coeff_dict.keys() if expand(coeff_dict[perm])!=0])
+			posified = False
+			if parabolic:
+				if display_positive:
+					posified = True
+				w_P = longest_element(parabolic_index)
+				w_P_prime = [1,2]
+				coeff_dict_update = {}
+				for w_1 in coeff_dict:
+					val = coeff_dict[w_1]
+					q_dict = factor_out_q_keep_factored(val)
+					for q_part in q_dict:
+						qv = q_vector(q_part)
+						w = [*w_1]
+						good = True
+						parabolic_index2 = []
+						for i in range(len(parabolic_index)):							
+							if omega(parabolic_index[i],qv) == 0:
+								parabolic_index2 += [parabolic_index[i]]
+							elif omega(parabolic_index[i],qv) != -1:
+								good = False
+								break
+						if not good:
+							continue
+						w_P_prime = longest_element(parabolic_index2)
+						if not check_blocks(qv,parabolic_index):
+							continue
+						w = permtrim(mulperm(mulperm(w,w_P_prime),w_P))
+						if not is_parabolic(w,parabolic_index):							
+							continue
+				
+						w = tuple(permtrim(w))
+						
+						new_q_part = np.prod([q_var[index+1-count_less_than(parabolic_index,index+1)]**qv[index] for index in range(len(qv)) if index+1 not in parabolic_index])
+						
+						try:
+							new_q_part = int(new_q_part)
+						except Exception:
+							pass
+						q_val_part = q_dict[q_part]
+						if display_positive:
+							try:
+								q_val_part = int(q_val_part)
+							except Exception:
+								try:
+									if len(perms) == 2 and q_part == 1:
+										u = permtrim([*perms[0]])
+										v = permtrim([*perms[1]])
+										q_val_part = posify(q_dict[q_part],tuple(u),tuple(v),w_1,var2_t,var3_t,msg,False)
+									else:
+										qv = q_vector(q_part)
+										u2, v2, w2 = perms[0], perms[1], w_1
+										u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+										while did_one:
+											u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+												#print(f"new {u=} {v=}")
+										q_part2 = np.prod([q_var[i+1]**qv[i] for i in range(len(qv))])
+										if q_part2 == 1:
+											q_val_part = posify(q_dict[q_part],u2,v2,w2,var2_t,var3_t,msg,False)
+										else:
+											q_val_part = compute_positive_rep(q_dict[q_part],var2_t,var3_t,msg,False)
+								except Exception as e:
+									print(f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {q_part*q_val_part=} {coeff_dict.get(w_1,0)=}")
+									print(f"Exception: {e}")
+									exit(1)
+						coeff_dict_update[w] = coeff_dict_update.get(w,0) + new_q_part*q_val_part
+				coeff_dict = coeff_dict_update
 			
 			coeff_perms = list(coeff_dict.keys())
 			coeff_perms.sort(key=lambda x: (inv(x),*x))
@@ -500,7 +584,7 @@ def main():
 					except Exception:
 						notint = True
 						val2 = 0
-						if display_positive:
+						if display_positive and not posified:
 							q_dict = factor_out_q_keep_factored(val)
 							for q_part in q_dict:
 								#print(f"{q_part=} {q_dict[q_part]=}")
@@ -524,9 +608,10 @@ def main():
 												q_part2 = np.prod([q_var[i+1]**qv[i] for i in range(len(qv))])
 												if q_part2 == 1:												
 													#if q_part != q_part2:
-													#	print("Posified q part")
+													#	print(f"Posified q part {q_part} {q_dict[q_part]=}")
 													val2 += q_part*posify(q_dict[q_part],u2,v2,w2,var2_t,var3_t,msg,False)
 												else:
+													#print("Failed to posify")
 													val2 += q_part*compute_positive_rep(q_dict[q_part],var2_t,var3_t,msg,False)
 											else:
 												val2 += q_part*compute_positive_rep(q_dict[q_part],var2_t,var3_t,msg,False)

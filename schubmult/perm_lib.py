@@ -282,33 +282,85 @@ def sg(i,w):
 
 def reduce_q_coeff(u, v, w, qv):
 	for i in range(len(qv)):
-		if (i<len(u)-1 and u[i]>u[i+1] and (i>=len(v)-1 or v[i]<v[i+1]) and (i>=len(w)-1 or w[i]<w[i+1]) and sg(i,w) + omega(i+1,qv) == 1):
-			ret_u = [*u]
-			ret_u[i], ret_u[i+1] = ret_u[i+1], ret_u[i]
-			ret_w = [*w] + [j+1 for j in range(len(w),i+2)]
-			ret_w[i], ret_w[i+1] = ret_w[i+1], ret_w[i]
-			qv_ret = [*qv]
-			qv_ret[i] -= 1
-			return tuple(permtrim(ret_u)), v, tuple(permtrim(ret_w)), qv_ret, True
-		elif (i<len(v)-1 and v[i]>v[i+1] and (i>=len(u)-1 or u[i]<u[i+1]) and (i>=len(w)-1 or w[i]<w[i+1]) and sg(i,w) + omega(i+1,qv) == 1):
+		if sg(i,v) == 1 and sg(i,u) == 0 and sg(i,w) + omega(i+1,qv) == 1:
 			ret_v = [*v]
 			ret_v[i], ret_v[i+1] = ret_v[i+1], ret_v[i]
 			ret_w = [*w] + [j+1 for j in range(len(w),i+2)]
 			ret_w[i], ret_w[i+1] = ret_w[i+1], ret_w[i]
 			qv_ret = [*qv]
-			qv_ret[i] -= 1
+			if sg(i,w) == 0:
+				qv_ret[i] -= 1
 			return u, tuple(permtrim(ret_v)), tuple(permtrim(ret_w)), qv_ret, True
-		elif (i<len(u)-1 and u[i]>u[i+1] and i<len(v)-1 and v[i]>v[i+1] and sg(i,w)+omega(i+1,qv)  == 2):
+		elif sg(i,u) == 1 and sg(i,v) == 0 and sg(i,w) + omega(i+1,qv) == 1:
 			ret_u = [*u]
 			ret_u[i], ret_u[i+1] = ret_u[i+1], ret_u[i]
 			ret_w = [*w] + [j+1 for j in range(len(w),i+2)]
 			ret_w[i], ret_w[i+1] = ret_w[i+1], ret_w[i]
 			qv_ret = [*qv]
-			if i>=len(w)-1 or w[i]<w[i+1]:
+			if sg(i,w) == 0:
+				qv_ret[i] -= 1		
+		elif sg(i,u) == 1 and sg(i,v) == 1 and sg(i,w)+omega(i+1,qv)  == 2:
+			ret_u = [*u]
+			ret_u[i], ret_u[i+1] = ret_u[i+1], ret_u[i]
+			ret_w = [*w] + [j+1 for j in range(len(w),i+2)]
+			ret_w[i], ret_w[i+1] = ret_w[i+1], ret_w[i]
+			qv_ret = [*qv]
+			if sg(i,w) == 0:
 				qv_ret[i] -= 1
-			return tuple(permtrim(ret_u)), v, tuple(permtrim(ret_w)), qv_ret, True
+			return tuple(permtrim(ret_u)), v, tuple(permtrim(ret_w)), qv_ret, True		
 	return u, v, w, qv, False
-		
+
+def longest_element(indices):
+	perm = [1,2]
+	did_one = True
+	while did_one:
+		did_one = False
+		for i in range(len(indices)):
+			j = indices[i]-1
+			if sg(j,perm) == 0:
+				if len(perm)<j+2:
+					perm = perm+[index for index in range(len(perm)+1,j+3)]
+				perm[j], perm[j+1] = perm[j+1],perm[j]
+				did_one = True
+	return permtrim(perm)
+
+def count_less_than(arr,val):
+	ct = 0
+	i = 0
+	while i<len(arr) and arr[i]<val:
+		i += 1
+		ct += 1
+	return ct
+
+
+def is_parabolic(w,parabolic_index):
+	for i in parabolic_index:
+		if sg(i-1,w) == 1:
+			return False
+	return True
+
+def check_blocks(qv,parabolic_index):
+	blocks = []
+	cur_block = []
+	last_val = -1
+	for i in range(len(parabolic_index)):
+		if last_val == -1 or last_val + 1 == parabolic_index[i]:
+			last_val = parabolic_index[i]
+			cur_block += [last_val]
+		else:
+			blocks += [cur_block]
+			cur_block = []
+	for block in blocks:
+		for i in range(len(block)):
+			for j in range(i,len(block)):
+				val = 0
+				for k in range(i,j+1):
+					val += omega(block[k],qv)
+				if val != 0 and val != -1:
+					return False
+	return True
+
+	
 # perms and inversion diff
 def kdown_perms(perm,monoperm,p,k):	
 	inv_m = inv(monoperm)
