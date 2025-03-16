@@ -143,22 +143,18 @@ def schubmult(perm_dict,v,var2=var2,var3=var3):
 						if sumval == 0:
 							continue
 						for v2,vdiff,s in vpathdicts[index][v]:
-							#print(f"{code(up2)=} {elem_sym_func_q(th[index],index+1,up,up2,v,v2,udiff,vdiff,var2,var3)=} {mul_val=} {sumval=}")							
 							newpathsums[up2][v2] = newpathsums[up2].get(v2,zero)+s*sumval*elem_sym_func_q(th[index],index+1,up,up2,v,v2,udiff,vdiff,var2,var3)
 			vpathsums = newpathsums
 		toget = tuple(vmu)
 		ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget,0) for ep in vpathsums},ret_dict)
 	return ret_dict
 
-def schubmult_db(perm_dict,v,var2=var2,var3=var3):
+def schubmult_db(perm_dict,v,var2=var2,var3=var3,q_var=q_var):
 	if v == (1,2):
 		return perm_dict
 	th = medium_theta(inverse(v))
-	#print(f"{th=}")
 	while th[-1] == 0:
 		th.pop()
-	#if len(set(th))!=len(th):
-	#	print(f"medium theta {th=}")
 	mu = permtrim(uncode(th))
 	vmu = permtrim(mulperm([*v],mu))
 	inv_vmu = inv(vmu)
@@ -167,10 +163,7 @@ def schubmult_db(perm_dict,v,var2=var2,var3=var3):
 	vpaths = [([(vmu,0)],1)]
 	
 	thL = len(th)
-	#if thL!=2 and len(set(thL))!=1:
-	#	raise ValueError("Not what I can do")
 	vpathdicts = compute_vpathdicts(th,vmu,True)
-	#print(f"{vpathdicts=}")
 	for u,val in perm_dict.items():
 		inv_u = inv(u)
 		vpathsums = {u: {(1,2): val}}
@@ -192,8 +185,7 @@ def schubmult_db(perm_dict,v,var2=var2,var3=var3):
 				for up in vpathsums:
 					newpathsums0 = {}
 					inv_up = inv(up)
-					newperms = double_elem_sym_q(up,mx_th,mx_th1,th[index])
-					#for up1, up2, udiff1,udiff2,mul_val1,mul_val2 in newperms:
+					newperms = double_elem_sym_q(up,mx_th,mx_th1,th[index],q_var)
 					for v in vpathdicts[index]:
 						sumval = vpathsums[up].get(v,zero)
 						if sumval == 0:
@@ -218,17 +210,12 @@ def schubmult_db(perm_dict,v,var2=var2,var3=var3):
 									mulfac = sumval*esim1
 									if up2 not in newpathsums:
 										newpathsums[up2] = {}
-									newpathsums[up2][v2] = newpathsums[up2].get(v2,0) + mulfac
-											#for up2, udiff2, mul_val2 in newperms[(up1,udiff1,mul_val1)]:
-											#	if up2 not in newpathsums:
-											#		newpathsums[up2]={}
-											#	for v3,vdiff3,s3 in vpathdicts[index+1][v2]:
-											#			newpathsums[up2][v3] = newpathsums[up2].get(v3,zero)+s3*mul_val2*mulfac*elem_sym_func_q(th[index+1],index+2,up1,up2,v2,v3,udiff2,vdiff3,var2,var3)
+									newpathsums[up2][v2] = newpathsums[up2].get(v2,0) + mulfac	
 			else:
 				newpathsums = {}
 				for up in vpathsums:
 					inv_up = inv(up)
-					newperms = elem_sym_perms_q(up,min(mx_th,(inv_mu-(inv_up-inv_u))-inv_vmu),th[index])
+					newperms = elem_sym_perms_q(up,min(mx_th,(inv_mu-(inv_up-inv_u))-inv_vmu),th[index],q_var)
 					for up2, udiff,mul_val in newperms:
 						if up2 not in newpathsums:
 							newpathsums[up2]={}
@@ -287,19 +274,26 @@ def factor_out_q_keep_factored(poly):
 	elif isinstance(poly,Pow):
 		base = poly.args[0]
 		exponent = int(poly.args[1])
+		
+		ret = factor_out_q_keep_factored(base)
+		ret0 = dict(ret)
+		for i in range(exponent-1):
+			ret = mul_q_dict(ret,ret0)
+			
+		
 		#print(f"exponent {exponent}")
-		work_val = factor_out_q_keep_factored(base)
-		ret = {1: 1}
-		while exponent > 0:
-			if exponent % 2 == 1:
-				if ret == {1: 1}:
-					ret = {**work_val}
-				else:
-					ret = mul_q_dict(ret,work_val)
-				exponent -= 1
-			else:
-				work_val = mul_q_dict(work_val,work_val)
-				exponent //= 2
+		#work_val = factor_out_q_keep_factored(base)
+		#ret = {1: 1}
+		#while exponent > 0:
+		#	if exponent % 2 == 1:
+		#		if ret == {1: 1}:
+		#			ret = {**work_val}
+		#		else:
+		#			ret = mul_q_dict(ret,work_val)
+		#		exponent -= 1
+		#	else:
+		#		work_val = mul_q_dict(work_val,work_val)
+		#		exponent //= 2
 		return ret
 	return ret
 
@@ -463,16 +457,16 @@ def main():
 		size = 0
 		L = len(perms)
 		
-		if parabolic and len(perms) != 2:
-			print("Only two permutations supported for parabolic.")
-			exit(1)
-			
-		if parabolic:
-			for i in range(len(parabolic_index)):
-				index = parabolic_index[i] - 1
-				if sg(index,perms[0]) == 1 or sg(index,perms[1]) == 1:
-					print("Parabolic given but elements are not minimal length coset representatives.")
-					exit(1)
+		#if parabolic and len(perms) != 2:
+		#	print("Only two permutations supported for parabolic.")
+		#	exit(1)
+		#	
+		#if parabolic:
+		#	for i in range(len(parabolic_index)):
+		#		index = parabolic_index[i] - 1
+		#		if sg(index,perms[0]) == 1 or sg(index,perms[1]) == 1:
+		#			print("Parabolic given but elements are not minimal length coset representatives.")
+		#			exit(1)
 		
 		if nilhecke:
 			coeff_dict = nil_hecke({(1,2): 1},perms[0],nil_N)			
@@ -559,7 +553,6 @@ def main():
 										u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
 										while did_one:
 											u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-												#print(f"new {u=} {v=}")
 										q_part2 = np.prod([q_var[i+1]**qv[i] for i in range(len(qv))])
 										if q_part2 == 1:
 											q_val_part = posify(q_dict[q_part],u2,v2,w2,var2_t,var3_t,msg,False)
@@ -587,7 +580,6 @@ def main():
 						if display_positive and not posified:
 							q_dict = factor_out_q_keep_factored(val)
 							for q_part in q_dict:
-								#print(f"{q_part=} {q_dict[q_part]=}")
 								try:
 									val2 += q_part*int(q_dict[q_part])
 								except Exception:
@@ -607,11 +599,9 @@ def main():
 													u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
 												q_part2 = np.prod([q_var[i+1]**qv[i] for i in range(len(qv))])
 												if q_part2 == 1:												
-													#if q_part != q_part2:
-													#	print(f"Posified q part {q_part} {q_dict[q_part]=}")
+													# reduced to classical coefficient
 													val2 += q_part*posify(q_dict[q_part],u2,v2,w2,var2_t,var3_t,msg,False)
 												else:
-													#print("Failed to posify")
 													val2 += q_part*compute_positive_rep(q_dict[q_part],var2_t,var3_t,msg,False)
 											else:
 												val2 += q_part*compute_positive_rep(q_dict[q_part],var2_t,var3_t,msg,False)
@@ -640,7 +630,7 @@ def main():
 							if norep:
 								print(f"{str(trimcode(perm))}  {str(val).replace(*rep)}")	
 							else:
-								print(f"{str(trimcode(perm))}  {str(val).replace('**','^').replace('*',' ').replace(*rep)}")	
+								print(f"{str(trimcode(perm))}  {str(sympify(val).subs({var3[i]: var2[i] for i in range(len(var3))})).replace('**','^').replace('*',' ').replace(*rep)}")	
 						else:
 							if norep:
 								print(f"{str(perm)}  {str(val).replace(*rep)}")	

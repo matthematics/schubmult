@@ -65,7 +65,7 @@ for i in range(1,n):
 		sm += var_r[j]
 	subs_dict[var2[i]] = sm
 
-def schubmult_db(perm_dict,v,var2=var2,var3=var3):
+def schubmult_db(perm_dict,v,var2=var2,var3=var3,q_var=q_var):
 	if v == (1,2):
 		return perm_dict
 	th = medium_theta(inverse(v))
@@ -107,7 +107,7 @@ def schubmult_db(perm_dict,v,var2=var2,var3=var3):
 				for up in vpathsums:
 					newpathsums0 = {}
 					inv_up = inv(up)
-					newperms = double_elem_sym_q(up,mx_th,mx_th1,th[index])
+					newperms = double_elem_sym_q(up,mx_th,mx_th1,th[index],q_var)
 					for v in vpathdicts[index]:
 						sumval = vpathsums[up].get(v,zero)
 						if sumval == 0:
@@ -134,7 +134,7 @@ def schubmult_db(perm_dict,v,var2=var2,var3=var3):
 				newpathsums = {}
 				for up in vpathsums:
 					inv_up = inv(up)
-					newperms = elem_sym_perms_q(up,min(mx_th,(inv_mu-(inv_up-inv_u))-inv_vmu),th[index])
+					newperms = elem_sym_perms_q(up,min(mx_th,(inv_mu-(inv_up-inv_u))-inv_vmu),th[index],q_var)
 					for up2, udiff, mul_val in newperms:
 						if up2 not in newpathsums:
 							newpathsums[up2]={}
