@@ -54,7 +54,12 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         self._repr_option_bracket = False
         cat = GradedBialgebrasWithBasis(R)
         CombinatorialFreeModule.__init__(
-            self, R, Permutations(), category=cat, prefix="X"
+            self,
+            R,
+            Permutations(),
+            category=cat,
+            prefix="S",
+            bracket=["_{", "}" + f"({varname})"],
         )
         self._polynomial_ring = PolynomialRing(R, num_vars, varname)
 

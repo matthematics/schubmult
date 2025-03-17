@@ -19,9 +19,9 @@ from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 lazy_import("sage.libs.symmetrica", "all", as_="symmetrica")
 
 
-def FastQuantumSchubertPolynomialRing(R, num_vars, varname):
-    QR = PolynomialRing(R, num_vars, "q_")
-    return FastQuantumSchubertPolynomialRing_xbasis(QR, num_vars, varname)
+def FastQuantumSchubertPolynomialRing(R, num_vars, varname, q_varname="q_"):
+    QR = PolynomialRing(R, num_vars, q_varname)
+    return FastQuantumSchubertPolynomialRing_xbasis(QR, num_vars, varname, q_varname)
 
 
 class FastQuantumSchubertPolynomial_class(CombinatorialFreeModule.Element):
@@ -43,7 +43,7 @@ class FastQuantumSchubertPolynomial_class(CombinatorialFreeModule.Element):
 class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     Element = FastQuantumSchubertPolynomial_class
 
-    def __init__(self, R, num_vars, varname):
+    def __init__(self, R, num_vars, varname, q_varname):
         """
         EXAMPLES::
 
@@ -55,7 +55,7 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         self._repr_option_bracket = False
         cat = GradedAlgebrasWithBasis(R)  # CoalgebrasWithBasis(R).Graded()
         CombinatorialFreeModule.__init__(
-            self, R, Permutations(), category=cat, prefix="X"
+            self, R, Permutations(), category=cat, prefix=f"S^{q_varname}({varname})"
         )
         self._polynomial_ring = PolynomialRing(R, num_vars, varname)
 
@@ -149,11 +149,9 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 [syme.Symbol(str(g)) for g in self._polynomial_ring.gens()],
                 [syme.Symbol(str(g)) for g in self.base_ring().gens()],
             )
-            print(f"{result=}")
             elem = self._from_dict(
                 {Permutation(list(k)): self.base_ring()(v) for k, v in result.items()}
             )
-            print(f"{elem=}")
             elem._polynomial_ring = self._polynomial_ring
             return elem
         else:
