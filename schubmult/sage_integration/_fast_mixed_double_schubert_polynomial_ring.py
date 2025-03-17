@@ -1,88 +1,7 @@
 import schubmult.schubmult_yz as yz
-from sage.categories.coalgebras_with_basis import CoalgebrasWithBasis
-
-
-# sage.doctest: needs sage.combinat sage.modules
-r"""
-Schubert Polynomials
-
-
-See :wikipedia:`Schubert_polynomial` and
-`SymmetricFunctions.com <https://www.symmetricfunctions.com/schubert.htm#schubert>`_.
-Schubert polynomials are representatives of cohomology classes in flag varieties.
-In `n` variables, they are indexed by permutations `w \in S_n`. They also form
-a basis for the coinvariant ring of the `S_n` action on
-`\ZZ[x_1, x_2, \ldots, x_n]`.
-
-EXAMPLES::
-
-    sage: X = FastSchubertPolynomialRing(ZZ)
-    sage: w = [1,2,5,4,3];  # a list representing an element of `S_5`
-    sage: X(w)
-    X[1, 2, 5, 4, 3]
-
-This can be expanded in terms of polynomial variables::
-
-    sage: X(w).expand()
-    x0^2*x1 + x0*x1^2 + x0^2*x2 + 2*x0*x1*x2 + x1^2*x2
-     + x0*x2^2 + x1*x2^2 + x0^2*x3 + x0*x1*x3 + x1^2*x3
-     + x0*x2*x3 + x1*x2*x3 + x2^2*x3
-
-We can also convert back from polynomial variables. For example,
-the longest permutation is a single term. In `S_5`, this is the
-element (in one line notation) `w_0 = 54321`::
-
-    sage: w0 = [5,4,3,2,1]
-    sage: R.<x0, x1, x2, x3, x4> = PolynomialRing(ZZ)
-    sage: Sw0 = X(x0^4*x1^3*x2^2*x3);  Sw0
-    X[5, 4, 3, 2, 1]
-
-The polynomials also have the property that if the indexing permutation `w` is
-multiplied by a simple transposition `s_i = (i, i+1)` such that the length of
-`w` is more than the length of `ws_i`, then the FastSchubert
-polynomial of the permutation `ws_i` is computed by applying the divided
-difference operator :meth:`~SchubertPolynomial_class.divided_difference` to
-the polynomial indexed by `w`. For example, applying the divided difference
-operator `\partial_2` to the FastSchubert polynomial `\mathfrak{S}_{w_0}`::
-
-    sage: Sw0.divided_difference(2)
-    X[5, 3, 4, 2, 1]
-
-We can also check the properties listed in :wikipedia:`Schubert_polynomial`::
-
-    sage: X([1,2,3,4,5])  # the identity in one-line notation
-    X[1]
-    sage: X([1,3,2,4,5]).expand()  # the transposition swapping 2 and 3
-    x0 + x1
-    sage: X([2,4,5,3,1]).expand()
-    x0^2*x1^2*x2*x3 + x0^2*x1*x2^2*x3 + x0*x1^2*x2^2*x3
-
-    sage: w = [4,5,1,2,3]
-    sage: s = SymmetricFunctions(QQ).schur()
-    sage: s[3,3].expand(2)
-    x0^3*x1^3
-    sage: X(w).expand()
-    x0^3*x1^3
-"""
-# ****************************************************************************
-#       Copyright (C) 2007 Mike Hansen <mhansen@gmail.com>,
-#
-#  Distributed under the terms of the GNU General Public License (GPL)
-#
-#    This code is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#    General Public License for more details.
-#
-#  The full text of the GPL is available at:
-#
-#                  https://www.gnu.org/licenses/
-# ****************************************************************************
-
-from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
+from sage.categories.graded_bialgebras_with_basis import GradedBialgebrasWithBasis
 from sage.combinat.free_module import CombinatorialFreeModule
 
-# from sage.combinat.key_polynomial import KeyPolynomial
 from sage.combinat.permutation import Permutations, Permutation, from_lehmer_code
 from sage.misc.cachefunc import cached_method
 from sage.misc.lazy_import import lazy_import
@@ -182,12 +101,12 @@ class FastMixedDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         self._name = "Schubert polynomial ring with X basis"
         self._splitter = indices
         self._repr_option_bracket = False
-        cat = CoalgebrasWithBasis(R).Graded()
+        cat = GradedBialgebrasWithBasis(R)
         CombinatorialFreeModule.__init__(
             self, R, Permutations(), category=cat, prefix="X"
         )
 
-    def set_coproduct_indices(indices):
+    def set_coproduct_indices(self, indices):
         self._splitter = indices
 
     @cached_method
@@ -263,16 +182,7 @@ class FastMixedDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             return self._from_dict({perm: self.base_ring().one()})
         elif isinstance(x, Permutation):
             perm = x.remove_extra_fixed_points()
-            return self._from_dict({perm: self.base_ring().one()})
-        elif isinstance(x, MPolynomial):
-            return symmetrica.t_POLYNOM_SCHUBERT(x)
-        elif isinstance(x, InfinitePolynomial):
-            R = x.polynomial().parent()
-            # massage the term order to be what symmetrica expects
-            S = PolynomialRing(R.base_ring(), names=list(map(repr, reversed(R.gens()))))
-            return symmetrica.t_POLYNOM_SCHUBERT(S(x.polynomial()))
-        # elif isinstance(x, KeyPolynomial):
-        # return self(x.expand())
+            return self._from_dict({perm: self.base_ring().one()})        
         else:
             raise TypeError
 

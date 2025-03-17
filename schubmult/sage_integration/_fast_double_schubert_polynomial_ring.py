@@ -1,5 +1,5 @@
 import schubmult.schubmult_yz as yz
-from sage.categories.coalgebras_with_basis import CoalgebrasWithBasis
+from sage.categories.graded_bialgebras_with_basis import GradedBialgebrasWithBasis
 
 
 # sage.doctest: needs sage.combinat sage.modules
@@ -192,7 +192,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         self._name = "Schubert polynomial ring with X basis"
         self._splitter = indices
         self._repr_option_bracket = False
-        cat = CoalgebrasWithBasis(R).Graded()
+        cat = GradedBialgebrasWithBasis(R)
         CombinatorialFreeModule.__init__(
             self, R, Permutations(), category=cat, prefix="X"
         )
