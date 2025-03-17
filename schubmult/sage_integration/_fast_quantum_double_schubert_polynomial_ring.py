@@ -19,7 +19,9 @@ from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 lazy_import("sage.libs.symmetrica", "all", as_="symmetrica")
 
 
-def FastQuantumDoubleSchubertPolynomialRing(R, num_vars, varname1, varname2):
+def FastQuantumDoubleSchubertPolynomialRing(
+    R, num_vars, varname1, varname2, q_varname="q_"
+):
     """
     Return the FastQuantumDoubleSchubert polynomial ring over ``R`` on the X basis.
 
@@ -42,7 +44,7 @@ def FastQuantumDoubleSchubertPolynomialRing(R, num_vars, varname1, varname2):
             sage: a^2
             X[3, 1, 2] + 2*X[4, 1, 2, 3] + X[5, 1, 2, 3, 4]
     """
-    QR = PolynomialRing(R, num_vars, "q_")
+    QR = PolynomialRing(R, num_vars, q_varname)
     return FastQuantumDoubleSchubertPolynomialRing_xbasis(
         QR, num_vars, varname1, varname2
     )
@@ -62,6 +64,19 @@ class FastQuantumDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element)
                 for k, v in self.monomial_coefficients().items()
             ]
         )
+
+    def root_coefficients(self, root_var_name):
+        num_vars = len(self.parent()._coeff_polynomial_ring.gens())
+        RR = PolynomialRing(
+            self.parent().base_ring().base_ring(), num_vars, root_var_name
+        )
+        r = [sum(RR._first_ngens(j)) for j in range(num_vars)]
+        subs_dict = {
+            self.parent()._coeff_polynomial_ring.gens()[i]: r[i]
+            for i in range(num_vars)
+        }
+        # res = self
+        return self.map_coefficients(lambda foi: RR(foi.subs(subs_dict)))
 
 
 class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
@@ -224,11 +239,15 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 X[4, 2, 1, 3]
         """
         # return symmetrica.mult_schubert_schubert(left, right)
-        r = [sum(self.base_ring()._first_ngens(j)) for j in range(100)]
+        # r = [sum(self.base_ring()._first_ngens(j)) for j in range(100)]
         le = tuple(left)
         ri = tuple(right)
         result = yz.schubmult_db(
-            {le: 1}, ri, r, r, list(self.base_ring().base_ring().gens())
+            {le: 1},
+            ri,
+            self._coeff_polynomial_ring.gens(),
+            self._coeff_polynomial_ring.gens(),
+            self._coeff_polynomial_ring.base_ring().gens(),
         )
         result = {k: v for k, v in result.items() if v != 0}
         return sum(
