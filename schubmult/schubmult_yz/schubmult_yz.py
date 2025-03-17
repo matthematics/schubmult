@@ -3,7 +3,7 @@ from bisect import bisect_left
 from functools import cache
 from cachetools import cached
 from cachetools.keys import hashkey
-from symengine import sympify, Add, Mul, Pow, symarray, zero, expand, Integer
+from symengine import sympify, Add, Mul, Pow, symarray, expand, Integer
 from schubmult.perm_lib import (
     trimcode,
     elem_sym_perms,
@@ -32,6 +32,7 @@ from schubmult.perm_lib import (
     try_reduce_v,
     phi1,
     mu_A,
+    zero
 )
 import numpy as np
 import pulp as pu

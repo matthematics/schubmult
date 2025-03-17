@@ -1,9 +1,10 @@
-from symengine import sympify, Mul, Pow, symarray, zero
+from symengine import sympify, Mul, Pow, symarray
 from functools import cache
 from itertools import chain
 from bisect import bisect_left
 import numpy as np
 
+zero = sympify(0)
 n = 100
 
 q_var = symarray("q", n)

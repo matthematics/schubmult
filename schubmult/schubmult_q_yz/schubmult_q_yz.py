@@ -1,4 +1,4 @@
-from symengine import sympify, Add, Mul, Pow, symarray, zero, expand
+from symengine import sympify, Add, Mul, Pow, symarray, expand
 from schubmult.perm_lib import (
     trimcode,
     elem_sym_perms_q,
@@ -24,7 +24,7 @@ from schubmult.perm_lib import (
     elem_sym_func_q,
     call_zvars,
     reduce_q_coeff,
-    var,
+    zero,
     q_var,
 )
 import numpy as np
@@ -226,7 +226,7 @@ def schubpoly_quantum(v, var_x=var_x, var_y=var2, q_var=q_var, coeff=1):
     return ret_dict[(1, 2)]
 
 
-def schubmult(perm_dict, v, var2=var2, var3=var, q_var=q_var):
+def schubmult(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
     if v == (1, 2):
         return perm_dict
     th = strict_theta(inverse(v))

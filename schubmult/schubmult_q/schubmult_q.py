@@ -1,4 +1,4 @@
-from symengine import sympify, Add, Mul, Pow, symarray, Symbol, zero, expand
+from symengine import sympify, Add, Mul, Pow, symarray, Symbol, expand
 from schubmult.perm_lib import (
     trimcode,
     elem_sym_perms_q,
@@ -22,6 +22,7 @@ from schubmult.perm_lib import (
     q_var,
     sg,
     n,
+    zero
 )
 import numpy as np
 from schubmult.schubmult_q_yz import factor_out_q_keep_factored

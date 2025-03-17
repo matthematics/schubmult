@@ -28,7 +28,6 @@ setup(
         "psutil",
         "cachetools",
         "sortedcontainers",
-        "sagemath==1.3.0",
     ],
     entry_points={
         "console_scripts": [
