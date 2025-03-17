@@ -25,12 +25,14 @@ class FastQuantumSchubertPolynomial_class(CombinatorialFreeModule.Element):
     def expand(self):
         return sum(
             [
-                qyz.schubpoly_quantum(
-                    tuple(k),
-                    self.parent()._polynomial_ring.gens(),
-                    [0 for i in range(100)],
-                    self.parent()._polynomial_ring.base_ring().gens(),
-                    v,
+                self.parent()._polynomial_ring(
+                    qyz.schubpoly_quantum(
+                        tuple(k),
+                        self.parent()._polynomial_ring.gens(),
+                        [0 for i in range(100)],
+                        self.parent()._q_ring.gens(),
+                        v,
+                    )
                 )
                 for k, v in self.monomial_coefficients().items()
             ]
@@ -54,6 +56,7 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         CombinatorialFreeModule.__init__(
             self, R, Permutations(), category=cat, prefix=f"S^{q_varname}({varname})"
         )
+        self._q_ring = R
         self._polynomial_ring = PolynomialRing(R, num_vars, varname)
 
     @cached_method
@@ -133,6 +136,7 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             perm = x.remove_extra_fixed_points()
             elem = self._from_dict({perm: self.base_ring().one()})
             elem._polynomial_ring = self._polynomial_ring
+            elem._q_ring = self._q_ring
             return elem
         elif isinstance(x, MPolynomial):
             from sage.interfaces.sympy import sympy_init
@@ -144,12 +148,16 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 {(1, 2): 1},
                 val,
                 [syme.Symbol(str(g)) for g in self._polynomial_ring.gens()],
-                [syme.Symbol(str(g)) for g in self.base_ring().gens()],
+                [syme.Symbol(str(g)) for g in self._q_ring.gens()],
             )
             elem = self._from_dict(
-                {Permutation(list(k)): self.base_ring()(v) for k, v in result.items()}
+                {
+                    Permutation(list(k)).remove_extra_fixed_points(): self._q_ring(v)
+                    for k, v in result.items()
+                }
             )
             elem._polynomial_ring = self._polynomial_ring
+            elem._q_ring = self._q_ring
             return elem
         else:
             raise TypeError

@@ -44,10 +44,10 @@ var_x = symarray("x", 100).tolist()
 def single_variable(coeff_dict, varnum, var_q=var_q):
     ret = {}
     for u in coeff_dict:
-        new_perms_k = elem_sym_perms_q(u, 1, varnum)
+        new_perms_k = elem_sym_perms_q(u, 1, varnum, var_q)
         new_perms_km1 = []
         if varnum > 1:
-            new_perms_km1 = elem_sym_perms_q(u, 1, varnum - 1)
+            new_perms_km1 = elem_sym_perms_q(u, 1, varnum - 1, var_q)
         for perm, udiff, mul_val in new_perms_k:
             if udiff == 1:
                 ret[perm] = ret.get(perm, 0) + coeff_dict[u] * mul_val
@@ -63,19 +63,19 @@ def mult_poly(coeff_dict, poly, var_x=var_x, var_q=var_q):
     elif isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
-            ret = mult_poly(ret, a, var_q=var_q)
+            ret = mult_poly(ret, a, var_x, var_q=var_q)
         return ret
     elif isinstance(poly, Pow):
         base = poly.args[0]
         exponent = int(poly.args[1])
         ret = coeff_dict
         for i in range(int(exponent)):
-            ret = mult_poly(ret, base, var_q=var_q)
+            ret = mult_poly(ret, base, var_x, var_q=var_q)
         return ret
     elif isinstance(poly, Add):
         ret = {}
         for a in poly.args:
-            ret = add_perm_dict(ret, mult_poly(coeff_dict, a, var_q=var_q))
+            ret = add_perm_dict(ret, mult_poly(coeff_dict, a, var_x, var_q=var_q))
         return ret
     else:
         ret = {}
