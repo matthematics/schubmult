@@ -1,5 +1,5 @@
 import schubmult.schubmult_yz as yz
-import schubmult.schubmult_py as py
+from sage.categories.coalgebras_with_basis import CoalgebrasWithBasis
 
 
 # sage.doctest: needs sage.combinat sage.modules
@@ -16,26 +16,26 @@ a basis for the coinvariant ring of the `S_n` action on
 
 EXAMPLES::
 
-	sage: X = FastSchubertPolynomialRing(ZZ)
-	sage: w = [1,2,5,4,3];  # a list representing an element of `S_5`
-	sage: X(w)
-	X[1, 2, 5, 4, 3]
+    sage: X = FastSchubertPolynomialRing(ZZ)
+    sage: w = [1,2,5,4,3];  # a list representing an element of `S_5`
+    sage: X(w)
+    X[1, 2, 5, 4, 3]
 
 This can be expanded in terms of polynomial variables::
 
-	sage: X(w).expand()
-	x0^2*x1 + x0*x1^2 + x0^2*x2 + 2*x0*x1*x2 + x1^2*x2
-	 + x0*x2^2 + x1*x2^2 + x0^2*x3 + x0*x1*x3 + x1^2*x3
-	 + x0*x2*x3 + x1*x2*x3 + x2^2*x3
+    sage: X(w).expand()
+    x0^2*x1 + x0*x1^2 + x0^2*x2 + 2*x0*x1*x2 + x1^2*x2
+     + x0*x2^2 + x1*x2^2 + x0^2*x3 + x0*x1*x3 + x1^2*x3
+     + x0*x2*x3 + x1*x2*x3 + x2^2*x3
 
 We can also convert back from polynomial variables. For example,
 the longest permutation is a single term. In `S_5`, this is the
 element (in one line notation) `w_0 = 54321`::
 
-	sage: w0 = [5,4,3,2,1]
-	sage: R.<x0, x1, x2, x3, x4> = PolynomialRing(ZZ)
-	sage: Sw0 = X(x0^4*x1^3*x2^2*x3);  Sw0
-	X[5, 4, 3, 2, 1]
+    sage: w0 = [5,4,3,2,1]
+    sage: R.<x0, x1, x2, x3, x4> = PolynomialRing(ZZ)
+    sage: Sw0 = X(x0^4*x1^3*x2^2*x3);  Sw0
+    X[5, 4, 3, 2, 1]
 
 The polynomials also have the property that if the indexing permutation `w` is
 multiplied by a simple transposition `s_i = (i, i+1)` such that the length of
@@ -45,24 +45,24 @@ difference operator :meth:`~SchubertPolynomial_class.divided_difference` to
 the polynomial indexed by `w`. For example, applying the divided difference
 operator `\partial_2` to the FastSchubert polynomial `\mathfrak{S}_{w_0}`::
 
-	sage: Sw0.divided_difference(2)
-	X[5, 3, 4, 2, 1]
+    sage: Sw0.divided_difference(2)
+    X[5, 3, 4, 2, 1]
 
 We can also check the properties listed in :wikipedia:`Schubert_polynomial`::
 
-	sage: X([1,2,3,4,5])  # the identity in one-line notation
-	X[1]
-	sage: X([1,3,2,4,5]).expand()  # the transposition swapping 2 and 3
-	x0 + x1
-	sage: X([2,4,5,3,1]).expand()
-	x0^2*x1^2*x2*x3 + x0^2*x1*x2^2*x3 + x0*x1^2*x2^2*x3
+    sage: X([1,2,3,4,5])  # the identity in one-line notation
+    X[1]
+    sage: X([1,3,2,4,5]).expand()  # the transposition swapping 2 and 3
+    x0 + x1
+    sage: X([2,4,5,3,1]).expand()
+    x0^2*x1^2*x2*x3 + x0^2*x1*x2^2*x3 + x0*x1^2*x2^2*x3
 
-	sage: w = [4,5,1,2,3]
-	sage: s = SymmetricFunctions(QQ).schur()
-	sage: s[3,3].expand(2)
-	x0^3*x1^3
-	sage: X(w).expand()
-	x0^3*x1^3
+    sage: w = [4,5,1,2,3]
+    sage: s = SymmetricFunctions(QQ).schur()
+    sage: s[3,3].expand(2)
+    x0^3*x1^3
+    sage: X(w).expand()
+    x0^3*x1^3
 """
 # ****************************************************************************
 #       Copyright (C) 2007 Mike Hansen <mhansen@gmail.com>,
@@ -83,7 +83,7 @@ from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
 from sage.combinat.free_module import CombinatorialFreeModule
 
 # from sage.combinat.key_polynomial import KeyPolynomial
-from sage.combinat.permutation import Permutations, Permutation
+from sage.combinat.permutation import Permutations, Permutation, from_lehmer_code
 from sage.misc.cachefunc import cached_method
 from sage.misc.lazy_import import lazy_import
 from sage.rings.integer import Integer
@@ -95,7 +95,7 @@ from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 lazy_import("sage.libs.symmetrica", "all", as_="symmetrica")
 
 
-def FastMixedDoubleSchubertPolynomialRing(R, varname1, varname2):
+def FastMixedDoubleSchubertPolynomialRing(R, varname1, varname2, indices):
     """
     Return the FastMixedDoubleSchubert polynomial ring over ``R`` on the X basis.
 
@@ -121,7 +121,7 @@ def FastMixedDoubleSchubertPolynomialRing(R, varname1, varname2):
     vars1 = [f"{varname1}{i}" for i in range(100)]
     vars2 = [f"{varname2}{i}" for i in range(100)]
     return FastMixedDoubleSchubertPolynomialRing_xbasis(
-        PolynomialRing(R, 200, vars1 + vars2)
+        PolynomialRing(R, 200, vars1 + vars2), indices
     )
 
 
@@ -391,19 +391,24 @@ class FastMixedDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
 class FastMixedDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     Element = FastMixedDoubleSchubertPolynomial_class
 
-    def __init__(self, R):
+    def __init__(self, R, indices):
         """
         EXAMPLES::
 
-                sage: X = FastMixedDoubleSchubertPolynomialRing(QQ)
+                sage: X = FastSchubertPolynomialRing(QQ)
                 sage: X == loads(dumps(X))
                 True
         """
-        self._name = "Double Schubert polynomial ring with X basis"
+        self._name = "Schubert polynomial ring with X basis"
+        self._splitter = indices
         self._repr_option_bracket = False
+        cat = CoalgebrasWithBasis(R).Graded()
         CombinatorialFreeModule.__init__(
-            self, R, Permutations(), category=GradedAlgebrasWithBasis(R), prefix="X"
+            self, R, Permutations(), category=cat, prefix="X"
         )
+
+    def set_coproduct_indices(indices):
+        self._splitter = indices
 
     @cached_method
     def one_basis(self):
@@ -533,3 +538,62 @@ class FastMixedDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 for k, v in result.items()
             ]
         )
+
+    def coproduct_on_basis(self, mperm):
+        indices = self._splitter
+        indices = sorted(indices)
+        subs_dict_coprod = {}
+        mperm = Permutation(list(mperm))
+        k = len(indices)
+        n = len(mperm)
+        kcd = [indices[i] - i - 1 for i in range(len(indices))] + [
+            n + 1 - k for i in range(k, n)
+        ]
+        max_required = max([kcd[i] + i for i in range(len(kcd))])
+        kcd2 = kcd + [0 for i in range(len(kcd), max_required)] + [0]
+        N = len(kcd)
+        kperm = from_lehmer_code(kcd2).inverse()
+
+        ng = len(self.base_ring().gens())
+        sg_index = ng // 2
+        y = [self.base_ring().gens()[i] for i in range(sg_index)]
+        z = [self.base_ring().gens()[i + sg_index] for i in range(sg_index)]
+
+        vn = [f"soible_{i}" for i in range(100)]
+        TR = PolynomialRing(self.base_ring(), 100, vn)
+
+        for i in range(1, 100):
+            if i <= N:
+                subs_dict_coprod[TR.gens()[i]] = y[i]
+            else:
+                subs_dict_coprod[TR.gens()[i]] = z[i - N]
+
+        coeff_dict = {tuple(kperm): 1}
+        coeff_dict = yz.schubmult(coeff_dict, tuple(mperm), list(TR.gens()), y)
+
+        inv_kperm = kperm.number_of_inversions()
+        inverse_kperm = kperm.inverse()
+        total_sum = 0
+        for perm, val in coeff_dict.items():
+            pperm = Permutation(list(perm))
+            downperm = pperm.left_action_product(inverse_kperm)
+            if (
+                downperm.number_of_inversions()
+                == pperm.number_of_inversions() - inv_kperm
+            ):
+                flag = True
+                for i in range(N):
+                    if downperm[i] > N:
+                        flag = False
+                        break
+                if not flag:
+                    continue
+                firstperm = Permutation(list(downperm[0:N]))
+                secondperm = Permutation(
+                    [downperm[i] - N for i in range(N, len(downperm))]
+                )
+                val = TR(val).subs(subs_dict_coprod)
+                total_sum += self.base_ring()(val) * self(firstperm).tensor(
+                    self(secondperm)
+                )
+        return total_sum
