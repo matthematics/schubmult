@@ -1,5 +1,7 @@
-import schubmult.schubmult_yz as yz
+from sympy import sympify, Symbol
+import symengine as syme
 import schubmult.schubmult_py as py
+import schubmult.schubmult_yz as yz
 
 from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
 from sage.combinat.free_module import CombinatorialFreeModule
@@ -17,57 +19,29 @@ from sage.categories.graded_bialgebras_with_basis import GradedBialgebrasWithBas
 lazy_import("sage.libs.symmetrica", "all", as_="symmetrica")
 
 
-def FastSchubertPolynomialRing(R, indices=tuple([1])):
-    return FastSchubertPolynomialRing_xbasis(R, indices)
+def FastSchubertPolynomialRing(R, num_vars, varname, indices=tuple([1])):
+    return FastSchubertPolynomialRing_xbasis(R, num_vars, varname, indices)
 
 
 class FastSchubertPolynomial_class(CombinatorialFreeModule.Element):
     def expand(self):
-        """
-        EXAMPLES::
-
-                sage: X = FastSchubertPolynomialRing(ZZ)
-                sage: X([2,1,3]).expand()
-                x0
-                sage: [X(p).expand() for p in Permutations(3)]
-                [1, x0 + x1, x0, x0*x1, x0^2, x0^2*x1]
-
-        TESTS:
-
-        Calling .expand() should always return an element of an
-        MPolynomialRing::
-
-                sage: X = FastSchubertPolynomialRing(ZZ)
-                sage: f = X([1]); f
-                X[1]
-                sage: type(f.expand())
-                <class Fast'sage.rings.polynomial.multi_polynomial_libsingular.MPolynomial_libsingular'>
-                sage: f.expand()
-                1
-                sage: f = X([1,2])
-                sage: type(f.expand())
-                <class Fast'sage.rings.polynomial.multi_polynomial_libsingular.MPolynomial_libsingular'>
-                sage: f = X([1,3,2,4])
-                sage: type(f.expand())
-                <class Fast'sage.rings.polynomial.multi_polynomial_libsingular.MPolynomial_libsingular'>
-
-        Now we check for correct handling of the empty
-        permutation (:issue:`23443`)::
-
-                sage: X([1]).expand() * X([2,1]).expand()
-                x0
-        """
-        p = symmetrica.t_SCHUBERT_POLYNOM(self)
-        if not isinstance(p, MPolynomial):
-            R = PolynomialRing(self.parent().base_ring(), 1, "x0")
-            p = R(p)
-        return p
+        return sum(
+            [
+                yz.schubmult(
+                    {(1, 2): v},
+                    tuple(k),
+                    self.parent()._polynomial_ring.gens(),
+                    [0 for i in range(100)],
+                ).get((1, 2), 0)
+                for k, v in self.monomial_coefficients().items()
+            ]
+        )
 
 
 class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     Element = FastSchubertPolynomial_class
 
-    def __init__(self, R, indices):
+    def __init__(self, R, num_vars, varname, indices):
         """
         EXAMPLES::
 
@@ -82,6 +56,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         CombinatorialFreeModule.__init__(
             self, R, Permutations(), category=cat, prefix="X"
         )
+        self._polynomial_ring = PolynomialRing(R, num_vars, varname)
 
     def set_coproduct_indices(self, indices):
         self._splitter = indices
@@ -151,15 +126,37 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 ....:     P = next(it)
                 ....:     assert X(k(X(P))) == X(P), P
         """
+        # print(type(x))
+        # elem = None
         if isinstance(x, list):
             # checking the input to avoid symmetrica crashing Sage, see trac 12924
             if x not in Permutations():
                 raise ValueError(f"the input {x} is not a valid permutation")
             perm = Permutation(x).remove_extra_fixed_points()
-            return self._from_dict({perm: self.base_ring().one()})
+            elem = self._from_dict({perm: self.base_ring().one()})
+            elem._polynomial_ring = self._polynomial_ring
+            return elem
         elif isinstance(x, Permutation):
             perm = x.remove_extra_fixed_points()
-            return self._from_dict({perm: self.base_ring().one()})
+            elem = self._from_dict({perm: self.base_ring().one()})
+            elem._polynomial_ring = self._polynomial_ring
+            return elem
+        elif isinstance(x, MPolynomial):
+            from sage.interfaces.sympy import sympy_init
+
+            sympy_init()
+            sympy_floff = sympify(str(x))
+            val = syme.sympify(sympy_floff)
+            result = py.mult_poly(
+                {(1, 2): 1},
+                val,
+                [syme.Symbol(str(g)) for g in self._polynomial_ring.gens()],
+            )
+            elem = self._from_dict(
+                {Permutation(list(k)): self.base_ring()(v) for k, v in result.items()}
+            )
+            elem._polynomial_ring = self._polynomial_ring
+            return elem
         else:
             raise TypeError
 

@@ -182,7 +182,7 @@ class FastMixedDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             return self._from_dict({perm: self.base_ring().one()})
         elif isinstance(x, Permutation):
             perm = x.remove_extra_fixed_points()
-            return self._from_dict({perm: self.base_ring().one()})        
+            return self._from_dict({perm: self.base_ring().one()})
         else:
             raise TypeError
 
