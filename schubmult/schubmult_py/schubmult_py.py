@@ -23,25 +23,25 @@ def single_variable(coeff_dict, varnum):
     return ret
 
 
-def mult_poly(coeff_dict, poly):
+def mult_poly(coeff_dict, poly, var_x=var_x):
     if poly in var_x:
         return single_variable(coeff_dict, var_x.index(poly))
     elif isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
-            ret = mult_poly(ret, a)
+            ret = mult_poly(ret, a, var_x)
         return ret
     elif isinstance(poly, Pow):
         base = poly.args[0]
         exponent = int(poly.args[1])
         ret = coeff_dict
         for i in range(int(exponent)):
-            ret = mult_poly(ret, base)
+            ret = mult_poly(ret, base, var_x)
         return ret
     elif isinstance(poly, Add):
         ret = {}
         for a in poly.args:
-            ret = add_perm_dict(ret, mult_poly(coeff_dict, a))
+            ret = add_perm_dict(ret, mult_poly(coeff_dict, a, var_x))
         return ret
     else:
         ret = {}

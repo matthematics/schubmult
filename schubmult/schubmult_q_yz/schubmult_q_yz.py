@@ -20,17 +20,17 @@ def E(p, k, varl=var_y[1:]):
     return elem_sym_poly_q(p, k, var_x[1:], varl)
 
 
-def single_variable(coeff_dict, varnum):
+def single_variable(coeff_dict, varnum, var2=var2, q_var=q_var):
     ret = {}
     for u in coeff_dict:
         if varnum - 1 < len(u):
             ret[u] = ret.get(u, 0) + var2[u[varnum - 1]] * coeff_dict[u]
         else:
             ret[u] = ret.get(u, 0) + var2[varnum] * coeff_dict[u]
-        new_perms_k = elem_sym_perms_q(u, 1, varnum)
+        new_perms_k = elem_sym_perms_q(u, 1, varnum, q_var)
         new_perms_km1 = []
         if varnum > 1:
-            new_perms_km1 = elem_sym_perms_q(u, 1, varnum - 1)
+            new_perms_km1 = elem_sym_perms_q(u, 1, varnum - 1, q_var)
         for perm, udiff, mul_val in new_perms_k:
             if udiff == 1:
                 ret[perm] = ret.get(perm, 0) + coeff_dict[u] * mul_val
@@ -40,25 +40,25 @@ def single_variable(coeff_dict, varnum):
     return ret
 
 
-def mult_poly(coeff_dict, poly):
+def mult_poly(coeff_dict, poly, var_x=var_x, var_y=var_y, q_var=q_var):
     if poly in var_x:
-        return single_variable(coeff_dict, var_x.index(poly))
+        return single_variable(coeff_dict, var_x.index(poly), var_y, q_var)
     elif isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
-            ret = mult_poly(ret, a)
+            ret = mult_poly(ret, a, var_x, var_y, q_var)
         return ret
     elif isinstance(poly, Pow):
         base = poly.args[0]
         exponent = int(poly.args[1])
         ret = coeff_dict
         for i in range(int(exponent)):
-            ret = mult_poly(ret, base)
+            ret = mult_poly(ret, base, var_x, var_y, q_var)
         return ret
     elif isinstance(poly, Add):
         ret = {}
         for a in poly.args:
-            ret = add_perm_dict(ret, mult_poly(coeff_dict, a))
+            ret = add_perm_dict(ret, mult_poly(coeff_dict, a, var_x, var_y, q_var))
         return ret
     else:
         ret = {}
@@ -125,7 +125,84 @@ def nil_hecke(perm_dict, v, n, var2=var2, var3=var3):
     return ret_dict
 
 
-def schubmult(perm_dict, v, var2=var2, var3=var3):
+def elem_sym_func_q_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, q_var=q_var):
+    newk = k - udiff
+    if newk < vdiff:
+        return 0
+    if newk == vdiff:
+        return 1
+    yvars = []
+    mlen = max(len(u1), len(u2))
+    u1 = [*u1] + [a + 1 for a in range(len(u1), mlen)]
+    u2 = [*u2] + [a + 1 for a in range(len(u2), mlen)]
+    for j in range(min(len(u1), k)):
+        if u1[j] == u2[j]:
+            yvars += [varl1[u2[j]]]
+    for j in range(len(u1), min(k, len(u2))):
+        if u2[j] == j + 1:
+            yvars += [varl1[u2[j]]]
+    for j in range(len(u2), k):
+        yvars += [varl1[j + 1]]
+    zvars = [varl2[a] for a in call_zvars(v1, v2, k, i)]
+    return elem_sym_poly_q(newk - vdiff, newk, yvars, zvars, q_var)
+
+
+def schubpoly_quantum(v, var_x=var_x, var_y=var2, q_var=q_var, coeff=1):
+    th = strict_theta(inverse(v))
+    mu = permtrim(uncode(th))
+    vmu = permtrim(mulperm([*v], mu))
+    while th[-1] == 0:
+        th.pop()
+    vpathdicts = compute_vpathdicts(th, vmu)
+    vpathsums = {(1, 2): {(1, 2): coeff}}
+    inv_mu = inv(mu)
+    inv_vmu = inv(vmu)
+    inv_u = 0
+    ret_dict = {}
+    for index in range(len(th)):
+        mx_th = 0
+        for vp in vpathdicts[index]:
+            for v2, vdiff, s in vpathdicts[index][vp]:
+                if th[index] - vdiff > mx_th:
+                    mx_th = th[index] - vdiff
+        newpathsums = {}
+        for up in vpathsums:
+            inv_up = inv(up)
+            newperms = elem_sym_perms_q(
+                up, min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu), th[index], q_var
+            )
+            for up2, udiff, mul_val in newperms:
+                if up2 not in newpathsums:
+                    newpathsums[up2] = {}
+                for v in vpathdicts[index]:
+                    sumval = vpathsums[up].get(v, 0) * mul_val
+                    if sumval == 0:
+                        continue
+                    for v2, vdiff, s in vpathdicts[index][v]:
+                        newpathsums[up2][v2] = newpathsums[up2].get(
+                            v2, 0
+                        ) + s * sumval * elem_sym_func_q_q(
+                            th[index],
+                            index + 1,
+                            up,
+                            up2,
+                            v,
+                            v2,
+                            udiff,
+                            vdiff,
+                            var_x,
+                            var_y,
+                            q_var,
+                        )
+        vpathsums = newpathsums
+    toget = tuple(vmu)
+    ret_dict = add_perm_dict(
+        {ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict
+    )
+    return ret_dict[(1, 2)]
+
+
+def schubmult(perm_dict, v, var2=var2, var3=var, q_var=q_var):
     if v == (1, 2):
         return perm_dict
     th = strict_theta(inverse(v))
@@ -134,7 +211,6 @@ def schubmult(perm_dict, v, var2=var2, var3=var3):
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}
-    vpaths = [([(vmu, 0)], 1)]
     while th[-1] == 0:
         th.pop()
     thL = len(th)
@@ -152,7 +228,10 @@ def schubmult(perm_dict, v, var2=var2, var3=var3):
             for up in vpathsums:
                 inv_up = inv(up)
                 newperms = elem_sym_perms_q(
-                    up, min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu), th[index]
+                    up,
+                    min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu),
+                    th[index],
+                    q_var,
                 )
                 for up2, udiff, mul_val in newperms:
                     if up2 not in newpathsums:

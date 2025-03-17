@@ -1,1 +1,1 @@
-from .schubmult_py import schubmult
+from .schubmult_py import schubmult, mult_poly
