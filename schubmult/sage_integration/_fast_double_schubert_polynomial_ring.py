@@ -170,9 +170,9 @@ class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
             [
                 yz.schubmult(
                     {(1, 2): v},
-                    tuple(k),
+                    tuple(k[0]),
                     self.parent()._base_polynomial_ring.gens(),
-                    self.parent()._coeff_polynomial_ring.gens(),
+                    self.parent()._coeff_polynomial_rings[k[1]].gens(),
                 ).get((1, 2), 0)
                 for k, v in self.monomial_coefficients().items()
             ]
@@ -371,7 +371,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             elem = self._from_dict(
                 {
                     (
-                        Permutation(list(k)),
+                        Permutation(list(k)).remove_extra_fixed_points(),
                         self._varlist[0],
                     ): self._coeff_polynomial_ring(str(v))
                     for k, v in result.items()

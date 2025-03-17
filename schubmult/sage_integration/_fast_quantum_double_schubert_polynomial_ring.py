@@ -57,10 +57,10 @@ class FastQuantumDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element)
         return sum(
             [
                 yz.schubpoly_quantum(
-                    tuple(k),
+                    tuple(k[0]),
                     self.parent()._base_polynomial_ring.gens(),
-                    self.parent()._coeff_polynomial_ring.gens(),
-                    self.parent()._coeff_polynomial_ring.base_ring().gens(),
+                    self.parent()._coeff_polynomial_rings[k[1]].gens(),
+                    self.parent()._q_ring.gens(),
                     v,
                 )
                 for k, v in self.monomial_coefficients().items()
@@ -95,6 +95,7 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         self._name = "QuantumDouble Schubert polynomial ring with X basis"
         self._repr_option_bracket = False
         self._mixed = False
+        self._q_ring = R
 
         if isinstance(varname2, tuple):
             self._mixed = True
@@ -252,15 +253,12 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     syme.Symbol(str(g))
                     for g in self._coeff_polynomial_rings[self._varlist[0]].gens()
                 ],
-                [
-                    syme.Symbol(str(g))
-                    for g in self._coeff_polynomial_ring.base_ring().gens()
-                ],
+                [syme.Symbol(str(g)) for g in self._q_ring.gens()],
             )
             elem = self._from_dict(
                 {
                     (
-                        Permutation(list(k)),
+                        Permutation(list(k)).remove_extra_fixed_points(),
                         self._varlist[0],
                     ): self._coeff_polynomial_ring(str(v))
                     for k, v in result.items()
