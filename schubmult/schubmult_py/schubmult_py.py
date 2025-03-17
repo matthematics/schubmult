@@ -1,8 +1,18 @@
 import sys
-from functools import cache
-from itertools import chain
-from schubmult.perm_lib import *
-from symengine import *
+from schubmult.perm_lib import (
+    trimcode,
+    elem_sym_perms,
+    add_perm_dict,
+    compute_vpathdicts,
+    inverse,
+    theta,
+    permtrim,
+    inv,
+    mulperm,
+    code,
+    uncode,
+)
+from symengine import sympify, Add, Mul, Pow, symarray
 
 var_x = symarray("x", 100).tolist()
 
@@ -60,7 +70,6 @@ def schubmult(perm_dict, v):
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}
-    vpaths = [([(vmu, 0)], 1)]
     while th[-1] == 0:
         th.pop()
     vpathdicts = compute_vpathdicts(th, vmu)
@@ -175,7 +184,6 @@ def main():
             coeff_dict = {tuple(permtrim(kperm)): 1}
             coeff_dict = schubmult(coeff_dict, tuple(permtrim([*perms[0]])))
 
-            inv_perm0 = inv(perms[0])
             inv_kperm = inv(kperm)
             inverse_kperm = inverse(kperm)
             if pr:

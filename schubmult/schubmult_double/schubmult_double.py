@@ -1,7 +1,13 @@
-from symengine import *
-from functools import cache
-from itertools import chain
-from schubmult.perm_lib import *
+from symengine import sympify, symarray, Symbol
+from schubmult.perm_lib import (
+    trimcode,
+    inverse,
+    permtrim,
+    inv,
+    mulperm,
+    code,
+    uncode,
+)
 from schubmult.schubmult_yz import schubmult, mult_poly
 import sys
 
@@ -100,7 +106,6 @@ def main():
             coeff_dict = {tuple(kperm): 1}
             coeff_dict = schubmult(coeff_dict, perms[0], var, var2)
 
-            inv_perm0 = inv(perms[0])
             inv_kperm = inv(kperm)
             inverse_kperm = inverse(kperm)
             if pr:

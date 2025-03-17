@@ -1,4 +1,4 @@
-from symengine import *
+from symengine import sympify, Mul, Pow, symarray, zero
 from functools import cache
 from itertools import chain
 from bisect import bisect_left
@@ -467,9 +467,8 @@ def kdown_perms(perm, monoperm, p, k):
 def compute_vpathdicts(th, vmu, smpify=False):
     vpathdicts = [{} for index in range(len(th))]
     vpathdicts[-1][tuple(vmu)] = None
-    S = sum(th)
     thL = len(th)
-    th2 = [*th]
+
     top = code(inverse(uncode(th)))
     for i in range(thL - 1, -1, -1):
         top2 = code(inverse(uncode(top)))
@@ -518,7 +517,6 @@ def add_perm_dict(d1, d2):
     return d1
 
 
-zero = sympify(0)
 one = sympify(1)
 
 
@@ -797,7 +795,7 @@ def is_reducible(v):
     for i in range(len(c03)):
         if c03[i] == 0:
             found0 = True
-        elif c03[i] != 0 and found0 == True:
+        elif c03[i] != 0 and found0:
             good = False
             break
     return good

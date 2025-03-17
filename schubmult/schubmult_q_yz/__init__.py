@@ -1,1 +1,1 @@
-from .schubmult_q_yz import *
+from .schubmult_q_yz import *  # noqa: F403

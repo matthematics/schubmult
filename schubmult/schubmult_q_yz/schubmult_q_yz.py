@@ -1,7 +1,35 @@
-from schubmult.perm_lib import *
+from symengine import sympify, Add, Mul, Pow, symarray, zero, expand
+from schubmult.perm_lib import (
+    trimcode,
+    elem_sym_perms_q,
+    add_perm_dict,
+    compute_vpathdicts,
+    inverse,
+    strict_theta,
+    medium_theta,
+    permtrim,
+    inv,
+    mulperm,
+    code,
+    uncode,
+    double_elem_sym_q,
+    elem_sym_poly_q,
+    longest_element,
+    check_blocks,
+    is_parabolic,
+    q_vector,
+    omega,
+    count_less_than,
+    elem_sym_perms_q_op,
+    elem_sym_func_q,
+    call_zvars,
+    reduce_q_coeff,
+    var,
+    q_var,
+)
+import numpy as np
 from schubmult.schubmult_yz import compute_positive_rep, posify
 import schubmult.schubmult_yz as norm_yz
-from symengine import *
 import sys
 
 var2 = symarray("y", 100)
@@ -73,16 +101,13 @@ def nil_hecke(perm_dict, v, n, var2=var2, var3=var3):
     th = strict_theta(inverse(v))
     mu = permtrim(uncode(th))
     vmu = permtrim(mulperm([*v], mu))
-    inv_vmu = inv(vmu)
-    inv_mu = inv(mu)
+
     ret_dict = {}
-    vpaths = [([(vmu, 0)], 1)]
     while th[-1] == 0:
         th.pop()
     thL = len(th)
     vpathdicts = compute_vpathdicts(th, vmu, True)
     for u, val in perm_dict.items():
-        inv_u = inv(u)
         vpathsums = {u: {(1, 2): val}}
         for index in range(thL):
             mx_th = 0
@@ -92,7 +117,6 @@ def nil_hecke(perm_dict, v, n, var2=var2, var3=var3):
                         mx_th = th[index] - vdiff
             newpathsums = {}
             for up in vpathsums:
-                inv_up = inv(up)
                 newperms = elem_sym_perms_q_op(up, mx_th, th[index], n)
                 for up2, udiff, mul_val in newperms:
                     if up2 not in newpathsums:
@@ -274,7 +298,6 @@ def schubmult_db(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}
-    vpaths = [([(vmu, 0)], 1)]
 
     thL = len(th)
     vpathdicts = compute_vpathdicts(th, vmu, True)
@@ -544,7 +567,6 @@ def main():
         pr = True
         display_positive = False
         ascode = False
-        coprod = False
         nilhecke = False
         nilhecke_apply = False
         check = True
@@ -640,20 +662,6 @@ def main():
                     perms[i] = (1, 2)
                 perms[i] = tuple(permtrim([*perms[i]]))
 
-        size = 0
-        L = len(perms)
-
-        # if parabolic and len(perms) != 2:
-        # print("Only two permutations supported for parabolic.")
-        # exit(1)
-        #
-        # if parabolic:
-        # for i in range(len(parabolic_index)):
-        # index = parabolic_index[i] - 1
-        # if sg(index,perms[0]) == 1 or sg(index,perms[1]) == 1:
-        # print("Parabolic given but elements are not minimal length coset representatives.")
-        # exit(1)
-
         if nilhecke:
             coeff_dict = nil_hecke({(1, 2): 1}, perms[0], nil_N)
             rep = ("y", "x")
@@ -679,7 +687,7 @@ def main():
                     globals()[str(v)] = v
                 for v in q_var:
                     globals()[str(v)] = v
-                q = q_var
+
                 mul_exp = eval(mulstring)
                 coeff_dict = mult_poly(coeff_dict, mul_exp)
             rep = ("", "")
@@ -805,11 +813,9 @@ def main():
             for perm in coeff_perms:
                 val = coeff_dict[perm]
                 if expand(val) != 0:
-                    notint = False
                     try:
                         int(val)
                     except Exception:
-                        notint = True
                         val2 = 0
                         if display_positive and not posified:
                             q_dict = factor_out_q_keep_factored(val)

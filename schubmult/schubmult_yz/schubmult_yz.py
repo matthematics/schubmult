@@ -1,14 +1,40 @@
-from symengine import *
 import sys
 from bisect import bisect_left
 from functools import cache
-from itertools import chain
 from cachetools import cached
 from cachetools.keys import hashkey
-from schubmult.perm_lib import *
+from symengine import sympify, Add, Mul, Pow, symarray, zero, expand, Integer
+from schubmult.perm_lib import (
+    trimcode,
+    elem_sym_perms,
+    elem_sym_poly,
+    add_perm_dict,
+    dominates,
+    compute_vpathdicts,
+    inverse,
+    theta,
+    permtrim,
+    inv,
+    mulperm,
+    code,
+    uncode,
+    elem_sym_func,
+    elem_sym_perms_op,
+    divdiffable,
+    pull_out_var,
+    cycle,
+    will_formula_work,
+    one_dominates,
+    is_reducible,
+    reduce_coeff,
+    reduce_descents,
+    try_reduce_u,
+    try_reduce_v,
+    phi1,
+    mu_A,
+)
 import numpy as np
 import pulp as pu
-import itertools as it
 import sympy
 import psutil
 from sortedcontainers import SortedList
@@ -144,7 +170,7 @@ def nilhecke_mult(coeff_dict1, coeff_dict2):
         poly = coeff_dict2[w]
         did_mul = mult_poly_down(coeff_dict1, poly)
         for v in did_mul:
-            v1 = [*v1]
+            v1 = [*v]
             addperm = mulperm(v1, w1)
             if inv(addperm) == inv(v1) + inv_w1:
                 toadd = tuple(permtrim(addperm))
@@ -254,7 +280,6 @@ def schubmult(perm_dict, v, var2=var2, var3=var3):
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}
-    vpaths = [([(vmu, 0)], 1)]
     while th[-1] == 0:
         th.pop()
     thL = len(th)
@@ -311,16 +336,13 @@ def schubmult_down(perm_dict, v, var2=var2, var3=var3):
         return perm_dict
     mu = permtrim(uncode(th))
     vmu = permtrim(mulperm([*v], mu))
-    inv_vmu = inv(vmu)
-    inv_mu = inv(mu)
     ret_dict = {}
-    vpaths = [([(vmu, 0)], 1)]
+
     while th[-1] == 0:
         th.pop()
     thL = len(th)
     vpathdicts = compute_vpathdicts(th, vmu, True)
     for u, val in perm_dict.items():
-        inv_u = inv(u)
         vpathsums = {u: {(1, 2): val}}
         for index in range(thL):
             mx_th = 0
@@ -330,7 +352,6 @@ def schubmult_down(perm_dict, v, var2=var2, var3=var3):
                         mx_th = th[index] - vdiff
             newpathsums = {}
             for up in vpathsums:
-                inv_up = inv(up)
                 newperms = elem_sym_perms_op(up, mx_th, th[index])
                 for up2, udiff in newperms:
                     if up2 not in newpathsums:
@@ -601,7 +622,6 @@ def find_base_vectors(monom_list, monom_list_neg, var2, var3, depth):
     mn_fullcount = {}
     # pairs_checked = set()
     monom_list = set([tuple(mn) for mn in monom_list])
-    additional_set = set(monom_list)
     ct = 0
     while ct < depth and size != len(monom_list):
         size = len(monom_list)
@@ -687,13 +707,9 @@ def find_base_vectors(monom_list, monom_list_neg, var2, var3, depth):
                     if mn4_t not in monom_list2:
                         additional_set2.add(mn4_t)
                     monom_list2.add(mn4_t)
-        additional_set = additional_set2
-        # print(f"{len(additional_set)=} {len(monom_list2)=}")
         monom_list = monom_list2
         ct += 1
-    # print(f"{monom_list=}")
     ret = []
-    # print("done monom")
     for mn in monom_list:
         if len(mn) != len(set(mn)):
             continue
@@ -734,7 +750,6 @@ def compute_positive_rep(val, var2=var2, var3=var3, msg=False, do_pos_neg=True):
         var22 = [sympy.sympify(m) for m in varsimp2]
         var33 = [sympy.sympify(m) for m in varsimp3]
         n1 = len(varsimp2)
-        n2 = len(varsimp3)
 
         for i in range(len(varsimp2)):
             varsimp2[i] = var2[var2list.index(varsimp2[i])]
@@ -782,8 +797,8 @@ def compute_positive_rep(val, var2=var2, var3=var3, msg=False, do_pos_neg=True):
                     mons, mons2, varsimp2, varsimp3, depth
                 )
                 if len(mons) == size:
-                    print(f"Found counterexample")
-                    return -1
+                    raise ValueError("Found counterexample")
+
                 size = len(mons)
                 base_vectors = []
                 bad = False
@@ -1454,8 +1469,6 @@ def posify(
             vp = pull_out_var(c1[0] + 1, [*v])
             u3 = tuple(permtrim(phi1(u)))
             w3 = tuple(permtrim(phi1(w)))
-            c3 = code(inverse(u3))
-            c4 = code(inverse(w3))
             val = 0
             for arr, v3 in vp:
                 tomul = 1
@@ -1731,7 +1744,6 @@ def main():
             coeff_dict = {tuple(kperm): 1}
             coeff_dict = schubmult(coeff_dict, perms[0], var, var2)
 
-            inv_perm0 = inv(perms[0])
             inv_kperm = inv(kperm)
             inverse_kperm = inverse(kperm)
             if pr:
@@ -1835,7 +1847,6 @@ def main():
                     perms[i] = tuple(permtrim([*perms[i]]))
 
             size = 0
-            L = len(perms)
             orig_perms = [*perms]
             while len(perms) != size:
                 size = len(perms)
@@ -1922,7 +1933,6 @@ def main():
                         except Exception:
                             notint = True
                         if notint and display_positive:
-                            valu = val
                             try:
                                 if len(perms) == 2 and not posified and not mult:
                                     if not down:
@@ -1954,7 +1964,7 @@ def main():
                             except Exception:
                                 if mult:
                                     print(
-                                        f"warning; --display-positive is on but result is not positive",
+                                        "warning; --display-positive is on but result is not positive",
                                         file=sys.stderr,
                                     )
                                 else:

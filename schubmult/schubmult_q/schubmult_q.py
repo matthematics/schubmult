@@ -1,7 +1,29 @@
-from symengine import *
-from functools import cache
-from itertools import chain
-from schubmult.perm_lib import *
+from symengine import sympify, Add, Mul, Pow, symarray, Symbol, zero, expand
+from schubmult.perm_lib import (
+    trimcode,
+    elem_sym_perms_q,
+    add_perm_dict,
+    compute_vpathdicts,
+    inverse,
+    strict_theta,
+    medium_theta,
+    permtrim,
+    inv,
+    mulperm,
+    code,
+    uncode,
+    double_elem_sym_q,
+    longest_element,
+    check_blocks,
+    is_parabolic,
+    q_vector,
+    omega,
+    count_less_than,
+    q_var,
+    sg,
+    n,
+)
+import numpy as np
 from schubmult.schubmult_q_yz import factor_out_q_keep_factored
 import schubmult.schubmult_yz as yz
 import sys
@@ -82,7 +104,6 @@ def schubmult_db(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}
-    vpaths = [([(vmu, 0)], 1)]
 
     thL = len(th)
     # if thL!=2 and len(set(thL))!=1:
@@ -178,11 +199,9 @@ def schubmult(perm_dict, v):
     th = strict_theta(inverse(v))
     mu = permtrim(uncode(th))
     vmu = permtrim(mulperm([*v], mu))
-    # print(f"{th=} {mu=} {vmu=}")
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}
-    vpaths = [([(vmu, 0)], 1)]
     while th[-1] == 0:
         th.pop()
     thL = len(th)
@@ -229,8 +248,6 @@ var_q = Symbol("q")
 def grass_q_replace(perm, k, d, n):
     if k - d < 0:
         return None
-    # print("Here")
-    ret = []
     cd = code(perm)
     for i in range(k - d, k):
         if i >= len(cd) or cd[i] < d:
