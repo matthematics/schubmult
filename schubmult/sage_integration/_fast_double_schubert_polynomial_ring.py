@@ -98,6 +98,11 @@ class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
         ss = self.parent().one() * self
         oo = self.parent().one() * other
         return ss.monomial_coefficients() == oo.monomial_coefficients()
+    
+    def __ne__(self, other):
+        ss = self.parent().one() * self
+        oo = self.parent().one() * other
+        return ss.monomial_coefficients() != oo.monomial_coefficients()
 
     def root_coefficients(self, root_var_name):
         num_vars = len(self.parent()._coeff_polynomial_ring.gens())

@@ -61,7 +61,10 @@ class FastQuantumDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element)
         )
 
     def __eq__(self, other):
-        return self.parent().one()*self == self.parent().one()*other
+        return (self.parent().one()*self).monomial_coefficients() == (self.parent().one()*other)..monomial_coefficients()
+
+    def __ne__(self, other):
+        return (self.parent().one()*self).monomial_coefficients() != (self.parent().one()*other).monomial_coefficients()
 
     def root_coefficients(self, root_var_name):
         num_vars = len(self.parent()._coeff_polynomial_ring.gens())
