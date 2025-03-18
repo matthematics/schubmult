@@ -274,6 +274,8 @@ def schubmult_one(perm1, perm2, var2=var2, var3=var3):
 def schubmult(perm_dict, v, var2=var2, var3=var3):
     vn1 = inverse(v)
     th = theta(vn1)
+    if len(th) == 0:
+        return perm_dict
     if th[0] == 0:
         return perm_dict
     mu = permtrim(uncode(th))

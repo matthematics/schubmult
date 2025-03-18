@@ -94,6 +94,11 @@ class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
             ]
         )
 
+    def __eq__(self, other):
+        ss = self.parent().one() * self
+        oo = self.parent().one() * other
+        return ss.monomial_coefficients() == oo.monomial_coefficients()
+
     def root_coefficients(self, root_var_name):
         num_vars = len(self.parent()._coeff_polynomial_ring.gens())
         RR = PolynomialRing(
@@ -174,7 +179,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 sage: X.one()  # indirect doctest
                 X[1]
         """
-        return self._indices([1])
+        return (Permutation([1]), self._varlist[0])
 
     def _element_constructor_(self, *x):
         """
@@ -257,7 +262,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     {self._index_wrapper((perm, x[1])): self.base_ring().one()}
                 )
             else:
-                raise ValueError
+                raise ValueError("Not perm")
             elem._coeff_polynomial_ring = self._coeff_polynomial_ring
             elem._base_polynomial_ring = self._base_polynomial_ring
             return elem
@@ -349,7 +354,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         return sum(
             [
                 self._coeff_polynomial_ring(v)
-                * self((Permutation(list(k)), self._varlist[0]))
+                * self(Permutation(list(k)), left[1])
                 for k, v in result.items()
             ]
         )

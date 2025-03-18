@@ -153,7 +153,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 [syme.Symbol(str(g)) for g in self._polynomial_ring.gens()],
             )
             elem = self._from_dict(
-                {Permutation(list(k)): self.base_ring()(v) for k, v in result.items()}
+                {Permutation(list(k)): self.base_ring()(str(v)) for k, v in result.items()}
             )
             elem._polynomial_ring = self._polynomial_ring
             return elem
@@ -235,5 +235,5 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 secondperm = Permutation(
                     [downperm[i] - N for i in range(N, len(downperm))]
                 )
-                total_sum += val * self(firstperm).tensor(self(secondperm))
+                total_sum += self.base_ring()(val) * self(firstperm).tensor(self(secondperm))
         return total_sum

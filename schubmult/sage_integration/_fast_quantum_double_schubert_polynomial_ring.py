@@ -60,6 +60,9 @@ class FastQuantumDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element)
             ]
         )
 
+    def __eq__(self, other):
+        return self.parent().one()*self == self.parent().one()*other
+
     def root_coefficients(self, root_var_name):
         num_vars = len(self.parent()._coeff_polynomial_ring.gens())
         RR = PolynomialRing(
@@ -137,7 +140,7 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 sage: X.one()  # indirect doctest
                 X[1]
         """
-        return self._indices([1])
+        return (Permutation([1]), self._varlist[0])
 
     def _element_constructor_(self, *x):
         """
