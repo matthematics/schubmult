@@ -175,6 +175,8 @@ def schubpoly_quantum(v, var_x=var_x, var_y=var2, q_var=q_var, coeff=1):
     th = strict_theta(inverse(v))
     mu = permtrim(uncode(th))
     vmu = permtrim(mulperm([*v], mu))
+    if len(th) == 0:
+        return coeff
     while th[-1] == 0:
         th.pop()
     vpathdicts = compute_vpathdicts(th, vmu)
