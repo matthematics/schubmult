@@ -77,6 +77,11 @@ def test_associative():
         X(perm2) * X(perm3, "z")
     )
 
+def test_coerce():
+    X = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y", "z"))
+    R = X._coeff_polynomial_ring
+    
+    assert X([2,3,5,4,1],"z") * R("x2^2") - R("x2^2") * X([2,3,5,4,1], "z") == 0
 
 def test_mixed_equal():
     """

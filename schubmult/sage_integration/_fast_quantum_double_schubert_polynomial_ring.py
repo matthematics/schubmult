@@ -2,7 +2,6 @@ import schubmult.schubmult_q_yz as yz
 from sympy import sympify
 import symengine as syme
 from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
-from sage.categories.algebra_modules import AlgebraModules
 from sage.combinat.free_module import CombinatorialFreeModule
 from sage.categories.cartesian_product import cartesian_product
 from sage.combinat.permutation import Permutations, Permutation
