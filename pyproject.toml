@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "schubmult"
+version = "1.5.0"
+dependencies = [
+        "numpy",
+        "PuLP>=2.7.0",
+        "symengine>=0.14.0",
+        "sympy>=1.12",
+        "psutil",
+        "cachetools",
+        "sortedcontainers",
+]
+requires-python = ">=3.9"
+authors = [
+  {name = "Matt Samuel", email = "schubmult@gmail.com"},
+]
+maintainers = [
+  {name = "Matt Samuel", email = "schubmult@gmail.com"},
+]
+description = "Package for algebraic computation with single, double, and quantum Schubert polynomials"
+readme = "README.md"
+keywords = ["Schubert", "polynomial", "double", "algebra"]
+classifiers = [
+  "Programming Language :: Python"
+]
+
+[project.license]
+file = "LICENSE"
+
+[project.optional-dependencies]
+sage = ["sagemath-standard"]
+
+
+[project.urls]
+Homepage = "http://schubmult.org"
+Repository = "https://github.com/matthematics/schubmult"
+
+
+[project.scripts]
+schubmult_py="schubmult.schubmult_py.__main__:main"
+schubmult_double="schubmult.schubmult_double.__main__:main"
+schubmult_yz="schubmult.schubmult_yz.__main__:main"
+schubmult_q="schubmult.schubmult_q.__main__:main"
+schubmult_q_double="schubmult.schubmult_q_double.__main__:main"
+schubmult_q_yz="schubmult.schubmult_q_yz.__main__:main"
