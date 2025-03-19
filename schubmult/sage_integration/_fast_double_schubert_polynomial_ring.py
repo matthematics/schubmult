@@ -2,6 +2,8 @@ import schubmult.schubmult_yz as yz
 from sympy import sympify
 import symengine as syme
 
+from ._fast_schubert_polynomial_ring import FastSchubertPolynomialRing_xbasis
+
 from sage.categories.graded_bialgebras_with_basis import GradedBialgebrasWithBasis
 from sage.rings.polynomial.flatten import FlatteningMorphism
 from sage.combinat.free_module import CombinatorialFreeModule
@@ -118,7 +120,7 @@ class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
         # res = self
         return self.map_coefficients(lambda foi: RR(foi.subs(subs_dict)))
 
-    
+
 class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     Element = FastDoubleSchubertPolynomial_class
 
@@ -282,7 +284,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             )
             elem._coeff_polynomial_ring = self._coeff_polynomial_ring
             elem._base_polynomial_ring = self._base_polynomial_ring
-            return elem
+            return elem        
         elif isinstance(x, MPolynomial):
             from sage.interfaces.sympy import sympy_init
 
@@ -310,6 +312,12 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             elem._coeff_polynomial_ring = self._coeff_polynomial_ring
             elem._base_polynomial_ring = self._base_polynomial_ring
             return elem
+        elif self.has_coerce_map_from(x.parent()):
+            try:
+                if self._base_polynomial_ring.has_coerce_map_from(x._polynomial_ring):
+                    return self(x.expand())
+            except Exception:
+                raise TypeError
         else:
             raise TypeError
 
@@ -438,5 +446,8 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     def _coerce_map_from_(self, S):
         if isinstance(S, MPolynomialRing_base):
             return True
+        if isinstance(S, FastSchubertPolynomialRing_xbasis):
+            return True
+        return super()._coerce_map_from_(S)
         return super()._coerce_map_from_(S)
 
