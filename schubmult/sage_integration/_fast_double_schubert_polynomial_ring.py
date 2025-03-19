@@ -10,6 +10,7 @@ from sage.categories.cartesian_product import cartesian_product
 from sage.misc.cachefunc import cached_method
 from sage.misc.lazy_import import lazy_import
 from sage.rings.polynomial.multi_polynomial import MPolynomial
+from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 
 lazy_import("sage.libs.symmetrica", "all", as_="symmetrica")
@@ -117,7 +118,7 @@ class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
         # res = self
         return self.map_coefficients(lambda foi: RR(foi.subs(subs_dict)))
 
-
+    
 class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     Element = FastDoubleSchubertPolynomial_class
 
@@ -160,7 +161,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         )
 
         self._index_wrapper = cartesian_product([Permutations(), self._varlist])
-        cat = GradedBialgebrasWithBasis(self._coeff_polynomial_ring)
+        cat = GradedBialgebrasWithBasis(self._coeff_polynomial_ring).Commutative()
 
         CombinatorialFreeModule.__init__(
             self,
@@ -169,9 +170,12 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             category=cat,
             prefix=f"S({varname1})",
         )
+        self._populate_coercion_lists_()
 
     def set_coproduct_indices(self, indices):
         self._splitter = indices
+
+    
 
     @cached_method
     def one_basis(self):
@@ -309,6 +313,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         else:
             raise TypeError
 
+
     def some_elements(self):
         """
         Return some elements.
@@ -429,3 +434,9 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     (firstperm, indm[1])
                 ).tensor(self((secondperm, self._varlist[0])))
         return total_sum
+
+    def _coerce_map_from_(self, S):
+        if isinstance(S, MPolynomialRing_base):
+            return True
+        return super()._coerce_map_from_(S)
+

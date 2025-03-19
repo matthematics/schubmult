@@ -2,12 +2,14 @@ import schubmult.schubmult_q_yz as yz
 from sympy import sympify
 import symengine as syme
 from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
+from sage.categories.algebra_modules import AlgebraModules
 from sage.combinat.free_module import CombinatorialFreeModule
 from sage.categories.cartesian_product import cartesian_product
 from sage.combinat.permutation import Permutations, Permutation
 from sage.misc.cachefunc import cached_method
 from sage.misc.lazy_import import lazy_import
 from sage.rings.polynomial.multi_polynomial import MPolynomial
+from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.polynomial.flatten import FlatteningMorphism
 
@@ -61,10 +63,14 @@ class FastQuantumDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element)
         )
 
     def __eq__(self, other):
-        return (self.parent().one()*self).monomial_coefficients() == (self.parent().one()*other)..monomial_coefficients()
-
+        ss = self.parent().one() * self
+        oo = self.parent().one() * other
+        return ss.monomial_coefficients() == oo.monomial_coefficients()
+    
     def __ne__(self, other):
-        return (self.parent().one()*self).monomial_coefficients() != (self.parent().one()*other).monomial_coefficients()
+        ss = self.parent().one() * self
+        oo = self.parent().one() * other
+        return ss.monomial_coefficients() != oo.monomial_coefficients()
 
     def root_coefficients(self, root_var_name):
         num_vars = len(self.parent()._coeff_polynomial_ring.gens())
@@ -122,7 +128,7 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         )
 
         self._index_wrapper = cartesian_product([Permutations(), self._varlist])
-        cat = GradedAlgebrasWithBasis(self._coeff_polynomial_ring)
+        cat = GradedAlgebrasWithBasis(self._coeff_polynomial_ring).Commutative()
 
         CombinatorialFreeModule.__init__(
             self,
@@ -131,6 +137,8 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             category=cat,
             prefix=f"S^{q_varname}({varname1})",
         )
+        self._populate_coercion_lists_()
+
 
     @cached_method
     def one_basis(self):
@@ -269,6 +277,11 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         else:
             raise TypeError
 
+    def _coerce_map_from_(self, S):
+        if isinstance(S, MPolynomialRing_base):
+            return True
+        return super()._coerce_map_from_(S)
+
     def some_elements(self):
         """
         Return some elements.
@@ -319,7 +332,7 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         return sum(
             [
                 self._coeff_polynomial_ring(v)
-                * self((Permutation(list(k)), self._varlist[0]))
+                * self((Permutation(list(k)), left[1]))
                 for k, v in result.items()
             ]
         )

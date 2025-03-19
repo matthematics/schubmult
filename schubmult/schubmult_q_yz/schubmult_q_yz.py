@@ -235,6 +235,8 @@ def schubmult(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}
+    if len(th) == 0:
+        return perm_dict
     while th[-1] == 0:
         th.pop()
     thL = len(th)
@@ -291,6 +293,8 @@ def schubmult_db(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
     if v == (1, 2):
         return perm_dict
     th = medium_theta(inverse(v))
+    if len(th) == 0:
+        return perm_dict
     while th[-1] == 0:
         th.pop()
     mu = permtrim(uncode(th))
