@@ -23,26 +23,10 @@ def FastDoubleSchubertPolynomialRing(
     R, num_vars, varname1, varname2, indices=tuple([1])
 ):
     """
-    Return the FastDoubleSchubert polynomial ring over ``R`` on the X basis.
-
-    This is the basis made of the FastDoubleSchubert polynomials.
-
-    EXAMPLES::
-
-            sage: X = FastDoubleSchubertPolynomialRing(ZZ); X
-            Schubert polynomial ring with X basis over Integer Ring
-            sage: TestSuite(X).run()
-            sage: X(1)
-            X[1]
-            sage: X([1,2,3])*X([2,1,3])
-            X[2, 1]
-            sage: X([2,1,3])*X([2,1,3])
-            X[3, 1, 2]
-            sage: X([2,1,3])+X([3,1,2,4])
-            X[2, 1] + X[3, 1, 2]
-            sage: a = X([2,1,3])+X([3,1,2,4])
-            sage: a^2
-            X[3, 1, 2] + 2*X[4, 1, 2, 3] + X[5, 1, 2, 3, 4]
+    Return the Double Schubert polynomial ring over R with base variable
+    varname1, and varname2 is either a string or a tuple of strings
+    representing the coefficient variables. The multiplicity of each set of
+    letter variables is num_vars. Note x0, y0, etc. are discarded and ignored.
     """
 
     return FastDoubleSchubertPolynomialRing_xbasis(
@@ -311,11 +295,11 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     res = yz.schubmult(
                                 {(1, 2): self._coeff_polynomial_ring(v)},
                                 tuple(k),
-                                self._coeff_polynomial_ring.gens(),
+                                self._coeff_polynomial_rings[self._varlist[0]].gens(),
                                 [
                                     0
                                     for i in range(
-                                        len(self._coeff_polynomial_ring.gens())
+                                        len(self._coeff_polynomial_rings[self._varlist[0]].gens())
                                     )
                                 ],
                             )

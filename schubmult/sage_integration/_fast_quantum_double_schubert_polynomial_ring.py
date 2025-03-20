@@ -286,7 +286,7 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     res = yz.schubmult_db(
                                 {(1, 2): self._coeff_polynomial_ring(v)},
                                 tuple(k),
-                                self._coeff_polynomial_ring.gens(),
+                                self._coeff_polynomial_rings[self._varlist[0]].gens(),
                                 [
                                     0
                                     for i in range(
