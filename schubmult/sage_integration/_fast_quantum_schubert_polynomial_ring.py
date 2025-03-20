@@ -58,6 +58,8 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             self, R, Permutations(), category=cat, prefix=f"S^{q_varname}({varname})"
         )
         self._q_ring = R
+        self._base_varname = varname
+        self._q_varname = q_varname
         self._polynomial_ring = PolynomialRing(R, num_vars, varname)
         self._populate_coercion_lists_()
 
@@ -165,6 +167,7 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         elem._q_ring = self._q_ring
         elem._base_varname = self._base_varname
         elem._q_varname = self._q_varname
+        return elem
 
     def some_elements(self):
         """
@@ -202,6 +205,10 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 ).items()
             ]
         )
+
+def _repr_(self):
+    return f"Ring of Quantum Schubert polynomials in {self._base_varname} with {len(self._polynomial_ring.gens())} variables over {self._q_ring.base_ring()}"
+
 
 FastQuantumSchubertPolynomial = FastQuantumSchubertPolynomial_class
 FastQuantumSchubertPolynomialRing_base = FastQuantumSchubertPolynomialRing_xbasis

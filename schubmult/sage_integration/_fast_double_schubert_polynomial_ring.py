@@ -463,7 +463,10 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         return super().has_coerce_map_from(S)
     
     def _repr_(self):
-        return f"Ring of double Schubert polynomials in {self._base_varname} with {len(self._base_polynomial_ring.gens())} variables over the coefficient variable ring {self._coeff_polynomial_ring}"
-        
+        return ( 
+        f"Ring of double Schubert polynomials in {self._base_varname} base with {len(self._base_polynomial_ring.gens())} variables"
+        f" with coefficient variables {','.join(self._varlist)} over the base ring {self._coeff_polynomial_ring.base_ring()}"
+        )
+    
 FastDoubleSchubertPolynomial = FastDoubleSchubertPolynomial_class
 FastDoubleSchubertPolynomialRing_base = FastDoubleSchubertPolynomialRing_xbasis

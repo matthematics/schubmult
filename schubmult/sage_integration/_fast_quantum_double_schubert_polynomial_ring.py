@@ -9,6 +9,9 @@ from ._fast_quantum_schubert_polynomial_ring import (
 
 from ._fast_schubert_polynomial_ring import FastSchubertPolynomialRing_base, FastSchubertPolynomial
 
+from ._fast_double_schubert_polynomial_ring import FastDoubleSchubertPolynomialRing_base, FastDoubleSchubertPolynomial
+
+
 from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
 from sage.combinat.free_module import CombinatorialFreeModule
 from sage.categories.cartesian_product import cartesian_product
@@ -274,8 +277,29 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     for k, v in result.items()
                 }
             )
-        elif isinstance(x, FastSchubertPolynomial):
+        elif isinstance(x, FastSchubertPolynomial) or isinstance(x, FastDoubleSchubertPolynomial):
             return self(x.expand())
+        elif isinstance(x, FastQuantumSchubertPolynomial):
+            if x._base_varname == self._base_varname and x._q_varname == self._q_varname:
+                elem_dict = {}
+                for k, v in x.monomial_coefficients().items():
+                    res = yz.schubmult_db(
+                                {(1, 2): self._coeff_polynomial_ring(v)},
+                                tuple(k),
+                                self._coeff_polynomial_ring.gens(),
+                                [
+                                    0
+                                    for i in range(
+                                        len(self._coeff_polynomial_ring.gens())
+                                    )
+                                ],
+                                self._q_ring.gens()
+                            )
+                    for k0, c0 in res.items():
+                        elem_dict[(k0, self._varlist[0])] = elem_dict.get((k0, self._varlist[0]), self._coeff_polynomial_ring.zero()) + self._coeff_polynomial_ring(c0)                        
+                elem = self._from_dict(elem_dict)
+            else:
+                elem = self(x.expand())
         else:
             elem = None         
 
@@ -351,10 +375,14 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             return True
         if isinstance(S, FastSchubertPolynomialRing_base):
             return True
+        if isinstance(S, FastDoubleSchubertPolynomialRing_base):
+            return True
         return super().has_coerce_map_from(S)
     
     def _repr_(self):
-        return f"Ring of quantum double Schubert polynomials in {self._base_varname},{self._q_varname} with {len(self._base_polynomial_ring.gens())} variables over the coefficient variable ring {self._coeff_polynomial_ring}"
-        
+        return (
+            f"Ring of quantum double Schubert polynomials in {self._base_varname},{self._q_varname} with {len(self._base_polynomial_ring.gens())} variables with"
+            f" coefficient variables {','.join(self._varlist)} over the ring {self._coeff_polynomial_ring.base_ring()}"
+        )
 FastQuantumDoubleSchubertPolynomial = FastQuantumDoubleSchubertPolynomial_class
 FastQuantumDoubleSchubertPolynomialRing_base = FastQuantumDoubleSchubertPolynomialRing_xbasis
