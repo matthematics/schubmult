@@ -48,7 +48,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         self._name = "Schubert polynomial ring with X basis"
         self._splitter = indices
         self._repr_option_bracket = False
-        cat = GradedBialgebrasWithBasis(R)
+        cat = GradedBialgebrasWithBasis(R).Commutative()
         CombinatorialFreeModule.__init__(
             self,
             R,

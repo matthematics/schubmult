@@ -18,6 +18,7 @@ dependencies = [
         "setuptools"
 ]
 requires-python = ">=3.9"
+license = {file = "LIECNSE"}
 authors = [
   {name = "Matt Samuel", email = "schubmult@gmail.com"},
 ]
@@ -31,8 +32,7 @@ classifiers = [
   "Programming Language :: Python"
 ]
 
-[project.license]
-file = "LICENSE"
+
 
 [project.optional-dependencies]
 sage = ["sagemath-standard"]

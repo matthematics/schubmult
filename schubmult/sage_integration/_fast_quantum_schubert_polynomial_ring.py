@@ -53,7 +53,7 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         """
         self._name = "QuantumSchubert polynomial ring with X basis"
         self._repr_option_bracket = False
-        cat = GradedAlgebrasWithBasis(R)  # CoalgebrasWithBasis(R).Graded()
+        cat = GradedAlgebrasWithBasis(R).Commutative()  # CoalgebrasWithBasis(R).Graded()
         CombinatorialFreeModule.__init__(
             self, R, Permutations(), category=cat, prefix=f"S^{q_varname}({varname})"
         )
@@ -137,14 +137,9 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 raise ValueError(f"the input {x} is not a valid permutation")
             perm = Permutation(x).remove_extra_fixed_points()
             elem = self._from_dict({perm: self.base_ring().one()})
-            elem._polynomial_ring = self._polynomial_ring
-            return elem
         elif isinstance(x, Permutation):
             perm = x.remove_extra_fixed_points()
             elem = self._from_dict({perm: self.base_ring().one()})
-            elem._polynomial_ring = self._polynomial_ring
-            elem._q_ring = self._q_ring
-            return elem
         elif isinstance(x, MPolynomial):
             from sage.interfaces.sympy import sympy_init
 
@@ -162,12 +157,14 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     Permutation(list(k)).remove_extra_fixed_points(): self._q_ring(v)
                     for k, v in result.items()
                 }
-            )
-            elem._polynomial_ring = self._polynomial_ring
-            elem._q_ring = self._q_ring
-            return elem
+            )                        
         else:
-            raise TypeError
+            elem = None
+        
+        elem._polynomial_ring = self._polynomial_ring
+        elem._q_ring = self._q_ring
+        elem._base_varname = self._base_varname
+        elem._q_varname = self._q_varname
 
     def some_elements(self):
         """
@@ -205,3 +202,6 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 ).items()
             ]
         )
+
+FastQuantumSchubertPolynomial = FastQuantumSchubertPolynomial_class
+FastQuantumSchubertPolynomialRing_base = FastQuantumSchubertPolynomialRing_xbasis

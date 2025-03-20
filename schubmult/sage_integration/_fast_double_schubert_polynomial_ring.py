@@ -325,10 +325,14 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             else:
                 elem = self(x.expand())
         else:
+            elem = None
+
+        try:            
+            elem._coeff_polynomial_ring = self._coeff_polynomial_ring
+            elem._base_polynomial_ring = self._base_polynomial_ring
+            elem._base_varname = self._base_varname
+        except Exception:
             raise TypeError
-        elem._coeff_polynomial_ring = self._coeff_polynomial_ring
-        elem._base_polynomial_ring = self._base_polynomial_ring
-        elem._base_varname = self._base_varname
         return elem
 
     def some_elements(self):
