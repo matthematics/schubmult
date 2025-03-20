@@ -461,3 +461,5 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     def _repr_(self):
         return f"Ring of double Schubert polynomials in {self._base_varname} with {len(self._base_polynomial_ring.gens())} variables over the coefficient variable ring {self._coeff_polynomial_ring}"
         
+FastDoubleSchubertPolynomial = FastDoubleSchubertPolynomial_class
+FastDoubleSchubertPolynomialRing_base = FastDoubleSchubertPolynomialRing_xbasis

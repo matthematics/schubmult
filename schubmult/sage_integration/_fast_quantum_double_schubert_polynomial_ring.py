@@ -335,3 +335,6 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 for k, v in result.items()
             ]
         )
+
+FastQuantumDoubleSchubertPolynomial = FastQuantumDoubleSchubertPolynomial_class
+FastQuantumDoubleSchubertPolynomialRing_base = FastQuantumDoubleSchubertPolynomialRing_xbasis
