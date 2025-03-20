@@ -6,13 +6,10 @@ import schubmult.schubmult_yz as yz
 from sage.combinat.free_module import CombinatorialFreeModule
 from sage.combinat.permutation import Permutations, Permutation, from_lehmer_code
 from sage.misc.cachefunc import cached_method
-# from sage.misc.lazy_import import lazy_import
 from sage.rings.polynomial.multi_polynomial import MPolynomial
 from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.categories.graded_bialgebras_with_basis import GradedBialgebrasWithBasis
-
-# lazy_import("sage.libs.symmetrica", "all", as_="symmetrica")
 
 
 def FastSchubertPolynomialRing(R, num_vars, varname, indices=tuple([1])):
@@ -20,6 +17,16 @@ def FastSchubertPolynomialRing(R, num_vars, varname, indices=tuple([1])):
 
 
 class FastSchubertPolynomial_class(CombinatorialFreeModule.Element):
+
+    @property
+    def base_varname(self):
+        return self.parent()._base_varname
+
+    @property
+    def polynomial_ring(self):
+        return self.parent()._polynomial_ring
+    
+
     def expand(self):
         return sum(
             [
@@ -75,7 +82,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 sage: X.one()  # indirect doctest
                 X[1]
         """
-        return self._indices([1])
+        return self(Permutation([1]))
 
     def _element_constructor_(self, x):
         """
@@ -129,8 +136,6 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 ....:     P = next(it)
                 ....:     assert X(k(X(P))) == X(P), P
         """
-        # print(type(x))
-        # elem = None
         if isinstance(x, list):
             # checking the input to avoid symmetrica crashing Sage, see trac 12924
             if x not in Permutations():
@@ -157,11 +162,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     for k, v in result.items()
                 }
             )
-        else:
-            raise TypeError
 
-        elem._polynomial_ring = self._polynomial_ring
-        elem._base_varname = self._base_varname
         return elem
 
     def some_elements(self):

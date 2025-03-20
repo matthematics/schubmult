@@ -35,6 +35,20 @@ def FastDoubleSchubertPolynomialRing(
 
 
 class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
+
+    @property
+    def base_varname(self):
+        return self.parent()._base_varname
+
+    @property
+    def base_polynomial_ring(self):
+        return self.parent()._base_polynomial_ring
+    
+    @property
+    def coeff_polynomial_ring(self):
+        return self.parent()._coeff_polynomial_ring
+    
+
     def expand(self):
         """
         EXAMPLES::
@@ -288,8 +302,8 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     for k, v in result.items()
                 }
             )
-        elif isinstance(x, FastSchubertPolynomial):
-            if x._base_varname == self._base_varname:
+        elif isinstance(x, FastSchubertPolynomial):            
+            if x.base_varname == self._base_varname:
                 elem_dict = {}
                 for k, v in x.monomial_coefficients().items():
                     res = yz.schubmult(

@@ -1,5 +1,10 @@
 from sage.all import ZZ
-from schubmult.sage_integration import FastDoubleSchubertPolynomialRing
+from schubmult.sage_integration import (
+    FastDoubleSchubertPolynomialRing,
+    FastSchubertPolynomialRing,
+    FastQuantumSchubertPolynomialRing,
+    FastQuantumDoubleSchubertPolynomialRing,
+)
 
 
 def test_schub_expand():
@@ -77,11 +82,20 @@ def test_associative():
         X(perm2) * X(perm3, "z")
     )
 
+
 def test_coerce():
-    X = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y", "z"))
-    R = X._coeff_polynomial_ring
-    
-    assert X([2,3,5,4,1],"z") * R("x2^2") - R("x2^2") * X([2,3,5,4,1], "z") == 0
+    XD = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y", "z"))
+    XDQ = FastQuantumDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y", "z"))
+    XS = FastSchubertPolynomialRing(ZZ, 100, "x")
+    XSQ = FastQuantumSchubertPolynomialRing(ZZ, 100, "x")
+    R = XD._base_polynomial_ring
+
+    assert (
+        XD([2, 3, 5, 4, 1], "z") * R("x2^2") - R("x2^2") * XD([2, 3, 5, 4, 1], "z") == 0
+    )
+
+    assert XS([3,1,4,2]) * XD([4,1,3,2], "z") == XD([4,1,3,2], "z") * XS([3,1,4,2])
+    assert XS([3,1,4,2]) * XDQ([1], "z") == XSQ([1]) * XS([3,1,4,2])
 
 def test_mixed_equal():
     """

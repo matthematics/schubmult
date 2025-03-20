@@ -17,13 +17,10 @@ from sage.combinat.free_module import CombinatorialFreeModule
 from sage.categories.cartesian_product import cartesian_product
 from sage.combinat.permutation import Permutations, Permutation
 from sage.misc.cachefunc import cached_method
-from sage.misc.lazy_import import lazy_import
 from sage.rings.polynomial.multi_polynomial import MPolynomial
 from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.polynomial.flatten import FlatteningMorphism
-
-lazy_import("sage.libs.symmetrica", "all", as_="symmetrica")
 
 
 def FastQuantumDoubleSchubertPolynomialRing(
@@ -58,6 +55,30 @@ def FastQuantumDoubleSchubertPolynomialRing(
 
 
 class FastQuantumDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
+
+    @property
+    def base_varname(self):
+        return self.parent()._base_varname
+    
+    @property
+    def q_varname(self):
+        return self.parent()._q_varname
+
+    @property
+    def base_polynomial_ring(self):
+        return self.parent()._base_polynomial_ring
+    
+    
+    @property
+    def coeff_polynomial_ring(self):
+        return self.parent()._coeff_polynomial_ring
+    
+    
+    @property
+    def q_ring(self):
+        return self.parent()._q_ring
+
+
     def expand(self):
         return sum(
             [
@@ -280,7 +301,8 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         elif isinstance(x, FastSchubertPolynomial) or isinstance(x, FastDoubleSchubertPolynomial):
             return self(x.expand())
         elif isinstance(x, FastQuantumSchubertPolynomial):
-            if x._base_varname == self._base_varname and x._q_varname == self._q_varname:
+            import inspect
+            if x.base_varname == self._base_varname and x.q_varname == self._q_varname:
                 elem_dict = {}
                 for k, v in x.monomial_coefficients().items():
                     res = yz.schubmult_db(
@@ -303,13 +325,6 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         else:
             elem = None         
 
-        try:
-            elem._base_varname = self._base_varname
-            elem._q_varname = self._q_varname
-            elem._coeff_polynomial_ring = self._coeff_polynomial_ring
-            elem._base_polynomial_ring = self._base_polynomial_ring
-        except Exception:
-            raise TypeError
         
         return elem
 

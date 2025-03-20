@@ -3,18 +3,19 @@ import schubmult.schubmult_q_yz as qyz
 from sympy import sympify
 import symengine as syme
 
+from ._fast_schubert_polynomial_ring import (
+    FastSchubertPolynomial,
+    FastSchubertPolynomialRing_base
+)
 
 from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
 from sage.combinat.free_module import CombinatorialFreeModule
 
 from sage.combinat.permutation import Permutations, Permutation
 from sage.misc.cachefunc import cached_method
-from sage.misc.lazy_import import lazy_import
 from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
 from sage.rings.polynomial.multi_polynomial import MPolynomial
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-
-lazy_import("sage.libs.symmetrica", "all", as_="symmetrica")
 
 
 def FastQuantumSchubertPolynomialRing(R, num_vars, varname, q_varname="q_"):
@@ -23,6 +24,23 @@ def FastQuantumSchubertPolynomialRing(R, num_vars, varname, q_varname="q_"):
 
 
 class FastQuantumSchubertPolynomial_class(CombinatorialFreeModule.Element):
+
+    @property
+    def base_varname(self):
+        return self.parent()._base_varname
+
+    @property
+    def q_varname(self):
+        return self.parent()._q_varname
+
+    @property
+    def polynomial_ring(self):
+        return self.parent()._polynomial_ring
+
+    @property
+    def q_varname(self):
+        return self.parent()._q_varname
+
     def expand(self):
         return sum(
             [
@@ -66,6 +84,8 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     def _coerce_map_from_(self, S):
         if isinstance(S, MPolynomialRing_base):
             return True
+        if isinstance(S, FastSchubertPolynomialRing_base):
+            return True
         return super()._coerce_map_from_(S)
 
     @cached_method
@@ -79,7 +99,7 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 sage: X.one()  # indirect doctest
                 X[1]
         """
-        return self._indices([1])
+        return self(Permutation([1]))
 
     def _element_constructor_(self, x):
         """
@@ -142,7 +162,9 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         elif isinstance(x, Permutation):
             perm = x.remove_extra_fixed_points()
             elem = self._from_dict({perm: self.base_ring().one()})
-        elif isinstance(x, MPolynomial):
+        elif isinstance(x, MPolynomial) or isinstance(x, FastSchubertPolynomial):
+            if isinstance(x, FastSchubertPolynomial):
+                x = x.expand()
             from sage.interfaces.sympy import sympy_init
 
             sympy_init()
@@ -161,12 +183,7 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 }
             )                        
         else:
-            elem = None
-        
-        elem._polynomial_ring = self._polynomial_ring
-        elem._q_ring = self._q_ring
-        elem._base_varname = self._base_varname
-        elem._q_varname = self._q_varname
+            elem = None        
         return elem
 
     def some_elements(self):
@@ -195,8 +212,6 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 sage: X.product_on_basis(p1,p2)
                 X[4, 2, 1, 3]
         """
-
-        # return symmetrica.mult_schubert_schubert(left, right)
         return sum(
             [
                 self.base_ring()(v) * self(Permutation(list(k)))
