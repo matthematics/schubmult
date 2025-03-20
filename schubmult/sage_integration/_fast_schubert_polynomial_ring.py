@@ -248,6 +248,9 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     self(secondperm)
                 )
         return total_sum
+    
+    def _repr_(self):
+        return f"Ring of Schubert polynomials in {self._base_varname} with {len(self._polynomial_ring.gens())} variables"
 
 
 
