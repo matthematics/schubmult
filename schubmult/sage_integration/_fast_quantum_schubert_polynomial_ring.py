@@ -35,11 +35,7 @@ class FastQuantumSchubertPolynomial_class(CombinatorialFreeModule.Element):
 
     @property
     def polynomial_ring(self):
-        return self.parent()._polynomial_ring
-
-    @property
-    def q_varname(self):
-        return self.parent()._q_varname
+        return self.parent()._polynomial_ring    
 
     def expand(self):
         return sum(

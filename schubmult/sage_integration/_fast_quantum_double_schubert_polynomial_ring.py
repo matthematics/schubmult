@@ -301,7 +301,6 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         elif isinstance(x, FastSchubertPolynomial) or isinstance(x, FastDoubleSchubertPolynomial):
             return self(x.expand())
         elif isinstance(x, FastQuantumSchubertPolynomial):
-            import inspect
             if x.base_varname == self._base_varname and x.q_varname == self._q_varname:
                 elem_dict = {}
                 for k, v in x.monomial_coefficients().items():
