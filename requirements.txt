@@ -6,5 +6,4 @@ setuptools
 sortedcontainers
 symengine>=0.14.0
 sympy>=1.12
-functools
 numpy
