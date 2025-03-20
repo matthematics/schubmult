@@ -28,6 +28,7 @@ setup(
         "psutil",
         "cachetools",
         "sortedcontainers",
+        "functools"
     ],
     entry_points={
         "console_scripts": [
