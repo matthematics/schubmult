@@ -14,7 +14,6 @@ dependencies = [
         "psutil",
         "cachetools",
         "sortedcontainers",
-        "functools",
         "setuptools"
 ]
 requires-python = ">=3.9"
