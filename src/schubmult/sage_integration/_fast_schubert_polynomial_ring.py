@@ -75,8 +75,6 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             index_set = Compositions()
             self._ascode = True
 
-        self.IndexClass = Permutation if not self._ascode else Composition
-
         CombinatorialFreeModule.__init__(
             self,
             R,
@@ -102,10 +100,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 sage: X.one()  # indirect doctest
                 X[1]
         """
-        if self._ascode:
-            return self(Composition([]))
-        else:
-            return self(Permutation([1]))
+        return _coerce_index([1], False, self._ascode)
 
     def _element_constructor_(self, x):
         """

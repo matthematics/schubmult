@@ -1,12 +1,6 @@
-from sage.combinat.permutation import (
-    Permutations,
-    Permutation,
-    from_lehmer_code,
-)
-from sage.combinat.composition import (
-    Compositions,
-    Composition,
-)
+from sage.combinat.permutation import Permutation
+
+from sage.combinat.composition import Composition
 
 from schubmult.perm_lib import uncode, trimcode, permtrim
 
@@ -47,3 +41,4 @@ def _coerce_index(indexed_obj, is_comp, should_be_comp):
                     Composition(trimcode(permtrim(list(k)))): v
                     for k, v in indexed_obj.items()
                 }
+    raise TypeError
