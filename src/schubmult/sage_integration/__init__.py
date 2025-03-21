@@ -7,13 +7,15 @@ from ._fast_double_schubert_polynomial_ring import (
     FastDoubleSchubertPolynomialRing,
     FastDoubleSchubertPolynomial,
     FastDoubleSchubertPolynomialRing_base,
+    FastQuantumDoubleSchubertPolynomialRing,
+    FastQuantumDoubleSchubertPolynomial,
+    FastQuantumDoubleSchubertPolynomialRing_base,
 )
 from ._fast_quantum_schubert_polynomial_ring import (
     FastQuantumSchubertPolynomialRing,   
     FastQuantumSchubertPolynomial,
     FastQuantumSchubertPolynomialRing_base, 
 )
-
 
 __all__ = [
     "FastSchubertPolynomialRing",
@@ -24,5 +26,8 @@ __all__ = [
     "FastDoubleSchubertPolynomialRing_base",
     "FastQuantumSchubertPolynomialRing",
     "FastQuantumSchubertPolynomial",
-    "FastQuantumSchubertPolynomialRing_base",    
+    "FastQuantumSchubertPolynomialRing_base",
+    "FastQuantumDoubleSchubertPolynomialRing",
+    "FastQuantumDoubleSchubertPolynomial",
+    "FastQuantumDoubleSchubertPolynomialRing_base",
 ]
