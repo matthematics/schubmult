@@ -34,7 +34,7 @@ def FastDoubleSchubertPolynomialRing(
     """
 
     return FastDoubleSchubertPolynomialRing_xbasis(
-        R, num_vars, varname1, varname2, indices
+        R, num_vars, varname1, varname2, indices, code_index
     )
 
 
@@ -303,7 +303,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 }
             )
         elif isinstance(x, FastDoubleSchubertPolynomial):
-            if x.base_varname == self._base_varname and x.q_varname == self._q_varname:
+            if x.base_varname == self._base_varname:
                 elem = self._from_dict(
                     {
                         (_coerce_index(k[0], x.parent()._ascode, self._ascode), k[1]): v
