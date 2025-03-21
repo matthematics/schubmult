@@ -127,7 +127,6 @@ def nil_hecke(perm_dict, v, n, var2=var2, var3=var3):
                         if sumval == 0:
                             continue
                         for v2, vdiff, s in vpathdicts[index][v]:
-                            # print(f"{code(up2)=} {elem_sym_func_q(th[index],index+1,up,up2,v,v2,udiff,vdiff,var2,var3)=} {mul_val=} {sumval=}")
                             newpathsums[up2][v2] = newpathsums[up2].get(
                                 v2, zero
                             ) + s * sumval * elem_sym_func_q(
@@ -564,7 +563,6 @@ def print_usage():
 
 
 def main():
-    global var2
     try:
         sys.setrecursionlimit(1000000)
 
@@ -930,7 +928,7 @@ def main():
                                 )
                             else:
                                 print(
-                                    f"{str(trimcode(perm))}  {str(sympify(val).subs({var3[i]: var2[i] for i in range(len(var3))})).replace('**', '^').replace('*', ' ').replace(*rep)}"
+                                    f"{str(trimcode(perm))}  {str(val).replace('**', '^').replace('*', ' ').replace(*rep)}"
                                 )
                         else:
                             if norep:
