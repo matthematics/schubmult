@@ -64,6 +64,27 @@ def FastDoubleSchubertPolynomialRing(
     )
 
 
+def FastDoubleQuantumSchubertPolynomialRing(
+    R,
+    num_vars,
+    varname1,
+    varname2,
+    *,
+    code_index=False,
+    q_varname="q",
+):
+    return FastDoubleSchubertPolynomialRing(
+        R,
+        num_vars,
+        varname1,
+        varname2,
+        code_index=code_index,
+        indices=tuple([1]),
+        quantum=True,
+        q_varname=q_varname,
+    )
+
+
 class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
     @property
     def base_varname(self):
@@ -422,7 +443,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
 
     def coproduct_on_basis(self, indm):
         if self._quantum:
-            raise TypeError("Quantum double Schubert polynomials have no coproduct")
+            raise NotImplementedError("Quantum double Schubert polynomials have no coproduct")
         indices = self._splitter
         indices = sorted(indices)
         subs_dict_coprod = {}
