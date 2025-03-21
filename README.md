@@ -126,9 +126,9 @@ True
 
 ## Coproducts
 
-FastSchubertPolynomialRing and FastDoubleSchubertPolynomialRings are bialgebras and each element implements the `coproduct()` member function. `set_coproduct_indiceSx()` on the base ring will determine the variables to partition on.
+FastSchubertPolynomialRing and FastDoubleSchubertPolynomialRings are bialgebras and each element implements the `coproduct()` member function. `set_coproduct_indices()` on the base ring will determine the variables to partition on.
 ```ada
-sage: DoubleRing.set_coproduct_indiceSx((1,3))
+sage: DoubleRing.set_coproduct_indices((1,3))
 sage: DoubleRing([4,1,5,2,3], "z").coproduct()
 (y1^2-y1*z2-y1*z3+z2*z3)*Sx([4, 1, 2, 3], 'z') # Sx([1], 'y') + (y1+y2-z2-z3)*Sx([4, 1, 2, 3], 'z') # Sx([2, 1], 'y') + Sx([4, 1, 2, 3], 'z') # Sx([3, 1, 2], 'y') + (y1-z3)*Sx([4, 2, 1, 3], 'z') # Sx([1], 'y') + Sx([4, 2, 1, 3], 'z') # Sx([2, 1], 'y') + Sx([4, 3, 1, 2], 'z') # Sx([1], 'y')
 ```
