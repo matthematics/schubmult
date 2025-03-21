@@ -32,6 +32,8 @@ classifiers = [
 ]
 
 
+[tool.ruff.lint.per-file-ignores]
+'!schubmult/**.py' = ["ALL"]
 
 [project.optional-dependencies]
 sage = ["sagemath-standard"]
