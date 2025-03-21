@@ -5,7 +5,7 @@
 The main purpose of this python package is for executing scripts to compute coefficients of products of various types of Schubert polynomials. Coproducts can also be computed, as well as substitution of commuting difference operators for quantum double Schubert polynomials. Quantum multiplication also has parabolic subgroup support, computed via the Peterson-Woodward comparison theorem. **Note that except for quantum Schubert polynomial multiplication with the --basic-pieri option, the methodology for quantum/quantum double Schubert polynomials is conjectural at this time.**
 
 
-## Baseic script command lines
+## Basic script command lines, one-line notation
 
 ```bash
 schubmult_py 1 2 4 9 11 6 8 12 3 5 7 10 - 6 8 1 2 3 4 7 10 12 14 5 9 11 13  
@@ -15,6 +15,8 @@ schubmult_q 5 1 4 3 2 - 5 1 3 4 2
 schubmult_q_double 5 1 4 3 2 - 5 1 3 4 2
 schubmult_q_yz 5 1 4 3 2 - 2 5 1 3 4 --display-positive
 ```
+
+## Using the Lehmer code
 
 The same execution with the Lehmer code:
 
@@ -29,12 +31,14 @@ schubmult_q_yz --code 4 0 2 1 - 1 3 --display-positive
 
 ## Coproducts
 
+Coproducts partition the variables of the polynomial ring and express the single polynomial as a sum of products of Schubert/double Schubert polynomials in the partitioned variables.
+
 ```bash
 schubmult_py --coprod 1 3 5 7 2 4 6 - 2 4
 schubmult_double --coprod 1 3 5 7 2 4 6 - 2 4
 schubmult_yz --coprod 1 3 5 7 2 4 6 - 2 4 --display-positive
 ```
-or
+Equivalently with the Lehmer code:
 ```bash
 schubmult_py --code --coprod 0 1 2 3 - 2 4
 schubmult_double --code --coprod 0 1 2 3 - 2 4
@@ -78,7 +82,7 @@ pip install schubmult[sage]
 
 This will install the [sagemath-standard](https://pypi.org/project/sagemath-standard/) python package in addition to the other dependencies. **Again, this only works on Linux, MacOS, or WSL.** To use with a currently installed SageMath distribution, use sage's python interpreter to install the package (the `[sage]` piece is not required in that case).
 
-Some examples with Sage:
+## Basic sage example
 
 ```python
 sage: from schubmult.sage_integration import FastSchubertPolynomial, FastDoubleSchubertPolynomialRing, FastQuantumSchubertPolynomial, FastQuantumDoubleSchubertPolynomialRing
@@ -89,7 +93,7 @@ sage: SingleRing([3,4,1,2]) * SingleRing([5,1,4,2,3])
 Sx[7, 3, 4, 1, 2, 5, 6] + Sx[7, 4, 2, 1, 3, 5, 6] + Sx[7, 5, 1, 2, 3, 4, 6]
 ```
 
-Mixed variable double products are available.
+## Mixed variable (Molev-Sagan) type products
 
 ```python
 sage: DoubleRing = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y", "z"))
@@ -98,13 +102,16 @@ sage: DoubleRing([3,4,1,2])*DoubleRing([1,4,2,3])
 sage: DoubleRing([3,4,1,2]) * DoubleRing([1,4,2,3],"z")
 (y3^2+y3*y4+y4^2-y3*z1-y4*z1-y3*z2-y4*z2+z1*z2-y3*z3-y4*z3+z1*z3+z2*z3)*Sx([3, 4, 1, 2], 'y') + (y3+y4+y5-z1-z2-z3)*Sx([3, 5, 1, 2, 4], 'y') + Sx([3, 6, 1, 2, 4, 5], 'y')
 ```
-Each class has expansion.
+
+## expand()
+
 ```python
 sage: SingleRingQ = FastQuantumSchubertPolynomialRing(ZZ, 100, "x")
 sage: SingleRingQ([2,3,1,4]).expand()
 x1*x2 + q_1
 ```
 
+## Coercion
 
 Coercion was implemented as widely as possible.
 ```python
@@ -117,6 +124,13 @@ sage: SingleRing([1,3,2]) - x1 - x2 == 0
 True
 ```
 
-Pure python scripts can now use SageMath as well.
+## Coproducts
+
+FastSchubertPolynomialRing and FastDoubleSchubertPolynomialRings are bialgebras and each element implements the `coproduct()` member function. `set_coproduct_indices()` on the base ring will determine the variables to partition on.
+```ada
+sage: DoubleRing.set_coproduct_indices((1,3))
+sage: DoubleRing([4,1,5,2,3], "z").coproduct()
+(y1^2-y1*z2-y1*z3+z2*z3)*S([4, 1, 2, 3], 'z') # S([1], 'y') + (y1+y2-z2-z3)*S([4, 1, 2, 3], 'z') # S([2, 1], 'y') + S([4, 1, 2, 3], 'z') # S([3, 1, 2], 'y') + (y1-z3)*S([4, 2, 1, 3], 'z') # S([1], 'y') + S([4, 2, 1, 3], 'z') # S([2, 1], 'y') + S([4, 3, 1, 2], 'z') # S([1], 'y')
+```
 
 [Homepage of schubmult](http://schubmult.org/)
