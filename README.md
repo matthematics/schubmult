@@ -9,7 +9,7 @@ The main purpose of this python package is for executing scripts to compute coef
 
 The command line argument --display-positive is available in schubmult_yz and schubmult_q_yz, which displays the result positively (if possible, this is still only always possible conjecturally). It will fail and print out the offending case if it finds a counterexample. This is highly processor intensive.
 
-```
+```bash
 schubmult_py 1 2 4 9 11 6 8 12 3 5 7 10 - 6 8 1 2 3 4 7 10 12 14 5 9 11 13  
 schubmult_double 1 3 4 6 2 5 - 2 1 5 7 3 4 6  
 schubmult_yz 1 3 4 6 2 5 - 2 1 5 7 3 4 6 --display-positive
@@ -20,38 +20,38 @@ schubmult_q_yz 5 1 4 3 2 - 2 5 1 3 4 --display-positive
 
 The same execution with the Lehmer code:
 
-```
-schubmult_py -code 0 0 1 5 6 2 3 4 - 5 6 0 0 0 0 1 2 3 4
-schubmult_double -code 0 1 1 2 - 1 0 2 3
-schubmult_yz -code 0 1 1 2 - 1 0 2 3 --display-positive
-schubmult_q -code 4 0 2 1 - 4 0 1 1
-schubmult_q_double -code 4 0 2 1 - 4 0 1 1
-schubmult_q_yz -code 4 0 2 1 - 1 3 --display-positive
+```bash
+schubmult_py --code 0 0 1 5 6 2 3 4 - 5 6 0 0 0 0 1 2 3 4
+schubmult_double --code 0 1 1 2 - 1 0 2 3
+schubmult_yz --code 0 1 1 2 - 1 0 2 3 --display-positive
+schubmult_q --code 4 0 2 1 - 4 0 1 1
+schubmult_q_double --code 4 0 2 1 - 4 0 1 1
+schubmult_q_yz --code 4 0 2 1 - 1 3 --display-positive
 ```
 
 For coproducts:
-```
-schubmult_py -coprod 1 3 5 7 2 4 6 - 2 4
-schubmult_double -coprod 1 3 5 7 2 4 6 - 2 4
-schubmult_yz -coprod 1 3 5 7 2 4 6 - 2 4 --display-positive
+```bash
+schubmult_py --coprod 1 3 5 7 2 4 6 - 2 4
+schubmult_double --coprod 1 3 5 7 2 4 6 - 2 4
+schubmult_yz --coprod 1 3 5 7 2 4 6 - 2 4 --display-positive
 ```
 or
-```
-schubmult_py -code -coprod 0 1 2 3 - 2 4
-schubmult_double -code -coprod 0 1 2 3 - 2 4
-schubmult_yz -code -coprod 0 1 2 3 - 2 4 --display-positive
+```bash
+schubmult_py --code --coprod 0 1 2 3 - 2 4
+schubmult_double --code --coprod 0 1 2 3 - 2 4
+schubmult_yz --code --coprod 0 1 2 3 - 2 4 --display-positive
 ```
 
 schubmult_q_yz has a feature for displaying the coefficients of the divided difference operators in the evaluation of the quantum double Schubert polynomials on the commuting difference operators of Fomin, Gelfand, and Postnikov. It is necessary to cap the value of n in the group S_n we are working in because as n increases the expression does not stabilize.
-```
-schubmult_q_yz -nil-hecke 6 -code 2 2 --display-positive
+```bash
+schubmult_q_yz --nil-hecke 6 --code 2 2 --display-positive
 ```
 
 Runtime will vary tremendously by case. The general problem is #P-hard. Though the result is always nonnegative (which at least is known for schubmult_py, schubmult_q, schubmult_double, and schubmult_q_double) and the problem is in GapP, it is not known to be in #P at this time.
 
-schubmult_py is for multiplying ordinary Schubert polynomials. schubmult_yz is for multiplying double Schubert polynomials in different sets of coefficient variables (labeled y and z), and schubmult_double is for multiplying double Schubert polynomials in the same set of coefficient variables. Similarly, schubmult_q is for multiplying quantum Schubert polynomials, schubmult_q_double is for multiplying quantum double Schubert polynomials in the same set of coefficient variables, and schubmult_q_yz is for multiplying quantum double Schubert polynomials in different sets of coefficient variables, or in other words it computes the Gromov-Witten invariants, equivariant Gromov-Witten invariants, and (mixed?) equivariant Gromov-Witten invariants of the complete flag variety. All have the same command line syntax as schubmult, except when using the -code option. schubmult_double/schubmult_q_double display the result with nonnegative coefficients in terms of the negative simple roots (and the q variables), and schubmult_yz and schubmult_q_yz optionally display the result positively in terms of y_i-z_j (and q) with the --display-positive option.
+schubmult_py is for multiplying ordinary Schubert polynomials. schubmult_yz is for multiplying double Schubert polynomials in different sets of coefficient variables (labeled y and z), and schubmult_double is for multiplying double Schubert polynomials in the same set of coefficient variables. Similarly, schubmult_q is for multiplying quantum Schubert polynomials, schubmult_q_double is for multiplying quantum double Schubert polynomials in the same set of coefficient variables, and schubmult_q_yz is for multiplying quantum double Schubert polynomials in different sets of coefficient variables, or in other words it computes the Gromov-Witten invariants, equivariant Gromov-Witten invariants, and (mixed?) equivariant Gromov-Witten invariants of the complete flag variety. All have the same command line syntax as schubmult, except when using the --code option. schubmult_double/schubmult_q_double display the result with nonnegative coefficients in terms of the negative simple roots (and the q variables), and schubmult_yz and schubmult_q_yz optionally display the result positively in terms of y_i-z_j (and q) with the --display-positive option.
 
-schubmult_xx -coprod allows you to split (double) Schubert polynomials along certain indices (not available for quantum). It takes one permutation as an argument, followed by a dash -, then the set of indices you would like to split on. These coefficients are always nonnegative since they occur as product coefficients (this is actually how they are computed).
+schubmult_xx --coprod allows you to split (double) Schubert polynomials along certain indices (not available for quantum). It takes one permutation as an argument, followed by a dash -, then the set of indices you would like to split on. These coefficients are always nonnegative since they occur as product coefficients (this is actually how they are computed).
 
 When imported as a python package, the relevant packages are schubmult.perm_lib, which has various permutation manipulation functions, and three modules that have functions of the same name (function name is "schubmult"): schubmult.schubmult_py, schubmult.schubmult_yz, schubmult.schubmult_double. Function takes a permutation dictionary (keys are tuples of ints, which must be trimmed permutations, and values are either integers or symengine values, which can also be integers) as well as a permutation as its second argument, which is the (double) Schubert polynomial to multiply by. Returns a dictionary of the same form with the coefficients.
 
@@ -94,7 +94,7 @@ Mixed variable double products are available.
 ```python
 sage: DoubleRing = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y", "z"))
 sage: DoubleRing([3,4,1,2])*DoubleRing([1,4,2,3])
-(y1*y2-y1*y4-y2*y4+y4^2)*S([3, 4, 1, 2], 'y') + (-y1-y2+y4+y5)*S([3, 5, 1, 2, 4], 'y') + S([3, 6, 1, 2, 4, 5], 'y')
+(y1*y2-y1*y4-y2*y4+y4^2)*Sx([3, 4, 1, 2], 'y') + (-y1-y2+y4+y5)*Sx([3, 5, 1, 2, 4], 'y') + Sx([3, 6, 1, 2, 4, 5], 'y')
 sage: DoubleRing([3,4,1,2]) * DoubleRing([1,4,2,3],"z")
 (y3^2+y3*y4+y4^2-y3*z1-y4*z1-y3*z2-y4*z2+z1*z2-y3*z3-y4*z3+z1*z3+z2*z3)*Sx([3, 4, 1, 2], 'y') + (y3+y4+y5-z1-z2-z3)*Sx([3, 5, 1, 2, 4], 'y') + Sx([3, 6, 1, 2, 4, 5], 'y')
 ```
@@ -109,7 +109,7 @@ x1*x2 + q_1
 Coercion was implemented as widely as possible.
 ```python
 sage: DoubleRing([1,4,2,3],"z") * SingleRing([3,4,1,2])
-z1^2*z4^2*Sx([1, 4, 2, 3], 'z') + (z1^2*z4+z1^2*z5)*Sx([1, 5, 2, 3, 4], 'z') + z1^2*Sx([1, 6, 2, 3, 4, 5], 'z') + (z1*z4^2+z2*z4^2)*Sx([2, 4, 1, 3], 'z') + (z1*z4+z2*z4+z1*z5+z2*z5)*Sx([2, 5, 1, 3, 4], 'z') + (z1+z2)*S([2, 6, 1, 3, 4, 5], 'z') + z4^2*S([3, 4, 1, 2], 'z') + (z4+z5)*Sx([3, 5, 1, 2, 4], 'z') + Sx([3, 6, 1, 2, 4, 5], 'z')
+z1^2*z4^2*Sx([1, 4, 2, 3], 'z') + (z1^2*z4+z1^2*z5)*Sx([1, 5, 2, 3, 4], 'z') + z1^2*Sx([1, 6, 2, 3, 4, 5], 'z') + (z1*z4^2+z2*z4^2)*Sx([2, 4, 1, 3], 'z') + (z1*z4+z2*z4+z1*z5+z2*z5)*Sx([2, 5, 1, 3, 4], 'z') + (z1+z2)*Sx([2, 6, 1, 3, 4, 5], 'z') + z4^2*Sx([3, 4, 1, 2], 'z') + (z4+z5)*Sx([3, 5, 1, 2, 4], 'z') + Sx([3, 6, 1, 2, 4, 5], 'z')
 sage: SingleRingQ([2,3,1,4]) * SingleRing([4,1,3,2])
 (-2*q_1^2*q_2+q_1*q_2*q_3)*QSx[1] + q_1*q_2*QSx[1, 3, 4, 2] + (-q_1^2)*QSx[2, 3, 1] + q_1*QSx[2, 4, 3, 1] + (-q_1*q_2)*QSx[3, 1, 2] + q_1*QSx[3, 2, 4, 1] + q_1*QSx[3, 4, 1, 2] + (-q_1)*QSx[4, 2, 1, 3] + QSx[5, 2, 3, 1, 4] + QSx[5, 3, 1, 2, 4]
 sage: R.<x1, x2> = PolynomialRing(ZZ, 2)
