@@ -1,8 +1,13 @@
 # schubmult
 
-## Program and package for computing Littlewood-Richardson coefficients of Schubert polynomials
+## Program and package for computing Littlewood-Richardson coefficients of Schubert polynomials, with optional Sage integration
 
-This is a set of python scripts written by Matt Samuel for computing (equivariant, Molev-Sagan) Littlewood-Richardson coefficients of (ordinary or double) Schubert polynomials. It also handles (double) quantum Schubert polynomials, if double then either in the same set or different sets of coefficient variables; that is to say it compute the (equivariant/mixed) Gromov-Witten invariants of the complete flag variety. It has the same command line syntax as the program "schubmult" in lrcalc by Anders Buch. Example:
+The main purpose of this python package is for executing scripts to compute coefficients of products of various types of Schubert polynomials. Coproducts can also be computed, as well as substitution of commuting difference operators for quantum double Schubert polynomials. Quantum multiplication also has parabolic subgroup support, computed via the Peterson-Woodward comparison theorem. **Note that except for quantum Schubert polynomial multiplication with the --basic-pieri option, the methodology for quantum/quantum double Schubert polynomials is conjectural at this time.**
+
+
+## Diplaying the result positively
+
+The command line argument --display-positive is available in schubmult_yz and schubmult_q_yz, which displays the result positively (if possible, this is still only always possible conjecturally). It will fail and print out the offending case if it finds a counterexample. This is highly processor intensive.
 
 ```
 schubmult_py 1 2 4 9 11 6 8 12 3 5 7 10 - 6 8 1 2 3 4 7 10 12 14 5 9 11 13  
@@ -63,8 +68,54 @@ from schubmult.schubmult_py import schubmult
 coeff_dict = schubmult({(1,3,4,6,2,5): 1},(2,1,5,7,3,4,6))
 ```
 
-The command line argument --display-positive is available in schubmult_yz and schubmult_q_yz, which displays the result positively (if possible, this is still only always possible conjecturally). It will fail and print out the offending case if it finds a counterexample. This is highly processor intensive.
+# Sage integration (as of version 1.5.0)
 
-![](https://raw.githubusercontent.com/matthematics/schubmult/main/positive_image.png)
+[SageMath](https://www.sagemath.org/) is a computer algebra system that, while wonderful, is monstrously large and only works on posix-based operating systems (including WSL VMs, so it is still usable on Windows). This is why Sage support is provided optionally in schubmult. The syntax to install the Sage dependencies is
+
+```
+pip install schubmult[sage]
+```
+
+This will install the [sagemath-standard](https://pypi.org/project/sagemath-standard/) python package in addition to the other dependencies. **Again, this only works on Linux, MacOS, or WSL.** To use with a currently installed SageMath distribution, use sage's python interpreter to install the package (the `[sage]` piece is not required in that case).
+
+Some examples with Sage:
+
+```python
+sage: from schubmult.sage_integration import FastSchubertPolynomial, FastDoubleSchubertPolynomialRing, FastQuantumSchubertPolynomial, FastQuantumDoubleSchubertPolynomialRing
+sage: SingleRing = FastSchubertPolynomialRing(ZZ, 100, "x")
+sage: SingleRing([3,4,1,2])
+Sx[3, 4, 1, 2]
+sage: SingleRing([3,4,1,2]) * SingleRing([5,1,4,2,3])
+Sx[7, 3, 4, 1, 2, 5, 6] + Sx[7, 4, 2, 1, 3, 5, 6] + Sx[7, 5, 1, 2, 3, 4, 6]
+```
+
+Mixed variable double products are available.
+
+```python
+sage: DoubleRing = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y", "z"))
+sage: DoubleRing([3,4,1,2])*DoubleRing([1,4,2,3])
+(y1*y2-y1*y4-y2*y4+y4^2)*S([3, 4, 1, 2], 'y') + (-y1-y2+y4+y5)*S([3, 5, 1, 2, 4], 'y') + S([3, 6, 1, 2, 4, 5], 'y')
+sage: DoubleRing([3,4,1,2]) * DoubleRing([1,4,2,3],"z")
+(y3^2+y3*y4+y4^2-y3*z1-y4*z1-y3*z2-y4*z2+z1*z2-y3*z3-y4*z3+z1*z3+z2*z3)*Sx([3, 4, 1, 2], 'y') + (y3+y4+y5-z1-z2-z3)*Sx([3, 5, 1, 2, 4], 'y') + Sx([3, 6, 1, 2, 4, 5], 'y')
+```
+Each class has expansion.
+```python
+sage: SingleRingQ = FastQuantumSchubertPolynomialRing(ZZ, 100, "x")
+sage: SingleRingQ([2,3,1,4]).expand()
+x1*x2 + q_1
+```
+
+
+Coercion was implemented as widely as possible.
+```python
+sage: DoubleRing([1,4,2,3],"z") * SingleRing([3,4,1,2])
+z1^2*z4^2*Sx([1, 4, 2, 3], 'z') + (z1^2*z4+z1^2*z5)*Sx([1, 5, 2, 3, 4], 'z') + z1^2*Sx([1, 6, 2, 3, 4, 5], 'z') + (z1*z4^2+z2*z4^2)*Sx([2, 4, 1, 3], 'z') + (z1*z4+z2*z4+z1*z5+z2*z5)*Sx([2, 5, 1, 3, 4], 'z') + (z1+z2)*S([2, 6, 1, 3, 4, 5], 'z') + z4^2*S([3, 4, 1, 2], 'z') + (z4+z5)*Sx([3, 5, 1, 2, 4], 'z') + Sx([3, 6, 1, 2, 4, 5], 'z')
+sage: SingleRingQ([2,3,1,4]) * SingleRing([4,1,3,2])
+(-2*q_1^2*q_2+q_1*q_2*q_3)*QSx[1] + q_1*q_2*QSx[1, 3, 4, 2] + (-q_1^2)*QSx[2, 3, 1] + q_1*QSx[2, 4, 3, 1] + (-q_1*q_2)*QSx[3, 1, 2] + q_1*QSx[3, 2, 4, 1] + q_1*QSx[3, 4, 1, 2] + (-q_1)*QSx[4, 2, 1, 3] + QSx[5, 2, 3, 1, 4] + QSx[5, 3, 1, 2, 4]
+sage: R.<x1, x2> = PolynomialRing(ZZ, 2)
+sage: SingleRing([1,3,2]) - x1 - x2 == 0
+True
+```
+
 
 [Homepage of schubmult](http://schubmult.org/)

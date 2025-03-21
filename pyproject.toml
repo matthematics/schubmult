@@ -2,10 +2,8 @@
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
-
 [project]
 name = "schubmult"
-version = "1.5.0"
 dependencies = [
         "numpy",
         "PuLP>=2.7.0",
@@ -14,7 +12,7 @@ dependencies = [
         "psutil",
         "cachetools",
         "sortedcontainers",
-        "setuptools"
+        "setuptools>=71.0.0"
 ]
 requires-python = ">=3.9"
 license = {file = "LIECNSE"}
@@ -30,7 +28,7 @@ keywords = ["Schubert", "polynomial", "double", "algebra"]
 classifiers = [
   "Programming Language :: Python"
 ]
-
+dynamic = ["version"]
 
 [tool.ruff.lint.per-file-ignores]
 '!schubmult/**.py' = ["ALL"]

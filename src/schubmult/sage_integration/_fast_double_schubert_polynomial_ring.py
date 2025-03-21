@@ -169,7 +169,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             self._coeff_polynomial_ring,
             self._index_wrapper,
             category=cat,
-            prefix="S",
+            prefix=f"S{varname1}",
         )
         self._base_varname = varname1
         self._populate_coercion_lists_()
