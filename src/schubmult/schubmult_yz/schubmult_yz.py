@@ -1620,7 +1620,7 @@ def permy(val, i):
 
 
 def main():
-    global var2
+    global var2, var3
     parser = ArgumentParser()
     try:
         sys.setrecursionlimit(1000000)
