@@ -1624,7 +1624,11 @@ def main():
     try:
         sys.setrecursionlimit(1000000)
 
-        args = schub_argparse(yz=True)
+        args = schub_argparse(
+            "schubmult_yz",
+            "Compute coefficients of product of double Schubert polynomials in different sets of coefficient variables",
+            yz=True,
+        )
 
         mult = args.mult
         mulstring = args.mulstring

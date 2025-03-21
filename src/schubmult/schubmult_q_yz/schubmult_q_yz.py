@@ -545,37 +545,23 @@ var2_t = tuple(var2.tolist())
 var3_t = tuple(var3.tolist())
 
 
-def print_usage():
-    print("**** schubmult_q_yz ****")
-    print(
-        "Purpose: Compute Molev-Sagan coefficients of quantum double Schubert polynomials"
-    )
-    print(
-        "Usage: schubmult_q_yz <-np|--no-print> <-parabolic descent1,descent2,...> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. > <-mult poly_expression>"
-    )
-    print("       *** Computes products")
-    print(
-        "Alternative usage: schubmult_q_yz -nil-hecke n <-code> <--display-positive> perm"
-    )
-    print(
-        "       *** Computes nil-Hecke representation of quantum double Schubert polynomial, limiting to the group S_n"
-    )
-
-
 def main():
     try:
         sys.setrecursionlimit(1000000)
 
-        
-        args = schub_argparse(yz=True,quantum=True)
+        args = schub_argparse(
+            "schubmult_q_yz",
+            "Compute coefficients of products of quantum double Schubert polynomials in different sets of coefficient variables",
+            yz=True,
+            quantum=True,
+        )
 
         mulstring = ""
 
         mult = args.mult
-        mulstring = args.mulstring  
+        mulstring = args.mulstring
 
         perms = args.perms
-
 
         ascode = args.ascode
         check = args.check

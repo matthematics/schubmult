@@ -31,7 +31,10 @@ for i in range(1, n):
 
 def main():
     try:
-        args = schub_argparse()
+        args = schub_argparse(
+            "schubmult_double",
+            "Compute products of double Schubert polynomials and display the result in terms of the simple negative roots",
+        )
 
         mulstring = ""
 

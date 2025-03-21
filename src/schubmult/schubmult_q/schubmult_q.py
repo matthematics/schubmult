@@ -310,8 +310,11 @@ def to_two_step(perm, k1, k2, n):
 
 def main():
     try:
-        
-        args = schub_argparse(quantum=True)
+        args = schub_argparse(
+            "schubmult_q",
+            "Compute products of quantum Schubert polynomials",
+            quantum=True,
+        )
 
         mulstring = ""
 
@@ -340,7 +343,6 @@ def main():
             print("Only two permutations supported for parabolic.")
             exit(1)
 
-        
         if ascode:
             for i in range(len(perms)):
                 perms[i] = uncode(perms[i])

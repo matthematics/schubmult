@@ -117,11 +117,12 @@ def schubmult(perm_dict, v):
 
 def main():
     try:
-        
-        args = schub_argparse()
+        args = schub_argparse(
+            "schubmult_py", "Compute products of ordinary Schubert polynomials"
+        )
 
         mult = args.mult
-        mulstring = args.mulstring  
+        mulstring = args.mulstring
 
         perms = args.perms
 

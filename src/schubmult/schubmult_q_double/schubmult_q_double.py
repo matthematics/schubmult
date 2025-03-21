@@ -45,7 +45,11 @@ def main():
     try:
         sys.setrecursionlimit(1000000)
 
-        args = schub_argparse(quantum=True)
+        args = schub_argparse(
+            "schubmult_q_double",
+            "Compute products of quantum double Schubert polynomials and display the result in terms of the negative simple roots",
+            quantum=True,
+        )
 
         mult = args.mult
         mulstring = args.mulstring

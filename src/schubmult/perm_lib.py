@@ -229,11 +229,9 @@ def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
                             new_val *= np.prod(
                                 [q_var[index] for index in range(i + 1, j + 1)]
                             )
-                        # print(f"{ct=} {i=} {j=} {k=} {last_j=} {pp=} {up_perm2=} {new_perm_add=} {new_val=}")
                         perm_list += [(new_perm_add, new_val, j)]
                         total_list += [(new_perm_add, pp + 1, new_val)]
         up_perm_list = perm_list
-    # print(f"{total_list=}")
     return total_list
 
 
