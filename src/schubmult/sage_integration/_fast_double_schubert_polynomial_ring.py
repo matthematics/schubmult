@@ -19,11 +19,6 @@ from ._fast_schubert_polynomial_ring import (
     FastSchubertPolynomial,
 )
 
-from ._fast_double_schubert_polynomial_ring import (
-    FastDoubleSchubertPolynomialRing_base,
-    FastDoubleSchubertPolynomial,
-)
-
 from sage.categories.graded_bialgebras_with_basis import GradedBialgebrasWithBasis
 from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
 from sage.combinat.free_module import CombinatorialFreeModule
@@ -56,7 +51,6 @@ def FastDoubleSchubertPolynomialRing(
         varname1,
         varname2,
         q_varname,
-        quantum,
         code_index,
         indices,
         quantum,
@@ -64,7 +58,7 @@ def FastDoubleSchubertPolynomialRing(
     )
 
 
-def FastDoubleQuantumSchubertPolynomialRing(
+def FastQuantumDoubleSchubertPolynomialRing(
     R,
     num_vars,
     varname1,
@@ -312,10 +306,6 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     for k, v in result.items()
                 }
             )
-        elif isinstance(x, FastSchubertPolynomial) or isinstance(
-            x, FastDoubleSchubertPolynomial
-        ):
-            return self(x.expand())
         elif isinstance(x, FastDoubleSchubertPolynomial):
             if (
                 x.base_varname == self._base_varname
