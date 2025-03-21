@@ -8,6 +8,11 @@ from ._fast_quantum_schubert_polynomial_ring import (
 )
 
 from ._indexing import _coerce_index
+from sage.combinat.composition import (
+    Compositions,
+    Composition,
+)
+
 from ._fast_schubert_polynomial_ring import (
     FastSchubertPolynomialRing_base,
     FastSchubertPolynomial,
@@ -17,10 +22,7 @@ from ._fast_double_schubert_polynomial_ring import (
     FastDoubleSchubertPolynomialRing_base,
     FastDoubleSchubertPolynomial,
 )
-from sage.combinat.composition import (
-    Compositions,
-    Composition,
-)
+
 
 from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
 from sage.combinat.free_module import CombinatorialFreeModule
@@ -196,7 +198,7 @@ class FastQuantumDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 sage: X.one()  # indirect doctest
                 X[1]
         """
-        return (Permutation([1]), self._varlist[0])
+        return (_coerce_index([1],False,self._ascode), self._varlist[0])
 
     def _element_constructor_(self, *x):
         """

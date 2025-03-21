@@ -4,7 +4,12 @@ import symengine as syme
 
 from ._fast_schubert_polynomial_ring import (
     FastSchubertPolynomial,
-    FastSchubertPolynomialRing_base
+    FastSchubertPolynomialRing_base,
+)
+from ._indexing import _coerce_index
+from sage.combinat.composition import (
+    Compositions,
+    Composition,
 )
 
 from sage.categories.graded_bialgebras_with_basis import GradedBialgebrasWithBasis
@@ -18,9 +23,8 @@ from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 
 
-
 def FastDoubleSchubertPolynomialRing(
-    R, num_vars, varname1, varname2, indices=tuple([1])
+    R, num_vars, varname1, varname2, indices=tuple([1]), *, code_index=False
 ):
     """
     Return the Double Schubert polynomial ring over R with base variable
@@ -35,7 +39,6 @@ def FastDoubleSchubertPolynomialRing(
 
 
 class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
-
     @property
     def base_varname(self):
         return self.parent()._base_varname
@@ -43,11 +46,10 @@ class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
     @property
     def base_polynomial_ring(self):
         return self.parent()._base_polynomial_ring
-    
+
     @property
     def coeff_polynomial_ring(self):
         return self.parent()._coeff_polynomial_ring
-    
 
     def expand(self):
         """
@@ -88,7 +90,7 @@ class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
             [
                 yz.schubmult(
                     {(1, 2): v},
-                    tuple(k[0]),
+                    tuple(_coerce_index(k[0], self.parent()._ascode, False)),
                     self.parent()._base_polynomial_ring.gens(),
                     self.parent()._coeff_polynomial_rings[k[1]].gens(),
                 ).get((1, 2), 0)
@@ -123,7 +125,7 @@ class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
 class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     Element = FastDoubleSchubertPolynomial_class
 
-    def __init__(self, R, num_vars, varname1, varname2, indices):
+    def __init__(self, R, num_vars, varname1, varname2, indices, code_index):
         """
         EXAMPLES::
 
@@ -135,6 +137,13 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         self._splitter = indices
         self._repr_option_bracket = False
         self._mixed = False
+
+        index_set = Permutations()
+        self._ascode = False
+
+        if code_index:
+            index_set = Compositions()
+            self._ascode = True
 
         if isinstance(varname2, tuple):
             self._mixed = True
@@ -161,7 +170,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             self._coeff_polynomial_ring, num_vars, varname1
         )
 
-        self._index_wrapper = cartesian_product([Permutations(), self._varlist])
+        self._index_wrapper = cartesian_product([index_set, self._varlist])
         cat = GradedBialgebrasWithBasis(self._coeff_polynomial_ring).Commutative()
 
         CombinatorialFreeModule.__init__(
@@ -188,7 +197,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 sage: X.one()  # indirect doctest
                 X[1]
         """
-        return (Permutation([1]), self._varlist[0])
+        return (_coerce_index([1], False, self._ascode), self._varlist[0])
 
     def _element_constructor_(self, *x):
         """
@@ -247,37 +256,28 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         elif len(x) > 2:
             raise ValueError("Bad index for element")
 
-        if isinstance(x, list) or isinstance(x, tuple):
+        if (
+            isinstance(x, list)
+            or isinstance(x, tuple)
+            or isinstance(x, Permutation)
+            or isinstance(x, Composition)
+        ):
             # checking the input to avoid symmetrica crashing Sage, see trac 12924
             if x in self._index_wrapper:
-                perm = Permutation(x[0]).remove_extra_fixed_points()
                 elem = self._from_dict(
-                    {self._index_wrapper((perm, x[1])): self.base_ring().one()}
+                    {self._index_wrapper((x[0], x[1])): self.base_ring().one()}
                 )
-            elif x in Permutations():
-                perm = Permutation(x).remove_extra_fixed_points()
+            else:
                 elem = self._from_dict(
                     {
                         self._index_wrapper(
-                            (perm, self._varlist[0])
+                            (
+                                _coerce_index(x, self._ascode, self._ascode),
+                                self._varlist[0],
+                            )
                         ): self.base_ring().one()
                     }
                 )
-            elif x[0] in Permutations():
-                if x[1] not in self._varlist:
-                    raise ValueError(f"{x[1]} is not a valid variable")
-                perm = Permutation(x[0]).remove_extra_fixed_points()
-                elem = self._from_dict(
-                    {self._index_wrapper((perm, x[1])): self.base_ring().one()}
-                )
-            else:
-                raise ValueError("Not perm")
-
-        elif isinstance(x, Permutation):
-            perm = x.remove_extra_fixed_points()
-            elem = self._from_dict(
-                {self._index_wrapper((perm, self._varlist[0])): self.base_ring().one()}
-            )
         elif isinstance(x, MPolynomial):
             from sage.interfaces.sympy import sympy_init
 
@@ -296,36 +296,55 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             elem = self._from_dict(
                 {
                     (
-                        Permutation(list(k)).remove_extra_fixed_points(),
+                        _coerce_index(k, False, self._ascode),
                         self._varlist[0],
                     ): self._coeff_polynomial_ring(str(v))
                     for k, v in result.items()
                 }
             )
-        elif isinstance(x, FastSchubertPolynomial):            
+        elif isinstance(x, FastDoubleSchubertPolynomial):
+            if x.base_varname == self._base_varname and x.q_varname == self._q_varname:
+                elem = self._from_dict(
+                    {
+                        (_coerce_index(k[0], x.parent()._ascode, self._ascode), k[1]): v
+                        for k, v in x.monomial_coefficients().items()
+                    }
+                )
+            else:
+                return self(x.expand())
+        elif isinstance(x, FastSchubertPolynomial):
             if x.base_varname == self._base_varname:
                 elem_dict = {}
                 for k, v in x.monomial_coefficients().items():
                     res = yz.schubmult(
-                                {(1, 2): self._coeff_polynomial_ring(v)},
-                                tuple(k),
-                                self._coeff_polynomial_rings[self._varlist[0]].gens(),
-                                [
-                                    0
-                                    for i in range(
-                                        len(self._coeff_polynomial_rings[self._varlist[0]].gens())
-                                    )
-                                ],
+                        {(1, 2): self._coeff_polynomial_ring(v)},
+                        tuple(_coerce_index(k, x.parent()._ascode, False)),
+                        self._coeff_polynomial_rings[self._varlist[0]].gens(),
+                        [
+                            0
+                            for i in range(
+                                len(
+                                    self._coeff_polynomial_rings[
+                                        self._varlist[0]
+                                    ].gens()
+                                )
                             )
+                        ],
+                    )
                     for k0, c0 in res.items():
-                        elem_dict[(k0, self._varlist[0])] = elem_dict.get((k0, self._varlist[0]), self._coeff_polynomial_ring.zero()) + self._coeff_polynomial_ring(c0)                        
+                        elem_dict[
+                            (_coerce_index(k0, False, self._ascode), self._varlist[0])
+                        ] = elem_dict.get(
+                            (_coerce_index(k0, False, self._ascode), self._varlist[0]),
+                            self._coeff_polynomial_ring.zero(),
+                        ) + self._coeff_polynomial_ring(c0)
                 elem = self._from_dict(elem_dict)
             else:
                 elem = self(x.expand())
         else:
             elem = None
 
-        try:            
+        try:
             elem._coeff_polynomial_ring = self._coeff_polynomial_ring
             elem._base_polynomial_ring = self._base_polynomial_ring
             elem._base_varname = self._base_varname
@@ -345,8 +364,10 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         """
         return [
             self.one(),
-            self([1]) + 2 * self([2, 1]),
-            self([4, 2, 1, 3]) - self([3, 2, 1]),
+            self(_coerce_index([1], False, self._ascode))
+            + 2 * self(_coerce_index([2, 1], False, self._ascode)),
+            self(_coerce_index([4, 2, 1, 3], False, self._ascode))
+            - self(_coerce_index([3, 2, 1], False, self._ascode)),
         ]
 
     def product_on_basis(self, left, right):
@@ -372,8 +393,8 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             for g in self._coeff_polynomial_rings[right[1]].gens()
         ]
         result = yz.schubmult(
-            {le: 1},
-            ri,
+            {tuple(_coerce_index(le, self._ascode, False)): 1},
+            tuple(_coerce_index(ri, self._ascode, False)),
             # self._coeff_polynomial_ring.gens(),
             # self._coeff_polynomial_ring.gens(),
             var_y,
@@ -382,7 +403,8 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         result = {k: v for k, v in result.items() if v != 0}
         return sum(
             [
-                self._coeff_polynomial_ring(v) * self(Permutation(list(k)), left[1])
+                self._coeff_polynomial_ring(v)
+                * self(_coerce_index(k, False, self._ascode), left[1])
                 for k, v in result.items()
             ]
         )
@@ -392,7 +414,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         indices = sorted(indices)
         subs_dict_coprod = {}
         mperm = indm[0]
-        mperm = Permutation(list(mperm))
+        mperm = _coerce_index(mperm, self._ascode, False)
         RR = self._coeff_polynomial_rings[indm[1]]
         RBase = self._coeff_polynomial_rings[self._varlist[0]]
         k = len(indices)
@@ -449,8 +471,8 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 )
                 val = TR(val).subs(subs_dict_coprod)
                 total_sum += self._coeff_polynomial_ring(val) * self(
-                    (firstperm, indm[1])
-                ).tensor(self((secondperm, self._varlist[0])))
+                    (_coerce_index(firstperm, False, self._ascode), indm[1])
+                ).tensor(self((_coerce_index(secondperm, False, self._ascode), self._varlist[0])))
         return total_sum
 
     def _coerce_map_from_(self, S):
@@ -458,13 +480,16 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             return True
         if isinstance(S, FastSchubertPolynomialRing_base):
             return True
+        if isinstance(S, FastDoubleSchubertPolynomialRing_base):
+            return True
         return super().has_coerce_map_from(S)
-    
+
     def _repr_(self):
-        return ( 
-        f"Ring of double Schubert polynomials in {self._base_varname} base with {len(self._base_polynomial_ring.gens())} variables"
-        f" with coefficient variables {','.join(self._varlist)} over the base ring {self._coeff_polynomial_ring.base_ring()}"
+        return (
+            f"Ring of double Schubert polynomials in {self._base_varname} base with {len(self._base_polynomial_ring.gens())} variables"
+            f" with coefficient variables {','.join(self._varlist)} over the base ring {self._coeff_polynomial_ring.base_ring()}"
         )
-    
+
+
 FastDoubleSchubertPolynomial = FastDoubleSchubertPolynomial_class
 FastDoubleSchubertPolynomialRing_base = FastDoubleSchubertPolynomialRing_xbasis
