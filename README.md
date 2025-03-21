@@ -1,13 +1,11 @@
 # schubmult
 
-## Program and package for computing Littlewood-Richardson coefficients of Schubert polynomials, with optional Sage integration
+## Program and package for rapid computation of Littlewood-Richardson coefficients of Schubert polynomials, with optional Sage integration
 
 The main purpose of this python package is for executing scripts to compute coefficients of products of various types of Schubert polynomials. Coproducts can also be computed, as well as substitution of commuting difference operators for quantum double Schubert polynomials. Quantum multiplication also has parabolic subgroup support, computed via the Peterson-Woodward comparison theorem. **Note that except for quantum Schubert polynomial multiplication with the --basic-pieri option, the methodology for quantum/quantum double Schubert polynomials is conjectural at this time.**
 
 
-## Diplaying the result positively
-
-The command line argument --display-positive is available in schubmult_yz and schubmult_q_yz, which displays the result positively (if possible, this is still only always possible conjecturally). It will fail and print out the offending case if it finds a counterexample. This is highly processor intensive.
+## Baseic script command lines
 
 ```bash
 schubmult_py 1 2 4 9 11 6 8 12 3 5 7 10 - 6 8 1 2 3 4 7 10 12 14 5 9 11 13  
@@ -29,7 +27,8 @@ schubmult_q_double --code 4 0 2 1 - 4 0 1 1
 schubmult_q_yz --code 4 0 2 1 - 1 3 --display-positive
 ```
 
-For coproducts:
+## Coproducts
+
 ```bash
 schubmult_py --coprod 1 3 5 7 2 4 6 - 2 4
 schubmult_double --coprod 1 3 5 7 2 4 6 - 2 4
@@ -42,10 +41,17 @@ schubmult_double --code --coprod 0 1 2 3 - 2 4
 schubmult_yz --code --coprod 0 1 2 3 - 2 4 --display-positive
 ```
 
+## Quantum commuting difference operators
+
 schubmult_q_yz has a feature for displaying the coefficients of the divided difference operators in the evaluation of the quantum double Schubert polynomials on the commuting difference operators of Fomin, Gelfand, and Postnikov. It is necessary to cap the value of n in the group S_n we are working in because as n increases the expression does not stabilize.
 ```bash
 schubmult_q_yz --nil-hecke 6 --code 2 2 --display-positive
 ```
+
+## Diplaying the result positively
+
+The command line argument `--display-positive `is available in schubmult_yz and schubmult_q_yz, which displays the result positively (if possible, this is still only always possible conjecturally). It will fail and print out the offending case if it finds a counterexample. This is highly processor intensive.
+
 
 Runtime will vary tremendously by case. The general problem is #P-hard. Though the result is always nonnegative (which at least is known for schubmult_py, schubmult_q, schubmult_double, and schubmult_q_double) and the problem is in GapP, it is not known to be in #P at this time.
 
@@ -55,18 +61,12 @@ schubmult_xx --coprod allows you to split (double) Schubert polynomials along ce
 
 When imported as a python package, the relevant packages are schubmult.perm_lib, which has various permutation manipulation functions, and three modules that have functions of the same name (function name is "schubmult"): schubmult.schubmult_py, schubmult.schubmult_yz, schubmult.schubmult_double. Function takes a permutation dictionary (keys are tuples of ints, which must be trimmed permutations, and values are either integers or symengine values, which can also be integers) as well as a permutation as its second argument, which is the (double) Schubert polynomial to multiply by. Returns a dictionary of the same form with the coefficients.
 
-```
+```python
 from schubmult.schubmult_yz import schubmult  
   
-coeff_dict = schubmult({(1,3,4,6,2,5): 1},(2,1,5,7,3,4,6)) # outputs dictionary with results  
+coeff_dict = schubmult({(1,3,4,6,2,5): 1},(2,1,5,7,3,4,6))  # outputs dictionary with results  
 ```
 
-
-```
-from schubmult.schubmult_py import schubmult  
-  
-coeff_dict = schubmult({(1,3,4,6,2,5): 1},(2,1,5,7,3,4,6))
-```
 
 # Sage integration (as of version 1.5.0)
 
@@ -117,5 +117,6 @@ sage: SingleRing([1,3,2]) - x1 - x2 == 0
 True
 ```
 
+Pure python scripts can now use SageMath as well.
 
 [Homepage of schubmult](http://schubmult.org/)
