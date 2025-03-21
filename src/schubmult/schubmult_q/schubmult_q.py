@@ -91,7 +91,7 @@ for i in range(1, n):
     subs_dict[var2[i]] = sm
 
 
-def schubmult_db(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
+def schubmult_db(perm_dict, v, q_var=q_var):
     if v == (1, 2):
         return perm_dict
     th = medium_theta(inverse(v))
@@ -135,7 +135,7 @@ def schubmult_db(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
                     inv_up = inv(up)
                     newperms = double_elem_sym_q(up, mx_th, mx_th1, th[index], q_var)
                     for v in vpathdicts[index]:
-                        sumval = vpathsums[up].get(v, zero)
+                        sumval = vpathsums[up].get(v, 0)
                         if sumval == 0:
                             continue
                         for v2, vdiff2, s2 in vpathdicts[index][v]:
@@ -145,14 +145,14 @@ def schubmult_db(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
                                 if udiff1 + vdiff2 == th[index]:
                                     newpathsums0[(up1, udiff1, mul_val1)][v2] = (
                                         newpathsums0[(up1, udiff1, mul_val1)].get(
-                                            v2, zero
+                                            v2, 0
                                         )
                                         + s2 * sumval * mul_val1
                                     )
 
                     for up1, udiff1, mul_val1 in newpathsums0:
                         for v in vpathdicts[index + 1]:
-                            sumval = newpathsums0[(up1, udiff1, mul_val1)].get(v, zero)
+                            sumval = newpathsums0[(up1, udiff1, mul_val1)].get(v, 0)
                             if sumval == 0:
                                 continue
                             for v2, vdiff2, s2 in vpathdicts[index + 1][v]:
@@ -163,7 +163,7 @@ def schubmult_db(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
                                         newpathsums[up2] = {}
                                     if udiff2 + vdiff2 == th[index + 1]:
                                         newpathsums[up2][v2] = (
-                                            newpathsums[up2].get(v2, zero)
+                                            newpathsums[up2].get(v2, 0)
                                             + s2 * sumval * mul_val2
                                         )
             else:
@@ -180,13 +180,13 @@ def schubmult_db(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
                         if up2 not in newpathsums:
                             newpathsums[up2] = {}
                         for v in vpathdicts[index]:
-                            sumval = vpathsums[up].get(v, zero)
+                            sumval = vpathsums[up].get(v, 0)
                             if sumval == 0:
                                 continue
                             for v2, vdiff, s in vpathdicts[index][v]:
                                 if udiff + vdiff == th[index]:
                                     newpathsums[up2][v2] = (
-                                        newpathsums[up2].get(v2, zero)
+                                        newpathsums[up2].get(v2, 0)
                                         + s * sumval * mul_val
                                     )
             vpathsums = newpathsums
@@ -229,13 +229,13 @@ def schubmult(perm_dict, v):
                     if up2 not in newpathsums:
                         newpathsums[up2] = {}
                     for v in vpathdicts[index]:
-                        sumval = vpathsums[up].get(v, zero)
+                        sumval = vpathsums[up].get(v, 0)
                         if sumval == 0:
                             continue
                         for v2, vdiff, s in vpathdicts[index][v]:
                             if udiff + vdiff == th[index]:
                                 newpathsums[up2][v2] = (
-                                    newpathsums[up2].get(v2, zero)
+                                    newpathsums[up2].get(v2, 0)
                                     + s * sumval * mul_val
                                 )
             vpathsums = newpathsums
