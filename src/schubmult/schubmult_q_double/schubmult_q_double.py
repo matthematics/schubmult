@@ -19,7 +19,7 @@ from schubmult.perm_lib import (
     count_less_than,
     q_var,
 )
-from argparse import ArgumentParser
+from schubmult._base_argparse import schub_argparse
 import numpy as np
 
 import sys
@@ -45,54 +45,10 @@ def main():
     try:
         sys.setrecursionlimit(1000000)
 
-        parser = ArgumentParser()
+        args = schub_argparse(quantum=True)
 
-        parser.add_argument("perms", nargs="+", action="append")
-        parser.add_argument("-", nargs="+", action="append", dest="perms")
-
-        parser.add_argument(
-            "-np", "--no-print", action="store_false", default=True, dest="pr"
-        )
-
-        parser.add_argument(
-            "--display-positive",
-            action="store_true",
-            default=False,
-            dest="display_positive",
-        )
-
-        parser.add_argument("--code", action="store_true", default=False, dest="ascode")
-
-        parser.add_argument("--mult", nargs="+", required=False, default=None)
-
-        parser.add_argument("--parabolic", nargs="+", required=False, default=[])
-
-        parser.add_argument(
-            "--nil-hecke", type=int, required=False, default=None, dest="nilhecke"
-        )
-
-        parser.add_argument(
-            "--nil-hecke-apply",
-            type=int,
-            required=False,
-            default=None,
-            dest="nilhecke_apply",
-        )
-
-        parser.add_argument(
-            "--basic-pieri", action="store_true", default=False, dest="slow"
-        )
-
-        parser.add_argument("--norep", action="store_true", default=False)
-
-        args = parser.parse_args()
-
-        mulstring = ""
-
-        mult = False
-        if args.mult is not None:
-            mult = True
-            mulstring = " ".join(args.mult)
+        mult = args.mult
+        mulstring = args.mulstring
 
         perms = args.perms
 

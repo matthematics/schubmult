@@ -4,7 +4,7 @@ from functools import cache
 from cachetools import cached
 from cachetools.keys import hashkey
 from symengine import sympify, Add, Mul, Pow, symarray, expand, Integer
-from argparse import ArgumentParser
+from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
     trimcode,
     elem_sym_perms,
@@ -1621,66 +1621,15 @@ def permy(val, i):
 
 def main():
     global var2, var3
-    parser = ArgumentParser()
     try:
         sys.setrecursionlimit(1000000)
 
-        parser.add_argument("perms", nargs="+", action="append")
-        parser.add_argument("-", nargs="+", action="append", dest="perms")
+        args = schub_argparse(yz=True)
 
-        parser.add_argument(
-            "-np", "--no-print", action="store_false", default=True, dest="pr"
-        )
-
-        parser.add_argument(
-            "--display-positive",
-            action="store_true",
-            default=False,
-            dest="display_positive",
-        )
-
-        parser.add_argument(
-            "--optimizer-message", action="store_true", default=False, dest="msg"
-        )
-
-        parser.add_argument(
-            "--down",
-            action="store_true",
-            default=False,
-        )
-
-        parser.add_argument("--coprod", action="store_true", default=False)
-
-        parser.add_argument(
-            "-nc", "--no-check", action="store_false", default=True, dest="check"
-        )
-
-        parser.add_argument("--code", action="store_true", default=False, dest="ascode")
-
-        parser.add_argument(
-            "--same-var", action="store_true", default=False, dest="same"
-        )
-
-        parser.add_argument("--mult", nargs="+", required=False, default=None)
-
-        args = parser.parse_args()  
-
-        mulstring = ""
-
-        mult = False
-        if args.mult is not None:
-            mult = True
-            mulstring = " ".join(args.mult)
+        mult = args.mult
+        mulstring = args.mulstring
 
         perms = args.perms
-
-        for perm in perms:
-            try:
-                for i in range(len(perm)):
-                    perm[i] = int(perm[i])
-            except Exception as e:
-                print("Permutations must have integer values")
-                raise e
 
         ascode = args.ascode
         coprod = args.coprod

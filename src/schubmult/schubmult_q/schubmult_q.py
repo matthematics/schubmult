@@ -1,5 +1,5 @@
 from symengine import sympify, Add, Mul, Pow, symarray, Symbol, expand
-from argparse import ArgumentParser
+from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
     trimcode,
     elem_sym_perms_q,
@@ -310,50 +310,8 @@ def to_two_step(perm, k1, k2, n):
 
 def main():
     try:
-        parser = ArgumentParser()
-
-        parser.add_argument("perms", nargs="+", action="append")
-        parser.add_argument("-", nargs="+", action="append", dest="perms")
-
-        parser.add_argument(
-            "-np", "--no-print", action="store_false", default=True, dest="pr"
-        )
-
-        parser.add_argument("--code", action="store_true", default=False, dest="ascode")
-
-        parser.add_argument("--equiv", action="store_true", default=False, dest="equiv")
-
-        parser.add_argument("--mult", nargs="+", required=False, default=None)
-
-        parser.add_argument("--parabolic", nargs="+", required=False, default=[])
-
-        parser.add_argument(
-            "--nil-hecke", type=int, required=False, default=None, dest="nilhecke"
-        )
-
-        parser.add_argument(
-            "--nil-hecke-apply",
-            type=int,
-            required=False,
-            default=None,
-            dest="nilhecke_apply",
-        )
-
-        parser.add_argument(
-            "--grass",
-            type=int,
-            required=False,
-            default=None,
-            dest="grass_q_n",
-        )
-
-        parser.add_argument(
-            "--basic-pieri", action="store_true", default=False, dest="slow"
-        )
-
-        parser.add_argument("--norep", action="store_true", default=False)
-
-        args = parser.parse_args()
+        
+        args = schub_argparse(quantum=True)
 
         mulstring = ""
 
@@ -374,9 +332,6 @@ def main():
 
         ascode = args.ascode
         pr = args.pr
-        equiv = args.equiv
-        grass_q_n = args.grass
-        grass = grass_q_n is not None
         parabolic_index = [int(s) for s in args.parabolic]
         parabolic = len(parabolic_index) != 0
         slow = args.slow
@@ -385,273 +340,117 @@ def main():
             print("Only two permutations supported for parabolic.")
             exit(1)
 
-        if grass:
-            perms_t = []
-            if ascode:
-                perms_t = [tuple(permtrim(uncode(perms[i]))) for i in range(len(perms))]
-            else:
-                perms_t = [tuple(permtrim(perms[i])) for i in range(len(perms))]
+        
+        if ascode:
+            for i in range(len(perms)):
+                perms[i] = uncode(perms[i])
 
-            k = -1
-
-            for perm in perms_t:
-                desc = -1
-                for i in range(len(perm) - 1):
-                    if desc != -1 and perm[i] > perm[i + 1]:
-                        print("Error: permutations must have one descent")
-                        exit(1)
-                    elif desc == -1:
-                        if perm[i] > perm[i + 1]:
-                            if k != -1 and k != i + 1:
-                                print(
-                                    "Error: permutations must all have the same descent"
-                                )
-                                exit(1)
-                            k = i + 1
-                            desc = i + 1
-            # perms1 = [perms_t[0]]
-            # perms2 = [perms_t[1]]
-            perms1 = []
-            perms2 = []
-            for d in range(100, -1, -1):
-                # print(f"{k=} {d=}")
-                grass_rep_1 = grass_q_replace(perms_t[0], k, d, grass_q_n)
-                grass_rep_2 = grass_q_replace(perms_t[1], k, d, grass_q_n)
-                # print(f"{grass_rep_1} {grass_rep_2}")
-                if grass_rep_1 is None or grass_rep_2 is None:
-                    continue
-                perms1 += [grass_rep_1]
-                perms2 += [grass_rep_2]
-            for i in range(len(perms1)):
-                d = len(perms1) - i - 1
-                # print(f"{d=} {perms1[i]=} {perms2[i]=}")
-                if equiv:
-                    coeff_dict = yz.schubmult({perms1[i]: 1}, perms2[i], var2, var2)
-                else:
-                    coeff_dict = yz.schubmult(
-                        {perms1[i]: 1},
-                        perms2[i],
-                        [0 for i in range(100)],
-                        [0 for i in range(100)],
+        if parabolic:
+            for i in range(len(parabolic_index)):
+                index = parabolic_index[i] - 1
+                if sg(index, perms[0]) == 1 or sg(index, perms[1]) == 1:
+                    print(
+                        "Parabolic given but elements are not minimal length coset representatives."
                     )
+                    exit(1)
 
-                # if ascode:
-                # width = max([len(str(trimcode(perm))) for perm in coeff_dict.keys()])
-                # else:
-                # width = max([len(str(perm)) for perm in coeff_dict.keys()])
-                k1 = k - d
-                k2 = k + d
-                coeff_perms = list(
-                    [key for key in coeff_dict.keys() if len(key) <= grass_q_n]
+        coeff_dict = {tuple(permtrim([*perms[0]])): 1}
+
+        if not slow:
+            for perm in perms[1:]:
+                coeff_dict = schubmult_db(coeff_dict, tuple(permtrim([*perm])))
+        else:
+            for perm in perms[1:]:
+                coeff_dict = schubmult(coeff_dict, tuple(permtrim([*perm])))
+
+        if mult:
+            mul_exp = sympify(mulstring)
+            coeff_dict = mult_poly(coeff_dict, mul_exp)
+
+        if pr:
+            if ascode:
+                width = max(
+                    [
+                        len(str(trimcode(perm)))
+                        for perm in coeff_dict.keys()
+                        if expand(coeff_dict[perm]) != 0
+                    ]
+                )
+            else:
+                width = max(
+                    [
+                        len(str(perm))
+                        for perm in coeff_dict.keys()
+                        if expand(coeff_dict[perm]) != 0
+                    ]
                 )
 
-                coeff_perms.sort(key=lambda x: (inv(x), *x))
-
-                coeff_perms2 = []
-
-                for perm in coeff_perms:
-                    two_step = to_two_step(perm, k1, k2, grass_q_n)
-                    num_1 = len([i for i in range(len(two_step)) if two_step[i] == 1])
-                    if num_1 != 2 * d:
-                        coeff_perms2 += [None]
-                        continue
-                    one_step = [*two_step]
-                    one_step.reverse()
-                    two_step_r = [*two_step]
-                    two_step_r.reverse()
-                    for i in range(len(one_step) - 1, -1, -1):
-                        if one_step[i] == 0:
-                            break
-                        if one_step[i] == 1:
-                            one_step[i] = 0
-                    no_good = False
-                    for i in range(len(one_step)):
-                        if one_step[i] == 1:
-                            one_step[i] = 2
-                        elif one_step[i] == 2:
-                            if (
-                                len(
-                                    [
-                                        j
-                                        for j in range(len(one_step))
-                                        if one_step[j] == 1
-                                    ]
-                                )
-                                != 0
-                            ):
-                                no_good = True
+            if parabolic:
+                w_P = longest_element(parabolic_index)
+                w_P_prime = [1, 2]
+                coeff_dict_update = {}
+                for w_1 in coeff_dict:
+                    val = coeff_dict[w_1]
+                    q_dict = factor_out_q_keep_factored(val)
+                    for q_part in q_dict:
+                        qv = q_vector(q_part)
+                        w = [*w_1]
+                        good = True
+                        parabolic_index2 = []
+                        for i in range(len(parabolic_index)):
+                            if omega(parabolic_index[i], qv) == 0:
+                                parabolic_index2 += [parabolic_index[i]]
+                            elif omega(parabolic_index[i], qv) != -1:
+                                good = False
                                 break
-                    num_0 = len([i for i in range(len(one_step)) if one_step[i] == 0])
-                    if num_0 != k or no_good:
-                        # print(f"No good {one_step=} {two_step_r=} {no_good=}")
-                        coeff_perms2 += [None]
-                        continue
-                    pos_0 = 0
-                    pos_1 = 0
-                    one_step.reverse()
-                    # print(f"{two_step=}")
-                    # print(f"{one_step=}")
-                    grass_perm = [0 for i in range(len(one_step))]
-                    for i in range(len(one_step)):
-                        if one_step[i] == 0:
-                            grass_perm[pos_0] = i + 1
-                            pos_0 += 1
-                        else:
-                            grass_perm[k + pos_1] = i + 1
-                            pos_1 += 1
-                    coeff_perms2 += [tuple(permtrim(grass_perm))]
+                        if not good:
+                            continue
+                        w_P_prime = longest_element(parabolic_index2)
+                        if not check_blocks(qv, parabolic_index):
+                            continue
+                        w = permtrim(mulperm(mulperm(w, w_P_prime), w_P))
+                        if not is_parabolic(w, parabolic_index):
+                            continue
 
-                try:
-                    if ascode:
-                        width = max(
+                        w = tuple(permtrim(w))
+
+                        new_q_part = np.prod(
                             [
-                                len(str(trimcode(perm)))
-                                for perm in coeff_perms2
-                                if perm is not None
+                                q_var[
+                                    index
+                                    + 1
+                                    - count_less_than(parabolic_index, index + 1)
+                                ]
+                                ** qv[index]
+                                for index in range(len(qv))
+                                if index + 1 not in parabolic_index
                             ]
+                        )
+
+                        try:
+                            new_q_part = int(new_q_part)
+                        except Exception:
+                            pass
+                        q_val_part = q_dict[q_part]
+                        coeff_dict_update[w] = (
+                            coeff_dict_update.get(w, 0) + new_q_part * q_val_part
+                        )
+                coeff_dict = coeff_dict_update
+
+            coeff_perms = list(coeff_dict.keys())
+            coeff_perms.sort(key=lambda x: (inv(x), *x))
+
+            for perm in coeff_perms:
+                val = sympify(coeff_dict[perm]).expand()
+                if val != 0:
+                    if ascode:
+                        print(
+                            f"{str(trimcode(perm))}  {str(val).replace('**', '^').replace('*', ' ')}"
                         )
                     else:
-                        width = max(
-                            [
-                                len(str(perm))
-                                for perm in coeff_perms2
-                                if perm is not None
-                            ]
-                        )
-                except ValueError:
-                    continue
-
-                for i in range(len(coeff_perms)):
-                    if coeff_perms2[i] is None:
-                        continue
-                    perm = coeff_perms[i]
-                    val = (var_q**d) * sympify(coeff_dict[perm]).subs(
-                        subs_dict
-                    ).expand()
-
-                    if val != 0:
-                        if ascode:
-                            print(
-                                f"{str(trimcode(coeff_perms2[i])):>{width}}  {str(val).replace('**', '^').replace('*', ' ')}"
-                            )
-                        else:
-                            print(
-                                f"{str(coeff_perms2[i]):>{width}}  {str(val).replace('**', '^').replace('*', ' ')}"
-                            )
-                        # print(f"{str(two_step):>{width}}  {str(val).replace('**','^').replace('*',' ')}")
-                        # else:
-                        # print(f"{str(perm):>{width}}  {str(val).replace('**','^').replace('*',' ')}")
-        else:
-            if ascode:
-                for i in range(len(perms)):
-                    perms[i] = uncode(perms[i])
-
-            if parabolic:
-                for i in range(len(parabolic_index)):
-                    index = parabolic_index[i] - 1
-                    if sg(index, perms[0]) == 1 or sg(index, perms[1]) == 1:
                         print(
-                            "Parabolic given but elements are not minimal length coset representatives."
+                            f"{str(perm)}  {str(val).replace('**', '^').replace('*', ' ')}"
                         )
-                        exit(1)
-
-            coeff_dict = {tuple(permtrim([*perms[0]])): 1}
-
-            if not slow:
-                for perm in perms[1:]:
-                    coeff_dict = schubmult_db(coeff_dict, tuple(permtrim([*perm])))
-            else:
-                for perm in perms[1:]:
-                    coeff_dict = schubmult(coeff_dict, tuple(permtrim([*perm])))
-
-            if mult:
-                mul_exp = sympify(mulstring)
-                coeff_dict = mult_poly(coeff_dict, mul_exp)
-
-            if pr:
-                if ascode:
-                    width = max(
-                        [
-                            len(str(trimcode(perm)))
-                            for perm in coeff_dict.keys()
-                            if expand(coeff_dict[perm]) != 0
-                        ]
-                    )
-                else:
-                    width = max(
-                        [
-                            len(str(perm))
-                            for perm in coeff_dict.keys()
-                            if expand(coeff_dict[perm]) != 0
-                        ]
-                    )
-
-                if parabolic:
-                    w_P = longest_element(parabolic_index)
-                    w_P_prime = [1, 2]
-                    coeff_dict_update = {}
-                    for w_1 in coeff_dict:
-                        val = coeff_dict[w_1]
-                        q_dict = factor_out_q_keep_factored(val)
-                        for q_part in q_dict:
-                            qv = q_vector(q_part)
-                            w = [*w_1]
-                            good = True
-                            parabolic_index2 = []
-                            for i in range(len(parabolic_index)):
-                                if omega(parabolic_index[i], qv) == 0:
-                                    parabolic_index2 += [parabolic_index[i]]
-                                elif omega(parabolic_index[i], qv) != -1:
-                                    good = False
-                                    break
-                            if not good:
-                                continue
-                            w_P_prime = longest_element(parabolic_index2)
-                            if not check_blocks(qv, parabolic_index):
-                                continue
-                            w = permtrim(mulperm(mulperm(w, w_P_prime), w_P))
-                            if not is_parabolic(w, parabolic_index):
-                                continue
-
-                            w = tuple(permtrim(w))
-
-                            new_q_part = np.prod(
-                                [
-                                    q_var[
-                                        index
-                                        + 1
-                                        - count_less_than(parabolic_index, index + 1)
-                                    ]
-                                    ** qv[index]
-                                    for index in range(len(qv))
-                                    if index + 1 not in parabolic_index
-                                ]
-                            )
-
-                            try:
-                                new_q_part = int(new_q_part)
-                            except Exception:
-                                pass
-                            q_val_part = q_dict[q_part]
-                            coeff_dict_update[w] = (
-                                coeff_dict_update.get(w, 0) + new_q_part * q_val_part
-                            )
-                    coeff_dict = coeff_dict_update
-
-                coeff_perms = list(coeff_dict.keys())
-                coeff_perms.sort(key=lambda x: (inv(x), *x))
-
-                for perm in coeff_perms:
-                    val = sympify(coeff_dict[perm]).expand()
-                    if val != 0:
-                        if ascode:
-                            print(
-                                f"{str(trimcode(perm))}  {str(val).replace('**', '^').replace('*', ' ')}"
-                            )
-                        else:
-                            print(
-                                f"{str(perm)}  {str(val).replace('**', '^').replace('*', ' ')}"
-                            )
     except BrokenPipeError:
         pass
 

@@ -1,4 +1,4 @@
-from argparse import ArgumentParser
+from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
     trimcode,
     elem_sym_perms,
@@ -117,29 +117,11 @@ def schubmult(perm_dict, v):
 
 def main():
     try:
-        parser = ArgumentParser()
+        
+        args = schub_argparse()
 
-        parser.add_argument("perms", nargs="+", action="append")
-        parser.add_argument("-", nargs="+", action="append", dest="perms")
-
-        parser.add_argument(
-            "-np", "--no-print", action="store_false", default=True, dest="pr"
-        )
-
-        parser.add_argument("--code", action="store_true", default=False, dest="ascode")
-
-        parser.add_argument("--mult", nargs="+", required=False, default=None)
-
-        parser.add_argument("--coprod", action="store_true", default=False)
-
-        args = parser.parse_args()
-
-        mulstring = ""
-
-        mult = False
-        if args.mult is not None:
-            mult = True
-            mulstring = " ".join(args.mult)
+        mult = args.mult
+        mulstring = args.mulstring  
 
         perms = args.perms
 

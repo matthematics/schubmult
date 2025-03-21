@@ -9,7 +9,7 @@ from schubmult.perm_lib import (
     uncode,
 )
 from schubmult.schubmult_yz import schubmult, mult_poly
-from argparse import ArgumentParser
+from schubmult._base_argparse import schub_argparse
 
 n = 100
 
@@ -31,20 +31,7 @@ for i in range(1, n):
 
 def main():
     try:
-        parser = ArgumentParser()
-
-        parser.add_argument("perms", nargs="+", action="append")
-        parser.add_argument("-", nargs="+", action="append", dest="perms")
-
-        parser.add_argument(
-            "-np", "--no-print", action="store_false", default=True, dest="pr"
-        )
-
-        parser.add_argument("--code", action="store_true", default=False, dest="ascode")
-        parser.add_argument("--coprod", action="store_true", default=False)
-        parser.add_argument("--mult", nargs="+", required=False, default=None)
-
-        args = parser.parse_args()
+        args = schub_argparse()
 
         mulstring = ""
 
