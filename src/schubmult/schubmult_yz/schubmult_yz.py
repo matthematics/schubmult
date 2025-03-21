@@ -4,6 +4,7 @@ from functools import cache
 from cachetools import cached
 from cachetools.keys import hashkey
 from symengine import sympify, Add, Mul, Pow, symarray, expand, Integer
+from argparse import ArgumentParser
 from schubmult.perm_lib import (
     trimcode,
     elem_sym_perms,
@@ -32,7 +33,7 @@ from schubmult.perm_lib import (
     try_reduce_v,
     phi1,
     mu_A,
-    zero
+    zero,
 )
 import numpy as np
 import pulp as pu
@@ -1620,81 +1621,78 @@ def permy(val, i):
 
 def main():
     global var2
+    parser = ArgumentParser()
     try:
         sys.setrecursionlimit(1000000)
 
-        perms = []
-        curperm = []
+        parser.add_argument("perms", nargs="+", action="append")
+        parser.add_argument("-", nargs="+", action="append", dest="perms")
 
-        pr = True
-        display_positive = False
-        ascode = False
-        coprod = False
-        check = True
-        msg = False
-        mult = False
+        parser.add_argument(
+            "-np", "--no-print", action="store_false", default=True, dest="pr"
+        )
+
+        parser.add_argument(
+            "--display-positive",
+            action="store_true",
+            default=False,
+            dest="display_positive",
+        )
+
+        parser.add_argument(
+            "--optimizer-message", action="store_true", default=False, dest="msg"
+        )
+
+        parser.add_argument(
+            "--down",
+            action="store_true",
+            default=False,
+        )
+
+        parser.add_argument("--coprod", action="store_true", default=False)
+
+        parser.add_argument(
+            "-nc", "--no-check", action="store_false", default=True, dest="check"
+        )
+
+        parser.add_argument("--code", action="store_true", default=False, dest="ascode")
+
+        parser.add_argument(
+            "--same-var", action="store_true", default=False, dest="same"
+        )
+
+        parser.add_argument("--mult", nargs="+", required=False, default=None)
+
+        args = parser.parse_args()  
+
         mulstring = ""
-        down = False
 
-        try:
-            for s in sys.argv[1:]:
-                if s == "-np" or s == "--no-print":
-                    pr = False
-                    continue
-                if mult:
-                    mulstring += s
-                    continue
-                if s == "-mult":
-                    mult = True
-                    continue
-                if s == "-down":
-                    down = True
-                    continue
-                if s == "-coprod":
-                    coprod = True
-                    continue
-                if s == "-nocheck":
-                    check = False
-                    continue
-                if s == "--display-positive":
-                    display_positive = True
-                    continue
-                if s == "--optimizer-message":
-                    msg = True
-                    continue
-                if s == "--version":
-                    print(f"Python version {sys.version}")
-                    exit(0)
-                if s == "-code":
-                    ascode = True
-                    continue
-                if s == "--usage":
-                    print(
-                        "Usage: schubmult_yz <-np|--no-print> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. > <-mult poly_expression>"
-                    )
-                    print(
-                        "Alternative usage: schubmult_yz <-code> <--display-positive> -coprod perm - indexlist"
-                    )
-                    exit(0)
-                if s == "-":
-                    perms += [curperm]
-                    curperm = []
-                    continue
-                curperm += [int(s)]
-        except Exception:
-            print("**** schubmult_yz ****")
-            print(
-                "Purpose: Compute products (and coproducts) of double Schubert polynomials in different sets of variables"
-            )
-            print(
-                "Usage: schubmult_yz <-np|--no-print> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. >"
-            )
-            print(
-                "Alternative usage: schubmult_yz <-code> <--display-positive> <--optimizer-message> -coprod perm - indexlist"
-            )
-            exit(1)
+        mult = False
+        if args.mult is not None:
+            mult = True
+            mulstring = " ".join(args.mult)
 
-        perms += [curperm]
+        perms = args.perms
+
+        for perm in perms:
+            try:
+                for i in range(len(perm)):
+                    perm[i] = int(perm[i])
+            except Exception as e:
+                print("Permutations must have integer values")
+                raise e
+
+        ascode = args.ascode
+        coprod = args.coprod
+        check = args.check
+        msg = args.msg
+        down = args.down
+        display_positive = args.display_positive
+        pr = args.pr
+
+        if args.same:
+            var3 = var2
+
         posified = False
         if coprod:
             subs_dict = {}
@@ -1724,7 +1722,7 @@ def main():
 
             muA = uncode(mu_A(code(mu_W), poso))
             muB = uncode(mu_A(code(mu_W), pos2))
-            # print(f"{code(mu_W)=},{pos=},{poso=} {pos2=},{p_trans(code(mu_W))=},{p_trans(code(muA))=},{p_trans(code(muB))=},{code(muA)=},{code(muB)=}")
+
             while cd[-1] == 0:
                 cd.pop()
             k = len(pos)

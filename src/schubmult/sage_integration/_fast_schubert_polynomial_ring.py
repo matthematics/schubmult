@@ -1,88 +1,74 @@
-import schubmult.schubmult_q as sq
-import schubmult.schubmult_q_yz as qyz
 from sympy import sympify
 import symengine as syme
+import schubmult.schubmult_py as py
+import schubmult.schubmult_yz as yz
 
-from ._fast_schubert_polynomial_ring import (
-    FastSchubertPolynomial,
-    FastSchubertPolynomialRing_base
-)
-
-from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
 from sage.combinat.free_module import CombinatorialFreeModule
-
-from sage.combinat.permutation import Permutations, Permutation
+from sage.combinat.permutation import Permutations, Permutation, from_lehmer_code
 from sage.misc.cachefunc import cached_method
-from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
 from sage.rings.polynomial.multi_polynomial import MPolynomial
+from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sage.categories.graded_bialgebras_with_basis import GradedBialgebrasWithBasis
 
 
-def FastQuantumSchubertPolynomialRing(R, num_vars, varname, q_varname="q_"):
-    QR = PolynomialRing(R, num_vars, q_varname)
-    return FastQuantumSchubertPolynomialRing_xbasis(QR, num_vars, varname, q_varname)
+def FastSchubertPolynomialRing(R, num_vars, varname, indices=tuple([1])):
+    return FastSchubertPolynomialRing_xbasis(R, num_vars, varname, indices)
 
 
-class FastQuantumSchubertPolynomial_class(CombinatorialFreeModule.Element):
+class FastSchubertPolynomial_class(CombinatorialFreeModule.Element):
 
     @property
     def base_varname(self):
         return self.parent()._base_varname
 
     @property
-    def q_varname(self):
-        return self.parent()._q_varname
-
-    @property
     def polynomial_ring(self):
-        return self.parent()._polynomial_ring    
+        return self.parent()._polynomial_ring
+    
 
     def expand(self):
         return sum(
             [
-                self.parent()._polynomial_ring(
-                    qyz.schubpoly_quantum(
-                        tuple(k),
-                        self.parent()._polynomial_ring.gens(),
-                        [0 for i in range(100)],
-                        self.parent()._q_ring.gens(),
-                        v,
-                    )
-                )
+                yz.schubmult(
+                    {(1, 2): v},
+                    tuple(k),
+                    self.parent()._polynomial_ring.gens(),
+                    [0 for i in range(100)],
+                ).get((1, 2), 0)
                 for k, v in self.monomial_coefficients().items()
             ]
         )
 
 
-class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
-    Element = FastQuantumSchubertPolynomial_class
+class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
+    Element = FastSchubertPolynomial_class
 
-    def __init__(self, R, num_vars, varname, q_varname):
+    def __init__(self, R, num_vars, varname, indices):
         """
         EXAMPLES::
 
-                sage: X = FastQuantumSchubertPolynomialRing(QQ)
+                sage: X = FastSchubertPolynomialRing(QQ)
                 sage: X == loads(dumps(X))
                 True
         """
-        self._name = "QuantumSchubert polynomial ring with X basis"
+        self._name = "Schubert polynomial ring with X basis"
+        self._splitter = indices
         self._repr_option_bracket = False
-        cat = GradedAlgebrasWithBasis(R).Commutative()  # CoalgebrasWithBasis(R).Graded()
+        cat = GradedBialgebrasWithBasis(R).Commutative()
         CombinatorialFreeModule.__init__(
-            self, R, Permutations(), category=cat, prefix=f"S^{q_varname}({varname})"
+            self,
+            R,
+            Permutations(),
+            category=cat,
+            prefix=f"S{varname}",
         )
-        self._q_ring = R
-        self._base_varname = varname
-        self._q_varname = q_varname
         self._polynomial_ring = PolynomialRing(R, num_vars, varname)
+        self._base_varname = varname
         self._populate_coercion_lists_()
 
-    def _coerce_map_from_(self, S):
-        if isinstance(S, MPolynomialRing_base):
-            return True
-        if isinstance(S, FastSchubertPolynomialRing_base):
-            return True
-        return super()._coerce_map_from_(S)
+    def set_coproduct_indices(self, indices):
+        self._splitter = indices
 
     @cached_method
     def one_basis(self):
@@ -91,7 +77,7 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
 
         EXAMPLES::
 
-                sage: X = FastQuantumSchubertPolynomialRing(QQ)
+                sage: X = FastSchubertPolynomialRing(QQ)
                 sage: X.one()  # indirect doctest
                 X[1]
         """
@@ -103,7 +89,7 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
 
         EXAMPLES::
 
-                sage: X = FastQuantumSchubertPolynomialRing(QQ)
+                sage: X = FastSchubertPolynomialRing(QQ)
                 sage: X._element_constructor_([2,1,3])
                 X[2, 1]
                 sage: X._element_constructor_(Permutation([2,1,3]))
@@ -128,7 +114,7 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
 
         We check that :issue:`12924` is fixed::
 
-                sage: X = FastQuantumSchubertPolynomialRing(QQ)
+                sage: X = FastSchubertPolynomialRing(QQ)
                 sage: X._element_constructor_([1,2,1])
                 Traceback (most recent call last):
                 ...
@@ -143,7 +129,7 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         Check the round trip from key polynomials::
 
                 sage: k = KeyPolynomials(ZZ)
-                sage: X = FastQuantumSchubertPolynomialRing(ZZ)
+                sage: X = FastSchubertPolynomialRing(ZZ)
                 sage: it = iter(Permutations())
                 sage: for _ in range(50):
                 ....:     P = next(it)
@@ -158,28 +144,24 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         elif isinstance(x, Permutation):
             perm = x.remove_extra_fixed_points()
             elem = self._from_dict({perm: self.base_ring().one()})
-        elif isinstance(x, MPolynomial) or isinstance(x, FastSchubertPolynomial):
-            if isinstance(x, FastSchubertPolynomial):
-                x = x.expand()
+        elif isinstance(x, MPolynomial):
             from sage.interfaces.sympy import sympy_init
 
             sympy_init()
             sympy_floff = sympify(str(x))
             val = syme.sympify(sympy_floff)
-            result = sq.mult_poly(
+            result = py.mult_poly(
                 {(1, 2): 1},
                 val,
                 [syme.Symbol(str(g)) for g in self._polynomial_ring.gens()],
-                [syme.Symbol(str(g)) for g in self._q_ring.gens()],
             )
             elem = self._from_dict(
                 {
-                    Permutation(list(k)).remove_extra_fixed_points(): self._q_ring(v)
+                    Permutation(list(k)): self.base_ring()(str(v))
                     for k, v in result.items()
                 }
-            )                        
-        else:
-            elem = None        
+            )
+
         return elem
 
     def some_elements(self):
@@ -188,7 +170,7 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
 
         EXAMPLES::
 
-                sage: X = FastQuantumSchubertPolynomialRing(QQ)
+                sage: X = FastSchubertPolynomialRing(QQ)
                 sage: X.some_elements()
                 [X[1], X[1] + 2*X[2, 1], -X[3, 2, 1] + X[4, 2, 1, 3]]
         """
@@ -198,28 +180,79 @@ class FastQuantumSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             self([4, 2, 1, 3]) - self([3, 2, 1]),
         ]
 
+    def _coerce_map_from_(self, S):
+        if isinstance(S, MPolynomialRing_base):
+            return True
+        return super()._coerce_map_from_(S)
+
     def product_on_basis(self, left, right):
         """
         EXAMPLES::
 
                 sage: p1 = Permutation([3,2,1])
                 sage: p2 = Permutation([2,1,3])
-                sage: X = FastQuantumSchubertPolynomialRing(QQ)
+                sage: X = FastSchubertPolynomialRing(QQ)
                 sage: X.product_on_basis(p1,p2)
                 X[4, 2, 1, 3]
         """
+        # return symmetrica.mult_schubert_schubert(left, right)
         return sum(
             [
                 self.base_ring()(v) * self(Permutation(list(k)))
-                for k, v in sq.schubmult_db(
-                    {tuple(left): 1}, tuple(right), list(self.base_ring().gens())
-                ).items()
+                for k, v in py.schubmult({tuple(left): 1}, tuple(right)).items()
             ]
         )
 
-def _repr_(self):
-    return f"Ring of Quantum Schubert polynomials in {self._base_varname} with {len(self._polynomial_ring.gens())} variables over {self._q_ring.base_ring()}"
+    def coproduct_on_basis(self, mperm):
+        """
+        Coproduct on a single Schubert polynomial
+        Depends on the indices.
+        """
+        indices = self._splitter
+        indices = sorted(indices)
+        mperm = Permutation(list(mperm))
+        k = len(indices)
+        n = len(mperm)
+        kcd = [indices[i] - i - 1 for i in range(len(indices))] + [
+            n + 1 - k for i in range(k, n)
+        ]
+        max_required = max([kcd[i] + i for i in range(len(kcd))])
+        kcd2 = kcd + [0 for i in range(len(kcd), max_required)] + [0]
+        N = len(kcd)
+        kperm = from_lehmer_code(kcd2).inverse()
+        coeff_dict = {tuple(kperm): 1}
+        coeff_dict = py.schubmult(coeff_dict, tuple(mperm))
+
+        inv_kperm = kperm.number_of_inversions()
+        inverse_kperm = kperm.inverse()
+        total_sum = 0
+        for perm, val in coeff_dict.items():
+            pperm = Permutation(list(perm))
+            downperm = pperm.left_action_product(inverse_kperm)
+            if (
+                downperm.number_of_inversions()
+                == pperm.number_of_inversions() - inv_kperm
+            ):
+                flag = True
+                for i in range(N):
+                    if downperm[i] > N:
+                        flag = False
+                        break
+                if not flag:
+                    continue
+                firstperm = Permutation(list(downperm[0:N]))
+                secondperm = Permutation(
+                    [downperm[i] - N for i in range(N, len(downperm))]
+                )
+                total_sum += self.base_ring()(val) * self(firstperm).tensor(
+                    self(secondperm)
+                )
+        return total_sum
+    
+    def _repr_(self):
+        return f"Ring of Schubert polynomials in {self._base_varname} with {len(self._polynomial_ring.gens())} variables over {self.base_ring()}"
 
 
-FastQuantumSchubertPolynomial = FastQuantumSchubertPolynomial_class
-FastQuantumSchubertPolynomialRing_base = FastQuantumSchubertPolynomialRing_xbasis
+
+FastSchubertPolynomial = FastSchubertPolynomial_class
+FastSchubertPolynomialRing_base = FastSchubertPolynomialRing_xbasis

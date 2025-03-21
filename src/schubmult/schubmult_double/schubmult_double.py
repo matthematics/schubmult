@@ -9,7 +9,7 @@ from schubmult.perm_lib import (
     uncode,
 )
 from schubmult.schubmult_yz import schubmult, mult_poly
-import sys
+from argparse import ArgumentParser
 
 n = 100
 
@@ -31,50 +31,41 @@ for i in range(1, n):
 
 def main():
     try:
-        perms = []
-        curperm = []
+        parser = ArgumentParser()
 
-        pr = True
-        ascode = False
-        coprod = False
-        mult = False
+        parser.add_argument("perms", nargs="+", action="append")
+        parser.add_argument("-", nargs="+", action="append", dest="perms")
+
+        parser.add_argument(
+            "-np", "--no-print", action="store_false", default=True, dest="pr"
+        )
+
+        parser.add_argument("--code", action="store_true", default=False, dest="ascode")
+        parser.add_argument("--coprod", action="store_true", default=False)
+        parser.add_argument("--mult", nargs="+", required=False, default=None)
+
+        args = parser.parse_args()
+
         mulstring = ""
-        try:
-            for s in sys.argv[1:]:
-                if s == "-np" or s == "--no-print":
-                    pr = False
-                    continue
-                if mult:
-                    mulstring += s
-                    continue
-                if s == "-code":
-                    ascode = True
-                    continue
-                if s == "-coprod":
-                    coprod = True
-                    continue
-                if s == "-":
-                    perms += [curperm]
-                    curperm = []
-                    continue
-                if s == "-mult":
-                    mult = True
-                    continue
-                curperm += [int(s)]
-        except Exception:
-            print("**** schubmult_double ****")
-            print(
-                "Purpose: Compute products (and coproducts) of double Schubert polynomials in the same set of variables"
-            )
-            print(
-                "Usage: schubmult_double <-np|--no-print> <-code> perm1 - perm2 < - perm 3 ... > <-mult poly>"
-            )
-            print(
-                "Alternative usage: schubmult_double <-code> -coprod perm - indexlist"
-            )
-            exit(1)
 
-        perms += [curperm]
+        mult = False
+        if args.mult is not None:
+            mult = True
+            mulstring = " ".join(args.mult)
+
+        perms = args.perms
+
+        for perm in perms:
+            try:
+                for i in range(len(perm)):
+                    perm[i] = int(perm[i])
+            except Exception as e:
+                print("Permutations must have integer values")
+                raise e
+
+        ascode = args.ascode
+        pr = args.pr
+        coprod = args.coprod
 
         if coprod:
             subs_dict_coprod = {}

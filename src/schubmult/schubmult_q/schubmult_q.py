@@ -1,4 +1,5 @@
 from symengine import sympify, Add, Mul, Pow, symarray, Symbol, expand
+from argparse import ArgumentParser
 from schubmult.perm_lib import (
     trimcode,
     elem_sym_perms_q,
@@ -22,12 +23,11 @@ from schubmult.perm_lib import (
     q_var,
     sg,
     n,
-    zero
+    zero,
 )
 import numpy as np
 from schubmult.schubmult_q_yz import factor_out_q_keep_factored
 import schubmult.schubmult_yz as yz
-import sys
 
 var = symarray("x", n)
 var2 = symarray("y", n)
@@ -310,74 +310,76 @@ def to_two_step(perm, k1, k2, n):
 
 def main():
     try:
-        perms = []
-        curperm = []
+        parser = ArgumentParser()
 
-        pr = True
-        ascode = False
-        grass = False
-        grass_q_n = 0
-        equiv = False
-        mult = False
+        parser.add_argument("perms", nargs="+", action="append")
+        parser.add_argument("-", nargs="+", action="append", dest="perms")
+
+        parser.add_argument(
+            "-np", "--no-print", action="store_false", default=True, dest="pr"
+        )
+
+        parser.add_argument("--code", action="store_true", default=False, dest="ascode")
+
+        parser.add_argument("--equiv", action="store_true", default=False, dest="equiv")
+
+        parser.add_argument("--mult", nargs="+", required=False, default=None)
+
+        parser.add_argument("--parabolic", nargs="+", required=False, default=[])
+
+        parser.add_argument(
+            "--nil-hecke", type=int, required=False, default=None, dest="nilhecke"
+        )
+
+        parser.add_argument(
+            "--nil-hecke-apply",
+            type=int,
+            required=False,
+            default=None,
+            dest="nilhecke_apply",
+        )
+
+        parser.add_argument(
+            "--grass",
+            type=int,
+            required=False,
+            default=None,
+            dest="grass_q_n",
+        )
+
+        parser.add_argument(
+            "--basic-pieri", action="store_true", default=False, dest="slow"
+        )
+
+        parser.add_argument("--norep", action="store_true", default=False)
+
+        args = parser.parse_args()
+
         mulstring = ""
-        slow = False
-        parabolic = False
-        just_parabolic = False
-        parabolic_index = []
 
-        try:
-            for s in sys.argv[1:]:
-                if s == "-np" or s == "--no-print":
-                    pr = False
-                    continue
-                if s == "--slow":
-                    slow = True
-                    continue
-                if s == "-parabolic":
-                    just_parabolic = True
-                    parabolic = True
-                    continue
-                if just_parabolic:
-                    just_parabolic = False
-                    parabolic_index = [int(i) for i in s.split(",")]
-                    parabolic_index.sort()
-                    continue
-                if mult:
-                    mulstring += s
-                    continue
-                if s == "-code":
-                    ascode = True
-                    continue
-                if s == "-grass":
-                    grass = None
-                    continue
-                if s == "-equiv":
-                    equiv = True
-                    continue
-                if grass is None:
-                    grass = True
-                    grass_q_n = int(s)
-                    continue
-                if s == "-mult":
-                    mult = True
-                    continue
-                if s == "-":
-                    perms += [curperm]
-                    curperm = []
-                    continue
-                curperm += [int(s)]
-        except Exception:
-            print("**** schubmult_q ****")
-            print(
-                "Purpose: Compute the structure constants of quantum Schubert polynomials"
-            )
-            print(
-                "Usage: schubmult_q <-np|--no-print> <-parabolic descent1,descent2,...> <-code> <-grass n> <-equiv> perm1 - perm2 < - perm 3 ... >"
-            )
-            # print("For the -grass option, must use Grassmannian permutations. -equiv only works together with -grass.")
-            exit(1)
+        mult = False
+        if args.mult is not None:
+            mult = True
+            mulstring = " ".join(args.mult)
 
-        perms += [curperm]
+        perms = args.perms
+
+        for perm in perms:
+            try:
+                for i in range(len(perm)):
+                    perm[i] = int(perm[i])
+            except Exception as e:
+                print("Permutations must have integer values")
+                raise e
+
+        ascode = args.ascode
+        pr = args.pr
+        equiv = args.equiv
+        grass_q_n = args.grass
+        grass = grass_q_n is not None
+        parabolic_index = [int(s) for s in args.parabolic]
+        parabolic = len(parabolic_index) != 0
+        slow = args.slow
 
         if parabolic and len(perms) != 2:
             print("Only two permutations supported for parabolic.")

@@ -1,4 +1,4 @@
-import sys
+from argparse import ArgumentParser
 from schubmult.perm_lib import (
     trimcode,
     elem_sym_perms,
@@ -117,50 +117,43 @@ def schubmult(perm_dict, v):
 
 def main():
     try:
-        perms = []
-        curperm = []
+        parser = ArgumentParser()
 
-        pr = True
-        coprod = False
-        ascode = False
-        mult = False
+        parser.add_argument("perms", nargs="+", action="append")
+        parser.add_argument("-", nargs="+", action="append", dest="perms")
+
+        parser.add_argument(
+            "-np", "--no-print", action="store_false", default=True, dest="pr"
+        )
+
+        parser.add_argument("--code", action="store_true", default=False, dest="ascode")
+
+        parser.add_argument("--mult", nargs="+", required=False, default=None)
+
+        parser.add_argument("--coprod", action="store_true", default=False)
+
+        args = parser.parse_args()
+
         mulstring = ""
 
-        try:
-            for s in sys.argv[1:]:
-                if mult:
-                    mulstring += s
-                    continue
-                if s == "-mult":
-                    mult = True
-                    continue
-                if s == "-np" or s == "--no-print":
-                    pr = False
-                    continue
-                if s == "-coprod":
-                    coprod = True
-                    continue
-                if s == "-code":
-                    ascode = True
-                    continue
-                if s == "-":
-                    perms += [tuple(curperm)]
-                    curperm = []
-                    continue
-                else:
-                    curperm += [int(s)]
-        except Exception:
-            print("**** schubmult_py ****")
-            print(
-                "Purpose: Compute products (and coproducts) of ordinary Schubert polynomials"
-            )
-            print(
-                "Usage: schubmult_py <-np|--no-print> <-code> perm1 - perm2 <- perm3...>"
-            )
-            print("Alternative usage: schubmult_py -coprod <-np> <perm> - <index list>")
-            exit(1)
+        mult = False
+        if args.mult is not None:
+            mult = True
+            mulstring = " ".join(args.mult)
 
-        perms += [tuple(curperm)]
+        perms = args.perms
+
+        for perm in perms:
+            try:
+                for i in range(len(perm)):
+                    perm[i] = int(perm[i])
+            except Exception as e:
+                print("Permutations must have integer values")
+                raise e
+
+        ascode = args.ascode
+        pr = args.pr
+        coprod = args.coprod
 
         if coprod:
             if ascode:

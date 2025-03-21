@@ -19,6 +19,7 @@ from schubmult.perm_lib import (
     count_less_than,
     q_var,
 )
+from argparse import ArgumentParser
 import numpy as np
 
 import sys
@@ -44,73 +45,70 @@ def main():
     try:
         sys.setrecursionlimit(1000000)
 
-        perms = []
-        curperm = []
+        parser = ArgumentParser()
 
-        pr = True
-        ascode = False
-        mult = False
-        slow = False
+        parser.add_argument("perms", nargs="+", action="append")
+        parser.add_argument("-", nargs="+", action="append", dest="perms")
+
+        parser.add_argument(
+            "-np", "--no-print", action="store_false", default=True, dest="pr"
+        )
+
+        parser.add_argument(
+            "--display-positive",
+            action="store_true",
+            default=False,
+            dest="display_positive",
+        )
+
+        parser.add_argument("--code", action="store_true", default=False, dest="ascode")
+
+        parser.add_argument("--mult", nargs="+", required=False, default=None)
+
+        parser.add_argument("--parabolic", nargs="+", required=False, default=[])
+
+        parser.add_argument(
+            "--nil-hecke", type=int, required=False, default=None, dest="nilhecke"
+        )
+
+        parser.add_argument(
+            "--nil-hecke-apply",
+            type=int,
+            required=False,
+            default=None,
+            dest="nilhecke_apply",
+        )
+
+        parser.add_argument(
+            "--basic-pieri", action="store_true", default=False, dest="slow"
+        )
+
+        parser.add_argument("--norep", action="store_true", default=False)
+
+        args = parser.parse_args()
+
         mulstring = ""
-        parabolic = False
-        just_parabolic = False
-        parabolic_index = []
 
-        try:
-            for s in sys.argv[1:]:
-                if s == "-np" or s == "--no-print":
-                    pr = False
-                    continue
-                if s == "--slow":
-                    slow = True
-                    continue
-                if s == "-parabolic":
-                    just_parabolic = True
-                    parabolic = True
-                    continue
-                if just_parabolic:
-                    just_parabolic = False
-                    parabolic_index = [int(i) for i in s.split(",")]
-                    parabolic_index.sort()
-                    continue
-                if mult:
-                    mulstring += s
-                    continue
-                if s == "-mult":
-                    mult = True
-                    continue              
-                if s == "--version":
-                    print(f"Python version {sys.version}")
-                    exit(0)
-                if s == "-code":
-                    ascode = True
-                    continue
-                if s == "--usage":
-                    print("**** schubmult_q_double ****")
-                    print(
-                        "Purpose: Compute equivariant Gromov-Witten invariants, structure constants of quantum double Schubert polynomials"
-                    )
-                    print(
-                        "Usage: schubmult_q_double <-np|--no-print> <-parabolic descent1,descent2,...> <-code> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. >"
-                    )
-                    # print("Alternative usage: schubmult_yz <-code> <--display-positive> -coprod perm - indexlist")
-                    exit(0)
-                if s == "-":
-                    perms += [curperm]
-                    curperm = []
-                    continue
-                curperm += [int(s)]
-        except Exception:
-            print("**** schubmult_q_double ****")
-            print(
-                "Purpose: Compute equivariant Gromov-Witten invariants, structure constants of quantum double Schubert polynomials"
-            )
-            print(
-                "Usage: schubmult_q_double <-np|--no-print> <-code> <-parabolic descent1,descent2,...> <--display-positive> <--optimizer-message> perm1 - perm2 < - perm3 .. >"
-            )
-            exit(1)
+        mult = False
+        if args.mult is not None:
+            mult = True
+            mulstring = " ".join(args.mult)
 
-        perms += [curperm]
+        perms = args.perms
+
+        for perm in perms:
+            try:
+                for i in range(len(perm)):
+                    perm[i] = int(perm[i])
+            except Exception as e:
+                print("Permutations must have integer values")
+                raise e
+
+        ascode = args.ascode
+        pr = args.pr
+        parabolic_index = [int(s) for s in args.parabolic]
+        parabolic = len(parabolic_index) != 0
+        slow = args.slow
 
         if ascode:
             for i in range(len(perms)):
@@ -118,7 +116,6 @@ def main():
         else:
             for i in range(len(perms)):
                 perms[i] = tuple(permtrim([*perms[i]]))
-
 
         coeff_dict = {perms[0]: 1}
         for perm in perms[1:]:

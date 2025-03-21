@@ -1,4 +1,5 @@
 from symengine import sympify, Add, Mul, Pow, symarray, expand
+from argparse import ArgumentParser
 from schubmult.perm_lib import (
     trimcode,
     elem_sym_perms_q,
@@ -567,97 +568,95 @@ def main():
     try:
         sys.setrecursionlimit(1000000)
 
-        perms = []
-        curperm = []
+        parser = ArgumentParser()
 
-        pr = True
-        display_positive = False
-        ascode = False
-        nilhecke = False
-        nilhecke_apply = False
-        check = True
-        msg = False
-        just_nil = False
-        mult = False
-        slow = False
-        parabolic = False
-        just_parabolic = False
-        parabolic_index = []
+        parser.add_argument("perms", nargs="+", action="append")
+        parser.add_argument("-", nargs="+", action="append", dest="perms")
 
-        nil_N = 0
+        parser.add_argument(
+            "-np", "--no-print", action="store_false", default=True, dest="pr"
+        )
+
+        parser.add_argument(
+            "--display-positive",
+            action="store_true",
+            default=False,
+            dest="display_positive",
+        )
+
+        parser.add_argument(
+            "--optimizer-message", action="store_true", default=False, dest="msg"
+        )
+
+        parser.add_argument(
+            "-nc", "--no-check", action="store_false", default=True, dest="check"
+        )
+
+        parser.add_argument("--code", action="store_true", default=False, dest="ascode")
+
+        parser.add_argument("--expand", action="store_true", default=False, dest="expa")
+
+        parser.add_argument("--mult", nargs="+", required=False, default=None)
+
+        parser.add_argument("--parabolic", nargs="+", required=False, default=[])
+
+        parser.add_argument(
+            "--nil-hecke", type=int, required=False, default=None, dest="nilhecke"
+        )
+
+        parser.add_argument(
+            "--nil-hecke-apply",
+            type=int,
+            required=False,
+            default=None,
+            dest="nilhecke_apply",
+        )
+
+        parser.add_argument(
+            "--basic-pieri", action="store_true", default=False, dest="slow"
+        )
+
+        parser.add_argument("--norep", action="store_true", default=False)
+
+        args = parser.parse_args()
 
         mulstring = ""
-        norep = False
-        expa = False
 
-        try:
-            for s in sys.argv[1:]:
-                if just_nil:
-                    just_nil = False
-                    nil_N = int(s)
-                    continue
-                if s == "--slow":
-                    slow = True
-                    continue
-                if s == "--norep":
-                    norep = True
-                    continue
-                if s == "-parabolic":
-                    just_parabolic = True
-                    parabolic = True
-                    continue
-                if just_parabolic:
-                    just_parabolic = False
-                    parabolic_index = [int(i) for i in s.split(",")]
-                    continue
-                if s == "--expand":
-                    expa = True
-                    continue
-                if s == "-np" or s == "--no-print":
-                    pr = False
-                    continue
-                if mult:
-                    mulstring += s
-                    continue
-                if s == "-mult":
-                    mult = True
-                    continue
-                if s == "-nocheck":
-                    check = False
-                    continue
-                if s == "--display-positive":
-                    display_positive = True
-                    continue
-                if s == "--optimizer-message":
-                    msg = True
-                    continue
-                if s == "-nil-hecke":
-                    nilhecke = True
-                    just_nil = True
-                    continue
-                if s == "-nil-hecke-apply":
-                    nilhecke_apply = True
-                    just_nil = True
-                    continue
-                if s == "--version":
-                    print(f"Python version {sys.version}")
-                    exit(0)
-                if s == "-code":
-                    ascode = True
-                    continue
-                if s == "--usage" or s == "--help":
-                    print_usage()
-                    exit(0)
-                if s == "-":
-                    perms += [curperm]
-                    curperm = []
-                    continue
-                curperm += [int(s)]
-        except Exception:
-            print_usage()
-            exit(1)
+        mult = False
+        if args.mult is not None:
+            mult = True
+            mulstring = " ".join(args.mult)
 
-        perms += [curperm]
+        perms = args.perms
+
+        for perm in perms:
+            try:
+                for i in range(len(perm)):
+                    perm[i] = int(perm[i])
+            except Exception as e:
+                print("Permutations must have integer values")
+                raise e
+
+        ascode = args.ascode
+        check = args.check
+        msg = args.msg
+        display_positive = args.display_positive
+        pr = args.pr
+        parabolic_index = [int(s) for s in args.parabolic]
+        parabolic = len(parabolic_index) != 0
+        expa = args.expa
+        slow = args.slow
+        norep = args.norep
+        nil_N = 0
+        nilhecke = False
+        nilhecke_apply = False
+
+        if args.nilhecke is not None:
+            nilhecke = True
+            nil_N = args.nilhecke
+        if args.nilhecke_apply is not None:
+            nil_N = args.nilhecke_apply
+            nilhecke_apply = True
 
         if ascode:
             for i in range(len(perms)):
