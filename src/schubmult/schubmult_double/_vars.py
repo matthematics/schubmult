@@ -14,3 +14,5 @@ var_z = var3
 x = var_x
 y = var_y
 z = var_z
+
+var_r = symarray("r", 100)

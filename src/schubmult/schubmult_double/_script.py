@@ -6,6 +6,7 @@ from ._vars import (
     var3,
     var_x,
     var,
+    var_r
 )
 from ._funcs import (
     mult_poly,
@@ -16,7 +17,7 @@ from ._funcs import (
     posify,
     split_perms,
 )
-from symengine import symarray, expand, sympify
+from symengine import expand, sympify
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
     add_perm_dict,
@@ -155,6 +156,14 @@ def _display_full(
                             val = val2
                         else:
                             val = 0
+                    elif display_positive:
+                        subs_dict = {}
+                        for i in range(1, 100):
+                            sm = var2[1]
+                            for j in range(1, i):
+                                sm += var_r[j]
+                            subs_dict[var2[i]] = sm
+                        val = expand(sympify(coeff_dict[perm]).xreplace(subs_dict))
                     if val != 0:
                         if not ascode:
                             width2 = (
@@ -182,8 +191,7 @@ def _display_full(
 
         coeff_perms = list(coeff_dict.keys())
         coeff_perms.sort(key=lambda x: (inv(x), *x))
-
-        var_r = symarray("r", 100)
+        
         for perm in coeff_perms:
             val = coeff_dict[perm]
             if val != 0:

@@ -18,7 +18,7 @@ from schubmult.perm_lib import (
 
 def main():
     try:
-        args = schub_argparse("schubmult_py", "Compute products of ordinary Schubert polynomials")
+        args, formatter = schub_argparse("schubmult_py", "Compute products of ordinary Schubert polynomials")
 
         mult = args.mult
         mulstring = args.mulstring

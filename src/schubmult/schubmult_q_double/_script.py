@@ -37,7 +37,7 @@ def _display_full(coeff_dict, args, formatter, posified=None, var2=var2, var3=va
     display_positive = args.display_positive
     expa = args.expa
     slow = args.slow
-    nilhecke_apply = False
+    nilhecke_apply = False    
 
     coeff_perms = list(coeff_dict.keys())
     coeff_perms.sort(key=lambda x: (inv(x), *x))
@@ -45,7 +45,7 @@ def _display_full(coeff_dict, args, formatter, posified=None, var2=var2, var3=va
     var_r = symarray("r", 100)
     for perm in coeff_perms:
         val = coeff_dict[perm]
-        if not same and expand(val) != 0:
+        if expand(val) != 0:
             try:
                 int(val)
             except Exception:
@@ -171,7 +171,7 @@ def main():
         ascode = args.ascode
         msg = args.msg
         display_positive = args.display_positive
-        pr = args.pr
+        pr = args.pr        
         parabolic_index = [int(s) for s in args.parabolic]
         parabolic = len(parabolic_index) != 0
         slow = args.slow
