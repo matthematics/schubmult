@@ -23,11 +23,9 @@ from schubmult.perm_lib import (
     q_var,
     sg,
     n,
-    zero,
 )
 import numpy as np
 from schubmult.schubmult_q_yz import factor_out_q_keep_factored
-import schubmult.schubmult_yz as yz
 
 var = symarray("x", n)
 var2 = symarray("y", n)
@@ -99,8 +97,6 @@ def schubmult_db(perm_dict, v, q_var=q_var):
         return perm_dict
     while th[-1] == 0:
         th.pop()
-    # if len(set(th))!=len(th):
-    # print(f"medium theta {th=}")
     mu = permtrim(uncode(th))
     vmu = permtrim(mulperm([*v], mu))
     inv_vmu = inv(vmu)

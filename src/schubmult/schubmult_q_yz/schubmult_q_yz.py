@@ -25,7 +25,6 @@ from schubmult.perm_lib import (
     elem_sym_func_q,
     call_zvars,
     reduce_q_coeff,
-    zero,
     q_var,
 )
 import numpy as np
@@ -123,12 +122,12 @@ def nil_hecke(perm_dict, v, n, var2=var2, var3=var3):
                     if up2 not in newpathsums:
                         newpathsums[up2] = {}
                     for v in vpathdicts[index]:
-                        sumval = vpathsums[up].get(v, zero) * mul_val
+                        sumval = vpathsums[up].get(v, 0) * mul_val
                         if sumval == 0:
                             continue
                         for v2, vdiff, s in vpathdicts[index][v]:
                             newpathsums[up2][v2] = newpathsums[up2].get(
-                                v2, zero
+                                v2, 0
                             ) + s * sumval * elem_sym_func_q(
                                 th[index],
                                 index + 1,
@@ -265,12 +264,12 @@ def schubmult(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
                     if up2 not in newpathsums:
                         newpathsums[up2] = {}
                     for v in vpathdicts[index]:
-                        sumval = vpathsums[up].get(v, zero) * mul_val
+                        sumval = vpathsums[up].get(v, 0) * mul_val
                         if sumval == 0:
                             continue
                         for v2, vdiff, s in vpathdicts[index][v]:
                             newpathsums[up2][v2] = newpathsums[up2].get(
-                                v2, zero
+                                v2, 0
                             ) + s * sumval * elem_sym_func_q(
                                 th[index],
                                 index + 1,
@@ -330,7 +329,7 @@ def schubmult_db(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
                     inv_up = inv(up)
                     newperms = double_elem_sym_q(up, mx_th, mx_th1, th[index], q_var)
                     for v in vpathdicts[index]:
-                        sumval = vpathsums[up].get(v, zero)
+                        sumval = vpathsums[up].get(v, 0)
                         if sumval == 0:
                             continue
                         for v2, vdiff2, s2 in vpathdicts[index][v]:
@@ -362,7 +361,7 @@ def schubmult_db(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
 
                     for up1, udiff1, mul_val1 in newpathsums0:
                         for v in vpathdicts[index + 1]:
-                            sumval = newpathsums0[(up1, udiff1, mul_val1)].get(v, zero)
+                            sumval = newpathsums0[(up1, udiff1, mul_val1)].get(v, 0)
                             if sumval == 0:
                                 continue
                             for v2, vdiff2, s2 in vpathdicts[index + 1][v]:
@@ -405,12 +404,12 @@ def schubmult_db(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
                         if up2 not in newpathsums:
                             newpathsums[up2] = {}
                         for v in vpathdicts[index]:
-                            sumval = vpathsums[up].get(v, zero) * mul_val
+                            sumval = vpathsums[up].get(v, 0) * mul_val
                             if sumval == 0:
                                 continue
                             for v2, vdiff, s in vpathdicts[index][v]:
                                 newpathsums[up2][v2] = newpathsums[up2].get(
-                                    v2, zero
+                                    v2, 0
                                 ) + s * sumval * elem_sym_func_q(
                                     th[index],
                                     index + 1,

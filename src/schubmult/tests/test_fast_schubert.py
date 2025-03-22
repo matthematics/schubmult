@@ -7,9 +7,10 @@ def test_schub_expand():
         Test expand
     """
     X = FastSchubertPolynomialRing(ZZ, 100, "x")
-    assert str(X([3,1,2]).expand()) == "x1^2"
-    assert X(X([5,3,4,1,2]).expand() * X([4,1,5,2,3]).expand()) - X([5,3,4,1,2]) * X([4,1,5,2,3]) == 0
-    assert str((X(X._polynomial_ring("x1"))*X([3,4,1,2])).expand()) == "x1^3*x2^2"
+    R = X._polynomial_ring
+    assert X([3,1,2]).expand() == R("x1^2")
+    assert X([5,3,4,1,2]).expand() * X([4,1,5,2,3]).expand() - X([5,3,4,1,2]) * X([4,1,5,2,3]) == 0
+    assert R("x1")*X([3,4,1,2]) == R("x1^3*x2^2")
 
 def test_coproduct():
     """

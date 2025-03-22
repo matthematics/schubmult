@@ -242,6 +242,9 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     def is_quantum(self):
         return self._quantum
 
+    def set_coproduct_indices(self, indices):
+        self._splitter = indices
+
     def _element_constructor_(self, *x):
         if len(x) == 1:
             x = x[0]

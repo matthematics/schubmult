@@ -13,7 +13,7 @@ from sage.categories.graded_bialgebras_with_basis import GradedBialgebrasWithBas
 from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
 from sage.combinat.free_module import CombinatorialFreeModule
 
-from sage.combinat.permutation import Permutations, Permutation
+from sage.combinat.permutation import Permutations, Permutation, from_lehmer_code
 from sage.combinat.composition import (
     Compositions,
     Composition,
@@ -46,9 +46,8 @@ def FastSchubertPolynomialRing(
 def FastQuantumSchubertPolynomialRing(
     R, num_vars, varname, *, code_index=False, q_varname="q"
 ):
-    QR = PolynomialRing(R, num_vars, q_varname)
     return FastSchubertPolynomialRing(
-        R, num_vars, varname, q_varname, code_index, tuple([1]), True, QR
+        R, num_vars, varname, q_varname=q_varname, code_index=code_index, quantum=True
     )
 
 
@@ -91,7 +90,7 @@ class FastSchubertPolynomial_class(CombinatorialFreeModule.Element):
                     self.parent()._polynomial_ring(
                         yz.schubmult(
                             {(1, 2): v},
-                            tuple(_coerce_index(k, self._ascode, False)),
+                            tuple(_coerce_index(k, self.parent()._ascode, False)),
                             self.parent()._polynomial_ring.gens(),
                             [0 for i in range(100)],
                         ).get((1, 2), 0)
@@ -130,7 +129,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         CombinatorialFreeModule.__init__(
             self, R, index_set, category=cat, prefix=f"QS{varname}"
         )
-        self._q_ring = R
+        self._q_ring = QR
         self._base_varname = varname
         self._q_varname = q_varname
         self._polynomial_ring = PolynomialRing(R, num_vars, varname)
@@ -198,9 +197,9 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 )
             elem = self._from_dict(
                 {
-                    _coerce_index(k, False, self._ascode): self._q_ring(v)
+                    _coerce_index(k, False, self._ascode): self._q_ring(str(v))
                     if self._quantum
-                    else self.base_ring()(v)
+                    else self.base_ring()(str(v))
                     for k, v in result.items()
                 }
             )
@@ -221,7 +220,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         if self._quantum:
             return sum(
                 [
-                    self.base_ring()(v) * self(_coerce_index(k, False, self._ascode))
+                    self.base_ring()(str(v)) * self(_coerce_index(k, False, self._ascode))
                     for k, v in sq.schubmult_db(
                         {
                             tuple(
@@ -229,7 +228,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                             ): self.base_ring()(1)
                         },
                         tuple(_coerce_index(right, self._ascode, False)),
-                        list(self.base_ring().gens()),
+                        list(self._q_ring.gens()),
                     ).items()
                 ]
             )
