@@ -238,8 +238,8 @@ def main():
         sympy.init_printing()
 
         args, formatter = schub_argparse(
-            "schubmult_yz",
-            "Compute coefficients of product of double Schubert polynomials in different sets of coefficient variables",
+            "schubmult_double",
+            "Compute coefficients of product of double Schubert polynomials in the same or different sets of coefficient variables",
             yz=True,
         )
 

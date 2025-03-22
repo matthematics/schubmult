@@ -161,8 +161,8 @@ def main():
         sys.setrecursionlimit(1000000)
 
         args, formatter = schub_argparse(
-            "schubmult_q_yz",
-            "Compute coefficients of products of quantum double Schubert polynomials in different sets of coefficient variables",
+            "schubmult_q_double",
+            "Compute coefficients of products of quantum double Schubert polynomials in the same or different sets of coefficient variables",
             yz=True,
             quantum=True,
         )
