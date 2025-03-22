@@ -203,7 +203,11 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         self._q_ring = QR
         self._base_varname = base_variable_name
         self._q_varname = q_varname
-        self._polynomial_ring = PolynomialRing(R, num_vars, base_variable_name)
+        self._polynomial_ring = (
+            PolynomialRing(R, num_vars, base_variable_name)
+            if not quantum
+            else PolynomialRing(QR, num_vars, base_variable_name)
+        )
         self._populate_coercion_lists_()
 
     def _coerce_map_from_(self, S):
