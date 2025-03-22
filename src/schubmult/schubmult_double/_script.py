@@ -1,13 +1,7 @@
 import numpy as np
 import sympy
 import sys
-from ._vars import (
-    var2,
-    var3,
-    var_x,
-    var,
-    var_r
-)
+from ._vars import var2, var3, var_x, var, var_r
 from ._funcs import (
     mult_poly,
     mult_poly_down,
@@ -49,6 +43,7 @@ def _display_full(
     var3=var3,
     N=None,
 ):
+    raw_result_dict = {}
     perms = args.perms
     mult = args.mult
     ascode = args.ascode
@@ -164,7 +159,7 @@ def _display_full(
                                 exit(1)
                             val = val2
                         else:
-                            val = 0                    
+                            val = 0
                     if val != 0:
                         if not ascode:
                             width2 = (
@@ -172,18 +167,22 @@ def _display_full(
                                 - len(str(permtrim(firstperm)))
                                 - len(str(permtrim(secondperm)))
                             )
-                            _display(
-                                f"{tuple(permtrim(firstperm))}{' ':>{width2}}{tuple(permtrim(secondperm))}  {formatter(val)}"
-                            )
+                            raw_result_dict[(tuple(permtrim(firstperm)),tuple(permtrim(secondperm)))] = val
+                            if formatter:
+                                _display(
+                                    f"{tuple(permtrim(firstperm))}{' ':>{width2}}{tuple(permtrim(secondperm))}  {formatter(val)}"
+                                )
                         else:
                             width2 = (
                                 width
                                 - len(str(trimcode(firstperm)))
                                 - len(str(trimcode(secondperm)))
                             )
-                            _display(
-                                f"{trimcode(firstperm)}{' ':>{width2}}{trimcode(secondperm)}  {formatter(val)}"
-                            )
+                            raw_result_dict[(tuple(trimcode(firstperm)),tuple(trimcode(secondperm)))] = val
+                            if formatter:
+                                _display(
+                                    f"{trimcode(firstperm)}{' ':>{width2}}{trimcode(secondperm)}  {formatter(val)}"
+                                )
     else:
         if ascode:
             width = max([len(str(trimcode(perm))) for perm in coeff_dict.keys()])
@@ -192,7 +191,7 @@ def _display_full(
 
         coeff_perms = list(coeff_dict.keys())
         coeff_perms.sort(key=lambda x: (inv(x), *x))
-        
+
         for perm in coeff_perms:
             val = coeff_dict[perm]
             if val != 0:
@@ -255,12 +254,16 @@ def _display_full(
                             exit(1)
                 if val != 0:
                     if ascode:
-                        _display(f"{str(trimcode(perm)):>{width}}  {formatter(val)}")
+                        raw_result_dict[tuple(trimcode(perm))] = val
+                        if formatter:
+                            _display(f"{str(trimcode(perm)):>{width}}  {formatter(val)}")
                     else:
-                        _display(f"{str(perm):>{width}}  {formatter(val)}")
+                        raw_result_dict[tuple(perm)] = val
+                        if formatter:
+                            _display(f"{str(perm):>{width}}  {formatter(val)}")
+    return raw_result_dict
 
-
-def main():
+def main(argv: list[str]):
     global var2, var3
     try:
         sys.setrecursionlimit(1000000)
@@ -271,8 +274,11 @@ def main():
         args, formatter = schub_argparse(
             "schubmult_double",
             "Compute coefficients of product of double Schubert polynomials in the same or different sets of coefficient variables",
+            argv=argv,
             yz=True,
         )
+
+        args
 
         mult = args.mult
         mulstring = args.mulstring
@@ -309,8 +315,8 @@ def main():
             coeff_dict = {tuple(kperm): 1}
             coeff_dict = schubmult(coeff_dict, perms[0], var, var2)
 
-            if pr:
-                _display_full(
+            if pr or formatter is None:
+                return _display_full(
                     coeff_dict,
                     args,
                     formatter,
@@ -398,8 +404,8 @@ def main():
             elif not posified:
                 coeff_dict = check_coeff_dict
 
-            if pr:
-                _display_full(
+            if pr or formatter is None:
+                raw_result_dict = _display_full(
                     coeff_dict,
                     args,
                     formatter,
@@ -408,6 +414,8 @@ def main():
                     var2=var2,
                     var3=var3,
                 )
+            if formatter is None:
+                return raw_result_dict
     except BrokenPipeError:
         pass
 

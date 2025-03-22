@@ -26,6 +26,7 @@ from schubmult._base_argparse import schub_argparse
 
 
 def _display_full(coeff_dict, args, formatter, posified=None, var2=var2, var3=var3):
+    raw_result_dict = {}
     mult = args.mult
 
     perms = args.perms
@@ -37,7 +38,7 @@ def _display_full(coeff_dict, args, formatter, posified=None, var2=var2, var3=va
     display_positive = args.display_positive
     expa = args.expa
     slow = args.slow
-    nilhecke_apply = False    
+    nilhecke_apply = False
 
     coeff_perms = list(coeff_dict.keys())
     coeff_perms.sort(key=lambda x: (inv(x), *x))
@@ -146,12 +147,17 @@ def _display_full(coeff_dict, args, formatter, posified=None, var2=var2, var3=va
                 val = expand(val)
             if val != 0:
                 if ascode:
-                    print(f"{str(trimcode(perm))}  {formatter(val)}")
+                    raw_result_dict[tuple(trimcode(perm))] = val
+                    if formatter:
+                        print(f"{str(trimcode(perm))}  {formatter(val)}")
                 else:
-                    print(f"{str(perm)}  {formatter(val)}")
+                    raw_result_dict[tuple(perm)] = val
+                    if formatter:
+                        print(f"{str(perm)}  {formatter(val)}")
+    return raw_result_dict
 
 
-def main():
+def main(argv: list[str]):
     global var2, var3
     try:
         sys.setrecursionlimit(1000000)
@@ -161,6 +167,7 @@ def main():
             "Compute coefficients of products of quantum double Schubert polynomials in the same or different sets of coefficient variables",
             yz=True,
             quantum=True,
+            argv=argv,
         )
 
         mult = args.mult
@@ -171,7 +178,7 @@ def main():
         ascode = args.ascode
         msg = args.msg
         display_positive = args.display_positive
-        pr = args.pr        
+        pr = args.pr
         parabolic_index = [int(s) for s in args.parabolic]
         parabolic = len(parabolic_index) != 0
         slow = args.slow
@@ -327,8 +334,11 @@ def main():
 
             coeff_dict = coeff_dict_update
 
-        if pr:
-            _display_full(coeff_dict, args, formatter, posified)
+        raw_result_dict = {}
+        if pr or formatter is None:
+            raw_result_dict = _display_full(coeff_dict, args, formatter, posified)
+        if formatter is None:
+            return raw_result_dict
     except BrokenPipeError:
         pass
 

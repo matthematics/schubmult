@@ -25,6 +25,7 @@ from schubmult.schubmult_q_double import factor_out_q_keep_factored
 
 
 def _display_full(coeff_dict, args, formatter):
+    raw_result_dict = {}
     ascode = args.ascode
     parabolic_index = [int(s) for s in args.parabolic]
     parabolic = len(parabolic_index) != 0
@@ -81,16 +82,19 @@ def _display_full(coeff_dict, args, formatter):
         val = sympify(coeff_dict[perm]).expand()
         if val != 0:
             if ascode:
+
                 print(f"{str(trimcode(perm))}  {formatter(val)}")
             else:
                 print(f"{str(perm)}  {formatter(val)}")
+    return raw_result_dict
 
 
-def main():
+def main(argv: list[str]):
     try:
         args, formatter = schub_argparse(
             "schubmult_q",
             "Compute products of quantum Schubert polynomials",
+            argv=argv,
             quantum=True,
         )
 
@@ -147,8 +151,10 @@ def main():
             mul_exp = sympify(mulstring)
             coeff_dict = mult_poly(coeff_dict, mul_exp)
 
-        if pr:
-            _display_full(coeff_dict, args, formatter)
+        if pr or formatter is None:
+            raw_result_dict = _display_full(coeff_dict, args, formatter)
+        if formatter is None:
+            return raw_result_dict
     except BrokenPipeError:
         pass
 

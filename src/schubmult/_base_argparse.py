@@ -1,7 +1,7 @@
 from argparse import ArgumentParser, SUPPRESS, RawDescriptionHelpFormatter
 
 
-def schub_argparse(prog_name, description, quantum=False, yz=False):
+def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
     parser = ArgumentParser(
         prog=prog_name,
         description=description,
@@ -143,13 +143,13 @@ def schub_argparse(prog_name, description, quantum=False, yz=False):
         "--display-mode",
         type=str,
         required=False,
-        choices=["basic", "pretty", "latex"],
+        choices=["basic", "pretty", "latex", "raw"],
         default="basic",
         dest="disp_mode",
         help="Method of displaying the output. Default basic",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     args.mulstring = ""
 
     if args.mult is not None:
@@ -165,10 +165,14 @@ def schub_argparse(prog_name, description, quantum=False, yz=False):
             raise e
     import sympy
 
-    formatter = lambda bob: str(bob)  # noqa: E731
+    
     if args.disp_mode == "latex":
         formatter = lambda bob: sympy.latex(sympy.sympify(bob)).replace("\\left", "").replace("\\right", "")  # noqa: E731
     elif args.disp_mode == "pretty":
         formatter = lambda bob: sympy.pretty(sympy.sympify(bob))  # noqa: E731
+    elif args.disp_mode == "basic":
+        formatter = lambda bob: str(bob)  # noqa: E731
+    elif args.disp_mode == "raw":
+        formatter = None
 
     return args, formatter

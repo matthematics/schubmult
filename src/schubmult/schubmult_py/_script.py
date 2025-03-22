@@ -1,7 +1,8 @@
-from ._funcs import (
+from schubmult.schubmult_py._funcs import (
     mult_poly,
     schubmult,
 )
+import sys
 from symengine import sympify
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
@@ -16,9 +17,12 @@ from schubmult.perm_lib import (
 )
 
 
-def main():
+def main(argv: list[str]):
+    print(f"{argv=}")
     try:
-        args, formatter = schub_argparse("schubmult_py", "Compute products of ordinary Schubert polynomials")
+        args, formatter = schub_argparse(
+            "schubmult_py", "Compute products of ordinary Schubert polynomials", argv=argv[1:]
+        )
 
         mult = args.mult
         mulstring = args.mulstring
@@ -36,7 +40,7 @@ def main():
         ascode = args.ascode
         pr = args.pr
         coprod = args.coprod
-
+        raw_result_dict = {}
         if coprod:
             if ascode:
                 perms[0] = tuple(permtrim(uncode(perms[0])))
@@ -59,7 +63,7 @@ def main():
 
             inv_kperm = inv(kperm)
             inverse_kperm = inverse(kperm)
-            if pr:
+            if pr or formatter is None:
                 for perm, val in coeff_dict.items():
                     downperm = mulperm(list(perm), inverse_kperm)
                     if inv(downperm) == inv(perm) - inv_kperm:
@@ -73,18 +77,22 @@ def main():
                         firstperm = downperm[0:N]
                         secondperm = [downperm[i] - N for i in range(N, len(downperm))]
                         if val != 0:
-                            # firstcode = code(firstperm)
-                            # while len(firstcode)>0 and firstcode[-1] == 0:
-                            # firstcode.pop()
-                            # secondcode = code(secondperm)
-                            # while len(secondcode)>0 and secondcode[-1] == 0:
-                            # secondcode.pop()
                             if ascode:
-                                print(f"{val} {trimcode(firstperm)} {trimcode(secondperm)}")
+                                if formatter is None:
+                                    raw_result_dict[
+                                        (tuple(trimcode(firstperm)), tuple(trimcode(secondperm)))
+                                    ] = val
+                                else:
+                                    print(f"{val} {trimcode(firstperm)} {trimcode(secondperm)}")
                             else:
-                                print(
-                                    f"{val} {tuple(permtrim(firstperm))} {tuple(permtrim(secondperm))}"
-                                )
+                                if formatter is None:
+                                    raw_result_dict[
+                                        (tuple(permtrim(firstperm)), tuple(permtrim(secondperm)))
+                                    ] = val
+                                else:
+                                    print(
+                                        f"{val} {tuple(permtrim(firstperm))} {tuple(permtrim(secondperm))}"
+                                    )
         else:
             if ascode:
                 for i in range(len(perms)):
@@ -100,16 +108,24 @@ def main():
                 mul_exp = sympify(mulstring)
                 coeff_dict = mult_poly(coeff_dict, mul_exp)
 
-            if pr:
+            if pr or formatter is None:
                 for perm, val in coeff_dict.items():
                     if val != 0:
                         if ascode:
-                            print(f"{val}  {trimcode(perm)}")
+                            raw_result_dict[tuple(perm)] = val
+                            if formatter:
+                                print(f"{val}  {trimcode(perm)}")
                         else:
-                            print(f"{val}  {perm}")
+                            raw_result_dict[tuple(perm)] = val
+                            if formatter:
+                                print(f"{val}  {perm}")
+        if formatter is None:
+            return raw_result_dict
     except BrokenPipeError:
         pass
 
+    
+
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
