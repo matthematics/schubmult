@@ -132,6 +132,15 @@ def _display_full(
                 secondperm = [downperm[i] - N for i in range(N, len(downperm))]
                 val = sympify(val).subs(subs_dict)
 
+                if same and display_positive:
+                    subs_dict2 = {}
+                    for i in range(1, 100):
+                        sm = var2[1]
+                        for j in range(1, i):
+                            sm += var_r[j]
+                        subs_dict2[var2[i]] = sm
+                    val = expand(sympify(val).xreplace(subs_dict2))
+
                 if val != 0:
                     if display_positive and not same:
                         if val != 0:
@@ -155,15 +164,7 @@ def _display_full(
                                 exit(1)
                             val = val2
                         else:
-                            val = 0
-                    elif display_positive:
-                        subs_dict = {}
-                        for i in range(1, 100):
-                            sm = var2[1]
-                            for j in range(1, i):
-                                sm += var_r[j]
-                            subs_dict[var2[i]] = sm
-                        val = expand(sympify(coeff_dict[perm]).xreplace(subs_dict))
+                            val = 0                    
                     if val != 0:
                         if not ascode:
                             width2 = (
