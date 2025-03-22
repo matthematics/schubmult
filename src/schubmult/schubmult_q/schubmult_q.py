@@ -303,10 +303,81 @@ def to_two_step(perm, k1, k2, n):
             rep[perm2[i] - 1] = 2
     return rep
 
+def _display_full(coeff_dict, args, formatter):
+    ascode = args.ascode
+    parabolic_index = [int(s) for s in args.parabolic]
+    parabolic = len(parabolic_index) != 0    
+
+    if parabolic:
+        w_P = longest_element(parabolic_index)
+        w_P_prime = [1, 2]
+        coeff_dict_update = {}
+        for w_1 in coeff_dict:
+            val = coeff_dict[w_1]
+            q_dict = factor_out_q_keep_factored(val)
+            for q_part in q_dict:
+                qv = q_vector(q_part)
+                w = [*w_1]
+                good = True
+                parabolic_index2 = []
+                for i in range(len(parabolic_index)):
+                    if omega(parabolic_index[i], qv) == 0:
+                        parabolic_index2 += [parabolic_index[i]]
+                    elif omega(parabolic_index[i], qv) != -1:
+                        good = False
+                        break
+                if not good:
+                    continue
+                w_P_prime = longest_element(parabolic_index2)
+                if not check_blocks(qv, parabolic_index):
+                    continue
+                w = permtrim(mulperm(mulperm(w, w_P_prime), w_P))
+                if not is_parabolic(w, parabolic_index):
+                    continue
+
+                w = tuple(permtrim(w))
+
+                new_q_part = np.prod(
+                    [
+                        q_var[
+                            index
+                            + 1
+                            - count_less_than(parabolic_index, index + 1)
+                        ]
+                        ** qv[index]
+                        for index in range(len(qv))
+                        if index + 1 not in parabolic_index
+                    ]
+                )
+
+                try:
+                    new_q_part = int(new_q_part)
+                except Exception:
+                    pass
+                q_val_part = q_dict[q_part]
+                coeff_dict_update[w] = (
+                    coeff_dict_update.get(w, 0) + new_q_part * q_val_part
+                )
+        coeff_dict = coeff_dict_update
+
+    coeff_perms = list(coeff_dict.keys())
+    coeff_perms.sort(key=lambda x: (inv(x), *x))
+
+    for perm in coeff_perms:
+        val = sympify(coeff_dict[perm]).expand()
+        if val != 0:
+            if ascode:
+                print(
+                    f"{str(trimcode(perm))}  {formatter(val)}"
+                )
+            else:
+                print(
+                    f"{str(perm)}  {formatter(val)}"
+                )
 
 def main():
     try:
-        args = schub_argparse(
+        args, formatter = schub_argparse(
             "schubmult_q",
             "Compute products of quantum Schubert polynomials",
             quantum=True,
@@ -366,89 +437,7 @@ def main():
             coeff_dict = mult_poly(coeff_dict, mul_exp)
 
         if pr:
-            if ascode:
-                width = max(
-                    [
-                        len(str(trimcode(perm)))
-                        for perm in coeff_dict.keys()
-                        if expand(coeff_dict[perm]) != 0
-                    ]
-                )
-            else:
-                width = max(
-                    [
-                        len(str(perm))
-                        for perm in coeff_dict.keys()
-                        if expand(coeff_dict[perm]) != 0
-                    ]
-                )
-
-            if parabolic:
-                w_P = longest_element(parabolic_index)
-                w_P_prime = [1, 2]
-                coeff_dict_update = {}
-                for w_1 in coeff_dict:
-                    val = coeff_dict[w_1]
-                    q_dict = factor_out_q_keep_factored(val)
-                    for q_part in q_dict:
-                        qv = q_vector(q_part)
-                        w = [*w_1]
-                        good = True
-                        parabolic_index2 = []
-                        for i in range(len(parabolic_index)):
-                            if omega(parabolic_index[i], qv) == 0:
-                                parabolic_index2 += [parabolic_index[i]]
-                            elif omega(parabolic_index[i], qv) != -1:
-                                good = False
-                                break
-                        if not good:
-                            continue
-                        w_P_prime = longest_element(parabolic_index2)
-                        if not check_blocks(qv, parabolic_index):
-                            continue
-                        w = permtrim(mulperm(mulperm(w, w_P_prime), w_P))
-                        if not is_parabolic(w, parabolic_index):
-                            continue
-
-                        w = tuple(permtrim(w))
-
-                        new_q_part = np.prod(
-                            [
-                                q_var[
-                                    index
-                                    + 1
-                                    - count_less_than(parabolic_index, index + 1)
-                                ]
-                                ** qv[index]
-                                for index in range(len(qv))
-                                if index + 1 not in parabolic_index
-                            ]
-                        )
-
-                        try:
-                            new_q_part = int(new_q_part)
-                        except Exception:
-                            pass
-                        q_val_part = q_dict[q_part]
-                        coeff_dict_update[w] = (
-                            coeff_dict_update.get(w, 0) + new_q_part * q_val_part
-                        )
-                coeff_dict = coeff_dict_update
-
-            coeff_perms = list(coeff_dict.keys())
-            coeff_perms.sort(key=lambda x: (inv(x), *x))
-
-            for perm in coeff_perms:
-                val = sympify(coeff_dict[perm]).expand()
-                if val != 0:
-                    if ascode:
-                        print(
-                            f"{str(trimcode(perm))}  {str(val).replace('**', '^').replace('*', ' ')}"
-                        )
-                    else:
-                        print(
-                            f"{str(perm)}  {str(val).replace('**', '^').replace('*', ' ')}"
-                        )
+            _display_full(coeff_dict, args, formatter)
     except BrokenPipeError:
         pass
 

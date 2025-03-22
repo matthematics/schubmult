@@ -314,42 +314,6 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                         ): self.base_ring().one()
                     }
                 )
-        elif isinstance(x, MPolynomial):
-            from sage.interfaces.sympy import sympy_init
-
-            sympy_init()
-            sympy_floff = sympify(str(x))
-            val = syme.sympify(sympy_floff)
-            if self._quantum:
-                result = qyz.mult_poly(
-                    {(1, 2): 1},
-                    val,
-                    [syme.Symbol(str(g)) for g in self._base_polynomial_ring.gens()],
-                    [
-                        syme.Symbol(str(g))
-                        for g in self._coeff_polynomial_rings[self._varlist[0]].gens()
-                    ],
-                    [syme.Symbol(str(g)) for g in self._q_ring.gens()],
-                )
-            else:
-                result = yz.mult_poly(
-                    {(1, 2): 1},
-                    val,
-                    [syme.Symbol(str(g)) for g in self._base_polynomial_ring.gens()],
-                    [
-                        syme.Symbol(str(g))
-                        for g in self._coeff_polynomial_rings[self._varlist[0]].gens()
-                    ],
-                )
-            elem = self._from_dict(
-                {
-                    (
-                        _coerce_index(k, False, self._ascode),
-                        self._varlist[0],
-                    ): self._coeff_polynomial_ring(str(v))
-                    for k, v in result.items()
-                }
-            )
         elif isinstance(x, FastDoubleSchubertPolynomial):
             if (
                 x.base_varname == self._base_varname
@@ -417,6 +381,42 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 elem = self._from_dict(elem_dict)
             else:
                 elem = self(x.expand())
+        elif isinstance(x, MPolynomial):
+            from sage.interfaces.sympy import sympy_init
+
+            sympy_init()
+            sympy_floff = sympify(str(x))
+            val = syme.sympify(sympy_floff)
+            if self._quantum:
+                result = qyz.mult_poly(
+                    {(1, 2): 1},
+                    val,
+                    [syme.Symbol(str(g)) for g in self._base_polynomial_ring.gens()],
+                    [
+                        syme.Symbol(str(g))
+                        for g in self._coeff_polynomial_rings[self._varlist[0]].gens()
+                    ],
+                    [syme.Symbol(str(g)) for g in self._q_ring.gens()],
+                )
+            else:
+                result = yz.mult_poly(
+                    {(1, 2): 1},
+                    val,
+                    [syme.Symbol(str(g)) for g in self._base_polynomial_ring.gens()],
+                    [
+                        syme.Symbol(str(g))
+                        for g in self._coeff_polynomial_rings[self._varlist[0]].gens()
+                    ],
+                )
+            elem = self._from_dict(
+                {
+                    (
+                        _coerce_index(k, False, self._ascode),
+                        self._varlist[0],
+                    ): self._coeff_polynomial_ring(str(v))
+                    for k, v in result.items()
+                }
+            )        
         else:
             raise TypeError
 
