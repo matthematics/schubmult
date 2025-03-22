@@ -20,8 +20,8 @@ from . import (
 from ._indexing import _coerce_index
 
 
-import schubmult.schubmult_q_yz as qyz
-import schubmult.schubmult_yz as yz
+import schubmult.schubmult_q_double as qyz
+import schubmult.schubmult_double as yz
 from sympy import sympify
 import symengine as syme
 

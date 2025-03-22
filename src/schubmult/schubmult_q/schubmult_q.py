@@ -25,7 +25,7 @@ from schubmult.perm_lib import (
     n,
 )
 import numpy as np
-from schubmult.schubmult_q_yz import factor_out_q_keep_factored
+from schubmult.schubmult_q_double import factor_out_q_keep_factored
 
 var = symarray("x", n)
 var2 = symarray("y", n)
