@@ -20,7 +20,7 @@ def schub_argparse(prog_name, description, quantum=False, yz=False):
         nargs="+",
         action="append",
         help="Space-delimited permutations separated by hyphens, e. g. 3 4 1 2 - 5 1 2 4 3",
-        metavar="hypthen-separated list of perms",
+        metavar="hyphen-separated list of perms",
     )
     parser.add_argument("-", nargs="+", action="append", dest="perms", help=SUPPRESS)
 

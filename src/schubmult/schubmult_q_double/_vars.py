@@ -16,3 +16,6 @@ q_var2 = q_var.tolist()
 
 var2_t = tuple(var2.tolist())
 var3_t = tuple(var3.tolist())
+
+n = 100
+
