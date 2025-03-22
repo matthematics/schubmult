@@ -8,43 +8,154 @@ The main purpose of this python package is for executing scripts to compute coef
 
 ## Basic script command lines, one-line notation
 
-```bash
-schubmult_py 1 2 4 9 11 6 8 12 3 5 7 10 - 6 8 1 2 3 4 7 10 12 14 5 9 11 13  
-schubmult_double 1 3 4 6 2 5 - 2 1 5 7 3 4 6 [ --mixed-var ] [ --display-positive ]
-schubmult_q 5 1 4 3 2 - 5 1 3 4 2
-schubmult_q_double 5 1 4 3 2 - 5 1 3 4 2 [ --mixed-var ] [ --display-positive ]
+### schubmult_py - ordinary Schubert polynmoials
+
+```
+usage: schubmult_py [-h] [-np] [--code] [--mult MULT [MULT ...]] [--coprod] [--display-mode {basic,pretty,latex}] 
+hyphen-separated list of perms [hyphen-separated list of perms ...]
+
+Compute products of ordinary Schubert polynomials
+
+positional arguments:
+  hyphen-separated list of perms
+                        Space-delimited permutations separated by hyphens, e. g. 3 4 1 2 - 5 1 2 4 3
+
+options:
+  -h, --help            show this help message and exit
+  -np, --no-print       Compute the result but do not print it
+  --code                Permutations represented by the Lehmer code
+  --mult MULT [MULT ...]
+                        Some additional terms in the ring to multiply by
+  --coprod              Compute the coproduct (different syntax: one permutation, then a hyphen, the variable index 
+positions to split on)
+  --display-mode {basic,pretty,latex}
+                        Method of displaying the output. Default basic
+
+Example:
+        schubmult_py 5 1 7 3 2 6 4 - 2 1 6 3 5 4
+            or equivalently
+        schubmult_py --code 4 0 4 1 0 1 - 1 0 3 0 1
+            or alternatively
+        schubmult_py --coprod --code 2 0 3 0 1 - 2 4
 ```
 
-## Using the Lehmer code
 
-The same execution with the Lehmer code:
-
-```bash
-schubmult_py --code 0 0 1 5 6 2 3 4 - 5 6 0 0 0 0 1 2 3 4
-schubmult_double --code 0 1 1 2 - 1 0 2 3 [ --mixed-var ] [ --display-positive ]
-schubmult_q --code 4 0 2 1 - 4 0 1 1
-schubmult_q_double --code 4 0 2 1 - 1 3 [ --mixed-var ] [ --display-positive ]
-```
-
-## Coproducts
-
-Coproducts partition the variables of the polynomial ring and express the single polynomial as a sum of products of Schubert/double Schubert polynomials in the partitioned variables.
-
-```bash
-schubmult_py --coprod 1 3 5 7 2 4 6 - 2 4
-schubmult_double --coprod 1 3 5 7 2 4 6 - 2 4 [ --mixed-var ] [ --display-positive ]
-```
-Equivalently with the Lehmer code:
-```bash
-schubmult_py --code --coprod 0 1 2 3 - 2 4
-schubmult_double --code --coprod 0 1 2 3 - 2 4 [ --mixed-var ] [ --display-positive ]
-```
-
-## Quantum commuting difference operators
+<!-- ## Quantum commuting difference operators
 
 schubmult_q_double has a feature for displaying the coefficients of the divided difference operators in the evaluation of the quantum double Schubert polynomials on the commuting difference operators of Fomin, Gelfand, and Postnikov. It is necessary to cap the value of n in the group S_n we are working in because as n increases the expression does not stabilize.
 ```bash
 schubmult_q_double --nil-hecke 6 --code 2 2 --display-positive
+``` -->
+
+### schubmult_double - Double Schubert polynmoials
+
+```
+usage: schubmult_double [-h] [-np] [--code] [--mult MULT [MULT ...]] [--coprod] [--display-positive] [--optimizer-message] [--down] [-nc] 
+[--mixed-var] [--expand] [--display-mode {basic,pretty,latex}]
+hyphen-separated list of perms [hyphen-separated list of perms ...]
+
+Compute coefficients of product of double Schubert polynomials in the same or different sets of coefficient variables
+
+positional arguments:
+  hyphen-separated list of perms
+                        Space-delimited permutations separated by hyphens, e. g. 3 4 1 2 - 5 1 2 4 3
+
+options:
+  -h, --help            show this help message and exit
+  -np, --no-print       Compute the result but do not print it
+  --code                Permutations represented by the Lehmer code
+  --mult MULT [MULT ...]
+                        Some additional terms in the ring to multiply by
+  --coprod              Compute the coproduct (different syntax: one permutation, then a hyphen, the variable index 
+  positions to split on)
+  --display-positive    Display the result in terms of the positive roots, or if mixed variable attempt to display the 
+  result as a positive algebraic combination of terms of the form y_i - z_j
+  --optimizer-message   Display debug output during integer optimization for --display-positive
+  --down                Reverse multiplication
+  -nc, --no-check       Do not check if positive result matches the original
+  --mixed-var           Used mixed variables y and z
+  --expand              Expand the output rather than leaving it as originally computed (slow)
+  --display-mode {basic,pretty,latex}
+                        Method of displaying the output. Default basic
+
+Example:
+        schubmult_double 5 1 7 3 2 6 4 - 2 1 6 3 5 4 [ --display-positive]
+            or equivalently
+        schubmult_double --code 4 0 4 1 0 1 - 1 0 3 0 1 [ --display-positive]
+            or alternatively
+        schubmult_double --coprod --code 2 0 3 0 1 - 2 4  [ --display-positive]
+```
+
+### schubmult_q - Quantum Schubert polynomials
+
+```
+usage: schubmult_q [-h] [-np] [--code] [--mult MULT [MULT ...]] [--parabolic PARABOLIC [PARABOLIC ...]] [--basic-pieri] 
+[--display-mode {basic,pretty,latex}]
+                   hyphen-separated list of perms [hyphen-separated list of perms ...]
+
+Compute products of quantum Schubert polynomials
+
+positional arguments:
+  hyphen-separated list of perms
+                        Space-delimited permutations separated by hyphens, e. g. 3 4 1 2 - 5 1 2 4 3
+
+options:
+  -h, --help            show this help message and exit
+  -np, --no-print       Compute the result but do not print it
+  --code                Permutations represented by the Lehmer code
+  --mult MULT [MULT ...]
+                        Some additional terms in the ring to multiply by
+  --parabolic PARABOLIC [PARABOLIC ...]
+                        Generators of the parabolic subgroup to compute quantum coeffs for
+  --basic-pieri         Do not apply conjectural computation optimization to quantum
+  --display-mode {basic,pretty,latex}
+                        Method of displaying the output. Default basic
+
+Example:
+        schubmult_q 5 1 7 3 2 6 4 - 2 1 6 3 5 4
+            or equivalently
+        schubmult_q --code 4 0 4 1 0 1 - 1 0 3 0 1
+```
+
+### schubmult_q_double - Quantum double Schubert polynomials
+
+```
+usage: schubmult_q_double [-h] [-np] [--code] [--mult MULT [MULT ...]] [--display-positive] [--optimizer-message] [--down] 
+[-nc] [--mixed-var] [--expand] [--parabolic PARABOLIC [PARABOLIC ...]] [--basic-pieri]
+                          [--nil-hecke N] [--nil-hecke-apply N] [--display-mode {basic,pretty,latex}]
+                          hyphen-separated list of perms [hyphen-separated list of perms ...]
+
+Compute coefficients of products of quantum double Schubert polynomials in the same or different sets of coefficient variables
+
+positional arguments:
+  hyphen-separated list of perms
+                        Space-delimited permutations separated by hyphens, e. g. 3 4 1 2 - 5 1 2 4 3
+
+options:
+  -h, --help            show this help message and exit
+  -np, --no-print       Compute the result but do not print it
+  --code                Permutations represented by the Lehmer code
+  --mult MULT [MULT ...]
+                        Some additional terms in the ring to multiply by
+  --display-positive    Display the result in terms of the positive roots, or if mixed variable attempt to display the 
+result as a positive algebraic combination of terms of the form y_i - z_j
+  --optimizer-message   Display debug output during integer optimization for --display-positive
+  --down                Reverse multiplication
+  -nc, --no-check       Do not check if positive result matches the original
+  --mixed-var           Used mixed variables y and z
+  --expand              Expand the output rather than leaving it as originally computed (slow)
+  --parabolic PARABOLIC [PARABOLIC ...]
+                        Generators of the parabolic subgroup to compute quantum coeffs for
+  --basic-pieri         Do not apply conjectural computation optimization to quantum
+  --nil-hecke N         Substitute up to N of Fomin-Gelfand-Postnikov commuting difference operators
+  --nil-hecke-apply N   Substitute commuting difference operators for perm1, then apply to Schub indexed by perm2
+  --display-mode {basic,pretty,latex}
+                        Method of displaying the output. Default basic
+
+Example:
+        schubmult_q_double 5 1 7 3 2 6 4 - 2 1 6 3 5 4 [ --display-positive]
+            or equivalently
+        schubmult_q_double --code 4 0 4 1 0 1 - 1 0 3 0 1 [ --display-positive]
 ```
 
 ## Diplaying the result positively
