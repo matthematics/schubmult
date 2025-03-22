@@ -10,9 +10,9 @@ The main purpose of this python package is for executing scripts to compute coef
 
 ```bash
 schubmult_py 1 2 4 9 11 6 8 12 3 5 7 10 - 6 8 1 2 3 4 7 10 12 14 5 9 11 13  
-schubmult_double 1 3 4 6 2 5 - 2 1 5 7 3 4 6 [ --same-var ] [ --display-positive ]
+schubmult_double 1 3 4 6 2 5 - 2 1 5 7 3 4 6 [ --mixed-var ] [ --display-positive ]
 schubmult_q 5 1 4 3 2 - 5 1 3 4 2
-schubmult_q_double 5 1 4 3 2 - 5 1 3 4 2 [ --same-var ] [ --display-positive ]
+schubmult_q_double 5 1 4 3 2 - 5 1 3 4 2 [ --mixed-var ] [ --display-positive ]
 ```
 
 ## Using the Lehmer code
@@ -21,9 +21,9 @@ The same execution with the Lehmer code:
 
 ```bash
 schubmult_py --code 0 0 1 5 6 2 3 4 - 5 6 0 0 0 0 1 2 3 4
-schubmult_double --code 0 1 1 2 - 1 0 2 3 [ --same-var ] [ --display-positive ]
+schubmult_double --code 0 1 1 2 - 1 0 2 3 [ --mixed-var ] [ --display-positive ]
 schubmult_q --code 4 0 2 1 - 4 0 1 1
-schubmult_q_double --code 4 0 2 1 - 1 3 [ --same-var ] [ --display-positive ]
+schubmult_q_double --code 4 0 2 1 - 1 3 [ --mixed-var ] [ --display-positive ]
 ```
 
 ## Coproducts
@@ -32,12 +32,12 @@ Coproducts partition the variables of the polynomial ring and express the single
 
 ```bash
 schubmult_py --coprod 1 3 5 7 2 4 6 - 2 4
-schubmult_double --coprod 1 3 5 7 2 4 6 - 2 4 [ --same-var ] [ --display-positive ]
+schubmult_double --coprod 1 3 5 7 2 4 6 - 2 4 [ --mixed-var ] [ --display-positive ]
 ```
 Equivalently with the Lehmer code:
 ```bash
 schubmult_py --code --coprod 0 1 2 3 - 2 4
-schubmult_double --code --coprod 0 1 2 3 - 2 4 [ --same-var ] [ --display-positive ]
+schubmult_double --code --coprod 0 1 2 3 - 2 4 [ --mixed-var ] [ --display-positive ]
 ```
 
 ## Quantum commuting difference operators
@@ -54,7 +54,7 @@ The command line argument `--display-positive `is available in schubmult_double 
 
 Runtime will vary tremendously by case. The general problem is #P-hard. Though the result is always nonnegative (which at least is known for schubmult_py, schubmult_q, schubmult_double, and schubmult_q_double) and the problem is in GapP, it is not known to be in #P at this time.
 
-schubmult_py is for multiplying ordinary Schubert polynomials. schubmult_double is for multiplying double Schubert polynomials in different sets of coefficient variables (by default, labeled y and z) or in the same set of coefficient variables (`--same-var`). Similarly, schubmult_q is for multiplying quantum Schubert polynomials, schubmult_q_double is for multiplying quantum double Schubert polynomials (in different sets of coefficient variables by default, or the same set with the `--same-var` option), or in other words it computes the Gromov-Witten invariants, equivariant Gromov-Witten invariants, and (mixed?) equivariant Gromov-Witten invariants of the complete flag variety. All have the same command line syntax as schubmult, except when using the --code option. schubmult_double/schubmult_q_double display the result with nonnegative coefficients (and the q variables) with the `--display-positive` option (either in the simple roots for `--same-var`, or in y_i - z_j otherwise).
+schubmult_py is for multiplying ordinary Schubert polynomials. schubmult_double is for multiplying double Schubert polynomials in different sets of coefficient variables (`--mixed-var`) or in the same set of coefficient variables (by default). Similarly, schubmult_q is for multiplying quantum Schubert polynomials, schubmult_q_double is for multiplying quantum double Schubert polynomials (in different sets of coefficient variables with the `--mixed-var` option, or the same set), or in other words it computes the Gromov-Witten invariants, equivariant Gromov-Witten invariants, and (mixed?) equivariant Gromov-Witten invariants of the complete flag variety. All have the same command line syntax as schubmult, except when using the --code option. schubmult_double/schubmult_q_double display the result with nonnegative coefficients (and the q variables) with the `--display-positive` option (either in the negative simple roots r_i, or in y_i - z_j for `--mixed-var`).
 
 schubmult_xx --coprod allows you to split (double) Schubert polynomials along certain indices (not available for quantum). It takes one permutation as an argument, followed by a dash -, then the set of indices you would like to split on.
 
