@@ -1,4 +1,4 @@
-from ._sd_lib import *
+from ._vars import *
 from ._funcs import *
 from schubmult._base_argparse import schub_argparse
 
