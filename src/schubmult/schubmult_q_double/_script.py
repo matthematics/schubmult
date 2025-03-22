@@ -8,7 +8,8 @@ def _display_full(
     posified=None,    
     var2=var2,
     var3=var3
-):
+):    
+
     mulstring = ""
 
     mult = args.mult
