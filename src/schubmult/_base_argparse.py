@@ -167,7 +167,11 @@ def schub_argparse(prog_name, description, quantum=False, yz=False):
 
     formatter = lambda bob: str(bob)
     if args.disp_mode == "latex":
-        formatter = lambda bob: sympy.latex(sympy.sympify(bob))
+        formatter = (
+            lambda bob: sympy.latex(sympy.sympify(bob))
+            .replace("\\left", "")
+            .replace("\\right", "")
+        )
     elif args.disp_mode == "pretty":
         formatter = lambda bob: sympy.pretty(sympy.sympify(bob))
 
