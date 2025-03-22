@@ -110,7 +110,7 @@ class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
         if self.parent()._quantum:
             return sum(
                 [
-                    qqyz.schubpoly_quantum(
+                    qyz.schubpoly_quantum(
                         tuple(_coerce_index(k[0], self.parent()._ascode, False)),
                         self.parent()._base_polynomial_ring.gens(),
                         self.parent()._coeff_polynomial_rings[k[1]].gens(),
@@ -436,7 +436,9 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
 
     def coproduct_on_basis(self, indm):
         if self._quantum:
-            raise NotImplementedError("Quantum double Schubert polynomials have no coproduct")
+            raise NotImplementedError(
+                "Quantum double Schubert polynomials have no coproduct"
+            )
         indices = self._splitter
         indices = sorted(indices)
         subs_dict_coprod = {}
