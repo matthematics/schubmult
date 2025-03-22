@@ -1,24 +1,4 @@
-import schubmult.schubmult_q_yz as qyz
-import schubmult.schubmult_yz as yz
-from sympy import sympify
-import symengine as syme
-
-# from ._fast_quantum_schubert_polynomial_ring import (
-#     FastSchubertPolynomial,
-#     FastSchubertPolynomialRing_base,
-# )
-
-from ._indexing import _coerce_index
-from sage.combinat.composition import (
-    Compositions,
-    Composition,
-)
-
-from ._fast_schubert_polynomial_ring import (
-    FastSchubertPolynomialRing_base,
-    FastSchubertPolynomial,
-)
-
+from sage.all import *
 from sage.categories.graded_bialgebras_with_basis import GradedBialgebrasWithBasis
 from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
 from sage.combinat.free_module import CombinatorialFreeModule
@@ -29,52 +9,111 @@ from sage.rings.polynomial.multi_polynomial import MPolynomial
 from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.polynomial.flatten import FlatteningMorphism
+from sage.combinat.composition import (
+    Compositions,
+    Composition,
+)
+from . import (
+    FastSchubertPolynomialRing_base,
+    FastSchubertPolynomial,
+)
+from ._indexing import _coerce_index
+
+
+import schubmult.schubmult_q_yz as qyz
+import schubmult.schubmult_yz as yz
+from sympy import sympify
+import symengine as syme
 
 
 def FastDoubleSchubertPolynomialRing(
-    R,
-    num_vars,
-    varname1,
-    varname2,
+    R: Parent,
+    num_vars: int,
+    base_variable_name: str,
+    coeff_variable_names: str | tuple[str],
     *,
-    indices=tuple([1]),
-    code_index=False,
-    q_varname="q",
-    quantum=False,
+    indices: tuple[int] = tuple([1]),
+    code_display: bool = False,
+    q_varname: str = "q",
+    is_quantum: bool = False,
 ):
+    """Wrapper function to return a double Schubert polynomial Ring
+
+        Calls the _xbasis class to return a double or quantum double Schubert
+        polynomial ring with the indicated base ring, number of variables,
+        variable names (base variable, and then one or more sets of coefficient)
+        variables, coproduct indices, code_display representation option, q-ring
+        variable name, and whether the ring is quantum.
+
+        Example call:
+
+    ```python
+    X = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y", "z"))
+    X([2, 4, 3, 1]) + X([2, 1, 4, 3], "z")
+    ```
+
+        Args:
+            R (sage ring): The base ring
+            num_vars (int): Cardinality of the sets of variables
+            base_variable_name (str): Base variable name
+            coeff_variable_names (str | tuple[str]): Coefficient variable name(s)
+            indices (tuple[int], optional): Indicies of the variables to split on for the coproduct.
+            code_display (bool, optional): Whether to display the indices as the Lehmer code. Defaults to False.
+            q_varname (str, optional): Variable name of the q-ring. Defaults to "q".
+            is_quantum (bool, optional): Whether or not the ring is quantum. Defaults to False.
+
+        Returns:
+            FastDoubleSchubertPolynomialRing_xbasis: Basis element generator of the ring
+    """
     QR = None
     if quantum:
         QR = PolynomialRing(R, num_vars, q_varname)
     return FastDoubleSchubertPolynomialRing_xbasis(
         R,
         num_vars,
-        varname1,
-        varname2,
+        base_variable_name,
+        coeff_variable_names,
         q_varname,
-        code_index,
+        code_display,
         indices,
-        quantum,
+        is_quantum,
         QR,
     )
 
 
 def FastQuantumDoubleSchubertPolynomialRing(
-    R,
-    num_vars,
-    varname1,
-    varname2,
+    R: Parent,
+    num_vars: int,
+    base_variable_name: str,
+    coeff_variable_names: str | tuple[str],
     *,
-    code_index=False,
+    code_display=False,
     q_varname="q",
 ):
+    """Quantum double Schubert ring generator
+
+    Wraps FastDoubleSchubertPolynomialRing(), omitting indices and setting
+    is_quantum to True.
+
+    Args:
+        R (sage ring): The base ring
+        num_vars (int): Cardinality of the sets of variables
+        base_variable_name (str): Base variable name
+        coeff_variable_names (str | tuple[str]): Coefficient variable name(s)
+        code_display (bool, optional): Whether to display the indices as the Lehmer code. Defaults to False.
+        q_varname (str, optional): Variable name of the q-ring. Defaults to "q".
+
+    Returns:
+        FastDoubleSchubertPolynomialRing_xbasis: Basis element generator of the quantum ring
+    """
     return FastDoubleSchubertPolynomialRing(
         R,
         num_vars,
-        varname1,
-        varname2,
-        code_index=code_index,
+        base_variable_name,
+        coeff_variable_names,
+        code_display=code_display,
         indices=tuple([1]),
-        quantum=True,
+        is_quantum=True,
         q_varname=q_varname,
     )
 
@@ -164,10 +203,10 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         self,
         R,
         num_vars,
-        varname1,
-        varname2,
+        base_variable_name,
+        coeff_variable_names,
         q_varname,
-        code_index,
+        code_display,
         indices,
         quantum,
         QR,
@@ -180,12 +219,12 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         self._mixed = False
         self._q_ring = QR
         self._quantum = quantum
-        self._base_varname = varname1
+        self._base_varname = base_variable_name
         self._q_varname = q_varname
 
-        if isinstance(varname2, tuple):
+        if isinstance(coeff_variable_names, tuple):
             self._mixed = True
-            self._varlist = [*varname2]
+            self._varlist = [*coeff_variable_names]
             self._coeff_polynomial_rings = {
                 name: PolynomialRing(R if not quantum else QR, num_vars, name)
                 for name in self._varlist
@@ -200,22 +239,24 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 self._coeff_polynomial_ring
             ).codomain()
         else:
-            self._varlist = [varname2]
+            self._varlist = [coeff_variable_names]
             self._coeff_polynomial_ring = PolynomialRing(
-                R if not quantum else QR, num_vars, varname2
+                R if not quantum else QR, num_vars, coeff_variable_names
             )
             self._coeff_polynomial_rings = {}
-            self._coeff_polynomial_rings[varname2] = self._coeff_polynomial_ring
+            self._coeff_polynomial_rings[coeff_variable_names] = (
+                self._coeff_polynomial_ring
+            )
 
         index_set = Permutations()
         self._ascode = False
 
-        if code_index:
+        if code_display:
             index_set = Compositions()
             self._ascode = True
 
         self._base_polynomial_ring = PolynomialRing(
-            self._coeff_polynomial_ring, num_vars, varname1
+            self._coeff_polynomial_ring, num_vars, base_variable_name
         )
 
         self._index_wrapper = cartesian_product([index_set, self._varlist])
@@ -230,7 +271,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             self._coeff_polynomial_ring,
             self._index_wrapper,
             category=cat,
-            prefix=f"{'Q' if quantum else ''}S{varname1}",
+            prefix=f"{'Q' if quantum else ''}S{base_variable_name}",
         )
         self._populate_coercion_lists_()
 

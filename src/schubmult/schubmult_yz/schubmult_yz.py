@@ -535,7 +535,7 @@ def split_mul(arg0, var2=var2, var3=var3):
 
     var2s = {fres(var2[i]): i for i in range(len(var2))}
     var3s = {fres(var3[i]): i for i in range(len(var3))}
-    # print(f"{type(arg0)=} {arg0=}")
+    # _display(f"{type(arg0)=} {arg0=}")
     if isinstance(arg0, Pow):
         arg = arg0
         arg2 = expand(arg.args[0])
@@ -635,7 +635,7 @@ def find_base_vectors(monom_list, monom_list_neg, var2, var3, depth):
         # found = True
         # break
         # if not found:
-        # print("Breaking")
+        # _display("Breaking")
         # break
 
         monom_list2 = set(monom_list)
@@ -677,9 +677,9 @@ def find_base_vectors(monom_list, monom_list_neg, var2, var3, depth):
                         if mncount[tp2] > mn2count.get(tp2, 0):
                             diff_term1 = tp2
                             break
-                    # print(f"{mn,mn2}")
+                    # _display(f"{mn,mn2}")
                     if diff_term1 is None or diff_term2 is None:
-                        print(f"{mn=} {mn2=}")
+                        _display(f"{mn=} {mn2=}")
                         exit(1)
                     if diff_term2[1] == diff_term1[1]:
                         continue
@@ -780,7 +780,7 @@ def compute_positive_rep(val, var2=var2, var3=var3, msg=False, do_pos_neg=True):
                     else:
                         neg_part -= arg
                 if neg_part == 0:
-                    # print("no neg")
+                    # _display("no neg")
                     return pos_part
             depth = 1
 
@@ -793,7 +793,7 @@ def compute_positive_rep(val, var2=var2, var3=var3, msg=False, do_pos_neg=True):
             # for mn in mons2:
             # if mn not in mons:
             # mons.add(mn)
-            # print(mons)
+            # _display(mons)
             status = 0
             size = len(mons)
             while status != 1:
@@ -919,10 +919,10 @@ def compute_positive_rep(val, var2=var2, var3=var3, msg=False, do_pos_neg=True):
                     child_process.terminate()
                     child_process.kill()
                 raise KeyboardInterrupt()
-        # print(f"{pos_part=}")
-        # print(f"{neg_part=}")
+        # _display(f"{pos_part=}")
+        # _display(f"{neg_part=}")
         # else:
-        # print(f"No dice {flat=}")
+        # _display(f"No dice {flat=}")
         # exit(1)
         # #val = pos_part - neg_part
 
@@ -1045,7 +1045,7 @@ def posify(
     if set(cdv) == set([0, 1]) and do_pos_neg:
         return val
     # if is_hook(cdv):
-    # print(f"Could've {cdv}")
+    # _display(f"Could've {cdv}")
     if not sign_only and expand(val) == 0:
         return 0
 
@@ -1619,6 +1619,27 @@ def permy(val, i):
     return sympify(val).subs(subsdict)
 
 
+from curses import wrapper
+
+MAX_SIZE = 10000000
+
+def _porint(stdscr, val):
+    print(val)
+
+cons = ""
+
+def _display(val):
+    # global cons
+    # cons += str(val)+"\n"
+    # if len(cons) > MAX_SIZE:
+    #     print(val, end="")
+    #     cons = ""
+    print(val)
+    # sys.stdout.write(val+"\n")
+
+def _full_out():
+    print("BOB JOHNSHON")
+
 def main():
     global var2, var3
     try:
@@ -1642,6 +1663,7 @@ def main():
         down = args.down
         display_positive = args.display_positive
         pr = args.pr
+        flush = args.flush
 
         if args.same:
             var3 = var2
@@ -1761,10 +1783,10 @@ def main():
                                         False,
                                     )
                                     if expand(val - val2) != 0:
-                                        print(
+                                        _display(
                                             f"error; write to schubmult@gmail.com with the case {perms=}\n{code(firstperm)=} {code(secondperm)=}\n{val2=}\n{val=}"
                                         )
-                                        print(
+                                        _display(
                                             f"{code(tuple(permtrim(mulperm(firstperm,muA))))=},{code(tuple(permtrim(mulperm(secondperm,muB))))=},{code(the_top_perm)=}\n{expand(val-val2)=}"
                                         )
                                         exit(1)
@@ -1778,7 +1800,7 @@ def main():
                                         - len(str(permtrim(firstperm)))
                                         - len(str(permtrim(secondperm)))
                                     )
-                                    print(
+                                    _display(
                                         f"{tuple(permtrim(firstperm))}{' ':>{width2}}{tuple(permtrim(secondperm))}  {str(val).replace('**', '^').replace('*', ' ')}"
                                     )
                                 else:
@@ -1787,7 +1809,7 @@ def main():
                                         - len(str(trimcode(firstperm)))
                                         - len(str(trimcode(secondperm)))
                                     )
-                                    print(
+                                    _display(
                                         f"{trimcode(firstperm)}{' ':>{width2}}{trimcode(secondperm)}  {str(val).replace('**', '^').replace('*', ' ')}"
                                     )
         else:
@@ -1917,12 +1939,12 @@ def main():
                                     )
                             except Exception:
                                 if mult:
-                                    print(
+                                    _display(
                                         "warning; --display-positive is on but result is not positive",
                                         file=sys.stderr,
                                     )
                                 else:
-                                    print(
+                                    _display(
                                         f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}"
                                     )
                                     exit(1)
@@ -1930,19 +1952,22 @@ def main():
                                 check
                                 and expand(val - check_coeff_dict.get(perm, 0)) != 0
                             ):
-                                print(
+                                _display(
                                     f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}"
                                 )
                                 exit(1)
                         if val != 0:
                             if ascode:
-                                print(
-                                    f"{str(trimcode(perm)):>{width}}  {str(val).replace('**', '^').replace('*', ' ')}"
+                                _display(
+                                    #f"{str(trimcode(perm)):>{width}}  {str(val).replace('**', '^').replace('*', ' ')}"
+                                    f"{str(trimcode(perm)):>{width}}  {val}"
                                 )
                             else:
-                                print(
-                                    f"{str(perm):>{width}}  {str(val).replace('**', '^').replace('*', ' ')}"
+                                _display(
+                                    #f"{str(perm):>{width}}  {str(val).replace('**', '^').replace('*', ' ')}"
+                                    f"{str(perm):>{width}}  {val}"
                                 )
+        _full_out()
     except BrokenPipeError:
         pass
 

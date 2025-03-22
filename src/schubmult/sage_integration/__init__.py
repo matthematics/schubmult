@@ -1,3 +1,5 @@
+from sage.all import *
+
 from ._fast_schubert_polynomial_ring import (
     FastSchubertPolynomialRing,
     FastSchubertPolynomial,

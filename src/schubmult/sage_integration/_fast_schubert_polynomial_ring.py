@@ -1,14 +1,4 @@
-import schubmult.schubmult_q as sq
-import schubmult.schubmult_q_yz as qyz
-import schubmult.schubmult_py as py
-import schubmult.schubmult_yz as yz
-
-
-from ._indexing import _coerce_index
-
-from sympy import sympify
-import symengine as syme
-
+from sage.all import *
 from sage.categories.graded_bialgebras_with_basis import GradedBialgebrasWithBasis
 from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
 from sage.combinat.free_module import CombinatorialFreeModule
@@ -22,39 +12,111 @@ from sage.misc.cachefunc import cached_method
 from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
 from sage.rings.polynomial.multi_polynomial import MPolynomial
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from ._indexing import _coerce_index
+
+
+import schubmult.schubmult_q as sq
+import schubmult.schubmult_q_yz as qyz
+import schubmult.schubmult_py as py
+import schubmult.schubmult_yz as yz
+
+
+from sympy import sympify
+import symengine as syme
 
 
 def FastSchubertPolynomialRing(
-    R,
-    num_vars,
-    varname,
+    R: Parent,
+    num_vars: int,
+    base_variable_name: str,
     *,
-    code_index=False,
-    q_varname="q",
-    quantum=False,
-    indices=tuple([1]),
+    code_display: bool = False,
+    q_varname: str = "q",
+    is_quantum: bool = False,
+    indices: tuple[int] = tuple([1]),
 ):
-    if quantum:
+    """Wrapper function to return a double Schubert polynomial Ring
+
+        Calls the _xbasis class to return a (quantum) Schubert
+        polynomial ring with the indicated base ring, number of variables,
+        variable name, coproduct indices, code_display representation option,
+        q-ring variable name, and whether the ring is quantum.
+
+        Example call:
+
+    ```python
+    X = FastSchubertPolynomialRing(ZZ, 100, "x")
+    X([2, 4, 3, 1]) + X([2, 1, 4, 3])
+    ```
+    This produces a sum of Schubert polynomials in the "x" variables. These will coerce
+    to any polynomial ring with variables with the same names as Schubert polynomials.
+
+    Args:
+        R (Parent): The base ring
+        num_vars (int): Cardinality of the sets of variables
+        base_variable_name (str): Base variable name
+        code_display (bool, optional): Whether to display the indices as the Lehmer code. Defaults to False.
+        q_varname (str, optional): Variable name of the q-ring. Defaults to "q".
+        is_quantum (bool, optional): Whether or not the ring is quantum. Defaults to False.
+        indices (tuple[int], optional): Indicies of the variables to split on for the coproduct.
+
+    Returns:
+        FastSchubertPolynomialRing_xbasis: Element constructor of the ring
+    """
+    if is_quantum:
         QR = PolynomialRing(R, num_vars, q_varname)
     else:
         QR = R
     return FastSchubertPolynomialRing_xbasis(
-        R, num_vars, varname, q_varname, code_index, indices, quantum, QR
+        R,
+        num_vars,
+        base_variable_name,
+        q_varname,
+        code_display,
+        indices,
+        is_quantum,
+        QR,
     )
 
 
 def FastQuantumSchubertPolynomialRing(
-    R, num_vars, varname, *, code_index=False, q_varname="q"
+    R: Parent,
+    num_vars: int,
+    base_variable_name: str,
+    q_varname: str = "q",
+    code_display: bool = False,
+    
 ):
+    """Quantum Schubert ring generator
+
+    Wraps FastSchubertPolynomialRing(), omitting indices and setting
+    is_quantum to True.
+
+    Args:
+        R (Parent): The base ring
+        num_vars (int): Cardinality of the sets of variables
+        base_variable_name (str): Base variable name
+        q_varname (str, optional): Variable name of the q-ring. Defaults to "q".
+        code_display (bool, optional): Whether to display the indices as the Lehmer code. Defaults to False.
+        
+
+    Returns:
+        FastSchubertPolynomialRing_xbasis: Element constructor of the ring
+    """
     return FastSchubertPolynomialRing(
-        R, num_vars, varname, q_varname=q_varname, code_index=code_index, quantum=True
+        R,
+        num_vars,
+        base_variable_name,
+        q_varname=q_varname,
+        code_display=code_display,
+        is_quantum=True,
     )
 
 
 class FastSchubertPolynomial_class(CombinatorialFreeModule.Element):
     @property
-    def base_varname(self):
-        return self.parent()._base_varname
+    def base_base_variable_name(self):
+        return self.parent()._base_base_variable_name
 
     @property
     def q_varname(self):
@@ -104,7 +166,15 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     Element = FastSchubertPolynomial_class
 
     def __init__(
-        self, R, num_vars, varname, q_varname, code_index, indices, quantum, QR
+        self,
+        R,
+        num_vars,
+        base_variable_name,
+        q_varname,
+        code_display,
+        indices,
+        quantum,
+        QR,
     ):
         self._name = (
             f"{'Quantum ' if quantum else ''}Schubert polynomial ring with X basis"
@@ -122,17 +192,17 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         index_set = Permutations()
         self._ascode = False
 
-        if code_index:
+        if code_display:
             index_set = Compositions()
             self._ascode = True
 
         CombinatorialFreeModule.__init__(
-            self, R, index_set, category=cat, prefix=f"QS{varname}"
+            self, R, index_set, category=cat, prefix=f"QS{base_variable_name}"
         )
         self._q_ring = QR
-        self._base_varname = varname
+        self._base_base_variable_name = base_variable_name
         self._q_varname = q_varname
-        self._polynomial_ring = PolynomialRing(R, num_vars, varname)
+        self._polynomial_ring = PolynomialRing(R, num_vars, base_variable_name)
         self._populate_coercion_lists_()
 
     def _coerce_map_from_(self, S):
@@ -164,7 +234,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             )
         elif isinstance(x, FastSchubertPolynomial):
             if (
-                x.base_varname == self._base_varname
+                x.base_base_variable_name == self._base_base_variable_name
                 and (self._quantum == x.parent()._quantum)
                 and (not self._quantum or x.q_varname == self._q_varname)
             ):
@@ -220,7 +290,8 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         if self._quantum:
             return sum(
                 [
-                    self.base_ring()(str(v)) * self(_coerce_index(k, False, self._ascode))
+                    self.base_ring()(str(v))
+                    * self(_coerce_index(k, False, self._ascode))
                     for k, v in sq.schubmult_db(
                         {
                             tuple(
@@ -291,7 +362,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
 
 
 def _repr_(self):
-    return f"Ring of  Schubert polynomials in {self._base_varname} with {len(self._polynomial_ring.gens())} variables over {self._q_ring.base_ring()}"
+    return f"Ring of  Schubert polynomials in {self._base_base_variable_name} with {len(self._polynomial_ring.gens())} variables over {self._q_ring.base_ring()}"
 
 
 FastSchubertPolynomial = FastSchubertPolynomial_class
