@@ -1623,8 +1623,232 @@ from curses import wrapper
 
 MAX_SIZE = 10000000
 
+
 def _display(val):
     print(val)
+
+
+def _display_full(
+    coeff_dict,
+    args,
+    formatter,
+    posified=None,
+    check_coeff_dict=None,
+    kperm=None,
+    var2=var2,
+    var3=var3,    
+    N=None,
+):
+    perms = args.perms
+    mult = args.mult
+    ascode = args.ascode
+    coprod = args.coprod
+    check = args.check
+    msg = args.msg
+    down = args.down
+    same = args.same
+    display_positive = args.display_positive    
+
+    coeff_perms = list(coeff_dict.keys())
+    if coprod:
+        pos = perms[1]
+        pos2 = []
+        last_descent = -1
+        poso = []
+        for i in range(len(perms[0]) - 1):
+            if perms[0][i] > perms[0][i + 1]:
+                last_descent = i + 1
+        for i in range(1, last_descent + 1):
+            if i not in pos:
+                pos2 += [i - 1]
+            else:
+                poso += [i - 1]
+
+        mu_W = uncode(theta(inverse(perms[0])))
+
+        the_top_perm = tuple(permtrim(mulperm(list(perms[0]), mu_W)))
+
+        muA = uncode(mu_A(code(mu_W), poso))
+        muB = uncode(mu_A(code(mu_W), pos2))
+        subs_dict = {}
+        inv_kperm = inv(kperm)
+        inverse_kperm = inverse(kperm)
+        var2neg = np.array([-var2[i] for i in range(len(var2))])
+        var3neg = np.array([-var3[i] for i in range(len(var3))])
+
+        for i in range(1, 100):
+            if i <= N:
+                subs_dict[var[i]] = var2[i]
+            else:
+                subs_dict[var[i]] = var3[i - N]
+
+        coeff_perms.sort(key=lambda x: (inv(x), *x))
+
+        perm_pairs = []
+
+        for perm in coeff_perms:
+            downperm = mulperm(list(perm), inverse_kperm)
+            if inv(downperm) == inv(perm) - inv_kperm:
+                flag = True
+                for i in range(N):
+                    if downperm[i] > N:
+                        flag = False
+                        break
+                if not flag:
+                    continue
+                firstperm = downperm[0:N]
+                secondperm = [downperm[i] - N for i in range(N, len(downperm))]
+                perm_pairs += [[permtrim(firstperm), permtrim(secondperm)]]
+
+        if ascode:
+            width = max(
+                [
+                    len(str(trimcode(perm[0])) + " " + str(trimcode(perm[1])))
+                    for perm in perm_pairs
+                ]
+            )
+        else:
+            width = max([len(str(perm[0]) + " " + str(perm[1])) for perm in perm_pairs])
+
+        for perm in coeff_perms:
+            val = coeff_dict[perm]
+            downperm = mulperm(list(perm), inverse_kperm)
+            if inv(downperm) == inv(perm) - inv_kperm:
+                flag = True
+                for i in range(N):
+                    if downperm[i] > N:
+                        flag = False
+                        break
+                if not flag:
+                    continue
+                firstperm = downperm[0:N]
+                secondperm = [downperm[i] - N for i in range(N, len(downperm))]
+                val = sympify(val).subs(subs_dict)
+
+                if val != 0:
+                    if display_positive:
+                        if val != 0:
+                            val2 = posify(
+                                val,
+                                tuple(permtrim(mulperm(firstperm, muA))),
+                                tuple(permtrim(mulperm(secondperm, muB))),
+                                the_top_perm,
+                                tuple(var2neg.tolist()),
+                                tuple(var3neg.tolist()),
+                                msg,
+                                False,
+                            )
+                            if expand(val - val2) != 0:
+                                _display(
+                                    f"error; write to schubmult@gmail.com with the case {perms=}\n{code(firstperm)=} {code(secondperm)=}\n{val2=}\n{val=}"
+                                )
+                                _display(
+                                    f"{code(tuple(permtrim(mulperm(firstperm,muA))))=},{code(tuple(permtrim(mulperm(secondperm,muB))))=},{code(the_top_perm)=}\n{expand(val-val2)=}"
+                                )
+                                exit(1)
+                            val = val2
+                        else:
+                            val = 0
+                    if val != 0:
+                        if not ascode:
+                            width2 = (
+                                width
+                                - len(str(permtrim(firstperm)))
+                                - len(str(permtrim(secondperm)))
+                            )
+                            _display(
+                                f"{tuple(permtrim(firstperm))}{' ':>{width2}}{tuple(permtrim(secondperm))}  {formatter(val)}"
+                            )
+                        else:
+                            width2 = (
+                                width
+                                - len(str(trimcode(firstperm)))
+                                - len(str(trimcode(secondperm)))
+                            )
+                            _display(
+                                f"{trimcode(firstperm)}{' ':>{width2}}{trimcode(secondperm)}  {formatter(val)}"
+                            )
+    else:
+        if ascode:
+            width = max([len(str(trimcode(perm))) for perm in coeff_dict.keys()])
+        else:
+            width = max([len(str(perm)) for perm in coeff_dict.keys()])
+
+        coeff_perms = list(coeff_dict.keys())
+        coeff_perms.sort(key=lambda x: (inv(x), *x))
+
+        var_r = symarray("r", 100)
+        for perm in coeff_perms:
+            val = coeff_dict[perm]            
+            if val != 0:
+                notint = False
+                try:
+                    int(val)
+                except Exception:
+                    notint = True
+                if notint and display_positive:
+                    if same:
+                        subs_dict = {}
+                        for i in range(1, 100):
+                            sm = var2[1]
+                            for j in range(1, i):
+                                sm += var_r[j]
+                            subs_dict[var2[i]] = sm
+                        val = expand(sympify(coeff_dict[perm]).subs(subs_dict)).simplify()
+                    else:
+                        try:
+                            if len(perms) == 2 and not posified and not mult:
+                                if not down:
+                                    val = posify(
+                                        val,
+                                        perms[0],
+                                        perms[1],
+                                        perm,
+                                        var2,
+                                        var3,
+                                        msg,
+                                    )
+                                else:
+                                    val = posify(
+                                        val,
+                                        perm,
+                                        perms[1],
+                                        perms[0],
+                                        var2,
+                                        var3,
+                                        msg,
+                                    )
+                            elif not posified and not mult:
+                                val = compute_positive_rep(val, var2, var3, msg)
+                            elif not posified:
+                                val = compute_positive_rep(
+                                    val, var2, var3, msg, do_pos_neg=False
+                                )
+                        except Exception:
+                            if mult:
+                                _display(
+                                    "warning; --display-positive is on but result is not positive",
+                                    file=sys.stderr,
+                                )
+                            else:
+                                _display(
+                                    f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}"
+                                )
+                                exit(1)
+                        if check and expand(val - check_coeff_dict.get(perm, 0)) != 0:
+                            _display(
+                                f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}"
+                            )
+                            exit(1)
+                if val != 0:
+                    if ascode:
+                        _display(
+                            f"{str(trimcode(perm)):>{width}}  {formatter(val)}"
+                        )
+                    else:
+                        _display(
+                            f"{str(perm):>{width}}  {formatter(val)}"
+                        )
 
 
 def main():
@@ -1632,7 +1856,10 @@ def main():
     try:
         sys.setrecursionlimit(1000000)
 
-        args = schub_argparse(
+        # TEMP
+        sympy.init_printing()
+
+        args, formatter = schub_argparse(
             "schubmult_yz",
             "Compute coefficients of product of double Schubert polynomials in different sets of coefficient variables",
             yz=True,
@@ -1645,48 +1872,25 @@ def main():
 
         ascode = args.ascode
         coprod = args.coprod
-        check = args.check
+        same = args.same
         msg = args.msg
         down = args.down
         display_positive = args.display_positive
         pr = args.pr
-        flush = args.flush
 
         if args.same:
             var3 = var2
 
         posified = False
         if coprod:
-            subs_dict = {}
             if ascode:
                 mperm = tuple(permtrim(uncode(perms[0])))
             else:
                 mperm = tuple(permtrim(perms[0]))
 
-            cd = code(mperm)
             perms[0] = mperm
-            pos = perms[1]
-            pos2 = []
-            last_descent = -1
-            poso = []
-            for i in range(len(perms[0]) - 1):
-                if perms[0][i] > perms[0][i + 1]:
-                    last_descent = i + 1
-            for i in range(1, last_descent + 1):
-                if i not in pos:
-                    pos2 += [i - 1]
-                else:
-                    poso += [i - 1]
+            pos = perms[1]                        
 
-            mu_W = uncode(theta(inverse(perms[0])))
-
-            the_top_perm = tuple(permtrim(mulperm(list(perms[0]), mu_W)))
-
-            muA = uncode(mu_A(code(mu_W), poso))
-            muB = uncode(mu_A(code(mu_W), pos2))
-
-            while cd[-1] == 0:
-                cd.pop()
             k = len(pos)
             n = len(perms[0])
             kcd = [pos[i] - i - 1 for i in range(len(pos))] + [
@@ -1694,111 +1898,21 @@ def main():
             ]
             N = len(kcd)
 
-            var2neg = np.array([-var2[i] for i in range(len(var2))])
-            var3neg = np.array([-var3[i] for i in range(len(var3))])
-
-            for i in range(1, 100):
-                if i <= N:
-                    subs_dict[var[i]] = var2[i]
-                else:
-                    subs_dict[var[i]] = var3[i - N]
-
             kperm = inverse(uncode(kcd))
             coeff_dict = {tuple(kperm): 1}
             coeff_dict = schubmult(coeff_dict, perms[0], var, var2)
 
-            inv_kperm = inv(kperm)
-            inverse_kperm = inverse(kperm)
             if pr:
-                coeff_perms = list(coeff_dict.keys())
-                coeff_perms.sort(key=lambda x: (inv(x), *x))
-
-                perm_pairs = []
-
-                for perm in coeff_perms:
-                    downperm = mulperm(list(perm), inverse_kperm)
-                    if inv(downperm) == inv(perm) - inv_kperm:
-                        flag = True
-                        for i in range(N):
-                            if downperm[i] > N:
-                                flag = False
-                                break
-                        if not flag:
-                            continue
-                        firstperm = downperm[0:N]
-                        secondperm = [downperm[i] - N for i in range(N, len(downperm))]
-                        perm_pairs += [[permtrim(firstperm), permtrim(secondperm)]]
-
-                if ascode:
-                    width = max(
-                        [
-                            len(str(trimcode(perm[0])) + " " + str(trimcode(perm[1])))
-                            for perm in perm_pairs
-                        ]
-                    )
-                else:
-                    width = max(
-                        [len(str(perm[0]) + " " + str(perm[1])) for perm in perm_pairs]
-                    )
-
-                for perm in coeff_perms:
-                    val = coeff_dict[perm]
-                    downperm = mulperm(list(perm), inverse_kperm)
-                    if inv(downperm) == inv(perm) - inv_kperm:
-                        flag = True
-                        for i in range(N):
-                            if downperm[i] > N:
-                                flag = False
-                                break
-                        if not flag:
-                            continue
-                        firstperm = downperm[0:N]
-                        secondperm = [downperm[i] - N for i in range(N, len(downperm))]
-                        val = sympify(val).subs(subs_dict)
-
-                        if val != 0:
-                            if display_positive:
-                                if val != 0:
-                                    val2 = posify(
-                                        val,
-                                        tuple(permtrim(mulperm(firstperm, muA))),
-                                        tuple(permtrim(mulperm(secondperm, muB))),
-                                        the_top_perm,
-                                        tuple(var2neg.tolist()),
-                                        tuple(var3neg.tolist()),
-                                        msg,
-                                        False,
-                                    )
-                                    if expand(val - val2) != 0:
-                                        _display(
-                                            f"error; write to schubmult@gmail.com with the case {perms=}\n{code(firstperm)=} {code(secondperm)=}\n{val2=}\n{val=}"
-                                        )
-                                        _display(
-                                            f"{code(tuple(permtrim(mulperm(firstperm,muA))))=},{code(tuple(permtrim(mulperm(secondperm,muB))))=},{code(the_top_perm)=}\n{expand(val-val2)=}"
-                                        )
-                                        exit(1)
-                                    val = val2
-                                else:
-                                    val = 0
-                            if val != 0:
-                                if not ascode:
-                                    width2 = (
-                                        width
-                                        - len(str(permtrim(firstperm)))
-                                        - len(str(permtrim(secondperm)))
-                                    )
-                                    _display(
-                                        f"{tuple(permtrim(firstperm))}{' ':>{width2}}{tuple(permtrim(secondperm))}  {str(val).replace('**', '^').replace('*', ' ')}"
-                                    )
-                                else:
-                                    width2 = (
-                                        width
-                                        - len(str(trimcode(firstperm)))
-                                        - len(str(trimcode(secondperm)))
-                                    )
-                                    _display(
-                                        f"{trimcode(firstperm)}{' ':>{width2}}{trimcode(secondperm)}  {str(val).replace('**', '^').replace('*', ' ')}"
-                                    )
+                _display_full(
+                    coeff_dict,
+                    args,
+                    formatter,
+                    posified=posified,
+                    kperm=kperm,
+                    var2=var2,
+                    var3=var3,
+                    N=N,
+                )
         else:
             if ascode:
                 for i in range(len(perms)):
@@ -1845,6 +1959,7 @@ def main():
                 and will_formula_work(perms[0], perms[1])
                 and not mult
                 and not down
+                and not same
             ):
                 coeff_dict = {}
                 th = theta(perms[1])
@@ -1858,7 +1973,7 @@ def main():
                         coeff_dict[tuple(permtrim(w))] = val
                 posified = True
 
-            if display_positive and len(perms) > 2 and not mult:
+            if display_positive and len(perms) > 2 and not mult and not same:
                 coeff_dict2 = dict(coeff_dict)
                 for perm in perms[1:]:
                     coeff_dict3 = {}
@@ -1877,83 +1992,12 @@ def main():
                 coeff_dict = check_coeff_dict
 
             if pr:
-                if ascode:
-                    width = max(
-                        [len(str(trimcode(perm))) for perm in coeff_dict.keys()]
-                    )
-                else:
-                    width = max([len(str(perm)) for perm in coeff_dict.keys()])
-
-                coeff_perms = list(coeff_dict.keys())
-                coeff_perms.sort(key=lambda x: (inv(x), *x))
-
-                for perm in coeff_perms:
-                    val = coeff_dict[perm]
-                    if val != 0:
-                        notint = False
-                        try:
-                            int(val)
-                        except Exception:
-                            notint = True
-                        if notint and display_positive:
-                            try:
-                                if len(perms) == 2 and not posified and not mult:
-                                    if not down:
-                                        val = posify(
-                                            val,
-                                            perms[0],
-                                            perms[1],
-                                            perm,
-                                            var2,
-                                            var3,
-                                            msg,
-                                        )
-                                    else:
-                                        val = posify(
-                                            val,
-                                            perm,
-                                            perms[1],
-                                            perms[0],
-                                            var2,
-                                            var3,
-                                            msg,
-                                        )
-                                elif not posified and not mult:
-                                    val = compute_positive_rep(val, var2, var3, msg)
-                                elif not posified:
-                                    val = compute_positive_rep(
-                                        val, var2, var3, msg, do_pos_neg=False
-                                    )
-                            except Exception:
-                                if mult:
-                                    _display(
-                                        "warning; --display-positive is on but result is not positive",
-                                        file=sys.stderr,
-                                    )
-                                else:
-                                    _display(
-                                        f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}"
-                                    )
-                                    exit(1)
-                            if (
-                                check
-                                and expand(val - check_coeff_dict.get(perm, 0)) != 0
-                            ):
-                                _display(
-                                    f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}"
-                                )
-                                exit(1)
-                        if val != 0:
-                            if ascode:
-                                _display(
-                                    #f"{str(trimcode(perm)):>{width}}  {str(val).replace('**', '^').replace('*', ' ')}"
-                                    f"{str(trimcode(perm)):>{width}}  {val}"
-                                )
-                            else:
-                                _display(
-                                    #f"{str(perm):>{width}}  {str(val).replace('**', '^').replace('*', ' ')}"
-                                    f"{str(perm):>{width}}  {val}"
-                                )
+                _display_full(
+                    coeff_dict,
+                    args,
+                    posified=posified,
+                    check_coeff_dict=check_coeff_dict,
+                )
     except BrokenPipeError:
         pass
 

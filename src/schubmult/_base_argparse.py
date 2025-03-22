@@ -1,7 +1,7 @@
 from argparse import ArgumentParser, SUPPRESS, RawDescriptionHelpFormatter
 
 
-def schub_argparse(prog_name, description, quantum=False, double=False, yz=False):
+def schub_argparse(prog_name, description, quantum=False, yz=False):
     parser = ArgumentParser(
         prog=prog_name,
         description=description,
@@ -101,14 +101,7 @@ def schub_argparse(prog_name, description, quantum=False, double=False, yz=False
             default=False,
             dest="expa",
             help="Expand the output rather than leaving it as originally computed (slow)",
-        )
-
-        parser.add_argument(
-            "--norep",
-            action="store_true",
-            default=False,
-            help="Do not replace * and ** with space and ^",
-        )
+        )        
 
     if quantum:
         parser.add_argument(
@@ -147,7 +140,15 @@ def schub_argparse(prog_name, description, quantum=False, double=False, yz=False
                 help="Substitute commuting difference operators for perm1, then apply to Schub indexed by perm2",
             )
 
-    parser.add_argument("--no-flush", action="store_false", dest="flush")
+    parser.add_argument(
+        "--display-mode",
+        type=str,
+        required=False,
+        choices=["basic", "pretty", "latex"],
+        default="basic",
+        dest="disp_mode",
+        help="Method of displaying the output. Default basic",
+    )
 
     args = parser.parse_args()
     args.mulstring = ""
@@ -163,4 +164,11 @@ def schub_argparse(prog_name, description, quantum=False, double=False, yz=False
         except Exception as e:
             print("Permutations must have integer values")
             raise e
-    return args
+    import sympy
+    formatter = lambda bob: str(bob)
+    if args.disp_mode == "latex":
+        formatter = lambda bob: sympy.latex(sympy.sympify(bob))
+    elif args.disp_mode == "pretty":
+        formatter = lambda bob: sympy.pretty(sympy.sympify(bob))
+
+    return args, formatter
