@@ -1,20 +1,5 @@
-from schubmult._base_argparse import schub_argparse
-from schubmult.perm_lib import (
-    trimcode,
-    elem_sym_perms,
-    add_perm_dict,
-    compute_vpathdicts,
-    inverse,
-    theta,
-    permtrim,
-    inv,
-    mulperm,
-    code,
-    uncode,
-)
-from symengine import sympify, Add, Mul, Pow, symarray
-
-var_x = symarray("x", 100).tolist()
+from ._vars import *
+from ._funcs import *
 
 
 def single_variable(coeff_dict, varnum):
