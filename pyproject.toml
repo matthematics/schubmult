@@ -45,7 +45,5 @@ Repository = "https://github.com/matthematics/schubmult"
 [project.scripts]
 schubmult_py="schubmult.schubmult_py.__main__:main"
 schubmult_double="schubmult.schubmult_double.__main__:main"
-schubmult_yz="schubmult.schubmult_yz.__main__:main"
 schubmult_q="schubmult.schubmult_q.__main__:main"
 schubmult_q_double="schubmult.schubmult_q_double.__main__:main"
-schubmult_q_yz="schubmult.schubmult_q_yz.__main__:main"
