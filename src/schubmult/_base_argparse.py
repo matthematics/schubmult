@@ -147,6 +147,8 @@ def schub_argparse(prog_name, description, quantum=False, double=False, yz=False
                 help="Substitute commuting difference operators for perm1, then apply to Schub indexed by perm2",
             )
 
+    parser.add_argument("--no-flush", action="store_false", dest="flush")
+
     args = parser.parse_args()
     args.mulstring = ""
 
