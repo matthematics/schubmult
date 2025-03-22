@@ -66,7 +66,7 @@ def FastDoubleSchubertPolynomialRing(
             FastDoubleSchubertPolynomialRing_xbasis: Basis element generator of the ring
     """
     QR = None
-    if quantum:
+    if is_quantum:
         QR = PolynomialRing(R, num_vars, q_varname)
     return FastDoubleSchubertPolynomialRing_xbasis(
         R,

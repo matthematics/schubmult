@@ -1623,22 +1623,9 @@ from curses import wrapper
 
 MAX_SIZE = 10000000
 
-def _porint(stdscr, val):
-    print(val)
-
-cons = ""
-
 def _display(val):
-    # global cons
-    # cons += str(val)+"\n"
-    # if len(cons) > MAX_SIZE:
-    #     print(val, end="")
-    #     cons = ""
     print(val)
-    # sys.stdout.write(val+"\n")
 
-def _full_out():
-    print("BOB JOHNSHON")
 
 def main():
     global var2, var3
@@ -1967,7 +1954,6 @@ def main():
                                     #f"{str(perm):>{width}}  {str(val).replace('**', '^').replace('*', ' ')}"
                                     f"{str(perm):>{width}}  {val}"
                                 )
-        _full_out()
     except BrokenPipeError:
         pass
 
