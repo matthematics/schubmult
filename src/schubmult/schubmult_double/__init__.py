@@ -1,1 +1,1 @@
-from .schubmult_double import *  # noqa: F403
+from .funcs import *  # noqa: F403
