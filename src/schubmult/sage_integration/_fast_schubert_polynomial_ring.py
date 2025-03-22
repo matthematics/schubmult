@@ -198,7 +198,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             self._ascode = True
 
         CombinatorialFreeModule.__init__(
-            self, R, index_set, category=cat, prefix=f"QS{base_variable_name}"
+            self, R if not quantum else QR, index_set, category=cat, prefix=f"QS{base_variable_name}"
         )
         self._q_ring = QR
         self._base_varname = base_variable_name
