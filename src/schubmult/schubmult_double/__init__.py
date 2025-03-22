@@ -1,1 +1,1 @@
-from .funcs import *  # noqa: F403
+from ._funcs import *  # noqa: F403
