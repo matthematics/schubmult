@@ -16,7 +16,6 @@ from schubmult.perm_lib import (
 from symengine import sympify, Add, Mul, Pow, symarray
 
 
-
 def single_variable(coeff_dict, varnum):
     ret = {}
     for u in coeff_dict:
@@ -113,4 +112,3 @@ def schubmult(perm_dict, v):
             {ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict
         )
     return ret_dict
-

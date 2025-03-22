@@ -32,7 +32,7 @@ def _display_full(
     var_r = symarray("r", 100)
     for perm in coeff_perms:
         val = coeff_dict[perm]
-        if expand(val) != 0:
+        if not same and expand(val) != 0:
             try:
                 int(val)
             except Exception:
@@ -143,7 +143,7 @@ def _display_full(
                         for j in range(1, i):
                             sm += var_r[j]
                         subs_dict[var2[i]] = sm
-                    val = expand(sympify(coeff_dict[perm]).subs(subs_dict)).simplify()
+                    val = sympify(coeff_dict[perm]).subs(subs_dict)
             elif expa:
                 val = expand(val)
             if val != 0:

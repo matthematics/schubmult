@@ -173,7 +173,7 @@ def _display_full(
                             for j in range(1, i):
                                 sm += var_r[j]
                             subs_dict[var2[i]] = sm
-                        val = expand(sympify(coeff_dict[perm]).subs(subs_dict)).simplify()
+                        val = expand(sympify(coeff_dict[perm]).xreplace(subs_dict))
                     else:
                         try:
                             if len(perms) == 2 and not posified and not mult:
