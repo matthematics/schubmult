@@ -63,7 +63,7 @@ def schub_argparse(prog_name, description, quantum=False, yz=False):
             action="store_true",
             default=False,
             dest="display_positive",
-            help="Attempt to display the result as a positive algebraic combination of terms of the form y_i - z_j",
+            help="Display the result in terms of the positive roots, or if mixed variable attempt to display the result as a positive algebraic combination of terms of the form y_i - z_j",
         )
 
         parser.add_argument(
@@ -88,11 +88,10 @@ def schub_argparse(prog_name, description, quantum=False, yz=False):
         )
 
         parser.add_argument(
-            "--same-var",
-            action="store_true",
-            default=False,
+            "--mixed-var",
+            action="store_false",
             dest="same",
-            help="Even though script is yz, use y for both coefficient variables",
+            help="Used mixed variables y and z",
         )
 
         parser.add_argument(
@@ -101,7 +100,7 @@ def schub_argparse(prog_name, description, quantum=False, yz=False):
             default=False,
             dest="expa",
             help="Expand the output rather than leaving it as originally computed (slow)",
-        )        
+        )
 
     if quantum:
         parser.add_argument(
@@ -165,6 +164,7 @@ def schub_argparse(prog_name, description, quantum=False, yz=False):
             print("Permutations must have integer values")
             raise e
     import sympy
+
     formatter = lambda bob: str(bob)
     if args.disp_mode == "latex":
         formatter = lambda bob: sympy.latex(sympy.sympify(bob))
