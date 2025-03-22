@@ -41,8 +41,7 @@ def code(perm):
 def mulperm(perm1, perm2):
     if len(perm1) < len(perm2):
         return [
-            perm1[perm2[i] - 1] if perm2[i] <= len(perm1) else perm2[i]
-            for i in range(len(perm2))
+            perm1[perm2[i] - 1] if perm2[i] <= len(perm1) else perm2[i] for i in range(len(perm2))
         ]
     else:
         return [perm1[perm2[i] - 1] for i in range(len(perm2))] + perm1[len(perm2) :]
@@ -169,11 +168,7 @@ def elem_sym_perms_op(orig_perm, p, k):
             up_perm2 = [*up_perm]
             if len(up_perm2) < k + 1:
                 up_perm2 += [i + 1 for i in range(len(up_perm2), k + 2)]
-            pos_list = [
-                i
-                for i in range(k)
-                if getpermval(up_perm2, i) == getpermval(orig_perm, i)
-            ]
+            pos_list = [i for i in range(k) if getpermval(up_perm2, i) == getpermval(orig_perm, i)]
             for j in range(last, len(up_perm2)):
                 for i in pos_list:
                     if has_bruhat_descent(up_perm2, i, j):
@@ -226,9 +221,7 @@ def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
                         new_perm_add = tuple(permtrim(new_perm))
                         new_val = val
                         if ct < 0:
-                            new_val *= np.prod(
-                                [q_var[index] for index in range(i + 1, j + 1)]
-                            )
+                            new_val *= np.prod([q_var[index] for index in range(i + 1, j + 1)])
                         perm_list += [(new_perm_add, new_val, j)]
                         total_list += [(new_perm_add, pp + 1, new_val)]
         up_perm_list = perm_list
@@ -260,9 +253,7 @@ def elem_sym_perms_q_op(orig_perm, p, k, n, q_var=q_var):
                         new_perm_add = tuple(permtrim(new_perm))
                         new_val = val
                         if ct > 0:
-                            new_val *= np.prod(
-                                [q_var[index] for index in range(i + 1, j + 1)]
-                            )
+                            new_val *= np.prod([q_var[index] for index in range(i + 1, j + 1)])
                         perm_list += [(new_perm_add, new_val, j)]
                         total_list += [(new_perm_add, pp + 1, new_val)]
         up_perm_list = perm_list
@@ -525,8 +516,7 @@ def elem_sym_poly_q(p, k, varl1, varl2, q_var=q_var):
     if p < 0 or p > k:
         return zero
     return (
-        (varl1[k - 1] - varl2[k - p])
-        * elem_sym_poly_q(p - 1, k - 1, varl1, varl2, q_var)
+        (varl1[k - 1] - varl2[k - p]) * elem_sym_poly_q(p - 1, k - 1, varl1, varl2, q_var)
         + elem_sym_poly_q(p, k - 1, varl1, varl2, q_var)
         + q_var[k - 1] * elem_sym_poly_q(p - 2, k - 2, varl1, varl2, q_var)
     )
@@ -898,10 +888,7 @@ def pull_out_var(vnum, v):
                         [
                             v[i]
                             for i in range(vnum, len(v))
-                            if (
-                                (i > len(vp) and v[i] == i)
-                                or (i <= len(vp) and v[i] == vp[i - 1])
-                            )
+                            if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))
                         ],
                         vp,
                     ]
@@ -925,10 +912,7 @@ def pull_out_var(vnum, v):
                     [
                         v[i]
                         for i in range(vnum, len(v))
-                        if (
-                            (i > len(vp) and v[i] == i)
-                            or (i <= len(vp) and v[i] == vp[i - 1])
-                        )
+                        if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))
                     ],
                     vp,
                 ]

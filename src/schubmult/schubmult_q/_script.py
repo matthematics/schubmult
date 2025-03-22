@@ -1,39 +1,33 @@
-from ._vars import *
-from ._funcs import *
-# from symengine import sympify, Add, Mul, Pow, symarray, Symbol, expand
-# from schubmult._base_argparse import schub_argparse
-# from schubmult.perm_lib import (
-#     trimcode,
-#     elem_sym_perms_q,
-#     add_perm_dict,
-#     compute_vpathdicts,
-#     inverse,
-#     strict_theta,
-#     medium_theta,
-#     permtrim,
-#     inv,
-#     mulperm,
-#     code,
-#     uncode,
-#     double_elem_sym_q,
-#     longest_element,
-#     check_blocks,
-#     is_parabolic,
-#     q_vector,
-#     omega,
-#     count_less_than,
-#     q_var,
-#     sg,
-#     n,
-# )
-# import numpy as np
-# from schubmult.schubmult_q_double import factor_out_q_keep_factored
+from ._funcs import (
+    schubmult,
+    schubmult_db,
+    mult_poly,
+)
+from symengine import sympify
+from schubmult._base_argparse import schub_argparse
+from schubmult.perm_lib import (
+    trimcode,
+    permtrim,
+    inv,
+    mulperm,
+    uncode,
+    longest_element,
+    check_blocks,
+    is_parabolic,
+    q_vector,
+    omega,
+    count_less_than,
+    q_var,
+    sg,
+)
+import numpy as np
+from schubmult.schubmult_q_double import factor_out_q_keep_factored
 
 
 def _display_full(coeff_dict, args, formatter):
     ascode = args.ascode
     parabolic_index = [int(s) for s in args.parabolic]
-    parabolic = len(parabolic_index) != 0    
+    parabolic = len(parabolic_index) != 0
 
     if parabolic:
         w_P = longest_element(parabolic_index)
@@ -66,12 +60,7 @@ def _display_full(coeff_dict, args, formatter):
 
                 new_q_part = np.prod(
                     [
-                        q_var[
-                            index
-                            + 1
-                            - count_less_than(parabolic_index, index + 1)
-                        ]
-                        ** qv[index]
+                        q_var[index + 1 - count_less_than(parabolic_index, index + 1)] ** qv[index]
                         for index in range(len(qv))
                         if index + 1 not in parabolic_index
                     ]
@@ -82,9 +71,7 @@ def _display_full(coeff_dict, args, formatter):
                 except Exception:
                     pass
                 q_val_part = q_dict[q_part]
-                coeff_dict_update[w] = (
-                    coeff_dict_update.get(w, 0) + new_q_part * q_val_part
-                )
+                coeff_dict_update[w] = coeff_dict_update.get(w, 0) + new_q_part * q_val_part
         coeff_dict = coeff_dict_update
 
     coeff_perms = list(coeff_dict.keys())
@@ -94,13 +81,10 @@ def _display_full(coeff_dict, args, formatter):
         val = sympify(coeff_dict[perm]).expand()
         if val != 0:
             if ascode:
-                print(
-                    f"{str(trimcode(perm))}  {formatter(val)}"
-                )
+                print(f"{str(trimcode(perm))}  {formatter(val)}")
             else:
-                print(
-                    f"{str(perm)}  {formatter(val)}"
-                )
+                print(f"{str(perm)}  {formatter(val)}")
+
 
 def main():
     try:

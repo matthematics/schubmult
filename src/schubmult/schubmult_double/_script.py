@@ -1,6 +1,36 @@
-from ._vars import *
-from ._funcs import *
+import numpy as np
+import sympy
+import sys
+from ._vars import (
+    var2,
+    var3,
+    var_x,
+    var,
+)
+from ._funcs import (
+    mult_poly,
+    mult_poly_down,
+    schubmult,
+    schubmult_down,
+    compute_positive_rep,
+    posify,
+    split_perms,
+)
+from symengine import symarray, expand, sympify
 from schubmult._base_argparse import schub_argparse
+from schubmult.perm_lib import (
+    add_perm_dict,
+    inverse,
+    theta,
+    permtrim,
+    inv,
+    mulperm,
+    code,
+    uncode,
+    will_formula_work,
+    mu_A,
+    trimcode,
+)
 
 
 def _display(val):
@@ -15,7 +45,7 @@ def _display_full(
     check_coeff_dict=None,
     kperm=None,
     var2=var2,
-    var3=var3,    
+    var3=var3,
     N=None,
 ):
     perms = args.perms
@@ -26,7 +56,7 @@ def _display_full(
     msg = args.msg
     down = args.down
     same = args.same
-    display_positive = args.display_positive    
+    display_positive = args.display_positive
 
     coeff_perms = list(coeff_dict.keys())
     if coprod:
@@ -81,10 +111,7 @@ def _display_full(
 
         if ascode:
             width = max(
-                [
-                    len(str(trimcode(perm[0])) + " " + str(trimcode(perm[1])))
-                    for perm in perm_pairs
-                ]
+                [len(str(trimcode(perm[0])) + " " + str(trimcode(perm[1]))) for perm in perm_pairs]
             )
         else:
             width = max([len(str(perm[0]) + " " + str(perm[1])) for perm in perm_pairs])
@@ -158,7 +185,7 @@ def _display_full(
 
         var_r = symarray("r", 100)
         for perm in coeff_perms:
-            val = coeff_dict[perm]            
+            val = coeff_dict[perm]
             if val != 0:
                 notint = False
                 try:
@@ -200,9 +227,7 @@ def _display_full(
                             elif not posified and not mult:
                                 val = compute_positive_rep(val, var2, var3, msg)
                             elif not posified:
-                                val = compute_positive_rep(
-                                    val, var2, var3, msg, do_pos_neg=False
-                                )
+                                val = compute_positive_rep(val, var2, var3, msg, do_pos_neg=False)
                         except Exception:
                             if mult:
                                 _display(
@@ -221,13 +246,10 @@ def _display_full(
                             exit(1)
                 if val != 0:
                     if ascode:
-                        _display(
-                            f"{str(trimcode(perm)):>{width}}  {formatter(val)}"
-                        )
+                        _display(f"{str(trimcode(perm)):>{width}}  {formatter(val)}")
                     else:
-                        _display(
-                            f"{str(perm):>{width}}  {formatter(val)}"
-                        )
+                        _display(f"{str(perm):>{width}}  {formatter(val)}")
+
 
 def main():
     global var2, var3
@@ -267,13 +289,11 @@ def main():
                 mperm = tuple(permtrim(perms[0]))
 
             perms[0] = mperm
-            pos = perms[1]                        
+            pos = perms[1]
 
             k = len(pos)
             n = len(perms[0])
-            kcd = [pos[i] - i - 1 for i in range(len(pos))] + [
-                n + 1 - k for i in range(k, n)
-            ]
+            kcd = [pos[i] - i - 1 for i in range(len(pos))] + [n + 1 - k for i in range(k, n)]
             N = len(kcd)
 
             kperm = inverse(uncode(kcd))

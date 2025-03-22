@@ -1,4 +1,4 @@
-from symengine import symarray, Symbol
+from symengine import symarray
 
 n = 100
 
@@ -6,8 +6,6 @@ var = symarray("x", n)
 var2 = symarray("y", n)
 var3 = var2
 var_r = symarray("r", n)
-
-var_q = Symbol("q")
 
 subs_dict = {}
 

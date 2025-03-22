@@ -165,14 +165,10 @@ def schub_argparse(prog_name, description, quantum=False, yz=False):
             raise e
     import sympy
 
-    formatter = lambda bob: str(bob)
+    formatter = lambda bob: str(bob)  # noqa: E731
     if args.disp_mode == "latex":
-        formatter = (
-            lambda bob: sympy.latex(sympy.sympify(bob))
-            .replace("\\left", "")
-            .replace("\\right", "")
-        )
+        formatter = lambda bob: sympy.latex(sympy.sympify(bob)).replace("\\left", "").replace("\\right", "")  # noqa: E731
     elif args.disp_mode == "pretty":
-        formatter = lambda bob: sympy.pretty(sympy.sympify(bob))
+        formatter = lambda bob: sympy.pretty(sympy.sympify(bob))  # noqa: E731
 
     return args, formatter

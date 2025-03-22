@@ -1,12 +1,24 @@
-from ._vars import *
-from ._funcs import *
+from ._funcs import (
+    mult_poly,
+    schubmult,
+)
+from symengine import sympify
+from schubmult._base_argparse import schub_argparse
+from schubmult.perm_lib import (
+    inverse,
+    theta,
+    permtrim,
+    inv,
+    mulperm,
+    code,
+    uncode,
+    trimcode,
+)
 
 
 def main():
     try:
-        args = schub_argparse(
-            "schubmult_py", "Compute products of ordinary Schubert polynomials"
-        )
+        args = schub_argparse("schubmult_py", "Compute products of ordinary Schubert polynomials")
 
         mult = args.mult
         mulstring = args.mulstring
@@ -39,9 +51,7 @@ def main():
                 cd.pop()
             k = len(pos)
             n = len(perms[0])
-            kcd = [pos[i] - i - 1 for i in range(len(pos))] + [
-                n + 1 - k for i in range(k, n)
-            ]
+            kcd = [pos[i] - i - 1 for i in range(len(pos))] + [n + 1 - k for i in range(k, n)]
             N = len(kcd)
             kperm = inverse(uncode(kcd))
             coeff_dict = {tuple(permtrim(kperm)): 1}
@@ -70,9 +80,7 @@ def main():
                             # while len(secondcode)>0 and secondcode[-1] == 0:
                             # secondcode.pop()
                             if ascode:
-                                print(
-                                    f"{val} {trimcode(firstperm)} {trimcode(secondperm)}"
-                                )
+                                print(f"{val} {trimcode(firstperm)} {trimcode(secondperm)}")
                             else:
                                 print(
                                     f"{val} {tuple(permtrim(firstperm))} {tuple(permtrim(secondperm))}"

@@ -1,4 +1,4 @@
-from sage.all import *
+from sage.all import *  # noqa: F403
 from sage.categories.graded_bialgebras_with_basis import GradedBialgebrasWithBasis
 from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
 from sage.combinat.free_module import CombinatorialFreeModule
@@ -26,7 +26,7 @@ import symengine as syme
 
 
 def FastSchubertPolynomialRing(
-    R: Parent,
+    R: Parent,  # noqa: F405
     num_vars: int,
     base_variable_name: str,
     *,
@@ -80,12 +80,11 @@ def FastSchubertPolynomialRing(
 
 
 def FastQuantumSchubertPolynomialRing(
-    R: Parent,
+    R: Parent,  # noqa: F405
     num_vars: int,
     base_variable_name: str,
     q_varname: str = "q",
     code_display: bool = False,
-    
 ):
     """Quantum Schubert ring generator
 
@@ -98,7 +97,7 @@ def FastQuantumSchubertPolynomialRing(
         base_variable_name (str): Base variable name
         q_varname (str, optional): Variable name of the q-ring. Defaults to "q".
         code_display (bool, optional): Whether to display the indices as the Lehmer code. Defaults to False.
-        
+
 
     Returns:
         FastSchubertPolynomialRing_xbasis: Element constructor of the ring
@@ -114,7 +113,6 @@ def FastQuantumSchubertPolynomialRing(
 
 
 class FastSchubertPolynomial_class(CombinatorialFreeModule.Element):
-
     @property
     def base_varname(self):
         return self.parent()._base_varname
@@ -177,9 +175,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         quantum,
         QR,
     ):
-        self._name = (
-            f"{'Quantum ' if quantum else ''}Schubert polynomial ring with X basis"
-        )
+        self._name = f"{'Quantum ' if quantum else ''}Schubert polynomial ring with X basis"
         self._splitter = indices
         self._repr_option_bracket = False
         self._quantum = quantum
@@ -198,7 +194,11 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             self._ascode = True
 
         CombinatorialFreeModule.__init__(
-            self, R if not quantum else QR, index_set, category=cat, prefix=f"QS{base_variable_name}"
+            self,
+            R if not quantum else QR,
+            index_set,
+            category=cat,
+            prefix=f"QS{base_variable_name}",
         )
         self._q_ring = QR
         self._base_varname = base_variable_name
@@ -291,14 +291,9 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         if self._quantum:
             return sum(
                 [
-                    self.base_ring()(str(v))
-                    * self(_coerce_index(k, False, self._ascode))
+                    self.base_ring()(str(v)) * self(_coerce_index(k, False, self._ascode))
                     for k, v in sq.schubmult_db(
-                        {
-                            tuple(
-                                _coerce_index(left, self._ascode, False)
-                            ): self.base_ring()(1)
-                        },
+                        {tuple(_coerce_index(left, self._ascode, False)): self.base_ring()(1)},
                         tuple(_coerce_index(right, self._ascode, False)),
                         list(self._q_ring.gens()),
                     ).items()
@@ -317,17 +312,13 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
 
     def coproduct_on_basis(self, mperm):
         if self._quantum:
-            raise NotImplementedError(
-                "Quantum Schubert polynomials do not have a coproduct"
-            )
+            raise NotImplementedError("Quantum Schubert polynomials do not have a coproduct")
         mperm = _coerce_index(mperm, self._ascode, False)
         indices = self._splitter
         indices = sorted(indices)
         k = len(indices)
         n = len(mperm)
-        kcd = [indices[i] - i - 1 for i in range(len(indices))] + [
-            n + 1 - k for i in range(k, n)
-        ]
+        kcd = [indices[i] - i - 1 for i in range(len(indices))] + [n + 1 - k for i in range(k, n)]
         max_required = max([kcd[i] + i for i in range(len(kcd))])
         kcd2 = kcd + [0 for i in range(len(kcd), max_required)] + [0]
         N = len(kcd)
@@ -341,10 +332,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         for perm, val in coeff_dict.items():
             pperm = Permutation(list(perm))
             downperm = pperm.left_action_product(inverse_kperm)
-            if (
-                downperm.number_of_inversions()
-                == pperm.number_of_inversions() - inv_kperm
-            ):
+            if downperm.number_of_inversions() == pperm.number_of_inversions() - inv_kperm:
                 flag = True
                 for i in range(N):
                     if downperm[i] > N:
@@ -353,9 +341,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 if not flag:
                     continue
                 firstperm = Permutation(list(downperm[0:N]))
-                secondperm = Permutation(
-                    [downperm[i] - N for i in range(N, len(downperm))]
-                )
+                secondperm = Permutation([downperm[i] - N for i in range(N, len(downperm))])
                 total_sum += self.base_ring()(val) * self(
                     _coerce_index(firstperm, False, self._ascode)
                 ).tensor(self(_coerce_index(secondperm, False, self._ascode)))

@@ -1,8 +1,8 @@
-from ._vars import *
-from symengine import sympify, Add, Mul, Pow, symarray, Symbol, expand
-from schubmult._base_argparse import schub_argparse
+from ._vars import (
+    var_x,
+)
+from symengine import Add, Mul, Pow
 from schubmult.perm_lib import (
-    trimcode,
     elem_sym_perms_q,
     add_perm_dict,
     compute_vpathdicts,
@@ -15,17 +15,8 @@ from schubmult.perm_lib import (
     code,
     uncode,
     double_elem_sym_q,
-    longest_element,
-    check_blocks,
-    is_parabolic,
-    q_vector,
-    omega,
-    count_less_than,
     q_var,
-    sg,
 )
-import numpy as np
-from schubmult.schubmult_q_double import factor_out_q_keep_factored
 
 # from symengine import sympify, Add, Mul, Pow, symarray, Symbol, expand
 # from schubmult._base_argparse import schub_argparse
@@ -57,7 +48,7 @@ from schubmult.schubmult_q_double import factor_out_q_keep_factored
 # from schubmult.schubmult_q_double import factor_out_q_keep_factored
 
 
-def single_variable(coeff_dict, varnum, var_q=var_q):
+def single_variable(coeff_dict, varnum, var_q=q_var):
     ret = {}
     for u in coeff_dict:
         new_perms_k = elem_sym_perms_q(u, 1, varnum, var_q)
@@ -73,7 +64,7 @@ def single_variable(coeff_dict, varnum, var_q=var_q):
     return ret
 
 
-def mult_poly(coeff_dict, poly, var_x=var_x, var_q=var_q):
+def mult_poly(coeff_dict, poly, var_x=var_x, var_q=q_var):
     if poly in var_x:
         return single_variable(coeff_dict, var_x.index(poly), var_q=var_q)
     elif isinstance(poly, Mul):

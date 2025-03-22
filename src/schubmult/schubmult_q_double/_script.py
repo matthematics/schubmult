@@ -1,17 +1,31 @@
-from ._vars import *
-from ._funcs import *
+import sys
+import numpy as np
+from ._vars import var_x, var2, var3, var2_t, var3_t
+from ._funcs import schubmult, schubmult_db, mult_poly, nil_hecke, factor_out_q_keep_factored
+from schubmult.schubmult_double import compute_positive_rep, posify, div_diff
+from symengine import expand, sympify, symarray
+from schubmult.perm_lib import (
+    inverse,
+    medium_theta,
+    permtrim,
+    inv,
+    mulperm,
+    uncode,
+    q_var,
+    q_vector,
+    reduce_q_coeff,
+    code,
+    trimcode,
+    longest_element,
+    check_blocks,
+    is_parabolic,
+    count_less_than,
+    omega,
+)
+from schubmult._base_argparse import schub_argparse
 
-def _display_full(
-    coeff_dict,
-    args,
-    formatter,
-    posified=None,    
-    var2=var2,
-    var3=var3
-):    
 
-    mulstring = ""
-
+def _display_full(coeff_dict, args, formatter, posified=None, var2=var2, var3=var3):
     mult = args.mult
 
     perms = args.perms
@@ -22,13 +36,12 @@ def _display_full(
     msg = args.msg
     display_positive = args.display_positive
     expa = args.expa
-    slow = args.slow    
+    slow = args.slow
     nilhecke_apply = False
 
     coeff_perms = list(coeff_dict.keys())
     coeff_perms.sort(key=lambda x: (inv(x), *x))
 
-    
     var_r = symarray("r", 100)
     for perm in coeff_perms:
         val = coeff_dict[perm]
@@ -49,8 +62,7 @@ def _display_full(
                                     v = tuple(permtrim([*perms[1]]))
                                 if (
                                     len(perms) == 2
-                                    and code(inverse(perms[1]))
-                                    == medium_theta(inverse(perms[1]))
+                                    and code(inverse(perms[1])) == medium_theta(inverse(perms[1]))
                                     and not mult
                                     and not slow
                                     and not nilhecke_apply
@@ -58,25 +70,14 @@ def _display_full(
                                     val2 += q_part * q_dict[q_part]
                                 else:
                                     q_part2 = q_part
-                                    if (
-                                        not mult
-                                        and not nilhecke_apply
-                                        and len(perms) == 2
-                                    ):
+                                    if not mult and not nilhecke_apply and len(perms) == 2:
                                         qv = q_vector(q_part)
                                         u2, v2, w2 = u, v, perm
-                                        u2, v2, w2, qv, did_one = (
-                                            reduce_q_coeff(u2, v2, w2, qv)
-                                        )
+                                        u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
                                         while did_one:
-                                            u2, v2, w2, qv, did_one = (
-                                                reduce_q_coeff(u2, v2, w2, qv)
-                                            )
+                                            u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
                                         q_part2 = np.prod(
-                                            [
-                                                q_var[i + 1] ** qv[i]
-                                                for i in range(len(qv))
-                                            ]
+                                            [q_var[i + 1] ** qv[i] for i in range(len(qv))]
                                         )
                                         if q_part2 == 1:
                                             # reduced to classical coefficient
@@ -91,15 +92,12 @@ def _display_full(
                                                 False,
                                             )
                                         else:
-                                            val2 += (
-                                                q_part
-                                                * compute_positive_rep(
-                                                    q_dict[q_part],
-                                                    var2_t,
-                                                    var3_t,
-                                                    msg,
-                                                    False,
-                                                )
+                                            val2 += q_part * compute_positive_rep(
+                                                q_dict[q_part],
+                                                var2_t,
+                                                var3_t,
+                                                msg,
+                                                False,
                                             )
                                     else:
                                         val2 += q_part * compute_positive_rep(
@@ -148,13 +146,10 @@ def _display_full(
                 val = expand(val)
             if val != 0:
                 if ascode:
-                    print(
-                        f"{str(trimcode(perm))}  {formatter(val)}"
-                    )                            
+                    print(f"{str(trimcode(perm))}  {formatter(val)}")
                 else:
-                    print(
-                        f"{str(perm)}  {formatter(val)}"
-                    )
+                    print(f"{str(perm)}  {formatter(val)}")
+
 
 def main():
     global var2, var3
@@ -167,8 +162,6 @@ def main():
             yz=True,
             quantum=True,
         )
-
-        mulstring = ""
 
         mult = args.mult
         mulstring = args.mulstring
@@ -207,13 +200,11 @@ def main():
 
         if nilhecke:
             coeff_dict = nil_hecke({(1, 2): 1}, perms[0], nil_N)
-            rep = ("y", "x")
         elif nilhecke_apply:
             coeff_dict0 = nil_hecke({(1, 2): 1}, perms[0], nil_N, var2, var2)
             coeff_dict = {(1, 2): 0}
             for v in coeff_dict0:
                 coeff_dict[(1, 2)] += coeff_dict0[v] * div_diff(v, perms[1], var2, var3)
-            rep = ("y", "x")
         else:
             coeff_dict = {perms[0]: 1}
             for perm in perms[1:]:
@@ -268,11 +259,7 @@ def main():
 
                     new_q_part = np.prod(
                         [
-                            q_var[
-                                index
-                                + 1
-                                - count_less_than(parabolic_index, index + 1)
-                            ]
+                            q_var[index + 1 - count_less_than(parabolic_index, index + 1)]
                             ** qv[index]
                             for index in range(len(qv))
                             if index + 1 not in parabolic_index
@@ -305,18 +292,11 @@ def main():
                                 else:
                                     qv = q_vector(q_part)
                                     u2, v2, w2 = perms[0], perms[1], w_1
-                                    u2, v2, w2, qv, did_one = reduce_q_coeff(
-                                        u2, v2, w2, qv
-                                    )
+                                    u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
                                     while did_one:
-                                        u2, v2, w2, qv, did_one = reduce_q_coeff(
-                                            u2, v2, w2, qv
-                                        )
+                                        u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
                                     q_part2 = np.prod(
-                                        [
-                                            q_var[i + 1] ** qv[i]
-                                            for i in range(len(qv))
-                                        ]
+                                        [q_var[i + 1] ** qv[i] for i in range(len(qv))]
                                     )
                                     if q_part2 == 1:
                                         q_val_part = posify(
@@ -343,9 +323,7 @@ def main():
                                 )
                                 print(f"Exception: {e}")
                                 exit(1)
-                    coeff_dict_update[w] = (
-                        coeff_dict_update.get(w, 0) + new_q_part * q_val_part
-                    )
+                    coeff_dict_update[w] = coeff_dict_update.get(w, 0) + new_q_part * q_val_part
 
             coeff_dict = coeff_dict_update
 
