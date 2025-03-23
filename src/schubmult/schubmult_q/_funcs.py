@@ -1,7 +1,4 @@
-from ._vars import (
-    var_x,
-)
-from symengine import Add, Mul, Pow
+from symengine import Add, Mul, Pow, symarray
 from schubmult.perm_lib import (
     elem_sym_perms_q,
     add_perm_dict,
@@ -14,41 +11,24 @@ from schubmult.perm_lib import (
     mulperm,
     code,
     uncode,
-    double_elem_sym_q,
-    q_var,
+    double_elem_sym_q,    
 )
 
-# from symengine import sympify, Add, Mul, Pow, symarray, Symbol, expand
-# from schubmult._base_argparse import schub_argparse
-# from schubmult.perm_lib import (
-#     trimcode,
-#     elem_sym_perms_q,
-#     add_perm_dict,
-#     compute_vpathdicts,
-#     inverse,
-#     strict_theta,
-#     medium_theta,
-#     permtrim,
-#     inv,
-#     mulperm,
-#     code,
-#     uncode,
-#     double_elem_sym_q,
-#     longest_element,
-#     check_blocks,
-#     is_parabolic,
-#     q_vector,
-#     omega,
-#     count_less_than,
-#     q_var,
-#     sg,
-#     n,
-# )
-# import numpy as np
-# from schubmult.schubmult_q_double import factor_out_q_keep_factored
+from functools import cached_property
 
 
-def single_variable(coeff_dict, varnum, var_q=q_var):
+class _gvars:
+    @cached_property
+    def var_x(self):
+        return tuple(symarray("x", self.n).tolist())
+
+    @cached_property
+    def q_var(self):
+        return tuple(symarray("q", self.n).tolist())
+
+_vars = _gvars()
+
+def single_variable(coeff_dict, varnum, var_q=_vars.q_var):
     ret = {}
     for u in coeff_dict:
         new_perms_k = elem_sym_perms_q(u, 1, varnum, var_q)
@@ -64,7 +44,7 @@ def single_variable(coeff_dict, varnum, var_q=q_var):
     return ret
 
 
-def mult_poly(coeff_dict, poly, var_x=var_x, var_q=q_var):
+def mult_poly(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
     if poly in var_x:
         return single_variable(coeff_dict, var_x.index(poly), var_q=var_q)
     elif isinstance(poly, Mul):
@@ -90,7 +70,7 @@ def mult_poly(coeff_dict, poly, var_x=var_x, var_q=q_var):
             ret[perm] = poly * coeff_dict[perm]
         return ret
 
-def schubmult_db(perm_dict, v, q_var=q_var):
+def schubmult_db(perm_dict, v, q_var=_vars.q_var):
     if v == (1, 2):
         return perm_dict
     th = medium_theta(inverse(v))

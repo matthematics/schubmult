@@ -1,7 +1,12 @@
 import sys
 import numpy as np
-from schubmult.schubmult_q_double._vars import var_x, var2, var3, var2_t, var3_t
-from schubmult.schubmult_q_double._funcs import schubmult, schubmult_db, mult_poly, nil_hecke, factor_out_q_keep_factored
+from schubmult.schubmult_q_double._funcs import (
+    schubmult,
+    schubmult_db,
+    mult_poly,
+    nil_hecke,
+    factor_out_q_keep_factored,
+)
 from schubmult.schubmult_double import compute_positive_rep, posify, div_diff
 from symengine import expand, sympify, symarray
 from schubmult.perm_lib import (
@@ -23,9 +28,39 @@ from schubmult.perm_lib import (
     omega,
 )
 from schubmult._base_argparse import schub_argparse
+from functools import cached_property
 
 
-def _display_full(coeff_dict, args, formatter, posified=None, var2=var2, var3=var3):
+class _gvars:
+    @cached_property
+    def n(self):
+        return 100
+
+    # @cached_property
+    # def fvar(self):
+    #     return 100
+
+    @cached_property
+    def var1(self):
+        return tuple(symarray("x", self.n).tolist())
+
+    @cached_property
+    def var2(self):
+        return tuple(symarray("y", self.n).tolist())
+
+    @cached_property
+    def var3(self):
+        return tuple(symarray("z", self.n).tolist())
+
+    @cached_property
+    def var_r(self):
+        return symarray("r", 100)
+
+
+_vars = _gvars()
+
+
+def _display_full(coeff_dict, args, formatter, posified=None, var2=_vars.var2, var3=_vars.var3):
     raw_result_dict = {}
     mult = args.mult
 
@@ -87,24 +122,24 @@ def _display_full(coeff_dict, args, formatter, posified=None, var2=var2, var3=va
                                                 u2,
                                                 v2,
                                                 w2,
-                                                var2_t,
-                                                var3_t,
+                                                var2,
+                                                var3,
                                                 msg,
                                                 False,
                                             )
                                         else:
                                             val2 += q_part * compute_positive_rep(
                                                 q_dict[q_part],
-                                                var2_t,
-                                                var3_t,
+                                                var2,
+                                                var3,
                                                 msg,
                                                 False,
                                             )
                                     else:
                                         val2 += q_part * compute_positive_rep(
                                             q_dict[q_part],
-                                            var2_t,
-                                            var3_t,
+                                            var2,
+                                            var3,
                                             msg,
                                             False,
                                         )
@@ -170,7 +205,7 @@ def main(argv: list[str]):
             argv=argv,
         )
 
-        mult = args.mult
+        mult = args.mult  # noqa: F841
         mulstring = args.mulstring
 
         perms = args.perms
@@ -219,15 +254,15 @@ def main(argv: list[str]):
                     coeff_dict = schubmult_db(coeff_dict, perm, var2, var3)
                 else:
                     coeff_dict = schubmult(coeff_dict, perm, var2, var3)
-            if mult:
-                for v in var2:
-                    globals()[str(v)] = v
-                for v in var3:
-                    globals()[str(v)] = v
-                for v in var_x:
-                    globals()[str(v)] = v
-                for v in q_var:
-                    globals()[str(v)] = v
+                # if mult:
+                #     for v in var2:
+                #         globals()[str(v)] = v
+                #     for v in var3:
+                #         globals()[str(v)] = v
+                #     for v in var_x:
+                #         globals()[str(v)] = v
+                #     for v in q_var:
+                #         globals()[str(v)] = v
 
                 mul_exp = eval(mulstring)
                 coeff_dict = mult_poly(coeff_dict, mul_exp)
@@ -291,8 +326,8 @@ def main(argv: list[str]):
                                         tuple(u),
                                         tuple(v),
                                         w_1,
-                                        var2_t,
-                                        var3_t,
+                                        var2,
+                                        var3,
                                         msg,
                                         False,
                                     )
@@ -311,16 +346,16 @@ def main(argv: list[str]):
                                             u2,
                                             v2,
                                             w2,
-                                            var2_t,
-                                            var3_t,
+                                            var2,
+                                            var3,
                                             msg,
                                             False,
                                         )
                                     else:
                                         q_val_part = compute_positive_rep(
                                             q_dict[q_part],
-                                            var2_t,
-                                            var3_t,
+                                            var2,
+                                            var3,
                                             msg,
                                             False,
                                         )

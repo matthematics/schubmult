@@ -36,13 +36,45 @@ import pulp as pu
 import sympy
 import psutil
 from sortedcontainers import SortedList
-from ._vars import (
-    n,
-    var2,
-    var3,
-    var_x,
-    var_y,
-)
+from functools import cached_property
+
+# NO GLOBAL VARS
+# from ._vars import (
+#     n,
+#     var2,
+#     var3,
+#     _vars.var1,
+#     var_y,
+# )
+
+
+class _gvars:
+    @cached_property
+    def n(self):
+        return 100
+
+    # @cached_property
+    # def fvar(self):
+    #     return 100
+
+    @cached_property
+    def var1(self):
+        return tuple(symarray("x", self.n).tolist())
+
+    @cached_property
+    def var2(self):
+        return tuple(symarray("y", self.n).tolist())
+
+    @cached_property
+    def var3(self):
+        return tuple(symarray("z", self.n).tolist())
+
+    @cached_property
+    def var_r(self):
+        return symarray("r", 100)
+
+
+_vars = _gvars()
 
 
 def count_sorted(mn, tp):
@@ -54,11 +86,11 @@ def count_sorted(mn, tp):
     return ct
 
 
-def E(p, k, varl=var_y[1:]):
-    return elem_sym_poly(p, k, var_x[1:], varl)
+def E(p, k, varl=_vars.var2[1:]):
+    return elem_sym_poly(p, k, _vars.var1[1:], varl)
 
 
-def single_variable(coeff_dict, varnum, var2=var2):
+def single_variable(coeff_dict, varnum, var2=None):
     ret = {}
     for u in coeff_dict:
         if varnum - 1 < len(u):
@@ -78,7 +110,7 @@ def single_variable(coeff_dict, varnum, var2=var2):
     return ret
 
 
-def single_variable_down(coeff_dict, varnum):
+def single_variable_down(coeff_dict, varnum, var2=_vars.var2):
     ret = {}
     for u in coeff_dict:
         if varnum - 1 < len(u):
@@ -98,25 +130,25 @@ def single_variable_down(coeff_dict, varnum):
     return ret
 
 
-def mult_poly(coeff_dict, poly, var_x=var_x, var_y=var2):
-    if poly in var_x:
-        return single_variable(coeff_dict, var_x.index(poly), var_y)
+def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
+    if poly in _vars.var1:
+        return single_variable(coeff_dict, _vars.var1.index(poly), var_y)
     elif isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
-            ret = mult_poly(ret, a, var_x, var_y)
+            ret = mult_poly(ret, a, _vars.var1, var_y)
         return ret
     elif isinstance(poly, Pow):
         base = poly.args[0]
         exponent = int(poly.args[1])
         ret = coeff_dict
         for i in range(int(exponent)):
-            ret = mult_poly(ret, base, var_x, var_y)
+            ret = mult_poly(ret, base, _vars.var1, var_y)
         return ret
     elif isinstance(poly, Add):
         ret = {}
         for a in poly.args:
-            ret = add_perm_dict(ret, mult_poly(coeff_dict, a, var_x, var_y))
+            ret = add_perm_dict(ret, mult_poly(coeff_dict, a, _vars.var1, var_y))
         return ret
     else:
         ret = {}
@@ -126,8 +158,8 @@ def mult_poly(coeff_dict, poly, var_x=var_x, var_y=var2):
 
 
 def mult_poly_down(coeff_dict, poly):
-    if poly in var_x:
-        return single_variable_down(coeff_dict, var_x.index(poly))
+    if poly in _vars.var1:
+        return single_variable_down(coeff_dict, _vars.var1.index(poly))
     elif isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
@@ -168,7 +200,7 @@ def nilhecke_mult(coeff_dict1, coeff_dict2):
     return ret
 
 
-def forwardcoeff(u, v, perm, var2=var2, var3=var3):
+def forwardcoeff(u, v, perm, var2=None, var3=None):
     th = theta(v)
     muv = uncode(th)
     vmun1 = mulperm(inverse([*v]), muv)
@@ -180,7 +212,7 @@ def forwardcoeff(u, v, perm, var2=var2, var3=var3):
     return 0
 
 
-def dualcoeff(u, v, perm, var2=var2, var3=var3):
+def dualcoeff(u, v, perm, var2=None, var3=None):
     if u == (1, 2):
         vp = mulperm([*v], inverse(perm))
         if inv(vp) == inv(v) - inv(perm):
@@ -256,11 +288,11 @@ monom_to_vec = {}
 
 
 @cache
-def schubmult_one(perm1, perm2, var2=var2, var3=var3):
+def schubmult_one(perm1, perm2, var2=None, var3=None):
     return schubmult({perm1: 1}, perm2, var2, var3)
 
 
-def schubmult(perm_dict, v, var2=var2, var3=var3):
+def schubmult(perm_dict, v, var2=None, var3=None):
     vn1 = inverse(v)
     th = theta(vn1)
     if len(th) == 0:
@@ -319,7 +351,7 @@ def schubmult(perm_dict, v, var2=var2, var3=var3):
     return ret_dict
 
 
-def schubmult_down(perm_dict, v, var2=var2, var3=var3):
+def schubmult_down(perm_dict, v, var2=None, var3=None):
     vn1 = inverse(v)
     th = theta(vn1)
     if th[0] == 0:
@@ -371,7 +403,7 @@ def schubmult_down(perm_dict, v, var2=var2, var3=var3):
     return ret_dict
 
 
-def poly_to_vec(poly, vec0=None):
+def poly_to_vec(poly, vec0=None, var3=_vars.var3):
     global dimen, monom_to_vec, base_vec
     poly = expand(poly.xreplace({var3[1]: 0}))
 
@@ -396,12 +428,12 @@ def poly_to_vec(poly, vec0=None):
     return vec
 
 
-def shiftsub(pol):
+def shiftsub(pol, var2=_vars.var2, var3=_vars.var3):
     subs_dict = dict([(var2[i], var2[i + 1]) for i in range(99)])
     return sympify(pol).subs(subs_dict)
 
 
-def shiftsubz(pol):
+def shiftsubz(pol, var2=_vars.var2, var3=_vars.var3):
     subs_dict = dict([(var3[i], var3[i + 1]) for i in range(99)])
     return sympify(pol).subs(subs_dict)
 
@@ -449,7 +481,7 @@ def is_flat_term(term):
     return True
 
 
-def flatten_factors(term, var2=var3, var3=var3):
+def flatten_factors(term, var2=_vars.var2, var3=_vars.var3):
     found_one = False
     if is_flat_term(term):
         return term, False
@@ -511,7 +543,7 @@ def fres(v):
         return s
 
 
-def split_mul(arg0, var2=var2, var3=var3):
+def split_mul(arg0, var2=None, var3=None):
     monoms = SortedList()
 
     var2s = {fres(var2[i]): i for i in range(len(var2))}
@@ -705,7 +737,7 @@ def find_base_vectors(monom_list, monom_list_neg, var2, var3, depth):
     return ret, monom_list
 
 
-def compute_positive_rep(val, var2=var2, var3=var3, msg=False, do_pos_neg=True):
+def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
     notint = False
     try:
         int(expand(val))
@@ -970,7 +1002,7 @@ def is_hook(cd):
     return False
 
 
-def div_diff(i, poly):
+def div_diff(i, poly, var2=_vars.var2):
     return sympify(
         sympy.div(sympy.sympify(poly - permy(poly, i)), sympy.sympify(var2[i] - var2[i + 1]))[0]
     )
@@ -1007,13 +1039,15 @@ def skew_div_diff(u, w, poly):
     u2,
     v2,
     w2,
-    var2=var2,
-    var3=var3,
+    var2=None,
+    var3=None,
     msg=False,
     do_pos_neg=True,
     sign_only=False: hashkey(u2, v2, w2, var2, var3, msg, do_pos_neg, sign_only),
 )
-def posify(val, u2, v2, w2, var2=var2, var3=var3, msg=False, do_pos_neg=True, sign_only=False):
+def posify(
+    val, u2, v2, w2, var2=None, var3=None, msg=False, do_pos_neg=True, sign_only=False, n=_vars.n
+):
     if inv(u2) + inv(v2) - inv(w2) == 0:
         return val
     cdv = code(v2)
@@ -1567,7 +1601,7 @@ def split_perms(perms):
     return perms2
 
 
-def schubpoly(v, var2=var2, var3=var3, start_var=1):
+def schubpoly(v, var2=None, var3=None, start_var=1):
     n = 0
     for j in range(len(v) - 2, -1, -1):
         if v[j] > v[j + 1]:
@@ -1585,11 +1619,12 @@ def schubpoly(v, var2=var2, var3=var3, start_var=1):
     return ret
 
 
-def permy(val, i):
+def permy(val, i, var2=_vars.var2):
     subsdict = {var2[i]: var2[i + 1], var2[i + 1]: var2[i]}
     return sympify(val).subs(subsdict)
 
-def schub_coprod(mperm, indices, var2=var2, var3=var3):
+
+def schub_coprod(mperm, indices, var2=_vars.var2, var3=_vars.var3):
     indices = sorted(indices)
     subs_dict_coprod = {}
     k = len(indices)
@@ -1601,8 +1636,8 @@ def schub_coprod(mperm, indices, var2=var2, var3=var3):
     kperm = permtrim(inverse(uncode(kcd2)))
     inv_kperm = inv(kperm)
     vn = symarray("soible", 100)
-    
-    for i in range(N * 2 + 1):
+
+    for i in range(1, N * 2 + 1):
         if i <= N:
             subs_dict_coprod[vn[i]] = var2[i]
         else:
@@ -1612,7 +1647,7 @@ def schub_coprod(mperm, indices, var2=var2, var3=var3):
     coeff_dict = schubmult(coeff_dict, mperm, vn, var2)
 
     inverse_kperm = inverse(kperm)
-    
+
     ret_dict = {}
     for perm in coeff_dict:
         downperm = mulperm(list(perm), inverse_kperm)
@@ -1628,7 +1663,7 @@ def schub_coprod(mperm, indices, var2=var2, var3=var3):
             secondperm = [downperm[i] - N for i in range(N, len(downperm))]
 
             val = sympify(coeff_dict[perm]).subs(subs_dict_coprod)
-            
+
             key = (tuple(permtrim(firstperm)), tuple(permtrim(secondperm)))
             ret_dict[key] = val
 

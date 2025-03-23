@@ -1,7 +1,8 @@
 import numpy as np
 import sympy
 import sys
-from schubmult.schubmult_double._vars import var2, var3, var_x, var, var_r
+
+# from schubmult.schubmult_double._vars import var_x, var, var_r
 from schubmult.schubmult_double._funcs import (
     mult_poly,
     mult_poly_down,
@@ -11,7 +12,7 @@ from schubmult.schubmult_double._funcs import (
     posify,
     split_perms,
 )
-from symengine import expand, sympify
+from symengine import expand, sympify, symarray
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
     add_perm_dict,
@@ -27,6 +28,37 @@ from schubmult.perm_lib import (
     trimcode,
 )
 
+from functools import cached_property
+
+
+class _gvars:
+    @cached_property
+    def n(self):
+        return 100
+
+    # @cached_property
+    # def fvar(self):
+    #     return 100
+
+    @cached_property
+    def var1(self):
+        return tuple(symarray("x", self.n).tolist())
+
+    @cached_property
+    def var2(self):
+        return tuple(symarray("y", self.n).tolist())
+
+    @cached_property
+    def var3(self):
+        return tuple(symarray("z", self.n).tolist())
+
+    @cached_property
+    def var_r(self):
+        return symarray("r", 100)
+
+
+_vars = _gvars()
+
 
 def _display(val):
     print(val)
@@ -36,11 +68,11 @@ def _display_full(
     coeff_dict,
     args,
     formatter,
+    var2,
+    var3,
     posified=None,
     check_coeff_dict=None,
     kperm=None,
-    var2=var2,
-    var3=var3,
     N=None,
 ):
     raw_result_dict = {}
@@ -83,9 +115,9 @@ def _display_full(
 
         for i in range(1, 100):
             if i <= N:
-                subs_dict[var[i]] = var2[i]
+                subs_dict[_vars.var1[i]] = var2[i]
             else:
-                subs_dict[var[i]] = var3[i - N]
+                subs_dict[_vars.var1[i]] = var3[i - N]
 
         coeff_perms.sort(key=lambda x: (inv(x), *x))
 
@@ -132,7 +164,7 @@ def _display_full(
                     for i in range(1, 100):
                         sm = var2[1]
                         for j in range(1, i):
-                            sm += var_r[j]
+                            sm += _vars.var_r[j]
                         subs_dict2[var2[i]] = sm
                     val = expand(sympify(val).xreplace(subs_dict2))
 
@@ -167,7 +199,9 @@ def _display_full(
                                 - len(str(permtrim(firstperm)))
                                 - len(str(permtrim(secondperm)))
                             )
-                            raw_result_dict[(tuple(permtrim(firstperm)),tuple(permtrim(secondperm)))] = val
+                            raw_result_dict[
+                                (tuple(permtrim(firstperm)), tuple(permtrim(secondperm)))
+                            ] = val
                             if formatter:
                                 _display(
                                     f"{tuple(permtrim(firstperm))}{' ':>{width2}}{tuple(permtrim(secondperm))}  {formatter(val)}"
@@ -178,7 +212,9 @@ def _display_full(
                                 - len(str(trimcode(firstperm)))
                                 - len(str(trimcode(secondperm)))
                             )
-                            raw_result_dict[(tuple(trimcode(firstperm)),tuple(trimcode(secondperm)))] = val
+                            raw_result_dict[
+                                (tuple(trimcode(firstperm)), tuple(trimcode(secondperm)))
+                            ] = val
                             if formatter:
                                 _display(
                                     f"{trimcode(firstperm)}{' ':>{width2}}{trimcode(secondperm)}  {formatter(val)}"
@@ -206,7 +242,7 @@ def _display_full(
                         for i in range(1, 100):
                             sm = var2[1]
                             for j in range(1, i):
-                                sm += var_r[j]
+                                sm += _vars.var_r[j]
                             subs_dict[var2[i]] = sm
                         val = expand(sympify(coeff_dict[perm]).xreplace(subs_dict))
                     else:
@@ -263,9 +299,18 @@ def _display_full(
                             _display(f"{str(perm):>{width}}  {formatter(val)}")
     return raw_result_dict
 
+
 def main(argv: list[str]):
-    global var2, var3
+    import logging
+
+    logging.basicConfig(
+        level=logging.ERROR, format="%(asctime)s %(levelname)s %(message) %(module) s"
+    )
+    logger = logging.getLogger(__name__)
+    logger.log(logging.DEBUG, f"main {argv=}")
     try:
+        var2 = symarray("y", 100)
+        var3 = symarray("z", 100)
         sys.setrecursionlimit(1000000)
 
         # TEMP
@@ -277,8 +322,6 @@ def main(argv: list[str]):
             argv=argv[1:],
             yz=True,
         )
-
-
 
         mult = args.mult
         mulstring = args.mulstring
@@ -293,9 +336,11 @@ def main(argv: list[str]):
         display_positive = args.display_positive
         pr = args.pr
 
+        # logger.log(logging.DEBUG, f"main boing 1 {var2=}{var3=}{same=}")
         if same:
+            # logger.log(logging.DEBUG, f"main OOO {same=}")
             var3 = var2
-
+        # logger.log(logging.DEBUG, f"main boing 2 {var2=}{var3=}{same=}")
         posified = False
         if coprod:
             if ascode:
@@ -313,9 +358,10 @@ def main(argv: list[str]):
 
             kperm = inverse(uncode(kcd))
             coeff_dict = {tuple(kperm): 1}
-            coeff_dict = schubmult(coeff_dict, perms[0], var, var2)
+            coeff_dict = schubmult(coeff_dict, perms[0], _vars.var1, var2)
 
             if pr or formatter is None:
+                # logger.log(logging.DEBUG, f"main {var2=}{var3=}{same=}")
                 return _display_full(
                     coeff_dict,
                     args,
@@ -345,13 +391,13 @@ def main(argv: list[str]):
             coeff_dict = {perms[0]: 1}
             check_coeff_dict = {perms[0]: 1}
 
-            if mult:
-                for v in var2:
-                    globals()[str(v)] = v
-                for v in var3:
-                    globals()[str(v)] = v
-                for v in var_x:
-                    globals()[str(v)] = v
+            # if mult:
+            #     for v in var2:
+            #         ()[str(v)] = v
+            #     for v in var3:
+            #         globals()[str(v)] = v
+            #     for v in _vars.var1:
+            #         globals()[str(v)] = v
 
             if down:
                 for perm in orig_perms[1:]:

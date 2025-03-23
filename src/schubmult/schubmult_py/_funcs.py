@@ -1,4 +1,3 @@
-from ._vars import var_x
 from schubmult.perm_lib import (
     elem_sym_perms,
     add_perm_dict,
@@ -10,7 +9,21 @@ from schubmult.perm_lib import (
     mulperm,
     uncode,
 )
-from symengine import Add, Mul, Pow
+from symengine import Add, Mul, Pow, symarray
+from functools import cached_property
+
+
+class _gvars:
+    @cached_property
+    def n(self):
+        return 100
+
+    @cached_property
+    def var_x(self):
+        return tuple(symarray("x", self.n).tolist())
+
+
+_vars = _gvars()
 
 
 def single_variable(coeff_dict, varnum):
@@ -29,7 +42,7 @@ def single_variable(coeff_dict, varnum):
     return ret
 
 
-def mult_poly(coeff_dict, poly, var_x=var_x):
+def mult_poly(coeff_dict, poly, var_x=_vars.var_x):
     if poly in var_x:
         return single_variable(coeff_dict, var_x.index(poly))
     elif isinstance(poly, Mul):
@@ -100,15 +113,12 @@ def schubmult(perm_dict, v):
                             if vdiff + udiff == th[index]:
                                 if up2 not in newpathsums:
                                     newpathsums[up2] = {}
-                                newpathsums[up2][v2] = (
-                                    newpathsums[up2].get(v2, 0) + addsumval
-                                )
+                                newpathsums[up2][v2] = newpathsums[up2].get(v2, 0) + addsumval
             vpathsums = newpathsums
         toget = tuple(vmu)
-        ret_dict = add_perm_dict(
-            {ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict
-        )
+        ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
+
 
 def schub_coprod(perm, indices):
     mperm = tuple(perm)
@@ -131,7 +141,7 @@ def schub_coprod(perm, indices):
         if val == 0:
             continue
         pperm = [*perm]
-        downperm = mulperm(pperm,inverse_kperm)
+        downperm = mulperm(pperm, inverse_kperm)
         if inv(downperm) == inv(pperm) - inv_kperm:
             flag = True
             for i in range(N):
