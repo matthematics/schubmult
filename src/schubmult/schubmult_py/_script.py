@@ -112,7 +112,7 @@ def main(argv: list[str]):
                 for perm, val in coeff_dict.items():
                     if val != 0:
                         if ascode:
-                            raw_result_dict[tuple(perm)] = val
+                            raw_result_dict[tuple(trimcode(perm))] = val
                             if formatter:
                                 print(f"{val}  {trimcode(perm)}")
                         else:
