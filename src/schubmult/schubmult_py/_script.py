@@ -1,8 +1,4 @@
-from schubmult.schubmult_py._funcs import (
-    mult_poly,
-    schubmult,
-    schub_coprod
-)
+from schubmult.schubmult_py._funcs import mult_poly, schubmult, schub_coprod
 import sys
 from symengine import sympify
 from schubmult._base_argparse import schub_argparse
@@ -11,8 +7,6 @@ from schubmult.perm_lib import (
     theta,
     permtrim,
     inv,
-    mulperm,
-    code,
     uncode,
     trimcode,
 )
@@ -57,20 +51,14 @@ def main(argv: list[str]):
                     if val != 0:
                         if ascode:
                             if formatter is None:
-                                raw_result_dict[
-                                    (firstperm, secondperm)
-                                ] = val
+                                raw_result_dict[(firstperm, secondperm)] = val
                             else:
                                 print(f"{val} {trimcode(firstperm)} {trimcode(secondperm)}")
                         else:
                             if formatter is None:
-                                raw_result_dict[
-                                    (firstperm, secondperm)
-                                ] = val
+                                raw_result_dict[(firstperm, secondperm)] = val
                             else:
-                                print(
-                                    f"{val} {firstperm} {secondperm}"
-                                )
+                                print(f"{val} {firstperm} {secondperm}")
         else:
             if ascode:
                 for i in range(len(perms)):
@@ -101,8 +89,6 @@ def main(argv: list[str]):
             return raw_result_dict
     except BrokenPipeError:
         pass
-
-    
 
 
 if __name__ == "__main__":

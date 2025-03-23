@@ -2,7 +2,7 @@ from bisect import bisect_left
 from functools import cache
 from cachetools import cached
 from cachetools.keys import hashkey
-from symengine import sympify, Add, Mul, Pow, expand, Integer
+from symengine import sympify, Add, Mul, Pow, expand, Integer, symarray
 from schubmult.perm_lib import (
     elem_sym_perms,
     elem_sym_poly,
@@ -1588,3 +1588,48 @@ def schubpoly(v, var2=var2, var3=var3, start_var=1):
 def permy(val, i):
     subsdict = {var2[i]: var2[i + 1], var2[i + 1]: var2[i]}
     return sympify(val).subs(subsdict)
+
+def schub_coprod(mperm, indices, var2=var2, var3=var3):
+    indices = sorted(indices)
+    subs_dict_coprod = {}
+    k = len(indices)
+    n = len(mperm)
+    kcd = [indices[i] - i - 1 for i in range(len(indices))] + [n + 1 - k for i in range(k, n)]
+    max_required = max([kcd[i] + i for i in range(len(kcd))])
+    kcd2 = kcd + [0 for i in range(len(kcd), max_required)] + [0]
+    N = len(kcd)
+    kperm = permtrim(inverse(uncode(kcd2)))
+    inv_kperm = inv(kperm)
+    vn = symarray("soible", 100)
+    
+    for i in range(N * 2 + 1):
+        if i <= N:
+            subs_dict_coprod[vn[i]] = var2[i]
+        else:
+            subs_dict_coprod[vn[i]] = var3[i - N]
+
+    coeff_dict = {tuple(kperm): 1}
+    coeff_dict = schubmult(coeff_dict, mperm, vn, var2)
+
+    inverse_kperm = inverse(kperm)
+    
+    ret_dict = {}
+    for perm in coeff_dict:
+        downperm = mulperm(list(perm), inverse_kperm)
+        if inv(downperm) == inv(perm) - inv_kperm:
+            flag = True
+            for i in range(N):
+                if downperm[i] > N:
+                    flag = False
+                    break
+            if not flag:
+                continue
+            firstperm = downperm[0:N]
+            secondperm = [downperm[i] - N for i in range(N, len(downperm))]
+
+            val = sympify(coeff_dict[perm]).subs(subs_dict_coprod)
+            
+            key = (tuple(permtrim(firstperm)), tuple(permtrim(secondperm)))
+            ret_dict[key] = val
+
+    return ret_dict

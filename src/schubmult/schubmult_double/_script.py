@@ -274,11 +274,11 @@ def main(argv: list[str]):
         args, formatter = schub_argparse(
             "schubmult_double",
             "Compute coefficients of product of double Schubert polynomials in the same or different sets of coefficient variables",
-            argv=argv,
+            argv=argv[1:],
             yz=True,
         )
 
-        args
+
 
         mult = args.mult
         mulstring = args.mulstring
@@ -362,6 +362,7 @@ def main(argv: list[str]):
             else:
                 for perm in orig_perms[1:]:
                     check_coeff_dict = schubmult(check_coeff_dict, perm, var2, var3)
+                coeff_dict = check_coeff_dict
                 if mult:
                     mul_exp = eval(mulstring)
                     check_coeff_dict = mult_poly(check_coeff_dict, mul_exp)
@@ -421,4 +422,4 @@ def main(argv: list[str]):
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)

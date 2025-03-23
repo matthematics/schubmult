@@ -4,7 +4,8 @@ from ._funcs import (
     single_variable,
     mult_poly,
     posify,
-    div_diff
+    div_diff,
+    schub_coprod
 )
 
 
@@ -14,5 +15,6 @@ __all__ = [
     "single_variable",
     "mult_poly",
     "posify",
-    "div_diff"
+    "div_diff",
+    "schub_coprod"
 ]
