@@ -14,7 +14,10 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
     """,
         formatter_class=RawDescriptionHelpFormatter,
     )
-
+    # import logging
+    # logging.basicConfig(level=logging.DEBUG,format="%(asctime)s %(levelname)s %(message) %(module) s")
+    # logger = logging.getLogger(__name__)
+    # logger.log(logging.DEBUG, f"{argv=}")
     parser.add_argument(
         "perms",
         nargs="+",
@@ -101,7 +104,7 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
             dest="expa",
             help="Expand the output rather than leaving it as originally computed (slow)",
         )
-
+    
     if quantum:
         parser.add_argument(
             "--parabolic",
@@ -149,6 +152,13 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
         help="Method of displaying the output. Default basic",
     )
 
+    parser.add_argument(
+        "-g",
+        action="store_true",
+        dest="gen",
+        help=SUPPRESS,
+    )
+
     args = parser.parse_args(argv)
     args.mulstring = ""
 
@@ -163,6 +173,16 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
         except Exception as e:
             print("Permutations must have integer values")
             raise e
+    
+    if args.gen:
+        import json
+        import sys
+        argv.pop(argv.index("-g"))
+        args.__dict__["cmd_line"] = argv
+        del args.__dict__["gen"]
+        json.dump(args.__dict__, sys.stdout, ensure_ascii=False, indent=4)
+        exit(0)
+
     import sympy
 
     
