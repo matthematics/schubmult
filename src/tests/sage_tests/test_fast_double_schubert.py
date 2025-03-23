@@ -1,16 +1,14 @@
-from sage.all import ZZ
-from schubmult.sage_integration import (
-    FastDoubleSchubertPolynomialRing,
-    FastSchubertPolynomialRing,
-    FastQuantumSchubertPolynomialRing,
-    FastQuantumDoubleSchubertPolynomialRing,
-)
+
 
 
 def test_schub_expand():
     """
     Test expand
     """
+    from sage.all import ZZ
+    from schubmult.sage_integration import (
+        FastDoubleSchubertPolynomialRing,
+    )
     X = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", "y")
     assert X._base_polynomial_ring(X([3, 1, 2]).expand()) == X._base_polynomial_ring(
         "(x1 - y1)*(x1 - y2)"
@@ -29,6 +27,10 @@ def test_coproduct():
     """
     Test coproduct
     """
+    from sage.all import ZZ
+    from schubmult.sage_integration import (
+        FastDoubleSchubertPolynomialRing,
+    )
     X = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", "y")
     R = X._base_polynomial_ring
     indices = [0, 1, 3]
@@ -71,6 +73,10 @@ def test_associative():
     """
     Test associative on some large perms
     """
+    from sage.all import ZZ
+    from schubmult.sage_integration import (
+        FastDoubleSchubertPolynomialRing,
+    )
     X = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", "y")
     perm1 = [1, 5, 3, 4, 2]
     perm2 = [1, 3, 2, 5, 4]
@@ -84,6 +90,13 @@ def test_associative():
 
 
 def test_coerce():
+    from sage.all import ZZ
+    from schubmult.sage_integration import (
+        FastDoubleSchubertPolynomialRing,
+        FastSchubertPolynomialRing,
+        FastQuantumSchubertPolynomialRing,
+        FastQuantumDoubleSchubertPolynomialRing,
+    )
     XD = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y", "z"))
     XDQ = FastQuantumDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y", "z"))
     XS = FastSchubertPolynomialRing(ZZ, 100, "x")
@@ -101,6 +114,10 @@ def test_mixed_equal():
     """
     Test mixed equality
     """
+    from sage.all import ZZ
+    from schubmult.sage_integration import (
+        FastDoubleSchubertPolynomialRing,
+    )
     X = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y", "z"))
     R = X._coeff_polynomial_ring
     perms = [
