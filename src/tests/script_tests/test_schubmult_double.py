@@ -98,15 +98,11 @@ def parse_ret(lines, ascode, coprod):
         for line in lines:
             try:
                 k, v = line.lstrip().split("  ")
-            except Exception as e:
-                # print(f"BOOB {coprod=} {line=} {e=}")
-                # if len(line)>0:
-                #     raise
+            except Exception:
                 continue
             try:
                 v = sympify(v)
-            except Exception as e:
-                # print(f"BOOB {v=} {e=}")
+            except Exception:
                 continue
             ret_dict[(tuple(literal_eval(k)) if not ascode else tuple(uncode(literal_eval(k))))] = v
     else:
@@ -119,30 +115,20 @@ def parse_ret(lines, ascode, coprod):
             jn = ")," if not ascode else "],"
             try:
                 s, vf = re.split(first_split, line)
-                # print(f"BABO {s=} {vf=}")
                 f, v = vf.split(second_split)  # re.split(second_split, vf)
-                # print(f"BABO {f=} {v=}")
                 evlaf = f"({charo}{f + jn + s}{charc})"
                 k1, k2 = literal_eval(evlaf)
-                # print(f"BABO {k1=} {k2=}")
-                # print(f"BABO {line=}")
                 if ascode:
                     k1 = tuple(permtrim(uncode(k1)))
                     k2 = tuple(permtrim(uncode(k2)))
                 k = (k2, k1)
-            except Exception as e:
-                # print(f"BOOB foop {line=} {e=}")
-                # if len(line)>0:
-                #     raise
-                # nf += 1
+            except Exception:
                 continue
             try:
-                v = sympify(v)
-            except Exception as e:
-                # print(f"BOOB {v=} {e=}")
+                v = sympify(v) 
+            except Exception:
                 continue
             ret_dict[k] = v
-            # print(f"BABO {k=} {ret_dict[k]=}{v=}")
     return ret_dict
 
 
