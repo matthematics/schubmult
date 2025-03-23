@@ -11,7 +11,7 @@ from tests._tests import get_json
 def assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices, same=True):
     print(f"{input_dict=}")
     from schubmult.schubmult_double import schubmult, schub_coprod
-    from symengine import sympify, symarray, expand
+    from symengine import symarray, expand
     var_a = symarray("y", 100)
     var_b = symarray("z", 100)
 
@@ -33,8 +33,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices, same=True):
 
 def parse_ret(lines, ascode, coprod):
     from schubmult.perm_lib import uncode, permtrim
-    from schubmult.schubmult_double._script import main
-    from symengine import sympify, symarray, expand
+    from symengine import sympify
     ret_dict = {}
     if not coprod:
         for line in lines:
@@ -52,7 +51,6 @@ def parse_ret(lines, ascode, coprod):
                 continue
             ret_dict[(tuple(literal_eval(k)) if not ascode else tuple(uncode(literal_eval(k))))] = v
     else:
-        nf = 0
         for line in lines:
             line = str(line)
             charo = "[" if ascode else "("
@@ -135,27 +133,24 @@ json_files_data_args = [f"{base_dir}/test_gen_double", f"{base_dir}/test_gen_dou
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
-    import re
-    from ast import literal_eval
     from schubmult.perm_lib import uncode, permtrim
 
     args = get_json(json_file)
     print(f"{json_file=} {args=} input_data")
     from schubmult.schubmult_double._script import main
-    from symengine import sympify, symarray, expand
 
-    mult = args["mult"]
-    mulstring = args["mulstring"]
+    mult = args["mult"]  # noqa: F841
+    mulstring = args["mulstring"]  # noqa: F841
 
     perms = args["perms"]
 
     ascode = args["ascode"]
     coprod = args["coprod"]
     same = args["same"]
-    msg = args["msg"]
-    down = args["down"]
-    display_positive = args["display_positive"]
-    pr = args["pr"]
+    msg = args["msg"]  # noqa: F841
+    down = args["down"]  # noqa: F841
+    display_positive = args["display_positive"]  # noqa: F841
+    pr = args["pr"]  # noqa: F841
 
     print(f"{args=}")
     print(f"{args['cmd_line']=}")

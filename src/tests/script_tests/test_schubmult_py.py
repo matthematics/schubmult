@@ -65,14 +65,14 @@ def test_with_same_args_exec(capsys, json_file):
     print(f"{json_file=} {args=} input_data")
     from schubmult.schubmult_py._script import main
 
-    mult = args["mult"]
-    mulstring = args["mulstring"]
+    mult = args["mult"]  # noqa: F841
+    mulstring = args["mulstring"]  # noqa: F841
 
     perms = args["perms"]
 
     ascode = args["ascode"]
     coprod = args["coprod"]
-    pr = args["pr"]
+    pr = args["pr"]  # noqa: F841
 
     print(f"{args=}")
     print(f"{args['cmd_line']=}")
