@@ -2,53 +2,39 @@
     "perms": [
         [
             3,
-            7,
-            1,
-            6,
-            2,
-            5,
-            4
+            0,
+            5
         ],
         [
             2,
-            3,
-            5,
-            4,
             1,
-            7,
-            6
+            0,
+            4
         ]
     ],
     "pr": true,
-    "ascode": false,
+    "ascode": true,
     "mult": null,
     "coprod": false,
     "display_positive": true,
     "msg": false,
     "down": false,
     "check": true,
-    "same": false,
+    "same": true,
     "expa": false,
     "disp_mode": "basic",
     "mulstring": "",
     "cmd_line": [
         "script",
+        "--code",
         "3",
-        "7",
-        "1",
-        "6",
-        "2",
+        "0",
         "5",
-        "4",
         "-",
         "2",
-        "3",
-        "5",
-        "4",
         "1",
-        "7",
-        "6",
-        "--mixed-var",
+        "0",
+        "4",
         "--display-positive"
     ]
 }

@@ -309,8 +309,8 @@ def main(argv: list[str]):
     logger = logging.getLogger(__name__)
     logger.log(logging.DEBUG, f"main {argv=}")
     try:
-        var2 = symarray("y", 100)
-        var3 = symarray("z", 100)
+        var2 = tuple(symarray("y", 100).tolist())
+        var3 = tuple(symarray("z", 100).tolist())
         sys.setrecursionlimit(1000000)
 
         # TEMP
@@ -408,7 +408,7 @@ def main(argv: list[str]):
             else:
                 for perm in orig_perms[1:]:
                     check_coeff_dict = schubmult(check_coeff_dict, perm, var2, var3)
-                coeff_dict = check_coeff_dict
+                # coeff_dict = check_coeff_dict
                 if mult:
                     mul_exp = eval(mulstring)
                     check_coeff_dict = mult_poly(check_coeff_dict, mul_exp)
@@ -456,10 +456,10 @@ def main(argv: list[str]):
                     coeff_dict,
                     args,
                     formatter,
+                    var2,
+                    var3,
                     posified=posified,
                     check_coeff_dict=check_coeff_dict,
-                    var2=var2,
-                    var3=var3,
                 )
             if formatter is None:
                 return raw_result_dict
