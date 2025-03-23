@@ -1,7 +1,0 @@
-{
-    "cmd_line": ["schubmult_py", "--coprod", "--code", "4", "3", "0", "5", "2", "-", "2", "4"],
-    "coprod": true,
-    "code": true,
-    "v_tuple": [4,3,0,5,2],
-    "indices": [2, 4]
-}
