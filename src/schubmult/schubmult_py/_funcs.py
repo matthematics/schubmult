@@ -109,3 +109,38 @@ def schubmult(perm_dict, v):
             {ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict
         )
     return ret_dict
+
+def schub_coprod(perm, indices):
+    mperm = tuple(perm)
+    indices = sorted(indices)
+    ret_dict = {}
+    k = len(indices)
+    n = len(mperm)
+    kcd = [indices[i] - i - 1 for i in range(len(indices))] + [n + 1 - k for i in range(k, n)]
+    max_required = max([kcd[i] + i for i in range(len(kcd))])
+    kcd2 = kcd + [0 for i in range(len(kcd), max_required)] + [0]
+    N = len(kcd)
+    kperm = permtrim(inverse(uncode(kcd2)))
+    coeff_dict = {tuple(kperm): 1}
+    coeff_dict = schubmult(coeff_dict, tuple(mperm))
+
+    inv_kperm = inv(kperm)
+    inverse_kperm = inverse(kperm)
+    # total_sum = 0
+    for perm, val in coeff_dict.items():
+        if val == 0:
+            continue
+        pperm = [*perm]
+        downperm = mulperm(pperm,inverse_kperm)
+        if inv(downperm) == inv(pperm) - inv_kperm:
+            flag = True
+            for i in range(N):
+                if downperm[i] > N:
+                    flag = False
+                    break
+            if not flag:
+                continue
+            firstperm = tuple(permtrim((list(downperm[0:N]))))
+            secondperm = tuple(permtrim(([downperm[i] - N for i in range(N, len(downperm))])))
+            ret_dict[(firstperm, secondperm)] = val
+    return ret_dict

@@ -1,6 +1,7 @@
 from schubmult.schubmult_py._funcs import (
     mult_poly,
     schubmult,
+    schub_coprod
 )
 import sys
 from symengine import sympify
@@ -18,7 +19,7 @@ from schubmult.perm_lib import (
 
 
 def main(argv: list[str]):
-    print(f"{argv=}")
+    print(f"{argv=}", file=sys.stderr)
     try:
         args, formatter = schub_argparse(
             "schubmult_py", "Compute products of ordinary Schubert polynomials", argv=argv[1:]
@@ -46,53 +47,30 @@ def main(argv: list[str]):
                 perms[0] = tuple(permtrim(uncode(perms[0])))
             pos = [*perms[1]]
             pos.sort()
-            mperm = perms[0]
+            mperm = tuple(permtrim(perms[0]))
 
-            cd = code(mperm)
-            perms[0] = mperm
+            coeff_dict = schub_coprod(mperm, pos)
 
-            while cd[-1] == 0:
-                cd.pop()
-            k = len(pos)
-            n = len(perms[0])
-            kcd = [pos[i] - i - 1 for i in range(len(pos))] + [n + 1 - k for i in range(k, n)]
-            N = len(kcd)
-            kperm = inverse(uncode(kcd))
-            coeff_dict = {tuple(permtrim(kperm)): 1}
-            coeff_dict = schubmult(coeff_dict, tuple(permtrim([*perms[0]])))
-
-            inv_kperm = inv(kperm)
-            inverse_kperm = inverse(kperm)
             if pr or formatter is None:
-                for perm, val in coeff_dict.items():
-                    downperm = mulperm(list(perm), inverse_kperm)
-                    if inv(downperm) == inv(perm) - inv_kperm:
-                        flag = True
-                        for i in range(N):
-                            if downperm[i] > N:
-                                flag = False
-                                break
-                        if not flag:
-                            continue
-                        firstperm = downperm[0:N]
-                        secondperm = [downperm[i] - N for i in range(N, len(downperm))]
-                        if val != 0:
-                            if ascode:
-                                if formatter is None:
-                                    raw_result_dict[
-                                        (tuple(trimcode(firstperm)), tuple(trimcode(secondperm)))
-                                    ] = val
-                                else:
-                                    print(f"{val} {trimcode(firstperm)} {trimcode(secondperm)}")
+                for firstperm, secondperm in coeff_dict:
+                    val = coeff_dict[(firstperm, secondperm)]
+                    if val != 0:
+                        if ascode:
+                            if formatter is None:
+                                raw_result_dict[
+                                    (firstperm, secondperm)
+                                ] = val
                             else:
-                                if formatter is None:
-                                    raw_result_dict[
-                                        (tuple(permtrim(firstperm)), tuple(permtrim(secondperm)))
-                                    ] = val
-                                else:
-                                    print(
-                                        f"{val} {tuple(permtrim(firstperm))} {tuple(permtrim(secondperm))}"
-                                    )
+                                print(f"{val} {trimcode(firstperm)} {trimcode(secondperm)}")
+                        else:
+                            if formatter is None:
+                                raw_result_dict[
+                                    (firstperm, secondperm)
+                                ] = val
+                            else:
+                                print(
+                                    f"{val} {firstperm} {secondperm}"
+                                )
         else:
             if ascode:
                 for i in range(len(perms)):
