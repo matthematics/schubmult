@@ -300,7 +300,7 @@ def _display_full(
     return raw_result_dict
 
 
-def main(argv: list[str]):
+def main(argv=None):
     import logging
 
     logging.basicConfig(
@@ -308,6 +308,8 @@ def main(argv: list[str]):
     )
     logger = logging.getLogger(__name__)
     logger.log(logging.DEBUG, f"main {argv=}")
+    if argv is None:
+        argv = sys.argv
     try:
         var2 = tuple(symarray("y", 100).tolist())
         var3 = tuple(symarray("z", 100).tolist())

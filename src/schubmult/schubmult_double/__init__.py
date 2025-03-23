@@ -9,6 +9,7 @@ from ._funcs import (
 )
 
 
+
 __all__ = [
     "compute_positive_rep",
     "schubmult",
@@ -16,5 +17,6 @@ __all__ = [
     "mult_poly",
     "posify",
     "div_diff",
-    "schub_coprod"
+    "schub_coprod",
+    "main"
 ]

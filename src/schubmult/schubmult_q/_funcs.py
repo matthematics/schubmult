@@ -19,6 +19,10 @@ from functools import cached_property
 
 class _gvars:
     @cached_property
+    def n(self):
+        return 100
+    
+    @cached_property
     def var_x(self):
         return tuple(symarray("x", self.n).tolist())
 

@@ -12,8 +12,9 @@ from schubmult.perm_lib import (
 )
 
 
-def main(argv: list[str]):
-    print(f"{argv=}", file=sys.stderr)
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
     try:
         args, formatter = schub_argparse(
             "schubmult_py", "Compute products of ordinary Schubert polynomials", argv=argv[1:]

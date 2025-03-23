@@ -192,8 +192,11 @@ def _display_full(coeff_dict, args, formatter, posified=None, var2=_vars.var2, v
     return raw_result_dict
 
 
-def main(argv: list[str]):
-    global var2, var3
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+    var2 = tuple(symarray("y",100))
+    var3 = tuple(symarray("z",100))
     try:
         sys.setrecursionlimit(1000000)
 
@@ -202,7 +205,7 @@ def main(argv: list[str]):
             "Compute coefficients of products of quantum double Schubert polynomials in the same or different sets of coefficient variables",
             yz=True,
             quantum=True,
-            argv=argv,
+            argv=argv[1:],
         )
 
         mult = args.mult  # noqa: F841
@@ -379,4 +382,5 @@ def main(argv: list[str]):
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(sys.argv)

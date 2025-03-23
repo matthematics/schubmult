@@ -1,11 +1,13 @@
-from ._vars import (
-    var_y,
-    var_x,
-    var2,
-    var3,
-    q_var2,
-)
-from symengine import Add, Mul, Pow, expand
+# from ._vars import (
+#     var_y,
+#     var_x,
+#     var2,
+#     var3,
+#     q_var2,
+# )
+import schubmult.schubmult_double as norm_yz
+
+from symengine import Add, Mul, Pow, expand, symarray
 from schubmult.perm_lib import (
     elem_sym_perms_q,
     add_perm_dict,
@@ -22,16 +24,47 @@ from schubmult.perm_lib import (
     elem_sym_perms_q_op,
     elem_sym_func_q,
     call_zvars,
-    q_var,
 )
-import schubmult.schubmult_double as norm_yz
+from functools import cached_property
+
+class _gvars:
+    @cached_property
+    def n(self):
+        return 100
+
+    # @cached_property
+    # def fvar(self):
+    #     return 100
+
+    @cached_property
+    def var1(self):
+        return tuple(symarray("x", self.n).tolist())
+
+    @cached_property
+    def var2(self):
+        return tuple(symarray("y", self.n).tolist())
+
+    @cached_property
+    def var3(self):
+        return tuple(symarray("z", self.n).tolist())
+    
+    @cached_property
+    def q_var(self):
+        return tuple(symarray("q", self.n).tolist())
+
+    @cached_property
+    def var_r(self):
+        return symarray("r", 100)
 
 
-def E(p, k, varl=var_y[1:]):
+_vars = _gvars()
+
+
+def E(p, k, varl=_vars.var2[1:],var_x=_vars.var1):
     return elem_sym_poly_q(p, k, var_x[1:], varl)
 
 
-def single_variable(coeff_dict, varnum, var2=var2, q_var=q_var):
+def single_variable(coeff_dict, varnum, var2=_vars.var2, q_var=_vars.q_var):
     ret = {}
     for u in coeff_dict:
         if varnum - 1 < len(u):
@@ -51,7 +84,7 @@ def single_variable(coeff_dict, varnum, var2=var2, q_var=q_var):
     return ret
 
 
-def mult_poly(coeff_dict, poly, var_x=var_x, var_y=var_y, q_var=q_var):
+def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var):
     if poly in var_x:
         return single_variable(coeff_dict, var_x.index(poly), var_y, q_var)
     elif isinstance(poly, Mul):
@@ -78,7 +111,7 @@ def mult_poly(coeff_dict, poly, var_x=var_x, var_y=var_y, q_var=q_var):
         return ret
 
 
-def nil_hecke(perm_dict, v, n, var2=var2, var3=var3):
+def nil_hecke(perm_dict, v, n, var2=_vars.var2, var3=_vars.var3):
     if v == (1, 2):
         return perm_dict
     th = strict_theta(inverse(v))
@@ -129,7 +162,7 @@ def nil_hecke(perm_dict, v, n, var2=var2, var3=var3):
     return ret_dict
 
 
-def elem_sym_func_q_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, q_var=q_var):
+def elem_sym_func_q_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, q_var=_vars.q_var):
     newk = k - udiff
     if newk < vdiff:
         return 0
@@ -151,7 +184,7 @@ def elem_sym_func_q_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, q_var=q_
     return elem_sym_poly_q(newk - vdiff, newk, yvars, zvars, q_var)
 
 
-def schubpoly_quantum(v, var_x=var_x, var_y=var2, q_var=q_var, coeff=1):
+def schubpoly_quantum(v, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var, coeff=1):
     th = strict_theta(inverse(v))
     mu = permtrim(uncode(th))
     vmu = permtrim(mulperm([*v], mu))
@@ -206,7 +239,7 @@ def schubpoly_quantum(v, var_x=var_x, var_y=var2, q_var=q_var, coeff=1):
     return ret_dict[(1, 2)]
 
 
-def schubmult(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
+def schubmult(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
     if v == (1, 2):
         return perm_dict
     th = strict_theta(inverse(v))
@@ -267,7 +300,7 @@ def schubmult(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
     return ret_dict
 
 
-def schubmult_db(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
+def schubmult_db(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
     if v == (1, 2):
         return perm_dict
     th = medium_theta(inverse(v))
@@ -400,7 +433,7 @@ def schubmult_db(perm_dict, v, var2=var2, var3=var3, q_var=q_var):
     return ret_dict
 
 
-def div_diff(v, w, var2=var2, var3=var3):
+def div_diff(v, w, var2=_vars.var2, var3=_vars.var3):
     coeff_dict = {v: 1}
     coeff_dict = norm_yz.schubmult_down(coeff_dict, w, var2, var3)
     return coeff_dict.get((1, 2), 0)
@@ -427,7 +460,7 @@ def factor_out_q_keep_factored(poly):
     if str(poly).find("q") == -1:
         ret[1] = poly
         return ret
-    elif poly in q_var2:
+    elif poly in _vars.q_var:
         ret[poly] = 1
         return ret
     elif isinstance(poly, Add):
@@ -481,24 +514,24 @@ def factor_out_q(poly):
             for var_maybe_pow in key.args:
                 if isinstance(var_maybe_pow, Pow):
                     real_var = var_maybe_pow.args[0]
-                    if real_var in q_var2:
+                    if real_var in _vars.q_var:
                         q_part *= var_maybe_pow
                     else:
                         yz_part *= var_maybe_pow
                 else:
                     real_var = var_maybe_pow
-                    if real_var in q_var2:
+                    if real_var in _vars.q_var:
                         q_part *= var_maybe_pow
                     else:
                         yz_part *= var_maybe_pow
         elif isinstance(key, Pow):
             real_var = key.args[0]
-            if real_var in q_var2:
+            if real_var in _vars.q_var:
                 q_part *= key
             else:
                 yz_part *= key
         else:
-            if key in q_var2:
+            if key in _vars.q_var:
                 q_part *= key
             else:
                 yz_part *= key

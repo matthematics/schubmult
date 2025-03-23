@@ -12,7 +12,7 @@ dependencies = [
         "psutil",
         "cachetools",
         "sortedcontainers",
-        "setuptools>=71.0.0"
+        "setuptools"
 ]
 requires-python = ">=3.9"
 license = {file = "LIECNSE"}
@@ -117,9 +117,14 @@ sage = ["sagemath-standard"]
 Homepage = "http://schubmult.org"
 Repository = "https://github.com/matthematics/schubmult"
 
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["schubmult*"]  # package names should match these glob patterns (["*"] by default)
+exclude = ["tests*"]  # exclude packages matching these glob patterns (empty by default)
+namespaces = false
 
 [project.scripts]
-schubmult_py="schubmult.schubmult_py.__main__:main"
-schubmult_double="schubmult.schubmult_double.__main__:main"
-schubmult_q="schubmult.schubmult_q.__main__:main"
-schubmult_q_double="schubmult.schubmult_q_double.__main__:main"
+schubmult_py = "schubmult.schubmult_py._script:main"
+schubmult_double = "schubmult.schubmult_double._script:main"
+schubmult_q = "schubmult.schubmult_q._script:main"
+schubmult_q_double = "schubmult.schubmult_q_double._script:main"

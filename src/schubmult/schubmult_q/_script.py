@@ -22,7 +22,7 @@ from schubmult.perm_lib import (
 )
 import numpy as np
 from schubmult.schubmult_q_double import factor_out_q_keep_factored
-
+import sys
 
 def _display_full(coeff_dict, args, formatter):
     raw_result_dict = {}
@@ -89,12 +89,14 @@ def _display_full(coeff_dict, args, formatter):
     return raw_result_dict
 
 
-def main(argv: list[str]):
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
     try:
         args, formatter = schub_argparse(
             "schubmult_q",
             "Compute products of quantum Schubert polynomials",
-            argv=argv,
+            argv=argv[1:],
             quantum=True,
         )
 
@@ -160,4 +162,5 @@ def main(argv: list[str]):
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(sys.argv)
