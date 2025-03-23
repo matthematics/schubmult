@@ -1,4 +1,4 @@
-from ._funcs import (
+from schubmult.schubmult_q._funcs import (
     schubmult,
     schubmult_db,
     mult_poly,

@@ -1,7 +1,7 @@
 import sys
 import numpy as np
-from ._vars import var_x, var2, var3, var2_t, var3_t
-from ._funcs import schubmult, schubmult_db, mult_poly, nil_hecke, factor_out_q_keep_factored
+from schubmult.schubmult_q_double._vars import var_x, var2, var3, var2_t, var3_t
+from schubmult.schubmult_q_double._funcs import schubmult, schubmult_db, mult_poly, nil_hecke, factor_out_q_keep_factored
 from schubmult.schubmult_double import compute_positive_rep, posify, div_diff
 from symengine import expand, sympify, symarray
 from schubmult.perm_lib import (

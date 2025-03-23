@@ -1,8 +1,8 @@
 import numpy as np
 import sympy
 import sys
-from ._vars import var2, var3, var_x, var, var_r
-from ._funcs import (
+from schubmult.schubmult_double._vars import var2, var3, var_x, var, var_r
+from schubmult.schubmult_double._funcs import (
     mult_poly,
     mult_poly_down,
     schubmult,
