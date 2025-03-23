@@ -66,19 +66,14 @@ def test_coeff_equal_exec(capsys):
                 jn = "),(" if not ascode else "],["
                 try:
                     vf, s = line.split(first_split)
-                    print(f"{(vf, s)}")
                     v, f = vf.split(second_split)
-                    print(f"{(v, f)}")
                     k1, k2 = literal_eval(f"({second_split}{f+jn+s})")
-                    print(f"{(k1, k2)}")
                     if ascode:
                         k1 = tuple(permtrim(uncode(k1)))
                         k2 = tuple(permtrim(uncode(k2)))
                     k = (k1, k2)
                 except ValueError:
-                    import traceback
-                    print(f"{line=} {first_split=}")
-                    print(traceback.format_exc())
+                    print(f"{line=}")
                     continue
                 v = int(v)
                 ret_dict[k] = v

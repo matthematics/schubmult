@@ -26,7 +26,6 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices, same=True):
     for k, v in coeff_dict.items():
         v = expand(v)
         if v != 0:            
-            print(f"{k=} {v=}")
             assert v == expand(ret_dict[k])
         else:            
             assert k not in ret_dict or v == expand(ret_dict[k])
