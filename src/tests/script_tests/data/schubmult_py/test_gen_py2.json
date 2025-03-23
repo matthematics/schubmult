@@ -1,0 +1,41 @@
+{
+    "perms": [
+        [
+            5,
+            0,
+            3,
+            1,
+            2
+        ],
+        [
+            1,
+            0,
+            3,
+            2,
+            0,
+            5
+        ]
+    ],
+    "pr": true,
+    "ascode": true,
+    "mult": null,
+    "coprod": false,
+    "disp_mode": "basic",
+    "mulstring": "",
+    "cmd_line": [
+        "script",
+        "--code",
+        "5",
+        "0",
+        "3",
+        "1",
+        "2",
+        "-",
+        "1",
+        "0",
+        "3",
+        "2",
+        "0",
+        "5"
+    ]
+}
