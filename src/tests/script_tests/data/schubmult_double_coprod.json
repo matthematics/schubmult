@@ -1,0 +1,7 @@
+{
+    "cmd_line": ["schubmult_double", "--coprod", "--code", "4", "3", "0", "2","-", "1", "3"],
+    "coprod": true,
+    "code": true,
+    "v_tuple": [5,4,1,6,2,3],
+    "indices": [1, 3]
+}
