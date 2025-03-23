@@ -178,7 +178,7 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
         import json
         import sys
         argv.pop(argv.index("-g"))
-        args.__dict__["cmd_line"] = argv
+        args.__dict__["cmd_line"] = ["script"] + argv
         del args.__dict__["gen"]
         json.dump(args.__dict__, sys.stdout, ensure_ascii=False, indent=4)
         exit(0)
