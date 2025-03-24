@@ -107,7 +107,7 @@ def assert_dict_good(
 
 def parse_ret(lines, ascode, coprod, unformat):
     from schubmult.perm_lib import uncode, permtrim
-
+    import sys
     ret_dict = {}
     if not coprod:
         for line in lines:
@@ -129,19 +129,21 @@ def parse_ret(lines, ascode, coprod, unformat):
             second_split = ")  " if not ascode else "]  "
             jn = ")," if not ascode else "],"
             try:
-                s, vf = re.split(first_split, line)
-                f, v = vf.split(second_split)  # re.split(second_split, vf)
+                s, vf = re.split(first_split, line, maxsplit=1)
+                f, v = vf.split(second_split, maxsplit=1)  # re.split(second_split, vf)
                 evlaf = f"({charo}{f + jn + s}{charc})"
                 k1, k2 = literal_eval(evlaf)
                 if ascode:
                     k1 = tuple(permtrim(uncode(k1)))
                     k2 = tuple(permtrim(uncode(k2)))
                 k = (k2, k1)
-            except Exception:
+            except Exception as e:
+                print(f"boingfish {line=} {e=}", file=sys.stderr)
                 continue
             try:
                 v = unformat(v)
-            except Exception:
+            except Exception as e:
+                print(f"bingfish {line=} {v=} {e=}", file=sys.stderr)
                 continue
             ret_dict[k] = v
     return ret_dict
@@ -227,8 +229,11 @@ def test_with_same_args_exec(capsys, json_file):
     if disp_mode != "raw":
         ret_dict = parse_ret(lines, ascode, coprod, unformat[disp_mode])
     else:
-        if ascode:
-            ret_dict = {tuple(uncode(k)): v for k, v in ret_dict.items()}
+        if coprod:
+            if ascode:
+                ret_dict = {(tuple(uncode(list(k[0]))),tuple(uncode(list(k[1])))): v for k, v in ret_dict.items()}    
+        elif ascode:
+            ret_dict = {tuple(uncode(list(k))): v for k, v in ret_dict.items()}
     v_tuple = (
         (tuple(perms[1]) if not ascode else tuple(uncode(perms[1])))
         if not coprod

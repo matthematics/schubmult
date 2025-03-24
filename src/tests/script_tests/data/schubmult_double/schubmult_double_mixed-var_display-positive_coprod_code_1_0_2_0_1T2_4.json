@@ -1,0 +1,42 @@
+{
+ "perms": [
+  [
+   1,
+   0,
+   2,
+   0,
+   1
+  ],
+  [
+   2,
+   4
+  ]
+ ],
+ "pr": true,
+ "ascode": true,
+ "mult": false,
+ "coprod": true,
+ "display_positive": true,
+ "msg": false,
+ "down": false,
+ "check": true,
+ "same": false,
+ "expa": false,
+ "disp_mode": "basic",
+ "mulstring": "",
+ "cmd_line": [
+  "schubmult_double",
+  "--mixed-var",
+  "--display-positive",
+  "--coprod",
+  "--code",
+  "1",
+  "0",
+  "2",
+  "0",
+  "1",
+  "-",
+  "2",
+  "4"
+ ]
+}

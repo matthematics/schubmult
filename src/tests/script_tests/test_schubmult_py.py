@@ -5,14 +5,15 @@ from ast import literal_eval
 
 def assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices):
     from schubmult.schubmult_py import schubmult, schub_coprod
-
+    import sys
     if coprod:
         coeff_dict = schub_coprod(v_tuple, indices)
+        print(f"{ret_dict=}",file=sys.stderr)
+        print(f"{coeff_dict=}",file=sys.stderr)
     else:
         coeff_dict = schubmult(input_dict, v_tuple)
     for k, v in coeff_dict.items():
         if v != 0:
-            assert k in ret_dict
             assert coeff_dict[k] == ret_dict[k]
         else:
             assert k not in ret_dict
@@ -69,7 +70,7 @@ json_files_data_args = load_json_test_names(base_dir)
 def test_with_same_args_exec(capsys, json_file):
     from schubmult.perm_lib import uncode, permtrim
 
-    args = get_json(json_file)
+    args = get_json(f"{base_dir}/{json_file}")
     print(f"{json_file=} {args=} input_data")
     from schubmult.schubmult_py._script import main
 
@@ -91,8 +92,11 @@ def test_with_same_args_exec(capsys, json_file):
     if disp_mode != "raw":
         ret_dict = parse_ret(lines, ascode, coprod)
     else:
-        if ascode:
-            ret_dict = {tuple(uncode(k)): v for k, v in ret_dict.items()}
+        if coprod:
+            if ascode:
+                ret_dict = {(tuple(uncode(list(k[0]))),tuple(uncode(list(k[1])))): v for k, v in ret_dict.items()}    
+        elif ascode:
+            ret_dict = {tuple(uncode(list(k))): v for k, v in ret_dict.items()}
     v_tuple = (
         (tuple(perms[1]) if not ascode else tuple(uncode(perms[1])))
         if not coprod

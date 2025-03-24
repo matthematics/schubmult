@@ -52,7 +52,7 @@ def main(argv=None):
                     if val != 0:
                         if ascode:
                             if formatter is None:
-                                raw_result_dict[(firstperm, secondperm)] = val
+                                raw_result_dict[(tuple(trimcode(firstperm)), tuple(trimcode(secondperm)))] = val
                             else:
                                 print(f"{val} {trimcode(firstperm)} {trimcode(secondperm)}")
                         else:

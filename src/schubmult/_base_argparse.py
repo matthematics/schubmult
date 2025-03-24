@@ -179,12 +179,14 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
 
     if args.gen:
         import json
-        import sys
 
         argv.pop(argv.index("-g"))
-        args.__dict__["cmd_line"] = ["script"] + argv
+        args.__dict__["cmd_line"] = [prog_name] + argv
         del args.__dict__["gen"]
-        json.dump(args.__dict__, sys.stdout, ensure_ascii=False, indent=4)
+        cmd = " ".join(args.cmd_line)
+        cmd = cmd.replace("--","").replace(" - ", "T").replace(" ","_")
+        with open(f"{cmd}.json", "w") as js:
+            json.dump(args.__dict__, js, ensure_ascii=False, indent=1)
         exit(0)
 
     import sympy

@@ -17,7 +17,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict):
         assert coeff_dict[k] == ret_dict[k]
 
 
-def parse_ret(lines, ascode):
+def parse_ret(lines, ascode,unformat):
     from schubmult.perm_lib import uncode
     from symengine import sympify
 
@@ -29,11 +29,11 @@ def parse_ret(lines, ascode):
             print(f"{line=}")
             continue
         try:
-            v = sympify(v)
+            v = unformat(v)
         except ValueError:
             continue
         ret_dict[(tuple(literal_eval(k)) if not ascode else tuple(uncode(literal_eval(k))))] = (
-            sympify(v)
+            unformat(v)
         )
     return ret_dict
 
@@ -47,7 +47,7 @@ json_files_data_args = load_json_test_names(base_dir)
 def test_with_same_args_exec(capsys, json_file):
     from schubmult.perm_lib import uncode, permtrim
 
-    args = get_json(json_file)
+    args = get_json(f"{base_dir}/{json_file}")
     print(f"{json_file=} {args=} input_data")
     from schubmult.schubmult_q._script import main
 
@@ -73,15 +73,15 @@ def test_with_same_args_exec(capsys, json_file):
     lines = str(lines.out).split("\n")
 
     if disp_mode != "raw":
-        ret_dict = parse_ret(lines, ascode)
+        ret_dict = parse_ret(lines, ascode, unformat[disp_mode])
     else:
         if ascode:
-            ret_dict = {tuple(uncode(k)): v for k, v in ret_dict.items()}
+            ret_dict = {tuple(uncode([*k])): v for k, v in ret_dict.items()}
     v_tuple = tuple(perms[1]) if not ascode else tuple(uncode(perms[1]))
 
     input_dict = {tuple(permtrim(perms[0])) if not ascode else tuple(permtrim(uncode(perms[0]))): 1}
     print(f"{v_tuple=} {input_dict=}")
-    assert_dict_good(v_tuple, input_dict, ret_dict, unformat[disp_mode])
+    assert_dict_good(v_tuple, input_dict, ret_dict)
 
 
 if __name__ == "__main__":

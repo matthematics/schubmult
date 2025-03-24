@@ -1,0 +1,36 @@
+{
+ "perms": [
+  [
+   2,
+   0,
+   3,
+   0,
+   5
+  ],
+  [
+   1,
+   4
+  ]
+ ],
+ "pr": true,
+ "ascode": true,
+ "mult": false,
+ "coprod": true,
+ "disp_mode": "raw",
+ "mulstring": "",
+ "cmd_line": [
+  "schubmult_py",
+  "--coprod",
+  "--code",
+  "2",
+  "0",
+  "3",
+  "0",
+  "5",
+  "-",
+  "1",
+  "4",
+  "--display-mode",
+  "raw"
+ ]
+}
