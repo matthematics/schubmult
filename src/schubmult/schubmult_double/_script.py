@@ -75,6 +75,12 @@ def _display_full(
     kperm=None,
     N=None,
 ):
+    subs_dict2 = {}
+    for i in range(1, 100):
+        sm = var2[1]
+        for j in range(1, i):
+            sm += _vars.var_r[j]
+        subs_dict2[var2[i]] = sm
     raw_result_dict = {}
     perms = args.perms
     mult = args.mult
@@ -144,6 +150,7 @@ def _display_full(
         else:
             width = max([len(str(perm[0]) + " " + str(perm[1])) for perm in perm_pairs])
 
+        subs_dict2 = {}        
         for perm in coeff_perms:
             val = coeff_dict[perm]
             downperm = mulperm(list(perm), inverse_kperm)
@@ -159,13 +166,7 @@ def _display_full(
                 secondperm = [downperm[i] - N for i in range(N, len(downperm))]
                 val = sympify(val).subs(subs_dict)
 
-                if same and display_positive:
-                    subs_dict2 = {}
-                    for i in range(1, 100):
-                        sm = var2[1]
-                        for j in range(1, i):
-                            sm += _vars.var_r[j]
-                        subs_dict2[var2[i]] = sm
+                if same and display_positive:                    
                     val = expand(sympify(val).xreplace(subs_dict2))
 
                 if val != 0:

@@ -100,12 +100,7 @@ def main(argv=None):
             quantum=True,
         )
 
-        mulstring = ""
-
-        mult = False
-        if args.mult is not None:
-            mult = True
-            mulstring = " ".join(args.mult)
+        
 
         perms = args.perms
 
@@ -149,9 +144,9 @@ def main(argv=None):
             for perm in perms[1:]:
                 coeff_dict = schubmult(coeff_dict, tuple(permtrim([*perm])))
 
-        if mult:
-            mul_exp = sympify(mulstring)
-            coeff_dict = mult_poly(coeff_dict, mul_exp)
+        # if mult:
+        #     mul_exp = sympify(mulstring)
+        #     coeff_dict = mult_poly(coeff_dict, mul_exp)
 
         if pr or formatter is None:
             raw_result_dict = _display_full(coeff_dict, args, formatter)
