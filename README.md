@@ -291,21 +291,18 @@ Sx([7, 3, 4, 1, 2, 5, 6]) + Sx([7, 4, 2, 1, 3, 5, 6]) + Sx([7, 5, 1, 2, 3, 4, 6]
 
 ```python
 sage: DoubleRing = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y", "z"))
-
 sage: DoubleRing([3,4,1,2])*DoubleRing([1,4,2,3])
 (y1*y2-y1*y4-y2*y4+y4^2)*DSx([3, 4, 1, 2], 'y') + (-y1-y2+y4+y5)*DSx([3, 5, 1, 2, 4], 'y') + DSx([3, 6, 
 1, 2, 4, 5], 'y')
 sage: DoubleRing([3,4,1,2]) * DoubleRing([1,4,2,3],"z")
 (y3^2+y3*y4+y4^2-y3*z1-y4*z1-y3*z2-y4*z2+z1*z2-y3*z3-y4*z3+z1*z3+z2*z3)*DSx([3, 4, 1, 2], 'y') + (y3+y4+
 y5-z1-z2-z3)*DSx([3, 5, 1, 2, 4], 'y') + DSx([3, 6, 1, 2, 4, 5], 'y')
-
 ```
 
 ## expand()
 
 ```python
 sage: SingleRingQ = FastQuantumSchubertPolynomialRing(ZZ, 100, "x")
-
 sage: SingleRingQ([2,3,1,4]).expand()
 x1*x2 + q_1
 ```
@@ -316,17 +313,12 @@ Coercion was implemented as widely as possible.
 ```python
 sage: DoubleRing([1,4,2,3],"z") * SingleRing([3,4,1,2])
 z1^2*z4^2*DSx([1, 4, 2, 3], 'z') + (z1^2*z4+z1^2*z5)*DSx([1, 5, 2, 3, 4], 'z') + z1^2*DSx([1, 6, 2, 3, 
-
 4, 5], 'z') + (z1*z4^2+z2*z4^2)*DSx([2, 4, 1, 3], 'z') + (z1*z4+z2*z4+z1*z5+z2*z5)*DSx([2, 5, 1, 3, 4], 
-
 'z') + (z1+z2)*DSx([2, 6, 1, 3, 4, 5], 'z') + z4^2*DSx([3, 4, 1, 2], 'z') + (z4+z5)*DSx([3, 5, 1, 2, 4], 
-
 'z') + DSx([3, 6, 1, 2, 4, 5], 'z')
 sage: SingleRingQ([2,3,1,4]) * SingleRing([4,1,3,2])
 (-2*q1^2*q2+q1*q2*q3)*QSx([1]) + q1*q2*QSx([1, 3, 4, 2]) + (-q1^2)*QSx([2, 3, 1]) + q1*QSx([2, 4, 3, 1]) 
-
 + (-q1*q2)*QSx([3, 1, 2]) + q1*QSx([3, 2, 4, 1]) + q1*QSx([3, 4, 1, 2]) + (-q1)*QSx([4, 2, 1, 3]) + 
-
 QSx([5, 2, 3, 1, 4]) + QSx([5, 3, 1, 2, 4])
 sage: R.<x1, x2> = PolynomialRing(ZZ, 2)
 sage: SingleRing([1,3,2]) - x1 - x2 == 0
@@ -342,11 +334,8 @@ the variables to partition on.
 sage: DoubleRing.set_coproduct_indices((1,3))
 sage: DoubleRing([4,1,5,2,3], "z").coproduct()
 (y1^2-y1*z2-y1*z3+z2*z3)*DSx([4, 1, 2, 3], 'z') # DSx([1], 'y') + (y1+y2-z2-z3)*DSx([4, 1, 2, 3], 'z') # 
-
 DSx([2, 1], 'y') + DSx([4, 1, 2, 3], 'z') # DSx([3, 1, 2], 'y') + (y1-z3)*DSx([4, 2, 1, 3], 'z') # 
-
 DSx([1], 'y') + DSx([4, 2, 1, 3], 'z') # DSx([2, 1], 'y') + DSx([4, 3, 1, 2], 'z') # DSx([1], 'y')
-
 
 ```
 
@@ -354,9 +343,7 @@ DSx([1], 'y') + DSx([4, 2, 1, 3], 'z') # DSx([2, 1], 'y') + DSx([4, 3, 1, 2], 'z
 
 ```python
 sage: QuantumDoubleRing = FastQuantumDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y","z"))
-
 sage: QuantumDoubleRing([4,1,3,2])*QuantumDoubleRing([5,1,3,2,4], "z")
-
 (q1*q2*q3*y1^3+q1*q2*q3*y1^2*y4+q1*q2*q3*y1*y4^2+q1*q2*q3*y4^3-q1*q2*q3*y1^2*z1-q1*q2*q3*y1*y4*z1-
 q1*q2*q3*y4^2*z1-q1*q2*q3*y1^2*z2-q1*q2*q3*y1*y4*z2-q1*q2*q3*y4^2*z2+q1*q2*q3*y1*z1*z2+q1*q2*q3*y4*z1*z2-
 q1*q2*q3*y1^2*z3-q1*q2*q3*y1*y4*z3-q1*q2*q3*y4^2*z3+q1*q2*q3*y1*z1*z3+q1*q2*q3*y4*z1*z3+
