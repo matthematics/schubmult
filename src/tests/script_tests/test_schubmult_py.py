@@ -1,5 +1,5 @@
 import pytest
-from schubmult._tests import get_json
+from schubmult._tests import get_json, load_json_test_names
 from ast import literal_eval
 
 
@@ -60,13 +60,9 @@ def parse_ret(lines, ascode, coprod):
     return ret_dict
 
 
-base_dir = "script_tests/data/schubmult_py"
+base_dir = "schubmult_py"
 
-json_files_data_args = [
-    f"{base_dir}/test_gen_py",
-    f"{base_dir}/test_gen_py2",
-    f"{base_dir}/test_gen_py_coprod",
-]
+json_files_data_args = load_json_test_names(base_dir)
 
 
 @pytest.mark.parametrize("json_file", json_files_data_args)

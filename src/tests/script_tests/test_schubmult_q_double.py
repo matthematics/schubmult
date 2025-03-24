@@ -3,7 +3,7 @@ from ast import literal_eval
 import re
 
 
-from schubmult._tests import get_json
+from schubmult._tests import get_json, load_json_test_names
 
 
 def check_positive(v2, same, subs_dict2):
@@ -129,14 +129,9 @@ def parse_ret(lines, ascode, unformat):
 
 
 
-base_dir = "script_tests/data/schubmult_q_double"
+base_dir = "schubmult_q_double"
 
-json_files_data_args = [
-    "test_gen1",
-    "test_mixed_positive",    
-    "test_same_positive",    
-]
-
+json_files_data_args = load_json_test_names(base_dir)
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):

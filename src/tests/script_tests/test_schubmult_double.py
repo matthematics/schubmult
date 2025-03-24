@@ -3,7 +3,7 @@ from ast import literal_eval
 import re
 
 
-from schubmult._tests import get_json
+from schubmult._tests import get_json, load_json_test_names
 
 
 def check_positive(v, coprod, same, var_r):
@@ -91,7 +91,7 @@ def assert_dict_good(
             sm += var_r[j]
         subs_dict2[var_a[i]] = sm
     if same and display_positive:
-        coeff_dict = {k: expand(sympify(v).xreplace(subs_dict2)) for k, v in coeff_dict.items()}
+        coeff_dict = {k: expand(sympify(v).subs(subs_dict2)) for k, v in coeff_dict.items()}
     for k, v in coeff_dict.items():
         if expand(v) == 0:            
             assert (k not in ret_dict) or (expand(v) == expand(ret_dict[k]))
@@ -187,15 +187,9 @@ def parse_ret(lines, ascode, coprod, unformat):
 #     # print(f"BOOB {json_file=} yay")
 
 
-base_dir = "script_tests/data/schubmult_double"
+base_dir = "schubmult_double"
 
-json_files_data_args = [
-    "test_gen_double_latex",
-    "test_gen_double_coprod2",
-    "test_gen_double",
-    "test_gen_double_coprod",
-    "test_gen_double_same_pos",
-]
+json_files_data_args = load_json_test_names(base_dir)
 
 
 @pytest.mark.parametrize("json_file", json_files_data_args)

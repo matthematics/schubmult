@@ -150,7 +150,7 @@ def _display_full(
         else:
             width = max([len(str(perm[0]) + " " + str(perm[1])) for perm in perm_pairs])
 
-        subs_dict2 = {}        
+              
         for perm in coeff_perms:
             val = coeff_dict[perm]
             downperm = mulperm(list(perm), inverse_kperm)
@@ -167,7 +167,7 @@ def _display_full(
                 val = sympify(val).subs(subs_dict)
 
                 if same and display_positive:                    
-                    val = expand(sympify(val).xreplace(subs_dict2))
+                    val = expand(sympify(val).subs(subs_dict2))
 
                 if val != 0:
                     if display_positive and not same:
@@ -302,15 +302,9 @@ def _display_full(
 
 
 def main(argv=None):
-    import logging
-
-    logging.basicConfig(
-        level=logging.ERROR, format="%(asctime)s %(levelname)s %(message) %(module) s"
-    )
-    logger = logging.getLogger(__name__)
-    logger.log(logging.DEBUG, f"main {argv=}")
     if argv is None:
         argv = sys.argv
+    
     try:
         var2 = tuple(symarray("y", 100).tolist())
         var3 = tuple(symarray("z", 100).tolist())
@@ -365,7 +359,7 @@ def main(argv=None):
 
             if pr or formatter is None:
                 # logger.log(logging.DEBUG, f"main {var2=}{var3=}{same=}")
-                return _display_full(
+                raw_result_dict = _display_full(
                     coeff_dict,
                     args,
                     formatter,
@@ -375,6 +369,8 @@ def main(argv=None):
                     var3=var3,
                     N=N,
                 )
+            if formatter is None:
+                return raw_result_dict
         else:
             if ascode:
                 for i in range(len(perms)):
@@ -454,6 +450,7 @@ def main(argv=None):
             elif not posified:
                 coeff_dict = check_coeff_dict
 
+            
             if pr or formatter is None:
                 raw_result_dict = _display_full(
                     coeff_dict,
@@ -464,11 +461,13 @@ def main(argv=None):
                     posified=posified,
                     check_coeff_dict=check_coeff_dict,
                 )
-            if formatter is None:
+            
+            if formatter is None:                
                 return raw_result_dict
     except BrokenPipeError:
-        pass
+        pass    
+    return 0
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    sys.exit(main(sys.argv))

@@ -81,10 +81,13 @@ def _display_full(coeff_dict, args, formatter):
         val = sympify(coeff_dict[perm]).expand()
         if val != 0:
             if ascode:
-
-                print(f"{str(trimcode(perm))}  {formatter(val)}")
+                raw_result_dict[tuple(trimcode(perm))] = val
+                if formatter:
+                    print(f"{str(trimcode(perm))}  {formatter(val)}")
             else:
-                print(f"{str(perm)}  {formatter(val)}")
+                raw_result_dict[perm] = val
+                if formatter:
+                    print(f"{str(perm)}  {formatter(val)}")
     return raw_result_dict
 
 
@@ -157,4 +160,4 @@ def main(argv=None):
 
 if __name__ == "__main__":
     import sys
-    main(sys.argv)
+    sys.exit(main(sys.argv))
