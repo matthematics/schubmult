@@ -1,7 +1,6 @@
 from schubmult.schubmult_q._funcs import (
     schubmult,
     schubmult_db,
-    mult_poly,
 )
 from symengine import sympify
 from schubmult._base_argparse import schub_argparse

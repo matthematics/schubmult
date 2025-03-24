@@ -72,7 +72,6 @@ def test_with_same_args_exec(capsys, json_file):
         
     input_dict = {tuple(permtrim(perms[0])) if not ascode else tuple(permtrim(uncode(perms[0]))): 1}
     print(f"{v_tuple=} {input_dict=}")
-    print("BOOB ASS")
     assert_dict_good(v_tuple, input_dict, ret_dict)
 
 
