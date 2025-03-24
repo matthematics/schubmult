@@ -1,4 +1,3 @@
-import pytest
 
 def get_json(file: str):
     import os

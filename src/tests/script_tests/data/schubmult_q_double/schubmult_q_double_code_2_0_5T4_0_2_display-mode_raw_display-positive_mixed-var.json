@@ -1,0 +1,44 @@
+{
+    "perms": [
+        [
+            2,
+            0,
+            5
+        ],
+        [
+            4,
+            0,
+            2
+        ]
+    ],
+    "pr": true,
+    "ascode": true,
+    "mult": false,
+    "display_positive": true,
+    "msg": false,
+    "down": false,
+    "check": true,
+    "same": false,
+    "expa": false,
+    "parabolic": [],
+    "slow": false,
+    "nilhecke": null,
+    "nilhecke_apply": null,
+    "disp_mode": "raw",
+    "mulstring": "",
+    "cmd_line": [
+        "script",
+        "--code",
+        "2",
+        "0",
+        "5",
+        "-",
+        "4",
+        "0",
+        "2",
+        "--display-mode",
+        "raw",
+        "--display-positive",
+        "--mixed-var"
+    ]
+}

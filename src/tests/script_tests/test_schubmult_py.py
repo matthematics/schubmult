@@ -77,18 +77,22 @@ def test_with_same_args_exec(capsys, json_file):
     mulstring = args["mulstring"]  # noqa: F841
 
     perms = args["perms"]
-
+    disp_mode = args["disp_mode"]
     ascode = args["ascode"]
     coprod = args["coprod"]
     pr = args["pr"]  # noqa: F841
 
     print(f"{args=}")
     print(f"{args['cmd_line']=}")
-    main(args["cmd_line"])
+    ret_dict = main(args["cmd_line"])
     lines = capsys.readouterr()
     lines = str(lines.out).split("\n")
 
-    ret_dict = parse_ret(lines, ascode, coprod)
+    if disp_mode != "raw":
+        ret_dict = parse_ret(lines, ascode, coprod)
+    else:
+        if ascode:
+            ret_dict = {tuple(uncode(k)): v for k, v in ret_dict.items()}
     v_tuple = (
         (tuple(perms[1]) if not ascode else tuple(uncode(perms[1])))
         if not coprod

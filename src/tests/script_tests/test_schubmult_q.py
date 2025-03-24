@@ -57,20 +57,31 @@ def test_with_same_args_exec(capsys, json_file):
     perms = args["perms"]
 
     ascode = args["ascode"]
+    disp_mode = args["disp_mode"]
     pr = args["pr"]  # noqa: F841
 
     print(f"{args=}")
     print(f"{args['cmd_line']=}")
-    main(args["cmd_line"])
+
+    from latex2sympy2_extended import latex2sympy
+    from symengine import sympify
+
+    unformat = {"basic": lambda v: sympify(v), "latex": lambda v: sympify(latex2sympy(v))}
+
+    ret_dict = main(args["cmd_line"])
     lines = capsys.readouterr()
     lines = str(lines.out).split("\n")
 
-    ret_dict = parse_ret(lines, ascode)
-    v_tuple = (tuple(perms[1]) if not ascode else tuple(uncode(perms[1])))
-        
+    if disp_mode != "raw":
+        ret_dict = parse_ret(lines, ascode)
+    else:
+        if ascode:
+            ret_dict = {tuple(uncode(k)): v for k, v in ret_dict.items()}
+    v_tuple = tuple(perms[1]) if not ascode else tuple(uncode(perms[1]))
+
     input_dict = {tuple(permtrim(perms[0])) if not ascode else tuple(permtrim(uncode(perms[0]))): 1}
     print(f"{v_tuple=} {input_dict=}")
-    assert_dict_good(v_tuple, input_dict, ret_dict)
+    assert_dict_good(v_tuple, input_dict, ret_dict, unformat[disp_mode])
 
 
 if __name__ == "__main__":

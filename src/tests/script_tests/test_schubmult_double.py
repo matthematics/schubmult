@@ -93,10 +93,10 @@ def assert_dict_good(
     if same and display_positive:
         coeff_dict = {k: expand(sympify(v).subs(subs_dict2)) for k, v in coeff_dict.items()}
     for k, v in coeff_dict.items():
-        if expand(v) == 0:            
+        if expand(v) == 0:
             assert (k not in ret_dict) or (expand(v) == expand(ret_dict[k]))
         else:
-            assert (expand(v) == expand(ret_dict[k]))
+            assert expand(v) == expand(ret_dict[k])
     for k in ret_dict.keys():
         if display_positive:
             assert check_positive(ret_dict[k], coprod, same, var_r)
@@ -220,11 +220,15 @@ def test_with_same_args_exec(capsys, json_file):
     unformat = {"basic": lambda v: sympify(v), "latex": lambda v: sympify(latex2sympy(v))}
     # print(f"{args=}")
     # print(f"{args['cmd_line']=}")
-    main(args["cmd_line"])
+    ret_dict = main(args["cmd_line"])
     lines = capsys.readouterr()
     lines = str(lines.out).split("\n")
 
-    ret_dict = parse_ret(lines, ascode, coprod, unformat[disp_mode])
+    if disp_mode != "raw":
+        ret_dict = parse_ret(lines, ascode, coprod, unformat[disp_mode])
+    else:
+        if ascode:
+            ret_dict = {tuple(uncode(k)): v for k, v in ret_dict.items()}
     v_tuple = (
         (tuple(perms[1]) if not ascode else tuple(uncode(perms[1])))
         if not coprod
