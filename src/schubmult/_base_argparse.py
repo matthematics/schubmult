@@ -166,6 +166,8 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
     if args.mult is not None:
         args.mulstring = " ".join(args.mult)
         args.mult = True
+    else:
+        args.mult = False
 
     for perm in args.perms:
         try:

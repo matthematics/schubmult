@@ -93,7 +93,10 @@ def assert_dict_good(
     if same and display_positive:
         coeff_dict = {k: expand(sympify(v).xreplace(subs_dict2)) for k, v in coeff_dict.items()}
     for k, v in coeff_dict.items():
-        assert (k not in ret_dict) or (expand(v) == expand(ret_dict[k]))
+        if expand(v) == 0:            
+            assert (k not in ret_dict) or (expand(v) == expand(ret_dict[k]))
+        else:
+            assert (expand(v) == expand(ret_dict[k]))
     for k in ret_dict.keys():
         if display_positive:
             assert check_positive(ret_dict[k], coprod, same, var_r)
