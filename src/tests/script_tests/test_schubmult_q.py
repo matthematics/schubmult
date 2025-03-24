@@ -19,7 +19,6 @@ def assert_dict_good(v_tuple, input_dict, ret_dict):
 
 def parse_ret(lines, ascode,unformat):
     from schubmult.perm_lib import uncode
-    from symengine import sympify
 
     ret_dict = {}
     for line in lines:
