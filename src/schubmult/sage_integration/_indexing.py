@@ -13,7 +13,14 @@ def _coerce_index(indexed_obj, is_comp, should_be_comp):
             else:
                 return Permutation(permtrim(list(indexed_obj))).remove_extra_fixed_points()
         else:
-            return indexed_obj
+            if not is_comp:
+                if isinstance(indexed_obj, Permutation):
+                    return indexed_obj.remove_extra_fixed_points()
+                elif isinstance(indexed_obj, dict):
+                    {
+                    Permutation(permtrim(list(k))).remove_extra_fixed_points(): v
+                    for k, v in indexed_obj.items()
+                }
     else:
         if is_comp:
             if (

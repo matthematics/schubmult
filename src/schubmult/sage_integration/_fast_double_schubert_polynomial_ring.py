@@ -502,8 +502,8 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                         break
                 if not flag:
                     continue
-                firstperm = Permutation(permtrim(list(downperm[0:N]))).remove_extra_fixed_points()
-                secondperm = Permutation(permtrim([downperm[i] - N for i in range(N, len(downperm))])).remove_extra_fixed_points()
+                firstperm = Permutation(permtrim(list(downperm[0:N])))
+                secondperm = Permutation(permtrim([downperm[i] - N for i in range(N, len(downperm))]))
                 val = TR(val).subs(subs_dict_coprod)
                 total_sum += self._coeff_polynomial_ring(val) * self(
                     (_coerce_index(firstperm, False, self._ascode), indm[1])
