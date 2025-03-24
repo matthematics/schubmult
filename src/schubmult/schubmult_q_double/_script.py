@@ -1,34 +1,36 @@
 import sys
+from functools import cached_property
+
 import numpy as np
-from schubmult.schubmult_q_double._funcs import (
-    schubmult,
-    schubmult_db,
-    # mult_poly,
-    nil_hecke,
-    factor_out_q_keep_factored,
-)
-from schubmult.schubmult_double import compute_positive_rep, posify, div_diff
-from symengine import expand, sympify, symarray
+from symengine import expand, symarray, sympify
+
+from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
-    inverse,
-    medium_theta,
-    permtrim,
+    check_blocks,
+    code,
+    count_less_than,
     inv,
+    inverse,
+    is_parabolic,
+    longest_element,
+    medium_theta,
     mulperm,
-    uncode,
+    omega,
+    permtrim,
     q_var,
     q_vector,
     reduce_q_coeff,
-    code,
     trimcode,
-    longest_element,
-    check_blocks,
-    is_parabolic,
-    count_less_than,
-    omega,
+    uncode,
 )
-from schubmult._base_argparse import schub_argparse
-from functools import cached_property
+from schubmult.schubmult_double import compute_positive_rep, div_diff, posify
+from schubmult.schubmult_q_double._funcs import (
+    factor_out_q_keep_factored,
+    # mult_poly,
+    nil_hecke,
+    schubmult,
+    schubmult_db,
+)
 
 
 class _gvars:
@@ -122,7 +124,7 @@ def _display_full(coeff_dict, args, formatter, posified=None, var2=_vars.var2, v
                                             while did_one:
                                                 u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
                                             q_part2 = np.prod(
-                                                [q_var[i + 1] ** qv[i] for i in range(len(qv))]
+                                                [q_var[i + 1] ** qv[i] for i in range(len(qv))],
                                             )
                                             if q_part2 == 1:
                                                 # reduced to classical coefficient
@@ -160,21 +162,20 @@ def _display_full(coeff_dict, args, formatter, posified=None, var2=_vars.var2, v
                                         )
                                         val2 = val
                                         break
-                                    else:
-                                        print(
-                                            f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {coeff_dict.get(perm,0)=}"
-                                        )
-                                        print(f"Exception: {e}")
-                                        import traceback
+                                    print(
+                                        f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {coeff_dict.get(perm,0)=}",
+                                    )
+                                    print(f"Exception: {e}")
+                                    import traceback
 
-                                        traceback.print_exc()
-                                        exit(1)
+                                    traceback.print_exc()
+                                    exit(1)
                     if not same and check and expand(val - val2) != 0:
                         if mult:
                             val2 = val
                         else:
                             print(
-                                f"error: value not equal; write to schubmult@gmail.com with the case {perms=} {perm=} {val2=} {coeff_dict.get(perm,0)=}"
+                                f"error: value not equal; write to schubmult@gmail.com with the case {perms=} {perm=} {val2=} {coeff_dict.get(perm,0)=}",
                             )
                             exit(1)
                     val = val2
@@ -184,11 +185,11 @@ def _display_full(coeff_dict, args, formatter, posified=None, var2=_vars.var2, v
                 if ascode:
                     raw_result_dict[tuple(trimcode(perm))] = val
                     if formatter:
-                        print(f"{str(trimcode(perm))}  {formatter(val)}")
+                        print(f"{trimcode(perm)!s}  {formatter(val)}")
                 else:
                     raw_result_dict[tuple(perm)] = val
                     if formatter:
-                        print(f"{str(perm)}  {formatter(val)}")
+                        print(f"{perm!s}  {formatter(val)}")
     return raw_result_dict
 
 
@@ -310,11 +311,10 @@ def main(argv=None):
 
                     new_q_part = np.prod(
                         [
-                            q_var[index + 1 - count_less_than(parabolic_index, index + 1)]
-                            ** qv[index]
+                            q_var[index + 1 - count_less_than(parabolic_index, index + 1)] ** qv[index]
                             for index in range(len(qv))
                             if index + 1 not in parabolic_index
-                        ]
+                        ],
                     )
 
                     try:
@@ -350,7 +350,7 @@ def main(argv=None):
                                         while did_one:
                                             u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
                                         q_part2 = np.prod(
-                                            [q_var[i + 1] ** qv[i] for i in range(len(qv))]
+                                            [q_var[i + 1] ** qv[i] for i in range(len(qv))],
                                         )
                                         if q_part2 == 1:
                                             q_val_part = posify(
@@ -373,13 +373,11 @@ def main(argv=None):
                                             )
                                 except Exception as e:
                                     print(
-                                        f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {q_part*q_val_part=} {coeff_dict.get(w_1,0)=}"
+                                        f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {q_part*q_val_part=} {coeff_dict.get(w_1,0)=}",
                                     )
                                     print(f"Exception: {e}")
                                     exit(1)
-                            coeff_dict_update[w] = (
-                                coeff_dict_update.get(w, 0) + new_q_part * q_val_part
-                            )
+                            coeff_dict_update[w] = coeff_dict_update.get(w, 0) + new_q_part * q_val_part
 
             coeff_dict = coeff_dict_update
 
@@ -394,4 +392,5 @@ def main(argv=None):
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main(sys.argv))

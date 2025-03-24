@@ -1,14 +1,15 @@
-import pytest
-from ast import literal_eval
 import re
+from ast import literal_eval
 
+import pytest
 
 from schubmult._tests import get_json, load_json_test_names
 
 
 def check_positive(v, coprod, same, var_r):
     # if same, should be no minus signs
-    from symengine import sympify, expand
+    from symengine import expand, sympify
+
     from schubmult.schubmult_double import compute_positive_rep
     from schubmult.schubmult_double._funcs import _vars
 
@@ -21,41 +22,40 @@ def check_positive(v, coprod, same, var_r):
             subs_dict = {var_r[i]: -var_r[i] for i in range(1, 100)}
             v = expand(v.subs(subs_dict))
         return str(v).find("-") == -1
-    else:
+    try:
+        if int(v) > 0:
+            return True
+    except Exception:
+        pass
+    work = str(v)
+    work = re.sub(r"[)] [+] [(]|[)][*][(]", "|", work)
+    work = re.sub(r"\s[(]|[)]", "", work)
+
+    vals = [val for val in work.split("|")]
+
+    for i in range(len(vals)):
+        if vals[i].find("*(") == -1:
+            vals[i] = re.sub(r"[)]|[(]", "", vals[i])
+
+    print(f"{vals=}", file=sys.stderr)
+    for val in vals:
+        if val.find("(") != -1:
+            val += ")"
         try:
-            if int(v) > 0:
-                return True
-        except Exception:
+            if int(val) >= 0:
+                continue
+        except ValueError:
             pass
-        work = str(v)
-        work = re.sub(r"[)] [+] [(]|[)][*][(]", "|", work)
-        work = re.sub(r"\s[(]|[)]", "", work)
-
-        vals = [val for val in work.split("|")]
-
-        for i in range(len(vals)):
-            if vals[i].find("*(") == -1:
-                vals[i] = re.sub(r"[)]|[(]", "", vals[i])
-
-        print(f"{vals=}", file=sys.stderr)
-        for val in vals:
-            if val.find("(") != -1:
-                val += ")"
-            try:
-                if int(val) >= 0:
-                    continue
-            except ValueError:
-                pass
-            sym_val = expand(sympify(val))
-            print(f"{sym_val=} not an int", file=sys.stderr)
-            if coprod:
-                assert expand(sym_val) == expand(
-                    compute_positive_rep(sym_val, var3, var2, do_pos_neg=False)
-                )
-            else:
-                assert expand(sym_val) == expand(
-                    compute_positive_rep(sym_val, var2, var3, do_pos_neg=False)
-                )
+        sym_val = expand(sympify(val))
+        print(f"{sym_val=} not an int", file=sys.stderr)
+        if coprod:
+            assert expand(sym_val) == expand(
+                compute_positive_rep(sym_val, var3, var2, do_pos_neg=False),
+            )
+        else:
+            assert expand(sym_val) == expand(
+                compute_positive_rep(sym_val, var2, var3, do_pos_neg=False),
+            )
     print(f"Donebaby {coprod=}", file=sys.stderr)
     return True
 
@@ -70,8 +70,9 @@ def assert_dict_good(
     display_positive=False,
 ):
     # print(f"{input_dict=}")
-    from schubmult.schubmult_double import schubmult, schub_coprod
-    from symengine import symarray, expand, sympify
+    from symengine import expand, symarray, sympify
+
+    from schubmult.schubmult_double import schub_coprod, schubmult
 
     var_a = symarray("y", 100).tolist()
     var_b = symarray("z", 100).tolist()
@@ -106,8 +107,9 @@ def assert_dict_good(
 
 
 def parse_ret(lines, ascode, coprod, unformat):
-    from schubmult.perm_lib import uncode, permtrim
     import sys
+
+    from schubmult.perm_lib import permtrim, uncode
     ret_dict = {}
     if not coprod:
         for line in lines:
@@ -196,7 +198,7 @@ json_files_data_args = load_json_test_names(base_dir)
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
-    from schubmult.perm_lib import uncode, permtrim
+    from schubmult.perm_lib import permtrim, uncode
 
     args = get_json(f"{base_dir}/{json_file}")
     # print(f"{json_file=} {args=} input_data")
@@ -212,7 +214,7 @@ def test_with_same_args_exec(capsys, json_file):
     same = args["same"]
     msg = args["msg"]  # noqa: F841
     down = args["down"]  # noqa: F841
-    display_positive = args["display_positive"]  # noqa: F841
+    display_positive = args["display_positive"]
     pr = args["pr"]  # noqa: F841
     disp_mode = args["disp_mode"]
 
@@ -228,12 +230,11 @@ def test_with_same_args_exec(capsys, json_file):
 
     if disp_mode != "raw":
         ret_dict = parse_ret(lines, ascode, coprod, unformat[disp_mode])
-    else:
-        if coprod:
-            if ascode:
-                ret_dict = {(tuple(uncode(list(k[0]))),tuple(uncode(list(k[1])))): v for k, v in ret_dict.items()}    
-        elif ascode:
-            ret_dict = {tuple(uncode(list(k))): v for k, v in ret_dict.items()}
+    elif coprod:
+        if ascode:
+            ret_dict = {(tuple(uncode(list(k[0]))),tuple(uncode(list(k[1])))): v for k, v in ret_dict.items()}
+    elif ascode:
+        ret_dict = {tuple(uncode(list(k))): v for k, v in ret_dict.items()}
     v_tuple = (
         (tuple(perms[1]) if not ascode else tuple(uncode(perms[1])))
         if not coprod

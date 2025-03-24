@@ -1,27 +1,30 @@
+import sys
+
+import numpy as np
+from symengine import sympify
+
+from schubmult._base_argparse import schub_argparse
+from schubmult.perm_lib import (
+    check_blocks,
+    count_less_than,
+    inv,
+    is_parabolic,
+    longest_element,
+    mulperm,
+    omega,
+    permtrim,
+    q_var,
+    q_vector,
+    sg,
+    trimcode,
+    uncode,
+)
 from schubmult.schubmult_q._funcs import (
     schubmult,
     schubmult_db,
 )
-from symengine import sympify
-from schubmult._base_argparse import schub_argparse
-from schubmult.perm_lib import (
-    trimcode,
-    permtrim,
-    inv,
-    mulperm,
-    uncode,
-    longest_element,
-    check_blocks,
-    is_parabolic,
-    q_vector,
-    omega,
-    count_less_than,
-    q_var,
-    sg,
-)
-import numpy as np
 from schubmult.schubmult_q_double import factor_out_q_keep_factored
-import sys
+
 
 def _display_full(coeff_dict, args, formatter):
     raw_result_dict = {}
@@ -63,7 +66,7 @@ def _display_full(coeff_dict, args, formatter):
                         q_var[index + 1 - count_less_than(parabolic_index, index + 1)] ** qv[index]
                         for index in range(len(qv))
                         if index + 1 not in parabolic_index
-                    ]
+                    ],
                 )
 
                 try:
@@ -83,11 +86,11 @@ def _display_full(coeff_dict, args, formatter):
             if ascode:
                 raw_result_dict[tuple(trimcode(perm))] = val
                 if formatter:
-                    print(f"{str(trimcode(perm))}  {formatter(val)}")
+                    print(f"{trimcode(perm)!s}  {formatter(val)}")
             else:
                 raw_result_dict[perm] = val
                 if formatter:
-                    print(f"{str(perm)}  {formatter(val)}")
+                    print(f"{perm!s}  {formatter(val)}")
     return raw_result_dict
 
 
@@ -102,7 +105,7 @@ def main(argv=None):
             quantum=True,
         )
 
-        
+
 
         perms = args.perms
 
@@ -133,7 +136,7 @@ def main(argv=None):
                 index = parabolic_index[i] - 1
                 if sg(index, perms[0]) == 1 or sg(index, perms[1]) == 1:
                     print(
-                        "Parabolic given but elements are not minimal length coset representatives."
+                        "Parabolic given but elements are not minimal length coset representatives.",
                     )
                     exit(1)
 

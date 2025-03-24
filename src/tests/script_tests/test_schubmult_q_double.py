@@ -1,14 +1,15 @@
-import pytest
-from ast import literal_eval
 import re
+from ast import literal_eval
 
+import pytest
 
 from schubmult._tests import get_json, load_json_test_names
 
 
 def check_positive(v2, same, subs_dict2):
     # if same, should be no minus signs
-    from symengine import sympify, expand
+    from symengine import expand, sympify
+
     from schubmult.schubmult_double import compute_positive_rep
     from schubmult.schubmult_double._funcs import _vars
     from schubmult.schubmult_q_double import factor_out_q_keep_factored
@@ -21,44 +22,44 @@ def check_positive(v2, same, subs_dict2):
         if same:
             v = expand(sympify(v).xreplace(subs_dict2))
             return str(v).find("-") == -1
-        else:
+        try:
+            if int(v) > 0:
+                return True
+        except Exception:
+            pass
+        work = str(v)
+        work = re.sub(r"[)] [+] [(]|[)][*][(]", "|", work)
+        work = re.sub(r"\s[(]|[)]", "", work)
+
+        vals = [val for val in work.split("|")]
+
+        for i in range(len(vals)):
+            if vals[i].find("*(") == -1:
+                vals[i] = re.sub(r"[)]|[(]", "", vals[i])
+
+        # print(f"{vals=}", file=sys.stderr)
+        for val in vals:
+            if val.find("(") != -1:
+                val += ")"
             try:
-                if int(v) > 0:
-                    return True
-            except Exception:
+                if int(val) >= 0:
+                    continue
+            except ValueError:
                 pass
-            work = str(v)
-            work = re.sub(r"[)] [+] [(]|[)][*][(]", "|", work)
-            work = re.sub(r"\s[(]|[)]", "", work)
-
-            vals = [val for val in work.split("|")]
-
-            for i in range(len(vals)):
-                if vals[i].find("*(") == -1:
-                    vals[i] = re.sub(r"[)]|[(]", "", vals[i])
-
-            # print(f"{vals=}", file=sys.stderr)
-            for val in vals:
-                if val.find("(") != -1:
-                    val += ")"
-                try:
-                    if int(val) >= 0:
-                        continue
-                except ValueError:
-                    pass
-                sym_val = expand(sympify(val))
-                # print(f"{sym_val=} not an int", file=sys.stderr)
-                assert expand(sym_val) == expand(
-                    compute_positive_rep(sym_val, var2, var3, do_pos_neg=False)
-                )
+            sym_val = expand(sympify(val))
+            # print(f"{sym_val=} not an int", file=sys.stderr)
+            assert expand(sym_val) == expand(
+                compute_positive_rep(sym_val, var2, var3, do_pos_neg=False),
+            )
     return True
 
 
 def assert_dict_good(v_tuple, input_dict, ret_dict, same=True, display_positive=False, slow=False):
     # print(f"{input_dict=}")
 
-    from schubmult.schubmult_q_double import schubmult_db, schubmult
-    from symengine import symarray, expand, sympify
+    from symengine import expand, symarray, sympify
+
+    from schubmult.schubmult_q_double import schubmult, schubmult_db
 
     var_a = symarray("y", 100).tolist()
     var_b = symarray("z", 100).tolist()
@@ -73,11 +74,11 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, same=True, display_positive=
         subs_dict2[var_a[i]] = sm
     if slow:
         coeff_dict = schubmult(
-            input_dict, v_tuple, var2=var_a, var3=var_a if same else var_b, q_var=var_q
+            input_dict, v_tuple, var2=var_a, var3=var_a if same else var_b, q_var=var_q,
         )
     else:
         coeff_dict = schubmult_db(
-            input_dict, v_tuple, var2=var_a, var3=var_a if same else var_b, q_var=var_q
+            input_dict, v_tuple, var2=var_a, var3=var_a if same else var_b, q_var=var_q,
         )
 
     # print(f"{coeff_dict=}",file=sys.stderr)
@@ -134,8 +135,8 @@ json_files_data_args = load_json_test_names(base_dir)
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
-    from schubmult.perm_lib import uncode, permtrim
-    
+    from schubmult.perm_lib import permtrim, uncode
+
 
     args = get_json(f"{base_dir}/{json_file}")
     # print(f"{json_file=} {args=} input_data")
@@ -149,7 +150,7 @@ def test_with_same_args_exec(capsys, json_file):
     ascode = args["ascode"]
     same = args["same"]
     msg = args["msg"]  # noqa: F841
-    display_positive = args["display_positive"]  # noqa: F841
+    display_positive = args["display_positive"]
     pr = args["pr"]  # noqa: F841
     disp_mode = args["disp_mode"]
     slow = args["slow"]

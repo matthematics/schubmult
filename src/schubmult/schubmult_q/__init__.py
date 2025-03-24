@@ -1,13 +1,8 @@
-from ._funcs import (
-    schubmult,
-    schubmult_db,
-    mult_poly
-)
-
+from ._funcs import mult_poly, schubmult, schubmult_db
 
 __all__ = [
+    "mult_poly",
     "schubmult",
     "schubmult_db",
-    "mult_poly"
 ]
 

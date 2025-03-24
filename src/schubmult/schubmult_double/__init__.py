@@ -1,22 +1,12 @@
-from ._funcs import (
-    compute_positive_rep,
-    schubmult,
-    single_variable,
-    mult_poly,
-    posify,
-    div_diff,
-    schub_coprod
-)
-
-
+from ._funcs import compute_positive_rep, div_diff, mult_poly, posify, schub_coprod, schubmult, single_variable
 
 __all__ = [
     "compute_positive_rep",
-    "schubmult",
-    "single_variable",
+    "div_diff",
+    "main",
     "mult_poly",
     "posify",
-    "div_diff",
     "schub_coprod",
-    "main"
+    "schubmult",
+    "single_variable",
 ]

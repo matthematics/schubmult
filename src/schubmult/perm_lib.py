@@ -1,8 +1,9 @@
-from symengine import sympify, Mul, Pow, symarray
+from bisect import bisect_left
 from functools import cache
 from itertools import chain
-from bisect import bisect_left
+
 import numpy as np
+from symengine import Mul, Pow, symarray, sympify
 
 zero = sympify(0)
 n = 100
@@ -18,7 +19,7 @@ def getpermval(perm, index):
 
 def inv(perm):
     L = len(perm)
-    v = [i for i in range(1, L + 1)]
+    v = list(range(1, L + 1))
     ans = 0
     for i in range(L):
         itr = bisect_left(v, perm[i])
@@ -30,7 +31,7 @@ def inv(perm):
 def code(perm):
     L = len(perm)
     ret = []
-    v = [i for i in range(1, L + 1)]
+    v = list(range(1, L + 1))
     for i in range(L - 1):
         itr = bisect_left(v, perm[i])
         ret += [itr]
@@ -40,11 +41,8 @@ def code(perm):
 
 def mulperm(perm1, perm2):
     if len(perm1) < len(perm2):
-        return [
-            perm1[perm2[i] - 1] if perm2[i] <= len(perm1) else perm2[i] for i in range(len(perm2))
-        ]
-    else:
-        return [perm1[perm2[i] - 1] for i in range(len(perm2))] + perm1[len(perm2) :]
+        return [perm1[perm2[i] - 1] if perm2[i] <= len(perm1) else perm2[i] for i in range(len(perm2))]
+    return [perm1[perm2[i] - 1] for i in range(len(perm2))] + perm1[len(perm2) :]
 
 
 def uncode(cd):
@@ -64,7 +62,7 @@ def uncode(cd):
 def reversecode(perm):
     ret = []
     for i in range(len(perm) - 1, 0, -1):
-        ret = [0] + ret
+        ret = [0, *ret]
         for j in range(i, -1, -1):
             if perm[i] > perm[j]:
                 ret[-1] += 1
@@ -80,7 +78,7 @@ def reverseuncode(cd):
     fullperm = [i + 1 for i in range(len(cd2) + 1)]
     perm = []
     for i in range(len(cd2) - 1, 0, -1):
-        perm = [fullperm[cd2[i]]] + perm
+        perm = [fullperm[cd2[i]], *perm]
         fullperm.pop(cd2[i])
     perm += [fullperm[0]]
     return perm
@@ -205,12 +203,7 @@ def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
             up_perm2 = [*up_perm, len(up_perm) + 1]
             if len(up_perm2) < k + 1:
                 up_perm2 += [i + 1 for i in range(len(up_perm2), k + 2)]
-            pos_list = [
-                i
-                for i in range(k)
-                if (i >= len(orig_perm) and up_perm2[i] == i + 1)
-                or (i < len(orig_perm) and up_perm2[i] == orig_perm[i])
-            ]
+            pos_list = [i for i in range(k) if (i >= len(orig_perm) and up_perm2[i] == i + 1) or (i < len(orig_perm) and up_perm2[i] == orig_perm[i])]
             for j in range(min(len(up_perm2) - 1, last_j), k - 1, -1):
                 for i in pos_list:
                     ct = count_bruhat(up_perm2, i, j)
@@ -237,12 +230,7 @@ def elem_sym_perms_q_op(orig_perm, p, k, n, q_var=q_var):
             up_perm2 = [*up_perm]
             if len(up_perm) < n:
                 up_perm2 += [i + 1 for i in range(len(up_perm2), n)]
-            pos_list = [
-                i
-                for i in range(k)
-                if (i >= len(orig_perm) and up_perm2[i] == i + 1)
-                or (i < len(orig_perm) and up_perm2[i] == orig_perm[i])
-            ]
+            pos_list = [i for i in range(k) if (i >= len(orig_perm) and up_perm2[i] == i + 1) or (i < len(orig_perm) and up_perm2[i] == orig_perm[i])]
             for j in range(last_j, n):
                 for i in pos_list:
                     ct = count_bruhat(up_perm2, i, j)
@@ -268,14 +256,12 @@ def q_vector(q_exp, q_var=q_var):
         return ret
     if q_exp in q_var:
         i = qvar_list.index(q_exp)
-        ret = [0 for j in range(i - 1)] + [1]
-        return ret
+        return [0 for j in range(i - 1)] + [1]
     if isinstance(q_exp, Pow):
         qv = q_exp.args[0]
         expon = int(q_exp.args[1])
         i = qvar_list.index(qv)
-        ret = [0 for j in range(i - 1)] + [expon]
-        return ret
+        return [0 for j in range(i - 1)] + [expon]
     if isinstance(q_exp, Mul):
         for a in q_exp.args:
             v1 = q_vector(a)
@@ -319,16 +305,7 @@ def reduce_q_coeff(u, v, w, qv):
             if sg(i, w) == 0:
                 qv_ret[i] -= 1
             return u, tuple(permtrim(ret_v)), tuple(permtrim(ret_w)), qv_ret, True
-        elif sg(i, u) == 1 and sg(i, v) == 0 and sg(i, w) + omega(i + 1, qv) == 1:
-            ret_u = [*u]
-            ret_u[i], ret_u[i + 1] = ret_u[i + 1], ret_u[i]
-            ret_w = [*w] + [j + 1 for j in range(len(w), i + 2)]
-            ret_w[i], ret_w[i + 1] = ret_w[i + 1], ret_w[i]
-            qv_ret = [*qv]
-            if sg(i, w) == 0:
-                qv_ret[i] -= 1
-            return tuple(permtrim(ret_u)), v, tuple(permtrim(ret_w)), qv_ret, True
-        elif sg(i, u) == 1 and sg(i, v) == 1 and sg(i, w) + omega(i + 1, qv) == 2:
+        if (sg(i, u) == 1 and sg(i, v) == 0 and sg(i, w) + omega(i + 1, qv) == 1) or (sg(i, u) == 1 and sg(i, v) == 1 and sg(i, w) + omega(i + 1, qv) == 2):
             ret_u = [*u]
             ret_u[i], ret_u[i + 1] = ret_u[i + 1], ret_u[i]
             ret_w = [*w] + [j + 1 for j in range(len(w), i + 2)]
@@ -342,16 +319,7 @@ def reduce_q_coeff(u, v, w, qv):
 
 def reduce_q_coeff_u_only(u, v, w, qv):
     for i in range(len(qv)):
-        if sg(i, u) == 1 and sg(i, v) == 0 and sg(i, w) + omega(i + 1, qv) == 1:
-            ret_u = [*u]
-            ret_u[i], ret_u[i + 1] = ret_u[i + 1], ret_u[i]
-            ret_w = [*w] + [j + 1 for j in range(len(w), i + 2)]
-            ret_w[i], ret_w[i + 1] = ret_w[i + 1], ret_w[i]
-            qv_ret = [*qv]
-            if sg(i, w) == 0:
-                qv_ret[i] -= 1
-            return tuple(permtrim(ret_u)), v, tuple(permtrim(ret_w)), qv_ret, True
-        elif sg(i, u) == 1 and sg(i, v) == 1 and sg(i, w) + omega(i + 1, qv) == 2:
+        if (sg(i, u) == 1 and sg(i, v) == 0 and sg(i, w) + omega(i + 1, qv) == 1) or (sg(i, u) == 1 and sg(i, v) == 1 and sg(i, w) + omega(i + 1, qv) == 2):
             ret_u = [*u]
             ret_u[i], ret_u[i + 1] = ret_u[i + 1], ret_u[i]
             ret_w = [*w] + [j + 1 for j in range(len(w), i + 2)]
@@ -372,7 +340,7 @@ def longest_element(indices):
             j = indices[i] - 1
             if sg(j, perm) == 0:
                 if len(perm) < j + 2:
-                    perm = perm + [index for index in range(len(perm) + 1, j + 3)]
+                    perm = perm + list(range(len(perm) + 1, j + 3))
                 perm[j], perm[j + 1] = perm[j + 1], perm[j]
                 did_one = True
     return permtrim(perm)
@@ -433,7 +401,7 @@ def kdown_perms(perm, monoperm, p, k):
         down_perm_list2 = []
         for perm2, s in down_perm_list:
             L = len(perm2)
-            if L < k:
+            if k > L:
                 continue
             s2 = -s
             for b in chain(range(k - 1), range(k, L)):
@@ -523,7 +491,6 @@ def elem_sym_poly_q(p, k, varl1, varl2, q_var=q_var):
 
 
 def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0):
-    global zero, one
     if p > k:
         return zero
     if p == 0:
@@ -543,28 +510,32 @@ def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0):
     ysm = ystart + mid
     kmm = k - mid
     res = elem_sym_poly(p, mid, varl1, varl2, xstart, ystart) + elem_sym_poly(
-        p, kmm, varl1, varl2, xsm, ysm
+        p,
+        kmm,
+        varl1,
+        varl2,
+        xsm,
+        ysm,
     )
     for p2 in range(max(1, p - kmm), min(p, mid + 1)):
         res += elem_sym_poly(p2, mid, varl1, varl2, xstart, ystart) * elem_sym_poly(
-            p - p2, kmm, varl1, varl2, xsm, ysm - p2
+            p - p2,
+            kmm,
+            varl1,
+            varl2,
+            xsm,
+            ysm - p2,
         )
     return res
 
 
 @cache
-def call_zvars(v1, v2, k, i):
-    v3 = [*v2] + [j for j in range(len(v2) + 1, i + 1)]
-    zvars = (
-        [v3[i - 1]]
-        + [v3[j] for j in range(len(v1), len(v3)) if v3[j] != j + 1 and j != i - 1]
-        + [v3[j] for j in range(len(v1)) if v1[j] != v3[j] and j != i - 1]
-    )
-    return zvars
+def call_zvars(v1, v2, k, i):  # noqa: ARG001
+    v3 = [*v2, *list(range(len(v2) + 1, i + 1))]
+    return [v3[i - 1]] + [v3[j] for j in range(len(v1), len(v3)) if v3[j] != j + 1 and j != i - 1] + [v3[j] for j in range(len(v1)) if v1[j] != v3[j] and j != i - 1]
 
 
 def elem_sym_func(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
-    global zero, one
     newk = k - udiff
     if newk < vdiff:
         return zero
@@ -584,7 +555,6 @@ def elem_sym_func(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
 
 
 def elem_sym_func_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
-    global zero, one
     newk = k - udiff
     if newk < vdiff:
         return zero
@@ -629,14 +599,13 @@ def p_trans(part):
 
 
 def cycle(p, q):
-    return [i for i in range(1, p)] + [i + 1 for i in range(p, p + q)] + [p]
+    return list(range(1, p)) + [i + 1 for i in range(p, p + q)] + [p]
 
 
 def phi1(u):
     c_star = code(inverse(u))
     c_star.pop(0)
-    phi_u = inverse(uncode(c_star))
-    return phi_u
+    return inverse(uncode(c_star))
 
 
 def one_dominates(u, w):
@@ -745,30 +714,14 @@ def reduce_descents(u, v, w):
     found_one = True
     while found_one:
         found_one = False
-        if (
-            will_formula_work(u2, v2)
-            or will_formula_work(v2, u2)
-            or one_dominates(u2, w2)
-            or is_reducible(v2)
-            or inv(w2) - inv(u2) == 1
-        ):
+        if will_formula_work(u2, v2) or will_formula_work(v2, u2) or one_dominates(u2, w2) or is_reducible(v2) or inv(w2) - inv(u2) == 1:
             break
         for i in range(len(w2) - 2, -1, -1):
-            if (
-                w2[i] > w2[i + 1]
-                and i < len(v2) - 1
-                and v2[i] > v2[i + 1]
-                and (i >= len(u2) - 1 or u2[i] < u2[i + 1])
-            ):
+            if w2[i] > w2[i + 1] and i < len(v2) - 1 and v2[i] > v2[i + 1] and (i >= len(u2) - 1 or u2[i] < u2[i + 1]):
                 w2[i], w2[i + 1] = w2[i + 1], w2[i]
                 v2[i], v2[i + 1] = v2[i + 1], v2[i]
                 found_one = True
-            elif (
-                w2[i] > w2[i + 1]
-                and i < len(u2) - 1
-                and u2[i] > u2[i + 1]
-                and (i >= len(v2) - 1 or v2[i] < v2[i + 1])
-            ):
+            elif w2[i] > w2[i + 1] and i < len(u2) - 1 and u2[i] > u2[i + 1] and (i >= len(v2) - 1 or v2[i] < v2[i + 1]):
                 w2[i], w2[i + 1] = w2[i + 1], w2[i]
                 u2[i], u2[i + 1] = u2[i + 1], u2[i]
                 found_one = True
@@ -802,18 +755,16 @@ def try_reduce_v(u, v, w):
             if i >= len(u2) - 1 or u2[i] < u2[i + 1]:
                 v2[i], v2[i + 1] = v2[i + 1], v2[i]
                 if i >= len(w2) - 1:
-                    w2 += [j for j in range(len(w2) + 1, i + 3)]
+                    w2 += list(range(len(w2) + 1, i + 3))
                 w2[i + 1], w2[i] = w2[i], w2[i + 1]
                 if is_reducible(v2):
                     return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
-                else:
-                    return try_reduce_v(u2, v2, w2)
-            elif i < len(w2) - 1 and w2[i] > w2[i + 1]:
+                return try_reduce_v(u2, v2, w2)
+            if i < len(w2) - 1 and w2[i] > w2[i + 1]:
                 u2[i], u2[i + 1] = u2[i + 1], u2[i]
                 v2[i], v2[i + 1] = v2[i + 1], v2[i]
                 return try_reduce_v(u2, v2, w2)
-            else:
-                return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
+            return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
     return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
 
 
@@ -829,18 +780,16 @@ def try_reduce_u(u, v, w):
             if i >= len(v2) - 1 or v2[i] < v2[i + 1]:
                 u2[i], u2[i + 1] = u2[i + 1], u2[i]
                 if i > len(w2) - 1:
-                    w2 += [j for j in range(len(w2) + 1, i + 3)]
+                    w2 += list(range(len(w2) + 1, i + 3))
                 w2[i + 1], w2[i] = w2[i], w2[i + 1]
                 if one_dominates(u, w):
                     return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
-                else:
-                    return try_reduce_u(u2, v2, w2)
-            elif i < len(w2) - 1 and w2[i] > w2[i + 1]:
+                return try_reduce_u(u2, v2, w2)
+            if i < len(w2) - 1 and w2[i] > w2[i + 1]:
                 u2[i], u2[i + 1] = u2[i + 1], u2[i]
                 v2[i], v2[i + 1] = v2[i + 1], v2[i]
                 return try_reduce_u(u2, v2, w2)
-            else:
-                return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
+            return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
     return tuple(permtrim(u2)), tuple(permtrim(v2)), tuple(permtrim(w2))
 
 
@@ -863,15 +812,14 @@ def will_formula_work(u, v):
                 found_one = True
                 if i < len(u) - 1 and u[i] > u[i + 1]:
                     return False
-                else:
-                    vn1muv[i], vn1muv[i + 1] = vn1muv[i + 1], vn1muv[i]
-                    break
+                vn1muv[i], vn1muv[i + 1] = vn1muv[i + 1], vn1muv[i]
+                break
         if not found_one:
             return True
 
 
 def pull_out_var(vnum, v):
-    vup = v + [len(v) + 1]
+    vup = [*v, len(v) + 1]
     if vnum >= len(v):
         return [[[], v]]
     vpm_list = [(vup, 0)]
@@ -885,13 +833,9 @@ def pull_out_var(vnum, v):
                 vp = permtrim(vpm2)
                 ret_list += [
                     [
-                        [
-                            v[i]
-                            for i in range(vnum, len(v))
-                            if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))
-                        ],
+                        [v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))],
                         vp,
-                    ]
+                    ],
                 ]
             for j in range(vnum, len(vup)):
                 if vpm[j] <= b:
@@ -909,13 +853,9 @@ def pull_out_var(vnum, v):
             vp = permtrim(vpm2)
             ret_list += [
                 [
-                    [
-                        v[i]
-                        for i in range(vnum, len(v))
-                        if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))
-                    ],
+                    [v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))],
                     vp,
-                ]
+                ],
             ]
     return ret_list
 

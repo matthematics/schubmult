@@ -1,17 +1,10 @@
-from ._funcs import (
-    schubmult,
-    schubmult_db,
-    mult_poly,
-    factor_out_q_keep_factored,
-    schubpoly_quantum
-)
-
+from ._funcs import factor_out_q_keep_factored, mult_poly, schubmult, schubmult_db, schubpoly_quantum
 
 __all__ = [
+    "factor_out_q_keep_factored",
+    "mult_poly",
     "schubmult",
     "schubmult_db",
-    "mult_poly",
-    "factor_out_q_keep_factored",
-    "schubpoly_quantum"
+    "schubpoly_quantum",
 ]
 

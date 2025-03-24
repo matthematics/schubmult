@@ -3,9 +3,10 @@
 
 def test_schub_expand():
     """
-        Test expand
+    Test expand
     """
     from sage.all import ZZ
+
     from schubmult.sage_integration import FastSchubertPolynomialRing
     X = FastSchubertPolynomialRing(ZZ, 100, "x")
     R = X._polynomial_ring
@@ -15,9 +16,10 @@ def test_schub_expand():
 
 def test_coproduct():
     """
-        Test coproduct
+    Test coproduct
     """
     from sage.all import ZZ
+
     from schubmult.sage_integration import FastSchubertPolynomialRing
     X = FastSchubertPolynomialRing(ZZ, 100, "x")
     R = X._polynomial_ring
@@ -35,6 +37,7 @@ def test_associative():
     Test associative on some large perms
     """
     from sage.all import ZZ
+
     from schubmult.sage_integration import FastSchubertPolynomialRing
     X = FastSchubertPolynomialRing(ZZ, 100, "x")
     perm1 = [6,7,1,5,3,4,2]

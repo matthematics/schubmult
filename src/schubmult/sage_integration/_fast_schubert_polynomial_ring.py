@@ -1,32 +1,31 @@
-from sage.all import *  # noqa: F403
-from sage.categories.graded_bialgebras_with_basis import GradedBialgebrasWithBasis
-from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
-from sage.combinat.free_module import CombinatorialFreeModule
-
-from sage.combinat.permutation import Permutations, Permutation, from_lehmer_code
-from sage.combinat.composition import (
-    Compositions,
-    Composition,
-)
-from sage.misc.cachefunc import cached_method
-from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
-from sage.rings.polynomial.multi_polynomial import MPolynomial
-from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
-from ._indexing import _coerce_index
-
-from schubmult.perm_lib import permtrim
-import schubmult.schubmult_q as sq
-import schubmult.schubmult_q_double as qyz
-import schubmult.schubmult_py as py
-import schubmult.schubmult_double as yz
-
-
-from sympy import sympify
+from functools import cache
 
 # from sage.misc.parser import Parser
 import symengine as syme
+from sage.all import *  # noqa: F403
+from sage.categories.graded_algebras_with_basis import GradedAlgebrasWithBasis
+from sage.categories.graded_bialgebras_with_basis import GradedBialgebrasWithBasis
+from sage.combinat.composition import (
+    Composition,
+    Compositions,
+)
+from sage.combinat.free_module import CombinatorialFreeModule
+from sage.combinat.permutation import Permutation, Permutations, from_lehmer_code
+from sage.misc.cachefunc import cached_method
+from sage.rings.polynomial.multi_polynomial import MPolynomial
+from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
+from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
+from sympy import sympify
+
 import schubmult.sage_integration._fast_double_schubert_polynomial_ring as bork
-from functools import cache
+import schubmult.schubmult_double as yz
+import schubmult.schubmult_py as py
+import schubmult.schubmult_q as sq
+import schubmult.schubmult_q_double as qyz
+from schubmult.perm_lib import permtrim
+
+from ._indexing import _coerce_index
+
 # FastQuantumDoubleSchubertPolynomialRing = bork.FastQuantumDoubleSchubertPolynomialRing
 
 
@@ -38,9 +37,10 @@ def FastSchubertPolynomialRing(
     code_display: bool = False,
     q_varname: str = "q",
     is_quantum: bool = False,
-    indices: tuple[int] = tuple([1]),
+    indices: tuple[int] = (1,),
 ):
-    """Wrapper function to return a double Schubert polynomial Ring
+    """
+    Wrapper function to return a double Schubert polynomial Ring
 
         Calls the _xbasis class to return a (quantum) Schubert
         polynomial ring with the indicated base ring, number of variables,
@@ -67,6 +67,7 @@ def FastSchubertPolynomialRing(
 
     Returns:
         FastSchubertPolynomialRing_xbasis: Element constructor of the ring
+
     """
     if is_quantum:
         QR = PolynomialRing(R, num_vars, q_varname)
@@ -91,7 +92,8 @@ def FastQuantumSchubertPolynomialRing(
     q_varname: str = "q",
     code_display: bool = False,
 ):
-    """Quantum Schubert ring generator
+    """
+    Quantum Schubert ring generator
 
     Wraps FastSchubertPolynomialRing(), omitting indices and setting
     is_quantum to True.
@@ -106,6 +108,7 @@ def FastQuantumSchubertPolynomialRing(
 
     Returns:
         FastSchubertPolynomialRing_xbasis: Element constructor of the ring
+
     """
     return FastSchubertPolynomialRing(
         R,
@@ -145,25 +148,24 @@ class FastSchubertPolynomial_class(CombinatorialFreeModule.Element):
                             [0 for i in range(100)],
                             self.parent()._q_ring.gens(),
                             v,
-                        )
+                        ),
                     )
                     for k, v in self.monomial_coefficients().items()
-                ]
+                ],
             )
-        else:
-            return sum(
-                [
-                    self.parent()._polynomial_ring(
-                        yz.schubmult(
-                            {(1, 2): v},
-                            tuple(_coerce_index(k, self.parent()._ascode, False)),
-                            self.parent()._polynomial_ring.gens(),
-                            [0 for i in range(100)],
-                        ).get((1, 2), 0)
-                    )
-                    for k, v in self.monomial_coefficients().items()
-                ]
-            )
+        return sum(
+            [
+                self.parent()._polynomial_ring(
+                    yz.schubmult(
+                        {(1, 2): v},
+                        tuple(_coerce_index(k, self.parent()._ascode, False)),
+                        self.parent()._polynomial_ring.gens(),
+                        [0 for i in range(100)],
+                    ).get((1, 2), 0),
+                )
+                for k, v in self.monomial_coefficients().items()
+            ],
+        )
 
 
 @cache
@@ -185,12 +187,12 @@ def _single_schub_parser(passed):
 
 class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     Element = FastSchubertPolynomial_class
-    
+
     def parser(self):
         if self._parser is None:
             self._parser = _single_schub_parser(self)
         return self._parser
-        
+
 
     def __init__(
         self,
@@ -263,7 +265,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     def _element_constructor_(self, x):
         if isinstance(x, str):
             return self.parser().parse(x)
-        elif (
+        if (
             isinstance(x, list)
             or isinstance(x, tuple)
             or isinstance(x, Composition)
@@ -271,7 +273,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         ):
             # checking the input to avoid symmetrica crashing Sage, see trac 12924
             elem = self._from_dict(
-                {_coerce_index(x, self._ascode, self._ascode): self.base_ring().one()}
+                {_coerce_index(x, self._ascode, self._ascode): self.base_ring().one()},
             )
         elif isinstance(x, FastSchubertPolynomial):
             if (
@@ -283,7 +285,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     {
                         _coerce_index(k, x.parent()._ascode, self._ascode): v
                         for k, v in x.monomial_coefficients().items()
-                    }
+                    },
                 )
             else:
                 return self(x.expand())
@@ -312,7 +314,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     if self._quantum
                     else self.base_ring()(str(v))
                     for k, v in result.items()
-                }
+                },
             )
         else:
             raise TypeError(f"Could not convert {x=} to {self}")
@@ -337,18 +339,17 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                         tuple(_coerce_index(right, self._ascode, False)),
                         list(self._q_ring.gens()),
                     ).items()
-                ]
+                ],
             )
-        else:
-            return sum(
-                [
-                    self.base_ring()(v) * self(_coerce_index(k, False, self._ascode))
-                    for k, v in py.schubmult(
-                        {tuple(_coerce_index(left, self._ascode, False)): 1},
-                        tuple(_coerce_index(right, self._ascode, False)),
-                    ).items()
-                ]
-            )
+        return sum(
+            [
+                self.base_ring()(v) * self(_coerce_index(k, False, self._ascode))
+                for k, v in py.schubmult(
+                    {tuple(_coerce_index(left, self._ascode, False)): 1},
+                    tuple(_coerce_index(right, self._ascode, False)),
+                ).items()
+            ],
+        )
 
     def coproduct_on_basis(self, mperm):
         if self._quantum:
@@ -382,10 +383,10 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     continue
                 firstperm = Permutation(permtrim(list(downperm[0:N])))
                 secondperm = Permutation(
-                    permtrim([downperm[i] - N for i in range(N, len(downperm))])
+                    permtrim([downperm[i] - N for i in range(N, len(downperm))]),
                 )
                 total_sum += self.base_ring()(val) * self(
-                    _coerce_index(firstperm, False, self._ascode)
+                    _coerce_index(firstperm, False, self._ascode),
                 ).tensor(self(_coerce_index(secondperm, False, self._ascode)))
         return total_sum
 

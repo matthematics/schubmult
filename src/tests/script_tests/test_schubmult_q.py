@@ -1,6 +1,8 @@
-import pytest
-from schubmult._tests import get_json, load_json_test_names
 from ast import literal_eval
+
+import pytest
+
+from schubmult._tests import get_json, load_json_test_names
 
 
 def assert_dict_good(v_tuple, input_dict, ret_dict):
@@ -44,7 +46,7 @@ json_files_data_args = load_json_test_names(base_dir)
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
-    from schubmult.perm_lib import uncode, permtrim
+    from schubmult.perm_lib import permtrim, uncode
 
     args = get_json(f"{base_dir}/{json_file}")
     print(f"{json_file=} {args=} input_data")
@@ -73,9 +75,8 @@ def test_with_same_args_exec(capsys, json_file):
 
     if disp_mode != "raw":
         ret_dict = parse_ret(lines, ascode, unformat[disp_mode])
-    else:
-        if ascode:
-            ret_dict = {tuple(uncode([*k])): v for k, v in ret_dict.items()}
+    elif ascode:
+        ret_dict = {tuple(uncode([*k])): v for k, v in ret_dict.items()}
     v_tuple = tuple(perms[1]) if not ascode else tuple(uncode(perms[1]))
 
     input_dict = {tuple(permtrim(perms[0])) if not ascode else tuple(permtrim(uncode(perms[0]))): 1}

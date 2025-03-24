@@ -1,16 +1,18 @@
+from functools import cached_property
+
+from symengine import Add, Mul, Pow, symarray
+
 from schubmult.perm_lib import (
-    elem_sym_perms,
     add_perm_dict,
     compute_vpathdicts,
-    inverse,
-    theta,
-    permtrim,
+    elem_sym_perms,
     inv,
+    inverse,
     mulperm,
+    permtrim,
+    theta,
     uncode,
 )
-from symengine import Add, Mul, Pow, symarray
-from functools import cached_property
 
 
 class _gvars:
@@ -45,28 +47,27 @@ def single_variable(coeff_dict, varnum):
 def mult_poly(coeff_dict, poly, var_x=_vars.var_x):
     if poly in var_x:
         return single_variable(coeff_dict, var_x.index(poly))
-    elif isinstance(poly, Mul):
+    if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
             ret = mult_poly(ret, a, var_x)
         return ret
-    elif isinstance(poly, Pow):
+    if isinstance(poly, Pow):
         base = poly.args[0]
         exponent = int(poly.args[1])
         ret = coeff_dict
         for i in range(int(exponent)):
             ret = mult_poly(ret, base, var_x)
         return ret
-    elif isinstance(poly, Add):
+    if isinstance(poly, Add):
         ret = {}
         for a in poly.args:
             ret = add_perm_dict(ret, mult_poly(coeff_dict, a, var_x))
         return ret
-    else:
-        ret = {}
-        for perm in coeff_dict:
-            ret[perm] = poly * coeff_dict[perm]
-        return ret
+    ret = {}
+    for perm in coeff_dict:
+        ret[perm] = poly * coeff_dict[perm]
+    return ret
 
 
 def schubmult(perm_dict, v):
@@ -87,8 +88,7 @@ def schubmult(perm_dict, v):
     for index in range(len(th)):
         for vp in vpathdicts[index]:
             for v2, vdiff, s in vpathdicts[index][vp]:
-                if th[index] - vdiff > mx_th[index]:
-                    mx_th[index] = th[index] - vdiff
+                mx_th[index] = max(mx_th[index], th[index] - vdiff)
 
     for u, val in perm_dict.items():
         inv_u = inv(u)
@@ -150,7 +150,7 @@ def schub_coprod(perm, indices):
                     break
             if not flag:
                 continue
-            firstperm = tuple(permtrim((list(downperm[0:N]))))
-            secondperm = tuple(permtrim(([downperm[i] - N for i in range(N, len(downperm))])))
+            firstperm = tuple(permtrim(list(downperm[0:N])))
+            secondperm = tuple(permtrim([downperm[i] - N for i in range(N, len(downperm))]))
             ret_dict[(firstperm, secondperm)] = val
     return ret_dict

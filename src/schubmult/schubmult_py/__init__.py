@@ -1,13 +1,12 @@
 from ._funcs import (
-    schubmult,
     mult_poly,
     schub_coprod,
+    schubmult,
 )
 
-
 __all__ = [
-    "schubmult",
     "mult_poly",
-    "schub_coprod"
+    "schub_coprod",
+    "schubmult",
 ]
 

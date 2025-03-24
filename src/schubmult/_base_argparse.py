@@ -1,4 +1,4 @@
-from argparse import ArgumentParser, SUPPRESS, RawDescriptionHelpFormatter
+from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
 
 
 def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
@@ -74,7 +74,10 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
         )
 
         parser.add_argument(
-            "--down", action="store_true", default=False, help="Reverse multiplication"
+            "--down",
+            action="store_true",
+            default=False,
+            help="Reverse multiplication",
         )
 
         parser.add_argument(
@@ -181,10 +184,10 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
         import json
 
         argv.pop(argv.index("-g"))
-        args.__dict__["cmd_line"] = [prog_name] + argv
+        args.__dict__["cmd_line"] = [prog_name, *argv]
         del args.__dict__["gen"]
         cmd = " ".join(args.cmd_line)
-        cmd = cmd.replace("--","").replace(" - ", "T").replace(" ","_")
+        cmd = cmd.replace("--", "").replace(" - ", "T").replace(" ", "_")
         with open(f"{cmd}.json", "w") as js:
             json.dump(args.__dict__, js, ensure_ascii=False, indent=1)
         exit(0)
@@ -194,7 +197,7 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
     if args.disp_mode == "latex":
         formatter = (  # noqa: E731
             lambda bob: sympy.latex(sympy.sympify(bob)).replace("\\left", "").replace("\\right", "")
-        )  # noqa: E731
+        )
     elif args.disp_mode == "pretty":
         formatter = lambda bob: sympy.pretty(sympy.sympify(bob))  # noqa: E731
     elif args.disp_mode == "basic":

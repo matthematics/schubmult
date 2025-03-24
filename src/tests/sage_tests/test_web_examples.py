@@ -1,7 +1,12 @@
 
 def test_basic_sage_example():
     from sage.all import ZZ
-    from schubmult.sage_integration import FastSchubertPolynomialRing, FastDoubleSchubertPolynomialRing, FastQuantumSchubertPolynomialRing
+
+    from schubmult.sage_integration import (
+        FastDoubleSchubertPolynomialRing,
+        FastQuantumSchubertPolynomialRing,
+        FastSchubertPolynomialRing,
+    )
     SingleRing = FastSchubertPolynomialRing(ZZ, 100, "x")
     assert str(SingleRing([3,4,1,2])) == "Sx([3, 4, 1, 2])"
     assert SingleRing([3,4,1,2]) * SingleRing([5,1,4,2,3]) == SingleRing([7, 3, 4, 1, 2, 5, 6]) + SingleRing([7, 4, 2, 1, 3, 5, 6]) + SingleRing([7, 5, 1, 2, 3, 4, 6])

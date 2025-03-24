@@ -1,34 +1,35 @@
+import sys
+from functools import cached_property
+
 import numpy as np
 import sympy
-import sys
+from symengine import expand, symarray, sympify
 
-# from schubmult.schubmult_double._vars import var_x, var, var_r
-from schubmult.schubmult_double._funcs import (
-    mult_poly,
-    mult_poly_down,
-    schubmult,
-    schubmult_down,
-    compute_positive_rep,
-    posify,
-    split_perms,
-)
-from symengine import expand, sympify, symarray
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
     add_perm_dict,
-    inverse,
-    theta,
-    permtrim,
-    inv,
-    mulperm,
     code,
+    inv,
+    inverse,
+    mu_A,
+    mulperm,
+    permtrim,
+    theta,
+    trimcode,
     uncode,
     will_formula_work,
-    mu_A,
-    trimcode,
 )
 
-from functools import cached_property
+# from schubmult.schubmult_double._vars import var_x, var, var_r
+from schubmult.schubmult_double._funcs import (
+    compute_positive_rep,
+    mult_poly,
+    mult_poly_down,
+    posify,
+    schubmult,
+    schubmult_down,
+    split_perms,
+)
 
 
 class _gvars:
@@ -145,12 +146,12 @@ def _display_full(
 
         if ascode:
             width = max(
-                [len(str(trimcode(perm[0])) + " " + str(trimcode(perm[1]))) for perm in perm_pairs]
+                [len(str(trimcode(perm[0])) + " " + str(trimcode(perm[1]))) for perm in perm_pairs],
             )
         else:
             width = max([len(str(perm[0]) + " " + str(perm[1])) for perm in perm_pairs])
 
-              
+
         for perm in coeff_perms:
             val = coeff_dict[perm]
             downperm = mulperm(list(perm), inverse_kperm)
@@ -166,7 +167,7 @@ def _display_full(
                 secondperm = [downperm[i] - N for i in range(N, len(downperm))]
                 val = sympify(val).subs(subs_dict)
 
-                if same and display_positive:                    
+                if same and display_positive:
                     val = expand(sympify(val).subs(subs_dict2))
 
                 if val != 0:
@@ -184,10 +185,10 @@ def _display_full(
                             )
                             if expand(val - val2) != 0:
                                 _display(
-                                    f"error; write to schubmult@gmail.com with the case {perms=}\n{code(firstperm)=} {code(secondperm)=}\n{val2=}\n{val=}"
+                                    f"error; write to schubmult@gmail.com with the case {perms=}\n{code(firstperm)=} {code(secondperm)=}\n{val2=}\n{val=}",
                                 )
                                 _display(
-                                    f"{code(tuple(permtrim(mulperm(firstperm,muA))))=},{code(tuple(permtrim(mulperm(secondperm,muB))))=},{code(the_top_perm)=}\n{expand(val-val2)=}"
+                                    f"{code(tuple(permtrim(mulperm(firstperm,muA))))=},{code(tuple(permtrim(mulperm(secondperm,muB))))=},{code(the_top_perm)=}\n{expand(val-val2)=}",
                                 )
                                 exit(1)
                             val = val2
@@ -205,7 +206,7 @@ def _display_full(
                             ] = val
                             if formatter:
                                 _display(
-                                    f"{tuple(permtrim(firstperm))}{' ':>{width2}}{tuple(permtrim(secondperm))}  {formatter(val)}"
+                                    f"{tuple(permtrim(firstperm))}{' ':>{width2}}{tuple(permtrim(secondperm))}  {formatter(val)}",
                                 )
                         else:
                             width2 = (
@@ -218,7 +219,7 @@ def _display_full(
                             ] = val
                             if formatter:
                                 _display(
-                                    f"{trimcode(firstperm)}{' ':>{width2}}{trimcode(secondperm)}  {formatter(val)}"
+                                    f"{trimcode(firstperm)}{' ':>{width2}}{trimcode(secondperm)}  {formatter(val)}",
                                 )
     else:
         if ascode:
@@ -281,30 +282,30 @@ def _display_full(
                                 )
                             else:
                                 _display(
-                                    f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}"
+                                    f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}",
                                 )
                                 exit(1)
                         if check and expand(val - check_coeff_dict.get(perm, 0)) != 0:
                             _display(
-                                f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}"
+                                f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}",
                             )
                             exit(1)
                 if val != 0:
                     if ascode:
                         raw_result_dict[tuple(trimcode(perm))] = val
                         if formatter:
-                            _display(f"{str(trimcode(perm)):>{width}}  {formatter(val)}")
+                            _display(f"{trimcode(perm)!s:>{width}}  {formatter(val)}")
                     else:
                         raw_result_dict[tuple(perm)] = val
                         if formatter:
-                            _display(f"{str(perm):>{width}}  {formatter(val)}")
+                            _display(f"{perm!s:>{width}}  {formatter(val)}")
     return raw_result_dict
 
 
 def main(argv=None):
     if argv is None:
         argv = sys.argv
-    
+
     try:
         var2 = tuple(symarray("y", 100).tolist())
         var3 = tuple(symarray("z", 100).tolist())
@@ -441,7 +442,7 @@ def main(argv=None):
                         coeff_dict4 = schubmult(coeff_dict4, perm, var2, var3)
                         for w in coeff_dict4:
                             coeff_dict4[w] = coeff_dict2[u] * posify(
-                                coeff_dict4[w], u, perm, w, var2, var3, msg
+                                coeff_dict4[w], u, perm, w, var2, var3, msg,
                             )
                         coeff_dict3 = add_perm_dict(coeff_dict4, coeff_dict3)
                     coeff_dict2 = coeff_dict3
@@ -450,7 +451,7 @@ def main(argv=None):
             elif not posified:
                 coeff_dict = check_coeff_dict
 
-            
+
             if pr or formatter is None:
                 raw_result_dict = _display_full(
                     coeff_dict,
@@ -461,11 +462,11 @@ def main(argv=None):
                     posified=posified,
                     check_coeff_dict=check_coeff_dict,
                 )
-            
-            if formatter is None:                
+
+            if formatter is None:
                 return raw_result_dict
     except BrokenPipeError:
-        pass    
+        pass
     return 0
 
 

@@ -5,27 +5,29 @@
 #     var3,
 #     q_var2,
 # )
-import schubmult.schubmult_double as norm_yz
+from functools import cached_property
 
 from symengine import Add, Mul, Pow, expand, symarray
+
+import schubmult.schubmult_double as norm_yz
 from schubmult.perm_lib import (
-    elem_sym_perms_q,
     add_perm_dict,
-    compute_vpathdicts,
-    inverse,
-    strict_theta,
-    medium_theta,
-    permtrim,
-    inv,
-    mulperm,
-    uncode,
-    double_elem_sym_q,
-    elem_sym_poly_q,
-    elem_sym_perms_q_op,
-    elem_sym_func_q,
     call_zvars,
+    compute_vpathdicts,
+    double_elem_sym_q,
+    elem_sym_func_q,
+    elem_sym_perms_q,
+    elem_sym_perms_q_op,
+    elem_sym_poly_q,
+    inv,
+    inverse,
+    medium_theta,
+    mulperm,
+    permtrim,
+    strict_theta,
+    uncode,
 )
-from functools import cached_property
+
 
 class _gvars:
     @cached_property
@@ -47,7 +49,7 @@ class _gvars:
     @cached_property
     def var3(self):
         return tuple(symarray("z", self.n).tolist())
-    
+
     @cached_property
     def q_var(self):
         return tuple(symarray("q", self.n).tolist())
@@ -60,7 +62,7 @@ class _gvars:
 _vars = _gvars()
 
 
-def E(p, k, varl=_vars.var2[1:],var_x=_vars.var1):
+def E(p, k, varl=_vars.var2[1:], var_x=_vars.var1):
     return elem_sym_poly_q(p, k, var_x[1:], varl)
 
 
@@ -87,28 +89,27 @@ def single_variable(coeff_dict, varnum, var2=_vars.var2, q_var=_vars.q_var):
 def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var):
     if poly in var_x:
         return single_variable(coeff_dict, var_x.index(poly), var_y, q_var)
-    elif isinstance(poly, Mul):
+    if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
             ret = mult_poly(ret, a, var_x, var_y, q_var)
         return ret
-    elif isinstance(poly, Pow):
+    if isinstance(poly, Pow):
         base = poly.args[0]
         exponent = int(poly.args[1])
         ret = coeff_dict
         for i in range(int(exponent)):
             ret = mult_poly(ret, base, var_x, var_y, q_var)
         return ret
-    elif isinstance(poly, Add):
+    if isinstance(poly, Add):
         ret = {}
         for a in poly.args:
             ret = add_perm_dict(ret, mult_poly(coeff_dict, a, var_x, var_y, q_var))
         return ret
-    else:
-        ret = {}
-        for perm in coeff_dict:
-            ret[perm] = poly * coeff_dict[perm]
-        return ret
+    ret = {}
+    for perm in coeff_dict:
+        ret[perm] = poly * coeff_dict[perm]
+    return ret
 
 
 def nil_hecke(perm_dict, v, n, var2=_vars.var2, var3=_vars.var3):
@@ -129,8 +130,7 @@ def nil_hecke(perm_dict, v, n, var2=_vars.var2, var3=_vars.var3):
             mx_th = 0
             for vp in vpathdicts[index]:
                 for v2, vdiff, s in vpathdicts[index][vp]:
-                    if th[index] - vdiff > mx_th:
-                        mx_th = th[index] - vdiff
+                    mx_th = max(mx_th, th[index] - vdiff)
             newpathsums = {}
             for up in vpathsums:
                 newperms = elem_sym_perms_q_op(up, mx_th, th[index], n)
@@ -143,7 +143,8 @@ def nil_hecke(perm_dict, v, n, var2=_vars.var2, var3=_vars.var3):
                             continue
                         for v2, vdiff, s in vpathdicts[index][v]:
                             newpathsums[up2][v2] = newpathsums[up2].get(
-                                v2, 0
+                                v2,
+                                0,
                             ) + s * sumval * elem_sym_func_q(
                                 th[index],
                                 index + 1,
@@ -202,13 +203,15 @@ def schubpoly_quantum(v, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var, 
         mx_th = 0
         for vp in vpathdicts[index]:
             for v2, vdiff, s in vpathdicts[index][vp]:
-                if th[index] - vdiff > mx_th:
-                    mx_th = th[index] - vdiff
+                mx_th = max(mx_th, th[index] - vdiff)
         newpathsums = {}
         for up in vpathsums:
             inv_up = inv(up)
             newperms = elem_sym_perms_q(
-                up, min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu), th[index], q_var
+                up,
+                min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu),
+                th[index],
+                q_var,
             )
             for up2, udiff, mul_val in newperms:
                 if up2 not in newpathsums:
@@ -219,7 +222,8 @@ def schubpoly_quantum(v, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var, 
                         continue
                     for v2, vdiff, s in vpathdicts[index][v]:
                         newpathsums[up2][v2] = newpathsums[up2].get(
-                            v2, 0
+                            v2,
+                            0,
                         ) + s * sumval * elem_sym_func_q_q(
                             th[index],
                             index + 1,
@@ -261,8 +265,7 @@ def schubmult(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var)
             mx_th = 0
             for vp in vpathdicts[index]:
                 for v2, vdiff, s in vpathdicts[index][vp]:
-                    if th[index] - vdiff > mx_th:
-                        mx_th = th[index] - vdiff
+                    mx_th = max(mx_th, th[index] - vdiff)
             newpathsums = {}
             for up in vpathsums:
                 inv_up = inv(up)
@@ -281,7 +284,8 @@ def schubmult(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var)
                             continue
                         for v2, vdiff, s in vpathdicts[index][v]:
                             newpathsums[up2][v2] = newpathsums[up2].get(
-                                v2, 0
+                                v2,
+                                0,
                             ) + s * sumval * elem_sym_func_q(
                                 th[index],
                                 index + 1,
@@ -325,14 +329,12 @@ def schubmult_db(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_v
             mx_th = 0
             for vp in vpathdicts[index]:
                 for v2, vdiff, s in vpathdicts[index][vp]:
-                    if th[index] - vdiff > mx_th:
-                        mx_th = th[index] - vdiff
+                    mx_th = max(mx_th, th[index] - vdiff)
             if index < len(th) - 1 and th[index] == th[index + 1]:
                 mx_th1 = 0
                 for vp in vpathdicts[index + 1]:
                     for v2, vdiff, s in vpathdicts[index + 1][vp]:
-                        if th[index + 1] - vdiff > mx_th1:
-                            mx_th1 = th[index + 1] - vdiff
+                        mx_th1 = max(mx_th1, th[index + 1] - vdiff)
                 newpathsums = {}
                 for up in vpathsums:
                     newpathsums0 = {}
@@ -364,9 +366,7 @@ def schubmult_db(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_v
                                 if (up1, udiff1, mul_val1) not in newpathsums0:
                                     newpathsums0[(up1, udiff1, mul_val1)] = {}
                                 # newpathsums0[(up1, udiff1, mul_val1
-                                newpathsums0[(up1, udiff1, mul_val1)][v2] = (
-                                    newpathsums0[(up1, udiff1, mul_val1)].get(v2, 0) + mulfac
-                                )
+                                newpathsums0[(up1, udiff1, mul_val1)][v2] = newpathsums0[(up1, udiff1, mul_val1)].get(v2, 0) + mulfac
 
                     for up1, udiff1, mul_val1 in newpathsums0:
                         for v in vpathdicts[index + 1]:
@@ -414,7 +414,8 @@ def schubmult_db(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_v
                                 continue
                             for v2, vdiff, s in vpathdicts[index][v]:
                                 newpathsums[up2][v2] = newpathsums[up2].get(
-                                    v2, 0
+                                    v2,
+                                    0,
                                 ) + s * sumval * elem_sym_func_q(
                                     th[index],
                                     index + 1,
@@ -460,28 +461,28 @@ def factor_out_q_keep_factored(poly):
     if str(poly).find("q") == -1:
         ret[1] = poly
         return ret
-    elif poly in _vars.q_var:
+    if poly in _vars.q_var:
         ret[poly] = 1
         return ret
-    elif isinstance(poly, Add):
+    if isinstance(poly, Add):
         ag = poly.args
         ret = factor_out_q_keep_factored(ag[0])
         for i in range(1, len(ag)):
             ret = sum_q_dict(ret, factor_out_q_keep_factored(ag[i]))
         return ret
-    elif isinstance(poly, Mul):
+    if isinstance(poly, Mul):
         ag = poly.args
         ret = factor_out_q_keep_factored(ag[0])
         for i in range(1, len(ag)):
             ret = mul_q_dict(ret, factor_out_q_keep_factored(ag[i]))
         return ret
-    elif isinstance(poly, Pow):
+    if isinstance(poly, Pow):
         base = poly.args[0]
         exponent = int(poly.args[1])
 
         ret = factor_out_q_keep_factored(base)
         ret0 = dict(ret)
-        for i in range(exponent - 1):
+        for _ in range(exponent - 1):
             ret = mul_q_dict(ret, ret0)
 
         # print(f"exponent {exponent}")
@@ -530,11 +531,10 @@ def factor_out_q(poly):
                 q_part *= key
             else:
                 yz_part *= key
+        elif key in _vars.q_var:
+            q_part *= key
         else:
-            if key in _vars.q_var:
-                q_part *= key
-            else:
-                yz_part *= key
+            yz_part *= key
 
         ret[q_part] = ret.get(q_part, 0) + yz_part
     return ret

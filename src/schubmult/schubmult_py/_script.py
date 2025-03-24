@@ -1,15 +1,17 @@
-from schubmult.schubmult_py._funcs import mult_poly, schubmult, schub_coprod
 import sys
+
 from symengine import sympify
+
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
-    inverse,
-    theta,
-    permtrim,
     inv,
-    uncode,
+    inverse,
+    permtrim,
+    theta,
     trimcode,
+    uncode,
 )
+from schubmult.schubmult_py._funcs import mult_poly, schub_coprod, schubmult
 
 
 def main(argv=None):
@@ -17,7 +19,7 @@ def main(argv=None):
         argv = sys.argv
     try:
         args, formatter = schub_argparse(
-            "schubmult_py", "Compute products of ordinary Schubert polynomials", argv=argv[1:]
+            "schubmult_py", "Compute products of ordinary Schubert polynomials", argv=argv[1:],
         )
 
         mult = args.mult
@@ -55,11 +57,10 @@ def main(argv=None):
                                 raw_result_dict[(tuple(trimcode(firstperm)), tuple(trimcode(secondperm)))] = val
                             else:
                                 print(f"{val} {trimcode(firstperm)} {trimcode(secondperm)}")
+                        elif formatter is None:
+                            raw_result_dict[(firstperm, secondperm)] = val
                         else:
-                            if formatter is None:
-                                raw_result_dict[(firstperm, secondperm)] = val
-                            else:
-                                print(f"{val} {firstperm} {secondperm}")
+                            print(f"{val} {firstperm} {secondperm}")
         else:
             if ascode:
                 for i in range(len(perms)):
