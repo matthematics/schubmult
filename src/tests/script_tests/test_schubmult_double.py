@@ -3,7 +3,7 @@ from ast import literal_eval
 import re
 
 
-from tests._tests import get_json
+from schubmult._tests import get_json
 
 
 def check_positive(v, coprod, same, var_r):

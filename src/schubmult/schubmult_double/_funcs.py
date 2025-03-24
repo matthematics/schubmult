@@ -131,24 +131,24 @@ def single_variable_down(coeff_dict, varnum, var2=_vars.var2):
 
 
 def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
-    if poly in _vars.var1:
-        return single_variable(coeff_dict, _vars.var1.index(poly), var_y)
+    if poly in var_x:
+        return single_variable(coeff_dict, var_x.index(poly), var_y)
     elif isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
-            ret = mult_poly(ret, a, _vars.var1, var_y)
+            ret = mult_poly(ret, a, var_x, var_y)
         return ret
     elif isinstance(poly, Pow):
         base = poly.args[0]
         exponent = int(poly.args[1])
         ret = coeff_dict
         for i in range(int(exponent)):
-            ret = mult_poly(ret, base, _vars.var1, var_y)
+            ret = mult_poly(ret, base, var_x, var_y)
         return ret
     elif isinstance(poly, Add):
         ret = {}
         for a in poly.args:
-            ret = add_perm_dict(ret, mult_poly(coeff_dict, a, _vars.var1, var_y))
+            ret = add_perm_dict(ret, mult_poly(coeff_dict, a, var_x, var_y))
         return ret
     else:
         ret = {}

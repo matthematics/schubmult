@@ -1,5 +1,6 @@
 from sage.all import *  # noqa: F403
 
+
 from ._fast_schubert_polynomial_ring import (
     FastSchubertPolynomialRing,
     FastSchubertPolynomial,

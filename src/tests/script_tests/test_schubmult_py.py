@@ -1,5 +1,5 @@
 import pytest
-from tests._tests import get_json
+from schubmult._tests import get_json
 from ast import literal_eval
 
 
