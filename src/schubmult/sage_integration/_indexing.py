@@ -11,7 +11,7 @@ def _coerce_index(indexed_obj, is_comp, should_be_comp):
             if is_comp:
                 return Composition(trimcode(permtrim(uncode(list(indexed_obj)))))
             else:
-                return Permutation(permtrim(list(indexed_obj)))
+                return Permutation(permtrim(list(indexed_obj))).remove_extra_fixed_points()
         else:
             return indexed_obj
     else:
@@ -21,11 +21,11 @@ def _coerce_index(indexed_obj, is_comp, should_be_comp):
                 or isinstance(indexed_obj, tuple)
                 or isinstance(indexed_obj, Composition)
             ):
-                return Permutation(permtrim(uncode(list(indexed_obj))))
+                return Permutation(permtrim(uncode(list(indexed_obj)))).remove_extra_fixed_points()
 
             if isinstance(indexed_obj, dict):  # keys are comps
                 return {
-                    Permutation(permtrim(uncode(list(k)))): v
+                    Permutation(permtrim(uncode(list(k)))).remove_extra_fixed_points(): v
                     for k, v in indexed_obj.items()
                 }
         else:

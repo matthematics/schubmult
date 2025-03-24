@@ -24,7 +24,7 @@ import schubmult.schubmult_q_double as qyz
 import schubmult.schubmult_double as yz
 from sympy import sympify
 import symengine as syme
-
+from schubmult.perm_lib import permtrim
 
 def FastDoubleSchubertPolynomialRing(
     R: Parent,  # noqa: F405
@@ -502,8 +502,8 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                         break
                 if not flag:
                     continue
-                firstperm = Permutation(list(downperm[0:N]))
-                secondperm = Permutation([downperm[i] - N for i in range(N, len(downperm))])
+                firstperm = Permutation(permtrim(list(downperm[0:N]))).remove_extra_fixed_points()
+                secondperm = Permutation(permtrim([downperm[i] - N for i in range(N, len(downperm))])).remove_extra_fixed_points()
                 val = TR(val).subs(subs_dict_coprod)
                 total_sum += self._coeff_polynomial_ring(val) * self(
                     (_coerce_index(firstperm, False, self._ascode), indm[1])

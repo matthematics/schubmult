@@ -14,7 +14,7 @@ from sage.rings.polynomial.multi_polynomial import MPolynomial
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from ._indexing import _coerce_index
 
-
+from schubmult.perm_lib import permtrim
 import schubmult.schubmult_q as sq
 import schubmult.schubmult_q_double as qyz
 import schubmult.schubmult_py as py
@@ -198,7 +198,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             R if not quantum else QR,
             index_set,
             category=cat,
-            prefix=f"QS{base_variable_name}",
+            prefix=f"{'Q' if quantum else ''}S{base_variable_name}",
         )
         self._q_ring = QR
         self._base_varname = base_variable_name
@@ -344,8 +344,8 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                         break
                 if not flag:
                     continue
-                firstperm = Permutation(list(downperm[0:N]))
-                secondperm = Permutation([downperm[i] - N for i in range(N, len(downperm))])
+                firstperm = Permutation(permtrim(list(downperm[0:N]))).remove_extra_fixed_points()
+                secondperm = Permutation(permtrim([downperm[i] - N for i in range(N, len(downperm))])).remove_extra_fixed_points()
                 total_sum += self.base_ring()(val) * self(
                     _coerce_index(firstperm, False, self._ascode)
                 ).tensor(self(_coerce_index(secondperm, False, self._ascode)))
