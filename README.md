@@ -182,8 +182,8 @@ This will install the [sagemath-standard](https://pypi.org/project/sagemath-stan
 ## Basic sage example
 
 ```python
-sage: from schubmult.sage_integration import FastSchubertPolynomial, FastDoubleSchubertPolynomialRing,
-FastQuantumSchubertPolynomial, FastQuantumDoubleSchubertPolynomialRing
+sage: from schubmult.sage_integration import FastSchubertPolynomialRing, FastDoubleSchubertPolynomialRing,
+FastQuantumSchubertPolynomialRing, FastQuantumDoubleSchubertPolynomialRing
 sage: SingleRing = FastSchubertPolynomialRing(ZZ, 100, "x")
 sage: SingleRing([3,4,1,2])
 Sx[3, 4, 1, 2]
