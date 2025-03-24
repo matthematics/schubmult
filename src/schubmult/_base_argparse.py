@@ -14,10 +14,6 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
     """,
         formatter_class=RawDescriptionHelpFormatter,
     )
-    # import logging
-    # logging.basicConfig(level=logging.DEBUG,format="%(asctime)s %(levelname)s %(message) %(module) s")
-    # logger = logging.getLogger(__name__)
-    # logger.log(logging.DEBUG, f"{argv=}")
     parser.add_argument(
         "perms",
         nargs="+",
