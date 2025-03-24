@@ -54,7 +54,7 @@ def check_positive(v, coprod, same, var_r):
     return True
 
 def assert_dict_good(
-    v_tuple, input_dict, ret_dict, coprod, indices, same=True, display_positive=False
+    v_tuple, input_dict, ret_dict, coprod, indices, same=True, display_positive=False,
 ):
     # print(f"{input_dict=}")
     from schubmult.schubmult_double import schubmult, schub_coprod
@@ -89,7 +89,7 @@ def assert_dict_good(
         assert expand(v) == expand(ret_dict[k])
 
 
-def parse_ret(lines, ascode, coprod):
+def parse_ret(lines, ascode, coprod, unformat):
     from schubmult.perm_lib import uncode, permtrim
     from symengine import sympify
 
@@ -101,7 +101,7 @@ def parse_ret(lines, ascode, coprod):
             except Exception:
                 continue
             try:
-                v = sympify(v)
+                v = unformat(v)
             except Exception:
                 continue
             ret_dict[(tuple(literal_eval(k)) if not ascode else tuple(uncode(literal_eval(k))))] = v
@@ -125,7 +125,7 @@ def parse_ret(lines, ascode, coprod):
             except Exception:
                 continue
             try:
-                v = sympify(v) 
+                v = unformat(v) 
             except Exception:
                 continue
             ret_dict[k] = v
@@ -175,6 +175,7 @@ def parse_ret(lines, ascode, coprod):
 base_dir = "script_tests/data/schubmult_double"
 
 json_files_data_args = [
+    "test_gen_double_latex",
     "test_gen_double_coprod2",
     "test_gen_double",
     "test_gen_double_coprod",
@@ -202,14 +203,21 @@ def test_with_same_args_exec(capsys, json_file):
     down = args["down"]  # noqa: F841
     display_positive = args["display_positive"]  # noqa: F841
     pr = args["pr"]  # noqa: F841
+    disp_mode = args["disp_mode"]
 
+    from latex2sympy2_extended import latex2sympy
+    from symengine import sympify
+    unformat = {
+        "basic": lambda v: sympify(v),
+        "latex": lambda v: sympify(latex2sympy(v))
+    }
     # print(f"{args=}")
     # print(f"{args['cmd_line']=}")
     main(args["cmd_line"])
     lines = capsys.readouterr()
     lines = str(lines.out).split("\n")
 
-    ret_dict = parse_ret(lines, ascode, coprod)
+    ret_dict = parse_ret(lines, ascode, coprod, unformat[disp_mode])
     v_tuple = (
         (tuple(perms[1]) if not ascode else tuple(uncode(perms[1])))
         if not coprod
