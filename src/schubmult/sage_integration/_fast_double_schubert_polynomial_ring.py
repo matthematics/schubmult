@@ -13,18 +13,24 @@ from sage.combinat.composition import (
     Compositions,
     Composition,
 )
-from . import (
-    FastSchubertPolynomialRing_base,
-    FastSchubertPolynomial,
-)
+
+# from . import (
+#     FastSchubertPolynomialRing_base,
+#     FastSchubertPolynomialRing,
+#     FastSchubertPolynomial,
+# )
+import schubmult.sage_integration._fast_schubert_polynomial_ring as bork
 from ._indexing import _coerce_index
 
-
+from functools import cache
 import schubmult.schubmult_q_double as qyz
 import schubmult.schubmult_double as yz
 from sympy import sympify
 import symengine as syme
 from schubmult.perm_lib import permtrim
+
+from sage.misc.parser import Parser
+
 
 def FastDoubleSchubertPolynomialRing(
     R: Parent,  # noqa: F405
@@ -191,8 +197,50 @@ class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
         return self.map_coefficients(lambda foi: RR(foi.subs(subs_dict)))
 
 
+@cache
+def _double_schub_parser(passed):
+    fdict = {}
+    vardict = {}
+    fdict[passed._sc_rep] = passed._element_constructor_
+    if passed._quantum:        
+        QSRing = bork.FastSchubertPolynomialRing(
+            passed._base_polynomial_ring.base_ring(),
+            len(passed._base_polynomial_ring.gens()),
+            passed._base_varname,
+            is_quantum=True,
+            code_display=passed._ascode,
+            q_varname=passed._q_varname,
+        )
+        fdict[QSRing._sc_rep] = QSRing._element_constructor_        
+    SRing = bork.FastSchubertPolynomialRing(
+            passed._base_polynomial_ring.base_ring().base_ring(),
+            len(passed._base_polynomial_ring.gens()),
+            passed._base_varname,
+            is_quantum=False,
+            code_display=passed._ascode,
+        ) 
+    DRing = FastDoubleSchubertPolynomialRing(
+            passed._base_polynomial_ring.base_ring().base_ring(),
+            len(passed._base_polynomial_ring.gens()),
+            passed._base_varname,
+            coeff_variable_names=tuple(passed._varlist),
+        )
+    fdict[DRing._sc_rep] = DRing._element_constructor_
+    fdict[SRing._sc_rep] = SRing._element_constructor_        
+    for g in passed._base_polynomial_ring.gens():
+            vardict[str(g)] = g
+    return Parser(make_function=fdict, make_var=vardict)
+
+
 class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     Element = FastDoubleSchubertPolynomial_class
+
+    #def inject_variables:
+
+    def parser(self):
+        if self._parser is None:
+            self._parser = _double_schub_parser(self)
+        return self._parser
 
     def __init__(
         self,
@@ -255,14 +303,17 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             else GradedBialgebrasWithBasis(self._coeff_polynomial_ring).Commutative()
         )
 
+        self._sc_rep = f"{'Q' if quantum else ''}DS{base_variable_name}"
+
         CombinatorialFreeModule.__init__(
             self,
             self._coeff_polynomial_ring,
             self._index_wrapper,
             category=cat,
-            prefix=f"{'Q' if quantum else ''}S{base_variable_name}",
+            prefix=self._sc_rep,
         )
         self._populate_coercion_lists_()
+        self._parser = None
 
     @cached_method
     def one_basis(self):
@@ -281,7 +332,9 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         elif len(x) > 2:
             raise ValueError("Bad index for element")
 
-        if (
+        if isinstance(x, str):
+            return self.parser().parse(x)
+        elif (
             isinstance(x, list)
             or isinstance(x, tuple)
             or isinstance(x, Permutation)
@@ -315,7 +368,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 )
             else:
                 return self(x.expand())
-        elif isinstance(x, FastSchubertPolynomial):
+        elif isinstance(x, bork.FastSchubertPolynomial):
             if (
                 x.base_varname == self._base_varname
                 and x.q_varname == self._q_varname
@@ -447,9 +500,11 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     def _coerce_map_from_(self, S):
         if isinstance(S, MPolynomialRing_base):
             return True
-        if isinstance(S, FastSchubertPolynomialRing_base):
+        if isinstance(S, bork.FastSchubertPolynomialRing_base):
             return True
         if isinstance(S, FastDoubleSchubertPolynomialRing_base):
+            return True
+        if isinstance(S, str):
             return True
         return super().has_coerce_map_from(S)
 
@@ -503,7 +558,9 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 if not flag:
                     continue
                 firstperm = Permutation(permtrim(list(downperm[0:N])))
-                secondperm = Permutation(permtrim([downperm[i] - N for i in range(N, len(downperm))]))
+                secondperm = Permutation(
+                    permtrim([downperm[i] - N for i in range(N, len(downperm))])
+                )
                 val = TR(val).subs(subs_dict_coprod)
                 total_sum += self._coeff_polynomial_ring(val) * self(
                     (_coerce_index(firstperm, False, self._ascode), indm[1])

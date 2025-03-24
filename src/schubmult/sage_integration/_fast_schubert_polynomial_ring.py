@@ -22,7 +22,12 @@ import schubmult.schubmult_double as yz
 
 
 from sympy import sympify
+
+# from sage.misc.parser import Parser
 import symengine as syme
+import schubmult.sage_integration._fast_double_schubert_polynomial_ring as bork
+from functools import cache
+# FastQuantumDoubleSchubertPolynomialRing = bork.FastQuantumDoubleSchubertPolynomialRing
 
 
 def FastSchubertPolynomialRing(
@@ -161,8 +166,31 @@ class FastSchubertPolynomial_class(CombinatorialFreeModule.Element):
             )
 
 
+@cache
+def _single_schub_parser(passed):
+    if passed._quantum:
+        q_varname = passed._q_varname
+    else:
+        q_varname = "q"
+    QDRing = bork.FastQuantumDoubleSchubertPolynomialRing(
+        passed.base_ring(),
+        len(passed._polynomial_ring.gens()),
+        passed._base_varname,
+        coeff_variable_names="y",
+        code_display=passed._ascode,
+        q_varname=q_varname,
+    )
+    return QDRing.parser()
+
+
 class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     Element = FastSchubertPolynomial_class
+    
+    def parser(self):
+        if self._parser is None:
+            self._parser = _single_schub_parser(self)
+        return self._parser
+        
 
     def __init__(
         self,
@@ -193,12 +221,15 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             index_set = Compositions()
             self._ascode = True
 
+        self._sc_rep = f"{'Q' if quantum else ''}S{base_variable_name}"
+
         CombinatorialFreeModule.__init__(
             self,
             R if not quantum else QR,
             index_set,
             category=cat,
-            prefix=f"{'Q' if quantum else ''}S{base_variable_name}",
+            prefix=self._sc_rep,
+            bracket="(",
         )
         self._q_ring = QR
         self._base_varname = base_variable_name
@@ -209,6 +240,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             else PolynomialRing(QR, num_vars, base_variable_name)
         )
         self._populate_coercion_lists_()
+        self._parser = None
 
     def _coerce_map_from_(self, S):
         if isinstance(S, MPolynomialRing_base):
@@ -216,6 +248,8 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         if isinstance(S, FastSchubertPolynomialRing_base):
             return True
         if isinstance(S, FastSchubertPolynomialRing_base):
+            return True
+        if isinstance(S, str):
             return True
         return super()._coerce_map_from_(S)
 
@@ -227,7 +261,9 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         self._splitter = indices
 
     def _element_constructor_(self, x):
-        if (
+        if isinstance(x, str):
+            return self.parser().parse(x)
+        elif (
             isinstance(x, list)
             or isinstance(x, tuple)
             or isinstance(x, Composition)
@@ -345,7 +381,9 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 if not flag:
                     continue
                 firstperm = Permutation(permtrim(list(downperm[0:N])))
-                secondperm = Permutation(permtrim([downperm[i] - N for i in range(N, len(downperm))]))
+                secondperm = Permutation(
+                    permtrim([downperm[i] - N for i in range(N, len(downperm))])
+                )
                 total_sum += self.base_ring()(val) * self(
                     _coerce_index(firstperm, False, self._ascode)
                 ).tensor(self(_coerce_index(secondperm, False, self._ascode)))

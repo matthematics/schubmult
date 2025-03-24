@@ -11,12 +11,14 @@ def check_positive(v, coprod, same, var_r):
     from symengine import sympify, expand
     from schubmult.schubmult_double import compute_positive_rep
     from schubmult.schubmult_double._funcs import _vars
+
     var2 = _vars.var2
     var3 = _vars.var3
     import sys
+
     if same:
         if coprod:
-            subs_dict = {var_r[i]: -var_r[i] for i in range(1,100)}
+            subs_dict = {var_r[i]: -var_r[i] for i in range(1, 100)}
             v = expand(v.subs(subs_dict))
         return str(v).find("-") == -1
     else:
@@ -26,14 +28,14 @@ def check_positive(v, coprod, same, var_r):
         except Exception:
             pass
         work = str(v)
-        work = re.sub( r'[)] [+] [(]|[)][*][(]',"|", work)
-        work = re.sub(r'\s[(]|[)]',"", work)
+        work = re.sub(r"[)] [+] [(]|[)][*][(]", "|", work)
+        work = re.sub(r"\s[(]|[)]", "", work)
 
         vals = [val for val in work.split("|")]
 
         for i in range(len(vals)):
             if vals[i].find("*(") == -1:
-                vals[i] = re.sub(r'[)]|[(]',"",vals[i])
+                vals[i] = re.sub(r"[)]|[(]", "", vals[i])
 
         print(f"{vals=}", file=sys.stderr)
         for val in vals:
@@ -43,18 +45,29 @@ def check_positive(v, coprod, same, var_r):
                 if int(val) >= 0:
                     continue
             except ValueError:
-                pass            
+                pass
             sym_val = expand(sympify(val))
             print(f"{sym_val=} not an int", file=sys.stderr)
             if coprod:
-                assert expand(sym_val) == expand(compute_positive_rep(sym_val, var3, var2,do_pos_neg=False))
-            else: 
-                assert expand(sym_val) == expand(compute_positive_rep(sym_val, var2, var3,do_pos_neg=False))
-    print(f"Donebaby {coprod=}",file=sys.stderr)
+                assert expand(sym_val) == expand(
+                    compute_positive_rep(sym_val, var3, var2, do_pos_neg=False)
+                )
+            else:
+                assert expand(sym_val) == expand(
+                    compute_positive_rep(sym_val, var2, var3, do_pos_neg=False)
+                )
+    print(f"Donebaby {coprod=}", file=sys.stderr)
     return True
 
+
 def assert_dict_good(
-    v_tuple, input_dict, ret_dict, coprod, indices, same=True, display_positive=False,
+    v_tuple,
+    input_dict,
+    ret_dict,
+    coprod,
+    indices,
+    same=True,
+    display_positive=False,
 ):
     # print(f"{input_dict=}")
     from schubmult.schubmult_double import schubmult, schub_coprod
@@ -78,20 +91,19 @@ def assert_dict_good(
             sm += var_r[j]
         subs_dict2[var_a[i]] = sm
     if same and display_positive:
-        coeff_dict = {k: expand(sympify(v).xreplace(subs_dict2)) for k,v in coeff_dict.items()}
+        coeff_dict = {k: expand(sympify(v).xreplace(subs_dict2)) for k, v in coeff_dict.items()}
     for k, v in coeff_dict.items():
         assert (k not in ret_dict) or (expand(v) == expand(ret_dict[k]))
     for k in ret_dict.keys():
         if display_positive:
             assert check_positive(ret_dict[k], coprod, same, var_r)
-        v = coeff_dict[k]        
+        v = coeff_dict[k]
         # v = sympify(v).xreplace(subs_dict2)
         assert expand(v) == expand(ret_dict[k])
 
 
 def parse_ret(lines, ascode, coprod, unformat):
     from schubmult.perm_lib import uncode, permtrim
-    from symengine import sympify
 
     ret_dict = {}
     if not coprod:
@@ -125,7 +137,7 @@ def parse_ret(lines, ascode, coprod, unformat):
             except Exception:
                 continue
             try:
-                v = unformat(v) 
+                v = unformat(v)
             except Exception:
                 continue
             ret_dict[k] = v
@@ -207,10 +219,8 @@ def test_with_same_args_exec(capsys, json_file):
 
     from latex2sympy2_extended import latex2sympy
     from symengine import sympify
-    unformat = {
-        "basic": lambda v: sympify(v),
-        "latex": lambda v: sympify(latex2sympy(v))
-    }
+
+    unformat = {"basic": lambda v: sympify(v), "latex": lambda v: sympify(latex2sympy(v))}
     # print(f"{args=}")
     # print(f"{args['cmd_line']=}")
     main(args["cmd_line"])

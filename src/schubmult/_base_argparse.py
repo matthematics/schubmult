@@ -100,7 +100,7 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
             dest="expa",
             help="Expand the output rather than leaving it as originally computed (slow)",
         )
-    
+
     if quantum:
         parser.add_argument(
             "--parabolic",
@@ -138,11 +138,16 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
                 help="Substitute commuting difference operators for perm1, then apply to Schub indexed by perm2",
             )
 
+    disp_mode_list = ["basic", "pretty", "latex", "raw"]
+
+    if not yz and not quantum:
+        disp_mode_list = ["basic", "raw"]
+
     parser.add_argument(
         "--display-mode",
         type=str,
         required=False,
-        choices=["basic", "pretty", "latex", "raw"],
+        choices=disp_mode_list,
         default="basic",
         dest="disp_mode",
         help="Method of displaying the output. Default basic",
@@ -169,10 +174,11 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
         except Exception as e:
             print("Permutations must have integer values")
             raise e
-    
+
     if args.gen:
         import json
         import sys
+
         argv.pop(argv.index("-g"))
         args.__dict__["cmd_line"] = ["script"] + argv
         del args.__dict__["gen"]
@@ -181,9 +187,10 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
 
     import sympy
 
-    
     if args.disp_mode == "latex":
-        formatter = lambda bob: sympy.latex(sympy.sympify(bob)).replace("\\left", "").replace("\\right", "")  # noqa: E731
+        formatter = (
+            lambda bob: sympy.latex(sympy.sympify(bob)).replace("\\left", "").replace("\\right", "")
+        )  # noqa: E731
     elif args.disp_mode == "pretty":
         formatter = lambda bob: sympy.pretty(sympy.sympify(bob))  # noqa: E731
     elif args.disp_mode == "basic":
