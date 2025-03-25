@@ -335,9 +335,9 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 [
                     self.base_ring()(str(v)) * self(_coerce_index(k, False, self._ascode))
                     for k, v in sq.schubmult_db(
-                        {tuple(_coerce_index(left, self._ascode, False)): self.base_ring()(1)},
+                        {tuple(_coerce_index(left, self._ascode, False)): 1},
                         tuple(_coerce_index(right, self._ascode, False)),
-                        list(self._q_ring.gens()),
+                        [str(g) for g in self._q_ring.gens()],
                     ).items()
                 ],
             )

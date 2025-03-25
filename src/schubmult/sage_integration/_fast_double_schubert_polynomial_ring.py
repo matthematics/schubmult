@@ -439,15 +439,15 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     def product_on_basis(self, left, right):
         le = tuple(left[0])
         ri = tuple(right[0])
-        var_y = [self._coeff_polynomial_ring(g) for g in self._coeff_polynomial_rings[left[1]].gens()]
-        var_z = [self._coeff_polynomial_ring(g) for g in self._coeff_polynomial_rings[right[1]].gens()]
+        var_y = [syme.sympify(str(g)) for g in self._coeff_polynomial_rings[left[1]].gens()]
+        var_z = [syme.sympify(str(g)) for g in self._coeff_polynomial_rings[right[1]].gens()]
         if self._quantum:
             result = qyz.schubmult_db(
                 {tuple(_coerce_index(le, self._ascode, False)): 1},
                 tuple(_coerce_index(ri, self._ascode, False)),
                 var_y,
                 var_z,
-                self._q_ring.gens(),
+                [syme.sympify(str(g)) for g in self._q_ring.gens()],
             )
         else:
             result = yz.schubmult(
@@ -458,7 +458,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             )
         result = {k: v for k, v in result.items() if v != 0}
         return sum(
-            [self._coeff_polynomial_ring(v) * self((_coerce_index(k, False, self._ascode), left[1])) for k, v in result.items()],
+            [self._coeff_polynomial_ring(str(v)) * self((_coerce_index(k, False, self._ascode), left[1])) for k, v in result.items()],
         )
 
     def _coerce_map_from_(self, S):
