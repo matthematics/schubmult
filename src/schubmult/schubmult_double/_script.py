@@ -22,7 +22,8 @@ from schubmult.perm_lib import (
 
 # from schubmult.schubmult_double._vars import var_x, var, var_r
 from schubmult.schubmult_double._funcs import (
-    compute_positive_rep,
+    # !TEMP
+    # compute_positive_rep,
     mult_poly,
     mult_poly_down,
     posify,
@@ -65,14 +66,60 @@ def _display(val):
     print(val)
 
 
+subs_dict = {}
+for i in range(1, 100):
+    sm = _vars.var2[1]
+    for j in range(1, i):
+        sm += _vars.var_r[j]
+    subs_dict[_vars.var2[i]] = sm
+
+def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, subs_dict):
+    try:
+        return int(val)
+    except Exception:
+        if same:
+            val = expand(sympify(val).xreplace(subs_dict))
+        else:
+            try:
+                if not down:
+                    val = posify(
+                        val,
+                        perms[0],
+                        perms[1],
+                        perm,
+                        var2,
+                        var3,
+                        msg,
+                    )
+                else:
+                    val = posify(
+                        val,
+                        perm,
+                        perms[1],
+                        perms[0],
+                        var2,
+                        var3,
+                        msg,
+                    )
+            except Exception:
+                _display(
+                    f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_val=}",
+                )
+                exit(1)
+            # if check and expand(val - check_coeff_dict.get(perm, 0)) != 0:
+            if check and expand(val - check_val) != 0:
+                _display(
+                    f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_val=}",
+                )
+                exit(1)
+    return val
+
 def _display_full(
     coeff_dict,
     args,
     formatter,
     var2,
     var3,
-    posified=None,
-    check_coeff_dict=None,
     kperm=None,
     N=None,
 ):
@@ -84,12 +131,9 @@ def _display_full(
         subs_dict2[var2[i]] = sm
     raw_result_dict = {}
     perms = args.perms
-    mult = args.mult
     ascode = args.ascode
     coprod = args.coprod
-    check = args.check
     msg = args.msg
-    down = args.down
     same = args.same
     display_positive = args.display_positive
 
@@ -232,73 +276,16 @@ def _display_full(
 
         for perm in coeff_perms:
             val = coeff_dict[perm]
+            # if val != 0:
             if val != 0:
-                notint = False
-                try:
-                    int(val)
-                except Exception:
-                    notint = True
-                if notint and display_positive:
-                    if same:
-                        subs_dict = {}
-                        for i in range(1, 100):
-                            sm = var2[1]
-                            for j in range(1, i):
-                                sm += _vars.var_r[j]
-                            subs_dict[var2[i]] = sm
-                        val = expand(sympify(coeff_dict[perm]).xreplace(subs_dict))
-                    else:
-                        try:
-                            if len(perms) == 2 and not posified and not mult:
-                                if not down:
-                                    val = posify(
-                                        val,
-                                        perms[0],
-                                        perms[1],
-                                        perm,
-                                        var2,
-                                        var3,
-                                        msg,
-                                    )
-                                else:
-                                    val = posify(
-                                        val,
-                                        perm,
-                                        perms[1],
-                                        perms[0],
-                                        var2,
-                                        var3,
-                                        msg,
-                                    )
-                            elif not posified and not mult:
-                                val = compute_positive_rep(val, var2, var3, msg)
-                            elif not posified:
-                                val = compute_positive_rep(val, var2, var3, msg, do_pos_neg=False)
-                        except Exception:
-                            if mult:
-                                _display(
-                                    "warning; --display-positive is on but result is not positive",
-                                    file=sys.stderr,
-                                )
-                            else:
-                                _display(
-                                    f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}",
-                                )
-                                exit(1)
-                        if check and expand(val - check_coeff_dict.get(perm, 0)) != 0:
-                            _display(
-                                f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_coeff_dict.get(perm,0)=}",
-                            )
-                            exit(1)
-                if val != 0:
-                    if ascode:
-                        raw_result_dict[tuple(trimcode(perm))] = val
-                        if formatter:
-                            _display(f"{trimcode(perm)!s:>{width}}  {formatter(val)}")
-                    else:
-                        raw_result_dict[tuple(perm)] = val
-                        if formatter:
-                            _display(f"{perm!s:>{width}}  {formatter(val)}")
+                if ascode:
+                    raw_result_dict[tuple(trimcode(perm))] = val
+                    if formatter:
+                        _display(f"{trimcode(perm)!s:>{width}}  {formatter(val)}")
+                else:
+                    raw_result_dict[tuple(perm)] = val
+                    if formatter:
+                        _display(f"{perm!s:>{width}}  {formatter(val)}")
     return raw_result_dict
 
 
@@ -331,12 +318,12 @@ def main(argv=None):
         same = args.same
         msg = args.msg
         down = args.down
+        check = args.check
         display_positive = args.display_positive
         pr = args.pr
 
         # logger.log(logging.DEBUG, f"main boing 1 {var2=}{var3=}{same=}")
         if same:
-            # logger.log(logging.DEBUG, f"main OOO {same=}")
             var3 = var2
         # logger.log(logging.DEBUG, f"main boing 2 {var2=}{var3=}{same=}")
         posified = False
@@ -364,7 +351,6 @@ def main(argv=None):
                     coeff_dict,
                     args,
                     formatter,
-                    posified=posified,
                     kperm=kperm,
                     var2=var2,
                     var3=var3,
@@ -412,7 +398,7 @@ def main(argv=None):
                 if mult:
                     mul_exp = eval(mulstring)
                     check_coeff_dict = mult_poly(check_coeff_dict, mul_exp)
-
+            # preprocess positivity
             if (
                 display_positive
                 and len(perms) == 2
@@ -452,6 +438,9 @@ def main(argv=None):
                 coeff_dict = check_coeff_dict
 
 
+            if not posified and display_positive:
+                coeff_dict = {k: pre_posify(perms,k,v,check,check_coeff_dict.get(k,0),same,down,var2,var3,msg,subs_dict) for k,v in coeff_dict.items()}
+
             if pr or formatter is None:
                 raw_result_dict = _display_full(
                     coeff_dict,
@@ -459,8 +448,6 @@ def main(argv=None):
                     formatter,
                     var2,
                     var3,
-                    posified=posified,
-                    check_coeff_dict=check_coeff_dict,
                 )
 
             if formatter is None:
