@@ -316,7 +316,7 @@ def main(argv=None):
 
         args, formatter = schub_argparse(
             "schubmult_double",
-            "Compute coefficients of product of double Schubert polynomials in the same or different sets of coefficient variables",
+            "Compute coefficients of products of double Schubert polynomials in the same or different sets of coefficient variables",
             argv=argv[1:],
             yz=True,
         )
