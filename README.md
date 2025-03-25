@@ -127,6 +127,7 @@ Example:
         schubmult_q 5 1 7 3 2 6 4 - 2 1 6 3 5 4
             or equivalently
         schubmult_q --code 4 0 4 1 0 1 - 1 0 3 0 1```
+```
 
 ### schubmult_q_double - Quantum double Schubert polynomials
 
