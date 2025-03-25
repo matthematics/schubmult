@@ -62,20 +62,75 @@ class _gvars:
 _vars = _gvars()
 
 
-def _display_full(coeff_dict, args, formatter, posified=None, var2=_vars.var2, var3=_vars.var3):
-    raw_result_dict = {}
-    mult = args.mult
+def q_posify(u, v, w, same, val, var2, var3, msg, subs_dict2):
+    if expand(val) != 0:
+        try:
+            int(val)
+        except Exception:
+            val2 = 0
+            q_dict = factor_out_q_keep_factored(val)
+            for q_part in q_dict:
+                try:
+                    val2 += q_part * int(q_dict[q_part])
+                except Exception:
+                    if same:
+                        to_add = q_part * expand(sympify(q_dict[q_part]).xreplace(subs_dict2))
+                        val2 += to_add
+                    else:
+                        try:
+                            if code(inverse(v)) == medium_theta(inverse(v)):
+                                val2 += q_part * q_dict[q_part]
+                            else:
+                                q_part2 = q_part
+                                qv = q_vector(q_part)
+                                u2, v2, w2 = u, v, (*w,)
+                                u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+                                while did_one:
+                                    u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+                                q_part2 = np.prod(
+                                    [q_var[i + 1] ** qv[i] for i in range(len(qv))],
+                                )
+                                if q_part2 == 1:
+                                    # reduced to classical coefficient
+                                    val2 += q_part * posify(
+                                        q_dict[q_part],
+                                        u2,
+                                        v2,
+                                        w2,
+                                        var2,
+                                        var3,
+                                        msg,
+                                        False,
+                                    )
+                                else:
+                                    val2 += q_part * compute_positive_rep(
+                                        q_dict[q_part],
+                                        var2,
+                                        var3,
+                                        msg,
+                                        False,
+                                    )
+                        except Exception as e:
+                            print(f"Exception: {e}")
+                            import traceback
 
-    perms = args.perms
+                            traceback.print_exc()
+                            exit(1)
+            # if not same and check and expand(val - val2) != 0:
+            #     if mult:
+            #         val2 = val
+            #     else:
+            #         print(
+            #             f"error: value not equal; write to schubmult@gmail.com with the case {perms=} {perm=} {val2=} {coeff_dict.get(perm,0)=}",
+            #         )
+            #         exit(1)
+            val = val2
+        return val
+    return 0
 
+
+def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3):  # noqa: ARG001
     ascode = args.ascode
-    same = args.same
-    check = args.check
-    msg = args.msg
-    display_positive = args.display_positive
-    expa = args.expa
-    slow = args.slow
-    nilhecke_apply = False
     subs_dict2 = {}
     for i in range(1, 100):
         sm = var2[1]
@@ -86,110 +141,19 @@ def _display_full(coeff_dict, args, formatter, posified=None, var2=_vars.var2, v
     coeff_perms = list(coeff_dict.keys())
     coeff_perms.sort(key=lambda x: (inv(x), *x))
 
+    raw_result_dict = {}
+
     for perm in coeff_perms:
         val = coeff_dict[perm]
-        if expand(val) != 0:
-            try:
-                int(val)
-            except Exception:
-                val2 = 0
-                if display_positive and not posified:
-                    q_dict = factor_out_q_keep_factored(val)
-                    for q_part in q_dict:
-                        try:
-                            val2 += q_part * int(q_dict[q_part])
-                        except Exception:
-                            if same:
-                                to_add = q_part * expand(sympify(q_dict[q_part]).xreplace(subs_dict2))
-                                val2 += to_add
-                            else:
-                                try:
-                                    if len(perms) == 2:
-                                        u = tuple(permtrim([*perms[0]]))
-                                        v = tuple(permtrim([*perms[1]]))
-                                    if (
-                                        len(perms) == 2
-                                        and code(inverse(perms[1])) == medium_theta(inverse(perms[1]))
-                                        and not mult
-                                        and not slow
-                                        and not nilhecke_apply
-                                    ):
-                                        val2 += q_part * q_dict[q_part]
-                                    else:
-                                        q_part2 = q_part
-                                        if not mult and not nilhecke_apply and len(perms) == 2:
-                                            qv = q_vector(q_part)
-                                            u2, v2, w2 = u, v, perm
-                                            u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-                                            while did_one:
-                                                u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-                                            q_part2 = np.prod(
-                                                [q_var[i + 1] ** qv[i] for i in range(len(qv))],
-                                            )
-                                            if q_part2 == 1:
-                                                # reduced to classical coefficient
-                                                val2 += q_part * posify(
-                                                    q_dict[q_part],
-                                                    u2,
-                                                    v2,
-                                                    w2,
-                                                    var2,
-                                                    var3,
-                                                    msg,
-                                                    False,
-                                                )
-                                            else:
-                                                val2 += q_part * compute_positive_rep(
-                                                    q_dict[q_part],
-                                                    var2,
-                                                    var3,
-                                                    msg,
-                                                    False,
-                                                )
-                                        else:
-                                            val2 += q_part * compute_positive_rep(
-                                                q_dict[q_part],
-                                                var2,
-                                                var3,
-                                                msg,
-                                                False,
-                                            )
-                                except Exception as e:
-                                    if mult:
-                                        print(
-                                            "warning; --display-positive is on but result is not positive",
-                                            file=sys.stderr,
-                                        )
-                                        val2 = val
-                                        break
-                                    print(
-                                        f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {coeff_dict.get(perm,0)=}",
-                                    )
-                                    print(f"Exception: {e}")
-                                    import traceback
-
-                                    traceback.print_exc()
-                                    exit(1)
-                    if not same and check and expand(val - val2) != 0:
-                        if mult:
-                            val2 = val
-                        else:
-                            print(
-                                f"error: value not equal; write to schubmult@gmail.com with the case {perms=} {perm=} {val2=} {coeff_dict.get(perm,0)=}",
-                            )
-                            exit(1)
-                    val = val2
-            if expa:
-                val = expand(val)
-            if val != 0:
-                if ascode:
-                    raw_result_dict[tuple(trimcode(perm))] = val
-                    if formatter:
-                        print(f"{trimcode(perm)!s}  {formatter(val)}")
-                else:
-                    raw_result_dict[tuple(perm)] = val
-                    if formatter:
-                        print(f"{perm!s}  {formatter(val)}")
+        if val != 0:
+            if ascode:
+                raw_result_dict[tuple(trimcode(perm))] = val
+                if formatter:
+                    print(f"{trimcode(perm)!s}  {formatter(val)}")
+            else:
+                raw_result_dict[tuple(perm)] = val
+                if formatter:
+                    print(f"{perm!s}  {formatter(val)}")
     return raw_result_dict
 
 
@@ -276,15 +240,14 @@ def main(argv=None):
 
                 # mul_exp = eval(mulstring)
                 # coeff_dict = mult_poly(coeff_dict, mul_exp)
+        if display_positive and not nilhecke and not nilhecke_apply:
+            coeff_dict = {perm: q_posify(perms[0], perms[1], perm, same, val, var2, var3, msg, subs_dict2) for perm, val in coeff_dict.items()}
 
-        posified = False
         if parabolic:
-            if display_positive:
-                posified = True
             w_P = longest_element(parabolic_index)
             w_P_prime = [1, 2]
             coeff_dict_update = {}
-            for w_1 in coeff_dict:
+            for w_1 in coeff_dict.keys():
                 val = coeff_dict[w_1]
                 q_dict = factor_out_q_keep_factored(val)
                 for q_part in q_dict:
@@ -310,80 +273,19 @@ def main(argv=None):
                     w = tuple(permtrim(w))
 
                     new_q_part = np.prod(
-                        [
-                            q_var[index + 1 - count_less_than(parabolic_index, index + 1)] ** qv[index]
-                            for index in range(len(qv))
-                            if index + 1 not in parabolic_index
-                        ],
+                        [q_var[index + 1 - count_less_than(parabolic_index, index + 1)] ** qv[index] for index in range(len(qv)) if index + 1 not in parabolic_index],
                     )
-
                     try:
                         new_q_part = int(new_q_part)
                     except Exception:
                         pass
                     q_val_part = q_dict[q_part]
-                    if display_positive:
-                        try:
-                            q_val_part = int(q_val_part)
-                        except Exception:
-                            if same:
-                                q_val_part = expand(sympify(q_val_part).xreplace(subs_dict2))
-                            else:
-                                try:
-                                    if len(perms) == 2 and q_part == 1:
-                                        u = permtrim([*perms[0]])
-                                        v = permtrim([*perms[1]])
-                                        q_val_part = posify(
-                                            q_dict[q_part],
-                                            tuple(u),
-                                            tuple(v),
-                                            w_1,
-                                            var2,
-                                            var3,
-                                            msg,
-                                            False,
-                                        )
-                                    else:
-                                        qv = q_vector(q_part)
-                                        u2, v2, w2 = perms[0], perms[1], w_1
-                                        u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-                                        while did_one:
-                                            u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-                                        q_part2 = np.prod(
-                                            [q_var[i + 1] ** qv[i] for i in range(len(qv))],
-                                        )
-                                        if q_part2 == 1:
-                                            q_val_part = posify(
-                                                q_dict[q_part],
-                                                u2,
-                                                v2,
-                                                w2,
-                                                var2,
-                                                var3,
-                                                msg,
-                                                False,
-                                            )
-                                        else:
-                                            q_val_part = compute_positive_rep(
-                                                q_dict[q_part],
-                                                var2,
-                                                var3,
-                                                msg,
-                                                False,
-                                            )
-                                except Exception as e:
-                                    print(
-                                        f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {q_part*q_val_part=} {coeff_dict.get(w_1,0)=}",
-                                    )
-                                    print(f"Exception: {e}")
-                                    exit(1)
-                            coeff_dict_update[w] = coeff_dict_update.get(w, 0) + new_q_part * q_val_part
-
+                    coeff_dict_update[w] = coeff_dict_update.get(w, 0) + new_q_part * q_val_part
             coeff_dict = coeff_dict_update
 
         raw_result_dict = {}
         if pr or formatter is None:
-            raw_result_dict = _display_full(coeff_dict, args, formatter, posified)
+            raw_result_dict = _display_full(coeff_dict, args, formatter)
         if formatter is None:
             return raw_result_dict
     except BrokenPipeError:
