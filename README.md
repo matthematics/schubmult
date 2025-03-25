@@ -1,7 +1,6 @@
 # schubmult
 
-## Program and package for rapid computation of Littlewood-Richardson coefficients of Schubert 
-polynomials, with optional Sage integration
+## Program and package for rapid computation of Littlewood-Richardson coefficients of Schubert polynomials, with optional Sage integration
 
 The main purpose of this python package is for executing scripts to compute coefficients of products of 
 various types of Schubert polynomials. Coproducts can also be computed, as well as substitution of 
