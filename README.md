@@ -219,9 +219,7 @@ currently installed SageMath distribution, use sage's python interpreter to inst
 ## Basic sage example
 
 ```python
-sage: from schubmult.sage_integration import FastSchubertPolynomialRing, 
-FastDoubleSchubertPolynomialRing,
-FastQuantumSchubertPolynomialRing, FastQuantumDoubleSchubertPolynomialRing
+sage: from schubmult.sage_integration import FastSchubertPolynomialRing, FastDoubleSchubertPolynomialRing, FastQuantumSchubertPolynomialRing, FastQuantumDoubleSchubertPolynomialRing
 
 sage: SingleRing = FastSchubertPolynomialRing(ZZ, 100, "x")
 sage: SingleRing([3,4,1,2])
@@ -236,11 +234,11 @@ Sx([7, 3, 4, 1, 2, 5, 6]) + Sx([7, 4, 2, 1, 3, 5, 6]) + Sx([7, 5, 1, 2, 3, 4, 6]
 ```python
 sage: DoubleRing = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y", "z"))
 sage: DoubleRing([3,4,1,2])*DoubleRing([1,4,2,3])
-(y1*y2-y1*y4-y2*y4+y4^2)*DSx([3, 4, 1, 2], 'y') + (-y1-y2+y4+y5)*DSx([3, 5, 1, 2, 4], 'y') + DSx([3, 6, 
-1, 2, 4, 5], 'y')
+(y1*y2-y1*y4-y2*y4+y4^2)*DSx([3, 4, 1, 2], 'y') + (-y1-y2+y4+y5)*DSx([3, 5, 1, 2, 4], 'y')
+ + DSx([3, 6, 1, 2, 4, 5], 'y')
 sage: DoubleRing([3,4,1,2]) * DoubleRing([1,4,2,3],"z")
-(y3^2+y3*y4+y4^2-y3*z1-y4*z1-y3*z2-y4*z2+z1*z2-y3*z3-y4*z3+z1*z3+z2*z3)*DSx([3, 4, 1, 2], 'y') + (y3+y4+
-y5-z1-z2-z3)*DSx([3, 5, 1, 2, 4], 'y') + DSx([3, 6, 1, 2, 4, 5], 'y')
+(y3^2+y3*y4+y4^2-y3*z1-y4*z1-y3*z2-y4*z2+z1*z2-y3*z3-y4*z3+z1*z3+z2*z3)*DSx([3, 4, 1, 2], 'y')
+ + (y3+y4+y5-z1-z2-z3)*DSx([3, 5, 1, 2, 4], 'y') + DSx([3, 6, 1, 2, 4, 5], 'y')
 ```
 
 ## expand()
@@ -256,14 +254,13 @@ x1*x2 + q_1
 Coercion was implemented as widely as possible.
 ```python
 sage: DoubleRing([1,4,2,3],"z") * SingleRing([3,4,1,2])
-z1^2*z4^2*DSx([1, 4, 2, 3], 'z') + (z1^2*z4+z1^2*z5)*DSx([1, 5, 2, 3, 4], 'z') + z1^2*DSx([1, 6, 2, 3, 
-4, 5], 'z') + (z1*z4^2+z2*z4^2)*DSx([2, 4, 1, 3], 'z') + (z1*z4+z2*z4+z1*z5+z2*z5)*DSx([2, 5, 1, 3, 4], 
-'z') + (z1+z2)*DSx([2, 6, 1, 3, 4, 5], 'z') + z4^2*DSx([3, 4, 1, 2], 'z') + (z4+z5)*DSx([3, 5, 1, 2, 4], 
-'z') + DSx([3, 6, 1, 2, 4, 5], 'z')
+z1^2*z4^2*DSx([1, 4, 2, 3], 'z') + (z1^2*z4+z1^2*z5)*DSx([1, 5, 2, 3, 4], 'z') + z1^2*DSx([1, 6, 2, 3, 4, 5], 'z')
+ + (z1*z4^2+z2*z4^2)*DSx([2, 4, 1, 3], 'z') + (z1*z4+z2*z4+z1*z5+z2*z5)*DSx([2, 5, 1, 3, 4], 'z')
+ + (z1+z2*DSx([2, 6, 1, 3, 4, 5], 'z') + z4^2*DSx([3, 4, 1, 2], 'z') + (z4+z5)*DSx([3, 5, 1, 2, 4], 'z')
+ + DSx([3, 6, 1,  2, 4, 5], 'z')
 sage: SingleRingQ([2,3,1,4]) * SingleRing([4,1,3,2])
-(-2*q1^2*q2+q1*q2*q3)*QSx([1]) + q1*q2*QSx([1, 3, 4, 2]) + (-q1^2)*QSx([2, 3, 1]) + q1*QSx([2, 4, 3, 1]) 
-+ (-q1*q2)*QSx([3, 1, 2]) + q1*QSx([3, 2, 4, 1]) + q1*QSx([3, 4, 1, 2]) + (-q1)*QSx([4, 2, 1, 3]) + 
-QSx([5, 2, 3, 1, 4]) + QSx([5, 3, 1, 2, 4])
+(-2*q1^2*q2+q1*q2*q3)*QSx([1]) + q1*q2*QSx([1, 3, 4, 2]) + (-q1^2)*QSx([2, 3, 1]) + q1*QSx([2, 4, 3, 1]) + (-q1*q2)*QSx([3, 1, 2])
+ + q1*QSx([3, 2, 4, 1]) + q1*QSx([3, 4, 1, 2]) + (-q1)*QSx([4, 2, 1, 3]) + QSx([5, 2, 3, 1, 4]) + QSx([5, 3, 1, 2, 4])
 sage: R.<x1, x2> = PolynomialRing(ZZ, 2)
 sage: SingleRing([1,3,2]) - x1 - x2 == 0
 True
@@ -277,10 +274,9 @@ the variables to partition on.
 ```ada
 sage: DoubleRing.set_coproduct_indices((1,3))
 sage: DoubleRing([4,1,5,2,3], "z").coproduct()
-(y1^2-y1*z2-y1*z3+z2*z3)*DSx([4, 1, 2, 3], 'z') # DSx([1], 'y') + (y1+y2-z2-z3)*DSx([4, 1, 2, 3], 'z') # 
-DSx([2, 1], 'y') + DSx([4, 1, 2, 3], 'z') # DSx([3, 1, 2], 'y') + (y1-z3)*DSx([4, 2, 1, 3], 'z') # 
-DSx([1], 'y') + DSx([4, 2, 1, 3], 'z') # DSx([2, 1], 'y') + DSx([4, 3, 1, 2], 'z') # DSx([1], 'y')
-
+(y1^2-y1*z2-y1*z3+z2*z3)*DSx([4, 1, 2, 3], 'z') # DSx([1], 'y') + (y1+y2-z2-z3)*DSx([4, 1, 2, 3], 'z') # DSx([2, 1], 'y')
+ + DSx([4, 1, 2, 3], 'z') # DSx([3, 1, 2], 'y') + (y1-z3)*DSx([4, 2, 1, 3], 'z') # DSx([1], 'y')
+  + DSx([4, 2, 1, 3], 'z') # DSx([2, 1], 'y') + DSx([4, 3, 1, 2], 'z') # DSx([1], 'y')
 ```
 
 ## Demonstration of quantum double mixed products
@@ -288,171 +284,168 @@ DSx([1], 'y') + DSx([4, 2, 1, 3], 'z') # DSx([2, 1], 'y') + DSx([4, 3, 1, 2], 'z
 ```python
 sage: QuantumDoubleRing = FastQuantumDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y","z"))
 sage: QuantumDoubleRing([4,1,3,2])*QuantumDoubleRing([5,1,3,2,4], "z")
-(q1*q2*q3*y1^3+q1*q2*q3*y1^2*y4+q1*q2*q3*y1*y4^2+q1*q2*q3*y4^3-q1*q2*q3*y1^2*z1-q1*q2*q3*y1*y4*z1-
-q1*q2*q3*y4^2*z1-q1*q2*q3*y1^2*z2-q1*q2*q3*y1*y4*z2-q1*q2*q3*y4^2*z2+q1*q2*q3*y1*z1*z2+q1*q2*q3*y4*z1*z2-
-q1*q2*q3*y1^2*z3-q1*q2*q3*y1*y4*z3-q1*q2*q3*y4^2*z3+q1*q2*q3*y1*z1*z3+q1*q2*q3*y4*z1*z3+
-q1*q2*q3*y1*z2*z3+q1*q2*q3*y4*z2*z3-q1*q2*q3*z1*z2*z3-q1*q2*q3*y1^2*z4-q1*q2*q3*y1*y4*z4-
-q1*q2*q3*y4^2*z4+q1*q2*q3*y1*z1*z4+q1*q2*q3*y4*z1*z4+q1*q2*q3*y1*z2*z4+q1*q2*q3*y4*z2*z4-
-q1*q2*q3*z1*z2*z4+q1*q2*q3*y1*z3*z4+q1*q2*q3*y4*z3*z4-q1*q2*q3*z1*z3*z4-q1*q2*q3*z2*z3*z4)*QDSx([1], 
-'y') + (q1*q2*q3*y1^2+q1*q2*q3*y1*y4+q1*q2*q3*y4^2+q1*q2*q3*y1*y5+q1*q2*q3*y4*y5+q1*q2*q3*y5^2-
-q1*q2*q3*y1*z1-q1*q2*q3*y4*z1-q1*q2*q3*y5*z1-q1*q2*q3*y1*z2-q1*q2*q3*y4*z2-q1*q2*q3*y5*z2+q1*q2*q3*z1*z2-
-q1*q2*q3*y1*z3-q1*q2*q3*y4*z3-q1*q2*q3*y5*z3+q1*q2*q3*z1*z3+q1*q2*q3*z2*z3-q1*q2*q3*y1*z4-q1*q2*q3*y4*z4-
-q1*q2*q3*y5*z4+q1*q2*q3*z1*z4+q1*q2*q3*z2*z4+q1*q2*q3*z3*z4)*QDSx([1, 2, 3, 5, 4], 'y') + (q1*q2*q3*y1+
-q1*q2*q3*y4+q1*q2*q3*y5+q1*q2*q3*y6-q1*q2*q3*z1-q1*q2*q3*z2-q1*q2*q3*z3-q1*q2*q3*z4)*QDSx([1, 2, 3, 6, 
-4, 5], 'y') + q1*q2*q3*QDSx([1, 2, 3, 7, 4, 5, 6], 'y') + (q1*q3*y1^3+q1*q3*y1^2*y4+q1*q3*y1*y4^2+
-q1*q3*y4^3-q1*q3*y1^2*z1-q1*q3*y1*y4*z1-q1*q3*y4^2*z1-q1*q3*y1^2*z2-q1*q3*y1*y4*z2-q1*q3*y4^2*z2+
-q1*q3*y1*z1*z2+q1*q3*y4*z1*z2-q1*q3*y1^2*z3-q1*q3*y1*y4*z3-q1*q3*y4^2*z3+q1*q3*y1*z1*z3+q1*q3*y4*z1*z3+
-q1*q3*y1*z2*z3+q1*q3*y4*z2*z3-q1*q3*z1*z2*z3-q1*q3*y1^2*z4-q1*q3*y1*y4*z4-q1*q3*y4^2*z4+q1*q3*y1*z1*z4+
-q1*q3*y4*z1*z4+q1*q3*y1*z2*z4+q1*q3*y4*z2*z4-q1*q3*z1*z2*z4+q1*q3*y1*z3*z4+q1*q3*y4*z3*z4-q1*q3*z1*z3*z4-
-q1*q3*z2*z3*z4)*QDSx([1, 4, 2, 3], 'y') + (q1*y1^3*y3+q1*y1^3*y4+q1*y1^2*y3*y4+q1*y1^2*y4^2+
-q1*y1*y3*y4^2+q1*y1*y4^3+q1*y3*y4^3-q1*y1^3*z1-q1*y1^2*y3*z1-2*q1*y1^2*y4*z1-q1*y1*y3*y4*z1-
-2*q1*y1*y4^2*z1-q1*y3*y4^2*z1-q1*y4^3*z1+q1*y1^2*z1^2+q1*y1*y4*z1^2+q1*y4^2*z1^2-q1*y1^3*z2-
-q1*y1^2*y3*z2-2*q1*y1^2*y4*z2-q1*y1*y3*y4*z2-2*q1*y1*y4^2*z2-q1*y3*y4^2*z2-q1*y4^3*z2+2*q1*y1^2*z1*z2+
-q1*y1*y3*z1*z2+3*q1*y1*y4*z1*z2+q1*y3*y4*z1*z2+2*q1*y4^2*z1*z2-q1*y1*z1^2*z2-q1*y4*z1^2*z2+q1*y1^2*z2^2+
-q1*y1*y4*z2^2+q1*y4^2*z2^2-q1*y1*z1*z2^2-q1*y4*z1*z2^2-q1*y1^2*y3*z3-q1*y1^2*y4*z3-q1*y1*y3*y4*z3-
-q1*y1*y4^2*z3-q1*y3*y4^2*z3+q1*y1^2*z1*z3+q1*y1*y3*z1*z3+2*q1*y1*y4*z1*z3+q1*y3*y4*z1*z3+q1*y4^2*z1*z3-
-q1*y1*z1^2*z3-q1*y4*z1^2*z3+q1*y1^2*z2*z3+q1*y1*y3*z2*z3+2*q1*y1*y4*z2*z3+q1*y3*y4*z2*z3+q1*y4^2*z2*z3-
-2*q1*y1*z1*z2*z3-q1*y3*z1*z2*z3-2*q1*y4*z1*z2*z3+q1*z1^2*z2*z3-q1*y1*z2^2*z3-q1*y4*z2^2*z3+q1*z1*z2^2*z3-
-q1*y1^2*y3*z4-q1*y1^2*y4*z4-q1*y1*y3*y4*z4-q1*y1*y4^2*z4-q1*y3*y4^2*z4+q1*y1^2*z1*z4+q1*y1*y3*z1*z4+
-2*q1*y1*y4*z1*z4+q1*y3*y4*z1*z4+q1*y4^2*z1*z4-q1*y1*z1^2*z4-q1*y4*z1^2*z4+q1*y1^2*z2*z4+q1*y1*y3*z2*z4+
-2*q1*y1*y4*z2*z4+q1*y3*y4*z2*z4+q1*y4^2*z2*z4-2*q1*y1*z1*z2*z4-q1*y3*z1*z2*z4-2*q1*y4*z1*z2*z4+
-q1*z1^2*z2*z4-q1*y1*z2^2*z4-q1*y4*z2^2*z4+q1*z1*z2^2*z4+q1*y1*y3*z3*z4+q1*y1*y4*z3*z4+q1*y3*y4*z3*z4-
-q1*y1*z1*z3*z4-q1*y3*z1*z3*z4-q1*y4*z1*z3*z4+q1*z1^2*z3*z4-q1*y1*z2*z3*z4-q1*y3*z2*z3*z4-q1*y4*z2*z3*z4+
-q1*z1*z2*z3*z4+q1*z2^2*z3*z4)*QDSx([1, 4, 3, 2], 'y') + (q1*y1^3+q1*y1^2*y4+q1*y1*y4^2+q1*y4^3-
-q1*y1^2*z1-q1*y1*y4*z1-q1*y4^2*z1-q1*y1^2*z2-q1*y1*y4*z2-q1*y4^2*z2+q1*y1*z1*z2+q1*y4*z1*z2-q1*y1^2*z3-
-q1*y1*y4*z3-q1*y4^2*z3+q1*y1*z1*z3+q1*y4*z1*z3+q1*y1*z2*z3+q1*y4*z2*z3-q1*z1*z2*z3-q1*y1^2*z4-
-q1*y1*y4*z4-q1*y4^2*z4+q1*y1*z1*z4+q1*y4*z1*z4+q1*y1*z2*z4+q1*y4*z2*z4-q1*z1*z2*z4+q1*y1*z3*z4+
-q1*y4*z3*z4-q1*z1*z3*z4-q1*z2*z3*z4)*QDSx([1, 4, 5, 2, 3], 'y') + (q1*q3*y1^2+q1*q3*y1*y4+q1*q3*y4^2+
-q1*q3*y1*y5+q1*q3*y4*y5+q1*q3*y5^2-q1*q3*y1*z1-q1*q3*y4*z1-q1*q3*y5*z1-q1*q3*y1*z2-q1*q3*y4*z2-
-q1*q3*y5*z2+q1*q3*z1*z2-q1*q3*y1*z3-q1*q3*y4*z3-q1*q3*y5*z3+q1*q3*z1*z3+q1*q3*z2*z3-q1*q3*y1*z4-
-q1*q3*y4*z4-q1*q3*y5*z4+q1*q3*z1*z4+q1*q3*z2*z4+q1*q3*z3*z4)*QDSx([1, 5, 2, 3, 4], 'y') + (q1*y1^3+
-q1*y1^2*y3+q1*y1^2*y4+q1*y1*y3*y4+q1*y1*y4^2+q1*y3*y4^2+q1*y1^2*y5+q1*y1*y3*y5+q1*y1*y4*y5+q1*y3*y4*y5+
-q1*y1*y5^2+q1*y3*y5^2-2*q1*y1^2*z1-q1*y1*y3*z1-2*q1*y1*y4*z1-q1*y3*y4*z1-q1*y4^2*z1-2*q1*y1*y5*z1-
-q1*y3*y5*z1-q1*y4*y5*z1-q1*y5^2*z1+q1*y1*z1^2+q1*y4*z1^2+q1*y5*z1^2-2*q1*y1^2*z2-q1*y1*y3*z2-
-2*q1*y1*y4*z2-q1*y3*y4*z2-q1*y4^2*z2-2*q1*y1*y5*z2-q1*y3*y5*z2-q1*y4*y5*z2-q1*y5^2*z2+3*q1*y1*z1*z2+
-q1*y3*z1*z2+2*q1*y4*z1*z2+2*q1*y5*z1*z2-q1*z1^2*z2+q1*y1*z2^2+q1*y4*z2^2+q1*y5*z2^2-q1*z1*z2^2-
-q1*y1^2*z3-q1*y1*y3*z3-q1*y1*y4*z3-q1*y3*y4*z3-q1*y1*y5*z3-q1*y3*y5*z3+2*q1*y1*z1*z3+q1*y3*z1*z3+
-q1*y4*z1*z3+q1*y5*z1*z3-q1*z1^2*z3+2*q1*y1*z2*z3+q1*y3*z2*z3+q1*y4*z2*z3+q1*y5*z2*z3-2*q1*z1*z2*z3-
-q1*z2^2*z3-q1*y1^2*z4-q1*y1*y3*z4-q1*y1*y4*z4-q1*y3*y4*z4-q1*y1*y5*z4-q1*y3*y5*z4+2*q1*y1*z1*z4+
-q1*y3*z1*z4+q1*y4*z1*z4+q1*y5*z1*z4-q1*z1^2*z4+2*q1*y1*z2*z4+q1*y3*z2*z4+q1*y4*z2*z4+q1*y5*z2*z4-
-2*q1*z1*z2*z4-q1*z2^2*z4+q1*y1*z3*z4+q1*y3*z3*z4-q1*z1*z3*z4-q1*z2*z3*z4)*QDSx([1, 5, 3, 2, 4], 'y') + 
-(q1*y1^2+q1*y1*y4+q1*y4^2+q1*y1*y5+q1*y4*y5+q1*y5^2-q1*y1*z1-q1*y4*z1-q1*y5*z1-q1*y1*z2-q1*y4*z2-
-q1*y5*z2+q1*z1*z2-q1*y1*z3-q1*y4*z3-q1*y5*z3+q1*z1*z3+q1*z2*z3-q1*y1*z4-q1*y4*z4-q1*y5*z4+q1*z1*z4+
-q1*z2*z4+q1*z3*z4)*QDSx([1, 5, 4, 2, 3], 'y') + (q1*q3*y1+q1*q3*y4+q1*q3*y5+q1*q3*y6-q1*q3*z1-q1*q3*z2-
-q1*q3*z3-q1*q3*z4)*QDSx([1, 6, 2, 3, 4, 5], 'y') + (q1*y1^2+q1*y1*y3+q1*y1*y4+q1*y3*y4+q1*y1*y5+q1*y3*y5+
-q1*y1*y6+q1*y3*y6-2*q1*y1*z1-q1*y3*z1-q1*y4*z1-q1*y5*z1-q1*y6*z1+q1*z1^2-2*q1*y1*z2-q1*y3*z2-q1*y4*z2-
-q1*y5*z2-q1*y6*z2+2*q1*z1*z2+q1*z2^2-q1*y1*z3-q1*y3*z3+q1*z1*z3+q1*z2*z3-q1*y1*z4-q1*y3*z4+q1*z1*z4+
-q1*z2*z4)*QDSx([1, 6, 3, 2, 4, 5], 'y') + (q1*y1+q1*y4+q1*y5+q1*y6-q1*z1-q1*z2-q1*z3-q1*z4)*QDSx([1, 6, 
-4, 2, 3, 5], 'y') + q1*q3*QDSx([1, 7, 2, 3, 4, 5, 6], 'y') + (q1*y1+q1*y3-q1*z1-q1*z2)*QDSx([1, 7, 3, 2, 
-4, 5, 6], 'y') + q1*QDSx([1, 7, 4, 2, 3, 5, 6], 'y') + (q1*q2*q3*y1^2+q1*q2*q3*y1*y2+q1*q2*q3*y2^2+
-q1*q2*q3*y1*y4+q1*q2*q3*y2*y4+q1*q2*q3*y4^2-q1*q2*q3*y1*z1-q1*q2*q3*y2*z1-q1*q2*q3*y4*z1-q1*q2*q3*y1*z2-
-q1*q2*q3*y2*z2-q1*q2*q3*y4*z2+q1*q2*q3*z1*z2-q1*q2*q3*y1*z3-q1*q2*q3*y2*z3-q1*q2*q3*y4*z3+q1*q2*q3*z1*z3+
-q1*q2*q3*z2*z3-q1*q2*q3*y1*z4-q1*q2*q3*y2*z4-q1*q2*q3*y4*z4+q1*q2*q3*z1*z4+q1*q2*q3*z2*z4+
-q1*q2*q3*z3*z4)*QDSx([2, 1], 'y') + (q1*q2*q3*y1+q1*q2*q3*y2+q1*q2*q3*y4+q1*q2*q3*y5-q1*q2*q3*z1-
-q1*q2*q3*z2-q1*q2*q3*z3-q1*q2*q3*z4)*QDSx([2, 1, 3, 5, 4], 'y') + q1*q2*q3*QDSx([2, 1, 3, 6, 4, 5], 'y') 
-+ (q1*q3*y1^2+q1*q3*y1*y2+q1*q3*y2^2+q1*q3*y1*y4+q1*q3*y2*y4+q1*q3*y4^2-q1*q3*y1*z1-q1*q3*y2*z1-
-q1*q3*y4*z1-q1*q3*y1*z2-q1*q3*y2*z2-q1*q3*y4*z2+q1*q3*z1*z2-q1*q3*y1*z3-q1*q3*y2*z3-q1*q3*y4*z3+
-q1*q3*z1*z3+q1*q3*z2*z3-q1*q3*y1*z4-q1*q3*y2*z4-q1*q3*y4*z4+q1*q3*z1*z4+q1*q3*z2*z4+
-q1*q3*z3*z4)*QDSx([2, 4, 1, 3], 'y') + (q1*y1^2*y3+q1*y1*y2*y3+q1*y2^2*y3+q1*y1^2*y4+q1*y1*y2*y4+
-q1*y2^2*y4+q1*y1*y3*y4+q1*y2*y3*y4+q1*y1*y4^2+q1*y2*y4^2+q1*y3*y4^2+q1*y4^3-q1*y1^2*z1-q1*y1*y2*z1-
-q1*y2^2*z1-q1*y1*y3*z1-q1*y2*y3*z1-2*q1*y1*y4*z1-2*q1*y2*y4*z1-q1*y3*y4*z1-2*q1*y4^2*z1+q1*y1*z1^2+
-q1*y2*z1^2+q1*y4*z1^2-q1*y1^2*z2-q1*y1*y2*z2-q1*y2^2*z2-q1*y1*y3*z2-q1*y2*y3*z2-2*q1*y1*y4*z2-
-2*q1*y2*y4*z2-q1*y3*y4*z2-2*q1*y4^2*z2+2*q1*y1*z1*z2+2*q1*y2*z1*z2+q1*y3*z1*z2+3*q1*y4*z1*z2-q1*z1^2*z2+
-q1*y1*z2^2+q1*y2*z2^2+q1*y4*z2^2-q1*z1*z2^2-q1*y1*y3*z3-q1*y2*y3*z3-q1*y1*y4*z3-q1*y2*y4*z3-q1*y3*y4*z3-
-q1*y4^2*z3+q1*y1*z1*z3+q1*y2*z1*z3+q1*y3*z1*z3+2*q1*y4*z1*z3-q1*z1^2*z3+q1*y1*z2*z3+q1*y2*z2*z3+
-q1*y3*z2*z3+2*q1*y4*z2*z3-2*q1*z1*z2*z3-q1*z2^2*z3-q1*y1*y3*z4-q1*y2*y3*z4-q1*y1*y4*z4-q1*y2*y4*z4-
-q1*y3*y4*z4-q1*y4^2*z4+q1*y1*z1*z4+q1*y2*z1*z4+q1*y3*z1*z4+2*q1*y4*z1*z4-q1*z1^2*z4+q1*y1*z2*z4+
-q1*y2*z2*z4+q1*y3*z2*z4+2*q1*y4*z2*z4-2*q1*z1*z2*z4-q1*z2^2*z4+q1*y3*z3*z4+q1*y4*z3*z4-q1*z1*z3*z4-
-q1*z2*z3*z4)*QDSx([2, 4, 3, 1], 'y') + (q1*y1^2+q1*y1*y2+q1*y2^2+q1*y1*y4+q1*y2*y4+q1*y4^2-q1*y1*z1-
-q1*y2*z1-q1*y4*z1-q1*y1*z2-q1*y2*z2-q1*y4*z2+q1*z1*z2-q1*y1*z3-q1*y2*z3-q1*y4*z3+q1*z1*z3+q1*z2*z3-
-q1*y1*z4-q1*y2*z4-q1*y4*z4+q1*z1*z4+q1*z2*z4+q1*z3*z4)*QDSx([2, 4, 5, 1, 3], 'y') + (q1*q3*y1+q1*q3*y2+
-q1*q3*y4+q1*q3*y5-q1*q3*z1-q1*q3*z2-q1*q3*z3-q1*q3*z4)*QDSx([2, 5, 1, 3, 4], 'y') + (q1*y1^2+q1*y1*y2+
-q1*y2^2+q1*y1*y3+q1*y2*y3+q1*y1*y4+q1*y2*y4+q1*y3*y4+q1*y4^2+q1*y1*y5+q1*y2*y5+q1*y3*y5+q1*y4*y5+q1*y5^2-
-2*q1*y1*z1-2*q1*y2*z1-q1*y3*z1-2*q1*y4*z1-2*q1*y5*z1+q1*z1^2-2*q1*y1*z2-2*q1*y2*z2-q1*y3*z2-2*q1*y4*z2-
-2*q1*y5*z2+3*q1*z1*z2+q1*z2^2-q1*y1*z3-q1*y2*z3-q1*y3*z3-q1*y4*z3-q1*y5*z3+2*q1*z1*z3+2*q1*z2*z3-
-q1*y1*z4-q1*y2*z4-q1*y3*z4-q1*y4*z4-q1*y5*z4+2*q1*z1*z4+2*q1*z2*z4+q1*z3*z4)*QDSx([2, 5, 3, 1, 4], 'y') +
- (q1*y1+q1*y2+q1*y4+q1*y5-q1*z1-q1*z2-q1*z3-q1*z4)*QDSx([2, 5, 4, 1, 3], 'y') + q1*q3*QDSx([2, 6, 1, 3, 
-4, 5], 'y') + (q1*y1+q1*y2+q1*y3+q1*y4+q1*y5+q1*y6-2*q1*z1-2*q1*z2-q1*z3-q1*z4)*QDSx([2, 6, 3, 1, 4, 5], 
-'y') + q1*QDSx([2, 6, 4, 1, 3, 5], 'y') + q1*QDSx([2, 7, 3, 1, 4, 5, 6], 'y') + (q1*q2*q3*y1+q1*q2*q3*y2+
-q1*q2*q3*y3+q1*q2*q3*y4-q1*q2*q3*z1-q1*q2*q3*z2-q1*q2*q3*z3-q1*q2*q3*z4)*QDSx([3, 1, 2], 'y') + 
-q1*q2*q3*QDSx([3, 1, 2, 5, 4], 'y') + (q1*y1^2*y3+q1*y1*y3^2+q1*y1^2*y4+2*q1*y1*y3*y4+q1*y3^2*y4+
-q1*y1*y4^2+q1*y3*y4^2-q1*y1^2*z1-2*q1*y1*y3*z1-q1*y3^2*z1-2*q1*y1*y4*z1-2*q1*y3*y4*z1-q1*y4^2*z1+
-q1*y1*z1^2+q1*y3*z1^2+q1*y4*z1^2-q1*y1^2*z2-2*q1*y1*y3*z2-q1*y3^2*z2-2*q1*y1*y4*z2-2*q1*y3*y4*z2-
-q1*y4^2*z2+2*q1*y1*z1*z2+2*q1*y3*z1*z2+2*q1*y4*z1*z2-q1*z1^2*z2+q1*y1*z2^2+q1*y3*z2^2+q1*y4*z2^2-
-q1*z1*z2^2-q1*y1*y3*z3-q1*y1*y4*z3-q1*y3*y4*z3+q1*y1*z1*z3+q1*y3*z1*z3+q1*y4*z1*z3-q1*z1^2*z3+
-q1*y1*z2*z3+q1*y3*z2*z3+q1*y4*z2*z3-q1*z1*z2*z3-q1*z2^2*z3-q1*y1*y3*z4-q1*y1*y4*z4-q1*y3*y4*z4+
-q1*y1*z1*z4+q1*y3*z1*z4+q1*y4*z1*z4-q1*z1^2*z4+q1*y1*z2*z4+q1*y3*z2*z4+q1*y4*z2*z4-q1*z1*z2*z4-
-q1*z2^2*z4+q1*q3*y1+q1*q3*y2+q1*q3*y3+q1*q3*y4-q1*q3*z1-q1*q3*z2-q1*q3*z3-q1*q3*z4)*QDSx([3, 4, 1, 2], 
-'y') + (q1*y1*y3+q1*y2*y3+q1*y3^2+q1*y1*y4+q1*y2*y4+2*q1*y3*y4+q1*y4^2-q1*y1*z1-q1*y2*z1-2*q1*y3*z1-
-2*q1*y4*z1+q1*z1^2-q1*y1*z2-q1*y2*z2-2*q1*y3*z2-2*q1*y4*z2+2*q1*z1*z2+q1*z2^2-q1*y3*z3-q1*y4*z3+q1*z1*z3+
-q1*z2*z3-q1*y3*z4-q1*y4*z4+q1*z1*z4+q1*z2*z4)*QDSx([3, 4, 2, 1], 'y') + (q1*y1+q1*y2+q1*y3+q1*y4-q1*z1-
-q1*z2-q1*z3-q1*z4)*QDSx([3, 4, 5, 1, 2], 'y') + (q1*y1^2+2*q1*y1*y3+q1*y3^2+q1*y1*y4+q1*y3*y4+q1*y1*y5+
-q1*y3*y5-2*q1*y1*z1-2*q1*y3*z1-q1*y4*z1-q1*y5*z1+q1*z1^2-2*q1*y1*z2-2*q1*y3*z2-q1*y4*z2-q1*y5*z2+
-2*q1*z1*z2+q1*z2^2-q1*y1*z3-q1*y3*z3+q1*z1*z3+q1*z2*z3-q1*y1*z4-q1*y3*z4+q1*z1*z4+q1*z2*z4+
-q1*q3)*QDSx([3, 5, 1, 2, 4], 'y') + (q1*y1+q1*y2+2*q1*y3+q1*y4+q1*y5-2*q1*z1-2*q1*z2-q1*z3-
-q1*z4)*QDSx([3, 5, 2, 1, 4], 'y') + q1*QDSx([3, 5, 4, 1, 2], 'y') + (q1*y1+q1*y3-q1*z1-q1*z2)*QDSx([3, 
-6, 1, 2, 4, 5], 'y') + q1*QDSx([3, 6, 2, 1, 4, 5], 'y') + (q3*y4^4-q3*y4^3*z1-q3*y4^3*z2+q3*y4^2*z1*z2-
-q3*y4^3*z3+q3*y4^2*z1*z3+q3*y4^2*z2*z3-q3*y4*z1*z2*z3-q3*y4^3*z4+q3*y4^2*z1*z4+q3*y4^2*z2*z4-
-q3*y4*z1*z2*z4+q3*y4^2*z3*z4-q3*y4*z1*z3*z4-q3*y4*z2*z3*z4+q3*z1*z2*z3*z4)*QDSx([4, 1, 2, 3], 'y') + 
-(y1*y4^4+y3*y4^4-y1*y4^3*z1-y3*y4^3*z1-y4^4*z1+y4^3*z1^2-y1*y4^3*z2-y3*y4^3*z2-y4^4*z2+y1*y4^2*z1*z2+
-y3*y4^2*z1*z2+2*y4^3*z1*z2-y4^2*z1^2*z2+y4^3*z2^2-y4^2*z1*z2^2-y1*y4^3*z3-y3*y4^3*z3+y1*y4^2*z1*z3+
-y3*y4^2*z1*z3+y4^3*z1*z3-y4^2*z1^2*z3+y1*y4^2*z2*z3+y3*y4^2*z2*z3+y4^3*z2*z3-y1*y4*z1*z2*z3-
-y3*y4*z1*z2*z3-2*y4^2*z1*z2*z3+y4*z1^2*z2*z3-y4^2*z2^2*z3+y4*z1*z2^2*z3-y1*y4^3*z4-y3*y4^3*z4+
-y1*y4^2*z1*z4+y3*y4^2*z1*z4+y4^3*z1*z4-y4^2*z1^2*z4+y1*y4^2*z2*z4+y3*y4^2*z2*z4+y4^3*z2*z4-
-y1*y4*z1*z2*z4-y3*y4*z1*z2*z4-2*y4^2*z1*z2*z4+y4*z1^2*z2*z4-y4^2*z2^2*z4+y4*z1*z2^2*z4+y1*y4^2*z3*z4+
-y3*y4^2*z3*z4-y1*y4*z1*z3*z4-y3*y4*z1*z3*z4-y4^2*z1*z3*z4+y4*z1^2*z3*z4-y1*y4*z2*z3*z4-y3*y4*z2*z3*z4-
-y4^2*z2*z3*z4+y1*z1*z2*z3*z4+y3*z1*z2*z3*z4+2*y4*z1*z2*z3*z4-z1^2*z2*z3*z4+y4*z2^2*z3*z4-
-z1*z2^2*z3*z4)*QDSx([4, 1, 3, 2], 'y') + (y4^4-y4^3*z1-y4^3*z2+y4^2*z1*z2-y4^3*z3+y4^2*z1*z3+y4^2*z2*z3-
-y4*z1*z2*z3-y4^3*z4+y4^2*z1*z4+y4^2*z2*z4-y4*z1*z2*z4+y4^2*z3*z4-y4*z1*z3*z4-y4*z2*z3*z4+
-z1*z2*z3*z4)*QDSx([4, 1, 5, 2, 3], 'y') + (y4^4-y4^3*z1-y4^3*z2+y4^2*z1*z2-y4^3*z3+y4^2*z1*z3+y4^2*z2*z3-
-y4*z1*z2*z3-y4^3*z4+y4^2*z1*z4+y4^2*z2*z4-y4*z1*z2*z4+y4^2*z3*z4-y4*z1*z3*z4-y4*z2*z3*z4+
-z1*z2*z3*z4)*QDSx([4, 2, 3, 1], 'y') + (q1*y1+q1*y3+q1*y4+q1*y5-q1*z1-q1*z2-q1*z3-q1*z4)*QDSx([4, 5, 1, 
-2, 3], 'y') + q1*QDSx([4, 5, 2, 1, 3], 'y') + q1*QDSx([4, 6, 1, 2, 3, 5], 'y') + (q3*y4^3+q3*y4^2*y5+
-q3*y4*y5^2+q3*y5^3-q3*y4^2*z1-q3*y4*y5*z1-q3*y5^2*z1-q3*y4^2*z2-q3*y4*y5*z2-q3*y5^2*z2+q3*y4*z1*z2+
-q3*y5*z1*z2-q3*y4^2*z3-q3*y4*y5*z3-q3*y5^2*z3+q3*y4*z1*z3+q3*y5*z1*z3+q3*y4*z2*z3+q3*y5*z2*z3-
-q3*z1*z2*z3-q3*y4^2*z4-q3*y4*y5*z4-q3*y5^2*z4+q3*y4*z1*z4+q3*y5*z1*z4+q3*y4*z2*z4+q3*y5*z2*z4-
-q3*z1*z2*z4+q3*y4*z3*z4+q3*y5*z3*z4-q3*z1*z3*z4-q3*z2*z3*z4)*QDSx([5, 1, 2, 3, 4], 'y') + (y1*y4^3+
-y3*y4^3+y1*y4^2*y5+y3*y4^2*y5+y1*y4*y5^2+y3*y4*y5^2+y1*y5^3+y3*y5^3-y1*y4^2*z1-y3*y4^2*z1-y4^3*z1-
-y1*y4*y5*z1-y3*y4*y5*z1-y4^2*y5*z1-y1*y5^2*z1-y3*y5^2*z1-y4*y5^2*z1-y5^3*z1+y4^2*z1^2+y4*y5*z1^2+
-y5^2*z1^2-y1*y4^2*z2-y3*y4^2*z2-y4^3*z2-y1*y4*y5*z2-y3*y4*y5*z2-y4^2*y5*z2-y1*y5^2*z2-y3*y5^2*z2-
-y4*y5^2*z2-y5^3*z2+y1*y4*z1*z2+y3*y4*z1*z2+2*y4^2*z1*z2+y1*y5*z1*z2+y3*y5*z1*z2+2*y4*y5*z1*z2+
-2*y5^2*z1*z2-y4*z1^2*z2-y5*z1^2*z2+y4^2*z2^2+y4*y5*z2^2+y5^2*z2^2-y4*z1*z2^2-y5*z1*z2^2-y1*y4^2*z3-
-y3*y4^2*z3-y1*y4*y5*z3-y3*y4*y5*z3-y1*y5^2*z3-y3*y5^2*z3+y1*y4*z1*z3+y3*y4*z1*z3+y4^2*z1*z3+y1*y5*z1*z3+
-y3*y5*z1*z3+y4*y5*z1*z3+y5^2*z1*z3-y4*z1^2*z3-y5*z1^2*z3+y1*y4*z2*z3+y3*y4*z2*z3+y4^2*z2*z3+y1*y5*z2*z3+
-y3*y5*z2*z3+y4*y5*z2*z3+y5^2*z2*z3-y1*z1*z2*z3-y3*z1*z2*z3-2*y4*z1*z2*z3-2*y5*z1*z2*z3+z1^2*z2*z3-
-y4*z2^2*z3-y5*z2^2*z3+z1*z2^2*z3-y1*y4^2*z4-y3*y4^2*z4-y1*y4*y5*z4-y3*y4*y5*z4-y1*y5^2*z4-y3*y5^2*z4+
-y1*y4*z1*z4+y3*y4*z1*z4+y4^2*z1*z4+y1*y5*z1*z4+y3*y5*z1*z4+y4*y5*z1*z4+y5^2*z1*z4-y4*z1^2*z4-y5*z1^2*z4+
-y1*y4*z2*z4+y3*y4*z2*z4+y4^2*z2*z4+y1*y5*z2*z4+y3*y5*z2*z4+y4*y5*z2*z4+y5^2*z2*z4-y1*z1*z2*z4-
-y3*z1*z2*z4-2*y4*z1*z2*z4-2*y5*z1*z2*z4+z1^2*z2*z4-y4*z2^2*z4-y5*z2^2*z4+z1*z2^2*z4+y1*y4*z3*z4+
-y3*y4*z3*z4+y1*y5*z3*z4+y3*y5*z3*z4-y1*z1*z3*z4-y3*z1*z3*z4-y4*z1*z3*z4-y5*z1*z3*z4+z1^2*z3*z4-
-y1*z2*z3*z4-y3*z2*z3*z4-y4*z2*z3*z4-y5*z2*z3*z4+2*z1*z2*z3*z4+z2^2*z3*z4)*QDSx([5, 1, 3, 2, 4], 'y') + 
-(y4^3+y4^2*y5+y4*y5^2+y5^3-y4^2*z1-y4*y5*z1-y5^2*z1-y4^2*z2-y4*y5*z2-y5^2*z2+y4*z1*z2+y5*z1*z2-y4^2*z3-
-y4*y5*z3-y5^2*z3+y4*z1*z3+y5*z1*z3+y4*z2*z3+y5*z2*z3-z1*z2*z3-y4^2*z4-y4*y5*z4-y5^2*z4+y4*z1*z4+y5*z1*z4+
-y4*z2*z4+y5*z2*z4-z1*z2*z4+y4*z3*z4+y5*z3*z4-z1*z3*z4-z2*z3*z4)*QDSx([5, 1, 4, 2, 3], 'y') + (y4^3+
-y4^2*y5+y4*y5^2+y5^3-y4^2*z1-y4*y5*z1-y5^2*z1-y4^2*z2-y4*y5*z2-y5^2*z2+y4*z1*z2+y5*z1*z2-y4^2*z3-
-y4*y5*z3-y5^2*z3+y4*z1*z3+y5*z1*z3+y4*z2*z3+y5*z2*z3-z1*z2*z3-y4^2*z4-y4*y5*z4-y5^2*z4+y4*z1*z4+y5*z1*z4+
-y4*z2*z4+y5*z2*z4-z1*z2*z4+y4*z3*z4+y5*z3*z4-z1*z3*z4-z2*z3*z4)*QDSx([5, 2, 3, 1, 4], 'y') + (q3*y4^2+
-q3*y4*y5+q3*y5^2+q3*y4*y6+q3*y5*y6+q3*y6^2-q3*y4*z1-q3*y5*z1-q3*y6*z1-q3*y4*z2-q3*y5*z2-q3*y6*z2+
-q3*z1*z2-q3*y4*z3-q3*y5*z3-q3*y6*z3+q3*z1*z3+q3*z2*z3-q3*y4*z4-q3*y5*z4-q3*y6*z4+q3*z1*z4+q3*z2*z4+
-q3*z3*z4)*QDSx([6, 1, 2, 3, 4, 5], 'y') + (y1*y4^2+y3*y4^2+y1*y4*y5+y3*y4*y5+y1*y5^2+y3*y5^2+y1*y4*y6+
-y3*y4*y6+y1*y5*y6+y3*y5*y6+y1*y6^2+y3*y6^2-y1*y4*z1-y3*y4*z1-y4^2*z1-y1*y5*z1-y3*y5*z1-y4*y5*z1-y5^2*z1-
-y1*y6*z1-y3*y6*z1-y4*y6*z1-y5*y6*z1-y6^2*z1+y4*z1^2+y5*z1^2+y6*z1^2-y1*y4*z2-y3*y4*z2-y4^2*z2-y1*y5*z2-
-y3*y5*z2-y4*y5*z2-y5^2*z2-y1*y6*z2-y3*y6*z2-y4*y6*z2-y5*y6*z2-y6^2*z2+y1*z1*z2+y3*z1*z2+2*y4*z1*z2+
-2*y5*z1*z2+2*y6*z1*z2-z1^2*z2+y4*z2^2+y5*z2^2+y6*z2^2-z1*z2^2-y1*y4*z3-y3*y4*z3-y1*y5*z3-y3*y5*z3-
-y1*y6*z3-y3*y6*z3+y1*z1*z3+y3*z1*z3+y4*z1*z3+y5*z1*z3+y6*z1*z3-z1^2*z3+y1*z2*z3+y3*z2*z3+y4*z2*z3+
-y5*z2*z3+y6*z2*z3-2*z1*z2*z3-z2^2*z3-y1*y4*z4-y3*y4*z4-y1*y5*z4-y3*y5*z4-y1*y6*z4-y3*y6*z4+y1*z1*z4+
-y3*z1*z4+y4*z1*z4+y5*z1*z4+y6*z1*z4-z1^2*z4+y1*z2*z4+y3*z2*z4+y4*z2*z4+y5*z2*z4+y6*z2*z4-2*z1*z2*z4-
-z2^2*z4+y1*z3*z4+y3*z3*z4-z1*z3*z4-z2*z3*z4)*QDSx([6, 1, 3, 2, 4, 5], 'y') + (y4^2+y4*y5+y5^2+y4*y6+
-y5*y6+y6^2-y4*z1-y5*z1-y6*z1-y4*z2-y5*z2-y6*z2+z1*z2-y4*z3-y5*z3-y6*z3+z1*z3+z2*z3-y4*z4-y5*z4-y6*z4+
-z1*z4+z2*z4+z3*z4)*QDSx([6, 1, 4, 2, 3, 5], 'y') + (y4^2+y4*y5+y5^2+y4*y6+y5*y6+y6^2-y4*z1-y5*z1-y6*z1-
-y4*z2-y5*z2-y6*z2+z1*z2-y4*z3-y5*z3-y6*z3+z1*z3+z2*z3-y4*z4-y5*z4-y6*z4+z1*z4+z2*z4+z3*z4)*QDSx([6, 2, 
-3, 1, 4, 5], 'y') + (q3*y4+q3*y5+q3*y6+q3*y7-q3*z1-q3*z2-q3*z3-q3*z4)*QDSx([7, 1, 2, 3, 4, 5, 6], 'y') + 
-(y1*y4+y3*y4+y1*y5+y3*y5+y1*y6+y3*y6+y1*y7+y3*y7-y1*z1-y3*z1-y4*z1-y5*z1-y6*z1-y7*z1+z1^2-y1*z2-y3*z2-
-y4*z2-y5*z2-y6*z2-y7*z2+2*z1*z2+z2^2-y1*z3-y3*z3+z1*z3+z2*z3-y1*z4-y3*z4+z1*z4+z2*z4)*QDSx([7, 1, 3, 2, 
-4, 5, 6], 'y') + (y4+y5+y6+y7-z1-z2-z3-z4)*QDSx([7, 1, 4, 2, 3, 5, 6], 'y') + (y4+y5+y6+y7-z1-z2-z3-
-z4)*QDSx([7, 2, 3, 1, 4, 5, 6], 'y') + q3*QDSx([8, 1, 2, 3, 4, 5, 6, 7], 'y') + (y1+y3-z1-z2)*QDSx([8, 
-1, 3, 2, 4, 5, 6, 7], 'y') + QDSx([8, 1, 4, 2, 3, 5, 6, 7], 'y') + QDSx([8, 2, 3, 1, 4, 5, 6, 7], 
-'y')
+(q1*q2*q3*y1^3 + q1*q2*q3*y1^2*y4 + q1*q2*q3*y1*y4^2 + q1*q2*q3*y4^3 - q1*q2*q3*y1^2*z1 - q1*q2*q3*y1*y4*z1 - 
+q1*q2*q3*y4^2*z1 - q1*q2*q3*y1^2*z2 - q1*q2*q3*y1*y4*z2 - q1*q2*q3*y4^2*z2 + q1*q2*q3*y1*z1*z2 + q1*q2*q3*y4*z1*z2 - 
+q1*q2*q3*y1^2*z3 - q1*q2*q3*y1*y4*z3 - q1*q2*q3*y4^2*z3 + q1*q2*q3*y1*z1*z3 + q1*q2*q3*y4*z1*z3 + q1*q2*q3*y1*z2*z3 + 
+q1*q2*q3*y4*z2*z3 - q1*q2*q3*z1*z2*z3 - q1*q2*q3*y1^2*z4 - q1*q2*q3*y1*y4*z4 - q1*q2*q3*y4^2*z4 + q1*q2*q3*y1*z1*z4 + 
+q1*q2*q3*y4*z1*z4 + q1*q2*q3*y1*z2*z4 + q1*q2*q3*y4*z2*z4 - q1*q2*q3*z1*z2*z4 + q1*q2*q3*y1*z3*z4 + q1*q2*q3*y4*z3*z4 - 
+q1*q2*q3*z1*z3*z4 - q1*q2*q3*z2*z3*z4)*QDSx([1], 'y') + (q1*q2*q3*y1^2 + q1*q2*q3*y1*y4 + q1*q2*q3*y4^2 + q1*q2*q3*y1*y5 
++ q1*q2*q3*y4*y5 + q1*q2*q3*y5^2 - q1*q2*q3*y1*z1 - q1*q2*q3*y4*z1 - q1*q2*q3*y5*z1 - q1*q2*q3*y1*z2 - q1*q2*q3*y4*z2 - 
+q1*q2*q3*y5*z2 + q1*q2*q3*z1*z2 - q1*q2*q3*y1*z3 - q1*q2*q3*y4*z3 - q1*q2*q3*y5*z3 + q1*q2*q3*z1*z3 + q1*q2*q3*z2*z3 - 
+q1*q2*q3*y1*z4 - q1*q2*q3*y4*z4 - q1*q2*q3*y5*z4 + q1*q2*q3*z1*z4 + q1*q2*q3*z2*z4 + 
+q1*q2*q3*z3*z4)*QDSx([1, 2, 3, 5, 4], 'y') + (q1*q2*q3*y1 + q1*q2*q3*y4 + q1*q2*q3*y5 + q1*q2*q3*y6 - q1*q2*q3*z1 - 
+q1*q2*q3*z2 - q1*q2*q3*z3 - q1*q2*q3*z4)*QDSx([1, 2, 3, 6, 4, 5], 'y') + q1*q2*q3*QDSx([1, 2, 3, 7, 4, 5, 6], 'y') + (q1*q3*y1^3 + 
+q1*q3*y1^2*y4 + q1*q3*y1*y4^2 + q1*q3*y4^3 - q1*q3*y1^2*z1 - q1*q3*y1*y4*z1 - q1*q3*y4^2*z1 - q1*q3*y1^2*z2 - 
+q1*q3*y1*y4*z2 - q1*q3*y4^2*z2 + q1*q3*y1*z1*z2 + q1*q3*y4*z1*z2 - q1*q3*y1^2*z3 - q1*q3*y1*y4*z3 - q1*q3*y4^2*z3 + 
+q1*q3*y1*z1*z3 + q1*q3*y4*z1*z3 + q1*q3*y1*z2*z3 + q1*q3*y4*z2*z3 - q1*q3*z1*z2*z3 - q1*q3*y1^2*z4 - q1*q3*y1*y4*z4 - 
+q1*q3*y4^2*z4 + q1*q3*y1*z1*z4 + q1*q3*y4*z1*z4 + q1*q3*y1*z2*z4 + q1*q3*y4*z2*z4 - q1*q3*z1*z2*z4 + q1*q3*y1*z3*z4 + 
+q1*q3*y4*z3*z4 - q1*q3*z1*z3*z4 - q1*q3*z2*z3*z4)*QDSx([1, 4, 2, 3], 'y') + (q1*y1^3*y3 + q1*y1^3*y4 + q1*y1^2*y3*y4 + 
+q1*y1^2*y4^2 + q1*y1*y3*y4^2 + q1*y1*y4^3 + q1*y3*y4^3 - q1*y1^3*z1 - q1*y1^2*y3*z1 - 2*q1*y1^2*y4*z1 - q1*y1*y3*y4*z1 
+- 2*q1*y1*y4^2*z1 - q1*y3*y4^2*z1 - q1*y4^3*z1 + q1*y1^2*z1^2 + q1*y1*y4*z1^2 + q1*y4^2*z1^2 - q1*y1^3*z2 - 
+q1*y1^2*y3*z2 - 2*q1*y1^2*y4*z2 - q1*y1*y3*y4*z2 - 2*q1*y1*y4^2*z2 - q1*y3*y4^2*z2 - q1*y4^3*z2 + 2*q1*y1^2*z1*z2 + 
+q1*y1*y3*z1*z2 + 3*q1*y1*y4*z1*z2 + q1*y3*y4*z1*z2 + 2*q1*y4^2*z1*z2 - q1*y1*z1^2*z2 - q1*y4*z1^2*z2 + q1*y1^2*z2^2 + 
+q1*y1*y4*z2^2 + q1*y4^2*z2^2 - q1*y1*z1*z2^2 - q1*y4*z1*z2^2 - q1*y1^2*y3*z3 - q1*y1^2*y4*z3 - q1*y1*y3*y4*z3 - 
+q1*y1*y4^2*z3 - q1*y3*y4^2*z3 + q1*y1^2*z1*z3 + q1*y1*y3*z1*z3 + 2*q1*y1*y4*z1*z3 + q1*y3*y4*z1*z3 + q1*y4^2*z1*z3 - 
+q1*y1*z1^2*z3 - q1*y4*z1^2*z3 + q1*y1^2*z2*z3 + q1*y1*y3*z2*z3 + 2*q1*y1*y4*z2*z3 + q1*y3*y4*z2*z3 + q1*y4^2*z2*z3 - 
+2*q1*y1*z1*z2*z3 - q1*y3*z1*z2*z3 - 2*q1*y4*z1*z2*z3 + q1*z1^2*z2*z3 - q1*y1*z2^2*z3 - q1*y4*z2^2*z3 + q1*z1*z2^2*z3 - 
+q1*y1^2*y3*z4 - q1*y1^2*y4*z4 - q1*y1*y3*y4*z4 - q1*y1*y4^2*z4 - q1*y3*y4^2*z4 + q1*y1^2*z1*z4 + q1*y1*y3*z1*z4 + 
+2*q1*y1*y4*z1*z4 + q1*y3*y4*z1*z4 + q1*y4^2*z1*z4 - q1*y1*z1^2*z4 - q1*y4*z1^2*z4 + q1*y1^2*z2*z4 + q1*y1*y3*z2*z4 + 
+2*q1*y1*y4*z2*z4 + q1*y3*y4*z2*z4 + q1*y4^2*z2*z4 - 2*q1*y1*z1*z2*z4 - q1*y3*z1*z2*z4 - 2*q1*y4*z1*z2*z4 + 
+q1*z1^2*z2*z4 - q1*y1*z2^2*z4 - q1*y4*z2^2*z4 + q1*z1*z2^2*z4 + q1*y1*y3*z3*z4 + q1*y1*y4*z3*z4 + q1*y3*y4*z3*z4 - 
+q1*y1*z1*z3*z4 - q1*y3*z1*z3*z4 - q1*y4*z1*z3*z4 + q1*z1^2*z3*z4 - q1*y1*z2*z3*z4 - q1*y3*z2*z3*z4 - q1*y4*z2*z3*z4 + 
+q1*z1*z2*z3*z4 + q1*z2^2*z3*z4)*QDSx([1, 4, 3, 2], 'y') + (q1*y1^3 + q1*y1^2*y4 + q1*y1*y4^2 + q1*y4^3 - q1*y1^2*z1 - 
+q1*y1*y4*z1 - q1*y4^2*z1 - q1*y1^2*z2 - q1*y1*y4*z2 - q1*y4^2*z2 + q1*y1*z1*z2 + q1*y4*z1*z2 - q1*y1^2*z3 - q1*y1*y4*z3 
+- q1*y4^2*z3 + q1*y1*z1*z3 + q1*y4*z1*z3 + q1*y1*z2*z3 + q1*y4*z2*z3 - q1*z1*z2*z3 - q1*y1^2*z4 - q1*y1*y4*z4 - 
+q1*y4^2*z4 + q1*y1*z1*z4 + q1*y4*z1*z4 + q1*y1*z2*z4 + q1*y4*z2*z4 - q1*z1*z2*z4 + q1*y1*z3*z4 + q1*y4*z3*z4 - 
+q1*z1*z3*z4 - q1*z2*z3*z4)*QDSx([1, 4, 5, 2, 3], 'y') + (q1*q3*y1^2 + q1*q3*y1*y4 + q1*q3*y4^2 + q1*q3*y1*y5 + q1*q3*y4*y5 + 
+q1*q3*y5^2 - q1*q3*y1*z1 - q1*q3*y4*z1 - q1*q3*y5*z1 - q1*q3*y1*z2 - q1*q3*y4*z2 - q1*q3*y5*z2 + q1*q3*z1*z2 - 
+q1*q3*y1*z3 - q1*q3*y4*z3 - q1*q3*y5*z3 + q1*q3*z1*z3 + q1*q3*z2*z3 - q1*q3*y1*z4 - q1*q3*y4*z4 - q1*q3*y5*z4 + 
+q1*q3*z1*z4 + q1*q3*z2*z4 + q1*q3*z3*z4)*QDSx([1, 5, 2, 3, 4], 'y') + (q1*y1^3 + q1*y1^2*y3 + q1*y1^2*y4 + q1*y1*y3*y4 + 
+q1*y1*y4^2 + q1*y3*y4^2 + q1*y1^2*y5 + q1*y1*y3*y5 + q1*y1*y4*y5 + q1*y3*y4*y5 + q1*y1*y5^2 + q1*y3*y5^2 - 2*q1*y1^2*z1 
+- q1*y1*y3*z1 - 2*q1*y1*y4*z1 - q1*y3*y4*z1 - q1*y4^2*z1 - 2*q1*y1*y5*z1 - q1*y3*y5*z1 - q1*y4*y5*z1 - q1*y5^2*z1 + 
+q1*y1*z1^2 + q1*y4*z1^2 + q1*y5*z1^2 - 2*q1*y1^2*z2 - q1*y1*y3*z2 - 2*q1*y1*y4*z2 - q1*y3*y4*z2 - q1*y4^2*z2 - 
+2*q1*y1*y5*z2 - q1*y3*y5*z2 - q1*y4*y5*z2 - q1*y5^2*z2 + 3*q1*y1*z1*z2 + q1*y3*z1*z2 + 2*q1*y4*z1*z2 + 2*q1*y5*z1*z2 - 
+q1*z1^2*z2 + q1*y1*z2^2 + q1*y4*z2^2 + q1*y5*z2^2 - q1*z1*z2^2 - q1*y1^2*z3 - q1*y1*y3*z3 - q1*y1*y4*z3 - q1*y3*y4*z3 - 
+q1*y1*y5*z3 - q1*y3*y5*z3 + 2*q1*y1*z1*z3 + q1*y3*z1*z3 + q1*y4*z1*z3 + q1*y5*z1*z3 - q1*z1^2*z3 + 2*q1*y1*z2*z3 + 
+q1*y3*z2*z3 + q1*y4*z2*z3 + q1*y5*z2*z3 - 2*q1*z1*z2*z3 - q1*z2^2*z3 - q1*y1^2*z4 - q1*y1*y3*z4 - q1*y1*y4*z4 - 
+q1*y3*y4*z4 - q1*y1*y5*z4 - q1*y3*y5*z4 + 2*q1*y1*z1*z4 + q1*y3*z1*z4 + q1*y4*z1*z4 + q1*y5*z1*z4 - q1*z1^2*z4 + 
+2*q1*y1*z2*z4 + q1*y3*z2*z4 + q1*y4*z2*z4 + q1*y5*z2*z4 - 2*q1*z1*z2*z4 - q1*z2^2*z4 + q1*y1*z3*z4 + q1*y3*z3*z4 - 
+q1*z1*z3*z4 - q1*z2*z3*z4)*QDSx([1, 5, 3, 2, 4], 'y') + (q1*y1^2 + q1*y1*y4 + q1*y4^2 + q1*y1*y5 + q1*y4*y5 + q1*y5^2 - 
+q1*y1*z1 - q1*y4*z1 - q1*y5*z1 - q1*y1*z2 - q1*y4*z2 - q1*y5*z2 + q1*z1*z2 - q1*y1*z3 - q1*y4*z3 - q1*y5*z3 + q1*z1*z3 
++ q1*z2*z3 - q1*y1*z4 - q1*y4*z4 - q1*y5*z4 + q1*z1*z4 + q1*z2*z4 + q1*z3*z4)*QDSx([1, 5, 4, 2, 3], 'y') + (q1*q3*y1 + 
+q1*q3*y4 + q1*q3*y5 + q1*q3*y6 - q1*q3*z1 - q1*q3*z2 - q1*q3*z3 - q1*q3*z4)*QDSx([1, 6, 2, 3, 4, 5], 'y') + (q1*y1^2 + 
+q1*y1*y3 + q1*y1*y4 + q1*y3*y4 + q1*y1*y5 + q1*y3*y5 + q1*y1*y6 + q1*y3*y6 - 2*q1*y1*z1 - q1*y3*z1 - q1*y4*z1 - 
+q1*y5*z1 - q1*y6*z1 + q1*z1^2 - 2*q1*y1*z2 - q1*y3*z2 - q1*y4*z2 - q1*y5*z2 - q1*y6*z2 + 2*q1*z1*z2 + q1*z2^2 - 
+q1*y1*z3 - q1*y3*z3 + q1*z1*z3 + q1*z2*z3 - q1*y1*z4 - q1*y3*z4 + q1*z1*z4 + q1*z2*z4)*QDSx([1, 6, 3, 2, 4, 5], 'y') + (q1*y1 
++ q1*y4 + q1*y5 + q1*y6 - q1*z1 - q1*z2 - q1*z3 - q1*z4)*QDSx([1, 6, 4, 2, 3, 5], 'y') + q1*q3*QDSx([1, 7, 2, 3, 4, 5, 6], 'y') + 
+(q1*y1 + q1*y3 - q1*z1 - q1*z2)*QDSx([1, 7, 3, 2, 4, 5, 6], 'y') + q1*QDSx([1, 7, 4, 2, 3, 5, 6], 'y') + (q1*q2*q3*y1^2 + 
+q1*q2*q3*y1*y2 + q1*q2*q3*y2^2 + q1*q2*q3*y1*y4 + q1*q2*q3*y2*y4 + q1*q2*q3*y4^2 - q1*q2*q3*y1*z1 - q1*q2*q3*y2*z1 - 
+q1*q2*q3*y4*z1 - q1*q2*q3*y1*z2 - q1*q2*q3*y2*z2 - q1*q2*q3*y4*z2 + q1*q2*q3*z1*z2 - q1*q2*q3*y1*z3 - q1*q2*q3*y2*z3 - 
+q1*q2*q3*y4*z3 + q1*q2*q3*z1*z3 + q1*q2*q3*z2*z3 - q1*q2*q3*y1*z4 - q1*q2*q3*y2*z4 - q1*q2*q3*y4*z4 + q1*q2*q3*z1*z4 + 
+q1*q2*q3*z2*z4 + q1*q2*q3*z3*z4)*QDSx([2, 1], 'y') + (q1*q2*q3*y1 + q1*q2*q3*y2 + q1*q2*q3*y4 + q1*q2*q3*y5 - q1*q2*q3*z1 
+- q1*q2*q3*z2 - q1*q2*q3*z3 - q1*q2*q3*z4)*QDSx([2, 1, 3, 5, 4], 'y') + q1*q2*q3*QDSx([2, 1, 3, 6, 4, 5], 'y') + (q1*q3*y1^2 + 
+q1*q3*y1*y2 + q1*q3*y2^2 + q1*q3*y1*y4 + q1*q3*y2*y4 + q1*q3*y4^2 - q1*q3*y1*z1 - q1*q3*y2*z1 - q1*q3*y4*z1 - 
+q1*q3*y1*z2 - q1*q3*y2*z2 - q1*q3*y4*z2 + q1*q3*z1*z2 - q1*q3*y1*z3 - q1*q3*y2*z3 - q1*q3*y4*z3 + q1*q3*z1*z3 + 
+q1*q3*z2*z3 - q1*q3*y1*z4 - q1*q3*y2*z4 - q1*q3*y4*z4 + q1*q3*z1*z4 + q1*q3*z2*z4 + q1*q3*z3*z4)*QDSx([2, 4, 1, 3], 'y') + 
+(q1*y1^2*y3 + q1*y1*y2*y3 + q1*y2^2*y3 + q1*y1^2*y4 + q1*y1*y2*y4 + q1*y2^2*y4 + q1*y1*y3*y4 + q1*y2*y3*y4 + q1*y1*y4^2 
++ q1*y2*y4^2 + q1*y3*y4^2 + q1*y4^3 - q1*y1^2*z1 - q1*y1*y2*z1 - q1*y2^2*z1 - q1*y1*y3*z1 - q1*y2*y3*z1 - 2*q1*y1*y4*z1 
+- 2*q1*y2*y4*z1 - q1*y3*y4*z1 - 2*q1*y4^2*z1 + q1*y1*z1^2 + q1*y2*z1^2 + q1*y4*z1^2 - q1*y1^2*z2 - q1*y1*y2*z2 - 
+q1*y2^2*z2 - q1*y1*y3*z2 - q1*y2*y3*z2 - 2*q1*y1*y4*z2 - 2*q1*y2*y4*z2 - q1*y3*y4*z2 - 2*q1*y4^2*z2 + 2*q1*y1*z1*z2 + 
+2*q1*y2*z1*z2 + q1*y3*z1*z2 + 3*q1*y4*z1*z2 - q1*z1^2*z2 + q1*y1*z2^2 + q1*y2*z2^2 + q1*y4*z2^2 - q1*z1*z2^2 - 
+q1*y1*y3*z3 - q1*y2*y3*z3 - q1*y1*y4*z3 - q1*y2*y4*z3 - q1*y3*y4*z3 - q1*y4^2*z3 + q1*y1*z1*z3 + q1*y2*z1*z3 + 
+q1*y3*z1*z3 + 2*q1*y4*z1*z3 - q1*z1^2*z3 + q1*y1*z2*z3 + q1*y2*z2*z3 + q1*y3*z2*z3 + 2*q1*y4*z2*z3 - 2*q1*z1*z2*z3 - 
+q1*z2^2*z3 - q1*y1*y3*z4 - q1*y2*y3*z4 - q1*y1*y4*z4 - q1*y2*y4*z4 - q1*y3*y4*z4 - q1*y4^2*z4 + q1*y1*z1*z4 + 
+q1*y2*z1*z4 + q1*y3*z1*z4 + 2*q1*y4*z1*z4 - q1*z1^2*z4 + q1*y1*z2*z4 + q1*y2*z2*z4 + q1*y3*z2*z4 + 2*q1*y4*z2*z4 - 
+2*q1*z1*z2*z4 - q1*z2^2*z4 + q1*y3*z3*z4 + q1*y4*z3*z4 - q1*z1*z3*z4 - q1*z2*z3*z4)*QDSx([2, 4, 3, 1], 'y') + (q1*y1^2 + 
+q1*y1*y2 + q1*y2^2 + q1*y1*y4 + q1*y2*y4 + q1*y4^2 - q1*y1*z1 - q1*y2*z1 - q1*y4*z1 - q1*y1*z2 - q1*y2*z2 - q1*y4*z2 + 
+q1*z1*z2 - q1*y1*z3 - q1*y2*z3 - q1*y4*z3 + q1*z1*z3 + q1*z2*z3 - q1*y1*z4 - q1*y2*z4 - q1*y4*z4 + q1*z1*z4 + q1*z2*z4 
++ q1*z3*z4)*QDSx([2, 4, 5, 1, 3], 'y') + (q1*q3*y1 + q1*q3*y2 + q1*q3*y4 + q1*q3*y5 - q1*q3*z1 - q1*q3*z2 - q1*q3*z3 - 
+q1*q3*z4)*QDSx([2, 5, 1, 3, 4], 'y') + (q1*y1^2 + q1*y1*y2 + q1*y2^2 + q1*y1*y3 + q1*y2*y3 + q1*y1*y4 + q1*y2*y4 + q1*y3*y4 
++ q1*y4^2 + q1*y1*y5 + q1*y2*y5 + q1*y3*y5 + q1*y4*y5 + q1*y5^2 - 2*q1*y1*z1 - 2*q1*y2*z1 - q1*y3*z1 - 2*q1*y4*z1 - 
+2*q1*y5*z1 + q1*z1^2 - 2*q1*y1*z2 - 2*q1*y2*z2 - q1*y3*z2 - 2*q1*y4*z2 - 2*q1*y5*z2 + 3*q1*z1*z2 + q1*z2^2 - q1*y1*z3 - 
+q1*y2*z3 - q1*y3*z3 - q1*y4*z3 - q1*y5*z3 + 2*q1*z1*z3 + 2*q1*z2*z3 - q1*y1*z4 - q1*y2*z4 - q1*y3*z4 - q1*y4*z4 - 
+q1*y5*z4 + 2*q1*z1*z4 + 2*q1*z2*z4 + q1*z3*z4)*QDSx([2, 5, 3, 1, 4], 'y') + (q1*y1 + q1*y2 + q1*y4 + q1*y5 - q1*z1 - q1*z2 - 
+q1*z3 - q1*z4)*QDSx([2, 5, 4, 1, 3], 'y') + q1*q3*QDSx([2, 6, 1, 3, 4, 5], 'y') + (q1*y1 + q1*y2 + q1*y3 + q1*y4 + q1*y5 + q1*y6 - 
+2*q1*z1 - 2*q1*z2 - q1*z3 - q1*z4)*QDSx([2, 6, 3, 1, 4, 5], 'y') + q1*QDSx([2, 6, 4, 1, 3, 5], 'y') + q1*QDSx([2, 7, 3, 1, 4, 5, 6], 'y') 
++ (q1*q2*q3*y1 + q1*q2*q3*y2 + q1*q2*q3*y3 + q1*q2*q3*y4 - q1*q2*q3*z1 - q1*q2*q3*z2 - q1*q2*q3*z3 - 
+q1*q2*q3*z4)*QDSx([3, 1, 2], 'y') + q1*q2*q3*QDSx([3, 1, 2, 5, 4], 'y') + (q1*y1^2*y3 + q1*y1*y3^2 + q1*y1^2*y4 + 2*q1*y1*y3*y4 
++ q1*y3^2*y4 + q1*y1*y4^2 + q1*y3*y4^2 - q1*y1^2*z1 - 2*q1*y1*y3*z1 - q1*y3^2*z1 - 2*q1*y1*y4*z1 - 2*q1*y3*y4*z1 - 
+q1*y4^2*z1 + q1*y1*z1^2 + q1*y3*z1^2 + q1*y4*z1^2 - q1*y1^2*z2 - 2*q1*y1*y3*z2 - q1*y3^2*z2 - 2*q1*y1*y4*z2 - 
+2*q1*y3*y4*z2 - q1*y4^2*z2 + 2*q1*y1*z1*z2 + 2*q1*y3*z1*z2 + 2*q1*y4*z1*z2 - q1*z1^2*z2 + q1*y1*z2^2 + q1*y3*z2^2 + 
+q1*y4*z2^2 - q1*z1*z2^2 - q1*y1*y3*z3 - q1*y1*y4*z3 - q1*y3*y4*z3 + q1*y1*z1*z3 + q1*y3*z1*z3 + q1*y4*z1*z3 - 
+q1*z1^2*z3 + q1*y1*z2*z3 + q1*y3*z2*z3 + q1*y4*z2*z3 - q1*z1*z2*z3 - q1*z2^2*z3 - q1*y1*y3*z4 - q1*y1*y4*z4 - 
+q1*y3*y4*z4 + q1*y1*z1*z4 + q1*y3*z1*z4 + q1*y4*z1*z4 - q1*z1^2*z4 + q1*y1*z2*z4 + q1*y3*z2*z4 + q1*y4*z2*z4 - 
+q1*z1*z2*z4 - q1*z2^2*z4 + q1*q3*y1 + q1*q3*y2 + q1*q3*y3 + q1*q3*y4 - q1*q3*z1 - q1*q3*z2 - q1*q3*z3 - 
+q1*q3*z4)*QDSx([3, 4, 1, 2], 'y') + (q1*y1*y3 + q1*y2*y3 + q1*y3^2 + q1*y1*y4 + q1*y2*y4 + 2*q1*y3*y4 + q1*y4^2 - q1*y1*z1 
+- q1*y2*z1 - 2*q1*y3*z1 - 2*q1*y4*z1 + q1*z1^2 - q1*y1*z2 - q1*y2*z2 - 2*q1*y3*z2 - 2*q1*y4*z2 + 2*q1*z1*z2 + q1*z2^2 - 
+q1*y3*z3 - q1*y4*z3 + q1*z1*z3 + q1*z2*z3 - q1*y3*z4 - q1*y4*z4 + q1*z1*z4 + q1*z2*z4)*QDSx([3, 4, 2, 1], 'y') + (q1*y1 + 
+q1*y2 + q1*y3 + q1*y4 - q1*z1 - q1*z2 - q1*z3 - q1*z4)*QDSx([3, 4, 5, 1, 2], 'y') + (q1*y1^2 + 2*q1*y1*y3 + q1*y3^2 + 
+q1*y1*y4 + q1*y3*y4 + q1*y1*y5 + q1*y3*y5 - 2*q1*y1*z1 - 2*q1*y3*z1 - q1*y4*z1 - q1*y5*z1 + q1*z1^2 - 2*q1*y1*z2 - 
+2*q1*y3*z2 - q1*y4*z2 - q1*y5*z2 + 2*q1*z1*z2 + q1*z2^2 - q1*y1*z3 - q1*y3*z3 + q1*z1*z3 + q1*z2*z3 - q1*y1*z4 - 
+q1*y3*z4 + q1*z1*z4 + q1*z2*z4 + q1*q3)*QDSx([3, 5, 1, 2, 4], 'y') + (q1*y1 + q1*y2 + 2*q1*y3 + q1*y4 + q1*y5 - 2*q1*z1 - 
+2*q1*z2 - q1*z3 - q1*z4)*QDSx([3, 5, 2, 1, 4], 'y') + q1*QDSx([3, 5, 4, 1, 2], 'y') + (q1*y1 + q1*y3 - q1*z1 - 
+q1*z2)*QDSx([3, 6, 1, 2, 4, 5], 'y') + q1*QDSx([3, 6, 2, 1, 4, 5], 'y') + (q3*y4^4 - q3*y4^3*z1 - q3*y4^3*z2 + q3*y4^2*z1*z2 - 
+q3*y4^3*z3 + q3*y4^2*z1*z3 + q3*y4^2*z2*z3 - q3*y4*z1*z2*z3 - q3*y4^3*z4 + q3*y4^2*z1*z4 + q3*y4^2*z2*z4 - 
+q3*y4*z1*z2*z4 + q3*y4^2*z3*z4 - q3*y4*z1*z3*z4 - q3*y4*z2*z3*z4 + q3*z1*z2*z3*z4)*QDSx([4, 1, 2, 3], 'y') + (y1*y4^4 + 
+y3*y4^4 - y1*y4^3*z1 - y3*y4^3*z1 - y4^4*z1 + y4^3*z1^2 - y1*y4^3*z2 - y3*y4^3*z2 - y4^4*z2 + y1*y4^2*z1*z2 + 
+y3*y4^2*z1*z2 + 2*y4^3*z1*z2 - y4^2*z1^2*z2 + y4^3*z2^2 - y4^2*z1*z2^2 - y1*y4^3*z3 - y3*y4^3*z3 + y1*y4^2*z1*z3 + 
+y3*y4^2*z1*z3 + y4^3*z1*z3 - y4^2*z1^2*z3 + y1*y4^2*z2*z3 + y3*y4^2*z2*z3 + y4^3*z2*z3 - y1*y4*z1*z2*z3 - 
+y3*y4*z1*z2*z3 - 2*y4^2*z1*z2*z3 + y4*z1^2*z2*z3 - y4^2*z2^2*z3 + y4*z1*z2^2*z3 - y1*y4^3*z4 - y3*y4^3*z4 + 
+y1*y4^2*z1*z4 + y3*y4^2*z1*z4 + y4^3*z1*z4 - y4^2*z1^2*z4 + y1*y4^2*z2*z4 + y3*y4^2*z2*z4 + y4^3*z2*z4 - y1*y4*z1*z2*z4 
+- y3*y4*z1*z2*z4 - 2*y4^2*z1*z2*z4 + y4*z1^2*z2*z4 - y4^2*z2^2*z4 + y4*z1*z2^2*z4 + y1*y4^2*z3*z4 + y3*y4^2*z3*z4 - 
+y1*y4*z1*z3*z4 - y3*y4*z1*z3*z4 - y4^2*z1*z3*z4 + y4*z1^2*z3*z4 - y1*y4*z2*z3*z4 - y3*y4*z2*z3*z4 - y4^2*z2*z3*z4 + 
+y1*z1*z2*z3*z4 + y3*z1*z2*z3*z4 + 2*y4*z1*z2*z3*z4 - z1^2*z2*z3*z4 + y4*z2^2*z3*z4 - z1*z2^2*z3*z4)*QDSx([4, 1, 3, 2], 'y') 
++ (y4^4 - y4^3*z1 - y4^3*z2 + y4^2*z1*z2 - y4^3*z3 + y4^2*z1*z3 + y4^2*z2*z3 - y4*z1*z2*z3 - y4^3*z4 + y4^2*z1*z4 + 
+y4^2*z2*z4 - y4*z1*z2*z4 + y4^2*z3*z4 - y4*z1*z3*z4 - y4*z2*z3*z4 + z1*z2*z3*z4)*QDSx([4, 1, 5, 2, 3], 'y') + (y4^4 - 
+y4^3*z1 - y4^3*z2 + y4^2*z1*z2 - y4^3*z3 + y4^2*z1*z3 + y4^2*z2*z3 - y4*z1*z2*z3 - y4^3*z4 + y4^2*z1*z4 + y4^2*z2*z4 - 
+y4*z1*z2*z4 + y4^2*z3*z4 - y4*z1*z3*z4 - y4*z2*z3*z4 + z1*z2*z3*z4)*QDSx([4, 2, 3, 1], 'y') + (q1*y1 + q1*y3 + q1*y4 + 
+q1*y5 - q1*z1 - q1*z2 - q1*z3 - q1*z4)*QDSx([4, 5, 1, 2, 3], 'y') + q1*QDSx([4, 5, 2, 1, 3], 'y') + q1*QDSx([4, 6, 1, 2, 3, 5], 'y') + 
+(q3*y4^3 + q3*y4^2*y5 + q3*y4*y5^2 + q3*y5^3 - q3*y4^2*z1 - q3*y4*y5*z1 - q3*y5^2*z1 - q3*y4^2*z2 - q3*y4*y5*z2 - 
+q3*y5^2*z2 + q3*y4*z1*z2 + q3*y5*z1*z2 - q3*y4^2*z3 - q3*y4*y5*z3 - q3*y5^2*z3 + q3*y4*z1*z3 + q3*y5*z1*z3 + 
+q3*y4*z2*z3 + q3*y5*z2*z3 - q3*z1*z2*z3 - q3*y4^2*z4 - q3*y4*y5*z4 - q3*y5^2*z4 + q3*y4*z1*z4 + q3*y5*z1*z4 + 
+q3*y4*z2*z4 + q3*y5*z2*z4 - q3*z1*z2*z4 + q3*y4*z3*z4 + q3*y5*z3*z4 - q3*z1*z3*z4 - q3*z2*z3*z4)*QDSx([5, 1, 2, 3, 4], 'y') 
++ (y1*y4^3 + y3*y4^3 + y1*y4^2*y5 + y3*y4^2*y5 + y1*y4*y5^2 + y3*y4*y5^2 + y1*y5^3 + y3*y5^3 - y1*y4^2*z1 - y3*y4^2*z1 
+- y4^3*z1 - y1*y4*y5*z1 - y3*y4*y5*z1 - y4^2*y5*z1 - y1*y5^2*z1 - y3*y5^2*z1 - y4*y5^2*z1 - y5^3*z1 + y4^2*z1^2 + 
+y4*y5*z1^2 + y5^2*z1^2 - y1*y4^2*z2 - y3*y4^2*z2 - y4^3*z2 - y1*y4*y5*z2 - y3*y4*y5*z2 - y4^2*y5*z2 - y1*y5^2*z2 - 
+y3*y5^2*z2 - y4*y5^2*z2 - y5^3*z2 + y1*y4*z1*z2 + y3*y4*z1*z2 + 2*y4^2*z1*z2 + y1*y5*z1*z2 + y3*y5*z1*z2 + 
+2*y4*y5*z1*z2 + 2*y5^2*z1*z2 - y4*z1^2*z2 - y5*z1^2*z2 + y4^2*z2^2 + y4*y5*z2^2 + y5^2*z2^2 - y4*z1*z2^2 - y5*z1*z2^2 - 
+y1*y4^2*z3 - y3*y4^2*z3 - y1*y4*y5*z3 - y3*y4*y5*z3 - y1*y5^2*z3 - y3*y5^2*z3 + y1*y4*z1*z3 + y3*y4*z1*z3 + y4^2*z1*z3 
++ y1*y5*z1*z3 + y3*y5*z1*z3 + y4*y5*z1*z3 + y5^2*z1*z3 - y4*z1^2*z3 - y5*z1^2*z3 + y1*y4*z2*z3 + y3*y4*z2*z3 + 
+y4^2*z2*z3 + y1*y5*z2*z3 + y3*y5*z2*z3 + y4*y5*z2*z3 + y5^2*z2*z3 - y1*z1*z2*z3 - y3*z1*z2*z3 - 2*y4*z1*z2*z3 - 
+2*y5*z1*z2*z3 + z1^2*z2*z3 - y4*z2^2*z3 - y5*z2^2*z3 + z1*z2^2*z3 - y1*y4^2*z4 - y3*y4^2*z4 - y1*y4*y5*z4 - y3*y4*y5*z4 
+- y1*y5^2*z4 - y3*y5^2*z4 + y1*y4*z1*z4 + y3*y4*z1*z4 + y4^2*z1*z4 + y1*y5*z1*z4 + y3*y5*z1*z4 + y4*y5*z1*z4 + 
+y5^2*z1*z4 - y4*z1^2*z4 - y5*z1^2*z4 + y1*y4*z2*z4 + y3*y4*z2*z4 + y4^2*z2*z4 + y1*y5*z2*z4 + y3*y5*z2*z4 + y4*y5*z2*z4 
++ y5^2*z2*z4 - y1*z1*z2*z4 - y3*z1*z2*z4 - 2*y4*z1*z2*z4 - 2*y5*z1*z2*z4 + z1^2*z2*z4 - y4*z2^2*z4 - y5*z2^2*z4 + 
+z1*z2^2*z4 + y1*y4*z3*z4 + y3*y4*z3*z4 + y1*y5*z3*z4 + y3*y5*z3*z4 - y1*z1*z3*z4 - y3*z1*z3*z4 - y4*z1*z3*z4 - 
+y5*z1*z3*z4 + z1^2*z3*z4 - y1*z2*z3*z4 - y3*z2*z3*z4 - y4*z2*z3*z4 - y5*z2*z3*z4 + 2*z1*z2*z3*z4 + 
+z2^2*z3*z4)*QDSx([5, 1, 3, 2, 4], 'y') + (y4^3 + y4^2*y5 + y4*y5^2 + y5^3 - y4^2*z1 - y4*y5*z1 - y5^2*z1 - y4^2*z2 - 
+y4*y5*z2 - y5^2*z2 + y4*z1*z2 + y5*z1*z2 - y4^2*z3 - y4*y5*z3 - y5^2*z3 + y4*z1*z3 + y5*z1*z3 + y4*z2*z3 + y5*z2*z3 - 
+z1*z2*z3 - y4^2*z4 - y4*y5*z4 - y5^2*z4 + y4*z1*z4 + y5*z1*z4 + y4*z2*z4 + y5*z2*z4 - z1*z2*z4 + y4*z3*z4 + y5*z3*z4 - 
+z1*z3*z4 - z2*z3*z4)*QDSx([5, 1, 4, 2, 3], 'y') + (y4^3 + y4^2*y5 + y4*y5^2 + y5^3 - y4^2*z1 - y4*y5*z1 - y5^2*z1 - y4^2*z2 
+- y4*y5*z2 - y5^2*z2 + y4*z1*z2 + y5*z1*z2 - y4^2*z3 - y4*y5*z3 - y5^2*z3 + y4*z1*z3 + y5*z1*z3 + y4*z2*z3 + y5*z2*z3 - 
+z1*z2*z3 - y4^2*z4 - y4*y5*z4 - y5^2*z4 + y4*z1*z4 + y5*z1*z4 + y4*z2*z4 + y5*z2*z4 - z1*z2*z4 + y4*z3*z4 + y5*z3*z4 - 
+z1*z3*z4 - z2*z3*z4)*QDSx([5, 2, 3, 1, 4], 'y') + (q3*y4^2 + q3*y4*y5 + q3*y5^2 + q3*y4*y6 + q3*y5*y6 + q3*y6^2 - q3*y4*z1 - 
+q3*y5*z1 - q3*y6*z1 - q3*y4*z2 - q3*y5*z2 - q3*y6*z2 + q3*z1*z2 - q3*y4*z3 - q3*y5*z3 - q3*y6*z3 + q3*z1*z3 + q3*z2*z3 
+- q3*y4*z4 - q3*y5*z4 - q3*y6*z4 + q3*z1*z4 + q3*z2*z4 + q3*z3*z4)*QDSx([6, 1, 2, 3, 4, 5], 'y') + (y1*y4^2 + y3*y4^2 + 
+y1*y4*y5 + y3*y4*y5 + y1*y5^2 + y3*y5^2 + y1*y4*y6 + y3*y4*y6 + y1*y5*y6 + y3*y5*y6 + y1*y6^2 + y3*y6^2 - y1*y4*z1 - 
+y3*y4*z1 - y4^2*z1 - y1*y5*z1 - y3*y5*z1 - y4*y5*z1 - y5^2*z1 - y1*y6*z1 - y3*y6*z1 - y4*y6*z1 - y5*y6*z1 - y6^2*z1 + 
+y4*z1^2 + y5*z1^2 + y6*z1^2 - y1*y4*z2 - y3*y4*z2 - y4^2*z2 - y1*y5*z2 - y3*y5*z2 - y4*y5*z2 - y5^2*z2 - y1*y6*z2 - 
+y3*y6*z2 - y4*y6*z2 - y5*y6*z2 - y6^2*z2 + y1*z1*z2 + y3*z1*z2 + 2*y4*z1*z2 + 2*y5*z1*z2 + 2*y6*z1*z2 - z1^2*z2 + 
+y4*z2^2 + y5*z2^2 + y6*z2^2 - z1*z2^2 - y1*y4*z3 - y3*y4*z3 - y1*y5*z3 - y3*y5*z3 - y1*y6*z3 - y3*y6*z3 + y1*z1*z3 + 
+y3*z1*z3 + y4*z1*z3 + y5*z1*z3 + y6*z1*z3 - z1^2*z3 + y1*z2*z3 + y3*z2*z3 + y4*z2*z3 + y5*z2*z3 + y6*z2*z3 - 2*z1*z2*z3 
+- z2^2*z3 - y1*y4*z4 - y3*y4*z4 - y1*y5*z4 - y3*y5*z4 - y1*y6*z4 - y3*y6*z4 + y1*z1*z4 + y3*z1*z4 + y4*z1*z4 + y5*z1*z4 
++ y6*z1*z4 - z1^2*z4 + y1*z2*z4 + y3*z2*z4 + y4*z2*z4 + y5*z2*z4 + y6*z2*z4 - 2*z1*z2*z4 - z2^2*z4 + y1*z3*z4 + 
+y3*z3*z4 - z1*z3*z4 - z2*z3*z4)*QDSx([6, 1, 3, 2, 4, 5], 'y') + (y4^2 + y4*y5 + y5^2 + y4*y6 + y5*y6 + y6^2 - y4*z1 - y5*z1 - 
+y6*z1 - y4*z2 - y5*z2 - y6*z2 + z1*z2 - y4*z3 - y5*z3 - y6*z3 + z1*z3 + z2*z3 - y4*z4 - y5*z4 - y6*z4 + z1*z4 + z2*z4 + 
+z3*z4)*QDSx([6, 1, 4, 2, 3, 5], 'y') + (y4^2 + y4*y5 + y5^2 + y4*y6 + y5*y6 + y6^2 - y4*z1 - y5*z1 - y6*z1 - y4*z2 - y5*z2 - 
+y6*z2 + z1*z2 - y4*z3 - y5*z3 - y6*z3 + z1*z3 + z2*z3 - y4*z4 - y5*z4 - y6*z4 + z1*z4 + z2*z4 + 
+z3*z4)*QDSx([6, 2, 3, 1, 4, 5], 'y') + (q3*y4 + q3*y5 + q3*y6 + q3*y7 - q3*z1 - q3*z2 - q3*z3 - 
+q3*z4)*QDSx([7, 1, 2, 3, 4, 5, 6], 'y') + (y1*y4 + y3*y4 + y1*y5 + y3*y5 + y1*y6 + y3*y6 + y1*y7 + y3*y7 - y1*z1 - y3*z1 - 
+y4*z1 - y5*z1 - y6*z1 - y7*z1 + z1^2 - y1*z2 - y3*z2 - y4*z2 - y5*z2 - y6*z2 - y7*z2 + 2*z1*z2 + z2^2 - y1*z3 - y3*z3 + 
+z1*z3 + z2*z3 - y1*z4 - y3*z4 + z1*z4 + z2*z4)*QDSx([7, 1, 3, 2, 4, 5, 6], 'y') + (y4 + y5 + y6 + y7 - z1 - z2 - z3 - 
+z4)*QDSx([7, 1, 4, 2, 3, 5, 6], 'y') + (y4 + y5 + y6 + y7 - z1 - z2 - z3 - z4)*QDSx([7, 2, 3, 1, 4, 5, 6], 'y') + 
+q3*QDSx([8, 1, 2, 3, 4, 5, 6, 7], 'y') + (y1 + y3 - z1 - z2)*QDSx([8, 1, 3, 2, 4, 5, 6, 7], 'y') + QDSx([8, 1, 4, 2, 3, 5, 6, 7], 'y') + 
+QDSx([8, 2, 3, 1, 4, 5, 6, 7], 'y')
 ```
 This output of roughly 17,000 characters took about 2 seconds to compute on my laptop. **Again note that 
 quantum double computations are technically conjectural, but a proof is likely forthcoming.**
