@@ -495,16 +495,16 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
 
         for i in range(N * 2 + 1):
             if i <= N:
-                subs_dict_coprod[TR.gens()[i]] = self._coeff_polynomial_ring(RR.gens()[i])
+                subs_dict_coprod[syme.sympify(str(TR.gens()[i]))] = syme.sympify(str(RR.gens()[i]))
             else:
-                subs_dict_coprod[TR.gens()[i]] = self._coeff_polynomial_ring(RBase.gens()[i - N])
+                subs_dict_coprod[syme.sympify(str(TR.gens()[i]))] = syme.sympify(str(RBase.gens()[i - N]))
 
         coeff_dict = {tuple(kperm): 1}
         coeff_dict = yz.schubmult(
             coeff_dict,
             tuple(mperm),
-            list(TR.gens()),
-            RR.gens(),
+            [syme.sympify(str(g)) for g in TR.gens()],
+            [syme.sympify(str(g)) for g in RR.gens()],
         )
 
         inv_kperm = kperm.number_of_inversions()
@@ -525,8 +525,8 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 secondperm = Permutation(
                     permtrim([downperm[i] - N for i in range(N, len(downperm))]),
                 )
-                val = TR(val).subs(subs_dict_coprod)
-                total_sum += self._coeff_polynomial_ring(val) * self(
+                val = syme.sympify(val).subs(subs_dict_coprod)
+                total_sum += self._coeff_polynomial_ring(str(val)) * self(
                     (_coerce_index(firstperm, False, self._ascode), indm[1]),
                 ).tensor(
                     self(
