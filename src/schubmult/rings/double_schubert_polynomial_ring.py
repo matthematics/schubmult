@@ -35,21 +35,22 @@ class DoubleDictAlgebraElement:
     def _sympify_(self):
         raise TypeError("You cannot sympify this")
 
-    def __rmul__(self, other):
+    def __mul__(self, other):
         elem = other
         if not isinstance(other, DoubleDictAlgebraElement):
             elem = DoubleDictAlgebraElement_basis(other)
 
         ret = {}
         for k, v in elem._dict.items():
-            ret = add_perm_dict(ret, yz.schubmult({k0: v0 * v for k0, v0 in self._dict.items()}, k, poly_ring(self._coeff_var), poly_ring(other._coeff_var)))
-        return DoubleDictAlgebraElement(ret, self._gens)
+            for k0, v0 in self._dict.items():
+                ret = {(k1, k0[1]): v1 for k1, v1 in add_perm_dict(ret, yz.schubmult({k0[0]: v0 * v}, k[0], poly_ring(k0[1]), poly_ring(k[1]))).items()}
+        return DoubleDictAlgebraElement(ret, self._base_var, self._coeff_var)
 
     def __str__(self):
         pieces = []
         for k, v in self._dict.items():
             if expand(v) != 0:
-                pieces += [v * Symbol(f"S({list(k)})")]
+                pieces += [v * Symbol(f"DS{self._base_var}({list(k[0])}, {k[1]})")]
         return str(Add(*pieces))
 
     def __repr__(self):
@@ -71,7 +72,8 @@ class DoubleDictAlgebraElement_basis:
 
         if isinstance(x, list) or isinstance(x, tuple):
             # checking the input to avoid symmetrica crashing Sage, see trac 12924
-            elem = DoubleDictAlgebraElement({(tuple(permtrim(list(x))), self._coeff_var): 1}, self._base_var, cv if cv else self._coeff_var)
+            cv = self._coeff_var if cv is None else cv
+            elem = DoubleDictAlgebraElement({(tuple(permtrim(list(x))), cv): 1}, self._base_var, cv)
         elif isinstance(x, DoubleDictAlgebraElement):
             if x._base_var == self._base_var:
                 elem = DoubleDictAlgebraElement(x._dict, self._base_var, x._coeff_var)
