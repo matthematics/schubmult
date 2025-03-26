@@ -470,9 +470,10 @@ def theta(perm):
 
 
 def add_perm_dict(d1, d2):
+    d_ret = {**d1}
     for k, v in d2.items():
-        d1[k] = d1.get(k, 0) + v
-    return d1
+        d_ret[k] = d_ret.get(k, 0) + v
+    return d_ret
 
 
 one = sympify(1)
