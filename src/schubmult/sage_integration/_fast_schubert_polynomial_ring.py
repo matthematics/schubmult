@@ -167,6 +167,13 @@ class FastSchubertPolynomial_class(CombinatorialFreeModule.Element):
             ],
         )
 
+    # PDB STEP WHEN LATEX CALLED
+    # def _latex_(self):
+    #     rep = "\\mathfrak{S}"
+    #     if self.is_quantum:
+    #         rep+=f"^{'{'}{self.q_varname}{'}'}"
+    #     rep+="_{"+str(()"
+
 
 @cache
 def _single_schub_parser(passed):
@@ -390,9 +397,11 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 ).tensor(self(_coerce_index(secondperm, False, self._ascode)))
         return total_sum
 
+    def _latex_(self, S):
+        return f"Boobfucker {S}"
 
-def _repr_(self):
-    return f"Ring of  Schubert polynomials in {self._base_varname} with {len(self._polynomial_ring.gens())} variables over {self._q_ring.base_ring()}"
+    def _repr_(self):
+        return f"Ring of  Schubert polynomials in {self._base_varname} with {len(self._polynomial_ring.gens())} variables over {self._q_ring.base_ring()}"
 
 
 FastSchubertPolynomial = FastSchubertPolynomial_class

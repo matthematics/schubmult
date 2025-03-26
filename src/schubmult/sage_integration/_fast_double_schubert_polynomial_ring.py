@@ -305,6 +305,16 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
 
         self._sc_rep = f"{'Q' if quantum else ''}DS{base_variable_name}"
 
+        #         [('bracket', None),
+        #  ('iterate_key', False),
+        #  ('latex_bracket', False), ('latex_names', None),
+        #  ('latex_prefix', None), ('latex_scalar_mult', None),
+        #  ('names', None), ('prefix', 'x'),
+        #  ('scalar_mult', '*'),
+        #  ('sorting_key', <function ...<lambda> at ...>),
+        #  ('sorting_reverse', False), ('string_quotes', True),
+        #  ('tensor_symbol', None)]
+
         CombinatorialFreeModule.__init__(
             self,
             self._coeff_polynomial_ring,
@@ -312,6 +322,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             category=cat,
             prefix=self._sc_rep,
         )
+        # print_options
         self._populate_coercion_lists_()
         self._parser = None
 
