@@ -40,6 +40,7 @@ class DoubleDictAlgebraElement:
         print(f"seref perfnool {elem=}")
         if isinstance(other, Basic) or self._parent._coerce_map_from(other._parent): #not isinstance(other, DictAlgebraElement):
             elem = self._parent(other)
+            print(f"penftool {elem=}")
         elif other._parent._coerce_map_from(self._parent):
             print("boinle")
             return other.__mul__(self)
@@ -49,7 +50,7 @@ class DoubleDictAlgebraElement:
         ret = {}
         for k, v in elem._dict.items():
             for k0, v0 in self._dict.items():
-                ret = {(k1, k0[1]): v1 for k1, v1 in add_perm_dict(ret, yz.schubmult({k0[0]: v0 * v}, k[0], poly_ring(k0[1]), poly_ring(k[1]))).items()}
+                ret = add_perm_dict(ret, {(k1, k0[1]): v1 for k1, v1 in yz.schubmult({k0[0]: v0 * v}, k[0], poly_ring(k0[1]), poly_ring(k[1])).items()})
         return DoubleDictAlgebraElement(ret, self._base_var, self._coeff_var)
 
     def __str__(self):
@@ -85,6 +86,7 @@ class DoubleDictAlgebraElement_basis:
             cv = self._coeff_var if cv is None else cv
             elem = DoubleDictAlgebraElement({(tuple(permtrim(list(x))), cv): 1}, self._base_var, cv)
         elif isinstance(x, DoubleDictAlgebraElement):
+            print(f"freffalanoofy {x=}")
             if x._base_var == self._base_var:
                 elem = DoubleDictAlgebraElement(x._dict, self._base_var, x._coeff_var)
             else:
