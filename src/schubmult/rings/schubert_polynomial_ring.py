@@ -1,6 +1,7 @@
 # from abc import ABC
 from symengine import Add, Mul, Pow, symarray, Basic, expand, Symbol, sympify
 from schubmult.schubmult_py import schubmult, mult_poly
+import schubmult.schubmult_double as yz
 from schubmult.perm_lib import add_perm_dict, permtrim
 from ._utils import poly_ring
 
@@ -38,8 +39,11 @@ class DictAlgebraElement:
 
     def __mul__(self, other):
         elem = other
-        if not isinstance(other, DictAlgebraElement):
-            elem = self(other)
+        if isinstance(other, Basic) or self._parent._coerce_map_from(other._parent): #not isinstance(other, DictAlgebraElement):
+            elem = self._parent(other)
+        elif other._parent._coerce_map_from(self._parent):
+            print(f"bingle fat")
+            return other.__mul__(self)
 
         ret = {}
         for k, v in elem._dict.items():
@@ -56,23 +60,45 @@ class DictAlgebraElement:
     def __repr__(self):
         return self.__str__()
 
+    def expand(self):
+        return sum(
+            Add(*[
+                    yz.schubmult(
+                        {(1, 2): v},
+                        k,
+                        poly_ring(self._base_var),
+                        [0 for i in range(100)],
+                    ).get((1, 2), 0)
+                for k, v in self._dict.items()
+            ]),
+        )
+
 
 class DictAlgebraElement_basis:
     def __init__(self, base_var = "x"):
         self._base_var = base_var
 
     def __call__(self, x):
+        print(f"boigel {x=}")
         if isinstance(x, list) or isinstance(x, tuple):
             # checking the input to avoid symmetrica crashing Sage, see trac 12924
-            elem = DictAlgebraElement({tuple(permtrim(list(x))): 1}, tuple(symarray("x", 100).tolist()))
+            elem = DictAlgebraElement({tuple(permtrim(list(x))): 1}, self._base_var)
         else:
             result = mult_poly(
                 {(1, 2): 1},
                 sympify(x),
                 poly_ring(self._base_var),
             )
-            elem = DictAlgebraElement(result, tuple(symarray("x", 100).tolist()))
+            elem = DictAlgebraElement(result, self._base_var)
+        elem._parent = self
         return elem
+
+    def _coerce_map_from(self, S):
+        if isinstance(S, type(Schub)):
+            return True
+        if isinstance(S, Basic):
+            return True
+        return False
 
 Schub = DictAlgebraElement_basis()
 SchubertPolynomial = DictAlgebraElement
