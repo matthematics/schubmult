@@ -1,5 +1,5 @@
 import sympy
-from symengine import Add, expand, sympify
+from symengine import expand, sympify
 
 import schubmult.schubmult_double as yz
 from schubmult.perm_lib import add_perm_dict, permtrim
@@ -10,6 +10,7 @@ from .schubert_polynomial_ring import SchubertPolynomial
 # numpy arrays
 # sympy parsing
 # quantum
+
 
 def _mul_schub_dicts(dict1, dict2):
     by_var = {}
@@ -81,15 +82,17 @@ class DoubleDictAlgebraElement:
         pieces = []
         for k, v in self._dict.items():
             if expand(v) != 0:
-                pieces += [v * sympy.Symbol(f"DS{self._parent._base_var}({list(k[0])}, '{k[1]}')", commutative=False)]
-        return str(Add(*pieces))  # use sstr
+                pieces += [sympy.Mul(v, sympy.Symbol(f"DS{self._parent._base_var}({list(k[0])}, '{k[1]}')", commutative=False))]
+        return sympy.sstr(sympy.Add(*pieces), order=lambda order: pieces)  # use sstr
 
     def __repr__(self):
         return self.__str__()
 
     def expand(self):
         ret = 0
-        for k, v in self._dict.items():
+        keys = list(self._dicts.keys())
+        for k in sorted(keys):
+            v = self._dict[k]
             ret += yz.schubmult({(1, 2): v}, k[0], poly_ring(self._parent._base_var), poly_ring(k[1])).get((1, 2), 0)
         return ret
 

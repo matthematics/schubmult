@@ -1,5 +1,5 @@
 import sympy
-from symengine import Add, expand, sympify
+from symengine import expand, sympify
 
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
@@ -89,8 +89,8 @@ class DictAlgebraElement:
         pieces = []
         for k, v in self._dict.items():
             if expand(v) != 0:
-                pieces += [v * sympy.Symbol(f"S{self._parent._base_var}({list(k[0])})", commutative=False)]
-        return str(Add(*pieces))  # use sstr
+                pieces += [sympy.Mul(v, sympy.Symbol(f"S{self._parent._base_var}({list(k[0])})", commutative=False))]
+        return sympy.sstr(sympy.Add(*pieces), order=lambda order: pieces)  # use sstr
 
     def __repr__(self):
         return self.__str__()
