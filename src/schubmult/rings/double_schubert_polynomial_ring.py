@@ -64,8 +64,6 @@ class DoubleDictAlgebraElement:
         one = self._parent([1, 2])
         elem1 = one * self
         elem2 = one * self._parent(other)
-        print(f"{elem1=}")
-        print(f"{elem2=}")
         done = set()
         for k, v in elem1._dict.items():
             done.add(k)
@@ -80,9 +78,19 @@ class DoubleDictAlgebraElement:
 
     def __str__(self):
         pieces = []
-        for k, v in self._dict.items():
+        keys = list(self._dict.keys())
+        for k in sorted(keys):
+            v = self._dict[k]
             if expand(v) != 0:
-                pieces += [sympy.Mul(v, sympy.Symbol(f"DS{self._parent._base_var}({list(k[0])}, '{k[1]}')", commutative=False))]
+                pieces += [
+                    sympy.Mul(
+                        v,
+                        sympy.Symbol(
+                            ((f"S{self._parent._base_var}" if k[1] is None else f"DS{self._parent._base_var}") + (f"({list(k[0])})" if k[1] is None else f"({list(k[0])}, '{k[1]}')")),
+                            commutative=False,
+                        ),
+                    ),
+                ]
         return sympy.sstr(sympy.Add(*pieces), order=lambda order: pieces)  # use sstr
 
     def __repr__(self):
@@ -90,7 +98,7 @@ class DoubleDictAlgebraElement:
 
     def expand(self):
         ret = 0
-        keys = list(self._dicts.keys())
+        keys = list(self._dict.keys())
         for k in sorted(keys):
             v = self._dict[k]
             ret += yz.schubmult({(1, 2): v}, k[0], poly_ring(self._parent._base_var), poly_ring(k[1])).get((1, 2), 0)
@@ -120,16 +128,7 @@ class DoubleDictAlgebraElement_basis:
                 return self(x.expand())
         elif isinstance(x, SchubertPolynomial):
             if x._parent._base_var == self._base_var:
-                elem_dict = {}
-                for k, v in x._dict.items():
-                    res = yz.schubmult(
-                        {(1, 2): v},
-                        k,
-                        poly_ring(self._coeff_var),
-                        [0 for i in range(100)],
-                    )
-                for k0, c0 in res.items():
-                    elem_dict[(k0, self._coeff_var)] = elem_dict.get((k0, self._coeff_var), 0) + c0
+                elem_dict = {(k, None): v for k, v in x._dict.items()}
                 elem = DoubleDictAlgebraElement(elem_dict, self)
             else:
                 return self(x.expand())

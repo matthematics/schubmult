@@ -87,7 +87,9 @@ class DictAlgebraElement:
 
     def __str__(self):
         pieces = []
-        for k, v in self._dict.items():
+        keys = list(self._dict.keys())
+        for k in sorted(keys):
+            v = self._dict[k]
             if expand(v) != 0:
                 pieces += [sympy.Mul(v, sympy.Symbol(f"S{self._parent._base_var}({list(k[0])})", commutative=False))]
         return sympy.sstr(sympy.Add(*pieces), order=lambda order: pieces)  # use sstr
