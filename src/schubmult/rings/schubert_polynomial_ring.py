@@ -1,104 +1,128 @@
-# from abc import ABC
-from symengine import Add, Mul, Pow, symarray, Basic, expand, Symbol, sympify
-from schubmult.schubmult_py import schubmult, mult_poly
+import sympy
+from symengine import Add, expand, sympify
+
 import schubmult.schubmult_double as yz
+import schubmult.schubmult_py as py
 from schubmult.perm_lib import add_perm_dict, permtrim
+
 from ._utils import poly_ring
 
-# _def_gens = tuple(symarray("x", 100).tolist())
-# _def_cof
+# numpy arrays
+# sympy parse
+
+
+def _mul_schub_dicts(dict1, dict2):
+    results = {}
+
+    for k, v in dict2.items():
+        results = add_perm_dict(results, py.schubmult(dict1, k))
+    return results
+
 
 class DictAlgebraElement:
     """Algebra with sympy coefficients
     and a dict basis
     """
 
-    def __init__(self, _dict = None,  base_var = "x"):
+    def __init__(self, _dict, parent):
         self._dict = _dict
-        self._base_var = base_var
-        # self._base_var = poly_ring(self._base_var)
-
+        self._parent = parent
 
     def __add__(self, other):
-        if isinstance(other, DictAlgebraElement):
-            return DictAlgebraElement(add_perm_dict(self._dict, other._dict), self._base_var)
-        else:
-            return DictAlgebraElement(add_perm_dict(self._dict, self(other)._dict), self._base_var)
+        try:
+            return DictAlgebraElement(add_perm_dict(self._dict, self._parent(other)._dict), self._parent)
+        except Exception:
+            return NotImplemented
+
+    def __radd__(self, other):
+        try:
+            return DictAlgebraElement(add_perm_dict(self._parent(other)._dict, self._dict), self._parent)
+        except Exception:
+            return NotImplemented
 
     def __sub__(self, other):
-        if isinstance(other, DictAlgebraElement):
-            return self.__add__(DictAlgebraElement({k: -v for k, v in other._dict.items()}, self._base_var))
-        else:
-            return self.__add__(DictAlgebraElement({k: -v for k, v in self(other)._dict.items()}, self._base_var))
+        try:
+            return DictAlgebraElement(add_perm_dict(self._dict, {k: -v for k, v in self._parent(other)._dict.items()}), self._parent)
+        except Exception:
+            return NotImplemented
+
+    def __rsub__(self, other):
+        try:
+            return DictAlgebraElement(add_perm_dict(self._parent(other)._dict, {k: -v for k, v in self._dict.items()}), self._parent)
+        except Exception:
+            return NotImplemented
 
     def __neg__(self):
-        return DictAlgebraElement({k: -v for k, v in self._dict.items()}, self._base_var)
-
-    def _sympify_(self):
-        raise TypeError("You cannot sympify this")
+        try:
+            return DictAlgebraElement({k: -v for k, v in self._dict.items()}, self._parent)
+        except Exception:
+            return NotImplemented
 
     def __mul__(self, other):
-        elem = other
-        if isinstance(other, Basic) or self._parent._coerce_map_from(other._parent): #not isinstance(other, DictAlgebraElement):
-            elem = self._parent(other)
-        elif other._parent._coerce_map_from(self._parent):
-            print(f"bingle fat")
-            return other.__mul__(self)
+        try:
+            return DictAlgebraElement(_mul_schub_dicts(self._dict, self._parent(other)._dict), self._parent)
+        except Exception:
+            return NotImplemented
 
-        ret = {}
-        for k, v in elem._dict.items():
-            ret = add_perm_dict(ret, schubmult({k0: v0 * v for k0, v0 in self._dict.items()}, k))
-        return DictAlgebraElement(ret, self._base_var)
+    def __rmul__(self, other):
+        try:
+            return DictAlgebraElement(_mul_schub_dicts(self._parent(other)._dict, self._dict), self._parent)
+        except Exception:
+            return NotImplemented
+
+    def __eq__(self, other):
+        elem1 = self
+        elem2 = self._parent(other)
+        done = set()
+        for k, v in elem1._dict.items():
+            done.add(k)
+            if expand(v - elem2._dict.get(k, 0)) != 0:
+                return False
+        for k, v in elem2._dict.items():
+            if k in done:
+                continue
+            if expand(v - elem1._dict.get(k, 0)) != 0:
+                return False
+        return True
 
     def __str__(self):
         pieces = []
         for k, v in self._dict.items():
             if expand(v) != 0:
-                pieces += [v * Symbol(f"S{self._base_var}({list(k)})")]
-        return str(Add(*pieces))
+                pieces += [v * sympy.Symbol(f"S{self._parent._base_var}({list(k[0])})", commutative=False)]
+        return str(Add(*pieces))  # use sstr
 
     def __repr__(self):
         return self.__str__()
 
     def expand(self):
-        return sum(
-            Add(*[
-                    yz.schubmult(
-                        {(1, 2): v},
-                        k,
-                        poly_ring(self._base_var),
-                        [0 for i in range(100)],
-                    ).get((1, 2), 0)
-                for k, v in self._dict.items()
-            ]),
-        )
+        ret = 0
+        for k, v in self._dict.items():
+            ret += yz.schubmult({(1, 2): v}, k, poly_ring(self._parent._base_var), [0 for i in range(100)]).get((1, 2), 0)
+        return ret
 
 
 class DictAlgebraElement_basis:
-    def __init__(self, base_var = "x"):
+    def __init__(self, base_var="x"):
         self._base_var = base_var
 
     def __call__(self, x):
-        print(f"boigel {x=}")
         if isinstance(x, list) or isinstance(x, tuple):
-            # checking the input to avoid symmetrica crashing Sage, see trac 12924
-            elem = DictAlgebraElement({tuple(permtrim(list(x))): 1}, self._base_var)
+            elem = DictAlgebraElement({tuple(permtrim(list(x))): 1}, self)
+        elif isinstance(x, DictAlgebraElement):
+            if x._parent._base_var == self._base_var:
+                elem = DictAlgebraElement(x._dict, self)
+            else:
+                return self(x.expand())
         else:
-            result = mult_poly(
-                {(1, 2): 1},
-                sympify(x),
-                poly_ring(self._base_var),
-            )
-            elem = DictAlgebraElement(result, self._base_var)
-        elem._parent = self
+            try:
+                result = py.mult_poly({(1, 2): 1}, sympify(x), poly_ring(self._base_var))  # this will raise an error if no good
+                elem = DictAlgebraElement(result, self)
+            except Exception:
+                # return NotImplemented
+                return NotImplemented
         return elem
 
-    def _coerce_map_from(self, S):
-        if isinstance(S, type(Schub)):
-            return True
-        if isinstance(S, Basic):
-            return True
-        return False
 
 Schub = DictAlgebraElement_basis()
 SchubertPolynomial = DictAlgebraElement
