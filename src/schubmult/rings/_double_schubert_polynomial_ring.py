@@ -4,6 +4,7 @@ from symengine import Expr, expand, sympify
 import schubmult.rings._schubert_polynomial_ring as spr
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
+import symengine.lib.symengine_wrapper as syme_wrap
 from schubmult.perm_lib import add_perm_dict, permtrim
 
 from ._utils import poly_ring
@@ -33,7 +34,7 @@ def _mul_schub_dicts(dict1, dict2):
         results.update(this_dict)
     return results
 
-
+from functools import cache
 class DoubleDictAlgebraElement(Expr):
     """Algebra with sympy coefficients
     and a dict basis
@@ -42,15 +43,50 @@ class DoubleDictAlgebraElement(Expr):
     _op_priority = 1e200
     __slots__ = ("_dict", "_parent")
 
+    def __hash__(self):
+        return hash(sympy.Dict(self._dict))
+
     def __new__(cls, _dict, parent):
+        return DoubleDictAlgebraElement.__xnew_cached__(sympy.Dict(_dict), parent)
+
+    @classmethod
+    def __xnew__(cls, _dict, parent):
         obj = Expr.__new__(cls)
         obj._dict = _dict
         obj._parent = parent
-        # # print(f"{obj=}")
-        # # print(f"Profilinsvasvagui {cls=} {_dict=} {parent=}")
-        # return DoubleDictAlgebraElement.__xnew__(_dict, parent)
+        print("ASFBIASF")
         return obj
 
+    @classmethod
+    @cache
+    def __xnew_cached__(cls, _dict, parent):
+        print(f"{_dict=} {hash(parent)}")
+        return DoubleDictAlgebraElement.__xnew__(_dict, parent)
+
+    @classmethod
+    @cache
+    def __xnew_sympy_cached__(cls, _dict, parent):
+        print("Plefflenoff gaboopa")
+        return DoubleDictAlgebraElement.__xnew_sympy__(_dict, parent)
+
+    def _simplify_(self):
+        print(f"{self=} preffdoffle")
+
+    @classmethod
+    def __xnew_sympy__(cls, _dict, parent):
+        obj = syme_wrap.Expr.__new__(cls)
+        obj._dict = _dict
+        obj._parent = parent
+        print("ASFBIAS brofool F")
+        return obj
+
+    def _sympy_(self):
+        print("Profdonket")
+        # print(f"{self=}")
+        return DoubleDictAlgebraElement.__xnew_sympy_cached__(self._dict, self._parent)
+
+    # def _symplify_(self):
+    #     print("Frababa")
     # def __init__(self, _dict, parent):
     #     self._dict = _dict
     #     self._parent = parent

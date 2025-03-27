@@ -23,6 +23,7 @@ def _mul_schub_dicts(dict1, dict2):
 class DictAlgebraElement:
     """Algebra with sympy coefficients
     and a dict basis
+
     """
 
     def __init__(self, _dict, parent):
