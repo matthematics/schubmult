@@ -2,6 +2,7 @@ import sympy
 from symengine import expand, sympify
 
 import schubmult.schubmult_double as yz
+import schubmult.schubmult_py as py
 from schubmult.perm_lib import add_perm_dict, permtrim
 
 from ._utils import poly_ring
@@ -25,7 +26,10 @@ def _mul_schub_dicts(dict1, dict2):
     for _vstr, _dict in by_var.items():
         this_dict = {}
         for k, v in dict2.items():
-            this_dict = add_perm_dict(this_dict, {(k1, _vstr): v1 * v for k1, v1 in yz.schubmult(_dict, k[0], poly_ring(_vstr), poly_ring(k[1])).items()})
+            if k[1] is None and _vstr is None:
+                this_dict = add_perm_dict(this_dict, {(k1, None): v1 * v for k1, v1 in py.schubmult(_dict, k[0])})
+            else:
+                this_dict = add_perm_dict(this_dict, {(k1, _vstr): v1 * v for k1, v1 in yz.schubmult(_dict, k[0], poly_ring(_vstr), poly_ring(k[1])).items()})
         results.update(this_dict)
     return results
 
@@ -112,12 +116,12 @@ class DoubleDictAlgebraElement_basis:
         self._coeff_var = coeff_var if coeff_var else "y"
 
     def __call__(self, *x):
-        cv = None
+        cv = ""
         if len(x) == 1:
             x = x[0]
         elif len(x) == 2 and (isinstance(x[0], list) or isinstance(x[0], tuple)):
             x, cv = x[0], x[1]
-        if cv is None:
+        if cv == "":
             cv = self._coeff_var
         if isinstance(x, list) or isinstance(x, tuple):
             elem = DoubleDictAlgebraElement({(tuple(permtrim(list(x))), cv): 1}, self)
