@@ -4,7 +4,7 @@ from symengine import expand, sympify
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
 from schubmult.perm_lib import add_perm_dict, permtrim
-
+from symengine.lib.symengine_wrapper import Expr
 from ._utils import poly_ring
 
 # numpy arrays
@@ -96,6 +96,12 @@ class DictAlgebraElement:
 
     def __repr__(self):
         return self.__str__()
+
+    def __expand__(self):
+        return self.expand()
+
+    # def _sympify(self):
+    #     return self
 
     def expand(self):
         ret = 0
