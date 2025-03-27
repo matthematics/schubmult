@@ -31,6 +31,10 @@ from ._utils import NoneVar, ZeroVar, poly_ring
 
 # sympy.init_printing(order='none')
 
+class ExceptionThrower:
+    def __bool__(self):
+        raise Exception
+    
 
 def _varstr(v):
     if v == NoneVar:
