@@ -1,12 +1,11 @@
 import sympy
-from symengine import expand, sympify
+from symengine import Expr, expand, sympify
 
 import schubmult.rings._schubert_polynomial_ring as spr
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
 from schubmult.perm_lib import add_perm_dict, permtrim
 
-from symengine import Expr
 from ._utils import poly_ring
 
 # numpy arrays
@@ -41,14 +40,14 @@ class DoubleDictAlgebraElement(Expr):
     """
 
     _op_priority = 1e200
-    __slots__ = ("_parent", "_dict")
+    __slots__ = ("_dict", "_parent")
 
     def __new__(cls, _dict, parent):
         obj = Expr.__new__(cls)
         obj._dict = _dict
         obj._parent = parent
-        # print(f"{obj=}")
-        # print(f"Profilinsvasvagui {cls=} {_dict=} {parent=}")
+        # # print(f"{obj=}")
+        # # print(f"Profilinsvasvagui {cls=} {_dict=} {parent=}")
         # return DoubleDictAlgebraElement.__xnew__(_dict, parent)
         return obj
 
@@ -59,41 +58,41 @@ class DoubleDictAlgebraElement(Expr):
     is_Atom = True
 
     def __add__(self, other):
-        print("ASFJASJ")
+        # print("ASFJASJ")
         return DoubleDictAlgebraElement(add_perm_dict(self._dict, self._parent(other)._dict), self._parent)
 
     def __radd__(self, other):
-        print("ASFJAdsajdSJ")
+        # print("ASFJAdsajdSJ")
 
         return DoubleDictAlgebraElement(add_perm_dict(self._parent(other)._dict, self._dict), self._parent)
 
     def __sub__(self, other):
-        print("ASFJAdsajdSJ")
+        # print("ASFJAdsajdSJ")
 
         return DoubleDictAlgebraElement(add_perm_dict(self._dict, {k: -v for k, v in self._parent(other)._dict.items()}), self._parent)
 
     def __rsub__(self, other):
-        print("ASFJAdsajdSJ")
+        # print("ASFJAdsajdSJ")
 
         return DoubleDictAlgebraElement(add_perm_dict(self._parent(other)._dict, {k: -v for k, v in self._dict.items()}), self._parent)
 
     def __neg__(self):
-        print("ASFJAdsajdSJ")
+        # print("ASFJAdsajdSJ")
 
         return DoubleDictAlgebraElement({k: -v for k, v in self._dict.items()}, self._parent)
 
     def __mul__(self, other):
-        print("ASFJAdsajdSJ")
+        # print("ASFJAdsajdSJ")
 
         return DoubleDictAlgebraElement(_mul_schub_dicts(self._dict, self._parent(other)._dict), self._parent)
 
     def __rmul__(self, other):
-        print("ASFJAdsajdSJ")
+        # print("ASFJAdsajdSJ")
 
         return DoubleDictAlgebraElement(_mul_schub_dicts(self._parent(other)._dict, self._dict), self._parent)
 
     def __eq__(self, other):
-        print("FERPE")
+        # print("FERPE")
         one = self._parent([1, 2])
         elem1 = one * self
         elem2 = one * self._parent(other)
@@ -110,7 +109,7 @@ class DoubleDictAlgebraElement(Expr):
         return True
 
     def __str__(self):
-        print("ASFJAdsajdSJ")
+        # print("ASFJAdsajdSJ")
 
         pieces = []
         keys = list(self._dict.keys())
@@ -129,13 +128,13 @@ class DoubleDictAlgebraElement(Expr):
         return sympy.sstr(sympy.Add(*pieces), order=lambda order: pieces)  # use sstr
 
     def __repr__(self):
-        print("ASFJAdsajdSJ")
+        # print("ASFJAdsajdSJ")
 
         return self.__str__()
 
     def as_coefficients_dict(self):
         # will not allow zeros
-        print("ASFJAdsajdSJ")
+        # print("ASFJAdsajdSJ")
 
         return {k: v for k, v in self._dict.items() if expand(v) != 0}
 
@@ -145,14 +144,15 @@ class DoubleDictAlgebraElement(Expr):
     # def schub_coeff(self, perm):
     #     return self._dict.get(tuple(permtrim(perm)), 0)
 
-    def expand(self):
-        print("ASFJAdsajdSJ")
-
-        ret = 0
-        keys = list(self._dict.keys())
-        for k in sorted(keys):
-            v = self._dict[k]
-            ret += yz.schubmult({(1, 2): v}, k[0], poly_ring(self._parent._base_var), poly_ring(k[1])).get((1, 2), 0)
+    def expand(self, deep=True):
+        if deep:
+            ret = 0
+            keys = list(self._dict.keys())
+            for k in sorted(keys):
+                v = self._dict[k]
+                ret += yz.schubmult({(1, 2): v}, k[0], poly_ring(self._parent._base_var), poly_ring(k[1])).get((1, 2), 0)
+        else:
+            ret = DoubleDictAlgebraElement({k: expand(v) for k, v in self._dict.items()}, self._parent)
         return ret
 
 
@@ -163,7 +163,7 @@ class DoubleDictAlgebraElement_basis:
         self._coeff_var = coeff_var if coeff_var else "y"
 
     def __call__(self, *x):
-        print(f"Profilingui {self=} {x=}")
+        # print(f"Profilingui {self=} {x=}")
         cv = ""
         if len(x) == 1:
             x = x[0]

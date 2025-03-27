@@ -1,10 +1,11 @@
 import sympy
 from symengine import expand, sympify
+from symengine.lib.symengine_wrapper import Expr
 
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
 from schubmult.perm_lib import add_perm_dict, permtrim
-from symengine.lib.symengine_wrapper import Expr
+
 from ._utils import poly_ring
 
 # numpy arrays
@@ -15,7 +16,7 @@ def _mul_schub_dicts(dict1, dict2):
     results = {}
 
     for k, v in dict2.items():
-        results = add_perm_dict(results, {k: v0*v for k, v0 in py.schubmult(dict1, k).items()})
+        results = add_perm_dict(results, {k: v0 * v for k, v0 in py.schubmult(dict1, k).items()})
     return results
 
 
@@ -103,7 +104,7 @@ class DictAlgebraElement:
     # def _sympify(self):
     #     return self
 
-    def expand(self):
+    def expand(self, deep=True):  # noqa: ARG002
         ret = 0
         for k, v in self._dict.items():
             ret += yz.schubmult({(1, 2): v}, k, poly_ring(self._parent._base_var), [0 for i in range(100)]).get((1, 2), 0)
@@ -112,6 +113,7 @@ class DictAlgebraElement:
     def as_coefficients_dict(self):
         # will not allow zeros
         return {k: v for k, v in self._dict.items() if expand(v) != 0}
+
 
 class DictAlgebraElement_basis:
     def __init__(self, base_var="x"):
