@@ -1,12 +1,12 @@
 import sympy
 from symengine import expand, sympify
 
+import schubmult.rings._schubert_polynomial_ring as spr
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
 from schubmult.perm_lib import add_perm_dict, permtrim
 
 from ._utils import poly_ring
-from .schubert_polynomial_ring import SchubertPolynomial
 
 # numpy arrays
 # sympy parsing
@@ -130,7 +130,7 @@ class DoubleDictAlgebraElement_basis:
                 elem = DoubleDictAlgebraElement(x._dict, self)
             else:
                 return self(x.expand())
-        elif isinstance(x, SchubertPolynomial):
+        elif isinstance(x, spr.SchubertPolynomial):
             if x._parent._base_var == self._base_var:
                 elem_dict = {(k, None): v for k, v in x._dict.items()}
                 elem = DoubleDictAlgebraElement(elem_dict, self)
