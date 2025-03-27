@@ -103,6 +103,9 @@ class DictAlgebraElement:
             ret += yz.schubmult({(1, 2): v}, k, poly_ring(self._parent._base_var), [0 for i in range(100)]).get((1, 2), 0)
         return ret
 
+    def as_coefficients_dict(self):
+        # will not allow zeros
+        return {k: v for k, v in self._dict.items() if expand(v) != 0}
 
 class DictAlgebraElement_basis:
     def __init__(self, base_var="x"):

@@ -100,6 +100,15 @@ class DoubleDictAlgebraElement:
     def __repr__(self):
         return self.__str__()
 
+    def as_coefficients_dict(self):
+        # will not allow zeros
+        return {k: v for k, v in self._dict.items() if expand(v) != 0}
+
+    def normalize_coefficients(self, coeff_var):
+        return self._parent([1,2], coeff_var) * self
+    # def schub_coeff(self, perm):
+    #     return self._dict.get(tuple(permtrim(perm)), 0)
+
     def expand(self):
         ret = 0
         keys = list(self._dict.keys())
