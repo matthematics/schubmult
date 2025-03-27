@@ -15,7 +15,7 @@ def _mul_schub_dicts(dict1, dict2):
     results = {}
 
     for k, v in dict2.items():
-        results = add_perm_dict(results, py.schubmult(dict1, k))
+        results = add_perm_dict(results, {k: v0*v for k, v0 in py.schubmult(dict1, k).items()})
     return results
 
 
