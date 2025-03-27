@@ -43,10 +43,11 @@ class DoubleDictAlgebraElement(Expr):
     _op_priority = 1e200
     __slots__ = ("_dict", "_parent")
 
-    def __hash__(self):
-        return hash(sympy.Dict(self._dict))
+    # def __hash__(self):
+    #     return hash(sympy.Dict(self._dict))
 
     def __new__(cls, _dict, parent):
+        print("Prifbonk")
         return DoubleDictAlgebraElement.__xnew_cached__(sympy.Dict(_dict), parent)
 
     @classmethod
@@ -60,7 +61,7 @@ class DoubleDictAlgebraElement(Expr):
     @classmethod
     @cache
     def __xnew_cached__(cls, _dict, parent):
-        print(f"{_dict=} {hash(parent)}")
+        print(f"{type(_dict)=} {hash(parent)}")
         return DoubleDictAlgebraElement.__xnew__(_dict, parent)
 
     @classmethod
@@ -69,8 +70,9 @@ class DoubleDictAlgebraElement(Expr):
         print("Plefflenoff gaboopa")
         return DoubleDictAlgebraElement.__xnew_sympy__(_dict, parent)
 
-    def _simplify_(self):
+    def _eval_simplify_(self):
         print(f"{self=} preffdoffle")
+        return self
 
     @classmethod
     def __xnew_sympy__(cls, _dict, parent):
@@ -80,10 +82,14 @@ class DoubleDictAlgebraElement(Expr):
         print("ASFBIAS brofool F")
         return obj
 
-    def _sympy_(self):
-        print("Profdonket")
-        # print(f"{self=}")
-        return DoubleDictAlgebraElement.__xnew_sympy_cached__(self._dict, self._parent)
+    def _symengine_(self):
+        print("piffwaffle")
+        return DoubleDictAlgebraElement.__xnew_cached__(self._dict, self._parent)
+    
+    # def _sympy_(self):
+    #     print("Profdonket")
+    #     # print(f"{self=}")
+    #     return DoubleDictAlgebraElement.__xnew_sympy_cached__(self._dict, self._parent)
 
     # def _symplify_(self):
     #     print("Frababa")
