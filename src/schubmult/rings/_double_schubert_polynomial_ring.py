@@ -5,6 +5,8 @@ import sympy
 import schubmult.rings._schubert_polynomial_ring as spr
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
+from symengine import sympify
+# from sympy.core.operations import AssocOp
 from schubmult.perm_lib import add_perm_dict, inv, permtrim
 
 from ._utils import NoneVar, ZeroVar, poly_ring
@@ -31,10 +33,13 @@ from ._utils import NoneVar, ZeroVar, poly_ring
 
 # sympy.init_printing(order='none')
 
+#class DSchubPoly(sympy.Symbol):
+#as Add
+
 class ExceptionThrower:
     def __bool__(self):
         raise Exception
-    
+
 
 def _varstr(v):
     if v == NoneVar:
@@ -61,7 +66,7 @@ def _mul_schub_dicts(dict1, dict2):
     for _vstr, _dict in by_var.items():
         this_dict = {}
         for k, v in dict2.items():
-            print(f"{k=}")
+            #print(f"{k=}")
             this_dict = add_perm_dict(this_dict, {(k1, k[1]): v1 * v for k1, v1 in yz.schubmult(_dict, k[0], poly_ring(_vstr), poly_ring(k[1])).items()})
         results.update(this_dict)
 
@@ -88,6 +93,20 @@ def _mul_schub_dicts(dict1, dict2):
 
     return results
 
+class DSchubSymbol(sympy.Symbol):
+
+    def __new__(cls, base_var, k):
+        return DSchubSymbol.__xnew_cached__(base_var, k)
+    
+    @classmethod
+    def __xnew__(cls, base_var, k):
+        obj = sympy.Symbol.__new__(cls,f"DS{base_var}({list(k[0])}, {_varstr(k[1])})", commutative=False)
+        return obj
+    
+    @classmethod
+    @cache
+    def __xnew_cached__(cls, base_var, k):
+        return DSchubSymbol.__xnew__(base_var, k)
 
 class DoubleDictAlgebraElement(sympy.Expr):
     """Algebra with sympy coefficients
@@ -102,13 +121,61 @@ class DoubleDictAlgebraElement(sympy.Expr):
     def __new__(cls, _dict, parent):
         return DoubleDictAlgebraElement.__xnew_cached__(sympy.Dict(_dict), parent)
 
+    def __hash__(self):
+        return hash(self._dict)
+    
+    def _latex(self,printer):
+        return self._sympystr(printer)
+
+    def _sympyrepr(self,printer):
+        return self._sympystr(printer)
+
+    def _sympystr(self, printer):
+        if not self:
+            return printer._print(0)
+        # ring = self.ring
+        # symbols = ring.symbols
+        # ngens = ring.ngens
+        # zm = ring.zero_monom
+        _dict = self._dict
+        keys = list(_dict.keys())
+        #print("Freftoolnagababarmpy")
+        pieces = []
+        for k in sorted(keys, key=lambda b: (inv(b[0]), str(b[1]) if b[1] != NoneVar else str("."), *b[0])):
+            v = _dict[k]
+            dvar = "D"
+            if sympy.expand(v) != 0:
+                pieces += [
+                    sympy.Mul(v,DSchubSymbol(self._parent._base_var, k))
+                ]
+        return printer._print_Add(sympy.Add(*pieces,evaluate=False),order='none')
+    
+
+
+    # def __repr__(self):
+     
+    #    return sympy.Add(*self.args, evaluate=False).__repr__()
     @classmethod
     def __xnew__(cls, _dict, parent):
+        # pieces = []
+        # keys = list(_dict.keys())
+        # #print("Freftoolnagababarmpy")
+        # for k in sorted(keys, key=lambda b: (inv(b[0]), str(b[1]) if b[1] != NoneVar else str("."), *b[0])):
+        #     v = _dict[k]
+        #     dvar = "D"
+        #     if sympy.expand(v) != 0:
+        #         pieces += [
+        #             sympy.Mul(v,DSchubSymbol(parent._base_var, k))
+        #         ]
+        #print(f"{pieces=}")
         obj = sympy.Expr.__new__(cls)
+        #obj.make_args(pieces)
+        #obj.args = pieces
         obj._dict = _dict
         obj._parent = parent
         return obj
 
+    is_Add = True
     @classmethod
     @cache
     def __xnew_cached__(cls, _dict, parent):
@@ -118,6 +185,7 @@ class DoubleDictAlgebraElement(sympy.Expr):
         return NotImplemented
 
     def _eval_simplify_(self):
+        #print("Hey pretty baby")
         return self
 
     def __add__(self, other):
@@ -169,27 +237,36 @@ class DoubleDictAlgebraElement(sympy.Expr):
                 return False
         return True
 
-    def __str__(self):
-        pieces = []
-        keys = list(self._dict.keys())
-        for k in sorted(keys, key=lambda b: (inv(b[0]), b[1], *b[0])):
-            v = self._dict[k]
-            dvar = "D"
-            if sympy.expand(v) != 0:
-                pieces += [
-                    sympy.Mul(
-                        v,
-                        sympy.Symbol(
-                            f"{dvar}S{self._parent._base_var}({list(k[0])}, {_varstr(k[1])})",
-                            commutative=False,
-                        )
-                        if k[0] != (1, 2)
-                        else 1,
-                    ),
-                ]
-        return sympy.sstr(sympy.Add(*pieces, evaluate=False), order="none")
+    # def __str__(self):
+    #     pieces = []
+    #     keys = list(self._dict.keys())
+    #     for k in sorted(keys, key=lambda b: (inv(b[0]), b[1], *b[0])):
+    #         v = self._dict[k]
+    #         dvar = "D"
+    #         if sympy.expand(v) != 0:
+    #             pieces += [
+    #                 sympy.Mul(
+    #                     v,
+    #                     sympy.Symbol(
+    #                         f"{dvar}S{self._parent._base_var}({list(k[0])}, {_varstr(k[1])})",
+    #                         commutative=False,
+    #                     )
+    #                     if k[0] != (1, 2)
+    #                     else 1,
+    #                 ),
+    #             ]
+    #     return sympy.sstr(sympy.Add(*pieces, evaluate=False), order="none")
 
-    def __repr__(self):
+    # def __repr__(self):
+    #     return str(self)
+    
+    # def _sympystr(self, *args):
+    #     return str(self)
+
+    def _print_Add(self,*args):
+        return "flagelnagel"
+
+    def _sympyrepr(self, *args):
         return str(self)
 
     def as_coefficients_dict(self):
@@ -204,7 +281,8 @@ class DoubleDictAlgebraElement(sympy.Expr):
     # def schub_coeff(self, perm):
     #     return self._dict.get(tuple(permtrim(perm)), 0)
 
-    def expand(self, deep=True):
+    def expand(self, deep=True, **kwargs):
+        print(f"feffa {deep}")
         if deep:
             ret = 0
             keys = list(self._dict.keys())
@@ -246,9 +324,9 @@ class DoubleDictAlgebraElement_basis:
         else:
             if cv is None:
                 cv = NoneVar
-                result = py.mult_poly({(1, 2): 1}, x, poly_ring(self._base_var))
+                result = py.mult_poly({(1, 2): 1}, sympify(x), poly_ring(self._base_var))
             else:
-                result = yz.mult_poly({(1, 2): 1}, x, poly_ring(self._base_var), poly_ring(cv))
+                result = yz.mult_poly({(1, 2): 1}, sympify(x), poly_ring(self._base_var), poly_ring(cv))
             elem = DoubleDictAlgebraElement({(k, cv): v for k, v in result.items()}, self)
         return elem
 
