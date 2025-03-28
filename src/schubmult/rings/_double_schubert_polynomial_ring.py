@@ -133,8 +133,8 @@ class DoubleSchubertAlgebraElement(Expr):
     is_commutative = True
     # default_coeff_var = "y"
 
-    def __new__(cls, _dict, parent, *args, **kwargs):
-        # print(f"{_dict} {parent=} {args=} {kwargs=}")
+    def __new__(cls,  _dict, parent, *args, **kwargs):
+        #print(f"{cls=} {_dict} {parent=} {args=} {kwargs=}")
         return DoubleSchubertAlgebraElement.__xnew_cached__(cls, sympy.Dict(_dict), parent, *args, **kwargs)
 
     def __hash__(self):
@@ -177,8 +177,9 @@ class DoubleSchubertAlgebraElement(Expr):
     # def __repr__(self):
 
     #    return sympy.Add(*self.args, evaluate=False).__repr__()
-    @classmethod
-    def __xnew__(cls, _class, _dict, parent, *args, **kwargs):
+    @staticmethod
+    def __xnew__(_class, _dict, parent, *args, **kwargs):
+        # print("Prong")
         # pieces = []
         # keys = list(_dict.keys())
         # #print("Freftoolnagababarmpy")
@@ -199,9 +200,9 @@ class DoubleSchubertAlgebraElement(Expr):
         obj._parent = parent
         return obj
 
-    @classmethod
+    @staticmethod
     @cache
-    def __xnew_cached__(cls, _class, _dict, parent, *args, **kwargs):
+    def __xnew_cached__(_class, _dict, parent, *args, **kwargs):
         return DoubleSchubertAlgebraElement.__xnew__(_class, _dict, parent, *args, **kwargs)
 
     def _symengine_(self):
@@ -212,7 +213,7 @@ class DoubleSchubertAlgebraElement(Expr):
         return self
 
     def _from_double_dict(self, _doubledict):
-        return self.__class__.__new__(self.__class__, _doubledict, self._parent, double_dict=True)
+        return DoubleSchubertAlgebraElement.__xnew__(self.__class__, _doubledict, self._parent, double_dict=True)
 
     def __add__(self, other):
         # print("ASFJASJ")
@@ -290,7 +291,7 @@ class DoubleSchubertAlgebraElement(Expr):
     # def _sympystr(self, *args):
     #     return str(self)
     def change_vars(self, cv):
-        return DoubleSchubertAlgebraElement(_mul_schub_dicts({((1, 2), cv): 1}, self._doubledict), self)
+        return self._from_double_dict(_mul_schub_dicts({((1, 2), cv): 1}, self._doubledict))
 
     def _print_Add(self, *_):
         return "flagelnagel"
