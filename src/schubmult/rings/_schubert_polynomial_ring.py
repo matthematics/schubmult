@@ -1,5 +1,6 @@
 from functools import cache
 
+import symengine
 import sympy
 from symengine import expand, sympify
 from sympy import Add, Basic, Mul
@@ -47,12 +48,9 @@ def _mul_schub_dicts(dict1, dict2):
 
     results = {}
 
-    # print(f"{by_var=}")
-
     for _vstr, _dict in by_var.items():
         this_dict = {}
         for k, v in dict2.items():
-            # print(f"{k=}")
             this_dict = add_perm_dict(this_dict, {(k1, _vstr): v1 * v for k1, v1 in yz.schubmult(_dict, k[0], utils.poly_ring(_vstr), utils.poly_ring(k[1])).items()})
         results.update(this_dict)
 
@@ -272,6 +270,9 @@ class DoubleSchubertAlgebraElement(Expr):
 
     # def _sympystr(self, *args):
     #     return str(self)
+    def _eval_simplify(self, *args, **kwargs):  # noqa: ARG002
+        return self._from_double_dict({k: sympify(sympy.simplify(v)) for k, v in self._doubledict.items()})
+
     def change_vars(self, cv):
         return self._from_double_dict(_mul_schub_dicts({((1, 2), cv): 1}, self._doubledict))
 
@@ -291,15 +292,11 @@ class DoubleSchubertAlgebraElement(Expr):
         return DSx([1, 2], coeff_var) * self
 
     def expand(self, *_a, **_):
-        # try:
         if isinstance(self, SchubAdd):
             return self.doit().expand()
         if isinstance(self, SchubMul):
             return self.doit().expand()
-        # except Exception as e:
-        # print(f"{self=} {type(self)=} {e=}")
-        # print(f"{self=} {self.is_Add=} {self.is_Mul=}")
-        return sympy.expand(Add(*[yz.schubmult({(1, 2): v}, k[0], utils.poly_ring(DSx._base_var), utils.poly_ring(k[1])).get((1, 2), 0) for k, v in self._doubledict.items()]))
+        return sympy.sympify(expand(symengine.Add(*[yz.schubmult({(1, 2): v}, k[0], utils.poly_ring(DSx._base_var), utils.poly_ring(k[1])).get((1, 2), 0) for k, v in self._doubledict.items()])))
 
 
 # None is faster to store
