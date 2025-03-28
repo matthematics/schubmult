@@ -3,7 +3,7 @@ from functools import cache
 from symengine import symarray
 from sympy import Dummy
 
-NoneVar = 0 #Dummy("None")
+NoneVar = Dummy("None")
 ZeroVar = 0
 
 @cache

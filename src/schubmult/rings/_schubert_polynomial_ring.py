@@ -229,9 +229,10 @@ class DoubleSchubertAlgebraElement(Expr):
                         return False
                 return True
             return False
+        # elem1 = self.change_vars(0)
+        # elem2 = DSx(other).change_vars(0)
         elem1 = self.change_vars(0)
         elem2 = DSx(other).change_vars(0)
-
         done = set()
         for k, v in elem1._doubledict.items():
             done.add(k)
@@ -286,7 +287,7 @@ class DoubleSchubertAlgebraElement(Expr):
         # will not allow zeros
         # print("ASFJAdsajdSJ")
 
-        return {k: v for k, v in self._doubledict.items() if sympy.expand(v) != 0}
+        return {k: v for k, v in self._doubledict.items() if expand(v) != 0}
 
     def normalize_coefficients(self, coeff_var):
         return DSx([1, 2], coeff_var) * self
