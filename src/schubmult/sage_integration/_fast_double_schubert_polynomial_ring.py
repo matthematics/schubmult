@@ -558,3 +558,6 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
 
 FastDoubleSchubertPolynomial = FastDoubleSchubertPolynomial_class
 FastDoubleSchubertPolynomialRing_base = FastDoubleSchubertPolynomialRing_xbasis
+
+from sympy import Basic
+

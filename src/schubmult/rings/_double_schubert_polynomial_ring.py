@@ -3,7 +3,9 @@ from functools import cache
 import sympy
 from symengine import sympify
 from sympy.printing.str import StrPrinter
-
+from sympy.core.expr import Expr
+from sympy.core.kind import NumberKind
+from sympy import Basic
 import schubmult.rings._schubert_polynomial_ring as spr
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
@@ -98,8 +100,8 @@ def _mul_schub_dicts(dict1, dict2):
 
 class DSchubSymbol(sympy.Symbol):
 
-    def __new__(cls, base_var, k):
-        return DSchubSymbol.__xnew_cached__(base_var, k)
+    def __new__(cls, base_var, k, *args, **kwargs):
+        return DSchubSymbol.__xnew_cached__(base_var, k, *args, **kwargs)
     
     @classmethod
     def __xnew__(cls, base_var, k):
@@ -111,18 +113,21 @@ class DSchubSymbol(sympy.Symbol):
     def __xnew_cached__(cls, base_var, k):
         return DSchubSymbol.__xnew__(base_var, k)
 
-class DoubleDictAlgebraElement(sympy.Expr):
+class DoubleDictAlgebraElement(Expr):
     """Algebra with sympy coefficients
     and a dict basis
     """
 
     _op_priority = 1e200
-    __slots__ = ("_dict", "_parent")
-
+    #__slots__ = ("_dict", "_parent")
+    _kind = NumberKind
+    is_Atom = True
+    is_commutative = True    
     # default_coeff_var = "y"
 
-    def __new__(cls, _dict, parent):
-        return DoubleDictAlgebraElement.__xnew_cached__(sympy.Dict(_dict), parent)
+    def __new__(cls, _dict, parent, *args, **kwargs):
+        #print(f"{_dict} {parent=} {args=} {kwargs=}")
+        return DoubleDictAlgebraElement.__xnew_cached__(sympy.Dict(_dict), parent)#, *args, **kwargs)
 
     def __hash__(self):
         return hash(self._dict)
@@ -133,7 +138,14 @@ class DoubleDictAlgebraElement(sympy.Expr):
     def _sympyrepr(self,printer):
         return self._sympystr(printer)
 
-    
+    @property
+    def _add_handler(self):
+        return SchubAdd
+
+    @property
+    def _mul_handler(self):
+        print("profilating")
+        return SchubMul
 
     def _sympystr(self, *args):
         printer = _def_printer
@@ -154,7 +166,8 @@ class DoubleDictAlgebraElement(sympy.Expr):
                 pieces += [
                     sympy.Mul(v,DSchubSymbol(self._parent._base_var, k))
                 ]
-        return printer._print_Add(sympy.Add(*pieces,evaluate=False),order='none')
+        
+        return printer._print(sympy.Add(*pieces,evaluate=False))
     
 
 
@@ -162,7 +175,7 @@ class DoubleDictAlgebraElement(sympy.Expr):
      
     #    return sympy.Add(*self.args, evaluate=False).__repr__()
     @classmethod
-    def __xnew__(cls, _dict, parent):
+    def __xnew__(cls, _dict, parent, *args, **kwargs):
         # pieces = []
         # keys = list(_dict.keys())
         # #print("Freftoolnagababarmpy")
@@ -174,18 +187,98 @@ class DoubleDictAlgebraElement(sympy.Expr):
         #             sympy.Mul(v,DSchubSymbol(parent._base_var, k))
         #         ]
         #print(f"{pieces=}")
-        obj = sympy.Expr.__new__(cls)
+        # print(f"{args=} {kwargs=} {_dict=} {parent=}")
+        # print(f"{args=} {kwargs=}")
+        obj = Expr.__new__(cls,_dict,parent, *args, **kwargs)
         #obj.make_args(pieces)
         #obj.args = pieces
         obj._dict = _dict
         obj._parent = parent
         return obj
 
-    is_Add = True
+    #def _eval_mul(self,*args):
+        # print(f"Fipple {args=}")
+    # @property
+    # def _mul_handler(self):
+    #     return DSchubAdd
+
+    #is_Add = True
+    #is_Mul = True
+    # is_Add
+# is_AlgebraicNumber
+# is_Atom
+# is_Boolean
+# is_Derivative
+# is_Dummy
+# is_Equality
+# is_Float
+# is_Function
+# is_Indexed
+# is_Integer
+# is_MatAdd
+# is_MatMul
+# is_Matrix
+# is_Mul
+# is_Not
+# is_Number
+# is_NumberSymbol
+# is_Order
+# is_Piecewise
+# is_Point
+# is_Poly
+# is_Pow
+# is_Rational
+# is_Relational
+# is_Symbol
+# is_Vector
+# is_Wild
+# is_algebraic
+# is_algebraic_expr
+# is_antihermitian
+# is_commutative
+# is_comparable
+# is_complex
+# is_composite
+# is_constant
+# is_even
+# is_extended_negative
+# is_extended_nonnegative
+# is_extended_nonpositive
+# is_extended_nonzero
+# is_extended_positive
+# is_extended_real
+# is_finite
+# is_hermitian
+# is_hypergeometric
+# is_imaginary
+# is_infinite
+# is_integer
+# is_irrational
+# is_meromorphic
+# is_negative
+# is_noninteger
+# is_nonnegative
+# is_nonpositive
+# is_nonzero
+# is_number
+# is_odd
+# is_polar
+# is_polynomial
+# is_positive
+# is_prime
+# is_rational
+# is_rational_function
+# is_real
+# is_scalar
+# is_symbol
+# is_transcendental
+# is_zero
+    #is_polynomial = True
+    #is_Symbol = True
     @classmethod
     @cache
-    def __xnew_cached__(cls, _dict, parent):
-        return DoubleDictAlgebraElement.__xnew__(_dict, parent)
+    def __xnew_cached__(cls, _dict, parent, *args, **kwargs):
+        return DoubleDictAlgebraElement.__xnew__(_dict, parent, *args, **kwargs)
 
     def _symengine_(self):
         return NotImplemented
@@ -287,8 +380,12 @@ class DoubleDictAlgebraElement(sympy.Expr):
     # def schub_coeff(self, perm):
     #     return self._dict.get(tuple(permtrim(perm)), 0)
 
+    def _eval_expand_mul(self,*args,**kwargs):
+        print(f"Yay happy {args=} {kwargs=}")
+        return self
+
     def expand(self, deep=True, **kwargs):
-        print(f"feffa {deep}")
+        # print(f"feffa {deep}")
         if deep:
             ret = 0
             keys = list(self._dict.keys())
@@ -300,8 +397,10 @@ class DoubleDictAlgebraElement(sympy.Expr):
         return sympy.sympify(ret)
 
 
+
+
 # None is faster to store
-class DoubleDictAlgebraElement_basis:
+class DoubleDictAlgebraElement_basis(Basic):
     coeff_varname = "y"
 
     def __init__(self, base_var="x"):
@@ -345,6 +444,81 @@ class DoubleDictAlgebraElement_basis:
     #         return True
     #     return False
 
+def _domul(*args):
+    # print(f"domul {args=}")
+    ret = 1
+    for arg in args:
+        if arg.is_Mul:
+            for arg0 in arg.args:
+                ret *= arg0
+        else:
+            ret *= arg    
+    return ret
+
+def _doadd(*args):
+    ret = 0
+    # print(f"doadd {args=}")
+    for arg in args:
+        if arg.is_Add:
+            for arg0 in arg.args:
+                ret += arg0
+        else:
+            ret += arg
+    # print(f"{ret=}")
+    return ret
+
+
+def get_postprocessor(cls):
+    #print(f"{cls=} hey baby")
+    if cls is Mul:
+        return _domul
+    if cls is Add:
+        return _doadd
+    return None
+
+from sympy.core.add import Add, add
+from sympy.core.mul import Mul, mul
+
+
+class SchubAdd(Add):
+    def __new__(cls, *args, **kwargs):
+        if len(args) == 0:
+            return 0
+        res =  args[0]
+        for arg in args[1:]:
+            res = res + arg
+        return res
+
+    def doit(*args, **kwargs):
+        print("FAISN")
+
+class SchubMul(Mul):
+    def __new__(cls, *args, **kwargs):
+        if len(args) == 0:
+            return 1
+        res =  args[0]
+        for arg in args[1:]:
+            res = res * arg
+        return res
+    
+    def doit(*args, **kwargs):
+        print("FAISN")
+
+Basic._constructor_postprocessor_mapping[DoubleDictAlgebraElement] = {
+    "Mul": [get_postprocessor(Mul)],
+    "Add": [get_postprocessor(Add)],
+}
+
+# add.register_handlerclass((Expr, SchubAdd), SchubAdd)
+# mul.register_handlerclass((Expr, SchubMul), SchubMul)
+
 
 DSx = DoubleDictAlgebraElement_basis()
 DoubleSchubertPolynomial = DoubleDictAlgebraElement
+
+# def test(*args,**kwargs):
+#     print(f"test {args=} {kwargs=}")
+# from sympy import Basic
+# Basic._constructor_postprocessor_mapping[DoubleDictAlgebraElement] = {'Mul': test}
+
+# print(f"{Basic._constructor_postprocessor_mapping=}")
