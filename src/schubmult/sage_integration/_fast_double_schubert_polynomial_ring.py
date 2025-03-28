@@ -23,7 +23,7 @@ from sympy import sympify
 #     FastSchubertPolynomialRing_base,
 #     FastSchubertPolynomialRing,
 #     FastSchubertPolynomial,
-# )
+# )as
 import schubmult.sage_integration._fast_schubert_polynomial_ring as bork
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_q_double as qyz
@@ -558,6 +558,3 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
 
 FastDoubleSchubertPolynomial = FastDoubleSchubertPolynomial_class
 FastDoubleSchubertPolynomialRing_base = FastDoubleSchubertPolynomialRing_xbasis
-
-from sympy import Basic
-

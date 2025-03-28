@@ -1,4 +1,4 @@
-from ._double_schubert_polynomial_ring import DoubleSchubertPolynomial, DSx
-from ._schubert_polynomial_ring import Schub, SchubertPolynomial
+from ._double_schubert_polynomial_ring import DoubleSchubertAlgebraElement, DoubleSchubertPolynomial, DSx
+from ._schubert_polynomial_ring import SchubertAlgebraElement, SchubertPolynomial, Sx
 
-__all__ = ["DSx", "DoubleSchubertPolynomial", "Schub", "SchubertPolynomial"]
+__all__ = ["DSx", "DoubleSchubertAlgebraElement", "DoubleSchubertPolynomial", "SchubertAlgebraElement", "SchubertPolynomial", "Sx"]
