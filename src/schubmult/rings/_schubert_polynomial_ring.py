@@ -344,10 +344,10 @@ class DoubleSchubertAlgebraElement(Expr):
 
     def expand(self, *_a, **_):
         #try:
-        if self.is_Add:
-            return self._evaluate()
-        elif self.is_Mul:
-            return self._evaluate()
+        if isinstance(self, SchubAdd):
+            return self._evaluate().expand()
+        if isinstance(self, SchubMul):
+            return self._evaluate().expand()
         #except Exception as e:
             # print(f"{self=} {type(self)=} {e=}")
         # print(f"{self=} {self.is_Add=} {self.is_Mul=}")
