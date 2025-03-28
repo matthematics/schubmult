@@ -9,8 +9,8 @@ def test_schub_expand():
     from sympy import symbols, sympify
     x_1, x_2 = symbols("x_1 x_2")
     assert Sx([3,1,2]).expand().equals(x_1**2)
-    assert (Sx([5,3,4,1,2]).expand() * Sx([4,1,5,2,3]).expand() - Sx([5,3,4,1,2]) * Sx([4,1,5,2,3])).equals(sympify(0))
-    assert (x_1*Sx([3,4,1,2])).equals(x_1**3*x_2**2)
+    assert (Sx([5,3,4,1,2]).expand() * Sx([4,1,5,2,3]).expand() - Sx([5,3,4,1,2]) * Sx([4,1,5,2,3])).expand().equals(sympify(0))
+    assert (x_1*Sx([3,4,1,2])).expand().equals(x_1**3*x_2**2)
 
 # def test_coproduct():
 #     """
@@ -36,4 +36,4 @@ def test_associative():
     """
     from schubmult.rings import Sx
     perm1, perm2, perm3 = [6,7,1,5,3,4,2], [1,3,2,7,6,5,4], [3,7,1,6,4,2,5]
-    assert ((Sx(perm1)*Sx(perm2))*Sx(perm3)).equals(Sx(perm1)*(Sx(perm2)*Sx(perm3)))
+    assert ((Sx(perm1)*Sx(perm2))*Sx(perm3)).equals((Sx(perm1)*(Sx(perm2)*Sx(perm3))))
