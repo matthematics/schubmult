@@ -1,7 +1,6 @@
 cachetools
 psutil
 PuLP>=2.7.0
-sagemath_standard==9.5
 setuptools
 sortedcontainers
 symengine>=0.14.0
