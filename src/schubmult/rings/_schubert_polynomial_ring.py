@@ -3,6 +3,8 @@ from functools import cache
 import sympy
 from symengine import sympify
 from sympy import Add, Basic, Mul
+from sympy.core.add import add
+from sympy.core.mul import mul
 from sympy.core.expr import Expr
 from sympy.core.kind import NumberKind
 from sympy.printing.str import StrPrinter
@@ -222,45 +224,45 @@ class DoubleSchubertAlgebraElement(Expr):
     def _from_double_dict(self, _doubledict):
         return DoubleSchubertAlgebraElement(_doubledict, self._parent)
 
-    def __add__(self, other):
-        # print("ASFJASJ")
-        # print(f"addwinky {self.__class__=} {self=} {other=}")
-        # print(f"flarfknockle {self._doubledict=} {self._parent(other)._doubledict=} {other=}")
-        return SchubAdd(self, self._parent(other))
-        #return self._from_double_dict(ret)
+    # def __add__(self, other):
+    #     # print("ASFJASJ")
+    #     # print(f"addwinky {self.__class__=} {self=} {other=}")
+    #     # print(f"flarfknockle {self._doubledict=} {self._parent(other)._doubledict=} {other=}")
+    #     return SchubAdd(self, self._parent(other))
+    #     #return self._from_double_dict(ret)
 
-    def __radd__(self, other):
-        # print("is wiz doing radd")
-        #return self._from_double_dict(add_perm_dict(self._parent(other)._doubledict, self._doubledict))
-        return SchubAdd(self._parent(other),self)
+    # def __radd__(self, other):
+    #     # print("is wiz doing radd")
+    #     #return self._from_double_dict(add_perm_dict(self._parent(other)._doubledict, self._doubledict))
+    #     return SchubAdd(self._parent(other),self)
 
-    def __sub__(self, other):
-        # print("ASFJAdsajdSJ")
-        return SchubAdd(self,-self._parent(other))
-        #return self._from_double_dict(add_perm_dict(self._doubledict, {k: -v for k, v in self._parent(other)._doubledict.items()}))
+    # def __sub__(self, other):
+    #     # print("ASFJAdsajdSJ")
+    #     return SchubAdd(self,-self._parent(other))
+    #     #return self._from_double_dict(add_perm_dict(self._doubledict, {k: -v for k, v in self._parent(other)._doubledict.items()}))
 
-    def __rsub__(self, other):
-        # print("ASFJAdsajdSJ")
-        # return self._from_double_dict(add_perm_dict(self._parent(other)._doubledict, {k: -v for k, v in self._doubledict.items()}))
-        return SchubAdd(self._parent(other), -self)
+    # def __rsub__(self, other):
+    #     # print("ASFJAdsajdSJ")
+    #     # return self._from_double_dict(add_perm_dict(self._parent(other)._doubledict, {k: -v for k, v in self._doubledict.items()}))
+    #     return SchubAdd(self._parent(other), -self)
 
-    def __neg__(self):
-        if self.is_Add:
-            return SchubAdd( *self.args)
-        if self.is_Mul:
-            return SchubMul( -self.args[0], *self.args[1:])
-        return self._from_double_dict({k: -v for k, v in self._doubledict.items()})
+    # def __neg__(self):
+    #     if self.is_Add:
+    #         return SchubAdd( *self.args)
+    #     if self.is_Mul:
+    #         return SchubMul( -self.args[0], *self.args[1:])
+    #     return self._from_double_dict({k: -v for k, v in self._doubledict.items()})
 
-    def __mul__(self, other):
-        # print("ASFJAdsajdSJ")
-        # print(f"mulwinky {self.__class__=} {self=} {other=}")
-        return SchubMul(self,self._parent(other))
+    # def __mul__(self, other):
+    #     # print("ASFJAdsajdSJ")
+    #     # print(f"mulwinky {self.__class__=} {self=} {other=}")
+    #     return SchubMul(self,self._parent(other))
 
-    def __rmul__(self, other):
-        # print("ASFJAdsajdSJ")
-        # print(f"rmulwinky {self.__class__=} {self=} {other=}")
-        #return self._from_double_dict(_mul_schub_dicts(self._parent(other)._doubledict, self._doubledict))
-        return SchubMul(self._parent(other),self)
+    # def __rmul__(self, other):
+    #     # print("ASFJAdsajdSJ")
+    #     # print(f"rmulwinky {self.__class__=} {self=} {other=}")
+    #     #return self._from_double_dict(_mul_schub_dicts(self._parent(other)._doubledict, self._doubledict))
+    #     return SchubMul(self._parent(other),self)
 
     def __eq__(self, other):
         # elem1 = self.change_vars("y")  # count vars?
@@ -345,9 +347,9 @@ class DoubleSchubertAlgebraElement(Expr):
     def expand(self, *_a, **_):
         #try:
         if isinstance(self, SchubAdd):
-            return self._evaluate().expand()
+            return self.doit().expand()
         if isinstance(self, SchubMul):
-            return self._evaluate().expand()
+            return self.doit().expand()
         #except Exception as e:
             # print(f"{self=} {type(self)=} {e=}")
         # print(f"{self=} {self.is_Add=} {self.is_Mul=}")
@@ -412,35 +414,19 @@ def _do_schub_add(parent, a,b):
 
 def _domul(*args):
     # print(f"domul {args=}")
-    ret = 1
-    for arg in args:
-        if arg.is_Mul:
-            for arg0 in arg.args:
-                ret *= arg0
-        else:
-            ret *= arg
-    return ret
+    return SchubMul(*args)
 
 
 def _doadd(*args):
-    ret = 0
-    # print(f"doadd {args=}")
-    for arg in args:
-        if arg.is_Add:
-            for arg0 in arg.args:
-                ret += arg0
-        else:
-            ret += arg
-    # print(f"{ret=}")
-    return ret
+    return SchubAdd(*args)
 
 
 def get_postprocessor(cls):
     # print(f"{cls=} hey baby")
     if cls is Mul:
-        return _domul
+        return lambda expr: SchubMul(*expr.args, evaluate=True).doit()
     if cls is Add:
-        return _doadd
+        return lambda expr: SchubAdd(*expr.args, evaluate=True).doit()
     return None
 
 
@@ -448,7 +434,7 @@ def get_postprocessor(cls):
     #     return _def_printer._print(f"SchubMul({self.args}")
 
     # @classmethod
-    # def _evaluate(cls, expr):
+    # def doit(cls, expr):
     #     # print("Mul pip monger")
     # def __new__(cls, *args, **_):
     #     if len(args) == 0:
@@ -467,10 +453,10 @@ def get_postprocessor(cls):
     #     return str(self)
 
 
-Basic._constructor_postprocessor_mapping[DoubleSchubertAlgebraElement] = {
-    "Mul": [get_postprocessor(Mul)],
-    "Add": [get_postprocessor(Add)],
-}
+# Basic._constructor_postprocessor_mapping[DoubleSchubertAlgebraElement] = {
+#     "Mul": [get_postprocessor(Mul)],
+#     "Add": [get_postprocessor(Add)],
+# }
 
 # add.register_handlerclass((Expr, SchubAdd), SchubAdd)
 # mul.register_handlerclass((Expr, SchubMul), SchubMul)
@@ -568,14 +554,14 @@ DoubleSchubertPolynomial = DoubleSchubertAlgebraElement
 
 class SchubAdd(DoubleSchubertAlgebraElement, Add):
     is_Add = True
-    def __new__(cls, *args, evaluate=False, check=None, _sympify=True, order='none',parent=DSx):
+    def __new__(cls, *args, evaluate=True, check=None, _sympify=True, order='none',parent=DSx):
         #print(f"{args=}")                
         # args = Add.flatten(args)
         # print(f"{args=}")
         # args, _, _ = Add.flatten(list(args))
         # print(f"Flattened butter {args=}")
         obj = Add.__new__(cls, *args, evaluate=evaluate, _sympify=_sympify)
-        obj._parent  = parent
+        # obj._parent  = parent
         if isinstance(parent, DoubleSchubertAlgebraElement):
             raise Exception(f"{obj=} {obj.args=} {parent=} {cls=} {args=}")
         # print(f"proff {obj=} {parent=}")
@@ -584,13 +570,14 @@ class SchubAdd(DoubleSchubertAlgebraElement, Add):
         # print(f"{evaluate=}")
         
         if evaluate:
-            return obj._evaluate()
+            return obj.doit()
         
         # print(f"a obj ret {obj=}")
         # obj._doubledict = args[0]._doubledict
         return obj
 
-    def _evaluate(self):
+    def doit(self):
+        parent = DSx
         # print(f"a {self=} {type(self._parent)=}")
         # print(f"start add {self.args=}")
         try:
@@ -601,11 +588,11 @@ class SchubAdd(DoubleSchubertAlgebraElement, Add):
         for arg in self.args[1:]:
             # print(f"oh {arg=} flop")                
             if arg.is_Add or arg.is_Mul:
-                arg = arg._evaluate()
+                arg = arg.doit()
                 # print(f"oh {arg=} again")                
-            ret = _do_schub_add(self._parent, ret, arg)
+            ret = _do_schub_add(parent, ret, arg)
             # print(f"ohafs {ret=}")
-        ret._parent = self._parent
+        #ret._parent = self._parent
         # print(f"a {ret=}")
         return ret
     
@@ -616,26 +603,27 @@ class SchubAdd(DoubleSchubertAlgebraElement, Add):
 
 class SchubMul(DoubleSchubertAlgebraElement, Mul):    
     is_Mul = True
-    def __new__(cls, *args, order='none', evaluate=False, check=None, _sympify=True, parent=DSx):
+    def __new__(cls, *args, order='none', evaluate=True, check=None, _sympify=True, parent=DSx):
         # print(f"flawboo {args=}")
         # print(f"{type(args)=}")
         args, a, b = Mul.flatten(list(args))
         # print(f"{args=} {a=} {b=} {parent=}")
         obj = Mul.__new__(cls, *args, evaluate=evaluate, _sympify=True)
-        obj._parent = parent
+        # obj._parent = parent
         if isinstance(parent, DoubleSchubertAlgebraElement):
             raise Exception(f"{obj.args=} {cls=} {args=}")
         # obj._doubledict = ret._doubledict
         # obj._parent = ret._parent
         
         if evaluate:
-            return obj._evaluate()
+            return obj.doit()
         # obj._doubledict = args[0]._doubledict
         # print(f"retting {obj=}")
         # print(f"{evaluate=}")
         return obj
 
-    def _evaluate(self):
+    def doit(self):
+        parent = DSx
         # print(f"m {self=} {type(self._parent)=}")
         try:
             ret = self.args[0]
@@ -646,10 +634,18 @@ class SchubMul(DoubleSchubertAlgebraElement, Mul):
         for arg in self.args[1:]:
             # print(f"going {arg=}")
             if arg.is_Add or arg.is_Mul:
-                arg = arg._evaluate()
+                arg = arg.doit()
                 # print(f"oh {arg=} flasaop")                
-            ret = _do_schub_mul(self._parent, ret, arg)
+            ret = _do_schub_mul(parent, ret, arg)
             # print(f"moving on {ret=}")
         # print(f"m {ret=}")
-        ret._parent = self._parent
+        #ret._parent = self._parent
         return ret
+
+Basic._constructor_postprocessor_mapping[DoubleSchubertAlgebraElement] = {
+    "Mul": [get_postprocessor(Mul)],
+    "Add": [get_postprocessor(Add)],
+}
+
+# add.register_handlerclass((Add, SchubAdd), SchubAdd)
+# mul.register_handlerclass((Mul, SchubMul), SchubMul)
