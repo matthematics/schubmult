@@ -1,16 +1,19 @@
 from functools import cache
 
 import sympy
+from symengine import sympify
+from sympy.printing.str import StrPrinter
 
 import schubmult.rings._schubert_polynomial_ring as spr
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
-from symengine import sympify
+
 # from sympy.core.operations import AssocOp
 from schubmult.perm_lib import add_perm_dict, inv, permtrim
 
 from ._utils import NoneVar, ZeroVar, poly_ring
 
+_def_printer = StrPrinter({"order":'none'})
 # numpy arrays
 # sympy parsing
 # quantum
@@ -130,7 +133,10 @@ class DoubleDictAlgebraElement(sympy.Expr):
     def _sympyrepr(self,printer):
         return self._sympystr(printer)
 
-    def _sympystr(self, printer):
+    
+
+    def _sympystr(self, *args):
+        printer = _def_printer
         if not self:
             return printer._print(0)
         # ring = self.ring
