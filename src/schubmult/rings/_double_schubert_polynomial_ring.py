@@ -192,7 +192,7 @@ class DoubleSchubertAlgebraElement(Expr):
         # print(f"{pieces=}")
         # print(f"{args=} {kwargs=} {_dict=} {parent=}")
         # print(f"{args=} {kwargs=}")
-        obj = Expr.__new__(_class, _dict, parent, *args, **kwargs)
+        obj = Expr.__new__(_class, _dict, parent)
         # obj.make_args(pieces)
         # obj.args = pieces
         obj._doubledict = _dict
@@ -250,19 +250,19 @@ class DoubleSchubertAlgebraElement(Expr):
         return self._from_double_dict(_mul_schub_dicts(self._parent(other)._doubledict, self._doubledict))
 
     def __eq__(self, other):
-        elem1 = self.change_vars("y")  # count vars?
-        elem2 = self._parent(other).change_vars("y")
-        done = set()
-        for k, v in elem1._doubledict.items():
-            done.add(k)
-            if sympy.expand(v - elem2._doubledict.get(k, 0)) != 0:
-                return False
-        for k, v in elem2._doubledict.items():
-            if k in done:
-                continue
-            if sympy.expand(v - elem1._doubledict.get(k, 0)) != 0:
-                return False
-        return True
+        # elem1 = self.change_vars("y")  # count vars?
+        # elem2 = self._parent(other).change_vars("y")
+        # done = set()
+        # for k, v in elem1._doubledict.items():
+        #     done.add(k)
+        #     if expand(v - elem2._doubledict.get(k, 0)) != 0:
+        #         return False
+        # for k, v in elem2._doubledict.items():
+        #     if k in done:
+        #         continue
+        #     if expand(v - elem1._doubledict.get(k, 0)) != 0:
+        #         return False
+        return sympy.expand(self - other) == 0
 
     # def __str__(self):
     #     pieces = []
@@ -307,16 +307,8 @@ class DoubleSchubertAlgebraElement(Expr):
     def normalize_coefficients(self, coeff_var):
         return self._parent([1, 2], coeff_var) * self
 
-    def expand(self, deep=True, **_):
-        if deep:
-            ret = 0
-            keys = list(self._doubledict.keys())
-            for k in sorted(keys):
-                v = self._doubledict[k]
-                ret += yz.schubmult({(1, 2): v}, k[0], utils.poly_ring(self._parent._base_var), utils.poly_ring(k[1])).get((1, 2), 0)
-        else:
-            ret = DoubleSchubertAlgebraElement({k: sympy.expand(v) for k, v in self._doubledict.items()}, self._parent)
-        return sympy.sympify(ret)
+    def expand(self, *_a, **_):
+        return sympy.expand(Add(*[yz.schubmult({(1, 2): v}, k[0], utils.poly_ring(self._parent._base_var), utils.poly_ring(k[1])).get((1, 2), 0) for k, v in self._doubledict.items()]))
 
 
 # None is faster to store
@@ -343,7 +335,6 @@ class DoubleSchubertAlgebraElement_basis(Basic):
         #         return self(x.expand(), cv)
         elif isinstance(x, DoubleSchubertAlgebraElement):
             if x._parent._base_var == self._base_var:
-                x = x.change_vars(0)
                 elem = DoubleSchubertAlgebraElement(x._doubledict, self)
             else:
                 return self(x.expand(), cv)

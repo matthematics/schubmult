@@ -35,20 +35,20 @@ class SchubertAlgebraElement(dsb.DoubleSchubertAlgebraElement):
         # obj._doubledict = sympy.Dict(_doubledict)
         return obj
 
-    def __eq__(self, other):
-        elem1 = self.change_vars(0)  # count vars?
-        elem2 = self._parent(other).change_vars(0)
-        done = set()
-        for k, v in elem1._doubledict.items():
-            done.add(k)
-            if sympy.expand(v - elem2._doubledict.get(k, 0)) != 0:
-                return False
-        for k, v in elem2._doubledict.items():
-            if k in done:
-                continue
-            if sympy.expand(v - elem1._doubledict.get(k, 0)) != 0:
-                return False
-        return True
+    # def __eq__(self, other):
+    #     elem1 = self.change_vars(0)  # count vars?
+    #     elem2 = self._parent(other).change_vars(0)
+    #     done = set()
+    #     for k, v in elem1._doubledict.items():
+    #         done.add(k)
+    #         if expand(v - elem2._doubledict.get(k, 0)) != 0:
+    #             return False
+    #     for k, v in elem2._doubledict.items():
+    #         if k in done:
+    #             continue
+    #         if expand(v - elem1._doubledict.get(k, 0)) != 0:
+    #             return False
+    #     return True
 
 
 class SchubertAlgebraElement_basis(dsb.DoubleSchubertAlgebraElement_basis):
