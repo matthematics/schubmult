@@ -5,5 +5,5 @@ sagemath_standard==9.5
 setuptools
 sortedcontainers
 symengine>=0.14.0
-sympy>=1.12
+sympy>=1.13.3
 numpy
