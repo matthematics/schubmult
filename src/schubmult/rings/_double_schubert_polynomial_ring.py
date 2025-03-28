@@ -113,7 +113,7 @@ class DSchubSymbol(sympy.Symbol):
     def __xnew_cached__(cls, base_var, k):
         return DSchubSymbol.__xnew__(base_var, k)
 
-class DoubleDictAlgebraElement(Expr):
+class DoubleSchubertAlgebraElement(Expr):
     """Algebra with sympy coefficients
     and a dict basis
     """
@@ -127,7 +127,7 @@ class DoubleDictAlgebraElement(Expr):
 
     def __new__(cls, _dict, parent, *args, **kwargs):
         #print(f"{_dict} {parent=} {args=} {kwargs=}")
-        return DoubleDictAlgebraElement.__xnew_cached__(sympy.Dict(_dict), parent)#, *args, **kwargs)
+        return DoubleSchubertAlgebraElement.__xnew_cached__(sympy.Dict(_dict), parent)#, *args, **kwargs)
 
     def __hash__(self):
         return hash(self._dict)
@@ -278,7 +278,7 @@ class DoubleDictAlgebraElement(Expr):
     @classmethod
     @cache
     def __xnew_cached__(cls, _dict, parent, *args, **kwargs):
-        return DoubleDictAlgebraElement.__xnew__(_dict, parent, *args, **kwargs)
+        return DoubleSchubertAlgebraElement.__xnew__(_dict, parent, *args, **kwargs)
 
     def _symengine_(self):
         return NotImplemented
@@ -289,37 +289,37 @@ class DoubleDictAlgebraElement(Expr):
 
     def __add__(self, other):
         # print("ASFJASJ")
-        return DoubleDictAlgebraElement(add_perm_dict(self._dict, self._parent(other)._dict), self._parent)
+        return DoubleSchubertAlgebraElement(add_perm_dict(self._dict, self._parent(other)._dict), self._parent)
 
     def __radd__(self, other):
         # print("ASFJAdsajdSJ")
 
-        return DoubleDictAlgebraElement(add_perm_dict(self._parent(other)._dict, self._dict), self._parent)
+        return DoubleSchubertAlgebraElement(add_perm_dict(self._parent(other)._dict, self._dict), self._parent)
 
     def __sub__(self, other):
         # print("ASFJAdsajdSJ")
 
-        return DoubleDictAlgebraElement(add_perm_dict(self._dict, {k: -v for k, v in self._parent(other)._dict.items()}), self._parent)
+        return DoubleSchubertAlgebraElement(add_perm_dict(self._dict, {k: -v for k, v in self._parent(other)._dict.items()}), self._parent)
 
     def __rsub__(self, other):
         # print("ASFJAdsajdSJ")
 
-        return DoubleDictAlgebraElement(add_perm_dict(self._parent(other)._dict, {k: -v for k, v in self._dict.items()}), self._parent)
+        return DoubleSchubertAlgebraElement(add_perm_dict(self._parent(other)._dict, {k: -v for k, v in self._dict.items()}), self._parent)
 
     def __neg__(self):
         # print("ASFJAdsajdSJ")
 
-        return DoubleDictAlgebraElement({k: -v for k, v in self._dict.items()}, self._parent)
+        return DoubleSchubertAlgebraElement({k: -v for k, v in self._dict.items()}, self._parent)
 
     def __mul__(self, other):
         # print("ASFJAdsajdSJ")
 
-        return DoubleDictAlgebraElement(_mul_schub_dicts(self._dict, self._parent(other)._dict), self._parent)
+        return DoubleSchubertAlgebraElement(_mul_schub_dicts(self._dict, self._parent(other)._dict), self._parent)
 
     def __rmul__(self, other):
         # print("ASFJAdsajdSJ")
 
-        return DoubleDictAlgebraElement(_mul_schub_dicts(self._parent(other)._dict, self._dict), self._parent)
+        return DoubleSchubertAlgebraElement(_mul_schub_dicts(self._parent(other)._dict, self._dict), self._parent)
 
     def __eq__(self, other):
         elem1 = self._parent(self, "y")  # count vars?
@@ -393,14 +393,14 @@ class DoubleDictAlgebraElement(Expr):
                 v = self._dict[k]
                 ret += yz.schubmult({(1, 2): v}, k[0], poly_ring(self._parent._base_var), poly_ring(k[1])).get((1, 2), 0)
         else:
-            ret = DoubleDictAlgebraElement({k: sympy.expand(v) for k, v in self._dict.items()}, self._parent)
+            ret = DoubleSchubertAlgebraElement({k: sympy.expand(v) for k, v in self._dict.items()}, self._parent)
         return sympy.sympify(ret)
 
 
 
 
 # None is faster to store
-class DoubleDictAlgebraElement_basis(Basic):
+class DoubleSchubertAlgebraElement_basis(Basic):
     coeff_varname = "y"
 
     def __init__(self, base_var="x"):
@@ -412,16 +412,16 @@ class DoubleDictAlgebraElement_basis(Basic):
         if isinstance(x, list) or isinstance(x, tuple):
             if cv is None:
                 cv = "y"
-            elem = DoubleDictAlgebraElement({(tuple(permtrim(list(x))), cv): 1}, self)
-        elif isinstance(x, DoubleDictAlgebraElement):
+            elem = DoubleSchubertAlgebraElement({(tuple(permtrim(list(x))), cv): 1}, self)
+        elif isinstance(x, DoubleSchubertAlgebraElement):
             if x._parent._base_var == self._base_var:
-                elem = DoubleDictAlgebraElement(x._dict, self)
+                elem = DoubleSchubertAlgebraElement(x._dict, self)
             else:
                 return self(x.expand(), cv)
         elif isinstance(x, spr.SchubertPolynomial):
             if x._parent._base_var == self._base_var:
                 elem_dict = {(x, NoneVar): v for k, v in x._dict.items()}
-                elem = DoubleDictAlgebraElement(elem_dict, self)
+                elem = DoubleSchubertAlgebraElement(elem_dict, self)
                 if cv is not None:
                     elem = self([1, 2], cv) * elem
             else:
@@ -432,7 +432,7 @@ class DoubleDictAlgebraElement_basis(Basic):
                 result = py.mult_poly({(1, 2): 1}, sympify(x), poly_ring(self._base_var))
             else:
                 result = yz.mult_poly({(1, 2): 1}, sympify(x), poly_ring(self._base_var), poly_ring(cv))
-            elem = DoubleDictAlgebraElement({(k, cv): v for k, v in result.items()}, self)
+            elem = DoubleSchubertAlgebraElement({(k, cv): v for k, v in result.items()}, self)
         return elem
 
     # def _coerce_map_from(self, S):
@@ -504,7 +504,7 @@ class SchubMul(Mul):
     def doit(*args, **kwargs):
         print("FAISN")
 
-Basic._constructor_postprocessor_mapping[DoubleDictAlgebraElement] = {
+Basic._constructor_postprocessor_mapping[DoubleSchubertAlgebraElement] = {
     "Mul": [get_postprocessor(Mul)],
     "Add": [get_postprocessor(Add)],
 }
@@ -513,12 +513,12 @@ Basic._constructor_postprocessor_mapping[DoubleDictAlgebraElement] = {
 # mul.register_handlerclass((Expr, SchubMul), SchubMul)
 
 
-DSx = DoubleDictAlgebraElement_basis()
-DoubleSchubertPolynomial = DoubleDictAlgebraElement
+DSx = DoubleSchubertAlgebraElement_basis()
+DoubleSchubertPolynomial = DoubleSchubertAlgebraElement
 
 # def test(*args,**kwargs):
 #     print(f"test {args=} {kwargs=}")
 # from sympy import Basic
-# Basic._constructor_postprocessor_mapping[DoubleDictAlgebraElement] = {'Mul': test}
+# Basic._constructor_postprocessor_mapping[DoubleSchubertAlgebraElement] = {'Mul': test}
 
 # print(f"{Basic._constructor_postprocessor_mapping=}")
