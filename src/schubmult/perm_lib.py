@@ -30,64 +30,7 @@ def uncode(cd):
     for i in range(len(cd2)):
         perm += [fullperm.pop(cd2[i])]
     perm += [fullperm[0]]
-    return perm
-
-
-def args_as_permutations(func):
-    def wrapper(*args):
-        perm_args = []
-        for arg in args:
-            if isinstance(arg, Permutation):
-                perm_args += [arg]
-            elif isinstance(arg,list) or isinstance(arg, tuple):
-                perm_args += [Permutation.from_sequence(arg)]
-        return func(*perm_args)
-    return wrapper
-
-def args_as_list(func):
-    def wrapper(*args):
-        perm_args = [*args]
-        # for arg in args:
-        #     if isinstance(arg, Permutation):
-        #         perm_args += [list(arg)]
-        #     else:
-        #         perm_args += [arg]
-        for i in range(len(perm_args)):
-            if isinstance(perm_args[i], Permutation):
-                perm_args[i] = [a +1 for a in list(perm_args[i])]
-        return func(*perm_args)
-    return wrapper
-
-def args_as_is_ret_permutation(func):
-    def wrapper(*args):
-        ret = func(*args)
-        return Permutation.from_sequence(ret)
-    return wrapper
-
-# def args_as_permutations_ret_tuple(func):
-#     def wrapper(*args):
-#         perm_args = []
-#         for arg in args:
-#             if isinstance(arg, Permutation):
-#                 perm_args += [arg]
-#             elif isinstance(arg,list) or isinstance(arg, tuple):
-#                 perm_args += [Permutation.from_sequence(arg)]
-#         return tuple(uncode(func(*perm_args)))
-#     return wrapper
-
-#
-# def inv(perm: Permutation):
-#     return perm.inversions()
-
-# class Perm:
-#     def __init__(self, L):
-#         self._L = tuple(permtrim(L))
-
-#     def __hash__(self):
-#         return hash(self._L)
-
-#     def __cal
-
+    return to_permutation(perm)
 
 @cache
 def inv(perm: Permutation):
@@ -150,27 +93,28 @@ def code(perm):
 #     return result
 
 
-@cache
-def get_permutation(tup):
-    return Permutation.from_sequence(tup)
+def to_permutation(perm):
+    return Permutation._af_new(perm_permtrim(perm))
+
+
 
 # @args_as_is_ret_permutation
+# def mulperm(perm1, perm2):
+#     if len(perm1) < len(perm2):
+#         return [
+#             perm1[perm2[i] - 1] if perm2[i] <= len(perm1) else perm2[i] for i in range(len(perm2))
+#         ]
+#     return [perm1[perm2[i] - 1] for i in range(len(perm2))] + perm1[len(perm2) :]
+
 def mulperm(perm1, perm2):
-    if len(perm1) < len(perm2):
-        return [
-            perm1[perm2[i] - 1] if perm2[i] <= len(perm1) else perm2[i] for i in range(len(perm2))
-        ]
-    return [perm1[perm2[i] - 1] for i in range(len(perm2))] + perm1[len(perm2) :]
-
-def perm_mulperm(perm1, perm2):
     return perm2*perm1
-    # if len(perm1) < len(perm2):
-    #     return [
-    #         perm1[perm2[i] - 1] if perm2[i] <= len(perm1) else perm2[i] for i in range(len(perm2))
-    #     ]
-    #print((perm1, perm2))
+#     # if len(perm1) < len(perm2):
+#     #     return [
+#     #         perm1[perm2[i] - 1] if perm2[i] <= len(perm1) else perm2[i] for i in range(len(perm2))
+#     #     ]
+#     #print((perm1, perm2))
 
-    return get_permutation(tuple(mulperm(perm1,perm2)))
+#     return get_permutation(tuple(mulperm(perm1,perm2)))
 
 # =======
 def getpermval(perm, index):
@@ -210,6 +154,41 @@ def old_mulperm(perm1, perm2):
         return [perm1[perm2[i] - 1] for i in range(len(perm2))] + perm1[len(perm2) :]
 # >>>>>>> Stashed changes
 
+def flip(i,j):
+    if i in (j, j+1) and i != j:
+        return j
+    return i
+
+keyflip = [lambda key: flip(i, key) for i in range(100)]
+
+def flipdesc(perm, i):
+    return Permutation(perm.list(), key=keyflip[i])
+
+def elem_sym_perms(orig_perm, p, k):
+    total_list = [(orig_perm, 0)]
+    up_perm_list = [(orig_perm, 1000000000)]
+    for pp in range(p):
+        perm_list = []
+        for up_perm, last in up_perm_list:
+            up_perm2 = [*up_perm, len(up_perm) + 1]
+            if len(up_perm2) < k + 1:
+                up_perm2 += [i + 1 for i in range(len(up_perm2), k + 2)]
+            pos_list = [i for i in range(k) if up_perm2[i] < last]
+            for j in range(k, len(up_perm2)):
+                if up_perm2[j] >= last:
+                    continue
+                for i in pos_list:
+                    if has_bruhat_ascent(up_perm2, i, j):
+                        new_perm = [*up_perm2]
+                        new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
+                        if new_perm[-1] == len(new_perm):
+                            new_perm_add = tuple(new_perm[:-1])
+                        else:
+                            new_perm_add = tuple(new_perm)
+                        perm_list += [(new_perm_add, up_perm2[j])]
+                        total_list += [(new_perm_add, pp + 1)]
+        up_perm_list = perm_list
+    return total_list
 
 
 
@@ -238,15 +217,15 @@ def reverseuncode(cd):
     return perm
 
 
-def inverse(perm):
-    retperm =list([0 for i in range(perm.size)])
-    for i in range(perm.size):
-        #print(f"{list(perm)=} {perm(i)=} {perm.size=})")
-        #print(perm.size)
-        retperm[perm(i)] = i + 1
-    return Permutation.from_sequence(retperm)
+# def old_inverse(perm):
+#     retperm =list([0 for i in range(perm.size)])
+#     for i in range(perm.size):
+#         #print(f"{list(perm)=} {perm(i)=} {perm.size=})")
+#         #print(perm.size)
+#         retperm[perm(i)] = i + 1
+#     return Permutation.from_sequence(retperm)
 
-def perm_inverse(perm):
+def inverse(perm):
     return ~perm
 
 
@@ -255,6 +234,18 @@ def permtrim(perm):
     while L > 2 and perm[-1] == L:
         L = perm.pop() - 1
     return perm
+
+def perm_permtrim(perm):
+    L = len(perm) - 1
+    while L > -1 and perm[-1] == L:
+        L = perm.pop() - 1
+    return perm
+
+# def perm_permtrim(perm):
+#     try:
+#         return Permutation(perm.array_form[:max(perm.support())+1])
+#     except Exception:
+#         return Permutation()
 
 
 def has_bruhat_descent(perm, i, j):
@@ -268,28 +259,28 @@ def has_bruhat_descent(perm, i, j):
 
 def count_bruhat(perm, i, j):
     up_amount = 0
-    if perm[i] < perm[j]:
+    if perm(i) < perm(j):
         up_amount = 1
     else:
         up_amount = -1
     for k in range(i + 1, j):
-        if perm[i] < perm[k] and perm[k] < perm[j]:
+        if perm(i) < perm(k) and perm(k) < perm(j):
             up_amount += 2
-        elif perm[i] > perm[k] and perm[k] > perm[j]:
+        elif perm(i) > perm(k) and perm(k) > perm(j):
             up_amount -= 2
     return up_amount
 
 
 def has_bruhat_ascent(perm, i, j):
-    if perm[i] > perm[j]:
+    if perm(i) > perm(j):
         return False
     for p in range(i + 1, j):
-        if perm[i] < perm[p] and perm[p] < perm[j]:
+        if perm(i) < perm(p) and perm(p) < perm(j):
             return False
     return True
 
 
-def elem_sym_perms(orig_perm, p, k):
+def old_elem_sym_perms(orig_perm, p, k):
     total_list = [(orig_perm, 0)]
     up_perm_list = [(orig_perm, 1000000000)]
     for pp in range(p):
@@ -764,7 +755,7 @@ def elem_sym_func_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
 
 
 def trimcode(perm):
-    cd = code(perm)
+    cd = [*code(perm)]
     while len(cd) > 0 and cd[-1] == 0:
         cd.pop()
     return cd

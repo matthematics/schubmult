@@ -8,6 +8,7 @@ from schubmult.perm_lib import (
     inverse,
     permtrim,
     theta,
+    to_permutation,
     trimcode,
     uncode,
 )
@@ -41,10 +42,10 @@ def main(argv=None):
         raw_result_dict = {}
         if coprod:
             if ascode:
-                perms[0] = tuple(permtrim(uncode(perms[0])))
+                perms[0] = to_permutation(uncode(perms[0]))
             pos = [*perms[1]]
             pos.sort()
-            mperm = tuple(permtrim(perms[0]))
+            mperm = to_permutation(perms[0])
 
             coeff_dict = schub_coprod(mperm, pos)
 
@@ -64,14 +65,14 @@ def main(argv=None):
         else:
             if ascode:
                 for i in range(len(perms)):
-                    perms[i] = tuple(permtrim(uncode(perms[i])))
+                    perms[i] = to_permutation(uncode(perms[i]))
 
             perms.sort(reverse=True, key=lambda x: sum(theta(inverse(x))) - inv(x))
 
-            coeff_dict = {tuple(permtrim([*perms[0]])): 1}
+            coeff_dict = {to_permutation([*perms[0]]): 1}
 
             for perm in perms[1:]:
-                coeff_dict = schubmult(coeff_dict, tuple(permtrim([*perm])))
+                coeff_dict = schubmult(coeff_dict, to_permutation([*perm]))
             if mult:
                 mul_exp = sympify(mulstring)
                 coeff_dict = mult_poly(coeff_dict, mul_exp)
