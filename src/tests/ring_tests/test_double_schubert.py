@@ -66,9 +66,7 @@ def test_associative():
     Test associative on some large perms
     """
     from schubmult.rings import DSx
-    perm1 = [1, 5, 3, 4, 2]
-    perm2 = [1, 3, 2, 5, 4]
-    perm3 = [3, 1, 4, 2, 5]
+    perm1, perm2, perm3 = [1, 5, 3, 4, 2], [1, 3, 2, 5, 4], [3, 1, 4, 2, 5]
     assert ((DSx(perm1) * DSx(perm2)) * DSx(perm3)).equals(DSx(perm1) * (DSx(perm2) * DSx(perm3)))
 
     assert ((DSx(perm1) * DSx(perm2)) * DSx(perm3, "z")).equals(DSx(perm1) * (DSx(perm2) * DSx(perm3, "z")))

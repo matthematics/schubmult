@@ -1,4 +1,4 @@
-from ._funcs import compute_positive_rep, div_diff, mult_poly, posify, schub_coprod, schubmult, single_variable
+from ._funcs import compute_positive_rep, div_diff, mult_poly, posify, schub_coprod, schubmult, schubmult_one, single_variable
 
 __all__ = [
     "compute_positive_rep",
@@ -9,4 +9,5 @@ __all__ = [
     "schub_coprod",
     "schubmult",
     "single_variable",
+    "schubmult_one",
 ]

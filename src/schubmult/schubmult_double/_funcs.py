@@ -9,6 +9,7 @@ from cachetools import cached
 from cachetools.keys import hashkey
 from sortedcontainers import SortedList
 from symengine import Add, Integer, Mul, Pow, expand, symarray, sympify
+from symengine.lib.symengine_wrapper import SympifyError
 
 from schubmult.perm_lib import (
     add_perm_dict,
@@ -132,6 +133,13 @@ def single_variable_down(coeff_dict, varnum, var2=_vars.var2):
 
 
 def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
+    # try:
+    #     poly = sympify(poly)
+    # except SympifyError:
+    #     poly = sympy.sympify(poly)
+    #     var_x = tuple([sympy.sympify(v) for v in var_x])
+    #     var_y = tuple([sympy.sympify(v) for v in var_y])
+    #     return mult_poly_sympy(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2)
     if poly in var_x:
         return single_variable(coeff_dict, var_x.index(poly), var_y)
     if isinstance(poly, Mul):
@@ -155,6 +163,8 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
     for perm in coeff_dict:
         ret[perm] = poly * coeff_dict[perm]
     return ret
+
+#def mult_poly_symy(coeff_dict, poly, var_x=_vars.sympy_var1, var_y=_vars.sympy_var2):
 
 
 def mult_poly_down(coeff_dict, poly):
@@ -1022,7 +1032,7 @@ def skew_div_diff(u, w, poly):
 
 @cached(
     cache={},
-    key=lambda val, u2, v2, w2, var2=None, var3=None, msg=False, do_pos_neg=True, sign_only=False: hashkey(u2, v2, w2, var2, var3, msg, do_pos_neg, sign_only),
+    key=lambda val, u2, v2, w2, var2=None, var3=None, msg=False, do_pos_neg=True, sign_only=False, optimize=True: hashkey(val, u2, v2, w2, var2, var3, msg, do_pos_neg, sign_only, optimize),
 )
 def posify(
     val,
@@ -1035,7 +1045,10 @@ def posify(
     do_pos_neg=True,
     sign_only=False,
     n=_vars.n,
+    *,
+    optimize=True
 ):
+    oldval = val
     if inv(u2) + inv(v2) - inv(w2) == 0:
         return val
     cdv = code(v2)
@@ -1297,6 +1310,7 @@ def posify(
                             var3,
                             msg,
                             do_pos_neg,
+                            optimize=optimize
                         ),
                         2,
                     )
@@ -1390,6 +1404,7 @@ def posify(
                     var3,
                     msg,
                     do_pos_neg,
+                    optimize=optimize
                 )
                 val += tomul * shiftsubz(newval)
         elif c01[0] == c02[0] and c01[0] != 0:
@@ -1412,6 +1427,7 @@ def posify(
                 var3,
                 msg,
                 do_pos_neg,
+                optimize=optimize
             )
             for i in range(varl):
                 val = permy(val, i + 1)
@@ -1431,15 +1447,18 @@ def posify(
                     tuple(permtrim(w3)),
                     0,
                 )
-                val2 = posify(val2, u3, tuple(permtrim(v3)), w3, var2, var3, msg, do_pos_neg)
+                val2 = posify(val2, u3, tuple(permtrim(v3)), w3, var2, var3, msg, do_pos_neg, optimize=optimize)
                 val += tomul * shiftsub(val2)
         elif not sign_only:
-            if inv(u) + inv(v) - inv(w) == 1:
-                val2 = compute_positive_rep(val, var2, var3, msg, False)
+            if optimize:
+                if inv(u) + inv(v) - inv(w) == 1:                
+                    val2 = compute_positive_rep(val, var2, var3, msg, False)
+                else:
+                    val2 = compute_positive_rep(val, var2, var3, msg, do_pos_neg)
+                if val2 is not None:
+                    val = val2
             else:
-                val2 = compute_positive_rep(val, var2, var3, msg, do_pos_neg)
-            if val2 is not None:
-                val = val2
+                return oldval
         else:
             d = expand(val).as_coefficients_dict()
             for v in d.values():

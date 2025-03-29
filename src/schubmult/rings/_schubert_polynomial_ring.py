@@ -1,3 +1,4 @@
+import sys
 from functools import cache
 
 import symengine
@@ -34,7 +35,14 @@ def _varstr(v):
     return f"'{v}'"
 
 
-def _mul_schub_dicts(dict1, dict2):
+class ExceptionThrower:
+    def __bool__(self):
+        raise Exception("Exception thrower")
+
+def _from_double_dict(_doubledict):
+    return DoubleSchubertAlgebraElement(_doubledict)
+
+def _mul_schub_dicts(dict1, dict2, best_effort_positive=False):
     by_var = {}
 
     none_dict = {}
@@ -50,8 +58,20 @@ def _mul_schub_dicts(dict1, dict2):
 
     for _vstr, _dict in by_var.items():
         this_dict = {}
-        for k, v in dict2.items():
-            this_dict = add_perm_dict(this_dict, {(k1, _vstr): v1 * v for k1, v1 in yz.schubmult(_dict, k[0], utils.poly_ring(_vstr), utils.poly_ring(k[1])).items()})
+        if best_effort_positive:
+            for k, v in dict2.items():
+                for kd, vd in _dict.items():
+                    vv = v * vd
+                    this_dict = add_perm_dict(
+                        this_dict,
+                        {
+                            (k1, _vstr): vv * yz.posify(v1, kd, k[0], k1, utils.poly_ring(_vstr), utils.poly_ring(k[1]), do_pos_neg=False, optimize=False)
+                            for k1, v1 in yz.schubmult_one(kd, k[0], utils.poly_ring(_vstr), utils.poly_ring(k[1])).items()
+                        },
+                    )
+        else:
+            for k, v in dict2.items():
+                this_dict = add_perm_dict(this_dict, {(k1, _vstr): v1 * v for k1, v1 in yz.schubmult(_dict, k[0], utils.poly_ring(_vstr), utils.poly_ring(k[1])).items()})
         results.update(this_dict)
 
     by_var2 = {}
@@ -69,7 +89,10 @@ def _mul_schub_dicts(dict1, dict2):
     for _vstr, _dict in by_var2.items():
         this_dict = {}
         for k, v in none_dict.items():
-            this_dict = add_perm_dict(this_dict, {(k1, _vstr): v1 * v for k1, v1 in yz.schubmult(_dict, k, utils.poly_ring(_vstr), utils.poly_ring(utils.NoneVar)).items()})
+            if not best_effort_positive:
+                this_dict = add_perm_dict(this_dict, {(k1, _vstr): v1 * v for k1, v1 in yz.schubmult(_dict, k, utils.poly_ring(_vstr), utils.poly_ring(utils.NoneVar)).items()})
+            else:
+                this_dict = add_perm_dict(this_dict, {(k1, _vstr): expand(v1) * v for k1, v1 in yz.schubmult(_dict, k, utils.poly_ring(_vstr), utils.poly_ring(utils.NoneVar)).items()})
         results = add_perm_dict(results, this_dict)
 
     none_dict, none_dict2 = sorted([none_dict, none_dict2], key=lambda x: -len(x.keys()))
@@ -113,7 +136,7 @@ class DoubleSchubertAlgebraElement(Expr):
 
     def __new__(cls, _dict, *args, **kwargs):
         # print(f"{cls=} {_dict} {parent=} {args=} {kwargs=}")
-        return DoubleSchubertAlgebraElement.__xnew_cached__(cls, sympy.Dict(_dict), *args, **kwargs)
+        return DoubleSchubertAlgebraElement.__xnew_cached__(cls, sympy.Dict({k: v for k, v in _dict.items() if expand(v) != 0}), *args, **kwargs)
 
     def __hash__(self):
         return hash(tuple(self.args))
@@ -143,15 +166,24 @@ class DoubleSchubertAlgebraElement(Expr):
         # print(f"{pieces=}")
         # print(f"{args=} {kwargs=} {_dict=} {parent=}")
         # print(f"{args=} {kwargs=}")
+        # print(f"{_dict=}")
         obj = Expr.__new__(_class, _dict)
         # obj.make_args(pieces)
         # obj.args = pieces
         obj._doubledict = _dict
-        obj._print_sum = sympy.Add(*[sympy.Mul(_dict[k], DSchubSymbol(DSx._base_var, k), evaluate=False) for k in sorted(_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))])
+        # print(f"{[sympy.Mul(_dict[k], DSchubSymbol(DSx._base_var, k)) for k in sorted(_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))]=}")
+        obj._print_sum = Add(*[sympy.Mul(_dict[k], DSchubSymbol(DSx._base_var, k)) for k in sorted(_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))],evaluate=False)
+        # print(f"{obj._print_sum=} {obj._print_sum.is_Add=} {type(obj._print_sum)=}")
         return obj
 
-    def _sympystr(self, printer):
-        return printer._print_Add(self._print_sum)
+    @cache
+    def _cached_sympystr(self):
+        return _def_printer._print(self._print_sum)
+
+    
+    def _sympystr(self, printer):  # noqa: ARG002
+        return self._cached_sympystr()
+        
 
     @staticmethod
     @cache
@@ -161,89 +193,97 @@ class DoubleSchubertAlgebraElement(Expr):
     def _symengine_(self):
         return NotImplemented
 
-    def _eval_simplify_(self):
-        # print("Hey pretty baby")
-        return self
+    # def _eval_simplify_(self):
+    #     # print("Hey pretty baby")
+    #     return self
+    
 
-    def _from_double_dict(self, _doubledict):
-        return DoubleSchubertAlgebraElement(_doubledict, DSx)
+    def __add__(self, other):
+        # print("ASFJASJ")
+        # print(f"addwinky {self.__class__=} {self=} {other=}")
+        # print(f"flarfknockle {self._doubledict=} {DSx(other)._doubledict=} {other=}")
+        # return SchubAdd(self, DSx(other))
+        #return self._from_double_dict(ret)
+        return _from_double_dict(add_perm_dict(self._doubledict, DSx(other)._doubledict))
 
-    # def __add__(self, other):
-    #     # print("ASFJASJ")
-    #     # print(f"addwinky {self.__class__=} {self=} {other=}")
-    #     # print(f"flarfknockle {self._doubledict=} {DSx(other)._doubledict=} {other=}")
-    #     return SchubAdd(self, DSx(other))
-    #     #return self._from_double_dict(ret)
+    def __radd__(self, other):
+        # print("is wiz doing radd")
+        return _from_double_dict(add_perm_dict(DSx(other)._doubledict, self._doubledict))
+        # return SchubAdd(DSx(other),self)
 
-    # def __radd__(self, other):
-    #     # print("is wiz doing radd")
-    #     #return self._from_double_dict(add_perm_dict(DSx(other)._doubledict, self._doubledict))
-    #     return SchubAdd(DSx(other),self)
+    def __sub__(self, other):
+        # print("ASFJAdsajdSJ")
+        # return SchubAdd(self,-DSx(other))
+        return _from_double_dict(add_perm_dict(self._doubledict, {k: -v for k, v in DSx(other)._doubledict.items()}))
 
-    # def __sub__(self, other):
-    #     # print("ASFJAdsajdSJ")
-    #     return SchubAdd(self,-DSx(other))
-    #     #return self._from_double_dict(add_perm_dict(self._doubledict, {k: -v for k, v in DSx(other)._doubledict.items()}))
+    def __rsub__(self, other):
+        # print("ASFJAdsajdSJ")
+        return _from_double_dict(add_perm_dict(DSx(other)._doubledict, {k: -v for k, v in self._doubledict.items()}))
+        # return SchubAdd(DSx(other), -self)
 
-    # def __rsub__(self, other):
-    #     # print("ASFJAdsajdSJ")
-    #     # return self._from_double_dict(add_perm_dict(DSx(other)._doubledict, {k: -v for k, v in self._doubledict.items()}))
-    #     return SchubAdd(DSx(other), -self)
+    def __neg__(self):
+        # if self.is_Add:
+        #     return SchubAdd(*[-arg for arg in self.args])
+        # if self.is_Mul:
+        #     return SchubMul(-self.args[0], *self.args[1:])
+        elem = self
+        if self.is_Add or self.is_Mul:
+            elem = self.doit()
+        return _from_double_dict({k: -v for k, v in elem._doubledict.items()})
 
-    # def __neg__(self):
-    #     if self.is_Add:
-    #         return SchubAdd( *self.args)
-    #     if self.is_Mul:
-    #         return SchubMul( -self.args[0], *self.args[1:])
-    #     return self._from_double_dict({k: -v for k, v in self._doubledict.items()})
+    def __mul__(self, other):
+        # print("ASFJAdsajdSJ")
+        # print(f"mulwinky {self.__class__=} {self=} {other=}")
+        # return SchubMul(self,DSx(other))
+        return _from_double_dict(_mul_schub_dicts(self._doubledict, DSx(other)._doubledict))
 
-    # def __mul__(self, other):
-    #     # print("ASFJAdsajdSJ")
-    #     # print(f"mulwinky {self.__class__=} {self=} {other=}")
-    #     return SchubMul(self,DSx(other))
+    def __rmul__(self, other):
+        # print("ASFJAdsajdSJ")
+        # print(f"rmulwinky {self.__class__=} {self=} {other=}")
+        return _from_double_dict(_mul_schub_dicts(DSx(other)._doubledict, self._doubledict))
+        #return SchubMul(DSx(other),self)
 
-    # def __rmul__(self, other):
-    #     # print("ASFJAdsajdSJ")
-    #     # print(f"rmulwinky {self.__class__=} {self=} {other=}")
-    #     #return self._from_double_dict(_mul_schub_dicts(DSx(other)._doubledict, self._doubledict))
-    #     return SchubMul(DSx(other),self)
+    def equals(self, other):
+        return self.__eq__(other)
 
-    def __eq__(self, other):
-        # elem1 = self.change_vars("y")  # count vars?
-        # elem2 = DSx(other).change_vars("y")
-        if self.is_Add:
-            if other.is_Add:
-                if len(self.args) != len(other.args):
-                    return False
-                for i in range(len(self.args)):
-                    if self.args[i] != other.args[i]:
-                        return False
-                return True
-            return False
-        if self.is_Mul:
-            if other.is_Mul:
-                if len(self.args) != len(other.args):
-                    return False
-                for i in range(len(self.args)):
-                    if self.args[i] != other.args[i]:
-                        return False
-                return True
-            return False
-        # elem1 = self.change_vars(0)
-        # elem2 = DSx(other).change_vars(0)
-        elem1 = self.change_vars(0)
-        elem2 = DSx(other).change_vars(0)
+    def test_equality(self, other):
+        elem1 = self
+        elem2 = other
         done = set()
         for k, v in elem1._doubledict.items():
             done.add(k)
             if expand(v - elem2._doubledict.get(k, 0)) != 0:
+                # print(f"{k=} {v=} {elem2._doubledict.get(k, 0)=} {expand(v - elem2._doubledict.get(k, 0))=}")
                 return False
         for k, v in elem2._doubledict.items():
             if k in done:
                 continue
             if expand(v - elem1._doubledict.get(k, 0)) != 0:
+                # print(f"{k=} {v=} {expand(v - elem1._doubledict.get(k, 0))=}")
                 return False
         return True
+
+    def __eq__(self, other):
+        # elem1 = self.change_vars("y")  # count vars?
+        # elem2 = DSx(other).change_vars("y")
+        if self.is_Add or self.is_Mul:
+            return self.doit().equals(other)
+        # elem1 = self.change_vars(0)
+        # elem2 = DSx(other).change_vars(0)
+        #cv = sorted([k[1] if k[1] != utils.NoneVar else 0 for k in self._doubledict.keys()],key=lambda flop:-len([k for k in self._doubledict.keys() if k[1] == flop]))[0]
+        #print(f"{cv=}")
+        cv = "y"
+        elem1 = self
+        elem2 = DSx(other)
+
+        if not elem1.test_equality(elem2):
+            elem1 = elem1.change_vars(cv)
+            elem2 = elem2.change_vars(cv)
+            return elem1.test_equality(elem2)
+        return True
+        # assert all([k[1] == cv for k in elem1._doubledict.keys()])
+        # assert all([k[1] == cv for k in elem2._doubledict.keys()])
+        
 
     # def __str__(self):
     #     pieces = []
@@ -271,17 +311,15 @@ class DoubleSchubertAlgebraElement(Expr):
 
     # def _sympystr(self, *args):
     #     return str(self)
-    def _eval_simplify(self, *args, **kwargs):  # noqa: ARG002
-        return self._from_double_dict({k: sympify(sympy.simplify(v)) for k, v in self._doubledict.items()})
-
+    # def _eval_simplify(self, *args, **kwargs):  # noqa: ARG002
+    #     return self._from_double_dict({k: sympify(sympy.simplify(v)) for k, v in self._doubledict.items()})
+    @cache
     def change_vars(self, cv):
-        return self._from_double_dict(_mul_schub_dicts({((1, 2), cv): 1}, self._doubledict))
+        result = {}
+        for k, v in self._doubledict.items():
+            result = add_perm_dict(result, {(k1, cv): v1 for k1, v1 in yz.schubmult({(1,2): v},k[0],utils.poly_ring(cv),utils.poly_ring(k[1])).items()} )
+        return _from_double_dict(result)
 
-    def _print_Add(self, *_):
-        return "flagelnagel"
-
-    def _sympyrepr(self, *_):
-        return str(self)
 
     def as_coefficients_dict(self):
         # will not allow zeros
@@ -330,43 +368,32 @@ class DoubleSchubertAlgebraElement_basis(Basic):
             else:
                 return self(x.expand(), cv)
         else:
-            if cv is None:
+            try:
+                x = sympify(x)
+            except Exception:
+                raise Exception(f"{str(x)=}", file=sys.stderr)
+                # x = sympify(str(x))
+
+            if cv is None or cv == utils.NoneVar:
                 cv = utils.NoneVar
-                result = py.mult_poly({(1, 2): 1}, sympify(x), utils.poly_ring(self._base_var))
+                result = py.mult_poly({(1, 2): 1}, x, utils.poly_ring(self._base_var))
             else:
-                result = yz.mult_poly({(1, 2): 1}, sympify(x), utils.poly_ring(self._base_var), utils.poly_ring(cv))
+                result = yz.mult_poly({(1, 2): 1}, x, utils.poly_ring(self._base_var), utils.poly_ring(cv))
             elem = DoubleSchubertAlgebraElement({(k, cv): v for k, v in result.items()})
         return elem
 
-    # def _coerce_map_from(self, S):
-    #     if isinstance(S, type(DSchub)):
-    #         return True
-    #     if isinstance(S, type(Schub)):
-    #         return True
-    #     if isinstance(S, Expr):
-    #         return True
-    #     return False
 
 
 def _do_schub_mul(a, b):
     A = DSx(a)
     B = DSx(b)
-    return A._from_double_dict(_mul_schub_dicts(A._doubledict, B._doubledict))
+    return _from_double_dict(_mul_schub_dicts(A._doubledict, B._doubledict))
 
 
 def _do_schub_add(a, b):
     A = DSx(a)
     B = DSx(b)
-    return A._from_double_dict(add_perm_dict(A._doubledict, B._doubledict))
-
-
-def _domul(*args):
-    # print(f"domul {args=}")
-    return SchubMul(*args)
-
-
-def _doadd(*args):
-    return SchubAdd(*args)
+    return _from_double_dict(add_perm_dict(A._doubledict, B._doubledict))
 
 
 def get_postprocessor(cls):
@@ -525,8 +552,12 @@ class SchubMul(DoubleSchubertAlgebraElement, Mul):
     is_Mul = True
 
     def __new__(cls, *args, evaluate=True, _sympify=True):
-        args, a, b = Mul.flatten(list(args))
-        obj = Mul.__new__(cls, *args, evaluate=evaluate, _sympify=True)
+        if len(args) == 0:
+            return 1
+        # args, a, b = Mul.flatten(list(args))
+        # if len(args) == 0:
+        #     return 1
+        obj = Mul.__new__(cls, *args, evaluate=evaluate, _sympify=_sympify)
 
         if evaluate:
             return obj.doit()
