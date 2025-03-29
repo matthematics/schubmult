@@ -1,6 +1,7 @@
 import sys
 
-from ._script import main
+# from ._script import main
+import schubmult.schubmult_double._script as scr
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    sys.exit(scr.main(sys.argv))
