@@ -180,7 +180,6 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
         try:
             for i in range(len(args.perms[perm_index])):
                 args.perms[perm_index][i] = int(args.perms[perm_index][i])
-            
         except Exception as e:
             print("Permutations must have integer values")
             raise e

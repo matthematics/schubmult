@@ -121,7 +121,7 @@ def _display_full(
     kperm=None,
     N=None,
 ):
-    print("Moinkamogle")
+    #print("Moinkamogle")
     subs_dict2 = {}
     for i in range(1, 100):
         sm = var2[1]
@@ -380,7 +380,7 @@ def main(argv=None):
 
             coeff_dict = {perms[0]: 1}
             check_coeff_dict = {perms[0]: 1}
-            print(f"{coeff_dict=}")
+            #print(f"{coeff_dict=}")
 
             # if mult:
             #     for v in var2:
@@ -443,7 +443,7 @@ def main(argv=None):
                 coeff_dict = check_coeff_dict
 
             # print("Foiglebagel")
-            print(f"{posified=}")
+            #print(f"{posified=}")
             if not posified and display_positive:
                 try:
                     coeff_dict = {k: pre_posify(perms,k,v,check,check_coeff_dict.get(k,0),same,down,var2,var3,msg,subs_dict) for k,v in coeff_dict.items()}
