@@ -32,11 +32,14 @@ def _varstr(v):
 def _from_double_dict(_doubledict):
     return DoubleSchubertAlgebraElement(_doubledict)
 
+
 class Ex:
     def __bool__(self):
         raise Exception
-    
+
+
 _ex = Ex()
+
 
 def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
     by_var = {}
@@ -51,7 +54,8 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
             by_var[k[1]][k[0]] = v
 
     results = {}
-    import sys
+    # import sys
+
     for _vstr, _dict in by_var.items():
         this_dict = {}
         if best_effort_positive and k[1] != _vstr:
@@ -60,20 +64,14 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
                     vv = v * vd
                     out_dict = yz.schubmult_one(kd, k[0], utils.poly_ring(_vstr), utils.poly_ring(k[1]))
                     for k1 in out_dict:
-                        val = yz.posify(out_dict[k1], kd, k[0], k1, utils.poly_ring(_vstr), utils.poly_ring(k[1]), msg=True,
-    do_pos_neg=False,
-    sign_only=False,
-    optimize=False)
+                        val = yz.posify(out_dict[k1], kd, k[0], k1, utils.poly_ring(_vstr), utils.poly_ring(k[1]), msg=True, do_pos_neg=False, sign_only=False, optimize=False)
                         # if expand(val-out_dict[k1])!=0:
                         #     raise Exception()
                         # else:
                         out_dict[k1] = val
                     this_dict = add_perm_dict(
                         this_dict,
-                        {
-                            (k1, _vstr): vv * v1 
-                            for k1, v1 in out_dict.items()
-                        },
+                        {(k1, _vstr): vv * v1 for k1, v1 in out_dict.items()},
                     )
         else:
             for k, v in dict2.items():
@@ -253,17 +251,18 @@ class DoubleSchubertAlgebraElement(Expr):
         elem1 = self
         elem2 = other
         done = set()
-        import sys
+        # import sys
+
         for k, v in elem1._doubledict.items():
             done.add(k)
             if expand(v - elem2._doubledict.get(k, 0)) != 0:
-                #print(f"{k=} {v=} {elem2._doubledict.get(k, 0)=} {expand(v - elem2._doubledict.get(k, 0))=}",file=sys.stderr)
+                # print(f"{k=} {v=} {elem2._doubledict.get(k, 0)=} {expand(v - elem2._doubledict.get(k, 0))=}",file=sys.stderr)
                 return False
         for k, v in elem2._doubledict.items():
             if k in done:
                 continue
             if expand(v - elem1._doubledict.get(k, 0)) != 0:
-                #print(f"{k=} {v=} {expand(v - elem1._doubledict.get(k, 0))=}",file=sys.stderr)
+                # print(f"{k=} {v=} {expand(v - elem1._doubledict.get(k, 0))=}",file=sys.stderr)
                 return False
         return True
 
