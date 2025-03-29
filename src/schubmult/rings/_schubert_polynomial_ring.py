@@ -41,7 +41,7 @@ class Ex:
 _ex = Ex()
 
 
-def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
+def _mul_schub_dicts(dict1, dict2, best_effort_positive=False):
     by_var = {}
 
     none_dict = {}
@@ -58,20 +58,22 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
 
     for _vstr, _dict in by_var.items():
         this_dict = {}
-        if best_effort_positive and k[1] != _vstr:
+        if best_effort_positive:
             for k, v in dict2.items():
                 for kd, vd in _dict.items():
                     vv = v * vd
-                    out_dict = yz.schubmult_one(kd, k[0], utils.poly_ring(_vstr), utils.poly_ring(k[1]))
-                    for k1 in out_dict:
-                        val = yz.posify(out_dict[k1], kd, k[0], k1, utils.poly_ring(_vstr), utils.poly_ring(k[1]), msg=True, do_pos_neg=False, sign_only=False, optimize=False)
-                        # if expand(val-out_dict[k1])!=0:
-                        #     raise Exception()
-                        # else:
-                        out_dict[k1] = val
+                    out_dict = {(k1, _vstr): vv * yz.xreplace_genvars(v1, utils.poly_ring(_vstr), utils.poly_ring(k[1])) for k1, v1 in yz.schubmult_generic_partial_posify(kd, k[0]).items()}
+                    # else:
+                    #     out_dict = {(k1, _vstr): vv * v1 for k1, v1 in yz.schubmult_one(kd, k[0],utils.poly_ring(_vstr), utils.poly_ring(k[1])).items()}
+                    # for k1 in out_dict:
+                    #     val = yz.posify(out_dict[k1], kd, k[0], k1, utils.poly_ring(_vstr), utils.poly_ring(k[1]), msg=True, do_pos_neg=False, sign_only=False, optimize=False)
+                    #     # if expand(val-out_dict[k1])!=0:
+                    #     #     raise Exception()
+                    #     # else:
+                    #     out_dict[k1] = val
                     this_dict = add_perm_dict(
                         this_dict,
-                        {(k1, _vstr): vv * v1 for k1, v1 in out_dict.items()},
+                          out_dict
                     )
         else:
             for k, v in dict2.items():
@@ -195,9 +197,14 @@ class DoubleSchubertAlgebraElement(Expr):
     def _symengine_(self):
         return NotImplemented
 
-    # def _eval_simplify_(self):
-    #     # print("Hey pretty baby")
-    #     return self
+    def _eval_simplify(self, *args, measure, **kwargs):
+        print(f"Hey pretty baby {args=} {kwargs=} {measure(self)=}")
+        boible = _from_double_dict({k: sympify(sympy.simplify(v,*args,measure=measure,**kwargs)) for k, v in self._doubledict.items()})
+        oldops = measure(self)
+        newops = measure(boible)
+        print(f"Frinished {oldops=} {newops=} ratio1={oldops/newops} ratio2={newops/oldops}")
+        print(f"{self=} {len(str(self))=} {boible=} {len(str(boible))=}")
+        return boible
 
     def __add__(self, other):
         # print("ASFJASJ")
@@ -247,22 +254,24 @@ class DoubleSchubertAlgebraElement(Expr):
     def equals(self, other):
         return self.__eq__(other)
 
-    def test_equality(self, other):
+    def test_equality(self, other, disp=False):
         elem1 = self
         elem2 = other
         done = set()
-        # import sys
+        import sys
 
         for k, v in elem1._doubledict.items():
             done.add(k)
             if expand(v - elem2._doubledict.get(k, 0)) != 0:
-                # print(f"{k=} {v=} {elem2._doubledict.get(k, 0)=} {expand(v - elem2._doubledict.get(k, 0))=}",file=sys.stderr)
+                if disp:
+                    print(f"{k=} {v=} {elem2._doubledict.get(k, 0)=} {expand(v - elem2._doubledict.get(k, 0))=}",file=sys.stderr)
                 return False
         for k, v in elem2._doubledict.items():
             if k in done:
                 continue
             if expand(v - elem1._doubledict.get(k, 0)) != 0:
-                # print(f"{k=} {v=} {expand(v - elem1._doubledict.get(k, 0))=}",file=sys.stderr)
+                if disp:
+                    print(f"{k=} {v=} {expand(v - elem1._doubledict.get(k, 0))=}",file=sys.stderr)
                 return False
         return True
 
@@ -280,9 +289,11 @@ class DoubleSchubertAlgebraElement(Expr):
         elem2 = DSx(other)
 
         if not elem1.test_equality(elem2):
-            elem1 = elem1.change_vars(cv)
-            elem2 = elem2.change_vars(cv)
-            return elem1.test_equality(elem2)
+            elem1_o = elem1.change_vars(cv)
+            elem2_o = elem2.change_vars(cv)
+            assert sympy.expand(elem1_o-elem1) == 0
+            assert sympy.expand(elem2_o-elem2) == 0
+            return elem1_o.test_equality(elem2_o, disp=True)
         return True
         # assert all([k[1] == cv for k in elem1._doubledict.keys()])
         # assert all([k[1] == cv for k in elem2._doubledict.keys()])
