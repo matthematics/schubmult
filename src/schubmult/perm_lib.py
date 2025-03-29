@@ -19,8 +19,6 @@ def getpermval(perm, index):
 
 def inv(perm):
     L = len(perm)
-    if L == 0:
-        return 0
     v = list(range(1, L + 1))
     ans = 0
     for i in range(L):
@@ -44,15 +42,13 @@ def code(perm):
 def mulperm(perm1, perm2):
     if len(perm1) < len(perm2):
         return [perm1[perm2[i] - 1] if perm2[i] <= len(perm1) else perm2[i] for i in range(len(perm2))]
-    ret = [perm1[perm2[i] - 1] for i in range(len(perm2))] + perm1[len(perm2) :]
-    # print(f"{ret=}")
-    return ret
+    return [perm1[perm2[i] - 1] for i in range(len(perm2))] + perm1[len(perm2) :]
 
 
 def uncode(cd):
     cd2 = [*cd]
     if cd2 == []:
-        return []
+        return [1, 2]
     max_required = max([cd2[i] + i for i in range(len(cd2))])
     cd2 += [0 for i in range(len(cd2), max_required)]
     fullperm = [i + 1 for i in range(len(cd2) + 1)]
@@ -76,7 +72,7 @@ def reversecode(perm):
 def reverseuncode(cd):
     cd2 = list(cd)
     if cd2 == []:
-        return []
+        return [1, 2]
     # max_required = max([cd2[i]+i for i in range(len(cd2))])
     # cd2 += [0 for i in range(len(cd2),max_required)]
     fullperm = [i + 1 for i in range(len(cd2) + 1)]
@@ -89,8 +85,6 @@ def reverseuncode(cd):
 
 
 def inverse(perm):
-    if len(perm) == 0:
-        return perm
     retperm = [0 for i in range(len(perm))]
     for i in range(len(perm)):
         retperm[perm[i] - 1] = i + 1
@@ -99,7 +93,7 @@ def inverse(perm):
 
 def permtrim(perm):
     L = len(perm)
-    while L > 0 and perm[-1] == L:
+    while L > 2 and perm[-1] == L:
         L = perm.pop() - 1
     return perm
 
@@ -338,7 +332,7 @@ def reduce_q_coeff_u_only(u, v, w, qv):
 
 
 def longest_element(indices):
-    perm = []
+    perm = [1, 2]
     did_one = True
     while did_one:
         did_one = False
@@ -442,7 +436,7 @@ def compute_vpathdicts(th, vmu, smpify=False):
         top = code(inverse(uncode(top2)))
         monoperm = uncode(top)
         if len(monoperm) < 2:
-            monoperm = []
+            monoperm = [1, 2]
         k = i + 1
         for last_perm in vpathdicts[i]:
             newperms = kdown_perms(last_perm, monoperm, th[i], k)
@@ -611,8 +605,6 @@ def cycle(p, q):
 
 def phi1(u):
     c_star = code(inverse(u))
-    if len(c_star) == 0:
-        return []
     c_star.pop(0)
     return inverse(uncode(c_star))
 
@@ -635,10 +627,10 @@ def one_dominates(u, w):
 def dominates(u, w):
     u2 = [*u]
     w2 = [*w]
-    while u2 != [] and one_dominates(u2, w2):
+    while u2 != [1, 2] and one_dominates(u2, w2):
         u2 = phi1(u2)
         w2 = phi1(w2)
-    if u2 == []:
+    if u2 == [1, 2]:
         return True
     return False
 

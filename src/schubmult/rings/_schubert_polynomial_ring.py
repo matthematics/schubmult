@@ -3,7 +3,6 @@ from functools import cache
 import symengine
 import sympy
 from symengine import expand, sympify
-from symengine.lib.symengine_wrapper import SympifyError
 from sympy import Add, Basic, Mul
 from sympy.core.expr import Expr
 from sympy.core.kind import NumberKind
@@ -22,7 +21,6 @@ _def_printer = StrPrinter({"order": "none"})
 # quantum
 
 # COPRODUCT
-# NEED SUBS TEST
 
 def _varstr(v):
     if v == utils.NoneVar:
@@ -36,12 +34,12 @@ def _from_double_dict(_doubledict):
     return DoubleSchubertAlgebraElement(_doubledict)
 
 
-# class Ex:
-#     def __bool__(self):
-#         raise Exception
+class Ex:
+    def __bool__(self):
+        raise Exception
 
 
-# _ex = Ex()
+_ex = Ex()
 
 @cache
 def cached_product(u, v, va, vb):
@@ -210,36 +208,6 @@ class DoubleSchubertAlgebraElement(Expr):
             else:
                 result[k] = result.get(k,0) + sympify(v).subs(b_old, b_new)
         return _from_double_dict(result)
-
-    def _sage_(self):
-        from sage.all import ZZ
-
-        from schubmult.sage_integration import FastDoubleSchubertPolynomialRing, FastSchubertPolynomialRing
-        base_var = self._base_var
-        coeff_vars = set()
-        for k in self._doubledict.keys():
-            k = (tuple(k[0]), k[1])
-            if k[1] != utils.NoneVar and k[1] != 0:
-                coeff_vars.add(str(k[1]))
-        print(f"{coeff_vars=}")
-        for v in coeff_vars:
-            print(f"{type(v)=}")
-        FSR = FastSchubertPolynomialRing(ZZ, 100, base_var)
-        if len(coeff_vars) == 0:
-            ret = 0
-            for k,v in self._doubledict.items():
-                ret += v*FSR(k[0])
-        else:
-            FDSR = FastDoubleSchubertPolynomialRing(ZZ, 100, base_var, tuple(sorted(coeff_vars)))
-            ret = 0
-            for k,v in self._doubledict.items():
-                k = (tuple(k[0]), k[1])
-                if k[1] == utils.NoneVar or k[1] == 0:
-                    ret += FSR(v*FSR(k[0]))
-                else:
-                    print(f"{k=} {k[0]=} {k[1]=} {type(k[1])=}")
-                    ret += v*FDSR(list(k[0]),str(k[1]))
-        return ret
 
     @staticmethod
     def __xnew__(_class, _dict, *args, **kwargs):
@@ -462,10 +430,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
             else:
                 return self(x.expand(), cv)
         else:
-            try:
-                x = sympify(x)
-            except SympifyError:
-                x = sympify(sympy.sympify(x))
+            x = sympify(x)
             if cv is None or cv == utils.NoneVar:
                 cv = utils.NoneVar
                 result = py.mult_poly({(1, 2): 1}, x, utils.poly_ring(self._base_var))

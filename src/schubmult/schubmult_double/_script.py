@@ -5,8 +5,6 @@ import numpy as np
 import sympy
 from symengine import expand, symarray, sympify
 
-# from schubmult.schubmult_double._vars import var_x, var, var_r
-import schubmult.schubmult_double._funcs as _f
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
     add_perm_dict,
@@ -22,12 +20,17 @@ from schubmult.perm_lib import (
     will_formula_work,
 )
 
-mult_poly = _f.mult_poly
-mult_poly_down = _f.mult_poly_down
-posify = _f.posify
-schubmult = _f.schubmult
-schubmult_down = _f.schubmult_down
-split_perms = _f.split_perms
+# from schubmult.schubmult_double._vars import var_x, var, var_r
+from schubmult.schubmult_double._funcs import (
+    # !TEMP
+    # compute_positive_rep,
+    mult_poly,
+    mult_poly_down,
+    posify,
+    schubmult,
+    schubmult_down,
+    split_perms,
+)
 
 
 class _gvars:
@@ -59,6 +62,9 @@ class _gvars:
 _vars = _gvars()
 
 
+def _display(val):
+    print(val)
+
 
 subs_dict = {}
 for i in range(1, 100):
@@ -68,8 +74,6 @@ for i in range(1, 100):
     subs_dict[_vars.var2[i]] = sm
 
 def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, subs_dict):
-    #print(f"{perms=} {perm=} {val=} {check=} {check_val=} {same=} {var2=} {var3=}")
-    # assert expand(val - check_val) == 0
     try:
         return int(val)
     except Exception:
@@ -97,19 +101,17 @@ def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, 
                         var3,
                         msg,
                     )
-            except Exception as e:
-                import traceback as tr
-                tr.print_exc(e)
-                print(
+            except Exception:
+                _display(
                     f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_val=}",
                 )
-                raise
+                exit(1)
             # if check and expand(val - check_coeff_dict.get(perm, 0)) != 0:
             if check and expand(val - check_val) != 0:
-                print(
+                _display(
                     f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_val=}",
                 )
-                raise
+                exit(1)
     return val
 
 def _display_full(
@@ -121,7 +123,6 @@ def _display_full(
     kperm=None,
     N=None,
 ):
-    print("Moinkamogle")
     subs_dict2 = {}
     for i in range(1, 100):
         sm = var2[1]
@@ -136,10 +137,7 @@ def _display_full(
     same = args.same
     display_positive = args.display_positive
 
-    # perms = [tuple(permtrim(perm)) for perm in perms]
-
     coeff_perms = list(coeff_dict.keys())
-    # print(f"{coeff_dict=}")
     if coprod:
         pos = perms[1]
         pos2 = []
@@ -230,10 +228,10 @@ def _display_full(
                                 False,
                             )
                             if expand(val - val2) != 0:
-                                print(
+                                _display(
                                     f"error; write to schubmult@gmail.com with the case {perms=}\n{code(firstperm)=} {code(secondperm)=}\n{val2=}\n{val=}",
                                 )
-                                print(
+                                _display(
                                     f"{code(tuple(permtrim(mulperm(firstperm,muA))))=},{code(tuple(permtrim(mulperm(secondperm,muB))))=},{code(the_top_perm)=}\n{expand(val-val2)=}",
                                 )
                                 exit(1)
@@ -251,7 +249,7 @@ def _display_full(
                                 (tuple(permtrim(firstperm)), tuple(permtrim(secondperm)))
                             ] = val
                             if formatter:
-                                print(
+                                _display(
                                     f"{tuple(permtrim(firstperm))}{' ':>{width2}}{tuple(permtrim(secondperm))}  {formatter(val)}",
                                 )
                         else:
@@ -264,7 +262,7 @@ def _display_full(
                                 (tuple(trimcode(firstperm)), tuple(trimcode(secondperm)))
                             ] = val
                             if formatter:
-                                print(
+                                _display(
                                     f"{trimcode(firstperm)}{' ':>{width2}}{trimcode(secondperm)}  {formatter(val)}",
                                 )
     else:
@@ -283,25 +281,25 @@ def _display_full(
                 if ascode:
                     raw_result_dict[tuple(trimcode(perm))] = val
                     if formatter:
-                        print(f"{trimcode(perm)!s:>{width}}  {formatter(val)}")
+                        _display(f"{trimcode(perm)!s:>{width}}  {formatter(val)}")
                 else:
                     raw_result_dict[tuple(perm)] = val
                     if formatter:
-                        print(f"{perm!s:>{width}}  {formatter(val)}")
+                        _display(f"{perm!s:>{width}}  {formatter(val)}")
     return raw_result_dict
 
 
 def main(argv=None):
     if argv is None:
         argv = sys.argv
-    sympy.init_printing()
+
     try:
         var2 = tuple(symarray("y", 100).tolist())
         var3 = tuple(symarray("z", 100).tolist())
         sys.setrecursionlimit(1000000)
 
         # TEMP
-        #sympy.init_printing()
+        sympy.init_printing()
 
         args, formatter = schub_argparse(
             "schubmult_double",
@@ -309,10 +307,10 @@ def main(argv=None):
             argv=argv[1:],
             yz=True,
         )
-        # print(f"{args=}")
+
         mult = args.mult
         mulstring = args.mulstring
-        
+
         perms = args.perms
 
         ascode = args.ascode
@@ -346,10 +344,9 @@ def main(argv=None):
             kperm = inverse(uncode(kcd))
             coeff_dict = {tuple(kperm): 1}
             coeff_dict = schubmult(coeff_dict, perms[0], _vars.var1, var2)
-            # print(f"{args=}")
+
             if pr or formatter is None:
                 # logger.log(logging.DEBUG, f"main {var2=}{var3=}{same=}")
-                # print(f"{args=}")
                 raw_result_dict = _display_full(
                     coeff_dict,
                     args,
@@ -362,14 +359,13 @@ def main(argv=None):
             if formatter is None:
                 return raw_result_dict
         else:
-            # print("Bingboggle")
             if ascode:
                 for i in range(len(perms)):
                     perms[i] = tuple(permtrim(uncode(perms[i])))
             else:
                 for i in range(len(perms)):
-                    # if len(perms[i]) < 2 and (len(perms[i]) == 0 or perms[i][0] == 1):
-                    #     perms[i] = tup
+                    if len(perms[i]) < 2 and (len(perms[i]) == 0 or perms[i][0] == 1):
+                        perms[i] = (1, 2)
                     perms[i] = tuple(permtrim([*perms[i]]))
 
             size = 0
@@ -380,7 +376,6 @@ def main(argv=None):
 
             coeff_dict = {perms[0]: 1}
             check_coeff_dict = {perms[0]: 1}
-            print(f"{coeff_dict=}")
 
             # if mult:
             #     for v in var2:
@@ -442,15 +437,11 @@ def main(argv=None):
             elif not posified:
                 coeff_dict = check_coeff_dict
 
-            # print("Foiglebagel")
-            print(f"{posified=}")
+
             if not posified and display_positive:
-                try:
-                    coeff_dict = {k: pre_posify(perms,k,v,check,check_coeff_dict.get(k,0),same,down,var2,var3,msg,subs_dict) for k,v in coeff_dict.items()}
-                except Exception:                    
-                    raise
+                coeff_dict = {k: pre_posify(perms,k,v,check,check_coeff_dict.get(k,0),same,down,var2,var3,msg,subs_dict) for k,v in coeff_dict.items()}
+
             if pr or formatter is None:
-                # print("mom is mom")
                 raw_result_dict = _display_full(
                     coeff_dict,
                     args,
@@ -463,6 +454,7 @@ def main(argv=None):
                 return raw_result_dict
     except BrokenPipeError:
         pass
+    return 0
 
 
 if __name__ == "__main__":

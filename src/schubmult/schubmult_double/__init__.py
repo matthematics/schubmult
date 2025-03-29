@@ -15,6 +15,7 @@ from ._funcs import (
 __all__ = [
     "compute_positive_rep",
     "div_diff",
+    "main",
     "mult_poly",
     "posify",
     "schub_coprod",

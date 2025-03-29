@@ -1,11 +1,7 @@
 from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
 
-# from sympy import init_printing
-
 
 def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
-    # init_printing()
-
     parser = ArgumentParser(
         prog=prog_name,
         description=description,
@@ -176,11 +172,10 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
     else:
         args.mult = False
 
-    for perm_index in range(len(args.perms)):
+    for perm in args.perms:
         try:
-            for i in range(len(args.perms[perm_index])):
-                args.perms[perm_index][i] = int(args.perms[perm_index][i])
-            
+            for i in range(len(perm)):
+                perm[i] = int(perm[i])
         except Exception as e:
             print("Permutations must have integer values")
             raise e
@@ -209,7 +204,5 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
         formatter = lambda bob: str(bob)  # noqa: E731
     elif args.disp_mode == "raw":
         formatter = None
-
-    # print(f"{formatter=}")
 
     return args, formatter
