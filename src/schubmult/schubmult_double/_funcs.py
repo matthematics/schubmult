@@ -1,42 +1,44 @@
 from bisect import bisect_left
-from functools import cache
-from cachetools import cached
-from cachetools.keys import hashkey
-from symengine import sympify, Add, Mul, Pow, expand, Integer, symarray
-from schubmult.perm_lib import (
-    elem_sym_perms,
-    elem_sym_poly,
-    add_perm_dict,
-    dominates,
-    compute_vpathdicts,
-    inverse,
-    theta,
-    permtrim,
-    inv,
-    mulperm,
-    code,
-    uncode,
-    elem_sym_func,
-    elem_sym_perms_op,
-    divdiffable,
-    pull_out_var,
-    cycle,
-    will_formula_work,
-    one_dominates,
-    is_reducible,
-    reduce_coeff,
-    reduce_descents,
-    try_reduce_u,
-    try_reduce_v,
-    phi1,
-    zero,
-)
+from functools import cache, cached_property
+
 import numpy as np
+import psutil
 import pulp as pu
 import sympy
-import psutil
+from cachetools import cached
+from cachetools.keys import hashkey
 from sortedcontainers import SortedList
-from functools import cached_property
+from symengine import Add, Integer, Mul, Pow, expand, symarray, sympify
+
+from schubmult.perm_lib import (
+    add_perm_dict,
+    code,
+    compute_vpathdicts,
+    cycle,
+    divdiffable,
+    dominates,
+    elem_sym_func,
+    elem_sym_perms,
+    elem_sym_perms_op,
+    elem_sym_poly,
+    inv,
+    inverse,
+    is_reducible,
+    mulperm,
+    one_dominates,
+    phi1,
+    pull_out_var,
+    reduce_coeff,
+    reduce_descents,
+    theta,
+    to_permutation,
+    trimcode,
+    try_reduce_u,
+    try_reduce_v,
+    uncode,
+    will_formula_work,
+    zero,
+)
 
 # NO GLOBAL VARS
 # from ._vars import (
@@ -195,7 +197,7 @@ def nilhecke_mult(coeff_dict1, coeff_dict2):
             v1 = [*v]
             addperm = mulperm(v1, w1)
             if inv(addperm) == inv(v1) + inv_w1:
-                toadd = tuple(permtrim(addperm))
+                toadd = tuple(to_permutation(addperm))
                 ret[toadd] = ret.get(toadd, 0) + did_mul[v]
     return ret
 
@@ -207,13 +209,13 @@ def forwardcoeff(u, v, perm, var2=None, var3=None):
 
     w = mulperm([*perm], vmun1)
     if inv(w) == inv(vmun1) + inv(perm):
-        coeff_dict = schubmult_one(tuple(permtrim([*u])), tuple(muv), var2, var3)
-        return coeff_dict.get(tuple(permtrim(w)), 0)
+        coeff_dict = schubmult_one(tuple(to_permutation([*u])), tuple(muv), var2, var3)
+        return coeff_dict.get(tuple(to_permutation(w)), 0)
     return 0
 
 
 def dualcoeff(u, v, perm, var2=None, var3=None):
-    if u == (1, 2):
+    if u == to_permutation([]):
         vp = mulperm([*v], inverse(perm))
         if inv(vp) == inv(v) - inv(perm):
             val = schubpoly(vp, var2, var3)
@@ -257,7 +259,7 @@ def dualpieri(mu, v, w):
     c = [1, 2]
     for i in range(len(lm), len(cn1w)):
         c = mulperm(cycle(i - len(lm) + 1, cn1w[i]), c)
-    c = permtrim(c)
+    c = to_permutation(c)
     res = [[[], v]]
     for i in range(len(lm)):
         res2 = []
@@ -292,37 +294,46 @@ def schubmult_one(perm1, perm2, var2=None, var3=None):
     return schubmult({perm1: 1}, perm2, var2, var3)
 
 
-def schubmult(perm_dict, v, var2=None, var3=None):
+def schubmult(perm_dict, v, var2=_vars.var2, var3=_vars.var3):
+    print(f"{perm_dict=} {v=}")
     vn1 = inverse(v)
     th = theta(vn1)
     if len(th) == 0:
         return perm_dict
     if th[0] == 0:
         return perm_dict
-    mu = permtrim(uncode(th))
-    vmu = permtrim(mulperm([*v], mu))
+    mu = uncode(th)
+    print(f"{mu.list()=}")
+    vmu = to_permutation(mulperm(v, mu).array_form)
+    print(f"{vmu=}")
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
+    print(f"{inv_vmu=} {inv_mu=} {th=}")
     ret_dict = {}
     while th[-1] == 0:
         th.pop()
-    thL = len(th)
+    thL = len(th)    
     vpathdicts = compute_vpathdicts(th, vmu, True)
+    print(f"{vpathdicts=}")
     for u, val in perm_dict.items():
         inv_u = inv(u)
-        vpathsums = {u: {(1, 2): val}}
+        vpathsums = {u: {to_permutation([]): val}}
         for index in range(thL):
+            print(f"{[(k.list(),v) for k,v in vpathsums.items()]}")
             mx_th = 0
             for vp in vpathdicts[index]:
                 for v2, vdiff, s in vpathdicts[index][vp]:
                     if th[index] - vdiff > mx_th:
                         mx_th = th[index] - vdiff
+            print(f"{th=} {mx_th=} {vdiff=}")
             newpathsums = {}
             for up in vpathsums:
                 inv_up = inv(up)
+                print(f"foif {inv_up=}")
                 newperms = elem_sym_perms(
                     up, min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu), th[index]
                 )
+                print(f"{newperms=}")
                 for up2, udiff in newperms:
                     if up2 not in newpathsums:
                         newpathsums[up2] = {}
@@ -331,9 +342,7 @@ def schubmult(perm_dict, v, var2=None, var3=None):
                         if sumval == 0:
                             continue
                         for v2, vdiff, s in vpathdicts[index][v]:
-                            newpathsums[up2][v2] = newpathsums[up2].get(
-                                v2, zero
-                            ) + s * sumval * elem_sym_func(
+                            acc = s * sumval * elem_sym_func(
                                 th[index],
                                 index + 1,
                                 up,
@@ -345,8 +354,17 @@ def schubmult(perm_dict, v, var2=None, var3=None):
                                 var2,
                                 var3,
                             )
+                            # print(f"{acc=} {index=} {up.list()=}{up2.list()}{v.list()=}{v2.list()=}{var2[:10]=}{var3[:10]=}")
+                            newpathsums[up2][v2] = newpathsums[up2].get(
+                                v2, zero
+                            ) + acc
+                print(f"{newpathsums=}")
             vpathsums = newpathsums
-        toget = tuple(vmu)
+        toget = vmu
+        for ep in vpathsums:
+            print(f"{ep.list()=}")
+            print(f"{toget.list()=}")
+            print(f"{[(k,v) for k,v in vpathsums[ep].items()]=}")
         ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
 
@@ -356,8 +374,8 @@ def schubmult_down(perm_dict, v, var2=None, var3=None):
     th = theta(vn1)
     if th[0] == 0:
         return perm_dict
-    mu = permtrim(uncode(th))
-    vmu = permtrim(mulperm([*v], mu))
+    mu = to_permutation(uncode(th))
+    vmu = to_permutation(mulperm([*v], mu))
     ret_dict = {}
 
     while th[-1] == 0:
@@ -365,7 +383,7 @@ def schubmult_down(perm_dict, v, var2=None, var3=None):
     thL = len(th)
     vpathdicts = compute_vpathdicts(th, vmu, True)
     for u, val in perm_dict.items():
-        vpathsums = {u: {(1, 2): val}}
+        vpathsums = {u: {to_permutation([]): val}}
         for index in range(thL):
             mx_th = 0
             for vp in vpathdicts[index]:
@@ -692,7 +710,7 @@ def find_base_vectors(monom_list, monom_list_neg, var2, var3, depth):
                             break
                     # print(f"{mn,mn2}")
                     if diff_term1 is None or diff_term2 is None:
-                        print(f"{mn=} {mn2=}")
+                        # print(f"{mn=} {mn2=}")
                         exit(1)
                     if diff_term2[1] == diff_term1[1]:
                         continue
@@ -1069,8 +1087,8 @@ def posify(
                 if is_coeff_irreducible(u, v, w):
                     u, v, w = reduce_coeff(u, v, w)
                     if is_coeff_irreducible(u, v, w):
-                        while is_coeff_irreducible(u, v, w) and tuple(permtrim(w0)) != tuple(
-                            permtrim([*w])
+                        while is_coeff_irreducible(u, v, w) and tuple(to_permutation(w0)) != tuple(
+                            to_permutation([*w])
                         ):
                             w0 = w
                             u, v, w = reduce_descents(u, v, w)
@@ -1310,11 +1328,11 @@ def posify(
                     v3[2], v3[3] = v3[3], v3[2]
                     coeff = permy(
                         posify(
-                            schubmult_one((1, 3, 2), tuple(permtrim([*v3])), var2, var3).get(
+                            schubmult_one((1, 3, 2), tuple(to_permutation([*v3])), var2, var3).get(
                                 (2, 4, 3, 1), 0
                             ),
                             (1, 3, 2),
-                            tuple(permtrim([*v3])),
+                            tuple(to_permutation([*v3])),
                             (2, 4, 3, 1),
                             var2,
                             var3,
@@ -1325,7 +1343,7 @@ def posify(
                     )
                 else:
                     coeff = permy(
-                        schubmult_one((1, 3, 2), tuple(permtrim([*v3])), var2, var3).get(
+                        schubmult_one((1, 3, 2), tuple(to_permutation([*v3])), var2, var3).get(
                             (2, 4, 1, 3), 0
                         ),
                         2,
@@ -1435,18 +1453,18 @@ def posify(
                     break
             v3 = uncode(newc)
             coeff_dict = schubmult_one(
-                tuple(permtrim([*u])), tuple(permtrim(uncode(elemc))), var2, var3
+                tuple(to_permutation([*u])), tuple(to_permutation(uncode(elemc))), var2, var3
             )
             val = 0
             for new_w in coeff_dict:
                 tomul = coeff_dict[new_w]
-                newval = schubmult_one(new_w, tuple(permtrim(uncode(newc))), var2, var3).get(
-                    tuple(permtrim([*w])), 0
+                newval = schubmult_one(new_w, tuple(to_permutation(uncode(newc))), var2, var3).get(
+                    tuple(to_permutation([*w])), 0
                 )
                 newval = posify(
                     newval,
                     new_w,
-                    tuple(permtrim(uncode(newc))),
+                    tuple(to_permutation(uncode(newc))),
                     w,
                     var2,
                     var3,
@@ -1461,14 +1479,14 @@ def posify(
             u3 = uncode([0] + c01[1:])
             w3 = uncode([0] + c02[1:])
             val = 0
-            val = schubmult_one(tuple(permtrim(u3)), tuple(permtrim([*v])), var2, var3).get(
-                tuple(permtrim(w3)), 0
+            val = schubmult_one(tuple(to_permutation(u3)), tuple(to_permutation([*v])), var2, var3).get(
+                tuple(to_permutation(w3)), 0
             )
             val = posify(
                 val,
-                tuple(permtrim(u3)),
-                tuple(permtrim([*v])),
-                tuple(permtrim(w3)),
+                tuple(to_permutation(u3)),
+                tuple(to_permutation([*v])),
+                tuple(to_permutation(w3)),
                 var2,
                 var3,
                 msg,
@@ -1480,18 +1498,18 @@ def posify(
             if sign_only:
                 return 0
             vp = pull_out_var(c1[0] + 1, [*v])
-            u3 = tuple(permtrim(phi1(u)))
-            w3 = tuple(permtrim(phi1(w)))
+            u3 = tuple(to_permutation(phi1(u)))
+            w3 = tuple(to_permutation(phi1(w)))
             val = 0
             for arr, v3 in vp:
                 tomul = 1
                 for i in range(len(arr)):
                     tomul *= var2[1] - var3[arr[i]]
 
-                val2 = schubmult_one(tuple(permtrim(u3)), tuple(permtrim(v3)), var2, var3).get(
-                    tuple(permtrim(w3)), 0
+                val2 = schubmult_one(tuple(to_permutation(u3)), tuple(to_permutation(v3)), var2, var3).get(
+                    tuple(to_permutation(w3)), 0
                 )
-                val2 = posify(val2, u3, tuple(permtrim(v3)), w3, var2, var3, msg, do_pos_neg)
+                val2 = posify(val2, u3, tuple(to_permutation(v3)), w3, var2, var3, msg, do_pos_neg)
                 val += tomul * shiftsub(val2)
         # elif inv(w)-inv(u)==2 and len(trimcode(u)) == len(trimcode(w)):
         # indices = []
@@ -1567,7 +1585,7 @@ def posify(
 def split_perms(perms):
     perms2 = [perms[0]]
     for perm in perms[1:]:
-        cd = code(perm)
+        cd = trimcode(perm)
         index = -1
         not_zero = False
         did = False
@@ -1591,8 +1609,8 @@ def split_perms(perms):
                     cd1 = cd[:index]
                     cd2 = [0 for i in range(index)] + cd[index:]
                     perms2 += [
-                        tuple(permtrim(uncode(cd1))),
-                        tuple(permtrim(uncode(cd2))),
+                        tuple(to_permutation(uncode(cd1))),
+                        tuple(to_permutation(uncode(cd2))),
                     ]
                     did = True
                     break
@@ -1633,7 +1651,7 @@ def schub_coprod(mperm, indices, var2=_vars.var2, var3=_vars.var3):
     max_required = max([kcd[i] + i for i in range(len(kcd))])
     kcd2 = kcd + [0 for i in range(len(kcd), max_required)] + [0]
     N = len(kcd)
-    kperm = permtrim(inverse(uncode(kcd2)))
+    kperm = to_permutation(inverse(uncode(kcd2)))
     inv_kperm = inv(kperm)
     vn = symarray("soible", 100)
 
@@ -1664,7 +1682,7 @@ def schub_coprod(mperm, indices, var2=_vars.var2, var3=_vars.var3):
 
             val = sympify(coeff_dict[perm]).subs(subs_dict_coprod)
 
-            key = (tuple(permtrim(firstperm)), tuple(permtrim(secondperm)))
+            key = (tuple(to_permutation(firstperm)), tuple(to_permutation(secondperm)))
             ret_dict[key] = val
 
     return ret_dict

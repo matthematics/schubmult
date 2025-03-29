@@ -1,34 +1,35 @@
+import sys
+from functools import cached_property
+
 import numpy as np
 import sympy
-import sys
+from symengine import expand, symarray, sympify
 
-# from schubmult.schubmult_double._vars import var_x, var, var_r
-from schubmult.schubmult_double._funcs import (
-    mult_poly,
-    mult_poly_down,
-    schubmult,
-    schubmult_down,
-    compute_positive_rep,
-    posify,
-    split_perms,
-)
-from symengine import expand, sympify, symarray
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
     add_perm_dict,
-    inverse,
-    theta,
-    permtrim,
-    inv,
-    mulperm,
     code,
+    inv,
+    inverse,
+    mu_A,
+    mulperm,
+    theta,
+    to_permutation,
+    trimcode,
     uncode,
     will_formula_work,
-    mu_A,
-    trimcode,
 )
 
-from functools import cached_property
+# from schubmult.schubmult_double._vars import var_x, var, var_r
+from schubmult.schubmult_double._funcs import (
+    compute_positive_rep,
+    mult_poly,
+    mult_poly_down,
+    posify,
+    schubmult,
+    schubmult_down,
+    split_perms,
+)
 
 
 class _gvars:
@@ -98,7 +99,7 @@ def _display_full(
         pos2 = []
         last_descent = -1
         poso = []
-        for i in range(len(perms[0]) - 1):
+        for i in range(perms[0].size - 1):
             if perms[0][i] > perms[0][i + 1]:
                 last_descent = i + 1
         for i in range(1, last_descent + 1):
@@ -109,7 +110,7 @@ def _display_full(
 
         mu_W = uncode(theta(inverse(perms[0])))
 
-        the_top_perm = tuple(permtrim(mulperm(list(perms[0]), mu_W)))
+        the_top_perm = (to_permutation(mulperm(list(perms[0]), mu_W)))
 
         muA = uncode(mu_A(code(mu_W), poso))
         muB = uncode(mu_A(code(mu_W), pos2))
@@ -140,8 +141,8 @@ def _display_full(
                 if not flag:
                     continue
                 firstperm = downperm[0:N]
-                secondperm = [downperm[i] - N for i in range(N, len(downperm))]
-                perm_pairs += [[permtrim(firstperm), permtrim(secondperm)]]
+                secondperm = [downperm[i] - N for i in range(N, downperm.size)]
+                perm_pairs += [[to_permutation(firstperm), to_permutation(secondperm)]]
 
         if ascode:
             width = max(
@@ -163,7 +164,7 @@ def _display_full(
                 if not flag:
                     continue
                 firstperm = downperm[0:N]
-                secondperm = [downperm[i] - N for i in range(N, len(downperm))]
+                secondperm = [downperm[i] - N for i in range(N, downperm.size)]
                 val = sympify(val).subs(subs_dict)
 
                 if same and display_positive:                    
@@ -174,8 +175,8 @@ def _display_full(
                         if val != 0:
                             val2 = posify(
                                 val,
-                                tuple(permtrim(mulperm(firstperm, muA))),
-                                tuple(permtrim(mulperm(secondperm, muB))),
+                                (to_permutation(mulperm(firstperm, muA))),
+                                (to_permutation(mulperm(secondperm, muB))),
                                 the_top_perm,
                                 tuple(var2neg.tolist()),
                                 tuple(var3neg.tolist()),
@@ -187,7 +188,7 @@ def _display_full(
                                     f"error; write to schubmult@gmail.com with the case {perms=}\n{code(firstperm)=} {code(secondperm)=}\n{val2=}\n{val=}"
                                 )
                                 _display(
-                                    f"{code(tuple(permtrim(mulperm(firstperm,muA))))=},{code(tuple(permtrim(mulperm(secondperm,muB))))=},{code(the_top_perm)=}\n{expand(val-val2)=}"
+                                    f"{code((to_permutation(mulperm(firstperm,muA))))=},{code((to_permutation(mulperm(secondperm,muB))))=},{code(the_top_perm)=}\n{expand(val-val2)=}"
                                 )
                                 exit(1)
                             val = val2
@@ -197,15 +198,15 @@ def _display_full(
                         if not ascode:
                             width2 = (
                                 width
-                                - len(str(permtrim(firstperm)))
-                                - len(str(permtrim(secondperm)))
+                                - len(str(to_permutation(firstperm)))
+                                - len(str(to_permutation(secondperm)))
                             )
                             raw_result_dict[
-                                (tuple(permtrim(firstperm)), tuple(permtrim(secondperm)))
+                                ((to_permutation(firstperm)), (to_permutation(secondperm)))
                             ] = val
                             if formatter:
                                 _display(
-                                    f"{tuple(permtrim(firstperm))}{' ':>{width2}}{tuple(permtrim(secondperm))}  {formatter(val)}"
+                                    f"{(to_permutation(firstperm))}{' ':>{width2}}{(to_permutation(secondperm))}  {formatter(val)}"
                                 )
                         else:
                             width2 = (
@@ -295,7 +296,7 @@ def _display_full(
                         if formatter:
                             _display(f"{str(trimcode(perm)):>{width}}  {formatter(val)}")
                     else:
-                        raw_result_dict[tuple(perm)] = val
+                        raw_result_dict[perm] = val
                         if formatter:
                             _display(f"{str(perm):>{width}}  {formatter(val)}")
     return raw_result_dict
@@ -330,6 +331,7 @@ def main(argv=None):
         mulstring = args.mulstring
 
         perms = args.perms
+        
 
         ascode = args.ascode
         coprod = args.coprod
@@ -347,20 +349,20 @@ def main(argv=None):
         posified = False
         if coprod:
             if ascode:
-                mperm = tuple(permtrim(uncode(perms[0])))
+                mperm = uncode(perms[0])
             else:
-                mperm = tuple(permtrim(perms[0]))
+                mperm = (to_permutation(perms[0]))
 
             perms[0] = mperm
             pos = perms[1]
 
             k = len(pos)
-            n = len(perms[0])
+            n = perms[0].size
             kcd = [pos[i] - i - 1 for i in range(len(pos))] + [n + 1 - k for i in range(k, n)]
             N = len(kcd)
 
             kperm = inverse(uncode(kcd))
-            coeff_dict = {tuple(kperm): 1}
+            coeff_dict = {kperm: 1}
             coeff_dict = schubmult(coeff_dict, perms[0], _vars.var1, var2)
 
             if pr or formatter is None:
@@ -376,15 +378,16 @@ def main(argv=None):
                     N=N,
                 )
         else:
+            #perms = [to_permutation(perm) for perm in perms]
             if ascode:
                 for i in range(len(perms)):
-                    perms[i] = tuple(permtrim(uncode(perms[i])))
+                    perms[i] = uncode(perms[i])
             else:
                 for i in range(len(perms)):
                     if len(perms[i]) < 2 and (len(perms[i]) == 0 or perms[i][0] == 1):
-                        perms[i] = (1, 2)
-                    perms[i] = tuple(permtrim([*perms[i]]))
-
+                        perms[i] = []
+                    perms[i] = to_permutation([p-1 for p in perms[i]])
+            print(f"{[perm.list() for perm in perms]}")
             size = 0
             orig_perms = [*perms]
             while len(perms) != size:
@@ -393,7 +396,7 @@ def main(argv=None):
 
             coeff_dict = {perms[0]: 1}
             check_coeff_dict = {perms[0]: 1}
-
+            print(f"{[perm.list() for perm in orig_perms]}")
             # if mult:
             #     for v in var2:
             #         ()[str(v)] = v
@@ -410,7 +413,9 @@ def main(argv=None):
                     check_coeff_dict = mult_poly_down(check_coeff_dict, mul_exp)
             else:
                 for perm in orig_perms[1:]:
+                    print(f"{[(k.list(),v) for k, v in check_coeff_dict.items()]} {perm.list()=}")
                     check_coeff_dict = schubmult(check_coeff_dict, perm, var2, var3)
+                    print(f"{check_coeff_dict=}")
                 # coeff_dict = check_coeff_dict
                 if mult:
                     mul_exp = eval(mulstring)
@@ -433,7 +438,7 @@ def main(argv=None):
                 for perm, val in coeff_dict2.items():
                     w = mulperm([*perm], muvn1v)
                     if inv(w) + inv(muvn1v) == inv(perm):
-                        coeff_dict[tuple(permtrim(w))] = val
+                        coeff_dict[(to_permutation(w))] = val
                 posified = True
 
             if display_positive and len(perms) > 2 and not mult and not same:
