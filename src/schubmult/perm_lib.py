@@ -4,6 +4,7 @@ from itertools import chain
 
 import numpy as np
 from symengine import Mul, Pow, symarray, sympify
+from sympy.combinatorics import Permutation
 
 zero = sympify(0)
 n = 100
@@ -11,42 +12,28 @@ n = 100
 q_var = symarray("q", n)
 
 
-def getpermval(perm, index):
-    if index < len(perm):
-        return perm[index]
-    return index + 1
+def args_as_permutations(func):
+    def wrapper(*args):
+        perm_args = []
+        for arg in *args:
+            if isinstance(arg, Permutation):
+                perm_args += [arg]
+            elif isinstance(arg,list) or isinstance(arg, tuple):
+                perm_args += [Permutation.from_sequence(arg)]
+        func(*perm_args)
+    return wrapper
 
+@args_as_permutations
+def inv(perm: Permutation):
+    return perm.inversions()
 
-def inv(perm):
-    L = len(perm)
-    if L == 0:
-        return 0
-    v = list(range(1, L + 1))
-    ans = 0
-    for i in range(L):
-        itr = bisect_left(v, perm[i])
-        ans += itr
-        v = v[:itr] + v[itr + 1 :]
-    return ans
+@args_as_permutations
+def code(perm: Permutation):
+    return perm.inversion_vector()
 
-
-def code(perm):
-    L = len(perm)
-    ret = []
-    v = list(range(1, L + 1))
-    for i in range(L - 1):
-        itr = bisect_left(v, perm[i])
-        ret += [itr]
-        v = v[:itr] + v[itr + 1 :]
-    return ret
-
-
-def mulperm(perm1, perm2):
-    if len(perm1) < len(perm2):
-        return [perm1[perm2[i] - 1] if perm2[i] <= len(perm1) else perm2[i] for i in range(len(perm2))]
-    ret = [perm1[perm2[i] - 1] for i in range(len(perm2))] + perm1[len(perm2) :]
-    # print(f"{ret=}")
-    return ret
+@args_as_permutations
+def mulperm(perm1: Permutation, perm2: Permutation):
+    return perm1
 
 
 def uncode(cd):
