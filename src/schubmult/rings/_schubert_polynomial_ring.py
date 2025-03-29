@@ -20,6 +20,7 @@ _def_printer = StrPrinter({"order": "none"})
 # sympy parsing
 # quantum
 
+# COPRODUCT
 
 def _varstr(v):
     if v == utils.NoneVar:
@@ -167,6 +168,10 @@ class DoubleSchubertAlgebraElement(Expr):
     def _mul_handler(self):
         # print("profilating")
         return SchubMul
+
+    def _eval_Eq(self, other):
+        # this will prevent sympy from acting like an idiot
+        return self.__eq__(other)
 
     def _eval_subs(self, old, new):
         b_old = sympify(old)

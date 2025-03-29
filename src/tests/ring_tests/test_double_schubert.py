@@ -67,9 +67,9 @@ def test_associative():
     """
     from schubmult.rings import DSx
     perm1, perm2, perm3 = [1, 5, 3, 4, 2], [1, 3, 2, 5, 4], [3, 1, 4, 2, 5]
-    assert ((DSx(perm1) * DSx(perm2)) * DSx(perm3)).equals(DSx(perm1) * (DSx(perm2) * DSx(perm3)))
+    assert ((DSx(perm1) * DSx(perm2)) * DSx(perm3)) == (DSx(perm1) * (DSx(perm2) * DSx(perm3)))
 
-    assert ((DSx(perm1) * DSx(perm2)) * DSx(perm3, "z")).equals(DSx(perm1) * (DSx(perm2) * DSx(perm3, "z")))
+    assert ((DSx(perm1) * DSx(perm2)) * DSx(perm3, "z")) == (DSx(perm1) * (DSx(perm2) * DSx(perm3, "z")))
 
 def test_change_vars():
     """
@@ -78,7 +78,7 @@ def test_change_vars():
     from schubmult.rings import DSx
     perm = [1, 5, 3, 4, 2]
     
-    assert DSx(perm).change_vars("theta").equals(DSx(perm).change_vars("gamama"))
+    assert DSx(perm).change_vars("theta") == DSx(perm).change_vars("gamama")
     #assert (DSx(perm)*DSx(perm,"z")).change_vars("theta").equals((DSx(perm)*DSx(perm,"z")).change_vars("yourmom"))
 
 
