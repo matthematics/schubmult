@@ -22,7 +22,7 @@ import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
 import schubmult.schubmult_q as sq
 import schubmult.schubmult_q_double as qyz
-from schubmult.perm_lib import permtrim
+from schubmult.libs.perms import permtrim
 
 from ._indexing import _coerce_index
 

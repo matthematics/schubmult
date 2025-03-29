@@ -12,7 +12,7 @@ from sympy.printing.str import StrPrinter
 import schubmult.rings._utils as utils
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
-from schubmult.perm_lib import add_perm_dict, inv, permtrim
+from schubmult.libs.perms import add_perm_dict, inv, permtrim
 
 # import utils.NoneVar, utils.ZeroVar, utils.poly_ring
 

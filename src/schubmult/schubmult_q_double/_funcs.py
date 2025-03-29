@@ -10,7 +10,7 @@ from functools import cached_property
 from symengine import Add, Mul, Pow, expand, symarray
 
 import schubmult.schubmult_double as norm_yz
-from schubmult.perm_lib import (
+from schubmult.libs.perms import (
     add_perm_dict,
     call_zvars,
     compute_vpathdicts,

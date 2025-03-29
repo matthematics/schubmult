@@ -2,7 +2,7 @@ from functools import cached_property
 
 from symengine import Add, Mul, Pow, symarray
 
-from schubmult.perm_lib import (
+from schubmult.libs.perms import (
     add_perm_dict,
     compute_vpathdicts,
     elem_sym_perms,

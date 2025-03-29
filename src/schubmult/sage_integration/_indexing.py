@@ -1,7 +1,7 @@
 from sage.combinat.composition import Composition
 from sage.combinat.permutation import Permutation
 
-from schubmult.perm_lib import permtrim, trimcode, uncode
+from schubmult.libs.perms import permtrim, trimcode, uncode
 
 
 def _coerce_index(indexed_obj, is_comp, should_be_comp):

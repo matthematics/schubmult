@@ -3,7 +3,7 @@ import sys
 from symengine import sympify
 
 from schubmult._base_argparse import schub_argparse
-from schubmult.perm_lib import (
+from schubmult.libs.perms import (
     inv,
     inverse,
     permtrim,

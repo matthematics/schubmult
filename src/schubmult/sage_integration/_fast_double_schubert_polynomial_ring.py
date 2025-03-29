@@ -27,7 +27,7 @@ from sympy import sympify
 import schubmult.sage_integration._fast_schubert_polynomial_ring as bork
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_q_double as qyz
-from schubmult.perm_lib import permtrim
+from schubmult.libs.perms import permtrim
 
 from ._indexing import _coerce_index
 

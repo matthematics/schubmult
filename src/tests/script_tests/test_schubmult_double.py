@@ -37,7 +37,7 @@ def check_positive(v, coprod, same, var_r):
         if vals[i].find("*(") == -1:
             vals[i] = re.sub(r"[)]|[(]", "", vals[i])
 
-    print(f"{vals=}", file=sys.stderr)
+    #print(f"{vals=}", file=sys.stderr)
     for val in vals:
         if val.find("(") != -1:
             val += ")"
@@ -47,7 +47,7 @@ def check_positive(v, coprod, same, var_r):
         except ValueError:
             pass
         sym_val = expand(sympify(val))
-        print(f"{sym_val=} not an int", file=sys.stderr)
+        #print(f"{sym_val=} not an int", file=sys.stderr)
         if coprod:
             assert expand(sym_val) == expand(
                 compute_positive_rep(sym_val, var3, var2, do_pos_neg=False),
@@ -56,7 +56,7 @@ def check_positive(v, coprod, same, var_r):
             assert expand(sym_val) == expand(
                 compute_positive_rep(sym_val, var2, var3, do_pos_neg=False),
             )
-    print(f"Donebaby {coprod=}", file=sys.stderr)
+    #print(f"Donebaby {coprod=}", file=sys.stderr)
     return True
 
 
@@ -109,7 +109,7 @@ def assert_dict_good(
 def parse_ret(lines, ascode, coprod, unformat):
     import sys
 
-    from schubmult.perm_lib import permtrim, uncode
+    from schubmult.libs.perms import permtrim, uncode
     ret_dict = {}
     if not coprod:
         for line in lines:
@@ -198,7 +198,7 @@ json_files_data_args = load_json_test_names(base_dir)
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
-    from schubmult.perm_lib import permtrim, uncode
+    from schubmult.libs.perms import permtrim, uncode
 
     args = get_json(f"{base_dir}/{json_file}")
     # print(f"{json_file=} {args=} input_data")
