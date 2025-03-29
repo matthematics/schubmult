@@ -40,6 +40,14 @@ class Ex:
 
 _ex = Ex()
 
+@cache
+def cached_product(u, v, va, vb):
+    return {(k, va): yz.xreplace_genvars(x,utils.poly_ring(va),utils.poly_ring(vb)) for k, x in yz.schubmult_one_generic(u, v).items()}
+
+@cache
+def cached_positive_product(u, v, va, vb):
+    return {(k, va): yz.xreplace_genvars(x,utils.poly_ring(va),utils.poly_ring(vb)) for k, x in yz.schubmult_generic_partial_posify(u, v).items()}
+
 
 def _mul_schub_dicts(dict1, dict2, best_effort_positive=False):
     by_var = {}
@@ -58,26 +66,30 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=False):
 
     for _vstr, _dict in by_var.items():
         this_dict = {}
-        if best_effort_positive:
-            for k, v in dict2.items():
-                for kd, vd in _dict.items():
-                    vv = v * vd
-                    out_dict = {(k1, _vstr): vv * yz.xreplace_genvars(v1, utils.poly_ring(_vstr), utils.poly_ring(k[1])) for k1, v1 in yz.schubmult_generic_partial_posify(kd, k[0]).items()}
-                    # else:
-                    #     out_dict = {(k1, _vstr): vv * v1 for k1, v1 in yz.schubmult_one(kd, k[0],utils.poly_ring(_vstr), utils.poly_ring(k[1])).items()}
-                    # for k1 in out_dict:
-                    #     val = yz.posify(out_dict[k1], kd, k[0], k1, utils.poly_ring(_vstr), utils.poly_ring(k[1]), msg=True, do_pos_neg=False, sign_only=False, optimize=False)
-                    #     # if expand(val-out_dict[k1])!=0:
-                    #     #     raise Exception()
-                    #     # else:
-                    #     out_dict[k1] = val
-                    this_dict = add_perm_dict(
-                        this_dict,
-                          out_dict
-                    )
-        else:
-            for k, v in dict2.items():
-                this_dict = add_perm_dict(this_dict, {(k1, _vstr): v1 * v for k1, v1 in yz.schubmult(_dict, k[0], utils.poly_ring(_vstr), utils.poly_ring(k[1])).items()})
+        # if best_effort_positive:
+        #     for k, v in dict2.items():
+        #         for kd, vd in _dict.items():
+        #             vv = v * vd
+        #             out_dict = {(k1, _vstr): vv * yz.xreplace_genvars(v1, utils.poly_ring(_vstr), utils.poly_ring(k[1])) for k1, v1 in yz.schubmult_generic_partial_posify(kd, k[0]).items()}
+        #             # else:
+        #             #     out_dict = {(k1, _vstr): vv * v1 for k1, v1 in yz.schubmult_one(kd, k[0],utils.poly_ring(_vstr), utils.poly_ring(k[1])).items()}
+        #             # for k1 in out_dict:
+        #             #     val = yz.posify(out_dict[k1], kd, k[0], k1, utils.poly_ring(_vstr), utils.poly_ring(k[1]), msg=True, do_pos_neg=False, sign_only=False, optimize=False)
+        #             #     # if expand(val-out_dict[k1])!=0:
+        #             #     #     raise Exception()
+        #             #     # else:
+        #             #     out_dict[k1] = val
+        #             this_dict = add_perm_dict(
+        #                 this_dict,
+        #                   out_dict
+        #             )
+        # else:
+        for k, v in dict2.items():
+            for kd, vd in _dict.items():
+                if best_effort_positive:
+                    this_dict = add_perm_dict(this_dict,{k1: v1 * v* vd for k1, v1 in cached_product(kd,k[0],_vstr,k[1]).items()})
+                else:
+                    this_dict = add_perm_dict(this_dict,{k1: v1 * v* vd for k1, v1 in cached_positive_product(kd,k[0],_vstr,k[1]).items()})
         results = add_perm_dict(results, this_dict)
 
     by_var2 = {}
@@ -177,6 +189,7 @@ class DoubleSchubertAlgebraElement(Expr):
         # obj.make_args(pieces)
         # obj.args = pieces
         obj._doubledict = _dict
+        # print(f"{_dict=}")
         # print(f"{[sympy.Mul(_dict[k], DSchubSymbol(DSx._base_var, k)) for k in sorted(_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))]=}")
         obj._print_sum = Add(*[sympy.Mul(_dict[k], DSchubSymbol(DSx._base_var, k)) for k in sorted(_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))], evaluate=False)
         # print(f"{obj._print_sum=} {obj._print_sum.is_Add=} {type(obj._print_sum)=}")
@@ -293,7 +306,7 @@ class DoubleSchubertAlgebraElement(Expr):
             elem2_o = elem2.change_vars(cv)
             assert sympy.expand(elem1_o-elem1) == 0
             assert sympy.expand(elem2_o-elem2) == 0
-            return elem1_o.test_equality(elem2_o, disp=True)
+            return elem1_o.test_equality(elem2_o)
         return True
         # assert all([k[1] == cv for k in elem1._doubledict.keys()])
         # assert all([k[1] == cv for k in elem2._doubledict.keys()])
@@ -326,7 +339,7 @@ class DoubleSchubertAlgebraElement(Expr):
     def change_vars(self, cv):
         result = {}
         for k, v in self._doubledict.items():
-            result = add_perm_dict(result, {(k1, cv): v1 for k1, v1 in yz.schubmult({(1, 2): v}, k[0], utils.poly_ring(cv), utils.poly_ring(k[1])).items()})
+            result = add_perm_dict(result, {k1: v1*v for k1, v1 in cached_product((1, 2), k[0], cv,k[1]).items()})
         return _from_double_dict(result)
 
     def as_coefficients_dict(self):

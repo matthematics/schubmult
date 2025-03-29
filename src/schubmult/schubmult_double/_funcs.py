@@ -73,7 +73,15 @@ class _gvars:
 
     @cached_property
     def var_r(self):
-        return symarray("r", 100)
+        return tuple(symarray("r", 100))
+    
+    @cached_property
+    def var_g1(self):
+        return tuple(symarray("y", 100))
+    
+    @cached_property
+    def var_g2(self):
+        return tuple(symarray("z", 100))
 
 
 _vars = _gvars()
@@ -298,6 +306,11 @@ monom_to_vec = {}
 @cache
 def schubmult_one(perm1, perm2, var2=None, var3=None):
     return schubmult({perm1: 1}, perm2, var2, var3)
+
+@cache
+def schubmult_one_generic(perm1, perm2):
+    return schubmult({perm1: 1}, perm2, _vars.var_g1, _vars.var_g2)
+
 
 
 def schubmult(perm_dict, v, var2=None, var3=None):
@@ -1029,6 +1042,35 @@ def skew_div_diff(u, w, poly):
         return skew_div_diff(u2, w2, permy(poly, d + 1))
     return skew_div_diff(u, w2, div_diff(d + 1, poly))
 
+def posify_generic_partial(val, u2, v2, w2):
+    val2 = val
+    val = posify(val, u2, v2, w2, var2=_vars.var_g1,var3=_vars.var_g2,msg=True,do_pos_neg=False,sign_only=False,optimize=False)
+    if expand(val-val2)!=0:
+        raise Exception(f"{val=} {val2=} {u2=} {v2=} {w2=}")
+    return val
+
+@cache
+def schubmult_generic_partial_posify(u2, v2):
+    return {w2: posify_generic_partial(val,u2,v2,w2) for w2, val in schubmult_one_generic(u2,v2).items()}
+
+def xreplace_genvars(poly, vars1, vars2):
+    subs_gen1 = {_vars.var_g1[i]: vars1[i] for i in range(len(_vars.var_g1))}
+    subs_gen2 = {_vars.var_g2[i]: vars2[i] for i in range(len(_vars.var_g2))}
+    #print(f"{poly=} {sympify(poly).free_symbols=}")
+    # for s in sympify(poly).free_symbols:
+    #     try:
+    #         ind = _vars.var_g1.index(s)
+    #         subs_gen1[_vars.var_g1[ind]] = vars1[ind]
+    #     except ValueError:
+    #         pass
+    #     try:
+    #         ind = _vars.var_g2.index(s)
+    #         subs_gen2[_vars.var_g2[ind]] = vars2[ind]
+    #     except ValueError:
+    #         pass
+    poly2 = sympify(poly).xreplace(subs_gen1).xreplace(subs_gen2)
+    #print(f"{poly2=} {poly2.free_symbols=}")
+    return poly2
 
 @cached(
     cache={},

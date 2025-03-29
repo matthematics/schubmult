@@ -78,7 +78,8 @@ def test_change_vars():
     from schubmult.rings import DSx
     perm = [1, 5, 3, 4, 2]
     
-    assert DSx(perm).change_vars("theta").equals(DSx(perm))
+    assert DSx(perm).change_vars("theta").equals(DSx(perm).change_vars("gamama"))
+    #assert (DSx(perm)*DSx(perm,"z")).change_vars("theta").equals((DSx(perm)*DSx(perm,"z")).change_vars("yourmom"))
 
 
 # def test_coerce():
