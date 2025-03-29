@@ -168,6 +168,42 @@ class DoubleSchubertAlgebraElement(Expr):
         # print("profilating")
         return SchubMul
 
+    def _eval_subs(self, old, new):
+        b_old = sympify(old)
+        b_new = sympify(new)
+        # print(f"{b_old=} {b_new=}")
+        result = {}
+        stuff_to_do = False
+        lots_of_stuff_to_do = False
+        if b_new in utils.poly_ring(self._base_var):
+            stuff_to_do = True
+        if b_old in utils.poly_ring(self._base_var):
+            lots_of_stuff_to_do = True
+        for k, v in self._doubledict.items():
+            if lots_of_stuff_to_do:
+                poley = (sympify(_from_double_dict({k: 1}).change_vars(0).expand()*v))
+                if b_old in poley.free_symbols:
+                    poley = poley.subs(b_old, b_new)
+                    new_dict = yz.mult_poly({(1,2): 1}, poley, utils.poly_ring(self._base_var),utils.poly_ring(k[1]))
+                    new_p = {(koifle, k[1]): voifle for koifle, voifle in new_dict.items()}
+                    result = add_perm_dict(result, new_p)
+            elif stuff_to_do:
+                this_p = _from_double_dict({k: v}).change_vars(0)
+                for kkk, vvv in this_p._doubledict.items():
+                    vvvv = sympify(vvv).subs(b_old, b_new)
+                    if b_new in sympify(vvvv).free_symbols:
+                        s_dict = {kkk[0]: 1}
+                        # print(f"{s_dict=}")
+                        r_dict = py.mult_poly(s_dict, vvvv, utils.poly_ring(self._base_var))
+                    else:
+                        r_dict = {kkk[0]: vvvv}
+                    r_dict = {(kk, 0): voif for kk, voif in r_dict.items()}
+                    new_p = _from_double_dict(r_dict).change_vars(k[1])
+                    result = add_perm_dict(result, new_p._doubledict)
+            else:
+                result[k] = result.get(k,0) + sympify(v).subs(b_old, b_new)
+        return _from_double_dict(result)
+
     @staticmethod
     def __xnew__(_class, _dict, *args, **kwargs):
         # print("Prong")
@@ -339,7 +375,7 @@ class DoubleSchubertAlgebraElement(Expr):
     def change_vars(self, cv):
         result = {}
         for k, v in self._doubledict.items():
-            result = add_perm_dict(result, {k1: v1*v for k1, v1 in cached_product((1, 2), k[0], cv,k[1]).items()})
+            result = add_perm_dict(result, {k1: v1*v for k1, v1 in cached_positive_product((1, 2), k[0], cv,k[1]).items()})
         return _from_double_dict(result)
 
     def as_coefficients_dict(self):

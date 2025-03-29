@@ -1056,6 +1056,7 @@ def schubmult_generic_partial_posify(u2, v2):
 def xreplace_genvars(poly, vars1, vars2):
     subs_gen1 = {_vars.var_g1[i]: vars1[i] for i in range(len(_vars.var_g1))}
     subs_gen2 = {_vars.var_g2[i]: vars2[i] for i in range(len(_vars.var_g2))}
+    subs_gen1.update(subs_gen2)
     #print(f"{poly=} {sympify(poly).free_symbols=}")
     # for s in sympify(poly).free_symbols:
     #     try:
@@ -1068,7 +1069,7 @@ def xreplace_genvars(poly, vars1, vars2):
     #         subs_gen2[_vars.var_g2[ind]] = vars2[ind]
     #     except ValueError:
     #         pass
-    poly2 = sympify(poly).xreplace(subs_gen1).xreplace(subs_gen2)
+    poly2 = sympify(poly).xreplace(subs_gen1)
     #print(f"{poly2=} {poly2.free_symbols=}")
     return poly2
 
