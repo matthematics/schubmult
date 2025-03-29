@@ -11,8 +11,6 @@ n = 100
 q_var = symarray("q", n)
 
 
-
-
 def getpermval(perm, index):
     if index < len(perm):
         return perm[index]

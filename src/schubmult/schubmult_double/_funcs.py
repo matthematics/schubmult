@@ -238,12 +238,12 @@ def dualcoeff(u, v, perm, var2=_vars.var2, var3=_vars.var3):
     else:
         dpret = []
         if dominates(u, perm):
-            # print(f"{u=} {perm=}")
+            print(f"{u=} {perm=}")
             dpret = dualpieri([*u], [*v], [*perm])
         else:
             th = theta(u)
             muu = uncode(th)
-            # print(f"{muu=}")
+            print(f"{muu=}")
             umun1 = mulperm(inverse([*u]), muu)
             w = mulperm([*perm], umun1)
             if inv(w) == inv(umun1) + inv(perm):
@@ -1124,7 +1124,7 @@ def posify(
     u = tuple(u)
     v = tuple(v)
     w = tuple(w)
-    # print(f"{u=} {v=} {w=}")
+    print(f"{u=} {v=} {w=}")
     if w != w2 and sign_only:
         return 0
 
@@ -1516,10 +1516,10 @@ def posify(
                 if val2 is not None:
                     val = val2
                 else:
-                    # print("WHJAT")
+                    print("WHJAT")
                     raise Exception
                 if expand(val - oldval) != 0:
-                    # print(f"{u2=} {v2=} {w2=}")
+                    print(f"{u2=} {v2=} {w2=}")
                     raise Exception
             else:
                 return val
@@ -1530,7 +1530,7 @@ def posify(
                     return -1
             return 1
     if expand(val-oldval) != 0:
-        # print("Waha")
+        print("Waha")
         raise Exception
     return val
 
