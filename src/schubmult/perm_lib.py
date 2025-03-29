@@ -18,7 +18,21 @@ n = 100
 q_var = symarray("q", n)
 
 
-# <<<<<<< Updated upstream
+
+def uncode(cd):
+    cd2 = [*cd]
+    if cd2 == []:
+        return [1, 2]
+    max_required = max([cd2[i] + i for i in range(len(cd2))])
+    cd2 += [0 for i in range(len(cd2), max_required)]
+    fullperm = [i + 1 for i in range(len(cd2) + 1)]
+    perm = []
+    for i in range(len(cd2)):
+        perm += [fullperm.pop(cd2[i])]
+    perm += [fullperm[0]]
+    return perm
+
+
 def args_as_permutations(func):
     def wrapper(*args):
         perm_args = []
@@ -30,29 +44,134 @@ def args_as_permutations(func):
         return func(*perm_args)
     return wrapper
 
-def args_as_permutations_ret_tuple(func):
+def args_as_list(func):
     def wrapper(*args):
-        perm_args = []
-        for arg in args:
-            if isinstance(arg, Permutation):
-                perm_args += [arg]
-            elif isinstance(arg,list) or isinstance(arg, tuple):
-                perm_args += [Permutation.from_sequence(arg)]
-        return tuple(uncode(func(*perm_args)))
+        perm_args = [*args]
+        # for arg in args:
+        #     if isinstance(arg, Permutation):
+        #         perm_args += [list(arg)]
+        #     else:
+        #         perm_args += [arg]
+        for i in range(len(perm_args)):
+            if isinstance(perm_args[i], Permutation):
+                perm_args[i] = [a +1 for a in list(perm_args[i])]
+        return func(*perm_args)
     return wrapper
 
-@args_as_permutations
+def args_as_is_ret_permutation(func):
+    def wrapper(*args):
+        ret = func(*args)
+        return Permutation.from_sequence(ret)
+    return wrapper
+
+# def args_as_permutations_ret_tuple(func):
+#     def wrapper(*args):
+#         perm_args = []
+#         for arg in args:
+#             if isinstance(arg, Permutation):
+#                 perm_args += [arg]
+#             elif isinstance(arg,list) or isinstance(arg, tuple):
+#                 perm_args += [Permutation.from_sequence(arg)]
+#         return tuple(uncode(func(*perm_args)))
+#     return wrapper
+
+#
+# def inv(perm: Permutation):
+#     return perm.inversions()
+
+# class Perm:
+#     def __init__(self, L):
+#         self._L = tuple(permtrim(L))
+
+#     def __hash__(self):
+#         return hash(self._L)
+
+#     def __cal
+
+
+@cache
 def inv(perm: Permutation):
     return perm.inversions()
 
-@args_as_permutations
-def code(perm: Permutation):
-    cd = perm.inversion_vector()
-    return cd
+# @cache
+# def old_inv(perm):
+#     L = perm.size
+#     if L == 0:
+#         return 0
+#     v = list(range(0, L))
+#     ans = 0
+#     for i in range(L):
+#         itr = bisect_left(v, perm(i))
+#         ans += itr
+#         v = v[:itr] + v[itr + 1 :]
+#     return ans
+
+# @args_as_permutations
+# @cache
+# def code(perm: Permutation):
+#     cd = perm.inversion_vector()
+#     return cd
+
+# def code(perm):
+#     L = len(perm)
+#     ret = []
+#     v = list(range(1, L + 1))
+#     for i in range(L - 1):
+#         itr = bisect_left(v, perm[i])
+#         ret += [itr]
+#         v = v[:itr] + v[itr + 1 :]
+#     return ret
+
+@cache
+def code(perm):
+    L = perm.size
+    ret = []
+    v = list(range(0, L))
+    for i in range(L - 1):
+        itr = bisect_left(v, perm(i))
+        ret += [itr]
+        v = v[:itr] + v[itr + 1 :]
+    return ret
+
+# def perm_code(perm):
+#     cd = perm.inversion_vector()
+#     return cd
+
 
 # @args_as_permutations_ret_tuple
-# def mulperm(perm1: Permutation, perm2: Permutation):
-#     return perm1*perm2
+# def perm_mulperm(perm1: Permutation, perm2: Permutation):
+#     p1 = perm_to_tuple(perm1)
+#     p2 = perm_to_tuple(perm2)
+#     result = [perm1.apply(k-1) +1 for k in perm_to_tuple(perm2)] + perm_to_tuple(perm1)[]
+#     result2 = old_mulperm(perm_to_tuple(perm1),perm_to_tuple(perm2))
+#     if result != result2:
+#         print(f"{result=} {result2=} {perm_to_tuple(perm1)=} {perm_to_tuple(perm2)=}")
+#         raise Exception
+#     return result
+
+
+@cache
+def get_permutation(tup):
+    return Permutation.from_sequence(tup)
+
+# @args_as_is_ret_permutation
+def mulperm(perm1, perm2):
+    if len(perm1) < len(perm2):
+        return [
+            perm1[perm2[i] - 1] if perm2[i] <= len(perm1) else perm2[i] for i in range(len(perm2))
+        ]
+    return [perm1[perm2[i] - 1] for i in range(len(perm2))] + perm1[len(perm2) :]
+
+def perm_mulperm(perm1, perm2):
+    return perm2*perm1
+    # if len(perm1) < len(perm2):
+    #     return [
+    #         perm1[perm2[i] - 1] if perm2[i] <= len(perm1) else perm2[i] for i in range(len(perm2))
+    #     ]
+    #print((perm1, perm2))
+
+    return get_permutation(tuple(mulperm(perm1,perm2)))
+
 # =======
 def getpermval(perm, index):
     if index < len(perm):
@@ -82,7 +201,7 @@ def getpermval(perm, index):
 #     return ret
 
 
-def mulperm(perm1, perm2):
+def old_mulperm(perm1, perm2):
     if len(perm1) < len(perm2):
         return [
             perm1[perm2[i] - 1] if perm2[i] <= len(perm1) else perm2[i] for i in range(len(perm2))
@@ -92,18 +211,6 @@ def mulperm(perm1, perm2):
 # >>>>>>> Stashed changes
 
 
-def uncode(cd):
-    cd2 = [*cd]
-    if cd2 == []:
-        return [1, 2]
-    max_required = max([cd2[i] + i for i in range(len(cd2))])
-    cd2 += [0 for i in range(len(cd2), max_required)]
-    fullperm = [i + 1 for i in range(len(cd2) + 1)]
-    perm = []
-    for i in range(len(cd2)):
-        perm += [fullperm.pop(cd2[i])]
-    perm += [fullperm[0]]
-    return perm
 
 
 def reversecode(perm):
@@ -132,10 +239,15 @@ def reverseuncode(cd):
 
 
 def inverse(perm):
-    retperm = [0 for i in range(len(perm))]
-    for i in range(len(perm)):
-        retperm[perm[i] - 1] = i + 1
-    return retperm
+    retperm =list([0 for i in range(perm.size)])
+    for i in range(perm.size):
+        #print(f"{list(perm)=} {perm(i)=} {perm.size=})")
+        #print(perm.size)
+        retperm[perm(i)] = i + 1
+    return Permutation.from_sequence(retperm)
+
+def perm_inverse(perm):
+    return ~perm
 
 
 def permtrim(perm):
