@@ -1044,9 +1044,9 @@ def posify(
     msg=False,
     do_pos_neg=True,
     sign_only=False,
+    optimize=True,
     n=_vars.n,
-    *,
-    optimize=True
+    
 ):
     oldval = val
     if inv(u2) + inv(v2) - inv(w2) == 0:
