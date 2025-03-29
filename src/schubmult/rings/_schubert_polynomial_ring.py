@@ -1,4 +1,3 @@
-import sys
 from functools import cache
 
 import symengine
@@ -22,11 +21,6 @@ _def_printer = StrPrinter({"order": "none"})
 # quantum
 
 
-class ExceptionThrower:
-    def __bool__(self):
-        raise Exception
-
-
 def _varstr(v):
     if v == utils.NoneVar:
         return "NoneVar"
@@ -35,12 +29,9 @@ def _varstr(v):
     return f"'{v}'"
 
 
-class ExceptionThrower:
-    def __bool__(self):
-        raise Exception("Exception thrower")
-
 def _from_double_dict(_doubledict):
     return DoubleSchubertAlgebraElement(_doubledict)
+
 
 def _mul_schub_dicts(dict1, dict2, best_effort_positive=False):
     by_var = {}
@@ -172,7 +163,7 @@ class DoubleSchubertAlgebraElement(Expr):
         # obj.args = pieces
         obj._doubledict = _dict
         # print(f"{[sympy.Mul(_dict[k], DSchubSymbol(DSx._base_var, k)) for k in sorted(_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))]=}")
-        obj._print_sum = Add(*[sympy.Mul(_dict[k], DSchubSymbol(DSx._base_var, k)) for k in sorted(_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))],evaluate=False)
+        obj._print_sum = Add(*[sympy.Mul(_dict[k], DSchubSymbol(DSx._base_var, k)) for k in sorted(_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))], evaluate=False)
         # print(f"{obj._print_sum=} {obj._print_sum.is_Add=} {type(obj._print_sum)=}")
         return obj
 
@@ -180,10 +171,8 @@ class DoubleSchubertAlgebraElement(Expr):
     def _cached_sympystr(self):
         return _def_printer._print(self._print_sum)
 
-    
     def _sympystr(self, printer):  # noqa: ARG002
         return self._cached_sympystr()
-        
 
     @staticmethod
     @cache
@@ -196,14 +185,13 @@ class DoubleSchubertAlgebraElement(Expr):
     # def _eval_simplify_(self):
     #     # print("Hey pretty baby")
     #     return self
-    
 
     def __add__(self, other):
         # print("ASFJASJ")
         # print(f"addwinky {self.__class__=} {self=} {other=}")
         # print(f"flarfknockle {self._doubledict=} {DSx(other)._doubledict=} {other=}")
         # return SchubAdd(self, DSx(other))
-        #return self._from_double_dict(ret)
+        # return self._from_double_dict(ret)
         return _from_double_dict(add_perm_dict(self._doubledict, DSx(other)._doubledict))
 
     def __radd__(self, other):
@@ -241,7 +229,7 @@ class DoubleSchubertAlgebraElement(Expr):
         # print("ASFJAdsajdSJ")
         # print(f"rmulwinky {self.__class__=} {self=} {other=}")
         return _from_double_dict(_mul_schub_dicts(DSx(other)._doubledict, self._doubledict))
-        #return SchubMul(DSx(other),self)
+        # return SchubMul(DSx(other),self)
 
     def equals(self, other):
         return self.__eq__(other)
@@ -270,8 +258,8 @@ class DoubleSchubertAlgebraElement(Expr):
             return self.doit().equals(other)
         # elem1 = self.change_vars(0)
         # elem2 = DSx(other).change_vars(0)
-        #cv = sorted([k[1] if k[1] != utils.NoneVar else 0 for k in self._doubledict.keys()],key=lambda flop:-len([k for k in self._doubledict.keys() if k[1] == flop]))[0]
-        #print(f"{cv=}")
+        # cv = sorted([k[1] if k[1] != utils.NoneVar else 0 for k in self._doubledict.keys()],key=lambda flop:-len([k for k in self._doubledict.keys() if k[1] == flop]))[0]
+        # print(f"{cv=}")
         cv = "y"
         elem1 = self
         elem2 = DSx(other)
@@ -283,7 +271,6 @@ class DoubleSchubertAlgebraElement(Expr):
         return True
         # assert all([k[1] == cv for k in elem1._doubledict.keys()])
         # assert all([k[1] == cv for k in elem2._doubledict.keys()])
-        
 
     # def __str__(self):
     #     pieces = []
@@ -309,17 +296,12 @@ class DoubleSchubertAlgebraElement(Expr):
     #     return str(self)
     # def _as_ordered_terms(self, *args, **kwargs):
 
-    # def _sympystr(self, *args):
-    #     return str(self)
-    # def _eval_simplify(self, *args, **kwargs):  # noqa: ARG002
-    #     return self._from_double_dict({k: sympify(sympy.simplify(v)) for k, v in self._doubledict.items()})
     @cache
     def change_vars(self, cv):
         result = {}
         for k, v in self._doubledict.items():
-            result = add_perm_dict(result, {(k1, cv): v1 for k1, v1 in yz.schubmult({(1,2): v},k[0],utils.poly_ring(cv),utils.poly_ring(k[1])).items()} )
+            result = add_perm_dict(result, {(k1, cv): v1 for k1, v1 in yz.schubmult({(1, 2): v}, k[0], utils.poly_ring(cv), utils.poly_ring(k[1])).items()})
         return _from_double_dict(result)
-
 
     def as_coefficients_dict(self):
         # will not allow zeros
@@ -368,12 +350,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
             else:
                 return self(x.expand(), cv)
         else:
-            try:
-                x = sympify(x)
-            except Exception:
-                raise Exception(f"{str(x)=}", file=sys.stderr)
-                # x = sympify(str(x))
-
+            x = sympify(x)
             if cv is None or cv == utils.NoneVar:
                 cv = utils.NoneVar
                 result = py.mult_poly({(1, 2): 1}, x, utils.poly_ring(self._base_var))
@@ -381,7 +358,6 @@ class DoubleSchubertAlgebraElement_basis(Basic):
                 result = yz.mult_poly({(1, 2): 1}, x, utils.poly_ring(self._base_var), utils.poly_ring(cv))
             elem = DoubleSchubertAlgebraElement({(k, cv): v for k, v in result.items()})
         return elem
-
 
 
 def _do_schub_mul(a, b):
