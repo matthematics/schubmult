@@ -15,12 +15,23 @@ q_var = symarray("q", n)
 def args_as_permutations(func):
     def wrapper(*args):
         perm_args = []
-        for arg in *args:
+        for arg in args:
             if isinstance(arg, Permutation):
                 perm_args += [arg]
             elif isinstance(arg,list) or isinstance(arg, tuple):
                 perm_args += [Permutation.from_sequence(arg)]
-        func(*perm_args)
+        return func(*perm_args)
+    return wrapper
+
+def args_as_permutations_ret_tuple(func):
+    def wrapper(*args):
+        perm_args = []
+        for arg in args:
+            if isinstance(arg, Permutation):
+                perm_args += [arg]
+            elif isinstance(arg,list) or isinstance(arg, tuple):
+                perm_args += [Permutation.from_sequence(arg)]
+        return tuple(uncode(func(*perm_args)))
     return wrapper
 
 @args_as_permutations
@@ -31,9 +42,9 @@ def inv(perm: Permutation):
 def code(perm: Permutation):
     return perm.inversion_vector()
 
-@args_as_permutations
+@args_as_permutations_ret_tuple
 def mulperm(perm1: Permutation, perm2: Permutation):
-    return perm1
+    return perm1*perm2
 
 
 def uncode(cd):
@@ -86,7 +97,7 @@ def inverse(perm):
 
 def permtrim(perm):
     L = len(perm)
-    while L > 0 and perm[-1] == L:
+    while L > 2 and perm[-1] == L:
         L = perm.pop() - 1
     return perm
 
