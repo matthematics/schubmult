@@ -1656,7 +1656,7 @@ def posify(
             for new_w in coeff_dict:
                 tomul = coeff_dict[new_w]
                 newval = schubmult_one(new_w, permtrim(uncode(newc)), var2, var3).get(
-                    permtrim([*w]),
+                    w,
                     0,
                 )
                 newval = posify(newval, new_w, permtrim(uncode(newc)), w, var2, var3, msg, do_pos_neg, optimize=optimize)

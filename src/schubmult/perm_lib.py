@@ -758,7 +758,7 @@ def try_reduce_v(u, v, w):
                 # if i >= len(w2) - 1:
                 #     w2 += list(range(len(w2) + 1, i + 3))
                 # w2[i + 1], w2[i] = w2[i], w2[i + 1]
-                w2 = w2. swap(i,i+1)
+                w2 = w2.swap(i,i+1)
                 if is_reducible(v2):
                     return Permutation(u2), Permutation(v2), Permutation(w2)
                 return try_reduce_v(u2, v2, w2)

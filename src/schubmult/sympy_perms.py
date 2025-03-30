@@ -1,6 +1,6 @@
 # from typing import NamedTuple
 
-from functools import cached_property
+from functools import cache, cached_property
 
 import sympy.combinatorics.permutations as spp
 from sympy import Basic
@@ -9,20 +9,33 @@ import schubmult.perm_lib as pl
 
 
 class Permutation(Basic):
-    def __init__(self, perm, sperm=None):
+
+    def __new__(cls, perm, sperm=None):
+        return Permutation.__xnew_cached__(cls, tuple(perm), sperm)
+
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, perm, sperm):
+        return Permutation.__xnew__(_class, perm, sperm)
+
+    @staticmethod
+    def __xnew__(_class, perm, sperm):
+        obj = Basic.__new__(_class)
         if isinstance(perm, Permutation):
             # print("this is happening")
-            self._perm = perm._perm
-            self._sperm = perm._sperm
+            obj._perm = perm._perm
+            obj._sperm = perm._sperm
         else:
             p = tuple(pl.permtrim_list([*perm]))
-            self._perm = p
-            if len(self._perm)<2:
-                self._perm = (1,2)
+            obj._perm = p
+            if len(obj._perm)<2:
+                obj._perm = (1,2)
             if sperm:
-                self._sperm = sperm
+                obj._sperm = sperm
             else:
-                self._sperm = spp.Permutation._af_new([i - 1 for i in p])
+                obj._sperm = spp.Permutation._af_new([i - 1 for i in p])
+        return obj
+
 
     @property
     def code(self):
