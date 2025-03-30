@@ -27,6 +27,7 @@ from schubmult.perm_lib import (
     strict_theta,
     uncode,
 )
+from schubmult.sympy_perms import Permutation
 
 
 class _gvars:
@@ -113,7 +114,7 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.
 
 
 def nil_hecke(perm_dict, v, n, var2=_vars.var2, var3=_vars.var3):
-    if v == (1, 2):
+    if v == Permutation([1, 2]):
         return perm_dict
     th = strict_theta(inverse(v))
     mu = permtrim(uncode(th))
@@ -125,7 +126,7 @@ def nil_hecke(perm_dict, v, n, var2=_vars.var2, var3=_vars.var3):
     thL = len(th)
     vpathdicts = compute_vpathdicts(th, vmu, True)
     for u, val in perm_dict.items():
-        vpathsums = {u: {(1, 2): val}}
+        vpathsums = {u: {Permutation([1, 2]): val}}
         for index in range(thL):
             mx_th = 0
             for vp in vpathdicts[index]:
@@ -158,7 +159,7 @@ def nil_hecke(perm_dict, v, n, var2=_vars.var2, var3=_vars.var3):
                                 var3,
                             )
             vpathsums = newpathsums
-        toget = tuple(vmu)
+        toget = vmu
         ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
 
@@ -188,13 +189,13 @@ def elem_sym_func_q_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, q_var=_v
 def schubpoly_quantum(v, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var, coeff=1):
     th = strict_theta(inverse(v))
     mu = permtrim(uncode(th))
-    vmu = permtrim(mulperm([*v], mu))
+    vmu = v * mu  # permtrim(mulperm([*v], mu))
     if len(th) == 0:
         return coeff
     while th[-1] == 0:
         th.pop()
     vpathdicts = compute_vpathdicts(th, vmu)
-    vpathsums = {(1, 2): {(1, 2): coeff}}
+    vpathsums = {Permutation([1, 2]): {Permutation([1, 2]): coeff}}
     inv_mu = inv(mu)
     inv_vmu = inv(vmu)
     inv_u = 0
@@ -238,17 +239,17 @@ def schubpoly_quantum(v, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var, 
                             q_var,
                         )
         vpathsums = newpathsums
-    toget = tuple(vmu)
+    toget = vmu
     ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
-    return ret_dict[(1, 2)]
+    return ret_dict[Permutation([1, 2])]
 
 
 def schubmult(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
-    if v == (1, 2):
+    if v == Permutation([1, 2]):
         return perm_dict
     th = strict_theta(inverse(v))
     mu = permtrim(uncode(th))
-    vmu = permtrim(mulperm([*v], mu))
+    vmu = v * mu  # permtrim(mulperm([*v], mu))
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}
@@ -260,7 +261,7 @@ def schubmult(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var)
     vpathdicts = compute_vpathdicts(th, vmu, True)
     for u, val in perm_dict.items():
         inv_u = inv(u)
-        vpathsums = {u: {(1, 2): val}}
+        vpathsums = {u: {Permutation([1, 2]): val}}
         for index in range(thL):
             mx_th = 0
             for vp in vpathdicts[index]:
@@ -299,13 +300,13 @@ def schubmult(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var)
                                 var3,
                             )
             vpathsums = newpathsums
-        toget = tuple(vmu)
+        toget = vmu
         ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
 
 
 def schubmult_db(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
-    if v == (1, 2):
+    if v == Permutation([1, 2]):
         return perm_dict
     th = medium_theta(inverse(v))
     if len(th) == 0:
@@ -313,7 +314,7 @@ def schubmult_db(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_v
     while th[-1] == 0:
         th.pop()
     mu = permtrim(uncode(th))
-    vmu = permtrim(mulperm([*v], mu))
+    vmu = v * mu  # permtrim(mulperm([*v], mu))
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}
@@ -322,7 +323,7 @@ def schubmult_db(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_v
     vpathdicts = compute_vpathdicts(th, vmu, True)
     for u, val in perm_dict.items():
         inv_u = inv(u)
-        vpathsums = {u: {(1, 2): val}}
+        vpathsums = {u: {Permutation([1, 2]): val}}
         for index in range(thL):
             if index > 0 and th[index - 1] == th[index]:
                 continue
@@ -429,7 +430,7 @@ def schubmult_db(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_v
                                     var3,
                                 )
             vpathsums = newpathsums
-        toget = tuple(vmu)
+        toget = vmu
         ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
 
@@ -437,7 +438,7 @@ def schubmult_db(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_v
 def div_diff(v, w, var2=_vars.var2, var3=_vars.var3):
     coeff_dict = {v: 1}
     coeff_dict = norm_yz.schubmult_down(coeff_dict, w, var2, var3)
-    return coeff_dict.get((1, 2), 0)
+    return coeff_dict.get(Permutation([1, 2]), 0)
 
 
 def sum_q_dict(q_dict1, q_dict2):

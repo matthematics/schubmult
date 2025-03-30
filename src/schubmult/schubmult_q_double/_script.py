@@ -31,6 +31,7 @@ from schubmult.schubmult_q_double._funcs import (
     schubmult,
     schubmult_db,
 )
+from schubmult.sympy_perms import Permutation
 
 
 class _gvars:
@@ -151,7 +152,7 @@ def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3)
                 if formatter:
                     print(f"{trimcode(perm)!s}  {formatter(val)}")
             else:
-                raw_result_dict[tuple(perm)] = val
+                raw_result_dict[perm] = val
                 if formatter:
                     print(f"{perm!s}  {formatter(val)}")
     return raw_result_dict
@@ -207,17 +208,17 @@ def main(argv=None):
 
         if ascode:
             for i in range(len(perms)):
-                perms[i] = tuple(permtrim(uncode(perms[i])))
+                perms[i] = uncode(perms[i])
         else:
             for i in range(len(perms)):
                 if len(perms[i]) < 2 and (len(perms[i]) == 0 or perms[i][0] == 1):
-                    perms[i] = (1, 2)
-                perms[i] = tuple(permtrim([*perms[i]]))
+                    perms[i] = Permutation([1,2])
+                perms[i] = permtrim([*perms[i]])
 
         if nilhecke:
-            coeff_dict = nil_hecke({(1, 2): 1}, perms[0], nil_N)
+            coeff_dict = nil_hecke({Permutation([1,2]): 1}, perms[0], nil_N)
         elif nilhecke_apply:
-            coeff_dict0 = nil_hecke({(1, 2): 1}, perms[0], nil_N, var2, var2)
+            coeff_dict0 = nil_hecke({Permutation([1,2]): 1}, perms[0], nil_N, var2, var2)
             coeff_dict = {(1, 2): 0}
             for v in coeff_dict0:
                 coeff_dict[(1, 2)] += coeff_dict0[v] * div_diff(v, perms[1], var2, var3)
@@ -266,11 +267,11 @@ def main(argv=None):
                     w_P_prime = longest_element(parabolic_index2)
                     if not check_blocks(qv, parabolic_index):
                         continue
-                    w = permtrim(mulperm(mulperm(w, w_P_prime), w_P))
+                    w = (w*w_P_prime)*w_P
                     if not is_parabolic(w, parabolic_index):
                         continue
 
-                    w = tuple(permtrim(w))
+                    w = permtrim(w)
 
                     new_q_part = np.prod(
                         [q_var[index + 1 - count_less_than(parabolic_index, index + 1)] ** qv[index] for index in range(len(qv)) if index + 1 not in parabolic_index],

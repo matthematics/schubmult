@@ -16,6 +16,7 @@ from schubmult.perm_lib import (
     strict_theta,
     uncode,
 )
+from schubmult.sympy_perms import Permutation
 
 
 class _gvars:
@@ -31,7 +32,9 @@ class _gvars:
     def q_var(self):
         return tuple(symarray("q", self.n).tolist())
 
+
 _vars = _gvars()
+
 
 def single_variable(coeff_dict, varnum, var_q=_vars.q_var):
     ret = {}
@@ -74,8 +77,9 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
         ret[perm] = poly * coeff_dict[perm]
     return ret
 
+
 def schubmult_db(perm_dict, v, q_var=_vars.q_var):
-    if v == (1, 2):
+    if inv(v) == 0:
         return perm_dict
     th = medium_theta(inverse(v))
     if len(th) == 0:
@@ -95,7 +99,7 @@ def schubmult_db(perm_dict, v, q_var=_vars.q_var):
     # print(f"{vpathdicts=}")
     for u, val in perm_dict.items():
         inv_u = inv(u)
-        vpathsums = {u: {(1, 2): val}}
+        vpathsums = {u: {Permutation([1, 2]): val}}
         for index in range(thL):
             if index > 0 and th[index - 1] == th[index]:
                 continue
@@ -124,7 +128,8 @@ def schubmult_db(perm_dict, v, q_var=_vars.q_var):
                                 if udiff1 + vdiff2 == th[index]:
                                     newpathsums0[(up1, udiff1, mul_val1)][v2] = (
                                         newpathsums0[(up1, udiff1, mul_val1)].get(
-                                            v2, 0,
+                                            v2,
+                                            0,
                                         )
                                         + s2 * sumval * mul_val1
                                     )
@@ -135,16 +140,11 @@ def schubmult_db(perm_dict, v, q_var=_vars.q_var):
                             if sumval == 0:
                                 continue
                             for v2, vdiff2, s2 in vpathdicts[index + 1][v]:
-                                for up2, udiff2, mul_val2 in newperms[
-                                    (up1, udiff1, mul_val1)
-                                ]:
+                                for up2, udiff2, mul_val2 in newperms[(up1, udiff1, mul_val1)]:
                                     if up2 not in newpathsums:
                                         newpathsums[up2] = {}
                                     if udiff2 + vdiff2 == th[index + 1]:
-                                        newpathsums[up2][v2] = (
-                                            newpathsums[up2].get(v2, 0)
-                                            + s2 * sumval * mul_val2
-                                        )
+                                        newpathsums[up2][v2] = newpathsums[up2].get(v2, 0) + s2 * sumval * mul_val2
             else:
                 newpathsums = {}
                 for up in vpathsums:
@@ -164,14 +164,12 @@ def schubmult_db(perm_dict, v, q_var=_vars.q_var):
                                 continue
                             for v2, vdiff, s in vpathdicts[index][v]:
                                 if udiff + vdiff == th[index]:
-                                    newpathsums[up2][v2] = (
-                                        newpathsums[up2].get(v2, 0)
-                                        + s * sumval * mul_val
-                                    )
+                                    newpathsums[up2][v2] = newpathsums[up2].get(v2, 0) + s * sumval * mul_val
             vpathsums = newpathsums
-        toget = tuple(vmu)
+        toget = vmu
         ret_dict = add_perm_dict(
-            {ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict,
+            {ep: vpathsums[ep].get(toget, 0) for ep in vpathsums},
+            ret_dict,
         )
     return ret_dict
 
@@ -201,7 +199,9 @@ def schubmult(perm_dict, v):
             for up in vpathsums:
                 inv_up = inv(up)
                 newperms = elem_sym_perms_q(
-                    up, min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu), th[index],
+                    up,
+                    min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu),
+                    th[index],
                 )
                 for up2, udiff, mul_val in newperms:
                     if up2 not in newpathsums:
@@ -212,18 +212,14 @@ def schubmult(perm_dict, v):
                             continue
                         for v2, vdiff, s in vpathdicts[index][v]:
                             if udiff + vdiff == th[index]:
-                                newpathsums[up2][v2] = (
-                                    newpathsums[up2].get(v2, 0)
-                                    + s * sumval * mul_val
-                                )
+                                newpathsums[up2][v2] = newpathsums[up2].get(v2, 0) + s * sumval * mul_val
             vpathsums = newpathsums
         toget = tuple(vmu)
         ret_dict = add_perm_dict(
-            {ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict,
+            {ep: vpathsums[ep].get(toget, 0) for ep in vpathsums},
+            ret_dict,
         )
     return ret_dict
-
-
 
 
 def grass_q_replace(perm, k, d, n):
