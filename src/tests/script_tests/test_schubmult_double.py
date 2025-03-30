@@ -37,7 +37,7 @@ def check_positive(v, coprod, same, var_r):
         if vals[i].find("*(") == -1:
             vals[i] = re.sub(r"[)]|[(]", "", vals[i])
 
-    print(f"{vals=}", file=sys.stderr)
+    #print(f"{vals=}", file=sys.stderr)
     for val in vals:
         if val.find("(") != -1:
             val += ")"
@@ -47,7 +47,7 @@ def check_positive(v, coprod, same, var_r):
         except ValueError:
             pass
         sym_val = expand(sympify(val))
-        print(f"{sym_val=} not an int", file=sys.stderr)
+        #print(f"{sym_val=} not an int", file=sys.stderr)
         if coprod:
             assert expand(sym_val) == expand(
                 compute_positive_rep(sym_val, var3, var2, do_pos_neg=False),
@@ -56,7 +56,7 @@ def check_positive(v, coprod, same, var_r):
             assert expand(sym_val) == expand(
                 compute_positive_rep(sym_val, var2, var3, do_pos_neg=False),
             )
-    print(f"Donebaby {coprod=}", file=sys.stderr)
+    #print(f"Donebaby {coprod=}", file=sys.stderr)
     return True
 
 
@@ -82,7 +82,8 @@ def assert_dict_good(
         coeff_dict = schub_coprod(v_tuple, indices, var2=var_a, var3=var_a if same else var_b)
     else:
         coeff_dict = schubmult(input_dict, v_tuple, var2=var_a, var3=var_a if same else var_b)
-
+    for k in ret_dict.keys():
+        print(f"{k=} {type(k)=} {type(k[0])=} {type(k[1])=}")
     # print(f"{coeff_dict=}")
     # print(f"{ret_dict=}")
     var_r = tuple(symarray("r", 100))
@@ -98,6 +99,7 @@ def assert_dict_good(
         if expand(v) == 0:
             assert (k not in ret_dict) or (expand(v) == expand(ret_dict[k]))
         else:
+            print(f"{k=} {type(k[0])=} {type(k[1])=} {coeff_dict[k]=}")
             assert expand(v) == expand(ret_dict[k])
     for k in ret_dict.keys():
         if display_positive:
@@ -123,8 +125,8 @@ def parse_ret(lines, ascode, coprod, unformat):
             try:
                 v = unformat(v)
             except Exception:
-                continue
-            ret_dict[(Permutation(literal_eval(k)) if not ascode else (uncode(literal_eval(k))))] = v
+                continue            
+            ret_dict[({Permutation}(literal_eval(k)) if not ascode else (uncode(literal_eval(k))))] = v
     else:
         for line in lines:
             line = str(line)
@@ -141,7 +143,9 @@ def parse_ret(lines, ascode, coprod, unformat):
                 if ascode:
                     k1 = uncode(k1)
                     k2 = uncode(k2)
-                k = (k2, k1)
+                    print("uncoded")
+                print(f"{k1=} {k2=}")
+                k = (Permutation(k2), Permutation(k1))
             except Exception as e:
                 print(f"boingfish {line=} {e=}", file=sys.stderr)
                 continue
@@ -151,6 +155,7 @@ def parse_ret(lines, ascode, coprod, unformat):
                 print(f"bingfish {line=} {v=} {e=}", file=sys.stderr)
                 continue
             ret_dict[k] = v
+            print(f"ret_dict[{k=}] = {v} {type(k)=} {type(k[0])=} {type(k[1])=}")
     return ret_dict
 
 
@@ -197,7 +202,9 @@ def test_with_same_args_exec(capsys, json_file):
         ret_dict = parse_ret(lines, ascode, coprod, unformat[disp_mode])
     elif coprod:
         if ascode:
-            ret_dict = {(tuple(uncode(list(k[0]))), tuple(uncode(list(k[1])))): v for k, v in ret_dict.items()}
+            ret_dict = {((uncode(list(k[0]))), (uncode(list(k[1])))): v for k, v in ret_dict.items()}
+        else:
+            ret_dict = {((Permutation(k[0])), (Permutation(list(k[1])))): v for k, v in ret_dict.items()}
     elif ascode:
         ret_dict = {uncode(list(k)): v for k, v in ret_dict.items()}
     v_tuple = (Permutation(perms[1]) if not ascode else uncode(perms[1])) if not coprod else (Permutation(perms[0]) if not ascode else (uncode(perms[0])))
@@ -205,9 +212,20 @@ def test_with_same_args_exec(capsys, json_file):
     indices = tuple(perms[1])
     # print(f"{v_tuple=} {input_dict=} {indices=}")
     # print("BOOB ASS")
+    print(f"{disp_mode=} {ret_dict=}")
     assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices, same, display_positive)
 
 
 if __name__ == "__main__":
     # test_coeff_equal_exec()
-    test_with_same_args_exec()
+    class fope:
+        pass
+    spoingle = fope()
+    st = ""
+    with(open("floil","r")) as f:
+        st = str(f.read())
+    boing = fope()
+    boing.out = st
+    spoingle.readouterr = lambda: boing
+    test_with_same_args_exec(spoingle,
+                            "schubmult_double_mixed-var_display-positive_coprod_code_1_0_2_0_1T2_4_display-mode_latex")

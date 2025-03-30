@@ -1777,7 +1777,7 @@ def schub_coprod(mperm, indices, var2=_vars.var2, var3=_vars.var3):
     max_required = max([kcd[i] + i for i in range(len(kcd))])
     kcd2 = kcd + [0 for i in range(len(kcd), max_required)] + [0]
     N = len(kcd)
-    kperm = permtrim(inverse(uncode(kcd2)))
+    kperm = ~(uncode(kcd2))
     inv_kperm = inv(kperm)
     vn = symarray("soible", 100)
 
@@ -1787,14 +1787,14 @@ def schub_coprod(mperm, indices, var2=_vars.var2, var3=_vars.var3):
         else:
             subs_dict_coprod[vn[i]] = var3[i - N]
 
-    coeff_dict = {tuple(kperm): 1}
+    coeff_dict = {kperm: 1}
     coeff_dict = schubmult(coeff_dict, mperm, vn, var2)
 
     inverse_kperm = inverse(kperm)
 
     ret_dict = {}
     for perm in coeff_dict:
-        downperm = mulperm(list(perm), inverse_kperm)
+        downperm = perm*inverse_kperm
         if inv(downperm) == inv(perm) - inv_kperm:
             flag = True
             for i in range(N):

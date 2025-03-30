@@ -16,6 +16,8 @@ class Permutation:
         else:
             p = tuple(pl.permtrim_list([*perm]))
             self._perm = p
+            if len(self._perm)<2:
+                self._perm = (1,2)
             if sperm:
                 self._sperm = sperm
             else:
@@ -48,7 +50,7 @@ class Permutation:
         raise NotImplementedError
 
     def __hash__(self):
-        return hash(self._sperm)
+        return hash(self._perm)
 
     def __mul__(self, other):
         # print("yay")
@@ -60,7 +62,7 @@ class Permutation:
         return Permutation(new_perm, new_sperm)
 
     def __iter__(self):
-        return self._perm.__iter__()
+        yield from self._perm.__iter__()
 
     def __getslice__(self, i, j):
         return self._perm[i:j]
