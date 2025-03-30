@@ -19,15 +19,17 @@ class Permutation:
             if sperm:
                 self._sperm = sperm
             else:
-                self._sperm = spp.Permutation._af_new([i-1 for i in p])
-        
+                self._sperm = spp.Permutation._af_new([i - 1 for i in p])
 
     @property
     def code(self):
         return self._sperm.inversion_vector()
-    
+
     def __getitem__(self, i):
-        # print("yay")
+        if isinstance(i, slice):
+            return [self[ii] for ii in range(*i.indices(len(self._perm)))]
+        if i >= len(self._perm):
+            return i + 1
         return self._perm[i]
 
     def __setitem__(self, i, v):
@@ -38,29 +40,28 @@ class Permutation:
 
     def __mul__(self, other):
         # print("yay")
-        new_sperm =  other._sperm * self._sperm
+        new_sperm = other._sperm * self._sperm
         new_perm = pl.permtrim_list([new_sperm(i) + 1 for i in range(new_sperm.size)])
+        # print(f"{new_perm=}")
         if len(new_perm) != new_sperm.size:
-            new_sperm = spp.Permutation._af_new([i-1 for i in new_perm])
-        return Permutation(new_perm,new_sperm)
+            new_sperm = spp.Permutation._af_new([i - 1 for i in new_perm])
+        return Permutation(new_perm, new_sperm)
 
     def __iter__(self):
-        # print("yay")
         return self._perm.__iter__()
 
     def __getslice__(self, i, j):
-        # print("yay")
         return self._perm[i:j]
 
     def __str__(self):
         # print("yay")
-        return "P"+str(self._perm)
+        return str(self._perm)
 
     def __add__(self, other):
         # print("yay")
         if not isinstance(other, list):
             raise NotImplementedError
-        permlist = [*self._perm] + other
+        permlist = [*self._perm, *other]
         try:
             return Permutation(permlist)
         except Exception:
@@ -70,7 +71,7 @@ class Permutation:
         # print("yay")
         if not isinstance(other, list):
             raise NotImplementedError
-        permlist = other + [*self._perm]
+        permlist = [*other, *self._perm]
         try:
             return Permutation(permlist)
         except Exception:
@@ -94,13 +95,13 @@ class Permutation:
         new_sperm = ~(self._sperm)
         new_perm = [new_sperm(i) + 1 for i in range(new_sperm.size)]
         return Permutation(new_perm, new_sperm)
-    
+
     def __repr__(self):
         return self.__str__()
+
 
 def inv(perm):
     return perm.inversions()
 
-#def permtrim
 
-
+# def permtrim
