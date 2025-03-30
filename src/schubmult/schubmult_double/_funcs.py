@@ -375,12 +375,12 @@ def schubmult(perm_dict, v, var2=None, var3=None):
 
 
 def schubmult_down(perm_dict, v, var2=None, var3=None):
-    vn1 = inverse(v)
+    vn1 = ~v
     th = theta(vn1)
     if th[0] == 0:
         return perm_dict
-    mu = permtrim(uncode(th))
-    vmu = permtrim(mulperm([*v], mu))
+    mu = uncode(th)
+    vmu = v * mu
     ret_dict = {}
 
     while th[-1] == 0:
@@ -421,7 +421,7 @@ def schubmult_down(perm_dict, v, var2=None, var3=None):
                                 var3,
                             )
             vpathsums = newpathsums
-        toget = tuple(vmu)
+        toget = vmu
         ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
 
