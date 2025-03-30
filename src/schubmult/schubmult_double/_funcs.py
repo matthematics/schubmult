@@ -1334,13 +1334,13 @@ def posify(
                     v3 = v3.swap(2,3)
                     coeff = permy(
                         posify(
-                            schubmult_one(Permutation(1, 3, 2), v3, var2, var3).get(
-                                Permutation(2, 4, 3, 1),
+                            schubmult_one(Permutation([1, 3, 2]), v3, var2, var3).get(
+                                Permutation([2, 4, 3, 1]),
                                 0,
                             ),
-                            Permutation(1, 3, 2),
+                            Permutation([1, 3, 2]),
                             v3,
-                            Permutation(2, 4, 3, 1),
+                            Permutation([2, 4, 3, 1]),
                             var2,
                             var3,
                             msg,
@@ -1351,8 +1351,8 @@ def posify(
                     )
                 else:
                     coeff = permy(
-                        schubmult_one(Permutation(1, 3, 2), v3, var2, var3).get(
-                            Permutation(2, 4, 1, 3),
+                        schubmult_one(Permutation([1, 3, 2]), v3, var2, var3).get(
+                            Permutation([2, 4, 1, 3]),
                             0,
                         ),
                         2,
