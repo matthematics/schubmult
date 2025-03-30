@@ -14,6 +14,9 @@ q_var = symarray("q", n)
 
 def ensure_perms(func):
     def wrapper(*args):
+        for arg in args:
+            if not isinstance(arg, Permutation):
+                raise TypeError
         return func(*[Permutation(arg) if (isinstance(arg,list) or isinstance(arg,tuple)) else arg for arg in args ])
     return wrapper
 
@@ -107,9 +110,8 @@ def permtrim_list(perm):
         L = perm.pop() - 1
     return perm
 
-@ensure_perms
 def permtrim(perm):
-    return perm
+    return Permutation(perm)
 
 
 def has_bruhat_descent(perm, i, j):

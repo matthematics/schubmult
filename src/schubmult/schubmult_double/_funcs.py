@@ -1326,7 +1326,7 @@ def posify(
                     if len(v3) <= 3 or v3[2] < v3[3]:
                         coeff = 0
                         continue
-                    v3 = v3.swap(0,1).swap(2,3)                    
+                    v3 = v3.swap(0,1).swap(2,3)
                     coeff = permy(schubpoly(v3, var2, var3), 2)
                 elif len(v3) <= 3 or v3[2] < v3[3]:
                     if len(v3) <= 3:
