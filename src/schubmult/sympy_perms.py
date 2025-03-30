@@ -46,10 +46,18 @@ class Permutation(Basic):
         return self._sperm.inversions()
 
     def swap(self, i, j):
+        import sys
         new_perm = [*self._perm]
+        #print(f"{new_perm=}",file=sys.stderr)
+        if i>j:
+            i, j = j, i
+        #print(f"OLD {new_perm=} {new_perm[i]=} {new_perm[j]=} {i=} {j=} FWIPO",file=sys.stderr)
+        
         if j>=len(new_perm):
             new_perm += list(range(len(new_perm)+1,j+2))
+            #print(f"bugs {new_perm=}", file=sys.stderr)
         new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
+        #print(f"NEW {new_perm=} {new_perm[i]=} {new_perm[j]=} FWoPO",file=sys.stderr)
         return Permutation(new_perm)
 
 

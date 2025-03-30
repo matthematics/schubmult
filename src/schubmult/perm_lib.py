@@ -606,7 +606,7 @@ def one_dominates(u, w):
             return False
     return True
 
-@ensure_perms
+
 def dominates(u, w):
     u2 = u
     w2 = w
@@ -617,7 +617,6 @@ def dominates(u, w):
         return True
     return False
 
-@ensure_perms
 def reduce_coeff(u, v, w):
     t_mu_u_t = theta(inverse(u))
     t_mu_v_t = theta(inverse(v))
@@ -816,28 +815,26 @@ def divdiffable(v, u):
 
 #@ensure_perms
 def will_formula_work(u, v):
-    # u, v = Permutation(u), Permutation(v)
-    # muv = uncode(theta(v))
-    # vn1muv = list((~v)*muv)
-    # while True:
-    #     found_one = False
-    #     for i in range(len(vn1muv) - 1):
-    #         if vn1muv[i] > vn1muv[i + 1]:
-    #             found_one = True
-    #             if i < len(u) - 1 and u[i] > u[i + 1]:
-    #                 return False
-    #             vn1muv[i], vn1muv[i + 1] = vn1muv[i + 1], vn1muv[i]
-    #             break
-    #     if not found_one:
-    #         return True
+    u, v = Permutation(u), Permutation(v)
+    muv = uncode(theta(v))
+    vn1muv = list((~v)*muv)
+    while True:
+        found_one = False
+        for i in range(len(vn1muv) - 1):
+            if vn1muv[i] > vn1muv[i + 1]:
+                found_one = True
+                if i < len(u) - 1 and u[i] > u[i + 1]:
+                    return False
+                vn1muv[i], vn1muv[i + 1] = vn1muv[i + 1], vn1muv[i]
+                break
+        if not found_one:
+            return True
     return False
 
-
-def pull_out_var(vnum, v):
-    # vup = [*v, len(v) + 1]
-    if not isinstance(v, Permutation):
-        raise Exception
-    vup = v
+def pull_out_var_old(vnum, v):
+    import sys
+    # print(f"pull_out_var_old {vnum=} {v=} {code(v)=}", file=sys.stderr)
+    vup = [*v, len(v) + 1]
     if vnum >= len(v):
         return [[[], v]]
     vpm_list = [(vup, 0)]
@@ -845,11 +842,15 @@ def pull_out_var(vnum, v):
     for p in range(len(v) + 1 - vnum):
         vpm_list2 = []
         for vpm, b in vpm_list:
+            # print(f"pull_out_var_old {vpm=} {vnum-1=} {vpm[vnum - 1]=} {len(v)+1}",file=sys.stderr)
             if vpm[vnum - 1] == len(v) + 1:
-                print(f"{vpm=} {type(vpm)=}")
+                # print(f"pull_out_var_old BALE {vpm=}")
                 vpm2 = [*vpm]
                 vpm2.pop(vnum - 1)
+                # print(f"pull_out_var_old {vpm2=} I BAGELED",file=sys.stderr)
+                # print(f"pull_out_var_old {vpm=} {type(vpm)=}",file=sys.stderr)
                 vp = permtrim(vpm2)
+                # print(f"pull_out_var_old {vp=}",file=sys.stderr)
                 ret_list += [
                     [
                         [v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))],
@@ -859,9 +860,13 @@ def pull_out_var(vnum, v):
             for j in range(vnum, len(vup)):
                 if vpm[j] <= b:
                     continue
+                # print(f"pull_out_var_old BALE {vpm=}", file=sys.stderr)
                 for i in range(vnum):
                     if has_bruhat_ascent(vpm, i, j):
-                        vpm_list2 += [(vpm.swap(i,j), vpm[j])]
+                        vpm[i], vpm[j] = vpm[j], vpm[i]
+                        vpm_list2 += [([*vpm], vpm[i])]
+                        # print(f"pull_over_var_old {vpm_list2=}",file=sys.stderr)
+                        vpm[i], vpm[j] = vpm[j], vpm[i]
         vpm_list = vpm_list2
     for vpm, b in vpm_list:
         if vpm[vnum - 1] == len(v) + 1:
@@ -874,6 +879,57 @@ def pull_out_var(vnum, v):
                     vp,
                 ],
             ]
+    # print(f"EMD pull_out_var_old {ret_list=}", file=sys.stderr)            
+    return ret_list
+
+def pull_out_var(vnum, v):
+    import sys
+    # print(f"pull_out_var {vnum=} {v=} {code(v)=}", file=sys.stderr)
+    vup = v
+    if vnum >= len(v): 
+        return [[[], v]]
+    vpm_list = [(vup, 0)]
+    ret_list = []
+    for p in range(len(v) + 1 - vnum):
+        vpm_list2 = []
+        for vpm, b in vpm_list:
+            # print(f"pull_out_var {vpm=} {vnum-1=} {vpm[vnum - 1]=} {len(v)+1}",file=sys.stderr)
+            if vpm[vnum - 1] == len(v) + 1:
+                # print(f"pull_out_var BALE {vpm=}",file=sys.stderr)                
+                vpm2 = [*vpm]
+                vpm2.pop(vnum - 1)
+                # print(f"pull_out_var {vpm2=} I BAGELED",file=sys.stderr)
+                # print(f"pull_out_var {vpm=} {type(vpm)=}",file=sys.stderr)
+                vp = permtrim(vpm2)
+                # print(f"pull_out_var {vp=}",file=sys.stderr)
+                ret_list += [
+                    [
+                        [v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))],
+                        vp,
+                    ],
+                ]
+            for j in range(vnum, len(vup)):
+                if vpm[j] <= b:
+                    continue
+                # print(f"pull_out_var {vpm=}", file=sys.stderr)
+                for i in range(vnum):
+                    if has_bruhat_ascent(vpm, i, j):
+                        vpm_list2 += [(vpm.swap(i,j), vpm[j])]
+                        # print(f"pull_out_var {vpm_list2=}",file=sys.stderr)
+        vpm_list = vpm_list2
+    for vpm, b in vpm_list:
+        if vpm[vnum - 1] == len(v) + 1:
+            vpm2 = [*vpm]
+            vpm2.pop(vnum - 1)
+            vp = permtrim(vpm2)
+            ret_list += [
+                [
+                    [v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))],
+                    vp,
+                ],
+            ]
+    # print(f"EMD pull_out_var {ret_list=}", file=sys.stderr)
+    pull_out_var_old(vnum,[*v])
     return ret_list
 
 @ensure_perms
