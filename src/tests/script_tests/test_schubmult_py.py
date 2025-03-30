@@ -39,7 +39,7 @@ def parse_ret(lines, ascode, coprod):
                 v = int(v)
             except ValueError:
                 continue
-            ret_dict[(tuple(literal_eval(k)) if not ascode else tuple(uncode(literal_eval(k))))] = (
+            ret_dict[(permtrim(literal_eval(k)) if not ascode else uncode(literal_eval(k)))] = (
                 int(v)
             )
     else:
@@ -53,8 +53,8 @@ def parse_ret(lines, ascode, coprod):
                 v, f = vf.split(second_split)
                 k1, k2 = literal_eval(f"({second_split}{f + jn + s})")
                 if ascode:
-                    k1 = tuple(permtrim(uncode(k1)))
-                    k2 = tuple(permtrim(uncode(k2)))
+                    k1 = (permtrim(uncode(k1)))
+                    k2 = (permtrim(uncode(k2)))
                 k = (k1, k2)
             except ValueError:
                 print(f"{line=}")
@@ -72,6 +72,7 @@ json_files_data_args = load_json_test_names(base_dir)
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
     from schubmult.perm_lib import permtrim, uncode
+    from schubmult.sympy_perms import Permutation
 
     args = get_json(f"{base_dir}/{json_file}")
     print(f"{json_file=} {args=} input_data")
@@ -96,15 +97,15 @@ def test_with_same_args_exec(capsys, json_file):
         ret_dict = parse_ret(lines, ascode, coprod)
     elif coprod:
         if ascode:
-            ret_dict = {(tuple(uncode(list(k[0]))),tuple(uncode(list(k[1])))): v for k, v in ret_dict.items()}
+            ret_dict = {((uncode(list(k[0]))),(uncode(list(k[1])))): v for k, v in ret_dict.items()}
     elif ascode:
-        ret_dict = {tuple(uncode(list(k))): v for k, v in ret_dict.items()}
+        ret_dict = {(uncode(list(k))): v for k, v in ret_dict.items()}
     v_tuple = (
-        (tuple(perms[1]) if not ascode else tuple(uncode(perms[1])))
+        (Permutation(perms[1]) if not ascode else (uncode(perms[1])))
         if not coprod
-        else (tuple(perms[0]) if not ascode else tuple(uncode(perms[0])))
+        else (Permutation(perms[0]) if not ascode else (uncode(perms[0])))
     )
-    input_dict = {tuple(permtrim(perms[0])) if not ascode else tuple(permtrim(uncode(perms[0]))): 1}
+    input_dict = {(permtrim(perms[0])) if not ascode else (permtrim(uncode(perms[0]))): 1}
     indices = tuple(perms[1])
     print(f"{v_tuple=} {input_dict=} {indices=}")
     print("BOOB ASS")

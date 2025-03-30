@@ -319,6 +319,7 @@ def schubmult_one_generic(perm1, perm2):
 
 
 def schubmult(perm_dict, v, var2=None, var3=None):
+    v = Permutation(v)
     vn1 = ~v
     th = theta(vn1)
     if len(th) == 0:

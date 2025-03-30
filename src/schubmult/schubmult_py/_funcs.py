@@ -72,6 +72,7 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var_x):
 
 
 def schubmult(perm_dict, v):
+    v = Permutation(v)
     vn1 = ~v
     th = theta(vn1)
     if th[0] == 0:
