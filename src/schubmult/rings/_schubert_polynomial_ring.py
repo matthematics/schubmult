@@ -155,7 +155,9 @@ class DoubleSchubertAlgebraElement(Expr):
     # default_coeff_var = "y"
 
     def __new__(cls, _dict, *args, **kwargs):
-        # print(f"{cls=} {_dict} {parent=} {args=} {kwargs=}")
+        # for k in _dict.keys():
+        #     if not isinstance(k[0], Permutation):
+        #         raise TypeError(f"Key {k[0]} is not a permutation")
         return DoubleSchubertAlgebraElement.__xnew_cached__(cls, sympy.Dict({k: v for k, v in _dict.items() if expand(v) != 0}), *args, **kwargs)
 
     def __hash__(self):
@@ -212,29 +214,9 @@ class DoubleSchubertAlgebraElement(Expr):
 
     @staticmethod
     def __xnew__(_class, _dict, *args, **kwargs):
-        # print("Prong")
-        # pieces = []
-        # keys = list(_dict.keys())
-        # #print("Freftoolnagababarmpy")
-        # for k in sorted(keys, key=lambda b: (inv(b[0]), str(b[1]) if b[1] != utils.NoneVar else str("."), *b[0])):
-        #     v = _dict[k]
-        #     dvar = "D"
-        #     if sympy.expand(v) != 0:
-        #         pieces += [
-        #             sympy.Mul(v,DSchubSymbol(parent._base_var, k))
-        #         ]
-        # print(f"{pieces=}")
-        # print(f"{args=} {kwargs=} {_dict=} {parent=}")
-        # print(f"{args=} {kwargs=}")
-        # print(f"{_dict=}")
         obj = Expr.__new__(_class, _dict)
-        # obj.make_args(pieces)
-        # obj.args = pieces
         obj._doubledict = _dict
-        # print(f"{_dict=}")
-        # print(f"{[sympy.Mul(_dict[k], DSchubSymbol(DSx._base_var, k)) for k in sorted(_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))]=}")
         obj._print_sum = Add(*[sympy.Mul(_dict[k], DSchubSymbol(DSx._base_var, k)) for k in sorted(_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))], evaluate=False)
-        # print(f"{obj._print_sum=} {obj._print_sum.is_Add=} {type(obj._print_sum)=}")
         return obj
 
     @cache
