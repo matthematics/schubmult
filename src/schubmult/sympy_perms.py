@@ -7,7 +7,7 @@ import schubmult.perm_lib as pl
 
 class Permutation:
     def __init__(self, perm, sperm=None):
-        p = pl.permtrim([*perm])
+        p = tuple(pl.permtrim([*perm]))
         self._perm = p
         if sperm:
             self._sperm = sperm
@@ -77,6 +77,14 @@ class Permutation:
     def __len__(self):
         # print("yay")
         return len(self._perm)
+
+    def __invert__(self):
+        new_sperm = ~(self._sperm)
+        new_perm = [new_sperm(i) + 1 for i in range(new_sperm.size)]
+        return Permutation(new_perm, new_sperm)
+    
+    def __repr__(self):
+        return self.__str__()
 
 def inv(perm):
     return perm.inversions()

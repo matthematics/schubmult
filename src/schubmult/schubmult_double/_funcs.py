@@ -74,11 +74,11 @@ class _gvars:
     @cached_property
     def var_r(self):
         return tuple(symarray("r", 100))
-    
+
     @cached_property
     def var_g1(self):
         return tuple(symarray("y", 100))
-    
+
     @cached_property
     def var_g2(self):
         return tuple(symarray("z", 100))
@@ -172,7 +172,8 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
         ret[perm] = poly * coeff_dict[perm]
     return ret
 
-#def mult_poly_symy(coeff_dict, poly, var_x=_vars.sympy_var1, var_y=_vars.sympy_var2):
+
+# def mult_poly_symy(coeff_dict, poly, var_x=_vars.sympy_var1, var_y=_vars.sympy_var2):
 
 
 def mult_poly_down(coeff_dict, poly):
@@ -307,15 +308,16 @@ monom_to_vec = {}
 def schubmult_one(perm1, perm2, var2=None, var3=None):
     return schubmult({perm1: 1}, perm2, var2, var3)
 
+
 @cache
 def schubmult_one_generic(perm1, perm2):
     return schubmult({perm1: 1}, perm2, _vars.var_g1, _vars.var_g2)
 
 
-
 def schubmult(perm_dict, v, var2=None, var3=None):
-    vn1 = inverse(v)
+    vn1 = ~Permutation(v)
     th = theta(vn1)
+    print(f"{th=} {theta(inverse(v))=} {v=} {inverse(v)=}")
     if len(th) == 0:
         return perm_dict
     if th[0] == 0:
@@ -370,7 +372,7 @@ def schubmult(perm_dict, v, var2=None, var3=None):
                             )
             vpathsums = newpathsums
         toget = tuple(vmu)
-        ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
+        ret_dict = add_perm_dict({Permutation(ep): vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
 
 
@@ -1042,22 +1044,25 @@ def skew_div_diff(u, w, poly):
         return skew_div_diff(u2, w2, permy(poly, d + 1))
     return skew_div_diff(u, w2, div_diff(d + 1, poly))
 
+
 def posify_generic_partial(val, u2, v2, w2):
     val2 = val
-    val = posify(val, u2, v2, w2, var2=_vars.var_g1,var3=_vars.var_g2,msg=True,do_pos_neg=False,sign_only=False,optimize=False)
-    if expand(val-val2)!=0:
+    val = posify(val, u2, v2, w2, var2=_vars.var_g1, var3=_vars.var_g2, msg=True, do_pos_neg=False, sign_only=False, optimize=False)
+    if expand(val - val2) != 0:
         raise Exception(f"{val=} {val2=} {u2=} {v2=} {w2=}")
     return val
 
+
 @cache
 def schubmult_generic_partial_posify(u2, v2):
-    return {w2: posify_generic_partial(val,u2,v2,w2) for w2, val in schubmult_one_generic(u2,v2).items()}
+    return {w2: posify_generic_partial(val, u2, v2, w2) for w2, val in schubmult_one_generic(u2, v2).items()}
+
 
 def xreplace_genvars(poly, vars1, vars2):
     subs_gen1 = {_vars.var_g1[i]: vars1[i] for i in range(len(_vars.var_g1))}
     subs_gen2 = {_vars.var_g2[i]: vars2[i] for i in range(len(_vars.var_g2))}
     subs_gen1.update(subs_gen2)
-    #print(f"{poly=} {sympify(poly).free_symbols=}")
+    # print(f"{poly=} {sympify(poly).free_symbols=}")
     # for s in sympify(poly).free_symbols:
     #     try:
     #         ind = _vars.var_g1.index(s)
@@ -1070,8 +1075,9 @@ def xreplace_genvars(poly, vars1, vars2):
     #     except ValueError:
     #         pass
     poly2 = sympify(poly).xreplace(subs_gen1)
-    #print(f"{poly2=} {poly2.free_symbols=}")
+    # print(f"{poly2=} {poly2.free_symbols=}")
     return poly2
+
 
 @cached(
     cache={},
@@ -1089,7 +1095,6 @@ def posify(
     sign_only=False,
     optimize=True,
     n=_vars.n,
-    
 ):
     oldval = val
     if inv(u2) + inv(v2) - inv(w2) == 0:
@@ -1353,7 +1358,7 @@ def posify(
                             var3,
                             msg,
                             do_pos_neg,
-                            optimize=optimize
+                            optimize=optimize,
                         ),
                         2,
                     )
@@ -1438,17 +1443,7 @@ def posify(
                     tuple(permtrim([*w])),
                     0,
                 )
-                newval = posify(
-                    newval,
-                    new_w,
-                    tuple(permtrim(uncode(newc))),
-                    w,
-                    var2,
-                    var3,
-                    msg,
-                    do_pos_neg,
-                    optimize=optimize
-                )
+                newval = posify(newval, new_w, tuple(permtrim(uncode(newc))), w, var2, var3, msg, do_pos_neg, optimize=optimize)
                 val += tomul * shiftsubz(newval)
         elif c01[0] == c02[0] and c01[0] != 0:
             if sign_only:
@@ -1461,17 +1456,7 @@ def posify(
                 tuple(permtrim(w3)),
                 0,
             )
-            val = posify(
-                val,
-                tuple(permtrim(u3)),
-                tuple(permtrim([*v])),
-                tuple(permtrim(w3)),
-                var2,
-                var3,
-                msg,
-                do_pos_neg,
-                optimize=optimize
-            )
+            val = posify(val, tuple(permtrim(u3)), tuple(permtrim([*v])), tuple(permtrim(w3)), var2, var3, msg, do_pos_neg, optimize=optimize)
             for i in range(varl):
                 val = permy(val, i + 1)
         elif c1[0] == c2[0]:
@@ -1494,7 +1479,7 @@ def posify(
                 val += tomul * shiftsub(val2)
         elif not sign_only:
             if optimize:
-                if inv(u) + inv(v) - inv(w) == 1:                
+                if inv(u) + inv(v) - inv(w) == 1:
                     val2 = compute_positive_rep(val, var2, var3, msg, False)
                 else:
                     val2 = compute_positive_rep(val, var2, var3, msg, do_pos_neg)
