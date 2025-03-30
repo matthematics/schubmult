@@ -177,9 +177,7 @@ def elem_sym_perms_op(orig_perm, p, k):
             for j in range(last, len(up_perm2)):
                 for i in pos_list:
                     if has_bruhat_descent(up_perm2, i, j):
-                        new_perm = [*up_perm2]
-                        new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
-                        new_perm_add = Permutation(new_perm)
+                        new_perm_add = up_perm.swap(i,j)
                         perm_list += [(new_perm_add, j)]
                         total_list += [(new_perm_add, pp + 1)]
         up_perm_list = perm_list
@@ -293,23 +291,19 @@ def sg(i, w):
 def reduce_q_coeff(u, v, w, qv):
     for i in range(len(qv)):
         if sg(i, v) == 1 and sg(i, u) == 0 and sg(i, w) + omega(i + 1, qv) == 1:
-            ret_v = [*v]
-            ret_v[i], ret_v[i + 1] = ret_v[i + 1], ret_v[i]
-            ret_w = [*w] + [j + 1 for j in range(len(w), i + 2)]
-            ret_w[i], ret_w[i + 1] = ret_w[i + 1], ret_w[i]
+            ret_v = v.swap(i,i+1)
+            ret_w = w.swap(i,i+1)
             qv_ret = [*qv]
             if sg(i, w) == 0:
                 qv_ret[i] -= 1
             return u, Permutation(ret_v),Permutation(ret_w), qv_ret, True
         if (sg(i, u) == 1 and sg(i, v) == 0 and sg(i, w) + omega(i + 1, qv) == 1) or (sg(i, u) == 1 and sg(i, v) == 1 and sg(i, w) + omega(i + 1, qv) == 2):
-            ret_u = [*u]
-            ret_u[i], ret_u[i + 1] = ret_u[i + 1], ret_u[i]
-            ret_w = [*w] + [j + 1 for j in range(len(w), i + 2)]
-            ret_w[i], ret_w[i + 1] = ret_w[i + 1], ret_w[i]
+            ret_u = u.swap(i,i+1)
+            ret_w = w.swap(i,i+1)
             qv_ret = [*qv]
             if sg(i, w) == 0:
                 qv_ret[i] -= 1
-            return Permutation(ret_u), v, Permutation(ret_w), qv_ret, True
+            return ret_u, ret_w, qv_ret, True
     return u, v, w, qv, False
 
 def reduce_q_coeff_u_only(u, v, w, qv):
@@ -405,9 +399,7 @@ def kdown_perms(perm, monoperm, p, k):
                 else:
                     i, j, s2 = a2, b, s
                 if has_bruhat_descent(perm2, i, j):
-                    new_perm = [*perm2]
-                    new_perm[a2], new_perm[b] = new_perm[b], new_perm[a2]
-                    new_perm  = Permutation(new_perm)
+                    new_perm = perm2.swap(a2,b)
                     down_perm_list2 += [(new_perm, s2)]
                     if inv(new_perm*monoperm) == inv_m - inv_p + pp:
                         full_perm_list += [(new_perm, pp, s2)]
@@ -657,8 +649,10 @@ def reduce_coeff(u, v, w):
 
     w_prime = wmu*mu_w
 
-    if permtrim(list(w)) == permtrim(w_prime):
-        return (permtrim(list(u)), permtrim(list(v)), permtrim(list(w)))
+    if w == w_prime:
+        return u, v, w
+    # if permtrim(list(w)) == permtrim(w_prime):
+    #     return (permtrim(list(u)), permtrim(list(v)), permtrim(list(w)))
 
     A = []
     B = []
@@ -698,7 +692,6 @@ def mu_A(mu, A):
             mu_A_t += [mu_t[A[i]]]
     return p_trans(mu_A_t)
 
-@ensure_perms
 def reduce_descents(u, v, w):
     found_one = True
     u2 = Permutation(u)
@@ -706,28 +699,33 @@ def reduce_descents(u, v, w):
     w2 = Permutation(w)
     while found_one:
         found_one = False
-        u2 = Permutation(u2)
-        v2 = Permutation(v2)
-        w2 = Permutation(w2)
+        # u2 = Permutation(u2)
+        # v2 = Permutation(v2)
+        # w2 = Permutation(w2)
         if will_formula_work(u2, v2) or will_formula_work(v2, u2) or one_dominates(u2, w2) or is_reducible(v2) or inv(w2) - inv(u2) == 1:
             break
-        u2 = [*u]
-        v2 = [*v]
-        w2 = [*w]
+        # u2 = [*u]
+        # v2 = [*v]
+        # w2 = [*w]
         for i in range(len(w2) - 2, -1, -1):
             if w2[i] > w2[i + 1] and i < len(v2) - 1 and v2[i] > v2[i + 1] and (i >= len(u2) - 1 or u2[i] < u2[i + 1]):
-                w2[i], w2[i + 1] = w2[i + 1], w2[i]
-                v2[i], v2[i + 1] = v2[i + 1], v2[i]
+                # w2[i], w2[i + 1] = w2[i + 1], w2[i]
+                # v2[i], v2[i + 1] = v2[i + 1], v2[i]
+                w2 = w2.swap(i,i+1)
+                v2 = v2.swap(i,i+1)
                 found_one = True
             elif w2[i] > w2[i + 1] and i < len(u2) - 1 and u2[i] > u2[i + 1] and (i >= len(v2) - 1 or v2[i] < v2[i + 1]):
-                w2[i], w2[i + 1] = w2[i + 1], w2[i]
-                u2[i], u2[i + 1] = u2[i + 1], u2[i]
+                # w2[i], w2[i + 1] = w2[i + 1], w2[i]
+                # u2[i], u2[i + 1] = u2[i + 1], u2[i]
+                w2 = w2.swap(i,i+1)
+                u2 = u2.swap(i,i+1)
                 found_one = True
             if found_one:
                 break
-    return Permutation(u2), Permutation(v2), Permutation(w2)
+    # return Permutation(u2), Permutation(v2), Permutation(w2)
+    return u2, v2, w2
 
-@ensure_perms
+
 def is_reducible(v):
     c03 = code(v)
     found0 = False
@@ -739,68 +737,81 @@ def is_reducible(v):
             good = False
             break
     return good
-    
 
-@ensure_perms
+
+#@ensure_perms
 def try_reduce_v(u, v, w):
     if is_reducible(v):
-        return Permutation([*u]), Permutation([*v]), Permutation([*w])
-    u2 = [*u]
-    v2 = [*v]
-    w2 = [*w]
+        return u, v, w
+    u2 = u
+    v2 = v
+    w2 = w
     cv = code(v2)
     for i in range(len(v2) - 2, -1, -1):
         if cv[i] == 0 and i < len(cv) - 1 and cv[i + 1] != 0:
             if i >= len(u2) - 1 or u2[i] < u2[i + 1]:
-                v2[i], v2[i + 1] = v2[i + 1], v2[i]
-                if i >= len(w2) - 1:
-                    w2 += list(range(len(w2) + 1, i + 3))
-                w2[i + 1], w2[i] = w2[i], w2[i + 1]
+                # v2[i], v2[i + 1] = v2[i + 1], v2[i]
+                v2 = v2.swap(i, i+1)
+                # if i >= len(w2) - 1:
+                #     w2 += list(range(len(w2) + 1, i + 3))
+                # w2[i + 1], w2[i] = w2[i], w2[i + 1]
+                w2 = w2. swap(i,i+1)
                 if is_reducible(v2):
                     return Permutation(u2), Permutation(v2), Permutation(w2)
                 return try_reduce_v(u2, v2, w2)
             if i < len(w2) - 1 and w2[i] > w2[i + 1]:
-                u2[i], u2[i + 1] = u2[i + 1], u2[i]
-                v2[i], v2[i + 1] = v2[i + 1], v2[i]
+                # u2[i], u2[i + 1] = u2[i + 1], u2[i]
+                # v2[i], v2[i + 1] = v2[i + 1], v2[i]
+                u2 = u2.swap(i,i+1)
+                v2 = v2.swap(i,i+1)
                 return try_reduce_v(u2, v2, w2)
-            return Permutation(u2), Permutation(v2), Permutation(w2)
-    return Permutation(u2), Permutation(v2), Permutation(w2)
+            #return Permutation(u2), Permutation(v2), Permutation(w2)
+            return u2, v2, w2
+    return u2, v2, w2
 
-@ensure_perms
+#@ensure_perms
 def try_reduce_u(u, v, w):
-    if one_dominates(Permutation(u), Permutation(w)):
+    if one_dominates(u, w):
         return u, v, w
-    u2 = [*u]
-    v2 = [*v]
-    w2 = [*w]
+    u2 = u
+    v2 = v
+    w2 = w
     cu = code(u)
     for i in range(len(u2) - 2, -1, -1):
         if cu[i] == 0 and i < len(cu) - 1 and cu[i + 1] != 0:
             if i >= len(v2) - 1 or v2[i] < v2[i + 1]:
-                u2[i], u2[i + 1] = u2[i + 1], u2[i]
-                if i > len(w2) - 1:
-                    w2 += list(range(len(w2) + 1, i + 3))
-                w2[i + 1], w2[i] = w2[i], w2[i + 1]
-                if one_dominates(Permutation(u2), Permutation(w2)):
-                    return Permutation(u2), Permutation(v2), Permutation(w2)
+                # u2[i], u2[i + 1] = u2[i + 1], u2[i]
+                # if i > len(w2) - 1:
+                #     w2 += list(range(len(w2) + 1, i + 3))
+                # w2[i + 1], w2[i] = w2[i], w2[i + 1]
+                u2 = u2.swap(i,i+1)
+                w2 = w2.swap(i,i+1)
+                if one_dominates(u2, w):
+                    #return Permutation(u2), Permutation(v2), Permutation(w2)
+                    return u2, v2, w2
                 return try_reduce_u(u2, v2, w2)
             if i < len(w2) - 1 and w2[i] > w2[i + 1]:
-                u2[i], u2[i + 1] = u2[i + 1], u2[i]
-                v2[i], v2[i + 1] = v2[i + 1], v2[i]
+                # ERROR?
+                # u2[i], u2[i + 1] = u2[i + 1], u2[i]
+                # v2[i], v2[i + 1] = v2[i + 1], v2[i]
+                u2 = u2.swap(i,i+1)
+                v2 = v2.swap(i,i+1)
                 return try_reduce_u(u2, v2, w2)
-            return Permutation(u2), Permutation(v2), Permutation(w2)
-    return Permutation(u2), Permutation(v2), Permutation(w2)
+            #return Permutation(u2), Permutation(v2), Permutation(w2)
+            return u2, v2, w2
+    # return Permutation(u2), Permutation(v2), Permutation(w2)
+    return u2, v2, w2
 
-@ensure_perms
+#@ensure_perms
 def divdiffable(v, u):
     inv_v = inv(v)
     inv_u = inv(u)
     perm2 = v*(~u)
     if inv(perm2) != inv_v - inv_u:
-        return []
+        return Permutation([])
     return perm2
 
-@ensure_perms
+#@ensure_perms
 def will_formula_work(u, v):
     # u, v = Permutation(u), Permutation(v)
     # muv = uncode(theta(v))

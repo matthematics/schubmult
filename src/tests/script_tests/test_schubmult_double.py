@@ -126,7 +126,7 @@ def parse_ret(lines, ascode, coprod, unformat):
                 v = unformat(v)
             except Exception:
                 continue            
-            ret_dict[({Permutation}(literal_eval(k)) if not ascode else (uncode(literal_eval(k))))] = v
+            ret_dict[(Permutation(literal_eval(k)) if not ascode else (uncode(literal_eval(k))))] = v
     else:
         for line in lines:
             line = str(line)

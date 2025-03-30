@@ -203,7 +203,8 @@ def _display_full(
 
         for perm in coeff_perms:
             val = coeff_dict[perm]
-            downperm = mulperm(list(perm), inverse_kperm)
+            #downperm = mulperm(list(perm), inverse_kperm)
+            downperm = perm * inverse_kperm
             if inv(downperm) == inv(perm) - inv_kperm:
                 flag = True
                 for i in range(N):
@@ -212,8 +213,8 @@ def _display_full(
                         break
                 if not flag:
                     continue
-                firstperm = downperm[0:N]
-                secondperm = [downperm[i] - N for i in range(N, len(downperm))]
+                firstperm = Permutation(downperm[0:N])
+                secondperm = Permutation([downperm[i] - N for i in range(N, len(downperm))])
                 val = sympify(val).subs(subs_dict)
 
                 if same and display_positive:
@@ -224,8 +225,10 @@ def _display_full(
                         if val != 0:
                             val2 = posify(
                                 val,
-                                tuple(permtrim(mulperm(firstperm, muA))),
-                                tuple(permtrim(mulperm(secondperm, muB))),
+                                #tuple(permtrim(mulperm(firstperm, muA))),
+                                firstperm*muA,
+                                #tuple(permtrim(mulperm(secondperm, muB))),
+                                secondperm*muB,
                                 the_top_perm,
                                 tuple(var2neg.tolist()),
                                 tuple(var3neg.tolist()),
