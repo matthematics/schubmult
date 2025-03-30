@@ -9,7 +9,6 @@ from cachetools import cached
 from cachetools.keys import hashkey
 from sortedcontainers import SortedList
 from symengine import Add, Integer, Mul, Pow, expand, symarray, sympify
-from symengine.lib.symengine_wrapper import SympifyError
 
 from schubmult.perm_lib import (
     add_perm_dict,
@@ -39,6 +38,7 @@ from schubmult.perm_lib import (
     will_formula_work,
     zero,
 )
+from schubmult.sympy_perms import Permutation
 
 # NO GLOBAL VARS
 # from ._vars import (

@@ -31,6 +31,7 @@ from schubmult.schubmult_double._funcs import (
     schubmult_down,
     split_perms,
 )
+from schubmult.sympy_perms import Permutation
 
 
 class _gvars:
@@ -329,9 +330,9 @@ def main(argv=None):
         posified = False
         if coprod:
             if ascode:
-                mperm = tuple(permtrim(uncode(perms[0])))
+                mperm = Permutation(uncode(perms[0]))
             else:
-                mperm = tuple(permtrim(perms[0]))
+                mperm = Permutation(perms[0])
 
             perms[0] = mperm
             pos = perms[1]
@@ -361,12 +362,12 @@ def main(argv=None):
         else:
             if ascode:
                 for i in range(len(perms)):
-                    perms[i] = tuple(permtrim(uncode(perms[i])))
+                    perms[i] = Permutation(uncode(perms[i]))
             else:
                 for i in range(len(perms)):
                     if len(perms[i]) < 2 and (len(perms[i]) == 0 or perms[i][0] == 1):
                         perms[i] = (1, 2)
-                    perms[i] = tuple(permtrim([*perms[i]]))
+                    perms[i] = Permutation(perms[i])
 
             size = 0
             orig_perms = [*perms]
