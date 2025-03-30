@@ -4,12 +4,12 @@ from functools import cache, cached_property
 import numpy as np
 import psutil
 import pulp as pu
+import symengine as sym
 import sympy
 from cachetools import cached
 from cachetools.keys import hashkey
 from sortedcontainers import SortedList
-from symengine import Add, Integer, Mul, Pow
-from sympy import IndexedBase, expand, sympify
+from sympy import Add, Indexed, IndexedBase, Integer, Mul, Pow, expand, sympify
 
 from schubmult.logging import get_logger
 from schubmult.perm_lib import (
@@ -521,7 +521,7 @@ def is_flat_term(term):
     return True
 
 
-def flatten_factors(term):
+def flatten_factors(term,var2=None,var3=None):
     found_one = False
     if is_flat_term(term):
         return term, False
@@ -683,32 +683,15 @@ def find_base_vectors(monom_list, var2, var3, depth):
     ct = 0
     while ct < depth and size != len(monom_list):
         size = len(monom_list)
-        # found = False
-        # for mn in mons2:
-        # if mn not in monom_list:
-        # found = True
-        # break
-        # if not found:
-        # print("Breaking")
-        # break
-
         monom_list2 = set(monom_list)
         additional_set2 = set()
         for mn in monom_list:
-            # res = 1
-            # for tp in mn:
-            # res *= var2[tp[0]] - var3[tp[1]]
-            # if poly_to_vec(res,vec) is None:
-            # continue
-
             mncount = mn_fullcount.get(mn, {})
             if mncount == {}:
                 for tp in mn:
                     mncount[tp] = mncount.get(tp, 0) + 1
                 mn_fullcount[mn] = mncount
             for mn2 in monom_list:
-                # if (mn,mn2) in pairs_checked:
-                # continue
                 mn2count = mn_fullcount.get(mn2, {})
                 if mn2count == {}:
                     for tp in mn2:
@@ -749,19 +732,9 @@ def find_base_vectors(monom_list, var2, var3, depth):
                     mn4 = list(mn2[:index2]) + list(mn2[index2 + 1 :])
                     index2 = bisect_left(mn4, new_term2)
                     mn4_t = tuple(mn4[:index2] + [new_term2] + mn4[index2:])
-                    # res = 1
-                    # for tp in mn3_t:
-                    # res *= var2[tp[0]] - var3[tp[1]]
-                    # if poly_to_vec(res,vec) is not None:
                     if mn3_t not in monom_list2:
                         additional_set2.add(mn3_t)
                     monom_list2.add(mn3_t)
-                    # res = 1
-                    # for tp in mn4_t:
-                    # res *= var2[tp[0]] - var3[tp[1]]
-                    ##
-                    ##	additional_set2.add(mn3_t)
-                    # if poly_to_vec(res,vec) is not None:
                     if mn4_t not in monom_list2:
                         additional_set2.add(mn4_t)
                     monom_list2.add(mn4_t)
@@ -778,8 +751,12 @@ def find_base_vectors(monom_list, var2, var3, depth):
     return ret, monom_list
 
 
-def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
+def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=False):
+    from schubmult.logging import get_logger, init_logging
+    init_logging(True)
+    logger = get_logger(__name__)
     notint = False
+    #val = sym.sympify(val)
     try:
         int(expand(val))
         val2 = expand(val)
@@ -787,32 +764,28 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
         notint = True
     if notint:
         frees = val.free_symbols
-        var2list = [*var2]
-        var3list = [*var3]
-
-        for i in range(len(var2list)):
-            symset = var2list[i].free_symbols
-            for sym in symset:
-                var2list[i] = sym
-
-        for i in range(len(var3list)):
-            symset = var3list[i].free_symbols
-            for sym in symset:
-                var3list[i] = sym
-
-        varsimp2 = [m for m in frees if m in var2list]
-        varsimp3 = [m for m in frees if m in var3list]
-        varsimp2.sort(key=lambda k: var2list.index(k))
-        varsimp3.sort(key=lambda k: var3list.index(k))
-
-        var22 = [sympy.sympify(m) for m in varsimp2]
-        var33 = [sympy.sympify(m) for m in varsimp3]
+        for m in frees:
+            logger.debug(f"{m=} {type(m)=} {m.args=} {var2.label=} {var3.label=}")
+            if isinstance(m, Indexed):
+                logger.debug(f"{var2.label=} {var3.label=} {m.base=} {var2==m.base}")
+                #logger.debug(f"{var2.label==m.label}")
+                #logger.debug(f"{var2.args=}")
+        varsimp2 = [m for m in frees if isinstance(m,Indexed) and m.base == var2]
+        varsimp3 = [m for m in frees if isinstance(m,Indexed) and m.base == var3]
+        varsimp2.sort(key=lambda k: k.args[1])
+        varsimp3.sort(key=lambda k: k.args[1])
+        logger.debug(f"{varsimp2=}" )
+        logger.debug(f"{varsimp3=}" )
+        var22 = varsimp2
+        var33 = varsimp3
+        # var22 = [sympy.sympify(m) for m in varsimp2]
+        # var33 = [sympy.sympify(m) for m in varsimp3]
         n1 = len(varsimp2)
 
-        for i in range(len(varsimp2)):
-            varsimp2[i] = var2[var2list.index(varsimp2[i])]
-        for i in range(len(varsimp3)):
-            varsimp3[i] = var3[var3list.index(varsimp3[i])]
+        # for i in range(len(varsimp2)):
+        #     varsimp2[i] = var2[var2list.index(varsimp2[i])]
+        # for i in range(len(varsimp3)):
+        #     varsimp3[i] = var3[var3list.index(varsimp3[i])]
 
         base_vectors = []
         base_monoms = []
@@ -900,12 +873,14 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
                     raise KeyboardInterrupt()
                 status = lp_prob.status
         else:
+            logger.debug("this")
             val_poly = sympy.poly(expand(val), *var22, *var33)
             vec = poly_to_vec(val)
             mn = val_poly.monoms()
             L1 = tuple([0 for i in range(n1)])
             mn1L = []
             lookup = {}
+            logger.debug("this")
             for mm0 in mn:
                 key = mm0[n1:]
                 if key not in lookup:
@@ -916,6 +891,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
                     lookup[key] += [mm0]
                 if mm0n1 == L1:
                     mn1L += [mm0]
+            logger.debug("this")
             for mn1 in mn1L:
                 comblistmn1 = [1]
                 for i in range(n1, len(mn1)):
@@ -950,7 +926,9 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
                         eqs[i] += bvi * vrs[j]
             for i in range(dimen):
                 lp_prob += eqs[i] == vec[i]
+            logger.debug("I IS SOLVING")
             try:
+                logger.debug("I IS SOLVING BOLVING")
                 solver = pu.PULP_CBC_CMD(msg=msg)
                 status = lp_prob.solve(solver)
             except KeyboardInterrupt:
@@ -975,6 +953,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
             b1 = base_monoms[k]
             if x != 0 and x is not None:
                 val2 += int(x) * b1
+    logger.debug(f"{val2=}")
     return val2
 
 
@@ -1096,7 +1075,7 @@ def xreplace_genvars(poly, vars1, vars2):
 
 @cached(
     cache={},
-    key=lambda val, u2, v2, w2, var2=None, var3=None, msg=False, do_pos_neg=True, sign_only=False, optimize=True: hashkey(val, u2, v2, w2, var2, var3, msg, do_pos_neg, sign_only, optimize),
+    key=lambda val, u2, v2, w2, var2=None, var3=None, msg=False, do_pos_neg=False, sign_only=False, optimize=True: hashkey(val, u2, v2, w2, var2, var3, msg, do_pos_neg, sign_only, optimize),
 )
 def posify(
     val,
@@ -1106,7 +1085,7 @@ def posify(
     var2=None,
     var3=None,
     msg=False,
-    do_pos_neg=True,
+    do_pos_neg=False,
     sign_only=False,
     optimize=True,
     n=_vars.n,
@@ -1389,7 +1368,7 @@ def posify(
                             2,
                             var2,
                         )
-                        logger.log(f"{coeff=}")
+                        logger.debug(f"{coeff=}")
                     else:
                         coeff = permy(
                             schubmult_one(Permutation([1, 3, 2]), v3, var2, var3).get(
@@ -1399,7 +1378,7 @@ def posify(
                             2,
                             var2
                         )
-                    logger.log(f"{coeff=}")
+                    logger.debug(f"{coeff=}")
                     if expand(coeff) == 0:
                         logger.debug("coeff 0 oh no")
                     tomul = sympify(coeff)
@@ -1540,7 +1519,8 @@ def posify(
                 val2 = compute_positive_rep(val, var2, var3, msg, do_pos_neg)
             if val2 is not None:
                 val = val2
-            logger.log("foing")
+            return val
+            logger.debug("foingI mage it")
         else:
             return oldval
     else:
