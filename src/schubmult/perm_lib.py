@@ -3,7 +3,8 @@ from functools import cache
 from itertools import chain
 
 import numpy as np
-from symengine import Mul, Pow, symarray, sympify
+from symengine import Mul, Pow
+from sympy import IndexedBase, symarray, sympify
 
 from schubmult.logging import get_logger
 from schubmult.sympy_perms import Permutation
@@ -13,7 +14,8 @@ logger = get_logger(__name__)
 zero = sympify(0)
 n = 100
 
-q_var = symarray("q", n)
+#q_var = symarray("q", n)
+q_var = IndexedBase("q")
 
 def ensure_perms(func):
     def wrapper(*args):

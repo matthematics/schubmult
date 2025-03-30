@@ -1,5 +1,7 @@
 from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
 
+from schubmult.logging import init_logging
+
 
 def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
     parser = ArgumentParser(
@@ -163,6 +165,13 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
         help=SUPPRESS,
     )
 
+    parser.add_argument(
+        "-debug",
+        action="store_true",
+        dest="debug",
+        help=SUPPRESS,
+    )
+
     args = parser.parse_args(argv)
     args.mulstring = ""
 
@@ -204,5 +213,5 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
         formatter = lambda bob: str(bob)  # noqa: E731
     elif args.disp_mode == "raw":
         formatter = None
-
+    init_logging(debug=args.debug)
     return args, formatter

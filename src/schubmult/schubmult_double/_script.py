@@ -3,9 +3,10 @@ from functools import cached_property
 
 import numpy as np
 import sympy
-from symengine import expand, symarray, sympify
+from sympy import IndexedBase, expand, sympify
 
 from schubmult._base_argparse import schub_argparse
+from schubmult.logging import get_logger
 from schubmult.perm_lib import (
     add_perm_dict,
     code,
@@ -33,6 +34,7 @@ from schubmult.schubmult_double._funcs import (
 )
 from schubmult.sympy_perms import Permutation
 
+logger = get_logger(__name__)
 
 class _gvars:
     @cached_property
@@ -45,19 +47,19 @@ class _gvars:
 
     @cached_property
     def var1(self):
-        return tuple(symarray("x", self.n).tolist())
+        return  IndexedBase("x")
 
     @cached_property
     def var2(self):
-        return tuple(symarray("y", self.n).tolist())
+        return IndexedBase("y")
 
     @cached_property
     def var3(self):
-        return tuple(symarray("z", self.n).tolist())
+        return IndexedBase("z")
 
     @cached_property
     def var_r(self):
-        return symarray("r", 100)
+        return IndexedBase("r")
 
 
 _vars = _gvars()
@@ -112,6 +114,7 @@ def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, 
                 _display(
                     f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_val=}",
                 )
+                logger.debug("Yep it's here")
                 exit(1)
     return val
 
@@ -287,8 +290,8 @@ def main(argv=None):
         argv = sys.argv
 
     try:
-        var2 = tuple(symarray("y", 100).tolist())
-        var3 = tuple(symarray("z", 100).tolist())
+        var2 = IndexedBase("y")
+        var3 = IndexedBase("z")
         sys.setrecursionlimit(1000000)
 
         # TEMP
