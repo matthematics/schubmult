@@ -142,8 +142,8 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
     #     var_x = tuple([sympy.sympify(v) for v in var_x])
     #     var_y = tuple([sympy.sympify(v) for v in var_y])
     #     return mult_poly_sympy(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2)
-    if poly in var_x:
-        return single_variable(coeff_dict, var_x.index(poly), var_y)
+    if isinstance(poly, Indexed) and poly.base==var_x:
+        return single_variable(coeff_dict, poly.args[1], var_y)
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
@@ -1053,22 +1053,7 @@ def schubmult_generic_partial_posify(u2, v2):
 
 
 def xreplace_genvars(poly, vars1, vars2):
-    subs_gen1 = {_vars.var_g1[i]: vars1[i] for i in range(len(_vars.var_g1))}
-    subs_gen2 = {_vars.var_g2[i]: vars2[i] for i in range(len(_vars.var_g2))}
-    subs_gen1.update(subs_gen2)
-    # print(f"{poly=} {sympify(poly).free_symbols=}")
-    # for s in sympify(poly).free_symbols:
-    #     try:
-    #         ind = _vars.var_g1.index(s)
-    #         subs_gen1[_vars.var_g1[ind]] = vars1[ind]
-    #     except ValueError:
-    #         pass
-    #     try:
-    #         ind = _vars.var_g2.index(s)
-    #         subs_gen2[_vars.var_g2[ind]] = vars2[ind]
-    #     except ValueError:
-    #         pass
-    poly2 = sympify(poly).xreplace(subs_gen1)
+    poly2 = sympify(poly).subs({_vars.var_g1: vars1, _vars.var_g2: vars2})
     # print(f"{poly2=} {poly2.free_symbols=}")
     return poly2
 

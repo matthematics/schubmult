@@ -1,9 +1,7 @@
 from functools import cache
 
-import symengine
 import sympy
-from symengine import expand, sympify
-from sympy import Add, Basic, Mul
+from sympy import Add, Basic, Indexed, IndexedBase, Mul, expand, sympify
 from sympy.core.expr import Expr
 from sympy.core.kind import NumberKind
 from sympy.printing.str import StrPrinter
@@ -380,7 +378,7 @@ class DoubleSchubertAlgebraElement(Expr):
             return self.doit().expand()
         if isinstance(self, SchubMul):
             return self.doit().expand()
-        return sympy.sympify(expand(symengine.Add(*[yz.schubmult({Permutation([]): v}, k[0], utils.poly_ring(DSx._base_var), utils.poly_ring(k[1])).get(Permutation([]), 0) for k, v in self._doubledict.items()])))
+        return Add(*[yz.schubmult({Permutation([]): v}, k[0], utils.poly_ring(DSx._base_var), utils.poly_ring(k[1])).get(Permutation([]), 0) for k, v in self._doubledict.items()])
 
 
 # None is faster to store

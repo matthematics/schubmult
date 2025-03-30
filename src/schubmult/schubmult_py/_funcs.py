@@ -1,14 +1,13 @@
 from functools import cached_property
 
-from symengine import Add, Mul, Pow, symarray
+# from symengine import Add, Mul, Pow, symarray
+from sympy import Add, Indexed, IndexedBase, Mul, Pow, symarray
 
 from schubmult.perm_lib import (
     add_perm_dict,
     compute_vpathdicts,
     elem_sym_perms,
     inv,
-    inverse,
-    mulperm,
     permtrim,
     theta,
     uncode,
@@ -23,7 +22,7 @@ class _gvars:
 
     @cached_property
     def var_x(self):
-        return tuple(symarray("x", self.n).tolist())
+        return IndexedBase("x")
 
 
 _vars = _gvars()
@@ -46,8 +45,8 @@ def single_variable(coeff_dict, varnum):
 
 
 def mult_poly(coeff_dict, poly, var_x=_vars.var_x):
-    if poly in var_x:
-        return single_variable(coeff_dict, var_x.index(poly))
+    if isinstance(poly,Indexed) and poly.base==var_x:
+        return single_variable(coeff_dict, poly.args[0])
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
