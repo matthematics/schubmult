@@ -250,18 +250,18 @@ def elem_sym_perms_q_op(orig_perm, p, k, n, q_var=q_var):
     return total_list
 
 def q_vector(q_exp, q_var=q_var):
-    qvar_list = q_var.tolist()
+    #qvar_list = q_var.tolist()
     ret = []
 
     if q_exp == 1:
         return ret
-    if q_exp in q_var:
-        i = qvar_list.index(q_exp)
+    if q_exp.base == q_var:
+        i = q_exp.args[1]
         return [0 for j in range(i - 1)] + [1]
     if isinstance(q_exp, Pow):
         qv = q_exp.args[0]
         expon = int(q_exp.args[1])
-        i = qvar_list.index(qv)
+        i = qv.args[1]
         return [0 for j in range(i - 1)] + [expon]
     if isinstance(q_exp, Mul):
         for a in q_exp.args:

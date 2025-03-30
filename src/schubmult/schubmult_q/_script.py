@@ -1,7 +1,7 @@
 import sys
 
 import numpy as np
-from symengine import sympify
+from sympy import sympify
 
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
@@ -24,6 +24,7 @@ from schubmult.schubmult_q._funcs import (
     schubmult_db,
 )
 from schubmult.schubmult_q_double import factor_out_q_keep_factored
+from schubmult.sympy_perms import Permutation
 
 
 def _display_full(coeff_dict, args, formatter):
@@ -59,7 +60,7 @@ def _display_full(coeff_dict, args, formatter):
                 if not is_parabolic(w, parabolic_index):
                     continue
 
-                w = tuple(permtrim(w))
+                w = permtrim(w)
 
                 new_q_part = np.prod(
                     [
@@ -130,6 +131,8 @@ def main(argv=None):
         if ascode:
             for i in range(len(perms)):
                 perms[i] = uncode(perms[i])
+        else:
+            perms = [Permutation(perm) for perm in perms]
 
         if parabolic:
             for i in range(len(parabolic_index)):
@@ -140,14 +143,14 @@ def main(argv=None):
                     )
                     exit(1)
 
-        coeff_dict = {tuple(permtrim([*perms[0]])): 1}
+        coeff_dict = {perms[0]: 1}
 
         if not slow:
             for perm in perms[1:]:
-                coeff_dict = schubmult_db(coeff_dict, tuple(permtrim([*perm])))
+                coeff_dict = schubmult_db(coeff_dict, perm)
         else:
             for perm in perms[1:]:
-                coeff_dict = schubmult(coeff_dict, tuple(permtrim([*perm])))
+                coeff_dict = schubmult(coeff_dict, perm)
 
         # if mult:
         #     mul_exp = sympify(mulstring)

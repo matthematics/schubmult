@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from symengine import Add, Mul, Pow, symarray
+from sympy import Add, Indexed, IndexedBase, Mul, Pow
 
 from schubmult.perm_lib import (
     add_perm_dict,
@@ -26,11 +26,11 @@ class _gvars:
 
     @cached_property
     def var_x(self):
-        return tuple(symarray("x", self.n).tolist())
+        return IndexedBase("x")
 
     @cached_property
     def q_var(self):
-        return tuple(symarray("q", self.n).tolist())
+        return IndexedBase("q")
 
 
 _vars = _gvars()
@@ -53,8 +53,8 @@ def single_variable(coeff_dict, varnum, var_q=_vars.q_var):
 
 
 def mult_poly(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
-    if poly in var_x:
-        return single_variable(coeff_dict, var_x.index(poly), var_q=var_q)
+    if isinstance(poly, Indexed) and poly.base==var_x:
+        return single_variable(coeff_dict, poly.args[1], var_q=var_q)
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
@@ -81,13 +81,13 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
 def schubmult_db(perm_dict, v, q_var=_vars.q_var):
     if inv(v) == 0:
         return perm_dict
-    th = medium_theta(inverse(v))
+    th = medium_theta(~v)
     if len(th) == 0:
         return perm_dict
     while th[-1] == 0:
         th.pop()
     mu = permtrim(uncode(th))
-    vmu = permtrim(mulperm([*v], mu))
+    vmu = permtrim(v*mu)
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}

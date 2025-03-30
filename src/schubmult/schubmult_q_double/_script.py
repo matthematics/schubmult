@@ -2,7 +2,7 @@ import sys
 from functools import cached_property
 
 import numpy as np
-from symengine import expand, symarray, sympify
+from sympy import IndexedBase, expand, symarray, sympify
 
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
@@ -45,19 +45,28 @@ class _gvars:
 
     @cached_property
     def var1(self):
-        return tuple(symarray("x", self.n).tolist())
+        return IndexedBase("x")
 
     @cached_property
     def var2(self):
-        return tuple(symarray("y", self.n).tolist())
+        return IndexedBase("y")
 
     @cached_property
     def var3(self):
-        return tuple(symarray("z", self.n).tolist())
+        return IndexedBase("z")
 
     @cached_property
     def var_r(self):
-        return symarray("r", 100)
+        return IndexedBase("r")
+
+    @cached_property
+    def var_g1(self):
+        return IndexedBase("y")
+
+    @cached_property
+    def var_g2(self):
+        return IndexedBase("z")
+
 
 
 _vars = _gvars()
