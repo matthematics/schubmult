@@ -1,6 +1,12 @@
+import logging
 from bisect import bisect_left
 from functools import cache
 from itertools import chain
+
+logging.basicConfig(format='%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+    datefmt='%Y-%m-%d:%H:%M:%S',
+    level=logging.ERROR)
+logger = logging.getLogger(__name__)
 
 import numpy as np
 from symengine import Mul, Pow, symarray, sympify
@@ -14,9 +20,6 @@ q_var = symarray("q", n)
 
 def ensure_perms(func):
     def wrapper(*args):
-        for arg in args:
-            if not isinstance(arg, Permutation):
-                raise TypeError
         return func(*[Permutation(arg) if (isinstance(arg,list) or isinstance(arg,tuple)) else arg for arg in args ])
     return wrapper
 
@@ -796,7 +799,7 @@ def try_reduce_u(u, v, w):
     # return Permutation(u2), Permutation(v2), Permutation(w2)
     return u2, v2, w2
 
-#@ensure_perms
+@ensure_perms
 def divdiffable(v, u):
     inv_v = inv(v)
     inv_u = inv(u)
@@ -826,7 +829,7 @@ def will_formula_work(u, v):
 
 def pull_out_var(vnum, v):
     import sys
-    # print(f"pull_out_var {vnum=} {v=} {code(v)=}", file=sys.stderr)
+    logger.log(logging.DEBUG, f"pull_out_var {vnum=} {v=} {code(v)=}")
     vup = v
     if vnum >= len(v): 
         return [[[], v]]
@@ -835,31 +838,25 @@ def pull_out_var(vnum, v):
     for p in range(len(v) + 1 - vnum):
         vpm_list2 = []
         for vpm, b in vpm_list:
-            # print(f"pull_out_var {vpm=} {vnum-1=} {vpm[vnum - 1]=} {len(v)+1}",file=sys.stderr)
             if vpm[vnum - 1] == len(v) + 1:
-                # print(f"pull_out_var BALE {vpm=}",file=sys.stderr)                
                 vpm2 = [*vpm]
                 vpm2.pop(vnum - 1)
-                # print(f"pull_out_var {vpm2=} I BAGELED",file=sys.stderr)
-                # print(f"pull_out_var {vpm=} {type(vpm)=}",file=sys.stderr)
                 vp = permtrim(vpm2)
-                # print(f"pull_out_var {vp=}",file=sys.stderr)
                 ret_list += [
                     [
                         [v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))],
                         vp,
                     ],
                 ]
-            for j in range(vnum, len(vup)):
+            for j in range(vnum, len(vup) + 2):
                 if vpm[j] <= b:
                     continue
-                # print(f"pull_out_var {vpm=}", file=sys.stderr)
                 for i in range(vnum):
                     if has_bruhat_ascent(vpm, i, j):
-                        vpm_list2 += [(vpm.swap(i,j), vpm[j])]
-                        # print(f"pull_out_var {vpm_list2=}",file=sys.stderr)
+                        vpm_list2 += [(vpm.swap(i,j), vpm[j])]            
         vpm_list = vpm_list2
     for vpm, b in vpm_list:
+        logger.log(logging.DEBUG, f"{vpm=} {b=}")
         if vpm[vnum - 1] == len(v) + 1:
             vpm2 = [*vpm]
             vpm2.pop(vnum - 1)
@@ -870,6 +867,7 @@ def pull_out_var(vnum, v):
                     vp,
                 ],
             ]
+    logger.log(logging.DEBUG,f"{ret_list=}")
     return ret_list
 
 @ensure_perms
