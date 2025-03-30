@@ -81,34 +81,44 @@ def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, 
         if same:
             val = expand(sympify(val).xreplace(subs_dict))
         else:
-            try:
-                if not down:
-                    val = posify(
-                        val,
-                        perms[0],
-                        perms[1],
-                        perm,
-                        var2,
-                        var3,
-                        msg,
-                    )
-                else:
-                    val = posify(
-                        val,
-                        perm,
-                        perms[1],
-                        perms[0],
-                        var2,
-                        var3,
-                        msg,
-                    )
-            except Exception:
-                _display(
-                    f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_val=}",
+            if not down:
+                print(f"""
+                      posify(
+                    {val=},
+                    {perms[0]=},
+                    {perms[1]=},
+                    {perm=},
+                    var2,
+                    var3,
+                    {msg=},
+                )"""
+                      )
+                val = posify(
+                    val,
+                    perms[0],
+                    perms[1],
+                    perm,
+                    var2,
+                    var3,
+                    msg,
                 )
-                exit(1)
+            else:
+                val = posify(
+                    val,
+                    perm,
+                    perms[1],
+                    perms[0],
+                    var2,
+                    var3,
+                    msg,
+                )
+            # except Exception:
+            #     _display(
+            #         f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_val=}",
+            #     )
+            #     exit(1)
             # if check and expand(val - check_coeff_dict.get(perm, 0)) != 0:
-            if check and expand(val - check_val) != 0:
+            if check and expand(val - check_val) != 0:                
                 _display(
                     f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_val=}",
                 )
@@ -124,6 +134,7 @@ def _display_full(
     kperm=None,
     N=None,
 ):
+    
     subs_dict2 = {}
     for i in range(1, 100):
         sm = var2[1]
@@ -247,11 +258,11 @@ def _display_full(
                                 - len(str(permtrim(secondperm)))
                             )
                             raw_result_dict[
-                                (tuple(permtrim(firstperm)), tuple(permtrim(secondperm)))
+                                (tuple(permtrim(firstperm)), Permutation(secondperm))
                             ] = val
                             if formatter:
                                 _display(
-                                    f"{tuple(permtrim(firstperm))}{' ':>{width2}}{tuple(permtrim(secondperm))}  {formatter(val)}",
+                                    f"{tuple(permtrim(firstperm))}{' ':>{width2}}{Permutation(secondperm)}  {formatter(val)}",
                                 )
                         else:
                             width2 = (
@@ -330,7 +341,7 @@ def main(argv=None):
         posified = False
         if coprod:
             if ascode:
-                mperm = Permutation(uncode(perms[0]))
+                mperm = uncode(perms[0])
             else:
                 mperm = Permutation(perms[0])
 
@@ -417,7 +428,7 @@ def main(argv=None):
                 for perm, val in coeff_dict2.items():
                     w = mulperm([*perm], muvn1v)
                     if inv(w) + inv(muvn1v) == inv(perm):
-                        coeff_dict[tuple(permtrim(w))] = val
+                        coeff_dict[Permutation(w)] = val
                 posified = True
 
             if display_positive and len(perms) > 2 and not mult and not same:
@@ -440,6 +451,7 @@ def main(argv=None):
 
 
             if not posified and display_positive:
+                print(f"{coeff_dict=}")
                 coeff_dict = {k: pre_posify(perms,k,v,check,check_coeff_dict.get(k,0),same,down,var2,var3,msg,subs_dict) for k,v in coeff_dict.items()}
 
             if pr or formatter is None:

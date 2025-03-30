@@ -219,14 +219,18 @@ def nilhecke_mult(coeff_dict1, coeff_dict2):
 
 
 def forwardcoeff(u, v, perm, var2=None, var3=None):
+    u = Permutation(u)
+    v = Permutation(v)
+    perm = Permutation(perm)
     th = theta(v)
     muv = uncode(th)
-    vmun1 = mulperm(inverse([*v]), muv)
+    vmun1 = (~v)*muv
 
-    w = mulperm([*perm], vmun1)
+    #w = mulperm([*perm], vmun1)
+    w = perm*vmun1
     if inv(w) == inv(vmun1) + inv(perm):
-        coeff_dict = schubmult_one(tuple(permtrim([*u])), tuple(muv), var2, var3)
-        return coeff_dict.get(tuple(permtrim(w)), 0)
+        coeff_dict = schubmult_one(u, muv, var2, var3)
+        return coeff_dict.get(w, 0)
     return 0
 
 
@@ -315,7 +319,7 @@ def schubmult_one_generic(perm1, perm2):
 
 
 def schubmult(perm_dict, v, var2=None, var3=None):
-    vn1 = ~Permutation(v)
+    vn1 = ~v
     th = theta(vn1)
     if len(th) == 0:
         return perm_dict
@@ -329,10 +333,11 @@ def schubmult(perm_dict, v, var2=None, var3=None):
     while th[-1] == 0:
         th.pop()
     thL = len(th)
+    #print(f"{vmu=}")
     vpathdicts = compute_vpathdicts(th, vmu, True)
     for u, val in perm_dict.items():
         inv_u = inv(u)
-        vpathsums = {u: {(1, 2): val}}
+        vpathsums = {u: {Permutation([1,2]): val}}
         for index in range(thL):
             mx_th = 0
             for vp in vpathdicts[index]:
@@ -370,10 +375,9 @@ def schubmult(perm_dict, v, var2=None, var3=None):
                                 var3,
                             )
             vpathsums = newpathsums
-        toget = tuple(vmu)
+        toget = vmu
         ret_dict = add_perm_dict({Permutation(ep): vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
-
 
 def schubmult_down(perm_dict, v, var2=None, var3=None):
     vn1 = inverse(v)
@@ -1499,6 +1503,7 @@ def split_perms(perms):
     perms2 = [perms[0]]
     for perm in perms[1:]:
         cd = code(perm)
+        print(f"{perm=} {cd=}")
         index = -1
         not_zero = False
         did = False

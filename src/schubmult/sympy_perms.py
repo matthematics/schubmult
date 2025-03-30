@@ -1,5 +1,7 @@
 # from typing import NamedTuple
 
+from functools import cached_property
+
 import sympy.combinatorics.permutations as spp
 
 import schubmult.perm_lib as pl
@@ -7,13 +9,23 @@ import schubmult.perm_lib as pl
 
 class Permutation:
     def __init__(self, perm, sperm=None):
-        p = tuple(pl.permtrim([*perm]))
-        self._perm = p
-        if sperm:
-            self._sperm = sperm
+        if isinstance(perm, Permutation):
+            # print("this is happening")
+            self._perm = perm._perm
+            self._sperm = perm._sperm
         else:
-            self._sperm = spp.Permutation._af_new([i-1 for i in p])
+            p = tuple(pl.permtrim_list([*perm]))
+            self._perm = p
+            if sperm:
+                self._sperm = sperm
+            else:
+                self._sperm = spp.Permutation._af_new([i-1 for i in p])
+        
 
+    @property
+    def code(self):
+        return self._sperm.inversion_vector()
+    
     def __getitem__(self, i):
         # print("yay")
         return self._perm[i]
@@ -27,7 +39,7 @@ class Permutation:
     def __mul__(self, other):
         # print("yay")
         new_sperm =  other._sperm * self._sperm
-        new_perm = pl.permtrim([new_sperm(i) + 1 for i in range(new_sperm.size)])
+        new_perm = pl.permtrim_list([new_sperm(i) + 1 for i in range(new_sperm.size)])
         if len(new_perm) != new_sperm.size:
             new_sperm = spp.Permutation._af_new([i-1 for i in new_perm])
         return Permutation(new_perm,new_sperm)
@@ -42,7 +54,7 @@ class Permutation:
 
     def __str__(self):
         # print("yay")
-        return str(self._perm)
+        return "P"+str(self._perm)
 
     def __add__(self, other):
         # print("yay")
