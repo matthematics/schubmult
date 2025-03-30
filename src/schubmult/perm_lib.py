@@ -200,25 +200,18 @@ def strict_theta(u):
         ret.pop()
     return ret
 
-@ensure_perms
 def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
     total_list = [(orig_perm, 0, 1)]
     up_perm_list = [(orig_perm, 1, 1000)]
     for pp in range(p):
         perm_list = []
         for up_perm, val, last_j in up_perm_list:
-            up_perm2 = [*up_perm, len(up_perm) + 1]
-            if len(up_perm2) < k + 1:
-                up_perm2 += [i + 1 for i in range(len(up_perm2), k + 2)]
-            pos_list = [i for i in range(k) if (i >= len(orig_perm) and up_perm2[i] == i + 1) or (i < len(orig_perm) and up_perm2[i] == orig_perm[i])]
-            for j in range(min(len(up_perm2) - 1, last_j), k - 1, -1):
+            pos_list = [i for i in range(k) if up_perm[i] == orig_perm[i]]
+            for j in range(min(max(k+1,len(up_perm) - 1), last_j), k - 1, -1):
                 for i in pos_list:
-                    ct = count_bruhat(up_perm2, i, j)
-                    # print(f"{up_perm2=} {ct=} {i=} {j=} {k=} {pp=}")
+                    ct = count_bruhat(up_perm, i, j)
                     if ct == 1 or ct == 2 * (i - j) + 1:
-                        new_perm = [*up_perm2]
-                        new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
-                        new_perm_add = Permutation(new_perm)
+                        new_perm_add = up_perm.swap(i,j)
                         new_val = val
                         if ct < 0:
                             new_val *= np.prod([q_var[index] for index in range(i + 1, j + 1)])
