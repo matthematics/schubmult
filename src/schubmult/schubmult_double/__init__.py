@@ -20,9 +20,9 @@ __all__ = [
     "posify",
     "schub_coprod",
     "schubmult",
-    "single_variable",
+    "schubmult_generic_partial_posify",
     "schubmult_one",
     "schubmult_one_generic",
-    "schubmult_generic_partial_posify",
-    "xreplace_genvars"
+    "single_variable",
+    "xreplace_genvars",
 ]

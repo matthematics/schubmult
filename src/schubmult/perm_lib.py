@@ -296,27 +296,29 @@ def reduce_q_coeff(u, v, w, qv):
             qv_ret = [*qv]
             if sg(i, w) == 0:
                 qv_ret[i] -= 1
-            return u, Permutation(ret_v),Permutation(ret_w), qv_ret, True
+            return u, ret_v, ret_w, qv_ret, True
         if (sg(i, u) == 1 and sg(i, v) == 0 and sg(i, w) + omega(i + 1, qv) == 1) or (sg(i, u) == 1 and sg(i, v) == 1 and sg(i, w) + omega(i + 1, qv) == 2):
             ret_u = u.swap(i,i+1)
             ret_w = w.swap(i,i+1)
             qv_ret = [*qv]
             if sg(i, w) == 0:
                 qv_ret[i] -= 1
-            return ret_u, ret_w, qv_ret, True
+            return ret_u, v, ret_w, qv_ret, True
     return u, v, w, qv, False
 
 def reduce_q_coeff_u_only(u, v, w, qv):
     for i in range(len(qv)):
         if (sg(i, u) == 1 and sg(i, v) == 0 and sg(i, w) + omega(i + 1, qv) == 1) or (sg(i, u) == 1 and sg(i, v) == 1 and sg(i, w) + omega(i + 1, qv) == 2):
-            ret_u = [*u]
-            ret_u[i], ret_u[i + 1] = ret_u[i + 1], ret_u[i]
-            ret_w = [*w] + [j + 1 for j in range(len(w), i + 2)]
-            ret_w[i], ret_w[i + 1] = ret_w[i + 1], ret_w[i]
+            # ret_u = [*u]
+            # ret_u[i], ret_u[i + 1] = ret_u[i + 1], ret_u[i]
+            ret_u = u.swap(i,i+1)
+            # ret_w = [*w] + [j + 1 for j in range(len(w), i + 2)]
+            # ret_w[i], ret_w[i + 1] = ret_w[i + 1], ret_w[i]
+            ret_w = w.swap(i,i+1)
             qv_ret = [*qv]
             if sg(i, w) == 0:
                 qv_ret[i] -= 1
-            return Permutation(ret_u), v, Permutation(ret_w), qv_ret, True
+            return ret_u, v, ret_w, qv_ret, True
     return u, v, w, qv, False
 
 def longest_element(indices):
@@ -327,9 +329,10 @@ def longest_element(indices):
         for i in range(len(indices)):
             j = indices[i] - 1
             if sg(j, perm) == 0:
-                if len(perm) < j + 2:
-                    perm = perm + list(range(len(perm) + 1, j + 3))
-                perm[j], perm[j + 1] = perm[j + 1], perm[j]
+                # if len(perm) < j + 2:
+                #     perm = perm + list(range(len(perm) + 1, j + 3))
+                # perm[j], perm[j + 1] = perm[j + 1], perm[j]
+                perm = perm.swap(j,j+1)
                 did_one = True
     return permtrim(perm)
 

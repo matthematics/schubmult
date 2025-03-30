@@ -3,11 +3,12 @@
 from functools import cached_property
 
 import sympy.combinatorics.permutations as spp
+from sympy import Basic
 
 import schubmult.perm_lib as pl
 
 
-class Permutation:
+class Permutation(Basic):
     def __init__(self, perm, sperm=None):
         if isinstance(perm, Permutation):
             # print("this is happening")

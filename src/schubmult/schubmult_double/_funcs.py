@@ -224,10 +224,10 @@ def forwardcoeff(u, v, perm, var2=None, var3=None):
     perm = Permutation(perm)
     th = theta(v)
     muv = uncode(th)
-    vmun1 = (~v)*muv
+    vmun1 = (~v) * muv
 
-    #w = mulperm([*perm], vmun1)
-    w = perm*vmun1
+    # w = mulperm([*perm], vmun1)
+    w = perm * vmun1
     if inv(w) == inv(vmun1) + inv(perm):
         coeff_dict = schubmult_one(u, muv, var2, var3)
         return coeff_dict.get(w, 0)
@@ -327,18 +327,18 @@ def schubmult(perm_dict, v, var2=None, var3=None):
     if th[0] == 0:
         return perm_dict
     mu = Permutation(uncode(th))
-    vmu = v*mu
+    vmu = v * mu
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}
     while th[-1] == 0:
         th.pop()
     thL = len(th)
-    #print(f"{vmu=}")
+    # print(f"{vmu=}")
     vpathdicts = compute_vpathdicts(th, vmu, True)
     for u, val in perm_dict.items():
         inv_u = inv(u)
-        vpathsums = {u: {Permutation([1,2]): val}}
+        vpathsums = {u: {Permutation([1, 2]): val}}
         for index in range(thL):
             mx_th = 0
             for vp in vpathdicts[index]:
@@ -379,6 +379,7 @@ def schubmult(perm_dict, v, var2=None, var3=None):
         toget = vmu
         ret_dict = add_perm_dict({Permutation(ep): vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
+
 
 def schubmult_down(perm_dict, v, var2=None, var3=None):
     vn1 = inverse(v)
@@ -964,6 +965,7 @@ def find_base_vectors(monom_list, var2, var3, depth):
 #                 val2 += int(x) * b1
 #     return val2
 
+
 def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
     notint = False
     do_pos_neg = False
@@ -1164,6 +1166,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
                 val2 += int(x) * b1
     return val2
 
+
 def is_split_two(u, v, w):  # noqa: ARG001
     # if inv(w) - inv(u) != 2:
     #     return False, []
@@ -1188,7 +1191,7 @@ def is_split_two(u, v, w):  # noqa: ARG001
     return False, []
 
 
-def is_coeff_irreducible(u, v, w):    
+def is_coeff_irreducible(u, v, w):
     return (
         not will_formula_work(u, v)
         and not will_formula_work(v, u)
@@ -1284,7 +1287,9 @@ def xreplace_genvars(poly, vars1, vars2):
 
 @cached(
     cache={},
-    key=lambda val, u2, v2, w2, var2=_vars.var2, var3=_vars.var3, msg=False, do_pos_neg=True, sign_only=False, optimize=True: hashkey(val, u2, v2, w2, var2, var3, msg, do_pos_neg, sign_only, optimize),
+    key=lambda val, u2, v2, w2, var2=_vars.var2, var3=_vars.var3, msg=False, do_pos_neg=True, sign_only=False, optimize=True: hashkey(
+        val, u2, v2, w2, var2, var3, msg, do_pos_neg, sign_only, optimize
+    ),
 )
 def posify(
     val,
@@ -1299,7 +1304,7 @@ def posify(
     optimize=True,
     n=_vars.n,
 ):
-    #print(f"{val=} {u2=} {v2=} {w2=} {var2[1]=} {var3[1]=} {msg=} {do_pos_neg=} {optimize=}")
+    # print(f"{val=} {u2=} {v2=} {w2=} {var2[1]=} {var3[1]=} {msg=} {do_pos_neg=} {optimize=}")
     oldval = val
     if inv(u2) + inv(v2) - inv(w2) == 0:
         return val
@@ -1318,7 +1323,7 @@ def posify(
         # print("Am I stuck")
         if is_coeff_irreducible(u, v, w):
             # print("Am I stuck")
-            u, v, w = [*u2], [*v2], [*w2]
+            u, v, w = u2, v2, w2
             # print("Am I stuck")
             if is_coeff_irreducible(u, v, w):
                 # print("Am I stuck")
@@ -1335,9 +1340,9 @@ def posify(
                             # print("Am I stuck")
                             u, v, w = reduce_coeff(u, v, w)
     # print("I'm not stuck")
-    u = tuple(u)
-    v = tuple(v)
-    w = tuple(w)
+    # u = tuple(u)
+    # v = tuple(v)
+    # w = tuple(w)
 
     if w != w2 and sign_only:
         return 0
@@ -1353,7 +1358,6 @@ def posify(
     split_two_b, split_two = is_split_two(u, v, w)
 
     if len([i for i in code(v) if i != 0]) == 1:
-        
         if sign_only:
             return 0
         cv = code(v)
@@ -1794,7 +1798,7 @@ def schub_coprod(mperm, indices, var2=_vars.var2, var3=_vars.var3):
 
     ret_dict = {}
     for perm in coeff_dict:
-        downperm = perm*inverse_kperm
+        downperm = perm * inverse_kperm
         if inv(downperm) == inv(perm) - inv_kperm:
             flag = True
             for i in range(N):

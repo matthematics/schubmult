@@ -84,7 +84,7 @@ def q_posify(u, v, w, same, val, var2, var3, msg, subs_dict2):
                             else:
                                 q_part2 = q_part
                                 qv = q_vector(q_part)
-                                u2, v2, w2 = u, v, (*w,)
+                                u2, v2, w2 = u, v, w
                                 u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
                                 while did_one:
                                     u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
@@ -212,13 +212,13 @@ def main(argv=None):
         else:
             for i in range(len(perms)):
                 if len(perms[i]) < 2 and (len(perms[i]) == 0 or perms[i][0] == 1):
-                    perms[i] = Permutation([1,2])
+                    perms[i] = Permutation([1, 2])
                 perms[i] = permtrim([*perms[i]])
 
         if nilhecke:
-            coeff_dict = nil_hecke({Permutation([1,2]): 1}, perms[0], nil_N)
+            coeff_dict = nil_hecke({Permutation([1, 2]): 1}, perms[0], nil_N)
         elif nilhecke_apply:
-            coeff_dict0 = nil_hecke({Permutation([1,2]): 1}, perms[0], nil_N, var2, var2)
+            coeff_dict0 = nil_hecke({Permutation([1, 2]): 1}, perms[0], nil_N, var2, var2)
             coeff_dict = {(1, 2): 0}
             for v in coeff_dict0:
                 coeff_dict[(1, 2)] += coeff_dict0[v] * div_diff(v, perms[1], var2, var3)
@@ -267,7 +267,7 @@ def main(argv=None):
                     w_P_prime = longest_element(parabolic_index2)
                     if not check_blocks(qv, parabolic_index):
                         continue
-                    w = (w*w_P_prime)*w_P
+                    w = (w * w_P_prime) * w_P
                     if not is_parabolic(w, parabolic_index):
                         continue
 

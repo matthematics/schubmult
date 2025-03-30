@@ -11,7 +11,8 @@ from sympy.printing.str import StrPrinter
 import schubmult.rings._utils as utils
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
-from schubmult.perm_lib import add_perm_dict, inv, permtrim
+from schubmult.perm_lib import add_perm_dict, inv
+from schubmult.sympy_perms import Permutation
 
 # import utils.NoneVar, utils.ZeroVar, utils.poly_ring
 
@@ -366,7 +367,7 @@ class DoubleSchubertAlgebraElement(Expr):
     #                         f"{dvar}S{DSx._base_var}({list(k[0])}, {_varstr(k[1])})",
     #                         commutative=False,
     #                     )
-    #                     if k[0] != (1, 2)
+    #                     if k[0] != Permutation([])
     #                     else 1,
     #                 ),
     #             ]
@@ -380,7 +381,7 @@ class DoubleSchubertAlgebraElement(Expr):
     def change_vars(self, cv):
         result = {}
         for k, v in self._doubledict.items():
-            result = add_perm_dict(result, {k1: v1*v for k1, v1 in cached_positive_product((1, 2), k[0], cv,k[1]).items()})
+            result = add_perm_dict(result, {k1: v1*v for k1, v1 in cached_positive_product(Permutation([]), k[0], cv,k[1]).items()})
         return _from_double_dict(result)
 
     def as_coefficients_dict(self):
@@ -397,7 +398,7 @@ class DoubleSchubertAlgebraElement(Expr):
             return self.doit().expand()
         if isinstance(self, SchubMul):
             return self.doit().expand()
-        return sympy.sympify(expand(symengine.Add(*[yz.schubmult({(1, 2): v}, k[0], utils.poly_ring(DSx._base_var), utils.poly_ring(k[1])).get((1, 2), 0) for k, v in self._doubledict.items()])))
+        return sympy.sympify(expand(symengine.Add(*[yz.schubmult({Permutation([]): v}, k[0], utils.poly_ring(DSx._base_var), utils.poly_ring(k[1])).get(Permutation([]), 0) for k, v in self._doubledict.items()])))
 
 
 # None is faster to store
@@ -413,7 +414,11 @@ class DoubleSchubertAlgebraElement_basis(Basic):
         if isinstance(x, list) or isinstance(x, tuple):
             if cv is None:
                 cv = "y"
-            elem = DoubleSchubertAlgebraElement({(tuple(permtrim(list(x))), cv): 1})
+            elem = DoubleSchubertAlgebraElement({(Permutation(x), cv): 1})
+        elif isinstance(x, Permutation):
+            if cv is None:
+                cv = "y"
+            elem = DoubleSchubertAlgebraElement({(x, cv): 1})
         # elif isinstance(x, spr.SchubertPolynomial):
         #     if x._parent._base_var == self._base_var:
         #         elem_dict = {(x, utils.NoneVar): v for k, v in x._doubledict.items()}
@@ -433,9 +438,9 @@ class DoubleSchubertAlgebraElement_basis(Basic):
             x = sympify(x)
             if cv is None or cv == utils.NoneVar:
                 cv = utils.NoneVar
-                result = py.mult_poly({(1, 2): 1}, x, utils.poly_ring(self._base_var))
+                result = py.mult_poly({Permutation([]): 1}, x, utils.poly_ring(self._base_var))
             else:
-                result = yz.mult_poly({(1, 2): 1}, x, utils.poly_ring(self._base_var), utils.poly_ring(cv))
+                result = yz.mult_poly({Permutation([]): 1}, x, utils.poly_ring(self._base_var), utils.poly_ring(cv))
             elem = DoubleSchubertAlgebraElement({(k, cv): v for k, v in result.items()})
         return elem
 
