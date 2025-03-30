@@ -27,7 +27,7 @@ class Permutation:
     def __mul__(self, other):
         # print("yay")
         new_sperm =  other._sperm * self._sperm
-        new_perm = pl.permtrim([new_sperm(i) + 1 for i in new_sperm.list()])
+        new_perm = pl.permtrim([new_sperm(i) + 1 for i in range(new_sperm.size)])
         if len(new_perm) != new_sperm.size:
             new_sperm = spp.Permutation._af_new([i-1 for i in new_perm])
         return Permutation(new_perm,new_sperm)

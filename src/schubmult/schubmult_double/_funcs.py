@@ -317,13 +317,12 @@ def schubmult_one_generic(perm1, perm2):
 def schubmult(perm_dict, v, var2=None, var3=None):
     vn1 = ~Permutation(v)
     th = theta(vn1)
-    print(f"{th=} {theta(inverse(v))=} {v=} {inverse(v)=}")
     if len(th) == 0:
         return perm_dict
     if th[0] == 0:
         return perm_dict
-    mu = permtrim(uncode(th))
-    vmu = permtrim(mulperm([*v], mu))
+    mu = Permutation(uncode(th))
+    vmu = v*mu
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}
