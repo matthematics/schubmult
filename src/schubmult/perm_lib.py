@@ -24,14 +24,15 @@ def getpermval(perm, index):
 
 @ensure_perms
 def inv(perm):
-    L = len(perm)
-    v = list(range(1, L + 1))
-    ans = 0
-    for i in range(L):
-        itr = bisect_left(v, perm[i])
-        ans += itr
-        v = v[:itr] + v[itr + 1 :]
-    return ans
+    return perm.inv()
+    # L = len(perm)
+    # v = list(range(1, L + 1))
+    # ans = 0
+    # for i in range(L):
+    #     itr = bisect_left(v, perm[i])
+    #     ans += itr
+    #     v = v[:itr] + v[itr + 1 :]
+    # return ans
 
 @ensure_perms
 def code(perm):
@@ -43,10 +44,7 @@ def code(perm):
     #     ret += [itr]
     #     v = v[:itr] + v[itr + 1 :]
     # return ret
-    try:
-        return perm.code
-    except Exception:
-        return Permutation(perm).code
+    return perm.code
 
 @ensure_perms
 def mulperm(perm1, perm2):
@@ -153,26 +151,19 @@ def elem_sym_perms(orig_perm, p, k):
     for pp in range(p):
         perm_list = []
         for up_perm, last in up_perm_list:
-            up_perm2 = [*up_perm, len(up_perm) + 1]
-            if len(up_perm2) < k + 1:
-                up_perm2 += [i + 1 for i in range(len(up_perm2), k + 2)]
-            pos_list = [i for i in range(k) if up_perm2[i] < last]
-            for j in range(k, len(up_perm2)):
-                if up_perm2[j] >= last:
+            pos_list = [i for i in range(k) if up_perm[i] < last]
+            for j in range(k, max(k+2,len(up_perm)+1)):
+                if up_perm[j] >= last:
                     continue
                 for i in pos_list:
-                    if has_bruhat_ascent(up_perm2, i, j):
-                        new_perm = [*up_perm2]
-                        new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
-                        new_perm_add = Permutation(new_perm)
-                        # else:
-                        #     new_perm_add = tuple(new_perm)
-                        perm_list += [(new_perm_add, up_perm2[j])]
+                    if has_bruhat_ascent(up_perm, i, j):
+                        new_perm_add = up_perm.swap(i,j)
+                        perm_list += [(new_perm_add, up_perm[j])]
                         total_list += [(new_perm_add, pp + 1)]
         up_perm_list = perm_list
     return total_list
 
-@ensure_perms
+
 def elem_sym_perms_op(orig_perm, p, k):
     total_list = [(orig_perm, 0)]
     up_perm_list = [(orig_perm, k)]
@@ -603,6 +594,7 @@ def p_trans(part):
 
 def cycle(p, q):
     return Permutation(list(range(1, p)) + [i + 1 for i in range(p, p + q)] + [p])
+    # return Permutation.cycle(p, q)
 
 @ensure_perms
 def phi1(u):

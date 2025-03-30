@@ -25,6 +25,18 @@ class Permutation:
     def code(self):
         return self._sperm.inversion_vector()
 
+
+    def inv(self):
+        return self._sperm.inversions()
+
+    def swap(self, i, j):
+        new_perm = [*self._perm]
+        if j>=len(new_perm):
+            new_perm += list(range(len(new_perm)+1,j+2))
+        new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
+        return Permutation(new_perm)
+
+
     def __getitem__(self, i):
         if isinstance(i, slice):
             return [self[ii] for ii in range(*i.indices(len(self._perm)))]
