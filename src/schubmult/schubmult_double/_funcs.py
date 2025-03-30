@@ -213,7 +213,7 @@ def nilhecke_mult(coeff_dict1, coeff_dict2):
             v1 = [*v]
             addperm = mulperm(v1, w1)
             if inv(addperm) == inv(v1) + inv_w1:
-                toadd = tuple(permtrim(addperm))
+                toadd = permtrim(addperm)
                 ret[toadd] = ret.get(toadd, 0) + did_mul[v]
     return ret
 
@@ -719,7 +719,7 @@ def find_base_vectors(monom_list, var2, var3, depth):
                             break
                     # print(f"{mn,mn2}")
                     if diff_term1 is None or diff_term2 is None:
-                        print(f"{mn=} {mn2=}")
+                        # print(f"{mn=} {mn2=}")
                         exit(1)
                     if diff_term2[1] == diff_term1[1]:
                         continue
@@ -764,8 +764,208 @@ def find_base_vectors(monom_list, var2, var3, depth):
     return ret, monom_list
 
 
+# def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
+#     notint = False
+#     try:
+#         int(expand(val))
+#         val2 = expand(val)
+#     except Exception:
+#         notint = True
+#     if notint:
+#         frees = val.free_symbols
+#         var2list = [*var2]
+#         var3list = [*var3]
+
+#         for i in range(len(var2list)):
+#             symset = var2list[i].free_symbols
+#             for sym in symset:
+#                 var2list[i] = sym
+
+#         for i in range(len(var3list)):
+#             symset = var3list[i].free_symbols
+#             for sym in symset:
+#                 var3list[i] = sym
+
+#         varsimp2 = [m for m in frees if m in var2list]
+#         varsimp3 = [m for m in frees if m in var3list]
+#         varsimp2.sort(key=lambda k: var2list.index(k))
+#         varsimp3.sort(key=lambda k: var3list.index(k))
+
+#         var22 = [sympy.sympify(m) for m in varsimp2]
+#         var33 = [sympy.sympify(m) for m in varsimp3]
+#         n1 = len(varsimp2)
+
+#         for i in range(len(varsimp2)):
+#             varsimp2[i] = var2[var2list.index(varsimp2[i])]
+#         for i in range(len(varsimp3)):
+#             varsimp3[i] = var3[var3list.index(varsimp3[i])]
+
+#         base_vectors = []
+#         base_monoms = []
+#         vec = poly_to_vec(val, None)
+
+#         if do_pos_neg:
+#             smp = val
+#             flat, found_one = flatten_factors(smp)
+#             while found_one:
+#                 flat, found_one = flatten_factors(flat, varsimp2, varsimp3)
+#             pos_part = 0
+#             neg_part = 0
+#             if isinstance(flat, Add) and not is_flat_term(flat):
+#                 for arg in flat.args:
+#                     if expand(arg) == 0:
+#                         continue
+#                     if not is_negative(arg):
+#                         pos_part += arg
+#                     else:
+#                         neg_part -= arg
+#                 if neg_part == 0:
+#                     # print("no neg")
+#                     return pos_part
+#             depth = 1
+
+#             mons = split_monoms(pos_part, varsimp2, varsimp3)
+#             mons = {tuple(mn) for mn in mons}
+#             mons2 = split_monoms(neg_part, varsimp2, varsimp3)
+#             mons2 = {tuple(mn2) for mn2 in mons2}
+
+#             # mons2 = split_monoms(neg_part)
+#             # for mn in mons2:
+#             # if mn not in mons:
+#             # mons.add(mn)
+#             # print(mons)
+#             status = 0
+#             size = len(mons)
+#             while status != 1:
+#                 base_monoms, mons = find_base_vectors(mons, mons2, varsimp2, varsimp3, depth)
+#                 if len(mons) == size:
+#                     raise ValueError("Found counterexample")
+
+#                 size = len(mons)
+#                 base_vectors = []
+#                 bad = False
+#                 bad_vectors = []
+#                 for i in range(len(base_monoms)):
+#                     vec0 = poly_to_vec(base_monoms[i], vec)
+#                     if vec0 is not None:
+#                         base_vectors += [vec0]
+#                     else:
+#                         bad_vectors += [i]
+#                 for j in range(len(bad_vectors) - 1, -1, -1):
+#                     base_monoms.pop(bad_vectors[j])
+
+#                 vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(base_vectors))]
+#                 lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
+#                 lp_prob += 0
+#                 eqs = [*base_vec]
+#                 for j in range(len(base_vectors)):
+#                     for i in base_vectors[j]:
+#                         bvi = base_vectors[j][i]
+#                         if bvi == 1:
+#                             eqs[i] += vrs[j]
+#                         else:
+#                             eqs[i] += bvi * vrs[j]
+#                 for i in range(dimen):
+#                     try:
+#                         lp_prob += eqs[i] == vec[i]
+#                     except TypeError:
+#                         bad = True
+#                         break
+#                 if bad:
+#                     continue
+#                 try:
+#                     solver = pu.PULP_CBC_CMD(msg=msg)
+#                     status = lp_prob.solve(solver)
+#                 except KeyboardInterrupt:
+#                     current_process = psutil.Process()
+#                     children = current_process.children(recursive=True)
+#                     for child in children:
+#                         child_process = psutil.Process(child.pid)
+#                         child_process.terminate()
+#                         child_process.kill()
+#                     raise KeyboardInterrupt()
+#                 status = lp_prob.status
+#         else:
+#             val_poly = sympy.poly(expand(val), *var22, *var33)
+#             vec = poly_to_vec(val)
+#             mn = val_poly.monoms()
+#             L1 = tuple([0 for i in range(n1)])
+#             mn1L = []
+#             lookup = {}
+#             for mm0 in mn:
+#                 key = mm0[n1:]
+#                 if key not in lookup:
+#                     lookup[key] = []
+#                 mm0n1 = mm0[:n1]
+#                 st = set(mm0n1)
+#                 if len(st.intersection({0, 1})) == len(st) and 1 in st:
+#                     lookup[key] += [mm0]
+#                 if mm0n1 == L1:
+#                     mn1L += [mm0]
+#             for mn1 in mn1L:
+#                 comblistmn1 = [1]
+#                 for i in range(n1, len(mn1)):
+#                     if mn1[i] != 0:
+#                         arr = np.array(comblistmn1)
+#                         comblistmn12 = []
+#                         mn1_2 = (*mn1[n1:i], 0, *mn1[i + 1 :])
+#                         for mm0 in lookup[mn1_2]:
+#                             comblistmn12 += (
+#                                 arr
+#                                 * np.prod(
+#                                     [varsimp2[k] - varsimp3[i - n1] for k in range(n1) if mm0[k] == 1],
+#                                 )
+#                             ).tolist()
+#                         comblistmn1 = comblistmn12
+#                 for i in range(len(comblistmn1)):
+#                     b1 = comblistmn1[i]
+#                     vec0 = poly_to_vec(b1, vec)
+#                     if vec0 is not None:
+#                         base_vectors += [vec0]
+#                         base_monoms += [b1]
+#             vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(base_vectors))]
+#             lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
+#             lp_prob += 0
+#             eqs = [*base_vec]
+#             for j in range(len(base_vectors)):
+#                 for i in base_vectors[j]:
+#                     bvi = base_vectors[j][i]
+#                     if bvi == 1:
+#                         eqs[i] += vrs[j]
+#                     else:
+#                         eqs[i] += bvi * vrs[j]
+#             for i in range(dimen):
+#                 lp_prob += eqs[i] == vec[i]
+#             try:
+#                 solver = pu.PULP_CBC_CMD(msg=msg)
+#                 status = lp_prob.solve(solver)
+#             except KeyboardInterrupt:
+#                 current_process = psutil.Process()
+#                 children = current_process.children(recursive=True)
+#                 for child in children:
+#                     child_process = psutil.Process(child.pid)
+#                     child_process.terminate()
+#                     child_process.kill()
+#                 raise KeyboardInterrupt()
+#         # print(f"{pos_part=}")
+#         # print(f"{neg_part=}")
+#         # else:
+#         # print(f"No dice {flat=}")
+#         # exit(1)
+#         # #val = pos_part - neg_part
+
+#         # depth+=1
+#         val2 = 0
+#         for k in range(len(base_vectors)):
+#             x = vrs[k].value()
+#             b1 = base_monoms[k]
+#             if x != 0 and x is not None:
+#                 val2 += int(x) * b1
+#     return val2
+
 def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
     notint = False
+    do_pos_neg = False
     try:
         int(expand(val))
         val2 = expand(val)
@@ -808,7 +1008,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
             smp = val
             flat, found_one = flatten_factors(smp)
             while found_one:
-                flat, found_one = flatten_factors(flat, varsimp2, varsimp3)
+                flat, found_one = flatten_factors(flat)
             pos_part = 0
             neg_part = 0
             if isinstance(flat, Add) and not is_flat_term(flat):
@@ -963,32 +1163,31 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
                 val2 += int(x) * b1
     return val2
 
-
 def is_split_two(u, v, w):  # noqa: ARG001
-    if inv(w) - inv(u) != 2:
-        return False, []
-    diff_perm = mulperm(inverse([*u]), [*w])
-    identity = [i + 1 for i in range(len(diff_perm))]
-    cycles = []
-    for i in range(len(identity)):
-        if diff_perm[i] != identity[i]:
-            cycle0 = set()
-            cycle = {i + 1}
-            last = i
-            while len(cycle0) != len(cycle):
-                cycle0 = cycle
-                last = diff_perm[last] - 1
-                cycle.add(last + 1)
-            if len(cycle) > 1 and cycle not in cycles:
-                cycles += [cycle]
-            if len(cycles) > 2:
-                break
-    if len(cycles) == 2:
-        return True, cycles
+    # if inv(w) - inv(u) != 2:
+    #     return False, []
+    # diff_perm = mulperm(inverse([*u]), [*w])
+    # identity = [i + 1 for i in range(len(diff_perm))]
+    # cycles = []
+    # for i in range(len(identity)):
+    #     if diff_perm[i] != identity[i]:
+    #         cycle0 = set()
+    #         cycle = {i + 1}
+    #         last = i
+    #         while len(cycle0) != len(cycle):
+    #             cycle0 = cycle
+    #             last = diff_perm[last] - 1
+    #             cycle.add(last + 1)
+    #         if len(cycle) > 1 and cycle not in cycles:
+    #             cycles += [cycle]
+    #         if len(cycles) > 2:
+    #             break
+    # if len(cycles) == 2:
+    #     return True, cycles
     return False, []
 
 
-def is_coeff_irreducible(u, v, w):
+def is_coeff_irreducible(u, v, w):    
     return (
         not will_formula_work(u, v)
         and not will_formula_work(v, u)
@@ -1084,21 +1283,22 @@ def xreplace_genvars(poly, vars1, vars2):
 
 @cached(
     cache={},
-    key=lambda val, u2, v2, w2, var2=None, var3=None, msg=False, do_pos_neg=True, sign_only=False, optimize=True: hashkey(val, u2, v2, w2, var2, var3, msg, do_pos_neg, sign_only, optimize),
+    key=lambda val, u2, v2, w2, var2=_vars.var2, var3=_vars.var3, msg=False, do_pos_neg=True, sign_only=False, optimize=True: hashkey(val, u2, v2, w2, var2, var3, msg, do_pos_neg, sign_only, optimize),
 )
 def posify(
     val,
     u2,
     v2,
     w2,
-    var2=None,
-    var3=None,
+    var2=_vars.var2,
+    var3=_vars.var3,
     msg=False,
     do_pos_neg=True,
     sign_only=False,
     optimize=True,
     n=_vars.n,
 ):
+    #print(f"{val=} {u2=} {v2=} {w2=} {var2[1]=} {var3[1]=} {msg=} {do_pos_neg=} {optimize=}")
     oldval = val
     if inv(u2) + inv(v2) - inv(w2) == 0:
         return val
@@ -1108,25 +1308,32 @@ def posify(
 
     if not sign_only and expand(val) == 0:
         return 0
-
+    # print("Am I stuck")
     u, v, w = try_reduce_v(u2, v2, w2)
+    # print("Am I stuck")
     if is_coeff_irreducible(u, v, w):
+        # print("Am I stuck")
         u, v, w = try_reduce_u(u2, v2, w2)
+        # print("Am I stuck")
         if is_coeff_irreducible(u, v, w):
+            # print("Am I stuck")
             u, v, w = [*u2], [*v2], [*w2]
+            # print("Am I stuck")
             if is_coeff_irreducible(u, v, w):
-                w0 = [*w]
-                u, v, w = reduce_descents(u, v, w)
+                # print("Am I stuck")
+                u, v, w = reduce_coeff(u, v, w)
+                # print("Am I stuck")
                 if is_coeff_irreducible(u, v, w):
-                    u, v, w = reduce_coeff(u, v, w)
-                    if is_coeff_irreducible(u, v, w):
-                        while is_coeff_irreducible(u, v, w) and tuple(permtrim(w0)) != tuple(
-                            permtrim([*w]),
-                        ):
-                            w0 = w
-                            u, v, w = reduce_descents(u, v, w)
-                            if is_coeff_irreducible(u, v, w):
-                                u, v, w = reduce_coeff(u, v, w)
+                    # print("Am I stuck")
+                    w0 = w
+                    while is_coeff_irreducible(u, v, w) and permtrim(w0) != permtrim([*w]):
+                        # print("Am I stuck")
+                        w0 = w
+                        u, v, w = reduce_descents(u, v, w)
+                        if is_coeff_irreducible(u, v, w):
+                            # print("Am I stuck")
+                            u, v, w = reduce_coeff(u, v, w)
+    # print("I'm not stuck")
     u = tuple(u)
     v = tuple(v)
     w = tuple(w)
@@ -1145,6 +1352,7 @@ def posify(
     split_two_b, split_two = is_split_two(u, v, w)
 
     if len([i for i in code(v) if i != 0]) == 1:
+        
         if sign_only:
             return 0
         cv = code(v)
@@ -1164,10 +1372,11 @@ def posify(
             [-var3[i] for i in range(1, n)],
             [-var2[i] for i in hvarset],
         )
-    elif will_formula_work(v, u) or dominates(u, w):
-        if sign_only:
-            return 0
-        val = dualcoeff(u, v, w, var2, var3)
+    # elif will_formula_work(v, u) or dominates(u, w):
+    #     # print("A")
+    #     if sign_only:
+    #         return 0
+    #     val = dualcoeff(u, v, w, var2, var3)
     elif inv(w) - inv(u) == 1:
         if sign_only:
             return 0
@@ -1220,184 +1429,183 @@ def posify(
                     toadd *= var2[yv] - var3[oaf[j]]
             toadd *= schubpoly(v3, [0, var2[w[a]], var2[w[b]]], var3)
             val += toadd
-    elif split_two_b:
-        if sign_only:
-            return 0
-        cycles = split_two
-        a1, b1 = cycles[0]
-        a2, b2 = cycles[1]
-        a1 -= 1
-        b1 -= 1
-        a2 -= 1
-        b2 -= 1
-        spo = sorted([a1, b1, a2, b2])
-        real_a1 = min(spo.index(a1), spo.index(b1))
-        real_a2 = min(spo.index(a2), spo.index(b2))
-        real_b1 = max(spo.index(a1), spo.index(b1))
-        real_b2 = max(spo.index(a2), spo.index(b2))
+    # elif split_two_b:
+    #     if sign_only:
+    #         return 0
+    #     cycles = split_two
+    #     a1, b1 = cycles[0]
+    #     a2, b2 = cycles[1]
+    #     a1 -= 1
+    #     b1 -= 1
+    #     a2 -= 1
+    #     b2 -= 1
+    #     spo = sorted([a1, b1, a2, b2])
+    #     real_a1 = min(spo.index(a1), spo.index(b1))
+    #     real_a2 = min(spo.index(a2), spo.index(b2))
+    #     real_b1 = max(spo.index(a1), spo.index(b1))
+    #     real_b2 = max(spo.index(a2), spo.index(b2))
 
-        good1 = False
-        good2 = False
-        if real_b1 - real_a1 == 1:
-            good1 = True
-        if real_b2 - real_a2 == 1:
-            good2 = True
-        a, b = -1, -1
-        if good1 and not good2:
-            a, b = min(a2, b2), max(a2, b2)
-        if good2 and not good1:
-            a, b = min(a1, b1), max(a1, b1)
-        arr = [[[], v]]
-        d = -1
-        for i in range(len(v) - 1):
-            if v[i] > v[i + 1]:
-                d = i + 1
-        for i in range(d):
-            arr2 = []
+    #     good1 = False
+    #     good2 = False
+    #     if real_b1 - real_a1 == 1:
+    #         good1 = True
+    #     if real_b2 - real_a2 == 1:
+    #         good2 = True
+    #     a, b = -1, -1
+    #     if good1 and not good2:
+    #         a, b = min(a2, b2), max(a2, b2)
+    #     if good2 and not good1:
+    #         a, b = min(a1, b1), max(a1, b1)
+    #     arr = [[[], v]]
+    #     d = -1
+    #     for i in range(len(v) - 1):
+    #         if v[i] > v[i + 1]:
+    #             d = i + 1
+    #     for i in range(d):
+    #         arr2 = []
 
-            if i in [a1, b1, a2, b2]:
-                continue
-            i2 = 1
-            i2 += len([aa for aa in [a1, b1, a2, b2] if i > aa])
-            for vr, v2 in arr:
-                dpret = pull_out_var(i2, [*v2])
-                for v3r, v3 in dpret:
-                    arr2 += [[[*vr, (v3r, i + 1)], v3]]
-            arr = arr2
-        val = 0
+    #         if i in [a1, b1, a2, b2]:
+    #             continue
+    #         i2 = 1
+    #         i2 += len([aa for aa in [a1, b1, a2, b2] if i > aa])
+    #         for vr, v2 in arr:
+    #             dpret = pull_out_var(i2, [*v2])
+    #             for v3r, v3 in dpret:
+    #                 arr2 += [[[*vr, (v3r, i + 1)], v3]]
+    #         arr = arr2
+    #     val = 0
 
-        if good1:
-            arr2 = []
-            for L in arr:
-                v3 = [*L[-1]]
-                if v3[real_a1] < v3[real_b1]:
-                    continue
-                v3[real_a1], v3[real_b1] = v3[real_b1], v3[real_a1]
-                arr2 += [[L[0], v3]]
-            arr = arr2
-            if not good2:
-                for i in range(4):
-                    arr2 = []
+    #     if good1:
+    #         arr2 = []
+    #         for L in arr:
+    #             v3 = [*L[-1]]
+    #             if v3[real_a1] < v3[real_b1]:
+    #                 continue
+    #             v3[real_a1], v3[real_b1] = v3[real_b1], v3[real_a1]
+    #             arr2 += [[L[0], v3]]
+    #         arr = arr2
+    #         if not good2:
+    #             for i in range(4):
+    #                 arr2 = []
 
-                    if i in [real_a2, real_b2]:
-                        continue
-                    if i == real_a1:
-                        var_index = min(a1, b1) + 1
-                    elif i == real_b1:
-                        var_index = max(a1, b1) + 1
-                    i2 = 1
-                    i2 += len([aa for aa in [real_a2, real_b2] if i > aa])
-                    for vr, v2 in arr:
-                        dpret = pull_out_var(i2, [*v2])
-                        for v3r, v3 in dpret:
-                            arr2 += [[[*vr, (v3r, var_index)], v3]]
-                    arr = arr2
-        if good2:
-            arr2 = []
-            for L in arr:
-                v3 = [*L[-1]]
-                try:
-                    if v3[real_a2] < v3[real_b2]:
-                        continue
-                    v3[real_a2], v3[real_b2] = v3[real_b2], v3[real_a2]
-                except IndexError:
-                    continue
-                arr2 += [[L[0], v3]]
-            arr = arr2
-            if not good1:
-                for i in range(4):
-                    arr2 = []
+    #                 if i in [real_a2, real_b2]:
+    #                     continue
+    #                 if i == real_a1:
+    #                     var_index = min(a1, b1) + 1
+    #                 elif i == real_b1:
+    #                     var_index = max(a1, b1) + 1
+    #                 i2 = 1
+    #                 i2 += len([aa for aa in [real_a2, real_b2] if i > aa])
+    #                 for vr, v2 in arr:
+    #                     dpret = pull_out_var(i2, [*v2])
+    #                     for v3r, v3 in dpret:
+    #                         arr2 += [[[*vr, (v3r, var_index)], v3]]
+    #                 arr = arr2
+    #     if good2:
+    #         arr2 = []
+    #         for L in arr:
+    #             v3 = [*L[-1]]
+    #             try:
+    #                 if v3[real_a2] < v3[real_b2]:
+    #                     continue
+    #                 v3[real_a2], v3[real_b2] = v3[real_b2], v3[real_a2]
+    #             except IndexError:
+    #                 continue
+    #             arr2 += [[L[0], v3]]
+    #         arr = arr2
+    #         if not good1:
+    #             for i in range(4):
+    #                 arr2 = []
 
-                    if i in [real_a1, real_b1]:
-                        continue
-                    i2 = 1
-                    i2 += len([aa for aa in [real_a1, real_b1] if i > aa])
-                    if i == real_a2:
-                        var_index = min(a2, b2) + 1
-                    elif i == real_b2:
-                        var_index = max(a2, b2) + 1
-                    for vr, v2 in arr:
-                        dpret = pull_out_var(i2, [*v2])
-                        for v3r, v3 in dpret:
-                            arr2 += [[[*vr, (v3r, var_index)], v3]]
-                    arr = arr2
+    #                 if i in [real_a1, real_b1]:
+    #                     continue
+    #                 i2 = 1
+    #                 i2 += len([aa for aa in [real_a1, real_b1] if i > aa])
+    #                 if i == real_a2:
+    #                     var_index = min(a2, b2) + 1
+    #                 elif i == real_b2:
+    #                     var_index = max(a2, b2) + 1
+    #                 for vr, v2 in arr:
+    #                     dpret = pull_out_var(i2, [*v2])
+    #                     for v3r, v3 in dpret:
+    #                         arr2 += [[[*vr, (v3r, var_index)], v3]]
+    #                 arr = arr2
 
-        for L in arr:
-            v3 = [*L[-1]]
-            tomul = 1
-            doschubpoly = True
-            if (not good1 or not good2) and v3[0] < v3[1] and (good1 or good2):
-                continue
-            if (good1 or good2) and (not good1 or not good2):
-                v3[0], v3[1] = v3[1], v3[0]
-            elif not good1 and not good2:
-                doschubpoly = False
-                if v3[0] < v3[1]:
-                    dual_u = uncode([2, 0])
-                    dual_w = [4, 2, 1, 3]
-                    coeff = permy(dualcoeff(dual_u, v3, dual_w, var2, var3), 2)
+    #     for L in arr:
+    #         v3 = [*L[-1]]
+    #         tomul = 1
+    #         doschubpoly = True
+    #         if (not good1 or not good2) and v3[0] < v3[1] and (good1 or good2):
+    #             continue
+    #         if (good1 or good2) and (not good1 or not good2):
+    #             v3[0], v3[1] = v3[1], v3[0]
+    #         elif not good1 and not good2:
+    #             doschubpoly = False
+    #             if v3[0] < v3[1]:
+    #                 dual_u = uncode([2, 0])
+    #                 dual_w = [4, 2, 1, 3]
+    #                 coeff = permy(dualcoeff(dual_u, v3, dual_w, var2, var3), 2)
 
-                elif len(v3) < 3 or v3[1] < v3[2]:
-                    if len(v3) <= 3 or v3[2] < v3[3]:
-                        coeff = 0
-                        continue
-                    v3[0], v3[1] = v3[1], v3[0]
-                    v3[2], v3[3] = v3[3], v3[2]
-                    coeff = permy(schubpoly(v3, var2, var3), 2)
-                elif len(v3) <= 3 or v3[2] < v3[3]:
-                    if len(v3) <= 3:
-                        v3 += [4]
-                    v3[2], v3[3] = v3[3], v3[2]
-                    coeff = permy(
-                        posify(
-                            schubmult_one((1, 3, 2), tuple(permtrim([*v3])), var2, var3).get(
-                                (2, 4, 3, 1),
-                                0,
-                            ),
-                            (1, 3, 2),
-                            tuple(permtrim([*v3])),
-                            (2, 4, 3, 1),
-                            var2,
-                            var3,
-                            msg,
-                            do_pos_neg,
-                            optimize=optimize,
-                        ),
-                        2,
-                    )
-                else:
-                    coeff = permy(
-                        schubmult_one((1, 3, 2), tuple(permtrim([*v3])), var2, var3).get(
-                            (2, 4, 1, 3),
-                            0,
-                        ),
-                        2,
-                    )
-                tomul = sympify(coeff)
-            toadd = 1
-            for i in range(len(L[0])):
-                var_index = L[0][i][1]
-                oaf = L[0][i][0]
-                if var_index - 1 >= len(w):
-                    yv = var_index
-                else:
-                    yv = w[var_index - 1]
-                for j in range(len(oaf)):
-                    toadd *= var2[yv] - var3[oaf[j]]
-            if (not good1 or not good2) and (good1 or good2):
-                varo = [0, var2[w[a]], var2[w[b]]]
-            else:
-                varo = [0, *[var2[w[spo[k]]] for k in range(4)]]
-            if doschubpoly:
-                toadd *= schubpoly(v3, varo, var3)
-            else:
-                subs_dict3 = {var2[i]: varo[i] for i in range(len(varo))}
-                toadd *= tomul.subs(subs_dict3)
-            val += toadd
-    elif will_formula_work(u, v):
-        if sign_only:
-            return 0
-        val = forwardcoeff(u, v, w, var2, var3)
+    #             elif len(v3) < 3 or v3[1] < v3[2]:
+    #                 if len(v3) <= 3 or v3[2] < v3[3]:
+    #                     coeff = 0
+    #                     continue
+    #                 v3[0], v3[1] = v3[1], v3[0]
+    #                 v3[2], v3[3] = v3[3], v3[2]
+    #                 coeff = permy(schubpoly(v3, var2, var3), 2)
+    #             elif len(v3) <= 3 or v3[2] < v3[3]:
+    #                 if len(v3) <= 3:
+    #                     v3 += [4]
+    #                 v3[2], v3[3] = v3[3], v3[2]
+    #                 coeff = permy(
+    #                     posify(
+    #                         schubmult_one((1, 3, 2), permtrim([*v3]), var2, var3).get(
+    #                             (2, 4, 3, 1),
+    #                             0,
+    #                         ),
+    #                         (1, 3, 2),
+    #                         permtrim([*v3]),
+    #                         (2, 4, 3, 1),
+    #                         var2,
+    #                         var3,
+    #                         msg,
+    #                         do_pos_neg,
+    #                         optimize=optimize,
+    #                     ),2,
+    #                 )
+    #             else:
+    #                 coeff = permy(
+    #                     schubmult_one((1, 3, 2), permtrim([*v3]), var2, var3).get(
+    #                         (2, 4, 1, 3),
+    #                         0,
+    #                     ),
+    #                     2,
+    #                 )
+    #             tomul = sympify(coeff)
+    #         toadd = 1
+    #         for i in range(len(L[0])):
+    #             var_index = L[0][i][1]
+    #             oaf = L[0][i][0]
+    #             if var_index - 1 >= len(w):
+    #                 yv = var_index
+    #             else:
+    #                 yv = w[var_index - 1]
+    #             for j in range(len(oaf)):
+    #                 toadd *= var2[yv] - var3[oaf[j]]
+    #         if (not good1 or not good2) and (good1 or good2):
+    #             varo = [0, var2[w[a]], var2[w[b]]]
+    #         else:
+    #             varo = [0, *[var2[w[spo[k]]] for k in range(4)]]
+    #         if doschubpoly:
+    #             toadd *= schubpoly(v3, varo, var3)
+    #         else:
+    #             subs_dict3 = {var2[i]: varo[i] for i in range(len(varo))}
+    #             toadd *= tomul.subs(subs_dict3)
+    #         val += toadd
+    # # elif will_formula_work(u, v):
+    #     if sign_only:
+    #         return 0
+    #     val = forwardcoeff(u, v, w, var2, var3)
     else:
         c01 = code(u)
         c02 = code(w)
@@ -1434,19 +1642,19 @@ def posify(
                     break
             v3 = uncode(newc)
             coeff_dict = schubmult_one(
-                tuple(permtrim([*u])),
-                tuple(permtrim(uncode(elemc))),
+                permtrim([*u]),
+                permtrim(uncode(elemc)),
                 var2,
                 var3,
             )
             val = 0
             for new_w in coeff_dict:
                 tomul = coeff_dict[new_w]
-                newval = schubmult_one(new_w, tuple(permtrim(uncode(newc))), var2, var3).get(
-                    tuple(permtrim([*w])),
+                newval = schubmult_one(new_w, permtrim(uncode(newc)), var2, var3).get(
+                    permtrim([*w]),
                     0,
                 )
-                newval = posify(newval, new_w, tuple(permtrim(uncode(newc))), w, var2, var3, msg, do_pos_neg, optimize=optimize)
+                newval = posify(newval, new_w, permtrim(uncode(newc)), w, var2, var3, msg, do_pos_neg, optimize=optimize)
                 val += tomul * shiftsubz(newval)
         elif c01[0] == c02[0] and c01[0] != 0:
             if sign_only:
@@ -1455,30 +1663,30 @@ def posify(
             u3 = uncode([0] + c01[1:])
             w3 = uncode([0] + c02[1:])
             val = 0
-            val = schubmult_one(tuple(permtrim(u3)), tuple(permtrim([*v])), var2, var3).get(
-                tuple(permtrim(w3)),
+            val = schubmult_one(permtrim(u3), permtrim([*v]), var2, var3).get(
+                permtrim(w3),
                 0,
             )
-            val = posify(val, tuple(permtrim(u3)), tuple(permtrim([*v])), tuple(permtrim(w3)), var2, var3, msg, do_pos_neg, optimize=optimize)
+            val = posify(val, permtrim(u3), permtrim([*v]), permtrim(w3), var2, var3, msg, do_pos_neg, optimize=optimize)
             for i in range(varl):
                 val = permy(val, i + 1)
         elif c1[0] == c2[0]:
             if sign_only:
                 return 0
             vp = pull_out_var(c1[0] + 1, [*v])
-            u3 = tuple(permtrim(phi1(u)))
-            w3 = tuple(permtrim(phi1(w)))
+            u3 = permtrim(phi1(u))
+            w3 = permtrim(phi1(w))
             val = 0
             for arr, v3 in vp:
                 tomul = 1
                 for i in range(len(arr)):
                     tomul *= var2[1] - var3[arr[i]]
 
-                val2 = schubmult_one(tuple(permtrim(u3)), tuple(permtrim(v3)), var2, var3).get(
-                    tuple(permtrim(w3)),
+                val2 = schubmult_one(permtrim(u3), permtrim(v3), var2, var3).get(
+                    permtrim(w3),
                     0,
                 )
-                val2 = posify(val2, u3, tuple(permtrim(v3)), w3, var2, var3, msg, do_pos_neg, optimize=optimize)
+                val2 = posify(val2, u3, permtrim(v3), w3, var2, var3, msg, do_pos_neg, optimize=optimize)
                 val += tomul * shiftsub(val2)
         elif not sign_only:
             if optimize:
@@ -1503,7 +1711,7 @@ def split_perms(perms):
     perms2 = [perms[0]]
     for perm in perms[1:]:
         cd = code(perm)
-        print(f"{perm=} {cd=}")
+        # print(f"{perm=} {cd=}")
         index = -1
         not_zero = False
         did = False
@@ -1526,8 +1734,8 @@ def split_perms(perms):
                     cd1 = cd[:index]
                     cd2 = [0 for i in range(index)] + cd[index:]
                     perms2 += [
-                        tuple(permtrim(uncode(cd1))),
-                        tuple(permtrim(uncode(cd2))),
+                        uncode(cd1),
+                        uncode(cd2),
                     ]
                     did = True
                     break
@@ -1599,7 +1807,7 @@ def schub_coprod(mperm, indices, var2=_vars.var2, var3=_vars.var3):
 
             val = sympify(coeff_dict[perm]).subs(subs_dict_coprod)
 
-            key = (tuple(permtrim(firstperm)), tuple(permtrim(secondperm)))
+            key = (permtrim(firstperm), permtrim(secondperm))
             ret_dict[key] = val
 
     return ret_dict

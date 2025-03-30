@@ -817,20 +817,20 @@ def divdiffable(v, u):
 
 @ensure_perms
 def will_formula_work(u, v):
-    u, v = Permutation(u), Permutation(v)
-    muv = uncode(theta(v))
-    vn1muv = list((~v)*muv)
-    while True:
-        found_one = False
-        for i in range(len(vn1muv) - 1):
-            if vn1muv[i] > vn1muv[i + 1]:
-                found_one = True
-                if i < len(u) - 1 and u[i] > u[i + 1]:
-                    return False
-                vn1muv[i], vn1muv[i + 1] = vn1muv[i + 1], vn1muv[i]
-                break
-        if not found_one:
-            return True
+    # u, v = Permutation(u), Permutation(v)
+    # muv = uncode(theta(v))
+    # vn1muv = list((~v)*muv)
+    # while True:
+    #     found_one = False
+    #     for i in range(len(vn1muv) - 1):
+    #         if vn1muv[i] > vn1muv[i + 1]:
+    #             found_one = True
+    #             if i < len(u) - 1 and u[i] > u[i + 1]:
+    #                 return False
+    #             vn1muv[i], vn1muv[i + 1] = vn1muv[i + 1], vn1muv[i]
+    #             break
+    #     if not found_one:
+    #         return True
     return False
 
 

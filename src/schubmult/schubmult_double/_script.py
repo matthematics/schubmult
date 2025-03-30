@@ -82,17 +82,6 @@ def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, 
             val = expand(sympify(val).xreplace(subs_dict))
         else:
             if not down:
-                print(f"""
-                      posify(
-                    {val=},
-                    {perms[0]=},
-                    {perms[1]=},
-                    {perm=},
-                    var2,
-                    var3,
-                    {msg=},
-                )"""
-                      )
                 val = posify(
                     val,
                     perms[0],
@@ -164,15 +153,15 @@ def _display_full(
             else:
                 poso += [i - 1]
 
-        mu_W = uncode(theta(inverse(perms[0])))
+        mu_W = uncode(theta(~perms[0]))
 
-        the_top_perm = tuple(permtrim(mulperm(list(perms[0]), mu_W)))
+        the_top_perm = perms[0]*mu_W
 
         muA = uncode(mu_A(code(mu_W), poso))
         muB = uncode(mu_A(code(mu_W), pos2))
         subs_dict = {}
         inv_kperm = inv(kperm)
-        inverse_kperm = inverse(kperm)
+        inverse_kperm = ~kperm
         var2neg = np.array([-var2[i] for i in range(len(var2))])
         var3neg = np.array([-var3[i] for i in range(len(var3))])
 
@@ -187,7 +176,8 @@ def _display_full(
         perm_pairs = []
 
         for perm in coeff_perms:
-            downperm = mulperm(list(perm), inverse_kperm)
+            #downperm = mulperm(list(perm), inverse_kperm)
+            downperm = perm * inverse_kperm
             if inv(downperm) == inv(perm) - inv_kperm:
                 flag = True
                 for i in range(N):
@@ -353,8 +343,9 @@ def main(argv=None):
             kcd = [pos[i] - i - 1 for i in range(len(pos))] + [n + 1 - k for i in range(k, n)]
             N = len(kcd)
 
-            kperm = inverse(uncode(kcd))
-            coeff_dict = {tuple(kperm): 1}
+            kperm = ~uncode(kcd)
+            coeff_dict = {kperm: 1}
+            print(f"{coeff_dict=}")
             coeff_dict = schubmult(coeff_dict, perms[0], _vars.var1, var2)
 
             if pr or formatter is None:
@@ -373,7 +364,7 @@ def main(argv=None):
         else:
             if ascode:
                 for i in range(len(perms)):
-                    perms[i] = Permutation(uncode(perms[i]))
+                    perms[i] = uncode(perms[i])
             else:
                 for i in range(len(perms)):
                     if len(perms[i]) < 2 and (len(perms[i]) == 0 or perms[i][0] == 1):
@@ -451,7 +442,7 @@ def main(argv=None):
 
 
             if not posified and display_positive:
-                print(f"{coeff_dict=}")
+                # print(f"{coeff_dict=}")
                 coeff_dict = {k: pre_posify(perms,k,v,check,check_coeff_dict.get(k,0),same,down,var2,var3,msg,subs_dict) for k,v in coeff_dict.items()}
 
             if pr or formatter is None:
