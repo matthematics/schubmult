@@ -834,7 +834,10 @@ def will_formula_work(u, v):
 
 
 def pull_out_var(vnum, v):
-    vup = [*v, len(v) + 1]
+    # vup = [*v, len(v) + 1]
+    if not isinstance(v, Permutation):
+        raise Exception
+    vup = v
     if vnum >= len(v):
         return [[[], v]]
     vpm_list = [(vup, 0)]
@@ -843,6 +846,7 @@ def pull_out_var(vnum, v):
         vpm_list2 = []
         for vpm, b in vpm_list:
             if vpm[vnum - 1] == len(v) + 1:
+                print(f"{vpm=} {type(vpm)=}")
                 vpm2 = [*vpm]
                 vpm2.pop(vnum - 1)
                 vp = permtrim(vpm2)
@@ -857,9 +861,7 @@ def pull_out_var(vnum, v):
                     continue
                 for i in range(vnum):
                     if has_bruhat_ascent(vpm, i, j):
-                        vpm[i], vpm[j] = vpm[j], vpm[i]
-                        vpm_list2 += [([*vpm], vpm[i])]
-                        vpm[i], vpm[j] = vpm[j], vpm[i]
+                        vpm_list2 += [(vpm.swap(i,j), vpm[j])]
         vpm_list = vpm_list2
     for vpm, b in vpm_list:
         if vpm[vnum - 1] == len(v) + 1:

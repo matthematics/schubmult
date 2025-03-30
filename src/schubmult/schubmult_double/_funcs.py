@@ -1368,6 +1368,7 @@ def posify(
                 break
         inv_u = inv(u)
         r = inv(w) - inv_u
+        # print("BOOGLE")
         val = 0
         w2 = w
         hvarset = [w2[i] for i in range(min(len(w2), k))] + [i + 1 for i in range(len(w2), k)] + [w2[b] for b in range(k, len(u)) if u[b] != w2[b]] + [w2[b] for b in range(len(u), len(w2))]
@@ -1383,6 +1384,8 @@ def posify(
     #         return 0
     #     val = dualcoeff(u, v, w, var2, var3)
     elif inv(w) - inv(u) == 1:
+        # TODO: problem?
+        # print(f"{val=} {oldval=}")
         if sign_only:
             return 0
         a, b = -1, -1
@@ -1406,16 +1409,18 @@ def posify(
             elif i > a:
                 i2 += 1
             for vr, v2 in arr:
-                dpret = pull_out_var(i2, [*v2])
+                dpret = pull_out_var(i2, v2)
                 for v3r, v3 in dpret:
                     arr2 += [[[*vr, v3r], v3]]
             arr = arr2
-        val = 0
+        # val = 0
         for L in arr:
-            v3 = [*L[-1]]
+            # print("po")
+            v3 = L[-1]
             if v3[0] < v3[1]:
                 continue
-            v3[0], v3[1] = v3[1], v3[0]
+            #v3[0], v3[1] = v3[1], v3[0]
+            v3 = v3.swap(0,1)
             toadd = 1
             for i in range(d):
                 if i in [a, b]:
@@ -1434,6 +1439,7 @@ def posify(
                     toadd *= var2[yv] - var3[oaf[j]]
             toadd *= schubpoly(v3, [0, var2[w[a]], var2[w[b]]], var3)
             val += toadd
+        # print(f"{val=} {oldval=}")
     # elif split_two_b:
     #     if sign_only:
     #         return 0
@@ -1623,12 +1629,14 @@ def posify(
             if sign_only:
                 return 0
             while c1[0] != c2[0]:
-                w = [*w]
-                v = [*v]
-                w[c2[0] - 1], w[c2[0]] = w[c2[0]], w[c2[0] - 1]
-                v[c2[0] - 1], v[c2[0]] = v[c2[0]], v[c2[0] - 1]
-                w = tuple(w)
-                v = tuple(v)
+                # w = [*w]
+                # v = [*v]
+                w = w.swap(c2[0]-1,c2[0])
+                v = v.swap(c2[0]-1,c2[0])
+                # w[c2[0] - 1], w[c2[0]] = w[c2[0]], w[c2[0] - 1]
+                # v[c2[0] - 1], v[c2[0]] = v[c2[0]], v[c2[0] - 1]
+                # w = tuple(w)
+                # v = tuple(v)
                 c2 = code(inverse(w))
                 c03 = code(v)
                 c01 = code(u)
@@ -1652,6 +1660,8 @@ def posify(
                 var2,
                 var3,
             )
+            # TODO: PROBLEM?
+            # print("TOTO: PROBLEM")
             val = 0
             for new_w in coeff_dict:
                 tomul = coeff_dict[new_w]
@@ -1667,21 +1677,24 @@ def posify(
             varl = c01[0]
             u3 = uncode([0] + c01[1:])
             w3 = uncode([0] + c02[1:])
+            # print("BOOGLE")
             val = 0
             val = schubmult_one(permtrim(u3), permtrim([*v]), var2, var3).get(
                 permtrim(w3),
                 0,
             )
-            val = posify(val, permtrim(u3), permtrim([*v]), permtrim(w3), var2, var3, msg, do_pos_neg, optimize=optimize)
+            val = posify(val, permtrim(u3), permtrim(v), permtrim(w3), var2, var3, msg, do_pos_neg, optimize=optimize)
             for i in range(varl):
                 val = permy(val, i + 1)
         elif c1[0] == c2[0]:
             if sign_only:
                 return 0
-            vp = pull_out_var(c1[0] + 1, [*v])
+            vp = pull_out_var(c1[0] + 1, v)
             u3 = permtrim(phi1(u))
             w3 = permtrim(phi1(w))
-            val = 0
+            # TODO: THIS - OK?
+            #val = 0
+            # print("AFSON")
             for arr, v3 in vp:
                 tomul = 1
                 for i in range(len(arr)):
