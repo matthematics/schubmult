@@ -1,7 +1,7 @@
 from functools import cached_property
 
 # from symengine import Add, Mul, Pow, symarray
-from sympy import Add, Indexed, IndexedBase, Mul, Pow, symarray
+from sympy import Add, Indexed, IndexedBase, Mul, Pow
 
 from schubmult.perm_lib import (
     add_perm_dict,
