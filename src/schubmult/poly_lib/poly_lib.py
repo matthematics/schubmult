@@ -1,12 +1,14 @@
 from functools import cache, cached_property
 
 import symengine
-import sympy
-from sympy import Indexed, IndexedBase, Mul, Pow, sympify
+from symengine import Mul, Pow, sympify
 
-Indexed._sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
+from .variables import GeneratingSet, is_indexed
+
+
+#Indexed._sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
 def expand(val):
-    return sympy.expand(val)
+    return symengine.expand(val)
 
 
 class _gvars:
@@ -20,31 +22,31 @@ class _gvars:
 
     @cached_property
     def var1(self):
-        return IndexedBase("x")
+        return GeneratingSet("x")
 
     @cached_property
     def var2(self):
-        return IndexedBase("y")
+        return GeneratingSet("y")
 
     @cached_property
     def var3(self):
-        return IndexedBase("z")
+        return GeneratingSet("z")
 
     @cached_property
     def var_r(self):
-        return IndexedBase("r")
+        return GeneratingSet("r")
 
     @cached_property
     def var_g1(self):
-        return IndexedBase("y")
+        return GeneratingSet("y")
 
     @cached_property
     def var_g2(self):
-        return IndexedBase("z")
+        return GeneratingSet("z")
 
     @cached_property
     def q_var(self):
-        return IndexedBase("q")
+        return GeneratingSet("q")
 
 
 zero = sympify(0)
@@ -167,8 +169,8 @@ def q_vector(q_exp, q_var=_vars.q_var):
 
     if q_exp == 1:
         return ret
-    if isinstance(q_exp, Indexed) and q_exp.base == q_var:
-        i = q_exp.args[1]
+    if is_indexed(q_exp) and q_exp.base == q_var:
+        i = q_exp.index
         return [0 for j in range(i - 1)] + [1]
     if isinstance(q_exp, Pow):
         qv = q_exp.args[0]

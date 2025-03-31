@@ -1,7 +1,8 @@
 from functools import cache
 
 import sympy
-from sympy import Add, Basic, Indexed, IndexedBase, Mul, expand, sympify
+from symengine import expand, sympify
+from sympy import Add, Basic, Mul
 from sympy.core.expr import Expr
 from sympy.core.kind import NumberKind
 from sympy.printing.str import StrPrinter
@@ -43,7 +44,7 @@ from schubmult.perm_lib import (
     trimcode,
     uncode,
 )
-from schubmult.poly_lib import call_zvars, elem_sym_func, elem_sym_func_q, elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
+from schubmult.poly_lib import GeneratingSet, call_zvars, elem_sym_func, elem_sym_func_q, elem_sym_poly, elem_sym_poly_q, is_indexed, q_vector, xreplace_genvars
 from schubmult.schub_lib import (
     check_blocks,
     compute_vpathdicts,

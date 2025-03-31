@@ -31,7 +31,7 @@ from functools import cached_property
 
 import numpy as np
 import sympy
-from sympy import Indexed, IndexedBase, expand, sympify
+from symengine import expand, sympify
 
 from schubmult._base_argparse import schub_argparse
 from schubmult.logging import get_logger
@@ -69,7 +69,7 @@ from schubmult.perm_lib import (
     trimcode,
     uncode,
 )
-from schubmult.poly_lib import efficient_subs
+from schubmult.poly_lib import GeneratingSet, efficient_subs, is_indexed
 from schubmult.schub_lib import (
     check_blocks,
     compute_vpathdicts,
@@ -119,19 +119,19 @@ class _gvars:
 
     @cached_property
     def var1(self):
-        return IndexedBase("x")
+        return GeneratingSet("x")
 
     @cached_property
     def var2(self):
-        return IndexedBase("y")
+        return GeneratingSet("y")
 
     @cached_property
     def var3(self):
-        return IndexedBase("z")
+        return GeneratingSet("z")
 
     @cached_property
     def var_r(self):
-        return IndexedBase("r")
+        return GeneratingSet("r")
 
 
 _vars = _gvars()
@@ -293,7 +293,7 @@ def _display_full(
                 secondperm = Permutation([downperm[i] - N for i in range(N, len(downperm))])
                 subs_dict = {}
                 for s in sympify(val).free_symbols:
-                    if isinstance(s, Indexed) and s.base == _vars.var1:
+                    if is_indexed(s) and s.base == _vars.var1:
                         if s.indices[0]<=N:
                             subs_dict[s] = var2[s.indices[0]]
                         else:
@@ -304,7 +304,7 @@ def _display_full(
                 if same and display_positive:
                     # subs_dict3 = {}
                     # for s in sympify(val).free_symbols:
-                    #     if isinstance(s, Indexed) and s.base == var2:
+                    #     if is_indexed(s) and s.base == var2:
                     #         subs_dict3[s] = subs_dict2[s] 
                     # val = expand(sympify(val).subs(subs_dict3))
                     val = efficient_subs(sympify(val), subs_dict2).expand()
@@ -376,8 +376,8 @@ def main(argv=None):
         argv = sys.argv
 
     try:
-        var2 = IndexedBase("y")
-        var3 = IndexedBase("z")
+        var2 = GeneratingSet("y")
+        var3 = GeneratingSet("z")
         sys.setrecursionlimit(1000000)
 
         # TEMP

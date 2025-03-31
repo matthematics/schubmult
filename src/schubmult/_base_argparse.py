@@ -1,6 +1,8 @@
 import os
 from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
 
+import sympy
+
 # from sympy import Indexed, init_printing
 from schubmult.logging import init_logging
 
@@ -215,7 +217,7 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
     elif args.disp_mode == "pretty":
         formatter = lambda bob: sympy.pretty(sympy.sympify(bob)).replace("[","_").replace("]","")  # noqa: E731  # noqa: E731
     elif args.disp_mode == "basic":
-        formatter = lambda bob: sympy.sstr(bob).replace("[","_").replace("]","")  # noqa: E731
+        formatter = lambda bob: sympy.sstr(sympy.sympify(bob)).replace("[","_").replace("]","")  # noqa: E731
     elif args.disp_mode == "raw":
         formatter = None
     init_logging(debug=args.debug)

@@ -7,7 +7,7 @@
 # )
 from functools import cached_property
 
-from sympy import Add, Indexed, IndexedBase, Mul, Pow, expand
+from symengine import Add, Mul, Pow, expand
 
 import schubmult.schubmult_double as norm_yz
 from schubmult.perm_lib import (
@@ -44,15 +44,7 @@ from schubmult.perm_lib import (
     trimcode,
     uncode,
 )
-from schubmult.poly_lib import (
-    call_zvars,
-    efficient_subs,
-    elem_sym_func,
-    elem_sym_func_q,
-    elem_sym_poly,
-    elem_sym_poly_q,
-    q_vector,
-)
+from schubmult.poly_lib import GeneratingSet, call_zvars, efficient_subs, elem_sym_func, elem_sym_func_q, elem_sym_poly, elem_sym_poly_q, is_indexed, q_vector
 from schubmult.schub_lib import (
     check_blocks,
     compute_vpathdicts,
@@ -89,23 +81,23 @@ class _gvars:
 
     @cached_property
     def var1(self):
-        return IndexedBase("x")
+        return GeneratingSet("x")
 
     @cached_property
     def var2(self):
-        return IndexedBase("y")
+        return GeneratingSet("y")
 
     @cached_property
     def var3(self):
-        return IndexedBase("z")
+        return GeneratingSet("z")
 
     @cached_property
     def q_var(self):
-        return IndexedBase("q")
+        return GeneratingSet("q")
 
     @cached_property
     def var_r(self):
-        return IndexedBase("r")
+        return GeneratingSet("r")
 
 
 _vars = _gvars()
@@ -510,7 +502,7 @@ def factor_out_q_keep_factored(poly):
     if str(poly).find("q") == -1:
         ret[1] = poly
         return ret
-    if isinstance(poly, Indexed) and poly.base == _vars.q_var:
+    if is_indexed(poly) and poly.base == _vars.q_var:
         ret[poly] = 1
         return ret
     if isinstance(poly, Add):

@@ -1,7 +1,7 @@
 import sys
 
 import numpy as np
-from sympy import sympify
+from symengine import sympify
 
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (

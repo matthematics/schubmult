@@ -4,8 +4,7 @@ from itertools import chain
 
 import numpy as np
 import sympy.combinatorics.permutations as spp
-from symengine import Mul, Pow
-from sympy import Basic, IndexedBase, Tuple, sympify
+from symengine import sympify
 
 from schubmult.perm_lib import (
     Permutation,

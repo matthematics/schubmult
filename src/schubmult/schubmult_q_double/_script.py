@@ -2,7 +2,7 @@ import sys
 from functools import cached_property
 
 import numpy as np
-from sympy import IndexedBase, poly_from_expr, symarray, sympify
+from symengine import sympify
 
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
@@ -39,15 +39,7 @@ from schubmult.perm_lib import (
     trimcode,
     uncode,
 )
-from schubmult.poly_lib import (
-    call_zvars,
-    elem_sym_func,
-    elem_sym_func_q,
-    elem_sym_poly,
-    elem_sym_poly_q,
-    expand,
-    q_vector,
-)
+from schubmult.poly_lib import GeneratingSet, call_zvars, div_diff, elem_sym_func, elem_sym_func_q, elem_sym_poly, elem_sym_poly_q, expand, is_indexed, q_vector
 from schubmult.schub_lib import (
     check_blocks,
     compute_vpathdicts,
@@ -92,31 +84,31 @@ class _gvars:
 
     @cached_property
     def var1(self):
-        return IndexedBase("x")
+        return GeneratingSet("x")
 
     @cached_property
     def var2(self):
-        return IndexedBase("y")
+        return GeneratingSet("y")
 
     @cached_property
     def var3(self):
-        return IndexedBase("z")
+        return GeneratingSet("z")
 
     @cached_property
     def var_r(self):
-        return IndexedBase("r")
+        return GeneratingSet("r")
 
     @cached_property
     def var_g1(self):
-        return IndexedBase("y")
+        return GeneratingSet("y")
 
     @cached_property
     def var_g2(self):
-        return IndexedBase("z")
+        return GeneratingSet("z")
     
     @cached_property
     def q_var(self):
-        return IndexedBase("q")
+        return GeneratingSet("q")
 
 
 

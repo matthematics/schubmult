@@ -1,7 +1,7 @@
 from functools import cached_property
 
 # from symengine import Add, Mul, Pow, symarray
-from sympy import Add, Indexed, IndexedBase, Mul, Pow
+from symengine import Add, Mul, Pow
 
 from schubmult.perm_lib import (
     Permutation,
@@ -38,11 +38,13 @@ from schubmult.perm_lib import (
     uncode,
 )
 from schubmult.poly_lib import (
+    GeneratingSet,
     call_zvars,
     elem_sym_func,
     elem_sym_func_q,
     elem_sym_poly,
     elem_sym_poly_q,
+    is_indexed,
     q_vector,
 )
 from schubmult.schub_lib import (
@@ -77,7 +79,7 @@ class _gvars:
 
     @cached_property
     def var_x(self):
-        return IndexedBase("x")
+        return GeneratingSet("x")
 
 
 _vars = _gvars()
@@ -100,7 +102,7 @@ def single_variable(coeff_dict, varnum):
 
 
 def mult_poly(coeff_dict, poly, var_x=_vars.var_x):
-    if isinstance(poly,Indexed) and poly.base==var_x:
+    if is_indexed(poly) and poly.base==var_x:
         return single_variable(coeff_dict, poly.args[0])
     if isinstance(poly, Mul):
         ret = coeff_dict

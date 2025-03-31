@@ -4,12 +4,11 @@ from functools import cache, cached_property
 import numpy as np
 import psutil
 import pulp as pu
-import symengine as sym
 import sympy
 from cachetools import cached
 from cachetools.keys import hashkey
 from sortedcontainers import SortedList
-from sympy import Add, Indexed, IndexedBase, Integer, Mul, Pow, sympify
+from symengine import Add, Integer, Mul, Pow, sympify
 
 from schubmult.logging import get_logger
 from schubmult.perm_lib import (
@@ -45,7 +44,7 @@ from schubmult.perm_lib import (
     trimcode,
     uncode,
 )
-from schubmult.poly_lib import efficient_subs, elem_sym_func, elem_sym_poly, expand, perm_act, schubpoly
+from schubmult.poly_lib import GeneratingSet, efficient_subs, elem_sym_func, elem_sym_poly, expand, is_indexed, perm_act, schubpoly
 from schubmult.schub_lib import (
     check_blocks,
     compute_vpathdicts,
@@ -86,27 +85,27 @@ class _gvars:
 
     @cached_property
     def var1(self):
-        return IndexedBase("x")
+        return GeneratingSet("x")
 
     @cached_property
     def var2(self):
-        return IndexedBase("y")
+        return GeneratingSet("y")
 
     @cached_property
     def var3(self):
-        return IndexedBase("z")
+        return GeneratingSet("z")
 
     @cached_property
     def var_r(self):
-        return IndexedBase("r")
+        return GeneratingSet("r")
 
     @cached_property
     def var_g1(self):
-        return IndexedBase("y")
+        return GeneratingSet("y")
 
     @cached_property
     def var_g2(self):
-        return IndexedBase("z")
+        return GeneratingSet("z")
 
 
 _vars = _gvars()
@@ -173,8 +172,8 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
     #     var_x = tuple([sympy.sympify(v) for v in var_x])
     #     var_y = tuple([sympy.sympify(v) for v in var_y])
     #     return mult_poly_sympy(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2)
-    if isinstance(poly, Indexed) and poly.base == var_x:
-        return single_variable(coeff_dict, poly.args[1], var_y)
+    if is_indexed(poly) and poly.base == var_x:
+        return single_variable(coeff_dict, poly.index, var_y)
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
@@ -182,7 +181,7 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
         return ret
     if isinstance(poly, Pow):
         base = poly.args[0]
-        exponent = int(poly.args[1])
+        exponent = int(poly.index)
         ret = coeff_dict
         for i in range(int(exponent)):
             ret = mult_poly(ret, base, var_x, var_y)
@@ -211,7 +210,7 @@ def mult_poly_down(coeff_dict, poly):
         return ret
     if isinstance(poly, Pow):
         base = poly.args[0]
-        exponent = int(poly.args[1])
+        exponent = int(poly.index)
         ret = coeff_dict
         for i in range(int(exponent)):
             ret = mult_poly_down(ret, base)
@@ -365,9 +364,9 @@ def schubmult_one_generic(perm1, perm2):
 
 def schubmult(perm_dict, v, var2=None, var3=None):
     if isinstance(var2, str):
-        var2 = IndexedBase(var2)
+        var2 = GeneratingSet(var2)
     if isinstance(var3, str):
-        var3 = IndexedBase(var3)
+        var3 = GeneratingSet(var3)
     perm_dict = {Permutation(k): v for k, v in perm_dict.items()}
     v = Permutation(v)
     vn1 = ~v
@@ -537,12 +536,12 @@ def split_flat_term(arg):
         if str(arg2).find("y") != -1:
             if isinstance(arg2, Mul):
                 for i in range(int(arg2.args[0])):
-                    ys += [arg2.args[1]]
+                    ys += [arg2.index]
             else:
                 ys += [arg2]
         elif isinstance(arg2, Mul):
             for i in range(abs(int(arg2.args[0]))):
-                zs += [-arg2.args[1]]
+                zs += [-arg2.index]
         else:
             zs += [arg2]
     return ys, zs
@@ -568,14 +567,14 @@ def flatten_factors(term, var2=None, var3=None):
             terms = [1]
             for i in range(len(ys)):
                 terms2 = []
-                for j in range(len(term.args[1])):
+                for j in range(len(term.index)):
                     for t in terms:
                         terms2 += [t * (ys[i] + zs[i])]
                 terms = terms2
             return Add(*terms)
         if is_flat_term(term.args[0]):
             return term, False
-        return flatten_factors(term.args[0]) ** term.args[1], True
+        return flatten_factors(term.args[0]) ** term.index, True
     if isinstance(term, Mul):
         terms = [1]
         for arg in term.args:
@@ -631,7 +630,7 @@ def split_mul(arg0, var2=None, var3=None):
         arg = arg0
         arg2 = expand(arg.args[0])
         yval = arg2.args[0]
-        zval = arg2.args[1]
+        zval = arg2.index
         if str(yval).find("z") != -1:
             yval, zval = zval, yval
         if str(zval).find("-") != -1:
@@ -639,7 +638,7 @@ def split_mul(arg0, var2=None, var3=None):
         if str(yval).find("-") != -1:
             yval = -yval
         tup = (var2s[fres(yval)], var3s[fres(zval)])
-        for i in range(int(arg0.args[1])):
+        for i in range(int(arg0.index)):
             monoms += [tup]
     else:
         for arg in arg0.args:
@@ -650,7 +649,7 @@ def split_mul(arg0, var2=None, var3=None):
                 if arg == 0:
                     break
                 yval = arg.args[0]
-                zval = arg.args[1]
+                zval = arg.index
                 if str(yval).find("z") != -1:
                     yval, zval = zval, yval
                 if str(zval).find("-") != -1:
@@ -661,7 +660,7 @@ def split_mul(arg0, var2=None, var3=None):
             elif isinstance(arg, Pow):
                 arg2 = arg.args[0]
                 yval = arg2.args[0]
-                zval = arg2.args[1]
+                zval = arg2.index
                 if str(yval).find("z") != -1:
                     yval, zval = zval, yval
                 if str(zval).find("-") != -1:
@@ -669,7 +668,7 @@ def split_mul(arg0, var2=None, var3=None):
                 if str(yval).find("-") != -1:
                     yval = -yval
                 tup = (var2s[fres(yval)], var3s[fres(zval)])
-                for i in range(int(arg.args[1])):
+                for i in range(int(arg.index)):
                     monoms += [tup]
     return monoms
 
@@ -703,12 +702,12 @@ def is_negative(term):
                 mulsign = 1
                 if str(arg.args[0]).find("-y") != -1:
                     mulsign = -1
-                sign *= mulsign ** term.args[1]
+                sign *= mulsign ** term.index
     elif isinstance(term, Pow):
         mulsign = 1
         if str(term.args[0]).find("-y") != -1:
             mulsign = -1
-        sign *= mulsign ** term.args[1]
+        sign *= mulsign ** term.index
     return sign < 0
 
 
@@ -788,7 +787,7 @@ def find_base_vectors(monom_list, var2, var3, depth):
     return ret, monom_list
 
 
-def compute_positive_rep(val, var2=IndexedBase("y"), var3=IndexedBase("z"), msg=False, do_pos_neg=True):
+def compute_positive_rep(val, var2=GeneratingSet("y"), var3=GeneratingSet("z"), msg=False, do_pos_neg=True):
     from schubmult.logging import get_logger, init_logging
 
     init_logging(True)
@@ -801,20 +800,14 @@ def compute_positive_rep(val, var2=IndexedBase("y"), var3=IndexedBase("z"), msg=
         notint = True
     if notint:
         frees = val.free_symbols
-        for m in frees:
-            logger.debug(f"{m=} {type(m)=} {m.args=} {var2.label=} {var3.label=}")
-            if isinstance(m, Indexed):
-                logger.debug(f"{var2.label=} {var3.label=} {m.base=} {var2 == m.base}")
-                # logger.debug(f"{var2.label==m.label}")
-                # logger.debug(f"{var2.args=}")
-        varsimp2 = [m for m in frees if isinstance(m, Indexed) and m.base == var2]
-        varsimp3 = [m for m in frees if isinstance(m, Indexed) and m.base == var3]
-        varsimp2.sort(key=lambda k: k.args[1])
-        varsimp3.sort(key=lambda k: k.args[1])
+        varsimp2 = [m for m in frees if is_indexed(m) and m.base == var2]
+        varsimp3 = [m for m in frees if is_indexed(m) and m.base == var3]
+        varsimp2.sort(key=lambda k: k.index)
+        varsimp3.sort(key=lambda k: k.index)
         logger.debug(f"{varsimp2=}")
         logger.debug(f"{varsimp3=}")
-        var22 = varsimp2
-        var33 = varsimp3
+        var22 = [sympy.sympify(v) for v in varsimp2]
+        var33 = [sympy.sympify(v) for v in varsimp3]
         # var22 = [sympy.sympify(m) for m in varsimp2]
         # var33 = [sympy.sympify(m) for m in varsimp3]
         n1 = len(varsimp2)
@@ -1477,7 +1470,7 @@ def schub_coprod(mperm, indices, var2=_vars.var2, var3=_vars.var3):
     N = len(kcd)
     kperm = ~uncode(kcd2)
     inv_kperm = ~kperm
-    vn = IndexedBase("soible")
+    vn = GeneratingSet("soible")
 
     for i in range(1, N * 2 + 1):
         if i <= N:

@@ -4,10 +4,12 @@ from itertools import chain
 
 import numpy as np
 import sympy.combinatorics.permutations as spp
-from symengine import Mul, Pow
-from sympy import Basic, IndexedBase, Tuple, sympify
+from symengine import Mul, Pow, sympify
+from sympy import Basic, Tuple
 
 from schubmult.logging import get_logger
+
+# schubmult.poly_lib.variables import GeneratingSet
 
 logger = get_logger(__name__)
 
@@ -15,7 +17,7 @@ zero = sympify(0)
 n = 100
 
 # q_var = symarray("q", n)
-q_var = IndexedBase("q")
+#q_var = GeneratingSet("q")
 
 # TODO: permutations act
 
