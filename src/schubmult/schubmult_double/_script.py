@@ -182,12 +182,12 @@ def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, 
             #     )
             #     exit(1)
             # if check and expand(val - check_coeff_dict.get(perm, 0)) != 0:
-            if expand(val - check_val) != 0 and debug:
-                _display(
-                    f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_val=}",
-                )
-                logger.debug("Yep it's here")
-                exit(1)
+            # if expand(val - check_val) != 0 and debug:
+            #     _display(
+            #         f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_val=}",
+            #     )
+            #     logger.debug("Yep it's here")
+            #     exit(1)
     return val
 
 

@@ -2,7 +2,7 @@ import sys
 from functools import cached_property
 
 import numpy as np
-from sympy import IndexedBase, expand, symarray, sympify
+from sympy import IndexedBase, expand, poly_from_expr, symarray, sympify
 
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
@@ -123,62 +123,61 @@ _vars = _gvars()
 
 q_var = _vars.q_var
 
-
+zero = sympify(0)
 def q_posify(u, v, w, same, val, var2, var3, msg, subs_dict2):
-    if expand(val) != 0:
-        try:
-            int(val)
-        except Exception:
-            val2 = 0
-            q_dict = factor_out_q_keep_factored(val)
-            for q_part in q_dict:
-                try:
-                    val2 += q_part * int(q_dict[q_part])
-                except Exception:
-                    if same:
-                        to_add = q_part * expand(sympify(q_dict[q_part]).xreplace(subs_dict2))
-                        val2 += to_add
-                    else:
-                        try:
-                            if code(inverse(v)) == medium_theta(inverse(v)):
-                                val2 += q_part * q_dict[q_part]
-                            else:
-                                q_part2 = q_part
-                                qv = q_vector(q_part)
-                                u2, v2, w2 = u, v, w
+    try:
+        int(val)
+    except Exception:
+        val2 = 0
+        q_dict = factor_out_q_keep_factored(val)
+        for q_part in q_dict:
+            try:
+                val2 += q_part * int(q_dict[q_part])
+            except Exception:
+                if same:
+                    to_add = q_part * expand(sympify(q_dict[q_part]).xreplace(subs_dict2))
+                    val2 += to_add
+                else:
+                    try:
+                        if code(inverse(v)) == medium_theta(inverse(v)):
+                            val2 += q_part * q_dict[q_part]
+                        else:
+                            q_part2 = q_part
+                            qv = q_vector(q_part)
+                            u2, v2, w2 = u, v, w
+                            u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+                            while did_one:
                                 u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-                                while did_one:
-                                    u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-                                q_part2 = np.prod(
-                                    [q_var[i + 1] ** qv[i] for i in range(len(qv))],
+                            q_part2 = np.prod(
+                                [q_var[i + 1] ** qv[i] for i in range(len(qv))],
+                            )
+                            if q_part2 == 1:
+                                # reduced to classical coefficient
+                                val2 += q_part * posify(
+                                    q_dict[q_part],
+                                    u2,
+                                    v2,
+                                    w2,
+                                    var2,
+                                    var3,
+                                    msg,
+                                    False,
                                 )
-                                if q_part2 == 1:
-                                    # reduced to classical coefficient
-                                    val2 += q_part * posify(
-                                        q_dict[q_part],
-                                        u2,
-                                        v2,
-                                        w2,
-                                        var2,
-                                        var3,
-                                        msg,
-                                        False,
-                                    )
-                                else:
-                                    val2 += q_part * compute_positive_rep(
-                                        q_dict[q_part],
-                                        var2,
-                                        var3,
-                                        msg,
-                                        False,
-                                    )
-                        except Exception as e:
-                            print(f"Exception: {e}")
-                            import traceback
+                            else:
+                                val2 += q_part * compute_positive_rep(
+                                    q_dict[q_part],
+                                    var2,
+                                    var3,
+                                    msg,
+                                    False,
+                                )
+                    except Exception as e:
+                        print(f"Exception: {e}")
+                        import traceback
 
-                            traceback.print_exc()
-                            exit(1)
-            # if not same and check and expand(val - val2) != 0:
+                        traceback.print_exc()
+                        exit(1)
+        # if not same and check and expand(val - val2) != 0:
             #     if mult:
             #         val2 = val
             #     else:
@@ -186,9 +185,9 @@ def q_posify(u, v, w, same, val, var2, var3, msg, subs_dict2):
             #             f"error: value not equal; write to schubmult@gmail.com with the case {perms=} {perm=} {val2=} {coeff_dict.get(perm,0)=}",
             #         )
             #         exit(1)
-            val = val2
-        return val
-    return 0
+        val = val2
+    return val
+
 
 
 def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3):  # noqa: ARG001

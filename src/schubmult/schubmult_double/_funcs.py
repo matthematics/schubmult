@@ -795,8 +795,8 @@ def compute_positive_rep(val, var2=IndexedBase("y"), var3=IndexedBase("z"), msg=
     logger = get_logger(__name__)
     notint = False
     try:
-        int(expand(val))
-        val2 = expand(val)
+        val2 = int(expand(val))
+        #val2 = expand(val)
     except Exception:
         notint = True
     if notint:
@@ -1311,8 +1311,8 @@ def posify(
                             var2,
                         )
                     logger.debug(f"{coeff=}")
-                    if expand(coeff) == 0:
-                        logger.debug("coeff 0 oh no")
+                    # if expand(coeff) == 0:
+                    #     logger.debug("coeff 0 oh no")
                     tomul = sympify(coeff)
                 toadd = 1
                 for i in range(len(L[0])):
@@ -1335,7 +1335,7 @@ def posify(
                     toadd *= efficient_subs(tomul, subs_dict3)
                 val += toadd
                 logger.debug(f"accum {val=}")
-            logger.debug(f"{expand(val-oldval)=}")
+            #logger.debug(f"{expand(val-oldval)=}")
     if will_formula_work(u, v):
         logger.debug("hi")
         if sign_only:
