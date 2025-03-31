@@ -1,5 +1,6 @@
 from .poly_lib import (
     call_zvars,
+    efficient_subs,
     elem_sym_func,
     elem_sym_func_q,
     elem_sym_poly,
@@ -21,4 +22,5 @@ __all__ = [
     "schubpoly",
     "skew_div_diff",
     "xreplace_genvars",
+    "efficient_subs",
 ]

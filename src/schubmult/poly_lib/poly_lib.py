@@ -147,6 +147,14 @@ def call_zvars(v1, v2, k, i):  # noqa: ARG001
     return [v3[i - 1]] + [v3[j] for j in range(len(v1), len(v3)) if v3[j] != j + 1 and j != i - 1] + [v3[j] for j in range(len(v1)) if v1[j] != v3[j] and j != i - 1]
 
 
+def efficient_subs(expr, subs_dict):
+    subs_dict_new = {}
+    expr = sympify(expr)
+    for s in expr.free_symbols:
+        if s in subs_dict:
+            subs_dict_new[s] = subs_dict[s]
+    return expr.subs(subs_dict_new)
+
 def q_vector(q_exp, q_var=_vars.q_var):
     # qvar_list = q_var.tolist()
     ret = []

@@ -69,6 +69,7 @@ from schubmult.perm_lib import (
     trimcode,
     uncode,
 )
+from schubmult.poly_lib import efficient_subs
 from schubmult.schub_lib import (
     check_blocks,
     compute_vpathdicts,
@@ -153,7 +154,7 @@ def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, 
         return int(val)
     except Exception:
         if same:
-            val = expand(sympify(val).xreplace(subs_dict))
+            val = efficient_subs(sympify(val), subs_dict).expand()#expand(sympify(val).xreplace(subs_dict))
         else:
             if not down:
                 val = posify(
@@ -301,11 +302,12 @@ def _display_full(
                 # subs_dict2 = {}
                 
                 if same and display_positive:
-                    subs_dict3 = {}
-                    for s in sympify(val).free_symbols:
-                        if isinstance(s, Indexed) and s.base == var2:
-                            subs_dict3[s] = subs_dict2[s] 
-                    val = expand(sympify(val).subs(subs_dict3))
+                    # subs_dict3 = {}
+                    # for s in sympify(val).free_symbols:
+                    #     if isinstance(s, Indexed) and s.base == var2:
+                    #         subs_dict3[s] = subs_dict2[s] 
+                    # val = expand(sympify(val).subs(subs_dict3))
+                    val = efficient_subs(sympify(val), subs_dict2).expand()
 
                 if val != 0:
                     if display_positive and not same:
