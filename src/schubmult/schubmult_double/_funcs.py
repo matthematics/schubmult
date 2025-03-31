@@ -9,7 +9,7 @@ import sympy
 from cachetools import cached
 from cachetools.keys import hashkey
 from sortedcontainers import SortedList
-from sympy import Add, Indexed, IndexedBase, Integer, Mul, Pow, expand, sympify
+from sympy import Add, Indexed, IndexedBase, Integer, Mul, Pow, sympify
 
 from schubmult.logging import get_logger
 from schubmult.perm_lib import (
@@ -45,7 +45,7 @@ from schubmult.perm_lib import (
     trimcode,
     uncode,
 )
-from schubmult.poly_lib import efficient_subs, elem_sym_func, elem_sym_poly, perm_act, schubpoly
+from schubmult.poly_lib import efficient_subs, elem_sym_func, elem_sym_poly, expand, perm_act, schubpoly
 from schubmult.schub_lib import (
     check_blocks,
     compute_vpathdicts,
@@ -483,7 +483,7 @@ def schubmult_down(perm_dict, v, var2=None, var3=None):
 
 
 def poly_to_vec(poly, vec0=None, var3=_vars.var3):
-    poly = expand(poly.xreplace({var3[1]: 0}))
+    poly = expand(sympify(poly).xreplace({var3[1]: 0}))
 
     dc = poly.as_coefficients_dict()
 

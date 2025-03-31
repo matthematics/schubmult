@@ -5,6 +5,7 @@ from .poly_lib import (
     elem_sym_func_q,
     elem_sym_poly,
     elem_sym_poly_q,
+    expand,
     q_vector,
     xreplace_genvars,
 )
@@ -23,4 +24,5 @@ __all__ = [
     "skew_div_diff",
     "xreplace_genvars",
     "efficient_subs",
+    "expand",
 ]

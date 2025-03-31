@@ -2,7 +2,7 @@ import sys
 from functools import cached_property
 
 import numpy as np
-from sympy import IndexedBase, expand, poly_from_expr, symarray, sympify
+from sympy import IndexedBase, poly_from_expr, symarray, sympify
 
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
@@ -45,6 +45,7 @@ from schubmult.poly_lib import (
     elem_sym_func_q,
     elem_sym_poly,
     elem_sym_poly_q,
+    expand,
     q_vector,
 )
 from schubmult.schub_lib import (
@@ -126,7 +127,7 @@ q_var = _vars.q_var
 zero = sympify(0)
 def q_posify(u, v, w, same, val, var2, var3, msg, subs_dict2):
     try:
-        int(val)
+        int(expand(val))
     except Exception:
         val2 = 0
         q_dict = factor_out_q_keep_factored(val)

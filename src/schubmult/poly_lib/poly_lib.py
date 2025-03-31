@@ -1,6 +1,12 @@
 from functools import cache, cached_property
 
+import symengine
+import sympy
 from sympy import Indexed, IndexedBase, Mul, Pow, sympify
+
+Indexed._sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
+def expand(val):
+    return sympy.expand(val)
 
 
 class _gvars:

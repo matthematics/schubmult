@@ -6,7 +6,7 @@ import schubmult.schub_lib as schub_lib
 
 def perm_act(val, i, var2=None):
     subsdict = {var2[i]: var2[i + 1], var2[i + 1]: var2[i]}
-    return sympy.ympify(val).subs(subsdict)
+    return sympy.sympify(val).subs(subsdict)
 
 
 def div_diff(i, poly, var2=None):
