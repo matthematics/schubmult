@@ -70,7 +70,7 @@ def assert_dict_good(
     display_positive=False,
 ):
     # print(f"{input_dict=}")
-    from schubmult.sympy_perms import Permutation
+    from schubmult.perm_lib import Permutation
     from symengine import expand, symarray, sympify
 
     from schubmult.schubmult_double import schub_coprod, schubmult
@@ -113,7 +113,7 @@ def parse_ret(lines, ascode, coprod, unformat):
     import sys
 
     from schubmult.perm_lib import permtrim, uncode
-    from schubmult.sympy_perms import Permutation
+    from schubmult.perm_lib import Permutation
 
     ret_dict = {}
     if not coprod:
@@ -172,7 +172,7 @@ def test_with_same_args_exec(capsys, json_file):
     args = get_json(f"{base_dir}/{json_file}")
     # print(f"{json_file=} {args=} input_data")
     from schubmult.schubmult_double._script import main
-    from schubmult.sympy_perms import Permutation
+    from schubmult.perm_lib import Permutation
 
     mult = args["mult"]  # noqa: F841
     mulstring = args["mulstring"]  # noqa: F841

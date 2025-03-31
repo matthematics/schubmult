@@ -11,6 +11,7 @@ from symengine import Add, Mul, Pow, expand, symarray
 
 import schubmult.schubmult_double as norm_yz
 from schubmult.perm_lib import (
+    Permutation,
     add_perm_dict,
     call_zvars,
     compute_vpathdicts,
@@ -27,7 +28,6 @@ from schubmult.perm_lib import (
     strict_theta,
     uncode,
 )
-from schubmult.sympy_perms import Permutation
 
 
 class _gvars:

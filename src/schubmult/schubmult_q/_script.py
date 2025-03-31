@@ -5,6 +5,7 @@ from sympy import sympify
 
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
+    Permutation,
     check_blocks,
     count_less_than,
     inv,
@@ -24,7 +25,6 @@ from schubmult.schubmult_q._funcs import (
     schubmult_db,
 )
 from schubmult.schubmult_q_double import factor_out_q_keep_factored
-from schubmult.sympy_perms import Permutation
 
 
 def _display_full(coeff_dict, args, formatter):

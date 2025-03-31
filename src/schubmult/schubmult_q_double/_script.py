@@ -6,6 +6,7 @@ from sympy import IndexedBase, expand, symarray, sympify
 
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
+    Permutation,
     check_blocks,
     code,
     count_less_than,
@@ -31,7 +32,6 @@ from schubmult.schubmult_q_double._funcs import (
     schubmult,
     schubmult_db,
 )
-from schubmult.sympy_perms import Permutation
 
 
 class _gvars:

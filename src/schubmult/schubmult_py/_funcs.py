@@ -4,6 +4,7 @@ from functools import cached_property
 from sympy import Add, Indexed, IndexedBase, Mul, Pow
 
 from schubmult.perm_lib import (
+    Permutation,
     add_perm_dict,
     compute_vpathdicts,
     elem_sym_perms,
@@ -12,7 +13,6 @@ from schubmult.perm_lib import (
     theta,
     uncode,
 )
-from schubmult.sympy_perms import Permutation
 
 
 class _gvars:

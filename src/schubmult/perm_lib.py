@@ -1,35 +1,41 @@
 from bisect import bisect_left
-from functools import cache
+from functools import cache, cached_property
 from itertools import chain
 
 import numpy as np
+import sympy.combinatorics.permutations as spp
 from symengine import Mul, Pow
-from sympy import IndexedBase, symarray, sympify
+from sympy import Basic, IndexedBase, sympify
 
 from schubmult.logging import get_logger
-from schubmult.sympy_perms import Permutation
 
 logger = get_logger(__name__)
 
 zero = sympify(0)
 n = 100
 
-#q_var = symarray("q", n)
+# q_var = symarray("q", n)
 q_var = IndexedBase("q")
+
+# TODO: permutations act
+
 
 def ensure_perms(func):
     def wrapper(*args):
-        return func(*[Permutation(arg) if (isinstance(arg,list) or isinstance(arg,tuple)) else arg for arg in args ])
+        return func(*[Permutation(arg) if (isinstance(arg, list) or isinstance(arg, tuple)) else arg for arg in args])
+
     return wrapper
+
 
 def getpermval(perm, index):
     if index < len(perm):
         return perm[index]
     return index + 1
 
+
 @ensure_perms
 def inv(perm):
-    return perm.inv()
+    return perm.inv
     # L = len(perm)
     # v = list(range(1, L + 1))
     # ans = 0
@@ -39,7 +45,7 @@ def inv(perm):
     #     v = v[:itr] + v[itr + 1 :]
     # return ans
 
-@ensure_perms
+
 def code(perm):
     # L = len(perm)
     # ret = []
@@ -53,7 +59,7 @@ def code(perm):
 
 @ensure_perms
 def mulperm(perm1, perm2):
-    return perm1*perm2
+    return perm1 * perm2
     # raise Exception("Don't do this")
     # if len(perm1) < len(perm2):
     #     return [perm1[perm2[i] - 1] if perm2[i] <= len(perm1) else perm2[i] for i in range(len(perm2))]
@@ -73,44 +79,18 @@ def uncode(cd):
     perm += [fullperm[0]]
     return Permutation(perm)
 
-# @ensure_perms
-# def reversecode(perm):
-#     ret = []
-#     for i in range(len(perm) - 1, 0, -1):
-#         ret = [0, *ret]
-#         for j in range(i, -1, -1):
-#             if perm[i] > perm[j]:
-#                 ret[-1] += 1
-#     return ret
-
-# @ensure_perms
-# def reverseuncode(cd):
-#     cd2 = list(cd)
-#     if cd2 == []:
-#         return [1, 2]
-#     # max_required = max([cd2[i]+i for i in range(len(cd2))])
-#     # cd2 += [0 for i in range(len(cd2),max_required)]
-#     fullperm = [i + 1 for i in range(len(cd2) + 1)]
-#     perm = []
-#     for i in range(len(cd2) - 1, 0, -1):
-#         perm = [fullperm[cd2[i]], *perm]
-#         fullperm.pop(cd2[i])
-#     perm += [fullperm[0]]
-#     return perm
 
 @ensure_perms
 def inverse(perm):
     return ~perm
-    # retperm = [0 for i in range(len(perm))]
-    # for i in range(len(perm)):
-    #     retperm[perm[i] - 1] = i + 1
-    # return retperm
+
 
 def permtrim_list(perm):
     L = len(perm)
     while L > 2 and perm[-1] == L:
         L = perm.pop() - 1
     return perm
+
 
 def permtrim(perm):
     return Permutation(perm)
@@ -156,12 +136,12 @@ def elem_sym_perms(orig_perm, p, k):
         perm_list = []
         for up_perm, last in up_perm_list:
             pos_list = [i for i in range(k) if up_perm[i] < last]
-            for j in range(k, max(k+2,len(up_perm)+1)):
+            for j in range(k, max(k + 2, len(up_perm) + 1)):
                 if up_perm[j] >= last:
                     continue
                 for i in pos_list:
                     if has_bruhat_ascent(up_perm, i, j):
-                        new_perm_add = up_perm.swap(i,j)
+                        new_perm_add = up_perm.swap(i, j)
                         perm_list += [(new_perm_add, up_perm[j])]
                         total_list += [(new_perm_add, pp + 1)]
         up_perm_list = perm_list
@@ -181,11 +161,12 @@ def elem_sym_perms_op(orig_perm, p, k):
             for j in range(last, len(up_perm2)):
                 for i in pos_list:
                     if has_bruhat_descent(up_perm2, i, j):
-                        new_perm_add = up_perm.swap(i,j)
+                        new_perm_add = up_perm.swap(i, j)
                         perm_list += [(new_perm_add, j)]
                         total_list += [(new_perm_add, pp + 1)]
         up_perm_list = perm_list
     return total_list
+
 
 @ensure_perms
 def strict_theta(u):
@@ -202,6 +183,7 @@ def strict_theta(u):
         ret.pop()
     return ret
 
+
 def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
     total_list = [(orig_perm, 0, 1)]
     up_perm_list = [(orig_perm, 1, 1000)]
@@ -209,11 +191,11 @@ def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
         perm_list = []
         for up_perm, val, last_j in up_perm_list:
             pos_list = [i for i in range(k) if up_perm[i] == orig_perm[i]]
-            for j in range(min(max(k+1,len(up_perm) - 1), last_j), k - 1, -1):
+            for j in range(min(max(k + 1, len(up_perm) - 1), last_j), k - 1, -1):
                 for i in pos_list:
                     ct = count_bruhat(up_perm, i, j)
                     if ct == 1 or ct == 2 * (i - j) + 1:
-                        new_perm_add = up_perm.swap(i,j)
+                        new_perm_add = up_perm.swap(i, j)
                         new_val = val
                         if ct < 0:
                             new_val *= np.prod([q_var[index] for index in range(i + 1, j + 1)])
@@ -221,6 +203,7 @@ def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
                         total_list += [(new_perm_add, pp + 1, new_val)]
         up_perm_list = perm_list
     return total_list
+
 
 @ensure_perms
 def elem_sym_perms_q_op(orig_perm, p, k, n, q_var=q_var):
@@ -249,8 +232,9 @@ def elem_sym_perms_q_op(orig_perm, p, k, n, q_var=q_var):
         up_perm_list = perm_list
     return total_list
 
+
 def q_vector(q_exp, q_var=q_var):
-    #qvar_list = q_var.tolist()
+    # qvar_list = q_var.tolist()
     ret = []
 
     if q_exp == 1:
@@ -273,6 +257,7 @@ def q_vector(q_exp, q_var=q_var):
 
     return None
 
+
 def omega(i, qv):
     i = i - 1
     if len(qv) == 0 or i > len(qv):
@@ -287,43 +272,47 @@ def omega(i, qv):
         return 2 * qv[-1] - qv[-2]
     return 2 * qv[i] - qv[i - 1] - qv[i + 1]
 
+
 def sg(i, w):
     if i >= len(w) - 1 or w[i] < w[i + 1]:
         return 0
     return 1
 
+
 def reduce_q_coeff(u, v, w, qv):
     for i in range(len(qv)):
         if sg(i, v) == 1 and sg(i, u) == 0 and sg(i, w) + omega(i + 1, qv) == 1:
-            ret_v = v.swap(i,i+1)
-            ret_w = w.swap(i,i+1)
+            ret_v = v.swap(i, i + 1)
+            ret_w = w.swap(i, i + 1)
             qv_ret = [*qv]
             if sg(i, w) == 0:
                 qv_ret[i] -= 1
             return u, ret_v, ret_w, qv_ret, True
         if (sg(i, u) == 1 and sg(i, v) == 0 and sg(i, w) + omega(i + 1, qv) == 1) or (sg(i, u) == 1 and sg(i, v) == 1 and sg(i, w) + omega(i + 1, qv) == 2):
-            ret_u = u.swap(i,i+1)
-            ret_w = w.swap(i,i+1)
+            ret_u = u.swap(i, i + 1)
+            ret_w = w.swap(i, i + 1)
             qv_ret = [*qv]
             if sg(i, w) == 0:
                 qv_ret[i] -= 1
             return ret_u, v, ret_w, qv_ret, True
     return u, v, w, qv, False
+
 
 def reduce_q_coeff_u_only(u, v, w, qv):
     for i in range(len(qv)):
         if (sg(i, u) == 1 and sg(i, v) == 0 and sg(i, w) + omega(i + 1, qv) == 1) or (sg(i, u) == 1 and sg(i, v) == 1 and sg(i, w) + omega(i + 1, qv) == 2):
             # ret_u = [*u]
             # ret_u[i], ret_u[i + 1] = ret_u[i + 1], ret_u[i]
-            ret_u = u.swap(i,i+1)
+            ret_u = u.swap(i, i + 1)
             # ret_w = [*w] + [j + 1 for j in range(len(w), i + 2)]
             # ret_w[i], ret_w[i + 1] = ret_w[i + 1], ret_w[i]
-            ret_w = w.swap(i,i+1)
+            ret_w = w.swap(i, i + 1)
             qv_ret = [*qv]
             if sg(i, w) == 0:
                 qv_ret[i] -= 1
             return ret_u, v, ret_w, qv_ret, True
     return u, v, w, qv, False
+
 
 def longest_element(indices):
     perm = [1, 2]
@@ -336,9 +325,10 @@ def longest_element(indices):
                 # if len(perm) < j + 2:
                 #     perm = perm + list(range(len(perm) + 1, j + 3))
                 # perm[j], perm[j + 1] = perm[j + 1], perm[j]
-                perm = perm.swap(j,j+1)
+                perm = perm.swap(j, j + 1)
                 did_one = True
     return permtrim(perm)
+
 
 def count_less_than(arr, val):
     ct = 0
@@ -348,11 +338,13 @@ def count_less_than(arr, val):
         ct += 1
     return ct
 
+
 def is_parabolic(w, parabolic_index):
     for i in parabolic_index:
         if sg(i - 1, w) == 1:
             return False
     return True
+
 
 def check_blocks(qv, parabolic_index):
     blocks = []
@@ -383,8 +375,8 @@ def kdown_perms(perm, monoperm, p, k):
     inv_m = inv(monoperm)
     inv_p = inv(perm)
     full_perm_list = []
-    #perm = Permutation(perm)
-    if inv(perm*monoperm) == inv_m - inv_p:
+    # perm = Permutation(perm)
+    if inv(perm * monoperm) == inv_m - inv_p:
         full_perm_list += [(perm, 0, 1)]
 
     down_perm_list = [(perm, 1)]
@@ -406,9 +398,9 @@ def kdown_perms(perm, monoperm, p, k):
                 else:
                     i, j, s2 = a2, b, s
                 if has_bruhat_descent(perm2, i, j):
-                    new_perm = perm2.swap(a2,b)
+                    new_perm = perm2.swap(a2, b)
                     down_perm_list2 += [(new_perm, s2)]
-                    if inv(new_perm*monoperm) == inv_m - inv_p + pp:
+                    if inv(new_perm * monoperm) == inv_m - inv_p + pp:
                         full_perm_list += [(new_perm, pp, s2)]
         down_perm_list = down_perm_list2
     return full_perm_list
@@ -450,6 +442,7 @@ def compute_vpathdicts(th, vmu, smpify=False):
     # print(vpathdicts2)
     return vpathdicts2
 
+
 @ensure_perms
 def theta(perm):
     cd = code(perm)
@@ -460,6 +453,7 @@ def theta(perm):
     cd.sort(reverse=True)
     return cd
 
+
 def add_perm_dict(d1, d2):
     d_ret = {**d1}
     for k, v in d2.items():
@@ -468,6 +462,7 @@ def add_perm_dict(d1, d2):
 
 
 one = sympify(1)
+
 
 def elem_sym_poly_q(p, k, varl1, varl2, q_var=q_var):
     if p == 0 and k >= 0:
@@ -479,6 +474,7 @@ def elem_sym_poly_q(p, k, varl1, varl2, q_var=q_var):
         + elem_sym_poly_q(p, k - 1, varl1, varl2, q_var)
         + q_var[k - 1] * elem_sym_poly_q(p - 2, k - 2, varl1, varl2, q_var)
     )
+
 
 def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0):
     if p > k:
@@ -524,6 +520,7 @@ def call_zvars(v1, v2, k, i):  # noqa: ARG001
     v3 = [*v2, *list(range(len(v2) + 1, i + 1))]
     return [v3[i - 1]] + [v3[j] for j in range(len(v1), len(v3)) if v3[j] != j + 1 and j != i - 1] + [v3[j] for j in range(len(v1)) if v1[j] != v3[j] and j != i - 1]
 
+
 def elem_sym_func(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
     newk = k - udiff
     if newk < vdiff:
@@ -541,6 +538,7 @@ def elem_sym_func(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
         yvars += [varl1[j + 1]]
     zvars = [varl2[i] for i in call_zvars(v1, v2, k, i)]
     return elem_sym_poly(newk - vdiff, newk, yvars, zvars)
+
 
 def elem_sym_func_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
     newk = k - udiff
@@ -563,12 +561,14 @@ def elem_sym_func_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
     zvars = [varl2[a] for a in call_zvars(v1, v2, k, i)]
     return elem_sym_poly(newk - vdiff, newk, yvars, zvars)
 
+
 @ensure_perms
 def trimcode(perm):
     cd = perm.code
     while len(cd) > 0 and cd[-1] == 0:
         cd.pop()
     return cd
+
 
 def p_trans(part):
     newpart = []
@@ -584,9 +584,11 @@ def p_trans(part):
         newpart += [cnt]
     return newpart
 
+
 def cycle(p, q):
     return Permutation(list(range(1, p)) + [i + 1 for i in range(p, p + q)] + [p])
     # return Permutation.cycle(p, q)
+
 
 @ensure_perms
 def phi1(u):
@@ -594,6 +596,7 @@ def phi1(u):
     c_star.pop(0)
     # print(f"{uncode(c_star)=}")
     return ~(uncode(c_star))
+
 
 @ensure_perms
 def one_dominates(u, w):
@@ -614,12 +617,13 @@ def one_dominates(u, w):
 def dominates(u, w):
     u2 = u
     w2 = w
-    while inv(u2)>0 and one_dominates(u2, w2):
+    while inv(u2) > 0 and one_dominates(u2, w2):
         u2 = phi1(u2)
         w2 = phi1(w2)
     if inv(u2) == 0:
         return True
     return False
+
 
 def reduce_coeff(u, v, w):
     t_mu_u_t = theta(inverse(u))
@@ -639,7 +643,7 @@ def reduce_coeff(u, v, w):
 
     mu_uv_inv = uncode(t_mu_uv_t)
 
-    if inv(w*mu_uv_inv) != inv(mu_uv_inv) - inv(w):
+    if inv(w * mu_uv_inv) != inv(mu_uv_inv) - inv(w):
         return u, v, w
 
     # umu = mulperm(list(u), mu_u_inv)
@@ -653,7 +657,7 @@ def reduce_coeff(u, v, w):
 
     mu_w = uncode(t_mu_w)
 
-    w_prime = wmu*mu_w
+    w_prime = wmu * mu_w
 
     if w == w_prime:
         return u, v, w
@@ -683,11 +687,7 @@ def reduce_coeff(u, v, w):
     mu_w_A = uncode(mu_A(code(mu_w), A))
     mu_w_B = uncode(mu_A(code(mu_w), B))
 
-    return (
-        umu*mu_w_A,
-        vmu*mu_w_B,
-        w_prime
-    )
+    return (umu * mu_w_A, vmu * mu_w_B, w_prime)
 
 
 def mu_A(mu, A):
@@ -697,6 +697,7 @@ def mu_A(mu, A):
         if A[i] < len(mu_t):
             mu_A_t += [mu_t[A[i]]]
     return p_trans(mu_A_t)
+
 
 def reduce_descents(u, v, w):
     found_one = True
@@ -709,12 +710,12 @@ def reduce_descents(u, v, w):
             break
         for i in range(len(w2) - 2, -1, -1):
             if w2[i] > w2[i + 1] and i < len(v2) - 1 and v2[i] > v2[i + 1] and (i >= len(u2) - 1 or u2[i] < u2[i + 1]):
-                w2 = w2.swap(i,i+1)
-                v2 = v2.swap(i,i+1)
+                w2 = w2.swap(i, i + 1)
+                v2 = v2.swap(i, i + 1)
                 found_one = True
             elif w2[i] > w2[i + 1] and i < len(u2) - 1 and u2[i] > u2[i + 1] and (i >= len(v2) - 1 or v2[i] < v2[i + 1]):
-                w2 = w2.swap(i,i+1)
-                u2 = u2.swap(i,i+1)
+                w2 = w2.swap(i, i + 1)
+                u2 = u2.swap(i, i + 1)
                 found_one = True
             if found_one:
                 break
@@ -735,7 +736,7 @@ def is_reducible(v):
     return good
 
 
-#@ensure_perms
+# @ensure_perms
 def try_reduce_v(u, v, w):
     if is_reducible(v):
         return u, v, w
@@ -747,25 +748,26 @@ def try_reduce_v(u, v, w):
         if cv[i] == 0 and i < len(cv) - 1 and cv[i + 1] != 0:
             if i >= len(u2) - 1 or u2[i] < u2[i + 1]:
                 # v2[i], v2[i + 1] = v2[i + 1], v2[i]
-                v2 = v2.swap(i, i+1)
+                v2 = v2.swap(i, i + 1)
                 # if i >= len(w2) - 1:
                 #     w2 += list(range(len(w2) + 1, i + 3))
                 # w2[i + 1], w2[i] = w2[i], w2[i + 1]
-                w2 = w2.swap(i,i+1)
+                w2 = w2.swap(i, i + 1)
                 if is_reducible(v2):
                     return Permutation(u2), Permutation(v2), Permutation(w2)
                 return try_reduce_v(u2, v2, w2)
             if i < len(w2) - 1 and w2[i] > w2[i + 1]:
                 # u2[i], u2[i + 1] = u2[i + 1], u2[i]
                 # v2[i], v2[i + 1] = v2[i + 1], v2[i]
-                u2 = u2.swap(i,i+1)
-                v2 = v2.swap(i,i+1)
+                u2 = u2.swap(i, i + 1)
+                v2 = v2.swap(i, i + 1)
                 return try_reduce_v(u2, v2, w2)
-            #return Permutation(u2), Permutation(v2), Permutation(w2)
+            # return Permutation(u2), Permutation(v2), Permutation(w2)
             return u2, v2, w2
     return u2, v2, w2
 
-#@ensure_perms
+
+# @ensure_perms
 def try_reduce_u(u, v, w):
     if one_dominates(u, w):
         return u, v, w
@@ -780,38 +782,40 @@ def try_reduce_u(u, v, w):
                 # if i > len(w2) - 1:
                 #     w2 += list(range(len(w2) + 1, i + 3))
                 # w2[i + 1], w2[i] = w2[i], w2[i + 1]
-                u2 = u2.swap(i,i+1)
-                w2 = w2.swap(i,i+1)
+                u2 = u2.swap(i, i + 1)
+                w2 = w2.swap(i, i + 1)
                 if one_dominates(u2, w):
-                    #return Permutation(u2), Permutation(v2), Permutation(w2)
+                    # return Permutation(u2), Permutation(v2), Permutation(w2)
                     return u2, v2, w2
                 return try_reduce_u(u2, v2, w2)
             if i < len(w2) - 1 and w2[i] > w2[i + 1]:
                 # ERROR?
                 # u2[i], u2[i + 1] = u2[i + 1], u2[i]
                 # v2[i], v2[i + 1] = v2[i + 1], v2[i]
-                u2 = u2.swap(i,i+1)
-                v2 = v2.swap(i,i+1)
+                u2 = u2.swap(i, i + 1)
+                v2 = v2.swap(i, i + 1)
                 return try_reduce_u(u2, v2, w2)
-            #return Permutation(u2), Permutation(v2), Permutation(w2)
+            # return Permutation(u2), Permutation(v2), Permutation(w2)
             return u2, v2, w2
     # return Permutation(u2), Permutation(v2), Permutation(w2)
     return u2, v2, w2
+
 
 @ensure_perms
 def divdiffable(v, u):
     inv_v = inv(v)
     inv_u = inv(u)
-    perm2 = v*(~u)
+    perm2 = v * (~u)
     if inv(perm2) != inv_v - inv_u:
         return []
     return perm2
 
-#@ensure_perms
+
+# @ensure_perms
 def will_formula_work(u, v):
     u, v = Permutation(u), Permutation(v)
     muv = uncode(theta(v))
-    vn1muv = (~v)*muv
+    vn1muv = (~v) * muv
     while True:
         found_one = False
         for i in range(len(vn1muv) - 1):
@@ -819,18 +823,20 @@ def will_formula_work(u, v):
                 found_one = True
                 if i < len(u) - 1 and u[i] > u[i + 1]:
                     return False
-                #vn1muv[i], vn1muv[i + 1] = vn1muv[i + 1], vn1muv[i]
-                vn1muv = vn1muv.swap(i,i+1)
+                # vn1muv[i], vn1muv[i + 1] = vn1muv[i + 1], vn1muv[i]
+                vn1muv = vn1muv.swap(i, i + 1)
                 break
         if not found_one:
             return True
     return False
 
+
 def pull_out_var(vnum, v):
     import sys
+
     logger.debug(f"pull_out_var {vnum=} {v=} {code(v)=}")
     vup = v
-    if vnum >= len(v): 
+    if vnum >= len(v):
         return [[[], v]]
     vpm_list = [(vup, 0)]
     ret_list = []
@@ -852,7 +858,7 @@ def pull_out_var(vnum, v):
                     continue
                 for i in range(vnum):
                     if has_bruhat_ascent(vpm, i, j):
-                        vpm_list2 += [(vpm.swap(i,j), vpm[j])]            
+                        vpm_list2 += [(vpm.swap(i, j), vpm[j])]
         vpm_list = vpm_list2
     for vpm, b in vpm_list:
         logger.debug(f"{vpm=} {b=}")
@@ -868,6 +874,7 @@ def pull_out_var(vnum, v):
             ]
     logger.debug(f"{ret_list=}")
     return ret_list
+
 
 @ensure_perms
 def get_cycles(perm):
@@ -930,6 +937,7 @@ def double_elem_sym_q(u, p1, p2, k, q_var=q_var):
                 ret_list[(perm1, udiff1, mul_val1)] += [(perm2, udiff2, mul_val2)]
     return ret_list
 
+
 @ensure_perms
 def medium_theta(perm):
     cd = code(perm)
@@ -948,6 +956,7 @@ def medium_theta(perm):
                 break
     return cd
 
+
 def old_code(perm):
     L = len(perm)
     ret = []
@@ -957,3 +966,145 @@ def old_code(perm):
         ret += [itr]
         v = v[:itr] + v[itr + 1 :]
     return ret
+
+
+# from typing import NamedTuple
+
+
+class Permutation(Basic):
+    def __new__(cls, perm, action=None, sperm=None):
+        return Permutation.__xnew_cached__(cls, tuple(perm), action, sperm)
+
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, perm, action, sperm):
+        return Permutation.__xnew__(_class, perm, action, sperm)
+
+    @staticmethod
+    def __xnew__(_class, perm, action, sperm):
+        obj = Basic.__new__(_class)
+        if isinstance(perm, Permutation):
+            # print("this is happening")
+            obj._perm = perm._perm
+            obj._sperm = perm._sperm
+            if action is None:
+                obj._action = perm._action
+            else:
+                obj._action = action
+        else:
+            p = tuple(permtrim_list([*perm]))
+            obj._perm = p
+            if len(obj._perm) < 2:
+                obj._perm = (1, 2)
+            if sperm:
+                obj._sperm = sperm
+            else:
+                obj._sperm = spp.Permutation._af_new([i - 1 for i in p])
+            obj._action = action
+        return obj
+
+    @property
+    def code(self):
+        return list(self.cached_code())
+    
+    @cache
+    def cached_code(self):
+        return self._sperm.inversion_vector()
+
+    @cached_property
+    def inv(self):
+        return self._sperm.inversions()
+
+    def swap(self, i, j):
+        import sys
+
+        new_perm = [*self._perm]
+        # print(f"{new_perm=}",file=sys.stderr)
+        if i > j:
+            i, j = j, i
+        # print(f"OLD {new_perm=} {new_perm[i]=} {new_perm[j]=} {i=} {j=} FWIPO",file=sys.stderr)
+
+        if j >= len(new_perm):
+            new_perm += list(range(len(new_perm) + 1, j + 2))
+            # print(f"bugs {new_perm=}", file=sys.stderr)
+        new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
+        # print(f"NEW {new_perm=} {new_perm[i]=} {new_perm[j]=} FWoPO",file=sys.stderr)
+        return Permutation(new_perm)
+
+    def __getitem__(self, i):
+        if isinstance(i, slice):
+            return [self[ii] for ii in range(*i.indices(len(self._perm)))]
+        if i >= len(self._perm):
+            return i + 1
+        return self._perm[i]
+
+    def __setitem__(self, i, v):
+        raise NotImplementedError
+
+    def __hash__(self):
+        return hash(self._perm)
+
+    def __mul__(self, other):
+        # print("yay")
+        new_sperm = other._sperm * self._sperm
+        new_perm = permtrim_list([new_sperm(i) + 1 for i in range(new_sperm.size)])
+        # print(f"{new_perm=}")
+        if len(new_perm) != new_sperm.size:
+            new_sperm = spp.Permutation._af_new([i - 1 for i in new_perm])
+        return Permutation(new_perm, new_sperm)
+
+    def __iter__(self):
+        yield from self._perm.__iter__()
+
+    def __getslice__(self, i, j):
+        return self._perm[i:j]
+
+    def __str__(self):
+        # print("yay")
+        return str(self._perm)
+
+    def __add__(self, other):
+        # print("yay")
+        if not isinstance(other, list):
+            raise NotImplementedError
+        permlist = [*self._perm, *other]
+        try:
+            return Permutation(permlist)
+        except Exception:
+            return permlist
+
+    def __radd__(self, other):
+        # print("yay")
+        if not isinstance(other, list):
+            raise NotImplementedError
+        permlist = [*other, *self._perm]
+        try:
+            return Permutation(permlist)
+        except Exception:
+            return permlist
+
+    def __eq__(self, other):
+        # print("yay")
+        if isinstance(other, Permutation):
+            return other._perm == self._perm
+        if isinstance(other, list):
+            return [*self._perm] == other
+        if isinstance(other, tuple):
+            return self._perm == other
+        return False
+
+    def __len__(self):
+        # print("yay")
+        return len(self._perm)
+
+    def __invert__(self):
+        new_sperm = ~(self._sperm)
+        new_perm = [new_sperm(i) + 1 for i in range(new_sperm.size)]
+        return Permutation(new_perm, new_sperm)
+
+    def __repr__(self):
+        return self.__str__()
+
+    # we want to format permuations
+    def _sympystr(self, p):
+        return f"moo{str(self._perm)}"

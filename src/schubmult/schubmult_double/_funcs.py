@@ -13,6 +13,7 @@ from sympy import Add, Indexed, IndexedBase, Integer, Mul, Pow, expand, sympify
 
 from schubmult.logging import get_logger
 from schubmult.perm_lib import (
+    Permutation,
     add_perm_dict,
     code,
     compute_vpathdicts,
@@ -40,7 +41,6 @@ from schubmult.perm_lib import (
     will_formula_work,
     zero,
 )
-from schubmult.sympy_perms import Permutation
 
 logger = get_logger(__name__)
 
@@ -751,12 +751,11 @@ def find_base_vectors(monom_list, var2, var3, depth):
     return ret, monom_list
 
 
-def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=False):
+def compute_positive_rep(val, var2=IndexedBase("y"), var3=IndexedBase("z"), msg=False, do_pos_neg=True):
     from schubmult.logging import get_logger, init_logging
     init_logging(True)
     logger = get_logger(__name__)
-    notint = False
-    #val = sym.sympify(val)
+    notint = False 
     try:
         int(expand(val))
         val2 = expand(val)
@@ -1137,18 +1136,18 @@ def posify(
             [-var3[i] for i in range(1, n)],
             [-var2[i] for i in hvarset],
         )
-        if expand(val - oldval) != 0:
-            logger.debug("This is bad")
-            logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
+        # if expand(val - oldval) != 0:
+        #     logger.debug("This is bad")
+        #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
         return val
     if will_formula_work(v, u) or dominates(u, w):
         logger.debug("hi")
         if sign_only:
             return 0
         val = dualcoeff(u, v, w, var2, var3)
-        if expand(val - oldval) != 0:
-            logger.debug("This is bad")
-            logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
+        # if expand(val - oldval) != 0:
+        #     logger.debug("This is bad")
+        #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
         return val    
     if inv(w) - inv(u) == 1:
         logger.debug("hi")
@@ -1203,9 +1202,9 @@ def posify(
                     toadd *= var2[yv] - var3[oaf[j]]
             toadd *= schubpoly(v3, [0, var2[w[a]], var2[w[b]]], var3)
             val += toadd
-        if expand(val - oldval) != 0:
-            logger.debug("This is bad")
-            logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
+        # if expand(val - oldval) != 0:
+        #     logger.debug("This is bad")
+        #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
         return val
     if split_two_b:
         logger.debug("hi")
@@ -1394,9 +1393,9 @@ def posify(
         if sign_only:
             return 0
         val = forwardcoeff(u, v, w, var2, var3)
-        if expand(val - oldval) != 0:
-            logger.debug("This is bad")
-            logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
+        # if expand(val - oldval) != 0:
+        #     logger.debug("This is bad")
+        #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
         return val        
     logger.debug("hi")
     c01 = code(u)
@@ -1448,9 +1447,9 @@ def posify(
                 )
                 newval = posify(newval, new_w, uncode(newc), w, var2, var3, msg, do_pos_neg, optimize=optimize)
                 val += tomul * shiftsubz(newval)
-            if expand(val - oldval) != 0:
-                logger.debug("This is bad")
-                logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
+            # if expand(val - oldval) != 0:
+            #     logger.debug("This is bad")
+            #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
             return val
         if c01[0] == c02[0] and c01[0] != 0:
             logger.debug("hi")
@@ -1467,9 +1466,9 @@ def posify(
             val = posify(val, u3, v, w3, var2, var3, msg, do_pos_neg, optimize=optimize)
             for i in range(varl):
                 val = permy(val, i + 1, var2)
-            if expand(val - oldval) != 0:
-                logger.debug("This is bad")
-                logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
+            # if expand(val - oldval) != 0:
+            #     logger.debug("This is bad")
+            #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
             return val
         if c1[0] == c2[0]:
             logger.debug("hi")
@@ -1490,9 +1489,9 @@ def posify(
                 )
                 val2 = posify(val2, u3, v3, w3, var2, var3, msg, do_pos_neg, optimize=optimize)
                 val += tomul * shiftsub(val2)
-            if expand(val - oldval) != 0:
-                logger.debug("This is bad")
-                logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
+            # if expand(val - oldval) != 0:
+            #     logger.debug("This is bad")
+            #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
             return val
     logger.debug("Fell all the way through. Cleverness did not save us")
     if not sign_only:

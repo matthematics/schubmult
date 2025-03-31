@@ -4,6 +4,7 @@ from symengine import sympify
 
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
+    Permutation,
     inv,
     inverse,
     permtrim,
@@ -12,7 +13,6 @@ from schubmult.perm_lib import (
     uncode,
 )
 from schubmult.schubmult_py._funcs import mult_poly, schub_coprod, schubmult
-from schubmult.sympy_perms import Permutation
 
 
 def main(argv=None):

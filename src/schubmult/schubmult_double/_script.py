@@ -8,6 +8,7 @@ from sympy import IndexedBase, expand, sympify
 from schubmult._base_argparse import schub_argparse
 from schubmult.logging import get_logger
 from schubmult.perm_lib import (
+    Permutation,
     add_perm_dict,
     code,
     inv,
@@ -32,7 +33,6 @@ from schubmult.schubmult_double._funcs import (
     schubmult_down,
     split_perms,
 )
-from schubmult.sympy_perms import Permutation
 
 logger = get_logger(__name__)
 
@@ -77,7 +77,7 @@ for i in range(1, 100):
     subs_dict[_vars.var2[i]] = sm
 
 
-def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, subs_dict):
+def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, subs_dict, debug):
     try:
         return int(val)
     except Exception:
@@ -110,7 +110,7 @@ def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, 
             #     )
             #     exit(1)
             # if check and expand(val - check_coeff_dict.get(perm, 0)) != 0:
-            if check and expand(val - check_val) != 0:
+            if expand(val - check_val) != 0 and debug:
                 _display(
                     f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_val=}",
                 )
@@ -127,7 +127,7 @@ def _display_full(
     var3,
     kperm=None,
     N=None,
-):
+):    
     subs_dict2 = {}
     for i in range(1, 100):
         sm = var2[1]
@@ -135,7 +135,7 @@ def _display_full(
             sm += _vars.var_r[j]
         subs_dict2[var2[i]] = sm
     raw_result_dict = {}
-    perms = args.perms
+    perms = args.perms    
     ascode = args.ascode
     coprod = args.coprod
     msg = args.msg
@@ -288,7 +288,7 @@ def _display_full(
 def main(argv=None):
     if argv is None:
         argv = sys.argv
-
+    
     try:
         var2 = IndexedBase("y")
         var3 = IndexedBase("z")
@@ -317,6 +317,7 @@ def main(argv=None):
         check = args.check
         display_positive = args.display_positive
         pr = args.pr
+        debug = args.debug
 
         # logger.log(logging.DEBUG, f"main boing 1 {var2=}{var3=}{same=}")
         if same:
@@ -435,7 +436,7 @@ def main(argv=None):
 
             if not posified and display_positive:
                 # print(f"{coeff_dict=}")
-                coeff_dict = {k: pre_posify(perms, k, v, check, check_coeff_dict.get(k, 0), same, down, var2, var3, msg, subs_dict) for k, v in coeff_dict.items()}
+                coeff_dict = {k: pre_posify(perms, k, v, check, check_coeff_dict.get(k, 0), same, down, var2, var3, msg, subs_dict, debug) for k, v in coeff_dict.items()}
 
             if pr or formatter is None:
                 raw_result_dict = _display_full(
