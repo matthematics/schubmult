@@ -5,7 +5,7 @@ from itertools import chain
 import numpy as np
 import sympy.combinatorics.permutations as spp
 from symengine import Mul, Pow
-from sympy import Basic, IndexedBase, sympify
+from sympy import Basic, IndexedBase, Tuple, sympify
 
 from schubmult.logging import get_logger
 
@@ -970,66 +970,48 @@ def old_code(perm):
 
 # from typing import NamedTuple
 
-
+#test perm speed
 class Permutation(Basic):
-    def __new__(cls, perm, s_perm=None):
-        return Permutation.__xnew_cached__(cls, tuple(perm), s_perm)
+    def __new__(cls, perm):
+        return Permutation.__xnew_cached__(cls, Tuple(*perm))
 
     @staticmethod
     @cache
-    def __xnew_cached__(_class, perm, s_perm):
-        return Permutation.__xnew__(_class, perm, s_perm)
+    def __xnew_cached__(_class, perm):
+        return Permutation.__xnew__(_class, perm)
 
     @staticmethod
-    def __xnew__(_class, perm, s_perm):
-        obj = Basic.__new__(_class, perm, s_perm)
+    def __xnew__(_class, perm):
+        # args[0] is a list, args[1] is a sympy.Permutation
         if isinstance(perm, Permutation):
-            # print("this is happening")
-            obj._perm = perm._perm
-            obj._sperm = perm._sperm
-            # if action is None:
-            #     obj._action = perm._action
-            # else:
-            #     obj._action = IndexedBase(action)
-        else:
-            p = tuple(permtrim_list([*perm]))
-            obj._perm = p
-            if len(obj._perm) < 2:
-                obj._perm = (1, 2)
-            if s_perm:
-                obj._sperm = s_perm
-            else:
-                obj._sperm = spp.Permutation._af_new([i - 1 for i in p])
-            # obj._action = IndexedBase(action)
-        
+            return perm
+        p = Tuple(permtrim_list([*perm]))
+        if len(p) < 2:
+            p = Tuple(1, 2)
+        s_perm = spp.Permutation._af_new([i - 1 for i in p])
+        obj = Basic.__new__(_class, perm)
+        obj._s_perm = s_perm
         return obj
 
     @property
     def code(self):
         return list(self.cached_code())
-    
+
     @cache
     def cached_code(self):
-        return self._sperm.inversion_vector()
+        return self._s_perm.inversion_vector()
 
     @cached_property
     def inv(self):
-        return self._sperm.inversions()
+        return self._s_perm.inversions()
 
     def swap(self, i, j):
-        import sys
-
         new_perm = [*self._perm]
-        # print(f"{new_perm=}",file=sys.stderr)
         if i > j:
             i, j = j, i
-        # print(f"OLD {new_perm=} {new_perm[i]=} {new_perm[j]=} {i=} {j=} FWIPO",file=sys.stderr)
-
         if j >= len(new_perm):
             new_perm += list(range(len(new_perm) + 1, j + 2))
-            # print(f"bugs {new_perm=}", file=sys.stderr)
         new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
-        # print(f"NEW {new_perm=} {new_perm[i]=} {new_perm[j]=} FWoPO",file=sys.stderr)
         return Permutation(new_perm)
 
     def __getitem__(self, i):
@@ -1047,28 +1029,28 @@ class Permutation(Basic):
 
     def __mul__(self, other):
         # print("yay")
-        new_sperm = other._sperm * self._sperm
-        new_perm = permtrim_list([new_sperm(i) + 1 for i in range(new_sperm.size)])
+        new_sperm = other.args[1] * self._s_perm
+        new_perm = permtrim_list([new_sperm.array_form[i] + 1 for i in range(new_sperm.size)])
         # print(f"{new_perm=}")
-        if len(new_perm) != new_sperm.size:
-            new_sperm = spp.Permutation._af_new([i - 1 for i in new_perm])
-        return Permutation(new_perm, new_sperm)
+        # if len(new_perm) != new_sperm.size:
+        #     new_sperm = spp.Permutation._af_new([i - 1 for i in new_perm])
+        return Permutation(new_perm)
 
     def __iter__(self):
-        yield from self._perm.__iter__()
+        yield from self.args[0].__iter__()
 
     def __getslice__(self, i, j):
-        return self._perm[i:j]
+        return self.args[0][i:j]
 
     def __str__(self):
         # print("yay")
-        return str(self._perm)
+        return str(self.args[0])
 
     def __add__(self, other):
         # print("yay")
         if not isinstance(other, list):
             raise NotImplementedError
-        permlist = [*self._perm, *other]
+        permlist = [*self.args[0], *other]
         try:
             return Permutation(permlist)
         except Exception:
@@ -1078,7 +1060,7 @@ class Permutation(Basic):
         # print("yay")
         if not isinstance(other, list):
             raise NotImplementedError
-        permlist = [*other, *self._perm]
+        permlist = [*other, *self.args[0]]
         try:
             return Permutation(permlist)
         except Exception:
@@ -1087,9 +1069,9 @@ class Permutation(Basic):
     def __eq__(self, other):
         # print("yay")
         if isinstance(other, Permutation):
-            return other._perm == self._perm
+            return other.args[0] == self.args[0]
         if isinstance(other, list):
-            return [*self._perm] == other
+            return [*self.args[0]] == other
         if isinstance(other, tuple):
             return self._perm == other
         return False
@@ -1100,8 +1082,8 @@ class Permutation(Basic):
 
     def __invert__(self):
         new_sperm = ~(self._sperm)
-        new_perm = [new_sperm(i) + 1 for i in range(new_sperm.size)]
-        return Permutation(new_perm, new_sperm)
+        new_perm = [new_sperm.array_form[i] + 1 for i in range(new_sperm.size)]
+        return Permutation(new_perm)
 
     def __repr__(self):
         return self.__str__()
@@ -1115,4 +1097,4 @@ class Permutation(Basic):
 
     # we want to format permuations
     def _sympystr(self, p):
-        return f"{str(self._perm)}"
+        return self.args[0].__str__()
