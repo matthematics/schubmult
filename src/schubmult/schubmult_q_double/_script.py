@@ -222,8 +222,8 @@ def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3)
 def main(argv=None):
     if argv is None:
         argv = sys.argv
-    var2 = tuple(symarray("y", 100))
-    var3 = tuple(symarray("z", 100))
+    var2 = _vars.var2
+    var3 = _vars.var3
     try:
         sys.setrecursionlimit(1000000)
 

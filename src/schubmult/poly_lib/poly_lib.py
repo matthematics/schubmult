@@ -1,6 +1,6 @@
 from functools import cache, cached_property
 
-from sympy import IndexedBase, Mul, Pow, sympify
+from sympy import Indexed, IndexedBase, Mul, Pow, sympify
 
 
 class _gvars:
@@ -161,7 +161,7 @@ def q_vector(q_exp, q_var=_vars.q_var):
 
     if q_exp == 1:
         return ret
-    if q_exp.base == q_var:
+    if isinstance(q_exp, Indexed) and q_exp.base == q_var:
         i = q_exp.args[1]
         return [0 for j in range(i - 1)] + [1]
     if isinstance(q_exp, Pow):

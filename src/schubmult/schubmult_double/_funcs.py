@@ -45,7 +45,7 @@ from schubmult.perm_lib import (
     trimcode,
     uncode,
 )
-from schubmult.poly_lib import elem_sym_func, elem_sym_poly, perm_act, schubpoly
+from schubmult.poly_lib import efficient_subs, elem_sym_func, elem_sym_poly, perm_act, schubpoly
 from schubmult.schub_lib import (
     check_blocks,
     compute_vpathdicts,
@@ -508,12 +508,12 @@ def poly_to_vec(poly, vec0=None, var3=_vars.var3):
 
 def shiftsub(pol, var2=_vars.var2):
     subs_dict = {var2[i]: var2[i + 1] for i in range(99)}
-    return sympify(pol).subs(subs_dict)
+    return efficient_subs(sympify(pol),subs_dict)
 
 
 def shiftsubz(pol, var3=_vars.var3):
     subs_dict = {var3[i]: var3[i + 1] for i in range(99)}
-    return sympify(pol).subs(subs_dict)
+    return efficient_subs(sympify(pol), subs_dict)
 
 
 def init_basevec(dc):
@@ -1332,7 +1332,7 @@ def posify(
                     toadd *= schubpoly(v3, varo, var3)
                 else:
                     subs_dict3 = {var2[i]: varo[i] for i in range(len(varo))}
-                    toadd *= tomul.subs(subs_dict3)
+                    toadd *= efficient_subs(tomul, subs_dict3)
                 val += toadd
                 logger.debug(f"accum {val=}")
             logger.debug(f"{expand(val-oldval)=}")
@@ -1504,7 +1504,7 @@ def schub_coprod(mperm, indices, var2=_vars.var2, var3=_vars.var3):
             firstperm = Permutation(downperm[0:N])
             secondperm = Permutation([downperm[i] - N for i in range(N, len(downperm))])
 
-            val = sympify(coeff_dict[perm]).subs(subs_dict_coprod)
+            val = efficient_subs(sympify(coeff_dict[perm]),subs_dict_coprod)
 
             key = (firstperm, secondperm)
             ret_dict[key] = val

@@ -7,7 +7,7 @@
 # )
 from functools import cached_property
 
-from symengine import Add, Mul, Pow, expand, symarray
+from sympy import Add, Indexed, IndexedBase, Mul, Pow, expand
 
 import schubmult.schubmult_double as norm_yz
 from schubmult.perm_lib import (
@@ -46,6 +46,7 @@ from schubmult.perm_lib import (
 )
 from schubmult.poly_lib import (
     call_zvars,
+    efficient_subs,
     elem_sym_func,
     elem_sym_func_q,
     elem_sym_poly,
@@ -88,30 +89,30 @@ class _gvars:
 
     @cached_property
     def var1(self):
-        return tuple(symarray("x", self.n).tolist())
+        return IndexedBase("x")
 
     @cached_property
     def var2(self):
-        return tuple(symarray("y", self.n).tolist())
+        return IndexedBase("y")
 
     @cached_property
     def var3(self):
-        return tuple(symarray("z", self.n).tolist())
+        return IndexedBase("z")
 
     @cached_property
     def q_var(self):
-        return tuple(symarray("q", self.n).tolist())
+        return IndexedBase("q")
 
     @cached_property
     def var_r(self):
-        return symarray("r", 100)
+        return IndexedBase("r")
 
 
 _vars = _gvars()
 
 
-def E(p, k, varl=_vars.var2[1:], var_x=_vars.var1):
-    return elem_sym_poly_q(p, k, var_x[1:], varl)
+# def E(p, k, varl=_vars.var2[1:], var_x=_vars.var1):
+#     return elem_sym_poly_q(p, k, var_x[1:], varl)
 
 
 def single_variable(coeff_dict, varnum, var2=_vars.var2, q_var=_vars.q_var):
@@ -509,7 +510,7 @@ def factor_out_q_keep_factored(poly):
     if str(poly).find("q") == -1:
         ret[1] = poly
         return ret
-    if poly in _vars.q_var:
+    if isinstance(poly, Indexed) and poly.base == _vars.q_var:
         ret[poly] = 1
         return ret
     if isinstance(poly, Add):
