@@ -1,9 +1,13 @@
+import os
 from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
+
+from sympy import Indexed
 
 from schubmult.logging import init_logging
 
+Indexed._sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
 
-def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
+def schub_argparse(prog_name, description, argv, quantum=False, yz=False):    
     parser = ArgumentParser(
         prog=prog_name,
         description=description,

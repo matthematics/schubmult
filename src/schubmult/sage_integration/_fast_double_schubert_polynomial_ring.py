@@ -10,7 +10,7 @@ from sage.combinat.composition import (
     Compositions,
 )
 from sage.combinat.free_module import CombinatorialFreeModule
-from sage.combinat.permutation import Permutation, Permutations, from_lehmer_code
+from sage.combinat.permutation import Permutation, Permutations
 from sage.misc.cachefunc import cached_method
 from sage.misc.parser import Parser
 from sage.rings.polynomial.flatten import FlatteningMorphism
@@ -27,7 +27,7 @@ from sympy import sympify
 import schubmult.sage_integration._fast_schubert_polynomial_ring as bork
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_q_double as qyz
-from schubmult.perm_lib import permtrim
+from schubmult.perm_lib import permtrim, uncode
 
 from ._indexing import _coerce_index
 
@@ -158,7 +158,7 @@ class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
             return sum(
                 [
                     qyz.schubpoly_quantum(
-                        tuple(_coerce_index(k[0], self.parent()._ascode, False)),
+                        (_coerce_index(k[0], self.parent()._ascode, False)),
                         self.parent()._base_polynomial_ring.gens(),
                         self.parent()._coeff_polynomial_rings[k[1]].gens(),
                         self.parent()._q_ring.gens(),
@@ -170,8 +170,8 @@ class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
         return sum(
             [
                 yz.schubmult(
-                    {(1, 2): v},
-                    tuple(_coerce_index(k[0], self.parent()._ascode, False)),
+                    {permtrim([1, 2]): v},
+                    (_coerce_index(k[0], self.parent()._ascode, False)),
                     self.parent()._base_polynomial_ring.gens(),
                     self.parent()._coeff_polynomial_rings[k[1]].gens(),
                 ).get((1, 2), 0)
@@ -374,8 +374,8 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 for k, v in x.monomial_coefficients().items():
                     if self._quantum:
                         res = qyz.schubmult_db(
-                            {(1, 2): self._coeff_polynomial_ring(v)},
-                            tuple(_coerce_index(k, x.parent()._ascode, False)),
+                            {Permutation((1, 2)): self._coeff_polynomial_ring(v)},
+                            (_coerce_index(k, x.parent()._ascode, False)),
                             self._coeff_polynomial_rings[self._varlist[0]].gens(),
                             [
                                 0
@@ -387,8 +387,8 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                         )
                     else:
                         res = yz.schubmult(
-                            {(1, 2): self._coeff_polynomial_ring(v)},
-                            tuple(_coerce_index(k, x.parent()._ascode, False)),
+                            {Permutation((1, 2)): self._coeff_polynomial_ring(v)},
+                            (_coerce_index(k, x.parent()._ascode, False)),
                             self._coeff_polynomial_rings[self._varlist[0]].gens(),
                             [
                                 0
@@ -448,22 +448,22 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         ]
 
     def product_on_basis(self, left, right):
-        le = tuple(left[0])
-        ri = tuple(right[0])
+        le = Permtuation(left[0])
+        ri = Permutation(right[0])
         var_y = [syme.sympify(str(g)) for g in self._coeff_polynomial_rings[left[1]].gens()]
         var_z = [syme.sympify(str(g)) for g in self._coeff_polynomial_rings[right[1]].gens()]
         if self._quantum:
             result = qyz.schubmult_db(
-                {tuple(_coerce_index(le, self._ascode, False)): 1},
-                tuple(_coerce_index(ri, self._ascode, False)),
+                {(_coerce_index(le, self._ascode, False)): 1},
+                (_coerce_index(ri, self._ascode, False)),
                 var_y,
                 var_z,
                 [syme.sympify(str(g)) for g in self._q_ring.gens()],
             )
         else:
             result = yz.schubmult(
-                {tuple(_coerce_index(le, self._ascode, False)): 1},
-                tuple(_coerce_index(ri, self._ascode, False)),
+                {(_coerce_index(le, self._ascode, False)): 1},
+                (_coerce_index(ri, self._ascode, False)),
                 var_y,
                 var_z,
             )
@@ -499,7 +499,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         max_required = max([kcd[i] + i for i in range(len(kcd))])
         kcd2 = kcd + [0 for i in range(len(kcd), max_required)] + [0]
         N = len(kcd)
-        kperm = from_lehmer_code(kcd2).inverse()
+        kperm = ~(uncode(kcd2))
         # r = [sum(self.base_ring()._first_ngens(j)) for j in range(100)]
         vn = [f"soible_{i}" for i in range(N * 2 + 1)]
         TR = PolynomialRing(self.base_ring(), N * 2 + 1, vn)
@@ -510,10 +510,10 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             else:
                 subs_dict_coprod[syme.sympify(str(TR.gens()[i]))] = syme.sympify(str(RBase.gens()[i - N]))
 
-        coeff_dict = {tuple(kperm): 1}
+        coeff_dict = {(kperm): 1}
         coeff_dict = yz.schubmult(
             coeff_dict,
-            tuple(mperm),
+            (mperm),
             [syme.sympify(str(g)) for g in TR.gens()],
             [syme.sympify(str(g)) for g in RR.gens()],
         )
