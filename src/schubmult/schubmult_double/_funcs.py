@@ -16,33 +16,37 @@ from schubmult.perm_lib import (
     Permutation,
     add_perm_dict,
     code,
-    compute_vpathdicts,
     cycle,
-    divdiffable,
     dominates,
-    elem_sym_func,
-    elem_sym_perms,
-    elem_sym_perms_op,
-    elem_sym_poly,
     inv,
     inverse,
-    is_reducible,
-    mulperm,
     one_dominates,
     permtrim,
     phi1,
+    theta,
+    uncode,
+)
+from schubmult.poly_lib import elem_sym_func, elem_sym_poly, perm_act, schubpoly
+from schubmult.schub_lib import (
+    compute_vpathdicts,
+    divdiffable,
+    elem_sym_perms,
+    elem_sym_perms_op,
+    is_coeff_irreducible,
+    is_reducible,
+    is_split_two,
     pull_out_var,
     reduce_coeff,
     reduce_descents,
-    theta,
     try_reduce_u,
     try_reduce_v,
-    uncode,
     will_formula_work,
-    zero,
 )
 
+zero = sympify(0)
+
 logger = get_logger(__name__)
+
 
 class _gvars:
     @cached_property
@@ -142,7 +146,7 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
     #     var_x = tuple([sympy.sympify(v) for v in var_x])
     #     var_y = tuple([sympy.sympify(v) for v in var_y])
     #     return mult_poly_sympy(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2)
-    if isinstance(poly, Indexed) and poly.base==var_x:
+    if isinstance(poly, Indexed) and poly.base == var_x:
         return single_variable(coeff_dict, poly.args[1], var_y)
     if isinstance(poly, Mul):
         ret = coeff_dict
@@ -245,9 +249,9 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
             muu = uncode(th)
             umun1 = (~u) * muu
             w = perm * umun1
-            logger.debug("spiggle")            
+            logger.debug("spiggle")
             logger.debug(f"{u=} {muu=} {v=} {w=} {perm=}")
-            #logger.debug(f"{w=} {perm=}")
+            # logger.debug(f"{w=} {perm=}")
             if inv(w) == inv(umun1) + inv(perm):
                 dpret = dualpieri(muu, v, w)
                 logger.debug(f"{muu=} {v=} {w=}")
@@ -527,7 +531,7 @@ def is_flat_term(term):
     return True
 
 
-def flatten_factors(term,var2=None,var3=None):
+def flatten_factors(term, var2=None, var3=None):
     found_one = False
     if is_flat_term(term):
         return term, False
@@ -759,9 +763,10 @@ def find_base_vectors(monom_list, var2, var3, depth):
 
 def compute_positive_rep(val, var2=IndexedBase("y"), var3=IndexedBase("z"), msg=False, do_pos_neg=True):
     from schubmult.logging import get_logger, init_logging
+
     init_logging(True)
     logger = get_logger(__name__)
-    notint = False 
+    notint = False
     try:
         int(expand(val))
         val2 = expand(val)
@@ -772,15 +777,15 @@ def compute_positive_rep(val, var2=IndexedBase("y"), var3=IndexedBase("z"), msg=
         for m in frees:
             logger.debug(f"{m=} {type(m)=} {m.args=} {var2.label=} {var3.label=}")
             if isinstance(m, Indexed):
-                logger.debug(f"{var2.label=} {var3.label=} {m.base=} {var2==m.base}")
-                #logger.debug(f"{var2.label==m.label}")
-                #logger.debug(f"{var2.args=}")
-        varsimp2 = [m for m in frees if isinstance(m,Indexed) and m.base == var2]
-        varsimp3 = [m for m in frees if isinstance(m,Indexed) and m.base == var3]
+                logger.debug(f"{var2.label=} {var3.label=} {m.base=} {var2 == m.base}")
+                # logger.debug(f"{var2.label==m.label}")
+                # logger.debug(f"{var2.args=}")
+        varsimp2 = [m for m in frees if isinstance(m, Indexed) and m.base == var2]
+        varsimp3 = [m for m in frees if isinstance(m, Indexed) and m.base == var3]
         varsimp2.sort(key=lambda k: k.args[1])
         varsimp3.sort(key=lambda k: k.args[1])
-        logger.debug(f"{varsimp2=}" )
-        logger.debug(f"{varsimp3=}" )
+        logger.debug(f"{varsimp2=}")
+        logger.debug(f"{varsimp3=}")
         var22 = varsimp2
         var33 = varsimp3
         # var22 = [sympy.sympify(m) for m in varsimp2]
@@ -962,88 +967,6 @@ def compute_positive_rep(val, var2=IndexedBase("y"), var3=IndexedBase("z"), msg=
     return val2
 
 
-def is_split_two(u, v, w):  # noqa: ARG001
-    if inv(w) - inv(u) != 2:
-        return False, []
-    diff_perm = (~v) * w
-    identity = [i + 1 for i in range(len(diff_perm))]
-    cycles = []
-    for i in range(len(identity)):
-        if diff_perm[i] != identity[i]:
-            cycle0 = set()
-            cycle = {i + 1}
-            last = i
-            while len(cycle0) != len(cycle):
-                cycle0 = cycle
-                last = diff_perm[last] - 1
-                cycle.add(last + 1)
-            if len(cycle) > 1 and cycle not in cycles:
-                cycles += [cycle]
-            if len(cycles) > 2:
-                break
-    if len(cycles) == 2:
-        return True, cycles
-    return False, []
-
-
-def is_coeff_irreducible(u, v, w):
-    return (
-        not will_formula_work(u, v)
-        and not will_formula_work(v, u)
-        and not one_dominates(u, w)
-        and not is_reducible(v)
-        and inv(w) - inv(u) > 1
-        and not is_split_two(u, v, w)[0]
-        and len([i for i in code(v) if i != 0]) > 1
-    )
-
-
-def is_hook(cd):
-    started = False
-    done = False
-    found_zero_after = False
-    for i in range(len(cd)):
-        if (done or found_zero_after) and cd[i] != 0:
-            return False
-        if cd[i] == 1 and not started:
-            started = True
-        if cd[i] > 1:
-            done = True
-        if started and cd[i] == 0:
-            found_zero_after = True
-    if started or done:
-        return True
-    return False
-
-
-def div_diff(i, poly, var2=_vars.var2):
-    return sympify(
-        sympy.div(sympy.sympify(poly - permy(poly, i)), sympy.sympify(var2[i] - var2[i + 1]))[0],
-    )
-
-
-def skew_div_diff(u, w, poly):
-    d = -1
-    for i in range(len(w) - 1):
-        if w[i] > w[i + 1]:
-            d = i
-            break
-    d2 = -1
-    for i in range(len(u) - 1):
-        if u[i] > u[i + 1]:
-            d2 = i
-            break
-    if d == -1:
-        if d2 == -1:
-            return poly
-        return 0
-    w2 = w.swap(d, d + 1)
-    if d < len(u) - 1 and u[d] > u[d + 1]:
-        u2 = u.swap(d, d + 1)
-        return skew_div_diff(u2, w2, permy(poly, d + 1))
-    return skew_div_diff(u, w2, div_diff(d + 1, poly))
-
-
 def posify_generic_partial(val, u2, v2, w2):
     val2 = val
     val = posify(val, u2, v2, w2, var2=_vars.var_g1, var3=_vars.var_g2, msg=True, do_pos_neg=False, sign_only=False, optimize=False)
@@ -1055,12 +978,6 @@ def posify_generic_partial(val, u2, v2, w2):
 @cache
 def schubmult_generic_partial_posify(u2, v2):
     return {w2: posify_generic_partial(val, u2, v2, w2) for w2, val in schubmult_one_generic(u2, v2).items()}
-
-
-def xreplace_genvars(poly, vars1, vars2):
-    poly2 = sympify(poly).subs({_vars.var_g1: vars1, _vars.var_g2: vars2})
-    # print(f"{poly2=} {poly2.free_symbols=}")
-    return poly2
 
 
 @cached(
@@ -1154,7 +1071,7 @@ def posify(
         # if expand(val - oldval) != 0:
         #     logger.debug("This is bad")
         #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
-        return val    
+        return val
     if inv(w) - inv(u) == 1:
         logger.debug("hi")
         if sign_only:
@@ -1328,19 +1245,19 @@ def posify(
                     if v3[0] < v3[1]:
                         dual_u = uncode([2, 0])
                         dual_w = Permutation([4, 2, 1, 3])
-                        coeff = permy(dualcoeff(dual_u, v3, dual_w, var2, var3), 2, var2)
+                        coeff = perm_act(dualcoeff(dual_u, v3, dual_w, var2, var3), 2, var2)
 
                     elif len(v3) < 3 or v3[1] < v3[2]:
                         if len(v3) <= 3 or v3[2] < v3[3]:
                             coeff = 0
                             continue
                         v3 = v3.swap(0, 1).swap(2, 3)
-                        coeff = permy(schubpoly(v3, var2, var3), 2, var2)
+                        coeff = perm_act(schubpoly(v3, var2, var3), 2, var2)
                     elif len(v3) <= 3 or v3[2] < v3[3]:
                         if len(v3) <= 3:
                             v3 += [4]
                         v3 = v3.swap(2, 3)
-                        coeff = permy(
+                        coeff = perm_act(
                             posify(
                                 schubmult_one(Permutation([1, 3, 2]), v3, var2, var3).get(
                                     Permutation([2, 4, 3, 1]),
@@ -1360,13 +1277,13 @@ def posify(
                         )
                         logger.debug(f"{coeff=}")
                     else:
-                        coeff = permy(
+                        coeff = perm_act(
                             schubmult_one(Permutation([1, 3, 2]), v3, var2, var3).get(
                                 Permutation([2, 4, 1, 3]),
                                 0,
                             ),
                             2,
-                            var2
+                            var2,
                         )
                     logger.debug(f"{coeff=}")
                     if expand(coeff) == 0:
@@ -1402,7 +1319,7 @@ def posify(
         # if expand(val - oldval) != 0:
         #     logger.debug("This is bad")
         #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
-        return val        
+        return val
     logger.debug("hi")
     c01 = code(u)
     c02 = code(w)
@@ -1471,7 +1388,7 @@ def posify(
             )
             val = posify(val, u3, v, w3, var2, var3, msg, do_pos_neg, optimize=optimize)
             for i in range(varl):
-                val = permy(val, i + 1, var2)
+                val = perm_act(val, i + 1, var2)
             # if expand(val - oldval) != 0:
             #     logger.debug("This is bad")
             #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
@@ -1511,79 +1428,18 @@ def posify(
                 val = val2
             return val
             logger.debug("foingI mage it")
-        else:
-            return oldval
-    else:
-        logger.debug("hi")
-        d = expand(val).as_coefficients_dict()
-        for v in d.values():
-            if v < 0:
-                return -1
-        return 1
-    
+        return oldval
+    logger.debug("hi")
+    d = expand(val).as_coefficients_dict()
+    for v in d.values():
+        if v < 0:
+            return -1
+    return 1
+
     #     if expand(val - oldval) !=0:
     #         logger.debug("NONONOONOO")
     #         raise Exception
     # return val
-
-
-def split_perms(perms):
-    perms2 = [perms[0]]
-    for perm in perms[1:]:
-        cd = code(perm)
-        index = -1
-        not_zero = False
-        did = False
-        for i in range(len(cd)):
-            if cd[i] != 0:
-                not_zero = True
-            elif not_zero and cd[i] == 0:
-                not_zero = False
-                index = i
-                num_zeros_to_miss = 0
-                for j in range(index):
-                    if cd[j] != 0:
-                        num_zeros_to_miss = max(num_zeros_to_miss, cd[j] - (index - 1 - j))
-                num_zeros = 0
-                for j in range(index, len(cd)):
-                    if cd[j] != 0:
-                        break
-                    num_zeros += 1
-                if num_zeros >= num_zeros_to_miss:
-                    cd1 = cd[:index]
-                    cd2 = [0 for i in range(index)] + cd[index:]
-                    perms2 += [
-                        uncode(cd1),
-                        uncode(cd2),
-                    ]
-                    did = True
-                    break
-        if not did:
-            perms2 += [perm]
-    return perms2
-
-
-def schubpoly(v, var2=None, var3=None, start_var=1):
-    n = 0
-    for j in range(len(v) - 2, -1, -1):
-        if v[j] > v[j + 1]:
-            n = j + 1
-            break
-    if n == 0:
-        return 1
-    lst = pull_out_var(n, v)
-    ret = 0
-    for pw, vp in lst:
-        tomul = 1
-        for p in pw:
-            tomul *= var2[start_var + n - 1] - var3[p]
-        ret += tomul * schubpoly(vp, var2, var3, start_var)
-    return ret
-
-
-def permy(val, i, var2=_vars.var2):
-    subsdict = {var2[i]: var2[i + 1], var2[i + 1]: var2[i]}
-    return sympify(val).subs(subsdict)
 
 
 def schub_coprod(mperm, indices, var2=_vars.var2, var3=_vars.var3):

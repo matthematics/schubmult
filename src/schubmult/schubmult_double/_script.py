@@ -127,7 +127,7 @@ def _display_full(
     var3,
     kperm=None,
     N=None,
-):    
+):
     subs_dict2 = {}
     for i in range(1, 100):
         sm = var2[1]
@@ -135,7 +135,7 @@ def _display_full(
             sm += _vars.var_r[j]
         subs_dict2[var2[i]] = sm
     raw_result_dict = {}
-    perms = args.perms    
+    perms = args.perms
     ascode = args.ascode
     coprod = args.coprod
     msg = args.msg
@@ -288,7 +288,7 @@ def _display_full(
 def main(argv=None):
     if argv is None:
         argv = sys.argv
-    
+
     try:
         var2 = IndexedBase("y")
         var3 = IndexedBase("z")

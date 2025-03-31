@@ -1,3 +1,23 @@
+def generate_all(module, filename):
+    D = dir(module)
+    print(f"{D=}")
+    file_data = ""
+    with open(filename) as f:
+        file_data = str(f.read())
+    print(f"{file_data}")
+    real_d = [d for d in D if (file_data.find(f"def {d}")!=-1 or file_data.find(f"class {d}")!=-1) and d[0]!="_"]
+    print("from bob import (")
+    print("    ",end="")
+    print(",\n    ".join(real_d))
+    print(",")
+    print(")")
+
+    print("__all__ =")
+    print("[")
+    print("    ",end="")
+    print("',\n    '".join(real_d))
+    print(",")
+    print("]")
 
 def get_json(file: str):
     import json
