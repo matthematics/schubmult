@@ -7,12 +7,30 @@ import sympy.combinatorics.permutations as spp
 from symengine import Mul, Pow
 from sympy import Basic, IndexedBase, Tuple, sympify
 
-from schubmult.logging import get_logger
-from schubmult.perm_lib.perm_lib import *
-from schubmult.poly_lib.poly_lib import *
+from schubmult.perm_lib import (
+    Permutation,
+    code,
+    count_bruhat,
+    ensure_perms,
+    get_cycles,
+    getpermval,
+    has_bruhat_ascent,
+    has_bruhat_descent,
+    inv,
+    inverse,
+    mu_A,
+    mulperm,
+    omega,
+    one_dominates,
+    p_trans,
+    permtrim,
+    sg,
+    theta,
+    uncode,
+)
 
 
-def double_elem_sym_q(u, p1, p2, k, q_var=q_var):
+def double_elem_sym_q(u, p1, p2, k, q_var=None):
     ret_list = {}
     perms1 = elem_sym_perms_q(u, p1, k, q_var)
     iu = inverse(u)
@@ -237,7 +255,6 @@ def reduce_coeff(u, v, w):
 def pull_out_var(vnum, v):
     import sys
 
-    logger.debug(f"pull_out_var {vnum=} {v=} {code(v)=}")
     vup = v
     if vnum >= len(v):
         return [[[], v]]
@@ -264,7 +281,6 @@ def pull_out_var(vnum, v):
                         vpm_list2 += [(vpm.swap(i, j), vpm[j])]
         vpm_list = vpm_list2
     for vpm, b in vpm_list:
-        logger.debug(f"{vpm=} {b=}")
         if vpm[vnum - 1] == len(v) + 1:
             vpm2 = [*vpm]
             vpm2.pop(vnum - 1)
@@ -275,7 +291,6 @@ def pull_out_var(vnum, v):
                     vp,
                 ],
             ]
-    logger.debug(f"{ret_list=}")
     return ret_list
 
 
@@ -421,7 +436,7 @@ def reduce_q_coeff_u_only(u, v, w, qv):
     return u, v, w, qv, False
 
 
-def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
+def elem_sym_perms_q(orig_perm, p, k, q_var=None):
     total_list = [(orig_perm, 0, 1)]
     up_perm_list = [(orig_perm, 1, 1000)]
     for pp in range(p):
@@ -443,7 +458,7 @@ def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
 
 
 @ensure_perms
-def elem_sym_perms_q_op(orig_perm, p, k, n, q_var=q_var):
+def elem_sym_perms_q_op(orig_perm, p, k, n, q_var=None):
     total_list = [(orig_perm, 0, 1)]
     up_perm_list = [(orig_perm, 1, k)]
     for pp in range(p):

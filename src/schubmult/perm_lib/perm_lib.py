@@ -367,11 +367,11 @@ class Permutation(Basic):
         # args[0] is a list, args[1] is a sympy.Permutation
         if isinstance(perm, Permutation):
             return perm
-        p = Tuple(permtrim_list([*perm]))
+        p = Tuple(*permtrim_list([*perm]))
         if len(p) < 2:
             p = Tuple(1, 2)
         s_perm = spp.Permutation._af_new([i - 1 for i in p])
-        obj = Basic.__new__(_class, perm)
+        obj = Basic.__new__(_class, p)
         obj._s_perm = s_perm
         return obj
 
@@ -388,7 +388,7 @@ class Permutation(Basic):
         return self._s_perm.inversions()
 
     def swap(self, i, j):
-        new_perm = [*self._perm]
+        new_perm = [*self.args[0]]
         if i > j:
             i, j = j, i
         if j >= len(new_perm):
@@ -398,20 +398,20 @@ class Permutation(Basic):
 
     def __getitem__(self, i):
         if isinstance(i, slice):
-            return [self[ii] for ii in range(*i.indices(len(self._perm)))]
-        if i >= len(self._perm):
+            return [self[ii] for ii in range(*i.indices(len(self.args[0])))]
+        if i >= len(self.args[0]):
             return i + 1
-        return self._perm[i]
+        return self.args[0][i]
 
     def __setitem__(self, i, v):
         raise NotImplementedError
 
     def __hash__(self):
-        return hash(self._perm)
+        return hash(self.args[0])
 
     def __mul__(self, other):
         # print("yay")
-        new_sperm = other.args[1] * self._s_perm
+        new_sperm = other._s_perm * self._s_perm
         new_perm = permtrim_list([new_sperm.array_form[i] + 1 for i in range(new_sperm.size)])
         # print(f"{new_perm=}")
         # if len(new_perm) != new_sperm.size:
@@ -455,15 +455,15 @@ class Permutation(Basic):
         if isinstance(other, list):
             return [*self.args[0]] == other
         if isinstance(other, tuple):
-            return self._perm == other
+            return self.args[0] == other
         return False
 
     def __len__(self):
         # print("yay")
-        return len(self._perm)
+        return len(self.args[0])
 
     def __invert__(self):
-        new_sperm = ~(self._sperm)
+        new_sperm = ~(self._s_perm)
         new_perm = [new_sperm.array_form[i] + 1 for i in range(new_sperm.size)]
         return Permutation(new_perm)
 
@@ -472,7 +472,7 @@ class Permutation(Basic):
 
     # def act(self, other):
     #     # act on a sympy expresssin
-    #     subs_dict = {self._action[i + 1]: self._action[self._perm[i]] for i in range(len(self))}
+    #     subs_dict = {self._action[i + 1]: self._action[self.args[0][i]] for i in range(len(self))}
     #     print(f"{subs_dict=}")
     #     result = sympify(other).subs(subs_dict)
 

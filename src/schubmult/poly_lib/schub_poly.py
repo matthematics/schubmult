@@ -1,6 +1,7 @@
 import sympy
 
-from schubmult.schub_lib import pull_out_var
+import schubmult.poly_lib as poly_lib
+import schubmult.schub_lib as schub_lib
 
 
 def perm_act(val, i, var2=None):
@@ -22,7 +23,7 @@ def schubpoly(v, var2=None, var3=None, start_var=1):
             break
     if n == 0:
         return 1
-    lst = pull_out_var(n, v)
+    lst = schub_lib.pull_out_var(n, v)
     ret = 0
     for pw, vp in lst:
         tomul = 1

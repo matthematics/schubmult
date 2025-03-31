@@ -63,11 +63,7 @@ def _display_full(coeff_dict, args, formatter):
                 w = permtrim(w)
 
                 new_q_part = np.prod(
-                    [
-                        q_var[index + 1 - count_less_than(parabolic_index, index + 1)] ** qv[index]
-                        for index in range(len(qv))
-                        if index + 1 not in parabolic_index
-                    ],
+                    [q_var[index + 1 - count_less_than(parabolic_index, index + 1)] ** qv[index] for index in range(len(qv)) if index + 1 not in parabolic_index],
                 )
 
                 try:
@@ -105,8 +101,6 @@ def main(argv=None):
             argv=argv[1:],
             quantum=True,
         )
-
-
 
         perms = args.perms
 
@@ -166,4 +160,5 @@ def main(argv=None):
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main(sys.argv))

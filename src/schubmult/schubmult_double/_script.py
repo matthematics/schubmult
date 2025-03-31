@@ -1,3 +1,31 @@
+# class Gens(Option, metaclass=OptionType):
+#     """``gens`` option to polynomial manipulation functions. """
+
+#     option = 'gens'
+
+#     requires: list[str] = []
+#     excludes: list[str] = []
+
+#     @classmethod
+#     def default(cls):
+#         return ()
+
+#     @classmethod
+#     def preprocess(cls, gens):
+#         if isinstance(gens, Basic):
+#             gens = (gens,)
+#         elif len(gens) == 1 and is_sequence(gens[0]):
+#             gens = gens[0]
+
+#         if gens == (None,):
+#             gens = ()
+#         elif has_dups(gens):
+#             raise GeneratorsError("duplicated generators: %s" % str(gens))
+#         elif any(gen.is_commutative is False for gen in gens):
+#             raise GeneratorsError("non-commutative generators: %s" % str(gens))
+
+#         return tuple(gens
+
 import sys
 from functools import cached_property
 
@@ -11,14 +39,57 @@ from schubmult.perm_lib import (
     Permutation,
     add_perm_dict,
     code,
+    count_bruhat,
+    count_less_than,
+    cycle,
+    dominates,
+    ensure_perms,
+    get_cycles,
+    getpermval,
+    has_bruhat_ascent,
+    has_bruhat_descent,
     inv,
     inverse,
+    is_parabolic,
+    longest_element,
+    medium_theta,
     mu_A,
     mulperm,
+    old_code,
+    omega,
+    one_dominates,
+    p_trans,
     permtrim,
+    permtrim_list,
+    phi1,
+    sg,
+    split_perms,
+    strict_theta,
     theta,
     trimcode,
     uncode,
+)
+from schubmult.schub_lib import (
+    check_blocks,
+    compute_vpathdicts,
+    divdiffable,
+    double_elem_sym_q,
+    elem_sym_perms,
+    elem_sym_perms_op,
+    elem_sym_perms_q,
+    elem_sym_perms_q_op,
+    is_coeff_irreducible,
+    is_hook,
+    is_reducible,
+    is_split_two,
+    kdown_perms,
+    pull_out_var,
+    reduce_coeff,
+    reduce_descents,
+    reduce_q_coeff,
+    reduce_q_coeff_u_only,
+    try_reduce_u,
+    try_reduce_v,
     will_formula_work,
 )
 
@@ -31,10 +102,10 @@ from schubmult.schubmult_double._funcs import (
     posify,
     schubmult,
     schubmult_down,
-    split_perms,
 )
 
 logger = get_logger(__name__)
+
 
 class _gvars:
     @cached_property
@@ -47,7 +118,7 @@ class _gvars:
 
     @cached_property
     def var1(self):
-        return  IndexedBase("x")
+        return IndexedBase("x")
 
     @cached_property
     def var2(self):
@@ -206,7 +277,7 @@ def _display_full(
 
         for perm in coeff_perms:
             val = coeff_dict[perm]
-            #downperm = mulperm(list(perm), inverse_kperm)
+            # downperm = mulperm(list(perm), inverse_kperm)
             downperm = perm * inverse_kperm
             if inv(downperm) == inv(perm) - inv_kperm:
                 flag = True
@@ -228,10 +299,10 @@ def _display_full(
                         if val != 0:
                             val2 = posify(
                                 val,
-                                #tuple(permtrim(mulperm(firstperm, muA))),
-                                firstperm*muA,
-                                #tuple(permtrim(mulperm(secondperm, muB))),
-                                secondperm*muB,
+                                # tuple(permtrim(mulperm(firstperm, muA))),
+                                firstperm * muA,
+                                # tuple(permtrim(mulperm(secondperm, muB))),
+                                secondperm * muB,
                                 the_top_perm,
                                 tuple(var2neg.tolist()),
                                 tuple(var3neg.tolist()),
