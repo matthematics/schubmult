@@ -5,6 +5,7 @@ from .poly_lib import (
     elem_sym_poly,
     elem_sym_poly_q,
     q_vector,
+    xreplace_genvars,
 )
 from .schub_poly import div_diff, perm_act, schubpoly, skew_div_diff
 
@@ -19,4 +20,5 @@ __all__ = [
     "q_vector",
     "schubpoly",
     "skew_div_diff",
+    "xreplace_genvars",
 ]

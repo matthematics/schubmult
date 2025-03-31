@@ -173,6 +173,5 @@ def q_vector(q_exp, q_var=_vars.q_var):
 
 
 def xreplace_genvars(poly, vars1, vars2):
-    poly2 = sympify(poly).subs({_vars.var_g1: vars1, _vars.var_g2: vars2})
+    return sympify(poly).subs({_vars.var_g1: vars1, _vars.var_g2: vars2})
     # print(f"{poly2=} {poly2.free_symbols=}")
-    return poly2

@@ -7,24 +7,70 @@ from sympy import IndexedBase, expand, symarray, sympify
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
     Permutation,
-    check_blocks,
+    add_perm_dict,
     code,
+    count_bruhat,
     count_less_than,
+    cycle,
+    dominates,
+    ensure_perms,
+    get_cycles,
+    getpermval,
+    has_bruhat_ascent,
+    has_bruhat_descent,
     inv,
     inverse,
     is_parabolic,
     longest_element,
     medium_theta,
+    mu_A,
     mulperm,
+    old_code,
     omega,
+    one_dominates,
+    p_trans,
     permtrim,
-    q_var,
-    q_vector,
-    reduce_q_coeff,
+    permtrim_list,
+    phi1,
+    sg,
+    split_perms,
+    strict_theta,
+    theta,
     trimcode,
     uncode,
 )
-from schubmult.schubmult_double import compute_positive_rep, div_diff, posify
+from schubmult.poly_lib import (
+    call_zvars,
+    elem_sym_func,
+    elem_sym_func_q,
+    elem_sym_poly,
+    elem_sym_poly_q,
+    q_vector,
+)
+from schubmult.schub_lib import (
+    check_blocks,
+    compute_vpathdicts,
+    divdiffable,
+    double_elem_sym_q,
+    elem_sym_perms,
+    elem_sym_perms_op,
+    elem_sym_perms_q,
+    elem_sym_perms_q_op,
+    is_coeff_irreducible,
+    is_hook,
+    is_reducible,
+    is_split_two,
+    kdown_perms,
+    pull_out_var,
+    reduce_coeff,
+    reduce_descents,
+    reduce_q_coeff,
+    reduce_q_coeff_u_only,
+    try_reduce_u,
+    try_reduce_v,
+    will_formula_work,
+)
+from schubmult.schubmult_double import compute_positive_rep, posify
 from schubmult.schubmult_q_double._funcs import (
     factor_out_q_keep_factored,
     # mult_poly,
@@ -66,10 +112,16 @@ class _gvars:
     @cached_property
     def var_g2(self):
         return IndexedBase("z")
+    
+    @cached_property
+    def q_var(self):
+        return IndexedBase("q")
 
 
 
 _vars = _gvars()
+
+q_var = _vars.q_var
 
 
 def q_posify(u, v, w, same, val, var2, var3, msg, subs_dict2):

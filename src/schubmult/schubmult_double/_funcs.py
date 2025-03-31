@@ -261,45 +261,45 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
         vp = v * (~perm)
         if inv(vp) == inv(v) - inv(perm):
             val = schubpoly(vp, var2, var3)
-        else:
-            val = 0
+            return None
+        val = 0
+        return None
+    dpret = []
+    ret = 0
+    if dominates(u, perm):
+        dpret = dualpieri(u, v, perm)
     else:
+        logger.debug("hi")
         dpret = []
-        ret = 0
-        if dominates(u, perm):
-            dpret = dualpieri(u, v, perm)
-        else:
-            logger.debug("hi")
-            dpret = []
-            logger.debug("hi")
-            th = theta(u)
-            muu = uncode(th)
-            umun1 = (~u) * muu
-            w = perm * umun1
-            logger.debug("spiggle")
-            logger.debug(f"{u=} {muu=} {v=} {w=} {perm=}")
-            # logger.debug(f"{w=} {perm=}")
-            if inv(w) == inv(umun1) + inv(perm):
-                dpret = dualpieri(muu, v, w)
-                logger.debug(f"{muu=} {v=} {w=}")
-                logger.debug(f"{dpret=}")
-        for vlist, vp in dpret:
-            logger.debug("hi")
-            toadd = 1
-            for i in range(len(vlist)):
-                for j in range(len(vlist[i])):
-                    toadd *= var2[i + 1] - var3[vlist[i][j]]
-            toadd *= schubpoly(vp, var2, var3, len(vlist) + 1)
-            ret += toadd
-        val = ret
-        logger.debug("spunky")
-        schub_val = schubmult_one(u, v, var2, var3)
-        val_ret = schub_val.get(perm, 0)
-        if expand(val - val_ret) != 0:
-            logger.debug(f"{schub_val=}")
-            logger.debug(f"{val=} {u=} {v=} {var2[1]=} {var3[1]=}  {perm=} {schub_val.get(perm,0)=}")
-        logger.debug("good to go")
-        return ret
+        logger.debug("hi")
+        th = theta(u)
+        muu = uncode(th)
+        umun1 = (~u) * muu
+        w = perm * umun1
+        logger.debug("spiggle")
+        logger.debug(f"{u=} {muu=} {v=} {w=} {perm=}")
+        # logger.debug(f"{w=} {perm=}")
+        if inv(w) == inv(umun1) + inv(perm):
+            dpret = dualpieri(muu, v, w)
+            logger.debug(f"{muu=} {v=} {w=}")
+            logger.debug(f"{dpret=}")
+    for vlist, vp in dpret:
+        logger.debug("hi")
+        toadd = 1
+        for i in range(len(vlist)):
+            for j in range(len(vlist[i])):
+                toadd *= var2[i + 1] - var3[vlist[i][j]]
+        toadd *= schubpoly(vp, var2, var3, len(vlist) + 1)
+        ret += toadd
+    val = ret
+    logger.debug("spunky")
+    schub_val = schubmult_one(u, v, var2, var3)
+    val_ret = schub_val.get(perm, 0)
+    if expand(val - val_ret) != 0:
+        logger.debug(f"{schub_val=}")
+        logger.debug(f"{val=} {u=} {v=} {var2[1]=} {var3[1]=}  {perm=} {schub_val.get(perm,0)=}")
+    logger.debug("good to go")
+    return ret
 
 
 def dualpieri(mu, v, w):
@@ -1080,7 +1080,7 @@ def posify(
         val = 0
         w2 = w
         hvarset = [w2[i] for i in range(min(len(w2), k))] + [i + 1 for i in range(len(w2), k)] + [w2[b] for b in range(k, len(u)) if u[b] != w2[b]] + [w2[b] for b in range(len(u), len(w2))]
-        val = elem_sym_poly(
+        return elem_sym_poly(
             p - r,
             k + p - 1,
             [-var3[i] for i in range(1, n)],
@@ -1089,16 +1089,14 @@ def posify(
         # if expand(val - oldval) != 0:
         #     logger.debug("This is bad")
         #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
-        return val
     if will_formula_work(v, u) or dominates(u, w):
         logger.debug("hi")
         if sign_only:
             return 0
-        val = dualcoeff(u, v, w, var2, var3)
+        return dualcoeff(u, v, w, var2, var3)
         # if expand(val - oldval) != 0:
         #     logger.debug("This is bad")
         #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
-        return val
     if inv(w) - inv(u) == 1:
         logger.debug("hi")
         if sign_only:
@@ -1342,11 +1340,10 @@ def posify(
         logger.debug("hi")
         if sign_only:
             return 0
-        val = forwardcoeff(u, v, w, var2, var3)
+        return forwardcoeff(u, v, w, var2, var3)
         # if expand(val - oldval) != 0:
         #     logger.debug("This is bad")
         #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
-        return val
     logger.debug("hi")
     c01 = code(u)
     c02 = code(w)

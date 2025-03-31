@@ -31,7 +31,7 @@ from functools import cached_property
 
 import numpy as np
 import sympy
-from sympy import IndexedBase, expand, sympify
+from sympy import Indexed, IndexedBase, expand, sympify
 
 from schubmult._base_argparse import schub_argparse
 from schubmult.logging import get_logger
@@ -199,6 +199,7 @@ def _display_full(
     kperm=None,
     N=None,
 ):
+    
     subs_dict2 = {}
     for i in range(1, 100):
         sm = var2[1]
@@ -237,8 +238,8 @@ def _display_full(
         subs_dict = {}
         inv_kperm = inv(kperm)
         inverse_kperm = ~kperm
-        var2neg = np.array([-var2[i] for i in range(len(var2))])
-        var3neg = np.array([-var3[i] for i in range(len(var3))])
+        var2neg = np.array([-var2[i] for i in range(100)])
+        var3neg = np.array([-var3[i] for i in range(100)])
 
         for i in range(1, 100):
             if i <= N:
@@ -289,10 +290,22 @@ def _display_full(
                     continue
                 firstperm = Permutation(downperm[0:N])
                 secondperm = Permutation([downperm[i] - N for i in range(N, len(downperm))])
+                subs_dict = {}
+                for s in sympify(val).free_symbols:
+                    if isinstance(s, Indexed) and s.base == _vars.var1:
+                        if s.indices[0]<=N:
+                            subs_dict[s] = var2[s.indices[0]]
+                        else:
+                            subs_dict[s] = var3[s.indices[0] - N]
                 val = sympify(val).subs(subs_dict)
-
+                # subs_dict2 = {}
+                
                 if same and display_positive:
-                    val = expand(sympify(val).subs(subs_dict2))
+                    subs_dict3 = {}
+                    for s in sympify(val).free_symbols:
+                        if isinstance(s, Indexed) and s.base == var2:
+                            subs_dict3[s] = subs_dict2[s] 
+                    val = expand(sympify(val).subs(subs_dict3))
 
                 if val != 0:
                     if display_positive and not same:

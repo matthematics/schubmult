@@ -9,7 +9,64 @@ from sympy.printing.str import StrPrinter
 import schubmult.rings._utils as utils
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
-from schubmult.perm_lib import Permutation, add_perm_dict, inv
+from schubmult.perm_lib import (
+    Permutation,
+    add_perm_dict,
+    code,
+    count_bruhat,
+    count_less_than,
+    cycle,
+    dominates,
+    ensure_perms,
+    get_cycles,
+    getpermval,
+    has_bruhat_ascent,
+    has_bruhat_descent,
+    inv,
+    inverse,
+    is_parabolic,
+    longest_element,
+    medium_theta,
+    mu_A,
+    mulperm,
+    old_code,
+    omega,
+    one_dominates,
+    p_trans,
+    permtrim,
+    permtrim_list,
+    phi1,
+    sg,
+    split_perms,
+    strict_theta,
+    theta,
+    trimcode,
+    uncode,
+)
+from schubmult.poly_lib import call_zvars, elem_sym_func, elem_sym_func_q, elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
+from schubmult.schub_lib import (
+    check_blocks,
+    compute_vpathdicts,
+    divdiffable,
+    double_elem_sym_q,
+    elem_sym_perms,
+    elem_sym_perms_op,
+    elem_sym_perms_q,
+    elem_sym_perms_q_op,
+    is_coeff_irreducible,
+    is_hook,
+    is_reducible,
+    is_split_two,
+    kdown_perms,
+    pull_out_var,
+    reduce_coeff,
+    reduce_descents,
+    reduce_q_coeff,
+    reduce_q_coeff_u_only,
+    try_reduce_u,
+    try_reduce_v,
+    will_formula_work,
+)
 
 # class IdxPrinter(StrPrinter):
 
@@ -40,11 +97,11 @@ def _from_double_dict(_doubledict):
 
 @cache
 def cached_product(u, v, va, vb):
-    return {(k, va): yz.xreplace_genvars(x,utils.poly_ring(va),utils.poly_ring(vb)) for k, x in yz.schubmult_one_generic(u, v).items()}
+    return {(k, va): xreplace_genvars(x,utils.poly_ring(va),utils.poly_ring(vb)) for k, x in yz.schubmult_one_generic(u, v).items()}
 
 @cache
 def cached_positive_product(u, v, va, vb):
-        return {(k, va): yz.xreplace_genvars(x,utils.poly_ring(va),utils.poly_ring(vb)) for k, x in yz.schubmult_generic_partial_posify(u, v).items()}
+        return {(k, va): xreplace_genvars(x,utils.poly_ring(va),utils.poly_ring(vb)) for k, x in yz.schubmult_generic_partial_posify(u, v).items()}
 
 
 def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
@@ -63,7 +120,7 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
     # import sys
 
     for _vstr, _dict in by_var.items():
-        this_dict = {}
+        this_dict = {}        
         for k, v in dict2.items():
             for kd, vd in _dict.items():
                 did_positive = False
@@ -73,7 +130,7 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
                     except Exception:
                         did_positive = False
                 if not did_positive:
-                    this_dict = add_perm_dict(this_dict,{k1: v1 * v* vd for k1, v1 in cached_product(kd,k[0],_vstr,k[1]).items()})
+                    this_dict = add_perm_dict(this_dict,{k1: v1 * v* vd for k1, v1 in cached_product(kd,k[0],_vstr,k[1]).items()})                    
         results = add_perm_dict(results, this_dict)
 
     by_var2 = {}
