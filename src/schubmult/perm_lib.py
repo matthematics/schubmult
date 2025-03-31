@@ -972,35 +972,36 @@ def old_code(perm):
 
 
 class Permutation(Basic):
-    def __new__(cls, perm, action=None, sperm=None):
-        return Permutation.__xnew_cached__(cls, tuple(perm), action, sperm)
+    def __new__(cls, perm, s_perm=None):
+        return Permutation.__xnew_cached__(cls, tuple(perm), s_perm)
 
     @staticmethod
     @cache
-    def __xnew_cached__(_class, perm, action, sperm):
-        return Permutation.__xnew__(_class, perm, action, sperm)
+    def __xnew_cached__(_class, perm, s_perm):
+        return Permutation.__xnew__(_class, perm, s_perm)
 
     @staticmethod
-    def __xnew__(_class, perm, action, sperm):
-        obj = Basic.__new__(_class)
+    def __xnew__(_class, perm, s_perm):
+        obj = Basic.__new__(_class, perm, s_perm)
         if isinstance(perm, Permutation):
             # print("this is happening")
             obj._perm = perm._perm
             obj._sperm = perm._sperm
-            if action is None:
-                obj._action = perm._action
-            else:
-                obj._action = action
+            # if action is None:
+            #     obj._action = perm._action
+            # else:
+            #     obj._action = IndexedBase(action)
         else:
             p = tuple(permtrim_list([*perm]))
             obj._perm = p
             if len(obj._perm) < 2:
                 obj._perm = (1, 2)
-            if sperm:
-                obj._sperm = sperm
+            if s_perm:
+                obj._sperm = s_perm
             else:
                 obj._sperm = spp.Permutation._af_new([i - 1 for i in p])
-            obj._action = action
+            # obj._action = IndexedBase(action)
+        
         return obj
 
     @property
@@ -1105,6 +1106,13 @@ class Permutation(Basic):
     def __repr__(self):
         return self.__str__()
 
+    # def act(self, other):
+    #     # act on a sympy expresssin
+    #     subs_dict = {self._action[i + 1]: self._action[self._perm[i]] for i in range(len(self))}
+    #     print(f"{subs_dict=}")
+    #     result = sympify(other).subs(subs_dict)
+        
+
     # we want to format permuations
     def _sympystr(self, p):
-        return f"moo{str(self._perm)}"
+        return f"{str(self._perm)}"

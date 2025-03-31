@@ -1,13 +1,13 @@
 import os
 from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
 
-from sympy import Indexed
-
+# from sympy import Indexed, init_printing
 from schubmult.logging import init_logging
 
-#Indexed._sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
+# Indexed._sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
 
-def schub_argparse(prog_name, description, argv, quantum=False, yz=False):    
+
+def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
     parser = ArgumentParser(
         prog=prog_name,
         description=description,
@@ -206,15 +206,16 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
         exit(0)
 
     import sympy
+    sympy.init_printing()
 
     if args.disp_mode == "latex":
         formatter = (  # noqa: E731
-            lambda bob: sympy.latex(sympy.sympify(bob)).replace("\\left", "").replace("\\right", "")
+            lambda bob: sympy.latex(sympy.sympify(bob), order='none').replace("\\left", "").replace("\\right", "")
         )
     elif args.disp_mode == "pretty":
-        formatter = lambda bob: sympy.pretty(sympy.sympify(bob))  # noqa: E731
+        formatter = lambda bob: sympy.pretty(sympy.sympify(bob)).replace("[","_").replace("]","")  # noqa: E731  # noqa: E731
     elif args.disp_mode == "basic":
-        formatter = lambda bob: str(bob)  # noqa: E731
+        formatter = lambda bob: sympy.sstr(bob).replace("[","_").replace("]","")  # noqa: E731
     elif args.disp_mode == "raw":
         formatter = None
     init_logging(debug=args.debug)

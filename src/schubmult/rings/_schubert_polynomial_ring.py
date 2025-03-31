@@ -9,12 +9,18 @@ from sympy.printing.str import StrPrinter
 import schubmult.rings._utils as utils
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
-from schubmult.perm_lib import add_perm_dict, inv
-from schubmult.sympy_perms import Permutation
+from schubmult.perm_lib import Permutation, add_perm_dict, inv
+
+# class IdxPrinter(StrPrinter):
+
 
 # import utils.NoneVar, utils.ZeroVar, utils.poly_ring
 
 _def_printer = StrPrinter({"order": "none"})
+# _def_printer = StrPrinter()
+
+
+
 # numpy arrays
 # sympy parsing
 # quantum
@@ -32,24 +38,16 @@ def _varstr(v):
 def _from_double_dict(_doubledict):
     return DoubleSchubertAlgebraElement(_doubledict)
 
-
-class Ex:
-    def __bool__(self):
-        raise Exception
-
-
-_ex = Ex()
-
 @cache
 def cached_product(u, v, va, vb):
     return {(k, va): yz.xreplace_genvars(x,utils.poly_ring(va),utils.poly_ring(vb)) for k, x in yz.schubmult_one_generic(u, v).items()}
 
 @cache
 def cached_positive_product(u, v, va, vb):
-    return {(k, va): yz.xreplace_genvars(x,utils.poly_ring(va),utils.poly_ring(vb)) for k, x in yz.schubmult_generic_partial_posify(u, v).items()}
+        return {(k, va): yz.xreplace_genvars(x,utils.poly_ring(va),utils.poly_ring(vb)) for k, x in yz.schubmult_generic_partial_posify(u, v).items()}
 
 
-def _mul_schub_dicts(dict1, dict2, best_effort_positive=False):
+def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
     by_var = {}
 
     none_dict = {}
@@ -65,31 +63,17 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=False):
     # import sys
 
     for _vstr, _dict in by_var.items():
-        this_dict = {}
-        # if best_effort_positive:
-        #     for k, v in dict2.items():
-        #         for kd, vd in _dict.items():
-        #             vv = v * vd
-        #             out_dict = {(k1, _vstr): vv * yz.xreplace_genvars(v1, utils.poly_ring(_vstr), utils.poly_ring(k[1])) for k1, v1 in yz.schubmult_generic_partial_posify(kd, k[0]).items()}
-        #             # else:
-        #             #     out_dict = {(k1, _vstr): vv * v1 for k1, v1 in yz.schubmult_one(kd, k[0],utils.poly_ring(_vstr), utils.poly_ring(k[1])).items()}
-        #             # for k1 in out_dict:
-        #             #     val = yz.posify(out_dict[k1], kd, k[0], k1, utils.poly_ring(_vstr), utils.poly_ring(k[1]), msg=True, do_pos_neg=False, sign_only=False, optimize=False)
-        #             #     # if expand(val-out_dict[k1])!=0:
-        #             #     #     raise Exception()
-        #             #     # else:
-        #             #     out_dict[k1] = val
-        #             this_dict = add_perm_dict(
-        #                 this_dict,
-        #                   out_dict
-        #             )
-        # else:
+        this_dict = {}        
         for k, v in dict2.items():
             for kd, vd in _dict.items():
+                did_positive = False
                 if best_effort_positive:
-                    this_dict = add_perm_dict(this_dict,{k1: v1 * v* vd for k1, v1 in cached_product(kd,k[0],_vstr,k[1]).items()})
-                else:
-                    this_dict = add_perm_dict(this_dict,{k1: v1 * v* vd for k1, v1 in cached_positive_product(kd,k[0],_vstr,k[1]).items()})
+                    try:
+                        this_dict = add_perm_dict(this_dict,{k1: v1 * v* vd for k1, v1 in cached_positive_product(kd,k[0],_vstr,k[1]).items()})
+                    except Exception:
+                        did_positive = False
+                if not did_positive:
+                    this_dict = add_perm_dict(this_dict,{k1: v1 * v* vd for k1, v1 in cached_product(kd,k[0],_vstr,k[1]).items()})                    
         results = add_perm_dict(results, this_dict)
 
     by_var2 = {}
@@ -219,7 +203,7 @@ class DoubleSchubertAlgebraElement(Expr):
 
     @cache
     def _cached_sympystr(self):
-        return _def_printer._print(self._print_sum)
+        return _def_printer.doprint(self._print_sum)
 
     def _sympystr(self, printer):  # noqa: ARG002
         return self._cached_sympystr()

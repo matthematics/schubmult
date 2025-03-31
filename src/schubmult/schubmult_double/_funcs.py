@@ -333,6 +333,12 @@ def schubmult_one_generic(perm1, perm2):
 
 
 def schubmult(perm_dict, v, var2=None, var3=None):
+    if isinstance(var2, str):
+        var2 = IndexedBase(var2)
+    if isinstance(var3, str):
+        var3 = IndexedBase(var3)
+    perm_dict = {Permutation(k): v for k, v in perm_dict.items()}
+    v = Permutation(v)
     vn1 = ~v
     th = theta(vn1)
     if len(th) == 0:
