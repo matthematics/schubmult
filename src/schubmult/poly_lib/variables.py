@@ -12,10 +12,10 @@ class ISymbol(Symbol):
         obj.base =None
         obj.index = 0
         return obj
-    
+
     def __hash__(self):
         return hash(self.name)
-    
+
     def __eq__(self, other):
         if not isinstance(other, Symbol):
             return False

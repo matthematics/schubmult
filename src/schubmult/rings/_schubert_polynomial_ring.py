@@ -134,7 +134,7 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
                         raise
                         #did_positive = False
                 if not did_positive:
-                    this_dict = add_perm_dict(this_dict,{k1: v1 * v* vd for k1, v1 in cached_product(kd,k[0],_vstr,k[1]).items()})                    
+                    this_dict = add_perm_dict(this_dict,{k1: v1 * v* vd for k1, v1 in cached_product(kd,k[0],_vstr,k[1]).items()})
         results = add_perm_dict(results, this_dict)
 
     by_var2 = {}

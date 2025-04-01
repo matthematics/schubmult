@@ -105,7 +105,7 @@ class _gvars:
     @cached_property
     def var_g2(self):
         return GeneratingSet("z")
-    
+
     @cached_property
     def q_var(self):
         return GeneratingSet("q")

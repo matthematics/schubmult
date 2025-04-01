@@ -200,7 +200,7 @@ def _display_full(
     kperm=None,
     N=None,
 ):
-    
+
     subs_dict2 = {}
     for i in range(1, 100):
         sm = var2[1]
@@ -300,12 +300,12 @@ def _display_full(
                             subs_dict[s] = var3[s.indices[0] - N]
                 val = sympify(val).subs(subs_dict)
                 # subs_dict2 = {}
-                
+
                 if same and display_positive:
                     # subs_dict3 = {}
                     # for s in sympify(val).free_symbols:
                     #     if is_indexed(s) and s.base == var2:
-                    #         subs_dict3[s] = subs_dict2[s] 
+                    #         subs_dict3[s] = subs_dict2[s]
                     # val = expand(sympify(val).subs(subs_dict3))
                     val = efficient_subs(sympify(val), subs_dict2).expand()
 

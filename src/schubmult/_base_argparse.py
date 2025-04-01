@@ -207,7 +207,6 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
             json.dump(args.__dict__, js, ensure_ascii=False, indent=1)
         exit(0)
 
-    import sympy
     sympy.init_printing()
 
     if args.disp_mode == "latex":
