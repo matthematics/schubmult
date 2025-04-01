@@ -1,9 +1,6 @@
-from bisect import bisect_left
-from functools import cache, cached_property
 from itertools import chain
 
 import numpy as np
-import sympy.combinatorics.permutations as spp
 from symengine import sympify
 
 from schubmult.perm_lib import (
@@ -253,8 +250,6 @@ def reduce_coeff(u, v, w):
 
 
 def pull_out_var(vnum, v):
-    import sys
-
     vup = v
     if vnum >= len(v):
         return [[[], v]]

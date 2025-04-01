@@ -1,10 +1,8 @@
 from bisect import bisect_left
 from functools import cache, cached_property
-from itertools import chain
 
-import numpy as np
 import sympy.combinatorics.permutations as spp
-from symengine import Mul, Pow, sympify
+from symengine import sympify
 from sympy import Basic, Tuple
 
 from schubmult.logging import get_logger
@@ -479,7 +477,7 @@ class Permutation(Basic):
     #     result = sympify(other).subs(subs_dict)
 
     # we want to format permuations
-    def _sympystr(self, p):
+    def _sympystr(self, p):  # noqa: ARG002
         return self.args[0].__str__()
 
 
