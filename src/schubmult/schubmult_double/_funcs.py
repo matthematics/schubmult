@@ -1464,7 +1464,7 @@ def schub_coprod(mperm, indices, var2=_vars.var2, var3=_vars.var3):
     kcd2 = kcd + [0 for i in range(len(kcd), max_required)] + [0]
     N = len(kcd)
     kperm = ~uncode(kcd2)
-    inv_kperm = ~kperm
+    inv_kperm = inv(kperm)
     vn = GeneratingSet("soible")
 
     for i in range(1, N * 2 + 1):
