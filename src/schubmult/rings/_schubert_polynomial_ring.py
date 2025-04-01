@@ -10,65 +10,13 @@ from sympy.printing.str import StrPrinter
 import schubmult.rings._utils as utils
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
-from schubmult.logging import get_logger, init_logging
+from schubmult.logging import get_logger
 from schubmult.perm_lib import (
     Permutation,
     add_perm_dict,
-    code,
-    count_bruhat,
-    count_less_than,
-    cycle,
-    dominates,
-    ensure_perms,
-    get_cycles,
-    getpermval,
-    has_bruhat_ascent,
-    has_bruhat_descent,
     inv,
-    inverse,
-    is_parabolic,
-    longest_element,
-    medium_theta,
-    mu_A,
-    mulperm,
-    old_code,
-    omega,
-    one_dominates,
-    p_trans,
-    permtrim,
-    permtrim_list,
-    phi1,
-    sg,
-    split_perms,
-    strict_theta,
-    theta,
-    trimcode,
-    uncode,
 )
-from schubmult.poly_lib import GeneratingSet, call_zvars, elem_sym_func, elem_sym_func_q, elem_sym_poly, elem_sym_poly_q, is_indexed, q_vector, xreplace_genvars
-from schubmult.schub_lib import (
-    check_blocks,
-    compute_vpathdicts,
-    divdiffable,
-    double_elem_sym_q,
-    elem_sym_perms,
-    elem_sym_perms_op,
-    elem_sym_perms_q,
-    elem_sym_perms_q_op,
-    is_coeff_irreducible,
-    is_hook,
-    is_reducible,
-    is_split_two,
-    kdown_perms,
-    pull_out_var,
-    reduce_coeff,
-    reduce_descents,
-    reduce_q_coeff,
-    reduce_q_coeff_u_only,
-    try_reduce_u,
-    try_reduce_v,
-    will_formula_work,
-)
+from schubmult.poly_lib import xreplace_genvars
 
 # class IdxPrinter(StrPrinter):
 
@@ -86,6 +34,7 @@ logger = get_logger(__name__)
 
 # COPRODUCT
 
+
 def _varstr(v):
     if v == utils.NoneVar:
         return "NoneVar"
@@ -97,13 +46,15 @@ def _varstr(v):
 def _from_double_dict(_doubledict):
     return DoubleSchubertAlgebraElement(_doubledict)
 
+
 @cache
 def cached_product(u, v, va, vb):
-    return {(k, va): xreplace_genvars(x,utils.poly_ring(va),utils.poly_ring(vb)) for k, x in yz.schubmult_one_generic(u, v).items()}
+    return {(k, va): xreplace_genvars(x, utils.poly_ring(va), utils.poly_ring(vb)) for k, x in yz.schubmult_one_generic(u, v).items()}
+
 
 @cache
 def cached_positive_product(u, v, va, vb):
-        return {(k, va): xreplace_genvars(x,utils.poly_ring(va),utils.poly_ring(vb)) for k, x in yz.schubmult_generic_partial_posify(u, v).items()}
+    return {(k, va): xreplace_genvars(x, utils.poly_ring(va), utils.poly_ring(vb)) for k, x in yz.schubmult_generic_partial_posify(u, v).items()}
 
 
 def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
@@ -128,13 +79,13 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
                 did_positive = False
                 if best_effort_positive:
                     try:
-                        this_dict = add_perm_dict(this_dict,{k1: v1 * v* vd for k1, v1 in cached_positive_product(kd,k[0],_vstr,k[1]).items()})
+                        this_dict = add_perm_dict(this_dict, {k1: v1 * v * vd for k1, v1 in cached_positive_product(kd, k[0], _vstr, k[1]).items()})
                     except Exception:
                         logger.debug("Failed to compute")
                         raise
-                        #did_positive = False
+                        # did_positive = False
                 if not did_positive:
-                    this_dict = add_perm_dict(this_dict,{k1: v1 * v* vd for k1, v1 in cached_product(kd,k[0],_vstr,k[1]).items()})
+                    this_dict = add_perm_dict(this_dict, {k1: v1 * v * vd for k1, v1 in cached_product(kd, k[0], _vstr, k[1]).items()})
         results = add_perm_dict(results, this_dict)
 
     by_var2 = {}
@@ -232,10 +183,10 @@ class DoubleSchubertAlgebraElement(Expr):
             lots_of_stuff_to_do = True
         for k, v in self._doubledict.items():
             if lots_of_stuff_to_do:
-                poley = (sympify(_from_double_dict({k: 1}).change_vars(0).expand()*v))
+                poley = sympify(_from_double_dict({k: 1}).change_vars(0).expand() * v)
                 if b_old in poley.free_symbols:
                     poley = poley.subs(b_old, b_new)
-                    new_dict = yz.mult_poly({(1,2): 1}, poley, utils.poly_ring(self._base_var),utils.poly_ring(k[1]))
+                    new_dict = yz.mult_poly({(1, 2): 1}, poley, utils.poly_ring(self._base_var), utils.poly_ring(k[1]))
                     new_p = {(koifle, k[1]): voifle for koifle, voifle in new_dict.items()}
                     result = add_perm_dict(result, new_p)
             elif stuff_to_do:
@@ -252,7 +203,7 @@ class DoubleSchubertAlgebraElement(Expr):
                     new_p = _from_double_dict(r_dict).change_vars(k[1])
                     result = add_perm_dict(result, new_p._doubledict)
             else:
-                result[k] = result.get(k,0) + sympify(v).subs(b_old, b_new)
+                result[k] = result.get(k, 0) + sympify(v).subs(b_old, b_new)
         return _from_double_dict(result)
 
     @staticmethod
@@ -279,10 +230,10 @@ class DoubleSchubertAlgebraElement(Expr):
 
     def _eval_simplify(self, *args, measure, **kwargs):
         print(f"Hey pretty baby {args=} {kwargs=} {measure(self)=}")
-        boible = _from_double_dict({k: sympify(sympy.simplify(v,*args,measure=measure,**kwargs)) for k, v in self._doubledict.items()})
+        boible = _from_double_dict({k: sympify(sympy.simplify(v, *args, measure=measure, **kwargs)) for k, v in self._doubledict.items()})
         oldops = measure(self)
         newops = measure(boible)
-        print(f"Frinished {oldops=} {newops=} ratio1={oldops/newops} ratio2={newops/oldops}")
+        print(f"Frinished {oldops=} {newops=} ratio1={oldops / newops} ratio2={newops / oldops}")
         print(f"{self=} {len(str(self))=} {boible=} {len(str(boible))=}")
         return boible
 
@@ -344,14 +295,14 @@ class DoubleSchubertAlgebraElement(Expr):
             done.add(k)
             if expand(v - elem2._doubledict.get(k, 0)) != 0:
                 if disp:
-                    print(f"{k=} {v=} {elem2._doubledict.get(k, 0)=} {expand(v - elem2._doubledict.get(k, 0))=}",file=sys.stderr)
+                    print(f"{k=} {v=} {elem2._doubledict.get(k, 0)=} {expand(v - elem2._doubledict.get(k, 0))=}", file=sys.stderr)
                 return False
         for k, v in elem2._doubledict.items():
             if k in done:
                 continue
             if expand(v - elem1._doubledict.get(k, 0)) != 0:
                 if disp:
-                    print(f"{k=} {v=} {expand(v - elem1._doubledict.get(k, 0))=}",file=sys.stderr)
+                    print(f"{k=} {v=} {expand(v - elem1._doubledict.get(k, 0))=}", file=sys.stderr)
                 return False
         return True
 
@@ -371,8 +322,8 @@ class DoubleSchubertAlgebraElement(Expr):
         if not elem1.test_equality(elem2):
             elem1_o = elem1.change_vars(cv)
             elem2_o = elem2.change_vars(cv)
-            assert sympy.expand(elem1_o-elem1) == 0
-            assert sympy.expand(elem2_o-elem2) == 0
+            assert sympy.expand(elem1_o - elem1) == 0
+            assert sympy.expand(elem2_o - elem2) == 0
             return elem1_o.test_equality(elem2_o)
         return True
         # assert all([k[1] == cv for k in elem1._doubledict.keys()])
@@ -406,7 +357,7 @@ class DoubleSchubertAlgebraElement(Expr):
     def change_vars(self, cv):
         result = {}
         for k, v in self._doubledict.items():
-            result = add_perm_dict(result, {k1: v1*v for k1, v1 in cached_positive_product(Permutation([]), k[0], cv,k[1]).items()})
+            result = add_perm_dict(result, {k1: v1 * v for k1, v1 in cached_positive_product(Permutation([]), k[0], cv, k[1]).items()})
         return _from_double_dict(result)
 
     def as_coefficients_dict(self):

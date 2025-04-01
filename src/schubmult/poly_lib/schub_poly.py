@@ -1,6 +1,5 @@
 import sympy
 
-import schubmult.poly_lib as poly_lib
 import schubmult.schub_lib as schub_lib
 
 

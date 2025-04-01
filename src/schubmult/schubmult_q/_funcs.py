@@ -6,59 +6,17 @@ from schubmult.perm_lib.perm_lib import (
     Permutation,
     add_perm_dict,
     code,
-    count_bruhat,
-    count_less_than,
-    cycle,
-    dominates,
-    ensure_perms,
-    get_cycles,
-    getpermval,
-    has_bruhat_ascent,
-    has_bruhat_descent,
     inv,
-    inverse,
-    is_parabolic,
-    longest_element,
     medium_theta,
-    mu_A,
-    mulperm,
-    old_code,
-    omega,
-    one_dominates,
-    p_trans,
     permtrim,
-    permtrim_list,
-    phi1,
-    sg,
-    split_perms,
     strict_theta,
-    theta,
-    trimcode,
     uncode,
 )
 from schubmult.poly_lib import GeneratingSet, is_indexed
 from schubmult.schub_lib import (
-    check_blocks,
     compute_vpathdicts,
-    divdiffable,
     double_elem_sym_q,
-    elem_sym_perms,
-    elem_sym_perms_op,
     elem_sym_perms_q,
-    elem_sym_perms_q_op,
-    is_coeff_irreducible,
-    is_hook,
-    is_reducible,
-    is_split_two,
-    kdown_perms,
-    pull_out_var,
-    reduce_coeff,
-    reduce_descents,
-    reduce_q_coeff,
-    reduce_q_coeff_u_only,
-    try_reduce_u,
-    try_reduce_v,
-    will_formula_work,
 )
 
 
@@ -96,7 +54,7 @@ def single_variable(coeff_dict, varnum, var_q=_vars.q_var):
 
 
 def mult_poly(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
-    if is_indexed(poly) and poly.base==var_x:
+    if is_indexed(poly) and poly.base == var_x:
         return single_variable(coeff_dict, poly.args[1], var_q=var_q)
     if isinstance(poly, Mul):
         ret = coeff_dict
@@ -130,7 +88,7 @@ def schubmult_db(perm_dict, v, q_var=_vars.q_var):
     while th[-1] == 0:
         th.pop()
     mu = permtrim(uncode(th))
-    vmu = permtrim(v*mu)
+    vmu = permtrim(v * mu)
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}
@@ -218,9 +176,9 @@ def schubmult_db(perm_dict, v, q_var=_vars.q_var):
 
 
 def schubmult(perm_dict, v):
-    th = strict_theta(inverse(v))
+    th = strict_theta(~v)
     mu = permtrim(uncode(th))
-    vmu = permtrim(mulperm([*v], mu))
+    vmu = v * mu
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}
@@ -232,7 +190,7 @@ def schubmult(perm_dict, v):
     vpathdicts = compute_vpathdicts(th, vmu, True)
     for u, val in perm_dict.items():
         inv_u = inv(u)
-        vpathsums = {u: {(1, 2): val}}
+        vpathsums = {u: {Permutation([]): val}}
         for index in range(thL):
             mx_th = 0
             for vp in vpathdicts[index]:
@@ -257,7 +215,7 @@ def schubmult(perm_dict, v):
                             if udiff + vdiff == th[index]:
                                 newpathsums[up2][v2] = newpathsums[up2].get(v2, 0) + s * sumval * mul_val
             vpathsums = newpathsums
-        toget = tuple(vmu)
+        toget = vmu
         ret_dict = add_perm_dict(
             {ep: vpathsums[ep].get(toget, 0) for ep in vpathsums},
             ret_dict,

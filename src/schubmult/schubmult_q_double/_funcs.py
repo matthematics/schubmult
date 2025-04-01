@@ -13,60 +13,17 @@ import schubmult.schubmult_double as norm_yz
 from schubmult.perm_lib import (
     Permutation,
     add_perm_dict,
-    code,
-    count_bruhat,
-    count_less_than,
-    cycle,
-    dominates,
-    ensure_perms,
-    get_cycles,
-    getpermval,
-    has_bruhat_ascent,
-    has_bruhat_descent,
     inv,
-    inverse,
-    is_parabolic,
-    longest_element,
     medium_theta,
-    mu_A,
-    mulperm,
-    old_code,
-    omega,
-    one_dominates,
-    p_trans,
-    permtrim,
-    permtrim_list,
-    phi1,
-    sg,
-    split_perms,
     strict_theta,
-    theta,
-    trimcode,
     uncode,
 )
-from schubmult.poly_lib import GeneratingSet, call_zvars, efficient_subs, elem_sym_func, elem_sym_func_q, elem_sym_poly, elem_sym_poly_q, is_indexed, q_vector
+from schubmult.poly_lib import GeneratingSet, call_zvars, elem_sym_func_q, elem_sym_poly_q, is_indexed
 from schubmult.schub_lib import (
-    check_blocks,
     compute_vpathdicts,
-    divdiffable,
     double_elem_sym_q,
-    elem_sym_perms,
-    elem_sym_perms_op,
     elem_sym_perms_q,
     elem_sym_perms_q_op,
-    is_coeff_irreducible,
-    is_hook,
-    is_reducible,
-    is_split_two,
-    kdown_perms,
-    pull_out_var,
-    reduce_coeff,
-    reduce_descents,
-    reduce_q_coeff,
-    reduce_q_coeff_u_only,
-    try_reduce_u,
-    try_reduce_v,
-    will_formula_work,
 )
 
 
@@ -156,9 +113,9 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.
 def nil_hecke(perm_dict, v, n, var2=_vars.var2, var3=_vars.var3):
     if v == Permutation([1, 2]):
         return perm_dict
-    th = strict_theta(inverse(v))
-    mu = permtrim(uncode(th))
-    vmu = permtrim(mulperm([*v], mu))
+    th = strict_theta(~v)
+    mu = uncode(th)
+    vmu = v * mu
 
     ret_dict = {}
     while th[-1] == 0:
@@ -227,12 +184,12 @@ def elem_sym_func_q_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, q_var=_v
 
 
 def schubpoly_quantum(v, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var, coeff=1):
-    th = strict_theta(inverse(v))
-    mu = permtrim(uncode(th))
+    th = strict_theta(~v)
+    mu = uncode(th)
     vmu = v * mu  # permtrim(mulperm([*v], mu))
     if len(th) == 0:
         return coeff
-    while th[-1] == 0:
+    while len(th) > 0 and th[-1] == 0:
         th.pop()
     vpathdicts = compute_vpathdicts(th, vmu)
     vpathsums = {Permutation([1, 2]): {Permutation([1, 2]): coeff}}
@@ -287,8 +244,8 @@ def schubpoly_quantum(v, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var, 
 def schubmult(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
     if v == Permutation([1, 2]):
         return perm_dict
-    th = strict_theta(inverse(v))
-    mu = permtrim(uncode(th))
+    th = strict_theta(~v)
+    mu = uncode(th)
     vmu = v * mu  # permtrim(mulperm([*v], mu))
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
@@ -348,12 +305,12 @@ def schubmult(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var)
 def schubmult_db(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
     if v == Permutation([1, 2]):
         return perm_dict
-    th = medium_theta(inverse(v))
+    th = medium_theta(~v)
     if len(th) == 0:
         return perm_dict
     while th[-1] == 0:
         th.pop()
-    mu = permtrim(uncode(th))
+    mu = uncode(th)
     vmu = v * mu  # permtrim(mulperm([*v], mu))
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)

@@ -7,66 +7,25 @@ from symengine import sympify
 from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
     Permutation,
-    add_perm_dict,
     code,
-    count_bruhat,
     count_less_than,
-    cycle,
-    dominates,
-    ensure_perms,
-    get_cycles,
-    getpermval,
-    has_bruhat_ascent,
-    has_bruhat_descent,
     inv,
-    inverse,
     is_parabolic,
     longest_element,
     medium_theta,
-    mu_A,
-    mulperm,
-    old_code,
     omega,
-    one_dominates,
-    p_trans,
     permtrim,
-    permtrim_list,
-    phi1,
-    sg,
-    split_perms,
-    strict_theta,
-    theta,
     trimcode,
     uncode,
 )
-from schubmult.poly_lib import GeneratingSet, call_zvars, div_diff, elem_sym_func, elem_sym_func_q, elem_sym_poly, elem_sym_poly_q, expand, is_indexed, q_vector
+from schubmult.poly_lib import GeneratingSet, div_diff, expand, q_vector
 from schubmult.schub_lib import (
     check_blocks,
-    compute_vpathdicts,
-    divdiffable,
-    double_elem_sym_q,
-    elem_sym_perms,
-    elem_sym_perms_op,
-    elem_sym_perms_q,
-    elem_sym_perms_q_op,
-    is_coeff_irreducible,
-    is_hook,
-    is_reducible,
-    is_split_two,
-    kdown_perms,
-    pull_out_var,
-    reduce_coeff,
-    reduce_descents,
     reduce_q_coeff,
-    reduce_q_coeff_u_only,
-    try_reduce_u,
-    try_reduce_v,
-    will_formula_work,
 )
 from schubmult.schubmult_double import compute_positive_rep, posify
 from schubmult.schubmult_q_double._funcs import (
     factor_out_q_keep_factored,
-    # mult_poly,
     nil_hecke,
     schubmult,
     schubmult_db,
@@ -132,7 +91,7 @@ def q_posify(u, v, w, same, val, var2, var3, msg, subs_dict2):
                     val2 += to_add
                 else:
                     try:
-                        if code(inverse(v)) == medium_theta(inverse(v)):
+                        if code(~v) == medium_theta(~v):
                             val2 += q_part * q_dict[q_part]
                         else:
                             q_part2 = q_part

@@ -1,31 +1,3 @@
-# class Gens(Option, metaclass=OptionType):
-#     """``gens`` option to polynomial manipulation functions. """
-
-#     option = 'gens'
-
-#     requires: list[str] = []
-#     excludes: list[str] = []
-
-#     @classmethod
-#     def default(cls):
-#         return ()
-
-#     @classmethod
-#     def preprocess(cls, gens):
-#         if isinstance(gens, Basic):
-#             gens = (gens,)
-#         elif len(gens) == 1 and is_sequence(gens[0]):
-#             gens = gens[0]
-
-#         if gens == (None,):
-#             gens = ()
-#         elif has_dups(gens):
-#             raise GeneratorsError("duplicated generators: %s" % str(gens))
-#         elif any(gen.is_commutative is False for gen in gens):
-#             raise GeneratorsError("non-commutative generators: %s" % str(gens))
-
-#         return tuple(gens
-
 import sys
 from functools import cached_property
 
@@ -39,58 +11,16 @@ from schubmult.perm_lib import (
     Permutation,
     add_perm_dict,
     code,
-    count_bruhat,
-    count_less_than,
-    cycle,
-    dominates,
-    ensure_perms,
-    get_cycles,
-    getpermval,
-    has_bruhat_ascent,
-    has_bruhat_descent,
     inv,
-    inverse,
-    is_parabolic,
-    longest_element,
-    medium_theta,
     mu_A,
-    mulperm,
-    old_code,
-    omega,
-    one_dominates,
-    p_trans,
     permtrim,
-    permtrim_list,
-    phi1,
-    sg,
     split_perms,
-    strict_theta,
     theta,
     trimcode,
     uncode,
 )
 from schubmult.poly_lib import GeneratingSet, efficient_subs, is_indexed
 from schubmult.schub_lib import (
-    check_blocks,
-    compute_vpathdicts,
-    divdiffable,
-    double_elem_sym_q,
-    elem_sym_perms,
-    elem_sym_perms_op,
-    elem_sym_perms_q,
-    elem_sym_perms_q_op,
-    is_coeff_irreducible,
-    is_hook,
-    is_reducible,
-    is_split_two,
-    kdown_perms,
-    pull_out_var,
-    reduce_coeff,
-    reduce_descents,
-    reduce_q_coeff,
-    reduce_q_coeff_u_only,
-    try_reduce_u,
-    try_reduce_v,
     will_formula_work,
 )
 
@@ -149,12 +79,12 @@ for i in range(1, 100):
     subs_dict[_vars.var2[i]] = sm
 
 
-def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, subs_dict, debug):
+def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, subs_dict):
     try:
         return int(val)
     except Exception:
         if same:
-            val = efficient_subs(sympify(val), subs_dict).expand()#expand(sympify(val).xreplace(subs_dict))
+            val = efficient_subs(sympify(val), subs_dict).expand()  # expand(sympify(val).xreplace(subs_dict))
         else:
             if not down:
                 val = posify(
@@ -182,12 +112,12 @@ def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, 
             #     )
             #     exit(1)
             # if check and expand(val - check_coeff_dict.get(perm, 0)) != 0:
-            # if expand(val - check_val) != 0 and debug:
-            #     _display(
-            #         f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_val=}",
-            #     )
-            #     logger.debug("Yep it's here")
-            #     exit(1)
+            if check and expand(val - check_val) != 0:
+                _display(
+                    f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_val=}",
+                )
+                logger.debug("Yep it's here")
+                exit(1)
     return val
 
 
@@ -200,7 +130,6 @@ def _display_full(
     kperm=None,
     N=None,
 ):
-
     subs_dict2 = {}
     for i in range(1, 100):
         sm = var2[1]
@@ -294,7 +223,7 @@ def _display_full(
                 subs_dict = {}
                 for s in sympify(val).free_symbols:
                     if is_indexed(s) and s.base == _vars.var1:
-                        if s.indices[0]<=N:
+                        if s.indices[0] <= N:
                             subs_dict[s] = var2[s.indices[0]]
                         else:
                             subs_dict[s] = var3[s.indices[0] - N]
@@ -403,7 +332,7 @@ def main(argv=None):
         check = args.check
         display_positive = args.display_positive
         pr = args.pr
-        debug = args.debug
+        # debug = args.debug
 
         # logger.log(logging.DEBUG, f"main boing 1 {var2=}{var3=}{same=}")
         if same:
@@ -487,11 +416,11 @@ def main(argv=None):
                 coeff_dict = {}
                 th = theta(perms[1])
                 muv = uncode(th)
-                muvn1v = mulperm(inverse(muv), perms[1])
+                muvn1v = (~muv) * perms[1]
                 coeff_dict2 = {perms[0]: 1}
                 coeff_dict2 = schubmult(coeff_dict2, muv, var2, var3)
                 for perm, val in coeff_dict2.items():
-                    w = mulperm([*perm], muvn1v)
+                    w = perm * muvn1v
                     if inv(w) + inv(muvn1v) == inv(perm):
                         coeff_dict[Permutation(w)] = val
                 posified = True
@@ -522,7 +451,7 @@ def main(argv=None):
 
             if not posified and display_positive:
                 # print(f"{coeff_dict=}")
-                coeff_dict = {k: pre_posify(perms, k, v, check, check_coeff_dict.get(k, 0), same, down, var2, var3, msg, subs_dict, debug) for k, v in coeff_dict.items()}
+                coeff_dict = {k: pre_posify(perms, k, v, check, check_coeff_dict.get(k, 0), same, down, var2, var3, msg, subs_dict) for k, v in coeff_dict.items()}
 
             if pr or formatter is None:
                 raw_result_dict = _display_full(

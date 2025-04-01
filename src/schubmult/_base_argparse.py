@@ -1,4 +1,3 @@
-import os
 from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
 
 import sympy

@@ -15,55 +15,25 @@ from schubmult.perm_lib import (
     Permutation,
     add_perm_dict,
     code,
-    count_bruhat,
-    count_less_than,
     cycle,
     dominates,
-    ensure_perms,
-    get_cycles,
-    getpermval,
-    has_bruhat_ascent,
-    has_bruhat_descent,
     inv,
-    inverse,
-    is_parabolic,
-    longest_element,
-    medium_theta,
-    mu_A,
-    mulperm,
-    old_code,
-    omega,
     one_dominates,
-    p_trans,
-    permtrim,
-    permtrim_list,
     phi1,
-    sg,
-    strict_theta,
     theta,
-    trimcode,
     uncode,
 )
-from schubmult.poly_lib import GeneratingSet, efficient_subs, elem_sym_func, elem_sym_poly, expand, is_indexed, perm_act, schubpoly
+from schubmult.poly_lib import GeneratingSet, efficient_subs, elem_sym_func, elem_sym_poly, expand, is_indexed, schubpoly
 from schubmult.schub_lib import (
-    check_blocks,
     compute_vpathdicts,
     divdiffable,
-    double_elem_sym_q,
     elem_sym_perms,
     elem_sym_perms_op,
-    elem_sym_perms_q,
-    elem_sym_perms_q_op,
     is_coeff_irreducible,
-    is_hook,
-    is_reducible,
     is_split_two,
-    kdown_perms,
     pull_out_var,
     reduce_coeff,
     reduce_descents,
-    reduce_q_coeff,
-    reduce_q_coeff_u_only,
     try_reduce_u,
     try_reduce_v,
     will_formula_work,
@@ -257,7 +227,7 @@ def forwardcoeff(u, v, perm, var2=None, var3=None):
 
 def dualcoeff(u, v, perm, var2=None, var3=None):
     if inv(u) == 0:
-        logger.debug("hi")
+        logger.debug("Recording line number")
         vp = v * (~perm)
         if inv(vp) == inv(v) - inv(perm):
             val = schubpoly(vp, var2, var3)
@@ -269,9 +239,9 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
     if dominates(u, perm):
         dpret = dualpieri(u, v, perm)
     else:
-        logger.debug("hi")
+        logger.debug("Recording line number")
         dpret = []
-        logger.debug("hi")
+        logger.debug("Recording line number")
         th = theta(u)
         muu = uncode(th)
         umun1 = (~u) * muu
@@ -284,7 +254,7 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
             logger.debug(f"{muu=} {v=} {w=}")
             logger.debug(f"{dpret=}")
     for vlist, vp in dpret:
-        logger.debug("hi")
+        logger.debug("Recording line number")
         toadd = 1
         for i in range(len(vlist)):
             for j in range(len(vlist[i])):
@@ -318,8 +288,8 @@ def dualpieri(mu, v, w):
     c = Permutation([1, 2])
     for i in range(len(lm), len(cn1w)):
         c = cycle(i - len(lm) + 1, cn1w[i]) * c
-    c = permtrim(c)
-    logger.debug("hi")
+    # c = permtrim(c)
+    logger.debug("Recording line number")
     res = [[[], v]]
     logger.debug(f"{v=} {type(v)=}")
     for i in range(len(lm)):
@@ -508,7 +478,7 @@ def poly_to_vec(poly, vec0=None, var3=_vars.var3):
 
 def shiftsub(pol, var2=_vars.var2):
     subs_dict = {var2[i]: var2[i + 1] for i in range(99)}
-    return efficient_subs(sympify(pol),subs_dict)
+    return efficient_subs(sympify(pol), subs_dict)
 
 
 def shiftsubz(pol, var3=_vars.var3):
@@ -558,7 +528,7 @@ def is_flat_term(term):
     return True
 
 
-def flatten_factors(term, var2=None, var3=None):
+def flatten_factors(term):
     found_one = False
     if is_flat_term(term):
         return term, False
@@ -703,12 +673,12 @@ def is_negative(term):
                 mulsign = 1
                 if str(arg.args[0]).find("-y") != -1:
                     mulsign = -1
-                sign *= mulsign ** term.index
+                sign *= mulsign**term.index
     elif isinstance(term, Pow):
         mulsign = 1
         if str(term.args[0]).find("-y") != -1:
             mulsign = -1
-        sign *= mulsign ** term.index
+        sign *= mulsign**term.index
     return sign < 0
 
 
@@ -797,7 +767,7 @@ def compute_positive_rep(val, var2=GeneratingSet("y"), var3=GeneratingSet("z"), 
     notint = False
     try:
         val2 = int(expand(val))
-        #val2 = expand(val)
+        # val2 = expand(val)
     except Exception:
         notint = True
     if notint:
@@ -993,10 +963,9 @@ def posify_generic_partial(val, u2, v2, w2):
     val2 = val
     val = posify(val, u2, v2, w2, var2=_vars.var_g1, var3=_vars.var_g2, msg=True, do_pos_neg=False, sign_only=False, optimize=False)
     if expand(val - val2) != 0:
-       import sys
-       logger.debug("Warning, failed on a case")
-       raise Exception(f"{val=} {val2=} {u2=} {v2=} {w2=}")
-    #print("FROFL")
+        logger.debug("Warning, failed on a case")
+        raise Exception(f"{val=} {val2=} {u2=} {v2=} {w2=}")
+    # print("FROFL")
     return val
 
 
@@ -1025,7 +994,7 @@ def posify(
     logger.debug(f"NEW {val=} {u2=} {v2=} {w2=}")
     hard_debug = True
     if hard_debug:
-        if expand(val - schubmult_one(u2, v2,var2,var3).get(w2,0)) !=0:
+        if expand(val - schubmult_one(u2, v2, var2, var3).get(w2, 0)) != 0:
             raise Exception("Bad news")
     oldval = val
     if inv(u2) + inv(v2) - inv(w2) == 0:
@@ -1040,7 +1009,7 @@ def posify(
         return 0
     logger.debug("proceeding")
     u, v, w = u2, v2, w2
-    #u, v, w = try_reduce_v(u2, v2, w2)
+    # u, v, w = try_reduce_v(u2, v2, w2)
     if is_coeff_irreducible(u2, v2, w2):
         u, v, w = try_reduce_u(u2, v2, w2)
         if is_coeff_irreducible(u, v, w):
@@ -1058,7 +1027,7 @@ def posify(
                                 u, v, w = reduce_coeff(u, v, w)
 
     if w != w2 and sign_only:
-        #logger.debug(f"Return 0 ")
+        # logger.debug(f"Return 0 ")
         return 0
     logger.debug(f"Reduced to {u2=} {v2=} {w2=} {val=}")
     if is_coeff_irreducible(u, v, w):
@@ -1070,9 +1039,9 @@ def posify(
             if not is_coeff_irreducible(u3, v3, w3):
                 u, v, w = u3, v3, w3
     split_two_b, split_two = is_split_two(u, v, w)
-    logger.debug("hi")
+    logger.debug("Recording line number")
     if len([i for i in code(v) if i != 0]) == 1:
-        logger.debug("hi")
+        logger.debug("Recording line number")
         if sign_only:
             return 0
         cv = code(v)
@@ -1097,7 +1066,7 @@ def posify(
         #     logger.debug("This is bad")
         #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
     if will_formula_work(v, u) or dominates(u, w):
-        logger.debug("hi")
+        logger.debug("Recording line number")
         if sign_only:
             return 0
         val = dualcoeff(u, v, w, var2, var3)
@@ -1107,7 +1076,7 @@ def posify(
         logger.debug(f"Returning {u2=} {v2=} {w2=} {val=}")
         return val
     if inv(w) - inv(u) == 1:
-        logger.debug("hi")
+        logger.debug("Recording line number")
         if sign_only:
             return 0
         a, b = -1, -1
@@ -1165,7 +1134,7 @@ def posify(
         logger.debug(f"good to go {u2=} {v2=} {w2=}")
         return val
     # if split_two_b:
-    #     logger.debug("hi")
+    #     logger.debug("Recording line number")
     #     if sign_only:
     #         return 0
     #     cycles = split_two
@@ -1349,7 +1318,7 @@ def posify(
     #         logger.debug(f"Returning {u2=} {v2=} {w2=} {val=}")
     #         return val
     if will_formula_work(u, v):
-        logger.debug("hi")
+        logger.debug("Recording line number")
         if sign_only:
             return 0
         logger.debug(f"Returning {u2=} {v2=} {w2=} {val=}")
@@ -1357,13 +1326,13 @@ def posify(
         # if expand(val - oldval) != 0:
         #     logger.debug("This is bad")
         #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
-    logger.debug("hi")
-    c01 = code(u)
-    c02 = code(w)
-    c03 = code(v)
+    logger.debug("Recording line number")
+    # c01 = code(u)
+    # c02 = code(w)
+    # c03 = code(v)
 
-    c1 = code(inverse(u))
-    c2 = code(inverse(w))
+    c1 = code(~u)
+    c2 = code(~w)
 
     if one_dominates(u, w):
         if sign_only:
@@ -1376,11 +1345,11 @@ def posify(
             # w = tuple(w)
             # v = tuple(v)
             c2 = code(~w)
-            c03 = code(v)
-            c01 = code(u)
-            c02 = code(w)
+            # c03 = code(v)
+            # c01 = code(u)
+            # c02 = code(w)
         # if is_reducible(v):
-        #     logger.debug("hi")
+        #     logger.debug("Recording line number")
         #     if sign_only:
         #         return 0
         #     newc = []
@@ -1415,7 +1384,7 @@ def posify(
         #     return val
         # removed, iffy (hard to implement)
         # if c01[0] == c02[0] and c01[0] != 0:
-        #     logger.debug("hi")
+        #     logger.debug("Recording line number")
         #     if sign_only:
         #         return 0
         #     varl = c01[0]
@@ -1436,7 +1405,7 @@ def posify(
         #     logger.debug(f"Returning {u2=} {v2=} {w2=} {val=}")
         #     return val
         if c1[0] == c2[0]:
-            logger.debug("hi")
+            logger.debug("Recording line number")
             if sign_only:
                 return 0
             vp = pull_out_var(c1[0] + 1, v)
@@ -1461,7 +1430,7 @@ def posify(
             return val
     logger.debug("Fell all the way through. Cleverness did not save us")
     if not sign_only:
-        logger.debug("hi")
+        logger.debug("Recording line number")
         if optimize:
             if inv(u) + inv(v) - inv(w) == 1:
                 val2 = compute_positive_rep(val, var2, var3, msg, False)
@@ -1472,7 +1441,7 @@ def posify(
             return val
         logger.debug("RETURNINGOLDVAL")
         return oldval
-    logger.debug("hi")
+    logger.debug("Recording line number")
     d = expand(val).as_coefficients_dict()
     for v in d.values():
         if v < 0:
@@ -1523,7 +1492,7 @@ def schub_coprod(mperm, indices, var2=_vars.var2, var3=_vars.var3):
             firstperm = Permutation(downperm[0:N])
             secondperm = Permutation([downperm[i] - N for i in range(N, len(downperm))])
 
-            val = efficient_subs(sympify(coeff_dict[perm]),subs_dict_coprod)
+            val = efficient_subs(sympify(coeff_dict[perm]), subs_dict_coprod)
 
             key = (firstperm, secondperm)
             ret_dict[key] = val
