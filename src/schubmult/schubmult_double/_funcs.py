@@ -250,6 +250,7 @@ def forwardcoeff(u, v, perm, var2=None, var3=None):
     w = perm * vmun1
     if inv(w) == inv(vmun1) + inv(perm):
         coeff_dict = schubmult_one(u, muv, var2, var3)
+        logger.debug(f"{coeff_dict.get(w,0)=} {w=} {perm=} {vmun1=} {v=} {muv=}")
         return coeff_dict.get(w, 0)
     return 0
 
@@ -297,7 +298,7 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
     if expand(val - val_ret) != 0:
         logger.debug(f"{schub_val=}")
         logger.debug(f"{val=} {u=} {v=} {var2[1]=} {var3[1]=}  {perm=} {schub_val.get(perm,0)=}")
-    logger.debug("good to go")
+    logger.debug(f"good to go {ret=}")
     return ret
 
 
@@ -788,6 +789,7 @@ def find_base_vectors(monom_list, var2, var3, depth):
 
 
 def compute_positive_rep(val, var2=GeneratingSet("y"), var3=GeneratingSet("z"), msg=False, do_pos_neg=True):
+    do_pos_neg = False
     from schubmult.logging import get_logger, init_logging
 
     init_logging(True)
@@ -991,7 +993,10 @@ def posify_generic_partial(val, u2, v2, w2):
     val2 = val
     val = posify(val, u2, v2, w2, var2=_vars.var_g1, var3=_vars.var_g2, msg=True, do_pos_neg=False, sign_only=False, optimize=False)
     if expand(val - val2) != 0:
-        raise Exception(f"{val=} {val2=} {u2=} {v2=} {w2=}")
+       import sys
+       logger.debug("Warning, failed on a case")
+       raise Exception(f"{val=} {val2=} {u2=} {v2=} {w2=}")
+    #print("FROFL")
     return val
 
 
@@ -1017,19 +1022,26 @@ def posify(
     optimize=True,
     n=_vars.n,
 ):
-    logger.debug("NEW")
+    logger.debug(f"NEW {val=} {u2=} {v2=} {w2=}")
+    hard_debug = True
+    if hard_debug:
+        if expand(val - schubmult_one(u2, v2,var2,var3).get(w2,0)) !=0:
+            raise Exception("Bad news")
     oldval = val
     if inv(u2) + inv(v2) - inv(w2) == 0:
+        logger.debug(f"Hmm this is probably not or val inty true {val=}")
         return val
-    cdv = code(v2)
-    if set(cdv) == {0, 1} and do_pos_neg:
-        return val
+    # cdv = code(v2)
+    # # if set(cdv) == {0, 1} and do_pos_neg:
+    #     return val
 
     if not sign_only and expand(val) == 0:
+        logger.debug(f"Hmm this is probably not true {u2=} {v2=} {w2=} {val=}")
         return 0
-
-    u, v, w = try_reduce_v(u2, v2, w2)
-    if is_coeff_irreducible(u, v, w):
+    logger.debug("proceeding")
+    u, v, w = u2, v2, w2
+    #u, v, w = try_reduce_v(u2, v2, w2)
+    if is_coeff_irreducible(u2, v2, w2):
         u, v, w = try_reduce_u(u2, v2, w2)
         if is_coeff_irreducible(u, v, w):
             u, v, w = u2, v2, w2
@@ -1046,8 +1058,9 @@ def posify(
                                 u, v, w = reduce_coeff(u, v, w)
 
     if w != w2 and sign_only:
+        #logger.debug(f"Return 0 ")
         return 0
-
+    logger.debug(f"Reduced to {u2=} {v2=} {w2=} {val=}")
     if is_coeff_irreducible(u, v, w):
         u3, v3, w3 = try_reduce_v(u, v, w)
         if not is_coeff_irreducible(u3, v3, w3):
@@ -1073,6 +1086,7 @@ def posify(
         val = 0
         w2 = w
         hvarset = [w2[i] for i in range(min(len(w2), k))] + [i + 1 for i in range(len(w2), k)] + [w2[b] for b in range(k, len(u)) if u[b] != w2[b]] + [w2[b] for b in range(len(u), len(w2))]
+        logger.debug(f"Returning {u2=} {v2=} {w2=} {val=}")
         return elem_sym_poly(
             p - r,
             k + p - 1,
@@ -1086,10 +1100,12 @@ def posify(
         logger.debug("hi")
         if sign_only:
             return 0
-        return dualcoeff(u, v, w, var2, var3)
-        # if expand(val - oldval) != 0:
-        #     logger.debug("This is bad")
-        #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
+        val = dualcoeff(u, v, w, var2, var3)
+        if expand(val - oldval) != 0:
+            logger.debug("This is bad")
+            logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=} {will_formula_work(v,u)=} {dominates(u,w)=}")
+        logger.debug(f"Returning {u2=} {v2=} {w2=} {val=}")
+        return val
     if inv(w) - inv(u) == 1:
         logger.debug("hi")
         if sign_only:
@@ -1143,196 +1159,200 @@ def posify(
                     toadd *= var2[yv] - var3[oaf[j]]
             toadd *= schubpoly(v3, [0, var2[w[a]], var2[w[b]]], var3)
             val += toadd
-        # if expand(val - oldval) != 0:
-        #     logger.debug("This is bad")
-        #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
+        if expand(val - oldval) != 0:
+            logger.debug("This is bad")
+            logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
+        logger.debug(f"good to go {u2=} {v2=} {w2=}")
         return val
-    if split_two_b:
-        logger.debug("hi")
-        if sign_only:
-            return 0
-        cycles = split_two
-        a1, b1 = cycles[0]
-        a2, b2 = cycles[1]
-        a1 -= 1
-        b1 -= 1
-        a2 -= 1
-        b2 -= 1
-        spo = sorted([a1, b1, a2, b2])
-        real_a1 = min(spo.index(a1), spo.index(b1))
-        real_a2 = min(spo.index(a2), spo.index(b2))
-        real_b1 = max(spo.index(a1), spo.index(b1))
-        real_b2 = max(spo.index(a2), spo.index(b2))
+    # if split_two_b:
+    #     logger.debug("hi")
+    #     if sign_only:
+    #         return 0
+    #     cycles = split_two
+    #     a1, b1 = cycles[0]
+    #     a2, b2 = cycles[1]
+    #     a1 -= 1
+    #     b1 -= 1
+    #     a2 -= 1
+    #     b2 -= 1
+    #     spo = sorted([a1, b1, a2, b2])
+    #     real_a1 = min(spo.index(a1), spo.index(b1))
+    #     real_a2 = min(spo.index(a2), spo.index(b2))
+    #     real_b1 = max(spo.index(a1), spo.index(b1))
+    #     real_b2 = max(spo.index(a2), spo.index(b2))
 
-        good1 = False
-        good2 = False
-        if real_b1 - real_a1 == 1:
-            good1 = True
-        if real_b2 - real_a2 == 1:
-            good2 = True
-        a, b = -1, -1
-        if good1 and not good2:
-            a, b = min(a2, b2), max(a2, b2)
-        if good2 and not good1:
-            a, b = min(a1, b1), max(a1, b1)
-        arr = [[[], v]]
-        d = -1
-        for i in range(len(v) - 1):
-            if v[i] > v[i + 1]:
-                d = i + 1
-        for i in range(d):
-            arr2 = []
+    #     good1 = False
+    #     good2 = False
+    #     if real_b1 - real_a1 == 1:
+    #         good1 = True
+    #     if real_b2 - real_a2 == 1:
+    #         good2 = True
+    #     a, b = -1, -1
+    #     if good1 and not good2:
+    #         a, b = min(a2, b2), max(a2, b2)
+    #     if good2 and not good1:
+    #         a, b = min(a1, b1), max(a1, b1)
+    #     arr = [[[], v]]
+    #     d = -1
+    #     for i in range(len(v) - 1):
+    #         if v[i] > v[i + 1]:
+    #             d = i + 1
+    #     for i in range(d):
+    #         arr2 = []
 
-            if i in [a1, b1, a2, b2]:
-                continue
-            i2 = 1
-            i2 += len([aa for aa in [a1, b1, a2, b2] if i > aa])
-            for vr, v2 in arr:
-                dpret = pull_out_var(i2, v2)
-                for v3r, v3 in dpret:
-                    arr2 += [[[*vr, (v3r, i + 1)], v3]]
-            arr = arr2
-        val = 0
+    #         if i in [a1, b1, a2, b2]:
+    #             continue
+    #         i2 = 1
+    #         i2 += len([aa for aa in [a1, b1, a2, b2] if i > aa])
+    #         for vr, v2 in arr:
+    #             dpret = pull_out_var(i2, v2)
+    #             for v3r, v3 in dpret:
+    #                 arr2 += [[[*vr, (v3r, i + 1)], v3]]
+    #         arr = arr2
+    #     val = 0
 
-        if good1:
-            arr2 = []
-            for L in arr:
-                v3 = L[-1]
-                if v3[real_a1] < v3[real_b1]:
-                    continue
-                v3 = v3.swap(real_a1, real_b1)
-                arr2 += [[L[0], v3]]
-            arr = arr2
-            if not good2:
-                for i in range(4):
-                    arr2 = []
+    #     if good1:
+    #         arr2 = []
+    #         for L in arr:
+    #             v3 = L[-1]
+    #             if v3[real_a1] < v3[real_b1]:
+    #                 continue
+    #             v3 = v3.swap(real_a1, real_b1)
+    #             arr2 += [[L[0], v3]]
+    #         arr = arr2
+    #         if not good2:
+    #             for i in range(4):
+    #                 arr2 = []
 
-                    if i in [real_a2, real_b2]:
-                        continue
-                    if i == real_a1:
-                        var_index = min(a1, b1) + 1
-                    elif i == real_b1:
-                        var_index = max(a1, b1) + 1
-                    i2 = 1
-                    i2 += len([aa for aa in [real_a2, real_b2] if i > aa])
-                    for vr, v2 in arr:
-                        dpret = pull_out_var(i2, v2)
-                        for v3r, v3 in dpret:
-                            arr2 += [[[*vr, (v3r, var_index)], v3]]
-                    arr = arr2
-        if good2:
-            arr2 = []
-            for L in arr:
-                v3 = L[-1]
-                try:
-                    if v3[real_a2] < v3[real_b2]:
-                        continue
-                    v3 = v3.swap(real_a2, real_b2)
-                except IndexError:
-                    continue
-                arr2 += [[L[0], v3]]
-            arr = arr2
-            if not good1:
-                for i in range(4):
-                    arr2 = []
+    #                 if i in [real_a2, real_b2]:
+    #                     continue
+    #                 if i == real_a1:
+    #                     var_index = min(a1, b1) + 1
+    #                 elif i == real_b1:
+    #                     var_index = max(a1, b1) + 1
+    #                 i2 = 1
+    #                 i2 += len([aa for aa in [real_a2, real_b2] if i > aa])
+    #                 for vr, v2 in arr:
+    #                     dpret = pull_out_var(i2, v2)
+    #                     for v3r, v3 in dpret:
+    #                         arr2 += [[[*vr, (v3r, var_index)], v3]]
+    #                 arr = arr2
+    #     if good2:
+    #         arr2 = []
+    #         for L in arr:
+    #             v3 = L[-1]
+    #             try:
+    #                 if v3[real_a2] < v3[real_b2]:
+    #                     continue
+    #                 v3 = v3.swap(real_a2, real_b2)
+    #             except IndexError:
+    #                 continue
+    #             arr2 += [[L[0], v3]]
+    #         arr = arr2
+    #         if not good1:
+    #             for i in range(4):
+    #                 arr2 = []
 
-                    if i in [real_a1, real_b1]:
-                        continue
-                    i2 = 1
-                    i2 += len([aa for aa in [real_a1, real_b1] if i > aa])
-                    if i == real_a2:
-                        var_index = min(a2, b2) + 1
-                    elif i == real_b2:
-                        var_index = max(a2, b2) + 1
-                    for vr, v2 in arr:
-                        dpret = pull_out_var(i2, v2)
-                        for v3r, v3 in dpret:
-                            arr2 += [[[*vr, (v3r, var_index)], v3]]
-                    arr = arr2
+    #                 if i in [real_a1, real_b1]:
+    #                     continue
+    #                 i2 = 1
+    #                 i2 += len([aa for aa in [real_a1, real_b1] if i > aa])
+    #                 if i == real_a2:
+    #                     var_index = min(a2, b2) + 1
+    #                 elif i == real_b2:
+    #                     var_index = max(a2, b2) + 1
+    #                 for vr, v2 in arr:
+    #                     dpret = pull_out_var(i2, v2)
+    #                     for v3r, v3 in dpret:
+    #                         arr2 += [[[*vr, (v3r, var_index)], v3]]
+    #                 arr = arr2
 
-            for L in arr:
-                v3 = L[-1]
-                tomul = 1
-                doschubpoly = True
-                if (not good1 or not good2) and v3[0] < v3[1] and (good1 or good2):
-                    continue
-                if (good1 or good2) and (not good1 or not good2):
-                    v3 = v3.swap(0, 1)
-                elif not good1 and not good2:
-                    doschubpoly = False
-                    if v3[0] < v3[1]:
-                        dual_u = uncode([2, 0])
-                        dual_w = Permutation([4, 2, 1, 3])
-                        coeff = perm_act(dualcoeff(dual_u, v3, dual_w, var2, var3), 2, var2)
+    #         for L in arr:
+    #             v3 = L[-1]
+    #             tomul = 1
+    #             doschubpoly = True
+    #             if (not good1 or not good2) and v3[0] < v3[1] and (good1 or good2):
+    #                 continue
+    #             if (good1 or good2) and (not good1 or not good2):
+    #                 v3 = v3.swap(0, 1)
+    #             elif not good1 and not good2:
+    #                 doschubpoly = False
+    #                 if v3[0] < v3[1]:
+    #                     dual_u = uncode([2, 0])
+    #                     dual_w = Permutation([4, 2, 1, 3])
+    #                     coeff = perm_act(dualcoeff(dual_u, v3, dual_w, var2, var3), 2, var2)
 
-                    elif len(v3) < 3 or v3[1] < v3[2]:
-                        if len(v3) <= 3 or v3[2] < v3[3]:
-                            coeff = 0
-                            continue
-                        v3 = v3.swap(0, 1).swap(2, 3)
-                        coeff = perm_act(schubpoly(v3, var2, var3), 2, var2)
-                    elif len(v3) <= 3 or v3[2] < v3[3]:
-                        if len(v3) <= 3:
-                            v3 += [4]
-                        v3 = v3.swap(2, 3)
-                        coeff = perm_act(
-                            posify(
-                                schubmult_one(Permutation([1, 3, 2]), v3, var2, var3).get(
-                                    Permutation([2, 4, 3, 1]),
-                                    0,
-                                ),
-                                Permutation([1, 3, 2]),
-                                v3,
-                                Permutation([2, 4, 3, 1]),
-                                var2,
-                                var3,
-                                msg,
-                                do_pos_neg,
-                                optimize=optimize,
-                            ),
-                            2,
-                            var2,
-                        )
-                        logger.debug(f"{coeff=}")
-                    else:
-                        coeff = perm_act(
-                            schubmult_one(Permutation([1, 3, 2]), v3, var2, var3).get(
-                                Permutation([2, 4, 1, 3]),
-                                0,
-                            ),
-                            2,
-                            var2,
-                        )
-                    logger.debug(f"{coeff=}")
-                    # if expand(coeff) == 0:
-                    #     logger.debug("coeff 0 oh no")
-                    tomul = sympify(coeff)
-                toadd = 1
-                for i in range(len(L[0])):
-                    var_index = L[0][i][1]
-                    oaf = L[0][i][0]
-                    if var_index - 1 >= len(w):
-                        yv = var_index
-                    else:
-                        yv = w[var_index - 1]
-                    for j in range(len(oaf)):
-                        toadd *= var2[yv] - var3[oaf[j]]
-                if (not good1 or not good2) and (good1 or good2):
-                    varo = [0, var2[w[a]], var2[w[b]]]
-                else:
-                    varo = [0, *[var2[w[spo[k]]] for k in range(4)]]
-                if doschubpoly:
-                    toadd *= schubpoly(v3, varo, var3)
-                else:
-                    subs_dict3 = {var2[i]: varo[i] for i in range(len(varo))}
-                    toadd *= efficient_subs(tomul, subs_dict3)
-                val += toadd
-                logger.debug(f"accum {val=}")
-            #logger.debug(f"{expand(val-oldval)=}")
+    #                 elif len(v3) < 3 or v3[1] < v3[2]:
+    #                     if len(v3) <= 3 or v3[2] < v3[3]:
+    #                         coeff = 0
+    #                         continue
+    #                     v3 = v3.swap(0, 1).swap(2, 3)
+    #                     coeff = perm_act(schubpoly(v3, var2, var3), 2, var2)
+    #                 elif len(v3) <= 3 or v3[2] < v3[3]:
+    #                     if len(v3) <= 3:
+    #                         v3 += [4]
+    #                     v3 = v3.swap(2, 3)
+    #                     coeff = perm_act(
+    #                         posify(
+    #                             schubmult_one(Permutation([1, 3, 2]), v3, var2, var3).get(
+    #                                 Permutation([2, 4, 3, 1]),
+    #                                 0,
+    #                             ),
+    #                             Permutation([1, 3, 2]),
+    #                             v3,
+    #                             Permutation([2, 4, 3, 1]),
+    #                             var2,
+    #                             var3,
+    #                             msg,
+    #                             do_pos_neg,
+    #                             optimize=optimize,
+    #                         ),
+    #                         2,
+    #                         var2,
+    #                     )
+    #                     logger.debug(f"{coeff=}")
+    #                 else:
+    #                     coeff = perm_act(
+    #                         schubmult_one(Permutation([1, 3, 2]), v3, var2, var3).get(
+    #                             Permutation([2, 4, 1, 3]),
+    #                             0,
+    #                         ),
+    #                         2,
+    #                         var2,
+    #                     )
+    #                 logger.debug(f"{coeff=}")
+    #                 # if expand(coeff) == 0:
+    #                 #     logger.debug("coeff 0 oh no")
+    #                 tomul = sympify(coeff)
+    #             toadd = 1
+    #             for i in range(len(L[0])):
+    #                 var_index = L[0][i][1]
+    #                 oaf = L[0][i][0]
+    #                 if var_index - 1 >= len(w):
+    #                     yv = var_index
+    #                 else:
+    #                     yv = w[var_index - 1]
+    #                 for j in range(len(oaf)):
+    #                     toadd *= var2[yv] - var3[oaf[j]]
+    #             if (not good1 or not good2) and (good1 or good2):
+    #                 varo = [0, var2[w[a]], var2[w[b]]]
+    #             else:
+    #                 varo = [0, *[var2[w[spo[k]]] for k in range(4)]]
+    #             if doschubpoly:
+    #                 toadd *= schubpoly(v3, varo, var3)
+    #             else:
+    #                 subs_dict3 = {var2[i]: varo[i] for i in range(len(varo))}
+    #                 toadd *= efficient_subs(tomul, subs_dict3)
+    #             val += toadd
+    #             logger.debug(f"accum {val=}")
+    #         #logger.debug(f"{expand(val-oldval)=}")
+    #         logger.debug(f"Returning {u2=} {v2=} {w2=} {val=}")
+    #         return val
     if will_formula_work(u, v):
         logger.debug("hi")
         if sign_only:
             return 0
+        logger.debug(f"Returning {u2=} {v2=} {w2=} {val=}")
         return forwardcoeff(u, v, w, var2, var3)
         # if expand(val - oldval) != 0:
         #     logger.debug("This is bad")
@@ -1359,57 +1379,62 @@ def posify(
             c03 = code(v)
             c01 = code(u)
             c02 = code(w)
-        if is_reducible(v):
-            logger.debug("hi")
-            if sign_only:
-                return 0
-            newc = []
-            elemc = []
-            for i in range(len(c03)):
-                if c03[i] > 0:
-                    newc += [c03[i] - 1]
-                    elemc += [1]
-                else:
-                    break
-            v3 = uncode(newc)
-            coeff_dict = schubmult_one(
-                u,
-                uncode(elemc),
-                var2,
-                var3,
-            )
-            val = 0
-            for new_w in coeff_dict:
-                tomul = coeff_dict[new_w]
-                newval = schubmult_one(new_w, uncode(newc), var2, var3).get(
-                    w,
-                    0,
-                )
-                newval = posify(newval, new_w, uncode(newc), w, var2, var3, msg, do_pos_neg, optimize=optimize)
-                val += tomul * shiftsubz(newval)
-            # if expand(val - oldval) != 0:
-            #     logger.debug("This is bad")
-            #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
-            return val
-        if c01[0] == c02[0] and c01[0] != 0:
-            logger.debug("hi")
-            if sign_only:
-                return 0
-            varl = c01[0]
-            u3 = uncode([0] + c01[1:])
-            w3 = uncode([0] + c02[1:])
-            val = 0
-            val = schubmult_one(u3, v, var2, var3).get(
-                w3,
-                0,
-            )
-            val = posify(val, u3, v, w3, var2, var3, msg, do_pos_neg, optimize=optimize)
-            for i in range(varl):
-                val = perm_act(val, i + 1, var2)
-            # if expand(val - oldval) != 0:
-            #     logger.debug("This is bad")
-            #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
-            return val
+        # if is_reducible(v):
+        #     logger.debug("hi")
+        #     if sign_only:
+        #         return 0
+        #     newc = []
+        #     elemc = []
+        #     for i in range(len(c03)):
+        #         if c03[i] > 0:
+        #             newc += [c03[i] - 1]
+        #             elemc += [1]
+        #         else:
+        #             break
+        #     v3 = uncode(newc)
+        #     coeff_dict = schubmult_one(
+        #         u,
+        #         uncode(elemc),
+        #         var2,
+        #         var3,
+        #     )
+        #     val = 0
+        #     for new_w in coeff_dict:
+        #         tomul = coeff_dict[new_w]
+        #         newval = schubmult_one(new_w, uncode(newc), var2, var3).get(
+        #             w,
+        #             0,
+        #         )
+        #         logger.debug(f"Calling posify on {newval=} {new_w=} {uncode(newc)=} {w=}")
+        #         newval = posify(newval, new_w, uncode(newc), w, var2, var3, msg, do_pos_neg, optimize=optimize)
+        #         val += tomul * shiftsubz(newval)
+        #     # if expand(val - oldval) != 0:
+        #     #     logger.debug("This is bad")
+        #     #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
+        #         logger.debug(f"Returning {u2=} {v2=} {w2=} {val=}")
+        #     return val
+        # removed, iffy (hard to implement)
+        # if c01[0] == c02[0] and c01[0] != 0:
+        #     logger.debug("hi")
+        #     if sign_only:
+        #         return 0
+        #     varl = c01[0]
+        #     u3 = uncode([0] + c01[1:])
+        #     w3 = uncode([0] + c02[1:])
+        #     val = 0
+        #     val = schubmult_one(u3, v, var2, var3).get(
+        #         w3,
+        #         0,
+        #     )
+        #     logger.debug(f"Calling posify on {val=} {u3=} {v=} {w3=}")
+        #     val = posify(val, u3, v, w3, var2, var3, msg, do_pos_neg, optimize=optimize)
+        #     for i in range(varl):
+        #         val = perm_act(val, i + 1, var2)
+        #     # if expand(val - oldval) != 0:
+        #     #     logger.debug("This is bad")
+        #     #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
+        #     logger.debug(f"Returning {u2=} {v2=} {w2=} {val=}")
+        #     return val
         if c1[0] == c2[0]:
             logger.debug("hi")
             if sign_only:
@@ -1431,7 +1456,8 @@ def posify(
                 val += tomul * shiftsub(val2)
             # if expand(val - oldval) != 0:
             #     logger.debug("This is bad")
-            #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
+            #     logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=")
+            logger.debug(f"Returning {u2=} {v2=} {w2=} {val=}")
             return val
     logger.debug("Fell all the way through. Cleverness did not save us")
     if not sign_only:
@@ -1444,7 +1470,7 @@ def posify(
             if val2 is not None:
                 val = val2
             return val
-            logger.debug("foingI mage it")
+        logger.debug("RETURNINGOLDVAL")
         return oldval
     logger.debug("hi")
     d = expand(val).as_coefficients_dict()

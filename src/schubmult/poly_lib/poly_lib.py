@@ -189,5 +189,9 @@ def q_vector(q_exp, q_var=_vars.q_var):
 
 
 def xreplace_genvars(poly, vars1, vars2):
-    return sympify(poly).subs({_vars.var_g1: vars1, _vars.var_g2: vars2})
+    subs_dict = {}
+    for s in sympify(poly).free_symbols:
+        if is_indexed(s) and s.base == vars1:
+            subs_dict[s] = vars2[s.index]
+    return sympify(poly).xreplace(subs_dict)
     # print(f"{poly2=} {poly2.free_symbols=}")

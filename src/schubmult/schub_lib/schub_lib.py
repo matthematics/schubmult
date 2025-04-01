@@ -70,7 +70,7 @@ def will_formula_work(u, v):
     u, v = Permutation(u), Permutation(v)
     muv = uncode(theta(v))
     vn1muv = (~v) * muv
-    while True:
+    while inv(vn1muv)>0:
         found_one = False
         for i in range(len(vn1muv) - 1):
             if vn1muv[i] > vn1muv[i + 1]:
@@ -80,9 +80,10 @@ def will_formula_work(u, v):
                 # vn1muv[i], vn1muv[i + 1] = vn1muv[i + 1], vn1muv[i]
                 vn1muv = vn1muv.swap(i, i + 1)
                 break
-        if not found_one:
-            return True
-    return False
+        if found_one:
+            return False
+    return True
+
 
 
 def try_reduce_u(u, v, w):

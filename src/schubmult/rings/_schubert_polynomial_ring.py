@@ -10,6 +10,7 @@ from sympy.printing.str import StrPrinter
 import schubmult.rings._utils as utils
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
+from schubmult.logging import get_logger, init_logging
 from schubmult.perm_lib import (
     Permutation,
     add_perm_dict,
@@ -77,7 +78,7 @@ from schubmult.schub_lib import (
 _def_printer = StrPrinter({"order": "none"})
 # _def_printer = StrPrinter()
 
-
+logger = get_logger(__name__)
 
 # numpy arrays
 # sympy parsing
@@ -121,7 +122,7 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
     # import sys
 
     for _vstr, _dict in by_var.items():
-        this_dict = {}        
+        this_dict = {}
         for k, v in dict2.items():
             for kd, vd in _dict.items():
                 did_positive = False
@@ -129,7 +130,9 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
                     try:
                         this_dict = add_perm_dict(this_dict,{k1: v1 * v* vd for k1, v1 in cached_positive_product(kd,k[0],_vstr,k[1]).items()})
                     except Exception:
-                        did_positive = False
+                        logger.debug("Failed to compute")
+                        raise
+                        #did_positive = False
                 if not did_positive:
                     this_dict = add_perm_dict(this_dict,{k1: v1 * v* vd for k1, v1 in cached_product(kd,k[0],_vstr,k[1]).items()})                    
         results = add_perm_dict(results, this_dict)
