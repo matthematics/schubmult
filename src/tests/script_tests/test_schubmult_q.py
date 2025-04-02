@@ -2,7 +2,7 @@ from ast import literal_eval
 
 import pytest
 
-from schubmult._tests import get_json, load_json_test_names
+from schubmult.utils import get_json, load_json_test_names
 
 
 def assert_dict_good(v_tuple, input_dict, ret_dict):
@@ -20,7 +20,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict):
 
 
 def parse_ret(lines, ascode,unformat):
-    from schubmult.perm_lib import uncode
+    from schubmult.perm_lib import uncode, permtrim
 
     ret_dict = {}
     for line in lines:
@@ -33,7 +33,7 @@ def parse_ret(lines, ascode,unformat):
             v = unformat(v)
         except ValueError:
             continue
-        ret_dict[(tuple(literal_eval(k)) if not ascode else tuple(uncode(literal_eval(k))))] = (
+        ret_dict[(permtrim(literal_eval(k)) if not ascode else (uncode(literal_eval(k))))] = (
             unformat(v)
         )
     return ret_dict
@@ -46,6 +46,9 @@ json_files_data_args = load_json_test_names(base_dir)
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
+    from schubmult.utils import get_json, load_json_test_names
+    from schubmult.parsing import parse_coeff
+    from schubmult.poly_lib import GeneratingSet
     from schubmult.perm_lib import permtrim, uncode
 
     args = get_json(f"{base_dir}/{json_file}")
@@ -67,7 +70,7 @@ def test_with_same_args_exec(capsys, json_file):
     from latex2sympy2_extended import latex2sympy
     from symengine import sympify
 
-    unformat = {"basic": lambda v: sympify(v), "latex": lambda v: sympify(latex2sympy(v))}
+    unformat = {"basic": lambda v: parse_coeff(v), "latex": lambda v: parse_coeff(str(latex2sympy(v)))}
 
     ret_dict = main(args["cmd_line"])
     lines = capsys.readouterr()
@@ -76,10 +79,10 @@ def test_with_same_args_exec(capsys, json_file):
     if disp_mode != "raw":
         ret_dict = parse_ret(lines, ascode, unformat[disp_mode])
     elif ascode:
-        ret_dict = {tuple(uncode([*k])): v for k, v in ret_dict.items()}
-    v_tuple = tuple(perms[1]) if not ascode else tuple(uncode(perms[1]))
+        ret_dict = {tuple(uncode(k)): v for k, v in ret_dict.items()}
+    v_tuple = permtrim(perms[1]) if not ascode else uncode(perms[1])
 
-    input_dict = {tuple(permtrim(perms[0])) if not ascode else tuple(permtrim(uncode(perms[0]))): 1}
+    input_dict = {permtrim(perms[0]) if not ascode else uncode(perms[0]): 1}
     print(f"{v_tuple=} {input_dict=}")
     assert_dict_good(v_tuple, input_dict, ret_dict)
 

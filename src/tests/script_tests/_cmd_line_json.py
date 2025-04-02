@@ -13,3 +13,4 @@ with open(sys.argv[1]) as f:
     new_name = new_name + cmd.replace("--", "").replace(" - ", "T").replace(" ", "_")
     # print(f"mv {sys.argv[1]} )
     os.rename(sys.argv[1], f"{new_name}.json")
+    print(cmd)

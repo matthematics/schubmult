@@ -2,7 +2,7 @@ from ast import literal_eval
 
 import pytest
 
-from schubmult._tests import get_json, load_json_test_names
+from schubmult.utils import get_json, load_json_test_names
 
 
 def assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices):
@@ -25,7 +25,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices):
 
 
 def parse_ret(lines, ascode, coprod):
-    from schubmult.perm_lib import permtrim, uncode
+    from schubmult.perm_lib.perm_lib import permtrim, uncode
 
     ret_dict = {}
     if not coprod:
@@ -71,8 +71,8 @@ json_files_data_args = load_json_test_names(base_dir)
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
-    from schubmult.perm_lib import permtrim, uncode
-    from schubmult.sympy_perms import Permutation
+    from schubmult.perm_lib.perm_lib import permtrim, uncode
+    from schubmult.perm_lib.perm_lib import Permutation
 
     args = get_json(f"{base_dir}/{json_file}")
     print(f"{json_file=} {args=} input_data")

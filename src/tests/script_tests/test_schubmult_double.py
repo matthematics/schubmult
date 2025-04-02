@@ -3,8 +3,9 @@ from ast import literal_eval
 
 import pytest
 
-from schubmult._tests import get_json, load_json_test_names
-
+from schubmult.utils import get_json, load_json_test_names
+from schubmult.parsing import parse_coeff
+from schubmult.poly_lib import GeneratingSet
 
 def check_positive(v, coprod, same, var_r):
     # if same, should be no minus signs
@@ -16,6 +17,7 @@ def check_positive(v, coprod, same, var_r):
     var2 = _vars.var2
     var3 = _vars.var3
     import sys
+    print(f"{var2=} {var3=}",file=sys.stderr)
 
     if same:
         if coprod:
@@ -46,7 +48,7 @@ def check_positive(v, coprod, same, var_r):
                 continue
         except ValueError:
             pass
-        sym_val = expand(sympify(val))
+        sym_val = expand(parse_coeff(val))
         #print(f"{sym_val=} not an int", file=sys.stderr)
         if coprod:
             assert expand(sym_val) == expand(
@@ -70,23 +72,23 @@ def assert_dict_good(
     display_positive=False,
 ):
     # print(f"{input_dict=}")
-    from schubmult.perm_lib import Permutation
-    from symengine import expand, symarray, sympify
-
+    from schubmult.perm_lib.perm_lib import Permutation
+    from symengine import expand, sympify
+    import sys
     from schubmult.schubmult_double import schub_coprod, schubmult
 
-    var_a = symarray("y", 100).tolist()
-    var_b = symarray("z", 100).tolist()
+    var_a = GeneratingSet("y")
+    var_b = GeneratingSet("z")
 
     if coprod:
         coeff_dict = schub_coprod(v_tuple, indices, var2=var_a, var3=var_a if same else var_b)
     else:
         coeff_dict = schubmult(input_dict, v_tuple, var2=var_a, var3=var_a if same else var_b)
-    for k in ret_dict.keys():
-        print(f"{k=} {type(k)=} {type(k[0])=} {type(k[1])=}")
-    # print(f"{coeff_dict=}")
+    # for k in ret_dict.keys():
+    #     print(f"{k=} {type(k)=} {type(k[0])=} {type(k[1])=} {type(ret_dict[k])=}")
+    #print(f"{coeff_dict=}",file=sys.stderr)
     # print(f"{ret_dict=}")
-    var_r = tuple(symarray("r", 100))
+    var_r = GeneratingSet("r")
     subs_dict2 = {}
     for i in range(1, 100):
         sm = var_a[1]
@@ -99,7 +101,7 @@ def assert_dict_good(
         if expand(v) == 0:
             assert (k not in ret_dict) or (expand(v) == expand(ret_dict[k]))
         else:
-            print(f"{k=} {type(k[0])=} {type(k[1])=} {coeff_dict[k]=}")
+            #print(f"{k=} {type(k[0])=} {type(k[1])=} {coeff_dict[k]=}")
             assert expand(v) == expand(ret_dict[k])
     for k in ret_dict.keys():
         if display_positive:
@@ -112,8 +114,8 @@ def assert_dict_good(
 def parse_ret(lines, ascode, coprod, unformat):
     import sys
 
-    from schubmult.perm_lib import permtrim, uncode
-    from schubmult.perm_lib import Permutation
+    from schubmult.perm_lib.perm_lib import permtrim, uncode
+    from schubmult.perm_lib.perm_lib import Permutation
 
     ret_dict = {}
     if not coprod:
@@ -150,12 +152,12 @@ def parse_ret(lines, ascode, coprod, unformat):
                 print(f"boingfish {line=} {e=}", file=sys.stderr)
                 continue
             try:
-                v = unformat(v)
+                v = unformat(v)                
             except Exception as e:
                 print(f"bingfish {line=} {v=} {e=}", file=sys.stderr)
-                continue
+                continue            
             ret_dict[k] = v
-            print(f"ret_dict[{k=}] = {v} {type(k)=} {type(k[0])=} {type(k[1])=}")
+            #print(f"ret_dict[{k=}] = {v} {type(k)=} {type(k[0])=} {type(ret_dict[k])=}")
     return ret_dict
 
 
@@ -167,12 +169,12 @@ json_files_data_args = load_json_test_names(base_dir)
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
-    from schubmult.perm_lib import permtrim, uncode
+    from schubmult.perm_lib.perm_lib import permtrim, uncode
 
     args = get_json(f"{base_dir}/{json_file}")
     # print(f"{json_file=} {args=} input_data")
     from schubmult.schubmult_double._script import main
-    from schubmult.perm_lib import Permutation
+    from schubmult.perm_lib.perm_lib import Permutation
 
     mult = args["mult"]  # noqa: F841
     mulstring = args["mulstring"]  # noqa: F841
@@ -191,7 +193,7 @@ def test_with_same_args_exec(capsys, json_file):
     from latex2sympy2_extended import latex2sympy
     from symengine import sympify
 
-    unformat = {"basic": lambda v: sympify(v), "latex": lambda v: sympify(latex2sympy(v))}
+    unformat = {"basic": lambda v: parse_coeff(v), "latex": lambda v: parse_coeff(str(latex2sympy(v)))}
     # print(f"{args=}")
     # print(f"{args['cmd_line']=}")
     ret_dict = main(args["cmd_line"])
@@ -212,7 +214,7 @@ def test_with_same_args_exec(capsys, json_file):
     indices = tuple(perms[1])
     # print(f"{v_tuple=} {input_dict=} {indices=}")
     # print("BOOB ASS")
-    print(f"{disp_mode=} {ret_dict=}")
+    #print(f"{disp_mode=} {ret_dict=}")
     assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices, same, display_positive)
 
 

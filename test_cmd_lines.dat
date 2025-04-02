@@ -1,12 +1,18 @@
-schubmult_py --code 5 0 3 1 2 - 1 0 3 2 0 5
+schubmult_py --coprod --code 2 0 3 0 5 - 1 4 --display-mode raw
 schubmult_py 8 3 7 1 9 6 2 5 4 - 2 9 3 5 8 4 1 7 6
+schubmult_py --code 5 0 3 1 2 - 1 0 3 2 0 5
 schubmult_py --coprod --code 5 0 3 0 2 1 - 2 4 6
+schubmult_q --code 2 0 3 0 5 - 1 0 4 --display-mode raw
 schubmult_q --code 2 0 5 - 3 0 2
+schubmult_q_double --code 2 0 5 - 4 0 2 --display-mode raw --display-positive --mixed-var
 schubmult_q_double --code 2 0 5 - 3 0 2 --mixed-var --display-positive
-schubmult_q_double --code 2 0 5 - 3 0 2 --display-positive
 schubmult_q_double --code 2 0 5 - 3 0 2
-schubmult_double --coprod 3 7 1 6 2 5 4 - 2 4 6 --display-positive --mixed-var
-schubmult_double --code --coprod 5 0 1 2 - 2 3 --display-positive
-schubmult_double 3 7 1 6 2 5 4 - 2 3 5 4 1 7 6 --mixed-var --display-positive --display-mode latex
+schubmult_q_double --code 2 0 5 - 3 0 2 --display-positive
+schubmult_double --mixed-var --display-positive --coprod --code 1 0 2 0 1 - 2 4 --display-mode latex
+schubmult_double --mixed-var --display-positive --coprod --code 1 0 2 0 1 - 2 4
 schubmult_double 3 7 1 6 2 5 4 - 2 3 5 4 1 7 6 --mixed-var --display-positive
+schubmult_double --code --coprod 5 0 1 2 - 2 3 --display-positive
+schubmult_double --mixed-var --display-positive --coprod --code 1 0 2 0 1 - 2 4 --display-mode raw
 schubmult_double --code 3 0 5 - 2 1 0 4 --display-positive
+schubmult_double 3 7 1 6 2 5 4 - 2 3 5 4 1 7 6 --mixed-var --display-positive --display-mode latex
+schubmult_double --coprod 3 7 1 6 2 5 4 - 2 4 6 --display-positive --mixed-var

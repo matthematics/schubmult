@@ -3,6 +3,7 @@ from itertools import chain
 import numpy as np
 from symengine import sympify
 
+import schubmult.poly_lib.variables as spl
 from schubmult.perm_lib import (
     Permutation,
     code,
@@ -25,8 +26,9 @@ from schubmult.perm_lib import (
     uncode,
 )
 
+q_var = spl.GeneratingSet("q")
 
-def double_elem_sym_q(u, p1, p2, k, q_var=None):
+def double_elem_sym_q(u, p1, p2, k, q_var=q_var):
     ret_list = {}
     perms1 = elem_sym_perms_q(u, p1, k, q_var)
     iu = inverse(u)
@@ -431,7 +433,7 @@ def reduce_q_coeff_u_only(u, v, w, qv):
     return u, v, w, qv, False
 
 
-def elem_sym_perms_q(orig_perm, p, k, q_var=None):
+def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
     total_list = [(orig_perm, 0, 1)]
     up_perm_list = [(orig_perm, 1, 1000)]
     for pp in range(p):
@@ -453,7 +455,7 @@ def elem_sym_perms_q(orig_perm, p, k, q_var=None):
 
 
 @ensure_perms
-def elem_sym_perms_q_op(orig_perm, p, k, n, q_var=None):
+def elem_sym_perms_q_op(orig_perm, p, k, n, q_var=q_var):
     total_list = [(orig_perm, 0, 1)]
     up_perm_list = [(orig_perm, 1, k)]
     for pp in range(p):
