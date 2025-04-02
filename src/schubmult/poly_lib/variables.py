@@ -51,6 +51,10 @@ class ISymbol(Symbol):
         return vsym.ISymbol(self._base, self._index)
 
     @property
+    def args(self):
+        return (self.name, self._base, self._index)
+
+    @property
     def func(self):
         return self.__class__
 

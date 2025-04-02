@@ -17,29 +17,29 @@ class ISymbol(Expr):
 
     @staticmethod
     def __xnew__(_class, base, index):
-        return Expr.__new__(_class, Str(f"{base.label}_{index}"), base, Integer(index))
+        return Expr.__new__(_class, base, Integer(index))
 
     def _sympystr(self, printer):
         return printer._print_Symbol(self)
 
     @property
     def base(self):
-        return self.args[1]
+        return self.args[0]
 
     @property
     def name(self):
-        return f"{self.args[1].label}_{self.args[2]}"
+        return f"{self.args[0].label}_{self.args[1]}"
 
     @property
     def index(self):
-        return self.args[2]
+        return self.args[1]
 
     @property
     def indices(self):
-        return (self.args[2],)
+        return (self.args[1],)
     
     def __hash__(self):
-        return hash(tuple(self.args[1:]))
+        return hash(tuple(self.args))
 
     def __eq__(self, other):
         if not vsyme.is_indexed(other):
@@ -47,5 +47,5 @@ class ISymbol(Expr):
         return other.base == self.base and other.index == self.index
  
     def _symengine_(self):
-        return vsyme.ISymbol(*self.args)
+        return vsyme.ISymbol(self.name, *self.args)
     
