@@ -1,6 +1,7 @@
 from functools import cache
 
-from sympy import Expr
+from sympy import Expr, Integer
+from sympy.core.symbol import Str
 
 import schubmult.poly_lib.variables as vsyme
 
@@ -16,7 +17,7 @@ class ISymbol(Expr):
 
     @staticmethod
     def __xnew__(_class, base, index):
-        return Expr.__new__(_class, f"{base.label}_{index}", base, index)
+        return Expr.__new__(_class, Str(f"{base.label}_{index}"), base, Integer(index))
 
     def _sympystr(self, printer):
         return printer._print_Symbol(self)
