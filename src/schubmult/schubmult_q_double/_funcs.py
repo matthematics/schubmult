@@ -7,7 +7,7 @@
 # )
 from functools import cached_property
 
-from symengine import Add, Mul, Pow, expand
+from symengine import Add, Mul, Pow, expand, sympify
 
 import schubmult.schubmult_double as norm_yz
 from schubmult.perm_lib import (
@@ -454,12 +454,20 @@ def mul_q_dict(q_dict1, q_dict2):
     return ret
 
 
-def factor_out_q_keep_factored(poly):
+def factor_out_q_keep_factored(poly, q_var=_vars.q_var):
     ret = {}
-    if str(poly).find("q") == -1:
+    # if str(poly).find("q") == -1:
+    #     ret[1] = poly
+    #     return ret
+    found_one = False
+    for s in sympify(poly).free_symbols:
+        if is_indexed(s) and s.base == q_var:
+            found_one = True
+
+    if not found_one:
         ret[1] = poly
         return ret
-    if is_indexed(poly) and poly.base == _vars.q_var:
+    if is_indexed(poly) and poly.base == q_var:
         ret[poly] = 1
         return ret
     if isinstance(poly, Add):
@@ -482,22 +490,8 @@ def factor_out_q_keep_factored(poly):
         ret0 = dict(ret)
         for _ in range(exponent - 1):
             ret = mul_q_dict(ret, ret0)
-
-        # print(f"exponent {exponent}")
-        # work_val = factor_out_q_keep_factored(base)
-        # ret = {1: 1}
-        # while exponent > 0:
-        # if exponent % 2 == 1:
-        # if ret == {1: 1}:
-        # ret = {**work_val}
-        # else:
-        # ret = mul_q_dict(ret,work_val)
-        # exponent -= 1
-        # else:
-        # work_val = mul_q_dict(work_val,work_val)
-        # exponent //= 2
         return ret
-    return ret
+    raise ValueError
 
 
 def factor_out_q(poly):

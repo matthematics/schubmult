@@ -14,9 +14,6 @@ logger = get_logger(__name__)
 zero = sympify(0)
 n = 100
 
-# q_var = symarray("q", n)
-#q_var = GeneratingSet("q")
-
 # TODO: permutations act
 
 

@@ -18,7 +18,7 @@ from schubmult.perm_lib import (
     trimcode,
     uncode,
 )
-from schubmult.poly_lib import GeneratingSet, div_diff, expand, q_vector
+from schubmult.poly_lib import GeneratingSet, div_diff, efficient_subs, expand, q_vector
 from schubmult.schub_lib import (
     check_blocks,
     reduce_q_coeff,
@@ -78,7 +78,7 @@ q_var = _vars.q_var
 zero = sympify(0)
 def q_posify(u, v, w, same, val, var2, var3, msg, subs_dict2):
     try:
-        int(expand(val))
+        val2 = int(expand(val))
     except Exception:
         val2 = 0
         q_dict = factor_out_q_keep_factored(val)
@@ -87,7 +87,7 @@ def q_posify(u, v, w, same, val, var2, var3, msg, subs_dict2):
                 val2 += q_part * int(q_dict[q_part])
             except Exception:
                 if same:
-                    to_add = q_part * expand(sympify(q_dict[q_part]).xreplace(subs_dict2))
+                    to_add = q_part * expand(efficient_subs(sympify(q_dict[q_part]),subs_dict2))
                     val2 += to_add
                 else:
                     try:
@@ -129,15 +129,12 @@ def q_posify(u, v, w, same, val, var2, var3, msg, subs_dict2):
 
                         traceback.print_exc()
                         exit(1)
-        # if not same and check and expand(val - val2) != 0:
-            #     if mult:
-            #         val2 = val
-            #     else:
-            #         print(
-            #             f"error: value not equal; write to schubmult@gmail.com with the case {perms=} {perm=} {val2=} {coeff_dict.get(perm,0)=}",
-            #         )
-            #         exit(1)
-        val = val2
+        if not same and expand(val - val2) != 0:
+            print(
+                f"error: value not equal"
+            )
+            exit(1)
+    val = val2
     return val
 
 
@@ -225,7 +222,7 @@ def main(argv=None):
             for i in range(len(perms)):
                 if len(perms[i]) < 2 and (len(perms[i]) == 0 or perms[i][0] == 1):
                     perms[i] = Permutation([1, 2])
-                perms[i] = permtrim([*perms[i]])
+                perms[i] = permtrim(perms[i])
 
         if nilhecke:
             coeff_dict = nil_hecke({Permutation([1, 2]): 1}, perms[0], nil_N)

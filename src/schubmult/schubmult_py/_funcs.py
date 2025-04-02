@@ -1,6 +1,5 @@
 from functools import cached_property
 
-# from symengine import Add, Mul, Pow, symarray
 from symengine import Add, Mul, Pow
 
 from schubmult.perm_lib import (
