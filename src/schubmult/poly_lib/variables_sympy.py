@@ -1,7 +1,7 @@
 from functools import cache
 
 from sympy import Expr, Integer
-from sympy.core.symbol import Str
+from sympy.core.symbol import Symbol
 
 import schubmult.poly_lib.variables as vsyme
 
@@ -10,6 +10,8 @@ class ISymbol(Expr):
     def __new__(cls, base, index):
         return ISymbol.__xnew_cached__(cls, base, index)
 
+    is_commutative = True    
+    
     @staticmethod
     @cache
     def __xnew_cached__(_class, base, index):
@@ -20,6 +22,9 @@ class ISymbol(Expr):
         return Expr.__new__(_class, base, Integer(index))
 
     def _sympystr(self, printer):
+        return printer._print_Symbol(self)
+
+    def _latex(self, printer):
         return printer._print_Symbol(self)
 
     @property
@@ -47,5 +52,6 @@ class ISymbol(Expr):
         return other.base == self.base and other.index == self.index
  
     def _symengine_(self):
-        return vsyme.ISymbol(self.name, *self.args)
+        return vsyme.ISymbol(*self.args)
+    
     

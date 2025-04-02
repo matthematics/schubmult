@@ -149,7 +149,7 @@ def _display_full(
     msg = args.msg
     same = args.same
     display_positive = args.display_positive
-
+    perms[0] = Permutation(perms[0])
     pos = list(perms[1])
     pos2 = []
     last_descent = -1

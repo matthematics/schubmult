@@ -1,3 +1,4 @@
+import sys
 from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
 
 import sympy
@@ -7,6 +8,8 @@ from schubmult.logging import init_logging
 
 # Indexed._sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
 
+def _sympy(obj):
+    return obj if not hasattr(obj, "_sympy_") else sympy.sympify(obj)
 
 def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
     parser = ArgumentParser(
@@ -210,12 +213,12 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
 
     if args.disp_mode == "latex":
         formatter = (  # noqa: E731
-            lambda bob: sympy.latex(sympy.sympify(bob), order='none').replace("\\left", "").replace("\\right", "")
+            lambda bob: sympy.latex(_sympy(bob)).replace("\\left", "").replace("\\right", "")
         )
     elif args.disp_mode == "pretty":
-        formatter = lambda bob: sympy.pretty(sympy.sympify(bob)).replace("[","_").replace("]","")  # noqa: E731  # noqa: E731
+        formatter = lambda bob: sympy.pretty(_sympy(bob))  # noqa: E731  # noqa: E731
     elif args.disp_mode == "basic":
-        formatter = lambda bob: sympy.sstr(sympy.sympify(bob)).replace("[","_").replace("]","")  # noqa: E731
+        formatter = lambda bob: sympy.sstr(_sympy(bob))  # noqa: E731
     elif args.disp_mode == "raw":
         formatter = None
     init_logging(debug=args.debug)

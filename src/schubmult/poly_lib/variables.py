@@ -3,9 +3,11 @@
 
 from functools import cache
 
+import sympy
 from symengine import symbols
 from symengine.lib.symengine_wrapper import Symbol
 from sympy import Basic
+from sympy.core.symbol import Str
 
 import schubmult.poly_lib.variables_sympy as vsym
 
@@ -14,7 +16,7 @@ class ISymbol(Symbol):
     def __new__(cls, dummy_name, base, index):
         #print(f"frofulating bagel {name=} {base=} {index=}")
         return ISymbol.__xnew_cached__(cls, base, index)
-
+    
     @staticmethod
     @cache
     def __xnew_cached__(_class, base, index):
@@ -22,7 +24,7 @@ class ISymbol(Symbol):
 
     @staticmethod
     def __xnew__(_class, base, index):
-        obj = Symbol.__new__(_class, f"{base._label}_{index}")
+        obj = Symbol.__new__(_class, f"{base.label}_{index}")
         obj._base = base
         obj._index = index
         return obj
@@ -61,6 +63,8 @@ class ISymbol(Symbol):
 class GeneratingSet(Basic):
     def __new__(cls, name):
         return GeneratingSet.__xnew_cached__(cls, name)
+    
+    is_Atom = True
 
     @staticmethod
     @cache
@@ -69,20 +73,29 @@ class GeneratingSet(Basic):
 
     @staticmethod
     def __xnew__(_class, name):
-        obj = Basic.__new__(_class, name)
-        obj._label = name
+        obj = Basic.__new__(_class, Str(name))
         obj._symbols_arr = tuple([symbols(f"{name}_{i}",cls=ISymbol,base=obj,index=i) for i in range(100)]) 
         return obj
 
     @property
     def label(self):
-        return self._label
+        return self.args[0]
+
+    @property
+    def name(self):
+        return self.args[0]
+    
+    def __repr__(self):
+        return f"GeneratingSet('{self.label}')"
 
     def __str__(self):
         return self.label
     
+    def _latex(self, printer):
+        return printer._print_Str(self)
+
     def _sympystr(self, printer):
-        return printer._print(self.label)
+        return printer.doprint(self.args[0])
 
     def __getitem__(self, i):
         return self._symbols_arr[i]

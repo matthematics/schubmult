@@ -230,10 +230,7 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
         logger.debug("Recording line number")
         vp = v * (~perm)
         if inv(vp) == inv(v) - inv(perm):
-            val = schubpoly(vp, var2, var3)
-            return None
-        val = 0
-        return None
+            return schubpoly(vp, var2, var3)
     dpret = []
     ret = 0
     if dominates(u, perm):
@@ -262,14 +259,14 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
         toadd *= schubpoly(vp, var2, var3, len(vlist) + 1)
         ret += toadd
     val = ret
-    logger.debug("spunky")
-    schub_val = schubmult_one(u, v, var2, var3)
-    val_ret = schub_val.get(perm, 0)
-    if expand(val - val_ret) != 0:
-        logger.debug(f"{schub_val=}")
-        logger.debug(f"{val=} {u=} {v=} {var2[1]=} {var3[1]=}  {perm=} {schub_val.get(perm,0)=}")
-    logger.debug(f"good to go {ret=}")
-    return ret
+    logger.debug("Recording line number")
+    # schub_val = schubmult_one(u, v, var2, var3)
+    # val_ret = schub_val.get(perm, 0)
+    # if expand(val - val_ret) != 0:
+    #     logger.debug(f"{schub_val=}")
+    #     logger.debug(f"{val=} {u=} {v=} {var2[1]=} {var3[1]=}  {perm=} {schub_val.get(perm,0)=}")
+    # logger.debug(f"good to go {ret=}")
+    return val
 
 
 def dualpieri(mu, v, w):
@@ -772,6 +769,8 @@ def compute_positive_rep(val, var2=GeneratingSet("y"), var3=GeneratingSet("z"), 
         notint = True
     if notint:
         frees = val.free_symbols
+        logger.debug(f"{frees=}")
+        logger.debug(f"{[type(s) for s in frees]=}")
         varsimp2 = [m for m in frees if is_indexed(m) and m.base == var2]
         varsimp3 = [m for m in frees if is_indexed(m) and m.base == var3]
         varsimp2.sort(key=lambda k: k.index)
