@@ -17,4 +17,4 @@ def poly_ring(v: str):
         return tuple([sympify(0) for i in range(100)])
     if v == NoneVar:
         return tuple([sympify(0) for i in range(100)])
-    return GeneratingSet(v)
+    return GeneratingSet(str(v))

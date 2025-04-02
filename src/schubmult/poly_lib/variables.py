@@ -6,7 +6,6 @@ from functools import cache
 import sympy
 from symengine import symbols
 from symengine.lib.symengine_wrapper import Symbol
-from sympy import Basic
 from sympy.core.symbol import Str
 
 import schubmult.poly_lib.variables_sympy as vsym
@@ -60,7 +59,7 @@ class ISymbol(Symbol):
     def func(self):
         return self.__class__
 
-class GeneratingSet(Basic):
+class GeneratingSet(Str):
     def __new__(cls, name):
         return GeneratingSet.__xnew_cached__(cls, name)
     
@@ -73,35 +72,32 @@ class GeneratingSet(Basic):
 
     @staticmethod
     def __xnew__(_class, name):
-        obj = Basic.__new__(_class, Str(name))
+        obj = Str.__new__(_class, name)
         obj._symbols_arr = tuple([symbols(f"{name}_{i}",cls=ISymbol,base=obj,index=i) for i in range(100)]) 
         return obj
 
     @property
     def label(self):
-        return self.args[0]
-
-    @property
-    def name(self):
-        return self.args[0]
+        return self.name
+    
     
     def __repr__(self):
         return f"GeneratingSet('{self.label}')"
 
     def __str__(self):
-        return self.label
+        return self.name
     
     def _latex(self, printer):
         return printer._print_Str(self)
 
     def _sympystr(self, printer):
-        return printer.doprint(self.args[0])
+        return printer.doprint(self.name)
 
     def __getitem__(self, i):
         return self._symbols_arr[i]
 
     def __hash__(self):
-        return hash(self.args)
+        return hash(self.name)
 
     def __eq__(self, other):
         return isinstance(other, GeneratingSet) and self.label == other.label
