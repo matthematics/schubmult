@@ -51,7 +51,7 @@ def single_variable(coeff_dict, varnum):
 
 def mult_poly(coeff_dict, poly, var_x=_vars.var_x):
     if is_indexed(poly) and poly.base==var_x:
-        return single_variable(coeff_dict, poly.args[0])
+        return single_variable(coeff_dict, poly.index)
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:

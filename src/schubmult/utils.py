@@ -1,3 +1,6 @@
+import symengine
+
+
 def generate_all(module, filename):
     D = dir(module)
     print(f"{D=}")
@@ -42,3 +45,22 @@ def load_json_test_names(this_dir):
         filename = file[:index]
         ret += [filename]
     return ret
+
+def print_args(poly):
+    def _pr(ag):
+        if hasattr(ag, "__sympy__") and not ag.is_Atom:
+            return f"({type(ag)},{print_args(ag)})"
+        return str(type(ag))
+    return "["+",".join([_pr(arg) for arg in poly.args])+"]"
+        
+def sympify_args(poly):
+    try:
+        return symengine.sympify(poly)
+    except Exception:
+        if poly.is_Mul:
+            return symengine.Mul(*[sympify_args(arg) for arg in poly.args])
+        if poly.is_Pow:
+            return symengine.Pow(*[sympify_args(arg) for arg in poly.args])
+        if poly.is_Add:
+            return symengine.Add(*[sympify_args(arg) for arg in poly.args])
+    print("fiminify critkcer")

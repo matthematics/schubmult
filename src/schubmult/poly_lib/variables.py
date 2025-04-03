@@ -4,7 +4,7 @@
 from functools import cache
 
 import sympy
-from symengine import symbols
+from symengine import Mul, symbols, sympify
 from symengine.lib.symengine_wrapper import Symbol
 from sympy.core.symbol import Str
 
@@ -44,9 +44,10 @@ class ISymbol(Symbol):
         return hash((self._base,self._index))
 
     def __eq__(self, other):
-        if not is_indexed(other):
-            return False
-        return other.base == self.base and other.index == self.index
+        try:
+            return self.name == sympify(other).name
+        except Exception:
+            return NotImplemented
 
     def _sympy_(self):
         return vsym.ISymbol(self._base, self._index)
@@ -101,6 +102,16 @@ class GeneratingSet(Str):
 
     def __eq__(self, other):
         return isinstance(other, GeneratingSet) and self.label == other.label
+
+
+class SMul(Mul,ISymbol):
+    
+    def __new__(cls, *args):
+        obj = Mul.__new__(cls,*args)
+        return obj
+    
+    def _sympy_(self):
+        return vsym.SMul(*[sympy.sympify(arg) for arg in self.args])
 
 
 def is_indexed(x):

@@ -17,6 +17,7 @@ from schubmult.perm_lib import (
     inv,
 )
 from schubmult.poly_lib import xreplace_genvars
+from schubmult.utils import print_args, sympify_args
 
 # class IdxPrinter(StrPrinter):
 
@@ -132,7 +133,7 @@ class DSchubSymbol(sympy.Symbol):
     @cache
     def __xnew_cached__(cls, base_var, k):
         return DSchubSymbol.__xnew__(base_var, k)
-
+    
 
 class DoubleSchubertAlgebraElement(Expr):
     """Algebra with sympy coefficients
@@ -163,7 +164,6 @@ class DoubleSchubertAlgebraElement(Expr):
 
     @property
     def _mul_handler(self):
-        # print("profilating")
         return SchubMul
 
     def _eval_Eq(self, other):
@@ -253,11 +253,13 @@ class DoubleSchubertAlgebraElement(Expr):
     def __sub__(self, other):
         # print("ASFJAdsajdSJ")
         # return SchubAdd(self,-DSx(other))
-        return _from_double_dict(add_perm_dict(self._doubledict, {k: -v for k, v in DSx(other)._doubledict.items()}))
+        double_dict = add_perm_dict(self._doubledict, {k: -v for k, v in DSx(other)._doubledict.items()})
+        return _from_double_dict(double_dict)
 
     def __rsub__(self, other):
         # print("ASFJAdsajdSJ")
-        return _from_double_dict(add_perm_dict(DSx(other)._doubledict, {k: -v for k, v in self._doubledict.items()}))
+        double_dict = add_perm_dict(DSx(other)._doubledict, {k: -v for k, v in self._doubledict.items()})
+        return _from_double_dict(double_dict)
         # return SchubAdd(DSx(other), -self)
 
     def __neg__(self):
@@ -268,7 +270,8 @@ class DoubleSchubertAlgebraElement(Expr):
         elem = self
         if self.is_Add or self.is_Mul:
             elem = self.doit()
-        return _from_double_dict({k: -v for k, v in elem._doubledict.items()})
+        double_dict = {k: -sympify(v) for k, v in elem._doubledict.items()}
+        return _from_double_dict(double_dict)
 
     def __mul__(self, other):
         # print("ASFJAdsajdSJ")
@@ -411,7 +414,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
             else:
                 return self(x.expand(), cv)
         else:
-            x = sympify(x)
+            x = sympify_args(x)
             if cv is None or cv == utils.NoneVar:
                 cv = utils.NoneVar
                 result = py.mult_poly({Permutation([]): 1}, x, utils.poly_ring(self._base_var))
