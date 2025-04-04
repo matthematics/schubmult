@@ -133,7 +133,7 @@ class DSchubSymbol(sympy.Symbol):
     @cache
     def __xnew_cached__(cls, base_var, k):
         return DSchubSymbol.__xnew__(base_var, k)
-    
+
 
 class DoubleSchubertAlgebraElement(Expr):
     """Algebra with sympy coefficients

@@ -52,7 +52,7 @@ def print_args(poly):
             return f"({type(ag)},{print_args(ag)})"
         return str(type(ag))
     return "["+",".join([_pr(arg) for arg in poly.args])+"]"
-        
+
 def sympify_args(poly):
     try:
         return symengine.sympify(poly)
@@ -62,4 +62,4 @@ def sympify_args(poly):
         if poly.is_Pow:
             return symengine.Pow(*[sympify_args(arg) for arg in poly.args])
         if poly.is_Add:
-            return symengine.Add(*[sympify_args(arg) for arg in poly.args])    
+            return symengine.Add(*[sympify_args(arg) for arg in poly.args])

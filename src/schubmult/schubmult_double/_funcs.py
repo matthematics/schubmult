@@ -142,8 +142,8 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
     #     var_x = tuple([sympy.sympify(v) for v in var_x])
     #     var_y = tuple([sympy.sympify(v) for v in var_y])
     #     return mult_poly_sympy(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2)
-    if base_index(poly)[0] == var_x.label:
-        return single_variable(coeff_dict, poly.index, var_y)
+    if base_index(poly)[0] == base_index(var_x)[0]:
+        return single_variable(coeff_dict, base_index(poly)[1], var_y)
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
@@ -151,7 +151,7 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
         return ret
     if isinstance(poly, Pow):
         base = poly.args[0]
-        exponent = int(poly.index)
+        exponent = int(poly.args[1])
         ret = coeff_dict
         for i in range(int(exponent)):
             ret = mult_poly(ret, base, var_x, var_y)
@@ -180,7 +180,7 @@ def mult_poly_down(coeff_dict, poly):
         return ret
     if isinstance(poly, Pow):
         base = poly.args[0]
-        exponent = int(poly.index)
+        exponent = int(poly.args[1])
         ret = coeff_dict
         for i in range(int(exponent)):
             ret = mult_poly_down(ret, base)
@@ -504,12 +504,12 @@ def split_flat_term(arg):
         if str(arg2).find("y") != -1:
             if isinstance(arg2, Mul):
                 for i in range(int(arg2.args[0])):
-                    ys += [arg2.index]
+                    ys += [arg2.args[1]]
             else:
                 ys += [arg2]
         elif isinstance(arg2, Mul):
             for i in range(abs(int(arg2.args[0]))):
-                zs += [-arg2.index]
+                zs += [-arg2.args[1]]
         else:
             zs += [arg2]
     return ys, zs
@@ -535,14 +535,14 @@ def flatten_factors(term):
             terms = [1]
             for i in range(len(ys)):
                 terms2 = []
-                for j in range(len(term.index)):
+                for j in range(len(term.args[1])):
                     for t in terms:
                         terms2 += [t * (ys[i] + zs[i])]
                 terms = terms2
             return Add(*terms)
         if is_flat_term(term.args[0]):
             return term, False
-        return flatten_factors(term.args[0]) ** term.index, True
+        return flatten_factors(term.args[0]) ** term.args[1], True
     if isinstance(term, Mul):
         terms = [1]
         for arg in term.args:
@@ -598,7 +598,7 @@ def split_mul(arg0, var2=None, var3=None):
         arg = arg0
         arg2 = expand(arg.args[0])
         yval = arg2.args[0]
-        zval = arg2.index
+        zval = arg2.args[1]
         if str(yval).find("z") != -1:
             yval, zval = zval, yval
         if str(zval).find("-") != -1:
@@ -606,7 +606,7 @@ def split_mul(arg0, var2=None, var3=None):
         if str(yval).find("-") != -1:
             yval = -yval
         tup = (var2s[fres(yval)], var3s[fres(zval)])
-        for i in range(int(arg0.index)):
+        for i in range(int(arg0.args[1])):
             monoms += [tup]
     else:
         for arg in arg0.args:
@@ -617,7 +617,7 @@ def split_mul(arg0, var2=None, var3=None):
                 if arg == 0:
                     break
                 yval = arg.args[0]
-                zval = arg.index
+                zval = arg.args[1]
                 if str(yval).find("z") != -1:
                     yval, zval = zval, yval
                 if str(zval).find("-") != -1:
@@ -628,7 +628,7 @@ def split_mul(arg0, var2=None, var3=None):
             elif isinstance(arg, Pow):
                 arg2 = arg.args[0]
                 yval = arg2.args[0]
-                zval = arg2.index
+                zval = arg2.args[1]
                 if str(yval).find("z") != -1:
                     yval, zval = zval, yval
                 if str(zval).find("-") != -1:
@@ -636,9 +636,10 @@ def split_mul(arg0, var2=None, var3=None):
                 if str(yval).find("-") != -1:
                     yval = -yval
                 tup = (var2s[fres(yval)], var3s[fres(zval)])
-                for i in range(int(arg.index)):
+                for i in range(int(arg.args[1])):
                     monoms += [tup]
     return monoms
+
 
 
 def split_monoms(pos_part, var2, var3):
@@ -771,8 +772,8 @@ def compute_positive_rep(val, var2=GeneratingSet("y"), var3=GeneratingSet("z"), 
         frees = val.free_symbols
         logger.debug(f"{frees=}")
         logger.debug(f"{[type(s) for s in frees]=}")
-        varsimp2 = [m for m in frees if base_index(m)[0]== var2.label]
-        varsimp3 = [m for m in frees if base_index(m)[0] == var3.label]
+        varsimp2 = [m for m in frees if base_index(m)[0]== base_index(var2)[0]]
+        varsimp3 = [m for m in frees if base_index(m)[0] == base_index(var3)[0]]
         varsimp2.sort(key=lambda k: base_index(k)[1])
         varsimp3.sort(key=lambda k: base_index(k)[1])
         logger.debug(f"{varsimp2=}")

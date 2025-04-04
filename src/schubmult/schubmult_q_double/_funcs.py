@@ -461,13 +461,13 @@ def factor_out_q_keep_factored(poly, q_var=_vars.q_var):
     #     return ret
     found_one = False
     for s in sympify(poly).free_symbols:
-        if base_index(s)[0] == q_var.label:
+        if base_index(s)[0] == base_index(q_var)[0]:
             found_one = True
 
     if not found_one:
         ret[1] = poly
         return ret
-    if base_index(poly)[0] == q_var.label:
+    if base_index(poly)[0] == base_index(q_var)[0]:
         ret[poly] = 1
         return ret
     if isinstance(poly, Add):

@@ -17,12 +17,13 @@ from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sympy import sympify
 
+import schubmult.perm_lib as pl
 import schubmult.sage_integration._fast_double_schubert_polynomial_ring as bork
 import schubmult.schubmult_double as yz
 import schubmult.schubmult_py as py
 import schubmult.schubmult_q as sq
 import schubmult.schubmult_q_double as qyz
-from schubmult.perm_lib.perm_lib import permtrim
+from schubmult.perm_lib import permtrim
 
 from ._indexing import _coerce_index
 
@@ -143,7 +144,7 @@ class FastSchubertPolynomial_class(CombinatorialFreeModule.Element):
                 [
                     self.parent()._polynomial_ring(
                         qyz.schubpoly_quantum(
-                            tuple(_coerce_index(k, self.parent()._ascode, False)),
+                            pl.Permutation(_coerce_index(k, self.parent()._ascode, False)),
                             self.parent()._polynomial_ring.gens(),
                             [0 for i in range(100)],
                             self.parent()._q_ring.gens(),
@@ -157,11 +158,11 @@ class FastSchubertPolynomial_class(CombinatorialFreeModule.Element):
             [
                 self.parent()._polynomial_ring(
                     yz.schubmult(
-                        {(1, 2): v},
-                        tuple(_coerce_index(k, self.parent()._ascode, False)),
+                        {pl.Permutation([]): v},
+                        pl.Permutation(_coerce_index(k, self.parent()._ascode, False)),
                         self.parent()._polynomial_ring.gens(),
                         [0 for i in range(100)],
-                    ).get((1, 2), 0),
+                    ).get(pl.Permutation([]), 0),
                 )
                 for k, v in self.monomial_coefficients().items()
             ],
@@ -272,12 +273,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     def _element_constructor_(self, x):
         if isinstance(x, str):
             return self.parser().parse(x)
-        if (
-            isinstance(x, list)
-            or isinstance(x, tuple)
-            or isinstance(x, Composition)
-            or isinstance(x, Permutation)
-        ):
+        if isinstance(x, (list, tuple, Composition, Permutation, pl.Permutation)):
             # checking the input to avoid symmetrica crashing Sage, see trac 12924
             elem = self._from_dict(
                 {_coerce_index(x, self._ascode, self._ascode): self.base_ring().one()},
@@ -304,14 +300,14 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             val = syme.sympify(sympy_floff)
             if self._quantum:
                 result = sq.mult_poly(
-                    {(1, 2): 1},
+                    {pl.Permutation([]): 1},
                     val,
                     [syme.Symbol(str(g)) for g in self._polynomial_ring.gens()],
                     [syme.Symbol(str(g)) for g in self._q_ring.gens()],
                 )
             else:
                 result = py.mult_poly(
-                    {(1, 2): 1},
+                    {pl.Permutation([]): 1},
                     val,
                     [syme.Symbol(str(g)) for g in self._polynomial_ring.gens()],
                 )
@@ -342,8 +338,8 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 [
                     self.base_ring()(str(v)) * self(_coerce_index(k, False, self._ascode))
                     for k, v in sq.schubmult_db(
-                        {tuple(_coerce_index(left, self._ascode, False)): 1},
-                        tuple(_coerce_index(right, self._ascode, False)),
+                        {pl.Permutation(_coerce_index(left, self._ascode, False)): 1},
+                        pl.Permutation(_coerce_index(right, self._ascode, False)),
                         [syme.sympify(str(g)) for g in self._q_ring.gens()],
                     ).items()
                 ],

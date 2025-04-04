@@ -131,7 +131,7 @@ def q_posify(u, v, w, same, val, var2, var3, msg, subs_dict2):
                         exit(1)
         if not same and expand(val - val2) != 0:
             print(
-                f"error: value not equal"
+                "error: value not equal",
             )
             exit(1)
     val = val2

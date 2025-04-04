@@ -169,7 +169,7 @@ def q_vector(q_exp, q_var=_vars.q_var):
 
     if q_exp == 1:
         return ret
-    if base_index(q_exp)[0] == q_var.label:
+    if base_index(q_exp)[0] == base_index(q_var)[0]:
         i = base_index(q_exp)[1]
         return [0 for j in range(i - 1)] + [1]
     if isinstance(q_exp, Pow):
@@ -191,9 +191,9 @@ def q_vector(q_exp, q_var=_vars.q_var):
 def xreplace_genvars(poly, vars1, vars2):
     subs_dict = {}
     for s in sympify(poly).free_symbols:
-        if base_index(s)[0] == _vars.var_g1.label:
+        if base_index(s)[0] == base_index(_vars.var_g1)[0]:
             subs_dict[s] = vars1[base_index(s)[1]]
-        elif base_index(s)[0]  == _vars.var_g2.label:
+        elif base_index(s)[0]  == base_index(_vars.var_g2)[0]:
             subs_dict[s] = vars2[base_index(s)[1]]
     return sympify(poly).xreplace(subs_dict)
     # print(f"{poly2=} {poly2.free_symbols=}")
