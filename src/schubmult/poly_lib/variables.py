@@ -3,6 +3,7 @@
 
 import re
 from functools import cache
+from typing import ClassVar
 
 from symengine import Symbol, symbols, sympify
 from sympy.core.symbol import Str
@@ -13,7 +14,7 @@ class GeneratingSet(Str):
     def __new__(cls, name):
         return GeneratingSet.__xnew_cached__(cls, name)
 
-    _registry = {}
+    _registry: ClassVar = {}
 
     _index_pattern = re.compile("^([^_]+)_([0-9]+)$")
     _sage_index_pattern = re.compile("^([^0-9]+)([0-9]+)$")
@@ -72,7 +73,7 @@ def base_index(v):
             imp.find_moulde("sage")
         except ImportError:
             return None, None
-        from sage.rings.polynomial.multivariate_polynomial import MPolynomial
+        from sage.rings.polynomial.multivariate_polynomial import MPolynomial  # type: ignore
 
         if isinstance(v, MPolynomial):
             m = GeneratingSet._sage_index_pattern.match(str(v))

@@ -135,8 +135,7 @@ def q_posify(u, v, w, same, val, var2, var3, msg, subs_dict2):
                 "error: value not equal",
             )
             exit(1)
-    val = val2
-    return val
+    return val2
 
 
 def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3):  # noqa: ARG001

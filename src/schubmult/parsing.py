@@ -1,6 +1,6 @@
 import symengine
-from latex2sympy2_extended import latex2sympy
-from sympy.parsing.sympy_parser import parse_expr
+from latex2sympy2_extended import latex2sympy  # noqa: F401
+from sympy.parsing.sympy_parser import parse_expr  # noqa: F401
 
 from schubmult.poly_lib import GeneratingSet
 
