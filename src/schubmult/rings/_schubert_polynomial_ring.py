@@ -10,13 +10,13 @@ from sympy.printing.str import StrPrinter
 import schubmult.rings._utils as utils
 import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.single as py
-from schubmult.logging import get_logger
 from schubmult.perm_lib import (
     Permutation,
     add_perm_dict,
     inv,
 )
 from schubmult.poly_lib import xreplace_genvars
+from schubmult.utils.logging import get_logger
 
 # class IdxPrinter(StrPrinter):
 

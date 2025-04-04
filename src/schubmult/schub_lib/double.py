@@ -10,7 +10,6 @@ from cachetools.keys import hashkey
 from sortedcontainers import SortedList
 from symengine import Add, Integer, Mul, Pow, sympify
 
-from schubmult.logging import get_logger
 from schubmult.perm_lib import (
     Permutation,
     add_perm_dict,
@@ -38,6 +37,7 @@ from schubmult.schub_lib import (
     try_reduce_v,
     will_formula_work,
 )
+from schubmult.utils.logging import get_logger
 
 zero = sympify(0)
 
@@ -758,7 +758,7 @@ def find_base_vectors(monom_list, var2, var3, depth):
 
 def compute_positive_rep(val, var2=GeneratingSet("y"), var3=GeneratingSet("z"), msg=False, do_pos_neg=True):
     do_pos_neg = False
-    from schubmult.logging import get_logger, init_logging
+    from schubmult.utils.logging import get_logger, init_logging
 
     init_logging(True)
     logger = get_logger(__name__)
