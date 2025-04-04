@@ -12,7 +12,7 @@ def check_positive(v, coprod, same, var_r):
     from symengine import expand, sympify
 
     from schubmult.schub_lib.schubmult_double import compute_positive_rep
-    from schubmult.schub_lib.schubmult_double._funcs import _vars
+    from schubmult.schub_lib.schubmult_double import _vars
 
     var2 = _vars.var2
     var3 = _vars.var3

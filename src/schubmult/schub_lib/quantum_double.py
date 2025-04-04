@@ -9,7 +9,7 @@ from functools import cached_property
 
 from symengine import Add, Mul, Pow, expand, sympify
 
-import schubmult.schub_lib.schubmult_double as norm_yz
+import schubmult.schub_lib.double as norm_yz
 from schubmult.perm_lib import (
     Permutation,
     add_perm_dict,
