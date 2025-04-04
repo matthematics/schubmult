@@ -186,7 +186,7 @@ def _display_full(
                     if val != 0:
                         try:
                             val = int(expand(val))
-                        except Exception as e:
+                        except Exception as e:  # noqa: F841
                             val2 = posify(
                                 flip_symbol_signs(val),
                                 firstperm * muA,
