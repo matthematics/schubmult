@@ -6,12 +6,13 @@ def test_schub_expand():
     Test expand
     """
     from schubmult.rings import DSx
-    from sympy import symbols
+    from symengine import symbols, expand
     x_1, y_1, y_2, y_3 = symbols("x_1 y_1 y_2 y_3")
     # DSx = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", "y")
-    assert DSx([3, 1, 2]).expand().equals((x_1 - y_1)*(x_1 - y_2))
-    assert (DSx([3, 4, 1, 2]).expand() * DSx([4, 1, 2, 3]).expand()).equals((DSx([3, 4, 1, 2]) * DSx([4, 1, 2, 3])).expand())
-    assert (x_1* DSx([3, 4, 1, 2])).expand().equals(y_3 * DSx([3, 4, 1, 2]).expand() + DSx([4, 3, 1, 2]).expand())
+    assert expand(DSx([3, 1, 2]).expand()) == expand((x_1 - y_1)*(x_1 - y_2))
+    print(f"{expand(DSx([3, 4, 1, 2]).expand() * DSx([4, 1, 2, 3]).expand() - ((DSx([3, 4, 1, 2]) * DSx([4, 1, 2, 3])).expand()))=}")
+    assert expand(DSx([3, 4, 1, 2]).expand() * DSx([4, 1, 2, 3]).expand() - ((DSx([3, 4, 1, 2]) * DSx([4, 1, 2, 3])).expand())) == 0
+    assert expand((x_1* DSx([3, 4, 1, 2])).expand()) == expand(y_3 * DSx([3, 4, 1, 2]).expand() + DSx([4, 3, 1, 2]).expand())
 
 
 # def test_coproduct():
@@ -79,7 +80,7 @@ def test_change_vars():
     perm = [1, 5, 3, 4, 2]
     
     assert DSx(perm).change_vars("theta") == DSx(perm).change_vars("gamama")
-    #assert (DSx(perm)*DSx(perm,"z")).change_vars("theta").equals((DSx(perm)*DSx(perm,"z")).change_vars("yourmom"))
+    #assert (DSx(perm)*DSx(perm,"z")).change_vars("theta") == ((DSx(perm)*DSx(perm,"z")).change_vars("yourmom"))
 
 
 # def test_coerce():

@@ -58,9 +58,8 @@ class GeneratingSet(Str):
         return isinstance(other, GeneratingSet) and self.label == other.label
 
 
-
 def base_index(v):
-    if isinstance(v, (list,tuple)):
+    if isinstance(v, (list, tuple)):
         return base_index(v[0])[0], None
     if isinstance(v, GeneratingSet):
         return v.label, None
@@ -69,10 +68,12 @@ def base_index(v):
     except Exception:
         try:
             import imp
+
             imp.find_moulde("sage")
         except ImportError:
             return None, None
         from sage.rings.polynomial.multivariate_polynomial import MPolynomial
+
         if isinstance(v, MPolynomial):
             m = GeneratingSet._sage_index_pattern.match(str(v))
             if m:

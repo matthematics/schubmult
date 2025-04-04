@@ -23,7 +23,7 @@ from schubmult.poly_lib import (
 from schubmult.schub_lib import (
     check_blocks,
 )
-from schubmult.schub_lib.schubmult_q import (
+from schubmult.schub_lib.schubmult_q._funcs import (
     _vars,
     schubmult,
     schubmult_db,
