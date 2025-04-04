@@ -17,7 +17,7 @@ def check_positive(v, coprod, same, var_r):
     var2 = _vars.var2
     var3 = _vars.var3
     import sys
-    print(f"{var2=} {var3=}",file=sys.stderr)
+    # print(f"{var2=} {var3=}",file=sys.stderr)
 
     if same:
         if coprod:
@@ -85,7 +85,7 @@ def assert_dict_good(
     else:
         coeff_dict = schubmult(input_dict, v_tuple, var2=var_a, var3=var_a if same else var_b)
     # for k in ret_dict.keys():
-    #     print(f"{k=} {type(k)=} {type(k[0])=} {type(k[1])=} {type(ret_dict[k])=}")
+    #     # print(f"{k=} {type(k)=} {type(k[0])=} {type(k[1])=} {type(ret_dict[k])=}")
     #print(f"{coeff_dict=}",file=sys.stderr)
     # print(f"{ret_dict=}")
     var_r = GeneratingSet("r")
@@ -145,16 +145,16 @@ def parse_ret(lines, ascode, coprod, unformat):
                 if ascode:
                     k1 = uncode(k1)
                     k2 = uncode(k2)
-                    print("uncoded")
-                print(f"{k1=} {k2=}")
+                    # print("uncoded")
+                # print(f"{k1=} {k2=}")
                 k = (Permutation(k2), Permutation(k1))
             except Exception as e:
-                print(f"boingfish {line=} {e=}", file=sys.stderr)
+                # print(f"boingfish {line=} {e=}", file=sys.stderr)
                 continue
             try:
                 v = unformat(v)                
             except Exception as e:
-                print(f"bingfish {line=} {v=} {e=}", file=sys.stderr)
+                # print(f"bingfish {line=} {v=} {e=}", file=sys.stderr)
                 continue            
             ret_dict[k] = v
             #print(f"ret_dict[{k=}] = {v} {type(k)=} {type(k[0])=} {type(ret_dict[k])=}")

@@ -448,7 +448,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         ]
 
     def product_on_basis(self, left, right):
-        le = Permtuation(left[0])
+        le = Permutation(left[0])
         ri = Permutation(right[0])
         var_y = [syme.sympify(str(g)) for g in self._coeff_polynomial_rings[left[1]].gens()]
         var_z = [syme.sympify(str(g)) for g in self._coeff_polynomial_rings[right[1]].gens()]

@@ -20,3 +20,5 @@ numbered symbols
 
 Better symengine sympify
 Maybe coerce indexed variables
+
+Get sage working again
