@@ -26,9 +26,9 @@ import schubmult.perm_lib as pl
 #     FastSchubertPolynomialRing,
 #     FastSchubertPolynomial,
 # )as
-import schubmult.sage_integration._fast_schubert_polynomial_ring as bork
-import schubmult.schubmult_double as yz
-import schubmult.schubmult_q_double as qyz
+import schubmult.sage._fast_schubert_polynomial_ring as bork
+import schubmult.schub_lib.schubmult_double as yz
+import schubmult.schub_lib.schubmult_q_double as qyz
 from schubmult.perm_lib import permtrim
 
 from ._indexing import _coerce_index
