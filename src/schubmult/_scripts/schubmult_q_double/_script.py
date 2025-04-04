@@ -4,7 +4,6 @@ from functools import cached_property
 import numpy as np
 from symengine import sympify
 
-from schubmult._base_argparse import schub_argparse
 from schubmult.perm_lib import (
     Permutation,
     code,
@@ -30,6 +29,7 @@ from schubmult.schub_lib.quantum_double import (
     schubmult_q_double,
     schubmult_q_double_fast,
 )
+from schubmult.utils.argparse import schub_argparse
 
 
 class _gvars:

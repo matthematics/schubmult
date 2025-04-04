@@ -4,8 +4,6 @@ from functools import cached_property
 import sympy
 from symengine import expand, sympify
 
-from schubmult._base_argparse import schub_argparse
-from schubmult.logging import get_logger
 from schubmult.perm_lib import (
     Permutation,
     add_perm_dict,
@@ -30,6 +28,8 @@ from schubmult.schub_lib.double import (
     schubmult_double,
     schubmult_down,
 )
+from schubmult.utils.argparse import schub_argparse
+from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
