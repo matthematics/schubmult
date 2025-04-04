@@ -18,7 +18,7 @@ from schubmult.perm_lib import (
     trimcode,
     uncode,
 )
-from schubmult.poly_lib import GeneratingSet, efficient_subs, is_indexed
+from schubmult.poly_lib import GeneratingSet, base_index, efficient_subs
 from schubmult.schub_lib import (
     will_formula_work,
 )
@@ -123,7 +123,7 @@ def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, 
 def flip_symbol_signs(val):
     subs_dict={}
     for s in val.free_symbols:
-        if is_indexed(s):
+        if base_index(s)[0]:
             subs_dict[s] = -s
     return val.subs(subs_dict)
 

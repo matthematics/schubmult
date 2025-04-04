@@ -12,7 +12,7 @@ from schubmult.perm_lib import (
 )
 from schubmult.poly_lib import (
     GeneratingSet,
-    is_indexed,
+    base_index,
 )
 from schubmult.schub_lib import (
     compute_vpathdicts,
@@ -21,10 +21,6 @@ from schubmult.schub_lib import (
 
 
 class _gvars:
-    @cached_property
-    def n(self):
-        return 100
-
     @cached_property
     def var_x(self):
         return GeneratingSet("x")
@@ -50,8 +46,8 @@ def single_variable(coeff_dict, varnum):
 
 
 def mult_poly(coeff_dict, poly, var_x=_vars.var_x):
-    if is_indexed(poly) and poly.base==var_x:
-        return single_variable(coeff_dict, poly.index)
+    if base_index(poly)[0]==var_x.label:
+        return single_variable(coeff_dict, base_index(poly)[1])
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:

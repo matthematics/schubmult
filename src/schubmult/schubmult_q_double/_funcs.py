@@ -18,7 +18,7 @@ from schubmult.perm_lib import (
     strict_theta,
     uncode,
 )
-from schubmult.poly_lib import GeneratingSet, call_zvars, elem_sym_func_q, elem_sym_poly_q, is_indexed
+from schubmult.poly_lib import GeneratingSet, base_index, call_zvars, elem_sym_func_q, elem_sym_poly_q
 from schubmult.schub_lib import (
     compute_vpathdicts,
     double_elem_sym_q,
@@ -461,13 +461,13 @@ def factor_out_q_keep_factored(poly, q_var=_vars.q_var):
     #     return ret
     found_one = False
     for s in sympify(poly).free_symbols:
-        if is_indexed(s) and s.base == q_var:
+        if base_index(s)[0] == q_var.label:
             found_one = True
 
     if not found_one:
         ret[1] = poly
         return ret
-    if is_indexed(poly) and poly.base == q_var:
+    if base_index(poly)[0] == q_var.label:
         ret[poly] = 1
         return ret
     if isinstance(poly, Add):

@@ -66,4 +66,4 @@ def base_index(v):
         m = GeneratingSet._index_pattern.match(v.name)
         if m:
             return m.group(1), int(m.group(2))
-    return NotImplemented, NotImplemented
+    return None, None

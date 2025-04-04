@@ -12,7 +12,7 @@ from schubmult.perm_lib.perm_lib import (
     strict_theta,
     uncode,
 )
-from schubmult.poly_lib import GeneratingSet, is_indexed
+from schubmult.poly_lib import GeneratingSet, base_index
 from schubmult.schub_lib import (
     compute_vpathdicts,
     double_elem_sym_q,
@@ -54,8 +54,8 @@ def single_variable(coeff_dict, varnum, var_q=_vars.q_var):
 
 
 def mult_poly(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
-    if is_indexed(poly) and poly.base == var_x:
-        return single_variable(coeff_dict, poly.args[1], var_q=var_q)
+    if base_index(poly)[0] == var_x.label:
+        return single_variable(coeff_dict, base_index(poly)[1], var_q=var_q)
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:

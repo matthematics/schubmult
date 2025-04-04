@@ -23,7 +23,7 @@ from schubmult.perm_lib import (
     theta,
     uncode,
 )
-from schubmult.poly_lib import GeneratingSet, efficient_subs, elem_sym_func, elem_sym_poly, expand, is_indexed, schubpoly
+from schubmult.poly_lib import GeneratingSet, base_index, efficient_subs, elem_sym_func, elem_sym_poly, expand, schubpoly
 from schubmult.schub_lib import (
     compute_vpathdicts,
     divdiffable,
@@ -142,7 +142,7 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
     #     var_x = tuple([sympy.sympify(v) for v in var_x])
     #     var_y = tuple([sympy.sympify(v) for v in var_y])
     #     return mult_poly_sympy(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2)
-    if is_indexed(poly) and poly.base == var_x:
+    if base_index(poly)[0] == var_x.label:
         return single_variable(coeff_dict, poly.index, var_y)
     if isinstance(poly, Mul):
         ret = coeff_dict
@@ -771,10 +771,10 @@ def compute_positive_rep(val, var2=GeneratingSet("y"), var3=GeneratingSet("z"), 
         frees = val.free_symbols
         logger.debug(f"{frees=}")
         logger.debug(f"{[type(s) for s in frees]=}")
-        varsimp2 = [m for m in frees if is_indexed(m) and m.base == var2]
-        varsimp3 = [m for m in frees if is_indexed(m) and m.base == var3]
-        varsimp2.sort(key=lambda k: k.index)
-        varsimp3.sort(key=lambda k: k.index)
+        varsimp2 = [m for m in frees if base_index(m)[0]== var2.label]
+        varsimp3 = [m for m in frees if base_index(m)[0] == var3.label]
+        varsimp2.sort(key=lambda k: base_index(k)[1])
+        varsimp3.sort(key=lambda k: base_index(k)[1])
         logger.debug(f"{varsimp2=}")
         logger.debug(f"{varsimp3=}")
         var22 = [sympy.sympify(v) for v in varsimp2]
