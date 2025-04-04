@@ -35,6 +35,5 @@ __all__ = [
     "mult_poly_q_double",
     "schubmult_q_double",
     "schubmult_q_double_fast",
-    "schubpoly_quantum"
+    "schubpoly_quantum",
 ]
-
