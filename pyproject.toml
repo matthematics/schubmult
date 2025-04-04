@@ -127,7 +127,7 @@ exclude = ["tests*"]  # exclude packages matching these glob patterns (empty by 
 namespaces = false
 
 [project.scripts]
-schubmult_py = "schubmult.schubmult_py._script:main"
-schubmult_double = "schubmult.schubmult_double._script:main"
-schubmult_q = "schubmult.schubmult_q._script:main"
-schubmult_q_double = "schubmult.schubmult_q_double._script:main"
+schubmult_py = "schubmult._scripts.schubmult_py._script:main"
+schubmult_double = "schubmult._scripts.schubmult_double._script:main"
+schubmult_q = "schubmult._scripts.schubmult_q._script:main"
+schubmult_q_double = "schubmult._scrupts.schubmult_q_double._script:main"
