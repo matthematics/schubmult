@@ -8,8 +8,8 @@ from sympy.core.kind import NumberKind
 from sympy.printing.str import StrPrinter
 
 import schubmult.rings._utils as utils
-import schubmult.schubmult_double as yz
-import schubmult.schubmult_py as py
+import schubmult.schub_lib.schubmult_double as yz
+import schubmult.schub_lib.schubmult_py as py
 from schubmult.logging import get_logger
 from schubmult.perm_lib import (
     Permutation,
@@ -17,7 +17,6 @@ from schubmult.perm_lib import (
     inv,
 )
 from schubmult.poly_lib import xreplace_genvars
-from schubmult.utils import print_args, sympify_args
 
 # class IdxPrinter(StrPrinter):
 
@@ -414,7 +413,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
             else:
                 return self(x.expand(), cv)
         else:
-            x = sympify_args(x)
+            x = sympify(x)
             if cv is None or cv == utils.NoneVar:
                 cv = utils.NoneVar
                 result = py.mult_poly({Permutation([]): 1}, x, utils.poly_ring(self._base_var))

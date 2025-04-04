@@ -7,7 +7,7 @@ def test_schub_expand():
     """
     from sage.all import ZZ
 
-    from schubmult.sage_integration import (
+    from schubmult.sage import (
         FastDoubleSchubertPolynomialRing,
     )
     X = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", "y")
@@ -30,7 +30,7 @@ def test_coproduct():
     """
     from sage.all import ZZ
 
-    from schubmult.sage_integration import (
+    from schubmult.sage import (
         FastDoubleSchubertPolynomialRing,
     )
     X = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", "y")
@@ -77,7 +77,7 @@ def test_associative():
     """
     from sage.all import ZZ
 
-    from schubmult.sage_integration import (
+    from schubmult.sage import (
         FastDoubleSchubertPolynomialRing,
     )
     X = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", "y")
@@ -95,7 +95,7 @@ def test_associative():
 def test_coerce():
     from sage.all import ZZ
 
-    from schubmult.sage_integration import (
+    from schubmult.sage import (
         FastDoubleSchubertPolynomialRing,
         FastQuantumDoubleSchubertPolynomialRing,
         FastQuantumSchubertPolynomialRing,
@@ -120,7 +120,7 @@ def test_mixed_equal():
     """
     from sage.all import ZZ
 
-    from schubmult.sage_integration import (
+    from schubmult.sage import (
         FastDoubleSchubertPolynomialRing,
     )
     X = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y", "z"))

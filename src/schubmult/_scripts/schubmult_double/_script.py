@@ -22,11 +22,7 @@ from schubmult.poly_lib import GeneratingSet, base_index, efficient_subs
 from schubmult.schub_lib import (
     will_formula_work,
 )
-
-# from schubmult.schubmult_double._vars import var_x, var, var_r
-from schubmult.schubmult_double._funcs import (
-    # !TEMP
-    # compute_positive_rep,
+from schubmult.schub_lib.schubmult_double import (
     mult_poly,
     mult_poly_down,
     posify,
@@ -120,8 +116,9 @@ def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, 
                 exit(1)
     return val
 
+
 def flip_symbol_signs(val):
-    subs_dict={}
+    subs_dict = {}
     for s in val.free_symbols:
         if base_index(s)[0]:
             subs_dict[s] = -s
@@ -165,7 +162,7 @@ def _display_full(
 
     mu_W = uncode(theta(~perms[0]))
 
-    the_top_perm = perms[0]*mu_W
+    the_top_perm = perms[0] * mu_W
 
     muA = uncode(mu_A(code(mu_W), poso))
     muB = uncode(mu_A(code(mu_W), pos2))
@@ -181,7 +178,7 @@ def _display_full(
             width = max([len(str(perm[0]) + " " + str(perm[1])) for perm in perm_pairs])
 
         for firstperm, secondperm in perm_pairs:
-            val = coeff_dict[(firstperm,secondperm)]
+            val = coeff_dict[(firstperm, secondperm)]
             if same and display_positive:
                 val = efficient_subs(sympify(val), subs_dict2).expand()
             if val != 0:

@@ -12,7 +12,7 @@ from schubmult.perm_lib import (
     trimcode,
     uncode,
 )
-from schubmult.schubmult_py._funcs import mult_poly, schub_coprod, schubmult
+from schubmult.schub_lib.schubmult_py import mult_poly, schub_coprod, schubmult
 
 
 def main(argv=None):

@@ -2,7 +2,7 @@
 def test_basic_sage_example():
     from sage.all import ZZ
 
-    from schubmult.sage_integration import (
+    from schubmult.sage import (
         FastDoubleSchubertPolynomialRing,
         FastQuantumSchubertPolynomialRing,
         FastSchubertPolynomialRing,

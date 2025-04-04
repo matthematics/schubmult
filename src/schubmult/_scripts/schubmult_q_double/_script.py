@@ -23,8 +23,8 @@ from schubmult.schub_lib import (
     check_blocks,
     reduce_q_coeff,
 )
-from schubmult.schubmult_double import compute_positive_rep, posify
-from schubmult.schubmult_q_double._funcs import (
+from schubmult.schub_lib.schubmult_double import compute_positive_rep, posify
+from schubmult.schub_lib.schubmult_q_double import (
     factor_out_q_keep_factored,
     nil_hecke,
     schubmult,

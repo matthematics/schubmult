@@ -12,9 +12,9 @@ def check_positive(v2, same, subs_dict2, var2, var3, q_var):
     # if same, should be no minus signs
     from symengine import expand, sympify
 
-    from schubmult.schubmult_double import compute_positive_rep
-    from schubmult.schubmult_double._funcs import _vars
-    from schubmult.schubmult_q_double import factor_out_q_keep_factored
+    from schubmult.schub_lib.schubmult_double import compute_positive_rep
+    
+    from schubmult.schub_lib.schubmult_q_double import factor_out_q_keep_factored
     
 
     q_dict = factor_out_q_keep_factored(v2)
@@ -59,7 +59,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, same=True, display_positive=
 
     from symengine import expand, sympify
 
-    from schubmult.schubmult_q_double import schubmult, schubmult_db
+    from schubmult.schub_lib.schubmult_q_double import schubmult, schubmult_db
 
     var_a = GeneratingSet("y")
     var_b = GeneratingSet("z")
@@ -135,12 +135,12 @@ json_files_data_args = load_json_test_names(base_dir)
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
-    from schubmult.perm_lib.perm_lib import permtrim, uncode
+    from schubmult.perm_lib import permtrim, uncode
 
 
     args = get_json(f"{base_dir}/{json_file}")
     # print(f"{json_file=} {args=} input_data")
-    from schubmult.schubmult_q_double._script import main
+    from schubmult._scripts.schubmult_q_double._script import main
 
     mult = args["mult"]  # noqa: F841
     mulstring = args["mulstring"]  # noqa: F841

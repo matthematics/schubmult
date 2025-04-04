@@ -15,5 +15,6 @@ def parse_coeff(coeff_str, latex=False):
                 gset = GeneratingSet(base)
                 subs_dict[s] = gset[int(index)]
         return result.subs(subs_dict)
+    return None
 
 

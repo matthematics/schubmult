@@ -8,7 +8,7 @@ from schubmult.utils import get_json, load_json_test_names
 def assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices):
     import sys
 
-    from schubmult.schubmult_py import schub_coprod, schubmult
+    from schubmult.schub_lib.schubmult_py import schub_coprod, schubmult
     if coprod:
         coeff_dict = schub_coprod(v_tuple, indices)
         print(f"{ret_dict=}",file=sys.stderr)
@@ -25,7 +25,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices):
 
 
 def parse_ret(lines, ascode, coprod):
-    from schubmult.perm_lib.perm_lib import permtrim, uncode
+    from schubmult.perm_lib import permtrim, uncode
 
     ret_dict = {}
     if not coprod:
@@ -71,12 +71,12 @@ json_files_data_args = load_json_test_names(base_dir)
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
-    from schubmult.perm_lib.perm_lib import permtrim, uncode
-    from schubmult.perm_lib.perm_lib import Permutation
+    from schubmult.perm_lib import permtrim, uncode
+    from schubmult.perm_lib import Permutation
 
     args = get_json(f"{base_dir}/{json_file}")
     print(f"{json_file=} {args=} input_data")
-    from schubmult.schubmult_py._script import main
+    from schubmult._scripts.schubmult_py._script import main
 
     mult = args["mult"]  # noqa: F841
     mulstring = args["mulstring"]  # noqa: F841

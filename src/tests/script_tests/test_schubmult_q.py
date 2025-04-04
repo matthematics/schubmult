@@ -6,7 +6,7 @@ from schubmult.utils import get_json, load_json_test_names
 
 
 def assert_dict_good(v_tuple, input_dict, ret_dict):
-    from schubmult.schubmult_q import schubmult
+    from schubmult.schub_lib.schubmult_q import schubmult
 
     coeff_dict = schubmult(input_dict, v_tuple)
     for k, v in coeff_dict.items():
@@ -53,7 +53,7 @@ def test_with_same_args_exec(capsys, json_file):
 
     args = get_json(f"{base_dir}/{json_file}")
     print(f"{json_file=} {args=} input_data")
-    from schubmult.schubmult_q._script import main
+    from schubmult._scripts.schubmult_q._script import main
 
     mult = args["mult"]  # noqa: F841
     mulstring = args["mulstring"]  # noqa: F841
