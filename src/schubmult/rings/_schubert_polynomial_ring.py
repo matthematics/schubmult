@@ -62,7 +62,7 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
 
     none_dict = {}
     for k, v in dict1.items():
-        if k[1] == utils.NoneVar:
+        if k[1] == utils.NoneVar or k[1] == utils.ZeroVar:
             none_dict[k[0]] = v
         else:
             if k[1] not in by_var:
@@ -76,22 +76,21 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
         this_dict = {}
         for k, v in dict2.items():
             for kd, vd in _dict.items():
-                did_positive = False
+                did_positive = True
                 if best_effort_positive:
                     try:
                         this_dict = add_perm_dict(this_dict, {k1: v1 * v * vd for k1, v1 in cached_positive_product(kd, k[0], _vstr, k[1]).items()})
                     except Exception:
                         logger.debug("Failed to compute")
-                        raise
-                        # did_positive = False
-                if not did_positive:
-                    this_dict = add_perm_dict(this_dict, {k1: v1 * v * vd for k1, v1 in cached_product(kd, k[0], _vstr, k[1]).items()})
+                        did_positive = False
+                    if not did_positive:
+                        this_dict = add_perm_dict(this_dict, {k1: v1 * v * vd for k1, v1 in cached_product(kd, k[0], _vstr, k[1]).items()})
         results = add_perm_dict(results, this_dict)
 
     by_var2 = {}
     none_dict2 = {}
     for k, v in dict2.items():
-        if k[1] == utils.NoneVar:
+        if k[1] == utils.NoneVar or k[1] == utils.ZeroVar:
             none_dict2[k[0]] = v
         else:
             if k[1] not in by_var2:
@@ -324,8 +323,6 @@ class DoubleSchubertAlgebraElement(Expr):
         if not elem1.test_equality(elem2):
             elem1_o = elem1.change_vars(cv)
             elem2_o = elem2.change_vars(cv)
-            assert sympy.expand(elem1_o - elem1) == 0
-            assert sympy.expand(elem2_o - elem2) == 0
             return elem1_o.test_equality(elem2_o)
         return True
         # assert all([k[1] == cv for k in elem1._doubledict.keys()])
@@ -376,7 +373,7 @@ class DoubleSchubertAlgebraElement(Expr):
             return self.doit().expand()
         if isinstance(self, SchubMul):
             return self.doit().expand()
-        return Add(*[yz.schubmult({Permutation([]): v}, k[0], utils.poly_ring(DSx._base_var), utils.poly_ring(k[1])).get(Permutation([]), 0) for k, v in self._doubledict.items()])
+        return expand(Add(*[yz.schubmult({Permutation([]): v}, k[0], utils.poly_ring(DSx._base_var), utils.poly_ring(k[1])).get(Permutation([]), 0) for k, v in self._doubledict.items()]))
 
 
 # None is faster to store
