@@ -5,11 +5,11 @@ import sympy.combinatorics.permutations as spp
 from symengine import sympify
 from sympy import Basic, Tuple
 
-from schubmult.logging import get_logger
+import schubmult.utils.logging as lg
 
 # schubmult.poly_lib.variables import GeneratingSet
 
-logger = get_logger(__name__)
+logger = lg.get_logger(__name__)
 
 zero = sympify(0)
 n = 100
