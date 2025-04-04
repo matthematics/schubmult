@@ -18,12 +18,5 @@ COPRODUCT RING
 
 numbered symbols
 
-~/schubmult$ sudo schubmult_double --coprod 3 1 6 2 5 4 - 2 4 6 --display-positive --mixed-var
-Traceback (most recent call last):
-  File "/usr/local/bin/schubmult_double", line 33, in <module>
-    sys.exit(load_entry_point('schubmult', 'console_scripts', 'schubmult_double')())
-  File "/home/matthematics/schubmult/src/schubmult/schubmult_double/_script.py", line 348, in main
-    raw_result_dict = _display_full(
-  File "/home/matthematics/schubmult/src/schubmult/schubmult_double/_script.py", line 169, in _display_full
-    var2neg = np.array([-var2[i] for i in range(len(var2))])
-TypeError: object of type 'IndexedBase' has no len()
+Better symengine sympify
+Maybe coerce indexed variables

@@ -10,10 +10,11 @@ from .poly_lib import (
     xreplace_genvars,
 )
 from .schub_poly import div_diff, perm_act, schubpoly, skew_div_diff
-from .variables import GeneratingSet, is_indexed
+from .variables import GeneratingSet, base_index
 
 __all__ = [
     "GeneratingSet",
+    "base_index",
     "call_zvars",
     "div_diff",
     "efficient_subs",

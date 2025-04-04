@@ -62,5 +62,4 @@ def sympify_args(poly):
         if poly.is_Pow:
             return symengine.Pow(*[sympify_args(arg) for arg in poly.args])
         if poly.is_Add:
-            return symengine.Add(*[sympify_args(arg) for arg in poly.args])
-    print("fiminify critkcer")
+            return symengine.Add(*[sympify_args(arg) for arg in poly.args])    
