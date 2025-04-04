@@ -47,13 +47,13 @@ json_files_data_args = load_json_test_names(base_dir)
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
     from schubmult.utils import get_json, load_json_test_names
-    from schubmult.parsing import parse_coeff
+    from schubmult.utils.parsing import parse_coeff
     from schubmult.poly_lib import GeneratingSet
     from schubmult.perm_lib import permtrim, uncode
 
     args = get_json(f"{base_dir}/{json_file}")
     print(f"{json_file=} {args=} input_data")
-    from schubmult._scripts.schubmult_q._script import main
+    from schubmult.scripts.schubmult_q._script import main
 
     mult = args["mult"]  # noqa: F841
     mulstring = args["mulstring"]  # noqa: F841
