@@ -157,7 +157,7 @@ class FastSchubertPolynomial_class(CombinatorialFreeModule.Element):
         return sum(
             [
                 self.parent()._polynomial_ring(
-                    yz.schubmult(
+                    yz.schubmult_double(
                         {pl.Permutation([]): v},
                         pl.Permutation(_coerce_index(k, self.parent()._ascode, False)),
                         self.parent()._polynomial_ring.gens(),
@@ -299,14 +299,14 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             sympy_floff = sympify(str(x))
             val = syme.sympify(sympy_floff)
             if self._quantum:
-                result = sq.mult_poly(
+                result = sq.mult_poly_q(
                     {pl.Permutation([]): 1},
                     val,
                     [syme.Symbol(str(g)) for g in self._polynomial_ring.gens()],
                     [syme.Symbol(str(g)) for g in self._q_ring.gens()],
                 )
             else:
-                result = py.mult_poly(
+                result = py.mult_poly_py(
                     {pl.Permutation([]): 1},
                     val,
                     [syme.Symbol(str(g)) for g in self._polynomial_ring.gens()],
@@ -337,7 +337,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             return sum(
                 [
                     self.base_ring()(str(v)) * self(_coerce_index(k, False, self._ascode))
-                    for k, v in sq.schubmult_db(
+                    for k, v in sq.schubmult_q_fast(
                         {pl.Permutation(_coerce_index(left, self._ascode, False)): 1},
                         pl.Permutation(_coerce_index(right, self._ascode, False)),
                         [syme.sympify(str(g)) for g in self._q_ring.gens()],
@@ -347,7 +347,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         return sum(
             [
                 self.base_ring()(v) * self(_coerce_index(k, False, self._ascode))
-                for k, v in py.schubmult(
+                for k, v in py.schubmult_py(
                     {tuple(_coerce_index(left, self._ascode, False)): 1},
                     tuple(_coerce_index(right, self._ascode, False)),
                 ).items()
@@ -368,7 +368,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         N = len(kcd)
         kperm = from_lehmer_code(kcd2).inverse()
         coeff_dict = {tuple(kperm): 1}
-        coeff_dict = py.schubmult(coeff_dict, tuple(mperm))
+        coeff_dict = py.schubmult_py(coeff_dict, tuple(mperm))
 
         inv_kperm = kperm.number_of_inversions()
         inverse_kperm = kperm.inverse()

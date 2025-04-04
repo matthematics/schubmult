@@ -25,8 +25,8 @@ from schubmult.schub_lib import (
 )
 from schubmult.schub_lib.schubmult_q._funcs import (
     _vars,
-    schubmult,
-    schubmult_db,
+    schubmult_q,
+    schubmult_q_fast,
 )
 from schubmult.schub_lib.schubmult_q_double import factor_out_q_keep_factored
 
@@ -146,10 +146,10 @@ def main(argv=None):
 
         if not slow:
             for perm in perms[1:]:
-                coeff_dict = schubmult_db(coeff_dict, perm)
+                coeff_dict = schubmult_q_fast(coeff_dict, perm)
         else:
             for perm in perms[1:]:
-                coeff_dict = schubmult(coeff_dict, perm)
+                coeff_dict = schubmult_q(coeff_dict, perm)
 
         # if mult:
         #     mul_exp = sympify(mulstring)

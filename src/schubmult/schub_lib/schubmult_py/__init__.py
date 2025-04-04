@@ -1,11 +1,11 @@
 from schubmult.schub_lib.schubmult_py._funcs import (
-    mult_poly,
-    schub_coprod,
-    schubmult,
+    mult_poly_py,
+    schub_coprod_py,
+    schubmult_py,
 )
 
 __all__ = [
-    "mult_poly",
-    "schub_coprod",
-    "schubmult",
+    "mult_poly_py",
+    "schub_coprod_py",
+    "schubmult_py",
 ]

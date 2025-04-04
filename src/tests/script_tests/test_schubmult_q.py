@@ -6,9 +6,9 @@ from schubmult.utils import get_json, load_json_test_names
 
 
 def assert_dict_good(v_tuple, input_dict, ret_dict):
-    from schubmult.schub_lib.schubmult_q import schubmult
+    from schubmult.schub_lib.schubmult_q import schubmult_q
 
-    coeff_dict = schubmult(input_dict, v_tuple)
+    coeff_dict = schubmult_q(input_dict, v_tuple)
     for k, v in coeff_dict.items():
         if v != 0:
             assert k in ret_dict

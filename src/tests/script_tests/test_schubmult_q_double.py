@@ -59,7 +59,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, same=True, display_positive=
 
     from symengine import expand, sympify
 
-    from schubmult.schub_lib.schubmult_q_double import schubmult, schubmult_db
+    from schubmult.schub_lib.schubmult_q_double import schubmult_q_double, schubmult_q_double_fast
 
     var_a = GeneratingSet("y")
     var_b = GeneratingSet("z")
@@ -73,11 +73,11 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, same=True, display_positive=
             sm += var_r[j]
         subs_dict2[var_a[i]] = sm
     if slow:
-        coeff_dict = schubmult(
+        coeff_dict = schubmult_q_double(
             input_dict, v_tuple, var2=var_a, var3=var_a if same else var_b, q_var=var_q,
         )
     else:
-        coeff_dict = schubmult_db(
+        coeff_dict = schubmult_q_double_fast(
             input_dict, v_tuple, var2=var_a, var3=var_a if same else var_b, q_var=var_q,
         )
 

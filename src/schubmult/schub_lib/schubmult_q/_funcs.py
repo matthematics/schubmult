@@ -53,25 +53,25 @@ def single_variable(coeff_dict, varnum, var_q=_vars.q_var):
     return ret
 
 
-def mult_poly(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
+def mult_poly_q(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
     if base_index(poly)[0] == base_index(var_x)[0]:
         return single_variable(coeff_dict, base_index(poly)[1], var_q=var_q)
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
-            ret = mult_poly(ret, a, var_x, var_q=var_q)
+            ret = mult_poly_q(ret, a, var_x, var_q=var_q)
         return ret
     if isinstance(poly, Pow):
         base = poly.args[0]
         exponent = int(poly.args[1])
         ret = coeff_dict
         for i in range(int(exponent)):
-            ret = mult_poly(ret, base, var_x, var_q=var_q)
+            ret = mult_poly_q(ret, base, var_x, var_q=var_q)
         return ret
     if isinstance(poly, Add):
         ret = {}
         for a in poly.args:
-            ret = add_perm_dict(ret, mult_poly(coeff_dict, a, var_x, var_q=var_q))
+            ret = add_perm_dict(ret, mult_poly_q(coeff_dict, a, var_x, var_q=var_q))
         return ret
     ret = {}
     for perm in coeff_dict:
@@ -79,7 +79,7 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
     return ret
 
 
-def schubmult_db(perm_dict, v, q_var=_vars.q_var):
+def schubmult_q_fast(perm_dict, v, q_var=_vars.q_var):
     if inv(v) == 0:
         return perm_dict
     th = medium_theta(~v)
@@ -175,7 +175,7 @@ def schubmult_db(perm_dict, v, q_var=_vars.q_var):
     return ret_dict
 
 
-def schubmult(perm_dict, v):
+def schubmult_q(perm_dict, v):
     th = strict_theta(~v)
     mu = permtrim(uncode(th))
     vmu = v * mu

@@ -45,25 +45,25 @@ def single_variable(coeff_dict, varnum):
     return ret
 
 
-def mult_poly(coeff_dict, poly, var_x=_vars.var_x):
+def mult_poly_py(coeff_dict, poly, var_x=_vars.var_x):
     if base_index(poly)[0]==base_index(var_x)[0]:
         return single_variable(coeff_dict, base_index(poly)[1])
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
-            ret = mult_poly(ret, a, var_x)
+            ret = mult_poly_py(ret, a, var_x)
         return ret
     if isinstance(poly, Pow):
         base = poly.args[0]
         exponent = int(poly.args[1])
         ret = coeff_dict
         for i in range(int(exponent)):
-            ret = mult_poly(ret, base, var_x)
+            ret = mult_poly_py(ret, base, var_x)
         return ret
     if isinstance(poly, Add):
         ret = {}
         for a in poly.args:
-            ret = add_perm_dict(ret, mult_poly(coeff_dict, a, var_x))
+            ret = add_perm_dict(ret, mult_poly_py(coeff_dict, a, var_x))
         return ret
     ret = {}
     for perm in coeff_dict:
@@ -71,7 +71,7 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var_x):
     return ret
 
 
-def schubmult(perm_dict, v):
+def schubmult_py(perm_dict, v):
     v = Permutation(v)
     vn1 = ~v
     th = theta(vn1)
@@ -122,7 +122,7 @@ def schubmult(perm_dict, v):
     return ret_dict
 
 
-def schub_coprod(perm, indices):
+def schub_coprod_py(perm, indices):
     mperm = perm
     indices = sorted(indices)
     ret_dict = {}
@@ -134,7 +134,7 @@ def schub_coprod(perm, indices):
     N = len(kcd)
     kperm = ~(uncode(kcd2))
     coeff_dict = {kperm: 1}
-    coeff_dict = schubmult(coeff_dict, mperm)
+    coeff_dict = schubmult_py(coeff_dict, mperm)
 
     inv_kperm = inv(kperm)
     inverse_kperm = ~kperm

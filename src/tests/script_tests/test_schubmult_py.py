@@ -8,13 +8,13 @@ from schubmult.utils import get_json, load_json_test_names
 def assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices):
     import sys
 
-    from schubmult.schub_lib.schubmult_py import schub_coprod, schubmult
+    from schubmult.schub_lib.schubmult_py import schub_coprod_py, schubmult_py
     if coprod:
-        coeff_dict = schub_coprod(v_tuple, indices)
+        coeff_dict = schub_coprod_py(v_tuple, indices)
         print(f"{ret_dict=}",file=sys.stderr)
         print(f"{coeff_dict=}",file=sys.stderr)
     else:
-        coeff_dict = schubmult(input_dict, v_tuple)
+        coeff_dict = schubmult_py(input_dict, v_tuple)
     for k, v in coeff_dict.items():
         if v != 0:
             assert coeff_dict[k] == ret_dict[k]

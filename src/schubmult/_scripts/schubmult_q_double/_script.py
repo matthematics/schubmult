@@ -27,8 +27,8 @@ from schubmult.schub_lib.schubmult_double import compute_positive_rep, posify
 from schubmult.schub_lib.schubmult_q_double import (
     factor_out_q_keep_factored,
     nil_hecke,
-    schubmult,
-    schubmult_db,
+    schubmult_q_double,
+    schubmult_q_double_fast,
 )
 
 
@@ -70,12 +70,13 @@ class _gvars:
         return GeneratingSet("q")
 
 
-
 _vars = _gvars()
 
 q_var = _vars.q_var
 
 zero = sympify(0)
+
+
 def q_posify(u, v, w, same, val, var2, var3, msg, subs_dict2):
     try:
         val2 = int(expand(val))
@@ -87,7 +88,7 @@ def q_posify(u, v, w, same, val, var2, var3, msg, subs_dict2):
                 val2 += q_part * int(q_dict[q_part])
             except Exception:
                 if same:
-                    to_add = q_part * expand(efficient_subs(sympify(q_dict[q_part]),subs_dict2))
+                    to_add = q_part * expand(efficient_subs(sympify(q_dict[q_part]), subs_dict2))
                     val2 += to_add
                 else:
                     try:
@@ -136,7 +137,6 @@ def q_posify(u, v, w, same, val, var2, var3, msg, subs_dict2):
             exit(1)
     val = val2
     return val
-
 
 
 def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3):  # noqa: ARG001
@@ -235,9 +235,9 @@ def main(argv=None):
             coeff_dict = {perms[0]: 1}
             for perm in perms[1:]:
                 if not slow:
-                    coeff_dict = schubmult_db(coeff_dict, perm, var2, var3)
+                    coeff_dict = schubmult_q_double_fast(coeff_dict, perm, var2, var3)
                 else:
-                    coeff_dict = schubmult(coeff_dict, perm, var2, var3)
+                    coeff_dict = schubmult_q_double(coeff_dict, perm, var2, var3)
                 # if mult:
                 #     for v in var2:
                 #         globals()[str(v)] = v

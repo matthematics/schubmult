@@ -84,25 +84,25 @@ def single_variable(coeff_dict, varnum, var2=_vars.var2, q_var=_vars.q_var):
     return ret
 
 
-def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var):
+def mult_poly_q_double(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var):
     if poly in var_x:
         return single_variable(coeff_dict, var_x.index(poly), var_y, q_var)
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
-            ret = mult_poly(ret, a, var_x, var_y, q_var)
+            ret = mult_poly_q_double(ret, a, var_x, var_y, q_var)
         return ret
     if isinstance(poly, Pow):
         base = poly.args[0]
         exponent = int(poly.args[1])
         ret = coeff_dict
         for i in range(int(exponent)):
-            ret = mult_poly(ret, base, var_x, var_y, q_var)
+            ret = mult_poly_q_double(ret, base, var_x, var_y, q_var)
         return ret
     if isinstance(poly, Add):
         ret = {}
         for a in poly.args:
-            ret = add_perm_dict(ret, mult_poly(coeff_dict, a, var_x, var_y, q_var))
+            ret = add_perm_dict(ret, mult_poly_q_double(coeff_dict, a, var_x, var_y, q_var))
         return ret
     ret = {}
     for perm in coeff_dict:
@@ -241,7 +241,7 @@ def schubpoly_quantum(v, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var, 
     return ret_dict[Permutation([1, 2])]
 
 
-def schubmult(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
+def schubmult_q_double(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
     if v == Permutation([1, 2]):
         return perm_dict
     th = strict_theta(~v)
@@ -302,7 +302,7 @@ def schubmult(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var)
     return ret_dict
 
 
-def schubmult_db(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
+def schubmult_q_double_fast(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
     if v == Permutation([1, 2]):
         return perm_dict
     th = medium_theta(~v)

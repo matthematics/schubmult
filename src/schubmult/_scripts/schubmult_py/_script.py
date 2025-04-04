@@ -12,7 +12,7 @@ from schubmult.perm_lib import (
     trimcode,
     uncode,
 )
-from schubmult.schub_lib.schubmult_py import mult_poly, schub_coprod, schubmult
+from schubmult.schub_lib.schubmult_py import mult_poly_py, schub_coprod_py, schubmult_py
 
 
 def main(argv=None):
@@ -47,7 +47,7 @@ def main(argv=None):
             pos.sort()
             mperm = Permutation(perms[0])
 
-            coeff_dict = schub_coprod(mperm, pos)
+            coeff_dict = schub_coprod_py(mperm, pos)
 
             if pr or formatter is None:
                 for firstperm, secondperm in coeff_dict:
@@ -72,10 +72,10 @@ def main(argv=None):
             coeff_dict = {permtrim([*perms[0]]): 1}
 
             for perm in perms[1:]:
-                coeff_dict = schubmult(coeff_dict, Permutation(perm))
+                coeff_dict = schubmult_py(coeff_dict, Permutation(perm))
             if mult:
                 mul_exp = sympify(mulstring)
-                coeff_dict = mult_poly(coeff_dict, mul_exp)
+                coeff_dict = mult_poly_py(coeff_dict, mul_exp)
 
             if pr or formatter is None:
                 for perm, val in coeff_dict.items():

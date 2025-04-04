@@ -49,7 +49,7 @@ def _from_double_dict(_doubledict):
 
 @cache
 def cached_product(u, v, va, vb):
-    return {(k, va): xreplace_genvars(x, utils.poly_ring(va), utils.poly_ring(vb)) for k, x in yz.schubmult_one_generic(u, v).items()}
+    return {(k, va): xreplace_genvars(x, utils.poly_ring(va), utils.poly_ring(vb)) for k, x in yz.schubmult_double_pair_generic(u, v).items()}
 
 
 @cache
@@ -103,14 +103,14 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
         this_dict = {}
         for k, v in none_dict.items():
             if not best_effort_positive:
-                this_dict = add_perm_dict(this_dict, {(k1, _vstr): v1 * v for k1, v1 in yz.schubmult(_dict, k, utils.poly_ring(_vstr), utils.poly_ring(utils.NoneVar)).items()})
+                this_dict = add_perm_dict(this_dict, {(k1, _vstr): v1 * v for k1, v1 in yz.schubmult_double(_dict, k, utils.poly_ring(_vstr), utils.poly_ring(utils.NoneVar)).items()})
             else:
-                this_dict = add_perm_dict(this_dict, {(k1, _vstr): expand(v1) * v for k1, v1 in yz.schubmult(_dict, k, utils.poly_ring(_vstr), utils.poly_ring(utils.NoneVar)).items()})
+                this_dict = add_perm_dict(this_dict, {(k1, _vstr): expand(v1) * v for k1, v1 in yz.schubmult_double(_dict, k, utils.poly_ring(_vstr), utils.poly_ring(utils.NoneVar)).items()})
         results = add_perm_dict(results, this_dict)
 
     none_dict, none_dict2 = sorted([none_dict, none_dict2], key=lambda x: -len(x.keys()))
     for k, v in none_dict2.items():
-        results = add_perm_dict(results, {(k1, utils.NoneVar): v1 * v for k1, v1 in py.schubmult(none_dict, k).items()})
+        results = add_perm_dict(results, {(k1, utils.NoneVar): v1 * v for k1, v1 in py.schubmult_py(none_dict, k).items()})
 
     return results
 
@@ -184,7 +184,7 @@ class DoubleSchubertAlgebraElement(Expr):
                 poley = sympify(_from_double_dict({k: 1}).change_vars(0).expand() * v)
                 if b_old in poley.free_symbols:
                     poley = poley.subs(b_old, b_new)
-                    new_dict = yz.mult_poly({(1, 2): 1}, poley, utils.poly_ring(self._base_var), utils.poly_ring(k[1]))
+                    new_dict = yz.mult_poly_double({(1, 2): 1}, poley, utils.poly_ring(self._base_var), utils.poly_ring(k[1]))
                     new_p = {(koifle, k[1]): voifle for koifle, voifle in new_dict.items()}
                     result = add_perm_dict(result, new_p)
             elif stuff_to_do:
@@ -194,7 +194,7 @@ class DoubleSchubertAlgebraElement(Expr):
                     if b_new in sympify(vvvv).free_symbols:
                         s_dict = {kkk[0]: 1}
                         # print(f"{s_dict=}")
-                        r_dict = py.mult_poly(s_dict, vvvv, utils.poly_ring(self._base_var))
+                        r_dict = py.mult_poly_py(s_dict, vvvv, utils.poly_ring(self._base_var))
                     else:
                         r_dict = {kkk[0]: vvvv}
                     r_dict = {(kk, 0): voif for kk, voif in r_dict.items()}
@@ -373,7 +373,7 @@ class DoubleSchubertAlgebraElement(Expr):
             return self.doit().expand()
         if isinstance(self, SchubMul):
             return self.doit().expand()
-        return expand(Add(*[yz.schubmult({Permutation([]): v}, k[0], utils.poly_ring(DSx._base_var), utils.poly_ring(k[1])).get(Permutation([]), 0) for k, v in self._doubledict.items()]))
+        return expand(Add(*[yz.schubmult_double({Permutation([]): v}, k[0], utils.poly_ring(DSx._base_var), utils.poly_ring(k[1])).get(Permutation([]), 0) for k, v in self._doubledict.items()]))
 
 
 # None is faster to store
@@ -413,9 +413,9 @@ class DoubleSchubertAlgebraElement_basis(Basic):
             x = sympify(x)
             if cv is None or cv == utils.NoneVar:
                 cv = utils.NoneVar
-                result = py.mult_poly({Permutation([]): 1}, x, utils.poly_ring(self._base_var))
+                result = py.mult_poly_py({Permutation([]): 1}, x, utils.poly_ring(self._base_var))
             else:
-                result = yz.mult_poly({Permutation([]): 1}, x, utils.poly_ring(self._base_var), utils.poly_ring(cv))
+                result = yz.mult_poly_double({Permutation([]): 1}, x, utils.poly_ring(self._base_var), utils.poly_ring(cv))
             elem = DoubleSchubertAlgebraElement({(k, cv): v for k, v in result.items()})
         return elem
 

@@ -171,7 +171,7 @@ class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
             )
         return sum(
             [
-                yz.schubmult(
+                yz.schubmult_double(
                     {pl.Permutation([]): v},
                     pl.Permutation(_coerce_index(k[0], self.parent()._ascode, False)),
                     self.parent()._base_polynomial_ring.gens(),
@@ -368,7 +368,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
 
                 for k, v in x.monomial_coefficients().items():
                     if self._quantum:
-                        res = qyz.schubmult_db(
+                        res = qyz.schubmult_q_double_fast(
                             {pl.Permutation([]): self._coeff_polynomial_ring(v)},
                             pl.Permutation(list(_coerce_index(k, x.parent()._ascode, False))),
                             self._coeff_polynomial_rings[self._varlist[0]].gens(),
@@ -381,7 +381,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                             self._q_ring.gens(),
                         )
                     else:
-                        res = yz.schubmult(
+                        res = yz.schubmult_double(
                             {pl.Permutation([]): self._coeff_polynomial_ring(v)},
                             pl.Permutation(list(_coerce_index(k, x.parent()._ascode, False))),
                             self._coeff_polynomial_rings[self._varlist[0]].gens(),
@@ -407,7 +407,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             sympy_floff = sympify(str(x))
             val = syme.sympify(sympy_floff)
             if self._quantum:
-                result = qyz.mult_poly(
+                result = qyz.mult_poly_q_double(
                     {pl.Permutation([]): 1},
                     val,
                     [syme.Symbol(str(g)) for g in self._base_polynomial_ring.gens()],
@@ -415,7 +415,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     [syme.Symbol(str(g)) for g in self._q_ring.gens()],
                 )
             else:
-                result = yz.mult_poly(
+                result = yz.mult_poly_double(
                     {pl.Permutation([]): 1},
                     val,
                     [syme.Symbol(str(g)) for g in self._base_polynomial_ring.gens()],
@@ -448,7 +448,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         var_y = [syme.sympify(str(g)) for g in self._coeff_polynomial_rings[left[1]].gens()]
         var_z = [syme.sympify(str(g)) for g in self._coeff_polynomial_rings[right[1]].gens()]
         if self._quantum:
-            result = qyz.schubmult_db(
+            result = qyz.schubmult_q_double_fast(
                 {pl.Permutation(le): 1},
                 pl.Permutation(ri),
                 var_y,
@@ -456,7 +456,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 [syme.sympify(str(g)) for g in self._q_ring.gens()],
             )
         else:
-            result = yz.schubmult(
+            result = yz.schubmult_double(
                 {pl.Permutation(le): 1},
                 pl.Permutation(ri),
                 var_y,
@@ -486,7 +486,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         RR = self._coeff_polynomial_rings[indm[1]]
         TR = self._coeff_polynomial_rings[self._varlist[0]]
 
-        coeff_dict = yz.schub_coprod(permtrim(indm[0]), indices, [syme.sympify(str(g)) for g in TR.gens()], [syme.sympify(str(g)) for g in RR.gens()])
+        coeff_dict = yz.schub_coprod_double(permtrim(indm[0]), indices, [syme.sympify(str(g)) for g in TR.gens()], [syme.sympify(str(g)) for g in RR.gens()])
         total_sum = 0
         for (fp, sp), val in coeff_dict.items():
             firstperm = Permutation(list(fp))

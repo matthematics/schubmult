@@ -1,10 +1,10 @@
-from schubmult.schub_lib.schubmult_q_double._funcs import factor_out_q_keep_factored, mult_poly, nil_hecke, schubmult, schubmult_db, schubpoly_quantum
+from schubmult.schub_lib.schubmult_q_double._funcs import factor_out_q_keep_factored, mult_poly_q_double, nil_hecke, schubmult_q_double, schubmult_q_double_fast, schubpoly_quantum
 
 __all__ = [
     "factor_out_q_keep_factored",
-    "mult_poly",
-    "schubmult",
-    "schubmult_db",
+    "mult_poly_q_double",
+    "schubmult_q_double",
+    "schubmult_q_double_fast",
     "schubpoly_quantum",
     "nil_hecke",
 ]

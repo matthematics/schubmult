@@ -134,7 +134,7 @@ def single_variable_down(coeff_dict, varnum, var2=_vars.var2):
     return ret
 
 
-def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
+def mult_poly_double(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
     # try:
     #     poly = sympify(poly)
     # except SympifyError:
@@ -147,19 +147,19 @@ def mult_poly(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
-            ret = mult_poly(ret, a, var_x, var_y)
+            ret = mult_poly_double(ret, a, var_x, var_y)
         return ret
     if isinstance(poly, Pow):
         base = poly.args[0]
         exponent = int(poly.args[1])
         ret = coeff_dict
         for i in range(int(exponent)):
-            ret = mult_poly(ret, base, var_x, var_y)
+            ret = mult_poly_double(ret, base, var_x, var_y)
         return ret
     if isinstance(poly, Add):
         ret = {}
         for a in poly.args:
-            ret = add_perm_dict(ret, mult_poly(coeff_dict, a, var_x, var_y))
+            ret = add_perm_dict(ret, mult_poly_double(coeff_dict, a, var_x, var_y))
         return ret
     ret = {}
     for perm in coeff_dict:
@@ -219,7 +219,7 @@ def forwardcoeff(u, v, perm, var2=None, var3=None):
 
     w = perm * vmun1
     if inv(w) == inv(vmun1) + inv(perm):
-        coeff_dict = schubmult_one(u, muv, var2, var3)
+        coeff_dict = schubmult_double_pair(u, muv, var2, var3)
         logger.debug(f"{coeff_dict.get(w,0)=} {w=} {perm=} {vmun1=} {v=} {muv=}")
         return coeff_dict.get(w, 0)
     return 0
@@ -321,16 +321,16 @@ monom_to_vec = {}
 
 
 @cache
-def schubmult_one(perm1, perm2, var2=None, var3=None):
-    return schubmult({perm1: 1}, perm2, var2, var3)
+def schubmult_double_pair(perm1, perm2, var2=None, var3=None):
+    return schubmult_double({perm1: 1}, perm2, var2, var3)
 
 
 @cache
-def schubmult_one_generic(perm1, perm2):
-    return schubmult({perm1: 1}, perm2, _vars.var_g1, _vars.var_g2)
+def schubmult_double_pair_generic(perm1, perm2):
+    return schubmult_double({perm1: 1}, perm2, _vars.var_g1, _vars.var_g2)
 
 
-def schubmult(perm_dict, v, var2=None, var3=None):
+def schubmult_double(perm_dict, v, var2=None, var3=None):
     if isinstance(var2, str):
         var2 = GeneratingSet(var2)
     if isinstance(var3, str):
@@ -971,7 +971,7 @@ def posify_generic_partial(val, u2, v2, w2):
 
 @cache
 def schubmult_generic_partial_posify(u2, v2):
-    return {w2: posify_generic_partial(val, u2, v2, w2) for w2, val in schubmult_one_generic(u2, v2).items()}
+    return {w2: posify_generic_partial(val, u2, v2, w2) for w2, val in schubmult_double_pair_generic(u2, v2).items()}
 
 
 @cached(
@@ -994,7 +994,7 @@ def posify(
     logger.debug(f"NEW {val=} {u2=} {v2=} {w2=}")
     hard_debug = True
     if hard_debug:
-        if expand(val - schubmult_one(u2, v2, var2, var3).get(w2, 0)) != 0:
+        if expand(val - schubmult_double_pair(u2, v2, var2, var3).get(w2, 0)) != 0:
             raise Exception("Bad news")
     oldval = val
     if inv(u2) + inv(v2) - inv(w2) == 0:
@@ -1417,7 +1417,7 @@ def posify(
                 for i in range(len(arr)):
                     tomul *= var2[1] - var3[arr[i]]
 
-                val2 = schubmult_one(u3, v3, var2, var3).get(
+                val2 = schubmult_double_pair(u3, v3, var2, var3).get(
                     w3,
                     0,
                 )
@@ -1454,7 +1454,7 @@ def posify(
     # return val
 
 
-def schub_coprod(mperm, indices, var2=_vars.var2, var3=_vars.var3):
+def schub_coprod_double(mperm, indices, var2=_vars.var2, var3=_vars.var3):
     indices = sorted(indices)
     subs_dict_coprod = {}
     k = len(indices)
@@ -1474,7 +1474,7 @@ def schub_coprod(mperm, indices, var2=_vars.var2, var3=_vars.var3):
             subs_dict_coprod[vn[i]] = var3[i - N]
 
     coeff_dict = {kperm: 1}
-    coeff_dict = schubmult(coeff_dict, mperm, vn, var2)
+    coeff_dict = schubmult_double(coeff_dict, mperm, vn, var2)
 
     inverse_kperm = ~kperm
 

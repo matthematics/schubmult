@@ -23,11 +23,11 @@ from schubmult.schub_lib import (
     will_formula_work,
 )
 from schubmult.schub_lib.schubmult_double import (
-    mult_poly,
+    mult_poly_double,
     mult_poly_down,
     posify,
-    schub_coprod,
-    schubmult,
+    schub_coprod_double,
+    schubmult_double,
     schubmult_down,
 )
 
@@ -292,7 +292,7 @@ def main(argv=None):
             pos.sort()
             mperm = Permutation(perms[0])
 
-            coeff_dict = schub_coprod(mperm, pos, var2, var3)
+            coeff_dict = schub_coprod_double(mperm, pos, var2, var3)
 
             if pr or formatter is None:
                 # logger.log(logging.DEBUG, f"main {var2=}{var3=}{same=}")
@@ -340,11 +340,11 @@ def main(argv=None):
                     check_coeff_dict = mult_poly_down(check_coeff_dict, mul_exp)
             else:
                 for perm in orig_perms[1:]:
-                    check_coeff_dict = schubmult(check_coeff_dict, perm, var2, var3)
+                    check_coeff_dict = schubmult_double(check_coeff_dict, perm, var2, var3)
                 # coeff_dict = check_coeff_dict
                 if mult:
                     mul_exp = eval(mulstring)
-                    check_coeff_dict = mult_poly(check_coeff_dict, mul_exp)
+                    check_coeff_dict = mult_poly_double(check_coeff_dict, mul_exp)
             # preprocess positivity
             if display_positive and len(perms) == 2 and will_formula_work(perms[0], perms[1]) and not mult and not down and not same:
                 coeff_dict = {}
@@ -352,7 +352,7 @@ def main(argv=None):
                 muv = uncode(th)
                 muvn1v = (~muv) * perms[1]
                 coeff_dict2 = {perms[0]: 1}
-                coeff_dict2 = schubmult(coeff_dict2, muv, var2, var3)
+                coeff_dict2 = schubmult_double(coeff_dict2, muv, var2, var3)
                 for perm, val in coeff_dict2.items():
                     w = perm * muvn1v
                     if inv(w) + inv(muvn1v) == inv(perm):
@@ -365,7 +365,7 @@ def main(argv=None):
                     coeff_dict3 = {}
                     for u in coeff_dict2:
                         coeff_dict4 = {u: 1}
-                        coeff_dict4 = schubmult(coeff_dict4, perm, var2, var3)
+                        coeff_dict4 = schubmult_double(coeff_dict4, perm, var2, var3)
                         for w in coeff_dict4:
                             coeff_dict4[w] = coeff_dict2[u] * posify(
                                 coeff_dict4[w],

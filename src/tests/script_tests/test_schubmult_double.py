@@ -75,15 +75,15 @@ def assert_dict_good(
     from schubmult.perm_lib.perm_lib import Permutation
     from symengine import expand, sympify
     import sys
-    from schubmult.schub_lib.schubmult_double import schub_coprod, schubmult
+    from schubmult.schub_lib.schubmult_double import schub_coprod_double, schubmult_double
 
     var_a = GeneratingSet("y")
     var_b = GeneratingSet("z")
 
     if coprod:
-        coeff_dict = schub_coprod(v_tuple, indices, var2=var_a, var3=var_a if same else var_b)
+        coeff_dict = schub_coprod_double(v_tuple, indices, var2=var_a, var3=var_a if same else var_b)
     else:
-        coeff_dict = schubmult(input_dict, v_tuple, var2=var_a, var3=var_a if same else var_b)
+        coeff_dict = schubmult_double(input_dict, v_tuple, var2=var_a, var3=var_a if same else var_b)
     # for k in ret_dict.keys():
     #     # print(f"{k=} {type(k)=} {type(k[0])=} {type(k[1])=} {type(ret_dict[k])=}")
     #print(f"{coeff_dict=}",file=sys.stderr)
