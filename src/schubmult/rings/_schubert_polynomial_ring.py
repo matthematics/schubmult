@@ -8,8 +8,8 @@ from sympy.core.kind import NumberKind
 from sympy.printing.str import StrPrinter
 
 import schubmult.rings._utils as utils
-import schubmult.schub_lib.schubmult_double as yz
-import schubmult.schub_lib.schubmult_py as py
+import schubmult.schub_lib.double as yz
+import schubmult.schub_lib.single as py
 from schubmult.logging import get_logger
 from schubmult.perm_lib import (
     Permutation,

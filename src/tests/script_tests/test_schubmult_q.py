@@ -6,7 +6,7 @@ from schubmult.utils import get_json, load_json_test_names
 
 
 def assert_dict_good(v_tuple, input_dict, ret_dict):
-    from schubmult.schub_lib.schubmult_q import schubmult_q
+    from schubmult.schub_lib.quantum import schubmult_q
 
     coeff_dict = schubmult_q(input_dict, v_tuple)
     for k, v in coeff_dict.items():

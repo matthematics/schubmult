@@ -12,9 +12,9 @@ def check_positive(v2, same, subs_dict2, var2, var3, q_var):
     # if same, should be no minus signs
     from symengine import expand, sympify
 
-    from schubmult.schub_lib.schubmult_double import compute_positive_rep
+    from schubmult.schub_lib.double import compute_positive_rep
     
-    from schubmult.schub_lib.schubmult_q_double import factor_out_q_keep_factored
+    from schubmult.schub_lib.quantum_double import factor_out_q_keep_factored
     
 
     q_dict = factor_out_q_keep_factored(v2)
@@ -59,7 +59,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, same=True, display_positive=
 
     from symengine import expand, sympify
 
-    from schubmult.schub_lib.schubmult_q_double import schubmult_q_double, schubmult_q_double_fast
+    from schubmult.schub_lib.quantum_double import schubmult_q_double, schubmult_q_double_fast
 
     var_a = GeneratingSet("y")
     var_b = GeneratingSet("z")

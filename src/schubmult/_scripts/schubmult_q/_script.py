@@ -23,12 +23,12 @@ from schubmult.poly_lib import (
 from schubmult.schub_lib import (
     check_blocks,
 )
-from schubmult.schub_lib.schubmult_q import (
+from schubmult.schub_lib.quantum import (
     _vars,
     schubmult_q,
     schubmult_q_fast,
 )
-from schubmult.schub_lib.schubmult_q_double import factor_out_q_keep_factored
+from schubmult.schub_lib.quantum_double import factor_out_q_keep_factored
 
 q_var = _vars.q_var
 

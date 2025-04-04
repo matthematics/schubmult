@@ -11,8 +11,8 @@ def check_positive(v, coprod, same, var_r):
     # if same, should be no minus signs
     from symengine import expand, sympify
 
-    from schubmult.schub_lib.schubmult_double import compute_positive_rep
-    from schubmult.schub_lib.schubmult_double import _vars
+    from schubmult.schub_lib.double import compute_positive_rep
+    from schubmult.schub_lib.double import _vars
 
     var2 = _vars.var2
     var3 = _vars.var3
@@ -75,7 +75,7 @@ def assert_dict_good(
     from schubmult.perm_lib.perm_lib import Permutation
     from symengine import expand, sympify
     import sys
-    from schubmult.schub_lib.schubmult_double import schub_coprod_double, schubmult_double
+    from schubmult.schub_lib.double import schub_coprod_double, schubmult_double
 
     var_a = GeneratingSet("y")
     var_b = GeneratingSet("z")

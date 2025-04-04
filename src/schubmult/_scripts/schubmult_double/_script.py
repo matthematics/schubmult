@@ -22,7 +22,7 @@ from schubmult.poly_lib import GeneratingSet, base_index, efficient_subs
 from schubmult.schub_lib import (
     will_formula_work,
 )
-from schubmult.schub_lib.schubmult_double import (
+from schubmult.schub_lib.double import (
     mult_poly_double,
     mult_poly_down,
     posify,
