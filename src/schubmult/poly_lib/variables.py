@@ -1,9 +1,9 @@
 # class generators with base
 # symbols cls argument!
 
+import re
 from functools import cache
 
-import sympy
 from symengine import Symbol, symbols, sympify
 from sympy.core.symbol import Str
 
@@ -15,6 +15,7 @@ class GeneratingSet(Str):
 
     _registry = {}
 
+    _index_pattern = re.compile("^([^_]+)_([0-9]+)$")
     is_Atom = True
 
     @staticmethod
@@ -56,9 +57,13 @@ class GeneratingSet(Str):
         return isinstance(other, GeneratingSet) and self.label == other.label
 
 
+
 def base_index(v):
-    if (v in GeneratingSet._registry) or (isinstance(v, sympy.Symbol) and sympify(v) in GeneratingSet._registry):
+    v = sympify(v)
+    if v in GeneratingSet._registry:
         return GeneratingSet._registry[v]
-    if isinstance(sympify(v), Symbol):
-        return sympify(v).name.split("_")[0], int(v.name.split("_")[1])
-    raise ValueError(f"Unknown type: {type(v)}")
+    if isinstance(v, Symbol):
+        m = GeneratingSet._index_pattern.match(v.name)
+        if m:
+            return m.group(1), int(m.group(2))
+    return NotImplemented, NotImplemented

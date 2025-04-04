@@ -23,7 +23,6 @@ __all__ = [
     "elem_sym_poly",
     "elem_sym_poly_q",
     "expand",
-    "is_indexed",
     "perm_act",
     "q_vector",
     "schubpoly",

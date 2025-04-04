@@ -3,7 +3,7 @@ from functools import cache, cached_property
 import symengine
 from symengine import Mul, Pow, sympify
 
-from .variables import GeneratingSet, is_indexed
+from .variables import GeneratingSet, base_index
 
 
 #Indexed._sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
@@ -169,8 +169,8 @@ def q_vector(q_exp, q_var=_vars.q_var):
 
     if q_exp == 1:
         return ret
-    if is_indexed(q_exp) and q_exp.base == q_var:
-        i = q_exp.index
+    if base_index(q_exp)[0] == q_var.label:
+        i = base_index(q_exp)[1]
         return [0 for j in range(i - 1)] + [1]
     if isinstance(q_exp, Pow):
         qv = q_exp.args[0]
@@ -191,9 +191,9 @@ def q_vector(q_exp, q_var=_vars.q_var):
 def xreplace_genvars(poly, vars1, vars2):
     subs_dict = {}
     for s in sympify(poly).free_symbols:
-        if is_indexed(s) and s.base == _vars.var_g1:
-            subs_dict[s] = vars1[s.index]
-        elif is_indexed(s) and s.base == _vars.var_g2:
-            subs_dict[s] = vars2[s.index]
+        if base_index(s)[0] == _vars.var_g1.label:
+            subs_dict[s] = vars1[base_index(s)[1]]
+        elif base_index(s)[0]  == _vars.var_g2.label:
+            subs_dict[s] = vars2[base_index(s)[1]]
     return sympify(poly).xreplace(subs_dict)
     # print(f"{poly2=} {poly2.free_symbols=}")
