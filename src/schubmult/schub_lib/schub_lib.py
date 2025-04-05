@@ -352,8 +352,6 @@ def compute_vpathdicts(th, vmu, smpify=False):
         top2.pop()
         top = code(~Permutation(uncode(top2)))
         monoperm = Permutation(uncode(top))
-        # if len(monoperm) < 2:
-        #     monoperm = [1, 2]
         k = i + 1
         for last_perm in vpathdicts[i]:
             newperms = kdown_perms(last_perm, monoperm, th[i], k)
@@ -372,7 +370,6 @@ def compute_vpathdicts(th, vmu, smpify=False):
                 if smpify:
                     v2 = sympify(v2)
                 vpathdicts2[i][key2].add((key, value[1], v2))
-    # print(vpathdicts2)
     return vpathdicts2
 
 

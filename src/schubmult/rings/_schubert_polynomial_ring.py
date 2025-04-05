@@ -15,7 +15,7 @@ from schubmult.perm_lib import (
     add_perm_dict,
     inv,
 )
-from schubmult.poly_lib import xreplace_genvars
+from schubmult.poly_lib import schubpoly, xreplace_genvars
 from schubmult.utils.logging import get_logger
 
 # class IdxPrinter(StrPrinter):
@@ -373,7 +373,11 @@ class DoubleSchubertAlgebraElement(Expr):
             return self.doit().expand()
         if isinstance(self, SchubMul):
             return self.doit().expand()
-        return expand(Add(*[yz.schubmult_double({Permutation([]): v}, k[0], utils.poly_ring(DSx._base_var), utils.poly_ring(k[1])).get(Permutation([]), 0) for k, v in self._doubledict.items()]))
+        return expand(Add(*[v*schubpoly(k[0],utils.poly_ring(DSx._base_var), utils.poly_ring(k[1])) for k, v in self._doubledict.items()]))
+
+    def as_polynomial(self):
+        return sympy.sympify(Add(*[v*schubpoly(k[0],utils.poly_ring(DSx._base_var), utils.poly_ring(k[1])) for k, v in self._doubledict.items()]))
+    
 
 
 # None is faster to store
