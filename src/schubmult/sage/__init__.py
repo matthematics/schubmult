@@ -1,4 +1,7 @@
-from sage.all import *  # noqa: F403
+try:
+    import sage  # noqa: F401
+except ImportError:
+    raise ImportError("SageMath is not installed. Please install SageMath to use this module.")
 
 from ._fast_double_schubert_polynomial_ring import (
     FastDoubleSchubertPolynomial,
