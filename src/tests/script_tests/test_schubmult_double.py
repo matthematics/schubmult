@@ -3,7 +3,7 @@ from ast import literal_eval
 
 import pytest
 
-from schubmult.utils import get_json, load_json_test_names
+from schubmult.utils.test_utils import get_json, load_json_test_names
 from schubmult.utils.parsing import parse_coeff
 from schubmult.poly_lib import GeneratingSet
 

@@ -2,7 +2,7 @@ import sys
 
 from symengine import sympify
 
-from schubmult._base_argparse import schub_argparse
+from schubmult.utils.argparse import schub_argparse
 from schubmult.perm_lib import (
     Permutation,
     inv,

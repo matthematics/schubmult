@@ -2,7 +2,7 @@ from ast import literal_eval
 
 import pytest
 
-from schubmult.utils import get_json, load_json_test_names
+from schubmult.utils.test_utils import get_json, load_json_test_names
 
 
 def assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices):
