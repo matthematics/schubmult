@@ -2,7 +2,6 @@ import sys
 
 from symengine import sympify
 
-from schubmult.utils.argparse import schub_argparse
 from schubmult.perm_lib import (
     Permutation,
     inv,
@@ -13,6 +12,7 @@ from schubmult.perm_lib import (
     uncode,
 )
 from schubmult.schub_lib.single import mult_poly_py, schub_coprod_py, schubmult_py
+from schubmult.utils.argparse import schub_argparse
 
 
 def main(argv=None):

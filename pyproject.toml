@@ -110,7 +110,7 @@ ignore = [
 unfixable = ["F401", "F841"]
 
 [tool.ruff.lint.per-file-ignores]
-"test_*.py" = ["ALL"]
+"test*.py" = ["ALL"]
 
 [project.optional-dependencies]
 sage = ["sagemath-standard"]
