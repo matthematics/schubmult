@@ -68,9 +68,7 @@ def base_index(v):
         v = sympify(v)
     except Exception:
         try:
-            import imp
-
-            imp.find_moulde("sage")
+            import sage  # noqa: F401
         except ImportError:
             return None, None
         from sage.rings.polynomial.multivariate_polynomial import MPolynomial  # type: ignore
