@@ -1,6 +1,6 @@
 import sympy
 
-import schubmult.schub_lib as schub_lib
+import schubmult.schub_lib.schub_lib as schub_lib
 
 
 def perm_act(val, i, var2=None):

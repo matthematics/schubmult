@@ -3,7 +3,9 @@ from functools import cache, cached_property
 import symengine
 from symengine import Mul, Pow, sympify
 
-from .variables import GeneratingSet, base_index
+import schubmult.poly_lib.variables as vv
+
+#import vv.GeneratingSet, vv.base_index
 
 
 #Indexed._sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
@@ -22,31 +24,31 @@ class _gvars:
 
     @cached_property
     def var1(self):
-        return GeneratingSet("x")
+        return vv.GeneratingSet("x")
 
     @cached_property
     def var2(self):
-        return GeneratingSet("y")
+        return vv.GeneratingSet("y")
 
     @cached_property
     def var3(self):
-        return GeneratingSet("z")
+        return vv.GeneratingSet("z")
 
     @cached_property
     def var_r(self):
-        return GeneratingSet("r")
+        return vv.GeneratingSet("r")
 
     @cached_property
     def var_g1(self):
-        return GeneratingSet("y")
+        return vv.GeneratingSet("y")
 
     @cached_property
     def var_g2(self):
-        return GeneratingSet("z")
+        return vv.GeneratingSet("z")
 
     @cached_property
     def q_var(self):
-        return GeneratingSet("q")
+        return vv.GeneratingSet("q")
 
 
 zero = sympify(0)
@@ -169,8 +171,8 @@ def q_vector(q_exp, q_var=_vars.q_var):
 
     if q_exp == 1:
         return ret
-    if base_index(q_exp)[0] == base_index(q_var)[0]:
-        i = base_index(q_exp)[1]
+    if vv.base_index(q_exp)[0] == vv.base_index(q_var)[0]:
+        i = vv.base_index(q_exp)[1]
         return [0 for j in range(i - 1)] + [1]
     if isinstance(q_exp, Pow):
         qv = q_exp.args[0]
@@ -191,9 +193,9 @@ def q_vector(q_exp, q_var=_vars.q_var):
 def xreplace_genvars(poly, vars1, vars2):
     subs_dict = {}
     for s in sympify(poly).free_symbols:
-        if base_index(s)[0] == base_index(_vars.var_g1)[0]:
-            subs_dict[s] = vars1[base_index(s)[1]]
-        elif base_index(s)[0]  == base_index(_vars.var_g2)[0]:
-            subs_dict[s] = vars2[base_index(s)[1]]
+        if vv.base_index(s)[0] == vv.base_index(_vars.var_g1)[0]:
+            subs_dict[s] = vars1[vv.base_index(s)[1]]
+        elif vv.base_index(s)[0]  == vv.base_index(_vars.var_g2)[0]:
+            subs_dict[s] = vars2[vv.base_index(s)[1]]
     return sympify(poly).xreplace(subs_dict)
     # print(f"{poly2=} {poly2.free_symbols=}")

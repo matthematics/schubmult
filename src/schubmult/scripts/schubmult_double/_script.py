@@ -4,6 +4,11 @@ from functools import cached_property
 import sympy
 from symengine import expand, sympify
 
+from schubmult import (
+    GeneratingSet,
+    base_index,
+    efficient_subs,
+)
 from schubmult.perm_lib import (
     Permutation,
     add_perm_dict,
@@ -16,10 +21,6 @@ from schubmult.perm_lib import (
     trimcode,
     uncode,
 )
-from schubmult.poly_lib import GeneratingSet, base_index, efficient_subs
-from schubmult.schub_lib import (
-    will_formula_work,
-)
 from schubmult.schub_lib.double import (
     mult_poly_double,
     mult_poly_down,
@@ -28,6 +29,7 @@ from schubmult.schub_lib.double import (
     schubmult_double,
     schubmult_down,
 )
+from schubmult.schub_lib.schub_lib import will_formula_work
 from schubmult.utils.argparse import schub_argparse
 from schubmult.utils.logging import get_logger
 

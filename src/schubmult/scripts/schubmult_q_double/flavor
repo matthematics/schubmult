@@ -1,0 +1,194 @@
+2025-04-05:15:31:40,484 DEBUG    [quantum_double.py:641] poly=(y_3 - z_3)*((y_3 - z_1)*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)) - (y_4 - z_1)*(y_3 - z_1)*(y_1 - z_1))
+2025-04-05:15:31:40,485 DEBUG    [quantum_double.py:644] s=y_4 base_index(s)=('y', 4) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,485 DEBUG    [quantum_double.py:644] s=y_3 base_index(s)=('y', 3) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,485 DEBUG    [quantum_double.py:644] s=z_1 base_index(s)=('z', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,485 DEBUG    [quantum_double.py:644] s=z_3 base_index(s)=('z', 3) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,485 DEBUG    [quantum_double.py:644] s=z_2 base_index(s)=('z', 2) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,485 DEBUG    [quantum_double.py:644] s=y_1 base_index(s)=('y', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,485 DEBUG    [double.py:996] NEW val=(y_3 - z_3)*((y_3 - z_1)*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)) - (y_4 - z_1)*(y_3 - z_1)*(y_1 - z_1)) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 4, 1, 2)
+2025-04-05:15:31:40,486 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:31:40,486 DEBUG    [double.py:1034] Reduced to u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 4, 1, 2) val=(y_3 - z_3)*((y_3 - z_1)*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)) - (y_4 - z_1)*(y_3 - z_1)*(y_1 - z_1))
+2025-04-05:15:31:40,486 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:31:40,486 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:31:40,487 DEBUG    [double.py:275] dualpieri mu=(3, 4, 1, 2) v=(4, 1, 3, 2) w=(3, 4, 1, 2)
+2025-04-05:15:31:40,487 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:31:40,487 DEBUG    [double.py:293] v=(4, 1, 3, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,487 DEBUG    [double.py:295] res=[[[], (4, 1, 3, 2)]]
+2025-04-05:15:31:40,487 DEBUG    [double.py:300] vpl=(4, 1, 3, 2) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,487 DEBUG    [double.py:304] vl=[[[2], (4, 1, 2, 3)], [[], (4, 2, 1, 3)]]
+2025-04-05:15:31:40,488 DEBUG    [double.py:295] res=[[[[2]], (4, 1, 2, 3)], [[[]], (4, 2, 1, 3)]]
+2025-04-05:15:31:40,488 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,488 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:31:40,488 DEBUG    [double.py:300] vpl=(4, 2, 1, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,489 DEBUG    [double.py:304] vl=[[[], (4, 2, 1, 3)]]
+2025-04-05:15:31:40,489 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:31:40,489 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:31:40,490 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:31:40,490 DEBUG    [double.py:1078] Returning u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 4, 1, 2) val=(y_3 - z_1)*(y_1 - z_2)*(y_3 - z_2)*(y_3 - z_3) + (y_4 - z_1)*(y_3 - z_1)*(y_3 - z_2)*(y_3 - z_3)
+2025-04-05:15:31:40,490 DEBUG    [quantum_double.py:641] poly=(y_3 - z_1)*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)) + (y_4 - z_3)*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)) - (y_4 - z_1)*(y_3 - z_1)*(y_1 - z_1)
+2025-04-05:15:31:40,490 DEBUG    [quantum_double.py:644] s=y_4 base_index(s)=('y', 4) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,490 DEBUG    [quantum_double.py:644] s=y_3 base_index(s)=('y', 3) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,490 DEBUG    [quantum_double.py:644] s=z_1 base_index(s)=('z', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,490 DEBUG    [quantum_double.py:644] s=z_3 base_index(s)=('z', 3) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,490 DEBUG    [quantum_double.py:644] s=z_2 base_index(s)=('z', 2) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,490 DEBUG    [quantum_double.py:644] s=y_1 base_index(s)=('y', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,491 DEBUG    [double.py:996] NEW val=(y_3 - z_1)*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)) + (y_4 - z_3)*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)) - (y_4 - z_1)*(y_3 - z_1)*(y_1 - z_1) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 3, 1, 2)
+2025-04-05:15:31:40,491 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:31:40,491 DEBUG    [double.py:1034] Reduced to u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 3, 1, 2) val=(y_3 - z_1)*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)) + (y_4 - z_3)*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)) - (y_4 - z_1)*(y_3 - z_1)*(y_1 - z_1)
+2025-04-05:15:31:40,492 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:31:40,492 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:31:40,492 DEBUG    [double.py:275] dualpieri mu=(3, 4, 1, 2) v=(4, 1, 3, 2) w=(4, 3, 1, 2)
+2025-04-05:15:31:40,492 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:31:40,492 DEBUG    [double.py:293] v=(4, 1, 3, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,492 DEBUG    [double.py:295] res=[[[], (4, 1, 3, 2)]]
+2025-04-05:15:31:40,492 DEBUG    [double.py:300] vpl=(4, 1, 3, 2) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,493 DEBUG    [double.py:304] vl=[[[2], (4, 1, 2, 3)], [[], (4, 2, 1, 3)]]
+2025-04-05:15:31:40,493 DEBUG    [double.py:295] res=[[[[2]], (4, 1, 2, 3)], [[[]], (4, 2, 1, 3)]]
+2025-04-05:15:31:40,493 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,493 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:31:40,494 DEBUG    [double.py:300] vpl=(4, 2, 1, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,494 DEBUG    [double.py:304] vl=[[[], (4, 2, 1, 3)]]
+2025-04-05:15:31:40,494 DEBUG    [double.py:317] res2=[[[[2], []], (1, 4, 2, 3)], [[[], []], (2, 4, 1, 3)]]
+2025-04-05:15:31:40,494 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:31:40,495 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:31:40,496 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:31:40,496 DEBUG    [double.py:1078] Returning u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 3, 1, 2) val=(y_1 - z_2)*((y_3 - z_1)*(y_3 - z_2) + (y_3 - z_1)*(y_4 - z_3) + (y_4 - z_2)*(y_4 - z_3)) + (y_4 - z_1)*(y_3 - z_1)*(y_3 - z_2) + (y_4 - z_1)*(y_3 - z_1)*(y_4 - z_3)
+2025-04-05:15:31:40,496 DEBUG    [quantum_double.py:641] poly=q_1*q_2*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2))
+2025-04-05:15:31:40,496 DEBUG    [quantum_double.py:644] s=y_4 base_index(s)=('y', 4) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,496 DEBUG    [quantum_double.py:644] s=q_1 base_index(s)=('q', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,496 DEBUG    [quantum_double.py:647] frobble bagel
+2025-04-05:15:31:40,496 DEBUG    [quantum_double.py:644] s=q_2 base_index(s)=('q', 2) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,496 DEBUG    [quantum_double.py:647] frobble bagel
+2025-04-05:15:31:40,496 DEBUG    [quantum_double.py:644] s=y_3 base_index(s)=('y', 3) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,497 DEBUG    [quantum_double.py:644] s=z_1 base_index(s)=('z', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,497 DEBUG    [quantum_double.py:644] s=z_2 base_index(s)=('z', 2) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,497 DEBUG    [quantum_double.py:644] s=y_1 base_index(s)=('y', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,497 DEBUG    [quantum_double.py:641] poly=q_1
+2025-04-05:15:31:40,497 DEBUG    [quantum_double.py:644] s=q_1 base_index(s)=('q', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,497 DEBUG    [quantum_double.py:647] frobble bagel
+2025-04-05:15:31:40,497 DEBUG    [quantum_double.py:653] it might be poke
+2025-04-05:15:31:40,497 DEBUG    [quantum_double.py:654] poly=q_1
+2025-04-05:15:31:40,497 DEBUG    [quantum_double.py:641] poly=q_2
+2025-04-05:15:31:40,497 DEBUG    [quantum_double.py:644] s=q_2 base_index(s)=('q', 2) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,497 DEBUG    [quantum_double.py:647] frobble bagel
+2025-04-05:15:31:40,497 DEBUG    [quantum_double.py:653] it might be poke
+2025-04-05:15:31:40,497 DEBUG    [quantum_double.py:654] poly=q_2
+2025-04-05:15:31:40,497 DEBUG    [quantum_double.py:641] poly=(y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)
+2025-04-05:15:31:40,497 DEBUG    [quantum_double.py:644] s=y_4 base_index(s)=('y', 4) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,498 DEBUG    [quantum_double.py:644] s=y_3 base_index(s)=('y', 3) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,498 DEBUG    [quantum_double.py:644] s=z_1 base_index(s)=('z', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,498 DEBUG    [quantum_double.py:644] s=z_2 base_index(s)=('z', 2) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,498 DEBUG    [quantum_double.py:644] s=y_1 base_index(s)=('y', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,498 DEBUG    [double.py:996] NEW val=(y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2) u2=(1, 3, 4, 2) v2=(1, 3, 4, 2) w2=(1, 3, 4, 2)
+2025-04-05:15:31:40,498 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:31:40,499 DEBUG    [double.py:1034] Reduced to u2=(1, 3, 4, 2) v2=(1, 3, 4, 2) w2=(1, 3, 4, 2) val=(y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)
+2025-04-05:15:31:40,499 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:31:40,500 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:31:40,500 DEBUG    [double.py:275] dualpieri mu=(1, 3, 4, 2) v=(1, 3, 4, 2) w=(1, 3, 4, 2)
+2025-04-05:15:31:40,500 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:31:40,500 DEBUG    [double.py:293] v=(1, 3, 4, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,500 DEBUG    [double.py:295] res=[[[], (1, 3, 4, 2)]]
+2025-04-05:15:31:40,500 DEBUG    [double.py:300] vpl=(1, 3, 4, 2) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,501 DEBUG    [double.py:304] vl=[[[2], (1, 3, 2)], [[], (2, 3, 1)]]
+2025-04-05:15:31:40,501 DEBUG    [double.py:295] res=[[[[2]], (1, 3, 2)], [[[]], (2, 3, 1)]]
+2025-04-05:15:31:40,501 DEBUG    [double.py:300] vpl=(1, 3, 2) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,501 DEBUG    [double.py:304] vl=[[[], (1, 3, 2)]]
+2025-04-05:15:31:40,501 DEBUG    [double.py:300] vpl=(2, 3, 1) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,502 DEBUG    [double.py:304] vl=[[[], (2, 3, 1)]]
+2025-04-05:15:31:40,502 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:31:40,502 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:31:40,502 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:31:40,503 DEBUG    [double.py:1078] Returning u2=(1, 3, 4, 2) v2=(1, 3, 4, 2) w2=(1, 3, 4, 2) val=(y_4 - z_1)*(y_3 - z_1) + (y_3 + y_4 - z_1 - z_2)*(y_1 - z_2)
+2025-04-05:15:31:40,503 DEBUG    [quantum_double.py:641] poly=(y_3 - z_3)*(-(y_3 - z_1)*(y_1 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1))
+2025-04-05:15:31:40,503 DEBUG    [quantum_double.py:644] s=y_3 base_index(s)=('y', 3) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,503 DEBUG    [quantum_double.py:644] s=z_1 base_index(s)=('z', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,503 DEBUG    [quantum_double.py:644] s=z_3 base_index(s)=('z', 3) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,503 DEBUG    [quantum_double.py:644] s=z_2 base_index(s)=('z', 2) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,503 DEBUG    [quantum_double.py:644] s=y_1 base_index(s)=('y', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,503 DEBUG    [double.py:996] NEW val=(y_3 - z_3)*(-(y_3 - z_1)*(y_1 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1)) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 5, 1, 2, 4)
+2025-04-05:15:31:40,503 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:31:40,504 DEBUG    [double.py:1034] Reduced to u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 5, 1, 2, 4) val=(y_3 - z_3)*(-(y_3 - z_1)*(y_1 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1))
+2025-04-05:15:31:40,504 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:31:40,504 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:31:40,504 DEBUG    [double.py:275] dualpieri mu=(3, 4, 1, 2) v=(4, 1, 3, 2) w=(3, 5, 1, 2, 4)
+2025-04-05:15:31:40,505 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:31:40,505 DEBUG    [double.py:293] v=(4, 1, 3, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,505 DEBUG    [double.py:295] res=[[[], (4, 1, 3, 2)]]
+2025-04-05:15:31:40,505 DEBUG    [double.py:300] vpl=(4, 1, 3, 2) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,505 DEBUG    [double.py:304] vl=[[[2], (4, 1, 2, 3)], [[], (4, 2, 1, 3)]]
+2025-04-05:15:31:40,505 DEBUG    [double.py:295] res=[[[[2]], (4, 1, 2, 3)], [[[]], (4, 2, 1, 3)]]
+2025-04-05:15:31:40,505 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,506 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:31:40,506 DEBUG    [double.py:300] vpl=(4, 2, 1, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,506 DEBUG    [double.py:304] vl=[[[], (4, 2, 1, 3)]]
+2025-04-05:15:31:40,506 DEBUG    [double.py:317] res2=[[[[], []], (4, 1, 2, 3)]]
+2025-04-05:15:31:40,507 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:31:40,507 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:31:40,507 DEBUG    [double.py:1078] Returning u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 5, 1, 2, 4) val=(y_3 - z_1)*(y_3 - z_2)*(y_3 - z_3)
+2025-04-05:15:31:40,507 DEBUG    [quantum_double.py:641] poly=-(y_3 - z_1)*(y_1 - z_1) + (y_4 - z_3)*(y_4 - z_1 - (y_1 - z_1)) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_4 - z_3)
+2025-04-05:15:31:40,507 DEBUG    [quantum_double.py:644] s=y_4 base_index(s)=('y', 4) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,507 DEBUG    [quantum_double.py:644] s=y_3 base_index(s)=('y', 3) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,507 DEBUG    [quantum_double.py:644] s=z_1 base_index(s)=('z', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,507 DEBUG    [quantum_double.py:644] s=z_3 base_index(s)=('z', 3) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,507 DEBUG    [quantum_double.py:644] s=z_2 base_index(s)=('z', 2) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,508 DEBUG    [quantum_double.py:644] s=y_1 base_index(s)=('y', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,508 DEBUG    [double.py:996] NEW val=-(y_3 - z_1)*(y_1 - z_1) + (y_4 - z_3)*(y_4 - z_1 - (y_1 - z_1)) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_4 - z_3) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 5, 1, 2, 3)
+2025-04-05:15:31:40,508 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:31:40,508 DEBUG    [double.py:1034] Reduced to u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 5, 1, 2, 3) val=-(y_3 - z_1)*(y_1 - z_1) + (y_4 - z_3)*(y_4 - z_1 - (y_1 - z_1)) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_4 - z_3)
+2025-04-05:15:31:40,509 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:31:40,509 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:31:40,509 DEBUG    [double.py:275] dualpieri mu=(3, 4, 1, 2) v=(4, 1, 3, 2) w=(4, 5, 1, 2, 3)
+2025-04-05:15:31:40,509 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:31:40,509 DEBUG    [double.py:293] v=(4, 1, 3, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,509 DEBUG    [double.py:295] res=[[[], (4, 1, 3, 2)]]
+2025-04-05:15:31:40,509 DEBUG    [double.py:300] vpl=(4, 1, 3, 2) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,510 DEBUG    [double.py:304] vl=[[[2], (4, 1, 2, 3)], [[], (4, 2, 1, 3)]]
+2025-04-05:15:31:40,510 DEBUG    [double.py:295] res=[[[[2]], (4, 1, 2, 3)], [[[]], (4, 2, 1, 3)]]
+2025-04-05:15:31:40,510 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,510 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:31:40,511 DEBUG    [double.py:300] vpl=(4, 2, 1, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,511 DEBUG    [double.py:304] vl=[[[], (4, 2, 1, 3)]]
+2025-04-05:15:31:40,511 DEBUG    [double.py:317] res2=[[[[], []], (1, 4, 2, 3)]]
+2025-04-05:15:31:40,511 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:31:40,512 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:31:40,512 DEBUG    [double.py:1078] Returning u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 5, 1, 2, 3) val=(y_3 - z_1)*(y_3 - z_2) + (y_3 - z_1)*(y_4 - z_3) + (y_4 - z_2)*(y_4 - z_3)
+2025-04-05:15:31:40,512 DEBUG    [quantum_double.py:641] poly=-(y_3 - z_1)*(y_1 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_5 - z_3)
+2025-04-05:15:31:40,512 DEBUG    [quantum_double.py:644] s=y_5 base_index(s)=('y', 5) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,512 DEBUG    [quantum_double.py:644] s=y_3 base_index(s)=('y', 3) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,512 DEBUG    [quantum_double.py:644] s=z_1 base_index(s)=('z', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,512 DEBUG    [quantum_double.py:644] s=z_3 base_index(s)=('z', 3) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,512 DEBUG    [quantum_double.py:644] s=z_2 base_index(s)=('z', 2) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,513 DEBUG    [quantum_double.py:644] s=y_1 base_index(s)=('y', 1) base_index(q_var)=('q', None)
+2025-04-05:15:31:40,513 DEBUG    [double.py:996] NEW val=-(y_3 - z_1)*(y_1 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_5 - z_3) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(5, 3, 1, 2, 4)
+2025-04-05:15:31:40,513 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:31:40,514 DEBUG    [double.py:1034] Reduced to u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(5, 3, 1, 2, 4) val=-(y_3 - z_1)*(y_1 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_5 - z_3)
+2025-04-05:15:31:40,514 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:31:40,514 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:31:40,514 DEBUG    [double.py:275] dualpieri mu=(3, 4, 1, 2) v=(4, 1, 3, 2) w=(5, 3, 1, 2, 4)
+2025-04-05:15:31:40,515 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:31:40,515 DEBUG    [double.py:293] v=(4, 1, 3, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,515 DEBUG    [double.py:295] res=[[[], (4, 1, 3, 2)]]
+2025-04-05:15:31:40,515 DEBUG    [double.py:300] vpl=(4, 1, 3, 2) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,515 DEBUG    [double.py:304] vl=[[[2], (4, 1, 2, 3)], [[], (4, 2, 1, 3)]]
+2025-04-05:15:31:40,515 DEBUG    [double.py:295] res=[[[[2]], (4, 1, 2, 3)], [[[]], (4, 2, 1, 3)]]
+2025-04-05:15:31:40,516 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,516 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:31:40,516 DEBUG    [double.py:300] vpl=(4, 2, 1, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:31:40,516 DEBUG    [double.py:304] vl=[[[], (4, 2, 1, 3)]]
+2025-04-05:15:31:40,517 DEBUG    [double.py:317] res2=[[[[2], []], (1, 2, 4, 3)], [[[], []], (2, 1, 4, 3)]]
+2025-04-05:15:31:40,517 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:31:40,517 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:31:40,518 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:31:40,518 DEBUG    [double.py:1076] This is bad
+2025-04-05:15:31:40,519 DEBUG    [double.py:1077] u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(5, 3, 1, 2, 4) val=(y_3 - z_1)*(y_3 - z_2) + (y_3 - z_1)*(y_5 - z_3) + (y_4 - z_1)*(y_3 - z_1) + (y_3 + y_4 + y_5 - z_1 - z_2 - z_3)*(y_1 - z_2) oldval=-(y_3 - z_1)*(y_1 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_5 - z_3) will_formula_work(v,u)=True dominates(u,w)=True
+2025-04-05:15:31:40,519 DEBUG    [double.py:1078] Returning u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(5, 3, 1, 2, 4) val=(y_3 - z_1)*(y_3 - z_2) + (y_3 - z_1)*(y_5 - z_3) + (y_4 - z_1)*(y_3 - z_1) + (y_3 + y_4 + y_5 - z_1 - z_2 - z_3)*(y_1 - z_2)
+Traceback (most recent call last):
+  File "/usr/local/bin/schubmult_q_double", line 33, in <module>
+    sys.exit(load_entry_point('schubmult', 'console_scripts', 'schubmult_q_double')())
+  File "/home/matthematics/schubmult/src/schubmult/scripts/schubmult_q_double/_script.py", line 195, in main
+    coeff_dict = {perm: q_posify(perms[0], perms[1], perm, val, var2, var3, _vars.q_var, msg) for perm, val in coeff_dict.items()}
+  File "/home/matthematics/schubmult/src/schubmult/scripts/schubmult_q_double/_script.py", line 195, in <dictcomp>
+    coeff_dict = {perm: q_posify(perms[0], perms[1], perm, val, var2, var3, _vars.q_var, msg) for perm, val in coeff_dict.items()}
+  File "/home/matthematics/schubmult/src/schubmult/schub_lib/quantum_double.py", line 294, in q_posify
+    raise Exception
+Exception

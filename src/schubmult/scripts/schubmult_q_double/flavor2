@@ -1,0 +1,212 @@
+2025-04-05:15:28:42,118 DEBUG    [double.py:996] NEW val=(y_3 - z_3)*((y_3 - z_1)*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)) - (y_4 - z_1)*(y_3 - z_1)*(y_1 - z_1)) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 4, 1, 2)
+2025-04-05:15:28:42,119 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:28:42,119 DEBUG    [double.py:1034] Reduced to u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 4, 1, 2) val=(y_3 - z_3)*((y_3 - z_1)*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)) - (y_4 - z_1)*(y_3 - z_1)*(y_1 - z_1))
+2025-04-05:15:28:42,119 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:28:42,119 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:28:42,120 DEBUG    [double.py:275] dualpieri mu=(3, 4, 1, 2) v=(4, 1, 3, 2) w=(3, 4, 1, 2)
+2025-04-05:15:28:42,120 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:28:42,120 DEBUG    [double.py:293] v=(4, 1, 3, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,120 DEBUG    [double.py:295] res=[[[], (4, 1, 3, 2)]]
+2025-04-05:15:28:42,120 DEBUG    [double.py:300] vpl=(4, 1, 3, 2) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,121 DEBUG    [double.py:304] vl=[[[2], (4, 1, 2, 3)], [[], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,121 DEBUG    [double.py:295] res=[[[[2]], (4, 1, 2, 3)], [[[]], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,121 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,121 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,121 DEBUG    [double.py:300] vpl=(4, 2, 1, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,122 DEBUG    [double.py:304] vl=[[[], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,122 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:28:42,122 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:28:42,123 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:28:42,123 DEBUG    [double.py:1078] Returning u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 4, 1, 2) val=(y_3 - z_1)*(y_1 - z_2)*(y_3 - z_2)*(y_3 - z_3) + (y_4 - z_1)*(y_3 - z_1)*(y_3 - z_2)*(y_3 - z_3)
+2025-04-05:15:28:42,123 DEBUG    [double.py:996] NEW val=(y_3 - z_1)*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)) + (y_4 - z_3)*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)) - (y_4 - z_1)*(y_3 - z_1)*(y_1 - z_1) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 3, 1, 2)
+2025-04-05:15:28:42,124 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:28:42,124 DEBUG    [double.py:1034] Reduced to u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 3, 1, 2) val=(y_3 - z_1)*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)) + (y_4 - z_3)*((y_4 - z_1)*(y_1 - z_1) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)) - (y_4 - z_1)*(y_3 - z_1)*(y_1 - z_1)
+2025-04-05:15:28:42,124 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:28:42,124 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:28:42,125 DEBUG    [double.py:275] dualpieri mu=(3, 4, 1, 2) v=(4, 1, 3, 2) w=(4, 3, 1, 2)
+2025-04-05:15:28:42,125 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:28:42,125 DEBUG    [double.py:293] v=(4, 1, 3, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,125 DEBUG    [double.py:295] res=[[[], (4, 1, 3, 2)]]
+2025-04-05:15:28:42,125 DEBUG    [double.py:300] vpl=(4, 1, 3, 2) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,125 DEBUG    [double.py:304] vl=[[[2], (4, 1, 2, 3)], [[], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,125 DEBUG    [double.py:295] res=[[[[2]], (4, 1, 2, 3)], [[[]], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,126 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,126 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,126 DEBUG    [double.py:300] vpl=(4, 2, 1, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,127 DEBUG    [double.py:304] vl=[[[], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,127 DEBUG    [double.py:317] res2=[[[[2], []], (1, 4, 2, 3)], [[[], []], (2, 4, 1, 3)]]
+2025-04-05:15:28:42,127 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:28:42,128 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:28:42,128 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:28:42,128 DEBUG    [double.py:1078] Returning u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 3, 1, 2) val=(y_1 - z_2)*((y_3 - z_1)*(y_3 - z_2) + (y_3 - z_1)*(y_4 - z_3) + (y_4 - z_2)*(y_4 - z_3)) + (y_4 - z_1)*(y_3 - z_1)*(y_3 - z_2) + (y_4 - z_1)*(y_3 - z_1)*(y_4 - z_3)
+2025-04-05:15:28:42,129 DEBUG    [double.py:996] NEW val=-(y_3 - z_1)*(y_1 - z_1) + (y_4 - z_1)*(y_1 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_5 - z_3) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(5, 3, 1, 2, 4)
+2025-04-05:15:28:42,129 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:28:42,129 DEBUG    [double.py:1034] Reduced to u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(5, 3, 1, 2, 4) val=-(y_3 - z_1)*(y_1 - z_1) + (y_4 - z_1)*(y_1 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_5 - z_3) + (y_1 + y_4 - z_1 - z_2)*(y_3 - z_2)
+2025-04-05:15:28:42,129 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:28:42,129 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:28:42,130 DEBUG    [double.py:275] dualpieri mu=(3, 4, 1, 2) v=(4, 1, 3, 2) w=(5, 3, 1, 2, 4)
+2025-04-05:15:28:42,130 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:28:42,130 DEBUG    [double.py:293] v=(4, 1, 3, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,130 DEBUG    [double.py:295] res=[[[], (4, 1, 3, 2)]]
+2025-04-05:15:28:42,130 DEBUG    [double.py:300] vpl=(4, 1, 3, 2) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,131 DEBUG    [double.py:304] vl=[[[2], (4, 1, 2, 3)], [[], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,131 DEBUG    [double.py:295] res=[[[[2]], (4, 1, 2, 3)], [[[]], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,131 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,131 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,131 DEBUG    [double.py:300] vpl=(4, 2, 1, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,132 DEBUG    [double.py:304] vl=[[[], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,132 DEBUG    [double.py:317] res2=[[[[2], []], (1, 2, 4, 3)], [[[], []], (2, 1, 4, 3)]]
+2025-04-05:15:28:42,132 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:28:42,133 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:28:42,134 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:28:42,134 DEBUG    [double.py:1078] Returning u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(5, 3, 1, 2, 4) val=(y_3 - z_1)*(y_3 - z_2) + (y_3 - z_1)*(y_5 - z_3) + (y_4 - z_1)*(y_3 - z_1) + (y_3 + y_4 + y_5 - z_1 - z_2 - z_3)*(y_1 - z_2)
+2025-04-05:15:28:42,135 DEBUG    [double.py:996] NEW val=(y_3 - z_3)*(-(y_4 - z_1)*(y_3 - z_1) + (y_3 + y_4 - z_1 - z_2)*(y_3 - z_1)) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 4, 2, 1)
+2025-04-05:15:28:42,135 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:28:42,135 DEBUG    [double.py:1034] Reduced to u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 4, 2, 1) val=(y_3 - z_3)*(-(y_4 - z_1)*(y_3 - z_1) + (y_3 + y_4 - z_1 - z_2)*(y_3 - z_1))
+2025-04-05:15:28:42,135 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:28:42,136 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:28:42,136 DEBUG    [double.py:275] dualpieri mu=(3, 4, 1, 2) v=(4, 1, 3, 2) w=(3, 4, 2, 1)
+2025-04-05:15:28:42,136 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:28:42,136 DEBUG    [double.py:293] v=(4, 1, 3, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,136 DEBUG    [double.py:295] res=[[[], (4, 1, 3, 2)]]
+2025-04-05:15:28:42,136 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,137 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,137 DEBUG    [double.py:295] res=[[[[]], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,137 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,137 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,137 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:28:42,138 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:28:42,138 DEBUG    [double.py:1078] Returning u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 4, 2, 1) val=(y_3 - z_1)*(y_3 - z_2)*(y_3 - z_3)
+2025-04-05:15:28:42,138 DEBUG    [double.py:996] NEW val=-(y_4 - z_1)*(y_3 - z_1) + (y_3 + y_4 - z_1 - z_2)*(y_3 - z_1) + (y_3 + y_4 - z_1 - z_2)*(y_4 - z_3) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 3, 2, 1)
+2025-04-05:15:28:42,138 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:28:42,139 DEBUG    [double.py:1034] Reduced to u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 3, 2, 1) val=-(y_4 - z_1)*(y_3 - z_1) + (y_3 + y_4 - z_1 - z_2)*(y_3 - z_1) + (y_3 + y_4 - z_1 - z_2)*(y_4 - z_3)
+2025-04-05:15:28:42,139 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:28:42,139 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:28:42,139 DEBUG    [double.py:275] dualpieri mu=(3, 4, 1, 2) v=(4, 1, 3, 2) w=(4, 3, 2, 1)
+2025-04-05:15:28:42,139 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:28:42,140 DEBUG    [double.py:293] v=(4, 1, 3, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,140 DEBUG    [double.py:295] res=[[[], (4, 1, 3, 2)]]
+2025-04-05:15:28:42,140 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,140 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,140 DEBUG    [double.py:295] res=[[[[]], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,140 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,141 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,141 DEBUG    [double.py:317] res2=[[[[], []], (1, 4, 2, 3)]]
+2025-04-05:15:28:42,141 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:28:42,141 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:28:42,142 DEBUG    [double.py:1078] Returning u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 3, 2, 1) val=(y_3 - z_1)*(y_3 - z_2) + (y_3 - z_1)*(y_4 - z_3) + (y_4 - z_2)*(y_4 - z_3)
+2025-04-05:15:28:42,142 DEBUG    [double.py:996] NEW val=2*y_3 + y_4 + y_5 - 2*z_1 - z_2 - z_3 - (y_3 - z_1) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(5, 3, 2, 1, 4)
+2025-04-05:15:28:42,142 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:28:42,142 DEBUG    [double.py:1034] Reduced to u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(5, 3, 2, 1, 4) val=2*y_3 + y_4 + y_5 - 2*z_1 - z_2 - z_3 - (y_3 - z_1)
+2025-04-05:15:28:42,142 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:28:42,143 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:28:42,143 DEBUG    [double.py:275] dualpieri mu=(3, 4, 1, 2) v=(4, 1, 3, 2) w=(5, 3, 2, 1, 4)
+2025-04-05:15:28:42,143 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:28:42,143 DEBUG    [double.py:293] v=(4, 1, 3, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,143 DEBUG    [double.py:295] res=[[[], (4, 1, 3, 2)]]
+2025-04-05:15:28:42,143 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,144 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,144 DEBUG    [double.py:295] res=[[[[]], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,144 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,144 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,144 DEBUG    [double.py:317] res2=[[[[], []], (1, 2, 4, 3)]]
+2025-04-05:15:28:42,144 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:28:42,145 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:28:42,145 DEBUG    [double.py:1078] Returning u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(5, 3, 2, 1, 4) val=y_3 + y_4 + y_5 - z_1 - z_2 - z_3
+2025-04-05:15:28:42,145 DEBUG    [double.py:996] NEW val=(y_3 - z_3)*(-(y_3 - z_1)*(y_1 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1)) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 5, 1, 2, 4)
+2025-04-05:15:28:42,145 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:28:42,146 DEBUG    [double.py:1034] Reduced to u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 5, 1, 2, 4) val=(y_3 - z_3)*(-(y_3 - z_1)*(y_1 - z_1) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1))
+2025-04-05:15:28:42,146 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:28:42,146 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:28:42,146 DEBUG    [double.py:275] dualpieri mu=(3, 4, 1, 2) v=(4, 1, 3, 2) w=(3, 5, 1, 2, 4)
+2025-04-05:15:28:42,147 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:28:42,147 DEBUG    [double.py:293] v=(4, 1, 3, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,147 DEBUG    [double.py:295] res=[[[], (4, 1, 3, 2)]]
+2025-04-05:15:28:42,147 DEBUG    [double.py:300] vpl=(4, 1, 3, 2) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,147 DEBUG    [double.py:304] vl=[[[2], (4, 1, 2, 3)], [[], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,147 DEBUG    [double.py:295] res=[[[[2]], (4, 1, 2, 3)], [[[]], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,148 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,148 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,148 DEBUG    [double.py:300] vpl=(4, 2, 1, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,148 DEBUG    [double.py:304] vl=[[[], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,149 DEBUG    [double.py:317] res2=[[[[], []], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,149 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:28:42,149 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:28:42,149 DEBUG    [double.py:1078] Returning u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 5, 1, 2, 4) val=(y_3 - z_1)*(y_3 - z_2)*(y_3 - z_3)
+2025-04-05:15:28:42,150 DEBUG    [double.py:996] NEW val=-(y_3 - z_1)*(y_1 - z_1) + (y_4 - z_3)*(y_1 + y_3 + y_4 - 2*z_1 - z_2 - (y_1 - z_1)) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 5, 1, 2, 3)
+2025-04-05:15:28:42,150 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:28:42,150 DEBUG    [double.py:1034] Reduced to u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 5, 1, 2, 3) val=-(y_3 - z_1)*(y_1 - z_1) + (y_4 - z_3)*(y_1 + y_3 + y_4 - 2*z_1 - z_2 - (y_1 - z_1)) + (y_1 + y_3 - z_1 - z_2)*(y_3 - z_1)
+2025-04-05:15:28:42,150 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:28:42,150 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:28:42,151 DEBUG    [double.py:275] dualpieri mu=(3, 4, 1, 2) v=(4, 1, 3, 2) w=(4, 5, 1, 2, 3)
+2025-04-05:15:28:42,151 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:28:42,151 DEBUG    [double.py:293] v=(4, 1, 3, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,151 DEBUG    [double.py:295] res=[[[], (4, 1, 3, 2)]]
+2025-04-05:15:28:42,151 DEBUG    [double.py:300] vpl=(4, 1, 3, 2) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,152 DEBUG    [double.py:304] vl=[[[2], (4, 1, 2, 3)], [[], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,152 DEBUG    [double.py:295] res=[[[[2]], (4, 1, 2, 3)], [[[]], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,152 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,152 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,152 DEBUG    [double.py:300] vpl=(4, 2, 1, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,153 DEBUG    [double.py:304] vl=[[[], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,153 DEBUG    [double.py:317] res2=[[[[], []], (1, 4, 2, 3)]]
+2025-04-05:15:28:42,153 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:28:42,154 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:28:42,154 DEBUG    [double.py:1078] Returning u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 5, 1, 2, 3) val=(y_3 - z_1)*(y_3 - z_2) + (y_3 - z_1)*(y_4 - z_3) + (y_4 - z_2)*(y_4 - z_3)
+2025-04-05:15:28:42,154 DEBUG    [double.py:996] NEW val=y_1 + y_3 - z_1 - z_2 u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(6, 3, 1, 2, 4, 5)
+2025-04-05:15:28:42,154 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:28:42,154 DEBUG    [double.py:1034] Reduced to u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(6, 3, 1, 2, 4, 5) val=y_1 + y_3 - z_1 - z_2
+2025-04-05:15:28:42,155 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:28:42,155 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:28:42,155 DEBUG    [double.py:275] dualpieri mu=(3, 4, 1, 2) v=(4, 1, 3, 2) w=(6, 3, 1, 2, 4, 5)
+2025-04-05:15:28:42,155 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:28:42,155 DEBUG    [double.py:293] v=(4, 1, 3, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,156 DEBUG    [double.py:295] res=[[[], (4, 1, 3, 2)]]
+2025-04-05:15:28:42,156 DEBUG    [double.py:300] vpl=(4, 1, 3, 2) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,156 DEBUG    [double.py:304] vl=[[[2], (4, 1, 2, 3)], [[], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,156 DEBUG    [double.py:295] res=[[[[2]], (4, 1, 2, 3)], [[[]], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,156 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,157 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,157 DEBUG    [double.py:300] vpl=(4, 2, 1, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,157 DEBUG    [double.py:304] vl=[[[], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,157 DEBUG    [double.py:317] res2=[[[[2], []], (1, 2)], [[[], []], (2, 1)]]
+2025-04-05:15:28:42,157 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:28:42,158 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:28:42,158 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:28:42,158 DEBUG    [double.py:1078] Returning u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(6, 3, 1, 2, 4, 5) val=y_1 + y_3 - z_1 - z_2
+2025-04-05:15:28:42,158 DEBUG    [double.py:996] NEW val=y_1 + y_3 + y_4 + y_5 - 2*z_1 - z_2 - z_3 - (y_1 - z_1) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(5, 4, 1, 2, 3)
+2025-04-05:15:28:42,158 DEBUG    [double.py:1012] proceeding
+2025-04-05:15:28:42,158 DEBUG    [double.py:1034] Reduced to u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(5, 4, 1, 2, 3) val=y_1 + y_3 + y_4 + y_5 - 2*z_1 - z_2 - z_3 - (y_1 - z_1)
+2025-04-05:15:28:42,159 DEBUG    [double.py:1044] Recording line number
+2025-04-05:15:28:42,159 DEBUG    [double.py:1071] Recording line number
+2025-04-05:15:28:42,159 DEBUG    [double.py:275] dualpieri mu=(3, 4, 1, 2) v=(4, 1, 3, 2) w=(5, 4, 1, 2, 3)
+2025-04-05:15:28:42,159 DEBUG    [double.py:291] Recording line number
+2025-04-05:15:28:42,159 DEBUG    [double.py:293] v=(4, 1, 3, 2) type(v)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,159 DEBUG    [double.py:295] res=[[[], (4, 1, 3, 2)]]
+2025-04-05:15:28:42,160 DEBUG    [double.py:300] vpl=(4, 1, 3, 2) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,160 DEBUG    [double.py:304] vl=[[[2], (4, 1, 2, 3)], [[], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,160 DEBUG    [double.py:295] res=[[[[2]], (4, 1, 2, 3)], [[[]], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,160 DEBUG    [double.py:300] vpl=(4, 1, 2, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,161 DEBUG    [double.py:304] vl=[[[], (4, 1, 2, 3)]]
+2025-04-05:15:28:42,161 DEBUG    [double.py:300] vpl=(4, 2, 1, 3) type(vpl)=<class 'schubmult.perm_lib.perm_lib.Permutation'>
+2025-04-05:15:28:42,161 DEBUG    [double.py:304] vl=[[[], (4, 2, 1, 3)]]
+2025-04-05:15:28:42,161 DEBUG    [double.py:317] res2=[[[[], []], (1, 2, 4, 3)]]
+2025-04-05:15:28:42,161 DEBUG    [double.py:256] Recording line number
+2025-04-05:15:28:42,162 DEBUG    [double.py:264] Recording line number
+2025-04-05:15:28:42,162 DEBUG    [double.py:1078] Returning u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(5, 4, 1, 2, 3) val=y_3 + y_4 + y_5 - z_1 - z_2 - z_3
+2025-04-05:15:28:42,162 DEBUG    [double.py:996] NEW val=(y_3 - z_3)*(y_3 - z_1 - (y_3 - z_1)) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 5, 2, 1, 4)
+2025-04-05:15:28:42,162 DEBUG    [double.py:1010] Hmm this is probably not true u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(3, 5, 2, 1, 4) val=(y_3 - z_3)*(y_3 - z_1 - (y_3 - z_1))
+2025-04-05:15:28:42,163 DEBUG    [double.py:996] NEW val=y_3 - z_1 - (y_3 - z_1) u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 5, 2, 1, 3)
+2025-04-05:15:28:42,163 DEBUG    [double.py:1010] Hmm this is probably not true u2=(3, 4, 1, 2) v2=(4, 1, 3, 2) w2=(4, 5, 2, 1, 3) val=y_3 - z_1 - (y_3 - z_1)
+      (3, 4, 1, 2)  (y_1 - z_2)*(y_3 - z_1)*(y_3 - z_2)*(y_3 - z_3) + (y_3 - z_1)*(y_3 - z_2)*(y_3 - z_3)*(y_4 - z_1)
+      (3, 4, 2, 1)  (y_3 - z_1)*(y_3 - z_2)*(y_3 - z_3)
+   (3, 5, 1, 2, 4)  (y_3 - z_1)*(y_3 - z_2)*(y_3 - z_3)
+      (4, 3, 1, 2)  (y_1 - z_2)*((y_3 - z_1)*(y_3 - z_2) + (y_3 - z_1)*(y_4 - z_3) + (y_4 - z_2)*(y_4 - z_3)) + (y_3 - z_1)*(y_3 - z_2)*(y_4 - z_1) + (y_3 - z_1)*(y_4 - z_1)*(y_4 - z_3)
+      (4, 3, 2, 1)  (y_3 - z_1)*(y_3 - z_2) + (y_3 - z_1)*(y_4 - z_3) + (y_4 - z_2)*(y_4 - z_3)
+   (4, 5, 1, 2, 3)  (y_3 - z_1)*(y_3 - z_2) + (y_3 - z_1)*(y_4 - z_3) + (y_4 - z_2)*(y_4 - z_3)
+   (5, 3, 1, 2, 4)  (y_1 - z_2)*(y_3 + y_4 + y_5 - z_1 - z_2 - z_3) + (y_3 - z_1)*(y_3 - z_2) + (y_3 - z_1)*(y_4 - z_1) + (y_3 - z_1)*(y_5 - z_3)
+   (5, 3, 2, 1, 4)  y_3 + y_4 + y_5 - z_1 - z_2 - z_3
+   (5, 4, 1, 2, 3)  y_3 + y_4 + y_5 - z_1 - z_2 - z_3
+(6, 3, 1, 2, 4, 5)  y_1 + y_3 - z_1 - z_2
+(6, 3, 2, 1, 4, 5)  1
+(6, 4, 1, 2, 3, 5)  1

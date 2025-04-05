@@ -34,7 +34,7 @@ def double_elem_sym_q(u, p1, p2, k, q_var=q_var):
     iu = inverse(u)
     for perm1, udiff1, mul_val1 in perms1:
         perms2 = elem_sym_perms_q(perm1, p2, k, q_var)
-        cycles1 = get_cycles(tuple(permtrim(mulperm(iu, [*perm1]))))
+        cycles1 = get_cycles(iu*perm1)
         cycles1_dict = {}
         for c in cycles1:
             if c[-1] not in cycles1_dict:
@@ -42,7 +42,7 @@ def double_elem_sym_q(u, p1, p2, k, q_var=q_var):
             cycles1_dict[c[-1]] += [set(c)]
         ip1 = inverse(perm1)
         for perm2, udiff2, mul_val2 in perms2:
-            cycles2 = get_cycles(tuple(permtrim(mulperm(ip1, [*perm2]))))
+            cycles2 = get_cycles(ip1*perm2)
             good = True
             for i in range(len(cycles2)):
                 c2 = cycles2[i]

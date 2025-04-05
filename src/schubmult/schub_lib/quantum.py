@@ -2,6 +2,8 @@ from functools import cached_property
 
 from symengine import Add, Mul, Pow
 
+import schubmult.poly_lib.variables as spl
+import schubmult.schub_lib.schub_lib as sss
 from schubmult.perm_lib.perm_lib import (
     Permutation,
     add_perm_dict,
@@ -12,12 +14,11 @@ from schubmult.perm_lib.perm_lib import (
     strict_theta,
     uncode,
 )
-from schubmult.poly_lib import GeneratingSet, base_index
-from schubmult.schub_lib import (
-    compute_vpathdicts,
-    double_elem_sym_q,
-    elem_sym_perms_q,
-)
+
+#     sss.compute_vpathdicts,
+#     sss.double_elem_sym_q,
+#     sss.elem_sym_perms_q,
+# )
 
 
 class _gvars:
@@ -27,11 +28,11 @@ class _gvars:
 
     @cached_property
     def var_x(self):
-        return GeneratingSet("x")
+        return spl.GeneratingSet("x")
 
     @cached_property
     def q_var(self):
-        return GeneratingSet("q")
+        return spl.GeneratingSet("q")
 
 
 _vars = _gvars()
@@ -40,10 +41,10 @@ _vars = _gvars()
 def single_variable(coeff_dict, varnum, var_q=_vars.q_var):
     ret = {}
     for u in coeff_dict:
-        new_perms_k = elem_sym_perms_q(u, 1, varnum, var_q)
+        new_perms_k = sss.elem_sym_perms_q(u, 1, varnum, var_q)
         new_perms_km1 = []
         if varnum > 1:
-            new_perms_km1 = elem_sym_perms_q(u, 1, varnum - 1, var_q)
+            new_perms_km1 = sss.elem_sym_perms_q(u, 1, varnum - 1, var_q)
         for perm, udiff, mul_val in new_perms_k:
             if udiff == 1:
                 ret[perm] = ret.get(perm, 0) + coeff_dict[u] * mul_val
@@ -54,8 +55,8 @@ def single_variable(coeff_dict, varnum, var_q=_vars.q_var):
 
 
 def mult_poly_q(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
-    if base_index(poly)[0] == base_index(var_x)[0]:
-        return single_variable(coeff_dict, base_index(poly)[1], var_q=var_q)
+    if spl.base_index(poly)[0] == spl.base_index(var_x)[0]:
+        return single_variable(coeff_dict, spl.base_index(poly)[1], var_q=var_q)
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
@@ -96,7 +97,7 @@ def schubmult_q_fast(perm_dict, v, q_var=_vars.q_var):
     thL = len(th)
     # if thL!=2 and len(set(thL))!=1:
     # raise ValueError("Not what I can do")
-    vpathdicts = compute_vpathdicts(th, vmu, True)
+    vpathdicts = sss.compute_vpathdicts(th, vmu, True)
     # print(f"{vpathdicts=}")
     for u, val in perm_dict.items():
         inv_u = inv(u)
@@ -117,7 +118,7 @@ def schubmult_q_fast(perm_dict, v, q_var=_vars.q_var):
                 for up in vpathsums:
                     newpathsums0 = {}
                     inv_up = inv(up)
-                    newperms = double_elem_sym_q(up, mx_th, mx_th1, th[index], q_var)
+                    newperms = sss.double_elem_sym_q(up, mx_th, mx_th1, th[index], q_var)
                     for v in vpathdicts[index]:
                         sumval = vpathsums[up].get(v, 0)
                         if sumval == 0:
@@ -150,7 +151,7 @@ def schubmult_q_fast(perm_dict, v, q_var=_vars.q_var):
                 newpathsums = {}
                 for up in vpathsums:
                     inv_up = inv(up)
-                    newperms = elem_sym_perms_q(
+                    newperms = sss.elem_sym_perms_q(
                         up,
                         min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu),
                         th[index],
@@ -187,7 +188,7 @@ def schubmult_q(perm_dict, v):
     while th[-1] == 0:
         th.pop()
     thL = len(th)
-    vpathdicts = compute_vpathdicts(th, vmu, True)
+    vpathdicts = sss.compute_vpathdicts(th, vmu, True)
     for u, val in perm_dict.items():
         inv_u = inv(u)
         vpathsums = {u: {Permutation([]): val}}
@@ -199,7 +200,7 @@ def schubmult_q(perm_dict, v):
             newpathsums = {}
             for up in vpathsums:
                 inv_up = inv(up)
-                newperms = elem_sym_perms_q(
+                newperms = sss.elem_sym_perms_q(
                     up,
                     min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu),
                     th[index],

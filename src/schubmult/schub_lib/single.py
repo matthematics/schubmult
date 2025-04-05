@@ -10,11 +10,11 @@ from schubmult.perm_lib import (
     theta,
     uncode,
 )
-from schubmult.poly_lib import (
+from schubmult.poly_lib.variables import (
     GeneratingSet,
     base_index,
 )
-from schubmult.schub_lib import (
+from schubmult.schub_lib.schub_lib import (
     compute_vpathdicts,
     elem_sym_perms,
 )

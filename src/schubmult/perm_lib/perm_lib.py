@@ -316,7 +316,6 @@ def get_cycles(perm):
     return cycle_set
 
 
-@ensure_perms
 def medium_theta(perm):
     cd = code(perm)
     found_one = True
@@ -328,10 +327,10 @@ def medium_theta(perm):
                 cd[i], cd[i + 1] = cd[i + 1] + 1, cd[i]
                 break
             if cd[i] == cd[i + 1] and cd[i] != 0 and i > 0 and cd[i - 1] <= cd[i] + 1:
-                # if cd[i]==cd[i+1] and i>0 and cd[i-1]<=cd[i]+1:
                 cd[i] += 1
                 found_one = True
                 break
+    logger.debug(f"medium_theta({perm=})={cd}")
     return cd
 
 

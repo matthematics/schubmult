@@ -22,8 +22,10 @@ from schubmult.perm_lib import (
     theta,
     uncode,
 )
-from schubmult.poly_lib import GeneratingSet, base_index, efficient_subs, elem_sym_func, elem_sym_poly, expand, schubpoly
-from schubmult.schub_lib import (
+from schubmult.poly_lib.poly_lib import efficient_subs, elem_sym_func, elem_sym_poly, expand
+from schubmult.poly_lib.schub_poly import schubpoly
+from schubmult.poly_lib.variables import GeneratingSet, base_index
+from schubmult.schub_lib.schub_lib import (
     compute_vpathdicts,
     divdiffable,
     elem_sym_perms,
@@ -993,9 +995,9 @@ def posify(
 ):
     logger.debug(f"NEW {val=} {u2=} {v2=} {w2=}")
     hard_debug = True
-    if hard_debug:
-        if expand(val - schubmult_double_pair(u2, v2, var2, var3).get(w2, 0)) != 0:
-            raise Exception("Bad news")
+    # if hard_debug:
+    #     if expand(val - schubmult_double_pair(u2, v2, var2, var3).get(w2, 0)) != 0:
+    #         raise Exception("Bad news")
     oldval = val
     if inv(u2) + inv(v2) - inv(w2) == 0:
         logger.debug(f"Hmm this is probably not or val inty true {val=}")

@@ -1,6 +1,8 @@
 __version__ = "2.1.0"
 
-from .poly_lib import GeneratingSet, base_index, div_diff, efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, schubpoly, skew_div_diff, xreplace_genvars
+from .poly_lib.poly_lib import efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
+from .poly_lib.schub_poly import div_diff, schubpoly, skew_div_diff
+from .poly_lib.variables import GeneratingSet, base_index
 from .rings._schubert_polynomial_ring import (
     DSx,
     Sx,

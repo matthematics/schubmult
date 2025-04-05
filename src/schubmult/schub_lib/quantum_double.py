@@ -5,8 +5,9 @@
 #     var3,
 #     q_var2,
 # )
-from functools import cached_property
+from functools import cache, cached_property
 
+import numpy as np
 from symengine import Add, Mul, Pow, expand, sympify
 
 import schubmult.schub_lib.double as norm_yz
@@ -18,13 +19,20 @@ from schubmult.perm_lib import (
     strict_theta,
     uncode,
 )
-from schubmult.poly_lib import GeneratingSet, base_index, call_zvars, elem_sym_func_q, elem_sym_poly_q
-from schubmult.schub_lib import (
+from schubmult.perm_lib.perm_lib import code
+from schubmult.poly_lib.poly_lib import call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
+from schubmult.poly_lib.variables import GeneratingSet, base_index
+from schubmult.schub_lib.schub_lib import (
     compute_vpathdicts,
     double_elem_sym_q,
     elem_sym_perms_q,
     elem_sym_perms_q_op,
+    reduce_q_coeff,
 )
+from schubmult.utils.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 
 class _gvars:
@@ -55,6 +63,14 @@ class _gvars:
     @cached_property
     def var_r(self):
         return GeneratingSet("r")
+    
+    @cached_property
+    def var_g1(self):
+        return GeneratingSet("y")
+
+    @cached_property
+    def var_g2(self):
+        return GeneratingSet("z")
 
 
 _vars = _gvars()
@@ -159,6 +175,169 @@ def nil_hecke(perm_dict, v, n, var2=_vars.var2, var3=_vars.var3):
         toget = vmu
         ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
+
+@cache
+def schubmult_q_double_pair(perm1, perm2, var2=None, var3=None, q_var=None):
+    return schubmult_q_double_fast({perm1: 1}, perm2, var2, var3, q_var)
+
+
+@cache
+def schubmult_q_double_pair_generic(perm1, perm2):
+    return schubmult_q_double_fast({perm1: 1}, perm2, _vars.var_g1, _vars.var_g2, _vars.q_var)
+
+@cache
+def schubmult_q_generic_partial_posify(u2, v2):
+    logger.debug("Line number")
+    return {w2: q_partial_posify_generic(val, u2, v2, w2) for w2, val in schubmult_q_double_pair_generic(u2, v2).items()}
+
+def q_posify(u, v, w, val, var2, var3, q_var, msg):
+    logger.debug(f"Line number {val=} {u=} {v=} {w=}")
+    try:
+        val2 = int(expand(val))
+    except Exception:
+        logger.debug("Line number")
+        val2 = 0
+        q_dict = factor_out_q_keep_factored(val)
+        logger.debug(f"{q_dict=}")
+        logger.debug("Line number")
+        for q_part in q_dict:
+            try:
+                val2 += q_part * int(q_dict[q_part])
+            except Exception:
+                try:
+                    logger.debug("Line number")
+                    if code(~v) == medium_theta(~v):
+                        val2 += q_part * q_dict[q_part]
+                    else:
+                        q_part2 = q_part
+                        qv = q_vector(q_part)
+                        u2, v2, w2 = u, v, w
+                        u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+                        while did_one:
+                            u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+                        q_part2 = np.prod(
+                            [q_var[i + 1] ** qv[i] for i in range(len(qv))],
+                        )
+                        if q_part2 == 1:
+                            # reduced to classical coefficient
+                            logger.debug(f"{u=} {v=} {w=} {u2=} {v2=} {w2=} {q_part=} {q_dict[q_part]=}")
+                            val2 += q_part * norm_yz.posify(
+                                q_dict[q_part],
+                                u2,
+                                v2,
+                                w2,
+                                var2,
+                                var3,
+                                msg,
+                                False,
+                            )
+                        else:
+                            val2 += q_part * norm_yz.compute_positive_rep(
+                                q_dict[q_part],
+                                var2,
+                                var3,
+                                msg,
+                                False,
+                            )
+                except Exception as e:
+                    logger.debug(f"Exception: {e}")
+                    import traceback
+                    traceback.print_exc()
+        if expand(val - val2) != 0:
+            logger.debug("Different")
+            raise Exception
+
+def old_q_posify(u, v, w, val, var2, var3, q_var, msg):
+    val2 = 0
+    q_dict = factor_out_q_keep_factored(val)
+    for q_part in q_dict:
+        try:
+            val2 += q_part * int(q_dict[q_part])
+        except Exception:
+            try:
+                q_part2 = q_part
+                qv = q_vector(q_part)
+                u2, v2, w2 = u, v, w
+                u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+                while did_one:
+                    u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+                q_part2 = np.prod(
+                    [q_var[i + 1] ** qv[i] for i in range(len(qv))],
+                )
+                if q_part2 == 1:
+                    # reduced to classical coefficient
+                    val2 += q_part * norm_yz.posify(
+                        q_dict[q_part],
+                        u2,
+                        v2,
+                        w2,
+                        var2,
+                        var3,
+                        msg,
+                        False,
+                    )
+                else:
+                    val2 += q_part * norm_yz.compute_positive_rep(
+                        q_dict[q_part],
+                        var2,
+                        var3,
+                        msg,
+                        False,
+                    )
+            except Exception as e:
+                print(f"Exception: {e}")
+                import traceback
+
+                traceback.print_exc()
+                exit(1)
+    if expand(val - val2) != 0:
+       raise Exception
+    return val2
+
+def q_partial_posify_generic(val, u, v, w):
+    try:
+        val2 = int(expand(val))
+    except Exception:
+        val2 = 0
+        logger.debug(f"{val=}")
+        q_dict = factor_out_q_keep_factored(val)
+        logger.debug(f"{q_dict=}")
+        for q_part in q_dict:
+            try:
+                val2 += q_part * int(q_dict[q_part])
+            except Exception:
+                try:
+                    if code(~v) == medium_theta(~v):
+                        val2 += q_part * q_dict[q_part]
+                    else:
+                        q_part2 = q_part
+                        qv = q_vector(q_part)
+                        u2, v2, w2 = u, v, w
+                        u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+                        while did_one:
+                            u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+                        q_part2 = np.prod(
+                            [_vars.q_var[i + 1] ** qv[i] for i in range(len(qv))],
+                        )
+                        if q_part2 == 1:
+                            # reduced to classical coefficient
+                            logger.debug(f"{u=} {v=} {w=} {u2=} {v2=} {w2=} {q_part=} {q_dict[q_part]=}")
+                            val2 += q_part * norm_yz.posify_generic_partial(
+                                q_dict[q_part],
+                                u2,
+                                v2,
+                                w2,
+                            )
+                        else:
+                            val2 += q_part * q_dict[q_part]
+                except Exception as e:
+                    print(f"Exception: {e}")
+                    import traceback
+                    traceback.print_exc()
+        if expand(val - val2) != 0:
+            raise Exception
+    return val2
+
 
 
 def elem_sym_func_q_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, q_var=_vars.q_var):
@@ -459,15 +638,20 @@ def factor_out_q_keep_factored(poly, q_var=_vars.q_var):
     # if str(poly).find("q") == -1:
     #     ret[1] = poly
     #     return ret
+    logger.debug(f"{poly=}")
     found_one = False
     for s in sympify(poly).free_symbols:
+        logger.debug(f"{s=} {base_index(s)=} {base_index(q_var)=}")
         if base_index(s)[0] == base_index(q_var)[0]:
             found_one = True
+            logger.debug("frobble bagel")
 
     if not found_one:
         ret[1] = poly
         return ret
     if base_index(poly)[0] == base_index(q_var)[0]:
+        logger.debug("it might be poke")
+        logger.debug(f"{poly=}")
         ret[poly] = 1
         return ret
     if isinstance(poly, Add):
