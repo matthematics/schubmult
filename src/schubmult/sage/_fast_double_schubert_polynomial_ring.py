@@ -155,6 +155,7 @@ class FastDoubleSchubertPolynomial_class(CombinatorialFreeModule.Element):
             return None
         return self.parent()._q_ring
 
+    # can speed this up
     def expand(self):
         if self.parent()._quantum:
             return sum(

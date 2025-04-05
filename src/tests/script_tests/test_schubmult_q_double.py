@@ -101,7 +101,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, same=True, display_positive=
             # print(f"boofle {same=} {display_positive=} {v=} {ret_dict[k]=}", file=sys.stderr)
             assert expand(v) == expand(ret_dict[k])
         else:
-            print(f"{k=} {expand(coeff_dict[k])=}", file=sys.stderr)
+            # print(f"{k=} {expand(coeff_dict[k])=}", file=sys.stderr)
             assert expand(v) == 0
     for k in ret_dict.keys():
         if display_positive:
