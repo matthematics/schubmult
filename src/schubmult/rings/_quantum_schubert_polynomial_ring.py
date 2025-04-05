@@ -4,7 +4,7 @@ from functools import cache
 
 import sympy
 from symengine import expand, sympify
-from sympy import Add, Basic, Mul
+from sympy import Add, Basic
 from sympy.core.expr import Expr
 from sympy.core.kind import NumberKind
 from sympy.printing.str import StrPrinter
@@ -18,6 +18,8 @@ from schubmult.perm_lib import (
     inv,
 )
 from schubmult.poly_lib.poly_lib import xreplace_genvars
+
+#from schubmult.rings._schubert_polynomial_ring import DoubleSchubertAlgebraElement
 from schubmult.schub_lib.quantum_double import schubpoly_quantum
 from schubmult.utils.logging import get_logger
 
@@ -118,7 +120,7 @@ class QuantumDoubleSchubertAlgebraElement(Expr):
     """Algebra with sympy coefficients
     and a dict basis
     """
-
+    is_quantum = True
     _base_var = "x"
 
     _op_priority = 1e200
