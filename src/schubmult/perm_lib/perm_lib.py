@@ -87,6 +87,7 @@ def permtrim_list(perm):
     L = len(perm)
     while L > 2 and perm[-1] == L:
         L = perm.pop() - 1
+    # print(f"{perm=}")
     return perm
 
 
@@ -291,29 +292,30 @@ def mu_A(mu, A):
 # @ensure_perms
 
 
-@ensure_perms
+#@ensure_perms
 def get_cycles(perm):
-    cycle_set = []
-    done_vals = set()
-    for i in range(len(perm)):
-        p = i + 1
-        if perm[i] == p:
-            continue
-        if p in done_vals:
-            continue
-        cycle = []
-        m = -1
-        max_index = -1
-        while p not in done_vals:
-            cycle += [p]
-            done_vals.add(p)
-            if p > m:
-                m = p
-                max_index = len(cycle) - 1
-            p = perm[p - 1]
-        cycle = tuple(cycle[max_index + 1 :] + cycle[: max_index + 1])
-        cycle_set += [cycle]
-    return cycle_set
+    # cycle_set = []
+    # done_vals = set()
+    # for i in range(len(perm)):
+    #     p = i + 1
+    #     if perm[i] == p:
+    #         continue
+    #     if p in done_vals:
+    #         continue
+    #     cycle = []
+    #     m = -1
+    #     max_index = -1
+    #     while p not in done_vals:
+    #         cycle += [p]
+    #         done_vals.add(p)
+    #         if p > m:
+    #             m = p
+    #             max_index = len(cycle) - 1
+    #         p = perm[p - 1]
+    #     cycle = tuple(cycle[max_index + 1 :] + cycle[: max_index + 1])
+    #     cycle_set += [cycle]
+    # return cycle_set
+    return perm.get_cycles()
 
 
 def medium_theta(perm):
@@ -346,31 +348,39 @@ def old_code(perm):
 
 
 # from typing import NamedTuple
-
+def cyclic_sort(L):
+    m = max(L)
+    i = L.index(m)
+    return L[i+1:] + L[:i+1]
 
 # test perm speed
 class Permutation(Basic):
     def __new__(cls, perm):
-        return Permutation.__xnew_cached__(cls, Tuple(*perm))
+    #     return Permutation.__xnew_cached__(cls, Tuple(tuple(perm)))
 
-    @staticmethod
-    @cache
-    def __xnew_cached__(_class, perm):
-        return Permutation.__xnew__(_class, perm)
+    # @staticmethod
+    # @cache
+    # def __xnew_cached__(_class, perm):
+    #     return Permutation.__xnew__(_class, perm)
 
-    @staticmethod
-    def __xnew__(_class, perm):
+    # @staticmethod
+    # def __xnew__(_class, perm):
         # args[0] is a list, args[1] is a sympy.Permutation
         if isinstance(perm, Permutation):
             return perm
+        
         p = Tuple(*permtrim_list([*perm]))
+        # print(f"{p=}")
         if len(p) < 2:
             p = Tuple(1, 2)
         s_perm = spp.Permutation._af_new([i - 1 for i in p])
-        obj = Basic.__new__(_class, p)
+        obj = Basic.__new__(cls, p)
         obj._s_perm = s_perm
+        obj._perm = p
         return obj
 
+    def get_cycles(self):
+        return [tuple(cyclic_sort([i+1 for i in c])) for c in self._s_perm.cyclic_form]
     @property
     def code(self):
         return list(self.cached_code())
@@ -384,12 +394,13 @@ class Permutation(Basic):
         return self._s_perm.inversions()
 
     def swap(self, i, j):
-        new_perm = [*self.args[0]]
+        new_perm = [*self._perm]
         if i > j:
             i, j = j, i
         if j >= len(new_perm):
-            new_perm += list(range(len(new_perm) + 1, j + 2))
+            new_perm += list(range(len(new_perm)+1, j + 2))
         new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
+        # print(f"{new_perm=}")
         return Permutation(new_perm)
 
     def __getitem__(self, i):
@@ -466,10 +477,12 @@ class Permutation(Basic):
     def __repr__(self):
         return self.__str__()
 
+    def __lt__(self, other):
+        return tuple(self)<tuple(other)
     # def act(self, other):
     #     # act on a sympy expresssin
     #     subs_dict = {self._action[i + 1]: self._action[self.args[0][i]] for i in range(len(self))}
-    #     print(f"{subs_dict=}")
+    #     # print(f"{subs_dict=}")
     #     result = sympify(other).subs(subs_dict)
 
     # we want to format permuations
@@ -511,5 +524,3 @@ def split_perms(perms):
         if not did:
             perms2 += [perm]
     return perms2
-
-

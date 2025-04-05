@@ -239,6 +239,8 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
                                 msg,
                                 False,
                             )
+                            if val2 is None:
+                                raise Exception
                 except Exception as e:
                     logger.debug(f"Exception: {e}")
                     import traceback
@@ -246,6 +248,67 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
         if expand(val - val2) != 0:
             logger.debug("Different")
             raise Exception
+    return val2
+
+# def q_posify(u, v, w, val, var2, var3, q_var, msg):
+#     if expand(val) != 0:
+#         try:
+#             int(val)
+#         except Exception:
+#             val2 = 0
+#             q_dict = factor_out_q_keep_factored(val)
+#             for q_part in q_dict:
+#                 try:
+#                     val2 += q_part * int(q_dict[q_part])
+#                 except Exception:
+#                     # if same:
+#                     #     to_add = q_part * expand(sympify(q_dict[q_part]).xreplace(subs_dict2))
+#                     #     val2 += to_add
+#                     # else:
+#                     try:
+#                         if code(~v) == medium_theta(~v):
+#                             val2 += q_part * q_dict[q_part]
+#                         else:
+#                             q_part2 = q_part
+#                             qv = q_vector(q_part)
+#                             u2, v2, w2 = u, v, w
+#                             u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+#                             while did_one:
+#                                 u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
+#                             q_part2 = np.prod(
+#                                 [q_var[i + 1] ** qv[i] for i in range(len(qv))],
+#                             )
+#                             if q_part2 == 1:
+#                                 # reduced to classical coefficient
+#                                 val2 += q_part * norm_yz.posify(
+#                                     q_dict[q_part],
+#                                     u2,
+#                                     v2,
+#                                     w2,
+#                                     var2,
+#                                     var3,
+#                                     msg,
+#                                     False,
+#                                 )
+#                             else:
+#                                 val2 += q_part * norm_yz.compute_positive_rep(
+#                                     q_dict[q_part],
+#                                     var2,
+#                                     var3,
+#                                     msg,
+#                                     False,
+#                                 )
+#                     except Exception as e:
+#                         print(f"Exception: {e}")
+#                         import traceback
+
+#                         traceback.print_exc()
+#                         exit(1)
+#             if expand(val - val2) != 0:
+#                raise Exception
+#             val = val2
+#         return val
+#     return 0
 
 def old_q_posify(u, v, w, val, var2, var3, q_var, msg):
     val2 = 0
@@ -499,7 +562,7 @@ def schubmult_q_double_fast(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_va
     vpathdicts = compute_vpathdicts(th, vmu, True)
     for u, val in perm_dict.items():
         inv_u = inv(u)
-        vpathsums = {u: {Permutation([1, 2]): val}}
+        vpathsums = {u: {Permutation([]): val}}
         for index in range(thL):
             if index > 0 and th[index - 1] == th[index]:
                 continue
@@ -609,6 +672,135 @@ def schubmult_q_double_fast(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_va
         toget = vmu
         ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
+
+# def schubmult_q_double_fast(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
+#     if v == (1, 2):
+#         return perm_dict
+#     th = medium_theta(inverse(v))
+#     if len(th) == 0:
+#         return perm_dict
+#     while th[-1] == 0:
+#         th.pop()
+#     mu = permtrim(uncode(th))
+#     vmu = permtrim(mulperm([*v], mu))
+#     inv_vmu = inv(vmu)
+#     inv_mu = inv(mu)
+#     ret_dict = {}
+
+#     thL = len(th)
+#     vpathdicts = compute_vpathdicts(th, vmu, True)
+#     for u, val in perm_dict.items():
+#         inv_u = inv(u)
+#         vpathsums = {u: {(1, 2): val}}
+#         for index in range(thL):
+#             if index > 0 and th[index - 1] == th[index]:
+#                 continue
+#             mx_th = 0
+#             for vp in vpathdicts[index]:
+#                 for v2, vdiff, s in vpathdicts[index][vp]:
+#                     mx_th = max(mx_th, th[index] - vdiff)
+#             if index < len(th) - 1 and th[index] == th[index + 1]:
+#                 mx_th1 = 0
+#                 for vp in vpathdicts[index + 1]:
+#                     for v2, vdiff, s in vpathdicts[index + 1][vp]:
+#                         mx_th1 = max(mx_th1, th[index + 1] - vdiff)
+#                 newpathsums = {}
+#                 for up in vpathsums:
+#                     newpathsums0 = {}
+#                     inv_up = inv(up)
+#                     newperms = double_elem_sym_q(up, mx_th, mx_th1, th[index], q_var)
+#                     for v in vpathdicts[index]:
+#                         sumval = vpathsums[up].get(v, 0)
+#                         if sumval == 0:
+#                             continue
+#                         for v2, vdiff2, s2 in vpathdicts[index][v]:
+#                             for up1, udiff1, mul_val1 in newperms:
+#                                 esim1 = (
+#                                     elem_sym_func_q(
+#                                         th[index],
+#                                         index + 1,
+#                                         up,
+#                                         up1,
+#                                         v,
+#                                         v2,
+#                                         udiff1,
+#                                         vdiff2,
+#                                         var2,
+#                                         var3,
+#                                     )
+#                                     * mul_val1
+#                                     * s2
+#                                 )
+#                                 mulfac = sumval * esim1
+#                                 if (up1, udiff1, mul_val1) not in newpathsums0:
+#                                     newpathsums0[(up1, udiff1, mul_val1)] = {}
+#                                 # newpathsums0[(up1, udiff1, mul_val1
+#                                 newpathsums0[(up1, udiff1, mul_val1)][v2] = newpathsums0[(up1, udiff1, mul_val1)].get(v2, 0) + mulfac
+
+#                     for up1, udiff1, mul_val1 in newpathsums0:
+#                         for v in vpathdicts[index + 1]:
+#                             sumval = newpathsums0[(up1, udiff1, mul_val1)].get(v, 0)
+#                             if sumval == 0:
+#                                 continue
+#                             for v2, vdiff2, s2 in vpathdicts[index + 1][v]:
+#                                 for up2, udiff2, mul_val2 in newperms[(up1, udiff1, mul_val1)]:
+#                                     esim1 = (
+#                                         elem_sym_func_q(
+#                                             th[index + 1],
+#                                             index + 2,
+#                                             up1,
+#                                             up2,
+#                                             v,
+#                                             v2,
+#                                             udiff2,
+#                                             vdiff2,
+#                                             var2,
+#                                             var3,
+#                                         )
+#                                         * mul_val2
+#                                         * s2
+#                                     )
+#                                     mulfac = sumval * esim1
+#                                     if up2 not in newpathsums:
+#                                         newpathsums[up2] = {}
+#                                     newpathsums[up2][v2] = newpathsums[up2].get(v2, 0) + mulfac
+#             else:
+#                 newpathsums = {}
+#                 for up in vpathsums:
+#                     inv_up = inv(up)
+#                     newperms = elem_sym_perms_q(
+#                         up,
+#                         min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu),
+#                         th[index],
+#                         q_var,
+#                     )
+#                     for up2, udiff, mul_val in newperms:
+#                         if up2 not in newpathsums:
+#                             newpathsums[up2] = {}
+#                         for v in vpathdicts[index]:
+#                             sumval = vpathsums[up].get(v, 0) * mul_val
+#                             if sumval == 0:
+#                                 continue
+#                             for v2, vdiff, s in vpathdicts[index][v]:
+#                                 newpathsums[up2][v2] = newpathsums[up2].get(
+#                                     v2,
+#                                     0,
+#                                 ) + s * sumval * elem_sym_func_q(
+#                                     th[index],
+#                                     index + 1,
+#                                     up,
+#                                     up2,
+#                                     v,
+#                                     v2,
+#                                     udiff,
+#                                     vdiff,
+#                                     var2,
+#                                     var3,
+#                                 )
+#             vpathsums = newpathsums
+#         toget = tuple(vmu)
+#         ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
+#     return ret_dict
 
 
 def div_diff(v, w, var2=_vars.var2, var3=_vars.var3):

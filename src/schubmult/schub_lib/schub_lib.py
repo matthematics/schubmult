@@ -28,10 +28,48 @@ from schubmult.perm_lib import (
 
 q_var = spl.GeneratingSet("q")
 
+# def double_elem_sym_q(u, p1, p2, k, q_var=q_var):
+#     ret_list = {}
+#     perms1 = elem_sym_perms_q(u, p1, k, q_var)
+#     iu = inverse(u)
+#     for perm1, udiff1, mul_val1 in perms1:
+#         perms2 = elem_sym_perms_q(perm1, p2, k, q_var)
+#         cycles1 = get_cycles(tuple(permtrim(mulperm(iu, [*perm1]))))
+#         cycles1_dict = {}
+#         for c in cycles1:
+#             if c[-1] not in cycles1_dict:
+#                 cycles1_dict[c[-1]] = []
+#             cycles1_dict[c[-1]] += [set(c)]
+#         ip1 = inverse(perm1)
+#         for perm2, udiff2, mul_val2 in perms2:
+#             cycles2 = get_cycles(tuple(permtrim(mulperm(ip1, [*perm2]))))
+#             good = True
+#             for i in range(len(cycles2)):
+#                 c2 = cycles2[i]
+#                 if c2[-1] not in cycles1_dict:
+#                     continue
+#                 for c1_s in cycles1_dict[c2[-1]]:
+#                     for a in range(len(c2) - 2, -1, -1):
+#                         if c2[a] in c1_s:
+#                             good = False
+#                             break
+#                     if not good:
+#                         break
+#                 if not good:
+#                     break
+
+#             if good:
+#                 # print(f"{(perm1, udiff1, mul_val1)=}")
+#                 if (perm1, udiff1, mul_val1) not in ret_list:
+#                     ret_list[(perm1, udiff1, mul_val1)] = []
+#                 ret_list[(perm1, udiff1, mul_val1)] += [(perm2, udiff2, mul_val2)]
+#     return ret_list
+
+
 def double_elem_sym_q(u, p1, p2, k, q_var=q_var):
     ret_list = {}
     perms1 = elem_sym_perms_q(u, p1, k, q_var)
-    iu = inverse(u)
+    iu = ~u
     for perm1, udiff1, mul_val1 in perms1:
         perms2 = elem_sym_perms_q(perm1, p2, k, q_var)
         cycles1 = get_cycles(iu*perm1)
@@ -430,18 +468,48 @@ def reduce_q_coeff_u_only(u, v, w, qv):
     return u, v, w, qv, False
 
 
+# def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
+#     total_list = [(orig_perm, 0, 1)]
+#     up_perm_list = [(orig_perm, 1, 1000)]
+#     for pp in range(p):
+#         perm_list = []
+#         for up_perm, val, last_j in up_perm_list:
+#             up_perm2 = [*up_perm, len(up_perm) + 1]
+#             if len(up_perm2) < k + 1:
+#                 up_perm2 += [i + 1 for i in range(len(up_perm2), k + 2)]
+#             pos_list = [i for i in range(k) if (i >= len(orig_perm) and up_perm2[i] == i + 1) or (i < len(orig_perm) and up_perm2[i] == orig_perm[i])]
+#             for j in range(min(len(up_perm2) - 1, last_j), k - 1, -1):
+#                 for i in pos_list:
+#                     ct = count_bruhat(up_perm2, i, j)
+#                     # print(f"{up_perm2=} {ct=} {i=} {j=} {k=} {pp=}")
+#                     if ct == 1 or ct == 2 * (i - j) + 1:
+#                         new_perm = [*up_perm2]
+#                         new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
+#                         new_perm_add = tuple(permtrim(new_perm))
+#                         new_val = val
+#                         if ct < 0:
+#                             new_val *= np.prod([q_var[index] for index in range(i + 1, j + 1)])
+#                         perm_list += [(new_perm_add, new_val, j)]
+#                         total_list += [(new_perm_add, pp + 1, new_val)]
+#         up_perm_list = perm_list
+#     return total_list
+
+
 def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
+    import sys
     total_list = [(orig_perm, 0, 1)]
     up_perm_list = [(orig_perm, 1, 1000)]
     for pp in range(p):
         perm_list = []
         for up_perm, val, last_j in up_perm_list:
             pos_list = [i for i in range(k) if up_perm[i] == orig_perm[i]]
-            for j in range(min(max(k + 1, len(up_perm) - 1), last_j), k - 1, -1):
+            # print(f"{pos_list=} {up_perm=} {orig_perm=} {k=}", file=sys.stderr)
+            for j in range(min(max(k + 1, len(up_perm)), last_j), k - 1, -1):
                 for i in pos_list:
                     ct = count_bruhat(up_perm, i, j)
                     if ct == 1 or ct == 2 * (i - j) + 1:
                         new_perm_add = up_perm.swap(i, j)
+                        # print(f"{new_perm_add=}")
                         new_val = val
                         if ct < 0:
                             new_val *= np.prod([q_var[index] for index in range(i + 1, j + 1)])

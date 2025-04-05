@@ -17,7 +17,7 @@ from .schub_lib.double import (
     schubmult_generic_partial_posify,
 )
 from .schub_lib.quantum import mult_poly_q, schubmult_q, schubmult_q_fast
-from .schub_lib.quantum_double import factor_out_q_keep_factored, mult_poly_q_double, schubmult_q_double, schubmult_q_double_fast, schubpoly_quantum
+from .schub_lib.quantum_double import factor_out_q_keep_factored, mult_poly_q_double, schubmult_q_double, schubpoly_quantum
 from .schub_lib.single import (
     mult_poly_py,
     schub_coprod_py,
@@ -49,7 +49,7 @@ __all__ = [
     "schubmult_py",
     "schubmult_q",
     "schubmult_q_double",
-    "schubmult_q_double_fast",
+    #"schubmult_q_double_fast",
     "schubmult_q_fast",
     "schubpoly",
     "schubpoly_quantum",
