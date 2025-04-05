@@ -368,7 +368,7 @@ class Permutation(Basic):
         # args[0] is a list, args[1] is a sympy.Permutation
         if isinstance(perm, Permutation):
             return perm
-        
+
         p = Tuple(*permtrim_list([*perm]))
         # print(f"{p=}")
         if len(p) < 2:

@@ -170,7 +170,7 @@ def main(argv=None):
             for v in coeff_dict0:
                 coeff_dict[(1, 2)] += coeff_dict0[v] * div_diff(v, perms[1], var2, var3)
         else:
-            coeff_dict = {perms[0]: 1}            
+            coeff_dict = {perms[0]: 1}
             for perm in perms[1:]:
                 if not slow:
                     coeff_dict = schubmult_q_double_fast(coeff_dict, perm, var2, var3)

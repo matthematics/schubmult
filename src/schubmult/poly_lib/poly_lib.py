@@ -82,7 +82,7 @@ def elem_sym_func_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
     if newk == vdiff:
         return one
     yvars = []
-    
+
     # u1 = [*u1] + [a + 1 for a in range(len(u1), mlen)]
     # u2 = [*u2] + [a + 1 for a in range(len(u2), mlen)]
     for j in range(k):

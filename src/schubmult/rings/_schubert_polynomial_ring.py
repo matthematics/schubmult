@@ -95,7 +95,7 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
                 by_var2[k[1]] = {}
             by_var2[k[1]][k[0]] = v
 
-    
+
     for _vstr, _dict in by_var2.items():
         this_dict = {}
         for k, v in none_dict.items():
@@ -193,7 +193,7 @@ class DoubleSchubertAlgebraElement(Expr):
     def _cached_sympystr(self, printer):
         # return _def_printer.doprint(self._print_sum)
         return printer._print_Add(
-            sympy.Add(*[sympy.Mul(self._doubledict[k], DSchubPoly(k)) for k in sorted(self._doubledict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))], evaluate=False)
+            sympy.Add(*[sympy.Mul(self._doubledict[k], DSchubPoly(k)) for k in sorted(self._doubledict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))], evaluate=False),
         )
 
     def _sympystr(self, printer):
@@ -224,7 +224,7 @@ class DoubleSchubertAlgebraElement(Expr):
 
     def __rsub__(self, other):
         double_dict = add_perm_dict(DSx(other)._doubledict, {k: -v for k, v in self._doubledict.items()})
-        return _from_double_dict(double_dict)        
+        return _from_double_dict(double_dict)
 
     def __neg__(self):
         elem = self
@@ -418,7 +418,7 @@ def get_postprocessor(cls):
         return lambda expr: SchubAdd(*expr.args, evaluate=False)  # .doit()
     return None
 
-    
+
 
 
 # Basic._constructor_postprocessor_mapping[DoubleSchubertAlgebraElement] = {
