@@ -2,10 +2,12 @@
 # symbols cls argument!
 
 import re
+from bisect import bisect_left
 from functools import cache
 from typing import ClassVar
 
 from symengine import Symbol, symbols, sympify
+from sympy import Basic
 from sympy.core.symbol import Str
 
 
@@ -20,7 +22,7 @@ class GeneratingSet(Str):
 
     _index_pattern = re.compile("^([^_]+)_([0-9]+)$")
     _sage_index_pattern = re.compile("^([^0-9]+)([0-9]+)$")
-    is_Atom = True
+    # is_Atom = True
     # TODO: masked generating set
     @staticmethod
     @cache
@@ -37,10 +39,10 @@ class GeneratingSet(Str):
     @property
     def label(self):
         return self.name
-    
+
     # index of v in the genset
     def index(self, v):
-
+        return self._index_lookup[v]
 
     def __repr__(self):
         return f"GeneratingSet('{self.label}')"
@@ -63,6 +65,40 @@ class GeneratingSet(Str):
     def __eq__(self, other):
         return isinstance(other, GeneratingSet) and self.label == other.label
 
+class MaskedGeneratingSet(Basic):
+
+    def __new__(cls, gset, index_mask):
+        return MaskedGeneratingSet.__xnew_cached__(cls, gset, index_mask)
+
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, gset, index_mask):
+        return MaskedGeneratingSet.__xnew__(_class, gset, index_mask)
+
+    @staticmethod
+    def __xnew__(_class, gset, index_mask):
+        obj = Basic.__new__(_class, gset, index_mask)
+        # obj._symbols_arr = tuple([symbols(f"{name}_{i}") for i in range(100)])
+        # obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
+        mask_dict = {}
+        cur_index = 0
+        for i in range(len(gset._symbols_arr)):
+            if bisect_left(index_mask, i) != i:
+                mask_dict[cur_index] = i
+                cur_index += 1
+        obj._mask = mask_dict
+        obj._index_lookup = {gset[index_mask[i]]: i for i in range(len(gset._symbols_arr) - len(index_mask))}
+        return obj
+
+    @property
+    def base_genset(self):
+        return self.args[0]
+
+    def __getitem__(self, index):
+        return self.base_genset[self._mask[index]]
+
+    def index(self, v):
+        return self._index_lookup(v)
 
 
 def base_index(v):
