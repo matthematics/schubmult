@@ -5,7 +5,7 @@ import pytest
 
 from schubmult.utils.test_utils import get_json, load_json_test_names
 from schubmult.utils.parsing import parse_coeff
-from schubmult.poly_lib import GeneratingSet, efficient_subs
+from schubmult import GeneratingSet, efficient_subs
 
 
 def check_positive(v2, same, subs_dict2, var2, var3, q_var):

@@ -3,6 +3,9 @@ import sys
 import numpy as np
 from symengine import sympify
 
+from schubmult import (
+    q_vector,
+)
 from schubmult.perm_lib import (
     Permutation,
     count_less_than,
@@ -16,18 +19,15 @@ from schubmult.perm_lib import (
     trimcode,
     uncode,
 )
-from schubmult.poly_lib import (
-    q_vector,
-)
-from schubmult.schub_lib import (
-    check_blocks,
-)
 from schubmult.schub_lib.quantum import (
     _vars,
     schubmult_q,
     schubmult_q_fast,
 )
 from schubmult.schub_lib.quantum_double import factor_out_q_keep_factored
+from schubmult.schub_lib.schub_lib import (
+    check_blocks,
+)
 from schubmult.utils.argparse import schub_argparse
 
 q_var = _vars.q_var

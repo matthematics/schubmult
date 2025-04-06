@@ -48,7 +48,6 @@ json_files_data_args = load_json_test_names(base_dir)
 def test_with_same_args_exec(capsys, json_file):
     from schubmult.utils.test_utils import get_json, load_json_test_names
     from schubmult.utils.parsing import parse_coeff
-    from schubmult.poly_lib import GeneratingSet
     from schubmult.perm_lib import permtrim, uncode
 
     args = get_json(f"{base_dir}/{json_file}")

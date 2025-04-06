@@ -15,11 +15,6 @@ from schubmult.perm_lib.perm_lib import (
     uncode,
 )
 
-#     sss.compute_vpathdicts,
-#     sss.double_elem_sym_q,
-#     sss.elem_sym_perms_q,
-# )
-
 
 class _gvars:
     @cached_property

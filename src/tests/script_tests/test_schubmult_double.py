@@ -5,7 +5,7 @@ import pytest
 
 from schubmult.utils.test_utils import get_json, load_json_test_names
 from schubmult.utils.parsing import parse_coeff
-from schubmult.poly_lib import GeneratingSet
+from schubmult import GeneratingSet
 
 def check_positive(v, coprod, same, var_r):
     # if same, should be no minus signs
