@@ -29,39 +29,18 @@ def getpermval(perm, index):
         return perm[index]
     return index + 1
 
-
 @ensure_perms
 def inv(perm):
     return perm.inv
-    # L = len(perm)
-    # v = list(range(1, L + 1))
-    # ans = 0
-    # for i in range(L):
-    #     itr = bisect_left(v, perm[i])
-    #     ans += itr
-    #     v = v[:itr] + v[itr + 1 :]
-    # return ans
 
-
+@ensure_perms
 def code(perm):
-    # L = len(perm)
-    # ret = []
-    # v = list(range(1, L + 1))
-    # for i in range(L - 1):
-    #     itr = bisect_left(v, perm[i])
-    #     ret += [itr]
-    #     v = v[:itr] + v[itr + 1 :]
-    # return ret
     return perm.code
 
 
 @ensure_perms
 def mulperm(perm1, perm2):
     return perm1 * perm2
-    # raise Exception("Don't do this")
-    # if len(perm1) < len(perm2):
-    #     return [perm1[perm2[i] - 1] if perm2[i] <= len(perm1) else perm2[i] for i in range(len(perm2))]
-    # return [perm1[perm2[i] - 1] for i in range(len(perm2))] + perm1[len(perm2) :]
 
 
 def uncode(cd):
@@ -87,7 +66,6 @@ def permtrim_list(perm):
     L = len(perm)
     while L > 2 and perm[-1] == L:
         L = perm.pop() - 1
-    # print(f"{perm=}")
     return perm
 
 
@@ -172,9 +150,6 @@ def longest_element(indices):
         for i in range(len(indices)):
             j = indices[i] - 1
             if sg(j, perm) == 0:
-                # if len(perm) < j + 2:
-                #     perm = perm + list(range(len(perm) + 1, j + 3))
-                # perm[j], perm[j + 1] = perm[j + 1], perm[j]
                 perm = perm.swap(j, j + 1)
                 did_one = True
     return permtrim(perm)
@@ -239,7 +214,6 @@ def p_trans(part):
 
 def cycle(p, q):
     return Permutation(list(range(1, p)) + [i + 1 for i in range(p, p + q)] + [p])
-    # return Permutation.cycle(p, q)
 
 
 @ensure_perms
@@ -286,35 +260,7 @@ def mu_A(mu, A):
     return p_trans(mu_A_t)
 
 
-# @ensure_perms
-
-
-# @ensure_perms
-
-
-#@ensure_perms
 def get_cycles(perm):
-    # cycle_set = []
-    # done_vals = set()
-    # for i in range(len(perm)):
-    #     p = i + 1
-    #     if perm[i] == p:
-    #         continue
-    #     if p in done_vals:
-    #         continue
-    #     cycle = []
-    #     m = -1
-    #     max_index = -1
-    #     while p not in done_vals:
-    #         cycle += [p]
-    #         done_vals.add(p)
-    #         if p > m:
-    #             m = p
-    #             max_index = len(cycle) - 1
-    #         p = perm[p - 1]
-    #     cycle = tuple(cycle[max_index + 1 :] + cycle[: max_index + 1])
-    #     cycle_set += [cycle]
-    # return cycle_set
     return perm.get_cycles()
 
 
@@ -332,7 +278,6 @@ def medium_theta(perm):
                 cd[i] += 1
                 found_one = True
                 break
-    logger.debug(f"medium_theta({perm=})={cd}")
     return cd
 
 
@@ -347,147 +292,6 @@ def old_code(perm):
     return ret
 
 
-# from typing import NamedTuple
-def cyclic_sort(L):
-    m = max(L)
-    i = L.index(m)
-    return L[i+1:] + L[:i+1]
-
-# test perm speed
-class Permutation(Basic):
-    def __new__(cls, perm):
-    #     return Permutation.__xnew_cached__(cls, Tuple(tuple(perm)))
-
-    # @staticmethod
-    # @cache
-    # def __xnew_cached__(_class, perm):
-    #     return Permutation.__xnew__(_class, perm)
-
-    # @staticmethod
-    # def __xnew__(_class, perm):
-        # args[0] is a list, args[1] is a sympy.Permutation
-        if isinstance(perm, Permutation):
-            return perm
-
-        p = Tuple(*permtrim_list([*perm]))
-        # print(f"{p=}")
-        if len(p) < 2:
-            p = Tuple(1, 2)
-        s_perm = spp.Permutation._af_new([i - 1 for i in p])
-        obj = Basic.__new__(cls, p)
-        obj._s_perm = s_perm
-        obj._perm = p
-        return obj
-
-    def get_cycles(self):
-        return [tuple(cyclic_sort([i+1 for i in c])) for c in self._s_perm.cyclic_form]
-    @property
-    def code(self):
-        return list(self.cached_code())
-
-    @cache
-    def cached_code(self):
-        return self._s_perm.inversion_vector()
-
-    @cached_property
-    def inv(self):
-        return self._s_perm.inversions()
-
-    def swap(self, i, j):
-        new_perm = [*self._perm]
-        if i > j:
-            i, j = j, i
-        if j >= len(new_perm):
-            new_perm += list(range(len(new_perm)+1, j + 2))
-        new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
-        # print(f"{new_perm=}")
-        return Permutation(new_perm)
-
-    def __getitem__(self, i):
-        if isinstance(i, slice):
-            return [self[ii] for ii in range(*i.indices(len(self.args[0])))]
-        if i >= len(self.args[0]):
-            return i + 1
-        return self.args[0][i]
-
-    def __setitem__(self, i, v):
-        raise NotImplementedError
-
-    def __hash__(self):
-        return hash(self.args[0])
-
-    def __mul__(self, other):
-        # print("yay")
-        new_sperm = other._s_perm * self._s_perm
-        new_perm = permtrim_list([new_sperm.array_form[i] + 1 for i in range(new_sperm.size)])
-        # print(f"{new_perm=}")
-        # if len(new_perm) != new_sperm.size:
-        #     new_sperm = spp.Permutation._af_new([i - 1 for i in new_perm])
-        return Permutation(new_perm)
-
-    def __iter__(self):
-        yield from self.args[0].__iter__()
-
-    def __getslice__(self, i, j):
-        return self.args[0][i:j]
-
-    def __str__(self):
-        # print("yay")
-        return str(self.args[0])
-
-    def __add__(self, other):
-        # print("yay")
-        if not isinstance(other, list):
-            raise NotImplementedError
-        permlist = [*self.args[0], *other]
-        try:
-            return Permutation(permlist)
-        except Exception:
-            return permlist
-
-    def __radd__(self, other):
-        # print("yay")
-        if not isinstance(other, list):
-            raise NotImplementedError
-        permlist = [*other, *self.args[0]]
-        try:
-            return Permutation(permlist)
-        except Exception:
-            return permlist
-
-    def __eq__(self, other):
-        # print("yay")
-        if isinstance(other, Permutation):
-            return other.args[0] == self.args[0]
-        if isinstance(other, list):
-            return [*self.args[0]] == other
-        if isinstance(other, tuple):
-            return self.args[0] == other
-        return False
-
-    def __len__(self):
-        # print("yay")
-        return len(self.args[0])
-
-    def __invert__(self):
-        new_sperm = ~(self._s_perm)
-        new_perm = [new_sperm.array_form[i] + 1 for i in range(new_sperm.size)]
-        return Permutation(new_perm)
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __lt__(self, other):
-        return tuple(self)<tuple(other)
-    # def act(self, other):
-    #     # act on a sympy expresssin
-    #     subs_dict = {self._action[i + 1]: self._action[self.args[0][i]] for i in range(len(self))}
-    #     # print(f"{subs_dict=}")
-    #     result = sympify(other).subs(subs_dict)
-
-    # we want to format permuations
-    def _sympystr(self, p):  # noqa: ARG002
-        return self.args[0].__str__()
 
 
 def split_perms(perms):
@@ -524,3 +328,139 @@ def split_perms(perms):
         if not did:
             perms2 += [perm]
     return perms2
+
+
+
+def cyclic_sort(L):
+    m = max(L)
+    i = L.index(m)
+    return L[i+1:] + L[:i+1]
+
+# test perm speed
+class Permutation(Basic):
+    def __new__(cls, perm):
+    #     return Permutation.__xnew_cached__(cls, Tuple(tuple(perm)))
+
+    # @staticmethod
+    # @cache
+    # def __xnew_cached__(_class, perm):
+    #     return Permutation.__xnew__(_class, perm)
+
+    # @staticmethod
+    # def __xnew__(_class, perm):
+        if isinstance(perm, Permutation):
+            return perm
+
+        p = Tuple(*permtrim_list([*perm]))
+        if len(p) < 2:
+            p = Tuple(1, 2)
+        s_perm = spp.Permutation._af_new([i - 1 for i in p])
+        obj = Basic.__new__(cls, p)
+        obj._s_perm = s_perm
+        obj._perm = p
+        return obj
+
+    def get_cycles(self):
+        return self.get_cycles_cached()
+
+    @cache
+    def get_cycles_cached(self):
+        return [tuple(cyclic_sort([i+1 for i in c])) for c in self._s_perm.cyclic_form]
+
+    @property
+    def code(self):
+        return list(self.cached_code())
+
+    @cache
+    def cached_code(self):
+        return self._s_perm.inversion_vector()
+
+    @cached_property
+    def inv(self):
+        return self._s_perm.inversions()
+
+    def swap(self, i, j):
+        new_perm = [*self._perm]
+        if i > j:
+            i, j = j, i
+        if j >= len(new_perm):
+            new_perm += list(range(len(new_perm)+1, j + 2))
+        new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
+        return Permutation(new_perm)
+
+    def __getitem__(self, i):
+        if isinstance(i, slice):
+            return [self[ii] for ii in range(*i.indices(len(self.args[0])))]
+        if i >= len(self.args[0]):
+            return i + 1
+        return self.args[0][i]
+
+    def __setitem__(self, i, v):
+        raise NotImplementedError
+
+    def __hash__(self):
+        return hash(self.args[0])
+
+    def __mul__(self, other):
+        new_sperm = other._s_perm * self._s_perm
+        new_perm = permtrim_list([new_sperm.array_form[i] + 1 for i in range(new_sperm.size)])
+        return Permutation(new_perm)
+
+    def __iter__(self):
+        yield from self.args[0].__iter__()
+
+    def __getslice__(self, i, j):
+        return self.args[0][i:j]
+
+    def __str__(self):
+        return str(self.args[0])
+
+    def __add__(self, other):
+        if not isinstance(other, list):
+            raise NotImplementedError
+        permlist = [*self.args[0], *other]
+        try:
+            return Permutation(permlist)
+        except Exception:
+            return permlist
+
+    def __radd__(self, other):
+        if not isinstance(other, list):
+            raise NotImplementedError
+        permlist = [*other, *self.args[0]]
+        try:
+            return Permutation(permlist)
+        except Exception:
+            return permlist
+
+    def __eq__(self, other):
+        if isinstance(other, Permutation):
+            return other.args[0] == self.args[0]
+        if isinstance(other, list):
+            return [*self.args[0]] == other
+        if isinstance(other, tuple):
+            return self.args[0] == other
+        return False
+
+    def __len__(self):
+        return len(self.args[0])
+
+    def __invert__(self):
+        new_sperm = ~(self._s_perm)
+        new_perm = [new_sperm.array_form[i] + 1 for i in range(new_sperm.size)]
+        return Permutation(new_perm)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __lt__(self, other):
+        return tuple(self)<tuple(other)
+    # def act(self, other):
+    #     # act on a sympy expresssin
+    #     subs_dict = {self._action[i + 1]: self._action[self.args[0][i]] for i in range(len(self))}
+    #     # print(f"{subs_dict=}")
+    #     result = sympify(other).subs(subs_dict)
+
+    # we want to format permuations
+    def _sympystr(self, p):  # noqa: ARG002
+        return self.args[0].__str__()
