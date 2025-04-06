@@ -235,42 +235,42 @@ class DoubleSchubertAlgebraElement(Expr):
     def __rmul__(self, other):
         return _from_double_dict(_mul_schub_dicts(DSx(other)._doubledict, self._doubledict))
 
-    def equals(self, other):
-        return self.__eq__(other)
+    # def equals(self, other):
+    #     return self.__eq__(other)
 
-    def test_equality(self, other, disp=False):
-        elem1 = self
-        elem2 = other
-        done = set()
-        import sys
+    # def test_equality(self, other, disp=False):
+    #     elem1 = self
+    #     elem2 = other
+    #     done = set()
+    #     import sys
 
-        for k, v in elem1._doubledict.items():
-            done.add(k)
-            if expand(v - elem2._doubledict.get(k, 0)) != 0:
-                if disp:
-                    print(f"{k=} {v=} {elem2._doubledict.get(k, 0)=} {expand(v - elem2._doubledict.get(k, 0))=}", file=sys.stderr)
-                return False
-        for k, v in elem2._doubledict.items():
-            if k in done:
-                continue
-            if expand(v - elem1._doubledict.get(k, 0)) != 0:
-                if disp:
-                    print(f"{k=} {v=} {expand(v - elem1._doubledict.get(k, 0))=}", file=sys.stderr)
-                return False
-        return True
+    #     for k, v in elem1._doubledict.items():
+    #         done.add(k)
+    #         if expand(v - elem2._doubledict.get(k, 0)) != 0:
+    #             if disp:
+    #                 print(f"{k=} {v=} {elem2._doubledict.get(k, 0)=} {expand(v - elem2._doubledict.get(k, 0))=}", file=sys.stderr)
+    #             return False
+    #     for k, v in elem2._doubledict.items():
+    #         if k in done:
+    #             continue
+    #         if expand(v - elem1._doubledict.get(k, 0)) != 0:
+    #             if disp:
+    #                 print(f"{k=} {v=} {expand(v - elem1._doubledict.get(k, 0))=}", file=sys.stderr)
+    #             return False
+    #     return True
 
-    def __eq__(self, other):
-        if self.is_Add or self.is_Mul:
-            return self.doit().equals(other)
-        cv = "y"
-        elem1 = self
-        elem2 = DSx(other)
+    # def __eq__(self, other):
+    #     if self.is_Add or self.is_Mul:
+    #         return self.doit().equals(other)
+    #     cv = "y"
+    #     elem1 = self
+    #     elem2 = DSx(other)
 
-        if not elem1.test_equality(elem2):
-            elem1_o = elem1.change_vars(cv)
-            elem2_o = elem2.change_vars(cv)
-            return elem1_o.test_equality(elem2_o)
-        return True
+    #     if not elem1.test_equality(elem2):
+    #         elem1_o = elem1.change_vars(cv)
+    #         elem2_o = elem2.change_vars(cv)
+    #         return elem1_o.test_equality(elem2_o)
+    #     return True
         # assert all([k[1] == cv for k in elem1._doubledict.keys()])
         # assert all([k[1] == cv for k in elem2._doubledict.keys()])
 
@@ -318,80 +318,71 @@ class DoubleSchubertAlgebraElement(Expr):
             return self.doit().expand()
         if isinstance(self, SchubMul):
             return self.doit().expand()
-        return expand(Add(*[v * schubpoly(k[0], utils.poly_ring(DSx._base_var), utils.poly_ring(k[1])) for k, v in self._doubledict.items()]))
+        return expand(Add(*[v * schubpoly(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self._doubledict.items()]))
 
     def as_polynomial(self):
-        return sympy.sympify(Add(*[v * schubpoly(k[0], utils.poly_ring(DSx._base_var), utils.poly_ring(k[1])) for k, v in self._doubledict.items()]))
+        return sympy.sympify(Add(*[v * schubpoly(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self._doubledict.items()]))
 
 
-# TODO: not a noncommutative symbol, something else
 # Atomic Schubert polynomial
 class DSchubPoly(DoubleSchubertAlgebraElement):
     is_Atom = True
 
-    def __new__(cls, k, *args, **kwargs):
-        return DSchubPoly.__xnew_cached__(k, *args, **kwargs)
+    def __new__(cls, k, genset):
+        return DSchubPoly.__xnew_cached__(cls, k, genset)
 
-    @classmethod
-    def __xnew__(cls, k):
-        obj = DoubleSchubertAlgebraElement.__new__(cls, sympy.Dict({(Permutation(k[0]), k[1]): 1}))
-        obj._perm = k[0]
-        obj._coeff_var = k[1]
-        # obj._base_var = base_var
+    @staticmethod
+    def __xnew__(_class, k, genset):
+        obj = DoubleSchubertAlgebraElement.__new__(_class, sympy.Dict({(Permutation(k[0]), k[1]): 1}), genset)
+        obj._key= k
         return obj
 
-    @classmethod
+    @staticmethod
     @cache
-    def __xnew_cached__(cls, k):
-        return DSchubPoly.__xnew__(k)
+    def __xnew_cached__(_class, k, genset):
+        return DSchubPoly.__xnew__(_class, k, genset)
 
     def _sympystr(self, printer):
-        if self._coeff_var == 0 or self._coeff_var == utils.NoneVar:
-            return printer.doprint(f"Sx({list(self._perm)})")
-        return printer.doprint(f"DSx({list(self._perm)}, {_varstr(self._coeff_var)})")
+        if self._key[1] == 0 or self._key[1] == utils.NoneVar:
+            return printer.doprint(f"S{self.genset.label}({list(self._perm)})")
+        return printer.doprint(f"DS{self.genset.label}({list(self._key[0])}, {_varstr(self._key[1])})")
 
 
 # None is faster to store
 class DoubleSchubertAlgebraElement_basis(Basic):
-    coeff_varname = "y"
-
-    def __init__(self, base_var="x"):
-        # self._doubledict = _dict
-        self._base_var = base_var
-        # self._coeff_var = coeff_var if coeff_var else "y"
-
+    
+    def __new__(cls, genset):
+        return Basic.__new__(genset)
+    
+    @property    
+    def genset(self):
+        return self.args[0]
+        
     def __call__(self, x, cv=None):
         if isinstance(x, list) or isinstance(x, tuple):
             if cv is None:
                 cv = "y"
-            elem = DoubleSchubertAlgebraElement({(Permutation(x), cv): 1})
+            elem = DoubleSchubertAlgebraElement({(Permutation(x), cv): 1}, self.genset)
         elif isinstance(x, Permutation):
             if cv is None:
                 cv = "y"
-            elem = DoubleSchubertAlgebraElement({(x, cv): 1})
-        # elif isinstance(x, spr.SchubertPolynomial):
-        #     if x._parent._base_var == self._base_var:
-        #         elem_dict = {(x, utils.NoneVar): v for k, v in x._doubledict.items()}
-        #         elem = DoubleSchubertAlgebraElement(elem_dict, self)
-        #         if cv is not None:
-        #             elem = self([1, 2], cv) * elem
-        #     else:
-        #         return self(x.expand(), cv)
+            elem = DoubleSchubertAlgebraElement({(x, cv): 1}, self.genset)
+        
         elif isinstance(x, DoubleSchubertAlgebraElement):
             if x.is_Add or x.is_Mul:
                 return x
-            if x._base_var == self._base_var:
-                elem = DoubleSchubertAlgebraElement(x._doubledict)  # , self)
+            if x.genset == self.genset:
+                elem = DoubleSchubertAlgebraElement(x._doubledict, self.genset)  # , self)
             else:
                 return self(x.expand(), cv)
         else:
             x = sympify(x)
             if cv is None or cv == utils.NoneVar:
                 cv = utils.NoneVar
-                result = py.mult_poly_py({Permutation([]): 1}, x, utils.poly_ring(self._base_var))
+                result = py.mult_poly_py({Permutation([]): 1}, x, self.genset)
             else:
-                result = yz.mult_poly_double({Permutation([]): 1}, x, utils.poly_ring(self._base_var), utils.poly_ring(cv))
-            elem = DoubleSchubertAlgebraElement({(k, cv): v for k, v in result.items()})
+                result = yz.mult_poly_double({Permutation([]): 1}, x, self.genset, utils.poly_ring(cv))
+            elem = DoubleSchubertAlgebraElement({(k, cv): v for k, v in result.items()}, self.genset)
         return elem
 
 
