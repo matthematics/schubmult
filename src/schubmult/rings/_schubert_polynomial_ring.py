@@ -41,8 +41,8 @@ def _varstr(v):
     return f"'{v}'"
 
 
-def _from_double_dict(_doubledict):
-    return DoubleSchubertAlgebraElement(_doubledict)
+# def self._from_dict(coeff_dict):
+#     return DoubleSchubertAlgebraElement(coeff_dict)
 
 
 @cache
@@ -156,6 +156,10 @@ class DoubleSchubertAlgebraElement(Expr):
     @property
     def _mul_handler(self):
         return SchubMul
+    
+    # confers existing generating set
+    def _from_dict(self, _dict):
+        return DoubleSchubertAlgebraElement(_dict, self.genset)
 
     # def _eval_Eq(self, other):
     #     # this will prevent sympy from acting like an idiot
@@ -173,15 +177,15 @@ class DoubleSchubertAlgebraElement(Expr):
     #         lots_of_stuff_to_do = True
     #     for k, v in self.coeff_dict.items():
     #         if lots_of_stuff_to_do:
-    #             poley = sympify(_from_double_dict({k: 1}).change_vars(0).expand() * v)
+    #             poley = sympify(self._from_dict({k: 1}).change_vars(0).expand() * v)
     #             if b_old in poley.free_symbols:
     #                 poley = poley.subs(b_old, b_new)
     #                 new_dict = yz.mult_poly_double({(1, 2): 1}, poley, utils.poly_ring(self._base_var), utils.poly_ring(k[1]))
     #                 new_p = {(koifle, k[1]): voifle for koifle, voifle in new_dict.items()}
     #                 result = add_perm_dict(result, new_p)
     #         elif stuff_to_do:
-    #             this_p = _from_double_dict({k: v}).change_vars(0)
-    #             for kkk, vvv in this_p._doubledict.items():
+    #             this_p = self._from_dict({k: v}).change_vars(0)
+    #             for kkk, vvv in this_p.coeff_dict.items():
     #                 vvvv = sympify(vvv).subs(b_old, b_new)
     #                 if b_new in sympify(vvvv).free_symbols:
     #                     s_dict = {kkk[0]: 1}
@@ -189,11 +193,11 @@ class DoubleSchubertAlgebraElement(Expr):
     #                 else:
     #                     r_dict = {kkk[0]: vvvv}
     #                 r_dict = {(kk, 0): voif for kk, voif in r_dict.items()}
-    #                 new_p = _from_double_dict(r_dict).change_vars(k[1])
-    #                 result = add_perm_dict(result, new_p._doubledict)
+    #                 new_p = self._from_dict(r_dict).change_vars(k[1])
+    #                 result = add_perm_dict(result, new_p.coeff_dict)
     #         else:
     #             result[k] = result.get(k, 0) + sympify(v).subs(b_old, b_new)
-    #     return _from_double_dict(result)
+    #     return self._from_dict(result)
 
     @cache
     def _cached_sympystr(self, printer):
@@ -204,38 +208,38 @@ class DoubleSchubertAlgebraElement(Expr):
     def _sympystr(self, printer):
         return self._cached_sympystr(printer)
 
-    
 
-    def _eval_simplify(self, *args, measure, **kwargs):
-        return _from_double_dict({k: sympify(sympy.simplify(v, *args, measure=measure, **kwargs)) for k, v in self.coeff_dict.items()})
+
+    # def _eval_simplify(self, *args, measure, **kwargs):
+    #     return self._from_dict({k: sympify(sympy.simplify(v, *args, measure=measure, **kwargs)) for k, v in self.coeff_dict.items()})
 
     def __add__(self, other):
-        return _from_double_dict(add_perm_dict(self.coeff_dict, DSx(other)._doubledict))
+        return self._from_dict(add_perm_dict(self.coeff_dict, other.coeff_dict))
 
     def __radd__(self, other):
 
-        return _from_double_dict(add_perm_dict(DSx(other)._doubledict, self.coeff_dict))
+        return self._from_dict(add_perm_dict(other.coeff_dict, self.coeff_dict))
 
     def __sub__(self, other):
-        double_dict = add_perm_dict(self.coeff_dict, {k: -v for k, v in DSx(other)._doubledict.items()})
-        return _from_double_dict(double_dict)
+        double_dict = add_perm_dict(self.coeff_dict, {k: -v for k, v in other.coeff_dict.items()})
+        return self._from_dict(double_dict)
 
     def __rsub__(self, other):
-        double_dict = add_perm_dict(DSx(other)._doubledict, {k: -v for k, v in self.coeff_dict.items()})
-        return _from_double_dict(double_dict)
+        double_dict = add_perm_dict(other.coeff_dict, {k: -v for k, v in self.coeff_dict.items()})
+        return self._from_dict(double_dict)
 
     def __neg__(self):
         elem = self
         if self.is_Add or self.is_Mul:
             elem = self.doit()
-        double_dict = {k: -sympify(v) for k, v in elem._doubledict.items()}
-        return _from_double_dict(double_dict)
+        double_dict = {k: -sympify(v) for k, v in elem.coeff_dict.items()}
+        return self._from_dict(double_dict)
 
     def __mul__(self, other):
-        return _from_double_dict(_mul_schub_dicts(self.coeff_dict, DSx(other)._doubledict))
+        return self._from_dict(_mul_schub_dicts(self.coeff_dict, other.coeff_dict))
 
     def __rmul__(self, other):
-        return _from_double_dict(_mul_schub_dicts(DSx(other)._doubledict, self.coeff_dict))
+        return self._from_dict(_mul_schub_dicts(other.coeff_dict, self.coeff_dict))
 
     # def equals(self, other):
     #     return self.__eq__(other)
@@ -246,18 +250,18 @@ class DoubleSchubertAlgebraElement(Expr):
     #     done = set()
     #     import sys
 
-    #     for k, v in elem1._doubledict.items():
+    #     for k, v in elem1.coeff_dict.items():
     #         done.add(k)
-    #         if expand(v - elem2._doubledict.get(k, 0)) != 0:
+    #         if expand(v - elem2.coeff_dict.get(k, 0)) != 0:
     #             if disp:
-    #                 print(f"{k=} {v=} {elem2._doubledict.get(k, 0)=} {expand(v - elem2._doubledict.get(k, 0))=}", file=sys.stderr)
+    #                 print(f"{k=} {v=} {elem2.coeff_dict.get(k, 0)=} {expand(v - elem2.coeff_dict.get(k, 0))=}", file=sys.stderr)
     #             return False
-    #     for k, v in elem2._doubledict.items():
+    #     for k, v in elem2.coeff_dict.items():
     #         if k in done:
     #             continue
-    #         if expand(v - elem1._doubledict.get(k, 0)) != 0:
+    #         if expand(v - elem1.coeff_dict.get(k, 0)) != 0:
     #             if disp:
-    #                 print(f"{k=} {v=} {expand(v - elem1._doubledict.get(k, 0))=}", file=sys.stderr)
+    #                 print(f"{k=} {v=} {expand(v - elem1.coeff_dict.get(k, 0))=}", file=sys.stderr)
     #             return False
     #     return True
 
@@ -266,15 +270,15 @@ class DoubleSchubertAlgebraElement(Expr):
     #         return self.doit().equals(other)
     #     cv = "y"
     #     elem1 = self
-    #     elem2 = DSx(other)
+    #     elem2 = other
 
     #     if not elem1.test_equality(elem2):
     #         elem1_o = elem1.change_vars(cv)
     #         elem2_o = elem2.change_vars(cv)
     #         return elem1_o.test_equality(elem2_o)
     #     return True
-        # assert all([k[1] == cv for k in elem1._doubledict.keys()])
-        # assert all([k[1] == cv for k in elem2._doubledict.keys()])
+        # assert all([k[1] == cv for k in elem1.coeff_dict.keys()])
+        # assert all([k[1] == cv for k in elem2.coeff_dict.keys()])
 
     # def __str__(self):
     #     pieces = []
@@ -305,7 +309,7 @@ class DoubleSchubertAlgebraElement(Expr):
         result = {}
         for k, v in self.coeff_dict.items():
             result = add_perm_dict(result, {k1: v1 * v for k1, v1 in cached_positive_product(Permutation([]), k[0], cv, k[1]).items()})
-        return _from_double_dict(result)
+        return self._from_dict(result)
 
     def as_coefficients_dict(self):
         # will not allow zeros
@@ -374,7 +378,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
             if x.is_Add or x.is_Mul:
                 return x
             if x.genset == self.genset:
-                elem = DoubleSchubertAlgebraElement(x._doubledict, self.genset)  # , self)
+                elem = DoubleSchubertAlgebraElement(x.coeff_dict, self.genset)  # , self)
             else:
                 return self(x.expand(), cv)
         else:
@@ -391,13 +395,13 @@ class DoubleSchubertAlgebraElement_basis(Basic):
 def _do_schub_mul(a, b):
     A = DSx(a)
     B = DSx(b)
-    return _from_double_dict(_mul_schub_dicts(A._doubledict, B._doubledict))
+    return self._from_dict(_mul_schub_dicts(A.coeff_dict, B.coeff_dict))
 
 
 def _do_schub_add(a, b):
     A = DSx(a)
     B = DSx(b)
-    return _from_double_dict(add_perm_dict(A._doubledict, B._doubledict))
+    return self._from_dict(add_perm_dict(A.coeff_dict, B.coeff_dict))
 
 
 def get_postprocessor(cls):
