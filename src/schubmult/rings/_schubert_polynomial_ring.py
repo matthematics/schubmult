@@ -17,6 +17,7 @@ from schubmult.perm_lib import (
 )
 from schubmult.poly_lib.poly_lib import xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly
+from schubmult.poly_lib.variables import GeneratingSet, MaskedGeneratingSet
 from schubmult.utils.logging import get_logger
 
 ## EMULATE POLYTOOLS
@@ -95,7 +96,6 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
                 by_var2[k[1]] = {}
             by_var2[k[1]][k[0]] = v
 
-
     for _vstr, _dict in by_var2.items():
         this_dict = {}
         for k, v in none_dict.items():
@@ -132,7 +132,7 @@ class DoubleSchubertAlgebraElement(Expr):
     def __xnew__(_class, _dict, genset):
         obj = Expr.__new__(_class, _dict, genset)
         return obj
-    
+
     @staticmethod
     @cache
     def __xnew_cached__(_class, _dict, *args, **kwargs):
@@ -141,7 +141,7 @@ class DoubleSchubertAlgebraElement(Expr):
     @property
     def coeff_dict(self):
         return self.args[0]
-    
+
     @property
     def genset(self):
         return self.args[1]
@@ -156,7 +156,7 @@ class DoubleSchubertAlgebraElement(Expr):
     @property
     def _mul_handler(self):
         return SchubMul
-    
+
     # confers existing generating set
     def _from_dict(self, _dict):
         return DoubleSchubertAlgebraElement(_dict, self.genset)
@@ -208,8 +208,6 @@ class DoubleSchubertAlgebraElement(Expr):
     def _sympystr(self, printer):
         return self._cached_sympystr(printer)
 
-
-
     # def _eval_simplify(self, *args, measure, **kwargs):
     #     return self._from_dict({k: sympify(sympy.simplify(v, *args, measure=measure, **kwargs)) for k, v in self.coeff_dict.items()})
 
@@ -217,7 +215,6 @@ class DoubleSchubertAlgebraElement(Expr):
         return self._from_dict(add_perm_dict(self.coeff_dict, other.coeff_dict))
 
     def __radd__(self, other):
-
         return self._from_dict(add_perm_dict(other.coeff_dict, self.coeff_dict))
 
     def __sub__(self, other):
@@ -277,8 +274,8 @@ class DoubleSchubertAlgebraElement(Expr):
     #         elem2_o = elem2.change_vars(cv)
     #         return elem1_o.test_equality(elem2_o)
     #     return True
-        # assert all([k[1] == cv for k in elem1.coeff_dict.keys()])
-        # assert all([k[1] == cv for k in elem2.coeff_dict.keys()])
+    # assert all([k[1] == cv for k in elem1.coeff_dict.keys()])
+    # assert all([k[1] == cv for k in elem2.coeff_dict.keys()])
 
     # def __str__(self):
     #     pieces = []
@@ -312,12 +309,34 @@ class DoubleSchubertAlgebraElement(Expr):
         return self._from_dict(result)
 
     def as_coefficients_dict(self):
-        # will not allow zeros
+        return self.coeff_dict
 
-        return {k: v for k, v in self.coeff_dict.items() if expand(v) != 0}
+    def coproduct(self, indices, coeff_var="y")#, gname1=None, gname2=None):
+        result_dict = {}
+        # if gname1 is None:
+        #     gname1 = f"{self._genset.name}_A"
+        # if gname2 is None:
+        #     gname2 = f"{self._genset.name}_B"
+        gens1 = MaskedGeneratingSet(self.genset, indices)
+        gens2 = gens1.complement()
+        for k, v in self._doubledict.items():
+            key = k[0]
+            var_str = k[1]
+            # print(f"{var_str=}")
+            # print(f"{coeff_var=}")
+            coprod_dict = yz.schub_coprod_double(key, indices, utils.poly_ring(var_str), utils.poly_ring(coeff_var))
+            # print(f"{coprod_dict=}")
+            result_dict = add_perm_dict(result_dict, {((k1, var_str), (k2, coeff_var)): v for (k1, k2), v in coprod_dict.items()})
+        result = sympy.Integer(0)
+        for ktuple, v in result_dict.items():
+            result += sympy.Mul(v, DSchubPoly(ktuple[0], gens1), DSchubPoly(ktuple[1], gens2), evaluate=False)
+        return result
+        # # will not allow zeros
 
-    def normalize_coefficients(self, coeff_var):
-        return DSx([1, 2], coeff_var) * self
+        # return {k: v for k, v in self.coeff_dict.items() if expand(v) != 0}
+
+    # def normalize_coefficients(self, coeff_var):
+    #     return DSx([1, 2], coeff_var) * self
 
     def expand(self, *_a, **_):
         if isinstance(self, SchubAdd):
@@ -340,7 +359,7 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
     @staticmethod
     def __xnew__(_class, k, genset):
         obj = DoubleSchubertAlgebraElement.__new__(_class, sympy.Dict({(Permutation(k[0]), k[1]): 1}), genset)
-        obj._key= k
+        obj._key = k
         return obj
 
     @staticmethod
@@ -356,14 +375,13 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
 
 # None is faster to store
 class DoubleSchubertAlgebraElement_basis(Basic):
-    
     def __new__(cls, genset):
         return Basic.__new__(genset)
-    
-    @property    
+
+    @property
     def genset(self):
         return self.args[0]
-        
+
     def __call__(self, x, cv=None):
         if isinstance(x, list) or isinstance(x, tuple):
             if cv is None:
@@ -373,7 +391,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
             if cv is None:
                 cv = "y"
             elem = DoubleSchubertAlgebraElement({(x, cv): 1}, self.genset)
-        
+
         elif isinstance(x, DoubleSchubertAlgebraElement):
             if x.is_Add or x.is_Mul:
                 return x
@@ -392,16 +410,16 @@ class DoubleSchubertAlgebraElement_basis(Basic):
         return elem
 
 
-def _do_schub_mul(a, b):
-    A = DSx(a)
-    B = DSx(b)
-    return self._from_dict(_mul_schub_dicts(A.coeff_dict, B.coeff_dict))
+# def _do_schub_mul(a, b):
+#     A = DSx(a)
+#     B = DSx(b)
+#     return self._from_dict(_mul_schub_dicts(A.coeff_dict, B.coeff_dict))
 
 
-def _do_schub_add(a, b):
-    A = DSx(a)
-    B = DSx(b)
-    return self._from_dict(add_perm_dict(A.coeff_dict, B.coeff_dict))
+# def _do_schub_add(a, b):
+#     A = DSx(a)
+#     B = DSx(b)
+#     return self._from_dict(add_perm_dict(A.coeff_dict, B.coeff_dict))
 
 
 def get_postprocessor(cls):
@@ -410,8 +428,6 @@ def get_postprocessor(cls):
     if cls is Add:
         return lambda expr: SchubAdd(*expr.args, evaluate=False)  # .doit()
     return None
-
-
 
 
 # Basic._constructor_postprocessor_mapping[DoubleSchubertAlgebraElement] = {
@@ -432,80 +448,6 @@ def Sx(x):
 
 DoubleSchubertPolynomial = DoubleSchubertAlgebraElement
 
-# is_Add = True
-# is_Mul = True
-# is_Add
-# is_AlgebraicNumber
-# is_Atom
-# is_Boolean
-# is_Derivative
-# is_Dummy
-# is_Equality
-# is_Float
-# is_Function
-# is_Indexed
-# is_Integer
-# is_MatAdd
-# is_MatMul
-# is_Matrix
-# is_Mul
-# is_Not
-# is_Number
-# is_NumberSymbol
-# is_Order
-# is_Piecewise
-# is_Point
-# is_Poly
-# is_Pow
-# is_Rational
-# is_Relational
-# is_Symbol
-# is_Vector
-# is_Wild
-# is_algebraic
-# is_algebraic_expr
-# is_antihermitian
-# is_commutative
-# is_comparable
-# is_complex
-# is_composite
-# is_constant
-# is_even
-# is_extended_negative
-# is_extended_nonnegative
-# is_extended_nonpositive
-# is_extended_nonzero
-# is_extended_positive
-# is_extended_real
-# is_finite
-# is_hermitian
-# is_hypergeometric
-# is_imaginary
-# is_infinite
-# is_integer
-# is_irrational
-# is_meromorphic
-# is_negative
-# is_noninteger
-# is_nonnegative
-# is_nonpositive
-# is_nonzero
-# is_number
-# is_odd
-# is_polar
-# is_polynomial
-# is_positive
-# is_prime
-# is_rational
-# is_rational_function
-# is_real
-# is_scalar
-# is_symbol
-# is_transcendental
-# is_zero
-# is_polynomial = True
-# is_Symbol = True
-
 
 class SchubAdd(DoubleSchubertAlgebraElement, Add):
     is_Add = True
@@ -516,13 +458,13 @@ class SchubAdd(DoubleSchubertAlgebraElement, Add):
             return obj.doit()
         return obj
 
-    def doit(self):
-        ret = self.args[0]
-        for arg in self.args[1:]:
-            if arg.is_Add or arg.is_Mul:
-                arg = arg.doit()
-            ret = _do_schub_add(ret, arg)
-        return ret
+    # def doit(self):
+    #     ret = self.args[0]
+    #     for arg in self.args[1:]:
+    #         if arg.is_Add or arg.is_Mul:
+    #             arg = arg.doit()
+    #         ret = _do_schub_add(ret, arg)
+    #     return ret
 
     # def _sympystr(self, printer):
     #     return _def_printer._print(f"SchubAdd({self.args}")
@@ -543,18 +485,16 @@ class SchubMul(DoubleSchubertAlgebraElement, Mul):
             return obj.doit()
         return obj
 
-    def doit(self):
-        ret = self.args[0]
-        for arg in self.args[1:]:
-            if arg.is_Add or arg.is_Mul:
-                arg = arg.doit()
-            ret = _do_schub_mul(ret, arg)
-        return ret
+    # def doit(self):
+    #     ret = self.args[0]
+    #     for arg in self.args[1:]:
+    #         if arg.is_Add or arg.is_Mul:
+    #             arg = arg.doit()
+    #         ret = _do_schub_mul(ret, arg)
+    #     return ret
 
 
 # Basic._constructor_postprocessor_mapping[DoubleSchubertAlgebraElement] = {
 #     "Mul": [get_postprocessor(Mul)],
 #     "Add": [get_postprocessor(Add)],
 # }
-
-

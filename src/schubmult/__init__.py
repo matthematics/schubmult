@@ -2,7 +2,7 @@ __version__ = "2.1.0"
 
 from .poly_lib.poly_lib import efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
 from .poly_lib.schub_poly import div_diff, schubpoly, skew_div_diff
-from .poly_lib.variables import GeneratingSet, base_index
+from .poly_lib.variables import GeneratingSet, MaskedGeneratingSet
 from .rings._schubert_polynomial_ring import (
     DSx,
     Sx,
@@ -17,7 +17,7 @@ from .schub_lib.double import (
     schubmult_generic_partial_posify,
 )
 from .schub_lib.quantum import mult_poly_q, schubmult_q, schubmult_q_fast
-from .schub_lib.quantum_double import factor_out_q_keep_factored, mult_poly_q_double, schubmult_q_double, schubpoly_quantum
+from .schub_lib.quantum_double import factor_out_q_keep_factored, mult_poly_q_double, schubmult_q_double, schubmult_q_double_fast, schubpoly_quantum
 from .schub_lib.single import (
     mult_poly_py,
     schub_coprod_py,
@@ -28,13 +28,13 @@ __all__ = [
     "DSx",
     "GeneratingSet",
     "Sx",
-    "base_index",
     "compute_positive_rep",
     "div_diff",
     "efficient_subs",
     "elem_sym_poly",
     "elem_sym_poly_q",
     "factor_out_q_keep_factored",
+    "MaskedGeneratingSet",
     "mult_poly_double",
     "mult_poly_py",
     "mult_poly_q",
@@ -49,7 +49,7 @@ __all__ = [
     "schubmult_py",
     "schubmult_q",
     "schubmult_q_double",
-    #"schubmult_q_double_fast",
+    "schubmult_q_double_fast",
     "schubmult_q_fast",
     "schubpoly",
     "schubpoly_quantum",
