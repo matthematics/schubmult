@@ -12,3 +12,5 @@ COPRODUCT RING
 
 
 DIV DIFF MAYBE NILHECKERING
+
+infinite parabolic

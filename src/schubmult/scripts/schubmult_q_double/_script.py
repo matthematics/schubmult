@@ -7,12 +7,10 @@ from symengine import sympify
 from schubmult import GeneratingSet, div_diff, efficient_subs, q_vector
 from schubmult.perm_lib import (
     Permutation,
-    code,
     count_less_than,
     inv,
     is_parabolic,
     longest_element,
-    medium_theta,
     omega,
     permtrim,
     trimcode,
@@ -191,8 +189,7 @@ def main(argv=None):
             if same:
                 coeff_dict = {perm: efficient_subs(val, subs_dict2).expand() for perm, val in coeff_dict.items()}
             else:
-                coeff_dict = {perm: 
-                              (perms[0], perms[1], perm, val, var2, var3, _vars.q_var, msg) for perm, val in coeff_dict.items()}
+                coeff_dict = {perm: q_posify(perms[0], perms[1], perm, val, var2, var3, _vars.q_var, msg) for perm, val in coeff_dict.items()}
         if parabolic:
             w_P = longest_element(parabolic_index)
             w_P_prime = [1, 2]
