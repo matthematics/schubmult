@@ -18,8 +18,7 @@ from schubmult.perm_lib import (
     inv,
 )
 from schubmult.poly_lib.poly_lib import xreplace_genvars
-
-#from schubmult.rings._schubert_polynomial_ring import DoubleSchubertAlgebraElement
+from schubmult.rings._schubert_polynomial_ring import DoubleSchubertAlgebraElement
 from schubmult.schub_lib.quantum_double import schubpoly_quantum
 from schubmult.utils.logging import get_logger
 
@@ -167,7 +166,7 @@ class QuantumDoubleSchubertAlgebraElement(Expr):
                 poley = sympify(_from_double_dict({k: 1}).change_vars(0).expand() * v)
                 if b_old in poley.free_symbols:
                     poley = poley.subs(b_old, b_new)
-                    new_dict = yz.mult_poly_double({(1, 2): 1}, poley, utils.poly_ring(self._base_var), utils.poly_ring(k[1]))
+                    new_dict = yz.mult_poly_q_double({(1, 2): 1}, poley, utils.poly_ring(self._base_var), utils.poly_ring(k[1]))
                     new_p = {(koifle, k[1]): voifle for koifle, voifle in new_dict.items()}
                     result = add_perm_dict(result, new_p)
             elif stuff_to_do:
@@ -176,7 +175,7 @@ class QuantumDoubleSchubertAlgebraElement(Expr):
                     vvvv = sympify(vvv).subs(b_old, b_new)
                     if b_new in sympify(vvvv).free_symbols:
                         s_dict = {kkk[0]: 1}
-                        r_dict = py.mult_poly_py(s_dict, vvvv, utils.poly_ring(self._base_var))
+                        r_dict = py.mult_poly_q(s_dict, vvvv, utils.poly_ring(self._base_var))
                     else:
                         r_dict = {kkk[0]: vvvv}
                     r_dict = {(kk, 0): voif for kk, voif in r_dict.items()}
@@ -207,9 +206,6 @@ class QuantumDoubleSchubertAlgebraElement(Expr):
     @cache
     def __xnew_cached__(_class, _dict, *args, **kwargs):
         return QuantumDoubleSchubertAlgebraElement.__xnew__(_class, _dict, *args, **kwargs)
-
-    def _symengine_(self):
-        return NotImplemented
 
     def _eval_simplify(self, *args, measure, **kwargs):
         boible = _from_double_dict({k: sympify(sympy.simplify(v, *args, measure=measure, **kwargs)) for k, v in self._doubledict.items()})
@@ -392,13 +388,15 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
                 elem = QuantumDoubleSchubertAlgebraElement(x._doubledict)  # , self)
             else:
                 return self(x.expand(), cv)
+        elif isinstance(x, DoubleSchubertAlgebraElement):
+            if x._base_var == self._base_var:
+                return self(x.expand())
         else:
-            x = sympify(x)
             if cv is None or cv == utils.NoneVar:
                 cv = utils.NoneVar
-                result = py.mult_poly_py({Permutation([]): 1}, x, utils.poly_ring(self._base_var))
+                result = py.mult_poly_q({Permutation([]): 1}, x, utils.poly_ring(self._base_var))
             else:
-                result = yz.mult_poly_double({Permutation([]): 1}, x, utils.poly_ring(self._base_var), utils.poly_ring(cv))
+                result = yz.mult_poly_q_double({Permutation([]): 1}, x, utils.poly_ring(self._base_var), utils.poly_ring(cv))
             elem = QuantumDoubleSchubertAlgebraElement({(k, cv): v for k, v in result.items()})
         return elem
 

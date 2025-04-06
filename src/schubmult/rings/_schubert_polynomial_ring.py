@@ -204,9 +204,6 @@ class DoubleSchubertAlgebraElement(Expr):
     def __xnew_cached__(_class, _dict, *args, **kwargs):
         return DoubleSchubertAlgebraElement.__xnew__(_class, _dict, *args, **kwargs)
 
-    def _symengine_(self):
-        return NotImplemented
-
     def _eval_simplify(self, *args, measure, **kwargs):
         boible = _from_double_dict({k: sympify(sympy.simplify(v, *args, measure=measure, **kwargs)) for k, v in self._doubledict.items()})
         return boible

@@ -7,21 +7,8 @@ PARABOLIC
 
 HARD POSITIVE ERRORS
 
-quantum
-
-SPEED It UP
-FIx SAGE
-
-Index base as wrapper only
 
 COPRODUCT RING
 
-numbered symbols
 
-Better symengine sympify
-Maybe coerce indexed variables
-
-Get sage working again
-
-restructure - sage_integration = sage
-move funcs to schub_lib
+DIV DIFF MAYBE NILHECKERING

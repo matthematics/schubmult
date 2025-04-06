@@ -2,7 +2,7 @@ import sys
 from functools import cached_property
 
 import numpy as np
-from symengine import expand, sympify
+from symengine import sympify
 
 from schubmult import GeneratingSet, div_diff, efficient_subs, q_vector
 from schubmult.perm_lib import (
@@ -18,7 +18,6 @@ from schubmult.perm_lib import (
     trimcode,
     uncode,
 )
-from schubmult.schub_lib.double import compute_positive_rep, posify
 from schubmult.schub_lib.quantum_double import (
     factor_out_q_keep_factored,
     nil_hecke,
@@ -192,7 +191,8 @@ def main(argv=None):
             if same:
                 coeff_dict = {perm: efficient_subs(val, subs_dict2).expand() for perm, val in coeff_dict.items()}
             else:
-                coeff_dict = {perm: q_posify(perms[0], perms[1], perm, val, var2, var3, _vars.q_var, msg) for perm, val in coeff_dict.items()}
+                coeff_dict = {perm: 
+                              (perms[0], perms[1], perm, val, var2, var3, _vars.q_var, msg) for perm, val in coeff_dict.items()}
         if parabolic:
             w_P = longest_element(parabolic_index)
             w_P_prime = [1, 2]

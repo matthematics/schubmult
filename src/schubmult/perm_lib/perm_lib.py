@@ -29,9 +29,11 @@ def getpermval(perm, index):
         return perm[index]
     return index + 1
 
+
 @ensure_perms
 def inv(perm):
     return perm.inv
+
 
 @ensure_perms
 def code(perm):
@@ -292,8 +294,6 @@ def old_code(perm):
     return ret
 
 
-
-
 def split_perms(perms):
     perms2 = [perms[0]]
     for perm in perms[1:]:
@@ -330,24 +330,24 @@ def split_perms(perms):
     return perms2
 
 
-
 def cyclic_sort(L):
     m = max(L)
     i = L.index(m)
-    return L[i+1:] + L[:i+1]
+    return L[i + 1 :] + L[: i + 1]
+
 
 # test perm speed
 class Permutation(Basic):
     def __new__(cls, perm):
-    #     return Permutation.__xnew_cached__(cls, Tuple(tuple(perm)))
+        #     return Permutation.__xnew_cached__(cls, Tuple(tuple(perm)))
 
-    # @staticmethod
-    # @cache
-    # def __xnew_cached__(_class, perm):
-    #     return Permutation.__xnew__(_class, perm)
+        # @staticmethod
+        # @cache
+        # def __xnew_cached__(_class, perm):
+        #     return Permutation.__xnew__(_class, perm)
 
-    # @staticmethod
-    # def __xnew__(_class, perm):
+        # @staticmethod
+        # def __xnew__(_class, perm):
         if isinstance(perm, Permutation):
             return perm
 
@@ -360,12 +360,15 @@ class Permutation(Basic):
         obj._perm = p
         return obj
 
+    def descents(self):
+        return self._s_perm.descents()
+
     def get_cycles(self):
         return self.get_cycles_cached()
 
     @cache
     def get_cycles_cached(self):
-        return [tuple(cyclic_sort([i+1 for i in c])) for c in self._s_perm.cyclic_form]
+        return [tuple(cyclic_sort([i + 1 for i in c])) for c in self._s_perm.cyclic_form]
 
     @property
     def code(self):
@@ -384,7 +387,7 @@ class Permutation(Basic):
         if i > j:
             i, j = j, i
         if j >= len(new_perm):
-            new_perm += list(range(len(new_perm)+1, j + 2))
+            new_perm += list(range(len(new_perm) + 1, j + 2))
         new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
         return Permutation(new_perm)
 
@@ -454,7 +457,8 @@ class Permutation(Basic):
         return self.__str__()
 
     def __lt__(self, other):
-        return tuple(self)<tuple(other)
+        return tuple(self) < tuple(other)
+
     # def act(self, other):
     #     # act on a sympy expresssin
     #     subs_dict = {self._action[i + 1]: self._action[self.args[0][i]] for i in range(len(self))}
