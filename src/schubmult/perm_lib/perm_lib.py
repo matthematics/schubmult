@@ -339,23 +339,23 @@ def cyclic_sort(L):
 # test perm speed
 class Permutation(Basic):
     def __new__(cls, perm):
-        #     return Permutation.__xnew_cached__(cls, Tuple(tuple(perm)))
+            return Permutation.__xnew_cached__(cls, tuple(perm))
 
-        # @staticmethod
-        # @cache
-        # def __xnew_cached__(_class, perm):
-        #     return Permutation.__xnew__(_class, perm)
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, perm):
+        return Permutation.__xnew__(_class, perm)
 
-        # @staticmethod
-        # def __xnew__(_class, perm):
+    @staticmethod
+    def __xnew__(_class, perm):
         if isinstance(perm, Permutation):
             return perm
 
-        p = Tuple(*permtrim_list([*perm]))
+        p = tuple(permtrim_list([*perm]))
         if len(p) < 2:
             p = Tuple(1, 2)
         s_perm = spp.Permutation._af_new([i - 1 for i in p])
-        obj = Basic.__new__(cls, p)
+        obj = Basic.__new__(_class)
         obj._s_perm = s_perm
         obj._perm = p
         return obj
@@ -393,16 +393,16 @@ class Permutation(Basic):
 
     def __getitem__(self, i):
         if isinstance(i, slice):
-            return [self[ii] for ii in range(*i.indices(len(self.args[0])))]
-        if i >= len(self.args[0]):
+            return [self[ii] for ii in range(*i.indices(len(self._perm)))]
+        if i >= len(self._perm):
             return i + 1
-        return self.args[0][i]
+        return self._perm[i]
 
     def __setitem__(self, i, v):
         raise NotImplementedError
 
     def __hash__(self):
-        return hash(self.args[0])
+        return hash(self._perm)
 
     def __mul__(self, other):
         new_sperm = other._s_perm * self._s_perm
@@ -410,18 +410,18 @@ class Permutation(Basic):
         return Permutation(new_perm)
 
     def __iter__(self):
-        yield from self.args[0].__iter__()
+        yield from self._perm.__iter__()
 
     def __getslice__(self, i, j):
-        return self.args[0][i:j]
+        return self._perm[i:j]
 
     def __str__(self):
-        return str(self.args[0])
+        return str(self._perm)
 
     def __add__(self, other):
         if not isinstance(other, list):
             raise NotImplementedError
-        permlist = [*self.args[0], *other]
+        permlist = [*self._perm, *other]
         try:
             return Permutation(permlist)
         except Exception:
@@ -430,7 +430,7 @@ class Permutation(Basic):
     def __radd__(self, other):
         if not isinstance(other, list):
             raise NotImplementedError
-        permlist = [*other, *self.args[0]]
+        permlist = [*other, *self._perm]
         try:
             return Permutation(permlist)
         except Exception:
@@ -438,15 +438,15 @@ class Permutation(Basic):
 
     def __eq__(self, other):
         if isinstance(other, Permutation):
-            return other.args[0] == self.args[0]
+            return other._perm == self._perm
         if isinstance(other, list):
-            return [*self.args[0]] == other
+            return [*self._perm] == other
         if isinstance(other, tuple):
-            return self.args[0] == other
+            return self._perm == other
         return False
 
     def __len__(self):
-        return len(self.args[0])
+        return len(self._perm)
 
     def __invert__(self):
         new_sperm = ~(self._s_perm)
@@ -467,4 +467,4 @@ class Permutation(Basic):
 
     # we want to format permuations
     def _sympystr(self, p):  # noqa: ARG002
-        return self.args[0].__str__()
+        return self._perm.__str__()

@@ -16,7 +16,6 @@ from schubmult.perm_lib import (
     inv,
     inverse,
     mu_A,
-    mulperm,
     omega,
     one_dominates,
     p_trans,
@@ -496,7 +495,6 @@ def reduce_q_coeff_u_only(u, v, w, qv):
 
 
 def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
-    import sys
     total_list = [(orig_perm, 0, 1)]
     up_perm_list = [(orig_perm, 1, 1000)]
     for pp in range(p):

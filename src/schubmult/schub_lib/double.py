@@ -643,7 +643,6 @@ def split_mul(arg0, var2=None, var3=None):
     return monoms
 
 
-
 def split_monoms(pos_part, var2, var3):
     arrs = SortedList()
     if isinstance(pos_part, Add):
@@ -774,7 +773,7 @@ def compute_positive_rep(val, var2=GeneratingSet("y"), var3=GeneratingSet("z"), 
         frees = val.free_symbols
         logger.debug(f"{frees=}")
         logger.debug(f"{[type(s) for s in frees]=}")
-        varsimp2 = [m for m in frees if base_index(m)[0]== base_index(var2)[0]]
+        varsimp2 = [m for m in frees if base_index(m)[0] == base_index(var2)[0]]
         varsimp3 = [m for m in frees if base_index(m)[0] == base_index(var3)[0]]
         varsimp2.sort(key=lambda k: base_index(k)[1])
         varsimp3.sort(key=lambda k: base_index(k)[1])
@@ -994,17 +993,10 @@ def posify(
     n=_vars.n,
 ):
     logger.debug(f"NEW {val=} {u2=} {v2=} {w2=}")
-    hard_debug = True
-    # if hard_debug:
-    #     if expand(val - schubmult_double_pair(u2, v2, var2, var3).get(w2, 0)) != 0:
-    #         raise Exception("Bad news")
     oldval = val
     if inv(u2) + inv(v2) - inv(w2) == 0:
         logger.debug(f"Hmm this is probably not or val inty true {val=}")
         return val
-    # cdv = code(v2)
-    # # if set(cdv) == {0, 1} and do_pos_neg:
-    #     return val
 
     if not sign_only and expand(val) == 0:
         logger.debug(f"Hmm this is probably not true {u2=} {v2=} {w2=} {val=}")

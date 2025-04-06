@@ -25,7 +25,6 @@ from schubmult.schub_lib.quantum_double import (
 )
 from schubmult.schub_lib.schub_lib import (
     check_blocks,
-    reduce_q_coeff,
 )
 from schubmult.utils.argparse import schub_argparse
 
