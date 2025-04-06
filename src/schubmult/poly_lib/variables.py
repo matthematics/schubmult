@@ -10,6 +10,8 @@ from sympy.core.symbol import Str
 
 
 # variable registry
+# TODO: ensure sympifies
+# TODO: masked generating set
 class GeneratingSet(Str):
     def __new__(cls, name):
         return GeneratingSet.__xnew_cached__(cls, name)
@@ -19,7 +21,7 @@ class GeneratingSet(Str):
     _index_pattern = re.compile("^([^_]+)_([0-9]+)$")
     _sage_index_pattern = re.compile("^([^0-9]+)([0-9]+)$")
     is_Atom = True
-
+    # TODO: masked generating set
     @staticmethod
     @cache
     def __xnew_cached__(_class, name):
@@ -29,13 +31,16 @@ class GeneratingSet(Str):
     def __xnew__(_class, name):
         obj = Str.__new__(_class, name)
         obj._symbols_arr = tuple([symbols(f"{name}_{i}") for i in range(100)])
-        for i in range(100):
-            GeneratingSet._registry[obj._symbols_arr[i]] = (name, i)
+        obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         return obj
 
     @property
     def label(self):
         return self.name
+    
+    # index of v in the genset
+    def index(self, v):
+
 
     def __repr__(self):
         return f"GeneratingSet('{self.label}')"
@@ -57,6 +62,7 @@ class GeneratingSet(Str):
 
     def __eq__(self, other):
         return isinstance(other, GeneratingSet) and self.label == other.label
+
 
 
 def base_index(v):
