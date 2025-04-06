@@ -117,8 +117,6 @@ class DoubleSchubertAlgebraElement(Expr):
     and a dict basis
     """
 
-    _base_var = "x"
-
     _op_priority = 1e200
     # __slots__ = ("_dict", "_parent")
     _kind = NumberKind
@@ -127,11 +125,26 @@ class DoubleSchubertAlgebraElement(Expr):
 
     # default_coeff_var = "y"
 
-    def __new__(cls, _dict, *args, **kwargs):
-        # for k in _dict.keys():
-        #     if not isinstance(k[0], Permutation):
-        #         raise TypeError(f"Key {k[0]} is not a permutation")
-        return DoubleSchubertAlgebraElement.__xnew_cached__(cls, sympy.Dict({k: v for k, v in _dict.items() if expand(v) != 0}), *args, **kwargs)
+    def __new__(cls, _dict, genset):
+        return DoubleSchubertAlgebraElement.__xnew_cached__(cls, sympy.Dict({k: v for k, v in _dict.items() if expand(v) != 0}), genset)
+
+    @staticmethod
+    def __xnew__(_class, _dict, genset):
+        obj = Expr.__new__(_class, _dict, genset)
+        return obj
+    
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, _dict, *args, **kwargs):
+        return DoubleSchubertAlgebraElement.__xnew__(_class, _dict, *args, **kwargs)
+
+    @property
+    def coeff_dict(self):
+        return self.args[0]
+    
+    @property
+    def genset(self):
+        return self.args[1]
 
     def __hash__(self):
         return hash(tuple(self.args))
@@ -144,82 +157,71 @@ class DoubleSchubertAlgebraElement(Expr):
     def _mul_handler(self):
         return SchubMul
 
-    def _eval_Eq(self, other):
-        # this will prevent sympy from acting like an idiot
-        return self.__eq__(other)
+    # def _eval_Eq(self, other):
+    #     # this will prevent sympy from acting like an idiot
+    #     return self.__eq__(other)
 
-    def _eval_subs(self, old, new):
-        b_old = sympify(old)
-        b_new = sympify(new)
-        result = {}
-        stuff_to_do = False
-        lots_of_stuff_to_do = False
-        if b_new in utils.poly_ring(self._base_var):
-            stuff_to_do = True
-        if b_old in utils.poly_ring(self._base_var):
-            lots_of_stuff_to_do = True
-        for k, v in self._doubledict.items():
-            if lots_of_stuff_to_do:
-                poley = sympify(_from_double_dict({k: 1}).change_vars(0).expand() * v)
-                if b_old in poley.free_symbols:
-                    poley = poley.subs(b_old, b_new)
-                    new_dict = yz.mult_poly_double({(1, 2): 1}, poley, utils.poly_ring(self._base_var), utils.poly_ring(k[1]))
-                    new_p = {(koifle, k[1]): voifle for koifle, voifle in new_dict.items()}
-                    result = add_perm_dict(result, new_p)
-            elif stuff_to_do:
-                this_p = _from_double_dict({k: v}).change_vars(0)
-                for kkk, vvv in this_p._doubledict.items():
-                    vvvv = sympify(vvv).subs(b_old, b_new)
-                    if b_new in sympify(vvvv).free_symbols:
-                        s_dict = {kkk[0]: 1}
-                        r_dict = py.mult_poly_py(s_dict, vvvv, utils.poly_ring(self._base_var))
-                    else:
-                        r_dict = {kkk[0]: vvvv}
-                    r_dict = {(kk, 0): voif for kk, voif in r_dict.items()}
-                    new_p = _from_double_dict(r_dict).change_vars(k[1])
-                    result = add_perm_dict(result, new_p._doubledict)
-            else:
-                result[k] = result.get(k, 0) + sympify(v).subs(b_old, b_new)
-        return _from_double_dict(result)
-
-    @staticmethod
-    def __xnew__(_class, _dict, *args, **kwargs):
-        obj = Expr.__new__(_class, _dict)
-        obj._doubledict = _dict
-        # obj._print_sum = Add(*[sympy.Mul(_dict[k], DSchubSymbol(DSx._base_var, k)) for k in sorted(_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))], evaluate=False)
-        return obj
+    # def _eval_subs(self, old, new):
+    #     b_old = sympify(old)
+    #     b_new = sympify(new)
+    #     result = {}
+    #     stuff_to_do = False
+    #     lots_of_stuff_to_do = False
+    #     if b_new in utils.poly_ring(self._base_var):
+    #         stuff_to_do = True
+    #     if b_old in utils.poly_ring(self._base_var):
+    #         lots_of_stuff_to_do = True
+    #     for k, v in self.coeff_dict.items():
+    #         if lots_of_stuff_to_do:
+    #             poley = sympify(_from_double_dict({k: 1}).change_vars(0).expand() * v)
+    #             if b_old in poley.free_symbols:
+    #                 poley = poley.subs(b_old, b_new)
+    #                 new_dict = yz.mult_poly_double({(1, 2): 1}, poley, utils.poly_ring(self._base_var), utils.poly_ring(k[1]))
+    #                 new_p = {(koifle, k[1]): voifle for koifle, voifle in new_dict.items()}
+    #                 result = add_perm_dict(result, new_p)
+    #         elif stuff_to_do:
+    #             this_p = _from_double_dict({k: v}).change_vars(0)
+    #             for kkk, vvv in this_p._doubledict.items():
+    #                 vvvv = sympify(vvv).subs(b_old, b_new)
+    #                 if b_new in sympify(vvvv).free_symbols:
+    #                     s_dict = {kkk[0]: 1}
+    #                     r_dict = py.mult_poly_py(s_dict, vvvv, utils.poly_ring(self._base_var))
+    #                 else:
+    #                     r_dict = {kkk[0]: vvvv}
+    #                 r_dict = {(kk, 0): voif for kk, voif in r_dict.items()}
+    #                 new_p = _from_double_dict(r_dict).change_vars(k[1])
+    #                 result = add_perm_dict(result, new_p._doubledict)
+    #         else:
+    #             result[k] = result.get(k, 0) + sympify(v).subs(b_old, b_new)
+    #     return _from_double_dict(result)
 
     @cache
     def _cached_sympystr(self, printer):
-        # return _def_printer.doprint(self._print_sum)
         return printer._print_Add(
-            sympy.Add(*[sympy.Mul(self._doubledict[k], DSchubPoly(k)) for k in sorted(self._doubledict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))], evaluate=False),
+            sympy.Add(*[sympy.Mul(self.coeff_dict[k], DSchubPoly(k, self.genset)) for k in sorted(self.coeff_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))], evaluate=False),
         )
 
     def _sympystr(self, printer):
         return self._cached_sympystr(printer)
 
-    @staticmethod
-    @cache
-    def __xnew_cached__(_class, _dict, *args, **kwargs):
-        return DoubleSchubertAlgebraElement.__xnew__(_class, _dict, *args, **kwargs)
+    
 
     def _eval_simplify(self, *args, measure, **kwargs):
-        return _from_double_dict({k: sympify(sympy.simplify(v, *args, measure=measure, **kwargs)) for k, v in self._doubledict.items()})
+        return _from_double_dict({k: sympify(sympy.simplify(v, *args, measure=measure, **kwargs)) for k, v in self.coeff_dict.items()})
 
     def __add__(self, other):
-        return _from_double_dict(add_perm_dict(self._doubledict, DSx(other)._doubledict))
+        return _from_double_dict(add_perm_dict(self.coeff_dict, DSx(other)._doubledict))
 
     def __radd__(self, other):
 
-        return _from_double_dict(add_perm_dict(DSx(other)._doubledict, self._doubledict))
+        return _from_double_dict(add_perm_dict(DSx(other)._doubledict, self.coeff_dict))
 
     def __sub__(self, other):
-        double_dict = add_perm_dict(self._doubledict, {k: -v for k, v in DSx(other)._doubledict.items()})
+        double_dict = add_perm_dict(self.coeff_dict, {k: -v for k, v in DSx(other)._doubledict.items()})
         return _from_double_dict(double_dict)
 
     def __rsub__(self, other):
-        double_dict = add_perm_dict(DSx(other)._doubledict, {k: -v for k, v in self._doubledict.items()})
+        double_dict = add_perm_dict(DSx(other)._doubledict, {k: -v for k, v in self.coeff_dict.items()})
         return _from_double_dict(double_dict)
 
     def __neg__(self):
@@ -230,10 +232,10 @@ class DoubleSchubertAlgebraElement(Expr):
         return _from_double_dict(double_dict)
 
     def __mul__(self, other):
-        return _from_double_dict(_mul_schub_dicts(self._doubledict, DSx(other)._doubledict))
+        return _from_double_dict(_mul_schub_dicts(self.coeff_dict, DSx(other)._doubledict))
 
     def __rmul__(self, other):
-        return _from_double_dict(_mul_schub_dicts(DSx(other)._doubledict, self._doubledict))
+        return _from_double_dict(_mul_schub_dicts(DSx(other)._doubledict, self.coeff_dict))
 
     # def equals(self, other):
     #     return self.__eq__(other)
@@ -276,9 +278,9 @@ class DoubleSchubertAlgebraElement(Expr):
 
     # def __str__(self):
     #     pieces = []
-    #     keys = list(self._doubledict.keys())
+    #     keys = list(self.coeff_dict.keys())
     #     for k in sorted(keys, key=lambda b: (inv(b[0]), b[1], *b[0])):
-    #         v = self._doubledict[k]
+    #         v = self.coeff_dict[k]
     #         dvar = "D"
     #         if sympy.expand(v) != 0:
     #             pieces += [
@@ -301,14 +303,14 @@ class DoubleSchubertAlgebraElement(Expr):
     @cache
     def change_vars(self, cv):
         result = {}
-        for k, v in self._doubledict.items():
+        for k, v in self.coeff_dict.items():
             result = add_perm_dict(result, {k1: v1 * v for k1, v1 in cached_positive_product(Permutation([]), k[0], cv, k[1]).items()})
         return _from_double_dict(result)
 
     def as_coefficients_dict(self):
         # will not allow zeros
 
-        return {k: v for k, v in self._doubledict.items() if expand(v) != 0}
+        return {k: v for k, v in self.coeff_dict.items() if expand(v) != 0}
 
     def normalize_coefficients(self, coeff_var):
         return DSx([1, 2], coeff_var) * self
@@ -318,10 +320,10 @@ class DoubleSchubertAlgebraElement(Expr):
             return self.doit().expand()
         if isinstance(self, SchubMul):
             return self.doit().expand()
-        return expand(Add(*[v * schubpoly(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self._doubledict.items()]))
+        return expand(Add(*[v * schubpoly(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
 
     def as_polynomial(self):
-        return sympy.sympify(Add(*[v * schubpoly(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self._doubledict.items()]))
+        return sympy.sympify(Add(*[v * schubpoly(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
 
 
 # Atomic Schubert polynomial
