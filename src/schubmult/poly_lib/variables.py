@@ -7,14 +7,24 @@ from functools import cache
 from typing import ClassVar
 
 from symengine import Symbol, symbols, sympify
-from sympy import Basic
+from sympy import Basic, Tuple
 from sympy.core.symbol import Str
 
+
+class GeneratingSet_base(Basic):
+    def __new__(cls, *args):
+        return Basic.__new__(cls, *args)
+
+    def __getitem__(self, i):
+        return NotImplemented
+
+    def __len__(self):
+        return NotImplemented
 
 # variable registry
 # TODO: ensure sympifies
 # TODO: masked generating set
-class GeneratingSet(Str):
+class GeneratingSet(GeneratingSet_base):
     def __new__(cls, name):
         return GeneratingSet.__xnew_cached__(cls, name)
 
@@ -27,18 +37,20 @@ class GeneratingSet(Str):
     @staticmethod
     @cache
     def __xnew_cached__(_class, name):
-        return GeneratingSet.__xnew__(_class, name)
+        return GeneratingSet.__xnew__(_class, Str(name))
 
     @staticmethod
     def __xnew__(_class, name):
-        obj = Str.__new__(_class, name)
+        obj = GeneratingSet_base.__new__(_class, name)
         obj._symbols_arr = tuple([symbols(f"{name}_{i}") for i in range(100)])
         obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         return obj
 
+    #@property
+
     @property
     def label(self):
-        return self.name
+        return str(self.args[0])
 
     # index of v in the genset
     def index(self, v):
@@ -51,24 +63,30 @@ class GeneratingSet(Str):
         return self.name
 
     def _latex(self, printer):
-        return printer._print_Str(self)
+        return printer.doprint(self.label)
 
     def _sympystr(self, printer):
-        return printer.doprint(self.name)
+        return printer.doprint(self.label)
 
     def __getitem__(self, i):
         return self._symbols_arr[i]
 
+    def __len__(self):
+        return len(self._symbols_arr)
+
     def __hash__(self):
-        return hash(self.name)
+        return hash(self.label)
+
+    def __iter__(self):
+        yield from [self[i] for i in range(len(self))]
 
     def __eq__(self, other):
         return isinstance(other, GeneratingSet) and self.label == other.label
 
-class MaskedGeneratingSet(Basic):
 
+class MaskedGeneratingSet(GeneratingSet_base):
     def __new__(cls, gset, index_mask):
-        return MaskedGeneratingSet.__xnew_cached__(cls, gset, index_mask)
+        return MaskedGeneratingSet.__xnew_cached__(cls, gset, tuple(sorted(index_mask)))
 
     @staticmethod
     @cache
@@ -77,7 +95,7 @@ class MaskedGeneratingSet(Basic):
 
     @staticmethod
     def __xnew__(_class, gset, index_mask):
-        obj = Basic.__new__(_class, gset, index_mask)
+        obj = GeneratingSet_base.__new__(_class, gset, Tuple(*index_mask))
         # obj._symbols_arr = tuple([symbols(f"{name}_{i}") for i in range(100)])
         # obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         mask_dict = {}
@@ -87,8 +105,15 @@ class MaskedGeneratingSet(Basic):
                 mask_dict[cur_index] = i
                 cur_index += 1
         obj._mask = mask_dict
-        obj._index_lookup = {gset[index_mask[i]]: i for i in range(len(gset._symbols_arr) - len(index_mask))}
+        obj._index_lookup = {gset[index_mask[i]]: i for i in range(len(gset) - len(index_mask))}
         return obj
+
+    @property
+    def index_mask(self):
+        return tuple(self.args[1])
+
+    def complement(self):
+        return MaskedGeneratingSet(self.base_genset, [i for i in range(len(self.base_genset)) if i not in set(self.index_mask)])
 
     @property
     def base_genset(self):
@@ -97,9 +122,14 @@ class MaskedGeneratingSet(Basic):
     def __getitem__(self, index):
         return self.base_genset[self._mask[index]]
 
+    def __iter__(self):
+        yield from [self[i] for i in range(len(self))]
+
     def index(self, v):
         return self._index_lookup(v)
 
+    def __len__(self):
+        return len(self.base_genset) - len(self.index_mask)
 
 def base_index(v):
     if isinstance(v, (list, tuple)):
