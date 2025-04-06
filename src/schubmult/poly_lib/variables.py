@@ -37,7 +37,7 @@ class GeneratingSet(GeneratingSet_base):
     @staticmethod
     @cache
     def __xnew_cached__(_class, name):
-        return GeneratingSet.__xnew__(_class, Str(name))
+        return GeneratingSet.__xnew__(_class, Str(str(name)))
 
     @staticmethod
     def __xnew__(_class, name):
@@ -105,7 +105,7 @@ class MaskedGeneratingSet(GeneratingSet_base):
                 mask_dict[cur_index] = i
                 cur_index += 1
         obj._mask = mask_dict
-        obj._index_lookup = {gset[index_mask[i]]: i for i in range(len(gset) - len(index_mask))}
+        obj._index_lookup = {gset[i]: mask_dict[i] for i in range(len(gset) - len(index_mask))}
         return obj
 
     @property
