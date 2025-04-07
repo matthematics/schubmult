@@ -7,6 +7,7 @@ from sympy.core.expr import Expr
 from sympy.core.kind import NumberKind
 from sympy.printing.str import StrPrinter
 
+import schubmult.rings._tensor_schub_ring as tsr
 import schubmult.rings._utils as utils
 import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.single as py
@@ -128,7 +129,7 @@ class DoubleSchubertAlgebraElement(Expr):
     _op_priority = 1e200
     # __slots__ = ("_dict", "_parent")
     _kind = NumberKind
-    is_commutative = True
+    is_commutative = False
     # is_polynomial = True
 
     # default_coeff_var = "y"
@@ -146,8 +147,8 @@ class DoubleSchubertAlgebraElement(Expr):
 
     @staticmethod
     @cache
-    def __xnew_cached__(_class, _dict, *args, **kwargs):
-        return DoubleSchubertAlgebraElement.__xnew__(_class, _dict, *args, **kwargs)
+    def __xnew_cached__(_class, _dict, genset):
+        return DoubleSchubertAlgebraElement.__xnew__(_class, _dict, genset)
 
     @property
     def coeff_dict(self):
@@ -368,6 +369,35 @@ class DoubleSchubertAlgebraElement(Expr):
         return sympy.sympify(expand(sympify(self.as_polynomial())))
 
     # TODO: Masked generating set labels
+    def test_coproduct(self, indices, coeff_var="y", gname1=None, gname2=None):
+        result_dict = {}
+        if gname1 is None:
+            gname1 = f"{self.genset.label}_A"
+        if gname2 is None:
+            gname2 = f"{self.genset.label}_B"
+        gens2 = MaskedGeneratingSet(self.genset, indices)
+        logger.debug(f"{indices=}")
+        gens1 = gens2.complement()
+        logger.debug(f"{gens1.index_mask=}")
+        logger.debug(f"{list(gens1)=}")
+        logger.debug(f"{gens2.index_mask=}")
+        logger.debug(f"{list(gens2)=}")
+        gens1.set_label(gname1)
+        gens2.set_label(gname2)
+        for k, v in self.coeff_dict.items():
+            key = k[0]
+            var_str = k[1]
+            # print(f"{var_str=}")
+            # print(f"{coeff_var=}")
+            if var_str in (utils.NoneVar, utils.ZeroVar) and coeff_var in (utils.NoneVar, utils.ZeroVar):
+                coprod_dict = py.schub_coprod_py(key, indices)
+            else:
+                coprod_dict = yz.schub_coprod_double(key, indices, utils.poly_ring(var_str), utils.poly_ring(coeff_var))
+            # print(f"{coprod_dict=}")
+            result_dict = add_perm_dict(result_dict, {((k1, var_str), (k2, coeff_var)): v for (k1, k2), v in coprod_dict.items()})
+        basis = tsr.TensorAlgebraBasis(DoubleSchubertAlgebraElement_basis(gens1), DoubleSchubertAlgebraElement_basis(gens2))
+        return basis._from_dict(result_dict)
+
     def coproduct(self, indices, coeff_var="y", gname1=None, gname2=None):
         result_dict = {}
         if gname1 is None:
@@ -479,12 +509,16 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
 
 # None is faster to store
 class DoubleSchubertAlgebraElement_basis(Basic):
+    
     def __new__(cls, genset):
         return Basic.__new__(cls, genset)
-
+    
     @property
     def genset(self):
         return self.args[0]
+
+    def _from_dict(self, _dict):
+        return DoubleSchubertAlgebraElement(_dict, self.genset)
 
     def __call__(self, x, cv=None, genset=None):
         if not genset:
