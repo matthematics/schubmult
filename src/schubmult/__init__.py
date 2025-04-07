@@ -1,4 +1,4 @@
-__version__ = "2.1.0"
+__version__ = "3.0.0"
 
 from .poly_lib.poly_lib import efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
 from .poly_lib.schub_poly import div_diff, schubpoly, skew_div_diff
