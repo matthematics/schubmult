@@ -17,6 +17,21 @@ def _tensor_product_of_dicts(d1, d2):
     return Dict(ret_dict)
 
 
+class TensorBasisElement(Expr):
+    is_commutative = False
+
+    
+    def __new__(cls, k1, k2, basis, tensor_symbol=" # "):
+        obj = Expr.__new__(cls, k1, k2, basis)
+        obj._elem1 = basis.basis1._from_dict({k1: 1})
+        obj._elem2 = basis.basis2._from_dict({k2: 1})
+        obj._tensor_symbol = tensor_symbol
+        return obj
+
+    def _sympystr(self, printer):
+        return f"{printer.doprint(self._elem1)}{self._tensor_symbol}{printer.doprint(self._elem2)}"
+
+
 class TensorAlgebraElement(Expr):
     # tensor ring
     def __new__(cls, _dict, basis):
@@ -57,7 +72,7 @@ class TensorAlgebraElement(Expr):
 
     @cache
     def cached_sympystr(self, printer):
-        ret_list = [Mul(v, self.basis.basis1._from_dict({k[0]: 1}), self.basis.basis2._from_dict({k[1]: 1})) for k, v in self.coeff_dict.items()]
+        ret_list = [Mul(v, TensorBasisElement(k[0], k[1], self.basis)) for k, v in self.coeff_dict.items()]
         return printer.doprint(Add(*ret_list))
 
     def _sympystr(self, printer):
