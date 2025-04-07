@@ -16,7 +16,6 @@ from schubmult.perm_lib import (
     inv,
 )
 from schubmult.poly_lib.poly_lib import xreplace_genvars
-from schubmult.poly_lib.schub_poly import schubpoly
 from schubmult.poly_lib.variables import GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from schubmult.utils.logging import get_logger
 
