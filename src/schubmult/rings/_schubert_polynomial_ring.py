@@ -316,6 +316,9 @@ class DoubleSchubertAlgebraElement(Expr):
     def as_coefficients_dict(self):
         return self.coeff_dict
 
+    def expand(self, deep=False):
+        return self.as_polynomial().expand()
+    
     # TODO: Masked generating set labels
     def coproduct(self, indices, coeff_var="y", gname1=None, gname2=None):
         result_dict = {}
@@ -342,7 +345,7 @@ class DoubleSchubertAlgebraElement(Expr):
             result_dict = add_perm_dict(result_dict, {((k1, var_str), (k2, coeff_var)): v for (k1, k2), v in coprod_dict.items()})
         result = sympy.Integer(0)
         for ktuple, v in result_dict.items():
-            result += sympy.Mul(v, DSchubPoly(ktuple[0], gens1), DSchubPoly(ktuple[1], gens2), evaluate=False)
+            result += sympy.Mul(sympy.sympify(v), DSchubPoly(ktuple[0], gens1), DSchubPoly(ktuple[1], gens2)).doit()
         return result
         # # will not allow zeros
 
@@ -351,12 +354,12 @@ class DoubleSchubertAlgebraElement(Expr):
     # def normalize_coefficients(self, coeff_var):
     #     return DSx([1, 2], coeff_var) * self
 
-    def expand(self, *_a, **_):
-        if isinstance(self, SchubAdd):
-            return self.doit().expand()
-        if isinstance(self, SchubMul):
-            return self.doit().expand()
-        return expand(Add(*[v * schubpoly(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
+    # def expand(self, *_a, **_):
+    #     if isinstance(self, SchubAdd):
+    #         return self.doit().expand()
+    #     if isinstance(self, SchubMul):
+    #         return self.doit().expand()
+    #     return expand(Add(*[v * schubpoly(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
 
     def as_polynomial(self):
         return sympy.sympify(Add(*[v * schubpoly(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
@@ -373,8 +376,13 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
     def __xnew__(_class, k, genset):
         obj = DoubleSchubertAlgebraElement.__new__(_class, sympy.Dict({(Permutation(k[0]), k[1]): 1}), genset)
         obj._key = k
+        obj._genset = genset
         return obj
 
+    @property
+    def args(self):
+        return (sympy.Tuple(*self._key), self._genset)
+    
     @staticmethod
     @cache
     def __xnew_cached__(_class, k, genset):

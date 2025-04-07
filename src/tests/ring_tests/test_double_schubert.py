@@ -19,21 +19,14 @@ def test_schub_expand():
 #     """
 #     Test coproduct
 #     """
-#     from sage.all import ZZ
+#     from sympy import expand
 
-#     from schubmult.sage_integration import (
-#         FastDoubleSchubertPolynomialRing,
-#     )
-#     DSx = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", "y")
-#     R = DSx._base_polynomial_ring
+#     from schubmult.rings import DSx
 #     indices = [0, 1, 3]
 #     indices2 = [0, 2, 4]
-#     DSx.set_coproduct_indices(indices[1:])
-#     subs_dict1 = {R.gens()[i]: R.gens()[indices[i]] for i in range(len(indices))}
-#     subs_dict2 = {R.gens()[i]: R.gens()[indices2[i]] for i in range(len(indices))}
-
+    
 #     perm = [3, 5, 1, 4, 2]
-#     assert DSx(perm) == DSx(
+#     assert expand(DSx(perm).expand() - DSx(
 #         sum(
 #             [
 #                 DSx._base_polynomial_ring(v)

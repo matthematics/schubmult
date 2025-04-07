@@ -48,7 +48,7 @@ def mulperm(perm1, perm2):
 def uncode(cd):
     cd2 = [*cd]
     if cd2 == []:
-        return Permutation([1, 2])
+        return Permutation([])
     max_required = max([cd2[i] + i for i in range(len(cd2))])
     cd2 += [0 for i in range(len(cd2), max_required)]
     fullperm = [i + 1 for i in range(len(cd2) + 1)]
@@ -352,10 +352,10 @@ class Permutation(Basic):
             return perm
 
         p = tuple(permtrim_list([*perm]))
-        if len(p) < 2:
-            p = Tuple(1, 2)
+        if len(p) <= 2:
+            p = ()
         s_perm = spp.Permutation._af_new([i - 1 for i in p])
-        obj = Basic.__new__(_class)
+        obj = Basic.__new__(_class, Tuple(*perm))
         obj._s_perm = s_perm
         obj._perm = p
         return obj
