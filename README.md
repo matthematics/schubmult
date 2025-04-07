@@ -203,7 +203,9 @@ indices you would like to split on.
 # sympy-compliant ring classes (as of version 3.0.0)
 
 There are sympy-compliant ring classes similar to the Sage classes that can be accessed with the
-`Sx`, `DSx`, `QSx`, and `QDSx` element constructors. The interface is Sage, shown below.
+`Sx`, `DSx`, `QSx`, and `QDSx` element constructors. The interface is similar to Sage, shown below, 
+though products are shown as positive if this can be done without extensive computation (i.e. avoiding
+integer programming).
 
 # Sage integration (as of version 2.0.0)
 

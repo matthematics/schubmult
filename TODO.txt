@@ -14,3 +14,7 @@ infinite parabolic rings
 
 PERM tests
 SCHUB tests
+
+Switch off best effort positive
+
+Better idea: build the masking into the Schubert polynomial class
