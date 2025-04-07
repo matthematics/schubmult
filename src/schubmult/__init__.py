@@ -1,8 +1,13 @@
 __version__ = "3.0.0"
 
+from .perm_lib.perm_lib import Permutation
 from .poly_lib.poly_lib import efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
 from .poly_lib.schub_poly import div_diff, schubpoly, skew_div_diff
-from .poly_lib.variables import GeneratingSet, MaskedGeneratingSet
+from .poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
+from .rings._quantum_schubert_polynomial_ring import (
+    QDSx,
+    QSx,
+)
 from .rings._schubert_polynomial_ring import (
     DSx,
     Sx,
@@ -30,16 +35,21 @@ __all__ = [
     "MaskedGeneratingSet",
     "Sx",
     "compute_positive_rep",
+    "CustomGeneratingSet",
     "div_diff",
     "efficient_subs",
     "elem_sym_poly",
     "elem_sym_poly_q",
     "factor_out_q_keep_factored",
+    "GeneratingSet_base", 
     "mult_poly_double",
     "mult_poly_py",
     "mult_poly_q",
     "mult_poly_q_double",
+    "Permutation",
     "q_vector",
+    "QDSx",
+    "QSx",
     "schub_coprod_double",
     "schub_coprod_py",
     "schubmult_double",

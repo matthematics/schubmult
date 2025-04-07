@@ -1,6 +1,6 @@
 # schubmult
 
-## Program and package for rapid computation of Littlewood-Richardson coefficients of Schubert polynomials, with optional Sage integration
+## Program and package for rapid computation of Littlewood-Richardson coefficients of Schubert polynomials, compliant with sympy and with optional Sage integration
 
 The main purpose of this python package is for executing scripts to compute coefficients of products of 
 various types of Schubert polynomials. Coproducts can also be computed, as well as substitution of 
@@ -200,6 +200,10 @@ schubmult_xx --coprod allows you to split (double) Schubert polynomials along ce
 available for quantum). It takes one permutation as an argument, followed by a dash -, then the set of 
 indices you would like to split on.
 
+# sympy-compliant ring classes
+
+
+
 # Sage integration (as of version 2.0.0)
 
 [SageMath](https://www.sagemath.org/) is a computer algebra system that, while wonderful, is monstrously 
@@ -219,7 +223,7 @@ currently installed SageMath distribution, use sage's python interpreter to inst
 ## Basic sage example
 
 ```python
-sage: from schubmult.sage_integration import FastSchubertPolynomialRing, FastDoubleSchubertPolynomialRing, FastQuantumSchubertPolynomialRing, FastQuantumDoubleSchubertPolynomialRing
+sage: from schubmult.sage import FastSchubertPolynomialRing, FastDoubleSchubertPolynomialRing, FastQuantumSchubertPolynomialRing, FastQuantumDoubleSchubertPolynomialRing
 
 sage: SingleRing = FastSchubertPolynomialRing(ZZ, 100, "x")
 sage: SingleRing([3,4,1,2])

@@ -559,11 +559,7 @@ Basic._constructor_postprocessor_mapping[DoubleSchubertAlgebraElement] = {
 # mul.register_handlerclass((Expr, SchubMul), SchubMul)
 
 
-DSx = DoubleSchubertAlgebraElement_basis(GeneratingSet("x"))
 
-
-def Sx(x):
-    return DSx(x, utils.NoneVar)
 
 
 DoubleSchubertPolynomial = DoubleSchubertAlgebraElement
@@ -640,3 +636,23 @@ class SchubMul(Mul):
 #     "Mul": [get_postprocessor(Mul)],
 #     "Add": [get_postprocessor(Add)],
 # }
+
+DSx = DoubleSchubertAlgebraElement_basis(GeneratingSet("x"))
+"""DSx: Double Schubert polynomial generator
+DSx is an alias for a DoubleSchubertAlgebraElement_basis object with
+GeneratingSet being variables with name x_i for i an integer up to 99.
+It is a callable object, and the signature is
+
+DSx(x, cv=None, genset=None)
+
+x is either a tuple, a list, a schubmult.Permutation, or a sympy
+or symengine object that you are trying to express in terms of
+double Schubert polynomials. cv is a string that is the name of
+the base GeneratingSet for the coefficient variable (defaults to
+"y"), and genset is the "x" variable generating set by default,
+but can be subsituted with a custom GeneratingSet_base object.
+"""
+
+
+def Sx(x):
+    return DSx(x, utils.NoneVar)
