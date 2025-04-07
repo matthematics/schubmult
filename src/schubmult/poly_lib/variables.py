@@ -6,9 +6,13 @@ from bisect import bisect_left
 from functools import cache
 from typing import ClassVar
 
-from symengine import symbols
+from symengine import symbols, sympify
 from sympy import Basic, Tuple
 from sympy.core.symbol import Str
+
+from schubmult.utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class GeneratingSet_base(Basic):
@@ -100,15 +104,18 @@ class MaskedGeneratingSet(GeneratingSet_base):
         # obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         mask_dict = {}
         mask_dict[0] = 0
-        cur_index = 1
         for i in range(1,len(gset._symbols_arr)):
             index = bisect_left(index_mask, i)
+            logger.debug(f"{index=}")
             if index>=len(index_mask) or index_mask[index] != i:
-                mask_dict[cur_index] = i
-                cur_index += 1
+                logger.debug(f"{i - index} mapsto {i} and {index_mask=}")
+                mask_dict[i - index] = i
+            # if index>=len(index_mask) or index_mask[index] != i:
+            #     mask_dict[cur_index] = i
+            #     cur_index += 1
         # print(f"{index_mask=} {mask_dict=}")
         obj._mask = mask_dict
-        obj._index_lookup = {gset[i]: mask_dict[i] for i in range(len(gset) - len(index_mask))}
+        obj._index_lookup = {gset[mask_dict[i]]: i for i in range(len(gset) - len(index_mask))}
         obj._label = gset.label
         return obj
 
@@ -154,12 +161,13 @@ class CustomGeneratingSet(GeneratingSet_base):
     @staticmethod
     def __xnew__(_class, gens):
         obj = GeneratingSet_base.__new__(_class, Tuple(*gens))
-        obj._index_lookup = {gens[i]: i for i in range(len(gens))}
+        obj._symbols_arr = [sympify(gens[i]) for i in range(len(gens))]
+        obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         return obj
 
 
     def __getitem__(self, index):
-        return self.args[0][index]
+        return self._symbols_arr[index]
 
     def __iter__(self):
         yield from [self[i] for i in range(len(self))]

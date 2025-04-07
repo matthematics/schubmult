@@ -393,7 +393,7 @@ class DoubleSchubertAlgebraElement(Expr):
             else:
                 coprod_dict = yz.schub_coprod_double(key, indices, utils.poly_ring(var_str), utils.poly_ring(coeff_var))
             # print(f"{coprod_dict=}")
-            result_dict = add_perm_dict(result_dict, {((k1, var_str), (k2, coeff_var)): v for (k1, k2), v in coprod_dict.items()})
+            result_dict = add_perm_dict(result_dict, {((k1, var_str), (k2, coeff_var)): v*v2 for (k1, k2), v2 in coprod_dict.items()})
         basis = tsr.TensorAlgebraBasis(DoubleSchubertAlgebraElement_basis(gens1), DoubleSchubertAlgebraElement_basis(gens2))
         return basis._from_dict(result_dict)
 

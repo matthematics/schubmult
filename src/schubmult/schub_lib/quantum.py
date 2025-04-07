@@ -14,6 +14,9 @@ from schubmult.perm_lib.perm_lib import (
     strict_theta,
     uncode,
 )
+from schubmult.utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class _gvars:
@@ -50,9 +53,12 @@ def single_variable(coeff_dict, varnum, var_q=_vars.q_var):
 
 
 def mult_poly_q(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
-    if not isinstance(var_x, spl.GeneratingSet_base):
-        var_x = spl.CustomGeneratingSet(var_x)
+    # if not isinstance(var_x, spl.GeneratingSet_base):
+    #     var_x = spl.CustomGeneratingSet(var_x)
+    logger.debug(f"{poly=} {type(poly)=} {list(var_x)}")
+    logger.debug(f"{[type(v) for v in var_x]}")
     if var_x.index(poly) != -1:
+        logger.debug(f"Found {var_x.index(poly)=}")
         return single_variable(coeff_dict, var_x.index(poly), var_q=var_q)
     if isinstance(poly, Mul):
         ret = coeff_dict
