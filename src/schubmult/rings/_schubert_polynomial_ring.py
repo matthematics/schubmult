@@ -256,14 +256,14 @@ class DoubleSchubertAlgebraElement(Expr):
     #         done.add(k)
     #         if expand(v - elem2.coeff_dict.get(k, 0)) != 0:
     #             if disp:
-    #                 print(f"{k=} {v=} {elem2.coeff_dict.get(k, 0)=} {expand(v - elem2.coeff_dict.get(k, 0))=}", file=sys.stderr)
+    #                 # print(f"{k=} {v=} {elem2.coeff_dict.get(k, 0)=} {expand(v - elem2.coeff_dict.get(k, 0))=}", file=sys.stderr)
     #             return False
     #     for k, v in elem2.coeff_dict.items():
     #         if k in done:
     #             continue
     #         if expand(v - elem1.coeff_dict.get(k, 0)) != 0:
     #             if disp:
-    #                 print(f"{k=} {v=} {expand(v - elem1.coeff_dict.get(k, 0))=}", file=sys.stderr)
+    #                 # print(f"{k=} {v=} {expand(v - elem1.coeff_dict.get(k, 0))=}", file=sys.stderr)
     #             return False
     #     return True
 
@@ -325,8 +325,8 @@ class DoubleSchubertAlgebraElement(Expr):
             gname2 = f"{self.genset.label}_B"
         gens2 = MaskedGeneratingSet(self.genset, indices)
         gens1 = gens2.complement()
-        print(f"{gens1.index_mask=}")
-        print(f"{gens2.index_mask=}")
+        # print(f"{gens1.index_mask=}")
+        # print(f"{gens2.index_mask=}")
         gens1.set_label(gname1)
         gens2.set_label(gname2)
         for k, v in self.coeff_dict.items():
@@ -334,7 +334,10 @@ class DoubleSchubertAlgebraElement(Expr):
             var_str = k[1]
             # print(f"{var_str=}")
             # print(f"{coeff_var=}")
-            coprod_dict = yz.schub_coprod_double(key, indices, utils.poly_ring(var_str), utils.poly_ring(coeff_var))
+            if var_str in (utils.NoneVar, utils.ZeroVar) and coeff_var in (utils.NoneVar, utils.ZeroVar):
+                coprod_dict = py.schub_coprod_py(key, indices)
+            else:
+                coprod_dict = yz.schub_coprod_double(key, indices, utils.poly_ring(var_str), utils.poly_ring(coeff_var))
             # print(f"{coprod_dict=}")
             result_dict = add_perm_dict(result_dict, {((k1, var_str), (k2, coeff_var)): v for (k1, k2), v in coprod_dict.items()})
         result = sympy.Integer(0)

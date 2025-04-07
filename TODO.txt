@@ -14,3 +14,6 @@ COPRODUCT RING
 DIV DIFF MAYBE NILHECKERING
 
 infinite parabolic
+
+ring coproduct expand
+convert quantum to generating set base

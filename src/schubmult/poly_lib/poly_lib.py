@@ -177,7 +177,9 @@ def q_vector(q_exp, q_var=_vars.q_var):
     if isinstance(q_exp, Pow):
         qv = q_exp.args[0]
         expon = int(q_exp.args[1])
-        i = qv.args[1]
+        i = q_var.index(qv)
+        if i == -1:
+            raise IndexError
         return [0 for j in range(i - 1)] + [expon]
     if isinstance(q_exp, Mul):
         for a in q_exp.args:
