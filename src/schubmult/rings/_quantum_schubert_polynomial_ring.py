@@ -18,7 +18,7 @@ from schubmult.perm_lib import (
     inv,
 )
 from schubmult.poly_lib.poly_lib import xreplace_genvars
-from schubmult.poly_lib.variables import GeneratingSet
+from schubmult.poly_lib.variables import GeneratingSet, GeneratingSet_base
 from schubmult.rings._schubert_polynomial_ring import DoubleSchubertAlgebraElement
 from schubmult.schub_lib.quantum_double import schubpoly_quantum
 from schubmult.utils.logging import get_logger
@@ -218,18 +218,42 @@ class QuantumDoubleSchubertAlgebraElement(Expr):
         return self._from_dict({k: sympify(sympy.simplify(v, *args, measure=measure, **kwargs)) for k, v in self.coeff_dict.items()})
 
     def __add__(self, other):
-        return self._from_dict(add_perm_dict(self.coeff_dict, QDSx(other).coeff_dict))
+        # if isinstance(self)
+        # logger.debug(f"{type(other)=} {self.genset=}")
+        try:
+            other = QDSx(other, genset=self.genset)
+        except Exception:
+            logger.debug(f"{other=} {list(self.genset)=}")
+            return sympify(other) + self.as_polynomial()
+        return self._from_dict(add_perm_dict(self.coeff_dict, other.coeff_dict))
 
     def __radd__(self, other):
-
-        return self._from_dict(add_perm_dict(QDSx(other).coeff_dict, self.coeff_dict))
+        logger.debug(f"{type(other)=}")
+        try:
+            other = QDSx(other, genset=self.genset)
+        except Exception:
+            logger.debug(f"{other=} {list(self.genset)=}")
+            return sympify(other) + self.as_polynomial()
+        return self._from_dict(add_perm_dict(other.coeff_dict, self.coeff_dict))
 
     def __sub__(self, other):
-        double_dict = add_perm_dict(self.coeff_dict, {k: -v for k, v in QDSx(other).coeff_dict.items()})
+        logger.debug(f"{type(other)=}")
+        try:
+            other = QDSx(other, genset=self.genset)
+        except Exception:
+            logger.debug(f"{other=} {list(self.genset)=}")
+            return self.as_polynomial() - sympify(other)
+        double_dict = add_perm_dict(self.coeff_dict, {k: -v for k, v in other.coeff_dict.items()})
         return self._from_dict(double_dict)
 
     def __rsub__(self, other):
-        double_dict = add_perm_dict(QDSx(other).coeff_dict, {k: -v for k, v in self.coeff_dict.items()})
+        logger.debug(f"{type(other)=}")
+        try:
+            other = QDSx(other, genset=self.genset)
+        except Exception:
+            logger.debug(f"{other=} {list(self.genset)=}")
+            return sympify(other) - self.as_polynomial()
+        double_dict = add_perm_dict(other.coeff_dict, {k: -v for k, v in self.coeff_dict.items()})
         return self._from_dict(double_dict)
 
     def __neg__(self):
@@ -240,10 +264,22 @@ class QuantumDoubleSchubertAlgebraElement(Expr):
         return self._from_dict(double_dict)
 
     def __mul__(self, other):
-        return self._from_dict(_mul_schub_dicts(self.coeff_dict, QDSx(other).coeff_dict))
+        logger.debug(f"{type(other)=}")
+        try:
+            other = QDSx(other, genset=self.genset)
+        except Exception:
+            logger.debug(f"{other=} {list(self.genset)=}")
+            return self.as_polynomial() * sympify(other)
+        return self._from_dict(_mul_schub_dicts(self.coeff_dict, other.coeff_dict))
 
     def __rmul__(self, other):
-        return self._from_dict(_mul_schub_dicts(QDSx(other).coeff_dict, self.coeff_dict))
+        logger.debug(f"{type(other)=}")
+        try:
+            other = QDSx(other, genset=self.genset)
+        except Exception:
+            logger.debug(f"{other=} {list(self.genset)=}")
+            return sympify(other) * self.as_polynomial()
+        return self._from_dict(_mul_schub_dicts(other.coeff_dict, self.coeff_dict))
 
     def equals(self, other):
         return self.__eq__(other)
@@ -323,15 +359,11 @@ class QuantumDoubleSchubertAlgebraElement(Expr):
     def normalize_coefficients(self, coeff_var):
         return QDSx([1, 2], coeff_var) * self
 
-    def expand(self, *_a, **_):
-        # if isinstance(self, SchubAdd):
-        #     return self.doit().expand()
-        # if isinstance(self, SchubMul):
-        #     return self.doit().expand()
-        return expand(Add(*[v * schubpoly_quantum(k[0], utils.poly_ring(QDSx._base_var), utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
+    def expand(self, *args, **kwargs):  # noqa: ARG002
+        return sympy.sympify(expand(sympify(self.as_polynomial())))
 
     def as_polynomial(self):
-        return sympy.sympify(Add(*[v * schubpoly_quantum(k[0], utils.poly_ring(QDSx._base_var), utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
+        return sympy.sympify(Add(*[v * schubpoly_quantum(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
 
 
 # TODO: not a noncommutative symbol, something else
@@ -363,26 +395,26 @@ class QDSchubPoly(QuantumDoubleSchubertAlgebraElement):
 
 # None is faster to store
 class QuantumDoubleSchubertAlgebraElement_basis(Basic):
-    coeff_varname = "y"
-
     def __new__(cls, genset):
-        # self.coeff_dict = _dict
         return Basic.__new__(cls, genset)
-        # self._coeff_var = coeff_var if coeff_var else "y"
 
     @property
     def genset(self):
         return self.args[0]
 
-    def __call__(self, x, cv=None):
+    def __call__(self, x, cv=None, genset=None):
+        if not genset:
+            genset = self.genset
+        if not isinstance(genset, GeneratingSet_base):
+            raise TypeError
         if isinstance(x, list) or isinstance(x, tuple):
             if cv is None:
                 cv = "y"
-            elem = QuantumDoubleSchubertAlgebraElement({(Permutation(x), cv): 1}, self.genset)
+            elem = QuantumDoubleSchubertAlgebraElement({(Permutation(x), cv): 1}, genset)
         elif isinstance(x, Permutation):
             if cv is None:
                 cv = "y"
-            elem = QuantumDoubleSchubertAlgebraElement({(x, cv): 1}, self.genset)
+            elem = QuantumDoubleSchubertAlgebraElement({(x, cv): 1}, genset)
         # elif isinstance(x, spr.SchubertPolynomial):
         #     if x._parent._base_var == self._base_var:
         #         elem_dict = {(x, utils.NoneVar): v for k, v in x.coeff_dict.items()}
@@ -394,20 +426,20 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
         elif isinstance(x, QuantumDoubleSchubertAlgebraElement):
             if x.is_Add or x.is_Mul:
                 return x
-            if x._base_var == self._base_var:
-                elem = QuantumDoubleSchubertAlgebraElement(x.coeff_dict, self.genset)  # , self)
+            if x.genset == genset:
+                elem = QuantumDoubleSchubertAlgebraElement(x.coeff_dict, genset)  # , self)
             else:
-                return self(x.expand(), cv)
+                return self(x.expand(), cv, genset)
         elif isinstance(x, DoubleSchubertAlgebraElement):
             if x.genset == self.genset:
-                return self(x.expand())
+                return self(x.expand(), cv, genset)
         else:
             if cv is None or cv == utils.NoneVar:
                 cv = utils.NoneVar
-                result = py.mult_poly_q({Permutation([]): 1}, x, self.genset)
+                result = py.mult_poly_q({Permutation([]): 1}, x, genset)
             else:
-                result = yz.mult_poly_q_double({Permutation([]): 1}, x, self.genset, utils.poly_ring(cv))
-            elem = QuantumDoubleSchubertAlgebraElement({(k, cv): v for k, v in result.items()}, self.genset)
+                result = yz.mult_poly_q_double({Permutation([]): 1}, x, genset, utils.poly_ring(cv))
+            elem = QuantumDoubleSchubertAlgebraElement({(k, cv): v for k, v in result.items()}, genset)
         return elem
 
 
