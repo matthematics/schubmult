@@ -2,6 +2,8 @@
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
+project.license = {file = "LICENSE"}
+
 [project]
 name = "schubmult"
 dependencies = [
@@ -15,7 +17,6 @@ dependencies = [
         "setuptools"
 ]
 requires-python = ">=3.9"
-license = {file = "LIECNSE"}
 authors = [
   {name = "Matt Samuel", email = "schubmult@gmail.com"},
 ]

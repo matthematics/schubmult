@@ -1,4 +1,4 @@
-__version__ = "3.0.0"
+__version__ = "3.0.dev"
 
 from .perm_lib.perm_lib import Permutation
 from .poly_lib.poly_lib import efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
