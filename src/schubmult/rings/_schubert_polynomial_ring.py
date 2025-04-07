@@ -1,4 +1,4 @@
-from functools import cache
+from functools import cache, cached_property
 
 import sympy
 from symengine import expand, sympify
@@ -18,13 +18,13 @@ from schubmult.perm_lib import (
 from schubmult.poly_lib.poly_lib import xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly
 from schubmult.poly_lib.variables import GeneratingSet, MaskedGeneratingSet
-from schubmult.utils.logging import get_logger
+from schubmult.utils.logging import get_logger, init_logging
 
 ## EMULATE POLYTOOLS
 
 _def_printer = StrPrinter({"order": "none"})
 # _def_printer = StrPrinter()
-
+init_logging()
 logger = get_logger(__name__)
 
 # numpy arrays
@@ -33,6 +33,8 @@ logger = get_logger(__name__)
 
 # COPRODUCT
 
+class NotEnoughGeneratorsError(ValueError):
+    pass
 
 def _varstr(v):
     if v == utils.NoneVar:
@@ -130,6 +132,8 @@ class DoubleSchubertAlgebraElement(Expr):
 
     @staticmethod
     def __xnew__(_class, _dict, genset):
+        if max([max([d+1 for d in k[0].descents()]+[0]) for k in _dict.keys()]) > len(genset):
+            raise NotEnoughGeneratorsError("Not enough generators")
         return Expr.__new__(_class, _dict, genset)
 
     @staticmethod
@@ -211,20 +215,41 @@ class DoubleSchubertAlgebraElement(Expr):
     #     return self._from_dict({k: sympify(sympy.simplify(v, *args, measure=measure, **kwargs)) for k, v in self.coeff_dict.items()})
 
     def __add__(self, other):
-        other = DSx(other)
+        logger.debug(f"{type(other)=}")
+        try:
+            other = DSx(other, genset=self.genset)
+        except Exception:
+            logger.debug(f"{other=} {list(self.genset)=}")
+            return sympify(other) + self.as_polynomial()
         return self._from_dict(add_perm_dict(self.coeff_dict, other.coeff_dict))
+        
 
     def __radd__(self, other):
-        other = DSx(other)
+        logger.debug(f"{type(other)=}")
+        try:
+            other = DSx(other, genset=self.genset)
+        except Exception:
+            logger.debug(f"{other=} {list(self.genset)=}")
+            return sympify(other) + self.as_polynomial()
         return self._from_dict(add_perm_dict(other.coeff_dict, self.coeff_dict))
 
     def __sub__(self, other):
-        other = DSx(other)
+        logger.debug(f"{type(other)=}")
+        try:
+            other = DSx(other, genset=self.genset)
+        except Exception:
+            logger.debug(f"{other=} {list(self.genset)=}")
+            return self.as_polynomial() - sympify(other) 
         double_dict = add_perm_dict(self.coeff_dict, {k: -v for k, v in other.coeff_dict.items()})
         return self._from_dict(double_dict)
 
     def __rsub__(self, other):
-        other = DSx(other)
+        logger.debug(f"{type(other)=}")
+        try:
+            other = DSx(other, genset=self.genset)
+        except Exception:
+            logger.debug(f"{other=} {list(self.genset)=}")
+            return sympify(other) - self.as_polynomial()
         double_dict = add_perm_dict(other.coeff_dict, {k: -v for k, v in self.coeff_dict.items()})
         return self._from_dict(double_dict)
 
@@ -236,11 +261,21 @@ class DoubleSchubertAlgebraElement(Expr):
         return self._from_dict(double_dict)
 
     def __mul__(self, other):
-        other = DSx(other)
+        logger.debug(f"{type(other)=}")
+        try:
+            other = DSx(other, genset=self.genset)
+        except Exception:
+            logger.debug(f"{other=} {list(self.genset)=}")
+            return self.as_polynomial() * sympify(other) 
         return self._from_dict(_mul_schub_dicts(self.coeff_dict, other.coeff_dict))
 
     def __rmul__(self, other):
-        other = DSx(other)
+        logger.debug(f"{type(other)=}")
+        try:
+            other = DSx(other, genset=self.genset)
+        except Exception:
+            logger.debug(f"{other=} {list(self.genset)=}")
+            return sympify(other) * self.as_polynomial()
         return self._from_dict(_mul_schub_dicts(other.coeff_dict, self.coeff_dict))
 
     # def equals(self, other):
@@ -327,9 +362,12 @@ class DoubleSchubertAlgebraElement(Expr):
         if gname2 is None:
             gname2 = f"{self.genset.label}_B"
         gens2 = MaskedGeneratingSet(self.genset, indices)
+        logger.debug(f"{indices=}")
         gens1 = gens2.complement()
-        # print(f"{gens1.index_mask=}")
-        # print(f"{gens2.index_mask=}")
+        logger.debug(f"{gens1.index_mask=}")
+        logger.debug(f"{list(gens1)=}")
+        logger.debug(f"{gens2.index_mask=}")
+        logger.debug(f"{list(gens2)=}")
         gens1.set_label(gname1)
         gens2.set_label(gname2)
         for k, v in self.coeff_dict.items():
@@ -343,10 +381,14 @@ class DoubleSchubertAlgebraElement(Expr):
                 coprod_dict = yz.schub_coprod_double(key, indices, utils.poly_ring(var_str), utils.poly_ring(coeff_var))
             # print(f"{coprod_dict=}")
             result_dict = add_perm_dict(result_dict, {((k1, var_str), (k2, coeff_var)): v for (k1, k2), v in coprod_dict.items()})
-        result = sympy.Integer(0)
+        result_list = []
         for ktuple, v in result_dict.items():
-            result += sympy.Mul(sympy.sympify(v), DSchubPoly(ktuple[0], gens1), DSchubPoly(ktuple[1], gens2)).doit()
-        return result
+            logger.debug(f"{ktuple=}")
+            A = DSchubPoly(ktuple[0], gens1)
+            B = DSchubPoly(ktuple[1], gens2)
+            logger.debug(f"{A=} {B=}")
+            result_list += [sympy.Mul(sympy.sympify(v), A, B, evaluate=False)]
+        return sympy.Add(*result_list, evaluate=False)
         # # will not allow zeros
 
         # return {k: v for k, v in self.coeff_dict.items() if expand(v) != 0}
@@ -361,7 +403,12 @@ class DoubleSchubertAlgebraElement(Expr):
     #         return self.doit().expand()
     #     return expand(Add(*[v * schubpoly(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
 
+    @cached_property
+    def max_gens(self):
+        return max([max(k[0].descents()) for k in self.coeff_dict.keys()])
+
     def as_polynomial(self):
+        logger.debug(f"{type(self)=}")
         return sympy.sympify(Add(*[v * schubpoly(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
 
 
@@ -374,10 +421,16 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
 
     @staticmethod
     def __xnew__(_class, k, genset):
-        obj = DoubleSchubertAlgebraElement.__new__(_class, sympy.Dict({(Permutation(k[0]), k[1]): 1}), genset)
+        _coeff_dict = sympy.Dict({(Permutation(k[0]), k[1]): 1})
+        obj = DoubleSchubertAlgebraElement.__new__(_class, _coeff_dict, genset)
         obj._key = k
         obj._genset = genset
+        obj._coeff_dict = _coeff_dict
         return obj
+
+    @property
+    def coeff_dict(self):
+        return self._coeff_dict
 
     @property
     def args(self):
@@ -403,31 +456,45 @@ class DoubleSchubertAlgebraElement_basis(Basic):
     def genset(self):
         return self.args[0]
 
-    def __call__(self, x, cv=None):
+    def __call__(self, x, cv=None, genset=None):
+        if not genset:
+            genset = self.genset
+        logger.debug(f"{type(x)=}")
+        if isinstance(x, Mul) or isinstance(x, Add):
+            raise TypeError
         if isinstance(x, list) or isinstance(x, tuple):
             if cv is None:
                 cv = "y"
-            elem = DoubleSchubertAlgebraElement({(Permutation(x), cv): 1}, self.genset)
+            p_x = Permutation(x)
+            if max(p_x.descents()) > len(self.genset):
+                raise NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
+            elem = DoubleSchubertAlgebraElement({(p_x, cv): 1}, genset)
         elif isinstance(x, Permutation):
             if cv is None:
                 cv = "y"
-            elem = DoubleSchubertAlgebraElement({(x, cv): 1}, self.genset)
+            if max(x.descents()) > len(self.genset):
+                raise NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
+            elem = DoubleSchubertAlgebraElement({(x, cv): 1}, genset)
 
         elif isinstance(x, DoubleSchubertAlgebraElement):
+            logger.debug(f"Line record")
             if x.is_Add or x.is_Mul:
+                return x.doit()
+            if x.genset == genset:
+                logger.debug(f"{x.genset=} == {genset=}")
                 return x
-            if x.genset == self.genset:
-                elem = DoubleSchubertAlgebraElement(x.coeff_dict, self.genset)  # , self)
             else:
-                return self(x.expand(), cv)
+                logger.debug(f"{x=} {x.genset=}")
+                raise ValueError("Different generating set")
         else:
             x = sympify(x)
+            logger.debug(f"{x=}")
             if cv is None or cv == utils.NoneVar:
                 cv = utils.NoneVar
-                result = py.mult_poly_py({Permutation([]): 1}, x, self.genset)
+                result = py.mult_poly_py({Permutation([]): 1}, x, genset)
             else:
-                result = yz.mult_poly_double({Permutation([]): 1}, x, self.genset, utils.poly_ring(cv))
-            elem = DoubleSchubertAlgebraElement({(k, cv): v for k, v in result.items()}, self.genset)
+                result = yz.mult_poly_double({Permutation([]): 1}, x, genset, utils.poly_ring(cv))
+            elem = DoubleSchubertAlgebraElement({(k, cv): v for k, v in result.items()}, genset)
         return elem
 
 
@@ -445,16 +512,16 @@ class DoubleSchubertAlgebraElement_basis(Basic):
 
 def get_postprocessor(cls):
     if cls is Mul:
-        return lambda expr: SchubMul(*expr.args, evaluate=False)  # .doit()
+        return lambda expr: SchubMul(*expr.args)  # .doit()
     if cls is Add:
-        return lambda expr: SchubAdd(*expr.args, evaluate=False)  # .doit()
+        return lambda expr: SchubAdd(*expr.args)  # .doit()
     return None
 
 
-# Basic._constructor_postprocessor_mapping[DoubleSchubertAlgebraElement] = {
-#     "Mul": [get_postprocessor(Mul)],
-#     "Add": [get_postprocessor(Add)],
-# }
+Basic._constructor_postprocessor_mapping[DoubleSchubertAlgebraElement] = {
+    "Mul": [get_postprocessor(Mul)],
+    "Add": [get_postprocessor(Add)],
+}
 
 # add.register_handlerclass((Expr, SchubAdd), SchubAdd)
 # mul.register_handlerclass((Expr, SchubMul), SchubMul)
@@ -473,19 +540,24 @@ DoubleSchubertPolynomial = DoubleSchubertAlgebraElement
 class SchubAdd(DoubleSchubertAlgebraElement, Add):
     is_Add = True
 
-    def __new__(cls, *args, evaluate=True, _sympify=True):
+    def __new__(cls, *args, evaluate=False, _sympify=True, **_):
+        if len(args) == 0:
+            return 0
         obj = Add.__new__(cls, *args, evaluate=evaluate, _sympify=_sympify)
         if evaluate:
             return obj.doit()
         return obj
 
-    # def doit(self):
-    #     ret = self.args[0]
-    #     for arg in self.args[1:]:
-    #         if arg.is_Add or arg.is_Mul:
-    #             arg = arg.doit()
-    #         ret = _do_schub_add(ret, arg)
-    #     return ret
+    def doit(self):
+        ret = self.args[0]
+        logger.debug(f"ADD {self.args=}")
+        for arg in self.args[1:]:
+            logger.debug(f"{arg=} {type(arg)=}")
+            ret += sympy.expand(arg)
+        return ret
+    
+    def _sympystr(self, printer):
+        return printer._print_Add(self)
 
     # def _sympystr(self, printer):
     #     return _def_printer._print(f"SchubAdd({self.args}")
@@ -494,7 +566,7 @@ class SchubAdd(DoubleSchubertAlgebraElement, Add):
 class SchubMul(DoubleSchubertAlgebraElement, Mul):
     is_Mul = True
 
-    def __new__(cls, *args, evaluate=True, _sympify=True):
+    def __new__(cls, *args, evaluate=False, _sympify=True, **_):
         if len(args) == 0:
             return 1
         # args, a, b = Mul.flatten(list(args))
@@ -506,13 +578,19 @@ class SchubMul(DoubleSchubertAlgebraElement, Mul):
             return obj.doit()
         return obj
 
-    # def doit(self):
-    #     ret = self.args[0]
-    #     for arg in self.args[1:]:
-    #         if arg.is_Add or arg.is_Mul:
-    #             arg = arg.doit()
-    #         ret = _do_schub_mul(ret, arg)
-    #     return ret
+    def doit(self):
+        ret = self.args[0]
+        logger.debug(f"MUL {self.args=}")
+        for arg in self.args[1:]:
+            logger.debug(f"{arg=} {type(arg)=}")
+            ret *= sympy.expand(arg)
+        return ret
+    
+    def _sympystr(self, printer):
+        return printer._print_Mul(self)
+    
+    def __neg__(self):
+        return SchubMul(-1,*self.args)
 
 
 # Basic._constructor_postprocessor_mapping[DoubleSchubertAlgebraElement] = {
