@@ -8,20 +8,9 @@ PARABOLIC
 HARD POSITIVE ERRORS
 
 
-COPRODUCT RING
-
-
 DIV DIFF MAYBE NILHECKERING
 
-infinite parabolic
-
-CHECK ring coproduct expand
-CHECK convert quantum to generating set base
-ADD TEST COPRODUCT
+infinite parabolic rings
 
 PERM tests
 SCHUB tests
-ALLOW len(perm) = 0
-call zvars
-
-RING QUANTUM TESTS
