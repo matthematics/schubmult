@@ -27,6 +27,7 @@ from .schub_lib.single import (
 __all__ = [
     "DSx",
     "GeneratingSet",
+    "MaskedGeneratingSet",
     "Sx",
     "compute_positive_rep",
     "div_diff",
@@ -34,7 +35,6 @@ __all__ = [
     "elem_sym_poly",
     "elem_sym_poly_q",
     "factor_out_q_keep_factored",
-    "MaskedGeneratingSet",
     "mult_poly_double",
     "mult_poly_py",
     "mult_poly_q",

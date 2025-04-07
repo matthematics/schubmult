@@ -130,8 +130,7 @@ class DoubleSchubertAlgebraElement(Expr):
 
     @staticmethod
     def __xnew__(_class, _dict, genset):
-        obj = Expr.__new__(_class, _dict, genset)
-        return obj
+        return Expr.__new__(_class, _dict, genset)
 
     @staticmethod
     @cache

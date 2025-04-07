@@ -50,7 +50,7 @@ def mult_poly_py(coeff_dict, poly, var_x=_vars.var_x):
     if var_x.index(poly) != -1:
         # print(f"{poly=} {var_x._symbols_arr=} {var_x._symbols_arr.index(poly)=}")
         return single_variable(coeff_dict, var_x.index(poly))
-        
+
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:

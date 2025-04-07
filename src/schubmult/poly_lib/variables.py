@@ -6,7 +6,7 @@ from bisect import bisect_left
 from functools import cache
 from typing import ClassVar
 
-from symengine import Symbol, symbols, sympify
+from symengine import symbols
 from sympy import Basic, Tuple
 from sympy.core.symbol import Str
 
