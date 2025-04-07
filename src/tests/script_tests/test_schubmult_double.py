@@ -211,10 +211,7 @@ def test_with_same_args_exec(capsys, json_file):
         ret_dict = {uncode(list(k)): v for k, v in ret_dict.items()}
     v_tuple = (Permutation(perms[1]) if not ascode else uncode(perms[1])) if not coprod else (Permutation(perms[0]) if not ascode else (uncode(perms[0])))
     input_dict = {(permtrim(perms[0])) if not ascode else (permtrim(uncode(perms[0]))): 1}
-    indices = tuple(perms[1])
-    # print(f"{v_tuple=} {input_dict=} {indices=}")
-    # print("BOOB ASS")
-    #print(f"{disp_mode=} {ret_dict=}")
+    indices = tuple(perms[1])    
     assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices, same, display_positive)
 
 

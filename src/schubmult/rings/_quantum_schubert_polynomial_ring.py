@@ -56,7 +56,7 @@ def cached_q_positive_product(u, v, va, vb):
 
 
 # TEMP
-def _mul_q_schub_dicts(dict1, dict2, best_effort_positive=False):
+def _mul_q_schub_dicts(dict1, dict2, best_effort_positive=True):
     by_var = {}
 
     none_dict = {}
@@ -75,10 +75,11 @@ def _mul_q_schub_dicts(dict1, dict2, best_effort_positive=False):
         this_dict = {}
         for k, v in dict2.items():
             for kd, vd in _dict.items():
-                did_positive = True
+                did_positive = False
                 if best_effort_positive:
                     try:
                         this_dict = add_perm_dict(this_dict, {k1: v1 * v * vd for k1, v1 in cached_q_positive_product(kd, k[0], _vstr, k[1]).items()})
+                        did_positive = True
                     except Exception:
                         logger.debug("Failed to compute")
                         did_positive = False

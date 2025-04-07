@@ -108,7 +108,6 @@ def test_with_same_args_exec(capsys, json_file):
     input_dict = {(permtrim(perms[0])) if not ascode else (permtrim(uncode(perms[0]))): 1}
     indices = tuple(perms[1])
     print(f"{v_tuple=} {input_dict=} {indices=}")
-    print("BOOB ASS")
     assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices)
 
 
