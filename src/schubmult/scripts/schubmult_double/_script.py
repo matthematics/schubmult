@@ -6,7 +6,6 @@ from symengine import expand, sympify
 
 from schubmult import (
     GeneratingSet,
-    base_index,
     efficient_subs,
 )
 from schubmult.perm_lib import (
@@ -122,9 +121,9 @@ def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, 
 def flip_symbol_signs(val):
     subs_dict = {}
     for s in val.free_symbols:
-        if base_index(s)[0]:
+        if _vars.var2.index(s) != -1 or _vars.var3.index(s) != -1:
             subs_dict[s] = -s
-    return val.subs(subs_dict)
+    return efficient_subs(val, subs_dict)
 
 
 def _display_full(

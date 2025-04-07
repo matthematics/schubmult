@@ -21,7 +21,7 @@ from schubmult.perm_lib import (
 )
 from schubmult.perm_lib.perm_lib import code
 from schubmult.poly_lib.poly_lib import call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
-from schubmult.poly_lib.variables import GeneratingSet, base_index
+from schubmult.poly_lib.variables import GeneratingSet
 from schubmult.schub_lib.schub_lib import (
     compute_vpathdicts,
     double_elem_sym_q,
@@ -833,15 +833,14 @@ def factor_out_q_keep_factored(poly, q_var=_vars.q_var):
     logger.debug(f"{poly=}")
     found_one = False
     for s in sympify(poly).free_symbols:
-        logger.debug(f"{s=} {base_index(s)=} {base_index(q_var)=}")
-        if base_index(s)[0] == base_index(q_var)[0]:
+        if q_var.index(s) != -1:
             found_one = True
             logger.debug("frobble bagel")
 
     if not found_one:
         ret[1] = poly
         return ret
-    if base_index(poly)[0] == base_index(q_var)[0]:
+    if q_var.index(poly) != -1:
         logger.debug("it might be poke")
         logger.debug(f"{poly=}")
         ret[poly] = 1

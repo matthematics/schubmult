@@ -171,8 +171,8 @@ def q_vector(q_exp, q_var=_vars.q_var):
 
     if q_exp == 1:
         return ret
-    if vv.base_index(q_exp)[0] == vv.base_index(q_var)[0]:
-        i = vv.base_index(q_exp)[1]
+    if isinstance(q_var, symengine.Symbol) and q_var.index(q_exp) != -1:
+        i = q_var.index(q_exp)
         return [0 for j in range(i - 1)] + [1]
     if isinstance(q_exp, Pow):
         qv = q_exp.args[0]
@@ -193,9 +193,9 @@ def q_vector(q_exp, q_var=_vars.q_var):
 def xreplace_genvars(poly, vars1, vars2):
     subs_dict = {}
     for s in sympify(poly).free_symbols:
-        if vv.base_index(s)[0] == vv.base_index(_vars.var_g1)[0]:
-            subs_dict[s] = vars1[vv.base_index(s)[1]]
-        elif vv.base_index(s)[0]  == vv.base_index(_vars.var_g2)[0]:
-            subs_dict[s] = vars2[vv.base_index(s)[1]]
+        if _vars.var_g1.index(s) != -1:
+            subs_dict[s] = vars1[_vars.var_g1.index(s)]
+        elif _vars.var_g2.index(s) != -1:
+            subs_dict[s] = vars2[_vars.var_g2.index(s)]
     return sympify(poly).xreplace(subs_dict)
     # print(f"{poly2=} {poly2.free_symbols=}")

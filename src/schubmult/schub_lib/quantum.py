@@ -50,8 +50,8 @@ def single_variable(coeff_dict, varnum, var_q=_vars.q_var):
 
 
 def mult_poly_q(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
-    if spl.base_index(poly)[0] == spl.base_index(var_x)[0]:
-        return single_variable(coeff_dict, spl.base_index(poly)[1], var_q=var_q)
+    if var_x.index(poly) != -1:
+        return single_variable(coeff_dict, var_x.index(poly), var_q=var_q)
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:

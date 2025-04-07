@@ -12,7 +12,6 @@ from schubmult.perm_lib import (
 )
 from schubmult.poly_lib.variables import (
     GeneratingSet,
-    base_index,
 )
 from schubmult.schub_lib.schub_lib import (
     compute_vpathdicts,
@@ -46,8 +45,13 @@ def single_variable(coeff_dict, varnum):
 
 
 def mult_poly_py(coeff_dict, poly, var_x=_vars.var_x):
-    if base_index(poly)[0]==base_index(var_x)[0]:
-        return single_variable(coeff_dict, base_index(poly)[1])
+    if isinstance(var_x, GeneratingSet):
+        if var_x.index(poly) != -1:
+            # print(f"{poly=} {var_x._symbols_arr=} {var_x._symbols_arr.index(poly)=}")
+            return single_variable(coeff_dict, var_x.index(poly))
+    else:
+        print("Fawip")
+        raise TypeError
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:
