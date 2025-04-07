@@ -24,7 +24,7 @@ from schubmult.perm_lib import (
 )
 from schubmult.poly_lib.poly_lib import efficient_subs, elem_sym_func, elem_sym_poly, expand
 from schubmult.poly_lib.schub_poly import schubpoly
-from schubmult.poly_lib.variables import GeneratingSet
+from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.schub_lib import (
     compute_vpathdicts,
     divdiffable,
@@ -144,6 +144,8 @@ def mult_poly_double(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
     #     var_x = tuple([sympy.sympify(v) for v in var_x])
     #     var_y = tuple([sympy.sympify(v) for v in var_y])
     #     return mult_poly_sympy(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2)
+    if not isinstance(var_x, GeneratingSet_base):
+        var_x = CustomGeneratingSet(var_x)
     if var_x.index(poly) != -1:
         return single_variable(coeff_dict, var_x.index(poly), var_y)
     if isinstance(poly, Mul):

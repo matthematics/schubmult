@@ -21,7 +21,7 @@ from schubmult.perm_lib import (
 )
 from schubmult.perm_lib.perm_lib import code
 from schubmult.poly_lib.poly_lib import call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
-from schubmult.poly_lib.variables import GeneratingSet
+from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.schub_lib import (
     compute_vpathdicts,
     double_elem_sym_q,
@@ -101,7 +101,9 @@ def single_variable(coeff_dict, varnum, var2=_vars.var2, q_var=_vars.q_var):
 
 
 def mult_poly_q_double(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var):
-    if poly in var_x:
+    if not isinstance(var_x, GeneratingSet_base):
+        var_x = CustomGeneratingSet(var_x)
+    if var_x.index(poly) != -1:
         return single_variable(coeff_dict, var_x.index(poly), var_y, q_var)
     if isinstance(poly, Mul):
         ret = coeff_dict
@@ -830,6 +832,8 @@ def factor_out_q_keep_factored(poly, q_var=_vars.q_var):
     # if str(poly).find("q") == -1:
     #     ret[1] = poly
     #     return ret
+    if not isinstance(q_var, GeneratingSet_base):
+        q_var = CustomGeneratingSet(q_var)
     logger.debug(f"{poly=}")
     found_one = False
     for s in sympify(poly).free_symbols:

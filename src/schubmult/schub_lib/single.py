@@ -10,9 +10,7 @@ from schubmult.perm_lib import (
     theta,
     uncode,
 )
-from schubmult.poly_lib.variables import (
-    GeneratingSet,
-)
+from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.schub_lib import (
     compute_vpathdicts,
     elem_sym_perms,
@@ -44,14 +42,15 @@ def single_variable(coeff_dict, varnum):
     return ret
 
 
+# TODO: if need indexes, CustomGeneratingSet
 def mult_poly_py(coeff_dict, poly, var_x=_vars.var_x):
-    if isinstance(var_x, GeneratingSet):
-        if var_x.index(poly) != -1:
-            # print(f"{poly=} {var_x._symbols_arr=} {var_x._symbols_arr.index(poly)=}")
-            return single_variable(coeff_dict, var_x.index(poly))
-    else:
-        print("Fawip")
-        raise TypeError
+    if not isinstance(var_x, GeneratingSet_base):
+        var_x = CustomGeneratingSet(var_x)
+
+    if var_x.index(poly) != -1:
+        # print(f"{poly=} {var_x._symbols_arr=} {var_x._symbols_arr.index(poly)=}")
+        return single_variable(coeff_dict, var_x.index(poly))
+        
     if isinstance(poly, Mul):
         ret = coeff_dict
         for a in poly.args:

@@ -171,7 +171,7 @@ def q_vector(q_exp, q_var=_vars.q_var):
 
     if q_exp == 1:
         return ret
-    if isinstance(q_var, symengine.Symbol) and q_var.index(q_exp) != -1:
+    if q_var.index(q_exp) != -1:
         i = q_var.index(q_exp)
         return [0 for j in range(i - 1)] + [1]
     if isinstance(q_exp, Pow):

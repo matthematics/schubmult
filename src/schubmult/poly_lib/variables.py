@@ -143,4 +143,29 @@ class MaskedGeneratingSet(GeneratingSet_base):
         return len(self.base_genset) - len(self.index_mask)
 
 class CustomGeneratingSet(GeneratingSet_base):
-    pass
+    def __new__(cls, gens):
+        return CustomGeneratingSet.__xnew_cached__(cls, tuple(gens))
+
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, gens):
+        return CustomGeneratingSet.__xnew__(_class, gens)
+
+    @staticmethod
+    def __xnew__(_class, gens):
+        obj = GeneratingSet_base.__new__(_class, Tuple(*gens))
+        obj._index_lookup = {gens[i]: i for i in range(len(gens))}
+        return obj
+
+
+    def __getitem__(self, index):
+        return self.args[0][index]
+
+    def __iter__(self):
+        yield from [self[i] for i in range(len(self))]
+
+    def index(self, v):
+        return self._index_lookup.get(v, -1)
+
+    def __len__(self):
+        return len(self.args[0])
