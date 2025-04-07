@@ -1,6 +1,7 @@
 import sympy
 
 import schubmult.schub_lib.schub_lib as schub_lib
+from schubmult.poly_lib.variables import GeneratingSet
 
 
 def perm_act(val, i, var2=None):
@@ -14,7 +15,7 @@ def div_diff(i, poly, var2=None):
     )
 
 
-def schubpoly(v, var2=None, var3=None, start_var=1):
+def schubpoly(v, var2=GeneratingSet("y"), var3=GeneratingSet("z"), start_var=1):
     n = 0
     for j in range(len(v) - 2, -1, -1):
         if v[j] > v[j + 1]:

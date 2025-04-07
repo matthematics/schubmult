@@ -33,8 +33,10 @@ logger = get_logger(__name__)
 
 # COPRODUCT
 
+
 class NotEnoughGeneratorsError(ValueError):
     pass
+
 
 def _varstr(v):
     if v == utils.NoneVar:
@@ -46,6 +48,11 @@ def _varstr(v):
 
 # def self._from_dict(coeff_dict):
 #     return DoubleSchubertAlgebraElement(coeff_dict)
+
+
+@cache
+def cached_schubpoly(u):
+    return yz.schubpoly(u)
 
 
 @cache
@@ -134,7 +141,7 @@ class DoubleSchubertAlgebraElement(Expr):
     def __xnew__(_class, _dict, genset):
         if not isinstance(genset, GeneratingSet_base):
             raise TypeError
-        if max([0] + [max([d+1 for d in k[0].descents()]+[0]) for k in _dict.keys()]) > len(genset):
+        if max([0] + [max([d + 1 for d in k[0].descents()] + [0]) for k in _dict.keys()]) > len(genset):
             raise NotEnoughGeneratorsError("Not enough generators")
         return Expr.__new__(_class, _dict, genset)
 
@@ -206,8 +213,13 @@ class DoubleSchubertAlgebraElement(Expr):
 
     @cache
     def _cached_sympystr(self, printer):
-        return printer._print_Add(
-            sympy.Add(*[sympy.Mul(self.coeff_dict[k], DSchubPoly(k, self.genset)) for k in sorted(self.coeff_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))], evaluate=False),
+        return printer.doprint(
+            sympy.Add(
+                *[
+                    self.coeff_dict[k] if k[0] == Permutation([]) else sympy.Mul(self.coeff_dict[k], DSchubPoly(k, self.genset))
+                    for k in sorted(self.coeff_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))
+                ],
+            ),
         )
 
     def _sympystr(self, printer):
@@ -225,7 +237,6 @@ class DoubleSchubertAlgebraElement(Expr):
             logger.debug(f"{other=} {list(self.genset)=}")
             return sympify(other) + self.as_polynomial()
         return self._from_dict(add_perm_dict(self.coeff_dict, other.coeff_dict))
-
 
     def __radd__(self, other):
         logger.debug(f"{type(other)=}")
@@ -354,8 +365,8 @@ class DoubleSchubertAlgebraElement(Expr):
     def as_coefficients_dict(self):
         return self.coeff_dict
 
-    def expand(self, *args, **kwargs): # noqa: ARG002
-        return sympy.expand(self.as_polynomial())
+    def expand(self, *args, **kwargs):  # noqa: ARG002
+        return sympy.sympify(expand(sympify(self.as_polynomial())))
 
     # TODO: Masked generating set labels
     def coproduct(self, indices, coeff_var="y", gname1=None, gname2=None):
@@ -389,9 +400,19 @@ class DoubleSchubertAlgebraElement(Expr):
             logger.debug(f"{ktuple=}")
             A = DSchubPoly(ktuple[0], gens1)
             B = DSchubPoly(ktuple[1], gens2)
+            # if A.perm == Permutation([]):
+            #     if B.perm == Permutation([]):
+            #         result_list += [v]
+            #     result_list += [sympy.Mul(v, B)]
+            # elif B.perm == Permutation([]):
+            #     result_list += [sympy.Mul(v, A)]
+            # else:
+            #     logger.debug(f"{A=} {B=}")
+            #     result_list += [sympy.Mul(v, A, B, evaluate=False)]
             logger.debug(f"{A=} {B=}")
-            result_list += [sympy.Mul(sympy.sympify(v), A, B, evaluate=False)]
-        return sympy.Add(*result_list, evaluate=False)
+            result_list += [sympy.Mul(sympy.sympify(v), A, B)]
+        return sympy.Add(*result_list)
+
         # # will not allow zeros
 
         # return {k: v for k, v in self.coeff_dict.items() if expand(v) != 0}
@@ -411,8 +432,7 @@ class DoubleSchubertAlgebraElement(Expr):
         return max([max(k[0].descents()) for k in self.coeff_dict.keys()])
 
     def as_polynomial(self):
-        logger.debug(f"{type(self)=}")
-        return sympy.Add(*[sympy.sympify(v) * sympy.sympify(schubpoly(k[0], self.genset, utils.poly_ring(k[1]))) for k, v in self.coeff_dict.items()])
+        return sympy.sympify(Add(*[v * xreplace_genvars(cached_schubpoly(k[0]), self.genset, utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
 
 
 # Atomic Schubert polynomial
@@ -438,6 +458,10 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
         return self._coeff_dict
 
     @property
+    def perm(self):
+        return self._key[0]
+
+    @property
     def args(self):
         return (sympy.Tuple(*self._key), self._genset)
 
@@ -447,6 +471,8 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
         return DSchubPoly.__xnew__(_class, k, genset)
 
     def _sympystr(self, printer):
+        if self._key[0] == Permutation([]):
+            return printer.doprint(1)
         if self._key[1] == 0 or self._key[1] == utils.NoneVar:
             return printer.doprint(f"S{self.genset.label}({list(self._key[0])})")
         return printer.doprint(f"DS{self.genset.label}({list(self._key[0])}, {_varstr(self._key[1])})")
@@ -604,7 +630,7 @@ class SchubMul(Mul):
         return printer._print_Mul(self)
 
     def __neg__(self):
-        return SchubMul(sympy.Integer(-1),self)
+        return SchubMul(sympy.Integer(-1), self)
 
     def _eval_expand_mul(self, *_, **__):
         logger.debug(f"Pringles {self.args=}")
