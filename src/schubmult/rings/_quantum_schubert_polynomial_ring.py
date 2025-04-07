@@ -168,7 +168,7 @@ class QuantumDoubleSchubertAlgebraElement(Expr):
                 poley = sympify(self._from_dict({k: 1}).change_vars(0).expand() * v)
                 if b_old in poley.free_symbols:
                     poley = poley.subs(b_old, b_new)
-                    new_dict = yz.mult_poly_q_double({(1, 2): 1}, poley, utils.poly_ring(self._base_var), utils.poly_ring(k[1]))
+                    new_dict = yz.mult_poly_q_double({Permutation([]): 1}, poley, utils.poly_ring(self._base_var), utils.poly_ring(k[1]))
                     new_p = {(koifle, k[1]): voifle for koifle, voifle in new_dict.items()}
                     result = add_perm_dict(result, new_p)
             elif stuff_to_do:

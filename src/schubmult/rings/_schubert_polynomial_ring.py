@@ -316,8 +316,8 @@ class DoubleSchubertAlgebraElement(Expr):
     def as_coefficients_dict(self):
         return self.coeff_dict
 
-    def expand(self, deep=False):
-        return self.as_polynomial().expand()
+    def expand(self, *args, **kwargs):
+        return expand(self.as_polynomial())
     
     # TODO: Masked generating set labels
     def coproduct(self, indices, coeff_var="y", gname1=None, gname2=None):

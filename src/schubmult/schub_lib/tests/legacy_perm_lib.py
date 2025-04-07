@@ -389,7 +389,7 @@ def kdown_perms(perm, monoperm, p, k):
     inv_m = inv(monoperm)
     inv_p = inv(perm)
     full_perm_list = []
-
+    print(f"LEGACY {perm=} {monoperm=} {inv_m=} {inv_p=} {mulperm(list(perm),monoperm)}")
     if inv(mulperm(list(perm), monoperm)) == inv_m - inv_p:
         full_perm_list += [(tuple(perm), 0, 1)]
 
@@ -401,6 +401,7 @@ def kdown_perms(perm, monoperm, p, k):
         down_perm_list2 = []
         for perm2, s in down_perm_list:
             L = len(perm2)
+            print(f"LEGACY {perm2=} {L=}")
             if k > L:
                 continue
             s2 = -s
@@ -411,13 +412,18 @@ def kdown_perms(perm, monoperm, p, k):
                     i, j = b, a2
                 else:
                     i, j, s2 = a2, b, s
+                print(f"LEGACY {perm2=} {i=} {j=}")
                 if has_bruhat_descent(perm2, i, j):
+                    print(f"LEGACY YEAH BABY {perm2=} {i=} {j=}")
                     new_perm = [*perm2]
                     new_perm[a2], new_perm[b] = new_perm[b], new_perm[a2]
                     permtrim(new_perm)
+                    print(f"LEGACY {new_perm=}")
                     down_perm_list2 += [(new_perm, s2)]
                     if inv(mulperm(new_perm, monoperm)) == inv_m - inv_p + pp:
                         full_perm_list += [(tuple(new_perm), pp, s2)]
+                else:
+                    print(f"LEGACY NO BABY {perm2=} {i=} {j=}")
         down_perm_list = down_perm_list2
     return full_perm_list
 

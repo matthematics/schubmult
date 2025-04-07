@@ -313,7 +313,7 @@ def main(argv=None):
             else:
                 for i in range(len(perms)):
                     if len(perms[i]) < 2 and (len(perms[i]) == 0 or perms[i][0] == 1):
-                        perms[i] = (1, 2)
+                        perms[i] = Permutation([])
                     perms[i] = Permutation(perms[i])
 
             size = 0

@@ -150,11 +150,13 @@ def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0):
         )
     return res
 
+# def call_zvars(v1, v2, k, i):  # noqa: ARG001
+#     v3 = [*v2, *list(range(len(v2) + 1, i + 1))]
+#     return [v3[i - 1]] + [v3[j] for j in range(len(v1), len(v3)) if v3[j] != j + 1 and j != i - 1] + [v3[j] for j in range(len(v1)) if v1[j] != v3[j] and j != i - 1]
 
 @cache
 def call_zvars(v1, v2, k, i):  # noqa: ARG001
-    v3 = [*v2, *list(range(len(v2) + 1, i + 1))]
-    return [v3[i - 1]] + [v3[j] for j in range(len(v1), len(v3)) if v3[j] != j + 1 and j != i - 1] + [v3[j] for j in range(len(v1)) if v1[j] != v3[j] and j != i - 1]
+    return [v2[i - 1]] + [v2[j] for j in range(len(v1),max(len(v2),i)) if v2[j] != j+1 and j != i -1] + [v2[j] for j in range(len(v1)) if v1[j] != v2[j] and j != i - 1]
 
 
 def efficient_subs(expr, subs_dict):

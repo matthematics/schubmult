@@ -346,6 +346,7 @@ def kdown_perms(perm, monoperm, p, k):
     inv_p = inv(perm)
     full_perm_list = []
     # perm = Permutation(perm)
+    # print(f"{perm=} {monoperm=} {inv_m=} {inv_p=} {perm*monoperm=}")
     if inv(perm * monoperm) == inv_m - inv_p:
         full_perm_list += [(perm, 0, 1)]
 
@@ -357,6 +358,7 @@ def kdown_perms(perm, monoperm, p, k):
         down_perm_list2 = []
         for perm2, s in down_perm_list:
             L = len(perm2)
+            # print(f"{perm2=} {L=}")
             if k > L:
                 continue
             s2 = -s
@@ -367,11 +369,16 @@ def kdown_perms(perm, monoperm, p, k):
                     i, j = b, a2
                 else:
                     i, j, s2 = a2, b, s
+                # print(f"{perm2=} {i=} {j=}")
                 if has_bruhat_descent(perm2, i, j):
-                    new_perm = perm2.swap(a2, b)
+                    # print(f"YEAH BABY {perm2=} {i=} {j=}")
+                    new_perm = perm2.swap(i, j)
+                    # print(f"{new_perm=}")
                     down_perm_list2 += [(new_perm, s2)]
                     if inv(new_perm * monoperm) == inv_m - inv_p + pp:
                         full_perm_list += [(new_perm, pp, s2)]
+                # else:
+                #     # print(f"NO BABY {perm2=} {i=} {j=}")
         down_perm_list = down_perm_list2
     return full_perm_list
 
@@ -388,7 +395,9 @@ def compute_vpathdicts(th, vmu, smpify=False):
             top2.pop()
         top2.pop()
         top = code(~Permutation(uncode(top2)))
+        # print(f"{top=}")
         monoperm = Permutation(uncode(top))
+        # print(f"{monoperm=}")
         k = i + 1
         for last_perm in vpathdicts[i]:
             newperms = kdown_perms(last_perm, monoperm, th[i], k)

@@ -66,7 +66,7 @@ def inverse(perm):
 
 def permtrim_list(perm):
     L = len(perm)
-    while L > 2 and perm[-1] == L:
+    while L > 0 and perm[-1] == L:
         L = perm.pop() - 1
     return perm
 
@@ -352,8 +352,6 @@ class Permutation(Basic):
             return perm
 
         p = tuple(permtrim_list([*perm]))
-        if len(p) <= 2:
-            p = ()
         s_perm = spp.Permutation._af_new([i - 1 for i in p])
         obj = Basic.__new__(_class, Tuple(*perm))
         obj._s_perm = s_perm
@@ -384,11 +382,15 @@ class Permutation(Basic):
 
     def swap(self, i, j):
         new_perm = [*self._perm]
+        # print(f"SWAP {new_perm=}")
         if i > j:
             i, j = j, i
         if j >= len(new_perm):
+            # print(f"SWAP {j}>={new_perm=}")
             new_perm += list(range(len(new_perm) + 1, j + 2))
+            # print(f"SWAP extended {new_perm=}")
         new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
+        # print(f"SWAP iddle {new_perm=}")
         return Permutation(new_perm)
 
     def __getitem__(self, i):
@@ -438,15 +440,19 @@ class Permutation(Basic):
 
     def __eq__(self, other):
         if isinstance(other, Permutation):
+            # print(f"{other._perm= } {self._perm=} {type(self._perm)=}")
             return other._perm == self._perm
         if isinstance(other, list):
+            # print(f"{[*self._perm]= } {other=}")
             return [*self._perm] == other
         if isinstance(other, tuple):
+            # print(f"{self._perm=} {other=}")
             return self._perm == other
         return False
 
     def __len__(self):
-        return len(self._perm)
+        # print("REMOVE THIS")
+        return max(len(self._perm),2)
 
     def __invert__(self):
         new_sperm = ~(self._s_perm)

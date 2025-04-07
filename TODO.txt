@@ -17,3 +17,8 @@ infinite parabolic
 
 ring coproduct expand
 convert quantum to generating set base
+
+PERM tests
+SCHUB tests
+ALLOW len(perm) = 0
+call zvars

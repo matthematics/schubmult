@@ -162,9 +162,9 @@ def main(argv=None):
             coeff_dict = nil_hecke({Permutation([1, 2]): 1}, perms[0], nil_N)
         elif nilhecke_apply:
             coeff_dict0 = nil_hecke({Permutation([1, 2]): 1}, perms[0], nil_N, var2, var2)
-            coeff_dict = {(1, 2): 0}
+            coeff_dict = {Permutation([]): 0}
             for v in coeff_dict0:
-                coeff_dict[(1, 2)] += coeff_dict0[v] * div_diff(v, perms[1], var2, var3)
+                coeff_dict[Permutation([])] += coeff_dict0[v] * div_diff(v, perms[1], var2, var3)
         else:
             coeff_dict = {perms[0]: 1}
             for perm in perms[1:]:
