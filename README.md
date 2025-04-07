@@ -200,9 +200,10 @@ schubmult_xx --coprod allows you to split (double) Schubert polynomials along ce
 available for quantum). It takes one permutation as an argument, followed by a dash -, then the set of 
 indices you would like to split on.
 
-# sympy-compliant ring classes
+# sympy-compliant ring classes (as of version 3.0.0)
 
-
+There are sympy-compliant ring classes similar to the Sage classes that can be accessed with the
+`Sx`, `DSx`, `QSx`, and `QDSx` element constructors. The interface is Sage, shown below.
 
 # Sage integration (as of version 2.0.0)
 
@@ -487,6 +488,7 @@ QDSx([8, 1, 4, 2, 3, 5, 6, 7], 'y') + QDSx([8, 2, 3, 1, 4, 5, 6, 7], 'y')
 ```
 This output of roughly 17,000 characters took about 2 seconds to compute on my laptop. **Again note that 
 quantum double computations are technically conjectural, but a proof is likely forthcoming.**
+
 
 
 [Homepage of schubmult](http://schubmult.org/)
