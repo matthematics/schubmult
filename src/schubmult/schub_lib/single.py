@@ -79,7 +79,7 @@ def schubmult_py(perm_dict, v):
     # print(f"{v=}")
     vn1 = ~v
     th = theta(vn1)
-    if th[0] == 0:
+    if len(th) == 0 or th[0] == 0:
         return perm_dict
     mu = uncode(th)
     vmu = v*mu

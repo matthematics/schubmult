@@ -368,8 +368,7 @@ class DoubleSchubertAlgebraElement(Expr):
     def expand(self, *args, **kwargs):  # noqa: ARG002
         return sympy.sympify(expand(sympify(self.as_polynomial())))
 
-    # TODO: Masked generating set labels
-    def test_coproduct(self, indices, coeff_var="y", gname1=None, gname2=None):
+    def coproduct(self, indices, coeff_var="y", gname1=None, gname2=None):
         result_dict = {}
         if gname1 is None:
             gname1 = f"{self.genset.label}_A"
@@ -398,7 +397,7 @@ class DoubleSchubertAlgebraElement(Expr):
         basis = tsr.TensorAlgebraBasis(DoubleSchubertAlgebraElement_basis(gens1), DoubleSchubertAlgebraElement_basis(gens2))
         return basis._from_dict(result_dict)
 
-    def coproduct(self, indices, coeff_var="y", gname1=None, gname2=None):
+    def legacy_coproduct(self, indices, coeff_var="y", gname1=None, gname2=None):
         result_dict = {}
         if gname1 is None:
             gname1 = f"{self.genset.label}_A"
@@ -509,10 +508,9 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
 
 # None is faster to store
 class DoubleSchubertAlgebraElement_basis(Basic):
-    
     def __new__(cls, genset):
         return Basic.__new__(cls, genset)
-    
+
     @property
     def genset(self):
         return self.args[0]
@@ -591,9 +589,6 @@ Basic._constructor_postprocessor_mapping[DoubleSchubertAlgebraElement] = {
 
 # add.register_handlerclass((Expr, SchubAdd), SchubAdd)
 # mul.register_handlerclass((Expr, SchubMul), SchubMul)
-
-
-
 
 
 DoubleSchubertPolynomial = DoubleSchubertAlgebraElement

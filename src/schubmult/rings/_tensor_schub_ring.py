@@ -66,8 +66,8 @@ class TensorAlgebraElement(Expr):
     def expand(self, **_):
         return sympify(
             symengine.Add(
-                *[v*symengine.sympify(self.basis.basis1._from_dict({k[0]: 1}).expand()) * symengine.sympify(self.basis.basis2._from_dict({k[1]: 1}).expand()) for k, v in self.coeff_dict.items()]
-            )
+                *[v * symengine.sympify(self.basis.basis1._from_dict({k[0]: 1}).expand()) * symengine.sympify(self.basis.basis2._from_dict({k[1]: 1}).expand()) for k, v in self.coeff_dict.items()],
+            ),
         )
 
 
