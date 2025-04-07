@@ -22,3 +22,5 @@ PERM tests
 SCHUB tests
 ALLOW len(perm) = 0
 call zvars
+
+RING QUANTUM TESTS

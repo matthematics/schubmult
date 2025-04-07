@@ -88,11 +88,7 @@ def schubmult_py(perm_dict, v):
     ret_dict = {}
     while th[-1] == 0:
         th.pop()
-    # print(f"{th=} {vmu=}")
     vpathdicts = compute_vpathdicts(th, vmu)
-    import schubmult.schub_lib.tests.legacy_perm_lib as opl
-    # print(f"{opl.compute_vpathdicts(th,vmu)=}")
-    # print(f"{vpathdicts=}")
     mx_th = [0 for i in range(len(th))]
     for index in range(len(th)):
         for vp in vpathdicts[index]:

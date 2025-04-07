@@ -301,7 +301,7 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
 #                                     False,
 #                                 )
 #                     except Exception as e:
-#                         print(f"Exception: {e}")
+#                         # print(f"Exception: {e}")
 #                         import traceback
 
 #                         traceback.print_exc()
@@ -349,8 +349,8 @@ def old_q_posify(u, v, w, val, var2, var3, q_var, msg):
                         msg,
                         False,
                     )
-            except Exception as e:
-                print(f"Exception: {e}")
+            except Exception:
+                # print(f"Exception: {e}")
                 import traceback
 
                 traceback.print_exc()
@@ -395,8 +395,8 @@ def q_partial_posify_generic(val, u, v, w):
                             )
                         else:
                             val2 += q_part * q_dict[q_part]
-                except Exception as e:
-                    print(f"Exception: {e}")
+                except Exception:
+                    # print(f"Exception: {e}")
                     import traceback
                     traceback.print_exc()
         if expand(val - val2) != 0:
@@ -412,17 +412,17 @@ def elem_sym_func_q_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, q_var=_v
     if newk == vdiff:
         return 1
     yvars = []
-    mlen = max(len(u1), len(u2))
-    u1 = [*u1] + [a + 1 for a in range(len(u1), mlen)]
-    u2 = [*u2] + [a + 1 for a in range(len(u2), mlen)]
-    for j in range(min(len(u1), k)):
+    # mlen = max(len(u1), len(u2))
+    # u1 = [*u1] + [a + 1 for a in range(len(u1), mlen)]
+    # u2 = [*u2] + [a + 1 for a in range(len(u2), mlen)]
+    for j in range(k):
         if u1[j] == u2[j]:
             yvars += [varl1[u2[j]]]
-    for j in range(len(u1), min(k, len(u2))):
-        if u2[j] == j + 1:
-            yvars += [varl1[u2[j]]]
-    for j in range(len(u2), k):
-        yvars += [varl1[j + 1]]
+    # for j in range(len(u1), min(k, len(u2))):
+    #     if u2[j] == j + 1:
+    #         yvars += [varl1[u2[j]]]
+    # for j in range(len(u2), k):
+    #     yvars += [varl1[j + 1]]
     zvars = [varl2[a] for a in call_zvars(v1, v2, k, i)]
     return elem_sym_poly_q(newk - vdiff, newk, yvars, zvars, q_var)
 

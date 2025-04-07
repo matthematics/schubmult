@@ -724,8 +724,7 @@ def find_base_vectors(monom_list, var2, var3, depth):
                             break
                     # print(f"{mn,mn2}")
                     if diff_term1 is None or diff_term2 is None:
-                        print(f"{mn=} {mn2=}")
-                        exit(1)
+                        raise Exception(f"{mn=} {mn2=}")
                     if diff_term2[1] == diff_term1[1]:
                         continue
                     new_term1 = (diff_term1[0], diff_term2[1])

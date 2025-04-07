@@ -316,9 +316,9 @@ class DoubleSchubertAlgebraElement(Expr):
     def as_coefficients_dict(self):
         return self.coeff_dict
 
-    def expand(self, *args, **kwargs):
+    def expand(self, *args, **kwargs): # noqa: ARG002
         return expand(self.as_polynomial())
-    
+
     # TODO: Masked generating set labels
     def coproduct(self, indices, coeff_var="y", gname1=None, gname2=None):
         result_dict = {}
@@ -382,7 +382,7 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
     @property
     def args(self):
         return (sympy.Tuple(*self._key), self._genset)
-    
+
     @staticmethod
     @cache
     def __xnew_cached__(_class, k, genset):

@@ -90,6 +90,7 @@ select = [
     "PLE",
     "PLW",
     "RUF",
+    "T201"
 ]
 ignore = [
     "N806",
@@ -111,6 +112,8 @@ unfixable = ["F401", "F841"]
 
 [tool.ruff.lint.per-file-ignores]
 "test*.py" = ["ALL"]
+"_script*.py" = ["T201"]
+"argparse.py" = ["T201"]
 
 [project.optional-dependencies]
 sage = ["sagemath-standard"]

@@ -395,7 +395,7 @@ class Permutation(Basic):
 
     def __getitem__(self, i):
         if isinstance(i, slice):
-            return [self[ii] for ii in range(*i.indices(len(self._perm)))]
+            return [self[ii] for ii in range(i.start, i.stop)]
         if i >= len(self._perm):
             return i + 1
         return self._perm[i]

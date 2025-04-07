@@ -198,7 +198,7 @@ class QuantumDoubleSchubertAlgebraElement(Expr):
     @property
     def coeff_dict(self):
         return self.args[0]
-    
+
     @cache
     def _cached_sympystr(self, printer):
         # return _def_printer.doprint(self._print_sum)
@@ -258,14 +258,14 @@ class QuantumDoubleSchubertAlgebraElement(Expr):
             done.add(k)
             if expand(v - elem2.coeff_dict.get(k, 0)) != 0:
                 if disp:
-                    print(f"{k=} {v=} {elem2.coeff_dict.get(k, 0)=} {expand(v - elem2.coeff_dict.get(k, 0))=}", file=sys.stderr)
+                    logger.debug(f"{k=} {v=} {elem2.coeff_dict.get(k, 0)=} {expand(v - elem2.coeff_dict.get(k, 0))=}", file=sys.stderr)
                 return False
         for k, v in elem2.coeff_dict.items():
             if k in done:
                 continue
             if expand(v - elem1.coeff_dict.get(k, 0)) != 0:
                 if disp:
-                    print(f"{k=} {v=} {expand(v - elem1.coeff_dict.get(k, 0))=}", file=sys.stderr)
+                    logger.debug(f"{k=} {v=} {expand(v - elem1.coeff_dict.get(k, 0))=}", file=sys.stderr)
                 return False
         return True
 
