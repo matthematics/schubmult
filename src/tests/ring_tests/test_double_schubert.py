@@ -78,6 +78,13 @@ def test_change_vars():
     #assert (DSx(perm)*DSx(perm,"z")).change_vars("theta") == ((DSx(perm)*DSx(perm,"z")).change_vars("yourmom"))
 
 
+def test_coproduct():
+    from schubmult.rings import DSx
+    from sympy import expand
+    perm = [3, 1, 5, 2, 6, 7, 4]
+    indices = [2, 4, 6]
+    assert expand(DSx(perm).coproduct(indices).expand() - DSx(perm).expand()) == 0
+
 # def test_coerce():
 #     from sage.all import ZZ
 

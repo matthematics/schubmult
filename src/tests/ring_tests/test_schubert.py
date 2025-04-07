@@ -13,23 +13,12 @@ def test_schub_expand():
     assert expand((Sx([5,3,4,1,2]).expand() * Sx([4,1,5,2,3]).expand() - Sx([5,3,4,1,2]) * Sx([4,1,5,2,3])).expand()) == 0
     assert (x_1*Sx([3,4,1,2])).expand() == x_1**3*x_2**2
 
-# def test_coproduct():
-#     """
-#     Test coproduct
-#     """
-#     from sage.all import ZZ
-
-#     from schubmult.sage_integration import FastSchubertPolynomialRing
-#     Sx = FastSchubertPolynomialRing(ZZ, 100, "x")
-#     R = Sx._polynomial_ring
-#     indices = [0, 1, 3, 5]
-#     indices2 = [0, 2, 4, 6]
-#     Sx.set_coproduct_indices(indices[1:])
-#     subs_dict1 = {R.gens()[i]: R.gens()[indices[i]] for i in range(len(indices))}
-#     subs_dict2 = {R.gens()[i]: R.gens()[indices2[i]] for i in range(len(indices))}
-
-#     perm = [3,6,5,1,4,7,2]
-#     assert Sx(perm) == Sx(sum([v*Sx(list(k[0])).expand().subs(subs_dict1)*(Sx(list(k[1])).expand().subs(subs_dict2)) for k,v in Sx(perm).coproduct().monomial_coefficients().items()]))
+def test_coproduct():
+    from schubmult.rings import Sx
+    from sympy import expand
+    perm = [3, 1, 5, 2, 6, 7, 4]
+    indices = [2, 4, 6]
+    assert expand(Sx(perm).coproduct(indices).expand() - Sx(perm).expand()) == 0
 
 def test_associative():
     """

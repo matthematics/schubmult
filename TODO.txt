@@ -15,8 +15,9 @@ DIV DIFF MAYBE NILHECKERING
 
 infinite parabolic
 
-ring coproduct expand
-convert quantum to generating set base
+CHECK ring coproduct expand
+CHECK convert quantum to generating set base
+ADD TEST COPRODUCT
 
 PERM tests
 SCHUB tests
