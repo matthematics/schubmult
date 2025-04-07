@@ -149,13 +149,13 @@ class DoubleSchubertAlgebraElement(Expr):
     def __hash__(self):
         return hash(tuple(self.args))
 
-    @property
-    def _add_handler(self):
-        return SchubAdd
+    # @property
+    # def _add_handler(self):
+    #     return SchubAdd
 
-    @property
-    def _mul_handler(self):
-        return SchubMul
+    # @property
+    # def _mul_handler(self):
+    #     return SchubMul
 
     # confers existing generating set
     def _from_dict(self, _dict):
@@ -212,16 +212,20 @@ class DoubleSchubertAlgebraElement(Expr):
     #     return self._from_dict({k: sympify(sympy.simplify(v, *args, measure=measure, **kwargs)) for k, v in self.coeff_dict.items()})
 
     def __add__(self, other):
+        other = DSx(other)
         return self._from_dict(add_perm_dict(self.coeff_dict, other.coeff_dict))
 
     def __radd__(self, other):
+        other = DSx(other)
         return self._from_dict(add_perm_dict(other.coeff_dict, self.coeff_dict))
 
     def __sub__(self, other):
+        other = DSx(other)
         double_dict = add_perm_dict(self.coeff_dict, {k: -v for k, v in other.coeff_dict.items()})
         return self._from_dict(double_dict)
 
     def __rsub__(self, other):
+        other = DSx(other)
         double_dict = add_perm_dict(other.coeff_dict, {k: -v for k, v in self.coeff_dict.items()})
         return self._from_dict(double_dict)
 
@@ -233,9 +237,11 @@ class DoubleSchubertAlgebraElement(Expr):
         return self._from_dict(double_dict)
 
     def __mul__(self, other):
+        other = DSx(other)
         return self._from_dict(_mul_schub_dicts(self.coeff_dict, other.coeff_dict))
 
     def __rmul__(self, other):
+        other = DSx(other)
         return self._from_dict(_mul_schub_dicts(other.coeff_dict, self.coeff_dict))
 
     # def equals(self, other):
@@ -374,7 +380,7 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
 
     def _sympystr(self, printer):
         if self._key[1] == 0 or self._key[1] == utils.NoneVar:
-            return printer.doprint(f"S{self.genset.label}({list(self._perm)})")
+            return printer.doprint(f"S{self.genset.label}({list(self._key[0])})")
         return printer.doprint(f"DS{self.genset.label}({list(self._key[0])}, {_varstr(self._key[1])})")
 
 
