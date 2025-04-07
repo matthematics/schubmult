@@ -142,34 +142,5 @@ class MaskedGeneratingSet(GeneratingSet_base):
     def __len__(self):
         return len(self.base_genset) - len(self.index_mask)
 
-# def base_index(v):
-#     if isinstance(v, (list, tuple)):
-#         return base_index(v[0])[0], None
-#     if isinstance(v, GeneratingSet):
-#         return v.label, None
-#     try:
-#         v = sympify(v)
-#     except Exception:
-#         try:
-#             import sage  # noqa: F401
-#         except ImportError:
-#             return None, None
-#         from sage.rings.polynomial.multivariate_polynomial import MPolynomial  # type: ignore
-
-#         if isinstance(v, MPolynomial):
-#             m = GeneratingSet._sage_index_pattern.match(str(v))
-#             if m:
-#                 return m.group(1), int(m.group(2))
-#     if v in GeneratingSet._registry:
-#         return GeneratingSet._registry[v]
-#     if isinstance(v, Symbol):
-#         try:
-#             m = GeneratingSet._index_pattern.match(v.name)
-#             if m:
-#                 return m.group(1), int(m.group(2))
-#         except Exception:
-#             pass
-#         m = GeneratingSet._sage_index_pattern.match(str(v))
-#         if m:
-#             return m.group(1), int(m.group(2))
-#     return None, None
+class CustomGeneratingSet(GeneratingSet_base):
+    pass

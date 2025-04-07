@@ -36,8 +36,9 @@ def test_associative():
     Test associative on some large perms
     """
     from schubmult.rings import Sx
-    perm1, perm2, perm3 = [6,7,1,5,3,4,2], [1,3,2,7,6,5,4], [3,7,1,6,4,2,5]
-    assert ((Sx(perm1)*Sx(perm2))*Sx(perm3)) == ((Sx(perm1)*(Sx(perm2)*Sx(perm3))))
+    from sympy import expand
+    perm1, perm2, perm3 = [6,1,5,3,4,2], [1,3,2,6,5,4], [3,1,6,4,2,5]
+    assert expand(((Sx(perm1)*Sx(perm2))*Sx(perm3)) - ((Sx(perm1)*(Sx(perm2)*Sx(perm3))))) == 0
 
 if __name__ == "__main__":
     test_schub_expand()

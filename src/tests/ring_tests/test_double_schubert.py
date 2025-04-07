@@ -67,19 +67,21 @@ def test_associative():
     Test associative on some large perms
     """
     from schubmult.rings import DSx
+    from sympy import expand
     perm1, perm2, perm3 = [1, 5, 3, 4, 2], [1, 3, 2, 5, 4], [3, 1, 4, 2, 5]
-    assert ((DSx(perm1) * DSx(perm2)) * DSx(perm3)) == (DSx(perm1) * (DSx(perm2) * DSx(perm3)))
+    assert expand(((DSx(perm1) * DSx(perm2)) * DSx(perm3)) - (DSx(perm1) * (DSx(perm2) * DSx(perm3)))) == 0
 
-    assert ((DSx(perm1) * DSx(perm2)) * DSx(perm3, "z")) == (DSx(perm1) * (DSx(perm2) * DSx(perm3, "z")))
+    assert expand(((DSx(perm1) * DSx(perm2)) * DSx(perm3, "z")) - (DSx(perm1) * (DSx(perm2) * DSx(perm3, "z")))) == 0
 
 def test_change_vars():
     """
     Test associative on some large perms
     """
     from schubmult.rings import DSx
+    from sympy import expand
     perm = [1, 5, 3, 4, 2]
     
-    assert DSx(perm).change_vars("theta") == DSx(perm).change_vars("gamama")
+    assert expand(DSx(perm).change_vars("theta") - DSx(perm).change_vars("gamama")) == 0
     #assert (DSx(perm)*DSx(perm,"z")).change_vars("theta") == ((DSx(perm)*DSx(perm,"z")).change_vars("yourmom"))
 
 
