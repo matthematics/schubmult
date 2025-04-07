@@ -99,21 +99,32 @@ class MaskedGeneratingSet(GeneratingSet_base):
         # obj._symbols_arr = tuple([symbols(f"{name}_{i}") for i in range(100)])
         # obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         mask_dict = {}
-        cur_index = 0
-        for i in range(len(gset._symbols_arr)):
-            if bisect_left(index_mask, i) != i:
+        mask_dict[0] = 0
+        cur_index = 1
+        for i in range(1,len(gset._symbols_arr)):
+            index = bisect_left(index_mask, i)
+            if index>=len(index_mask) or index_mask[index] != i:
                 mask_dict[cur_index] = i
                 cur_index += 1
+        # print(f"{index_mask=} {mask_dict=}")
         obj._mask = mask_dict
         obj._index_lookup = {gset[i]: mask_dict[i] for i in range(len(gset) - len(index_mask))}
+        obj._label = gset.label
         return obj
+
+    @property
+    def label(self):
+        return str(self._label)
+
+    def set_label(self, label):
+        self._label = label
 
     @property
     def index_mask(self):
         return tuple(self.args[1])
 
     def complement(self):
-        return MaskedGeneratingSet(self.base_genset, [i for i in range(len(self.base_genset)) if i not in set(self.index_mask)])
+        return MaskedGeneratingSet(self.base_genset, [i for i in range(1,len(self.base_genset)) if i not in set(self.index_mask)])
 
     @property
     def base_genset(self):

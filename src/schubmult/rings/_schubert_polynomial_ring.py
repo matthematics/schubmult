@@ -311,15 +311,20 @@ class DoubleSchubertAlgebraElement(Expr):
     def as_coefficients_dict(self):
         return self.coeff_dict
 
-    def coproduct(self, indices, coeff_var="y")#, gname1=None, gname2=None):
+    # TODO: Masked generating set labels
+    def coproduct(self, indices, coeff_var="y", gname1=None, gname2=None):
         result_dict = {}
-        # if gname1 is None:
-        #     gname1 = f"{self._genset.name}_A"
-        # if gname2 is None:
-        #     gname2 = f"{self._genset.name}_B"
-        gens1 = MaskedGeneratingSet(self.genset, indices)
-        gens2 = gens1.complement()
-        for k, v in self._doubledict.items():
+        if gname1 is None:
+            gname1 = f"{self.genset.label}_A"
+        if gname2 is None:
+            gname2 = f"{self.genset.label}_B"
+        gens2 = MaskedGeneratingSet(self.genset, indices)
+        gens1 = gens2.complement()
+        print(f"{gens1.index_mask=}")
+        print(f"{gens2.index_mask=}")
+        gens1.set_label(gname1)
+        gens2.set_label(gname2)
+        for k, v in self.coeff_dict.items():
             key = k[0]
             var_str = k[1]
             # print(f"{var_str=}")
@@ -376,7 +381,7 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
 # None is faster to store
 class DoubleSchubertAlgebraElement_basis(Basic):
     def __new__(cls, genset):
-        return Basic.__new__(genset)
+        return Basic.__new__(cls, genset)
 
     @property
     def genset(self):
@@ -439,7 +444,7 @@ def get_postprocessor(cls):
 # mul.register_handlerclass((Expr, SchubMul), SchubMul)
 
 
-DSx = DoubleSchubertAlgebraElement_basis()
+DSx = DoubleSchubertAlgebraElement_basis(GeneratingSet("x"))
 
 
 def Sx(x):
