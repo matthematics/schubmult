@@ -10,6 +10,9 @@ from sympy.printing.str import StrPrinter
 import schubmult.rings._tensor_schub_ring as tsr
 import schubmult.rings._utils as utils
 import schubmult.schub_lib.double as yz
+
+# from schubmult.poly_lib.schub_poly import pull_out_var
+import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import (
     Permutation,
@@ -175,24 +178,48 @@ class DoubleSchubertAlgebraElement(Expr):
         return DoubleSchubertAlgebraElement(_dict, self.genset)
 
     def divdiff(self, i):
-        return self._from_dict({(k[0].swap(i-1,i),k[1]): v for k, v in self.coeff_dict.items() if i-1 in k[0].descents()})
+        return self._from_dict({(k[0].swap(i - 1, i), k[1]): v for k, v in self.coeff_dict.items() if i - 1 in k[0].descents()})
+
+    def mult_poly(self, poly):
+        res_dict2 = {}
+        # poly = self.genset[i + 1] - self.genset[i]
+        for k, v in self.coeff_dict.items():
+            if k[1] == utils.ZeroVar or k[1] == utils.NoneVar:
+                dict2 = py.mult_poly_py({k[0]: v}, poly, self.genset)
+            else:
+                dict2 = yz.mult_poly_double({k[0]: v}, poly, self.genset, utils.poly_ring(k[1]))
+            res_dict2 = add_perm_dict(res_dict2, {(k2, k[1]): v for k2, v in dict2.items()})
+
+        return self._from_dict(res_dict2)
 
     def simpleref(self, i):
-        return self + self.divdiff(i) * (self.genset[i+1] - self.genset[i])
-    
+        return self + self.divdiff(i).mult_poly(self.genset[i + 1] - self.genset[i])
+        # result = self
+        # result2 = self.divdiff(i)
+        # res_dict2 = {}
+        # poly = self.genset[i+1] - self.genset[i]
+        # for k, v in result2.coeff_dict.items():
+        #     if k[1] == utils.ZeroVar or k[1] == utils.NoneVar:
+        #         dict2 = py.mult_poly_py({k[0]: v},poly,self.genset)
+        #     else:
+        #         dict2 = yz.mult_poly_double({k[0]: v}, poly, self.genset, utils.poly_ring(k[1]))
+        #     res_dict2 = add_perm_dict(res_dict2, self._from_dict(dict2))
+
+        # res_dict2 = add_perm_dict(res_dict2, result.coeff_dict)
+        # return self._from_dict(res_dict2)
+
     def act(self, perm):
         perm = Permutation(perm)
         dset = perm.descents()
         if len(dset) == 0:
             return self
         i = next(iter(dset))
-        return self.simpleref(i+1).act(perm.swap(i, i+1))
+        return self.simpleref(i + 1).act(perm.swap(i, i + 1))
 
     def max_index(self):
-        return max([max([0] + [i+1 for i in k[0].descents()]) for k in self.coeff_dict.keys()])
-                   
-    def _eval_subs(self, old, new):
+        return max([max([0] + [i + 1 for i in k[0].descents()]) for k in self.coeff_dict.keys()])
 
+    def _eval_subs(self, old, new):
         if self.genset.index(old) != -1:
             # coproduct might help here
             logger.debug(f"I is the found {old=} {self.genset.index(old)=}")
@@ -206,20 +233,32 @@ class DoubleSchubertAlgebraElement(Expr):
             logger.debug(f"{perm=}")
             transf = self.act(perm)
             logger.debug(f"{perm=} {transf=}")
-            logger.debug(f"{self.expand()=}")
-            logger.debug(f"{transf.expand().expand()=}")
-            transf2 = transf.coproduct([i for i in range(1,self.max_index()+1)],coeff_var=utils.NoneVar)
-            logger.debug(f"{transf2=}")
-            for (k1, k2), v in transf2.coeff_dict.items():
-                result += self._from_dict({k1: v}) * (new**k2[0].inv)
+            # logger.debug(f"{self.expand()=}")
+            # logger.debug(f"{transf.expand().expand()=}")
+            # transf2 = transf.coproduct([i for i in range(1,self.max_index()+1)],coeff_var=utils.NoneVar)
+            # logger.debug(f"{transf2=}")
+            # for (k1, k2), v in transf2.coeff_dict.items():
+            #     result += self._from_dict({k1: v}) * (new**k2[0].inv)
+            # don't want to go nuts
+            # res_dict = {}
+            for k, v in transf.coeff_dict.items():
+                perm = k[0]
+                coeff_var = k[1]
+                coeff_gens = utils.poly_ring(coeff_var)
+                # cached mul_poly
+                L = schub_lib.pull_out_var(mindex, perm)
+                for index_list, new_perm in L:
+                    result += self._from_dict({(new_perm, k[1]): v}).mult_poly(sympy.prod([(new - coeff_gens[index2]) for index2 in index_list]))
             return result
-        logger.debug(f"{old=} {self.genset.index(old)=}")
+        # TODO: elif old in coeff_vars somehow
+
+        #logger.debug(f"{old=} {self.genset.index(old)=}")
         return self
 
-            # for k, v in self.coeff_dict.items():
-            #     # can permute it to the end and substitute
-            #     perm = k[0]
-            #     coeff_var = k[1]
+        # for k, v in self.coeff_dict.items():
+        #     # can permute it to the end and substitute
+        #     perm = k[0]
+        #     coeff_var = k[1]
 
     @property
     def free_symbols(self):
@@ -228,14 +267,15 @@ class DoubleSchubertAlgebraElement(Expr):
             ret.update(v.free_symbols)
             perm = k[0]
             coeff_var = k[1]
-            if len(perm.descents())>0:
-                ret.update([self.genset[i] for i in range(1,max(perm.descents())+2)])
+            if len(perm.descents()) > 0:
+                ret.update([self.genset[i] for i in range(1, max(perm.descents()) + 2)])
             if coeff_var != utils.NoneVar and coeff_var != utils.ZeroVar:
                 genset2 = utils.poly_ring(coeff_var)
                 perm2 = ~perm
-                if len(perm2.descents())>0:
-                    ret.update([genset2[i] for i in range(1,max(perm2.descents())+2)])
+                if len(perm2.descents()) > 0:
+                    ret.update([genset2[i] for i in range(1, max(perm2.descents()) + 2)])
         return ret
+
     # def _eval_Eq(self, other):
     #     # this will prevent sympy from acting like an idiot
     #     return self.__eq__(other)
@@ -456,7 +496,7 @@ class DoubleSchubertAlgebraElement(Expr):
             else:
                 coprod_dict = yz.schub_coprod_double(key, indices, utils.poly_ring(var_str), utils.poly_ring(coeff_var))
             # print(f"{coprod_dict=}")
-            result_dict = add_perm_dict(result_dict, {((k1, var_str), (k2, coeff_var)): v*v2 for (k1, k2), v2 in coprod_dict.items()})
+            result_dict = add_perm_dict(result_dict, {((k1, var_str), (k2, coeff_var)): v * v2 for (k1, k2), v2 in coprod_dict.items()})
         basis = tsr.TensorAlgebraBasis(DoubleSchubertAlgebraElement_basis(gens1), DoubleSchubertAlgebraElement_basis(gens2))
         return basis._from_dict(result_dict)
 

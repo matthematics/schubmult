@@ -289,6 +289,7 @@ def reduce_coeff(u, v, w):
 
 
 def pull_out_var(vnum, v):
+    v = Permutation(v)
     vup = v
     if vnum >= len(v):
         return [[[], v]]
