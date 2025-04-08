@@ -6,7 +6,7 @@ from bisect import bisect_left
 from functools import cache
 from typing import ClassVar
 
-from symengine import symbols, sympify
+from symengine import SympifyError, symbols, sympify
 from sympy import Basic, Tuple
 from sympy.core.symbol import Str
 
@@ -58,7 +58,10 @@ class GeneratingSet(GeneratingSet_base):
 
     # index of v in the genset
     def index(self, v):
-        return self._index_lookup.get(v, -1)
+        try:
+            return self._index_lookup.get(v, self._index_lookup.get(sympify(v), -1))
+        except SympifyError:
+            return -1
 
     def __repr__(self):
         return f"GeneratingSet('{self.label}')"
@@ -144,7 +147,10 @@ class MaskedGeneratingSet(GeneratingSet_base):
         yield from [self[i] for i in range(len(self))]
 
     def index(self, v):
-        return self._index_lookup.get(v, -1)
+        try:
+            return self._index_lookup.get(v, self._index_lookup.get(sympify(v), -1))
+        except SympifyError:
+            return -1
 
     def __len__(self):
         return len(self.base_genset) - len(self.index_mask)
@@ -173,7 +179,10 @@ class CustomGeneratingSet(GeneratingSet_base):
         yield from [self[i] for i in range(len(self))]
 
     def index(self, v):
-        return self._index_lookup.get(v, -1)
+        try:
+            return self._index_lookup.get(v, self._index_lookup.get(sympify(v), -1))
+        except SympifyError:
+            return -1
 
     def __len__(self):
         return len(self.args[0])
