@@ -109,9 +109,9 @@ class MaskedGeneratingSet(GeneratingSet_base):
         mask_dict[0] = 0
         for i in range(1,len(gset._symbols_arr)):
             index = bisect_left(index_mask, i)
-            logger.debug(f"{index=}")
+            # logger.debug(f"{index=}")
             if index>=len(index_mask) or index_mask[index] != i:
-                logger.debug(f"{i - index} mapsto {i} and {index_mask=}")
+                # logger.debug(f"{i - index} mapsto {i} and {index_mask=}")
                 mask_dict[i - index] = i
             # if index>=len(index_mask) or index_mask[index] != i:
             #     mask_dict[cur_index] = i

@@ -174,6 +174,53 @@ class DoubleSchubertAlgebraElement(Expr):
     def _from_dict(self, _dict):
         return DoubleSchubertAlgebraElement(_dict, self.genset)
 
+    def divdiff(self, i):
+        return self._from_dict({(k[0].swap(i-1,i),k[1]): v for k, v in self.coeff_dict.items() if i-1 in k[0].descents()})
+
+    def simpleref(self, i):
+        return self + self.divdiff(i) * (self.genset[i+1] - self.genset[i])
+    
+    def act(self, perm):
+        perm = Permutation(perm)
+        dset = perm.descents()
+        if len(dset) == 0:
+            return self
+        i = next(iter(dset))
+        return self.simpleref(i+1).act(perm.swap(i, i+1))
+
+    def max_index(self):
+        return max([max([0] + [i+1 for i in k[0].descents()]) for k in self.coeff_dict.keys()])
+                   
+    def _eval_subs(self, old, new):
+
+        if self.genset.index(old) != -1:
+            # coproduct might help here
+            logger.debug(f"I is the found {old=} {self.genset.index(old)=}")
+            result = 0
+            index = self.genset.index(old)
+            mindex = self.max_index()
+            logger.debug(f"{mindex=}")
+            if mindex < index:
+                return self
+            perm = Permutation([]).swap(index - 1, self.max_index())
+            logger.debug(f"{perm=}")
+            transf = self.act(perm)
+            logger.debug(f"{perm=} {transf=}")
+            logger.debug(f"{self.expand()=}")
+            logger.debug(f"{transf.expand().expand()=}")
+            transf2 = transf.coproduct([i for i in range(1,self.max_index()+1)],coeff_var=utils.NoneVar)
+            logger.debug(f"{transf2=}")
+            for (k1, k2), v in transf2.coeff_dict.items():
+                result += self._from_dict({k1: v}) * (new**k2[0].inv)
+            return result
+        logger.debug(f"{old=} {self.genset.index(old)=}")
+        return self
+
+            # for k, v in self.coeff_dict.items():
+            #     # can permute it to the end and substitute
+            #     perm = k[0]
+            #     coeff_var = k[1]
+
     @property
     def free_symbols(self):
         ret = set()

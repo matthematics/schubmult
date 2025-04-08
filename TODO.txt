@@ -26,4 +26,6 @@ perm actions
 PERMUTATION CALL check
 
 free_symbols and sub
-sympy guardrails for GeneratingSet
+sympy guardrails for GeneratingSet check
+
+SEM basis
