@@ -29,3 +29,9 @@ free_symbols and sub
 sympy guardrails for GeneratingSet check
 
 SEM basis
+
+Convert poly permute monomial
+Fast basis change
+Fix subs 
+
+Change vars breaks if not positive

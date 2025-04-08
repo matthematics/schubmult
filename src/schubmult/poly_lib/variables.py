@@ -25,6 +25,7 @@ class GeneratingSet_base(Basic):
     def __len__(self):
         return NotImplemented
 
+
 # variable registry
 # TODO: ensure sympifies
 # TODO: masked generating set
@@ -36,6 +37,7 @@ class GeneratingSet(GeneratingSet_base):
 
     _index_pattern = re.compile("^([^_]+)_([0-9]+)$")
     _sage_index_pattern = re.compile("^([^0-9]+)([0-9]+)$")
+
     # is_Atom = True
     # TODO: masked generating set
     @staticmethod
@@ -50,7 +52,9 @@ class GeneratingSet(GeneratingSet_base):
         obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         return obj
 
-    #@property
+    def __call__(self, index):
+        """1-indexed"""
+        return self[index - 1]
 
     @property
     def label(self):
@@ -107,10 +111,10 @@ class MaskedGeneratingSet(GeneratingSet_base):
         # obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         mask_dict = {}
         mask_dict[0] = 0
-        for i in range(1,len(gset._symbols_arr)):
+        for i in range(1, len(gset._symbols_arr)):
             index = bisect_left(index_mask, i)
             # logger.debug(f"{index=}")
-            if index>=len(index_mask) or index_mask[index] != i:
+            if index >= len(index_mask) or index_mask[index] != i:
                 # logger.debug(f"{i - index} mapsto {i} and {index_mask=}")
                 mask_dict[i - index] = i
             # if index>=len(index_mask) or index_mask[index] != i:
@@ -134,11 +138,15 @@ class MaskedGeneratingSet(GeneratingSet_base):
         return tuple(self.args[1])
 
     def complement(self):
-        return MaskedGeneratingSet(self.base_genset, [i for i in range(1,len(self.base_genset)) if i not in set(self.index_mask)])
+        return MaskedGeneratingSet(self.base_genset, [i for i in range(1, len(self.base_genset)) if i not in set(self.index_mask)])
 
     @property
     def base_genset(self):
         return self.args[0]
+
+    def __call__(self, index):
+        """1-indexed"""
+        return self[index - 1]
 
     def __getitem__(self, index):
         return self.base_genset[self._mask[index]]
@@ -154,6 +162,7 @@ class MaskedGeneratingSet(GeneratingSet_base):
 
     def __len__(self):
         return len(self.base_genset) - len(self.index_mask)
+
 
 class CustomGeneratingSet(GeneratingSet_base):
     def __new__(cls, gens):
@@ -171,7 +180,6 @@ class CustomGeneratingSet(GeneratingSet_base):
         obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         return obj
 
-
     def __getitem__(self, index):
         return self._symbols_arr[index]
 
@@ -183,6 +191,10 @@ class CustomGeneratingSet(GeneratingSet_base):
             return self._index_lookup.get(v, self._index_lookup.get(sympify(v), -1))
         except SympifyError:
             return -1
+
+    def __call__(self, index):
+        """1-indexed"""
+        return self[index - 1]
 
     def __len__(self):
         return len(self.args[0])

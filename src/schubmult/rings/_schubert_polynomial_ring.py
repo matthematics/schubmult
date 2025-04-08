@@ -20,7 +20,7 @@ from schubmult.perm_lib import (
     inv,
 )
 from schubmult.poly_lib.poly_lib import xreplace_genvars
-from schubmult.poly_lib.variables import GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
+from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from schubmult.utils.logging import get_logger
 
 ## EMULATE POLYTOOLS
@@ -194,19 +194,6 @@ class DoubleSchubertAlgebraElement(Expr):
 
     def simpleref(self, i):
         return self + self.divdiff(i).mult_poly(self.genset[i + 1] - self.genset[i])
-        # result = self
-        # result2 = self.divdiff(i)
-        # res_dict2 = {}
-        # poly = self.genset[i+1] - self.genset[i]
-        # for k, v in result2.coeff_dict.items():
-        #     if k[1] == utils.ZeroVar or k[1] == utils.NoneVar:
-        #         dict2 = py.mult_poly_py({k[0]: v},poly,self.genset)
-        #     else:
-        #         dict2 = yz.mult_poly_double({k[0]: v}, poly, self.genset, utils.poly_ring(k[1]))
-        #     res_dict2 = add_perm_dict(res_dict2, self._from_dict(dict2))
-
-        # res_dict2 = add_perm_dict(res_dict2, result.coeff_dict)
-        # return self._from_dict(res_dict2)
 
     def act(self, perm):
         perm = Permutation(perm)
@@ -217,9 +204,10 @@ class DoubleSchubertAlgebraElement(Expr):
         return self.simpleref(i + 1).act(perm.swap(i, i + 1))
 
     def max_index(self):
-        return max([max([0] + [i + 1 for i in k[0].descents()]) for k in self.coeff_dict.keys()])
+        return max([max([0, *list(k[0].descents(zero_indexed=False))]) for k in self.coeff_dict.keys()])
 
     def _eval_subs(self, old, new):
+        result = 0
         if self.genset.index(old) != -1:
             # coproduct might help here
             logger.debug(f"I is the found {old=} {self.genset.index(old)=}")
@@ -229,10 +217,12 @@ class DoubleSchubertAlgebraElement(Expr):
             logger.debug(f"{mindex=}")
             if mindex < index:
                 return self
-            perm = Permutation([]).swap(index - 1, self.max_index())
+            # if already equal to the max index, we don't want to move it over
+            perm = Permutation([]).swap(index - 1, mindex)  # index to max index + 1
+            logger.debug(f"{mindex=}")
             logger.debug(f"{perm=}")
             transf = self.act(perm)
-            logger.debug(f"{perm=} {transf=}")
+            #logger.debug(f"{transf=}")
             # logger.debug(f"{self.expand()=}")
             # logger.debug(f"{transf.expand().expand()=}")
             # transf2 = transf.coproduct([i for i in range(1,self.max_index()+1)],coeff_var=utils.NoneVar)
@@ -246,14 +236,36 @@ class DoubleSchubertAlgebraElement(Expr):
                 coeff_var = k[1]
                 coeff_gens = utils.poly_ring(coeff_var)
                 # cached mul_poly
-                L = schub_lib.pull_out_var(mindex, perm)
+                L = schub_lib.pull_out_var(mindex+1, perm)
+                #logger.debug(f"{perm=} {L=}")
                 for index_list, new_perm in L:
                     result += self._from_dict({(new_perm, k[1]): v}).mult_poly(sympy.prod([(new - coeff_gens[index2]) for index2 in index_list]))
             return result
-        # TODO: elif old in coeff_vars somehow
 
-        #logger.debug(f"{old=} {self.genset.index(old)=}")
-        return self
+        for k, v in self.coeff_dict.items():
+            if k[1] == utils.ZeroVar or k[1] == utils.NoneVar:
+                add_dict = {k: v.subs(old, new)}
+            else:
+                coeff_genset = utils.poly_ring(k[1])
+                if coeff_genset.index(old) != -1:
+                    genset_list = [coeff_genset[i] for i in range(len(coeff_genset))]
+                    genset_list[coeff_genset.index(old)] = 0
+                    custom_genset = CustomGeneratingSet(genset_list)
+                    new_add_dict = {k2: sympify(v2).subs(old, new) for k2, v2 in yz.schubmult_double({(): v}, k[0], custom_genset, coeff_genset).items()}  # remove the variable
+                    add_dict = {}
+                    for k3, v3 in new_add_dict.items():
+                        # convert back to coeff_genset
+                        to_add_dict = {(k4, k[1]): v4 for k4, v4 in yz.schubmult_double({(): v3}, k3, coeff_genset, custom_genset).items()}
+                        add_dict = add_perm_dict(add_dict, to_add_dict)
+                else:
+                    add_dict = {k: sympify(v).subs(old, new)}
+            for k5, v5 in add_dict.items():
+                if any(self.genset.index(s) != -1 for s in sympify(v5).free_symbols):
+                    result += self._from_dict({k5: 1}).mult_poly(v5)
+                else:
+                    result += self._from_dict({k5: v5})
+            # check correct, change vars to zeroed coeff var for coeff
+        return result
 
         # for k, v in self.coeff_dict.items():
         #     # can permute it to the end and substitute
@@ -648,9 +660,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
             if x.is_Add or x.is_Mul:
                 return x.doit()
             if x.genset == genset:
-                logger.debug(f"{x.genset=} == {genset=}")
                 return x
-            logger.debug(f"{x=} {x.genset=}")
             raise ValueError("Different generating set")
         else:
             logger.debug(f"{x=}")

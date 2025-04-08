@@ -363,8 +363,10 @@ class Permutation(Basic):
         """
         return self[i-1]
 
-    def descents(self):
-        return self._s_perm.descents()
+    def descents(self, zero_indexed=True):
+        if zero_indexed:
+            return self._s_perm.descents()
+        return {i+1 for i in self._s_perm.descents()}
 
     def get_cycles(self):
         return self.get_cycles_cached()
