@@ -662,6 +662,9 @@ class DoubleSchubertAlgebraElement_basis(Basic):
             if x.genset == genset:
                 return x
             raise ValueError("Different generating set")
+        # poly
+        # elif isinstance(x, sympy.poly):
+
         else:
             logger.debug(f"{x=}")
             x = sympify(x)

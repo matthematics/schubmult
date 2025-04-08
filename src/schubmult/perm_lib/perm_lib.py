@@ -358,6 +358,12 @@ class Permutation(Basic):
         obj._perm = p
         return obj
 
+    @classmethod
+    def sorting_perm(cls, itera):
+        L = [i+1 for i in range(len(itera))]
+        L.sort(key=lambda i: itera[i - 1])
+        return Permutation(L)
+
     def __call__(self, i):
         """1-indexed
         """
