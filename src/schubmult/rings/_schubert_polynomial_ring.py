@@ -18,6 +18,7 @@ from schubmult.perm_lib import (
     Permutation,
     add_perm_dict,
     inv,
+    uncode,
 )
 from schubmult.poly_lib.poly_lib import xreplace_genvars
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
@@ -663,8 +664,28 @@ class DoubleSchubertAlgebraElement_basis(Basic):
                 return x
             raise ValueError("Different generating set")
         # poly
-        # elif isinstance(x, sympy.poly):
-
+        elif isinstance(x, sympy.Poly):
+            # eject generators we don't want
+            if not x.has_only_gens():
+                x, _ = sympy.poly_from_expr(x.as_expr())
+            new_gens = [g for g in x.gens if self.genset.index(g) != -1]
+            # end_gens = [g for g in x.gens if self.genset.index(g) == -1]
+            if len(new_gens) == 0:
+                logger.debug(f"Didn't find any gens in {x=}")
+                return self(x.as_expr())
+            new_gens.sort(key=lambda g: self.genset.index(g))
+            # expand_gens = [self.genset[i] for i in range(self.genset.index(new_gens[-1])+1)] + end_gens
+            x = sympy.poly(x, gens=tuple(new_gens))
+            dct = x.as_dict()
+            result = 0
+            for monom, coeff in dct.items():
+                srt_perm = Permutation.sorting_perm([-i for i in monom])
+                # srt_perm.reverse()
+                # srt_perm = Permutation(srt_perm)
+                # print(sorted(monom,reverse=True))
+                schub_perm = uncode(sorted(monom,reverse=True))
+                result += self._from_dict({(schub_perm, utils.NoneVar): coeff}).act(srt_perm)
+            return result
         else:
             logger.debug(f"{x=}")
             x = sympify(x)
