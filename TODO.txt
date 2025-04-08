@@ -12,9 +12,18 @@ DIV DIFF MAYBE NILHECKERING
 
 infinite parabolic rings
 
-PERM tests
+!!PERM tests!!
 SCHUB tests
 
 Switch off best effort positive
-
+Quantum correctness tests
 Coerce tensor rings
+document
+
+DOCS
+
+perm actions
+PERMUTATION CALL check
+
+free_symbols and sub
+sympy guardrails for GeneratingSet

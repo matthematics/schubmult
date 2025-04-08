@@ -3,6 +3,7 @@ from functools import cache, cached_property
 import symengine
 from symengine import Mul, Pow, sympify
 
+import schubmult.perm_lib.perm_lib as pl
 import schubmult.poly_lib.variables as vv
 
 # import vv.GeneratingSet, vv.base_index
@@ -55,6 +56,16 @@ zero = sympify(0)
 
 _vars = _gvars()
 
+def act(w, poly, genset):
+    if not isinstance(w, pl.Permutation):
+        w = pl.Permutation(w)
+    subs_dict = {}
+    if not isinstance(genset, vv.GeneratingSet_base):
+        genset = vv.CustomGeneratingSet(genset)
+    for s in poly.free_symbols:
+        if genset.index(s) != -1:
+            subs_dict[s] = genset[w(genset.index(s))]
+    return efficient_subs(poly, subs_dict)
 
 def elem_sym_func(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
     newk = k - udiff

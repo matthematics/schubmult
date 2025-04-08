@@ -174,6 +174,21 @@ class DoubleSchubertAlgebraElement(Expr):
     def _from_dict(self, _dict):
         return DoubleSchubertAlgebraElement(_dict, self.genset)
 
+    @property
+    def free_symbols(self):
+        ret = set()
+        for k, v in self.coeff_dict.items():
+            ret.update(v.free_symbols)
+            perm = k[0]
+            coeff_var = k[1]
+            if len(perm.descents())>0:
+                ret.update([self.genset[i] for i in range(1,max(perm.descents())+2)])
+            if coeff_var != utils.NoneVar and coeff_var != utils.ZeroVar:
+                genset2 = utils.poly_ring(coeff_var)
+                perm2 = ~perm
+                if len(perm2.descents())>0:
+                    ret.update([genset2[i] for i in range(1,max(perm2.descents())+2)])
+        return ret
     # def _eval_Eq(self, other):
     #     # this will prevent sympy from acting like an idiot
     #     return self.__eq__(other)

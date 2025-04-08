@@ -358,6 +358,11 @@ class Permutation(Basic):
         obj._perm = p
         return obj
 
+    def __call__(self, i):
+        """1-indexed
+        """
+        return self[i-1]
+
     def descents(self):
         return self._s_perm.descents()
 
