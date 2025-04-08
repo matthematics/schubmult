@@ -20,7 +20,6 @@ def _tensor_product_of_dicts(d1, d2):
 class TensorBasisElement(Expr):
     is_commutative = False
 
-    
     def __new__(cls, k1, k2, basis, tensor_symbol=" # "):
         obj = Expr.__new__(cls, k1, k2, basis)
         obj._elem1 = basis.basis1._from_dict({k1: 1})

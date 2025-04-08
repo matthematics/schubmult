@@ -84,15 +84,16 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
         this_dict = {}
         for k, v in dict2.items():
             for kd, vd in _dict.items():
-                did_positive = True
+                did_positive = False
                 if best_effort_positive:
                     try:
                         this_dict = add_perm_dict(this_dict, {k1: v1 * v * vd for k1, v1 in cached_positive_product(kd, k[0], _vstr, k[1]).items()})
+                        did_positive = True
                     except Exception:
                         logger.debug("Failed to compute")
                         did_positive = False
-                    if not did_positive:
-                        this_dict = add_perm_dict(this_dict, {k1: v1 * v * vd for k1, v1 in cached_product(kd, k[0], _vstr, k[1]).items()})
+                if not did_positive:
+                    this_dict = add_perm_dict(this_dict, {k1: v1 * v * vd for k1, v1 in cached_product(kd, k[0], _vstr, k[1]).items()})
         results = add_perm_dict(results, this_dict)
 
     by_var2 = {}
