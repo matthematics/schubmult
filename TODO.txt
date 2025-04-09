@@ -38,3 +38,8 @@ Change vars breaks if not positive
 
 Test if Poly technique is faster
 Results: higher degree and/or fewer terms, poly faster
+
+Use symengine for everything possible
+Basis instead of generating set
+classical schubpoly
+basis generates basis change
