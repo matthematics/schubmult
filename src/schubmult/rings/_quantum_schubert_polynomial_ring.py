@@ -9,6 +9,7 @@ from sympy.core.expr import Expr
 from sympy.core.kind import NumberKind
 from sympy.printing.str import StrPrinter
 
+import schubmult.rings._schubert_polynomial_ring as spr
 import schubmult.rings._utils as utils
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
@@ -17,13 +18,22 @@ from schubmult.perm_lib import (
     add_perm_dict,
     inv,
 )
-from schubmult.poly_lib.poly_lib import xreplace_genvars
+from schubmult.poly_lib.poly_lib import elem_sym_poly_q, xreplace_genvars
+from schubmult.poly_lib.schub_poly import schubpoly_from_elems
 from schubmult.poly_lib.variables import GeneratingSet, GeneratingSet_base
 from schubmult.rings._schubert_polynomial_ring import DoubleSchubertAlgebraElement
 from schubmult.schub_lib.quantum_double import schubpoly_quantum
 from schubmult.utils.logging import get_logger
 
 ## EMULATE POLYTOOLS
+
+
+def classical_elem_func(coeff_var):
+    def elem_func(p, k, vx, vy):
+        return spr.DSx(elem_sym_poly_q(p, k, vx, vy), coeff_var)
+
+    return elem_func
+
 
 _def_printer = StrPrinter({"order": "none"})
 # _def_printer = StrPrinter()
@@ -359,11 +369,22 @@ class QuantumDoubleSchubertAlgebraElement(Expr):
     def normalize_coefficients(self, coeff_var):
         return QDSx([1, 2], coeff_var) * self
 
-    def expand(self, *args, **kwargs):  # noqa: ARG002
+    def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
+        if not deep:
+            return self._from_dict({k: expand(v) for k, v in self.coeff_dict.items()})
         return sympy.sympify(expand(sympify(self.as_polynomial())))
 
     def as_polynomial(self):
         return sympy.sympify(Add(*[v * schubpoly_quantum(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
+
+    def as_classical(self):
+        result = 0
+        for k, v in self.coeff_dict.items():
+            result += v * schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), classical_elem_func(k[1]))
+        return result
+
+    def _eval_subs(self, old, new):
+        return self.as_classical().expand(deep=False).subs(old, new).expand(deep=False).as_quantum().expand(deep=False)
 
 
 # TODO: not a noncommutative symbol, something else

@@ -7,6 +7,7 @@ from sympy.core.expr import Expr
 from sympy.core.kind import NumberKind
 from sympy.printing.str import StrPrinter
 
+import schubmult.rings._quantum_schubert_polynomial_ring as qsr
 import schubmult.rings._tensor_schub_ring as tsr
 import schubmult.rings._utils as utils
 import schubmult.schub_lib.double as yz
@@ -20,9 +21,23 @@ from schubmult.perm_lib import (
     inv,
     uncode,
 )
-from schubmult.poly_lib.poly_lib import xreplace_genvars
+from schubmult.poly_lib.poly_lib import elem_sym_poly, xreplace_genvars
+from schubmult.poly_lib.schub_poly import schubpoly_from_elems
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from schubmult.utils.logging import get_logger
+
+# def quantum_elem_func(coeff_var):
+#     def elem_func(p, k, vx, vy):
+#         return DSx(elem_sym_poly_q(p, k, vx, vy), coeff_var)
+#     return elem_func
+
+
+def quantum_elem_func(coeff_var):
+    def elem_func(p, k, vx, vy):
+        return qsr.QDSx(elem_sym_poly(p, k, vx, vy), coeff_var)
+
+    return elem_func
+
 
 ## EMULATE POLYTOOLS
 
@@ -223,7 +238,7 @@ class DoubleSchubertAlgebraElement(Expr):
             logger.debug(f"{mindex=}")
             logger.debug(f"{perm=}")
             transf = self.act(perm)
-            #logger.debug(f"{transf=}")
+            # logger.debug(f"{transf=}")
             # logger.debug(f"{self.expand()=}")
             # logger.debug(f"{transf.expand().expand()=}")
             # transf2 = transf.coproduct([i for i in range(1,self.max_index()+1)],coeff_var=utils.NoneVar)
@@ -237,8 +252,8 @@ class DoubleSchubertAlgebraElement(Expr):
                 coeff_var = k[1]
                 coeff_gens = utils.poly_ring(coeff_var)
                 # cached mul_poly
-                L = schub_lib.pull_out_var(mindex+1, perm)
-                #logger.debug(f"{perm=} {L=}")
+                L = schub_lib.pull_out_var(mindex + 1, perm)
+                # logger.debug(f"{perm=} {L=}")
                 for index_list, new_perm in L:
                     result += self._from_dict({(new_perm, k[1]): v}).mult_poly(sympy.prod([(new - coeff_gens[index2]) for index2 in index_list]))
             return result
@@ -481,7 +496,9 @@ class DoubleSchubertAlgebraElement(Expr):
     def as_coefficients_dict(self):
         return self.coeff_dict
 
-    def expand(self, *args, **kwargs):  # noqa: ARG002
+    def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
+        if not deep:
+            return self._from_dict({k: expand(v) for k, v in self.coeff_dict.items()})
         return sympy.sympify(expand(sympify(self.as_polynomial())))
 
     def coproduct(self, indices, coeff_var="y", gname1=None, gname2=None):
@@ -578,6 +595,12 @@ class DoubleSchubertAlgebraElement(Expr):
     def as_polynomial(self):
         return sympy.sympify(Add(*[v * xreplace_genvars(cached_schubpoly(k[0]), self.genset, utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
 
+    def as_quantum(self):
+        result = 0
+        for k, v in self.coeff_dict.items():
+            result += v * schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), quantum_elem_func(k[1]))
+        return result
+
 
 # Atomic Schubert polynomial
 class DSchubPoly(DoubleSchubertAlgebraElement):
@@ -620,6 +643,12 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
         if self._key[1] == 0 or self._key[1] == utils.NoneVar:
             return printer.doprint(f"S{self.genset.label}({list(self._key[0])})")
         return printer.doprint(f"DS{self.genset.label}({list(self._key[0])}, {_varstr(self._key[1])})")
+
+
+# def elem_func(p, k, vx, vy):
+#     return DSx(elem_sym_poly_q(p, k, vx, vy), "y")
+
+# A = schubpoly_from_elems([4,1,3,2], DSx.genset, poly_ring("y"),elem_func)
 
 
 # None is faster to store
@@ -683,7 +712,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
                 # srt_perm.reverse()
                 # srt_perm = Permutation(srt_perm)
                 # print(sorted(monom,reverse=True))
-                schub_perm = uncode(sorted(monom,reverse=True))
+                schub_perm = uncode(sorted(monom, reverse=True))
                 result += self._from_dict({(schub_perm, utils.NoneVar): coeff}).act(srt_perm)
             return result
         else:
@@ -757,8 +786,7 @@ class SchubAdd(Add):
     def _sympystr(self, printer):
         return printer._print_Add(self)
 
-    def expand(self, *_, **__):
-        logger.debug(f"Pringles {self.args=}")
+    def expand(self, deep=True, *_, **__):  # noqa: ARG002
         return SchubAdd(*[sympy.expand(arg) for arg in self.args]).doit()
 
 
