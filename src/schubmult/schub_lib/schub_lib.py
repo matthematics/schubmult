@@ -1,3 +1,4 @@
+from functools import cache
 from itertools import chain
 
 import numpy as np
@@ -383,8 +384,8 @@ def kdown_perms(perm, monoperm, p, k):
         down_perm_list = down_perm_list2
     return full_perm_list
 
-
-def compute_vpathdicts(th, vmu, smpify=False):
+@cache
+def compute_vpathdicts_cached(th, vmu, smpify):
     vpathdicts = [{} for index in range(len(th))]
     vpathdicts[-1][vmu] = None
     thL = len(th)
@@ -418,6 +419,9 @@ def compute_vpathdicts(th, vmu, smpify=False):
                     v2 = sympify(v2)
                 vpathdicts2[i][key2].add((key, value[1], v2))
     return vpathdicts2
+
+def compute_vpathdicts(th, vmu, smpify=False):
+    return compute_vpathdicts_cached(tuple(th), vmu, smpify)
 
 
 def check_blocks(qv, parabolic_index):

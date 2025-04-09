@@ -64,6 +64,43 @@ def schubpoly_from_elems(v, var_x=None, var_y=None, elem_func=None):
         vpathsums = newpathsums
     return vpathsums.get(vmu, 0)
 
+def schubpoly_classical_from_elems(v, var_x=None, var_y=None, elem_func=None):
+    th = pl.theta(~pl.Permutation(v))
+    mu = pl.uncode(th)
+    vmu = pl.Permutation(v) * mu  # permtrim(mulperm([*v], mu))
+    if len(th) == 0:
+        return elem_func(0, 0, var_x, var_y)
+    while len(th) > 0 and th[-1] == 0:
+        th.pop()
+    vpathdicts = schub_lib.compute_vpathdicts(th, vmu)
+    vpathsums = {pl.Permutation([1, 2]): elem_func(0, 0, var_x, var_y)}
+    for index in range(len(th)):
+        mx_th = 0
+        newpathsums = {}
+        for vp in vpathdicts[index]:
+            for v2, vdiff, s in vpathdicts[index][vp]:
+                mx_th = max(mx_th, th[index] - vdiff)
+        for v in vpathdicts[index]:
+            sumval = vpathsums.get(v, 0)
+            if sumval == 0:
+                continue
+            for v2, vdiff, s in vpathdicts[index][v]:
+                newpathsums[v2] = newpathsums.get(
+                    v2,
+                    0,
+                ) + s * sumval * elem_func_func(
+                    th[index],
+                    index + 1,
+                    v,
+                    v2,
+                    vdiff,
+                    var_x,
+                    var_y,
+                    elem_func=elem_func,
+                )
+        vpathsums = newpathsums
+    return vpathsums.get(vmu, 0)
+
 
 def schubpoly(v, var2=GeneratingSet("y"), var3=GeneratingSet("z"), start_var=1):
     n = 0
