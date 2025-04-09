@@ -21,22 +21,52 @@ from schubmult.perm_lib import (
     inv,
     uncode,
 )
-from schubmult.poly_lib.poly_lib import elem_sym_poly, xreplace_genvars
+from schubmult.poly_lib.poly_lib import xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_from_elems
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from schubmult.utils.logging import get_logger
 
-# def quantum_elem_func(coeff_var):
-#     def elem_func(p, k, vx, vy):
-#         return DSx(elem_sym_poly_q(p, k, vx, vy), coeff_var)
-#     return elem_func
-
 
 def quantum_elem_func(coeff_var):
-    def elem_func(p, k, vx, vy):
-        return qsr.QDSx(elem_sym_poly(p, k, vx, vy), coeff_var)
+    def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0):
+        if p > k:
+            return 0
+        if p == 0:
+            return qsr.QDSx([], coeff_var)
+        if p == 1:
+            res = varl1[xstart] - varl2[ystart]
+            for i in range(1, k):
+                res += varl1[xstart + i] - varl2[ystart + i]
+            return res
+        if p == k:
+            res = (varl1[xstart] - varl2[ystart]) * (varl1[xstart + 1] - varl2[ystart])
+            for i in range(2, k):
+                res *= varl1[i + xstart] - varl2[ystart]
+            return res
+        mid = k // 2
+        xsm = xstart + mid
+        ysm = ystart + mid
+        kmm = k - mid
+        res = elem_sym_poly(p, mid, varl1, varl2, xstart, ystart) + elem_sym_poly(
+            p,
+            kmm,
+            varl1,
+            varl2,
+            xsm,
+            ysm,
+        )
+        for p2 in range(max(1, p - kmm), min(p, mid + 1)):
+            res += elem_sym_poly(p2, mid, varl1, varl2, xstart, ystart) * elem_sym_poly(
+                p - p2,
+                kmm,
+                varl1,
+                varl2,
+                xsm,
+                ysm - p2,
+            )
+        return res
+    return elem_sym_poly
 
-    return elem_func
 
 
 ## EMULATE POLYTOOLS

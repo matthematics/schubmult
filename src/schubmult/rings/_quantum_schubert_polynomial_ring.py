@@ -18,21 +18,26 @@ from schubmult.perm_lib import (
     add_perm_dict,
     inv,
 )
-from schubmult.poly_lib.poly_lib import elem_sym_poly_q, xreplace_genvars
+from schubmult.poly_lib.poly_lib import xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_from_elems
 from schubmult.poly_lib.variables import GeneratingSet, GeneratingSet_base
 from schubmult.rings._schubert_polynomial_ring import DoubleSchubertAlgebraElement
 from schubmult.schub_lib.quantum_double import schubpoly_quantum
 from schubmult.utils.logging import get_logger
 
+q_var = GeneratingSet("q")
+
 ## EMULATE POLYTOOLS
-
-
 def classical_elem_func(coeff_var):
-    def elem_func(p, k, vx, vy):
-        return spr.DSx(elem_sym_poly_q(p, k, vx, vy), coeff_var)
-
+    def elem_func(p, k, varl1, varl2):
+        if p == 0 and k >= 0:
+            return spr.DSx([], coeff_var)
+        if p < 0 or p > k:
+            return 0
+        return (varl1[k - 1] - varl2[k - p]) * elem_func(p - 1, k - 1, varl1, varl2) + elem_func(p, k - 1, varl1, varl2) + q_var[k - 1] * elem_func(p - 2, k - 2, varl1, varl2)
     return elem_func
+
+
 
 
 _def_printer = StrPrinter({"order": "none"})
