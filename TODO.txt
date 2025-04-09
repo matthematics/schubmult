@@ -35,3 +35,6 @@ Fast basis change
 Fix subs 
 
 Change vars breaks if not positive
+
+Test if Poly technique is faster
+Results: higher degree and/or fewer terms, poly faster
