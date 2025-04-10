@@ -13,7 +13,7 @@ import schubmult.schub_lib.quantum_double as yz
 from schubmult.perm_lib import (
     Permutation,
 )
-from schubmult.poly_lib.poly_lib import xreplace_genvars
+from schubmult.poly_lib.poly_lib import elem_sym_poly_q, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_from_elems
 from schubmult.poly_lib.variables import GeneratingSet, GeneratingSet_base
 from schubmult.rings._schubert_polynomial_ring import DoubleSchubertAlgebraElement
@@ -207,7 +207,7 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
 
     @cache
     def cached_schubpoly(self, k):
-        return yz.schubpoly_quantum(k[0], self.genset, utils.poly_ring(k[1]))
+        return schubpoly_from_elems(k[0],self.genset,utils.poly_ring(k[1]),elem_func=elem_sym_poly_q)# yz.schubpoly_quantum(k[0], self.genset, utils.poly_ring(k[1]))
 
     @cache
     def cached_positive_product(self, u, v, va, vb):
@@ -229,7 +229,8 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
     def mult_poly_double(self):
         return yz.mult_poly_q_double
 
-    def __call__(self, x, cv=None, genset=None):
+    def __call__(self, x, cv=None):
+        genset = self.genset
         logger.debug(f"{x=} {type(x)=}")
         if not genset:
             genset = self.genset

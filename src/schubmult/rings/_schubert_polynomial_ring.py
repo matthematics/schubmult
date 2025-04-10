@@ -21,7 +21,7 @@ from schubmult.perm_lib import (
     inv,
     uncode,
 )
-from schubmult.poly_lib.poly_lib import xreplace_genvars
+from schubmult.poly_lib.poly_lib import elem_sym_poly, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_classical_from_elems
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from schubmult.utils.logging import get_logger
@@ -677,14 +677,14 @@ class DoubleSchubertAlgebraElement_basis(Basic):
 
         return elem_sym_poly
 
-    @cache
-    def cached_schubpoly_oink(self, u):
-        return yz.schubpoly(u)
+    # @cache
+    # def cached_schubpoly_oink(self, u):
+    #     return yz.schubpoly(u)
 
     @cache
     def cached_schubpoly(self, k):
         # return yz.schubpoly(u)
-        return xreplace_genvars(self.cached_schubpoly_oink(k[0]), self.genset, utils.poly_ring(k[1]))
+        return schubpoly_classical_from_elems(k[0],self.genset,utils.poly_ring(k[1]),elem_func=elem_sym_poly)
 
     def __call__(self, x, cv=None):
         genset = self.genset
@@ -770,7 +770,7 @@ def get_postprocessor(cls):
     return None
 
 
-Basic._constructor_postprocessor_mapping[DoubleSchubertAlgebraElement] = {
+Basic._constructor_postprocessor_mapping[BasisSchubertAlgebraElement] = {
     "Mul": [get_postprocessor(Mul)],
     "Add": [get_postprocessor(Add)],
 }

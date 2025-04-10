@@ -149,6 +149,10 @@ class MaskedGeneratingSet(GeneratingSet_base):
         return self[index - 1]
 
     def __getitem__(self, index):
+        if isinstance(index, slice):
+            start = index.start if index.start is not None else 0
+            stop = index.stop if index.stop is not None else len(self)
+            return [self[ii] for ii in range(start, stop)]
         return self.base_genset[self._mask[index]]
 
     def __iter__(self):

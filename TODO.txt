@@ -43,3 +43,5 @@ Use symengine for everything possible
 Basis instead of generating set
 classical schubpoly
 basis generates basis change
+
+schubpoly_quantum is slow
