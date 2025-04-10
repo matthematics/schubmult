@@ -318,7 +318,7 @@ class BasisSchubertAlgebraElement(Expr):
         return sympy.sympify(expand(sympify(self.as_polynomial())))
 
     def as_polynomial(self):
-        return sympy.sympify(Add(*[v * xreplace_genvars(self.basis.cached_schubpoly(k[0]), self.genset, utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
+        return sympy.sympify(Add(*[v * self.basis.cached_schubpoly(k) for k, v in self.coeff_dict.items()]))
 
     def as_classical(self):
         return self.basis.in_classical_basis(self)
@@ -678,8 +678,13 @@ class DoubleSchubertAlgebraElement_basis(Basic):
         return elem_sym_poly
 
     @cache
-    def cached_schubpoly(self, u):
+    def cached_schubpoly_oink(self, u):
         return yz.schubpoly(u)
+
+    @cache
+    def cached_schubpoly(self, k):
+        # return yz.schubpoly(u)
+        return xreplace_genvars(self.cached_schubpoly_oink(k[0]), self.genset, utils.poly_ring(k[1]))
 
     def __call__(self, x, cv=None):
         genset = self.genset

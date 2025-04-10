@@ -206,8 +206,8 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
         return schubpoly_from_elems(perm, self.genset, utils.poly_ring(coeff_var), self.classical_elem_func(coeff_var))
 
     @cache
-    def cached_schubpoly(self, u):
-        return yz.schubpoly_quantum(u, self.genset, utils.poly_ring("y"))
+    def cached_schubpoly(self, k):
+        return yz.schubpoly_quantum(k[0], self.genset, utils.poly_ring(k[1]))
 
     @cache
     def cached_positive_product(self, u, v, va, vb):
