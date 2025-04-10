@@ -15,6 +15,20 @@ def test_schub_expand():
     assert expand((x_1* QDSx([3, 4, 1, 2])).expand()) == expand(y_3 * QDSx([3, 4, 1, 2]).expand() + QDSx([4, 3, 1, 2]).expand())
 
 
+def test_subs():
+    from sympy import expand
+    from schubmult.rings import QDSx
+    from schubmult import GeneratingSet
+    x = GeneratingSet("x")
+    y = GeneratingSet("y")
+    perm = [4, 6, 1, 2, 3, 5]
+    old = x[5]
+    new = x[1]
+    assert expand(QDSx(perm,"z").subs(old, new) - QDSx(perm,"z").as_polynomial().subs(old, new)) == 0
+    old = y[5]
+    new = 3
+    assert expand(QDSx(perm,"z").subs(old, new) - QDSx(perm,"z").as_polynomial().subs(old, new)) == 0
+
 # def test_coproduct():
 #     """
 #     Test coproduct
