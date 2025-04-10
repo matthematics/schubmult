@@ -385,8 +385,12 @@ class QuantumDoubleSchubertAlgebraElement(Expr):
     def as_classical(self):
         result = 0
         for k, v in self.coeff_dict.items():
-            result += v * self.basis.quantum_schubpoly_as_classical(k[0], k[1])
+            result += v * self.quantum_schubpoly_as_classical(k[0], k[1])
         return result
+
+    @cache
+    def quantum_schubpoly_as_classical(self, perm, coeff_var="y"):
+        return schubpoly_from_elems(perm, self.genset, utils.poly_ring(coeff_var), classical_elem_func(coeff_var))
 
     def _eval_subs(self, old, new):
         return self.as_classical().expand(deep=False).subs(old, new).expand(deep=False).as_quantum().expand(deep=False)

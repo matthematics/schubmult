@@ -94,6 +94,7 @@ def _mul_schub_dicts(dict1, dict2, best_effort_positive=True):
                 to_mul = v * vd
                 if best_effort_positive:
                     try:
+                        # logger.critical(f"{to_mul=} {kd=} {k=}")
                         this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in cached_positive_product(kd, k[0], _vstr, k[1]).items()})
                         did_positive = True
                     except Exception:
@@ -143,13 +144,14 @@ class DoubleSchubertAlgebraElement(Expr):
     # default_coeff_var = "y"
 
     def __new__(cls, _dict, basis):
-        _dict = {k: v for k, v in _dict if expand(v) != 0}
+        _dict = {k: v for k, v in _dict.items() if expand(v) != 0}
         return DoubleSchubertAlgebraElement.__xnew_cached__(cls, sympy.Dict(_dict), basis)
 
     @staticmethod
     def __xnew__(_class, _dict, basis):
         obj = Expr.__new__(_class, _dict, basis)
         obj._dict = {k: sympify(v) for k, v in _dict.items()}
+        return obj
 
     @staticmethod
     @cache
@@ -333,7 +335,7 @@ class DoubleSchubertAlgebraElement(Expr):
         return printer.doprint(
             sympy.Add(
                 *[
-                    self.coeff_dict[k] if k[0] == Permutation([]) else sympy.Mul(self.coeff_dict[k], DSchubPoly(k, self.genset))
+                    self.coeff_dict[k] if k[0] == Permutation([]) else sympy.Mul(self.coeff_dict[k], DSchubPoly(k, self.basis))
                     for k in sorted(self.coeff_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))
                 ],
             ),
@@ -584,8 +586,7 @@ class DoubleSchubertAlgebraElement(Expr):
     def as_quantum(self):
         result = 0
         for k, v in self.coeff_dict.items():
-            result += v * self.basis.quantum_schubpoly(k[0], coeff_var=k[1])
-            # schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), quantum_elem_func(k[1]))
+            result += v * self.basis.quantum_schubpoly(k[0], k[1])
         return result
 
 
@@ -605,6 +606,7 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
         obj._key = k
         obj._genset = basis.genset
         obj._coeff_dict = _coeff_dict
+        obj._basis = basis
         return obj
 
     # @property
@@ -617,7 +619,7 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
 
     @property
     def args(self):
-        return (sympy.Tuple(*self._key), self.basis)
+        return (sympy.Tuple(*self._key), self._basis)
 
     @staticmethod
     @cache
