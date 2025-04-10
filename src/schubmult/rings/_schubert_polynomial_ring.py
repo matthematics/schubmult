@@ -672,7 +672,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
             return res
 
         return elem_sym_poly
-    
+
     @cache
     def cached_schubpoly(self, u):
         return yz.schubpoly(u)
