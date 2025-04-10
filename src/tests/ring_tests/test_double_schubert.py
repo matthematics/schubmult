@@ -90,12 +90,12 @@ def test_subs():
     from schubmult.rings import DSx
     from schubmult import GeneratingSet
     x = GeneratingSet("x")
-    y = GeneratingSet("y")
+    z = GeneratingSet("z")
     perm = [4, 6, 1, 2, 3, 5]
     old = x[5]
     new = x[1]
     assert expand(DSx(perm,"z").subs(old, new) - DSx(perm,"z").as_polynomial().subs(old, new)) == 0
-    old = y[5]
+    old = z[1]
     new = 3
     assert expand(DSx(perm,"z").subs(old, new) - DSx(perm,"z").as_polynomial().subs(old, new)) == 0
 # def test_coerce():

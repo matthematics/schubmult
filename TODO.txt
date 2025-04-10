@@ -47,3 +47,5 @@ basis generates basis change
 schubpoly_quantum is slow
 
 more tests
+
+subs faster, do better with dense product
