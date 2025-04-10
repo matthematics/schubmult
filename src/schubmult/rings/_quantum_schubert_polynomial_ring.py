@@ -187,9 +187,10 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
         return result
 
     def classical_elem_func(self, coeff_var):
+        basis = spr.DoubleSchubertAlgebraElement_basis(self.genset)
         def elem_func(p, k, varl1, varl2):
             if p == 0 and k >= 0:
-                return spr.DSx([], coeff_var)
+                return basis([], coeff_var)
             if p < 0 or p > k:
                 return 0
             return (varl1[k - 1] - varl2[k - p]) * elem_func(p - 1, k - 1, varl1, varl2) + elem_func(p, k - 1, varl1, varl2) + q_var[k - 1] * elem_func(p - 2, k - 2, varl1, varl2)

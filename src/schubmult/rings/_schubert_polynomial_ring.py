@@ -61,7 +61,7 @@ def _mul_schub_dicts(dict1, dict2, basis, best_effort_positive=True):
 
     none_dict = {}
     for k, v in dict1.items():
-        if k[1] == utils.NoneVar or k[1] == utils.ZeroVar:
+        if k[1] == utils.NoneVar:  # or k[1] == utils.ZeroVar:
             none_dict[k[0]] = v
         else:
             if k[1] not in by_var:
@@ -92,7 +92,7 @@ def _mul_schub_dicts(dict1, dict2, basis, best_effort_positive=True):
     by_var2 = {}
     none_dict2 = {}
     for k, v in dict2.items():
-        if k[1] == utils.NoneVar or k[1] == utils.ZeroVar:
+        if k[1] == utils.NoneVar:  # or k[1] == utils.ZeroVar:
             none_dict2[k[0]] = v
         else:
             if k[1] not in by_var2:
@@ -114,10 +114,11 @@ def _mul_schub_dicts(dict1, dict2, basis, best_effort_positive=True):
 
     return results
 
+
 class BasisSchubertAlgebraElement(Expr):
     def __new__(cls, _dict, basis):
         # assume dict is cleaned
-        #_dict = {k: v for k, v in _dict.items() if expand(v) != 0}
+        # _dict = {k: v for k, v in _dict.items() if expand(v) != 0}
         return BasisSchubertAlgebraElement.__xnew_cached__(cls, sympy.Dict(_dict), basis)
 
     @staticmethod
@@ -303,11 +304,13 @@ class BasisSchubertAlgebraElement(Expr):
 
     @cache
     def change_vars(self, cv):
-        result = {}
+        # result = {}
         # fix
-        for k, v in self.coeff_dict.items():
-            result = add_perm_dict(result, {k1: v1 * v for k1, v1 in self.basis.cached_positive_product(Permutation([]), k[0], cv, k[1]).items()})
-        return self.basis._from_dict(result)
+        # for k, v in self.coeff_dict.items():
+        #     result = add_perm_dict(result, {k1: v1 * v for k1, v1 in self.basis.cached_positive_product(Permutation([]), k[0], cv, k[1]).items()})
+        # # result = {(k, cv): v for k, v in self.basis.mul_double(Permutation([]),utils.poly_ring)}
+        # return self.basis._from_dict(result)
+        return self.basis([], cv) * self
 
     def as_coefficients_dict(self):
         return self.coeff_dict
@@ -487,7 +490,6 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
     #             result[k] = result.get(k, 0) + sympify(v).subs(b_old, b_new)
     #     return self.basis._from_dict(result)
 
-
     def coproduct(self, indices, coeff_var="y", gname1=None, gname2=None):
         result_dict = {}
         if gname1 is None:
@@ -517,8 +519,6 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
         basis = tsr.TensorAlgebraBasis(DoubleSchubertAlgebraElement_basis(gens1), DoubleSchubertAlgebraElement_basis(gens2))
         return basis._from_dict(result_dict)
 
-
-
     # def normalize_coefficients(self, coeff_var):
     #     return DSx([1, 2], coeff_var) * self
 
@@ -532,6 +532,7 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
     @cached_property
     def max_gens(self):
         return max([max(k[0].descents()) for k in self.coeff_dict.keys()])
+
 
 # Atomic Schubert polynomial
 class DSchubPoly(DoubleSchubertAlgebraElement):
@@ -637,11 +638,12 @@ class DoubleSchubertAlgebraElement_basis(Basic):
         return yz.mult_poly_double
 
     def quantum_elem_func(self, coeff_var):
+        basis = qsr.QuantumDoubleSchubertAlgebraElement_basis(self.genset)
         def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0):
             if p > k:
                 return 0
             if p == 0:
-                return qsr.QDSx([], coeff_var)
+                return basis([], coeff_var)
             if p == 1:
                 res = varl1[xstart] - varl2[ystart]
                 for i in range(1, k):
@@ -684,7 +686,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
     @cache
     def cached_schubpoly(self, k):
         # return yz.schubpoly(u)
-        return schubpoly_classical_from_elems(k[0],self.genset,utils.poly_ring(k[1]),elem_func=elem_sym_poly)
+        return schubpoly_classical_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=elem_sym_poly)
 
     def __call__(self, x, cv=None):
         genset = self.genset
