@@ -56,7 +56,7 @@ def _varstr(v):
 #     return DoubleSchubertAlgebraElement(coeff_dict)
 
 
-def _mul_schub_dicts(dict1, dict2, basis, best_effort_positive=False):
+def _mul_schub_dicts(dict1, dict2, basis, best_effort_positive=True):
     by_var = {}
 
     none_dict = {}
@@ -339,7 +339,7 @@ class BasisSchubertAlgebraElement(Expr):
         return sympy.sympify(expand(sympify(self.as_polynomial())))
 
     def as_polynomial(self):
-        return Add(*[v * self.basis.cached_schubpoly(k) for k, v in self.coeff_dict.items()])
+        return sympy.sympify(Add(*[v * self.basis.cached_schubpoly(k) for k, v in self.coeff_dict.items()]))
 
     def as_classical(self):
         return self.basis.in_classical_basis(self)

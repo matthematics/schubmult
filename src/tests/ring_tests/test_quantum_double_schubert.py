@@ -31,11 +31,15 @@ def test_subs():
     assert expand(A - B) == S.Zero
     old = z[1]
     new = 3
-    A = QDSx(perm,"z").subs(old, new).as_polynomial()
+    print(f"{perm=}")
+    A = QDSx(perm,"z").subs(old, new).expand(deep=False)
+    print(f"{perm=}")
     B = QDSx(perm,"z").as_polynomial().subs(old, new)
-    C = expand(A - B)
+    print(f"{perm=}")
+    C = expand(A.as_polynomial() - B)
     print(f"{C=}")
-    assert sympy.expand(C) == 0
+    assert C == 0
+    
 
 # def test_coproduct():
 #     """

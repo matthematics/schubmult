@@ -16,11 +16,7 @@ from schubmult.perm_lib import (
 from schubmult.poly_lib.poly_lib import elem_sym_poly_q, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_from_elems
 from schubmult.poly_lib.variables import GeneratingSet, GeneratingSet_base
-from schubmult.rings._schubert_polynomial_ring import DoubleSchubertAlgebraElement
 from schubmult.utils.logging import get_logger
-
-q_var = GeneratingSet("q")
-
 
 ## EMULATE POLYTOOLS
 
@@ -182,12 +178,12 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
 
     def classical_elem_func(self, coeff_var):
         basis = spr.DoubleSchubertAlgebraElement_basis(self.genset)
-
+        q_var = yz._vars.q_var
         def elem_func(p, k, varl1, varl2):
             if p == 0 and k >= 0:
                 return basis([], coeff_var)
             if p < 0 or p > k:
-                return 0
+                return basis(0, coeff_var)
             return (varl1[k - 1] - varl2[k - p]) * elem_func(p - 1, k - 1, varl1, varl2) + elem_func(p, k - 1, varl1, varl2) + q_var[k - 1] * elem_func(p - 2, k - 2, varl1, varl2)
 
         return elem_func
@@ -255,7 +251,7 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
                 elem = QuantumDoubleSchubertAlgebraElement(x.coeff_dict, self)  # , self)
             else:
                 return self(x.expand(), cv, genset)
-        elif isinstance(x, DoubleSchubertAlgebraElement):
+        elif isinstance(x, spr.DoubleSchubertAlgebraElement):
             if x.genset == self.genset:
                 return self(x.expand(), cv, genset)
         else:
