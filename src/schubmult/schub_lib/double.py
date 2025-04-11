@@ -262,7 +262,7 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
                 toadd *= var2[i + 1] - var3[vlist[i][j]]
         toadd *= schubpoly(vp, var2, var3, len(vlist) + 1)
         ret += toadd
-    val = ret
+    return ret
     # logger.debug("Recording line number")
     # schub_val = schubmult_one(u, v, var2, var3)
     # val_ret = schub_val.get(perm, 0)
@@ -270,7 +270,6 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
     #     # logger.debug(f"{schub_val=}")
     #     # logger.debug(f"{val=} {u=} {v=} {var2[1]=} {var3[1]=}  {perm=} {schub_val.get(perm,0)=}")
     # logger.debug(f"good to go {ret=}")
-    return val
 
 
 def dualpieri(mu, v, w):
@@ -760,10 +759,6 @@ def find_base_vectors(monom_list, var2, var3, depth):
 
 def compute_positive_rep(val, var2=GeneratingSet("y"), var3=GeneratingSet("z"), msg=False, do_pos_neg=True):
     do_pos_neg = False
-    from schubmult.utils.logging import get_logger, init_logging
-
-    init_logging(True)
-    logger = get_logger(__name__)
     notint = False
     try:
         val2 = int(expand(val))
@@ -1064,12 +1059,11 @@ def posify(
         # logger.debug("Recording line number")
         if sign_only:
             return 0
-        val = dualcoeff(u, v, w, var2, var3)
+        return dualcoeff(u, v, w, var2, var3)
         # if expand(val - oldval) != 0:
         # logger.debug("This is bad")
         # logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=} {will_formula_work(v,u)=} {dominates(u,w)=}")
         # logger.debug(f"Returning {u2=} {v2=} {w2=} {val=}")
-        return val
     if inv(w) - inv(u) == 1:
         # logger.debug("Recording line number")
         if sign_only:

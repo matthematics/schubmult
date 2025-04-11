@@ -245,8 +245,7 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
                             )
                             if val2 is None:
                                 raise Exception
-                except Exception as e:
-                    # logger.debug(f"Exception: {e}")
+                except Exception:
                     import traceback
                     traceback.print_exc()
         if expand(val - val2) != 0:

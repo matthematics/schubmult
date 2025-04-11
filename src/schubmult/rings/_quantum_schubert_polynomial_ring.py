@@ -3,7 +3,7 @@
 from functools import cache
 
 import sympy
-from symengine import S, expand, sympify
+from symengine import S, sympify
 from sympy import Basic
 
 import schubmult.rings._schubert_polynomial_ring as spr
@@ -275,11 +275,9 @@ class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_ba
         return QuantumDoubleSchubertAlgebraElement_basis.__new__(cls, genset)
 
     def _from_single_dict(self, _dict):
-        print("reffledoffer")
         return QuantumDoubleSchubertAlgebraElement({(k, utils.NoneVar): v for k,v in _dict.items()}, self)
 
     def __call__(self, x):
-        print(f"pickels {x=}")
         genset = self.genset
         # logger.debug(f"{x=} {type(x)=}")
         if not genset:
@@ -309,7 +307,6 @@ class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_ba
             if x.genset == self.genset:
                 return x.as_quantum()
         else:
-            print("fingle")
             x = sympify(x)
             result = py.mult_poly_q({Permutation([]): 1}, x, genset)
             elem = self._from_single_dict(result)

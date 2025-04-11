@@ -1,7 +1,7 @@
 from functools import cache, cached_property
 
 import sympy
-from symengine import Add, Mul, S, expand, sympify
+from symengine import Add, S, expand, sympify
 from sympy import Basic
 from sympy.core.expr import Expr
 from sympy.core.kind import NumberKind
@@ -156,11 +156,9 @@ class BasisSchubertAlgebraElement(Expr):
 
     def mult_poly(self, poly):
         res_dict2 = {}
-        print("pickles")
         # poly = self.genset[i + 1] - self.genset[i]
         for k, v in self.coeff_dict.items():
             if k[1] == utils.ZeroVar or k[1] == utils.NoneVar:
-                print("frofulated bagle")
                 dict2 = self.basis.mult_poly_single({k[0]: v}, poly, self.genset)
             else:
                 dict2 = self.basis.mult_poly_double({k[0]: v}, poly, self.genset, utils.poly_ring(k[1]))
@@ -234,12 +232,9 @@ class BasisSchubertAlgebraElement(Expr):
         return self.basis._from_dict(double_dict)
 
     def __mul__(self, other):
-        print(f" pingle {type(other)=}")
         try:
             o = sympify(other)
-            bong =self.mult_poly(o)
-            print("{bong=}")
-            return bong
+            return self.mult_poly(o)
         except Exception:
             try:
                 other = self.basis(other)
@@ -250,12 +245,9 @@ class BasisSchubertAlgebraElement(Expr):
 
     def __rmul__(self, other):
         # logger.debug(f"{type(other)=}")
-        print(f"rmul {type(other)=}")
         try:
             o = sympify(other)
-            bong =self.mult_poly(o)
-            print(f"{bong=}")
-            return bong
+            return self.mult_poly(o)
         except Exception:
             try:
                 other = self.basis(other)

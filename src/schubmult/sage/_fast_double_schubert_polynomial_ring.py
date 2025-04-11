@@ -19,7 +19,7 @@ from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sympy import sympify
 
-import schubmult.perm_lib as pl
+import schubmult.perm_lib.perm_lib as pl
 
 # from . import (
 #     FastSchubertPolynomialRing_base,
