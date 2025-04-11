@@ -113,7 +113,7 @@ def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, 
                 _display(
                     f"error; write to schubmult@gmail.com with the case {perms=} {perm=} {val=} {check_val=}",
                 )
-                logger.debug("Yep it's here")
+                # logger.debug("Yep it's here")
                 exit(1)
     return val
 

@@ -24,10 +24,11 @@ def test_subs():
     perm = [4, 6, 1, 2, 3, 5]
     old = x[5]
     new = x[1]
-    assert expand(QDSx(perm,"z").subs(old, new) - QDSx(perm,"z").as_polynomial().subs(old, new)) == 0
+    print("TODO! CHECK THIS TEST POLYNOMIAL COERCION!")
+    assert expand(QDSx(perm,"z").subs(old, new).as_polynomial() - QDSx(perm,"z").as_polynomial().subs(old, new)) == 0
     old = z[1]
     new = 3
-    assert expand(QDSx(perm,"z").subs(old, new) - QDSx(perm,"z").as_polynomial().subs(old, new)) == 0
+    assert expand(QDSx(perm,"z").subs(old, new).as_polynomial() - QDSx(perm,"z").as_polynomial().subs(old, new)) == 0
 
 # def test_coproduct():
 #     """

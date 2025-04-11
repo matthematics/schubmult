@@ -103,9 +103,9 @@ def single_variable(coeff_dict, varnum, var2=_vars.var2, q_var=_vars.q_var):
 def mult_poly_q_double(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var):
     if not isinstance(var_x, GeneratingSet_base):
         var_x = CustomGeneratingSet(var_x)
-    logger.debug(f"{poly=} {list(var_x)=}")
+    # logger.debug(f"{poly=} {list(var_x)=}")
     if var_x.index(poly) != -1:
-        logger.debug(f"yay {var_x.index(poly)=}")
+        # logger.debug(f"yay {var_x.index(poly)=}")
         return single_variable(coeff_dict, var_x.index(poly), var_y, q_var)
     if isinstance(poly, Mul):
         ret = coeff_dict
@@ -191,25 +191,25 @@ def schubmult_q_double_pair_generic(perm1, perm2):
 
 @cache
 def schubmult_q_generic_partial_posify(u2, v2):
-    logger.debug("Line number")
+    # logger.debug("Line number")
     return {w2: q_partial_posify_generic(val, u2, v2, w2) for w2, val in schubmult_q_double_pair_generic(u2, v2).items()}
 
 def q_posify(u, v, w, val, var2, var3, q_var, msg):
-    logger.debug(f"Line number {val=} {u=} {v=} {w=}")
+    # logger.debug(f"Line number {val=} {u=} {v=} {w=}")
     try:
         val2 = int(expand(val))
     except Exception:
-        logger.debug("Line number")
+        # logger.debug("Line number")
         val2 = 0
         q_dict = factor_out_q_keep_factored(val)
-        logger.debug(f"{q_dict=}")
-        logger.debug("Line number")
+        # logger.debug(f"{q_dict=}")
+        # logger.debug("Line number")
         for q_part in q_dict:
             try:
                 val2 += q_part * int(q_dict[q_part])
             except Exception:
                 try:
-                    logger.debug("Line number")
+                    # logger.debug("Line number")
                     if code(~v) == medium_theta(~v):
                         val2 += q_part * q_dict[q_part]
                     else:
@@ -224,7 +224,7 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
                         )
                         if q_part2 == 1:
                             # reduced to classical coefficient
-                            logger.debug(f"{u=} {v=} {w=} {u2=} {v2=} {w2=} {q_part=} {q_dict[q_part]=}")
+                            # logger.debug(f"{u=} {v=} {w=} {u2=} {v2=} {w2=} {q_part=} {q_dict[q_part]=}")
                             val2 += q_part * norm_yz.posify(
                                 q_dict[q_part],
                                 u2,
@@ -246,11 +246,11 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
                             if val2 is None:
                                 raise Exception
                 except Exception as e:
-                    logger.debug(f"Exception: {e}")
+                    # logger.debug(f"Exception: {e}")
                     import traceback
                     traceback.print_exc()
         if expand(val - val2) != 0:
-            logger.debug("Different")
+            # logger.debug("Different")
             raise Exception
     return val2
 
@@ -366,9 +366,9 @@ def q_partial_posify_generic(val, u, v, w):
         val2 = int(expand(val))
     except Exception:
         val2 = 0
-        logger.debug(f"{val=}")
+        # logger.debug(f"{val=}")
         q_dict = factor_out_q_keep_factored(val)
-        logger.debug(f"{q_dict=}")
+        # logger.debug(f"{q_dict=}")
         for q_part in q_dict:
             try:
                 val2 += q_part * int(q_dict[q_part])
@@ -388,7 +388,7 @@ def q_partial_posify_generic(val, u, v, w):
                         )
                         if q_part2 == 1:
                             # reduced to classical coefficient
-                            logger.debug(f"{u=} {v=} {w=} {u2=} {v2=} {w2=} {q_part=} {q_dict[q_part]=}")
+                            # logger.debug(f"{u=} {v=} {w=} {u2=} {v2=} {w2=} {q_part=} {q_dict[q_part]=}")
                             val2 += q_part * norm_yz.posify_generic_partial(
                                 q_dict[q_part],
                                 u2,
@@ -836,19 +836,19 @@ def factor_out_q_keep_factored(poly, q_var=_vars.q_var):
     #     return ret
     if not isinstance(q_var, GeneratingSet_base):
         q_var = CustomGeneratingSet(q_var)
-    logger.debug(f"{poly=}")
+    # logger.debug(f"{poly=}")
     found_one = False
     for s in sympify(poly).free_symbols:
         if q_var.index(s) != -1:
             found_one = True
-            logger.debug("frobble bagel")
+            # logger.debug("frobble bagel")
 
     if not found_one:
         ret[1] = poly
         return ret
     if q_var.index(poly) != -1:
-        logger.debug("it might be poke")
-        logger.debug(f"{poly=}")
+        # logger.debug("it might be poke")
+        # logger.debug(f"{poly=}")
         ret[poly] = 1
         return ret
     if isinstance(poly, Add):

@@ -57,3 +57,5 @@ sum of dicts
 Decouple from sympy
 Don't load args
 Unique key for permutations
+
+Zero things out
