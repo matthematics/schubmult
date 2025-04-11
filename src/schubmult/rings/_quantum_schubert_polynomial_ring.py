@@ -10,7 +10,7 @@ import schubmult.rings._schubert_polynomial_ring as spr
 import schubmult.rings._utils as utils
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
-from schubmult.perm_lib import (
+from schubmult.perm_lib.perm_lib import (
     Permutation,
 )
 from schubmult.poly_lib.poly_lib import elem_sym_poly_q, xreplace_genvars
@@ -30,7 +30,7 @@ class QuantumDoubleSchubertAlgebraElement(spr.BasisSchubertAlgebraElement):
     def __new__(cls, _dict, basis):
         return spr.BasisSchubertAlgebraElement.__new__(cls, _dict, basis)
 
-    def _eval_subs(self, old, new):
+    def subs(self, old, new):
         logger.debug("ferefef")
         elb = self.as_classical().subs(old, new).as_quantum()
         logger.debug(f"{elb=}")

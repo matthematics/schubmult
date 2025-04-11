@@ -15,7 +15,7 @@ import schubmult.schub_lib.double as yz
 # from schubmult.poly_lib.schub_poly import pull_out_var
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
-from schubmult.perm_lib import (
+from schubmult.perm_lib.perm_lib import (
     Permutation,
     add_perm_dict,
     inv,
@@ -381,7 +381,7 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
     def max_index(self):
         return max([max([0, *list(k[0].descents(zero_indexed=False))]) for k in self.coeff_dict.keys()])
 
-    def _eval_subs(self, old, new):
+    def subs(self, old, new):
         result = 0
         if self.genset.index(old) != -1:
             result = 0

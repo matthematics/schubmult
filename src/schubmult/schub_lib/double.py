@@ -10,7 +10,7 @@ from cachetools.keys import hashkey
 from sortedcontainers import SortedList
 from symengine import Add, Integer, Mul, Pow, sympify
 
-from schubmult.perm_lib import (
+from schubmult.perm_lib.perm_lib import (
     Permutation,
     add_perm_dict,
     code,

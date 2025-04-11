@@ -38,7 +38,8 @@ def test_subs():
     print(f"{perm=}")
     C = expand(A.as_polynomial() - B)
     print(f"{C=}")
-    assert C == 0
+    quality = (C == 0)
+    assert quality
     
 
 # def test_coproduct():

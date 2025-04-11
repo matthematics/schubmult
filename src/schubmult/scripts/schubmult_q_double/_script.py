@@ -5,7 +5,7 @@ import numpy as np
 from symengine import sympify
 
 from schubmult import GeneratingSet, div_diff, efficient_subs, q_vector
-from schubmult.perm_lib import (
+from schubmult.perm_lib.perm_lib import (
     Permutation,
     count_less_than,
     inv,

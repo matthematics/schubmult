@@ -23,7 +23,7 @@ import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.quantum as sq
 import schubmult.schub_lib.quantum_double as qyz
 import schubmult.schub_lib.single as py
-from schubmult.perm_lib import permtrim
+from schubmult.perm_lib.perm_lib import permtrim
 
 from ._indexing import _coerce_index
 

@@ -114,8 +114,8 @@ def assert_dict_good(
 def parse_ret(lines, ascode, coprod, unformat):
     import sys
 
-    from schubmult.perm_lib import permtrim, uncode
-    from schubmult.perm_lib import Permutation
+    from schubmult.perm_lib.perm_lib import permtrim, uncode
+    from schubmult.perm_lib.perm_lib import Permutation
 
     ret_dict = {}
     if not coprod:
@@ -169,12 +169,12 @@ json_files_data_args = load_json_test_names(base_dir)
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
-    from schubmult.perm_lib import permtrim, uncode
+    from schubmult.perm_lib.perm_lib import permtrim, uncode
 
     args = get_json(f"{base_dir}/{json_file}")
     # print(f"{json_file=} {args=} input_data")
     from schubmult.scripts.schubmult_double._script import main
-    from schubmult.perm_lib import Permutation
+    from schubmult.perm_lib.perm_lib import Permutation
 
     mult = args["mult"]  # noqa: F841
     mulstring = args["mulstring"]  # noqa: F841

@@ -112,7 +112,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, same=True, display_positive=
 
 
 def parse_ret(lines, ascode, unformat):
-    from schubmult.perm_lib import uncode, permtrim
+    from schubmult.perm_lib.perm_lib import uncode, permtrim
 
     ret_dict = {}
     for line in lines:
@@ -135,7 +135,7 @@ json_files_data_args = load_json_test_names(base_dir)
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
-    from schubmult.perm_lib import permtrim, uncode
+    from schubmult.perm_lib.perm_lib import permtrim, uncode
 
 
     args = get_json(f"{base_dir}/{json_file}")
