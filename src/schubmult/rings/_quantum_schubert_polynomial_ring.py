@@ -3,7 +3,7 @@
 from functools import cache
 
 import sympy
-from symengine import expand, sympify
+from symengine import S, expand, sympify
 from sympy import Basic
 
 import schubmult.rings._schubert_polynomial_ring as spr
@@ -35,7 +35,10 @@ class QuantumDoubleSchubertAlgebraElement(spr.BasisSchubertAlgebraElement):
         return spr.BasisSchubertAlgebraElement.__new__(cls, _dict, basis)
 
     def _eval_subs(self, old, new):
-        return self.as_classical().subs(old, new).as_quantum()
+        logger.debug("ferefef")
+        elb = self.as_classical().subs(old, new).as_quantum()
+        logger.debug(f"{elb=}")
+        return elb
 
 
 # # TODO: not a noncommutative symbol, something else
@@ -171,9 +174,10 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
         return elem
 
     def in_classical_basis(self, elem):
-        result = 0
+        result = S.Zero
         for k, v in elem.coeff_dict.items():
-            result += v * self.quantum_as_classical_schubpoly(k[0], k[1])
+            
+            result += v*self.quantum_as_classical_schubpoly(k[0], k[1])
         return result
 
     def classical_elem_func(self, coeff_var):
@@ -191,6 +195,7 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
     @property
     def single_element_class(self):
         return QDSchubPoly
+
 
     @cache
     def quantum_as_classical_schubpoly(self, perm, coeff_var="y"):
@@ -247,23 +252,23 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
             if x.is_Add or x.is_Mul:
                 return x
             if x.genset == genset:
-                elem = QuantumDoubleSchubertAlgebraElement(x.coeff_dict, genset)  # , self)
+                elem = QuantumDoubleSchubertAlgebraElement(x.coeff_dict, self)  # , self)
             else:
                 return self(x.expand(), cv, genset)
         elif isinstance(x, DoubleSchubertAlgebraElement):
             if x.genset == self.genset:
                 return self(x.expand(), cv, genset)
         else:
-            # logger.debug("bagelflap")
+            logger.debug("bagelflap")
             x = sympify(x)
             if cv is None or cv == utils.NoneVar:
                 cv = utils.NoneVar
-                # logger.debug(f"{x=} {list(genset)=}")
+                logger.debug(f"{x=} {list(genset)=}")
                 result = py.mult_poly_q({Permutation([]): 1}, x, genset)
-                # logger.debug(f"{result=}")
+                logger.debug(f"{result=}")
             else:
                 result = yz.mult_poly_q_double({Permutation([]): 1}, x, genset, utils.poly_ring(cv))
-            elem = QuantumDoubleSchubertAlgebraElement({(k, cv): v for k, v in result.items()}, genset)
+            elem = QuantumDoubleSchubertAlgebraElement({(k, cv): v for k, v in result.items()}, self)
         return elem
 
 

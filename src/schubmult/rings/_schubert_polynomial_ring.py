@@ -118,7 +118,8 @@ def _mul_schub_dicts(dict1, dict2, basis, best_effort_positive=False):
 class BasisSchubertAlgebraElement(Expr):
     def __new__(cls, _dict, basis):
         obj = Expr.__new__(cls)
-        obj._dict = {k: sympify(v) for k, v in _dict.items()}
+        obj._dict = {k: sympify(v) for k, v in _dict.items() if expand(v) != S.Zero}
+        # obj.prune()
         obj._basis = basis
         return obj
 #217 per night
@@ -142,12 +143,12 @@ class BasisSchubertAlgebraElement(Expr):
     # def __hash__(self):
     #     return hash(self.args)
 
-    def prune(self):
-        keys = list(self._dict.keys())
-        for k in keys:
-            if expand(self._dict[k]) == S.Zero:
-                del self._dict[k]
-        return self
+    # def prune(self):
+    #     keys = list(self._dict.keys())
+    #     for k in keys:
+    #         if expand(self._dict[k]) == S.Zero:
+    #             del self._dict[k]
+    #     return self
 
     def mult_poly(self, poly):
         res_dict2 = {}
@@ -158,7 +159,7 @@ class BasisSchubertAlgebraElement(Expr):
             else:
                 dict2 = self.basis.mult_poly_double({k[0]: v}, poly, self.genset, utils.poly_ring(k[1]))
             res_dict2 = add_perm_dict(res_dict2, {(k2, k[1]): v for k2, v in dict2.items()})
-
+        logger.debug(f"{res_dict2=}")
         return self.basis._from_dict(res_dict2)
 
     @cache
@@ -178,8 +179,8 @@ class BasisSchubertAlgebraElement(Expr):
     # def _eval_simplify(self, *args, measure, **kwargs):
     #     return self.basis._from_dict({k: sympify(sympy.simplify(v, *args, measure=measure, **kwargs)) for k, v in self.coeff_dict.items()})
 
-    def __iadd__(self, other):
-        return self.__add__(other)
+    # def __iadd__(self, other):
+    #     return self.__add__(other)
     
     def __add__(self, other):
         # if isinstance(self)
@@ -230,7 +231,9 @@ class BasisSchubertAlgebraElement(Expr):
         # logger.debug(f"{type(other)=}")
         try:
             o = sympify(other)
-            return self.basis._from_dict({k: o*v for k,v in self.coeff_dict.items()})
+            bong =self.mult_poly(o)
+            logger.debug(f"{bong=}")
+            return bong
         except Exception:
             try:
                 other = self.basis(other)
@@ -243,7 +246,9 @@ class BasisSchubertAlgebraElement(Expr):
         # logger.debug(f"{type(other)=}")
         try:
             o = sympify(other)
-            return self.basis._from_dict({k: o*v for k,v in self.coeff_dict.items()})
+            bong =self.mult_poly(o)
+            logger.debug(f"{bong=}")
+            return bong
         except Exception:
             try:
                 other = self.basis(other)
@@ -334,7 +339,7 @@ class BasisSchubertAlgebraElement(Expr):
         return sympy.sympify(expand(sympify(self.as_polynomial())))
 
     def as_polynomial(self):
-        return sympy.sympify(Add(*[v * self.basis.cached_schubpoly(k) for k, v in self.coeff_dict.items()]))
+        return Add(*[v * self.basis.cached_schubpoly(k) for k, v in self.coeff_dict.items()])
 
     def as_classical(self):
         return self.basis.in_classical_basis(self)
@@ -582,7 +587,7 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
 
 
 # def elem_func(p, k, vx, vy):
-#     return DSx(elem_sym_poly_q(p, k, vx, vy), "y")
+#     return DSx(elem_func_q(p, k, vx, vy), "y")
 
 # A = schubpoly_from_elems([4,1,3,2], DSx.genset, poly_ring("y"),elem_func)
 
@@ -604,7 +609,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
         return DSchubPoly
 
     def in_quantum_basis(self, elem):
-        result = 0
+        result = S.Zero
         for k, v in elem.coeff_dict.items():
             result += v * self.quantum_schubpoly(k[0], k[1])
         return result
@@ -642,26 +647,26 @@ class DoubleSchubertAlgebraElement_basis(Basic):
 
     def quantum_elem_func(self, coeff_var):
         basis = qsr.QuantumDoubleSchubertAlgebraElement_basis(self.genset)
-        def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0):
+        def elem_func(p, k, varl1, varl2, xstart=0, ystart=0):
             if p > k:
-                return 0
+                return basis(0, coeff_var)
             if p == 0:
                 return basis([], coeff_var)
             if p == 1:
-                res = varl1[xstart] - varl2[ystart]
+                res = basis(varl1[xstart] - varl2[ystart], coeff_var)
                 for i in range(1, k):
-                    res += varl1[xstart + i] - varl2[ystart + i]
+                    res += basis(varl1[xstart + i] - varl2[ystart + i], coeff_var)
                 return res
             if p == k:
-                res = (varl1[xstart] - varl2[ystart]) * (varl1[xstart + 1] - varl2[ystart])
+                res = basis((varl1[xstart] - varl2[ystart]) * (varl1[xstart + 1] - varl2[ystart]), coeff_var)
                 for i in range(2, k):
-                    res *= varl1[i + xstart] - varl2[ystart]
+                    res *= basis(varl1[i + xstart] - varl2[ystart], coeff_var)
                 return res
             mid = k // 2
             xsm = xstart + mid
             ysm = ystart + mid
             kmm = k - mid
-            res = elem_sym_poly(p, mid, varl1, varl2, xstart, ystart) + elem_sym_poly(
+            res = elem_func(p, mid, varl1, varl2, xstart, ystart) + elem_func(
                 p,
                 kmm,
                 varl1,
@@ -670,7 +675,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
                 ysm,
             )
             for p2 in range(max(1, p - kmm), min(p, mid + 1)):
-                res += elem_sym_poly(p2, mid, varl1, varl2, xstart, ystart) * elem_sym_poly(
+                res += elem_func(p2, mid, varl1, varl2, xstart, ystart) * elem_func(
                     p - p2,
                     kmm,
                     varl1,
@@ -678,9 +683,10 @@ class DoubleSchubertAlgebraElement_basis(Basic):
                     xsm,
                     ysm - p2,
                 )
+            logger.debug(f"{res=}")
             return res
 
-        return elem_sym_poly
+        return elem_func
 
     # @cache
     # def cached_schubpoly_oink(self, u):

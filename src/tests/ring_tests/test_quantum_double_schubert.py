@@ -16,19 +16,26 @@ def test_schub_expand():
 
 
 def test_subs():
-    from sympy import expand
+    from symengine import expand, S
+    import sympy
     from schubmult.rings import QDSx
-    from schubmult import GeneratingSet
+    from schubmult.poly_lib.variables import GeneratingSet
     x = GeneratingSet("x")
     z = GeneratingSet("z")
-    perm = [4, 6, 1, 2, 3, 5]
-    old = x[5]
+    perm = [4, 1, 3, 2]
+    old = x[3]
     new = x[1]
     print("TODO! CHECK THIS TEST POLYNOMIAL COERCION!")
-    assert expand(QDSx(perm,"z").subs(old, new).as_polynomial() - QDSx(perm,"z").as_polynomial().subs(old, new)) == 0
+    A = QDSx(perm,"z").subs(old, new).as_polynomial()
+    B = QDSx(perm,"z").as_polynomial().subs(old, new)
+    assert expand(A - B) == S.Zero
     old = z[1]
     new = 3
-    assert expand(QDSx(perm,"z").subs(old, new).as_polynomial() - QDSx(perm,"z").as_polynomial().subs(old, new)) == 0
+    A = QDSx(perm,"z").subs(old, new).as_polynomial()
+    B = QDSx(perm,"z").as_polynomial().subs(old, new)
+    C = expand(A - B)
+    print(f"{C=}")
+    assert sympy.expand(C) == 0
 
 # def test_coproduct():
 #     """
@@ -173,3 +180,6 @@ def test_associative():
 #     assert QDSx([3, 1, 5, 2, 4], "z") * QDSx([5, 3, 1, 2, 4]) == QDSx([5, 3, 1, 2, 4]) * QDSx(
 #         [3, 1, 5, 2, 4], "z",
 #     )
+
+if __name__ == "__main__":
+    test_subs()
