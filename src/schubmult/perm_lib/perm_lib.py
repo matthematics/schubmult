@@ -1,3 +1,4 @@
+import math
 from bisect import bisect_left
 from functools import cache, cached_property
 
@@ -356,6 +357,9 @@ class Permutation(Basic):
         obj = Basic.__new__(_class, Tuple(*perm))
         obj._s_perm = s_perm
         obj._perm = p
+        obj._hash_code = hash(p)
+        cd = s_perm.inversion_vector()
+        obj._unique_key = (len(p), sum([cd[i]*math.factorial(len(p)-1-i) for i in range(len(cd))]))
         return obj
 
     @classmethod
@@ -417,7 +421,7 @@ class Permutation(Basic):
         raise NotImplementedError
 
     def __hash__(self):
-        return hash(self._perm)
+        return self._hash_code
 
     def __mul__(self, other):
         new_sperm = other._s_perm * self._s_perm
@@ -454,7 +458,8 @@ class Permutation(Basic):
     def __eq__(self, other):
         if isinstance(other, Permutation):
             # print(f"{other._perm= } {self._perm=} {type(self._perm)=}")
-            return other._perm == self._perm
+            # return other._perm == self._perm
+            return other._unique_key == self._unique_key
         if isinstance(other, list):
             # print(f"{[*self._perm]= } {other=}")
             return [*self._perm] == other

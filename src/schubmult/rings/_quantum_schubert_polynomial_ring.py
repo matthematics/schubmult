@@ -32,17 +32,7 @@ logger = get_logger(__name__)
 
 class QuantumDoubleSchubertAlgebraElement(spr.BasisSchubertAlgebraElement):
     def __new__(cls, _dict, basis):
-        _dict = {k: v for k, v in _dict.items() if expand(v) != 0}
-        return QuantumDoubleSchubertAlgebraElement.__xnew_cached__(cls, sympy.Dict(_dict), basis)
-
-    @staticmethod
-    def __xnew__(_class, _dict, basis):
-        return spr.BasisSchubertAlgebraElement.__new__(_class, _dict, basis)
-
-    @staticmethod
-    @cache
-    def __xnew_cached__(_class, _dict, basis):
-        return QuantumDoubleSchubertAlgebraElement.__xnew__(_class, _dict, basis)
+        return spr.BasisSchubertAlgebraElement.__new__(cls, _dict, basis)
 
     def _eval_subs(self, old, new):
         return self.as_classical().subs(old, new).as_quantum()

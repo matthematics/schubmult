@@ -117,20 +117,14 @@ def _mul_schub_dicts(dict1, dict2, basis, best_effort_positive=True):
 
 class BasisSchubertAlgebraElement(Expr):
     def __new__(cls, _dict, basis):
-        # assume dict is cleaned
-        # _dict = {k: v for k, v in _dict.items() if expand(v) != 0}
-        return BasisSchubertAlgebraElement.__xnew_cached__(cls, sympy.Dict(_dict), basis)
-
-    @staticmethod
-    def __xnew__(_class, _dict, basis):
-        obj = Expr.__new__(_class, _dict, basis)
+        obj = Expr.__new__(cls)
         obj._dict = {k: sympify(v) for k, v in _dict.items()}
+        obj._basis = basis
         return obj
 
-    @staticmethod
-    @cache
-    def __xnew_cached__(_class, _dict, basis):
-        return BasisSchubertAlgebraElement.__xnew__(_class, _dict, basis)
+    @property
+    def args(self):
+        return (sympy.Dict(self._dict), self._basis)
 
     @property
     def coeff_dict(self):
@@ -142,10 +136,10 @@ class BasisSchubertAlgebraElement(Expr):
 
     @property
     def basis(self):
-        return self.args[1]
+        return self._basis
 
-    def __hash__(self):
-        return hash(self.args)
+    # def __hash__(self):
+    #     return hash(self.args)
 
     def mult_poly(self, poly):
         res_dict2 = {}

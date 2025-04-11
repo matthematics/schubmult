@@ -49,3 +49,11 @@ schubpoly_quantum is slow
 more tests
 
 subs faster, do better with dense product
+
+Key union?
+
+sum of dicts
+
+Decouple from sympy
+Don't load args
+Unique key for permutations
