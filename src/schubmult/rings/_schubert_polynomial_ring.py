@@ -116,6 +116,10 @@ def _mul_schub_dicts(dict1, dict2, basis, best_effort_positive=True):
 
 
 class BasisSchubertAlgebraElement(Expr):
+    _op_priority = 1e200
+    _kind = NumberKind
+    is_commutative = False
+
     def __new__(cls, _dict, basis):
         obj = Expr.__new__(cls)
         obj._dict = {k: sympify(v) for k, v in _dict.items() if expand(v) != S.Zero}
@@ -152,9 +156,11 @@ class BasisSchubertAlgebraElement(Expr):
 
     def mult_poly(self, poly):
         res_dict2 = {}
+        print("pickles")
         # poly = self.genset[i + 1] - self.genset[i]
         for k, v in self.coeff_dict.items():
             if k[1] == utils.ZeroVar or k[1] == utils.NoneVar:
+                print("frofulated bagle")
                 dict2 = self.basis.mult_poly_single({k[0]: v}, poly, self.genset)
             else:
                 dict2 = self.basis.mult_poly_double({k[0]: v}, poly, self.genset, utils.poly_ring(k[1]))
@@ -181,7 +187,7 @@ class BasisSchubertAlgebraElement(Expr):
 
     # def __iadd__(self, other):
     #     return self.__add__(other)
-    
+
     def __add__(self, other):
         # if isinstance(self)
         # # logger.debug(f"{type(other)=} {self.genset=}")
@@ -228,11 +234,11 @@ class BasisSchubertAlgebraElement(Expr):
         return self.basis._from_dict(double_dict)
 
     def __mul__(self, other):
-        # logger.debug(f"{type(other)=}")
+        print(f" pingle {type(other)=}")
         try:
             o = sympify(other)
             bong =self.mult_poly(o)
-            logger.debug(f"{bong=}")
+            print("{bong=}")
             return bong
         except Exception:
             try:
@@ -240,14 +246,15 @@ class BasisSchubertAlgebraElement(Expr):
                 return self.basis._from_dict(_mul_schub_dicts(self.coeff_dict, other.coeff_dict, self.basis))
             except Exception:
                 return self.as_polynomial() * sympify(other)
-        
+
 
     def __rmul__(self, other):
         # logger.debug(f"{type(other)=}")
+        print(f"rmul {type(other)=}")
         try:
             o = sympify(other)
             bong =self.mult_poly(o)
-            logger.debug(f"{bong=}")
+            print(f"{bong=}")
             return bong
         except Exception:
             try:
@@ -353,10 +360,8 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
     and a dict basis
     """
 
-    _op_priority = 1e200
+
     # __slots__ = ("_dict", "_parent")
-    _kind = NumberKind
-    is_commutative = False
     # is_polynomial = True
 
     # default_coeff_var = "y"
@@ -819,7 +824,7 @@ DoubleSchubertPolynomial = DoubleSchubertAlgebraElement
 #     def _sympystr(self, printer):
 #         return printer._print_Add(self)
 
-#     def expand(self, deep=True, *_, **__):  # noqa: ARG002
+#     def expand(self, deep=True, *_, **__):
 #         return SchubAdd(*[sympy.expand(arg) for arg in self.args]).doit()
 
 

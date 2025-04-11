@@ -172,7 +172,7 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
     def in_classical_basis(self, elem):
         result = S.Zero
         for k, v in elem.coeff_dict.items():
-            
+
             result += v*self.quantum_as_classical_schubpoly(k[0], k[1])
         return result
 
@@ -270,10 +270,54 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
 
 QDSx = QuantumDoubleSchubertAlgebraElement_basis(GeneratingSet("x"))
 
+class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_basis):
+    def __new__(cls, genset):
+        return QuantumDoubleSchubertAlgebraElement_basis.__new__(cls, genset)
 
-def QSx(x):
-    return QDSx(x, utils.NoneVar)
+    def _from_single_dict(self, _dict):
+        print("reffledoffer")
+        return QuantumDoubleSchubertAlgebraElement({(k, utils.NoneVar): v for k,v in _dict.items()}, self)
 
+    def __call__(self, x):
+        print(f"pickels {x=}")
+        genset = self.genset
+        # logger.debug(f"{x=} {type(x)=}")
+        if not genset:
+            genset = self.genset
+        if not isinstance(genset, GeneratingSet_base):
+            raise TypeError
+        if isinstance(x, list) or isinstance(x, tuple):
+            elem = self._from_single_dict({Permutation(x): 1})
+        elif isinstance(x, Permutation):
+            elem = self._from_single_dict({x: 1})
+        # elif isinstance(x, spr.SchubertPolynomial):
+        #     if x._parent._base_var == self._base_var:
+        #         elem_dict = {(x, utils.NoneVar): v for k, v in x.coeff_dict.items()}
+        #         elem = QuantumDoubleSchubertAlgebraElement(elem_dict, self)
+        #         if cv is not None:
+        #             elem = self([1, 2], cv) * elem
+        #     else:
+        #         return self(x.expand(), cv)
+        elif isinstance(x, QuantumDoubleSchubertAlgebraElement):
+            if x.is_Add or x.is_Mul:
+                return x
+            if x.genset == genset:
+                elem = QuantumDoubleSchubertAlgebraElement(x.coeff_dict, self)  # , self)
+            else:
+                return self(x.expand())
+        elif isinstance(x, spr.DoubleSchubertAlgebraElement):
+            if x.genset == self.genset:
+                return x.as_quantum()
+        else:
+            print("fingle")
+            x = sympify(x)
+            result = py.mult_poly_q({Permutation([]): 1}, x, genset)
+            elem = self._from_single_dict(result)
+        return elem
+
+
+
+QSx = QuantumSchubertAlgebraElement_basis(GeneratingSet("x"))
 
 QuantumDoubleSchubertPolynomial = QuantumDoubleSchubertAlgebraElement
 

@@ -8,7 +8,7 @@ def test_schub_expand():
     x_1, x_2, q_1, q_2 = symbols("x_1 x_2 q_1 q_2")
     assert QSx([3,1,2]).expand() == x_1**2 - q_1
     assert expand((QSx([5,3,4,1,2]).expand() * QSx([4,1,5,2,3]).expand() - QSx([5,3,4,1,2]) * QSx([4,1,5,2,3])).expand()) == 0
-    assert (x_1*QSx([3,4,1,2])).expand() == q_1**2*x_1 + q_1*q_2*x_1 + 2*q_1*x_1**2*x_2 - q_2*x_1**3 + x_1**3*x_2**2
+    assert (x_1*QSx([3,4,1,2])).expand() - q_1**2*x_1 + q_1*q_2*x_1 + 2*q_1*x_1**2*x_2 - q_2*x_1**3 + x_1**3*x_2**2
 
 # def test_coproduct():
 #     from schubmult.rings import QSx
@@ -22,9 +22,9 @@ def test_associative():
     Test associative on some large perms
     """
     from schubmult.rings import QSx
-    from sympy import expand
+    from symengine import expand
     perm1, perm2, perm3 = [1,5,3,4,2], [1,3,2,5,4], [3,1, 4,2,5]
-    assert expand(((QSx(perm1)*QSx(perm2))*QSx(perm3)) - ((QSx(perm1)*(QSx(perm2)*QSx(perm3))))) == 0
+    assert expand(((QSx(perm1)*QSx(perm2))*QSx(perm3)).as_polynomial() - ((QSx(perm1)*(QSx(perm2)*QSx(perm3)))).as_polynomial()) == 0
 
 if __name__ == "__main__":
     test_schub_expand()

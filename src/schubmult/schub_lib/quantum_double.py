@@ -14,12 +14,12 @@ import schubmult.schub_lib.double as norm_yz
 from schubmult.perm_lib.perm_lib import (
     Permutation,
     add_perm_dict,
+    code,
     inv,
     medium_theta,
     strict_theta,
     uncode,
 )
-from schubmult.perm_lib.perm_lib import code
 from schubmult.poly_lib.poly_lib import call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.schub_lib import (
