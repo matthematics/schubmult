@@ -12,6 +12,12 @@ quantum/quantum double Schubert polynomials is conjectural at this time.**
 
 [Docs to be hosted on Wiki](https://github.com/matthematics/schubmult/wiki/schubmult-home)
 
+## To install dev version
+
+```
+pip install -r https://raw.githubusercontent.com/matthematics/schubmult/refs/heads/main/requirements.txt
+pip install git+https://github.com/matthematics/schubmult.git
+```
 
 ## Basic script command lines, one-line notation
 
