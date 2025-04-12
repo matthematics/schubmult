@@ -146,7 +146,7 @@ def sg(i, w):
 
 
 def longest_element(indices):
-    perm = [1, 2]
+    perm = Permutation([1, 2])
     did_one = True
     while did_one:
         did_one = False

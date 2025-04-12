@@ -144,8 +144,8 @@ class BasisSchubertAlgebraElement(Expr):
     def basis(self):
         return self._basis
 
-    # def __hash__(self):
-    #     return hash(self.args)
+    def _hashable_content(self):
+        return self.args
 
     # def prune(self):
     #     keys = list(self._dict.keys())
@@ -166,15 +166,12 @@ class BasisSchubertAlgebraElement(Expr):
         logger.debug(f"{res_dict2=}")
         return self.basis._from_dict(res_dict2)
 
-    @cache
     def _cached_sympystr(self, printer):
-        return printer.doprint(
-            sympy.Add(
+        return sympy.Add(
                 *[
-                    self.coeff_dict[k] if k[0] == Permutation([]) else sympy.Mul(self.coeff_dict[k], self.basis.single_element_class(k, self.basis))
+                    (self.coeff_dict[k] if k[0] == Permutation([]) else sympy.Mul(self.coeff_dict[k], self.basis.single_element_class(k, self.basis)))
                     for k in sorted(self.coeff_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))
                 ],
-            ),
         )
 
     def _sympystr(self, printer):

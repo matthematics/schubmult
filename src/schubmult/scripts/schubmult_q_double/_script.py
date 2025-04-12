@@ -2,6 +2,7 @@ import sys
 from functools import cached_property
 
 import numpy as np
+import sympy
 from symengine import sympify
 
 from schubmult import GeneratingSet, div_diff, efficient_subs, q_vector
@@ -93,7 +94,8 @@ def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3)
             if ascode:
                 raw_result_dict[tuple(trimcode(perm))] = val
                 if formatter:
-                    print(f"{trimcode(perm)!s}  {formatter(val)}")
+                    wid = len(f"{trimcode(perm)!s}  ")
+                    print(f"{trimcode(perm)!s}  {formatter(val,wid)}")
             else:
                 raw_result_dict[perm] = val
                 if formatter:
@@ -189,16 +191,28 @@ def main(argv=None):
                 coeff_dict = {perm: efficient_subs(val, subs_dict2).expand() for perm, val in coeff_dict.items()}
             else:
                 coeff_dict = {perm: q_posify(perms[0], perms[1], perm, val, var2, var3, _vars.q_var, msg) for perm, val in coeff_dict.items()}
+        from sympy import S, Symbol
+        def my_measure(expr):
+            ADD = Symbol('ADD')
+            NEG = Symbol('NEG')
+            SUB = Symbol('SUB')
+            # Discourage powers by giving POW a weight of 10
+            count = sympy.count_ops(expr, visual=True).subs(ADD,1.5).subs(SUB,0.2)
+            # Every other operation gets a weight of 1 (the default)
+            count = count.replace(Symbol, type(S.One))
+            print(count)
+            return count
+        
         if parabolic:
             w_P = longest_element(parabolic_index)
-            w_P_prime = [1, 2]
+            w_P_prime = Permutation([1, 2])
             coeff_dict_update = {}
             for w_1 in coeff_dict.keys():
                 val = coeff_dict[w_1]
                 q_dict = factor_out_q_keep_factored(val)
                 for q_part in q_dict:
                     qv = q_vector(q_part)
-                    w = [*w_1]
+                    w = w_1
                     good = True
                     parabolic_index2 = []
                     for i in range(len(parabolic_index)):
@@ -230,6 +244,8 @@ def main(argv=None):
             coeff_dict = coeff_dict_update
 
         raw_result_dict = {}
+        for k in coeff_dict:
+            coeff_dict[k] = sympy.simplify(coeff_dict[k], measure = my_measure)
         if pr or formatter is None:
             raw_result_dict = _display_full(coeff_dict, args, formatter)
         if formatter is None:
