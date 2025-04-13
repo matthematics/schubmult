@@ -134,7 +134,13 @@ def main(argv=None):
         msg = args.msg
         display_positive = args.display_positive
         pr = args.pr
-        parabolic_index = [int(s) for s in args.parabolic]
+        parabolic_index = []
+        start = 1
+        # 1, 2 | 3 
+        for i in range(len(args.parabolic)):
+            parabolic_index += list(range(start,start+int(args.parabolic[i])-1))
+            start += int(args.parabolic[i])
+        # [sum(int(args.parabolic[j]) for j in range(i+1)) for i in range(len(args.parabolic))]
         parabolic = len(parabolic_index) != 0
         slow = args.slow
         nil_N = 0
@@ -200,11 +206,12 @@ def main(argv=None):
             count = sympy.count_ops(expr, visual=True).subs(ADD,1.5).subs(SUB,0.2)
             # Every other operation gets a weight of 1 (the default)
             count = count.replace(Symbol, type(S.One))
-            print(count)
+            #print(count)
             return count
         
         if parabolic:
             w_P = longest_element(parabolic_index)
+            max_len = len(w_P)
             w_P_prime = Permutation([1, 2])
             coeff_dict_update = {}
             for w_1 in coeff_dict.keys():
@@ -231,7 +238,8 @@ def main(argv=None):
                         continue
 
                     w = permtrim(w)
-
+                    if len(w) > max_len:
+                        continue
                     new_q_part = np.prod(
                         [q_var[index + 1 - count_less_than(parabolic_index, index + 1)] ** qv[index] for index in range(len(qv)) if index + 1 not in parabolic_index],
                     )

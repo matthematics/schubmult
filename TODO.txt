@@ -59,3 +59,8 @@ Don't load args
 Unique key for permutations
 
 Zero things out
+
+Reduce adds and muls
+
+Algebrize parabolic
+(use composition instead of explicit parabolic)
