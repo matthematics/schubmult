@@ -67,4 +67,5 @@ Algebrize parabolic
 
 moderate work positive
 positivity with just y's
-actual parabolic polynomials
+actual parabolic polynomials!!!
+stable parabolic options
