@@ -64,3 +64,7 @@ Reduce adds and muls
 
 Algebrize parabolic
 (use composition instead of explicit parabolic)
+
+moderate work positive
+positivity with just y's
+actual parabolic polynomials

@@ -144,7 +144,6 @@ def sg(i, w):
         return 0
     return 1
 
-
 def longest_element(indices):
     perm = Permutation([1, 2])
     did_one = True
@@ -155,6 +154,22 @@ def longest_element(indices):
             if sg(j, perm) == 0:
                 perm = perm.swap(j, j + 1)
                 did_one = True
+
+# def longest_element(indices):
+#     elems = list(range(indices[-1]+1,0,-1))
+#     spots = list(sorted(set(ranges(indices[-1])) - set(indices)))
+#     i = 0
+#     for j in range(len(elems)):
+
+    # indices2 = [0,*indices,10000]
+    # print(indices2)
+    # last_spot = 0
+    # for i in range(1,len(indices2)):
+    #     if indices2[i] - indices2[i-1] > 1:
+    #         perm = perm[:last_spot] + list(reversed(perm[last_spot:indices2[i-1]])) + perm[indices2[i-1]:]
+    #         last_spot = indices2[i]
+    # print(perm)
+
     return permtrim(perm)
 
 
@@ -340,7 +355,7 @@ def cyclic_sort(L):
 # test perm speed
 class Permutation(Basic):
     def __new__(cls, perm):
-            return Permutation.__xnew_cached__(cls, tuple(perm))
+        return Permutation.__xnew_cached__(cls, tuple(perm))
 
     @staticmethod
     @cache
@@ -349,9 +364,6 @@ class Permutation(Basic):
 
     @staticmethod
     def __xnew__(_class, perm):
-        if isinstance(perm, Permutation):
-            return perm
-
         p = tuple(permtrim_list([*perm]))
         s_perm = spp.Permutation._af_new([i - 1 for i in p])
         obj = Basic.__new__(_class, Tuple(*perm))
@@ -412,7 +424,7 @@ class Permutation(Basic):
 
     def __getitem__(self, i):
         if isinstance(i, slice):
-            return [self[ii] for ii in range(i.start, i.stop)]
+            return [self[ii] for ii in range(i.start if i.start is not None else 0, i.stop if i.stop is not None else len(self))]
         if i >= len(self._perm):
             return i + 1
         return self._perm[i]

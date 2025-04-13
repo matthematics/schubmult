@@ -135,11 +135,13 @@ def main(argv=None):
         display_positive = args.display_positive
         pr = args.pr
         parabolic_index = []
-        start = 1
+        start = 0
         # 1, 2 | 3 
         for i in range(len(args.parabolic)):
-            parabolic_index += list(range(start,start+int(args.parabolic[i])-1))
-            start += int(args.parabolic[i])
+            end = start + int(args.parabolic[i])
+            parabolic_index += list(range(start+1,end))
+            # start += int(args.parabolic[i])
+            start = end
         # [sum(int(args.parabolic[j]) for j in range(i+1)) for i in range(len(args.parabolic))]
         parabolic = len(parabolic_index) != 0
         slow = args.slow
