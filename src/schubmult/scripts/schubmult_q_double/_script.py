@@ -257,6 +257,7 @@ def main(argv=None):
 
         raw_result_dict = {}
         for k in coeff_dict:
+            # TODO: this probably shouldn't have simplify unless display_positive = True
             coeff_dict[k] = sympy.simplify(coeff_dict[k], measure = my_measure)
         if pr or formatter is None:
             raw_result_dict = _display_full(coeff_dict, args, formatter)
