@@ -79,13 +79,13 @@ for i in range(1, 100):
 def sv_posify(val):
     # this has just y's, we want to rearrange
     # can we do this without an optimization
-    val = sympy.simplify(val.subs(subs_dict))
+    val = sympify(sympy.simplify(val.subs(subs_dict)))
     bingle_dict = {}
     for i in range(1, len(_vars.var_r) - 1):
         bingle_dict[_vars.var_r[i]] = _vars.var2[i+1] - _vars.var2[i]# sympy.Add(*[_vars.var2[i+1], - _vars.var2[i]],evaluate=False)
         # oh bay does that bar bangled banber bet bave space buckets of cheese
     # val = sympy.simplify(val)
-    return efficient_subs(val, bingle_dict)
+    return val.xreplace(bingle_dict)
 
 def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, subs_dict):
     try:
