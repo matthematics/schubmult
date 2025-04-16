@@ -27,9 +27,15 @@ def elem_func_func(k, i, v1, v2, vdiff, varl1, varl2, elem_func):
     return elem_func(newk - vdiff, newk, varl1[1:], zvars)
 
 
-def schubpoly_from_elems(v, var_x=None, var_y=None, elem_func=None):
-    th = pl.strict_theta(~pl.Permutation(v))
-    mu = pl.uncode(th)
+def schubpoly_from_elems(v, var_x=None, var_y=None, elem_func=None, mumu=None):
+    if mumu:
+        print(pl.code(mumu))
+        th = pl.code(mumu)
+        print(f"{th=}")
+        mu = mumu
+    else:
+        th = pl.strict_theta(~pl.Permutation(v))
+        mu = pl.uncode(th)
     vmu = pl.Permutation(v) * mu  # permtrim(mulperm([*v], mu))
     if len(th) == 0:
         return elem_func(0, 0, var_x, var_y)

@@ -165,6 +165,7 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
     def cached_schubpoly(self, k):
         return schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=elem_sym_poly_q)  # yz.schubpoly_quantum(k[0], self.genset, utils.poly_ring(k[1]))
 
+
     @cache
     def cached_positive_product(self, u, v, va, vb):
         return {(k, va): xreplace_genvars(x, utils.poly_ring(va), utils.poly_ring(vb)) for k, x in yz.schubmult_q_generic_partial_posify(u, v).items()}
@@ -234,6 +235,7 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
 
 QDSx = QuantumDoubleSchubertAlgebraElement_basis(GeneratingSet("x"))
 
+t = GeneratingSet("t")
 
 class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_basis):
     def __new__(cls, genset):
@@ -278,9 +280,41 @@ class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_ba
         return elem
 
 
+spunky_basis = spr.DoubleSchubertAlgebraElement_basis(t)
+
+a = GeneratingSet("a")
+
 class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
+
+    
     def __new__(cls, genset, index_comp):
         obj = Basic.__new__(cls, genset, tuple(index_comp))
+        obj._n = list(index_comp)
+        
+        obj._N = [sum(obj._n[:i]) for i in range(len(obj._n) + 1)]
+        print(obj._N)
+        obj._D = []
+        from sympy.matrices import Matrix
+        obj._E = {}
+        for j in range(1, len(obj._N)):
+            m_arr = [[0 for i in range(obj._N[j])] for p in range(obj._N[j])]
+            for i in range(obj._N[j]):
+                m_arr[i][i] = a[i+1] - t[1] #genset[i+1] - t[1]
+                if i < obj._N[j] - 1:
+                    m_arr[i][i+1] = -1
+            for b in range(1, j):
+                njm1 = obj._N[b + 1] - 1
+                njp1 = obj._N[b - 1]
+                print(f"{b=}")
+                print(f"{njm1=} {njp1=}")
+                if njp1 < obj._N[j] and njm1 < obj._N[j]:
+                    m_arr[njm1][njp1] = (-1)**(obj._n[b])*q_var[b + 1]
+            poly = Matrix(m_arr).det()
+            # def dongle(v):
+            #     return poly.subs(t[1], v)
+            obj._D += [spunky_basis(poly)]
+            obj._E[obj._N[j]] = obj._D[-1]
+        print(obj._E)
         parabolic_index = []
         start = 0
         # 1, 2 | 3 
@@ -290,8 +324,29 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
             # start += int(args.parabolic[i])
             start = end
         obj._parabolic_index = parabolic_index
+        obj._otherlong = Permutation(list(range(obj._N[-1],0,-1)))
+        obj._longest = obj._otherlong * longest_element(parabolic_index)
+        #print(f"{}")
         return obj
-        
+    
+    def elem_sym(self):
+        def bagelflesh(p, k, varl1, varl2):
+            print(f"{p=} {k=} {len(self._D)=}")
+            if p == 0 and k == 0:
+                return 1
+            subs_dict = {}
+            for i in range(min(k,len(varl1))):
+                subs_dict[a[i+1]] = varl1[i]
+            for i in range(min(k,len(varl2))):
+                subs_dict[t[i+1]] = varl2[i]
+
+            if p == k:
+                return self._E[k].as_polynomial().subs(subs_dict)
+            splack = self._E[k]
+            for i in range(k - p):
+                splack = -splack.divdiff(i + 1)
+            return splack.as_polynomial().subs(subs_dict)
+        return bagelflesh
 
     def _from_dict(self, _dict):
         return ParabolicQuantumDoubleSchubertAlgebraElement(_dict, self)
@@ -386,7 +441,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
 
     @cache
     def cached_schubpoly(self, k):
-        return schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=elem_sym_poly_q)  # yz.schubpoly_quantum(k[0], self.genset, utils.poly_ring(k[1]))
+        return schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=self.elem_sym(),mumu=~self._longest)  # yz.schubpoly_quantum(k[0], self.genset, utils.poly_ring(k[1]))
 
     @cache
     def cached_positive_product(self, u, v, va, vb):
