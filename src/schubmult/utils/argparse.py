@@ -217,9 +217,9 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
         )
     elif args.disp_mode == "pretty":
         # pretty we need to keep centered
-        formatter = lambda bob, width=None: sympy.pretty(_sympy(bob))  if width is None else sympy.pretty(_sympy(bob), order="rev-lex", use_unicode=False).replace("\n","\n"+" ".join(["" for i in range(width)])) # noqa: E731  # noqa: E731
+        formatter = lambda bob, width=None: sympy.pretty(_sympy(bob))  if width is None else sympy.pretty(_sympy(bob), order="rev-lex" if args.same else "none", use_unicode=False).replace("\n","\n"+" ".join(["" for i in range(width)])) # noqa: E731  # noqa: E731
     elif args.disp_mode == "basic":
-        formatter = lambda bob, width=None: sympy.sstr(_sympy(bob))  # noqa: E731
+        formatter = lambda bob, width=None: sympy.sstr(_sympy(bob), order="rev-lex" if args.same else "none")  # noqa: E731
     elif args.disp_mode == "raw":
         formatter = None
     init_logging(debug=args.debug)

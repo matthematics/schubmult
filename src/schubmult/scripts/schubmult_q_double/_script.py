@@ -102,6 +102,18 @@ def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3)
                     print(f"{perm!s}  {formatter(val)}")
     return raw_result_dict
 
+def sv_posify(val):
+    # this has just y's, we want to rearrange
+    # can we do this without an optimization
+    val = sympify(sympy.simplify(efficient_subs(val, subs_dict2)))
+    bingle_dict = {}
+    for i in range(1, len(_vars.var_r) - 1):
+        bingle_dict[_vars.var_r[i]] = _vars.var2[i+1] - _vars.var2[i]# sympy.Add(*[_vars.var2[i+1], - _vars.var2[i]],evaluate=False)
+        # oh bay does that bar bangled banber bet bave space buckets of cheese
+    # val = sympy.simplify(val)
+    #return efficient_subs(val, bingle_dict)
+    return val.xreplace(bingle_dict)
+
 
 def main(argv=None):
     if argv is None:
@@ -194,11 +206,7 @@ def main(argv=None):
 
                 # mul_exp = eval(mulstring)
                 # coeff_dict = mult_poly(coeff_dict, mul_exp)
-        if display_positive and not nilhecke and not nilhecke_apply:
-            if same:
-                coeff_dict = {perm: efficient_subs(val, subs_dict2).expand() for perm, val in coeff_dict.items()}
-            else:
-                coeff_dict = {perm: q_posify(perms[0], perms[1], perm, val, var2, var3, _vars.q_var, msg) for perm, val in coeff_dict.items()}
+        
         from sympy import S, Symbol
         def my_measure(expr):
             ADD = Symbol('ADD')
@@ -255,10 +263,16 @@ def main(argv=None):
                     coeff_dict_update[w] = coeff_dict_update.get(w, 0) + new_q_part * q_val_part
             coeff_dict = coeff_dict_update
 
+        if display_positive and not nilhecke and not nilhecke_apply:
+            if same:
+                coeff_dict = {perm: sv_posify(val) for perm, val in coeff_dict.items()}
+            else:
+                coeff_dict = {perm: q_posify(perms[0], perms[1], perm, val, var2, var3, _vars.q_var, msg) for perm, val in coeff_dict.items()}
+
         raw_result_dict = {}
-        for k in coeff_dict:
-            # TODO: this probably shouldn't have simplify unless display_positive = True
-            coeff_dict[k] = sympy.simplify(coeff_dict[k], measure = my_measure)
+        # for k in coeff_dict:
+        #     # TODO: this probably shouldn't have simplify unless display_positive = True
+        #     coeff_dict[k] = sympy.simplify(coeff_dict[k], measure = my_measure)
         if pr or formatter is None:
             raw_result_dict = _display_full(coeff_dict, args, formatter)
         if formatter is None:
