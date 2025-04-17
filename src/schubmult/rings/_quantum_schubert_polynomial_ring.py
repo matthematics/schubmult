@@ -73,6 +73,14 @@ class ParabolicQuantumDoubleSchubertAlgebraElement(spr.BasisSchubertAlgebraEleme
     def index_comp(self):
         return self.basis.index_comp
 
+    def kill_ideal(self):
+        length = sum(self.index_comp)
+        new_dict = {}
+        for k, v in self.coeff_dict.items():
+            if len(k[0]) <= length:
+                new_dict[k] = v
+        return self.basis._from_dict(new_dict)
+
 
 class PQDSchubPoly(ParabolicQuantumDoubleSchubertAlgebraElement):
     is_Atom = True
@@ -95,8 +103,8 @@ class PQDSchubPoly(ParabolicQuantumDoubleSchubertAlgebraElement):
 
     def _sympystr(self, printer):
         if self._coeff_var == 0 or self._coeff_var == utils.NoneVar:
-            return printer.doprint(f"QPDS{self.genset.label}({(list(trimcode(self._perm)), list(self.index_comp))}")
-        return printer.doprint(f"QPDS{self.genset.label}({(list(trimcode(self._perm)), list(self.index_comp))}, {spr._varstr(self._coeff_var)})")
+            return printer.doprint(f"QPS{self.genset.label}{list(self.index_comp)}({list(trimcode(self._perm))})")
+        return printer.doprint(f"QPDS{self.genset.label}{list(self.index_comp)}({list(trimcode(self._perm))}, {spr._varstr(self._coeff_var)})")
 
 
 class QuantumDoubleSchubertAlgebraElement_basis(Basic):
