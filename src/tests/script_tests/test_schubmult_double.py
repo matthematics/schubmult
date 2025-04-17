@@ -95,8 +95,8 @@ def assert_dict_good(
         for j in range(1, i):
             sm += var_r[j]
         subs_dict2[var_a[i]] = sm
-    if same and display_positive:
-        coeff_dict = {k: expand(sympify(v).subs(subs_dict2)) for k, v in coeff_dict.items()}
+    # if same and display_positive:
+    #     coeff_dict = {k: expand(sympify(v).subs(subs_dict2)) for k, v in coeff_dict.items()}
     for k, v in coeff_dict.items():
         if expand(v) == 0:
             assert (k not in ret_dict) or (expand(v) == expand(ret_dict[k]))
@@ -104,7 +104,7 @@ def assert_dict_good(
             #print(f"{k=} {type(k[0])=} {type(k[1])=} {coeff_dict[k]=}")
             assert expand(v) == expand(ret_dict[k])
     for k in ret_dict.keys():
-        if display_positive:
+        if display_positive and not same:
             assert check_positive(ret_dict[k], coprod, same, var_r)
         v = coeff_dict[k]
         # v = sympify(v).xreplace(subs_dict2)

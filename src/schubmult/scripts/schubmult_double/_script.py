@@ -82,17 +82,18 @@ def sv_posify(val):
     val = sympify(sympy.simplify(val.subs(subs_dict)))
     bingle_dict = {}
     for i in range(1, len(_vars.var_r) - 1):
-        bingle_dict[_vars.var_r[i]] = _vars.var2[i+1] - _vars.var2[i]# sympy.Add(*[_vars.var2[i+1], - _vars.var2[i]],evaluate=False)
+        bingle_dict[_vars.var_r[i]] = _vars.var2[i + 1] - _vars.var2[i]  # sympy.Add(*[_vars.var2[i+1], - _vars.var2[i]],evaluate=False)
         # oh bay does that bar bangled banber bet bave space buckets of cheese
     # val = sympy.simplify(val)
     return val.xreplace(bingle_dict)
 
-def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, subs_dict):
+
+def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg):
     try:
         return int(val)
     except Exception:
         if same:
-            val = sv_posify(val) #efficient_subs(sympify(val), subs_dict).expand()  # expand(sympify(val).xreplace(subs_dict))
+            val = sv_posify(val)  # efficient_subs(sympify(val), subs_dict).expand()  # expand(sympify(val).xreplace(subs_dict))
         else:
             if not down:
                 val = posify(
@@ -192,7 +193,7 @@ def _display_full(
         for firstperm, secondperm in perm_pairs:
             val = coeff_dict[(firstperm, secondperm)]
             if same and display_positive:
-                val = efficient_subs(sympify(val), subs_dict2).expand()
+                val = sv_posify(val)  # efficient_subs(sympify(val), subs_dict2).expand()
             if val != 0:
                 if display_positive and not same:
                     if val != 0:
@@ -397,7 +398,7 @@ def main(argv=None):
 
             if not posified and display_positive:
                 # print(f"{coeff_dict=}")
-                coeff_dict = {k: pre_posify(perms, k, v, check, check_coeff_dict.get(k, 0), same, down, var2, var3, msg, subs_dict) for k, v in coeff_dict.items()}
+                coeff_dict = {k: pre_posify(perms, k, v, check, check_coeff_dict.get(k, 0), same, down, var2, var3, msg) for k, v in coeff_dict.items()}
 
             if pr or formatter is None:
                 raw_result_dict = _display_full(

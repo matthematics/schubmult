@@ -126,8 +126,9 @@ class BasisSchubertAlgebraElement(Expr):
         # obj.prune()
         obj._basis = basis
         return obj
-#217 per night
-#569 per night
+
+    # 217 per night
+    # 569 per night
     @property
     def args(self):
         return (sympy.Dict(self._dict), self._basis)
@@ -167,11 +168,13 @@ class BasisSchubertAlgebraElement(Expr):
         return self.basis._from_dict(res_dict2)
 
     def _cached_sympystr(self, printer):
-        return sympy.Add(
+        return printer.doprint(
+            sympy.Add(
                 *[
                     (self.coeff_dict[k] if k[0] == Permutation([]) else sympy.Mul(self.coeff_dict[k], self.basis.single_element_class(k, self.basis)))
                     for k in sorted(self.coeff_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))
                 ],
+            ),
         )
 
     def _sympystr(self, printer):
@@ -239,7 +242,6 @@ class BasisSchubertAlgebraElement(Expr):
             except Exception:
                 return self.as_polynomial() * sympify(other)
 
-
     def __rmul__(self, other):
         # logger.debug(f"{type(other)=}")
         try:
@@ -251,7 +253,6 @@ class BasisSchubertAlgebraElement(Expr):
                 return self.basis._from_dict(_mul_schub_dicts(other.coeff_dict, self.coeff_dict, self.basis))
             except Exception:
                 return self.as_polynomial() * sympify(other)
-
 
     # def equals(self, other):
     #     return self.__eq__(other)
@@ -348,7 +349,6 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
     """Algebra with sympy coefficients
     and a dict basis
     """
-
 
     # __slots__ = ("_dict", "_parent")
     # is_polynomial = True
@@ -641,6 +641,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
 
     def quantum_elem_func(self, coeff_var):
         basis = qsr.QuantumDoubleSchubertAlgebraElement_basis(self.genset)
+
         def elem_func(p, k, varl1, varl2, xstart=0, ystart=0):
             if p > k:
                 return basis(0, coeff_var)
@@ -875,5 +876,51 @@ but can be subsituted with a custom GeneratingSet_base object.
 """
 
 
-def Sx(x):
-    return DSx(x, utils.NoneVar)
+# def Sx(x):
+#     return DSx(x, utils.NoneVar)
+
+
+class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
+    def __new__(cls, genset):
+        return DoubleSchubertAlgebraElement_basis.__new__(cls, genset)
+
+    def _from_single_dict(self, _dict):
+        return DoubleSchubertAlgebraElement({(k, utils.NoneVar): v for k, v in _dict.items()}, self)
+
+    def __call__(self, x):
+        genset = self.genset
+        # logger.debug(f"{x=} {type(x)=}")
+        if not genset:
+            genset = self.genset
+        if not isinstance(genset, GeneratingSet_base):
+            raise TypeError
+        if isinstance(x, list) or isinstance(x, tuple):
+            elem = self._from_single_dict({Permutation(x): 1})
+        elif isinstance(x, Permutation):
+            elem = self._from_single_dict({x: 1})
+        # elif isinstance(x, spr.SchubertPolynomial):
+        #     if x._parent._base_var == self._base_var:
+        #         elem_dict = {(x, utils.NoneVar): v for k, v in x.coeff_dict.items()}
+        #         elem = QuantumDoubleSchubertAlgebraElement(elem_dict, self)
+        #         if cv is not None:
+        #             elem = self([1, 2], cv) * elem
+        #     else:
+        #         return self(x.expand(), cv)
+        elif isinstance(x, DoubleSchubertAlgebraElement):
+            if x.is_Add or x.is_Mul:
+                return x
+            if x.genset == genset:
+                elem = DoubleSchubertAlgebraElement(x.coeff_dict, self)  # , self)
+            else:
+                return self(x.expand())
+        # elif isinstance(x, spr.DoubleSchubertAlgebraElement):
+        #     if x.genset == self.genset:
+        #         return x.as_quantum()
+        else:
+            x = sympify(x)
+            result = py.mult_poly({Permutation([]): 1}, x, genset)
+            elem = self._from_single_dict(result)
+        return elem
+
+
+Sx = SchubertAlgebraElement_basis(GeneratingSet("x"))

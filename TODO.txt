@@ -59,3 +59,7 @@ Do quantum poly parabolic
 Create single basis for classical
 
 For quantum, correctly expand polynomial even if there aren't enough variables
+
+Parabolic classical if that's what we want
+
+Correct positive testing

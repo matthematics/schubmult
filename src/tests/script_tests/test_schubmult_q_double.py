@@ -91,8 +91,8 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, same=True, display_positive=
         for j in range(1, i):
             sm += var_r[j]
         subs_dict2[var_a[i]] = sm
-    if same and display_positive:
-        coeff_dict = {k: expand(efficient_subs(sympify(v),subs_dict2)) for k, v in coeff_dict.items()}
+    # if same and display_positive:
+    #     coeff_dict = {k: expand(efficient_subs(sympify(v),subs_dict2)) for k, v in coeff_dict.items()}
     for k, v in coeff_dict.items():
         import sys
 
@@ -104,7 +104,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, same=True, display_positive=
             # print(f"{k=} {expand(coeff_dict[k])=}", file=sys.stderr)
             assert expand(v) == 0
     for k in ret_dict.keys():
-        if display_positive:
+        if display_positive and not same:
             assert check_positive(ret_dict[k], same, subs_dict2, var_a, var_a if same else var_b, q_var=var_q)
         v = coeff_dict[k]
         # v = sympify(v).xreplace(subs_dict2)

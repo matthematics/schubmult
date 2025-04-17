@@ -13,7 +13,7 @@ import schubmult.rings._utils as utils
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
 from schubmult.perm_lib.perm_lib import Permutation, count_less_than, is_parabolic, longest_element, omega, permtrim, trimcode
-from schubmult.poly_lib.poly_lib import efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
+from schubmult.poly_lib.poly_lib import elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_from_elems
 from schubmult.poly_lib.variables import GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.schub_lib import check_blocks
@@ -67,29 +67,11 @@ class QDSchubPoly(QuantumDoubleSchubertAlgebraElement):
 
 class ParabolicQuantumDoubleSchubertAlgebraElement(spr.BasisSchubertAlgebraElement):
     def __new__(cls, _dict, basis):
-        obj = spr.BasisSchubertAlgebraElement.__new__(cls, _dict, basis)
-        # obj._index_comp = tuple(index_comp)parabolic_index = []
-        # start = 0
-        # # 1, 2 | 3
-        # for i in range(len(args.parabolic)):
-        #     end = start + int(args.parabolic[i])
-        #     parabolic_index += list(range(start+1,end))
-        #     # start += int(args.parabolic[i])
-        #     start = end
-        return obj
+        return spr.BasisSchubertAlgebraElement.__new__(cls, _dict, basis)
 
     @property
     def index_comp(self):
         return self.basis.index_comp
-
-    # return (sympy.Dict(self._dict), self._basis)     return obj
-
-    # @property
-    # def args(self):
-    #     return
-
-    # def _hashable_content(self):
-    #     return self.args
 
 
 class PQDSchubPoly(ParabolicQuantumDoubleSchubertAlgebraElement):
@@ -281,11 +263,6 @@ class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_ba
         return elem
 
 
-spunky_basis = spr.DoubleSchubertAlgebraElement_basis(t)
-
-a = GeneratingSet("a")
-
-
 class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
     def __new__(cls, genset, index_comp):
         obj = Basic.__new__(cls, genset, tuple(index_comp))
@@ -335,7 +312,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
             # print(f"{p=} {k=} {self._N=}")
             if p < 0 or p > k:
                 return 0
-            if p == 0 and k>=0:
+            if p == 0 and k >= 0:
                 return 1
             if k <= self._N[1]:
                 return elem_sym_poly(p, k, varl1, varl2)
@@ -350,8 +327,8 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
             ret = 0
             j = bisect_left(self._N, k)
             # print(f"{j=}")
-            if j< len(self._N) and k == self._N[j]:
-                ret = (-(-1) ** (self._n[j - 1])) * q_var[j - 1] * bagelflesh(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
+            if j < len(self._N) and k == self._N[j]:
+                ret = (-((-1) ** (self._n[j - 1]))) * q_var[j - 1] * bagelflesh(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
             # print(f"{k=} {self._N=} {j=}")
             ret += bagelflesh(p, k - 1, varl1, varl2) + (varl1[k - 1] - varl2[k - p]) * bagelflesh(p - 1, k - 1, varl1, varl2)
 
@@ -522,11 +499,11 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
             parabolic_index = []
             start = 0
             # 1, 2 | 3
-            index_comp = self._n + [len(k[0]) - self._N[-1] - 1]
+            index_comp = [*self._n, len(k[0]) - self._N[-1] - 1]
             for i in range(len(index_comp)):
                 end = start + index_comp[i]
                 parabolic_index += list(range(start + 1, end))
-        # start += int(args.parabolic[i])
+                # start += int(args.parabolic[i])
                 start = end
             otherlong = Permutation(list(range(len(k[0]), 0, -1)))
             longest = otherlong * longest_element(parabolic_index)

@@ -81,6 +81,7 @@ for i in range(1, 100):
         sm += _vars.var_r[j]
     subs_dict2[_vars.var2[i]] = sm
 
+
 def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3):  # noqa: ARG001
     ascode = args.ascode
     coeff_perms = list(coeff_dict.keys())
@@ -95,12 +96,13 @@ def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3)
                 raw_result_dict[tuple(trimcode(perm))] = val
                 if formatter:
                     wid = len(f"{trimcode(perm)!s}  ")
-                    print(f"{trimcode(perm)!s}  {formatter(val,wid)}")
+                    print(f"{trimcode(perm)!s}  {formatter(val, wid)}")
             else:
                 raw_result_dict[perm] = val
                 if formatter:
                     print(f"{perm!s}  {formatter(val)}")
     return raw_result_dict
+
 
 def sv_posify(val):
     # this has just y's, we want to rearrange
@@ -108,10 +110,10 @@ def sv_posify(val):
     val = sympify(sympy.simplify(efficient_subs(val, subs_dict2)))
     bingle_dict = {}
     for i in range(1, len(_vars.var_r) - 1):
-        bingle_dict[_vars.var_r[i]] = _vars.var2[i+1] - _vars.var2[i]# sympy.Add(*[_vars.var2[i+1], - _vars.var2[i]],evaluate=False)
+        bingle_dict[_vars.var_r[i]] = _vars.var2[i + 1] - _vars.var2[i]  # sympy.Add(*[_vars.var2[i+1], - _vars.var2[i]],evaluate=False)
         # oh bay does that bar bangled banber bet bave space buckets of cheese
     # val = sympy.simplify(val)
-    #return efficient_subs(val, bingle_dict)
+    # return efficient_subs(val, bingle_dict)
     return val.xreplace(bingle_dict)
 
 
@@ -151,7 +153,7 @@ def main(argv=None):
         # 1, 2 | 3
         for i in range(len(args.parabolic)):
             end = start + int(args.parabolic[i])
-            parabolic_index += list(range(start+1,end))
+            parabolic_index += list(range(start + 1, end))
             # start += int(args.parabolic[i])
             start = end
         # [sum(int(args.parabolic[j]) for j in range(i+1)) for i in range(len(args.parabolic))]
@@ -207,21 +209,22 @@ def main(argv=None):
                 # mul_exp = eval(mulstring)
                 # coeff_dict = mult_poly(coeff_dict, mul_exp)
 
-        from sympy import S, Symbol
-        def my_measure(expr):
-            ADD = Symbol('ADD')
-            NEG = Symbol('NEG')
-            SUB = Symbol('SUB')
-            # Discourage powers by giving POW a weight of 10
-            count = sympy.count_ops(expr, visual=True).subs(ADD,1.5).subs(SUB,0.2)
-            # Every other operation gets a weight of 1 (the default)
-            count = count.replace(Symbol, type(S.One))
-            #print(count)
-            return count
+        # from sympy import S, Symbol
+
+        # def my_measure(expr):
+        #     ADD = Symbol("ADD")
+        #     NEG = Symbol("NEG")
+        #     SUB = Symbol("SUB")
+        #     # Discourage powers by giving POW a weight of 10
+        #     count = sympy.count_ops(expr, visual=True).subs(ADD, 1.5).subs(SUB, 0.2)
+        #     # Every other operation gets a weight of 1 (the default)
+        #     count = count.replace(Symbol, type(S.One))
+        #     # print(count)
+        #     return count
 
         if parabolic:
             max_len = max(len(w) for w in coeff_dict)
-            parabolic_index += list(range(parabolic_index[-1]+2,max_len))
+            parabolic_index += list(range(parabolic_index[-1] + 2, max_len))
             w_P = longest_element(parabolic_index)
             # max_len = len(w_P)
             w_P_prime = Permutation([1, 2])
