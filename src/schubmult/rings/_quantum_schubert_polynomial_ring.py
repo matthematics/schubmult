@@ -350,7 +350,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
             ret = 0
             j = bisect_left(self._N, k)
             # print(f"{j=}")
-            if k == self._N[j]:
+            if j< len(self._N) and k == self._N[j]:
                 ret = (-(-1) ** (self._n[j - 1])) * q_var[j - 1] * bagelflesh(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
             # print(f"{k=} {self._N=} {j=}")
             ret += bagelflesh(p, k - 1, varl1, varl2) + (varl1[k - 1] - varl2[k - p]) * bagelflesh(p - 1, k - 1, varl1, varl2)
@@ -522,7 +522,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
             parabolic_index = []
             start = 0
             # 1, 2 | 3
-            index_comp = self._n + [len(k[0]) - len(self._longest)]
+            index_comp = self._n + [len(k[0]) - self._N[-1] - 1]
             for i in range(len(index_comp)):
                 end = start + index_comp[i]
                 parabolic_index += list(range(start + 1, end))
