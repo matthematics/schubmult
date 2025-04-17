@@ -29,9 +29,9 @@ def elem_func_func(k, i, v1, v2, vdiff, varl1, varl2, elem_func):
 
 def schubpoly_from_elems(v, var_x=None, var_y=None, elem_func=None, mumu=None):
     if mumu:
-        print(pl.code(mumu))
+        # print(pl.code(mumu))
         th = pl.code(mumu)
-        print(f"{th=}")
+        # print(f"{th=}")
         mu = mumu
     else:
         th = pl.strict_theta(~pl.Permutation(v))

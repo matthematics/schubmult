@@ -66,6 +66,12 @@ Algebrize parabolic
 (use composition instead of explicit parabolic)
 
 moderate work positive
-positivity with just y's
+(positivity with just y's)
 actual parabolic polynomials!!!
 stable parabolic options
+
+Do quantum poly parabolic
+
+Create single basis for classical
+
+Make q's equal for quantum, speed up basis comp

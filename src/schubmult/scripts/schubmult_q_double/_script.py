@@ -148,7 +148,7 @@ def main(argv=None):
         pr = args.pr
         parabolic_index = []
         start = 0
-        # 1, 2 | 3 
+        # 1, 2 | 3
         for i in range(len(args.parabolic)):
             end = start + int(args.parabolic[i])
             parabolic_index += list(range(start+1,end))
@@ -206,7 +206,7 @@ def main(argv=None):
 
                 # mul_exp = eval(mulstring)
                 # coeff_dict = mult_poly(coeff_dict, mul_exp)
-        
+
         from sympy import S, Symbol
         def my_measure(expr):
             ADD = Symbol('ADD')
@@ -218,7 +218,7 @@ def main(argv=None):
             count = count.replace(Symbol, type(S.One))
             #print(count)
             return count
-        
+
         if parabolic:
             max_len = max(len(w) for w in coeff_dict)
             parabolic_index += list(range(parabolic_index[-1]+2,max_len))
