@@ -291,7 +291,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
         obj.quantum_basis = QuantumDoubleSchubertAlgebraElement_basis(genset)
         obj._n = list(index_comp)
         obj._N = [sum(obj._n[:i]) for i in range(len(obj._n) + 1)]
-        print(f"{obj._N=}")
+        # print(f"{obj._N=}")
         obj._D = []
         from symengine import Matrix
         obj._E = {}
@@ -309,7 +309,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
                 if njp1 < obj._N[j] and njm1 < obj._N[j]:
                     m_arr[njm1][njp1] = -(-1)**(obj._n[b])*q_var[b]
             poly = Matrix(m_arr).det().simplify()
-            print(f"{poly=}")
+            # print(f"{poly=}")
             # def dongle(v):
             #     return poly.subs(t[1], v)
             obj._D += [spunky_basis(poly)]
