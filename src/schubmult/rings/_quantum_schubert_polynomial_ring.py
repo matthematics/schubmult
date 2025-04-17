@@ -1,5 +1,6 @@
 # to encourage development
 
+from bisect import bisect_left
 from functools import cache
 
 import numpy as np
@@ -12,7 +13,7 @@ import schubmult.rings._utils as utils
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
 from schubmult.perm_lib.perm_lib import Permutation, count_less_than, is_parabolic, longest_element, omega, permtrim, trimcode
-from schubmult.poly_lib.poly_lib import efficient_subs, elem_sym_poly_q, q_vector, xreplace_genvars
+from schubmult.poly_lib.poly_lib import efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_from_elems
 from schubmult.poly_lib.variables import GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.schub_lib import check_blocks
@@ -165,7 +166,6 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
     def cached_schubpoly(self, k):
         return schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=elem_sym_poly_q)  # yz.schubpoly_quantum(k[0], self.genset, utils.poly_ring(k[1]))
 
-
     @cache
     def cached_positive_product(self, u, v, va, vb):
         return {(k, va): xreplace_genvars(x, utils.poly_ring(va), utils.poly_ring(vb)) for k, x in yz.schubmult_q_generic_partial_posify(u, v).items()}
@@ -237,6 +237,7 @@ QDSx = QuantumDoubleSchubertAlgebraElement_basis(GeneratingSet("x"))
 
 t = GeneratingSet("t")
 
+
 class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_basis):
     def __new__(cls, genset):
         return QuantumDoubleSchubertAlgebraElement_basis.__new__(cls, genset)
@@ -284,68 +285,96 @@ spunky_basis = spr.DoubleSchubertAlgebraElement_basis(t)
 
 a = GeneratingSet("a")
 
-class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
 
+class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
     def __new__(cls, genset, index_comp):
         obj = Basic.__new__(cls, genset, tuple(index_comp))
         obj.quantum_basis = QuantumDoubleSchubertAlgebraElement_basis(genset)
         obj._n = list(index_comp)
         obj._N = [sum(obj._n[:i]) for i in range(len(obj._n) + 1)]
         # print(f"{obj._N=}")
-        obj._D = []
-        from symengine import Matrix
-        obj._E = {}
-        for j in range(1, len(obj._N)):
-            m_arr = [[0 for i in range(obj._N[j])] for p in range(obj._N[j])]
-            for i in range(obj._N[j]):
-                m_arr[i][i] = a[i+1] - t[1] #genset[i+1] - t[1]
-                if i < obj._N[j] - 1:
-                    m_arr[i][i+1] = -1
-            for b in range(1, j):
-                njm1 = obj._N[b + 1] - 1
-                njp1 = obj._N[b - 1]
-                # print(f"{b=}")
-                # print(f"{njm1=} {njp1=}")
-                if njp1 < obj._N[j] and njm1 < obj._N[j]:
-                    m_arr[njm1][njp1] = -(-1)**(obj._n[b])*q_var[b]
-            poly = Matrix(m_arr).det().simplify()
-            # print(f"{poly=}")
-            # def dongle(v):
-            #     return poly.subs(t[1], v)
-            obj._D += [spunky_basis(poly)]
-            obj._E[obj._N[j]] = obj._D[-1]
+        # obj._D = []
+        # from symengine import Matrix
+        # obj._E = {}
+        # for j in range(1, len(obj._N)):
+        #     m_arr = [[0 for i in range(obj._N[j])] for p in range(obj._N[j])]
+        #     for i in range(obj._N[j]):
+        #         m_arr[i][i] = a[i+1] - t[1] #genset[i+1] - t[1]
+        #         if i < obj._N[j] - 1:
+        #             m_arr[i][i+1] = -1
+        #     for b in range(1, j):
+        #         njm1 = obj._N[b + 1] - 1
+        #         njp1 = obj._N[b - 1]
+        #         # print(f"{b=}")
+        #         # print(f"{njm1=} {njp1=}")
+        #         if njp1 < obj._N[j] and njm1 < obj._N[j]:
+        #             m_arr[njm1][njp1] = -(-1)**(obj._n[b])*q_var[b]
+        #     poly = Matrix(m_arr).det().simplify()
+        #     # print(f"{poly=}")
+        #     # def dongle(v):
+        #     #     return poly.subs(t[1], v)
+        #     obj._D += [spunky_basis(poly)]
+        #     obj._E[obj._N[j]] = obj._D[-1]
         # print(obj._E)
         parabolic_index = []
         start = 0
         # 1, 2 | 3
         for i in range(len(index_comp)):
             end = start + index_comp[i]
-            parabolic_index += list(range(start+1,end))
+            parabolic_index += list(range(start + 1, end))
             # start += int(args.parabolic[i])
             start = end
         obj._parabolic_index = parabolic_index
-        obj._otherlong = Permutation(list(range(obj._N[-1],0,-1)))
+        obj._otherlong = Permutation(list(range(obj._N[-1], 0, -1)))
         obj._longest = obj._otherlong * longest_element(parabolic_index)
-        #print(f"{}")
+        # print(f"{}")
         return obj
 
     def elem_sym(self):
         def bagelflesh(p, k, varl1, varl2):
-            # print(f"{p=} {k=} {len(self._D)=}")
-            if p == 0 and k == 0:
+            # print(f"{p=} {k=} {self._N=}")
+            if p < 0 or p > k:
+                return 0
+            if p == 0 and k>=0:
                 return 1
-            subs_dict = {}
-            for i in range(min(k,len(varl1))):
-                subs_dict[a[i+1]] = varl1[i]
-            for i in range(min(k,len(varl2))):
-                subs_dict[t[i+1]] = varl2[i]
+            if k <= self._N[1]:
+                return elem_sym_poly(p, k, varl1, varl2)
+            # if k>=len(self._N):
+            #     return (
+            #         (varl1[K - 1] - varl2[K - p]) * bagelflesh(p - 1, k - 1, varl1, varl2)
+            #         + bagelflesh(p, k - 1, varl1, varl2)
+            #         # + q_var[k - 1] * elem_sym_poly_q(p - 2, k - 2, varl1, varl2, q_var)
+            #     )
+            # we have a block
+            # j = self._N.index(k)
+            ret = 0
+            j = bisect_left(self._N, k)
+            # print(f"{j=}")
+            if k == self._N[j]:
+                ret = (-(-1) ** (self._n[j - 1])) * q_var[j - 1] * bagelflesh(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
+            # print(f"{k=} {self._N=} {j=}")
+            ret += bagelflesh(p, k - 1, varl1, varl2) + (varl1[k - 1] - varl2[k - p]) * bagelflesh(p - 1, k - 1, varl1, varl2)
 
-            if p == k:
-                return efficient_subs(self._E[k].as_polynomial(),subs_dict)
-            splack = self._E[k]
-            for i in range(k - p):
-                splack = -splack.divdiff(i + 1)
-            return efficient_subs(splack.as_polynomial(), subs_dict)
+            # ret = ((-1)**(self._n[k - 1] + 1))*q_var[k - 1] * bagelflesh(p - self._n[k - 1], k-2, varl1, varl2) + \
+            #     + bagelflesh(p, k - 1, varl1, varl2)
+            # ret += bagelflesh(p - 1, k - 1, varl1, varl2)
+            return ret
+            # sum([(varl1[k - r] - varl2[k - p]) * bagelflesh(p - r, k - 1, varl1, varl2) for r in range(1, )])
+
+            # sum([obj._n[k]])
+            # subs_dict = {}
+            # for i in range(min(k,len(varl1))):
+            #     subs_dict[a[i+1]] = varl1[i]
+            # for i in range(min(k,len(varl2))):
+            #     subs_dict[t[i+1]] = varl2[i]
+
+            # if p == k:
+            #     return efficient_subs(self._E[k].as_polynomial(),subs_dict)
+            # splack = self._E[k]
+            # for i in range(k - p):
+            #     splack = -splack.divdiff(i + 1)
+            # return efficient_subs(splack.as_polynomial(), subs_dict)
+
         return bagelflesh
 
     def _from_dict(self, _dict):
@@ -415,7 +444,6 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
         w_P_prime = Permutation([1, 2])
         coeff_dict_update = {}
         for w_1, cv in coeff_dict.keys():
-
             val = coeff_dict[(w_1, cv)]
             q_dict = yz.factor_out_q_keep_factored(val)
             for q_part in q_dict:
@@ -450,7 +478,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
                 except Exception:
                     pass
                 q_val_part = q_dict[q_part]
-                coeff_dict_update[(w, cv)] = coeff_dict_update.get((w,cv), 0) + new_q_part * q_val_part
+                coeff_dict_update[(w, cv)] = coeff_dict_update.get((w, cv), 0) + new_q_part * q_val_part
         return coeff_dict_update
 
     @cache
@@ -490,7 +518,21 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
 
     @cache
     def cached_schubpoly(self, k):
-        return schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=self.elem_sym(),mumu=~self._longest)  # yz.schubpoly_quantum(k[0], self.genset, utils.poly_ring(k[1]))
+        if len(k[0]) > len(self._longest):
+            parabolic_index = []
+            start = 0
+            # 1, 2 | 3
+            index_comp = self._n + [len(k[0]) - len(self._longest)]
+            for i in range(len(index_comp)):
+                end = start + index_comp[i]
+                parabolic_index += list(range(start + 1, end))
+        # start += int(args.parabolic[i])
+                start = end
+            otherlong = Permutation(list(range(len(k[0]), 0, -1)))
+            longest = otherlong * longest_element(parabolic_index)
+        else:
+            longest = self._longest
+        return schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=self.elem_sym(), mumu=~longest)  # yz.schubpoly_quantum(k[0], self.genset, utils.poly_ring(k[1]))
 
     @cache
     def cached_positive_product(self, u, v, va, vb):
