@@ -5,12 +5,12 @@ parser sage tests
 more script tests (parabolic?)
 PARABOLIC
 
-HARD POSITIVE ERRORS
+# HARD POSITIVE ERRORS
 
 
 DIV DIFF MAYBE NILHECKERING
 
-infinite parabolic rings
+# infinite parabolic rings
 
 !!PERM tests!!
 SCHUB tests
@@ -22,29 +22,29 @@ document
 
 DOCS
 
-perm actions
+# perm actions
 PERMUTATION CALL check
 
 free_symbols and sub
-sympy guardrails for GeneratingSet check
+# sympy guardrails for GeneratingSet check
 
 SEM basis
 
 Convert poly permute monomial
 Fast basis change
-Fix subs 
+# Fix subs 
 
-Change vars breaks if not positive
+# Change vars breaks if not positive
 
 Test if Poly technique is faster
 Results: higher degree and/or fewer terms, poly faster
 
-Use symengine for everything possible
-Basis instead of generating set
+# Use symengine for everything possible
+# Basis instead of generating set
 classical schubpoly
 basis generates basis change
 
-schubpoly_quantum is slow
+# schubpoly_quantum is slow
 
 more tests
 
@@ -54,12 +54,19 @@ Key union?
 
 moderate work positive
 (positivity with just y's)
-Do quantum poly parabolic
+
+# Do quantum poly parabolic
 
 Create single basis for classical
 
-For quantum, correctly expand polynomial even if there aren't enough variables
+# For quantum, correctly expand polynomial even if there aren't enough variables
 
 Parabolic classical if that's what we want
 
-Correct positive testing
+# Correct positive testing
+
+Convert parabolic if possible
+
+# Faster Peterson-Woodward
+
+Quantum parabolic change basis

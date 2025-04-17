@@ -324,42 +324,12 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
                 return 1
             if k <= self._N[1]:
                 return elem_sym_poly(p, k, varl1, varl2)
-            # if k>=len(self._N):
-            #     return (
-            #         (varl1[K - 1] - varl2[K - p]) * bagelflesh(p - 1, k - 1, varl1, varl2)
-            #         + bagelflesh(p, k - 1, varl1, varl2)
-            #         # + q_var[k - 1] * elem_sym_poly_q(p - 2, k - 2, varl1, varl2, q_var)
-            #     )
-            # we have a block
-            # j = self._N.index(k)
             ret = 0
             j = bisect_left(self._N, k)
-            # print(f"{j=}")
             if j < len(self._N) and k == self._N[j]:
                 ret = (-((-1) ** (self._n[j - 1]))) * q_var[j - 1] * bagelflesh(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
-            # print(f"{k=} {self._N=} {j=}")
             ret += bagelflesh(p, k - 1, varl1, varl2) + (varl1[k - 1] - varl2[k - p]) * bagelflesh(p - 1, k - 1, varl1, varl2)
-
-            # ret = ((-1)**(self._n[k - 1] + 1))*q_var[k - 1] * bagelflesh(p - self._n[k - 1], k-2, varl1, varl2) + \
-            #     + bagelflesh(p, k - 1, varl1, varl2)
-            # ret += bagelflesh(p - 1, k - 1, varl1, varl2)
             return ret
-            # sum([(varl1[k - r] - varl2[k - p]) * bagelflesh(p - r, k - 1, varl1, varl2) for r in range(1, )])
-
-            # sum([obj._n[k]])
-            # subs_dict = {}
-            # for i in range(min(k,len(varl1))):
-            #     subs_dict[a[i+1]] = varl1[i]
-            # for i in range(min(k,len(varl2))):
-            #     subs_dict[t[i+1]] = varl2[i]
-
-            # if p == k:
-            #     return efficient_subs(self._E[k].as_polynomial(),subs_dict)
-            # splack = self._E[k]
-            # for i in range(k - p):
-            #     splack = -splack.divdiff(i + 1)
-            # return efficient_subs(splack.as_polynomial(), subs_dict)
-
         return bagelflesh
 
     def _from_dict(self, _dict):
@@ -419,53 +389,6 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
                 coeff_dict_update[w] = coeff_dict_update.get(w, 0) + new_q_part * q_val_part
         return coeff_dict_update
 
-    # TODO: this doesn't work
-    def process_coeff_dict_double(self, coeff_dict):
-        max_len = max(len(w) for w in coeff_dict)
-        parabolic_index = [*self._parabolic_index]
-        parabolic_index += list(range(parabolic_index[-1] + 2, max_len))
-        w_P = Permutation(longest_element(parabolic_index))
-        # max_len = len(w_P)
-        w_P_prime = Permutation([1, 2])
-        coeff_dict_update = {}
-        for w_1, cv in coeff_dict.keys():
-            val = coeff_dict[(w_1, cv)]
-            q_dict = yz.factor_out_q_keep_factored(val)
-            for q_part in q_dict:
-                qv = q_vector(q_part)
-                w = w_1
-                good = True
-                parabolic_index2 = []
-                for i in range(len(parabolic_index)):
-                    if omega(parabolic_index[i], qv) == 0:
-                        parabolic_index2 += [parabolic_index[i]]
-                    elif omega(parabolic_index[i], qv) != -1:
-                        good = False
-                        break
-                if not good:
-                    continue
-                w_P_prime = Permutation(longest_element(parabolic_index2))
-                if not check_blocks(qv, parabolic_index):
-                    continue
-                # print(f"{type(w)=} {type(w_P_prime)=} {type(w_P)=}")
-                w = (w * w_P_prime) * w_P
-                if not is_parabolic(w, parabolic_index):
-                    continue
-
-                w = permtrim(w)
-                if len(w) > max_len:
-                    continue
-                new_q_part = np.prod(
-                    [q_var[index + 1 - count_less_than(parabolic_index, index + 1)] ** qv[index] for index in range(len(qv)) if index + 1 not in parabolic_index],
-                )
-                try:
-                    new_q_part = int(new_q_part)
-                except Exception:
-                    pass
-                q_val_part = q_dict[q_part]
-                coeff_dict_update[(w, cv)] = coeff_dict_update.get((w, cv), 0) + new_q_part * q_val_part
-        return coeff_dict_update
-
     @cache
     def cached_product(self, u, v, va, vb):
         initial_dict = {k: xreplace_genvars(x, utils.poly_ring(va), utils.poly_ring(vb)) for k, x in yz.schubmult_q_double_pair_generic(u, v).items()}
@@ -474,24 +397,32 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
     # def in_quantum_basis(self, elem):
     #     return elem
 
-    # def in_classical_basis(self, elem):
-    #     result = S.Zero
-    #     for k, v in elem.coeff_dict.items():
-    #         result += v * self.quantum_as_classical_schubpoly(k[0], k[1])
-    #     return result
+    def in_classical_basis(self, elem):
+        result = S.Zero
+        for k, v in elem.coeff_dict.items():
+            result += v * self.quantum_as_classical_schubpoly(k[0], k[1])
+            # print(f"{result=}")
+        return result
 
-    # def classical_elem_func(self, coeff_var):
-    #     basis = spr.DoubleSchubertAlgebraElement_basis(self.genset)
-    #     q_var = yz._vars.q_var
-
-    #     def elem_func(p, k, varl1, varl2):
-    #         if p == 0 and k >= 0:
-    #             return basis([], coeff_var)
-    #         if p < 0 or p > k:
-    #             return basis(0, coeff_var)
-    #         return (varl1[k - 1] - varl2[k - p]) * elem_func(p - 1, k - 1, varl1, varl2) + elem_func(p, k - 1, varl1, varl2) + q_var[k - 1] * elem_func(p - 2, k - 2, varl1, varl2)
-
-    #     return elem_func
+    def classical_elem_func(self, coeff_var):
+        basis = spr.DoubleSchubertAlgebraElement_basis(self.genset)
+        q_var = yz._vars.q_var
+        def elem_func(p, k, varl1, varl2):
+            # print(f"{p=} {k=} {varl1=} {varl2=}")
+            if p == 0 and k >= 0:
+                return basis([], coeff_var)
+            if p < 0 or p > k:
+                return basis(0, coeff_var)
+            if k <= self._N[1]:
+                return basis(elem_sym_poly(p, k, varl1, varl2), coeff_var)
+            ret = basis(0, coeff_var)
+            j = bisect_left(self._N, k)
+            if j < len(self._N) and k == self._N[j]:
+                ret = (-((-1) ** (self._n[j - 1]))) * q_var[j - 1] * elem_func(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
+            ret += elem_func(p, k - 1, varl1, varl2) + (varl1[k - 1] - varl2[k - p]) * elem_func(p - 1, k - 1, varl1, varl2)
+            # print(f"{ret=}")
+            return ret
+        return elem_func
 
     @property
     def single_element_class(self):
@@ -499,7 +430,24 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
 
     @cache
     def quantum_as_classical_schubpoly(self, perm, coeff_var="y"):
-        return schubpoly_from_elems(perm, self.genset, utils.poly_ring(coeff_var), self.classical_elem_func(coeff_var))
+        k = (perm, coeff_var)
+        # print(f"{k=}")
+        if len(k[0]) > len(self._longest):
+            parabolic_index = []
+            start = 0
+            # 1, 2 | 3
+            index_comp = [*self._n, len(k[0]) - self._N[-1] - 1]
+            for i in range(len(index_comp)):
+                end = start + index_comp[i]
+                parabolic_index += list(range(start + 1, end))
+                # start += int(args.parabolic[i])
+                start = end
+            otherlong = Permutation(list(range(len(k[0]), 0, -1)))
+            longest = otherlong * longest_element(parabolic_index)
+        else:
+            longest = self._longest
+        # print(f"{perm=} {longest=} {self._longest=}")
+        return schubpoly_from_elems(perm, self.genset, utils.poly_ring(coeff_var), elem_func=self.classical_elem_func(coeff_var), mumu=~longest)
 
     @cache
     def cached_schubpoly(self, k):
@@ -558,8 +506,9 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
         elif isinstance(x, ParabolicQuantumDoubleSchubertAlgebraElement):
             return x
         else:
-            x = self.quantum_basis(x)
-            return self._from_dict(self.process_coeff_dict_double(x.coeff_dict))
+            raise NotImplementedError
+            # x = self.quantum_basis(x)
+            # return self._from_dict(self.process_coeff_dict_double(x.coeff_dict))
         # elif isinstance(x, spr.SchubertPolynomial):
         #     if x._parent._base_var == self._base_var:
         #         elem_dict = {(x, utils.NoneVar): v for k, v in x.coeff_dict.items()}

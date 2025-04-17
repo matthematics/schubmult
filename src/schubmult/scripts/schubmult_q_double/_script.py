@@ -223,8 +223,8 @@ def main(argv=None):
         #     return count
 
         if parabolic:
-            max_len = max(len(w) for w in coeff_dict)
-            parabolic_index += list(range(parabolic_index[-1] + 2, max_len))
+            max_len = parabolic_index[-1] + 1
+            # parabolic_index += list(range(parabolic_index[-1] + 2, max_len))
             w_P = longest_element(parabolic_index)
             # max_len = len(w_P)
             w_P_prime = Permutation([1, 2])
