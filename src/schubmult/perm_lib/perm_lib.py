@@ -144,6 +144,7 @@ def sg(i, w):
         return 0
     return 1
 
+
 def longest_element(indices):
     perm = Permutation([1, 2])
     did_one = True
@@ -155,11 +156,11 @@ def longest_element(indices):
                 perm = perm.swap(j, j + 1)
                 did_one = True
 
-# def longest_element(indices):
-#     elems = list(range(indices[-1]+1,0,-1))
-#     spots = list(sorted(set(ranges(indices[-1])) - set(indices)))
-#     i = 0
-#     for j in range(len(elems)):
+    # def longest_element(indices):
+    #     elems = list(range(indices[-1]+1,0,-1))
+    #     spots = list(sorted(set(ranges(indices[-1])) - set(indices)))
+    #     i = 0
+    #     for j in range(len(elems)):
 
     # indices2 = [0,*indices,10000]
     # print(indices2)
@@ -357,6 +358,8 @@ class Permutation(Basic):
     def __new__(cls, perm):
         return Permutation.__xnew_cached__(cls, tuple(perm))
 
+    
+
     @staticmethod
     @cache
     def __xnew_cached__(_class, perm):
@@ -371,24 +374,29 @@ class Permutation(Basic):
         obj._perm = p
         obj._hash_code = hash(p)
         cd = s_perm.inversion_vector()
-        obj._unique_key = (len(p), sum([cd[i]*math.factorial(len(p)-1-i) for i in range(len(cd))]))
+        obj._unique_key = (len(p), sum([cd[i] * math.factorial(len(p) - 1 - i) for i in range(len(cd))]))
+        obj._print_as_code = False
         return obj
 
     @classmethod
     def sorting_perm(cls, itera):
-        L = [i+1 for i in range(len(itera))]
+        L = [i + 1 for i in range(len(itera))]
         L.sort(key=lambda i: itera[i - 1])
         return Permutation(L)
 
+    def _sympystr(self, printer):
+        if self._print_as_code:
+            return printer.doprint(trimcode(self))
+        return printer.doprint(list(self._perm))
+
     def __call__(self, i):
-        """1-indexed
-        """
-        return self[i-1]
+        """1-indexed"""
+        return self[i - 1]
 
     def descents(self, zero_indexed=True):
         if zero_indexed:
             return self._s_perm.descents()
-        return {i+1 for i in self._s_perm.descents()}
+        return {i + 1 for i in self._s_perm.descents()}
 
     def get_cycles(self):
         return self.get_cycles_cached()
@@ -482,7 +490,7 @@ class Permutation(Basic):
 
     def __len__(self):
         # print("REMOVE THIS")
-        return max(len(self._perm),2)
+        return max(len(self._perm), 2)
 
     def __invert__(self):
         new_sperm = ~(self._s_perm)
@@ -494,13 +502,3 @@ class Permutation(Basic):
 
     def __lt__(self, other):
         return tuple(self) < tuple(other)
-
-    # def act(self, other):
-    #     # act on a sympy expresssin
-    #     subs_dict = {self._action[i + 1]: self._action[self.args[0][i]] for i in range(len(self))}
-    #     # print(f"{subs_dict=}")
-    #     result = sympify(other).subs(subs_dict)
-
-    # we want to format permuations
-    def _sympystr(self, p):  # noqa: ARG002
-        return self._perm.__str__()

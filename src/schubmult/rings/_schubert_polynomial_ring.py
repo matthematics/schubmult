@@ -1,7 +1,7 @@
 from functools import cache, cached_property
 
 import sympy
-from symengine import Add, S, expand, sympify
+from symengine import Add, S, Symbol, expand, sympify
 from sympy import Basic
 from sympy.core.expr import Expr
 from sympy.core.kind import NumberKind
@@ -15,9 +15,9 @@ import schubmult.schub_lib.double as yz
 # from schubmult.poly_lib.schub_poly import pull_out_var
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
-from schubmult.perm_lib.perm_lib import Permutation, add_perm_dict, inv, trimcode
+from schubmult.perm_lib.perm_lib import Permutation, add_perm_dict, inv
 from schubmult.poly_lib.poly_lib import elem_sym_poly, xreplace_genvars
-from schubmult.poly_lib.schub_poly import schubpoly_classical_from_elems
+from schubmult.poly_lib.schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from schubmult.utils.logging import get_logger
 
@@ -39,14 +39,10 @@ class NotEnoughGeneratorsError(ValueError):
     pass
 
 
-class GlobalPrintOptions:
-    _display_as_code = True
+# class GlobalPrintOptions:
+#     _display_as_code = True
 
-    @staticmethod
-    def perm_str(perm):
-        if GlobalPrintOptions._display_as_code:
-            return str(trimcode(perm))
-        return str(list(perm))
+#     @staticmethod
 
 
 def _varstr(v):
@@ -536,6 +532,22 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
     #         return self.doit().expand()
     #     return expand(Add(*[v * schubpoly(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
 
+    def in_SEM_basis(self):
+        result = S.Zero
+        for k, v in self.coeff_dict.items():
+            result += v * schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=self.basis.symbol_elem_func)
+        # print(f"{result=}")
+        # gens = []
+        # for k in range(1, 10):
+        #     gens += [sympy.Symbol(f"e_{p}_{k}") for p in range(1,k+1)]
+        # #print(f"{gens=}")
+        # ply = sympy.poly(sympy.sympify(expand(result)), *gens)
+        # floss = 0
+        # for m, c in ply.as_dict().items():
+        #     floss += c * sympy.prod([gens[i]**m[i] for i in range(len(m))])
+        # return floss
+        return result
+
     @cached_property
     def max_gens(self):
         return max([max(k[0].descents()) for k in self.coeff_dict.keys()])
@@ -581,8 +593,8 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
         if self._key[0] == Permutation([]):
             return printer.doprint(1)
         if self._key[1] == 0 or self._key[1] == utils.NoneVar:
-            return printer.doprint(f"S{self.genset.label}({GlobalPrintOptions.perm_str(self._key[0])})")
-        return printer.doprint(f"DS{self.genset.label}({GlobalPrintOptions.perm_str(self._key[0])}, {_varstr(self._key[1])})")
+            return printer.doprint(f"S{self.genset.label}({printer.doprint(self._key[0])})")
+        return printer.doprint(f"DS{self.genset.label}({printer.doprint(self._key[0])}, {_varstr(self._key[1])})")
 
 
 # def elem_func(p, k, vx, vy):
@@ -595,6 +607,20 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
 class DoubleSchubertAlgebraElement_basis(Basic):
     def __new__(cls, genset):
         return Basic.__new__(cls, genset)
+
+    @property
+    def symbol_elem_func(self):
+        def elem_func(p, k, varl1, varl2):
+            if p == 0 and k >= 0:
+                return 1
+            if p < 0 or p > k:
+                return 0
+            return sympy.Add(*[(Symbol(f"e_{p - i}_{k}") if p - i > 0 else 1) * elem_sym_poly(i, k + 1 - p, [-v for v in varl2], [0 for a in varl1]) for i in range(p + 1)])
+
+        return elem_func
+
+    # def in_SEM_basis(self, elem):
+    #     return
 
     @property
     def genset(self):
@@ -931,3 +957,5 @@ class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
 
 
 Sx = SchubertAlgebraElement_basis(GeneratingSet("x"))
+
+ybas = SchubertAlgebraElement_basis(GeneratingSet("y"))

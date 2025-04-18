@@ -61,8 +61,8 @@ class QDSchubPoly(QuantumDoubleSchubertAlgebraElement):
 
     def _sympystr(self, printer):
         if self._coeff_var == 0 or self._coeff_var == utils.NoneVar:
-            return printer.doprint(f"QS{self.genset.label}({spr.GlobalPrintOptions.perm_str(self._perm)})")
-        return printer.doprint(f"QDS{self.genset.label}({spr.GlobalPrintOptions.perm_str(self._perm)}, {spr._varstr(self._coeff_var)})")
+            return printer.doprint(f"QS{self.genset.label}({printer.doprint(self._perm)})")
+        return printer.doprint(f"QDS{self.genset.label}({printer.doprint(self._perm)}, {spr._varstr(self._coeff_var)})")
 
 
 class ParabolicQuantumDoubleSchubertAlgebraElement(spr.BasisSchubertAlgebraElement):
@@ -92,6 +92,7 @@ class PQDSchubPoly(ParabolicQuantumDoubleSchubertAlgebraElement):
     def __xnew__(_class, k, basis):
         obj = ParabolicQuantumDoubleSchubertAlgebraElement.__new__(_class, sympy.Dict({(Permutation(k[0]), k[1]): 1}), basis)
         obj._perm = k[0]
+        obj._perm._print_as_code = True
         obj._coeff_var = k[1]
         # obj._base_var = base_var
         return obj
@@ -103,8 +104,8 @@ class PQDSchubPoly(ParabolicQuantumDoubleSchubertAlgebraElement):
 
     def _sympystr(self, printer):
         if self._coeff_var == 0 or self._coeff_var == utils.NoneVar:
-            return printer.doprint(f"QPS{self.genset.label}{(tuple(self.index_comp))}({spr.GlobalPrintOptions.perm_str(self._perm)})")
-        return printer.doprint(f"QPDS{self.genset.label}{tuple(self.index_comp)}({spr.GlobalPrintOptions.perm_str(self._perm)}, {spr._varstr(self._coeff_var)})")
+            return printer.doprint(f"QPS{self.genset.label}{(tuple(self.index_comp))}({printer.doprint(self._perm)})")
+        return printer.doprint(f"QPDS{self.genset.label}{tuple(self.index_comp)}({printer.doprint(self._perm)}, {spr._varstr(self._coeff_var)})")
 
 
 class QuantumDoubleSchubertAlgebraElement_basis(Basic):
