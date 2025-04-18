@@ -103,8 +103,8 @@ class PQDSchubPoly(ParabolicQuantumDoubleSchubertAlgebraElement):
 
     def _sympystr(self, printer):
         if self._coeff_var == 0 or self._coeff_var == utils.NoneVar:
-            return printer.doprint(f"QPS{self.genset.label}{(list(self.index_comp))}({spr.GlobalPrintOptions.perm_str(self._perm)})")
-        return printer.doprint(f"QPDS{self.genset.label}{list(self.index_comp)}({spr.GlobalPrintOptions.perm_str(self._perm)}, {spr._varstr(self._coeff_var)})")
+            return printer.doprint(f"QPS{self.genset.label}{(tuple(self.index_comp))}({spr.GlobalPrintOptions.perm_str(self._perm)})")
+        return printer.doprint(f"QPDS{self.genset.label}{tuple(self.index_comp)}({spr.GlobalPrintOptions.perm_str(self._perm)}, {spr._varstr(self._coeff_var)})")
 
 
 class QuantumDoubleSchubertAlgebraElement_basis(Basic):
@@ -450,7 +450,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
 
     def process_coeff_dict(self, coeff_dict):
         max_len = max(len(w) for w in coeff_dict)
-        # parabolic_index = [*self._parabolic_index]
+        parabolic_index = [*self._parabolic_index]
         # parabolic_index += list(range(parabolic_index[-1] + 2, max_len + 1))
         if max_len > len(self._longest):
             parabolic_index = []
@@ -697,6 +697,9 @@ QuantumDoubleSchubertPolynomial = QuantumDoubleSchubertAlgebraElement
 def make_parabolic_quantum_basis(index_comp):
     return ParabolicQuantumDoubleSchubertAlgebraElement_basis(GeneratingSet("x"), index_comp)
 
+@cache
+def QPDSx(*args):
+    return make_parabolic_quantum_basis(args)
 
 # is_Add = True
 # is_Mul = True

@@ -70,6 +70,6 @@ Parabolic classical if that's what we want
 
 # Quantum parabolic change basis
 
-code display!!!
+code display!!! !!!
 
-SEM basis
+SEM basis!!!
