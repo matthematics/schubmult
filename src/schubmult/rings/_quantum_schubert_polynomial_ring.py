@@ -594,17 +594,19 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
             parabolic_index = []
             start = 0
             # 1, 2 | 3
-            index_comp = [*self._n, len(k[0]) - self._N[-1] + 1]
+            index_comp = [*self._n, len(k[0]) + 1 - self._N[-1]]
             for i in range(len(index_comp)):
                 end = start + index_comp[i]
                 parabolic_index += list(range(start + 1, end))
                 # start += int(args.parabolic[i])
                 start = end
-            otherlong = Permutation(list(range(len(k[0]), 0, -1)))
-            longest = otherlong * longest_element(parabolic_index)
+            otherlong = Permutation(list(range(parabolic_index[-1] + 1, 0, -1)))
+            longpar = Permutation(longest_element(parabolic_index))
+            # print(f"{longpar=} {parabolic_index=}")
+            longest = otherlong * longpar
+            # print(f"new longest = {longest=}")
         else:
             longest = self._longest
-        # print(f"{perm=} {longest=} {self._longest=}")
         return schubpoly_from_elems(perm, self.genset, utils.poly_ring(coeff_var), elem_func=self.classical_elem_func(coeff_var), mumu=~longest)
 
     @cache
@@ -674,6 +676,8 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
         else:
             dct = self.classical_basis(x, cv)
             elem = 0
+            if not isinstance(dct, spr.BasisSchubertAlgebraElement):
+                return dct
             try:
                 for k, v in dct.coeff_dict.items():
                     if elem == 0:

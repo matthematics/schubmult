@@ -22,8 +22,8 @@ def test_parabolic():
     from schubmult.perm_lib.perm_lib import uncode
     from symengine import S, expand
     QPDSx = make_parabolic_quantum_basis([2, 3, 4])
-    A = QPDSx(uncode([1,2,0,2,3]), 0)
-    B = QPDSx(uncode([1,3,0,1,2]), 0)
+    A = QPDSx(uncode([0,2,0,1,3]), 0)
+    B = QPDSx(uncode([1,2,0,0,2]), 0)
     C = A*B
     assert expand(C.as_polynomial()-A.as_polynomial()*B.as_polynomial()) == S.Zero
     assert expand(C.as_polynomial()-QPDSx(C.as_polynomial(), 0).as_polynomial()) == S.Zero
