@@ -23,6 +23,7 @@ def test_parabolic():
     B = QPDSx(uncode([1,3]), "z")
     C = A*B
     assert expand(C.as_polynomial()-A.as_polynomial()*B.as_polynomial()) == S.Zero
+    assert expand(C.as_polynomial()-QPDSx(C.as_polynomial(), "y").as_polynomial()) == S.Zero
 
 
 def test_subs():

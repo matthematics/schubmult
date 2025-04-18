@@ -26,6 +26,7 @@ def test_parabolic():
     B = QPDSx(uncode([1,3]), 0)
     C = A*B
     assert expand(C.as_polynomial()-A.as_polynomial()*B.as_polynomial()) == S.Zero
+    assert expand(C.as_polynomial()-QPDSx(C.as_polynomial(), 0).as_polynomial()) == S.Zero
 
 
 def test_associative():
