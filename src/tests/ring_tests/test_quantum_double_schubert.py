@@ -14,6 +14,16 @@ def test_schub_expand():
     assert expand(QDSx([3, 4, 1, 2]).expand() * QDSx([4, 1, 2, 3]).expand() - ((QDSx([3, 4, 1, 2]) * QDSx([4, 1, 2, 3])).expand())) == 0
     assert expand((x_1* QDSx([3, 4, 1, 2])).expand()) == expand(y_3 * QDSx([3, 4, 1, 2]).expand() + QDSx([4, 3, 1, 2]).expand())
 
+def test_parabolic():
+    from schubmult.rings import make_parabolic_quantum_basis
+    from schubmult.perm_lib.perm_lib import uncode
+    from symengine import S, expand
+    QPDSx = make_parabolic_quantum_basis([2, 3])
+    A = QPDSx(uncode([1,2]))
+    B = QPDSx(uncode([1,3]), "z")
+    C = A*B
+    assert expand(C.as_polynomial()-A.as_polynomial()*B.as_polynomial()) == S.Zero
+
 
 def test_subs():
     from symengine import expand, S
@@ -25,7 +35,6 @@ def test_subs():
     perm = [4, 1, 3, 2]
     old = x[3]
     new = x[1]
-    print("TODO! CHECK THIS TEST POLYNOMIAL COERCION!")
     A = QDSx(perm,"z").subs(old, new).as_polynomial()
     B = QDSx(perm,"z").as_polynomial().subs(old, new)
     assert expand(A - B) == S.Zero
