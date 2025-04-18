@@ -41,8 +41,8 @@ Results: higher degree and/or fewer terms, poly faster
 
 # Use symengine for everything possible
 # Basis instead of generating set
-classical schubpoly
-basis generates basis change
+# classical schubpoly
+# basis generates basis change
 
 # schubpoly_quantum is slow
 
@@ -52,8 +52,8 @@ subs faster, do better with dense product
 
 Key union?
 
-moderate work positive
-(positivity with just y's)
+# moderate work positive
+# (positivity with just y's)
 
 # Do quantum poly parabolic
 

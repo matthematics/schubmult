@@ -316,7 +316,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
         return obj
 
     def elem_sym(self):
-        def bagelflesh(p, k, varl1, varl2):
+        def elem_func(p, k, varl1, varl2):
             # print(f"{p=} {k=} {self._N=}")
             if p < 0 or p > k:
                 return 0
@@ -327,10 +327,11 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
             ret = 0
             j = bisect_left(self._N, k)
             if j < len(self._N) and k == self._N[j]:
-                ret = (-((-1) ** (self._n[j - 1]))) * q_var[j - 1] * bagelflesh(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
-            ret += bagelflesh(p, k - 1, varl1, varl2) + (varl1[k - 1] - varl2[k - p]) * bagelflesh(p - 1, k - 1, varl1, varl2)
+                ret = (-((-1) ** (self._n[j - 1]))) * q_var[j - 1] * elem_func(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
+            ret += elem_func(p, k - 1, varl1, varl2) + (varl1[k - 1] - varl2[k - p]) * elem_func(p - 1, k - 1, varl1, varl2)
             return ret
-        return bagelflesh
+
+        return elem_func
 
     def _from_dict(self, _dict):
         return ParabolicQuantumDoubleSchubertAlgebraElement(_dict, self)
@@ -394,8 +395,12 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
         initial_dict = {k: xreplace_genvars(x, utils.poly_ring(va), utils.poly_ring(vb)) for k, x in yz.schubmult_q_double_pair_generic(u, v).items()}
         return {(k, va): v for k, v in self.process_coeff_dict(initial_dict).items()}
 
-    # def in_quantum_basis(self, elem):
-    #     return elem
+    def in_quantum_basis(self, elem):
+        result = S.Zero
+        for k, v in elem.coeff_dict.items():
+            result += v * schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), self.quantum_elem_func(k[1]))
+            # print(f"{result=}")
+        return result
 
     def in_classical_basis(self, elem):
         result = S.Zero
@@ -407,6 +412,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
     def classical_elem_func(self, coeff_var):
         basis = spr.DoubleSchubertAlgebraElement_basis(self.genset)
         q_var = yz._vars.q_var
+
         def elem_func(p, k, varl1, varl2):
             # print(f"{p=} {k=} {varl1=} {varl2=}")
             if p == 0 and k >= 0:
@@ -422,6 +428,29 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
             ret += elem_func(p, k - 1, varl1, varl2) + (varl1[k - 1] - varl2[k - p]) * elem_func(p - 1, k - 1, varl1, varl2)
             # print(f"{ret=}")
             return ret
+
+        return elem_func
+
+    def quantum_elem_func(self, coeff_var):
+        basis = QuantumDoubleSchubertAlgebraElement_basis(self.genset)
+        q_var = yz._vars.q_var
+
+        def elem_func(p, k, varl1, varl2):
+            # print(f"{p=} {k=} {varl1=} {varl2=}")
+            if p == 0 and k >= 0:
+                return basis([], coeff_var)
+            if p < 0 or p > k:
+                return basis(0, coeff_var)
+            if k <= self._N[1]:
+                return basis(elem_sym_poly(p, k, varl1, varl2), coeff_var)
+            ret = basis(0, coeff_var)
+            j = bisect_left(self._N, k)
+            if j < len(self._N) and k == self._N[j]:
+                ret = (-((-1) ** (self._n[j - 1]))) * q_var[j - 1] * elem_func(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
+            ret += elem_func(p, k - 1, varl1, varl2) + (varl1[k - 1] - varl2[k - p]) * elem_func(p - 1, k - 1, varl1, varl2)
+            # print(f"{ret=}")
+            return ret
+
         return elem_func
 
     @property
