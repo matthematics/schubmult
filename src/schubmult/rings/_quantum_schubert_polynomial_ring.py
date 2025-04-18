@@ -227,6 +227,8 @@ QDSx = QuantumDoubleSchubertAlgebraElement_basis(GeneratingSet("x"))
 
 t = GeneratingSet("t")
 
+spunky_basis = spr.SchubertAlgebraElement_basis(t)
+
 
 class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_basis):
     def __new__(cls, genset):
@@ -281,28 +283,30 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
         obj._n = list(index_comp)
         obj._N = [sum(obj._n[:i]) for i in range(len(obj._n) + 1)]
         # print(f"{obj._N=}")
-        # obj._D = []
-        # from symengine import Matrix
-        # obj._E = {}
-        # for j in range(1, len(obj._N)):
-        #     m_arr = [[0 for i in range(obj._N[j])] for p in range(obj._N[j])]
-        #     for i in range(obj._N[j]):
-        #         m_arr[i][i] = a[i+1] - t[1] #genset[i+1] - t[1]
-        #         if i < obj._N[j] - 1:
-        #             m_arr[i][i+1] = -1
-        #     for b in range(1, j):
-        #         njm1 = obj._N[b + 1] - 1
-        #         njp1 = obj._N[b - 1]
-        #         # print(f"{b=}")
-        #         # print(f"{njm1=} {njp1=}")
-        #         if njp1 < obj._N[j] and njm1 < obj._N[j]:
-        #             m_arr[njm1][njp1] = -(-1)**(obj._n[b])*q_var[b]
-        #     poly = Matrix(m_arr).det().simplify()
-        #     # print(f"{poly=}")
-        #     # def dongle(v):
-        #     #     return poly.subs(t[1], v)
-        #     obj._D += [spunky_basis(poly)]
-        #     obj._E[obj._N[j]] = obj._D[-1]
+        obj._D = []
+        obj._E = {}
+        from symengine import Matrix
+        for j in range(1, len(obj._N)):
+            m_arr = [[0 for i in range(obj._N[j])] for p in range(obj._N[j])]
+            for i in range(obj._N[j]):
+                m_arr[i][i] = genset[i+1] - t[1] #genset[i+1] - t[1]
+                if i < obj._N[j] - 1:
+                    m_arr[i][i+1] = -1
+            for b in range(1, j):
+                njm1 = obj._N[b + 1] - 1
+                njp1 = obj._N[b - 1]
+                # print(f"{b=}")
+                # print(f"{njm1=} {njp1=}")
+                if njp1 < obj._N[j] and njm1 < obj._N[j]:
+                    m_arr[njm1][njp1] = -(-1)**(obj._n[b])*q_var[b]
+            poly = Matrix(m_arr).det().simplify()
+            # print(f"{poly=}")
+            # def dongle(v):
+            #     return poly.subs(t[1], v)
+            obj._D += [spunky_basis(poly)]
+            obj._E[obj._N[j]] = {obj._N[j]: obj._D[-1]}
+            for i in range(1,obj._N[j]):
+                obj._E[obj._N[j]][obj._N[j] - i] = -obj._E[obj._N[j]][obj._N[j] - i + 1].divdiff(i)
         # print(obj._E)
         parabolic_index = []
         start = 0
@@ -315,7 +319,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
         obj._parabolic_index = parabolic_index
         obj._otherlong = Permutation(list(range(obj._N[-1], 0, -1)))
         obj._longest = obj._otherlong * longest_element(parabolic_index)
-        # print(f"{}")
+        # obj._E[0] = obj._from_dict({(Permutation([]),utils.NoneVar): S.One})
         return obj
 
     @property
@@ -330,21 +334,77 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
     def classical_basis(self):
         return self._classical_basis
 
+    # def elem_sym_poly(self, p, k, varl1, varl2, xstart=0, ystart=0):
+    #     print(f"{p=} {k=} {xstart=} {ystart=} {len(varl1)=} {len(varl2)=}")
+    #     if p > k:
+    #         return zero
+    #     if p == 0:
+    #         return one
+    #     if p == 1:
+    #         res = varl1[xstart] - varl2[ystart]
+    #         for i in range(1, k):
+    #             res += varl1[xstart + i] - varl2[ystart + i]
+    #         return res
+    #     if p == k:
+    #         res = (varl1[xstart] - varl2[ystart]) * (varl1[xstart + 1] - varl2[ystart])
+    #         for i in range(2, k):
+    #             res *= varl1[i + xstart] - varl2[ystart]
+    #         return res
+    #     mid = k // 2
+    #     xsm = xstart + mid
+    #     ysm = ystart + mid
+    #     kmm = k - mid
+    #     res = elem_sym_poly(p, mid, varl1, varl2, xstart, ystart) + elem_sym_poly(
+    #         p,
+    #         kmm,
+    #         varl1,
+    #         varl2,
+    #         xsm,
+    #         ysm,
+    #     )
+    #     for p2 in range(max(1, p - kmm), min(p, mid + 1)):
+    #         res += elem_sym_poly(p2, mid, varl1, varl2, xstart, ystart) * elem_sym_poly(
+    #             p - p2,
+    #             kmm,
+    #             varl1,
+    #             varl2,
+    #             xsm,
+    #             ysm - p2,
+    #         )
+    #     return res
+
+
     def elem_sym(self):
         def elem_func(p, k, varl1, varl2):
-            # print(f"{p=} {k=} {self._N=}")
+            if p == 0 and k>=0:
+                return S.One
             if p < 0 or p > k:
-                return 0
-            if p == 0 and k >= 0:
-                return 1
-            if k <= self._N[1]:
-                return elem_sym_poly(p, k, varl1, varl2)
-            ret = 0
-            j = bisect_left(self._N, k)
-            if j < len(self._N) and k == self._N[j]:
-                ret = (-((-1) ** (self._n[j - 1]))) * q_var[j - 1] * elem_func(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
-            ret += elem_func(p, k - 1, varl1, varl2) + (varl1[k - 1] - varl2[k - p]) * elem_func(p - 1, k - 1, varl1, varl2)
-            return ret
+                return S.Zero
+            spoink = self._E[k][p]
+            # for i in range(1,k - p + 1):
+            #     spoink = -spoink.divdiff(i)
+            return sympify(spoink.as_polynomial()).xreplace({t[i]: varl2[i-1] for i in range(1,len(varl2)+1)}).xreplace({self.genset[i]: varl1[i-1] for i in range(1,len(varl1)+1)})
+            #TEMP
+            # varl2 = utils.poly_ring(0)
+            # if p < 0 or p > k:
+            #     return 0
+            # if p == 0 and k >= 0:
+            #     return 1
+            # if k == self._N[1]:
+            #     return elem_sym_poly(p, k, varl1, varl2)
+            # print(f"{p=} {k=} {self._N=}")
+            # ret = 0
+            # j = bisect_left(self._N, k)
+            # if j < len(self._N) and k == self._N[j]:
+            #     ret = (-((-1) ** (self._n[j - 1]))) * q_var[j - 1] * elem_func(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
+            #     #ret += elem_func(p, self._N[j-1], varl1, varl2)
+            #     print(f"{self._n[j-1]=}")
+            #     for i in range(min(p+1,self._n[j-1]+1)):
+            #         # print(f"{p=} {p - i=} {i=} {self._N[j-1]-1=} {self._N[j-1]-1-i=} {len(varl2)=}")
+            #         ret += varl1[self._N[j] - 1 - i] * elem_func(p - i, self._N[j-1], varl1, varl2)
+            # else:
+            #     print("Bob jones")
+            # return ret
 
         return elem_func
 

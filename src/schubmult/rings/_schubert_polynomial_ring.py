@@ -925,7 +925,7 @@ class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
         #         return x.as_quantum()
         else:
             x = sympify(x)
-            result = py.mult_poly({Permutation([]): 1}, x, genset)
+            result = py.mult_poly_py({Permutation([]): 1}, x, genset)
             elem = self._from_single_dict(result)
         return elem
 
