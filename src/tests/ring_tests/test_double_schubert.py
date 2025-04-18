@@ -92,7 +92,7 @@ def test_subs():
     x = GeneratingSet("x")
     z = GeneratingSet("z")
     perm = [4, 6, 1, 2, 3, 5]
-    old = x[5]
+    old = x[2]
     new = x[1]
     assert expand(DSx(perm,"z").subs(old, new) - DSx(perm,"z").as_polynomial().subs(old, new)) == 0
     old = z[1]
