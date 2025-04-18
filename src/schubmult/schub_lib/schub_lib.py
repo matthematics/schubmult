@@ -429,12 +429,15 @@ def check_blocks(qv, parabolic_index):
     cur_block = []
     last_val = -1
     for i in range(len(parabolic_index)):
-        if last_val == -1 or last_val + 1 == parabolic_index[i]:
-            last_val = parabolic_index[i]
-            cur_block += [last_val]
-        else:
+        if last_val + 1 != parabolic_index[i] and i != 0:
             blocks += [cur_block]
             cur_block = []
+        last_val = parabolic_index[i]
+        cur_block += [last_val]
+    if len(cur_block) != 0:
+        blocks += [cur_block]
+    # print(f"{parabolic_index=}")
+    # print(f"{blocks=}")
     for block in blocks:
         for i in range(len(block)):
             for j in range(i, len(block)):

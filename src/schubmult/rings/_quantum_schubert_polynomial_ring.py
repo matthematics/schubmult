@@ -12,7 +12,7 @@ import schubmult.rings._schubert_polynomial_ring as spr
 import schubmult.rings._utils as utils
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
-from schubmult.perm_lib.perm_lib import Permutation, count_less_than, is_parabolic, longest_element, omega, permtrim, trimcode, uncode
+from schubmult.perm_lib.perm_lib import Permutation, count_less_than, is_parabolic, longest_element, omega, permtrim, trimcode, uncode  # noqa: F401
 from schubmult.poly_lib.poly_lib import elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_from_elems
 from schubmult.poly_lib.variables import GeneratingSet, GeneratingSet_base
@@ -226,6 +226,7 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
 QDSx = QuantumDoubleSchubertAlgebraElement_basis(GeneratingSet("x"))
 
 t = GeneratingSet("t")
+a = GeneratingSet("a")
 
 spunky_basis = spr.SchubertAlgebraElement_basis(t)
 
@@ -283,31 +284,36 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
         obj._n = list(index_comp)
         obj._N = [sum(obj._n[:i]) for i in range(len(obj._n) + 1)]
         # print(f"{obj._N=}")
-        obj._D = []
-        obj._E = {}
-        from symengine import Matrix
-        for j in range(1, len(obj._N)):
-            m_arr = [[0 for i in range(obj._N[j])] for p in range(obj._N[j])]
-            for i in range(obj._N[j]):
-                m_arr[i][i] = genset[i+1] - t[1] #genset[i+1] - t[1]
-                if i < obj._N[j] - 1:
-                    m_arr[i][i+1] = -1
-            for b in range(1, j):
-                njm1 = obj._N[b + 1] - 1
-                njp1 = obj._N[b - 1]
-                # print(f"{b=}")
-                # print(f"{njm1=} {njp1=}")
-                if njp1 < obj._N[j] and njm1 < obj._N[j]:
-                    m_arr[njm1][njp1] = -(-1)**(obj._n[b])*q_var[b]
-            poly = Matrix(m_arr).det().simplify()
-            # print(f"{poly=}")
-            # def dongle(v):
-            #     return poly.subs(t[1], v)
-            obj._D += [spunky_basis(poly)]
-            obj._E[obj._N[j]] = {obj._N[j]: obj._D[-1]}
-            for i in range(1,obj._N[j]):
-                obj._E[obj._N[j]][obj._N[j] - i] = -obj._E[obj._N[j]][obj._N[j] - i + 1].divdiff(i)
-        # print(obj._E)
+        # obj._D = []
+        # obj._E = {}
+        # from symengine import Matrix
+        # for j in range(1, len(obj._N)):
+        #     m_arr = [[0 for i in range(obj._N[j])] for p in range(obj._N[j])]
+        #     for i in range(obj._N[j]):
+        #         m_arr[i][i] = a[i+1] - t[1] #genset[i+1] - t[1]
+        #         if i < obj._N[j] - 1:
+        #             m_arr[i][i+1] = -1
+        #     for b in range(1, j):
+        #         njm1 = obj._N[b + 1] - 1
+        #         njp1 = obj._N[b - 1]
+        #         # print(f"{b=}")
+        #         # print(f"{njm1=} {njp1=}")
+        #         if njp1 < obj._N[j] and njm1 < obj._N[j]:
+        #             # print(f"{b=} {obj._n[b]=}")
+        #             m_arr[njm1][njp1] = -(-1)**(obj._n[b])*q_var[b]
+        #     # print(Matrix(m_arr))
+        #     poly = Matrix(m_arr).det().simplify()
+        #     # print(f"{poly=}")
+        #     # def dongle(v):
+        #     #     return poly.subs(t[1], v)
+        #     obj._D += [spunky_basis(poly)]
+        #     obj._E[obj._N[j]] = {obj._N[j]: obj._D[-1]}
+        #     for i in range(1,obj._N[j]):
+        #         obj._E[obj._N[j]][obj._N[j] - i] = -obj._E[obj._N[j]][obj._N[j] - i + 1].divdiff(i)
+        # # print(obj._E)
+        # add_am = 6
+        # index_comp += [add_am]
+        # obj._N += [obj._N[-1] + add_am]
         parabolic_index = []
         start = 0
         # 1, 2 | 3
@@ -335,7 +341,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
         return self._classical_basis
 
     # def elem_sym_poly(self, p, k, varl1, varl2, xstart=0, ystart=0):
-    #     print(f"{p=} {k=} {xstart=} {ystart=} {len(varl1)=} {len(varl2)=}")
+    #     # print(f"{p=} {k=} {xstart=} {ystart=} {len(varl1)=} {len(varl2)=}")
     #     if p > k:
     #         return zero
     #     if p == 0:
@@ -373,18 +379,37 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
     #         )
     #     return res
 
-
     def elem_sym(self):
         def elem_func(p, k, varl1, varl2):
-            if p == 0 and k>=0:
+            # print(f"{p=} {k=} {self._N=}")
+            if p < 0 or p > k:
+                return 0
+            if p == 0 and k >= 0:
+                return 1
+            if k <= self._N[1]:
+                return elem_sym_poly(p, k, varl1, varl2)
+            ret = 0
+            j = bisect_left(self._N, k)
+            if j < len(self._N) and k == self._N[j]:
+                ret = (-((-1) ** (self._n[j - 1]))) * q_var[j - 1] * elem_func(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
+            ret += elem_func(p, k - 1, varl1, varl2) + (varl1[k - 1] - varl2[k - p]) * elem_func(p - 1, k - 1, varl1, varl2)
+            return ret
+
+        return elem_func
+
+    def boingle_elem_sym(self):
+        def elem_func(p, k, varl1, varl2):
+            if p == 0 and k >= 0:
                 return S.One
             if p < 0 or p > k:
                 return S.Zero
+            # print(f"{p=} {k=}")
             spoink = self._E[k][p]
+            # print(f"{spoink=}")
             # for i in range(1,k - p + 1):
             #     spoink = -spoink.divdiff(i)
-            return sympify(spoink.as_polynomial()).xreplace({t[i]: varl2[i-1] for i in range(1,len(varl2)+1)}).xreplace({self.genset[i]: varl1[i-1] for i in range(1,len(varl1)+1)})
-            #TEMP
+            return sympify(sympify(spoink.as_polynomial()).xreplace({t[i]: varl2[i - 1] for i in range(1, len(varl2) + 1)})).xreplace({a[i]: varl1[i - 1] for i in range(1, len(varl1) + 1)})
+            # TEMP
             # varl2 = utils.poly_ring(0)
             # if p < 0 or p > k:
             #     return 0
@@ -398,12 +423,12 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
             # if j < len(self._N) and k == self._N[j]:
             #     ret = (-((-1) ** (self._n[j - 1]))) * q_var[j - 1] * elem_func(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
             #     #ret += elem_func(p, self._N[j-1], varl1, varl2)
-            #     print(f"{self._n[j-1]=}")
+            #     # print(f"{self._n[j-1]=}")
             #     for i in range(min(p+1,self._n[j-1]+1)):
             #         # print(f"{p=} {p - i=} {i=} {self._N[j-1]-1=} {self._N[j-1]-1-i=} {len(varl2)=}")
             #         ret += varl1[self._N[j] - 1 - i] * elem_func(p - i, self._N[j-1], varl1, varl2)
             # else:
-            #     print("Bob jones")
+            #     # print("Bob jones")
             # return ret
 
         return elem_func
@@ -425,8 +450,19 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
 
     def process_coeff_dict(self, coeff_dict):
         max_len = max(len(w) for w in coeff_dict)
-        parabolic_index = [*self._parabolic_index]
-        parabolic_index += list(range(parabolic_index[-1] + 2, max_len))
+        # parabolic_index = [*self._parabolic_index]
+        # parabolic_index += list(range(parabolic_index[-1] + 2, max_len + 1))
+        if max_len > len(self._longest):
+            parabolic_index = []
+            start = 0
+            # 1, 2 | 3
+            index_comp = [*self._n, max_len + 1 - self._N[-1]]
+            for i in range(len(index_comp)):
+                end = start + index_comp[i]
+                parabolic_index += list(range(start + 1, end))
+                # start += int(args.parabolic[i])
+                start = end
+
         w_P = Permutation(longest_element(parabolic_index))
         # max_len = len(w_P)
         w_P_prime = Permutation([1, 2])
@@ -558,7 +594,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
             parabolic_index = []
             start = 0
             # 1, 2 | 3
-            index_comp = [*self._n, len(k[0]) - self._N[-1] - 1]
+            index_comp = [*self._n, len(k[0]) - self._N[-1] + 1]
             for i in range(len(index_comp)):
                 end = start + index_comp[i]
                 parabolic_index += list(range(start + 1, end))
@@ -577,14 +613,17 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
             parabolic_index = []
             start = 0
             # 1, 2 | 3
-            index_comp = [*self._n, len(k[0]) - self._N[-1] - 1]
+            index_comp = [*self._n, len(k[0]) + 1 - self._N[-1]]
             for i in range(len(index_comp)):
                 end = start + index_comp[i]
                 parabolic_index += list(range(start + 1, end))
                 # start += int(args.parabolic[i])
                 start = end
-            otherlong = Permutation(list(range(len(k[0]), 0, -1)))
-            longest = otherlong * longest_element(parabolic_index)
+            otherlong = Permutation(list(range(parabolic_index[-1] + 1, 0, -1)))
+            longpar = Permutation(longest_element(parabolic_index))
+            # print(f"{longpar=} {parabolic_index=}")
+            longest = otherlong * longpar
+            # print(f"new longest = {longest=}")
         else:
             longest = self._longest
         return schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=self.elem_sym(), mumu=~longest)  # yz.schubpoly_quantum(k[0], self.genset, utils.poly_ring(k[1]))
