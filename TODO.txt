@@ -70,3 +70,5 @@ Convert parabolic if possible
 # Faster Peterson-Woodward
 
 # Quantum parabolic change basis
+
+code display

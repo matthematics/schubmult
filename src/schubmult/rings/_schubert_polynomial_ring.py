@@ -15,12 +15,7 @@ import schubmult.schub_lib.double as yz
 # from schubmult.poly_lib.schub_poly import pull_out_var
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
-from schubmult.perm_lib.perm_lib import (
-    Permutation,
-    add_perm_dict,
-    inv,
-    uncode,
-)
+from schubmult.perm_lib.perm_lib import Permutation, add_perm_dict, inv, trimcode
 from schubmult.poly_lib.poly_lib import elem_sym_poly, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_classical_from_elems
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
@@ -42,6 +37,16 @@ logger = get_logger(__name__)
 
 class NotEnoughGeneratorsError(ValueError):
     pass
+
+
+class GlobalPrintOptions:
+    _display_as_code = True
+
+    @staticmethod
+    def perm_str(perm):
+        if GlobalPrintOptions._display_as_code:
+            return str(trimcode(perm))
+        return str(list(perm))
 
 
 def _varstr(v):
@@ -576,8 +581,8 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
         if self._key[0] == Permutation([]):
             return printer.doprint(1)
         if self._key[1] == 0 or self._key[1] == utils.NoneVar:
-            return printer.doprint(f"S{self.genset.label}({list(self._key[0])})")
-        return printer.doprint(f"DS{self.genset.label}({list(self._key[0])}, {_varstr(self._key[1])})")
+            return printer.doprint(f"S{self.genset.label}({GlobalPrintOptions.perm_str(self._key[0])})")
+        return printer.doprint(f"DS{self.genset.label}({GlobalPrintOptions.perm_str(self._key[0])}, {_varstr(self._key[1])})")
 
 
 # def elem_func(p, k, vx, vy):
@@ -693,6 +698,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
         return schubpoly_classical_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=elem_sym_poly)
 
     def __call__(self, x, cv=None):
+        # print(f"frivol {x=} {cv=}")
         genset = self.genset
         if not isinstance(genset, GeneratingSet_base):
             raise TypeError
@@ -721,28 +727,28 @@ class DoubleSchubertAlgebraElement_basis(Basic):
                 return x
             raise ValueError("Different generating set")
         # poly
-        elif isinstance(x, sympy.Poly):
-            # eject generators we don't want
-            if not x.has_only_gens():
-                x, _ = sympy.poly_from_expr(x.as_expr())
-            new_gens = [g for g in x.gens if self.genset.index(g) != -1]
-            # end_gens = [g for g in x.gens if self.genset.index(g) == -1]
-            if len(new_gens) == 0:
-                # logger.debug(f"Didn't find any gens in {x=}")
-                return self(x.as_expr())
-            new_gens.sort(key=lambda g: self.genset.index(g))
-            # expand_gens = [self.genset[i] for i in range(self.genset.index(new_gens[-1])+1)] + end_gens
-            x = sympy.poly(x, gens=tuple(new_gens))
-            dct = x.as_dict()
-            result = 0
-            for monom, coeff in dct.items():
-                srt_perm = Permutation.sorting_perm([-i for i in monom])
-                # srt_perm.reverse()
-                # srt_perm = Permutation(srt_perm)
-                # print(sorted(monom,reverse=True))
-                schub_perm = uncode(sorted(monom, reverse=True))
-                result += self._from_dict({(schub_perm, utils.NoneVar): coeff}).act(srt_perm)
-            return result
+        # elif isinstance(x, sympy.Poly):
+        #     # eject generators we don't want
+        #     if not x.has_only_gens():
+        #         x, _ = sympy.poly_from_expr(x.as_expr())
+        #     new_gens = [g for g in x.gens if self.genset.index(g) != -1]
+        #     # end_gens = [g for g in x.gens if self.genset.index(g) == -1]
+        #     if len(new_gens) == 0:
+        #         # logger.debug(f"Didn't find any gens in {x=}")
+        #         return self(x.as_expr())
+        #     new_gens.sort(key=lambda g: self.genset.index(g))
+        #     # expand_gens = [self.genset[i] for i in range(self.genset.index(new_gens[-1])+1)] + end_gens
+        #     x = sympy.poly(x, gens=tuple(new_gens))
+        #     dct = x.as_dict()
+        #     result = 0
+        #     for monom, coeff in dct.items():
+        #         srt_perm = Permutation.sorting_perm([-i for i in monom])
+        #         # srt_perm.reverse()
+        #         # srt_perm = Permutation(srt_perm)
+        #         # print(sorted(monom,reverse=True))
+        #         schub_perm = uncode(sorted(monom, reverse=True))
+        #         result += self._from_dict({(schub_perm, utils.NoneVar): coeff}).act(srt_perm)
+        #     return result
         else:
             # logger.debug(f"{x=}")
             x = sympify(x)
@@ -750,9 +756,10 @@ class DoubleSchubertAlgebraElement_basis(Basic):
                 cv = utils.NoneVar
                 result = py.mult_poly_py({Permutation([]): 1}, x, genset)
             else:
+                # print("splinterfish")
                 result = yz.mult_poly_double({Permutation([]): 1}, x, genset, utils.poly_ring(cv))
             elem = self._from_dict({(k, cv): v for k, v in result.items()})
-            # logger.debug(f"Returning {elem=}")
+            logger.debug(f"Returning {elem=}")
         return elem
 
 
