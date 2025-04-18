@@ -162,7 +162,7 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
 
     @property
     def double_mul(self):
-        return yz.schubmult_q_double
+        return yz.schubmult_q_double_fast
 
     @property
     def single_mul(self):
@@ -264,6 +264,8 @@ class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_ba
         elif isinstance(x, spr.DoubleSchubertAlgebraElement):
             if x.genset == self.genset:
                 return x.as_quantum()
+        elif isinstance(x, ParabolicQuantumDoubleSchubertAlgebraElement):
+            return x.as_quantum()
         else:
             x = sympify(x)
             result = py.mult_poly_q({Permutation([]): 1}, x, genset)
@@ -503,7 +505,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
 
     @property
     def double_mul(self):
-        return yz.schubmult_q_double
+        return yz.schubmult_q_double_fast
 
     @property
     def single_mul(self):
