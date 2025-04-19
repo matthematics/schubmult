@@ -92,7 +92,7 @@ class PQDSchubPoly(ParabolicQuantumDoubleSchubertAlgebraElement):
     def __xnew__(_class, k, basis):
         obj = ParabolicQuantumDoubleSchubertAlgebraElement.__new__(_class, sympy.Dict({(Permutation(k[0]), k[1]): 1}), basis)
         obj._perm = k[0]
-        obj._perm._print_as_code = True
+        #obj._perm._print_as_code = True
         obj._coeff_var = k[1]
         # obj._base_var = base_var
         return obj

@@ -39,37 +39,17 @@ Test if Poly technique is faster
 Results: higher degree and/or fewer terms, poly faster
 
 # Use symengine for everything possible
-# Basis instead of generating set
-# classical schubpoly
-# basis generates basis change
-
-# schubpoly_quantum is slow
 
 more tests
 
 subs faster, do better with dense product
 
-# Key union?
-
-# moderate work positive
-# (positivity with just y's)
-
-# Do quantum poly parabolic
-
-Create single basis for classical
-
-# For quantum, correctly expand polynomial even if there aren't enough variables
-
 Parabolic classical if that's what we want
 
-# Correct positive testing
-
-# Convert parabolic if possible
-
-# Faster Peterson-Woodward
-
-# Quantum parabolic change basis
-
 code display!!! !!!
+
+DIFFERENT Q VARS
+
+refactor scripts to print as code
 
 SEM basis!!!

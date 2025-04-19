@@ -358,7 +358,7 @@ class Permutation(Basic):
     def __new__(cls, perm):
         return Permutation.__xnew_cached__(cls, tuple(perm))
 
-
+    print_as_code = False
 
     @staticmethod
     @cache
@@ -375,7 +375,6 @@ class Permutation(Basic):
         obj._hash_code = hash(p)
         cd = s_perm.inversion_vector()
         obj._unique_key = (len(p), sum([cd[i] * math.factorial(len(p) - 1 - i) for i in range(len(cd))]))
-        obj._print_as_code = False
         return obj
 
     @classmethod
@@ -385,7 +384,7 @@ class Permutation(Basic):
         return Permutation(L)
 
     def _sympystr(self, printer):
-        if self._print_as_code:
+        if Permutation.print_as_code:
             return printer.doprint(trimcode(self))
         return printer.doprint(list(self._perm))
 
