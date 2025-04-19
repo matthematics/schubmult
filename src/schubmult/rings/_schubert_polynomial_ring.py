@@ -101,7 +101,7 @@ def _mul_schub_dicts(dict1, dict2, basis, best_effort_positive=True):
             def add_result(result):
                 result_list.append(result)
 
-            with multiprocessing.Pool() as pool:
+            with multiprocessing.Pool(processes=6) as pool:
                 for mulf in mul_funcs:
                     pool.apply_async(domul, args=(mulf, itemlist), callback=add_result)
                 pool.close()
