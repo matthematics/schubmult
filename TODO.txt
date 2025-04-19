@@ -25,7 +25,7 @@ DOCS
 # perm actions
 # PERMUTATION CALL check
 
-free_symbols and sub
+# free_symbols and sub
 # sympy guardrails for GeneratingSet check
 
 
@@ -44,13 +44,13 @@ more tests
 
 subs faster, do better with dense product
 
-Parabolic classical if that's what we want
+# Parabolic classical if that's what we want
 
-code display!!! !!!
+# code display!!! !!!
 
 DIFFERENT Q VARS
 
-refactor scripts to print as code
+# refactor scripts to print as code
 
 SEM basis!!!
 
