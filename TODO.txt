@@ -55,3 +55,5 @@ DIFFERENT Q VARS
 SEM basis!!!
 
 parallelism if useful
+
+What do we want the API to be?
