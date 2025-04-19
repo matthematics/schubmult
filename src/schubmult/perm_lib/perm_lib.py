@@ -386,7 +386,7 @@ class Permutation(Basic):
     def _sympystr(self, printer):
         if Permutation.print_as_code:
             return printer.doprint(trimcode(self))
-        return printer.doprint(list(self._perm))
+        return printer.doprint(self._perm)
 
     def __call__(self, i):
         """1-indexed"""
