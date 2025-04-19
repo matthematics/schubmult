@@ -358,7 +358,7 @@ class Permutation(Basic):
     def __new__(cls, perm):
         return Permutation.__xnew_cached__(cls, tuple(perm))
 
-    
+
 
     @staticmethod
     @cache
