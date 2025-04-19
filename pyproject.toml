@@ -1,11 +1,12 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-project.license = {file = "LICENSE"}
+
 
 [project]
 name = "schubmult"
+license = {file = "LICENSE"}
 dependencies = [
         "numpy",
         "PuLP>=2.7.0",
@@ -27,7 +28,7 @@ description = "Package for algebraic computation with single, double, and quantu
 readme = "README.md"
 keywords = ["Schubert", "polynomial", "double", "algebra"]
 classifiers = [
-  "Programming Language :: Python"
+  "Programming Language :: Python",
 ]
 dynamic = ["version"]
 
@@ -132,7 +133,7 @@ exclude = ["tests*"]  # exclude packages matching these glob patterns (empty by 
 namespaces = false
 
 [project.scripts]
-schubmult_py = "scripts.schubmult_py:main"
-schubmult_double = "scripts.schubmult_double:main"
-schubmult_q = "scripts.schubmult_q:main"
-schubmult_q_double = "scripts.schubmult_q_double:main"
+schubmult_py = "schubmult.scripts.schubmult_py:main"
+schubmult_double = "schubmult.scripts.schubmult_double:main"
+schubmult_q = "schubmult.scripts.schubmult_q:main"
+schubmult_q_double = "schubmult.scripts.schubmult_q_double:main"

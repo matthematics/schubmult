@@ -76,7 +76,7 @@ def test_with_same_args_exec(capsys, json_file):
 
     args = get_json(f"{base_dir}/{json_file}")
     print(f"{json_file=} {args=} input_data")
-    from scripts.schubmult_py import main
+    from schubmult.scripts.schubmult_py import main
 
     mult = args["mult"]  # noqa: F841
     mulstring = args["mulstring"]  # noqa: F841
