@@ -4,7 +4,7 @@ from functools import cached_property
 import sympy
 from symengine import expand, sympify
 
-from schubmult import GeneratingSet, Permutation, code, efficient_subs, mult_poly_double, permtrim, posify, schub_coprod_double, schubmult_double, theta, uncode
+from schubmult import GeneratingSet, Permutation, efficient_subs, mult_poly_double, permtrim, posify, schub_coprod_double, schubmult_double, theta, uncode
 from schubmult.perm_lib import split_perms
 from schubmult.schub_lib.schub_lib import will_formula_work
 from schubmult.utils.argparse import schub_argparse
@@ -156,8 +156,8 @@ def _display_full(
 
     the_top_perm = perms[0] * mu_W
 
-    muA = uncode(mu_A(code(mu_W), poso))
-    muB = uncode(mu_A(code(mu_W), pos2))
+    muA = uncode(mu_A(mu_W.code, poso))
+    muB = uncode(mu_A(mu_W.code, pos2))
 
     coeff_perms = list(coeff_dict.keys())
     if coprod:
@@ -187,7 +187,7 @@ def _display_full(
                             val2 = flip_symbol_signs(val2)
                             if check and expand(val - val2) != 0:
                                 _display(
-                                    f"error; write to schubmult@gmail.com with the case {perms=}\n{code(firstperm)=} {code(secondperm)=}\n{val2=}\n{val=}",
+                                    f"error; write to schubmult@gmail.com with the case {perms=}\n{sympy.sstr(firstperm)=} {sympy.sstr(secondperm)=}\n{val2=}\n{val=}",
                                 )
                                 _display(f"{firstperm*muA=} {secondperm*muB=} {the_top_perm=}")
                                 exit(1)

@@ -216,6 +216,8 @@ class BasisSchubertAlgebraElement(Expr):
         # return self._cached_sympystr(printer)
 
     def as_terms(self):
+        if len(self.coeff_dict.keys()) == 0:
+            return [sympy.sympify(S.Zero)]
         return [
             (sympy.sympify(self.coeff_dict[k]) if k[0] == Permutation([]) else sympy.Mul(self.coeff_dict[k], self.basis.single_element_class(k, self.basis)))
             for k in sorted(self.coeff_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))

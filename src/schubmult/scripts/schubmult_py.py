@@ -56,7 +56,8 @@ def main(argv=None):
             if ascode:
                 for i in range(len(perms)):
                     perms[i] = permtrim(uncode(perms[i]))
-
+            else:
+                perms = [permtrim(perm) for perm in perms]
             perms.sort(reverse=True, key=lambda x: sum(theta(~x)) - x.inv)
 
             coeff_dict = {permtrim([*perms[0]]): 1}
