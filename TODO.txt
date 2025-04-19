@@ -61,3 +61,7 @@ What do we want the API to be?
 # Permutation static functions
 
 All polynomial funcs
+
+Have scripts only use basic functions
+
+Peterson-Woodward in basic libraries
