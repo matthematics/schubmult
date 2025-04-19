@@ -29,7 +29,7 @@ import schubmult.perm_lib as pl
 import schubmult.sage._fast_schubert_polynomial_ring as bork
 import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.quantum_double as qyz
-from schubmult.utils.perm_lib import permtrim
+from schubmult.perm_lib import permtrim
 
 from ._indexing import _coerce_index
 
@@ -444,8 +444,8 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         ]
 
     def product_on_basis(self, left, right):
-        le = _coerce_index(left[0],self._ascode,False)
-        ri = _coerce_index(right[0],self._ascode,False)
+        le = _coerce_index(left[0], self._ascode, False)
+        ri = _coerce_index(right[0], self._ascode, False)
         var_y = [syme.sympify(str(g)) for g in self._coeff_polynomial_rings[left[1]].gens()]
         var_z = [syme.sympify(str(g)) for g in self._coeff_polynomial_rings[right[1]].gens()]
         if self._quantum:
