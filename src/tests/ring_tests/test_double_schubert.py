@@ -5,7 +5,7 @@ def test_schub_expand():
     """
     Test expand
     """
-    from schubmult.rings import DSx
+    from schubmult import DSx
     from symengine import symbols, expand
     x_1, y_1, y_2, y_3 = symbols("x_1 y_1 y_2 y_3")
     # DSx = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", "y")
@@ -15,51 +15,11 @@ def test_schub_expand():
     assert expand((x_1* DSx([3, 4, 1, 2])).expand()) == expand(y_3 * DSx([3, 4, 1, 2]).expand() + DSx([4, 3, 1, 2]).expand())
 
 
-# def test_coproduct():
-#     """
-#     Test coproduct
-#     """
-#     from sympy import expand
-
-#     from schubmult.rings import DSx
-#     indices = [0, 1, 3]
-#     indices2 = [0, 2, 4]
-    
-#     perm = [3, 5, 1, 4, 2]
-#     assert expand(DSx(perm).expand() - DSx(
-#         sum(
-#             [
-#                 DSx._base_polynomial_ring(v)
-#                 * (DSx(*k[0]).expand().subs(subs_dict1))
-#                 * (DSx(*k[1]).expand().subs(subs_dict2))
-#                 for k, v in DSx(perm).coproduct().monomial_coefficients().items()
-#             ],
-#         ),
-#     )
-
-#     # double coproduct
-#     DSx = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", ("y", "z"))
-#     R = DSx._base_polynomial_ring
-#     DSx.set_coproduct_indices(indices[1:])
-#     subs_dict1 = {R.gens()[i]: R.gens()[indices[i]] for i in range(len(indices))}
-#     subs_dict2 = {R.gens()[i]: R.gens()[indices2[i]] for i in range(len(indices))}
-#     assert DSx(perm) == DSx(
-#         sum(
-#             [
-#                 DSx._base_polynomial_ring(v)
-#                 * (DSx(*k[0]).expand().subs(subs_dict1))
-#                 * (DSx(*k[1]).expand().subs(subs_dict2))
-#                 for k, v in DSx(perm).coproduct().monomial_coefficients().items()
-#             ],
-#         ),
-#     )
-
-
 def test_associative():
     """
     Test associative on some large perms
     """
-    from schubmult.rings import DSx
+    from schubmult import DSx
     from sympy import expand
     perm1, perm2, perm3 = [1, 5, 3, 4, 2], [1, 3, 2, 5, 4], [3, 1, 4, 2, 5]
     assert expand(((DSx(perm1) * DSx(perm2)) * DSx(perm3)) - (DSx(perm1) * (DSx(perm2) * DSx(perm3)))) == 0
@@ -70,7 +30,7 @@ def test_change_vars():
     """
     Test associative on some large perms
     """
-    from schubmult.rings import DSx
+    from schubmult import DSx
     from sympy import expand
     perm = [1, 5, 3, 4, 2]
     
@@ -79,7 +39,7 @@ def test_change_vars():
 
 
 def test_coproduct():
-    from schubmult.rings import DSx
+    from schubmult import DSx
     from sympy import expand
     perm = [3, 1, 5, 2, 6, 7, 4]
     indices = [2, 4, 6]
@@ -87,8 +47,7 @@ def test_coproduct():
 
 def test_subs():
     from sympy import expand
-    from schubmult.rings import DSx
-    from schubmult import GeneratingSet
+    from schubmult import DSx, GeneratingSet
     x = GeneratingSet("x")
     z = GeneratingSet("z")
     perm = [4, 6, 1, 2, 3, 5]

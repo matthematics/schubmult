@@ -29,7 +29,7 @@ import schubmult.perm_lib as pl
 import schubmult.sage._fast_schubert_polynomial_ring as bork
 import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.quantum_double as qyz
-from schubmult.perm_lib import permtrim
+from schubmult.utils.perm_lib import permtrim
 
 from ._indexing import _coerce_index
 

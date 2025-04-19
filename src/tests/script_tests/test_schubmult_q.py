@@ -6,7 +6,7 @@ from schubmult.utils.test_utils import get_json, load_json_test_names
 
 
 def assert_dict_good(v_tuple, input_dict, ret_dict):
-    from schubmult.schub_lib.quantum import schubmult_q
+    from schubmult import schubmult_q
 
     coeff_dict = schubmult_q(input_dict, v_tuple)
     for k, v in coeff_dict.items():
@@ -20,7 +20,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict):
 
 
 def parse_ret(lines, ascode,unformat):
-    from schubmult.perm_lib import uncode, permtrim
+    from schubmult import uncode, permtrim
 
     ret_dict = {}
     for line in lines:
@@ -48,7 +48,7 @@ json_files_data_args = load_json_test_names(base_dir)
 def test_with_same_args_exec(capsys, json_file):
     from schubmult.utils.test_utils import get_json, load_json_test_names
     from schubmult.utils.parsing import parse_coeff
-    from schubmult.perm_lib import permtrim, uncode
+    from schubmult import permtrim, uncode
 
     args = get_json(f"{base_dir}/{json_file}")
     print(f"{json_file=} {args=} input_data")

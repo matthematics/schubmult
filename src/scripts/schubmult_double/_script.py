@@ -6,15 +6,15 @@ from symengine import expand, sympify
 
 from schubmult import (
     GeneratingSet,
-    efficient_subs,
-)
-from schubmult.perm_lib import (
     Permutation,
+    efficient_subs,
+    permtrim,
+)
+from schubmult.utils.perm_lib import (
     add_perm_dict,
     code,
     inv,
     mu_A,
-    permtrim,
     split_perms,
     theta,
     uncode,

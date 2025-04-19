@@ -2,7 +2,7 @@ from functools import cached_property
 
 from symengine import Add, Mul, Pow
 
-from schubmult.perm_lib import (
+from schubmult.utils.perm_lib import (
     Permutation,
     add_perm_dict,
     inv,

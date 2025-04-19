@@ -11,11 +11,9 @@ def check_positive(v, coprod, same, var_r):
     # if same, should be no minus signs
     from symengine import expand, sympify
 
-    from schubmult.schub_lib.double import compute_positive_rep
-    from schubmult.schub_lib.double import _vars
-
-    var2 = _vars.var2
-    var3 = _vars.var3
+    from schubmult import compute_positive_rep
+    var2 = GeneratingSet("y")
+    var3 = GeneratingSet("z")
     import sys
     # print(f"{var2=} {var3=}",file=sys.stderr)
 
@@ -72,10 +70,10 @@ def assert_dict_good(
     display_positive=False,
 ):
     # print(f"{input_dict=}")
-    from schubmult.perm_lib import Permutation
+    from schubmult import Permutation
     from symengine import expand, sympify
     import sys
-    from schubmult.schub_lib.double import schub_coprod_double, schubmult_double
+    from schubmult import schub_coprod_double, schubmult_double
 
     var_a = GeneratingSet("y")
     var_b = GeneratingSet("z")
@@ -114,8 +112,8 @@ def assert_dict_good(
 def parse_ret(lines, ascode, coprod, unformat):
     import sys
 
-    from schubmult.perm_lib import permtrim, uncode
-    from schubmult.perm_lib import Permutation
+    from schubmult import permtrim, uncode
+    from schubmult import Permutation
 
     ret_dict = {}
     if not coprod:
@@ -169,12 +167,12 @@ json_files_data_args = load_json_test_names(base_dir)
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
-    from schubmult.perm_lib import permtrim, uncode
+    from schubmult import permtrim, uncode
 
     args = get_json(f"{base_dir}/{json_file}")
     # print(f"{json_file=} {args=} input_data")
     from schubmult.scripts.schubmult_double._script import main
-    from schubmult.perm_lib import Permutation
+    from schubmult import Permutation
 
     mult = args["mult"]  # noqa: F841
     mulstring = args["mulstring"]  # noqa: F841

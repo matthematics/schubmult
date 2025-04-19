@@ -1,6 +1,6 @@
 __version__ = "3.0.dev"
 #schubpoly_from_elems?
-from .perm_lib import Permutation
+from .perm_lib import Permutation, permtrim, uncode
 from .poly_lib.poly_lib import efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
 from .poly_lib.schub_poly import div_diff, schubpoly, skew_div_diff
 from .poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
@@ -59,6 +59,7 @@ __all__ = [
     "mult_poly_py",
     "mult_poly_q",
     "mult_poly_q_double",
+    "permtrim",
     "q_vector",
     "rings",
     "sage",
@@ -78,5 +79,6 @@ __all__ = [
     "schubpoly",
     "schubpoly_quantum",
     "skew_div_diff",
+    "uncode",
     "xreplace_genvars",
 ]

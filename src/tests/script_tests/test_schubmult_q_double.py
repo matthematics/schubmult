@@ -12,9 +12,9 @@ def check_positive(v2, same, subs_dict2, var2, var3, q_var):
     # if same, should be no minus signs
     from symengine import expand, sympify
 
-    from schubmult.schub_lib.double import compute_positive_rep
+    from schubmult import compute_positive_rep
     
-    from schubmult.schub_lib.quantum_double import factor_out_q_keep_factored
+    from schubmult import factor_out_q_keep_factored
     
 
     q_dict = factor_out_q_keep_factored(v2)
@@ -59,7 +59,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, same=True, display_positive=
 
     from symengine import expand, sympify
 
-    from schubmult.schub_lib.quantum_double import schubmult_q_double, schubmult_q_double_fast
+    from schubmult import schubmult_q_double, schubmult_q_double_fast
 
     var_a = GeneratingSet("y")
     var_b = GeneratingSet("z")
@@ -112,7 +112,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, same=True, display_positive=
 
 
 def parse_ret(lines, ascode, unformat):
-    from schubmult.perm_lib import uncode, permtrim
+    from schubmult import uncode, permtrim
 
     ret_dict = {}
     for line in lines:
@@ -135,7 +135,7 @@ json_files_data_args = load_json_test_names(base_dir)
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
-    from schubmult.perm_lib import permtrim, uncode
+    from schubmult import permtrim, uncode
 
 
     args = get_json(f"{base_dir}/{json_file}")

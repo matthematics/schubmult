@@ -7,7 +7,7 @@ from symengine import sympify
 from schubmult import (
     q_vector,
 )
-from schubmult.perm_lib import (
+from schubmult.utils.perm_lib import (
     Permutation,
     count_less_than,
     inv,
