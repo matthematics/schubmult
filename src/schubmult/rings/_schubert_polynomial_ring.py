@@ -372,7 +372,7 @@ class BasisSchubertAlgebraElement(Expr):
         return self.basis([], cv) * self
 
     def as_coefficients_dict(self):
-        return self.coeff_dict
+        return sympy.Dict({self.basis.single_element_class(k, self.basis): sympy.sympify(v) for k, v in self.coeff_dict.items()})
 
     def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
         if not deep:

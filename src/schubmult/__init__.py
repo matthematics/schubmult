@@ -62,7 +62,6 @@ __all__ = [
     "permtrim",
     "q_vector",
     "rings",
-    "sage",
     "schub_coprod_double",
     "schub_coprod_py",
     "schubmult_double",

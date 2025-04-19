@@ -65,3 +65,5 @@ All polynomial funcs
 Have scripts only use basic functions
 
 Peterson-Woodward in basic libraries
+
+rewrite rules to re-express
