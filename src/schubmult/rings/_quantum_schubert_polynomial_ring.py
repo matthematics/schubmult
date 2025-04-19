@@ -12,12 +12,13 @@ import schubmult.rings._schubert_polynomial_ring as spr
 import schubmult.rings._utils as utils
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
-from schubmult.utils.perm_lib import Permutation, count_less_than, is_parabolic, longest_element, omega, permtrim, trimcode, uncode  # noqa: F401
+from schubmult.perm_lib import Permutation, longest_element, permtrim
 from schubmult.poly_lib.poly_lib import elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_from_elems
 from schubmult.poly_lib.variables import GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.schub_lib import check_blocks
 from schubmult.utils.logging import get_logger
+from schubmult.utils.perm_utils import count_less_than, is_parabolic, omega
 
 ## EMULATE POLYTOOLS
 

@@ -5,25 +5,27 @@ import numpy as np
 from symengine import sympify
 
 import schubmult.poly_lib.variables as spl
-from schubmult.utils.perm_lib import (
+from schubmult.perm_lib import (
     Permutation,
     code,
-    count_bruhat,
     ensure_perms,
+    inv,
+    inverse,
+    one_dominates,
+    permtrim,
+    theta,
+    uncode,
+)
+from schubmult.utils.perm_utils import (
+    count_bruhat,
     get_cycles,
     getpermval,
     has_bruhat_ascent,
     has_bruhat_descent,
-    inv,
-    inverse,
     mu_A,
     omega,
-    one_dominates,
     p_trans,
-    permtrim,
     sg,
-    theta,
-    uncode,
 )
 
 q_var = spl.GeneratingSet("q")

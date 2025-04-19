@@ -2,9 +2,8 @@ from functools import cached_property
 
 from symengine import Add, Mul, Pow
 
-from schubmult.utils.perm_lib import (
+from schubmult.perm_lib import (
     Permutation,
-    add_perm_dict,
     inv,
     permtrim,
     theta,
@@ -14,6 +13,9 @@ from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, Gen
 from schubmult.schub_lib.schub_lib import (
     compute_vpathdicts,
     elem_sym_perms,
+)
+from schubmult.utils.perm_utils import (
+    add_perm_dict,
 )
 
 
@@ -82,7 +84,7 @@ def schubmult_py(perm_dict, v):
     if len(th) == 0 or th[0] == 0:
         return perm_dict
     mu = uncode(th)
-    vmu = v*mu
+    vmu = v * mu
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}
@@ -97,7 +99,7 @@ def schubmult_py(perm_dict, v):
 
     for u, val in perm_dict.items():
         inv_u = inv(u)
-        vpathsums = {Permutation(u): {Permutation([1,2]): val}}
+        vpathsums = {Permutation(u): {Permutation([1, 2]): val}}
 
         for index in range(len(th)):
             newpathsums = {}
@@ -149,7 +151,7 @@ def schub_coprod_py(perm, indices):
         if val == 0:
             continue
         # pperm = [*perm]
-        downperm = perm*inverse_kperm
+        downperm = perm * inverse_kperm
         if inv(downperm) == inv(perm) - inv_kperm:
             flag = True
             for i in range(N):

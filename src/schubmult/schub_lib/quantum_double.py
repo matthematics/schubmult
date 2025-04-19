@@ -11,28 +11,14 @@ import numpy as np
 from symengine import Add, Mul, Pow, expand, sympify
 
 import schubmult.schub_lib.double as norm_yz
-from schubmult.utils.perm_lib import (
-    Permutation,
-    add_perm_dict,
-    code,
-    inv,
-    medium_theta,
-    strict_theta,
-    uncode,
-)
+from schubmult.perm_lib import Permutation, code, inv, medium_theta, strict_theta, uncode
 from schubmult.poly_lib.poly_lib import call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
-from schubmult.schub_lib.schub_lib import (
-    compute_vpathdicts,
-    double_elem_sym_q,
-    elem_sym_perms_q,
-    elem_sym_perms_q_op,
-    reduce_q_coeff,
-)
+from schubmult.schub_lib.schub_lib import compute_vpathdicts, double_elem_sym_q, elem_sym_perms_q, elem_sym_perms_q_op, reduce_q_coeff
 from schubmult.utils.logging import get_logger
+from schubmult.utils.perm_utils import add_perm_dict
 
 logger = get_logger(__name__)
-
 
 
 class _gvars:
@@ -180,6 +166,7 @@ def nil_hecke(perm_dict, v, n, var2=_vars.var2, var3=_vars.var3):
         ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
 
+
 @cache
 def schubmult_q_double_pair(perm1, perm2, var2=None, var3=None, q_var=None):
     return schubmult_q_double_fast({perm1: 1}, perm2, var2, var3, q_var)
@@ -189,10 +176,12 @@ def schubmult_q_double_pair(perm1, perm2, var2=None, var3=None, q_var=None):
 def schubmult_q_double_pair_generic(perm1, perm2):
     return schubmult_q_double_fast({perm1: 1}, perm2, _vars.var_g1, _vars.var_g2, _vars.q_var)
 
+
 @cache
 def schubmult_q_generic_partial_posify(u2, v2):
     # logger.debug("Line number")
     return {w2: q_partial_posify_generic(val, u2, v2, w2) for w2, val in schubmult_q_double_pair_generic(u2, v2).items()}
+
 
 def q_posify(u, v, w, val, var2, var3, q_var, msg):
     # logger.debug(f"Line number {val=} {u=} {v=} {w=}")
@@ -247,11 +236,13 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
                                 raise Exception
                 except Exception:
                     import traceback
+
                     traceback.print_exc()
         if expand(val - val2) != 0:
             # logger.debug("Different")
             raise Exception
     return val2
+
 
 # def q_posify(u, v, w, val, var2, var3, q_var, msg):
 #     if expand(val) != 0:
@@ -313,6 +304,7 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
 #         return val
 #     return 0
 
+
 def old_q_posify(u, v, w, val, var2, var3, q_var, msg):
     val2 = 0
     q_dict = factor_out_q_keep_factored(val)
@@ -357,8 +349,9 @@ def old_q_posify(u, v, w, val, var2, var3, q_var, msg):
                 traceback.print_exc()
                 exit(1)
     if expand(val - val2) != 0:
-       raise Exception
+        raise Exception
     return val2
+
 
 def q_partial_posify_generic(val, u, v, w):
     try:
@@ -399,11 +392,11 @@ def q_partial_posify_generic(val, u, v, w):
                 except Exception:
                     # print(f"Exception: {e}")
                     import traceback
+
                     traceback.print_exc()
         if expand(val - val2) != 0:
             raise Exception
     return val2
-
 
 
 def elem_sym_func_q_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, q_var=_vars.q_var):
@@ -675,6 +668,7 @@ def schubmult_q_double_fast(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_va
         toget = vmu
         ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
+
 
 # def schubmult_q_double_fast(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
 #     if v == (1, 2):

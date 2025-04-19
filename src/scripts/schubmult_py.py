@@ -3,7 +3,7 @@ import sys
 import sympy
 from symengine import sympify
 
-from schubmult.utils.perm_lib import (
+from schubmult.perm_lib import (
     Permutation,
     inv,
     inverse,
@@ -20,7 +20,9 @@ def main(argv=None):
         argv = sys.argv
     try:
         args, formatter = schub_argparse(
-            "schubmult_py", "Compute products of ordinary Schubert polynomials", argv=argv[1:],
+            "schubmult_py",
+            "Compute products of ordinary Schubert polynomials",
+            argv=argv[1:],
         )
 
         mult = args.mult

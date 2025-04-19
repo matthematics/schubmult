@@ -16,11 +16,12 @@ import schubmult.schub_lib.double as yz
 # from schubmult.poly_lib.schub_poly import pull_out_var
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
-from schubmult.utils.perm_lib import Permutation, add_perm_dict, inv
+from schubmult.perm_lib import Permutation, inv
 from schubmult.poly_lib.poly_lib import elem_sym_poly, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from schubmult.utils.logging import get_logger
+from schubmult.utils.perm_utils import add_perm_dict
 
 ## EMULATE POLYTOOLS
 

@@ -10,9 +10,8 @@ from cachetools.keys import hashkey
 from sortedcontainers import SortedList
 from symengine import Add, Integer, Mul, Pow, sympify
 
-from schubmult.utils.perm_lib import (
+from schubmult.perm_lib import (
     Permutation,
-    add_perm_dict,
     code,
     cycle,
     dominates,
@@ -40,6 +39,7 @@ from schubmult.schub_lib.schub_lib import (
     will_formula_work,
 )
 from schubmult.utils.logging import get_logger
+from schubmult.utils.perm_utils import add_perm_dict
 
 zero = sympify(0)
 

@@ -10,15 +10,7 @@ from schubmult import (
     efficient_subs,
     permtrim,
 )
-from schubmult.utils.perm_lib import (
-    add_perm_dict,
-    code,
-    inv,
-    mu_A,
-    split_perms,
-    theta,
-    uncode,
-)
+from schubmult.perm_lib import code, inv, split_perms, theta, uncode
 from schubmult.schub_lib.double import (
     mult_poly_double,
     mult_poly_down,
@@ -30,6 +22,10 @@ from schubmult.schub_lib.double import (
 from schubmult.schub_lib.schub_lib import will_formula_work
 from schubmult.utils.argparse import schub_argparse
 from schubmult.utils.logging import get_logger
+from schubmult.utils.perm_utils import (
+    add_perm_dict,
+    mu_A,
+)
 
 logger = get_logger(__name__)
 
@@ -38,10 +34,6 @@ class _gvars:
     @cached_property
     def n(self):
         return 100
-
-    # @cached_property
-    # def fvar(self):
-    #     return 100
 
     @cached_property
     def var1(self):

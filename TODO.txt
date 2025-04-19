@@ -58,4 +58,6 @@ parallelism if useful
 
 What do we want the API to be?
 
-Permutation static functions
+# Permutation static functions
+
+All polynomial funcs

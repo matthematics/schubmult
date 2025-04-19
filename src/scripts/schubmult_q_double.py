@@ -6,13 +6,10 @@ import sympy
 from symengine import sympify
 
 from schubmult import GeneratingSet, div_diff, efficient_subs, q_vector
-from schubmult.utils.perm_lib import (
+from schubmult.perm_lib import (
     Permutation,
-    count_less_than,
     inv,
-    is_parabolic,
     longest_element,
-    omega,
     permtrim,
     uncode,
 )
@@ -27,6 +24,11 @@ from schubmult.schub_lib.schub_lib import (
     check_blocks,
 )
 from schubmult.utils.argparse import schub_argparse
+from schubmult.utils.perm_utils import (
+    count_less_than,
+    is_parabolic,
+    omega,
+)
 
 
 class _gvars:
