@@ -155,6 +155,7 @@ def _display_full(
     raw_result_dict = {}
     perms = args.perms
     ascode = args.ascode
+    Permutation.print_as_code = ascode
     coprod = args.coprod
     msg = args.msg
     same = args.same
@@ -183,12 +184,7 @@ def _display_full(
     coeff_perms = list(coeff_dict.keys())
     if coprod:
         perm_pairs = coeff_perms
-        if ascode:
-            width = max(
-                [len(str(trimcode(perm[0])) + " " + str(trimcode(perm[1]))) for perm in perm_pairs],
-            )
-        else:
-            width = max([len(str(perm[0]) + " " + str(perm[1])) for perm in perm_pairs])
+        width = max([len(sympy.sstr(perm[0]) + " " + sympy.sstr(perm[1])) for perm in perm_pairs])
 
         for firstperm, secondperm in perm_pairs:
             val = coeff_dict[(firstperm, secondperm)]
@@ -221,25 +217,14 @@ def _display_full(
                     else:
                         val = 0
                 if val != 0:
-                    if not ascode:
-                        width2 = width - len(str(permtrim(firstperm))) - len(str(permtrim(secondperm)))
-                        raw_result_dict[(permtrim(firstperm), Permutation(secondperm))] = val
-                        if formatter:
-                            _display(
-                                f"{permtrim(firstperm)}{' ':>{width2}}{Permutation(secondperm)}  {formatter(val)}",
-                            )
-                    else:
-                        width2 = width - len(str(trimcode(firstperm))) - len(str(trimcode(secondperm)))
-                        raw_result_dict[(tuple(trimcode(firstperm)), tuple(trimcode(secondperm)))] = val
-                        if formatter:
-                            _display(
-                                f"{trimcode(firstperm)}{' ':>{width2}}{trimcode(secondperm)}  {formatter(val)}",
-                            )
+                    width2 = width - len(sympy.sstr(permtrim(firstperm))) - len(sympy.sstr(permtrim(secondperm)))
+                    raw_result_dict[(permtrim(firstperm), Permutation(secondperm))] = val
+                    if formatter:
+                        _display(
+                            f"{sympy.sstr(permtrim(firstperm))}{' ':>{width2}}{sympy.sstr(Permutation(secondperm))}  {formatter(val)}",
+                        )
     else:
-        if ascode:
-            width = max([len(str(trimcode(perm))) for perm in coeff_dict.keys()])
-        else:
-            width = max([len(str(perm)) for perm in coeff_dict.keys()])
+        width = max([len(sympy.sstr(perm)) for perm in coeff_dict.keys()])
 
         coeff_perms = list(coeff_dict.keys())
         coeff_perms.sort(key=lambda x: (inv(x), *x))
@@ -248,14 +233,9 @@ def _display_full(
             val = coeff_dict[perm]
             # if val != 0:
             if val != 0:
-                if ascode:
-                    raw_result_dict[tuple(trimcode(perm))] = val
-                    if formatter:
-                        _display(f"{trimcode(perm)!s:>{width}}  {formatter(val)}")
-                else:
-                    raw_result_dict[tuple(perm)] = val
-                    if formatter:
-                        _display(f"{perm!s:>{width}}  {formatter(val)}")
+                raw_result_dict[perm] = val
+                if formatter:
+                    _display(f"{sympy.sstr(perm)!s:>{width}}  {formatter(val)}")
     return raw_result_dict
 
 

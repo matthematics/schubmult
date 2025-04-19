@@ -1,3 +1,4 @@
+import multiprocessing
 from functools import cache, cached_property
 
 import sympy
@@ -57,6 +58,25 @@ def _varstr(v):
 #     return DoubleSchubertAlgebraElement(coeff_dict)
 
 
+def domul(t1, dict2):
+    _vstr, kd, vd, basis, best_effort_positive = t1
+    this_dict = {}
+    for k, v in dict2:
+        did_positive = False
+        to_mul = v * vd
+        if best_effort_positive:
+            try:
+                # logger.critical(f"{to_mul=} {kd=} {k=}")
+                this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis.cached_positive_product(kd, k[0], _vstr, k[1]).items()})
+                did_positive = True
+            except Exception:
+                # logger.debug("Failed to compute")
+                did_positive = False
+        if not did_positive:
+            this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis.cached_product(kd, k[0], _vstr, k[1]).items()})
+    return this_dict
+
+
 def _mul_schub_dicts(dict1, dict2, basis, best_effort_positive=True):
     by_var = {}
 
@@ -73,22 +93,38 @@ def _mul_schub_dicts(dict1, dict2, basis, best_effort_positive=True):
     # import sys
 
     for _vstr, _dict in by_var.items():
-        this_dict = {}
-        for k, v in dict2.items():
-            for kd, vd in _dict.items():
-                did_positive = False
-                to_mul = v * vd
-                if best_effort_positive:
-                    try:
-                        # logger.critical(f"{to_mul=} {kd=} {k=}")
-                        this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis.cached_positive_product(kd, k[0], _vstr, k[1]).items()})
-                        did_positive = True
-                    except Exception:
-                        # logger.debug("Failed to compute")
-                        did_positive = False
-                if not did_positive:
-                    this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis.cached_product(kd, k[0], _vstr, k[1]).items()})
-        results = add_perm_dict(results, this_dict)
+        if BasisSchubertAlgebraElement.do_parallel:
+            result_list = []
+            mul_funcs = [(_vstr, kd, vd, basis, best_effort_positive) for kd, vd in _dict.items()]
+            itemlist = list(dict2.items())
+
+            def add_result(result):
+                result_list.append(result)
+
+            with multiprocessing.Pool() as pool:
+                for mulf in mul_funcs:
+                    pool.apply_async(domul, args=(mulf, itemlist), callback=add_result)
+                pool.close()
+                pool.join()
+            for res in result_list:
+                results = add_perm_dict(results, res)
+        else:
+            this_dict = {}
+            for k, v in dict2.items():
+                for kd, vd in _dict.items():
+                    did_positive = False
+                    to_mul = v * vd
+                    if best_effort_positive:
+                        try:
+                            # logger.critical(f"{to_mul=} {kd=} {k=}")
+                            this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis.cached_positive_product(kd, k[0], _vstr, k[1]).items()})
+                            did_positive = True
+                        except Exception:
+                            # logger.debug("Failed to compute")
+                            did_positive = False
+                    if not did_positive:
+                        this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis.cached_product(kd, k[0], _vstr, k[1]).items()})
+            results = add_perm_dict(results, this_dict)
 
     by_var2 = {}
     none_dict2 = {}
@@ -120,6 +156,8 @@ class BasisSchubertAlgebraElement(Expr):
     _op_priority = 1e200
     _kind = NumberKind
     is_commutative = False
+
+    do_parallel = False
 
     def __new__(cls, _dict, basis):
         obj = Expr.__new__(cls)

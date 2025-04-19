@@ -53,3 +53,5 @@ DIFFERENT Q VARS
 refactor scripts to print as code
 
 SEM basis!!!
+
+parallelism if useful
