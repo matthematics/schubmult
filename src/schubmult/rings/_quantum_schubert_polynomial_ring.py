@@ -3,7 +3,6 @@
 from bisect import bisect_left
 from functools import cache
 
-import numpy as np
 import sympy
 from symengine import S, sympify
 from sympy import Basic
@@ -12,13 +11,12 @@ import schubmult.rings._schubert_polynomial_ring as spr
 import schubmult.rings._utils as utils
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
-from schubmult.perm_lib import Permutation, longest_element, permtrim
-from schubmult.poly_lib.poly_lib import elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
+from schubmult.perm_lib import Permutation, longest_element
+from schubmult.poly_lib.poly_lib import elem_sym_poly, elem_sym_poly_q, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_from_elems
 from schubmult.poly_lib.variables import GeneratingSet, GeneratingSet_base
-from schubmult.schub_lib.schub_lib import check_blocks
 from schubmult.utils.logging import get_logger
-from schubmult.utils.perm_utils import count_less_than, is_parabolic, omega
+from schubmult.utils.perm_utils import is_parabolic
 
 ## EMULATE POLYTOOLS
 
@@ -93,7 +91,7 @@ class PQDSchubPoly(ParabolicQuantumDoubleSchubertAlgebraElement):
     def __xnew__(_class, k, basis):
         obj = ParabolicQuantumDoubleSchubertAlgebraElement.__new__(_class, sympy.Dict({(Permutation(k[0]), k[1]): 1}), basis)
         obj._perm = k[0]
-        #obj._perm._print_as_code = True
+        # obj._perm._print_as_code = True
         obj._coeff_var = k[1]
         # obj._base_var = base_var
         return obj
@@ -464,48 +462,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
                 parabolic_index += list(range(start + 1, end))
                 # start += int(args.parabolic[i])
                 start = end
-
-        w_P = Permutation(longest_element(parabolic_index))
-        # max_len = len(w_P)
-        w_P_prime = Permutation([1, 2])
-        coeff_dict_update = {}
-        for w_1 in coeff_dict.keys():
-            val = coeff_dict[w_1]
-            q_dict = yz.factor_out_q_keep_factored(val)
-            for q_part in q_dict:
-                qv = q_vector(q_part)
-                w = w_1
-                good = True
-                parabolic_index2 = []
-                for i in range(len(parabolic_index)):
-                    if omega(parabolic_index[i], qv) == 0:
-                        parabolic_index2 += [parabolic_index[i]]
-                    elif omega(parabolic_index[i], qv) != -1:
-                        good = False
-                        break
-                if not good:
-                    continue
-                w_P_prime = Permutation(longest_element(parabolic_index2))
-                if not check_blocks(qv, parabolic_index):
-                    continue
-                # print(f"{type(w)=} {type(w_P_prime)=} {type(w_P)=}")
-                w = (w * w_P_prime) * w_P
-                if not is_parabolic(w, parabolic_index):
-                    continue
-
-                w = permtrim(w)
-                if len(w) > max_len:
-                    continue
-                new_q_part = np.prod(
-                    [q_var[index + 1 - count_less_than(parabolic_index, index + 1)] ** qv[index] for index in range(len(qv)) if index + 1 not in parabolic_index],
-                )
-                try:
-                    new_q_part = int(new_q_part)
-                except Exception:
-                    pass
-                q_val_part = q_dict[q_part]
-                coeff_dict_update[w] = coeff_dict_update.get(w, 0) + new_q_part * q_val_part
-        return coeff_dict_update
+        return yz.apply_peterson_woodward(coeff_dict, parabolic_index)
 
     @cache
     def cached_product(self, u, v, va, vb):
@@ -699,9 +656,11 @@ QuantumDoubleSchubertPolynomial = QuantumDoubleSchubertAlgebraElement
 def make_parabolic_quantum_basis(index_comp):
     return ParabolicQuantumDoubleSchubertAlgebraElement_basis(GeneratingSet("x"), index_comp)
 
+
 @cache
 def QPDSx(*args):
     return make_parabolic_quantum_basis(args)
+
 
 # is_Add = True
 # is_Mul = True

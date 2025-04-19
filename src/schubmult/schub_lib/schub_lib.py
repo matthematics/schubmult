@@ -30,6 +30,7 @@ from schubmult.utils.perm_utils import (
 
 q_var = spl.GeneratingSet("q")
 
+
 # def double_elem_sym_q(u, p1, p2, k, q_var=q_var):
 #     ret_list = {}
 #     perms1 = elem_sym_perms_q(u, p1, k, q_var)

@@ -25,6 +25,7 @@ from .schub_lib.double import (
 )
 from .schub_lib.quantum import mult_poly_q, schubmult_q, schubmult_q_fast
 from .schub_lib.quantum_double import (
+    apply_peterson_woodward,
     factor_out_q_keep_factored,
     mult_poly_q_double,
     nil_hecke,
@@ -53,6 +54,7 @@ __all__ = [
     "QPDSx",
     "QSx",
     "Sx",
+    "apply_peterson_woodward",
     "check_blocks",
     "compute_positive_rep",
     "div_diff",

@@ -11,12 +11,17 @@ import numpy as np
 from symengine import Add, Mul, Pow, expand, sympify
 
 import schubmult.schub_lib.double as norm_yz
-from schubmult.perm_lib import Permutation, code, inv, medium_theta, strict_theta, uncode
+from schubmult.perm_lib import Permutation, code, inv, longest_element, medium_theta, permtrim, strict_theta, uncode
 from schubmult.poly_lib.poly_lib import call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
-from schubmult.schub_lib.schub_lib import compute_vpathdicts, double_elem_sym_q, elem_sym_perms_q, elem_sym_perms_q_op, reduce_q_coeff
+from schubmult.schub_lib.schub_lib import check_blocks, compute_vpathdicts, double_elem_sym_q, elem_sym_perms_q, elem_sym_perms_q_op, reduce_q_coeff
 from schubmult.utils.logging import get_logger
-from schubmult.utils.perm_utils import add_perm_dict
+from schubmult.utils.perm_utils import (
+    add_perm_dict,
+    count_less_than,
+    is_parabolic,
+    omega,
+)
 
 logger = get_logger(__name__)
 
@@ -398,6 +403,48 @@ def q_partial_posify_generic(val, u, v, w):
         if expand(val - val2) != 0:
             raise Exception
     return val2
+
+def apply_peterson_woodward(coeff_dict, parabolic_index,q_var=_vars.q_var):
+    max_len = parabolic_index[-1] + 1
+    w_P = longest_element(parabolic_index)
+    w_P_prime = Permutation([1, 2])
+    coeff_dict_update = {}
+    for w_1 in coeff_dict.keys():
+        val = coeff_dict[w_1]
+        q_dict = factor_out_q_keep_factored(val)
+        for q_part in q_dict:
+            qv = q_vector(q_part)
+            w = w_1
+            good = True
+            parabolic_index2 = []
+            for i in range(len(parabolic_index)):
+                if omega(parabolic_index[i], qv) == 0:
+                    parabolic_index2 += [parabolic_index[i]]
+                elif omega(parabolic_index[i], qv) != -1:
+                    good = False
+                    break
+            if not good:
+                continue
+            w_P_prime = longest_element(parabolic_index2)
+            if not check_blocks(qv, parabolic_index):
+                continue
+            w = (w * w_P_prime) * w_P
+            if not is_parabolic(w, parabolic_index):
+                continue
+
+            w = permtrim(w)
+            if len(w) > max_len:
+                continue
+            new_q_part = np.prod(
+                [q_var[index + 1 - count_less_than(parabolic_index, index + 1)] ** qv[index] for index in range(len(qv)) if index + 1 not in parabolic_index],
+            )
+            try:
+                new_q_part = int(new_q_part)
+            except Exception:
+                pass
+            q_val_part = q_dict[q_part]
+            coeff_dict_update[w] = coeff_dict_update.get(w, 0) + new_q_part * q_val_part
+    return coeff_dict_update
 
 
 def elem_sym_func_q_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, q_var=_vars.q_var):
