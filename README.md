@@ -209,9 +209,41 @@ indices you would like to split on.
 # sympy-compliant ring classes (as of version 3.0.0)
 
 There are sympy-compliant ring classes similar to the Sage classes that can be accessed with the
-`Sx`, `DSx`, `QSx`, and `QDSx` element constructors. The interface is similar to Sage, shown below, 
+`Sx`, `DSx`, `QSx`, `QDSx`, and `QPDSx` element constructors. The interface is similar to Sage, shown below, 
 though products are shown as positive if this can be done without extensive computation (i.e. avoiding
 integer programming).
+
+Examples:
+```python
+>>> from schubmult import *
+>>> QPDSx(2,3)(uncode([1,2]))*QPDSx(2,3)(uncode([1,3]))
+q_1*((-y_1 + y_2)*(y_1 - y_4) + (-y_1 + y_2)*(y_2 - y_3) + (-y_1 + y_2)*(-y_1 - y_2 + y_4 + y_5)) 
++ q_1*(-y_1 + y_2)*QPDSx(2, 3)((1, 2, 3, 4, 6, 5), 'y') + q_1*(-y_1 + y_5)*QPDSx(2, 3)((1, 3, 2), 'y') 
++ q_1*QPDSx(2, 3)((1, 3, 2, 4, 6, 5), 'y') + q_1*QPDSx(2, 3)((1, 4, 2, 3), 'y') + q_1*QPDSx(2, 3)((2, 3, 1), 'y') 
++ ((-y_1 + y_2)*(y_2 - y_3)*(y_2 - y_4) + (-y_1 + y_2)*(y_2 - y_4)*(-y_1 - y_2 + y_4 + y_5) + (-y_1 + y_2)*((-y_1 + y_4)*(-y_2 + y_4)
++ (-y_1 + y_4)*(-y_3 + y_5) + (-y_2 + y_5)*(-y_3 + y_5)))*QPDSx(2, 3)((2, 5, 1, 3, 4), 'y') + ((-y_1 + y_2)*(y_2 - y_4)
++ (-y_1 + y_2)*(-y_1 - y_2 - y_3 + y_4 + y_5 + y_6))*QPDSx(2, 3)((2, 6, 1, 3, 4, 5), 'y') + ((-y_1 + y_2)*(-y_1 + y_4) 
+- (-y_1 + y_2)*(-y_2 + y_5) + (-y_1 + y_2)*(-y_3 + y_5) - (-y_1 + y_4)*(-y_2 + y_3) + (-y_1 + y_4)*(-y_2 + y_4) 
+- (-y_2 + y_3)*(-y_2 + y_5) + (-2*y_1 + y_4 + y_5)*(-y_2 + y_3 - y_4 + y_5))*QPDSx(2, 3)((3, 5, 1, 2, 4), 'y') 
++ (-y_1 + y_2)*QPDSx(2, 3)((2, 7, 1, 3, 4, 5, 6), 'y') + (-2*y_1 + y_5 + y_6)*QPDSx(2, 3)((3, 6, 1, 2, 4, 5), 'y') 
++ (-y_1 + y_5)*QPDSx(2, 3)((4, 5, 1, 2, 3), 'y') + QPDSx(2, 3)((3, 7, 1, 2, 4, 5, 6), 'y') + QPDSx(2, 3)((4, 6, 1, 2, 3, 5), 'y')
+```
+
+which agrees with the following script output,
+
+```bash
+$ schubmult_q_double --parabolic 2 3 --code 1 2 - 1 3 --display-positive
+[]  q_1*(-y_1 + y_2)*(-y_3 + y_5)
+[0, 1]  q_1*(-y_1 + y_5)
+[0, 2]  q_1
+[1, 1]  q_1
+[1, 3]  (-y_1 + y_2)*(-y_1 + y_5)*(-y_3 + y_5)
+[2, 3]  (-y_1 + y_5)**2
+[3, 3]  -y_1 + y_5
+```
+
+except of course that it is not displayed positively, and also parabolic quantum double Schubert polynomials are included that
+do not show up in the equivariant quantum cohomology ring of the Grassmannian.
 
 # Sage integration (as of version 2.0.0)
 
