@@ -1,6 +1,7 @@
 import sys
 
 import numpy as np
+import sympy
 from symengine import sympify
 
 from schubmult import (
@@ -16,7 +17,6 @@ from schubmult.perm_lib.perm_lib import (
     omega,
     permtrim,
     sg,
-    trimcode,
     uncode,
 )
 from schubmult.schub_lib.quantum import (
@@ -32,9 +32,11 @@ from schubmult.utils.argparse import schub_argparse
 
 q_var = _vars.q_var
 
+
 def _display_full(coeff_dict, args, formatter):
     raw_result_dict = {}
     ascode = args.ascode
+    Permutation.print_as_code = ascode
     parabolic_index = [int(s) for s in args.parabolic]
     parabolic = len(parabolic_index) != 0
 
@@ -85,14 +87,9 @@ def _display_full(coeff_dict, args, formatter):
     for perm in coeff_perms:
         val = sympify(coeff_dict[perm]).expand()
         if val != 0:
-            if ascode:
-                raw_result_dict[tuple(trimcode(perm))] = val
-                if formatter:
-                    print(f"{trimcode(perm)!s}  {formatter(val)}")
-            else:
-                raw_result_dict[perm] = val
-                if formatter:
-                    print(f"{perm!s}  {formatter(val)}")
+            raw_result_dict[perm] = val
+            if formatter:
+                print(f"{sympy.sstr(perm)!s}  {formatter(val)}")
     return raw_result_dict
 
 

@@ -14,7 +14,6 @@ from schubmult.perm_lib.perm_lib import (
     longest_element,
     omega,
     permtrim,
-    trimcode,
     uncode,
 )
 from schubmult.schub_lib.quantum_double import (
@@ -84,6 +83,7 @@ for i in range(1, 100):
 
 def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3):  # noqa: ARG001
     ascode = args.ascode
+    Permutation.print_as_code = ascode
     coeff_perms = list(coeff_dict.keys())
     coeff_perms.sort(key=lambda x: (inv(x), *x))
 
@@ -92,15 +92,9 @@ def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3)
     for perm in coeff_perms:
         val = coeff_dict[perm]
         if val != 0:
-            if ascode:
-                raw_result_dict[tuple(trimcode(perm))] = val
-                if formatter:
-                    wid = len(f"{trimcode(perm)!s}  ")
-                    print(f"{trimcode(perm)!s}  {formatter(val, wid)}")
-            else:
-                raw_result_dict[perm] = val
-                if formatter:
-                    print(f"{perm!s}  {formatter(val)}")
+            raw_result_dict[perm] = val
+            if formatter:
+                print(f"{sympy.sstr(perm)!s}  {formatter(val)}")
     return raw_result_dict
 
 
@@ -196,31 +190,6 @@ def main(argv=None):
                     coeff_dict = schubmult_q_double_fast(coeff_dict, perm, var2, var3)
                 else:
                     coeff_dict = schubmult_q_double(coeff_dict, perm, var2, var3)
-                # if mult:
-                #     for v in var2:
-                #         globals()[str(v)] = v
-                #     for v in var3:
-                #         globals()[str(v)] = v
-                #     for v in var_x:
-                #         globals()[str(v)] = v
-                #     for v in q_var:
-                #         globals()[str(v)] = v
-
-                # mul_exp = eval(mulstring)
-                # coeff_dict = mult_poly(coeff_dict, mul_exp)
-
-        # from sympy import S, Symbol
-
-        # def my_measure(expr):
-        #     ADD = Symbol("ADD")
-        #     NEG = Symbol("NEG")
-        #     SUB = Symbol("SUB")
-        #     # Discourage powers by giving POW a weight of 10
-        #     count = sympy.count_ops(expr, visual=True).subs(ADD, 1.5).subs(SUB, 0.2)
-        #     # Every other operation gets a weight of 1 (the default)
-        #     count = count.replace(Symbol, type(S.One))
-        #     # print(count)
-        #     return count
 
         if parabolic:
             max_len = parabolic_index[-1] + 1
@@ -273,9 +242,7 @@ def main(argv=None):
                 coeff_dict = {perm: q_posify(perms[0], perms[1], perm, val, var2, var3, _vars.q_var, msg) for perm, val in coeff_dict.items()}
 
         raw_result_dict = {}
-        # for k in coeff_dict:
-        #     # TODO: this probably shouldn't have simplify unless display_positive = True
-        #     coeff_dict[k] = sympy.simplify(coeff_dict[k], measure = my_measure)
+
         if pr or formatter is None:
             raw_result_dict = _display_full(coeff_dict, args, formatter)
         if formatter is None:

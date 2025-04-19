@@ -1,5 +1,6 @@
 import sys
 
+import sympy
 from symengine import sympify
 
 from schubmult.perm_lib.perm_lib import (
@@ -8,7 +9,6 @@ from schubmult.perm_lib.perm_lib import (
     inverse,
     permtrim,
     theta,
-    trimcode,
     uncode,
 )
 from schubmult.schub_lib.single import mult_poly_py, schub_coprod_py, schubmult_py
@@ -37,6 +37,7 @@ def main(argv=None):
                 raise e
 
         ascode = args.ascode
+        Permutation.print_as_code = ascode
         pr = args.pr
         coprod = args.coprod
         raw_result_dict = {}
@@ -53,15 +54,10 @@ def main(argv=None):
                 for firstperm, secondperm in coeff_dict:
                     val = coeff_dict[(firstperm, secondperm)]
                     if val != 0:
-                        if ascode:
-                            if formatter is None:
-                                raw_result_dict[(tuple(trimcode(firstperm)), tuple(trimcode(secondperm)))] = val
-                            else:
-                                print(f"{val} {trimcode(firstperm)} {trimcode(secondperm)}")
-                        elif formatter is None:
+                        if formatter is None:
                             raw_result_dict[(firstperm, secondperm)] = val
                         else:
-                            print(f"{val} {firstperm} {secondperm}")
+                            print(f"{val} {sympy.sstr(firstperm)} {sympy.sstr(secondperm)}")
         else:
             if ascode:
                 for i in range(len(perms)):
@@ -80,14 +76,9 @@ def main(argv=None):
             if pr or formatter is None:
                 for perm, val in coeff_dict.items():
                     if val != 0:
-                        if ascode:
-                            raw_result_dict[tuple(trimcode(perm))] = val
-                            if formatter:
-                                print(f"{val}  {trimcode(perm)}")
-                        else:
-                            raw_result_dict[tuple(perm)] = val
-                            if formatter:
-                                print(f"{val}  {perm}")
+                        raw_result_dict[perm] = val
+                        if formatter:
+                            print(f"{val}  {sympy.sstr(perm)}")
         if formatter is None:
             return raw_result_dict
     except BrokenPipeError:

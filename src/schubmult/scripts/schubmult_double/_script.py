@@ -17,7 +17,6 @@ from schubmult.perm_lib.perm_lib import (
     permtrim,
     split_perms,
     theta,
-    trimcode,
     uncode,
 )
 from schubmult.schub_lib.double import (
