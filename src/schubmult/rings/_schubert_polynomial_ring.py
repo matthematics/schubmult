@@ -147,12 +147,16 @@ class BasisSchubertAlgebraElement(Expr):
     _op_priority = 1e200
     _kind = NumberKind
     is_commutative = False
-
+    # precedence = 40
     do_parallel = False
 
     def __new__(cls, _dict, basis):
         obj = Expr.__new__(cls)
         obj._dict = {k: sympify(v) for k, v in _dict.items() if expand(v) != S.Zero}
+        if len(obj._dict.keys()) == 1 and next(iter(obj._dict.values())) == S.One:
+            obj.precedence = 1000
+        else:
+            obj.precedence = 40
         # obj.prune()
         obj._basis = basis
         return obj
@@ -197,18 +201,28 @@ class BasisSchubertAlgebraElement(Expr):
         logger.debug(f"{res_dict2=}")
         return self.basis._from_dict(res_dict2)
 
-    def _cached_sympystr(self, printer):
-        return printer.doprint(
-            sympy.Add(
-                *[
-                    (self.coeff_dict[k] if k[0] == Permutation([]) else sympy.Mul(self.coeff_dict[k], self.basis.single_element_class(k, self.basis)))
-                    for k in sorted(self.coeff_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))
-                ],
-            ),
-        )
+    # def _cached_sympystr(self, printer):
+    #     return printer.doprint(
+    #         sympy.Add(
+    #             *[
+    #                 (self.coeff_dict[k] if k[0] == Permutation([]) else sympy.Mul(self.coeff_dict[k], self.basis.single_element_class(k, self.basis)))
+    #                 for k in sorted(self.coeff_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))
+    #             ],
+    #         ),
+    #     )
 
     def _sympystr(self, printer):
-        return self._cached_sympystr(printer)
+        return printer._print_Add(self)
+        # return self._cached_sympystr(printer)
+
+    def as_terms(self):
+        return [
+            (sympy.sympify(self.coeff_dict[k]) if k[0] == Permutation([]) else sympy.Mul(self.coeff_dict[k], self.basis.single_element_class(k, self.basis)))
+            for k in sorted(self.coeff_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))
+        ]
+
+    def as_ordered_terms(self, *_, **__):
+        return self.as_terms()
 
     # def _eval_simplify(self, *args, measure, **kwargs):
     #     return self.basis._from_dict({k: sympify(sympy.simplify(v, *args, measure=measure, **kwargs)) for k, v in self.coeff_dict.items()})
