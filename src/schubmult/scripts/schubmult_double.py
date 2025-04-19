@@ -4,21 +4,8 @@ from functools import cached_property
 import sympy
 from symengine import expand, sympify
 
-from schubmult import (
-    GeneratingSet,
-    Permutation,
-    efficient_subs,
-    permtrim,
-)
-from schubmult.perm_lib import code, inv, split_perms, theta, uncode
-from schubmult.schub_lib.double import (
-    mult_poly_double,
-    mult_poly_down,
-    posify,
-    schub_coprod_double,
-    schubmult_double,
-    schubmult_down,
-)
+from schubmult import GeneratingSet, Permutation, code, efficient_subs, mult_poly_double, permtrim, posify, schub_coprod_double, schubmult_double, theta, uncode
+from schubmult.perm_lib import split_perms
 from schubmult.schub_lib.schub_lib import will_formula_work
 from schubmult.utils.argparse import schub_argparse
 from schubmult.utils.logging import get_logger
@@ -218,7 +205,7 @@ def _display_full(
         width = max([len(sympy.sstr(perm)) for perm in coeff_dict.keys()])
 
         coeff_perms = list(coeff_dict.keys())
-        coeff_perms.sort(key=lambda x: (inv(x), *x))
+        coeff_perms.sort(key=lambda x: (x.inv, *x))
 
         for perm in coeff_perms:
             val = coeff_dict[perm]
@@ -316,19 +303,19 @@ def main(argv=None):
             #     for v in _vars.var1:
             #         globals()[str(v)] = v
 
-            if down:
-                for perm in orig_perms[1:]:
-                    check_coeff_dict = schubmult_down(check_coeff_dict, perm, var2, var3)
-                if mult:
-                    mul_exp = eval(mulstring)
-                    check_coeff_dict = mult_poly_down(check_coeff_dict, mul_exp)
-            else:
-                for perm in orig_perms[1:]:
-                    check_coeff_dict = schubmult_double(check_coeff_dict, perm, var2, var3)
-                # coeff_dict = check_coeff_dict
-                if mult:
-                    mul_exp = eval(mulstring)
-                    check_coeff_dict = mult_poly_double(check_coeff_dict, mul_exp)
+            # if down:
+            #     for perm in orig_perms[1:]:
+            #         check_coeff_dict = schubmult_down(check_coeff_dict, perm, var2, var3)
+            #     if mult:
+            #         mul_exp = eval(mulstring)
+            #         check_coeff_dict = mult_poly_down(check_coeff_dict, mul_exp)
+            # else:
+            for perm in orig_perms[1:]:
+                check_coeff_dict = schubmult_double(check_coeff_dict, perm, var2, var3)
+            # coeff_dict = check_coeff_dict
+            if mult:
+                mul_exp = eval(mulstring)
+                check_coeff_dict = mult_poly_double(check_coeff_dict, mul_exp)
             # preprocess positivity
             if display_positive and len(perms) == 2 and will_formula_work(perms[0], perms[1]) and not mult and not down and not same:
                 coeff_dict = {}
@@ -339,7 +326,7 @@ def main(argv=None):
                 coeff_dict2 = schubmult_double(coeff_dict2, muv, var2, var3)
                 for perm, val in coeff_dict2.items():
                     w = perm * muvn1v
-                    if inv(w) + inv(muvn1v) == inv(perm):
+                    if w.inv + muvn1v.inv == perm.inv:
                         coeff_dict[Permutation(w)] = val
                 posified = True
 

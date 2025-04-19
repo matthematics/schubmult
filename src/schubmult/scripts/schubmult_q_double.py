@@ -5,23 +5,23 @@ import numpy as np
 import sympy
 from symengine import sympify
 
-from schubmult import GeneratingSet, div_diff, efficient_subs, q_vector
-from schubmult.perm_lib import (
+from schubmult import (
+    GeneratingSet,
     Permutation,
-    inv,
-    longest_element,
-    permtrim,
-    uncode,
-)
-from schubmult.schub_lib.quantum_double import (
+    check_blocks,
+    div_diff,
+    efficient_subs,
     factor_out_q_keep_factored,
     nil_hecke,
+    permtrim,
     q_posify,
+    q_vector,
     schubmult_q_double,
     schubmult_q_double_fast,
+    uncode,
 )
-from schubmult.schub_lib.schub_lib import (
-    check_blocks,
+from schubmult.perm_lib import (
+    longest_element,
 )
 from schubmult.utils.argparse import schub_argparse
 from schubmult.utils.perm_utils import (
@@ -87,7 +87,7 @@ def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3)
     ascode = args.ascode
     Permutation.print_as_code = ascode
     coeff_perms = list(coeff_dict.keys())
-    coeff_perms.sort(key=lambda x: (inv(x), *x))
+    coeff_perms.sort(key=lambda x: (x.inv, *x))
 
     raw_result_dict = {}
 

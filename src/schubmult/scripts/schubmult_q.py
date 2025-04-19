@@ -4,35 +4,18 @@ import numpy as np
 import sympy
 from symengine import sympify
 
-from schubmult import (
-    q_vector,
-)
+from schubmult import GeneratingSet, Permutation, check_blocks, factor_out_q_keep_factored, permtrim, q_vector, schubmult_q, schubmult_q_fast, uncode
 from schubmult.perm_lib import (
-    Permutation,
-    inv,
     longest_element,
-    mulperm,
-    permtrim,
-    uncode,
-)
-from schubmult.schub_lib.quantum import (
-    _vars,
-    schubmult_q,
-    schubmult_q_fast,
-)
-from schubmult.schub_lib.quantum_double import factor_out_q_keep_factored
-from schubmult.schub_lib.schub_lib import (
-    check_blocks,
 )
 from schubmult.utils.argparse import schub_argparse
 from schubmult.utils.perm_utils import (
     count_less_than,
     is_parabolic,
     omega,
-    sg,
 )
 
-q_var = _vars.q_var
+q_var = GeneratingSet("q")
 
 
 def _display_full(coeff_dict, args, formatter):
@@ -92,7 +75,7 @@ def _display_full(coeff_dict, args, formatter):
             coeff_dict = coeff_dict_update
 
     coeff_perms = list(coeff_dict.keys())
-    coeff_perms.sort(key=lambda x: (inv(x), *x))
+    coeff_perms.sort(key=lambda x: (x.inv, *x))
 
     for perm in coeff_perms:
         val = sympify(coeff_dict[perm]).expand()

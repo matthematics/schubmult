@@ -3,15 +3,7 @@ import sys
 import sympy
 from symengine import sympify
 
-from schubmult.perm_lib import (
-    Permutation,
-    inv,
-    inverse,
-    permtrim,
-    theta,
-    uncode,
-)
-from schubmult.schub_lib.single import mult_poly_py, schub_coprod_py, schubmult_py
+from schubmult import Permutation, mult_poly_py, permtrim, schub_coprod_py, schubmult_py, theta, uncode
 from schubmult.utils.argparse import schub_argparse
 
 
@@ -63,9 +55,9 @@ def main(argv=None):
         else:
             if ascode:
                 for i in range(len(perms)):
-                    perms[i] = tuple(permtrim(uncode(perms[i])))
+                    perms[i] = permtrim(uncode(perms[i]))
 
-            perms.sort(reverse=True, key=lambda x: sum(theta(inverse(x))) - inv(x))
+            perms.sort(reverse=True, key=lambda x: sum(theta(~x)) - x.inv)
 
             coeff_dict = {permtrim([*perms[0]]): 1}
 
