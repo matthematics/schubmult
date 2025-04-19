@@ -16,7 +16,7 @@ def test_schub_expand():
 
 def test_parabolic():
     from schubmult.rings import make_parabolic_quantum_basis
-    from schubmult.perm_lib.perm_lib import uncode
+    from schubmult.perm_lib import uncode
     from symengine import S, expand
     QPDSx = make_parabolic_quantum_basis([2, 3])
     A = QPDSx(uncode([1,2]))

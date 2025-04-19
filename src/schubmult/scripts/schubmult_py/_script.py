@@ -3,7 +3,7 @@ import sys
 import sympy
 from symengine import sympify
 
-from schubmult.perm_lib.perm_lib import (
+from schubmult.perm_lib import (
     Permutation,
     inv,
     inverse,

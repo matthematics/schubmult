@@ -8,7 +8,7 @@ from schubmult import (
     GeneratingSet,
     efficient_subs,
 )
-from schubmult.perm_lib.perm_lib import (
+from schubmult.perm_lib import (
     Permutation,
     add_perm_dict,
     code,

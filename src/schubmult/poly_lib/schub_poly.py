@@ -1,6 +1,6 @@
 import sympy
 
-import schubmult.perm_lib.perm_lib as pl
+import schubmult.perm_lib as pl
 import schubmult.schub_lib.schub_lib as schub_lib
 from schubmult.poly_lib.poly_lib import call_zvars
 from schubmult.poly_lib.variables import GeneratingSet

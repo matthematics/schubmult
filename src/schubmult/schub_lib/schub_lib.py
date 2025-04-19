@@ -5,7 +5,7 @@ import numpy as np
 from symengine import sympify
 
 import schubmult.poly_lib.variables as spl
-from schubmult.perm_lib.perm_lib import (
+from schubmult.perm_lib import (
     Permutation,
     code,
     count_bruhat,

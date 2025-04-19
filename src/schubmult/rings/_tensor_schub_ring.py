@@ -4,7 +4,7 @@ import symengine
 from symengine import expand
 from sympy import Add, Basic, Dict, Expr, Mul, sympify
 
-import schubmult.perm_lib.perm_lib as pl
+import schubmult.perm_lib as pl
 
 
 def _tensor_product_of_dicts(d1, d2):

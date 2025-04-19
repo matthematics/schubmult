@@ -11,7 +11,7 @@ import numpy as np
 from symengine import Add, Mul, Pow, expand, sympify
 
 import schubmult.schub_lib.double as norm_yz
-from schubmult.perm_lib.perm_lib import (
+from schubmult.perm_lib import (
     Permutation,
     add_perm_dict,
     code,
