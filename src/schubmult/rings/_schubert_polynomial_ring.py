@@ -40,22 +40,12 @@ class NotEnoughGeneratorsError(ValueError):
     pass
 
 
-# class GlobalPrintOptions:
-#     _display_as_code = True
-
-#     @staticmethod
-
-
 def _varstr(v):
     if v == utils.NoneVar:
         return "NoneVar"
     if v == utils.ZeroVar:
         return "0"
     return f"'{v}'"
-
-
-# def self.basis._from_dict(coeff_dict):
-#     return DoubleSchubertAlgebraElement(coeff_dict)
 
 
 def domul(t1, dict2):
