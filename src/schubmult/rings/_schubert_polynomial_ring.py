@@ -213,6 +213,9 @@ class BasisSchubertAlgebraElement(Expr):
 
     def _sympystr(self, printer):
         return printer._print_Add(self)
+
+    def _pretty(self, printer):
+        return printer._print_Add(self)
         # return self._cached_sympystr(printer)
 
     def as_terms(self):
@@ -598,6 +601,9 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
         return max([max(k[0].descents()) for k in self.coeff_dict.keys()])
 
 
+_pretty_schub_char = "𝔖"  # noqa: RUF001
+
+
 # Atomic Schubert polynomial
 class DSchubPoly(DoubleSchubertAlgebraElement):
     is_Atom = True
@@ -640,6 +646,14 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
         if self._key[1] == 0 or self._key[1] == utils.NoneVar:
             return printer.doprint(f"S{self.genset.label}({printer.doprint(self._key[0])})")
         return printer.doprint(f"DS{self.genset.label}({printer.doprint(self._key[0])}, {_varstr(self._key[1])})")
+
+    def _pretty(self, printer):
+        if self._key[0] == Permutation([]):
+            return printer._print(1)
+        subscript = printer._print(int("".join([str(i) for i in self._key[0]])))
+        if self._key[1] == 0 or self._key[1] == utils.NoneVar:
+            return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(self.genset.label)))
+        return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(f"{self.genset.label}; {self._key[1]}")))
 
 
 # def elem_func(p, k, vx, vy):
