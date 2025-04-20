@@ -52,8 +52,6 @@ DIFFERENT Q VARS
 
 # refactor scripts to print as code
 
-SEM basis!!!
-
 parallelism if useful
 
 What do we want the API to be?
@@ -68,6 +66,12 @@ All polynomial funcs
 
 rewrite rules to re-express
 
-parabolic script tests
+# parabolic script tests
 
-Single var quantum parabolic
+# Single var quantum parabolic
+
+FOCUS ON SEM basis!!!
+
+Drawing
+
+Best effort positive for same var

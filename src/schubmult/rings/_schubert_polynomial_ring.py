@@ -17,7 +17,7 @@ import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, inv
-from schubmult.poly_lib.poly_lib import complete_sym_poly, elem_sym_poly, xreplace_genvars
+from schubmult.poly_lib.poly_lib import complete_sym_poly, elem_sym_poly, sv_posify, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from schubmult.utils.logging import get_logger
@@ -147,17 +147,17 @@ class BasisSchubertAlgebraElement(Expr):
     _op_priority = 1e200
     _kind = NumberKind
     is_commutative = False
+    is_Add = False
     # precedence = 40
     do_parallel = False
 
     def __new__(cls, _dict, basis):
         obj = Expr.__new__(cls)
         obj._dict = {k: sympify(v) for k, v in _dict.items() if expand(v) != S.Zero}
-        if len(obj._dict.keys()) == 1 and next(iter(obj._dict.values())) == S.One:
+        if len(obj._dict.keys()) == 0 or (len(obj._dict.keys()) == 1 and next(iter(obj._dict.values())) == S.One):
             obj.precedence = 1000
         else:
             obj.precedence = 40
-        # obj.prune()
         obj._basis = basis
         return obj
 
@@ -208,11 +208,19 @@ class BasisSchubertAlgebraElement(Expr):
         return result
 
     def _sympystr(self, printer):
+        if printer.order in ("old", "none"):  # needed to avoid infinite recursion
+            return printer._print_Add(self, order="lex")
         return printer._print_Add(self)
 
     def _pretty(self, printer):
+        if printer.order in ("old", "none"):  # needed to avoid infinite recursion
+            return printer._print_Add(self, order="lex")
         return printer._print_Add(self)
-        # return self._cached_sympystr(printer)
+
+    def _latex(self, printer):
+        if printer.order in ("old", "none"):  # needed to avoid infinite recursion
+            return printer._print_Add(self, order="lex")
+        return printer._print_Add(self)
 
     def as_terms(self):
         if len(self.coeff_dict.keys()) == 0:
@@ -635,6 +643,14 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
             return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(self.genset.label)))
         return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(f"{self.genset.label}; {self._key[1]}")))
 
+    def _latex(self, printer):
+        if self._key[0] == Permutation([]):
+            return printer._print(1)
+        subscript = printer._print(self._key[0])
+        if self._key[1] == 0 or self._key[1] == utils.NoneVar:
+            return printer._print_Function(sympy.Function("\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(self.genset.label)))
+        return printer._print_Function(sympy.Function("\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(f"{self.genset.label}; {self._key[1]}")))
+
 
 # def elem_func(p, k, vx, vy):
 #     return DSx(elem_func_q(p, k, vx, vy), "y")
@@ -698,6 +714,9 @@ class DoubleSchubertAlgebraElement_basis(Basic):
 
     @cache
     def cached_positive_product(self, u, v, va, vb):
+        if va != 0 and va != utils.NoneVar and va == vb:
+            res_dict = self.cached_product(u, v, va, vb)
+            return {k: sv_posify(v, utils.poly_ring(va)) for k, v in res_dict.items()}
         return {(k, va): xreplace_genvars(x, utils.poly_ring(va), utils.poly_ring(vb)) for k, x in yz.schubmult_generic_partial_posify(u, v).items()}
 
     @property

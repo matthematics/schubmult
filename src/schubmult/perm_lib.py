@@ -47,6 +47,11 @@ class Permutation(Basic):
         L.sort(key=lambda i: itera[i - 1])
         return Permutation(L)
 
+    def _latex(self, printer):
+        if Permutation.print_as_code:
+            return printer.doprint(trimcode(self))
+        return printer.doprint(list(self._perm))
+
     def _sympystr(self, printer):
         if Permutation.print_as_code:
             return printer.doprint(trimcode(self))

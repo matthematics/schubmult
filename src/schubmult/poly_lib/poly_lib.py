@@ -1,6 +1,7 @@
 from functools import cache, cached_property
 
 import symengine
+import sympy
 from symengine import Mul, Pow, sympify
 
 import schubmult.perm_lib as pl
@@ -55,6 +56,20 @@ class _gvars:
 zero = sympify(0)
 
 _vars = _gvars()
+
+def sv_posify(val, var2):
+    var_r = vv.GeneratingSet("r")
+    subs_dict = {}
+    for i in range(1, 100):
+        sm = sympify(var2[1])
+        for j in range(1, i):
+            sm += var_r[j]
+        subs_dict[sympify(var2[i])] = sm
+    val = sympify(sympy.simplify(efficient_subs(sympify(val), subs_dict)))
+    bingle_dict = {}
+    for i in range(1, len(var_r) - 1):
+        bingle_dict[var_r[i]] = var2[i + 1] - var2[i]  # sympy.Add(*[_vars.var2[i+1], - _vars.var2[i]],evaluate=False)
+    return val.xreplace(bingle_dict)
 
 def act(w, poly, genset):
     if not isinstance(w, pl.Permutation):
