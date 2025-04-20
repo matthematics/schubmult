@@ -5,10 +5,23 @@ import pytest
 from schubmult.utils.test_utils import get_json, load_json_test_names
 
 
-def assert_dict_good(v_tuple, input_dict, ret_dict):
-    from schubmult import schubmult_q
+def assert_dict_good(v_tuple, input_dict, ret_dict, parabolic):
+    from schubmult import schubmult_q, apply_peterson_woodward
 
     coeff_dict = schubmult_q(input_dict, v_tuple)
+
+    if len(parabolic) > 0:
+        parabolic_index = []
+        start = 0
+        # 1, 2 | 3
+        for i in range(len(parabolic)):
+            end = start + int(parabolic[i])
+            parabolic_index += list(range(start + 1, end))
+            # start += int(args.parabolic[i])
+            start = end
+        # [sum(int(args.parabolic[j]) for j in range(i+1)) for i in range(len(args.parabolic))]
+        coeff_dict = apply_peterson_woodward(coeff_dict, parabolic_index)
+
     for k, v in coeff_dict.items():
         if v != 0:
             assert k in ret_dict
@@ -61,6 +74,7 @@ def test_with_same_args_exec(capsys, json_file):
 
     ascode = args["ascode"]
     disp_mode = args["disp_mode"]
+    parabolic = [int(bob) for bob in args["parabolic"]]
     pr = args["pr"]  # noqa: F841
 
     print(f"{args=}")
@@ -83,7 +97,7 @@ def test_with_same_args_exec(capsys, json_file):
 
     input_dict = {permtrim(perms[0]) if not ascode else uncode(perms[0]): 1}
     print(f"{v_tuple=} {input_dict=}")
-    assert_dict_good(v_tuple, input_dict, ret_dict)
+    assert_dict_good(v_tuple, input_dict, ret_dict, parabolic)
 
 
 if __name__ == "__main__":

@@ -54,12 +54,12 @@ def check_positive(v2, same, subs_dict2, var2, var3, q_var):
     return True
 
 
-def assert_dict_good(v_tuple, input_dict, ret_dict, same=True, display_positive=False, slow=False):
+def assert_dict_good(v_tuple, input_dict, ret_dict, parabolic, same=True, display_positive=False, slow=False):
     # print(f"{input_dict=}")
 
     from symengine import expand, sympify
 
-    from schubmult import schubmult_q_double, schubmult_q_double_fast
+    from schubmult import schubmult_q_double, schubmult_q_double_fast, apply_peterson_woodward
 
     var_a = GeneratingSet("y")
     var_b = GeneratingSet("z")
@@ -80,7 +80,17 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, same=True, display_positive=
         coeff_dict = schubmult_q_double_fast(
             input_dict, v_tuple, var2=var_a, var3=var_a if same else var_b, q_var=var_q,
         )
-
+    if len(parabolic) > 0:
+        parabolic_index = []
+        start = 0
+        # 1, 2 | 3
+        for i in range(len(parabolic)):
+            end = start + int(parabolic[i])
+            parabolic_index += list(range(start + 1, end))
+            # start += int(args.parabolic[i])
+            start = end
+        # [sum(int(args.parabolic[j]) for j in range(i+1)) for i in range(len(args.parabolic))]
+        coeff_dict = apply_peterson_woodward(coeff_dict, parabolic_index)
     # print(f"{coeff_dict=}",file=sys.stderr)
     # print(f"{coeff_dict=}")
     # print(f"{ret_dict=}")
@@ -154,6 +164,7 @@ def test_with_same_args_exec(capsys, json_file):
     pr = args["pr"]  # noqa: F841
     disp_mode = args["disp_mode"]
     slow = args["slow"]
+    parabolic = [int(bob) for bob in args['parabolic']]
 
     from latex2sympy2_extended import latex2sympy
     from symengine import sympify
@@ -172,7 +183,7 @@ def test_with_same_args_exec(capsys, json_file):
     v_tuple = permtrim(perms[1]) if not ascode else (uncode(perms[1]))
     input_dict = {(permtrim(perms[0])) if not ascode else (permtrim(uncode(perms[0]))): 1}
 
-    assert_dict_good(v_tuple, input_dict, ret_dict, same, display_positive, slow)
+    assert_dict_good(v_tuple, input_dict, ret_dict, parabolic, same, display_positive, slow)
 
 
 if __name__ == "__main__":
