@@ -1,4 +1,4 @@
-from ._quantum_schubert_polynomial_ring import QDSx, QPDSx, QSx, QuantumDoubleSchubertAlgebraElement, QuantumDoubleSchubertAlgebraElement_basis, make_parabolic_quantum_basis
+from ._quantum_schubert_polynomial_ring import QDSx, QPDSx, QPSx, QSx, QuantumDoubleSchubertAlgebraElement, QuantumDoubleSchubertAlgebraElement_basis, make_parabolic_quantum_basis
 from ._schubert_polynomial_ring import DoubleSchubertAlgebraElement, DoubleSchubertAlgebraElement_basis, DSx, Sx
 from ._utils import poly_ring
 
@@ -8,6 +8,7 @@ __all__ = [
     "DoubleSchubertAlgebraElement_basis",
     "QDSx",
     "QPDSx",
+    "QPSx",
     "QSx",
     "QuantumDoubleSchubertAlgebraElement",
     "QuantumDoubleSchubertAlgebraElement_basis",

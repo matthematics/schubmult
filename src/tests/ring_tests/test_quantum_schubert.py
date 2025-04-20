@@ -11,13 +11,19 @@ def test_schub_expand():
     assert (x_1*QSx([3,4,1,2])).expand() == q_1**2*x_1 + q_1*q_2*x_1 + 2*q_1*x_1**2*x_2 - q_2*x_1**3 + x_1**3*x_2**2
 
 def test_parabolic():
-    from schubmult import QPDSx
+    from schubmult import QPDSx, QPSx
     from schubmult import uncode
     from symengine import S, expand
     # QPDSx = make_parabolic_quantum_basis([2, 3, 4])
     A = QPDSx(2,3,4)(uncode([1,2,0,2,3]), 0)
+    A2 = QPSx(2,3,4)(uncode([1,2,0,2,3]))
+    assert expand(A.as_polynomial() - A2.as_polynomial()) == S.Zero
     B = QPDSx(2,3,4)(uncode([1,3,0,1,2]), 0)
+    B2 = QPSx(2,3,4)(uncode([1,3,0,1,2]))
+    assert expand(B.as_polynomial() - B2.as_polynomial()) == S.Zero
     C = A*B
+    C2 = A2*B2
+    assert expand(C.as_polynomial() - C2.as_polynomial()) == S.Zero
     assert expand(C.as_polynomial()-A.as_polynomial()*B.as_polynomial()) == S.Zero
     # assert expand(C.as_polynomial()-QPDSx(C.as_polynomial(), 0).as_polynomial()) == S.Zero
 

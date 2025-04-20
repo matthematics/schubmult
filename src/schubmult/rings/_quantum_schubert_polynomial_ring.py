@@ -345,40 +345,8 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
         obj._classical_basis = spr.DoubleSchubertAlgebraElement_basis(genset)
         obj._n = list(index_comp)
         obj._N = [sum(obj._n[:i]) for i in range(len(obj._n) + 1)]
-        # print(f"{obj._N=}")
-        # obj._D = []
-        # obj._E = {}
-        # from symengine import Matrix
-        # for j in range(1, len(obj._N)):
-        #     m_arr = [[0 for i in range(obj._N[j])] for p in range(obj._N[j])]
-        #     for i in range(obj._N[j]):
-        #         m_arr[i][i] = a[i+1] - t[1] #genset[i+1] - t[1]
-        #         if i < obj._N[j] - 1:
-        #             m_arr[i][i+1] = -1
-        #     for b in range(1, j):
-        #         njm1 = obj._N[b + 1] - 1
-        #         njp1 = obj._N[b - 1]
-        #         # print(f"{b=}")
-        #         # print(f"{njm1=} {njp1=}")
-        #         if njp1 < obj._N[j] and njm1 < obj._N[j]:
-        #             # print(f"{b=} {obj._n[b]=}")
-        #             m_arr[njm1][njp1] = -(-1)**(obj._n[b])*q_var[b]
-        #     # print(Matrix(m_arr))
-        #     poly = Matrix(m_arr).det().simplify()
-        #     # print(f"{poly=}")
-        #     # def dongle(v):
-        #     #     return poly.subs(t[1], v)
-        #     obj._D += [spunky_basis(poly)]
-        #     obj._E[obj._N[j]] = {obj._N[j]: obj._D[-1]}
-        #     for i in range(1,obj._N[j]):
-        #         obj._E[obj._N[j]][obj._N[j] - i] = -obj._E[obj._N[j]][obj._N[j] - i + 1].divdiff(i)
-        # # print(obj._E)
-        # add_am = 6
-        # index_comp += [add_am]
-        # obj._N += [obj._N[-1] + add_am]
         parabolic_index = []
         start = 0
-        # 1, 2 | 3
         for i in range(len(index_comp)):
             end = start + index_comp[i]
             parabolic_index += list(range(start + 1, end))
@@ -387,7 +355,6 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
         obj._parabolic_index = parabolic_index
         obj._otherlong = Permutation(list(range(obj._N[-1], 0, -1)))
         obj._longest = obj._otherlong * longest_element(parabolic_index)
-        # obj._E[0] = obj._from_dict({(Permutation([]),utils.NoneVar): S.One})
         return obj
 
     @property
@@ -493,6 +460,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
     def process_coeff_dict(self, coeff_dict):
         max_len = max(len(w) for w in coeff_dict)
         parabolic_index = [*self._parabolic_index]
+        # print(f"bagels = {parabolic_index=} {type(self)=}")
         # parabolic_index += list(range(parabolic_index[-1] + 2, max_len + 1))
         if max_len > len(self._longest):
             parabolic_index = []
@@ -638,19 +606,27 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
 
     @property
     def double_mul(self):
-        return yz.schubmult_q_double_fast
+        from schubmult.schub_lib.quantum_double import _vars
+        def do_double_mul(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
+            coeff_dict = yz.schubmult_q_double_fast(perm_dict, v, var2, var3, q_var)
+            return self.process_coeff_dict(coeff_dict)
+        return do_double_mul
 
     @property
     def single_mul(self):
-        return py.schubmult_q_fast
+        from schubmult.schub_lib.quantum_double import _vars
+        def do_single_mul(perm_dict, v, q_var=_vars.q_var):
+            coeff_dict = py.schubmult_q_fast(perm_dict, v, q_var)
+            return self.process_coeff_dict(coeff_dict)
+        return do_single_mul
 
-    @property
-    def mult_poly_single(self):
-        return py.mult_poly_q
+    # @property
+    # def mult_poly_single(self):
+    #     return py.mult_poly_q
 
-    @property
-    def mult_poly_double(self):
-        return yz.mult_poly_q_double
+    # @property
+    # def mult_poly_double(self):
+    #     return yz.mult_poly_q_double
 
     def __call__(self, x, cv=None):
         genset = self.genset
@@ -704,127 +680,51 @@ def QPDSx(*args):
     return make_parabolic_quantum_basis(args)
 
 
-# is_Add = True
-# is_Mul = True
-# is_Add
-# is_AlgebraicNumber
-# is_Atom
-# is_Boolean
-# is_Derivative
-# is_Dummy
-# is_Equality
-# is_Float
-# is_Function
-# is_Indexed
-# is_Integer
-# is_MatAdd
-# is_MatMul
-# is_Matrix
-# is_Mul
-# is_Not
-# is_Number
-# is_NumberSymbol
-# is_Order
-# is_Piecewise
-# is_Point
-# is_Poly
-# is_Pow
-# is_Rational
-# is_Relational
-# is_Symbol
-# is_Vector
-# is_Wild
-# is_algebraic
-# is_algebraic_expr
-# is_antihermitian
-# is_commutative
-# is_comparable
-# is_complex
-# is_composite
-# is_constant
-# is_even
-# is_extended_negative
-# is_extended_nonnegative
-# is_extended_nonpositive
-# is_extended_nonzero
-# is_extended_positive
-# is_extended_real
-# is_finite
-# is_hermitian
-# is_hypergeometric
-# is_imaginary
-# is_infinite
-# is_integer
-# is_irrational
-# is_meromorphic
-# is_negative
-# is_noninteger
-# is_nonnegative
-# is_nonpositive
-# is_nonzero
-# is_number
-# is_odd
-# is_polar
-# is_polynomial
-# is_positive
-# is_prime
-# is_rational
-# is_rational_function
-# is_real
-# is_scalar
-# is_symbol
-# is_transcendental
-# is_zero
-# is_polynomial = True
-# is_Symbol = True
+class ParabolicQuantumSchubertAlgebraElement_basis(ParabolicQuantumDoubleSchubertAlgebraElement_basis):
+    def __new__(cls, genset, index_comp):
+        return ParabolicQuantumDoubleSchubertAlgebraElement_basis.__new__(cls, genset, index_comp)
+
+    def __hash__(self):
+        return hash((*self.args, utils.NoneVar))
+
+    def _from_single_dict(self, _dict):
+        return ParabolicQuantumDoubleSchubertAlgebraElement({(k, utils.NoneVar): v for k, v in _dict.items()}, self)
+
+    def __call__(self, x):
+        genset = self.genset
+        # logger.debug(f"{x=} {type(x)=}")
+        if not genset:
+            genset = self.genset
+        if isinstance(x, list) or isinstance(x, tuple):
+            perm = Permutation(x)
+            if not is_parabolic(perm, self.parabolic_index):
+                raise ValueError(f"Permutation must be parabolic: {perm} is not")
+            elem = self._from_dict({(perm, utils.NoneVar): 1})
+        elif isinstance(x, Permutation):
+            if not is_parabolic(x, self.parabolic_index):
+                raise ValueError(f"Permutation must be parabolic: {x} is not")
+            elem = self._from_dict({(x, utils.NoneVar): 1})
+        elif isinstance(x, ParabolicQuantumDoubleSchubertAlgebraElement):
+            return x
+        else:
+            dct = self.classical_basis(x, utils.NoneVar)
+            elem = 0
+            if not isinstance(dct, spr.BasisSchubertAlgebraElement):
+                return dct
+            try:
+                for k, v in dct.coeff_dict.items():
+                    if elem == 0:
+                        elem = v * self.classical_in_basis(k)
+                    else:
+                        elem += v * self.classical_in_basis(k)
+            except ValueError:
+                raise ValueError(f"Could not convert {x=} to quantum parabolic")
+        return elem
+
+def make_single_parabolic_quantum_basis(index_comp):
+    return ParabolicQuantumSchubertAlgebraElement_basis(GeneratingSet("x"), index_comp)
 
 
-# class SchubAdd(QuantumDoubleSchubertAlgebraElement, Add):
-#     is_Add = True
-
-#     def __new__(cls, *args, evaluate=True, _sympify=True):
-#         obj = Add.__new__(cls, *args, evaluate=evaluate, _sympify=_sympify)
-#         if evaluate:
-#             return obj.doit()
-#         return obj
-
-#     def doit(self):
-#         ret = self.args[0]
-#         for arg in self.args[1:]:
-#             if arg.is_Add or arg.is_Mul:
-#                 arg = arg.doit()
-#             ret = _do_schub_add(ret, arg)
-#         return ret
-
-#     # def _sympystr(self, printer):
-#     #     return _def_printer._print(f"SchubAdd({self.args}")
-
-
-# class SchubMul(QuantumDoubleSchubertAlgebraElement, Mul):
-#     is_Mul = True
-
-#     def __new__(cls, *args, evaluate=True, _sympify=True):
-#         if len(args) == 0:
-#             return 1
-#         # args, a, b = Mul.flatten(list(args))
-#         # if len(args) == 0:
-#         #     return 1
-#         obj = Mul.__new__(cls, *args, evaluate=evaluate, _sympify=_sympify)
-
-#         if evaluate:
-#             return obj.doit()
-#         return obj
-
-#     def doit(self):
-#         ret = self.args[0]
-#         for arg in self.args[1:]:
-#             if arg.is_Add or arg.is_Mul:
-#                 arg = arg.doit()
-#             ret = _do_schub_mul(ret, arg)
-#         return ret
-
-
-# Basic._constructor_postprocessor_mapping[DoubleSchubertAlgebraElement] = {
-#     "Mul": [get_postprocessor(Mul)],
-#     "Add": [get_postprocessor(Add)],
-# }
+@cache
+def QPSx(*args):
+    return make_single_parabolic_quantum_basis(args)

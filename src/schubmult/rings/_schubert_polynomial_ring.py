@@ -963,6 +963,9 @@ class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
     def __new__(cls, genset):
         return DoubleSchubertAlgebraElement_basis.__new__(cls, genset)
 
+    def __hash__(self):
+        return hash((*self.args, utils.NoneVar))
+
     def _from_single_dict(self, _dict):
         return DoubleSchubertAlgebraElement({(k, utils.NoneVar): v for k, v in _dict.items()}, self)
 

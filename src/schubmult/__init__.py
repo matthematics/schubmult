@@ -7,6 +7,7 @@ from .poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSe
 from .rings._quantum_schubert_polynomial_ring import (
     QDSx,
     QPDSx,
+    QPSx,
     QSx,
 )
 from .rings._schubert_polynomial_ring import (
@@ -52,6 +53,7 @@ __all__ = [
     "Permutation",
     "QDSx",
     "QPDSx",
+    "QPSx",
     "QSx",
     "Sx",
     "apply_peterson_woodward",
