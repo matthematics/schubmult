@@ -632,23 +632,25 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
 
     @property
     def double_mul(self):
-        from schubmult.schub_lib.quantum_double import _vars
+        # from schubmult.schub_lib.quantum_double import _vars
 
-        def do_double_mul(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
-            coeff_dict = yz.schubmult_q_double_fast(perm_dict, v, var2, var3, q_var)
-            return self.process_coeff_dict(coeff_dict)
+        # def do_double_mul(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
+        #     coeff_dict = yz.schubmult_q_double_fast(perm_dict, v, var2, var3, q_var)
+        #     return self.process_coeff_dict(coeff_dict)
 
-        return do_double_mul
+        # return do_double_mul
+        return yz.schubmult_q_double_fast
 
     @property
     def single_mul(self):
-        from schubmult.schub_lib.quantum_double import _vars
+        # from schubmult.schub_lib.quantum_double import _vars
 
-        def do_single_mul(perm_dict, v, q_var=_vars.q_var):
-            coeff_dict = py.schubmult_q_fast(perm_dict, v, q_var)
-            return self.process_coeff_dict(coeff_dict)
+        # def do_single_mul(perm_dict, v, q_var=_vars.q_var):
+        #     coeff_dict = py.schubmult_q_fast(perm_dict, v, q_var)
+        # return self.process_coeff_dict(coeff_dict)
 
-        return do_single_mul
+        # return do_single_mul
+        return py.schubmult_q_fast
 
     # @property
     # def mult_poly_single(self):

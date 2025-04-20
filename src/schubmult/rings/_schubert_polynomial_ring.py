@@ -30,6 +30,7 @@ _def_printer = StrPrinter({"order": "none"})
 
 logger = get_logger(__name__)
 
+_use_sv_posify = False
 # numpy arrays
 # sympy parsing
 # quantum
@@ -147,7 +148,6 @@ class BasisSchubertAlgebraElement(Expr):
     _op_priority = 1e200
     _kind = NumberKind
     is_commutative = False
-    is_Add = False
     # precedence = 40
     do_parallel = False
 
@@ -714,7 +714,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
 
     @cache
     def cached_positive_product(self, u, v, va, vb):
-        if va != 0 and va != utils.NoneVar and va == vb:
+        if va != 0 and va != utils.NoneVar and va == vb and _use_sv_posify:
             res_dict = self.cached_product(u, v, va, vb)
             return {k: sv_posify(v, utils.poly_ring(va)) for k, v in res_dict.items()}
         return {(k, va): xreplace_genvars(x, utils.poly_ring(va), utils.poly_ring(vb)) for k, x in yz.schubmult_generic_partial_posify(u, v).items()}
