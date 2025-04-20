@@ -69,3 +69,5 @@ All polynomial funcs
 rewrite rules to re-express
 
 parabolic script tests
+
+Single var quantum parabolic
