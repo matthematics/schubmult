@@ -2,8 +2,8 @@ import sys  # noqa: F401
 from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
 
 import sympy
-from sympy import init_printing
 
+# from sympy import init_printing
 from schubmult.utils.logging import init_logging
 
 # Indexed._sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
