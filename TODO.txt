@@ -74,4 +74,6 @@ FOCUS ON SEM basis!!!
 
 Drawing
 
-Best effort positive for same var
+Best effort positive for same var (speed?)
+
+Script display order = 'old'
