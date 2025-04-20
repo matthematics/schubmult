@@ -4,7 +4,7 @@ from bisect import bisect_left
 from functools import cache
 
 import sympy
-from symengine import S, sympify
+from symengine import S, Symbol, sympify
 from sympy import Basic
 
 import schubmult.rings._schubert_polynomial_ring as spr
@@ -12,7 +12,7 @@ import schubmult.rings._utils as utils
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
 from schubmult.perm_lib import Permutation, longest_element
-from schubmult.poly_lib.poly_lib import elem_sym_poly, elem_sym_poly_q, xreplace_genvars
+from schubmult.poly_lib.poly_lib import complete_sym_poly, elem_sym_poly, elem_sym_poly_q, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_from_elems
 from schubmult.poly_lib.variables import GeneratingSet, GeneratingSet_base
 from schubmult.utils.logging import get_logger
@@ -131,6 +131,24 @@ class PQDSchubPoly(ParabolicQuantumDoubleSchubertAlgebraElement):
 class QuantumDoubleSchubertAlgebraElement_basis(Basic):
     def __new__(cls, genset):
         return Basic.__new__(cls, genset)
+
+    @property
+    def symbol_elem_func(self):
+        def elem_func(p, k, varl1, varl2):  # noqa: ARG001
+            if p == 0 and k >= 0:
+                return 1
+            if p < 0 or p > k:
+                return 0
+            return sympy.Add(*[(Symbol(f"e_{p - i}_{k}") if p - i > 0 else 1) * complete_sym_poly(i, k + 1 - p, [-v for v in varl2]) for i in range(p + 1)])
+
+        return elem_func
+
+    def elem_sym_subs(self, kk):
+        elems = []
+        for k in range(1,kk+1):
+            for p in range(1,k+1):
+                elems += [(sympy.Symbol(f"e_{p}_{k}"),elem_sym_poly_q(p,k,self.genset[1:],utils.poly_ring(0)))]
+        return dict(elems)
 
     def _from_dict(self, _dict):
         return QuantumDoubleSchubertAlgebraElement(_dict, self)

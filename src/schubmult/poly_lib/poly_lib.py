@@ -148,6 +148,23 @@ def elem_sym_poly_q(p, k, varl1, varl2, q_var=_vars.q_var):
     )
 
 
+def complete_sym_poly(p, k, vrs):
+    if p == 0 and k>=0:
+        return 1
+    if p != 0 and k == 0:
+        return 0
+    if k < 0:
+        return 0
+    if k == 1:
+        return vrs[0]**p
+    sm = 0
+    mid = k // 2
+    for i in range(p + 1):
+        sm += complete_sym_poly(i, mid, vrs[:mid])*complete_sym_poly(p-i, k-mid, vrs[mid:])
+    return sm
+
+
+
 def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0):
     if p > k:
         return zero

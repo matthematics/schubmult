@@ -17,7 +17,7 @@ import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, inv
-from schubmult.poly_lib.poly_lib import elem_sym_poly, xreplace_genvars
+from schubmult.poly_lib.poly_lib import complete_sym_poly, elem_sym_poly, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from schubmult.utils.logging import get_logger
@@ -201,15 +201,11 @@ class BasisSchubertAlgebraElement(Expr):
         logger.debug(f"{res_dict2=}")
         return self.basis._from_dict(res_dict2)
 
-    # def _cached_sympystr(self, printer):
-    #     return printer.doprint(
-    #         sympy.Add(
-    #             *[
-    #                 (self.coeff_dict[k] if k[0] == Permutation([]) else sympy.Mul(self.coeff_dict[k], self.basis.single_element_class(k, self.basis)))
-    #                 for k in sorted(self.coeff_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))
-    #             ],
-    #         ),
-    #     )
+    def in_SEM_basis(self):
+        result = S.Zero
+        for k, v in self.coeff_dict.items():
+            result += v * schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=self.basis.symbol_elem_func)
+        return result
 
     def _sympystr(self, printer):
         return printer._print_Add(self)
@@ -580,22 +576,6 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
     #         return self.doit().expand()
     #     return expand(Add(*[v * schubpoly(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
 
-    def in_SEM_basis(self):
-        result = S.Zero
-        for k, v in self.coeff_dict.items():
-            result += v * schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=self.basis.symbol_elem_func)
-        # print(f"{result=}")
-        # gens = []
-        # for k in range(1, 10):
-        #     gens += [sympy.Symbol(f"e_{p}_{k}") for p in range(1,k+1)]
-        # #print(f"{gens=}")
-        # ply = sympy.poly(sympy.sympify(expand(result)), *gens)
-        # floss = 0
-        # for m, c in ply.as_dict().items():
-        #     floss += c * sympy.prod([gens[i]**m[i] for i in range(len(m))])
-        # return floss
-        return result
-
     @cached_property
     def max_gens(self):
         return max([max(k[0].descents()) for k in self.coeff_dict.keys()])
@@ -669,14 +649,21 @@ class DoubleSchubertAlgebraElement_basis(Basic):
 
     @property
     def symbol_elem_func(self):
-        def elem_func(p, k, varl1, varl2):
+        def elem_func(p, k, varl1, varl2):  # noqa: ARG001
             if p == 0 and k >= 0:
                 return 1
             if p < 0 or p > k:
                 return 0
-            return sympy.Add(*[(Symbol(f"e_{p - i}_{k}") if p - i > 0 else 1) * elem_sym_poly(i, k + 1 - p, [-v for v in varl2], [0 for a in varl1]) for i in range(p + 1)])
+            return sympy.Add(*[(Symbol(f"e_{p - i}_{k}") if p - i > 0 else 1) * complete_sym_poly(i, k + 1 - p, [-v for v in varl2]) for i in range(p + 1)])
 
         return elem_func
+
+    def elem_sym_subs(self, kk):
+        elems = []
+        for k in range(1, kk + 1):
+            for p in range(1, k + 1):
+                elems += [(sympy.Symbol(f"e_{p}_{k}"), elem_sym_poly(p, k, self.genset[1:], utils.poly_ring(0)))]
+        return dict(elems)
 
     # def in_SEM_basis(self, elem):
     #     return
