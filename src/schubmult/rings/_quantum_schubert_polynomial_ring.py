@@ -25,15 +25,13 @@ q_var = GeneratingSet("q")
 
 logger = get_logger(__name__)
 
+
 class QuantumDoubleSchubertAlgebraElement(spr.BasisSchubertAlgebraElement):
     def __new__(cls, _dict, basis):
         return spr.BasisSchubertAlgebraElement.__new__(cls, _dict, basis)
 
     def subs(self, old, new):
-        logger.debug("ferefef")
-        elb = self.as_classical().subs(old, new).as_quantum()
-        logger.debug(f"{elb=}")
-        return elb
+        return self.as_classical().subs(old, new).as_quantum()
 
 
 # # TODO: not a noncommutative symbol, something else
@@ -268,13 +266,13 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
             if x.genset == self.genset:
                 return self(x.expand(), cv, genset)
         else:
-            logger.debug("bagelflap")
+            # logger.debug("bagelflap")
             x = sympify(x)
             if cv is None or cv == utils.NoneVar:
                 cv = utils.NoneVar
-                logger.debug(f"{x=} {list(genset)=}")
+                # logger.debug(f"{x=} {list(genset)=}")
                 result = py.mult_poly_q({Permutation([]): 1}, x, genset)
-                logger.debug(f"{result=}")
+                # logger.debug(f"{result=}")
             else:
                 result = yz.mult_poly_q_double({Permutation([]): 1}, x, genset, utils.poly_ring(cv))
             elem = QuantumDoubleSchubertAlgebraElement({(k, cv): v for k, v in result.items()}, self)
@@ -626,26 +624,30 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
     @property
     def double_mul(self):
         from schubmult.schub_lib.quantum_double import _vars
+
         def do_double_mul(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
             coeff_dict = yz.schubmult_q_double_fast(perm_dict, v, var2, var3, q_var)
             return self.process_coeff_dict(coeff_dict)
+
         return do_double_mul
 
     @property
     def single_mul(self):
         from schubmult.schub_lib.quantum_double import _vars
+
         def do_single_mul(perm_dict, v, q_var=_vars.q_var):
             coeff_dict = py.schubmult_q_fast(perm_dict, v, q_var)
             return self.process_coeff_dict(coeff_dict)
+
         return do_single_mul
 
-    # @property
-    # def mult_poly_single(self):
-    #     return py.mult_poly_q
+    @property
+    def mult_poly_single(self):
+        return py.mult_poly_q
 
-    # @property
-    # def mult_poly_double(self):
-    #     return yz.mult_poly_q_double
+    @property
+    def mult_poly_double(self):
+        return yz.mult_poly_q_double
 
     def __call__(self, x, cv=None):
         genset = self.genset

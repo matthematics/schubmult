@@ -197,7 +197,7 @@ class BasisSchubertAlgebraElement(Expr):
             else:
                 dict2 = self.basis.mult_poly_double({k[0]: v}, poly, self.genset, utils.poly_ring(k[1]))
             res_dict2 = add_perm_dict(res_dict2, {(k2, k[1]): v for k2, v in dict2.items()})
-        logger.debug(f"{res_dict2=}")
+        # logger.debug(f"{res_dict2=}")
         return self.basis._from_dict(res_dict2)
 
     def in_SEM_basis(self):
@@ -770,7 +770,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
                     xsm,
                     ysm - p2,
                 )
-            logger.debug(f"{res=}")
+            # logger.debug(f"{res=}")
             return res
 
         return elem_func
@@ -846,7 +846,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
                 # print("splinterfish")
                 result = yz.mult_poly_double({Permutation([]): 1}, x, genset, utils.poly_ring(cv))
             elem = self._from_dict({(k, cv): v for k, v in result.items()})
-            logger.debug(f"Returning {elem=}")
+            # logger.debug(f"Returning {elem=}")
         return elem
 
 

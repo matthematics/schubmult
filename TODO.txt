@@ -70,10 +70,10 @@ rewrite rules to re-express
 
 # Single var quantum parabolic
 
-FOCUS ON SEM basis!!!
-
 Drawing
 
-Best effort positive for same var (speed?)
+# Best effort positive for same var (speed?)
 
-Script display order = 'old'
+# Script display order = 'old'
+
+FOCUS ON SEM basis!!!!!!!!!
