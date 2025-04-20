@@ -94,9 +94,9 @@ def single_variable(coeff_dict, varnum, var2=_vars.var2, q_var=_vars.q_var):
 def mult_poly_q_double(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var):
     if not isinstance(var_x, GeneratingSet_base):
         var_x = CustomGeneratingSet(var_x)
-    logger.debug(f"{poly=} {list(var_x)=}")
+    # logger.debug(f"{poly=} {list(var_x)=}")
     if var_x.index(poly) != -1:
-        logger.debug(f"yay {var_x.index(poly)=}")
+        # logger.debug(f"yay {var_x.index(poly)=}")
         return single_variable(coeff_dict, var_x.index(poly), var_y, q_var)
     if isinstance(poly, Mul):
         ret = coeff_dict
@@ -395,7 +395,7 @@ def q_partial_posify_generic(val, u, v, w):
                         else:
                             val2 += q_part * q_dict[q_part]
                 except Exception as e:
-                    logger.debug(f"Exception: {e}")
+                    # logger.debug(f"Exception: {e}")
 
                     #import traceback
 
