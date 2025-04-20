@@ -395,7 +395,7 @@ def q_partial_posify_generic(val, u, v, w):
                         else:
                             val2 += q_part * q_dict[q_part]
                 except Exception as e:
-                    # logger.debug(f"Exception: {e}")
+                    logger.debug(f"Exception: {e}")
 
                     #import traceback
 

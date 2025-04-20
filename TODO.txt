@@ -77,3 +77,5 @@ Drawing
 # Script display order = 'old'
 
 FOCUS ON SEM basis!!!!!!!!!
+
+string generation is expensive. Cache?
