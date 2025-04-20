@@ -17,7 +17,7 @@ import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, inv
-from schubmult.poly_lib.poly_lib import complete_sym_poly, elem_sym_poly, sv_posify, xreplace_genvars
+from schubmult.poly_lib.poly_lib import complete_sym_poly, elem_sym_poly, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from schubmult.utils.logging import get_logger
@@ -30,7 +30,6 @@ _def_printer = StrPrinter({"order": "none"})
 
 logger = get_logger(__name__)
 
-_use_sv_posify = False
 # numpy arrays
 # sympy parsing
 # quantum
@@ -154,7 +153,7 @@ class BasisSchubertAlgebraElement(Expr):
     def __new__(cls, _dict, basis):
         obj = Expr.__new__(cls)
         obj._dict = {k: sympify(v) for k, v in _dict.items() if expand(v) != S.Zero}
-        if len(obj._dict.keys()) == 0 or (len(obj._dict.keys()) == 1 and next(iter(obj._dict.values())) == S.One):
+        if len(obj._dict.keys()) == 1 and next(iter(obj._dict.values())) == S.One:
             obj.precedence = 1000
         else:
             obj.precedence = 40
@@ -714,9 +713,6 @@ class DoubleSchubertAlgebraElement_basis(Basic):
 
     @cache
     def cached_positive_product(self, u, v, va, vb):
-        if va != 0 and va != utils.NoneVar and va == vb and _use_sv_posify:
-            res_dict = self.cached_product(u, v, va, vb)
-            return {k: sv_posify(v, utils.poly_ring(va)) for k, v in res_dict.items()}
         return {(k, va): xreplace_genvars(x, utils.poly_ring(va), utils.poly_ring(vb)) for k, x in yz.schubmult_generic_partial_posify(u, v).items()}
 
     @property

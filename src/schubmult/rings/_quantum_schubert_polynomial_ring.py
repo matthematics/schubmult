@@ -12,7 +12,7 @@ import schubmult.rings._utils as utils
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
 from schubmult.perm_lib import Permutation, longest_element
-from schubmult.poly_lib.poly_lib import complete_sym_poly, elem_sym_poly, elem_sym_poly_q, sv_posify, xreplace_genvars
+from schubmult.poly_lib.poly_lib import complete_sym_poly, elem_sym_poly, elem_sym_poly_q, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_from_elems
 from schubmult.poly_lib.variables import GeneratingSet, GeneratingSet_base
 from schubmult.utils.logging import get_logger
@@ -24,7 +24,6 @@ q_var = GeneratingSet("q")
 # _def_printer = StrPrinter({"order": "none"})
 
 logger = get_logger(__name__)
-_use_sv_posify = False # TODO: dynamic
 
 class QuantumDoubleSchubertAlgebraElement(spr.BasisSchubertAlgebraElement):
     def __new__(cls, _dict, basis):
@@ -217,9 +216,6 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
 
     @cache
     def cached_positive_product(self, u, v, va, vb):
-        if va != 0 and va != utils.NoneVar and va == vb and _use_sv_posify:
-            res_dict = self.cached_product(u, v, va, vb)
-            return {k: sv_posify(v, utils.poly_ring(va)) for k, v in res_dict.items()}
         return {(k, va): xreplace_genvars(x, utils.poly_ring(va), utils.poly_ring(vb)) for k, x in yz.schubmult_q_generic_partial_posify(u, v).items()}
 
     @property
@@ -489,7 +485,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
             parabolic_index = []
             start = 0
             # 1, 2 | 3
-            index_comp = [*self._n, max_len - self._N[-1]]
+            index_comp = [*self._n, max_len + 1 - self._N[-1]]
             for i in range(len(index_comp)):
                 end = start + index_comp[i]
                 parabolic_index += list(range(start + 1, end))
@@ -624,33 +620,24 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
 
     @cache
     def cached_positive_product(self, u, v, va, vb):
-        if va != 0 and va != utils.NoneVar and va == vb and _use_sv_posify:
-            res_dict = self.cached_product(u, v, va, vb)
-            return {k: sv_posify(v, utils.poly_ring(va)) for k, v in res_dict.items()}
         initial_dict = {k: xreplace_genvars(x, utils.poly_ring(va), utils.poly_ring(vb)) for k, x in yz.schubmult_q_generic_partial_posify(u, v).items()}
         return {(k, va): v for k, v in self.process_coeff_dict(initial_dict).items()}
 
     @property
     def double_mul(self):
-        # from schubmult.schub_lib.quantum_double import _vars
-
-        # def do_double_mul(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
-        #     coeff_dict = yz.schubmult_q_double_fast(perm_dict, v, var2, var3, q_var)
-        #     return self.process_coeff_dict(coeff_dict)
-
-        # return do_double_mul
-        return yz.schubmult_q_double_fast
+        from schubmult.schub_lib.quantum_double import _vars
+        def do_double_mul(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
+            coeff_dict = yz.schubmult_q_double_fast(perm_dict, v, var2, var3, q_var)
+            return self.process_coeff_dict(coeff_dict)
+        return do_double_mul
 
     @property
     def single_mul(self):
-        # from schubmult.schub_lib.quantum_double import _vars
-
-        # def do_single_mul(perm_dict, v, q_var=_vars.q_var):
-        #     coeff_dict = py.schubmult_q_fast(perm_dict, v, q_var)
-        # return self.process_coeff_dict(coeff_dict)
-
-        # return do_single_mul
-        return py.schubmult_q_fast
+        from schubmult.schub_lib.quantum_double import _vars
+        def do_single_mul(perm_dict, v, q_var=_vars.q_var):
+            coeff_dict = py.schubmult_q_fast(perm_dict, v, q_var)
+            return self.process_coeff_dict(coeff_dict)
+        return do_single_mul
 
     # @property
     # def mult_poly_single(self):
