@@ -54,9 +54,7 @@ DIFFERENT Q VARS
 
 parallelism if useful
 
-What do we want the API to be?
-
-# Permutation static functions
+Permutation class functions
 
 All polynomial funcs
 

@@ -47,6 +47,10 @@ class Permutation(Basic):
         L.sort(key=lambda i: itera[i - 1])
         return Permutation(L)
 
+    @classmethod
+    def from_code(cls, cd):
+        return uncode(cd)
+
     def _latex(self, printer):
         if Permutation.print_as_code:
             return printer.doprint(trimcode(self))
@@ -58,11 +62,11 @@ class Permutation(Basic):
             return True
         if len(self._perm) <= len(Permutation(pattern)):
             return False
-        expanded = list(self) + list(range(len(self)+1,len(pattern)+1))
+        expanded = list(self) + list(range(len(self) + 1, len(pattern) + 1))
         for i in range(len(expanded)):
             rmval = expanded[i]
-            perm2 = [*expanded[:i], *expanded[i+1:]]
-            perm2 = tuple([val-1 if val>rmval else val for val in perm2])
+            perm2 = [*expanded[:i], *expanded[i + 1 :]]
+            perm2 = tuple([val - 1 if val > rmval else val for val in perm2])
             if Permutation(perm2).has_pattern(pattern):
                 return True
         return False
@@ -90,10 +94,10 @@ class Permutation(Basic):
 
     @property
     def code(self):
-        return list(self.cached_code())
+        return list(self._cached_code())
 
     @cache
-    def cached_code(self):
+    def _cached_code(self):
         return self._s_perm.inversion_vector()
 
     @cached_property
@@ -185,6 +189,9 @@ class Permutation(Basic):
 
     def __lt__(self, other):
         return tuple(self) < tuple(other)
+
+    def minimal_dominant_above(self):
+        return uncode(theta(self))
 
 
 def ensure_perms(func):
@@ -371,4 +378,5 @@ def split_perms(perms):
             perms2 += [perm]
     return perms2
 
-bad_classical_patterns = [Permutation([1,4,2,3]), Permutation([1,4,3,2]), Permutation([4,1,3,2]), Permutation([3,1,4,2])]
+
+bad_classical_patterns = [Permutation([1, 4, 2, 3]), Permutation([1, 4, 3, 2]), Permutation([4, 1, 3, 2]), Permutation([3, 1, 4, 2])]
