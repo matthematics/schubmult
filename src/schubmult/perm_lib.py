@@ -52,6 +52,21 @@ class Permutation(Basic):
             return printer.doprint(trimcode(self))
         return printer.doprint(list(self._perm))
 
+    # pattern is a list, not a permutation
+    def has_pattern(self, pattern):
+        if self == Permutation(pattern):
+            return True
+        if len(self._perm) <= len(Permutation(pattern)):
+            return False
+        expanded = list(self) + [i for i in range(len(self)+1,len(pattern)+1)]
+        for i in range(len(expanded)):
+            rmval = expanded[i]
+            perm2 = [*expanded[:i], *expanded[i+1:]]
+            perm2 = tuple([val-1 if val>rmval else val for val in perm2])
+            if Permutation(perm2).has_pattern(pattern):
+                return True
+        return False
+
     def _sympystr(self, printer):
         if Permutation.print_as_code:
             return printer.doprint(trimcode(self))
@@ -355,3 +370,5 @@ def split_perms(perms):
         if not did:
             perms2 += [perm]
     return perms2
+
+bad_classical_patterns = [Permutation([1,4,2,3]), Permutation([1,4,3,2]), Permutation([4,1,3,2]), Permutation([3,1,4,2])]
