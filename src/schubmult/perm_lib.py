@@ -58,7 +58,7 @@ class Permutation(Basic):
             return True
         if len(self._perm) <= len(Permutation(pattern)):
             return False
-        expanded = list(self) + [i for i in range(len(self)+1,len(pattern)+1)]
+        expanded = list(self) + list(range(len(self)+1,len(pattern)+1))
         for i in range(len(expanded)):
             rmval = expanded[i]
             perm2 = [*expanded[:i], *expanded[i+1:]]
