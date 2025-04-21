@@ -136,6 +136,7 @@ namespaces = false
 
 [tool.setuptools.dynamic]
 version = {attr = "schubmult.__version__"} 
+readme = {file = ["README.md"]}
 
 [project.scripts]
 schubmult_py = "schubmult.scripts.schubmult_py:main"
@@ -146,9 +147,6 @@ schubmult_q_double = "schubmult.scripts.schubmult_q_double:main"
 [tool.pytest.ini_options]
 addopts = [
     "--import-mode=importlib",
-    "-vv"
-]
-testpaths = ["tests"]
-pythonpath = [
-  "src"
+    "-vv",
+    "--capture=tee-sys"
 ]
