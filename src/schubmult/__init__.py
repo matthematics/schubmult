@@ -1,4 +1,4 @@
-__version__ = "3.0.dev"
+__version__ = "3.0.1"
 #schubpoly_from_elems?
 from .perm_lib import Permutation, permtrim, theta, uncode
 from .poly_lib.poly_lib import efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
