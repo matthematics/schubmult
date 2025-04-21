@@ -12,8 +12,6 @@ import schubmult.rings._quantum_schubert_polynomial_ring as qsr
 import schubmult.rings._tensor_schub_ring as tsr
 import schubmult.rings._utils as utils
 import schubmult.schub_lib.double as yz
-
-# from schubmult.poly_lib.schub_poly import pull_out_var
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, inv, uncode
@@ -549,6 +547,22 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
     #         else:
     #             result[k] = result.get(k, 0) + sympify(v).subs(b_old, b_new)
     #     return self.basis._from_dict(result)
+
+    def pull_out_gen(self, gen):
+        ind = self.genset.index(gen)
+        gens2 = MaskedGeneratingSet(self.genset, [ind])
+        gens2.set_label(f"({self.genset.label}\\{gen})")
+        new_basis = DoubleSchubertAlgebraElement_basis(gens2)
+        ret = new_basis(0)
+        for (perm, cv), val in self.coeff_dict.items():
+            L = schub_lib.pull_out_var(ind, perm)
+            for index_list, new_perm in L:
+                toadd = S.One
+                for index2 in index_list:
+                    toadd *= (gen - utils.poly_ring(cv)[index2])
+                ret += toadd*val*new_basis(new_perm,cv)
+        return ret
+
 
     def coproduct(self, indices, coeff_var="y", gname1=None, gname2=None):
         result_dict = {}
