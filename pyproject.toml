@@ -126,14 +126,29 @@ sage = ["sagemath-standard"]
 Homepage = "http://schubmult.org"
 Repository = "https://github.com/matthematics/schubmult"
 
+[tool.setuptools]
+include-package-data = false
+
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["schubmult*"]  # package names should match these glob patterns (["*"] by default)
-exclude = ["tests*"]  # exclude packages matching these glob patterns (empty by default)
 namespaces = false
+
+[tool.setuptools.dynamic]
+version = {attr = "schubmult.__version__"} 
 
 [project.scripts]
 schubmult_py = "schubmult.scripts.schubmult_py:main"
 schubmult_double = "schubmult.scripts.schubmult_double:main"
 schubmult_q = "schubmult.scripts.schubmult_q:main"
 schubmult_q_double = "schubmult.scripts.schubmult_q_double:main"
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+    "-vv"
+]
+testpaths = ["tests"]
+pythonpath = [
+  "src"
+]

@@ -90,26 +90,11 @@ multiples
 !!4132 = e_1_1 * 3142!!
 
 
-
-132
-312
-123
-
-132
-321
-
-312
-321
-132
-
-213
-312
-132
-231
-
-
-
 you don't have to touch the 2 at the end
 
 A D A    A D D  D A D   D A D
 string generation is expensive. Cache?
+
+SEM tests
+
+Pytest virtual env
