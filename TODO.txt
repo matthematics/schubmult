@@ -98,3 +98,12 @@ string generation is expensive. Cache?
 SEM tests
 
 Pytest virtual env
+
+One path
+
+v is a length-additive product of theta(~v) elem cycles
+
+coprod pattern
+
+Can pull out boink-thetainverse
+reduce coeff
