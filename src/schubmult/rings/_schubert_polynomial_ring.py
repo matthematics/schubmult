@@ -16,7 +16,7 @@ import schubmult.schub_lib.double as yz
 # from schubmult.poly_lib.schub_poly import pull_out_var
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
-from schubmult.perm_lib import Permutation, inv
+from schubmult.perm_lib import Permutation, inv, uncode
 from schubmult.poly_lib.poly_lib import complete_sym_poly, elem_sym_poly, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
@@ -783,7 +783,20 @@ class DoubleSchubertAlgebraElement_basis(Basic):
 
     # @cache
     # def cached_schubpoly_oink(self, u):
-    #     return yz.schubpoly(u)
+    #     return yz.shubpoly(u)
+
+    def monomial_schub(self, monom):
+        monom = [*monom]
+        while len(monom) > 0 and monom[-1] == 0:
+            monom.pop()
+        return self._monomial_schub_cache(tuple(monom))
+
+    @cache
+    def _monomial_schub_cache(self, monom):
+        srt_perm = Permutation.sorting_perm([-i for i in monom])
+        schub_perm = uncode(sorted(monom, reverse=True))
+        return self._from_dict({(schub_perm, utils.NoneVar): S.One}).act(srt_perm)
+
 
     @cache
     def cached_schubpoly(self, k):
@@ -1029,3 +1042,4 @@ class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
 Sx = SchubertAlgebraElement_basis(GeneratingSet("x"))
 
 ybas = SchubertAlgebraElement_basis(GeneratingSet("y"))
+

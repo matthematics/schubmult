@@ -83,6 +83,23 @@ What about single EM at all, not necessarily SEM?
 Div diffs on the SEMS that don't expand them
 1423, 1432, 4132, 3142
 
+123
+312
+132
+
+132
+321
+
+321
+132
+312
+
+312
+213
+132
+231
+
+
 Avoids 1432, and if it has a 312 then it has repeats
 
 multiples
@@ -107,3 +124,10 @@ coprod pattern
 
 Can pull out boink-thetainverse
 reduce coeff
+
+ladder moves
+
+UNIVERSAL SCHUBS
+
+For positivity, when can we factor out elem syms?
+That could make it much faster and positivity easier
