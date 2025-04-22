@@ -124,3 +124,14 @@ If it factorizes?
 
 Pull out elem sym
 nil hecke
+
+more formalism around elem sym
+coproduct of inverse
+elem sym coproduct
+
+when do Schub products combine
+If avoid 1423 can fully factor
+
+Elem sym vars
+
+principal specialization

@@ -1066,6 +1066,7 @@ def posify(
         # logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=} {will_formula_work(v,u)=} {dominates(u,w)=}")
         # logger.debug(f"Returning {u2=} {v2=} {w2=} {val=}")
     if not v.has_pattern([1,4,2,3]) and not v.has_pattern([4,1,3,2]) and not v.has_pattern([3,1,4,2]) and not v.has_pattern([1,4,3,2]):
+        logger.debug("Recording new characterization was used")
         return schubmult_double({u: 1}, v, var2, var3).get(w, 0)
     if inv(w) - inv(u) == 1:
         # logger.debug("Recording line number")
