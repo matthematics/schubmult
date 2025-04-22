@@ -124,6 +124,7 @@ class MaskedGeneratingSet(GeneratingSet_base):
         obj._mask = mask_dict
         obj._index_lookup = {gset[mask_dict[i]]: i for i in range(len(gset) - len(index_mask))}
         obj._label = gset.label
+        obj._symbols_arr = tuple(iter(obj))
         return obj
 
     @property

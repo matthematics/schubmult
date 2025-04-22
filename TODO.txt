@@ -120,4 +120,7 @@ Very useful to detect if reducible
 
 If it factorizes? 
 
-Pull out generator
+# Pull out generator
+
+Pull out elem sym
+nil hecke
