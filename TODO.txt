@@ -150,3 +150,10 @@ So 3142 and 4132 are non-clearing patterns
 SEM fact looks good
 
 Factorizes if and only if vpath, and is shub
+
+3 9 36 207 1550
+
+Very little benefit to allowing mixed generating sets
+Unevaluated sums instead
+Coefficient variables as part of the basis
+Then can do coeff coproducts to factorize
