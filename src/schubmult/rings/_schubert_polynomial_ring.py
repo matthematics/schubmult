@@ -204,7 +204,7 @@ class BasisSchubertAlgebraElement(Expr):
             result += v * schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=self.basis.symbol_elem_func)
         return result
 
-    def in_classical_EM_basis(self):
+    def in_CEM_basis(self):
         result = S.Zero
         for k, v in self.coeff_dict.items():
             result += v * schubpoly_classical_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=self.basis.symbol_elem_func)

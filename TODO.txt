@@ -130,8 +130,23 @@ coproduct of inverse
 elem sym coproduct
 
 when do Schub products combine
-If avoid 1423 can fully factor
 
 Elem sym vars
 
 principal specialization
+
+Avoiding: Can never increase by 2 from any point
+If there is a code ascent, the line has to clear the peaks
+
+Flattened perm, chop off the beginning
+Each code non-move increases the rank element by 1
+So 3142 and 4132 are non-clearing patterns
+
+1. Code cannot increase by more than one total from any point left to right
+2. Increases must clear previous decreases
+
+# Patterns kind of correspond to coproducts
+
+SEM fact looks good
+
+Factorizes if and only if vpath, and is shub

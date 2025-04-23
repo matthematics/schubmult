@@ -190,6 +190,12 @@ class Permutation(Basic):
     def __lt__(self, other):
         return tuple(self) < tuple(other)
 
+    def pattern_at(self, *indices):
+        indices = sorted(indices)
+        seq = [self[i] for i in indices]
+        return ~Permutation.sorting_perm(seq)
+
+
     def minimal_dominant_above(self):
         return uncode(theta(self))
 
