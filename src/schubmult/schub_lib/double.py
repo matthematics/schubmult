@@ -8,7 +8,7 @@ import sympy
 from cachetools import cached
 from cachetools.keys import hashkey
 from sortedcontainers import SortedList
-from symengine import Add, Integer, Mul, Pow, sympify
+from symengine import Add, Integer, Mul, Pow, Symbol, sympify
 
 from schubmult.perm_lib import (
     Permutation,
@@ -465,12 +465,12 @@ def init_basevec(dc):
     base_vec = [0 for i in range(dimen)]
 
 
-def split_flat_term(arg):
+def split_flat_term(arg, genset):
     arg = expand(arg)
     ys = []
     zs = []
     for arg2 in arg.args:
-        if str(arg2).find("y") != -1:
+        if any(genset.index(x) != -1 for x in arg2.free_symbols):
             if isinstance(arg2, Mul):
                 for i in range(int(arg2.args[0])):
                     ys += [arg2.args[1]]
@@ -488,10 +488,7 @@ def is_flat_term(term):
     if isinstance(term, Integer) or isinstance(term, int):
         return True
     dc = expand(term).as_coefficients_dict()
-    for t in dc:
-        if str(t).count("y") + str(t).count("z") > 1 or str(t).find("**") != -1:
-            return False
-    return True
+    return all(isinstance(x, Symbol) for x in dc.keys())
 
 
 def flatten_factors(term):
@@ -723,7 +720,7 @@ def find_base_vectors(monom_list, var2, var3, depth):
     return ret, monom_list
 
 
-def compute_positive_rep(val, var2=GeneratingSet("y"), var3=GeneratingSet("z"), msg=False, do_pos_neg=True):
+def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
     do_pos_neg = False
     notint = False
     try:
@@ -754,7 +751,7 @@ def compute_positive_rep(val, var2=GeneratingSet("y"), var3=GeneratingSet("z"), 
 
         base_vectors = []
         base_monoms = []
-        vec = poly_to_vec(val, None)
+        vec = poly_to_vec(val, None, var3)
 
         if do_pos_neg:
             smp = val
@@ -798,7 +795,7 @@ def compute_positive_rep(val, var2=GeneratingSet("y"), var3=GeneratingSet("z"), 
                 bad = False
                 bad_vectors = []
                 for i in range(len(base_monoms)):
-                    vec0 = poly_to_vec(base_monoms[i], vec)
+                    vec0 = poly_to_vec(base_monoms[i], vec, var3)
                     if vec0 is not None:
                         base_vectors += [vec0]
                     else:
@@ -840,7 +837,7 @@ def compute_positive_rep(val, var2=GeneratingSet("y"), var3=GeneratingSet("z"), 
         else:
             # logger.debug("this")
             val_poly = sympy.poly(expand(val), *var22, *var33)
-            vec = poly_to_vec(val)
+            vec = poly_to_vec(val, None, var3)
             mn = val_poly.monoms()
             L1 = tuple([0 for i in range(n1)])
             mn1L = []
@@ -874,7 +871,7 @@ def compute_positive_rep(val, var2=GeneratingSet("y"), var3=GeneratingSet("z"), 
                         comblistmn1 = comblistmn12
                 for i in range(len(comblistmn1)):
                     b1 = comblistmn1[i]
-                    vec0 = poly_to_vec(b1, vec)
+                    vec0 = poly_to_vec(b1, vec, var3)
                     if vec0 is not None:
                         base_vectors += [vec0]
                         base_monoms += [b1]
@@ -1380,7 +1377,7 @@ def posify(
                     0,
                 )
                 val2 = posify(val2, u3, v3, w3, var2, var3, msg, do_pos_neg, optimize=optimize)
-                val += tomul * shiftsub(val2)
+                val += tomul * shiftsub(val2, var2)
             # if expand(val - oldval) != 0:
             #     # logger.debug("This is bad")
             #     # logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=")

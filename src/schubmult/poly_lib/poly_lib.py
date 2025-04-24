@@ -42,11 +42,11 @@ class _gvars:
 
     @cached_property
     def var_g1(self):
-        return vv.GeneratingSet("glabba")
+        return vv.GeneratingSet("ॅ")
 
     @cached_property
     def var_g2(self):
-        return vv.GeneratingSet("noofka")
+        return vv.GeneratingSet("१")
 
     @cached_property
     def q_var(self):

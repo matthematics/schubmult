@@ -789,9 +789,16 @@ def make_parabolic_quantum_basis(index_comp, coeff_genset):
     return ParabolicQuantumDoubleSchubertAlgebraElement_basis(GeneratingSet("x"), coeff_genset, index_comp)
 
 
+def QPDSx_index(*args):
+    def this_QPDSx(x, coeff_genset=GeneratingSet("y")):
+        return make_parabolic_quantum_basis(args, utils.poly_ring(coeff_genset) if isinstance(coeff_genset, str) else coeff_genset)(x)
+
+    return this_QPDSx
+
+
 @cache
-def QPDSx(*args, coeff_genset=GeneratingSet("y")):
-    return make_parabolic_quantum_basis(args, utils.poly_ring(coeff_genset) if isinstance(coeff_genset, str) else coeff_genset)
+def QPDSx(*args):
+    return QPDSx_index(*args)
 
 
 class ParabolicQuantumSchubertAlgebraElement_basis(ParabolicQuantumDoubleSchubertAlgebraElement_basis):
