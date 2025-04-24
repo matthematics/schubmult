@@ -1,8 +1,7 @@
 from functools import cache, cached_property
 
-import symengine
 import sympy
-from symengine import Add, S, Symbol, SympifyError, expand, sympify
+from symengine import Add, S, SympifyError, expand, sympify
 from sympy import Basic
 from sympy.core.expr import Expr
 from sympy.core.kind import NumberKind
@@ -15,7 +14,7 @@ import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, inv, uncode
-from schubmult.poly_lib.poly_lib import complete_sym_poly, elem_sym_poly, xreplace_genvars
+from schubmult.poly_lib.poly_lib import elem_sym_poly, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from schubmult.utils.logging import get_logger
@@ -534,8 +533,6 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
         return printer._print_Function(sympy.Function("\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(f"{self.genset.label}; {self.coeff_genset.label}")))
 
 
-
-
 # can coerce, otherwise unevaluated mul
 class DoubleSchubertAlgebraElement_basis(Basic):
     def __new__(cls, genset, coeff_genset):
@@ -579,6 +576,11 @@ class DoubleSchubertAlgebraElement_basis(Basic):
             @classmethod
             def eval(cls, *x):
                 pass
+
+            # probably just want to make it an Expr
+            # def doit(**_):
+            #     return elem_sym_poly(p, k, self.genset[1:], utils.poly_ring(0))
+
         return elem_sym
 
     @property
@@ -591,7 +593,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
             if self.coeff_genset.label:
                 return self.elem_sym(p, k, *varl2)
             return self.elem_sym(p, k)
-                #(Symbol(f"e_{p - i}_{k}") if p - i > 0 else 1) * complete_sym_poly(i, k + 1 - p, [-v for v in varl2]) for i in range(p + 1)])
+            # (Symbol(f"e_{p - i}_{k}") if p - i > 0 else 1) * complete_sym_poly(i, k + 1 - p, [-v for v in varl2]) for i in range(p + 1)])
 
         return elem_func
 
@@ -782,8 +784,6 @@ class DoubleSchubertAlgebraElement_basis(Basic):
             elem = self._from_dict(result)
             # # # logger.debug((f"Returning {elem=}")
         return elem
-
-
 
 
 DoubleSchubertPolynomial = DoubleSchubertAlgebraElement
