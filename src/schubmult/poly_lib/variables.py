@@ -25,6 +25,10 @@ class GeneratingSet_base(Basic):
     def __len__(self):
         return NotImplemented
 
+    @property
+    def label(self):
+        return None
+
 
 # variable registry
 # TODO: ensure sympifies
@@ -71,7 +75,7 @@ class GeneratingSet(GeneratingSet_base):
         return f"GeneratingSet('{self.label}')"
 
     def __str__(self):
-        return self.name
+        return self.label
 
     def _latex(self, printer):
         return printer.doprint(self.label)
@@ -91,8 +95,8 @@ class GeneratingSet(GeneratingSet_base):
     def __iter__(self):
         yield from [self[i] for i in range(len(self))]
 
-    def __eq__(self, other):
-        return isinstance(other, GeneratingSet) and self.label == other.label
+    # def __eq__(self, other):
+    #     return isinstance(other, GeneratingSet) and self.label == other.label
 
 
 class MaskedGeneratingSet(GeneratingSet_base):

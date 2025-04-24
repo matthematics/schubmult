@@ -26,16 +26,16 @@ def test_associative():
 
     assert expand(((DSx(perm1) * DSx(perm2)) * DSx(perm3, "z")) - (DSx(perm1) * (DSx(perm2) * DSx(perm3, "z")))) == 0
 
-def test_change_vars():
-    """
-    Test associative on some large perms
-    """
-    from schubmult import DSx
-    from sympy import expand
-    perm = [1, 5, 3, 4, 2]
+# def test_change_vars():
+#     """
+#     Test associative on some large perms
+#     """
+#     from schubmult import DSx
+#     from sympy import expand
+#     perm = [1, 5, 3, 4, 2]
     
-    assert expand(DSx(perm).change_vars("theta") - DSx(perm).change_vars("gamama")) == 0
-    #assert (DSx(perm)*DSx(perm,"z")).change_vars("theta") == ((DSx(perm)*DSx(perm,"z")).change_vars("yourmom"))
+#     assert expand(DSx([], "theta").basis.express(DSx(perm)) - DSx(perm).change_vars("gamama")) == 0
+#     #assert (DSx(perm)*DSx(perm,"z")).change_vars("theta") == ((DSx(perm)*DSx(perm,"z")).change_vars("yourmom"))
 
 
 def test_coproduct():

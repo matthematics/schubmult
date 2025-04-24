@@ -59,7 +59,7 @@ class QDSchubPoly(QuantumDoubleSchubertAlgebraElement):
         return QDSchubPoly.__xnew__(_class, k, genset)
 
     def _sympystr(self, printer):
-        if self.basis.coeff_genset is None:
+        if self.basis.coeff_genset.label is None:
             return printer.doprint(f"QS{self.genset.label}({printer.doprint(self._perm)})")
         return printer.doprint(f"QDS{self.genset.label}({printer.doprint(self._perm)}, {self.basis.coeff_genset.label})")
 
@@ -67,7 +67,7 @@ class QDSchubPoly(QuantumDoubleSchubertAlgebraElement):
         if self._key == Permutation([]):
             return printer._print(1)
         subscript = printer.doprint(int("".join([str(i) for i in self._key])))
-        if self.basis.coeff_genset is None:
+        if self.basis.coeff_genset.label is None:
             return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(self.genset.label)))
         return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(f"{self.genset.label}; {self.basis.coeff_genset.label}")))
 
@@ -76,7 +76,7 @@ class QDSchubPoly(QuantumDoubleSchubertAlgebraElement):
             return printer._print(1)
         # subscript = printer._print(int("".join([str(i) for i in self._key])))
         subscript = sympy.sstr(self._key)
-        if self.basis.coeff_genset is None:
+        if self.basis.coeff_genset.label is None:
             return printer._print_Function(sympy.Function("\\widetilde{\\mathfrak{S}}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(self.genset.label)))
         return printer._print_Function(sympy.Function("\\widetilde{\\mathfrak{S}}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(f"{self.genset.label}; {self.basis.coeff_genset.label}")))
 
@@ -145,7 +145,34 @@ class PQDSchubPoly(ParabolicQuantumDoubleSchubertAlgebraElement):
 
 class QuantumDoubleSchubertAlgebraElement_basis(Basic):
     def __new__(cls, genset, coeff_genset):
-        return Basic.__new__(cls, genset, coeff_genset)
+        return QuantumDoubleSchubertAlgebraElement_basis.__xnew_cached__(cls, genset, coeff_genset)
+
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, genset, coeff_genset):
+        return QuantumDoubleSchubertAlgebraElement_basis.__xnew__(_class, genset, coeff_genset)
+
+    @staticmethod
+    def __xnew__(_class, genset, coeff_genset):
+        return Basic.__new__(_class, genset, coeff_genset)
+
+    def _coerce_mul(self, other):
+        if isinstance(other, spr.BasisSchubertAlgebraElement):
+            if type(other.basis) is type(self):
+                if self.genset == other.basis.genset:
+                    return other
+            if type(other.basis) is QuantumSchubertAlgebraElement_basis:
+                if self.genset == other.basis.genset:
+                    newbasis = QuantumDoubleSchubertAlgebraElement_basis(self.genset, utils.poly_ring(0))
+                    return newbasis._from_dict(other.coeff_dict)
+        return None
+
+    def _coerce_add(self, other):
+        if isinstance(other, spr.BasisSchubertAlgebraElement):
+            if type(other.basis) is type(self):
+                if self.genset == other.basis.genset and self.coeff_genset == other.basis.coeff_genset:
+                    return other
+        return None
 
     @property
     def coeff_genset(self):
@@ -288,6 +315,23 @@ class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_ba
     def __new__(cls, genset):
         return QuantumDoubleSchubertAlgebraElement_basis.__new__(cls, genset, utils.poly_ring(utils.NoneVar))
 
+    def _coerce_mul(self, other):
+        """Coerce a basis schubert algebra element so it can be multiplied
+
+        Args:
+            other (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        if type(other.basis) is type(self):
+            if self.genset == other.basis.genset:
+                return other
+        if type(other.basis) is QuantumDoubleSchubertAlgebraElement_basis:
+            if self.genset == other.basis.genset:
+                return other
+        return None
+
     @property
     def coeff_genset(self):
         return utils.poly_ring(utils.NoneVar)
@@ -363,7 +407,16 @@ class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_ba
 
 class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
     def __new__(cls, genset, coeff_genset, index_comp):
-        obj = Basic.__new__(cls, genset, coeff_genset, sympy.Tuple(*index_comp))
+        return ParabolicQuantumDoubleSchubertAlgebraElement_basis.__xnew_cached__(cls, genset, coeff_genset, sympy.Tuple(*index_comp))
+
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, genset, coeff_genset, index_comp):
+        return ParabolicQuantumDoubleSchubertAlgebraElement_basis.__xnew__(_class, genset, coeff_genset, index_comp)
+
+    @staticmethod
+    def __xnew__(_class, genset, coeff_genset, index_comp):
+        obj = Basic.__new__(_class, genset, coeff_genset, index_comp)
         obj._quantum_basis = QuantumDoubleSchubertAlgebraElement_basis(genset, coeff_genset)
         obj._classical_basis = spr.DoubleSchubertAlgebraElement_basis(genset, coeff_genset)
         obj._n = list(index_comp)
@@ -379,6 +432,24 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
         obj._otherlong = Permutation(list(range(obj._N[-1], 0, -1)))
         obj._longest = obj._otherlong * longest_element(parabolic_index)
         return obj
+
+    def _coerce_mul(self, other):
+        if isinstance(other, spr.BasisSchubertAlgebraElement):
+            if type(other.basis) is type(self):
+                if self.genset == other.basis.genset:
+                    return other
+            if type(other.basis) is spr.ParabolicQuantumSchubertAlgebraElement_basis:
+                if self.genset == other.basis.genset and self.index_comp == other.basis.index_comp:
+                    newbasis = ParabolicQuantumDoubleSchubertAlgebraElement_basis(self.genset, utils.poly_ring(0), self.index_comp)
+                    return newbasis._from_dict(other.coeff_dict)
+        return None
+
+    def _coerce_add(self, other):
+        if isinstance(other, spr.BasisSchubertAlgebraElement):
+            if type(other.basis) is type(self):
+                if self.genset == other.basis.genset and self.coeff_genset == other.basis.coeff_genset and self.index_comp == other.basis.index_comp:
+                    return other
+        return None
 
     @property
     def symbol_elem_func(self):
@@ -718,6 +789,17 @@ class ParabolicQuantumSchubertAlgebraElement_basis(ParabolicQuantumDoubleSchuber
 
     def __hash__(self):
         return hash((*self.args, utils.NoneVar))
+
+    def _coerce_mul(self, other):
+        if isinstance(other, spr.BasisSchubertAlgebraElement):
+            if type(other.basis) is type(self):
+                if self.genset == other.basis.genset:
+                    return other
+            if type(other.basis) is spr.ParabolicQuantumDoubleSchubertAlgebraElement_basis:
+                if self.genset == other.basis.genset and self.index_comp == other.basis.index_comp:
+                    newbasis = ParabolicQuantumDoubleSchubertAlgebraElement_basis(self.genset, utils.poly_ring(0), self.index_comp)
+                    return newbasis._from_dict(other.coeff_dict)
+        return None
 
     @property
     def coeff_genset(self):
