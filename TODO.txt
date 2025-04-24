@@ -153,20 +153,9 @@ Factorizes if and only if vpath, and is shub
 
 3 9 36 207 1550
 
-Very little benefit to allowing mixed generating sets
-Unevaluated sums instead
-Coefficient variables as part of the basis
-Then can do coeff coproducts to factorize
-
-Put back schubadd? No
-
-But schub element coercion
-
 coeff var coproduct can actually be expressed fully as products of normal double Schubs with coeffs
 
-quantum subs
 change vars
-coercion order decorator
 
 speed up single var coproduct
 
@@ -176,4 +165,3 @@ order of operations. Avoid returning unevaluated Add if possible
 
 basis object for change_vars
 need SchubAdd, don't try to combine unless doit
-Behavior of expand? symengine?
