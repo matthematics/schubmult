@@ -1,6 +1,6 @@
-import multiprocessing
 from functools import cache, cached_property
 
+import symengine
 import sympy
 from symengine import Add, S, Symbol, expand, sympify
 from sympy import Basic
@@ -39,106 +39,25 @@ class NotEnoughGeneratorsError(ValueError):
     pass
 
 
-def _varstr(v):
-    if v == utils.NoneVar:
-        return "NoneVar"
-    if v == utils.ZeroVar:
-        return "0"
-    return f"'{v}'"
-
-
-def domul(t1, dict2):
-    _vstr, kd, vd, basis, best_effort_positive = t1
+def _mul_schub_dicts(dict1, dict2, basis1, basis2, best_effort_positive=True):
     this_dict = {}
-    for k, v in dict2:
-        did_positive = False
-        to_mul = v * vd
-        if best_effort_positive:
-            try:
-                # logger.critical(f"{to_mul=} {kd=} {k=}")
-                this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis.cached_positive_product(kd, k[0], _vstr, k[1]).items()})
-                did_positive = True
-            except Exception:
-                # logger.debug("Failed to compute")
-                did_positive = False
-        if not did_positive:
-            this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis.cached_product(kd, k[0], _vstr, k[1]).items()})
-    return this_dict
-
-
-def _mul_schub_dicts(dict1, dict2, basis, best_effort_positive=True):
-    by_var = {}
-
-    none_dict = {}
-    for k, v in dict1.items():
-        if k[1] == utils.NoneVar:  # or k[1] == utils.ZeroVar:
-            none_dict[k[0]] = v
-        else:
-            if k[1] not in by_var:
-                by_var[k[1]] = {}
-            by_var[k[1]][k[0]] = v
-
-    results = {}
-    # import sys
-
-    for _vstr, _dict in by_var.items():
-        if BasisSchubertAlgebraElement.do_parallel:
-            result_list = []
-            mul_funcs = [(_vstr, kd, vd, basis, best_effort_positive) for kd, vd in _dict.items()]
-            itemlist = list(dict2.items())
-
-            def add_result(result):
-                result_list.append(result)
-
-            with multiprocessing.Pool(processes=6) as pool:
-                for mulf in mul_funcs:
-                    pool.apply_async(domul, args=(mulf, itemlist), callback=add_result)
-                pool.close()
-                pool.join()
-            for res in result_list:
-                results = add_perm_dict(results, res)
-        else:
-            this_dict = {}
-            for k, v in dict2.items():
-                for kd, vd in _dict.items():
-                    did_positive = False
-                    to_mul = v * vd
-                    if best_effort_positive:
-                        try:
-                            # logger.critical(f"{to_mul=} {kd=} {k=}")
-                            this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis.cached_positive_product(kd, k[0], _vstr, k[1]).items()})
-                            did_positive = True
-                        except Exception:
-                            # logger.debug("Failed to compute")
-                            did_positive = False
-                    if not did_positive:
-                        this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis.cached_product(kd, k[0], _vstr, k[1]).items()})
-            results = add_perm_dict(results, this_dict)
-
-    by_var2 = {}
-    none_dict2 = {}
     for k, v in dict2.items():
-        if k[1] == utils.NoneVar:  # or k[1] == utils.ZeroVar:
-            none_dict2[k[0]] = v
-        else:
-            if k[1] not in by_var2:
-                by_var2[k[1]] = {}
-            by_var2[k[1]][k[0]] = v
+        for kd, vd in dict1.items():
+            did_positive = False
+            to_mul = v * vd
+            if best_effort_positive:
+                try:
+                    # logger.critical(f"{to_mul=} {kd=} {k=}")
+                    this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis1.cached_positive_product(kd, k, basis2).items()})
+                    did_positive = True
+                except Exception:
+                    # logger.debug("Failed to compute")
+                    did_positive = False
+            if not did_positive:
+                this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis1.cached_product(kd, k, basis2).items()})
+    # results = add_perm_dict(results, this_dict)
 
-    for _vstr, _dict in by_var2.items():
-        this_dict = {}
-        for k, v in none_dict.items():
-            if not best_effort_positive:
-                this_dict = add_perm_dict(this_dict, {(k1, _vstr): v1 * v for k1, v1 in basis.double_mul(_dict, k, utils.poly_ring(_vstr), utils.poly_ring(utils.NoneVar)).items()})
-            else:
-                this_dict = add_perm_dict(this_dict, {(k1, _vstr): expand(v1) * v for k1, v1 in basis.double_mul(_dict, k, utils.poly_ring(_vstr), utils.poly_ring(utils.NoneVar)).items()})
-        results = add_perm_dict(results, this_dict)
-
-    none_dict, none_dict2 = sorted([none_dict, none_dict2], key=lambda x: -len(x.keys()))
-    for k, v in none_dict2.items():
-        results = add_perm_dict(results, {(k1, utils.NoneVar): v1 * v for k1, v1 in basis.single_mul(none_dict, k).items()})
-
-    return results
+    return this_dict
 
 
 class BasisSchubertAlgebraElement(Expr):
@@ -173,6 +92,10 @@ class BasisSchubertAlgebraElement(Expr):
         return self.basis.genset
 
     @property
+    def coeff_genset(self):
+        return self.basis.coeff_genset
+
+    @property
     def basis(self):
         return self._basis
 
@@ -190,24 +113,24 @@ class BasisSchubertAlgebraElement(Expr):
         res_dict2 = {}
         # poly = self.genset[i + 1] - self.genset[i]
         for k, v in self.coeff_dict.items():
-            if k[1] == utils.ZeroVar or k[1] == utils.NoneVar:
-                dict2 = self.basis.mult_poly_single({k[0]: v}, poly, self.genset)
+            if self.basis.coeff_genset is None:
+                dict2 = self.basis.mult_poly_single({k: v}, poly, self.genset)
             else:
-                dict2 = self.basis.mult_poly_double({k[0]: v}, poly, self.genset, utils.poly_ring(k[1]))
-            res_dict2 = add_perm_dict(res_dict2, {(k2, k[1]): v for k2, v in dict2.items()})
+                dict2 = self.basis.mult_poly_double({k: v}, poly, self.genset, self.basis.coeff_genset)
+            res_dict2 = add_perm_dict(res_dict2, dict2)
         # logger.debug(f"{res_dict2=}")
         return self.basis._from_dict(res_dict2)
 
     def in_SEM_basis(self):
         result = S.Zero
         for k, v in self.coeff_dict.items():
-            result += v * schubpoly_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=self.basis.symbol_elem_func)
+            result += v * schubpoly_from_elems(k, self.genset, self.basis.coeff_genset, elem_func=self.basis.symbol_elem_func)
         return result
 
     def in_CEM_basis(self):
         result = S.Zero
         for k, v in self.coeff_dict.items():
-            result += v * schubpoly_classical_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=self.basis.symbol_elem_func)
+            result += v * schubpoly_classical_from_elems(k, self.genset, self.coeff_genset, elem_func=self.basis.symbol_elem_func)
         return result
 
     def _sympystr(self, printer):
@@ -229,8 +152,8 @@ class BasisSchubertAlgebraElement(Expr):
         if len(self.coeff_dict.keys()) == 0:
             return [sympy.sympify(S.Zero)]
         return [
-            (sympy.sympify(self.coeff_dict[k]) if k[0] == Permutation([]) else sympy.Mul(self.coeff_dict[k], self.basis.single_element_class(k, self.basis)))
-            for k in sorted(self.coeff_dict.keys(), key=lambda bob: (inv(bob[0]), str(bob[1]), *bob[0]))
+            (sympy.sympify(self.coeff_dict[k]) if k == Permutation([]) else sympy.Mul(self.coeff_dict[k], self.basis.single_element_class(k, self.basis)))
+            for k in sorted(self.coeff_dict.keys(), key=lambda bob: (inv(bob), *bob))
         ]
 
     def as_ordered_terms(self, *_, **__):
@@ -245,70 +168,67 @@ class BasisSchubertAlgebraElement(Expr):
     def __add__(self, other):
         # if isinstance(self)
         # # logger.debug(f"{type(other)=} {self.genset=}")
-        try:
-            other = self.basis(other)
-        except Exception:
-            return sympify(other) + self.as_polynomial()
-        return self.basis._from_dict(add_perm_dict(self.coeff_dict, other.coeff_dict))
+        if isinstance(other, BasisSchubertAlgebraElement):
+            if other.basis == self.basis:
+                return self.basis._from_dict(add_perm_dict(self.coeff_dict, other.coeff_dict))
+            return sympy.Add(self, other)
+        return sympify(other) + self.as_polynomial()
 
     def __radd__(self, other):
         # logger.debug(f"{type(other)=}")
-        try:
-            other = self.basis(other)
-        except Exception:
-            # logger.debug(f"{other=} {list(self.genset)=}")
-            return sympify(other) + self.as_polynomial()
-        return self.basis._from_dict(add_perm_dict(other.coeff_dict, self.coeff_dict))
+        if isinstance(other, BasisSchubertAlgebraElement):
+            if other.basis == self.basis:
+                return self.basis._from_dict(add_perm_dict(other.coeff_dict, self.coeff_dict))
+            return sympy.Add(other, self)
+        return self.as_polynomial() + sympify(other)
 
     def __sub__(self, other):
         # logger.debug(f"{type(other)=}")
-        try:
-            other = self.basis(other)
-        except Exception:
-            # logger.debug(f"{other=} {list(self.genset)=}")
-            return self.as_polynomial() - sympify(other)
-        double_dict = add_perm_dict(self.coeff_dict, {k: -v for k, v in other.coeff_dict.items()})
-        return self.basis._from_dict(double_dict)
+        if isinstance(other, BasisSchubertAlgebraElement):
+            if other.basis == self.basis:
+                return self.basis._from_dict(add_perm_dict(self.coeff_dict, {k: -v for k, v in other.coeff_dict.items()}))
+            return sympy.Add(self, sympy.Mul(-1, other))
+        return self.as_polynomial() - sympify(other)
 
     def __rsub__(self, other):
-        # logger.debug(f"{type(other)=}")
-        try:
-            other = self.basis(other)
-        except Exception:
-            # logger.debug(f"{other=} {list(self.genset)=}")
-            return sympify(other) - self.as_polynomial()
-        double_dict = add_perm_dict(other.coeff_dict, {k: -v for k, v in self.coeff_dict.items()})
-        return self.basis._from_dict(double_dict)
+        if isinstance(other, BasisSchubertAlgebraElement):
+            if other.basis == self.basis:
+                return self.basis._from_dict(add_perm_dict(other.coeff_dict, {k: -v for k, v in self.coeff_dict.items()}))
+            return sympy.Add(other, sympy.Mul(-1, self))
+        return sympify(other) - self.as_polynomial()
 
     def __neg__(self):
-        elem = self
-        if self.is_Add or self.is_Mul:
-            elem = self.doit()
-        double_dict = {k: -sympify(v) for k, v in elem.coeff_dict.items()}
-        return self.basis._from_dict(double_dict)
+        return self.basis._from_dict({k: -sympify(v) for k, v in self.coeff_dict.items()})
 
     def __mul__(self, other):
-        try:
-            o = sympify(other)
-            return self.mult_poly(o)
-        except Exception:
-            try:
-                other = self.basis(other)
-                return self.basis._from_dict(_mul_schub_dicts(self.coeff_dict, other.coeff_dict, self.basis))
-            except Exception:
-                return self.as_polynomial() * sympify(other)
+        if isinstance(other, BasisSchubertAlgebraElement):
+            if type(self.basis) is type(other.basis):
+                return self.basis._from_dict(_mul_schub_dicts(self.coeff_dict, other.coeff_dict, self.basis, other.basis))
+            return NotImplemented
+        if isinstance(other, sympy.Add) or isinstance(other, symengine.Add):
+            vals = [self * arg for arg in other.args]
+            result = vals[0]
+            for i in range(1, len(vals)):
+                result += vals[i]
+            return result
+        if isinstance(other, symengine.Basic) or isinstance(other, sympy.Basic):
+            return self.basis._from_dict({k: other * v for k, v in self.coeff_dict.items()})
+        return self.as_polynomial() * sympify(other)
 
     def __rmul__(self, other):
-        # logger.debug(f"{type(other)=}")
-        try:
-            o = sympify(other)
-            return self.mult_poly(o)
-        except Exception:
-            try:
-                other = self.basis(other)
-                return self.basis._from_dict(_mul_schub_dicts(other.coeff_dict, self.coeff_dict, self.basis))
-            except Exception:
-                return self.as_polynomial() * sympify(other)
+        if isinstance(other, BasisSchubertAlgebraElement):
+            if type(self.basis) is type(other.basis):
+                return other.basis._from_dict(_mul_schub_dicts(other.coeff_dict, self.coeff_dict, other.basis, self.basis))
+            return NotImplemented
+        if isinstance(other, sympy.Add) or isinstance(other, symengine.Add):
+            vals = [arg * self for arg in other.args]
+            result = vals[0]
+            for i in range(1, len(vals)):
+                result += vals[i]
+            return result
+        if isinstance(other, symengine.Basic) or isinstance(other, sympy.Basic):
+            return self.basis._from_dict({k: v * other for k, v in self.coeff_dict.items()})
+        return self.as_polynomial() * sympify(other)
 
     # def equals(self, other):
     #     return self.__eq__(other)
@@ -333,55 +253,6 @@ class BasisSchubertAlgebraElement(Expr):
     #                 # print(f"{k=} {v=} {expand(v - elem1.coeff_dict.get(k, 0))=}", file=sys.stderr)
     #             return False
     #     return True
-
-    # def __eq__(self, other):
-    #     if self.is_Add or self.is_Mul:
-    #         return self.doit().equals(other)
-    #     cv = "y"
-    #     elem1 = self
-    #     elem2 = other
-
-    #     if not elem1.test_equality(elem2):
-    #         elem1_o = elem1.change_vars(cv)
-    #         elem2_o = elem2.change_vars(cv)
-    #         return elem1_o.test_equality(elem2_o)
-    #     return True
-    # assert all([k[1] == cv for k in elem1.coeff_dict.keys()])
-    # assert all([k[1] == cv for k in elem2.coeff_dict.keys()])
-
-    # def __str__(self):
-    #     pieces = []
-    #     keys = list(self.coeff_dict.keys())
-    #     for k in sorted(keys, key=lambda b: (inv(b[0]), b[1], *b[0])):
-    #         v = self.coeff_dict[k]
-    #         dvar = "D"
-    #         if sympy.expand(v) != 0:
-    #             pieces += [
-    #                 sympy.Mul(
-    #                     v,
-    #                     sympy.Symbol(
-    #                         f"{dvar}S{DSx._base_var}({list(k[0])}, {_varstr(k[1])})",
-    #                         commutative=False,
-    #                     )
-    #                     if k[0] != Permutation([])
-    #                     else 1,
-    #                 ),
-    #             ]
-    #     return sympy.sstr(sympy.Add(*pieces, evaluate=False), order="none")
-
-    # def __repr__(self):
-    #     return str(self)
-    # def _as_ordered_terms(self, *args, **kwargs):
-
-    @cache
-    def change_vars(self, cv):
-        # result = {}
-        # fix
-        # for k, v in self.coeff_dict.items():
-        #     result = add_perm_dict(result, {k1: v1 * v for k1, v1 in self.basis.cached_positive_product(Permutation([]), k[0], cv, k[1]).items()})
-        # # result = {(k, cv): v for k, v in self.basis.mul_double(Permutation([]),utils.poly_ring)}
-        # return self.basis._from_dict(result)
-        return self.basis([], cv) * self
 
     def as_coefficients_dict(self):
         return sympy.Dict({self.basis.single_element_class(k, self.basis): sympy.sympify(v) for k, v in self.coeff_dict.items()})
@@ -409,13 +280,11 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
     # __slots__ = ("_dict", "_parent")
     # is_polynomial = True
 
-    # default_coeff_var = "y"
-
     def __new__(cls, _dict, basis):
         return BasisSchubertAlgebraElement.__new__(cls, _dict, basis)
 
     def divdiff(self, i):
-        return self.basis._from_dict({(k[0].swap(i - 1, i), k[1]): v for k, v in self.coeff_dict.items() if i - 1 in k[0].descents()})
+        return self.basis._from_dict({k.swap(i - 1, i): v for k, v in self.coeff_dict.items() if i - 1 in k.descents()})
 
     def simpleref(self, i):
         return self + self.divdiff(i).mult_poly(self.genset[i + 1] - self.genset[i])
@@ -429,7 +298,7 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
         return self.simpleref(i + 1).act(perm.swap(i, i + 1))
 
     def max_index(self):
-        return max([max([0, *list(k[0].descents(zero_indexed=False))]) for k in self.coeff_dict.keys()])
+        return max([max([0, *list(k.descents(zero_indexed=False))]) for k in self.coeff_dict.keys()])
 
     def subs(self, old, new):
         result = 0
@@ -447,37 +316,35 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
             # # logger.debug(f"{transf=}")
             # # logger.debug(f"{self.expand()=}")
             # # logger.debug(f"{transf.expand().expand()=}")
-            # transf2 = transf.coproduct([i for i in range(1,self.max_index()+1)],coeff_var=utils.NoneVar)
             # # logger.debug(f"{transf2=}")
             # for (k1, k2), v in transf2.coeff_dict.items():
             #     result += self.basis._from_dict({k1: v}) * (new**k2[0].inv)
             # don't want to go nuts
             # res_dict = {}
             for k, v in transf.coeff_dict.items():
-                perm = k[0]
-                coeff_var = k[1]
-                coeff_gens = utils.poly_ring(coeff_var)
+                perm = k
+                coeff_gens = self.basis.coeff_genset
                 # cached mul_poly
                 L = schub_lib.pull_out_var(mindex + 1, perm)
                 # # logger.debug(f"{perm=} {L=}")
                 for index_list, new_perm in L:
-                    result += self.basis._from_dict({(new_perm, k[1]): v}).mult_poly(sympy.prod([(new - coeff_gens[index2]) for index2 in index_list]))
+                    result += self.basis._from_dict({new_perm: v}).mult_poly(sympy.prod([(new - coeff_gens[index2]) for index2 in index_list]))
             return result
 
         for k, v in self.coeff_dict.items():
-            if k[1] == utils.ZeroVar or k[1] == utils.NoneVar:
+            if self.coeff_genset is None:
                 add_dict = {k: v.subs(old, new)}
             else:
-                coeff_genset = utils.poly_ring(k[1])
+                coeff_genset = self.coeff_genset
                 if coeff_genset.index(old) != -1:
                     genset_list = [coeff_genset[i] for i in range(len(coeff_genset))]
                     genset_list[coeff_genset.index(old)] = 0
                     custom_genset = CustomGeneratingSet(genset_list)
-                    new_add_dict = {k2: sympify(v2).subs(old, new) for k2, v2 in yz.schubmult_double({(): v}, k[0], custom_genset, coeff_genset).items()}  # remove the variable
+                    new_add_dict = {k2: sympify(v2).subs(old, new) for k2, v2 in yz.schubmult_double({(): v}, k, custom_genset, coeff_genset).items()}  # remove the variable
                     add_dict = {}
                     for k3, v3 in new_add_dict.items():
                         # convert back to coeff_genset
-                        to_add_dict = {(k4, k[1]): v4 for k4, v4 in yz.schubmult_double({(): v3}, k3, coeff_genset, custom_genset).items()}
+                        to_add_dict = yz.schubmult_double({(): v3}, k3, coeff_genset, custom_genset)
                         add_dict = add_perm_dict(add_dict, to_add_dict)
                 else:
                     add_dict = {k: sympify(v).subs(old, new)}
@@ -489,64 +356,20 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
             # check correct, change vars to zeroed coeff var for coeff
         return result
 
-        # for k, v in self.coeff_dict.items():
-        #     # can permute it to the end and substitute
-        #     perm = k[0]
-        #     coeff_var = k[1]
-
     @property
     def free_symbols(self):
         ret = set()
         for k, v in self.coeff_dict.items():
             ret.update(v.free_symbols)
-            perm = k[0]
-            coeff_var = k[1]
+            perm = k
             if len(perm.descents()) > 0:
                 ret.update([self.genset[i] for i in range(1, max(perm.descents()) + 2)])
-            if coeff_var != utils.NoneVar and coeff_var != utils.ZeroVar:
-                genset2 = utils.poly_ring(coeff_var)
+            if self.coeff_genset:
+                genset2 = self.basis.coeff_genset
                 perm2 = ~perm
                 if len(perm2.descents()) > 0:
                     ret.update([genset2[i] for i in range(1, max(perm2.descents()) + 2)])
         return ret
-
-    # def _eval_Eq(self, other):
-    #     # this will prevent sympy from acting like an idiot
-    #     return self.__eq__(other)
-
-    # def _eval_subs(self, old, new):
-    #     b_old = sympify(old)
-    #     b_new = sympify(new)
-    #     result = {}
-    #     stuff_to_do = False
-    #     lots_of_stuff_to_do = False
-    #     if b_new in utils.poly_ring(self._base_var):
-    #         stuff_to_do = True
-    #     if b_old in utils.poly_ring(self._base_var):
-    #         lots_of_stuff_to_do = True
-    #     for k, v in self.coeff_dict.items():
-    #         if lots_of_stuff_to_do:
-    #             poley = sympify(self.basis._from_dict({k: 1}).change_vars(0).expand() * v)
-    #             if b_old in poley.free_symbols:
-    #                 poley = poley.subs(b_old, b_new)
-    #                 new_dict = yz.mult_poly_double({(1, 2): 1}, poley, utils.poly_ring(self._base_var), utils.poly_ring(k[1]))
-    #                 new_p = {(koifle, k[1]): voifle for koifle, voifle in new_dict.items()}
-    #                 result = add_perm_dict(result, new_p)
-    #         elif stuff_to_do:
-    #             this_p = self.basis._from_dict({k: v}).change_vars(0)
-    #             for kkk, vvv in this_p.coeff_dict.items():
-    #                 vvvv = sympify(vvv).subs(b_old, b_new)
-    #                 if b_new in sympify(vvvv).free_symbols:
-    #                     s_dict = {kkk[0]: 1}
-    #                     r_dict = py.mult_poly_py(s_dict, vvvv, utils.poly_ring(self._base_var))
-    #                 else:
-    #                     r_dict = {kkk[0]: vvvv}
-    #                 r_dict = {(kk, 0): voif for kk, voif in r_dict.items()}
-    #                 new_p = self.basis._from_dict(r_dict).change_vars(k[1])
-    #                 result = add_perm_dict(result, new_p.coeff_dict)
-    #         else:
-    #             result[k] = result.get(k, 0) + sympify(v).subs(b_old, b_new)
-    #     return self.basis._from_dict(result)
 
     def pull_out_gen(self, gen):
         ind = self.genset.index(gen)
@@ -559,13 +382,14 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
             for index_list, new_perm in L:
                 toadd = S.One
                 for index2 in index_list:
-                    toadd *= (gen - utils.poly_ring(cv)[index2])
-                ret += toadd*val*new_basis(new_perm,cv)
+                    toadd *= gen - utils.poly_ring(cv)[index2]
+                ret += toadd * val * new_basis(new_perm, cv)
         return ret
 
-
-    def coproduct(self, indices, coeff_var="y", gname1=None, gname2=None):
+    def coproduct(self, *indices, alt_coeff_genset=None, gname1=None, gname2=None):
         result_dict = {}
+        # if not alt_coeff_genset:
+        #     alt_coeff_genset = self.coeff_genset
         if gname1 is None:
             gname1 = f"{self.genset.label}_A"
         if gname2 is None:
@@ -580,32 +404,21 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
         gens1.set_label(gname1)
         gens2.set_label(gname2)
         for k, v in self.coeff_dict.items():
-            key = k[0]
-            var_str = k[1]
-            # print(f"{var_str=}")
-            # print(f"{coeff_var=}")
-            if var_str in (utils.NoneVar, utils.ZeroVar) and coeff_var in (utils.NoneVar, utils.ZeroVar):
+            key = k
+            if isinstance(self.basis, SchubertAlgebraElement_basis) and not alt_coeff_genset:
                 coprod_dict = py.schub_coprod_py(key, indices)
             else:
-                coprod_dict = yz.schub_coprod_double(key, indices, utils.poly_ring(var_str), utils.poly_ring(coeff_var))
+                coprod_dict = yz.schub_coprod_double(key, indices, self.basis.coeff_genset, alt_coeff_genset if alt_coeff_genset else self.basis.coeff_genset)
             # print(f"{coprod_dict=}")
-            result_dict = add_perm_dict(result_dict, {((k1, var_str), (k2, coeff_var)): v * v2 for (k1, k2), v2 in coprod_dict.items()})
-        basis = tsr.TensorAlgebraBasis(DoubleSchubertAlgebraElement_basis(gens1), DoubleSchubertAlgebraElement_basis(gens2))
+            result_dict = add_perm_dict(result_dict, {k: v * v2 for k, v2 in coprod_dict.items()})
+        basis = tsr.TensorAlgebraBasis(
+            DoubleSchubertAlgebraElement_basis(gens1, self.basis.coeff_genset), DoubleSchubertAlgebraElement_basis(gens2, alt_coeff_genset if alt_coeff_genset else self.basis.coeff_genset)
+        )
         return basis._from_dict(result_dict)
-
-    # def normalize_coefficients(self, coeff_var):
-    #     return DSx([1, 2], coeff_var) * self
-
-    # def expand(self, *_a, **_):
-    #     if isinstance(self, SchubAdd):
-    #         return self.doit().expand()
-    #     if isinstance(self, SchubMul):
-    #         return self.doit().expand()
-    #     return expand(Add(*[v * schubpoly(k[0], self.genset, utils.poly_ring(k[1])) for k, v in self.coeff_dict.items()]))
 
     @cached_property
     def max_gens(self):
-        return max([max(k[0].descents()) for k in self.coeff_dict.keys()])
+        return max([max(k.descents()) for k in self.coeff_dict.keys()])
 
 
 _pretty_schub_char = "𝔖"  # noqa: RUF001
@@ -620,7 +433,7 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
 
     @staticmethod
     def __xnew__(_class, k, basis):
-        _coeff_dict = sympy.Dict({(Permutation(k[0]), k[1]): 1})
+        _coeff_dict = sympy.Dict({Permutation(k): 1})
         # if not isinstance(genset, GeneratingSet_base):
         #     raise TypeError
         obj = DoubleSchubertAlgebraElement.__new__(_class, _coeff_dict, basis)
@@ -636,7 +449,7 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
 
     @property
     def perm(self):
-        return self._key[0]
+        return self._key
 
     @property
     def args(self):
@@ -648,27 +461,27 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
         return DSchubPoly.__xnew__(_class, k, basis)
 
     def _sympystr(self, printer):
-        if self._key[0] == Permutation([]):
+        if self._key == Permutation([]):
             return printer.doprint(1)
-        if self._key[1] == 0 or self._key[1] == utils.NoneVar:
-            return printer.doprint(f"S{self.genset.label}({printer.doprint(self._key[0])})")
-        return printer.doprint(f"DS{self.genset.label}({printer.doprint(self._key[0])}, {_varstr(self._key[1])})")
+        if self.coeff_genset is None:
+            return printer.doprint(f"S{self.genset.label}({printer.doprint(self._key)})")
+        return printer.doprint(f"DS{self.genset.label}({printer.doprint(self._key)}, {self.coeff_genset.label})")
 
     def _pretty(self, printer):
-        if self._key[0] == Permutation([]):
+        if self._key == Permutation([]):
             return printer._print(1)
-        subscript = printer._print(int("".join([str(i) for i in self._key[0]])))
-        if self._key[1] == 0 or self._key[1] == utils.NoneVar:
+        subscript = printer._print(int("".join([str(i) for i in self._key])))
+        if self.coeff_genset is None:
             return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(self.genset.label)))
-        return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(f"{self.genset.label}; {self._key[1]}")))
+        return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(f"{self.genset.label}; {self.coeff_genset.label}")))
 
     def _latex(self, printer):
-        if self._key[0] == Permutation([]):
+        if self._key == Permutation([]):
             return printer._print(1)
-        subscript = printer._print(self._key[0])
-        if self._key[1] == 0 or self._key[1] == utils.NoneVar:
+        subscript = printer._print(self._key)
+        if self.coeff_genset is None:
             return printer._print_Function(sympy.Function("\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(self.genset.label)))
-        return printer._print_Function(sympy.Function("\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(f"{self.genset.label}; {self._key[1]}")))
+        return printer._print_Function(sympy.Function("\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(f"{self.genset.label}; {self.coeff_genset.label}")))
 
 
 # def elem_func(p, k, vx, vy):
@@ -679,9 +492,10 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
 
 # None is faster to store
 class DoubleSchubertAlgebraElement_basis(Basic):
-    def __new__(cls, genset):
-        return Basic.__new__(cls, genset)
+    def __new__(cls, genset, coeff_genset):
+        return Basic.__new__(cls, genset, coeff_genset)
 
+    # elem syms as functions
     @property
     def symbol_elem_func(self):
         def elem_func(p, k, varl1, varl2):  # noqa: ARG001
@@ -707,6 +521,10 @@ class DoubleSchubertAlgebraElement_basis(Basic):
     def genset(self):
         return self.args[0]
 
+    @property
+    def coeff_genset(self):
+        return self.args[1]
+
     def _from_dict(self, _dict):
         return DoubleSchubertAlgebraElement(_dict, self)
 
@@ -717,23 +535,23 @@ class DoubleSchubertAlgebraElement_basis(Basic):
     def in_quantum_basis(self, elem):
         result = S.Zero
         for k, v in elem.coeff_dict.items():
-            result += v * self.quantum_schubpoly(k[0], k[1])
+            result += v * self.quantum_schubpoly(k)
         return result
 
     def in_classical_basis(self, elem):
         return elem
 
     @cache
-    def quantum_schubpoly(self, perm, coeff_var="y"):
-        return schubpoly_classical_from_elems(perm, self.genset, utils.poly_ring(coeff_var), self.quantum_elem_func(coeff_var))
+    def quantum_schubpoly(self, perm):
+        return schubpoly_classical_from_elems(perm, self.genset, self.coeff_genset, self.quantum_elem_func)
 
     @cache
-    def cached_product(self, u, v, va, vb):
-        return {(k, va): xreplace_genvars(x, utils.poly_ring(va), utils.poly_ring(vb)) for k, x in yz.schubmult_double_pair_generic(u, v).items()}
+    def cached_product(self, u, v, basis2):
+        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset if basis2.coeff_genset else utils.poly_ring(0)) for k, x in yz.schubmult_double_pair_generic(u, v).items()}
 
     @cache
-    def cached_positive_product(self, u, v, va, vb):
-        return {(k, va): xreplace_genvars(x, utils.poly_ring(va), utils.poly_ring(vb)) for k, x in yz.schubmult_generic_partial_posify(u, v).items()}
+    def cached_positive_product(self, u, v, basis2):
+        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset if basis2.coeff_genset else utils.poly_ring(0)) for k, x in yz.schubmult_generic_partial_posify(u, v).items()}
 
     @property
     def double_mul(self):
@@ -751,23 +569,24 @@ class DoubleSchubertAlgebraElement_basis(Basic):
     def mult_poly_double(self):
         return yz.mult_poly_double
 
-    def quantum_elem_func(self, coeff_var):
-        basis = qsr.QuantumDoubleSchubertAlgebraElement_basis(self.genset)
+    @property
+    def quantum_elem_func(self):
+        basis = qsr.QuantumDoubleSchubertAlgebraElement_basis(self.genset, self.coeff_genset)
 
         def elem_func(p, k, varl1, varl2, xstart=0, ystart=0):
             if p > k:
-                return basis(0, coeff_var)
+                return basis(0)
             if p == 0:
-                return basis([], coeff_var)
+                return basis([])
             if p == 1:
-                res = basis(varl1[xstart] - varl2[ystart], coeff_var)
+                res = basis(varl1[xstart] - varl2[ystart])
                 for i in range(1, k):
-                    res += basis(varl1[xstart + i] - varl2[ystart + i], coeff_var)
+                    res += basis(varl1[xstart + i] - varl2[ystart + i])
                 return res
             if p == k:
-                res = basis((varl1[xstart] - varl2[ystart]) * (varl1[xstart + 1] - varl2[ystart]), coeff_var)
+                res = basis((varl1[xstart] - varl2[ystart]) * (varl1[xstart + 1] - varl2[ystart]))
                 for i in range(2, k):
-                    res *= basis(varl1[i + xstart] - varl2[ystart], coeff_var)
+                    res *= basis(varl1[i + xstart] - varl2[ystart])
                 return res
             mid = k // 2
             xsm = xstart + mid
@@ -811,13 +630,12 @@ class DoubleSchubertAlgebraElement_basis(Basic):
         schub_perm = uncode(sorted(monom, reverse=True))
         return self._from_dict({(schub_perm, utils.NoneVar): S.One}).act(srt_perm)
 
-
     @cache
     def cached_schubpoly(self, k):
         # return yz.schubpoly(u)
-        return schubpoly_classical_from_elems(k[0], self.genset, utils.poly_ring(k[1]), elem_func=elem_sym_poly)
+        return schubpoly_classical_from_elems(k, self.genset, self.coeff_genset, elem_func=elem_sym_poly)
 
-    def __call__(self, x, cv=None):
+    def __call__(self, x):
         # print(f"frivol {x=} {cv=}")
         genset = self.genset
         if not isinstance(genset, GeneratingSet_base):
@@ -826,18 +644,14 @@ class DoubleSchubertAlgebraElement_basis(Basic):
         # if isinstance(x, Mul) or isinstance(x, Add):
         #     raise TypeError
         if isinstance(x, list) or isinstance(x, tuple):
-            if cv is None:
-                cv = "y"
             p_x = Permutation(x)
             if max([0, *list(p_x.descents())]) > len(self.genset):
                 raise NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
-            elem = self._from_dict({(p_x, cv): 1})
+            elem = self._from_dict({p_x: 1})
         elif isinstance(x, Permutation):
-            if cv is None:
-                cv = "y"
             if max([0, *list(x.descents())]) > len(self.genset):
                 raise NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
-            elem = self._from_dict({(x, cv): 1})
+            elem = self._from_dict({x: 1})
 
         elif isinstance(x, DoubleSchubertAlgebraElement):
             # logger.debug("Line record")
@@ -872,13 +686,8 @@ class DoubleSchubertAlgebraElement_basis(Basic):
         else:
             # logger.debug(f"{x=}")
             x = sympify(x)
-            if cv is None or cv == utils.NoneVar:
-                cv = utils.NoneVar
-                result = py.mult_poly_py({Permutation([]): 1}, x, genset)
-            else:
-                # print("splinterfish")
-                result = yz.mult_poly_double({Permutation([]): 1}, x, genset, utils.poly_ring(cv))
-            elem = self._from_dict({(k, cv): v for k, v in result.items()})
+            result = yz.mult_poly_double({Permutation([]): 1}, x, genset, self.coeff_genset)
+            elem = self._from_dict(result)
             # logger.debug(f"Returning {elem=}")
         return elem
 
@@ -986,7 +795,13 @@ DoubleSchubertPolynomial = DoubleSchubertAlgebraElement
 #     "Add": [get_postprocessor(Add)],
 # }
 
-DSx = DoubleSchubertAlgebraElement_basis(GeneratingSet("x"))
+
+def DSx(x, genset=GeneratingSet("y")):
+    if isinstance(genset, str):
+        genset = GeneratingSet(genset)
+    return DoubleSchubertAlgebraElement_basis(GeneratingSet("x"), genset)(x)
+
+
 """DSx: Double Schubert polynomial generator
 DSx is an alias for a DoubleSchubertAlgebraElement_basis object with
 GeneratingSet being variables with name x_i for i an integer up to 99.
@@ -1009,13 +824,26 @@ but can be subsituted with a custom GeneratingSet_base object.
 
 class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
     def __new__(cls, genset):
-        return DoubleSchubertAlgebraElement_basis.__new__(cls, genset)
+        return DoubleSchubertAlgebraElement_basis.__new__(cls, genset, utils.poly_ring(utils.NoneVar))
 
-    def __hash__(self):
-        return hash((*self.args, utils.NoneVar))
+    # def __hash__(self):
+    #     return hash(*self.args)
 
-    def _from_single_dict(self, _dict):
-        return DoubleSchubertAlgebraElement({(k, utils.NoneVar): v for k, v in _dict.items()}, self)
+    # def _from_single_dict(self, _dict):
+    #     return DoubleSchubertAlgebraElement({(k, utils.NoneVar): v for k, v in _dict.items()}, self)
+    @property
+    def coeff_genset(self):
+        return None
+
+    @cache
+    def cached_product(self, u, v, basis2):
+        if self == basis2:
+            return py.schubmult_py({u: S.One}, v)
+        return {k: xreplace_genvars(x, utils.poly_ring(0), basis2.coeff_genset if basis2.coeff_genset else utils.poly_ring(0)) for k, x in yz.schubmult_double_pair_generic(u, v).items()}
+
+    @cache
+    def cached_positive_product(self, u, v, basis2):
+        return self.cached_product(u, v, basis2)
 
     def __call__(self, x):
         genset = self.genset
@@ -1025,9 +853,9 @@ class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
         if not isinstance(genset, GeneratingSet_base):
             raise TypeError
         if isinstance(x, list) or isinstance(x, tuple):
-            elem = self._from_single_dict({Permutation(x): 1})
+            elem = self._from_dict({Permutation(x): 1})
         elif isinstance(x, Permutation):
-            elem = self._from_single_dict({x: 1})
+            elem = self._from_dict({x: 1})
         # elif isinstance(x, spr.SchubertPolynomial):
         #     if x._parent._base_var == self._base_var:
         #         elem_dict = {(x, utils.NoneVar): v for k, v in x.coeff_dict.items()}
@@ -1049,11 +877,8 @@ class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
         else:
             x = sympify(x)
             result = py.mult_poly_py({Permutation([]): 1}, x, genset)
-            elem = self._from_single_dict(result)
+            elem = self._from_dict(result)
         return elem
 
 
 Sx = SchubertAlgebraElement_basis(GeneratingSet("x"))
-
-ybas = SchubertAlgebraElement_basis(GeneratingSet("y"))
-

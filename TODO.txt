@@ -157,3 +157,9 @@ Very little benefit to allowing mixed generating sets
 Unevaluated sums instead
 Coefficient variables as part of the basis
 Then can do coeff coproducts to factorize
+
+Put back schubadd? No
+
+But schub element coercion
+
+coeff var coproduct can actually be expressed fully as products of normal double Schubs with coeffs
