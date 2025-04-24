@@ -10,7 +10,7 @@ def test_schub_expand():
     from symengine import sympify
     x_1, x_2 = symbols("x_1 x_2")
     assert Sx([3,1,2]).expand() == x_1**2
-    assert expand((Sx([5,3,4,1,2]).expand() * Sx([4,1,5,2,3]).expand() - Sx([5,3,4,1,2]) * Sx([4,1,5,2,3])).expand()) == 0
+    assert expand((Sx([5,3,4,1,2]).expand() * Sx([4,1,5,2,3]).expand() - (Sx([5,3,4,1,2]) * Sx([4,1,5,2,3])).expand()).expand()) == 0
     assert (x_1*Sx([3,4,1,2])).expand() == x_1**3*x_2**2
 
 def test_coproduct():

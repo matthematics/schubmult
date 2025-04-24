@@ -540,14 +540,9 @@ class DoubleSchubertAlgebraElement_basis(Basic):
 
     def _coerce_mul(self, other):
         if isinstance(other, BasisSchubertAlgebraElement):
-            if type(other.basis) is type(self):
-                # # logger.debug(f"{type(other.basis)} {other.basis=} {other=} {self=} {type(self)=} {self.genset=} {other.genset=}")
+            if isinstance(other, DoubleSchubertAlgebraElement):
                 if self.genset == other.basis.genset:
                     return other
-            if type(other.basis) is SchubertAlgebraElement_basis:
-                if self.genset == other.basis.genset:
-                    newbasis = DoubleSchubertAlgebraElement_basis(self.genset, utils.poly_ring(0))
-                    return newbasis._from_dict(other.coeff_dict)
             if isinstance(other.basis, qsr.QuantumDoubleSchubertAlgebraElement_basis):
                 return self._coerce_mul(other.as_classical())
         return None
@@ -904,24 +899,24 @@ class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
     # def _from_single_dict(self, _dict):
     #     return DoubleSchubertAlgebraElement({(k, utils.NoneVar): v for k, v in _dict.items()}, self)
     # maybe don't reinvent the wheel
-    def _coerce_mul(self, other):
-        """Coerce a basis schubert algebra element so it can be multiplied
+    # def _coerce_mul(self, other):
+    #     """Coerce a basis schubert algebra element so it can be multiplied
 
-        Args:
-            other (_type_): _description_
+    #     Args:
+    #         other (_type_): _description_
 
-        Returns:
-            _type_: _description_
-        """
-        if type(other.basis) is type(self):
-            if self.genset == other.basis.genset:
-                return other
-        if type(other.basis) is DoubleSchubertAlgebraElement_basis:
-            if self.genset == other.basis.genset:
-                return other
-        if isinstance(other.basis, qsr.QuantumDoubleSchubertAlgebraElement_basis):
-            return self._coerce_mul(other.as_classical())
-        return None
+    #     Returns:
+    #         _type_: _description_
+    #     """
+    #     if type(other.basis) is type(self):
+    #         if self.genset == other.basis.genset:
+    #             return other
+    #     if type(other.basis) is DoubleSchubertAlgebraElement_basis:
+    #         if self.genset == other.basis.genset:
+    #             return other
+    #     if isinstance(other.basis, qsr.QuantumDoubleSchubertAlgebraElement_basis):
+    #         return self._coerce_mul(other.as_classical())
+    #     return None
 
     @property
     def coeff_genset(self):

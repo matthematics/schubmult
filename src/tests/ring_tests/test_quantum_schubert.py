@@ -7,7 +7,7 @@ def test_schub_expand():
     from symengine import sympify
     x_1, x_2, q_1, q_2 = symbols("x_1 x_2 q_1 q_2")
     assert QSx([3,1,2]).expand() == x_1**2 - q_1
-    assert expand((QSx([5,3,4,1,2]).expand() * QSx([4,1,5,2,3]).expand() - QSx([5,3,4,1,2]) * QSx([4,1,5,2,3])).expand()) == 0
+    assert expand((QSx([5,3,4,1,2]).expand() * QSx([4,1,5,2,3]).expand() - (QSx([5,3,4,1,2]) * QSx([4,1,5,2,3])).expand()).expand()) == 0
     assert (x_1*QSx([3,4,1,2])).expand() == q_1**2*x_1 + q_1*q_2*x_1 + 2*q_1*x_1**2*x_2 - q_2*x_1**3 + x_1**3*x_2**2
 
 def test_parabolic():
