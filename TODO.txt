@@ -171,3 +171,5 @@ coercion order decorator
 speed up single var coproduct
 
 Make use of variable separation as a last resort to avoid linear optimization
+
+order of operations. Avoid returning unevaluated Add if possible

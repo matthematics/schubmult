@@ -169,54 +169,65 @@ class BasisSchubertAlgebraElement(Expr):
         # if isinstance(self)
         # # logger.debug(f"{type(other)=} {self.genset=}")
         if isinstance(other, BasisSchubertAlgebraElement):
-            if other.basis == self.basis:
-                return self.basis._from_dict(add_perm_dict(self.coeff_dict, other.coeff_dict))
-            return sympy.Add(self, other)
-        return self + self.basis(other)
+            new_other = self.basis._coerce_add(other)
+            if new_other:
+                return self.basis._from_dict(add_perm_dict(self.coeff_dict, new_other.coeff_dict))
+            # new_self = other.basis._coerce_add(self)
+            # if new_self:
+            #     return other.basis._from_dict(add_perm_dict(new_self.coeff_dict, other.coeff_dict))
+            return other.__radd__(self)
+        return super().__add__(other)
+
 
     def __radd__(self, other):
         # logger.debug(f"{type(other)=}")
         if isinstance(other, BasisSchubertAlgebraElement):
-            if other.basis == self.basis:
-                return self.basis._from_dict(add_perm_dict(other.coeff_dict, self.coeff_dict))
-            return sympy.Add(other, self)
-        return self.basis(other) + self
+            new_other = self.basis._coerce_add(other)
+            if new_other:
+                return self.basis._from_dict(add_perm_dict(new_other.coeff_dict, self.coeff_dict))
+        return super().__radd__(other)
 
     def __sub__(self, other):
         # logger.debug(f"{type(other)=}")
         if isinstance(other, BasisSchubertAlgebraElement):
-            if other.basis == self.basis:
-                return self.basis._from_dict(add_perm_dict(self.coeff_dict, {k: -v for k, v in other.coeff_dict.items()}))
-            return sympy.Add(self, sympy.Mul(-1, other))
-        return self - self.basis(other)
+            new_other = self.basis._coerce_add(other)
+            if new_other:
+                return self.basis._from_dict(add_perm_dict(self.coeff_dict, {k: -v for k, v in new_other.coeff_dict.items()}))
+            return other.__rsub__(self)
+        return super().__sub__(other)
 
     def __rsub__(self, other):
         if isinstance(other, BasisSchubertAlgebraElement):
-            if other.basis == self.basis:
-                return self.basis._from_dict(add_perm_dict(other.coeff_dict, {k: -v for k, v in self.coeff_dict.items()}))
-            return sympy.Add(other, sympy.Mul(-1, self))
-        return self.basis(other) - self
+            new_other = self.basis._coerce_add(other)
+            if new_other:
+                return self.basis._from_dict(add_perm_dict(other.coeff_dict, {k: -v for k, v in new_other.coeff_dict.items()}))
+        return super().__rsub__(other)
 
     def __neg__(self):
-        return self.basis._from_dict({k: -sympify(v) for k, v in self.coeff_dict.items()})
+        return self.basis._from_dict({k: -v for k, v in self.coeff_dict.items()})
 
     def __mul__(self, other):
         if isinstance(other, BasisSchubertAlgebraElement):
-            if type(self.basis) is type(other.basis):
-                return self.basis._from_dict(_mul_schub_dicts(self.coeff_dict, other.coeff_dict, self.basis, other.basis))
-            return NotImplemented
+            new_other = self.basis._coerce_mul(other)
+            if new_other:
+                return self.basis._from_dict(_mul_schub_dicts(self.coeff_dict, new_other.coeff_dict, self.basis, new_other.basis))
+            return other.__rmul__(self)
         if isinstance(other, symengine.Basic) and not any(x in self.basis.genset for x in other.free_symbols):
             return self.basis._from_dict({k: other * v for k, v in self.coeff_dict.items()})
-        return self * self.basis(other)
+        if isinstance(other, sympy.Expr) and not any(x in self.basis.genset for x in other.free_symbols):
+            return self.basis._from_dict({k: sympify(other) * v for k, v in self.coeff_dict.items()})
+        return super().__mul__(other)
 
     def __rmul__(self, other):
         if isinstance(other, BasisSchubertAlgebraElement):
-            if type(self.basis) is type(other.basis):
-                return other.basis._from_dict(_mul_schub_dicts(other.coeff_dict, self.coeff_dict, other.basis, self.basis))
-            return NotImplemented
+            new_other = self.basis._coerce_mul(other)
+            if new_other:
+                return self.basis._from_dict(_mul_schub_dicts(new_other.coeff_dict, self.coeff_dict, new_other.basis, self.basis))
         if isinstance(other, symengine.Basic) and not any(x in self.basis.genset for x in other.free_symbols):
             return self.basis._from_dict({k: v * other for k, v in self.coeff_dict.items()})
-        return self.basis(other) * self
+        if isinstance(other, sympy.Expr) and not any(x in self.basis.genset for x in other.free_symbols):
+            return self.basis._from_dict({k: v * sympify(other) for k, v in self.coeff_dict.items()})
+        return super().__rmul__(other)
 
     # def equals(self, other):
     #     return self.__eq__(other)
@@ -492,10 +503,28 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
 # A = schubpoly_from_elems([4,1,3,2], DSx.genset, poly_ring("y"),elem_func)
 
 
-# None is faster to store
+# can coerce, otherwise unevaluated mul
 class DoubleSchubertAlgebraElement_basis(Basic):
     def __new__(cls, genset, coeff_genset):
         return Basic.__new__(cls, genset, coeff_genset)
+
+    def _coerce_mul(self, other):
+        if isinstance(other, BasisSchubertAlgebraElement):
+            if type(other.basis) is type(self):
+                if self.genset == other.basis.genset:
+                    return other
+            if type(other.basis) is SchubertAlgebraElement_basis:
+                if self.genset == other.basis.genset:
+                    newbasis =  DoubleSchubertAlgebraElement_basis(self.genset, utils.poly_ring(0))
+                    return newbasis._from_dict(other.coeff_dict)
+        return None
+
+    def _coerce_add(self, other):
+        if isinstance(other, BasisSchubertAlgebraElement):
+            if type(other.basis) is type(self):
+                if self.genset == other.basis.genset and self.coeff_genset == other.basis.coeff_genset:
+                    return other
+        return None
 
     # elem syms as functions
     @property
@@ -833,6 +862,25 @@ class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
 
     # def _from_single_dict(self, _dict):
     #     return DoubleSchubertAlgebraElement({(k, utils.NoneVar): v for k, v in _dict.items()}, self)
+    #maybe don't reinvent the wheel
+    def _coerce_mul(self, other):
+        """Coerce a basis schubert algebra element so it can be multiplied
+
+        Args:
+            other (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        if type(other.basis) is type(self):
+            if self.genset == other.basis.genset:
+                return other
+        if type(other.basis) is DoubleSchubertAlgebraElement_basis:
+            if self.genset == other.basis.genset:
+                return other
+        return None
+
+
     @property
     def coeff_genset(self):
         return utils.poly_ring(utils.NoneVar)
