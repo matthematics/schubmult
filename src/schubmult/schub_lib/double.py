@@ -1,5 +1,5 @@
 from bisect import bisect_left
-from functools import cache, cached_property
+from functools import cache
 
 import numpy as np
 import psutil

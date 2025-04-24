@@ -3,7 +3,6 @@ import sympy
 import schubmult.perm_lib as pl
 import schubmult.schub_lib.schub_lib as schub_lib
 from schubmult.poly_lib.poly_lib import call_zvars
-from schubmult.poly_lib.variables import GeneratingSet
 
 
 def perm_act(val, i, var2=None):
@@ -69,6 +68,7 @@ def schubpoly_from_elems(v, var_x=None, var_y=None, elem_func=None, mumu=None):
                 )
         vpathsums = newpathsums
     return vpathsums.get(vmu, 0)
+
 
 def schubpoly_classical_from_elems(v, var_x=None, var_y=None, elem_func=None):
     # print(f"{v=} {var_x=} {var_y=}")
