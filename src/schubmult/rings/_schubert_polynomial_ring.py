@@ -172,7 +172,7 @@ class BasisSchubertAlgebraElement(Expr):
             if other.basis == self.basis:
                 return self.basis._from_dict(add_perm_dict(self.coeff_dict, other.coeff_dict))
             return sympy.Add(self, other)
-        return sympify(other) + self.as_polynomial()
+        return self + self.basis(other)
 
     def __radd__(self, other):
         # logger.debug(f"{type(other)=}")
@@ -180,7 +180,7 @@ class BasisSchubertAlgebraElement(Expr):
             if other.basis == self.basis:
                 return self.basis._from_dict(add_perm_dict(other.coeff_dict, self.coeff_dict))
             return sympy.Add(other, self)
-        return self.as_polynomial() + sympify(other)
+        return self.basis(other) + self
 
     def __sub__(self, other):
         # logger.debug(f"{type(other)=}")
@@ -188,14 +188,14 @@ class BasisSchubertAlgebraElement(Expr):
             if other.basis == self.basis:
                 return self.basis._from_dict(add_perm_dict(self.coeff_dict, {k: -v for k, v in other.coeff_dict.items()}))
             return sympy.Add(self, sympy.Mul(-1, other))
-        return self.as_polynomial() - sympify(other)
+        return self - self.basis(other)
 
     def __rsub__(self, other):
         if isinstance(other, BasisSchubertAlgebraElement):
             if other.basis == self.basis:
                 return self.basis._from_dict(add_perm_dict(other.coeff_dict, {k: -v for k, v in self.coeff_dict.items()}))
             return sympy.Add(other, sympy.Mul(-1, self))
-        return sympify(other) - self.as_polynomial()
+        return self.basis(other) - self
 
     def __neg__(self):
         return self.basis._from_dict({k: -sympify(v) for k, v in self.coeff_dict.items()})
@@ -213,7 +213,7 @@ class BasisSchubertAlgebraElement(Expr):
             return result
         if isinstance(other, symengine.Basic) or isinstance(other, sympy.Basic):
             return self.basis._from_dict({k: other * v for k, v in self.coeff_dict.items()})
-        return self.as_polynomial() * sympify(other)
+        return self * self.basis(other)
 
     def __rmul__(self, other):
         if isinstance(other, BasisSchubertAlgebraElement):
@@ -228,7 +228,7 @@ class BasisSchubertAlgebraElement(Expr):
             return result
         if isinstance(other, symengine.Basic) or isinstance(other, sympy.Basic):
             return self.basis._from_dict({k: v * other for k, v in self.coeff_dict.items()})
-        return self.as_polynomial() * sympify(other)
+        return self.basis(other) * self
 
     # def equals(self, other):
     #     return self.__eq__(other)

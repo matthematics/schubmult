@@ -524,10 +524,11 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(Basic):
     def classical_in_basis(self, k):
         from symengine import expand
 
-        a = self.classical_basis(*k)
-        b = self(*k)
+        a = self.classical_basis(k)
+        b = self(k)
         if expand(a.as_polynomial() - b.as_polynomial()) == S.Zero:
             return b
+
         cd = dict(b.as_classical().coeff_dict)
         for k2, v in cd.items():
             if k != k2:
@@ -708,7 +709,7 @@ def make_parabolic_quantum_basis(index_comp, coeff_genset):
 
 @cache
 def QPDSx(*args, coeff_genset=GeneratingSet("y")):
-    return make_parabolic_quantum_basis(args,utils.poly_ring(coeff_genset) if isinstance(coeff_genset, str) else coeff_genset)
+    return make_parabolic_quantum_basis(args, utils.poly_ring(coeff_genset) if isinstance(coeff_genset, str) else coeff_genset)
 
 
 class ParabolicQuantumSchubertAlgebraElement_basis(ParabolicQuantumDoubleSchubertAlgebraElement_basis):
