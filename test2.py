@@ -190,39 +190,54 @@ if __name__ == "__main__":
     #     #if not perm.has_pattern([3,1,4,2]) and not perm.has_pattern([4,1,3,2]) and not perm.has_pattern([1,4,3,2])
     #     if not perm.has_pattern([3,1,4,2]):
     #         print(f"{perm} {Sx(perm).in_CEM_basis()}")
-
-    dct = [{} for i in range(n-1)]
-
+    total = 0
     for perm in perms:
-        for i in range(1,n):
-            esp = elem_sym_perms(perm, i, i)
-            cts = {}
-            for perm2, f in esp:
-                if f > 0:
-                    cts[f] = cts.get(f,[]) + [perm2]
-            for f in cts:
-                if len(cts[f]) == 1:
-                    dct[i-1][perm] = dct[i-1].get(perm,[]) + [cts[f][0]]
-    
-    dct2 = [{} for i in range(n-1)]
-    for i in range(len(dct)):
-        for perm in dct[i]:
-            for perm1 in dct[i][perm]:
-                dct2[i][perm1] = perm
-
-    for perm in perms:
-        perm0 = perm
-        factorization = []
-        while perm0 != Permutation([]):
-            found = False
-            for i in range(len(dct2)):
-                if perm0 in dct2[i]:
-                    perm1 = dct2[i][perm0]
-                    factorization += [(perm0.inv-perm1.inv, i+1)]
-                    found = True
-                    perm0 = perm1
-                    break
-            if not found:
-                factorization += [perm0]
+        if perm.inv < 8:
+            continue
+        lastvar = max((~perm).descents()) + 1
+        if lastvar == 1:
+            continue
+        spoly = DSx(perm)
+        total += 1
+        for i in range(lastvar,1,-1):
+            if len(spoly.coproduct(*list(range(i,lastvar+1)),on_coeff_gens=True).coeff_dict.keys()) == 1:
+                bongo+=1
+                print(f"{perm}")
                 break
-        print(f"{perm} {factorization} {Sx(perm).in_CEM_basis()}")
+            
+    # dct = [{} for i in range(n-1)]
+
+    # for perm in perms:
+    #     for i in range(1,n):
+    #         esp = elem_sym_perms(perm, i, i)
+    #         cts = {}
+    #         for perm2, f in esp:
+    #             if f > 0:
+    #                 cts[f] = cts.get(f,[]) + [perm2]
+    #         for f in cts:
+    #             if len(cts[f]) == 1:
+    #                 dct[i-1][perm] = dct[i-1].get(perm,[]) + [cts[f][0]]
+    
+    # dct2 = [{} for i in range(n-1)]
+    # for i in range(len(dct)):
+    #     for perm in dct[i]:
+    #         for perm1 in dct[i][perm]:
+    #             dct2[i][perm1] = perm
+
+    # for perm in perms:
+    #     perm0 = perm
+    #     factorization = []
+    #     while perm0 != Permutation([]):
+    #         found = False
+    #         for i in range(len(dct2)):
+    #             if perm0 in dct2[i]:
+    #                 perm1 = dct2[i][perm0]
+    #                 factorization += [(perm0.inv-perm1.inv, i+1)]
+    #                 found = True
+    #                 perm0 = perm1
+    #                 break
+    #         if not found:
+    #             factorization += [perm0]
+    #             break
+    #     print(f"{perm} {factorization} {Sx(perm).in_CEM_basis()}")
+    print(f"{bongo} {total}")

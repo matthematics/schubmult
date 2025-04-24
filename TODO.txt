@@ -164,11 +164,10 @@ But schub element coercion
 
 coeff var coproduct can actually be expressed fully as products of normal double Schubs with coeffs
 
-quantum
+quantum subs
 change vars
-coercion
-coeff_genset is None won't work
+coercion order decorator
 
 speed up single var coproduct
 
-still change vars
+Make use of variable separation as a last resort to avoid linear optimization
