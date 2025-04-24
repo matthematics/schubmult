@@ -163,3 +163,8 @@ Put back schubadd? No
 But schub element coercion
 
 coeff var coproduct can actually be expressed fully as products of normal double Schubs with coeffs
+
+quantum
+change vars
+coercion
+coeff_genset is None won't work

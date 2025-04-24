@@ -412,8 +412,7 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
             # print(f"{coprod_dict=}")
             result_dict = add_perm_dict(result_dict, {k: v * v2 for k, v2 in coprod_dict.items()})
         basis = tsr.TensorAlgebraBasis(
-            DoubleSchubertAlgebraElement_basis(gens1, self.basis.coeff_genset), DoubleSchubertAlgebraElement_basis(gens2, alt_coeff_genset if alt_coeff_genset else self.basis.coeff_genset)
-        )
+            DoubleSchubertAlgebraElement_basis(gens1, self.basis.coeff_genset), DoubleSchubertAlgebraElement_basis(gens2, alt_coeff_genset if alt_coeff_genset else self.basis.coeff_genset)        )
         return basis._from_dict(result_dict)
 
     @cached_property
