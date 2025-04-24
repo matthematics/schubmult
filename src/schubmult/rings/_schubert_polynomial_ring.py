@@ -1,5 +1,6 @@
 from functools import cache, cached_property
 
+import symengine
 import sympy
 from symengine import Add, S, Symbol, SympifyError, expand, sympify
 from sympy import Basic
@@ -122,15 +123,15 @@ class BasisSchubertAlgebraElement(Expr):
         return self.basis._from_dict(res_dict2)
 
     def in_SEM_basis(self):
-        result = S.Zero
+        result = sympy.S.Zero
         for k, v in self.coeff_dict.items():
-            result += v * schubpoly_from_elems(k, self.genset, self.basis.coeff_genset, elem_func=self.basis.symbol_elem_func)
+            result += sympy.sympify(v) * schubpoly_from_elems(k, self.genset, self.basis.coeff_genset, elem_func=self.basis.symbol_elem_func)
         return result
 
     def in_CEM_basis(self):
-        result = S.Zero
+        result = sympy.S.Zero
         for k, v in self.coeff_dict.items():
-            result += v * schubpoly_classical_from_elems(k, self.genset, self.coeff_genset, elem_func=self.basis.symbol_elem_func)
+            result += sympy.sympify(v) * schubpoly_classical_from_elems(k, self.genset, self.coeff_genset, elem_func=self.basis.symbol_elem_func)
         return result
 
     def _sympystr(self, printer):
@@ -573,13 +574,24 @@ class DoubleSchubertAlgebraElement_basis(Basic):
 
     # elem syms as functions
     @property
+    def elem_sym(self):
+        class elem_sym(sympy.Function):
+            @classmethod
+            def eval(cls, *x):
+                pass
+        return elem_sym
+
+    @property
     def symbol_elem_func(self):
         def elem_func(p, k, varl1, varl2):  # noqa: ARG001
             if p == 0 and k >= 0:
                 return 1
             if p < 0 or p > k:
                 return 0
-            return sympy.Add(*[(Symbol(f"e_{p - i}_{k}") if p - i > 0 else 1) * complete_sym_poly(i, k + 1 - p, [-v for v in varl2]) for i in range(p + 1)])
+            if self.coeff_genset.label:
+                return self.elem_sym(p, k, *varl2)
+            return self.elem_sym(p, k)
+                #(Symbol(f"e_{p - i}_{k}") if p - i > 0 else 1) * complete_sym_poly(i, k + 1 - p, [-v for v in varl2]) for i in range(p + 1)])
 
         return elem_func
 
