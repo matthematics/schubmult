@@ -30,6 +30,10 @@ class QuantumDoubleSchubertAlgebraElement(spr.BasisSchubertAlgebraElement):
     def __new__(cls, _dict, basis):
         return spr.BasisSchubertAlgebraElement.__new__(cls, _dict, basis)
 
+    # def expand(self, *args, **kwargs):
+    #     # print("Frofulating bagel")
+    #     return super().expand()
+
     def subs(self, old, new):
         return self.as_classical().subs(old, new).as_quantum()
 
@@ -145,6 +149,7 @@ class PQDSchubPoly(ParabolicQuantumDoubleSchubertAlgebraElement):
 
 class QuantumDoubleSchubertAlgebraElement_basis(Basic):
     def __new__(cls, genset, coeff_genset):
+        # print(f"{genset=} {coeff_genset=}")
         return QuantumDoubleSchubertAlgebraElement_basis.__xnew_cached__(cls, genset, coeff_genset)
 
     @staticmethod
@@ -212,13 +217,16 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
 
     def in_classical_basis(self, elem):
         result = S.Zero
+        # print(f"{elem=}")
         for k, v in elem.coeff_dict.items():
             result += v * self.quantum_as_classical_schubpoly(k)
+            # print(f"{v=} {result=}")
         return result
 
     @property
     def classical_elem_func(self):
         basis = spr.DoubleSchubertAlgebraElement_basis(self.genset, self.coeff_genset)
+        # print(f"{basis=} {self=} {basis.genset=} {self.coeff_genset=} {basis.coeff_genset=}")
         q_var = yz._vars.q_var
 
         def elem_func(p, k, varl1, varl2):
@@ -236,10 +244,12 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
 
     @cache
     def quantum_as_classical_schubpoly(self, perm):
+        # print(f"{self=} {self.genset=} {self.coeff_genset=} {perm=}")
         return schubpoly_from_elems(perm, self.genset, self.coeff_genset, self.classical_elem_func)
 
     @cache
     def cached_schubpoly(self, k):
+        # print(f"pralfasank {self=}")
         return schubpoly_from_elems(k, self.genset, self.coeff_genset, elem_func=elem_sym_poly_q)
 
     @cache
@@ -294,7 +304,7 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
         else:
             # logger.debug("bagelflap")
             x = sympify(x)
-            result = yz.mult_poly_q_double({Permutation([]): 1}, x, self.coeff_genset)
+            result = yz.mult_poly_q_double({Permutation([]): 1}, x, self.genset, self.coeff_genset)
             elem = QuantumDoubleSchubertAlgebraElement(result, self)
         return elem
 
@@ -302,6 +312,7 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
 def QDSx(x, genset=GeneratingSet("y")):
     if isinstance(genset, str):
         genset = GeneratingSet(genset)
+    # print(f"{genset=}")
     return QuantumDoubleSchubertAlgebraElement_basis(GeneratingSet("x"), genset)(x)
 
 

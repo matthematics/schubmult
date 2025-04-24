@@ -277,7 +277,15 @@ class BasisSchubertAlgebraElement(Expr):
     def as_coefficients_dict(self):
         return sympy.Dict({self.basis.single_element_class(k, self.basis): sympy.sympify(v) for k, v in self.coeff_dict.items()})
 
+    def _eval_expand_basic(self, *args, **kwargs):  # noqa: ARG002
+        return self.as_polynomial()
+
+    # def _eval_expand_mul(self, *args, **kwargs):
+    #     # print(f"wogboppy {self} {args=} {kwargs=}")
+    #     return self
+
     def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
+        # print(f"Frable gaboopa {self=} {args=} {kwargs=}")
         if not deep:
             return self.basis._from_dict({k: expand(v) for k, v in self.coeff_dict.items()})
         return sympy.sympify(expand(sympify(self.as_polynomial())))
@@ -358,13 +366,18 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
                 coeff_genset = self.coeff_genset
                 if coeff_genset.index(old) != -1:
                     genset_list = [coeff_genset[i] for i in range(len(coeff_genset))]
+                    # print(f"{genset_list=}")
                     genset_list[coeff_genset.index(old)] = 0
+                    # print(f"{genset_list=}")
                     custom_genset = CustomGeneratingSet(genset_list)
+                    # print(f"{custom_genset=}")
                     new_add_dict = {k2: sympify(v2).subs(old, new) for k2, v2 in yz.schubmult_double({(): v}, k, custom_genset, coeff_genset).items()}  # remove the variable
+                    # print(f"{new_add_dict=}")
                     add_dict = {}
                     for k3, v3 in new_add_dict.items():
                         # convert back to coeff_genset
                         to_add_dict = yz.schubmult_double({(): v3}, k3, coeff_genset, custom_genset)
+                        # print(f"{to_add_dict=}")
                         add_dict = add_perm_dict(add_dict, to_add_dict)
                 else:
                     add_dict = {k: sympify(v).subs(old, new)}
@@ -520,10 +533,6 @@ class DSchubPoly(DoubleSchubertAlgebraElement):
         return printer._print_Function(sympy.Function("\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(f"{self.genset.label}; {self.coeff_genset.label}")))
 
 
-# def elem_func(p, k, vx, vy):
-#     return DSx(elem_func_q(p, k, vx, vy), "y")
-
-# A = schubpoly_from_elems([4,1,3,2], DSx.genset, poly_ring("y"),elem_func)
 
 
 # can coerce, otherwise unevaluated mul
@@ -603,6 +612,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
         result = S.Zero
         for k, v in elem.coeff_dict.items():
             result += v * self.quantum_schubpoly(k)
+            # print(f"{v=} {result=}")
         return result
 
     def in_classical_basis(self, elem):
@@ -610,6 +620,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
 
     @cache
     def quantum_schubpoly(self, perm):
+        # print(f"quantum bucket schubpoly {self=} {self.genset=} {self.coeff_genset=}")
         return schubpoly_classical_from_elems(perm, self.genset, self.coeff_genset, self.quantum_elem_func)
 
     @cache
@@ -676,6 +687,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
                     xsm,
                     ysm - p2,
                 )
+            # print(f"{res=}")
             # # # logger.debug((f"{res=}")
             return res
 
@@ -700,6 +712,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
     @cache
     def cached_schubpoly(self, k):
         # return yz.schubpoly(u)
+        # print(f"Brablesink {self.genset=} {self.coeff_genset=}")
         return schubpoly_classical_from_elems(k, self.genset, self.coeff_genset, elem_func=elem_sym_poly)
 
     def __call__(self, x):
@@ -759,33 +772,6 @@ class DoubleSchubertAlgebraElement_basis(Basic):
         return elem
 
 
-# def _do_schub_mul(a, b):
-#     A = DSx(a)
-#     B = DSx(b)
-#     return self.basis._from_dict(_mul_schub_dicts(A.coeff_dict, B.coeff_dict))
-
-
-# def _do_schub_add(a, b):
-#     A = DSx(a)
-#     B = DSx(b)
-#     return self.basis._from_dict(add_perm_dict(A.coeff_dict, B.coeff_dict))
-
-
-# def get_postprocessor(cls):
-#     if cls is Mul:
-#         return lambda expr: SchubMul(*expr.args)  # .doit()
-#     if cls is Add:
-#         return lambda expr: SchubAdd(*expr.args)  # .doit()
-#     return None
-
-
-# Basic._constructor_postprocessor_mapping[BasisSchubertAlgebraElement] = {
-#     "Mul": [get_postprocessor(Mul)],
-#     "Add": [get_postprocessor(Add)],
-# }
-
-# add.register_handlerclass((Expr, SchubAdd), SchubAdd)
-# mul.register_handlerclass((Expr, SchubMul), SchubMul)
 
 
 DoubleSchubertPolynomial = DoubleSchubertAlgebraElement

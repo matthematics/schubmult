@@ -153,6 +153,9 @@ class Permutation(Basic):
         except Exception:
             return permlist
 
+    def _sympyrepr(self, printer):  # noqa: ARG002
+        return f"Permutation({list(self._perm)})"
+
     def __radd__(self, other):
         if not isinstance(other, list):
             raise NotImplementedError

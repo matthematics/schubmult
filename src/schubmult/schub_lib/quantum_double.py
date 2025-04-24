@@ -12,7 +12,7 @@ from symengine import Add, Mul, Pow, expand, sympify
 
 import schubmult.schub_lib.double as norm_yz
 from schubmult.perm_lib import Permutation, code, inv, longest_element, medium_theta, permtrim, strict_theta, uncode
-from schubmult.poly_lib.poly_lib import call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
+from schubmult.poly_lib.poly_lib import _vars, call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.schub_lib import check_blocks, compute_vpathdicts, double_elem_sym_q, elem_sym_perms_q, elem_sym_perms_q_op, reduce_q_coeff
 from schubmult.utils.logging import get_logger
@@ -26,58 +26,17 @@ from schubmult.utils.perm_utils import (
 logger = get_logger(__name__)
 
 
-class _gvars:
-    @cached_property
-    def n(self):
-        return 100
-
-    # @cached_property
-    # def fvar(self):
-    #     return 100
-
-    @cached_property
-    def var1(self):
-        return GeneratingSet("x")
-
-    @cached_property
-    def var2(self):
-        return GeneratingSet("y")
-
-    @cached_property
-    def var3(self):
-        return GeneratingSet("z")
-
-    @cached_property
-    def q_var(self):
-        return GeneratingSet("q")
-
-    @cached_property
-    def var_r(self):
-        return GeneratingSet("r")
-
-    @cached_property
-    def var_g1(self):
-        return GeneratingSet("y")
-
-    @cached_property
-    def var_g2(self):
-        return GeneratingSet("z")
-
-
-_vars = _gvars()
-
-
-# def E(p, k, varl=_vars.var2[1:], var_x=_vars.var1):
+# def E(p, k, varl=None, var_x=None):
 #     return elem_sym_poly_q(p, k, var_x[1:], varl)
 
 
-def single_variable(coeff_dict, varnum, var2=_vars.var2, q_var=_vars.q_var):
+def single_variable(coeff_dict, varnum, var_y=None, q_var=_vars.q_var):
     ret = {}
     for u in coeff_dict:
         if varnum - 1 < len(u):
-            ret[u] = ret.get(u, 0) + var2[u[varnum - 1]] * coeff_dict[u]
+            ret[u] = ret.get(u, 0) + var_y[u[varnum - 1]] * coeff_dict[u]
         else:
-            ret[u] = ret.get(u, 0) + var2[varnum] * coeff_dict[u]
+            ret[u] = ret.get(u, 0) + var_y[varnum] * coeff_dict[u]
         new_perms_k = elem_sym_perms_q(u, 1, varnum, q_var)
         new_perms_km1 = []
         if varnum > 1:
@@ -91,7 +50,7 @@ def single_variable(coeff_dict, varnum, var2=_vars.var2, q_var=_vars.q_var):
     return ret
 
 
-def mult_poly_q_double(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var):
+def mult_poly_q_double(coeff_dict, poly, var_x=None, var_y=None, q_var=_vars.q_var):
     if not isinstance(var_x, GeneratingSet_base):
         var_x = CustomGeneratingSet(var_x)
     # logger.debug(f"{poly=} {list(var_x)=}")
@@ -121,7 +80,7 @@ def mult_poly_q_double(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2, q_v
     return ret
 
 
-def nil_hecke(perm_dict, v, n, var2=_vars.var2, var3=_vars.var3):
+def nil_hecke(perm_dict, v, n, var2=None, var3=None):
     if v == Permutation([1, 2]):
         return perm_dict
     th = strict_theta(~v)
@@ -469,7 +428,7 @@ def elem_sym_func_q_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, q_var=_v
     return elem_sym_poly_q(newk - vdiff, newk, yvars, zvars, q_var)
 
 
-def schubpoly_quantum(v, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var, coeff=1):
+def schubpoly_quantum(v, var_x=None, var_y=None, q_var=_vars.q_var, coeff=1):
     th = strict_theta(~v)
     mu = uncode(th)
     vmu = v * mu  # permtrim(mulperm([*v], mu))
@@ -527,7 +486,7 @@ def schubpoly_quantum(v, var_x=_vars.var1, var_y=_vars.var2, q_var=_vars.q_var, 
     return ret_dict[Permutation([1, 2])]
 
 
-def schubmult_q_double(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
+def schubmult_q_double(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var):
     if v == Permutation([1, 2]):
         return perm_dict
     th = strict_theta(~v)
@@ -588,7 +547,7 @@ def schubmult_q_double(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_va
     return ret_dict
 
 
-def schubmult_q_double_fast(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
+def schubmult_q_double_fast(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var):
     if v == Permutation([1, 2]):
         return perm_dict
     th = medium_theta(~v)
@@ -718,7 +677,7 @@ def schubmult_q_double_fast(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_va
     return ret_dict
 
 
-# def schubmult_q_double_fast(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
+# def schubmult_q_double_fast(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var):
 #     if v == (1, 2):
 #         return perm_dict
 #     th = medium_theta(inverse(v))
@@ -848,7 +807,7 @@ def schubmult_q_double_fast(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_va
 #     return ret_dict
 
 
-def div_diff(v, w, var2=_vars.var2, var3=_vars.var3):
+def div_diff(v, w, var2=None, var3=None):
     coeff_dict = {v: 1}
     coeff_dict = norm_yz.schubmult_down(coeff_dict, w, var2, var3)
     return coeff_dict.get(Permutation([1, 2]), 0)

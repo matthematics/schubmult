@@ -176,3 +176,4 @@ order of operations. Avoid returning unevaluated Add if possible
 
 basis object for change_vars
 need SchubAdd, don't try to combine unless doit
+Behavior of expand? symengine?

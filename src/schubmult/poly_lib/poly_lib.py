@@ -42,11 +42,11 @@ class _gvars:
 
     @cached_property
     def var_g1(self):
-        return vv.GeneratingSet("y")
+        return vv.GeneratingSet("glabba")
 
     @cached_property
     def var_g2(self):
-        return vv.GeneratingSet("z")
+        return vv.GeneratingSet("noofka")
 
     @cached_property
     def q_var(self):
@@ -181,6 +181,7 @@ def complete_sym_poly(p, k, vrs):
 
 
 def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0):
+    # print("pragalbatz")
     if p > k:
         return zero
     if p == 0:
@@ -269,8 +270,9 @@ def xreplace_genvars(poly, vars1, vars2):
     subs_dict = {}
     for s in sympify(poly).free_symbols:
         if _vars.var_g1.index(s) != -1:
-            subs_dict[s] = vars1[_vars.var_g1.index(s)]
+            subs_dict[s] = sympify(vars1[_vars.var_g1.index(s)])
         elif _vars.var_g2.index(s) != -1:
-            subs_dict[s] = vars2[_vars.var_g2.index(s)]
+            subs_dict[s] = sympify(vars2[_vars.var_g2.index(s)])
+    # print(f"Prefnool {poly=} {subs_dict=}")
     return sympify(poly).xreplace(subs_dict)
     # print(f"{poly2=} {poly2.free_symbols=}")

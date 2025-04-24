@@ -21,7 +21,7 @@ from schubmult.perm_lib import (
     theta,
     uncode,
 )
-from schubmult.poly_lib.poly_lib import efficient_subs, elem_sym_func, elem_sym_poly, expand
+from schubmult.poly_lib.poly_lib import _vars, efficient_subs, elem_sym_func, elem_sym_poly, expand
 from schubmult.poly_lib.schub_poly import schubpoly
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.schub_lib import (
@@ -46,42 +46,7 @@ zero = sympify(0)
 logger = get_logger(__name__)
 
 
-class _gvars:
-    @cached_property
-    def n(self):
-        return 100
 
-    # @cached_property
-    # def fvar(self):
-    #     return 100
-
-    @cached_property
-    def var1(self):
-        return GeneratingSet("x")
-
-    @cached_property
-    def var2(self):
-        return GeneratingSet("y")
-
-    @cached_property
-    def var3(self):
-        return GeneratingSet("z")
-
-    @cached_property
-    def var_r(self):
-        return GeneratingSet("r")
-
-    @cached_property
-    def var_g1(self):
-        return GeneratingSet("y")
-
-    @cached_property
-    def var_g2(self):
-        return GeneratingSet("z")
-
-
-
-_vars = _gvars()
 
 
 def count_sorted(mn, tp):
@@ -93,7 +58,7 @@ def count_sorted(mn, tp):
     return ct
 
 
-# def E(p, k, varl=_vars.var2[1:]):
+# def E(p, k, varl=None):
 #     return elem_sym_poly(p, k, _vars.var1[1:], varl)
 
 
@@ -117,7 +82,7 @@ def single_variable(coeff_dict, varnum, var2=None):
     return ret
 
 
-def single_variable_down(coeff_dict, varnum, var2=_vars.var2):
+def single_variable_down(coeff_dict, varnum, var2=None):
     ret = {}
     for u in coeff_dict:
         if varnum - 1 < len(u):
@@ -137,14 +102,14 @@ def single_variable_down(coeff_dict, varnum, var2=_vars.var2):
     return ret
 
 
-def mult_poly_double(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2):
+def mult_poly_double(coeff_dict, poly, var_x=None, var_y=None):
     # try:
     #     poly = sympify(poly)
     # except SympifyError:
     #     poly = sympy.sympify(poly)
     #     var_x = tuple([sympy.sympify(v) for v in var_x])
     #     var_y = tuple([sympy.sympify(v) for v in var_y])
-    #     return mult_poly_sympy(coeff_dict, poly, var_x=_vars.var1, var_y=_vars.var2)
+    #     return mult_poly_sympy(coeff_dict, poly, var_x=None, var_y=None)
     if not isinstance(var_x, GeneratingSet_base):
         var_x = CustomGeneratingSet(var_x)
     if var_x.index(poly) != -1:
@@ -335,10 +300,10 @@ def schubmult_double_pair_generic(perm1, perm2):
 
 
 def schubmult_double(perm_dict, v, var2=None, var3=None):
-    if isinstance(var2, str):
-        var2 = GeneratingSet(var2)
-    if isinstance(var3, str):
-        var3 = GeneratingSet(var3)
+    # if isinstance(var2, str):
+    #     var2 = GeneratingSet(var2)
+    # if isinstance(var3, str):
+    #     var3 = GeneratingSet(var3)
     perm_dict = {Permutation(k): v for k, v in perm_dict.items()}
     v = Permutation(v)
     vn1 = ~v
@@ -453,7 +418,7 @@ def schubmult_down(perm_dict, v, var2=None, var3=None):
     return ret_dict
 
 
-def poly_to_vec(poly, vec0=None, var3=_vars.var3):
+def poly_to_vec(poly, vec0=None, var3=None):
     poly = expand(sympify(poly).xreplace({var3[1]: 0}))
 
     dc = poly.as_coefficients_dict()
@@ -477,12 +442,12 @@ def poly_to_vec(poly, vec0=None, var3=_vars.var3):
     return vec
 
 
-def shiftsub(pol, var2=_vars.var2):
+def shiftsub(pol, var2=None):
     subs_dict = {var2[i]: var2[i + 1] for i in range(99)}
     return efficient_subs(sympify(pol), subs_dict)
 
 
-def shiftsubz(pol, var3=_vars.var3):
+def shiftsubz(pol, var3=None):
     subs_dict = {var3[i]: var3[i + 1] for i in range(99)}
     return efficient_subs(sympify(pol), subs_dict)
 
@@ -959,7 +924,7 @@ def compute_positive_rep(val, var2=GeneratingSet("y"), var3=GeneratingSet("z"), 
 
 def posify_generic_partial(val, u2, v2, w2):
     val2 = val
-    val = posify(val, u2, v2, w2, var2=_vars.var_g1, var3=_vars.var_g2, msg=True, do_pos_neg=False, sign_only=False, optimize=False)
+    val = posify(val, u2, v2, w2, var2=None, var3=None, msg=True, do_pos_neg=False, sign_only=False, optimize=False)
     if expand(val - val2) != 0:
         # logger.debug("Warning, failed on a case")
         raise Exception(f"{val=} {val2=} {u2=} {v2=} {w2=}")
@@ -1447,7 +1412,7 @@ def posify(
     # return val
 
 
-def schub_coprod_double(mperm, indices, var2=_vars.var2, var3=_vars.var3):
+def schub_coprod_double(mperm, indices, var2=None, var3=None):
     indices = sorted(indices)
     subs_dict_coprod = {}
     k = len(indices)

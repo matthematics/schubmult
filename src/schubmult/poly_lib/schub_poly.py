@@ -71,6 +71,7 @@ def schubpoly_from_elems(v, var_x=None, var_y=None, elem_func=None, mumu=None):
     return vpathsums.get(vmu, 0)
 
 def schubpoly_classical_from_elems(v, var_x=None, var_y=None, elem_func=None):
+    # print(f"{v=} {var_x=} {var_y=}")
     th = pl.theta(~pl.Permutation(v))
     mu = pl.uncode(th)
     vmu = pl.Permutation(v) * mu  # permtrim(mulperm([*v], mu))
@@ -108,7 +109,8 @@ def schubpoly_classical_from_elems(v, var_x=None, var_y=None, elem_func=None):
     return vpathsums.get(vmu, 0)
 
 
-def schubpoly(v, var2=GeneratingSet("y"), var3=GeneratingSet("z"), start_var=1):
+def schubpoly(v, var2=None, var3=None, start_var=1):
+    # print("prantix")
     n = 0
     for j in range(len(v) - 2, -1, -1):
         if v[j] > v[j + 1]:
