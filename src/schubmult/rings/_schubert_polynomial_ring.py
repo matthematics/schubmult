@@ -572,14 +572,16 @@ class DoubleSchubertAlgebraElement_basis(Basic):
     # elem syms as functions
     @property
     def elem_sym(self):
+        genset = self.genset
         class elem_sym(sympy.Function):
             @classmethod
             def eval(cls, *x):
                 pass
 
-            # probably just want to make it an Expr
-            # def doit(**_):
-            #     return elem_sym_poly(p, k, self.genset[1:], utils.poly_ring(0))
+            def _eval_expand_func(self, **_):
+                if len(self.args) == 2:
+                    return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], utils.poly_ring(0))
+                return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], self.args[2:])
 
         return elem_sym
 
