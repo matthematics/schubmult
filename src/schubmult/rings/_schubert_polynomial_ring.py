@@ -205,13 +205,7 @@ class BasisSchubertAlgebraElement(Expr):
             if type(self.basis) is type(other.basis):
                 return self.basis._from_dict(_mul_schub_dicts(self.coeff_dict, other.coeff_dict, self.basis, other.basis))
             return NotImplemented
-        if isinstance(other, sympy.Add) or isinstance(other, symengine.Add):
-            vals = [self * arg for arg in other.args]
-            result = vals[0]
-            for i in range(1, len(vals)):
-                result += vals[i]
-            return result
-        if isinstance(other, symengine.Basic) or isinstance(other, sympy.Basic):
+        if isinstance(other, symengine.Basic) and not any(x in self.basis.genset for x in other.free_symbols):
             return self.basis._from_dict({k: other * v for k, v in self.coeff_dict.items()})
         return self * self.basis(other)
 
@@ -220,13 +214,7 @@ class BasisSchubertAlgebraElement(Expr):
             if type(self.basis) is type(other.basis):
                 return other.basis._from_dict(_mul_schub_dicts(other.coeff_dict, self.coeff_dict, other.basis, self.basis))
             return NotImplemented
-        if isinstance(other, sympy.Add) or isinstance(other, symengine.Add):
-            vals = [arg * self for arg in other.args]
-            result = vals[0]
-            for i in range(1, len(vals)):
-                result += vals[i]
-            return result
-        if isinstance(other, symengine.Basic) or isinstance(other, sympy.Basic):
+        if isinstance(other, symengine.Basic) and not any(x in self.basis.genset for x in other.free_symbols):
             return self.basis._from_dict({k: v * other for k, v in self.coeff_dict.items()})
         return self.basis(other) * self
 
@@ -386,15 +374,18 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
                 ret += toadd * val * new_basis(new_perm, cv)
         return ret
 
-    def coproduct(self, *indices, alt_coeff_genset=None, gname1=None, gname2=None):
+    def coproduct(self, *indices, alt_coeff_genset=None, on_coeff_gens=False, gname1=None, gname2=None):
         result_dict = {}
+        genset = self.genset
+        if on_coeff_gens:
+            genset = self.coeff_genset
         # if not alt_coeff_genset:
         #     alt_coeff_genset = self.coeff_genset
         if gname1 is None:
-            gname1 = f"{self.genset.label}_A"
+            gname1 = f"{genset.label}_A"
         if gname2 is None:
-            gname2 = f"{self.genset.label}_B"
-        gens2 = MaskedGeneratingSet(self.genset, indices)
+            gname2 = f"{genset.label}_B"
+        gens2 = MaskedGeneratingSet(genset, indices)
         # logger.debug(f"{indices=}")
         gens1 = gens2.complement()
         # logger.debug(f"{gens1.index_mask=}")
@@ -408,11 +399,23 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
             if isinstance(self.basis, SchubertAlgebraElement_basis) and not alt_coeff_genset:
                 coprod_dict = py.schub_coprod_py(key, indices)
             else:
-                coprod_dict = yz.schub_coprod_double(key, indices, self.basis.coeff_genset, alt_coeff_genset if alt_coeff_genset else self.basis.coeff_genset)
+                if on_coeff_gens:
+                    coprod_dict = yz.schub_coprod_double(~key, indices, self.basis.genset, alt_coeff_genset if alt_coeff_genset else self.basis.genset)
+                else:
+                    coprod_dict = yz.schub_coprod_double(key, indices, self.basis.coeff_genset, alt_coeff_genset if alt_coeff_genset else self.basis.coeff_genset)
             # print(f"{coprod_dict=}")
-            result_dict = add_perm_dict(result_dict, {k: v * v2 for k, v2 in coprod_dict.items()})
-        basis = tsr.TensorAlgebraBasis(
-            DoubleSchubertAlgebraElement_basis(gens1, self.basis.coeff_genset), DoubleSchubertAlgebraElement_basis(gens2, alt_coeff_genset if alt_coeff_genset else self.basis.coeff_genset)        )
+            if on_coeff_gens:
+                result_dict = add_perm_dict(result_dict, {(~k1, ~k2): v * v2 for (k1, k2), v2 in coprod_dict.items()})
+            else:
+                result_dict = add_perm_dict(result_dict, {k: v * v2 for k, v2 in coprod_dict.items()})
+        if on_coeff_gens:
+            basis = tsr.TensorAlgebraBasis(
+                DoubleSchubertAlgebraElement_basis(self.basis.genset, gens1), DoubleSchubertAlgebraElement_basis(alt_coeff_genset if alt_coeff_genset else self.basis.genset, gens2),
+            )
+        else:
+            basis = tsr.TensorAlgebraBasis(
+                DoubleSchubertAlgebraElement_basis(gens1, self.basis.coeff_genset), DoubleSchubertAlgebraElement_basis(gens2, alt_coeff_genset if alt_coeff_genset else self.basis.coeff_genset),
+            )
         return basis._from_dict(result_dict)
 
     @cached_property
