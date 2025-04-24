@@ -43,7 +43,7 @@ def test_coproduct():
     from sympy import expand
     perm = [3, 1, 5, 2, 6, 7, 4]
     indices = [2, 4, 6]
-    assert expand(DSx(perm).coproduct(indices).expand() - DSx(perm).expand()) == 0
+    assert expand(DSx(perm).coproduct(*indices).expand() - DSx(perm).expand()) == 0
 
 def test_subs():
     from sympy import expand

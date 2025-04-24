@@ -189,8 +189,9 @@ class QuantumDoubleSchubertAlgebraElement_basis(Basic):
             result += v * self.quantum_as_classical_schubpoly(k)
         return result
 
+    @property
     def classical_elem_func(self):
-        basis = spr.DoubleSchubertAlgebraElement_basis(self.genset)
+        basis = spr.DoubleSchubertAlgebraElement_basis(self.genset, self.coeff_genset)
         q_var = yz._vars.q_var
 
         def elem_func(p, k, varl1, varl2):
@@ -289,7 +290,7 @@ class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_ba
 
     @property
     def coeff_genset(self):
-        return None
+        return utils.poly_ring(utils.NoneVar)
 
     @cache
     def cached_product(self, u, v, basis2):
@@ -701,13 +702,13 @@ QSx = QuantumSchubertAlgebraElement_basis(GeneratingSet("x"))
 QuantumDoubleSchubertPolynomial = QuantumDoubleSchubertAlgebraElement
 
 
-def make_parabolic_quantum_basis(index_comp):
-    return ParabolicQuantumDoubleSchubertAlgebraElement_basis(GeneratingSet("x"), index_comp)
+def make_parabolic_quantum_basis(index_comp, coeff_genset):
+    return ParabolicQuantumDoubleSchubertAlgebraElement_basis(GeneratingSet("x"), coeff_genset, index_comp)
 
 
 @cache
-def QPDSx(*args):
-    return make_parabolic_quantum_basis(args)
+def QPDSx(*args, coeff_genset=GeneratingSet("y")):
+    return make_parabolic_quantum_basis(args,utils.poly_ring(coeff_genset) if isinstance(coeff_genset, str) else coeff_genset)
 
 
 class ParabolicQuantumSchubertAlgebraElement_basis(ParabolicQuantumDoubleSchubertAlgebraElement_basis):
@@ -719,7 +720,7 @@ class ParabolicQuantumSchubertAlgebraElement_basis(ParabolicQuantumDoubleSchuber
 
     @property
     def coeff_genset(self):
-        return None
+        return utils.poly_ring(utils.NoneVar)
 
     @cache
     def cached_product(self, u, v, basis2):

@@ -168,3 +168,7 @@ quantum
 change vars
 coercion
 coeff_genset is None won't work
+
+speed up single var coproduct
+
+still change vars

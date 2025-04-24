@@ -832,7 +832,7 @@ class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
     #     return DoubleSchubertAlgebraElement({(k, utils.NoneVar): v for k, v in _dict.items()}, self)
     @property
     def coeff_genset(self):
-        return None
+        return utils.poly_ring(utils.NoneVar)
 
     @cache
     def cached_product(self, u, v, basis2):

@@ -17,10 +17,10 @@ def test_parabolic():
     from symengine import S, expand
     #QPDSx = make_parabolic_quantum_basis([2, 3])
     A = QPDSx(2,3)(uncode([1,2]))
-    B = QPDSx(2,3)(uncode([1,3]), "z")
+    B = QPDSx(2,3, coeff_genset = "z")(uncode([1,3]))
     C = A*B
     assert expand(C.as_polynomial()-A.as_polynomial()*B.as_polynomial()) == S.Zero
-    assert expand(C.as_polynomial()-QPDSx(2,3)(C.as_polynomial(), "y").as_polynomial()) == S.Zero
+    assert expand(C.as_polynomial()-QPDSx(2,3)(C.as_polynomial()).as_polynomial()) == S.Zero
 
 
 def test_subs():
