@@ -168,3 +168,6 @@ need SchubAdd, don't try to combine unless doit
 
 
 elem_funcs as Functions
+
+Seek out terms to combine with?
+Yes we need SchubAdd SchubMul

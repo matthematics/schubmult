@@ -77,8 +77,6 @@ class BasisSchubertAlgebraElement(Expr):
         obj._basis = basis
         return obj
 
-    # 217 per night
-    # 569 per night
     @property
     def args(self):
         return (sympy.Dict(self._dict), self._basis)
@@ -573,7 +571,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
     @property
     def elem_sym(self):
         genset = self.genset
-        class elem_sym(sympy.Function):
+        class esf(sympy.Function):
             @classmethod
             def eval(cls, *x):
                 pass
@@ -583,7 +581,7 @@ class DoubleSchubertAlgebraElement_basis(Basic):
                     return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], utils.poly_ring(0))
                 return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], self.args[2:])
 
-        return elem_sym
+        return esf
 
     @property
     def symbol_elem_func(self):
