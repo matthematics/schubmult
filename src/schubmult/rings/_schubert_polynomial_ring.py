@@ -113,7 +113,6 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         if isinstance(other, BaseSchubertElement):
             if self.ring == other.ring:
                 return self.ring.add(self, other)
-            # print("Boingle")
             return other.__radd__(self)
         try:
             other = self.ring.domain_new(other)
@@ -985,12 +984,13 @@ class TensorRing(BaseSchubertRing):
             for r in self._rings:
                 if isinstance(r, TensorRing):
                     unpacked = True
-                    for r in r.rings:
-                        if r not in new_rings:
-                            new_rings += [r]
+                    for r2 in r.rings:
+                        if r2 not in new_rings:
+                            new_rings += [r2]
                 else:
                     if r not in new_rings:
                         new_rings += [r]
+            self._rings = new_rings
         self._rings = tuple(new_rings)
         genset = set()
         for r in self._rings:
@@ -1068,11 +1068,14 @@ class TensorRing(BaseSchubertRing):
         return TensorBasisElement(k, self)
 
     def from_comp_ring(self, t):
-        ind = self.rings.index(t.ring)
         dct = {}
         for k, v in t.items():
             new_k = list(self.zero_monom)
-            new_k[ind] = k
+            if isinstance(t.ring, TensorRing):
+                for i in range(len(t.ring.rings)):
+                    new_k[self.rings.index(t.ring.rings[i])] = k[i]
+            else:
+                new_k[self.rings.index(t.ring)] = k
             dct[tuple(new_k)] = v
         return self.from_dict(dct)
 

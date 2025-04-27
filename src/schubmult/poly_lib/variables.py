@@ -24,7 +24,7 @@ class GeneratingSet_base(Basic):
 
     def __len__(self):
         return NotImplemented
-
+    
     @property
     def label(self):
         return None
@@ -95,8 +95,8 @@ class GeneratingSet(GeneratingSet_base):
     def __iter__(self):
         yield from [self[i] for i in range(len(self))]
 
-    # def __eq__(self, other):
-    #     return isinstance(other, GeneratingSet) and self.label == other.label
+    def __eq__(self, other):
+        return isinstance(other, GeneratingSet) and self.label == other.label
 
 
 class MaskedGeneratingSet(GeneratingSet_base):
@@ -145,10 +145,6 @@ class MaskedGeneratingSet(GeneratingSet_base):
     def complement(self):
         return MaskedGeneratingSet(self.base_genset, [i for i in range(1, len(self.base_genset)) if i not in set(self.index_mask)])
 
-    @property
-    def base_genset(self):
-        return self.args[0]
-
     def __call__(self, index):
         """1-indexed"""
         return self[index - 1]
@@ -171,6 +167,9 @@ class MaskedGeneratingSet(GeneratingSet_base):
 
     def __len__(self):
         return len(self.base_genset) - len(self.index_mask)
+
+    def __eq__(self, other):
+        return type(self) is type(other) and other._symbols_arr == self._symbols_arr and other._label == self._label and other._mask == self._mask
 
 
 class CustomGeneratingSet(GeneratingSet_base):
@@ -207,3 +206,6 @@ class CustomGeneratingSet(GeneratingSet_base):
 
     def __len__(self):
         return len(self.args[0])
+    
+    def __eq__(self, other):
+        return type(self) is type(other) and other._symbols_arr == self._symbols_arr
