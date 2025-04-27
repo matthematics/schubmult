@@ -51,6 +51,7 @@ def _mul_schub_dicts(dict1, dict2, basis1, basis2, best_effort_positive=True):
 
 class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     _op_priority = 1e200
+    precedence = 40
 
     def parent(self):
         return self.ring
@@ -476,6 +477,7 @@ class DSchubPoly(AbstractSchubPoly):
 
 
 class BaseSchubertRing(Ring, CompositeDomain):
+
     def __str__(self):
         return self.__class__.__name__
 
@@ -912,7 +914,12 @@ class TensorBasisElement(AbstractSchubPoly):
 
     @staticmethod
     def __xnew__(_class, k, basis):
-        return AbstractSchubPoly.__new__(_class, k, basis)
+        obj = AbstractSchubPoly.__new__(_class, k, basis)
+        if not basis.is_implicit:
+            obj.precedence = 50
+        else:
+            obj.precedence = 1000
+        return obj
 
     @staticmethod
     @cache
@@ -930,7 +937,7 @@ class TensorBasisElement(AbstractSchubPoly):
                     return printer._print(self.ring.rings[i].printing_term(self._key[i]))
             # print(f"This shouldn't happen {self._key=}")
             # return printer._print_Mul(sympy.Mul(self._elem1, self._elem2))
-        return f"{printer._print(self._elem1)}{self._tensor_symbol}{printer._print(self._elem2)}"
+        return self.ring.tensor_symbol.join([printer._print(self.ring.rings[i].printing_term(self._key[i])) for i in range(len(self._key))])
 
 
 class TensorRingElement(BaseSchubertElement):

@@ -132,6 +132,10 @@ class MaskedGeneratingSet(GeneratingSet_base):
         return obj
 
     @property
+    def base_genset(self):
+        return self.args[0]
+    
+    @property
     def label(self):
         return str(self._label)
 
@@ -165,11 +169,14 @@ class MaskedGeneratingSet(GeneratingSet_base):
         except SympifyError:
             return -1
 
+    def __hash__(self):
+        return hash((self.base_genset, self.index_mask))
+
     def __len__(self):
         return len(self.base_genset) - len(self.index_mask)
 
     def __eq__(self, other):
-        return type(self) is type(other) and other._symbols_arr == self._symbols_arr and other._label == self._label and other._mask == self._mask
+        return type(self) is type(other) and other.base_genset == self.base_genset and other.index_mask == self.index_mask
 
 
 class CustomGeneratingSet(GeneratingSet_base):
