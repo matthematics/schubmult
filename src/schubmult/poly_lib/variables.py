@@ -24,7 +24,7 @@ class GeneratingSet_base(Basic):
 
     def __len__(self):
         return NotImplemented
-    
+
     @property
     def label(self):
         return None
@@ -134,7 +134,7 @@ class MaskedGeneratingSet(GeneratingSet_base):
     @property
     def base_genset(self):
         return self.args[0]
-    
+
     @property
     def label(self):
         return str(self._label)
@@ -213,6 +213,6 @@ class CustomGeneratingSet(GeneratingSet_base):
 
     def __len__(self):
         return len(self.args[0])
-    
+
     def __eq__(self, other):
         return type(self) is type(other) and other._symbols_arr == self._symbols_arr
