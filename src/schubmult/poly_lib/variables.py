@@ -191,7 +191,7 @@ class CustomGeneratingSet(GeneratingSet_base):
     @staticmethod
     def __xnew__(_class, gens):
         obj = GeneratingSet_base.__new__(_class, Tuple(*gens))
-        obj._symbols_arr = [sympify(gens[i]) for i in range(len(gens))]
+        obj._symbols_arr = tuple([sympify(gens[i]) for i in range(len(gens))])
         obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         return obj
 
@@ -214,5 +214,8 @@ class CustomGeneratingSet(GeneratingSet_base):
     def __len__(self):
         return len(self.args[0])
 
+    def __hash__(self):
+        return hash(self._symbols_arr)
+    
     def __eq__(self, other):
         return type(self) is type(other) and other._symbols_arr == self._symbols_arr
