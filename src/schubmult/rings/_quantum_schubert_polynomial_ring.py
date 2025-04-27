@@ -244,7 +244,7 @@ class QuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebraRing):
         result = yz.mult_poly_q_double({Permutation([]): 1}, x, self.genset, self.coeff_genset)
         return self.from_dict(result)
 
-    def __call__(self, x):
+    def new(self, x):
         genset = self.genset
         if not genset:
             genset = self.genset
@@ -304,7 +304,7 @@ class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_ba
         result = py.mult_poly_q({Permutation([]): 1}, x, self.genset)
         return self.from_dict(result)
 
-    def __call__(self, x):
+    def new(self, x):
         genset = self.genset
         if not isinstance(genset, GeneratingSet_base):
             raise TypeError
@@ -590,7 +590,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebr
     def mult_poly_double(self):
         return yz.mult_poly_q_double
 
-    def __call__(self, x):
+    def new(self, x):
         genset = self.genset
         if not genset:
             genset = self.genset
@@ -676,7 +676,7 @@ class ParabolicQuantumSchubertAlgebraElement_basis(ParabolicQuantumDoubleSchuber
     def cached_positive_product(self, u, v, basis2):
         return self.cached_product(u, v, basis2)
 
-    def __call__(self, x):
+    def new(self, x):
         genset = self.genset
         if not genset:
             genset = self.genset

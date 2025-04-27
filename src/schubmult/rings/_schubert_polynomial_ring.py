@@ -113,54 +113,70 @@ class BasisSchubertAlgebraElement(DomainElement, DefaultPrinting, dict):
         if isinstance(other, BasisSchubertAlgebraElement):
             if self.ring == other.ring:
                 return self.ring.add(self, other)
+            return other.__radd__(self)
         try:
             other = self.ring.domain_new(other)
-        except CoercionFailed:
-            return NotImplemented
-        else:
             other = self.ring.from_dict({Permutation([]): other})
             return self.ring.add(self, other)
+        except CoercionFailed:
+            pass
+        try:
+            new_other = self.ring(other)
+            return self.__add_(new_other)
+        except CoercionFailed:
+            return other.__radd__(self)
 
     def __sympy__(self):
         return self.ring.to_sympy(self)
 
     def __radd__(self, other):
         if isinstance(other, BasisSchubertAlgebraElement):
-            new_other = self.ring._coerce_add(other)
-            if new_other:
-                return self.ring.add(other, self)
+            if self.ring == other.ring:
+                return self.ring.add(self, other)
         try:
             other = self.ring.domain_new(other)
-        except CoercionFailed:
-            return NotImplemented
-        else:
             other = self.ring.from_dict({Permutation([]): other})
             return self.ring.add(other, self)
+        except CoercionFailed:
+            pass
+        try:
+            new_other = self.ring(other)
+            return new_other.__add_(self)
+        except CoercionFailed:
+            return NotImplemented
 
     def __sub__(self, other):
         if isinstance(other, BasisSchubertAlgebraElement):
             if self.ring == other.ring:
                 return self.ring.sub(self, other)
+            return other.__rsub__(self)
         try:
             other = self.ring.domain_new(other)
-        except CoercionFailed:
-            return NotImplemented
-        else:
             other = self.ring.from_dict({Permutation([]): other})
-            return self.ring.sub(self, other)
+            return self.ring.sub(other, self)
+        except CoercionFailed:
+            pass
+        try:
+            new_other = self.ring(other)
+            return self.__sub__(new_other)
+        except CoercionFailed:
+            return other.__rsub__(self)
 
     def __rsub__(self, other):
         if isinstance(other, BasisSchubertAlgebraElement):
-            new_other = self.ring._coerce_add(other)
-            if new_other:
-                return self.ring.from_dict(add_perm_dict(other, {k: -v for k, v in new_other.items()}))
+            if self.ring == other.ring:
+                return self.ring.sub(other, self)
         try:
             other = self.ring.domain_new(other)
+            other = self.ring.from_dict({Permutation([]): other})
+            return self.ring.sub(self, other)
+        except CoercionFailed:
+            pass
+        try:
+            new_other = self.ring(other)
+            return new_other.__sub_(self)
         except CoercionFailed:
             return NotImplemented
-        else:
-            other = self.ring.from_dict({Permutation([]): other})
-            return self.ring.sub(other, self)
 
     def __neg__(self):
         return self.ring.neg(self)
@@ -169,29 +185,36 @@ class BasisSchubertAlgebraElement(DomainElement, DefaultPrinting, dict):
         if isinstance(other, BasisSchubertAlgebraElement):
             if isinstance(other.ring, type(self.ring)):
                 return self.ring.from_dict(_mul_schub_dicts(self, other, self.ring, other.ring))
-            return other.__rmul__(self)
-        try:
-            new_other = self.ring(other)
-            return self.__mul__(new_other)
-        except Exception:
-            return other.__rmul__(self)
-
-    def __rmul__(self, other):
-        ring = self.ring
-        if isinstance(other, BasisSchubertAlgebraElement):
             new_other = self.ring._coerce_mul(other)
             if new_other:
                 return self.ring.from_dict(_mul_schub_dicts(self, new_other, self.ring, new_other.ring))
+            return other.__rmul__(self)
+        try:
+            other = self.ring.domain_new(other)
+            return self.ring.from_dict({k: sympify(other) * v for k, v in self.items()})
+        except CoercionFailed:
+            pass
+        try:
+            new_other = self.ring(other)
+            return self.__mul__(new_other)
+        except CoercionFailed:
+            return other.__rmul__(self)
+
+    def __rmul__(self, other):
+        if isinstance(other, BasisSchubertAlgebraElement):
+            new_other = self.ring._coerce_mul(other)
+            if new_other:
+                return self.ring.from_dict(_mul_schub_dicts(new_other, self, new_other.ring, self.ring))
+        try:
+            other = self.ring.domain_new(other)
+            return self.ring.from_dict({k: sympify(other) * v for k, v in self.items()})
+        except CoercionFailed:
+            pass
         try:
             new_other = self.ring(other)
             return new_other.__mul__(self)
-        except Exception:
-            pass
-        try:
-            other = ring.domain_new(other)
         except CoercionFailed:
             return NotImplemented
-        return self.ring.from_dict({k: other * v for k, v in self.items()})
 
     def as_coefficients_dict(self):
         return sympy.Dict({self.ring.printing_term(k, self.ring): sympy.sympify(v) for k, v in self.items()})
@@ -477,6 +500,8 @@ class BasisSchubertAlgebraRing(Ring, CompositeDomain):
     def to_domain(self):
         return self
 
+    def new(self, x): ...
+
     def printing_term(self, k): ...
 
     def _coerce_mul(self, other): ...
@@ -510,7 +535,9 @@ class BasisSchubertAlgebraRing(Ring, CompositeDomain):
     def elem_sym_subs(self, kk): ...
 
     def domain_new(self, element, orig_domain=None):
-        return self.domain.convert(element, orig_domain)
+        if not sympy.sympify(element).has_free(*self.symbols):
+            return self.domain.convert(element, orig_domain)
+        raise CoercionFailed(f"{element} contains an element of the set of generators")
 
     @property
     def genset(self):
@@ -712,7 +739,7 @@ class DoubleSchubertAlgebraElement_basis(BasisSchubertAlgebraRing):
         result = yz.mult_poly_double({Permutation([]): 1}, x, self.genset, self.coeff_genset)
         return self.from_dict(result)
 
-    def __call__(self, x):
+    def new(self, x):
         genset = self.genset
         if not isinstance(genset, GeneratingSet_base):
             raise TypeError
@@ -823,7 +850,7 @@ class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
         result = py.mult_poly_py({Permutation([]): 1}, x, self.genset)
         return self.from_dict(result)
 
-    def __call__(self, x):
+    def new(self, x):
         genset = self.genset
         if not genset:
             genset = self.genset
