@@ -979,13 +979,19 @@ class TensorRing(BaseSchubertRing):
     def __init__(self, *rings, tensor_symbol=" # "):
         self._rings = list(rings)
         new_rings = []
-        while len(new_rings) != len(self._rings):
+        unpacked = True
+        while unpacked:
+            unpacked = False
             for r in self._rings:
                 if isinstance(r, TensorRing):
-                    new_rings += [*r.rings]
+                    unpacked = True
+                    for r in r.rings:
+                        if r not in new_rings:
+                            new_rings += [r]
                 else:
-                    new_rings += [r]
-        self._rings = tuple(sorted(set(new_rings), key=lambda x: hash(x)))
+                    if r not in new_rings:
+                        new_rings += [r]
+        self._rings = tuple(new_rings)
         genset = set()
         for r in self._rings:
             genset.update(set(r.genset))
