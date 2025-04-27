@@ -108,7 +108,12 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         return [(self.ring.domain.to_sympy(self[k]) if k == Permutation([]) else sympy.Mul(self.ring.domain.to_sympy(self[k]), self.ring.printing_term(k))) for k in self.keys()]
 
     def as_ordered_terms(self, *_, **__):
-        return self.as_terms()
+        if len(self.keys()) == 0:
+            return [sympy.sympify(S.Zero)]
+        return [
+            (self.ring.domain.to_sympy(self[k]) if k == Permutation([]) else sympy.Mul(self.ring.domain.to_sympy(self[k]), self.ring.printing_term(k)))
+            for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))
+        ]
 
     def __add__(self, other):
         if isinstance(other, BaseSchubertElement):
@@ -123,7 +128,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             pass
         try:
             new_other = self.ring(other)
-            return self.__add_(new_other)
+            return self.__add__(new_other)
         except CoercionFailed:
             return other.__radd__(self)
 
@@ -494,7 +499,6 @@ class DSchubPoly(AbstractSchubPoly):
 
 
 class BaseSchubertRing(Ring, CompositeDomain):
-
     def __str__(self):
         return self.__class__.__name__
 
@@ -977,6 +981,14 @@ class TensorRingElement(BaseSchubertElement):
             for i in range(len(k)):
                 ret.update(self.rings.rings[i](k[i]).free_symbols)
         return ret
+
+    def as_ordered_terms(self, *_, **__):
+        if len(self.keys()) == 0:
+            return [sympy.sympify(S.Zero)]
+        return [
+            self.ring.domain.to_sympy(self[k]) if k == self.ring.zero_monom else sympy.Mul(self.ring.domain.to_sympy(self[k]), self.ring.printing_term(k))
+            for k in sorted(self.keys(), key=lambda kkt: [(kk.inv, tuple(kk)) for kk in kkt])
+        ]
 
     # @cahe
     # def _sympystr(self, printer):

@@ -4,5 +4,5 @@ PuLP>=2.7.0
 setuptools
 sortedcontainers
 symengine>=0.14.0
-sympy>=1.13.3
+sympy>=1.14.0
 numpy
