@@ -3,7 +3,6 @@ from functools import cache, cached_property
 import sympy
 from symengine import Add, S, expand, sympify
 from sympy import CoercionFailed
-from sympy.core.kind import NumberKind
 from sympy.polys.domains import EXRAW
 from sympy.polys.domains.compositedomain import CompositeDomain
 from sympy.polys.domains.domainelement import DomainElement
@@ -256,17 +255,28 @@ class BasisSchubertAlgebraElement(DomainElement, DefaultPrinting, dict):
                 return self.ring.from_dict(_mul_schub_dicts(self, other, self.ring, other.ring))
             return other.__rmul__(self)
         try:
-            other = self.ring.domain_new(other)
-        except CoercionFailed:
-            return NotImplemented
-        return self.ring.from_dict({k: other * v for k, v in self.items()})
+            new_other = self.ring(other)
+            return self.__mul__(new_other)
+        except Exception:
+            return other.__rmul__(self)
+        # try:
+        #     other = self.ring.domain_new(other)
+        # except CoercionFailed:
+        #     return NotImplemented
+        # return self.ring.from_dict({k: other * v for k, v in self.items()})
         # return NotImplemented
 
     def __rmul__(self, other):
         ring = self.ring
         if isinstance(other, BasisSchubertAlgebraElement):
             new_other = self.ring._coerce_mul(other)
-            return self.ring.from_dict(_mul_schub_dicts(self, new_other, self.ring, new_other.ring))
+            if new_other:
+                return self.ring.from_dict(_mul_schub_dicts(self, new_other, self.ring, new_other.ring))
+        try:
+            new_other = self.ring(other)
+            return new_other.__mul__(self)
+        except Exception:
+            pass
         try:
             other = ring.domain_new(other)
         except CoercionFailed:
@@ -617,7 +627,7 @@ class BasisSchubertAlgebraRing(Ring, CompositeDomain):
 
         for monom, coeff in element.items():
             coeff = domain_new(coeff, orig_domain)
-            if coeff:
+            if expand(coeff) != S.Zero:
                 poly[monom] = coeff
         return poly
 

@@ -145,7 +145,7 @@ class PQDSchubPoly(spr.AbstractSchubPoly):
         if self.ring.coeff_genset.label is None:
             return printer._print_Function(sympy.Function("\\widetilde{\\mathfrak{S}}" + f"^{'{'}{supscript}{'}'}_{'{' + subscript + '}'}")(sympy.Symbol(self.genset.label)))
         return printer._print_Function(
-            sympy.Function("\\widetilde{\\mathfrak{S}}" + f"^{'{'}{supscript}{'}'}_{'{' + subscript + '}'}")(sympy.Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label}"))
+            sympy.Function("\\widetilde{\\mathfrak{S}}" + f"^{'{'}{supscript}{'}'}_{'{' + subscript + '}'}")(sympy.Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label}")),
         )
 
 
@@ -207,10 +207,13 @@ class QuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebraRing):
         return elem
 
     def in_classical_basis(self, elem):
-        result = S.Zero
+        result = None
         for k, v in elem.items():
-            result += v * self.quantum_as_classical_schubpoly(k)
-        return result
+            if not result:
+                result = v * self.quantum_as_classical_schubpoly(k)
+            else:
+                result += v * self.quantum_as_classical_schubpoly(k)
+        return result if result else S.Zero
 
     @property
     def classical_elem_func(self):
@@ -542,10 +545,10 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebr
             if p == 0 and k >= 0:
                 return basis([])
             if p < 0 or p > k:
-                return basis(0)
+                return basis.zero
             if k <= self._N[1]:
                 return basis(elem_sym_poly(p, k, varl1, varl2))
-            ret = basis(0)
+            ret = basis.zero
             j = bisect_left(self._N, k)
             if j < len(self._N) and k == self._N[j]:
                 ret = (-((-1) ** (self._n[j - 1]))) * q_var[j - 1] * elem_func(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
@@ -683,14 +686,12 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebr
             elem = self.zero
             if not isinstance(dct, spr.BasisSchubertAlgebraElement):
                 return dct
-            try:
-                for k, v in dct.items():
-                    if elem == 0:
-                        elem = v * self.classical_in_basis(k)
-                    else:
-                        elem += v * self.classical_in_basis(k)
-            except ValueError:
-                raise  # ValueError(f"Could not convert {x=} to quantum parabolic")
+            for k, v in dct.items():
+                if elem == self.zero:
+                    elem = v * self.classical_in_basis(k)
+                else:
+                    elem += v * self.classical_in_basis(k)
+
         return elem
 
 
