@@ -472,6 +472,10 @@ class DSchubPoly(AbstractSchubPoly):
 
 
 class BaseSchubertRing(Ring, CompositeDomain):
+
+    def __str__(self):
+        return self.__class__.__name__
+
     def __eq__(self, other):
         return type(self) is type(other) and self.genset == other.genset and self.coeff_genset == other.coeff_genset
 
@@ -969,7 +973,7 @@ class TensorRing(BaseSchubertRing):
 
     @cache
     def cached_schubpoly(self, k):
-        return self.ring1.cached_schubpoly(k[0]) * self.ring1.cached_schubpoly(k[1])
+        return self.ring1.cached_schubpoly(k[0]) * self.ring2.cached_schubpoly(k[1])
 
     @property
     def ring1(self):
