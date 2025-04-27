@@ -4,13 +4,13 @@ from .perm_lib import Permutation, permtrim, theta, uncode
 from .poly_lib.poly_lib import efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
 from .poly_lib.schub_poly import div_diff, schubpoly, skew_div_diff
 from .poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
-from .rings._quantum_schubert_polynomial_ring import (
+from .rings.quantum_schubert_ring import (
     QDSx,
     QPDSx,
     QPSx,
     QSx,
 )
-from .rings._schubert_polynomial_ring import (
+from .rings.schubert_ring import (
     DSx,
     Sx,
 )

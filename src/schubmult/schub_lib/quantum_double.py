@@ -8,7 +8,7 @@
 from functools import cache
 
 import numpy as np
-from symengine import Add, Mul, Pow, expand, sympify
+from symengine import Add, Mul, Pow, S, expand, sympify
 
 import schubmult.schub_lib.double as norm_yz
 from schubmult.perm_lib import Permutation, code, inv, longest_element, medium_theta, permtrim, strict_theta, uncode
@@ -73,6 +73,36 @@ def mult_poly_q_double(coeff_dict, poly, var_x=None, var_y=None, q_var=_vars.q_v
         ret = {}
         for a in poly.args:
             ret = add_perm_dict(ret, mult_poly_q_double(coeff_dict, a, var_x, var_y, q_var))
+        return ret
+    ret = {}
+    for perm in coeff_dict:
+        ret[perm] = poly * coeff_dict[perm]
+    return ret
+
+
+def mult_poly_q_double_alt(coeff_dict, poly, var_x=None, var_y=None, q_var=_vars.q_var):
+    if not isinstance(var_x, GeneratingSet_base):
+        var_x = CustomGeneratingSet(var_x)
+    if var_x.index(poly) != -1:
+        return single_variable(coeff_dict, var_x.index(poly), var_y)
+    if isinstance(poly, Mul):
+        ret = coeff_dict
+        for a in poly.args:
+            s_d = mult_poly_q_double_alt({Permutation([]): S.One}, a, var_x, var_y, q_var)
+            ret = schubmult_q_double_dict_fast(ret, s_d, var_y, var_y, q_var)
+        return ret
+    if isinstance(poly, Pow):
+        base = poly.args[0]
+        exponent = int(poly.args[1])
+        ret = coeff_dict
+        s_d = mult_poly_q_double_alt({Permutation([]): S.One}, base, var_x, var_y, q_var)
+        for i in range(int(exponent)):
+            ret = schubmult_q_double_dict_fast(ret, s_d, var_y, var_y, q_var)
+        return ret
+    if isinstance(poly, Add):
+        ret = {}
+        for a in poly.args:
+            ret = add_perm_dict(ret, mult_poly_q_double_alt(coeff_dict, a, var_x, var_y, q_var))
         return ret
     ret = {}
     for perm in coeff_dict:
@@ -356,14 +386,15 @@ def q_partial_posify_generic(val, u, v, w):
                 except Exception as e:
                     logger.debug(f"Exception: {e}")
 
-                    #import traceback
+                    # import traceback
 
-                    #traceback.print_exc()
+                    # traceback.print_exc()
         if expand(val - val2) != 0:
             raise Exception
     return val2
 
-def apply_peterson_woodward(coeff_dict, parabolic_index,q_var=_vars.q_var):
+
+def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var):
     max_len = parabolic_index[-1] + 1
     w_P = longest_element(parabolic_index)
     w_P_prime = Permutation([1, 2])
@@ -545,6 +576,13 @@ def schubmult_q_double(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var):
         toget = vmu
         ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
+
+
+def schubmult_q_double_dict_fast(perm_dict1, perm_dict2, var2=None, var3=None, q_var=_vars.q_var):
+    ret = {}
+    for k, v in perm_dict2.items():
+        ret = add_perm_dict(ret, {k2: v2 * v for k2, v2 in schubmult_q_double_fast(perm_dict1, k, var2, var3, q_var).items()})
+    return ret
 
 
 def schubmult_q_double_fast(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var):

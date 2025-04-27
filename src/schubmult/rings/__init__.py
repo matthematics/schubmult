@@ -1,6 +1,7 @@
-from ._quantum_schubert_polynomial_ring import QDSx, QPDSx, QPSx, QSx, QuantumDoubleSchubertElement, QuantumDoubleSchubertRing, QuantumSingleSchubertRing, make_parabolic_quantum_basis
-from ._schubert_polynomial_ring import DoubleSchubertElement, DoubleSchubertRing, DSx, SingleSchubertRing, Sx, TensorRing, TensorRingElement
 from ._utils import poly_ring
+from .base_schubert_ring import TensorRing, TensorRingElement
+from .quantum_schubert_ring import QDSx, QPDSx, QPSx, QSx, QuantumDoubleSchubertElement, QuantumDoubleSchubertRing, QuantumSingleSchubertRing, make_parabolic_quantum_basis
+from .schubert_ring import DoubleSchubertElement, DoubleSchubertRing, DSx, SingleSchubertRing, Sx
 
 __all__ = [
     "DSx",

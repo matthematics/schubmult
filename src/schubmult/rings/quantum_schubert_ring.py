@@ -4,8 +4,8 @@ from functools import cache
 import sympy
 from symengine import S, Symbol, sympify
 
-import schubmult.rings._schubert_polynomial_ring as spr
 import schubmult.rings._utils as utils
+import schubmult.rings.schubert_ring as spr
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
 from schubmult.perm_lib import Permutation, longest_element

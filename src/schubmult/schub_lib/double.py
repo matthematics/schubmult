@@ -8,7 +8,7 @@ import sympy
 from cachetools import cached
 from cachetools.keys import hashkey
 from sortedcontainers import SortedList
-from symengine import Add, Integer, Mul, Pow, Symbol, sympify
+from symengine import Add, Integer, Mul, Pow, S, Symbol, sympify
 
 from schubmult.perm_lib import (
     Permutation,
@@ -44,9 +44,6 @@ from schubmult.utils.perm_utils import add_perm_dict
 zero = sympify(0)
 
 logger = get_logger(__name__)
-
-
-
 
 
 def count_sorted(mn, tp):
@@ -130,6 +127,36 @@ def mult_poly_double(coeff_dict, poly, var_x=None, var_y=None):
         ret = {}
         for a in poly.args:
             ret = add_perm_dict(ret, mult_poly_double(coeff_dict, a, var_x, var_y))
+        return ret
+    ret = {}
+    for perm in coeff_dict:
+        ret[perm] = poly * coeff_dict[perm]
+    return ret
+
+
+def mult_poly_double_alt(coeff_dict, poly, var_x=None, var_y=None):
+    if not isinstance(var_x, GeneratingSet_base):
+        var_x = CustomGeneratingSet(var_x)
+    if var_x.index(poly) != -1:
+        return single_variable(coeff_dict, var_x.index(poly), var_y)
+    if isinstance(poly, Mul):
+        ret = coeff_dict
+        for a in poly.args:
+            s_d = mult_poly_double_alt({Permutation([]): S.One}, a, var_x, var_y)
+            ret = schubmult_double_dict(ret, s_d, var_y, var_y)
+        return ret
+    if isinstance(poly, Pow):
+        base = poly.args[0]
+        exponent = int(poly.args[1])
+        ret = coeff_dict
+        s_d = mult_poly_double_alt({Permutation([]): S.One}, base, var_x, var_y)
+        for i in range(int(exponent)):
+            ret = schubmult_double_dict(ret, s_d, var_y, var_y)
+        return ret
+    if isinstance(poly, Add):
+        ret = {}
+        for a in poly.args:
+            ret = add_perm_dict(ret, mult_poly_double_alt(coeff_dict, a, var_x, var_y))
         return ret
     ret = {}
     for perm in coeff_dict:
@@ -298,6 +325,12 @@ def schubmult_double_pair(perm1, perm2, var2=None, var3=None):
 def schubmult_double_pair_generic(perm1, perm2):
     return schubmult_double({perm1: 1}, perm2, _vars.var_g1, _vars.var_g2)
 
+
+def schubmult_double_dict(perm_dict1, perm_dict2, var2=None, var3=None):
+    ret = {}
+    for k, v in perm_dict2.items():
+        ret = add_perm_dict(ret, {k2: v2*v for k2, v2 in schubmult_double(perm_dict1, k, var2, var3).items()})
+    return ret
 
 def schubmult_double(perm_dict, v, var2=None, var3=None):
     # if isinstance(var2, str):
@@ -1027,7 +1060,7 @@ def posify(
         # logger.debug("This is bad")
         # logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=} {will_formula_work(v,u)=} {dominates(u,w)=}")
         # logger.debug(f"Returning {u2=} {v2=} {w2=} {val=}")
-    if not v.has_pattern([1,4,2,3]) and not v.has_pattern([4,1,3,2]) and not v.has_pattern([3,1,4,2]) and not v.has_pattern([1,4,3,2]):
+    if not v.has_pattern([1, 4, 2, 3]) and not v.has_pattern([4, 1, 3, 2]) and not v.has_pattern([3, 1, 4, 2]) and not v.has_pattern([1, 4, 3, 2]):
         logger.debug("Recording new characterization was used")
         return schubmult_double({u: 1}, v, var2, var3).get(w, 0)
     if inv(w) - inv(u) == 1:
