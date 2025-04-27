@@ -252,6 +252,23 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def as_quantum(self):
         return self.ring.in_quantum_basis(self)
 
+    def __eq__(self, other):
+        return self.ring == other.ring and dict.__eq__(self, other)
+
+    # unify base ring
+    def almosteq(self, other):
+        if isinstance(other, BaseSchubertElement):
+            elem1 = self
+            elem2 = other
+            if isinstance(self, TensorRingElement):
+                elem1 = elem1.ring.combine(elem1)
+            if isinstance(other, TensorRingElement):
+                elem2 = elem2.ring.combine(elem2)
+            if elem1.ring == elem2.ring:
+                return elem1 == elem2
+            return elem1 == elem1.ring.one * elem2
+        return self == self.ring.from_sympy(other)
+
 
 class DoubleSchubertElement(BaseSchubertElement):
     """Algebra with sympy coefficients
