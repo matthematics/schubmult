@@ -115,9 +115,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         if isinstance(other, BaseSchubertElement):
             if self.ring == other.ring:
                 return self.ring.add(self, other)
-            # new_other = self.ring._coerce_add(other)
-            # if new_other:
-            #     return self.ring.add(self, new_other)
+            # print("Boingle")
             return other.__radd__(self)
         try:
             other = self.ring.domain_new(other)
@@ -136,12 +134,10 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def __radd__(self, other):
         if isinstance(other, BaseSchubertElement):
-            if self.ring == other.ring:
-                return self.ring.add(self, other)
-            new_ring = TensorRing(other.ring, self.ring)
+            new_ring = TensorRing(other.ring, self.ring, tensor_symbol=None)
             elem1 = new_ring.from_dict(_tensor_product_of_dicts(other, self.ring.one))
             elem2 = new_ring.from_dict(_tensor_product_of_dicts(other.ring.one, self))
-            return elem1.__add__(elem2)
+            return new_ring.add(elem1, elem2)
         try:
             other = self.ring.domain_new(other)
             other = self.ring.from_dict({Permutation([]): other})
@@ -158,9 +154,6 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         if isinstance(other, BaseSchubertElement):
             if self.ring == other.ring:
                 return self.ring.sub(self, other)
-            new_other = self.ring._coerce_add(other)
-            if new_other:
-                return self.ring.sub(self, new_other)
             return other.__rsub__(self)
         try:
             other = self.ring.domain_new(other)
@@ -176,8 +169,10 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def __rsub__(self, other):
         if isinstance(other, BaseSchubertElement):
-            if self.ring == other.ring:
-                return self.ring.sub(other, self)
+            new_ring = TensorRing(other.ring, self.ring, tensor_symbol=None)
+            elem1 = new_ring.from_dict(_tensor_product_of_dicts(other, self.ring.one))
+            elem2 = new_ring.from_dict(_tensor_product_of_dicts(other.ring.one, self))
+            return new_ring.sub(elem1, elem2)
         try:
             other = self.ring.domain_new(other)
             other = self.ring.from_dict({Permutation([]): other})
@@ -197,6 +192,11 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         if isinstance(other, BaseSchubertElement):
             if isinstance(other.ring, type(self.ring)):
                 return self.ring.from_dict(_mul_schub_dicts(self, other, self.ring, other.ring))
+            if isinstance(other.ring, TensorRing) and other.ring.is_implicit:
+                res = self.ring.zero
+                for k, v in other.items():
+                    res += v * self * other.ring.combine(other.ring(k))
+                return res
             new_other = self.ring._coerce_mul(other)
             if new_other:
                 return self.ring.mul(self, new_other)
@@ -214,6 +214,11 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def __rmul__(self, other):
         if isinstance(other, BaseSchubertElement):
+            if isinstance(other.ring, TensorRing) and other.ring.is_implicit:
+                res = 0
+                for k, v in other.items():
+                    res += v * other.ring.combine(other.ring(k)) * self
+                return res
             new_other = self.ring._coerce_mul(other)
             if new_other:
                 return self.ring.mul(new_other, self)
@@ -612,9 +617,9 @@ class DoubleSchubertRing(BaseSchubertRing):
         return None
 
     def _coerce_add(self, other):
-        if isinstance(other, BaseSchubertElement):
-            if isinstance(other.ring, DoubleSchubertRing) and other.ring.genset == self.genset:
-                return self.one * other
+        # if isinstance(other, BaseSchubertElement):
+        #     if isinstance(other.ring, DoubleSchubertRing) and other.ring.genset == self.genset:
+        #         return self.one * other
         return None
 
     @property
@@ -912,6 +917,8 @@ class TensorBasisElement(AbstractSchubPoly):
         obj = AbstractSchubPoly.__new__(_class, k, basis)
         obj._elem1 = basis.ring1.printing_term(k[0])
         obj._elem2 = basis.ring2.printing_term(k[1])
+        obj._ring1 = basis.ring1
+        obj._ring2 = basis.ring2
         obj._tensor_symbol = basis.tensor_symbol
         return obj
 
@@ -922,7 +929,17 @@ class TensorBasisElement(AbstractSchubPoly):
 
     def _sympystr(self, printer):
         if not self._tensor_symbol:
-            return printer._print_Mul(sympy.Mul(self._elem1, self._elem2))
+            # print(f"{self._key=}")
+            ring1 = self._ring1
+            ring2 = self._ring2
+            if self._key[0] == ring1.zero_monom:
+                # print(f"{self._key[1]=}")
+                return printer._print(ring2.printing_term(self._key[1]))
+            if self._key[1] == ring2.zero_monom:
+                # print(f"{self._key[0]=}")
+                return printer._print(ring1.printing_term(self._key[0]))
+            # print(f"This shouldn't happen {self._key=}")
+            #return printer._print_Mul(sympy.Mul(self._elem1, self._elem2))
         return f"{printer._print(self._elem1)}{self._tensor_symbol}{printer._print(self._elem2)}"
 
 
@@ -935,6 +952,15 @@ class TensorRingElement(BaseSchubertElement):
             return [sympy.sympify(S.Zero)]
         return [(self.ring.domain.to_sympy(self[k]) if k == self.ring.zero_monom else sympy.Mul(self.ring.domain.to_sympy(self[k]), self.ring.printing_term(k))) for k in self.keys()]
 
+    @property
+    def free_symbols(self):
+        ret = set()
+        for k, v in self.items():
+            ret.update(v.free_symbols)
+            ret.update(self.ring.ring1(k[0]).free_symbols)
+            ret.update(self.ring.ring2(k[1]).free_symbols)
+        return ret
+        
     # @cache
     # def _sympystr(self, printer):
     #     ret_list = [sympy.Mul(v, TensorBasisElement(k[0], k[1], self.ring)) for k, v in self.items()]
@@ -953,13 +979,15 @@ class TensorRingElement(BaseSchubertElement):
 
 class TensorRing(BaseSchubertRing):
     # tensor ring
-    tensor_symbol = None
+    def __eq__(self, other):
+        return type(self) is type(other) and self.ring1 == other.ring1 and self.ring2 == other.ring2
 
-    def __init__(self, ring1, ring2):
+    def __init__(self, ring1, ring2, tensor_symbol=" # "):
         super().__init__(list({*ring1.genset, *ring2.genset}), list({*ring1.coeff_genset, *ring2.coeff_genset}))
         self.zero_monom = (ring1.zero_monom, ring2.zero_monom)
         self._ring1 = ring1
         self._ring2 = ring2
+        self.tensor_symbol = tensor_symbol
         self.dtype = type("TensorRingElement", (TensorRingElement,), {"ring": self})
 
     def __hash__(self):
@@ -972,12 +1000,38 @@ class TensorRing(BaseSchubertRing):
                 dict1 = self.ring1.from_dict({k1[0]: v1 * v2}) * self.ring1.from_dict({k2[0]: 1})
                 dict2 = self.ring2.from_dict({k1[1]: 1}) * self.ring2.from_dict({k2[1]: 1})
                 ret_dict = add_perm_dict(ret_dict, _tensor_product_of_dicts(dict1, dict2))
-        return self.from_dict(ret_dict)
+        elem = self.from_dict(ret_dict)
+        if not self.tensor_symbol:
+            return self.combine(elem)
+        return elem
+
+    def combine(self, elem):
+        # print(f"Bifflefiff {elem=}")
+        if self.is_implicit:
+            if len(elem.keys()) == 1:
+                k = next(iter(elem.keys()))
+                if k[0] != self.ring1.zero_monom:
+                    return elem[k] * self.ring1(k[0])
+                return elem[k] * self.ring2(k[1])
+        res = self.ring1.zero
+        for k, v in elem.items():
+            res += v * self.ring1(k[0]) * self.ring2(k[1])
+        return res
+
+    @property
+    def is_implicit(self):
+        return self.tensor_symbol is None
+
+    def _coerce_add(self, x):
+        # print(f"Bing bong fliffle {x=}")
+        # if not self.tensor_symbol:
+        #     if x.ring == self.ring1:
+        #         return self.from_dict(_tensor_product_of_dicts(x, self.ring2.one))
+        #     if x.ring == self.ring2:
+        #         return self.from_dict(_tensor_product_of_dicts(self.ring1.one, x))
+        return None
 
     def _coerce_mul(self, x):
-        if isinstance(x, BaseSchubertElement):
-            if x.ring == self:
-                return x
         return None
 
     @property
@@ -1007,13 +1061,13 @@ class TensorRing(BaseSchubertRing):
     #             return self(Permutation([]))(other)
     #     return None
 
-    def _coerce_add(self, other):
-        if isinstance(other, BaseSchubertElement):
-            if other.ring == self.ring1:
-                return self(other)(Permutation([]))
-            if other.ring == self.ring2:
-                return self(Permutation([]))(other)
-        return None
+    # def _coerce_add(self, other):
+    #     if isinstance(other, BaseSchubertElement):
+    #         if other.ring == self.ring1:
+    #             return self(other)(Permutation([]))
+    #         if other.ring == self.ring2:
+    #             return self(Permutation([]))(other)
+    #     return None
 
     def call2(self, *args):
         def calla(*a):
