@@ -707,6 +707,11 @@ class DoubleSchubertAlgebraElement_basis(BasisSchubertAlgebraRing):
     def cached_schubpoly(self, k):
         return schubpoly_classical_from_elems(k, self.genset, self.coeff_genset, elem_func=elem_sym_poly)
 
+    def from_sympy(self, x):
+        x = sympify(x)
+        result = yz.mult_poly_double({Permutation([]): 1}, x, self.genset, self.coeff_genset)
+        return self.from_dict(result)
+
     def __call__(self, x):
         genset = self.genset
         if not isinstance(genset, GeneratingSet_base):
@@ -748,9 +753,7 @@ class DoubleSchubertAlgebraElement_basis(BasisSchubertAlgebraRing):
         #         result += self.from_dict({(schub_perm, utils.NoneVar): coeff}).act(srt_perm)
         #     return result
         else:
-            x = sympify(x)
-            result = yz.mult_poly_double({Permutation([]): 1}, x, genset, self.coeff_genset)
-            elem = self.from_dict(result)
+            elem = self.from_sympy(x)
         return elem
 
 
@@ -815,6 +818,11 @@ class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
     def cached_positive_product(self, u, v, basis2):
         return self.cached_product(u, v, basis2)
 
+    def from_sympy(self, x):
+        x = sympify(x)
+        result = py.mult_poly_py({Permutation([]): 1}, x, self.genset)
+        return self.from_dict(result)
+
     def __call__(self, x):
         genset = self.genset
         if not genset:
@@ -833,9 +841,7 @@ class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
             else:
                 return self(x.expand())
         else:
-            x = sympify(x)
-            result = py.mult_poly_py({Permutation([]): 1}, x, genset)
-            elem = self.from_dict(result)
+            elem = self.from_sympy(x)
         return elem
 
 
