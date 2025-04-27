@@ -29,7 +29,7 @@ def test_associative():
     from schubmult import QSx
     from symengine import expand
     perm1, perm2, perm3 = [1,5,3,4,2], [1,3,2,5,4], [3,1, 4,2,5]
-    assert expand(((QSx(perm1)*QSx(perm2))*QSx(perm3)).as_polynomial() - ((QSx(perm1)*(QSx(perm2)*QSx(perm3)))).as_polynomial()) == 0
+    assert (((QSx(perm1)*QSx(perm2))*QSx(perm3)) - ((QSx(perm1)*(QSx(perm2)*QSx(perm3))))).almosteq(0)
 
 if __name__ == "__main__":
     test_schub_expand()

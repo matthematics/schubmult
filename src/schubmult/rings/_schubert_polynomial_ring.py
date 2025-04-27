@@ -253,7 +253,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         return self.ring.in_quantum_basis(self)
 
     def __eq__(self, other):
-        return self.ring == other.ring and dict.__eq__(self, other)
+        return (type(self) is type(other) and self.ring == other.ring and dict.__eq__(self, other)) or self.almosteq(other)
 
     # unify base ring
     def almosteq(self, other):
@@ -265,7 +265,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             if isinstance(other, TensorRingElement):
                 elem2 = elem2.ring.combine(elem2)
             if elem1.ring == elem2.ring:
-                return elem1 == elem2
+                return dict.__eq__(elem1, elem2)
             return elem1 == elem1.ring.one * elem2
         return self == self.ring.from_sympy(other)
 
