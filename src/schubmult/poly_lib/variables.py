@@ -24,7 +24,7 @@ class GeneratingSet_base(Basic):
 
     def __len__(self):
         return NotImplemented
-    
+
     @property
     def label(self):
         return None
