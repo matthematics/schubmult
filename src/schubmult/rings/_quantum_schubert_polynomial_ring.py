@@ -20,7 +20,7 @@ q_var = GeneratingSet("q")
 logger = get_logger(__name__)
 
 
-class QuantumDoubleSchubertAlgebraElement(spr.BasisSchubertAlgebraElement):
+class QuantumDoubleSchubertElement(spr.BaseSchubertElement):
     def subs(self, old, new):
         return self.as_classical().subs(old, new).as_quantum()
 
@@ -65,7 +65,7 @@ class QDSchubPoly(spr.AbstractSchubPoly):
         return printer._print_Function(sympy.Function("\\widetilde{\\mathfrak{S}}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label}")))
 
 
-class ParabolicQuantumDoubleSchubertAlgebraElement(spr.BasisSchubertAlgebraElement):
+class ParabolicQuantumDoubleSchubertElement(spr.BaseSchubertElement):
     @property
     def index_comp(self):
         return self.ring.index_comp
@@ -131,13 +131,13 @@ class PQDSchubPoly(spr.AbstractSchubPoly):
         )
 
 
-class QuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebraRing):
+class QuantumDoubleSchubertRing(spr.BaseSchubertRing):
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, "QDBS"))
 
     def __init__(self, genset, coeff_genset):
         super().__init__(genset, coeff_genset)
-        self.dtype = type("QuantumDoubleSchubertAlgebraElement", (QuantumDoubleSchubertAlgebraElement,), {"ring": self})
+        self.dtype = type("QuantumDoubleSchubertElement", (QuantumDoubleSchubertElement,), {"ring": self})
 
     def __str__(self):
         return f"Quantum Double Schubert polynomial ring in {self.genset.label} and {self.coeff_genset.label}"
@@ -146,18 +146,18 @@ class QuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebraRing):
         return QDSchubPoly(k, self)
 
     def _coerce_mul(self, other):
-        if isinstance(other, spr.BasisSchubertAlgebraElement):
+        if isinstance(other, spr.BaseSchubertElement):
             if type(other.ring) is type(self):
                 if self.genset == other.ring.genset:
                     return other
-            if type(other.ring) is QuantumSchubertAlgebraElement_basis:
+            if type(other.ring) is QuantumSingleSchubertRing:
                 if self.genset == other.ring.genset:
-                    newbasis = QuantumDoubleSchubertAlgebraElement_basis(self.genset, utils.poly_ring(0))
+                    newbasis = QuantumDoubleSchubertRing(self.genset, utils.poly_ring(0))
                     return newbasis.from_dict(other)
         return None
 
     def _coerce_add(self, other):
-        if isinstance(other, spr.BasisSchubertAlgebraElement):
+        if isinstance(other, spr.BaseSchubertElement):
             if type(other.ring) is type(self):
                 if self.genset == other.ring.genset and self.coeff_genset == other.ring.coeff_genset:
                     return other
@@ -199,7 +199,7 @@ class QuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebraRing):
 
     @property
     def classical_elem_func(self):
-        basis = spr.DoubleSchubertAlgebraElement_basis(self.genset, self.coeff_genset)
+        basis = spr.DoubleSchubertRing(self.genset, self.coeff_genset)
         q_var = yz._vars.q_var
 
         def elem_func(p, k, varl1, varl2):
@@ -262,10 +262,10 @@ class QuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebraRing):
 def QDSx(x, genset=GeneratingSet("y")):
     if isinstance(genset, str):
         genset = GeneratingSet(genset)
-    return QuantumDoubleSchubertAlgebraElement_basis(GeneratingSet("x"), genset)(x)
+    return QuantumDoubleSchubertRing(GeneratingSet("x"), genset)(x)
 
 
-class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_basis):
+class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
     def __init__(cls, genset):
         super().__init__(genset, utils.poly_ring(utils.NoneVar))
 
@@ -284,7 +284,7 @@ class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_ba
         if type(other.ring) is type(self):
             if self.genset == other.ring.genset:
                 return other
-        if type(other.ring) is QuantumDoubleSchubertAlgebraElement_basis:
+        if type(other.ring) is QuantumDoubleSchubertRing:
             if self.genset == other.ring.genset:
                 return other
         return None
@@ -312,10 +312,10 @@ class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_ba
             elem = self.from_dict({Permutation(x): 1})
         elif isinstance(x, Permutation):
             elem = self.from_dict({x: 1})
-        elif isinstance(x, spr.DoubleSchubertAlgebraElement):
+        elif isinstance(x, spr.DoubleSchubertElement):
             if x.genset == self.genset:
                 return x.as_quantum()
-        elif isinstance(x, ParabolicQuantumDoubleSchubertAlgebraElement):
+        elif isinstance(x, ParabolicQuantumDoubleSchubertElement):
             return x.as_quantum()
         else:
             elem = self.from_sympy(x)
@@ -341,14 +341,14 @@ class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_ba
         return result
 
 
-class ParabolicQuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebraRing):
+class ParabolicQuantumDoubleSchubertRing(spr.BaseSchubertRing):
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, self.index_comp, "PBGBG"))
 
     def __init__(self, genset, coeff_genset, index_comp):
         super().__init__(genset, coeff_genset)
-        self._quantum_basis = QuantumDoubleSchubertAlgebraElement_basis(genset, coeff_genset)
-        self._classical_basis = spr.DoubleSchubertAlgebraElement_basis(genset, coeff_genset)
+        self._quantum_basis = QuantumDoubleSchubertRing(genset, coeff_genset)
+        self._classical_basis = spr.DoubleSchubertRing(genset, coeff_genset)
         self._index_comp = index_comp
         self._n = list(index_comp)
         self._N = [sum(self._n[:i]) for i in range(len(self._n) + 1)]
@@ -361,21 +361,21 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebr
         self._parabolic_index = parabolic_index
         self._otherlong = Permutation(list(range(self._N[-1], 0, -1)))
         self._longest = self._otherlong * longest_element(parabolic_index)
-        self.dtype = type("ParabolicQuantumDoubleSchubertAlgebraElement", (ParabolicQuantumDoubleSchubertAlgebraElement,), {"ring": self})
+        self.dtype = type("ParabolicQuantumDoubleSchubertElement", (ParabolicQuantumDoubleSchubertElement,), {"ring": self})
 
     def _coerce_mul(self, other):
-        if isinstance(other, spr.BasisSchubertAlgebraElement):
+        if isinstance(other, spr.BaseSchubertElement):
             if type(other.ring) is type(self):
                 if self.genset == other.ring.genset:
                     return other
-            if type(other.ring) is spr.ParabolicQuantumSchubertAlgebraElement_basis:
+            if type(other.ring) is ParabolicQuantumSingleSchubertRing:
                 if self.genset == other.ring.genset and self.index_comp == other.ring.index_comp:
-                    newbasis = ParabolicQuantumDoubleSchubertAlgebraElement_basis(self.genset, utils.poly_ring(0), self.index_comp)
+                    newbasis = ParabolicQuantumDoubleSchubertRing(self.genset, utils.poly_ring(0), self.index_comp)
                     return newbasis.from_dict(other)
         return None
 
     def _coerce_add(self, other):
-        if isinstance(other, spr.BasisSchubertAlgebraElement):
+        if isinstance(other, spr.BaseSchubertElement):
             if type(other.ring) is type(self):
                 if self.genset == other.ring.genset and self.coeff_genset == other.ring.coeff_genset and self.index_comp == other.ring.index_comp:
                     return other
@@ -477,7 +477,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebr
 
     @property
     def classical_elem_func(self):
-        basis = spr.DoubleSchubertAlgebraElement_basis(self.genset, self.coeff_genset)
+        basis = spr.DoubleSchubertRing(self.genset, self.coeff_genset)
         q_var = yz._vars.q_var
 
         def elem_func(p, k, varl1, varl2):
@@ -498,7 +498,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebr
 
     @property
     def quantum_elem_func(self):
-        basis = QuantumDoubleSchubertAlgebraElement_basis(self.genset, self.coeff_genset)
+        basis = QuantumDoubleSchubertRing(self.genset, self.coeff_genset)
         q_var = yz._vars.q_var
 
         def elem_func(p, k, varl1, varl2):
@@ -605,12 +605,12 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebr
             if not is_parabolic(x, self.parabolic_index):
                 raise ValueError(f"Permutation must be parabolic: {x} is not")
             elem = self.from_dict({x: 1})
-        elif isinstance(x, ParabolicQuantumDoubleSchubertAlgebraElement):
+        elif isinstance(x, ParabolicQuantumDoubleSchubertElement):
             return x
         else:
             dct = self.classical_basis(x)
             elem = self.zero
-            if not isinstance(dct, spr.BasisSchubertAlgebraElement):
+            if not isinstance(dct, spr.BaseSchubertElement):
                 return dct
             for k, v in dct.items():
                 if elem == self.zero:
@@ -621,13 +621,13 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebr
         return elem
 
 
-QSx = QuantumSchubertAlgebraElement_basis(GeneratingSet("x"))
+QSx = QuantumSingleSchubertRing(GeneratingSet("x"))
 
-QuantumDoubleSchubertPolynomial = QuantumDoubleSchubertAlgebraElement
+QuantumDoubleSchubertPolynomial = QuantumDoubleSchubertElement
 
 
 def make_parabolic_quantum_basis(index_comp, coeff_genset):
-    return ParabolicQuantumDoubleSchubertAlgebraElement_basis(GeneratingSet("x"), coeff_genset, index_comp)
+    return ParabolicQuantumDoubleSchubertRing(GeneratingSet("x"), coeff_genset, index_comp)
 
 
 def QPDSx_index(*args):
@@ -642,7 +642,7 @@ def QPDSx(*args):
     return QPDSx_index(*args)
 
 
-class ParabolicQuantumSchubertAlgebraElement_basis(ParabolicQuantumDoubleSchubertAlgebraElement_basis):
+class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing):
     def __init__(self, genset, index_comp):
         super().__init__(genset, utils.poly_ring(utils.NoneVar), index_comp)
 
@@ -650,13 +650,13 @@ class ParabolicQuantumSchubertAlgebraElement_basis(ParabolicQuantumDoubleSchuber
         return hash((self.genset, self.coeff_genset, self.index_comp, "PQSB"))
 
     def _coerce_mul(self, other):
-        if isinstance(other, spr.BasisSchubertAlgebraElement):
+        if isinstance(other, spr.BaseSchubertElement):
             if type(other.ring) is type(self):
                 if self.genset == other.ring.genset:
                     return other
-            if type(other.ring) is spr.ParabolicQuantumDoubleSchubertAlgebraElement_basis:
+            if type(other.ring) is ParabolicQuantumDoubleSchubertRing:
                 if self.genset == other.ring.genset and self.index_comp == other.ring.index_comp:
-                    newbasis = ParabolicQuantumDoubleSchubertAlgebraElement_basis(self.genset, utils.poly_ring(0), self.index_comp)
+                    newbasis = ParabolicQuantumDoubleSchubertRing(self.genset, utils.poly_ring(0), self.index_comp)
                     return newbasis.from_dict(other)
         return None
 
@@ -689,12 +689,12 @@ class ParabolicQuantumSchubertAlgebraElement_basis(ParabolicQuantumDoubleSchuber
             if not is_parabolic(x, self.parabolic_index):
                 raise ValueError(f"Permutation must be parabolic: {x} is not")
             elem = self.from_dict({x: 1})
-        elif isinstance(x, ParabolicQuantumDoubleSchubertAlgebraElement):
+        elif isinstance(x, ParabolicQuantumDoubleSchubertElement):
             return x
         else:
             dct = self.classical_basis(x)
             elem = self.zero
-            if not isinstance(dct, spr.BasisSchubertAlgebraElement):
+            if not isinstance(dct, spr.BaseSchubertElement):
                 return dct
             for k, v in dct.items():
                 if elem == self.zero:
@@ -705,7 +705,7 @@ class ParabolicQuantumSchubertAlgebraElement_basis(ParabolicQuantumDoubleSchuber
 
 
 def make_single_parabolic_quantum_basis(index_comp):
-    return ParabolicQuantumSchubertAlgebraElement_basis(GeneratingSet("x"), index_comp)
+    return ParabolicQuantumSingleSchubertRing(GeneratingSet("x"), index_comp)
 
 
 @cache

@@ -11,7 +11,6 @@ from sympy.printing.defaults import DefaultPrinting
 from sympy.printing.str import StrPrinter
 
 import schubmult.rings._quantum_schubert_polynomial_ring as qsr
-import schubmult.rings._tensor_schub_ring as tsr
 import schubmult.rings._utils as utils
 import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.schub_lib as schub_lib
@@ -49,7 +48,7 @@ def _mul_schub_dicts(dict1, dict2, basis1, basis2, best_effort_positive=True):
     return this_dict
 
 
-class BasisSchubertAlgebraElement(DomainElement, DefaultPrinting, dict):
+class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     _op_priority = 1e200
 
     def parent(self):
@@ -113,7 +112,7 @@ class BasisSchubertAlgebraElement(DomainElement, DefaultPrinting, dict):
         return self.as_terms()
 
     def __add__(self, other):
-        if isinstance(other, BasisSchubertAlgebraElement):
+        if isinstance(other, BaseSchubertElement):
             if self.ring == other.ring:
                 return self.ring.add(self, other)
             new_other = self.ring._coerce_add(other)
@@ -136,7 +135,7 @@ class BasisSchubertAlgebraElement(DomainElement, DefaultPrinting, dict):
         return self.ring.to_sympy(self)
 
     def __radd__(self, other):
-        if isinstance(other, BasisSchubertAlgebraElement):
+        if isinstance(other, BaseSchubertElement):
             if self.ring == other.ring:
                 return self.ring.add(self, other)
         try:
@@ -152,7 +151,7 @@ class BasisSchubertAlgebraElement(DomainElement, DefaultPrinting, dict):
             return NotImplemented
 
     def __sub__(self, other):
-        if isinstance(other, BasisSchubertAlgebraElement):
+        if isinstance(other, BaseSchubertElement):
             if self.ring == other.ring:
                 return self.ring.sub(self, other)
             new_other = self.ring._coerce_add(other)
@@ -172,7 +171,7 @@ class BasisSchubertAlgebraElement(DomainElement, DefaultPrinting, dict):
             return other.__rsub__(self)
 
     def __rsub__(self, other):
-        if isinstance(other, BasisSchubertAlgebraElement):
+        if isinstance(other, BaseSchubertElement):
             if self.ring == other.ring:
                 return self.ring.sub(other, self)
         try:
@@ -191,7 +190,7 @@ class BasisSchubertAlgebraElement(DomainElement, DefaultPrinting, dict):
         return self.ring.neg(self)
 
     def __mul__(self, other):
-        if isinstance(other, BasisSchubertAlgebraElement):
+        if isinstance(other, BaseSchubertElement):
             if isinstance(other.ring, type(self.ring)):
                 return self.ring.from_dict(_mul_schub_dicts(self, other, self.ring, other.ring))
             new_other = self.ring._coerce_mul(other)
@@ -210,7 +209,7 @@ class BasisSchubertAlgebraElement(DomainElement, DefaultPrinting, dict):
             return other.__rmul__(self)
 
     def __rmul__(self, other):
-        if isinstance(other, BasisSchubertAlgebraElement):
+        if isinstance(other, BaseSchubertElement):
             new_other = self.ring._coerce_mul(other)
             if new_other:
                 return self.ring.from_dict(_mul_schub_dicts(new_other, self, new_other.ring, self.ring))
@@ -249,7 +248,7 @@ class BasisSchubertAlgebraElement(DomainElement, DefaultPrinting, dict):
         return self.ring.in_quantum_basis(self)
 
 
-class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
+class DoubleSchubertElement(BaseSchubertElement):
     """Algebra with sympy coefficients
     and a dict basis
     """
@@ -331,7 +330,7 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
         ind = self.genset.index(gen)
         gens2 = MaskedGeneratingSet(self.genset, [ind])
         gens2.set_label(f"({self.ring.genset.label}\\{gen})")
-        new_basis = DoubleSchubertAlgebraElement_basis(gens2)
+        new_basis = DoubleSchubertRing(gens2)
         ret = new_basis(0)
         for (perm, cv), val in self.items():
             L = schub_lib.pull_out_var(ind, perm)
@@ -357,7 +356,7 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
         gens2.set_label(gname2)
         for k, v in self.items():
             key = k
-            if isinstance(self.ring, SchubertAlgebraElement_basis) and not alt_coeff_genset:
+            if isinstance(self.ring, SingleSchubertRing) and not alt_coeff_genset:
                 coprod_dict = py.schub_coprod_py(key, indices)
             else:
                 if on_coeff_gens:
@@ -369,14 +368,14 @@ class DoubleSchubertAlgebraElement(BasisSchubertAlgebraElement):
             else:
                 result_dict = add_perm_dict(result_dict, {k: v * v2 for k, v2 in coprod_dict.items()})
         if on_coeff_gens:
-            basis = tsr.TensorAlgebraBasis(
-                DoubleSchubertAlgebraElement_basis(self.ring.genset, gens1),
-                DoubleSchubertAlgebraElement_basis(alt_coeff_genset if alt_coeff_genset else self.ring.genset, gens2),
+            basis = TensorRing(
+                DoubleSchubertRing(self.ring.genset, gens1),
+                DoubleSchubertRing(alt_coeff_genset if alt_coeff_genset else self.ring.genset, gens2),
             )
         else:
-            basis = tsr.TensorAlgebraBasis(
-                DoubleSchubertAlgebraElement_basis(gens1, self.ring.coeff_genset),
-                DoubleSchubertAlgebraElement_basis(gens2, alt_coeff_genset if alt_coeff_genset else self.ring.coeff_genset),
+            basis = TensorRing(
+                DoubleSchubertRing(gens1, self.ring.coeff_genset),
+                DoubleSchubertRing(gens2, alt_coeff_genset if alt_coeff_genset else self.ring.coeff_genset),
             )
         return basis.from_dict(result_dict)
 
@@ -409,7 +408,7 @@ class AbstractSchubPoly(sympy.Expr):
         return sympy.sympify(expand(sympify(self.as_polynomial())))
 
     def as_polynomial(self):
-        return sympy.sympify(Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()]))
+        return self.ring.cached_schubpoly(self._key)
 
     @property
     def ring(self):
@@ -472,7 +471,7 @@ class DSchubPoly(AbstractSchubPoly):
         return DSchubPoly.__xnew__(_class, k, basis)
 
 
-class BasisSchubertAlgebraRing(Ring, CompositeDomain):
+class BaseSchubertRing(Ring, CompositeDomain):
     def __eq__(self, other):
         return type(self) is type(other) and self.genset == other.genset and self.coeff_genset == other.coeff_genset
 
@@ -498,7 +497,7 @@ class BasisSchubertAlgebraRing(Ring, CompositeDomain):
 
     def mul(self, elem, other):
         if self.of_type(elem):
-            if isinstance(other, BasisSchubertAlgebraElement):
+            if isinstance(other, BaseSchubertElement):
                 if isinstance(other.ring, type(self)):
                     return self.from_dict(_mul_schub_dicts(elem, other, elem.ring, other.ring))
         try:
@@ -585,13 +584,13 @@ class BasisSchubertAlgebraRing(Ring, CompositeDomain):
     def cached_schubpoly(self, k): ...
 
 
-class DoubleSchubertAlgebraElement_basis(BasisSchubertAlgebraRing):
+class DoubleSchubertRing(BaseSchubertRing):
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, "DBS"))
 
     def __init__(self, genset, coeff_genset):
         super().__init__(genset, coeff_genset)
-        self.dtype = type("DoubleSchubertAlgebraElement", (DoubleSchubertAlgebraElement,), {"ring": self})
+        self.dtype = type("DoubleSchubertElement", (DoubleSchubertElement,), {"ring": self})
 
     def __str__(self):
         return f"Double Schubert polynomial ring in {self.genset.label} and {self.coeff_genset.label}"
@@ -600,14 +599,14 @@ class DoubleSchubertAlgebraElement_basis(BasisSchubertAlgebraRing):
         return DSchubPoly(k, self)
 
     def _coerce_mul(self, other):
-        if isinstance(other, BasisSchubertAlgebraElement):
-            if isinstance(other.ring, qsr.QuantumDoubleSchubertAlgebraElement_basis):
+        if isinstance(other, BaseSchubertElement):
+            if isinstance(other.ring, qsr.QuantumDoubleSchubertRing):
                 return other.as_classical()
         return None
 
     def _coerce_add(self, other):
-        if isinstance(other, BasisSchubertAlgebraElement):
-            if isinstance(other.ring, DoubleSchubertAlgebraElement_basis) and other.ring.genset == self.genset:
+        if isinstance(other, BaseSchubertElement):
+            if isinstance(other.ring, DoubleSchubertRing) and other.ring.genset == self.genset:
                 return self.one * other
         return None
 
@@ -686,7 +685,7 @@ class DoubleSchubertAlgebraElement_basis(BasisSchubertAlgebraRing):
 
     @property
     def quantum_elem_func(self):
-        basis = qsr.QuantumDoubleSchubertAlgebraElement_basis(self.genset, self.coeff_genset)
+        basis = qsr.QuantumDoubleSchubertRing(self.genset, self.coeff_genset)
 
         def elem_func(p, k, varl1, varl2, xstart=0, ystart=0):
             if p > k:
@@ -763,7 +762,7 @@ class DoubleSchubertAlgebraElement_basis(BasisSchubertAlgebraRing):
                 raise NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
             elem = self.from_dict({x: 1})
 
-        elif isinstance(x, DoubleSchubertAlgebraElement):
+        elif isinstance(x, DoubleSchubertElement):
             if x.is_Add or x.is_Mul:
                 return x.doit()
             if x.genset == genset:
@@ -797,7 +796,7 @@ class DoubleSchubertAlgebraElement_basis(BasisSchubertAlgebraRing):
 def DSx(x, genset=GeneratingSet("y")):
     if isinstance(genset, str):
         genset = GeneratingSet(genset)
-    return DoubleSchubertAlgebraElement_basis(GeneratingSet("x"), genset)(x)
+    return DoubleSchubertRing(GeneratingSet("x"), genset)(x)
 
 
 """DSx: Double Schubert polynomial generator
@@ -816,7 +815,7 @@ but can be subsituted with a custom GeneratingSet_base object.
 """
 
 
-class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
+class SingleSchubertRing(DoubleSchubertRing):
     def __init__(self, genset):
         super().__init__(genset, utils.poly_ring(utils.NoneVar))
 
@@ -838,10 +837,10 @@ class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
         if type(other.basis) is type(self):
             if self.genset == other.basis.genset:
                 return other
-        if type(other.basis) is DoubleSchubertAlgebraElement_basis:
+        if type(other.basis) is DoubleSchubertRing:
             if self.genset == other.basis.genset:
                 return other
-        if isinstance(other.basis, qsr.QuantumDoubleSchubertAlgebraElement_basis):
+        if isinstance(other.basis, qsr.QuantumDoubleSchubertRing):
             return self._coerce_mul(other.as_classical())
         return None
 
@@ -870,11 +869,11 @@ class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
             elem = self.from_dict({Permutation(x): 1})
         elif isinstance(x, Permutation):
             elem = self.from_dict({x: 1})
-        elif isinstance(x, DoubleSchubertAlgebraElement):
+        elif isinstance(x, DoubleSchubertElement):
             if x.is_Add or x.is_Mul:
                 return x
             if x.genset == genset:
-                elem = DoubleSchubertAlgebraElement(x, self)  # , self)
+                elem = DoubleSchubertElement(x, self)  # , self)
             else:
                 return self(x.expand())
         else:
@@ -882,4 +881,144 @@ class SchubertAlgebraElement_basis(DoubleSchubertAlgebraElement_basis):
         return elem
 
 
-Sx = SchubertAlgebraElement_basis(GeneratingSet("x"))
+Sx = SingleSchubertRing(GeneratingSet("x"))
+
+
+def _tensor_product_of_dicts(d1, d2):
+    ret_dict = {}
+    for k1, v1 in d1.items():
+        this_dict = {}
+        for k2, v2 in d2.items():
+            this_dict[(k1, k2)] = v1 * v2
+        ret_dict = add_perm_dict(ret_dict, this_dict)
+    return ret_dict
+
+
+class TensorBasisElement(AbstractSchubPoly):
+    is_commutative = False
+
+    def __new__(cls, k, basis, tensor_symbol=" # "):
+        return TensorBasisElement.__xnew_cached__(cls, k, basis, tensor_symbol)
+
+    @staticmethod
+    def __xnew__(_class, k, basis, tensor_symbol):
+        obj = AbstractSchubPoly.__new__(_class, k, basis)
+        obj._elem1 = basis.ring1.printing_term(k[0])
+        obj._elem2 = basis.ring2.printing_term(k[1])
+        obj._tensor_symbol = tensor_symbol
+        return obj
+
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, k, basis, tensor_symbol):
+        return TensorBasisElement.__xnew__(_class, k, basis, tensor_symbol)
+
+    def _sympystr(self, printer):
+        return f"{printer._print(self._elem1)}{self._tensor_symbol}{printer._print(self._elem2)}"
+
+
+class TensorRingElement(BaseSchubertElement):
+    # tensor ring
+    # def __new__(cls, _dict, basis):
+    #     return TensorAlgebraElement.__xnew_cached__(cls, Dict(_dict), basis)
+    def as_terms(self):
+        if len(self.keys()) == 0:
+            return [sympy.sympify(S.Zero)]
+        return [(self.ring.domain.to_sympy(self[k]) if k == self.ring.zero_monom else sympy.Mul(self.ring.domain.to_sympy(self[k]), self.ring.printing_term(k))) for k in self.keys()]
+
+    def __mul__(self, other):
+        ret_dict = {}
+        for k1, v1 in self.items():
+            for k2, v2 in other.items():
+                dict1 = self.basis.ring1.from_dict({k1[0]: v1 * v2}) * self.basis.ring1.from_dict({k2[0]: 1})
+                dict2 = self.basis.ring2.from_dict({k1[1]: 1}) * self.basis.ring2.from_dict({k2[1]: 1})
+                ret_dict = add_perm_dict(ret_dict, _tensor_product_of_dicts(dict1, dict2))
+        return self.basis.from_dict(ret_dict)
+
+    # @cache
+    # def _sympystr(self, printer):
+    #     ret_list = [sympy.Mul(v, TensorBasisElement(k[0], k[1], self.basis)) for k, v in self.items()]
+    #     return printer.doprint(Add(*ret_list))
+
+    # def _sympystr(self, printer):
+    #     return self.cached_sympystr(printer)
+
+    # def expand(self, **_):
+    #     return sympify(
+    #         Add(
+    #             *[v * sympify(self.basis.ring1.from_dict({k[0]: 1}).expand()) * sympify(self.basis.ring2.from_dict({k[1]: 1}).expand()) for k, v in self.items()],
+    #         ),
+    #     )
+
+
+class TensorRing(BaseSchubertRing):
+    # tensor ring
+    def __init__(self, ring1, ring2):
+        super().__init__([*ring1.genset, *ring2.genset], [*ring1.coeff_genset, *ring2.coeff_genset])
+        self.zero_monom = (ring1.zero_monom, ring2.zero_monom)
+        self._ring1 = ring1
+        self._ring2 = ring2
+        self.dtype = type("TensorRingElement", (TensorRingElement,), {"ring": self})
+
+    def __hash__(self):
+        return hash((self.ring1, self.ring2))
+
+    @property
+    def one(self):
+        return self.from_dict(_tensor_product_of_dicts(self.ring1.one, self.ring2.one))
+
+    @cache
+    def cached_schubpoly(self, k):
+        return self.ring1.cached_schubpoly(k[0]) * self.ring1.cached_schubpoly(k[1])
+
+    @property
+    def ring1(self):
+        return self._ring1
+
+    def printing_term(self, k):
+        return TensorBasisElement(k, self)
+
+    @property
+    def ring2(self):
+        return self._ring2
+
+    def _coerce_mul(self, other):
+        if isinstance(other, BaseSchubertElement):
+            if other.ring == self.ring1:
+                return self(other)(Permutation([]))
+            if other.ring == self.ring2:
+                return self(Permutation([]))(other)
+        return None
+
+    def _coerce_add(self, other):
+        if isinstance(other, BaseSchubertElement):
+            if other.ring == self.ring1:
+                return self(other)(Permutation([]))
+            if other.ring == self.ring2:
+                return self(Permutation([]))(other)
+        return None
+
+    def call2(self, *args):
+        def calla(*a):
+            return self.from_dict(_tensor_product_of_dicts(self.ring1(*args), self.ring2(*a)))
+
+        return calla
+
+    def tensor_new(self, *args):
+        return self.call2(args)
+
+    def from_sympy(self, x):
+        elem1 = self.ring1.from_sympy(x)
+        res = self.zero
+        for k, v in elem1.items():
+            res += self.from_dict(_tensor_product_of_dicts(self.ring1(k),self.ring2.from_sympy(v)))
+        return res
+
+    def __call__(self, x):
+        if isinstance(x, tuple):
+            return self.from_dict(_tensor_product_of_dicts(self.ring1(x[0]), self.ring2(x[1])))
+        return self.from_sympy(x)
+
+
+# def TensorAlgebra_basis(Basic):
+#     pass
