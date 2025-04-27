@@ -55,6 +55,9 @@ class BasisSchubertAlgebraElement(DomainElement, DefaultPrinting, dict):
     def parent(self):
         return self.ring
 
+    def has_free(self, *args):
+        return any(s in args for s in self.free_symbols)
+
     def mult_poly(self, poly):
         res_dict2 = {}
         for k, v in self.items():
@@ -113,6 +116,9 @@ class BasisSchubertAlgebraElement(DomainElement, DefaultPrinting, dict):
         if isinstance(other, BasisSchubertAlgebraElement):
             if self.ring == other.ring:
                 return self.ring.add(self, other)
+            new_other = self.ring._coerce_add(other)
+            if new_other:
+                return self.ring.add(self, new_other)
             return other.__radd__(self)
         try:
             other = self.ring.domain_new(other)
@@ -149,6 +155,9 @@ class BasisSchubertAlgebraElement(DomainElement, DefaultPrinting, dict):
         if isinstance(other, BasisSchubertAlgebraElement):
             if self.ring == other.ring:
                 return self.ring.sub(self, other)
+            new_other = self.ring._coerce_add(other)
+            if new_other:
+                return self.ring.sub(self, new_other)
             return other.__rsub__(self)
         try:
             other = self.ring.domain_new(other)
@@ -475,6 +484,7 @@ class BasisSchubertAlgebraRing(Ring, CompositeDomain):
         self._coeff_genset = coeff_genset
         self.symbols = list(genset)
         self.domain = EXRAW
+        self.dom = self.domain
         self.zero_monom = Permutation([])
 
     def add(self, elem, other):
