@@ -1,4 +1,4 @@
-from functools import cache
+from functools import cache, cached_property
 
 import sympy
 from symengine import Add, S, expand, sympify
@@ -108,8 +108,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def __radd__(self, other):
         if isinstance(other, BaseSchubertElement):
-            new_ring = TensorRing(other.ring, self.ring, tensor_symbol=None)
-            return new_ring.add(new_ring.from_comp_ring(other), new_ring.from_comp_ring(self))
+            return MixedSchubertElement(other, self)
         try:
             other = self.ring.domain_new(other)
             other = self.ring.from_dict({Permutation([]): other})
@@ -141,8 +140,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def __rsub__(self, other):
         if isinstance(other, BaseSchubertElement):
-            new_ring = TensorRing(other.ring, self.ring, tensor_symbol=None)
-            return new_ring.sub(new_ring.from_comp_ring(other), new_ring.from_comp_ring(self))
+            return MixedSchubertElement(other, -self)
         try:
             other = self.ring.domain_new(other)
             other = self.ring.from_dict({Permutation([]): other})
@@ -162,12 +160,6 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         if isinstance(other, BaseSchubertElement):
             if isinstance(other.ring, type(self.ring)):
                 return self.ring.from_dict(utils._mul_schub_dicts(self, other, self.ring, other.ring))
-            if isinstance(other.ring, TensorRing) and other.ring.is_implicit:
-                terms = [v * self * other.ring.combine(other.ring(k)) for k, v in other.items()]
-                if self.ring in other.ring.rings:
-                    return other.ring.sum([other.from_comp_ring(t) for t in terms])
-                new_ring = TensorRing(self.ring, *other.ring.rings, tensor_symbol=None)
-                return new_ring.sum([new_ring.from_comp_ring(t) for t in terms])
             new_other = self.ring._coerce_mul(other)
             if new_other:
                 return self.ring.mul(self, new_other)
@@ -185,12 +177,6 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def __rmul__(self, other):
         if isinstance(other, BaseSchubertElement):
-            if isinstance(other.ring, TensorRing) and other.ring.is_implicit:
-                terms = [v * other.ring.combine(other.ring(k)) * self for k, v in other.items()]
-                if self.ring in other.ring.rings:
-                    return other.ring.sum([other.ring.from_comp_ring(t) for t in terms])
-                new_ring = TensorRing(self.ring, *other.ring.rings, tensor_symbol=None)
-                return new_ring.sum([new_ring.from_comp_ring(t) for t in terms])
             new_other = self.ring._coerce_mul(other)
             if new_other:
                 return self.ring.mul(new_other, self)
@@ -560,3 +546,143 @@ class TensorRingElement(BaseSchubertElement):
             self.ring.domain.to_sympy(self[k]) if k == self.ring.zero_monom else sympy.Mul(self.ring.domain.to_sympy(self[k]), self.ring.printing_term(k))
             for k in sorted(self.keys(), key=lambda kkt: [(kk.inv, tuple(kk)) for kk in kkt])
         ]
+
+
+class MixedSchubertElement(BaseSchubertElement, dict):
+    # tensor ring
+
+    def __new__(cls, *elems):
+        obj = dict.__new__(cls)
+        for elem in elems:
+            obj[elem.ring] = elem.ring.add(obj.get(elem.ring, elem.ring.zero), elem)
+        if len(obj.keys()) == 1:
+            return next(iter(obj.values()))
+        return obj
+
+    def __init__(self, *elems):
+        self._ring = BaseSchubertRing([], [])
+        self._ring.dtype = type("MixedSchubertElement", (MixedSchubertElement,), {"ring": self})
+
+    def __hash__(self):
+        return hash(tuple(self.values()))
+
+    @property
+    def ring(self):
+        return self._ring
+
+    def __add__(self, other):
+        if isinstance(other, MixedSchubertElement):
+            return MixedSchubertElement(*list(add_perm_dict(self, other).values()))
+        if isinstance(other, BaseSchubertElement):
+            elem = MixedSchubertElement(*list(self.values()))
+            elem[other.ring] = other.ring.add(elem.get(other.ring, other.ring.zero), other)
+            return elem
+        elem = MixedSchubertElement(*list(self.values()))
+
+        for ring in elem:
+            try:
+                new_other = ring.domain_new(other)
+                new_other = ring.from_dict({Permutation([]): new_other})
+                elem[ring] = ring.add(elem.get(ring, ring.zero), new_other)
+                return elem
+            except CoercionFailed:
+                pass
+        return NotImplemented
+
+    def __sub__(self, other):
+        if isinstance(other, MixedSchubertElement):
+            return MixedSchubertElement(*list(add_perm_dict(self, -other).values()))
+        if isinstance(other, BaseSchubertElement):
+            elem = MixedSchubertElement(*list(self.values()))
+            elem[other.ring] = other.ring.sub(elem.get(other.ring, other.ring.zero), other)
+            return elem
+        elem = MixedSchubertElement(*list(self.values()))
+        for ring in elem:
+            try:
+                new_other = ring.domain_new(other)
+                new_other = ring.from_dict({Permutation([]): new_other})
+                elem[ring] = ring.sub(elem.get(ring, ring.zero), new_other)
+                return elem
+            except CoercionFailed:
+                pass
+        return NotImplemented
+
+
+    def __radd__(self, other):
+        if isinstance(other, BaseSchubertElement):
+            elem = MixedSchubertElement(*list(self.values()))
+            elem[other.ring] = other.ring.add(other, elem.get(other.ring, other.ring.zero))
+            return elem
+        elem = MixedSchubertElement(*list(self.values()))
+        for ring in elem:
+            try:
+                new_other = ring.domain_new(other)
+                new_other = ring.from_dict({Permutation([]): new_other})
+                elem[ring] = ring.add(new_other, elem.get(ring, ring.zero))
+                return elem
+            except CoercionFailed:
+                pass
+        return NotImplemented
+
+    def __rsub__(self, other):
+        if isinstance(other, BaseSchubertElement):
+            elem = MixedSchubertElement(*list(self.values()))
+            elem[other.ring] = other.ring.sub(other, elem.get(other.ring, other.ring.zero))
+            return elem
+        elem = MixedSchubertElement(*list(self.values()))
+        for ring in elem:
+            try:
+                new_other = ring.domain_new(other)
+                new_other = ring.from_dict({Permutation([]): new_other})
+                elem[ring] = ring.sub(new_other, elem.get(ring, ring.zero))
+                return elem
+            except CoercionFailed:
+                pass
+        return NotImplemented
+
+    def __mul__(self, other):
+        if isinstance(other, MixedSchubertElement):
+            elem = MixedSchubertElement()
+            for v1 in self.values():
+                for v2 in other.values():
+                    elem[v1.ring] = elem.get(v1.ring, v1.ring.zero) + (v1 * v2)
+            return elem
+        if isinstance(other, BaseSchubertElement):
+            return MixedSchubertElement(*[a * other for a in self.values()])
+        elem = MixedSchubertElement(*list(self.values()))
+        for ring in elem:
+            try:
+                new_other = ring.domain_new(other)
+                new_other = ring.from_dict({Permutation([]): new_other})
+                elem[ring] = ring.mul(elem[ring], new_other)
+                return elem
+            except CoercionFailed:
+                return NotImplemented
+        return NotImplemented
+
+    def __rmul__(self, other):
+        if isinstance(other, BaseSchubertElement):
+            return MixedSchubertElement(*[other * a for a in self.values()])
+        elem = MixedSchubertElement(*list(self.values()))
+        for ring in elem:
+            try:
+                new_other = ring.domain_new(other)
+                new_other = ring.from_dict({Permutation([]): new_other})
+                elem[ring] = ring.mul(new_other, elem[ring])
+                return elem
+            except CoercionFailed:
+                return NotImplemented
+        return NotImplemented
+
+    @property
+    def free_symbols(self):
+        ret = set()
+        for v in self.values():
+            ret.update(v.free_symbols)
+        return ret
+
+    def as_ordered_terms(self, *_, **__):
+        tms = []
+        for v in self.values():
+            tms += v.as_ordered_terms()
+        return tms

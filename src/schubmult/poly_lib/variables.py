@@ -216,6 +216,6 @@ class CustomGeneratingSet(GeneratingSet_base):
 
     def __hash__(self):
         return hash(self._symbols_arr)
-    
+
     def __eq__(self, other):
         return type(self) is type(other) and other._symbols_arr == self._symbols_arr
