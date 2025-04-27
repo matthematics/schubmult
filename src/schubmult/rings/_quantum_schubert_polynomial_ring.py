@@ -37,8 +37,6 @@ class QuantumDoubleSchubertAlgebraElement(spr.BasisSchubertAlgebraElement):
         return self.as_classical().subs(old, new).as_quantum()
 
 
-# # TODO: not a noncommutative symbol, something else
-# # Atomic Schubert polynomial
 _pretty_schub_char = "𝕼𝔖"  # noqa: RUF001
 
 
@@ -121,22 +119,22 @@ class PQDSchubPoly(spr.AbstractSchubPoly):
 
     @staticmethod
     @cache
-    def __xnew_cached__(_class, k, genset, index_comp):
-        return PQDSchubPoly.__xnew__(_class, k, genset, index_comp)
+    def __xnew_cached__(_class, k, basis, index_comp):
+        return PQDSchubPoly.__xnew__(_class, k, basis, index_comp)
 
     def _sympystr(self, printer):
-        if self._coeff_var == 0 or self._coeff_var == utils.NoneVar:
+        if self.ring.coeff_genset.label is None:
             return printer.doprint(f"QPS{self.genset.label}{(tuple(self.index_comp))}({printer.doprint(self._perm)})")
-        return printer.doprint(f"QPDS{self.genset.label}{tuple(self.index_comp)}({printer.doprint(self._perm)}, {spr._varstr(self._coeff_var)})")
+        return printer.doprint(f"QPDS{self.genset.label}{tuple(self.index_comp)}({printer.doprint(self._perm)}, {self.ring.coeff_genset.label})")
 
     def _pretty(self, printer):
         if self._key == Permutation([]):
             return printer._print(1)
         subscript = printer._print(int("".join([str(i) for i in self._key])))
         # subscript = sympy.sstr(self._key)
-        if self._key[1] == 0 or self._key[1] == utils.NoneVar:
+        if self.ring.coeff_genset.label is None:
             return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(f"{self.genset.label} | {self.ring.index_comp}")))
-        return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(f"{self.genset.label}; {self._key[1]} | {self.ring.index_comp}")))
+        return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label} | {self.ring.index_comp}")))
 
     def _latex(self, printer):
         if self._key == Permutation([]):
@@ -144,9 +142,11 @@ class PQDSchubPoly(spr.AbstractSchubPoly):
         # subscript = printer._print(int("".join([str(i) for i in self._key])))
         subscript = printer._print(self._key)
         supscript = printer._print(sympy.Tuple(*self.index_comp))
-        if self._key[1] == 0 or self._key[1] == utils.NoneVar:
+        if self.ring.coeff_genset.label is None:
             return printer._print_Function(sympy.Function("\\widetilde{\\mathfrak{S}}" + f"^{'{'}{supscript}{'}'}_{'{' + subscript + '}'}")(sympy.Symbol(self.genset.label)))
-        return printer._print_Function(sympy.Function("\\widetilde{\\mathfrak{S}}" + f"^{'{'}{supscript}{'}'}_{'{' + subscript + '}'}")(sympy.Symbol(f"{self.genset.label}; {self._key[1]}")))
+        return printer._print_Function(
+            sympy.Function("\\widetilde{\\mathfrak{S}}" + f"^{'{'}{supscript}{'}'}_{'{' + subscript + '}'}")(sympy.Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label}"))
+        )
 
 
 class QuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebraRing):
@@ -287,7 +287,7 @@ class QuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebraRing):
             # logger.debug("bagelflap")
             x = sympify(x)
             result = yz.mult_poly_q_double({Permutation([]): 1}, x, self.genset, self.coeff_genset)
-            elem = QuantumDoubleSchubertAlgebraElement(result, self)
+            elem = self.from_dict(result)
         return elem
 
 
@@ -391,10 +391,14 @@ class QuantumSchubertAlgebraElement_basis(QuantumDoubleSchubertAlgebraElement_ba
 
 
 class ParabolicQuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebraRing):
+    def __hash__(self):
+        return hash((self.genset, self.coeff_genset, self.index_comp, "PBGBG"))
+
     def __init__(self, genset, coeff_genset, index_comp):
         super().__init__(genset, coeff_genset)
         self._quantum_basis = QuantumDoubleSchubertAlgebraElement_basis(genset, coeff_genset)
         self._classical_basis = spr.DoubleSchubertAlgebraElement_basis(genset, coeff_genset)
+        self._index_comp = index_comp
         self._n = list(index_comp)
         self._N = [sum(self._n[:i]) for i in range(len(self._n) + 1)]
         parabolic_index = []
@@ -475,7 +479,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebr
 
     @property
     def index_comp(self):
-        return self.args[2]
+        return self._index_comp
 
     def process_coeff_dict(self, coeff_dict):
         max_len = max(len(w) for w in coeff_dict)
@@ -522,7 +526,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebr
         if expand(a.as_polynomial() - b.as_polynomial()) == S.Zero:
             return b
 
-        cd = dict(b.as_classical())
+        cd = b.as_classical()
         for k2, v in cd.items():
             if k != k2:
                 b -= v * self.classical_in_basis(k2)
@@ -574,9 +578,8 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebr
 
         return elem_func
 
-    @property
-    def printing_term(self):
-        return PQDSchubPoly
+    def printing_term(self, k):
+        return PQDSchubPoly(k, self, self.index_comp)
 
     @cache
     def quantum_as_classical_schubpoly(self, perm):
@@ -677,7 +680,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebr
             return x
         else:
             dct = self.classical_basis(x)
-            elem = 0
+            elem = self.zero
             if not isinstance(dct, spr.BasisSchubertAlgebraElement):
                 return dct
             try:
@@ -687,7 +690,7 @@ class ParabolicQuantumDoubleSchubertAlgebraElement_basis(spr.BasisSchubertAlgebr
                     else:
                         elem += v * self.classical_in_basis(k)
             except ValueError:
-                raise ValueError(f"Could not convert {x=} to quantum parabolic")
+                raise  # ValueError(f"Could not convert {x=} to quantum parabolic")
         return elem
 
 
@@ -765,17 +768,18 @@ class ParabolicQuantumSchubertAlgebraElement_basis(ParabolicQuantumDoubleSchuber
             return x
         else:
             dct = self.classical_basis(x)
-            elem = 0
+            elem = self.zero
             if not isinstance(dct, spr.BasisSchubertAlgebraElement):
                 return dct
             try:
                 for k, v in dct.items():
-                    if elem == 0:
+                    if elem == self.zero:
                         elem = v * self.classical_in_basis(k)
                     else:
                         elem += v * self.classical_in_basis(k)
             except ValueError:
-                raise ValueError(f"Could not convert {x=} to quantum parabolic")
+                # raise ValueError(f"Could not convert {x=} to quantum parabolic")
+                raise
         return elem
 
 

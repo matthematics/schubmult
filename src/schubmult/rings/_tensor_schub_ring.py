@@ -22,8 +22,8 @@ class TensorBasisElement(Expr):
 
     def __new__(cls, k1, k2, basis, tensor_symbol=" # "):
         obj = Expr.__new__(cls, k1, k2, basis)
-        obj._elem1 = basis.basis1._from_dict({k1: 1})
-        obj._elem2 = basis.basis2._from_dict({k2: 1})
+        obj._elem1 = basis.basis1.from_dict({k1: 1})
+        obj._elem2 = basis.basis2.from_dict({k2: 1})
         obj._tensor_symbol = tensor_symbol
         return obj
 
@@ -58,16 +58,16 @@ class TensorAlgebraElement(Expr):
         ret_dict = {}
         for k1, v1 in self.coeff_dict.items():
             for k2, v2 in other.coeff_dict.items():
-                dict1 = self.basis.basis1._from_dict({k1[0]: v1 * v2}) * self.basis.basis1._from_dict({k2[0]: 1})
-                dict2 = self.basis.basis2._from_dict({k1[1]: 1}) * self.basis.basis2._from_dict({k2[1]: 1})
+                dict1 = self.basis.basis1.from_dict({k1[0]: v1 * v2}) * self.basis.basis1.from_dict({k2[0]: 1})
+                dict2 = self.basis.basis2.from_dict({k1[1]: 1}) * self.basis.basis2.from_dict({k2[1]: 1})
                 ret_dict = pl.add_perm_dict(ret_dict, _tensor_product_of_dicts(dict1.coeff_dict, dict2.coeff_dict))
-        return self.basis._from_dict(ret_dict)
+        return self.basis.from_dict(ret_dict)
 
     def __add__(self, other):
-        return self.basis._from_dict(pl.add_perm_dict(self.coeff_dict, other.coeff_dict))
+        return self.basis.from_dict(pl.add_perm_dict(self.coeff_dict, other.coeff_dict))
 
     def __sub__(self, other):
-        return self.basis._from_dict(pl.add_perm_dict(self.coeff_dict, {k: -v for k, v in other.coeff_dict.items()}))
+        return self.basis.from_dict(pl.add_perm_dict(self.coeff_dict, {k: -v for k, v in other.coeff_dict.items()}))
 
     @cache
     def cached_sympystr(self, printer):
@@ -80,7 +80,7 @@ class TensorAlgebraElement(Expr):
     def expand(self, **_):
         return sympify(
             symengine.Add(
-                *[v * symengine.sympify(self.basis.basis1._from_dict({k[0]: 1}).expand()) * symengine.sympify(self.basis.basis2._from_dict({k[1]: 1}).expand()) for k, v in self.coeff_dict.items()],
+                *[v * symengine.sympify(self.basis.basis1.from_dict({k[0]: 1}).expand()) * symengine.sympify(self.basis.basis2.from_dict({k[1]: 1}).expand()) for k, v in self.coeff_dict.items()],
             ),
         )
 
@@ -106,7 +106,7 @@ class TensorAlgebraBasis(Basic):
     def coeff_dict(self):
         return self.args[0]
 
-    def _from_dict(self, _dict):
+    def from_dict(self, _dict):
         return TensorAlgebraElement(_dict, self)
 
     @staticmethod
@@ -116,7 +116,7 @@ class TensorAlgebraBasis(Basic):
 
     def call2(self, *args):
         def calla(*a):
-            return TensorAlgebraElement._from_dict(_tensor_product_of_dicts(self.basis1(*args).coeff_dict, self.basis2(*a).coeff_dict))
+            return TensorAlgebraElement.from_dict(_tensor_product_of_dicts(self.basis1(*args).coeff_dict, self.basis2(*a).coeff_dict))
 
         return calla
 
