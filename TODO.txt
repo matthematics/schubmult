@@ -155,19 +155,9 @@ Factorizes if and only if vpath, and is shub
 
 coeff var coproduct can actually be expressed fully as products of normal double Schubs with coeffs
 
-change vars
-
 speed up single var coproduct
 
 Make use of variable separation as a last resort to avoid linear optimization
 
-order of operations. Avoid returning unevaluated Add if possible
 
-basis object for change_vars
-need SchubAdd, don't try to combine unless doit
-
-
-elem_funcs as Functions
-
-Tensor logic
 
