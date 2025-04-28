@@ -152,6 +152,20 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def __neg__(self):
         return self.ring.neg(self)
 
+    def __pow__(self, val):
+        try:
+            val = int(val)
+        except Exception:
+            return NotImplemented
+        if val == 0:
+            return self.ring.one
+        if val < 0:
+            return NotImplemented
+        if val == 1:
+            return self
+        return (self ** (val - 1)) * self
+
+
     def __mul__(self, other):
         if isinstance(other, BaseSchubertElement):
             if isinstance(other.ring, type(self.ring)):
