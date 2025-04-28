@@ -36,7 +36,6 @@ from schubmult.schub_lib.schub_lib import (
     will_formula_work,
 )
 from schubmult.utils.logging import get_logger
-from schubmult.utils.perm_utils import add_perm_dict
 
 from .double import schubmult_double, schubmult_double_pair, schubmult_double_pair_generic
 
@@ -44,7 +43,7 @@ logger = get_logger(__name__)
 
 
 def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
-    do_pos_neg = False
+    do_pos_neg = False # noqa: F841
     notint = False
     try:
         val2 = int(expand(val))
@@ -209,14 +208,14 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
             try:
                 lp_prob += eqs[i] == vec.get(i, 0)
             except KeyError:
-                print(f"{vec=} {val=}")
+                # print(f"{vec=} {val=}")
                 raise
-        print(f"{vec=}")
+        # print(f"{vec=}")
         # print(lp_prob.constraints)
         try:
             # logger.debug("I IS SOLVING BOLVING")
             solver = pu.PULP_CBC_CMD(msg=msg)
-            status = lp_prob.solve(solver)
+            status = lp_prob.solve(solver)  # noqa: F841
         except KeyboardInterrupt:
             current_process = psutil.Process()
             children = current_process.children(recursive=True)
@@ -240,9 +239,9 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
             if x != 0 and x is not None:
                 val2 += int(x) * b1
         if expand(val - val2) != 0:
-            print(f"{val=}")
-            print(f"{val2=}")
-            print(f"{vec=}")
+            # print(f"{val=}")
+            # print(f"{val2=}")
+            # print(f"{vec=}")
             raise Exception
     # print(f"{val2=}")
     return val2
