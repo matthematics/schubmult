@@ -155,7 +155,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def __mul__(self, other):
         if isinstance(other, BaseSchubertElement):
             if isinstance(other.ring, type(self.ring)):
-                return self.ring.from_dict(utils._mul_schub_dicts(self, other, self.ring, other.ring))
+                return self.ring.mul(self, other)
             new_other = self.ring._coerce_mul(other)
             if new_other:
                 return self.ring.mul(self, new_other)
@@ -211,7 +211,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         return self.ring.in_quantum_basis(self)
 
     def __eq__(self, other):
-        return (type(self) is type(other) and self.ring == other.ring and dict.__eq__(self, other)) or self.almosteq(other)
+        return type(self) is type(other) and self.ring == other.ring and dict.__eq__(self, other)
 
     # unify base ring
     def almosteq(self, other):
@@ -220,14 +220,14 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             elem2 = other
             if isinstance(self, MixedSchubertElement):
                 if isinstance(other, MixedSchubertElement):
-                    return dict.__eq__(self, other)
+                    return (self - other).almosteq(sympy.S.Zero)
                 return (self - other).almosteq(sympy.S.Zero)
             if isinstance(other, MixedSchubertElement):
                 return (self - other).almosteq(sympy.S.Zero)
             if elem1.ring == elem2.ring:
-                return dict.__eq__(elem1, elem2)
-            return elem1 == elem1.ring.one * elem2
-        return self == self.ring.from_sympy(other)
+                return (self - other).almosteq(sympy.S.Zero)
+            return elem1.almosteq(elem1.ring.one * elem2)
+        return (self - self.ring.from_sympy(other)) == self.ring.zero
 
 
 class BaseSchubertRing(Ring, CompositeDomain):
