@@ -46,6 +46,15 @@ class DoubleSchubertElement(BaseSchubertElement):
     def max_index(self):
         return max([max([0, *list(k.descents(zero_indexed=False))]) for k in self.keys()])
 
+    def eval(self, x):
+        ret = self
+        for v, val in x.items():
+            ret = ret.pull_out_gen(v)
+            ret = ret.ring.from_dict({k: v2.subs(v, val) for k, v2 in ret.items()})
+        if len(ret.keys()) == 1 and next(iter(ret.keys())) == Permutation([]):
+            return ret[Permutation([])]
+        return ret
+
     def subs(self, old, new):
         result = 0
         if self.ring.genset.index(old) != -1:
@@ -103,18 +112,34 @@ class DoubleSchubertElement(BaseSchubertElement):
         return ret
 
     def pull_out_gen(self, gen):
-        ind = self.genset.index(gen)
-        gens2 = MaskedGeneratingSet(self.genset, [ind])
+        ind = self.ring.genset.index(gen)
+        if ind == -1:
+            ind = self.ring.coeff_genset.index(gen)
+            if ind == -1:
+                raise ValueError(f"{gen} passed but is not a generator")
+            gens2 = MaskedGeneratingSet(self.ring.coeff_genset, [ind])
+            gens2.set_label(f"({self.ring.coeff_genset.label}\\{gen})")
+            new_basis = DoubleSchubertRing(self.ring.genset, gens2)
+            ret = new_basis.zero
+            for perm, val in self.items():
+                L = schub_lib.pull_out_var(ind, ~perm)
+                for index_list, new_perm in L:
+                    toadd = S.One
+                    for index2 in index_list:
+                        toadd *= self.ring.genset[index2] - gen
+                    ret += toadd * val * new_basis(~new_perm)
+            return ret
+        gens2 = MaskedGeneratingSet(self.ring.genset, [ind])
         gens2.set_label(f"({self.ring.genset.label}\\{gen})")
-        new_basis = DoubleSchubertRing(gens2)
-        ret = new_basis(0)
-        for (perm, cv), val in self.items():
+        new_basis = DoubleSchubertRing(gens2, self.ring.coeff_genset)
+        ret = new_basis.zero
+        for perm, val in self.items():
             L = schub_lib.pull_out_var(ind, perm)
             for index_list, new_perm in L:
                 toadd = S.One
                 for index2 in index_list:
-                    toadd *= gen - utils.poly_ring(cv)[index2]
-                ret += toadd * val * new_basis(new_perm, cv)
+                    toadd *= gen - self.ring.coeff_genset[index2]
+                ret += toadd * val * new_basis(new_perm)
         return ret
 
     def coproduct(self, *indices, alt_coeff_genset=None, on_coeff_gens=False, gname1=None, gname2=None):
@@ -123,9 +148,9 @@ class DoubleSchubertElement(BaseSchubertElement):
         if on_coeff_gens:
             genset = self.ring.coeff_genset
         if gname1 is None:
-            gname1 = f"{genset.label}_A" #"("+", ".join([f"{genset.label}_{i}" for i in indices])+")"
+            gname1 = f"{genset.label}_A"  # "("+", ".join([f"{genset.label}_{i}" for i in indices])+")"
         if gname2 is None:
-            gname2 = f"{genset.label}_B" #f"{genset.label}\\{{"+", ".join([f"{genset.label}_{i}" for i in indices])+"}"
+            gname2 = f"{genset.label}_B"  # f"{genset.label}\\{{"+", ".join([f"{genset.label}_{i}" for i in indices])+"}"
         gens2 = MaskedGeneratingSet(genset, indices)
         gens1 = gens2.complement()
         gens1.set_label(gname1)
@@ -376,7 +401,7 @@ class DoubleSchubertRing(BaseSchubertRing):
                 res *= self.from_sympy(arg)
             return res
         if isinstance(x, Pow):
-            return self.from_sympy(x.args[0])**int(x.args[1])
+            return self.from_sympy(x.args[0]) ** int(x.args[1])
         return self.from_dict({Permutation([]): x})
 
     def new(self, x):
@@ -485,7 +510,7 @@ class SingleSchubertRing(DoubleSchubertRing):
                 res *= self.from_sympy(arg)
             return res
         if isinstance(x, Pow):
-            return self.from_sympy(x.args[0])**int(x.args[1])
+            return self.from_sympy(x.args[0]) ** int(x.args[1])
         return self.from_dict({Permutation([]): x})
 
     # def from_sympy(self, x):

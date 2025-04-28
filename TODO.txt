@@ -174,4 +174,7 @@ separatevars() to change Mul, Add and Pow (including exp) into Mul
 
 Test separatevars before mult_poly
 
-Mult_poly dont separate degree 1 term
+Element __call__ to substitute vals
+
+pull_out_gen and eval tests
+pull_out_gen for quantum

@@ -26,6 +26,9 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def has_free(self, *args):
         return any(s in args for s in self.free_symbols)
 
+    def eval(self, *args):
+        pass
+
     def mult_poly(self, poly):
         res_dict2 = {}
         for k, v in self.items():
