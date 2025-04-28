@@ -15,15 +15,13 @@ from .rings.schubert_ring import (
     Sx,
 )
 from .schub_lib.double import (
-    compute_positive_rep,
     mult_poly_double,
-    posify,
     schub_coprod_double,
     schubmult_double,
     schubmult_double_pair,
     schubmult_double_pair_generic,
-    schubmult_generic_partial_posify,
 )
+from .schub_lib.positivity import compute_positive_rep, posify, schubmult_generic_partial_posify
 from .schub_lib.quantum import mult_poly_q, schubmult_q, schubmult_q_fast
 from .schub_lib.quantum_double import (
     apply_peterson_woodward,
