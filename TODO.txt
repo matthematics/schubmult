@@ -163,3 +163,11 @@ More tests
 
 
 
+as_independent(*deps, **hint) → tuple[Expr, Expr][source]
+A mostly naive separation of a Mul or Add into arguments that are not are dependent on deps. To obtain as complete a separation of variables as possible, use a separation method first, e.g.:
+
+separatevars() to change Mul, Add and Pow (including exp) into Mul
+
+.expand(mul=True) to change Add or Mul into Add
+
+.expand(log=True) to change log expr into an Add
