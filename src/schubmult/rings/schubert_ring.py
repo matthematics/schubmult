@@ -123,9 +123,9 @@ class DoubleSchubertElement(BaseSchubertElement):
         if on_coeff_gens:
             genset = self.ring.coeff_genset
         if gname1 is None:
-            gname1 = f"{genset.label}_A"
+            gname1 = f"{genset.label}_A" #"("+", ".join([f"{genset.label}_{i}" for i in indices])+")"
         if gname2 is None:
-            gname2 = f"{genset.label}_B"
+            gname2 = f"{genset.label}_B" #f"{genset.label}\\{{"+", ".join([f"{genset.label}_{i}" for i in indices])+"}"
         gens2 = MaskedGeneratingSet(genset, indices)
         gens1 = gens2.complement()
         gens1.set_label(gname1)
