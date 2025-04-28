@@ -16,7 +16,8 @@ from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
 from .abstract_schub_poly import AbstractSchubPoly
-from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing, TensorRing
+from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+from .tensor_ring import TensorRing
 
 _pretty_schub_char = "𝔖"  # noqa: RUF001
 
