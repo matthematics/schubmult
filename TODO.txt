@@ -171,3 +171,7 @@ separatevars() to change Mul, Add and Pow (including exp) into Mul
 .expand(mul=True) to change Add or Mul into Add
 
 .expand(log=True) to change log expr into an Add
+
+Test separatevars before mult_poly
+
+Mult_poly dont separate degree 1 term

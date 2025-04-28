@@ -1,7 +1,7 @@
 from functools import cache, cached_property
 
 import sympy
-from symengine import S, sympify
+from symengine import Add, Mul, Pow, S, sympify
 
 import schubmult.rings._utils as utils
 import schubmult.rings.quantum_schubert_ring as qsr
@@ -361,9 +361,23 @@ class DoubleSchubertRing(BaseSchubertRing):
         return schubpoly_classical_from_elems(k, self.genset, self.coeff_genset, elem_func=elem_sym_poly)
 
     def from_sympy(self, x):
+        if isinstance(x, BaseSchubertElement):
+            if x.ring == self:
+                return x
         x = sympify(x)
-        result = yz.mult_poly_double({Permutation([]): 1}, x, self.genset, self.coeff_genset)
-        return self.from_dict(result)
+        ind = self.genset.index(x)
+        if ind != -1:
+            return self.from_dict(yz.mult_poly_double({Permutation([]): 1}, x, self.genset, self.coeff_genset))
+        if isinstance(x, Add):
+            return self.sum([self.from_sympy(arg) for arg in x.args])
+        if isinstance(x, Mul):
+            res = self.one
+            for arg in x.args:
+                res *= self.from_sympy(arg)
+            return res
+        if isinstance(x, Pow):
+            return self.from_sympy(x.args[0])**int(x.args[1])
+        return self.from_dict({Permutation([]): x})
 
     def new(self, x):
         genset = self.genset
@@ -456,9 +470,28 @@ class SingleSchubertRing(DoubleSchubertRing):
         return self.cached_product(u, v, basis2)
 
     def from_sympy(self, x):
+        if isinstance(x, BaseSchubertElement):
+            if x.ring == self:
+                return x
         x = sympify(x)
-        result = py.mult_poly_py({Permutation([]): 1}, x, self.genset)
-        return self.from_dict(result)
+        ind = self.genset.index(x)
+        if ind != -1:
+            return self.from_dict(py.mult_poly_py({Permutation([]): 1}, x, self.genset))
+        if isinstance(x, Add):
+            return self.sum([self.from_sympy(arg) for arg in x.args])
+        if isinstance(x, Mul):
+            res = self.one
+            for arg in x.args:
+                res *= self.from_sympy(arg)
+            return res
+        if isinstance(x, Pow):
+            return self.from_sympy(x.args[0])**int(x.args[1])
+        return self.from_dict({Permutation([]): x})
+
+    # def from_sympy(self, x):
+    #     x = sympify(x)
+    #     result = py.mult_poly_py({Permutation([]): 1}, x, self.genset)
+    #     return self.from_dict(result)
 
     def new(self, x):
         genset = self.genset
