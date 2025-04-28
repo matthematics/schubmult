@@ -1,4 +1,4 @@
-from functools import cache, cached_property
+from functools import cache
 
 import sympy
 from symengine import Add, S, expand, sympify
@@ -559,7 +559,7 @@ class MixedSchubertElement(BaseSchubertElement, dict):
             return next(iter(obj.values()))
         return obj
 
-    def __init__(self, *elems):
+    def __init__(self, *elems):  # noqa: ARG002
         self._ring = BaseSchubertRing([], [])
         self._ring.dtype = type("MixedSchubertElement", (MixedSchubertElement,), {"ring": self})
 
@@ -579,14 +579,20 @@ class MixedSchubertElement(BaseSchubertElement, dict):
             return elem
         elem = MixedSchubertElement(*list(self.values()))
 
-        for ring in elem:
+        for ring in self:
             try:
                 new_other = ring.domain_new(other)
                 new_other = ring.from_dict({Permutation([]): new_other})
                 elem[ring] = ring.add(elem.get(ring, ring.zero), new_other)
-                return elem
+                if elem[ring] == ring.zero:
+                    del elem[ring]
+                return MixedSchubertElement(*list(elem.values()))
             except CoercionFailed:
-                pass
+                new_other = ring.from_sympy(other)
+                elem[ring] = ring.add(elem.get(ring, ring.zero), new_other)
+                if elem[ring] == ring.zero:
+                    del elem[ring]
+                return MixedSchubertElement(*list(elem.values()))
         return NotImplemented
 
     def __sub__(self, other):
@@ -597,16 +603,21 @@ class MixedSchubertElement(BaseSchubertElement, dict):
             elem[other.ring] = other.ring.sub(elem.get(other.ring, other.ring.zero), other)
             return elem
         elem = MixedSchubertElement(*list(self.values()))
-        for ring in elem:
+        for ring in self:
             try:
                 new_other = ring.domain_new(other)
                 new_other = ring.from_dict({Permutation([]): new_other})
                 elem[ring] = ring.sub(elem.get(ring, ring.zero), new_other)
-                return elem
+                if elem[ring] == ring.zero:
+                    del elem[ring]
+                return MixedSchubertElement(*list(elem.values()))
             except CoercionFailed:
-                pass
+                new_other = ring.from_sympy(other)
+                elem[ring] = ring.sub(elem.get(ring, ring.zero), new_other)
+                if elem[ring] == ring.zero:
+                    del elem[ring]
+                return MixedSchubertElement(*list(elem.values()))
         return NotImplemented
-
 
     def __radd__(self, other):
         if isinstance(other, BaseSchubertElement):
@@ -614,14 +625,20 @@ class MixedSchubertElement(BaseSchubertElement, dict):
             elem[other.ring] = other.ring.add(other, elem.get(other.ring, other.ring.zero))
             return elem
         elem = MixedSchubertElement(*list(self.values()))
-        for ring in elem:
+        for ring in self:
             try:
                 new_other = ring.domain_new(other)
                 new_other = ring.from_dict({Permutation([]): new_other})
                 elem[ring] = ring.add(new_other, elem.get(ring, ring.zero))
-                return elem
+                if elem[ring] == ring.zero:
+                    del elem[ring]
+                return MixedSchubertElement(*list(elem.values()))
             except CoercionFailed:
-                pass
+                new_other = ring.from_sympy(other)
+                elem[ring] = ring.add(new_other, elem.get(ring, ring.zero))
+                if elem[ring] == ring.zero:
+                    del elem[ring]
+                return MixedSchubertElement(*list(elem.values()))
         return NotImplemented
 
     def __rsub__(self, other):
@@ -630,14 +647,20 @@ class MixedSchubertElement(BaseSchubertElement, dict):
             elem[other.ring] = other.ring.sub(other, elem.get(other.ring, other.ring.zero))
             return elem
         elem = MixedSchubertElement(*list(self.values()))
-        for ring in elem:
+        for ring in self:
             try:
                 new_other = ring.domain_new(other)
                 new_other = ring.from_dict({Permutation([]): new_other})
                 elem[ring] = ring.sub(new_other, elem.get(ring, ring.zero))
-                return elem
+                if elem[ring] == ring.zero:
+                    del elem[ring]
+                return MixedSchubertElement(*list(elem.values()))
             except CoercionFailed:
-                pass
+                new_other = ring.from_sympy(other)
+                elem[ring] = ring.sub(new_other, elem.get(ring, ring.zero))
+                if elem[ring] == ring.zero:
+                    del elem[ring]
+                return MixedSchubertElement(*list(elem.values()))
         return NotImplemented
 
     def __mul__(self, other):
@@ -655,10 +678,10 @@ class MixedSchubertElement(BaseSchubertElement, dict):
                 new_other = ring.domain_new(other)
                 new_other = ring.from_dict({Permutation([]): new_other})
                 elem[ring] = ring.mul(elem[ring], new_other)
-                return elem
             except CoercionFailed:
-                return NotImplemented
-        return NotImplemented
+                new_other = ring.from_sympy(other)
+                elem[ring] = ring.mul(elem[ring], new_other)
+        return elem
 
     def __rmul__(self, other):
         if isinstance(other, BaseSchubertElement):
@@ -671,8 +694,9 @@ class MixedSchubertElement(BaseSchubertElement, dict):
                 elem[ring] = ring.mul(new_other, elem[ring])
                 return elem
             except CoercionFailed:
-                return NotImplemented
-        return NotImplemented
+                new_other = ring.from_sympy(other)
+                elem[ring] = ring.mul(new_other, elem[ring])
+        return elem
 
     @property
     def free_symbols(self):
