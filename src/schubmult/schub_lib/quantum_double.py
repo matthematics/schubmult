@@ -11,6 +11,7 @@ import numpy as np
 from symengine import Add, Mul, Pow, S, expand, sympify
 
 import schubmult.schub_lib.double as norm_yz
+import schubmult.schub_lib.positivity as pos
 from schubmult.perm_lib import Permutation, code, inv, longest_element, medium_theta, permtrim, strict_theta, uncode
 from schubmult.poly_lib.poly_lib import _vars, call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet_base
@@ -179,7 +180,7 @@ def schubmult_q_generic_partial_posify(u2, v2):
 
 def q_posify(u, v, w, val, var2, var3, q_var, msg):
     # logger.debug(f"Line number {val=} {u=} {v=} {w=}")
-    if not v.has_pattern([1,4,3,2]) and not v.has_pattern([3,1,2]):
+    if not v.has_pattern([1, 4, 3, 2]) and not v.has_pattern([3, 1, 2]):
         return val
     try:
         val2 = int(expand(val))
@@ -210,7 +211,7 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
                         if q_part2 == 1:
                             # reduced to classical coefficient
                             # logger.debug(f"{u=} {v=} {w=} {u2=} {v2=} {w2=} {q_part=} {q_dict[q_part]=}")
-                            val2 += q_part * norm_yz.posify(
+                            val2 += q_part * pos.posify(
                                 q_dict[q_part],
                                 u2,
                                 v2,
@@ -221,7 +222,7 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
                                 False,
                             )
                         else:
-                            val2 += q_part * norm_yz.compute_positive_rep(
+                            val2 += q_part * pos.compute_positive_rep(
                                 q_dict[q_part],
                                 var2,
                                 var3,
@@ -270,7 +271,7 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
 #                             )
 #                             if q_part2 == 1:
 #                                 # reduced to classical coefficient
-#                                 val2 += q_part * norm_yz.posify(
+#                                 val2 += q_part * pos.posify(
 #                                     q_dict[q_part],
 #                                     u2,
 #                                     v2,
@@ -281,7 +282,7 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
 #                                     False,
 #                                 )
 #                             else:
-#                                 val2 += q_part * norm_yz.compute_positive_rep(
+#                                 val2 += q_part * pos.compute_positive_rep(
 #                                     q_dict[q_part],
 #                                     var2,
 #                                     var3,
@@ -320,7 +321,7 @@ def old_q_posify(u, v, w, val, var2, var3, q_var, msg):
                 )
                 if q_part2 == 1:
                     # reduced to classical coefficient
-                    val2 += q_part * norm_yz.posify(
+                    val2 += q_part * pos.posify(
                         q_dict[q_part],
                         u2,
                         v2,
@@ -331,7 +332,7 @@ def old_q_posify(u, v, w, val, var2, var3, q_var, msg):
                         False,
                     )
                 else:
-                    val2 += q_part * norm_yz.compute_positive_rep(
+                    val2 += q_part * pos.compute_positive_rep(
                         q_dict[q_part],
                         var2,
                         var3,
@@ -350,7 +351,7 @@ def old_q_posify(u, v, w, val, var2, var3, q_var, msg):
 
 
 def q_partial_posify_generic(val, u, v, w):
-    if not v.has_pattern([1,4,3,2]) and not v.has_pattern([3,1,2]):
+    if not v.has_pattern([1, 4, 3, 2]) and not v.has_pattern([3, 1, 2]):
         return val
     try:
         val2 = int(expand(val))
@@ -379,7 +380,7 @@ def q_partial_posify_generic(val, u, v, w):
                         if q_part2 == 1:
                             # reduced to classical coefficient
                             # logger.debug(f"{u=} {v=} {w=} {u2=} {v2=} {w2=} {q_part=} {q_dict[q_part]=}")
-                            val2 += q_part * norm_yz.posify_generic_partial(
+                            val2 += q_part * pos.posify_generic_partial(
                                 q_dict[q_part],
                                 u2,
                                 v2,
