@@ -53,7 +53,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
         notint = True
     if notint:
         z_ring = rings.SingleSchubertRing(var3)
-        opt = Optimizer(z_ring)
+        opt = Optimizer(z_ring, val)
         frees = val.free_symbols
         # logger.debug(f"{frees=}")
         # logger.debug(f"{[type(s) for s in frees]=}")
@@ -76,7 +76,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
 
         base_vectors = []
         base_monoms = []
-        vec = opt.poly_to_vec(val)
+        vec = opt.vec0
 
         # if do_pos_neg:
         #     smp = val
@@ -185,8 +185,9 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
             for i in range(len(comblistmn1)):
                 b1 = comblistmn1[i]
                 vec0 = opt.poly_to_vec(b1)
-                base_vectors += [vec0]
-                base_monoms += [b1]
+                if vec0:
+                    base_vectors += [vec0]
+                    base_monoms += [b1]
         vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(base_vectors))]
         lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
         lp_prob += 0
@@ -1105,23 +1106,41 @@ def dualpieri(mu, v, w):
 
 
 class Optimizer:
-    def __init__(self, z_ring):
+    def __init__(self, z_ring, poly):
         self.z_ring = z_ring
         self.pos_dict = {z_ring.genset[i]: -z_ring.genset[i] for i in range(100)}
+        self.monom_to_vec = {}
+        self.vec0 = None
+        self.vec0 = self.poly_to_vec(poly)
+
+    def _init_basevec(self, dc):
+        self.monom_to_vec = {}
+        index = 0
+        for mn in dc:
+            if dc[mn] == 0:
+                continue
+            self.monom_to_vec[mn] = index
+            index += 1
 
     def poly_to_vec(self, poly):
-        poly = efficient_subs(sympify(poly), self.pos_dict)
+        poly = expand(sympify(poly).xreplace({self.z_ring.genset[1]: 0}))
 
-        schub_elem = self.z_ring(poly)
-        dcts = [(perm, expand(v).as_coefficients_dict()) for perm, v in schub_elem.items()]
-        dc = {}
-        for perm, dct in dcts:
-            for m, val in dct.items():
-                if int(val) == 0:
-                    continue
-                if any(sympy.sympify(arg) is sympy.S.NegativeOne for arg in m.args):
-                    m = -m
-                    val = -val
-                dc[(perm, m)] = dc.get((perm,m),0) + int(val)
-        print(dc)
-        return dc
+        dc = poly.as_coefficients_dict()
+
+        if self.vec0 is None:
+            self._init_basevec(dc)
+
+        vec = {}
+        for mn in dc:
+            cf = dc[mn]
+            if cf == 0:
+                continue
+            cf = abs(int(cf))
+            try:
+                index = self.monom_to_vec[mn]
+            except KeyError:
+                return None
+            if self.vec0 is not None and self.vec0[index] < cf:
+                return None
+            vec[index] = cf
+        return vec
