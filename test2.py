@@ -192,18 +192,21 @@ if __name__ == "__main__":
     #         print(f"{perm} {Sx(perm).in_CEM_basis()}")
     total = 0
     for perm in perms:
-        if perm.inv < 8:
+        if perm.inv < 8 or not perm.has_pattern([1,3,2]):
             continue
         lastvar = max((~perm).descents()) + 1
         if lastvar == 1:
             continue
         spoly = DSx(perm)
         total += 1
-        for i in range(lastvar,1,-1):
-            if len(spoly.coproduct(*list(range(i,lastvar+1)),on_coeff_gens=True).coeff_dict.keys()) == 1:
-                bongo+=1
-                print(f"{perm}")
-                break
+        for i in range(lastvar-1,1,-1):
+            try:
+                if len(spoly.coproduct(*list(range(i,lastvar+1)),on_coeff_gens=True).keys()) == 1:
+                    bongo+=1
+                    print(f"{DSx(perm)} = {spoly.coproduct(*list(range(i,lastvar+1)),on_coeff_gens=True)}")
+                    break
+            except:
+                pass
             
     # dct = [{} for i in range(n-1)]
 

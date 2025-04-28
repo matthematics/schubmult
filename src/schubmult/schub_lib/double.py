@@ -984,6 +984,9 @@ def posify(
     optimize=True,
     n=_vars.n,
 ):
+    if not v2.has_pattern([1, 4, 2, 3]) and not v2.has_pattern([4, 1, 3, 2]) and not v2.has_pattern([3, 1, 4, 2]) and not v2.has_pattern([1, 4, 3, 2]):
+        logger.debug("Recording new characterization was used")
+        return schubmult_double({u2: 1}, v2, var2, var3).get(w2, 0)
     # logger.debug(f"NEW {val=} {u2=} {v2=} {w2=}")
     oldval = val
     if inv(u2) + inv(v2) - inv(w2) == 0:
@@ -1063,6 +1066,7 @@ def posify(
     if not v.has_pattern([1, 4, 2, 3]) and not v.has_pattern([4, 1, 3, 2]) and not v.has_pattern([3, 1, 4, 2]) and not v.has_pattern([1, 4, 3, 2]):
         logger.debug("Recording new characterization was used")
         return schubmult_double({u: 1}, v, var2, var3).get(w, 0)
+
     if inv(w) - inv(u) == 1:
         # logger.debug("Recording line number")
         if sign_only:

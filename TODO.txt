@@ -159,5 +159,7 @@ speed up single var coproduct
 
 Make use of variable separation as a last resort to avoid linear optimization
 
+More tests
+
 
 
