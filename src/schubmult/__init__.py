@@ -1,7 +1,7 @@
 __version__ = "3.0.2dev1"
 #schubpoly_from_elems?
 from .perm_lib import Permutation, permtrim, theta, uncode
-from .poly_lib.poly_lib import efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, xreplace_genvars
+from .poly_lib.poly_lib import divide_out_diff, efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, split_up, xreplace_genvars
 from .poly_lib.schub_poly import div_diff, schubpoly, skew_div_diff
 from .poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from .rings.quantum_schubert_ring import (
@@ -58,6 +58,7 @@ __all__ = [
     "check_blocks",
     "compute_positive_rep",
     "div_diff",
+    "divide_out_diff",
     "efficient_subs",
     "elem_sym_poly",
     "elem_sym_poly_q",
@@ -88,6 +89,7 @@ __all__ = [
     "schubpoly",
     "schubpoly_quantum",
     "skew_div_diff",
+    "split_up",
     "theta",
     "uncode",
     "xreplace_genvars",

@@ -276,3 +276,44 @@ def xreplace_genvars(poly, vars1, vars2):
     # print(f"Prefnool {poly=} {subs_dict=}")
     return sympify(poly).xreplace(subs_dict)
     # print(f"{poly2=} {poly2.free_symbols=}")
+
+
+# def schub_horner(poly, vr):
+#     qd = factor_out_q_keep_factored(poly, [vr])
+#     updated_dict = {0 if isinstance(k, int) else (1 if not isinstance(k, Pow) else int(k.args[1])): v for k, v in qd.items()}
+#     start = max(updated_dict.keys())
+#     ret = 0
+#     for pw in range(start,-1,-1):
+#         ret *= vr
+#         ret += updated_dict.get(pw, 0)
+#     return ret
+
+def divide_out_diff(poly, v1, v2):
+    poly2 = poly.xreplace({v1: v2})
+    if poly == poly2:
+        return symengine.S.Zero
+    if poly == v2:
+        return symengine.S.NegativeOne
+    if poly2 == v2:
+        return symengine.S.One
+    if isinstance(poly, symengine.Add):
+        return symengine.Add(*[divide_out_diff(a, v1, v2) for a in poly.args])
+    if isinstance(poly, symengine.Pow):
+        poly = symengine.Mul([poly.args[0]]*int(poly.args[1]), evaluate=False)
+    if isinstance(poly, symengine.Mul):
+        current_args = [*poly.args]
+        args_ret = []
+        for i, arg in enumerate(poly.args):
+            res = divide_out_diff(arg, v1, v2)
+            if res == 0:
+                continue
+            if res == symengine.S.One:
+                args_ret += Mul(*[*current_args[:i],*current_args[i+1:]])
+            else:
+                args_ret += Mul(*[*current_args[:i],res,*current_args[i+1:]])
+            current_args[i] = current_args[i].xreplace({v1: v2})
+        return symengine.Add(*args_ret)
+    raise Exception("This shouldn't happen")
+    
+def split_up(poly, v1, v2):
+    return (poly.xreplace({v1: v2}), (v1 - v2, divide_out_diff(poly, v1, v2)))

@@ -917,28 +917,6 @@ def factor_out_q_keep_factored(poly, q_var=_vars.q_var):
         return ret
     raise ValueError
 
-def schub_horner(poly, vr):
-    qd = factor_out_q_keep_factored(poly, [vr])
-    updated_dict = {0 if isinstance(k, int) else (1 if not isinstance(k, Pow) else int(k.args[1])): v for k, v in qd.items()}
-    start = max(updated_dict.keys())
-    ret = 0
-    for pw in range(start,-1,-1):
-        ret *= vr
-        ret += updated_dict.get(pw, 0)
-    return ret
-
-def divide_out_diff(poly, v1, v2):
-    qd = factor_out_q_keep_factored(poly, [v2])
-    updated_dict = {0 if isinstance(k, int) else (1 if not isinstance(k, Pow) else int(k.args[1])): v for k, v in qd.items()}
-    start = max(updated_dict.keys())
-    ret = 0
-    b = 0
-    for pw in range(start,0,-1):
-        b *= v2
-        b += updated_dict.get(pw, 0)
-        ret *= v1
-        ret += b
-    return poly.subs(v2,v1) + (v2 - v1)*ret
 
 def factor_out_q(poly):
     coeff_dict = expand(poly).as_coefficients_dict()
