@@ -10,8 +10,8 @@ license = {file = "LICENSE"}
 dependencies = [
         "numpy",
         "PuLP>=2.7.0",
-        "symengine>=0.14.0",
-        "sympy>=1.14.1",
+        "symengine>=0.14.1",
+        "sympy>=1.14.0",
         "psutil",
         "cachetools",
         "sortedcontainers",
