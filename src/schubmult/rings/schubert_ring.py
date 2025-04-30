@@ -580,10 +580,9 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
         else:
             elem = self.from_sympy(x)
         return elem
-    
+
     def _coerce_mul(self, other):
         if isinstance(other, BaseSchubertElement):
-            print(f"{type(other)=} {type(other.ring)=}")
             if isinstance(other.ring, qsr.QuantumDoubleSchubertRing):
                 return other.as_classical()
             if isinstance(other.ring, ElemDoubleSchubertRing):

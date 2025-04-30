@@ -314,6 +314,6 @@ def divide_out_diff(poly, v1, v2):
             current_args[i] = current_args[i].xreplace({v1: v2})
         return sympify(sympy.sympify(symengine.Add(*args_ret)))
     raise ValueError(f"Expected Expr but got {type(poly)}")
-    
+
 def split_up(poly, v1, v2):
     return (poly.xreplace({v1: v2}), (v1 - v2, divide_out_diff(poly, v1, v2)))

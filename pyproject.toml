@@ -115,6 +115,7 @@ unfixable = ["F401", "F841"]
 [tool.ruff.lint.per-file-ignores]
 "test*.py" = ["ALL"]
 "tst*.py" = ["ALL"]
+"working*.py" = ["ALL"]
 "schubmult_*.py" = ["T201"]
 "argparse.py" = ["T201"]
 
