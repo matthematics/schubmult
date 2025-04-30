@@ -25,6 +25,23 @@ def elem_func_func(k, i, v1, v2, vdiff, varl1, varl2, elem_func):
     zvars = [varl2[i] for i in call_zvars(v1, v2, k, i)]
     return elem_func(newk - vdiff, newk, varl1[1:], zvars)
 
+def elem_func_func_mul(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, elem_func):
+    newk = k - udiff
+    if newk < vdiff:
+        return 0
+    if newk == vdiff:
+        return 1
+    yvars = []
+    for j in range(min(len(u1), k)):
+        if u1[j] == u2[j]:
+            yvars += [varl1[u2[j]]]
+    for j in range(len(u1), min(k, len(u2))):
+        if u2[j] == j + 1:
+            yvars += [varl1[u2[j]]]
+    for j in range(len(u2), k):
+        yvars += [varl1[j + 1]]
+    zvars = [varl2[i] for i in call_zvars(v1, v2, k, i)]
+    return elem_func(newk - vdiff, newk, yvars, zvars)
 
 def schubpoly_from_elems(v, var_x=None, var_y=None, elem_func=None, mumu=None):
     if mumu:

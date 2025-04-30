@@ -2,7 +2,7 @@ from bisect import bisect_left
 from functools import cache
 
 import sympy
-from symengine import Add, Mul, Pow, S, Symbol, sympify
+from symengine import Add, Mul, Pow, S, Symbol, expand, sympify
 
 import schubmult.rings._utils as utils
 import schubmult.rings.schubert_ring as spr
@@ -503,8 +503,6 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
 
     @cache
     def classical_in_basis(self, k):
-        from symengine import expand
-
         a = self.classical_basis(k)
         b = self(k)
         if expand(a.as_polynomial() - b.as_polynomial()) == S.Zero:
@@ -642,7 +640,6 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
             else:
                 elem += v * self.classical_in_basis(k)
         return elem
-
 
     def __call__(self, x):
         genset = self.genset

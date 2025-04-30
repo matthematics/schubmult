@@ -10,6 +10,7 @@ from schubmult.perm_lib import (
     uncode,
 )
 from schubmult.poly_lib.poly_lib import _vars, efficient_subs, elem_sym_func
+from schubmult.poly_lib.schub_poly import elem_func_func_mul
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.schub_lib import (
     compute_vpathdicts,
@@ -205,10 +206,6 @@ def schubmult_double_dict(perm_dict1, perm_dict2, var2=None, var3=None):
 
 
 def schubmult_double(perm_dict, v, var2=None, var3=None):
-    # if isinstance(var2, str):
-    #     var2 = GeneratingSet(var2)
-    # if isinstance(var3, str):
-    #     var3 = GeneratingSet(var3)
     perm_dict = {Permutation(k): v for k, v in perm_dict.items()}
     v = Permutation(v)
     vn1 = ~v
@@ -270,6 +267,68 @@ def schubmult_double(perm_dict, v, var2=None, var3=None):
         ret_dict = add_perm_dict({Permutation(ep): vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
 
+def schubmult_double_from_elems(perm_dict, v, var2=None, var3=None, elem_func=None):
+    perm_dict = {Permutation(k): v for k, v in perm_dict.items()}
+    v = Permutation(v)
+    vn1 = ~v
+    th = theta(vn1)
+    if len(th) == 0:
+        return perm_dict
+    if th[0] == 0:
+        return perm_dict
+    mu = uncode(th)
+    vmu = v * mu
+    inv_vmu = inv(vmu)
+    inv_mu = inv(mu)
+    ret_dict = {}
+    while th[-1] == 0:
+        th.pop()
+    thL = len(th)
+    vpathdicts = compute_vpathdicts(th, vmu, True)
+    for u, val in perm_dict.items():
+        inv_u = inv(u)
+        vpathsums = {u: {Permutation([1, 2]): val}}
+        for index in range(thL):
+            mx_th = 0
+            for vp in vpathdicts[index]:
+                for v2, vdiff, s in vpathdicts[index][vp]:
+                    mx_th = max(mx_th, th[index] - vdiff)
+            newpathsums = {}
+            for up in vpathsums:
+                inv_up = inv(up)
+                newperms = elem_sym_perms(
+                    up,
+                    min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu),
+                    th[index],
+                )
+                for up2, udiff in newperms:
+                    if up2 not in newpathsums:
+                        newpathsums[up2] = {}
+                    for v in vpathdicts[index]:
+                        sumval = vpathsums[up].get(v, 0)
+                        if sumval == 0:
+                            continue
+                        for v2, vdiff, s in vpathdicts[index][v]:
+                            newpathsums[up2][v2] = newpathsums[up2].get(
+                                v2,
+                                0,
+                            ) + s * sumval * elem_func_func_mul(
+                                th[index],
+                                index + 1,
+                                up,
+                                up2,
+                                v,
+                                v2,
+                                udiff,
+                                vdiff,
+                                var2,
+                                var3,
+                                elem_func=elem_func,
+                            )
+            vpathsums = newpathsums
+        toget = vmu
+        ret_dict = add_perm_dict({Permutation(ep): vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
+    return ret_dict
 
 def schubmult_down(perm_dict, v, var2=None, var3=None):
     vn1 = ~v

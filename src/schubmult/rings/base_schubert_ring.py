@@ -200,7 +200,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             pass
         try:
             new_other = self.ring(other)
-            return new_other.__mul__(self)
+            return new_other.ring.mul(new_other, self)
         except CoercionFailed:
             return NotImplemented
 
@@ -277,8 +277,7 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def mul(self, elem, other):
         if self.of_type(elem):
             if isinstance(other, BaseSchubertElement):
-                if isinstance(other.ring, type(self)):
-                    return self.from_dict(utils._mul_schub_dicts(elem, other, elem.ring, other.ring))
+                return self.from_dict(utils._mul_schub_dicts(elem, other, elem.ring, other.ring))
         try:
             other = self.domain_new(other)
         except CoercionFailed:

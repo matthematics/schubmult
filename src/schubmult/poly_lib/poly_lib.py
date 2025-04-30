@@ -68,7 +68,7 @@ def sv_posify(val, var2):
     val = sympify(sympy.simplify(efficient_subs(sympify(val), subs_dict)))
     bingle_dict = {}
     for i in range(1, len(var_r) - 1):
-        bingle_dict[var_r[i]] = var2[i + 1] - var2[i]  # sympy.Add(*[_vars.var2[i+1], - _vars.var2[i]],evaluate=False)
+        bingle_dict[var_r[i]] = var2[i + 1] - var2[i]  # symengine.Add(*[_vars.var2[i+1], - _vars.var2[i]],evaluate=False)
     return val.xreplace(bingle_dict)
 
 def act(w, poly, genset):
@@ -297,7 +297,7 @@ def divide_out_diff(poly, v1, v2):
     if poly2 == v2:
         return symengine.S.One
     if isinstance(poly, symengine.Add):
-        return symengine.Add(*[divide_out_diff(a, v1, v2) for a in poly.args])
+        return sympify(sympy.sympify(symengine.Add(*[divide_out_diff(a, v1, v2) for a in poly.args])))
     if isinstance(poly, symengine.Pow):
         poly = symengine.Mul([poly.args[0]]*int(poly.args[1]), evaluate=False)
     if isinstance(poly, symengine.Mul):
@@ -308,12 +308,12 @@ def divide_out_diff(poly, v1, v2):
             if res == 0:
                 continue
             if res == symengine.S.One:
-                args_ret += Mul(*[*current_args[:i],*current_args[i+1:]])
+                args_ret += [Mul(*[*current_args[:i],*current_args[i+1:]])]
             else:
-                args_ret += Mul(*[*current_args[:i],res,*current_args[i+1:]])
+                args_ret += [Mul(*[*current_args[:i],res,*current_args[i+1:]])]
             current_args[i] = current_args[i].xreplace({v1: v2})
-        return symengine.Add(*args_ret)
-    raise Exception("This shouldn't happen")
+        return sympify(sympy.sympify(symengine.Add(*args_ret)))
+    raise ValueError(f"Expected Expr but got {type(poly)}")
     
 def split_up(poly, v1, v2):
     return (poly.xreplace({v1: v2}), (v1 - v2, divide_out_diff(poly, v1, v2)))

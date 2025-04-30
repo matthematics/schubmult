@@ -17,6 +17,7 @@ from schubmult.utils.perm_utils import add_perm_dict
 
 from .abstract_schub_poly import AbstractSchubPoly
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+from .elem_sym import ElemSym
 from .tensor_ring import TensorRing
 
 _pretty_schub_char = "𝔖"  # noqa: RUF001
@@ -247,6 +248,10 @@ class DoubleSchubertRing(BaseSchubertRing):
         if isinstance(other, BaseSchubertElement):
             if isinstance(other.ring, qsr.QuantumDoubleSchubertRing):
                 return other.as_classical()
+            if isinstance(other.ring, ElemDoubleSchubertRing):
+                return other
+            if isinstance(other.ring, DoubleSchubertRing):
+                return other
         return None
 
     def _coerce_add(self, other):  # noqa: ARG002
@@ -419,9 +424,7 @@ class DoubleSchubertRing(BaseSchubertRing):
             elem = self.from_dict({x: 1})
 
         elif isinstance(x, DoubleSchubertElement):
-            if x.is_Add or x.is_Mul:
-                return x.doit()
-            if x.genset == genset:
+            if x.ring.genset == genset:
                 return x
             raise ValueError("Different generating set")
         # poly
@@ -529,9 +532,7 @@ class SingleSchubertRing(DoubleSchubertRing):
         elif isinstance(x, Permutation):
             elem = self.from_dict({x: 1})
         elif isinstance(x, DoubleSchubertElement):
-            if x.is_Add or x.is_Mul:
-                return x
-            if x.genset == genset:
+            if x.ring.genset == genset:
                 elem = DoubleSchubertElement(x, self)  # , self)
             else:
                 return self(x.expand())
@@ -541,3 +542,52 @@ class SingleSchubertRing(DoubleSchubertRing):
 
 
 Sx = SingleSchubertRing(GeneratingSet("x"))
+
+class ElemDoubleSchubertRing(DoubleSchubertRing):
+    def __init__(self, genset, coeff_genset):
+        super().__init__(genset, coeff_genset)
+        self.dtype = type("DoubleSchubertElement", (DoubleSchubertElement,), {"ring": self})
+
+    @property
+    def elem_func(self):
+        return ElemSym
+
+    @cache
+    def cached_product(self, u, v, basis2):
+        return yz.schubmult_double_from_elems({u: 1}, v, self.coeff_genset, basis2.coeff_genset, elem_func=self.elem_func)
+
+    @cache
+    def cached_positive_product(self, u, v, basis2):
+        return self.cached_product(u, v, basis2)
+
+    def new(self, x):
+        genset = self.genset
+        if not isinstance(genset, GeneratingSet_base):
+            raise TypeError
+        if isinstance(x, list) or isinstance(x, tuple):
+            p_x = Permutation(x)
+            if max([0, *list(p_x.descents())]) > len(self.genset):
+                raise utils.NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
+            elem = self.from_dict({p_x: 1})
+        elif isinstance(x, Permutation):
+            if max([0, *list(x.descents())]) > len(self.genset):
+                raise utils.NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
+            elem = self.from_dict({x: 1})
+        elif isinstance(x, DoubleSchubertElement):
+            if x.ring.genset == genset:
+                return x
+            raise ValueError("Different generating set")
+        else:
+            elem = self.from_sympy(x)
+        return elem
+    
+    def _coerce_mul(self, other):
+        if isinstance(other, BaseSchubertElement):
+            print(f"{type(other)=} {type(other.ring)=}")
+            if isinstance(other.ring, qsr.QuantumDoubleSchubertRing):
+                return other.as_classical()
+            if isinstance(other.ring, ElemDoubleSchubertRing):
+                return other
+            if isinstance(other.ring, DoubleSchubertRing):
+                return other
+        return None
