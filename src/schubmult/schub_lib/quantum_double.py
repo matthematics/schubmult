@@ -122,7 +122,7 @@ def nil_hecke(perm_dict, v, n, var2=None, var3=None):
     while th[-1] == 0:
         th.pop()
     thL = len(th)
-    vpathdicts = compute_vpathdicts(th, vmu, True)
+    vpathdicts = compute_vpathdicts(th, vmu)
     for u, val in perm_dict.items():
         vpathsums = {u: {Permutation([1, 2]): val}}
         for index in range(thL):
@@ -536,7 +536,7 @@ def schubmult_q_double(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var):
     while th[-1] == 0:
         th.pop()
     thL = len(th)
-    vpathdicts = compute_vpathdicts(th, vmu, True)
+    vpathdicts = compute_vpathdicts(th, vmu)
     for u, val in perm_dict.items():
         inv_u = inv(u)
         vpathsums = {u: {Permutation([1, 2]): val}}
@@ -605,7 +605,7 @@ def schubmult_q_double_fast(perm_dict, v, var2=None, var3=None, q_var=_vars.q_va
     ret_dict = {}
 
     thL = len(th)
-    vpathdicts = compute_vpathdicts(th, vmu, True)
+    vpathdicts = compute_vpathdicts(th, vmu)
     for u, val in perm_dict.items():
         inv_u = inv(u)
         vpathsums = {u: {Permutation([]): val}}
@@ -735,7 +735,7 @@ def schubmult_q_double_fast(perm_dict, v, var2=None, var3=None, q_var=_vars.q_va
 #     ret_dict = {}
 
 #     thL = len(th)
-#     vpathdicts = compute_vpathdicts(th, vmu, True)
+#     vpathdicts = compute_vpathdicts(th, vmu)
 #     for u, val in perm_dict.items():
 #         inv_u = inv(u)
 #         vpathsums = {u: {(1, 2): val}}

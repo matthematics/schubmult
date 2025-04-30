@@ -100,7 +100,7 @@ def schubmult_q_fast(perm_dict, v, q_var=_vars.q_var):
     thL = len(th)
     # if thL!=2 and len(set(thL))!=1:
     # raise ValueError("Not what I can do")
-    vpathdicts = sss.compute_vpathdicts(th, vmu, True)
+    vpathdicts = sss.compute_vpathdicts(th, vmu)
     # print(f"{vpathdicts=}")
     for u, val in perm_dict.items():
         inv_u = inv(u)
@@ -191,7 +191,7 @@ def schubmult_q(perm_dict, v):
     while th[-1] == 0:
         th.pop()
     thL = len(th)
-    vpathdicts = sss.compute_vpathdicts(th, vmu, True)
+    vpathdicts = sss.compute_vpathdicts(th, vmu)
     for u, val in perm_dict.items():
         inv_u = inv(u)
         vpathsums = {u: {Permutation([]): val}}

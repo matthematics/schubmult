@@ -44,6 +44,7 @@ class ElemSym(Expr):
         obj._k = k
         return obj
 
+    # z's can be initial for the schubs
     def split_out_vars(self, vars1, vars2):
         # order of vars2 matters!
         vars1 = [sympify(v) for v in vars1]

@@ -388,7 +388,7 @@ def kdown_perms(perm, monoperm, p, k):
     return full_perm_list
 
 @cache
-def compute_vpathdicts_cached(th, vmu, smpify):
+def compute_vpathdicts_cached(th, vmu):
     vpathdicts = [{} for index in range(len(th))]
     vpathdicts[-1][vmu] = None
     thL = len(th)
@@ -418,13 +418,11 @@ def compute_vpathdicts_cached(th, vmu, smpify):
                 if key2 not in vpathdicts2[i]:
                     vpathdicts2[i][key2] = set()
                 v2 = value[2]
-                if smpify:
-                    v2 = sympify(v2)
                 vpathdicts2[i][key2].add((key, value[1], v2))
     return vpathdicts2
 
-def compute_vpathdicts(th, vmu, smpify=False):
-    return compute_vpathdicts_cached(tuple(th), vmu, smpify)
+def compute_vpathdicts(th, vmu):
+    return compute_vpathdicts_cached(tuple(th), vmu)
 
 
 def check_blocks(qv, parabolic_index):

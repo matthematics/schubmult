@@ -222,7 +222,7 @@ def schubmult_double(perm_dict, v, var2=None, var3=None):
     while th[-1] == 0:
         th.pop()
     thL = len(th)
-    vpathdicts = compute_vpathdicts(th, vmu, True)
+    vpathdicts = compute_vpathdicts(th, vmu)
     for u, val in perm_dict.items():
         inv_u = inv(u)
         vpathsums = {u: {Permutation([1, 2]): val}}
@@ -284,7 +284,7 @@ def schubmult_double_from_elems(perm_dict, v, var2=None, var3=None, elem_func=No
     while th[-1] == 0:
         th.pop()
     thL = len(th)
-    vpathdicts = compute_vpathdicts(th, vmu, True)
+    vpathdicts = compute_vpathdicts(th, vmu)
     for u, val in perm_dict.items():
         inv_u = inv(u)
         vpathsums = {u: {Permutation([1, 2]): val}}
@@ -342,7 +342,7 @@ def schubmult_down(perm_dict, v, var2=None, var3=None):
     while th[-1] == 0:
         th.pop()
     thL = len(th)
-    vpathdicts = compute_vpathdicts(th, vmu, True)
+    vpathdicts = compute_vpathdicts(th, vmu)
     for u, val in perm_dict.items():
         vpathsums = {u: {Permutation([1, 2]): val}}
         for index in range(thL):
