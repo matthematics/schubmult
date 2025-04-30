@@ -1,9 +1,11 @@
 from functools import cache
 
-from sympy import Integer, Tuple
+from sympy import Integer, S, Tuple
 from sympy.core.expr import Expr
 
 from schubmult.poly_lib.poly_lib import elem_sym_poly
+
+from ._utils import NotEnoughGeneratorsError
 
 
 class ElemSym(Expr):
@@ -17,21 +19,106 @@ class ElemSym(Expr):
 
     @staticmethod
     def __xnew__(_class, p, k, var1, var2):
-        obj = Expr.__new__(_class, Integer(p), Integer(k), Tuple(*var1), Tuple(*var2))
+        var1_update = [*var1]
+        var2_update = [*var2]
+        for i, v in enumerate(var1):
+            if v in var2:
+                var1_update.remove(v)
+                var2_update.remove(v)
+                k -= 1
+        
+        var1 = tuple(var1_update)
+        var2 = tuple(var2_update)
+        if p > k or k < 0:
+            return S.Zero
+        if p == 0:
+            return S.One
+        if len(var1) < k:
+            raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
+        if len(var2) < k + 1 - p:
+            raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
+        obj = Expr.__new__(
+            _class,
+            Integer(p),
+            Integer(k),
+            Tuple(*sorted(var1, key=lambda x: int(x.name.split("_")[1]))),
+            Tuple(*sorted(var2, key=lambda x: int(x.name.split("_")[1]))),
+        )
         obj._p = p
         obj._k = k
-        obj._var1 = var1
-        obj._var2 = var2
         return obj
 
-    def _eval_expand_func(self, *args, **kwargs):
-        return elem_sym_poly(self._p, self._k, self._var1, self._var2)
+    @property
+    def degree(self):
+        return self._p
+
+    @property
+    def numvars(self):
+        return self._k
+
+    @property
+    def genvars(self):
+        return tuple(self.args[2])
+
+    @property
+    def coeffvars(self):
+        return tuple(self.args[3])
+
+    def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
+        return elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars)
 
     @property
     def func(self):
         def e(*args):
             return ElemSym(*args)
         return e
+
+    def xreplace(self, rule):
+        res = self
+        for v1, v2 in rule.items():
+            if v1 in res.genvars:
+                new_genvars = [*res.genvars]
+                for i, v in enumerate(res.genvars):
+                    if v == v1:
+                        new_genvars[i] = v2
+                res = res.func(res._p, res._k, new_genvars, res.coeffvars)
+            if v1 in self.coeffvars:
+                new_coeffvars = [*res.coeffvars]
+                for i, v in enumerate(res.coeffvars):
+                    if v == v1:
+                        new_coeffvars[i] = v2
+                res = res.func(res._p, res._k, res.genvars, new_coeffvars)
+        return res
+
+    def divide_out_diff(self, v1, v2):
+        if v1 == v2:
+            return S.Zero
+        if v1 in self.genvars:
+            new_genvars = [*self.genvars]
+            new_genvars.remove(v1)
+            return self.func(self._p - 1, self._k - 1, new_genvars, self.coeffvars)
+        if v1 in self.coeffvars:
+            if v2 in self.coeffvars:
+                return S.Zero
+            if v2 in self.genvars:
+                new_genvars = [*self.genvars]
+                new_genvars.remove(v2)
+                return -self.func(self._p, self._k - 1, new_genvars, self.coeffvars)
+            return -self.func(self._p - 1, self._k, self.genvars, [*self.coeffvars, v2])
+        return S.Zero
+    
+    def sign_of_pair(self, v1, v2):
+        if v1 == v2:
+            return S.Zero
+        if v1 in self.genvars:
+            return S.One
+        if v1 in self.coeffvars:
+            if v2 in self.coeffvars:
+                return S.Zero
+            if v2 in self.genvars:
+                return None
+            return S.NegativeOne
+        return S.Zero
 
     def _sympystr(self, printer):
         return printer._print_Function(self)

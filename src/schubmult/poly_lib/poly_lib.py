@@ -57,6 +57,7 @@ zero = 0
 
 _vars = _gvars()
 
+
 def sv_posify(val, var2):
     var_r = vv.GeneratingSet("r")
     subs_dict = {}
@@ -71,6 +72,7 @@ def sv_posify(val, var2):
         bingle_dict[var_r[i]] = var2[i + 1] - var2[i]  # symengine.Add(*[_vars.var2[i+1], - _vars.var2[i]],evaluate=False)
     return val.xreplace(bingle_dict)
 
+
 def act(w, poly, genset):
     if not isinstance(w, pl.Permutation):
         w = pl.Permutation(w)
@@ -81,6 +83,7 @@ def act(w, poly, genset):
         if genset.index(s) != -1:
             subs_dict[s] = genset[w(genset.index(s))]
     return efficient_subs(poly, subs_dict)
+
 
 def elem_sym_func(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
     newk = k - udiff
@@ -164,20 +167,19 @@ def elem_sym_poly_q(p, k, varl1, varl2, q_var=_vars.q_var):
 
 
 def complete_sym_poly(p, k, vrs):
-    if p == 0 and k>=0:
+    if p == 0 and k >= 0:
         return 1
     if p != 0 and k == 0:
         return 0
     if k < 0:
         return 0
     if k == 1:
-        return vrs[0]**p
+        return vrs[0] ** p
     sm = 0
     mid = k // 2
     for i in range(p + 1):
-        sm += complete_sym_poly(i, mid, vrs[:mid])*complete_sym_poly(p-i, k-mid, vrs[mid:])
+        sm += complete_sym_poly(i, mid, vrs[:mid]) * complete_sym_poly(p - i, k - mid, vrs[mid:])
     return sm
-
 
 
 def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0):
@@ -288,32 +290,58 @@ def xreplace_genvars(poly, vars1, vars2):
 #         ret += updated_dict.get(pw, 0)
 #     return ret
 
+
 def divide_out_diff(poly, v1, v2):
+    if hasattr(poly, "divide_out_diff"):
+        return poly.divide_out_diff(v1, v2)
+    Mul_local = Mul
+    Add_local = symengine.Add
+    Pow_local = Pow
+    S = symengine.S
+    sympify_local = sympify
+    try:
+        poly = sympify(poly)
+        v1 = sympify(v1)
+        v2 = sympify(v2)
+    except Exception:
+        poly = sympy.sympify(poly)
+        v1 = sympy.sympify(v1)
+        v2 = sympy.sympify(v2)
+        Mul_local = sympy.Mul
+        Add_local = sympy.Add
+        Pow_local = sympy.Pow
+        S = sympy.S
+        sympify_local = sympy.sympify
+
     poly2 = poly.xreplace({v1: v2})
     if poly == poly2:
-        return symengine.S.Zero
+        return S.Zero
     if poly == v2:
-        return symengine.S.NegativeOne
+        return S.NegativeOne
     if poly2 == v2:
-        return symengine.S.One
-    if isinstance(poly, symengine.Add):
-        return sympify(sympy.sympify(symengine.Add(*[divide_out_diff(a, v1, v2) for a in poly.args])))
-    if isinstance(poly, symengine.Pow):
-        poly = symengine.Mul([poly.args[0]]*int(poly.args[1]), evaluate=False)
-    if isinstance(poly, symengine.Mul):
+        return S.One
+    if isinstance(poly, Add_local):
+        return sympify_local(sympy.sympify(Add_local(*[divide_out_diff(a, v1, v2) for a in poly.args])))
+    if isinstance(poly, Pow_local):
+        poly = Mul_local([poly.args[0]] * int(poly.args[1]), evaluate=False)
+    if isinstance(poly, Mul_local):
         current_args = [*poly.args]
         args_ret = []
         for i, arg in enumerate(poly.args):
             res = divide_out_diff(arg, v1, v2)
             if res == 0:
                 continue
-            if res == symengine.S.One:
-                args_ret += [Mul(*[*current_args[:i],*current_args[i+1:]])]
+            if res == S.One:
+                args_ret += [Mul_local(*[*current_args[:i], *current_args[i + 1 :]])]
             else:
-                args_ret += [Mul(*[*current_args[:i],res,*current_args[i+1:]])]
+                args_ret += [Mul_local(*[*current_args[:i], res, *current_args[i + 1 :]])]
             current_args[i] = current_args[i].xreplace({v1: v2})
-        return sympify(sympy.sympify(symengine.Add(*args_ret)))
+        return sympify_local(sympy.sympify(Add_local(*args_ret)))
     raise ValueError(f"Expected Expr but got {type(poly)}")
 
+
 def split_up(poly, v1, v2):
-    return (poly.xreplace({v1: v2}), (v1 - v2, divide_out_diff(poly, v1, v2)))
+    try:
+        return (sympify(poly).xreplace({sympify(v1): sympify(v2)}), (sympify(v1 - v2), divide_out_diff(poly, v1, v2)))
+    except Exception:
+        return (sympy.sympify(poly).xreplace({sympy.sympify(v1): sympy.sympify(v2)}), (sympy.sympify(v1 - v2), divide_out_diff(poly, v1, v2)))

@@ -7,7 +7,8 @@ def sympify(val):
         return symengine.sympify(val)
     except symengine.SympifyError:
         return sympy.sympify(val)
-    
+
+
 def expand(val, **kwargs):
     try:
         return symengine.expand(val, **kwargs)

@@ -452,10 +452,13 @@ class DoubleSchubertRing(BaseSchubertRing):
         return elem
 
 
-def DSx(x, genset=GeneratingSet("y")):
+def DSx(x, genset=GeneratingSet("y"), elem_sym=False):
     if isinstance(genset, str):
         genset = GeneratingSet(genset)
-    return DoubleSchubertRing(GeneratingSet("x"), genset)(x)
+    if elem_sym:
+        return ElemDoubleSchubertRing(GeneratingSet("x"), genset)(x)
+    else:
+        return DoubleSchubertRing(GeneratingSet("x"), genset)(x)
 
 
 class SingleSchubertRing(DoubleSchubertRing):
