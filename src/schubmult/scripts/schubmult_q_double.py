@@ -62,7 +62,7 @@ _vars = _gvars()
 
 q_var = _vars.q_var
 
-zero = sympify(0)
+zero = 0
 
 subs_dict2 = {}
 for i in range(1, 100):

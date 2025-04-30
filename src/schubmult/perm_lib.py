@@ -12,7 +12,7 @@ from schubmult.utils.perm_utils import cyclic_sort, permtrim_list, sg
 
 logger = lg.get_logger(__name__)
 
-zero = sympify(0)
+zero = 0
 n = 100
 
 # TODO: permutations act

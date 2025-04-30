@@ -53,7 +53,7 @@ class _gvars:
         return vv.GeneratingSet("q")
 
 
-zero = sympify(0)
+zero = 0
 
 _vars = _gvars()
 
@@ -148,7 +148,7 @@ def elem_sym_func_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2):
     return elem_sym_poly(newk - vdiff, newk, yvars, zvars)
 
 
-one = sympify(1)
+one = 1
 
 
 def elem_sym_poly_q(p, k, varl1, varl2, q_var=_vars.q_var):
