@@ -457,8 +457,7 @@ def DSx(x, genset=GeneratingSet("y"), elem_sym=False):
         genset = GeneratingSet(genset)
     if elem_sym:
         return ElemDoubleSchubertRing(GeneratingSet("x"), genset)(x)
-    else:
-        return DoubleSchubertRing(GeneratingSet("x"), genset)(x)
+    return DoubleSchubertRing(GeneratingSet("x"), genset)(x)
 
 
 class SingleSchubertRing(DoubleSchubertRing):
@@ -545,6 +544,7 @@ class SingleSchubertRing(DoubleSchubertRing):
 
 
 Sx = SingleSchubertRing(GeneratingSet("x"))
+
 
 class ElemDoubleSchubertRing(DoubleSchubertRing):
     def __init__(self, genset, coeff_genset):

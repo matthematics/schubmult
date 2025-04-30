@@ -1,6 +1,6 @@
 from functools import cache
 
-from sympy import Integer, S, Tuple
+from sympy import Integer, S, Tuple, sympify
 from sympy.core.expr import Expr
 
 from schubmult.poly_lib.poly_lib import elem_sym_poly
@@ -24,11 +24,11 @@ class ElemSym(Expr):
         if p == 0:
             return S.One
         var1 = var1[:k]
-        var2 = var2[:k + 1 - p]
+        var2 = var2[: k + 1 - p]
         for i, v in enumerate(var1):
             if v in var2:
                 j = var2.index(v)
-                return ElemSym.__new__(_class, p, k - 1, [*var1[:i],*var1[i + 1:]], [*var2[:j],*var2[j + 1:]])
+                return ElemSym.__new__(_class, p, k - 1, [*var1[:i], *var1[i + 1 :]], [*var2[:j], *var2[j + 1 :]])
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
@@ -43,6 +43,36 @@ class ElemSym(Expr):
         obj._p = p
         obj._k = k
         return obj
+
+    def split_out_vars(self, vars1, vars2):
+        # order of vars2 matters!
+        vars1 = [sympify(v) for v in vars1]
+        vars2 = [sympify(v) for v in vars2]
+        if not all(v in self.genvars for v in vars1):
+            raise NotEnoughGeneratorsError(f"Not all variables {vars1} are in the generating set {self.genvars}")
+        if not all(v in self.coeffvars for v in vars2):
+            raise NotEnoughGeneratorsError(f"Not all variables {vars2} are in the coefficient set {self.coeffvars}")
+        ret = S.Zero
+        k2 = len(vars1)
+        k1 = self._k - k2
+        new_genvars1 = [*self.genvars]
+        for v in vars1:
+            new_genvars1.remove(v)
+        # print(len(new_genvars1))
+        new_coeffvars2 = [*vars2]
+        new_coeffvars1 = [*vars2]
+        new_coeffvars2.reverse()
+        # we have k + 1 - p
+        for p1 in range(min(k1 + 1, self._p + 1)):
+            p2 = self._p - p1
+            # print(f"{p1=}, {p2=}, {k1=}, {k2=}")
+            # print(f"{vars1=}, {vars2=}")
+            # print(f"{new_coeffvars1=} {new_coeffvars2}")
+            try:
+                ret += self.func(p1, k1, new_genvars1, new_coeffvars1) * self.func(p2, k2, vars1, new_coeffvars2)
+            except NotEnoughGeneratorsError:
+                pass
+        return ret
 
     @property
     def degree(self):
@@ -67,6 +97,7 @@ class ElemSym(Expr):
     def func(self):
         def e(*args):
             return ElemSym(*args)
+
         return e
 
     def xreplace(self, rule):
@@ -102,7 +133,7 @@ class ElemSym(Expr):
                 return -self.func(self._p, self._k - 1, new_genvars, self.coeffvars)
             return -self.func(self._p - 1, self._k, self.genvars, [*self.coeffvars, v2])
         return S.Zero
-    
+
     def sign_of_pair(self, v1, v2):
         if v1 == v2:
             return S.Zero
