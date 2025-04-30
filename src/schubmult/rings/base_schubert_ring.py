@@ -1,5 +1,5 @@
 import sympy
-from symengine import Add, S, expand, sympify
+from symengine import Add, S, SympifyError, expand, sympify
 from sympy import CoercionFailed
 from sympy.polys.domains import EXRAW
 from sympy.polys.domains.compositedomain import CompositeDomain
@@ -300,13 +300,21 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def _coerce_add(self, other): ...
 
     def from_dict(self, element, orig_domain=None):
+        expand_func = expand
+        S_nm = S
         domain_new = self.domain_new
         poly = self.zero
 
         for monom, coeff in element.items():
             coeff = domain_new(coeff, orig_domain)
-            if expand(coeff) != S.Zero:
-                poly[monom] = coeff
+            try:
+                if expand_func(coeff) != S_nm.Zero:
+                    poly[monom] = coeff
+            except SympifyError:
+                expand_func = sympy.expand
+                S_nm = sympy.S
+                if expand_func(coeff) != S_nm.Zero:
+                    poly[monom] = coeff
         return poly
 
     @property

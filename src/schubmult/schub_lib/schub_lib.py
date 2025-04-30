@@ -2,7 +2,7 @@ from functools import cache
 from itertools import chain
 
 import numpy as np
-from symengine import sympify
+from sympy import sympify
 
 import schubmult.poly_lib.variables as spl
 from schubmult.perm_lib import (
