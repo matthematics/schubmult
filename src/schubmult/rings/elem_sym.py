@@ -3,6 +3,8 @@ from functools import cache
 from sympy import Integer, Tuple
 from sympy.core.expr import Expr
 
+from schubmult.poly_lib.poly_lib import elem_sym_poly
+
 
 class ElemSym(Expr):
     def __new__(cls, p, k, var1, var2):
@@ -21,6 +23,15 @@ class ElemSym(Expr):
         obj._var1 = var1
         obj._var2 = var2
         return obj
+
+    def _eval_expand_func(self, *args, **kwargs):
+        return elem_sym_poly(self._p, self._k, self._var1, self._var2)
+
+    @property
+    def func(self):
+        def e(*args):
+            return ElemSym(*args)
+        return e
 
     def _sympystr(self, printer):
         return printer._print_Function(self)

@@ -1,5 +1,5 @@
 import sympy
-from symengine import Add, S, SympifyError, expand, sympify
+from symengine import Add, S, SympifyError
 from sympy import CoercionFailed
 from sympy.polys.domains import EXRAW
 from sympy.polys.domains.compositedomain import CompositeDomain
@@ -12,6 +12,8 @@ from schubmult.perm_lib import Permutation
 from schubmult.poly_lib.schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
+
+from .backend import expand, sympify
 
 logger = get_logger(__name__)
 
@@ -212,14 +214,17 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
         if not deep:
-            return self.ring.from_dict({k: expand(v) for k, v in self.items()})
+            return self.ring.from_dict({k: expand(v, **kwargs) for k, v in self.items()})
         return sympy.sympify(expand(sympify(self.as_polynomial())))
 
     def as_expr(self):
         return sympy.Add(*self.as_terms())
 
     def as_polynomial(self):
-        return sympy.sympify(Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()]))
+        try:
+            return sympy.sympify(Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()]))
+        except SympifyError:
+            return sympy.Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()])
 
     def as_classical(self):
         return self.ring.in_classical_basis(self)
