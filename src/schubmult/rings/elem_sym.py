@@ -19,20 +19,16 @@ class ElemSym(Expr):
 
     @staticmethod
     def __xnew__(_class, p, k, var1, var2):
-        var1_update = [*var1]
-        var2_update = [*var2]
-        for i, v in enumerate(var1):
-            if v in var2:
-                var1_update.remove(v)
-                var2_update.remove(v)
-                k -= 1
-        
-        var1 = tuple(var1_update)
-        var2 = tuple(var2_update)
         if p > k or k < 0:
             return S.Zero
         if p == 0:
             return S.One
+        var1 = var1[:k]
+        var2 = var2[:k + 1 - p]
+        for i, v in enumerate(var1):
+            if v in var2:
+                j = var2.index(v)
+                return ElemSym.__new__(_class, p, k - 1, [*var1[:i],*var1[i + 1:]], [*var2[:j],*var2[j + 1:]])
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
