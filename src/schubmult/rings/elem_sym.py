@@ -1,12 +1,15 @@
 from functools import cache
 
-from sympy import Dict, Integer, S, Tuple, Wild, sympify
-from sympy.core.decorators import sympify_return
+from sympy import Dict, Integer, Mul, S, Tuple, Wild, sympify
 from sympy.core.expr import Expr
 
-from schubmult.poly_lib.poly_lib import elem_sym_poly
+from schubmult import uncode
+from schubmult.rings import DoubleSchubertRing
 from schubmult.utils.logging import get_logger
 from schubmult.utils.ring_utils import NotEnoughGeneratorsError
+
+from .poly_lib import elem_sym_poly
+from .variables import CustomGeneratingSet
 
 logger = get_logger(__name__)
 
@@ -53,7 +56,15 @@ class ElemSym(Expr):
         obj._k = k
         obj._genvars = var1
         obj._coeffvars = var2
+
         return obj
+
+    def flip(self):
+        R = DoubleSchubertRing(CustomGeneratingSet(self.coeffvars), CustomGeneratingSet(self.genvars))
+        p = self._k
+        K = self._k + 1 - p
+        poly = R(uncode([*list((K - 1) * [0]), p]))
+        return poly.in_CEM_basis()
 
     @property
     def free_symbols(self):
@@ -74,15 +85,15 @@ class ElemSym(Expr):
                 newvars2.remove(v)
 
         # vars2 = [*newvars2]
-            # for v in vars1:
-            #     if v not in self.genvars:
-            #         new_vars1.remove(v)
-            # new_vars2 = [*vars2]
-            # for v in vars2:
-            #     if v not in self.coeffvars:
-            #         new_vars2.remove(v)
-            # vars1 = new_vars1
-            # vars2 = new_vars2
+        # for v in vars1:
+        #     if v not in self.genvars:
+        #         new_vars1.remove(v)
+        # new_vars2 = [*vars2]
+        # for v in vars2:
+        #     if v not in self.coeffvars:
+        #         new_vars2.remove(v)
+        # vars1 = new_vars1
+        # vars2 = new_vars2
         ret = S.Zero
         k1 = len(vars1)
         k2 = self._k - k1
@@ -177,6 +188,26 @@ class ElemSym(Expr):
             return -self.func(self._p - 1, self._k, self.genvars, [*self.coeffvars, v2])
         return S.Zero
 
+    # def __mul__(self, other):
+    #     if self._p == 1:
+    #         if isinstance(other, ElemSym):
+    #             for i, v in enumerate(self.coeffvars):
+    #                 if v in other.coeffvars:
+    #                     j = 0
+    #                     while j < self._k and self.genvars[j] in other.genvars:
+    #                         j += 1
+    #                     if j == self._k:
+    #                         j -= 1
+    #                     v1 = self.genvars[j]
+    #                     newgenvars1 = [*self.genvars[:j], *self.genvars[j+1:]]
+    #                     newcoeffvars1 = [*self.coeffvars[:i],*self.coeffvars[i+1:]]
+    #                     newcoeffvars2 = [*other.coeffvars]
+    #                     newcoeffvars2.remove(v)
+    #                     if self._k == 1:
+    #                         return ElemSym(other._p + 1, other._k, other.genvars, newcoeffvars2) - ElemSym(other._p + 1, other._k + 1, [*other.genvars, self.genvars[0]], other.coeffvars)
+    #                     return ElemSym(1, self._k - 1, newgenvars1, newcoeffvars1)* (ElemSym(other._p + 1, other._k, other.genvars, newcoeffvars2) - ElemSym(other._p + 1, other._k + 1, [*other.genvars, self.genvars[0]], other.coeffvars))
+    #     return Mul(self, other)
+
     def _eval_div_diff(self, v1, v2):
         return self.div_diff(v1, v2)
 
@@ -261,9 +292,10 @@ def pull_out_vars(expr, var1, var2, min_degree=1):
 #
 # ElemSym(p, k, stuff1 + v1, stuff1 + v2) = ElemSym(p, k, stuff1, stuff2) + Elem(1, 1, v1, v2)*ElemSym(p - 1, k - 1, stuff1, stuff2 + v2)
 
-#def elem_sym_unify_recurse(expr, expr1)
+# def elem_sym_unify_recurse(expr, expr1)
 
-def elem_sym_unify(expr, arg = None):
+
+def elem_sym_unify(expr, arg=None):
     expr = sympify(expr)
 
     if not expr.args:
@@ -280,7 +312,7 @@ def elem_sym_unify(expr, arg = None):
         v1 = Wild("v_1")
         v2 = Wild("v_2")
         rep_pattern = ElemSym(arg._p, arg._k + 1, [*arg.genvars, v1], [*arg.coeffvars, v2])
-        pattern = arg + ElemSym(1, 1, [v1], [v2])*ElemSym(arg._p - 1, arg._k, arg.genvars, [*arg.coeffvars, v2])
+        pattern = arg + ElemSym(1, 1, [v1], [v2]) * ElemSym(arg._p - 1, arg._k, arg.genvars, [*arg.coeffvars, v2])
         expr2 = expr.replace(pattern, rep_pattern)
     if arg.args:
         for arg2 in arg.args:
@@ -288,6 +320,8 @@ def elem_sym_unify(expr, arg = None):
     if expr != expr2:
         return elem_sym_unify(expr2)
     return expr
+
+
 # def elem_sym_unify(expr):
 
 #     a = Wild("a")
@@ -296,11 +330,16 @@ def elem_sym_unify(expr, arg = None):
 #         if instance(a, ElemSym) and a._p == 1 and a._k ==1:
 #             if isinstance
 
-    # if isinstance(expr, Add):
-    #     for arg in expr.args:
-    # self.xreplace({var1: var2}) + ElemSym(1, 1, [var1], [var2]) * self.divide_out_diff(var1, var2)
-    # matching
+# if isinstance(expr, Add):
+#     for arg in expr.args:
+# self.xreplace({var1: var2}) + ElemSym(1, 1, [var1], [var2]) * self.divide_out_diff(var1, var2)
+# matching
 
 # wild patterns
 
 
+# v_1 = Wild("v_1")
+# v_2 = Wild("v_2")
+# a = Wild("a")
+# match_pattern = a * ElemSym(1, 1, [v_1], [v_2])
+# rep_pattern

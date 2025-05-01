@@ -275,16 +275,7 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     @property
     def symbol_elem_func(self):
-        def elem_func(p, k, varl1, varl2):  # noqa: ARG001
-            if p == 0 and k >= 0:
-                return 1
-            if p < 0 or p > k:
-                return 0
-            if self.coeff_genset.label:
-                return self.elem_sym(p, k, *varl2)
-            return self.elem_sym(p, k)
-
-        return elem_func
+        return ElemSym
 
     def elem_sym_subs(self, kk):
         elems = []
