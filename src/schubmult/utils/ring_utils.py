@@ -2,7 +2,7 @@ from functools import cache
 
 from symengine import sympify
 
-from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet
+from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet
 from schubmult.utils.perm_utils import add_perm_dict
 
 NoneVar = 1e10

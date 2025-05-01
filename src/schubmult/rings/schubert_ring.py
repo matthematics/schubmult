@@ -9,16 +9,16 @@ import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 import schubmult.utils.ring_utils as utils
 from schubmult.perm_lib import Permutation, uncode
-from schubmult.poly_lib.elem_sym import ElemSym
-from schubmult.poly_lib.poly_lib import elem_sym_poly, xreplace_genvars
-from schubmult.poly_lib.schub_poly import schubpoly_classical_from_elems
-from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
 from .abstract_schub_poly import AbstractSchubPoly
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+from .elem_sym import ElemSym
+from .poly_lib import elem_sym_poly, xreplace_genvars
+from .schub_poly import schubpoly_classical_from_elems
 from .tensor_ring import TensorRing
+from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 
 _pretty_schub_char = "𝔖"  # noqa: RUF001
 
@@ -284,6 +284,15 @@ class DoubleSchubertRing(BaseSchubertRing):
                 elems += [(sympy.Symbol(f"e_{p}_{k}"), elem_sym_poly(p, k, self.genset[1:], utils.poly_ring(0)))]
         return dict(elems)
 
+    @staticmethod
+    def flip(elem):
+        R = DoubleSchubertRing(CustomGeneratingSet([0,*elem.coeffvars]), CustomGeneratingSet([0,*elem.genvars]))
+        p = elem._p
+        K = elem._k + 1 - p
+        poly = R(uncode([*list((K - 1) * [0]), p]))
+        print(poly)
+        return poly.in_CEM_basis()
+    
     def in_quantum_basis(self, elem):
         result = S.Zero
         for k, v in elem.items():

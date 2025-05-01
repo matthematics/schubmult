@@ -9,9 +9,9 @@ import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
 import schubmult.utils.ring_utils as utils
 from schubmult.perm_lib import Permutation, longest_element
-from schubmult.poly_lib.poly_lib import complete_sym_poly, elem_sym_poly, elem_sym_poly_q, xreplace_genvars
-from schubmult.poly_lib.schub_poly import schubpoly_from_elems
-from schubmult.poly_lib.variables import GeneratingSet, GeneratingSet_base
+from .poly_lib import complete_sym_poly, elem_sym_poly, elem_sym_poly_q, xreplace_genvars
+from .schub_poly import schubpoly_from_elems
+from .variables import GeneratingSet, GeneratingSet_base
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import is_parabolic
 

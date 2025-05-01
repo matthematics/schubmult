@@ -27,7 +27,7 @@ class GeneratingSet_base(Basic):
 
     @property
     def label(self):
-        return None
+        return str(self.args)
 
 
 # variable registry

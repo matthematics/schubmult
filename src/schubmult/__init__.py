@@ -1,10 +1,10 @@
 __version__ = "3.0.2dev1"
 #schubpoly_from_elems?
 from .perm_lib import Permutation, permtrim, theta, uncode
-from .poly_lib.elem_sym import ElemSym, elem_sym_unify, split_out_vars
-from .poly_lib.poly_lib import divide_out_diff, efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, split_up, xreplace_genvars
-from .poly_lib.schub_poly import div_diff, schubpoly, skew_div_diff
-from .poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
+from .rings.elem_sym import ElemSym, elem_sym_unify, split_out_vars
+from .rings.poly_lib import divide_out_diff, efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, split_up, xreplace_genvars
+from .rings.schub_poly import div_diff, schubpoly, skew_div_diff
+from .rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from .rings.quantum_schubert_ring import (
     QDSx,
     QPDSx,

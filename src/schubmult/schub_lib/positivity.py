@@ -22,8 +22,8 @@ from schubmult.perm_lib import (
     theta,
     uncode,
 )
-from schubmult.poly_lib.poly_lib import _vars, efficient_subs, elem_sym_poly, expand
-from schubmult.poly_lib.schub_poly import schubpoly
+from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_poly, expand
+from schubmult.rings.schub_poly import schubpoly
 from schubmult.schub_lib.schub_lib import (
     divdiffable,
     is_coeff_irreducible,

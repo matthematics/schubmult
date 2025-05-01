@@ -9,7 +9,7 @@ from schubmult.perm_lib import (
     theta,
     uncode,
 )
-from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
+from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.schub_lib import (
     compute_vpathdicts,
     elem_sym_perms,

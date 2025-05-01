@@ -4,7 +4,8 @@ from symengine import Mul, Pow, sympify
 
 import schubmult.perm_lib as pl
 import schubmult.schub_lib.schub_lib as schub_lib
-from schubmult.poly_lib.poly_lib import call_zvars
+
+from .poly_lib import call_zvars
 
 
 def perm_act(val, i, var2=None):

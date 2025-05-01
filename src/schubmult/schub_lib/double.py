@@ -9,9 +9,9 @@ from schubmult.perm_lib import (
     theta,
     uncode,
 )
-from schubmult.poly_lib.poly_lib import _vars, efficient_subs, elem_sym_func
-from schubmult.poly_lib.schub_poly import elem_func_func_mul
-from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
+from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_func
+from schubmult.rings.schub_poly import elem_func_func_mul
+from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.schub_lib import (
     compute_vpathdicts,
     elem_sym_perms,

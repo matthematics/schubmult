@@ -5,7 +5,7 @@ import sympy
 from symengine import Mul, Pow, sympify
 
 import schubmult.perm_lib as pl
-import schubmult.poly_lib.variables as vv
+import schubmult.rings.variables as vv
 
 # import vv.GeneratingSet, vv.base_index
 

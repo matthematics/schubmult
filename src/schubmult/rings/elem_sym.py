@@ -3,13 +3,10 @@ from functools import cache
 from sympy import Dict, Integer, Mul, S, Tuple, Wild, sympify
 from sympy.core.expr import Expr
 
-from schubmult import uncode
-from schubmult.rings import DoubleSchubertRing
 from schubmult.utils.logging import get_logger
 from schubmult.utils.ring_utils import NotEnoughGeneratorsError
 
 from .poly_lib import elem_sym_poly
-from .variables import CustomGeneratingSet
 
 logger = get_logger(__name__)
 
@@ -58,13 +55,6 @@ class ElemSym(Expr):
         obj._coeffvars = var2
 
         return obj
-
-    def flip(self):
-        R = DoubleSchubertRing(CustomGeneratingSet(self.coeffvars), CustomGeneratingSet(self.genvars))
-        p = self._k
-        K = self._k + 1 - p
-        poly = R(uncode([*list((K - 1) * [0]), p]))
-        return poly.in_CEM_basis()
 
     @property
     def free_symbols(self):

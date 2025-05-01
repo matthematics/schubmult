@@ -2,7 +2,7 @@ from functools import cached_property
 
 from symengine import Add, Mul, Pow
 
-import schubmult.poly_lib.variables as spl
+import schubmult.rings.variables as spl
 import schubmult.schub_lib.schub_lib as sss
 from schubmult.perm_lib import (
     Permutation,

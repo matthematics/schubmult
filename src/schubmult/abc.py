@@ -1,5 +1,5 @@
-from schubmult.poly_lib.elem_sym import ElemSym
-from schubmult.poly_lib.variables import GeneratingSet
+from schubmult.rings.elem_sym import ElemSym
+from schubmult.rings.variables import GeneratingSet
 
 e = ElemSym
 x = GeneratingSet("x")
