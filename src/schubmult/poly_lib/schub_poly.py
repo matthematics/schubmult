@@ -175,7 +175,6 @@ def div_diff(poly, v1, v2):
     Add_local = symengine.Add
     Pow_local = Pow
     S = symengine.S
-    sympify_local = sympify
     try:
         poly = sympify(poly)
         v1 = sympify(v1)
@@ -188,17 +187,15 @@ def div_diff(poly, v1, v2):
         Add_local = sympy.Add
         Pow_local = sympy.Pow
         S = sympy.S
-        sympify_local = sympy.sympify
 
-    poly2 = poly.xreplace({v1: v2, v2: v1})
-    if poly == poly2:
+    if v1 not in poly.free_symbols and v2 not in poly.free_symbols:
         return S.Zero
+    if poly == v1:
+        return S.One
     if poly == v2:
         return S.NegativeOne
-    if poly2 == v2:
-        return S.One
     if isinstance(poly, Add_local):
-        return sympify_local(sympy.sympify(Add_local(*[div_diff(a, v1, v2) for a in poly.args])))
+        return Add_local(*[div_diff(a, v1, v2) for a in poly.args])
     if isinstance(poly, Pow_local):
         a = poly.args[0]
         dd = div_diff(poly.args[0],v1,v2)
@@ -209,12 +206,12 @@ def div_diff(poly, v1, v2):
         args_ret = []
         for i, arg in enumerate(poly.args):
             res = div_diff(arg, v1, v2)
-            if res == 0:
+            if res == S.Zero:
                 continue
             if res == S.One:
                 args_ret += [Mul_local(*[*current_args[:i], *current_args[i + 1 :]])]
             else:
                 args_ret += [Mul_local(*[*current_args[:i], res, *current_args[i + 1 :]])]
             current_args[i] = current_args[i].xreplace({v1: v2, v2: v1})
-        return sympify_local(sympy.sympify(Add_local(*args_ret)))
+        return Add_local(*args_ret)
     raise ValueError(f"Expected Expr but got {type(poly)}")
