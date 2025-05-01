@@ -1,14 +1,23 @@
 from functools import cache
 
 from sympy import Dict, Integer, S, Tuple, sympify
+from sympy.core.decorators import sympify_return
 from sympy.core.expr import Expr
 
 from schubmult.poly_lib.poly_lib import elem_sym_poly
+from schubmult.rings._utils import NotEnoughGeneratorsError
+from schubmult.utils.logging import get_logger
 
-from ._utils import NotEnoughGeneratorsError
+logger = get_logger(__name__)
 
 
 class ElemSym(Expr):
+    is_commutative = True
+    is_Atom = False
+    is_polynomial = True
+    is_Function = True
+    is_nonzero = True
+
     def __new__(cls, p, k, var1, var2):
         return ElemSym.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
 
@@ -42,17 +51,31 @@ class ElemSym(Expr):
         )
         obj._p = p
         obj._k = k
+        obj._genvars = var1
+        obj._coeffvars = var2
         return obj
 
-    # z's can be initial for the schubs
-    def split_out_vars(self, vars1, vars2):
+
+    def split_out_vars(self, vars1, vars2, strict=False):
         # order of vars2 matters!
         vars1 = [sympify(v) for v in vars1]
         vars2 = [sympify(v) for v in vars2]
-        if not all(v in self.genvars for v in vars1):
-            raise NotEnoughGeneratorsError(f"Not all variables {vars1} are in the generating set {self.genvars}")
-        if not all(v in self.coeffvars for v in vars2):
-            raise NotEnoughGeneratorsError(f"Not all variables {vars2} are in the coefficient set {self.coeffvars}")
+        if strict:
+            if not all(v in self.genvars for v in vars1):
+                raise NotEnoughGeneratorsError(f"Not all variables {vars1} are in the generating set {self.genvars}")
+            if not all(v in self.coeffvars for v in vars2):
+                raise NotEnoughGeneratorsError(f"Not all variables {vars2} are in the coefficient set {self.coeffvars}")
+        else:
+            new_vars1 = [*vars1]
+            for v in vars1:
+                if v not in self.genvars:
+                    new_vars1.remove(v)
+            new_vars2 = [*vars2]
+            for v in vars2:
+                if v not in self.coeffvars:
+                    new_vars2.remove(v)
+            vars1 = new_vars1
+            vars2 = new_vars2
         ret = S.Zero
         k1 = len(vars1)
         k2 = self._k - k1
@@ -92,16 +115,33 @@ class ElemSym(Expr):
         return tuple(self.args[3])
 
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
-        return elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars)
+        return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
 
     @property
-    def func(self):
+    def func(self, *args):
         def e(*args):
-            return ElemSym(*args)
-
+            return self.__class__(*args)
         return e
 
+    #     return e
+    def _eval_subs(self, rule):
+        print(f"_eval_subs")
+        print(f"{rule=}")
+        print(f"{self=}")
+        rule = Dict(rule)
+        new_args = [*self.args]
+        new_args[2] = [*new_args[2]]
+        new_args[3] = [*new_args[3]]
+        for i, arg in enumerate(self.args[2]):
+            new_args[2][i] = arg.subs(rule)
+        for i, arg in enumerate(self.args[3]):
+            new_args[3][i] = arg.subs(rule)
+        return self.func(*new_args)
+
     def xreplace(self, rule):
+        print(f"xreplace")
+        print(f"{rule=}")
+        print(f"{self=}")
         rule = Dict(rule)
         new_args = [*self.args]
         new_args[2] = [*new_args[2]]
@@ -112,6 +152,7 @@ class ElemSym(Expr):
             new_args[3][i] = arg.xreplace(rule)
         return self.func(*new_args)
 
+    @sympify_return([("other", "Expr")], NotImplemented)
     def divide_out_diff(self, v1, v2):
         if v1 == v2:
             return S.Zero
@@ -179,3 +220,47 @@ class ElemSym(Expr):
 
     def _sympystr(self, printer):
         return printer._print_Function(self)
+
+    # def _eval_expand_basic(self, mul=True, *args, **kwargs):
+    #     print(f"_eval_expand_basic")
+    #     print(f"{args=}")
+    #     print(f"{kwargs=}")
+    #     print(f"{self}")
+    #     return self
+
+    # def _eval_expand_multinomial(self, *args, **kwargs):
+    #     print(f"_eval_expand_multinomial")
+    #     print(f"{args=}")
+    #     print(f"{kwargs=}")
+    #     print(f"{self}")
+    #     return self
+
+    # def _eval_expand_mul(self, *args, **kwargs):
+    #     ret = self.split_out_vars([self.genvars[0]], self.coeffvars)
+    #     return ret
+
+    # def _eval_expand_hint(self, *args, **kwargs):
+    #     print(f"_eval_expand_hint")
+    #     print(f"{args=}")
+    #     print(f"{kwargs=}")
+    #     print(f"{self}")
+    #     return self
+    
+    # def _eval_expand_vars(self, *args, **kwargs):
+    #     print(f"_eval_expand_hint")
+    #     print(f"{args=}")
+    #     print(f"{kwargs=}")
+    #     print(f"{self}")
+    #     print("hint")
+    #     print(f"{args=}")
+    #     print(f"{kwargs=}")
+    #     return self
+
+    
+def split_out_vars(expr, vars1, vars2):
+    expr = sympify(expr)
+    if isinstance(expr, ElemSym):
+        return expr.split_out_vars(vars1, vars2)
+    if hasattr(expr, "_eval_split_out_vars"):
+        return expr._eval_split_out_vars(vars1, vars2)
+    return expr.func(*[split_out_vars(arg, vars1, vars2) for arg in expr.args])

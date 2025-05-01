@@ -9,6 +9,7 @@ import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, uncode
+from schubmult.poly_lib.elem_sym import ElemSym
 from schubmult.poly_lib.poly_lib import elem_sym_poly, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_classical_from_elems
 from schubmult.poly_lib.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
@@ -17,7 +18,6 @@ from schubmult.utils.perm_utils import add_perm_dict
 
 from .abstract_schub_poly import AbstractSchubPoly
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
-from .elem_sym import ElemSym
 from .tensor_ring import TensorRing
 
 _pretty_schub_char = "𝔖"  # noqa: RUF001

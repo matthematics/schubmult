@@ -178,3 +178,5 @@ Element __call__ to substitute vals
 
 pull_out_gen and eval tests
 pull_out_gen for quantum
+
+Simplify elem sym (copy sympy)
