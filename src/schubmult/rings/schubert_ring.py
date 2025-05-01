@@ -3,11 +3,11 @@ from functools import cache, cached_property
 import sympy
 from symengine import Add, Mul, Pow, S, sympify
 
-import schubmult.utils.ring_utils as utils
 import schubmult.rings.quantum_schubert_ring as qsr
 import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
+import schubmult.utils.ring_utils as utils
 from schubmult.perm_lib import Permutation, uncode
 from schubmult.poly_lib.elem_sym import ElemSym
 from schubmult.poly_lib.poly_lib import elem_sym_poly, xreplace_genvars

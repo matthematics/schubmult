@@ -52,7 +52,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
     except Exception:
         notint = True
     if notint:
-        z_ring = rings.SingleSchubertRing(var3)
+        z_ring = rings.DoubleSchubertRing(var3, var2)
         opt = Optimizer(z_ring, val)
         frees = val.free_symbols
         # logger.debug(f"{frees=}")
@@ -1108,15 +1108,15 @@ def dualpieri(mu, v, w):
 class Optimizer:
     def __init__(self, z_ring, poly):
         self.z_ring = z_ring
-        self.pos_dict = {z_ring.genset[i]: -z_ring.genset[i] for i in range(100)}
         self.monom_to_vec = {}
-        self.vec0 = None
-        self.vec0 = self.poly_to_vec(poly)
         self._subs_dict = {}
         self._r = GeneratingSet("r")
-        self._subs_dict[z_ring.coeff_gens[1]] = -self._r[0]
-        for i, v in enumerate(self.z_ring.coeff_gens[2:len(poly.free_symbols)+2]):
-            self._subs_dict[v] = self._subs_dict[self.z_ring.coeff_gens[i + 1]] - self._r[i + 1]
+        self._subs_dict[z_ring.coeff_genset[1]] = -self._r[0]
+        for i, v in enumerate(self.z_ring.coeff_genset[2:len(poly.free_symbols)+2]):
+            self._subs_dict[v] = self._subs_dict[self.z_ring.coeff_genset[i + 1]] - self._r[i + 1]
+        self.vec0 = None
+        self.vec0 = self.poly_to_vec(poly)
+        
 
     def _init_basevec(self, dc):
         self.monom_to_vec = {}
@@ -1129,7 +1129,7 @@ class Optimizer:
 
     def poly_to_vec(self, poly):
         poly_r = self.z_ring(poly)
-        lst_tup = [(k,expand(efficient_subs(v,self._subs_dict)).as_coefficients_dict()) for k, v in poly_r]
+        lst_tup = [(k,expand(efficient_subs(v,self._subs_dict)).as_coefficients_dict()) for k, v in poly_r.items()]
         dc = {}
         for kk, p in lst_tup:
             for a, b in p.items():
