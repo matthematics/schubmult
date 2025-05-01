@@ -1,4 +1,6 @@
+import symengine
 import sympy
+from symengine import Mul, Pow, sympify
 
 import schubmult.perm_lib as pl
 import schubmult.schub_lib.schub_lib as schub_lib
@@ -10,10 +12,10 @@ def perm_act(val, i, var2=None):
     return sympy.sympify(val).subs(subsdict)
 
 
-def div_diff(i, poly, var2=None):
-    return sympy.sympify(
-        sympy.div(sympy.sympify(poly - perm_act(poly, i)), sympy.sympify(var2[i] - var2[i + 1]))[0],
-    )
+# def div_diff(i, poly, var2=None):
+#     return sympy.sympify(
+#         sympy.div(sympy.sympify(poly - perm_act(poly, i)), sympy.sympify(var2[i] - var2[i + 1]))[0],
+#     )
 
 
 def elem_func_func(k, i, v1, v2, vdiff, varl1, varl2, elem_func):
@@ -165,3 +167,54 @@ def skew_div_diff(u, w, poly):
         u2 = u.swap(d, d + 1)
         return skew_div_diff(u2, w2, perm_act(poly, d + 1))
     return skew_div_diff(u, w2, div_diff(d + 1, poly))
+
+def div_diff(poly, v1, v2):
+    if hasattr(poly, "div_diff"):
+        return poly.div_diff(v1, v2)
+    Mul_local = Mul
+    Add_local = symengine.Add
+    Pow_local = Pow
+    S = symengine.S
+    sympify_local = sympify
+    try:
+        poly = sympify(poly)
+        v1 = sympify(v1)
+        v2 = sympify(v2)
+    except Exception:
+        poly = sympy.sympify(poly)
+        v1 = sympy.sympify(v1)
+        v2 = sympy.sympify(v2)
+        Mul_local = sympy.Mul
+        Add_local = sympy.Add
+        Pow_local = sympy.Pow
+        S = sympy.S
+        sympify_local = sympy.sympify
+
+    poly2 = poly.xreplace({v1: v2, v2: v1})
+    if poly == poly2:
+        return S.Zero
+    if poly == v2:
+        return S.NegativeOne
+    if poly2 == v2:
+        return S.One
+    if isinstance(poly, Add_local):
+        return sympify_local(sympy.sympify(Add_local(*[div_diff(a, v1, v2) for a in poly.args])))
+    if isinstance(poly, Pow_local):
+        a = poly.args[0]
+        dd = div_diff(poly.args[0],v1,v2)
+        b = poly.args[0].xreplace({v1: v2, v2: v1})
+        return Add_local(*[Mul_local(dd,Pow_local(b,i),Pow_local(a,int(poly.args[1]) - 1 - i)) for i in range(int(poly.args[1]))])
+    if isinstance(poly, Mul_local):
+        current_args = [*poly.args]
+        args_ret = []
+        for i, arg in enumerate(poly.args):
+            res = div_diff(arg, v1, v2)
+            if res == 0:
+                continue
+            if res == S.One:
+                args_ret += [Mul_local(*[*current_args[:i], *current_args[i + 1 :]])]
+            else:
+                args_ret += [Mul_local(*[*current_args[:i], res, *current_args[i + 1 :]])]
+            current_args[i] = current_args[i].xreplace({v1: v2, v2: v1})
+        return sympify_local(sympy.sympify(Add_local(*args_ret)))
+    raise ValueError(f"Expected Expr but got {type(poly)}")

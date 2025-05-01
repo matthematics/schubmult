@@ -291,6 +291,7 @@ def xreplace_genvars(poly, vars1, vars2):
 #     return ret
 
 
+
 def divide_out_diff(poly, v1, v2):
     if hasattr(poly, "divide_out_diff"):
         return poly.divide_out_diff(v1, v2)

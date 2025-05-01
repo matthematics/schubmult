@@ -102,21 +102,14 @@ class ElemSym(Expr):
         return e
 
     def xreplace(self, rule):
-        res = self
-        for v1, v2 in rule.items():
-            if v1 in res.genvars:
-                new_genvars = [*res.genvars]
-                for i, v in enumerate(res.genvars):
-                    if v == v1:
-                        new_genvars[i] = v2
-                res = res.func(res._p, res._k, new_genvars, res.coeffvars)
-            if v1 in self.coeffvars:
-                new_coeffvars = [*res.coeffvars]
-                for i, v in enumerate(res.coeffvars):
-                    if v == v1:
-                        new_coeffvars[i] = v2
-                res = res.func(res._p, res._k, res.genvars, new_coeffvars)
-        return res
+        new_args = [*self.args]
+        new_args[2] = [*new_args[2]]
+        new_args[3] = [*new_args[3]]
+        for i, arg in enumerate(self.args[2]):
+            new_args[2][i] = arg.xreplace(rule)
+        for i, arg in enumerate(self.args[3]):
+            new_args[3][i] = arg.xreplace(rule)
+        return self.func(*new_args)
 
     def divide_out_diff(self, v1, v2):
         if v1 == v2:
@@ -133,6 +126,35 @@ class ElemSym(Expr):
                 new_genvars.remove(v2)
                 return -self.func(self._p, self._k - 1, new_genvars, self.coeffvars)
             return -self.func(self._p - 1, self._k, self.genvars, [*self.coeffvars, v2])
+        return S.Zero
+
+    def div_diff(self, v1, v2):
+        if v1 == v2:
+            return S.Zero
+        if v1 in self.genvars:
+            new_genvars = [*self.genvars]
+            new_genvars.remove(v1)
+            return self.func(self._p - 1, self._k - 1, new_genvars, self.coeffvars)
+        if v1 in self.coeffvars:
+            if v2 in self.coeffvars:
+                return S.Zero
+            if v2 in self.genvars:
+                new_genvars = [*self.genvars]
+                new_genvars.remove(v2)
+                return -self.func(self._p, self._k - 1, new_genvars, self.coeffvars)
+            return -self.func(self._p - 1, self._k, self.genvars, [*self.coeffvars, v2])
+        if v2 in self.genvars:
+            new_genvars = [*self.genvars]
+            new_genvars.remove(v2)
+            return -self.func(self._p - 1, self._k - 1, new_genvars, self.coeffvars)
+        if v2 in self.coeffvars:
+            if v1 in self.coeffvars:
+                return S.Zero
+            if v1 in self.genvars:
+                new_genvars = [*self.genvars]
+                new_genvars.remove(v1)
+                return self.func(self._p, self._k - 1, new_genvars, self.coeffvars)
+            return self.func(self._p - 1, self._k, self.genvars, [*self.coeffvars, v1])
         return S.Zero
 
     def sign_of_pair(self, v1, v2):
