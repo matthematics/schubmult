@@ -1,8 +1,12 @@
 from schubmult import *
-from schubmult.rings.elem_sym import ElemSym
-from schubmult.schub_lib.double import schubmult_double_from_elems
-
-def elem_sym(p, k, varl1, varl2):
-    return ElemSym(p, k, varl1, varl2)
-
-print(schubmult_double_from_elems({Permutation([4,3,1,2]): 1}, Permutation([3,1,4,2]), GeneratingSet("y"), GeneratingSet("z"), elem_sym))
+from schubmult.abc import *
+coeff = (DSx([4,1,5,2,3],elem_sym=True)*DSx([5,1,4,2,3],"z"))[Permutation([6,2,5,1,3,4])]
+coeff2 = coeff.expand(mul=True, func=False)
+from sympy import sympify
+f = coeff2.args[0].args[1]
+print(f)
+g = f.split_out_vars([y[5]], [z[2],z[3]])
+print(f"{f=}")
+print(f"{g=}")
+import sympy
+print(f"{sympy.expand(f-g, func=True)}")

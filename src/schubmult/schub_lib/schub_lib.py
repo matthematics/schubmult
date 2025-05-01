@@ -2,7 +2,6 @@ from functools import cache
 from itertools import chain
 
 import numpy as np
-from sympy import sympify
 
 import schubmult.poly_lib.variables as spl
 from schubmult.perm_lib import (
@@ -75,7 +74,7 @@ def double_elem_sym_q(u, p1, p2, k, q_var=q_var):
     iu = ~u
     for perm1, udiff1, mul_val1 in perms1:
         perms2 = elem_sym_perms_q(perm1, p2, k, q_var)
-        cycles1 = get_cycles(iu*perm1)
+        cycles1 = get_cycles(iu * perm1)
         cycles1_dict = {}
         for c in cycles1:
             if c[-1] not in cycles1_dict:
@@ -83,7 +82,7 @@ def double_elem_sym_q(u, p1, p2, k, q_var=q_var):
             cycles1_dict[c[-1]] += [set(c)]
         ip1 = inverse(perm1)
         for perm2, udiff2, mul_val2 in perms2:
-            cycles2 = get_cycles(ip1*perm2)
+            cycles2 = get_cycles(ip1 * perm2)
             good = True
             for i in range(len(cycles2)):
                 c2 = cycles2[i]
@@ -110,7 +109,7 @@ def will_formula_work(u, v):
     u, v = Permutation(u), Permutation(v)
     muv = uncode(theta(v))
     vn1muv = (~v) * muv
-    while inv(vn1muv)>0:
+    while inv(vn1muv) > 0:
         found_one = False
         for i in range(len(vn1muv) - 1):
             if vn1muv[i] > vn1muv[i + 1]:
@@ -123,7 +122,6 @@ def will_formula_work(u, v):
         if found_one:
             return False
     return True
-
 
 
 def try_reduce_u(u, v, w):
@@ -387,6 +385,7 @@ def kdown_perms(perm, monoperm, p, k):
         down_perm_list = down_perm_list2
     return full_perm_list
 
+
 @cache
 def compute_vpathdicts_cached(th, vmu):
     vpathdicts = [{} for index in range(len(th))]
@@ -420,6 +419,7 @@ def compute_vpathdicts_cached(th, vmu):
                 v2 = value[2]
                 vpathdicts2[i][key2].add((key, value[1], v2))
     return vpathdicts2
+
 
 def compute_vpathdicts(th, vmu):
     return compute_vpathdicts_cached(tuple(th), vmu)
