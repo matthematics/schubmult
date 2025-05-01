@@ -37,6 +37,14 @@ def test_associative():
 #     assert expand(DSx([], "theta").basis.express(DSx(perm)) - DSx(perm).change_vars("gamama")) == 0
 #     #assert (DSx(perm)*DSx(perm,"z")).change_vars("theta") == ((DSx(perm)*DSx(perm,"z")).change_vars("yourmom"))
 
+def test_elem_sym():
+    from schubmult import DSx, Permutation
+    from sympy import expand, S
+    perm1 = Permutation([3,4,1,5,6,2])
+    perm2 = Permutation([4,3,6,5,2,1])
+    dct1 = DSx(perm1) * DSx(perm2, "z")
+    dct2 = DSx(perm1,elem_sym=True) * DSx(perm2, "z")
+    assert all(expand(dct1[k] - dct2[k], func=True) == S.Zero for k in dct1.keys())
 
 def test_coproduct():
     from schubmult import DSx

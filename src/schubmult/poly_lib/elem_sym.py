@@ -1,12 +1,12 @@
 from functools import cache
 
-from sympy import Dict, Integer, S, Tuple, sympify
+from sympy import Dict, Integer, S, Tuple, Wild, sympify
 from sympy.core.decorators import sympify_return
 from sympy.core.expr import Expr
 
 from schubmult.poly_lib.poly_lib import elem_sym_poly
-from schubmult.rings._utils import NotEnoughGeneratorsError
 from schubmult.utils.logging import get_logger
+from schubmult.utils.ring_utils import NotEnoughGeneratorsError
 
 logger = get_logger(__name__)
 
@@ -55,27 +55,34 @@ class ElemSym(Expr):
         obj._coeffvars = var2
         return obj
 
+    @property
+    def free_symbols(self):
+        return set(self.genvars).union(set(self.coeffvars))
 
-    def split_out_vars(self, vars1, vars2, strict=False):
+    def split_out_vars(self, vars1, vars2):
         # order of vars2 matters!
         vars1 = [sympify(v) for v in vars1]
-        vars2 = [sympify(v) for v in vars2]
-        if strict:
-            if not all(v in self.genvars for v in vars1):
-                raise NotEnoughGeneratorsError(f"Not all variables {vars1} are in the generating set {self.genvars}")
-            if not all(v in self.coeffvars for v in vars2):
-                raise NotEnoughGeneratorsError(f"Not all variables {vars2} are in the coefficient set {self.coeffvars}")
+        if vars2 is None:
+            vars2 = [*self.coeffvars]
         else:
-            new_vars1 = [*vars1]
-            for v in vars1:
-                if v not in self.genvars:
-                    new_vars1.remove(v)
-            new_vars2 = [*vars2]
-            for v in vars2:
-                if v not in self.coeffvars:
-                    new_vars2.remove(v)
-            vars1 = new_vars1
-            vars2 = new_vars2
+            vars2 = [sympify(v) for v in vars2]
+        if not all(v in self.genvars for v in vars1):
+            raise NotEnoughGeneratorsError(f"Not all variables {vars1} are in the generating set {self.genvars}")
+        newvars2 = [*vars2]
+        for v in vars2:
+            if v not in self.coeffvars:
+                newvars2.remove(v)
+
+        # vars2 = [*newvars2]
+            # for v in vars1:
+            #     if v not in self.genvars:
+            #         new_vars1.remove(v)
+            # new_vars2 = [*vars2]
+            # for v in vars2:
+            #     if v not in self.coeffvars:
+            #         new_vars2.remove(v)
+            # vars1 = new_vars1
+            # vars2 = new_vars2
         ret = S.Zero
         k1 = len(vars1)
         k2 = self._k - k1
@@ -83,8 +90,8 @@ class ElemSym(Expr):
         for v in vars1:
             new_genvars1.remove(v)
         # print(len(new_genvars1))
-        new_coeffvars2 = [*vars2]
-        new_coeffvars1 = [*vars2]
+        new_coeffvars2 = [*newvars2]
+        new_coeffvars1 = [*newvars2]
         new_coeffvars2.reverse()
         # we have k + 1 - p
         for p1 in range(min(k1 + 1, self._p + 1)):
@@ -121,13 +128,14 @@ class ElemSym(Expr):
     def func(self, *args):
         def e(*args):
             return self.__class__(*args)
+
         return e
 
     #     return e
-    def _eval_subs(self, rule):
-        print(f"_eval_subs")
-        print(f"{rule=}")
-        print(f"{self=}")
+    def _eval_subs(self, *rule):
+        # print(f"_eval_subs")
+        # print(f"{rule=}")
+        # print(f"{self=}")
         rule = Dict(rule)
         new_args = [*self.args]
         new_args[2] = [*new_args[2]]
@@ -139,9 +147,9 @@ class ElemSym(Expr):
         return self.func(*new_args)
 
     def xreplace(self, rule):
-        print(f"xreplace")
-        print(f"{rule=}")
-        print(f"{self=}")
+        # print(f"xreplace")
+        # print(f"{rule=}")
+        # print(f"{self=}")
         rule = Dict(rule)
         new_args = [*self.args]
         new_args[2] = [*new_args[2]]
@@ -152,7 +160,6 @@ class ElemSym(Expr):
             new_args[3][i] = arg.xreplace(rule)
         return self.func(*new_args)
 
-    @sympify_return([("other", "Expr")], NotImplemented)
     def divide_out_diff(self, v1, v2):
         if v1 == v2:
             return S.Zero
@@ -221,46 +228,80 @@ class ElemSym(Expr):
     def _sympystr(self, printer):
         return printer._print_Function(self)
 
-    # def _eval_expand_basic(self, mul=True, *args, **kwargs):
-    #     print(f"_eval_expand_basic")
-    #     print(f"{args=}")
-    #     print(f"{kwargs=}")
-    #     print(f"{self}")
-    #     return self
+    def pull_out_vars(self, var1, var2, min_degree=1):
+        if self._p < min_degree:
+            return self
+        if var1 in self.genvars and var2 in self.coeffvars:
+            return self.xreplace({var1: var2}) + ElemSym(1, 1, [var1], [var2]) * self.divide_out_diff(var1, var2)
+        return self
 
-    # def _eval_expand_multinomial(self, *args, **kwargs):
-    #     print(f"_eval_expand_multinomial")
-    #     print(f"{args=}")
-    #     print(f"{kwargs=}")
-    #     print(f"{self}")
-    #     return self
 
-    # def _eval_expand_mul(self, *args, **kwargs):
-    #     ret = self.split_out_vars([self.genvars[0]], self.coeffvars)
-    #     return ret
-
-    # def _eval_expand_hint(self, *args, **kwargs):
-    #     print(f"_eval_expand_hint")
-    #     print(f"{args=}")
-    #     print(f"{kwargs=}")
-    #     print(f"{self}")
-    #     return self
-    
-    # def _eval_expand_vars(self, *args, **kwargs):
-    #     print(f"_eval_expand_hint")
-    #     print(f"{args=}")
-    #     print(f"{kwargs=}")
-    #     print(f"{self}")
-    #     print("hint")
-    #     print(f"{args=}")
-    #     print(f"{kwargs=}")
-    #     return self
-
-    
 def split_out_vars(expr, vars1, vars2):
     expr = sympify(expr)
+    if not expr.args:
+        return expr
     if isinstance(expr, ElemSym):
-        return expr.split_out_vars(vars1, vars2)
-    if hasattr(expr, "_eval_split_out_vars"):
-        return expr._eval_split_out_vars(vars1, vars2)
+        try:
+            return expr.split_out_vars(vars1, vars2)
+        except NotEnoughGeneratorsError:
+            return expr
     return expr.func(*[split_out_vars(arg, vars1, vars2) for arg in expr.args])
+
+
+def pull_out_vars(expr, var1, var2, min_degree=1):
+    expr = sympify(expr)
+    if hasattr(expr, "pull_out_vars"):
+        return expr.pull_out_vars(var1, var2, min_degree)
+    if not expr.args:
+        return expr
+    return expr.func(*[pull_out_vars(arg, var1, var2, min_degree) for arg in expr.args])
+    # return expr.xreplace({sympify(var1): sympify(var2)}) + ElemSym(1, 1, [var1],[var2]) * divide_out_diff(expr, sympify(var1), sympify(var2))
+
+
+#
+# ElemSym(p, k, stuff1 + v1, stuff1 + v2) = ElemSym(p, k, stuff1, stuff2) + Elem(1, 1, v1, v2)*ElemSym(p - 1, k - 1, stuff1, stuff2 + v2)
+
+#def elem_sym_unify_recurse(expr, expr1)
+
+def elem_sym_unify(expr, arg = None):
+    expr = sympify(expr)
+    
+    if not expr.args:
+        return expr
+    if isinstance(expr, ElemSym):
+        return expr
+
+    if not arg:
+        for arg in expr.args:
+            expr = elem_sym_unify(expr, arg)
+        return expr.func(*[elem_sym_unify(arg) for arg in expr.args])
+    expr2 = expr
+    if isinstance(arg, ElemSym):
+        v1 = Wild("v_1")
+        v2 = Wild("v_2")
+        rep_pattern = ElemSym(arg._p, arg._k + 1, [*arg.genvars, v1], [*arg.coeffvars, v2])
+        pattern = arg + ElemSym(1, 1, [v1], [v2])*ElemSym(arg._p - 1, arg._k, arg.genvars, [*arg.coeffvars, v2])
+        expr2 = expr.replace(pattern, rep_pattern)
+    if arg.args:
+        for arg2 in arg.args:
+            expr2 = elem_sym_unify(expr2, arg2)
+    if expr != expr2:
+        return elem_sym_unify(expr2)
+    return expr
+# def elem_sym_unify(expr):
+    
+#     a = Wild("a")
+#     b = Wild("b")
+#     def rep(a, b):
+#         if instance(a, ElemSym) and a._p == 1 and a._k ==1:
+#             if isinstance
+
+    # if isinstance(expr, Add):
+    #     for arg in expr.args:
+    # self.xreplace({var1: var2}) + ElemSym(1, 1, [var1], [var2]) * self.divide_out_diff(var1, var2)
+    # matching
+
+# wild patterns
+
+
+    

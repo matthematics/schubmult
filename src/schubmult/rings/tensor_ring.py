@@ -3,7 +3,7 @@ from functools import cache
 import sympy
 from symengine import S
 
-import schubmult.rings._utils as utils
+import schubmult.utils.ring_utils as utils
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 

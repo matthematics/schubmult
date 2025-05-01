@@ -3,7 +3,7 @@ from functools import cache, cached_property
 import sympy
 from symengine import Add, Mul, Pow, S, sympify
 
-import schubmult.rings._utils as utils
+import schubmult.utils.ring_utils as utils
 import schubmult.rings.quantum_schubert_ring as qsr
 import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.schub_lib as schub_lib

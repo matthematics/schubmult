@@ -24,6 +24,7 @@ from schubmult.perm_lib import (
 )
 from schubmult.poly_lib.poly_lib import _vars, efficient_subs, elem_sym_poly, expand
 from schubmult.poly_lib.schub_poly import schubpoly
+from schubmult.poly_lib.variables import GeneratingSet
 from schubmult.schub_lib.schub_lib import (
     divdiffable,
     is_coeff_irreducible,
@@ -1111,6 +1112,11 @@ class Optimizer:
         self.monom_to_vec = {}
         self.vec0 = None
         self.vec0 = self.poly_to_vec(poly)
+        self._subs_dict = {}
+        self._r = GeneratingSet("r")
+        self._subs_dict[z_ring.coeff_gens[1]] = -self._r[0]
+        for i, v in enumerate(self.z_ring.coeff_gens[2:len(poly.free_symbols)+2]):
+            self._subs_dict[v] = self._subs_dict[self.z_ring.coeff_gens[i + 1]] - self._r[i + 1]
 
     def _init_basevec(self, dc):
         self.monom_to_vec = {}
@@ -1122,7 +1128,14 @@ class Optimizer:
             index += 1
 
     def poly_to_vec(self, poly):
-        poly = expand(sympify(poly).xreplace({self.z_ring.genset[1]: 0}))
+        poly_r = self.z_ring(poly)
+        lst_tup = [(k,expand(efficient_subs(v,self._subs_dict)).as_coefficients_dict()) for k, v in poly_r]
+        dc = {}
+        for kk, p in lst_tup:
+            for a, b in p.items():
+                dc[(kk, a)] = b
+
+        #poly = expand(efficient_subs(sympify(poly), self._subs_dict))
 
         dc = poly.as_coefficients_dict()
 

@@ -4,7 +4,7 @@ from functools import cache
 import sympy
 from symengine import Add, Mul, Pow, S, Symbol, expand, sympify
 
-import schubmult.rings._utils as utils
+import schubmult.utils.ring_utils as utils
 import schubmult.rings.schubert_ring as spr
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz

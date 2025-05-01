@@ -7,7 +7,7 @@ from sympy.polys.domains.domainelement import DomainElement
 from sympy.polys.domains.ring import Ring
 from sympy.printing.defaults import DefaultPrinting
 
-import schubmult.rings._utils as utils
+import schubmult.utils.ring_utils as utils
 from schubmult.perm_lib import Permutation
 from schubmult.poly_lib.schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 from schubmult.utils.logging import get_logger

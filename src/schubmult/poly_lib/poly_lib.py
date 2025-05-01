@@ -324,7 +324,10 @@ def divide_out_diff(poly, v1, v2):
     if isinstance(poly, Add_local):
         return sympify_local(sympy.sympify(Add_local(*[divide_out_diff(a, v1, v2) for a in poly.args])))
     if isinstance(poly, Pow_local):
-        poly = Mul_local([poly.args[0]] * int(poly.args[1]), evaluate=False)
+        b = poly.args[0]
+        dd = divide_out_diff(poly.args[0],v1,v2)
+        a = poly.args[0].xreplace({v1: v2})
+        return Add_local(*[Mul_local(dd,Pow_local(b,i),Pow_local(a,int(poly.args[1]) - 1 - i)) for i in range(int(poly.args[1]))])
     if isinstance(poly, Mul_local):
         current_args = [*poly.args]
         args_ret = []
