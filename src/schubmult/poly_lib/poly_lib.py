@@ -293,8 +293,8 @@ def xreplace_genvars(poly, vars1, vars2):
 
 
 def divide_out_diff(poly, v1, v2):
-    if hasattr(poly, "divide_out_diff"):
-        return poly.divide_out_diff(v1, v2)
+    if hasattr(poly, "_eval_divide_out_diff"):
+        return poly._eval_divide_out_diff(v1, v2)
     Mul_local = Mul
     Add_local = symengine.Add
     Pow_local = Pow

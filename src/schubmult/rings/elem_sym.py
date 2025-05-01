@@ -1,6 +1,6 @@
 from functools import cache
 
-from sympy import Integer, S, Tuple, sympify
+from sympy import Dict, Integer, S, Tuple, sympify
 from sympy.core.expr import Expr
 
 from schubmult.poly_lib.poly_lib import elem_sym_poly
@@ -54,8 +54,8 @@ class ElemSym(Expr):
         if not all(v in self.coeffvars for v in vars2):
             raise NotEnoughGeneratorsError(f"Not all variables {vars2} are in the coefficient set {self.coeffvars}")
         ret = S.Zero
-        k2 = len(vars1)
-        k1 = self._k - k2
+        k1 = len(vars1)
+        k2 = self._k - k1
         new_genvars1 = [*self.genvars]
         for v in vars1:
             new_genvars1.remove(v)
@@ -70,7 +70,7 @@ class ElemSym(Expr):
             # print(f"{vars1=}, {vars2=}")
             # print(f"{new_coeffvars1=} {new_coeffvars2}")
             try:
-                ret += self.func(p1, k1, new_genvars1, new_coeffvars1) * self.func(p2, k2, vars1, new_coeffvars2)
+                ret += self.func(p1, k1, vars1, new_coeffvars1) * self.func(p2, k2, new_genvars1, new_coeffvars2)
             except NotEnoughGeneratorsError:
                 pass
         return ret
@@ -102,6 +102,7 @@ class ElemSym(Expr):
         return e
 
     def xreplace(self, rule):
+        rule = Dict(rule)
         new_args = [*self.args]
         new_args[2] = [*new_args[2]]
         new_args[3] = [*new_args[3]]
@@ -127,6 +128,12 @@ class ElemSym(Expr):
                 return -self.func(self._p, self._k - 1, new_genvars, self.coeffvars)
             return -self.func(self._p - 1, self._k, self.genvars, [*self.coeffvars, v2])
         return S.Zero
+
+    def _eval_div_diff(self, v1, v2):
+        return self.div_diff(v1, v2)
+
+    def _eval_divide_out_diff(self, v1, v2):
+        return self.divide_out_diff(v1, v2)
 
     def div_diff(self, v1, v2):
         if v1 == v2:

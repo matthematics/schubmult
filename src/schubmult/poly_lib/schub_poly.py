@@ -169,8 +169,8 @@ def skew_div_diff(u, w, poly):
     return skew_div_diff(u, w2, div_diff(d + 1, poly))
 
 def div_diff(poly, v1, v2):
-    if hasattr(poly, "div_diff"):
-        return poly.div_diff(v1, v2)
+    if hasattr(poly, "_eval_div_diff"):
+        return poly._eval_div_diff(v1, v2)
     Mul_local = Mul
     Add_local = symengine.Add
     Pow_local = Pow
