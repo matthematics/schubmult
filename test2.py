@@ -1,11 +1,24 @@
 from schubmult.utils.logging import init_logging
 init_logging(False)
-from schubmult.poly_lib.elem_sym import pull_out_vars
+from schubmult.rings.elem_sym import pull_out_vars
 from schubmult import *
+from schubmult.rings import *
 from schubmult.abc import *
 from sympy import *
 
 
+# v_1 = Wild("v_1")
+# v_2 = Wild("v_2")
+# a = Wild("a")
+# match_pattern = a * ElemSym(1, 1, [v_1], [v_2])
+# #rep_pattern
+
+# frob  = e(1,1,[x[1]],[y[2]]) * e(3,7,x[1:8],y[1:6])  + e(1,1,[x[5]],[y[7]]) * e(7,7,x[1:8],y[5:6])
+
+
+# print(frob.replace(match_pattern, lambda v_1, v_2, a: e(a._p + 1, a._k + 1, [*a.genvars, v_1], [*a.coeffvars]) - e(a._p + 1, a._k, )))
+
+# exit()
 def remove_zeros(poly):
     if expand(poly, func=True) == S.Zero:
         return S.Zero
@@ -20,7 +33,9 @@ def remove_zeros(poly):
         return Pow(remove_zeros(poly.args[0]), poly.args[1])
     return poly
 
-coeffs = (DSx([4,1,5,2,3],elem_sym=True)*DSx([5,1,4,2,3],"z"))
+perm = Permutation([5,1,4,2,3])
+# mu = (~perm).minimal_dominant_above()
+coeffs = (DSx([4,1,5,2,3],elem_sym=True)*DSx(perm,"z"))
 import random 
 bob = None
 it = iter(coeffs.values())
@@ -32,12 +47,26 @@ for i in range(random.randrange(1,len(coeffs.values()))):
     if not isinstance(a, int) and not isinstance(a, Integer):
         bob = a
 
-bob = remove_zeros(simplify(bob))
+# perm2 = perm * mu
+
+# while perm2 != Permutation([]):
+#     desc = next(iter(perm2.descents()))
+#     perm2 = perm2.swap(desc, desc+1)
+#     bob = div_diff(bob, z[desc + 2], z[desc + 1])
+
+# symbs = [v for v in bob.free_symbols if y.index(v) != -1]
+# symbs.sort(key=lambda v: y.index(v))
+# print(symbs)
+# for i, v in enumerate(symbs):
+#     bob = bob.xreplace({v: y[i+1]})
+# print(bob.free_symbols)
+#bob = bob.replace(ElemSym, lambda *x: DoubleSchubertRing.flip(ElemSym(*x)))
+bob = simplify(bob)
 
 print(bob)
 
-varlist = [sympify(arg) for arg in y[1:6]]
-varlist2 = [sympify(arg) for arg in z[1:10]]
+varlist = [sympify(arg) for arg in z[1:6]]
+varlist2 = [sympify(arg) for arg in y[1:10]]
 
 
 
@@ -74,7 +103,7 @@ negf = lambda x: isinstance(x, Integer) and x < 0
 boing = True
 final = None
 nomoves = 0
-while nomoves < 20:
+while nomoves < 50:
     res = None
     changed = True
     while changed:
@@ -125,7 +154,7 @@ while nomoves < 20:
 print(expand(bob-final, func=True))
 # print(expand(remove_zeros(simplify(bob2)),func=False,mul=True))
 print(final)
-print(simplify(expand_func(final)))
+print(expand_func(final))
 print(f"{final.count(negf)=}")
 print(f"{final=}")
 final2 = None
