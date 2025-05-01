@@ -4,10 +4,10 @@ from functools import cache
 import sympy
 from symengine import Add, Mul, Pow, S, Symbol, expand, sympify
 
-import schubmult.utils.ring_utils as utils
 import schubmult.rings.schubert_ring as spr
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
+import schubmult.utils.ring_utils as utils
 from schubmult.perm_lib import Permutation, longest_element
 from schubmult.poly_lib.poly_lib import complete_sym_poly, elem_sym_poly, elem_sym_poly_q, xreplace_genvars
 from schubmult.poly_lib.schub_poly import schubpoly_from_elems

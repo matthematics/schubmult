@@ -265,7 +265,7 @@ def pull_out_vars(expr, var1, var2, min_degree=1):
 
 def elem_sym_unify(expr, arg = None):
     expr = sympify(expr)
-    
+
     if not expr.args:
         return expr
     if isinstance(expr, ElemSym):
@@ -289,7 +289,7 @@ def elem_sym_unify(expr, arg = None):
         return elem_sym_unify(expr2)
     return expr
 # def elem_sym_unify(expr):
-    
+
 #     a = Wild("a")
 #     b = Wild("b")
 #     def rep(a, b):
@@ -304,4 +304,3 @@ def elem_sym_unify(expr, arg = None):
 # wild patterns
 
 
-    
