@@ -261,7 +261,7 @@ def split_out_vars(expr, vars1, vars2):
     expr = sympify(expr)
     if not expr.args:
         return expr
-    if isinstance(expr, ElemSym):
+    if hasattr(expr,"split_out_vars"):
         try:
             return expr.split_out_vars(vars1, vars2)
         except NotEnoughGeneratorsError:
@@ -330,13 +330,13 @@ class CompleteSym(Expr):
 
     @staticmethod
     def __xnew__(_class, p, k, var1, var2):
-        cont_obj = ElemSym(p, k + 1 - p, var2, var1)
+        cont_obj = ElemSym(p, k + p - 1, var2, var1)
         if not isinstance(cont_obj, ElemSym):
             return cont_obj
-        obj = Expr.__new__(_class, cont_obj.args[0], cont_obj.args[1], cont_obj.args[3], cont_obj.args[2])
+        obj = Expr.__new__(_class, cont_obj.args[0], cont_obj.args[1] + 1 - cont_obj.args[0], cont_obj.args[3], cont_obj.args[2])
         obj._under_elem = cont_obj
-        obj._p = cont_obj.args[0]
-        obj._k = cont_obj.args[1] + 1 - cont_obj.args[0]
+        obj._p = obj.args[0]
+        obj._k = obj.args[1]
         return obj
 
     @classmethod
@@ -347,9 +347,8 @@ class CompleteSym(Expr):
     def free_symbols(self):
         return set(self.genvars).union(set(self.coeffvars))
 
-    def split_out_vars(self, vars1, vars2):
-        new_obj = self._cont_obj.split_out_vars(vars2, vars1)
-        return new_obj.replace(ElemSym, lambda x: CompleteSym.from_elem_sym(ElemSym(*x)))
+    # def split_out_vars(self, vars1, vars2):
+    #     other_vars = 
         # # order of vars2 matters!
         # vars1 = [sympify(v) for v in vars1]
         # if vars2 is None:
@@ -411,15 +410,15 @@ class CompleteSym(Expr):
     def coeffvars(self):
         return tuple(self.args[3])
 
-    def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
-        return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
+    def _eval_expand_func(self, *args, **kwargs):
+        return sympify(elem_sym_poly(self._under_elem._p, self._under_elem._k, [-x for x in self._under_elem.genvars], [-y for y in self._under_elem.coeffvars]))
 
     @property
     def func(self, *args):
-        def e(*args):
+        def h(*args):
             return self.__class__(*args)
 
-        return e
+        return h
 
     #     return e
     def _eval_subs(self, *rule):
@@ -451,101 +450,25 @@ class CompleteSym(Expr):
         return self.func(*new_args)
 
     def divide_out_diff(self, v1, v2):
-        if v1 == v2:
-            return S.Zero
-        if v1 in self.genvars:
-            new_genvars = [*self.genvars]
-            new_genvars.remove(v1)
-            return self.func(self._p - 1, self._k - 1, new_genvars, self.coeffvars)
-        if v1 in self.coeffvars:
-            if v2 in self.coeffvars:
-                return S.Zero
-            if v2 in self.genvars:
-                new_genvars = [*self.genvars]
-                new_genvars.remove(v2)
-                return -self.func(self._p, self._k - 1, new_genvars, self.coeffvars)
-            return -self.func(self._p - 1, self._k, self.genvars, [*self.coeffvars, v2])
-        return S.Zero
+        new_obj = self._under_elem.divide_out_diff(v1, v2)
+        return new_obj.replace(ElemSym, lambda x: CompleteSym.from_elem_sym(ElemSym(*x)))
 
-    # def __mul__(self, other):
-    #     if self._p == 1:
-    #         if isinstance(other, ElemSym):
-    #             for i, v in enumerate(self.coeffvars):
-    #                 if v in other.coeffvars:
-    #                     j = 0
-    #                     while j < self._k and self.genvars[j] in other.genvars:
-    #                         j += 1
-    #                     if j == self._k:
-    #                         j -= 1
-    #                     v1 = self.genvars[j]
-    #                     newgenvars1 = [*self.genvars[:j], *self.genvars[j+1:]]
-    #                     newcoeffvars1 = [*self.coeffvars[:i],*self.coeffvars[i+1:]]
-    #                     newcoeffvars2 = [*other.coeffvars]
-    #                     newcoeffvars2.remove(v)
-    #                     if self._k == 1:
-    #                         return ElemSym(other._p + 1, other._k, other.genvars, newcoeffvars2) - ElemSym(other._p + 1, other._k + 1, [*other.genvars, self.genvars[0]], other.coeffvars)
-    #                     return ElemSym(1, self._k - 1, newgenvars1, newcoeffvars1)* (ElemSym(other._p + 1, other._k, other.genvars, newcoeffvars2) - ElemSym(other._p + 1, other._k + 1, [*other.genvars, self.genvars[0]], other.coeffvars))
-    #     return Mul(self, other)
+    @staticmethod
+    def from_expr_elem_sym(self, expr):
+        return expr.replace(ElemSym, lambda x: CompleteSym.from_elem_sym(ElemSym(*x)))
 
     def _eval_div_diff(self, v1, v2):
-        return self.div_diff(v1, v2)
+        return CompleteSym.from_expr_elem_sym(self._under_elem.div_diff(v1, v2))
 
     def _eval_divide_out_diff(self, v1, v2):
-        return self.divide_out_diff(v1, v2)
+        return CompleteSym.from_expr_elem_sym(self._under_elem.divide_out_diff(v1, v2))
 
     def div_diff(self, v1, v2):
-        if v1 == v2:
-            return S.Zero
-        if v1 in self.genvars:
-            new_genvars = [*self.genvars]
-            new_genvars.remove(v1)
-            return self.func(self._p - 1, self._k - 1, new_genvars, self.coeffvars)
-        if v1 in self.coeffvars:
-            if v2 in self.coeffvars:
-                return S.Zero
-            if v2 in self.genvars:
-                new_genvars = [*self.genvars]
-                new_genvars.remove(v2)
-                return -self.func(self._p, self._k - 1, new_genvars, self.coeffvars)
-            return -self.func(self._p - 1, self._k, self.genvars, [*self.coeffvars, v2])
-        if v2 in self.genvars:
-            new_genvars = [*self.genvars]
-            new_genvars.remove(v2)
-            return -self.func(self._p - 1, self._k - 1, new_genvars, self.coeffvars)
-        if v2 in self.coeffvars:
-            if v1 in self.coeffvars:
-                return S.Zero
-            if v1 in self.genvars:
-                new_genvars = [*self.genvars]
-                new_genvars.remove(v1)
-                return self.func(self._p, self._k - 1, new_genvars, self.coeffvars)
-            return self.func(self._p - 1, self._k, self.genvars, [*self.coeffvars, v1])
-        return S.Zero
-
-    def sign_of_pair(self, v1, v2):
-        if v1 == v2:
-            return S.Zero
-        if v1 in self.genvars:
-            return S.One
-        if v1 in self.coeffvars:
-            if v2 in self.coeffvars:
-                return S.Zero
-            if v2 in self.genvars:
-                return None
-            return S.NegativeOne
-        return S.Zero
+        return CompleteSym.from_expr_elem_sym(self._under_elem.div_diff(v1, v2))
 
     def _sympystr(self, printer):
         return printer._print_Function(self)
-
-    def pull_out_vars(self, var1, var2, min_degree=1):
-        if self._p < min_degree:
-            return self
-        if var1 in self.genvars and var2 in self.coeffvars:
-            return self.xreplace({var1: var2}) + ElemSym(1, 1, [var1], [var2]) * self.divide_out_diff(var1, var2)
-        return self
-
-
+    
 
 
 

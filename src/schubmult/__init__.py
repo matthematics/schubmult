@@ -1,7 +1,7 @@
 __version__ = "3.0.2dev1"
 #schubpoly_from_elems?
 from .perm_lib import Permutation, permtrim, theta, uncode
-from .rings.elem_sym import ElemSym, elem_sym_unify, split_out_vars
+from .rings.elem_sym import CompleteSym, ElemSym, elem_sym_unify, split_out_vars
 from .rings.poly_lib import divide_out_diff, efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, split_up, xreplace_genvars
 from .rings.quantum_schubert_ring import (
     QDSx,
@@ -45,6 +45,7 @@ from .schub_lib.single import (
 
 __all__ = [
     "CustomGeneratingSet",
+    "CompleteSym",
     "DSx",
     "ElemSym",
     "GeneratingSet",

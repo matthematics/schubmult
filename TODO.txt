@@ -186,3 +186,4 @@ Newtons identities
 
 New mul with subs
 Work on coercing elem sym
+complete sym
