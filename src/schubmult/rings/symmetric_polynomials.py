@@ -295,7 +295,6 @@ def elem_sym_unify(expr, arg=None):
         return elem_sym_unify(expr2)
     return expr
 
-
 class CompleteSym(Expr):
     is_commutative = True
     is_Atom = False
@@ -371,11 +370,7 @@ class CompleteSym(Expr):
 
         return h
 
-    #     return e
     def _eval_subs(self, *rule):
-        # print(f"_eval_subs")
-        # print(f"{rule=}")
-        # print(f"{self=}")
         rule = Dict(rule)
         new_args = [*self.args]
         new_args[2] = [*new_args[2]]
@@ -387,9 +382,6 @@ class CompleteSym(Expr):
         return self.func(*new_args)
 
     def xreplace(self, rule):
-        # print(f"xreplace")
-        # print(f"{rule=}")
-        # print(f"{self=}")
         rule = Dict(rule)
         new_args = [*self.args]
         new_args[2] = [*new_args[2]]

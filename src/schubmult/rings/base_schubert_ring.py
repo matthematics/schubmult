@@ -395,6 +395,9 @@ class MixedSchubertElement(BaseSchubertElement, dict):
     def ring(self):
         return self._ring
 
+    def subs(self, old, new):
+        return self.__class__({k: v.subs(old, new) for k, v in self.items()})
+
     def __add__(self, other):
         if isinstance(other, MixedSchubertElement):
             return MixedSchubertElement(*list(add_perm_dict(self, other).values()))

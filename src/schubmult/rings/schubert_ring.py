@@ -14,9 +14,9 @@ from schubmult.utils.perm_utils import add_perm_dict
 
 from .abstract_schub_poly import AbstractSchubPoly
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
-from .elem_sym import CompleteSym, ElemSym, split_out_vars
 from .poly_lib import elem_sym_poly, xreplace_genvars
 from .schub_poly import schubpoly_classical_from_elems
+from .symmetric_polynomials import CompleteSym, ElemSym, split_out_vars
 from .tensor_ring import TensorRing
 from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 
@@ -429,7 +429,7 @@ class DoubleSchubertRing(BaseSchubertRing):
             if len(coeffs_to_remove):
                 return self.from_sympy(split_out_vars(x.to_complete_sym(), coeffs_to_remove))
 
-            return self.from_dict({k: sympy.sympify(v) * x for k, v in self.items()})
+            return self.from_dict({Permutation([]): x})
         if isinstance(x, CompleteSym):
             if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
                 indexes = [self.genset.index(a) for a in x.genvars]
@@ -451,7 +451,7 @@ class DoubleSchubertRing(BaseSchubertRing):
             if len(coeffs_to_remove):
                 return self.from_sympy(split_out_vars(x.to_elem_sym(), coeffs_to_remove))
 
-            return self.from_dict({k: sympy.sympify(v) * x for k, v in self.items()})
+            return self.from_dict({Permutation([]): x})
         if isinstance(x, _Add):
             return self.sum([self.from_sympy(arg) for arg in x.args])
         if isinstance(x, _Mul):
