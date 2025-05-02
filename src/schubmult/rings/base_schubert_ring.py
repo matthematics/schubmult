@@ -173,7 +173,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def __mul__(self, other):
         if isinstance(other, BaseSchubertElement):
-            if isinstance(other.ring, type(self.ring)):
+            if isinstance(other.ring, self.ring.__class__):
                 return self.ring.mul(self, other)
             new_other = self.ring._coerce_mul(other)
             if new_other:

@@ -14,7 +14,7 @@ from schubmult.utils.perm_utils import add_perm_dict
 
 from .abstract_schub_poly import AbstractSchubPoly
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
-from .elem_sym import ElemSym
+from .elem_sym import CompleteSym, ElemSym, split_out_vars
 from .poly_lib import elem_sym_poly, xreplace_genvars
 from .schub_poly import schubpoly_classical_from_elems
 from .tensor_ring import TensorRing
@@ -286,11 +286,11 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     @staticmethod
     def flip(elem):
-        R = DoubleSchubertRing(CustomGeneratingSet([0,*elem.coeffvars]), CustomGeneratingSet([0,*elem.genvars]))
+        R = DoubleSchubertRing(CustomGeneratingSet([0, *elem.coeffvars]), CustomGeneratingSet([0, *elem.genvars]))
         p = elem._p
         K = elem._k + 1 - p
         poly = R(uncode([*list((K - 1) * [0]), p]))
-        print(poly)
+        # print(poly)
         return poly.in_CEM_basis()
 
     def in_quantum_basis(self, elem):
@@ -391,30 +391,75 @@ class DoubleSchubertRing(BaseSchubertRing):
         return schubpoly_classical_from_elems(k, self.genset, self.coeff_genset, elem_func=elem_sym_poly)
 
     def from_sympy(self, x):
+        _Add = Add
+        _Mul = Mul
+        _Pow = Pow
         if isinstance(x, BaseSchubertElement):
             if x.ring == self:
                 return x
-        x = sympify(x)
+        try:
+            x = sympify(x)
+        except Exception:
+            x = sympy.sympify(x)
+            _Add = sympy.Add
+            _Mul = sympy.Mul
+            _Pow = sympy.Pow
         ind = self.genset.index(x)
         if ind != -1:
             return self.from_dict(yz.mult_poly_double({Permutation([]): 1}, x, self.genset, self.coeff_genset))
-        # if isinstance(x, ElemSym):
-        #     if not any(a in self.genset for a in x.free_symbols):
-        #         return self.from_dict({k: sympy.sympify(v)*a for k, v in self.items()})
-        #     gens_to_remove = [a in x.genvars if a in self.genset]
+        if isinstance(x, ElemSym):
+            if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
+                indexes = [self.genset.index(a) for a in x.genvars]
+                perm_list = schub_lib.elem_sym_positional_perms(Permutation([]),x._p, *indexes)
+                ret = self.zero
+                for perm, df, sign in perm_list:
+                    if df == x._p:
+                        ret += sympy.sympify(sign) * self(perm)
+                for i, val in enumerate(x.coeffvars):
+                    ret = ret.subs(self.coeff_genset[i+1], val)
+                return ret
 
-        #     coeffs_to_remove = [a in x.coeffvars if a in self.genset]
-        #     res = x
-        #     for a in coeffs_to_remove:
-        #         res = res.xreplace({a: next(iter())})
-        if isinstance(x, Add):
+            gens_to_remove = [a for a in x.genvars if a not in self.genset]
+
+            if len(gens_to_remove):
+                return self.from_sympy(x.split_out_vars(gens_to_remove))
+
+            coeffs_to_remove = [a for a in x.coeff_vars if a in self.genset]
+
+            if len(coeffs_to_remove):
+                return self.from_sympy(split_out_vars(x.to_complete_sym(), coeffs_to_remove))
+
+            return self.from_dict({k: sympy.sympify(v) * x for k, v in self.items()})
+        if isinstance(x, CompleteSym):
+            if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
+                indexes = [self.genset.index(a) for a in x.genvars]
+                perm_list = schub_lib.complete_sym_positional_perms(Permutation([]),x._p, *indexes)
+                ret = self.zero
+                for perm, df, sign in perm_list:
+                    if df == x._p:
+                        ret += sympy.sympify(sign) * self(perm)
+                for i, val in enumerate(x.coeffvars):
+                    ret = ret.subs(self.coeff_genset[i+1], val)
+                return ret
+            gens_to_remove = [a for a in x.genvars if a not in self.genset]
+
+            if len(gens_to_remove):
+                return self.from_sympy(x.split_out_vars(gens_to_remove))
+
+            coeffs_to_remove = [a for a in x.coeff_vars if a in self.genset]
+
+            if len(coeffs_to_remove):
+                return self.from_sympy(split_out_vars(x.to_elem_sym(), coeffs_to_remove))
+
+            return self.from_dict({k: sympy.sympify(v) * x for k, v in self.items()})
+        if isinstance(x, _Add):
             return self.sum([self.from_sympy(arg) for arg in x.args])
-        if isinstance(x, Mul):
+        if isinstance(x, _Mul):
             res = self.one
             for arg in x.args:
                 res *= self.from_sympy(arg)
             return res
-        if isinstance(x, Pow):
+        if isinstance(x, _Pow):
             return self.from_sympy(x.args[0]) ** int(x.args[1])
         return self.from_dict({Permutation([]): x})
 

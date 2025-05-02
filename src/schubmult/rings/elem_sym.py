@@ -1,6 +1,6 @@
 from functools import cache
 
-from sympy import Dict, Integer, Mul, S, Tuple, Wild, sympify
+from sympy import Add, Dict, Integer, S, Tuple, Wild, sympify
 from sympy.core.expr import Expr
 
 from schubmult.utils.logging import get_logger
@@ -60,7 +60,7 @@ class ElemSym(Expr):
     def free_symbols(self):
         return set(self.genvars).union(set(self.coeffvars))
 
-    def split_out_vars(self, vars1, vars2):
+    def split_out_vars(self, vars1, vars2=None):
         # order of vars2 matters!
         vars1 = [sympify(v) for v in vars1]
         if vars2 is None:
@@ -261,7 +261,7 @@ def split_out_vars(expr, vars1, vars2):
     expr = sympify(expr)
     if not expr.args:
         return expr
-    if hasattr(expr,"split_out_vars"):
+    if hasattr(expr, "split_out_vars"):
         try:
             return expr.split_out_vars(vars1, vars2)
         except NotEnoughGeneratorsError:
@@ -283,6 +283,10 @@ def pull_out_vars(expr, var1, var2, min_degree=1):
 # ElemSym(p, k, stuff1 + v1, stuff1 + v2) = ElemSym(p, k, stuff1, stuff2) + Elem(1, 1, v1, v2)*ElemSym(p - 1, k - 1, stuff1, stuff2 + v2)
 
 # def elem_sym_unify_recurse(expr, expr1)
+
+
+def to_complete_sym(self):
+    return S.NegativeOne ** (self._p % 2) * CompleteSym.from_elem_sym(self)
 
 
 def elem_sym_unify(expr, arg=None):
@@ -313,7 +317,6 @@ def elem_sym_unify(expr, arg=None):
 
 
 class CompleteSym(Expr):
-
     is_commutative = True
     is_Atom = False
     is_polynomial = True
@@ -327,6 +330,9 @@ class CompleteSym(Expr):
     @cache
     def __xnew_cached__(_class, p, k, var1, var2):
         return CompleteSym.__xnew__(_class, p, k, var1, var2)
+
+    def to_elem_sym(self):
+        return S.NegativeOne * (self._p % 2) * self._under_elem
 
     @staticmethod
     def __xnew__(_class, p, k, var1, var2):
@@ -347,52 +353,17 @@ class CompleteSym(Expr):
     def free_symbols(self):
         return set(self.genvars).union(set(self.coeffvars))
 
-    # def split_out_vars(self, vars1, vars2):
-    #     other_vars = 
-        # # order of vars2 matters!
-        # vars1 = [sympify(v) for v in vars1]
-        # if vars2 is None:
-        #     vars2 = [*self.coeffvars]
-        # else:
-        #     vars2 = [sympify(v) for v in vars2]
-        # if not all(v in self.genvars for v in vars1):
-        #     raise NotEnoughGeneratorsError(f"Not all variables {vars1} are in the generating set {self.genvars}")
-        # newvars2 = [*vars2]
-        # for v in vars2:
-        #     if v not in self.coeffvars:
-        #         newvars2.remove(v)
+    def split_out_vars(self, vars1, vars2=None):
+        if not all(v in self.genvars for v in vars1):
+            return self
+        first_vars = [*vars1]
+        second_vars = [a for a in self.genvars if a not in vars1]
+        k1 = len(first_vars)
+        k2 = len(second_vars)
+        if k1 + k2 != self._k:
+            raise Exception
 
-        # vars2 = [*newvars2]
-        # for v in vars1:
-        #     if v not in self.genvars:
-        #         new_vars1.remove(v)
-        # new_vars2 = [*vars2]
-        # for v in vars2:
-        #     if v not in self.coeffvars:
-        #         new_vars2.remove(v)
-        # vars1 = new_vars1
-        # vars2 = new_vars2
-        # ret = S.Zero
-        # k1 = len(vars1)
-        # k2 = self._k - k1
-        # new_genvars1 = [*self.genvars]
-        # for v in vars1:
-        #     new_genvars1.remove(v)
-        # # print(len(new_genvars1))
-        # new_coeffvars2 = [*newvars2]
-        # new_coeffvars1 = [*newvars2]
-        # new_coeffvars2.reverse()
-        # # we have k + 1 - p
-        # for p1 in range(min(k1 + 1, self._p + 1)):
-        #     p2 = self._p - p1
-        #     # print(f"{p1=}, {p2=}, {k1=}, {k2=}")
-        #     # print(f"{vars1=}, {vars2=}")
-        #     # print(f"{new_coeffvars1=} {new_coeffvars2}")
-        #     try:
-        #         ret += self.func(p1, k1, vars1, new_coeffvars1) * self.func(p2, k2, new_genvars1, new_coeffvars2)
-        #     except NotEnoughGeneratorsError:
-        #         pass
-        # return ret
+        return Add(*[CompleteSym(i, k1, first_vars, self.coeffvars[: k1 + i - 1]) * CompleteSym(self._p - i, k2, second_vars, self.coeffvars[k1 + i :]) for i in range(0, self._p + 1)])
 
     @property
     def degree(self):
@@ -468,7 +439,3 @@ class CompleteSym(Expr):
 
     def _sympystr(self, printer):
         return printer._print_Function(self)
-    
-
-
-
