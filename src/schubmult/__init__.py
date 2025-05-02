@@ -44,8 +44,8 @@ from .schub_lib.single import (
 )
 
 __all__ = [
-    "CustomGeneratingSet",
     "CompleteSym",
+    "CustomGeneratingSet",
     "DSx",
     "ElemSym",
     "GeneratingSet",

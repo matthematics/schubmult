@@ -2,7 +2,6 @@ import math
 from functools import cache, cached_property
 
 import sympy.combinatorics.permutations as spp
-from symengine import sympify
 from sympy import Basic, Tuple
 
 import schubmult.utils.logging as lg

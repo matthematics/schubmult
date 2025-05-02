@@ -126,7 +126,7 @@ class ElemSym(Expr):
         return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
 
     @property
-    def func(self, *args):
+    def func(self):
         def e(*args):
             return self.__class__(*args)
 
@@ -177,26 +177,6 @@ class ElemSym(Expr):
                 return -self.func(self._p, self._k - 1, new_genvars, self.coeffvars)
             return -self.func(self._p - 1, self._k, self.genvars, [*self.coeffvars, v2])
         return S.Zero
-
-    # def __mul__(self, other):
-    #     if self._p == 1:
-    #         if isinstance(other, ElemSym):
-    #             for i, v in enumerate(self.coeffvars):
-    #                 if v in other.coeffvars:
-    #                     j = 0
-    #                     while j < self._k and self.genvars[j] in other.genvars:
-    #                         j += 1
-    #                     if j == self._k:
-    #                         j -= 1
-    #                     v1 = self.genvars[j]
-    #                     newgenvars1 = [*self.genvars[:j], *self.genvars[j+1:]]
-    #                     newcoeffvars1 = [*self.coeffvars[:i],*self.coeffvars[i+1:]]
-    #                     newcoeffvars2 = [*other.coeffvars]
-    #                     newcoeffvars2.remove(v)
-    #                     if self._k == 1:
-    #                         return ElemSym(other._p + 1, other._k, other.genvars, newcoeffvars2) - ElemSym(other._p + 1, other._k + 1, [*other.genvars, self.genvars[0]], other.coeffvars)
-    #                     return ElemSym(1, self._k - 1, newgenvars1, newcoeffvars1)* (ElemSym(other._p + 1, other._k, other.genvars, newcoeffvars2) - ElemSym(other._p + 1, other._k + 1, [*other.genvars, self.genvars[0]], other.coeffvars))
-    #     return Mul(self, other)
 
     def _eval_div_diff(self, v1, v2):
         return self.div_diff(v1, v2)
@@ -353,7 +333,7 @@ class CompleteSym(Expr):
     def free_symbols(self):
         return set(self.genvars).union(set(self.coeffvars))
 
-    def split_out_vars(self, vars1, vars2=None):
+    def split_out_vars(self, vars1, vars2=None):  # noqa: ARG002
         if not all(v in self.genvars for v in vars1):
             return self
         first_vars = [*vars1]
@@ -363,7 +343,7 @@ class CompleteSym(Expr):
         if k1 + k2 != self._k:
             raise Exception
 
-        return Add(*[CompleteSym(i, k1, first_vars, self.coeffvars[: k1 + i - 1]) * CompleteSym(self._p - i, k2, second_vars, self.coeffvars[k1 + i :]) for i in range(0, self._p + 1)])
+        return Add(*[CompleteSym(i, k1, first_vars, self.coeffvars[: k1 + i - 1]) * CompleteSym(self._p - i, k2, second_vars, self.coeffvars[k1 + i :]) for i in range(self._p + 1)])
 
     @property
     def degree(self):
@@ -381,11 +361,11 @@ class CompleteSym(Expr):
     def coeffvars(self):
         return tuple(self.args[3])
 
-    def _eval_expand_func(self, *args, **kwargs):
+    def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify(elem_sym_poly(self._under_elem._p, self._under_elem._k, [-x for x in self._under_elem.genvars], [-y for y in self._under_elem.coeffvars]))
 
     @property
-    def func(self, *args):
+    def func(self):
         def h(*args):
             return self.__class__(*args)
 
@@ -425,7 +405,7 @@ class CompleteSym(Expr):
         return new_obj.replace(ElemSym, lambda x: CompleteSym.from_elem_sym(ElemSym(*x)))
 
     @staticmethod
-    def from_expr_elem_sym(self, expr):
+    def from_expr_elem_sym(expr):
         return expr.replace(ElemSym, lambda x: CompleteSym.from_elem_sym(ElemSym(*x)))
 
     def _eval_div_diff(self, v1, v2):
