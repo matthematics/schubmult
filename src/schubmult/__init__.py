@@ -3,18 +3,18 @@ __version__ = "3.0.2dev1"
 from .perm_lib import Permutation, permtrim, theta, uncode
 from .rings.elem_sym import ElemSym, elem_sym_unify, split_out_vars
 from .rings.poly_lib import divide_out_diff, efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, split_up, xreplace_genvars
-from .rings.schub_poly import div_diff, schubpoly, skew_div_diff
-from .rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from .rings.quantum_schubert_ring import (
     QDSx,
     QPDSx,
     QPSx,
     QSx,
 )
+from .rings.schub_poly import div_diff, schubpoly, skew_div_diff
 from .rings.schubert_ring import (
     DSx,
     Sx,
 )
+from .rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from .schub_lib.double import (
     mult_poly_double,
     schub_coprod_double,

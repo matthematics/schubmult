@@ -161,6 +161,7 @@ Make use of variable separation as a last resort to avoid linear optimization
 
 More tests
 
+Each in the z_1 variables is independent
 
 
 as_independent(*deps, **hint) → tuple[Expr, Expr][source]
@@ -180,3 +181,8 @@ pull_out_gen and eval tests
 pull_out_gen for quantum
 
 Simplify elem sym (copy sympy)
+
+Newtons identities
+
+New mul with subs
+Work on coercing elem sym

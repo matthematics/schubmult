@@ -292,7 +292,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         poly = R(uncode([*list((K - 1) * [0]), p]))
         print(poly)
         return poly.in_CEM_basis()
-    
+
     def in_quantum_basis(self, elem):
         result = S.Zero
         for k, v in elem.items():
@@ -398,6 +398,15 @@ class DoubleSchubertRing(BaseSchubertRing):
         ind = self.genset.index(x)
         if ind != -1:
             return self.from_dict(yz.mult_poly_double({Permutation([]): 1}, x, self.genset, self.coeff_genset))
+        # if isinstance(x, ElemSym):
+        #     if not any(a in self.genset for a in x.free_symbols):
+        #         return self.from_dict({k: sympy.sympify(v)*a for k, v in self.items()})
+        #     gens_to_remove = [a in x.genvars if a in self.genset]
+
+        #     coeffs_to_remove = [a in x.coeffvars if a in self.genset]
+        #     res = x
+        #     for a in coeffs_to_remove:
+        #         res = res.xreplace({a: next(iter())})
         if isinstance(x, Add):
             return self.sum([self.from_sympy(arg) for arg in x.args])
         if isinstance(x, Mul):

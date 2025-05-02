@@ -9,11 +9,11 @@ from sympy.printing.defaults import DefaultPrinting
 
 import schubmult.utils.ring_utils as utils
 from schubmult.perm_lib import Permutation
-from .schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
 from .backend import expand, sympify
+from .schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 
 logger = get_logger(__name__)
 
