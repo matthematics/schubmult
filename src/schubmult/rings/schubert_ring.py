@@ -410,13 +410,10 @@ class DoubleSchubertRing(BaseSchubertRing):
         if isinstance(x, ElemSym):
             if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
                 indexes = [self.genset.index(a) for a in x.genvars]
-                perm_list = schub_lib.elem_sym_positional_perms(Permutation([]),x._p, *indexes)
+                perm_list = schub_lib.elem_sym_positional_perms(Permutation([]), x._p, *indexes)
                 ret = self.zero
                 for perm, df, sign in perm_list:
-                    if df == x._p:
-                        ret += sympy.sympify(sign) * self(perm)
-                for i, val in enumerate(x.coeffvars):
-                    ret = ret.subs(self.coeff_genset[i+1], val)
+                    ret += sympy.sympify(sign) * ElemSym(x._p - df, x._k - df, [self.coeff_genset[perm[i - 1]] for i in indexes if perm[i - 1] == i], x.coeffvars) * self(perm)
                 return ret
 
             gens_to_remove = [a for a in x.genvars if a not in self.genset]
@@ -433,13 +430,14 @@ class DoubleSchubertRing(BaseSchubertRing):
         if isinstance(x, CompleteSym):
             if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
                 indexes = [self.genset.index(a) for a in x.genvars]
-                perm_list = schub_lib.complete_sym_positional_perms(Permutation([]),x._p, *indexes)
+                perm_list = schub_lib.complete_sym_positional_perms(Permutation([]), x._p, *indexes)
                 ret = self.zero
                 for perm, df, sign in perm_list:
-                    if df == x._p:
-                        ret += sympy.sympify(sign) * self(perm)
-                for i, val in enumerate(x.coeffvars):
-                    ret = ret.subs(self.coeff_genset[i+1], val)
+                    ret += (
+                        sympy.sympify(sign)
+                        * CompleteSym(x._p - df, x._k + df, [self.coeff_genset[perm[i - 1]] for i in set([*indexes, *[j + 1 for j in range(len(perm)) if perm[j] != j + 1]])], x.coeffvars)
+                        * self(perm)
+                    )
                 return ret
             gens_to_remove = [a for a in x.genvars if a not in self.genset]
 

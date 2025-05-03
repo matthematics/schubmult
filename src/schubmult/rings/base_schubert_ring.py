@@ -150,7 +150,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             pass
         try:
             new_other = self.ring(other)
-            return new_other.__sub_(self)
+            return new_other.__sub__(self)
         except CoercionFailed:
             return NotImplemented
 
