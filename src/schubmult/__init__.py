@@ -8,7 +8,7 @@ from .rings.quantum_schubert_ring import (
     QPSx,
     QSx,
 )
-from .rings.schub_poly import div_diff, schubpoly, skew_div_diff
+from .rings.schub_poly import div_diff, schubpoly
 from .rings.schubert_ring import (
     DSx,
     Sx,
@@ -92,7 +92,6 @@ __all__ = [
     "schubmult_q_generic_partial_posify",
     "schubpoly",
     "schubpoly_quantum",
-    "skew_div_diff",
     "split_out_vars",
     "split_up",
     "theta",
