@@ -279,10 +279,10 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def neg(self, elem):
         return self.from_dict({k: -v for k, v in elem.items()})
 
-    def mul(self, elem, other):
+    def mul(self, elem, other, _sympify=False):
         if self.of_type(elem):
             if isinstance(other, BaseSchubertElement):
-                return self.from_dict(utils._mul_schub_dicts(elem, other, elem.ring, other.ring))
+                return self.from_dict(utils._mul_schub_dicts(elem, other, elem.ring, other.ring, _sympify=_sympify))
         try:
             other = self.domain_new(other)
         except CoercionFailed:

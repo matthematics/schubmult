@@ -435,7 +435,7 @@ class DoubleSchubertRing(BaseSchubertRing):
                 for perm, df, sign in perm_list:
                     ret += (
                         sympy.sympify(sign)
-                        * CompleteSym(x._p - df, x._k + df, [self.coeff_genset[perm[i - 1]] for i in set([*indexes, *[j + 1 for j in range(len(perm)) if perm[j] != j + 1]])], x.coeffvars)
+                        * CompleteSym(x._p - df, x._k + df, [self.coeff_genset[perm[i - 1]] for i in {*indexes, *[j + 1 for j in range(len(perm)) if perm[j] != j + 1]}], x.coeffvars)
                         * self(perm)
                     )
                 return ret
@@ -455,7 +455,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         if isinstance(x, _Mul):
             res = self.one
             for arg in x.args:
-                res *= self.from_sympy(arg)
+                res = self.mul(res, self.from_sympy(arg), _sympify=True)
             return res
         if isinstance(x, _Pow):
             return self.from_sympy(x.args[0]) ** int(x.args[1])
