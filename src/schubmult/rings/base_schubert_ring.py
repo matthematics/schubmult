@@ -172,37 +172,14 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
 
     def __mul__(self, other):
-        if isinstance(other, BaseSchubertElement):
-            if isinstance(other.ring, self.ring.__class__):
-                return self.ring.mul(self, other)
-            new_other = self.ring._coerce_mul(other)
-            if new_other:
-                return self.ring.mul(self, new_other)
-            return other.__rmul__(self)
         try:
-            other = self.ring.domain_new(other)
-            return self.ring.from_dict({k: sympify(other) * v for k, v in self.items()})
-        except CoercionFailed:
-            pass
-        try:
-            new_other = self.ring(other)
-            return self.__mul__(new_other)
+            return self.ring.mul(self, other)
         except CoercionFailed:
             return other.__rmul__(self)
 
     def __rmul__(self, other):
-        if isinstance(other, BaseSchubertElement):
-            new_other = self.ring._coerce_mul(other)
-            if new_other:
-                return self.ring.mul(new_other, self)
         try:
-            other = self.ring.domain_new(other)
-            return self.ring.from_dict({k: sympify(other) * v for k, v in self.items()})
-        except CoercionFailed:
-            pass
-        try:
-            new_other = self.ring(other)
-            return new_other.ring.mul(new_other, self)
+            return self.ring.mul(self, other)
         except CoercionFailed:
             return NotImplemented
 
@@ -262,11 +239,14 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def to_sympy(self, elem):
         return elem.as_expr()
 
-    def __init__(self, genset, coeff_genset):
+    def __init__(self, genset, coeff_genset, domain=None):
         self._genset = genset
         self._coeff_genset = coeff_genset
         self.symbols = list(genset)
-        self.domain = EXRAW
+        if domain:
+            self.domain = domain
+        else:
+            self.domain = EXRAW
         self.dom = self.domain
         self.zero_monom = Permutation([])
 
@@ -302,6 +282,12 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def one(self):
         return self.from_dict({Permutation([]): S.One})
 
+    @property
+    def elem_mul_type(self):
+        return None
+
+    def elem_mul(self, ring_elem, elem): ...
+
     def _coerce_add(self, other): ...
 
     def from_dict(self, element, orig_domain=None):
@@ -334,9 +320,9 @@ class BaseSchubertRing(Ring, CompositeDomain):
 
     def elem_sym_subs(self, kk): ...
 
-    def domain_new(self, element, orig_domain=None):
+    def domain_new(self, element, orig_domain=None):  # noqa: ARG002
         if not sympy.sympify(element).has_free(*self.symbols):
-            return self.domain.convert(element, orig_domain)
+            return element
         raise CoercionFailed(f"{element} contains an element of the set of generators")
 
     @property
@@ -512,6 +498,8 @@ class MixedSchubertElement(BaseSchubertElement, dict):
         return elem
 
     def __rmul__(self, other):
+        if isinstance(other, self.elem_mul_type):
+            return self.ring.mul(self, other)
         if isinstance(other, BaseSchubertElement):
             return MixedSchubertElement(*[other * a for a in self.values()])
         elem = MixedSchubertElement(*list(self.values()))

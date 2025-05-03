@@ -597,13 +597,15 @@ def elem_sym_positional_perms(orig_perm, p, *k):
         for up_perm, last, sign in up_perm_list:
             # pos_list = [i for i in range(k) if up_perm[i] < last]
             rg = [q for q in range(len(up_perm) + max(k) + 1) if q not in k]
-            for i in k.difference(last):
+            for i in k:
+                if i in last:
+                    continue
                 for j in rg:
                     a, b = (i, j) if i < j else (j, i)
                     if has_bruhat_ascent(up_perm, a, b):
                         new_perm_add = up_perm.swap(a, b)
                         new_last = set(last)
-                        new_last.add(j)
+                        new_last.add(i)
                         new_sign = sign if i < j else -sign
                         perm_list += [(new_perm_add, new_last, new_sign)]
                         total_list += [(new_perm_add, pp + 1, new_sign)]

@@ -216,3 +216,9 @@ quantum elem syms
 DSx(uncode([0,2]))*DSx(uncode([0,0,1]),"a") - DSx(uncode([0,3]))
 
 DSx(uncode([2,2]),"z")*DSx([0,0,0,1],"z") - DSx(uncode([2,2]),"z")*DSx(uncode([0,1]),"a").subs(a)
+
+!! Elem sym mul directly
+
+coproduct vpathdicts
+
+domain types

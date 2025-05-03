@@ -2,6 +2,7 @@ from functools import cache, cached_property
 
 import sympy
 from symengine import Add, Mul, Pow, S, sympify
+from sympy import CoercionFailed
 
 import schubmult.rings.quantum_schubert_ring as qsr
 import schubmult.schub_lib.double as yz
@@ -143,6 +144,18 @@ class DoubleSchubertElement(BaseSchubertElement):
                 ret += toadd * val * new_basis(new_perm)
         return ret
 
+    # def elem_coproduct(self, *indices):
+    #     genset = self.ring.genset
+    #     genset = self.ring.coeff_genset
+    #     gname1 = f"{genset.label}_A"  # "("+", ".join([f"{genset.label}_{i}" for i in indices])+")"
+    #     gname2 = f"{genset.label}_B"  # f"{genset.label}\\{{"+", ".join([f"{genset.label}_{i}" for i in indices])+"}"
+    #     gens2 = MaskedGeneratingSet(genset, indices)
+    #     gens1 = gens2.complement()
+    #     gens1.set_label(gname1)
+    #     gens2.set_label(gname2)
+    #     R = TensorRing(DoubleSchubertRing(gens1),DoubleSchubertRing(gens2))
+    #     def elem_sym(p, k, varl1, varl2):
+
     def coproduct(self, *indices, alt_coeff_genset=None, on_coeff_gens=False, gname1=None, gname2=None):
         result_dict = {}
         genset = self.ring.genset
@@ -188,6 +201,8 @@ class DoubleSchubertElement(BaseSchubertElement):
 
 class DSchubPoly(AbstractSchubPoly):
     is_Atom = True
+    is_Commutative = False
+    is_commutative = False
 
     def __new__(cls, k, basis):
         return DSchubPoly.__xnew_cached__(cls, k, basis)
@@ -234,12 +249,36 @@ class DoubleSchubertRing(BaseSchubertRing):
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, "DBS"))
 
-    def __init__(self, genset, coeff_genset):
-        super().__init__(genset, coeff_genset)
+    def __init__(self, genset, coeff_genset, domain=None):
+        super().__init__(genset, coeff_genset, domain)
         self.dtype = type("DoubleSchubertElement", (DoubleSchubertElement,), {"ring": self})
 
     def __str__(self):
         return f"Double Schubert polynomial ring in {self.genset.label} and {self.coeff_genset.label}"
+
+    def mul(self, elem, other, _sympify=False):
+        try:
+            other = self.domain_new(other)
+            return self.from_dict({k: other * v for k, v in elem.items()})
+        except CoercionFailed:
+            pass
+        # if isinstance(other, self.elem_mul_type):
+        #     return self.ring.mul(self, other)
+        if isinstance(other, BaseSchubertElement):
+            other = self._coerce_mul(other)
+            if not other:
+                raise CoercionFailed(f"Could not coerce {other} of type {type(other)} to {type(elem)}")
+            return self.from_dict(utils._mul_schub_dicts(elem, other, elem.ring, other.ring, _sympify=_sympify))
+
+        return self.mul_sympy(elem, other)
+        # try:
+        #     other = self.domain_new(other)
+        # except CoercionFailed:
+        #     return NotImplemented
+        # return self.from_dict({k: other * v for k, v in elem.items()})
+
+    # def rmul(self, elem, other, _sympify=False):
+    #     return self.ring.rmul(other, self)
 
     def printing_term(self, k):
         return DSchubPoly(k, self)
@@ -272,6 +311,22 @@ class DoubleSchubertRing(BaseSchubertRing):
                 return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], self.args[2:])
 
         return esf
+
+    @property
+    def elem_mul_type(self):
+        return ElemSym
+
+    # specifically symengine
+    def elem_mul(self, ring_elem, elem):
+        indexes = [self.genset.index(a) for a in elem.genvars]
+        ret = self.zero
+        for k, v in ring_elem.items():
+            perm_list = schub_lib.elem_sym_positional_perms(k, elem._p, *indexes)
+            for perm, df, sign in perm_list:
+                remaining_vars = [self.coeff_genset[perm[i - 1]] for i in indexes if perm[i - 1] == k[i - 1]]
+                coeff = ElemSym(elem._p - df, elem._k - df, remaining_vars, elem.coeffvars)  # leave as elem sym
+                ret += self.domain_new(v * sympy.expand_func(coeff)) * self(perm)
+        return ret
 
     @property
     def symbol_elem_func(self):
@@ -390,13 +445,90 @@ class DoubleSchubertRing(BaseSchubertRing):
     def cached_schubpoly(self, k):
         return schubpoly_classical_from_elems(k, self.genset, self.coeff_genset, elem_func=elem_sym_poly)
 
+    def complete_mul(self, elem, x):
+        indexes = {self.genset.index(a) for a in x.genvars}
+        ret = self.zero
+        ret = self.zero
+        for k, v in elem.items():
+            perm_list = schub_lib.complete_sym_positional_perms(Permutation([]), x._p, *indexes)
+            for perm, df, sign in perm_list:
+                remaining_vars = [self.coeff_genset[perm[i]] for i in [*indexes, *[j for j in range(len(perm)) if perm[j] != k[j]]]]
+                coeff = CompleteSym(x._p - df, x._k + df, remaining_vars, x.coeffvars)  # leave as elem sym
+                ret += self.domain_new(sign * v * sympy.expand_func(coeff)) * self(perm)
+        return ret
+
     def from_sympy(self, x):
+        return self.mul_sympy(self.one, x)
+        # _Add = Add
+        # _Mul = Mul
+        # _Pow = Pow
+        # if isinstance(x, BaseSchubertElement):
+        #     if x.ring == self:
+        #         return x
+        # try:
+        #     x = sympify(x)
+        # except Exception:
+        #     x = sympy.sympify(x)
+        #     _Add = sympy.Add
+        #     _Mul = sympy.Mul
+        #     _Pow = sympy.Pow
+        # ind = self.genset.index(x)
+        # if ind != -1:
+        #     return self.from_dict(yz.mult_poly_double({Permutation([]): 1}, x, self.genset, self.coeff_genset))
+        # if isinstance(x, ElemSym):
+        #     if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
+        #         return self.elem_mul(self.one,x)
+
+        #     gens_to_remove = [a for a in x.genvars if a not in self.genset]
+        #     if any(a in self.genset for a in x.genvars) and len(gens_to_remove):
+        #         return self.from_sympy(x.split_out_vars(gens_to_remove))
+
+        #     coeffs_to_remove = [a for a in x.coeffvars if a in self.genset]
+
+        #     if any(a in self.genset for a in x.coeffvars) and len(coeffs_to_remove):
+        #         return self.from_sympy(split_out_vars(x.to_complete_sym(), coeffs_to_remove))
+        #     return self.from_dict({Permutation([]): self.domain_new(x)})
+        # if isinstance(x, CompleteSym):
+        #     if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
+        #         indexes = [self.genset.index(a) for a in x.genvars]
+        #         perm_list = schub_lib.complete_sym_positional_perms(Permutation([]), x._p, *indexes)
+        #         ret = self.zero
+        #         for perm, df, sign in perm_list:
+        #             ret += (
+        #                 self.domain_new(sign
+        #                 * CompleteSym(x._p - df, x._k + df, [self.coeff_genset[perm[i - 1]] for i in {*indexes, *[j + 1 for j in range(len(perm)) if perm[j] != j + 1]}], x.coeffvars))
+        #                 * self(perm)
+        #             )
+        #         return ret
+        #     gens_to_remove = [a for a in x.genvars if a not in self.genset]
+
+        #     if any(a in self.genset for a in x.genvars) and len(gens_to_remove):
+        #         return self.from_sympy(x.split_out_vars(gens_to_remove))
+
+        #     coeffs_to_remove = [a for a in x.coeff_vars if a in self.genset]
+
+        #     if len(coeffs_to_remove):
+        #         return self.from_sympy(split_out_vars(x.to_elem_sym(), coeffs_to_remove))
+
+        #     return self.from_dict({Permutation([]): x})
+        # if isinstance(x, _Add):
+        #     return self.sum([self.from_sympy(arg) for arg in x.args])
+        # if isinstance(x, _Mul):
+        #     res = self.one
+        #     for arg in x.args:
+        #         res = self.mul(res, self.from_sympy(arg), _sympify=True)
+        #     return res
+        # if isinstance(x, _Pow):
+        #     return self.from_sympy(x.args[0]) ** int(x.args[1])
+        # return self.from_dict({Permutation([]): x})
+
+    def handle_sympoly(self, other):
+        return sympy.expand_func(other)
+
+    def mul_sympy(self, elem, x):
         _Add = Add
         _Mul = Mul
         _Pow = Pow
-        if isinstance(x, BaseSchubertElement):
-            if x.ring == self:
-                return x
         try:
             x = sympify(x)
         except Exception:
@@ -406,60 +538,110 @@ class DoubleSchubertRing(BaseSchubertRing):
             _Pow = sympy.Pow
         ind = self.genset.index(x)
         if ind != -1:
-            return self.from_dict(yz.mult_poly_double({Permutation([]): 1}, x, self.genset, self.coeff_genset))
+            return elem.mult_poly(x)
+        # from_dict(yz.mult_poly_double({Permutation([]): 1}, x, self.genset, self.coeff_genset))
         if isinstance(x, ElemSym):
             if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
-                indexes = [self.genset.index(a) for a in x.genvars]
-                perm_list = schub_lib.elem_sym_positional_perms(Permutation([]), x._p, *indexes)
-                ret = self.zero
-                for perm, df, sign in perm_list:
-                    ret += sympy.sympify(sign) * ElemSym(x._p - df, x._k - df, [self.coeff_genset[perm[i - 1]] for i in indexes if perm[i - 1] == i], x.coeffvars) * self(perm)
-                return ret
+                return self.elem_mul(elem, x)
 
             gens_to_remove = [a for a in x.genvars if a not in self.genset]
+            if any(a in self.genset for a in x.genvars) and len(gens_to_remove):
+                return self.mul_sympy(elem, x.split_out_vars(gens_to_remove))
 
-            if len(gens_to_remove):
-                return self.from_sympy(x.split_out_vars(gens_to_remove))
+            coeffs_to_remove = [a for a in x.coeffvars if a in self.genset]
 
-            coeffs_to_remove = [a for a in x.coeff_vars if a in self.genset]
-
-            if len(coeffs_to_remove):
-                return self.from_sympy(split_out_vars(x.to_complete_sym(), coeffs_to_remove))
-
-            return self.from_dict({Permutation([]): x})
+            if any(a in self.genset for a in x.coeffvars) and len(coeffs_to_remove):
+                return self.mul_sympy(elem.split_out_vars(x.to_complete_sym(), coeffs_to_remove))
+            return self.from_dict({k: self.domain_new(self.handle_sympoly(x)) * v for k, v in elem.items()})
         if isinstance(x, CompleteSym):
             if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
-                indexes = [self.genset.index(a) for a in x.genvars]
-                perm_list = schub_lib.complete_sym_positional_perms(Permutation([]), x._p, *indexes)
-                ret = self.zero
-                for perm, df, sign in perm_list:
-                    ret += (
-                        sympy.sympify(sign)
-                        * CompleteSym(x._p - df, x._k + df, [self.coeff_genset[perm[i - 1]] for i in {*indexes, *[j + 1 for j in range(len(perm)) if perm[j] != j + 1]}], x.coeffvars)
-                        * self(perm)
-                    )
-                return ret
+                return self.complete_mul(elem, x)
             gens_to_remove = [a for a in x.genvars if a not in self.genset]
 
-            if len(gens_to_remove):
-                return self.from_sympy(x.split_out_vars(gens_to_remove))
+            if any(a in self.genset for a in x.genvars) and len(gens_to_remove):
+                return self.mul_sympy(elem, x.split_out_vars(gens_to_remove))
 
             coeffs_to_remove = [a for a in x.coeff_vars if a in self.genset]
 
             if len(coeffs_to_remove):
-                return self.from_sympy(split_out_vars(x.to_elem_sym(), coeffs_to_remove))
+                return self.mul_sympy(elem, split_out_vars(x.to_elem_sym(), coeffs_to_remove))
 
-            return self.from_dict({Permutation([]): x})
+            return self.from_dict({k: self.domain_new(sympy.expand_func(x)) * v for k, v in elem.items()})
         if isinstance(x, _Add):
-            return self.sum([self.from_sympy(arg) for arg in x.args])
+            return self.sum([self.mul_sympy(elem, arg) for arg in x.args])
         if isinstance(x, _Mul):
-            res = self.one
+            res = elem
             for arg in x.args:
-                res = self.mul(res, self.from_sympy(arg), _sympify=True)
+                res = self.mul_sympy(res, arg)
             return res
         if isinstance(x, _Pow):
-            return self.from_sympy(x.args[0]) ** int(x.args[1])
-        return self.from_dict({Permutation([]): x})
+            res = elem
+            for _ in range(int(x.args[0])):
+                res = self.mul_sympy(res, x.args[0])
+        return self.from_dict({Permutation([]): self.domain_new(x)})
+
+    # def from_sympy(self, x):
+    #     _Add = Add
+    #     _Mul = Mul
+    #     _Pow = Pow
+    #     if isinstance(x, BaseSchubertElement):
+    #         if x.ring == self:
+    #             return x
+    #     try:
+    #         x = sympify(x)
+    #     except Exception:
+    #         x = sympy.sympify(x)
+    #         _Add = sympy.Add
+    #         _Mul = sympy.Mul
+    #         _Pow = sympy.Pow
+    #     ind = self.genset.index(x)
+
+    #     if isinstance(x, ElemSym):
+    #         if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
+    #             # print(f"Planting {x=}")
+    #             # print(f"elem sym {x=} {self.genset=} {x.genvars=}")
+    #             return self.elem_mul(self.one, x)
+
+    #         gens_to_remove = [a for a in x.genvars if a not in self.genset]
+    #         if any(a in self.genset for a in x.genvars) and len(gens_to_remove):
+    #             return self.from_sympy(x.split_out_vars(gens_to_remove))
+
+    #         coeffs_to_remove = [a for a in x.coeffvars if a in self.genset]
+
+    #         if any(a in self.genset for a in x.coeffvars) and len(coeffs_to_remove):
+    #             return self.from_sympy(split_out_vars(x.to_complete_sym(), coeffs_to_remove))
+    #         return self.from_dict({Permutation([]): self.domain_new(x)})
+    #     if isinstance(x, CompleteSym):
+    #         if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
+    #             indexes = [self.genset.index(a) for a in x.genvars]
+    #             perm_list = schub_lib.complete_sym_positional_perms(Permutation([]), x._p, *indexes)
+    #             ret = self.zero
+    #             for perm, df, sign in perm_list:
+    #                 ret += self.domain_new(
+    #                     sign * CompleteSym(x._p - df, x._k + df, [self.coeff_genset[perm[i - 1]] for i in {*indexes, *[j + 1 for j in range(len(perm)) if perm[j] != j + 1]}], x.coeffvars)
+    #                 ) * self(perm)
+    #             return ret
+    #         gens_to_remove = [a for a in x.genvars if a not in self.genset]
+
+    #         if any(a in self.genset for a in x.genvars) and len(gens_to_remove):
+    #             return self.from_sympy(x.split_out_vars(gens_to_remove))
+
+    #         coeffs_to_remove = [a for a in x.coeff_vars if a in self.genset]
+
+    #         if len(coeffs_to_remove):
+    #             return self.from_sympy(split_out_vars(x.to_elem_sym(), coeffs_to_remove))
+
+    #         return self.from_dict({Permutation([]): x})
+    #     if isinstance(x, _Add):
+    #         return self.sum([self.from_sympy(arg) for arg in x.args])
+    #     if isinstance(x, _Mul):
+    #         res = self.one
+    #         for arg in x.args:
+    #             res = self.mul(res, self.from_sympy(arg), _sympify=True)
+    #         return res
+    #     if isinstance(x, _Pow):
+    #         return self.from_sympy(x.args[0]) ** int(x.args[1])
+    #     return self.from_dict({Permutation([]): x})
 
     def new(self, x):
         genset = self.genset
@@ -469,11 +651,11 @@ class DoubleSchubertRing(BaseSchubertRing):
             p_x = Permutation(x)
             if max([0, *list(p_x.descents())]) > len(self.genset):
                 raise utils.NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
-            elem = self.from_dict({p_x: 1})
+            elem = self.from_dict({p_x: self.domain.one})
         elif isinstance(x, Permutation):
             if max([0, *list(x.descents())]) > len(self.genset):
                 raise utils.NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
-            elem = self.from_dict({x: 1})
+            elem = self.from_dict({x: self.domain.one})
 
         elif isinstance(x, DoubleSchubertElement):
             if x.ring.genset == genset:
@@ -558,7 +740,7 @@ class SingleSchubertRing(DoubleSchubertRing):
         x = sympify(x)
         ind = self.genset.index(x)
         if ind != -1:
-            return self.from_dict(py.mult_poly_py({Permutation([]): 1}, x, self.genset))
+            return self.from_dict(py.mult_poly_py({Permutation([]): self.domain.one}, x, self.genset))
         if isinstance(x, Add):
             return self.sum([self.from_sympy(arg) for arg in x.args])
         if isinstance(x, Mul):
@@ -568,7 +750,7 @@ class SingleSchubertRing(DoubleSchubertRing):
             return res
         if isinstance(x, Pow):
             return self.from_sympy(x.args[0]) ** int(x.args[1])
-        return self.from_dict({Permutation([]): x})
+        return self.from_dict({Permutation([]): self.domain_new(x)})
 
     # def from_sympy(self, x):
     #     x = sympify(x)
@@ -582,7 +764,7 @@ class SingleSchubertRing(DoubleSchubertRing):
         if not isinstance(genset, GeneratingSet_base):
             raise TypeError
         if isinstance(x, list) or isinstance(x, tuple):
-            elem = self.from_dict({Permutation(x): 1})
+            elem = self.from_dict({Permutation(x): self.domain.one})
         elif isinstance(x, Permutation):
             elem = self.from_dict({x: 1})
         elif isinstance(x, DoubleSchubertElement):
@@ -597,15 +779,87 @@ class SingleSchubertRing(DoubleSchubertRing):
 
 Sx = SingleSchubertRing(GeneratingSet("x"))
 
+# class ElemSymRingElem(Expr):
+#     def
+
+# class ExprWrapped(sympy.Basic):
+
+#     # @property
+#     # def __slots__(self):
+#     #     return (*self._old_slots, "domain")
+
+#     @property
+#     def domain(self):
+#         return self.args[0]
+
+#     @property
+#     def args(self):
+#         return self._args[1:]
+
+#     def __new__(cls, *args, domain=None, _class=sympy.Basic):
+#         obj = _.__new__(cls, *args)
+#         return obj
+
+# class ElemSymDomain(EXRAW):
+
+
+#     def new(self, a):
+#         a = sympy.sympify(a)
+#         return a
+
+
+# ESDOM = ElemSymDomain()
+
 
 class ElemDoubleSchubertRing(DoubleSchubertRing):
     def __init__(self, genset, coeff_genset):
         super().__init__(genset, coeff_genset)
         self.dtype = type("DoubleSchubertElement", (DoubleSchubertElement,), {"ring": self})
 
+    # def domain_new(self, element, orig_domain=None):
+    #     elem = self.domain.new(element)
+    #     if element.has_free(*self.symbols):
+    #         raise CoercionFailed(f"{element} contains an element of the set of generators")
+    #     return elem
+
+    def domain_new(self, element, orig_domain=None):  # noqa: ARG002
+        element = sympy.sympify(element)
+        if not element.has_free(*self.symbols):
+            return element
+        raise CoercionFailed(f"{element} contains an element of the set of generators")
+
     @property
     def elem_func(self):
         return ElemSym
+
+    def handle_sympoly(self, other):
+        return other
+
+    def elem_mul(self, ring_elem, elem):
+        if not all(a in self.genset for a in elem.genvars):
+            gens_to_remove = [a for a in elem.genvars if a not in self.genset]
+            return ring_elem * elem.split_out_vars(gens_to_remove)
+        indexes = [self.genset.index(a) for a in elem.genvars]
+        ret = self.zero
+        for k, v in ring_elem.items():
+            perm_list = schub_lib.elem_sym_positional_perms(k, elem._p, *indexes)
+            for perm, df, sign in perm_list:
+                remaining_vars = [self.coeff_genset[perm[i - 1]] for i in indexes if perm[i - 1] == k[i - 1]]
+                coeff = ElemSym(elem._p - df, elem._k - df, remaining_vars, elem.coeffvars)
+                ret += self.domain_new(v * coeff) * self(perm)
+        return ret
+
+    def complete_mul(self, elem, x):
+        indexes = {self.genset.index(a) for a in x.genvars}
+        ret = self.zero
+        ret = self.zero
+        for k, v in elem.items():
+            perm_list = schub_lib.complete_sym_positional_perms(Permutation([]), x._p, *indexes)
+            for perm, df, sign in perm_list:
+                remaining_vars = [self.coeff_genset[perm[i]] for i in [*[ind-1 for ind in indexes], *[j for j in range(len(perm)) if perm[j] != k[j]]]]
+                coeff = CompleteSym(x._p - df, x._k + df, remaining_vars, x.coeffvars)  # leave as elem sym
+                ret += self.domain_new(sign * v * (coeff.to_elem_sym() if isinstance(coeff, CompleteSym) else coeff)) * self(perm)
+        return ret
 
     @cache
     def cached_product(self, u, v, basis2):
@@ -623,11 +877,11 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
             p_x = Permutation(x)
             if max([0, *list(p_x.descents())]) > len(self.genset):
                 raise utils.NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
-            elem = self.from_dict({p_x: 1})
+            elem = self.from_dict({p_x: self.domain.one})
         elif isinstance(x, Permutation):
             if max([0, *list(x.descents())]) > len(self.genset):
                 raise utils.NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
-            elem = self.from_dict({x: 1})
+            elem = self.from_dict({x: self.domain.one})
         elif isinstance(x, DoubleSchubertElement):
             if x.ring.genset == genset:
                 return x

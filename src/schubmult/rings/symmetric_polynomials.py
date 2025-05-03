@@ -62,13 +62,19 @@ class ElemSym(Expr):
 
     def split_out_vars(self, vars1, vars2=None):
         # order of vars2 matters!
-        vars1 = [sympify(v) for v in vars1]
+        vars1 = [sympify(v) for v in vars1 if v in self.genvars]
         if vars2 is None:
             vars2 = [*self.coeffvars]
         else:
             vars2 = [sympify(v) for v in vars2]
-        if not all(v in self.genvars for v in vars1):
-            raise NotEnoughGeneratorsError(f"Not all variables {vars1} are in the generating set {self.genvars}")
+        # if not all(v in self.genvars for v in vars1):
+        #     raise NotEnoughGeneratorsError(f"Not all variables {vars1} are in the generating set {self.genvars}")
+        newvars1 = [*vars1]
+        for v in vars1:
+            if v not in self.genvars:
+                newvars1.remove(v)
+        if not len(newvars1):
+            return self
         newvars2 = [*vars2]
         for v in vars2:
             if v not in self.coeffvars:
@@ -85,10 +91,10 @@ class ElemSym(Expr):
         # vars1 = new_vars1
         # vars2 = new_vars2
         ret = S.Zero
-        k1 = len(vars1)
+        k1 = len(newvars1)
         k2 = self._k - k1
         new_genvars1 = [*self.genvars]
-        for v in vars1:
+        for v in newvars1:
             new_genvars1.remove(v)
         # print(len(new_genvars1))
         new_coeffvars2 = [*newvars2]
@@ -101,7 +107,7 @@ class ElemSym(Expr):
             # print(f"{vars1=}, {vars2=}")
             # print(f"{new_coeffvars1=} {new_coeffvars2}")
             try:
-                ret += self.func(p1, k1, vars1, new_coeffvars1) * self.func(p2, k2, new_genvars1, new_coeffvars2)
+                ret += self.func(p1, k1, newvars1, new_coeffvars1) * self.func(p2, k2, new_genvars1, new_coeffvars2)
             except NotEnoughGeneratorsError:
                 pass
         return ret
@@ -335,7 +341,7 @@ class CompleteSym(Expr):
     def split_out_vars(self, vars1, vars2=None):  # noqa: ARG002
         if not all(v in self.genvars for v in vars1):
             return self
-        first_vars = [*vars1]
+        first_vars = [sympify(v) for v in vars1 if v in self.genvars]
         second_vars = [a for a in self.genvars if a not in vars1]
         k1 = len(first_vars)
         k2 = len(second_vars)

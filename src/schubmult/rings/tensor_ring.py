@@ -23,22 +23,7 @@ class TensorRing(BaseSchubertRing):
         return ()
 
     def __init__(self, *rings):
-        self._rings = list(rings)
-        new_rings = []
-        unpacked = True
-        while unpacked:
-            unpacked = False
-            for r in self._rings:
-                if isinstance(r, TensorRing):
-                    unpacked = True
-                    for r2 in r.rings:
-                        if r2 not in new_rings:
-                            new_rings += [r2]
-                else:
-                    if r not in new_rings:
-                        new_rings += [r]
-            self._rings = new_rings
-        self._rings = tuple(new_rings)
+        self._rings = rings
         genset = set()
         for r in self._rings:
             genset.update(set(r.genset))
@@ -103,13 +88,15 @@ class TensorRing(BaseSchubertRing):
         return self.from_dict(dct)
 
     def from_sympy(self, x):
+        dct = {}
         elem1 = self.rings[0].from_sympy(x)
+        dct = {(k,): v for k,v in elem1.items()}
         for i in range(1, len(self.rings)):
-            res = self.zero
-            for k, v in elem1.items():
-                res += self.from_dict(utils._tensor_product_of_dicts({k: S.One}, self.rings[i].from_sympy(v)))
-            elem1 = res
-        return self.from_dict(elem1)
+            dct_new = {}
+            for k, v in dct.items():
+                dct_new = add_perm_dict(dct_new,{(*k, k1): v1 for k1, v1 in self.rings[i].from_sympy(v).items()})
+            dct = dct_new
+        return self.from_dict(dct)
 
     def __call__(self, x):
         if isinstance(x, tuple):

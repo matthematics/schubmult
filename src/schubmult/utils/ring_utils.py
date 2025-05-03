@@ -1,7 +1,7 @@
 from functools import cache
 
 import sympy
-from symengine import sympify
+from symengine import SympifyError, sympify
 
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet
 from schubmult.utils.perm_utils import add_perm_dict
@@ -47,10 +47,19 @@ def _tensor_product_of_dicts(d1, d2):
     ret_dict = {}
     for k1, v1 in d1.items():
         this_dict = {}
+        try:
+            v1 = sympify(v1)
+        except SympifyError:
+            v1 = sympy.sympify(v1)
         for k2, v2 in d2.items():
-            if isinstance(k1, tuple):
-                this_dict[(*k1, k2)] = v1 * v2
-            else:
-                this_dict[(k1, k2)] = v1 * v2
+                try:
+                    v2 = sympify(v2)
+                except SympifyError:
+                    v2 = sympy.sympify(v2)
+                    v1 = sympy.sympify(v1)
+                if isinstance(k1, tuple):
+                    this_dict[(*k1, k2)] = v1 * v2
+                else:
+                    this_dict[(k1, k2)] = v1 * v2
         ret_dict = add_perm_dict(ret_dict, this_dict)
     return ret_dict
