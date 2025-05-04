@@ -81,7 +81,7 @@ class ElemSym(Symbol, DefaultPrinting):
         if any(a in self.free_symbols or sympify(a) in self.free_symbols for a in x):
             return True
         return False
-    
+
     def split_out_vars(self, vars1, vars2=None):
         vars1 = [sympify(v) for v in vars1 if v in self.genvars]
         if vars2 is None:

@@ -514,7 +514,7 @@ class DoubleSchubertRing(BaseSchubertRing):
             return res
         return self.from_dict({k: v * self.domain_new(x) for k, v in elem.items()})
 
-    
+
     def new(self, x):
         genset = self.genset
         if not isinstance(genset, GeneratingSet_base):
@@ -784,7 +784,7 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
     #         raise CoercionFailed(f"{element} contains an element of the set of generators")
     #     return elem
 
-    # def domain_new(self, element, orig_domain=None):  # noqa: ARG002
+    # def domain_new(self, element, orig_domain=None):
     #     element = sympify(element)
     #     if not element.has_free(*self.symbols):
     #         return element

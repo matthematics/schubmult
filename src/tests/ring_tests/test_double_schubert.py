@@ -22,7 +22,7 @@ def test_associative():
     from schubmult import DSx
     from sympy import expand
     perm1, perm2, perm3 = [1, 5, 3, 4, 2], [1, 3, 2, 5, 4], [3, 1, 4, 2, 5]
-    assert ((DSx(perm1) * DSx(perm2)) * DSx(perm3)) - (DSx(perm1) * (DSx(perm2) * DSx(perm3))).almosteq(0)
+    assert ((DSx(perm1) * DSx(perm2)) * DSx(perm3) - DSx(perm1) * (DSx(perm2) * DSx(perm3))).almosteq(0)
 
     assert (((DSx(perm1) * DSx(perm2)) * DSx(perm3, "z")) - (DSx(perm1) * (DSx(perm2) * DSx(perm3, "z")))).almosteq(0)
 

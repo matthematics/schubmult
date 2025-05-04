@@ -1,6 +1,8 @@
+import symengine
 import sympy
 from symengine import Add, S, SympifyError
 from sympy import CoercionFailed
+from sympy.core.sympify import CantSympify
 from sympy.polys.domains import EXRAW
 from sympy.polys.domains.compositedomain import CompositeDomain
 from sympy.polys.domains.domainelement import DomainElement
@@ -21,7 +23,7 @@ logger = get_logger(__name__)
 class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     _op_priority = 1e200
     precedence = 40
-
+    __sympy__ = True
     def parent(self):
         return self.ring
 
@@ -76,17 +78,17 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def as_terms(self):
         if len(self.keys()) == 0:
-            return [sympify(S.Zero)]
+            return [sympy.sympify(S.Zero)]
         return [
-            (self[k] if k == Permutation([]) else sympy.Mul(self[k], self.ring.printing_term(k)))
+            (sympy.sympify(self[k]) if k == Permutation([]) else sympy.Mul(sympy.sympify(self[k]), self.ring.printing_term(k)))
             for k in self.keys()
         ]
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
-            return [sympify(S.Zero)]
+            return [sympy.sympify(S.Zero)]
         return [
-            (self[k] if k == Permutation([]) else sympy.Mul(self[k], self.ring.printing_term(k)))
+            (sympy.sympify(self[k]) if k == Permutation([]) else sympy.Mul(sympy.sympify(self[k]), self.ring.printing_term(k)))
             for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))
         ]
 
@@ -106,9 +108,6 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             return self.__add__(new_other)
         except CoercionFailed:
             return other.__radd__(self)
-
-    def __sympy__(self):
-        return self.ring.to_sympy(self)
 
     def __radd__(self, other):
         if isinstance(other, BaseSchubertElement):
@@ -133,7 +132,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         try:
             other = self.ring.domain_new(other)
             other = self.ring.from_dict({Permutation([]): other})
-            return self.ring.sub(other, self)
+            return self.ring.sub(self, other)
         except CoercionFailed:
             pass
         try:
@@ -148,7 +147,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         try:
             other = self.ring.domain_new(other)
             other = self.ring.from_dict({Permutation([]): other})
-            return self.ring.sub(self, other)
+            return self.ring.sub(other, self)
         except CoercionFailed:
             pass
         try:
@@ -194,16 +193,17 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
         if not deep:
             return self.ring.from_dict({k: expand(v, **kwargs) for k, v in self.items()})
-        return sympify(expand(sympify(self.as_polynomial())))
+        return sympy.sympify(expand(self.as_polynomial()))
 
     def as_expr(self):
         return sympy.Add(*self.as_terms())
 
     def as_polynomial(self):
+        # print(f"{self=}")
         try:
-            return sympify(Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()]))
+            return symengine.sympify(Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()]))
         except SympifyError:
-            return sympy.Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()])
+            return sympy.Add(*[sympy.sympify(v) * self.ring.cached_schubpoly(k) for k, v in self.items()])
 
     def as_classical(self):
         return self.ring.in_classical_basis(self)
@@ -266,10 +266,12 @@ class BaseSchubertRing(Ring, CompositeDomain):
         return self.from_dict({k: -v for k, v in elem.items()})
 
     def mul(self, elem, other, _sympify=False):
+        # print(f"{self=} {elem=} {other=}")
         try:
             other = self.domain_new(other)
+            # print(f"{other=} {type(other)=}")
             return self.from_dict({k: other * v for k, v in elem.items()})
-        except CoercionFailed:
+        except Exception:
             pass
         if isinstance(other, BaseSchubertElement):
             other = self._coerce_mul(other)
@@ -301,21 +303,15 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def _coerce_add(self, other): ...
 
     def from_dict(self, element, orig_domain=None):
-        expand_func = expand
+        # print(f"{element=}")
         S_nm = S
         domain_new = self.domain_new
         poly = self.zero
 
         for monom, coeff in element.items():
             coeff = domain_new(coeff, orig_domain)
-            try:
-                if expand_func(coeff) != S_nm.Zero:
-                    poly[monom] = coeff
-            except SympifyError:
-                expand_func = sympy.expand
-                S_nm = sympy.S
-                if expand_func(coeff) != S_nm.Zero:
-                    poly[monom] = coeff
+            if expand(coeff) != S_nm.Zero:
+                poly[monom] = coeff
         return poly
 
     @property
@@ -331,11 +327,18 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def elem_sym_subs(self, kk): ...
 
     def domain_new(self, element, orig_domain=None):  # noqa: ARG002
-        if hasattr(sympy.sympify(element), "has_free"): 
-            if not sympy.sympify(element).has_free(*self.symbols):
-                return sympify(element)
-            raise CoercionFailed(f"{element} contains an element of the set of generators")
-        return sympify(element)
+        # print(f"They is called me {element=}")
+        if isinstance(element, BaseSchubertElement):
+            raise CoercionFailed("not a domain element")
+        try:
+            if hasattr(sympy.sympify(element), "has_free") and hasattr(sympy.sympify(element), "free_symbols"):
+                if not sympy.sympify(element).has_free(*self.symbols):
+                    return sympify(element)
+                raise CoercionFailed(f"{element} contains an element of the set of generators")
+            # print("Is da no gens")
+            return sympify(element)
+        except Exception as e:
+            raise CoercionFailed(f"{e}")
         # except Exception:
         #     import traceback
         #     traceback.print_exc()
@@ -362,7 +365,7 @@ class BaseSchubertRing(Ring, CompositeDomain):
 
     def from_sympy(self, x):
         return self.mul_sympy(self.one, x)
-    
+
     def mul_sympy(self, x): ...
 
     @property
@@ -434,6 +437,8 @@ class MixedSchubertElement(BaseSchubertElement, dict):
         return NotImplemented
 
     def __sub__(self, other):
+        if self.ring == other.ring:
+            return self.ring.sub(self, other)
         if isinstance(other, MixedSchubertElement):
             return MixedSchubertElement(*list(add_perm_dict(self, -other).values()))
         if isinstance(other, BaseSchubertElement):

@@ -29,7 +29,7 @@ class CompleteSym(Symbol, DefaultPrinting):
         if any(a in self.free_symbols or sympify(a) in self.free_symbols for a in x):
             return True
         return False
-    
+
     @property
     def args(self):
         return(
@@ -37,7 +37,7 @@ class CompleteSym(Symbol, DefaultPrinting):
             Integer(self._k),
             Tuple(*sorted(self._genvars, key=lambda x: sympy.sympify(x).sort_key())),
             Tuple(*sorted(self._coeffvars, key=lambda x: sympy.sympify(x).sort_key())))
-    
+
     @staticmethod
     @cache
     def __xnew_cached__(_class, p, k, var1, var2):
@@ -45,7 +45,7 @@ class CompleteSym(Symbol, DefaultPrinting):
 
     def to_elem_sym(self):
         return S.NegativeOne * (self._p % 2) * self._under_elem
-    
+
     def __init__(self, *args, **kwargs):
         Symbol.__init__(self, sympy.sstr(self))
 
@@ -154,7 +154,7 @@ class CompleteSym(Symbol, DefaultPrinting):
 
     def _sympystr(self, printer):
         return printer._print_Function(self)
-    
+
     def __str__(self):
         return self._sympy_().__str__() #sympy.sstr(self._obj)
 

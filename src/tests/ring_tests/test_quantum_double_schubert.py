@@ -4,7 +4,7 @@ def test_schub_expand():
     Test expand
     """
     from schubmult import QDSx
-    from symengine import symbols, expand
+    from sympy import symbols, expand
     x_1, y_1, y_2, y_3, q_1 = symbols("x_1 y_1 y_2 y_3 q_1")
     # QDSx = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", "y")
     assert expand(QDSx([3, 1, 2]).expand()) == -q_1 + x_1**2 - x_1*y_1 - x_1*y_2 + y_1*y_2
@@ -14,7 +14,7 @@ def test_schub_expand():
 
 def test_parabolic():
     from schubmult import QPDSx, uncode
-    from symengine import S, expand
+    from sympy import S, expand
     #QPDSx = make_parabolic_quantum_basis([2, 3])
     A = QPDSx(2,3)(uncode([1,2]))
     B = QPDSx(2,3)(uncode([1,3]), "z")
@@ -24,7 +24,7 @@ def test_parabolic():
 
 
 def test_subs():
-    from symengine import expand, S
+    from sympy import expand, S
     from schubmult import QDSx, GeneratingSet
     x = GeneratingSet("x")
     z = GeneratingSet("z")

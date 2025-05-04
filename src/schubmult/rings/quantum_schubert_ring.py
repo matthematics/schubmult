@@ -1,8 +1,10 @@
 from bisect import bisect_left
 from functools import cache
 
+import symengine
 import sympy
-from symengine import Add, Mul, Pow, S, Symbol, expand, sympify
+from symengine import Add, Mul, Pow, S, Symbol, expand
+from sympy.core.sympify import CantSympify
 
 import schubmult.rings.schubert_ring as spr
 import schubmult.schub_lib.quantum as py
@@ -13,6 +15,7 @@ from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import is_parabolic
 
 from .abstract_schub_poly import AbstractSchubPoly
+from .backend import sympify
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .poly_lib import complete_sym_poly, elem_sym_poly, elem_sym_poly_q, xreplace_genvars
 from .schub_poly import schubpoly_from_elems
@@ -24,6 +27,7 @@ logger = get_logger(__name__)
 
 
 class QuantumDoubleSchubertElement(BaseSchubertElement):
+
     def subs(self, old, new):
         return self.as_classical().subs(old, new).as_quantum()
 
@@ -150,9 +154,10 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
 
     def _coerce_mul(self, other):
         if isinstance(other, BaseSchubertElement):
-            if type(other.ring) is type(self):
-                if self.genset == other.ring.genset:
-                    return other
+            if other.ring == self:
+                return other
+            if isinstance(other.ring, QuantumDoubleSchubertRing) and other.ring.genset == self.genset:
+                return other
             if type(other.ring) is QuantumSingleSchubertRing:
                 if self.genset == other.ring.genset:
                     newbasis = QuantumDoubleSchubertRing(self.genset, utils.poly_ring(0))
@@ -266,7 +271,7 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
         _Mul = Mul
         _Pow = Pow
         try:
-            x = sympify(x)
+            x = symengine.sympify(x)
         except Exception:
             x = sympy.sympify(x)
             _Add = sympy.Add
@@ -326,9 +331,8 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
         Returns:
             _type_: _description_
         """
-        if type(other.ring) is type(self):
-            if self.genset == other.ring.genset:
-                return other
+        if other.ring == self:
+            return other
         if type(other.ring) is QuantumDoubleSchubertRing:
             if self.genset == other.ring.genset:
                 return other
@@ -368,7 +372,7 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
         _Mul = Mul
         _Pow = Pow
         try:
-            x = sympify(x)
+            x = symengine.sympify(x)
         except Exception:
             x = sympy.sympify(x)
             _Add = sympy.Add
@@ -457,9 +461,10 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
 
     def _coerce_mul(self, other):
         if isinstance(other, BaseSchubertElement):
-            if type(other.ring) is type(self):
-                if self.genset == other.ring.genset:
-                    return other
+            if other.ring == self:
+                return other
+            if isinstance(other.ring, ParabolicQuantumDoubleSchubertRing) and other.ring.genset == self.genset and self.index_comp == other.ring.index_comp:
+                return other
             if type(other.ring) is ParabolicQuantumSingleSchubertRing:
                 if self.genset == other.ring.genset and self.index_comp == other.ring.index_comp:
                     newbasis = ParabolicQuantumDoubleSchubertRing(self.genset, utils.poly_ring(0), self.index_comp)
@@ -772,7 +777,7 @@ class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing):
 
     def _coerce_mul(self, other):
         if isinstance(other, BaseSchubertElement):
-            if type(other.ring) is type(self):
+            if other.ring == self:
                 if self.genset == other.ring.genset:
                     return other
             if type(other.ring) is ParabolicQuantumDoubleSchubertRing:
