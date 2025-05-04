@@ -465,7 +465,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         try:
             x = sympify(x)
         except Exception:
-            x = sympy.sympify(x)
+            x = sympify(x)
             _Add = sympy.Add
             _Mul = sympy.Mul
             _Pow = sympy.Pow
@@ -623,7 +623,7 @@ class SingleSchubertRing(DoubleSchubertRing):
         try:
             x = sympify(x)
         except Exception:
-            x = sympy.sympify(x)
+            x = sympify(x)
             _Add = sympy.Add
             _Mul = sympy.Mul
             _Pow = sympy.Pow
@@ -742,7 +742,7 @@ Sx = SingleSchubertRing(GeneratingSet("x"))
 
 
 #     def new(self, a):
-#         a = sympy.sympify(a)
+#         a = sympify(a)
 #         return a
 
 
@@ -783,11 +783,11 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
     #         raise CoercionFailed(f"{element} contains an element of the set of generators")
     #     return elem
 
-    def domain_new(self, element, orig_domain=None):  # noqa: ARG002
-        element = sympy.sympify(element)
-        if not element.has_free(*self.symbols):
-            return element
-        raise CoercionFailed(f"{element} contains an element of the set of generators")
+    # def domain_new(self, element, orig_domain=None):  # noqa: ARG002
+    #     element = sympify(element)
+    #     if not element.has_free(*self.symbols):
+    #         return element
+    #     raise CoercionFailed(f"{element} contains an element of the set of generators")
 
     @property
     def elem_func(self):

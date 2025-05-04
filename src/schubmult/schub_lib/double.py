@@ -79,13 +79,6 @@ def single_variable_down(coeff_dict, varnum, var2=None):
 
 
 def mult_poly_double(coeff_dict, poly, var_x=None, var_y=None):
-    # try:
-    #     poly = sympify(poly)
-    # except SympifyError:
-    #     poly = sympy.sympify(poly)
-    #     var_x = tuple([sympy.sympify(v) for v in var_x])
-    #     var_y = tuple([sympy.sympify(v) for v in var_y])
-    #     return mult_poly_sympy(coeff_dict, poly, var_x=None, var_y=None)
     if not isinstance(var_x, GeneratingSet_base):
         var_x = CustomGeneratingSet(var_x)
     if var_x.index(poly) != -1:

@@ -44,13 +44,13 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def in_SEM_basis(self):
         result = sympy.S.Zero
         for k, v in self.items():
-            result += sympy.sympify(v) * schubpoly_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=self.ring.symbol_elem_func)
+            result += sympify(v) * schubpoly_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=self.ring.symbol_elem_func)
         return result
 
     def in_CEM_basis(self):
         result = sympy.S.Zero
         for k, v in self.items():
-            result += sympy.sympify(v) * schubpoly_classical_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=self.ring.symbol_elem_func)
+            result += sympify(v) * schubpoly_classical_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=self.ring.symbol_elem_func)
         return result
 
     def _sympystr(self, printer):
@@ -76,15 +76,15 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def as_terms(self):
         if len(self.keys()) == 0:
-            return [sympy.sympify(S.Zero)]
+            return [sympify(S.Zero)]
         return [
-            (self.ring.domain.to_sympy(sympy.sympify(self[k])) if k == Permutation([]) else sympy.Mul(self.ring.domain.to_sympy(sympy.sympify(self[k])), self.ring.printing_term(k)))
+            (self.ring.domain.to_sympy(sympify(self[k])) if k == Permutation([]) else sympy.Mul(self.ring.domain.to_sympy(sympify(self[k])), self.ring.printing_term(k)))
             for k in self.keys()
         ]
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
-            return [sympy.sympify(S.Zero)]
+            return [sympify(S.Zero)]
         return [
             (self.ring.domain.to_sympy(self[k]) if k == Permutation([]) else sympy.Mul(self.ring.domain.to_sympy(self[k]), self.ring.printing_term(k)))
             for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))
@@ -186,7 +186,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             return NotImplemented
 
     def as_coefficients_dict(self):
-        return sympy.Dict({self.ring.printing_term(k, self.ring): sympy.sympify(v) for k, v in self.items()})
+        return sympy.Dict({self.ring.printing_term(k, self.ring): sympify(v) for k, v in self.items()})
 
     def _eval_expand_basic(self, *args, **kwargs):  # noqa: ARG002
         return self.as_polynomial()
@@ -194,14 +194,14 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
         if not deep:
             return self.ring.from_dict({k: expand(v, **kwargs) for k, v in self.items()})
-        return sympy.sympify(expand(sympify(self.as_polynomial())))
+        return sympify(expand(sympify(self.as_polynomial())))
 
     def as_expr(self):
         return sympy.Add(*self.as_terms())
 
     def as_polynomial(self):
         try:
-            return sympy.sympify(Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()]))
+            return sympify(Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()]))
         except SympifyError:
             return sympy.Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()])
 
@@ -273,7 +273,7 @@ class BaseSchubertRing(Ring, CompositeDomain):
             other = self._coerce_mul(other)
             if not other:
                 raise CoercionFailed(f"Could not coerce {other} of type {type(other)} to {type(elem)}")
-            return self.from_dict(utils._mul_schub_dicts(elem, other, elem.ring, other.ring, _sympify=_sympify))
+            return self.from_dict(utils._mul_schub_dicts(elem, other, elem.ring, other.ring))
 
         return self.mul_sympy(elem, other)
 
@@ -329,12 +329,15 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def elem_sym_subs(self, kk): ...
 
     def domain_new(self, element, orig_domain=None):  # noqa: ARG002
-        try:
-            if not sympy.sympify(element).has_free(*self.symbols):
-                return element
+        if hasattr(sympify(element), "has_free"): 
+            if not sympify(element).has_free(*self.symbols):
+                return sympify(element)
             raise CoercionFailed(f"{element} contains an element of the set of generators")
-        except Exception:
-            raise CoercionFailed(f"{element} is of type {type(element)} and could not be coerced to {self.domain}")
+        return sympify(element)
+        # except Exception:
+        #     import traceback
+        #     traceback.print_exc()
+        #     raise CoercionFailed(f"{element} is of type {type(element)} and could not be coerced to {self.domain}")
 
 
     @property

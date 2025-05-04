@@ -20,8 +20,7 @@ logger = get_logger(__name__)
 #     #     pass
 
 
-
-class ElemSym(Symbol):
+class ElemSymBase(Symbol):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
@@ -60,14 +59,16 @@ class ElemSym(Symbol):
     is_MatMul = False
 
     def __new__(cls, p, k, var1, var2):
-        return ElemSym.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
+        return ElemSymBase.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
 
     __sympy__ = True
 
     @staticmethod
     @cache
     def __xnew_cached__(_class, p, k, var1, var2):
-        return ElemSym.__xnew__(_class, p, k, var1, var2)
+        return ElemSymBase.__xnew__(_class, p, k, var1, var2)
+
+
 
     @staticmethod
     def __xnew__(_class, p, k, var1, var2):
@@ -80,7 +81,7 @@ class ElemSym(Symbol):
         for i, v in enumerate(var1):
             if v in var2:
                 j = var2.index(v)
-                return ElemSym.__new__(_class, p, k - 1, [*var1[:i], *var1[i + 1 :]], [*var2[:j], *var2[j + 1 :]])
+                return ElemSymBase.__new__(_class, p, k - 1, [*var1[:i], *var1[i + 1 :]], [*var2[:j], *var2[j + 1 :]])
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
@@ -90,8 +91,8 @@ class ElemSym(Symbol):
             _class,
             name
         )
-        obj._p = symengine.Integer(p)
-        obj._k = symengine.Integer(k)
+        obj._p = p
+        obj._k = k
         obj._genvars = var1
         obj._coeffvars = var2
         return obj
@@ -108,18 +109,6 @@ class ElemSym(Symbol):
             Integer(self._k),
             Tuple(*sorted(self._genvars, key=lambda x: sympify(x).sort_key())),
             Tuple(*sorted(self._coeffvars, key=lambda x: sympify(x).sort_key())))
-    # @classmethod
-    # def from_expr(cls, expr):
-
-    # def to_complete_sym(self):
-    #     return S.NegativeOne ** (self._p % 2) * CompleteSym.from_elem_sym(self)
-
-    # def in_complete_sym_basis(self, new_genset):
-    #     if self._p == 1:
-    #         a = CompleteSym(1, self._k, new_genset, self.coeffvars)
-    #     12
-    #     e(2,2,x,y) = - (e(2,2,y,z) + e(1,1,y,z)*e(1,2,x,y))
-    #     return a
 
     @property
     def free_symbols(self):
@@ -202,7 +191,6 @@ class ElemSym(Symbol):
     def func(self):
         def e(*args):
             return self.__class__(*args)
-
         return e
 
     #     return e
@@ -299,9 +287,6 @@ class ElemSym(Symbol):
             return S.NegativeOne
         return S.Zero
 
-    def _sympystr(self, printer):
-        return printer._print_Function(self)
-
     def pull_out_vars(self, var1, var2, min_degree=1):
         if self._p < min_degree:
             return self
@@ -309,6 +294,45 @@ class ElemSym(Symbol):
             return self.xreplace({var1: var2}) + ElemSym(1, 1, [var1], [var2]) * self.divide_out_diff(var1, var2)
         return self
 
+    def _sympy_(self):
+        return self._obj
+ 
+    def _sympystr(self, printer):
+        return printer._print_Function(self)
+
+class ElemSym(Expr):
+    """
+    Adapts an object by replacing methods.
+    Usage:
+    motorCycle = MotorCycle()
+    motorCycle = Adapter(motorCycle, wheels = motorCycle.TwoWheeler)
+    """
+
+    # def __new__(cls, *args):
+    #     return Expr.__new__(cls)
+    
+    def __init__(self, *args):
+        """We set the adapted methods in the object's dict"""
+        self.obj = ElemSymBase(*args)
+        self.obj._obj = self
+        self.__dict__.update(self.obj.__dict__)
+
+    def __get__(self, *args):
+        print(f"{args=}")
+        return self.obj.__get__(*args)
+
+    def __getattr__(self, attr):
+        """All non-adapted calls are passed to the object"""
+        if attr != "obj":
+            print(f"{attr=}")
+            return getattr(self.obj, attr)
+        return self.obj
+
+    def _symengine_(self):
+        return self.obj
+    
+    def __hash__(self):
+        return hash(self.obj.args)
 
 def split_out_vars(expr, vars1, vars2):
     expr = sympify(expr)
@@ -336,7 +360,6 @@ def pull_out_vars(expr, var1, var2, min_degree=1):
 # ElemSym(p, k, stuff1 + v1, stuff1 + v2) = ElemSym(p, k, stuff1, stuff2) + Elem(1, 1, v1, v2)*ElemSym(p - 1, k - 1, stuff1, stuff2 + v2)
 
 # def elem_sym_unify_recurse(expr, expr1)
-
 
 def elem_sym_unify(expr, arg=None):
     expr = sympify(expr)
@@ -436,7 +459,7 @@ class CompleteSym(Expr):
     @property
     def func(self):
         def h(*args):
-            return self.__class__(*args)
+            return ElemSym(*args).obj
 
         return h
 
