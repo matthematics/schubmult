@@ -231,3 +231,4 @@ single elem sym
 express as elem sym to ease positivity testing 
 
 need to fix up quantum with from_sympy
+faster way to posify with elem syms
