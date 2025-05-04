@@ -1,4 +1,4 @@
-from schubmult.rings.symmetric_polynomials import CompleteSym, ElemSym
+from schubmult.rings.backend import CompleteSym, ElemSym
 from schubmult.rings.variables import GeneratingSet
 
 e = ElemSym

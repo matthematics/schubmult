@@ -1,28 +1,43 @@
 from functools import cache
 
-from sympy import Add, Dict, Expr, S, sympify
+import sympy
+from symengine import Add
+from symengine.lib.symengine_wrapper import S, Symbol, sympify
+from sympy import Dict, Function, Integer, StrPrinter, Tuple
+from sympy.printing.defaults import DefaultPrinting
 
-import schubmult.rings.symmetric_polynomials.symengine.complete_sym as syme
+import schubmult.rings.symmetric_polynomials.sympy.complete_sym as symp
 from schubmult.rings.poly_lib import elem_sym_poly
-from schubmult.rings.symmetric_polynomials.sympy.elem_sym import ElemSym
 from schubmult.utils.logging import get_logger
 
-logger = get_logger(__name__)    
+from .elem_sym import ElemSym
+
+logger = get_logger(__name__)
 
 
-class CompleteSym(Expr):
+class CompleteSym(Symbol, DefaultPrinting):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
     is_Function = True
     is_nonzero = True
 
-    def _symengine_(self):
-        return syme.CompleteSym(*self.args)
-
     def __new__(cls, p, k, var1, var2):
         return CompleteSym.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
 
+    def has_free(self, *x):
+        if any(a in self.free_symbols or sympify(a) in self.free_symbols for a in x):
+            return True
+        return False
+    
+    @property
+    def args(self):
+        return(
+            Integer(self._p),
+            Integer(self._k),
+            Tuple(*sorted(self._genvars, key=lambda x: sympy.sympify(x).sort_key())),
+            Tuple(*sorted(self._coeffvars, key=lambda x: sympy.sympify(x).sort_key())))
+    
     @staticmethod
     @cache
     def __xnew_cached__(_class, p, k, var1, var2):
@@ -30,16 +45,26 @@ class CompleteSym(Expr):
 
     def to_elem_sym(self):
         return S.NegativeOne * (self._p % 2) * self._under_elem
+    
+    def __init__(self, *args, **kwargs):
+        Symbol.__init__(self, sympy.sstr(self))
 
     @staticmethod
     def __xnew__(_class, p, k, var1, var2):
         cont_obj = ElemSym(p, k + p - 1, var2, var1)
         if not isinstance(cont_obj, ElemSym):
             return cont_obj
-        obj = Expr.__new__(_class, cont_obj.args[0], cont_obj.args[1] + 1 - cont_obj.args[0], cont_obj.args[3], cont_obj.args[2])
-        obj._under_elem = cont_obj
-        obj._p = obj.args[0]
-        obj._k = obj.args[1]
+        var1 = var1[:k]
+        var2 = var2[:p+k-1]
+        name = StrPrinter()._print_Function(Function("h")(p,k,Tuple(*sorted(var1, key=lambda x: sympy.sympify(x).sort_key())),Tuple(*sorted(var2, key=lambda x: sympy.sympify(x).sort_key()))))
+        obj = Symbol.__new__(
+            _class,
+            name,
+        )
+        obj._p = p
+        obj._k = k
+        obj._genvars = var1
+        obj._coeffvars = var2
         return obj
 
     @classmethod
@@ -129,3 +154,12 @@ class CompleteSym(Expr):
 
     def _sympystr(self, printer):
         return printer._print_Function(self)
+    
+    def __str__(self):
+        return self._sympy_().__str__() #sympy.sstr(self._obj)
+
+    def _sympy_(self):
+        return symp.CompleteSym(*self.args)
+
+    def _sympystr(self, printer):
+        return printer._print_Function(self._sympy_())

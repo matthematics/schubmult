@@ -25,6 +25,11 @@ class GeneratingSet_base(Basic):
     def __len__(self):
         return NotImplemented
 
+    def index(self, other): ...
+    
+    def __contains__(self, other):
+        return self.index(other) != -1
+    
     @property
     def label(self):
         return str(self.args)

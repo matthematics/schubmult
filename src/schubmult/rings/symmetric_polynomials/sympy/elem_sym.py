@@ -3,7 +3,7 @@ from functools import cache
 from sympy import Dict, Integer, S, Tuple, sympify
 from sympy.core.expr import Expr
 
-import schubmult.rings.symmetric_polynomials.symengine as syme
+import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.utils.logging import get_logger
 from schubmult.utils.ring_utils import NotEnoughGeneratorsError

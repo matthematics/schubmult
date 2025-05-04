@@ -255,6 +255,8 @@ class BaseSchubertRing(Ring, CompositeDomain):
 
 
     def add(self, elem, other):
+        # print(f"{elem=}")
+        # print(f"{other=}")
         return self.from_dict(add_perm_dict(elem, other))
 
     def sub(self, elem, other):
@@ -274,7 +276,7 @@ class BaseSchubertRing(Ring, CompositeDomain):
             if not other:
                 raise CoercionFailed(f"Could not coerce {other} of type {type(other)} to {type(elem)}")
             return self.from_dict(utils._mul_schub_dicts(elem, other, elem.ring, other.ring))
-
+        # print(f"I'm a bagel {other=}")
         return self.mul_sympy(elem, other)
 
     def to_domain(self):
@@ -329,8 +331,8 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def elem_sym_subs(self, kk): ...
 
     def domain_new(self, element, orig_domain=None):  # noqa: ARG002
-        if hasattr(sympify(element), "has_free"): 
-            if not sympify(element).has_free(*self.symbols):
+        if hasattr(sympy.sympify(element), "has_free"): 
+            if not sympy.sympify(element).has_free(*self.symbols):
                 return sympify(element)
             raise CoercionFailed(f"{element} contains an element of the set of generators")
         return sympify(element)
@@ -407,6 +409,8 @@ class MixedSchubertElement(BaseSchubertElement, dict):
     def __add__(self, other):
         if isinstance(other, MixedSchubertElement):
             return MixedSchubertElement(*list(add_perm_dict(self, other).values()))
+        if self.ring == other.ring:
+            return self.ring.add(self, other)
         if isinstance(other, BaseSchubertElement):
             elem = MixedSchubertElement(*list(self.values()))
             elem[other.ring] = other.ring.add(elem.get(other.ring, other.ring.zero), other)

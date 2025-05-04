@@ -1,5 +1,6 @@
 from functools import cache, cached_property
 
+import symengine
 import sympy
 from symengine import Add, Mul, Pow, S
 from sympy import CoercionFailed
@@ -463,42 +464,42 @@ class DoubleSchubertRing(BaseSchubertRing):
         _Mul = Mul
         _Pow = Pow
         try:
-            x = sympify(x)
+            x = symengine.sympify(x)
         except Exception:
-            x = sympify(x)
+            x = sympy.sympify(x)
             _Add = sympy.Add
             _Mul = sympy.Mul
             _Pow = sympy.Pow
         ind = self.genset.index(x)
         if ind != -1:
             return self.single_variable(elem, ind)
-        # if isinstance(x, ElemSym):
-        #     if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
-        #         return self.elem_mul(elem, x)
+        if isinstance(sympify(x), ElemSym):
+            if all(self.genset.index(a)!=-1 for a in x.genvars) and not any(self.genset.index(a)!=-1 for a in x.coeffvars):
+                return self.elem_mul(elem, x)
 
-        #     gens_to_remove = [a for a in x.genvars if a not in self.gensWet]
-        #     if any(a in self.genset for a in x.genvars) and len(gens_to_remove):
-        #         return self.mul_sympy(elem, x.split_out_vars(gens_to_remove))
+            gens_to_remove = [a for a in x.genvars if a not in self.gensWet]
+            if any(self.genset.index(a)!=-1 for a in x.genvars) and len(gens_to_remove):
+                return self.mul_sympy(elem, x.split_out_vars(gens_to_remove))
 
-        #     coeffs_to_remove = [a for a in x.coeffvars if a in self.genset]
+            coeffs_to_remove = [a for a in x.coeffvars if a in self.genset]
 
-        #     if any(a in self.genset for a in x.coeffvars) and len(coeffs_to_remove):
-        #         return self.mul_sympy(elem.split_out_vars(x.to_complete_sym(), coeffs_to_remove))
-        #     return self.from_dict({k: self.domain_new(self.handle_sympoly(x)) * v for k, v in elem.items()})
-        # if isinstance(x, CompleteSym):
-        #     if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
-        #         return self.complete_mul(elem, x)
-        #     gens_to_remove = [a for a in x.genvars if a not in self.genset]
+            if any(a in self.genset for a in x.coeffvars) and len(coeffs_to_remove):
+                return self.mul_sympy(elem.split_out_vars(x.to_complete_sym(), coeffs_to_remove))
+            return self.from_dict({k: self.domain_new(self.handle_sympoly(x)) * v for k, v in elem.items()})
+        if isinstance(sympify(x), CompleteSym):
+            if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
+                return self.complete_mul(elem, x)
+            gens_to_remove = [a for a in x.genvars if a not in self.genset]
 
-        #     if any(a in self.genset for a in x.genvars) and len(gens_to_remove):
-        #         return self.mul_sympy(elem, x.split_out_vars(gens_to_remove))
+            if any(a in self.genset for a in x.genvars) and len(gens_to_remove):
+                return self.mul_sympy(elem, x.split_out_vars(gens_to_remove))
 
-        #     coeffs_to_remove = [a for a in x.coeff_vars if a in self.genset]
+            coeffs_to_remove = [a for a in x.coeff_vars if a in self.genset]
 
-        #     if len(coeffs_to_remove):
-        #         return self.mul_sympy(elem, split_out_vars(x.to_elem_sym(), coeffs_to_remove))
+            if len(coeffs_to_remove):
+                return self.mul_sympy(elem, split_out_vars(x.to_elem_sym(), coeffs_to_remove))
 
-        #     return self.from_dict({k: self.domain_new(self.handle_sympoly(x)) * v for k, v in elem.items()})
+            return self.from_dict({k: self.domain_new(self.handle_sympoly(x)) * v for k, v in elem.items()})
         if isinstance(x, _Add):
             return self.sum([self.mul_sympy(elem, arg) for arg in x.args])
         if isinstance(x, _Mul):
@@ -621,16 +622,16 @@ class SingleSchubertRing(DoubleSchubertRing):
         _Mul = Mul
         _Pow = Pow
         try:
-            x = sympify(x)
+            x = symengine.sympify(x)
         except Exception:
-            x = sympify(x)
+            x = sympy.sympify(x)
             _Add = sympy.Add
             _Mul = sympy.Mul
             _Pow = sympy.Pow
         ind = self.genset.index(x)
         if ind != -1:
             return self.single_variable(elem, ind)
-        if isinstance(x, ElemSym):
+        if isinstance(sympify(x), ElemSym):
             if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
                 return self.elem_mul(elem, x)
 
@@ -643,7 +644,7 @@ class SingleSchubertRing(DoubleSchubertRing):
             if any(a in self.genset for a in x.coeffvars) and len(coeffs_to_remove):
                 return self.mul_sympy(elem.split_out_vars(x.to_complete_sym(), coeffs_to_remove))
             return self.from_dict({k: self.domain_new(self.handle_sympoly(x)) * v for k, v in elem.items()})
-        if isinstance(x, CompleteSym):
+        if isinstance(sympify(x), CompleteSym):
             if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
                 return self.complete_mul(elem, x)
             gens_to_remove = [a for a in x.genvars if a not in self.genset]
@@ -817,7 +818,9 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
             for perm, df, sign in perm_list:
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in indexes if perm[i - 1] == k[i - 1]]
                 coeff = ElemSym(elem._p - df, elem._k - df, remaining_vars, elem.coeffvars)
-                ret += self.domain_new(v * coeff) * self(perm)
+                toadd = self.domain_new(v * sign * coeff) * self(perm)
+                # print(f"{toadd=}")
+                ret += toadd
         return ret
 
     def complete_mul(self, elem, x):

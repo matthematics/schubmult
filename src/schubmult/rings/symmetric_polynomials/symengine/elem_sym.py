@@ -5,7 +5,7 @@ from symengine.lib.symengine_wrapper import S, Symbol, sympify
 from sympy import Dict, Function, Integer, StrPrinter, Tuple
 from sympy.printing.defaults import DefaultPrinting
 
-import schubmult.rings.symmetric_polynomials.sympy as symp
+import schubmult.rings.symmetric_polynomials.sympy.elem_sym as symp
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.utils.logging import get_logger
 from schubmult.utils.ring_utils import NotEnoughGeneratorsError
@@ -19,8 +19,6 @@ class ElemSym(Symbol, DefaultPrinting):
     is_polynomial = True
     is_Function = True
     is_nonzero = True
-
-    _op_priority = 200
 
     def __new__(cls, p, k, var1, var2):
         return ElemSym.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
@@ -48,7 +46,7 @@ class ElemSym(Symbol, DefaultPrinting):
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
-        name = StrPrinter()._print_Function(Function("e")(p,k,Tuple(*sorted(var1, key=lambda x: sympify(x).sort_key())),Tuple(*sorted(var2, key=lambda x: sympify(x).sort_key()))))
+        name = StrPrinter()._print_Function(Function("e")(p,k,Tuple(*sorted(var1, key=lambda x: sympy.sympify(x).sort_key())),Tuple(*sorted(var2, key=lambda x: sympy.sympify(x).sort_key()))))
         obj = Symbol.__new__(
             _class,
             name,
@@ -70,13 +68,20 @@ class ElemSym(Symbol, DefaultPrinting):
         return(
             Integer(self._p),
             Integer(self._k),
-            Tuple(*sorted(self._genvars, key=lambda x: sympify(x).sort_key())),
-            Tuple(*sorted(self._coeffvars, key=lambda x: sympify(x).sort_key())))
+            Tuple(*sorted(self._genvars, key=lambda x: sympy.sympify(x).sort_key())),
+            Tuple(*sorted(self._coeffvars, key=lambda x: sympy.sympify(x).sort_key())))
+
+    #def __rmul__(self, other):
 
     @property
     def free_symbols(self):
         return set(self.genvars).union(set(self.coeffvars))
 
+    def has_free(self, *x):
+        if any(a in self.free_symbols or sympify(a) in self.free_symbols for a in x):
+            return True
+        return False
+    
     def split_out_vars(self, vars1, vars2=None):
         vars1 = [sympify(v) for v in vars1 if v in self.genvars]
         if vars2 is None:
