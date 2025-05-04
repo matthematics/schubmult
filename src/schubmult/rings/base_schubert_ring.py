@@ -57,28 +57,28 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         if len(self.keys()) == 0:
             return printer._print(sympy.S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
-            return printer._print_Add(sympy.Add(*self.as_terms()), order="lex")
-        return printer._print_Add(sympy.Add(*self.as_terms()))
+            return printer._print_Add(self, order="lex")
+        return printer._print_Add(self)
 
     def _pretty(self, printer):
         if len(self.keys()) == 0:
             return printer._print(sympy.S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
             return printer._print_Add(self, order="lex")
-        return printer._print_Add(sympy.Add(*self.as_terms()))
+        return printer._print_Add(self)
 
     def _latex(self, printer):
         if len(self.keys()) == 0:
             return printer._print(sympy.S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
             return printer._print_Add(self, order="lex")
-        return printer._print_Add(sympy.Add(*self.as_terms()))
+        return printer._print_Add(self)
 
     def as_terms(self):
         if len(self.keys()) == 0:
             return [sympify(S.Zero)]
         return [
-            (self.ring.domain.to_sympy(sympify(self[k])) if k == Permutation([]) else sympy.Mul(self.ring.domain.to_sympy(sympify(self[k])), self.ring.printing_term(k)))
+            (self[k] if k == Permutation([]) else sympy.Mul(self[k], self.ring.printing_term(k)))
             for k in self.keys()
         ]
 
@@ -86,7 +86,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         if len(self.keys()) == 0:
             return [sympify(S.Zero)]
         return [
-            (self.ring.domain.to_sympy(self[k]) if k == Permutation([]) else sympy.Mul(self.ring.domain.to_sympy(self[k]), self.ring.printing_term(k)))
+            (self[k] if k == Permutation([]) else sympy.Mul(self[k], self.ring.printing_term(k)))
             for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))
         ]
 
