@@ -1,8 +1,12 @@
 from functools import cache
 
-from sympy import Add, Dict, Integer, S, Tuple, Wild, sympify
-from sympy.core.expr import Expr
+import symengine
+import sympy
+from symengine.lib.symengine_wrapper import Expr, Symbol
+from sympy import Add, Dict, Function, Integer, S, StrPrinter, Tuple, Wild, sympify
+from sympy.printing.defaults import DefaultPrinting
 
+#from sympy.core.expr import Expr
 from schubmult.utils.logging import get_logger
 from schubmult.utils.ring_utils import NotEnoughGeneratorsError
 
@@ -11,15 +15,48 @@ from .poly_lib import elem_sym_poly
 logger = get_logger(__name__)
 
 
-class ElemSym(Expr):
+class ElemSym(Symbol, DefaultPrinting):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
     is_Function = True
     is_nonzero = True
 
+    _op_priority = 200
+
+    is_number = False
+    is_Symbol = False
+    is_symbol = False
+    is_Indexed = False
+    is_Dummy = False
+    is_Wild = False
+    is_Add = False
+    is_Mul = False
+    is_Pow = False
+    is_Number = False
+    is_Float = False
+    is_Rational = False
+    is_Integer = False
+    is_NumberSymbol = False
+    is_Order = False
+    is_Derivative = False
+    is_Piecewise = False
+    is_Poly = False
+    is_AlgebraicNumber = False
+    is_Relational = False
+    is_Equality = False
+    is_Boolean = False
+    is_Not = False
+    is_Matrix = False
+    is_Vector = False
+    is_Point = False
+    is_MatAdd = False
+    is_MatMul = False
+
     def __new__(cls, p, k, var1, var2):
         return ElemSym.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
+
+    __sympy__ = True
 
     @staticmethod
     @cache
@@ -42,19 +79,30 @@ class ElemSym(Expr):
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
-        obj = Expr.__new__(
+        name = StrPrinter()._print_Function(Function("e")(p,k,Tuple(*sorted(var1, key=lambda x: sympify(x).sort_key())),Tuple(*sorted(var2, key=lambda x: sympify(x).sort_key()))))
+        obj = Symbol.__new__(
             _class,
-            Integer(p),
-            Integer(k),
-            Tuple(*sorted(var1, key=lambda x: sympify(x).sort_key())),
-            Tuple(*sorted(var2, key=lambda x: sympify(x).sort_key())),
+            name,
         )
-        obj._p = p
-        obj._k = k
+        obj._p = symengine.Integer(p)
+        obj._k = symengine.Integer(k)
         obj._genvars = var1
         obj._coeffvars = var2
         return obj
 
+    def __init__(self, *args):
+        super().__init__(sympy.sstr(self))
+
+    def _sympy_(Self):
+        return Self
+    
+    @property
+    def args(self):
+        return(
+            Integer(self._p),
+            Integer(self._k),
+            Tuple(*sorted(self._genvars, key=lambda x: sympify(x).sort_key())),
+            Tuple(*sorted(self._coeffvars, key=lambda x: sympify(x).sort_key())))
     # @classmethod
     # def from_expr(cls, expr):
 
@@ -134,11 +182,13 @@ class ElemSym(Expr):
 
     @property
     def genvars(self):
-        return tuple(self.args[2])
+        #return tuple(self.args[2])
+        return self._genvars
 
     @property
     def coeffvars(self):
-        return tuple(self.args[3])
+        #return tuple(self.args[3])
+        return self._coeffvars
 
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
