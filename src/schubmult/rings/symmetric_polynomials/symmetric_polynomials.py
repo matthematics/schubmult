@@ -61,6 +61,7 @@ class ElemSym(Symbol):
     def __new__(cls, p, k, var1, var2):
         return ElemSym.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
 
+    __sympy__ = True
 
     @staticmethod
     @cache
@@ -94,7 +95,6 @@ class ElemSym(Symbol):
         obj._k = k
         obj._genvars = var1
         obj._coeffvars = var2
-        obj._obj = ElemSymExpr(obj)
         return obj
 
     def __hash__(self):
@@ -296,53 +296,12 @@ class ElemSym(Symbol):
             return self.xreplace({var1: var2}) + ElemSym(1, 1, [var1], [var2]) * self.divide_out_diff(var1, var2)
         return self
 
-    
-
-    def _sympy_(self):
-        return self._obj
-
-
     def __str__(self):
         return sympy.sstr(self._obj)
-    
-class ElemSymExpr(Expr):
-    """
-    Adapts an object by replacing methods.
-    Usage:
-    motorCycle = MotorCycle()
-    motorCycle = Adapter(motorCycle, wheels = motorCycle.TwoWheeler)
-    """
 
-    
     def _sympystr(self, printer):
-        return printer._print_Function(self.obj)
+        return printer._print_Function(self)
     
-    # def __new__(cls, *args):
-    #     return Expr.__new__(cls)
-
-    def __init__(self, obj):
-        """We set the adapted methods in the object's dict"""
-        self.obj = obj
-        self.__dict__.update(self.obj.__dict__)
-
-    def __get__(self, *args):
-        # print(f"{args=}")
-        return self.obj.__get__(*args)
-
-    def __getattr__(self, attr):
-        """All non-adapted calls are passed to the object"""
-        # print(f"{attr=}")
-        if attr != "obj":
-            return getattr(self.obj, attr)
-        return self.obj
-
-    
-    
-    def _symengine_(self):
-        return self.obj
-    
-    def sort_key(self, order=None):
-        return sympy.Symbol(self.name).sort_key(order)
 
 def split_out_vars(expr, vars1, vars2):
     expr = sympify(expr)
@@ -425,7 +384,6 @@ class CompleteSym(Expr):
         obj._under_elem = cont_obj
         obj._p = obj.args[0]
         obj._k = obj.args[1]
-        #obj._obj = ElemSymExpr(self)
         return obj
 
     @classmethod
