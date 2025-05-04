@@ -223,3 +223,9 @@ coproduct vpathdicts
 
 in complete sym basis
 newthon's formula
+
+complete tests
+
+single elem sym
+
+express as elem sym to ease positivity testing 
