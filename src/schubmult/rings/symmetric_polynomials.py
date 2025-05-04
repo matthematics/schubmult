@@ -459,7 +459,7 @@ class CompleteSym(Expr):
     @property
     def func(self):
         def h(*args):
-            return ElemSym(*args).obj
+            return self.__class__(*args)
 
         return h
 

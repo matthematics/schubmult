@@ -5,12 +5,13 @@ from symengine import Mul, Pow, sympify
 import schubmult.perm_lib as pl
 import schubmult.schub_lib.schub_lib as schub_lib
 
+from .backend import sympify
 from .poly_lib import call_zvars
 
 
 def perm_act(val, i, var2=None):
     subsdict = {var2[i]: var2[i + 1], var2[i + 1]: var2[i]}
-    return sympy.sympify(val).subs(subsdict)
+    return sympify(val).subs(subsdict)
 
 
 def elem_func_func(k, i, v1, v2, vdiff, varl1, varl2, elem_func):
