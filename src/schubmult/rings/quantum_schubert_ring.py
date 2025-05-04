@@ -242,29 +242,52 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
     def mult_poly_double(self):
         return yz.mult_poly_q_double
 
-    def from_sympy(self, x):
-        if isinstance(x, BaseSchubertElement):
-            if x.ring == self:
-                return x
-        x = sympify(x)
+    # def from_sympy(self, x):
+    #     if isinstance(x, BaseSchubertElement):
+    #         if x.ring == self:
+    #             return x
+    #     x = sympify(x)
+    #     ind = self.genset.index(x)
+    #     if ind != -1:
+    #         return self.from_dict(yz.mult_poly_q_double({Permutation([]): 1}, x, self.genset, self.coeff_genset))
+    #     if isinstance(x, Add):
+    #         return self.sum([self.from_sympy(arg) for arg in x.args])
+    #     if isinstance(x, Mul):
+    #         res = self.one
+    #         for arg in x.args:
+    #             res *= self.from_sympy(arg)
+    #         return res
+    #     if isinstance(x, Pow):
+    #         return self.from_sympy(x.args[0]) ** int(x.args[1])
+    #     return self.from_dict({Permutation([]): x})
+
+    def mul_sympy(self, elem, x):
+        _Add = Add
+        _Mul = Mul
+        _Pow = Pow
+        try:
+            x = sympify(x)
+        except Exception:
+            x = sympy.sympify(x)
+            _Add = sympy.Add
+            _Mul = sympy.Mul
+            _Pow = sympy.Pow
         ind = self.genset.index(x)
         if ind != -1:
-            return self.from_dict(yz.mult_poly_q_double({Permutation([]): 1}, x, self.genset, self.coeff_genset))
-        if isinstance(x, Add):
-            return self.sum([self.from_sympy(arg) for arg in x.args])
-        if isinstance(x, Mul):
-            res = self.one
+            return self.from_dict(yz.mult_poly_q_double(elem, x, self.genset, self.coeff_genset))
+        if isinstance(x, _Add):
+            return self.sum([self.mul_sympy(elem, arg) for arg in x.args])
+        if isinstance(x, _Mul):
+            res = elem
             for arg in x.args:
-                res *= self.from_sympy(arg)
+                res = self.mul_sympy(res, arg)
             return res
-        if isinstance(x, Pow):
-            return self.from_sympy(x.args[0]) ** int(x.args[1])
-        return self.from_dict({Permutation([]): x})
-
-    # def from_sympy(self, x):
-    #     x = sympify(x)
-    #     result = yz.mult_poly_q_double({Permutation([]): 1}, x, self.genset, self.coeff_genset)
-    #     return self.from_dict(result)
+        if isinstance(x, _Pow):
+            res = elem
+            for _ in range(int(x.args[1])):
+                res = self.mul_sympy(res, x.args[0])
+            return res
+        return self.from_dict({k: v * self.domain_new(x) for k, v in elem.items()})
 
     def new(self, x):
         genset = self.genset
@@ -321,24 +344,52 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
     def cached_positive_product(self, u, v, basis2):
         return self.cached_product(u, v, basis2)
 
-    def from_sympy(self, x):
-        if isinstance(x, BaseSchubertElement):
-            if x.ring == self:
-                return x
-        x = sympify(x)
+    # def from_sympy(self, x):
+    #     if isinstance(x, BaseSchubertElement):
+    #         if x.ring == self:
+    #             return x
+    #     x = sympify(x)
+    #     ind = self.genset.index(x)
+    #     if ind != -1:
+    #         return self.from_dict(py.mult_poly_q({Permutation([]): 1}, x, self.genset))
+    #     if isinstance(x, Add):
+    #         return self.sum([self.from_sympy(arg) for arg in x.args])
+    #     if isinstance(x, Mul):
+    #         res = self.one
+    #         for arg in x.args:
+    #             res *= self.from_sympy(arg)
+    #         return res
+    #     if isinstance(x, Pow):
+    #         return self.from_sympy(x.args[0]) ** int(x.args[1])
+    #     return self.from_dict({Permutation([]): x})
+
+    def mul_sympy(self, elem, x):
+        _Add = Add
+        _Mul = Mul
+        _Pow = Pow
+        try:
+            x = sympify(x)
+        except Exception:
+            x = sympy.sympify(x)
+            _Add = sympy.Add
+            _Mul = sympy.Mul
+            _Pow = sympy.Pow
         ind = self.genset.index(x)
         if ind != -1:
-            return self.from_dict(py.mult_poly_q({Permutation([]): 1}, x, self.genset))
-        if isinstance(x, Add):
-            return self.sum([self.from_sympy(arg) for arg in x.args])
-        if isinstance(x, Mul):
-            res = self.one
+            return self.from_dict(py.mult_poly_q(elem, x, self.genset, self.coeff_genset))
+        if isinstance(x, _Add):
+            return self.sum([self.mul_sympy(elem, arg) for arg in x.args])
+        if isinstance(x, _Mul):
+            res = elem
             for arg in x.args:
-                res *= self.from_sympy(arg)
+                res = self.mul_sympy(res, arg)
             return res
-        if isinstance(x, Pow):
-            return self.from_sympy(x.args[0]) ** int(x.args[1])
-        return self.from_dict({Permutation([]): x})
+        if isinstance(x, _Pow):
+            res = elem
+            for _ in range(int(x.args[1])):
+                res = self.mul_sympy(res, x.args[0])
+            return res
+        return self.from_dict({k: v * self.domain_new(x) for k, v in elem.items()})
 
     # def from_sympy(self, x):
     #     x = sympify(x)
@@ -629,8 +680,10 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
     def mult_poly_double(self):
         return yz.mult_poly_q_double
 
-    def from_sympy(self, x):
-        dct = self.classical_basis.from_sympy(x)
+
+    # TODO: speed this up
+    def mul_sympy(self, elem, x):
+        dct = self.classical_basis.mul_sympy(self.in_classical_basis(elem), x)
         elem = self.zero
         if not isinstance(dct, BaseSchubertElement):
             return dct
@@ -640,6 +693,32 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
             else:
                 elem += v * self.classical_in_basis(k)
         return elem
+        # _Add = Add
+        # _Mul = Mul
+        # _Pow = Pow
+        # try:
+        #     x = sympify(x)
+        # except Exception:
+        #     x = sympy.sympify(x)
+        #     _Add = sympy.Add
+        #     _Mul = sympy.Mul
+        #     _Pow = sympy.Pow
+        # ind = self.genset.index(x)
+        # if ind != -1:
+        #     return self.from_dict(yz.mult_poly_q_double(elem, x, self.genset, self.coeff_genset))
+        # if isinstance(x, _Add):
+        #     return self.sum([self.mul_sympy(elem, arg) for arg in x.args])
+        # if isinstance(x, _Mul):
+        #     res = elem
+        #     for arg in x.args:
+        #         res = self.mul_sympy(res, arg)
+        #     return res
+        # if isinstance(x, _Pow):
+        #     res = elem
+        #     for _ in range(int(x.args[1])):
+        #         res = self.mul_sympy(res, x.args[0])
+        #     return res
+        # return self.from_dict({k: v * self.domain_new(x) for k, v in elem.items()})
 
     def __call__(self, x):
         genset = self.genset

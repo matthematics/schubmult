@@ -262,14 +262,18 @@ class BaseSchubertRing(Ring, CompositeDomain):
         return self.from_dict({k: -v for k, v in elem.items()})
 
     def mul(self, elem, other, _sympify=False):
-        if self.of_type(elem):
-            if isinstance(other, BaseSchubertElement):
-                return self.from_dict(utils._mul_schub_dicts(elem, other, elem.ring, other.ring, _sympify=_sympify))
         try:
             other = self.domain_new(other)
+            return self.from_dict({k: other * v for k, v in elem.items()})
         except CoercionFailed:
-            return NotImplemented
-        return self.from_dict({k: other * v for k, v in elem.items()})
+            pass
+        if isinstance(other, BaseSchubertElement):
+            other = self._coerce_mul(other)
+            if not other:
+                raise CoercionFailed(f"Could not coerce {other} of type {type(other)} to {type(elem)}")
+            return self.from_dict(utils._mul_schub_dicts(elem, other, elem.ring, other.ring, _sympify=_sympify))
+
+        return self.mul_sympy(elem, other)
 
     def to_domain(self):
         return self
@@ -323,9 +327,13 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def elem_sym_subs(self, kk): ...
 
     def domain_new(self, element, orig_domain=None):  # noqa: ARG002
-        if not sympy.sympify(element).has_free(*self.symbols):
-            return element
-        raise CoercionFailed(f"{element} contains an element of the set of generators")
+        try:
+            if not sympy.sympify(element).has_free(*self.symbols):
+                return element
+            raise CoercionFailed(f"{element} contains an element of the set of generators")
+        except Exception:
+            raise CoercionFailed(f"{element} is of type {type(element)} and could not be coerced to {self.domain}")
+
 
     @property
     def genset(self):
@@ -344,6 +352,11 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def cached_product(self, u, v, basis2): ...
 
     def cached_positive_product(self, u, v, basis2): ...
+
+    def from_sympy(self, x):
+        return self.mul_sympy(self.one, x)
+    
+    def mul_sympy(self, x): ...
 
     @property
     def double_mul(self): ...
