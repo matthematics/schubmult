@@ -252,6 +252,8 @@ class BaseSchubertRing(Ring, CompositeDomain):
         self.dom = self.domain
         self.zero_monom = Permutation([])
 
+
+
     def add(self, elem, other):
         return self.from_dict(add_perm_dict(elem, other))
 

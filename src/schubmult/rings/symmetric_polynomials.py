@@ -2,8 +2,8 @@ from functools import cache
 
 import symengine
 import sympy
-from symengine.lib.symengine_wrapper import Expr, Symbol
-from sympy import Add, Dict, Function, Integer, S, StrPrinter, Tuple, Wild, sympify
+from symengine.lib.symengine_wrapper import Symbol
+from sympy import Add, Basic, Dict, Expr, Function, Integer, S, StrPrinter, Tuple, Wild, sympify
 from sympy.printing.defaults import DefaultPrinting
 
 #from sympy.core.expr import Expr
@@ -14,8 +14,14 @@ from .poly_lib import elem_sym_poly
 
 logger = get_logger(__name__)
 
+# class ElemSymExpr(Expr):
+#     pass
+#     # def __init__(self, *args, **kwargs):
+#     #     pass
 
-class ElemSym(Symbol, DefaultPrinting):
+
+
+class ElemSym(Symbol):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
@@ -82,7 +88,7 @@ class ElemSym(Symbol, DefaultPrinting):
         name = StrPrinter()._print_Function(Function("e")(p,k,Tuple(*sorted(var1, key=lambda x: sympify(x).sort_key())),Tuple(*sorted(var2, key=lambda x: sympify(x).sort_key()))))
         obj = Symbol.__new__(
             _class,
-            name,
+            name
         )
         obj._p = symengine.Integer(p)
         obj._k = symengine.Integer(k)
@@ -90,12 +96,11 @@ class ElemSym(Symbol, DefaultPrinting):
         obj._coeffvars = var2
         return obj
 
-    def __init__(self, *args):
-        super().__init__(sympy.sstr(self))
 
-    def _sympy_(Self):
-        return Self
-    
+    def __init__(self, *args, **kwargs):
+        Symbol.__init__(self, sympy.sstr(self))
+        #super(Expr, self).__init__(*args)
+
     @property
     def args(self):
         return(
