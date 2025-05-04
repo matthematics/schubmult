@@ -616,25 +616,25 @@ def elem_sym_positional_perms(orig_perm, p, *k):
 def complete_sym_positional_perms(orig_perm, p, *k):
     k = {i - 1 for i in k}
     orig_perm = Permutation(orig_perm)
-    total_list = [(orig_perm, 0, 1)]
-    up_perm_list = [(orig_perm, set(), 1)]
+    total_list = {(orig_perm, 0, 1)}
+    up_perm_list = {(orig_perm, 1)}
+    # print(f"{orig_perm=}")
     for pp in range(p):
-        perm_list = []
-        for up_perm, last, sign in up_perm_list:
+        perm_list = set()
+        for up_perm, sign in up_perm_list:
             # pos_list = [i for i in range(k) if up_perm[i] < last]
-            rg = [q for q in range(len(up_perm) + max(k) + 1) if q not in k]
+            rg = [q for q in range(len(up_perm) + max(k) + 1) if q not in k and up_perm[q] == orig_perm[q]]
             for j in rg:
-                if j in last:
-                    continue
                 for i in k:
                     a, b = (i, j) if i < j else (j, i)
                     if has_bruhat_ascent(up_perm, a, b):
+                        # print(f"bruhat ascent on {up_perm=} at {(a,b)=}")
                         new_perm_add = up_perm.swap(a, b)
-                        new_last = set(last)
-                        new_last.add(j)
+                        # print(f"{up_perm.inv - orig_perm.inv=}")
+                        # print(f"{new_perm_add.inv - orig_perm.inv=}")
                         new_sign = sign if i < j else -sign
-                        perm_list += [(new_perm_add, new_last, new_sign)]
-                        total_list += [(new_perm_add, pp + 1, new_sign)]
+                        perm_list.add((new_perm_add, new_sign))
+                        total_list.add((new_perm_add, pp + 1, new_sign))
         up_perm_list = perm_list
     return total_list
 

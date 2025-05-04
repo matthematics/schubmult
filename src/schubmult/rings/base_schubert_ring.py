@@ -57,27 +57,27 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         if len(self.keys()) == 0:
             return printer._print(sympy.S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
-            return printer._print_Add(self, order="lex")
-        return printer._print_Add(self)
+            return printer._print_Add(sympy.Add(*self.as_terms()), order="lex")
+        return printer._print_Add(sympy.Add(*self.as_terms()))
 
     def _pretty(self, printer):
         if len(self.keys()) == 0:
             return printer._print(sympy.S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
             return printer._print_Add(self, order="lex")
-        return printer._print_Add(self)
+        return printer._print_Add(sympy.Add(*self.as_terms()))
 
     def _latex(self, printer):
         if len(self.keys()) == 0:
             return printer._print(sympy.S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
             return printer._print_Add(self, order="lex")
-        return printer._print_Add(self)
+        return printer._print_Add(sympy.Add(*self.as_terms()))
 
     def as_terms(self):
         if len(self.keys()) == 0:
             return [sympy.sympify(S.Zero)]
-        return [(self.ring.domain.to_sympy(self[k]) if k == Permutation([]) else sympy.Mul(self.ring.domain.to_sympy(self[k]), self.ring.printing_term(k))) for k in self.keys()]
+        return [(self.ring.domain.to_sympy(sympy.sympify(self[k])) if k == Permutation([]) else sympy.Mul(self.ring.domain.to_sympy(sympy.sympify(self[k])), self.ring.printing_term(k))) for k in self.keys()]
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:

@@ -46,15 +46,27 @@ class ElemSym(Expr):
             _class,
             Integer(p),
             Integer(k),
-            Tuple(*sorted(var1, key=lambda x: int(x.name.split("_")[1]))),
-            Tuple(*sorted(var2, key=lambda x: int(x.name.split("_")[1]))),
+            Tuple(*sorted(var1, key=lambda x: sympify(x).sort_key())),
+            Tuple(*sorted(var2, key=lambda x: sympify(x).sort_key())),
         )
         obj._p = p
         obj._k = k
         obj._genvars = var1
         obj._coeffvars = var2
-
         return obj
+
+    # @classmethod
+    # def from_expr(cls, expr):
+
+    # def to_complete_sym(self):
+    #     return S.NegativeOne ** (self._p % 2) * CompleteSym.from_elem_sym(self)
+
+    # def in_complete_sym_basis(self, new_genset):
+    #     if self._p == 1:
+    #         a = CompleteSym(1, self._k, new_genset, self.coeffvars)
+    #     12
+    #     e(2,2,x,y) = - (e(2,2,y,z) + e(1,1,y,z)*e(1,2,x,y))
+    #     return a
 
     @property
     def free_symbols(self):
@@ -271,10 +283,6 @@ def pull_out_vars(expr, var1, var2, min_degree=1):
 # def elem_sym_unify_recurse(expr, expr1)
 
 
-def to_complete_sym(self):
-    return S.NegativeOne ** (self._p % 2) * CompleteSym.from_elem_sym(self)
-
-
 def elem_sym_unify(expr, arg=None):
     expr = sympify(expr)
 
@@ -300,6 +308,7 @@ def elem_sym_unify(expr, arg=None):
     if expr != expr2:
         return elem_sym_unify(expr2)
     return expr
+
 
 class CompleteSym(Expr):
     is_commutative = True
