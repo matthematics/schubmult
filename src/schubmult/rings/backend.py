@@ -1,6 +1,9 @@
 import symengine
 import sympy
 
+from .symmetric_polynomials.symengine.elem_sym import ElemSym
+from .symmetric_polynomials.sympy.complete_sym import CompleteSym
+
 
 def sympify(val):
     try:

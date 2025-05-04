@@ -14,11 +14,11 @@ from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
 from .abstract_schub_poly import AbstractSchubPoly
-from .backend import sympify
+from .backend import CompleteSym, ElemSym, sympify
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .poly_lib import elem_sym_poly, xreplace_genvars
 from .schub_poly import schubpoly_classical_from_elems
-from .symmetric_polynomials import CompleteSym, ElemSym, split_out_vars
+from .symmetric_polynomials.sympy.functions import split_out_vars
 from .tensor_ring import TensorRing
 from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 
