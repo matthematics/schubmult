@@ -19,7 +19,7 @@ from .backend import CompleteSym, ElemSym, sympify
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .poly_lib import elem_sym_poly, xreplace_genvars
 from .schub_poly import schubpoly_classical_from_elems
-from .symmetric_polynomials.sympy.functions import split_out_vars
+from .symmetric_polynomials.functions import split_out_vars
 from .tensor_ring import TensorRing
 from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 

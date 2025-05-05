@@ -14,7 +14,7 @@ from .rings.schubert_ring import (
     DSx,
     Sx,
 )
-from .rings.symmetric_polynomials.sympy.functions import elem_sym_unify, split_out_vars
+from .rings.symmetric_polynomials.functions import canonicalize_elem_syms, elem_sym_unify, split_out_vars
 from .rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from .schub_lib.double import (
     mult_poly_double,

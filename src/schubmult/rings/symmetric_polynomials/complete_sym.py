@@ -2,9 +2,8 @@ from functools import cache
 
 from sympy import Add, Dict, Expr, S, sympify
 
-import schubmult.rings.symmetric_polynomials.symengine.complete_sym as syme
 from schubmult.rings.poly_lib import elem_sym_poly
-from schubmult.rings.symmetric_polynomials.sympy.elem_sym import ElemSym
+from schubmult.rings.symmetric_polynomials.elem_sym import ElemSym
 from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -17,8 +16,8 @@ class CompleteSym(Expr):
     is_Function = True
     is_nonzero = True
 
-    def _symengine_(self):
-        return syme.CompleteSym(*self.args)
+    # def _symengine_(self):
+    #     return syme.CompleteSym(*self.args)
 
     def __new__(cls, p, k, var1, var2):
         return CompleteSym.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
