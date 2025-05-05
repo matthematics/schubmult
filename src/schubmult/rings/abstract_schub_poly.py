@@ -1,4 +1,5 @@
 import sympy
+
 from schubmult.rings.backend import expand, sympify
 
 

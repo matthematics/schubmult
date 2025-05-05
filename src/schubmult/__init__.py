@@ -60,6 +60,7 @@ __all__ = [
     "QSx",
     "Sx",
     "apply_peterson_woodward",
+    "canonicalize_elem_syms",
     "check_blocks",
     "compute_positive_rep",
     "div_diff",

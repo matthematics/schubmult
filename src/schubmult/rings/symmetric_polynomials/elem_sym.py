@@ -128,6 +128,7 @@ class e(Function):
     def coeffvars(self):
         return tuple(self.args[3])
 
+    @cache
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
 
