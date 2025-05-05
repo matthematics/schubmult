@@ -1,6 +1,6 @@
 from functools import cache
 
-from sympy import Add, Dict, Expr, S, sympify
+from sympy import Add, Dict, Function, S, sympify
 
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.rings.symmetric_polynomials.elem_sym import ElemSym
@@ -9,7 +9,7 @@ from schubmult.utils.logging import get_logger
 logger = get_logger(__name__)
 
 
-class CompleteSym(Expr):
+class CompleteSym(Function):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
@@ -35,7 +35,7 @@ class CompleteSym(Expr):
         cont_obj = ElemSym(p, k + p - 1, var2, var1)
         if not isinstance(cont_obj, ElemSym):
             return cont_obj
-        obj = Expr.__new__(_class, cont_obj.args[0], cont_obj.args[1] + 1 - cont_obj.args[0], cont_obj.args[3], cont_obj.args[2])
+        obj = Function.__new__(_class, cont_obj.args[0], cont_obj.args[1] + 1 - cont_obj.args[0], cont_obj.args[3], cont_obj.args[2])
         obj._under_elem = cont_obj
         obj._p = obj.args[0]
         obj._k = obj.args[1]
@@ -80,12 +80,12 @@ class CompleteSym(Expr):
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify(elem_sym_poly(self._under_elem._p, self._under_elem._k, [-x for x in self._under_elem.genvars], [-y for y in self._under_elem.coeffvars]))
 
-    @property
-    def func(self):
-        def h(*args):
-            return self.__class__(*args)
+    # @property
+    # def func(self):
+    #     def h(*args):
+    #         return self.__class__(*args)
 
-        return h
+    #     return h
 
     def _eval_subs(self, *rule):
         rule = Dict(rule)

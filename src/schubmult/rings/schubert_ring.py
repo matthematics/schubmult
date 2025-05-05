@@ -475,7 +475,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         ind = self.genset.index(x)
         if ind != -1:
             return self.single_variable(elem, ind)
-        if isinstance(sympify(x), ElemSym):
+        if isinstance(sympy.sympify(x), ElemSym):
             if all(self.genset.index(a)!=-1 for a in x.genvars) and not any(self.genset.index(a)!=-1 for a in x.coeffvars):
                 return self.elem_mul(elem, x)
 
@@ -488,7 +488,7 @@ class DoubleSchubertRing(BaseSchubertRing):
             if any(a in self.genset for a in x.coeffvars) and len(coeffs_to_remove):
                 return self.mul_sympy(elem.split_out_vars(x.to_complete_sym(), coeffs_to_remove))
             return self.from_dict({k: self.domain_new(self.handle_sympoly(x)) * v for k, v in elem.items()})
-        if isinstance(sympify(x), CompleteSym):
+        if isinstance(sympy.sympify(x), CompleteSym):
             if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
                 return self.complete_mul(elem, x)
             gens_to_remove = [a for a in x.genvars if a not in self.genset]
@@ -633,7 +633,7 @@ class SingleSchubertRing(DoubleSchubertRing):
         ind = self.genset.index(x)
         if ind != -1:
             return self.single_variable(elem, ind)
-        if isinstance(sympify(x), ElemSym):
+        if isinstance(sympy.sympify(x), ElemSym):
             if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
                 return self.elem_mul(elem, x)
 
@@ -646,7 +646,7 @@ class SingleSchubertRing(DoubleSchubertRing):
             if any(a in self.genset for a in x.coeffvars) and len(coeffs_to_remove):
                 return self.mul_sympy(elem.split_out_vars(x.to_complete_sym(), coeffs_to_remove))
             return self.from_dict({k: self.domain_new(self.handle_sympoly(x)) * v for k, v in elem.items()})
-        if isinstance(sympify(x), CompleteSym):
+        if isinstance(sympy.sympify(x), CompleteSym):
             if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
                 return self.complete_mul(elem, x)
             gens_to_remove = [a for a in x.genvars if a not in self.genset]

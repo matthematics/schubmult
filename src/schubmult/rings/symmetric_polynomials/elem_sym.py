@@ -1,7 +1,7 @@
 from functools import cache
 
-from sympy import Dict, Integer, S, Tuple, sympify
-from sympy.core.expr import Expr
+from sympy import Dict, FiniteSet, Integer, S, sympify
+from sympy.core.function import Function
 
 # import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
 from schubmult.rings.poly_lib import elem_sym_poly
@@ -11,7 +11,7 @@ from schubmult.utils.ring_utils import NotEnoughGeneratorsError
 logger = get_logger(__name__)
 
 
-class ElemSym(Expr):
+class ElemSym(Function):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
@@ -42,12 +42,12 @@ class ElemSym(Expr):
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
-        obj = Expr.__new__(
+        obj = Function.__new__(
             _class,
             Integer(p),
             Integer(k),
-            Tuple(*sorted(var1, key=lambda x: int(x.name.split("_")[1]))),
-            Tuple(*sorted(var2, key=lambda x: int(x.name.split("_")[1]))),
+            FiniteSet(*sorted(var1, key=lambda x: int(x.name.split("_")[1]))),
+            FiniteSet(*sorted(var2, key=lambda x: int(x.name.split("_")[1]))),
         )
         obj._p = p
         obj._k = k
@@ -128,12 +128,12 @@ class ElemSym(Expr):
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
 
-    @property
-    def func(self):
-        def e(*args):
-            return self.__class__(*args)
+    # @property
+    # def func(self):
+    #     def e(*args):
+    #         return self.__class__(*args)
 
-        return e
+    #     return e
 
     #     return e
     def _eval_subs(self, *rule):
