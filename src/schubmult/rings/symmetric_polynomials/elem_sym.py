@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from functools import cache
 
-from symengine.lib.symengine_wrapper import Basic, DictBasic, FiniteSet, PyFunction, Symbol
+import symengine.lib.symengine_wrapper as sw
 from sympy import Dict, Expr, Integer, S, sympify
 from sympy.core.function import Function
 
@@ -10,61 +10,16 @@ from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.utils.logging import get_logger
 from schubmult.utils.ring_utils import NotEnoughGeneratorsError
 
+from .utils import symengine_tuple
+
 logger = get_logger(__name__)
 
-    # def __init__(self, *args):
-    #     super().__init__(*args)
-    
-    # def _symengine_(self):
-    #     return tuple(self.args)
+# def __init__(self, *args):
+#     super().__init__(*args)
 
+# def _symengine_(self):
+#     return tuple(self.args)
 
-class symengine_tuple(Symbol):
-    
-    # def __getattribute__(self, attr):
-    #     print(attr)
-    #     return super().__getattribute__(attr)
-
-    def __init__(self, *args):
-        self._tuple = tuple(args)
-        super().__init__(str(self._tuple))
-    
-    def get_args(self):
-        return self._tuple
-
-    def __iter__(self):
-        return iter(self._tuple)
-    
-    def __getitem__(self, i):
-        return self._tuple.__getitem__(i)
-    
-    def __len__(self):
-        return len(self._tuple)
-    
-    def __contains__(self, item):
-        return item in self._tuple
-    
-    def __hash__(self):
-        return hash(self._tuple)
-    
-    def __eq__(self, other):
-        if isinstance(other, tuple):
-            return self._tuple == other
-        if isinstance(other, symengine_tuple):
-            return self._tuple == other._tuple
-
-    def index(self, item):
-        return self._tuple.index(item)    
-    
-    def __str__(self):
-        return self._tuple.__str__()
-    
-    def __repr__(self):
-        return self._tuple.__repr__()
-
-    @property
-    def func(self):
-        return self.__class__
 
 class e(Function):
     is_commutative = True
@@ -110,25 +65,28 @@ class e(Function):
         obj._k = k
         obj._genvars = tuple(var1)
         obj._coeffvars = tuple(var2)
-        obj._sg = symengine_tuple(*obj._genvars)
-        obj._cv = symengine_tuple(*obj._coeffvars)
+        obj.gsym = sw.Symbol(str(obj._genvars))
+        obj.csym = sw.Symbol(str(obj._coeffvars))
         return obj
-    
+
     @classmethod
     def _new_(cls, *args):
         return Expr.__new__(cls, *args)
 
-    # def _symengine_(self):
-    #     return PyFunction()
+    
     @property
     def args(self):
-        return (Integer(self._p), Integer(self._k), self._sg, self._cv)
+        return (Integer(self._p), Integer(self._k), symengine_tuple(self._genvars), symengine_tuple(self._coeffvars))
     
-    def _hashable_content(self):
-        return (self._p, self._k, self._genvars, self._coeffvars)
-    
+    # @property
+    # def symengine_args(self):
+    #     return (Integer(self._p), Integer(self._k), self.gsym, self.csym)
+
+    # def _hashable_content(self):
+    #     return (self._p, self._k, symengine_tuple(self._genvars), symengine_tuple(self._coeffvars))
+
     # def _symengine_(self):
-    #     return SymPolyWrap(self, self.args, self.__class__, sw.PyModule(self.__module__))
+    #     return sw.PyFunction(self, self.args, self.__class__, sw.sympy_module)
 
     @property
     def free_symbols(self):
@@ -311,5 +269,6 @@ class e(Function):
         if var1 in self.genvars and var2 in self.coeffvars:
             return self.xreplace({var1: var2}) + ElemSym(1, 1, [var1], [var2]) * self.divide_out_diff(var1, var2)
         return self
+
 
 ElemSym = e
