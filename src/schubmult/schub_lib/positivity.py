@@ -52,7 +52,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
         notint = True
     if notint:
         z_ring = rings.SingleSchubertRing(var3)
-        opt = Optimizer(z_ring, val)
+        # opt = Optimizer(z_ring, val)
         frees = val.free_symbols
         # logger.debug(f"{frees=}")
         # logger.debug(f"{[type(s) for s in frees]=}")
@@ -73,9 +73,10 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
         # for i in range(len(varsimp3)):
         #     varsimp3[i] = var3[var3list.index(varsimp3[i])]
 
-        base_vectors = []
-        base_monoms = []
-        vec = opt.vec0
+        base_vectors = {}
+        base_monoms = {}
+        opts = {}
+        #vec = opt.vec0
 
         # if do_pos_neg:
         #     smp = val
@@ -149,7 +150,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
         # else:
             # logger.debug("this")
         val_poly = sympy.poly(expand(val), *var22, *var33)
-        vec = opt.poly_to_vec(val)
+        #vec = opt.poly_to_vec(val)
         mn = val_poly.monoms()
         L1 = tuple([0 for i in range(n1)])
         mn1L = []
@@ -167,6 +168,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
                 mn1L += [mm0]
         # logger.debug("this")
         for mn1 in mn1L:
+            #vals[mn1] = Add(np.prod([varsimp2[i]**mn[i] for i in range(n1)],[varsimp3[i]**mn[i] for i ])])
             comblistmn1 = [1]
             for i in range(n1, len(mn1)):
                 if mn1[i] != 0:
@@ -185,8 +187,8 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
                 b1 = comblistmn1[i]
                 vec0 = opt.poly_to_vec(b1)
                 if vec0:
-                    base_vectors += [vec0]
-                    base_monoms += [b1]
+                    base_vectors[mn1] += [vec0]
+                    base_monoms[mn1] += [b1]
         vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(base_vectors))]
         lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
         lp_prob += 0
