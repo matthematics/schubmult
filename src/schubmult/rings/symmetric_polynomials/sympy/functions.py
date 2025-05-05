@@ -34,7 +34,7 @@ def canonicalize_elem_syms(expr):
         # if we got here, all _p == _k
         var_dict = {}
         for elem in elems:
-            var_dict[elem.coeffvars[0]] = var_dict.get(elem.coeffvars[0], []) + [*elem.genvars]
+            var_dict[elem.coeffvars[0]] = [*var_dict.get(elem.coeffvars[0], []), *elem.genvars]
         return Mul(*[*split_out,*[ElemSym(len(v),len(v),v,[k]) for k,v in var_dict.items()],*[Pow(canonicalize_elem_syms(arg.args[0]),arg.args[1]) for arg in pows]])
     return expr
 

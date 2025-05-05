@@ -1,16 +1,23 @@
+import os
+
+os.environ['USE_SYMENGINE'] = "1"
+
+
+
 from functools import cache
 
-import sympy
 from symengine.lib.symengine_wrapper import S, Symbol, sympify
-from sympy import Dict, Function, Integer, StrPrinter, Tuple
+from sympy import Dict, Function, Integer, StrPrinter, Tuple, sstr
 from sympy.printing.defaults import DefaultPrinting
 
-import schubmult.rings.symmetric_polynomials.sympy.elem_sym as symp
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.utils.logging import get_logger
 from schubmult.utils.ring_utils import NotEnoughGeneratorsError
 
 logger = get_logger(__name__)
+
+
+from sympy.core.backend import *
 
 
 class ElemSym(Symbol, DefaultPrinting):
@@ -46,7 +53,7 @@ class ElemSym(Symbol, DefaultPrinting):
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
-        name = StrPrinter()._print_Function(Function("e")(p,k,Tuple(*sorted(var1, key=lambda x: sympy.sympify(x).sort_key())),Tuple(*sorted(var2, key=lambda x: sympy.sympify(x).sort_key()))))
+        name = StrPrinter()._print_Function(Function("e")(p,k,*var1, *var2))
         obj = Symbol.__new__(
             _class,
             name,
@@ -61,15 +68,15 @@ class ElemSym(Symbol, DefaultPrinting):
         return hash(self.args)
 
     def __init__(self, *args, **kwargs):
-        Symbol.__init__(self, sympy.sstr(self))
+        Symbol.__init__(self, sstr(self))
 
     @property
     def args(self):
         return(
             Integer(self._p),
             Integer(self._k),
-            Tuple(*sorted(self._genvars, key=lambda x: sympy.sympify(x).sort_key())),
-            Tuple(*sorted(self._coeffvars, key=lambda x: sympy.sympify(x).sort_key())))
+            Tuple(*self._genvars),
+            Tuple(*self._coeffvars))
 
     #def __rmul__(self, other):
 
@@ -134,6 +141,7 @@ class ElemSym(Symbol, DefaultPrinting):
     def coeffvars(self):
         return self._coeffvars
 
+    @cache
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
 
@@ -238,10 +246,12 @@ class ElemSym(Symbol, DefaultPrinting):
         return self
 
     def __str__(self):
-        return self._sympy_().__str__() #sympy.sstr(self._obj)
+        return sstr(self)
 
-    def _sympy_(self):
-        return symp.ElemSym(*self.args)
+    # def _sympy_(self):
+    #     return symp.ElemSym(*self.args)
 
     def _sympystr(self, printer):
-        return printer._print_Function(self._sympy_())
+        return printer._print_Function(self)
+
+
