@@ -1,6 +1,6 @@
 from functools import cache
 
-from sympy import Dict, Dummy, FiniteSet, Integer, S, sympify
+from sympy import Dict, FiniteSet, Integer, S, sympify
 from sympy.core.function import Function
 
 # import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
