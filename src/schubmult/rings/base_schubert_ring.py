@@ -7,7 +7,6 @@ import symengine
 import sympy
 from symengine import Add, S, SympifyError
 from sympy import CoercionFailed
-from sympy.core.sympify import CantSympify
 from sympy.polys.domains import EXRAW
 from sympy.polys.domains.compositedomain import CompositeDomain
 from sympy.polys.domains.domainelement import DomainElement

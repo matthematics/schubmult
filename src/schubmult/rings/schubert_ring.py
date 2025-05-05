@@ -1,9 +1,7 @@
 from functools import cache, cached_property
 
-import symengine
 import sympy
-from symengine import Add, Mul, Pow, S
-from sympy import CoercionFailed
+from symengine import S
 
 import schubmult.rings.quantum_schubert_ring as qsr
 import schubmult.schub_lib.double as yz

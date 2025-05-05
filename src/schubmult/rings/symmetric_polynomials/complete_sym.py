@@ -1,13 +1,10 @@
 from functools import cache
 
-import symengine.lib.symengine_wrapper as sw
-from sympy import Add, Dict, Function, FunctionClass, S, sympify
+from sympy import Add, Dict, Function, S, sympify
 
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.rings.symmetric_polynomials.elem_sym import ElemSym
 from schubmult.utils.logging import get_logger
-
-from .utils import SymPolyWrap
 
 logger = get_logger(__name__)
 

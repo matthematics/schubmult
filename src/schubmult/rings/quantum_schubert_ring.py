@@ -1,9 +1,8 @@
 from bisect import bisect_left
 from functools import cache
 
-import symengine
 import sympy
-from symengine import Add, Mul, Pow, S, Symbol, expand
+from symengine import S, Symbol, expand
 
 import schubmult.rings.schubert_ring as spr
 import schubmult.schub_lib.quantum as py

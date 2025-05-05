@@ -1,15 +1,12 @@
 from functools import cache
 
-import symengine.lib.symengine_wrapper as sw
-from sympy import Dict, FiniteSet, FunctionClass, Integer, S, sstr, sympify
+from sympy import Dict, FiniteSet, Integer, S, sympify
 from sympy.core.function import Function
 
 # import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.utils.logging import get_logger
 from schubmult.utils.ring_utils import NotEnoughGeneratorsError
-
-from .utils import SymPolyWrap
 
 logger = get_logger(__name__)
 

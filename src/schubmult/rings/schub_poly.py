@@ -5,7 +5,6 @@ from symengine import Mul, Pow, sympify
 import schubmult.perm_lib as pl
 import schubmult.schub_lib.schub_lib as schub_lib
 
-from .backend import sympify
 from .poly_lib import call_zvars
 
 
