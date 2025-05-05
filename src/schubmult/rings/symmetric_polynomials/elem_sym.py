@@ -49,6 +49,10 @@ class e(Function):
             FiniteSet(*var1),
             FiniteSet(*var2),
         )
+        if len(obj.args[2]) < k:
+            raise ValueError("Duplicate genvar arguments")
+        if len(obj.args[3]) < k + 1 - p:
+            raise ValueError("Duplicate coeffvar arguments")
         obj._p = p
         obj._k = k
         obj._genvars = var1
@@ -242,3 +246,4 @@ class e(Function):
         return self
 
 ElemSym = e
+
