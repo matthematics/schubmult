@@ -1,8 +1,6 @@
-from collections.abc import Iterable
 from functools import cache
 
-import symengine.lib.symengine_wrapper as sw
-from sympy import Dict, Expr, Integer, S, sympify
+from sympy import Dict, Dummy, FiniteSet, Integer, S, sympify
 from sympy.core.function import Function
 
 # import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
@@ -10,15 +8,7 @@ from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.utils.logging import get_logger
 from schubmult.utils.ring_utils import NotEnoughGeneratorsError
 
-from .utils import symengine_tuple
-
 logger = get_logger(__name__)
-
-# def __init__(self, *args):
-#     super().__init__(*args)
-
-# def _symengine_(self):
-#     return tuple(self.args)
 
 
 class e(Function):
@@ -29,12 +19,12 @@ class e(Function):
     is_nonzero = True
 
     def __new__(cls, p, k, var1, var2):
-        return e.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
+        return ElemSym.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
 
     @staticmethod
     @cache
     def __xnew_cached__(_class, p, k, var1, var2):
-        return e.__xnew__(_class, p, k, var1, var2)
+        return ElemSym.__xnew__(_class, p, k, var1, var2)
 
     @staticmethod
     def __xnew__(_class, p, k, var1, var2):
@@ -48,8 +38,6 @@ class e(Function):
             if v in var2:
                 j = var2.index(v)
                 return ElemSym.__new__(_class, p, k - 1, [*var1[:i], *var1[i + 1 :]], [*var2[:j], *var2[j + 1 :]])
-        # multiple variables split?
-
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
@@ -58,35 +46,18 @@ class e(Function):
             _class,
             Integer(p),
             Integer(k),
-            tuple(var1),
-            tuple(var2),
+            FiniteSet(*var1),
+            FiniteSet(*var2),
         )
         obj._p = p
         obj._k = k
-        obj._genvars = tuple(var1)
-        obj._coeffvars = tuple(var2)
-        obj.gsym = sw.Symbol(str(obj._genvars))
-        obj.csym = sw.Symbol(str(obj._coeffvars))
+        obj._genvars = var1
+        obj._coeffvars = var2
+
         return obj
 
-    @classmethod
-    def _new_(cls, *args):
-        return Expr.__new__(cls, *args)
-
-    
-    @property
-    def args(self):
-        return (Integer(self._p), Integer(self._k), symengine_tuple(self._genvars), symengine_tuple(self._coeffvars))
-    
-    # @property
-    # def symengine_args(self):
-    #     return (Integer(self._p), Integer(self._k), self.gsym, self.csym)
-
-    # def _hashable_content(self):
-    #     return (self._p, self._k, symengine_tuple(self._genvars), symengine_tuple(self._coeffvars))
-
     # def _symengine_(self):
-    #     return sw.PyFunction(self, self.args, self.__class__, sw.sympy_module)
+    #     return SymPolyWrap(self, self.args, self.__class__, sw.PyModule(self.__module__))
 
     @property
     def free_symbols(self):
@@ -269,6 +240,5 @@ class e(Function):
         if var1 in self.genvars and var2 in self.coeffvars:
             return self.xreplace({var1: var2}) + ElemSym(1, 1, [var1], [var2]) * self.divide_out_diff(var1, var2)
         return self
-
 
 ElemSym = e
