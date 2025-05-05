@@ -1,7 +1,7 @@
 from functools import cache
 
 import sympy
-from symengine import Add
+from schubmult.rings.backend import Add
 from symengine.lib.symengine_wrapper import S, Symbol, sympify
 from sympy import Dict, Function, Integer, StrPrinter, Tuple
 from sympy.printing.defaults import DefaultPrinting

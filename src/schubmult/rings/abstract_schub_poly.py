@@ -1,5 +1,5 @@
 import sympy
-from symengine import expand, sympify
+from schubmult.rings.backend import expand, sympify
 
 
 # Atomic Schubert polynomial
