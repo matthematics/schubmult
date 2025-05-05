@@ -1,3 +1,8 @@
+import os
+
+os.environ['USE_SYMENGINE'] = "1"
+
+
 import symengine
 import sympy
 from symengine import Add, S, SympifyError
@@ -18,6 +23,8 @@ from .backend import expand, sympify
 from .schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 
 logger = get_logger(__name__)
+
+
 
 
 class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
