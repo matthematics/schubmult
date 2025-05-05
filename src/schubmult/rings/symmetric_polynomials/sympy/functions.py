@@ -8,6 +8,11 @@ from .elem_sym import ElemSym
 def canonicalize_elem_syms(expr):
     if not expr.args:
         return expr
+    expr = expand(expr)
+    if isinstance(expr, ElemSym):
+        if expr._p < expr._k:
+            return canonicalize_elem_syms(split_out_vars(expr,expr.genvars[:-1], None))
+        return expr
     if isinstance(expr, Add):
         return Add(*[canonicalize_elem_syms(arg) for arg in expr.args])
     if isinstance(expr, Mul):
@@ -19,18 +24,18 @@ def canonicalize_elem_syms(expr):
         pows = [arg for arg in expr.args if isinstance(arg, Pow)]
         if any(isinstance(arg.args[0],Add) for arg in pows):
             return canonicalize_elem_syms(expand(expr))
-        for arg in pows:
-            elems += [*(int(arg.args[1])*[arg.args[0]])]
+        # for arg in pows:
+        #     elems += [*(int(arg.args[1])*[arg.args[0]])]
         # split out vars if p != k
         for i, elem in enumerate(elems):
             if isinstance(elem, ElemSym) and elem._p < elem._k:
                 elems[i] = elem.split_out_vars(elem.genvars[:len(elem.genvars)//2], None)
-                return canonicalize_elem_syms(expand_mul(Mul(*elems,*split_out)))
+                return canonicalize_elem_syms(expand(Mul(*elems,*split_out,*pows)))
         # if we got here, all _p == _k
         var_dict = {}
         for elem in elems:
             var_dict[elem.coeffvars[0]] = var_dict.get(elem.coeffvars[0], []) + [*elem.genvars]
-        return Mul(*[ElemSym(len(v),len(v),v,[k]) for k,v in var_dict.items()])
+        return Mul(*[*split_out,*[ElemSym(len(v),len(v),v,[k]) for k,v in var_dict.items()],*[Pow(canonicalize_elem_syms(arg.args[0]),arg.args[1]) for arg in pows]])
     return expr
 
 def split_out_vars(expr, vars1, vars2):
