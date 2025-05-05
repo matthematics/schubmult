@@ -1,6 +1,8 @@
+from collections.abc import Iterable
 from functools import cache
 
-from sympy import Dict, FiniteSet, Integer, S, sympify
+from symengine.lib.symengine_wrapper import Basic, DictBasic, FiniteSet, PyFunction, Symbol
+from sympy import Dict, Expr, Integer, S, sympify
 from sympy.core.function import Function
 
 # import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
@@ -10,6 +12,59 @@ from schubmult.utils.ring_utils import NotEnoughGeneratorsError
 
 logger = get_logger(__name__)
 
+    # def __init__(self, *args):
+    #     super().__init__(*args)
+    
+    # def _symengine_(self):
+    #     return tuple(self.args)
+
+
+class symengine_tuple(Symbol):
+    
+    # def __getattribute__(self, attr):
+    #     print(attr)
+    #     return super().__getattribute__(attr)
+
+    def __init__(self, *args):
+        self._tuple = tuple(args)
+        super().__init__(str(self._tuple))
+    
+    def get_args(self):
+        return self._tuple
+
+    def __iter__(self):
+        return iter(self._tuple)
+    
+    def __getitem__(self, i):
+        return self._tuple.__getitem__(i)
+    
+    def __len__(self):
+        return len(self._tuple)
+    
+    def __contains__(self, item):
+        return item in self._tuple
+    
+    def __hash__(self):
+        return hash(self._tuple)
+    
+    def __eq__(self, other):
+        if isinstance(other, tuple):
+            return self._tuple == other
+        if isinstance(other, symengine_tuple):
+            return self._tuple == other._tuple
+
+    def index(self, item):
+        return self._tuple.index(item)    
+    
+    def __str__(self):
+        return self._tuple.__str__()
+    
+    def __repr__(self):
+        return self._tuple.__repr__()
+
+    @property
+    def func(self):
+        return self.__class__
 
 class e(Function):
     is_commutative = True
@@ -19,12 +74,12 @@ class e(Function):
     is_nonzero = True
 
     def __new__(cls, p, k, var1, var2):
-        return ElemSym.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
+        return e.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
 
     @staticmethod
     @cache
     def __xnew_cached__(_class, p, k, var1, var2):
-        return ElemSym.__xnew__(_class, p, k, var1, var2)
+        return e.__xnew__(_class, p, k, var1, var2)
 
     @staticmethod
     def __xnew__(_class, p, k, var1, var2):
@@ -38,6 +93,8 @@ class e(Function):
             if v in var2:
                 j = var2.index(v)
                 return ElemSym.__new__(_class, p, k - 1, [*var1[:i], *var1[i + 1 :]], [*var2[:j], *var2[j + 1 :]])
+        # multiple variables split?
+
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
@@ -46,16 +103,30 @@ class e(Function):
             _class,
             Integer(p),
             Integer(k),
-            FiniteSet(*sorted(var1, key=lambda x: int(x.name.split("_")[1]))),
-            FiniteSet(*sorted(var2, key=lambda x: int(x.name.split("_")[1]))),
+            tuple(var1),
+            tuple(var2),
         )
         obj._p = p
         obj._k = k
-        obj._genvars = var1
-        obj._coeffvars = var2
-
+        obj._genvars = tuple(var1)
+        obj._coeffvars = tuple(var2)
+        obj._sg = symengine_tuple(*obj._genvars)
+        obj._cv = symengine_tuple(*obj._coeffvars)
         return obj
+    
+    @classmethod
+    def _new_(cls, *args):
+        return Expr.__new__(cls, *args)
 
+    # def _symengine_(self):
+    #     return PyFunction()
+    @property
+    def args(self):
+        return (Integer(self._p), Integer(self._k), self._sg, self._cv)
+    
+    def _hashable_content(self):
+        return (self._p, self._k, self._genvars, self._coeffvars)
+    
     # def _symengine_(self):
     #     return SymPolyWrap(self, self.args, self.__class__, sw.PyModule(self.__module__))
 
