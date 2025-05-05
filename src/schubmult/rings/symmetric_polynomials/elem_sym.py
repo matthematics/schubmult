@@ -1,6 +1,7 @@
 from functools import cache
 
-from sympy import Dict, FiniteSet, Integer, S, sympify
+import symengine.lib.symengine_wrapper as sw
+from sympy import Dict, FiniteSet, FunctionClass, Integer, S, sstr, sympify
 from sympy.core.function import Function
 
 # import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
@@ -8,10 +9,15 @@ from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.utils.logging import get_logger
 from schubmult.utils.ring_utils import NotEnoughGeneratorsError
 
+from .utils import SymPolyWrap
+
 logger = get_logger(__name__)
 
+class e(FunctionClass):
+    pass
+    
 
-class ElemSym(Function):
+class ElemSym(Function, metaclass=e):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
@@ -56,8 +62,8 @@ class ElemSym(Function):
 
         return obj
 
-    # def _symengine_(self):
-    #     return syme.ElemSym(*self.args)
+    def _symengine_(self):
+        return SymPolyWrap(self, self.args, e, sw.PyModule(self.__module__))
 
     @property
     def free_symbols(self):
@@ -128,10 +134,9 @@ class ElemSym(Function):
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
 
-    # @property
-    # def func(self):
-    #     def e(*args):
-    #         return self.__class__(*args)
+    @property
+    def func(self):
+        return e
 
     #     return e
 

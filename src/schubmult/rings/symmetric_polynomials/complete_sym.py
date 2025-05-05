@@ -1,23 +1,28 @@
 from functools import cache
 
-from sympy import Add, Dict, Function, S, sympify
+import symengine.lib.symengine_wrapper as sw
+from sympy import Add, Dict, Function, FunctionClass, S, sympify
 
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.rings.symmetric_polynomials.elem_sym import ElemSym
 from schubmult.utils.logging import get_logger
 
+from .utils import SymPolyWrap
+
 logger = get_logger(__name__)
 
+class h(FunctionClass):
+    pass
 
-class CompleteSym(Function):
+class CompleteSym(Function, metaclass=h):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
     is_Function = True
     is_nonzero = True
 
-    # def _symengine_(self):
-    #     return syme.CompleteSym(*self.args)
+    def _symengine_(self):
+        return SymPolyWrap(self, self.args, h, sw.PyModule(self.__module___))
 
     def __new__(cls, p, k, var1, var2):
         return CompleteSym.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
@@ -80,12 +85,9 @@ class CompleteSym(Function):
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify(elem_sym_poly(self._under_elem._p, self._under_elem._k, [-x for x in self._under_elem.genvars], [-y for y in self._under_elem.coeffvars]))
 
-    # @property
-    # def func(self):
-    #     def h(*args):
-    #         return self.__class__(*args)
-
-    #     return h
+    @property
+    def func(self):
+        return h
 
     def _eval_subs(self, *rule):
         rule = Dict(rule)
