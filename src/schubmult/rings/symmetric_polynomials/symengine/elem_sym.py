@@ -1,14 +1,11 @@
+
+
 import os
-
-os.environ['USE_SYMENGINE'] = "1"
-
-
-
 from functools import cache
 
-from symengine.lib.symengine_wrapper import S, Symbol, sympify
-from sympy import Dict, Function, Integer, StrPrinter, Tuple, sstr
-from sympy.printing.defaults import DefaultPrinting
+os.environ['USE_SYMENGINE'] = "1"
+from sympy import Dict, Integer, S, Tuple, sstr, sympify
+from sympy.core.expr import Expr
 
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.utils.logging import get_logger
@@ -17,10 +14,8 @@ from schubmult.utils.ring_utils import NotEnoughGeneratorsError
 logger = get_logger(__name__)
 
 
-from sympy.core.backend import *
 
-
-class ElemSym(Symbol, DefaultPrinting):
+class ElemSym(Expr):
     is_commutative = True
     is_Atom = True
     is_polynomial = True
@@ -34,7 +29,6 @@ class ElemSym(Symbol, DefaultPrinting):
     @cache
     def __xnew_cached__(_class, p, k, var1, var2):
         return ElemSym.__xnew__(_class, p, k, var1, var2)
-
 
 
     @staticmethod
@@ -53,10 +47,9 @@ class ElemSym(Symbol, DefaultPrinting):
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
-        name = StrPrinter()._print_Function(Function("e")(p,k,*var1, *var2))
-        obj = Symbol.__new__(
+        # name = StrPrinter()._print_Function(Function("e")(p,k,*var1, *var2))
+        obj = Expr.__new__(
             _class,
-            name,
         )
         obj._p = p
         obj._k = k
@@ -64,11 +57,11 @@ class ElemSym(Symbol, DefaultPrinting):
         obj._coeffvars = var2
         return obj
 
+
+
     def __hash__(self):
         return hash(self.args)
 
-    def __init__(self, *args, **kwargs):
-        Symbol.__init__(self, sstr(self))
 
     @property
     def args(self):
@@ -84,10 +77,10 @@ class ElemSym(Symbol, DefaultPrinting):
     def free_symbols(self):
         return set(self.genvars).union(set(self.coeffvars))
 
-    def has_free(self, *x):
-        if any(a in self.free_symbols or sympify(a) in self.free_symbols for a in x):
-            return True
-        return False
+    # def has_free(self, *x):
+    #     if any(a in self.free_symbols or sympify(a) in self.free_symbols for a in x):
+    #         return True
+    #     return False
 
     def split_out_vars(self, vars1, vars2=None):
         vars1 = [sympify(v) for v in vars1 if v in self.genvars]
