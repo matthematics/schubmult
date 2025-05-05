@@ -266,16 +266,10 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
     #     return self.from_dict({Permutation([]): x})
 
     def mul_sympy(self, elem, x):
-        _Add = Add
-        _Mul = Mul
-        _Pow = Pow
-        try:
-            x = symengine.sympify(x)
-        except Exception:
-            x = sympy.sympify(x)
-            _Add = sympy.Add
-            _Mul = sympy.Mul
-            _Pow = sympy.Pow
+        x = sympy.sympify(x)
+        _Add = sympy.Add
+        _Mul = sympy.Mul
+        _Pow = sympy.Pow
         ind = self.genset.index(x)
         if ind != -1:
             return self.from_dict(yz.mult_poly_q_double(elem, x, self.genset, self.coeff_genset))
@@ -367,16 +361,10 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
     #     return self.from_dict({Permutation([]): x})
 
     def mul_sympy(self, elem, x):
-        _Add = Add
-        _Mul = Mul
-        _Pow = Pow
-        try:
-            x = symengine.sympify(x)
-        except Exception:
-            x = sympy.sympify(x)
-            _Add = sympy.Add
-            _Mul = sympy.Mul
-            _Pow = sympy.Pow
+        x = sympy.sympify(x)
+        _Add = sympy.Add
+        _Mul = sympy.Mul
+        _Pow = sympy.Pow
         ind = self.genset.index(x)
         if ind != -1:
             return self.from_dict(py.mult_poly_q(elem, x, self.genset, self.coeff_genset))

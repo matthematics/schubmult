@@ -4,9 +4,13 @@ import symengine.lib.symengine_wrapper as sw
 from sympy import sstr
 
 
-class SymPolyWrap(sw.PyFunction):
+class SymPolyWrap(sw.PyFunction, sw.Symbol):
+
+    def __new__(cls, *args):
+        return sw.PyFunction.__new__(cls, *args)
+
     def __init__(self, *args):
-        super().__init__(*args)
+        super(sw.Symbol, self).__init__(sstr(self.pyobject()))
 
     def __repr__(self):
         return sstr(self.pyobject())
@@ -21,6 +25,9 @@ class SymPolyWrap(sw.PyFunction):
     @property
     def coeffvars(self):
         return self.pyobject().coeffvars
+    
+    def _symengine_(self):
+        return self
     
     def _sympy_(self):
         return self.pyobject()

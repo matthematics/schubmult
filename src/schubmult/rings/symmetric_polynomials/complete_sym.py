@@ -11,18 +11,15 @@ from .utils import SymPolyWrap
 
 logger = get_logger(__name__)
 
-class h(FunctionClass):
-    pass
-
-class CompleteSym(Function, metaclass=h):
+class h(Function):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
     is_Function = True
     is_nonzero = True
 
-    def _symengine_(self):
-        return SymPolyWrap(self, self.args, h, sw.PyModule(self.__module___))
+    # def _symengine_(self):
+    #     return SymPolyWrap(self, self.args, self.__class__, sw.PyModule(self.__module__))
 
     def __new__(cls, p, k, var1, var2):
         return CompleteSym.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
@@ -85,9 +82,11 @@ class CompleteSym(Function, metaclass=h):
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify(elem_sym_poly(self._under_elem._p, self._under_elem._k, [-x for x in self._under_elem.genvars], [-y for y in self._under_elem.coeffvars]))
 
-    @property
-    def func(self):
-        return h
+    # @property
+    # def func(self):
+    #     def h(*args):
+    #         return self.__class__(*args)
+    #     return h
 
     def _eval_subs(self, *rule):
         rule = Dict(rule)
@@ -130,3 +129,5 @@ class CompleteSym(Function, metaclass=h):
 
     def _sympystr(self, printer):
         return printer._print_Function(self)
+
+CompleteSym = h

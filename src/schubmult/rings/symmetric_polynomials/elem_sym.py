@@ -13,11 +13,8 @@ from .utils import SymPolyWrap
 
 logger = get_logger(__name__)
 
-class e(FunctionClass):
-    pass
-    
 
-class ElemSym(Function, metaclass=e):
+class e(Function):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
@@ -62,8 +59,8 @@ class ElemSym(Function, metaclass=e):
 
         return obj
 
-    def _symengine_(self):
-        return SymPolyWrap(self, self.args, e, sw.PyModule(self.__module__))
+    # def _symengine_(self):
+    #     return SymPolyWrap(self, self.args, self.__class__, sw.PyModule(self.__module__))
 
     @property
     def free_symbols(self):
@@ -134,9 +131,11 @@ class ElemSym(Function, metaclass=e):
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
 
-    @property
-    def func(self):
-        return e
+    # @property
+    # def func(self):
+    #     def e(*args):
+    #         return self.__class__(*args)
+    #     return e
 
     #     return e
 
@@ -243,3 +242,5 @@ class ElemSym(Function, metaclass=e):
         if var1 in self.genvars and var2 in self.coeffvars:
             return self.xreplace({var1: var2}) + ElemSym(1, 1, [var1], [var2]) * self.divide_out_diff(var1, var2)
         return self
+
+ElemSym = e
