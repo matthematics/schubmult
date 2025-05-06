@@ -154,12 +154,9 @@ class e(Function):
         # print(f"{self=}")
         rule = Dict(rule)
         new_args = [*self.args]
-        new_args[2] = [*new_args[2]]
-        new_args[3] = [*new_args[3]]
-        for i, arg in enumerate(self.args[2]):
-            new_args[2][i] = arg.subs(rule)
-        for i, arg in enumerate(self.args[3]):
-            new_args[3][i] = arg.subs(rule)
+        new_args = [*self.args]
+        for i, arg in enumerate(self.args[2:]):
+            new_args[i + 2] = arg.xreplace(rule)
         return self.func(*new_args)
 
     def xreplace(self, rule):
@@ -168,12 +165,8 @@ class e(Function):
         # print(f"{self=}")
         rule = Dict(rule)
         new_args = [*self.args]
-        new_args[2] = [*new_args[2]]
-        new_args[3] = [*new_args[3]]
-        for i, arg in enumerate(self.args[2]):
-            new_args[2][i] = arg.xreplace(rule)
-        for i, arg in enumerate(self.args[3]):
-            new_args[3][i] = arg.xreplace(rule)
+        for i, arg in enumerate(self.args[2:]):
+            new_args[i + 2] = arg.xreplace(rule)
         return self.func(*new_args)
 
     def divide_out_diff(self, v1, v2):
@@ -244,7 +237,7 @@ class e(Function):
     def _sympystr(self, printer):
         # return printer._print_Function(self)
         return printer._print_Function(self)
-    
+
     def pull_out_vars(self, var1, var2, min_degree=1):
         if self._p < min_degree:
             return self

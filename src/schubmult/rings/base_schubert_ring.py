@@ -227,14 +227,14 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             elem2 = other
             if isinstance(self, MixedSchubertElement):
                 if isinstance(other, MixedSchubertElement):
-                    return (self - other).almosteq(sympy.S.Zero)
-                return (self - other).almosteq(sympy.S.Zero)
+                    return (self - other).expand(deep=False).almosteq(sympy.S.Zero)
+                return (self - other).expand(deep=False).almosteq(sympy.S.Zero)
             if isinstance(other, MixedSchubertElement):
-                return (self - other).almosteq(sympy.S.Zero)
+                return (self - other).expand(deep=False).almosteq(sympy.S.Zero)
             if elem1.ring == elem2.ring:
-                return (self - other).almosteq(sympy.S.Zero)
+                return (self - other).expand(deep=False).almosteq(sympy.S.Zero)
             return elem1.almosteq(elem1.ring.one * elem2)
-        return (self - self.ring.from_sympy(other)) == self.ring.zero
+        return (self - self.ring.from_sympy(other)).expand(deep=False) == self.ring.zero
 
 
 class BaseSchubertRing(Ring, CompositeDomain):
@@ -335,7 +335,7 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def domain_new(self, element, orig_domain=None):  # noqa: ARG002
         # print(f"They is called me {element=}")
         if isinstance(element, BaseSchubertElement):
-            raise CoercionFailed("not a domain element")
+            raise CoercionFailed("Not a domain element")
         try:
             if hasattr(sympy.sympify(element), "has_free") and hasattr(sympy.sympify(element), "free_symbols"):
                 if not sympy.sympify(element).has_free(*self.symbols):

@@ -293,9 +293,9 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
         if not isinstance(genset, GeneratingSet_base):
             raise TypeError
         if isinstance(x, list) or isinstance(x, tuple):
-            elem = self.from_dict({Permutation(x): 1})
+            elem = self.from_dict({Permutation(x): self.domain.one})
         elif isinstance(x, Permutation):
-            elem = self.from_dict({x: 1})
+            elem = self.from_dict({x: self.domain.one})
         else:
             elem = self.from_sympy(x)
         return elem
@@ -391,9 +391,9 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
         if not isinstance(genset, GeneratingSet_base):
             raise TypeError
         if isinstance(x, list) or isinstance(x, tuple):
-            elem = self.from_dict({Permutation(x): 1})
+            elem = self.from_dict({Permutation(x): self.domain.one})
         elif isinstance(x, Permutation):
-            elem = self.from_dict({x: 1})
+            elem = self.from_dict({x: self.domain.one})
         elif isinstance(x, spr.DoubleSchubertElement):
             if x.genset == self.genset:
                 return x.as_quantum()
@@ -552,9 +552,11 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
 
         cd = b.as_classical()
         for k2, v in cd.items():
+            if expand(v) == S.Zero:
+                continue
             if k != k2:
                 b -= v * self.classical_in_basis(k2)
-        return b
+        return self.from_dict({k: self.domain_new(v) for k,v in b.items() if expand(v) != S.Zero})
 
     @property
     def classical_elem_func(self):
@@ -679,6 +681,8 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
         if not isinstance(dct, BaseSchubertElement):
             return dct
         for k, v in dct.items():
+            if expand(v) == S.Zero:
+                continue
             if elem == self.zero:
                 elem = v * self.classical_in_basis(k)
             else:
@@ -721,15 +725,15 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
             perm = Permutation(x)
             if not is_parabolic(perm, self.parabolic_index):
                 raise ValueError(f"Permutation must be parabolic: {perm} is not")
-            elem = self.from_dict({perm: 1})
+            elem = self.from_dict({perm: self.domain.one})
         elif isinstance(x, Permutation):
             if not is_parabolic(x, self.parabolic_index):
                 raise ValueError(f"Permutation must be parabolic: {x} is not")
-            elem = self.from_dict({x: 1})
+            elem = self.from_dict({x: self.domain.one})
         elif isinstance(x, ParabolicQuantumDoubleSchubertElement):
             return x
         else:
-            elem = self.from_sympy(sympify(x))
+            elem = self.from_sympy(x)
         return elem
 
 
@@ -796,11 +800,11 @@ class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing):
             perm = Permutation(x)
             if not is_parabolic(perm, self.parabolic_index):
                 raise ValueError(f"Permutation must be parabolic: {perm} is not")
-            elem = self.from_dict({perm: 1})
+            elem = self.from_dict({perm: self.domain.one})
         elif isinstance(x, Permutation):
             if not is_parabolic(x, self.parabolic_index):
                 raise ValueError(f"Permutation must be parabolic: {x} is not")
-            elem = self.from_dict({x: 1})
+            elem = self.from_dict({x: self.domain.one})
         elif isinstance(x, ParabolicQuantumDoubleSchubertElement):
             return x
         else:

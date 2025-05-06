@@ -18,8 +18,10 @@ class h(Function):
     # def _symengine_(self):
     #     return SymPolyWrap(self, self.args, self.__class__, sw.PyModule(self.__module__))
 
-    def __new__(cls, p, k, var1, var2):
-        return CompleteSym.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
+    def __new__(cls, p, k, *args):
+        if hasattr(args[0], "__iter__"):
+            return CompleteSym.__xnew_cached__(cls, p, k, tuple(args[0]), tuple(args[1]))
+        return CompleteSym.__xnew_cached__(cls, p, k, tuple(args[:k]), tuple(args[k:2*k + p - 1]))
 
     @staticmethod
     @cache
@@ -34,10 +36,12 @@ class h(Function):
         cont_obj = ElemSym(p, k + p - 1, var2, var1)
         if not isinstance(cont_obj, ElemSym):
             return cont_obj
-        obj = Function.__new__(_class, cont_obj.args[0], cont_obj.args[1] + 1 - cont_obj.args[0], cont_obj.args[3], cont_obj.args[2])
+        obj = Function.__new__(_class, cont_obj.args[0], cont_obj.args[1] + 1 - cont_obj.args[0], *cont_obj._coeffvars, *cont_obj._genvars)
         obj._under_elem = cont_obj
         obj._p = obj.args[0]
         obj._k = obj.args[1]
+        obj._genvars = cont_obj._coeffvars
+        obj._coeffvars = cont_obj._genvars
         return obj
 
     @classmethod
@@ -70,11 +74,11 @@ class h(Function):
 
     @property
     def genvars(self):
-        return tuple(self.args[2])
+        return self._genvars
 
     @property
     def coeffvars(self):
-        return tuple(self.args[3])
+        return self._coeffvars
 
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify(elem_sym_poly(self._under_elem._p, self._under_elem._k, [-x for x in self._under_elem.genvars], [-y for y in self._under_elem.coeffvars]))
@@ -88,23 +92,15 @@ class h(Function):
     def _eval_subs(self, *rule):
         rule = Dict(rule)
         new_args = [*self.args]
-        new_args[2] = [*new_args[2]]
-        new_args[3] = [*new_args[3]]
-        for i, arg in enumerate(self.args[2]):
-            new_args[2][i] = arg.subs(rule)
-        for i, arg in enumerate(self.args[3]):
-            new_args[3][i] = arg.subs(rule)
+        for i, arg in enumerate(self.args[2:]):
+            new_args[i+2] = arg.xreplace(rule)
         return self.func(*new_args)
 
     def xreplace(self, rule):
         rule = Dict(rule)
         new_args = [*self.args]
-        new_args[2] = [*new_args[2]]
-        new_args[3] = [*new_args[3]]
-        for i, arg in enumerate(self.args[2]):
-            new_args[2][i] = arg.xreplace(rule)
-        for i, arg in enumerate(self.args[3]):
-            new_args[3][i] = arg.xreplace(rule)
+        for i, arg in enumerate(self.args[2:]):
+            new_args[i+2] = arg.xreplace(rule)
         return self.func(*new_args)
 
     def divide_out_diff(self, v1, v2):
