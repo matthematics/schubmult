@@ -288,19 +288,19 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     @property
     def elem_sym(self):
-        genset = self.genset
+        # genset = self.genset
 
-        class esf(sympy.Function):
-            @classmethod
-            def eval(cls, *x):
-                pass
+        # class esf(sympy.Function):
+        #     @classmethod
+        #     def eval(cls, *x):
+        #         pass
 
-            def _eval_expand_func(self, **_):
-                if len(self.args) == 2:
-                    return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], utils.poly_ring(0))
-                return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], self.args[2:])
+        #     def _eval_expand_func(self, **_):
+        #         if len(self.args) == 2:
+        #             return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], utils.poly_ring(0))
+        #         return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], self.args[2:])
 
-        return esf
+        return ElemSym
 
     @property
     def elem_mul_type(self):

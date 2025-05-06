@@ -1,7 +1,7 @@
 from functools import cache
 
 import symengine.lib.symengine_wrapper as sw
-from sympy import Dict, FiniteSet, Integer, S, sympify
+from sympy import Dict, FiniteSet, Integer, S, Symbol, Tuple, sympify
 from sympy.core.function import Function
 
 # import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
@@ -19,8 +19,10 @@ class e(Function):
     is_Function = True
     is_nonzero = True
 
-    def __new__(cls, p, k, var1, var2):
-        return ElemSym.__xnew_cached__(cls, p, k, tuple(var1), tuple(var2))
+    def __new__(cls, p, k, *args):
+        if hasattr(args[0], "__iter__"):
+            return ElemSym.__xnew_cached__(cls, p, k, tuple(args[0]), tuple(args[1]))
+        return ElemSym.__xnew_cached__(cls, p, k, tuple(args[:k]), tuple(args[k:2*k + 1 - p]))
 
     @staticmethod
     @cache
@@ -49,13 +51,13 @@ class e(Function):
             _class,
             Integer(p),
             Integer(k),
-            var1,
-            var2,
+            *var1,
+            *var2,
         )
-        if len(obj.args[2]) < k:
-            raise ValueError("Duplicate genvar arguments")
-        if len(obj.args[3]) < k + 1 - p:
-            raise ValueError("Duplicate coeffvar arguments")
+        # if len(obj.args[2]) < k:
+        #     raise ValueError("Duplicate genvar arguments")
+        # if len(obj.args[3]) < k + 1 - p:
+        #     raise ValueError("Duplicate coeffvar arguments")
         obj._p = p
         obj._k = k
         obj._genvars = var1
@@ -127,11 +129,11 @@ class e(Function):
 
     @property
     def genvars(self):
-        return tuple(self.args[2])
+        return self._genvars
 
     @property
     def coeffvars(self):
-        return tuple(self.args[3])
+        return self._coeffvars
 
     @cache
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
@@ -241,8 +243,8 @@ class e(Function):
 
     def _sympystr(self, printer):
         # return printer._print_Function(self)
-        return printer._print(f"{self.func.__name__}({printer.stringify([self.args[0],self.args[1],*self.args[2],*self.args[3]], ', ')})")
-
+        return printer._print_Function(self)
+    
     def pull_out_vars(self, var1, var2, min_degree=1):
         if self._p < min_degree:
             return self
