@@ -344,7 +344,7 @@ class e(Function):
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify(elem_sym_poly(self._p, self._k, self.genvars, [0 for i in range(30)]))
 
-    
+
     def _eval_subs(self, *rule):
         # print(f"_eval_subs")
         # print(f"{rule=}")
