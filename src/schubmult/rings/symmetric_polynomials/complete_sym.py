@@ -3,7 +3,7 @@ from functools import cache
 from sympy import Add, Dict, Function, S, sympify
 
 from schubmult.rings.poly_lib import elem_sym_poly
-from schubmult.rings.symmetric_polynomials.elem_sym import ElemSym
+from schubmult.rings.symmetric_polynomials.elem_sym import FactorialElemSym
 from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -33,8 +33,8 @@ class h(Function):
 
     @staticmethod
     def __xnew__(_class, p, k, var1, var2):
-        cont_obj = ElemSym(p, k + p - 1, var2, var1)
-        if not isinstance(cont_obj, ElemSym):
+        cont_obj = FactorialElemSym(p, k + p - 1, var2, var1)
+        if not isinstance(cont_obj, FactorialElemSym):
             return cont_obj
         obj = Function.__new__(_class, cont_obj.args[0], cont_obj.args[1] + 1 - cont_obj.args[0], *cont_obj._coeffvars, *cont_obj._genvars)
         obj._under_elem = cont_obj
@@ -105,11 +105,11 @@ class h(Function):
 
     def divide_out_diff(self, v1, v2):
         new_obj = self._under_elem.divide_out_diff(v1, v2)
-        return new_obj.replace(ElemSym, lambda x: CompleteSym.from_elem_sym(ElemSym(*x)))
+        return new_obj.replace(FactorialElemSym, lambda x: CompleteSym.from_elem_sym(FactorialElemSym(*x)))
 
     @staticmethod
     def from_expr_elem_sym(expr):
-        return expr.replace(ElemSym, lambda x: CompleteSym.from_elem_sym(ElemSym(*x)))
+        return expr.replace(FactorialElemSym, lambda x: CompleteSym.from_elem_sym(FactorialElemSym(*x)))
 
     def _eval_div_diff(self, v1, v2):
         return CompleteSym.from_expr_elem_sym(self._under_elem.div_diff(v1, v2))

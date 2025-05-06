@@ -68,9 +68,9 @@ def test_subs():
 
 def test_elem_sym_schub():
     from schubmult import DSx
-    from schubmult.abc import x, y, e, z
+    from schubmult.abc import x, y, E, z
     from sympy import expand, S
-    em = e(2,3,[x[1],x[5],x[7]],[y[1],y[5],y[7],y[9]])*e(1,3,[x[1],x[4],x[5]],[y[8],y[14],y[29]]) - e(3,3,[x[1],x[7],x[3]],[z[4]])
+    em = E(2,3,[x[1],x[5],x[7]],[y[1],y[5],y[7],y[9]])*E(1,3,[x[1],x[4],x[5]],[y[8],y[14],y[29]]) - E(3,3,[x[1],x[7],x[3]],[z[4]])
     assert expand(em - DSx([]).ring.from_sympy(em),func=True) == S.Zero
 
 def test_complete_sym_schub():

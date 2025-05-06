@@ -21,13 +21,13 @@ class E(Function):
 
     def __new__(cls, p, k, *args):
         if hasattr(args[0], "__iter__"):
-            return ElemSym.__xnew_cached__(cls, p, k, tuple(args[0]), tuple(args[1]))
-        return ElemSym.__xnew_cached__(cls, p, k, tuple(args[:k]), tuple(args[k:2*k + 1 - p]))
+            return FactorialElemSym.__xnew_cached__(cls, p, k, tuple(args[0]), tuple(args[1]))
+        return FactorialElemSym.__xnew_cached__(cls, p, k, tuple(args[:k]), tuple(args[k:2*k + 1 - p]))
 
     @staticmethod
     @cache
     def __xnew_cached__(_class, p, k, var1, var2):
-        return ElemSym.__xnew__(_class, p, k, var1, var2)
+        return FactorialElemSym.__xnew__(_class, p, k, var1, var2)
 
     @staticmethod
     def __xnew__(_class, p, k, var1, var2):
@@ -40,7 +40,7 @@ class E(Function):
         for i, v in enumerate(var1):
             if v in var2:
                 j = var2.index(v)
-                return ElemSym.__new__(_class, p, k - 1, [*var1[:i], *var1[i + 1 :]], [*var2[:j], *var2[j + 1 :]])
+                return FactorialElemSym.__new__(_class, p, k - 1, [*var1[:i], *var1[i + 1 :]], [*var2[:j], *var2[j + 1 :]])
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
@@ -242,7 +242,7 @@ class E(Function):
         if self._p < min_degree:
             return self
         if var1 in self.genvars and var2 in self.coeffvars:
-            return self.xreplace({var1: var2}) + ElemSym(1, 1, [var1], [var2]) * self.divide_out_diff(var1, var2)
+            return self.xreplace({var1: var2}) + FactorialElemSym(1, 1, [var1], [var2]) * self.divide_out_diff(var1, var2)
         return self
 
 
@@ -264,7 +264,7 @@ class e(Function):
         return ElemSym.__xnew__(_class, p, k, var1)
 
     @staticmethod
-    def __xnew__(_class, p, k, var1, var2):
+    def __xnew__(_class, p, k, var1):
         if p > k or k < 0:
             return S.Zero
         if p == 0:

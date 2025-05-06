@@ -238,3 +238,5 @@ different monomials are disjoint
 cached elem sym eval
 
 Allow zero coeff_vars/genvars
+
+Make e subclass of E?
