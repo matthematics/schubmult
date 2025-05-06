@@ -43,6 +43,8 @@ class e(Function):
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
+        var1 = tuple(sorted(var1,key=lambda x: sympify(x).sort_key()))
+        var2 = tuple(sorted(var2,key=lambda x: sympify(x).sort_key()))
         obj = Function.__new__(
             _class,
             Integer(p),
@@ -238,7 +240,8 @@ class e(Function):
         return S.Zero
 
     def _sympystr(self, printer):
-        return printer._print_Function(self)
+        # return printer._print_Function(self)
+        return printer._print(f"{self.func.__name__}({printer.stringify([self.args[0],self.args[1],*self.args[2],*self.args[3]], ', ')})")
 
     def pull_out_vars(self, var1, var2, min_degree=1):
         if self._p < min_degree:
