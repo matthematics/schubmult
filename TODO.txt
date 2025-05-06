@@ -240,3 +240,7 @@ cached elem sym eval
 Allow zero coeff_vars/genvars
 
 Make e subclass of E?
+
+Difference algebra
+Difference ideal groebner
+groeber basis on (y1 - z1) ideal
