@@ -18,7 +18,7 @@ from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .poly_lib import elem_sym_poly, xreplace_genvars
 from .schub_poly import schubpoly_classical_from_elems
 from .symmetric_polynomials.complete_sym import CompleteSym
-from .symmetric_polynomials.elem_sym import ElemSym
+from .symmetric_polynomials.elem_sym import ElemSym, FactorialElemSym
 from .symmetric_polynomials.functions import split_out_vars
 from .tensor_ring import TensorRing
 from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
@@ -300,11 +300,11 @@ class DoubleSchubertRing(BaseSchubertRing):
         #             return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], utils.poly_ring(0))
         #         return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], self.args[2:])
 
-        return ElemSym
+        return FactorialElemSym
 
     @property
     def elem_mul_type(self):
-        return ElemSym
+        return FactorialElemSym
 
     # specifically symengine
     def elem_mul(self, ring_elem, elem):
@@ -320,7 +320,7 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     @property
     def symbol_elem_func(self):
-        return ElemSym
+        return FactorialElemSym
 
     def elem_sym_subs(self, kk):
         elems = []
