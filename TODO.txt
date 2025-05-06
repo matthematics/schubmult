@@ -244,3 +244,7 @@ Make e subclass of E?
 Difference algebra
 Difference ideal groebner
 groeber basis on (y1 - z1) ideal
+
+Infinite gensets
+Symbol printing
+Try to combine classes
