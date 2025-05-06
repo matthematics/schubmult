@@ -1,7 +1,9 @@
 from functools import cache
 
+import symengine.lib.symengine_wrapper as sw
 import sympy
 from symengine import SympifyError, sympify
+from sympy.core._print_helpers import Printable
 
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet
 from schubmult.utils.perm_utils import add_perm_dict
@@ -63,3 +65,100 @@ def _tensor_product_of_dicts(d1, d2):
                     this_dict[(k1, k2)] = v1 * v2
         ret_dict = add_perm_dict(ret_dict, this_dict)
     return ret_dict
+
+import os
+
+os.environ["USE_SYMENGINE"] = "1"
+
+class SymengineExpr(sw.Symbol, Printable):
+
+    is_number = False
+    is_Atom = False
+    is_Symbol = False
+    is_symbol = False
+    is_Indexed = False
+    is_Dummy = False
+    is_Wild = False
+    is_Function = False
+    is_Add = False
+    is_Mul = False
+    is_Pow = False
+    is_Number = False
+    is_Float = False
+    is_Rational = False
+    is_Integer = False
+    is_NumberSymbol = False
+    is_Order = False
+    is_Derivative = False
+    is_Piecewise = False
+    is_Poly = False
+    is_AlgebraicNumber = False
+    is_Relational = False
+    is_Equality = False
+    is_Boolean = False
+    is_Not = False
+    is_Matrix = False
+    is_Vector = False
+    is_Point = False
+    is_MatAdd = False
+    is_MatMul = False
+
+    _op_priority = 400
+    is_composite: bool | None
+    is_noninteger: bool | None
+    is_extended_positive: bool | None
+    is_negative: bool | None
+    is_complex: bool | None
+    is_extended_nonpositive: bool | None
+    is_integer: bool | None
+    is_positive: bool | None
+    is_rational: bool | None
+    is_extended_nonnegative: bool | None
+    is_infinite: bool | None
+    is_extended_negative: bool | None
+    is_extended_real: bool | None
+    is_finite: bool | None
+    is_polar: bool | None
+    is_imaginary: bool | None
+    is_transcendental: bool | None
+    is_extended_nonzero: bool | None
+    is_nonzero: bool | None
+    is_odd: bool | None
+    is_algebraic: bool | None
+    is_prime: bool | None
+    is_commutative: bool | None
+    is_nonnegative: bool | None
+    is_nonpositive: bool | None
+    is_irrational: bool | None
+    is_real: bool | None
+    is_zero: bool | None
+    is_even: bool | None
+
+    def __new__(cls, *args):
+        obj = sw.Symbol.__new__(cls)
+        obj._base_args = args
+        return obj
+
+    def __init__(self, *args):
+        super().__init__(self, *args, store_pickle=True)
+
+    def encode(self, *args):
+        from sympy.printing.str import sstr
+        return sstr(self).encode(*args)
+
+    @property
+    def args(self):
+        return self._base_args
+
+    def __reduce__(self):
+        return (self.__class__, self.args)
+
+    def _sympystr(self, printer):
+        return printer._print(self.args)
+
+    def _sympyrepr(self, printer):
+        return printer._print(self.args)
+
+    @property
+    def func(self):
+        return self.__class__

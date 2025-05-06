@@ -1,18 +1,18 @@
 from functools import cache
 
 import symengine.lib.symengine_wrapper as sw
-from sympy import Dict, FiniteSet, Integer, S, Symbol, Tuple, sympify
+from sympy import Dict, Expr, FiniteSet, Integer, S, Symbol, Tuple, sympify
 from sympy.core.function import Function
 
 # import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.utils.logging import get_logger
-from schubmult.utils.ring_utils import NotEnoughGeneratorsError
+from schubmult.utils.ring_utils import NotEnoughGeneratorsError, SymengineExpr
 
 logger = get_logger(__name__)
 
 
-class E(Function):
+class E(SymengineExpr):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
@@ -47,7 +47,7 @@ class E(Function):
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
         var1 = tuple(sorted(var1,key=lambda x: sympify(x).sort_key()))
         var2 = tuple(sorted(var2,key=lambda x: sympify(x).sort_key()))
-        obj = Function.__new__(
+        obj = SymengineExpr.__new__(
             _class,
             Integer(p),
             Integer(k),
@@ -65,9 +65,11 @@ class E(Function):
 
         return obj
 
+    # def __init__(self, p, k, *args):
+    #     super().__init__(self, p, k, *args)
 
-    def _symengine_(self):
-        return sw.PyFunction(self, (self.args[0],self.args[1],*self.genvars,*self.coeffvars), self.__class__, sw.PyModule(self.__module__))
+    # def _symengine_(self):
+    #     return sw.PyFunction(self, (self.args[0],self.args[1],*self.genvars,*self.coeffvars), self.__class__, sw.PyModule(self.__module__))
 
     @property
     def free_symbols(self):
@@ -246,7 +248,7 @@ class E(Function):
         return self
 
 
-class e(Function):
+class e(SymengineExpr):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
@@ -273,11 +275,8 @@ class e(Function):
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         var1 = tuple(sorted(var1,key=lambda x: sympify(x).sort_key()))
-        obj = Function.__new__(
+        obj = SymengineExpr.__new__(
             _class,
-            Integer(p),
-            Integer(k),
-            *var1,
         )
         # if len(obj.args[2]) < k:
         #     raise ValueError("Duplicate genvar arguments")
@@ -289,9 +288,13 @@ class e(Function):
 
         return obj
 
-
-    def _symengine_(self):
-        return sw.PyFunction(self, (self.args[0],self.args[1],*self.genvars), self.__class__, sw.PyModule(self.__module__))
+    # def __init__(self, p, k, *args):
+    #     super().__init__(self, p, k, *args)
+    
+    def __reduce__(self):
+        return (self.__class__, self.args)
+    # def _symengine_(self):
+    #     return sw.PyFunction(self, (self.args[0],self.args[1],*self.genvars), self.__class__, sw.PyModule(self.__module__))
 
     @property
     def free_symbols(self):
@@ -402,6 +405,9 @@ class e(Function):
         if v1 in self.genvars:
             return S.One
         return S.Zero
+    
+    def __reduce__(self):
+        return (self.__class__, self.args)
 
     def _sympystr(self, printer):
         # return printer._print_Function(self)
