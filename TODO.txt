@@ -236,3 +236,5 @@ faster way to posify with elem syms
 different monomials are disjoint
 
 cached elem sym eval
+
+Allow zero coeff_vars/genvars

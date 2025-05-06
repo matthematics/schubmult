@@ -316,7 +316,7 @@ class BaseSchubertRing(Ring, CompositeDomain):
 
         for monom, coeff in element.items():
             coeff = domain_new(coeff, orig_domain)
-            if expand(coeff) != S_nm.Zero:
+            if coeff != self.domain.zero:
                 poly[monom] = coeff
         return poly
 

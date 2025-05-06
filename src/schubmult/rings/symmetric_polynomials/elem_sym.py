@@ -1,5 +1,6 @@
 from functools import cache
 
+import symengine.lib.symengine_wrapper as sw
 from sympy import Dict, FiniteSet, Integer, S, sympify
 from sympy.core.function import Function
 
@@ -46,8 +47,8 @@ class e(Function):
             _class,
             Integer(p),
             Integer(k),
-            FiniteSet(*var1),
-            FiniteSet(*var2),
+            var1,
+            var2,
         )
         if len(obj.args[2]) < k:
             raise ValueError("Duplicate genvar arguments")
@@ -60,8 +61,9 @@ class e(Function):
 
         return obj
 
-    # def _symengine_(self):
-    #     return SymPolyWrap(self, self.args, self.__class__, sw.PyModule(self.__module__))
+
+    def _symengine_(self):
+        return sw.PyFunction(self, (self.args[0],self.args[1],*self.genvars,*self.coeffvars), self.__class__, sw.PyModule(self.__module__))
 
     @property
     def free_symbols(self):
