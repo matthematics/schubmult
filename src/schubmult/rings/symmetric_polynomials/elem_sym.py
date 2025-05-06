@@ -19,9 +19,13 @@ class e(Function):
     is_Function = True
     is_nonzero = True
 
-    def __new__(cls, p, k, *args):
+    def __new__(cls, p, k, *args, factorial=True):
         if hasattr(args[0], "__iter__"):
+            if not factorial:
+                return ElemSym.__xnew_cached__(cls, p, k, tuple(args[0]), None)
             return ElemSym.__xnew_cached__(cls, p, k, tuple(args[0]), tuple(args[1]))
+        if not factorial:
+            return ElemSym.__xnew_cached__(cls, p, k, tuple(args[:k]), None)
         return ElemSym.__xnew_cached__(cls, p, k, tuple(args[:k]), tuple(args[k:2*k + 1 - p]))
 
     @staticmethod
@@ -36,24 +40,35 @@ class e(Function):
         if p == 0:
             return S.One
         var1 = var1[:k]
-        var2 = var2[: k + 1 - p]
-        for i, v in enumerate(var1):
-            if v in var2:
-                j = var2.index(v)
-                return ElemSym.__new__(_class, p, k - 1, [*var1[:i], *var1[i + 1 :]], [*var2[:j], *var2[j + 1 :]])
+        factorial = True if var2 is not None else False
+        if var2 is not None:
+            var2 = var2[: k + 1 - p]
+            for i, v in enumerate(var1):
+                if v in var2:
+                    j = var2.index(v)
+                    return ElemSym.__new__(_class, p, k - 1, [*var1[:i], *var1[i + 1 :]], [*var2[:j], *var2[j + 1 :]])
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
-        if len(var2) < k + 1 - p:
+        if var2 is not None and len(var2) < k + 1 - p:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
         var1 = tuple(sorted(var1,key=lambda x: sympify(x).sort_key()))
-        var2 = tuple(sorted(var2,key=lambda x: sympify(x).sort_key()))
-        obj = Function.__new__(
-            _class,
-            Integer(p),
-            Integer(k),
-            *var1,
-            *var2,
-        )
+        if var2 is not None:
+            var2 = tuple(sorted(var2,key=lambda x: sympify(x).sort_key()))
+        if factorial:
+            obj = Function.__new__(
+                _class,
+                Integer(p),
+                Integer(k),
+                *var1,
+                *var2,
+            )
+        else:
+            obj = Function.__new__(
+                _class,
+                Integer(p),
+                Integer(k),
+                *var1,
+            )
         # if len(obj.args[2]) < k:
         #     raise ValueError("Duplicate genvar arguments")
         # if len(obj.args[3]) < k + 1 - p:
@@ -62,9 +77,12 @@ class e(Function):
         obj._k = k
         obj._genvars = var1
         obj._coeffvars = var2
-
+        obj._factorial = factorial
         return obj
 
+    @property
+    def is_factorial(self):
+        return self._factorial
 
     def _symengine_(self):
         return sw.PyFunction(self, (self.args[0],self.args[1],*self.genvars,*self.coeffvars), self.__class__, sw.PyModule(self.__module__))
