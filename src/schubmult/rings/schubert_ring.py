@@ -315,7 +315,7 @@ class DoubleSchubertRing(BaseSchubertRing):
             for perm, df, sign in perm_list:
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in indexes if perm[i - 1] == k[i - 1]]
                 coeff = ElemSym(elem._p - df, elem._k - df, remaining_vars, elem.coeffvars)  # leave as elem sym
-                ret += self.domain_new(v * sympy.expand_func(coeff)) * self(perm)
+                ret += self.domain_new(v * sign* sympy.expand_func(coeff)) * self(perm)
         return ret
 
     @property
