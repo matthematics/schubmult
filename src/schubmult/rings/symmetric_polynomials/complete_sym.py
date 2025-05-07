@@ -5,10 +5,11 @@ from sympy import Add, Dict, Function, S, sympify
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.rings.symmetric_polynomials.elem_sym import FactorialElemSym
 from schubmult.utils.logging import get_logger
+from schubmult.utils.ring_utils import SymengineExpr
 
 logger = get_logger(__name__)
 
-class h(Function):
+class h(SymengineExpr):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
@@ -36,7 +37,7 @@ class h(Function):
         cont_obj = FactorialElemSym(p, k + p - 1, var2, var1)
         if not isinstance(cont_obj, FactorialElemSym):
             return cont_obj
-        obj = Function.__new__(_class, cont_obj.args[0], cont_obj.args[1] + 1 - cont_obj.args[0], *cont_obj._coeffvars, *cont_obj._genvars)
+        obj = SymengineExpr.__new__(_class, cont_obj.args[0], cont_obj.args[1] + 1 - cont_obj.args[0], *cont_obj._coeffvars, *cont_obj._genvars)
         obj._under_elem = cont_obj
         obj._p = obj.args[0]
         obj._k = obj.args[1]

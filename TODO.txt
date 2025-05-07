@@ -246,5 +246,7 @@ Difference ideal groebner
 groeber basis on (y1 - z1) ideal
 
 Infinite gensets
-Symbol printing
-Try to combine classes
+Symbol printing!!!
+Try to combine classes!!!
+update complete sym
+can set the class

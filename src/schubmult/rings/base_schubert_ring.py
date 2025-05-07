@@ -1,6 +1,6 @@
 import os
 
-os.environ['USE_SYMENGINE'] = "1"
+os.environ["USE_SYMENGINE"] = "1"
 
 
 import symengine
@@ -24,12 +24,11 @@ from .schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 logger = get_logger(__name__)
 
 
-
-
 class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     _op_priority = 1e200
     precedence = 40
     __sympy__ = True
+
     def parent(self):
         return self.ring
 
@@ -85,18 +84,12 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def as_terms(self):
         if len(self.keys()) == 0:
             return [sympy.sympify(S.Zero)]
-        return [
-            (sympy.sympify(self[k]) if k == Permutation([]) else sympy.Mul(sympy.sympify(self[k]), self.ring.printing_term(k)))
-            for k in self.keys()
-        ]
+        return [((self[k]) if k == Permutation([]) else sympy.Mul((self[k]), self.ring.printing_term(k))) for k in self.keys()]
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
             return [sympy.sympify(S.Zero)]
-        return [
-            (sympy.sympify(self[k]) if k == Permutation([]) else sympy.Mul(sympy.sympify(self[k]), self.ring.printing_term(k)))
-            for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))
-        ]
+        return [((self[k]) if k == Permutation([]) else sympy.Mul((self[k]), self.ring.printing_term(k))) for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))]
 
     def __add__(self, other):
         if isinstance(other, BaseSchubertElement):
@@ -258,8 +251,6 @@ class BaseSchubertRing(Ring, CompositeDomain):
         self.dom = self.domain
         self.zero_monom = Permutation([])
 
-
-
     def add(self, elem, other):
         # print(f"{elem=}")
         # print(f"{other=}")
@@ -349,7 +340,6 @@ class BaseSchubertRing(Ring, CompositeDomain):
         #     import traceback
         #     traceback.print_exc()
         #     raise CoercionFailed(f"{element} is of type {type(element)} and could not be coerced to {self.domain}")
-
 
     @property
     def genset(self):

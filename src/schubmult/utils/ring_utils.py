@@ -54,17 +54,18 @@ def _tensor_product_of_dicts(d1, d2):
         except SympifyError:
             v1 = sympy.sympify(v1)
         for k2, v2 in d2.items():
-                try:
-                    v2 = sympify(v2)
-                except SympifyError:
-                    v2 = sympy.sympify(v2)
-                    v1 = sympy.sympify(v1)
-                if isinstance(k1, tuple):
-                    this_dict[(*k1, k2)] = v1 * v2
-                else:
-                    this_dict[(k1, k2)] = v1 * v2
+            try:
+                v2 = sympify(v2)
+            except SympifyError:
+                v2 = sympy.sympify(v2)
+                v1 = sympy.sympify(v1)
+            if isinstance(k1, tuple):
+                this_dict[(*k1, k2)] = v1 * v2
+            else:
+                this_dict[(k1, k2)] = v1 * v2
         ret_dict = add_perm_dict(ret_dict, this_dict)
     return ret_dict
+
 
 import os
 
@@ -74,21 +75,31 @@ from sympy.core.backend import *
 from sympy.core.expr import Expr
 
 
-class SympySymbol(Expr):
-    def __init__(self, obj):
-        self._obj = obj
+class SympyExpr(Expr):
+    def __new__(cls, _obj):
+        obj = Expr.__new__(cls, *_obj.args)
+        obj._obj = _obj
+        return obj
+
+    def __hash__(self):
+        return hash(self.args)
+
+    def __getattr__(self, attr):
+        if attr == "_symengine_":
+            return self._symengine_
+        return getattr(self._obj, attr)
 
     def _symengine_(self):
         return self._obj
 
-    def _sympystr(self,printer):
+    def _sympystr(self, printer):
         return printer.doprint(self._obj)
-    
+
     def __str__(self):
         return sstr(self._obj)
 
-class SymengineExpr(sw.Symbol, Printable):
 
+class SymengineExpr(sw.Symbol, Printable):
     _op_priority = 800000
 
     is_number = False
@@ -122,7 +133,6 @@ class SymengineExpr(sw.Symbol, Printable):
     is_MatAdd = False
     is_MatMul = False
 
-    _op_priority = 400
     is_composite: bool | None
     is_noninteger: bool | None
     is_extended_positive: bool | None
@@ -156,16 +166,21 @@ class SymengineExpr(sw.Symbol, Printable):
     def __new__(cls, *args):
         obj = sw.Symbol.__new__(cls)
         obj._base_args = args
+        obj._obj = SympyExpr(obj)
         return obj
 
     def __init__(self, *args):
         super().__init__(self, *args, store_pickle=True)
 
-    def _sympy_(self):
-        return SympySymbol(self)
+    # def _sympy_(self):
+    #     return self._obj
 
+    def __hash__(self):
+        return hash(self.args)
+    
     def encode(self, *args):
         from sympy.printing.str import sstr
+
         return sstr(self).encode(*args)
 
     @property

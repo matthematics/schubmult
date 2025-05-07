@@ -255,6 +255,7 @@ class e(SymengineExpr):
     is_Function = True
     is_nonzero = True
 
+
     def __new__(cls, p, k, *args):
         if hasattr(args[0], "__iter__"):
             return ElemSym.__xnew_cached__(cls, p, k, tuple(args[0]))
