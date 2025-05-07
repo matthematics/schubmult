@@ -1,8 +1,7 @@
 from functools import cache
 
+import symengine.lib.symengine_wrapper as sw
 import sympy
-
-#import symengine.lib.symengine_wrapper as sw
 from symengine import DictBasic, S, sympify
 
 # import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
@@ -155,18 +154,31 @@ class E(SymengineExpr):
         # print(f"_eval_subs")
         # print(f"{rule=}")
         # print(f"{self=}")
-        rule = DictBasic(rule)
+        print("pwing")
+        rule = sw.get_dict(*rule)
+        new_args = [*self.args]
+        new_args = [*self.args]
+        for i, arg in enumerate(self.args[2:]):
+            new_args[i + 2] = arg.xreplace(rule)
+        return self.func(*new_args)
+    
+    def subs(self, *rule):
+        # print(f"_eval_subs")
+        # print(f"{rule=}")
+        # print(f"{self=}")
+        print("Pwangus")
+        rule = sw.get_dict(*rule)
         new_args = [*self.args]
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
             new_args[i + 2] = arg.xreplace(rule)
         return self.func(*new_args)
 
-    def xreplace(self, rule):
+    def xreplace(self, *rule):
         # print(f"xreplace")
         # print(f"{rule=}")
         # print(f"{self=}")
-        rule = DictBasic(rule)
+        rule = sw.get_dict(*rule)
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
             new_args[i + 2] = arg.xreplace(rule)
