@@ -1,6 +1,6 @@
 from functools import cache
 
-from sympy import Add, Dict, Function, S, sympify
+from symengine import Add, DictBasic, S, sympify
 
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.rings.symmetric_polynomials.elem_sym import FactorialElemSym
@@ -91,14 +91,14 @@ class h(SymengineExpr):
     #     return h
 
     def _eval_subs(self, *rule):
-        rule = Dict(rule)
+        rule = DictBasic(rule)
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
             new_args[i+2] = arg.xreplace(rule)
         return self.func(*new_args)
 
     def xreplace(self, rule):
-        rule = Dict(rule)
+        rule = DictBasic(rule)
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
             new_args[i+2] = arg.xreplace(rule)

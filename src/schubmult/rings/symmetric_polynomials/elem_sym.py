@@ -1,8 +1,9 @@
 from functools import cache
 
-import symengine.lib.symengine_wrapper as sw
-from sympy import Dict, Expr, FiniteSet, Integer, S, Symbol, Tuple, sympify
-from sympy.core.function import Function
+import sympy
+
+#import symengine.lib.symengine_wrapper as sw
+from symengine import DictBasic, S, sympify
 
 # import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
 from schubmult.rings.poly_lib import elem_sym_poly
@@ -45,12 +46,12 @@ class E(SymengineExpr):
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
-        var1 = tuple(sorted(var1,key=lambda x: sympify(x).sort_key()))
-        var2 = tuple(sorted(var2,key=lambda x: sympify(x).sort_key()))
+        var1 = tuple(sorted(var1,key=lambda x: sympy.sympify(x).sort_key()))
+        var2 = tuple(sorted(var2,key=lambda x: sympy.sympify(x).sort_key()))
         obj = SymengineExpr.__new__(
             _class,
-            Integer(p),
-            Integer(k),
+            p,
+            k,
             *var1,
             *var2,
         )
@@ -154,7 +155,7 @@ class E(SymengineExpr):
         # print(f"_eval_subs")
         # print(f"{rule=}")
         # print(f"{self=}")
-        rule = Dict(rule)
+        rule = DictBasic(rule)
         new_args = [*self.args]
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
@@ -165,11 +166,14 @@ class E(SymengineExpr):
         # print(f"xreplace")
         # print(f"{rule=}")
         # print(f"{self=}")
-        rule = Dict(rule)
+        rule = DictBasic(rule)
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
             new_args[i + 2] = arg.xreplace(rule)
         return self.func(*new_args)
+
+    def __reduce__(self):
+        return (self.__class__, self.args)
 
     def divide_out_diff(self, v1, v2):
         if v1 == v2:
@@ -275,7 +279,7 @@ class e(SymengineExpr):
         var1 = var1[:k]
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
-        var1 = tuple(sorted(var1,key=lambda x: sympify(x).sort_key()))
+        var1 = tuple(sorted(var1,key=lambda x: sympy.sympify(x).sort_key()))
         obj = SymengineExpr.__new__(
             _class,
         )
@@ -291,9 +295,7 @@ class e(SymengineExpr):
 
     # def __init__(self, p, k, *args):
     #     super().__init__(self, p, k, *args)
-    
-    def __reduce__(self):
-        return (self.__class__, self.args)
+
     # def _symengine_(self):
     #     return sw.PyFunction(self, (self.args[0],self.args[1],*self.genvars), self.__class__, sw.PyModule(self.__module__))
 
@@ -353,7 +355,7 @@ class e(SymengineExpr):
         # print(f"_eval_subs")
         # print(f"{rule=}")
         # print(f"{self=}")
-        rule = Dict(rule)
+        rule = DictBasic(rule)
         new_args = [*self.args]
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
@@ -364,7 +366,7 @@ class e(SymengineExpr):
         # print(f"xreplace")
         # print(f"{rule=}")
         # print(f"{self=}")
-        rule = Dict(rule)
+        rule = DictBasic(rule)
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
             new_args[i + 2] = arg.xreplace(rule)
@@ -406,7 +408,7 @@ class e(SymengineExpr):
         if v1 in self.genvars:
             return S.One
         return S.Zero
-    
+
     def __reduce__(self):
         return (self.__class__, self.args)
 

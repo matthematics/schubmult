@@ -177,7 +177,7 @@ class SymengineExpr(sw.Symbol, Printable):
 
     def __hash__(self):
         return hash(self.args)
-    
+
     def encode(self, *args):
         from sympy.printing.str import sstr
 

@@ -74,7 +74,7 @@ class DoubleSchubertElement(BaseSchubertElement):
                 coeff_gens = self.ring.coeff_genset
                 L = schub_lib.pull_out_var(mindex + 1, perm)
                 for index_list, new_perm in L:
-                    result += self.ring.from_dict({new_perm: v}).mult_poly(sympy.prod([(new - coeff_gens[index2]) for index2 in index_list]))
+                    result += self.ring.from_dict({new_perm: v}).mult_poly(Mul(*[(new - coeff_gens[index2]) for index2 in index_list]))
             return result
 
         for k, v in self.items():
@@ -750,7 +750,7 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
 
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, "EDBS"))
-    
+
     _elem_sym_pattern = sympy.Wild("a") - sympy.Wild("b")
     _elem_sym_pattern2 = sympy.Wild("a") + sympy.Wild("b")
 
