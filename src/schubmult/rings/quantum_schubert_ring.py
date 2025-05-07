@@ -2,7 +2,7 @@ from bisect import bisect_left
 from functools import cache
 
 import sympy
-from symengine import S, Symbol, expand
+from symengine import Add, Mul, Pow, S, Symbol, expand
 
 import schubmult.rings.schubert_ring as spr
 import schubmult.schub_lib.quantum as py
@@ -176,7 +176,7 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
                 return 1
             if p < 0 or p > k:
                 return 0
-            return sympy.Add(*[(Symbol(f"e_{p - i}_{k}") if p - i > 0 else 1) * complete_sym_poly(i, k + 1 - p, [-v for v in varl2]) for i in range(p + 1)])
+            return Add(*[(Symbol(f"e_{p - i}_{k}") if p - i > 0 else 1) * complete_sym_poly(i, k + 1 - p, [-v for v in varl2]) for i in range(p + 1)])
 
         return elem_func
 
@@ -265,10 +265,10 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
     #     return self.from_dict({Permutation([]): x})
 
     def mul_sympy(self, elem, x):
-        x = sympy.sympify(x)
-        _Add = sympy.Add
-        _Mul = sympy.Mul
-        _Pow = sympy.Pow
+        x = sympify(x)
+        _Add = Add
+        _Mul = Mul
+        _Pow = Pow
         ind = self.genset.index(x)
         if ind != -1:
             return self.from_dict(yz.mult_poly_q_double(elem, x, self.genset, self.coeff_genset))
@@ -360,10 +360,10 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
     #     return self.from_dict({Permutation([]): x})
 
     def mul_sympy(self, elem, x):
-        x = sympy.sympify(x)
-        _Add = sympy.Add
-        _Mul = sympy.Mul
-        _Pow = sympy.Pow
+        x = sympify(x)
+        _Add = Add
+        _Mul = Mul
+        _Pow = Pow
         ind = self.genset.index(x)
         if ind != -1:
             return self.from_dict(py.mult_poly_q(elem, x, self.genset, self.coeff_genset))
@@ -471,7 +471,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
                 return 1
             if p < 0 or p > k:
                 return 0
-            return sympy.Add(*[(Symbol(f"e_{p - i}_{k}") if p - i > 0 else 1) * complete_sym_poly(i, k + 1 - p, [-v for v in varl2]) for i in range(p + 1)])
+            return Add(*[(Symbol(f"e_{p - i}_{k}") if p - i > 0 else 1) * complete_sym_poly(i, k + 1 - p, [-v for v in varl2]) for i in range(p + 1)])
 
         return elem_func
 
@@ -694,10 +694,10 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
         # try:
         #     x = sympify(x)
         # except Exception:
-        #     x = sympy.sympify(x)
-        #     _Add = sympy.Add
-        #     _Mul = sympy.Mul
-        #     _Pow = sympy.Pow
+        #     x = sympify(x)
+        #     _Add = Add
+        #     _Mul = Mul
+        #     _Pow = Pow
         # ind = self.genset.index(x)
         # if ind != -1:
         #     return self.from_dict(yz.mult_poly_q_double(elem, x, self.genset, self.coeff_genset))

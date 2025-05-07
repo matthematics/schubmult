@@ -1,7 +1,7 @@
 from functools import cache, cached_property
 
 import sympy
-from symengine import S
+from symengine import Add, Mul, Pow, S
 
 import schubmult.rings.quantum_schubert_ring as qsr
 import schubmult.schub_lib.double as yz
@@ -462,10 +462,10 @@ class DoubleSchubertRing(BaseSchubertRing):
         return ret
 
     def mul_sympy(self, elem, x):
-        x = sympy.sympify(x)
-        _Add = sympy.Add
-        _Mul = sympy.Mul
-        _Pow = sympy.Pow
+        x = sympify(x)
+        _Add = Add
+        _Mul = Mul
+        _Pow = Pow
         ind = self.genset.index(x)
         if ind != -1:
             return self.single_variable(elem, ind)
@@ -615,10 +615,10 @@ class SingleSchubertRing(DoubleSchubertRing):
     #     return ret
 
     def mul_sympy(self, elem, x):
-        x = sympy.sympify(x)
-        _Add = sympy.Add
-        _Mul = sympy.Mul
-        _Pow = sympy.Pow
+        x = sympify(x)
+        _Add = Add
+        _Mul = Mul
+        _Pow = Pow
         ind = self.genset.index(x)
         if ind != -1:
             return self.single_variable(elem, ind)

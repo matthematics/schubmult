@@ -83,12 +83,12 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def as_terms(self):
         if len(self.keys()) == 0:
-            return [sympy.sympify(S.Zero)]
+            return [sympify(S.Zero)]
         return [((self[k]) if k == Permutation([]) else sympy.Mul((self[k]), self.ring.printing_term(k))) for k in self.keys()]
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
-            return [sympy.sympify(S.Zero)]
+            return [sympify(S.Zero)]
         return [((self[k]) if k == Permutation([]) else sympy.Mul((self[k]), self.ring.printing_term(k))) for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))]
 
     def __add__(self, other):
@@ -192,17 +192,17 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
         if not deep:
             return self.ring.from_dict({k: expand(v, **kwargs) for k, v in self.items()})
-        return sympy.sympify(expand(self.as_polynomial()))
+        return sympify(expand(self.as_polynomial()))
 
     def as_expr(self):
-        return sympy.Add(*self.as_terms())
+        return Add(*self.as_terms())
 
     def as_polynomial(self):
         # print(f"{self=}")
         try:
             return symengine.sympify(Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()]))
         except SympifyError:
-            return sympy.Add(*[sympy.sympify(v) * self.ring.cached_schubpoly(k) for k, v in self.items()])
+            return sympy.Add(*[sympify(v) * self.ring.cached_schubpoly(k) for k, v in self.items()])
 
     def as_classical(self):
         return self.ring.in_classical_basis(self)
@@ -328,8 +328,8 @@ class BaseSchubertRing(Ring, CompositeDomain):
         if isinstance(element, BaseSchubertElement):
             raise CoercionFailed("Not a domain element")
         try:
-            if hasattr(sympy.sympify(element), "has_free") and hasattr(sympy.sympify(element), "free_symbols"):
-                if not sympy.sympify(element).has_free(*self.symbols):
+            if hasattr(sympify(element), "has_free") and hasattr(sympify(element), "free_symbols"):
+                if not sympify(element).has_free(*self.symbols):
                     return sympify(element)
                 raise CoercionFailed(f"{element} contains an element of the set of generators")
             # print("Is da no gens")
