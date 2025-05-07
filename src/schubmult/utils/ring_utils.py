@@ -25,23 +25,20 @@ def poly_ring(v: str):
     return GeneratingSet(str(v))
 
 
-def _mul_schub_dicts(dict1, dict2, basis1, basis2, best_effort_positive=True, _sympify=False):
+def _mul_schub_dicts(dict1, dict2, basis1, basis2, best_effort_positive=True):
     this_dict = {}
-    symp = lambda x: x  # noqa: E731
-    # if _sympify:
-    #     symp = sympy.sympify
     for k, v in dict2.items():
         for kd, vd in dict1.items():
             did_positive = False
-            to_mul = symp(v) * symp(vd)
+            to_mul = v * vd
             if best_effort_positive:
                 try:
-                    this_dict = add_perm_dict(this_dict, {k1: symp(v1) * to_mul for k1, v1 in basis1.cached_positive_product(kd, k, basis2).items()})
+                    this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis1.cached_positive_product(kd, k, basis2).items()})
                     did_positive = True
                 except Exception:
                     did_positive = False
             if not did_positive:
-                this_dict = add_perm_dict(this_dict, {k1: symp(v1) * to_mul for k1, v1 in basis1.cached_product(kd, k, basis2).items()})
+                this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis1.cached_product(kd, k, basis2).items()})
     return this_dict
 
 

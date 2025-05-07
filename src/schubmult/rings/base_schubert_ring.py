@@ -262,7 +262,7 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def neg(self, elem):
         return self.from_dict({k: -v for k, v in elem.items()})
 
-    def mul(self, elem, other, _sympify=False):
+    def mul(self, elem, other):
         # print(f"{self=} {elem=} {other=}")
         try:
             other = self.domain_new(other)
