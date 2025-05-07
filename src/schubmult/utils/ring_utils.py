@@ -69,6 +69,23 @@ def _tensor_product_of_dicts(d1, d2):
 import os
 
 os.environ["USE_SYMENGINE"] = "1"
+from sympy import sstr
+from sympy.core.backend import *
+from sympy.core.expr import Expr
+
+
+class SympySymbol(Expr):
+    def __init__(self, obj):
+        self._obj = obj
+
+    def _symengine_(self):
+        return self._obj
+
+    def _sympystr(self,printer):
+        return printer.doprint(self._obj)
+    
+    def __str__(self):
+        return sstr(self._obj)
 
 class SymengineExpr(sw.Symbol, Printable):
 
@@ -144,8 +161,8 @@ class SymengineExpr(sw.Symbol, Printable):
     def __init__(self, *args):
         super().__init__(self, *args, store_pickle=True)
 
-    # def _sympy_(self):
-    #     return self
+    def _sympy_(self):
+        return SympySymbol(self)
 
     def encode(self, *args):
         from sympy.printing.str import sstr
