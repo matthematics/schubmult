@@ -7,9 +7,12 @@ from symengine import DictBasic, S, sympify
 # import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.utils.logging import get_logger
-from schubmult.utils.ring_utils import NotEnoughGeneratorsError, SymengineExpr
+from schubmult.utils.ring_utils import NotEnoughGeneratorsError, SymengineExpr, SympyExpr
 
 logger = get_logger(__name__)
+
+class _E(SympyExpr):
+    pass
 
 
 class E(SymengineExpr):
@@ -19,6 +22,8 @@ class E(SymengineExpr):
     is_Function = True
     is_nonzero = True
 
+    _sympyclass = _E
+    
     def __new__(cls, p, k, *args):
         if hasattr(args[0], "__iter__"):
             return FactorialElemSym.__xnew_cached__(cls, p, k, tuple(args[0]), tuple(args[1]))

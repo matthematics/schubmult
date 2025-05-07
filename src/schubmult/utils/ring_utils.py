@@ -5,7 +5,7 @@ import sympy
 from symengine import SympifyError, sympify
 from sympy.core._print_helpers import Printable
 
-from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet
+from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, ZeroGeneratingSet
 from schubmult.utils.perm_utils import add_perm_dict
 
 NoneVar = 1e10
@@ -19,9 +19,9 @@ class NotEnoughGeneratorsError(ValueError):
 @cache
 def poly_ring(v: str):
     if v == ZeroVar:
-        return CustomGeneratingSet(tuple([sympify(0) for i in range(100)]))
+        return ZeroGeneratingSet(tuple([sympify(0) for i in range(100)]))
     if v == NoneVar:
-        return CustomGeneratingSet(tuple([sympify(0) for i in range(100)]))
+        return ZeroGeneratingSet(tuple([sympify(0) for i in range(100)]))
     return GeneratingSet(str(v))
 
 
@@ -92,11 +92,29 @@ class SympyExpr(Expr):
     def _sympystr(self, printer):
         return printer.doprint(self._obj)
 
+    @property
+    def args(self):
+        return self._obj.args
+
+    @property
+    def func(self):
+        return self._obj.__class__
+
+    def __repr__(self):
+        return self._obj.__repr__()
+
     def __str__(self):
         return sstr(self._obj)
 
 
-class SymengineExpr(sw.Symbol, Printable):
+class SymengineExprClass(type):
+
+    @property
+    def __sympyclass__(cls):
+        return cls._sympyclass
+
+
+class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
     _op_priority = 800000
 
     is_number = False
@@ -160,17 +178,21 @@ class SymengineExpr(sw.Symbol, Printable):
     is_zero: bool | None
     is_even: bool | None
 
+    _sympyclass = SympyExpr
+
     def __new__(cls, *args):
         obj = sw.Symbol.__new__(cls)
         obj._base_args = args
-        obj._obj = SympyExpr(obj)
+        obj._obj = SympyExpr.__new__(cls.__sympyclass__, obj)
         return obj
 
     def __init__(self, *args):
         super().__init__(self, *args, store_pickle=True)
 
-    # def _sympy_(self):
-    #     return self._obj
+    
+
+    def _sympy_(self):
+        return self._obj
 
     def __hash__(self):
         return hash(self.args)

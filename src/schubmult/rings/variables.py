@@ -6,7 +6,7 @@ from bisect import bisect_left
 from functools import cache
 from typing import ClassVar
 
-from symengine import SympifyError, symbols, sympify
+from symengine import S, SympifyError, symbols, sympify
 from sympy import Basic, Tuple
 from sympy.core.symbol import Str
 
@@ -34,6 +34,15 @@ class GeneratingSet_base(Basic):
     def label(self):
         return None#str(self.args)
 
+class ZeroGeneratingSet(GeneratingSet_base):
+    def __getitem__(self, i):
+        return S.Zero
+
+    def __contains__(self, item):
+        return False
+
+    def index(self, other):
+        return -1
 
 # variable registry
 # TODO: ensure sympifies
