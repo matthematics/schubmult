@@ -72,6 +72,8 @@ os.environ["USE_SYMENGINE"] = "1"
 
 class SymengineExpr(sw.Symbol, Printable):
 
+    _op_priority = 800000
+
     is_number = False
     is_Atom = False
     is_Symbol = False
@@ -141,6 +143,9 @@ class SymengineExpr(sw.Symbol, Printable):
 
     def __init__(self, *args):
         super().__init__(self, *args, store_pickle=True)
+
+    # def _sympy_(self):
+    #     return self
 
     def encode(self, *args):
         from sympy.printing.str import sstr
