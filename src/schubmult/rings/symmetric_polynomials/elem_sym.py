@@ -23,11 +23,14 @@ class E(SymengineExpr):
     is_nonzero = True
 
     _sympyclass = _E
-    
+
     def __new__(cls, p, k, *args):
         if hasattr(args[0], "__iter__"):
             return FactorialElemSym.__xnew_cached__(cls, p, k, tuple(args[0]), tuple(args[1]))
         return FactorialElemSym.__xnew_cached__(cls, p, k, tuple(args[:k]), tuple(args[k:2*k + 1 - p]))
+
+    def has_free(self, *args):
+        return any(arg in self.args for arg in args)
 
     @staticmethod
     @cache

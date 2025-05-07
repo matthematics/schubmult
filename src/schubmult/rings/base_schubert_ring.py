@@ -328,7 +328,7 @@ class BaseSchubertRing(Ring, CompositeDomain):
         if isinstance(element, BaseSchubertElement):
             raise CoercionFailed("Not a domain element")
         try:
-            if hasattr(sympify(element), "has_free") and hasattr(sympify(element), "free_symbols"):
+            if hasattr(sympify(element), "has_free"):
                 if not sympify(element).has_free(*self.symbols):
                     return sympify(element)
                 raise CoercionFailed(f"{element} contains an element of the set of generators")
