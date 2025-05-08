@@ -11,8 +11,8 @@ from schubmult.utils.ring_utils import NotEnoughGeneratorsError, SymengineExpr, 
 
 logger = get_logger(__name__)
 
-class _E(SympyExpr):
-    pass
+# class _E(SympyExpr):
+#     pass
 
 
 class E(SymengineExpr):
@@ -22,7 +22,7 @@ class E(SymengineExpr):
     is_Function = True
     is_nonzero = True
 
-    _sympyclass = _E
+    # _sympyclass = _E
 
     def __new__(cls, p, k, *args):
         if hasattr(args[0], "__iter__"):

@@ -72,7 +72,17 @@ from sympy.core.backend import *
 from sympy.core.expr import Expr
 
 
-class SympyExpr(Expr):
+class SympyExprClass(type):
+    @property
+    def __symengineclass__(cls):
+        return cls._symengineclass
+
+    def __repr__(cls):
+        return repr(cls._symengineclass)
+    
+
+class SympyExpr(Expr, metaclass=SympyExprClass):
+
     def __new__(cls, _obj):
         obj = Expr.__new__(cls, *_obj.args)
         obj._obj = _obj
@@ -98,7 +108,7 @@ class SympyExpr(Expr):
 
     @property
     def func(self):
-        return self._obj.__class__
+        return self._obj.func
 
     def __repr__(self):
         return self._obj.__repr__()
@@ -108,7 +118,6 @@ class SympyExpr(Expr):
 
 
 class SymengineExprClass(type):
-
     @property
     def __sympyclass__(cls):
         return cls._sympyclass
@@ -178,18 +187,19 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
     is_zero: bool | None
     is_even: bool | None
 
-    _sympyclass = SympyExpr
+    #_sympyclass = SympyExpr
 
     def __new__(cls, *args):
         obj = sw.Symbol.__new__(cls)
         obj._base_args = args
-        obj._obj = SympyExpr.__new__(cls.__sympyclass__, obj)
+        class Me(SympyExpr):
+            _symengineclass = cls
+        obj._sympyclass = Me
+        obj._obj = Me.__new__(obj._sympyclass, obj)
         return obj
 
     def __init__(self, *args):
         super().__init__(self, *args, store_pickle=True)
-
-    
 
     def _sympy_(self):
         return self._obj

@@ -5,9 +5,12 @@ from symengine import Add, DictBasic, S, sympify
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.rings.symmetric_polynomials.elem_sym import FactorialElemSym
 from schubmult.utils.logging import get_logger
-from schubmult.utils.ring_utils import SymengineExpr
+from schubmult.utils.ring_utils import SymengineExpr, SympyExpr
 
 logger = get_logger(__name__)
+
+# class _h(SympyExpr):
+#     pass
 
 class h(SymengineExpr):
     is_commutative = True
@@ -16,6 +19,7 @@ class h(SymengineExpr):
     is_Function = True
     is_nonzero = True
 
+    # _sympyclass = _h
     # def _symengine_(self):
     #     return SymPolyWrap(self, self.args, self.__class__, sw.PyModule(self.__module__))
 
