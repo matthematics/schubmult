@@ -71,22 +71,23 @@ from sympy import sstr
 from sympy.core.backend import *
 from sympy.core.expr import Expr
 
+# class SympyExprClass(type):
+#     @property
+#     def __symengineclass__(cls):
+#         return cls._symengineclass
 
-class SympyExprClass(type):
-    @property
-    def __symengineclass__(cls):
-        return cls._symengineclass
-
-    def __repr__(cls):
-        return repr(cls._symengineclass)
+#     def __repr__(cls):
+#         return repr(cls._symengineclass)
 
 
-class SympyExpr(Expr, metaclass=SympyExprClass):
+class SympyExpr(Expr):
 
     def __new__(cls, _obj):
-        obj = Expr.__new__(cls)
+        obj = Expr.__new__(cls, *_obj.args)
         obj._obj = _obj
+        # print("painfuldingbat")
         obj.__dict__.update(_obj.__dict__)
+        obj.subs = _obj.subs
         return obj
 
     def __hash__(self):
@@ -95,13 +96,10 @@ class SympyExpr(Expr, metaclass=SympyExprClass):
     @property
     def is_number(self):
         return False
-    
-    # def __getattr__(self, attr):
-    #     if attr == "_symengine_":
-    #         return self._symengine_
-    #     return getattr(self._obj, attr)
+
 
     def _symengine_(self):
+        # print("pageblitz")
         return self._obj
 
     def _sympystr(self, printer):
@@ -111,11 +109,18 @@ class SympyExpr(Expr, metaclass=SympyExprClass):
     def args(self):
         return self._obj.args
 
-    @property
-    def func(self):
-        def func(*bob):
-            return self.__class__(self._obj.func(*bob))
-        return func
+    def __getattr__(self, attr):
+        # print(f"{attr}")
+        return getattr(self._obj, attr)
+
+    # @property
+    # def func(self):
+    #     return self._obj.func   
+    # @property
+    # def func(self):
+    #     def func(*bob):
+    #         return self.__class__(self._obj.func(*bob))
+    #     return func
 
     def __repr__(self):
         return self._obj.__repr__()
@@ -195,25 +200,19 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
     is_even: bool | None
 
     #_sympyclass = SympyExpr
-    js_sympy = False
+
     def __new__(cls, *args):
         obj = sw.Symbol.__new__(cls)
         obj._base_args = args
-        class Me(SympyExpr):
-            _symengineclass = cls
-            @property
-            def __name__(self):
-                return Me._symengineclass.__name__
-
-        obj._sympyclass = Me
-        obj._obj = Me.__new__(obj._sympyclass, obj)
+        # print("woo")
+        obj._sympyclass = SympyExpr
         return obj
 
     def __init__(self, *args):
         super().__init__(self, *args, store_pickle=True)
 
     def _sympy_(self):
-        return self._obj
+        return SympyExpr(self)
 
     def __hash__(self):
         return hash(self.args)
@@ -227,8 +226,12 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
     def args(self):
         return self._base_args
 
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
     def __reduce__(self):
-        return (self.__class__, self.args)
+        # print(f"yo dude I'm getting pickled {self.__class__=}")
+        return (self.__class__, self.args, self.__dict__)
 
     def _sympystr(self, printer):
         return printer._print(self.args)

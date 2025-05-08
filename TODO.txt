@@ -250,3 +250,5 @@ Symbol printing!!!
 Try to combine classes!!!
 update complete sym
 can set the class
+
+not forwarded if it has it

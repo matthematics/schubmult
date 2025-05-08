@@ -2,7 +2,7 @@ from functools import cache
 
 import symengine.lib.symengine_wrapper as sw
 import sympy
-from symengine import DictBasic, S, sympify
+from symengine import S, sympify
 
 # import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
 from schubmult.rings.poly_lib import elem_sym_poly
@@ -162,38 +162,39 @@ class E(SymengineExpr):
         # print(f"_eval_subs")
         # print(f"{rule=}")
         # print(f"{self=}")
-        print("pwing")
-        rule = sw.get_dict(*rule)
+        rule = sw.get_dict(rule)
+        # print(f"{rule=}")
         new_args = [*self.args]
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
-            new_args[i + 2] = arg.xreplace(rule)
+            new_args[i + 2] = arg.subs(rule)
         return self.func(*new_args)
     
-    def subs(self, *rule):
+    def subs(self, rule):
         # print(f"_eval_subs")
         # print(f"{rule=}")
         # print(f"{self=}")
-        print("Pwangus")
-        rule = sw.get_dict(*rule)
+        # print(rule)
         new_args = [*self.args]
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
-            new_args[i + 2] = arg.xreplace(rule)
+            new_args[i + 2] = arg.subs(rule)
+        # print(f"{new_args=}")
         return self.func(*new_args)
 
     def xreplace(self, *rule):
         # print(f"xreplace")
         # print(f"{rule=}")
         # print(f"{self=}")
-        rule = sw.get_dict(*rule)
+        # print(rule)
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
             new_args[i + 2] = arg.xreplace(rule)
+        # print(f"{new_args=}")
         return self.func(*new_args)
 
-    def __reduce__(self):
-        return (self.__class__, self.args)
+    # def __reduce__(self):
+    #     return (self.__class__, self.args)
 
     def divide_out_diff(self, v1, v2):
         if v1 == v2:
@@ -246,6 +247,13 @@ class E(SymengineExpr):
                 return self.func(self._p, self._k - 1, new_genvars, self.coeffvars)
             return self.func(self._p - 1, self._k, self.genvars, [*self.coeffvars, v1])
         return S.Zero
+
+    # def __setstate__(self, state):
+    #     self.__dict__.update(state)
+
+    # def __reduce__(self):
+    #     # print(f"yo dude I'm getting pickled bong {self.__dict__} {self.__class__=}")
+    #     return (self.__class__, self.args, self.__dict__)
 
     def sign_of_pair(self, v1, v2):
         if v1 == v2:
@@ -350,6 +358,9 @@ class e(SymengineExpr):
                 pass
         return ret
 
+    # def __setstate__(self, state):
+    #     self.__dict__.update(state)
+
     @property
     def degree(self):
         return self._p
@@ -371,22 +382,18 @@ class e(SymengineExpr):
         return sympify(elem_sym_poly(self._p, self._k, self.genvars, [0 for i in range(30)]))
 
 
+    
+
     def _eval_subs(self, *rule):
         # print(f"_eval_subs")
         # print(f"{rule=}")
         # print(f"{self=}")
-        rule = DictBasic(rule)
-        new_args = [*self.args]
-        new_args = [*self.args]
-        for i, arg in enumerate(self.args[2:]):
-            new_args[i + 2] = arg.xreplace(rule)
-        return self.func(*new_args)
+        return self.func(*self.args)
 
     def xreplace(self, rule):
         # print(f"xreplace")
         # print(f"{rule=}")
         # print(f"{self=}")
-        rule = DictBasic(rule)
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
             new_args[i + 2] = arg.xreplace(rule)
@@ -429,8 +436,9 @@ class e(SymengineExpr):
             return S.One
         return S.Zero
 
-    def __reduce__(self):
-        return (self.__class__, self.args)
+    # def __reduce__(self):
+    #     # print(f"yo dude I'm getting pickled bang {self.__class__=}")
+    #     return (self.__class__, self.args, self.__dict__)
 
     def _sympystr(self, printer):
         # return printer._print_Function(self)
