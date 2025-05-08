@@ -84,17 +84,22 @@ class SympyExprClass(type):
 class SympyExpr(Expr, metaclass=SympyExprClass):
 
     def __new__(cls, _obj):
-        obj = Expr.__new__(cls, *_obj.args)
+        obj = Expr.__new__(cls)
         obj._obj = _obj
+        obj.__dict__.update(_obj.__dict__)
         return obj
 
     def __hash__(self):
         return hash(self.args)
 
-    def __getattr__(self, attr):
-        if attr == "_symengine_":
-            return self._symengine_
-        return getattr(self._obj, attr)
+    @property
+    def is_number(self):
+        return False
+    
+    # def __getattr__(self, attr):
+    #     if attr == "_symengine_":
+    #         return self._symengine_
+    #     return getattr(self._obj, attr)
 
     def _symengine_(self):
         return self._obj
@@ -108,7 +113,9 @@ class SympyExpr(Expr, metaclass=SympyExprClass):
 
     @property
     def func(self):
-        return self._obj.func
+        def func(*bob):
+            return self.__class__(self._obj.func(*bob))
+        return func
 
     def __repr__(self):
         return self._obj.__repr__()
@@ -195,8 +202,9 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
         class Me(SympyExpr):
             _symengineclass = cls
             @property
-            def __class__(self):
-                return Me._symengineclass
+            def __name__(self):
+                return Me._symengineclass.__name__
+
         obj._sympyclass = Me
         obj._obj = Me.__new__(obj._sympyclass, obj)
         return obj
