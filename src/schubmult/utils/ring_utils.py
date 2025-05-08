@@ -79,7 +79,7 @@ class SympyExprClass(type):
 
     def __repr__(cls):
         return repr(cls._symengineclass)
-    
+
 
 class SympyExpr(Expr, metaclass=SympyExprClass):
 
@@ -194,6 +194,9 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
         obj._base_args = args
         class Me(SympyExpr):
             _symengineclass = cls
+            @property
+            def __class__(self):
+                return Me._symengineclass
         obj._sympyclass = Me
         obj._obj = Me.__new__(obj._sympyclass, obj)
         return obj
