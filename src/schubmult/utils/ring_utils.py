@@ -188,7 +188,7 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
     is_even: bool | None
 
     #_sympyclass = SympyExpr
-    __sympy__ = False
+    js_sympy = False
     def __new__(cls, *args):
         obj = sw.Symbol.__new__(cls)
         obj._base_args = args
