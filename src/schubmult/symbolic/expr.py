@@ -214,12 +214,18 @@ class SympyExpr(Expr):
 
 
 class SymengineExprClass(type):
-    @property
-    def __sympyclass__(cls):
-        return cls._sympyclass
+   def __call__(cls, *args):
+       obj = super().__call__(*args)
+       return obj
+
+   def __repr__(cls):
+       return cls.__name__
+   
+   def __str__(cls):
+       return cls.__name__
 
 
-class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
+class SymengineExpr(sw.PyFunction, Printable, metaclass=SymengineExprClass):
     _op_priority = 800000
 
     is_number = False
@@ -263,7 +269,7 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
         raise AttributeError
 
     def __new__(cls, *args):
-        obj = sw.Symbol.__new__(cls)
+        obj = sw.PyFunction.__new__(cls)
         # print("{args=}")
         obj._base_args = args
         # print("woo")
@@ -273,8 +279,7 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
     def __init__(self, *args):
         # print([type(arg) for arg in args])
         # print(f"{type(self)=}")
-        sw.Symbol.__init__(self, self, *args, store_pickle=True)
-        # self._sympy_obj = SympyExpr(self)
+        sw.PyFunction.__init__(self, self, args, self.__class__, sw.sympy_module)
 
     def _sympy_(self):
         return SympyExpr(self)

@@ -415,12 +415,14 @@ class DoubleSchubertRing(BaseSchubertRing):
         return ret
 
     def mul_expr(self, elem, x):
+        print(f"{x=} fartbanger {type(x)=}")
         x = sympify(x)
+        print(f"{x=} me is da {type(x)=}")
         ind = self.genset.index(x)
         if ind != -1:
             return self.single_variable(elem, ind)
         if isinstance(x, FactorialElemSym):
-            # print(f"moo {x=}")
+            print(f"moo {x=}")
             if all(self.genset.index(a) != -1 for a in x.genvars) and not any(self.genset.index(a) != -1 for a in x.coeffvars):
                 return self.elem_mul(elem, x)
 
