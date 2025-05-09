@@ -2,7 +2,7 @@ from functools import cache
 
 import symengine.lib.symengine_wrapper as sw
 import sympy
-from symengine import S, sympify
+from symengine import Integer, S, sympify
 
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.symbolic import SymengineExpr
@@ -27,9 +27,11 @@ class E(SymengineExpr):
     # _sympyclass = _E
 
     def __new__(cls, p, k, *args):
+        p = int(p)
+        k = int(k)
         if hasattr(args[0], "__iter__"):
-            return FactorialElemSym.__xnew_cached__(cls, p, k, tuple(args[0]), tuple(args[1]))
-        return FactorialElemSym.__xnew_cached__(cls, p, k, tuple(args[:k]), tuple(args[k:2*k + 1 - p]))
+            return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[0]), tuple(args[1]))
+        return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[:int(k)]), tuple(args[k:2*k + 1 - p]))
 
     def has_free(self, *args):
         return any(arg in self.args for arg in args)
@@ -59,8 +61,8 @@ class E(SymengineExpr):
         var2 = tuple(sorted(var2,key=lambda x: sympy.sympify(x).sort_key()))
         obj = SymengineExpr.__new__(
             _class,
-            p,
-            k,
+            Integer(p),
+            Integer(k),
             *var1,
             *var2,
         )
