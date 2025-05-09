@@ -6,7 +6,7 @@ def test_schub_expand():
     Test expand
     """
     from schubmult import DSx
-    from symengine import symbols, expand
+    from schubmult.symbolic import symbols, expand
     x_1, y_1, y_2, y_3 = symbols("x_1 y_1 y_2 y_3")
     # DSx = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", "y")
     assert expand(DSx([3, 1, 2]).expand()) == expand((x_1 - y_1)*(x_1 - y_2))
@@ -20,7 +20,7 @@ def test_associative():
     Test associative on some large perms
     """
     from schubmult import DSx
-    from sympy import expand, S
+    from schubmult.symbolic import expand, S
     perm1, perm2, perm3 = [1, 5, 3, 4, 2], [1, 3, 2, 5, 4], [3, 1, 4, 2, 5]
     assert ((DSx(perm1) * DSx(perm2)) * DSx(perm3) - DSx(perm1) * (DSx(perm2) * DSx(perm3))).almosteq(S.Zero)
 
@@ -31,7 +31,7 @@ def test_associative():
 #     Test associative on some large perms
 #     """
 #     from schubmult import DSx
-#     from sympy import expand
+#     from schubmult.symbolic import expand
 #     perm = [1, 5, 3, 4, 2]
     
 #     assert expand(DSx([], "theta").basis.express(DSx(perm)) - DSx(perm).change_vars("gamama")) == 0
@@ -39,7 +39,7 @@ def test_associative():
 
 def test_elem_sym():
     from schubmult import DSx, Permutation
-    from sympy import expand, S
+    from schubmult.symbolic import expand, S
     perm1 = Permutation([3,4,1,5,6,2])
     perm2 = Permutation([4,3,6,5,2,1])
     dct1 = DSx(perm1) * DSx(perm2, "z")
@@ -48,13 +48,13 @@ def test_elem_sym():
 
 def test_coproduct():
     from schubmult import DSx
-    from symengine import expand
+    from schubmult.symbolic import expand
     perm = [3, 1, 5, 2, 6, 7, 4]
     indices = [2, 4, 6]
     assert expand(DSx(perm).coproduct(*indices).expand() - DSx(perm).expand()) == 0
 
 def test_subs():
-    from sympy import expand
+    from schubmult.symbolic import expand
     from schubmult import DSx, GeneratingSet
     x = GeneratingSet("x")
     z = GeneratingSet("z")
@@ -69,14 +69,14 @@ def test_subs():
 def test_elem_sym_schub():
     from schubmult import DSx
     from schubmult.abc import x, y, E, z
-    from sympy import expand, S
+    from schubmult.symbolic import expand, S
     em = E(2,3,[x[1],x[5],x[7]],[y[1],y[5],y[7],y[9]])*E(1,3,[x[1],x[4],x[5]],[y[8],y[14],y[29]]) - E(3,3,[x[1],x[7],x[3]],[z[4]])
     assert expand(em - DSx([]).ring.from_sympy(em),func=True) == S.Zero
 
 def test_complete_sym_schub():
     from schubmult import DSx
     from schubmult.abc import x, y, h, z
-    from sympy import expand, S
+    from schubmult.symbolic import expand, S
     em = h(2,3,[x[1],x[5],x[7]],[y[1],y[5],y[7],y[9],y[13],y[15]])*h(1,3,[x[1],x[4],x[5]],[y[8],y[14],y[29]]) - h(3,3,[x[1],x[7],x[3]],[z[4],z[15],y[1],y[12],z[2]])
     assert expand(em - DSx([]).ring.from_sympy(em),func=True) == S.Zero
 

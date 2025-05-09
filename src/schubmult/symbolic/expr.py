@@ -3,13 +3,10 @@ from functools import cache
 
 import symengine.lib.symengine_wrapper as sw
 import sympy
+from sympy import sstr
 
 # from symengine import SympifyError, sympify
 from sympy.core._print_helpers import Printable
-
-os.environ["USE_SYMENGINE"] = "1"
-from sympy import sstr
-from sympy.core.backend import *
 from sympy.core.expr import Expr
 
 # class SympyExprClass(type):
@@ -65,6 +62,8 @@ class SympyExpr(Expr):
         # print(f"{attr}")
         return getattr(self._obj, attr)
 
+    def _sympy_(self):
+        return self
     # need to explicitly forward overriden methods by sympy expr
 
     def simplify(self, **kwargs) -> Expr:
@@ -79,7 +78,7 @@ class SympyExpr(Expr):
         return super().sort_key(order)
 
     def _hashable_content(self):
-        return self.obj.args
+        return self._obj.args
 
     def equals(self, other, failing_expression=False):
         if hasattr(self._obj, "equals"):
@@ -267,6 +266,7 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
 
     def __new__(cls, *args):
         obj = sw.Symbol.__new__(cls)
+        #print("{args=}")
         obj._base_args = args
         # print("woo")
         obj._sympyclass = SympyExpr
@@ -274,10 +274,10 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
 
     def __init__(self, *args):
         super().__init__(self, *args, store_pickle=True)
-        self._sympy_obj = SympyExpr(self)
+        #self._sympy_obj = SympyExpr(self)
 
     def _sympy_(self):
-        return self._sympy_obj
+        return SympyExpr(self)
 
     def __hash__(self):
         return hash(self.args)

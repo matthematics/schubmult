@@ -5,7 +5,7 @@ import sympy
 from symengine import S, sympify
 
 from schubmult.rings.poly_lib import elem_sym_poly
-from schubmult.symbolic.expr import SymengineExpr, SympyExpr
+from schubmult.symbolic import SymengineExpr
 from schubmult.utils.logging import get_logger
 
 # import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
@@ -82,10 +82,10 @@ class E(SymengineExpr):
 
 
 
-    def __getattr__(self, name):
-        if name in dir(self._sympy_obj):
-            return getattr(self._sympy_obj, name)
-        raise AttributeError(f"No attribute {name}")
+    # def __getattr__(self, name):
+    #     if name in dir(self._sympy_obj):
+    #         return getattr(self._sympy_obj, name)
+    #     raise AttributeError(f"No attribute {name}")
 
     @property
     def free_symbols(self):
