@@ -201,6 +201,16 @@ class SympyExpr(Expr):
         if hasattr(self._obj, "compare"):
             return self._obj.compare(other)
         return super().compare(other)
+    
+    def has(self, *args):
+        if hasattr(self._obj, "has"):
+            return self._obj.has(*args)
+        return super().has(*args)
+
+    def has_symbol(self, sym):
+        if hasattr(self._obj, "has_symbol"):
+            return self._obj.has_symbol(sym)
+        return super().has_symbol(sym)
 
 
 class SymengineExprClass(type):

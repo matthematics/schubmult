@@ -4,7 +4,7 @@ os.environ["USE_SYMENGINE"] = "1"
 
 
 from schubmult.perm_lib import Permutation
-from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Mul, Ring, S, SchubStrPrinter, sstr, sympy_Add, sympy_Mul
+from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Mul, Ring, S, SchubStrPrinter, SympifyError, sstr, sympify_sympy, sympy_Add, sympy_Mul
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -14,11 +14,15 @@ from .schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 
 logger = get_logger(__name__)
 
+from sympy.core.sympify import CantSympify
+
 
 class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     _op_priority = 1e200
     precedence = 40
-    
+
+    __sympy__ = True
+
     def __reduce__(self):
         return (self.__class__, self.items())
 
@@ -54,7 +58,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         return result
 
     def _sympystr(self, printer):
-        printer = SchubStrPrinter()
+        # printer = SchubStrPrinter()
         if len(self.keys()) == 0:
             return printer._print(S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
@@ -221,7 +225,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             if elem1.ring == elem2.ring:
                 return (self - other).expand(deep=False).almosteq(S.Zero)
             return elem1.almosteq(elem1.ring.one * elem2)
-        return (self - self.ring.from_sympy(other)).expand(deep=False) == self.ring.zero
+        return (self - self.ring.from_expr(other)).expand(deep=False) == self.ring.zero
     
     def __str__(self):
         return sstr(self)
@@ -273,11 +277,14 @@ class BaseSchubertRing(Ring, CompositeDomain):
                 raise CoercionFailed(f"Could not coerce {other} of type {type(other)} to {type(elem)}")
             return self.from_dict(_mul_schub_dicts(elem, other, elem.ring, other.ring))
         # print(f"I'm a bagel {other=}")
-        return self.mul_sympy(elem, other)
+        return self.mul_expr(elem, other)
 
     def to_domain(self):
         return self
 
+    def from_sympy(self, expr):
+        return self.from_expr(expr)
+    
     def new(self, x): ...
 
     def printing_term(self, k): ...
@@ -321,21 +328,12 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def elem_sym_subs(self, kk): ...
 
     def domain_new(self, element, orig_domain=None):  # noqa: ARG002
-        # print(f"They is called me {element=}")
-        print(f"{element=}")
-        print(f"{type(element)=}")
+        # print(f"{element=} {type(element)=} bagels {type(sympify(element))=} {sympify(element).has(*self.symbols)=}")
         if isinstance(element, BaseSchubertElement):
             raise CoercionFailed("Not a domain element")
-        if hasattr(sympify(element), "has_free"):
-            if not sympify(element).has_free(*self.symbols):
-                return sympify(element)
-            raise CoercionFailed(f"{element} contains an element of the set of generators")
-        return sympify(element)
-        
-        # except Exception:
-        #     import traceback
-        #     traceback.print_exc()
-        #     raise CoercionFailed(f"{element} is of type {type(element)} and could not be coerced to {self.domain}")
+        if not any(x in self.genset for x in sympify_sympy(element).free_symbols):
+            return sympify(element)
+        raise CoercionFailed(f"{element} contains an element of the set of generators")
 
     @property
     def genset(self):
@@ -355,10 +353,10 @@ class BaseSchubertRing(Ring, CompositeDomain):
 
     def cached_positive_product(self, u, v, basis2): ...
 
-    def from_sympy(self, x):
-        return self.mul_sympy(self.one, x)
+    def from_expr(self, x):
+        return self.mul_expr(self.one, x)
 
-    def mul_sympy(self, x): ...
+    def mul_expr(self, x): ...
 
     @property
     def double_mul(self): ...
@@ -421,7 +419,7 @@ class MixedSchubertElement(BaseSchubertElement, dict):
                     del elem[ring]
                 return MixedSchubertElement(*list(elem.values()))
             except CoercionFailed:
-                new_other = ring.from_sympy(other)
+                new_other = ring.from_expr(other)
                 elem[ring] = ring.add(elem.get(ring, ring.zero), new_other)
                 if elem[ring] == ring.zero:
                     del elem[ring]
@@ -447,7 +445,7 @@ class MixedSchubertElement(BaseSchubertElement, dict):
                     del elem[ring]
                 return MixedSchubertElement(*list(elem.values()))
             except CoercionFailed:
-                new_other = ring.from_sympy(other)
+                new_other = ring.from_expr(other)
                 elem[ring] = ring.sub(elem.get(ring, ring.zero), new_other)
                 if elem[ring] == ring.zero:
                     del elem[ring]
@@ -469,7 +467,7 @@ class MixedSchubertElement(BaseSchubertElement, dict):
                     del elem[ring]
                 return MixedSchubertElement(*list(elem.values()))
             except CoercionFailed:
-                new_other = ring.from_sympy(other)
+                new_other = ring.from_expr(other)
                 elem[ring] = ring.add(new_other, elem.get(ring, ring.zero))
                 if elem[ring] == ring.zero:
                     del elem[ring]
@@ -491,7 +489,7 @@ class MixedSchubertElement(BaseSchubertElement, dict):
                     del elem[ring]
                 return MixedSchubertElement(*list(elem.values()))
             except CoercionFailed:
-                new_other = ring.from_sympy(other)
+                new_other = ring.from_expr(other)
                 elem[ring] = ring.sub(new_other, elem.get(ring, ring.zero))
                 if elem[ring] == ring.zero:
                     del elem[ring]
@@ -514,7 +512,7 @@ class MixedSchubertElement(BaseSchubertElement, dict):
                 new_other = ring.from_dict({Permutation([]): new_other})
                 elem[ring] = ring.mul(elem[ring], new_other)
             except CoercionFailed:
-                new_other = ring.from_sympy(other)
+                new_other = ring.from_expr(other)
                 elem[ring] = ring.mul(elem[ring], new_other)
         return elem
 
@@ -531,7 +529,7 @@ class MixedSchubertElement(BaseSchubertElement, dict):
                 elem[ring] = ring.mul(new_other, elem[ring])
                 return elem
             except CoercionFailed:
-                new_other = ring.from_sympy(other)
+                new_other = ring.from_expr(other)
                 elem[ring] = ring.mul(new_other, elem[ring])
         return elem
 

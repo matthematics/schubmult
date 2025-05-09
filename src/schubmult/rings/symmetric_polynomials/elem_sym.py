@@ -28,9 +28,20 @@ class E(SymengineExpr):
             return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[0]), tuple(args[1]))
         return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[: int(k)]), tuple(args[k : 2 * k + 1 - p]))
 
-    def has_free(self, *args):
-        return any(arg in self.args for arg in args)
+    def has(self, *args):
+        return any(arg in self.genvars for arg in args) or any(arg in self.coeffvars for arg in args)
 
+    def has_symbol(self, sym):
+        return sym in self.genvars or sym in self.coeffvars
+
+    @property
+    def is_Symbol(self):
+        return False
+    
+    @property
+    def is_symbol(self):
+        return False
+    
     @property
     def free_symbols(self):
         return {*self._genvars, *self._coeffvars}

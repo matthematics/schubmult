@@ -149,7 +149,7 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
     def mult_poly_double(self):
         return yz.mult_poly_q_double
 
-    # def from_sympy(self, x):
+    # def from_expr(self, x):
     #     if isinstance(x, BaseSchubertElement):
     #         if x.ring == self:
     #             return x
@@ -158,17 +158,17 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
     #     if ind != -1:
     #         return self.from_dict(yz.mult_poly_q_double({Permutation([]): 1}, x, self.genset, self.coeff_genset))
     #     if isinstance(x, Add):
-    #         return self.sum([self.from_sympy(arg) for arg in x.args])
+    #         return self.sum([self.from_expr(arg) for arg in x.args])
     #     if isinstance(x, Mul):
     #         res = self.one
     #         for arg in x.args:
-    #             res *= self.from_sympy(arg)
+    #             res *= self.from_expr(arg)
     #         return res
     #     if isinstance(x, Pow):
-    #         return self.from_sympy(x.args[0]) ** int(x.args[1])
+    #         return self.from_expr(x.args[0]) ** int(x.args[1])
     #     return self.from_dict({Permutation([]): x})
 
-    def mul_sympy(self, elem, x):
+    def mul_expr(self, elem, x):
         x = sympify(x)
         _Add = Add
         _Mul = Mul
@@ -177,16 +177,16 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
         if ind != -1:
             return self.from_dict(yz.mult_poly_q_double(elem, x, self.genset, self.coeff_genset))
         if isinstance(x, _Add):
-            return self.sum([self.mul_sympy(elem, arg) for arg in x.args])
+            return self.sum([self.mul_expr(elem, arg) for arg in x.args])
         if isinstance(x, _Mul):
             res = elem
             for arg in x.args:
-                res = self.mul_sympy(res, arg)
+                res = self.mul_expr(res, arg)
             return res
         if isinstance(x, _Pow):
             res = elem
             for _ in range(int(x.args[1])):
-                res = self.mul_sympy(res, x.args[0])
+                res = self.mul_expr(res, x.args[0])
             return res
         return self.from_dict({k: v * self.domain_new(x) for k, v in elem.items()})
 
@@ -201,7 +201,7 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
         elif isinstance(x, Permutation):
             elem = self.from_dict({x: self.domain.one})
         else:
-            elem = self.from_sympy(x)
+            elem = self.from_expr(x)
         return elem
 
 
@@ -244,7 +244,7 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
     def cached_positive_product(self, u, v, basis2):
         return self.cached_product(u, v, basis2)
 
-    # def from_sympy(self, x):
+    # def from_expr(self, x):
     #     if isinstance(x, BaseSchubertElement):
     #         if x.ring == self:
     #             return x
@@ -253,17 +253,17 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
     #     if ind != -1:
     #         return self.from_dict(py.mult_poly_q({Permutation([]): 1}, x, self.genset))
     #     if isinstance(x, Add):
-    #         return self.sum([self.from_sympy(arg) for arg in x.args])
+    #         return self.sum([self.from_expr(arg) for arg in x.args])
     #     if isinstance(x, Mul):
     #         res = self.one
     #         for arg in x.args:
-    #             res *= self.from_sympy(arg)
+    #             res *= self.from_expr(arg)
     #         return res
     #     if isinstance(x, Pow):
-    #         return self.from_sympy(x.args[0]) ** int(x.args[1])
+    #         return self.from_expr(x.args[0]) ** int(x.args[1])
     #     return self.from_dict({Permutation([]): x})
 
-    def mul_sympy(self, elem, x):
+    def mul_expr(self, elem, x):
         x = sympify(x)
         _Add = Add
         _Mul = Mul
@@ -272,20 +272,20 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
         if ind != -1:
             return self.from_dict(py.mult_poly_q(elem, x, self.genset, self.coeff_genset))
         if isinstance(x, _Add):
-            return self.sum([self.mul_sympy(elem, arg) for arg in x.args])
+            return self.sum([self.mul_expr(elem, arg) for arg in x.args])
         if isinstance(x, _Mul):
             res = elem
             for arg in x.args:
-                res = self.mul_sympy(res, arg)
+                res = self.mul_expr(res, arg)
             return res
         if isinstance(x, _Pow):
             res = elem
             for _ in range(int(x.args[1])):
-                res = self.mul_sympy(res, x.args[0])
+                res = self.mul_expr(res, x.args[0])
             return res
         return self.from_dict({k: v * self.domain_new(x) for k, v in elem.items()})
 
-    # def from_sympy(self, x):
+    # def from_expr(self, x):
     #     x = sympify(x)
     #     result = py.mult_poly_q({Permutation([]): 1}, x, self.genset)
     #     return self.from_dict(result)
@@ -304,7 +304,7 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
         elif isinstance(x, ParabolicQuantumDoubleSchubertElement):
             return x.as_quantum()
         else:
-            elem = self.from_sympy(x)
+            elem = self.from_expr(x)
         return elem
 
     def in_SEM_basis(self):
@@ -576,8 +576,8 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
         return yz.mult_poly_q_double
 
     # TODO: speed this up
-    def mul_sympy(self, elem, x):
-        dct = self.classical_basis.mul_sympy(self.in_classical_basis(elem), x)
+    def mul_expr(self, elem, x):
+        dct = self.classical_basis.mul_expr(self.in_classical_basis(elem), x)
         elem = self.zero
         if not isinstance(dct, BaseSchubertElement):
             return dct
@@ -603,16 +603,16 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
         # if ind != -1:
         #     return self.from_dict(yz.mult_poly_q_double(elem, x, self.genset, self.coeff_genset))
         # if isinstance(x, _Add):
-        #     return self.sum([self.mul_sympy(elem, arg) for arg in x.args])
+        #     return self.sum([self.mul_expr(elem, arg) for arg in x.args])
         # if isinstance(x, _Mul):
         #     res = elem
         #     for arg in x.args:
-        #         res = self.mul_sympy(res, arg)
+        #         res = self.mul_expr(res, arg)
         #     return res
         # if isinstance(x, _Pow):
         #     res = elem
         #     for _ in range(int(x.args[1])):
-        #         res = self.mul_sympy(res, x.args[0])
+        #         res = self.mul_expr(res, x.args[0])
         #     return res
         # return self.from_dict({k: v * self.domain_new(x) for k, v in elem.items()})
 
@@ -634,7 +634,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
         elif isinstance(x, ParabolicQuantumDoubleSchubertElement):
             return x
         else:
-            elem = self.from_sympy(x)
+            elem = self.from_expr(x)
         return elem
 
 
@@ -709,7 +709,7 @@ class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing):
         elif isinstance(x, ParabolicQuantumDoubleSchubertElement):
             return x
         else:
-            elem = self.from_sympy(x)
+            elem = self.from_expr(x)
         return elem
 
 
