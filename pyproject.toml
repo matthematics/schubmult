@@ -118,6 +118,7 @@ unfixable = ["F401", "F841"]
 "working*.py" = ["ALL"]
 "schubmult_*.py" = ["T201"]
 "argparse.py" = ["T201"]
+"__init__.py" = ["F401"]
 
 [project.optional-dependencies]
 sage = ["sagemath-standard"]
