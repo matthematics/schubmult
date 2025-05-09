@@ -10,7 +10,7 @@ from sympy.polys.domains.ring import Ring
 from sympy.polys.polyerrors import CoercionFailed
 from sympy.printing.defaults import DefaultPrinting
 
-from .base_printing import sstr
+from .base_printing import SchubStrPrinter, sstr
 from .expr import SymengineExpr, SympyExpr
 from .functions import Add, Mul, Pow, S, Symbol, SympifyError, expand, symbols, sympify
 

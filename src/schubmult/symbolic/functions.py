@@ -2,7 +2,6 @@ import symengine
 import sympy
 
 from .base_printing import sstr
-from .symbol import SymengineSymbol
 
 Add = symengine.Add
 Mul = symengine.Mul
@@ -14,7 +13,6 @@ Symbol = symengine.Symbol
 def expand(obj, **kwargs):
     if len(kwargs.keys()):
         return sympy.expand(obj, **kwargs)
-    #print(f"bagels {type(obj)=} {[(type(arg),type(v)) for arg,v in obj.items()]=}")
     try:
         return symengine.expand(obj)
     except Exception:

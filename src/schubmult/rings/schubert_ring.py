@@ -6,7 +6,7 @@ import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, uncode
-from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand_func, sstr
+from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand_func, init_printing, sstr
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -22,6 +22,7 @@ from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, M
 
 logger = get_logger(__name__)
 
+init_printing(str_printer=sstr)
 
 class DoubleSchubertElement(BaseSchubertElement):
     """Algebra with sympy coefficients

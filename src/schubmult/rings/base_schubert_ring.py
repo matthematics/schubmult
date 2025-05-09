@@ -6,7 +6,7 @@ os.environ["USE_SYMENGINE"] = "1"
 import symengine
 
 from schubmult.perm_lib import Permutation
-from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Mul, Ring, S, SympifyError, sstr
+from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Mul, Ring, S, SchubStrPrinter, SympifyError, sstr
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -15,6 +15,7 @@ from .backend import expand, sympify
 from .schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 
 logger = get_logger(__name__)
+import sympy
 
 
 class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
@@ -57,25 +58,26 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         return result
 
     def _sympystr(self, printer):
+        printer = SchubStrPrinter()
         if len(self.keys()) == 0:
             return printer._print(S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
-            return printer._print_Add(self, order="lex")
-        return printer._print_Add(self)
+            return printer._print_Add(sympy.Add(*self.as_ordered_terms()), order="lex")
+        return printer._print_Add(sympy.Add(*self.as_ordered_terms()))
 
     def _pretty(self, printer):
         if len(self.keys()) == 0:
             return printer._print(S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
             return printer._print_Add(self, order="lex")
-        return printer._print_Add(self)
+        return printer._print_Add(sympy.Add(*self.as_ordered_terms()))
 
     def _latex(self, printer):
         if len(self.keys()) == 0:
             return printer._print(S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
             return printer._print_Add(self, order="lex")
-        return printer._print_Add(self)
+        return printer._print_Add(sympy.Add(*self.as_ordered_terms()))
 
     def as_terms(self):
         if len(self.keys()) == 0:
