@@ -1,6 +1,7 @@
 from sympy import Add, Mul, Pow, Wild, expand, expand_mul, sympify
 
-from ..variables import NotEnoughGeneratorsError
+from schubmult.rings.variables import NotEnoughGeneratorsError
+
 from .elem_sym import ElemSym
 
 

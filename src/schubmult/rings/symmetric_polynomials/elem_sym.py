@@ -175,7 +175,7 @@ class E(SymengineExpr):
         for i, arg in enumerate(self.args[2:]):
             new_args[i + 2] = arg.subs(rule)
         return self.func(*new_args)
-    
+
     def subs(self, rule):
         # print(f"_eval_subs")
         # print(f"{rule=}")
@@ -388,7 +388,7 @@ class e(SymengineExpr):
         return sympify(elem_sym_poly(self._p, self._k, self.genvars, [0 for i in range(30)]))
 
 
-    
+
 
     def _eval_subs(self, *rule):
         # print(f"_eval_subs")
