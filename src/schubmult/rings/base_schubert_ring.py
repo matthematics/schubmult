@@ -3,8 +3,6 @@ import os
 os.environ["USE_SYMENGINE"] = "1"
 
 
-import symengine
-
 from schubmult.perm_lib import Permutation
 from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Mul, Ring, S, SchubStrPrinter, SympifyError, sstr
 from schubmult.utils.logging import get_logger
@@ -197,10 +195,10 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def as_polynomial(self):
         # print(f"{self=}")
-        try:
-            return symengine.sympify(Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()]))
-        except SympifyError:
-            return Add(*[sympify(v) * self.ring.cached_schubpoly(k) for k, v in self.items()])
+        #try:
+        return sympify(Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()]))
+        # except SympifyError:
+        #     return Add(*[sympify(v) * self.ring.cached_schubpoly(k) for k, v in self.items()])
 
     def as_classical(self):
         return self.ring.in_classical_basis(self)
