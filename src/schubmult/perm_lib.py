@@ -2,7 +2,6 @@ import math
 from functools import cache, cached_property
 
 import sympy.combinatorics.permutations as spp
-from sympy import Basic, Tuple
 
 import schubmult.utils.logging as lg
 from schubmult.utils.perm_utils import cyclic_sort, permtrim_list, sg
@@ -17,7 +16,7 @@ n = 100
 # TODO: permutations act
 
 
-class Permutation(Basic):
+class Permutation:
     def __new__(cls, perm):
         return Permutation.__xnew_cached__(cls, tuple(perm))
 
@@ -32,13 +31,18 @@ class Permutation(Basic):
     def __xnew__(_class, perm):
         p = tuple(permtrim_list([*perm]))
         s_perm = spp.Permutation._af_new([i - 1 for i in p])
-        obj = Basic.__new__(_class, Tuple(*perm))
+        obj = object.__new__(_class)
+        obj._args = (perm,)
         obj._s_perm = s_perm
         obj._perm = p
         obj._hash_code = hash(p)
         cd = s_perm.inversion_vector()
         obj._unique_key = (len(p), sum([cd[i] * math.factorial(len(p) - 1 - i) for i in range(len(cd))]))
         return obj
+
+    @property
+    def args(self):
+        return self._args
 
     @classmethod
     def sorting_perm(cls, itera):

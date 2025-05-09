@@ -6,19 +6,21 @@ from bisect import bisect_left
 from functools import cache
 from typing import ClassVar
 
-from symengine import SympifyError, sympify
-from sympy import Basic, Tuple
-from sympy.core.symbol import Str
-
-from schubmult.symbolic import S, symbols
+from schubmult.symbolic import S, SympifyError, symbols, sympify
 from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-class GeneratingSet_base(Basic):
+class GeneratingSet_base:
     def __new__(cls, *args):
-        return Basic.__new__(cls, *args)
+        obj = object.__new__(cls)
+        obj._args = args
+        return obj
+
+    @property
+    def args(self):
+        return self._args
 
     def __getitem__(self, i):
         return NotImplemented
@@ -67,7 +69,7 @@ class GeneratingSet(GeneratingSet_base):
     @staticmethod
     @cache
     def __xnew_cached__(_class, name):
-        return GeneratingSet.__xnew__(_class, Str(str(name)))
+        return GeneratingSet.__xnew__(_class, str(name))
 
     @staticmethod
     def __xnew__(_class, name):
@@ -130,7 +132,7 @@ class MaskedGeneratingSet(GeneratingSet_base):
 
     @staticmethod
     def __xnew__(_class, gset, index_mask):
-        obj = GeneratingSet_base.__new__(_class, gset, Tuple(*index_mask))
+        obj = GeneratingSet_base.__new__(_class, gset, index_mask)
         # obj._symbols_arr = tuple([symbols(f"{name}_{i}") for i in range(100)])
         # obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         mask_dict = {}
@@ -210,7 +212,7 @@ class CustomGeneratingSet(GeneratingSet_base):
 
     @staticmethod
     def __xnew__(_class, gens):
-        obj = GeneratingSet_base.__new__(_class, Tuple(*gens))
+        obj = GeneratingSet_base.__new__(_class, gens)
         obj._symbols_arr = tuple([sympify(gens[i]) for i in range(len(gens))])
         obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         return obj

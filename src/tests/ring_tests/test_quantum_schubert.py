@@ -3,8 +3,8 @@ def test_schub_expand():
     Test expand
     """
     from schubmult import QSx
-    from sympy import symbols, expand
-    from symengine import sympify
+    from schubmult.symbolic import symbols, expand
+    from schubmult.symbolic import sympify
     x_1, x_2, q_1, q_2 = symbols("x_1 x_2 q_1 q_2")
     assert QSx([3,1,2]).expand() == x_1**2 - q_1
     assert expand((QSx([5,3,4,1,2]).expand() * QSx([4,1,5,2,3]).expand() - (QSx([5,3,4,1,2]) * QSx([4,1,5,2,3])).expand()).expand()) == 0
@@ -13,7 +13,7 @@ def test_schub_expand():
 def test_parabolic():
     from schubmult import QPSx
     from schubmult import uncode
-    from symengine import S, expand
+    from schubmult.symbolic import S, expand
     # QPDSx = make_parabolic_quantum_basis([2, 3, 4])
     A = QPSx(2,3,4)(uncode([1,2,0,2,3]))
     B = QPSx(2,3,4)(uncode([1,3,0,1,2]))

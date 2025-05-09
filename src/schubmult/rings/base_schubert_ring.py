@@ -4,16 +4,9 @@ os.environ["USE_SYMENGINE"] = "1"
 
 
 import symengine
-import sympy
-from symengine import Add, S, SympifyError
-from sympy import CoercionFailed
-from sympy.polys.domains import EXRAW
-from sympy.polys.domains.compositedomain import CompositeDomain
-from sympy.polys.domains.domainelement import DomainElement
-from sympy.polys.domains.ring import Ring
-from sympy.printing.defaults import DefaultPrinting
 
 from schubmult.perm_lib import Permutation
+from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Mul, Ring, S, SympifyError, sstr
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -28,6 +21,9 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     _op_priority = 1e200
     precedence = 40
     __sympy__ = True
+
+    def __reduce__(self):
+        return (self.__class__, self.items())
 
     def parent(self):
         return self.ring
@@ -49,34 +45,34 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         return self.ring.from_dict(res_dict2)
 
     def in_SEM_basis(self):
-        result = sympy.S.Zero
+        result = S.Zero
         for k, v in self.items():
             result += sympify(v) * schubpoly_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=self.ring.symbol_elem_func)
         return result
 
     def in_CEM_basis(self):
-        result = sympy.S.Zero
+        result = S.Zero
         for k, v in self.items():
             result += sympify(v) * schubpoly_classical_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=self.ring.symbol_elem_func)
         return result
 
     def _sympystr(self, printer):
         if len(self.keys()) == 0:
-            return printer._print(sympy.S.Zero)
+            return printer._print(S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
             return printer._print_Add(self, order="lex")
         return printer._print_Add(self)
 
     def _pretty(self, printer):
         if len(self.keys()) == 0:
-            return printer._print(sympy.S.Zero)
+            return printer._print(S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
             return printer._print_Add(self, order="lex")
         return printer._print_Add(self)
 
     def _latex(self, printer):
         if len(self.keys()) == 0:
-            return printer._print(sympy.S.Zero)
+            return printer._print(S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
             return printer._print_Add(self, order="lex")
         return printer._print_Add(self)
@@ -84,12 +80,12 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def as_terms(self):
         if len(self.keys()) == 0:
             return [sympify(S.Zero)]
-        return [((self[k]) if k == Permutation([]) else sympy.Mul((self[k]), self.ring.printing_term(k))) for k in self.keys()]
+        return [((self[k]) if k == Permutation([]) else Mul((self[k]), self.ring.printing_term(k))) for k in self.keys()]
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
             return [sympify(S.Zero)]
-        return [((self[k]) if k == Permutation([]) else sympy.Mul((self[k]), self.ring.printing_term(k))) for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))]
+        return [((self[k]) if k == Permutation([]) else Mul((self[k]), self.ring.printing_term(k))) for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))]
 
     def __add__(self, other):
         if isinstance(other, BaseSchubertElement):
@@ -184,7 +180,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             return NotImplemented
 
     def as_coefficients_dict(self):
-        return sympy.Dict({self.ring.printing_term(k, self.ring): sympify(v) for k, v in self.items()})
+        return dict({self.ring.printing_term(k, self.ring): sympify(v) for k, v in self.items()})
 
     def _eval_expand_basic(self, *args, **kwargs):  # noqa: ARG002
         return self.as_polynomial()
@@ -202,7 +198,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         try:
             return symengine.sympify(Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()]))
         except SympifyError:
-            return sympy.Add(*[sympify(v) * self.ring.cached_schubpoly(k) for k, v in self.items()])
+            return Add(*[sympify(v) * self.ring.cached_schubpoly(k) for k, v in self.items()])
 
     def as_classical(self):
         return self.ring.in_classical_basis(self)
@@ -220,14 +216,17 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             elem2 = other
             if isinstance(self, MixedSchubertElement):
                 if isinstance(other, MixedSchubertElement):
-                    return (self - other).expand(deep=False).almosteq(sympy.S.Zero)
-                return (self - other).expand(deep=False).almosteq(sympy.S.Zero)
+                    return (self - other).expand(deep=False).almosteq(S.Zero)
+                return (self - other).expand(deep=False).almosteq(S.Zero)
             if isinstance(other, MixedSchubertElement):
-                return (self - other).expand(deep=False).almosteq(sympy.S.Zero)
+                return (self - other).expand(deep=False).almosteq(S.Zero)
             if elem1.ring == elem2.ring:
-                return (self - other).expand(deep=False).almosteq(sympy.S.Zero)
+                return (self - other).expand(deep=False).almosteq(S.Zero)
             return elem1.almosteq(elem1.ring.one * elem2)
         return (self - self.ring.from_sympy(other)).expand(deep=False) == self.ring.zero
+    
+    def __str__(self):
+        return sstr(self)
 
 
 class BaseSchubertRing(Ring, CompositeDomain):

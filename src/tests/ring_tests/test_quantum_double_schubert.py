@@ -4,7 +4,7 @@ def test_schub_expand():
     Test expand
     """
     from schubmult import QDSx
-    from symengine import symbols, expand
+    from schubmult.symbolic import symbols, expand
     x_1, y_1, y_2, y_3, q_1 = symbols("x_1 y_1 y_2 y_3 q_1")
     # QDSx = FastDoubleSchubertPolynomialRing(ZZ, 100, "x", "y")
     assert expand(QDSx([3, 1, 2]).expand()) == -q_1 + x_1**2 - x_1*y_1 - x_1*y_2 + y_1*y_2
@@ -14,7 +14,7 @@ def test_schub_expand():
 
 def test_parabolic():
     from schubmult import QPDSx, uncode
-    from symengine import S, expand
+    from schubmult.symbolic import S, expand
     #QPDSx = make_parabolic_quantum_basis([2, 3])
     A = QPDSx(2,3)(uncode([1,2]))
     B = QPDSx(2,3)(uncode([1,3]), "z")
@@ -52,7 +52,7 @@ def test_associative():
     Test associative on some large perms
     """
     from schubmult import QDSx
-    from symengine import expand, S
+    from schubmult.symbolic import expand, S
     perm1, perm2, perm3 = [1, 5, 3, 4, 2], [1, 3, 2, 5, 4], [3, 1, 4, 2, 5]
     assert (((QDSx(perm1) * QDSx(perm2)) * QDSx(perm3)) - (QDSx(perm1) * (QDSx(perm2) * QDSx(perm3)))).almosteq(S.Zero)
 

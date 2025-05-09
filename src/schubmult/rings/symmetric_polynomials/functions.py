@@ -1,6 +1,5 @@
-from sympy import Add, Mul, Pow, Wild, expand, expand_mul, sympify
-
 from schubmult.rings.variables import NotEnoughGeneratorsError
+from schubmult.symbolic import Add, Mul, Pow, expand, sympify
 
 from .elem_sym import ElemSym
 
@@ -18,7 +17,7 @@ def canonicalize_elem_syms(expr):
     if isinstance(expr, Mul):
         # make the z variables disjoint
         if any(isinstance(arg, Add) for arg in expr.args):
-            return canonicalize_elem_syms(expand_mul(expr))
+            return canonicalize_elem_syms(expand(expr))
         split_out = [arg for arg in expr.args if not isinstance(arg, ElemSym) and not isinstance(arg, Pow)]
         elems = [arg for arg in expr.args if isinstance(arg, ElemSym)]
         pows = [arg for arg in expr.args if isinstance(arg, Pow)]
@@ -73,12 +72,12 @@ def elem_sym_unify(expr, arg=None):
             expr = elem_sym_unify(expr, arg)
         return expr.func(*[elem_sym_unify(arg) for arg in expr.args])
     expr2 = expr
-    if isinstance(arg, ElemSym):
-        v1 = Wild("v_1")
-        v2 = Wild("v_2")
-        rep_pattern = ElemSym(arg._p, arg._k + 1, [*arg.genvars, v1], [*arg.coeffvars, v2])
-        pattern = arg + ElemSym(1, 1, [v1], [v2]) * ElemSym(arg._p - 1, arg._k, arg.genvars, [*arg.coeffvars, v2])
-        expr2 = expr.replace(pattern, rep_pattern)
+    # if isinstance(arg, ElemSym):
+    #     v1 = Wild("v_1")
+    #     v2 = Wild("v_2")
+    #     rep_pattern = ElemSym(arg._p, arg._k + 1, [*arg.genvars, v1], [*arg.coeffvars, v2])
+    #     pattern = arg + ElemSym(1, 1, [v1], [v2]) * ElemSym(arg._p - 1, arg._k, arg.genvars, [*arg.coeffvars, v2])
+    #     expr2 = expr.replace(pattern, rep_pattern)
     if arg.args:
         for arg2 in arg.args:
             expr2 = elem_sym_unify(expr2, arg2)

@@ -1,17 +1,15 @@
 from functools import cache, cached_property
 
-import sympy
-from symengine import Add, Mul, Pow, S
-
+import schubmult.rings.abstract_schub_poly as spolymod
 import schubmult.rings.quantum_schubert_ring as qsr
 import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, uncode
+from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand_func, sstr
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
-from .abstract_schub_poly import AbstractSchubPoly
 from .backend import sympify
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .poly_lib import elem_sym_poly, xreplace_genvars
@@ -21,8 +19,6 @@ from .symmetric_polynomials.elem_sym import FactorialElemSym
 from .symmetric_polynomials.functions import split_out_vars
 from .tensor_ring import TensorRing
 from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet, NotEnoughGeneratorsError, poly_genset
-
-_pretty_schub_char = "𝔖"  # noqa: RUF001
 
 logger = get_logger(__name__)
 
@@ -200,50 +196,6 @@ class DoubleSchubertElement(BaseSchubertElement):
         return max([max(k.descents()) for k in self.keys()])
 
 
-class DSchubPoly(AbstractSchubPoly):
-    is_Atom = True
-
-    def __new__(cls, k, basis):
-        return DSchubPoly.__xnew_cached__(cls, k, basis)
-
-    @staticmethod
-    def __xnew__(_class, k, basis):
-        return AbstractSchubPoly.__new__(_class, k, basis)
-
-    def _sympystr(self, printer):
-        key = self._key
-        if self._key == Permutation([]):
-            return printer.doprint(1)
-        if self.ring.coeff_genset.label is None:
-            return printer.doprint(f"S{self.ring.genset.label}({printer.doprint(key)})")
-        return printer.doprint(f"DS{self.ring.genset.label}({printer.doprint(key)}, {self.ring.coeff_genset.label})")
-
-    def _pretty(self, printer):
-        key = self._key
-        gl = self.ring.genset.label
-        if key == Permutation([]):
-            return printer._print(1)
-        subscript = printer._print(int("".join([str(i) for i in key])))
-        if self.ring.coeff_genset.label is None:
-            return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(gl)))
-        return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(f"{self.ring.genset.label}; {self.ring.coeff_genset.label}")))
-
-    def _latex(self, printer):
-        key = self._key
-        gl = self.ring.genset.label
-        if key == Permutation([]):
-            return printer._print(1)
-        subscript = printer._print(key)
-        if self.ring.coeff_genset.label is None:
-            return printer._print_Function(sympy.Function("\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(gl)))
-        return printer._print_Function(sympy.Function("\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(f"{{{self.ring.genset.label}}}; {{{self.ring.coeff_genset.label}}}")))
-
-    @staticmethod
-    @cache
-    def __xnew_cached__(_class, k, basis):
-        return DSchubPoly.__xnew__(_class, k, basis)
-
-
 class DoubleSchubertRing(BaseSchubertRing):
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, "DBS"))
@@ -270,7 +222,7 @@ class DoubleSchubertRing(BaseSchubertRing):
     #     return self.mul_sympy(elem, other)
 
     def printing_term(self, k):
-        return DSchubPoly(k, self)
+        return spolymod.DSchubPoly(k, self.genset.label, self.coeff_genset.label)
 
     def _coerce_mul(self, other):
         if isinstance(other, BaseSchubertElement):
@@ -315,7 +267,7 @@ class DoubleSchubertRing(BaseSchubertRing):
             for perm, df, sign in perm_list:
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in indexes if perm[i - 1] == k[i - 1]]
                 coeff = FactorialElemSym(elem._p - df, elem._k - df, remaining_vars, elem.coeffvars)  # leave as elem sym
-                ret += self.domain_new(v * sign * sympy.expand_func(coeff)) * self(perm)
+                ret += self.domain_new(v * sign * expand_func(coeff)) * self(perm)
         return ret
 
     @property
@@ -326,7 +278,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         elems = []
         for k in range(1, kk + 1):
             for p in range(1, k + 1):
-                elems += [(sympy.Symbol(f"e_{p}_{k}"), elem_sym_poly(p, k, self.genset[1:], poly_genset(0)))]
+                elems += [(Symbol(f"e_{p}_{k}"), elem_sym_poly(p, k, self.genset[1:], poly_genset(0)))]
         return dict(elems)
 
     @staticmethod
@@ -444,11 +396,11 @@ class DoubleSchubertRing(BaseSchubertRing):
             for perm, df, sign in perm_list:
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in {*indexes, *[j + 1 for j in range(len(perm)) if perm[j] != k[j]]}]
                 coeff = CompleteSym(x._p - df, x._k + df, remaining_vars, x.coeffvars)  # leave as elem sym
-                ret += self.domain_new(sign * v * sympy.expand_func(coeff)) * self(perm)
+                ret += self.domain_new(sign * v * expand_func(coeff)) * self(perm)
         return ret
 
     def handle_sympoly(self, other):
-        return sympy.expand_func(other)
+        return expand_func(other)
 
     def single_variable(self, elem, varnum):
         ret = self.zero
@@ -750,8 +702,6 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, "EDBS"))
 
-    _elem_sym_pattern = sympy.Wild("a") - sympy.Wild("b")
-    _elem_sym_pattern2 = sympy.Wild("a") + sympy.Wild("b")
 
     @property
     def replacematch(self):
@@ -767,7 +717,7 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
                 return FactorialElemSym(1, 1, [a], [self.coeff_genset[1]]) - FactorialElemSym(1, 1, [b], [self.coeff_genset[1]])
             if ind2 != -1:
                 return -FactorialElemSym(1, 1, [b], [a])
-            if isinstance(a, sympy.Symbol) and isinstance(b, sympy.Symbol):
+            if isinstance(a, Symbol) and isinstance(b, Symbol):
                 return FactorialElemSym(1, 1, [a], [b])
             return a - b
 

@@ -54,17 +54,17 @@ def test_coproduct():
     assert expand(DSx(perm).coproduct(*indices).expand() - DSx(perm).expand()) == 0
 
 def test_subs():
-    from schubmult.symbolic import expand
+    from schubmult.symbolic import expand, S
     from schubmult import DSx, GeneratingSet
     x = GeneratingSet("x")
     z = GeneratingSet("z")
     perm = [4, 6, 1, 2, 3, 5]
     old = x[2]
     new = x[1]
-    assert expand(DSx(perm,"z").subs(old, new) - DSx(perm,"z").as_polynomial().subs(old, new)) == 0
+    assert expand(DSx(perm,"z").subs(old, new) - DSx(perm,"z").as_polynomial().subs(old, new)) == S.Zero
     old = z[1]
     new = 3
-    assert expand(DSx(perm,"z").subs(old, new) - DSx(perm,"z").as_polynomial().subs(old, new)) == 0
+    assert expand(DSx(perm,"z").subs(old, new) - DSx(perm,"z").as_polynomial().subs(old, new)) == S.Zero
 
 def test_elem_sym_schub():
     from schubmult import DSx

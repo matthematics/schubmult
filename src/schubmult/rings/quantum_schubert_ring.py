@@ -8,6 +8,7 @@ import schubmult.rings.schubert_ring as spr
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
 from schubmult.perm_lib import Permutation, longest_element
+from schubmult.symbolic import sstr
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import is_parabolic
 
@@ -62,7 +63,7 @@ class QDSchubPoly(AbstractSchubPoly):
     def _latex(self, printer):
         if self._key == Permutation([]):
             return printer._print(1)
-        subscript = sympy.sstr(self._key)
+        subscript = sstr(self._key)
         if self.ring.coeff_genset.label is None:
             return printer._print_Function(sympy.Function("\\widetilde{\\mathfrak{S}}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(self.genset.label)))
         return printer._print_Function(sympy.Function("\\widetilde{\\mathfrak{S}}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label}")))
@@ -146,7 +147,7 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
         return f"Quantum Double Schubert polynomial ring in {self.genset.label} and {self.coeff_genset.label}"
 
     def printing_term(self, k):
-        return QDSchubPoly(k, self)
+        return QDSchubPoly(k, self.genset.label, self.coeff_genset.label)
 
     def _coerce_mul(self, other):
         if isinstance(other, BaseSchubertElement):
@@ -599,7 +600,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
         return elem_func
 
     def printing_term(self, k):
-        return PQDSchubPoly(k, self, self.index_comp)
+        return PQDSchubPoly(k, self.genset.label, self.coeff_genset.label, self.index_comp)
 
     @cache
     def quantum_as_classical_schubpoly(self, perm):

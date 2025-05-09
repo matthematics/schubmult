@@ -3,11 +3,12 @@ from functools import cache
 
 import symengine.lib.symengine_wrapper as sw
 import sympy
-from sympy import sstr
 
 # from symengine import SympifyError, sympify
 from sympy.core._print_helpers import Printable
 from sympy.core.expr import Expr
+
+from .base_printing import sstr
 
 # class SympyExprClass(type):
 #     @property
@@ -242,6 +243,9 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
 
     # _sympyclass = SympyExpr
 
+    def __str__(self):
+        return sstr(self)
+
     def __getattr__(self, attr):
         # print(f"{self=} {attr=}")
         raise AttributeError
@@ -255,7 +259,9 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
         return obj
 
     def __init__(self, *args):
-        super().__init__(self, *args, store_pickle=True)
+        # print([type(arg) for arg in args])
+        # print(f"{type(self)=}")
+        sw.Symbol.__init__(self, self, *args, store_pickle=True)
         #self._sympy_obj = SympyExpr(self)
 
     def _sympy_(self):
@@ -265,8 +271,6 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
         return hash(self.args)
 
     def encode(self, *args):
-        from sympy.printing.str import sstr
-
         return sstr(self).encode(*args)
 
     @property

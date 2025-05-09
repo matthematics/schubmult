@@ -6,8 +6,8 @@ def test_schub_expand():
     Test expand
     """
     from schubmult import Sx
-    from sympy import symbols, expand
-    from symengine import sympify
+    from schubmult.symbolic import symbols, expand
+    from schubmult.symbolic import sympify
     x_1, x_2 = symbols("x_1 x_2")
     assert Sx([3,1,2]).expand() == x_1**2
     assert expand((Sx([5,3,4,1,2]).expand() * Sx([4,1,5,2,3]).expand() - (Sx([5,3,4,1,2]) * Sx([4,1,5,2,3])).expand()).expand()) == 0
@@ -15,7 +15,7 @@ def test_schub_expand():
 
 def test_coproduct():
     from schubmult import Sx
-    from symengine import expand
+    from schubmult.symbolic import expand
     perm = [3, 1, 5, 2, 6, 7, 4]
     indices = [2, 4, 6]
     assert expand(Sx(perm).coproduct(*indices).expand() - Sx(perm).expand()) == 0

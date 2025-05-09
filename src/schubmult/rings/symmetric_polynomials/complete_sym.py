@@ -1,6 +1,6 @@
 from functools import cache
 
-from symengine import Add, DictBasic, S, sympify
+from symengine import Add, DictBasic, Integer, S, sympify
 
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.rings.symmetric_polynomials.elem_sym import FactorialElemSym
@@ -24,9 +24,11 @@ class h(SymengineExpr):
     #     return SymPolyWrap(self, self.args, self.__class__, sw.PyModule(self.__module__))
 
     def __new__(cls, p, k, *args):
+        p = int(p)
+        k = int(p)
         if hasattr(args[0], "__iter__"):
-            return CompleteSym.__xnew_cached__(cls, p, k, tuple(args[0]), tuple(args[1]))
-        return CompleteSym.__xnew_cached__(cls, p, k, tuple(args[:k]), tuple(args[k:2*k + p - 1]))
+            return CompleteSym.__xnew_cached__(cls, int(p), int(k), tuple(args[0]), tuple(args[1]))
+        return CompleteSym.__xnew_cached__(cls, int(p), int(k), tuple(args[:int(k)]), tuple(args[k:2*k + p - 1]))
 
     @staticmethod
     @cache
@@ -41,10 +43,10 @@ class h(SymengineExpr):
         cont_obj = FactorialElemSym(p, k + p - 1, var2, var1)
         if not isinstance(cont_obj, FactorialElemSym):
             return cont_obj
-        obj = SymengineExpr.__new__(_class, cont_obj.args[0], cont_obj.args[1] + 1 - cont_obj.args[0], *cont_obj._coeffvars, *cont_obj._genvars)
+        obj = SymengineExpr.__new__(_class, cont_obj.args[0], cont_obj.args[1] + Integer(1) - cont_obj.args[0], *cont_obj._coeffvars, *cont_obj._genvars)
         obj._under_elem = cont_obj
-        obj._p = obj.args[0]
-        obj._k = obj.args[1]
+        obj._p = int(obj.args[0])
+        obj._k = int(obj.args[1])
         obj._genvars = cont_obj._coeffvars
         obj._coeffvars = cont_obj._genvars
         return obj

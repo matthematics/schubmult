@@ -1,18 +1,13 @@
 from functools import cache, cached_property
 
-import symengine
-import sympy
-from symengine import Mul, Pow, sympify
-
 import schubmult.perm_lib as pl
 import schubmult.rings.variables as vv
+from schubmult.symbolic import Add, Mul, Pow, S, expand, sympify
 
 # import vv.GeneratingSet, vv.base_index
 
 
 # Indexed._sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
-def expand(val):
-    return symengine.expand(val)
 
 
 class _gvars:
@@ -66,7 +61,7 @@ def sv_posify(val, var2):
         for j in range(1, i):
             sm += var_r[j]
         subs_dict[sympify(var2[i])] = sm
-    val = sympify(sympy.simplify(efficient_subs(sympify(val), subs_dict)))
+    val = sympify(efficient_subs(sympify(val), subs_dict).simplify())
     bingle_dict = {}
     for i in range(1, len(var_r) - 1):
         bingle_dict[var_r[i]] = var2[i + 1] - var2[i]  # symengine.Add(*[_vars.var2[i+1], - _vars.var2[i]],evaluate=False)
@@ -291,28 +286,16 @@ def xreplace_genvars(poly, vars1, vars2):
 #     return ret
 
 
-
 def divide_out_diff(poly, v1, v2):
     if hasattr(poly, "_eval_divide_out_diff"):
         return poly._eval_divide_out_diff(v1, v2)
     Mul_local = Mul
-    Add_local = symengine.Add
+    Add_local = Add
     Pow_local = Pow
-    S = symengine.S
     sympify_local = sympify
-    try:
-        poly = sympify(poly)
-        v1 = sympify(v1)
-        v2 = sympify(v2)
-    except Exception:
-        poly = sympy.sympify(poly)
-        v1 = sympy.sympify(v1)
-        v2 = sympy.sympify(v2)
-        Mul_local = sympy.Mul
-        Add_local = sympy.Add
-        Pow_local = sympy.Pow
-        S = sympy.S
-        sympify_local = sympy.sympify
+    poly = sympify(poly)
+    v1 = sympify(v1)
+    v2 = sympify(v2)
 
     poly2 = poly.xreplace({v1: v2})
     if poly == poly2:
@@ -322,25 +305,25 @@ def divide_out_diff(poly, v1, v2):
     if poly2 == v2:
         return S.One
     if isinstance(poly, Add_local):
-        return sympify_local(sympy.sympify(Add_local(*[divide_out_diff(a, v1, v2) for a in poly.args])))
+        return sympify_local(sympify(Add_local(*[divide_out_diff(a, v1, v2) for a in poly.args])))
     if isinstance(poly, Pow_local):
         b = poly.args[0]
-        dd = divide_out_diff(poly.args[0],v1,v2)
+        dd = divide_out_diff(poly.args[0], v1, v2)
         a = poly.args[0].xreplace({v1: v2})
-        return Add_local(*[Mul_local(dd,Pow_local(b,i),Pow_local(a,int(poly.args[1]) - 1 - i)) for i in range(int(poly.args[1]))])
+        return Add_local(*[Mul_local(dd, Pow_local(b, i), Pow_local(a, int(poly.args[1]) - 1 - i)) for i in range(int(poly.args[1]))])
     if isinstance(poly, Mul_local):
         current_args = [*poly.args]
         args_ret = []
         for i, arg in enumerate(poly.args):
             res = divide_out_diff(arg, v1, v2)
-            if res == 0:
+            if res == S.Zero:
                 continue
             if res == S.One:
                 args_ret += [Mul_local(*[*current_args[:i], *current_args[i + 1 :]])]
             else:
                 args_ret += [Mul_local(*[*current_args[:i], res, *current_args[i + 1 :]])]
             current_args[i] = current_args[i].xreplace({v1: v2})
-        return sympify_local(sympy.sympify(Add_local(*args_ret)))
+        return sympify_local(sympify(Add_local(*args_ret)))
     raise ValueError(f"Expected Expr but got {type(poly)}")
 
 
@@ -348,4 +331,4 @@ def split_up(poly, v1, v2):
     try:
         return (sympify(poly).xreplace({sympify(v1): sympify(v2)}), (sympify(v1 - v2), divide_out_diff(poly, v1, v2)))
     except Exception:
-        return (sympy.sympify(poly).xreplace({sympy.sympify(v1): sympy.sympify(v2)}), (sympy.sympify(v1 - v2), divide_out_diff(poly, v1, v2)))
+        return (sympify(poly).xreplace({sympify(v1): sympify(v2)}), (sympify(v1 - v2), divide_out_diff(poly, v1, v2)))

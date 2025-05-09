@@ -1,9 +1,8 @@
 import symengine
-import sympy
-from symengine import Mul, Pow, sympify
 
 import schubmult.perm_lib as pl
 import schubmult.schub_lib.schub_lib as schub_lib
+from schubmult.symbolic import Add, Mul, Pow, sympify
 
 from .poly_lib import call_zvars
 
@@ -167,21 +166,13 @@ def div_diff(poly, v1, v2):
     if hasattr(poly, "_eval_div_diff"):
         return poly._eval_div_diff(v1, v2)
     Mul_local = Mul
-    Add_local = symengine.Add
+    Add_local = Add
     Pow_local = Pow
     S = symengine.S
-    try:
-        poly = sympify(poly)
-        v1 = sympify(v1)
-        v2 = sympify(v2)
-    except Exception:
-        poly = sympy.sympify(poly)
-        v1 = sympy.sympify(v1)
-        v2 = sympy.sympify(v2)
-        Mul_local = sympy.Mul
-        Add_local = sympy.Add
-        Pow_local = sympy.Pow
-        S = sympy.S
+    poly = sympify(poly)
+    v1 = sympify(v1)
+    v2 = sympify(v2)
+
 
     if v1 not in poly.free_symbols and v2 not in poly.free_symbols:
         return S.Zero

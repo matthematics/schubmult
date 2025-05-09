@@ -1,6 +1,4 @@
-import sympy
-from symengine import SympifyError, sympify
-
+from schubmult.symbolic import sympify
 from schubmult.utils.perm_utils import add_perm_dict
 
 
@@ -25,16 +23,9 @@ def _tensor_product_of_dicts(d1, d2):
     ret_dict = {}
     for k1, v1 in d1.items():
         this_dict = {}
-        try:
-            v1 = sympify(v1)
-        except SympifyError:
-            v1 = sympy.sympify(v1)
+        v1 = sympify(v1)
         for k2, v2 in d2.items():
-            try:
-                v2 = sympify(v2)
-            except SympifyError:
-                v2 = sympy.sympify(v2)
-                v1 = sympy.sympify(v1)
+            v2 = sympify(v2)
             if isinstance(k1, tuple):
                 this_dict[(*k1, k2)] = v1 * v2
             else:
