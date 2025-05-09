@@ -15,7 +15,7 @@ def test_schub_expand():
 
 def test_coproduct():
     from schubmult import Sx
-    from sympy import expand
+    from symengine import expand
     perm = [3, 1, 5, 2, 6, 7, 4]
     indices = [2, 4, 6]
     assert expand(Sx(perm).coproduct(*indices).expand() - Sx(perm).expand()) == 0

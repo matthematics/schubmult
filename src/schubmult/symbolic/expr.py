@@ -57,9 +57,9 @@ class SympyExpr(Expr):
     def _sympystr(self, printer):
         return printer.doprint(self._obj)
 
-    @property
-    def args(self):
-        return self._obj.args
+    # @property
+    # def args(self):
+    #     return [sympy.sympify(arg) for arg in self._obj.args]
 
     def __getattr__(self, attr):
         # print(f"{attr}")
@@ -118,6 +118,8 @@ class SympyExpr(Expr):
             return self._obj.as_base_exp()
         return super().as_base_exp()
 
+    def func(self, *args):
+        return sympy.sympify(self._obj.func(*args))
     # def could_extract_minus_sign(self) -> bool:
     #     """Return True if self has -1 as a leading factor or has
     #     more literal negative signs than positive signs in a sum,
@@ -179,7 +181,10 @@ class SympyExpr(Expr):
     #     return (expr, hit)
 
     def expand(self, *args, **kwargs):
-        return self._obj.expand(*args, **kwargs)
+        try:
+            return self._obj.expand(*args, **kwargs)
+        except Exception:
+            return super().expand(*args, **kwargs)
 
     def __repr__(self):
         return self._obj.__repr__()

@@ -502,6 +502,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         if isinstance(x, _Mul):
             res = elem
             for arg in x.args:
+                print(f"frag {arg=}")
                 res = self.mul_sympy(res, arg)
             return res
         if isinstance(x, _Pow):

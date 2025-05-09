@@ -48,7 +48,7 @@ def test_elem_sym():
 
 def test_coproduct():
     from schubmult import DSx
-    from sympy import expand
+    from symengine import expand
     perm = [3, 1, 5, 2, 6, 7, 4]
     indices = [2, 4, 6]
     assert expand(DSx(perm).coproduct(*indices).expand() - DSx(perm).expand()) == 0

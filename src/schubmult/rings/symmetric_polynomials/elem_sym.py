@@ -4,10 +4,12 @@ import symengine.lib.symengine_wrapper as sw
 import sympy
 from symengine import S, sympify
 
-# import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
 from schubmult.rings.poly_lib import elem_sym_poly
-from schubmult.symbolic.expr import NotEnoughGeneratorsError, SymengineExpr, SympyExpr
+from schubmult.symbolic.expr import SymengineExpr, SympyExpr
 from schubmult.utils.logging import get_logger
+
+# import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
+from ..variables import NotEnoughGeneratorsError
 
 logger = get_logger(__name__)
 
