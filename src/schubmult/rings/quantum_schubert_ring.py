@@ -56,16 +56,16 @@ class QDSchubPoly(AbstractSchubPoly):
             return printer._print(1)
         subscript = printer.doprint(int("".join([str(i) for i in self._key])))
         if self.ring.coeff_genset.label is None:
-            return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(self.genset.label)))
-        return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label}")))
+            return printer._print_Function(Function(f"{_pretty_schub_char}_{subscript}")(Symbol(self.genset.label)))
+        return printer._print_Function(Function(f"{_pretty_schub_char}_{subscript}")(Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label}")))
 
     def _latex(self, printer):
         if self._key == Permutation([]):
             return printer._print(1)
         subscript = sstr(self._key)
         if self.ring.coeff_genset.label is None:
-            return printer._print_Function(sympy.Function("\\widetilde{\\mathfrak{S}}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(self.genset.label)))
-        return printer._print_Function(sympy.Function("\\widetilde{\\mathfrak{S}}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label}")))
+            return printer._print_Function(Function("\\widetilde{\\mathfrak{S}}" + f"_{'{' + subscript + '}'}")(Symbol(self.genset.label)))
+        return printer._print_Function(Function("\\widetilde{\\mathfrak{S}}" + f"_{'{' + subscript + '}'}")(Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label}")))
 
 
 class ParabolicQuantumDoubleSchubertElement(BaseSchubertElement):
@@ -102,7 +102,7 @@ class PQDSchubPoly(AbstractSchubPoly):
 
     @property
     def args(self):
-        return (sympy.Tuple(*self._key), self._basis, sympy.Tuple(*self._index_comp))
+        return (tuple(self._key), self._basis, tuple(self._index_comp))
 
     @staticmethod
     @cache
@@ -119,18 +119,18 @@ class PQDSchubPoly(AbstractSchubPoly):
             return printer._print(1)
         subscript = printer._print(int("".join([str(i) for i in self._key])))
         if self.ring.coeff_genset.label is None:
-            return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(f"{self.genset.label} | {self.ring.index_comp}")))
-        return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label} | {self.ring.index_comp}")))
+            return printer._print_Function(Function(f"{_pretty_schub_char}_{subscript}")(Symbol(f"{self.genset.label} | {self.ring.index_comp}")))
+        return printer._print_Function(Function(f"{_pretty_schub_char}_{subscript}")(Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label} | {self.ring.index_comp}")))
 
     def _latex(self, printer):
         if self._key == Permutation([]):
             return printer._print(1)
         subscript = printer._print(self._key)
-        supscript = printer._print(sympy.Tuple(*self.index_comp))
+        supscript = printer._print(tuple(self.index_comp))
         if self.ring.coeff_genset.label is None:
-            return printer._print_Function(sympy.Function("\\widetilde{\\mathfrak{S}}" + f"^{'{'}{supscript}{'}'}_{'{' + subscript + '}'}")(sympy.Symbol(self.genset.label)))
+            return printer._print_Function(Function("\\widetilde{\\mathfrak{S}}" + f"^{'{'}{supscript}{'}'}_{'{' + subscript + '}'}")(Symbol(self.genset.label)))
         return printer._print_Function(
-            sympy.Function("\\widetilde{\\mathfrak{S}}" + f"^{'{'}{supscript}{'}'}_{'{' + subscript + '}'}")(sympy.Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label}")),
+            Function("\\widetilde{\\mathfrak{S}}" + f"^{'{'}{supscript}{'}'}_{'{' + subscript + '}'}")(Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label}")),
         )
 
 
@@ -182,7 +182,7 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
         elems = []
         for k in range(1, kk + 1):
             for p in range(1, k + 1):
-                elems += [(sympy.Symbol(f"e_{p}_{k}"), elem_sym_poly_q(p, k, self.genset[1:], poly_genset(0)))]
+                elems += [(Symbol(f"e_{p}_{k}"), elem_sym_poly_q(p, k, self.genset[1:], poly_genset(0)))]
         return dict(elems)
 
     @cache
@@ -478,7 +478,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
         elem_func = self.elem_sym
         for k in range(1, kk + 1):
             for p in range(1, k + 1):
-                elems += [(sympy.Symbol(f"e_{p}_{k}"), elem_func(p, k, self.genset[1:], poly_genset(0)))]
+                elems += [(Symbol(f"e_{p}_{k}"), elem_func(p, k, self.genset[1:], poly_genset(0)))]
         return dict(elems)
 
     @property

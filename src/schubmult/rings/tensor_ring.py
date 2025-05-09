@@ -69,7 +69,7 @@ class TensorRing(BaseSchubertRing):
 
     @cache
     def cached_schubpoly(self, k):
-        return sympy.Mul(*[self.rings[i].cached_schubpoly(k[i]) for i in range(len(self.rings))])
+        return Mul(*[self.rings[i].cached_schubpoly(k[i]) for i in range(len(self.rings))])
 
     def printing_term(self, k):
         return TensorBasisElement(k, self)
@@ -123,10 +123,10 @@ class TensorBasisElement(AbstractSchubPoly):
         return " # ".join([printer._print(self.ring.rings[i].printing_term(self._key[i])) for i in range(len(self._key))])
 
     def _pretty(self, printer):
-        return printer._print_TensorProduct(sympy.Mul(*[self.ring.rings[i].printing_term(self._key[i]) for i in range(len(self._key))]))
+        return printer._print_TensorProduct(Mul(*[self.ring.rings[i].printing_term(self._key[i]) for i in range(len(self._key))]))
 
     def _latex(self, printer):
-        return printer._print_TensorProduct(sympy.Mul(*[self.ring.rings[i].printing_term(self._key[i]) for i in range(len(self._key))]))
+        return printer._print_TensorProduct(Mul(*[self.ring.rings[i].printing_term(self._key[i]) for i in range(len(self._key))]))
 
 
 class TensorRingElement(BaseSchubertElement):
@@ -141,8 +141,8 @@ class TensorRingElement(BaseSchubertElement):
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
-            return [sympy.sympify(S.Zero)]
+            return [sympify(S.Zero)]
         return [
-            self.ring.domain.to_sympy(self[k]) if k == self.ring.zero_monom else sympy.Mul(self.ring.domain.to_sympy(self[k]), self.ring.printing_term(k))
+            self.ring.domain.to_sympy(self[k]) if k == self.ring.zero_monom else Mul(self.ring.domain.to_sympy(self[k]), self.ring.printing_term(k))
             for k in sorted(self.keys(), key=lambda kkt: [(kk.inv, tuple(kk)) for kk in kkt])
         ]

@@ -56,8 +56,8 @@ class E(SymengineExpr):
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
-        var1 = tuple(sorted(var1,key=lambda x: sympy.sympify(x).sort_key()))
-        var2 = tuple(sorted(var2,key=lambda x: sympy.sympify(x).sort_key()))
+        var1 = tuple(sorted(var1,key=lambda x: sympify(x).sort_key()))
+        var2 = tuple(sorted(var2,key=lambda x: sympify(x).sort_key()))
         obj = SymengineExpr.__new__(
             _class,
             Integer(p),
@@ -157,7 +157,7 @@ class E(SymengineExpr):
 
     @cache
     def _eval_expand_func(self, *args, **kwargs):
-        return sympy.sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
+        return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
 
     # @property
     # def func(self):
@@ -317,7 +317,7 @@ class e(SymengineExpr):
         var1 = var1[:k]
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
-        var1 = tuple(sorted(var1,key=lambda x: sympy.sympify(x).sort_key()))
+        var1 = tuple(sorted(var1,key=lambda x: sympify(x).sort_key()))
         obj = SymengineExpr.__new__(
             _class,
         )

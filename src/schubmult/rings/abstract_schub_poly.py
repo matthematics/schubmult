@@ -79,8 +79,8 @@ class DSchubPoly(AbstractSchubPoly):
             return printer._print(1)
         subscript = printer._print(int("".join([str(i) for i in key])))
         if self._coeff_genset is None:
-            return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(gl)))
-        return printer._print_Function(sympy.Function(f"{_pretty_schub_char}_{subscript}")(sympy.Symbol(f"{self._genset}; {self._coeff_genset}")))
+            return printer._print_Function(Function(f"{_pretty_schub_char}_{subscript}")(Symbol(gl)))
+        return printer._print_Function(Function(f"{_pretty_schub_char}_{subscript}")(Symbol(f"{self._genset}; {self._coeff_genset}")))
 
     def _latex(self, printer):
         key = self._key
@@ -89,9 +89,9 @@ class DSchubPoly(AbstractSchubPoly):
             return printer._print(1)
         subscript = printer._print(key)
         if self._coeff_genset is None:
-            return printer._print_Function(sympy.Function("\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(gl)))
+            return printer._print_Function(Function("\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(Symbol(gl)))
         return printer._print_Function(
-            sympy.Function("\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(sympy.Symbol(f"{{{self._genset}}}; {{{self._coeff_genset}}}"))
+            Function("\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(Symbol(f"{{{self._genset}}}; {{{self._coeff_genset}}}"))
         )
 
     @staticmethod

@@ -241,7 +241,7 @@ class DoubleSchubertRing(BaseSchubertRing):
     def elem_sym(self):
         # genset = self.genset
 
-        # class esf(sympy.Function):
+        # class esf(Function):
         #     @classmethod
         #     def eval(cls, *x):
         #         pass

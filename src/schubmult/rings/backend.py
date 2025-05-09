@@ -6,7 +6,7 @@ from schubmult.symbolic import expand, sympify
 #         return symengine.sympify(val)
 #     except symengine.SympifyError:
 #         # print(f"Bagels {val=}")
-#         return sympy.sympify(val)
+#         return sympify(val)
 
 
 # def expand(val, **kwargs):
@@ -14,4 +14,4 @@ from schubmult.symbolic import expand, sympify
 #         return symengine.expand(val, **kwargs)
 #     except Exception:
 #         # print(f"Bogels {val=}")
-#         return sympy.expand(val, **kwargs)
+#         return expand(val, **kwargs)
