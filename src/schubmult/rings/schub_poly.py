@@ -1,4 +1,3 @@
-
 import schubmult.perm_lib as pl
 import schubmult.schub_lib.schub_lib as schub_lib
 from schubmult.symbolic import Add, Mul, Pow, S, sympify
@@ -20,6 +19,7 @@ def elem_func_func(k, i, v1, v2, vdiff, varl1, varl2, elem_func):
     zvars = [varl2[i] for i in call_zvars(v1, v2, k, i)]
     return elem_func(newk - vdiff, newk, varl1[1:], zvars)
 
+
 def elem_func_func_mul(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, elem_func):
     newk = k - udiff
     if newk < vdiff:
@@ -37,6 +37,7 @@ def elem_func_func_mul(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, elem_fu
         yvars += [varl1[j + 1]]
     zvars = [varl2[i] for i in call_zvars(v1, v2, k, i)]
     return elem_func(newk - vdiff, newk, yvars, zvars)
+
 
 def schubpoly_from_elems(v, var_x=None, var_y=None, elem_func=None, mumu=None):
     if mumu:
@@ -161,13 +162,13 @@ def schubpoly(v, var2=None, var3=None, start_var=1):
 #         return skew_div_diff(u2, w2, perm_act(poly, d + 1))
 #     return skew_div_diff(u, w2, div_diff(d + 1, poly))
 
+
 def div_diff(poly, v1, v2):
     if hasattr(poly, "_eval_div_diff"):
         return poly._eval_div_diff(v1, v2)
     poly = sympify(poly)
     v1 = sympify(v1)
     v2 = sympify(v2)
-
 
     if v1 not in poly.free_symbols and v2 not in poly.free_symbols:
         return S.Zero
@@ -179,9 +180,9 @@ def div_diff(poly, v1, v2):
         return Add(*[div_diff(a, v1, v2) for a in poly.args])
     if isinstance(poly, Pow):
         a = poly.args[0]
-        dd = div_diff(poly.args[0],v1,v2)
+        dd = div_diff(poly.args[0], v1, v2)
         b = poly.args[0].xreplace({v1: v2, v2: v1})
-        return Add(*[Mul(dd,Pow(b,i),Pow(a,int(poly.args[1]) - 1 - i)) for i in range(int(poly.args[1]))])
+        return Add(*[Mul(dd, Pow(b, i), Pow(a, int(poly.args[1]) - 1 - i)) for i in range(int(poly.args[1]))])
     if isinstance(poly, Mul):
         current_args = [*poly.args]
         args_ret = []

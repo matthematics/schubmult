@@ -42,7 +42,7 @@ logger = get_logger(__name__)
 
 
 def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
-    do_pos_neg = False # noqa: F841
+    do_pos_neg = False  # noqa: F841
     notint = False
     try:
         val2 = int(expand(val))
@@ -146,7 +146,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
         #             raise KeyboardInterrupt()
         #         status = lp_prob.status
         # else:
-            # logger.debug("this")
+        # logger.debug("this")
         val_poly = poly(expand(val), *var22, *var33)
         vec = opt.poly_to_vec(val)
         mn = val_poly.monoms()

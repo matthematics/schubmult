@@ -1,7 +1,5 @@
 from functools import cached_property
 
-from schubmult.symbolic import Add, Mul, Pow
-
 import schubmult.rings.variables as spl
 import schubmult.schub_lib.schub_lib as sss
 from schubmult.perm_lib import (
@@ -13,6 +11,7 @@ from schubmult.perm_lib import (
     strict_theta,
     uncode,
 )
+from schubmult.symbolic import Add, Mul, Pow
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 

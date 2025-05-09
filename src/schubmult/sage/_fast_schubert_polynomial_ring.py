@@ -201,7 +201,6 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
             self._parser = _single_schub_parser(self)
         return self._parser
 
-
     def __init__(
         self,
         R,
@@ -218,11 +217,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         self._repr_option_bracket = False
         self._quantum = quantum
 
-        cat = (
-            GradedAlgebrasWithBasis(QR).Commutative()
-            if quantum
-            else GradedBialgebrasWithBasis(R).Commutative()
-        )
+        cat = GradedAlgebrasWithBasis(QR).Commutative() if quantum else GradedBialgebrasWithBasis(R).Commutative()
 
         index_set = Permutations()
         self._ascode = False
@@ -244,11 +239,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
         self._q_ring = QR
         self._base_varname = base_variable_name
         self._q_varname = q_varname
-        self._polynomial_ring = (
-            PolynomialRing(R, num_vars, base_variable_name)
-            if not quantum
-            else PolynomialRing(QR, num_vars, base_variable_name)
-        )
+        self._polynomial_ring = PolynomialRing(R, num_vars, base_variable_name) if not quantum else PolynomialRing(QR, num_vars, base_variable_name)
         self._populate_coercion_lists_()
         self._parser = None
 
@@ -279,16 +270,9 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                 {_coerce_index(x, self._ascode, self._ascode): self.base_ring().one()},
             )
         elif isinstance(x, FastSchubertPolynomial):
-            if (
-                x.base_varname == self._base_varname
-                and (self._quantum == x.parent()._quantum)
-                and (not self._quantum or x.q_varname == self._q_varname)
-            ):
+            if x.base_varname == self._base_varname and (self._quantum == x.parent()._quantum) and (not self._quantum or x.q_varname == self._q_varname):
                 elem = self._from_dict(
-                    {
-                        _coerce_index(k, x.parent()._ascode, self._ascode): v
-                        for k, v in x.monomial_coefficients().items()
-                    },
+                    {_coerce_index(k, x.parent()._ascode, self._ascode): v for k, v in x.monomial_coefficients().items()},
                 )
             else:
                 return self(x.expand())
@@ -312,12 +296,7 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
                     [syme.Symbol(str(g)) for g in self._polynomial_ring.gens()],
                 )
             elem = self._from_dict(
-                {
-                    _coerce_index(k, False, self._ascode): self._q_ring(str(v))
-                    if self._quantum
-                    else self.base_ring()(str(v))
-                    for k, v in result.items()
-                },
+                {_coerce_index(k, False, self._ascode): self._q_ring(str(v)) if self._quantum else self.base_ring()(str(v)) for k, v in result.items()},
             )
         else:
             raise TypeError(f"Could not convert {x=} to {self}")
@@ -326,10 +305,8 @@ class FastSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
     def some_elements(self):
         return [
             self.one(),
-            self(_coerce_index([1], False, self._ascode))
-            + 2 * self(_coerce_index([2, 1], False, self._ascode)),
-            self(_coerce_index([4, 2, 1, 3], False, self._ascode))
-            - self(_coerce_index([3, 2, 1], False, self._ascode)),
+            self(_coerce_index([1], False, self._ascode)) + 2 * self(_coerce_index([2, 1], False, self._ascode)),
+            self(_coerce_index([4, 2, 1, 3], False, self._ascode)) - self(_coerce_index([3, 2, 1], False, self._ascode)),
         ]
 
     def product_on_basis(self, left, right):

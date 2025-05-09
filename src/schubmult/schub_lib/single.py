@@ -1,7 +1,5 @@
 from functools import cached_property
 
-from schubmult.symbolic import Add, Mul, Pow
-
 from schubmult.perm_lib import (
     Permutation,
     inv,
@@ -14,6 +12,7 @@ from schubmult.schub_lib.schub_lib import (
     compute_vpathdicts,
     elem_sym_perms,
 )
+from schubmult.symbolic import Add, Mul, Pow
 from schubmult.utils.perm_utils import (
     add_perm_dict,
 )

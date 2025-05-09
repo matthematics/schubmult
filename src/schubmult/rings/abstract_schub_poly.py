@@ -8,11 +8,12 @@ from schubmult.perm_lib import Permutation
 
 
 # Atomic Schubert polynomial
-class AbstractSchubPoly(ssymb.SymengineExpr):
+class AbstractSchubPoly(ssymb.Expr):
     is_Atom = True
+    is_number = False
 
     def __new__(cls, k, genset, coeff_genset):
-        obj = ssymb.SymengineExpr.__new__(cls)
+        obj = ssymb.Expr.__new__(cls)
         obj._key = k
         obj._genset = genset
         obj._coeff_genset = coeff_genset
@@ -25,14 +26,14 @@ class AbstractSchubPoly(ssymb.SymengineExpr):
     # def __reduce__(self):
     #     return (self.__class__, self.args)
 
-    # def _eval_expand_basic(self, *args, **kwargs):  # noqa: ARG002
+    # def _eval_expand_basic(self, *args, **kwargs):
     #     return self._ring_elem.as_polynomial()
 
     # def __reduce__(self):
     #     print("Fleff")
     #     return (self.__class__, self.args)
 
-    # def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
+    # def expand(self, deep=True, *args, **kwargs):
     #     if not deep:
     #         return self._from_dict({k: expand(v) for k, v in self._ring_elem.items()})
     #     return sympify(expand(sympify(self.as_polynomial())))

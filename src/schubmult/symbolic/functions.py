@@ -1,22 +1,15 @@
 import symengine
+import symengine.lib.symengine_wrapper as sw
 import sympy
-
-from .base_printing import sstr
-
-# Add = symengine.Add
-# Mul = symengine.Mul
-# Pow = symengine.Pow
-# SympifyError = symengine.SympifyError
-# Symbol = symengine.Symbol
-# S = symengine.S
 
 
 def expand(obj, **kwargs):
     if len(kwargs.keys()):
         return symengine.sympify(sympy.expand(obj, **kwargs))
-    return symengine.expand(obj)
-    # except Exception:
-    #     return symengine.sympify(sympy.expand(obj))
+    try:
+        return symengine.expand(obj)
+    except Exception:
+        return sympy.expand(obj)
 
 
 def symbols(*args, **kwargs):
@@ -24,8 +17,11 @@ def symbols(*args, **kwargs):
 
 
 def sympify(val):
-    # try:
-    return symengine.sympify(val)
-    # except symengine.SympifyError:
-    #     # print(f"Bagels {val=}")
-    #     return sympy.sympify(val)
+    try:
+        return symengine.sympify(val)
+    except symengine.SympifyError:
+        return sympy.sympify(val)
+
+
+def is_of_func_type(elem, typ):
+    return isinstance(elem, typ) or (isinstance(elem, sw.PyFunction) and isinstance(elem.pyobject(), typ))

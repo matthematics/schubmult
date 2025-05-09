@@ -2,7 +2,7 @@ from functools import cache
 
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.rings.symmetric_polynomials.elem_sym import FactorialElemSym
-from schubmult.symbolic import Add, Integer, S, SymengineExpr, sympify
+from schubmult.symbolic import Add, Function, Integer, S, sympify
 from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -10,7 +10,8 @@ logger = get_logger(__name__)
 # class _h(SympyExpr):
 #     pass
 
-class h(SymengineExpr):
+
+class h(Function):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
@@ -23,10 +24,13 @@ class h(SymengineExpr):
 
     def __new__(cls, p, k, *args):
         p = int(p)
-        k = int(p)
+        k = int(k)
         if hasattr(args[0], "__iter__"):
             return CompleteSym.__xnew_cached__(cls, int(p), int(k), tuple(args[0]), tuple(args[1]))
-        return CompleteSym.__xnew_cached__(cls, int(p), int(k), tuple(args[:int(k)]), tuple(args[k:2*k + p - 1]))
+        return CompleteSym.__xnew_cached__(cls, int(p), int(k), tuple(args[: int(k)]), tuple(args[k:]))
+
+    # def __hash__(self):
+    #     return hash(self.args, "bonbon")
 
     @staticmethod
     @cache
@@ -41,7 +45,7 @@ class h(SymengineExpr):
         cont_obj = FactorialElemSym(p, k + p - 1, var2, var1)
         if not isinstance(cont_obj, FactorialElemSym):
             return cont_obj
-        obj = SymengineExpr.__new__(_class, cont_obj.args[0], cont_obj.args[1] + Integer(1) - cont_obj.args[0], *cont_obj._coeffvars, *cont_obj._genvars)
+        obj = Function.__new__(_class, cont_obj.args[0], cont_obj.args[1] + 1 - cont_obj.args[0], *cont_obj._coeffvars, *cont_obj._genvars)
         obj._under_elem = cont_obj
         obj._p = int(obj.args[0])
         obj._k = int(obj.args[1])
@@ -88,23 +92,23 @@ class h(SymengineExpr):
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify(elem_sym_poly(self._under_elem._p, self._under_elem._k, [-x for x in self._under_elem.genvars], [-y for y in self._under_elem.coeffvars]))
 
-    # @property
-    # def func(self):
-    #     def h(*args):
-    #         return self.__class__(*args)
-    #     return h
+    @property
+    def func(self):
+        def h(*args):
+            return self.__class__(*args)
 
-    def _eval_subs(self, *rule):
-        rule = dict(rule)
+        return h
+
+    def _eval_subs(self, rule):
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
-            new_args[i+2] = arg.xreplace(rule)
+            new_args[i + 2] = sympify(arg).xreplace(rule)
         return self.func(*new_args)
 
     def xreplace(self, rule):
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
-            new_args[i+2] = arg.xreplace(rule)
+            new_args[i + 2] = sympify(arg).xreplace(rule)
         return self.func(*new_args)
 
     def divide_out_diff(self, v1, v2):
@@ -126,5 +130,6 @@ class h(SymengineExpr):
 
     def _sympystr(self, printer):
         return printer._print_Function(self)
+
 
 CompleteSym = h

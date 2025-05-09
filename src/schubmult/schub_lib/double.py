@@ -1,8 +1,6 @@
 from bisect import bisect_left
 from functools import cache
 
-from schubmult.symbolic import Add, Mul, Pow, S, sympify
-
 from schubmult.perm_lib import (
     Permutation,
     inv,
@@ -17,6 +15,7 @@ from schubmult.schub_lib.schub_lib import (
     elem_sym_perms,
     elem_sym_perms_op,
 )
+from schubmult.symbolic import Add, Mul, Pow, S, sympify
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -260,6 +259,7 @@ def schubmult_double(perm_dict, v, var2=None, var3=None):
         ret_dict = add_perm_dict({Permutation(ep): vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
 
+
 def schubmult_double_from_elems(perm_dict, v, var2=None, var3=None, elem_func=None):
     perm_dict = {Permutation(k): v for k, v in perm_dict.items()}
     v = Permutation(v)
@@ -322,6 +322,7 @@ def schubmult_double_from_elems(perm_dict, v, var2=None, var3=None, elem_func=No
         toget = vmu
         ret_dict = add_perm_dict({Permutation(ep): vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
+
 
 def schubmult_down(perm_dict, v, var2=None, var3=None):
     vn1 = ~v

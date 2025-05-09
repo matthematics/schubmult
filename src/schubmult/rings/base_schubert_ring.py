@@ -4,7 +4,7 @@ os.environ["USE_SYMENGINE"] = "1"
 
 
 from schubmult.perm_lib import Permutation
-from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Mul, Ring, S, SchubStrPrinter, SympifyError, sstr, sympify_sympy, sympy_Add, sympy_Mul
+from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Mul, Ring, S, sstr, sympify_sympy, sympy_Add, sympy_Mul
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -82,12 +82,12 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def as_terms(self):
         if len(self.keys()) == 0:
             return [sympify(S.Zero)]
-        return [((self[k]) if k == Permutation([]) else Mul((self[k]), self.ring.printing_term(k))) for k in self.keys()]
+        return [((self[k]) if k == Permutation([]) else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in self.keys()]
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
             return [sympify(S.Zero)]
-        return [((self[k]) if k == Permutation([]) else Mul((self[k]), self.ring.printing_term(k))) for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))]
+        return [((self[k]) if k == Permutation([]) else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))]
 
     def __add__(self, other):
         if isinstance(other, BaseSchubertElement):
@@ -182,7 +182,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             return NotImplemented
 
     def as_coefficients_dict(self):
-        return dict({self.ring.printing_term(k, self.ring): sympify(v) for k, v in self.items()})
+        return {self.ring.printing_term(k, self.ring): sympify(v) for k, v in self.items()}
 
     def _eval_expand_basic(self, *args, **kwargs):  # noqa: ARG002
         return self.as_polynomial()
@@ -197,7 +197,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def as_polynomial(self):
         # print(f"{self=}")
-        #try:
+        # try:
         return sympify(Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()]))
         # except SympifyError:
         #     return Add(*[sympify(v) * self.ring.cached_schubpoly(k) for k, v in self.items()])
@@ -226,7 +226,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
                 return (self - other).expand(deep=False).almosteq(S.Zero)
             return elem1.almosteq(elem1.ring.one * elem2)
         return (self - self.ring.from_expr(other)).expand(deep=False) == self.ring.zero
-    
+
     def __str__(self):
         return sstr(self)
 
@@ -284,7 +284,7 @@ class BaseSchubertRing(Ring, CompositeDomain):
 
     def from_sympy(self, expr):
         return self.from_expr(expr)
-    
+
     def new(self, x): ...
 
     def printing_term(self, k): ...
@@ -295,9 +295,7 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def one(self):
         return self.from_dict({Permutation([]): S.One})
 
-    @property
-    def elem_mul_type(self):
-        return None
+    def is_elem_mul_type(self, elem): ...
 
     def elem_mul(self, ring_elem, elem): ...
 

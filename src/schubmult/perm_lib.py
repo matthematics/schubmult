@@ -201,7 +201,6 @@ class Permutation:
         seq = [self[i] for i in indices]
         return ~Permutation.sorting_perm(seq)
 
-
     def minimal_dominant_above(self):
         return uncode(theta(self))
 

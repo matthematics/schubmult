@@ -2,11 +2,11 @@ import sys
 from functools import cached_property
 
 import sympy
-from schubmult.symbolic import expand, sympify
 
 from schubmult import GeneratingSet, Permutation, efficient_subs, mult_poly_double, permtrim, posify, schub_coprod_double, schubmult_double, theta, uncode
 from schubmult.perm_lib import split_perms
 from schubmult.schub_lib.schub_lib import will_formula_work
+from schubmult.symbolic import expand, sympify
 from schubmult.utils.argparse import schub_argparse
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import (

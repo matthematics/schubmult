@@ -28,7 +28,8 @@ class TensorRing(BaseSchubertRing):
         genset = tuple(genset)
         coeff_genset = set()
         for r in self._rings:
-            coeff_genset.update(set(r.coeff_genset))
+            if r.coeff_genset.label:
+                coeff_genset.update(set(r.coeff_genset))
         coeff_genset = tuple(coeff_genset)
         super().__init__(list(genset), list(coeff_genset))
         self.zero_monom = tuple([self.rings[i].zero_monom for i in range(len(self.rings))])

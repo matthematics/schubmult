@@ -290,8 +290,6 @@ def reduce_coeff(u, v, w):
     return (umu * mu_w_A, vmu * mu_w_B, w_prime)
 
 
-
-
 def pull_out_var(vnum, v):
     v = Permutation(v)
     vup = v
@@ -386,9 +384,6 @@ def kdown_perms(perm, monoperm, p, k):
                 #     # print(f"NO BABY {perm2=} {i=} {j=}")
         down_perm_list = down_perm_list2
     return full_perm_list
-
-
-
 
 
 @cache
@@ -586,6 +581,7 @@ def elem_sym_perms(orig_perm, p, k):
                         total_list += [(new_perm_add, pp + 1)]
         up_perm_list = perm_list
     return total_list
+
 
 def elem_sym_positional_perms(orig_perm, p, *k):
     k = {i - 1 for i in k}

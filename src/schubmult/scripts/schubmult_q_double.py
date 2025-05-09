@@ -2,7 +2,6 @@ import sys
 from functools import cached_property
 
 import sympy
-from schubmult.symbolic import sympify
 
 from schubmult import (
     GeneratingSet,
@@ -17,6 +16,7 @@ from schubmult import (
     schubmult_q_double_fast,
     uncode,
 )
+from schubmult.symbolic import sympify
 from schubmult.utils.argparse import schub_argparse
 
 

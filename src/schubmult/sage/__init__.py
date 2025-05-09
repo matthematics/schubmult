@@ -1,5 +1,5 @@
 try:
-    import sage  # noqa: F401
+    import sage
 except ImportError:
     raise ImportError("SageMath is not installed. Please install SageMath to use this module.")
 

@@ -1,9 +1,9 @@
 import sys
 
 import sympy
-from schubmult.symbolic import sympify
 
 from schubmult import Permutation, mult_poly_py, permtrim, schub_coprod_py, schubmult_py, theta, uncode
+from schubmult.symbolic import sympify
 from schubmult.utils.argparse import schub_argparse
 
 

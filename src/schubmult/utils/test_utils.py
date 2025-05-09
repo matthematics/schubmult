@@ -8,19 +8,20 @@ def generate_all(module, filename):
     with open(filename) as f:
         file_data = str(f.read())
     print(f"{file_data}")
-    real_d = [d for d in D if (file_data.find(f"def {d}")!=-1 or file_data.find(f"class {d}")!=-1) and d[0]!="_"]
+    real_d = [d for d in D if (file_data.find(f"def {d}") != -1 or file_data.find(f"class {d}") != -1) and d[0] != "_"]
     print("from bob import (")
-    print("    ",end="")
+    print("    ", end="")
     print(",\n    ".join(real_d))
     print(",")
     print(")")
 
     print("__all__ =")
     print("[")
-    print("    ",end="")
+    print("    ", end="")
     print("',\n    '".join(real_d))
     print(",")
     print("]")
+
 
 def get_json(file: str):
     import json
@@ -35,6 +36,7 @@ def get_json(file: str):
 
 def load_json_test_names(this_dir):
     import os
+
     script_dir = os.path.dirname(__file__)
     rel_path = f"../../tests/script_tests/data/{this_dir}"
     abs_path = os.path.join(script_dir, rel_path)
@@ -46,12 +48,15 @@ def load_json_test_names(this_dir):
         ret += [filename]
     return ret
 
+
 def print_args(poly):
     def _pr(ag):
         if hasattr(ag, "__sympy__") and not ag.is_Atom:
             return f"({type(ag)},{print_args(ag)})"
         return str(type(ag))
-    return "["+",".join([_pr(arg) for arg in poly.args])+"]"
+
+    return "[" + ",".join([_pr(arg) for arg in poly.args]) + "]"
+
 
 def sympify_args(poly):
     try:

@@ -47,9 +47,9 @@ class ZeroGeneratingSet(GeneratingSet_base):
 
     def index(self, other):
         return -1
-    
-    # def __iter__(self):
-    #     return iter(())
+
+    def __iter__(self):
+        pass
 
 
 # variable registry

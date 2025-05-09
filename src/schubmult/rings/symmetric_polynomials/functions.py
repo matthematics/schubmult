@@ -4,6 +4,34 @@ from schubmult.symbolic import Add, Mul, Pow, expand, sympify
 from .elem_sym import ElemSym
 
 
+def genvars(obj):
+    try:
+        return obj.genvars
+    except AttributeError:
+        return obj.pyobject().genvars
+
+
+def coeffvars(obj):
+    try:
+        return obj.coeffvars
+    except AttributeError:
+        return obj.pyobject().coeffvars
+
+
+def degree(obj):
+    try:
+        return obj._p
+    except AttributeError:
+        return obj.pyobject()._p
+
+
+def numvars(obj):
+    try:
+        return obj._k
+    except AttributeError:
+        return obj.pyobject()._k
+
+
 def canonicalize_elem_syms(expr):
     if not expr.args:
         return expr

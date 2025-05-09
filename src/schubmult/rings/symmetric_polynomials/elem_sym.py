@@ -1,10 +1,9 @@
 from functools import cache
 
 from schubmult.rings.poly_lib import elem_sym_poly
-from schubmult.symbolic import Integer, S, SymengineExpr, SymengineExprClass, sympify, sympify_sympy
+from schubmult.rings.variables import NotEnoughGeneratorsError
+from schubmult.symbolic import Function, Integer, S, sympify, sympify_sympy
 from schubmult.utils.logging import get_logger
-
-from ..variables import NotEnoughGeneratorsError
 
 logger = get_logger(__name__)
 
@@ -19,7 +18,8 @@ logger = get_logger(__name__)
 #     def __class__(self):
 #         return Buns
 
-class E(SymengineExpr):
+
+class E(Function):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
@@ -44,11 +44,11 @@ class E(SymengineExpr):
     @property
     def is_Symbol(self):
         return False
-    
+
     @property
     def is_symbol(self):
         return False
-    
+
     @property
     def free_symbols(self):
         return {*self._genvars, *self._coeffvars}
@@ -76,7 +76,7 @@ class E(SymengineExpr):
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
         var1 = tuple(sorted(var1, key=lambda x: sympify_sympy(x).sort_key()))
         var2 = tuple(sorted(var2, key=lambda x: sympify_sympy(x).sort_key()))
-        obj = SymengineExpr.__new__(
+        obj = Function.__new__(
             _class,
             Integer(p),
             Integer(k),
@@ -106,10 +106,6 @@ class E(SymengineExpr):
     #     if name in dir(self._sympy_obj):
     #         return getattr(self._sympy_obj, name)
     #     raise AttributeError(f"No attribute {name}")
-
-    @property
-    def free_symbols(self):
-        return set(self.genvars).union(set(self.coeffvars))
 
     def split_out_vars(self, vars1, vars2=None):
         # order of vars2 matters!
@@ -186,7 +182,7 @@ class E(SymengineExpr):
     #     return e
 
     #     return e
-    def _eval_subs(self, *rule):
+    def _eval_subs(self, rule):
         # print(f"_eval_subs")
         # print(f"{rule=}")
         # print(f"{self=}")
@@ -195,7 +191,7 @@ class E(SymengineExpr):
         new_args = [*self.args]
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
-            new_args[i + 2] = arg.subs(rule)
+            new_args[i + 2] = sympify(arg).subs(rule)
         return self.func(*new_args)
 
     def subs(self, rule):
@@ -206,18 +202,18 @@ class E(SymengineExpr):
         new_args = [*self.args]
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
-            new_args[i + 2] = arg.subs(rule)
+            new_args[i + 2] = sympify(arg).subs(rule)
         # print(f"{new_args=}")
         return self.func(*new_args)
 
-    def xreplace(self, *rule):
+    def xreplace(self, rule):
         # print(f"xreplace")
         # print(f"{rule=}")
         # print(f"{self=}")
         # print(rule)
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
-            new_args[i + 2] = arg.xreplace(rule)
+            new_args[i + 2] = sympify(arg).xreplace(rule)
         # print(f"{new_args=}")
         return self.func(*new_args)
 
@@ -308,7 +304,7 @@ class E(SymengineExpr):
         return self
 
 
-class e(SymengineExpr):
+class e(Function):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
@@ -335,8 +331,11 @@ class e(SymengineExpr):
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         var1 = tuple(sorted(var1, key=lambda x: sympify_sympy(x).sort_key()))
-        obj = SymengineExpr.__new__(
+        obj = Function.__new__(
             _class,
+            Integer(p),
+            Integer(k),
+            *var1,
         )
         # if len(obj.args[2]) < k:
         #     raise ValueError("Duplicate genvar arguments")
@@ -408,11 +407,11 @@ class e(SymengineExpr):
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify(elem_sym_poly(self._p, self._k, self.genvars, [0 for i in range(30)]))
 
-    def _eval_subs(self, *rule):
-        # print(f"_eval_subs")
-        # print(f"{rule=}")
-        # print(f"{self=}")
-        return self.func(*self.args)
+    # def _eval_subs(self, *rule):
+    #     # print(f"_eval_subs")
+    #     # print(f"{rule=}")
+    #     # print(f"{self=}")
+    #     return self.func(*self.args)
 
     def xreplace(self, rule):
         # print(f"xreplace")

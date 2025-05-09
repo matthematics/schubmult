@@ -6,7 +6,7 @@ import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, uncode
-from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand_func, init_printing, sstr
+from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand_func, init_printing, is_of_func_type, sstr
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -16,13 +16,21 @@ from .poly_lib import elem_sym_poly, xreplace_genvars
 from .schub_poly import schubpoly_classical_from_elems
 from .symmetric_polynomials.complete_sym import CompleteSym
 from .symmetric_polynomials.elem_sym import FactorialElemSym
-from .symmetric_polynomials.functions import split_out_vars
+from .symmetric_polynomials.functions import coeffvars, degree, genvars, numvars, split_out_vars
 from .tensor_ring import TensorRing
 from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet, NotEnoughGeneratorsError, poly_genset
 
 logger = get_logger(__name__)
 
 init_printing(str_printer=sstr)
+
+
+def is_elem_sym(obj):
+    return is_of_func_type(obj, FactorialElemSym)
+
+
+def is_complete_sym(obj):
+    return is_of_func_type(obj, CompleteSym)
 
 
 class DoubleSchubertElement(BaseSchubertElement):
@@ -255,20 +263,19 @@ class DoubleSchubertRing(BaseSchubertRing):
 
         return FactorialElemSym
 
-    @property
-    def elem_mul_type(self):
-        return FactorialElemSym
+    def is_elem_mul_type(self, other):
+        return is_elem_sym(other)
 
     # specifically symengine
     def elem_mul(self, ring_elem, elem):
         elem = sympify(elem)
-        indexes = [self.genset.index(a) for a in elem.genvars]
+        indexes = [self.genset.index(a) for a in genvars(elem)]
         ret = self.zero
         for k, v in ring_elem.items():
-            perm_list = schub_lib.elem_sym_positional_perms(k, elem._p, *indexes)
+            perm_list = schub_lib.elem_sym_positional_perms(k, degree(elem), *indexes)
             for perm, df, sign in perm_list:
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in indexes if perm[i - 1] == k[i - 1]]
-                coeff = FactorialElemSym(elem._p - df, elem._k - df, remaining_vars, elem.coeffvars)  # leave as elem sym
+                coeff = FactorialElemSym(degree(elem) - df, numvars(elem) - df, remaining_vars, coeffvars(elem))  # leave as elem sym
                 ret += self.domain_new(v * sign * expand_func(coeff)) * self(perm)
         return ret
 
@@ -285,9 +292,9 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     @staticmethod
     def flip(elem):
-        R = DoubleSchubertRing(CustomGeneratingSet([0, *elem.coeffvars]), CustomGeneratingSet([0, *elem.genvars]))
-        p = elem._p
-        K = elem._k + 1 - p
+        R = DoubleSchubertRing(CustomGeneratingSet([0, *coeffvars(elem)]), CustomGeneratingSet([0, *genvars(elem)]))
+        p = degree(elem)
+        K = numvars(elem) + 1 - p
         poly = R(uncode([*list((K - 1) * [0]), p]))
         # print(poly)
         return poly.in_CEM_basis()
@@ -391,13 +398,13 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     def complete_mul(self, elem, x):
         x = sympify(x)
-        indexes = {self.genset.index(a) for a in x.genvars}
+        indexes = {self.genset.index(a) for a in genvars(x)}
         ret = self.zero
         for k, v in elem.items():
-            perm_list = schub_lib.complete_sym_positional_perms(k, x._p, *indexes)
+            perm_list = schub_lib.complete_sym_positional_perms(k, degree(x), *indexes)
             for perm, df, sign in perm_list:
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in {*indexes, *[j + 1 for j in range(len(perm)) if perm[j] != k[j]]}]
-                coeff = CompleteSym(x._p - df, x._k + df, remaining_vars, x.coeffvars)  # leave as elem sym
+                coeff = CompleteSym(degree(x) - df, numvars(x) + df, remaining_vars, coeffvars(x))  # leave as elem sym
                 ret += self.domain_new(sign * v * expand_func(coeff)) * self(perm)
         return ret
 
@@ -419,27 +426,27 @@ class DoubleSchubertRing(BaseSchubertRing):
         ind = self.genset.index(x)
         if ind != -1:
             return self.single_variable(elem, ind)
-        if isinstance(x, FactorialElemSym):
+        if is_elem_sym(x):
             # print(f"moo {x=}")
-            if all(self.genset.index(a) != -1 for a in x.genvars) and not any(self.genset.index(a) != -1 for a in x.coeffvars):
+            if all(self.genset.index(a) != -1 for a in genvars(x)) and not any(self.genset.index(a) != -1 for a in coeffvars(x)):
                 return self.elem_mul(elem, x)
 
-            gens_to_remove = [a for a in x.genvars if a not in self.gensWet]
-            if any(self.genset.index(a) != -1 for a in x.genvars) and len(gens_to_remove):
+            gens_to_remove = [a for a in genvars(x) if a not in self.gensWet]
+            if any(self.genset.index(a) != -1 for a in genvars(x)) and len(gens_to_remove):
                 return self.mul_expr(elem, x.split_out_vars(gens_to_remove))
 
-            coeffs_to_remove = [a for a in x.coeffvars if a in self.genset]
+            coeffs_to_remove = [a for a in coeffvars(x) if a in self.genset]
 
-            if any(a in self.genset for a in x.coeffvars) and len(coeffs_to_remove):
+            if any(a in self.genset for a in coeffvars(x)) and len(coeffs_to_remove):
                 return self.mul_expr(elem.split_out_vars(x.to_complete_sym(), coeffs_to_remove))
             return self.from_dict({k: self.domain_new(self.handle_sympoly(x)) * v for k, v in elem.items()})
-        if isinstance(sympify(x), CompleteSym):
+        if is_complete_sym(x):
             x = sympify(x)
-            if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
+            if all(a in self.genset for a in genvars(x)) and not any(a in self.genset for a in coeffvars(x)):
                 return self.complete_mul(elem, x)
-            gens_to_remove = [a for a in x.genvars if a not in self.genset]
+            gens_to_remove = [a for a in genvars(x) if a not in self.genset]
 
-            if any(a in self.genset for a in x.genvars) and len(gens_to_remove):
+            if any(a in self.genset for a in genvars(x)) and len(gens_to_remove):
                 return self.mul_expr(elem, x.split_out_vars(gens_to_remove))
 
             coeffs_to_remove = [a for a in x.coeff_vars if a in self.genset]
@@ -570,20 +577,20 @@ class SingleSchubertRing(DoubleSchubertRing):
     #     if ind != -1:
     #         return self.single_variable(elem, ind)
     #     if isinstance(sympify(x), FactorialElemSym):
-    #         if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
+    #         if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in coeffvars(x)):
     #             return self.elem_mul(elem, x)
 
     #         gens_to_remove = [a for a in x.genvars if a not in self.gensWet]
     #         if any(a in self.genset for a in x.genvars) and len(gens_to_remove):
     #             return self.mul_expr(elem, x.split_out_vars(gens_to_remove))
 
-    #         coeffs_to_remove = [a for a in x.coeffvars if a in self.genset]
+    #         coeffs_to_remove = [a for a in coeffvars(x) if a in self.genset]
 
-    #         if any(a in self.genset for a in x.coeffvars) and len(coeffs_to_remove):
+    #         if any(a in self.genset for a in coeffvars(x)) and len(coeffs_to_remove):
     #             return self.mul_expr(elem.split_out_vars(x.to_complete_sym(), coeffs_to_remove))
     #         return self.from_dict({k: self.domain_new(self.handle_sympoly(x)) * v for k, v in elem.items()})
     #     if isinstance(sympify(x), CompleteSym):
-    #         if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in x.coeffvars):
+    #         if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in coeffvars(x)):
     #             return self.complete_mul(sympify(elem), x)
     #         gens_to_remove = [a for a in x.genvars if a not in self.genset]
 
@@ -746,27 +753,27 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
     #     return ret
 
     def elem_mul(self, ring_elem, elem):
-        indexes = [self.genset.index(a) for a in elem.genvars]
+        indexes = [self.genset.index(a) for a in genvars(elem)]
         ret = self.zero
         for k, v in ring_elem.items():
-            perm_list = schub_lib.elem_sym_positional_perms(k, elem._p, *indexes)
+            perm_list = schub_lib.elem_sym_positional_perms(k, degree(elem), *indexes)
             for perm, df, sign in perm_list:
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in indexes if perm[i - 1] == k[i - 1]]
-                coeff = FactorialElemSym(elem._p - df, elem._k - df, remaining_vars, elem.coeffvars)
+                coeff = FactorialElemSym(degree(elem) - df, numvars(elem) - df, remaining_vars, coeffvars(elem))
                 toadd = self.domain_new(v * sign * coeff) * self(perm)
                 # print(f"{toadd=}")
                 ret += toadd
         return ret
 
     def complete_mul(self, elem, x):
-        indexes = {self.genset.index(a) for a in x.genvars}
+        indexes = {self.genset.index(a) for a in genvars(x)}
         ret = self.zero
         for k, v in elem.items():
-            perm_list = schub_lib.complete_sym_positional_perms(k, x._p, *indexes)
+            perm_list = schub_lib.complete_sym_positional_perms(k, degree(x), *indexes)
             for perm, df, sign in perm_list:
                 # print(f"{(perm, df, sign)=}")
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in {*indexes, *[j + 1 for j in range(len(perm)) if perm[j] != k[j]]}]
-                coeff = CompleteSym(x._p - df, x._k + df, remaining_vars, x.coeffvars)  # leave as elem sym
+                coeff = CompleteSym(degree(x) - df, numvars(x) + df, remaining_vars, coeffvars(x))  # leave as elem sym
                 ret += self.domain_new(sign * v * coeff) * self(perm)
         return ret
 
