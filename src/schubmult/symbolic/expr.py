@@ -27,10 +27,23 @@ class SympyExpr(Expr):
     def __new__(cls, _obj):
         obj = Expr.__new__(cls, *_obj.args)
         obj._obj = _obj
-        # print("painfuldingbat")
         obj.__dict__.update(_obj.__dict__)
-        obj.subs = _obj.subs
         return obj
+
+    def subs(self, *args, **kwargs):
+        if hasattr(self._obj, "subs"):
+            return self._obj.subs(*args, **kwargs)
+        return super().subs(*args, **kwargs)
+
+    def xreplace(self, *args, **kwargs):
+        if hasattr(self._obj, "xreplace"):
+            return self._obj.xreplace(*args, **kwargs)
+        return super().xreplace(*args, **kwargs)
+
+    def _eval_subs(self, *args, **kwargs):
+        if hasattr(self._obj, "_eval_subs"):
+            return self._obj.subs(*args, **kwargs)
+        return super()._eval_subs(*args, **kwargs)
 
     def __hash__(self):
         return hash(self.args)
