@@ -60,7 +60,9 @@ class SympyExpr(Expr):
 
     def __getattr__(self, attr):
         # print(f"{attr}")
-        return getattr(self._obj, attr)
+        pang = getattr(self._obj, attr)
+        # print(f"{pang=}")
+        return pang
 
     def _sympy_(self):
         return self

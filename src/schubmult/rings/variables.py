@@ -6,10 +6,11 @@ from bisect import bisect_left
 from functools import cache
 from typing import ClassVar
 
-from symengine import S, SympifyError, symbols, sympify
+from symengine import SympifyError, sympify
 from sympy import Basic, Tuple
 from sympy.core.symbol import Str
 
+from schubmult.symbolic import S, symbols
 from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -71,6 +72,7 @@ class GeneratingSet(GeneratingSet_base):
     @staticmethod
     def __xnew__(_class, name):
         obj = GeneratingSet_base.__new__(_class, name)
+        print("optimize generatingset")
         obj._symbols_arr = tuple([symbols(f"{name}_{i}") for i in range(100)])
         obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         return obj
