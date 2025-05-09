@@ -3,11 +3,9 @@ from functools import cache
 
 import symengine.lib.symengine_wrapper as sw
 import sympy
-from symengine import SympifyError, sympify
-from sympy.core._print_helpers import Printable
 
-from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, ZeroGeneratingSet
-from schubmult.utils.perm_utils import add_perm_dict
+# from symengine import SympifyError, sympify
+from sympy.core._print_helpers import Printable
 
 os.environ["USE_SYMENGINE"] = "1"
 from sympy import sstr
