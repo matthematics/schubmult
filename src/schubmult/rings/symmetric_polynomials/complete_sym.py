@@ -2,7 +2,7 @@ from functools import cache
 
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.rings.symmetric_polynomials.elem_sym import FactorialElemSym
-from schubmult.symbolic import Add, Function, Integer, S, sympify
+from schubmult.symbolic import Add, Function, S, sympify
 from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)

@@ -5,7 +5,7 @@ import schubmult.rings.schubert_ring as spr
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
 from schubmult.perm_lib import Permutation, longest_element
-from schubmult.symbolic import Add, Function, Mul, Pow, S, Symbol, expand, sstr
+from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import is_parabolic
 

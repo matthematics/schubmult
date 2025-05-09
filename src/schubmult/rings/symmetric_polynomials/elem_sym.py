@@ -170,7 +170,7 @@ class E(Function):
         return self._coeffvars
 
     @cache
-    def _eval_expand_func(self, *args, **kwargs):
+    def _eval_expand_func(self, *_, **__):
         return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
 
     # @property
@@ -404,7 +404,7 @@ class e(Function):
         return None
 
     @cache
-    def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
+    def _eval_expand_func(self, *args, **_):  # noqa: ARG002
         return sympify(elem_sym_poly(self._p, self._k, self.genvars, [0 for i in range(30)]))
 
     # def _eval_subs(self, *rule):

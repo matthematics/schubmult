@@ -35,7 +35,7 @@ class GeneratingSet_base:
 
     @property
     def label(self):
-        return None  # str(self.args)
+        return None
 
 
 class ZeroGeneratingSet(GeneratingSet_base):
@@ -45,7 +45,7 @@ class ZeroGeneratingSet(GeneratingSet_base):
     def __contains__(self, item):
         return False
 
-    def index(self, other):
+    def index(self, _):
         return -1
 
     def __iter__(self):

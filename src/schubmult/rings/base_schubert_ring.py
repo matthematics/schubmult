@@ -4,7 +4,7 @@ os.environ["USE_SYMENGINE"] = "1"
 
 
 from schubmult.perm_lib import Permutation
-from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Mul, Ring, S, sstr, sympify_sympy, sympy_Add, sympy_Mul
+from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Ring, S, sstr, sympify_sympy, sympy_Add, sympy_Mul
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -13,8 +13,6 @@ from .backend import expand, sympify
 from .schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 
 logger = get_logger(__name__)
-
-from sympy.core.sympify import CantSympify
 
 
 class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
@@ -58,7 +56,6 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         return result
 
     def _sympystr(self, printer):
-        # printer = SchubStrPrinter()
         if len(self.keys()) == 0:
             return printer._print(S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
@@ -303,7 +300,6 @@ class BaseSchubertRing(Ring, CompositeDomain):
 
     def from_dict(self, element, orig_domain=None):
         # print(f"{element=}")
-        S_nm = S
         domain_new = self.domain_new
         poly = self.zero
 
