@@ -1,5 +1,8 @@
 #sympy.init_printing(str_printer = sstr)
-from sympy import expand_func
+from symengine import Integer
+from symengine import sympify as sympify_symengine
+from sympy import Function, Poly, expand_func, init_printing, latex, poly, pretty
+from sympy import sympify as sympify_sympy
 from sympy.polys.domains.compositedomain import CompositeDomain
 from sympy.polys.domains.domainelement import DomainElement
 from sympy.polys.domains.expressionrawdomain import EXRAW

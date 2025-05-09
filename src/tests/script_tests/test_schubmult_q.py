@@ -81,7 +81,7 @@ def test_with_same_args_exec(capsys, json_file):
     print(f"{args['cmd_line']=}")
 
     from latex2sympy2_extended import latex2sympy
-    from symengine import sympify
+    from schubmult.symbolic import sympify
 
     unformat = {"basic": lambda v: parse_coeff(v), "latex": lambda v: parse_coeff(str(latex2sympy(v)))}
 

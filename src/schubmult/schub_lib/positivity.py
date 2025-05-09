@@ -7,7 +7,6 @@ import pulp as pu
 from cachetools import cached
 from cachetools.keys import hashkey
 from sortedcontainers import SortedList
-from symengine import Add, Integer, Mul, Pow, Symbol, sympify
 
 import schubmult.rings as rings
 from schubmult.perm_lib import (
@@ -34,6 +33,7 @@ from schubmult.schub_lib.schub_lib import (
     try_reduce_v,
     will_formula_work,
 )
+from schubmult.symbolic import Add, Integer, Mul, Pow, Symbol, poly, sympify
 from schubmult.utils.logging import get_logger
 
 from .double import schubmult_double, schubmult_double_pair, schubmult_double_pair_generic
@@ -61,10 +61,10 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
         varsimp3.sort(key=lambda k: var3.index(k))
         # logger.debug(f"{varsimp2=}")
         # logger.debug(f"{varsimp3=}")
-        var22 = [sympy.sympify(v) for v in varsimp2]
-        var33 = [sympy.sympify(v) for v in varsimp3]
-        # var22 = [sympy.sympify(m) for m in varsimp2]
-        # var33 = [sympy.sympify(m) for m in varsimp3]
+        var22 = [sympify(v) for v in varsimp2]
+        var33 = [sympify(v) for v in varsimp3]
+        # var22 = [sympify(m) for m in varsimp2]
+        # var33 = [sympify(m) for m in varsimp3]
         n1 = len(varsimp2)
 
         # for i in range(len(varsimp2)):
@@ -147,7 +147,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
         #         status = lp_prob.status
         # else:
             # logger.debug("this")
-        val_poly = sympy.poly(expand(val), *var22, *var33)
+        val_poly = poly(expand(val), *var22, *var33)
         vec = opt.poly_to_vec(val)
         mn = val_poly.monoms()
         L1 = tuple([0 for i in range(n1)])

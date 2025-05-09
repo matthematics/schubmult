@@ -10,7 +10,6 @@ Pow = symengine.Pow
 SympifyError = symengine.SympifyError
 Symbol = symengine.Symbol
 
-sympy.init_printing(str_printer = sstr)
 
 def expand(obj, **kwargs):
     if len(kwargs.keys()):

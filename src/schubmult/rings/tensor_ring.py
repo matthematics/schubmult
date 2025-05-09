@@ -1,7 +1,6 @@
 from functools import cache
 
-from symengine import S
-
+from schubmult.symbolic import Mul, S, sympify
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 

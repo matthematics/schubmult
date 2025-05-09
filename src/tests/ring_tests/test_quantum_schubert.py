@@ -27,7 +27,7 @@ def test_associative():
     Test associative on some large perms
     """
     from schubmult import QSx
-    from symengine import expand
+    from schubmult.symbolic import expand
     perm1, perm2, perm3 = [1,5,3,4,2], [1,3,2,5,4], [3,1, 4,2,5]
     assert (((QSx(perm1)*QSx(perm2))*QSx(perm3)) - ((QSx(perm1)*(QSx(perm2)*QSx(perm3))))).almosteq(0)
 

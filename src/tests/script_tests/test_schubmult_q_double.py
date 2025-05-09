@@ -10,7 +10,7 @@ from schubmult import GeneratingSet, efficient_subs
 
 def check_positive(v2, same, subs_dict2, var2, var3, q_var):
     # if same, should be no minus signs
-    from symengine import expand, sympify
+    from schubmult.symbolic import expand, sympify
 
     from schubmult import compute_positive_rep
     
@@ -57,7 +57,7 @@ def check_positive(v2, same, subs_dict2, var2, var3, q_var):
 def assert_dict_good(v_tuple, input_dict, ret_dict, parabolic, same=True, display_positive=False, slow=False):
     # print(f"{input_dict=}")
 
-    from symengine import expand, sympify
+    from schubmult.symbolic import expand, sympify
 
     from schubmult import schubmult_q_double, schubmult_q_double_fast, apply_peterson_woodward
 
@@ -167,7 +167,7 @@ def test_with_same_args_exec(capsys, json_file):
     parabolic = [int(bob) for bob in args['parabolic']]
 
     from latex2sympy2_extended import latex2sympy
-    from symengine import sympify
+    from schubmult.symbolic import sympify
 
     unformat = {"basic": lambda v: parse_coeff(v), "latex": lambda v: parse_coeff(str(latex2sympy(v)))}
     # print(f"{args=}")

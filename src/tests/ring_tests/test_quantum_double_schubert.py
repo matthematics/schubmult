@@ -24,7 +24,7 @@ def test_parabolic():
 
 
 # def test_subs():
-#     from symengine import expand, S
+#     from schubmult.symbolic import expand, S
 #     from schubmult import QDSx, GeneratingSet
 #     x = GeneratingSet("x")
 #     z = GeneratingSet("z")

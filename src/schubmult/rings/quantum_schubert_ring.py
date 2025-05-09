@@ -1,17 +1,15 @@
 from bisect import bisect_left
 from functools import cache
 
-from symengine import Add, Mul, Pow, S, Symbol, expand
-
 import schubmult.rings.schubert_ring as spr
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
 from schubmult.perm_lib import Permutation, longest_element
-from schubmult.symbolic import sstr
+from schubmult.symbolic import Add, Function, Mul, Pow, S, Symbol, expand, sstr
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import is_parabolic
 
-from .abstract_schub_poly import AbstractSchubPoly
+from .abstract_schub_poly import PQDSchubPoly, QDSchubPoly
 from .backend import sympify
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .poly_lib import complete_sym_poly, elem_sym_poly, elem_sym_poly_q, xreplace_genvars
@@ -28,46 +26,6 @@ class QuantumDoubleSchubertElement(BaseSchubertElement):
         return self.as_classical().subs(old, new).as_quantum()
 
 
-_pretty_schub_char = "𝕼𝔖"  # noqa: RUF001
-
-
-class QDSchubPoly(AbstractSchubPoly):
-    is_Atom = True
-
-    def __new__(cls, k, ring):
-        return QDSchubPoly.__xnew_cached__(cls, k, ring)
-
-    @staticmethod
-    def __xnew__(_class, k, ring):
-        return AbstractSchubPoly.__new__(_class, k, ring)
-
-    @staticmethod
-    @cache
-    def __xnew_cached__(_class, k, genset):
-        return QDSchubPoly.__xnew__(_class, k, genset)
-
-    def _sympystr(self, printer):
-        if self.ring.coeff_genset.label is None:
-            return printer.doprint(f"QS{self.genset.label}({printer.doprint(self._perm)})")
-        return printer.doprint(f"QDS{self.genset.label}({printer.doprint(self._perm)}, {self.ring.coeff_genset.label})")
-
-    def _pretty(self, printer):
-        if self._key == Permutation([]):
-            return printer._print(1)
-        subscript = printer.doprint(int("".join([str(i) for i in self._key])))
-        if self.ring.coeff_genset.label is None:
-            return printer._print_Function(Function(f"{_pretty_schub_char}_{subscript}")(Symbol(self.genset.label)))
-        return printer._print_Function(Function(f"{_pretty_schub_char}_{subscript}")(Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label}")))
-
-    def _latex(self, printer):
-        if self._key == Permutation([]):
-            return printer._print(1)
-        subscript = sstr(self._key)
-        if self.ring.coeff_genset.label is None:
-            return printer._print_Function(Function("\\widetilde{\\mathfrak{S}}" + f"_{'{' + subscript + '}'}")(Symbol(self.genset.label)))
-        return printer._print_Function(Function("\\widetilde{\\mathfrak{S}}" + f"_{'{' + subscript + '}'}")(Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label}")))
-
-
 class ParabolicQuantumDoubleSchubertElement(BaseSchubertElement):
     @property
     def index_comp(self):
@@ -80,58 +38,6 @@ class ParabolicQuantumDoubleSchubertElement(BaseSchubertElement):
             if len(k) <= length:
                 new_dict[k] = v
         return self.ring.from_dict(new_dict)
-
-
-class PQDSchubPoly(AbstractSchubPoly):
-    is_Atom = True
-
-    def __new__(cls, k, basis, index_comp):
-        return PQDSchubPoly.__xnew_cached__(cls, k, basis, index_comp)
-
-    @staticmethod
-    def __xnew__(_class, k, basis, index_comp):
-        obj = AbstractSchubPoly.__new__(_class, k, basis)
-        obj._perm = k
-        obj._key = k
-        obj._index_comp = index_comp
-        return obj
-
-    @property
-    def index_comp(self):
-        return self._index_comp
-
-    @property
-    def args(self):
-        return (tuple(self._key), self._basis, tuple(self._index_comp))
-
-    @staticmethod
-    @cache
-    def __xnew_cached__(_class, k, basis, index_comp):
-        return PQDSchubPoly.__xnew__(_class, k, basis, index_comp)
-
-    def _sympystr(self, printer):
-        if self.ring.coeff_genset.label is None:
-            return printer.doprint(f"QPS{self.genset.label}{(tuple(self.index_comp))}({printer.doprint(self._perm)})")
-        return printer.doprint(f"QPDS{self.genset.label}{tuple(self.index_comp)}({printer.doprint(self._perm)}, {self.ring.coeff_genset.label})")
-
-    def _pretty(self, printer):
-        if self._key == Permutation([]):
-            return printer._print(1)
-        subscript = printer._print(int("".join([str(i) for i in self._key])))
-        if self.ring.coeff_genset.label is None:
-            return printer._print_Function(Function(f"{_pretty_schub_char}_{subscript}")(Symbol(f"{self.genset.label} | {self.ring.index_comp}")))
-        return printer._print_Function(Function(f"{_pretty_schub_char}_{subscript}")(Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label} | {self.ring.index_comp}")))
-
-    def _latex(self, printer):
-        if self._key == Permutation([]):
-            return printer._print(1)
-        subscript = printer._print(self._key)
-        supscript = printer._print(tuple(self.index_comp))
-        if self.ring.coeff_genset.label is None:
-            return printer._print_Function(Function("\\widetilde{\\mathfrak{S}}" + f"^{'{'}{supscript}{'}'}_{'{' + subscript + '}'}")(Symbol(self.genset.label)))
-        return printer._print_Function(
-            Function("\\widetilde{\\mathfrak{S}}" + f"^{'{'}{supscript}{'}'}_{'{' + subscript + '}'}")(Symbol(f"{self.genset.label}; {self.ring.coeff_genset.label}")),
-        )
 
 
 class QuantumDoubleSchubertRing(BaseSchubertRing):

@@ -9,7 +9,7 @@ from schubmult import GeneratingSet
 
 def check_positive(v, coprod, same, var_r):
     # if same, should be no minus signs
-    from symengine import expand, sympify
+    from schubmult.symbolic import expand, sympify
 
     from schubmult import compute_positive_rep
     var2 = GeneratingSet("y")
@@ -71,7 +71,7 @@ def assert_dict_good(
 ):
     # print(f"{input_dict=}")
     from schubmult import Permutation
-    from symengine import expand, sympify
+    from schubmult.symbolic import expand, sympify
     import sys
     from schubmult import schub_coprod_double, schubmult_double
 
@@ -189,7 +189,7 @@ def test_with_same_args_exec(capsys, json_file):
     disp_mode = args["disp_mode"]
 
     from latex2sympy2_extended import latex2sympy
-    from symengine import sympify
+    from schubmult.symbolic import sympify
 
     unformat = {"basic": lambda v: parse_coeff(v), "latex": lambda v: parse_coeff(str(latex2sympy(v)))}
     # print(f"{args=}")

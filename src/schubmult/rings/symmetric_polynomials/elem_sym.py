@@ -1,10 +1,9 @@
 from functools import cache
 
 import symengine.lib.symengine_wrapper as sw
-from symengine import Integer, S, sympify
 
 from schubmult.rings.poly_lib import elem_sym_poly
-from schubmult.symbolic import SymengineExpr
+from schubmult.symbolic import Integer, S, SymengineExpr, sympify, sympify_sympy
 from schubmult.utils.logging import get_logger
 
 # import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
@@ -56,8 +55,8 @@ class E(SymengineExpr):
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
-        var1 = tuple(sorted(var1,key=lambda x: sympify(x).sort_key()))
-        var2 = tuple(sorted(var2,key=lambda x: sympify(x).sort_key()))
+        var1 = tuple(sorted(var1,key=lambda x: sympify_sympy(x).sort_key()))
+        var2 = tuple(sorted(var2,key=lambda x: sympify_sympy(x).sort_key()))
         obj = SymengineExpr.__new__(
             _class,
             Integer(p),
@@ -317,7 +316,7 @@ class e(SymengineExpr):
         var1 = var1[:k]
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
-        var1 = tuple(sorted(var1,key=lambda x: sympify(x).sort_key()))
+        var1 = tuple(sorted(var1,key=lambda x: sympify_sympy(x).sort_key()))
         obj = SymengineExpr.__new__(
             _class,
         )

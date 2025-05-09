@@ -1,6 +1,7 @@
 import sys  # noqa: F401
 from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
 
+from schubmult.symbolic import init_printing, latex, pretty, sstr, sympify
 
 # from sympy import init_printing
 from schubmult.utils.logging import init_logging
@@ -9,7 +10,7 @@ from schubmult.utils.logging import init_logging
 
 
 def _sympy(obj):
-    return obj if not hasattr(obj, "_sympy_") else sympy.sympify(obj)
+    return sympify(obj)
 
 
 def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
@@ -210,21 +211,21 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
             json.dump(args.__dict__, js, ensure_ascii=False, indent=1)
         exit(0)
 
-    sympy.init_printing()
+    init_printing()
 
     if args.disp_mode == "latex":
         formatter = (  # noqa: E731
-            lambda bob, width=None: sympy.latex(_sympy(bob), order="old").replace("\\left", "").replace("\\right", "")
+            lambda bob, width=None: latex(_sympy(bob), order="old").replace("\\left", "").replace("\\right", "")
         )
     elif args.disp_mode == "pretty":
         # pretty we need to keep centered
         formatter = (  # noqa: E731
-            lambda bob, width=None: sympy.pretty(_sympy(bob), order="old")
+            lambda bob, width=None: pretty(_sympy(bob), order="old")
             if width is None
-            else sympy.pretty(_sympy(bob), order="rev-lex" if args.same else "none", use_unicode=False).replace("\n", "\n" + " ".join(["" for i in range(width)]))
+            else pretty(_sympy(bob), order="rev-lex" if args.same else "none", use_unicode=False).replace("\n", "\n" + " ".join(["" for i in range(width)]))
         )
     elif args.disp_mode == "basic":
-        formatter = lambda bob, width=None: sympy.sstr(_sympy(bob), order="old")  # , order="rev-lex" if args.same else "none")  # noqa: E731
+        formatter = lambda bob, width=None: sstr(_sympy(bob), order="old")  # , order="rev-lex" if args.same else "none")  # noqa: E731
     elif args.disp_mode == "raw":
         formatter = None
     init_logging(debug=args.debug)

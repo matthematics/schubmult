@@ -1,7 +1,7 @@
 from bisect import bisect_left
 from functools import cache
 
-from symengine import Add, Mul, Pow, S, sympify
+from schubmult.symbolic import Add, Mul, Pow, S, sympify
 
 from schubmult.perm_lib import (
     Permutation,

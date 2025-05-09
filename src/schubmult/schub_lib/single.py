@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from symengine import Add, Mul, Pow
+from schubmult.symbolic import Add, Mul, Pow
 
 from schubmult.perm_lib import (
     Permutation,

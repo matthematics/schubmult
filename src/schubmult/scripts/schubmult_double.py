@@ -2,7 +2,7 @@ import sys
 from functools import cached_property
 
 import sympy
-from symengine import expand, sympify
+from schubmult.symbolic import expand, sympify
 
 from schubmult import GeneratingSet, Permutation, efficient_subs, mult_poly_double, permtrim, posify, schub_coprod_double, schubmult_double, theta, uncode
 from schubmult.perm_lib import split_perms

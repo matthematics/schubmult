@@ -8,7 +8,7 @@
 from functools import cache
 
 import numpy as np
-from symengine import Add, Mul, Pow, S, expand, sympify
+from schubmult.symbolic import Add, Mul, Pow, S, expand, sympify
 
 import schubmult.schub_lib.double as norm_yz
 import schubmult.schub_lib.positivity as pos

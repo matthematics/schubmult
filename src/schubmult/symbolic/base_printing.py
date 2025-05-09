@@ -4,9 +4,6 @@ def sstr(expr, **settings):
     return s
 
 import sympy
-
-sympy.init_printing(str_printer = sstr)
-
 from sympy.printing.str import StrPrinter
 
 

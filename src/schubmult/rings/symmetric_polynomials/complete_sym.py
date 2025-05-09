@@ -1,10 +1,8 @@
 from functools import cache
 
-from symengine import Add, DictBasic, Integer, S, sympify
-
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.rings.symmetric_polynomials.elem_sym import FactorialElemSym
-from schubmult.symbolic import SymengineExpr
+from schubmult.symbolic import Add, Integer, S, SymengineExpr, sympify
 from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -97,14 +95,13 @@ class h(SymengineExpr):
     #     return h
 
     def _eval_subs(self, *rule):
-        rule = DictBasic(rule)
+        rule = dict(rule)
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
             new_args[i+2] = arg.xreplace(rule)
         return self.func(*new_args)
 
     def xreplace(self, rule):
-        rule = DictBasic(rule)
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
             new_args[i+2] = arg.xreplace(rule)

@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from symengine import Add, Mul, Pow
+from schubmult.symbolic import Add, Mul, Pow
 
 import schubmult.rings.variables as spl
 import schubmult.schub_lib.schub_lib as sss
