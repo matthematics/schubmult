@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 init_printing(str_printer=sstr)
 
 
-def is_elem_sym(obj):
+def is_fact_elem_sym(obj):
     return is_of_func_type(obj, FactorialElemSym)
 
 
@@ -264,7 +264,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         return FactorialElemSym
 
     def is_elem_mul_type(self, other):
-        return is_elem_sym(other)
+        return is_fact_elem_sym(other)
 
     # specifically symengine
     def elem_mul(self, ring_elem, elem):
@@ -426,7 +426,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         ind = self.genset.index(x)
         if ind != -1:
             return self.single_variable(elem, ind)
-        if is_elem_sym(x):
+        if is_fact_elem_sym(x):
             # print(f"moo {x=}")
             if all(self.genset.index(a) != -1 for a in genvars(x)) and not any(self.genset.index(a) != -1 for a in coeffvars(x)):
                 return self.elem_mul(elem, x)

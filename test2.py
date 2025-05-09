@@ -1,4 +1,5 @@
 from schubmult.utils.logging import init_logging
+
 init_logging(False)
 from schubmult.rings.elem_sym import pull_out_vars
 from schubmult import *
@@ -18,6 +19,7 @@ from sympy import *
 
 # print(frob.replace(match_pattern, lambda v_1, v_2, a: e(a._p + 1, a._k + 1, [*a.genvars, v_1], [*a.coeffvars]) - e(a._p + 1, a._k, )))
 
+
 # exit()
 def remove_zeros(poly):
     if expand(poly, func=True) == S.Zero:
@@ -33,14 +35,16 @@ def remove_zeros(poly):
         return Pow(remove_zeros(poly.args[0]), poly.args[1])
     return poly
 
-perm = Permutation([5,1,4,2,3])
+
+perm = Permutation([5, 1, 4, 2, 3])
 mu = (~perm).minimal_dominant_above()
 # coeffs = (DSx([4,1,5,2,3],elem_sym=True)*DSx(perm,"z"))
-coeffs = (DSx([4,1,5,2,3],elem_sym=True)*DSx(~mu,"z"))
-import random 
+coeffs = DSx([4, 1, 5, 2, 3], elem_sym=True) * DSx(~mu, "z")
+import random
+
 bob = None
 it = iter(coeffs.values())
-for i in range(random.randrange(1,len(coeffs.values()))):
+for i in range(random.randrange(1, len(coeffs.values()))):
     try:
         a = next(it)
     except Exception:
@@ -64,7 +68,6 @@ print(bob)
 #     varlist2 = [sympify(arg) for arg in y[1:10]]
 
 
-
 #     # # import random
 
 #     # # bob2 = bob
@@ -78,57 +81,56 @@ print(bob)
 #         if bob3.count(S.NegativeOne) < bob2.count(S.NegativeOne):
 #             bob2 = bob3
 #     bob = bob2
-    # # #     # try:
-    # # #     #     if len(bob3.match(S.NegativeOne)) < len(bob2.match(S.NegativeOne)):
-    # # #     #         bob2 = bob3
-    # # #     # except TypeError:
-    # # #     #     if not bob3.match(S.NegativeOne):
-    # # #     #         final = bob3 
-    # # #     #     elif not bob2.match(S.NegativeOne):
-    # # #     #         final = bob2
+# # #     # try:
+# # #     #     if len(bob3.match(S.NegativeOne)) < len(bob2.match(S.NegativeOne)):
+# # #     #         bob2 = bob3
+# # #     # except TypeError:
+# # #     #     if not bob3.match(S.NegativeOne):
+# # #     #         final = bob3
+# # #     #     elif not bob2.match(S.NegativeOne):
+# # #     #         final = bob2
 
 
-    # # for j in range(20):
-    # #     random.shuffle(varlist2)
-    # #     bob3 = split_out_vars(bob2, random.sample(varlist, 2), varlist2)
-    # #     bob3 = expand(remove_zeros(simplify(bob3.expand(mul=True, func=False))),func=False, mul=True)
-    # #     if bob3.count(S.NegativeOne) < bob2.count(S.NegativeOne):
-    # #         bob2 = bob3
-    # negf = lambda x: isinstance(x, Integer) and x < 0
-    # boing = True
-    # final = None
-    # nomoves = 0
-    # while nomoves < 50:
-    #     res = None
-    #     changed = True
-    #     while changed:
-    #         symbs = [v for v in (res if res else bob2).free_symbols if y.index(v) != -1]
-    #         varlist2 = [v for v in (res if res else bob2).free_symbols if z.index(v) != -1]
-    #         random.shuffle(varlist2)
-    #         v = symbs
-    #         if len(symbs) > 1:
-    #             v = random.sample(symbs, 1 if boing else random.randrange(1,len(symbs)))
-    #         bob3 = expand(remove_zeros(simplify(split_out_vars((res if res else bob2), v, varlist2))))
-    #         if bob3 == (res if res else bob2):
-    #             changed = False
-    #             break
-    #         if not res:
-    #             res = bob3
-    #         if bob3.count(S.NegativeOne) <= 1.7 * res.count(S.NegativeOne):
-    #             res = bob3
-    #         # else:
-    #         #     print(f"{bob3.count(S.NegativeOne)=} {res.count(S.NegativeOne)=}")
-    #     if (res and not final) or (res and res.count(negf) < final.count(negf)):
-    #         final = res
-    #         print(f"{final=} {final.count(negf)=}")
-    #         if final.count(negf) == 0:
-    #             print("Success")
-    #             break
-    #     elif res:
-    #         bob2 = simplify(expand(bob2))
-    #     nomoves += 1
-    # bob = final
-
+# # for j in range(20):
+# #     random.shuffle(varlist2)
+# #     bob3 = split_out_vars(bob2, random.sample(varlist, 2), varlist2)
+# #     bob3 = expand(remove_zeros(simplify(bob3.expand(mul=True, func=False))),func=False, mul=True)
+# #     if bob3.count(S.NegativeOne) < bob2.count(S.NegativeOne):
+# #         bob2 = bob3
+# negf = lambda x: isinstance(x, Integer) and x < 0
+# boing = True
+# final = None
+# nomoves = 0
+# while nomoves < 50:
+#     res = None
+#     changed = True
+#     while changed:
+#         symbs = [v for v in (res if res else bob2).free_symbols if y.index(v) != -1]
+#         varlist2 = [v for v in (res if res else bob2).free_symbols if z.index(v) != -1]
+#         random.shuffle(varlist2)
+#         v = symbs
+#         if len(symbs) > 1:
+#             v = random.sample(symbs, 1 if boing else random.randrange(1,len(symbs)))
+#         bob3 = expand(remove_zeros(simplify(split_out_vars((res if res else bob2), v, varlist2))))
+#         if bob3 == (res if res else bob2):
+#             changed = False
+#             break
+#         if not res:
+#             res = bob3
+#         if bob3.count(S.NegativeOne) <= 1.7 * res.count(S.NegativeOne):
+#             res = bob3
+#         # else:
+#         #     print(f"{bob3.count(S.NegativeOne)=} {res.count(S.NegativeOne)=}")
+#     if (res and not final) or (res and res.count(negf) < final.count(negf)):
+#         final = res
+#         print(f"{final=} {final.count(negf)=}")
+#         if final.count(negf) == 0:
+#             print("Success")
+#             break
+#     elif res:
+#         bob2 = simplify(expand(bob2))
+#     nomoves += 1
+# bob = final
 
 
 # # #print(simplify(expand(split_out_vars(split_out_vars(bob, [y[1]], [z[2],z[1]]),[y[4]],[z[1],z[2]]))))
@@ -176,4 +178,3 @@ print(bob)
 # # bob = sympify(bob, rational=True)
 # # print(getattr(bob, '_eval_simplify', None))
 # # print(bob._eval_simplify())
-
