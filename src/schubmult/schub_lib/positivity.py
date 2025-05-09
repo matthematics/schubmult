@@ -4,7 +4,6 @@ from functools import cache
 import numpy as np
 import psutil
 import pulp as pu
-import sympy
 from cachetools import cached
 from cachetools.keys import hashkey
 from sortedcontainers import SortedList

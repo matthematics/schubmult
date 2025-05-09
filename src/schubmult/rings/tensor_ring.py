@@ -1,6 +1,5 @@
 from functools import cache
 
-import sympy
 from symengine import S
 
 from schubmult.utils.logging import get_logger

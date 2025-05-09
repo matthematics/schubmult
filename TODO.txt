@@ -254,3 +254,5 @@ can set the class
 not forwarded if it has it
 
 Can forward printing stuff back to sympy object
+
+override strprinter

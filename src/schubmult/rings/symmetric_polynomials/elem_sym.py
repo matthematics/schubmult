@@ -1,7 +1,6 @@
 from functools import cache
 
 import symengine.lib.symengine_wrapper as sw
-import sympy
 from symengine import Integer, S, sympify
 
 from schubmult.rings.poly_lib import elem_sym_poly

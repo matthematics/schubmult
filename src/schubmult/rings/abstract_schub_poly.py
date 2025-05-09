@@ -1,6 +1,5 @@
 from functools import cache
 
-import sympy
 
 import schubmult.symbolic as ssymb
 from schubmult.perm_lib import Permutation

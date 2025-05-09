@@ -1,7 +1,6 @@
 import sys  # noqa: F401
 from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
 
-import sympy
 
 # from sympy import init_printing
 from schubmult.utils.logging import init_logging
