@@ -85,16 +85,16 @@ class TensorRing(BaseSchubertRing):
             dct[tuple(new_k)] = v
         return self.from_dict(dct)
 
-    def from_sympy(self, x):
-        dct = {}
-        elem1 = self.rings[0].from_sympy(x)
-        dct = {(k,): v for k,v in elem1.items()}
-        for i in range(1, len(self.rings)):
-            dct_new = {}
-            for k, v in dct.items():
-                dct_new = add_perm_dict(dct_new,{(*k, k1): v1 for k1, v1 in self.rings[i].from_sympy(v).items()})
-            dct = dct_new
-        return self.from_dict(dct)
+    # def from_sympy(self, x):
+    #     dct = {}
+    #     elem1 = self.rings[0].from_sympy(x)
+    #     dct = {(k,): v for k,v in elem1.items()}
+    #     for i in range(1, len(self.rings)):
+    #         dct_new = {}
+    #         for k, v in dct.items():
+    #             dct_new = add_perm_dict(dct_new,{(*k, k1): v1 for k1, v1 in self.rings[i].from_sympy(v).items()})
+    #         dct = dct_new
+    #     return self.from_dict(dct)
 
     def __call__(self, x):
         if isinstance(x, tuple):

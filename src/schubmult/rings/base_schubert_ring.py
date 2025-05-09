@@ -4,7 +4,7 @@ os.environ["USE_SYMENGINE"] = "1"
 
 
 from schubmult.perm_lib import Permutation
-from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Mul, Ring, S, SchubStrPrinter, SympifyError, sstr
+from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Mul, Ring, S, SchubStrPrinter, sstr, sympy_Add, sympy_Mul
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -13,14 +13,12 @@ from .backend import expand, sympify
 from .schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 
 logger = get_logger(__name__)
-import sympy
 
 
 class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     _op_priority = 1e200
     precedence = 40
-    __sympy__ = True
-
+    
     def __reduce__(self):
         return (self.__class__, self.items())
 
@@ -60,22 +58,22 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         if len(self.keys()) == 0:
             return printer._print(S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
-            return printer._print_Add(sympy.Add(*self.as_ordered_terms()), order="lex")
-        return printer._print_Add(sympy.Add(*self.as_ordered_terms()))
+            return printer._print_Add(sympy_Add(*self.as_ordered_terms()), order="lex")
+        return printer._print_Add(sympy_Add(*self.as_ordered_terms()))
 
     def _pretty(self, printer):
         if len(self.keys()) == 0:
             return printer._print(S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
             return printer._print_Add(self, order="lex")
-        return printer._print_Add(sympy.Add(*self.as_ordered_terms()))
+        return printer._print_Add(sympy_Add(*self.as_ordered_terms()))
 
     def _latex(self, printer):
         if len(self.keys()) == 0:
             return printer._print(S.Zero)
         if printer.order in ("old", "none"):  # needed to avoid infinite recursion
             return printer._print_Add(self, order="lex")
-        return printer._print_Add(sympy.Add(*self.as_ordered_terms()))
+        return printer._print_Add(sympy_Add(*self.as_ordered_terms()))
 
     def as_terms(self):
         if len(self.keys()) == 0:
@@ -324,17 +322,16 @@ class BaseSchubertRing(Ring, CompositeDomain):
 
     def domain_new(self, element, orig_domain=None):  # noqa: ARG002
         # print(f"They is called me {element=}")
+        print(f"{element=}")
+        print(f"{type(element)=}")
         if isinstance(element, BaseSchubertElement):
             raise CoercionFailed("Not a domain element")
-        try:
-            if hasattr(sympify(element), "has_free"):
-                if not sympify(element).has_free(*self.symbols):
-                    return sympify(element)
-                raise CoercionFailed(f"{element} contains an element of the set of generators")
-            # print("Is da no gens")
-            return sympify(element)
-        except Exception as e:
-            raise CoercionFailed(f"{e}")
+        if hasattr(sympify(element), "has_free"):
+            if not sympify(element).has_free(*self.symbols):
+                return sympify(element)
+            raise CoercionFailed(f"{element} contains an element of the set of generators")
+        return sympify(element)
+        
         # except Exception:
         #     import traceback
         #     traceback.print_exc()

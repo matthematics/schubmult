@@ -1,12 +1,9 @@
 from functools import cache
 
-import symengine.lib.symengine_wrapper as sw
-
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.symbolic import Integer, S, SymengineExpr, sympify, sympify_sympy
 from schubmult.utils.logging import get_logger
 
-# import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
 from ..variables import NotEnoughGeneratorsError
 
 logger = get_logger(__name__)
@@ -29,10 +26,14 @@ class E(SymengineExpr):
         k = int(k)
         if hasattr(args[0], "__iter__"):
             return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[0]), tuple(args[1]))
-        return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[:int(k)]), tuple(args[k:2*k + 1 - p]))
+        return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[: int(k)]), tuple(args[k : 2 * k + 1 - p]))
 
     def has_free(self, *args):
         return any(arg in self.args for arg in args)
+
+    @property
+    def free_symbols(self):
+        return {*self._genvars, *self._coeffvars}
 
     @staticmethod
     @cache
@@ -55,8 +56,8 @@ class E(SymengineExpr):
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         if len(var2) < k + 1 - p:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
-        var1 = tuple(sorted(var1,key=lambda x: sympify_sympy(x).sort_key()))
-        var2 = tuple(sorted(var2,key=lambda x: sympify_sympy(x).sort_key()))
+        var1 = tuple(sorted(var1, key=lambda x: sympify_sympy(x).sort_key()))
+        var2 = tuple(sorted(var2, key=lambda x: sympify_sympy(x).sort_key()))
         obj = SymengineExpr.__new__(
             _class,
             Integer(p),
@@ -171,7 +172,7 @@ class E(SymengineExpr):
         # print(f"_eval_subs")
         # print(f"{rule=}")
         # print(f"{self=}")
-        rule = sw.get_dict(rule)
+        # rule = sw.get_dict(rule)
         # print(f"{rule=}")
         new_args = [*self.args]
         new_args = [*self.args]
@@ -296,7 +297,6 @@ class e(SymengineExpr):
     is_Function = True
     is_nonzero = True
 
-
     def __new__(cls, p, k, *args):
         if hasattr(args[0], "__iter__"):
             return ElemSym.__xnew_cached__(cls, p, k, tuple(args[0]))
@@ -316,7 +316,7 @@ class e(SymengineExpr):
         var1 = var1[:k]
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
-        var1 = tuple(sorted(var1,key=lambda x: sympify_sympy(x).sort_key()))
+        var1 = tuple(sorted(var1, key=lambda x: sympify_sympy(x).sort_key()))
         obj = SymengineExpr.__new__(
             _class,
         )
@@ -390,9 +390,6 @@ class e(SymengineExpr):
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify(elem_sym_poly(self._p, self._k, self.genvars, [0 for i in range(30)]))
 
-
-
-
     def _eval_subs(self, *rule):
         # print(f"_eval_subs")
         # print(f"{rule=}")
@@ -460,10 +457,7 @@ class e(SymengineExpr):
             return self.xreplace({var1: var2}) + ElemSym(1, 1, [var1], [var2]) * self.divide_out_diff(var1, var2)
         return self
 
+
 FactorialElemSym = E
 
 ElemSym = e
-
-
-
-

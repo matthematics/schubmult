@@ -20,7 +20,6 @@ from .base_printing import sstr
 
 
 class SympyExpr(Expr):
-  
     def __new__(cls, _obj):
         obj = Expr.__new__(cls, *_obj.args)
         obj._obj = _obj
@@ -68,6 +67,7 @@ class SympyExpr(Expr):
 
     def _sympy_(self):
         return self
+
     # need to explicitly forward overriden methods by sympy expr
 
     def simplify(self, **kwargs) -> Expr:
@@ -123,6 +123,7 @@ class SympyExpr(Expr):
 
     def func(self, *args):
         return sympy.sympify(self._obj.func(*args))
+
     # def could_extract_minus_sign(self) -> bool:
     #     """Return True if self has -1 as a leading factor or has
     #     more literal negative signs than positive signs in a sum,
@@ -201,6 +202,7 @@ class SympyExpr(Expr):
             return self._obj.compare(other)
         return super().compare(other)
 
+
 class SymengineExprClass(type):
     @property
     def __sympyclass__(cls):
@@ -252,7 +254,7 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
 
     def __new__(cls, *args):
         obj = sw.Symbol.__new__(cls)
-        #print("{args=}")
+        # print("{args=}")
         obj._base_args = args
         # print("woo")
         obj._sympyclass = SympyExpr
@@ -262,7 +264,7 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
         # print([type(arg) for arg in args])
         # print(f"{type(self)=}")
         sw.Symbol.__init__(self, self, *args, store_pickle=True)
-        #self._sympy_obj = SympyExpr(self)
+        # self._sympy_obj = SympyExpr(self)
 
     def _sympy_(self):
         return SympyExpr(self)

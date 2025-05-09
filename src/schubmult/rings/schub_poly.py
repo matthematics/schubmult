@@ -1,8 +1,7 @@
-import symengine
 
 import schubmult.perm_lib as pl
 import schubmult.schub_lib.schub_lib as schub_lib
-from schubmult.symbolic import Add, Mul, Pow, sympify
+from schubmult.symbolic import Add, Mul, Pow, S, sympify
 
 from .poly_lib import call_zvars
 
@@ -165,10 +164,6 @@ def schubpoly(v, var2=None, var3=None, start_var=1):
 def div_diff(poly, v1, v2):
     if hasattr(poly, "_eval_div_diff"):
         return poly._eval_div_diff(v1, v2)
-    Mul_local = Mul
-    Add_local = Add
-    Pow_local = Pow
-    S = symengine.S
     poly = sympify(poly)
     v1 = sympify(v1)
     v2 = sympify(v2)
@@ -180,14 +175,14 @@ def div_diff(poly, v1, v2):
         return S.One
     if poly == v2:
         return S.NegativeOne
-    if isinstance(poly, Add_local):
-        return Add_local(*[div_diff(a, v1, v2) for a in poly.args])
-    if isinstance(poly, Pow_local):
+    if isinstance(poly, Add):
+        return Add(*[div_diff(a, v1, v2) for a in poly.args])
+    if isinstance(poly, Pow):
         a = poly.args[0]
         dd = div_diff(poly.args[0],v1,v2)
         b = poly.args[0].xreplace({v1: v2, v2: v1})
-        return Add_local(*[Mul_local(dd,Pow_local(b,i),Pow_local(a,int(poly.args[1]) - 1 - i)) for i in range(int(poly.args[1]))])
-    if isinstance(poly, Mul_local):
+        return Add(*[Mul(dd,Pow(b,i),Pow(a,int(poly.args[1]) - 1 - i)) for i in range(int(poly.args[1]))])
+    if isinstance(poly, Mul):
         current_args = [*poly.args]
         args_ret = []
         for i, arg in enumerate(poly.args):
@@ -195,9 +190,9 @@ def div_diff(poly, v1, v2):
             if res == S.Zero:
                 continue
             if res == S.One:
-                args_ret += [Mul_local(*[*current_args[:i], *current_args[i + 1 :]])]
+                args_ret += [Mul(*[*current_args[:i], *current_args[i + 1 :]])]
             else:
-                args_ret += [Mul_local(*[*current_args[:i], res, *current_args[i + 1 :]])]
+                args_ret += [Mul(*[*current_args[:i], res, *current_args[i + 1 :]])]
             current_args[i] = current_args[i].xreplace({v1: v2, v2: v1})
-        return Add_local(*args_ret)
+        return Add(*args_ret)
     raise ValueError(f"Expected Expr but got {type(poly)}")
