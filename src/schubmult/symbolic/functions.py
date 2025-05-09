@@ -12,6 +12,4 @@ def expand(obj, **kwargs):
 S = symengine.S
 
 def symbols(*args, **kwargs):
-    if "cls" not in kwargs:
-        return sympy.symbols(*args, cls=SymengineSymbol, **kwargs)
-    return sympy.symbols(*args, **kwargs)
+    return symengine.symbols(*args, **kwargs)

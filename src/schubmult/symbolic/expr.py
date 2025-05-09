@@ -19,6 +19,7 @@ from sympy.core.expr import Expr
 
 
 class SympyExpr(Expr):
+  
     def __new__(cls, _obj):
         obj = Expr.__new__(cls, *_obj.args)
         obj._obj = _obj
@@ -59,7 +60,7 @@ class SympyExpr(Expr):
     #     return [sympy.sympify(arg) for arg in self._obj.args]
 
     def __getattr__(self, attr):
-        # print(f"{attr}")
+        # print(f"{self=} {attr}")
         pang = getattr(self._obj, attr)
         # print(f"{pang=}")
         return pang
@@ -193,6 +194,11 @@ class SympyExpr(Expr):
     def __str__(self):
         return sstr(self._obj)
 
+    def compare(self, other):
+        # print("bongfunket")
+        if hasattr(self._obj, "compare"):
+            return self._obj.compare(other)
+        return super().compare(other)
 
 class SymengineExprClass(type):
     @property
@@ -234,37 +240,11 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
     is_MatAdd = False
     is_MatMul = False
 
-    is_composite: bool | None
-    is_noninteger: bool | None
-    is_extended_positive: bool | None
-    is_negative: bool | None
-    is_complex: bool | None
-    is_extended_nonpositive: bool | None
-    is_integer: bool | None
-    is_positive: bool | None
-    is_rational: bool | None
-    is_extended_nonnegative: bool | None
-    is_infinite: bool | None
-    is_extended_negative: bool | None
-    is_extended_real: bool | None
-    is_finite: bool | None
-    is_polar: bool | None
-    is_imaginary: bool | None
-    is_transcendental: bool | None
-    is_extended_nonzero: bool | None
-    is_nonzero: bool | None
-    is_odd: bool | None
-    is_algebraic: bool | None
-    is_prime: bool | None
-    is_commutative: bool | None
-    is_nonnegative: bool | None
-    is_nonpositive: bool | None
-    is_irrational: bool | None
-    is_real: bool | None
-    is_zero: bool | None
-    is_even: bool | None
-
     # _sympyclass = SympyExpr
+
+    def __getattr__(self, attr):
+        # print(f"{self=} {attr=}")
+        raise AttributeError
 
     def __new__(cls, *args):
         obj = sw.Symbol.__new__(cls)

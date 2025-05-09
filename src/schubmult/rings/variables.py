@@ -72,7 +72,6 @@ class GeneratingSet(GeneratingSet_base):
     @staticmethod
     def __xnew__(_class, name):
         obj = GeneratingSet_base.__new__(_class, name)
-        print("optimize generatingset")
         obj._symbols_arr = tuple([symbols(f"{name}_{i}") for i in range(100)])
         obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         return obj

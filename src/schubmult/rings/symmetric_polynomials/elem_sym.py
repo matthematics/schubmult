@@ -80,7 +80,8 @@ class E(SymengineExpr):
     # def _symengine_(self):
     #     return sw.PyFunction(self, (self.args[0],self.args[1],*self.genvars,*self.coeffvars), self.__class__, sw.PyModule(self.__module__))
 
-
+    def compare(self, other):
+        return -1 if str(self) < (str(other)) else (1 if str(self) > str(other) else 0)
 
     # def __getattr__(self, name):
     #     if name in dir(self._sympy_obj):
@@ -154,8 +155,8 @@ class E(SymengineExpr):
         return self._coeffvars
 
     @cache
-    def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
-        return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
+    def _eval_expand_func(self, *args, **kwargs):
+        return sympy.sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
 
     # @property
     # def func(self):
