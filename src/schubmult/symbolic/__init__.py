@@ -13,7 +13,7 @@ from sympy.polys.polyerrors import CoercionFailed
 from sympy.printing.defaults import DefaultPrinting
 
 from .base_printing import SchubStrPrinter, sstr
-from .expr import SymengineExpr, SympyExpr
+from .expr import SymengineExpr, SymengineExprClass, SympyExpr
 from .functions import expand, symbols, sympify
 
 

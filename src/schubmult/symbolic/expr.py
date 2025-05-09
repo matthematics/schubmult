@@ -215,8 +215,8 @@ class SympyExpr(Expr):
 
 class SymengineExprClass(type):
     @property
-    def __sympyclass__(cls):
-        return cls._sympyclass
+    def __class__(self):
+        return sw.Expr
 
 
 class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
@@ -273,7 +273,7 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
     def __init__(self, *args):
         # print([type(arg) for arg in args])
         # print(f"{type(self)=}")
-        sw.Symbol.__init__(self, self, *args, store_pickle=True)
+        sw.Symbol.__init__(self, self, *args, store_pickle=False)
         # self._sympy_obj = SympyExpr(self)
 
     def _sympy_(self):

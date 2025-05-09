@@ -1,7 +1,7 @@
 from functools import cache
 
 from schubmult.rings.poly_lib import elem_sym_poly
-from schubmult.symbolic import Integer, S, SymengineExpr, sympify, sympify_sympy
+from schubmult.symbolic import Integer, S, SymengineExpr, SymengineExprClass, sympify, sympify_sympy
 from schubmult.utils.logging import get_logger
 
 from ..variables import NotEnoughGeneratorsError
@@ -11,6 +11,13 @@ logger = get_logger(__name__)
 # class _E(SympyExpr):
 #     pass
 
+# class Buns:
+#     pass
+
+# class Sponge(SymengineExprClass):
+#     @property
+#     def __class__(self):
+#         return Buns
 
 class E(SymengineExpr):
     is_commutative = True
