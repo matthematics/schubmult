@@ -13,11 +13,11 @@ from sympy.polys.domains.domainelement import DomainElement
 from sympy.polys.domains.ring import Ring
 from sympy.printing.defaults import DefaultPrinting
 
-import schubmult.utils.ring_utils as utils
 from schubmult.perm_lib import Permutation
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
+from ._mul_utils import _mul_schub_dicts
 from .backend import expand, sympify
 from .schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 
@@ -274,7 +274,7 @@ class BaseSchubertRing(Ring, CompositeDomain):
             other = self._coerce_mul(other)
             if not other:
                 raise CoercionFailed(f"Could not coerce {other} of type {type(other)} to {type(elem)}")
-            return self.from_dict(utils._mul_schub_dicts(elem, other, elem.ring, other.ring))
+            return self.from_dict(_mul_schub_dicts(elem, other, elem.ring, other.ring))
         # print(f"I'm a bagel {other=}")
         return self.mul_sympy(elem, other)
 

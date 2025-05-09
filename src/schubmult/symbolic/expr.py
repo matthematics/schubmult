@@ -1,3 +1,4 @@
+import os
 from functools import cache
 
 import symengine.lib.symengine_wrapper as sw
@@ -7,64 +8,6 @@ from sympy.core._print_helpers import Printable
 
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, ZeroGeneratingSet
 from schubmult.utils.perm_utils import add_perm_dict
-
-NoneVar = 1e10
-ZeroVar = 0
-
-
-class NotEnoughGeneratorsError(ValueError):
-    pass
-
-
-@cache
-def poly_ring(v: str):
-    if v == ZeroVar:
-        return ZeroGeneratingSet(tuple([sympify(0) for i in range(100)]))
-    if v == NoneVar:
-        return ZeroGeneratingSet(tuple([sympify(0) for i in range(100)]))
-    return GeneratingSet(str(v))
-
-
-def _mul_schub_dicts(dict1, dict2, basis1, basis2, best_effort_positive=True):
-    this_dict = {}
-    for k, v in dict2.items():
-        for kd, vd in dict1.items():
-            did_positive = False
-            to_mul = v * vd
-            if best_effort_positive:
-                try:
-                    this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis1.cached_positive_product(kd, k, basis2).items()})
-                    did_positive = True
-                except Exception:
-                    did_positive = False
-            if not did_positive:
-                this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis1.cached_product(kd, k, basis2).items()})
-    return this_dict
-
-
-def _tensor_product_of_dicts(d1, d2):
-    ret_dict = {}
-    for k1, v1 in d1.items():
-        this_dict = {}
-        try:
-            v1 = sympify(v1)
-        except SympifyError:
-            v1 = sympy.sympify(v1)
-        for k2, v2 in d2.items():
-            try:
-                v2 = sympify(v2)
-            except SympifyError:
-                v2 = sympy.sympify(v2)
-                v1 = sympy.sympify(v1)
-            if isinstance(k1, tuple):
-                this_dict[(*k1, k2)] = v1 * v2
-            else:
-                this_dict[(k1, k2)] = v1 * v2
-        ret_dict = add_perm_dict(ret_dict, this_dict)
-    return ret_dict
-
-
-import os
 
 os.environ["USE_SYMENGINE"] = "1"
 from sympy import sstr
@@ -81,7 +24,6 @@ from sympy.core.expr import Expr
 
 
 class SympyExpr(Expr):
-
     def __new__(cls, _obj):
         obj = Expr.__new__(cls, *_obj.args)
         obj._obj = _obj
@@ -96,7 +38,6 @@ class SympyExpr(Expr):
     @property
     def is_number(self):
         return False
-
 
     def _symengine_(self):
         # print("pageblitz")
@@ -113,14 +54,121 @@ class SympyExpr(Expr):
         # print(f"{attr}")
         return getattr(self._obj, attr)
 
-    # @property
-    # def func(self):
-    #     return self._obj.func   
-    # @property
-    # def func(self):
-    #     def func(*bob):
-    #         return self.__class__(self._obj.func(*bob))
-    #     return func
+    # need to explicitly forward overriden methods by sympy expr
+
+    def simplify(self, **kwargs) -> Expr:
+        if hasattr(self._obj, "simplify"):
+            return sympy.sympify(self._obj.simplify(**kwargs))
+        return super().simplify(**kwargs)
+
+    @cache
+    def sort_key(self, order=None):
+        if hasattr(self._obj, "sort_key"):
+            return self._obj.sort_key(order)
+        return super().sort_key(order)
+
+    def _hashable_content(self):
+        return self.obj.args
+
+    def equals(self, other, failing_expression=False):
+        if hasattr(self._obj, "equals"):
+            return self._obj.equals(other)
+        return super().equals(other, failing_expression=failing_expression)
+
+    def as_ordered_factors(self, order=None):
+        if hasattr(self._obj, "as_ordered_factors"):
+            return self._obj.as_ordered_factors(order)
+        return super().as_ordered_factors(order)
+
+    # def as_poly(self, *gens, **args):
+
+    def as_ordered_terms(self, order=None):
+        if hasattr(self._obj, "as_ordered_terms"):
+            return self._obj.as_ordered_terms(order)
+        return super().as_ordered_terms(order)
+
+    def as_terms(self):
+        if hasattr(self._obj, "as_terms"):
+            return self._obj.as_terms()
+        return super().as_terms()
+
+    def as_powers_dict(self):
+        if hasattr(self._obj, "as_powers_dict"):
+            return self._obj.as_powers_dict()
+        return super().as_powers_dict()
+
+    def as_coefficients_dict(self, *syms):
+        if hasattr(self._obj, "as_coefficients_dict"):
+            return self._obj.as_coefficients_dict(*syms)
+        return super().as_coefficients_dict(*syms)
+
+    def as_base_exp(self):
+        if hasattr(self._obj, "as_base_exp"):
+            return self._obj.as_base_exp()
+        return super().as_base_exp()
+
+    # def could_extract_minus_sign(self) -> bool:
+    #     """Return True if self has -1 as a leading factor or has
+    #     more literal negative signs than positive signs in a sum,
+    #     otherwise False.
+
+    #     Examples
+    #     ========
+
+    #     >>> from sympy.abc import x, y
+    #     >>> e = x - y
+    #     >>> {i.could_extract_minus_sign() for i in (e, -e)}
+    #     {False, True}
+
+    #     Though the ``y - x`` is considered like ``-(x - y)``, since it
+    #     is in a product without a leading factor of -1, the result is
+    #     false below:
+
+    #     >>> (x*(y - x)).could_extract_minus_sign()
+    #     False
+
+    #     To put something in canonical form wrt to sign, use `signsimp`:
+
+    #     >>> from sympy import signsimp
+    #     >>> signsimp(x*(y - x))
+    #     -x*(x - y)
+    #     >>> _.could_extract_minus_sign()
+    #     True
+    #     """
+    #     return False
+
+    # @staticmethod
+    # def _expand_hint(expr, hint, deep=True, **hints):
+    #     """
+    #     Helper for ``expand()``.  Recursively calls ``expr._eval_expand_hint()``.
+
+    #     Returns ``(expr, hit)``, where expr is the (possibly) expanded
+    #     ``expr`` and ``hit`` is ``True`` if ``expr`` was truly expanded and
+    #     ``False`` otherwise.
+    #     """
+    #     hit = False
+    #     # XXX: Hack to support non-Basic args
+    #     #              |
+    #     #              V
+    #     if deep and getattr(expr, 'args', ()) and not expr.is_Atom:
+    #         sargs = []
+    #         for arg in expr.args:
+    #             arg, arghit = Expr._expand_hint(arg, hint, **hints)
+    #             hit |= arghit
+    #             sargs.append(arg)
+
+    #         if hit:
+    #             expr = expr.func(*sargs)
+
+    #     if hasattr(expr, hint):
+    #         newexpr = getattr(expr, hint)(**hints)
+    #         if newexpr != expr:
+    #             return (newexpr, True)
+
+    #     return (expr, hit)
+
+    def expand(self, *args, **kwargs):
+        return self._obj.expand(*args, **kwargs)
 
     def __repr__(self):
         return self._obj.__repr__()
@@ -199,7 +247,7 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
     is_zero: bool | None
     is_even: bool | None
 
-    #_sympyclass = SympyExpr
+    # _sympyclass = SympyExpr
 
     def __new__(cls, *args):
         obj = sw.Symbol.__new__(cls)
@@ -210,9 +258,10 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
 
     def __init__(self, *args):
         super().__init__(self, *args, store_pickle=True)
+        self._sympy_obj = SympyExpr(self)
 
     def _sympy_(self):
-        return SympyExpr(self)
+        return self._sympy_obj
 
     def __hash__(self):
         return hash(self.args)
@@ -230,7 +279,6 @@ class SymengineExpr(sw.Symbol, Printable, metaclass=SymengineExprClass):
         self.__dict__.update(state)
 
     def __reduce__(self):
-        # print(f"yo dude I'm getting pickled {self.__class__=}")
         return (self.__class__, self.args, self.__dict__)
 
     def _sympystr(self, printer):

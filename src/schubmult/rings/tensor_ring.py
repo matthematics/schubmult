@@ -3,10 +3,10 @@ from functools import cache
 import sympy
 from symengine import S
 
-import schubmult.utils.ring_utils as utils
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
+from ._mul_utils import _tensor_product_of_dicts
 from .abstract_schub_poly import AbstractSchubPoly
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
@@ -50,7 +50,7 @@ class TensorRing(BaseSchubertRing):
                 dct = self.rings[0].from_dict({k1[0]: v1 * v2}) * elem2.ring.rings[0].from_dict({k2[0]: 1})
                 for i in range(1, len(self.rings)):
                     dct2 = self.rings[i].from_dict({k1[i]: 1}) * elem2.ring.rings[i].from_dict({k2[i]: 1})
-                    dct = utils._tensor_product_of_dicts(dct, dct2)
+                    dct = _tensor_product_of_dicts(dct, dct2)
                 ret_dict = add_perm_dict(ret_dict, dct)
         return self.from_dict(ret_dict)
 

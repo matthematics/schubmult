@@ -4,8 +4,8 @@ from symengine import Add, DictBasic, S, sympify
 
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.rings.symmetric_polynomials.elem_sym import FactorialElemSym
+from schubmult.symbolic.expr import SymengineExpr, SympyExpr
 from schubmult.utils.logging import get_logger
-from schubmult.utils.ring_utils import SymengineExpr, SympyExpr
 
 logger = get_logger(__name__)
 

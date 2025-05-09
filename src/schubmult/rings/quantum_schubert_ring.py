@@ -7,7 +7,6 @@ from symengine import Add, Mul, Pow, S, Symbol, expand
 import schubmult.rings.schubert_ring as spr
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
-import schubmult.utils.ring_utils as utils
 from schubmult.perm_lib import Permutation, longest_element
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import is_parabolic
@@ -17,7 +16,7 @@ from .backend import sympify
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .poly_lib import complete_sym_poly, elem_sym_poly, elem_sym_poly_q, xreplace_genvars
 from .schub_poly import schubpoly_from_elems
-from .variables import GeneratingSet, GeneratingSet_base
+from .variables import GeneratingSet, GeneratingSet_base, poly_genset
 
 q_var = GeneratingSet("q")
 
@@ -25,7 +24,6 @@ logger = get_logger(__name__)
 
 
 class QuantumDoubleSchubertElement(BaseSchubertElement):
-
     def subs(self, old, new):
         return self.as_classical().subs(old, new).as_quantum()
 
@@ -158,7 +156,7 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
                 return other
             if type(other.ring) is QuantumSingleSchubertRing:
                 if self.genset == other.ring.genset:
-                    newbasis = QuantumDoubleSchubertRing(self.genset, utils.poly_ring(0))
+                    newbasis = QuantumDoubleSchubertRing(self.genset, poly_genset(0))
                     return newbasis.from_dict(other)
         return None
 
@@ -184,7 +182,7 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
         elems = []
         for k in range(1, kk + 1):
             for p in range(1, k + 1):
-                elems += [(sympy.Symbol(f"e_{p}_{k}"), elem_sym_poly_q(p, k, self.genset[1:], utils.poly_ring(0)))]
+                elems += [(sympy.Symbol(f"e_{p}_{k}"), elem_sym_poly_q(p, k, self.genset[1:], poly_genset(0)))]
         return dict(elems)
 
     @cache
@@ -309,7 +307,7 @@ def QDSx(x, genset=GeneratingSet("y")):
 
 class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
     def __init__(cls, genset):
-        super().__init__(genset, utils.poly_ring(utils.NoneVar))
+        super().__init__(genset, poly_genset(0))
 
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, "QBS"))
@@ -453,7 +451,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
                 return other
             if type(other.ring) is ParabolicQuantumSingleSchubertRing:
                 if self.genset == other.ring.genset and self.index_comp == other.ring.index_comp:
-                    newbasis = ParabolicQuantumDoubleSchubertRing(self.genset, utils.poly_ring(0), self.index_comp)
+                    newbasis = ParabolicQuantumDoubleSchubertRing(self.genset, poly_genset(0), self.index_comp)
                     return newbasis.from_dict(other)
         return None
 
@@ -480,7 +478,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
         elem_func = self.elem_sym
         for k in range(1, kk + 1):
             for p in range(1, k + 1):
-                elems += [(sympy.Symbol(f"e_{p}_{k}"), elem_func(p, k, self.genset[1:], utils.poly_ring(0)))]
+                elems += [(sympy.Symbol(f"e_{p}_{k}"), elem_func(p, k, self.genset[1:], poly_genset(0)))]
         return dict(elems)
 
     @property
@@ -556,7 +554,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
                 continue
             if k != k2:
                 b -= v * self.classical_in_basis(k2)
-        return self.from_dict({k: self.domain_new(v) for k,v in b.items() if expand(v) != S.Zero})
+        return self.from_dict({k: self.domain_new(v) for k, v in b.items() if expand(v) != S.Zero})
 
     @property
     def classical_elem_func(self):
@@ -640,9 +638,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
 
     @cache
     def cached_positive_product(self, u, v, basis2):
-        initial_dict = {
-            k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset if basis2.coeff_genset else utils.poly_ring(utils.NoneVar)) for k, x in yz.schubmult_q_generic_partial_posify(u, v).items()
-        }
+        initial_dict = {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset if basis2.coeff_genset else poly_genset(0)) for k, x in yz.schubmult_q_generic_partial_posify(u, v).items()}
         return self.process_coeff_dict(initial_dict)
 
     @property
@@ -672,7 +668,6 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
     @property
     def mult_poly_double(self):
         return yz.mult_poly_q_double
-
 
     # TODO: speed this up
     def mul_sympy(self, elem, x):
@@ -748,7 +743,7 @@ def make_parabolic_quantum_basis(index_comp, coeff_genset):
 
 def QPDSx_index(*args):
     def this_QPDSx(x, coeff_genset=GeneratingSet("y")):
-        return make_parabolic_quantum_basis(args, utils.poly_ring(coeff_genset) if isinstance(coeff_genset, str) else coeff_genset)(x)
+        return make_parabolic_quantum_basis(args, poly_genset(coeff_genset) if isinstance(coeff_genset, str) else coeff_genset)(x)
 
     return this_QPDSx
 
@@ -760,7 +755,7 @@ def QPDSx(*args):
 
 class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing):
     def __init__(self, genset, index_comp):
-        super().__init__(genset, utils.poly_ring(utils.NoneVar), index_comp)
+        super().__init__(genset, poly_genset(0), index_comp)
 
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, self.index_comp, "PQSB"))
@@ -772,13 +767,13 @@ class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing):
                     return other
             if type(other.ring) is ParabolicQuantumDoubleSchubertRing:
                 if self.genset == other.ring.genset and self.index_comp == other.ring.index_comp:
-                    newbasis = ParabolicQuantumDoubleSchubertRing(self.genset, utils.poly_ring(0), self.index_comp)
+                    newbasis = ParabolicQuantumDoubleSchubertRing(self.genset, poly_genset(0), self.index_comp)
                     return newbasis.from_dict(other)
         return None
 
     @property
     def coeff_genset(self):
-        return utils.poly_ring(utils.NoneVar)
+        return poly_genset(0)
 
     @cache
     def cached_product(self, u, v, basis2):

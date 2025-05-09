@@ -7,7 +7,6 @@ import schubmult.rings.quantum_schubert_ring as qsr
 import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
-import schubmult.utils.ring_utils as utils
 from schubmult.perm_lib import Permutation, uncode
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
@@ -21,7 +20,7 @@ from .symmetric_polynomials.complete_sym import CompleteSym
 from .symmetric_polynomials.elem_sym import FactorialElemSym
 from .symmetric_polynomials.functions import split_out_vars
 from .tensor_ring import TensorRing
-from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
+from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet, NotEnoughGeneratorsError, poly_genset
 
 _pretty_schub_char = "𝔖"  # noqa: RUF001
 
@@ -297,7 +296,7 @@ class DoubleSchubertRing(BaseSchubertRing):
 
         #     def _eval_expand_func(self, **_):
         #         if len(self.args) == 2:
-        #             return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], utils.poly_ring(0))
+        #             return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], poly_genset(0))
         #         return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], self.args[2:])
 
         return FactorialElemSym
@@ -327,7 +326,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         elems = []
         for k in range(1, kk + 1):
             for p in range(1, k + 1):
-                elems += [(sympy.Symbol(f"e_{p}_{k}"), elem_sym_poly(p, k, self.genset[1:], utils.poly_ring(0)))]
+                elems += [(sympy.Symbol(f"e_{p}_{k}"), elem_sym_poly(p, k, self.genset[1:], poly_genset(0)))]
         return dict(elems)
 
     @staticmethod
@@ -354,11 +353,11 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     @cache
     def cached_product(self, u, v, basis2):
-        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset if basis2.coeff_genset else utils.poly_ring(0)) for k, x in yz.schubmult_double_pair_generic(u, v).items()}
+        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset if basis2.coeff_genset else poly_genset(0)) for k, x in yz.schubmult_double_pair_generic(u, v).items()}
 
     @cache
     def cached_positive_product(self, u, v, basis2):
-        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset if basis2.coeff_genset else utils.poly_ring(0)) for k, x in yz.schubmult_generic_partial_posify(u, v).items()}
+        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset if basis2.coeff_genset else poly_genset(0)) for k, x in yz.schubmult_generic_partial_posify(u, v).items()}
 
     @property
     def double_mul(self):
@@ -430,7 +429,7 @@ class DoubleSchubertRing(BaseSchubertRing):
     def _monomial_schub_cache(self, monom):
         srt_perm = Permutation.sorting_perm([-i for i in monom])
         schub_perm = uncode(sorted(monom, reverse=True))
-        return self.from_dict({(schub_perm, utils.NoneVar): S.One}).act(srt_perm)
+        return self.from_dict({(schub_perm, 0): S.One}).act(srt_perm)
 
     @cache
     def cached_schubpoly(self, k):
@@ -519,11 +518,11 @@ class DoubleSchubertRing(BaseSchubertRing):
         if isinstance(x, list) or isinstance(x, tuple):
             p_x = Permutation(x)
             if max([0, *list(p_x.descents())]) > len(self.genset):
-                raise utils.NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
+                raise NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
             elem = self.from_dict({p_x: self.domain.one})
         elif isinstance(x, Permutation):
             if max([0, *list(x.descents())]) > len(self.genset):
-                raise utils.NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
+                raise NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
             elem = self.from_dict({x: self.domain.one})
 
         elif isinstance(x, DoubleSchubertElement):
@@ -548,7 +547,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         #     for monom, coeff in dct.items():
         #         srt_perm = Permutation.sorting_perm([-i for i in monom])
         #         schub_perm = uncode(sorted(monom, reverse=True))
-        #         result += self.from_dict({(schub_perm, utils.NoneVar): coeff}).act(srt_perm)
+        #         result += self.from_dict({(schub_perm, 0): coeff}).act(srt_perm)
         #     return result
         else:
             elem = self.from_sympy(x)
@@ -565,7 +564,7 @@ def DSx(x, genset=GeneratingSet("y"), elem_sym=False):
 
 class SingleSchubertRing(DoubleSchubertRing):
     def __init__(self, genset):
-        super().__init__(genset, utils.poly_ring(utils.NoneVar))
+        super().__init__(genset, poly_genset(0))
 
     def __str__(self):
         return f"Schubert polynomial ring in {self.genset.label}"
@@ -596,7 +595,7 @@ class SingleSchubertRing(DoubleSchubertRing):
     def cached_product(self, u, v, basis2):
         if self == basis2:
             return py.schubmult_py({u: S.One}, v)
-        return {k: xreplace_genvars(x, utils.poly_ring(0), basis2.coeff_genset if basis2.coeff_genset else utils.poly_ring(0)) for k, x in yz.schubmult_double_pair_generic(u, v).items()}
+        return {k: xreplace_genvars(x, poly_genset(0), basis2.coeff_genset if basis2.coeff_genset else poly_genset(0)) for k, x in yz.schubmult_double_pair_generic(u, v).items()}
 
     @cache
     def cached_positive_product(self, u, v, basis2):
@@ -848,11 +847,11 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
         if isinstance(x, list) or isinstance(x, tuple):
             p_x = Permutation(x)
             if max([0, *list(p_x.descents())]) > len(self.genset):
-                raise utils.NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
+                raise NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
             elem = self.from_dict({p_x: self.domain.one})
         elif isinstance(x, Permutation):
             if max([0, *list(x.descents())]) > len(self.genset):
-                raise utils.NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
+                raise NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
             elem = self.from_dict({x: self.domain.one})
         elif x.ring == self:
             return x

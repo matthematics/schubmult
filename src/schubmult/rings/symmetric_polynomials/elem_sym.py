@@ -6,8 +6,8 @@ from symengine import S, sympify
 
 # import schubmult.rings.symmetric_polynomials.symengine.elem_sym as syme
 from schubmult.rings.poly_lib import elem_sym_poly
+from schubmult.symbolic.expr import NotEnoughGeneratorsError, SymengineExpr, SympyExpr
 from schubmult.utils.logging import get_logger
-from schubmult.utils.ring_utils import NotEnoughGeneratorsError, SymengineExpr, SympyExpr
 
 logger = get_logger(__name__)
 
@@ -70,7 +70,6 @@ class E(SymengineExpr):
         obj._k = k
         obj._genvars = var1
         obj._coeffvars = var2
-
         return obj
 
     # def __init__(self, p, k, *args):
@@ -78,6 +77,13 @@ class E(SymengineExpr):
 
     # def _symengine_(self):
     #     return sw.PyFunction(self, (self.args[0],self.args[1],*self.genvars,*self.coeffvars), self.__class__, sw.PyModule(self.__module__))
+
+
+
+    def __getattr__(self, name):
+        if name in dir(self._sympy_obj):
+            return getattr(self._sympy_obj, name)
+        raise AttributeError(f"No attribute {name}")
 
     @property
     def free_symbols(self):

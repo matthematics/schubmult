@@ -32,7 +32,8 @@ class GeneratingSet_base(Basic):
 
     @property
     def label(self):
-        return None#str(self.args)
+        return None  # str(self.args)
+
 
 class ZeroGeneratingSet(GeneratingSet_base):
     def __getitem__(self, i):
@@ -43,6 +44,7 @@ class ZeroGeneratingSet(GeneratingSet_base):
 
     def index(self, other):
         return -1
+
 
 # variable registry
 # TODO: ensure sympifies
@@ -233,3 +235,20 @@ class CustomGeneratingSet(GeneratingSet_base):
 
     def __eq__(self, other):
         return type(self) is type(other) and other._symbols_arr == self._symbols_arr
+
+
+NoneVar = 1e10
+ZeroVar = 0
+
+
+class NotEnoughGeneratorsError(ValueError):
+    pass
+
+
+@cache
+def poly_genset(v: str):
+    if v == ZeroVar:
+        return ZeroGeneratingSet(tuple([sympify(0) for i in range(100)]))
+    if v == NoneVar:
+        return ZeroGeneratingSet(tuple([sympify(0) for i in range(100)]))
+    return GeneratingSet(str(v))
