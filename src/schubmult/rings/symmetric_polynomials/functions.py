@@ -1,5 +1,5 @@
 from schubmult.rings.variables import NotEnoughGeneratorsError
-from schubmult.symbolic import Add, Mul, Pow, S, expand, is_of_func_type, sympify
+from schubmult.symbolic import Add, Mul, Pow, S, expand, is_of_func_type, prod, sympify
 
 from .elem_sym import FactorialElemSym
 
@@ -32,7 +32,7 @@ def numvars(obj):
         return obj.pyobject()._k
 
 
-def canonicalize_elem_syms(expr):
+def canonicalize_elem_syms(expr, combine_equal=False):
     expr = sympify(expr)
     expr = expand(expr)
     #print(f"farfel {expr=}")
@@ -61,7 +61,28 @@ def canonicalize_elem_syms(expr):
                         mdict[cv] = arg
                     else:
                         em = mdict[cv]
-                        mdict[cv] = FactorialElemSym(degree(em)+degree(arg),numvars(em)+numvars(arg),*genvars(em),*genvars(arg),cv)
+                        if combine_equal:
+                            mdict[cv] = FactorialElemSym(degree(em)+degree(arg),numvars(em)+numvars(arg),*genvars(em),*genvars(arg),cv)
+                        else:
+                            new_genvars_list = [set()]
+                            total_genvars = []
+                            if isinstance(mdict[cv], Mul):
+                                for arg2 in mdict[cv].args:
+                                    total_genvars += genvars(arg2)
+                            else:
+                                total_genvars += genvars(mdict[cv])
+                            total_genvars += genvars(arg)
+                            for gv in total_genvars:
+                                found = False
+                                for L in new_genvars_list:
+                                    if gv not in L:
+                                        L.add(gv)
+                                        found = True
+                                        break
+                                if not found:
+                                    new_genvars_list += [{gv}]
+                            # print(new_genvars_list)
+                            mdict[cv] = sympify(prod([FactorialElemSym(len(gvs),len(gvs),*gvs,cv) for gvs in new_genvars_list]))
             return Mul(*list(mdict.values()))
     if blaff != expr:
         return canonicalize_elem_syms(blaff)
