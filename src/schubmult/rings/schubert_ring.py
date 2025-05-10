@@ -7,20 +7,17 @@ import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, uncode
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand_func, init_printing, is_of_func_type, sstr, sympify
+from schubmult.symmetric_polynomials import CompleteSym, ElemSym, FactorialCompleteSym, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .poly_lib import elem_sym_poly, xreplace_genvars
 from .schub_poly import schubpoly_classical_from_elems
-from .symmetric_polynomials import CompleteSym, ElemSym, FactorialCompleteSym, FactorialElemSym
-from .symmetric_polynomials.functions import coeffvars, degree, genvars, numvars, split_out_vars
 from .tensor_ring import TensorRing
 from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet, NotEnoughGeneratorsError, poly_genset
 
 logger = get_logger(__name__)
-
-init_printing(str_printer=sstr)
 
 
 def is_fact_elem_sym(obj):

@@ -1,6 +1,6 @@
 import symengine
 import sympy
-from sympy import Dict
+from sympy import Dict, div
 
 from schubmult import *
 from schubmult.abc import *
@@ -130,6 +130,19 @@ def splitupallvars(pos_neg_part):
 for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
     if expand(bargain,func=True) == S.Zero:
         continue
+
+    # flaffer = expand(bargain, func=True)
+    # r = flaffer
+    # print(f"{flaffer=}")
+    # for i in range(1,10):
+    #     print(sympy.sympify(z[i]))
+    #     q, r = div(sympy.sympify(r), sympy.sympify(z[i]))
+    #     if q!=S.Zero:
+    #         print(f"{q=}")
+    #     print(f"{r=} after doink")
+    # print(f"{r=}")
+    # continue
+
     # try:
     #     posify(sympify(expand_func(bargain)),bagel1,porn,k,y,z,optimize=None,msg=True)
     #     continue
