@@ -429,7 +429,7 @@ class DoubleSchubertRing(BaseSchubertRing):
             if all(self.genset.index(a) != -1 for a in genvars(x)) and not any(self.genset.index(a) != -1 for a in coeffvars(x)):
                 return self.elem_mul(elem, x)
 
-            gens_to_remove = [a for a in genvars(x) if a not in self.gensWet]
+            gens_to_remove = [a for a in genvars(x) if a not in self.genset]
             if any(self.genset.index(a) != -1 for a in genvars(x)) and len(gens_to_remove):
                 return self.mul_expr(elem, x.split_out_vars(gens_to_remove))
 
@@ -578,7 +578,7 @@ class SingleSchubertRing(DoubleSchubertRing):
     #         if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in coeffvars(x)):
     #             return self.elem_mul(elem, x)
 
-    #         gens_to_remove = [a for a in x.genvars if a not in self.gensWet]
+    #         gens_to_remove = [a for a in x.genvars if a not in self.genset]
     #         if any(a in self.genset for a in x.genvars) and len(gens_to_remove):
     #             return self.mul_expr(elem, x.split_out_vars(gens_to_remove))
 

@@ -6,7 +6,7 @@ from schubmult.abc import *
 from schubmult.rings import DoubleSchubertRing, SingleSchubertRing
 from schubmult.rings.symmetric_polynomials.functions import coeffvars, degree, is_of_func_type
 from schubmult.schub_lib.positivity import compute_positive_rep
-from schubmult.symbolic import Add, Mul, Pow, S, expand, expand_func
+from schubmult.symbolic import Add, Integer, Mul, Pow, S, expand, expand_func, sympify
 
 r = GeneratingSet("r")
 znz = {z[i]: -z[i] for i in range(20)}
@@ -24,13 +24,22 @@ sympy.init_printing(pretty_print=False)
 z_ring = SingleSchubertRing(z)
 zy_ring = DoubleSchubertRing(z,y)
 
-bagel1 = [4, 6, 1, 5, 2, 3]
-porn = [5, 1, 4, 6, 2, 3]
+# bagel1 = Permutation([4, 6, 1, 5, 7, 2, 3])
+# porn = Permutation([5, 7, 1, 4, 6, 2, 3])
+bagel1 = Permutation([4, 6, 1, 5, 2, 3])
+porn = Permutation([5, 1, 4, 6, 2, 3])
+
 ctgood = 0
 ctbad = 0
+# simplify graph
 for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
-    if expand(bargain,func=True) == S.Zero:
-        continue
+    # if expand(bargain,func=True) == S.Zero:
+    #     continue
+    # try:
+    #     posify(sympify(expand_func(bargain)),bagel1,porn,k,y,z,optimize=None,msg=True)
+    #     continue
+    # except Exception:
+    #     pass
     bacon = canonicalize_elem_syms(bargain)
     if isinstance(bacon, Add):
         dct = {}
@@ -73,15 +82,22 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
                     pos_part += bargle
                     #dctyep[monom] = voib_bo
                 except Exception:
-                    neg_part += bargle
+                    if isinstance(bargle, Add):
+                        for arg in bargle.args:
+                            if isinstance(arg, Mul) and isinstance(arg.args[0],Integer) and int(arg.args[0]) < 0:
+                                neg_part -= arg
+                            else:
+                                pos_part += arg
+                    else:
+                        neg_part -= bargle
                     print(f"Nope {monom}")#: {bargle=}")
                     anyn = True
                     # dctnope[monom] = voib_bo
         if anyn:
-            # pos_part = pos_part.expand(deep=False)
-            # neg_part = neg_part.expand(deep=False)
-            # if pos_part == S.Zero:
-            #     continue
+            pos_part = pos_part.expand(deep=False)
+            neg_part = neg_part.expand(deep=False)
+            if pos_part == S.Zero:
+                continue
             # dctyep2 = {}
             # dctnope2 = {}
 
@@ -106,6 +122,8 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
             # print(f"{dctnope2=}")
             print(f"{pos_part=}")
             print(f"{neg_part=}")
+            #print(f"{expand(bargain - neg_part)=}")
+            continue
             try:
                 bagel = compute_positive_rep(expand(neg_part, func=True, mul=False), y, z, False, False)
                 bagel = bagel+expand_func(pos_part)

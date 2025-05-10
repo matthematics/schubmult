@@ -710,6 +710,8 @@ def posify(
             if val2 is not None:
                 val = val2
             return val
+        if optimize is None:
+            raise Exception
         # logger.debug("RETURNINGOLDVAL")
         return oldval
     # logger.debug("Recording line number")
