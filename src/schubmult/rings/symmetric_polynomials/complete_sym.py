@@ -3,7 +3,7 @@ from functools import cache
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.rings.symmetric_polynomials.elem_sym import FactorialElemSym
 from schubmult.rings.variables import NotEnoughGeneratorsError, ZeroGeneratingSet
-from schubmult.symbolic import Add, Function, Integer, S, sympify, sympify_sympy
+from schubmult.symbolic import Function, Integer, S, sympify, sympify_sympy, sympy_Add
 from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -95,7 +95,7 @@ class H(CompleteSym_base):
         if k1 + k2 != self._k:
             raise Exception
 
-        return Add(*[CompleteSym(i, k1, first_vars, self.coeffvars[: k1 + i - 1]) * CompleteSym(self._p - i, k2, second_vars, self.coeffvars[k1 + i :]) for i in range(self._p + 1)])
+        return sympy_Add(*[FactorialCompleteSym(i, k1, first_vars, self.coeffvars[: k1 + i - 1]) * FactorialCompleteSym(self._p - i, k2, second_vars, self.coeffvars[k1 + i :]) for i in range(self._p + 1)])
 
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify_sympy(elem_sym_poly(self._under_elem._p, self._under_elem._k, [-x for x in self._under_elem.genvars], [-y for y in self._under_elem.coeffvars]))

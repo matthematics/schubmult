@@ -76,9 +76,9 @@ def test_elem_sym_schub():
 
 def test_complete_sym_schub():
     from schubmult import DSx
-    from schubmult.abc import x, y, h, z
+    from schubmult.abc import x, y, H, z
     from schubmult.symbolic import expand, S
-    em = h(2,3,[x[1],x[5],x[7]],[y[1],y[5],y[7],y[9],y[13],y[15]])*h(1,3,[x[1],x[4],x[5]],[y[8],y[14],y[29]]) - h(3,3,[x[1],x[7],x[3]],[z[4],z[15],y[1],y[12],z[2]])
+    em = H(2,3,[x[1],x[5],x[7]],[y[1],y[5],y[7],y[9],y[13],y[15]])*H(1,3,[x[1],x[4],x[5]],[y[8],y[14],y[29]]) - H(3,3,[x[1],x[7],x[3]],[z[4],z[15],y[1],y[12],z[2]])
     assert expand(em - DSx([]).ring.from_sympy(em),func=True) == S.Zero
 
 # def test_coerce():
