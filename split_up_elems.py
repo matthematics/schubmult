@@ -47,19 +47,24 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
         if schuber.expand() == S.Zero:
             print("Dodged a bullet")
             continue
-        print(f"{k}: {dct}")
-        #print(schuber.ring.from_dict({k: abs(v) for k, v in schuber.items()}))
+        print(f"{k}")
+        print(schuber.ring.from_dict({k: abs(v) for k, v in schuber.items()}))
+        dct2 = {}
+        dctbool = {}
         for monom, bargle in dct.items():
             if expand(bargle, func=True, deep=True, mul=True) != 0:
                 voib = expand(bargle, func=True, mul=False)
-                plop = zy_ring(efficient_subs(voib,znz))
-                plop2 = zy_ring.from_dict({k: expand(efficient_subs(v,subs_dict),mul=False) for k,v in plop.items()})
+                plop = z_ring(efficient_subs(voib,znz))
+                plop2 = zy_ring.from_dict({k: expand(efficient_subs(v,subs_dict),mul=False) for k,v in plop.items() if k in schuber})
                 try:
                     compute_positive_rep(expand(bargle, func=True, mul=False), y, z, False, False)
-                    print(f"Yep: {monom}: {bargle=}")
+                    print(f"Yep: {monom}")#: {bargle=}")
+                    dctbool[monom] = True
                 except Exception:
-                    print(f"Nope {monom}: {bargle=}")
-                print(plop2)
+                    print(f"Nope {monom}")#: {bargle=}")
+                    dctbool[monom] = False
+                dct2[monom] = dict(plop2)
+        print(dct2)
 
         
       # Anything that isn't Schub will disappear
