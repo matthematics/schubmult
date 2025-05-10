@@ -72,7 +72,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def as_terms(self):
         if len(self.keys()) == 0:
-            return [sympify(S.Zero)]
+            return [sympify_sympy(S.Zero)]
         return [((self[k]) if k == Permutation([]) else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in self.keys()]
 
     def as_ordered_terms(self, *_, **__):

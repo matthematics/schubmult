@@ -29,14 +29,16 @@ class ElemSym_base(Function):
     def _sympystr(self, printer):
         return printer._print_Function(self)
 
-    def _eval_subs(self, rule):
+    def _eval_subs(self, old, new):
+        rule = {old: new}
         new_args = [*self.args]
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
             new_args[i + 2] = sympify(arg).subs(rule)
         return self.func(*new_args)
 
-    def subs(self, rule):
+    def subs(self, *rule):
+        rule = dict(rule)
         new_args = [*self.args]
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
