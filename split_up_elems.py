@@ -6,7 +6,7 @@ from schubmult.abc import *
 from schubmult.rings import DoubleSchubertRing, SingleSchubertRing
 from schubmult.rings.symmetric_polynomials.functions import coeffvars, degree, is_of_func_type
 from schubmult.schub_lib.positivity import compute_positive_rep
-from schubmult.symbolic import Add, Mul, Pow, S, expand
+from schubmult.symbolic import Add, Mul, Pow, S, expand, expand_func
 
 r = GeneratingSet("r")
 znz = {z[i]: -z[i] for i in range(20)}
@@ -24,8 +24,10 @@ sympy.init_printing(pretty_print=False)
 z_ring = SingleSchubertRing(z)
 zy_ring = DoubleSchubertRing(z,y)
 
-bagel1 = [4, 1, 5, 2, 3]
-porn = [5, 1, 4, 2, 3]
+bagel1 = [4, 6, 1, 5, 2, 3]
+porn = [5, 1, 4, 6, 2, 3]
+ctgood = 0
+ctbad = 0
 for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
     if expand(bargain,func=True) == S.Zero:
         continue
@@ -60,45 +62,76 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
         anyn = False
         for monom, bargle in dct.items():
             if expand(bargle, func=True, deep=True, mul=True) != 0:
-                voib_bo = efficient_subs(expand(bargle, func=False, mul=True),znz)
-                voib=expand(voib_bo,func=True,mul=False)
-                plop = z_ring(voib)
-                plop2 = z_ring.from_dict({k: expand(efficient_subs(v,subs_dict),mul=False) for k,v in plop.items()})
+                # voib_bo = efficient_subs(expand(bargle, func=False, mul=True),znz)
+                # voib=expand(voib_bo,func=True,mul=False)
+                # plop = z_ring(voib)
+                # plop2 = z_ring.from_dict({k: expand(efficient_subs(v,subs_dict),mul=False) for k,v in plop.items()})
                 try:
                     compute_positive_rep(expand(bargle, func=True, mul=False), y, z, False, False)
                     print(f"Yep: {monom}")#: {bargle=}")
                     #dctbool[monom] = True
-                    pos_part += plop2
-                    dctyep[monom] = voib_bo
+                    pos_part += bargle
+                    #dctyep[monom] = voib_bo
                 except Exception:
-                    neg_part += plop2
+                    neg_part += bargle
                     print(f"Nope {monom}")#: {bargle=}")
                     anyn = True
-                    dctnope[monom] = voib_bo
+                    # dctnope[monom] = voib_bo
         if anyn:
-            pos_part = pos_part.expand(deep=False)
-            neg_part = neg_part.expand(deep=False)
-            if pos_part == S.Zero:
-                continue
-            dctyep2 = {}
-            dctnope2 = {}
+            # pos_part = pos_part.expand(deep=False)
+            # neg_part = neg_part.expand(deep=False)
+            # if pos_part == S.Zero:
+            #     continue
+            # dctyep2 = {}
+            # dctnope2 = {}
 
-            def forple(voib2):
-                plop = zy_ring(efficient_subs(voib2,znz))
-                plop2 = zy_ring.from_dict({k: expand(efficient_subs(v,subs_dict),mul=False) for k,v in plop.items()})
-                return plop2
-            for monom, blarp in dctyep.items():
-                if isinstance(blarp, Add):
-                    dctyep2[monom] = [{k: expand(efficient_subs(v,subs_dict),func=True) for k,v in z_ring.from_expr(arg).items() if k in pos_part} for arg in blarp.args]
-                else:
-                    dctyep2[monom] = {k: expand(efficient_subs(v, subs_dict),func=True) for k,v in z_ring.from_expr(blarp).items() if k in pos_part}
-            for monom, blarp in dctnope.items():
-                if isinstance(blarp, Add):
-                    dctnope2[monom] = [{k: expand(efficient_subs(v,subs_dict),func=True) for k,v in z_ring.from_expr(arg).items() } for arg in blarp.args]
-                else:
-                    dctnope2[monom] = {k: expand(efficient_subs(v, subs_dict),func=True) for k,v in z_ring.from_expr(blarp).items()}
-            print(f"{dctyep2=}")
-            print(f"{dctnope2=}")
-
+            # def forple(voib2):
+            #     plop = zy_ring(efficient_subs(voib2,znz))
+            #     plop2 = zy_ring.from_dict({k: expand(efficient_subs(v,subs_dict),mul=False) for k,v in plop.items()})
+            #     return plop2
+            # #forple = Add(*list(dctyep.values()))
+            # for monom, blarp in dctyep.items():
+            #     if isinstance(blarp, Add):
+            #         dctyep2[monom] = [{k: efficient_subs(v,subs_dict) for k,v in z_ring.from_expr(expand_func(arg)).items() if k in pos_part} for arg in blarp.args]
+            #     else:
+            #         dctyep2[monom] = [{k: efficient_subs(v, subs_dict) for k,v in z_ring.from_expr(expand_func(blarp)).items() if k in pos_part}]
+            # for monom, blarp in dctnope.items():
+            #     if isinstance(blarp, Add):
+            #         dctnope2[monom] = [{k: efficient_subs(v,subs_dict) for k,v in z_ring.from_expr(expand_func(arg)).items() } for arg in blarp.args]
+            #     else:
+            #         dctnope2[monom] = [{k: efficient_subs(v, subs_dict) for k,v in z_ring.from_expr(expand_func(blarp)).items()}]
+            # print(f"{dctyep=}")
+            # print(f"{dctyep2=}")
+            # print(f"{dctnope=}")
+            # print(f"{dctnope2=}")
+            print(f"{pos_part=}")
+            print(f"{neg_part=}")
+            try:
+                bagel = compute_positive_rep(expand(neg_part, func=True, mul=False), y, z, False, False)
+                bagel = bagel+expand_func(pos_part)
+                print(f"Yay: {bagel}")
+                ctgood += 1
+            except Exception:
+                ctbad+=1
+                import traceback
+                traceback.print_exc()
+            
+            # def ctneg(expr):
+            #     return str(expr).count("-")
+            # yep_list = [(dctyep[monom],z_ring.from_dict(v)) for monom, v in dctyep2.items()]
+            # nope_list = [(dctnope[monom],z_ring.from_dict(v)) for monom, v in dctnope2.items()}]
+            # # total_list = [*yep_list, *nope_]
+            # # fun_list = []
+            # # ct = len(nope_list)
+            # # while ct:
+            # #     new_nope_list = []
+            # #     for spob, elem in nope_list:
+            # #         new_yep_list = []
+            # #         for spob2, elem2 in nope_list:
+            # #             if ctneg(elem + elem2) < ctneg(elem) + ctneg(elem2):
+            # #                 new_yep_list 
+            
+print(f"{ctgood=}")
+print(f"{ctbad=}")
         
       # Anything that isn't Schub will disappear
