@@ -1,5 +1,5 @@
 from schubmult.rings.variables import NotEnoughGeneratorsError
-from schubmult.symbolic import Add, Mul, Pow, expand, is_of_func_type, sympify
+from schubmult.symbolic import Add, Mul, Pow, S, expand, is_of_func_type, sympify
 
 from .elem_sym import FactorialElemSym
 
@@ -50,6 +50,19 @@ def canonicalize_elem_syms(expr):
         blaff = Pow(canonicalize_elem_syms(expr.args[0]),expr.args[1])
     if isinstance(expr, Mul):
         blaff = Mul(*[canonicalize_elem_syms(arg) for arg in expr.args])
+        if blaff == expr:
+            mdict = {}
+            for arg in blaff.args:
+                if not is_of_func_type(arg, FactorialElemSym):
+                    mdict[S.One] = mdict.get(S.One,S.One) * arg
+                else:
+                    cv = coeffvars(arg)[0]
+                    if cv not in mdict:
+                        mdict[cv] = arg
+                    else:
+                        em = mdict[cv]
+                        mdict[cv] = FactorialElemSym(degree(em)+degree(arg),numvars(em)+numvars(arg),*genvars(em),*genvars(arg),cv)
+            return Mul(*list(mdict.values()))
     if blaff != expr:
         return canonicalize_elem_syms(blaff)
     return expr
