@@ -41,7 +41,7 @@ def canonicalize_elem_syms(expr, combine_equal=False):
         return expr
     if is_of_func_type(expr, FactorialElemSym):
         if degree(expr) < numvars(expr):
-            return canonicalize_elem_syms(split_out_vars(expr, genvars(expr)[1:], None))
+            return canonicalize_elem_syms(split_out_vars(expr, genvars(expr)[:len(genvars(expr))//2], None))
         #print(f"What a bargain {expr=}")
         return expr
     if isinstance(expr, Add):

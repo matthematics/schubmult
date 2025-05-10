@@ -518,6 +518,7 @@ def DSx(x, genset=GeneratingSet("y"), elem_sym=False):
 class SingleSchubertRing(DoubleSchubertRing):
     def __init__(self, genset):
         super().__init__(genset, poly_genset(0))
+        self.dtype = type("DoubleSchubertElement", (DoubleSchubertElement,), {"ring": self})
 
     def __str__(self):
         return f"Schubert polynomial ring in {self.genset.label}"
@@ -556,15 +557,18 @@ class SingleSchubertRing(DoubleSchubertRing):
 
     # need mul sympy
 
-    # def single_variable(self, elem, varnum):
-    #     ret = self.zero
-    #     for u, v in elem.items():
-    #         # ret += v * self.domain_new(self.coeff_genset[u[varnum - 1]])
-    #         new_perms = schub_lib.elem_sym_positional_perms(u, 1, varnum)
-    #         for perm, udiff, sign in new_perms:
-    #             if udiff == 1:
-    #                 ret += self.domain_new(sign * v) * self(perm)
-    #     return ret
+    def single_variable(self, elem, varnum):
+        ret = self.zero
+        for u, v in elem.items():
+            # ret += v * self.domain_new(self.coeff_genset[u[varnum - 1]])
+            new_perms = schub_lib.elem_sym_positional_perms(u, 1, varnum)
+            for perm, udiff, sign in new_perms:
+                # print((perm, udiff, sign))
+                if udiff == 1:
+                    # print(f"{self.new(perm)=}")
+                    ret += self.domain_new(sign * v) * self.new(perm)
+                    # print(ret)
+        return ret
 
     # def mul_expr(self, elem, x):
     #     x = sympify(x)
@@ -645,14 +649,11 @@ class SingleSchubertRing(DoubleSchubertRing):
         if isinstance(x, list) or isinstance(x, tuple):
             elem = self.from_dict({Permutation(x): self.domain.one})
         elif isinstance(x, Permutation):
-            elem = self.from_dict({x: 1})
-        elif isinstance(x, DoubleSchubertElement):
-            if x.ring.genset == genset:
-                elem = DoubleSchubertElement(x, self)  # , self)
-            else:
-                return self(x.expand())
+            elem = self.from_dict({x: S.One})
         else:
             elem = self.from_expr(x)
+        # print(f"{elem=}")
+        # print(f"{x=} {type(x)=} {elem.ring=}")
         return elem
 
 
