@@ -34,36 +34,24 @@ def numvars(obj):
 
 def canonicalize_elem_syms(expr):
     expr = sympify(expr)
-    if not expr.args:
-        return expr
     expr = expand(expr)
+    #print(f"farfel {expr=}")
+    if not expr.args:
+        #print(f"I have returned the moofer of sin {expr=}")
+        return expr
     if is_of_func_type(expr, FactorialElemSym):
         if degree(expr) < numvars(expr):
             return canonicalize_elem_syms(split_out_vars(expr, genvars(expr)[:-1], None))
+        #print(f"What a bargain {expr=}")
         return expr
     if isinstance(expr, Add):
-        return Add(*[canonicalize_elem_syms(arg) for arg in expr.args])
+        blaff = Add(*[canonicalize_elem_syms(arg) for arg in expr.args])
+    if isinstance(expr, Pow):
+        blaff = Pow(canonicalize_elem_syms(expr.args[0]),expr.args[1])
     if isinstance(expr, Mul):
-        # make the z variables disjoint
-        if any(isinstance(arg, Add) for arg in expr.args):
-            return canonicalize_elem_syms(expand(expr))
-        split_out = [arg for arg in expr.args if not is_of_func_type(arg, FactorialElemSym) and not isinstance(arg, Pow)]
-        elems = [arg for arg in expr.args if is_of_func_type(arg, FactorialElemSym)]
-        pows = [arg for arg in expr.args if isinstance(arg, Pow)]
-        if any(isinstance(arg.args[0], Add) for arg in pows):
-            return canonicalize_elem_syms(expand(expr))
-        # for arg in pows:
-        #     elems += [*(int(arg.args[1])*[arg.args[0]])]
-        # split out vars if p != k
-        for i, elem in enumerate(elems):
-            if isinstance(elem, FactorialElemSym) and elem._p < elem._k:
-                elems[i] = elem.split_out_vars(genvars(elem)[: len(genvars(elem)) // 2], None)
-                return canonicalize_elem_syms(expand(Mul(*elems, *split_out, *pows)))
-        # if we got here, all _p == _k
-        var_dict = {}
-        for elem in elems:
-            var_dict[coeffvars(elem)[0]] = [*var_dict.get(coeffvars(elem)[0], []), *genvars(elem)]
-        return Mul(*[*split_out, *[FactorialElemSym(len(v), len(v), v, [k]) for k, v in var_dict.items()], *[Pow(canonicalize_elem_syms(arg.args[0]), arg.args[1]) for arg in pows]])
+        blaff = Mul(*[canonicalize_elem_syms(arg) for arg in expr.args])
+    if blaff != expr:
+        return canonicalize_elem_syms(blaff)
     return expr
 
 
