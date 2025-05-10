@@ -179,41 +179,49 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
                             fromp = fromp.args[0]
                         marfle = fromp
                         bacon = expand(split_out_vars(bacon, genvars(marfle), None))
+                        #break
                     #bacon = expand(split_out_vars(bacon, None, coeffvars(marfle)[-1:]))
     print(f"first {bacon=}")
     bacon_new = 0
     #bacon = canonicalize_elem_syms(bacon)
-    while bacon != bacon_new:
-        bacon_new = bacon
-        if isinstance(bacon, Add):
-            for arg in bacon.args:
-                if isinstance(arg, Mul) and isinstance(arg.args[0],Integer) and arg.args[0] < 0:
-                    expr = sympy.sympify(arg)
-                    for fromp in arg.args[1:]:
-                        if isinstance(fromp, Pow):
-                            fromp = fromp.args[0]
-                        marfle = fromp
-                        bacon = expand(split_out_vars(bacon, genvars(marfle)[:len(genvars(marfle))//2], None))
-                        break
-                    #bacon = expand(split_out_vars(bacon, None, coeffvars(marfle)[-1:]))
-    print(f"second {bacon=}")
-    if str(bacon).find("-") != -1:
-        bacon = sympify(FactorialCompleteSym.from_expr_elem_sym(sympy.sympify(bacon)))
+    # while bacon != bacon_new:
+    #     bacon_new = bacon
+    #     if isinstance(bacon, Add):
+    #         for arg in bacon.args:
+    #             if isinstance(arg, Mul) and isinstance(arg.args[0],Integer) and arg.args[0] < 0:
+    #                 expr = sympy.sympify(arg)
+    #                 for fromp in arg.args[1:]:
+    #                     if isinstance(fromp, Pow):
+    #                         fromp = fromp.args[0]
+    #                     marfle = fromp
+    #                     bacon = expand(split_out_vars(bacon, genvars(marfle)[:len(genvars(marfle))//2], None))
+    #                     #break
+    #                 #bacon = expand(split_out_vars(bacon, None, coeffvars(marfle)[-1:]))
+    # print(f"second {bacon=}")
+    #bacon = canonicalize_elem_syms_coeff(bacon)
+    if sympy.sstr(sympy.sympify(bacon)).find("-") != -1:
+        print("Trying to save it")
+        bacon = sympify(FactorialCompleteSym.from_expr_elem_sym(bacon))
+        assert (expand(bacon - bargain, func=True) == S.Zero)
+        print(f"iter {bacon=}")
         bacon_new = 0
+        bacon = sympify(bacon)
         while bacon != bacon_new:
             bacon_new = bacon
             if isinstance(bacon, Add):
                 for arg in bacon.args:
                     if isinstance(arg, Mul) and isinstance(arg.args[0],Integer) and arg.args[0] < 0:
-                        expr = sympy.sympify(arg)
+                        expr = arg
                         for fromp in arg.args[1:]:
                             if isinstance(fromp, Pow):
                                 fromp = fromp.args[0]
                             marfle = fromp
                             bacon = expand(split_out_vars(bacon, genvars(marfle), None))
-                            break
+                            #break
                         #bacon = expand(split_out_vars(bacon, None, coeffvars(marfle)[-1:]))
     print(f"{sympy.sympify(bacon)=}")
+    print(f"{expand(bacon - bargain,func=True)}")
+    assert (expand(bacon - bargain, func=True) == S.Zero)
     if str(sympy.sympify(bacon)).find("-") == -1:
         success+=1
     else:

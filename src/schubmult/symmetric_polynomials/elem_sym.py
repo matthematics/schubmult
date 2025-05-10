@@ -2,7 +2,7 @@ from functools import cache
 
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.rings.variables import NotEnoughGeneratorsError, ZeroGeneratingSet
-from schubmult.symbolic import Function, Integer, S, sympify, sympify_sympy
+from schubmult.symbolic import Add, Function, Integer, S, sympify, sympify_sympy
 from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -134,7 +134,19 @@ class E(ElemSym_base):
         obj._coeffvars = var2
         return obj
 
+
     def split_out_vars(self, vars1, vars2=None):
+        if vars1 is None:
+            first_vars = [sympify(v) for v in vars2 if v in self.coeffvars]
+            second_vars = [a for a in self.coeffvars if a not in vars2]
+            k1 = len(first_vars)
+            k2 = len(second_vars)
+            # if k1 + k2 != self._k + 1 - self.:
+            #     raise Exception
+
+            return Add(
+                *[FactorialElemSym(i, k1 + i -1, self.genvars[:k1 + i - 1], first_vars) * FactorialElemSym(self._p - i, len(self.genvars[k1+i:]), self.genvars[k1+i:], second_vars) for i in range(self._p + 1)]
+            )    
         vars1 = [sympify(v) for v in vars1]
         if vars2 is None:
             vars2 = [*self.coeffvars]
