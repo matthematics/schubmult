@@ -27,6 +27,8 @@ zy_ring = DoubleSchubertRing(z,y)
 bagel1 = [4, 1, 5, 2, 3]
 porn = [5, 1, 4, 2, 3]
 for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
+    if expand(bargain,func=True) == S.Zero:
+        continue
     bacon = canonicalize_elem_syms(bargain)
     if isinstance(bacon, Add):
         dct = {}
@@ -43,28 +45,60 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
             elif isinstance(arg, Pow):
                 monom = coeffvars(arg.args[0])[0] ** (degree(arg.args[0]) * int(arg.args[1]))
             dct[monom] = dct.get(monom, S.Zero) + arg
-        schuber = z_ring.from_expr(Add(*[expand(efficient_subs(vl,{y[i]: S.Zero for i in range(10)}),func=True,mul=False) for vl in dct.values()]))
-        if schuber.expand() == S.Zero:
-            print("Dodged a bullet")
-            continue
+        #schuber = z_ring.from_expr(Add(*[expand(efficient_subs(vl,{y[i]: S.Zero for i in range(10)}),func=True,mul=False) for vl in dct.values()]))
+        #schuber = z_ring.from_expr(expand(efficient_subs(bargain,znz),func=True,mul=False))
+        # if schuber.expand() == S.Zero:
+        #     print("Dodged a bullet")
+        #     continue
         print(f"{k}")
-        print(schuber.ring.from_dict({k: abs(v) for k, v in schuber.items()}))
-        dct2 = {}
+        #print(schuber.ring.from_dict({k: abs(v) for k, v in schuber.items()}))
+        dctyep = {}
+        dctnope = {}
         dctbool = {}
+        pos_part = S.Zero
+        neg_part = S.Zero
+        anyn = False
         for monom, bargle in dct.items():
             if expand(bargle, func=True, deep=True, mul=True) != 0:
-                voib = expand(bargle, func=True, mul=False)
-                plop = z_ring(efficient_subs(voib,znz))
-                plop2 = zy_ring.from_dict({k: expand(efficient_subs(v,subs_dict),mul=False) for k,v in plop.items() if k in schuber})
+                voib_bo = efficient_subs(expand(bargle, func=False, mul=True),znz)
+                voib=expand(voib_bo,func=True,mul=False)
+                plop = z_ring(voib)
+                plop2 = z_ring.from_dict({k: expand(efficient_subs(v,subs_dict),mul=False) for k,v in plop.items()})
                 try:
                     compute_positive_rep(expand(bargle, func=True, mul=False), y, z, False, False)
                     print(f"Yep: {monom}")#: {bargle=}")
-                    dctbool[monom] = True
+                    #dctbool[monom] = True
+                    pos_part += plop2
+                    dctyep[monom] = voib_bo
                 except Exception:
+                    neg_part += plop2
                     print(f"Nope {monom}")#: {bargle=}")
-                    dctbool[monom] = False
-                dct2[monom] = dict(plop2)
-        print(dct2)
+                    anyn = True
+                    dctnope[monom] = voib_bo
+        if anyn:
+            pos_part = pos_part.expand(deep=False)
+            neg_part = neg_part.expand(deep=False)
+            if pos_part == S.Zero:
+                continue
+            dctyep2 = {}
+            dctnope2 = {}
+
+            def forple(voib2):
+                plop = zy_ring(efficient_subs(voib2,znz))
+                plop2 = zy_ring.from_dict({k: expand(efficient_subs(v,subs_dict),mul=False) for k,v in plop.items()})
+                return plop2
+            for monom, blarp in dctyep.items():
+                if isinstance(blarp, Add):
+                    dctyep2[monom] = [{k: expand(efficient_subs(v,subs_dict),func=True) for k,v in z_ring.from_expr(arg).items() if k in pos_part} for arg in blarp.args]
+                else:
+                    dctyep2[monom] = {k: expand(efficient_subs(v, subs_dict),func=True) for k,v in z_ring.from_expr(blarp).items() if k in pos_part}
+            for monom, blarp in dctnope.items():
+                if isinstance(blarp, Add):
+                    dctnope2[monom] = [{k: expand(efficient_subs(v,subs_dict),func=True) for k,v in z_ring.from_expr(arg).items() } for arg in blarp.args]
+                else:
+                    dctnope2[monom] = {k: expand(efficient_subs(v, subs_dict),func=True) for k,v in z_ring.from_expr(blarp).items()}
+            print(f"{dctyep2=}")
+            print(f"{dctnope2=}")
 
         
       # Anything that isn't Schub will disappear
