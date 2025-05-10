@@ -180,18 +180,6 @@ Element __call__ to substitute vals
 pull_out_gen and eval tests
 pull_out_gen for quantum
 
-Simplify elem sym (copy sympy)
-
-Newtons identities
-
-New mul with subs
-Work on coercing elem sym
-complete sym
-
-Subs to make the rest of the poly vanish
-
-divide out diff z3 x1
-
 mul elem_sym
 
 complete * elem - complete less vars , set z3 = y[k[0]] (fully positive)
@@ -206,23 +194,12 @@ DSx(uncode([1,1]))*DSx(uncode([0,0,1])) subs y[2] x[3]
 
 DSx(uncode([0,2,1])) subs y[2] x[3]
 
-from sympy
-complete sym
-
-flipping along a box, multiplying and zeroing out, need to subtract but the variable parts zero out
-
 quantum elem syms
-
-DSx(uncode([0,2]))*DSx(uncode([0,0,1]),"a") - DSx(uncode([0,3]))
-
-DSx(uncode([2,2]),"z")*DSx([0,0,0,1],"z") - DSx(uncode([2,2]),"z")*DSx(uncode([0,1]),"a").subs(a)
-
-!! Elem sym mul directly
 
 coproduct vpathdicts
 
 in complete sym basis
-newthon's formula
+newton's formula
 
 complete tests
 
@@ -230,7 +207,6 @@ single elem sym
 
 express as elem sym to ease positivity testing 
 
-need to fix up quantum with from_sympy
 faster way to posify with elem syms
 
 different monomials are disjoint
@@ -239,20 +215,14 @@ cached elem sym eval
 
 Allow zero coeff_vars/genvars
 
-Make e subclass of E?
-
 Difference algebra
 Difference ideal groebner
 groeber basis on (y1 - z1) ideal
 
 Infinite gensets
-Symbol printing!!!
-Try to combine classes!!!
-update complete sym
-can set the class
 
-not forwarded if it has it
+We can get speed improvements by splitting into definitely linearly independent sets
 
-Can forward printing stuff back to sympy object
 
-override strprinter
+Simplify elem sym (copy sympy)
+
