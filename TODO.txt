@@ -226,3 +226,4 @@ We can get speed improvements by splitting into definitely linearly independent 
 
 Simplify elem sym (copy sympy)
 
+apply rule to get into unique pieces
