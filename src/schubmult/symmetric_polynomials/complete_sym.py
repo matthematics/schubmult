@@ -150,6 +150,21 @@ class H(CompleteSym_base):
             return Pow(FactorialCompleteSym.from_expr_elem_sym(expr.args[0]),expr.args[1])
         return expr
 
+    @staticmethod
+    def to_expr_elem_sym(expr):
+        #return expr.replace(FactorialElemSym, lambda *x: (S.NegativeOne**int(x[0]))*FactorialCompleteSym.from_elem_sym(FactorialElemSym(*x)))
+        if not expr.args:
+            return expr
+        if is_of_func_type(expr, FactorialCompleteSym):
+            return sympify_sympy(expr).to_elem_sym()
+        if isinstance(expr, Mul):
+            return Mul(*[FactorialCompleteSym.to_expr_elem_sym(arg) for arg in expr.args])
+        if isinstance(expr, Add):
+            return Add(*[FactorialCompleteSym.to_expr_elem_sym(arg) for arg in expr.args])
+        if isinstance(expr, Pow):
+            return Pow(FactorialCompleteSym.to_expr_elem_sym(expr.args[0]),expr.args[1])
+        return expr
+
     def _eval_div_diff(self, v1, v2):
         return FactorialCompleteSym.from_expr_elem_sym(self._under_elem.div_diff(v1, v2))
 
