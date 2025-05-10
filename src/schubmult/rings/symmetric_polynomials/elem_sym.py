@@ -1,7 +1,7 @@
 from functools import cache
 
 from schubmult.rings.poly_lib import elem_sym_poly
-from schubmult.rings.variables import NotEnoughGeneratorsError
+from schubmult.rings.variables import NotEnoughGeneratorsError, ZeroGeneratingSet
 from schubmult.symbolic import Function, Integer, S, sympify, sympify_sympy
 from schubmult.utils.logging import get_logger
 
@@ -19,21 +19,35 @@ logger = get_logger(__name__)
 #         return Buns
 
 
-class E(Function):
+class ElemSym_base(Function):
     is_commutative = True
     is_Atom = False
     is_polynomial = True
     is_Function = True
     is_nonzero = True
 
-    # _sympyclass = _E
+    def _sympystr(self, printer):
+        return printer._print_Function(self)
 
-    def __new__(cls, p, k, *args):
-        p = int(p)
-        k = int(k)
-        if hasattr(args[0], "__iter__"):
-            return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[0]), tuple(args[1]))
-        return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[: int(k)]), tuple(args[k : 2 * k + 1 - p]))
+    def _eval_subs(self, rule):
+        new_args = [*self.args]
+        new_args = [*self.args]
+        for i, arg in enumerate(self.args[2:]):
+            new_args[i + 2] = sympify(arg).subs(rule)
+        return self.func(*new_args)
+
+    def subs(self, rule):
+        new_args = [*self.args]
+        new_args = [*self.args]
+        for i, arg in enumerate(self.args[2:]):
+            new_args[i + 2] = sympify(arg).subs(rule)
+        return self.func(*new_args)
+
+    def xreplace(self, rule):
+        new_args = [*self.args]
+        for i, arg in enumerate(self.args[2:]):
+            new_args[i + 2] = sympify(arg).xreplace(rule)
+        return self.func(*new_args)
 
     def has(self, *args):
         return any(arg in self.genvars for arg in args) or any(arg in self.coeffvars for arg in args)
@@ -48,6 +62,35 @@ class E(Function):
     @property
     def is_symbol(self):
         return False
+
+    @property
+    def degree(self):
+        return self._p
+
+    @property
+    def numvars(self):
+        return self._k
+
+    @property
+    def genvars(self):
+        return self._genvars
+
+    @property
+    def coeffvars(self):
+        return self._coeffvars
+
+    @cache
+    def _eval_expand_func(self, *args, **_):  # noqa: ARG002
+        return sympify_sympy(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
+
+
+class E(ElemSym_base):
+    def __new__(cls, p, k, *args):
+        p = int(p)
+        k = int(k)
+        if hasattr(args[0], "__iter__"):
+            return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[0]), tuple(args[1]))
+        return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[: int(k)]), tuple(args[k : 2 * k + 1 - p]))
 
     @property
     def free_symbols(self):
@@ -76,39 +119,20 @@ class E(Function):
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
         var1 = tuple(sorted(var1, key=lambda x: sympify_sympy(x).sort_key()))
         var2 = tuple(sorted(var2, key=lambda x: sympify_sympy(x).sort_key()))
-        obj = Function.__new__(
+        obj = ElemSym_base.__new__(
             _class,
             Integer(p),
             Integer(k),
             *var1,
             *var2,
         )
-        # if len(obj.args[2]) < k:
-        #     raise ValueError("Duplicate genvar arguments")
-        # if len(obj.args[3]) < k + 1 - p:
-        #     raise ValueError("Duplicate coeffvar arguments")
         obj._p = p
         obj._k = k
         obj._genvars = var1
         obj._coeffvars = var2
         return obj
 
-    # def __init__(self, p, k, *args):
-    #     super().__init__(self, p, k, *args)
-
-    # def _symengine_(self):
-    #     return sw.PyFunction(self, (self.args[0],self.args[1],*self.genvars,*self.coeffvars), self.__class__, sw.PyModule(self.__module__))
-
-    def compare(self, other):
-        return -1 if str(self) < (str(other)) else (1 if str(self) > str(other) else 0)
-
-    # def __getattr__(self, name):
-    #     if name in dir(self._sympy_obj):
-    #         return getattr(self._sympy_obj, name)
-    #     raise AttributeError(f"No attribute {name}")
-
     def split_out_vars(self, vars1, vars2=None):
-        # order of vars2 matters!
         vars1 = [sympify(v) for v in vars1]
         if vars2 is None:
             vars2 = [*self.coeffvars]
@@ -121,104 +145,26 @@ class E(Function):
             if v not in self.coeffvars:
                 newvars2.remove(v)
 
-        # vars2 = [*newvars2]
-        # for v in vars1:
-        #     if v not in self.genvars:
-        #         new_vars1.remove(v)
-        # new_vars2 = [*vars2]
-        # for v in vars2:
-        #     if v not in self.coeffvars:
-        #         new_vars2.remove(v)
-        # vars1 = new_vars1
-        # vars2 = new_vars2
         ret = S.Zero
         k1 = len(vars1)
         k2 = self._k - k1
         new_genvars1 = [*self.genvars]
         for v in vars1:
             new_genvars1.remove(v)
-        # print(len(new_genvars1))
         new_coeffvars2 = [*newvars2]
         new_coeffvars1 = [*newvars2]
         new_coeffvars2.reverse()
-        # we have k + 1 - p
         for p1 in range(min(k1 + 1, self._p + 1)):
             p2 = self._p - p1
-            # print(f"{p1=}, {p2=}, {k1=}, {k2=}")
-            # print(f"{vars1=}, {vars2=}")
-            # print(f"{new_coeffvars1=} {new_coeffvars2}")
             try:
                 ret += self.func(p1, k1, vars1, new_coeffvars1) * self.func(p2, k2, new_genvars1, new_coeffvars2)
             except NotEnoughGeneratorsError:
                 pass
         return ret
 
-    @property
-    def degree(self):
-        return self._p
-
-    @property
-    def numvars(self):
-        return self._k
-
-    @property
-    def genvars(self):
-        return self._genvars
-
-    @property
-    def coeffvars(self):
-        return self._coeffvars
-
     @cache
     def _eval_expand_func(self, *_, **__):
         return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
-
-    # @property
-    # def func(self):
-    #     def e(*args):
-    #         return self.__class__(*args)
-    #     return e
-
-    #     return e
-
-    #     return e
-    def _eval_subs(self, rule):
-        # print(f"_eval_subs")
-        # print(f"{rule=}")
-        # print(f"{self=}")
-        # rule = sw.get_dict(rule)
-        # print(f"{rule=}")
-        new_args = [*self.args]
-        new_args = [*self.args]
-        for i, arg in enumerate(self.args[2:]):
-            new_args[i + 2] = sympify(arg).subs(rule)
-        return self.func(*new_args)
-
-    def subs(self, rule):
-        # print(f"_eval_subs")
-        # print(f"{rule=}")
-        # print(f"{self=}")
-        # print(rule)
-        new_args = [*self.args]
-        new_args = [*self.args]
-        for i, arg in enumerate(self.args[2:]):
-            new_args[i + 2] = sympify(arg).subs(rule)
-        # print(f"{new_args=}")
-        return self.func(*new_args)
-
-    def xreplace(self, rule):
-        # print(f"xreplace")
-        # print(f"{rule=}")
-        # print(f"{self=}")
-        # print(rule)
-        new_args = [*self.args]
-        for i, arg in enumerate(self.args[2:]):
-            new_args[i + 2] = sympify(arg).xreplace(rule)
-        # print(f"{new_args=}")
-        return self.func(*new_args)
-
-    # def __reduce__(self):
-    #     return (self.__class__, self.args)
 
     def divide_out_diff(self, v1, v2):
         if v1 == v2:
@@ -272,30 +218,6 @@ class E(Function):
             return self.func(self._p - 1, self._k, self.genvars, [*self.coeffvars, v1])
         return S.Zero
 
-    # def __setstate__(self, state):
-    #     self.__dict__.update(state)
-
-    # def __reduce__(self):
-    #     # print(f"yo dude I'm getting pickled bong {self.__dict__} {self.__class__=}")
-    #     return (self.__class__, self.args, self.__dict__)
-
-    def sign_of_pair(self, v1, v2):
-        if v1 == v2:
-            return S.Zero
-        if v1 in self.genvars:
-            return S.One
-        if v1 in self.coeffvars:
-            if v2 in self.coeffvars:
-                return S.Zero
-            if v2 in self.genvars:
-                return None
-            return S.NegativeOne
-        return S.Zero
-
-    def _sympystr(self, printer):
-        # return printer._print_Function(self)
-        return printer._print_Function(self)
-
     def pull_out_vars(self, var1, var2, min_degree=1):
         if self._p < min_degree:
             return self
@@ -304,13 +226,7 @@ class E(Function):
         return self
 
 
-class e(Function):
-    is_commutative = True
-    is_Atom = False
-    is_polynomial = True
-    is_Function = True
-    is_nonzero = True
-
+class e(ElemSym_base):
     def __new__(cls, p, k, *args):
         if hasattr(args[0], "__iter__"):
             return ElemSym.__xnew_cached__(cls, p, k, tuple(args[0]))
@@ -331,34 +247,23 @@ class e(Function):
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
         var1 = tuple(sorted(var1, key=lambda x: sympify_sympy(x).sort_key()))
-        obj = Function.__new__(
+        obj = ElemSym_base.__new__(
             _class,
             Integer(p),
             Integer(k),
             *var1,
         )
-        # if len(obj.args[2]) < k:
-        #     raise ValueError("Duplicate genvar arguments")
-        # if len(obj.args[3]) < k + 1 - p:
-        #     raise ValueError("Duplicate coeffvar arguments")
         obj._p = p
         obj._k = k
         obj._genvars = var1
 
         return obj
 
-    # def __init__(self, p, k, *args):
-    #     super().__init__(self, p, k, *args)
-
-    # def _symengine_(self):
-    #     return sw.PyFunction(self, (self.args[0],self.args[1],*self.genvars), self.__class__, sw.PyModule(self.__module__))
-
     @property
     def free_symbols(self):
-        return set(self.genvars).union(set(self.coeffvars))
+        return set(self.genvars)
 
     def split_out_vars(self, vars1, vars2=None):
-        # order of vars2 matters!
         vars1 = [sympify(v) for v in vars1]
         if vars2 is not None:
             raise ValueError(f"There are no coeffvars for {self}")
@@ -372,57 +277,18 @@ class e(Function):
         new_genvars1 = [*self.genvars]
         for v in vars1:
             new_genvars1.remove(v)
-        # print(len(new_genvars1))
         for p1 in range(min(k1 + 1, self._p + 1)):
             p2 = self._p - p1
-            # print(f"{p1=}, {p2=}, {k1=}, {k2=}")
-            # print(f"{vars1=}, {vars2=}")
-            # print(f"{new_coeffvars1=} {new_coeffvars2}")
             try:
                 ret += self.func(p1, k1, vars1) * self.func(p2, k2, new_genvars1)
             except NotEnoughGeneratorsError:
                 pass
         return ret
 
-    # def __setstate__(self, state):
-    #     self.__dict__.update(state)
-
-    @property
-    def degree(self):
-        return self._p
-
-    @property
-    def numvars(self):
-        return self._k
-
-    @property
-    def genvars(self):
-        return self._genvars
-
     @property
     def coeffvars(self):
-        return None
+        return ZeroGeneratingSet()
 
-    @cache
-    def _eval_expand_func(self, *args, **_):  # noqa: ARG002
-        return sympify(elem_sym_poly(self._p, self._k, self.genvars, [0 for i in range(30)]))
-
-    # def _eval_subs(self, *rule):
-    #     # print(f"_eval_subs")
-    #     # print(f"{rule=}")
-    #     # print(f"{self=}")
-    #     return self.func(*self.args)
-
-    def xreplace(self, rule):
-        # print(f"xreplace")
-        # print(f"{rule=}")
-        # print(f"{self=}")
-        new_args = [*self.args]
-        for i, arg in enumerate(self.args[2:]):
-            new_args[i + 2] = arg.xreplace(rule)
-        return self.func(*new_args)
-
-    # let vars be a set
     def divide_out_diff(self, v1, v2):
         if v1 == v2:
             return S.Zero
@@ -451,28 +317,6 @@ class e(Function):
             new_genvars.remove(v2)
             return -self.func(self._p - 1, self._k - 1, new_genvars)
         return S.Zero
-
-    def sign_of_pair(self, v1, v2):
-        if v1 == v2:
-            return S.Zero
-        if v1 in self.genvars:
-            return S.One
-        return S.Zero
-
-    # def __reduce__(self):
-    #     # print(f"yo dude I'm getting pickled bang {self.__class__=}")
-    #     return (self.__class__, self.args, self.__dict__)
-
-    def _sympystr(self, printer):
-        # return printer._print_Function(self)
-        return printer._print_Function(self)
-
-    def pull_out_vars(self, var1, var2, min_degree=1):
-        if self._p < min_degree:
-            return self
-        if var1 in self.genvars and var2 in self.coeffvars:
-            return self.xreplace({var1: var2}) + ElemSym(1, 1, [var1], [var2]) * self.divide_out_diff(var1, var2)
-        return self
 
 
 FactorialElemSym = E

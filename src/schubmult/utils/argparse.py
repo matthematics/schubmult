@@ -1,16 +1,12 @@
 import sys  # noqa: F401
 from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
 
-from schubmult.symbolic import init_printing, latex, pretty, sstr, sympify
+from schubmult.symbolic import init_printing, latex, pretty, sstr, sympify_sympy
 
 # from sympy import init_printing
 from schubmult.utils.logging import init_logging
 
-# Indexed._sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
-
-
-def _sympy(obj):
-    return sympify(obj)
+# Indexed.sympify_sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
 
 
 def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
@@ -215,17 +211,17 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
 
     if args.disp_mode == "latex":
         formatter = (  # noqa: E731
-            lambda bob, width=None: latex(_sympy(bob), order="old").replace("\\left", "").replace("\\right", "")
+            lambda bob, width=None: latex(sympify_sympy(bob), order="old").replace("\\left", "").replace("\\right", "")
         )
     elif args.disp_mode == "pretty":
         # pretty we need to keep centered
         formatter = (  # noqa: E731
-            lambda bob, width=None: pretty(_sympy(bob), order="old")
+            lambda bob, width=None: pretty(sympify_sympy(bob), order="old")
             if width is None
-            else pretty(_sympy(bob), order="rev-lex" if args.same else "none", use_unicode=False).replace("\n", "\n" + " ".join(["" for i in range(width)]))
+            else pretty(sympify_sympy(bob), order="rev-lex" if args.same else "none", use_unicode=False).replace("\n", "\n" + " ".join(["" for i in range(width)]))
         )
     elif args.disp_mode == "basic":
-        formatter = lambda bob, width=None: sstr(_sympy(bob), order="old")  # , order="rev-lex" if args.same else "none")  # noqa: E731
+        formatter = lambda bob, width=None: sstr(sympify_sympy(bob), order="old")  # , order="rev-lex" if args.same else "none")  # noqa: E731
     elif args.disp_mode == "raw":
         formatter = None
     init_logging(debug=args.debug)

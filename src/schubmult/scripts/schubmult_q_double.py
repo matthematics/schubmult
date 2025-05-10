@@ -1,8 +1,6 @@
 import sys
 from functools import cached_property
 
-import sympy
-
 from schubmult import (
     GeneratingSet,
     Permutation,
@@ -16,7 +14,7 @@ from schubmult import (
     schubmult_q_double_fast,
     uncode,
 )
-from schubmult.symbolic import sympify
+from schubmult.symbolic import simplify, sstr, sympify
 from schubmult.utils.argparse import schub_argparse
 
 
@@ -85,14 +83,14 @@ def _display_full(coeff_dict, args, formatter, var2=_vars.var2, var3=_vars.var3)
         if val != 0:
             raw_result_dict[perm] = val
             if formatter:
-                print(f"{sympy.sstr(perm)!s}  {formatter(val)}")
+                print(f"{sstr(perm)!s}  {formatter(val)}")
     return raw_result_dict
 
 
 def sv_posify(val):
     # this has just y's, we want to rearrange
     # can we do this without an optimization
-    val = sympify(sympy.simplify(efficient_subs(val, subs_dict2)))
+    val = sympify(simplify(efficient_subs(val, subs_dict2)))
     bingle_dict = {}
     for i in range(1, len(_vars.var_r) - 1):
         bingle_dict[_vars.var_r[i]] = _vars.var2[i + 1] - _vars.var2[i]  # sympy.Add(*[_vars.var2[i+1], - _vars.var2[i]],evaluate=False)

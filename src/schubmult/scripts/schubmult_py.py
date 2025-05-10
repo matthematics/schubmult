@@ -1,9 +1,7 @@
 import sys
 
-import sympy
-
 from schubmult import Permutation, mult_poly_py, permtrim, schub_coprod_py, schubmult_py, theta, uncode
-from schubmult.symbolic import sympify
+from schubmult.symbolic import sstr, sympify
 from schubmult.utils.argparse import schub_argparse
 
 
@@ -51,7 +49,7 @@ def main(argv=None):
                         if formatter is None:
                             raw_result_dict[(firstperm, secondperm)] = val
                         else:
-                            print(f"{val} {sympy.sstr(firstperm)} {sympy.sstr(secondperm)}")
+                            print(f"{val} {sstr(firstperm)} {sstr(secondperm)}")
         else:
             if ascode:
                 for i in range(len(perms)):
@@ -73,7 +71,7 @@ def main(argv=None):
                     if val != 0:
                         raw_result_dict[perm] = val
                         if formatter:
-                            print(f"{val}  {sympy.sstr(perm)}")
+                            print(f"{val}  {sstr(perm)}")
         if formatter is None:
             return raw_result_dict
     except BrokenPipeError:

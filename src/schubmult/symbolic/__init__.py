@@ -2,7 +2,7 @@
 from symengine import Add, Integer, Mul, Pow, S, Symbol, SympifyError
 from symengine import sympify as sympify_symengine
 from sympy import Add as sympy_Add
-from sympy import Expr, Function, Poly, expand_func, init_printing, latex, poly, pretty, sstr
+from sympy import Expr, Function, Poly, expand_func, init_printing, latex, poly, pretty, simplify, sstr
 from sympy import Mul as sympy_Mul
 from sympy import sympify as sympify_sympy
 from sympy.polys.domains.compositedomain import CompositeDomain

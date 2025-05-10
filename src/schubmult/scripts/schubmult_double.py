@@ -1,12 +1,10 @@
 import sys
 from functools import cached_property
 
-import sympy
-
 from schubmult import GeneratingSet, Permutation, efficient_subs, mult_poly_double, permtrim, posify, schub_coprod_double, schubmult_double, theta, uncode
 from schubmult.perm_lib import split_perms
 from schubmult.schub_lib.schub_lib import will_formula_work
-from schubmult.symbolic import expand, sympify
+from schubmult.symbolic import expand, init_printing, simplify, sstr, sympify
 from schubmult.utils.argparse import schub_argparse
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import (
@@ -57,12 +55,12 @@ for i in range(1, 100):
 def sv_posify(val):
     # this has just y's, we want to rearrange
     # can we do this without an optimization
-    val = sympify(sympy.simplify(val.subs(subs_dict)))
+    val = sympify(simplify(val.subs(subs_dict)))
     bingle_dict = {}
     for i in range(1, len(_vars.var_r) - 1):
-        bingle_dict[_vars.var_r[i]] = _vars.var2[i + 1] - _vars.var2[i]  # sympy.Add(*[_vars.var2[i+1], - _vars.var2[i]],evaluate=False)
+        bingle_dict[_vars.var_r[i]] = _vars.var2[i + 1] - _vars.var2[i]  # Add(*[_vars.var2[i+1], - _vars.var2[i]],evaluate=False)
         # oh bay does that bar bangled banber bet bave space buckets of cheese
-    # val = sympy.simplify(val)
+    # val = simplify(val)
     return val.xreplace(bingle_dict)
 
 
@@ -162,7 +160,7 @@ def _display_full(
     coeff_perms = list(coeff_dict.keys())
     if coprod:
         perm_pairs = coeff_perms
-        width = max([len(sympy.sstr(perm[0]) + " " + sympy.sstr(perm[1])) for perm in perm_pairs])
+        width = max([len(sstr(perm[0]) + " " + sstr(perm[1])) for perm in perm_pairs])
 
         for firstperm, secondperm in perm_pairs:
             val = coeff_dict[(firstperm, secondperm)]
@@ -187,7 +185,7 @@ def _display_full(
                             val2 = flip_symbol_signs(val2)
                             if check and expand(val - val2) != 0:
                                 _display(
-                                    f"error; write to schubmult@gmail.com with the case {perms=}\n{sympy.sstr(firstperm)=} {sympy.sstr(secondperm)=}\n{val2=}\n{val=}",
+                                    f"error; write to schubmult@gmail.com with the case {perms=}\n{sstr(firstperm)=} {sstr(secondperm)=}\n{val2=}\n{val=}",
                                 )
                                 _display(f"{firstperm*muA=} {secondperm*muB=} {the_top_perm=}")
                                 exit(1)
@@ -195,14 +193,14 @@ def _display_full(
                     else:
                         val = 0
                 if val != 0:
-                    width2 = width - len(sympy.sstr(permtrim(firstperm))) - len(sympy.sstr(permtrim(secondperm)))
+                    width2 = width - len(sstr(permtrim(firstperm))) - len(sstr(permtrim(secondperm)))
                     raw_result_dict[(permtrim(firstperm), Permutation(secondperm))] = val
                     if formatter:
                         _display(
-                            f"{sympy.sstr(permtrim(firstperm))}{' ':>{width2}}{sympy.sstr(Permutation(secondperm))}  {formatter(val)}",
+                            f"{sstr(permtrim(firstperm))}{' ':>{width2}}{sstr(Permutation(secondperm))}  {formatter(val)}",
                         )
     else:
-        width = max([len(sympy.sstr(perm)) for perm in coeff_dict.keys()])
+        width = max([len(sstr(perm)) for perm in coeff_dict.keys()])
 
         coeff_perms = list(coeff_dict.keys())
         coeff_perms.sort(key=lambda x: (x.inv, *x))
@@ -213,7 +211,7 @@ def _display_full(
             if val != 0:
                 raw_result_dict[perm] = val
                 if formatter:
-                    _display(f"{sympy.sstr(perm)!s:>{width}}  {formatter(val)}")
+                    _display(f"{sstr(perm)!s:>{width}}  {formatter(val)}")
     return raw_result_dict
 
 
@@ -227,7 +225,7 @@ def main(argv=None):
         sys.setrecursionlimit(1000000)
 
         # TEMP
-        sympy.init_printing()
+        init_printing()
 
         args, formatter = schub_argparse(
             "schubmult_double",

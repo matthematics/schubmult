@@ -20,7 +20,7 @@ from schubmult.perm_lib import (
     theta,
     uncode,
 )
-from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_poly, expand
+from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_poly
 from schubmult.rings.schub_poly import schubpoly
 from schubmult.schub_lib.schub_lib import (
     divdiffable,
@@ -33,7 +33,7 @@ from schubmult.schub_lib.schub_lib import (
     try_reduce_v,
     will_formula_work,
 )
-from schubmult.symbolic import Add, Integer, Mul, Pow, Symbol, poly, sympify
+from schubmult.symbolic import Add, Integer, Mul, Pow, Symbol, expand, poly, sympify, sympify_sympy
 from schubmult.utils.logging import get_logger
 
 from .double import schubmult_double, schubmult_double_pair, schubmult_double_pair_generic
@@ -61,8 +61,8 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
         varsimp3.sort(key=lambda k: var3.index(k))
         # logger.debug(f"{varsimp2=}")
         # logger.debug(f"{varsimp3=}")
-        var22 = [sympify(v) for v in varsimp2]
-        var33 = [sympify(v) for v in varsimp3]
+        var22 = [sympify_sympy(v) for v in varsimp2]
+        var33 = [sympify_sympy(v) for v in varsimp3]
         # var22 = [sympify(m) for m in varsimp2]
         # var33 = [sympify(m) for m in varsimp3]
         n1 = len(varsimp2)

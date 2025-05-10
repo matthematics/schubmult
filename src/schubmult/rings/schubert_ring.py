@@ -6,16 +6,14 @@ import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, uncode
-from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand_func, init_printing, is_of_func_type, sstr
+from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand_func, init_printing, is_of_func_type, sstr, sympify
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
-from .backend import sympify
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .poly_lib import elem_sym_poly, xreplace_genvars
 from .schub_poly import schubpoly_classical_from_elems
-from .symmetric_polynomials.complete_sym import CompleteSym
-from .symmetric_polynomials.elem_sym import FactorialElemSym
+from .symmetric_polynomials import CompleteSym, ElemSym, FactorialCompleteSym, FactorialElemSym
 from .symmetric_polynomials.functions import coeffvars, degree, genvars, numvars, split_out_vars
 from .tensor_ring import TensorRing
 from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet, NotEnoughGeneratorsError, poly_genset
@@ -29,8 +27,8 @@ def is_fact_elem_sym(obj):
     return is_of_func_type(obj, FactorialElemSym)
 
 
-def is_complete_sym(obj):
-    return is_of_func_type(obj, CompleteSym)
+def is_fact_complete_sym(obj):
+    return is_of_func_type(obj, FactorialCompleteSym)
 
 
 class DoubleSchubertElement(BaseSchubertElement):
@@ -440,7 +438,7 @@ class DoubleSchubertRing(BaseSchubertRing):
             if any(a in self.genset for a in coeffvars(x)) and len(coeffs_to_remove):
                 return self.mul_expr(elem.split_out_vars(x.to_complete_sym(), coeffs_to_remove))
             return self.from_dict({k: self.domain_new(self.handle_sympoly(x)) * v for k, v in elem.items()})
-        if is_complete_sym(x):
+        if is_fact_complete_sym(x):
             x = sympify(x)
             if all(a in self.genset for a in genvars(x)) and not any(a in self.genset for a in coeffvars(x)):
                 return self.complete_mul(elem, x)
