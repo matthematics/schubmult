@@ -235,11 +235,10 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
 
         # depth+=1
         val2 = 0
-        for k in range(len(base_vectors)):
+        for k in vrs:
             x = vrs[k].value()
-            b1 = base_monoms[k]
             if x != 0 and x is not None:
-                val2 += int(x) * b1
+                val2 += int(x) * k
         if expand(val - val2) != 0:
             # print(f"{val=}")
             # print(f"{val2=}")
@@ -249,25 +248,29 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
     return val2
 
 
-def coeffvars_monom(arg):
+def coeffvars_monom(arg, genset):
+    # actually put in the vars
+    monom = {}
     if is_of_func_type(arg, FactorialElemSym) or is_of_func_type(arg, FactorialCompleteSym):
-        monom = coeffvars(arg)[0] ** degree(arg)
+        monom[genset.index(coeffvars(arg)[0])] = [*genvars(arg)]
     elif isinstance(arg, Mul):
-        monom = S.One
         for arg2 in arg.args:
             if is_of_func_type(arg2, FactorialElemSym) or is_of_func_type(arg2, FactorialCompleteSym):
-                monom *= coeffvars(arg2)[0] ** degree(arg2)
+                i = genset.index(coeffvars(arg2)[0])
+                monom[i] = monom.get(i,[]) + [*genvars(arg2)]
             if isinstance(arg2, Pow) and (is_of_func_type(arg2.args[0], FactorialElemSym) or is_of_func_type(arg2.args[0], FactorialCompleteSym)):
-                monom *= coeffvars(arg2.args[0])[0] ** (degree(arg2.args[0]) * int(arg2.args[1]))
+                i = genset.index(coeffvars(arg2.args[0])[0])
+                monom[i] = monom.get(i,[])  + [*genvars(arg2.args[0])] * int(arg2.args[1])
     elif isinstance(arg, Pow):
-        monom = coeffvars(arg.args[0])[0] ** (degree(arg.args[0]) * int(arg.args[1]))
-    else:
-        monom = S.NegativeInfinity
-    return monom
+        i = genset.index(coeffvars(arg.args[0])[0])
+        monom[i] = monom.get(i,[])  + [*genvars(arg.args[0])] * int(arg.args[1])
+    return Dict({k: tuple(v) for k, v in monom.items()})
 
 
 def coeff_to_monom(monom, genset):
     dct = {}
+    if monom == S.One:
+        return Dict(dct)
     if genset.index(monom) != -1:
         dct[genset.index(monom)] = 1
     if isinstance(monom, Pow):
@@ -301,10 +304,9 @@ def splitupcoeffvars(pos_neg_part, genset):
         args = bacon.args
     else:
         args = [pos_neg_part]
-    dct = {}
+    dct = set()
     for arg in args:
-        monom = coeffvars_monom(arg)
-        dct[coeff_to_monom(monom, genset)] = dct.get(coeff_to_monom(monom, genset), S.Zero) + arg
+        dct.add(coeffvars_monom(arg, genset))
     return dct
 
 
@@ -338,61 +340,76 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
     val_expr = expand(val, func=True)
     z_ring = rings.SingleSchubertRing(var3)
     opt = Optimizer(z_ring,val_expr)
-    vec = opt.vec0
+    vec_base = opt.vec0
     val = canonicalize_elem_syms(expand(val))
-    dctcv = splitupcoeffvars(val, var3)
-    mndct = {k: set(splitupgenvars(v,var2).keys()) for k, v in dctcv.items()}
+    mnset = splitupcoeffvars(val, var3)
+    #mndct = {k: set(splitupgenvars(v,var2).keys()) for k, v in dctcv.items()}
+
     # mndct = {}
     # for k, st in dctmn.items():
     #     if k not in mndct:
     #         mndct[k] = set()
     #     mndct[k].update(
-    base_vectors = []
+    base_vectors = {}
     base_monoms = []
     #base_monoms += [b1]s
-    for mn1 in mndct:
+    for mn1 in mnset:
         comblistmn1 = [S.One]
-        for z_index in mn1:
+        for z_index, vs in mn1.items():
+            degree = len(vs)
             arr = np.array(comblistmn1)
             comblistmn12 = []
             #n1 = mn1[z_index]
-            mn1_2 = Dict({k: p for k, p in mn1.items()() if k != z_index})
-            for mm0 in mndct[mn1_2]:
-                comblistmn12 += (
-                    arr
-                    * np.prod(
-                        [var2[int(k)] - var3[int(z_index)] for k,pw in mm0.items() if pw == 1],
-                    )
-                ).tolist()
-            comblistmn1 = comblistmn12
-        for i in range(len(comblistmn1)):
-            b1 = comblistmn1[i]
-            vec0 = opt.poly_to_vec(b1)
-            if vec0:
-                base_vectors += [vec0]
-                base_monoms += [b1]
-    vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(base_vectors))]
+            #combinations degree in the lists
+            
+            for mn2 in mnset:
+                lst = set()
+                for sp, vs2 in mn2.items():
+                    if sp == z_index:
+                        if len(vs2) > len(vs):
+                            break
+                        continue
+                    lst.update(vs2)
+                # combintations
+                from itertools import combinations
+                combs = list(combinations(lst, degree))
+                for comb in combs:
+                    comblistmn12 += (
+                        arr
+                        * np.prod(
+                            [k - var3[int(z_index)] for k in comb],
+                        )
+                    ).tolist()
+                comblistmn1 = comblistmn12
+            for i in range(len(comblistmn1)):
+                b1 = comblistmn1[i]
+                vec0 = opt.poly_to_vec(b1)
+                
+                # if b1 in base_monoms:
+                #     continue
+                if vec0 is not None:
+                    base_vectors[b1] = vec0
+    vrs = {bv: pu.LpVariable(name=f"a{bv}", lowBound=0, cat="Integer") for bv in base_vectors}
     lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
     lp_prob += 0
     eqs = {}
-    for j in range(len(base_vectors)):
-        for i in base_vectors[j]:
-            bvi = int(base_vectors[j][i])
+    for bv, vec in base_vectors.items():
+        for i in vec:
+            bvi = int(vec[i])
             if bvi == 1:
                 if i not in eqs:
-                    eqs[i] = vrs[j]
+                    eqs[i] = vrs[bv]
                 else:
-                    eqs[i] += vrs[j]
+                    eqs[i] += vrs[bv]
             elif bvi != 0:
                 if i not in eqs:
-                    eqs[i] = bvi * vrs[j]
+                    eqs[i] = bvi * vrs[bv]
                 else:
-                    eqs[i] += bvi * vrs[j]
+                    eqs[i] += bvi * vrs[bv]
     for i in eqs:
         try:
-            lp_prob += eqs[i] == vec.get(i, 0)
+            lp_prob += eqs[i] == vec_base[i]
         except KeyError:
-            # print(f"{vec=} {val=}")
             raise
     # print(f"{vec=}")
     # print(lp_prob.constraints)
@@ -417,11 +434,10 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
 
     # depth+=1
     val2 = 0
-    for k in range(len(base_vectors)):
+    for k in base_vectors:
         x = vrs[k].value()
-        b1 = base_monoms[k]
         if x != 0 and x is not None:
-            val2 += int(x) * b1
+            val2 += int(x) * k
     if expand(val - val2) != 0:
         # print(f"{val=}")
         # print(f"{val2=}")
