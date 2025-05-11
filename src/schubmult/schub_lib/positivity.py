@@ -304,9 +304,9 @@ def splitupcoeffvars(pos_neg_part, genset):
         args = bacon.args
     else:
         args = [pos_neg_part]
-    dct = set()
+    dct = {}
     for arg in args:
-        dct.add(coeffvars_monom(arg, genset))
+        dct[coeffvars_monom(arg, genset)] = arg
     return dct
 
 
@@ -350,62 +350,122 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
     #     if k not in mndct:
     #         mndct[k] = set()
     #     mndct[k].update(
-    combcache={}
+    #combcache={}
     base_vectors = {}
     base_monoms = []
     #base_monoms += [b1]s
+    # lookup = {}
+    frees = val_expr.free_symbols
+        # logger.debug(f"{frees=}")
+        # logger.debug(f"{[type(s) for s in frees]=}")
+    varsimp2 = [m for m in frees if var2.index(m) != -1]
+    varsimp3 = [m for m in frees if var3.index(m) != -1]
+    varsimp2.sort(key=lambda k: var2.index(k))
+    varsimp3.sort(key=lambda k: var3.index(k))
+    # logger.debug(f"{varsimp2=}")
+    # logger.debug(f"{varsimp3=}")
+    var22 = [sympify_sympy(v) for v in varsimp2]
+    var33 = [sympify_sympy(v) for v in varsimp3]
+    # var22 = [sympify(m) for m in varsimp2]
+    # var33 = [sympify(m) for m in varsimp3]
+    n1 = len(varsimp2)
+    val_poly = S.Zero
+    for k, expr in mnset.items():
+        val_poly += poly(expand(expr, func=True),*var22, *var33)
+    mn = val_poly.monoms()
+    L1 = tuple([0 for i in range(n1)])
+    mn1L = []
     lookup = {}
-        # logger.debug("this")
-    mnsetset = {vv: {k: set(voing) for k, voing in vv.items()} for vv in mnset}
-    for vv in mnset:
-        key = vv
+    # logger.debug("this")
+    for mm0 in mn:
+        key = mm0[n1:]
         if key not in lookup:
-            lookup[key] = {}
-        vvset = mnsetset[vv]
-        for z_index, pw in vvset.items():
-            lookup[key][z_index] = set()
-            for vv2 in mnset:
-                vv2set = mnsetset[vv2]
-                if vv2set.get(z_index,set()).issubset(pw):
-                    for pork, bingo in vv2set.items():
-                        if pork == z_index:
-                            continue
-                        if pork in vv and vvset[pork].issubset(bingo):
-                               continue
-                        lookup[key][z_index].update(bingo)
-            lookup[key][z_index] = frozenset(lookup[key][z_index])
-    for mn1 in mnset:
-        comblistmn1 = [S.One]
-        for z_index, vs in mn1.items():
-            arr = np.array(comblistmn1)
-            comblistmn12 = []
-            #n1 = mn1[z_index]
-            #combinations degree in the lists
-            # fslower but we can do better
-            lst = lookup[mn1][z_index]
-            # print(lst)
-            #cached combs
-            from itertools import combinations
-            if (lst, len(vs)) not in combcache:
-                combcache[(lst, len(vs))] = list(combinations(lst, len(vs)))
-            combs = combcache[(lst,len(vs))] 
-            for comb in combs:
-                comblistmn12 += (
-                    arr
-                    * np.prod(
-                        [k - var3[int(z_index)] for k in comb],
-                    )
-                ).tolist()
-            comblistmn1 = comblistmn12
-        # print(comblistmn12)
+            lookup[key] = []
+        mm0n1 = mm0[:n1]
+        st = set(mm0n1)
+        if len(st.intersection({0, 1})) == len(st) and 1 in st:
+            lookup[key] += [mm0]
+        if mm0n1 == L1:
+            mn1L += [mm0]
+    # logger.debug("this")
+    for mn1 in mn1L:
+        comblistmn1 = [1]
+        for i in range(n1, len(mn1)):
+            if mn1[i] != 0:
+                arr = np.array(comblistmn1)
+                comblistmn12 = []
+                mn1_2 = (*mn1[n1:i], 0, *mn1[i + 1 :])
+                for mm0 in lookup[mn1_2]:
+                    comblistmn12 += (
+                        arr
+                        * np.prod(
+                            [varsimp2[k] - varsimp3[i - n1] for k in range(n1) if mm0[k] == 1],
+                        )
+                    ).tolist()
+                comblistmn1 = comblistmn12
         for i in range(len(comblistmn1)):
             b1 = comblistmn1[i]
             vec0 = opt.poly_to_vec(b1)
-            
-            # if b1 in base_monoms:
-            #     continue
-            if vec0 is not None:
+            if vec0:
                 base_vectors[b1] = vec0
+        # logger.debug("this")
+    # mnsetset = {vv: {k: set(voing) for k, voing in vv.items()} for vv in mnset}
+    # for vv in mnset:
+    #     key = vv
+    #     if key not in lookup:
+    #         lookup[key] = {}
+    #     vvset = mnsetset[vv]
+    #     bad = False
+    #     poinkset = set()
+    #     for z_index, pw in vvset.items():
+    #         lookup[key][z_index] = []
+    #         for vv2 in mnset:
+    #             vv2set = mnsetset[vv2]
+    #             bad = True
+    #             if vv2set.get(z_index,set()).issubset(pw):
+    #                 for pork, bingo in vv2set.items():
+    #                     if pork == z_index:
+    #                         continue
+    #                     if pork in vv and not vvset[pork].issubset(bingo):
+    #                         bad = True
+    #                         break
+    #                     bad = False
+    #                     poinkset.update(bingo)
+    #             if not bad:
+    #                 lookup[key][z_index] += [frozenset(poinkset)]
+    # for mn1 in mnset:
+    #     comblistmn1 = [S.One]
+    #     for z_index, vs in mn1.items():
+    #         arr = np.array(comblistmn1)
+    #         comblistmn12 = []
+    #         #n1 = mn1[z_index]
+    #         #combinations degree in the lists
+    #         # fslower but we can do better
+            
+    #         # print(lst)
+    #         #cached combs
+    #         from itertools import combinations
+    #         for lst in lookup[mn1][z_index]:
+    #             if (lst, len(vs)) not in combcache:
+    #                 combcache[(lst, len(vs))] = list(combinations(lst, len(vs)))
+    #             combs = combcache[(lst,len(vs))] 
+    #             for comb in combs:
+    #                 comblistmn12 += (
+    #                     arr
+    #                     * np.prod(
+    #                         [k - var3[int(z_index)] for k in comb],
+    #                     )
+    #                 ).tolist()
+    #         comblistmn1 = comblistmn12
+    #     # print(comblistmn12)
+    #     for i in range(len(comblistmn1)):
+    #         b1 = comblistmn1[i]
+    #         vec0 = opt.poly_to_vec(b1)
+            
+    #         # if b1 in base_monoms:
+    #         #     continue
+    #         if vec0 is not None:
+    #             base_vectors[b1] = vec0
     vrs = {bv: pu.LpVariable(name=f"a{bv}", lowBound=0, cat="Integer") for bv in base_vectors}
     lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
     lp_prob += 0
