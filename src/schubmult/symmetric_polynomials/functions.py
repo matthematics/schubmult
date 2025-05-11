@@ -69,6 +69,8 @@ def canonicalize_elem_syms(expr, combine_equal=False):
                             if isinstance(mdict[cv], Mul):
                                 for arg2 in mdict[cv].args:
                                     total_genvars += genvars(arg2)
+                            elif isinstance(mdict[cv], Pow):
+                                total_genvars += genvars(mdict[cv].args[0])*int(mdict[cv].args[1])
                             else:
                                 total_genvars += genvars(mdict[cv])
                             total_genvars += genvars(arg)

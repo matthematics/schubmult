@@ -7,6 +7,7 @@ import pulp as pu
 from cachetools import cached
 from cachetools.keys import hashkey
 from sortedcontainers import SortedList
+from sympy import Dict
 
 import schubmult.rings as rings
 from schubmult.perm_lib import (
@@ -33,8 +34,10 @@ from schubmult.schub_lib.schub_lib import (
     try_reduce_v,
     will_formula_work,
 )
-from schubmult.symbolic import Add, Integer, Mul, Pow, Symbol, expand, poly, sympify, sympify_sympy
+from schubmult.symbolic import Add, Integer, Mul, Pow, S, Symbol, expand, is_of_func_type, poly, prod, sympify, sympify_sympy
+from schubmult.symmetric_polynomials import FactorialCompleteSym, FactorialElemSym, canonicalize_elem_syms, coeffvars, degree, genvars, numvars
 from schubmult.utils.logging import get_logger
+from schubmult.utils.perm_utils import add_perm_dict
 
 from .double import schubmult_double, schubmult_double_pair, schubmult_double_pair_generic
 
@@ -246,9 +249,178 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
     return val2
 
 
+def coeffvars_monom(arg):
+    if is_of_func_type(arg, FactorialElemSym) or is_of_func_type(arg, FactorialCompleteSym):
+        monom = coeffvars(arg)[0] ** degree(arg)
+    elif isinstance(arg, Mul):
+        monom = S.One
+        for arg2 in arg.args:
+            if is_of_func_type(arg2, FactorialElemSym) or is_of_func_type(arg2, FactorialCompleteSym):
+                monom *= coeffvars(arg2)[0] ** degree(arg2)
+            if isinstance(arg2, Pow) and (is_of_func_type(arg2.args[0], FactorialElemSym) or is_of_func_type(arg2.args[0], FactorialCompleteSym)):
+                monom *= coeffvars(arg2.args[0])[0] ** (degree(arg2.args[0]) * int(arg2.args[1]))
+    elif isinstance(arg, Pow):
+        monom = coeffvars(arg.args[0])[0] ** (degree(arg.args[0]) * int(arg.args[1]))
+    else:
+        monom = S.NegativeInfinity
+    return monom
+
+
+def coeff_to_monom(monom, genset):
+    dct = {}
+    if genset.index(monom) != -1:
+        dct[genset.index(monom)] = 1
+    if isinstance(monom, Pow):
+        dct[genset.index(monom.args[0])] = int(monom.args[1])
+    else:
+        for arg in monom.args:
+            dct = add_perm_dict(dct, coeff_to_monom(arg, genset))
+    return Dict(dct)
+
+
+def genvars_monom(arg):
+    if is_of_func_type(arg, FactorialElemSym) or is_of_func_type(arg, FactorialCompleteSym):
+        monom = prod(genvars(arg))
+    elif isinstance(arg, Mul):
+        monom = S.One
+        for arg2 in arg.args:
+            if is_of_func_type(arg2, FactorialElemSym) or is_of_func_type(arg2, FactorialCompleteSym):
+                monom *= prod(genvars(arg2))
+            if isinstance(arg2, Pow) and (is_of_func_type(arg2.args[0], FactorialElemSym) or is_of_func_type(arg2.args[0], FactorialCompleteSym)):
+                monom *= prod(genvars(arg2.args[0])) ** int(arg2.args[1])
+    elif isinstance(arg, Pow):
+        monom = prod(genvars(arg.args[0])) ** int(arg.args[1])
+    else:
+        monom = S.NegativeInfinity
+    return monom
+
+
+def splitupcoeffvars(pos_neg_part, genset):
+    if isinstance(pos_neg_part, Add):
+        bacon = pos_neg_part
+        args = bacon.args
+    else:
+        args = [pos_neg_part]
+    dct = {}
+    for arg in args:
+        monom = coeffvars_monom(arg)
+        dct[coeff_to_monom(monom, genset)] = dct.get(coeff_to_monom(monom, genset), S.Zero) + arg
+    return dct
+
+
+def splitupgenvars(pos_neg_part, genset):
+    if isinstance(pos_neg_part, Add):
+        bacon = pos_neg_part
+        args = bacon.args
+    else:
+        args = [pos_neg_part]
+    dct = {}
+    for arg in args:
+        monom = genvars_monom(arg)
+        dct[coeff_to_monom(monom, genset)] = dct.get(coeff_to_monom(monom, genset), S.Zero) + arg
+    return dct
+
+
+def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=True):
+    val_expr = expand(val, func=True)
+    z_ring = rings.SingleSchubertRing(var3)
+    opt = Optimizer(z_ring,val_expr)
+    vec = opt.vec0
+    val = canonicalize_elem_syms(expand(val))
+    dctcv = splitupcoeffvars(val, var3)
+    dctgv = splitupgenvars(val, var2)
+    base_vectors = []
+    base_monoms = []
+    # for mn1 in dctgv:
+    #     vsets = []
+    #     for i in mn1:
+    #         p = mn1[int(i)]
+    #         for j in range(int(p)):
+    #             if j >= len(vsets):
+    #                 vsets += [set()]
+    #             vsets[j].add(var2[int(i)])
+    #     for mn2 in dctcv:
+    #         b1 = S.One
+    #         total_list = [S.One]
+    #         for varnum, pw in mn2.items():
+    #             varnum = int(varnum)
+    #             pw = int(pw)
+    #             if len(total_list) == 0:
+    #                 break
+    #             total_list2 = []
+    #             for vs in vsets:
+    #                 if len(vs) == pw:
+    #                     for vl in total_list:
+    #                         total_list2 += [vl * prod([vr - var3[varnum] for vr in vs])]
+    #             total_list = total_list2
+    #         for b1 in total_list:
+    #             vec0 = opt.poly_to_vec(b1)
+    #             if vec0:
+    #                 base_vectors += [vec0]
+    #                 base_monoms += [b1]
+    vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(base_vectors))]
+    lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
+    lp_prob += 0
+    eqs = {}
+    for j in range(len(base_vectors)):
+        for i in base_vectors[j]:
+            bvi = int(base_vectors[j][i])
+            if bvi == 1:
+                if i not in eqs:
+                    eqs[i] = vrs[j]
+                else:
+                    eqs[i] += vrs[j]
+            elif bvi != 0:
+                if i not in eqs:
+                    eqs[i] = bvi * vrs[j]
+                else:
+                    eqs[i] += bvi * vrs[j]
+    for i in eqs:
+        try:
+            lp_prob += eqs[i] == vec.get(i, 0)
+        except KeyError:
+            # print(f"{vec=} {val=}")
+            raise
+    # print(f"{vec=}")
+    # print(lp_prob.constraints)
+    try:
+        # logger.debug("I IS SOLVING BOLVING")
+        solver = pu.PULP_CBC_CMD(msg=msg)
+        status = lp_prob.solve(solver)  # noqa: F841
+    except KeyboardInterrupt:
+        current_process = psutil.Process()
+        children = current_process.children(recursive=True)
+        for child in children:
+            child_process = psutil.Process(child.pid)
+            child_process.terminate()
+            child_process.kill()
+        raise KeyboardInterrupt()
+    # print(f"{pos_part=}")
+    # print(f"{neg_part=}")
+    # else:
+    # print(f"No dice {flat=}")
+    # exit(1)
+    # #val = pos_part - neg_part
+
+    # depth+=1
+    val2 = 0
+    for k in range(len(base_vectors)):
+        x = vrs[k].value()
+        b1 = base_monoms[k]
+        if x != 0 and x is not None:
+            val2 += int(x) * b1
+    if expand(val - val2) != 0:
+        # print(f"{val=}")
+        # print(f"{val2=}")
+        # print(f"{vec=}")
+        raise Exception
+    # print(f"{val2=}")
+    return val2
+
+
 @cached(
     cache={},
-    key=lambda val, u2, v2, w2, var2=None, var3=None, msg=False, do_pos_neg=False, sign_only=False, optimize=True: hashkey(val, u2, v2, w2, var2, var3, msg, do_pos_neg, sign_only, optimize),
+    key=lambda val, u2, v2, w2, var2=None, var3=None, msg=False, do_pos_neg=False, sign_only=False, optimize=True, elem_sym=None: hashkey(val, u2, v2, w2, var2, var3, msg, do_pos_neg, sign_only, optimize),
 )
 def posify(
     val,
@@ -262,6 +434,7 @@ def posify(
     sign_only=False,
     optimize=True,
     n=_vars.n,
+    elem_sym=None,
 ):
     if not v2.has_pattern([1, 4, 2, 3]) and not v2.has_pattern([4, 1, 3, 2]) and not v2.has_pattern([3, 1, 4, 2]) and not v2.has_pattern([1, 4, 3, 2]):
         logger.debug("Recording new characterization was used")
@@ -646,7 +819,7 @@ def posify(
         #             0,
         #         )
         #         # logger.debug(f"Calling posify on {newval=} {new_w=} {uncode(newc)=} {w=}")
-        #         newval = posify(newval, new_w, uncode(newc), w, var2, var3, msg, do_pos_neg, optimize=optimize)
+        #         newval = posify(newval, new_w, uncode(newc), w, var2, var3, msg, do_pos_neg, optimize=optimize,elem_sym=elem_sym)
         #         val += tomul * shiftsubz(newval)
         #     # if expand(val - oldval) != 0:
         #     #     # logger.debug("This is bad")
@@ -667,7 +840,7 @@ def posify(
         #         0,
         #     )
         #     # logger.debug(f"Calling posify on {val=} {u3=} {v=} {w3=}")
-        #     val = posify(val, u3, v, w3, var2, var3, msg, do_pos_neg, optimize=optimize)
+        #     val = posify(val, u3, v, w3, var2, var3, msg, do_pos_neg, optimize=optimize,elem_sym=elem_sym)
         #     for i in range(varl):
         #         val = perm_act(val, i + 1, var2)
         #     # if expand(val - oldval) != 0:
@@ -692,7 +865,7 @@ def posify(
                     w3,
                     0,
                 )
-                val2 = posify(val2, u3, v3, w3, var2, var3, msg, do_pos_neg, optimize=optimize)
+                val2 = posify(val2, u3, v3, w3, var2, var3, msg, do_pos_neg, optimize=optimize,elem_sym=elem_sym)
                 val += tomul * shiftsub(val2, var2)
             # if expand(val - oldval) != 0:
             #     # logger.debug("This is bad")
@@ -703,7 +876,10 @@ def posify(
     if not sign_only:
         # logger.debug("Recording line number")
         if optimize:
-            if inv(u) + inv(v) - inv(w) == 1:
+            if elem_sym:
+                #print(f"{elem_sym=}")
+                val2 = compute_positive_rep_new(elem_sym, var2, var3, msg, False)
+            elif inv(u) + inv(v) - inv(w) == 1:
                 val2 = compute_positive_rep(val, var2, var3, msg, False)
             else:
                 val2 = compute_positive_rep(val, var2, var3, msg, do_pos_neg)
@@ -1107,8 +1283,7 @@ def dualpieri(mu, v, w):
 
 class Optimizer:
     def __init__(self, z_ring, poly):
-        self.z_ring = z_ring
-        self.pos_dict = {z_ring.genset[i]: -z_ring.genset[i] for i in range(100)}
+        self.z_ring=z_ring
         self.monom_to_vec = {}
         self.vec0 = None
         self.vec0 = self.poly_to_vec(poly)
@@ -1144,3 +1319,64 @@ class Optimizer:
                 return None
             vec[index] = cf
         return vec
+
+
+class SchubOptimizer(Optimizer):
+    # spake = z_ring(sympify(expand_func(v)).xreplace(vnv))
+    # spake = zs_ring.from_dict({k:expand(spa) for k,spa in spake.items()})
+    # #print(f"{v}={spake}")
+    # fartspangle = {}
+    # for k,pork in spake.items():
+    #     spink = pork.as_coefficients_dict()
+    #     for sperg, po in spink.items():
+    #         if po == 0:
+    #             continue
+    #         fartspangle[sperg] = fartspangle.get(sperg,0) + 1
+    def __init__(self, z_ring, poly):
+        self.z_ring = z_ring
+        self.pos_dict = {z_ring.genset[i]: -z_ring.genset[i] for i in range(100)}
+        self.vec0 = self.poly_to_vec(poly)
+
+    # def _init_basevec(self, dc):
+    #     self.monom_to_vec = {}
+    #     index = 0
+    #     for mn in dc:
+    #         if dc[mn] == 0:
+    #             continue
+    #         self.monom_to_vec[mn] = index
+    #         index += 1
+
+    def poly_to_vec(self, poly):
+        spake = self.z_ring(poly.xreplace(self.pos_dict))
+        spake = self.z_ring.from_dict({k: expand(spa) for k, spa in spake.items()})
+        # #print(f"{v}={spake}")
+        monom_dct = {}
+        for k, pork in spake.items():
+            spink = pork.as_coefficients_dict()
+            for sperg, po in spink.items():
+                if po == 0:
+                    continue
+                monom_dct[sperg] = monom_dct.get(sperg, {})
+                monom_dct[sperg][k] = monom_dct[sperg].get(k, 0) + int(po)
+        return monom_dct
+        # poly = expand(sympify(poly).xreplace({self.z_ring.genset[1]: 0}))
+
+        # dc = poly.as_coefficients_dict()
+
+        # if self.vec0 is None:
+        #     self._init_basevec(dc)
+
+        # vec = {}
+        # for mn in dc:
+        #     cf = dc[mn]
+        #     if cf == 0:
+        #         continue
+        #     cf = abs(int(cf))
+        #     try:
+        #         index = self.monom_to_vec[mn]
+        #     except KeyError:
+        #         return None
+        #     if self.vec0 is not None and self.vec0[index] < cf:
+        #         return None
+        #     vec[index] = cf
+        # return vec

@@ -46,14 +46,14 @@ def coeff_to_monom(monom, genset):
     return Dict(dct)
 
 def genvars_monom(arg):
-    if is_of_func_type(arg, FactorialElemSym):
+    if is_of_func_type(arg, FactorialElemSym) or is_of_func_type(arg, FactorialCompleteSym):
         monom = prod(genvars(arg))
     elif isinstance(arg, Mul):
         monom = S.One
         for arg2 in arg.args:
-            if is_of_func_type(arg2, FactorialElemSym):
+            if is_of_func_type(arg2, FactorialElemSym) or is_of_func_type(arg2, FactorialCompleteSym):
                 monom *= prod(genvars(arg2))
-            if isinstance(arg2, Pow) and is_of_func_type(arg2.args[0], FactorialElemSym):
+            if isinstance(arg2, Pow) and (is_of_func_type(arg2.args[0], FactorialElemSym) or is_of_func_type(arg2.args[0], FactorialCompleteSym)):
                 monom *= prod(genvars(arg2.args[0]))  ** int(arg2.args[1])
     elif isinstance(arg, Pow):
         monom = prod(genvars(arg.args[0])) ** int(arg.args[1])
@@ -62,14 +62,14 @@ def genvars_monom(arg):
     return monom
 
 def coeffvars_monom(arg):
-    if is_of_func_type(arg, FactorialElemSym):
+    if is_of_func_type(arg, FactorialElemSym) or is_of_func_type(arg, FactorialCompleteSym):
         monom = coeffvars(arg)[0] ** degree(arg)
     elif isinstance(arg, Mul):
         monom = S.One
         for arg2 in arg.args:
-            if is_of_func_type(arg2, FactorialElemSym):
+            if is_of_func_type(arg2, FactorialElemSym) or is_of_func_type(arg2, FactorialCompleteSym):
                 monom *= coeffvars(arg2)[0] ** degree(arg2)
-            if isinstance(arg2, Pow) and is_of_func_type(arg2.args[0], FactorialElemSym):
+            if isinstance(arg2, Pow) and (is_of_func_type(arg2.args[0], FactorialElemSym) or is_of_func_type(arg2.args[0], FactorialCompleteSym)):
                 monom *= coeffvars(arg2.args[0])[0] ** (degree(arg2.args[0]) * int(arg2.args[1]))
     elif isinstance(arg, Pow):
         monom = coeffvars(arg.args[0])[0] ** (degree(arg.args[0]) * int(arg.args[1]))
@@ -78,7 +78,7 @@ def coeffvars_monom(arg):
     return monom
 
 
-def splitupgenvars(pos_neg_part):
+def splitupgenvars(pos_neg_part, comp=False):
     if isinstance(pos_neg_part, Add):
         bacon = pos_neg_part
         args = bacon.args
@@ -86,11 +86,14 @@ def splitupgenvars(pos_neg_part):
         args = [pos_neg_part]
     dct = {}
     for arg in args:
-        monom = genvars_monom(arg)
+        if comp:
+            monom = coeffvars_monom(arg)
+        else:
+            monom = genvars_monom(arg)
         dct[coeff_to_monom(monom,y)] = dct.get(coeff_to_monom(monom,y), S.Zero) + arg
     return dct
 
-def splitupcoeffvars(pos_neg_part):
+def splitupcoeffvars(pos_neg_part, comp=False):
     if isinstance(pos_neg_part, Add):
         bacon = pos_neg_part
         args = bacon.args
@@ -98,7 +101,10 @@ def splitupcoeffvars(pos_neg_part):
         args = [pos_neg_part]
     dct = {}
     for arg in args:
-        monom = coeffvars_monom(arg)
+        if comp:
+            monom = genvars_monom(arg)
+        else:
+            monom = coeffvars_monom(arg)
         dct[coeff_to_monom(monom,z)] = dct.get(coeff_to_monom(monom,z), S.Zero) + arg
     return dct
 
@@ -142,92 +148,88 @@ def splitupallvars(pos_neg_part):
 
 # simplify graph
 for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
-    if expand(bargain,func=True) == S.Zero:
+    if expand(bargain,func=True) == S.Zero or isinstance(bargain, Integer):
         continue
     bargain = expand(bargain)
-    # flaffer = expand(bargain, func=True)
-    # r = flaffer
-    # print(f"{flaffer=}")
-    # for i in range(1,10):
-    #     print(sympy.sympify(z[i]))
-    #     q, r = div(sympy.sympify(r), sympy.sympify(z[i]))
-    #     if q!=S.Zero:
-    #         print(f"{q=}")
-    #     print(f"{r=} after doink")
-    # print(f"{r=}")
-    # continue
-
-    # try:
-    #     posify(sympify(expand_func(bargain)),bagel1,porn,k,y,z,optimize=None,msg=True)
-    #     continue
-    # except Exception:
-    #     pass
-    #print(bargain)
-    # bacon = bargain
-    # print(bacon)
     bacon = bargain
+    bacon = sympify(FactorialCompleteSym.from_expr_elem_sym(bacon))
     bacon_new = 1
     print(f"initial {bacon=}")
     while bacon != bacon_new:
         bacon_new = bacon
         if isinstance(bacon, Add):
             for arg in bacon.args:
-                if isinstance(arg, Mul) and isinstance(arg.args[0],Integer) and arg.args[0] < 0:
+                if not(isinstance(arg, Mul) and isinstance(arg.args[0],Integer) and arg.args[0] < 0):
                     expr = sympy.sympify(arg)
-                    for fromp in arg.args[1:]:
+                    if isinstance(arg, Mul):
+                        args = arg.args
+                    elif isinstance(arg, Pow):
+                        args = int(arg.args[1])*[arg.args[0]]
+                    elif isinstance(arg, FactorialCompleteSym):
+                        args [arg]
+                    else:
+                        continue
+                    for fromp in args:
                         if isinstance(fromp, Pow):
                             fromp = fromp.args[0]
+                        if not isinstance(fromp, FactorialCompleteSym):
+                            continue
                         marfle = fromp
-                        bacon = expand(split_out_vars(bacon, genvars(marfle), None))
+                        bacon = expand(split_out_vars(bacon, genvars(marfle)[:1], None))
+
+    if isinstance(bacon, Integer):
+        continue
                         #break
                     #bacon = expand(split_out_vars(bacon, None, coeffvars(marfle)[-1:]))
-    print(f"first {bacon=}")
-    bacon_new = 0
-    #bacon = canonicalize_elem_syms(bacon)
-    # while bacon != bacon_new:
-    #     bacon_new = bacon
-    #     if isinstance(bacon, Add):
-    #         for arg in bacon.args:
-    #             if isinstance(arg, Mul) and isinstance(arg.args[0],Integer) and arg.args[0] < 0:
-    #                 expr = sympy.sympify(arg)
-    #                 for fromp in arg.args[1:]:
-    #                     if isinstance(fromp, Pow):
-    #                         fromp = fromp.args[0]
-    #                     marfle = fromp
-    #                     bacon = expand(split_out_vars(bacon, genvars(marfle)[:len(genvars(marfle))//2], None))
-    #                     #break
-    #                 #bacon = expand(split_out_vars(bacon, None, coeffvars(marfle)[-1:]))
-    # print(f"second {bacon=}")
-    #bacon = canonicalize_elem_syms_coeff(bacon)
-    if sympy.sstr(sympy.sympify(bacon)).find("-") != -1:
-        print("Trying to save it")
-        bacon = sympify(FactorialCompleteSym.from_expr_elem_sym(bacon))
-        assert (expand(bacon - bargain, func=True) == S.Zero)
-        print(f"iter {bacon=}")
-        bacon_new = 0
-        bacon = sympify(bacon)
-        while bacon != bacon_new:
-            bacon_new = bacon
-            if isinstance(bacon, Add):
-                for arg in bacon.args:
-                    if isinstance(arg, Mul) and isinstance(arg.args[0],Integer) and arg.args[0] < 0:
-                        expr = arg
-                        for fromp in arg.args[1:]:
-                            if isinstance(fromp, Pow):
-                                fromp = fromp.args[0]
-                            marfle = fromp
-                            bacon = expand(split_out_vars(bacon, genvars(marfle), None))
-                            #break
-                        #bacon = expand(split_out_vars(bacon, None, coeffvars(marfle)[-1:]))
-    print(f"{sympy.sympify(bacon)=}")
-    print(f"{expand(bacon - bargain,func=True)}")
-    assert (expand(bacon - bargain, func=True) == S.Zero)
+    # print(f"first {bacon=}")
+    # #bacon = canonicalize_elem_syms(bacon)
+    # bacon_new = 0
+    # #bacon = canonicalize_elem_syms(bacon)
+    # # while bacon != bacon_new:
+    # #     bacon_new = bacon
+    # #     if isinstance(bacon, Add):
+    # #         for arg in bacon.args:
+    # #             if isinstance(arg, Mul) and isinstance(arg.args[0],Integer) and arg.args[0] < 0:
+    # #                 expr = sympy.sympify(arg)
+    # #                 for fromp in arg.args[1:]:
+    # #                     if isinstance(fromp, Pow):
+    # #                         fromp = fromp.args[0]
+    # #                     marfle = fromp
+    # #                     bacon = expand(split_out_vars(bacon, genvars(marfle)[:len(genvars(marfle))//2], None))
+    # #                     #break
+    # #                 #bacon = expand(split_out_vars(bacon, None, coeffvars(marfle)[-1:]))
+    # # print(f"second {bacon=}")
+    # #bacon = canonicalize_elem_syms_coeff(bacon)
+    # # if sympy.sstr(sympy.sympify(bacon)).find("-") != -1:
+    # #     print("Trying to save it")
+    # #     bacon = sympify(FactorialCompleteSym.from_expr_elem_sym(bacon))
+    # #     assert (expand(bacon - bargain, func=True) == S.Zero)
+    # #     print(f"iter {bacon=}")
+    # #     bacon_new = 0
+    # #     while bacon != bacon_new:
+    # #         bacon_new = bacon
+    # #         if isinstance(bacon, Add):
+    # #             for arg in bacon.args:
+    # #                 if isinstance(arg, Mul) and isinstance(arg.args[0],Integer) and arg.args[0] < 0:
+    # #                     expr = arg
+    # #                     for fromp in arg.args[1:]:
+    # #                         if isinstance(fromp, Pow):
+    # #                             fromp = fromp.args[0]
+    # #                         marfle = fromp
+    # #                         bacon = expand(split_out_vars(bacon, genvars(marfle)[:1], None))
+    # #                         #break
+    #                     #bacon = expand(split_out_vars(bacon, None, coeffvars(marfle)[-1:]))
+    # print(f"{sympy.sympify(bacon)=}")
+    # print(f"{expand(bacon - bargain,func=True)}")
+    # assert (expand(bacon - bargain, func=True) == S.Zero)
+    bacon = FactorialCompleteSym.to_expr_elem_sym(bacon)
+    print(f"Elemorkle {bacon=}")
     if str(sympy.sympify(bacon)).find("-") == -1:
         success+=1
     else:
         fail += 1
     continue
-    dct = splitupcoeffvars(bacon)
+    dct = splitupcoeffvars(bacon,comp=True)
     if isinstance(bacon, Add):
     #     dct = {}
     #     for arg in bacon.args:
@@ -282,18 +284,19 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
                         pos_part += bargle
                         #dctyep[monom] = voib_bo
                     except Exception:
+                        flip = True
                         if isinstance(bargle, Add):
                             for arg in bargle.args:
                                 if isinstance(arg, Mul) and isinstance(arg.args[0],Integer) and int(arg.args[0]) < 0:
-                                    neg_part -= arg
-                                else:
                                     pos_neg_part += arg
+                                else:
+                                    neg_part += arg
                         else:
                             arg = bargle
                             if isinstance(arg, Mul) and isinstance(arg.args[0],Integer) and int(arg.args[0]) < 0:
-                                neg_part -= arg
-                            else:
                                 pos_neg_part += arg
+                            else:
+                                neg_part += arg
                         print(f"Nope {monom}")#: {bargle=}")
                         anyn = True
                         # dctnope[monom] = voib_bo
