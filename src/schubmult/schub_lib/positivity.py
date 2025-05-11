@@ -41,8 +41,7 @@ logger = get_logger(__name__)
 
 def compute_positive_rep(val, var2=None, var3=None, msg=False):
     try:
-        val2 = int(expand(val))
-        return val2
+        return int(expand(val))
     except Exception:
         pass
     # opt = Optimizer(z_ring, val)
@@ -89,17 +88,20 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
             mn1L += [mm0]
     # logger.debug("this")
     for mn1 in mn1L:
-        comblistmn1 = [1]
+        comblistmn1 = [S.One]
         for i in range(n1, len(mn1)):
             if mn1[i] != 0:
                 arr = [*comblistmn1]
                 comblistmn12 = []
                 mn1_2 = (*mn1[n1:i], 0, *mn1[i + 1 :])
                 for mm0 in lookup[mn1_2]:
-                    prd = sympify(prod(
+                    prd = sympify(
+                        prod(
                             [varsimp2[k] - varsimp3[i - n1] for k in range(n1) if mm0[k] == 1],
-                        ))
-                    comblistmn12 += [a*prd for a in arr]
+                            start=S.One,
+                        ),
+                    )
+                    comblistmn12 += [a * prd for a in arr]
                 comblistmn1 = comblistmn12
         for i in range(len(comblistmn1)):
             b1 = comblistmn1[i]
@@ -255,6 +257,57 @@ def posify(
         # if expand(val - oldval) != 0:
         #     # logger.debug("This is bad")
         #     # logger.debug(f"{u2=} {v2=} {w2=} {val=} {oldval=}")
+    ## TODO: DOOO THIS
+    # cd = code(v)
+
+    # # find one that is hanging off
+    # # max_cd = 0
+    # # max_index = -1
+    # good_index = None
+    # for i in range(len(cd)):
+    #     if i < len(cd) and cd[i] < cd[i+1]:
+    #         continue
+    #     good = True
+    #     for j in range(i):
+    #         if cd[i] <= cd[j] + i - j - 1:
+    #             good = False
+    #             break
+    #     if good:
+    #         good_index = i
+    #         p = 1
+    #         for plus in range(1,len(cd)-i):
+    #             if cd[i+plus] < cd[i + plus - 1]:
+    #                 break
+    #             elif cd[i + plus] > cd[i + plus - 1]:
+    #                 break
+
+    #         break
+    # if good_index:
+    #     if good_index == len(cd) - 1:
+    #         p = cd[good_index] - cd[good_index - 1]
+    #     else:
+    #         p = cd[good_index] - max(cd[good_index+1],cd[good_index-1])
+    #     print(f"Broinkspat {u.code=} {v.code=} {w.code=} {good_index=} {p=}")
+    #     cd[good_index] -= p
+    #     from schubmult.abc import x
+    #     from schubmult.rings import DoubleSchubertRing
+    #     #from schubmult.symmetric_polynomials import H
+    #     R = DoubleSchubertRing(x,var2)
+    #     R2 = DoubleSchubertRing(x,var3)
+    #     new_v = uncode(cd)
+    #     print(f"{code(new_v)=}")
+    #     elem = R(u)*R2(new_v)
+    #     val2 = S.Zero
+    #     R3 = DoubleSchubertRing(x,var3[cd[good_index]+1 - p:])
+    #     elem_sym = R3(uncode(([0]*good_index)+[p]))
+    #     for w3, vv2 in elem.items():
+    #         elem2 = R(w3)*elem_sym
+    #         if w in elem2:
+    #             val2 += elem2[w] * posify(vv2,u,new_v,w3,var2,var3,msg,sign_only,optimize)
+    #     return val2
+
+    # elem_sym_poly(1, good_index + 1, , var3[cd[good_index]+1:])*posify(schubmult_double_pair(u, uncode(cd), var2, var3).get(w,S.Zero),u,uncode(cd),w,var2,var3,msg,sign_only,optimize)
+
     if will_formula_work(v, u) or dominates(u, w):
         # logger.debug("Recording line number")
         if sign_only:
@@ -1028,104 +1081,3 @@ def dualpieri(mu, v, w):
         res2 += [[vlist, vpl]]
     # logger.debug(f"{res2=}")
     return res2
-
-
-class Optimizer:
-    def __init__(self, z_ring, poly):
-        self.z_ring = z_ring
-        self.monom_to_vec = {}
-        self.vec0 = None
-        self.vec0 = self.poly_to_vec(poly)
-
-    def _init_basevec(self, dc):
-        self.monom_to_vec = {}
-        index = 0
-        for mn in dc:
-            if dc[mn] == 0:
-                continue
-            self.monom_to_vec[mn] = index
-            index += 1
-
-    def poly_to_vec(self, poly):
-        poly = expand(sympify(poly).xreplace({self.z_ring.genset[1]: 0}))
-
-        dc = poly.as_coefficients_dict()
-
-        if self.vec0 is None:
-            self._init_basevec(dc)
-
-        vec = {}
-        for mn in dc:
-            cf = dc[mn]
-            if cf == 0:
-                continue
-            cf = abs(int(cf))
-            try:
-                index = self.monom_to_vec[mn]
-            except KeyError:
-                return None
-            if self.vec0 is not None and self.vec0[index] < cf:
-                return None
-            vec[index] = cf
-        return vec
-
-
-class SchubOptimizer(Optimizer):
-    # spake = z_ring(sympify(expand_func(v)).xreplace(vnv))
-    # spake = zs_ring.from_dict({k:expand(spa) for k,spa in spake.items()})
-    # #print(f"{v}={spake}")
-    # fartspangle = {}
-    # for k,pork in spake.items():
-    #     spink = pork.as_coefficients_dict()
-    #     for sperg, po in spink.items():
-    #         if po == 0:
-    #             continue
-    #         fartspangle[sperg] = fartspangle.get(sperg,0) + 1
-    def __init__(self, z_ring, poly):
-        self.z_ring = z_ring
-        self.pos_dict = {z_ring.genset[i]: -z_ring.genset[i] for i in range(100)}
-        self.vec0 = self.poly_to_vec(poly)
-
-    # def _init_basevec(self, dc):
-    #     self.monom_to_vec = {}
-    #     index = 0
-    #     for mn in dc:
-    #         if dc[mn] == 0:
-    #             continue
-    #         self.monom_to_vec[mn] = index
-    #         index += 1
-
-    def poly_to_vec(self, poly):
-        spake = self.z_ring(poly.xreplace(self.pos_dict))
-        spake = self.z_ring.from_dict({k: expand(spa) for k, spa in spake.items()})
-        # #print(f"{v}={spake}")
-        monom_dct = {}
-        for k, pork in spake.items():
-            spink = pork.as_coefficients_dict()
-            for sperg, po in spink.items():
-                if po == 0:
-                    continue
-                monom_dct[sperg] = monom_dct.get(sperg, {})
-                monom_dct[sperg][k] = monom_dct[sperg].get(k, 0) + int(po)
-        return monom_dct
-        # poly = expand(sympify(poly).xreplace({self.z_ring.genset[1]: 0}))
-
-        # dc = poly.as_coefficients_dict()
-
-        # if self.vec0 is None:
-        #     self._init_basevec(dc)
-
-        # vec = {}
-        # for mn in dc:
-        #     cf = dc[mn]
-        #     if cf == 0:
-        #         continue
-        #     cf = abs(int(cf))
-        #     try:
-        #         index = self.monom_to_vec[mn]
-        #     except KeyError:
-        #         return None
-        #     if self.vec0 is not None and self.vec0[index] < cf:
-        #         return None
-        #     vec[index] = cf
-        # return vec
