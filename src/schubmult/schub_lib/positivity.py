@@ -364,11 +364,12 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
             for vv2 in mnset:
                 if len(vv2.get(z_index, [])) <= len(pw):
                     for pork, bingo in vv2.items():
+                        if pork == z_index:
+                            continue
                         lookup[key][z_index].update(bingo)
     for mn1 in mnset:
         comblistmn1 = [S.One]
         for z_index, vs in mn1.items():
-            degree = len(vs)
             arr = np.array(comblistmn1)
             comblistmn12 = []
             #n1 = mn1[z_index]
@@ -377,7 +378,7 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
             lst = lookup[mn1][z_index]
             # print(lst)
             from itertools import combinations_with_replacement
-            combs = list(combinations_with_replacement(lst, degree))
+            combs = list(combinations_with_replacement(lst, len(vs)))
             for comb in combs:
                 comblistmn12 += (
                     arr
