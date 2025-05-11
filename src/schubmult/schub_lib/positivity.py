@@ -78,7 +78,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
         base_vectors = {}
 
         val_expr = expand(val)
-        vec0 = val_expr.as_coefficients_dict()
+        vec0 = {k: v for k,v in val_expr.subs({var3[1]: S.Zero}).as_coefficients_dict().items() if v != S.Zero}
         val_poly = poly(val_expr, *var22, *var33)
         # vec = opt.poly_to_vec(val)
         mn = val_poly.monoms()
@@ -115,7 +115,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
             for i in range(len(comblistmn1)):
                 b1 = comblistmn1[i]
                 # vec0 = opt.poly_to_vec(b1)
-                dct2 = expand(b1).as_coefficients_dict()
+                dct2 = {k: v for k,v in expand(b1).subs({var3[1]: S.Zero}).as_coefficients_dict().items() if v != S.Zero}
                 bad = False
                 for k in dct2:
                     if abs(vec0.get(k, 0)) < abs(dct2[k]):
