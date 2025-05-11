@@ -49,7 +49,7 @@ def check_positive(v2, same, subs_dict2, var2, var3, q_var):
             sym_val = expand(parse_coeff(val))
             # print(f"{sym_val=} not an int", file=sys.stderr)
             assert expand(sym_val) == expand(
-                compute_positive_rep(sym_val, var2, var3, do_pos_neg=False),
+                compute_positive_rep(sym_val, var2, var3),
             )
     return True
 

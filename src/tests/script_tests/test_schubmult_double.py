@@ -50,11 +50,11 @@ def check_positive(v, coprod, same, var_r):
         #print(f"{sym_val=} not an int", file=sys.stderr)
         if coprod:
             assert expand(sym_val) == expand(
-                compute_positive_rep(sym_val, var3, var2, do_pos_neg=False),
+                compute_positive_rep(sym_val, var3, var2),
             )
         else:
             assert expand(sym_val) == expand(
-                compute_positive_rep(sym_val, var2, var3, do_pos_neg=False),
+                compute_positive_rep(sym_val, var2, var3),
             )
     #print(f"Donebaby {coprod=}", file=sys.stderr)
     return True

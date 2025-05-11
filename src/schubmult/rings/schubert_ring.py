@@ -7,7 +7,7 @@ import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, uncode
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand_func, is_of_func_type, sympify
-from schubmult.symmetric_polynomials import CompleteSym, FactorialCompleteSym, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars
+from schubmult.symmetric_polynomials import FactorialCompleteSym, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -399,7 +399,7 @@ class DoubleSchubertRing(BaseSchubertRing):
             perm_list = schub_lib.complete_sym_positional_perms(k, degree(x), *indexes)
             for perm, df, sign in perm_list:
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in {*indexes, *[j + 1 for j in range(len(perm)) if perm[j] != k[j]]}]
-                coeff = CompleteSym(degree(x) - df, numvars(x) + df, remaining_vars, coeffvars(x))  # leave as elem sym
+                coeff =FactorialCompleteSym(degree(x) - df, numvars(x) + df, remaining_vars, coeffvars(x))  # leave as elem sym
                 ret += self.domain_new(sign * v * expand_func(coeff)) * self(perm)
         return ret
 
@@ -588,7 +588,7 @@ class SingleSchubertRing(DoubleSchubertRing):
     #         if any(a in self.genset for a in coeffvars(x)) and len(coeffs_to_remove):
     #             return self.mul_expr(elem.split_out_vars(x.to_complete_sym(), coeffs_to_remove))
     #         return self.from_dict({k: self.domain_new(self.handle_sympoly(x)) * v for k, v in elem.items()})
-    #     if isinstance(sympify(x), CompleteSym):
+    #     if isinstance(sympify(x),FactorialCompleteSym):
     #         if all(a in self.genset for a in x.genvars) and not any(a in self.genset for a in coeffvars(x)):
     #             return self.complete_mul(sympify(elem), x)
     #         gens_to_remove = [a for a in x.genvars if a not in self.genset]
@@ -769,7 +769,7 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
             for perm, df, sign in perm_list:
                 # print(f"{(perm, df, sign)=}")
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in {*indexes, *[j + 1 for j in range(len(perm)) if perm[j] != k[j]]}]
-                coeff = CompleteSym(degree(x) - df, numvars(x) + df, remaining_vars, coeffvars(x))  # leave as elem sym
+                coeff =FactorialCompleteSym(degree(x) - df, numvars(x) + df, remaining_vars, coeffvars(x))  # leave as elem sym
                 ret += self.domain_new(sign * v * coeff) * self(perm)
         return ret
 

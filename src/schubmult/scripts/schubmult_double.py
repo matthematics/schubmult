@@ -64,7 +64,7 @@ def sv_posify(val):
     return val.xreplace(bingle_dict)
 
 
-def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, elem_sym):
+def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg):
     try:
         return int(val)
     except Exception:
@@ -80,7 +80,6 @@ def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, 
                     var2,
                     var3,
                     msg,
-                    elem_sym=elem_sym,
                 )
             else:
                 val = posify(
@@ -181,8 +180,6 @@ def _display_full(
                                 var2,
                                 var3,
                                 msg,
-                                False,
-                                None,
                             )
                             val2 = flip_symbol_signs(val2)
                             if check and expand(val - val2) != 0:
@@ -353,11 +350,8 @@ def main(argv=None):
                 posified = True
             elif not posified:
                 coeff_dict = check_coeff_dict
-            # if not same:
-            #     extra_coeff_dict = DSx(perms[0],elem_sym=True) * DSx(perms[1],"z")
             if not posified and display_positive:
-                # print(f"{coeff_dict=}")
-                coeff_dict = {k: pre_posify(perms, k, v, check, check_coeff_dict.get(k, 0), same, down, var2, var3, msg, elem_sym=None) for k, v in coeff_dict.items()}
+                coeff_dict = {k: pre_posify(perms, k, v, check, check_coeff_dict.get(k, 0), same, down, var2, var3, msg) for k, v in coeff_dict.items()}
 
             if pr or formatter is None:
                 raw_result_dict = _display_full(
