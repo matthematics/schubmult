@@ -373,7 +373,7 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
             comblistmn12 = []
             #n1 = mn1[z_index]
             #combinations degree in the lists
-            
+            # fslower but we can do better
             lst = lookup[mn1][z_index]
             # print(lst)
             from itertools import combinations_with_replacement
