@@ -320,6 +320,19 @@ def splitupgenvars(pos_neg_part, genset):
         dct[coeff_to_monom(monom, genset)] = dct.get(coeff_to_monom(monom, genset), S.Zero) + arg
     return dct
 
+def splitupallvars(pos_neg_part, gs1, gs2):
+    if isinstance(pos_neg_part, Add):
+        bacon = pos_neg_part
+        args = bacon.args
+    else:
+        args = [pos_neg_part]
+    dct = {}
+    for arg in args:
+        monom1 = Dict(coeff_to_monom(genvars_monom(arg, gs1),gs1))
+        monom2 = Dict(coeff_to_monom(coeffvars_monom(arg, gs2),gs2))
+        dct[(monom1, monom2)] = dct.get((monom1, monom2), S.Zero) + arg
+    return dct
+
 
 def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=True):
     val_expr = expand(val, func=True)
@@ -328,36 +341,36 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
     vec = opt.vec0
     val = canonicalize_elem_syms(expand(val))
     dctcv = splitupcoeffvars(val, var3)
-    dctgv = splitupgenvars(val, var2)
+    mndct = {k: set(splitupgenvars(v,var2).keys()) for k, v in dctcv.items()}
+    # mndct = {}
+    # for k, st in dctmn.items():
+    #     if k not in mndct:
+    #         mndct[k] = set()
+    #     mndct[k].update(
     base_vectors = []
     base_monoms = []
-    # for mn1 in dctgv:
-    #     vsets = []
-    #     for i in mn1:
-    #         p = mn1[int(i)]
-    #         for j in range(int(p)):
-    #             if j >= len(vsets):
-    #                 vsets += [set()]
-    #             vsets[j].add(var2[int(i)])
-    #     for mn2 in dctcv:
-    #         b1 = S.One
-    #         total_list = [S.One]
-    #         for varnum, pw in mn2.items():
-    #             varnum = int(varnum)
-    #             pw = int(pw)
-    #             if len(total_list) == 0:
-    #                 break
-    #             total_list2 = []
-    #             for vs in vsets:
-    #                 if len(vs) == pw:
-    #                     for vl in total_list:
-    #                         total_list2 += [vl * prod([vr - var3[varnum] for vr in vs])]
-    #             total_list = total_list2
-    #         for b1 in total_list:
-    #             vec0 = opt.poly_to_vec(b1)
-    #             if vec0:
-    #                 base_vectors += [vec0]
-    #                 base_monoms += [b1]
+    #base_monoms += [b1]s
+    for mn1 in mndct:
+        comblistmn1 = [S.One]
+        for z_index in mn1:
+            arr = np.array(comblistmn1)
+            comblistmn12 = []
+            #n1 = mn1[z_index]
+            mn1_2 = Dict({k: p for k, p in mn1.items()() if k != z_index})
+            for mm0 in mndct[mn1_2]:
+                comblistmn12 += (
+                    arr
+                    * np.prod(
+                        [var2[int(k)] - var3[int(z_index)] for k,pw in mm0.items() if pw == 1],
+                    )
+                ).tolist()
+            comblistmn1 = comblistmn12
+        for i in range(len(comblistmn1)):
+            b1 = comblistmn1[i]
+            vec0 = opt.poly_to_vec(b1)
+            if vec0:
+                base_vectors += [vec0]
+                base_monoms += [b1]
     vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(base_vectors))]
     lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
     lp_prob += 0
