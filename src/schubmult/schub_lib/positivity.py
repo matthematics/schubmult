@@ -353,6 +353,18 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
     base_vectors = {}
     base_monoms = []
     #base_monoms += [b1]s
+    lookup = {}
+        # logger.debug("this")
+    for vv in mnset:
+        key = vv
+        if key not in lookup:
+            lookup[key] = {}
+        for z_index, pw in vv.items():
+            lookup[key][z_index] = set()
+            for vv2 in mnset:
+                if len(vv2.get(z_index, [])) <= len(pw):
+                    for pork, bingo in vv2.items():
+                        lookup[key][z_index].update(bingo)
     for mn1 in mnset:
         comblistmn1 = [S.One]
         for z_index, vs in mn1.items():
@@ -362,33 +374,27 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
             #n1 = mn1[z_index]
             #combinations degree in the lists
             
-            for mn2 in mnset:
-                lst = set()
-                for sp, vs2 in mn2.items():
-                    if sp == z_index:
-                        if len(vs2) > len(vs):
-                            break
-                        continue
-                    lst.update(vs2)
-                # combintations
-                from itertools import combinations
-                combs = list(combinations(lst, degree))
-                for comb in combs:
-                    comblistmn12 += (
-                        arr
-                        * np.prod(
-                            [k - var3[int(z_index)] for k in comb],
-                        )
-                    ).tolist()
-                comblistmn1 = comblistmn12
-            for i in range(len(comblistmn1)):
-                b1 = comblistmn1[i]
-                vec0 = opt.poly_to_vec(b1)
-                
-                # if b1 in base_monoms:
-                #     continue
-                if vec0 is not None:
-                    base_vectors[b1] = vec0
+            lst = lookup[mn1][z_index]
+            # print(lst)
+            from itertools import combinations_with_replacement
+            combs = list(combinations_with_replacement(lst, degree))
+            for comb in combs:
+                comblistmn12 += (
+                    arr
+                    * np.prod(
+                        [k - var3[int(z_index)] for k in comb],
+                    )
+                ).tolist()
+            comblistmn1 = comblistmn12
+        # print(comblistmn12)
+        for i in range(len(comblistmn1)):
+            b1 = comblistmn1[i]
+            vec0 = opt.poly_to_vec(b1)
+            
+            # if b1 in base_monoms:
+            #     continue
+            if vec0 is not None:
+                base_vectors[b1] = vec0
     vrs = {bv: pu.LpVariable(name=f"a{bv}", lowBound=0, cat="Integer") for bv in base_vectors}
     lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
     lp_prob += 0
@@ -438,9 +444,7 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
         x = vrs[k].value()
         if x != 0 and x is not None:
             val2 += int(x) * k
-    if expand(val - val2) != 0:
-        # print(f"{val=}")
-        # print(f"{val2=}")
+    if expand(val - val2, func=True) != 0:
         # print(f"{vec=}")
         raise Exception
     # print(f"{val2=}")
