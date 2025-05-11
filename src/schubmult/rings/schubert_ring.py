@@ -6,8 +6,8 @@ import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, uncode
-from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand_func, init_printing, is_of_func_type, sstr, sympify
-from schubmult.symmetric_polynomials import CompleteSym, ElemSym, FactorialCompleteSym, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars
+from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand_func, is_of_func_type, sympify
+from schubmult.symmetric_polynomials import CompleteSym, FactorialCompleteSym, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 

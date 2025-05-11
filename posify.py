@@ -167,7 +167,6 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
     # print(bacon)
     bacon = bargain
     bacon_new = 1
-    print(f"initial {bacon=}")
     while bacon != bacon_new:
         bacon_new = bacon
         if isinstance(bacon, Add):
@@ -180,7 +179,6 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
                         marfle = fromp
                         bacon = expand(split_out_vars(bacon, genvars(marfle), None))
                     #bacon = expand(split_out_vars(bacon, None, coeffvars(marfle)[-1:]))
-    print(f"first {bacon=}")
     bacon_new = 0
     #bacon = canonicalize_elem_syms(bacon)
     while bacon != bacon_new:
@@ -196,7 +194,6 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
                         bacon = expand(split_out_vars(bacon, genvars(marfle)[:len(genvars(marfle))//2], None))
                         break
                     #bacon = expand(split_out_vars(bacon, None, coeffvars(marfle)[-1:]))
-    print(f"second {bacon=}")
     if str(bacon).find("-") != -1:
         bacon = sympify(FactorialCompleteSym.from_expr_elem_sym(sympy.sympify(bacon)))
         bacon_new = 0
@@ -213,7 +210,6 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
                             bacon = expand(split_out_vars(bacon, genvars(marfle), None))
                             break
                         #bacon = expand(split_out_vars(bacon, None, coeffvars(marfle)[-1:]))
-    print(f"{sympy.sympify(bacon)=}")
     if str(sympy.sympify(bacon)).find("-") == -1:
         success+=1
     else:
@@ -241,8 +237,6 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
         # if schuber.expand() == S.Zero:
         #     print("Dodged a bullet")
         #     continue
-        print(f"{k}")
-        print(f"{dct=}")
         # if any(isinstance(val,Add) for val in dct.values()):
         #     raise Exception("bongdunket")
         #print(schuber.ring.from_dict({k: abs(v) for k, v in schuber.items()}))
@@ -269,7 +263,6 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
                     # plop2 = z_ring.from_dict({k: expand(efficient_subs(v,subs_dict),mul=False) for k,v in plop.items()})
                     try:
                         compute_positive_rep(expand(bargle, func=True, mul=False), y, z, False, False)
-                        print(f"Yep: {monom}")#: {bargle=}")
                         #dctbool[monom] = True
                         pos_part += bargle
                         #dctyep[monom] = voib_bo
@@ -286,7 +279,6 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
                                 neg_part -= arg
                             else:
                                 pos_neg_part += arg
-                        print(f"Nope {monom}")#: {bargle=}")
                         anyn = True
                         # dctnope[monom] = voib_bo
             if anyn:
@@ -318,9 +310,6 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
             # print(f"{dctyep2=}")
             # print(f"{dctnope=}")
             # print(f"{dctnope2=}")
-                print(f"{pos_part=}")
-                print(f"{pos_neg_part=}")
-                print(f"{neg_part=}")
                 # dct_neg = splitupgenvars(neg_part)
             # dct_pos_neg = splitupgenvars(pos_neg_part)
             # dct_pos = splitupgenvars(pos_part)
@@ -376,7 +365,7 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
             #         args = int(pos_part.args[1])*[pos_part.args[0]]
             #     else:
             #         args = [pos_part]
-                
+
             #     gv = []
             #     for arg in args:
             #         gv += genvars(arg)
@@ -399,7 +388,7 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
             #     ctbad+=1
             #     import traceback
             #     traceback.print_exc()
-            
+
             # # def ctneg(expr):
             # #     return str(expr).count("-")
             # # yep_list = [(dctyep[monom],z_ring.from_dict(v)) for monom, v in dctyep2.items()]
@@ -413,9 +402,7 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
             # # #         new_yep_list = []
             # # #         for spob2, elem2 in nope_list:
             # # #             if ctneg(elem + elem2) < ctneg(elem) + ctneg(elem2):
-            # # #                 new_yep_list 
-            
-print(f"{success=}")
-print(f"{fail=}")
-        
+            # # #                 new_yep_list
+
+
       # Anything that isn't Schub will disappear

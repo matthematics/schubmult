@@ -52,7 +52,6 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
         # if schuber.expand() == S.Zero:
         #     print("Dodged a bullet")
         #     continue
-        print(f"{k}")
         #print(schuber.ring.from_dict({k: abs(v) for k, v in schuber.items()}))
         dctyep = {}
         dctnope = {}
@@ -68,13 +67,11 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
                 # plop2 = z_ring.from_dict({k: expand(efficient_subs(v,subs_dict),mul=False) for k,v in plop.items()})
                 try:
                     compute_positive_rep(expand(bargle, func=True, mul=False), y, z, False, False)
-                    print(f"Yep: {monom}")#: {bargle=}")
                     #dctbool[monom] = True
                     pos_part += bargle
                     #dctyep[monom] = voib_bo
                 except Exception:
                     neg_part += bargle
-                    print(f"Nope {monom}")#: {bargle=}")
                     anyn = True
                     # dctnope[monom] = voib_bo
         if anyn:
@@ -104,18 +101,15 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
             # print(f"{dctyep2=}")
             # print(f"{dctnope=}")
             # print(f"{dctnope2=}")
-            print(f"{pos_part=}")
-            print(f"{neg_part=}")
             try:
                 bagel = compute_positive_rep(expand(neg_part, func=True, mul=False), y, z, False, False)
                 bagel = bagel+expand_func(pos_part)
-                print(f"Yay: {bagel}")
                 ctgood += 1
             except Exception:
                 ctbad+=1
                 import traceback
                 traceback.print_exc()
-            
+
             # def ctneg(expr):
             #     return str(expr).count("-")
             # yep_list = [(dctyep[monom],z_ring.from_dict(v)) for monom, v in dctyep2.items()]
@@ -129,9 +123,7 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
             # #         new_yep_list = []
             # #         for spob2, elem2 in nope_list:
             # #             if ctneg(elem + elem2) < ctneg(elem) + ctneg(elem2):
-            # #                 new_yep_list 
-            
-print(f"{ctgood=}")
-print(f"{ctbad=}")
-        
+            # #                 new_yep_list
+
+
       # Anything that isn't Schub will disappear

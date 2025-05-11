@@ -145,8 +145,8 @@ class E(ElemSym_base):
             #     raise Exception
 
             return Add(
-                *[FactorialElemSym(i, k1 + i -1, self.genvars[:k1 + i - 1], first_vars) * FactorialElemSym(self._p - i, len(self.genvars[k1+i:]), self.genvars[k1+i:], second_vars) for i in range(self._p + 1)]
-            )    
+                *[FactorialElemSym(i, k1 + i -1, self.genvars[:k1 + i - 1], first_vars) * FactorialElemSym(self._p - i, len(self.genvars[k1+i:]), self.genvars[k1+i:], second_vars) for i in range(self._p + 1)],
+            )
         vars1 = [sympify(v) for v in vars1]
         if vars2 is None:
             vars2 = [*self.coeffvars]

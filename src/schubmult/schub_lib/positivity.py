@@ -35,7 +35,7 @@ from schubmult.schub_lib.schub_lib import (
     will_formula_work,
 )
 from schubmult.symbolic import Add, Integer, Mul, Pow, S, Symbol, expand, is_of_func_type, poly, prod, sympify, sympify_sympy
-from schubmult.symmetric_polynomials import FactorialCompleteSym, FactorialElemSym, canonicalize_elem_syms, coeffvars, degree, genvars, numvars
+from schubmult.symmetric_polynomials import FactorialCompleteSym, FactorialElemSym, canonicalize_elem_syms, coeffvars, genvars
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -54,7 +54,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
         notint = True
     if notint:
         z_ring = rings.SingleSchubertRing(var3)
-        opt = Optimizer(z_ring, val)
+        # opt = Optimizer(z_ring, val)
         frees = val.free_symbols
         # logger.debug(f"{frees=}")
         # logger.debug(f"{[type(s) for s in frees]=}")
@@ -75,83 +75,12 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
         # for i in range(len(varsimp3)):
         #     varsimp3[i] = var3[var3list.index(varsimp3[i])]
 
-        base_vectors = []
-        base_monoms = []
-        vec = opt.vec0
+        base_vectors = {}
 
-        # if do_pos_neg:
-        #     smp = val
-        #     flat, found_one = flatten_factors(smp)
-        #     while found_one:
-        #         flat, found_one = flatten_factors(flat, varsimp2, varsimp3)
-        #     pos_part = 0
-        #     neg_part = 0
-        #     if isinstance(flat, Add) and not is_flat_term(flat):
-        #         for arg in flat.args:
-        #             if expand(arg) == 0:
-        #                 continue
-        #             if not is_negative(arg):
-        #                 pos_part += arg
-        #             else:
-        #                 neg_part -= arg
-        #         if neg_part == 0:
-        #             # print("no neg")
-        #             return pos_part
-        #     depth = 1
-
-        #     mons = split_monoms(pos_part, varsimp2, varsimp3)
-        #     mons = {tuple(mn) for mn in mons}
-        #     mons2 = split_monoms(neg_part, varsimp2, varsimp3)
-        #     mons2 = {tuple(mn2) for mn2 in mons2}
-
-        #     # mons2 = split_monoms(neg_part)
-        #     # for mn in mons2:
-        #     # if mn not in mons:
-        #     # mons.add(mn)
-        #     # print(mons)
-        #     status = 0
-        #     size = len(mons)
-        #     while status != 1:
-        #         base_monoms, mons = find_base_vectors(mons, mons2, varsimp2, varsimp3, depth)
-        #         if len(mons) == size:
-        #             raise ValueError("Found counterexample")
-
-        #         size = len(mons)
-        #         base_vectors = []
-        #         for i in range(len(base_monoms)):
-        #             vec0 = opt.poly_to_vec(base_monoms[i])
-        #             if vec0 is not None:
-        #                 base_vectors += [vec0]
-
-        #         vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(base_vectors))]
-        #         lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
-        #         lp_prob += 0
-        #         eqs = opt.base_vec
-        #         for j in range(len(base_vectors)):
-        #             for i in base_vectors[j]:
-        #                 bvi = base_vectors[j][i]
-        #                 if bvi == 1:
-        #                     eqs[i] += vrs[j]
-        #                 else:
-        #                     eqs[i] += bvi * vrs[j]
-        #         for i in eqs.keys():
-        #             lp_prob += eqs[i] == vec[i]
-        #         try:
-        #             solver = pu.PULP_CBC_CMD(msg=msg)
-        #             status = lp_prob.solve(solver)
-        #         except KeyboardInterrupt:
-        #             current_process = psutil.Process()
-        #             children = current_process.children(recursive=True)
-        #             for child in children:
-        #                 child_process = psutil.Process(child.pid)
-        #                 child_process.terminate()
-        #                 child_process.kill()
-        #             raise KeyboardInterrupt()
-        #         status = lp_prob.status
-        # else:
-        # logger.debug("this")
-        val_poly = poly(expand(val), *var22, *var33)
-        vec = opt.poly_to_vec(val)
+        val_expr = expand(val)
+        vec0 = val_expr.as_coefficients_dict()
+        val_poly = poly(val_expr, *var22, *var33)
+        # vec = opt.poly_to_vec(val)
         mn = val_poly.monoms()
         L1 = tuple([0 for i in range(n1)])
         mn1L = []
@@ -178,72 +107,75 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False, do_pos_neg=True):
                     for mm0 in lookup[mn1_2]:
                         comblistmn12 += (
                             arr
-                            * np.prod(
+                            * prod(
                                 [varsimp2[k] - varsimp3[i - n1] for k in range(n1) if mm0[k] == 1],
                             )
                         ).tolist()
                     comblistmn1 = comblistmn12
             for i in range(len(comblistmn1)):
                 b1 = comblistmn1[i]
-                vec0 = opt.poly_to_vec(b1)
-                if vec0:
-                    base_vectors += [vec0]
-                    base_monoms += [b1]
-        vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(base_vectors))]
+                # vec0 = opt.poly_to_vec(b1)
+                dct2 = expand(b1).as_coefficients_dict()
+                bad = False
+                for k in dct2:
+                    if abs(vec0.get(k, 0)) < abs(dct2[k]):
+                        bad = True
+                        break
+                if not bad:
+                    base_vectors[b1] = dct2
+        # vrs = [pu.LpVariable(name=f"a{i}", lowBound=0, cat="Integer") for i in range(len(base_vectors))]
+        vrs = {bv: pu.LpVariable(name=f"a{bv}", lowBound=0, cat="Integer") for bv in base_vectors}
         lp_prob = pu.LpProblem("Problem", pu.LpMinimize)
-        lp_prob += 0
-        eqs = {}
-        for j in range(len(base_vectors)):
-            for i in base_vectors[j]:
-                bvi = int(base_vectors[j][i])
-                if bvi == 1:
-                    if i not in eqs:
-                        eqs[i] = vrs[j]
-                    else:
-                        eqs[i] += vrs[j]
-                elif bvi != 0:
-                    if i not in eqs:
-                        eqs[i] = bvi * vrs[j]
-                    else:
-                        eqs[i] += bvi * vrs[j]
-        for i in eqs:
-            try:
-                lp_prob += eqs[i] == vec.get(i, 0)
-            except KeyError:
-                # print(f"{vec=} {val=}")
-                raise
-        # print(f"{vec=}")
-        # print(lp_prob.constraints)
+    lp_prob += 0
+    eqs = {}
+    for bv, vec in base_vectors.items():
+        for i in vec:
+            bvi = int(vec[i])
+            if bvi == 1:
+                if i not in eqs:
+                    eqs[i] = vrs[bv]
+                else:
+                    eqs[i] += vrs[bv]
+            elif bvi != 0:
+                if i not in eqs:
+                    eqs[i] = bvi * vrs[bv]
+                else:
+                    eqs[i] += bvi * vrs[bv]
+    for i in eqs:
         try:
-            # logger.debug("I IS SOLVING BOLVING")
-            solver = pu.PULP_CBC_CMD(msg=msg)
-            status = lp_prob.solve(solver)  # noqa: F841
-        except KeyboardInterrupt:
-            current_process = psutil.Process()
-            children = current_process.children(recursive=True)
-            for child in children:
-                child_process = psutil.Process(child.pid)
-                child_process.terminate()
-                child_process.kill()
-            raise KeyboardInterrupt()
-        # print(f"{pos_part=}")
-        # print(f"{neg_part=}")
-        # else:
-        # print(f"No dice {flat=}")
-        # exit(1)
-        # #val = pos_part - neg_part
+            lp_prob += eqs[i] == vec0[i]
+        except KeyError:
+            raise
+    # print(f"{vec=}")
+    # print(lp_prob.constraints)
+    try:
+        # logger.debug("I IS SOLVING BOLVING")
+        solver = pu.PULP_CBC_CMD(msg=msg)
+        status = lp_prob.solve(solver)  # noqa: F841
+    except KeyboardInterrupt:
+        current_process = psutil.Process()
+        children = current_process.children(recursive=True)
+        for child in children:
+            child_process = psutil.Process(child.pid)
+            child_process.terminate()
+            child_process.kill()
+        raise KeyboardInterrupt()
+    # print(f"{pos_part=}")
+    # print(f"{neg_part=}")
+    # else:
+    # print(f"No dice {flat=}")
+    # exit(1)
+    # #val = pos_part - neg_part
 
-        # depth+=1
-        val2 = 0
-        for k in vrs:
-            x = vrs[k].value()
-            if x != 0 and x is not None:
-                val2 += int(x) * k
-        if expand(val - val2) != 0:
-            # print(f"{val=}")
-            # print(f"{val2=}")
-            # print(f"{vec=}")
-            raise Exception
+    # depth+=1
+    val2 = 0
+    for k in base_vectors:
+        x = vrs[k].value()
+        if x != 0 and x is not None:
+            val2 += int(x) * k
+    if expand(val - val2, func=True) != 0:
+        # print(f"{vec=}")
+        raise Exception
     # print(f"{val2=}")
     return val2
 
@@ -257,13 +189,13 @@ def coeffvars_monom(arg, genset):
         for arg2 in arg.args:
             if is_of_func_type(arg2, FactorialElemSym) or is_of_func_type(arg2, FactorialCompleteSym):
                 i = genset.index(coeffvars(arg2)[0])
-                monom[i] = monom.get(i,[]) + [*genvars(arg2)]
+                monom[i] = [*monom.get(i, []), *genvars(arg2)]
             if isinstance(arg2, Pow) and (is_of_func_type(arg2.args[0], FactorialElemSym) or is_of_func_type(arg2.args[0], FactorialCompleteSym)):
                 i = genset.index(coeffvars(arg2.args[0])[0])
-                monom[i] = monom.get(i,[])  + [*genvars(arg2.args[0])] * int(arg2.args[1])
+                monom[i] = monom.get(i, []) + [*genvars(arg2.args[0])] * int(arg2.args[1])
     elif isinstance(arg, Pow):
         i = genset.index(coeffvars(arg.args[0])[0])
-        monom[i] = monom.get(i,[])  + [*genvars(arg.args[0])] * int(arg.args[1])
+        monom[i] = monom.get(i, []) + [*genvars(arg.args[0])] * int(arg.args[1])
     return Dict({k: tuple(v) for k, v in monom.items()})
 
 
@@ -322,6 +254,7 @@ def splitupgenvars(pos_neg_part, genset):
         dct[coeff_to_monom(monom, genset)] = dct.get(coeff_to_monom(monom, genset), S.Zero) + arg
     return dct
 
+
 def splitupallvars(pos_neg_part, gs1, gs2):
     if isinstance(pos_neg_part, Add):
         bacon = pos_neg_part
@@ -330,8 +263,8 @@ def splitupallvars(pos_neg_part, gs1, gs2):
         args = [pos_neg_part]
     dct = {}
     for arg in args:
-        monom1 = Dict(coeff_to_monom(genvars_monom(arg, gs1),gs1))
-        monom2 = Dict(coeff_to_monom(coeffvars_monom(arg, gs2),gs2))
+        monom1 = Dict(coeff_to_monom(genvars_monom(arg, gs1), gs1))
+        monom2 = Dict(coeff_to_monom(coeffvars_monom(arg, gs2), gs2))
         dct[(monom1, monom2)] = dct.get((monom1, monom2), S.Zero) + arg
     return dct
 
@@ -339,25 +272,25 @@ def splitupallvars(pos_neg_part, gs1, gs2):
 def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=True):
     val_expr = expand(val, func=True)
     z_ring = rings.SingleSchubertRing(var3)
-    opt = Optimizer(z_ring,val_expr)
+    opt = Optimizer(z_ring, val_expr)
     vec_base = opt.vec0
     val = canonicalize_elem_syms(expand(val))
     mnset = splitupcoeffvars(val, var3)
-    #mndct = {k: set(splitupgenvars(v,var2).keys()) for k, v in dctcv.items()}
+    # mndct = {k: set(splitupgenvars(v,var2).keys()) for k, v in dctcv.items()}
 
     # mndct = {}
     # for k, st in dctmn.items():
     #     if k not in mndct:
     #         mndct[k] = set()
     #     mndct[k].update(
-    #combcache={}
+    # combcache={}
     base_vectors = {}
     base_monoms = []
-    #base_monoms += [b1]s
+    # base_monoms += [b1]s
     # lookup = {}
     frees = val_expr.free_symbols
-        # logger.debug(f"{frees=}")
-        # logger.debug(f"{[type(s) for s in frees]=}")
+    # logger.debug(f"{frees=}")
+    # logger.debug(f"{[type(s) for s in frees]=}")
     varsimp2 = [m for m in frees if var2.index(m) != -1]
     varsimp3 = [m for m in frees if var3.index(m) != -1]
     varsimp2.sort(key=lambda k: var2.index(k))
@@ -369,9 +302,7 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
     # var22 = [sympify(m) for m in varsimp2]
     # var33 = [sympify(m) for m in varsimp3]
     n1 = len(varsimp2)
-    val_poly = S.Zero
-    for k, expr in mnset.items():
-        val_poly += poly(expand(expr, func=True),*var22, *var33)
+    val_poly = poly(val_expr, *var22, *var33)
     mn = val_poly.monoms()
     L1 = tuple([0 for i in range(n1)])
     mn1L = []
@@ -398,7 +329,7 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
                 for mm0 in lookup[mn1_2]:
                     comblistmn12 += (
                         arr
-                        * np.prod(
+                        * prod(
                             [varsimp2[k] - varsimp3[i - n1] for k in range(n1) if mm0[k] == 1],
                         )
                     ).tolist()
@@ -441,14 +372,14 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
     #         #n1 = mn1[z_index]
     #         #combinations degree in the lists
     #         # fslower but we can do better
-            
+
     #         # print(lst)
     #         #cached combs
     #         from itertools import combinations
     #         for lst in lookup[mn1][z_index]:
     #             if (lst, len(vs)) not in combcache:
     #                 combcache[(lst, len(vs))] = list(combinations(lst, len(vs)))
-    #             combs = combcache[(lst,len(vs))] 
+    #             combs = combcache[(lst,len(vs))]
     #             for comb in combs:
     #                 comblistmn12 += (
     #                     arr
@@ -461,7 +392,7 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
     #     for i in range(len(comblistmn1)):
     #         b1 = comblistmn1[i]
     #         vec0 = opt.poly_to_vec(b1)
-            
+
     #         # if b1 in base_monoms:
     #         #     continue
     #         if vec0 is not None:
@@ -524,7 +455,9 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
 
 @cached(
     cache={},
-    key=lambda val, u2, v2, w2, var2=None, var3=None, msg=False, do_pos_neg=False, sign_only=False, optimize=True, elem_sym=None: hashkey(val, u2, v2, w2, var2, var3, msg, do_pos_neg, sign_only, optimize),
+    key=lambda val, u2, v2, w2, var2=None, var3=None, msg=False, do_pos_neg=False, sign_only=False, optimize=True, elem_sym=None: hashkey(
+        val, u2, v2, w2, var2, var3, msg, do_pos_neg, sign_only, optimize
+    ),
 )
 def posify(
     val,
@@ -969,7 +902,7 @@ def posify(
                     w3,
                     0,
                 )
-                val2 = posify(val2, u3, v3, w3, var2, var3, msg, do_pos_neg, optimize=optimize,elem_sym=elem_sym)
+                val2 = posify(val2, u3, v3, w3, var2, var3, msg, do_pos_neg, optimize=optimize, elem_sym=elem_sym)
                 val += tomul * shiftsub(val2, var2)
             # if expand(val - oldval) != 0:
             #     # logger.debug("This is bad")
@@ -981,7 +914,7 @@ def posify(
         # logger.debug("Recording line number")
         if optimize:
             if elem_sym:
-                #print(f"{elem_sym=}")
+                # print(f"{elem_sym=}")
                 val2 = compute_positive_rep_new(elem_sym, var2, var3, msg, False)
             elif inv(u) + inv(v) - inv(w) == 1:
                 val2 = compute_positive_rep(val, var2, var3, msg, False)
@@ -1387,7 +1320,7 @@ def dualpieri(mu, v, w):
 
 class Optimizer:
     def __init__(self, z_ring, poly):
-        self.z_ring=z_ring
+        self.z_ring = z_ring
         self.monom_to_vec = {}
         self.vec0 = None
         self.vec0 = self.poly_to_vec(poly)

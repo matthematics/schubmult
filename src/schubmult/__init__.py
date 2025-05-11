@@ -15,9 +15,6 @@ from .rings.schubert_ring import (
     DSx,
     Sx,
 )
-from .symmetric_polynomials.complete_sym import CompleteSym
-from .symmetric_polynomials.elem_sym import ElemSym
-from .symmetric_polynomials.functions import canonicalize_elem_syms, elem_sym_unify, split_out_vars
 from .rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet
 from .schub_lib.double import (
     mult_poly_double,
@@ -46,6 +43,9 @@ from .schub_lib.single import (
     schub_coprod_py,
     schubmult_py,
 )
+from .symmetric_polynomials.complete_sym import CompleteSym
+from .symmetric_polynomials.elem_sym import ElemSym
+from .symmetric_polynomials.functions import canonicalize_elem_syms, elem_sym_unify, split_out_vars
 
 __all__ = [
     "CompleteSym",

@@ -14,17 +14,17 @@ r = GeneratingSet("r")
 znz = {z[i]: -z[i] for i in range(20)}
 subs_dict = {y[1]: S.Zero}
 
-for i in range(1,len(y[1:])):
-    subs_dict[y[i+1]] = subs_dict[y[i]] + r[i]
+for i in range(1, len(y[1:])):
+    subs_dict[y[i + 1]] = subs_dict[y[i]] + r[i]
 
-subs_dict2 = {r[i]: y[i+1]-y[i] for i in range(1,20)}
+subs_dict2 = {r[i]: y[i + 1] - y[i] for i in range(1, 20)}
 # symengine.var("y_(1:100)")
 # symengine.var("z_(1:100)")
 # bargain = E(1, 1, y_4, z_1)*E(1, 1, y_4, z_2)*E(1, 3, y_1, y_4, y_5, z_1, z_2, z_3) + E(1, 1, y_4, z_1)*E(1, 1, y_5, z_4)*E(1, 3, y_1, y_4, y_5, z_1, z_2, z_3) - E(1, 1, y_4, z_1)*E(2, 3, y_1, y_4, y_5, z_1, z_2) + E(1, 1, y_5, z_2)*E(1, 1, y_5, z_4)*E(1, 3, y_1, y_4, y_5, z_1, z_2, z_3) - E(1, 1, y_5, z_4)*E(2, 3, y_1, y_4, y_5, z_1, z_2) + E(3, 3, y_1, y_4, y_5, z_1)
 sympy.init_printing(pretty_print=False)
 
 z_ring = SingleSchubertRing(z)
-zy_ring = DoubleSchubertRing(z,y)
+zy_ring = DoubleSchubertRing(z, y)
 
 # bagel1 = Permutation([4, 6, 1, 5, 7, 2, 3])
 # porn = Permutation([5, 7, 1, 4, 6, 2, 3])
@@ -33,6 +33,7 @@ porn = Permutation([5, 1, 4, 2, 3])
 
 ctgood = 0
 ctbad = 0
+
 
 def coeff_to_monom(monom, genset):
     dct = {}
@@ -45,6 +46,7 @@ def coeff_to_monom(monom, genset):
             dct = add_perm_dict(dct, coeff_to_monom(arg, genset))
     return Dict(dct)
 
+
 def genvars_monom(arg):
     if is_of_func_type(arg, FactorialElemSym) or is_of_func_type(arg, FactorialCompleteSym):
         monom = prod(genvars(arg))
@@ -54,12 +56,13 @@ def genvars_monom(arg):
             if is_of_func_type(arg2, FactorialElemSym) or is_of_func_type(arg2, FactorialCompleteSym):
                 monom *= prod(genvars(arg2))
             if isinstance(arg2, Pow) and (is_of_func_type(arg2.args[0], FactorialElemSym) or is_of_func_type(arg2.args[0], FactorialCompleteSym)):
-                monom *= prod(genvars(arg2.args[0]))  ** int(arg2.args[1])
+                monom *= prod(genvars(arg2.args[0])) ** int(arg2.args[1])
     elif isinstance(arg, Pow):
         monom = prod(genvars(arg.args[0])) ** int(arg.args[1])
     else:
         monom = S.NegativeInfinity
     return monom
+
 
 def coeffvars_monom(arg):
     if is_of_func_type(arg, FactorialElemSym) or is_of_func_type(arg, FactorialCompleteSym):
@@ -90,8 +93,9 @@ def splitupgenvars(pos_neg_part, comp=False):
             monom = coeffvars_monom(arg)
         else:
             monom = genvars_monom(arg)
-        dct[coeff_to_monom(monom,y)] = dct.get(coeff_to_monom(monom,y), S.Zero) + arg
+        dct[coeff_to_monom(monom, y)] = dct.get(coeff_to_monom(monom, y), S.Zero) + arg
     return dct
+
 
 def splitupcoeffvars(pos_neg_part, comp=False):
     if isinstance(pos_neg_part, Add):
@@ -105,7 +109,7 @@ def splitupcoeffvars(pos_neg_part, comp=False):
             monom = genvars_monom(arg)
         else:
             monom = coeffvars_monom(arg)
-        dct[coeff_to_monom(monom,z)] = dct.get(coeff_to_monom(monom,z), S.Zero) + arg
+        dct[coeff_to_monom(monom, z)] = dct.get(coeff_to_monom(monom, z), S.Zero) + arg
     return dct
 
 
@@ -132,6 +136,8 @@ def splitupcoeffvars(pos_neg_part, comp=False):
 #     return dct
 success = 0
 fail = 0
+
+
 def splitupallvars(pos_neg_part):
     if isinstance(pos_neg_part, Add):
         bacon = pos_neg_part
@@ -140,33 +146,32 @@ def splitupallvars(pos_neg_part):
         args = [pos_neg_part]
     dct = {}
     for arg in args:
-        monom1 = Dict(coeff_to_monom(genvars_monom(arg),y))
-        monom2 = Dict(coeff_to_monom(coeffvars_monom(arg),z))
+        monom1 = Dict(coeff_to_monom(genvars_monom(arg), y))
+        monom2 = Dict(coeff_to_monom(coeffvars_monom(arg), z))
         dct[(monom1, monom2)] = dct.get((monom1, monom2), S.Zero) + arg
     return dct
 
 
 # simplify graph
 for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
-    if expand(bargain,func=True) == S.Zero or isinstance(bargain, Integer):
+    if expand(bargain, func=True) == S.Zero or isinstance(bargain, Integer):
         continue
     bargain = expand(bargain)
     bacon = bargain
     bacon = sympify(FactorialCompleteSym.from_expr_elem_sym(bacon))
     bacon_new = 1
-    print(f"initial {bacon=}")
     while bacon != bacon_new:
         bacon_new = bacon
         if isinstance(bacon, Add):
             for arg in bacon.args:
-                if not(isinstance(arg, Mul) and isinstance(arg.args[0],Integer) and arg.args[0] < 0):
+                if not (isinstance(arg, Mul) and isinstance(arg.args[0], Integer) and arg.args[0] < 0):
                     expr = sympy.sympify(arg)
                     if isinstance(arg, Mul):
                         args = arg.args
                     elif isinstance(arg, Pow):
-                        args = int(arg.args[1])*[arg.args[0]]
+                        args = int(arg.args[1]) * [arg.args[0]]
                     elif isinstance(arg, FactorialCompleteSym):
-                        args [arg]
+                        args[arg]
                     else:
                         continue
                     for fromp in args:
@@ -179,8 +184,8 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
 
     if isinstance(bacon, Integer):
         continue
-                        #break
-                    #bacon = expand(split_out_vars(bacon, None, coeffvars(marfle)[-1:]))
+        # break
+        # bacon = expand(split_out_vars(bacon, None, coeffvars(marfle)[-1:]))
     # print(f"first {bacon=}")
     # #bacon = canonicalize_elem_syms(bacon)
     # bacon_new = 0
@@ -223,39 +228,36 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
     # print(f"{expand(bacon - bargain,func=True)}")
     # assert (expand(bacon - bargain, func=True) == S.Zero)
     bacon = FactorialCompleteSym.to_expr_elem_sym(bacon)
-    print(f"Elemorkle {bacon=}")
     if str(sympy.sympify(bacon)).find("-") == -1:
-        success+=1
+        success += 1
     else:
         fail += 1
     continue
-    dct = splitupcoeffvars(bacon,comp=True)
+    dct = splitupcoeffvars(bacon, comp=True)
     if isinstance(bacon, Add):
-    #     dct = {}
-    #     for arg in bacon.args:
-    #         if is_of_func_type(arg, FactorialElemSym):
-    #             monom = coeffvars(arg)[0] ** degree(arg)
-    #         elif isinstance(arg, Mul):
-    #             monom = S.One
-    #             for arg2 in arg.args:
-    #                 if is_of_func_type(arg2, FactorialElemSym):
-    #                     monom *= coeffvars(arg2)[0] ** degree(arg2)
-    #                 if isinstance(arg2, Pow) and is_of_func_type(arg2.args[0], FactorialElemSym):
-    #                     monom *= coeffvars(arg2.args[0])[0] ** (degree(arg2.args[0]) * int(arg2.args[1]))
-    #         elif isinstance(arg, Pow):
-    #             monom = coeffvars(arg.args[0])[0] ** (degree(arg.args[0]) * int(arg.args[1]))
-    #         dct[monom] = dct.get(monom, S.Zero) + arg
-        #dct = splitupallvars(bacon)
-        #schuber = z_ring.from_expr(Add(*[expand(efficient_subs(vl,{y[i]: S.Zero for i in range(10)}),func=True,mul=False) for vl in dct.values()]))
-        #schuber = z_ring.from_expr(expand(efficient_subs(bargain,znz),func=True,mul=False))
+        #     dct = {}
+        #     for arg in bacon.args:
+        #         if is_of_func_type(arg, FactorialElemSym):
+        #             monom = coeffvars(arg)[0] ** degree(arg)
+        #         elif isinstance(arg, Mul):
+        #             monom = S.One
+        #             for arg2 in arg.args:
+        #                 if is_of_func_type(arg2, FactorialElemSym):
+        #                     monom *= coeffvars(arg2)[0] ** degree(arg2)
+        #                 if isinstance(arg2, Pow) and is_of_func_type(arg2.args[0], FactorialElemSym):
+        #                     monom *= coeffvars(arg2.args[0])[0] ** (degree(arg2.args[0]) * int(arg2.args[1]))
+        #         elif isinstance(arg, Pow):
+        #             monom = coeffvars(arg.args[0])[0] ** (degree(arg.args[0]) * int(arg.args[1]))
+        #         dct[monom] = dct.get(monom, S.Zero) + arg
+        # dct = splitupallvars(bacon)
+        # schuber = z_ring.from_expr(Add(*[expand(efficient_subs(vl,{y[i]: S.Zero for i in range(10)}),func=True,mul=False) for vl in dct.values()]))
+        # schuber = z_ring.from_expr(expand(efficient_subs(bargain,znz),func=True,mul=False))
         # if schuber.expand() == S.Zero:
         #     print("Dodged a bullet")
         #     continue
-        print(f"{k}")
-        print(f"{dct=}")
         # if any(isinstance(val,Add) for val in dct.values()):
         #     raise Exception("bongdunket")
-        #print(schuber.ring.from_dict({k: abs(v) for k, v in schuber.items()}))
+        # print(schuber.ring.from_dict({k: abs(v) for k, v in schuber.items()}))
         # dctyep = {}
         # dctnope = {}
         # dctbool = {}
@@ -279,25 +281,23 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
                     # plop2 = z_ring.from_dict({k: expand(efficient_subs(v,subs_dict),mul=False) for k,v in plop.items()})
                     try:
                         compute_positive_rep(expand(bargle, func=True, mul=False), y, z, False, False)
-                        print(f"Yep: {monom}")#: {bargle=}")
-                        #dctbool[monom] = True
+                        # dctbool[monom] = True
                         pos_part += bargle
-                        #dctyep[monom] = voib_bo
+                        # dctyep[monom] = voib_bo
                     except Exception:
                         flip = True
                         if isinstance(bargle, Add):
                             for arg in bargle.args:
-                                if isinstance(arg, Mul) and isinstance(arg.args[0],Integer) and int(arg.args[0]) < 0:
+                                if isinstance(arg, Mul) and isinstance(arg.args[0], Integer) and int(arg.args[0]) < 0:
                                     pos_neg_part += arg
                                 else:
                                     neg_part += arg
                         else:
                             arg = bargle
-                            if isinstance(arg, Mul) and isinstance(arg.args[0],Integer) and int(arg.args[0]) < 0:
+                            if isinstance(arg, Mul) and isinstance(arg.args[0], Integer) and int(arg.args[0]) < 0:
                                 pos_neg_part += arg
                             else:
                                 neg_part += arg
-                        print(f"Nope {monom}")#: {bargle=}")
                         anyn = True
                         # dctnope[monom] = voib_bo
             if anyn:
@@ -329,10 +329,7 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
             # print(f"{dctyep2=}")
             # print(f"{dctnope=}")
             # print(f"{dctnope2=}")
-                print(f"{pos_part=}")
-                print(f"{pos_neg_part=}")
-                print(f"{neg_part=}")
-                # dct_neg = splitupgenvars(neg_part)
+            # dct_neg = splitupgenvars(neg_part)
             # dct_pos_neg = splitupgenvars(pos_neg_part)
             # dct_pos = splitupgenvars(pos_part)
             # print(f"{dct_neg=}")
@@ -358,7 +355,7 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
             #         dct[monom] = dct.get(monom,S.Zero)
             # else:
             #     dct[prod(genvars(neg_part))] = neg_part
-            #pos_part += pos_neg_part
+            # pos_part += pos_neg_part
             # dct_remain = {}
             # dct_pos = {}
             # if isinstance(pos_part, Add):
@@ -387,7 +384,7 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
             #         args = int(pos_part.args[1])*[pos_part.args[0]]
             #     else:
             #         args = [pos_part]
-                
+
             #     gv = []
             #     for arg in args:
             #         gv += genvars(arg)
@@ -410,7 +407,7 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
             #     ctbad+=1
             #     import traceback
             #     traceback.print_exc()
-            
+
             # # def ctneg(expr):
             # #     return str(expr).count("-")
             # # yep_list = [(dctyep[monom],z_ring.from_dict(v)) for monom, v in dctyep2.items()]
@@ -424,9 +421,6 @@ for k, bargain in (DSx(bagel1, elem_sym=True) * DSx(porn, "z")).items():
             # # #         new_yep_list = []
             # # #         for spob2, elem2 in nope_list:
             # # #             if ctneg(elem + elem2) < ctneg(elem) + ctneg(elem2):
-            # # #                 new_yep_list 
-            
-print(f"{success=}")
-print(f"{fail=}")
-        
-      # Anything that isn't Schub will disappear
+            # # #                 new_yep_list
+
+    # Anything that isn't Schub will disappear

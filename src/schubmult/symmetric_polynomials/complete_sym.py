@@ -43,7 +43,7 @@ class CompleteSym_base(Function):
     def _sympystr(self, printer):
         return printer._print_Function(self)
 
-    
+
 
 class H(CompleteSym_base):
     is_commutative = True
@@ -55,19 +55,19 @@ class H(CompleteSym_base):
     @property
     def genvars(self):
         return self._genvars
-    
+
     @property
     def coeffvars(self):
         return self._coeffvars
-    
+
     @property
     def degree(self):
         return self._p
-    
+
     @property
     def numvars(self):
         return self._k
-    
+
     def __new__(cls, p, k, *args):
         p = int(p)
         k = int(k)
@@ -120,9 +120,9 @@ class H(CompleteSym_base):
             raise Exception
 
         return Add(
-            *[FactorialCompleteSym(i, k1, first_vars, self.coeffvars[: k1 + i - 1]) * FactorialCompleteSym(self._p - i, k2, second_vars, self.coeffvars[k1 + i :]) for i in range(self._p + 1)]
+            *[FactorialCompleteSym(i, k1, first_vars, self.coeffvars[: k1 + i - 1]) * FactorialCompleteSym(self._p - i, k2, second_vars, self.coeffvars[k1 + i :]) for i in range(self._p + 1)],
         )
-        
+
 
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
         return sympify_sympy(elem_sym_poly(self._under_elem._p, self._under_elem._k, [-x for x in self._under_elem.genvars], [-y for y in self._under_elem.coeffvars]))

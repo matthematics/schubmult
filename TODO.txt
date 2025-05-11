@@ -228,4 +228,4 @@ Simplify elem sym (copy sympy)
 
 apply rule to get into unique pieces
 
-Positive iff has no minus signs?
+Pull off peaks

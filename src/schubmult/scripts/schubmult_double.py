@@ -1,7 +1,7 @@
 import sys
 from functools import cached_property
 
-from schubmult import DSx, GeneratingSet, Permutation, efficient_subs, mult_poly_double, permtrim, posify, schub_coprod_double, schubmult_double, theta, uncode
+from schubmult import GeneratingSet, Permutation, efficient_subs, mult_poly_double, permtrim, posify, schub_coprod_double, schubmult_double, theta, uncode
 from schubmult.perm_lib import split_perms
 from schubmult.schub_lib.schub_lib import will_formula_work
 from schubmult.symbolic import expand, init_printing, simplify, sstr, sympify
@@ -353,12 +353,11 @@ def main(argv=None):
                 posified = True
             elif not posified:
                 coeff_dict = check_coeff_dict
-            extra_coeff_dict = {}
-            if not same:
-                extra_coeff_dict = DSx(perms[0],elem_sym=True) * DSx(perms[1],"z")
+            # if not same:
+            #     extra_coeff_dict = DSx(perms[0],elem_sym=True) * DSx(perms[1],"z")
             if not posified and display_positive:
                 # print(f"{coeff_dict=}")
-                coeff_dict = {k: pre_posify(perms, k, v, check, check_coeff_dict.get(k, 0), same, down, var2, var3, msg, elem_sym=extra_coeff_dict.get(k, None)) for k, v in coeff_dict.items()}
+                coeff_dict = {k: pre_posify(perms, k, v, check, check_coeff_dict.get(k, 0), same, down, var2, var3, msg, elem_sym=None) for k, v in coeff_dict.items()}
 
             if pr or formatter is None:
                 raw_result_dict = _display_full(

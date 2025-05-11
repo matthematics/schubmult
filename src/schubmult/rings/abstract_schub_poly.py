@@ -63,7 +63,7 @@ class DSchubPoly(AbstractSchubPoly):
 
     def __hash__(self):
         return hash((self._key,self._genset,self._coeff_genset,"dasiub"))
-    
+
     def __new__(cls, k, genset, coeff_genset):
         return DSchubPoly.__xnew_cached__(cls, k, genset, coeff_genset)
 
@@ -113,7 +113,7 @@ class QDSchubPoly(AbstractSchubPoly):
 
     def __hash__(self):
         return hash((self._key,self._genset,self._coeff_genset,"AbSsf","q"))
-    
+
     _pretty_schub_char = "𝕼𝔖"  # noqa: RUF001
 
     def __new__(cls, k, genset, coeff_genset):
@@ -158,7 +158,7 @@ class PQDSchubPoly(AbstractSchubPoly):
 
     def __hash__(self):
         return hash((self._key,self._genset,self._coeff_genset,self.index_comp,"asfafAbS"))
-    
+
     _pretty_schub_char = "𝕼𝔖"  # noqa: RUF001
 
     def __new__(cls, k, basis, index_comp):
