@@ -350,6 +350,7 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
     #     if k not in mndct:
     #         mndct[k] = set()
     #     mndct[k].update(
+    combcache={}
     base_vectors = {}
     base_monoms = []
     #base_monoms += [b1]s
@@ -372,6 +373,7 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
                         if pork in vv and vvset[pork].issubset(bingo):
                                continue
                         lookup[key][z_index].update(bingo)
+            lookup[key][z_index] = frozenset(lookup[key][z_index])
     for mn1 in mnset:
         comblistmn1 = [S.One]
         for z_index, vs in mn1.items():
@@ -382,8 +384,11 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
             # fslower but we can do better
             lst = lookup[mn1][z_index]
             # print(lst)
+            #cached combs
             from itertools import combinations
-            combs = list(combinations(lst, len(vs)))
+            if (lst, len(vs)) not in combcache:
+                combcache[(lst, len(vs))] = list(combinations(lst, len(vs)))
+            combs = combcache[(lst,len(vs))] 
             for comb in combs:
                 comblistmn12 += (
                     arr
