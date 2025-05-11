@@ -355,17 +355,22 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
     #base_monoms += [b1]s
     lookup = {}
         # logger.debug("this")
+    mnsetset = {vv: {k: set(voing) for k, voing in vv.items()} for vv in mnset}
     for vv in mnset:
         key = vv
         if key not in lookup:
             lookup[key] = {}
-        for z_index, pw in vv.items():
+        vvset = mnsetset[vv]
+        for z_index, pw in vvset.items():
             lookup[key][z_index] = set()
             for vv2 in mnset:
-                if len(vv2.get(z_index, [])) <= len(pw):
-                    for pork, bingo in vv2.items():
+                vv2set = mnsetset[vv2]
+                if vv2set.get(z_index,set()).issubset(pw):
+                    for pork, bingo in vv2set.items():
                         if pork == z_index:
                             continue
+                        if pork in vv and vvset[pork].issubset(bingo):
+                               continue
                         lookup[key][z_index].update(bingo)
     for mn1 in mnset:
         comblistmn1 = [S.One]
@@ -377,8 +382,8 @@ def compute_positive_rep_new(val, var2=None, var3=None, msg=False, do_pos_neg=Tr
             # fslower but we can do better
             lst = lookup[mn1][z_index]
             # print(lst)
-            from itertools import combinations_with_replacement
-            combs = list(combinations_with_replacement(lst, len(vs)))
+            from itertools import combinations
+            combs = list(combinations(lst, len(vs)))
             for comb in combs:
                 comblistmn12 += (
                     arr
