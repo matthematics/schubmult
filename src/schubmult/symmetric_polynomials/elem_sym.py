@@ -32,14 +32,12 @@ class ElemSym_base(Function):
     def _eval_subs(self, old, new):
         rule = {old: new}
         new_args = [*self.args]
-        new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
             new_args[i + 2] = sympify(arg).subs(rule)
         return self.func(*new_args)
 
     def subs(self, *rule):
         rule = dict(rule)
-        new_args = [*self.args]
         new_args = [*self.args]
         for i, arg in enumerate(self.args[2:]):
             new_args[i + 2] = sympify(arg).subs(rule)
@@ -134,7 +132,6 @@ class E(ElemSym_base):
         obj._coeffvars = var2
         return obj
 
-
     def split_out_vars(self, vars1, vars2=None):
         if vars1 is None:
             first_vars = [sympify(v) for v in vars2 if v in self.coeffvars]
@@ -145,7 +142,10 @@ class E(ElemSym_base):
             #     raise Exception
 
             return Add(
-                *[FactorialElemSym(i, k1 + i -1, self.genvars[:k1 + i - 1], first_vars) * FactorialElemSym(self._p - i, len(self.genvars[k1+i:]), self.genvars[k1+i:], second_vars) for i in range(self._p + 1)],
+                *[
+                    FactorialElemSym(i, k1 + i - 1, self.genvars[: k1 + i - 1], first_vars) * FactorialElemSym(self._p - i, len(self.genvars[k1 + i :]), self.genvars[k1 + i :], second_vars)
+                    for i in range(self._p + 1)
+                ],
             )
         vars1 = [sympify(v) for v in vars1]
         if vars2 is None:
@@ -176,9 +176,9 @@ class E(ElemSym_base):
                 pass
         return ret
 
-    @cache
-    def _eval_expand_func(self, *_, **__):
-        return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
+    # @cache
+    # def _eval_expand_func(self, *_, **__):
+    #     return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
 
     def divide_out_diff(self, v1, v2):
         if v1 == v2:
@@ -242,6 +242,8 @@ class E(ElemSym_base):
 
 class e(ElemSym_base):
     def __new__(cls, p, k, *args):
+        p = int(p)
+        k = int(k)
         if hasattr(args[0], "__iter__"):
             return ElemSym.__xnew_cached__(cls, p, k, tuple(args[0]))
         return ElemSym.__xnew_cached__(cls, p, k, tuple(args))

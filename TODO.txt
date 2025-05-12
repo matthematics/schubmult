@@ -229,3 +229,7 @@ Simplify elem sym (copy sympy)
 apply rule to get into unique pieces
 
 Pull off peaks
+
+Fix up single ElemSym
+
+Symbol elem func should be symbols
