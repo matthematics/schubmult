@@ -6,8 +6,8 @@ import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, uncode
-from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand_func, is_of_func_type, sympify
-from schubmult.symmetric_polynomials import CompleteSym_base, ElemSym_base, FactorialCompleteSym, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars
+from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand_func, is_of_func_type, sympify, sympify_sympy
+from schubmult.symmetric_polynomials import CompleteSym_base, ElemSym_base, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -266,11 +266,12 @@ class DoubleSchubertRing(BaseSchubertRing):
         elem = sympify(elem)
         indexes = [self.genset.index(a) for a in genvars(elem)]
         ret = self.zero
+        elem_sympy = sympify_sympy(elem)
         for k, v in ring_elem.items():
             perm_list = schub_lib.elem_sym_positional_perms(k, degree(elem), *indexes)
             for perm, df, sign in perm_list:
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in indexes if perm[i - 1] == k[i - 1]]
-                coeff = elem.func(degree(elem) - df, numvars(elem) - df, remaining_vars, coeffvars(elem))  # leave as elem sym
+                coeff = elem_sympy.func(degree(elem) - df, numvars(elem) - df, remaining_vars, coeffvars(elem))  # leave as elem sym
                 ret += self.domain_new(v * sign * expand_func(coeff)) * self(perm)
         return ret
 
@@ -393,13 +394,14 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     def complete_mul(self, elem, x):
         x = sympify(x)
+        x_sympy = sympify_sympy(x)
         indexes = {self.genset.index(a) for a in genvars(x)}
         ret = self.zero
         for k, v in elem.items():
             perm_list = schub_lib.complete_sym_positional_perms(k, degree(x), *indexes)
             for perm, df, sign in perm_list:
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in {*indexes, *[j + 1 for j in range(len(perm)) if perm[j] != k[j]]}]
-                coeff = x.func(degree(x) - df, numvars(x) + df, remaining_vars, coeffvars(x))  # leave as elem sym
+                coeff = x_sympy.func(degree(x) - df, numvars(x) + df, remaining_vars, coeffvars(x))  # leave as elem sym
                 ret += self.domain_new(sign * v * expand_func(coeff)) * self(perm)
         return ret
 
@@ -628,11 +630,12 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
     def elem_mul(self, ring_elem, elem):
         indexes = [self.genset.index(a) for a in genvars(elem)]
         ret = self.zero
+        elem_sympy = sympify_sympy(elem)
         for k, v in ring_elem.items():
             perm_list = schub_lib.elem_sym_positional_perms(k, degree(elem), *indexes)
             for perm, df, sign in perm_list:
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in indexes if perm[i - 1] == k[i - 1]]
-                coeff = elem.func(degree(elem) - df, numvars(elem) - df, remaining_vars, coeffvars(elem))
+                coeff = elem_sympy.func(degree(elem) - df, numvars(elem) - df, remaining_vars, coeffvars(elem))
                 toadd = self.domain_new(v * sign * coeff) * self(perm)
                 # print(f"{toadd=}")
                 ret += toadd
@@ -641,12 +644,13 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
     def complete_mul(self, elem, x):
         indexes = {self.genset.index(a) for a in genvars(x)}
         ret = self.zero
+        x_sympy = sympify_sympy(x)
         for k, v in elem.items():
             perm_list = schub_lib.complete_sym_positional_perms(k, degree(x), *indexes)
             for perm, df, sign in perm_list:
                 # print(f"{(perm, df, sign)=}")
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in {*indexes, *[j + 1 for j in range(len(perm)) if perm[j] != k[j]]}]
-                coeff = x.func(degree(x) - df, numvars(x) + df, remaining_vars, coeffvars(x))  # leave as elem sym
+                coeff = x_sympy.func(degree(x) - df, numvars(x) + df, remaining_vars, coeffvars(x))  # leave as elem sym
                 ret += self.domain_new(sign * v * coeff) * self(perm)
         return ret
 

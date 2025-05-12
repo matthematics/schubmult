@@ -49,7 +49,8 @@ class ZeroGeneratingSet(GeneratingSet_base):
         return -1
 
     def __iter__(self):
-        pass
+        if False:
+            yield
 
 
 # variable registry

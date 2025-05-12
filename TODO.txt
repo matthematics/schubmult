@@ -233,3 +233,5 @@ Pull off peaks
 Fix up single ElemSym
 
 Symbol elem func should be symbols
+
+H missing extra variables

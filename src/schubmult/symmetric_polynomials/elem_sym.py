@@ -83,6 +83,10 @@ class ElemSym_base(Function):
     def _eval_expand_func(self, *args, **_):  # noqa: ARG002
         return sympify_sympy(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
 
+    @property
+    def func(self):
+        return self.__class__
+
 
 class E(ElemSym_base):
     def __new__(cls, p, k, *args):

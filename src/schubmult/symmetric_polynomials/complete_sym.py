@@ -2,7 +2,7 @@ from functools import cache
 
 from schubmult.rings.poly_lib import elem_sym_poly
 from schubmult.rings.variables import NotEnoughGeneratorsError, ZeroGeneratingSet
-from schubmult.symbolic import Add, Function, Integer, Mul, Pow, S, expand, expand_func, sympify, sympify_sympy
+from schubmult.symbolic import Add, Function, Integer, Mul, Pow, S, expand_func, sympify, sympify_sympy
 from schubmult.symmetric_polynomials.elem_sym import FactorialElemSym
 from schubmult.utils.logging import get_logger
 
@@ -42,7 +42,6 @@ class CompleteSym_base(Function):
 
     def _sympystr(self, printer):
         return printer._print_Function(self)
-
 
 
 class H(CompleteSym_base):
@@ -88,21 +87,39 @@ class H(CompleteSym_base):
 
     @staticmethod
     def __xnew__(_class, p, k, var1, var2):
-        cont_obj = FactorialElemSym(p, k + p - 1, var2, var1)
-        if not is_of_func_type(cont_obj, FactorialElemSym):
-            return cont_obj
-        obj = CompleteSym_base.__new__(_class, cont_obj.args[0], cont_obj.args[1] + 1 - cont_obj.args[0], *cont_obj._coeffvars, *cont_obj._genvars)
-        obj._under_elem = cont_obj
-        obj._p = int(obj.args[0])
-        obj._k = int(obj.args[1])
-        obj._genvars = cont_obj.coeffvars
-        obj._coeffvars = cont_obj.genvars
+        if p < 0 or k < 0:
+            return S.Zero
+        if p == 0:
+            return S.One
+        var1 = var1[:k]
+        var2 = var2[: p + k - 1]
+        for i, v in enumerate(var1):
+            if v in var2:
+                j = var2.index(v)
+                return FactorialCompleteSym.__new__(_class, p, k - 1, [*var1[:i], *var1[i + 1 :]], [*var2[:j], *var2[j + 1 :]])
+        if len(var1) < k:
+            raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
+        if len(var2) < p + k - 1:
+            raise NotEnoughGeneratorsError(f"{k} passed as number of variables and degree is {p} but only {len(var2)} coefficient variables given. {k + 1 - p} coefficient variables are needed.")
+        var1 = tuple(sorted(var1, key=lambda x: sympify_sympy(x).sort_key()))
+        var2 = tuple(sorted(var2, key=lambda x: sympify_sympy(x).sort_key()))
+        obj = CompleteSym_base.__new__(
+            _class,
+            Integer(p),
+            Integer(k),
+            *var1,
+            *var2,
+        )
+        obj._p = p
+        obj._k = k
+        obj._genvars = var1
+        obj._coeffvars = var2
         return obj
 
     @classmethod
     def from_elem_sym(cls, elem, sign=False):
         if sign:
-            return (S.NegativeOne**degree(elem))*cls(degree(elem), numvars(elem) + 1 - degree(elem), *coeffvars(elem), *genvars(elem))
+            return (S.NegativeOne ** degree(elem)) * cls(degree(elem), numvars(elem) + 1 - degree(elem), *coeffvars(elem), *genvars(elem))
         return cls(degree(elem), numvars(elem) + 1 - degree(elem), *coeffvars(elem), *genvars(elem))
 
     @property
@@ -123,9 +140,8 @@ class H(CompleteSym_base):
             *[FactorialCompleteSym(i, k1, first_vars, self.coeffvars[: k1 + i - 1]) * FactorialCompleteSym(self._p - i, k2, second_vars, self.coeffvars[k1 + i :]) for i in range(self._p + 1)],
         )
 
-
     def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
-        return sympify_sympy(elem_sym_poly(self._under_elem._p, self._under_elem._k, [-x for x in self._under_elem.genvars], [-y for y in self._under_elem.coeffvars]))
+        return sympify_sympy(elem_sym_poly(self._p, self._p + self._k - 1, [-x for x in self.coeffvars], [-y for y in self.genvars]))
 
     @property
     def func(self):
@@ -137,7 +153,7 @@ class H(CompleteSym_base):
 
     @staticmethod
     def from_expr_elem_sym(expr):
-        #return expr.replace(FactorialElemSym, lambda *x: (S.NegativeOne**int(x[0]))*FactorialCompleteSym.from_elem_sym(FactorialElemSym(*x)))
+        # return expr.replace(FactorialElemSym, lambda *x: (S.NegativeOne**int(x[0]))*FactorialCompleteSym.from_elem_sym(FactorialElemSym(*x)))
         if not expr.args:
             return expr
         if is_of_func_type(expr, FactorialElemSym):
@@ -147,12 +163,12 @@ class H(CompleteSym_base):
         if isinstance(expr, Add):
             return Add(*[FactorialCompleteSym.from_expr_elem_sym(arg) for arg in expr.args])
         if isinstance(expr, Pow):
-            return Pow(FactorialCompleteSym.from_expr_elem_sym(expr.args[0]),expr.args[1])
+            return Pow(FactorialCompleteSym.from_expr_elem_sym(expr.args[0]), expr.args[1])
         return expr
 
     @staticmethod
     def to_expr_elem_sym(expr):
-        #return expr.replace(FactorialElemSym, lambda *x: (S.NegativeOne**int(x[0]))*FactorialCompleteSym.from_elem_sym(FactorialElemSym(*x)))
+        # return expr.replace(FactorialElemSym, lambda *x: (S.NegativeOne**int(x[0]))*FactorialCompleteSym.from_elem_sym(FactorialElemSym(*x)))
         if not expr.args:
             return expr
         if is_of_func_type(expr, FactorialCompleteSym):
@@ -162,7 +178,7 @@ class H(CompleteSym_base):
         if isinstance(expr, Add):
             return Add(*[FactorialCompleteSym.to_expr_elem_sym(arg) for arg in expr.args])
         if isinstance(expr, Pow):
-            return Pow(FactorialCompleteSym.to_expr_elem_sym(expr.args[0]),expr.args[1])
+            return Pow(FactorialCompleteSym.to_expr_elem_sym(expr.args[0]), expr.args[1])
         return expr
 
     def _eval_div_diff(self, v1, v2):
@@ -182,10 +198,6 @@ class h(CompleteSym_base):
     is_Function = True
     is_nonzero = True
 
-    # _sympyclass = _h
-    # def _symengine_(self):
-    #     return SymPolyWrap(self, self.args, self.__class__, sw.PyModule(self.__module__))
-
     def __new__(cls, p, k, *args):
         p = int(p)
         k = int(k)
@@ -193,26 +205,30 @@ class h(CompleteSym_base):
             return CompleteSym.__xnew_cached__(cls, int(p), int(k), tuple(args[0]))
         return CompleteSym.__xnew_cached__(cls, int(p), int(k), tuple(args))
 
-    # def __hash__(self):
-    #     return hash(self.args, "bonbon")
-
     @staticmethod
     @cache
     def __xnew_cached__(_class, p, k, var1):
         return CompleteSym.__xnew__(_class, p, k, var1)
 
-    # def to_elem_sym(self):
-    #     return S.NegativeOne * (self._p % 2) * self._under_elem
-
     @staticmethod
     def __xnew__(_class, p, k, var1):
-        if len(var1) < k:
-            raise NotEnoughGeneratorsError
+        if p > k or k < 0:
+            return S.Zero
+        if p == 0:
+            return S.One
         var1 = var1[:k]
-        obj = CompleteSym_base.__new__(_class, Integer(p), Integer(k), *var1)
-        obj._p = int(obj.args[0])
-        obj._k = int(obj.args[1])
-        obj._genvars = tuple(var1)
+        if len(var1) < k:
+            raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
+        var1 = tuple(sorted(var1, key=lambda x: sympify_sympy(x).sort_key()))
+        obj = CompleteSym_base.__new__(
+            _class,
+            Integer(p),
+            Integer(k),
+            *var1,
+        )
+        obj._p = p
+        obj._k = k
+        obj._genvars = var1
         return obj
 
     @property
@@ -222,7 +238,6 @@ class h(CompleteSym_base):
     @property
     def coeffvars(self):
         return ZeroGeneratingSet()
-
 
     @property
     def func(self):
