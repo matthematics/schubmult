@@ -256,7 +256,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         #             return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], poly_genset(0))
         #         return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], self.args[2:])
 
-        return ElemSym_base
+        return FactorialElemSym
 
     def is_elem_mul_type(self, other):
         return is_fact_elem_sym(other)
@@ -622,7 +622,7 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
 
     @property
     def elem_func(self):
-        return ElemSym_base
+        return FactorialElemSym
 
     def handle_sympoly(self, other):
         return other

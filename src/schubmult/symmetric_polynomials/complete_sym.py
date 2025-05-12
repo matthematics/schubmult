@@ -212,7 +212,7 @@ class h(CompleteSym_base):
 
     @staticmethod
     def __xnew__(_class, p, k, var1):
-        if p > k or k < 0:
+        if p < 0 or k < 0:
             return S.Zero
         if p == 0:
             return S.One
