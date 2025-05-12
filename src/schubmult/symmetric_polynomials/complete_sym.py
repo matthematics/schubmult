@@ -36,6 +36,13 @@ class CompleteSym_base(Function):
     def genvars(self):
         return self._genvars
 
+    def __hash__(self):
+        return hash((*self.args, "forp"))
+
+    @property
+    def func(self):
+        return self.__class__
+
     @property
     def coeffvars(self):
         return self._coeffvars
@@ -235,13 +242,6 @@ class h(CompleteSym_base):
     @property
     def coeffvars(self):
         return ZeroGeneratingSet()
-
-    @property
-    def func(self):
-        def h(*args):
-            return self.__class__(*args)
-
-        return h
 
 
 FactorialCompleteSym = H
