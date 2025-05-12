@@ -1,6 +1,6 @@
 from functools import cache
 
-from schubmult.rings.poly_lib import elem_sym_poly
+from schubmult.rings.poly_lib import complete_sym_poly
 from schubmult.rings.variables import NotEnoughGeneratorsError, ZeroGeneratingSet
 from schubmult.symbolic import Add, Function, Integer, Mul, Pow, S, expand_func, sympify, sympify_sympy
 from schubmult.symmetric_polynomials.elem_sym import FactorialElemSym
@@ -43,6 +43,9 @@ class CompleteSym_base(Function):
     def _sympystr(self, printer):
         return printer._print_Function(self)
 
+    def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
+        return sympify_sympy(complete_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
+
 
 class H(CompleteSym_base):
     is_commutative = True
@@ -80,10 +83,7 @@ class H(CompleteSym_base):
         return FactorialCompleteSym.__xnew__(_class, p, k, var1, var2)
 
     def to_elem_sym(self):
-        return (S.NegativeOne ** (self._p % 2)) * self._under_elem
-
-    def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
-        return expand_func(self.to_elem_sym())
+        return (S.NegativeOne ** (self._p % 2)) * FactorialElemSym(self._p, self._k + 1 - self._p, self.coeffvars, self.genvars)
 
     @staticmethod
     def __xnew__(_class, p, k, var1, var2):
@@ -140,15 +140,12 @@ class H(CompleteSym_base):
             *[FactorialCompleteSym(i, k1, first_vars, self.coeffvars[: k1 + i - 1]) * FactorialCompleteSym(self._p - i, k2, second_vars, self.coeffvars[k1 + i :]) for i in range(self._p + 1)],
         )
 
-    def _eval_expand_func(self, *args, **kwargs):  # noqa: ARG002
-        return sympify_sympy(elem_sym_poly(self._p, self._p + self._k - 1, [-x for x in self.coeffvars], [-y for y in self.genvars]))
-
     @property
     def func(self):
         return self.__class__
 
     def divide_out_diff(self, v1, v2):
-        new_obj = self._under_elem.divide_out_diff(v1, v2)
+        new_obj = self.to_elem_sym().divide_out_diff(v1, v2)
         return new_obj.replace(FactorialElemSym, lambda x: FactorialCompleteSym.from_elem_sym(x))
 
     @staticmethod
@@ -182,13 +179,13 @@ class H(CompleteSym_base):
         return expr
 
     def _eval_div_diff(self, v1, v2):
-        return FactorialCompleteSym.from_expr_elem_sym(self._under_elem.div_diff(v1, v2))
+        return FactorialCompleteSym.from_expr_elem_sym(self.to_elem_sym().div_diff(v1, v2))
 
     def _eval_divide_out_diff(self, v1, v2):
-        return FactorialCompleteSym.from_expr_elem_sym(self._under_elem.divide_out_diff(v1, v2))
+        return FactorialCompleteSym.from_expr_elem_sym(self.to_elem_sym().divide_out_diff(v1, v2))
 
     def div_diff(self, v1, v2):
-        return FactorialCompleteSym.from_expr_elem_sym(self._under_elem.div_diff(v1, v2))
+        return FactorialCompleteSym.from_expr_elem_sym(self.to_elem_sym().div_diff(v1, v2))
 
 
 class h(CompleteSym_base):

@@ -39,7 +39,13 @@ class GeneratingSet_base:
 
 
 class ZeroGeneratingSet(GeneratingSet_base):
-    def __getitem__(self, i):
+    def __getitem__(self, index):
+        if isinstance(index, slice):
+            if index.stop is None:
+                return self
+            start = index.start if index.start is not None else 0
+            stop = index.stop
+            return [S.Zero for i in range(start, stop)]
         return S.Zero
 
     def __contains__(self, item):

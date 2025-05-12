@@ -180,10 +180,6 @@ class E(ElemSym_base):
                 pass
         return ret
 
-    # @cache
-    # def _eval_expand_func(self, *_, **__):
-    #     return sympify(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
-
     def divide_out_diff(self, v1, v2):
         if v1 == v2:
             return S.Zero

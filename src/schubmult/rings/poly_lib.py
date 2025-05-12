@@ -2,7 +2,7 @@ from functools import cache, cached_property
 
 import schubmult.perm_lib as pl
 import schubmult.rings.variables as vv
-from schubmult.symbolic import Add, Mul, Pow, S, sympify
+from schubmult.symbolic import Add, Mul, Pow, S, prod, sympify
 
 # import vv.GeneratingSet, vv.base_index
 
@@ -151,9 +151,9 @@ one = 1
 
 def elem_sym_poly_q(p, k, varl1, varl2, q_var=_vars.q_var):
     if p == 0 and k >= 0:
-        return one
+        return S.One
     if p < 0 or p > k:
-        return zero
+        return S.Zerl
     return (
         (varl1[k - 1] - varl2[k - p]) * elem_sym_poly_q(p - 1, k - 1, varl1, varl2, q_var)
         + elem_sym_poly_q(p, k - 1, varl1, varl2, q_var)
@@ -161,20 +161,23 @@ def elem_sym_poly_q(p, k, varl1, varl2, q_var=_vars.q_var):
     )
 
 
-def complete_sym_poly(p, k, vrs):
+def complete_sym_poly(p, k, vrs, vrs2):
     if p == 0 and k >= 0:
-        return 1
+        return S.One
     if p != 0 and k == 0:
-        return 0
+        return S.Zero
     if k < 0:
-        return 0
+        return S.Zero
     if k == 1:
-        return vrs[0] ** p
+        return prod([vrs[0] - vrs2[i] for i in range(p)])
     sm = 0
     mid = k // 2
     for i in range(p + 1):
-        sm += complete_sym_poly(i, mid, vrs[:mid]) * complete_sym_poly(p - i, k - mid, vrs[mid:])
+        sm += complete_sym_poly(i, mid, vrs[:mid], vrs2[:mid + i - 1]) * complete_sym_poly(p - i, k - mid, vrs[mid:],vrs2[mid + i:])
     return sm
+
+
+
 
 
 def elem_sym_poly(p, k, varl1, varl2, xstart=0, ystart=0):
