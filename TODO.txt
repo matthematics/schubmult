@@ -241,3 +241,5 @@ Elem mul correctness (good)
 H completesym to evaluate
 
 (TESTSTESTS)
+
+Complete sym decomp will be useful for mul
