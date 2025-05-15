@@ -243,3 +243,16 @@ H completesym to evaluate
 (TESTSTESTS)
 
 Complete sym decomp will be useful for mul
+
+At least splitting hom monom elements 321 231
+
+replace pieces with hom in CEM factorization
+
+Definitely some factoring going on
+pattern 4123
+
+Express expansion as positive elem sym
+Many will already be positive!
+
+Before trying optimization, mul out with positive expression
+pull_out_var fastest way to do this

@@ -85,6 +85,9 @@ class GeneratingSet(GeneratingSet_base):
         obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         return obj
 
+    # def shift(self, index):
+    #     return CustomGeneratingSet(self._symbols_arr[])
+
     def __call__(self, index):
         """1-indexed"""
         return self[index - 1]
