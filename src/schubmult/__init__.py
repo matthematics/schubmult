@@ -21,6 +21,7 @@ from .schub_lib.double import (
     schub_coprod_double,
     schubmult_double,
     schubmult_double_alt,
+    schubmult_double_alt_from_elems,
     schubmult_double_pair,
     schubmult_double_pair_generic,
 )

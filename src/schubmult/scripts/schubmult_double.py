@@ -1,10 +1,24 @@
 import sys
 from functools import cached_property
 
-from schubmult import GeneratingSet, Permutation, efficient_subs, mult_poly_double, permtrim, posify, schub_coprod_double, schubmult_double, schubmult_double_alt, theta, uncode
+from schubmult import (
+    GeneratingSet,
+    Permutation,
+    efficient_subs,
+    mult_poly_double,
+    permtrim,
+    posify,
+    schub_coprod_double,
+    schubmult_double,
+    schubmult_double_alt,
+    schubmult_double_alt_from_elems,
+    theta,
+    uncode,
+)
 from schubmult.perm_lib import split_perms
 from schubmult.schub_lib.schub_lib import will_formula_work
-from schubmult.symbolic import expand, init_printing, simplify, sstr, sympify
+from schubmult.symbolic import S, expand, expand_func, init_printing, simplify, sstr, sympify
+from schubmult.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.argparse import schub_argparse
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import (
@@ -64,13 +78,17 @@ def sv_posify(val):
     return val.xreplace(bingle_dict)
 
 
-def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg):
+def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, elem_dict):
     try:
         return int(val)
     except Exception:
         if same:
             val = sv_posify(val)  # efficient_subs(sympify(val), subs_dict).expand()  # expand(sympify(val).xreplace(subs_dict))
         else:
+            if elem_dict:
+                val2 = expand(elem_dict.get(perm, S.Zero))
+                if str(val2).find("-") == -1:
+                    return expand_func(val2)
             if not down:
                 val = posify(
                     val,
@@ -308,9 +326,14 @@ def main(argv=None):
             #         check_coeff_dict = mult_poly_down(check_coeff_dict, mul_exp)
             # else:
             use_alt = True
+            elem_dict = None
             if use_alt:
+                if not same and display_positive:
+                    elem_dict = check_coeff_dict
                 for perm in orig_perms[1:]:
                     check_coeff_dict = schubmult_double_alt(check_coeff_dict, perm, var2, var3)
+                    if not same and display_positive:
+                        elem_dict = schubmult_double_alt_from_elems(elem_dict, perm, var2, var3, elem_func=FactorialElemSym)
             else:
                 for perm in orig_perms[1:]:
                     check_coeff_dict = schubmult_double(check_coeff_dict, perm, var2, var3)
@@ -356,7 +379,7 @@ def main(argv=None):
             elif not posified:
                 coeff_dict = check_coeff_dict
             if not posified and display_positive:
-                coeff_dict = {k: pre_posify(perms, k, v, check, check_coeff_dict.get(k, 0), same, down, var2, var3, msg) for k, v in coeff_dict.items()}
+                coeff_dict = {k: pre_posify(perms, k, v, check, check_coeff_dict.get(k, 0), same, down, var2, var3, msg, elem_dict) for k, v in coeff_dict.items()}
 
             if pr or formatter is None:
                 raw_result_dict = _display_full(
