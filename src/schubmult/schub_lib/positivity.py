@@ -34,7 +34,7 @@ from schubmult.schub_lib.schub_lib import (
 from schubmult.symbolic import Add, Integer, Mul, Pow, S, Symbol, expand, poly, prod, sympify, sympify_sympy
 from schubmult.utils.logging import get_logger
 
-from .double import schubmult_double, schubmult_double_pair, schubmult_double_pair_generic
+from .double import schubmult_double, schubmult_double_pair, schubmult_double_pair_generic_alt
 
 logger = get_logger(__name__)
 
@@ -967,7 +967,7 @@ def find_base_vectors(monom_list, var2, var3, depth):
 
 def posify_generic_partial(val, u2, v2, w2):
     val2 = val
-    val = posify(val, u2, v2, w2, var2=None, var3=None, msg=True, sign_only=False, optimize=False)
+    val = posify(val, u2, v2, w2, var2=_vars.var_g1, var3=_vars.var_g2, msg=True, sign_only=False, optimize=False)
     if expand(val - val2) != 0:
         # logger.debug("Warning, failed on a case")
         raise Exception(f"{val=} {val2=} {u2=} {v2=} {w2=}")
@@ -977,7 +977,7 @@ def posify_generic_partial(val, u2, v2, w2):
 
 @cache
 def schubmult_generic_partial_posify(u2, v2):
-    return {w2: posify_generic_partial(val, u2, v2, w2) for w2, val in schubmult_double_pair_generic(u2, v2).items()}
+    return {w2: posify_generic_partial(val, u2, v2, w2) for w2, val in schubmult_double_pair_generic_alt(u2, v2).items()}
 
 
 def forwardcoeff(u, v, perm, var2=None, var3=None):

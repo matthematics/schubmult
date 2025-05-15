@@ -2,7 +2,7 @@ from functools import cache
 
 from schubmult.rings.poly_lib import complete_sym_poly
 from schubmult.rings.variables import NotEnoughGeneratorsError, ZeroGeneratingSet
-from schubmult.symbolic import Add, Function, Integer, Mul, Pow, S, expand_func, sympify, sympify_sympy
+from schubmult.symbolic import Add, Function, Integer, Mul, Pow, S, sympify, sympify_sympy
 from schubmult.symmetric_polynomials.elem_sym import FactorialElemSym
 from schubmult.utils.logging import get_logger
 

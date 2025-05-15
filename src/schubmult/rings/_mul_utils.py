@@ -13,7 +13,7 @@ def _mul_schub_dicts(dict1, dict2, basis1, basis2, best_effort_positive=True):
                     this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis1.cached_positive_product(kd, k, basis2).items()})
                     did_positive = True
                 except Exception:
-                    did_positive = False
+                    raise
             if not did_positive:
                 this_dict = add_perm_dict(this_dict, {k1: v1 * to_mul for k1, v1 in basis1.cached_product(kd, k, basis2).items()})
     return this_dict

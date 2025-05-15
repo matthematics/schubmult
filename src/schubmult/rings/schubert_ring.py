@@ -3,6 +3,7 @@ from functools import cache, cached_property
 import schubmult.rings.abstract_schub_poly as spolymod
 import schubmult.rings.quantum_schubert_ring as qsr
 import schubmult.schub_lib.double as yz
+import schubmult.schub_lib.positivity as pos
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, uncode
@@ -140,7 +141,7 @@ class DoubleSchubertElement(BaseSchubertElement):
                     toadd = S.One
                     # for index2 in index_list:
                     #     toadd *= self.ring.genset[index2] - gen
-                    ret += FactorialElemSym(len(index_list),len(index_list),[self.ring.genset[index2] for index2 in index_list],[gen]) * val * new_basis(~new_perm)
+                    ret += FactorialElemSym(len(index_list), len(index_list), [self.ring.genset[index2] for index2 in index_list], [gen]) * val * new_basis(~new_perm)
             return ret
         gens2 = MaskedGeneratingSet(self.ring.genset, [ind])
         gens2.set_label(f"({self.ring.genset.label}\\{gen})")
@@ -227,8 +228,9 @@ class DoubleSchubertRing(BaseSchubertRing):
         ret = S.Zero
         L = schub_lib.pull_out_var(1, ~perm)
         for index_list, new_perm in L:
-            ret += self.elem_sym(len(index_list),len(index_list),[self.genset[index2] for index2 in index_list],[self.coeff_genset[index]]) * self.positive_elem_sym_rep(~new_perm, index+1)
+            ret += self.elem_sym(len(index_list), len(index_list), [self.genset[index2] for index2 in index_list], [self.coeff_genset[index]]) * self.positive_elem_sym_rep(~new_perm, index + 1)
         return ret
+
     # def mul(self, elem, other, _sympify=False):
     #     try:
     #         other = self.domain_new(other)
@@ -331,7 +333,7 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     @cache
     def cached_positive_product(self, u, v, basis2):
-        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset if basis2.coeff_genset else poly_genset(0)) for k, x in yz.schubmult_generic_partial_posify(u, v).items()}
+        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset if basis2.coeff_genset else poly_genset(0)) for k, x in pos.schubmult_generic_partial_posify(u, v).items()}
 
     @property
     def double_mul(self):

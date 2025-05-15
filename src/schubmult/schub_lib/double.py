@@ -17,7 +17,8 @@ from schubmult.schub_lib.schub_lib import (
     elem_sym_positional_perms,
     pull_out_var,
 )
-from schubmult.symbolic import Add, Mul, Pow, S, sympify
+from schubmult.symbolic import Add, Mul, Pow, S, expand, expand_func, sympify
+from schubmult.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -184,12 +185,17 @@ def nilhecke_mult(coeff_dict1, coeff_dict2):
 
 @cache
 def schubmult_double_pair(perm1, perm2, var2=None, var3=None):
-    return schubmult_double({perm1: 1}, perm2, var2, var3)
+    return schubmult_double({perm1: S.One}, perm2, var2, var3)
 
 
 @cache
 def schubmult_double_pair_generic(perm1, perm2):
-    return schubmult_double({perm1: 1}, perm2, _vars.var_g1, _vars.var_g2)
+    return schubmult_double({perm1: S.One}, perm2, _vars.var_g1, _vars.var_g2)
+
+
+@cache
+def schubmult_double_pair_generic_alt(perm1, perm2):
+    return {k: expand_func(expand(v)) for k,v in schubmult_double_alt_from_elems({perm1: S.One}, perm2, _vars.var_g1, _vars.var_g2, elem_func=FactorialElemSym).items()}
 
 
 def schubmult_double_dict(perm_dict1, perm_dict2, var2=None, var3=None):
@@ -274,10 +280,14 @@ def schubmult_double_alt(perm_dict, v, var2=None, var3=None, index=1):
             new_perms = elem_sym_positional_perms(u, len(index_list), *index_list)
             for new_perm, p, sgn in new_perms:
                 interim_dict[new_perm] = interim_dict.get(new_perm, S.Zero) + sgn * val * elem_sym_poly(
-                    len(index_list) - p, len(index_list) - p, [var2[new_perm[i - 1]] for i in index_list if new_perm[i - 1] == u[i - 1]], [var3[index]],
+                    len(index_list) - p,
+                    len(index_list) - p,
+                    [var2[new_perm[i - 1]] for i in index_list if new_perm[i - 1] == u[i - 1]],
+                    [var3[index]],
                 )
         ret_dict = add_perm_dict(ret_dict, schubmult_double_alt(interim_dict, ~new_v, var2, var3, index + 1))
     return ret_dict
+
 
 def schubmult_double_alt_from_elems(perm_dict, v, var2=None, var3=None, index=1, elem_func=None):
     if v.inv == 0:
@@ -291,9 +301,12 @@ def schubmult_double_alt_from_elems(perm_dict, v, var2=None, var3=None, index=1,
             new_perms = elem_sym_positional_perms(u, len(index_list), *index_list)
             for new_perm, p, sgn in new_perms:
                 interim_dict[new_perm] = interim_dict.get(new_perm, S.Zero) + sgn * val * elem_func(
-                    len(index_list) - p, len(index_list) - p, [var2[new_perm[i - 1]] for i in index_list if new_perm[i - 1] == u[i - 1]], [var3[index]],
+                    len(index_list) - p,
+                    len(index_list) - p,
+                    [var2[new_perm[i - 1]] for i in index_list if new_perm[i - 1] == u[i - 1]],
+                    [var3[index]],
                 )
-        ret_dict = add_perm_dict(ret_dict, schubmult_double_alt_from_elems(interim_dict, ~new_v, var2, var3, index + 1,elem_func))
+        ret_dict = add_perm_dict(ret_dict, schubmult_double_alt_from_elems(interim_dict, ~new_v, var2, var3, index + 1, elem_func))
     return ret_dict
 
 
