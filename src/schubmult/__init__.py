@@ -20,6 +20,7 @@ from .schub_lib.double import (
     mult_poly_double,
     schub_coprod_double,
     schubmult_double,
+    schubmult_double_alt,
     schubmult_double_pair,
     schubmult_double_pair_generic,
 )
@@ -85,6 +86,7 @@ __all__ = [
     "schub_coprod_double",
     "schub_coprod_py",
     "schubmult_double",
+    "schubmult_double_alt",
     "schubmult_double_pair",
     "schubmult_double_pair_generic",
     "schubmult_generic_partial_posify",

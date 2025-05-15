@@ -7,7 +7,7 @@ from schubmult.perm_lib import (
     theta,
     uncode,
 )
-from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_func
+from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_func, elem_sym_poly
 from schubmult.rings.schub_poly import elem_func_func_mul
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.schub_lib import (
@@ -261,10 +261,11 @@ def schubmult_double(perm_dict, v, var2=None, var3=None):
         ret_dict = add_perm_dict({Permutation(ep): vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
     return ret_dict
 
+
 def schubmult_double_alt(perm_dict, v, var2=None, var3=None, index=1):
     if v.inv == 0:
         return perm_dict
-        #ret = S.Zero
+        # ret = S.Zero
     ret_dict = {}
     L = pull_out_var(1, ~v)
     for index_list, new_v in L:
@@ -272,9 +273,12 @@ def schubmult_double_alt(perm_dict, v, var2=None, var3=None, index=1):
         for u, val in perm_dict.items():
             new_perms = elem_sym_positional_perms(u, len(index_list), *index_list)
             for new_perm, p, sgn in new_perms:
-                interim_dict[new_perm] = interim_dict.get(new_perm, S.Zero) + sgn*val*elem_sym_func(p,index,u,new_perm,Permutation([]),Permutation([]),p,0,var2,var3)
-        ret_dict = add_perm_dict(ret_dict,schubmult_double_alt(interim_dict,new_v,var2,var3,index+1))
+                interim_dict[new_perm] = interim_dict.get(new_perm, S.Zero) + sgn * val * elem_sym_poly(
+                    len(index_list) - p, len(index_list) - p, [var2[new_perm[i - 1]] for i in index_list if new_perm[i - 1] == u[i - 1]], [var3[index]]
+                )
+        ret_dict = add_perm_dict(ret_dict, schubmult_double_alt(interim_dict, ~new_v, var2, var3, index + 1))
     return ret_dict
+
 
 def schubmult_double_from_elems(perm_dict, v, var2=None, var3=None, elem_func=None):
     perm_dict = {Permutation(k): v for k, v in perm_dict.items()}

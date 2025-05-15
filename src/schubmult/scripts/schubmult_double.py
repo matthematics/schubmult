@@ -1,7 +1,7 @@
 import sys
 from functools import cached_property
 
-from schubmult import GeneratingSet, Permutation, efficient_subs, mult_poly_double, permtrim, posify, schub_coprod_double, schubmult_double, theta, uncode
+from schubmult import GeneratingSet, Permutation, efficient_subs, mult_poly_double, permtrim, posify, schub_coprod_double, schubmult_double, schubmult_double_alt, theta, uncode
 from schubmult.perm_lib import split_perms
 from schubmult.schub_lib.schub_lib import will_formula_work
 from schubmult.symbolic import expand, init_printing, simplify, sstr, sympify
@@ -307,8 +307,13 @@ def main(argv=None):
             #         mul_exp = eval(mulstring)
             #         check_coeff_dict = mult_poly_down(check_coeff_dict, mul_exp)
             # else:
-            for perm in orig_perms[1:]:
-                check_coeff_dict = schubmult_double(check_coeff_dict, perm, var2, var3)
+            use_alt = True
+            if use_alt:
+                for perm in orig_perms[1:]:
+                    check_coeff_dict = schubmult_double_alt(check_coeff_dict, perm, var2, var3)
+            else:
+                for perm in orig_perms[1:]:
+                    check_coeff_dict = schubmult_double(check_coeff_dict, perm, var2, var3)
             # coeff_dict = check_coeff_dict
             if mult:
                 mul_exp = eval(mulstring)
