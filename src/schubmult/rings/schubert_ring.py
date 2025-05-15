@@ -59,6 +59,15 @@ class DoubleSchubertElement(BaseSchubertElement):
             return ret[Permutation([])]
         return ret
 
+    # def to_pos_elem_sym(self):
+    #     ret = self
+    #     for v, val in x.items():
+    #         ret = ret.pull_out_gen(v)
+    #         ret = ret.ring.from_dict({k: v2.subs(v, val) for k, v2 in ret.items()})
+    #     if len(ret.keys()) == 1 and next(iter(ret.keys())) == Permutation([]):
+    #         return ret[Permutation([])]
+    #     return ret
+
     def subs(self, old, new):
         result = 0
         if self.ring.genset.index(old) != -1:
@@ -129,9 +138,9 @@ class DoubleSchubertElement(BaseSchubertElement):
                 L = schub_lib.pull_out_var(ind, ~perm)
                 for index_list, new_perm in L:
                     toadd = S.One
-                    for index2 in index_list:
-                        toadd *= self.ring.genset[index2] - gen
-                    ret += toadd * val * new_basis(~new_perm)
+                    # for index2 in index_list:
+                    #     toadd *= self.ring.genset[index2] - gen
+                    ret += FactorialElemSym(len(index_list),len(index_list),[self.ring.genset[index2] for index2 in index_list],[gen]) * val * new_basis(~new_perm)
             return ret
         gens2 = MaskedGeneratingSet(self.ring.genset, [ind])
         gens2.set_label(f"({self.ring.genset.label}\\{gen})")
@@ -212,6 +221,14 @@ class DoubleSchubertRing(BaseSchubertRing):
     def __str__(self):
         return f"Double Schubert polynomial ring in {self.genset.label} and {self.coeff_genset.label}"
 
+    def positive_elem_sym_rep(self, perm, index=1):
+        if perm.inv == 0:
+            return S.One
+        ret = S.Zero
+        L = schub_lib.pull_out_var(1, ~perm)
+        for index_list, new_perm in L:
+            ret += self.elem_sym(len(index_list),len(index_list),[self.genset[index2] for index2 in index_list],[self.coeff_genset[index]]) * self.positive_elem_sym_rep(~new_perm, index+1)
+        return ret
     # def mul(self, elem, other, _sympify=False):
     #     try:
     #         other = self.domain_new(other)
