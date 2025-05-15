@@ -153,7 +153,7 @@ def elem_sym_poly_q(p, k, varl1, varl2, q_var=_vars.q_var):
     if p == 0 and k >= 0:
         return S.One
     if p < 0 or p > k:
-        return S.Zerl
+        return S.Zero
     return (
         (varl1[k - 1] - varl2[k - p]) * elem_sym_poly_q(p - 1, k - 1, varl1, varl2, q_var)
         + elem_sym_poly_q(p, k - 1, varl1, varl2, q_var)
