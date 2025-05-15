@@ -329,11 +329,11 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     @cache
     def cached_product(self, u, v, basis2):
-        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset if basis2.coeff_genset else poly_genset(0)) for k, x in yz.schubmult_double_pair_generic(u, v).items()}
+        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset) for k, x in yz.schubmult_double_pair_generic(u, v).items()}
 
     @cache
     def cached_positive_product(self, u, v, basis2):
-        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset if basis2.coeff_genset else poly_genset(0)) for k, x in pos.schubmult_generic_partial_posify(u, v).items()}
+        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset) for k, x in pos.schubmult_generic_partial_posify(u, v).items()}
 
     @property
     def double_mul(self):
