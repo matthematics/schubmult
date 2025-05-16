@@ -2,7 +2,7 @@ from schubmult.symbolic import sympify
 from schubmult.utils.perm_utils import add_perm_dict
 
 
-def _mul_schub_dicts(dict1, dict2, basis1, basis2, best_effort_positive=True):
+def _mul_schub_dicts(dict1, dict2, basis1, basis2, best_effort_positive=False):
     this_dict = {}
     for k, v in dict2.items():
         for kd, vd in dict1.items():
