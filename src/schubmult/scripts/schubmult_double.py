@@ -88,6 +88,7 @@ def pre_posify(perms, perm, val, check, check_val, same, down, var2, var3, msg, 
             if elem_dict:
                 val2 = expand(elem_dict.get(perm, S.Zero))
                 if str(val2).find("-") == -1:
+                    logger.debug("Already positive")
                     return expand_func(val2)
             if not down:
                 val = posify(
