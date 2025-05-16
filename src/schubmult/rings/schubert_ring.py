@@ -231,6 +231,16 @@ class DoubleSchubertRing(BaseSchubertRing):
             ret += self.elem_sym(len(index_list), len(index_list), [self.genset[index2] for index2 in index_list], [self.coeff_genset[index]]) * self.positive_elem_sym_rep(~new_perm, index + 1)
         return ret
 
+    def positive_elem_sym_rep_backward(self, perm):
+        if perm.inv == 0:
+            return S.One
+        ret = S.Zero
+        index = max((~perm).descents()) + 1
+        L = schub_lib.pull_out_var(index, ~perm)
+        for index_list, new_perm in L:
+            ret += self.positive_elem_sym_rep_backward(~new_perm) * self.elem_sym(len(index_list), len(index_list), [self.genset[index2] for index2 in index_list], [self.coeff_genset[index]])
+        return ret
+
     # def mul(self, elem, other, _sympify=False):
     #     try:
     #         other = self.domain_new(other)
@@ -679,7 +689,7 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
 
     @cache
     def cached_positive_product(self, u, v, basis2):
-        return {k: expand(v) for k,v in yz.schubmult_double_alt_from_elems({u: self.domain.one}, v, self.coeff_genset, basis2.coeff_genset, elem_func=self.elem_func).items()}
+        return {k: expand(v) for k, v in yz.schubmult_double_alt_from_elems({u: self.domain.one}, v, self.coeff_genset, basis2.coeff_genset, elem_func=self.elem_func).items()}
 
     def new(self, x):
         genset = self.genset
