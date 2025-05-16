@@ -7,7 +7,7 @@ import schubmult.schub_lib.positivity as pos
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, uncode
-from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand_func, is_of_func_type, sympify, sympify_sympy
+from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, expand_func, is_of_func_type, sympify, sympify_sympy
 from schubmult.symmetric_polynomials import CompleteSym_base, ElemSym_base, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
@@ -679,7 +679,7 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
 
     @cache
     def cached_positive_product(self, u, v, basis2):
-        return self.cached_product(u, v, basis2)
+        return {k: expand(v) for k,v in yz.schubmult_double_alt_from_elems({u: self.domain.one}, v, self.coeff_genset, basis2.coeff_genset, elem_func=self.elem_func).items()}
 
     def new(self, x):
         genset = self.genset

@@ -98,6 +98,8 @@ class H(CompleteSym_base):
             return S.Zero
         if p == 0:
             return S.One
+        if k == 0:
+            return S.Zero
         var1 = var1[:k]
         var2 = var2[: p + k - 1]
         for i, v in enumerate(var1):
@@ -220,6 +222,8 @@ class h(CompleteSym_base):
             return S.Zero
         if p == 0:
             return S.One
+        if k == 0:
+            return S.Zero
         var1 = var1[:k]
         if len(var1) < k:
             raise NotEnoughGeneratorsError(f"{k} passed as number of variables but only {len(var1)} given")
