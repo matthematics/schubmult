@@ -301,7 +301,7 @@ class DoubleSchubertRing(BaseSchubertRing):
             for perm, df, sign in perm_list:
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in indexes if perm[i - 1] == k[i - 1]]
                 coeff = elem_sympy.func(degree(elem) - df, numvars(elem) - df, remaining_vars, coeffvars(elem))  # leave as elem sym
-                ret += self.domain_new(v * sign * expand_func(coeff)) * self(perm)
+                ret += (v * sign * expand_func(coeff)) * self(perm)
         return ret
 
     @property
@@ -431,7 +431,7 @@ class DoubleSchubertRing(BaseSchubertRing):
             for perm, df, sign in perm_list:
                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in {*indexes, *[j + 1 for j in range(len(perm)) if perm[j] != k[j]]}]
                 coeff = x_sympy.func(degree(x) - df, numvars(x) + df, remaining_vars, coeffvars(x))  # leave as elem sym
-                ret += self.domain_new(sign * v * expand_func(coeff)) * self(perm)
+                ret += (sign * v * expand_func(coeff)) * self(perm)
         return ret
 
     def handle_sympoly(self, other):
@@ -440,11 +440,11 @@ class DoubleSchubertRing(BaseSchubertRing):
     def single_variable(self, elem, varnum):
         ret = self.zero
         for u, v in elem.items():
-            ret += v * self.domain_new(self.coeff_genset[u[varnum - 1]]) * self(u)
+            ret += v * self.coeff_genset[u[varnum - 1]] * self(u)
             new_perms = schub_lib.elem_sym_positional_perms(u, 1, varnum)
             for perm, udiff, sign in new_perms:
                 if udiff == 1:
-                    ret += self.domain_new(sign * v) * self(perm)
+                    ret += (sign * v) * self(perm)
         return ret
 
     def mul_expr(self, elem, x):
@@ -465,7 +465,7 @@ class DoubleSchubertRing(BaseSchubertRing):
 
             if any(a in self.genset for a in coeffvars(x)) and len(coeffs_to_remove):
                 return self.mul_expr(elem.split_out_vars(x.to_complete_sym(), coeffs_to_remove))
-            return self.from_dict({k: self.domain_new(self.handle_sympoly(x)) * v for k, v in elem.items()})
+            return self.from_dict({k: (self.handle_sympoly(x)) * v for k, v in elem.items()})
         if is_fact_complete_sym(x):
             x = sympify(x)
             if all(a in self.genset for a in genvars(x)) and not any(a in self.genset for a in coeffvars(x)):
@@ -480,7 +480,7 @@ class DoubleSchubertRing(BaseSchubertRing):
             if len(coeffs_to_remove):
                 return self.mul_expr(elem, split_out_vars(x.to_elem_sym(), coeffs_to_remove))
 
-            return self.from_dict({k: self.domain_new(self.handle_sympoly(x)) * v for k, v in elem.items()})
+            return self.from_dict({k: (self.handle_sympoly(x)) * v for k, v in elem.items()})
         if isinstance(x, Add):
             return self.sum([self.mul_expr(elem, arg) for arg in x.args])
         if isinstance(x, Mul):

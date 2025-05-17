@@ -261,3 +261,4 @@ Elem product positive suspiciously often
 
 Change alt go to backwards
 Backwards better
+Hierarchy number of y variables

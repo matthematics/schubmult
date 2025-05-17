@@ -10,7 +10,7 @@ from schubmult import (
     posify,
     schub_coprod_double,
     schubmult_double,
-    schubmult_double_alt,
+    # schubmult_double_alt,
     schubmult_double_alt_from_elems,
     theta,
     uncode,
@@ -329,12 +329,17 @@ def main(argv=None):
             use_alt = True
             elem_dict = None
             if use_alt:
-                if not same and display_positive:
+                if not same:
                     elem_dict = check_coeff_dict
                 for perm in orig_perms[1:]:
-                    check_coeff_dict = schubmult_double_alt(check_coeff_dict, perm, var2, var3)
-                    if not same and display_positive:
+                    if not same:
                         elem_dict = schubmult_double_alt_from_elems(elem_dict, perm, var2, var3, elem_func=FactorialElemSym)
+                    else:
+                        check_coeff_dict = schubmult_double(check_coeff_dict, perm, var2, var3)
+                if not same:
+                    check_coeff_dict = {k: expand_func(expand(v)) for k, v in elem_dict.items()}
+                if args.secret:
+                    check_coeff_dict = {k: expand(v) for k, v in elem_dict.items()}
             else:
                 for perm in orig_perms[1:]:
                     check_coeff_dict = schubmult_double(check_coeff_dict, perm, var2, var3)

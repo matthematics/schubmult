@@ -178,6 +178,13 @@ def schub_argparse(prog_name, description, argv, quantum=False, yz=False):
         help=SUPPRESS,
     )
 
+    parser.add_argument(
+        "--secret",
+        action="store_true",
+        dest="secret",
+        help=SUPPRESS,
+    )
+
     args = parser.parse_args(argv)
     args.mulstring = ""
 

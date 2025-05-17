@@ -357,6 +357,33 @@ def schubmult_double_alt_from_elems_backwards(perm_dict, v, var2=None, var3=None
         # ret_dict = add_perm_dict(ret_dict,schubmult_double_alt_from_elems_backwards(interim_dict, ~new_v, var2, var3, elem_func))
     return ret_dict
 
+def schubmult_double_alt_from_elems_backwards_backwards(perm_dict, v, var2=None, var3=None, elem_func=None):
+    if v.inv == 0:
+        return perm_dict
+    ret_dict = {}
+    index = max((~v).descents()) + 1
+    L = pull_out_var(index, ~v)
+    #_cache = {}
+    for index_list, new_v in L:
+        # if new_v not in _cache:
+        #     _cache[new_v] = schubmult_double_alt_from_elems_backwards(perm_dict, ~new_v, var2, var3, elem_func)
+        start_dict = perm_dict
+        # start_dict = perm_dict
+        interim_dict = {}
+        for u, val in start_dict.items():
+            new_perms = elem_sym_positional_perms(u, len(index_list), *index_list)
+            for new_perm, p, sgn in new_perms:
+                interim_dict[new_perm] = interim_dict.get(new_perm, S.Zero) + sgn * val * elem_func(
+                    len(index_list) - p,
+                    len(index_list) - p,
+                    [var2[new_perm[i - 1]] for i in index_list if new_perm[i - 1] == u[i - 1]],
+                    [var3[index]],
+                )
+        # ret_dict = add_perm_dict(ret_dict, interim_dict)
+        ret_dict = add_perm_dict(ret_dict,schubmult_double_alt_from_elems_backwards_backwards(interim_dict, ~new_v, var2, var3, elem_func))
+    return ret_dict
+
+
 schubmult_double_alt_from_elems = schubmult_double_alt_from_elems_backwards
 
 
