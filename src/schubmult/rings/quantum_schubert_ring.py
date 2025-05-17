@@ -104,7 +104,7 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
                 result = v * self.quantum_as_classical_schubpoly(k)
             else:
                 result += v * self.quantum_as_classical_schubpoly(k)
-        return result if result else S.Zero
+        return result if result else self.zero
 
     @property
     def classical_elem_func(self):
@@ -113,9 +113,9 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
 
         def elem_func(p, k, varl1, varl2):
             if p == 0 and k >= 0:
-                return basis([])
+                return basis.one
             if p < 0 or p > k:
-                return basis(0)
+                return basis.zero
             return (varl1[k - 1] - varl2[k - p]) * elem_func(p - 1, k - 1, varl1, varl2) + elem_func(p, k - 1, varl1, varl2) + q_var[k - 1] * elem_func(p - 2, k - 2, varl1, varl2)
 
         return elem_func
@@ -147,25 +147,6 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
     @property
     def mult_poly_double(self):
         return yz.mult_poly_q_double
-
-    # def from_expr(self, x):
-    #     if isinstance(x, BaseSchubertElement):
-    #         if x.ring == self:
-    #             return x
-    #     x = sympify(x)
-    #     ind = self.genset.index(x)
-    #     if ind != -1:
-    #         return self.from_dict(yz.mult_poly_q_double({Permutation([]): 1}, x, self.genset, self.coeff_genset))
-    #     if isinstance(x, Add):
-    #         return self.sum([self.from_expr(arg) for arg in x.args])
-    #     if isinstance(x, Mul):
-    #         res = self.one
-    #         for arg in x.args:
-    #             res *= self.from_expr(arg)
-    #         return res
-    #     if isinstance(x, Pow):
-    #         return self.from_expr(x.args[0]) ** int(x.args[1])
-    #     return self.from_dict({Permutation([]): x})
 
     def mul_expr(self, elem, x):
         x = sympify(x)
@@ -242,25 +223,6 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
     @cache
     def cached_positive_product(self, u, v, basis2):
         return self.cached_product(u, v, basis2)
-
-    # def from_expr(self, x):
-    #     if isinstance(x, BaseSchubertElement):
-    #         if x.ring == self:
-    #             return x
-    #     x = sympify(x)
-    #     ind = self.genset.index(x)
-    #     if ind != -1:
-    #         return self.from_dict(py.mult_poly_q({Permutation([]): 1}, x, self.genset))
-    #     if isinstance(x, Add):
-    #         return self.sum([self.from_expr(arg) for arg in x.args])
-    #     if isinstance(x, Mul):
-    #         res = self.one
-    #         for arg in x.args:
-    #             res *= self.from_expr(arg)
-    #         return res
-    #     if isinstance(x, Pow):
-    #         return self.from_expr(x.args[0]) ** int(x.args[1])
-    #     return self.from_dict({Permutation([]): x})
 
     def mul_expr(self, elem, x):
         x = sympify(x)
@@ -446,6 +408,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
             result += v * self.quantum_as_classical_schubpoly(k)
         return result
 
+    # TODO: speed this up
     @cache
     def classical_in_basis(self, k):
         a = self.classical_basis(k)
@@ -468,16 +431,16 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
 
         def elem_func(p, k, varl1, varl2):
             if p == 0 and k >= 0:
-                return basis([])
+                return basis.one
             if p < 0 or p > k:
                 return basis.zero
             if k <= self._N[1]:
-                return basis(elem_sym_poly(p, k, varl1, varl2))
+                return basis.elem_sym(p, k, varl1, varl2) # check: this may speed it up
             ret = basis.zero
             j = bisect_left(self._N, k)
             if j < len(self._N) and k == self._N[j]:
-                ret = (-((-1) ** (self._n[j - 1]))) * q_var[j - 1] * elem_func(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
-            ret += elem_func(p, k - 1, varl1, varl2) + (varl1[k - 1] - varl2[k - p]) * elem_func(p - 1, k - 1, varl1, varl2)
+                ret = (-((S.NegativeOne) ** (self._n[j - 1]))) * q_var[j - 1] * elem_func(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
+            ret += elem_func(p, k - 1, varl1, varl2) + basis.elem_sym(1, 1, varl1[k - 1], varl2[k - p]) * elem_func(p - 1, k - 1, varl1, varl2)
             return ret
 
         return elem_func

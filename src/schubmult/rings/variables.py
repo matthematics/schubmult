@@ -102,6 +102,8 @@ class GeneratingSet(GeneratingSet_base):
             return self._index_lookup.get(v, self._index_lookup.get(sympify(v), -1))
         except SympifyError:
             return -1
+        except TypeError:
+            return -1
 
     def __repr__(self):
         return f"GeneratingSet('{self.label}')"
@@ -200,6 +202,8 @@ class MaskedGeneratingSet(GeneratingSet_base):
             return self._index_lookup.get(v, self._index_lookup.get(sympify(v), -1))
         except SympifyError:
             return -1
+        except TypeError:
+            return -1
 
     def __hash__(self):
         return hash((self.base_genset, self.index_mask))
@@ -237,6 +241,8 @@ class CustomGeneratingSet(GeneratingSet_base):
         try:
             return self._index_lookup.get(v, self._index_lookup.get(sympify(v), -1))
         except SympifyError:
+            return -1
+        except TypeError:
             return -1
 
     def __call__(self, index):

@@ -273,18 +273,6 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     @property
     def elem_sym(self):
-        # genset = self.genset
-
-        # class esf(Function):
-        #     @classmethod
-        #     def eval(cls, *x):
-        #         pass
-
-        #     def _eval_expand_func(self, **_):
-        #         if len(self.args) == 2:
-        #             return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], poly_genset(0))
-        #         return elem_sym_poly(int(self.args[0]), int(self.args[1]), genset[1:], self.args[2:])
-
         return FactorialElemSym
 
     def is_elem_mul_type(self, other):
