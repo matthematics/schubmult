@@ -588,32 +588,6 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
             else:
                 elem += v * self.classical_in_basis(k)
         return elem
-        # _Add = Add
-        # _Mul = Mul
-        # _Pow = Pow
-        # try:
-        #     x = sympify(x)
-        # except Exception:
-        #     x = sympify(x)
-        #     _Add = Add
-        #     _Mul = Mul
-        #     _Pow = Pow
-        # ind = self.genset.index(x)
-        # if ind != -1:
-        #     return self.from_dict(yz.mult_poly_q_double(elem, x, self.genset, self.coeff_genset))
-        # if isinstance(x, _Add):
-        #     return self.sum([self.mul_expr(elem, arg) for arg in x.args])
-        # if isinstance(x, _Mul):
-        #     res = elem
-        #     for arg in x.args:
-        #         res = self.mul_expr(res, arg)
-        #     return res
-        # if isinstance(x, _Pow):
-        #     res = elem
-        #     for _ in range(int(x.args[1])):
-        #         res = self.mul_expr(res, x.args[0])
-        #     return res
-        # return self.from_dict({k: v * self.domain_new(x) for k, v in elem.items()})
 
     def __call__(self, x):
         genset = self.genset
