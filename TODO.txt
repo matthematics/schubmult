@@ -81,23 +81,6 @@ What about single EM at all, not necessarily SEM?
 Div diffs on the SEMS that don't expand them
 1423, 1432, 4132, 3142
 
-123
-312
-132
-
-132
-321
-
-321
-132
-312
-
-312
-213
-132
-231
-
-
 Avoids 1432, and if it has a 312 then it has repeats
 
 multiples
@@ -109,12 +92,7 @@ string generation is expensive. Cache?
 
 SEM tests
 
-Pytest virtual env
-
 UNIVERSAL SCHUBS
-
-For positivity, when can we factor out elem syms?
-That could make it much faster and positivity easier
 
 Very useful to detect if reducible
 
@@ -135,23 +113,8 @@ Elem sym vars
 
 principal specialization
 
-Avoiding: Can never increase by 2 from any point
-If there is a code ascent, the line has to clear the peaks
-
-Flattened perm, chop off the beginning
-Each code non-move increases the rank element by 1
-So 3142 and 4132 are non-clearing patterns
-
-1. Code cannot increase by more than one total from any point left to right
-2. Increases must clear previous decreases
-
 # Patterns kind of correspond to coproducts
 
-SEM fact looks good
-
-Factorizes if and only if vpath, and is shub
-
-3 9 36 207 1550
 
 coeff var coproduct can actually be expressed fully as products of normal double Schubs with coeffs
 
@@ -160,8 +123,6 @@ speed up single var coproduct
 Make use of variable separation as a last resort to avoid linear optimization
 
 More tests
-
-Each in the z_1 variables is independent
 
 
 as_independent(*deps, **hint) → tuple[Expr, Expr][source]
@@ -180,36 +141,9 @@ Element __call__ to substitute vals
 pull_out_gen and eval tests
 pull_out_gen for quantum
 
-mul elem_sym
-
-complete * elem - complete less vars , set z3 = y[k[0]] (fully positive)
-
-
-A2 = A.ring.from_dict({k: v.subs(z[3],y[k[0]]) for k,v in A.items()})
-3 1 4 2 = (DSx(uncode([2]),"z")*DSx(uncode([0,0,1]),"z") - DSx(uncode([3]),"z")).subs(z[3], y[k[0]])
-4132, mul by x[1] - a[1], subs a[1], z[3]
-
-
-DSx(uncode([1,1]))*DSx(uncode([0,0,1])) subs y[2] x[3]
-
-DSx(uncode([0,2,1])) subs y[2] x[3]
-
 quantum elem syms
 
 coproduct vpathdicts
-
-in complete sym basis
-newton's formula
-
-complete tests
-
-single elem sym
-
-express as elem sym to ease positivity testing 
-
-faster way to posify with elem syms
-
-different monomials are disjoint
 
 cached elem sym eval
 
@@ -223,22 +157,11 @@ Infinite gensets
 
 We can get speed improvements by splitting into definitely linearly independent sets
 
-
 Simplify elem sym (copy sympy)
-
-apply rule to get into unique pieces
-
-Pull off peaks
 
 Fix up single ElemSym
 
-Symbol elem func should be symbols
-
 H missing extra variables
-
-Elem mul correctness (good)
-
-H completesym to evaluate
 
 (TESTSTESTS)
 
@@ -248,17 +171,178 @@ At least splitting hom monom elements 321 231
 
 replace pieces with hom in CEM factorization
 
-Definitely some factoring going on
-pattern 4123
-
-Express expansion as positive elem sym
-Many will already be positive!
-
-Before trying optimization, mul out with positive expression
-pull_out_var fastest way to do this
-
 Elem product positive suspiciously often
 
 Change alt go to backwards
 Backwards better
 Hierarchy number of y variables
+
+Symbolic quantum elem syms
+
+graded ring functionality
+degree of generators
+Is this worth it?
+
+
+E(1, 1, y_1, z_3)*E(1, 1, y_10, z_5) + E(1, 1, y_1, z_3)*E(1, 1, y_3, z_1) + E(1, 1, y_1, z_3)*E(1, 1, y_4, z_2) + E(1, 1, y_1, z_3)*E(1, 1, y_9, z_4) + E(1, 1, y_10, z_5)*E(1, 1, y_2, z_2) + E(1, 1, y_10, z_5)*E(1, 1, y_3, z_4) 
++ E(1, 1, y_10, z_5)*E(1, 1, y_4, z_2) + E(1, 1, y_10, z_5)*E(1, 1, y_8, z_1) + E(1, 1, y_2, z_2)*E(1, 1, y_3, z_1) + E(1, 1, y_2, z_2)*E(1, 1, y_8, z_3) + E(1, 1, y_2, z_2)*E(1, 1, y_9, z_4) + E(1, 1, y_3, z_1)*E(1, 1, y_3, z_4) 
++ E(1, 1, y_3, z_1)*E(1, 1, y_4, z_3) + E(1, 1, y_3, z_4)*E(1, 1, y_4, z_2) + E(1, 1, y_3, z_4)*E(1, 1, y_8, z_3) + E(1, 1, y_4, z_2)*E(1, 1, y_4, z_3) + E(1, 1, y_4, z_2)*E(1, 1, y_8, z_1) + E(1, 1, y_4, z_2)*E(1, 1, y_9, z_4) 
++ E(1, 1, y_8, z_1)*E(1, 1, y_8, z_3) + E(1, 1, y_8, z_1)*E(1, 1, y_9, z_4) - E(1, 1, y_10, z_5)*E(1, 1, y_8, z_2) - E(1, 1, y_3, z_1)*E(1, 1, y_8, z_3) - E(1, 1, y_8, z_2)*E(1, 1, y_8, z_3) - E(1, 1, y_8, z_2)*E(1, 1, y_9, z_4) 
++ E(2, 2, y_1, y_8, z_3) + E(2, 2, y_2, y_4, z_2) + E(2, 2, y_3, y_8, z_1) + E(2, 2, y_3, y_9, z_4)
+
+- E(1, 1, y_10, z_5)*E(1, 1, y_8, z_2) - E(1, 1, y_3, z_1)*E(1, 1, y_8, z_3) - E(1, 1, y_8, z_2)*E(1, 1, y_8, z_3) - E(1, 1, y_8, z_2)*E(1, 1, y_9, z_4)
+=
+- E(1, 1, y_10, z_5)*E(1, 1, y_8, z_2)  - E(1, 1, y_8, z_2)*E(1, 1, y_9, z_4)      |    - E(1, 1, y_3, z_1)*E(1, 1, y_8, z_3) - E(1, 1, y_8, z_2)*E(1, 1, y_8, z_3) 
+switch left 1
+- E(1, 1, y_10, z_4)*E(1, 1, y_8, z_2)  - E(1, 1, y_8, z_2)*E(1, 1, y_9, z_5)      |    - E(1, 1, y_3, z_1)*E(1, 1, y_8, z_3) - E(1, 1, y_8, z_2)*E(1, 1, y_8, z_3) 
+switch right 1
+- E(1, 1, y_10, z_5)*E(1, 1, y_8, z_2)  - E(1, 1, y_8, z_2)*E(1, 1, y_9, z_4)      |    - E(1, 1, y_3, z_2)*E(1, 1, y_8, z_3) - E(1, 1, y_8, z_1)*E(1, 1, y_8, z_3) 
+
+or is this more of a quotient ring problem?
+
+classical elementary monomials form a basis no z
+
+single schub in CEM
+
+This is by definition not positive, but the monomial EMs are
+Monomial ems canonical, no, but there might be a canonical positive em form
+pulling out the variable. Combinatorial, decidedly not canonical
+Is there a canonical one? If it is positive, there is a positive final EM form
+But is there a canonical one?
+Can we do it by manually pulling out a variable?
+Monomial mul, positive
+2 div diff, 0 out, 1 positive
+The way the 0 out works is path by path?
+May have to manually posify the div diff if can't do it abstractly?
+If the 1 is always positive if we posify from the right
+We've had a problem with this commuting pull out var map
+Is the pull out var map positive for all positive? We have to dry
+Make schub pull out gen backwards seems to be positive
+
+(y_5 - z_5)*(y_5 - z_6)
+
+not quite but start from the dominant
+
+pull out var simulates the div diff?
+
+pull out gen, inverse linear div diff
+in CEM basis pull out gen?
+
+relation, dominate up, div down
+
+pos v -> coeffpv
+|           |
+v     -> coeffv
+|           |
+dom v -> coeffdv
+
+dom v -> coeff dom v
+| ddx
+pos v -> coeff v
+
+same as backwards pull out var
+backwards pull out var as linear tensor map
+div diff on beginning, skew on end
+
+DSx(~Permutation([3,2,5,1,4]),"z")*(x_4-z_5) = 
+DSx((4, 2, 1, 6, 3, 5), z) - DSx((4, 2, 5, 1, 3), z) - DSx((4, 5, 1, 2, 3), z) - DSx((5, 2, 1, 4, 3), z)
+
+>>> poing = DSx((4, 2, 1, 6, 3, 5), z).pull_out_gen(x_1)
+>>> poing
+(x_1 - z_1)*(x_1 - z_2)*(x_1 - z_3)*(x_1 - z_5)*DS(x\x_1)((2, 1, 4, 3), z) + (x_1 - z_1)*(x_1 - z_2)*(x_1 - z_3)*DS(x\x_1)((2, 1, 5, 3, 4), z)
+
+
+(x_1 - z_5)
+
+(x_1 - z_1)*(x_1 - z_2)*(x_1 - z_3)*DS(x\x_1)((2, 1, 4, 3), z) + (x_1 - z_1)*(x_1 - z_2)*(x_1 - z_3)*DS(x\x_1)((2, 1, 5, 3, 4), z)
+
+OK back to canonical positive
+
+
+E(1, a_k, b_k) + E(k-1, a_1, ..., a_k-1, b_1,...,b_k-1) = E(k,a_1,...,a_k,b_1,...b_k)
+
+E(1,a_k,b)E(k-1,a_1,...,a_{k-1},b) = E(k,a_1,...,a_k,b) 
+
+hey coproduct tensorwize on the missing vars
+
+pull out var might work but issue with the extra hanging vars
+
+schubert division
+
+good mul elem sym rep
+pos elem sym rep
+
+E(1, 1, x_1, y_3)*(E(1, 1, x_1, y_1)*E(2, 3, x_1, x_2, x_3, y_1, y_2) - E(3, 3, x_1, x_2, x_3, y_1))
+>>> DSx([4,1,3,2]).positive_elem_sym_rep_backward()
+
+E(1, 1, x_1, y_3)*(E(1, 1, x_1, y_1)*E(2, 3, x_1, x_2, x_3, y_1, y_2) - E(3, 3, x_1, x_2, x_3, y_1))
+E(1, 1, x_1, y_3)*(E(2, 2, x_1, x_2, y_1)*E(1, 1, x_1, y_2) + E(2, 2, x_1, x_3, y_2)*E(1, 1, x_1, y_1))
+
+E(1, 1, x_1, y_3)*(E(1, 1, x_1, y_1)*(E(2, 2, x_1, x_3, y_2) + E(1,1,x_1,y_2)E(1,2,) + E() - E(3, 3, x_1, x_2, x_3, y_1))
+E(1, 1, x_1, y_3)*(E(1, 1, x_1, y_1)*E(2, 2, x_1, x_3, y_2) + E(2, 2, x_1, x_2, y_1)*E(1, 1, x_1, y_2) )
+
+
+E(1, 1, x_1, y_3)*(E(1, 1, x_1, y_1)*(E(2, 2, x_2, x_3, y_1) + E(1, 1, x_2, y_1)*E(1, 1, x_1,y_2) -E(3, 3, x_1, x_2, x_3, y_1))
+E(1, 1, x_1, y_3)*(E(1, 1, x_1, y_1)*E(2, 2, x_1, x_3, y_2) + E(2, 2, x_1, x_2, y_1)*E(1, 1, x_1, y_2) )
+
+
+E(3,3,x_1,x_2,x_3,y_1)
+
+transformation rules
+
+E(1, 1, y_4, z_3)*(E(1, 1, y_4, z_1)*E(1, 2, y_1, y_4, z_1, z_2) - E(2, 2, y_1, y_4, z_1))
+
+E(1, 1, y_4, z_3)*(E(1, 1, y_4, z_1)*(E(1, 1, y_1,z_1)+E(1,1,y_4, z_2)) - E(2, 2, y_1, y_4, z_1))
+
+
+CEM and backwards related
+CEM to backwards pos cancelation rules
+
+
+E(1, 1, x_1, y_3)*E(1, 1, x_1, y_1)*E(2, 3, x_1, x_2, x_3, y_1, y_2) - E(1, 1, x_1, y_3)*E(3, 3, x_1, x_2, x_3, y_1))
+E(1, 1, x_1, y_3)*E(2, 2, x_1, x_2, y_1)*E(1, 1, x_1, y_2) +           E(1, 1, x_1, y_3)*E(2, 2, x_1, x_3, y_2)*E(1, 1, x_1, y_1))
+
+
+E(1, 2, y_3, y_4, y_1, y_2)*(E(1, 1, y_3, y_1) + E(1, 1, y_4, y_3)) - E(2, 2, y_3, y_4, y_1)
+E(1, 1, y_3, y_1) + E(1, 1, y_4, y_2))*E(1, 1, y_4, y_3) + E(1, 1, y_3, y_1)*E(1, 1, y_3, y_2)
+
+
+(E(2, 3, z_1, z_3, z_4, y_1, y_2)*(E(1, 1, z_3, y_1) + E(1, 1, z_4, y_3)) - E(3, 3, z_1, z_3, z_4, y_1)
+E(1, 1, z_4, y_3)*(E(1, 1, z_4, y_2)*E(1, 1, z_1, y_1) + E(2, 2, z_1, z_3, y_1)) + E(2, 2, z_1, z_3, y_1)*E(1, 1, z_3, y_2) + E(2, 2, z_3, z_4, y_2)*E(1, 1, z_3, y_1) + E(2, 2, z_3, z_4, y_2)*E(1, 1, z_4, y_3))
+
+(-E(1, 1, z_3, y_3)*E(2, 2, z_3, z_4, y_1) + E(1, 1, z_3, y_1)*E(1, 2, z_3, z_4, y_1, y_2)*E(1, 1, z_3, y_3), 
+E(1, 1, z_3, y_1)*E(1, 1, z_3, y_3)*E(1, 1, z_3, y_2))
+
+E(1, 1, z_3, y_1)*E(1, 1, z_3, y_3) - E(1, 1, z_4, y_3)*E(1, 1, z_1, y_1) + E(1, 2, z_1, z_4, y_1, y_2)*(E(1, 1, z_3, y_1) + E(1, 1, z_4, y_3))
+SEMs instead of cEM
+
+SEM straightening
+
+CEM for pos mul then subs
+
+A = expand((DSx([],"z",elem_sym=True)*(DSx([4,1,3,5,2],"a").positive_elem_sym_rep_backward()).in_CEM_basis())
+B = DSx([3,4,1,5,2],elem_sym=True)*A
+C = B.ring.from_dict({k: v.subs({a[i]: z[i] for i in range(20)}) for k,v in B.items() if expand(v,func=True)!=S.Zero})
+
+straightening winkel
+
+interpolate
+
+
+Elem sym rings straighten canonical form
+question what to do with squares
+
+elem sym rings
+
+lex transform algorithm
+
+greedy algo
+subtract off compute pos simply faster schubert poly reexpress
+
+groeb
+
+reduced on the z roots root polynomial pos
+
+New rep: positive roots y, z schubs
+
+fast schub creation solving

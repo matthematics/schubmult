@@ -8,7 +8,7 @@ import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, uncode
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, expand_func, is_of_func_type, sympify, sympify_sympy
-from schubmult.symmetric_polynomials import CompleteSym_base, ElemSym_base, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars
+from schubmult.symmetric_polynomials import CompleteSym_base, ElemSym, ElemSym_base, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -209,6 +209,18 @@ class DoubleSchubertElement(BaseSchubertElement):
     @cached_property
     def max_gens(self):
         return max([max(k.descents()) for k in self.keys()])
+
+    def positive_elem_sym_rep(self):
+        res = S.Zero
+        for k, val in self.items():
+            res += val * self.ring.positive_elem_sym_rep(k)
+        return res
+
+    def positive_elem_sym_rep_backward(self):
+        res = S.Zero
+        for k, val in self.items():
+            res += val * self.ring.positive_elem_sym_rep_backward(k)
+        return res
 
 
 class DoubleSchubertRing(BaseSchubertRing):
@@ -605,6 +617,10 @@ class SingleSchubertRing(DoubleSchubertRing):
         # print(f"{x=} {type(x)=} {elem.ring=}")
         return elem
 
+    @property
+    def elem_func(self):
+        return ElemSym
+
 
 Sx = SingleSchubertRing(GeneratingSet("x"))
 
@@ -707,3 +723,103 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
             if isinstance(other.ring, DoubleSchubertRing):
                 return other
         return None
+
+
+# class ElemSingleSchubertRing(ElemDoubleSchubertRing):
+#     def __init__(self, genset):
+#         super().__init__(genset, poly_genset(0))
+#         self.dtype = type("DoubleSchubertElement", (DoubleSchubertElement,), {"ring": self})
+
+#     def __hash__(self):
+#         return hash((self.genset, self.coeff_genset, "EDBS"))
+
+#     # @property
+#     # def replacematch(self):
+#     #     def bob(*args, **kwargs):  # noqa: ARG001
+#     #         # print(f"{args=} {kwargs=}")
+#     #         a = kwargs["a"]
+#     #         b = kwargs["b"]
+#     #         ind1 = self.genset.index(a)
+#     #         ind2 = self.genset.index(b)
+#     #         if ind1 != -1:
+#     #             if ind2 == -1:
+#     #                 return FactorialElemSym(1, 1, [a], [b])
+#     #             return FactorialElemSym(1, 1, [a], [self.coeff_genset[1]]) - FactorialElemSym(1, 1, [b], [self.coeff_genset[1]])
+#     #         if ind2 != -1:
+#     #             return -FactorialElemSym(1, 1, [b], [a])
+#     #         if isinstance(a, Symbol) and isinstance(b, Symbol):
+#     #             return FactorialElemSym(1, 1, [a], [b])
+#     #         return a - b
+
+#     #     return bob
+
+#     @property
+#     def elem_func(self):
+#         return ElemSym
+
+#     def handle_sympoly(self, other):
+#         return other
+
+#     def elem_mul(self, ring_elem, elem):
+#         indexes = [self.genset.index(a) for a in genvars(elem)]
+#         ret = self.zero
+#         elem_sympy = sympify_sympy(elem)
+#         for k, v in ring_elem.items():
+#             perm_list = schub_lib.elem_sym_positional_perms(k, degree(elem), *indexes)
+#             for perm, df, sign in perm_list:
+#                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in indexes if perm[i - 1] == k[i - 1]]
+#                 coeff = elem_sympy.func(degree(elem) - df, numvars(elem) - df, remaining_vars, coeffvars(elem))
+#                 toadd = self.domain_new(v * sign * coeff) * self(perm)
+#                 # print(f"{toadd=}")
+#                 ret += toadd
+#         return ret
+
+#     def complete_mul(self, elem, x):
+#         indexes = {self.genset.index(a) for a in genvars(x)}
+#         ret = self.zero
+#         x_sympy = sympify_sympy(x)
+#         for k, v in elem.items():
+#             perm_list = schub_lib.complete_sym_positional_perms(k, degree(x), *indexes)
+#             for perm, df, sign in perm_list:
+#                 # print(f"{(perm, df, sign)=}")
+#                 remaining_vars = [self.coeff_genset[perm[i - 1]] for i in {*indexes, *[j + 1 for j in range(len(perm)) if perm[j] != k[j]]}]
+#                 coeff = x_sympy.func(degree(x) - df, numvars(x) + df, remaining_vars, coeffvars(x))  # leave as elem sym
+#                 ret += self.domain_new(sign * v * coeff) * self(perm)
+#         return ret
+
+#     @cache
+#     def cached_product(self, u, v, basis2):
+#         return yz.schubmult_double_from_elems({u: self.domain.one}, v, self.coeff_genset, basis2.coeff_genset, elem_func=self.elem_func)
+
+#     @cache
+#     def cached_positive_product(self, u, v, basis2):
+#         return {k: expand(v) for k, v in yz.schubmult_double_alt_from_elems({u: self.domain.one}, v, self.coeff_genset, basis2.coeff_genset, elem_func=self.elem_func).items()}
+
+#     def new(self, x):
+#         genset = self.genset
+#         if not isinstance(genset, GeneratingSet_base):
+#             raise TypeError
+#         if isinstance(x, list) or isinstance(x, tuple):
+#             p_x = Permutation(x)
+#             if max([0, *list(p_x.descents())]) > len(self.genset):
+#                 raise NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
+#             elem = self.from_dict({p_x: self.domain.one})
+#         elif isinstance(x, Permutation):
+#             if max([0, *list(x.descents())]) > len(self.genset):
+#                 raise NotEnoughGeneratorsError(f"Not enough generators {p_x=} {len(genset)=}")
+#             elem = self.from_dict({x: self.domain.one})
+#         elif x.ring == self:
+#             return x
+#         else:
+#             elem = self.from_expr(x)
+#         return elem
+
+#     def _coerce_mul(self, other):
+#         if isinstance(other, BaseSchubertElement):
+#             if isinstance(other.ring, qsr.QuantumDoubleSchubertRing):
+#                 return other.as_classical()
+#             if isinstance(other.ring, ElemDoubleSchubertRing):
+#                 return other
+#             if isinstance(other.ring, DoubleSchubertRing):
+#                 return other
+#         return None

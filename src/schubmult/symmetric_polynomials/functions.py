@@ -11,7 +11,7 @@ def genvars(obj):
         try:
             return obj.pyobject().genvars
         except AttributeError:
-            raise AttributeError ("Object or pyobject does have genvars attribute")
+            raise AttributeError("Object or pyobject does have genvars attribute")
 
 
 def coeffvars(obj):
@@ -21,8 +21,7 @@ def coeffvars(obj):
         try:
             return obj.pyobject().coeffvars
         except AttributeError:
-            raise AttributeError ("Object or pyobject does have coeffvars attribute")
-
+            raise AttributeError("Object or pyobject does have coeffvars attribute")
 
 
 def degree(obj):
@@ -46,19 +45,19 @@ def canonicalize_elem_syms(expr, combine_equal=False):
         return expr
     if is_of_func_type(expr, FactorialElemSym):
         if degree(expr) < numvars(expr):
-            return canonicalize_elem_syms(split_out_vars(expr, genvars(expr)[:len(genvars(expr))//2], None))
+            return canonicalize_elem_syms(split_out_vars(expr, genvars(expr)[: len(genvars(expr)) // 2], None))
         return expr
     if isinstance(expr, Add):
         blaff = Add(*[canonicalize_elem_syms(arg) for arg in expr.args])
     if isinstance(expr, Pow):
-        blaff = Pow(canonicalize_elem_syms(expr.args[0]),expr.args[1])
+        blaff = Pow(canonicalize_elem_syms(expr.args[0]), expr.args[1])
     if isinstance(expr, Mul):
         blaff = Mul(*[canonicalize_elem_syms(arg) for arg in expr.args])
         if blaff == expr:
             mdict = {}
             for arg in blaff.args:
                 if not is_of_func_type(arg, FactorialElemSym):
-                    mdict[S.One] = mdict.get(S.One,S.One) * arg
+                    mdict[S.One] = mdict.get(S.One, S.One) * arg
                 else:
                     check_arg = arg
                     if isinstance(arg, Pow):
@@ -69,7 +68,7 @@ def canonicalize_elem_syms(expr, combine_equal=False):
                     else:
                         em = mdict[cv]
                         if combine_equal:
-                            mdict[cv] = FactorialElemSym(degree(em)+degree(arg),numvars(em)+numvars(arg),*genvars(em),*genvars(arg),cv)
+                            mdict[cv] = FactorialElemSym(degree(em) + degree(arg), numvars(em) + numvars(arg), *genvars(em), *genvars(arg), cv)
                         else:
                             new_genvars_list = [set()]
                             total_genvars = []
@@ -77,7 +76,7 @@ def canonicalize_elem_syms(expr, combine_equal=False):
                                 for arg2 in mdict[cv].args:
                                     total_genvars += genvars(arg2)
                             elif isinstance(mdict[cv], Pow):
-                                total_genvars += genvars(mdict[cv].args[0])*int(mdict[cv].args[1])
+                                total_genvars += genvars(mdict[cv].args[0]) * int(mdict[cv].args[1])
                             else:
                                 total_genvars += genvars(mdict[cv])
                             total_genvars += genvars(arg)
@@ -91,7 +90,7 @@ def canonicalize_elem_syms(expr, combine_equal=False):
                                 if not found:
                                     new_genvars_list += [{gv}]
                             # print(new_genvars_list)
-                            mdict[cv] = sympify(prod([FactorialElemSym(len(gvs),len(gvs),*gvs,cv) for gvs in new_genvars_list]))
+                            mdict[cv] = sympify(prod([FactorialElemSym(len(gvs), len(gvs), *gvs, cv) for gvs in new_genvars_list]))
             return Mul(*list(mdict.values()))
     if blaff != expr:
         return canonicalize_elem_syms(blaff)
@@ -101,26 +100,26 @@ def canonicalize_elem_syms(expr, combine_equal=False):
 def canonicalize_elem_syms_coeff(expr, combine_equal=False):
     expr = sympify(expr)
     expr = expand(expr)
-    #print(f"farfel {expr=}")
+    # print(f"farfel {expr=}")
     if not expr.args:
-        #print(f"I have returned the moofer of sin {expr=}")
+        # print(f"I have returned the moofer of sin {expr=}")
         return expr
     if is_of_func_type(expr, FactorialElemSym):
         if degree(expr) < numvars(expr):
             return canonicalize_elem_syms_coeff(split_out_vars(expr, None, coeffvars(expr)[:-1]))
-        #print(f"What a bargain {expr=}")
+        # print(f"What a bargain {expr=}")
         return expr
     if isinstance(expr, Add):
         blaff = Add(*[canonicalize_elem_syms_coeff(arg) for arg in expr.args])
     if isinstance(expr, Pow):
-        blaff = Pow(canonicalize_elem_syms_coeff(expr.args[0]),expr.args[1])
+        blaff = Pow(canonicalize_elem_syms_coeff(expr.args[0]), expr.args[1])
     if isinstance(expr, Mul):
         blaff = Mul(*[canonicalize_elem_syms_coeff(arg) for arg in expr.args])
         if blaff == expr:
             mdict = {}
             for arg in blaff.args:
                 if not is_of_func_type(arg, FactorialElemSym):
-                    mdict[S.One] = mdict.get(S.One,S.One) * arg
+                    mdict[S.One] = mdict.get(S.One, S.One) * arg
                 else:
                     cv = coeffvars(arg)[0]
                     if cv not in mdict:
@@ -128,7 +127,7 @@ def canonicalize_elem_syms_coeff(expr, combine_equal=False):
                     else:
                         em = mdict[cv]
                         if combine_equal:
-                            mdict[cv] = FactorialElemSym(degree(em)+degree(arg),numvars(em)+numvars(arg),*genvars(em),*genvars(arg),cv)
+                            mdict[cv] = FactorialElemSym(degree(em) + degree(arg), numvars(em) + numvars(arg), *genvars(em), *genvars(arg), cv)
                         else:
                             new_genvars_list = [set()]
                             total_genvars = []
@@ -148,7 +147,7 @@ def canonicalize_elem_syms_coeff(expr, combine_equal=False):
                                 if not found:
                                     new_genvars_list += [{gv}]
                             # print(new_genvars_list)
-                            mdict[cv] = sympify(prod([FactorialElemSym(len(gvs),len(gvs),*gvs,cv) for gvs in new_genvars_list]))
+                            mdict[cv] = sympify(prod([FactorialElemSym(len(gvs), len(gvs), *gvs, cv) for gvs in new_genvars_list]))
             return Mul(*list(mdict.values()))
     if blaff != expr:
         return canonicalize_elem_syms_coeff(blaff)

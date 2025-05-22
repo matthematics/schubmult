@@ -1,6 +1,6 @@
 import schubmult.perm_lib as pl
 import schubmult.schub_lib.schub_lib as schub_lib
-from schubmult.symbolic import Add, Mul, Pow, S, sympify
+from schubmult.symbolic import Add, Mul, Pow, S, Symbol, sympify
 
 from .poly_lib import call_zvars
 
@@ -162,6 +162,7 @@ def schubpoly(v, var2=None, var3=None, start_var=1):
 #         return skew_div_diff(u2, w2, perm_act(poly, d + 1))
 #     return skew_div_diff(u, w2, div_diff(d + 1, poly))
 
+_s = Symbol("_s")
 
 def div_diff(poly, v1, v2):
     if hasattr(poly, "_eval_div_diff"):
@@ -181,7 +182,7 @@ def div_diff(poly, v1, v2):
     if isinstance(poly, Pow):
         a = poly.args[0]
         dd = div_diff(poly.args[0], v1, v2)
-        b = poly.args[0].xreplace({v1: v2, v2: v1})
+        b = poly.args[0].xreplace({v1: _s}).xreplace({v2:v1}).xreplace({_s:v2})
         return Add(*[Mul(dd, Pow(b, i), Pow(a, int(poly.args[1]) - 1 - i)) for i in range(int(poly.args[1]))])
     if isinstance(poly, Mul):
         current_args = [*poly.args]
@@ -194,6 +195,6 @@ def div_diff(poly, v1, v2):
                 args_ret += [Mul(*[*current_args[:i], *current_args[i + 1 :]])]
             else:
                 args_ret += [Mul(*[*current_args[:i], res, *current_args[i + 1 :]])]
-            current_args[i] = current_args[i].xreplace({v1: v2, v2: v1})
+            current_args[i] = current_args[i].xreplace({v1: _s}).xreplace({v2:v1}).xreplace({_s:v2})
         return Add(*args_ret)
     raise ValueError(f"Expected Expr but got {type(poly)}")
