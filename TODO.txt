@@ -348,3 +348,7 @@ New rep: positive roots y, z schubs
 fast schub creation solving
 
 elem sym q shifting
+
+generates its own q_vars?
+
+elem sym not quite work
