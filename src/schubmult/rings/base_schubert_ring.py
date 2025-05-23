@@ -4,7 +4,7 @@ from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
 from ._mul_utils import _mul_schub_dicts
-from .schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
+from .schub_poly import schubpoly_from_elems
 
 logger = get_logger(__name__)
 
@@ -41,12 +41,6 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         result = S.Zero
         for k, v in self.items():
             result += sympify(v) * schubpoly_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=self.ring.symbol_elem_func)
-        return result
-
-    def in_CEM_basis(self):
-        result = S.Zero
-        for k, v in self.items():
-            result += sympify(v) * schubpoly_classical_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=self.ring.symbol_elem_func)
         return result
 
     def _sympystr(self, printer):

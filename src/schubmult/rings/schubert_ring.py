@@ -156,17 +156,11 @@ class DoubleSchubertElement(BaseSchubertElement):
                 ret += toadd * val * new_basis(new_perm)
         return ret
 
-    # def elem_coproduct(self, *indices):
-    #     genset = self.ring.genset
-    #     genset = self.ring.coeff_genset
-    #     gname1 = f"{genset.label}_A"  # "("+", ".join([f"{genset.label}_{i}" for i in indices])+")"
-    #     gname2 = f"{genset.label}_B"  # f"{genset.label}\\{{"+", ".join([f"{genset.label}_{i}" for i in indices])+"}"
-    #     gens2 = MaskedGeneratingSet(genset, indices)
-    #     gens1 = gens2.complement()
-    #     gens1.set_label(gname1)
-    #     gens2.set_label(gname2)
-    #     R = TensorRing(DoubleSchubertRing(gens1),DoubleSchubertRing(gens2))
-    #     def elem_sym(p, k, varl1, varl2):
+    def in_CEM_basis(self):
+        result = S.Zero
+        for k, v in self.items():
+            result += sympify(v) * schubpoly_classical_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=self.ring.symbol_elem_func)
+        return result
 
     def coproduct(self, *indices, alt_coeff_genset=None, on_coeff_gens=False, gname1=None, gname2=None):
         result_dict = {}

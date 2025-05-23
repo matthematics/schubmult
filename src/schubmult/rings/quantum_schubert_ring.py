@@ -6,6 +6,7 @@ import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
 from schubmult.perm_lib import Permutation, longest_element, uncode
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, sympify
+from schubmult.symmetric_polynomials import QFactorialElemSym
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import is_parabolic
 
@@ -74,14 +75,7 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
 
     @property
     def symbol_elem_func(self):
-        def elem_func(p, k, varl1, varl2):  # noqa: ARG001
-            if p == 0 and k >= 0:
-                return 1
-            if p < 0 or p > k:
-                return 0
-            return Add(*[(Symbol(f"e_{p - i}_{k}") if p - i > 0 else 1) * complete_sym_poly(i, k + 1 - p, [-v for v in varl2]) for i in range(p + 1)])
-
-        return elem_func
+        return QFactorialElemSym
 
     def elem_sym_subs(self, kk):
         elems = []
@@ -283,24 +277,24 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
             elem = self.from_expr(x)
         return elem
 
-    def in_SEM_basis(self):
-        result = S.Zero
-        for k, v in self.items():
-            if len(k) > len(self._longest):
-                parabolic_index = []
-                start = 0
-                index_comp = [*self._n, len(k) + 1 - self._N[-1]]
-                for i in range(len(index_comp)):
-                    end = start + index_comp[i]
-                    parabolic_index += list(range(start + 1, end))
-                    start = end
-                otherlong = Permutation(list(range(parabolic_index[-1] + 1, 0, -1)))
-                longpar = Permutation(longest_element(parabolic_index))
-                longest = otherlong * longpar
-            else:
-                longest = self._longest
-            result += v * schubpoly_from_elems(k, self.genset, self.coeff_genset, elem_func=self.ring.symbol_elem_func, mumu=~longest)
-        return result
+    # def in_SEM_basis(self):
+    #     result = S.Zero
+    #     for k, v in self.items():
+    #         if len(k) > len(self._longest):
+    #             parabolic_index = []
+    #             start = 0
+    #             index_comp = [*self._n, len(k) + 1 - self._N[-1]]
+    #             for i in range(len(index_comp)):
+    #                 end = start + index_comp[i]
+    #                 parabolic_index += list(range(start + 1, end))
+    #                 start = end
+    #             otherlong = Permutation(list(range(parabolic_index[-1] + 1, 0, -1)))
+    #             longpar = Permutation(longest_element(parabolic_index))
+    #             longest = otherlong * longpar
+    #         else:
+    #             longest = self._longest
+    #         result += v * schubpoly_from_elems(k, self.genset, self.coeff_genset, elem_func=self.ring.symbol_elem_func, mumu=~longest)
+    #     return result
 
 
 class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
@@ -450,7 +444,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
             if p < 0 or p > k:
                 return basis.zero
             if k <= self._N[1]:
-                return basis.elem_sym(p, k, varl1, varl2) # check: this may speed it up
+                return basis.elem_sym(p, k, varl1, varl2)  # check: this may speed it up
             ret = basis.zero
             j = bisect_left(self._N, k)
             if j < len(self._N) and k == self._N[j]:
@@ -562,7 +556,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
                 new_key = []
                 coeff1 = dct[key]
                 for i in range(len(self.index_comp)):
-                    new_key += sorted(key[len(new_key):len(new_key)+self.index_comp[i]])
+                    new_key += sorted(key[len(new_key) : len(new_key) + self.index_comp[i]])
                 new_key = tuple(new_key)
                 try:
                     coeff2 = dct[new_key]
