@@ -12,4 +12,3 @@ x = GeneratingSet("x")
 y = GeneratingSet("y")
 z = GeneratingSet("z")
 q = GeneratingSet("q")
-

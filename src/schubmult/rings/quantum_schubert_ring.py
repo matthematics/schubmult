@@ -269,6 +269,12 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, "QBS"))
 
+    def quantize(self, poly):
+        r = spr.SingleSchubertRing(self.genset)
+        ssp = r.from_expr(poly)
+        sspq = self.from_dict(dict(ssp.items()))
+        return sspq.as_polynomial()
+
     def _coerce_mul(self, other):
         """Coerce a basis schubert algebra element so it can be multiplied
 
