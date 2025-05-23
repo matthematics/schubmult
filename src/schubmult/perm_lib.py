@@ -4,7 +4,7 @@ from functools import cache, cached_property
 import sympy.combinatorics.permutations as spp
 
 import schubmult.utils.logging as lg
-from schubmult.utils.perm_utils import cyclic_sort, permtrim_list, sg
+from schubmult.utils.perm_utils import cyclic_sort, old_code, permtrim_list, sg
 
 # schubmult.poly_lib.variables import GeneratingSet
 
@@ -30,13 +30,13 @@ class Permutation:
     @staticmethod
     def __xnew__(_class, perm):
         p = tuple(permtrim_list([*perm]))
-        s_perm = spp.Permutation._af_new([i - 1 for i in p])
+        # s_perm = spp.Permutation._af_new([i - 1 for i in p])
         obj = object.__new__(_class)
         obj._args = (perm,)
-        obj._s_perm = s_perm
+        # obj._s_perm = s_perm
         obj._perm = p
         obj._hash_code = hash(p)
-        cd = s_perm.inversion_vector()
+        cd = old_code(p)
         obj._unique_key = (len(p), sum([cd[i] * math.factorial(len(p) - 1 - i) for i in range(len(cd))]))
         return obj
 
@@ -83,17 +83,24 @@ class Permutation:
         """1-indexed"""
         return self[i - 1]
 
+    def zero_indexed_descents(self):
+        desc = set()
+        for i in range(len(self._perm) - 1):
+            if self[i] > self[i + 1]:
+                desc.add(i)
+        return desc
+
     def descents(self, zero_indexed=True):
         if zero_indexed:
-            return self._s_perm.descents()
-        return {i + 1 for i in self._s_perm.descents()}
+            return self.zero_indexed_descents()
+        return {i + 1 for i in self.zero_indexed_descents()}
 
     def get_cycles(self):
         return self.get_cycles_cached()
 
     @cache
     def get_cycles_cached(self):
-        return [tuple(cyclic_sort([i + 1 for i in c])) for c in self._s_perm.cyclic_form]
+        return [tuple(cyclic_sort([i + 1 for i in c])) for c in spp.Permutation._af_new([k-1 for k in self._perm]).cyclic_form]
 
     @property
     def code(self):
@@ -101,11 +108,11 @@ class Permutation:
 
     @cache
     def _cached_code(self):
-        return self._s_perm.inversion_vector()
+        return old_code(self._perm)
 
     @cached_property
     def inv(self):
-        return self._s_perm.inversions()
+        return sum(self.code)
 
     def swap(self, i, j):
         new_perm = [*self._perm]
@@ -134,9 +141,9 @@ class Permutation:
         return self._hash_code
 
     def __mul__(self, other):
-        new_sperm = other._s_perm * self._s_perm
-        new_perm = permtrim_list([new_sperm.array_form[i] + 1 for i in range(new_sperm.size)])
-        return Permutation(new_perm)
+        if len(other._perm) > len(self._perm):
+            return Permutation([self[other._perm[i] - 1] for i in range(len(other._perm))])
+        return Permutation([self._perm[other[i] - 1] for i in range(len(self._perm))])
 
     def __iter__(self):
         yield from self._perm.__iter__()
@@ -186,8 +193,9 @@ class Permutation:
         return max(len(self._perm), 2)
 
     def __invert__(self):
-        new_sperm = ~(self._s_perm)
-        new_perm = [new_sperm.array_form[i] + 1 for i in range(new_sperm.size)]
+        new_perm = [0] * len(self._perm)
+        for i in range(len(self._perm)):
+            new_perm[self[i] - 1] = i + 1
         return Permutation(new_perm)
 
     def __repr__(self):

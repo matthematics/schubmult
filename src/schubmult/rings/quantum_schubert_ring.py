@@ -580,18 +580,18 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
 
     # TODO: speed this up
     def mul_expr(self, elem, x):
-        dct = self.classical_basis.mul_expr(self.in_classical_basis(elem), x)
-        elem = self.zero
-        if not isinstance(dct, BaseSchubertElement):
-            return dct
-        for k, v in dct.items():
-            if expand(v) == S.Zero:
-                continue
-            if elem == self.zero:
-                elem = v * self.classical_in_basis(k)
-            else:
-                elem += v * self.classical_in_basis(k)
-        return elem
+        # dct = self.classical_basis.mul_expr(self.in_classical_basis(elem), x)
+        # elem = self.zero
+        # if not isinstance(dct, BaseSchubertElement):
+        #     return dct
+        # for k, v in dct.items():
+        #     if expand(v) == S.Zero:
+        #         continue
+        #     if elem == self.zero:
+        #         elem = v * self.classical_in_basis(k)
+        #     else:
+        #         elem += v * self.classical_in_basis(k)
+        return elem * self.from_expr(x)
 
     def __call__(self, x):
         genset = self.genset
