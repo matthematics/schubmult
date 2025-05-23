@@ -66,7 +66,7 @@ class E_q(ElemSym_base):
 
     @cache
     def _eval_expand_func(self, *args, **_):  # noqa: ARG002
-        return sympify_sympy(elem_sym_poly_q(self._p, self._k, self.genvars, self.coeffvars, q_var=tuple([0, *[self._q_var[self._x_var.index(b)] for b in self.genvars]])))
+        return sympify_sympy(elem_sym_poly_q(self._p, self._k, self.genvars, self.coeffvars, q_var=(0, *[self._q_var[self._x_var.index(b)] for b in self.genvars])))
 
     # def pull_out_vars(self, var1, var2, min_degree=1):
     #     if self._p < min_degree:

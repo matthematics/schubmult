@@ -235,7 +235,7 @@ class E(ElemSym_base):
         if var1 in self.genvars and var2 in self.coeffvars:
             return self.xreplace({var1: var2}) + FactorialElemSym(1, 1, [var1], [var2]) * self.divide_out_diff(var1, var2)
         return self
-    
+
     @cache
     def _eval_expand_func(self, *args, **_):  # noqa: ARG002
         return sympify_sympy(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))
@@ -334,7 +334,7 @@ class e(ElemSym_base):
             new_genvars.remove(v2)
             return -self.func(self._p - 1, self._k - 1, new_genvars)
         return S.Zero
-    
+
     @cache
     def _eval_expand_func(self, *args, **_):  # noqa: ARG002
         return sympify_sympy(elem_sym_poly(self._p, self._k, self.genvars, self.coeffvars))

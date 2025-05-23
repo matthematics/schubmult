@@ -1,7 +1,6 @@
 from functools import cache
 
-from schubmult.perm_lib import Permutation
-from schubmult.symbolic import Mul, S, sympify, sympy_Mul
+from schubmult.symbolic import Mul, S, sympy_Mul
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
