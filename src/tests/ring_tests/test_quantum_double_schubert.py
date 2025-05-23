@@ -22,6 +22,24 @@ def test_parabolic():
     assert expand(C.as_polynomial()-A.as_polynomial()*B.as_polynomial()) == S.Zero
     assert expand(C.as_polynomial()-QPDSx(2,3)(C.as_polynomial()).as_polynomial()) == S.Zero
 
+def test_expr_trans():
+    from schubmult import QDSx
+    from schubmult.symbolic import expand, S
+    from schubmult.abc import x, y
+
+    expr = (x[1] + y[1]*x[2])**5
+    schub = QDSx([]).ring.from_expr(expr)
+    assert expand(schub.as_polynomial() - expr) == S.Zero
+
+def test_expr_trans_parabolic():
+    from schubmult import QPDSx
+    from schubmult.symbolic import expand, S
+    from schubmult.abc import x, y
+
+    expr = (x[1] + y[1]*(x[2]+x[3])**2)**2
+    schub = QPDSx(1,2)([]).ring.from_expr(expr)
+    assert expand(schub.as_polynomial() - expr) == S.Zero
+
 
 # def test_subs():
 #     from schubmult.symbolic import expand, S

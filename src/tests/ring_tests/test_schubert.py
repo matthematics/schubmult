@@ -20,6 +20,16 @@ def test_coproduct():
     indices = [2, 4, 6]
     assert expand(Sx(perm).coproduct(*indices).expand() - Sx(perm).expand()) == 0
 
+def test_expr_trans():
+    from schubmult import Sx
+    from schubmult.symbolic import expand, S
+    from schubmult.abc import x, y
+
+    expr = (x[1] + y[1]*x[2])**5
+    schub = Sx([]).ring.from_expr(expr)
+    assert expand(schub.as_polynomial() - expr) == S.Zero
+
+
 def test_associative():
     """
     Test associative on some large perms

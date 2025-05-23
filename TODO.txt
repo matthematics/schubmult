@@ -341,10 +341,6 @@ subtract off compute pos simply faster schubert poly reexpress
 
 groeb
 
-reduced on the z roots root polynomial pos
-
-New rep: positive roots y, z schubs
-
 fast schub creation solving
 
 elem sym q shifting
@@ -352,3 +348,6 @@ elem sym q shifting
 generates its own q_vars?
 
 elem sym not quite work
+
+
+more tests

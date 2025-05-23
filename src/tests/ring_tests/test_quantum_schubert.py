@@ -10,6 +10,24 @@ def test_schub_expand():
     assert expand((QSx([5,3,4,1,2]).expand() * QSx([4,1,5,2,3]).expand() - (QSx([5,3,4,1,2]) * QSx([4,1,5,2,3])).expand()).expand()) == 0
     assert (x_1*QSx([3,4,1,2])).expand() == q_1**2*x_1 + q_1*q_2*x_1 + 2*q_1*x_1**2*x_2 - q_2*x_1**3 + x_1**3*x_2**2
 
+def test_expr_trans():
+    from schubmult import QSx
+    from schubmult.symbolic import expand, S
+    from schubmult.abc import x, y
+
+    expr = (x[1] + y[1]*x[2])**5
+    schub = QSx([]).ring.from_expr(expr)
+    assert expand(schub.as_polynomial() - expr) == S.Zero
+
+def test_expr_trans_parabolic():
+    from schubmult import QPSx
+    from schubmult.symbolic import expand, S
+    from schubmult.abc import x, y
+
+    expr = (x[1] + y[1]*(x[2]+x[3])**2)**2
+    schub = QPSx(1,2)([]).ring.from_expr(expr)
+    assert expand(schub.as_polynomial() - expr) == S.Zero
+
 def test_parabolic():
     from schubmult import QPSx
     from schubmult import uncode

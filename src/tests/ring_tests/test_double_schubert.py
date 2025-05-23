@@ -37,6 +37,15 @@ def test_associative():
 #     assert expand(DSx([], "theta").basis.express(DSx(perm)) - DSx(perm).change_vars("gamama")) == 0
 #     #assert (DSx(perm)*DSx(perm,"z")).change_vars("theta") == ((DSx(perm)*DSx(perm,"z")).change_vars("yourmom"))
 
+def test_expr_trans():
+    from schubmult import DSx
+    from schubmult.symbolic import expand, S
+    from schubmult.abc import x, y
+
+    expr = (x[1] + y[1]*x[2])**5
+    schub = DSx([]).ring.from_expr(expr)
+    assert expand(schub.as_polynomial() - expr) == S.Zero
+
 def test_elem_sym():
     from schubmult import DSx, Permutation
     from schubmult.symbolic import expand, S

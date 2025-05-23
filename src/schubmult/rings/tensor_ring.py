@@ -1,6 +1,7 @@
 from functools import cache
 
-from schubmult.symbolic import Mul, S, sympify
+from schubmult.perm_lib import Permutation
+from schubmult.symbolic import Mul, S, sympify, sympy_Mul
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -99,8 +100,8 @@ class TensorRing(BaseSchubertRing):
 
     def __call__(self, x):
         if isinstance(x, tuple):
-            return self.from_dict({x: 1})
-        return self.from_sympy(x)
+            return self.from_dict({x: self.domain.one})
+        return self.from_expr(x)
 
 
 class TensorBasisElement(AbstractSchubPoly):
@@ -112,7 +113,13 @@ class TensorBasisElement(AbstractSchubPoly):
 
     @staticmethod
     def __xnew__(_class, k, basis):
-        return AbstractSchubPoly.__new__(_class, k, basis)
+        obj =  AbstractSchubPoly.__new__(_class, k, None, None)
+        obj._key = k
+        obj.ring = basis
+        return obj
+
+    def __hash__(self):
+        return hash((self._key, self.ring))
 
     @staticmethod
     @cache
@@ -123,10 +130,10 @@ class TensorBasisElement(AbstractSchubPoly):
         return " # ".join([printer._print(self.ring.rings[i].printing_term(self._key[i])) for i in range(len(self._key))])
 
     def _pretty(self, printer):
-        return printer._print_TensorProduct(Mul(*[self.ring.rings[i].printing_term(self._key[i]) for i in range(len(self._key))]))
+        return printer._print_TensorProduct(sympy_Mul(*[self.ring.rings[i].printing_term(self._key[i]) for i in range(len(self._key))]))
 
     def _latex(self, printer):
-        return printer._print_TensorProduct(Mul(*[self.ring.rings[i].printing_term(self._key[i]) for i in range(len(self._key))]))
+        return printer._print_TensorProduct(sympy_Mul(*[self.ring.rings[i].printing_term(self._key[i]) for i in range(len(self._key))]))
 
 
 class TensorRingElement(BaseSchubertElement):
@@ -141,8 +148,8 @@ class TensorRingElement(BaseSchubertElement):
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
-            return [sympify(S.Zero)]
+            return [S.Zero]
         return [
-            self.ring.domain.to_sympy(self[k]) if k == self.ring.zero_monom else Mul(self.ring.domain.to_sympy(self[k]), self.ring.printing_term(k))
+            self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k))
             for k in sorted(self.keys(), key=lambda kkt: [(kk.inv, tuple(kk)) for kk in kkt])
         ]
