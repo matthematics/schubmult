@@ -135,7 +135,7 @@ class Permutation:
                 return [self[ii] for ii in range(i.start if i.start is not None else 0, i.stop if i.stop is not None else len(self))]
             if i >= len(self._perm):
                 return i + 1
-        
+
 
     def __setitem__(self, i, v):
         raise NotImplementedError
