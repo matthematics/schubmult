@@ -16,7 +16,7 @@ from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .poly_lib import elem_sym_poly, xreplace_genvars
 from .schub_poly import schubpoly_classical_from_elems
 from .tensor_ring import TensorRing
-from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet, NotEnoughGeneratorsError, poly_genset
+from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet, NotEnoughGeneratorsError, genset_dict_from_expr, poly_genset
 
 logger = get_logger(__name__)
 
@@ -447,6 +447,23 @@ class DoubleSchubertRing(BaseSchubertRing):
                     ret += (sign * v) * self(perm)
         return ret
 
+    def from_expr(self, expr):
+        # if expr.is_Number:
+        #     return self.from_dict({Permutation(): sympify(expr)})
+        ret = self.zero
+        try:
+            expr = sympify(expr)
+            while expr != S.Zero:
+                dct = genset_dict_from_expr(expr, self.genset)
+                key = sorted(dct.keys(), reverse=True)[0]
+                term = self.from_dict({uncode(key): dct[key]})
+                ret += term
+                expr -= term.as_polynomial()
+                expr = expand(expr)
+            return ret
+        except Exception:
+            raise
+
     def mul_expr(self, elem, x):
         x = sympify(x)
         ind = self.genset.index(x)
@@ -735,7 +752,7 @@ class ElemDoubleSchubertRing(DoubleSchubertRing):
 
 #     # @property
 #     # def replacematch(self):
-#     #     def bob(*args, **kwargs):  # noqa: ARG001
+#     #     def bob(*args, **kwargs):
 #     #         # print(f"{args=} {kwargs=}")
 #     #         a = kwargs["a"]
 #     #         b = kwargs["b"]

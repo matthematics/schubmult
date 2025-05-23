@@ -6,7 +6,7 @@ from bisect import bisect_left
 from functools import cache
 from typing import ClassVar
 
-from schubmult.symbolic import S, SympifyError, symbols, sympify
+from schubmult.symbolic import Add, Mul, Pow, S, SympifyError, expand, symbols, sympify
 from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -274,3 +274,41 @@ def poly_genset(v: str):
     if v == NoneVar:
         return ZeroGeneratingSet(tuple([sympify(0) for i in range(100)]))
     return GeneratingSet(str(v))
+
+def genset_dict_from_expr(expr, genset):
+    """Transform expressions into a multinomial form given generators. """
+    k = max([genset.index(a) for a in expr.free_symbols])
+
+    poly = {}
+    expr = expand(expr)
+    for term in Add.make_args(expr):
+        coeff, monom = [], [0]*k
+
+        for factor in Mul.make_args(term):
+            if factor.is_Number:
+                coeff.append(factor)
+            else:
+                try:
+                    if isinstance(factor, Pow):
+                        base, exp = factor.args[0], int(factor.args[1])
+                        if base not in genset:
+                            raise IndexError
+                        monom[genset.index(base) - 1] = exp
+                    else:
+                        if factor not in genset:
+                            raise IndexError
+                        monom[genset.index(factor) - 1] = 1
+                except IndexError:
+                    if not any(a in factor.free_symbols for a in genset[:k]):
+                        coeff.append(factor)
+                    else:
+                        raise Exception(f"{factor} contains an element of the set of generators.")
+
+        monom = tuple(monom)
+
+        if monom in poly:
+            poly[monom] += Mul(*coeff)
+        else:
+            poly[monom] = Mul(*coeff)
+
+    return poly
