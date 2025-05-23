@@ -189,7 +189,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def as_polynomial(self):
         # print(f"{self=}")
         # try:
-        return sympify(Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()]))
+        return Add(*[v * self.ring.cached_schubpoly(k) for k, v in self.items()])
         # except SympifyError:
         #     return Add(*[sympify(v) * self.ring.cached_schubpoly(k) for k, v in self.items()])
 
