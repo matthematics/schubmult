@@ -4,9 +4,10 @@ from functools import cache
 import schubmult.rings.schubert_ring as spr
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
+import schubmult.schub_lib.schub_lib as schub_lib
 from schubmult.perm_lib import Permutation, longest_element, uncode
-from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, sympify
-from schubmult.symmetric_polynomials import QFactorialElemSym
+from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, expand_func, sympify
+from schubmult.symmetric_polynomials import FactorialElemSym, QFactorialElemSym, coeffvars, degree, genvars, is_of_func_type, numvars
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import is_parabolic
 
@@ -19,6 +20,10 @@ from .variables import GeneratingSet, GeneratingSet_base, genset_dict_from_expr,
 q_var = GeneratingSet("q")
 
 logger = get_logger(__name__)
+
+
+def is_fact_elem_sym(obj):
+    return is_of_func_type(obj, QFactorialElemSym)
 
 
 class QuantumDoubleSchubertElement(BaseSchubertElement):
@@ -84,6 +89,27 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
                 elems += [(Symbol(f"e_{p}_{k}"), elem_sym_poly_q(p, k, self.genset[1:], poly_genset(0)))]
         return dict(elems)
 
+    @property
+    def elem_sym(self):
+        return QFactorialElemSym
+
+    def is_elem_mul_type(self, other):
+        return is_fact_elem_sym(other)
+
+    # specifically symengine
+    def elem_mul(self, ring_elem, elem):
+        elem = sympify(elem)
+        indexes = [self.genset.index(a) for a in genvars(elem)]
+        ret = self.zero
+        for k, v in ring_elem.items():
+            perm_list = schub_lib.elem_sym_positional_perms_q(k, degree(elem), *indexes, q_var=q_var)
+            # print(perm_list)
+            for perm, df, sign, mul_val in perm_list:
+                remaining_vars = [self.coeff_genset[perm[i - 1]] for i in indexes if perm[i - 1] == k[i - 1]]
+                coeff = FactorialElemSym(degree(elem) - df, numvars(elem) - df, remaining_vars, coeffvars(elem))  # we need FactorialElemSym here
+                ret += (v * sign * expand_func(coeff) * mul_val) * self(perm)
+        return ret
+
     @cache
     def cached_product(self, u, v, basis2):
         return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset) for k, x in yz.schubmult_q_double_pair_generic(u, v).items()}
@@ -138,6 +164,25 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
     def mult_poly_single(self):
         return py.mult_poly_q
 
+    def positive_elem_sym_rep(self, perm, index=1):
+        if perm.inv == 0:
+            return S.One
+        ret = S.Zero
+        L = schub_lib.pull_out_var(1, ~perm)
+        for index_list, new_perm in L:
+            ret += self.elem_sym(len(index_list), len(index_list), [self.genset[index2] for index2 in index_list], [self.coeff_genset[index]]) * self.positive_elem_sym_rep(~new_perm, index + 1)
+        return ret
+
+    def positive_elem_sym_rep_backward(self, perm):
+        if perm.inv == 0:
+            return S.One
+        ret = S.Zero
+        index = max((~perm).descents()) + 1
+        L = schub_lib.pull_out_var(index, ~perm)
+        for index_list, new_perm in L:
+            ret += self.positive_elem_sym_rep_backward(~new_perm) * self.elem_sym(len(index_list), len(index_list), [self.genset[index2] for index2 in index_list], [self.coeff_genset[index]])
+        return ret
+
     @property
     def mult_poly_double(self):
         return yz.mult_poly_q_double
@@ -155,7 +200,10 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
                 expr = expand(expr)
             return ret
         except Exception:
-            raise
+            return self.mul_expr(self.one, expr)
+
+    def handle_sympoly(self, other):
+        return expand_func(other)
 
     def mul_expr(self, elem, x):
         x = sympify(x)
@@ -165,6 +213,20 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
         ind = self.genset.index(x)
         if ind != -1:
             return self.from_dict(yz.mult_poly_q_double(elem, x, self.genset, self.coeff_genset))
+        if is_fact_elem_sym(x):
+            # print(f"moo {x=}")
+            if all(self.genset.index(a) != -1 for a in genvars(x)) and not any(self.genset.index(a) != -1 for a in coeffvars(x)):
+                return self.elem_mul(elem, x)
+
+            gens_to_remove = [a for a in genvars(x) if a not in self.genset]
+            if any(self.genset.index(a) != -1 for a in genvars(x)) and len(gens_to_remove):
+                return self.mul_expr(elem, x.split_out_vars(gens_to_remove))
+
+            coeffs_to_remove = [a for a in coeffvars(x) if a in self.genset]
+
+            if any(a in self.genset for a in coeffvars(x)) and len(coeffs_to_remove):
+                return self.mul_expr(elem.split_out_vars(x.to_complete_sym(), coeffs_to_remove))
+            return self.from_dict({k: (self.handle_sympoly(x)) * v for k, v in elem.items()})
         if isinstance(x, _Add):
             return self.sum([self.mul_expr(elem, arg) for arg in x.args])
         if isinstance(x, _Mul):

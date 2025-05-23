@@ -1,8 +1,6 @@
 from functools import cache
 from itertools import chain
 
-import numpy as np
-
 import schubmult.rings.variables as spl
 from schubmult.perm_lib import (
     Permutation,
@@ -15,6 +13,7 @@ from schubmult.perm_lib import (
     theta,
     uncode,
 )
+from schubmult.symbolic import S, prod
 from schubmult.utils.perm_utils import (
     count_bruhat,
     get_cycles,
@@ -485,32 +484,6 @@ def reduce_q_coeff_u_only(u, v, w, qv):
     return u, v, w, qv, False
 
 
-# def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
-#     total_list = [(orig_perm, 0, 1)]
-#     up_perm_list = [(orig_perm, 1, 1000)]
-#     for pp in range(p):
-#         perm_list = []
-#         for up_perm, val, last_j in up_perm_list:
-#             up_perm2 = [*up_perm, len(up_perm) + 1]
-#             if len(up_perm2) < k + 1:
-#                 up_perm2 += [i + 1 for i in range(len(up_perm2), k + 2)]
-#             pos_list = [i for i in range(k) if (i >= len(orig_perm) and up_perm2[i] == i + 1) or (i < len(orig_perm) and up_perm2[i] == orig_perm[i])]
-#             for j in range(min(len(up_perm2) - 1, last_j), k - 1, -1):
-#                 for i in pos_list:
-#                     ct = count_bruhat(up_perm2, i, j)
-#                     # print(f"{up_perm2=} {ct=} {i=} {j=} {k=} {pp=}")
-#                     if ct == 1 or ct == 2 * (i - j) + 1:
-#                         new_perm = [*up_perm2]
-#                         new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
-#                         new_perm_add = tuple(permtrim(new_perm))
-#                         new_val = val
-#                         if ct < 0:
-#                             new_val *= np.prod([q_var[index] for index in range(i + 1, j + 1)])
-#                         perm_list += [(new_perm_add, new_val, j)]
-#                         total_list += [(new_perm_add, pp + 1, new_val)]
-#         up_perm_list = perm_list
-#     return total_list
-
 
 def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
     total_list = [(orig_perm, 0, 1)]
@@ -519,7 +492,6 @@ def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
         perm_list = []
         for up_perm, val, last_j in up_perm_list:
             pos_list = [i for i in range(k) if up_perm[i] == orig_perm[i]]
-            # print(f"{pos_list=} {up_perm=} {orig_perm=} {k=}", file=sys.stderr)
             for j in range(min(max(k + 1, len(up_perm)), last_j), k - 1, -1):
                 for i in pos_list:
                     ct = count_bruhat(up_perm, i, j)
@@ -528,7 +500,7 @@ def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
                         # print(f"{new_perm_add=}")
                         new_val = val
                         if ct < 0:
-                            new_val *= np.prod([q_var[index] for index in range(i + 1, j + 1)])
+                            new_val *= prod([q_var[index] for index in range(i + 1, j + 1)])
                         perm_list += [(new_perm_add, new_val, j)]
                         total_list += [(new_perm_add, pp + 1, new_val)]
         up_perm_list = perm_list
@@ -556,7 +528,7 @@ def elem_sym_perms_q_op(orig_perm, p, k, n, q_var=q_var):
                         new_perm_add = Permutation(new_perm)
                         new_val = val
                         if ct > 0:
-                            new_val *= np.prod([q_var[index] for index in range(i + 1, j + 1)])
+                            new_val *= prod([q_var[index] for index in range(i + 1, j + 1)])
                         perm_list += [(new_perm_add, new_val, j)]
                         total_list += [(new_perm_add, pp + 1, new_val)]
         up_perm_list = perm_list
@@ -602,6 +574,91 @@ def elem_sym_positional_perms(orig_perm, p, *k):
                         new_sign = sign if i < j else -sign
                         perm_list.add((new_perm_add, new_sign))
                         total_list.add((new_perm_add, pp + 1, new_sign))
+        up_perm_list = perm_list
+    return total_list
+
+# def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
+#     total_list = [(orig_perm, 0, 1)]
+#     up_perm_list = [(orig_perm, 1, 1000)]
+#     for pp in range(p):
+#         perm_list = []
+#         for up_perm, val, last_j in up_perm_list:
+#             pos_list = [i for i in range(k) if up_perm[i] == orig_perm[i]]
+#             for j in range(min(max(k + 1, len(up_perm)), last_j), k - 1, -1):
+#                 for i in pos_list:
+#                     ct = count_bruhat(up_perm, i, j)
+#                     if ct == 1 or ct == 2 * (i - j) + 1:
+#                         new_perm_add = up_perm.swap(i, j)
+#                         # print(f"{new_perm_add=}")
+#                         new_val = val
+#                         if ct < 0:
+#                             new_val *= prod([q_var[index] for index in range(i + 1, j + 1)])
+#                         perm_list += [(new_perm_add, new_val, j)]
+#                         total_list += [(new_perm_add, pp + 1, new_val)]
+#         up_perm_list = perm_list
+#     return total_list
+
+
+# def elem_sym_positional_perms_q(orig_perm, p, *k, q_var=q_var):
+#     k = {i - 1 for i in k}
+#     orig_perm = Permutation(orig_perm)
+#     total_list = {(orig_perm, 0, S.One, S.One)}
+#     up_perm_list = {(orig_perm, S.One, S.One, 1000)}
+#     for pp in range(p):
+#         perm_list = set()
+#         for up_perm, sign, val, last_j in up_perm_list:
+#             pos_list = [i for i in k if up_perm[i] == orig_perm[i]]
+#             rg = [q for q in range(min(len(up_perm) + max(k), last_j + 1)) if q not in k]
+#             for j in rg:
+#                 for i in pos_list:
+#                     a, b = (i, j) if i < j else (j, i)
+#                     ct = count_bruhat(up_perm, a, b)
+#                     if ct == 1 or ct == 2 * (a - b) + 1:
+#                         new_perm_add = up_perm.swap(i, j)
+#                         # print(f"{new_perm_add=} {i=} {j=} {p=} {last_j=} {pos_list=}")
+#                         new_sign = sign if i < j else -sign
+#                         new_val = val
+#                         if ct < 0:
+#                             new_val *= prod([q_var[index] for index in range(a + 1, b + 1)])
+#                         # print(f"{val=} {new_val=}")
+#                         perm_list.add((new_perm_add, new_sign, new_val, j))
+#                         total_list.add((new_perm_add, pp + 1, new_sign, new_val))
+#         up_perm_list = perm_list
+#     return total_list
+
+
+# this is a quantization
+def elem_sym_positional_perms_q(orig_perm, p, *k, q_var=q_var):
+    k = {i - 1 for i in k}
+    # print(f"{k=}")
+    # sorting perm
+    # lookup_mask = Permutation.sorting_perm(k)
+    orig_perm = Permutation(orig_perm)
+    total_list = {(orig_perm, 0, S.One, S.One)}
+    up_perm_list = {(orig_perm, S.One, S.One, 1000)}
+    for pp in range(p):
+        perm_list = set()
+        for up_perm, sign, val, last_j in up_perm_list:
+            # print(f"{up_perm=}")
+            pos_list = [i for i in k if up_perm[i] == orig_perm[i]]
+            rg = [q for q in range(min(last_j,len(up_perm) + max(k)),-1,-1) if q not in k]
+            # print(f"{rg=}")
+            # print(f"{pos_list=}")
+            for i in pos_list:
+                for j in rg:
+                    a, b = (i, j) if i < j else (j, i)
+                    ct = count_bruhat(up_perm, a, b)
+                    # print(f"{up_perm=} {a=} {b=} {ct=}")
+                    if ct == 1 or ct == 2 * (a - b) + 1:
+                        new_perm_add = up_perm.swap(i, j)
+                        # print(f"{new_perm_add=} {i=} {j=} {p=} {pos_list=}")
+                        new_sign = sign if i < j else -sign
+                        new_val = val
+                        if ct < 0:
+                            new_val *= prod([q_var[index] for index in range(a + 1, b + 1)])
+                        # print(f"{val=} {new_val=}")
+                        perm_list.add((new_perm_add, new_sign, new_val, j))
+                        total_list.add((new_perm_add, pp + 1, new_sign, new_val))
         up_perm_list = perm_list
     return total_list
 

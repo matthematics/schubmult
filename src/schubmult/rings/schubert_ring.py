@@ -20,14 +20,12 @@ from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, M
 
 logger = get_logger(__name__)
 
-
 def is_fact_elem_sym(obj):
     return is_of_func_type(obj, ElemSym_base)
 
 
 def is_fact_complete_sym(obj):
     return is_of_func_type(obj, CompleteSym_base)
-
 
 class DoubleSchubertElement(BaseSchubertElement):
     """Algebra with sympy coefficients

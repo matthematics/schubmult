@@ -346,3 +346,5 @@ reduced on the z roots root polynomial pos
 New rep: positive roots y, z schubs
 
 fast schub creation solving
+
+elem sym q shifting

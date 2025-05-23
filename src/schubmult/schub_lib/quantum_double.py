@@ -14,7 +14,7 @@ import schubmult.schub_lib.positivity as pos
 from schubmult.perm_lib import Permutation, code, inv, longest_element, medium_theta, permtrim, strict_theta, uncode
 from schubmult.rings.poly_lib import _vars, call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet_base
-from schubmult.schub_lib.schub_lib import check_blocks, compute_vpathdicts, double_elem_sym_q, elem_sym_perms_q, elem_sym_perms_q_op, reduce_q_coeff
+from schubmult.schub_lib.schub_lib import check_blocks, compute_vpathdicts, double_elem_sym_q, elem_sym_perms_q, elem_sym_perms_q_op, elem_sym_positional_perms_q, reduce_q_coeff
 from schubmult.symbolic import Add, Mul, Pow, S, expand, sympify
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import (
@@ -34,20 +34,19 @@ logger = get_logger(__name__)
 def single_variable(coeff_dict, varnum, var_y=None, q_var=_vars.q_var):
     ret = {}
     for u in coeff_dict:
-        if varnum - 1 < len(u):
-            ret[u] = ret.get(u, 0) + var_y[u[varnum - 1]] * coeff_dict[u]
-        else:
-            ret[u] = ret.get(u, 0) + var_y[varnum] * coeff_dict[u]
-        new_perms_k = elem_sym_perms_q(u, 1, varnum, q_var)
-        new_perms_km1 = []
-        if varnum > 1:
-            new_perms_km1 = elem_sym_perms_q(u, 1, varnum - 1, q_var)
-        for perm, udiff, mul_val in new_perms_k:
+        ret[u] = ret.get(u, S.Zero) + var_y[u[varnum - 1]] * coeff_dict[u]
+        # else:
+        #     ret[u] = ret.get(u, 0) + var_y[varnum] * coeff_dict[u]
+        new_perms_k = elem_sym_positional_perms_q(u, 1, varnum, q_var=q_var)
+        # new_perms_km1 = []
+        # if varnum > 1:
+        #     new_perms_km1 = elem_sym_perms_q(u, 1, varnum - 1, q_var)
+        for perm, udiff, sign, mul_val in new_perms_k:
             if udiff == 1:
-                ret[perm] = ret.get(perm, 0) + coeff_dict[u] * mul_val
-        for perm, udiff, mul_val in new_perms_km1:
-            if udiff == 1:
-                ret[perm] = ret.get(perm, 0) - coeff_dict[u] * mul_val
+                ret[perm] = ret.get(perm, S.Zero) + coeff_dict[u] * mul_val * sign
+        # for perm, udiff, mul_val in new_perms_km1:
+        #     if udiff == 1:
+        #         ret[perm] = ret.get(perm, 0) - coeff_dict[u] * mul_val
     return ret
 
 
