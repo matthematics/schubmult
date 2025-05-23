@@ -33,7 +33,7 @@ class Permutation:
         # s_perm = spp.Permutation._af_new([i - 1 for i in p])
         obj = object.__new__(_class)
         obj._args = (perm,)
-        # obj._s_perm = s_perm
+        # obj._s_perm = tuple([i - 1 for i in p])
         obj._perm = p
         obj._hash_code = hash(p)
         cd = old_code(p)
@@ -142,8 +142,8 @@ class Permutation:
 
     def __mul__(self, other):
         if len(other._perm) > len(self._perm):
-            return Permutation([self[other._perm[i] - 1] for i in range(len(other._perm))])
-        return Permutation([self._perm[other[i] - 1] for i in range(len(self._perm))])
+            return Permutation([self(other._perm[i]) for i in range(len(other._perm))])
+        return Permutation([*[self._perm[other._perm[i] - 1] for i in range(len(other._perm))],*self._perm[len(other._perm):]])
 
     def __iter__(self):
         yield from self._perm.__iter__()
