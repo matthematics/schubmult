@@ -128,11 +128,14 @@ class Permutation:
         return Permutation(new_perm)
 
     def __getitem__(self, i):
-        if isinstance(i, slice):
-            return [self[ii] for ii in range(i.start if i.start is not None else 0, i.stop if i.stop is not None else len(self))]
-        if i >= len(self._perm):
-            return i + 1
-        return self._perm[i]
+        try:
+            return self._perm[i]
+        except Exception:
+            if isinstance(i, slice):
+                return [self[ii] for ii in range(i.start if i.start is not None else 0, i.stop if i.stop is not None else len(self))]
+            if i >= len(self._perm):
+                return i + 1
+        
 
     def __setitem__(self, i, v):
         raise NotImplementedError
