@@ -4,7 +4,7 @@ from functools import cache
 import schubmult.rings.schubert_ring as spr
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
-from schubmult.perm_lib import Permutation, longest_element
+from schubmult.perm_lib import Permutation, longest_element, uncode
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, sympify
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import is_parabolic
@@ -13,7 +13,7 @@ from .abstract_schub_poly import PQDSchubPoly, QDSchubPoly
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .poly_lib import complete_sym_poly, elem_sym_poly, elem_sym_poly_q, xreplace_genvars
 from .schub_poly import schubpoly_from_elems
-from .variables import GeneratingSet, GeneratingSet_base, poly_genset
+from .variables import GeneratingSet, GeneratingSet_base, genset_dict_from_expr, poly_genset
 
 q_var = GeneratingSet("q")
 
@@ -147,6 +147,21 @@ class QuantumDoubleSchubertRing(BaseSchubertRing):
     @property
     def mult_poly_double(self):
         return yz.mult_poly_q_double
+
+    def from_expr(self, expr):
+        ret = self.zero
+        try:
+            expr = sympify(expr)
+            while expr != S.Zero:
+                dct = genset_dict_from_expr(expr, self.genset)
+                key = sorted(dct.keys(), reverse=True)[0]
+                term = self.from_dict({uncode(key): dct[key]})
+                ret += term
+                expr -= term.as_polynomial()
+                expr = expand(expr)
+            return ret
+        except Exception:
+            raise
 
     def mul_expr(self, elem, x):
         x = sympify(x)
@@ -536,6 +551,32 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
     @property
     def mult_poly_double(self):
         return yz.mult_poly_q_double
+
+    def from_expr(self, expr):
+        ret = self.zero
+        try:
+            expr = sympify(expr)
+            while expr != S.Zero:
+                dct = genset_dict_from_expr(expr, self.genset)
+                key = sorted(dct.keys(), reverse=True)[0]
+                new_key = []
+                coeff1 = dct[key]
+                for i in range(len(self.index_comp)):
+                    new_key += sorted(key[len(new_key):len(new_key)+self.index_comp[i]])
+                new_key = tuple(new_key)
+                try:
+                    coeff2 = dct[new_key]
+                except KeyError:
+                    raise ValueError(f"{expr} does not have symmetry properties")
+                if expand(coeff1 - coeff2) != S.Zero:
+                    raise ValueError(f"{expr} does not have symmetry properties")
+                term = self.from_dict({uncode(new_key): dct[new_key]})
+                ret += term
+                expr -= term.as_polynomial()
+                expr = expand(expr)
+            return ret
+        except Exception:
+            raise
 
     # TODO: speed this up
     def mul_expr(self, elem, x):

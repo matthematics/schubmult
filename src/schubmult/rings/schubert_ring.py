@@ -448,8 +448,6 @@ class DoubleSchubertRing(BaseSchubertRing):
         return ret
 
     def from_expr(self, expr):
-        # if expr.is_Number:
-        #     return self.from_dict({Permutation(): sympify(expr)})
         ret = self.zero
         try:
             expr = sympify(expr)
@@ -462,7 +460,7 @@ class DoubleSchubertRing(BaseSchubertRing):
                 expr = expand(expr)
             return ret
         except Exception:
-            raise
+            return super().from_expr(expr)
 
     def mul_expr(self, elem, x):
         x = sympify(x)

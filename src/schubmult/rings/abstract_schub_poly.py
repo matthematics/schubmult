@@ -161,12 +161,12 @@ class PQDSchubPoly(AbstractSchubPoly):
 
     _pretty_schub_char = "𝕼𝔖"  # noqa: RUF001
 
-    def __new__(cls, k, basis, index_comp):
-        return PQDSchubPoly.__xnew_cached__(cls, k, basis, index_comp)
+    def __new__(cls, k, genset, coeff_genset, index_comp):
+        return PQDSchubPoly.__xnew_cached__(cls, k, genset, coeff_genset, index_comp)
 
     @staticmethod
-    def __xnew__(_class, k, basis, index_comp):
-        obj = AbstractSchubPoly.__new__(_class, k, basis)
+    def __xnew__(_class, k, genset, coeff_genset,    index_comp):
+        obj = AbstractSchubPoly.__new__(_class, k, genset, coeff_genset)
         obj._perm = k
         obj._key = k
         obj._index_comp = index_comp
@@ -182,8 +182,8 @@ class PQDSchubPoly(AbstractSchubPoly):
 
     @staticmethod
     @cache
-    def __xnew_cached__(_class, k, basis, index_comp):
-        return PQDSchubPoly.__xnew__(_class, k, basis, index_comp)
+    def __xnew_cached__(_class, k, genset, coeff_genset, index_comp):
+        return PQDSchubPoly.__xnew__(_class, k, genset, coeff_genset, index_comp)
 
     def _sympystr(self, printer):
         if self.coeff_genset is None:
