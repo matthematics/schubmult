@@ -41,14 +41,12 @@ def elem_func_func_mul(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, elem_fu
 
 def schubpoly_from_elems(v, var_x=None, var_y=None, elem_func=None, mumu=None):
     if mumu:
-        # print(pl.code(mumu))
         th = pl.code(mumu)
-        # print(f"{th=}")
         mu = mumu
     else:
         th = pl.strict_theta(~pl.Permutation(v))
         mu = pl.uncode(th)
-    vmu = pl.Permutation(v) * mu  # permtrim(mulperm([*v], mu))
+    vmu = pl.Permutation(v) * mu
     if len(th) == 0:
         return elem_func(0, 0, var_x, var_y)
     while len(th) > 0 and th[-1] == 0:

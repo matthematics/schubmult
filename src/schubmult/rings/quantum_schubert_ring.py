@@ -705,6 +705,37 @@ class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing):
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, self.index_comp, "PQSB"))
 
+    @cache
+    def cached_schubpoly(self, k):
+        if len(k) > len(self._longest):
+            parabolic_index = []
+            start = 0
+            index_comp = [*self._n, len(k) + 1 - self._N[-1]]
+            for i in range(len(index_comp)):
+                end = start + index_comp[i]
+                parabolic_index += list(range(start + 1, end))
+                start = end
+            otherlong = Permutation(list(range(parabolic_index[-1] + 1, 0, -1)))
+            longpar = Permutation(longest_element(parabolic_index))
+            longest = otherlong * longpar
+        else:
+            longest = self._longest
+        return schubpoly_from_elems(k, self.genset, self.coeff_genset, elem_func=self.elem_sym, mumu=~longest)
+
+    def elem_sym(self, p, k, varl1, varl2):
+        if p < 0 or p > k:
+            return 0
+        if p == 0 and k >= 0:
+            return 1
+        if k <= self._N[1]:
+            return elem_sym_poly(p, k, varl1, poly_genset(0))
+        ret = 0
+        j = bisect_left(self._N, k)
+        if j < len(self._N) and k == self._N[j]:
+            ret = (-((-1) ** (self._n[j - 1]))) * q_var[j - 1] * self.elem_sym(p - self._N[j] + self._N[j - 2], self._N[j - 2], varl1, varl2)
+        ret += self.elem_sym(p, k - 1, varl1, varl2) + varl1[k - 1] * self.elem_sym(p - 1, k - 1, varl1, varl2)
+        return ret
+
     def _coerce_mul(self, other):
         if isinstance(other, BaseSchubertElement):
             if other.ring == self:

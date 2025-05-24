@@ -341,49 +341,83 @@ def divdiffable(v, u):
 
 
 # perms and inversion diff
+# def kdown_perms(perm, monoperm, p, k):
+#     perm = Permutation(perm)
+#     monoperm = Permutation(monoperm)
+#     imonoperm = ~monoperm
+#     inv_m = inv(monoperm)
+#     inv_p = inv(perm)
+#     full_perm_list = []
+#     # perm = Permutation(perm)
+#     # print(f"{perm=} {monoperm=} {inv_m=} {inv_p=} {perm*monoperm=}")
+#     if inv(perm * monoperm) == inv_m - inv_p:
+#         full_perm_list += [(perm, 0, 1)]
+#     down_perm_list = [(perm, 1, perm * monoperm)]
+#     if len(perm) < k:
+#         return full_perm_list
+#     a2 = k - 1
+#     for pp in range(1, p + 1):
+#         down_perm_list2 = []
+#         for perm2, s, test_perm in down_perm_list:
+#             L = len(perm2)
+#             inv_test_perm = inv(test_perm)
+#             if k > L:
+#                 continue
+#             s2 = -s
+#             for b in chain(range(k - 1), range(k, L)):
+#                 if perm2[b] != perm[b]:
+#                     continue
+#                 if b < a2:
+#                     i, j = b, a2
+#                 else:
+#                     i, j, s2 = a2, b, s
+#                 # print(f"{perm2=} {i=} {j=}")
+#                 if has_bruhat_descent(perm2, i, j):
+#                     new_perm = perm2.swap(i, j)
+#                     down_perm_list2 += [(new_perm, s2, test_perm.swap(imonoperm[i] - 1,imonoperm[j] - 1))]
+#                     add_inv = 1 if test_perm[imonoperm[i] - 1] < test_perm[imonoperm[j] - 1] else -1
+#                     if inv_test_perm + add_inv == inv_m - inv_p + pp:
+#                         full_perm_list += [(new_perm, pp, s2)]
+#         down_perm_list = down_perm_list2
+#     return full_perm_list
+
 def kdown_perms(perm, monoperm, p, k):
     perm = Permutation(perm)
     monoperm = Permutation(monoperm)
     inv_m = inv(monoperm)
     inv_p = inv(perm)
     full_perm_list = []
-    # perm = Permutation(perm)
-    # print(f"{perm=} {monoperm=} {inv_m=} {inv_p=} {perm*monoperm=}")
     if inv(perm * monoperm) == inv_m - inv_p:
         full_perm_list += [(perm, 0, 1)]
 
-    down_perm_list = [(perm, 1)]
+    down_perm_list = [(perm, S.One)]
     if len(perm) < k:
         return full_perm_list
     a2 = k - 1
     for pp in range(1, p + 1):
         down_perm_list2 = []
+        g_inv = inv_m - inv_p + pp
         for perm2, s in down_perm_list:
             L = len(perm2)
-            # print(f"{perm2=} {L=}")
             if k > L:
                 continue
             s2 = -s
-            for b in chain(range(k - 1), range(k, L)):
-                if perm2[b] != perm[b]:
-                    continue
-                if b < a2:
-                    i, j = b, a2
-                else:
-                    i, j, s2 = a2, b, s
-                # print(f"{perm2=} {i=} {j=}")
-                if has_bruhat_descent(perm2, i, j):
-                    # print(f"YEAH BABY {perm2=} {i=} {j=}")
-                    new_perm = perm2.swap(i, j)
-                    # print(f"{new_perm=}")
+            rg = [i for i in range(k - 1) if perm2[i] == perm[i]]
+            for b in rg:
+                if has_bruhat_descent(perm2, b, a2):
+                    new_perm = perm2.swap(b, a2)
                     down_perm_list2 += [(new_perm, s2)]
-                    if inv(new_perm * monoperm) == inv_m - inv_p + pp:
+                    if inv(new_perm * monoperm) == g_inv:
                         full_perm_list += [(new_perm, pp, s2)]
-                # else:
-                #     # print(f"NO BABY {perm2=} {i=} {j=}")
+            rg = [i for i in range(k, L) if perm2[i] == perm[i]]
+            for b in rg:
+                if has_bruhat_descent(perm2, a2, b):
+                    new_perm = perm2.swap(a2, b)
+                    down_perm_list2 += [(new_perm, s)]
+                    if inv(new_perm * monoperm) == g_inv:
+                        full_perm_list += [(new_perm, pp, s)]
         down_perm_list = down_perm_list2
     return full_perm_list
-
 
 @cache
 def compute_vpathdicts_cached(th, vmu):

@@ -351,3 +351,5 @@ elem sym not quite work
 
 
 more tests
+
+parabolic as polynomial is slow
