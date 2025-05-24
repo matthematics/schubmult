@@ -18,7 +18,7 @@ def has_bruhat_descent(perm, i, j):
     if perm[i] < perm[j]:
         return False
     for p in range(i + 1, j):
-        if perm[i] > perm[p] and perm[p] > perm[j]:
+        if perm[p] > perm[j] and perm[i] > perm[p]:
             return False
     return True
 

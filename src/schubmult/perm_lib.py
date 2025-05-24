@@ -20,6 +20,18 @@ class Permutation:
     def __new__(cls, perm):
         return Permutation.__xnew_cached__(cls, tuple(perm))
 
+    # @classmethod
+    # def _af_new(cls, p):
+    #     obj = object.__new__(cls)
+    #     p = tuple(p)
+    #     obj._args = (p,)
+    #     # obj._s_perm = tuple([i - 1 for i in p])
+    #     obj._perm = p
+    #     obj._hash_code = hash(p)
+    #     cd = old_code(p)
+    #     obj._unique_key = (len(p), sum([cd[i] * math.factorial(len(p) - 1 - i) for i in range(len(cd))]))
+    #     return obj
+
     print_as_code = False
 
     @staticmethod
@@ -30,9 +42,9 @@ class Permutation:
     @staticmethod
     def __xnew__(_class, perm):
         p = tuple(permtrim_list([*perm]))
-        # s_perm = spp.Permutation._af_new([i - 1 for i in p])
+        # s_perm = spp.Permutation([i - 1 for i in p])
         obj = object.__new__(_class)
-        obj._args = (perm,)
+        obj._args = (p,)
         # obj._s_perm = tuple([i - 1 for i in p])
         obj._perm = p
         obj._hash_code = hash(p)
@@ -100,7 +112,7 @@ class Permutation:
 
     @cache
     def get_cycles_cached(self):
-        return [tuple(cyclic_sort([i + 1 for i in c])) for c in spp.Permutation._af_new([k-1 for k in self._perm]).cyclic_form]
+        return [tuple(cyclic_sort([i + 1 for i in c])) for c in spp.Permutation([k - 1 for k in self._perm]).cyclic_form]
 
     @property
     def code(self):
@@ -120,11 +132,8 @@ class Permutation:
         if i > j:
             i, j = j, i
         if j >= len(new_perm):
-            # print(f"SWAP {j}>={new_perm=}")
-            new_perm += list(range(len(new_perm) + 1, j + 2))
-            # print(f"SWAP extended {new_perm=}")
+            new_perm.extend(range(len(new_perm) + 1, j + 2))
         new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
-        # print(f"SWAP iddle {new_perm=}")
         return Permutation(new_perm)
 
     def __getitem__(self, i):
@@ -136,7 +145,6 @@ class Permutation:
             if i >= len(self._perm):
                 return i + 1
 
-
     def __setitem__(self, i, v):
         raise NotImplementedError
 
@@ -145,8 +153,8 @@ class Permutation:
 
     def __mul__(self, other):
         if len(other._perm) > len(self._perm):
-            return Permutation([self(other._perm[i]) for i in range(len(other._perm))])
-        return Permutation([*[self._perm[other._perm[i] - 1] for i in range(len(other._perm))],*self._perm[len(other._perm):]])
+            return Permutation([self[other._perm[i] - 1] for i in range(len(other._perm))])
+        return Permutation([*[self._perm[other._perm[i] - 1] for i in range(len(other._perm))], *self._perm[len(other._perm) :]])
 
     def __iter__(self):
         yield from self._perm.__iter__()
@@ -216,24 +224,14 @@ class Permutation:
         return uncode(theta(self))
 
 
-def ensure_perms(func):
-    def wrapper(*args):
-        return func(*[Permutation(arg) if (isinstance(arg, list) or isinstance(arg, tuple)) else arg for arg in args])
-
-    return wrapper
-
-
-@ensure_perms
 def inv(perm):
     return perm.inv
 
 
-@ensure_perms
 def code(perm):
     return perm.code
 
 
-@ensure_perms
 def mulperm(perm1, perm2):
     return perm1 * perm2
 
@@ -252,7 +250,6 @@ def uncode(cd):
     return Permutation(perm)
 
 
-@ensure_perms
 def inverse(perm):
     return ~perm
 
@@ -261,7 +258,6 @@ def permtrim(perm):
     return Permutation(perm)
 
 
-@ensure_perms
 def strict_theta(u):
     ret = [*trimcode(u)]
     did_one = True
@@ -290,7 +286,6 @@ def longest_element(indices):
     return permtrim(perm)
 
 
-@ensure_perms
 def theta(perm):
     cd = code(perm)
     for i in range(len(cd) - 1, 0, -1):
@@ -301,7 +296,6 @@ def theta(perm):
     return cd
 
 
-@ensure_perms
 def trimcode(perm):
     cd = perm.code
     while len(cd) > 0 and cd[-1] == 0:
@@ -313,7 +307,6 @@ def cycle(p, q):
     return Permutation(list(range(1, p)) + [i + 1 for i in range(p, p + q)] + [p])
 
 
-@ensure_perms
 def phi1(u):
     c_star = (~u).code
     c_star.pop(0)
@@ -321,7 +314,6 @@ def phi1(u):
     return ~(uncode(c_star))
 
 
-@ensure_perms
 def one_dominates(u, w):
     c_star_u = (~u).code
     c_star_w = (~w).code

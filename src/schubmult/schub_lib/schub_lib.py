@@ -1,11 +1,9 @@
 from functools import cache
-from itertools import chain
 
 import schubmult.rings.variables as spl
 from schubmult.perm_lib import (
     Permutation,
     code,
-    ensure_perms,
     inv,
     inverse,
     one_dominates,
@@ -193,7 +191,7 @@ def is_reducible(v):
     return good
 
 
-# @ensure_perms
+#
 def try_reduce_v(u, v, w):
     if is_reducible(v):
         return u, v, w
@@ -330,7 +328,6 @@ def pull_out_var(vnum, v):
     return ret_list
 
 
-@ensure_perms
 def divdiffable(v, u):
     inv_v = inv(v)
     inv_u = inv(u)
@@ -381,6 +378,7 @@ def divdiffable(v, u):
 #         down_perm_list = down_perm_list2
 #     return full_perm_list
 
+
 def kdown_perms(perm, monoperm, p, k):
     perm = Permutation(perm)
     monoperm = Permutation(monoperm)
@@ -418,6 +416,7 @@ def kdown_perms(perm, monoperm, p, k):
                         full_perm_list += [(new_perm, pp, s)]
         down_perm_list = down_perm_list2
     return full_perm_list
+
 
 @cache
 def compute_vpathdicts_cached(th, vmu):
@@ -518,7 +517,6 @@ def reduce_q_coeff_u_only(u, v, w, qv):
     return u, v, w, qv, False
 
 
-
 def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
     total_list = [(orig_perm, 0, 1)]
     up_perm_list = [(orig_perm, 1, 1000)]
@@ -541,7 +539,6 @@ def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
     return total_list
 
 
-@ensure_perms
 def elem_sym_perms_q_op(orig_perm, p, k, n, q_var=q_var):
     total_list = [(orig_perm, 0, 1)]
     up_perm_list = [(orig_perm, 1, k)]
@@ -611,6 +608,7 @@ def elem_sym_positional_perms(orig_perm, p, *k):
         up_perm_list = perm_list
     return total_list
 
+
 # def elem_sym_perms_q(orig_perm, p, k, q_var=q_var):
 #     total_list = [(orig_perm, 0, 1)]
 #     up_perm_list = [(orig_perm, 1, 1000)]
@@ -675,7 +673,7 @@ def elem_sym_positional_perms_q(orig_perm, p, *k, q_var=q_var):
         for up_perm, sign, val, last_j in up_perm_list:
             # print(f"{up_perm=}")
             pos_list = [i for i in k if up_perm[i] == orig_perm[i]]
-            rg = [q for q in range(min(last_j,len(up_perm) + max(k)),-1,-1) if q not in k]
+            rg = [q for q in range(min(last_j, len(up_perm) + max(k)), -1, -1) if q not in k]
             # print(f"{rg=}")
             # print(f"{pos_list=}")
             for i in pos_list:
