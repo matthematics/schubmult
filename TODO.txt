@@ -360,3 +360,17 @@ graded module monk
 
 fomin-kirillov
 Zero out then schubify? Same expression?
+Any extra mul terms cut
+
+Quantum Dunkl -> Commuting difference operators classical Dunkl -> constant term, invertible, identical tau rep
+
+(y_2 - z_1)*(y_3 - z_1)*QDSx([1, 1], y) + (y_2 - z_1)*QDSx([1, 2], y) + QDSx([2, 2], y) reduced tau rep
+
+skip terms that produce a q
+simplify FK remove terms identically zero
+
+If we can reduce in lower algebra, good to go
+
+Eigenvalues
+char poly
+eigenvectors

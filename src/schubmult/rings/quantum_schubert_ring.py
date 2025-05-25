@@ -308,7 +308,7 @@ class QuantumSingleSchubertRing(QuantumDoubleSchubertRing):
         _Pow = Pow
         ind = self.genset.index(x)
         if ind != -1:
-            return self.from_dict(py.mult_poly_q(elem, x, self.genset, self.coeff_genset))
+            return self.from_dict(py.mult_poly_q(elem, x, self.genset))
         if isinstance(x, _Add):
             return self.sum([self.mul_expr(elem, arg) for arg in x.args])
         if isinstance(x, _Mul):

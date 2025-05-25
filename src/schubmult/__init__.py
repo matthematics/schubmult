@@ -3,6 +3,7 @@ __version__ = "3.0.2dev1"
 
 # schubpoly_from_elems?
 from .perm_lib import Permutation, permtrim, theta, uncode
+from .rings.nil_hecke import NilHeckeRing, df
 from .rings.poly_lib import divide_out_diff, efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, split_up, xreplace_genvars
 from .rings.quantum_schubert_ring import (
     QDSx,
@@ -69,6 +70,7 @@ __all__ = [
     "compute_positive_rep",
     "div_diff",
     "divide_out_diff",
+    "df",
     "efficient_subs",
     "elem_sym_poly",
     "elem_sym_poly_q",
@@ -105,4 +107,5 @@ __all__ = [
     "theta",
     "uncode",
     "xreplace_genvars",
+    "NilHeckeRing",
 ]

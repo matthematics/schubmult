@@ -42,6 +42,7 @@ def single_variable(coeff_dict, varnum, var_q=_vars.q_var):
         new_perms_km1 = []
         if varnum > 1:
             new_perms_km1 = sss.elem_sym_perms_q(u, 1, varnum - 1, var_q)
+        # print(f"{new_perms_k=}")
         for perm, udiff, mul_val in new_perms_k:
             if udiff == 1:
                 ret[perm] = ret.get(perm, 0) + coeff_dict[u] * mul_val
@@ -58,6 +59,7 @@ def mult_poly_q(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
     # logger.debug(f"{[type(v) for v in var_x]}")
     if var_x.index(poly) != -1:
         # logger.debug(f"Found {var_x.index(poly)=}")
+        # print("bang")
         return single_variable(coeff_dict, var_x.index(poly), var_q=var_q)
     if isinstance(poly, Mul):
         ret = coeff_dict
