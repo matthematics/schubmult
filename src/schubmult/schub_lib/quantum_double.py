@@ -180,7 +180,7 @@ def schubmult_q_generic_partial_posify(u2, v2):
 def q_posify(u, v, w, val, var2, var3, q_var, msg):
     # logger.debug(f"Line number {val=} {u=} {v=} {w=}")
     if not v.has_pattern([1, 4, 3, 2]) and not v.has_pattern([3, 1, 2]):
-        return val
+        return schubmult_q_double_fast(u, v, var2, var3, q_var).get(w, S.Zero)
     try:
         val2 = int(expand(val))
     except Exception:

@@ -353,3 +353,10 @@ elem sym not quite work
 more tests
 
 parabolic as polynomial is slow
+
+quantum correctness verification
+
+graded module monk
+
+fomin-kirillov
+Zero out then schubify? Same expression?

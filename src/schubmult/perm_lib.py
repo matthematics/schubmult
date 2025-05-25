@@ -126,6 +126,9 @@ class Permutation:
     def inv(self):
         return sum(self.code)
 
+    def __reduce__(self):
+        return (self.__class__, (self._perm,))
+
     def swap(self, i, j):
         new_perm = [*self._perm]
         # print(f"SWAP {new_perm=}")
