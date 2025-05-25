@@ -7,7 +7,6 @@ from schubmult.symbolic import (
     CompositeDomain,
     DefaultPrinting,
     DomainElement,
-    Function,
     Mul,
     Pow,
     Ring,
@@ -309,7 +308,7 @@ class NilHeckeRing(Ring, CompositeDomain):
     def one(self):
         return self.from_dict({Permutation([]): S.One})
 
-    def from_dict(self, element, orig_domain=None):
+    def from_dict(self, element, orig_domain=None):  # noqa: ARG002
         # print(f"{element=}")
         poly = self.zero
 
