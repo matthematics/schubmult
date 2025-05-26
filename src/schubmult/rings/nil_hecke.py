@@ -161,7 +161,7 @@ class NilHeckeElement(DomainElement, DefaultPrinting, dict):
 
     def __rmul__(self, other):
         try:
-            return self.ring.mul(self, other)
+            return self.ring.rmul(self, other)
         except CoercionFailed:
             return NotImplemented
 
@@ -265,6 +265,14 @@ class NilHeckeRing(Ring, CompositeDomain):
             if newperm.inv == k.inv + perm.inv:
                 dct[newperm] = v
         return self.from_dict(dct)
+
+    def rmul(self, elem, other):
+        # print(f"{self=} {elem=} {other=}")
+        if isinstance(other, NilHeckeElement):
+            raise NotImplementedError
+        if isinstance(other, BaseSchubertElement):
+            other = other.as_polynomial()
+        return self.from_dict({k: v*other for k,v in elem.items()})
 
     def mul(self, elem, other):
         # print(f"{self=} {elem=} {other=}")
