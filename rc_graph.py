@@ -38,7 +38,9 @@ def rc_graph_set(perm, reorg_perm):
         print(f"{index_list=}")
         to_add_first = [*perm]
         print(f"{to_add_first=}")
-        to_add_first=["+" if a in index_list else "-" for a in to_add_first]
+        # pos
+        # to_add_first=["+" if a in index_list else "-" for a in to_add_first]
+        to_add_first=["+" if a + 1 in index_list else "-" for a in range(len(to_add_first))] # TEMP
         print(f"{to_add_first=}")
         # print(f"{perm.code=}, {new_perm.code=}")
         # print(f"{((~new_perm)*perm).inv=} {perm.inv-new_perm.inv=}")
@@ -62,21 +64,31 @@ def rc_graph_set(perm, reorg_perm):
             ret.append((new_labels, new_word, new_perml,new_grid))
     return ret
 
-rp = Permutation([3, 1, 2])  # reorganization permutation
-# rp = Permutation([])
+# rp = Permutation([3, 1, 2])  # reorganization permutation
+rp = Permutation([1,4,2,3])
 rs_set = rc_graph_set(perm0,~rp)
+
+# SAME SPOT
 
 for labels, word, perml,grid in rs_set:
     # print(f"{labels=}, {word=}")
     # print(f"{perml=}")
     print(f"{labels=}")
+    #top_line = set()
+    bacon = []
     for i in range(len(grid)):
         grid2 = []
+        #bump = 0
         for j in range(len(grid[i])):
             if grid[i][j] == "*":
                 grid2 = ["*"] + grid2
             else:
+                #top_line.add(j + 1)
                 grid2.append(grid[i][j])
+        bacon.append(grid2)
+    #top_line = sorted(top_line)
+    #print("   "+" ".join([str(x) for x in top_line]))
+    for i, grid2 in enumerate(bacon):
         print(f"{rp[i]}: "+" ".join([str(x) for x in grid2]))
     print("")
     perm2 = Permutation([])
