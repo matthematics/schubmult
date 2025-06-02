@@ -62,8 +62,8 @@ def rc_graph_set(perm, reorg_perm):
             ret.append((new_labels, new_word, new_perml,new_grid))
     return ret
 
-#rp = Permutation([3, 1, 2])  # reorganization permutation
-rp = Permutation([])
+rp = Permutation([3, 1, 2])  # reorganization permutation
+# rp = Permutation([])
 rs_set = rc_graph_set(perm0,~rp)
 
 for labels, word, perml,grid in rs_set:
@@ -71,7 +71,13 @@ for labels, word, perml,grid in rs_set:
     # print(f"{perml=}")
     print(f"{labels=}")
     for i in range(len(grid)):
-        print(f"{rp[i]}: "+" ".join([str(x) for x in grid[i]]))
+        grid2 = []
+        for j in range(len(grid[i])):
+            if grid[i][j] == "*":
+                grid2 = ["*"] + grid2
+            else:
+                grid2.append(grid[i][j])
+        print(f"{rp[i]}: "+" ".join([str(x) for x in grid2]))
     print("")
     perm2 = Permutation([])
     flob=[]
