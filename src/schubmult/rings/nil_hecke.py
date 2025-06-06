@@ -1,3 +1,5 @@
+from sympy import Expr
+
 from schubmult.perm_lib import Permutation
 from schubmult.schub_lib.double import schubmult_down
 from schubmult.symbolic import (
@@ -11,6 +13,7 @@ from schubmult.symbolic import (
     Pow,
     Ring,
     S,
+    Symbol,
     expand,
     prod,
     sstr,
@@ -306,9 +309,20 @@ class NilHeckeRing(Ring, CompositeDomain):
         return self.mul_scalar(self.one, x)
 
     def printing_term(self, k):
-        from sympy import Symbol
+        # from sympy import Symbol
 
-        return Symbol(f"df({k})", commutative=False)
+        # return Symbol(f"df({k})", commutative=False)
+        class NilHeckeTerm(Expr):
+            def _sympystr(self, printer):
+                return printer._print(f"df({sstr(k)})")
+
+            def _pretty(self, printer):
+                return printer._print(f"\u2202({sstr(k)})")
+
+            def _latex(self, printer):
+                return printer._print_Symbol(Symbol(f"\\partial^{sstr(k)}"))
+        return NilHeckeTerm()
+
 
     def _coerce_mul(self, other): ...
 

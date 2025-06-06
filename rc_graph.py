@@ -21,10 +21,12 @@ import sys
 
 # pull out gen generates RC graphs?
 Permutation.print_as_code=True
-perm0 = uncode([3,2,0,4])
+# perm0 = uncode([2, 3])
+perm0 = uncode([2,4])
 
-def rc_graph_set(perm, reorg_perm):
-    if perm.inv == 0:
+def rc_graph_set(perm, reorg_perm, floin):
+    #if perm.inv == 0:
+    if floin == 0:
         #print(f"{perm=}")
         return [tuple([(),(),(),()])]
     # ret = [tuple([(),()])]
@@ -40,12 +42,13 @@ def rc_graph_set(perm, reorg_perm):
         print(f"{to_add_first=}")
         # pos
         # to_add_first=["+" if a in index_list else "-" for a in to_add_first]
+        #to_add_first=["+" if a + 1 in index_list else "-" for a in range(len(to_add_first))] # TEMP
         to_add_first=["+" if a + 1 in index_list else "-" for a in range(len(to_add_first))] # TEMP
         print(f"{to_add_first=}")
         # print(f"{perm.code=}, {new_perm.code=}")
         # print(f"{((~new_perm)*perm).inv=} {perm.inv-new_perm.inv=}")
         #if ((~new_perm)*perm).inv != perm.inv-new_perm.inv:
-        rc_set = rc_graph_set(new_perm, Permutation([r - 1 for r in reorg_perm if r != 1]))
+        rc_set = rc_graph_set(new_perm, Permutation([r - 1 for r in reorg_perm if r != 1]), floin - 1)
         lsort = sorted(index_list, reverse=True)
         # lsort = sorted(index_list)
         
@@ -65,37 +68,51 @@ def rc_graph_set(perm, reorg_perm):
     return ret
 
 # rp = Permutation([3, 1, 2])  # reorganization permutation
-rp = Permutation([1,4,2,3])
-rs_set = rc_graph_set(perm0,~rp)
+rp = Permutation([2,1])
+rp2 = Permutation([1,2])
+rs_set1 = rc_graph_set(perm0,~rp,len(perm0))
+rs_set2 = rc_graph_set(perm0,~rp2,len(perm0))
 
 # SAME SPOT
+def print_bagel(rs_set):
+    for labels, word, perml,grid in rs_set:
+        # print(f"{labels=}, {word=}")
+        # print(f"{perml=}")
+        print(f"{labels=}")
+        #top_line = set()
+        bacon = []
+        farple = []
+        for i in range(len(grid)):
+            grid2 = []
+            #bump = 0
+            spain = []
+            boing = 0
+            for j in range(len(grid[i])):
+                if grid[i][j] == "*":
+                    grid2 = ["*"] + grid2
+                    spain.append("*")
+                    boing += 1
+                else:
+                    #top_line.add(j + 1)
+                    grid2.append(grid[i][j])
+                    spain.append(perml[i][j - boing])
+            farple.append(spain)
+            bacon.append(grid2)
+        bacon = grid
+        #top_line = sorted(top_line)
+        print("   "+" ".join([str(x) for x in perm0]))
+        for i, grid2 in enumerate(bacon):
+            print(f"{rp[i]}: "+" ".join([str(x) for x in grid2])+"  "+" ".join([str(x) for x in farple[i]]))
+        print("")
+        perm2 = Permutation([])
+        flob=[]
+        for i, word_s in enumerate(word):
+            #perm2 = perm2.swap(word[rp[i]-1]+labels[rp[i]-1]-2, word[rp[i]-1]+labels[rp[i]-1]-1)
+            flob += [word[i] + rp[labels[i]-1]-1]
+            perm2 = perm2.swap(flob[-1]-1, flob[-1])
+        # print(f"{perm2=}")
+        # print(f"{flob=}")
 
-for labels, word, perml,grid in rs_set:
-    # print(f"{labels=}, {word=}")
-    # print(f"{perml=}")
-    print(f"{labels=}")
-    #top_line = set()
-    bacon = []
-    for i in range(len(grid)):
-        grid2 = []
-        #bump = 0
-        for j in range(len(grid[i])):
-            if grid[i][j] == "*":
-                grid2 = ["*"] + grid2
-            else:
-                #top_line.add(j + 1)
-                grid2.append(grid[i][j])
-        bacon.append(grid2)
-    #top_line = sorted(top_line)
-    #print("   "+" ".join([str(x) for x in top_line]))
-    for i, grid2 in enumerate(bacon):
-        print(f"{rp[i]}: "+" ".join([str(x) for x in grid2]))
-    print("")
-    perm2 = Permutation([])
-    flob=[]
-    for i, word_s in enumerate(word):
-        #perm2 = perm2.swap(word[rp[i]-1]+labels[rp[i]-1]-2, word[rp[i]-1]+labels[rp[i]-1]-1)
-        flob += [word[i] + rp[labels[i]-1]-1]
-        perm2 = perm2.swap(flob[-1]-1, flob[-1])
-    # print(f"{perm2=}")
-    # print(f"{flob=}")
+print_bagel(rs_set2)
+print("FROF")
+print_bagel(rs_set1)
