@@ -22,7 +22,7 @@ import sys
 # pull out gen generates RC graphs?
 Permutation.print_as_code=True
 # perm0 = uncode([2, 3])
-perm0 = uncode([2,4])
+perm0 = uncode([2,0,4])
 
 def rc_graph_set(perm, reorg_perm, floin):
     #if perm.inv == 0:
@@ -34,17 +34,17 @@ def rc_graph_set(perm, reorg_perm, floin):
     # indexes = ~reorg_perm
     ret = []
     L = pull_out_var(index, perm)
-    print(f"{index=}")
+    #print(f"{index=}")
     for index_list, new_perm in L:
-        print(f"{perm=}, {new_perm=}")
-        print(f"{index_list=}")
+        #print(f"{perm=}, {new_perm=}")
+        #print(f"{index_list=}")
         to_add_first = [*perm]
-        print(f"{to_add_first=}")
+        #print(f"{to_add_first=}")
         # pos
         # to_add_first=["+" if a in index_list else "-" for a in to_add_first]
         #to_add_first=["+" if a + 1 in index_list else "-" for a in range(len(to_add_first))] # TEMP
         to_add_first=["+" if a + 1 in index_list else "-" for a in range(len(to_add_first))] # TEMP
-        print(f"{to_add_first=}")
+        #print(f"{to_add_first=}")
         # print(f"{perm.code=}, {new_perm.code=}")
         # print(f"{((~new_perm)*perm).inv=} {perm.inv-new_perm.inv=}")
         #if ((~new_perm)*perm).inv != perm.inv-new_perm.inv:
@@ -64,55 +64,84 @@ def rc_graph_set(perm, reorg_perm, floin):
                 to_add = [*perm_old[:index - 1],"*",*perm_old[index - 1:]]
                 to_add += ["-"]*(-(len(to_add)-len(perm)))
                 new_grid.append(to_add)
+            # new_term = term * prod([x[index] - y[il] for il in index_list])
             ret.append((new_labels, new_word, new_perml,new_grid))
     return ret
+# KEY POLYNOMIAL OPERTAORS POSITIVE SCHUBERT
+# Cauchy kernel
+# WE CAN BACK OUT THE CAUCHY KERNEL FROM THE PULLOUTVAR
+# SCHUB BASIS PULL OUT FACTOR
+# FULL FACTORIZATION OF THE CAUCHY KERNEL
+# nilPlactic key Cauchy kernel
+# rc graph pull out var nilplactic
+# identify Bruhat word
 
 # rp = Permutation([3, 1, 2])  # reorganization permutation
-rp = Permutation([2,1])
-rp2 = Permutation([1,2])
-rs_set1 = rc_graph_set(perm0,~rp,len(perm0))
-rs_set2 = rc_graph_set(perm0,~rp2,len(perm0))
+if __name__ == "__main__":
 
-# SAME SPOT
-def print_bagel(rs_set):
-    for labels, word, perml,grid in rs_set:
-        # print(f"{labels=}, {word=}")
-        # print(f"{perml=}")
-        print(f"{labels=}")
-        #top_line = set()
-        bacon = []
-        farple = []
-        for i in range(len(grid)):
-            grid2 = []
-            #bump = 0
-            spain = []
-            boing = 0
-            for j in range(len(grid[i])):
-                if grid[i][j] == "*":
-                    grid2 = ["*"] + grid2
-                    spain.append("*")
-                    boing += 1
-                else:
-                    #top_line.add(j + 1)
-                    grid2.append(grid[i][j])
-                    spain.append(perml[i][j - boing])
-            farple.append(spain)
-            bacon.append(grid2)
-        bacon = grid
-        #top_line = sorted(top_line)
-        print("   "+" ".join([str(x) for x in perm0]))
-        for i, grid2 in enumerate(bacon):
-            print(f"{rp[i]}: "+" ".join([str(x) for x in grid2])+"  "+" ".join([str(x) for x in farple[i]]))
-        print("")
-        perm2 = Permutation([])
-        flob=[]
-        for i, word_s in enumerate(word):
-            #perm2 = perm2.swap(word[rp[i]-1]+labels[rp[i]-1]-2, word[rp[i]-1]+labels[rp[i]-1]-1)
-            flob += [word[i] + rp[labels[i]-1]-1]
-            perm2 = perm2.swap(flob[-1]-1, flob[-1])
-        # print(f"{perm2=}")
-        # print(f"{flob=}")
+    # factor Cauchy kernel
+    n = int(sys.argv[1])
+    index = int(sys.argv[2])
+    perms = [Permutation(perm) for perm in permutations([i for i in range(1, n+1)])]
+    frog_dict = {}
+    for perm in perms:
+        L = pull_out_var(index, perm)
+        for index_list, new_perm in L:
+            # L2 = pull_out_var(index+1, new_perm)
+            # for index_list2, new_perm2 in L2:
+                #frog_dict[new_perm2] = frog_dict.get(new_perm2,S.Zero) + prod([x[index+1] - y[a] for a in index_list2])*prod([x[index] - y[a] for a in index_list])
+            frog_dict[tuple(sorted(index_list))] = frog_dict.get(tuple(sorted(index_list)), []) + [new_perm]
+    for pain in frog_dict:
+        print(f"{pain}: {frog_dict[pain]}")    
+    #print(frog_dict)
+    exit(0)
+    rp1 = Permutation([1,3,2])
+    rp2 = Permutation([3,1,2])
+    rs_set1 = rc_graph_set(perm0,~rp1,len(perm0))
+    rs_set2 = rc_graph_set(perm0,~rp2,len(perm0))
 
-print_bagel(rs_set2)
-print("FROF")
-print_bagel(rs_set1)
+    # SAME SPOT
+    def print_bagel(rs_set,rp):
+        for labels, word, perml,grid in rs_set:
+            # print(f"{labels=}, {word=}")
+            # print(f"{perml=}")
+            print(f"{labels=}")
+            term = prod([x[l] - y[ww] for l, ww in zip(labels, word)])
+            print(f"{term=}")
+            #top_line = set()
+            bacon = []
+            farple = []
+            for i in range(len(grid)):
+                grid2 = []
+                #bump = 0
+                spain = []
+                boing = 0
+                for j in range(len(grid[i])):
+                    if grid[i][j] == "*":
+                        grid2 = ["*"] + grid2
+                        spain.append("*")
+                        boing += 1
+                    else:
+                        #top_line.add(j + 1)
+                        grid2.append(grid[i][j])
+                        spain.append(perml[i][j - boing])
+                farple.append(spain)
+                bacon.append(grid2)
+            bacon = grid
+            #top_line = sorted(top_line)
+            print("   "+" ".join([str(x) for x in perm0]))
+            for i, grid2 in enumerate(bacon):
+                print(f"{rp[i]}: "+" ".join([str(x) for x in grid2])+"  "+" ".join([str(x) for x in farple[i]]))
+            print("")
+            perm2 = Permutation([])
+            flob=[]
+            for i, word_s in enumerate(word):
+                #perm2 = perm2.swap(word[rp[i]-1]+labels[rp[i]-1]-2, word[rp[i]-1]+labels[rp[i]-1]-1)
+                flob += [word[i] + rp[labels[i]-1]-1]
+                perm2 = perm2.swap(flob[-1]-1, flob[-1])
+            # print(f"{perm2=}")
+            # print(f"{flob=}")
+
+    print_bagel(rs_set2,rp2)
+    print("FROF")
+    print_bagel(rs_set1,rp1)

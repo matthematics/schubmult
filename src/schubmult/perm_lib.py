@@ -396,4 +396,52 @@ def split_perms(perms):
     return perms2
 
 
+class NilPlactic:
+
+    def __init__(self, word):
+        self._word = tuple(word)
+
+    @staticmethod
+    def from_word(word):
+        if len(word) <= 1:
+            return NilPlactic(word)
+        return NilPlactic.from_word(word[:-1]).ed_insert(word[-1])
+
+    @staticmethod
+    def _ed_insert(word, letter):
+        if len(word) == 0:
+            return tuple([letter])
+        first_row_start = len(word) - 1
+        if len(word) > 1:
+            while first_row_start > 0 and word[first_row_start - 1] < word[first_row_start]:
+                first_row_start -= 1
+        index = first_row_start
+        while index < len(word) and word[index] < letter:
+            index += 1
+        if index == len(word):
+            return tuple([*word, letter])
+        if word[index] == letter:
+            return tuple([*NilPlactic._ed_insert(word[:first_row_start], letter + 1), *word[first_row_start:]])
+        else:
+            new_word = [*word]
+            bump = new_word[index]
+            new_word[index] = letter
+            return tuple([*NilPlactic._ed_insert(new_word[:first_row_start], bump), *new_word[first_row_start:]])
+
+    def ed_insert(self, letter):
+        """Insert a letter into the nilplactic word."""
+        return NilPlactic(NilPlactic._ed_insert(self._word, letter))
+
+    def __eq__(self, other):
+        if isinstance(other, NilPlactic):
+            return self._word == other._word
+        return False
+
+    def __repr__(self):
+        return f"{self._word}"
+
+    def __str__(self):
+        return f"{self._word}"
+    
+
 bad_classical_patterns = [Permutation([1, 4, 2, 3]), Permutation([1, 4, 3, 2]), Permutation([4, 1, 3, 2]), Permutation([3, 1, 4, 2])]
