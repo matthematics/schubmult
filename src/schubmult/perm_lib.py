@@ -4,6 +4,7 @@ from functools import cache, cached_property
 import sympy.combinatorics.permutations as spp
 
 import schubmult.utils.logging as lg
+from schubmult.schub_lib.schub_lib import pull_out_var
 from schubmult.utils.perm_utils import cyclic_sort, old_code, permtrim_list, sg
 
 # schubmult.poly_lib.variables import GeneratingSet
@@ -453,14 +454,14 @@ def perm_to_key(perm):
     if len(perm) == 0:
         return {NilPlactic(()): S.One}
     
-    ret = set()
-    stack = [(perm,NilPlactic(()),1)]
+    ret = {}
+    stack = [(perm,NilPlactic(()),1, S.One)]
 
     while len(stack) > 0:
-        current_perm, word, index = stack.pop()
+        current_perm, word, index, poly = stack.pop()
         if current_perm.inv == 0:
             np_elem = word
-            ret.add(np_elem)#[np_elem] = ret.get(np_elem, S.Zero) + S.One
+            ret[np_elem] = ret.get(np_elem, S.Zero) + poly
             continue        
         L = pull_out_var(1, current_perm)
         for index_list, new_perm in L:
@@ -468,5 +469,5 @@ def perm_to_key(perm):
             new_word = word
             for index2 in index_list:
                 new_word = new_word.ed_insert(index + index2 - 1)
-            stack.append((new_perm, new_word, index + 1))
+            stack.append((new_perm, new_word, index + 1, poly * prod([x[index] - y[a] for a in index_list])))
     return ret
