@@ -3,8 +3,8 @@ from functools import cache, cached_property
 
 import sympy.combinatorics.permutations as spp
 
+# import schubmult.schub_lib.schub_lib as sl
 import schubmult.utils.logging as lg
-from schubmult.schub_lib.schub_lib import pull_out_var
 from schubmult.utils.perm_utils import cyclic_sort, old_code, permtrim_list, sg
 
 # schubmult.poly_lib.variables import GeneratingSet
@@ -398,7 +398,6 @@ def split_perms(perms):
 
 
 class NilPlactic:
-
     def __init__(self, word):
         self._word = tuple(word)
 
@@ -432,6 +431,32 @@ class NilPlactic:
             new_word[index] = letter
             return tuple([*NilPlactic._ed_insert(new_word[:first_row_start], bump), *new_word[first_row_start:]])
 
+    @staticmethod
+    def ed_insert_rsk(word, word2, letter, letter2):
+        if len(word) == 0:
+            return tuple([letter]), tuple([letter2])
+        first_row_start = len(word) - 1
+        if len(word) > 1:
+            while first_row_start > 0 and word[first_row_start - 1] < word[first_row_start]:
+                first_row_start -= 1
+        index = first_row_start
+        while index < len(word) and word[index] < letter:
+            index += 1
+        if index == len(word):
+            return tuple([*word, letter]), tuple([*word2, letter2])
+        if word[index] == letter:
+            word0, word2_0 = NilPlactic.ed_insert_rsk(word[:first_row_start], word2[:first_row_start], letter + 1, letter2)
+            return tuple([*word0, *word[first_row_start:]]), tuple([*word2_0, *word2[first_row_start:]]),
+        else:
+            new_word = [*word]
+            new_word2 = [*word2]
+            bump = new_word[index]
+            # bump2 = new_word2[index]
+            new_word[index] = letter
+            # new_word2[index] = letter2
+            word0, word2_0 = NilPlactic.ed_insert_rsk(new_word[:first_row_start], new_word2[:first_row_start], bump, letter2)
+            return tuple([*word0, *new_word[first_row_start:]]), tuple([*word2_0, *new_word2[first_row_start:]])
+
     def ed_insert(self, letter):
         """Insert a letter into the nilplactic word."""
         return NilPlactic(NilPlactic._ed_insert(self._word, letter))
@@ -446,24 +471,72 @@ class NilPlactic:
 
     def __str__(self):
         return f"{self._word}"
-    
+
+
+class Plactic:
+    def __init__(self, word):
+        self._word = tuple(word)
+
+    @staticmethod
+    def from_word(word):
+        if len(word) <= 1:
+            return Plactic(word)
+        return Plactic.from_word(word[:-1]).rs_insert(word[-1])
+
+    def __hash__(self):
+        return hash(self._word)
+
+    @staticmethod
+    def _rs_insert(word, letter):
+        if len(word) == 0:
+            return tuple([letter])
+        first_row_start = len(word) - 1
+        if len(word) > 1:
+            while first_row_start > 0 and word[first_row_start - 1] <= word[first_row_start]:
+                first_row_start -= 1
+        index = first_row_start
+        while index < len(word) and word[index] <= letter:
+            index += 1
+        if index == len(word):
+            return tuple([*word, letter])
+        new_word = [*word]
+        bump = new_word[index]
+        new_word[index] = letter
+        return tuple([*NilPlactic._ed_insert(new_word[:first_row_start], bump), *new_word[first_row_start:]])
+
+    def rs_insert(self, letter):
+        """Insert a letter into the nilplactic word."""
+        return Plactic(Plactic._rs_insert(self._word, letter))
+
+    def __eq__(self, other):
+        if isinstance(other, Plactic):
+            return self._word == other._word
+        return False
+
+    def __repr__(self):
+        return f"{self._word}"
+
+    def __str__(self):
+        return f"{self._word}"
+
 
 bad_classical_patterns = [Permutation([1, 4, 2, 3]), Permutation([1, 4, 3, 2]), Permutation([4, 1, 3, 2]), Permutation([3, 1, 4, 2])]
+
 
 def perm_to_key(perm):
     if len(perm) == 0:
         return {NilPlactic(()): S.One}
-    
+
     ret = {}
-    stack = [(perm,NilPlactic(()),1, S.One)]
+    stack = [(perm, NilPlactic(()), 1, S.One)]
 
     while len(stack) > 0:
         current_perm, word, index, poly = stack.pop()
         if current_perm.inv == 0:
             np_elem = word
             ret[np_elem] = ret.get(np_elem, S.Zero) + poly
-            continue        
-        L = pull_out_var(1, current_perm)
+            continue
+        # L = sl.pull_out_var(1, current_perm)
         for index_list, new_perm in L:
             index_list.sort(reverse=True)
             new_word = word

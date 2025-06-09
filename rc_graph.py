@@ -92,26 +92,30 @@ def perm_to_key(perm):
         return {NilPlactic(()): S.One}
     
     ret = {}
-    stack = [(perm,NilPlactic(()),1, S.One)]
+    stack = [(perm,(),1, S.One, [])]
 
     while len(stack) > 0:
-        current_perm, word, index, poly = stack.pop()
+        current_perm, word, index, poly, word2 = stack.pop()
         if current_perm.inv == 0:
             np_elem = word
+            print(f"{(word, word2)}")
             ret[np_elem] = ret.get(np_elem, S.Zero) + poly
             continue        
         L = pull_out_var(1, current_perm)
         for index_list, new_perm in L:
             index_list.sort(reverse=True)
-            new_word = word
+            new_word = [*word]
+            new_word2 = [*word2]
             for index2 in index_list:
-                new_word = new_word.ed_insert(index + index2 - 1)
-            stack.append((new_perm, new_word, index + 1, poly * prod([x[index] - y[a] for a in index_list])))
+                new_word, new_word2 = NilPlactic.ed_insert_rsk(new_word, new_word2, index+index2 - 1, index)            
+            stack.append((new_perm, new_word, index + 1, poly * prod([x[index] - y[a] for a in index_list]), new_word2))
     return ret
 
 if __name__ == "__main__":
     # print(key_polynomial([3,0,5,1]))
-    print(perm_to_key(Permutation(uncode([1,0,1]))))
+    # free module over sym
+    print(perm_to_key(Permutation(uncode([0,0,2]))))
+    #Sx(uncode([0,2,1])).in_CEM_basis().expand()
     exit(0)
     # factor Cauchy kernel
     n = int(sys.argv[1])
