@@ -57,9 +57,9 @@ class Permutation:
         return self._args
 
     @classmethod
-    def sorting_perm(cls, itera):
+    def sorting_perm(cls, itera, reverse=False):
         L = [i + 1 for i in range(len(itera))]
-        L.sort(key=lambda i: itera[i - 1])
+        L.sort(key=lambda i: itera[i - 1], reverse=reverse)
         return Permutation(L)
 
     @classmethod
@@ -407,6 +407,9 @@ class NilPlactic:
             return NilPlactic(word)
         return NilPlactic.from_word(word[:-1]).ed_insert(word[-1])
 
+    def __hash__(self):
+        return hash(self._word)
+
     @staticmethod
     def _ed_insert(word, letter):
         if len(word) == 0:
@@ -445,3 +448,25 @@ class NilPlactic:
     
 
 bad_classical_patterns = [Permutation([1, 4, 2, 3]), Permutation([1, 4, 3, 2]), Permutation([4, 1, 3, 2]), Permutation([3, 1, 4, 2])]
+
+def perm_to_key(perm):
+    if len(perm) == 0:
+        return {NilPlactic(()): S.One}
+    
+    ret = set()
+    stack = [(perm,NilPlactic(()),1)]
+
+    while len(stack) > 0:
+        current_perm, word, index = stack.pop()
+        if current_perm.inv == 0:
+            np_elem = word
+            ret.add(np_elem)#[np_elem] = ret.get(np_elem, S.Zero) + S.One
+            continue        
+        L = pull_out_var(1, current_perm)
+        for index_list, new_perm in L:
+            index_list.sort(reverse=True)
+            new_word = word
+            for index2 in index_list:
+                new_word = new_word.ed_insert(index + index2 - 1)
+            stack.append((new_perm, new_word, index + 1))
+    return ret

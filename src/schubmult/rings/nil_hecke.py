@@ -194,6 +194,16 @@ class NilHeckeRing(Ring, CompositeDomain):
     def to_sympy(self, elem):
         return elem.as_expr()
 
+    def isobaric(self, perm):
+        perm = Permutation(perm)
+        if perm.inv == 0:
+            return self.one
+        index = max(perm.descents())
+        elem = self.isobaric(perm.swap(index, index +1))
+        elem = elem * self.from_dict({Permutation([]).swap(index, index + 1): S.One})
+        elem = self.mul(elem, self.genset[index + 1])
+        return elem
+
     def fgp_operator(self, k, length, q_var=GeneratingSet("q")):
         # xk
         elem = self.zero

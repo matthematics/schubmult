@@ -77,8 +77,42 @@ def rc_graph_set(perm, reorg_perm, floin):
 # identify Bruhat word
 
 # rp = Permutation([3, 1, 2])  # reorganization permutation
-if __name__ == "__main__":
+from schubmult.rings import *
 
+ring = NilHeckeRing(x)
+
+def key_polynomial(comp):
+    perm = Permutation.sorting_perm(comp, reverse=True)
+    print(perm)
+    part = [comp[perm[i] - 1 ] for i in range(len(comp))]
+    return ring.isobaric(perm).apply(Sx(uncode(part))).as_polynomial().expand()
+
+def perm_to_key(perm):
+    if len(perm) == 0:
+        return {NilPlactic(()): S.One}
+    
+    ret = set()
+    stack = [(perm,NilPlactic(()),1)]
+
+    while len(stack) > 0:
+        current_perm, word, index = stack.pop()
+        if current_perm.inv == 0:
+            np_elem = word
+            ret.add(np_elem)#[np_elem] = ret.get(np_elem, S.Zero) + S.One
+            continue        
+        L = pull_out_var(1, current_perm)
+        for index_list, new_perm in L:
+            index_list.sort(reverse=True)
+            new_word = word
+            for index2 in index_list:
+                new_word = new_word.ed_insert(index + index2 - 1)
+            stack.append((new_perm, new_word, index + 1))
+    return ret
+
+if __name__ == "__main__":
+    # print(key_polynomial([3,0,5,1]))
+    print(perm_to_key(Permutation(uncode([1,0,1]))))
+    exit(0)
     # factor Cauchy kernel
     n = int(sys.argv[1])
     index = int(sys.argv[2])
