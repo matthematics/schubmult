@@ -456,6 +456,28 @@ class NilPlactic:
             # new_word2[index] = letter2
             word0, word2_0 = NilPlactic.ed_insert_rsk(new_word[:first_row_start], new_word2[:first_row_start], bump, letter2)
             return tuple([*word0, *new_word[first_row_start:]]), tuple([*word2_0, *new_word2[first_row_start:]])
+        
+    @staticmethod
+    def reverse_insert_rsk(word, word2, letter, letter2):
+        if len(word) == 0:
+            return tuple([letter]), tuple([letter2])
+        first_row_start = len(word2) - 1
+        if len(word) > 1:
+            while first_row_start > 0 and word2[first_row_start - 1] > word2[first_row_start]:
+                first_row_start -= 1
+        index = len(word2) - 1#first_row_start
+        while index >= first_row_start and word2[index] <= letter2:
+            index -= 1
+        if index == first_row_start - 1:
+            return tuple([*word[:first_row_start], letter, *word[first_row_start:]]), tuple([*word2[:first_row_start], letter2, *word2[first_row_start:]])
+        new_word = [*word]
+        new_word2 = [*word2]
+        bump = new_word2[index]
+        # bump2 = new_word2[index]
+        new_word2[index] = letter2
+        # new_word2[index] = letter2
+        word0, word2_0 = NilPlactic.reverse_insert_rsk(new_word[:first_row_start], new_word2[:first_row_start], letter, bump)
+        return tuple([*word0, *new_word[first_row_start:]]), tuple([*word2_0, *new_word2[first_row_start:]])
 
     def ed_insert(self, letter):
         """Insert a letter into the nilplactic word."""
