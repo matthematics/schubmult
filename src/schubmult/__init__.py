@@ -2,7 +2,7 @@ __version__ = "3.0.2dev1"
 
 
 # schubpoly_from_elems?
-from .perm_lib import NilPlactic, Permutation, Plactic, perm_to_key, permtrim, theta, uncode
+from .perm_lib import NilPlactic, Permutation, Plactic, permtrim, theta, uncode
 from .rings.nil_hecke import NilHeckeRing, df
 from .rings.poly_lib import divide_out_diff, efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, split_up, xreplace_genvars
 from .rings.quantum_schubert_ring import (
@@ -84,7 +84,7 @@ __all__ = [
     "mult_poly_q",
     "mult_poly_q_double",
     "nil_hecke",
-    "perm_to_key",
+    #"perm_to_key",
     "permtrim",
     "posify",
     "q_posify",

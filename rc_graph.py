@@ -151,20 +151,22 @@ if __name__ == "__main__":
     for key in bob2:
         print(perm_to_key(key))
     #Sx(uncode([0,2,1])).in_CEM_basis().expand()
-    panko = uncode([0,2])
+    panko = uncode([0,2, 1])
     graphs = rc_graph_eg(panko)
     # for i in range(1, 5):
     for graph in graphs:
         word1, word2 = graph
-        word1 = [word1[i] - word2[i] + 1 for i in range(len(word1))]
-        print(f"{(word1, word2)}")
+        print(f"graph: {(word1, word2)}")
+        inverse_word1, inverse_word2 = NilPlactic.inverse_ed_insert_rsk(word1, word2)
+        print(f"origw: {(inverse_word1, inverse_word2)}")
     print("fat bacon")
     graphs = rc_graph_eg(~panko)
     # for i in range(1, 5):
     for graph in graphs:
         word1, word2 = graph
-        word1 = [word1[i] - word2[i] + 1 for i in range(len(word1))]
+        inverse_word1, inverse_word2 = NilPlactic.inverse_ed_insert_rsk(word1, word2)        
         print(f"{(word1, word2)}")
+        print(f"origw: {(inverse_word1, inverse_word2)}")
     exit(0)
     # factor Cauchy kernel
     n = int(sys.argv[1])
