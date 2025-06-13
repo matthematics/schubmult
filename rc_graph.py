@@ -99,7 +99,37 @@ def perm_to_key(perm):
         if current_perm.inv == 0:
             np_elem = word
             print(f"{(word, word2)}")
+            # for i in range(2):
+            #     print(f"{i+1}:{NilPlactic.reverse_insert_rsk(word, word2, '*', i + 1)}")
+            # assert tuple(Plactic(word2)._word) == tuple(word2)
             ret[np_elem] = ret.get(np_elem, S.Zero) + poly
+            continue        
+        L = pull_out_var(1, current_perm)
+        for index_list, new_perm in L:
+            index_list.sort(reverse=True)
+            new_word = [*word]
+            new_word2 = [*word2]
+            for index2 in index_list:
+                new_word, new_word2 = NilPlactic.ed_insert_rsk(new_word, new_word2, index+index2 - 1, index)            
+            stack.append((new_perm, new_word, index + 1, poly * prod([x[index] - y[a] for a in index_list]), new_word2))
+    return ret
+
+def rc_graph_eg(perm):
+    # if len(perm) == 0:
+    #     return (perm, {NilPlactic(()): S.One}
+    
+    ret = set()
+    stack = [(perm,(),1, S.One, [])]
+
+    while len(stack) > 0:
+        current_perm, word, index, poly, word2 = stack.pop()
+        if current_perm.inv == 0:
+            print(f"{(word, word2)}")
+            # for i in range(2):
+            #     print(f"{i+1}:{NilPlactic.reverse_insert_rsk(word, word2, '*', i + 1)}")
+            # assert tuple(Plactic(word2)._word) == tuple(word2)
+            # ret[np_elem] = ret.get(np_elem, S.Zero) + poly
+            ret.add((word, word2))
             continue        
         L = pull_out_var(1, current_perm)
         for index_list, new_perm in L:
@@ -114,8 +144,27 @@ def perm_to_key(perm):
 if __name__ == "__main__":
     # print(key_polynomial([3,0,5,1]))
     # free module over sym
-    print(perm_to_key(Permutation(uncode([0,0,2]))))
+    bob = Sx(uncode([0,2,1]))
+    bob2 = bob * Sx(uncode([0,1]))
+    print(perm_to_key(next(iter(bob.keys()))))
+    print("prong")
+    for key in bob2:
+        print(perm_to_key(key))
     #Sx(uncode([0,2,1])).in_CEM_basis().expand()
+    panko = uncode([0,2])
+    graphs = rc_graph_eg(panko)
+    # for i in range(1, 5):
+    for graph in graphs:
+        word1, word2 = graph
+        word1 = [word1[i] - word2[i] + 1 for i in range(len(word1))]
+        print(f"{(word1, word2)}")
+    print("fat bacon")
+    graphs = rc_graph_eg(~panko)
+    # for i in range(1, 5):
+    for graph in graphs:
+        word1, word2 = graph
+        word1 = [word1[i] - word2[i] + 1 for i in range(len(word1))]
+        print(f"{(word1, word2)}")
     exit(0)
     # factor Cauchy kernel
     n = int(sys.argv[1])

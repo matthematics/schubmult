@@ -446,7 +446,10 @@ class NilPlactic:
             return tuple([*word, letter]), tuple([*word2, letter2])
         if word[index] == letter:
             word0, word2_0 = NilPlactic.ed_insert_rsk(word[:first_row_start], word2[:first_row_start], letter + 1, letter2)
-            return tuple([*word0, *word[first_row_start:]]), tuple([*word2_0, *word2[first_row_start:]]),
+            return (
+                tuple([*word0, *word[first_row_start:]]),
+                tuple([*word2_0, *word2[first_row_start:]]),
+            )
         else:
             new_word = [*word]
             new_word2 = [*word2]
@@ -456,20 +459,52 @@ class NilPlactic:
             # new_word2[index] = letter2
             word0, word2_0 = NilPlactic.ed_insert_rsk(new_word[:first_row_start], new_word2[:first_row_start], bump, letter2)
             return tuple([*word0, *new_word[first_row_start:]]), tuple([*word2_0, *new_word2[first_row_start:]])
-        
+
+    @staticmethod
+    def inverse_ed_insert_rsk(word, word2):
+        if len(word) != len(word2):
+            raise ValueError("Words must be of the same length for inverse ed insert.")
+        if len(word) == 0:
+            return (), ()
+        mx = max(word2)
+        index = 0
+        for i in range(len(word2) - 1, -1, -1):
+            if word2[i] == mx:
+                index = i
+                break
+        new_word = [*word]
+        new_word2 = [*word2]
+        a, b = new_word.pop(index), new_word2.pop(index)
+        index2 = index
+        while index2 < len(word2) - 1 and word[index2] < word[index2 + 1]:
+            index2 += 1
+        if index2 == len(word2) - 1:
+            new_word, new_word2 = NilPlactic.inverse_ed_insert_rsk(new_word, new_word2)
+            return (*new_word, a), (*new_word2, b)
+        row_start = index2 + 1
+        index3 = row_start
+        while index3 < len(word2) - 1 and word[index3] < word[index3 + 1] and word[index3] < a:
+            index3 += 1
+        if word[index3] < a:
+            raise ValueError("Cannot perform inverse ed insert: word is not nilplactic.")
+        a2 = word[index3]
+        new_word[index3 - 1] = a
+        new_word, new_word2 = NilPlactic.inverse_ed_insert_rsk(new_word, new_word2)
+        return (*new_word, a2), (*new_word2, b)
+
     @staticmethod
     def reverse_insert_rsk(word, word2, letter, letter2):
-        if len(word) == 0:
+        if len(word2) == 0:
             return tuple([letter]), tuple([letter2])
         first_row_start = len(word2) - 1
-        if len(word) > 1:
-            while first_row_start > 0 and word2[first_row_start - 1] > word2[first_row_start]:
+        if len(word2) > 1:
+            while first_row_start > 0 and word2[first_row_start - 1] < word2[first_row_start]:
                 first_row_start -= 1
-        index = len(word2) - 1#first_row_start
-        while index >= first_row_start and word2[index] <= letter2:
-            index -= 1
-        if index == first_row_start - 1:
-            return tuple([*word[:first_row_start], letter, *word[first_row_start:]]), tuple([*word2[:first_row_start], letter2, *word2[first_row_start:]])
+        index = first_row_start
+        while index < len(word2) and word2[index] <= letter2:
+            index += 1
+        if index == len(word2):
+            return tuple([*word, letter]), tuple([*word2, letter2])
         new_word = [*word]
         new_word2 = [*word2]
         bump = new_word2[index]
@@ -482,6 +517,20 @@ class NilPlactic:
     def ed_insert(self, letter):
         """Insert a letter into the nilplactic word."""
         return NilPlactic(NilPlactic._ed_insert(self._word, letter))
+
+    def inverse_insert(self, position):
+        if position >= len(self._word):
+            raise IndexError("Position out of bounds for nilplactic word.")
+        row_start = position
+        row_end = position
+        if len(self._word) > 1:
+            while row_start > 0 and self._word[row_start - 1] < self._word[row_start]:
+                row_start -= 1
+            while row_end < len(self._word) - 1 and self._word[row_end] < self._word[row_end + 1]:
+                row_end += 1
+        row = self._word[row_start : row_end + 1]
+        pos = position - row_start
+        val = row.pop(pos)
 
     def __eq__(self, other):
         if isinstance(other, NilPlactic):
@@ -524,7 +573,7 @@ class Plactic:
         new_word = [*word]
         bump = new_word[index]
         new_word[index] = letter
-        return tuple([*NilPlactic._ed_insert(new_word[:first_row_start], bump), *new_word[first_row_start:]])
+        return tuple([*Plactic._rs_insert(new_word[:first_row_start], bump), *new_word[first_row_start:]])
 
     def rs_insert(self, letter):
         """Insert a letter into the nilplactic word."""
@@ -545,24 +594,24 @@ class Plactic:
 bad_classical_patterns = [Permutation([1, 4, 2, 3]), Permutation([1, 4, 3, 2]), Permutation([4, 1, 3, 2]), Permutation([3, 1, 4, 2])]
 
 
-def perm_to_key(perm):
-    if len(perm) == 0:
-        return {NilPlactic(()): S.One}
+# def perm_to_key(perm):
+#     if len(perm) == 0:
+#         return {NilPlactic(()): S.One}
 
-    ret = {}
-    stack = [(perm, NilPlactic(()), 1, S.One)]
+#     ret = {}
+#     stack = [(perm, NilPlactic(()), 1, S.One)]
 
-    while len(stack) > 0:
-        current_perm, word, index, poly = stack.pop()
-        if current_perm.inv == 0:
-            np_elem = word
-            ret[np_elem] = ret.get(np_elem, S.Zero) + poly
-            continue
-        # L = sl.pull_out_var(1, current_perm)
-        for index_list, new_perm in L:
-            index_list.sort(reverse=True)
-            new_word = word
-            for index2 in index_list:
-                new_word = new_word.ed_insert(index + index2 - 1)
-            stack.append((new_perm, new_word, index + 1, poly * prod([x[index] - y[a] for a in index_list])))
-    return ret
+#     while len(stack) > 0:
+#         current_perm, word, index, poly = stack.pop()
+#         if current_perm.inv == 0:
+#             np_elem = word
+#             ret[np_elem] = ret.get(np_elem, S.Zero) + poly
+#             continue
+#         # L = sl.pull_out_var(1, current_perm)
+#         for index_list, new_perm in L:
+#             index_list.sort(reverse=True)
+#             new_word = word
+#             for index2 in index_list:
+#                 new_word = new_word.ed_insert(index + index2 - 1)
+#             stack.append((new_perm, new_word, index + 1, poly * prod([x[index] - y[a] for a in index_list])))
+#     return ret
