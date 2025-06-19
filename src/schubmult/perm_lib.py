@@ -456,7 +456,7 @@ class NilPlactic:
             bump = new_word[index]
             # bump2 = new_word2[index]
             new_word[index] = letter
-            # new_word2[index] = letter2
+            #new_word2[index] = letter2
             word0, word2_0 = NilPlactic.ed_insert_rsk(new_word[:first_row_start], new_word2[:first_row_start], bump, letter2)
             return tuple([*word0, *new_word[first_row_start:]]), tuple([*word2_0, *new_word2[first_row_start:]])
 
@@ -465,8 +465,8 @@ class NilPlactic:
         if len(word) == len(set(word)) and set(word) == set(range(1, len(word) + 1)):
             return word
         mn = min(word)
-        index = len(word) - 1
-        while index >= 0 and word[index] != mn:
+        index = 0
+        while index > 0 and word[index - 1] <= word[index]:
             index -= 1
         subword = [*word[:index], *word[index + 1 :]]
         subword = [i+1 for i in NilPlactic.standardize(subword)]
@@ -503,7 +503,7 @@ class NilPlactic:
                 if word[index3] == a - 1:
                     new_word[index3 - 1] = a
                     new_word, new_word2 = NilPlactic.inverse_ed_insert_rsk(new_word, new_word2)
-                    return (*new_word, a -1), (*new_word2, b)
+                    return (*new_word, a - 1), (*new_word2, b)
                 raise ValueError(f"Cannot perform inverse ed insert: word is not nilplactic. DBG {index3=}, {word=}, {word2=}, {a=}")
             if word[index3] == a:
                 print("pangolin2")
