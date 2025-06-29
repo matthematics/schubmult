@@ -5,14 +5,24 @@ from schubmult.utils.perm_utils import add_perm_dict, mu_A
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
 
-def _sep_desc_mul(perm, perm2, p, coeff, ring):
+def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
     pmu2 = (~perm2).minimal_dominant_above()
     mu2 = pmu2.code
-    mul2 = ring.from_dict({perm2 * pmu2: S.One})
+    
     pmu1 = (~perm).minimal_dominant_above()
+    while len(mu2) > 0 and mu2[-1] == 0:
+        mu2.pop()
+    # if len(mu2) == 0:
+    #     mu2 = [q]
+    # else:
+    #     # start = mu2[0]
+    #     # to_add = q - start
+    #     # mu2 = [a + to_add for a in mu2]
+    #     mu2 = [q] + mu2
+    
+    #mu2 = (max(q - len(mu2), 0)* [start]) + mu2
     mu1 = pmu1.code
-    if len(mu1) > 0:
-        mu1 = (len(mu2) * [p]) + mu1
+    # mu1 = (len(mu2) * [p]) + mu1
     bigmu = [*mu1]
 
     for i in range(len(mu2)):
@@ -20,11 +30,17 @@ def _sep_desc_mul(perm, perm2, p, coeff, ring):
             bigmu[i] += mu2[i]
         else:
             bigmu += [mu2[i]]
+    if len(bigmu) < p + q:
+        for i in range(p + q - len(bigmu)):
+            bigmu = [b+1 for b in bigmu]
+            bigmu += [1]
     mu1 = mu_A(bigmu, list(range(p)))
     mu2 = mu_A(bigmu, list(range(p, len(bigmu))))
+
     pmu1 = uncode(mu1)
+    pmu2 = uncode(mu2)
     pmu = uncode(bigmu)
-    bingo = ring.from_dict({perm * pmu1: coeff}) * mul2
+    bingo = ring.from_dict({perm * pmu1: coeff}) * ring.from_dict({perm2 * pmu2: S.One})
     dct = {}
     ipmu = ~pmu
     for w, v in bingo.items():
@@ -64,7 +80,7 @@ class SeparatedDescentsRing(BaseSchubertRing):
                 deg1 = k1[1]
                 deg2 = k2[1]
 
-                dct = _sep_desc_mul(perm1, perm2, deg1, v1 * v2, self.schub_ring)
+                dct = _sep_desc_mul(perm1, perm2, deg1, deg2, v1 * v2, self.schub_ring)
                 to_add = {(k, deg1 + deg2): v for k, v in dct.items()}
                 ret_dict = add_perm_dict(ret_dict, to_add)
         return self.from_dict(ret_dict)
@@ -87,7 +103,12 @@ class SeparatedDescentsRing(BaseSchubertRing):
         return self.from_dict({self.zero_monom: S.One})
 
     def __call__(self, perm, deg):
-        return self.from_dict({(Permutation(perm), deg): S.One})
+        if deg < 0:
+            raise ValueError("Degree must be non-negative")
+        perm = Permutation(perm)
+        if perm.inv > 0:
+            deg = max(deg, max(perm.descents()) + 1)
+        return self.from_dict({(perm, deg): S.One})
 
 
 class SeparatedDescentsRingElement(BaseSchubertElement):
