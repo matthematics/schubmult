@@ -35,6 +35,13 @@ class Permutation:
 
     print_as_code = False
 
+    @classmethod
+    def ref_product(cls, *args):
+        p = cls([])
+        for a in args:
+            p = p.swap(a - 1, a)
+        return p
+
     @staticmethod
     @cache
     def __xnew_cached__(_class, perm):
@@ -115,6 +122,11 @@ class Permutation:
     def get_cycles_cached(self):
         return [tuple(cyclic_sort([i + 1 for i in c])) for c in spp.Permutation([k - 1 for k in self._perm]).cyclic_form]
 
+    @classmethod
+    def from_cycles(cls, cycle_iter):
+        spoing = spp.Permutation(*cycle_iter)
+        return cls([a+1 for a in spoing.array_form])
+    
     @property
     def code(self):
         return list(self._cached_code())
@@ -140,6 +152,10 @@ class Permutation:
         new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
         return Permutation(new_perm)
 
+    def rslice(self, start, stop):
+        ttup = [*self._perm, *list(range(len(self._perm)+1,stop+2))]
+        return ttup[start:stop]
+
     def __getitem__(self, i):
         try:
             return self._perm[i]
@@ -164,6 +180,7 @@ class Permutation:
         yield from self._perm.__iter__()
 
     def __getslice__(self, i, j):
+        print("BOINGFAT")
         return self._perm[i:j]
 
     def __str__(self):
@@ -413,23 +430,30 @@ class NilPlactic:
     @staticmethod
     def _ed_insert(word, letter):
         if len(word) == 0:
-            return tuple([letter])
-        first_row_start = len(word) - 1
-        if len(word) > 1:
-            while first_row_start > 0 and word[first_row_start - 1] < word[first_row_start]:
-                first_row_start -= 1
-        index = first_row_start
-        while index < len(word) and word[index] < letter:
+            return tuple([[letter]])
+        # print(word)
+        row = word[0]
+        index = 0
+        while index < len(row) and row[index] < letter:
             index += 1
-        if index == len(word):
-            return tuple([*word, letter])
-        if word[index] == letter:
-            return tuple([*NilPlactic._ed_insert(word[:first_row_start], letter + 1), *word[first_row_start:]])
-        else:
-            new_word = [*word]
-            bump = new_word[index]
-            new_word[index] = letter
-            return tuple([*NilPlactic._ed_insert(new_word[:first_row_start], bump), *new_word[first_row_start:]])
+        if index == len(row):
+            return [tuple([*row, letter]), *word[1:]]
+        if row[index] == letter: 
+            if index < len(row) - 1:
+                if row[index + 1] == letter + 1:
+            #return tuple([*NilPlactic._ed_insert(word[:first_row_start], letter + 1), *word[first_row_start:]])
+                    return [row, *NilPlactic._ed_insert(word[1:],letter + 1)]
+            while index < len(row) and row[index] == letter:
+                index += 1
+            if index == len(row):
+                return [tuple([*row, letter]), *word[1:]]
+        new_word = [*word]
+        bump = row[index]
+        new_word[0] = [*new_word[0]]
+        new_word[0][index] = letter
+        new_word[0] = tuple([*new_word[0]])
+        #return tuple([*NilPlactic._ed_insert(new_word[:first_row_start], bump), *new_word[first_row_start:]])
+        return [new_word[0], *NilPlactic._ed_insert(new_word[1:],bump)]
 
     @staticmethod
     def ed_insert_rsk(word, word2, letter, letter2):
@@ -475,13 +499,13 @@ class NilPlactic:
 
     @staticmethod
     def inverse_ed_insert_rsk(word, word2):
-        print(f"DBG: {word=}, {word2=}")
+        # print(f"DBG: {word=}, {word2=}")
         if len(word) != len(word2):
             raise ValueError("Words must be of the same length for inverse ed insert.")
         if len(word) == 0:
             return (), ()
         sputnik = NilPlactic.standardize(word2)
-        print(f"DBG: {sputnik=}")
+        # print(f"DBG: {sputnik=}")
         index = sputnik.index(max(sputnik))
         new_word = [*word]
         new_word2 = [*word2]
@@ -498,16 +522,16 @@ class NilPlactic:
             index3 += 1
         if index3 < len(word2) - 1:
             if word[index3] < a:
-                print("pangolin")
-                print(f"{word=}, {word2=}, {index3=}, {a=}, {new_word=}, {new_word2=} {b=}")
+                # print("pangolin")
+                # print(f"{word=}, {word2=}, {index3=}, {a=}, {new_word=}, {new_word2=} {b=}")
                 if word[index3] == a - 1:
                     new_word[index3 - 1] = a
                     new_word, new_word2 = NilPlactic.inverse_ed_insert_rsk(new_word, new_word2)
                     return (*new_word, a - 1), (*new_word2, b)
                 raise ValueError(f"Cannot perform inverse ed insert: word is not nilplactic. DBG {index3=}, {word=}, {word2=}, {a=}")
             if word[index3] == a:
-                print("pangolin2")
-                print(f"{word=}, {word2=}, {index3=}, {a=}, {new_word=}, {new_word2=} {b=}")
+                # print("pangolin2")
+                # print(f"{word=}, {word2=}, {index3=}, {a=}, {new_word=}, {new_word2=} {b=}")
                 new_word, new_word2 = NilPlactic.inverse_ed_insert_rsk(new_word, new_word2)
                 return (*new_word, a - 1), (*new_word2, b)
         

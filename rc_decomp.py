@@ -86,11 +86,35 @@ def code_word(perm):
         word += list(range(code_value + i,i,-1))
     return word
 
+def normal_word(perm, A):
+    # cd = perm.code
+    # word = []
+    # for i, code_value in enumerate(cd):
+    #     word += list(range(code_value + i,i,-1))
+    # return word
+    if len(A) == 0:
+        return perm
+    word = []
+    found = True
+    A2 = [*A[1:]]
+    index = A[0]
+    perm2 = perm
+    while found:
+        found = False
+        for i in range(len(perm2) - 1):
+            if i == index - 1:
+                continue
+            if perm2[i] > perm2[i + 1]:
+                found = True
+                perm2 = perm2.swap(i, i+1)
+    return [*code_word(perm2), *normal_word((~perm2)*perm, A2)]
+
+
 
 def delete_ref_from_word(word, ref):
-    print(f"{word=}")
-    print(f"{ref=}")
-    print(f"{[root_at(word, i) for i in range(len(word))]}")
+    # print(f"{word=}")
+    # print(f"{ref=}")
+    # print(f"{[root_at(word, i) for i in range(len(word))]}")
     for i in range(len(word)):
         if root_at_right(word, i) == ref:
             return [*word[:i],*word[i+1:]]
@@ -117,7 +141,8 @@ if __name__ == "__main__":
         #A = list(range(1,dd-1))
         if dd != 5:
             continue
-        A = [2, 3, 5, 1, 4]
+        #A = [2, 3, 5, 1, 4]
+        A = [4,5,1,2,3]
         n = len(perm) + 1
         Aspots = ~Permutation(A)
         print(f"{perm=}")
@@ -130,8 +155,9 @@ if __name__ == "__main__":
         perm_stack = [perm]
         weight_stack = [[]]
         end_stack = [perm]
-        for a_index, varspot in enumerate(A):
+        for a_index, varspot in enumerate(A):            
             print(f"{a_index=} {varspot=}")
+
             new_results = []
             new_perm_stack = []
             new_weight_stack = []
@@ -147,12 +173,23 @@ if __name__ == "__main__":
                 vup = new_perm # this is a fat perm
                 # if vvarspot >= len(new_perm):
                 #     return [[[], v, (), []]]
+                # target = max([arb for arb in new_perm.rslice(varspot - 1, len(new_perm))]) + 1
+                # print(f"{target=}")
+                target = n - a_index #max(max([arb for arb in new_perm.rslice(varspot - 1, len(new_perm))]),len(perm)) + 1
+                # if (~new_perm)[target] <= varspot:
+                #     while (~new_perm)[target] <= varspot:
+                #         target += 1
+
                 vpm_list = [(vup, 0, [])]
                 ret_list = []
-                for p in range(n):
+                #for p in (range(target - varspot)):
+                while len(vpm_list) > 0:
                     vpm_list2 = []
                     for vpm, b, refs in vpm_list:
-                        if vpm[varspot - 1] == n - a_index:
+                        if vpm[varspot - 1] > target:
+                            continue
+                        if vpm[varspot - 1] == target:
+                            #print(f"Found {vpm}")
                             # vpm2 = [*vpm]
                             # vpm2.pop(vnum - 1)
                             vp = permtrim(vpm)
@@ -162,25 +199,31 @@ if __name__ == "__main__":
                             #         vp, vpm, refs,
                             #     ],
                             # ]
-                            index_list = [new_perm[i] for i in range(varspot, len(new_perm)) if ((new_perm[i]<n-a_index) and ((i > len(vp) and new_perm[i] == i) or (i <= len(vp) and new_perm[i] == vp[i])))]# , vp, vpm, refs,
+                            vvp = Permutation([arb for arb in vp if arb < target])
+                            new_perm0 = Permutation([arb for arb in new_perm if arb <= target])
+                            index_list = [new_perm0[i] for i in range(varspot - len([aa for aa in A[:a_index] if aa < varspot]), len(new_perm0)) if ((i > len(vvp) and new_perm0[i] == i and new_perm0[i]<target) or (i <= len(vvp) and new_perm0[i] == vvp[i - 1] and new_perm0[i] < target))]
                             new_perm_stack.append(vp)
                             new_results.append([*new_refs,*refs])
                             new_new_weight = new_weight + ([varspot] * len(index_list))
                             new_weight_stack.append(new_new_weight)
                  
-                        for j in range(varspot, min(n,len(vup) + 2)):
-                            if vpm[j] <= b or j + 1 in A[:a_index]:
+                        for j in range(varspot, len(vup) + 2):
+                            if vpm[j] <= b or vpm[j]>target or j + 1 in A[:a_index]:
                                 continue
                             for i in range(varspot):
+                                if i + 1 in A[:a_index]:
+                                    continue
                                 if has_bruhat_ascent(vpm, i, j):
                                     vpm_list2 += [(vpm.swap(i, j), vpm[j], refs + [(i + 1, j + 1)] )]
                     vpm_list = vpm_list2
                 for vpm, b, refs in vpm_list:
-                    if vpm[varspot - 1] == n - a_index:
+                    if vpm[varspot - 1] == target:
                         vp = permtrim(vpm)
                         # ret_list += [
                         #     [
-                        index_list = [new_perm[i] for i in range(varspot, len(new_perm)) if ((new_perm[i]<n-a_index) and ((i > len(vp) and new_perm[i] == i) or (i <= len(vp) and new_perm[i] == vp[i])))]# , vp, vpm, refs,
+                        vvp = Permutation([arb for arb in vp if arb < target])
+                        new_perm0 = Permutation([arb for arb in new_perm if arb <= target])
+                        index_list = [new_perm0[i] for i in range(varspot - len([aa for aa in A[:a_index] if aa < varspot]), len(new_perm0)) if ((i > len(vvp) and new_perm0[i] == i and new_perm0[i]<target) or (i <= len(vvp) and new_perm0[i] == vvp[i - 1] and new_perm0[i] < target))]
                                 
                         #     ],
                         new_results.append([*new_refs,*refs])
@@ -198,11 +241,15 @@ if __name__ == "__main__":
 
         print(f"printing {perm=}")
         print(f"{results=}")
+
+        if len(results) == 0:
+            print("Fail")
         
         for the_word, the_weight, the_perm in zip(results, weight_stack, perm_stack):
             end_perm = the_perm
-            print(f"{the_perm=}")
-            print(f"{the_word=}")
+            the_weight.sort(reverse=True)
+            # print(f"{the_perm=}")
+            # print(f"{the_word=}")
             #print(f"{the_fat=}")
             # for bongle in the_word:
             #     frof = end_perm.inv
@@ -210,17 +257,17 @@ if __name__ == "__main__":
             #     print(f"{end_perm=}")
             #     end_perm = end_perm.swap(bongle[0] - 1, bongle[1] - 1)
             #     assert frof == end_perm.inv - 1
-            word = code_word(end_perm)
+            word = normal_word(end_perm, A)
             
             start_word = [*word]
-            print(f"{end_perm=}")
-            print(f"{end_perm.inv=} {len(the_word)=} {perm.inv=}")
+            # print(f"{end_perm=}")
+            # print(f"{end_perm.inv=} {len(the_word)=} {perm.inv=}")
             new_end_perm = Permutation.ref_product(*start_word)
-            print(f"{new_end_perm=}")
+            # print(f"{new_end_perm=}")
             assert new_end_perm == end_perm
-            fat_perm = end_perm
-            print(f"{the_word=}")
-            print(f"{fat_perm=}")
+            # fat_perm = end_perm
+            # print(f"{the_word=}")
+            # print(f"{fat_perm=}")
             # for aa, bb in reversed(the_word):
             #     print(f"{aa,bb=}")
             #     elv = fat_perm.inv

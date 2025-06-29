@@ -129,15 +129,17 @@ def rc_graph_eg(perm):
             #     print(f"{i+1}:{NilPlactic.reverse_insert_rsk(word, word2, '*', i + 1)}")
             # assert tuple(Plactic(word2)._word) == tuple(word2)
             # ret[np_elem] = ret.get(np_elem, S.Zero) + poly
-            ret.add((word, word2))
+            ret.add((tuple(word), tuple(word2)))
             continue        
-        L = pull_out_var(1, current_perm)
+        #L = pull_out_var(1, current_perm)
+        L = pull_out_var(max(current_perm.descents())+1, current_perm)
         for index_list, new_perm in L:
             index_list.sort(reverse=True)
             new_word = [*word]
             new_word2 = [*word2]
             for index2 in index_list:
-                new_word, new_word2 = NilPlactic.ed_insert_rsk(new_word, new_word2, index+index2 - 1, index)            
+                #new_word, new_word2 = NilPlactic.ed_insert_rsk(new_word, new_word2, index+index2 - 1, index)            
+                new_word, new_word2 = [*new_word, index + index2 - 1], [*new_word2, index]
             stack.append((new_perm, new_word, index + 1, poly * prod([x[index] - y[a] for a in index_list]), new_word2))
     return ret
 
@@ -152,14 +154,22 @@ if __name__ == "__main__":
         print(perm_to_key(key))
     #Sx(uncode([0,2,1])).in_CEM_basis().expand()
     #panko = uncode([0,2, 1])
-    panko = Permutation([2,4,3,1])
+    panko = Permutation([3,5,6,1,2,4])
     graphs = rc_graph_eg(panko)
     # for i in range(1, 5):
+    from sage.all import ZZ
+    from sage.combinat.rsk import RSK
     for graph in graphs:
-        word1, word2 = graph
+        oword1, oword2 = graph
+        print(f"origw_bang: {(oword1, oword2)}")
+        word1, sword2 = RSK(oword1, insertion=RSK.rules.EG)
+        word2 = [[oword2[i - 1] for i in sword0] for sword0 in sword2]        
+        # for i in range(len(oword1)):
+        #     word1, word2 = NilPlactic.ed_insert_rsk(word1, word2, oword1[i], oword2[i])
         print(f"graph: {(word1, word2)}")
-        inverse_word1, inverse_word2 = NilPlactic.inverse_ed_insert_rsk(word1, word2)
-        print(f"origw: {(inverse_word1, inverse_word2)}")
+        # inverse_word1 = RSK_inverse()
+        # #, inverse_word2 = NilPlactic.inverse_ed_insert_rsk(word1, word2)
+        # print(f"origw: {(inverse_word1)}")
     print("fat bacon")
     # graphs = rc_graph_eg(~panko)
     # # for i in range(1, 5):
