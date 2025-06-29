@@ -67,6 +67,19 @@ def h_coprod(p, k):
             ret += [[([0] * (k-1)) + [ p ], []]]
         else:
             ret += [[([0] * (k-1)) + [ i], ([0] * (k-1)) + [p - i]]]
+    # for j in range(k + 1):
+    #     if j == 0:
+    #         ret += [[[], ([0] * (k - 1)) + [ p ]]]
+    #     elif j == k:
+    #         ret += [[([0] * (k - 1)) + [ p ],[]]]
+    #     else:
+    #         for i in range(p + 1):
+    #             if i == 0:
+    #                 ret += [[[], ([0] * ((k - j)-1)) + [ p -i ]]]
+    #             elif i == p:
+    #                 ret += [[([0] * (j-1)) + [ p ], []]]
+    #             else:
+    #                 ret += [[([0] * (j-1)) + [ i], ([0] * (k - j -1)) + [p - i]]]
     return ret
     # for perm2 in perms:
     #     mu1 = (~perm).minimal_dominant_above().code
@@ -114,8 +127,8 @@ for elem in elems:
     ret = S.Zero
     for k1, v1 in res.items():
         for k2, v2 in elem.items():
-            dct = sep_desc_mul(RR.rings[0].from_dict({k1[0]: v1 * v2}), k2[0])
-            dct2 = sep_desc_mul(RR.rings[1].from_dict({k1[1]: 1}),k2[1])
+            dct = sep_desc_mul(RR.rings[0].from_dict({k1[0]: v1 * v2}), uncode((([0] * (max(k1[1].descents())+1)) if len(k1[1].descents()) != 0 else [])+k2[0].code))
+            dct2 = sep_desc_mul(RR.rings[1].from_dict({k1[1]: 1}),uncode((([0] * (max(k1[0].descents())+1)) if len(k1[0].descents()) != 0 else [])+k2[1].code))
             dct = _tensor_product_of_dicts(dct, dct2)
             ret += RR.from_dict(dct)
     res = ret
