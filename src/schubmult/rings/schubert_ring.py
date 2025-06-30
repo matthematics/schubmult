@@ -259,8 +259,8 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     #     return self.mul_expr(elem, other)
 
-    def printing_term(self, k):
-        return spolymod.DSchubPoly(k, self.genset.label, self.coeff_genset.label)
+    def printing_term(self, k, prefix=""):
+        return spolymod.DSchubPoly(k, self.genset.label, self.coeff_genset.label, prefix=prefix)
 
     def _coerce_mul(self, other):
         if isinstance(other, BaseSchubertElement):

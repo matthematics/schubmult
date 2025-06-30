@@ -12,8 +12,9 @@ class AbstractSchubPoly(ssymb.Expr):
     is_Atom = True
     is_number = False
 
-    def __new__(cls, k, genset, coeff_genset):
+    def __new__(cls, k, genset, coeff_genset, prefix = ""):
         obj = ssymb.Expr.__new__(cls)
+        obj._prefix = prefix
         obj._key = k
         obj._genset = genset
         obj._coeff_genset = coeff_genset
@@ -21,7 +22,7 @@ class AbstractSchubPoly(ssymb.Expr):
         return obj
 
     def __hash__(self):
-        return hash((self._key,self._genset,self._coeff_genset,"AbS"))
+        return hash((self._key,self._genset,self._coeff_genset,"AbS",self._prefix))
     # def __init__(self, k, genset, coeff_genset):
     #     super().__init__(k, genset, coeff_genset)
 
@@ -64,20 +65,20 @@ class DSchubPoly(AbstractSchubPoly):
     def __hash__(self):
         return hash((self._key,self._genset,self._coeff_genset,"dasiub"))
 
-    def __new__(cls, k, genset, coeff_genset):
-        return DSchubPoly.__xnew_cached__(cls, k, genset, coeff_genset)
+    def __new__(cls, k, genset, coeff_genset, prefix = ""):
+        return DSchubPoly.__xnew_cached__(cls, k, genset, coeff_genset, prefix)
 
     @staticmethod
-    def __xnew__(_class, k, genset, coeff_genset):
-        return AbstractSchubPoly.__new__(_class, k, genset, coeff_genset)
+    def __xnew__(_class, k, genset, coeff_genset, prefix):
+        return AbstractSchubPoly.__new__(_class, k, genset, coeff_genset, prefix)
 
     def _sympystr(self, printer):
         key = self._key
         if self._key == Permutation([]):
             return printer.doprint(ssymb.S.One)
         if self._coeff_genset is None:
-            return printer.doprint(f"S{self._genset}({printer.doprint(key)})")
-        return printer.doprint(f"DS{self._genset}({printer.doprint(key)}, {self._coeff_genset})")
+            return printer.doprint(f"{self._prefix}S{self._genset}({printer.doprint(key)})")
+        return printer.doprint(f"{self._prefix}DS{self._genset}({printer.doprint(key)}, {self._coeff_genset})")
 
     def _pretty(self, printer):
         key = self._key
@@ -86,8 +87,8 @@ class DSchubPoly(AbstractSchubPoly):
             return printer._print(ssymb.S.One)
         subscript = printer._print(int("".join([str(i) for i in key])))
         if self._coeff_genset is None:
-            return printer._print_Function(ssymb.Function(f"{self.__class__._pretty_schub_char}_{subscript}")(ssymb.Symbol(gl)))
-        return printer._print_Function(ssymb.Function(f"{self.__class__._pretty_schub_char}_{subscript}")(ssymb.Symbol(f"{self._genset}; {self._coeff_genset}")))
+            return printer._print_Function(ssymb.Function(f"{self._prefix}{self.__class__._pretty_schub_char}_{subscript}")(ssymb.Symbol(gl)))
+        return printer._print_Function(ssymb.Function(f"{self._prefix}{self.__class__._pretty_schub_char}_{subscript}")(ssymb.Symbol(f"{self._genset}; {self._coeff_genset}")))
 
     def _latex(self, printer):
         key = self._key
@@ -96,16 +97,16 @@ class DSchubPoly(AbstractSchubPoly):
             return printer._print(ssymb.S.One)
         subscript = printer._print(key)
         if self._coeff_genset is None:
-            return printer._print_Function(ssymb.Function("\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(ssymb.Symbol(gl)))
-        return printer._print_Function(ssymb.Function("\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(ssymb.Symbol(f"{{{self._genset}}}; {{{self._coeff_genset}}}")))
+            return printer._print_Function(ssymb.Function(f"{self._prefix}"+"\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(ssymb.Symbol(gl)))
+        return printer._print_Function(ssymb.Function(f"{self._prefix}"+"\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(ssymb.Symbol(f"{{{self._genset}}}; {{{self._coeff_genset}}}")))
 
     def __reduce__(self):
         return (self.__class__, self.args)
 
     @staticmethod
     @cache
-    def __xnew_cached__(_class, k, genset, coeff_genset):
-        return DSchubPoly.__xnew__(_class, k, genset, coeff_genset)
+    def __xnew_cached__(_class, k, genset, coeff_genset, prefix):
+        return DSchubPoly.__xnew__(_class, k, genset, coeff_genset, prefix)
 
 
 class QDSchubPoly(AbstractSchubPoly):

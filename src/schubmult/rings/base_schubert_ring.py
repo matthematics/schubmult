@@ -67,12 +67,12 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def as_terms(self):
         if len(self.keys()) == 0:
             return [sympify_sympy(S.Zero)]
-        return [((self[k]) if k == Permutation([]) else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in self.keys()]
+        return [((self[k]) if k == self.ring.zero_monom else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in self.keys()]
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
             return [sympify(S.Zero)]
-        return [((self[k]) if k == Permutation([]) else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))]
+        return [((self[k]) if k == self.ring.zero_monom else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))]
 
     def __add__(self, other):
         if isinstance(other, BaseSchubertElement):
@@ -81,7 +81,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             return other.__radd__(self)
         try:
             other = self.ring.domain_new(other)
-            other = self.ring.from_dict({Permutation([]): other})
+            other = self.ring.from_dict({self.ring.zero_monom: other})
             return self.ring.add(self, other)
         except CoercionFailed:
             pass
@@ -96,7 +96,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             return MixedSchubertElement(other, self)
         try:
             other = self.ring.domain_new(other)
-            other = self.ring.from_dict({Permutation([]): other})
+            other = self.ring.from_dict({self.ring.zero_monom: other})
             return self.ring.add(other, self)
         except CoercionFailed:
             pass
@@ -113,7 +113,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             return other.__rsub__(self)
         try:
             other = self.ring.domain_new(other)
-            other = self.ring.from_dict({Permutation([]): other})
+            other = self.ring.from_dict({self.ring.zero_monom: other})
             return self.ring.sub(self, other)
         except CoercionFailed:
             pass
@@ -128,7 +128,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             return MixedSchubertElement(other, -self)
         try:
             other = self.ring.domain_new(other)
-            other = self.ring.from_dict({Permutation([]): other})
+            other = self.ring.from_dict({self.ring.zero_monom: other})
             return self.ring.sub(other, self)
         except CoercionFailed:
             pass

@@ -1,12 +1,11 @@
 from schubmult.perm_lib import Permutation, uncode
-from schubmult.symbolic import S, Symbol, sympy_Mul
-from schubmult.utils.perm_utils import add_perm_dict, mu_A, p_trans
+from schubmult.symbolic import CoercionFailed, S, sympy_Mul
+from schubmult.utils.perm_utils import mu_A
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
 
 def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
-    
     # pmu2 = (~perm2).minimal_dominant_above()
     # mu2 = pmu2.code
 
@@ -28,7 +27,7 @@ def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
     # #mu1 = [max(p,mu1[0])] * q + mu1
     # if len(mu2) == 0:
     #     mu2 = list(range(q, 0, -1))
-    
+
     # if len(mu1) == 0 or mu1[0] < p:
     #     mu1 = [p] + mu1
     # if len(mu2) == 0 or mu2[0] < q:
@@ -58,12 +57,14 @@ def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
     while len(c2) < q:
         c2 += [0]
     c = c1 + c2
-    n = max([i + c[i] for i in range(len(c))])
+    if len(c) == 0:
+        n = 0
+    else:
+        n = max([i + c[i] + 1 for i in range(len(c))])
     bigmu = list(range(n, 0, -1))
 
-
-    #print(f"{bigmu=} {p=}, {q=}, {perm=}, {perm2=}, {pmu1=}, {pmu2=}")
-    #bigmu = [0] * (p + q)
+    # print(f"{bigmu=} {p=}, {q=}, {perm=}, {perm2=}, {pmu1=}, {pmu2=}")
+    # bigmu = [0] * (p + q)
     # bigmu = []
     # for i in range(p + q, p - 1, -1):
     #     bigmu += [i]
@@ -72,14 +73,14 @@ def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
     # if bigmu[0] < p + q:
     #     for i in range(p + q - bigmu[0]):
     #         bigmu = [b+1 for b in bigmu]
-            # bigmu += [1]
+    # bigmu += [1]
     mu1 = mu_A(bigmu, list(range(p)))
     mu2 = mu_A(bigmu, list(range(p, len(bigmu))))
 
     pmu1 = uncode(mu1)
     pmu2 = uncode(mu2)
     pmu = uncode(bigmu)
-    #print(f"{bigmu=}, {mu1=}, {mu2=}, {pmu1=}, {pmu2=}, {pmu=} {perm=}, {perm2=}")
+    # print(f"{bigmu=}, {mu1=}, {mu2=}, {pmu1=}, {pmu2=}, {pmu=} {perm=}, {perm2=}")
     assert (perm * pmu1).inv == pmu1.inv - perm.inv
     assert (perm2 * pmu2).inv == pmu2.inv - perm2.inv
     bingo = ring.from_dict({perm * pmu1: coeff}) * ring.from_dict({perm2 * pmu2: S.One})
@@ -90,6 +91,11 @@ def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
             continue
         dct[w * ipmu] = v
     return dct
+
+
+# 1 [] [0, 4, 1, 2]
+# 1 [] [0, 3, 3, 1]
+# 1 [] [0, 2, 3, 2]
 
 
 class SeparatedDescentsRing(BaseSchubertRing):
@@ -114,7 +120,24 @@ class SeparatedDescentsRing(BaseSchubertRing):
     # def rings(self):
     #     return self._rings
 
+    # def domain_new(self, elem1, elem2):
+
     def mul(self, elem1, elem2):
+        # print(f"{elem1=}, {elem2=}")
+        try:
+            bongus = self.domain_new(elem1)
+            return self.from_dict({k: v * bongus for k, v in elem2.items()})
+        except CoercionFailed:
+            # import traceback
+            # traceback.print_exc()
+            pass
+        try:
+            bongus = self.domain_new(elem2)
+            return self.from_dict({k: v * bongus for k, v in elem1.items()})
+        except CoercionFailed:
+            # import traceback
+            # traceback.print_exc()
+            pass
         ret = self.zero
         for k1, v1 in elem1.items():
             for k2, v2 in elem2.items():
@@ -131,11 +154,18 @@ class SeparatedDescentsRing(BaseSchubertRing):
                         continue
                     dct_update[(k, deg1 + deg2)] = v
                 ret += self.from_dict(dct_update)
-        #return self.from_dict(ret_dict)
+        # return self.from_dict(ret_dict)
         return ret
 
-    def _coerce_add(self, x):  # noqa: ARG002
-        return None
+    def _coerce_add(self, x):
+        try:
+            x = self.domain_new(x)
+            return self.from_dict({self.zero_monom: x})
+        except CoercionFailed:
+            # import traceback
+            # traceback.print_exc()
+            return None
+        # return None
 
     def _coerce_mul(self, x):  # noqa: ARG002
         # have to pull out gens
@@ -145,15 +175,22 @@ class SeparatedDescentsRing(BaseSchubertRing):
         return None
 
     def printing_term(self, k):
-        if Permutation.print_as_code:
-            return Symbol(f"ASx({k[0].code}, {k[1]})", commutative=False)
-        return Symbol(f"ASx({k[0]}, {k[1]})", commutative=False)
+        # return Symbol(f"ASx({k[0]}, {k[1]})", commutative=False)
+        return self._schub_ring.printing_term(k, prefix="A")
 
     @property
     def one(self):
         return self.from_dict({self.zero_monom: S.One})
 
-    def __call__(self, perm, deg):
+    def _get_min_deg(self, perm):
+        if perm.inv > 0:
+            return max(perm.descents()) + 1
+        return 0
+
+    def new(self, perm, deg=0):
+        if not isinstance(perm, Permutation) and not isinstance(perm, list) and not isinstance(perm, tuple):
+            elem = self._schub_ring(perm)
+            return self.from_dict({(k, self._get_min_deg(k)): v for k, v in elem.items()})
         if deg < 0:
             raise ValueError("Degree must be non-negative")
         perm = Permutation(perm)
