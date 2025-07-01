@@ -114,7 +114,7 @@ class SeparatedDescentsRing(BaseSchubertRing):
         self.dtype = type("SeparatedDescentsRingElement", (SeparatedDescentsRingElement,), {"ring": self})
 
     def __hash__(self):
-        return hash(self._rings)
+        return hash((self._schub_ring, "ARBLE"))
 
     # @property
     # def rings(self):

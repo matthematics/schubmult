@@ -4,7 +4,7 @@ from schubmult.symbolic import Mul, S, sympy_Mul
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
-from ._mul_utils import _tensor_product_of_dicts
+from ._mul_utils import _tensor_product_of_dicts, _tensor_product_of_dicts_first
 from .abstract_schub_poly import AbstractSchubPoly
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
@@ -49,7 +49,10 @@ class TensorRing(BaseSchubertRing):
                 dct = self.rings[0].from_dict({k1[0]: v1 * v2}) * elem2.ring.rings[0].from_dict({k2[0]: 1})
                 for i in range(1, len(self.rings)):
                     dct2 = self.rings[i].from_dict({k1[i]: 1}) * elem2.ring.rings[i].from_dict({k2[i]: 1})
-                    dct = _tensor_product_of_dicts(dct, dct2)
+                    if i == 1:
+                        dct = _tensor_product_of_dicts_first(dct, dct2)
+                    else:
+                        dct = _tensor_product_of_dicts(dct, dct2)
                 ret_dict = add_perm_dict(ret_dict, dct)
         return self.from_dict(ret_dict)
 
@@ -150,5 +153,5 @@ class TensorRingElement(BaseSchubertElement):
             return [S.Zero]
         return [
             self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k))
-            for k in sorted(self.keys(), key=lambda kkt: [(kk.inv, tuple(kk)) for kk in kkt])
+            for k in self.keys()#sorted(self.keys(), key=lambda kkt: [(kk.inv, tuple(kk)) for kk in kkt])
         ]

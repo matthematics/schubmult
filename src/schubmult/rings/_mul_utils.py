@@ -19,6 +19,18 @@ def _mul_schub_dicts(dict1, dict2, basis1, basis2, best_effort_positive=False):
     return this_dict
 
 
+def _tensor_product_of_dicts_first(d1, d2):
+    ret_dict = {}
+    for k1, v1 in d1.items():
+        this_dict = {}
+        v1 = sympify(v1)
+        for k2, v2 in d2.items():
+            v2 = sympify(v2)
+            this_dict[(k1, k2)] = v1 * v2
+        ret_dict = add_perm_dict(ret_dict, this_dict)
+    return ret_dict
+
+
 def _tensor_product_of_dicts(d1, d2):
     ret_dict = {}
     for k1, v1 in d1.items():
