@@ -21,17 +21,6 @@ def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
         n = max([i + c[i] + 1 for i in range(len(c))])
     bigmu = list(range(n, 0, -1))
 
-    # print(f"{bigmu=} {p=}, {q=}, {perm=}, {perm2=}, {pmu1=}, {pmu2=}")
-    # bigmu = [0] * (p + q)
-    # bigmu = []
-    # for i in range(p + q, p - 1, -1):
-    #     bigmu += [i]
-    # bigmu = p_trans(bigmu)
-
-    # if bigmu[0] < p + q:
-    #     for i in range(p + q - bigmu[0]):
-    #         bigmu = [b+1 for b in bigmu]
-    # bigmu += [1]
     mu1 = mu_A(bigmu, list(range(p)))
     mu2 = mu_A(bigmu, list(range(p, len(bigmu))))
 
@@ -56,11 +45,6 @@ def _single_coprod(p, n, T):
     for i in range(p+1):
         res += T.from_dict({((uncode([i]), n), (uncode([p-i]), n)): S.One})
     return res
-
-
-# 1 [] [0, 4, 1, 2]
-# 1 [] [0, 3, 3, 1]
-# 1 [] [0, 2, 3, 2]
 
 
 class SeparatedDescentsRing(BaseSchubertRing):
