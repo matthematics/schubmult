@@ -1,3 +1,5 @@
+from functools import cache
+
 from schubmult.perm_lib import Permutation, uncode
 from schubmult.symbolic import CoercionFailed, S, sympy_Mul
 from schubmult.utils.perm_utils import mu_A
@@ -6,50 +8,6 @@ from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
 
 def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
-    # pmu2 = (~perm2).minimal_dominant_above()
-    # mu2 = pmu2.code
-
-    # pmu1 = (~perm).minimal_dominant_above()
-    # mu1 = pmu1.code
-    # while len(mu2) > 0 and mu2[-1] == 0:
-    #     mu2.pop()
-    # while len(mu1) > 0 and mu1[-1] == 0:
-    #     mu1.pop()
-
-    # if len(mu1) == 0 or mu1[0] < p:
-    #     if len(mu1) == 0:
-    #         mu1 = list(range(p, 0, -1))
-    #     else:
-    #         start = mu1[0]
-    #         for i in range(p - start):
-    #             mu1 = [m + 1 for m in mu1]
-    #             mu1 += [1]
-    # #mu1 = [max(p,mu1[0])] * q + mu1
-    # if len(mu2) == 0:
-    #     mu2 = list(range(q, 0, -1))
-
-    # if len(mu1) == 0 or mu1[0] < p:
-    #     mu1 = [p] + mu1
-    # if len(mu2) == 0 or mu2[0] < q:
-    #     mu2 = [q] + mu2
-    # # if len(mu2) == 0:
-    # #     mu2 = [q]
-    # # else:
-    # #     # start = mu2[0]
-    # #     # to_add = q - start
-    # #     # mu2 = [a + to_add for a in mu2]
-    # #     mu2 = [q] + mu2
-
-    # #mu2 = (max(q - len(mu2), 0)* [start]) + mu2
-    # # mu1 = (len(mu2) * [p]) + mu1
-    # bigmu = [*mu1]
-
-    # for i in range(len(mu2)):
-    #     if i < len(bigmu):
-    #         bigmu[i] += mu2[i]
-    #     else:
-    #         bigmu += [mu2[i]]
-
     c1 = perm.code
     while len(c1) < p:
         c1 += [0]
@@ -92,6 +50,13 @@ def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
         dct[w * ipmu] = v
     return dct
 
+@cache
+def _single_coprod(p, n, T):
+    res = T.zero
+    for i in range(p+1):
+        res += T.from_dict({((uncode([i]), n), (uncode([p-i]), n)): S.One})
+    return res
+
 
 # 1 [] [0, 4, 1, 2]
 # 1 [] [0, 3, 3, 1]
@@ -121,6 +86,32 @@ class SeparatedDescentsRing(BaseSchubertRing):
     #     return self._rings
 
     # def domain_new(self, elem1, elem2):
+
+    def coproduct(self, val):
+        T = self @ self
+        if val == self.zero:
+            return T.zero
+
+        cprd_val = T.zero
+
+        while val != val.ring.zero:
+            mx = [k[0].code for k in val.keys() if val[k] != S.Zero ]
+            mx.sort(reverse=True)
+            cd = mx[0]
+
+
+            mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
+            if len(cd) == 0:
+                return cprd_val + T.from_dict({((Permutation([]),mx_key[1]),(Permutation([]),mx_key[1])): val[mx_key] * S.One})
+            cd = [*cd]
+            fv = cd.pop(0)
+            while len(cd) > 1 and cd[-1] == 0:
+                cd.pop()
+            cf = val[mx_key]
+            cprd_val += (T.from_dict({((Permutation([]),0),(Permutation([]),0)): cf*S.One}))*_single_coprod(fv, 1, T) * self.coproduct(self(uncode(cd), mx_key[1] - 1))
+            val -= cf * self(uncode([fv]),1)*self(uncode(cd), mx_key[1] - 1)
+        return cprd_val
+
 
     def mul(self, elem1, elem2):
         # print(f"{elem1=}, {elem2=}")
@@ -203,6 +194,9 @@ class SeparatedDescentsRingElement(BaseSchubertElement):
     @property
     def free_symbols(self):
         return set()
+
+    def coproduct(self):
+        return self.ring.coproduct(self)
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:

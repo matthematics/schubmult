@@ -162,7 +162,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def __rmul__(self, other):
         try:
-            return self.ring.mul(self, other)
+            return self.ring.rmul(self, other)
         except CoercionFailed:
             return NotImplemented
 
@@ -223,6 +223,7 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def __matmul__(self, other):
         if isinstance(other, BaseSchubertRing):
             from .tensor_ring import TensorRing
+
             return TensorRing(self, other)
         return NotImplemented
 
@@ -244,8 +245,6 @@ class BaseSchubertRing(Ring, CompositeDomain):
         self.zero_monom = Permutation([])
 
     def add(self, elem, other):
-        # print(f"{elem=}")
-        # print(f"{other=}")
         return self.from_dict(add_perm_dict(elem, other))
 
     def sub(self, elem, other):
@@ -254,8 +253,14 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def neg(self, elem):
         return self.from_dict({k: -v for k, v in elem.items()})
 
+    def rmul(self, elem, other):
+        try:
+            other = self.domain_new(other)
+            return self.from_dict({k: v * other for k, v in elem.items()})
+        except Exception:
+            return self.mul_expr(elem, other)
+
     def mul(self, elem, other):
-        # print(f"{self=} {elem=} {other=}")
         try:
             other = self.domain_new(other)
             # print(f"{other=} {type(other)=}")
@@ -267,7 +272,6 @@ class BaseSchubertRing(Ring, CompositeDomain):
             if not other:
                 raise CoercionFailed(f"Could not coerce {other} of type {type(other)} to {type(elem)}")
             return self.from_dict(_mul_schub_dicts(elem, other, elem.ring, other.ring))
-        # print(f"I'm a bagel {other=}")
         return self.mul_expr(elem, other)
 
     def to_domain(self):

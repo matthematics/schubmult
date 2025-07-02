@@ -125,8 +125,8 @@ class Permutation:
     @classmethod
     def from_cycles(cls, cycle_iter):
         spoing = spp.Permutation(*cycle_iter)
-        return cls([a+1 for a in spoing.array_form])
-    
+        return cls([a + 1 for a in spoing.array_form])
+
     @property
     def code(self):
         return list(self._cached_code())
@@ -153,7 +153,7 @@ class Permutation:
         return Permutation(new_perm)
 
     def rslice(self, start, stop):
-        ttup = [*self._perm, *list(range(len(self._perm)+1,stop+2))]
+        ttup = [*self._perm, *list(range(len(self._perm) + 1, stop + 2))]
         return ttup[start:stop]
 
     def __getitem__(self, i):
@@ -438,11 +438,11 @@ class NilPlactic:
             index += 1
         if index == len(row):
             return [tuple([*row, letter]), *word[1:]]
-        if row[index] == letter: 
+        if row[index] == letter:
             if index < len(row) - 1:
                 if row[index + 1] == letter + 1:
-            #return tuple([*NilPlactic._ed_insert(word[:first_row_start], letter + 1), *word[first_row_start:]])
-                    return [row, *NilPlactic._ed_insert(word[1:],letter + 1)]
+                    # return tuple([*NilPlactic._ed_insert(word[:first_row_start], letter + 1), *word[first_row_start:]])
+                    return [row, *NilPlactic._ed_insert(word[1:], letter + 1)]
             while index < len(row) and row[index] == letter:
                 index += 1
             if index == len(row):
@@ -452,8 +452,8 @@ class NilPlactic:
         new_word[0] = [*new_word[0]]
         new_word[0][index] = letter
         new_word[0] = tuple([*new_word[0]])
-        #return tuple([*NilPlactic._ed_insert(new_word[:first_row_start], bump), *new_word[first_row_start:]])
-        return [new_word[0], *NilPlactic._ed_insert(new_word[1:],bump)]
+        # return tuple([*NilPlactic._ed_insert(new_word[:first_row_start], bump), *new_word[first_row_start:]])
+        return [new_word[0], *NilPlactic._ed_insert(new_word[1:], bump)]
 
     @staticmethod
     def ed_insert_rsk(word, word2, letter, letter2):
@@ -480,7 +480,7 @@ class NilPlactic:
             bump = new_word[index]
             # bump2 = new_word2[index]
             new_word[index] = letter
-            #new_word2[index] = letter2
+            # new_word2[index] = letter2
             word0, word2_0 = NilPlactic.ed_insert_rsk(new_word[:first_row_start], new_word2[:first_row_start], bump, letter2)
             return tuple([*word0, *new_word[first_row_start:]]), tuple([*word2_0, *new_word2[first_row_start:]])
 
@@ -493,7 +493,7 @@ class NilPlactic:
         while index > 0 and word[index - 1] <= word[index]:
             index -= 1
         subword = [*word[:index], *word[index + 1 :]]
-        subword = [i+1 for i in NilPlactic.standardize(subword)]
+        subword = [i + 1 for i in NilPlactic.standardize(subword)]
         subword.insert(index, 1)
         return subword
 
@@ -534,7 +534,7 @@ class NilPlactic:
                 # print(f"{word=}, {word2=}, {index3=}, {a=}, {new_word=}, {new_word2=} {b=}")
                 new_word, new_word2 = NilPlactic.inverse_ed_insert_rsk(new_word, new_word2)
                 return (*new_word, a - 1), (*new_word2, b)
-        
+
         a2 = word[index3]
         new_word[index3 - 1] = a
         new_word, new_word2 = NilPlactic.inverse_ed_insert_rsk(new_word, new_word2)
@@ -663,3 +663,11 @@ bad_classical_patterns = [Permutation([1, 4, 2, 3]), Permutation([1, 4, 3, 2]), 
 #                 new_word = new_word.ed_insert(index + index2 - 1)
 #             stack.append((new_perm, new_word, index + 1, poly * prod([x[index] - y[a] for a in index_list])))
 #     return ret
+
+ID_PERM = Permutation([])
+
+@cache
+def s(i):
+    return Permutation([*list(range(1,i)), i+1, i])
+
+
