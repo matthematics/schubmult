@@ -734,6 +734,31 @@ def complete_sym_positional_perms(orig_perm, p, *k):
         up_perm_list = perm_list
     return total_list
 
+def complete_sym_positional_perms_down(orig_perm, p, *k, hack_off=None):
+    k = {i - 1 for i in k}
+    orig_perm = Permutation(orig_perm)
+    total_list = {(orig_perm, 0, 1)}
+    up_perm_list = {(orig_perm, 1)}
+    # print(f"{orig_perm=}")
+    for pp in range(p):
+        perm_list = set()
+        for up_perm, sign in up_perm_list:
+            # pos_list = [i for i in range(k) if up_perm[i] < last]
+            rg = [q for q in range(len(up_perm) if hack_off is None else min(len(up_perm),hack_off)) if q not in k and up_perm[q] == orig_perm[q]]
+            for j in rg:
+                for i in k:
+                    a, b = (i, j) if i < j else (j, i)
+                    if has_bruhat_descent(up_perm, a, b):
+                        # print(f"bruhat ascent on {up_perm=} at {(a,b)=}")
+                        new_perm_add = up_perm.swap(a, b)
+                        # print(f"{up_perm.inv - orig_perm.inv=}")
+                        # print(f"{new_perm_add.inv - orig_perm.inv=}")
+                        new_sign = sign if i < j else -sign
+                        perm_list.add((new_perm_add, new_sign))
+                        total_list.add((new_perm_add, pp + 1, new_sign))
+        up_perm_list = perm_list
+    return total_list
+
 
 def elem_sym_perms_op(orig_perm, p, k):
     total_list = [(orig_perm, 0)]

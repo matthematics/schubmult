@@ -1,6 +1,7 @@
 from functools import cache
 
 from schubmult.perm_lib import Permutation, uncode
+from schubmult.schub_lib.schub_lib import complete_sym_positional_perms_down
 from schubmult.symbolic import CoercionFailed, S, sympy_Mul
 from schubmult.utils.perm_utils import mu_A
 
@@ -46,6 +47,8 @@ def _single_coprod(p, n, T):
         res += T.from_dict({((uncode([i]), n), (uncode([p-i]), n)): S.One})
     return res
 
+def _is_code1(perm):
+    return perm.inv > 0 and perm.code[0] == perm.inv
 
 class SeparatedDescentsRing(BaseSchubertRing):
     @property
@@ -55,6 +58,36 @@ class SeparatedDescentsRing(BaseSchubertRing):
     @property
     def schub_ring(self):
         return self._schub_ring
+
+    # pieri formula for uncode([p]), 1
+    def _single_coprod_test(self, p, tensor_elem):
+        res = tensor_elem.ring.zero
+        for (t1, t2), val in tensor_elem.items():
+            for i in range(p+1):
+                #res += T.from_dict({((uncode([i]), n), (uncode([p-i]), n)): S.One})
+                telem1 = self.pieri_formula(i, self(*t1))
+                telem2 = self.pieri_formula(p - i, self(*t2))
+                for perm1, val1 in telem1.items():
+                    for perm2, val2 in telem2.items():
+                        res += val*val1*val2*tensor_elem.ring((perm1, perm2))
+        return res
+
+
+    def pieri_formula(self, p, elem):
+        val = self.zero
+        for (perm, num_vars), coeff in elem.items():
+            lne = len(perm)
+            if perm.inv == 0:
+                lne = 0
+            code_add = p + max(lne, num_vars)
+            big_elem = uncode([code_add, *perm.code])
+            e_list = complete_sym_positional_perms_down(big_elem, code_add - p, 1)
+
+            for to_add, deg, _ in e_list:
+                if deg == code_add - p:
+                    if to_add.inv == 0 or max(to_add.descents()) + 1 <= num_vars + 1:
+                        val += coeff * self(to_add, num_vars + 1)
+        return val
 
     def __init__(self, ring):
         self._schub_ring = ring
@@ -70,11 +103,10 @@ class SeparatedDescentsRing(BaseSchubertRing):
     #     return self._rings
 
     # def domain_new(self, elem1, elem2):
-
-    def coproduct(self, val):
+    @cache
+    def coproduct(self, key):
         T = self @ self
-        if val == self.zero:
-            return T.zero
+        val = self(*key)
 
         cprd_val = T.zero
 
@@ -92,8 +124,34 @@ class SeparatedDescentsRing(BaseSchubertRing):
             while len(cd) > 1 and cd[-1] == 0:
                 cd.pop()
             cf = val[mx_key]
-            cprd_val += (T.from_dict({((Permutation([]),0),(Permutation([]),0)): cf*S.One}))*_single_coprod(fv, 1, T) * self.coproduct(self(uncode(cd), mx_key[1] - 1))
+            cprd_val += (T.from_dict({((Permutation([]),0),(Permutation([]),0)): cf*S.One}))*_single_coprod(fv, 1, T) * self.coproduct((uncode(cd), mx_key[1] - 1))
             val -= cf * self(uncode([fv]),1)*self(uncode(cd), mx_key[1] - 1)
+        return cprd_val
+
+    def coproduct_test(self, key):
+        T = self @ self
+        # if val == self.zero:
+        #     return T.zero
+        val = self(*key)
+
+        cprd_val = T.zero
+
+        while val != val.ring.zero:
+            mx = [k[0].code for k in val.keys() if val[k] != S.Zero ]
+            mx.sort(reverse=True)
+            cd = mx[0]
+
+
+            mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
+            if len(cd) == 0:
+                return cprd_val + T.from_dict({((Permutation([]),mx_key[1]),(Permutation([]),mx_key[1])): val[mx_key] * S.One})
+            cd = [*cd]
+            fv = cd.pop(0)
+            while len(cd) > 1 and cd[-1] == 0:
+                cd.pop()
+            cf = val[mx_key]
+            cprd_val += cf*self._single_coprod_test(fv, self.coproduct_test((uncode(cd), mx_key[1] - 1)))
+            val -= cf * self.pieri_formula(fv, self(uncode(cd), mx_key[1] - 1))
         return cprd_val
 
 
@@ -180,7 +238,14 @@ class SeparatedDescentsRingElement(BaseSchubertElement):
         return set()
 
     def coproduct(self):
-        return self.ring.coproduct(self)
+        T = self.ring @ self.ring
+        res = T.zero
+        for key, val in self.items():
+            res += val * self.ring.coproduct(key)
+        return res
+
+    def coproduct_test(self):
+        return self.ring.coproduct_test(self)
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:

@@ -72,6 +72,38 @@ def coprod(val, T):
         
     return cprd_val
 
+
+def coprod_back(val, T):
+    if val == val.ring.zero:
+        return T.zero
+    
+    cprd_val = T.zero
+
+    while val != val.ring.zero:
+        mx = [k[0].code for k in val.keys() if val[k] != S.Zero ]
+        mx.sort()
+        cd = mx[0]
+        
+
+        mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
+        cd = [*cd]
+        while len(cd) > 0 and cd[-1] == 0:
+            cd.pop()
+        
+        print(f"{cd=}")
+        fv = cd.pop()
+        
+        cf = val[mx_key]
+        if len(cd) == 0:
+            cprd_val += cf * single_coprod(fv, mx_key[1], T)
+            val -= cf * ASx(uncode([fv]),mx_key[1])
+        else:
+            cprd_val += cf * coprod_back(ASx(uncode(cd), mx_key[1] - 1), T) * single_coprod(fv, 1, T)
+            val -= cf * ASx(uncode(cd), mx_key[1] - 1) * ASx(uncode([fv]),1)
+        print(val)
+    return cprd_val
+
+
 if __name__ == "__main__":
     
     expr = generate(perm)
