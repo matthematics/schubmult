@@ -1,7 +1,7 @@
-from sympy import Expr
+from functools import cache
 
-from schubmult.perm_lib import Permutation
-from schubmult.schub_lib.double import schubmult_down
+from schubmult.perm_lib import Permutation, strict_theta, uncode
+from schubmult.schub_lib import schub_lib
 from schubmult.symbolic import (
     EXRAW,
     Add,
@@ -9,13 +9,10 @@ from schubmult.symbolic import (
     CompositeDomain,
     DefaultPrinting,
     DomainElement,
-    Mul,
-    Pow,
     Ring,
     S,
     Symbol,
     expand,
-    prod,
     sstr,
     sympify,
     sympify_sympy,
@@ -26,38 +23,22 @@ from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
 from .base_schubert_ring import BaseSchubertElement
-from .schubert_ring import DoubleSchubertElement, SingleSchubertRing
-from .variables import GeneratingSet
+from .schubert_ring import Sx
+from .separated_descents import SeparatedDescentsRing
+
+ASx = SeparatedDescentsRing(Sx([]).ring)
 
 logger = get_logger(__name__)
 
 
-class NilHeckeElement(DomainElement, DefaultPrinting, dict):
-    _op_priority = 1e200
+# keys are tuples of nonnegative integers
+class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
     precedence = 40
 
     __sympy__ = True
 
-    def apply(self, other):
-        if not isinstance(other, DoubleSchubertElement):
-            raise NotImplementedError
-        ret = other.ring.zero
-        for k0, v0 in self.items():
-            for k, v in other.items():
-                perm = k * (~k0)
-                if perm.inv == k.inv - k0.inv:
-                    new_elem = other.ring.from_dict({perm: v})
-                    ret += v0 * new_elem
-        return ret
-
-    def __reduce__(self):
-        return (self.__class__, self.items())
-
     def parent(self):
         return self.ring
-
-    def has_free(self, *args):
-        return any(s in args for s in self.free_symbols)
 
     def eval(self, *args):
         pass
@@ -86,21 +67,21 @@ class NilHeckeElement(DomainElement, DefaultPrinting, dict):
     def as_terms(self):
         if len(self.keys()) == 0:
             return [sympify_sympy(S.Zero)]
-        return [((self[k]) if k == Permutation([]) else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in self.keys()]
+        return [self[k] if k == () else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k)) for k in self.keys()]
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
             return [sympify(S.Zero)]
-        return [((self[k]) if k == Permutation([]) else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))]
+        return [((self[k]) if k == () else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in sorted(self.keys())]
 
     def __add__(self, other):
-        if isinstance(other, NilHeckeElement):
+        if isinstance(other, FreeAlgebraElement):
             if self.ring == other.ring:
                 return self.ring.add(self, other)
             return other.__radd__(self)
         try:
             other = self.ring.domain_new(other)
-            other = self.ring.from_dict({Permutation([]): other})
+            other = self.ring.from_dict({(): other})
             return self.ring.add(self, other)
         except CoercionFailed:
             pass
@@ -113,7 +94,7 @@ class NilHeckeElement(DomainElement, DefaultPrinting, dict):
     def __radd__(self, other):
         try:
             other = self.ring.domain_new(other)
-            other = self.ring.from_dict({Permutation([]): other})
+            other = self.ring.from_dict({(): other})
             return self.ring.add(other, self)
         except CoercionFailed:
             pass
@@ -124,13 +105,13 @@ class NilHeckeElement(DomainElement, DefaultPrinting, dict):
             return NotImplemented
 
     def __sub__(self, other):
-        if isinstance(other, NilHeckeElement):
+        if isinstance(other, FreeAlgebraElement):
             if self.ring == other.ring:
                 return self.ring.sub(self, other)
             return other.__rsub__(self)
         try:
             other = self.ring.domain_new(other)
-            other = self.ring.from_dict({Permutation([]): other})
+            other = self.ring.from_dict({(): other})
             return self.ring.sub(self, other)
         except CoercionFailed:
             pass
@@ -143,7 +124,7 @@ class NilHeckeElement(DomainElement, DefaultPrinting, dict):
     def __rsub__(self, other):
         try:
             other = self.ring.domain_new(other)
-            other = self.ring.from_dict({Permutation([]): other})
+            other = self.ring.from_dict({(): other})
             return self.ring.sub(other, self)
         except CoercionFailed:
             pass
@@ -174,6 +155,29 @@ class NilHeckeElement(DomainElement, DefaultPrinting, dict):
     def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
         return self.ring.from_dict({k: expand(v, **kwargs) for k, v in self.items()})
 
+    @staticmethod
+    @cache
+    def tup_expand(tup):
+        res = ASx([])
+        if len(tup) == 0:
+            return res
+        tup2 = tup[:-1]
+        return FreeAlgebraElement.tup_expand(tup2) * ASx(uncode([tup[-1]]), 1)
+
+    def schub_expand(self):
+        res = ASx([]).ring.zero
+        for tup, val in self.items():
+            res += val * self.__class__.tup_expand(tup)
+        return res
+
+    def coproduct(self):
+        T = self.ring @ self.ring
+        res = T.zero
+
+        for key, val in self.items():
+            res += val * self.ring.coproduct_on_basis(key)
+        return res
+
     def as_expr(self):
         return Add(*self.as_terms())
 
@@ -184,61 +188,105 @@ class NilHeckeElement(DomainElement, DefaultPrinting, dict):
         return sstr(self)
 
 
-class NilHeckeRing(Ring, CompositeDomain):
+class FreeAlgebra(Ring, CompositeDomain):
     def __str__(self):
         return self.__class__.__name__
 
+    def tensor_schub_expand(self, tensor):
+        T = ASx([]).ring @ ASx([]).ring
+        ret = T.zero
+        for (key1, key2), val in tensor.items():
+            ret += val * T.ext_multiply(self(key1).schub_expand(), self(key2).schub_expand())
+        return ret
+
+    def __hash__(self):
+        return hash((self.domain, "whatabong"))
+
     def __eq__(self, other):
-        return type(self) is type(other) and self.genset == other.genset
+        return type(self) is type(other) and self.domain == other.domain
 
-    def to_sympy(self, elem):
-        return elem.as_expr()
-
-    def isobaric(self, perm):
-        perm = Permutation(perm)
-        if perm.inv == 0:
-            return self.one
-        index = max(perm.descents())
-        elem = self.isobaric(perm.swap(index, index + 1))
-        elem = elem * self.from_dict({Permutation([]).swap(index, index + 1): S.One})
-        return self.mul(elem, self.genset[index + 1])
-
-    def fgp_operator(self, k, length, q_var=GeneratingSet("q")):
-        # xk
-        elem = self.zero
-        elem += self.genset[k] * self.one
-        for i in range(1, k):
-            perm = Permutation([])
-            perm = perm.swap(i - 1, k - 1)
-            elem += self.from_dict({perm: -prod([q_var[j] for j in range(i, k)])})
-        for i in range(k + 1, length + 1):
-            perm = Permutation([])
-            perm = perm.swap(k - 1, i - 1)
-            elem += self.from_dict({perm: prod([q_var[j] for j in range(k, i)])})
-        return elem
-
-    def subs_fgp(self, poly, length):
-        if self.genset.index(poly) != -1:
-            return self.fgp_operator(self.genset.index(poly), length)
-        if isinstance(poly, Add):
-            return self.sum([self.subs_fgp(arg, length) for arg in poly.args])
-        if isinstance(poly, Mul):
-            return prod([self.subs_fgp(arg, length) for arg in poly.args])
-        if isinstance(poly, Pow):
-            return prod([self.subs_fgp(poly.args[0], length)] * int(poly.args[1]))
-        return poly
-
-    def __init__(self, genset, domain=None):
-        self._genset = genset
-        self._sring = SingleSchubertRing(genset)
-        self.symbols = list(genset)
+    def __init__(self, domain=None):
         if domain:
             self.domain = domain
         else:
             self.domain = EXRAW
         self.dom = self.domain
-        self.zero_monom = Permutation([])
-        self.dtype = type("NilHeckeElement", (NilHeckeElement,), {"ring": self})
+        self.zero_monom = ()
+        self.dtype = type("FreeAlgebraElement", (FreeAlgebraElement,), {"ring": self})
+
+    @staticmethod
+    def right_pad(tup, n):
+        if len(tup) < n:
+            return (*tup, *([0] * (n - len(tup))))
+        return tup
+
+    def __matmul__(self, other):
+        from .tensor_ring import TensorRing
+        return TensorRing(self, other)
+
+    def coproduct_on_basis(self, key):
+        T = self @ self
+        if len(key) == 0:
+            return T.one
+        return self.__class__._single_coprod(key[0], T) * self.coproduct_on_basis(key[1:])
+
+
+    @cache
+    def _single_coprod(p, T):
+        res = T.zero
+        for i in range(p+1):
+            res += T.from_dict({((i,), (p-i,)): S.One})
+        return res
+
+# @cache
+#     def coproduct(self, key):
+#         T = self @ self
+#         val = self(*key)
+
+#         cprd_val = T.zero
+
+#         while val != val.ring.zero:
+#             mx = [k[0].code for k in val.keys() if val[k] != S.Zero ]
+#             mx.sort(reverse=True)
+#             cd = mx[0]
+
+
+#             mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
+#             if len(cd) == 0:
+#                 return cprd_val + T.from_dict({((Permutation([]),mx_key[1]),(Permutation([]),mx_key[1])): val[mx_key] * S.One})
+#             cd = [*cd]
+#             fv = cd.pop(0)
+#             while len(cd) > 1 and cd[-1] == 0:
+#                 cd.pop()
+#             cf = val[mx_key]
+#             cprd_val += (T.from_dict({((Permutation([]),0),(Permutation([]),0)): cf*S.One}))*_single_coprod(fv, 1, T) * self.coproduct((uncode(cd), mx_key[1] - 1))
+#             val -= cf * self(uncode([fv]),1)*self(uncode(cd), mx_key[1] - 1)
+#         return cprd_val
+
+    def schub_elem(self, perm, n):
+        res = self.zero
+        val = ASx(perm, n)
+        res = self.zero
+
+        while val != val.ring.zero:
+            mx = [k[0].code for k in val.keys() if val[k] != S.Zero ]
+            mx.sort(reverse=True)
+            cd = mx[0]
+
+
+            mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
+            if len(cd) == 0:
+                return res + val[mx_key]*self((*([0]*n),))
+            cd = [*cd]
+            fv = cd.pop(0)
+            while len(cd) > 1 and cd[-1] == 0:
+                cd.pop()
+            cf = val[mx_key]
+            res += cf*self((fv,)) * self.schub_elem(uncode(cd), mx_key[1] - 1)
+            val -= cf * val.ring(uncode([fv]),1)*val.ring(uncode(cd), mx_key[1] - 1)
+        return res
+
+
 
     def add(self, elem, other):
         # print(f"{elem=}")
@@ -251,25 +299,6 @@ class NilHeckeRing(Ring, CompositeDomain):
     def neg(self, elem):
         return self.from_dict({k: -v for k, v in elem.items()})
 
-    def mul_scalar(self, elem, other):
-        try:
-            other = self.domain_new(other)
-            # print(f"{other=} {type(other)=}")
-            return self.from_dict({k: other * v for k, v in elem.items()})
-        except Exception:
-            pass
-        mul_elem = other
-        if isinstance(other, BaseSchubertElement):
-            if not isinstance(other, DoubleSchubertElement) or not other.ring.genset == self.genset:
-                mul_elem = self._sring.from_expr(other.as_polynomial())
-        else:
-            mul_elem = self._sring.from_expr(other)
-
-        ret = self.zero
-        for k, v in mul_elem.items():
-            ret += self.from_dict({k2: v * v2 for k2, v2 in schubmult_down(elem, k, self.genset, mul_elem.ring.coeff_genset).items()})
-        return ret
-
     def mul_perm(self, elem, perm):
         dct = {}
         for k, v in elem.items():
@@ -280,10 +309,8 @@ class NilHeckeRing(Ring, CompositeDomain):
 
     def rmul(self, elem, other):
         # print(f"{self=} {elem=} {other=}")
-        if isinstance(other, NilHeckeElement):
+        if isinstance(other, FreeAlgebraElement):
             raise NotImplementedError
-        if isinstance(other, BaseSchubertElement):
-            other = other.as_polynomial()
         return self.from_dict({k: v * other for k, v in elem.items()})
 
     def mul(self, elem, other):
@@ -294,50 +321,35 @@ class NilHeckeRing(Ring, CompositeDomain):
             return self.from_dict({k: other * v for k, v in elem.items()})
         except Exception:
             pass
-        if isinstance(other, NilHeckeElement):
+        if isinstance(other, FreeAlgebraElement):
             ret = self.zero
-            for k, v in other.items():
-                new_elem = self.mul_perm(self.mul_scalar(elem, v), k)
-                ret += new_elem
+            for k0, v0 in elem.items():
+                for k, v in other.items():
+                    new_key = (*k0, *k)
+                    ret += self.from_dict({new_key: v * v0})
             return ret
-        return self.mul_scalar(elem, other)
+        raise CoercionFailed
 
     def to_domain(self):
         return self
 
-    def from_sympy(self, expr):
-        return self.from_expr(expr)
-
     def new(self, x):
-        if isinstance(x, NilHeckeElement):
+        if isinstance(x, FreeAlgebraElement):
             return x
         if isinstance(x, list) or isinstance(x, tuple):
-            return self.from_dict({Permutation(x): S.One})
-        if isinstance(x, Permutation):
-            return self.from_dict({x: S.One})
+            return self.from_dict({tuple(x): S.One})
         return self.mul_scalar(self.one, x)
 
     def printing_term(self, k):
-        # from sympy import Symbol
-
-        # return Symbol(f"df({k})", commutative=False)
-        class NilHeckeTerm(Expr):
-            def _sympystr(self, printer):
-                return printer._print(f"df({sstr(k)})")
-
-            def _pretty(self, printer):
-                return printer._print(f"\u2202({sstr(k)})")
-
-            def _latex(self, printer):
-                return printer._print_Symbol(Symbol(f"\\partial^{sstr(k)}"))
-
-        return NilHeckeTerm()
+        if all(a < 10 for a in k):
+            return Symbol("["+"".join([str(a) for a in k])+"]")
+        return Symbol("["+" ".join([str(a) for a in k])+"]")
 
     def _coerce_mul(self, other): ...
 
     @property
     def one(self):
-        return self.from_dict({Permutation([]): S.One})
+        return self.from_dict({(): S.One})
 
     def from_dict(self, element, orig_domain=None):  # noqa: ARG002
         # print(f"{element=}")
@@ -354,18 +366,18 @@ class NilHeckeRing(Ring, CompositeDomain):
 
     def domain_new(self, element, orig_domain=None):  # noqa: ARG002
         # print(f"{element=} {type(element)=} bagels {type(sympify(element))=} {sympify(element).has(*self.symbols)=}")
-        if isinstance(element, NilHeckeElement) or isinstance(element, BaseSchubertElement):
+        if isinstance(element, FreeAlgebraElement) or isinstance(element, BaseSchubertElement):
             raise CoercionFailed("Not a domain element")
-        if not any(x in self.genset for x in sympify_sympy(element).free_symbols):
-            return sympify(element)
-        raise CoercionFailed(f"{element} contains an element of the set of generators")
+        # if not any(x in self.genset for x in sympify_sympy(element).free_symbols):
+        return sympify(element)
+        # raise CoercionFailed(f"{element} contains an element of the set of generators")
 
-    @property
-    def genset(self):
-        return self._genset
+    # @property
+    # def genset(self):
+    #     return self._genset
 
-    def from_expr(self, x):
-        return self.mul_scalar(self.one, x)
+    # def from_expr(self, x):
+    #     return self.mul_scalar(self.one, x)
 
 
-df = NilHeckeRing(GeneratingSet("x"))
+FA = FreeAlgebra()

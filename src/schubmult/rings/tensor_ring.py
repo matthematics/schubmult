@@ -24,12 +24,18 @@ class TensorRing(BaseSchubertRing):
         self._rings = rings
         genset = set()
         for r in self._rings:
-            genset.update(set(r.genset))
+            try:
+                genset.update(set(r.genset))
+            except AttributeError:
+                pass
         genset = tuple(genset)
         coeff_genset = set()
         for r in self._rings:
-            if r.coeff_genset.label:
-                coeff_genset.update(set(r.coeff_genset))
+            try:
+                if r.coeff_genset.label:
+                    coeff_genset.update(set(r.coeff_genset))
+            except AttributeError:
+                pass
         coeff_genset = tuple(coeff_genset)
         super().__init__(list(genset), list(coeff_genset))
         self.zero_monom = tuple([self.rings[i].zero_monom for i in range(len(self.rings))])
@@ -99,6 +105,13 @@ class TensorRing(BaseSchubertRing):
     #             dct_new = add_perm_dict(dct_new,{(*k, k1): v1 for k1, v1 in self.rings[i].from_sympy(v).items()})
     #         dct = dct_new
     #     return self.from_dict(dct)
+
+    def ext_multiply(self, elem1, elem2):
+        ret = self.zero
+        for key, val in elem1.items():
+            for key2, val2 in elem2.items():
+                ret += self.from_dict({(key, key2): val*val2})
+        return ret
 
     def __call__(self, x):
         if isinstance(x, tuple):
