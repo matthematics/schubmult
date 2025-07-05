@@ -18,6 +18,12 @@ n = 100
 
 
 class Permutation:
+
+    @classmethod
+    def all_permutations(cls, n):
+        from itertools import permutations
+        return [cls(perm) for perm in list(permutations(list(range(1, n+1))))]
+
     def __new__(cls, perm):
         return Permutation.__xnew_cached__(cls, tuple(perm))
 

@@ -32,6 +32,22 @@ class DoubleSchubertElement(BaseSchubertElement):
     and a dict basis
     """
 
+    def to_genset_dict(self, trim=False):
+        gdict = genset_dict_from_expr(self.as_polynomial(), self.ring.genset)
+        def _trim_tuple(tup):
+            tup = [*tup]
+            while len(tup) > 0 and tup[-1] == 0:
+                tup.pop()
+            return (*tup,)
+        if trim:
+            new_dict = {}
+            for flop, val in gdict.items():
+                real_tup = _trim_tuple(flop)
+                new_dict[real_tup] = new_dict.get(real_tup, S.Zero) + val
+        else:
+            new_dict = gdict
+        return new_dict
+
     def divdiff(self, i):
         return self.ring.from_dict({k.swap(i - 1, i): v for k, v in self.items() if i - 1 in k.descents()})
 

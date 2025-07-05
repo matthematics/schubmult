@@ -277,9 +277,11 @@ def poly_genset(v: str):
 
 def genset_dict_from_expr(expr, genset):
     """Transform expressions into a multinomial form given generators. """
-    k = max([genset.index(a) for a in expr.free_symbols])
-
-    poly = {}
+    try:
+        k = max([genset.index(a) for a in expr.free_symbols])
+    except Exception:
+        return {(): expr}
+    poly = {}   
     expr = expand(expr)
     for term in Add.make_args(expr):
         coeff, monom = [], [0]*k

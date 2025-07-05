@@ -9,6 +9,7 @@ from schubmult.symbolic import (
     CompositeDomain,
     DefaultPrinting,
     DomainElement,
+    Integer,
     Ring,
     S,
     Symbol,
@@ -23,7 +24,7 @@ from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
 from .base_schubert_ring import BaseSchubertElement
-from .schubert_ring import Sx
+from .schubert_ring import DSx, Sx
 from .separated_descents import SeparatedDescentsRing
 
 ASx = SeparatedDescentsRing(Sx([]).ring)
@@ -155,6 +156,10 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
     def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
         return self.ring.from_dict({k: expand(v, **kwargs) for k, v in self.items()})
 
+    @property
+    def free_symbols(self):
+        return set()
+
     @staticmethod
     @cache
     def tup_expand(tup):
@@ -284,6 +289,33 @@ class FreeAlgebra(Ring, CompositeDomain):
             cf = val[mx_key]
             res += cf*self((fv,)) * self.schub_elem(uncode(cd), mx_key[1] - 1)
             val -= cf * val.ring(uncode([fv]),1)*val.ring(uncode(cd), mx_key[1] - 1)
+        return res
+
+    def schub_elem_double(self, perm, n, N):
+        ADSx = SeparatedDescentsRing(DSx([]).ring)
+        val = ADSx(perm, n)
+        res = self.zero
+
+        while any(sympify(v) != S.Zero for v in val.values()):
+            mx = [k[0].code for k in val.keys() if val[k] != S.Zero ]
+            mx.sort(key = lambda bob: (-sum(bob), bob), reverse=True)
+            cd = mx[0]
+
+
+            mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
+            if len(cd) == 0:
+                return res + val[mx_key]*self((*([0]*n),))
+            cd = [*cd]
+            fv = cd.pop(0)
+            while len(cd) > 1 and cd[-1] == 0:
+                cd.pop()
+            cf = val[mx_key]
+            res += cf*self((fv,)) * self.schub_elem_double(uncode(cd), mx_key[1] - 1, N)
+            val -= cf * val.ring(uncode([fv]),1)*val.ring(uncode(cd), mx_key[1] - 1)
+            keys = val.keys()
+            for key in list(keys):
+                if len(key[0]) > N or expand(val[key]) == S.Zero:
+                    del val[key]
         return res
 
 

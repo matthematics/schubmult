@@ -6,9 +6,11 @@ from .separated_descents import SeparatedDescentsRing, SeparatedDescentsRingElem
 from .tensor_ring import TensorRing, TensorRingElement
 
 ASx = SeparatedDescentsRing(Sx([]).ring)
+ADSx = SeparatedDescentsRing(DSx([]).ring)
 
 __all__ = [
     "FA",
+    "ADSx",
     "ASx",
     "DSx",
     "DoubleSchubertElement",
