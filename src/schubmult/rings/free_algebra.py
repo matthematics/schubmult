@@ -10,16 +10,19 @@ from schubmult.symbolic import (
     DefaultPrinting,
     DomainElement,
     Integer,
+    Mul,
     Ring,
     S,
     Symbol,
     expand,
+    is_of_func_type,
     sstr,
     sympify,
     sympify_sympy,
     sympy_Add,
     sympy_Mul,
 )
+from schubmult.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -28,6 +31,7 @@ from .schubert_ring import DSx, Sx
 from .separated_descents import SeparatedDescentsRing
 
 ASx = SeparatedDescentsRing(Sx([]).ring)
+ADSx = SeparatedDescentsRing(DSx([]).ring)
 
 logger = get_logger(__name__)
 
@@ -169,10 +173,25 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         tup2 = tup[:-1]
         return FreeAlgebraElement.tup_expand(tup2) * ASx(uncode([tup[-1]]), 1)
 
+    @staticmethod
+    @cache
+    def tup_double_expand(tup):
+        res = ADSx([])
+        if len(tup) == 0:
+            return res
+        tup2 = tup[:-1]
+        return FreeAlgebraElement.tup_double_expand(tup2) * ADSx(uncode([tup[-1]]), 1)
+
     def schub_expand(self):
         res = ASx([]).ring.zero
         for tup, val in self.items():
             res += val * self.__class__.tup_expand(tup)
+        return res
+
+    def schub_double_expand(self):
+        res = ADSx([]).ring.zero
+        for tup, val in self.items():
+            res += val * self.__class__.tup_double_expand(tup)
         return res
 
     def coproduct(self):
@@ -227,6 +246,7 @@ class FreeAlgebra(Ring, CompositeDomain):
 
     def __matmul__(self, other):
         from .tensor_ring import TensorRing
+
         return TensorRing(self, other)
 
     def coproduct_on_basis(self, key):
@@ -235,60 +255,59 @@ class FreeAlgebra(Ring, CompositeDomain):
             return T.one
         return self.__class__._single_coprod(key[0], T) * self.coproduct_on_basis(key[1:])
 
-
     @cache
     def _single_coprod(p, T):
         res = T.zero
-        for i in range(p+1):
-            res += T.from_dict({((i,), (p-i,)): S.One})
+        for i in range(p + 1):
+            res += T.from_dict({((i,), (p - i,)): S.One})
         return res
 
-# @cache
-#     def coproduct(self, key):
-#         T = self @ self
-#         val = self(*key)
+    # @cache
+    #     def coproduct(self, key):
+    #         T = self @ self
+    #         val = self(*key)
 
-#         cprd_val = T.zero
+    #         cprd_val = T.zero
 
-#         while val != val.ring.zero:
-#             mx = [k[0].code for k in val.keys() if val[k] != S.Zero ]
-#             mx.sort(reverse=True)
-#             cd = mx[0]
+    #         while val != val.ring.zero:
+    #             mx = [k[0].code for k in val.keys() if val[k] != S.Zero ]
+    #             mx.sort(reverse=True)
+    #             cd = mx[0]
 
+    #             mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
+    #             if len(cd) == 0:
+    #                 return cprd_val + T.from_dict({((Permutation([]),mx_key[1]),(Permutation([]),mx_key[1])): val[mx_key] * S.One})
+    #             cd = [*cd]
+    #             fv = cd.pop(0)
+    #             while len(cd) > 1 and cd[-1] == 0:
+    #                 cd.pop()
+    #             cf = val[mx_key]
+    #             cprd_val += (T.from_dict({((Permutation([]),0),(Permutation([]),0)): cf*S.One}))*_single_coprod(fv, 1, T) * self.coproduct((uncode(cd), mx_key[1] - 1))
+    #             val -= cf * self(uncode([fv]),1)*self(uncode(cd), mx_key[1] - 1)
+    #         return cprd_val
 
-#             mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
-#             if len(cd) == 0:
-#                 return cprd_val + T.from_dict({((Permutation([]),mx_key[1]),(Permutation([]),mx_key[1])): val[mx_key] * S.One})
-#             cd = [*cd]
-#             fv = cd.pop(0)
-#             while len(cd) > 1 and cd[-1] == 0:
-#                 cd.pop()
-#             cf = val[mx_key]
-#             cprd_val += (T.from_dict({((Permutation([]),0),(Permutation([]),0)): cf*S.One}))*_single_coprod(fv, 1, T) * self.coproduct((uncode(cd), mx_key[1] - 1))
-#             val -= cf * self(uncode([fv]),1)*self(uncode(cd), mx_key[1] - 1)
-#         return cprd_val
-
-    def schub_elem(self, perm, n):
+    def schub_elem(self, perm, numvars):
         res = self.zero
-        val = ASx(perm, n)
-        res = self.zero
-
-        while val != val.ring.zero:
-            mx = [k[0].code for k in val.keys() if val[k] != S.Zero ]
-            mx.sort(reverse=True)
-            cd = mx[0]
-
-
-            mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
-            if len(cd) == 0:
-                return res + val[mx_key]*self((*([0]*n),))
-            cd = [*cd]
-            fv = cd.pop(0)
-            while len(cd) > 1 and cd[-1] == 0:
-                cd.pop()
-            cf = val[mx_key]
-            res += cf*self((fv,)) * self.schub_elem(uncode(cd), mx_key[1] - 1)
-            val -= cf * val.ring(uncode([fv]),1)*val.ring(uncode(cd), mx_key[1] - 1)
+        expr = Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis().expand()
+        args = expr.args
+        if not isinstance(expr, Add):
+            args = [expr]
+        for arg in args:
+            tup = list(range(perm.inv + numvars, perm.inv, -1))
+            coeff = S.One
+            if is_of_func_type(sympify(arg), FactorialElemSym):
+                arg = sympify_sympy(arg)
+                tup[perm.inv + numvars - arg.numvars] = arg.numvars - arg.degree
+            elif isinstance(arg, Mul):
+                for arg0 in arg.args:
+                    if is_of_func_type(sympify(arg0), FactorialElemSym):
+                        arg0 = sympify_sympy(arg0)
+                        tup[perm.inv + numvars - arg0.numvars] = arg0.numvars - arg0.degree
+                    else:
+                        coeff = Integer(arg0)
+            else:
+                coeff = Integer(arg)
+            res += coeff * self(tup)
         return res
 
     def schub_elem_double(self, perm, n, N):
@@ -297,28 +316,25 @@ class FreeAlgebra(Ring, CompositeDomain):
         res = self.zero
 
         while any(sympify(v) != S.Zero for v in val.values()):
-            mx = [k[0].code for k in val.keys() if val[k] != S.Zero ]
-            mx.sort(key = lambda bob: (-sum(bob), bob), reverse=True)
+            mx = [k[0].code for k in val.keys() if val[k] != S.Zero]
+            mx.sort(key=lambda bob: (sum(bob), bob), reverse=True)
             cd = mx[0]
-
 
             mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
             if len(cd) == 0:
-                return res + val[mx_key]*self((*([0]*n),))
+                return res + val[mx_key] * self((*([0] * n),))
             cd = [*cd]
             fv = cd.pop(0)
             while len(cd) > 1 and cd[-1] == 0:
                 cd.pop()
             cf = val[mx_key]
-            res += cf*self((fv,)) * self.schub_elem_double(uncode(cd), mx_key[1] - 1, N)
-            val -= cf * val.ring(uncode([fv]),1)*val.ring(uncode(cd), mx_key[1] - 1)
+            res += cf * self((fv,)) * self.schub_elem_double(uncode(cd), mx_key[1] - 1, N)
+            val -= cf * val.ring(uncode([fv]), 1) * val.ring(uncode(cd), mx_key[1] - 1)
             keys = val.keys()
             for key in list(keys):
                 if len(key[0]) > N or expand(val[key]) == S.Zero:
                     del val[key]
         return res
-
-
 
     def add(self, elem, other):
         # print(f"{elem=}")
@@ -374,8 +390,8 @@ class FreeAlgebra(Ring, CompositeDomain):
 
     def printing_term(self, k):
         if all(a < 10 for a in k):
-            return Symbol("["+"".join([str(a) for a in k])+"]")
-        return Symbol("["+" ".join([str(a) for a in k])+"]")
+            return Symbol("[" + "".join([str(a) for a in k]) + "]")
+        return Symbol("[" + " ".join([str(a) for a in k]) + "]")
 
     def _coerce_mul(self, other): ...
 

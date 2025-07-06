@@ -6,6 +6,7 @@ from schubmult.symbolic import CoercionFailed, S, sympy_Mul
 from schubmult.utils.perm_utils import mu_A
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+from .free_algebra import FA
 
 
 def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
@@ -37,18 +38,24 @@ def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
     for w, v in bingo.items():
         if (w * ipmu).inv != ipmu.inv - w.inv:
             continue
-        dct[w * ipmu] = v
+        # if ring.coeff_genset.label:
+        #     v = xreplace_genvars(v, ring.coeff_genset, [-c for c in ring.coeff_genset])
+        dct[w * ipmu] = v * (S.NegativeOne ** ((w * ipmu).inv - perm.inv - perm2.inv))
+        # xreplace# * (S.NegativeOne ** ((w*ipmu).inv - perm.inv - perm2.inv))
     return dct
+
 
 @cache
 def _single_coprod(p, n, T):
     res = T.zero
-    for i in range(p+1):
-        res += T.from_dict({((uncode([i]), n), (uncode([p-i]), n)): S.One})
+    for i in range(p + 1):
+        res += T.from_dict({((uncode([i]), n), (uncode([p - i]), n)): S.One})
     return res
+
 
 def _is_code1(perm):
     return perm.inv > 0 and perm.code[0] == perm.inv
+
 
 class SeparatedDescentsRing(BaseSchubertRing):
     @property
@@ -63,15 +70,14 @@ class SeparatedDescentsRing(BaseSchubertRing):
     def _single_coprod_test(self, p, tensor_elem):
         res = tensor_elem.ring.zero
         for (t1, t2), val in tensor_elem.items():
-            for i in range(p+1):
-                #res += T.from_dict({((uncode([i]), n), (uncode([p-i]), n)): S.One})
+            for i in range(p + 1):
+                # res += T.from_dict({((uncode([i]), n), (uncode([p-i]), n)): S.One})
                 telem1 = self.pieri_formula(i, self(*t1))
                 telem2 = self.pieri_formula(p - i, self(*t2))
                 for perm1, val1 in telem1.items():
                     for perm2, val2 in telem2.items():
-                        res += val*val1*val2*tensor_elem.ring((perm1, perm2))
+                        res += val * val1 * val2 * tensor_elem.ring((perm1, perm2))
         return res
-
 
     def pieri_formula(self, p, elem):
         val = self.zero
@@ -105,28 +111,8 @@ class SeparatedDescentsRing(BaseSchubertRing):
     # def domain_new(self, elem1, elem2):
     @cache
     def coproduct(self, key):
-        T = self @ self
-        val = self(*key)
-
-        cprd_val = T.zero
-
-        while val != val.ring.zero:
-            mx = [k[0].code for k in val.keys() if val[k] != S.Zero ]
-            mx.sort(reverse=True)
-            cd = mx[0]
-
-
-            mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
-            if len(cd) == 0:
-                return cprd_val + T.from_dict({((Permutation([]),mx_key[1]),(Permutation([]),mx_key[1])): val[mx_key] * S.One})
-            cd = [*cd]
-            fv = cd.pop(0)
-            while len(cd) > 1 and cd[-1] == 0:
-                cd.pop()
-            cf = val[mx_key]
-            cprd_val += (T.from_dict({((Permutation([]),0),(Permutation([]),0)): cf*S.One}))*_single_coprod(fv, 1, T) * self.coproduct((uncode(cd), mx_key[1] - 1))
-            val -= cf * self(uncode([fv]),1)*self(uncode(cd), mx_key[1] - 1)
-        return cprd_val
+        # R = self @ self
+        return FA([]).ring.tensor_schub_expand(FA([]).ring.schub_elem(*key).coproduct())
 
     def coproduct_test(self, key):
         T = self @ self
@@ -137,23 +123,21 @@ class SeparatedDescentsRing(BaseSchubertRing):
         cprd_val = T.zero
 
         while val != val.ring.zero:
-            mx = [k[0].code for k in val.keys() if val[k] != S.Zero ]
+            mx = [k[0].code for k in val.keys() if val[k] != S.Zero]
             mx.sort(reverse=True)
             cd = mx[0]
 
-
             mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
             if len(cd) == 0:
-                return cprd_val + T.from_dict({((Permutation([]),mx_key[1]),(Permutation([]),mx_key[1])): val[mx_key] * S.One})
+                return cprd_val + T.from_dict({((Permutation([]), mx_key[1]), (Permutation([]), mx_key[1])): val[mx_key] * S.One})
             cd = [*cd]
             fv = cd.pop(0)
             while len(cd) > 1 and cd[-1] == 0:
                 cd.pop()
             cf = val[mx_key]
-            cprd_val += cf*self._single_coprod_test(fv, self.coproduct_test((uncode(cd), mx_key[1] - 1)))
+            cprd_val += cf * self._single_coprod_test(fv, self.coproduct_test((uncode(cd), mx_key[1] - 1)))
             val -= cf * self.pieri_formula(fv, self(uncode(cd), mx_key[1] - 1))
         return cprd_val
-
 
     def mul(self, elem1, elem2):
         # print(f"{elem1=}, {elem2=}")
