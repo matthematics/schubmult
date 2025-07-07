@@ -1,7 +1,6 @@
 from functools import cache
 
-from schubmult.perm_lib import Permutation, strict_theta, uncode
-from schubmult.schub_lib import schub_lib
+from schubmult.perm_lib import uncode
 from schubmult.symbolic import (
     EXRAW,
     Add,
@@ -26,6 +25,7 @@ from schubmult.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
+from .abstract_schub_poly import GenericPrintingTerm
 from .base_schubert_ring import BaseSchubertElement
 from .schubert_ring import DSx, Sx
 from .separated_descents import SeparatedDescentsRing
@@ -211,6 +211,32 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
     def __str__(self):
         return sstr(self)
 
+    def _nsymtup(self, tup, R):
+        if len(tup) == 0:
+            return R.one
+        if tup[-1] == 0:
+            return self._nsymtup(tup[:-1], R)
+        return self._nsymtup(tup[:-1], R) * R.from_dict({(tup[-1],): S.One}, R)
+
+    def remove_zeros(self):
+        new_elem = self.ring.zero
+        for k, v in self.items():
+            new_elem += self.ring.from_dict({tuple([a for a in k if a != 0]): v})
+        return new_elem
+
+    def nsymexpand(self):
+        R = NSym()
+        ret = R.zero
+        for k, v in self.items():
+            ret += v * self._nsymtup(k, R)
+        return ret
+
+    def to_schub(self):
+        res = Sx([]).ring.zero
+        for k, v in self.items():
+            res += v * self.ring.tup_to_schub(k)
+        return res
+
 
 class FreeAlgebra(Ring, CompositeDomain):
     def __str__(self):
@@ -308,6 +334,24 @@ class FreeAlgebra(Ring, CompositeDomain):
             else:
                 coeff = Integer(arg)
             res += coeff * self(tup)
+        return res
+
+    def tup_to_schub(self, tup):
+        from schubmult.abc import e, x
+        pinv = sum(tup)
+        res = Sx([])
+        for i in range(len(tup)):
+            #numvars = len(tup) + 1 - i
+            # i = len - numvars
+            # tup[i] = numvars - degree
+            # numvars = len - i
+            # degree = numvars - tup[i]
+
+            numvars = len(tup) - i + pinv
+            degree = numvars - tup[i]
+
+            if degree > 0:
+                res *= e(degree, numvars, x[1:])
         return res
 
     def schub_elem_double(self, perm, n, N):
@@ -429,3 +473,180 @@ class FreeAlgebra(Ring, CompositeDomain):
 
 
 FA = FreeAlgebra()
+
+
+class NSym(FreeAlgebra):
+    def __hash__(self):
+        return hash((self.domain, "whatabong2"))
+
+    def __init__(self, domain=None):
+        if domain:
+            self.domain = domain
+        else:
+            self.domain = EXRAW
+        self.dom = self.domain
+        self.zero_monom = ()
+        self.dtype = type("NSymElement", (NSymElement,), {"ring": self})
+
+    def printing_term(self, k):
+        return GenericPrintingTerm(k, "R")
+
+    def rmul(self, elem, other):
+        # print(f"{self=} {elem=} {other=}")
+        if isinstance(other, NSymElement):
+            raise NotImplementedError
+        return self.from_dict({k: v * other for k, v in elem.items()})
+
+    def mul(self, elem, other):
+        # print(f"{self=} {elem=} {other=}")
+        try:
+            other = self.domain_new(other)
+            # print(f"{other=} {type(other)=}")
+            return self.from_dict({k: other * v for k, v in elem.items()})
+        except Exception:
+            pass
+        if isinstance(other, NSymElement):
+            ret = self.zero
+            for k0, v0 in elem.items():
+                for k, v in other.items():
+                    if len(k0) > 0 and len(k) > 0:
+                        new_key0 = (*k0[:-1], k0[-1] + k[0], *k[1:])
+                        ret += self.from_dict({new_key0: v * v0})
+                    new_key1 = (*k0, *k)
+                    ret += self.from_dict({new_key1: v * v0})
+            return ret
+        raise CoercionFailed
+
+
+class NSymElement(FreeAlgebraElement):
+    precedence = 40
+
+    __sympy__ = True
+
+    def parent(self):
+        return self.ring
+
+    def eval(self, *args):
+        pass
+
+    def _sympystr(self, printer):
+        if len(self.keys()) == 0:
+            return printer._print(S.Zero)
+        if printer.order in ("old", "none"):  # needed to avoid infinite recursion
+            return printer._print_Add(sympy_Add(*self.as_ordered_terms()), order="lex")
+        return printer._print_Add(sympy_Add(*self.as_ordered_terms()))
+
+    def _pretty(self, printer):
+        if len(self.keys()) == 0:
+            return printer._print(S.Zero)
+        if printer.order in ("old", "none"):  # needed to avoid infinite recursion
+            return printer._print_Add(self, order="lex")
+        return printer._print_Add(sympy_Add(*self.as_ordered_terms()))
+
+    def _latex(self, printer):
+        if len(self.keys()) == 0:
+            return printer._print(S.Zero)
+        if printer.order in ("old", "none"):  # needed to avoid infinite recursion
+            return printer._print_Add(self, order="lex")
+        return printer._print_Add(sympy_Add(*self.as_ordered_terms()))
+
+    def as_terms(self):
+        if len(self.keys()) == 0:
+            return [sympify_sympy(S.Zero)]
+        return [self[k] if k == () else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k)) for k in self.keys()]
+
+    def as_ordered_terms(self, *_, **__):
+        if len(self.keys()) == 0:
+            return [sympify(S.Zero)]
+        return [((self[k]) if k == () else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in sorted(self.keys())]
+
+    def __add__(self, other):
+        if isinstance(other, NSymElement):
+            if self.ring == other.ring:
+                return self.ring.add(self, other)
+            return other.__radd__(self)
+        try:
+            other = self.ring.domain_new(other)
+            other = self.ring.from_dict({(): other})
+            return self.ring.add(self, other)
+        except CoercionFailed:
+            pass
+        try:
+            new_other = self.ring(other)
+            return self.__add__(new_other)
+        except CoercionFailed:
+            return other.__radd__(self)
+
+    def __radd__(self, other):
+        try:
+            other = self.ring.domain_new(other)
+            other = self.ring.from_dict({(): other})
+            return self.ring.add(other, self)
+        except CoercionFailed:
+            pass
+        try:
+            new_other = self.ring(other)
+            return new_other.__add__(self)
+        except CoercionFailed:
+            return NotImplemented
+
+    def __sub__(self, other):
+        if isinstance(other, NSymElement):
+            if self.ring == other.ring:
+                return self.ring.sub(self, other)
+            return other.__rsub__(self)
+        try:
+            other = self.ring.domain_new(other)
+            other = self.ring.from_dict({(): other})
+            return self.ring.sub(self, other)
+        except CoercionFailed:
+            pass
+        try:
+            new_other = self.ring(other)
+            return self.__sub__(new_other)
+        except CoercionFailed:
+            return other.__rsub__(self)
+
+    def __rsub__(self, other):
+        try:
+            other = self.ring.domain_new(other)
+            other = self.ring.from_dict({(): other})
+            return self.ring.sub(other, self)
+        except CoercionFailed:
+            pass
+        try:
+            new_other = self.ring(other)
+            return new_other.__sub__(self)
+        except CoercionFailed:
+            return NotImplemented
+
+    def __neg__(self):
+        return self.ring.neg(self)
+
+    def __mul__(self, other):
+        try:
+            return self.ring.mul(self, other)
+        except CoercionFailed:
+            return other.__rmul__(self)
+
+    def __rmul__(self, other):
+        try:
+            return self.ring.rmul(self, other)
+        except CoercionFailed:
+            return NotImplemented
+
+    def as_coefficients_dict(self):
+        return {self.ring.printing_term(k, self.ring): sympify(v) for k, v in self.items()}
+
+    @property
+    def free_symbols(self):
+        return set()
+
+    def as_expr(self):
+        return Add(*self.as_terms())
+
+    def __eq__(self, other):
+        return type(self) is type(other) and self.ring == other.ring and dict.__eq__(self, other)
+
+    def __str__(self):
+        return sstr(self)

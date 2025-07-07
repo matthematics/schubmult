@@ -57,6 +57,37 @@ class AbstractSchubPoly(ssymb.Expr):
         return ((*self._key,), self._genset, self._coeff_genset)
 
 
+class GenericPrintingTerm(AbstractSchubPoly):
+    is_Atom = True
+
+    _pretty_schub_char = "𝔖"  # noqa: RUF001
+
+    def __hash__(self):
+        return hash((self._key,self._genset,self._coeff_genset,"dasiub"))
+
+    def __new__(cls, k, name):
+        return GenericPrintingTerm.__xnew_cached__(cls, k, name)
+
+    @staticmethod
+    def __xnew__(_class, k, name):
+        obj = AbstractSchubPoly.__new__(_class, k, None, None, None)
+        obj._name = name
+        return obj
+
+    def _sympystr(self, printer):
+        key = self._key
+        if self._key == Permutation([]):
+            return printer.doprint(ssymb.S.One)
+        return printer.doprint(f"{self._name}{printer.doprint(key)}")
+
+    def __reduce__(self):
+        return (self.__class__, self.args)
+
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, k, name):
+        return GenericPrintingTerm.__xnew__(_class, k, name)
+
 class DSchubPoly(AbstractSchubPoly):
     is_Atom = True
 

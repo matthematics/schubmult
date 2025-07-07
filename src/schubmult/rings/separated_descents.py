@@ -1,12 +1,12 @@
 from functools import cache
 
+import schubmult.rings.free_algebra as fa
 from schubmult.perm_lib import Permutation, uncode
 from schubmult.schub_lib.schub_lib import complete_sym_positional_perms_down
 from schubmult.symbolic import CoercionFailed, S, sympy_Mul
 from schubmult.utils.perm_utils import mu_A
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
-from .free_algebra import FA
 
 
 def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
@@ -112,7 +112,8 @@ class SeparatedDescentsRing(BaseSchubertRing):
     @cache
     def coproduct(self, key):
         # R = self @ self
-        return FA([]).ring.tensor_schub_expand(FA([]).ring.schub_elem(*key).coproduct())
+        R = fa.FreeAlgebra()
+        return R.tensor_schub_expand(R.schub_elem(*key).coproduct())
 
     def coproduct_test(self, key):
         T = self @ self
