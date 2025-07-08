@@ -115,6 +115,10 @@ class SeparatedDescentsRing(BaseSchubertRing):
         R = fa.FreeAlgebra()
         return R.tensor_schub_expand(R.schub_elem(*key).coproduct())
 
+    @cache
+    def free_element(self, perm, numvars):
+        return fa.FreeAlgebra().schub_elem(perm, numvars)
+
     def coproduct_test(self, key):
         T = self @ self
         # if val == self.zero:
@@ -231,6 +235,12 @@ class SeparatedDescentsRingElement(BaseSchubertElement):
 
     def coproduct_test(self):
         return self.ring.coproduct_test(self)
+
+    def free_element(self):
+        ret = fa.FA([]).ring.zero
+        for k, v in self.items():
+            ret += v * self.ring.free_element(*k)
+        return ret
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:

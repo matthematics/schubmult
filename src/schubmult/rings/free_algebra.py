@@ -221,6 +221,8 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
     def remove_zeros(self):
         new_elem = self.ring.zero
         for k, v in self.items():
+            if 0 in k:
+                continue
             new_elem += self.ring.from_dict({tuple([a for a in k if a != 0]): v})
         return new_elem
 
@@ -231,10 +233,10 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
             ret += v * self._nsymtup(k, R)
         return ret
 
-    def to_schub(self):
+    def to_schub(self, sym=False):
         res = Sx([]).ring.zero
         for k, v in self.items():
-            res += v * self.ring.tup_to_schub(k)
+            res += v * self.ring.tup_to_schub(k, sym=sym)
         return res
 
 
@@ -336,8 +338,8 @@ class FreeAlgebra(Ring, CompositeDomain):
             res += coeff * self(tup)
         return res
 
-    def tup_to_schub(self, tup):
-        from schubmult.abc import e, x
+    def tup_to_schub(self, tup, sym=False):
+        from schubmult.abc import e, h, x
         pinv = sum(tup)
         res = Sx([])
         for i in range(len(tup)):
@@ -348,8 +350,11 @@ class FreeAlgebra(Ring, CompositeDomain):
             # degree = numvars - tup[i]
 
             numvars = len(tup) - i + pinv
+            # numvars = i + 1
             degree = numvars - tup[i]
-
+            # degree = tup[i]
+            if sym:
+                numvars = pinv
             if degree > 0:
                 res *= e(degree, numvars, x[1:])
         return res
