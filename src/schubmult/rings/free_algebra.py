@@ -170,8 +170,10 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         res = ASx([])
         if len(tup) == 0:
             return res
-        tup2 = tup[:-1]
-        return FreeAlgebraElement.tup_expand(tup2) * ASx(uncode([tup[-1]]), 1)
+        if len(tup) == 1:
+            return ASx(uncode(tup),1)
+        mid = len(tup)//2
+        return FreeAlgebraElement.tup_expand(tup[:mid]) * FreeAlgebraElement.tup_expand(tup[mid:])
 
     @staticmethod
     @cache
@@ -214,16 +216,18 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
     def _nsymtup(self, tup, R):
         if len(tup) == 0:
             return R.one
-        if tup[-1] == 0:
-            return self._nsymtup(tup[:-1], R)
+        if 0 in tup:
+            #return self._nsymtup(tup[:-1], R)
+            return R.zero
         return self._nsymtup(tup[:-1], R) * R.from_dict({(tup[-1],): S.One}, R)
 
-    def remove_zeros(self):
+    def remove_zeros(self, inserter=S.One):
         new_elem = self.ring.zero
         for k, v in self.items():
-            if 0 in k:
-                continue
-            new_elem += self.ring.from_dict({tuple([a for a in k if a != 0]): v})
+            # if 0 in k:
+            #     continue
+            # add x?
+            new_elem += self.ring.from_dict({tuple([a for a in k if a != 0]): v}) * (inserter ** len([a for a in k if a == 0]))
         return new_elem
 
     def nsymexpand(self):
@@ -249,6 +253,13 @@ class FreeAlgebra(Ring, CompositeDomain):
         ret = T.zero
         for (key1, key2), val in tensor.items():
             ret += val * T.ext_multiply(self(key1).schub_expand(), self(key2).schub_expand())
+        return ret
+
+    def tensor_nsym_expand(self, tensor, inserter=S.Zero):
+        T = NSym() @ NSym()
+        ret = T.zero
+        for (key1, key2), val in tensor.items():
+            ret += val * T.ext_multiply(self(key1).remove_zeros(inserter=inserter).nsymexpand(), self(key2).remove_zeros(inserter=inserter).nsymexpand())
         return ret
 
     def __hash__(self):
@@ -494,13 +505,28 @@ class NSym(FreeAlgebra):
         self.dtype = type("NSymElement", (NSymElement,), {"ring": self})
 
     def printing_term(self, k):
-        return GenericPrintingTerm(k, "R")
+        return GenericPrintingTerm(k, "N")
 
     def rmul(self, elem, other):
         # print(f"{self=} {elem=} {other=}")
         if isinstance(other, NSymElement):
             raise NotImplementedError
         return self.from_dict({k: v * other for k, v in elem.items()})
+
+    def sepify(self, elem):
+        return ASx([]).ring.from_dict({(uncode([a-1 for a in k]),len(k)): v for k, v in elem.items()})
+
+    def from_sep(self, elem):
+        dct = {}
+        for (k, n), v in elem.items():
+            cd = k.code
+            if len(cd) < n:
+                cd += ([0]*(n-len(cd)))
+            elif len(cd) > n:
+                cd = cd[:n]
+            cd = tuple([c + 1 for c in cd])
+            dct[cd] = v
+        return self.from_dict(dct)
 
     def mul(self, elem, other):
         # print(f"{self=} {elem=} {other=}")
@@ -511,15 +537,16 @@ class NSym(FreeAlgebra):
         except Exception:
             pass
         if isinstance(other, NSymElement):
-            ret = self.zero
-            for k0, v0 in elem.items():
-                for k, v in other.items():
-                    if len(k0) > 0 and len(k) > 0:
-                        new_key0 = (*k0[:-1], k0[-1] + k[0], *k[1:])
-                        ret += self.from_dict({new_key0: v * v0})
-                    new_key1 = (*k0, *k)
-                    ret += self.from_dict({new_key1: v * v0})
-            return ret
+            return self.from_sep(self.sepify(elem) * self.sepify(other))
+            # ret = self.zero
+            # for k0, v0 in elem.items():
+            #     for k, v in other.items():
+            #         if len(k0) > 0 and len(k) > 0:
+            #             new_key0 = (*k0[:-1], k0[-1] + k[0], *k[1:])
+            #             ret += self.from_dict({new_key0: v * v0})
+            #         new_key1 = (*k0, *k)
+            #         ret += self.from_dict({new_key1: v * v0})
+            # return ret
         raise CoercionFailed
 
 
