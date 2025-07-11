@@ -171,8 +171,8 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         if len(tup) == 0:
             return res
         if len(tup) == 1:
-            return ASx(uncode(tup),1)
-        mid = len(tup)//2
+            return ASx(uncode(tup), 1)
+        mid = len(tup) // 2
         return FreeAlgebraElement.tup_expand(tup[:mid]) * FreeAlgebraElement.tup_expand(tup[mid:])
 
     @staticmethod
@@ -217,7 +217,7 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         if len(tup) == 0:
             return R.one
         if 0 in tup:
-            #return self._nsymtup(tup[:-1], R)
+            # return self._nsymtup(tup[:-1], R)
             return R.zero
         return self._nsymtup(tup[:-1], R) * R.from_dict({(tup[-1],): S.One}, R)
 
@@ -351,10 +351,11 @@ class FreeAlgebra(Ring, CompositeDomain):
 
     def tup_to_schub(self, tup, sym=False):
         from schubmult.abc import e, h, x
+
         pinv = sum(tup)
         res = Sx([])
         for i in range(len(tup)):
-            #numvars = len(tup) + 1 - i
+            # numvars = len(tup) + 1 - i
             # i = len - numvars
             # tup[i] = numvars - degree
             # numvars = len - i
@@ -459,8 +460,7 @@ class FreeAlgebra(Ring, CompositeDomain):
     def one(self):
         return self.from_dict({(): S.One})
 
-    def from_dict(self, element, orig_domain=None):  # noqa: ARG002
-        # print(f"{element=}")
+    def from_dict(self, element):
         poly = self.zero
 
         for monom, coeff in element.items():
@@ -514,14 +514,14 @@ class NSym(FreeAlgebra):
         return self.from_dict({k: v * other for k, v in elem.items()})
 
     def sepify(self, elem):
-        return ASx([]).ring.from_dict({(uncode([a-1 for a in k]),len(k)): v for k, v in elem.items()})
+        return ASx([]).ring.from_dict({(uncode([a - 1 for a in k]), len(k)): v for k, v in elem.items()})
 
     def from_sep(self, elem):
         dct = {}
         for (k, n), v in elem.items():
             cd = k.code
             if len(cd) < n:
-                cd += ([0]*(n-len(cd)))
+                cd += [0] * (n - len(cd))
             elif len(cd) > n:
                 cd = cd[:n]
             cd = tuple([c + 1 for c in cd])
