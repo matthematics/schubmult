@@ -237,6 +237,16 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
             ret += v * self._nsymtup(k, R)
         return ret
 
+    def split(self, p):
+        T = self.ring @ self.ring
+        ret = T.zero
+        for tup, val in self.items():
+            if len(tup) < p:
+                ret += val * T((tup, tuple()))
+            else:
+                ret += val * T((tup[:p], tup[p:]))
+        return ret
+
     def to_schub(self, sym=False):
         res = Sx([]).ring.zero
         for k, v in self.items():
@@ -292,7 +302,10 @@ class FreeAlgebra(Ring, CompositeDomain):
         T = self @ self
         if len(key) == 0:
             return T.one
-        return self.__class__._single_coprod(key[0], T) * self.coproduct_on_basis(key[1:])
+        if len(key) == 1:
+            return self.__class__._single_coprod(key[0], T)
+        mid = len(key)//2
+        return self.coproduct_on_basis(key[:mid]) * self.coproduct_on_basis(key[mid:])
 
     @cache
     def _single_coprod(p, T):

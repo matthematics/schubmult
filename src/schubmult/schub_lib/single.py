@@ -13,10 +13,13 @@ from schubmult.schub_lib.schub_lib import (
     elem_sym_perms,
 )
 from schubmult.symbolic import Add, Mul, Pow
+from schubmult.utils.logging import get_logger, init_logging
 from schubmult.utils.perm_utils import (
     add_perm_dict,
 )
 
+init_logging(debug=True)
+logger = get_logger(__name__)
 
 class _gvars:
     @cached_property
@@ -141,6 +144,7 @@ def schub_coprod_py(perm, indices):
     N = len(kcd)
     kperm = ~(uncode(kcd2))
     coeff_dict = {kperm: 1}
+    logger.debug(f"{kperm.code}*{mperm.code}")
     coeff_dict = schubmult_py(coeff_dict, mperm)
 
     inv_kperm = inv(kperm)
