@@ -48,19 +48,25 @@ class TensorRing(BaseSchubertRing):
     def rings(self):
         return self._rings
 
+    def rmul(self, elem1, elem2):
+        return self.from_dict({self.zero_monom: elem2}) * elem1
+
     def mul(self, elem1, elem2):
-        ret_dict = {}
-        for k1, v1 in elem1.items():
-            for k2, v2 in elem2.items():
-                dct = self.rings[0].from_dict({k1[0]: v1 * v2}) * elem2.ring.rings[0].from_dict({k2[0]: 1})
-                for i in range(1, len(self.rings)):
-                    dct2 = self.rings[i].from_dict({k1[i]: 1}) * elem2.ring.rings[i].from_dict({k2[i]: 1})
-                    if i == 1:
-                        dct = _tensor_product_of_dicts_first(dct, dct2)
-                    else:
-                        dct = _tensor_product_of_dicts(dct, dct2)
-                ret_dict = add_perm_dict(ret_dict, dct)
-        return self.from_dict(ret_dict)
+        try:
+            ret_dict = {}
+            for k1, v1 in elem1.items():
+                for k2, v2 in elem2.items():
+                    dct = self.rings[0].from_dict({k1[0]: v1 * v2}) * elem2.ring.rings[0].from_dict({k2[0]: S.One})
+                    for i in range(1, len(self.rings)):
+                        dct2 = self.rings[i].from_dict({k1[i]: S.One}) * elem2.ring.rings[i].from_dict({k2[i]: S.One})
+                        if i == 1:
+                            dct = _tensor_product_of_dicts_first(dct, dct2)
+                        else:
+                            dct = _tensor_product_of_dicts(dct, dct2)
+                    ret_dict = add_perm_dict(ret_dict, dct)
+            return self.from_dict(ret_dict)
+        except Exception:
+            return self.from_dict({self.zero_monom: elem2}) * elem1
 
     def _coerce_add(self, x):  # noqa: ARG002
         return None

@@ -157,7 +157,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def __mul__(self, other):
         try:
             return self.ring.mul(self, other)
-        except CoercionFailed:
+        except Exception:
             return other.__rmul__(self)
 
     def __rmul__(self, other):

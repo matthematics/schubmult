@@ -14,11 +14,12 @@ from schubmult.utils.perm_utils import add_perm_dict
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .poly_lib import elem_sym_poly, xreplace_genvars
-from .schub_poly import schubpoly_classical_from_elems
+from .schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 from .tensor_ring import TensorRing
 from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet, NotEnoughGeneratorsError, genset_dict_from_expr, poly_genset
 
 logger = get_logger(__name__)
+
 
 def is_fact_elem_sym(obj):
     return is_of_func_type(obj, ElemSym_base)
@@ -27,6 +28,7 @@ def is_fact_elem_sym(obj):
 def is_fact_complete_sym(obj):
     return is_of_func_type(obj, CompleteSym_base)
 
+
 class DoubleSchubertElement(BaseSchubertElement):
     """Algebra with sympy coefficients
     and a dict basis
@@ -34,11 +36,13 @@ class DoubleSchubertElement(BaseSchubertElement):
 
     def to_genset_dict(self, trim=False):
         gdict = genset_dict_from_expr(self.as_polynomial(), self.ring.genset)
+
         def _trim_tuple(tup):
             tup = [*tup]
             while len(tup) > 0 and tup[-1] == 0:
                 tup.pop()
             return (*tup,)
+
         if trim:
             new_dict = {}
             for flop, val in gdict.items():
@@ -315,6 +319,48 @@ class DoubleSchubertRing(BaseSchubertRing):
     @property
     def symbol_elem_func(self):
         return FactorialElemSym
+
+    def schubert_schur_elem_func(self, numvars):
+        ring = self @ self
+
+        def elem_func(p, k, *args):
+            if p < 0:
+                return ring.zero
+            if p > k:
+                return ring.zero
+            if k >= 0 and p == 0:
+                return ring.one
+            if k >= numvars:
+                return ring((uncode([0] * (k - p) + [1] * p), Permutation([])))
+            return ring((Permutation([]), uncode([0] * (k - p) + [1] * p)))
+
+        return elem_func
+
+    def in_schubert_schur_basis(self, perm, numvars):
+        elem_func = self.schubert_schur_elem_func(numvars)
+        if perm.inv == 0:
+            return elem_func(0, 0)
+        extra = len(perm) - numvars
+        dom = uncode([numvars] * extra + list(range(numvars - 1, 0, -1)))
+        return schubpoly_from_elems(perm, self.genset, self.coeff_genset, elem_func=elem_func, mumu=dom)
+
+    def in_descending_schur_basis(self, perm, numvars):
+        if numvars == 1:
+            if perm == uncode([1]) or perm.inv == 0:
+                return Sx(perm)
+            return self.zero
+        mid_res = self.in_schubert_schur_basis(perm, numvars)
+        new_ring = TensorRing(mid_res.ring, self)
+        result = new_ring.zero
+        for k, v in mid_res.items():
+            second_part = self.in_descending_schur_basis(k[1], numvars - 1)
+            if numvars == 2:
+                for k1, v2 in second_part.items():
+                    result += new_ring.from_dict({(k[0], k1): v * v2})
+            else:
+                for (k1, k2), v2 in second_part.items():
+                    result += new_ring.from_dict({((k[0], k1), k2): v * v2})
+        return result
 
     def elem_sym_subs(self, kk):
         elems = []
