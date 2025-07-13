@@ -271,23 +271,29 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
 
 
 class FreeAlgebraBasis:
-    def is_key(self, x): ...
-
-    def as_key(self, x): ...
-
-    def product(self, key1, key2, coeff=S.One): ...
-
-    def coproduct(self, key, coeff=S.One): ...
-
-    def transition(self, other_basis): ...
-
-    @property
-    def zero_monom(self): ...
-
-    def printing_term(self, key): ...
+    @classmethod
+    def is_key(cls, x): ...
 
     @classmethod
-    def compose_transition(tkeyfunc, output):
+    def as_key(cls, x): ...
+
+    @classmethod
+    def product(cls, key1, key2, coeff=S.One): ...
+
+    @classmethod
+    def coproduct(cls, key, coeff=S.One): ...
+
+    @classmethod
+    def transition(cls, other_basis): ...
+
+    # @property
+    # def zero_monom(cls): ...
+
+    @classmethod
+    def printing_term(cls, key): ...
+
+    @classmethod
+    def compose_transition(cls, tkeyfunc, output):
         ret = {}
         for key, v in output.items():
             ret = add_perm_dict(ret, {k: v*v0 for k, v0 in tkeyfunc(key).items()})
@@ -295,21 +301,23 @@ class FreeAlgebraBasis:
 
 
 class WordBasis(FreeAlgebraBasis):
-    def is_key(self, x):
+    @classmethod
+    def is_key(cls, x):
         return isinstance(x, tuple | list)
 
-    def as_key(self, x):
+    @classmethod
+    def as_key(cls, x):
         return tuple(x)
 
-    def product(self, key1, key2, coeff=S.One):
+    @classmethod
+    def product(cls, key1, key2, coeff=S.One):
         return {(*key1, *key2): coeff}
 
-    @property
-    def zero_monom(self):
-        return ()
+    zero_monom = ()
 
+    @classmethod
     @cache
-    def coproduct(self, key, coeff=S.One):
+    def coproduct(cls, key, coeff=S.One):
         if len(key) == 0:
             return {((), ()): coeff}
         if len(key) == 1:
@@ -319,15 +327,16 @@ class WordBasis(FreeAlgebraBasis):
                 dct[((i,), (key - i,))] = coeff
             return dct
         mid = len(key) // 2
-        cp1 = self.coproduct(key[:mid], coeff)
-        cp2 = self.coproduct(key[mid:])
+        cp1 = cls.coproduct(key[:mid], coeff)
+        cp2 = cls.coproduct(key[mid:])
         ret = {}
         for k0, v0 in cp1.items():
             for k1, v1 in cp2.items():
                 ret = add_perm_dict(ret, {((*k0[0], *k1[0]), (*k0[1], *k1[1])): v0 * v1})
         return ret
 
-    def printing_term(self, k):
+    @classmethod
+    def printing_term(cls, k):
         if all(a < 10 for a in k):
             return Symbol("[" + "".join([str(a) for a in k]) + "]")
         return Symbol("[" + " ".join([str(a) for a in k]) + "]")
@@ -343,44 +352,49 @@ class WordBasis(FreeAlgebraBasis):
         mid = len(tup) // 2
         return WordBasis.tup_expand(tup[:mid]) * WordBasis.tup_expand(tup[mid:])
 
-    def transition_schubert(self, key):
+    @classmethod
+    def transition_schubert(cls, key):
         return dict(WordBasis.tup_expand(key))
 
-    def transition(self, other_basis):
-        if isinstance(other_basis, SchubertBasis):
-            return self.transition_schubert
-        if isinstance(other_basis, WordBasis):
+    @classmethod
+    def transition(cls, other_basis):
+        if other_basis == SchubertBasis:
+            return cls.transition_schubert
+        if other_basis == WordBasis:
             return lambda x: x
-        if isinstance(other_basis, SchubertSchurBasis):
-            return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis().transition(SchubertSchurBasis()), self.transition_schubert(x))
+        if other_basis == SchubertSchurBasis:
+            return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(SchubertSchurBasis), cls.transition_schubert(x))
         return None
 
 
 class SchubertBasis(FreeAlgebraBasis):
-    def is_key(self, x):
+    @classmethod
+    def is_key(cls, x):
         return (len(x) == 1 and isinstance(x[0], Permutation | list | tuple)) or (len(x) == 2 and isinstance(x[0], Permutation | list | tuple) and isinstance(x[1], int))
 
-    def as_key(self, x):
+    @classmethod
+    def as_key(cls, x):
         # print(f"{x=} {type(x)=}")
         if len(x) == 1:
             perm = Permutation(x[0])
             return (perm, 0) if len(perm.descents()) == 0 else (perm, max(perm.descents()) + 1)
         return (Permutation(x[0]), x[1])
 
-    def product(self, key1, key2, coeff=S.One):
-        return dict(coeff * splugSx(*self.as_key(key1)) * splugSx(*self.as_key(key2)))
+    @classmethod
+    def product(cls, key1, key2, coeff=S.One):
+        return dict(coeff * splugSx(*cls.as_key(key1)) * splugSx(*cls.as_key(key2)))
 
-    @property
-    def zero_monom(self):
-        return (Permutation([]), 0)
+    zero_monom = (Permutation([]), 0)
 
+    
+    @classmethod
     @cache
-    def coproduct(self, key):
+    def coproduct(cls, key):
         from ._mul_utils import _tensor_product_of_dicts_first
 
-        dct = self.transition_word(*key)
+        dct = cls.transition_word(*key)
         res = {}
-        wbasis = WordBasis()
+        wbasis = WordBasis
         for key_word, v in dct.items():
             dct2 = wbasis.coproduct(key_word, v)
             # print(f"{dct2=}")
@@ -390,7 +404,8 @@ class SchubertBasis(FreeAlgebraBasis):
                 res = add_perm_dict(res, {k: v0 * v2 for k, v0 in _tensor_product_of_dicts_first(dct0, dct1).items()})
         return res
 
-    def transition_schubert_schur(self, *x):
+    @classmethod
+    def transition_schubert_schur(cls, *x):
         perm, numvars = x
         # schur(n)schubert(n)schur(m,init)schubert(n,end)
         # expansion vmu^{-1} in m schur (complement) n schubert (times w0)
@@ -412,16 +427,18 @@ class SchubertBasis(FreeAlgebraBasis):
 
 
 
-    def transition(self, other_basis):
-        if isinstance(other_basis, SchubertBasis):
+    @classmethod
+    def transition(cls, other_basis):
+        if other_basis == SchubertBasis:
             return lambda x: x
-        if isinstance(other_basis, SchubertSchurBasis):
-            return lambda x: self.transition_schubert_schur(*x)
-        if isinstance(other_basis, WordBasis):
-            return lambda x: self.transition_word(*x)
+        if other_basis == SchubertSchurBasis:
+            return lambda x: cls.transition_schubert_schur(*x)
+        if other_basis == WordBasis:
+            return lambda x: cls.transition_word(*x)
         return None
 
-    def transition_word(self, perm, numvars):
+    @classmethod
+    def transition_word(cls, perm, numvars):
         res = {}
         expr = Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis().expand()
         args = expr.args
@@ -446,17 +463,21 @@ class SchubertBasis(FreeAlgebraBasis):
             res[tup] = res.get(tup, S.Zero) + coeff
         return res
 
-    def printing_term(self, k):
+    @classmethod
+    def printing_term(cls, k):
         return splugSx([]).ring.printing_term(k)
 
 class SchubertSchurBasis(FreeAlgebraBasis):
-    def is_key(self, x):
+    @classmethod
+    def is_key(cls, x):
         return len(x) == 2 and isinstance(x[0], list | tuple) and isinstance(x[1], Permutation | list | tuple)
 
-    def as_key(self, x):
+    @classmethod
+    def as_key(cls, x):
         return (tuple(x[0]), Permutation(x[1]))
 
-    def product(self, key1, key2, coeff=S.One):
+    @classmethod
+    def product(cls, key1, key2, coeff=S.One):
         #return dict(coeff * splugSx(*self.as_key(key1)) * splugSx(*self.as_key(key2)))
         # from ._mul_utils import _tensor_product_of_dicts_first
         # part1 = key1[0]
@@ -470,7 +491,6 @@ class SchubertSchurBasis(FreeAlgebraBasis):
         #     if len(k[0].descents()) > 1:
         #         del sym_part[k]
         # sym_part = {tuple(FreeAlgebra.right_pad(trimcode(k[0]),k[1])): v for k, v in sym_part.items()}
-        
         # bym_part = {k[0]: v for k, v in bym_part.items()}
         # # for k0, v0 in sym_part.items():
         # #     for k1, v1 in bym_part.items():
@@ -478,17 +498,16 @@ class SchubertSchurBasis(FreeAlgebraBasis):
         # return _tensor_product_of_dicts_first(sym_part, bym_part)
         pass
 
-    @property
-    def zero_monom(self):
-        return ((), Permutation([]))
+    zero_monom = ((), Permutation([]))
 
+    @classmethod
     @cache
-    def coproduct(self, key): ...
+    def coproduct(cls, key): ...
         # from ._mul_utils import _tensor_product_of_dicts_first
 
-        # dct = self.transition_word(*key)
+        # dct = cls.transition_word(*key)
         # res = {}
-        # wbasis = WordBasis()
+        # wbasis = WordBasis
         # for key_word, v in dct.items():
         #     dct2 = wbasis.coproduct(key_word, v)
         #     # print(f"{dct2=}")
@@ -504,7 +523,8 @@ class SchubertSchurBasis(FreeAlgebraBasis):
         # remaining: div(lambd * (~mu0), perm * (~mu)) on +n perm0 w9
         # multiply the +n perm0 w0
 
-    def transition_schubert(self, lambd, perm):
+    @classmethod
+    def transition_schubert(cls, lambd, perm):
         #pass
         from .schubert_ring import SingleSchubertRing
         from .variables import MaskedGeneratingSet
@@ -526,7 +546,7 @@ class SchubertSchurBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_word(cls, lambd, perm):
-        return FreeAlgebraBasis.compose_transition(SchubertBasis.transition(WordBasis()),self.transition_schubert(lambd, perm))
+        return FreeAlgebraBasis.compose_transition(SchubertBasis.transition(WordBasis), cls.transition_schubert(lambd, perm))
 
     @classmethod
     def transition(cls, other_basis):
@@ -534,7 +554,7 @@ class SchubertSchurBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_schubert(*x)
         if other_basis == WordBasis:
             return lambda x: cls.transition_word(*x)
-        if isinstance(other_basis, SchubertSchurBasis):
+        if other_basis == SchubertSchurBasis:
             return lambda x: x
         return None
 
@@ -563,7 +583,8 @@ class SchubertSchurBasis(FreeAlgebraBasis):
     #         res[tup] = res.get(tup, S.Zero) + coeff
     #     return res
 
-    def printing_term(self, k):
+    @classmethod
+    def printing_term(cls, k):
         return Symbol(f"SS{sstr(k)}")
 
 class FreeAlgebra(Ring, CompositeDomain):
@@ -590,7 +611,7 @@ class FreeAlgebra(Ring, CompositeDomain):
     def __eq__(self, other):
         return type(self) is type(other) and self.domain == other.domain
 
-    def __init__(self, basis=WordBasis(), domain=None):
+    def __init__(self, basis=WordBasis, domain=None):
         if domain:
             self.domain = domain
         else:
