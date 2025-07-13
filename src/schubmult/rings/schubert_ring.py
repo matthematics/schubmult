@@ -344,6 +344,12 @@ class DoubleSchubertRing(BaseSchubertRing):
         dom = uncode([numvars] * extra + list(range(numvars - 1, 0, -1)))
         return schubpoly_from_elems(perm, self.genset, self.coeff_genset, elem_func=elem_func, mumu=dom)
 
+    # def in_shifted_SEM_basis(self, shift):
+    #     result = S.Zero
+    #     for k, v in self.items():
+    #         result += sympify(v) * schubpoly_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=self.ring.shifted_symbol_elem_func(shift))
+    #     return result
+
     def in_descending_schur_basis(self, perm, numvars):
         if numvars == 1:
             if perm == uncode([1]) or perm.inv == 0:

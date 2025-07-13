@@ -286,6 +286,13 @@ class FreeAlgebraBasis:
 
     def printing_term(self, key): ...
 
+    @classmethod
+    def compose_transition(tkeyfunc, output):
+        ret = {}
+        for key, v in output.items():
+            ret = add_perm_dict(ret, {k: v*v0 for k, v0 in tkeyfunc(key).items()})
+        return ret
+
 
 class WordBasis(FreeAlgebraBasis):
     def is_key(self, x):
@@ -344,6 +351,8 @@ class WordBasis(FreeAlgebraBasis):
             return self.transition_schubert
         if isinstance(other_basis, WordBasis):
             return lambda x: x
+        if isinstance(other_basis, SchubertSchurBasis):
+            return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis().transition(SchubertSchurBasis()), self.transition_schubert(x))
         return None
 
 
@@ -445,7 +454,7 @@ class SchubertSchurBasis(FreeAlgebraBasis):
         return len(x) == 2 and isinstance(x[0], list | tuple) and isinstance(x[1], Permutation | list | tuple)
 
     def as_key(self, x):
-        return (tuple(x[0]), Permutation(x[1]), x[1])
+        return (tuple(x[0]), Permutation(x[1]))
 
     def product(self, key1, key2, coeff=S.One):
         #return dict(coeff * splugSx(*self.as_key(key1)) * splugSx(*self.as_key(key2)))
@@ -488,14 +497,43 @@ class SchubertSchurBasis(FreeAlgebraBasis):
         #         dct1 = wbasis.transition_schubert(k2)
         #         res = add_perm_dict(res, {k: v0 * v2 for k, v0 in _tensor_product_of_dicts_first(dct0, dct1).items()})
         # return res
-    def transition_schubert(self, lambd, perm):
-        pass
 
-    def transition(self, other_basis):
-        if isinstance(other_basis, SchubertBasis):
-            return lambda x: self.transition_schubert(*x)
-        if isinstance(other_basis, WordBasis):
-            return lambda x: self.transition_word(*x)
+    #def schubert_matrix(self, lambd, perm0, perm):
+        # div schubert: perm * (~mu)
+        # div lambd: lambd * (~mu0)
+        # remaining: div(lambd * (~mu0), perm * (~mu)) on +n perm0 w9
+        # multiply the +n perm0 w0
+
+    def transition_schubert(self, lambd, perm):
+        #pass
+        from .schubert_ring import SingleSchubertRing
+        from .variables import MaskedGeneratingSet
+        if lambd[-1] == 0:
+            return {(perm, len(lambd)): 1}
+        numvars = len(lambd)
+        extra = lambd[-1] + len(lambd) - 1
+        dom = uncode([numvars] * extra)
+        grass_perm = uncode(lambd) * dom
+        w0 = uncode(list(range(numvars - 1, 0, -1)))
+        lower_perm = perm * w0
+        dom_perm = uncode(([numvars] * extra) + list(range(numvars - 1, 0, -1)))
+        shifted_ring = SingleSchubertRing(MaskedGeneratingSet(Sx([]).ring.genset,list(range(1,extra+1))))
+        start_schub = Sx(grass_perm)
+        start_schub *= shifted_ring(lower_perm).in_SEM_basis()
+        return {(k*~dom_perm, numvars): v for k, v in start_schub.items()}
+
+
+
+    @classmethod
+    def transition_word(cls, lambd, perm):
+        return FreeAlgebraBasis.compose_transition(SchubertBasis.transition(WordBasis()),self.transition_schubert(lambd, perm))
+
+    @classmethod
+    def transition(cls, other_basis):
+        if other_basis == SchubertBasis:
+            return lambda x: cls.transition_schubert(*x)
+        if other_basis == WordBasis:
+            return lambda x: cls.transition_word(*x)
         if isinstance(other_basis, SchubertSchurBasis):
             return lambda x: x
         return None
