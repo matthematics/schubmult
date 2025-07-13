@@ -49,9 +49,12 @@ class TensorRing(BaseSchubertRing):
         return self._rings
 
     def rmul(self, elem1, elem2):
+        # print(f"{dict(elem1)=} {elem2=}")
+        # print(f"{self.zero_monom=} {type(elem2)=}")
         return self.from_dict({self.zero_monom: elem2}) * elem1
 
     def mul(self, elem1, elem2):
+        # print(f"{elem1=} {elem2=} {type(elem1)=} {type(elem2)=}")
         try:
             ret_dict = {}
             for k1, v1 in elem1.items():
@@ -66,6 +69,8 @@ class TensorRing(BaseSchubertRing):
                     ret_dict = add_perm_dict(ret_dict, dct)
             return self.from_dict(ret_dict)
         except Exception:
+            import traceback
+            traceback.print_exc()
             return self.from_dict({self.zero_monom: elem2}) * elem1
 
     def _coerce_add(self, x):  # noqa: ARG002

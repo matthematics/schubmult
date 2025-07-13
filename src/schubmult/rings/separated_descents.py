@@ -1,6 +1,6 @@
 from functools import cache
 
-import schubmult.rings.free_algebra as fa
+#import schubmult.rings.free_algebra as fa
 from schubmult.perm_lib import Permutation, uncode
 from schubmult.schub_lib.schub_lib import complete_sym_positional_perms_down
 from schubmult.symbolic import CoercionFailed, S, sympy_Mul
@@ -109,15 +109,15 @@ class SeparatedDescentsRing(BaseSchubertRing):
     #     return self._rings
 
     # def domain_new(self, elem1, elem2):
-    @cache
-    def coproduct(self, key):
-        # R = self @ self
-        R = fa.FreeAlgebra()
-        return R.tensor_schub_expand(R.schub_elem(*key).coproduct())
+    # @cache
+    # def coproduct(self, key):
+    #     # R = self @ self
+    #     R = fa.FreeAlgebra()
+    #     return R.tensor_schub_expand(R.schub_elem(*key).coproduct())
 
-    @cache
-    def free_element(self, perm, numvars):
-        return fa.FreeAlgebra().schub_elem(perm, numvars)
+    # @cache
+    # def free_element(self, perm, numvars):
+    #     return fa.FreeAlgebra().schub_elem(perm, numvars)
 
     def coproduct_test(self, key):
         T = self @ self
@@ -226,21 +226,21 @@ class SeparatedDescentsRingElement(BaseSchubertElement):
     def free_symbols(self):
         return set()
 
-    def coproduct(self):
-        T = self.ring @ self.ring
-        res = T.zero
-        for key, val in self.items():
-            res += val * self.ring.coproduct(key)
-        return res
+    # def coproduct(self):
+    #     T = self.ring @ self.ring
+    #     res = T.zero
+    #     for key, val in self.items():
+    #         res += val * self.ring.coproduct(key)
+    #     return res
 
     def coproduct_test(self):
         return self.ring.coproduct_test(self)
 
-    def free_element(self):
-        ret = fa.FA([]).ring.zero
-        for k, v in self.items():
-            ret += v * self.ring.free_element(*k)
-        return ret
+    # def free_element(self):
+    #     ret = fa.FA([]).ring.zero
+    #     for k, v in self.items():
+    #         ret += v * self.ring.free_element(*k)
+    #     return ret
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:

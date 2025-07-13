@@ -1,6 +1,6 @@
 from functools import cache
 
-from schubmult.perm_lib import uncode
+from schubmult.perm_lib import Permutation, uncode
 from schubmult.symbolic import (
     EXRAW,
     Add,
@@ -30,10 +30,11 @@ from .base_schubert_ring import BaseSchubertElement
 from .schubert_ring import DSx, Sx
 from .separated_descents import SeparatedDescentsRing
 
-ASx = SeparatedDescentsRing(Sx([]).ring)
+splugSx = SeparatedDescentsRing(Sx([]).ring)
 ADSx = SeparatedDescentsRing(DSx([]).ring)
 
 logger = get_logger(__name__)
+
 
 
 # keys are tuples of nonnegative integers
@@ -166,17 +167,6 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
 
     @staticmethod
     @cache
-    def tup_expand(tup):
-        res = ASx([])
-        if len(tup) == 0:
-            return res
-        if len(tup) == 1:
-            return ASx(uncode(tup), 1)
-        mid = len(tup) // 2
-        return FreeAlgebraElement.tup_expand(tup[:mid]) * FreeAlgebraElement.tup_expand(tup[mid:])
-
-    @staticmethod
-    @cache
     def tup_double_expand(tup):
         res = ADSx([])
         if len(tup) == 0:
@@ -184,8 +174,20 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         tup2 = tup[:-1]
         return FreeAlgebraElement.tup_double_expand(tup2) * ADSx(uncode([tup[-1]]), 1)
 
+    @staticmethod
+    @cache
+    def tup_expand(tup):
+        res = splugSx([])
+        if len(tup) == 0:
+            return res
+        if len(tup) == 1:
+            return splugSx(uncode(tup), 1)
+        mid = len(tup) // 2
+        return FreeAlgebraElement.tup_expand(tup[:mid]) * FreeAlgebraElement.tup_expand(tup[mid:])
+
+
     def schub_expand(self):
-        res = ASx([]).ring.zero
+        res = splugSx([]).ring.zero
         for tup, val in self.items():
             res += val * self.__class__.tup_expand(tup)
         return res
@@ -253,93 +255,126 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
             res += v * self.ring.tup_to_schub(k, sym=sym)
         return res
 
+class FreeAlgebraBasis:
+    def is_key(self, x): ...
 
-class FreeAlgebra(Ring, CompositeDomain):
-    def __str__(self):
-        return self.__class__.__name__
+    def as_key(self, x): ...
 
-    def tensor_schub_expand(self, tensor):
-        T = ASx([]).ring @ ASx([]).ring
-        ret = T.zero
-        for (key1, key2), val in tensor.items():
-            ret += val * T.ext_multiply(self(key1).schub_expand(), self(key2).schub_expand())
-        return ret
+    def product(self, key1, key2, coeff=S.One): ...
 
-    def tensor_nsym_expand(self, tensor, inserter=S.Zero):
-        T = NSym() @ NSym()
-        ret = T.zero
-        for (key1, key2), val in tensor.items():
-            ret += val * T.ext_multiply(self(key1).remove_zeros(inserter=inserter).nsymexpand(), self(key2).remove_zeros(inserter=inserter).nsymexpand())
-        return ret
+    def coproduct(self, key, coeff=S.One): ...
 
-    def __hash__(self):
-        return hash((self.domain, "whatabong"))
+    def transition(self, other_basis): ...
 
-    def __eq__(self, other):
-        return type(self) is type(other) and self.domain == other.domain
+    @property
+    def zero_monom(self): ...
 
-    def __init__(self, domain=None):
-        if domain:
-            self.domain = domain
-        else:
-            self.domain = EXRAW
-        self.dom = self.domain
-        self.zero_monom = ()
-        self.dtype = type("FreeAlgebraElement", (FreeAlgebraElement,), {"ring": self})
+    def printing_term(self, key): ...
 
-    @staticmethod
-    def right_pad(tup, n):
-        if len(tup) < n:
-            return (*tup, *([0] * (n - len(tup))))
-        return tup
+class WordBasis(FreeAlgebraBasis):
+    def is_key(self, x):
+        return isinstance(x, tuple | list)
 
-    def __matmul__(self, other):
-        from .tensor_ring import TensorRing
+    def as_key(self, x):
+        return tuple(x)
 
-        return TensorRing(self, other)
+    def product(self, key1, key2, coeff=S.One):
+        return {(*key1, *key2): coeff}
 
-    def coproduct_on_basis(self, key):
-        T = self @ self
-        if len(key) == 0:
-            return T.one
-        if len(key) == 1:
-            return self.__class__._single_coprod(key[0], T)
-        mid = len(key)//2
-        return self.coproduct_on_basis(key[:mid]) * self.coproduct_on_basis(key[mid:])
+    @property
+    def zero_monom(self):
+        return ()
 
     @cache
-    def _single_coprod(p, T):
-        res = T.zero
-        for i in range(p + 1):
-            res += T.from_dict({((i,), (p - i,)): S.One})
+    def coproduct(self, key, coeff=S.One):
+        if len(key) == 0:
+            return {((),()): coeff}
+        if len(key) == 1:
+            key = key[0]
+            dct = {}
+            for i in range(key + 1):
+                dct[((i,),(key - i,))] = coeff
+            return dct
+        mid = len(key)//2
+        cp1 = self.coproduct(key[:mid],coeff)
+        cp2 = self.coproduct(key[mid:])
+        ret = {}
+        for k0, v0 in cp1.items():
+            for k1, v1 in cp2.items():
+                ret = add_perm_dict(ret, {((*k0[0],*k1[0]),(*k0[1],*k1[1])): v0 * v1})
+        return ret
+    
+    def printing_term(self, k):
+        if all(a < 10 for a in k):
+            return Symbol("[" + "".join([str(a) for a in k]) + "]")
+        return Symbol("[" + " ".join([str(a) for a in k]) + "]")
+
+
+    @staticmethod
+    @cache
+    def tup_expand(tup):
+        res = splugSx([])
+        if len(tup) == 0:
+            return res
+        if len(tup) == 1:
+            return splugSx(uncode(tup), 1)
+        mid = len(tup) // 2
+        return WordBasis.tup_expand(tup[:mid]) * WordBasis.tup_expand(tup[mid:])
+
+
+    def transition_schubert(self, key):
+        return dict(WordBasis.tup_expand(key))
+
+    def transition(self, other_basis):
+        if isinstance(other_basis, SchubertBasis):
+            return self.transition_schubert
+        if isinstance(other_basis, WordBasis):
+            return lambda x: x
+        return None
+
+class SchubertBasis(FreeAlgebraBasis):
+    def is_key(self, x):
+        return (len(x) == 1 and isinstance(x[0], Permutation | list | tuple)) or (len(x) == 2 and isinstance(x[0], Permutation | list | tuple) and isinstance(x[1], int))
+
+    def as_key(self, x):
+        # print(f"{x=} {type(x)=}")
+        if len(x) == 1:
+            perm = Permutation(x[0])
+            return (perm,0) if len(perm.descents()) == 0 else (perm, max(perm.descents()) + 1)
+        return (Permutation(x[0]), x[1])
+
+    def product(self, key1, key2, coeff=S.One):
+        return dict(coeff * splugSx(*self.as_key(key1)) * splugSx(*self.as_key(key2)))
+
+    @property
+    def zero_monom(self):
+        return (Permutation([]), 0)
+
+    @cache
+    def coproduct(self, key):
+        from ._mul_utils import _tensor_product_of_dicts_first
+        dct = self.transition_word(*key)
+        res = {}
+        wbasis = WordBasis()
+        for key_word, v in dct.items():
+            dct2 = wbasis.coproduct(key_word, v)
+            # print(f"{dct2=}")
+            for (k1, k2), v2 in dct2.items():
+                dct0 = wbasis.transition_schubert(k1)
+                dct1 = wbasis.transition_schubert(k2)
+                res = add_perm_dict(res, {k: v0*v2 for k, v0 in _tensor_product_of_dicts_first(dct0, dct1).items()})
         return res
 
-    # @cache
-    #     def coproduct(self, key):
-    #         T = self @ self
-    #         val = self(*key)
 
-    #         cprd_val = T.zero
+    def transition(self, other_basis):
+        if isinstance(other_basis, SchubertBasis):
+            return lambda x: x
+        if isinstance(other_basis, WordBasis):
+            return lambda x: self.transition_word(*x)
+        return None
 
-    #         while val != val.ring.zero:
-    #             mx = [k[0].code for k in val.keys() if val[k] != S.Zero ]
-    #             mx.sort(reverse=True)
-    #             cd = mx[0]
-
-    #             mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
-    #             if len(cd) == 0:
-    #                 return cprd_val + T.from_dict({((Permutation([]),mx_key[1]),(Permutation([]),mx_key[1])): val[mx_key] * S.One})
-    #             cd = [*cd]
-    #             fv = cd.pop(0)
-    #             while len(cd) > 1 and cd[-1] == 0:
-    #                 cd.pop()
-    #             cf = val[mx_key]
-    #             cprd_val += (T.from_dict({((Permutation([]),0),(Permutation([]),0)): cf*S.One}))*_single_coprod(fv, 1, T) * self.coproduct((uncode(cd), mx_key[1] - 1))
-    #             val -= cf * self(uncode([fv]),1)*self(uncode(cd), mx_key[1] - 1)
-    #         return cprd_val
-
-    def schub_elem(self, perm, numvars):
-        res = self.zero
+    def transition_word(self, perm, numvars):
+        res = {}
         expr = Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis().expand()
         args = expr.args
         if not isinstance(expr, Add):
@@ -359,60 +394,65 @@ class FreeAlgebra(Ring, CompositeDomain):
                         coeff = Integer(arg0)
             else:
                 coeff = Integer(arg)
-            res += coeff * self(tup)
+            tup = tuple(tup)
+            res[tup] = res.get(tup, S.Zero) + coeff
         return res
 
-    def tup_to_schub(self, tup, sym=False):
-        from schubmult.abc import e, h, x
+    def printing_term(self, k):
+        return splugSx([]).ring.printing_term(k)
 
-        pinv = sum(tup)
-        res = Sx([])
-        for i in range(len(tup)):
-            # numvars = len(tup) + 1 - i
-            # i = len - numvars
-            # tup[i] = numvars - degree
-            # numvars = len - i
-            # degree = numvars - tup[i]
 
-            numvars = len(tup) - i + pinv
-            # numvars = i + 1
-            degree = numvars - tup[i]
-            # degree = tup[i]
-            if sym:
-                numvars = pinv
-            if degree > 0:
-                res *= e(degree, numvars, x[1:])
-        return res
+class FreeAlgebra(Ring, CompositeDomain):
+    def __str__(self):
+        return self.__class__.__name__
 
-    def schub_elem_double(self, perm, n, N):
-        ADSx = SeparatedDescentsRing(DSx([]).ring)
-        val = ADSx(perm, n)
-        res = self.zero
+    def tensor_schub_expand(self, tensor):
+        T = splugSx([]).ring @ splugSx([]).ring
+        ret = T.zero
+        for (key1, key2), val in tensor.items():
+            ret += val * T.ext_multiply(self(key1).schub_expand(), self(key2).schub_expand())
+        return ret
 
-        while any(sympify(v) != S.Zero for v in val.values()):
-            mx = [k[0].code for k in val.keys() if val[k] != S.Zero]
-            mx.sort(key=lambda bob: (sum(bob), bob), reverse=True)
-            cd = mx[0]
+    def tensor_nsym_expand(self, tensor, inserter=S.Zero):
+        T = NSym() @ NSym()
+        ret = T.zero
+        for (key1, key2), val in tensor.items():
+            ret += val * T.ext_multiply(self(key1).remove_zeros(inserter=inserter).nsymexpand(), self(key2).remove_zeros(inserter=inserter).nsymexpand())
+        return ret
 
-            mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
-            if len(cd) == 0:
-                return res + val[mx_key] * self((*([0] * n),))
-            cd = [*cd]
-            fv = cd.pop(0)
-            while len(cd) > 1 and cd[-1] == 0:
-                cd.pop()
-            cf = val[mx_key]
-            res += cf * self((fv,)) * self.schub_elem_double(uncode(cd), mx_key[1] - 1, N)
-            val -= cf * val.ring(uncode([fv]), 1) * val.ring(uncode(cd), mx_key[1] - 1)
-            keys = val.keys()
-            for key in list(keys):
-                if len(key[0]) > N or expand(val[key]) == S.Zero:
-                    del val[key]
-        return res
+    def __hash__(self):
+        return hash((self.domain, "whatabong"))
+
+    def __eq__(self, other):
+        return type(self) is type(other) and self.domain == other.domain
+
+    def __init__(self, basis=WordBasis(), domain=None):
+        if domain:
+            self.domain = domain
+        else:
+            self.domain = EXRAW
+        self.dom = self.domain
+        self._basis = basis
+        self.zero_monom = self._basis.zero_monom
+        self.dtype = type("FreeAlgebraElement", (FreeAlgebraElement,), {"ring": self})
+
+    @staticmethod
+    def right_pad(tup, n):
+        if len(tup) < n:
+            return (*tup, *([0] * (n - len(tup))))
+        return tup
+
+    def __matmul__(self, other):
+        from .tensor_ring import TensorRing
+
+        return TensorRing(self, other)
+
+    def coproduct_on_basis(self, key):
+        T = self @ self
+        return T.from_dict(self._basis.coproduct(key))
+
 
     def add(self, elem, other):
-        # print(f"{elem=}")
-        # print(f"{other=}")
         return self.from_dict(add_perm_dict(elem, other))
 
     def sub(self, elem, other):
@@ -421,14 +461,6 @@ class FreeAlgebra(Ring, CompositeDomain):
     def neg(self, elem):
         return self.from_dict({k: -v for k, v in elem.items()})
 
-    def mul_perm(self, elem, perm):
-        dct = {}
-        for k, v in elem.items():
-            newperm = k * perm
-            if newperm.inv == k.inv + perm.inv:
-                dct[newperm] = v
-        return self.from_dict(dct)
-
     def rmul(self, elem, other):
         # print(f"{self=} {elem=} {other=}")
         if isinstance(other, FreeAlgebraElement):
@@ -436,10 +468,8 @@ class FreeAlgebra(Ring, CompositeDomain):
         return self.from_dict({k: v * other for k, v in elem.items()})
 
     def mul(self, elem, other):
-        # print(f"{self=} {elem=} {other=}")
         try:
             other = self.domain_new(other)
-            # print(f"{other=} {type(other)=}")
             return self.from_dict({k: other * v for k, v in elem.items()})
         except Exception:
             pass
@@ -447,25 +477,23 @@ class FreeAlgebra(Ring, CompositeDomain):
             ret = self.zero
             for k0, v0 in elem.items():
                 for k, v in other.items():
-                    new_key = (*k0, *k)
-                    ret += self.from_dict({new_key: v * v0})
+                    ret += self.from_dict(self._basis.product(k0, k, v*v0))
             return ret
         raise CoercionFailed
 
     def to_domain(self):
         return self
 
-    def new(self, x):
-        if isinstance(x, FreeAlgebraElement):
+    def new(self, *x):
+        if len(x) == 0 and isinstance(x, FreeAlgebraElement):
             return x
-        if isinstance(x, list) or isinstance(x, tuple):
-            return self.from_dict({tuple(x): S.One})
+        if self._basis.is_key(x):
+            return self.from_dict({self._basis.as_key(x): S.One})
         return self.mul_scalar(self.one, x)
 
     def printing_term(self, k):
-        if all(a < 10 for a in k):
-            return Symbol("[" + "".join([str(a) for a in k]) + "]")
-        return Symbol("[" + " ".join([str(a) for a in k]) + "]")
+        # print(f"pingdunkit {k=}")
+        return self._basis.printing_term(k)
 
     def _coerce_mul(self, other): ...
 
@@ -475,7 +503,6 @@ class FreeAlgebra(Ring, CompositeDomain):
 
     def from_dict(self, element):
         poly = self.zero
-
         for monom, coeff in element.items():
             if coeff != self.domain.zero:
                 poly[monom] = coeff
@@ -486,19 +513,10 @@ class FreeAlgebra(Ring, CompositeDomain):
         return self.dtype()
 
     def domain_new(self, element, orig_domain=None):  # noqa: ARG002
-        # print(f"{element=} {type(element)=} bagels {type(sympify(element))=} {sympify(element).has(*self.symbols)=}")
         if isinstance(element, FreeAlgebraElement) or isinstance(element, BaseSchubertElement):
             raise CoercionFailed("Not a domain element")
-        # if not any(x in self.genset for x in sympify_sympy(element).free_symbols):
         return sympify(element)
-        # raise CoercionFailed(f"{element} contains an element of the set of generators")
 
-    # @property
-    # def genset(self):
-    #     return self._genset
-
-    # def from_expr(self, x):
-    #     return self.mul_scalar(self.one, x)
 
 
 FA = FreeAlgebra()
@@ -527,7 +545,7 @@ class NSym(FreeAlgebra):
         return self.from_dict({k: v * other for k, v in elem.items()})
 
     def sepify(self, elem):
-        return ASx([]).ring.from_dict({(uncode([a - 1 for a in k]), len(k)): v for k, v in elem.items()})
+        return splugSx([]).ring.from_dict({(uncode([a - 1 for a in k]), len(k)): v for k, v in elem.items()})
 
     def from_sep(self, elem):
         dct = {}
