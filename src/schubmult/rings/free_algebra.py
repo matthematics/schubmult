@@ -215,6 +215,20 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
             res += val * self.ring.coproduct_on_basis(key)
         return res
 
+    # def antipode(self):
+    #     new_elem = self.change_basis(WordBasis)
+    #     ret = new_elem.ring.zero
+    #     for k, v in new_elem.items():
+    #         to_add = new_elem.ring.one
+    #         for a in k:
+    #             if a == 0:
+    #                 to_add *= (new_elem.ring.one - new_elem.ring(a))
+    #             else:
+    #                 to_add *= -new_elem.ring(a)
+    #         ret += v * to_add
+    #         #ret[tuple(reversed(k))] = (S.NegativeOne**(len(k) - k.count(0)))*v
+    #     return ret.change_basis(self.ring._basis)
+
     def as_expr(self):
         return Add(*self.as_terms())
 
@@ -258,7 +272,7 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         ret = T.zero
         for tup, val in self.items():
             if len(tup) < p:
-                ret += val * T((tup, tuple()))
+                ret += val * T((tup, ()))
             else:
                 ret += val * T((tup[:p], tup[p:]))
         return ret
@@ -296,7 +310,7 @@ class FreeAlgebraBasis:
     def compose_transition(cls, tkeyfunc, output):
         ret = {}
         for key, v in output.items():
-            ret = add_perm_dict(ret, {k: v*v0 for k, v0 in tkeyfunc(key).items()})
+            ret = add_perm_dict(ret, {k: v * v0 for k, v0 in tkeyfunc(key).items()})
         return ret
 
 
@@ -359,7 +373,7 @@ class WordBasis(FreeAlgebraBasis):
     @classmethod
     def transition(cls, other_basis):
         if other_basis == SchubertBasis:
-            return cls.transition_schubert
+            return lambda x: cls.transition_schubert(x)
         if other_basis == WordBasis:
             return lambda x: x
         if other_basis == SchubertSchurBasis:
@@ -386,7 +400,6 @@ class SchubertBasis(FreeAlgebraBasis):
 
     zero_monom = (Permutation([]), 0)
 
-    
     @classmethod
     @cache
     def coproduct(cls, key):
@@ -412,25 +425,23 @@ class SchubertBasis(FreeAlgebraBasis):
         extra = len(perm) - numvars
 
         if extra == 0:
-            return {(tuple([0]*numvars),perm,numvars): 1}
+            return {(tuple([0] * numvars), perm, numvars): 1}
         dom = uncode([numvars] * extra + list(range(numvars - 1, 0, -1)))
         tosplit = perm * dom
-        dct = Sx(tosplit).coproduct(*list(range(1,extra+1)))
-        w0 = uncode(list(range(numvars-1,0,-1)))
-        w0s = uncode([numvars]*extra)
+        dct = Sx(tosplit).coproduct(*list(range(1, extra + 1)))
+        w0 = uncode(list(range(numvars - 1, 0, -1)))
+        w0s = uncode([numvars] * extra)
         dct2 = {}
         for (lambd, perm0), v in dct.items():
             perm1 = perm0 * w0
             lambd2 = tuple(trimcode(lambd * (~w0s)))
             dct2[(lambd2, perm1)] = v
-        return {(tuple(FreeAlgebra.right_pad(k[0],numvars)),k[1]): v for k, v in dct2.items()}
-
-
+        return {(tuple(FreeAlgebra.right_pad(k[0], numvars)), k[1]): v for k, v in dct2.items()}
 
     @classmethod
     def transition(cls, other_basis):
         if other_basis == SchubertBasis:
-            return lambda x: x
+            return lambda x: {SchubertBasis.as_key(x): S.One}
         if other_basis == SchubertSchurBasis:
             return lambda x: cls.transition_schubert_schur(*x)
         if other_basis == WordBasis:
@@ -467,6 +478,7 @@ class SchubertBasis(FreeAlgebraBasis):
     def printing_term(cls, k):
         return splugSx([]).ring.printing_term(k)
 
+
 class SchubertSchurBasis(FreeAlgebraBasis):
     @classmethod
     def is_key(cls, x):
@@ -478,7 +490,7 @@ class SchubertSchurBasis(FreeAlgebraBasis):
 
     @classmethod
     def product(cls, key1, key2, coeff=S.One):
-        #return dict(coeff * splugSx(*self.as_key(key1)) * splugSx(*self.as_key(key2)))
+        # return dict(coeff * splugSx(*self.as_key(key1)) * splugSx(*self.as_key(key2)))
         # from ._mul_utils import _tensor_product_of_dicts_first
         # part1 = key1[0]
         # part2 = key2[0]
@@ -502,7 +514,8 @@ class SchubertSchurBasis(FreeAlgebraBasis):
 
     @classmethod
     @cache
-    def coproduct(cls, key): ...
+    def coproduct(cls, key):
+        ...
         # from ._mul_utils import _tensor_product_of_dicts_first
 
         # dct = cls.transition_word(*key)
@@ -517,17 +530,19 @@ class SchubertSchurBasis(FreeAlgebraBasis):
         #         res = add_perm_dict(res, {k: v0 * v2 for k, v0 in _tensor_product_of_dicts_first(dct0, dct1).items()})
         # return res
 
-    #def schubert_matrix(self, lambd, perm0, perm):
-        # div schubert: perm * (~mu)
-        # div lambd: lambd * (~mu0)
-        # remaining: div(lambd * (~mu0), perm * (~mu)) on +n perm0 w9
-        # multiply the +n perm0 w0
+    # def schubert_matrix(self, lambd, perm0, perm):
+    # div schubert: perm * (~mu)
+    # div lambd: lambd * (~mu0)
+    # remaining: div(lambd * (~mu0), perm * (~mu)) on +n perm0 w9
+    # multiply the +n perm0 w0
 
     @classmethod
     def transition_schubert(cls, lambd, perm):
-        #pass
+        # pass
+        # transition matrix, positive subsitute, Schubert times Schur
         from .schubert_ring import SingleSchubertRing
         from .variables import MaskedGeneratingSet
+
         if lambd[-1] == 0:
             return {(perm, len(lambd)): 1}
         numvars = len(lambd)
@@ -537,12 +552,10 @@ class SchubertSchurBasis(FreeAlgebraBasis):
         w0 = uncode(list(range(numvars - 1, 0, -1)))
         lower_perm = perm * w0
         dom_perm = uncode(([numvars] * extra) + list(range(numvars - 1, 0, -1)))
-        shifted_ring = SingleSchubertRing(MaskedGeneratingSet(Sx([]).ring.genset,list(range(1,extra+1))))
+        shifted_ring = SingleSchubertRing(MaskedGeneratingSet(Sx([]).ring.genset, list(range(1, extra + 1))))
         start_schub = Sx(grass_perm)
         start_schub *= shifted_ring(lower_perm).in_SEM_basis()
-        return {(k*~dom_perm, numvars): v for k, v in start_schub.items()}
-
-
+        return {(k * ~dom_perm, numvars): v for k, v in start_schub.items()}
 
     @classmethod
     def transition_word(cls, lambd, perm):
@@ -587,6 +600,7 @@ class SchubertSchurBasis(FreeAlgebraBasis):
     def printing_term(cls, k):
         return Symbol(f"SS{sstr(k)}")
 
+
 class FreeAlgebra(Ring, CompositeDomain):
     def __str__(self):
         return self.__class__.__name__
@@ -594,6 +608,7 @@ class FreeAlgebra(Ring, CompositeDomain):
     @classmethod
     def change_tensor_basis(cls, tensor_elem, basis1, basis2):
         from .tensor_ring import TensorRing
+
         ring1 = tensor_elem.ring.rings[0]
         ring2 = tensor_elem.ring.rings[1]
         Tring2 = TensorRing(FreeAlgebra(basis=basis1), FreeAlgebra(basis=basis2))

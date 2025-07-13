@@ -6,7 +6,7 @@ from .separated_descents import SeparatedDescentsRing, SeparatedDescentsRingElem
 from .tensor_ring import TensorRing, TensorRingElement
 
 #ASx = #SeparatedDescentsRing(Sx([]).ring)
-ASx = FreeAlgebra(basis=SchubertBasis())
+ASx = FreeAlgebra(basis=SchubertBasis)
 ADSx = SeparatedDescentsRing(DSx([]).ring)
 
 __all__ = [

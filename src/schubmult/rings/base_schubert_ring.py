@@ -37,6 +37,12 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             res_dict2 = add_perm_dict(res_dict2, dict2)
         return self.ring.from_dict(res_dict2)
 
+    def in_schubert_schur_basis(self, numvars):
+        res = (self.ring @ self.ring).zero
+        for perm, v in self.items():
+            res += v * self.ring.in_schubert_schur_basis(perm, numvars)
+        return res
+
     def in_SEM_basis(self):
         result = S.Zero
         for k, v in self.items():
