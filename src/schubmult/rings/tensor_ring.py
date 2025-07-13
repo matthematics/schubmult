@@ -51,7 +51,18 @@ class TensorRing(BaseSchubertRing):
     def rmul(self, elem1, elem2):
         # print(f"{dict(elem1)=} {elem2=}")
         # print(f"{self.zero_monom=} {type(elem2)=}")
-        return self.from_dict({self.zero_monom: elem2}) * elem1
+        #return self.from_dict({self.zero_monom: elem2}) * elem1
+        return self.from_dict({k: v * elem2 for k, v in elem1.items()})
+        # except Exception:
+        #     # import traceback
+        #     # traceback.print_exc()
+        #     raise
+
+    def from_dict(self, element):
+        res = self.zero
+        for k, v in element.items():
+            res[k] = v
+        return res
 
     def mul(self, elem1, elem2):
         # print(f"{elem1=} {elem2=} {type(elem1)=} {type(elem2)=}")
@@ -69,8 +80,8 @@ class TensorRing(BaseSchubertRing):
                     ret_dict = add_perm_dict(ret_dict, dct)
             return self.from_dict(ret_dict)
         except Exception:
-            import traceback
-            traceback.print_exc()
+            # import traceback
+            # traceback.print_exc()
             return self.from_dict({self.zero_monom: elem2}) * elem1
 
     def _coerce_add(self, x):  # noqa: ARG002
@@ -121,7 +132,7 @@ class TensorRing(BaseSchubertRing):
         ret = self.zero
         for key, val in elem1.items():
             for key2, val2 in elem2.items():
-                ret += self.from_dict({(key, key2): val*val2})
+                ret += self.from_dict({(key, key2): val * val2})
         return ret
 
     def __call__(self, x):
@@ -139,7 +150,7 @@ class TensorBasisElement(AbstractSchubPoly):
 
     @staticmethod
     def __xnew__(_class, k, basis):
-        obj =  AbstractSchubPoly.__new__(_class, k, None, None)
+        obj = AbstractSchubPoly.__new__(_class, k, None, None)
         obj._key = k
         obj.ring = basis
         return obj
@@ -163,6 +174,10 @@ class TensorBasisElement(AbstractSchubPoly):
 
 
 class TensorRingElement(BaseSchubertElement):
+
+    def __init__(self):
+        pass
+
     @property
     def free_symbols(self):
         ret = set()
@@ -177,5 +192,5 @@ class TensorRingElement(BaseSchubertElement):
             return [S.Zero]
         return [
             self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k))
-            for k in self.keys()#sorted(self.keys(), key=lambda kkt: [(kk.inv, tuple(kk)) for kk in kkt])
+            for k in self.keys()  # sorted(self.keys(), key=lambda kkt: [(kk.inv, tuple(kk)) for kk in kkt])
         ]

@@ -18,7 +18,7 @@ from schubmult.utils.perm_utils import (
     add_perm_dict,
 )
 
-init_logging(debug=True)
+init_logging(debug=False)
 logger = get_logger(__name__)
 
 class _gvars:
@@ -144,7 +144,7 @@ def schub_coprod_py(perm, indices):
     N = len(kcd)
     kperm = ~(uncode(kcd2))
     coeff_dict = {kperm: 1}
-    logger.debug(f"{kperm.code}*{mperm.code}")
+    #logger.debug(f"{kperm.code}*{mperm.code}")
     coeff_dict = schubmult_py(coeff_dict, mperm)
 
     inv_kperm = inv(kperm)
