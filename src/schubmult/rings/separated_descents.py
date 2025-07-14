@@ -1,8 +1,7 @@
 from functools import cache
-from itertools import zip_longest
 
 #import schubmult.rings.free_algebra as fa
-from schubmult.perm_lib import Permutation, trimcode, uncode
+from schubmult.perm_lib import Permutation, uncode
 from schubmult.schub_lib.schub_lib import complete_sym_positional_perms_down
 from schubmult.symbolic import CoercionFailed, S, sympy_Mul
 from schubmult.utils.perm_utils import mu_A
@@ -11,32 +10,21 @@ from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
 
 def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
-    # c1 = perm.code
-    # while len(c1) < p:
-    #     c1 += [0]
-    # c2 = perm2.code
-    # while len(c2) < q:
-    #     c2 += [0]
-    # c = c1 + c2
-    # if len(c) == 0:
-    #     n = 0
-    # else:
-    #     n = max([i + c[i] + 1 for i in range(len(c))])
-    mu1_tofat = (~perm).minimal_dominant_above()
+    c1 = perm.code
+    while len(c1) < p:
+        c1 += [0]
+    c2 = perm2.code
+    while len(c2) < q:
+        c2 += [0]
+    c = c1 + c2
+    if len(c) == 0:
+        n = 0
+    else:
+        n = max([i + c[i] + 1 for i in range(len(c))])
+    bigmu = list(range(n, 0, -1))
 
-
-
-    mu2 = (~perm2).minimal_dominant_above().code
-
-    bumcode = trimcode(~mu1_tofat)
-    bumcode = [a + (~uncode(mu2)).code[0] for a in bumcode]
-
-    mu1 = (~uncode(bumcode)).code
-
-    bigmu = [a + b for a,b in zip_longest(mu1,mu2,fillvalue=0)]
-
-    # mu1 = mu_A(bigmu, list(range(p)))
-    # mu2 = mu_A(bigmu, list(range(p, len(bigmu))))
+    mu1 = mu_A(bigmu, list(range(p)))
+    mu2 = mu_A(bigmu, list(range(p, len(bigmu))))
 
     pmu1 = uncode(mu1)
     pmu2 = uncode(mu2)
