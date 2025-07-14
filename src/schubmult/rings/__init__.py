@@ -1,5 +1,5 @@
 from .free_algebra import FA, FreeAlgebra, FreeAlgebraElement
-from .free_algebra_basis import SchubertBasis, SchubertSchurBasis, SeparatedDescentsBasis, WordBasis
+from .free_algebra_basis import FreeAlgebraBasis, SchubertBasis, SchubertSchurBasis, SeparatedDescentsBasis, WordBasis
 from .nil_hecke import NilHeckeRing
 from .quantum_schubert_ring import QDSx, QPDSx, QPSx, QSx, QuantumDoubleSchubertElement, QuantumDoubleSchubertRing, QuantumSingleSchubertRing, make_parabolic_quantum_basis
 from .schubert_ring import DoubleSchubertElement, DoubleSchubertRing, DSx, ElemDoubleSchubertRing, SingleSchubertRing, Sx
@@ -19,6 +19,7 @@ __all__ = [
     "DoubleSchubertRing",
     "ElemDoubleSchubertRing",
     "FreeAlgebra",
+    "FreeAlgebraBasis",
     "FreeAlgebraElement",
     "NilHeckeRing",
     "QDSx",

@@ -65,7 +65,6 @@ class FreeAlgebraBasis:
             res += v * Tring2.ext_multiply(new_elem1, new_elem2)
         return res
 
-
 class WordBasis(FreeAlgebraBasis):
     @classmethod
     def is_key(cls, x):
@@ -188,7 +187,7 @@ class SchubertBasis(FreeAlgebraBasis):
             perm1 = perm0 * w0
             lambd2 = tuple(trimcode(lambd * (~w0s)))
             dct2[(lambd2, perm1)] = v
-        return {(*k[0], *([0] * (numvars - len(k[0]))), k[1]): v for k, v in dct2.items()}
+        return {(k[0], *([0] * (numvars - len(k[0]))), k[1]): v for k, v in dct2.items()}
 
     @classmethod
     def transition_separated_descents(cls, k, *x):
@@ -298,7 +297,9 @@ class SchubertSchurBasis(FreeAlgebraBasis):
     @classmethod
     @cache
     def coproduct(cls, key):
-        ...
+        from ._mul_utils import _tensor_product_of_dicts_first
+        #return FreeAlgebraBasis.compose_transition(lambda x: FreeAlgebraBasis.change_tensor_basis(x, cls, cls), FreeAlgebraBasis.compose_transition(lambda x: SchubertBasis.coproduct(x), cls.transition_schubert(*key)))
+        return FreeAlgebraBasis.compose_transition(lambda x: _tensor_product_of_dicts_first(SchubertBasis.transition(cls)(x[0]), SchubertBasis.transition(cls)(x[1])), FreeAlgebraBasis.compose_transition(lambda x: SchubertBasis.coproduct(x), cls.transition_schubert(*key)))
         # from ._mul_utils import _tensor_product_of_dicts_first
 
         # dct = cls.transition_word(*key)
@@ -415,13 +416,13 @@ class _SeparatedDescentsBasis(FreeAlgebraBasis):
         if other_basis == cls:
             return lambda x: {x: S.One}
         if isinstance(other_basis, type) and other_basis.__name__ == cls.__name__ and other_basis.k != cls.k:
-            return lambda x: FreeAlgebraBasis.compose_transition(lambda x: SchubertBasis.transition_separated_descents(cls.k, *x), cls.transition_schubert(*x))
+            return lambda x: FreeAlgebraBasis.compose_transition(lambda y: SchubertBasis.transition_separated_descents(cls.k, *y), cls.transition_schubert(*x))
         if other_basis == SchubertBasis:
             return lambda x: cls.transition_schubert(*x)
         if other_basis == WordBasis:
             return lambda x: cls.transition_word(*x)
         if other_basis == SchubertSchurBasis:
-            return lambda x: x
+            return lambda x: FreeAlgebraBasis.compose_transition(lambda y: SchubertBasis.transition_schubert_schur(*y), cls.transition_schubert(*x))
         return None
 
     @classmethod
