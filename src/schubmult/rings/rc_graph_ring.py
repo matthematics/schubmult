@@ -189,8 +189,7 @@ class RCGraphRing(Ring, CompositeDomain):
         index = max(perm.descents())
         elem = self.isobaric(perm.swap(index, index +1))
         elem = elem * self.from_dict({Permutation([]).swap(index, index + 1): S.One})
-        elem = self.mul(elem, self.genset[index + 1])
-        return elem
+        return self.mul(elem, self.genset[index + 1])
 
     def fgp_operator(self, k, length, q_var=GeneratingSet("q")):
         # xk

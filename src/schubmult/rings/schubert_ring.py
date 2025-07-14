@@ -323,7 +323,7 @@ class DoubleSchubertRing(BaseSchubertRing):
     def schubert_schur_elem_func(self, numvars):
         ring = self @ self
 
-        def elem_func(p, k, *args):
+        def elem_func(p, k, *args):  # noqa: ARG001
             if p < 0:
                 return ring.zero
             if p > k:

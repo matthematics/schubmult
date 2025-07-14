@@ -78,8 +78,6 @@ if __name__ == "__main__":
             mu_v = ~((~perm2).minimal_dominant_above())
 
             mu_w = uncode(sum_lists((mu_u).code, (mu_v).code))
-            print(f"{perm1.code=} {perm2.code=}")
-            print(f"{mu_u.code=} {mu_v.code=} {mu_w.code=}")
             coeff_dict = schubmult_py({perm1: S.One}, perm2)
 
             #A = list(range(mn+2,mx+2))
@@ -91,23 +89,16 @@ if __name__ == "__main__":
             # end = max(max(A),max(B))+1
             # B = [*B,*list(range(end, end+5))]
             #A_left = list(range(mn,mx+1))
-            print(f"{perm1.code=} {perm2.code=}")
-            print(f"{A=} {B=}")
             for w, coeff in coeff_dict.items():
-                print(f"{w.code=} {coeff=}")
                 w_prime = w * (~mu_w)
                 u_prime = perm1 * (~mu_u)
                 v_prime = perm2 * (~mu_v) # this is A
                 mn, mx = min(A)-1, max(A)
-                print(f"{u_prime.code=} {v_prime.code=} {w_prime.code=}")
-                print(f"{mn=}, {mx=}")
                 if len(w_prime.descents()) > 3:
-                    w_prime_reduced, ddiff_perm = w_prime.parabolic_reduce(*list(set(list([mn, mx]))))
-                    print(f"{w_prime_reduced.code=} {ddiff_perm.code=}")
+                    w_prime_reduced, ddiff_perm = w_prime.parabolic_reduce(*list({mn, mx}))
                     from bisect import bisect_left
                     while ddiff_perm.inv > 0:
                         desc = next(iter(ddiff_perm.descents()))
-                        print(f"fat {desc=} {A=} {B=}")
                         ddiff_perm = ddiff_perm.swap(desc, desc+1)
                         if desc in A:
                             desc2 = bisect_left(A, desc)
@@ -126,26 +117,21 @@ if __name__ == "__main__":
                         #     desc2 = desc - mn
                         #     v_prime = v_prime.swap(desc2, desc2 + 1)
                     assert len(w_prime_reduced.descents()) <= 3
-                    print(f"{u_prime.code=} {v_prime.code=}")
                     new_mu_w = (~w_prime_reduced).minimal_dominant_above()
                     top_coeff = w_prime_reduced * (new_mu_w)
                     assert len(top_coeff.descents()) <= 3
                     #B = [*list(range(1,mn + 2)), *list(range(mx+2, max(w_prime_reduced.descents())+1))]
                     new_mu_u = uncode(mu_A(new_mu_w.code,B))
                     new_mu_v = uncode(mu_A(new_mu_w.code,A))
-                    print(f"{new_mu_u.code=} {new_mu_v.code=} {new_mu_w.code=}")
                     u_coeff = u_prime * new_mu_u
                     v_coeff = v_prime * new_mu_v
 
                     assert len(u_coeff.descents()) <= 3
                     assert len(v_coeff.descents()) <= 3
-                    print(f"{u_coeff.code=} {v_coeff.code=} {top_coeff.code=}")
                     try:
                         assert schubmult_py({u_coeff: S.One}, v_coeff).get(top_coeff, S.Zero) == coeff
                     except AssertionError:
-                        print(f"{coeff=} {top_coeff=}")
                         raise
-            print(f"Success {perm1} {perm2}")
 
 
     # argv = sys.argv

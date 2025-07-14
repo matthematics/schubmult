@@ -201,7 +201,6 @@ class Permutation:
         yield from self._perm.__iter__()
 
     def __getslice__(self, i, j):
-        print("BOINGFAT")
         return self._perm[i:j]
 
     def __str__(self):
@@ -451,14 +450,14 @@ class NilPlactic:
     @staticmethod
     def _ed_insert(word, letter):
         if len(word) == 0:
-            return tuple([[letter]])
+            return ([letter],)
         # print(word)
         row = word[0]
         index = 0
         while index < len(row) and row[index] < letter:
             index += 1
         if index == len(row):
-            return [tuple([*row, letter]), *word[1:]]
+            return [(*row, letter), *word[1:]]
         if row[index] == letter:
             if index < len(row) - 1:
                 if row[index + 1] == letter + 1:
@@ -467,19 +466,19 @@ class NilPlactic:
             while index < len(row) and row[index] == letter:
                 index += 1
             if index == len(row):
-                return [tuple([*row, letter]), *word[1:]]
+                return [(*row, letter), *word[1:]]
         new_word = [*word]
         bump = row[index]
         new_word[0] = [*new_word[0]]
         new_word[0][index] = letter
-        new_word[0] = tuple([*new_word[0]])
+        new_word[0] = (*new_word[0],)
         # return tuple([*NilPlactic._ed_insert(new_word[:first_row_start], bump), *new_word[first_row_start:]])
         return [new_word[0], *NilPlactic._ed_insert(new_word[1:], bump)]
 
     @staticmethod
     def ed_insert_rsk(word, word2, letter, letter2):
         if len(word) == 0:
-            return tuple([letter]), tuple([letter2])
+            return (letter,), (letter2,)
         first_row_start = len(word) - 1
         if len(word) > 1:
             while first_row_start > 0 and word[first_row_start - 1] < word[first_row_start]:
@@ -488,12 +487,12 @@ class NilPlactic:
         while index < len(word) and word[index] < letter:
             index += 1
         if index == len(word):
-            return tuple([*word, letter]), tuple([*word2, letter2])
+            return (*word, letter), (*word2, letter2)
         if word[index] == letter:
             word0, word2_0 = NilPlactic.ed_insert_rsk(word[:first_row_start], word2[:first_row_start], letter + 1, letter2)
             return (
-                tuple([*word0, *word[first_row_start:]]),
-                tuple([*word2_0, *word2[first_row_start:]]),
+                (*word0, *word[first_row_start:]),
+                (*word2_0, *word2[first_row_start:]),
             )
         new_word = [*word]
         new_word2 = [*word2]
@@ -502,7 +501,7 @@ class NilPlactic:
         new_word[index] = letter
         # new_word2[index] = letter2
         word0, word2_0 = NilPlactic.ed_insert_rsk(new_word[:first_row_start], new_word2[:first_row_start], bump, letter2)
-        return tuple([*word0, *new_word[first_row_start:]]), tuple([*word2_0, *new_word2[first_row_start:]])
+        return (*word0, *new_word[first_row_start:]), (*word2_0, *new_word2[first_row_start:])
 
     @staticmethod
     def standardize(word):
@@ -563,7 +562,7 @@ class NilPlactic:
     @staticmethod
     def reverse_insert_rsk(word, word2, letter, letter2):
         if len(word2) == 0:
-            return tuple([letter]), tuple([letter2])
+            return (letter,), (letter2,)
         first_row_start = len(word2) - 1
         if len(word2) > 1:
             while first_row_start > 0 and word2[first_row_start - 1] < word2[first_row_start]:
@@ -572,7 +571,7 @@ class NilPlactic:
         while index < len(word2) and word2[index] <= letter2:
             index += 1
         if index == len(word2):
-            return tuple([*word, letter]), tuple([*word2, letter2])
+            return (*word, letter), (*word2, letter2)
         new_word = [*word]
         new_word2 = [*word2]
         bump = new_word2[index]
@@ -580,7 +579,7 @@ class NilPlactic:
         new_word2[index] = letter2
         # new_word2[index] = letter2
         word0, word2_0 = NilPlactic.reverse_insert_rsk(new_word[:first_row_start], new_word2[:first_row_start], letter, bump)
-        return tuple([*word0, *new_word[first_row_start:]]), tuple([*word2_0, *new_word2[first_row_start:]])
+        return (*word0, *new_word[first_row_start:]), (*word2_0, *new_word2[first_row_start:])
 
     def ed_insert(self, letter):
         """Insert a letter into the nilplactic word."""
@@ -628,7 +627,7 @@ class Plactic:
     @staticmethod
     def _rs_insert(word, letter):
         if len(word) == 0:
-            return tuple([letter])
+            return (letter,)
         first_row_start = len(word) - 1
         if len(word) > 1:
             while first_row_start > 0 and word[first_row_start - 1] <= word[first_row_start]:
@@ -637,11 +636,11 @@ class Plactic:
         while index < len(word) and word[index] <= letter:
             index += 1
         if index == len(word):
-            return tuple([*word, letter])
+            return (*word, letter)
         new_word = [*word]
         bump = new_word[index]
         new_word[index] = letter
-        return tuple([*Plactic._rs_insert(new_word[:first_row_start], bump), *new_word[first_row_start:]])
+        return (*Plactic._rs_insert(new_word[:first_row_start], bump), *new_word[first_row_start:])
 
     def rs_insert(self, letter):
         """Insert a letter into the nilplactic word."""
