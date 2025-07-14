@@ -439,6 +439,28 @@ class SchubertBasis(FreeAlgebraBasis):
         return {(tuple(FreeAlgebra.right_pad(k[0], numvars)), k[1]): v for k, v in dct2.items()}
 
     @classmethod
+    def transition_separated_descents(cls, k, *x):
+        perm, numvars = x
+        # schur(n)schubert(n)schur(m,init)schubert(n,end)
+        # expansion vmu^{-1} in m schur (complement) n schubert (times w0)
+        #extra = len(perm) - numvars + k
+
+        # if extra == 0:
+        #     return {(tuple([0] * numvars), perm, numvars): 1}
+        #dom = uncode([numvars] * extra + list(range(numvars - 1, 0, -1)))
+        dom = uncode(list(range(len(perm) - 1, 0, -1)))
+        tosplit = perm * dom
+        dct = Sx(tosplit).coproduct(*list(range(1, len(perm) - k + 1)))
+        w0 = uncode(list(range(k - 1, 0, -1)))
+        w0s = uncode(list(range(len(perm)-1, k - 1, -1)))
+        dct2 = {}
+        for (perm0, perm1), v in dct.items():
+            perm0_out = perm0 * (~w0s)
+            perm1_out = perm1 * (w0)
+            dct2[(perm0_out, perm1_out, numvars)] = v
+        return dct2
+
+    @classmethod
     def transition(cls, other_basis):
         if other_basis == SchubertBasis:
             return lambda x: {SchubertBasis.as_key(x): S.One}
@@ -446,6 +468,8 @@ class SchubertBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_schubert_schur(*x)
         if other_basis == WordBasis:
             return lambda x: cls.transition_word(*x)
+        if other_basis.__name__ == "_SeparatedDescentsBasis":
+            return lambda x: cls.transition_separated_descents(other_basis.k, *x)
         return None
 
     @classmethod
@@ -601,6 +625,159 @@ class SchubertSchurBasis(FreeAlgebraBasis):
         return Symbol(f"SS{sstr(k)}")
 
 
+class _SeparatedDescentsBasis(FreeAlgebraBasis):
+    @classmethod
+    def is_key(cls, x):
+        return (
+            len(x) == 3
+            and isinstance(x[0], Permutation | list | tuple)
+            and isinstance(x[1], Permutation | list | tuple)
+            and isinstance(x[2], int)
+            and (len(x[1]) <= x[2])
+        )
+
+    @classmethod
+    def as_key(cls, x):
+        return (Permutation(x[0]), Permutation(x[1]), x[2])
+
+    @classmethod
+    def product(cls, key1, key2, coeff=S.One):
+        pass
+
+    @classmethod
+    @cache
+    def coproduct(cls, key):
+        ...
+        # from ._mul_utils import _tensor_product_of_dicts_first
+
+        # dct = cls.transition_word(*key)
+        # res = {}
+        # wbasis = WordBasis
+        # for key_word, v in dct.items():
+        #     dct2 = wbasis.coproduct(key_word, v)
+        #     # print(f"{dct2=}")
+        #     for (k1, k2), v2 in dct2.items():
+        #         dct0 = wbasis.transition_schubert(k1)
+        #         dct1 = wbasis.transition_schubert(k2)
+        #         res = add_perm_dict(res, {k: v0 * v2 for k, v0 in _tensor_product_of_dicts_first(dct0, dct1).items()})
+        # return res
+
+    # def schubert_matrix(self, lambd, perm0, perm):
+    # div schubert: perm * (~mu)
+    # div lambd: lambd * (~mu0)
+    # remaining: div(lambd * (~mu0), perm * (~mu)) on +n perm0 w9
+    # multiply the +n perm0 w0
+
+
+    # def transition_separated_descents(cls, k, *x):
+    #     perm, numvars = x
+    #     # schur(n)schubert(n)schur(m,init)schubert(n,end)
+    #     # expansion vmu^{-1} in m schur (complement) n schubert (times w0)
+    #     #extra = len(perm) - numvars + k
+
+    #     # if extra == 0:
+    #     #     return {(tuple([0] * numvars), perm, numvars): 1}
+    #     #dom = uncode([numvars] * extra + list(range(numvars - 1, 0, -1)))
+    #     dom = uncode(list(range(len(perm) - 1, 0, -1)))
+    #     tosplit = perm * dom
+    #     dct = Sx(tosplit).coproduct(*list(range(1, len(perm) - k + 1)))
+    #     w0 = uncode(list(range(k - 1, 0, -1)))
+    #     w0s = uncode(list(range(len(perm)-1, k - 1, -1)))
+    #     dct2 = {}
+    #     for (perm0, perm1), v in dct.items():
+    #         perm0_out = perm0 * (~w0s)
+    #         perm1_out = perm1 * (w0)
+    #         dct2[(perm0_out, perm1_out, numvars)] = v
+    #     return dct2
+
+    @classmethod
+    def transition_schubert(cls, perm0, perm1, numvars):
+        # pass
+        # transition matrix, positive subsitute, Schubert times Schur
+        from .schubert_ring import SingleSchubertRing
+        from .variables import MaskedGeneratingSet
+
+        result = Sx(perm0)*Sx(perm1)
+        # if perm0.inv == 0:
+        #     return {(perm1,numvars): S.One}
+        # if perm1.inv == 0:
+        #     return {(perm0,numvars): S.One}
+        # extra = lambd[-1] + len(lambd) - 1
+        #N = len(perm0)
+        dom = (~perm0).minimal_dominant_above()
+        #dom = uncode(list(range(max(len(v) for v in result.values) - 1, 0, -1)))
+        #dom = uncode(list(range(max(len(v) for v in result.keys()) - 1, cls.k - 1, -1)))
+        #uncode(list(range(N - 1, cls.k - 1, -1)))
+        #print(f"{perm0.code=} {perm0.descents()=} {N-1=}")
+        first_perm = perm0 * (dom)
+        assert dom.inv - perm0.inv == first_perm.inv
+        w0 = uncode(list(range(cls.k - 1, 0, -1)))
+        lower_perm = perm1 * w0
+        #loin = max(len((~dom).code), k-1)
+        tup1, tup2 = (~dom).code, w0.code
+        if len(tup1) < len(tup2):
+            tup1, tup2 = tup2, tup1
+        new_code = [*[tup1[i] + tup2[i] for i in range(len(tup2))],*tup1[len(tup2):]]
+        # print(f"{new_code=}")
+        dom_perm = uncode(new_code)
+        # print(f"{dom_perm.descents()=}")
+        shifted_ring = SingleSchubertRing(MaskedGeneratingSet(Sx([]).ring.genset, list(range(1, dom_perm.code[0] - cls.k + 1))))
+        start_schub = Sx(first_perm)
+        start_schub *= shifted_ring(lower_perm).in_SEM_basis()
+        return {(k1 * (dom_perm), numvars): v for k1, v in start_schub.items()}
+
+    @classmethod
+    def transition_word(cls, perm0, perm1, n):
+        return FreeAlgebraBasis.compose_transition(SchubertBasis.transition(WordBasis), cls.transition_schubert(perm0, perm1, n))
+
+    @classmethod
+    def transition(cls, other_basis):
+        if other_basis == cls:
+            return lambda x: {x: S.One}
+        if isinstance(other_basis, type) and other_basis.__name__ == cls.__name__ and other_basis.k != cls.k:
+            return FreeAlgebraBasis.compose_transition(lambda x: SchubertBasis.transition_separated_descents(cls.k, *x), lambda x: cls.transition_schubert(*x))
+        if other_basis == SchubertBasis:
+            return lambda x: cls.transition_schubert(*x)
+        if other_basis == WordBasis:
+            return lambda x: cls.transition_word(*x)
+        if other_basis == SchubertSchurBasis:
+            return lambda x: x
+        return None
+
+    # def transition_word(self, perm, numvars):
+    #     res = {}
+    #     expr = Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis().expand()
+    #     args = expr.args
+    #     if not isinstance(expr, Add):
+    #         args = [expr]
+    #     for arg in args:
+    #         tup = list(range(perm.inv + numvars, perm.inv, -1))
+    #         coeff = S.One
+    #         if is_of_func_type(sympify(arg), FactorialElemSym):
+    #             arg = sympify_sympy(arg)
+    #             tup[perm.inv + numvars - arg.numvars] = arg.numvars - arg.degree
+    #         elif isinstance(arg, Mul):
+    #             for arg0 in arg.args:
+    #                 if is_of_func_type(sympify(arg0), FactorialElemSym):
+    #                     arg0 = sympify_sympy(arg0)
+    #                     tup[perm.inv + numvars - arg0.numvars] = arg0.numvars - arg0.degree
+    #                 else:
+    #                     coeff = Integer(arg0)
+    #         else:
+    #             coeff = Integer(arg)
+    #         tup = tuple(tup)
+    #         res[tup] = res.get(tup, S.Zero) + coeff
+    #     return res
+
+    @classmethod
+    def printing_term(cls, k):
+        return Symbol(f"SepDesc{cls.k}{sstr(k)}")
+
+
+def SeparatedDescentsBasis(k):
+    return type("_SeparatedDescentsBasis", (_SeparatedDescentsBasis,), {"k": k, "zero_monom": (Permutation(()), Permutation([]), 0)})
+
+
 class FreeAlgebra(Ring, CompositeDomain):
     def __str__(self):
         return self.__class__.__name__
@@ -705,7 +882,6 @@ class FreeAlgebra(Ring, CompositeDomain):
         return self.mul_scalar(self.one, x)
 
     def printing_term(self, k):
-        # print(f"pingdunkit {k=}")
         return self._basis.printing_term(k)
 
     def _coerce_mul(self, other): ...

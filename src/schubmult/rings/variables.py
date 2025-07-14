@@ -281,7 +281,7 @@ def genset_dict_from_expr(expr, genset):
         k = max([genset.index(a) for a in expr.free_symbols])
     except Exception:
         return {(): expr}
-    poly = {}   
+    poly = {}
     expr = expand(expr)
     for term in Add.make_args(expr):
         coeff, monom = [], [0]*k

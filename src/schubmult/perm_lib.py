@@ -495,15 +495,14 @@ class NilPlactic:
                 tuple([*word0, *word[first_row_start:]]),
                 tuple([*word2_0, *word2[first_row_start:]]),
             )
-        else:
-            new_word = [*word]
-            new_word2 = [*word2]
-            bump = new_word[index]
-            # bump2 = new_word2[index]
-            new_word[index] = letter
-            # new_word2[index] = letter2
-            word0, word2_0 = NilPlactic.ed_insert_rsk(new_word[:first_row_start], new_word2[:first_row_start], bump, letter2)
-            return tuple([*word0, *new_word[first_row_start:]]), tuple([*word2_0, *new_word2[first_row_start:]])
+        new_word = [*word]
+        new_word2 = [*word2]
+        bump = new_word[index]
+        # bump2 = new_word2[index]
+        new_word[index] = letter
+        # new_word2[index] = letter2
+        word0, word2_0 = NilPlactic.ed_insert_rsk(new_word[:first_row_start], new_word2[:first_row_start], bump, letter2)
+        return tuple([*word0, *new_word[first_row_start:]]), tuple([*word2_0, *new_word2[first_row_start:]])
 
     @staticmethod
     def standardize(word):
