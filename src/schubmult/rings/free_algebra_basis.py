@@ -29,11 +29,11 @@ class FreeAlgebraBasis:
     @classmethod
     def as_key(cls, x): ...
 
-    @classmethod
-    def product(cls, key1, key2, coeff=S.One): ...
+    # @classmethod
+    # def product(cls, key1, key2, coeff=S.One): ...
 
-    @classmethod
-    def coproduct(cls, key, coeff=S.One): ...
+    # @classmethod
+    # def coproduct(cls, key, coeff=S.One): ...
 
     @classmethod
     def transition(cls, other_basis): ...
@@ -65,14 +65,23 @@ class FreeAlgebraBasis:
             res += v * Tring2.ext_multiply(new_elem1, new_elem2)
         return res
 
+    # @classmethod
+    # @cache
+    # def coproduct(cls, key):
+    #     from ._mul_utils import _tensor_product_of_dicts_first
+
+    #     return FreeAlgebraBasis.compose_transition(
+    #         lambda x: _tensor_product_of_dicts_first(SchubertBasis.transition(cls)(x[0]), SchubertBasis.transition(cls)(x[1])),
+    #         FreeAlgebraBasis.compose_transition(lambda y: SchubertBasis.coproduct(y), cls.transition(SchubertBasis)(key)),
+    #     )
+
     @classmethod
     @cache
     def coproduct(cls, key):
         from ._mul_utils import _tensor_product_of_dicts_first
-
         return FreeAlgebraBasis.compose_transition(
             lambda x: _tensor_product_of_dicts_first(SchubertBasis.transition(cls)(x[0]), SchubertBasis.transition(cls)(x[1])),
-            FreeAlgebraBasis.compose_transition(lambda x: SchubertBasis.coproduct(x), cls.transition_schubert(*key)),
+            FreeAlgebraBasis.compose_transition(lambda y: SchubertBasis.coproduct(y), cls.transition_schubert(*key)),
         )
 
     @classmethod
@@ -178,7 +187,7 @@ class SchubertBasis(FreeAlgebraBasis):
     @cache
     def coproduct(cls, key):
         from ._mul_utils import _tensor_product_of_dicts_first
-
+        # print(f"{key=}")
         dct = cls.transition_word(*key)
         res = {}
         wbasis = WordBasis
@@ -473,13 +482,29 @@ class ElementaryBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_schubert(cls, tup, numvars):
+        from schubmult.abc import e, x
         from schubmult.symbolic import prod
         mu = list(range(numvars,0,-1))
         if len(mu) < len(tup):
             mu = [*([numvars]*(len(tup) - len(mu))), *mu]
-        painted_bagel = Sx([]).ring.from_expr(prod([Sx([]).ring.genset[i + 1] ** (mu[i] - tup[i]) for i in range(len(tup))]))
-        w0 = uncode(mu)
-        monom = {(k * (~w0), numvars): v for k, v in painted_bagel.items()}
+            #mu = [*list(range(numvars + len(tup) - len(mu),numvars,-1)), *mu]
+            #mu = []
+        # print(f"{mu=}")
+        # print(f"{tup=}")
+        #cd = (~mu).code    
+        # print(f"{mu=} {tup=}")
+        painted_bagel = Sx([]).ring.from_expr(prod([(x[i+1])**(mu[i] - tup[i]) for i in range(len(tup))]))
+        # print(f"{painted_bagel=}")
+        w0 = ~uncode(mu)
+        # print(f"{w0.code=}")
+        # print(f"{(~w0).code=}")
+        monom = {}
+        for k, v in painted_bagel.items():
+            if (k*w0).inv != w0.inv - k.inv:
+                raise Exception
+            monom[(k*w0, numvars)] = v
+        # monom = {SchubertBasis.as_key((k * w0, numvars)): v for k, v in painted_bagel.items() if v != S.Zero}
+        # print(f"{monom=}")
         return dict(monom)
 
     @classmethod
