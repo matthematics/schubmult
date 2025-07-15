@@ -239,7 +239,7 @@ class SchubertBasis(FreeAlgebraBasis):
             
             if len(new_tup) < len(mu):
                 new_tup += mu[len(new_tup):]
-            ret[(tuple(new_tup), numvars)] = v
+            ret[(tuple([*list(sorted(new_tup[:-numvars+1],reverse=True)),*new_tup[-numvars+1:]]), numvars)] = v
         return ret
     
     @classmethod
@@ -484,16 +484,31 @@ class ElementaryBasis(FreeAlgebraBasis):
     def transition_schubert(cls, tup, numvars):
         from schubmult.abc import e, x
         from schubmult.symbolic import prod
+
         mu = list(range(numvars,0,-1))
         if len(mu) < len(tup):
             mu = [*([numvars]*(len(tup) - len(mu))), *mu]
+        # froff = Sx([]).ring.from_expr(prod([e(mu[i]-tup[i] ,mu[i],x[1:]) for i in range(len(mu))]))
+        # N = max([len(perm) for perm, v in froff.items() if v != S.Zero])
+        # if N - 1 > len(mu):
+        #     mu = [*([numvars]*(N - 1 - len(mu))), *mu]
+        #     tup = [*([0]*(N-1-len(mu))),*tup[:-numvars+1], *tup[-numvars+1:]]
+        # elem sym monomial!
             #mu = [*list(range(numvars + len(tup) - len(mu),numvars,-1)), *mu]
             #mu = []
         # print(f"{mu=}")
         # print(f"{tup=}")
         #cd = (~mu).code    
         # print(f"{mu=} {tup=}")
-        painted_bagel = Sx([]).ring.from_expr(prod([(x[i+1])**(mu[i] - tup[i]) for i in range(len(tup))]))
+        from itertools import permutations
+        flat_part = tup[:-numvars+1]
+        boink_part = tup[-numvars+1:]
+        pickles = set(permutations(flat_part))
+        painted_bagel = Sx([]).ring.zero
+        for tuppo in pickles:
+            #tup0 = [*tuppo, *tup[-numvars+1:]]
+            painted_bagel += Sx([]).ring.from_expr(prod([(x[i+1])**(mu[i] - tuppo[i]) for i in range(len(tuppo))]))
+        painted_bagel *= (prod([x[i+1]**(mu[i]-boink_part[i - len(flat_part)]) for i in range(len(flat_part), len(mu))]))
         # print(f"{painted_bagel=}")
         w0 = ~uncode(mu)
         # print(f"{w0.code=}")
