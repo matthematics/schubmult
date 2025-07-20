@@ -1,5 +1,6 @@
 from functools import cache
 
+import schubmult.abc as abc
 from schubmult.symbolic import (
     EXRAW,
     Add,
@@ -19,7 +20,9 @@ from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
 from .base_schubert_ring import BaseSchubertElement
-from .polynomial_basis import EXBasis
+from .polynomial_basis import MonomialBasis
+
+# from .polynomial_basis import EXBasis
 
 logger = get_logger(__name__)
 
@@ -195,12 +198,13 @@ class PolynomialAlgebra(Ring, CompositeDomain):
     def __eq__(self, other):
         return type(self) is type(other) and self.domain == other.domain
 
-    def __init__(self, basis=EXBasis, domain=None):
+    def __init__(self, basis, domain=None):
         if domain:
             self.domain = domain
         else:
             self.domain = EXRAW
         self.dom = self.domain
+
         self._basis = basis
         self.zero_monom = self._basis.zero_monom
         self.dtype = type("PolynomialAlgebraElement", (PolynomialAlgebraElement,), {"ring": self})
@@ -246,12 +250,17 @@ class PolynomialAlgebra(Ring, CompositeDomain):
     def to_domain(self):
         return self
 
-    def new(self, x):
-        if len(x) == 0 and isinstance(x, PolynomialAlgebraElement):
-            return x
+    def new(self, *x):
+        if len(x) == 1:
+            if self._basis.is_key(x[0]):
+                return self.from_dict({self._basis.as_key(x[0]): S.One})
+            return self.from_expr(x[0])
         if self._basis.is_key(x):
             return self.from_dict({self._basis.as_key(x): S.One})
-        return self.mul_scalar(self.one, x)
+        return self.from_dict(self._basis.from_expr(x))
+
+    def from_expr(self, x):
+        return self.from_dict(self._basis.from_expr(x))
 
     def printing_term(self, k):
         return self._basis.printing_term(k)
@@ -279,4 +288,4 @@ class PolynomialAlgebra(Ring, CompositeDomain):
         return sympify(element)
 
 
-PA = PolynomialAlgebra()
+PA = PolynomialAlgebra(MonomialBasis(abc.x, 10))

@@ -1,3 +1,4 @@
+from functools import cached_property
 from itertools import zip_longest
 
 # If you use symbolic coefficients like S.One, import S from your symbolic module
@@ -39,9 +40,9 @@ class PolynomialBasis:
     def transition(self, other_basis): ...
 
     def printing_term(self, k): ...
+
     # @property
     # def zero_monom(self): ...
-
 
     @staticmethod
     def compose_transition(tkeyfunc, output):
@@ -131,46 +132,23 @@ class MonomialBasis(PolynomialBasis):
         if isinstance(other_basis, MonomialBasis):
             return lambda x: {self.as_key(x): S.One}
         if isinstance(other_basis, SchubertPolyBasis):
-            return lambda x: other_basis.ring.from_expr()
-        if isinstance(other_basis, EXBasis):
-            return lambda x: self.expand_monom(x)
+            return lambda x: other_basis.ring.from_expr(self.expand_monom(x))
         return None
+
+    def from_expr(self, expr):
+        from .variables import genset_dict_from_expr
+
+        return {self.as_key(k): v for k, v in genset_dict_from_expr(expr, self.genset).items()}
 
     @property
     def zero_monom(self):
         return self.as_key([])
 
 
-class EXBasis(PolynomialBasis):
-    def is_key(self, x):  # noqa: ARG002
-        return True
-
-    def as_key(self, x):
-        return x
-
-    def printing_term(self, k):  # noqa: ARG002
-        return S.One
-
-    def product(self, key1, key2, coeff=S.One):  # noqa: ARG002
-        return {S.One: coeff}
-
-    def transition(self, other_basis):
-        if isinstance(other_basis, EXBasis):
-            return lambda x: {S.One: x}
-        if isinstance(other_basis, SchubertPolyBasis):
-            return lambda x: other_basis.ring.from_expr(x)
-        if isinstance(other_basis, MonomialBasis):
-            from .variables import genset_dict_from_expr
-
-            return lambda x: genset_dict_from_expr(x, other_basis.genset)
-        return None
-
-    @property
-    def zero_monom(self):
-        return {S.One: S.One}
-
-
 class SchubertPolyBasis(PolynomialBasis):
+    def __hash__(self):
+        return hash(self.numvars, self.ring)
+
     @property
     def numvars(self):
         return self._numvars
@@ -194,7 +172,7 @@ class SchubertPolyBasis(PolynomialBasis):
         if self.ring is None:
             self.ring = Sx([]).ring
 
-    @property
+    @cached_property
     def monomial_basis(self):
         return MonomialBasis(numvars=self.numvars, genset=self.ring.genset)
 
@@ -205,11 +183,14 @@ class SchubertPolyBasis(PolynomialBasis):
     def zero_monom(self):
         return self.as_key([])
 
+    def from_expr(self, expr):
+        return self.ring.from_expr(expr)
+
     def transition(self, other_basis):
         if isinstance(other_basis, SchubertPolyBasis):
             return lambda x: {x: S.One}
-        if isinstance(other_basis, EXBasis):
-            return lambda x: {S.One: self.ring(x).as_polynomial()}
+        # if isinstance(other_basis, EXBasis):
+        #     return lambda x: {S.One: self.ring(x).as_polynomial()}
         if isinstance(other_basis, MonomialBasis):
             from .variables import genset_dict_from_expr
 
