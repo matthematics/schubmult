@@ -28,6 +28,9 @@ class PolynomialBasis:
 
     def as_key(self, x): ...
 
+    def attach_key(self, dct):
+        return {self.as_key(k): v for k, v in dct.items()}
+
     def with_numvars(self, numvars):
         return self.__class__(numvars=numvars, genset=self.genset)
 
@@ -114,7 +117,7 @@ class MonomialBasis(PolynomialBasis):
 
     def as_key(self, x):
         if len(x) > self.numvars:
-            raise ValueError(f"Key {x} exceeds the number of variables {self.numvars}.")
+            raise ValueError(f"Length of key {x} exceeds the number of variables {self.numvars}.")
         return (*x, *([0] * (self.numvars - len(x))))
 
     def printing_term(self, k):
@@ -144,7 +147,13 @@ class MonomialBasis(PolynomialBasis):
         self._genset = genset
 
     def product(self, key1, key2, coeff=S.One):
-        return {tuple(a + b for a, b in zip_longest(key1, key2, fillvalue=0)): coeff}
+        if len(key1) != len(key2):
+            return {}
+        if len(key1) != self.numvars:
+            _altbasis = self.with_numvars(key1[1])
+        else:
+            _altbasis = self
+        return _altbasis.attach_key({tuple(a + b for a, b in zip_longest(key1, key2, fillvalue=0)): coeff})
 
     def expand_monom(self, monom):
         return Mul(*[self.genset[i + 1] ** monom[i] for i in range(len(monom))])
@@ -154,15 +163,15 @@ class MonomialBasis(PolynomialBasis):
 
     def transition(self, other_basis):
         if isinstance(other_basis, MonomialBasis):
-            return lambda x: x
+            return lambda x: other_basis.attach_key(x)
         if isinstance(other_basis, SchubertPolyBasis):
-            return lambda x: {other_basis.as_key(k): v for k, v in other_basis.ring.from_expr(Add(*[v * self.expand_monom(k) for k, v in x.items()])).items()}
+            return lambda x: other_basis.attach_key(other_basis.ring.from_expr(Add(*[v * self.expand_monom(k) for k, v in x.items()])))
         return None
 
     def from_expr(self, expr):
         from .variables import genset_dict_from_expr
 
-        return {self.as_key(k): v for k, v in genset_dict_from_expr(expr, self.genset).items()}
+        return self.attach_key(genset_dict_from_expr(expr, self.genset))
 
     @property
     def zero_monom(self):
@@ -204,24 +213,26 @@ class SchubertPolyBasis(PolynomialBasis):
         return MonomialBasis(numvars=self.numvars, genset=self.ring.genset)
 
     def product(self, key1, key2, coeff=S.One):
-        if key1[1] != key2[1] or key1[1] != self.numvars or key2[1] != self.numvars:
+        if key1[1] != key2[1]:
             return {}
-        return {(k, self.numvars): v for k, v in self.ring.mul(self.ring.from_dict({key1[0]: coeff}), self.ring(key2[0])).items()}
+        if key1[1] != self.numvars:
+            _altbasis = self.with_numvars(key1[1])
+        else:
+            _altbasis = self
+        return _altbasis.attach_key(self.ring.mul(self.ring.from_dict({key1[0]: coeff}), self.ring(key2[0])))
 
     @property
     def zero_monom(self):
         return self.as_key([])
 
     def from_expr(self, expr):
-        return self.ring.from_expr(expr)
+        return self.attach_key(self.ring.from_expr(expr))
 
     def transition(self, other_basis):
         if isinstance(other_basis, SchubertPolyBasis):
-            return lambda x: x
-        # if isinstance(other_basis, EXBasis):
-        #     return lambda x: {S.One: self.ring(x).as_polynomial()}
+            return lambda x: other_basis.attach_key({k[0]: v for k, v in x.items()})
         if isinstance(other_basis, MonomialBasis):
             from .variables import genset_dict_from_expr
 
-            return lambda x: genset_dict_from_expr(self.ring.from_dict({k[0]: v for k, v in x.items()}).as_polynomial(), other_basis.genset)
+            return lambda x: other_basis.attach_key(genset_dict_from_expr(self.ring.from_dict({k[0]: v for k, v in x.items()}).as_polynomial(), other_basis.genset))
         return None
