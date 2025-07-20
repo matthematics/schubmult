@@ -160,11 +160,8 @@ class PolynomialAlgebraElement(DomainElement, DefaultPrinting, dict):
 
     def change_basis(self, other_basis):
         new_ring = PolynomialAlgebra(basis=other_basis)
-        ret = new_ring.zero
         tfunc = self.ring._basis.transition(other_basis)
-        for k, v in self.items():
-            ret += v * new_ring.from_dict(tfunc(k))
-        return ret
+        return new_ring.from_dict(tfunc(self))
 
     def coproduct(self):
         T = self.ring @ self.ring
@@ -272,11 +269,12 @@ class PolynomialAlgebra(Ring, CompositeDomain):
         return self.from_dict({self._basis.zero_monom: S.One})
 
     def from_dict(self, element):
-        poly = self.zero
-        for monom, coeff in element.items():
-            if coeff != self.domain.zero:
-                poly[monom] = coeff
-        return poly
+        # poly = self.zero
+        # for monom, coeff in element.items():
+        #     if coeff != self.domain.zero:
+        #         poly[monom] = coeff
+        # return poly
+        return self.dtype(element)
 
     @property
     def zero(self):

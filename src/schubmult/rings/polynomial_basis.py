@@ -101,7 +101,9 @@ class MonomialBasis(PolynomialBasis):
         return isinstance(x, tuple | list) and len(x) <= self.numvars
 
     def as_key(self, x):
-        return tuple([*x] + [0] * (self.numvars - len(x)))
+        if len(x) > self.numvars:
+            raise ValueError(f"Key {x} exceeds the number of variables {self.numvars}.")
+        return (*x, *([0] * (self.numvars - len(x))))
 
     def printing_term(self, k):
         return GenericPrintingTerm(str(self.expand_monom(k)), "")
@@ -122,17 +124,16 @@ class MonomialBasis(PolynomialBasis):
         return {tuple(a + b for a, b in zip_longest(key1, key2, fillvalue=0)): coeff}
 
     def expand_monom(self, monom):
-        monom = self.as_key(monom)
-        return Mul(*[self.genset[i + 1] ** monom[i] for i in range(self.numvars)])
+        return Mul(*[self.genset[i + 1] ** monom[i] for i in range(len(monom))])
 
     def expand(self, dct):
-        return Add(*[v * self.expand(monom) for monom, v in dct.items()])
+        return Add(*[v * self.expand_monom(k) for k, v in dct.items()])
 
     def transition(self, other_basis):
         if isinstance(other_basis, MonomialBasis):
-            return lambda x: {self.as_key(x): S.One}
+            return lambda x: x
         if isinstance(other_basis, SchubertPolyBasis):
-            return lambda x: other_basis.ring.from_expr(self.expand_monom(x))
+            return lambda x: other_basis.ring.from_expr(Add(*[v * self.expand_monom(k) for k, v in x.items()]))
         return None
 
     def from_expr(self, expr):
@@ -188,11 +189,11 @@ class SchubertPolyBasis(PolynomialBasis):
 
     def transition(self, other_basis):
         if isinstance(other_basis, SchubertPolyBasis):
-            return lambda x: {x: S.One}
+            return lambda x: x
         # if isinstance(other_basis, EXBasis):
         #     return lambda x: {S.One: self.ring(x).as_polynomial()}
         if isinstance(other_basis, MonomialBasis):
             from .variables import genset_dict_from_expr
 
-            return lambda x: genset_dict_from_expr(self.ring(x).as_polynomial(), other_basis.genset)
+            return lambda x: genset_dict_from_expr(self.ring.from_dict(x).as_polynomial(), other_basis.genset)
         return None

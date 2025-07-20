@@ -528,6 +528,29 @@ class DoubleSchubertRing(BaseSchubertRing):
         except Exception:
             return super().from_expr(expr)
 
+    # def from_expr(self, expr):
+    #     from .polynomial_algebra import PA
+    #     ret = self.zero
+    #     dexpr = PA.from_expr(expr)
+    #     try:
+    #         while dexpr.keys():
+    #             # dct = genset_dict_from_expr(expr, self.genset)
+    #             key = next(iter(sorted(dexpr.keys(), reverse=True)))
+    #             # print(f"{key=} {dexpr[key]=}")
+    #             term = self.from_dict({uncode(key): dexpr[key]})
+    #             # print(f"{term=}")
+    #             ret += term
+    #             dingopants = PA.from_expr(term.as_polynomial())
+    #             # print(f"{dingopants=}")
+    #             dexpr = dexpr - dingopants
+    #             dexpr = PA.from_dict({k: v for k, v in dexpr.items() if expand(v) != S.Zero})
+    #             # print(f"{dexpr=}")
+    #         # print("dingbats")
+    #         return ret
+    #     except Exception:
+    #         raise
+    #         #return super().from_expr(expr)
+
     def mul_expr(self, elem, x):
         x = sympify(x)
         ind = self.genset.index(x)

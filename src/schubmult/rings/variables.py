@@ -11,6 +11,7 @@ from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
+DEF_GENSET_SIZE = 20
 
 class GeneratingSet_base:
     def __new__(cls, *args):
@@ -81,7 +82,7 @@ class GeneratingSet(GeneratingSet_base):
     @staticmethod
     def __xnew__(_class, name):
         obj = GeneratingSet_base.__new__(_class, name)
-        obj._symbols_arr = tuple([symbols(f"{name}_{i}") for i in range(100)])
+        obj._symbols_arr = tuple([symbols(f"{name}_{i}") for i in range(DEF_GENSET_SIZE)])
         obj._index_lookup = {obj._symbols_arr[i]: i for i in range(len(obj._symbols_arr))}
         return obj
 
@@ -270,9 +271,9 @@ class NotEnoughGeneratorsError(ValueError):
 @cache
 def poly_genset(v: str):
     if v == ZeroVar:
-        return ZeroGeneratingSet(tuple([sympify(0) for i in range(100)]))
+        return ZeroGeneratingSet(tuple([sympify(0) for i in range(DEF_GENSET_SIZE)]))
     if v == NoneVar:
-        return ZeroGeneratingSet(tuple([sympify(0) for i in range(100)]))
+        return ZeroGeneratingSet(tuple([sympify(0) for i in range(DEF_GENSET_SIZE)]))
     return GeneratingSet(str(v))
 
 def genset_dict_from_expr(expr, genset):
