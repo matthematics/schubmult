@@ -514,19 +514,19 @@ class DoubleSchubertRing(BaseSchubertRing):
         return ret
 
     def from_expr(self, expr):
-        ret = self.zero
-        try:
-            expr = sympify(expr)
-            while expr != S.Zero:
-                dct = genset_dict_from_expr(expr, self.genset)
-                key = sorted(dct.keys(), reverse=True)[0]
-                term = self.from_dict({uncode(key): dct[key]})
-                ret += term
-                expr -= term.as_polynomial()
-                expr = expand(expr)
-            return ret
-        except Exception:
-            return super().from_expr(expr)
+        # ret = self.zero
+        # try:
+        #     expr = sympify(expr)
+        #     while expr != S.Zero:
+        #         dct = genset_dict_from_expr(expr, self.genset)
+        #         key = sorted(dct.keys(), reverse=True)[0]
+        #         term = self.from_dict({uncode(key): dct[key]})
+        #         ret += term
+        #         expr -= term.as_polynomial()
+        #         expr = expand(expr)
+        #     return ret
+        # except Exception:
+        return super().from_expr(expr)
 
     # def from_expr(self, expr):
     #     from .polynomial_algebra import PA
