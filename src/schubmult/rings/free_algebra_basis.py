@@ -404,6 +404,22 @@ class ElementaryBasis(FreeAlgebraBasis):
     def as_key(cls, x):
         return (x[0], x[1])
 
+    @classmethod
+    def product(cls, key1, key2, coeff=S.One):
+        tup1, numvars1 = key1
+        tup2, numvars2 = key2 
+        # so the sum of the length parititions of these is a partition
+        length_partition1 = list(range(numvars1, 0, -1))
+        length_partition2 = list(range(numvars2, 0, -1))
+        if len(length_partition1) < len(tup1):
+            length_partition1 = [numvars1] * (len(tup1) - len(length_partition1)) + length_partition1
+        if len(length_partition2) < len(tup2):
+            length_partition2 = [numvars2] * (len(tup2) - len(length_partition2)) + length_partition2
+        from itertools import zip_longest
+        total_length_partition = [a + b for a, b in zip_longest(length_partition1, length_partition2, fillvalue=0)]
+        
+        #return dict(coeff * splugSx(*cls.as_key(key1)) * splugSx(*cls.as_key(key2)))
+
     zero_monom = ((), 0)
 
     @classmethod
@@ -435,7 +451,7 @@ class ElementaryBasis(FreeAlgebraBasis):
         boink_part = tup[-numvars + 1 :]
         painted_bagel = Sx([]).ring.zero
         pickles = [mu[i] - flat_part[len(flat_part) - 1 - i] for i in range(len(flat_part))]
-        painted_bagel = Sx(monom_sym(pickles, len(flat_part), Sx([]).ring.genset))
+        painted_bagel = Sx.from_expr(monom_sym(pickles, len(flat_part), Sx([]).ring.genset))
 
         painted_bagel *= prod([x[i + 1] ** (mu[i] - boink_part[i - len(flat_part)]) for i in range(len(flat_part), len(mu))])
         w0 = ~uncode(mu)
