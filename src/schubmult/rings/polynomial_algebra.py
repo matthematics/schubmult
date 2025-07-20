@@ -1,6 +1,5 @@
 from functools import cache
 
-from schubmult.perm_lib import uncode
 from schubmult.symbolic import (
     EXRAW,
     Add,
@@ -10,7 +9,6 @@ from schubmult.symbolic import (
     DomainElement,
     Ring,
     S,
-    expand,
     sstr,
     sympify,
     sympify_sympy,
@@ -20,10 +18,8 @@ from schubmult.symbolic import (
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
-from .abstract_schub_poly import GenericPrintingTerm
 from .base_schubert_ring import BaseSchubertElement
 from .polynomial_basis import EXBasis
-from .schubert_ring import Sx
 
 logger = get_logger(__name__)
 
@@ -152,7 +148,7 @@ class PolynomialAlgebraElement(DomainElement, DefaultPrinting, dict):
     def as_coefficients_dict(self):
         return {self.ring.printing_term(k, self.ring): sympify(v) for k, v in self.items()}
 
-    # def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
+    # def expand(self, deep=True, *args, **kwargs):
     #     return self.change_basis(EXBasis())
 
     @property

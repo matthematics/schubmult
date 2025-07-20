@@ -18,11 +18,11 @@ n = 100
 
 
 class Permutation:
-
     @classmethod
     def all_permutations(cls, n):
         from itertools import permutations
-        return [cls(perm) for perm in list(permutations(list(range(1, n+1))))]
+
+        return [cls(perm) for perm in list(permutations(list(range(1, n + 1))))]
 
     def parabolic_reduce(self, *descs):
         descs = set(descs)
@@ -33,8 +33,8 @@ class Permutation:
             found = False
             for d in reduced_perm.descents():
                 if d not in descs:
-                    w_J = ~((~w_J).swap(d, d+1))
-                    reduced_perm = reduced_perm.swap(d, d+1)
+                    w_J = ~((~w_J).swap(d, d + 1))
+                    reduced_perm = reduced_perm.swap(d, d + 1)
                     found = True
                     break
         return reduced_perm, w_J
@@ -507,7 +507,6 @@ class NilPlactic:
     def standardize(word):
         if len(word) == len(set(word)) and set(word) == set(range(1, len(word) + 1)):
             return word
-        mn = min(word)
         index = 0
         while index > 0 and word[index - 1] <= word[index]:
             index -= 1
@@ -597,7 +596,7 @@ class NilPlactic:
                 row_end += 1
         row = self._word[row_start : row_end + 1]
         pos = position - row_start
-        val = row.pop(pos)
+        return row.pop(pos)
 
     def __eq__(self, other):
         if isinstance(other, NilPlactic):
@@ -685,8 +684,7 @@ bad_classical_patterns = [Permutation([1, 4, 2, 3]), Permutation([1, 4, 3, 2]), 
 
 ID_PERM = Permutation([])
 
+
 @cache
 def s(i):
-    return Permutation([*list(range(1,i)), i+1, i])
-
-
+    return Permutation([*list(range(1, i)), i + 1, i])

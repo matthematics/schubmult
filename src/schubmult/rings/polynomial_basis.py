@@ -1,10 +1,9 @@
-from functools import cache
 from itertools import zip_longest
 
 # If you use symbolic coefficients like S.One, import S from your symbolic module
 from schubmult.perm_lib import Permutation
 from schubmult.rings.abstract_schub_poly import GenericPrintingTerm
-from schubmult.symbolic import Add, Mul, S, sstr
+from schubmult.symbolic import Add, Mul, S
 
 # Utility for combining dictionaries with permutation keys
 from schubmult.utils.perm_utils import add_perm_dict
@@ -14,7 +13,7 @@ from schubmult.utils.perm_utils import add_perm_dict
 # If transition_schubert is a method of FreeAlgebraBasis or another class, import accordingly
 # For example, if it's a method of FreeAlgebraBasis, you don't need to import it separately
 # If you use TensorRing in change_tensor_basis
-from .schubert_ring import SingleSchubertRing, Sx
+from .schubert_ring import Sx
 
 
 class PolynomialBasis:
@@ -143,16 +142,16 @@ class MonomialBasis(PolynomialBasis):
 
 
 class EXBasis(PolynomialBasis):
-    def is_key(self, x):
+    def is_key(self, x):  # noqa: ARG002
         return True
 
     def as_key(self, x):
         return x
 
-    def printing_term(self, k):
+    def printing_term(self, k):  # noqa: ARG002
         return S.One
 
-    def product(self, key1, key2, coeff=S.One):
+    def product(self, key1, key2, coeff=S.One):  # noqa: ARG002
         return {S.One: coeff}
 
     def transition(self, other_basis):
