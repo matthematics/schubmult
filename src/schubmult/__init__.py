@@ -6,7 +6,7 @@ from .perm_lib import ID_PERM, NilPlactic, Permutation, Plactic, permtrim, theta
 from .rings import ASx, SchubertBasis, SchubertSchurBasis, WordBasis
 from .rings.free_algebra import FA
 from .rings.nil_hecke import NilHeckeRing, df
-from .rings.poly_lib import divide_out_diff, efficient_subs, elem_sym_poly, elem_sym_poly_q, q_vector, split_up, xreplace_genvars
+from .rings.poly_lib import divide_out_diff, efficient_subs, elem_sym_poly, elem_sym_poly_q, monom_sym, q_vector, split_up, xreplace_genvars
 from .rings.quantum_schubert_ring import (
     QDSx,
     QPDSx,
@@ -87,6 +87,7 @@ __all__ = [
     "elem_sym_poly_q",
     "elem_sym_unify",
     "factor_out_q_keep_factored",
+    "monom_sym",
     "mult_poly_double",
     "mult_poly_py",
     "mult_poly_q",

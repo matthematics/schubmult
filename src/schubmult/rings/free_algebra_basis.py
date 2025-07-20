@@ -79,6 +79,7 @@ class FreeAlgebraBasis:
     @cache
     def coproduct(cls, key):
         from ._mul_utils import _tensor_product_of_dicts_first
+
         return FreeAlgebraBasis.compose_transition(
             lambda x: _tensor_product_of_dicts_first(SchubertBasis.transition(cls)(x[0]), SchubertBasis.transition(cls)(x[1])),
             FreeAlgebraBasis.compose_transition(lambda y: SchubertBasis.coproduct(y), cls.transition_schubert(*key)),
@@ -187,6 +188,7 @@ class SchubertBasis(FreeAlgebraBasis):
     @cache
     def coproduct(cls, key):
         from ._mul_utils import _tensor_product_of_dicts_first
+
         # print(f"{key=}")
         dct = cls.transition_word(*key)
         res = {}
@@ -221,27 +223,29 @@ class SchubertBasis(FreeAlgebraBasis):
             dct2[(lambd2, perm1)] = v
         return {(k[0], *([0] * (numvars - len(k[0]))), k[1]): v for k, v in dct2.items()}
 
+    # schubert schur => elementary multiplicative
 
     @classmethod
     def transition_elementary(cls, perm, numvars):
         from schubmult.utils.perm_utils import p_trans
 
         from .variables import genset_dict_from_expr
+
         mu = p_trans(list(range(numvars, 0, -1)))
         if len(mu) < len(perm) - 1:
             mu = ([numvars] * (len(perm) - 1 - len(mu))) + mu
         w0 = uncode(mu)
-        dct = genset_dict_from_expr(Sx((perm * w0)).as_polynomial(), Sx([]).ring.genset)
+        dct = genset_dict_from_expr(Sx(perm * w0).as_polynomial(), Sx([]).ring.genset)
         ret = {}
 
         for tup, v in dct.items():
-            new_tup = list(([mu[i] - tup[i] for i in range(len(tup))]))
-            
+            new_tup = [mu[i] - tup[i] for i in range(len(tup))]
+
             if len(new_tup) < len(mu):
-                new_tup += mu[len(new_tup):]
-            ret[(tuple([*list(sorted(new_tup[:-numvars+1],reverse=True)),*new_tup[-numvars+1:]]), numvars)] = v
+                new_tup += mu[len(new_tup) :]
+            ret[((*sorted(new_tup[: -numvars + 1], reverse=True), *new_tup[-numvars + 1 :]), numvars)] = v
         return ret
-    
+
     @classmethod
     def transition_separated_descents(cls, k, *x):
         perm, numvars = x
@@ -400,71 +404,7 @@ class ElementaryBasis(FreeAlgebraBasis):
     def as_key(cls, x):
         return (x[0], x[1])
 
-    # @classmethod
-    # def product(cls, key1, key2, coeff=S.One):
-    #     return dict(coeff * splugSx(*cls.as_key(key1)) * splugSx(*cls.as_key(key2)))
-
     zero_monom = ((), 0)
-
-    # @classmethod
-    # @cache
-    # def coproduct(cls, key):
-    #     from ._mul_utils import _tensor_product_of_dicts_first
-
-    #     dct = cls.transition_word(*key)
-    #     res = {}
-    #     wbasis = WordBasis
-    #     for key_word, v in dct.items():
-    #         dct2 = wbasis.coproduct(key_word, v)
-    #         # print(f"{dct2=}")
-    #         for (k1, k2), v2 in dct2.items():
-    #             dct0 = wbasis.transition_schubert(k1)
-    #             dct1 = wbasis.transition_schubert(k2)
-    #             res = add_perm_dict(res, {k: v0 * v2 for k, v0 in _tensor_product_of_dicts_first(dct0, dct1).items()})
-    #     return res
-
-    # @classmethod
-    # def transition_schubert_schur(cls, *x):
-    #     perm, numvars = x
-    #     # schur(n)schubert(n)schur(m,init)schubert(n,end)
-    #     # expansion vmu^{-1} in m schur (complement) n schubert (times w0)
-    #     extra = len(perm) - numvars
-
-    #     if extra == 0:
-    #         return {(tuple([0] * numvars), perm, numvars): 1}
-    #     dom = uncode([numvars] * extra + list(range(numvars - 1, 0, -1)))
-    #     tosplit = perm * dom
-    #     dct = Sx(tosplit).coproduct(*list(range(1, extra + 1)))
-    #     w0 = uncode(list(range(numvars - 1, 0, -1)))
-    #     w0s = uncode([numvars] * extra)
-    #     dct2 = {}
-    #     for (lambd, perm0), v in dct.items():
-    #         perm1 = perm0 * w0
-    #         lambd2 = tuple(trimcode(lambd * (~w0s)))
-    #         dct2[(lambd2, perm1)] = v
-    #     return {(k[0], *([0] * (numvars - len(k[0]))), k[1]): v for k, v in dct2.items()}
-
-    # @classmethod
-    # def transition_separated_descents(cls, k, *x):
-    #     perm, numvars = x
-    #     # schur(n)schubert(n)schur(m,init)schubert(n,end)
-    #     # expansion vmu^{-1} in m schur (complement) n schubert (times w0)
-    #     # extra = len(perm) - numvars + k
-
-    #     # if extra == 0:
-    #     #     return {(tuple([0] * numvars), perm, numvars): 1}
-    #     # dom = uncode([numvars] * extra + list(range(numvars - 1, 0, -1)))
-    #     dom = uncode(list(range(len(perm) - 1, 0, -1)))
-    #     tosplit = perm * dom
-    #     dct = Sx(tosplit).coproduct(*list(range(1, len(perm) - k + 1)))
-    #     w0 = uncode(list(range(k - 1, 0, -1)))
-    #     w0s = uncode(list(range(len(perm) - 1, k - 1, -1)))
-    #     dct2 = {}
-    #     for (perm0, perm1), v in dct.items():
-    #         perm0_out = perm0 * (~w0s)
-    #         perm1_out = perm1 * (w0)
-    #         dct2[(perm0_out, perm1_out, numvars)] = v
-    #     return dct2
 
     @classmethod
     def transition(cls, other_basis):
@@ -482,49 +422,34 @@ class ElementaryBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_schubert(cls, tup, numvars):
-        from schubmult.abc import e, x
+        from schubmult.abc import x
         from schubmult.symbolic import prod
 
-        mu = list(range(numvars,0,-1))
+        from .poly_lib import monom_sym
+
+        mu = list(range(numvars, 0, -1))
         if len(mu) < len(tup):
-            mu = [*([numvars]*(len(tup) - len(mu))), *mu]
-        # froff = Sx([]).ring.from_expr(prod([e(mu[i]-tup[i] ,mu[i],x[1:]) for i in range(len(mu))]))
-        # N = max([len(perm) for perm, v in froff.items() if v != S.Zero])
-        # if N - 1 > len(mu):
-        #     mu = [*([numvars]*(N - 1 - len(mu))), *mu]
-        #     tup = [*([0]*(N-1-len(mu))),*tup[:-numvars+1], *tup[-numvars+1:]]
-        # elem sym monomial!
-            #mu = [*list(range(numvars + len(tup) - len(mu),numvars,-1)), *mu]
-            #mu = []
-        # print(f"{mu=}")
-        # print(f"{tup=}")
-        #cd = (~mu).code    
-        # print(f"{mu=} {tup=}")
-        from itertools import permutations
-        flat_part = tup[:-numvars+1]
-        boink_part = tup[-numvars+1:]
-        pickles = set(permutations(flat_part))
+            mu = [*([numvars] * (len(tup) - len(mu))), *mu]
+
+        flat_part = tup[: -numvars + 1]
+        boink_part = tup[-numvars + 1 :]
         painted_bagel = Sx([]).ring.zero
-        for tuppo in pickles:
-            #tup0 = [*tuppo, *tup[-numvars+1:]]
-            painted_bagel += Sx([]).ring.from_expr(prod([(x[i+1])**(mu[i] - tuppo[i]) for i in range(len(tuppo))]))
-        painted_bagel *= (prod([x[i+1]**(mu[i]-boink_part[i - len(flat_part)]) for i in range(len(flat_part), len(mu))]))
-        # print(f"{painted_bagel=}")
+        pickles = [mu[i] - flat_part[len(flat_part) - 1 - i] for i in range(len(flat_part))]
+        painted_bagel = Sx(monom_sym(pickles, len(flat_part), Sx([]).ring.genset))
+
+        painted_bagel *= prod([x[i + 1] ** (mu[i] - boink_part[i - len(flat_part)]) for i in range(len(flat_part), len(mu))])
         w0 = ~uncode(mu)
-        # print(f"{w0.code=}")
-        # print(f"{(~w0).code=}")
         monom = {}
         for k, v in painted_bagel.items():
-            if (k*w0).inv != w0.inv - k.inv:
+            if (k * w0).inv != w0.inv - k.inv:
                 raise Exception
-            monom[(k*w0, numvars)] = v
-        # monom = {SchubertBasis.as_key((k * w0, numvars)): v for k, v in painted_bagel.items() if v != S.Zero}
-        # print(f"{monom=}")
+            monom[(k * w0, numvars)] = v
         return dict(monom)
 
     @classmethod
     def printing_term(cls, k):
         from .abstract_schub_poly import GenericPrintingTerm
+
         return GenericPrintingTerm(k, "Elem")
 
 

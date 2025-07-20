@@ -265,6 +265,20 @@ def q_vector(q_exp, q_var=_vars.q_var):
 
     return None
 
+def monom_sym(partition, numvars, genset):
+    if numvars == 0:
+        return S.One
+    if numvars < 0:
+        return S.Zero
+    if len(partition) < numvars:
+        partition = [*partition, *([0]*(numvars-len(partition)))]
+    pm1 = -1
+    res = S.Zero
+    for i, p in enumerate(partition):
+        if pm1 != p:
+            pm1 = p
+            res += (genset[numvars] ** p)*monom_sym(partition[:i]+partition[i+1:], numvars-1, genset)
+    return res
 
 def xreplace_genvars(poly, vars1, vars2):
     subs_dict = {}
