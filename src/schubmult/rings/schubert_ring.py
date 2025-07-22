@@ -180,10 +180,14 @@ class DoubleSchubertElement(BaseSchubertElement):
             result += sympify(v) * schubpoly_classical_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=self.ring.symbol_elem_func)
         return result
 
-    def cem_rep(self, elem_func):
+    def cem_rep(self, elem_func, mumu=None):
         result = S.Zero
-        for k, v in self.items():
-            result += sympify(v) * schubpoly_classical_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=elem_func)
+        if mumu:
+            for k, v in self.items():
+                result += sympify(v) * schubpoly_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=elem_func, mumu=mumu)
+        else:
+            for k, v in self.items():
+                result += sympify(v) * schubpoly_classical_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=elem_func)
         return result
 
     def coproduct(self, *indices, alt_coeff_genset=None, on_coeff_gens=False, gname1=None, gname2=None):
