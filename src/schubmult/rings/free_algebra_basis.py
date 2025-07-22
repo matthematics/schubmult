@@ -243,7 +243,7 @@ class SchubertBasis(FreeAlgebraBasis):
 
             if len(new_tup) < len(mu):
                 new_tup += mu[len(new_tup) :]
-            ret[((*sorted(new_tup[: -numvars + 1], reverse=True), *new_tup[-numvars + 1 :]), numvars)] = v
+            ret[((*reversed(new_tup[-numvars + 1 :]), *sorted(new_tup[: -numvars + 1])), numvars)] = v
         return ret
 
     @classmethod
@@ -446,7 +446,7 @@ class ElementaryBasis(FreeAlgebraBasis):
         mu = list(range(numvars, 0, -1))
         if len(mu) < len(tup):
             mu = [*([numvars] * (len(tup) - len(mu))), *mu]
-
+        tup = tuple(reversed(tup))
         flat_part = tup[: -numvars + 1]
         boink_part = tup[-numvars + 1 :]
         painted_bagel = Sx([]).ring.zero
@@ -461,6 +461,32 @@ class ElementaryBasis(FreeAlgebraBasis):
                 raise Exception
             monom[(k * w0, numvars)] = v
         return dict(monom)
+
+    # @classmethod
+    # def transition_schubert(cls, tup, numvars):
+    #     from schubmult.abc import x
+    #     from schubmult.symbolic import prod
+
+    #     from .poly_lib import monom_sym
+
+    #     mu = list(range(numvars, 0, -1))
+    #     if len(mu) < len(tup):
+    #         mu = [*([numvars] * (len(tup) - len(mu))), *mu]
+
+    #     flat_part = tup[:numvars - 1]
+    #     boink_part = tup[numvars - 1 :]
+    #     painted_bagel = Sx([]).ring.zero
+    #     pickles = [mu[i] - flat_part[len(flat_part) - 1 - i] for i in range(len(flat_part))]
+    #     painted_bagel = Sx.from_expr(monom_sym(pickles, len(flat_part), Sx([]).ring.genset))
+
+    #     painted_bagel *= prod([x[i + 1] ** (mu[i] - boink_part[len(mu) - 1 - i - len(flat_part)]) for i in range(len(flat_part), len(mu))])
+    #     w0 = ~uncode(mu)
+    #     monom = {}
+    #     for k, v in painted_bagel.items():
+    #         if (k * w0).inv != w0.inv - k.inv:
+    #             raise Exception
+    #         monom[(k * w0, numvars)] = v
+    #     return dict(monom)
 
     @classmethod
     def printing_term(cls, k):

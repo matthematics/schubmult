@@ -225,7 +225,7 @@ class SchubertPolyBasis(PolynomialBasis):
         from schubmult.perm_lib import uncode
         from schubmult.rings import FA
 
-        def elem_func(p, k, *args):
+        def elem_func(p, k, *_):
             return FA(p, k)
 
         elem = self.ring.from_dict(dct)
