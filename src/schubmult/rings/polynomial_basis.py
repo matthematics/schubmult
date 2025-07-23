@@ -166,6 +166,9 @@ class MonomialBasis(PolynomialBasis):
             return lambda x: other_basis.attach_key(x)
         if isinstance(other_basis, SchubertPolyBasis):
             return lambda x: other_basis.attach_key(other_basis.ring.from_expr(Add(*[v * self.expand_monom(k) for k, v in x.items()])))
+        if isinstance(other_basis, ElemSymPolyBasis):
+            spb = SchubertPolyBasis(numvars=other_basis.numvars, ring=other_basis.ring)
+            return lambda x: spb.transition(other_basis)(self.transition(spb)(x))
         return None
 
     def from_expr(self, expr):
@@ -290,7 +293,7 @@ class SchubertPolyBasis(PolynomialBasis):
 
 class ElemSymPolyBasis(PolynomialBasis):
     def is_key(self, x):
-        return isinstance(x, tuple | list) and len(x) <= self.numvars
+        return isinstance(x, tuple | list)
 
     def as_key(self, x):
         return ((*x,), self.numvars)
@@ -303,6 +306,10 @@ class ElemSymPolyBasis(PolynomialBasis):
 
     def with_numvars(self, numvars):
         return self.__class__(numvars=numvars, ring=self.ring)
+
+    @cached_property
+    def monomial_basis(self):
+        return MonomialBasis(numvars=self.numvars, genset=self.ring.genset)
 
     @property
     def numvars(self):
@@ -340,7 +347,7 @@ class ElemSymPolyBasis(PolynomialBasis):
             to_add = S.One
             for i, a in enumerate(k[:n]):
                 to_add *= expand_func(e(a, i + 1, self.ring.genset[1:]))
-            for a in enumerate(k[n:]):
+            for a in k[n:]:
                 to_add *= expand_func(e(a, n, self.ring.genset[1:]))
             res += v * to_add
         return res
