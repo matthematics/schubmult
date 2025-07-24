@@ -100,14 +100,17 @@ class PolynomialBasis:
         return ret_dict
 
     def product(self, key1, key2, coeff=S.One):
-        mnb = MonomialBasis(self.numvars, self.genset)
-        left = self.transition(mnb)(key1)
-        right = self.transition(mnb)(key2)
+        mnb = MonomialBasis(numvars=self.numvars, genset=self.genset)
+        left = self.transition(mnb)({key1: coeff})
+        right = self.transition(mnb)({key2: S.One})
+
         ret = {}
 
         for key_schub_right, v in right.items():
+            # print(f"{key_schub_right=} {v=}")
             for key_schub_left, v2 in left.items():
-                ret = add_perm_dict(ret, PolynomialBasis.compose_transition(mnb.transition(self), MonomialBasis.product(key_schub_left, key_schub_right, v * v2 * coeff)))
+                # print(f"{key_schub_left=} {v2=}")
+                ret = add_perm_dict(ret, mnb.transition(self)(mnb.product(key_schub_left, key_schub_right, v * v2 * coeff)))
         return ret
 
 
@@ -119,6 +122,9 @@ class MonomialBasis(PolynomialBasis):
         if len(x) > self.numvars:
             raise ValueError(f"Length of key {x} exceeds the number of variables {self.numvars}.")
         return (*x, *([0] * (self.numvars - len(x))))
+
+    def attach_key(self, dct):
+        return dct
 
     def printing_term(self, k):
         return GenericPrintingTerm(str(self.expand_monom(k)), "")
@@ -147,6 +153,7 @@ class MonomialBasis(PolynomialBasis):
         self._genset = genset
 
     def product(self, key1, key2, coeff=S.One):
+        # print(f"{key1=} {key2=} {coeff=}")
         if len(key1) != len(key2):
             return {}
         if len(key1) != self.numvars:
@@ -344,12 +351,18 @@ class ElemSymPolyBasis(PolynomialBasis):
 
         res = S.Zero
         for (k, n), v in dct.items():
+            # print(f"{(k,n)=} {v=}")
             to_add = S.One
             for i, a in enumerate(k[:n]):
+                # if a > i +1:
+                    # print(f"{a=} {i=} a>i+1 waffle")
                 to_add *= expand_func(e(a, i + 1, self.ring.genset[1:]))
+                # print(f"{to_add=}")
             for a in k[n:]:
                 to_add *= expand_func(e(a, n, self.ring.genset[1:]))
+                # print(f"{to_add=    }")
             res += v * to_add
+        # print(f"{res=}")
         return res
 
     def transition(self, other_basis):
