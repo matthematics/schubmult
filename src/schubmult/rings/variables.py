@@ -11,7 +11,7 @@ from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
-DEF_GENSET_SIZE = 20
+DEF_GENSET_SIZE = 100
 
 class GeneratingSet_base:
     def __new__(cls, *args):

@@ -238,6 +238,8 @@ class SchubertBasis(FreeAlgebraBasis):
             mu = ([numvars] * (len(perm) - 1 - len(mu))) + mu
         w0 = uncode(mu)
         dct = genset_dict_from_expr(Sx(perm * w0).as_polynomial(), Sx([]).ring.genset)
+        # print(f"{dct=} ")
+        # print(f"{mu=}")
         ret = {}
 
         for tup, v in dct.items():
