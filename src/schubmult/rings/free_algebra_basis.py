@@ -121,6 +121,8 @@ class WordBasis(FreeAlgebraBasis):
         if len(key) == 1:
             key = key[0]
             dct = {}
+            # dct[((),(key,))] = coeff
+            # dct[((key,), ())] = coeff
             for i in range(key + 1):
                 dct[((i,), (key - i,))] = coeff
             return dct

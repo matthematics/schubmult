@@ -2,7 +2,7 @@ from .free_algebra import FA, FreeAlgebra, FreeAlgebraElement
 from .free_algebra_basis import ElementaryBasis, FreeAlgebraBasis, SchubertBasis, SchubertSchurBasis, SeparatedDescentsBasis, WordBasis
 from .nil_hecke import NilHeckeRing
 from .polynomial_algebra import PA, PolynomialAlgebra, PolynomialAlgebraElement
-from .polynomial_basis import ElemSymPolyBasis, MonomialBasis, PolynomialBasis, SchubertPolyBasis
+from .polynomial_basis import ElemSymPolyBasis, MonomialBasis, PolynomialBasis, SchubertPolyBasis, SepDescPolyBasis
 from .quantum_schubert_ring import QDSx, QPDSx, QPSx, QSx, QuantumDoubleSchubertElement, QuantumDoubleSchubertRing, QuantumSingleSchubertRing, make_parabolic_quantum_basis
 from .schubert_ring import DoubleSchubertElement, DoubleSchubertRing, DSx, ElemDoubleSchubertRing, SingleSchubertRing, Sx
 from .separated_descents import SeparatedDescentsRing, SeparatedDescentsRingElement
@@ -40,6 +40,7 @@ __all__ = [
     "SchubertBasis",
     "SchubertPolyBasis",
     "SchubertSchurBasis",
+    "SepDescPolyBasis",
     "SeparatedDescentsBasis",
     "SeparatedDescentsRing",
     "SeparatedDescentsRingElement",

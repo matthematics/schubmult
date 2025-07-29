@@ -181,6 +181,9 @@ class PolynomialAlgebraElement(DomainElement, DefaultPrinting, dict):
                 return all(v == S.Zero for v in diff.values())
         return False
 
+    def expand(self):
+        return self.ring._basis.expand(self)
+
     def __str__(self):
         return sstr(self)
 
