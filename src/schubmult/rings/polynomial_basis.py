@@ -40,8 +40,15 @@ class PolynomialBasis:
     @property
     def monomial_basis(self): ...
 
-    # @classmethod
-    # def product(self, key1, key2, coeff=S.One): ...
+    # def product(self, key1, key2, coeff=S.One):
+    #     sb = SchubertPolyBasis(numvars=self.numvars, ring=self.ring)
+    #     dct = self.transition(sb)({key1: coeff})
+    #     dct2 = self.transition(sb)({key2: S.One})
+    #     res_dict = {}
+    #     for k, v in dct.items():
+    #         for k2, v2 in dct2.items():
+    #             res_dict = add_perm_dict(res_dict, sb.product(k, k2, v * v2))
+    #     return res_dict
 
     # @classmethod
     # def coproduct(self, key, coeff=S.One): ...
@@ -114,7 +121,7 @@ class PolynomialBasis:
             # print(f"{key_schub_right=} {v=}")
             for key_schub_left, v2 in left.items():
                 # print(f"{key_schub_left=} {v2=}")
-                ret = add_perm_dict(ret, mnb.transition(self)(mnb.product(key_schub_left, key_schub_right, v * v2 * coeff)))
+                ret = add_perm_dict(ret, mnb.transition(self)(mnb.product(key_schub_left, key_schub_right, v * v2)))
         return ret
 
 
@@ -158,13 +165,13 @@ class MonomialBasis(PolynomialBasis):
 
     def product(self, key1, key2, coeff=S.One):
         # print(f"{key1=} {key2=} {coeff=}")
-        if len(key1) != len(key2):
-            return {}
-        if len(key1) != self.numvars:
-            _altbasis = self.with_numvars(key1[1])
-        else:
-            _altbasis = self
-        return _altbasis.attach_key({tuple(a + b for a, b in zip_longest(key1, key2, fillvalue=0)): coeff})
+        # if len(key1) != len(key2):
+        #     return {}
+        # if len(key1) != self.numvars:
+        #     _altbasis = self.with_numvars(key1[1])
+        # else:
+        #     _altbasis = self
+        return self.attach_key({tuple(a + b for a, b in zip_longest(key1, key2, fillvalue=0)): coeff})
 
     def expand_monom(self, monom):
         return Mul(*[self.genset[i + 1] ** monom[i] for i in range(len(monom))])
@@ -177,6 +184,9 @@ class MonomialBasis(PolynomialBasis):
             return lambda x: other_basis.attach_key(x)
         if isinstance(other_basis, SchubertPolyBasis):
             return lambda x: other_basis.attach_key(other_basis.ring.from_expr(Add(*[v * self.expand_monom(k) for k, v in x.items()])))
+        if isinstance(other_basis, SepDescPolyBasis):
+            bonky_basis = SchubertPolyBasis(numvars=other_basis.numvars, ring=other_basis.ring)
+            return lambda x: other_basis.attach_key(bonky_basis.transition(other_basis)(bonky_basis.attach_key(bonky_basis.ring.from_expr(Add(*[v * self.expand_monom(k) for k, v in x.items()])))))
         if isinstance(other_basis, ElemSymPolyBasis):
             spb = SchubertPolyBasis(numvars=other_basis.numvars, ring=other_basis.ring)
             return lambda x: spb.transition(other_basis)(self.transition(spb)(x))
@@ -246,7 +256,7 @@ class SchubertPolyBasis(PolynomialBasis):
             part2 = self.ring.one
             for i in range(k):
                 part1 *= e(part[i],i+1,self.ring.genset[1:])
-            for i in range(k+1, len(part)):
+            for i in range(k, len(part)):
                 part2 *= e(part[i], n if i + 1 > n else i + 1, self.ring.genset[1:])
             for v, coeff1 in part1.items():
                 for u, coeff2 in part2.items():
@@ -341,6 +351,20 @@ class SepDescPolyBasis(PolynomialBasis):
     def with_numvars(self, numvars):
         return self.__class__(numvars=numvars, ring=self.ring, k=self.k)
 
+    def product(self, key1, key2, coeff=S.One):
+        mnb =SchubertPolyBasis(numvars=self.numvars, ring=self.ring)
+        left = self.transition(mnb)({key1: coeff})
+        right = self.transition(mnb)({key2: S.One})
+
+        ret = {}
+
+        for key_schub_right, v in right.items():
+            # print(f"{key_schub_right=} {v=}")
+            for key_schub_left, v2 in left.items():
+                # print(f"{key_schub_left=} {v2=}")
+                ret = add_perm_dict(ret, mnb.transition(self)(mnb.product(key_schub_left, key_schub_right, v * v2)))
+        return ret
+
     @property
     def numvars(self):
         return self._numvars
@@ -383,6 +407,7 @@ class SepDescPolyBasis(PolynomialBasis):
     #     return _altbasis.attach_key(self.ring.mul(self.ring.from_dict({key1[0]: coeff}), self.ring(key2[0])))
 
     def transition_schubert(self, dct, other_basis):
+        # print(f"{dct=}")
         # from schubmult.perm_lib import uncode
         # from schubmult.rings import FA
 
@@ -429,7 +454,7 @@ class SepDescPolyBasis(PolynomialBasis):
         #         res[key] = res.get(key, S.Zero) + v
         # return res
         out_ret = self.ring.zero
-        for (k1, k2), v in dct.items():
+        for (k1, k2, _, __), v in dct.items():
             out_ret += self.ring.from_dict({k1: v}) * self.ring.from_dict({k2: S.One})
         return other_basis.attach_key(dict(out_ret))
 
@@ -444,7 +469,8 @@ class SepDescPolyBasis(PolynomialBasis):
         if isinstance(other_basis, SchubertPolyBasis):
             return lambda x: self.transition_schubert(x, other_basis)
         if isinstance(other_basis, MonomialBasis):
-            return lambda x: other_basis.transition_monomial(self.transition_schubert(x, other_basis))
+            bonky_basis = SchubertPolyBasis(self.numvars, self.ring)
+            return lambda x: bonky_basis.transition(other_basis)(self.transition_schubert(x, bonky_basis))
         if isinstance(other_basis, ElemSymPolyBasis):
             return lambda x: other_basis.transition_elementary(self.transition_schubert(x, other_basis))
             # raise NotImplementedError("The bonky cheese need to implement the elemnify")
