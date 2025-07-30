@@ -97,6 +97,17 @@ class FreeAlgebraBasis:
                 ret = add_perm_dict(ret, FreeAlgebraBasis.compose_transition(SchubertBasis.transition(cls), SchubertBasis.product(key_schub_left, key_schub_right, v * v2 * coeff)))
         return ret
 
+    @classmethod
+    @cache
+    def internal_product(cls, key1, key2, coeff=S.One):
+        left = cls.transition(WordBasis)(key1)
+        right = cls.transition(WordBasis)(key2)
+        ret = {}
+
+        for key_schub_right, v in right.items():
+            for key_schub_left, v2 in left.items():
+                ret = add_perm_dict(ret, FreeAlgebraBasis.compose_transition(WordBasis.transition(cls), WordBasis.internal_product(key_schub_left, key_schub_right, v * v2 * coeff)))
+        return ret
 
 class WordBasis(FreeAlgebraBasis):
     @classmethod
@@ -134,6 +145,48 @@ class WordBasis(FreeAlgebraBasis):
             for k1, v1 in cp2.items():
                 ret = add_perm_dict(ret, {((*k0[0], *k1[0]), (*k0[1], *k1[1])): v0 * v1})
         return ret
+
+    @classmethod
+    def try_internal_product(cls, key1, key2, coeff=S.One):
+        from sage.combinat.integer_matrices import IntegerMatrices
+        bkey1 = [a + 1 for a in key1]
+        bkey2 = [a + 1 for a in key2]
+        mats = IntegerMatrices(bkey1, bkey2).list()
+        def mat_to_key(mat):
+            res = []
+            for row in mat:
+                for val in row:
+                    if val != 0:
+                        res.append(val - 1)
+            return tuple(res)
+        ret_dict = {}
+        for mat in mats:
+            key = mat_to_key(mat)
+            if key not in ret_dict:
+                ret_dict[key] = S.Zero
+            ret_dict[key] += coeff
+        return ret_dict
+
+    @classmethod
+    def internal_product(cls, key1, key2, coeff=S.One):
+        if 0 in key1 or 0 in key2:
+            return {}
+        from sage.combinat.integer_matrices import IntegerMatrices
+        mats = IntegerMatrices(key1, key2).list()
+        def mat_to_key(mat):
+            res = []
+            for row in mat:
+                for val in row:
+                    if val != 0:
+                        res.append(val)
+            return tuple(res)
+        ret_dict = {}
+        for mat in mats:
+            key = mat_to_key(mat)
+            if key not in ret_dict:
+                ret_dict[key] = S.Zero
+            ret_dict[key] += coeff
+        return ret_dict
 
     @classmethod
     def printing_term(cls, k):

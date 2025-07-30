@@ -147,6 +147,9 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         except CoercionFailed:
             return other.__rmul__(self)
 
+    def __matmul__(self, other):
+        return self.ring.matmul(self, other)
+
     def __rmul__(self, other):
         try:
             return self.ring.rmul(self, other)
@@ -356,6 +359,20 @@ class FreeAlgebra(Ring, CompositeDomain):
             for k0, v0 in elem.items():
                 for k, v in other.items():
                     ret += self.from_dict(self._basis.product(k0, k, v * v0))
+            return ret
+        raise CoercionFailed
+
+    def matmul(self, elem, other):
+        try:
+            other = self.domain_new(other)
+            return self.from_dict({k: other * v for k, v in elem.items()})
+        except Exception:
+            pass
+        if isinstance(other, FreeAlgebraElement):
+            ret = self.zero
+            for k0, v0 in elem.items():
+                for k, v in other.items():
+                    ret += self.from_dict(self._basis.internal_product(k0, k, v * v0))
             return ret
         raise CoercionFailed
 
