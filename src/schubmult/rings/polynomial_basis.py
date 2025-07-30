@@ -254,9 +254,9 @@ class SchubertPolyBasis(PolynomialBasis):
         for (part, n), coeff0 in dct2.items():
             part1 = self.ring.one
             part2 = self.ring.one
-            for i in range(k):
+            for i in range(k - 1):
                 part1 *= e(part[i],i+1,self.ring.genset[1:])
-            for i in range(k, len(part)):
+            for i in range(k - 1, len(part)):
                 part2 *= e(part[i], n if i + 1 > n else i + 1, self.ring.genset[1:])
             for v, coeff1 in part1.items():
                 for u, coeff2 in part2.items():
