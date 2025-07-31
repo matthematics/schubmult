@@ -15,6 +15,7 @@ from schubmult.symbolic import (
 from schubmult.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.perm_utils import add_perm_dict
 
+from .abstract_schub_poly import GenericPrintingTerm
 from .schubert_ring import DSx, Sx
 from .separated_descents import SeparatedDescentsRing
 
@@ -217,6 +218,62 @@ class WordBasis(FreeAlgebraBasis):
         if other_basis == SchubertSchurBasis:
             return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(SchubertSchurBasis), cls.transition_schubert(x))
         return None
+
+class JBasis(FreeAlgebraBasis):
+    @classmethod
+    def is_key(cls, x):
+        return isinstance(x, tuple | list)
+
+    @classmethod
+    def as_key(cls, x):
+        return tuple(x)
+
+    @staticmethod
+    def from_perm(perm, n):
+        cd = perm.code
+        if len(cd) < n:
+            return None
+        if 0 in cd[:n]:
+            return None
+        return cd[:n]
+
+    @classmethod
+    def product(cls, key1, key2, coeff=S.One):
+        key11 = (uncode([k - 1 for k in key1]), len(key1))
+        key22 = (uncode([k - 1 for k in key2]), len(key2))
+
+        dct = SchubertBasis.product(key11, key22, coeff)
+
+        dct_out = {}
+
+        for perm, v in dct_out.items():
+            kk = JBasis.from_perm(perm)
+            if kk:
+                dct_out[kk] = v
+        return dct_out
+
+    # NDD
+
+    zero_monom = ()
+
+
+    @classmethod
+    def printing_term(cls, k):
+        return GenericPrintingTerm("J", k)
+
+    @classmethod
+    def transition_schubert(cls, key):
+        return dict(WordBasis.tup_expand(key))
+
+    @classmethod
+    def transition(cls, other_basis):
+        # if other_basis == SchubertBasis:
+        #     return lambda x: cls.transition_schubert(x)
+        # if other_basis == WordBasis:
+        #     return lambda x: {x: S.One}
+        # if other_basis == SchubertSchurBasis:
+        return lambda x: FreeAlgebraBasis.compose_transition(lambda k: JBasis.from_perm(*k), JBasis.transition_word(x))
+        # return None
 
 
 class SchubertBasis(FreeAlgebraBasis):
