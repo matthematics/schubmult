@@ -98,7 +98,6 @@ class FreeAlgebraBasis:
         return ret
 
     @classmethod
-    @cache
     def internal_product(cls, key1, key2, coeff=S.One):
         left = cls.transition(WordBasis)(key1)
         right = cls.transition(WordBasis)(key2)
