@@ -89,6 +89,16 @@ class FreeAlgebraBasis:
 
     @classmethod
     @cache
+    def bcoproduct(cls, key):
+        from ._mul_utils import _tensor_product_of_dicts_first
+
+        return FreeAlgebraBasis.compose_transition(
+            lambda x: _tensor_product_of_dicts_first(WordBasis.transition(cls)(x[0]), WordBasis.transition(cls)(x[1])),
+            FreeAlgebraBasis.compose_transition(lambda y: WordBasis.bcoproduct(y), cls.transition(WordBasis)(key)),
+        )
+    
+    @classmethod
+    @cache
     def product(cls, key1, key2, coeff=S.One):
         left = cls.transition(WordBasis)(key1)
         right = cls.transition(WordBasis)(key2)
@@ -148,6 +158,28 @@ class WordBasis(FreeAlgebraBasis):
                 ret = add_perm_dict(ret, {((*k0[0], *k1[0]), (*k0[1], *k1[1])): v0 * v1})
         return ret
 
+    @classmethod
+    @cache
+    def bcoproduct(cls, key, coeff=S.One):
+        if len(key) == 0:
+            return {((), ()): coeff}
+        if len(key) == 1:
+            key = key[0]
+            dct = {}
+            # dct[((),(key,))] = coeff
+            # dct[((key,), ())] = coeff
+            for i in range(key + 1):
+                dct[((i,) if i != 0 else (), (key - i,) if key - i != 0 else ())] = coeff
+            return dct
+        mid = len(key) // 2
+        cp1 = cls.bcoproduct(key[:mid], coeff)
+        cp2 = cls.bcoproduct(key[mid:])
+        ret = {}
+        for k0, v0 in cp1.items():
+            for k1, v1 in cp2.items():
+                ret = add_perm_dict(ret, {((*k0[0], *k1[0]), (*k0[1], *k1[1])): v0 * v1})
+        return ret
+    
     @classmethod
     def try_internal_product(cls, key1, key2, coeff=S.One):
         from sage.combinat.integer_matrices import IntegerMatrices
@@ -219,7 +251,7 @@ class WordBasis(FreeAlgebraBasis):
     @staticmethod
     @cache
     def jbasis_tup_expand(tup):
-        JB = fa.FreeAlgebra(basis=JBasis)
+        JB = fa.FreeAlgebra(basis=ZBasis)
         res = JB()
         if len(tup) == 0:
             return res
@@ -251,16 +283,43 @@ class WordBasis(FreeAlgebraBasis):
         return ret
 
     @classmethod
+    def transition_zbasis(cls, key):
+        # return dict(WordBasis.jbasis_tup_expand(key))
+        FA = fa.FreeAlgebra(WordBasis)
+        JB = fa.FreeAlgebra(basis=ZBasis)
+        res = FA(*key)
+
+        ret = JB.from_dict({})
+        while res != FA.zero:
+            tup = next(iter(sorted(res.keys())))
+            c = res[tup]
+            val = c * JB(*tup).change_basis(WordBasis)
+            res -= val
+            ret += c * JB(*tup)
+        return ret
+
+    @classmethod
+    def transition_nelementary(cls, tup):
+        from sage.all import Composition
+        pain = Composition(tup)
+        piss = list(pain.finer())
+        return {tuple([int(p) for p in pi]): (S.NegativeOne ** (sum(tup) - len(pi))) for pi in piss}
+
+    @classmethod
     def transition(cls, other_basis):
         if other_basis == SchubertBasis:
             return lambda x: cls.transition_schubert(x)
         if other_basis == WordBasis:
             return lambda x: {x: S.One}
-        if other_basis == SchubertSchurBasis:
-            return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(SchubertSchurBasis), cls.transition_schubert(x))
+        if other_basis == NElementaryBasis:
+            return lambda x: cls.transition_nelementary(x)
+        # if other_basis == SchubertSchurBasis:
+        #     return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(SchubertSchurBasis), cls.transition_schubert(x))
         if other_basis == JBasis:
             return lambda x: cls.transition_jbasis(x)
-        return None
+        if other_basis == ZBasis:
+            return lambda x: cls.transition_zbasis(x)
+        return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(x))
 
 
 class JBasis(FreeAlgebraBasis):
@@ -312,7 +371,7 @@ class JBasis(FreeAlgebraBasis):
     #         # if 0 in perm[0].code[: perm[1]]:
     #         #     continue
     #         bento_box = ASx(*perm).change_basis(WordBasis)
-    #         bento_box = FA.from_dict({tuple(a for a in k if a!=0): veta for k, veta in bento_box.items()})
+    #         bento_box = ({tuple(a for a in k if a!=0): veta for k, veta in bento_box.items()})
     #         print(f'{bento_box=}')
     #         dct_out += v * bento_box.change_basis(JBasis)
     #         # print(f"{kk=} {key1=} {key2=} {perm=}")
@@ -331,6 +390,21 @@ class JBasis(FreeAlgebraBasis):
     # def transition_schubert(cls, key):
     #     return dict(WordBasis.tup_expand(key))
 
+    # @classmethod
+    # def transition(cls, other_basis):
+    #     # if other_basis == SchubertBasis:
+    #     #     return lambda x: cls.transition_schubert(x)
+    #     # if other_basis == WordBasis:
+    #     #     return lambda x: {x: S.One}
+    #     # if other_basis == SchubertSchurBasis:
+    #     def trans(x):
+    #         ASx = fa.FreeAlgebra(basis=SchubertBasis)
+    #         dct = ASx(uncode(x)).change_basis(WordBasis)
+    #         dct_out = {}
+    #         for k, v in dct.items():
+    #             k2 = tuple(a for a in k if a != 0)
+    #             dct_out[k2] = dct_out.get(k2, S.Zero) + v
+    #         return dct_out
     @classmethod
     def transition(cls, other_basis):
         # if other_basis == SchubertBasis:
@@ -344,6 +418,9 @@ class JBasis(FreeAlgebraBasis):
             dct_out = {}
             for k, v in dct.items():
                 k2 = tuple(a for a in k if a != 0)
+                # if 0 in k:
+                #     continue
+                #k2 = k
                 dct_out[k2] = dct_out.get(k2, S.Zero) + v
             return dct_out
 
@@ -475,9 +552,12 @@ class SchubertBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_separated_descents(other_basis.k, *x)
         if other_basis == ElementaryBasis:
             return lambda x: cls.transition_elementary(*x)
+        if other_basis == ZBasis:
+            return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition(WordBasis)(x))
         return None
 
     @classmethod
+    @cache
     def transition_word(cls, perm, numvars):
         res = {}
         expr = Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis().expand()
@@ -759,3 +839,545 @@ class _SeparatedDescentsBasis(FreeAlgebraBasis):
 
 def SeparatedDescentsBasis(k):
     return type("_SeparatedDescentsBasis", (_SeparatedDescentsBasis,), {"k": k, "zero_monom": (Permutation(()), Permutation([]), 0)})
+
+
+# class ZNElementaryBasis(FreeAlgebraBasis):
+#     @classmethod
+#     def is_key(cls, x):
+#         return isinstance(x, tuple | list)
+
+#     @classmethod
+#     def as_key(cls, x):
+#         return tuple(x)
+
+#     @classmethod
+#     def product(cls, key1, key2, coeff=S.One):
+#         return {(*key1, *key2): coeff}
+
+#     zero_monom = ()
+
+#     # @classmethod
+#     # @cache
+#     # def coproduct(cls, key, coeff=S.One):
+#     #     if len(key) == 0:
+#     #         return {((), ()): coeff}
+#     #     if len(key) == 1:
+#     #         key = key[0]
+#     #         dct = {}
+#     #         # dct[((),(key,))] = coeff
+#     #         # dct[((key,), ())] = coeff
+#     #         for i in range(key + 1):
+#     #             dct[((i,), (key - i,))] = coeff
+#     #         return dct
+#     #     mid = len(key) // 2
+#     #     cp1 = cls.coproduct(key[:mid], coeff)
+#     #     cp2 = cls.coproduct(key[mid:])
+#     #     ret = {}
+#     #     for k0, v0 in cp1.items():
+#     #         for k1, v1 in cp2.items():
+#     #             ret = add_perm_dict(ret, {((*k0[0], *k1[0]), (*k0[1], *k1[1])): v0 * v1})
+#     #     return ret
+
+#     # @classmethod
+#     # def try_internal_product(cls, key1, key2, coeff=S.One):
+#     #     from sage.combinat.integer_matrices import IntegerMatrices
+
+#     #     bkey1 = [a + 1 for a in key1]
+#     #     bkey2 = [a + 1 for a in key2]
+#     #     mats = IntegerMatrices(bkey1, bkey2).list()
+
+#     #     def mat_to_key(mat):
+#     #         res = []
+#     #         for row in mat:
+#     #             for val in row:
+#     #                 if val != 0:
+#     #                     res.append(val - 1)
+#     #         return tuple(res)
+
+#     #     ret_dict = {}
+#     #     for mat in mats:
+#     #         key = mat_to_key(mat)
+#     #         if key not in ret_dict:
+#     #             ret_dict[key] = S.Zero
+#     #         ret_dict[key] += coeff
+#     #     return ret_dict
+
+#     # @classmethod
+#     # def internal_product(cls, key1, key2, coeff=S.One):
+#     #     if 0 in key1 or 0 in key2:
+#     #         return {}
+#     #     # print(f"{key1=} {key2=}")
+#     #     from sage.combinat.integer_matrices import IntegerMatrices
+
+#     #     mats = list(IntegerMatrices(key1, key2))
+
+#     #     def mat_to_key(mat):
+#     #         res = []
+#     #         for row in mat:
+#     #             for val in row:
+#     #                 if val != 0:
+#     #                     res.append(int(val))
+#     #         return tuple(res)
+
+#     #     ret_dict = {}
+#     #     for mat in mats:
+#     #         # print(f"{mat=}")
+#     #         key = mat_to_key(mat)
+#     #         if key not in ret_dict:
+#     #             ret_dict[key] = S.Zero
+#     #         ret_dict[key] += coeff
+#     #     # print(f"{ret_dict=}")
+#     #     return ret_dict
+
+#     @classmethod
+#     def printing_term(cls, k):
+#         # if all(a < 10 for a in k):
+#         #     return GenericPrintingTerm("L" + "".join([str(a) for a in k]) + "]")
+#         # return Symbol("L[" + " ".join([str(a) for a in k]) + "]")
+#         return GenericPrintingTerm(k, "LZ")
+
+#     # @staticmethod
+#     # @cache
+#     # def tup_expand(tup):
+#     #     res = splugSx([])
+#     #     if len(tup) == 0:
+#     #         return res
+#     #     if len(tup) == 1:
+#     #         return splugSx(uncode(tup), 1)
+#     #     mid = len(tup) // 2
+#     #     return WordBasis.tup_expand(tup[:mid]) * WordBasis.tup_expand(tup[mid:])
+
+#     # @staticmethod
+#     # @cache
+#     # def jbasis_tup_expand(tup):
+#     #     JB = fa.FreeAlgebra(basis=ZBasis)
+#     #     res = JB()
+#     #     if len(tup) == 0:
+#     #         return res
+#     #     if len(tup) == 1:
+#     #         if tup[0] == 0:
+#     #             return res
+#     #         return JB(*tup)
+#     #     mid = len(tup) // 2
+#     #     return WordBasis.jbasis_tup_expand(tup[:mid]) * WordBasis.jbasis_tup_expand(tup[mid:])
+
+#     # @classmethod
+#     # def transition_schubert(cls, key):
+#     #     return dict(WordBasis.tup_expand(key))
+
+#     # @classmethod
+#     # def transition_jbasis(cls, key):
+#     #     # return dict(WordBasis.jbasis_tup_expand(key))
+#     #     FA = fa.FreeAlgebra(WordBasis)
+#     #     JB = fa.FreeAlgebra(basis=ZBasis)
+#     #     res = FA(*key)
+
+#     #     ret = JB.from_dict({})
+#     #     while res != FA.zero:
+#     #         tup = next(iter(sorted(res.keys())))
+#     #         c = res[tup]
+#     #         val = c * JB(*tup).change_basis(WordBasis)
+#     #         res -= val
+#     #         ret += c * JB(*tup)
+#     #     return ret
+
+#     @classmethod
+#     def transition_word(cls, tup):
+#         from sage.all import Composition
+#         pain = Composition([a + 1 for a in tup])
+#         piss = list(pain.finer())
+#         return {tuple([int(p) - 1 for p in pi]): (S.NegativeOne ** (sum(tup) - len(pi))) for pi in piss}
+
+#     @classmethod
+#     def transition(cls, other_basis):
+#         # if other_basis == SchubertBasis:
+#         #     return lambda x: cls.transition_schubert(x)
+#         # if other_basis == WordBasis:
+#         #     return lambda x: {x: S.One}
+#         # if other_basis == SchubertSchurBasis:
+#         return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition_word(x))
+#         # if other_basis == ZBasis:
+#         #     return lambda x: cls.transition_jbasis(x)
+#         # return None
+
+
+class NElementaryBasis(FreeAlgebraBasis):
+    @classmethod
+    def is_key(cls, x):
+        return isinstance(x, tuple | list)
+
+    @classmethod
+    def as_key(cls, x):
+        return tuple(x)
+
+    @classmethod
+    def product(cls, key1, key2, coeff=S.One):
+        return {(*key1, *key2): coeff}
+
+    zero_monom = ()
+
+    # @classmethod
+    # @cache
+    # def coproduct(cls, key, coeff=S.One):
+    #     if len(key) == 0:
+    #         return {((), ()): coeff}
+    #     if len(key) == 1:
+    #         key = key[0]
+    #         dct = {}
+    #         # dct[((),(key,))] = coeff
+    #         # dct[((key,), ())] = coeff
+    #         for i in range(key + 1):
+    #             dct[((i,), (key - i,))] = coeff
+    #         return dct
+    #     mid = len(key) // 2
+    #     cp1 = cls.coproduct(key[:mid], coeff)
+    #     cp2 = cls.coproduct(key[mid:])
+    #     ret = {}
+    #     for k0, v0 in cp1.items():
+    #         for k1, v1 in cp2.items():
+    #             ret = add_perm_dict(ret, {((*k0[0], *k1[0]), (*k0[1], *k1[1])): v0 * v1})
+    #     return ret
+
+    # @classmethod
+    # def try_internal_product(cls, key1, key2, coeff=S.One):
+    #     from sage.combinat.integer_matrices import IntegerMatrices
+
+    #     bkey1 = [a + 1 for a in key1]
+    #     bkey2 = [a + 1 for a in key2]
+    #     mats = IntegerMatrices(bkey1, bkey2).list()
+
+    #     def mat_to_key(mat):
+    #         res = []
+    #         for row in mat:
+    #             for val in row:
+    #                 if val != 0:
+    #                     res.append(val - 1)
+    #         return tuple(res)
+
+    #     ret_dict = {}
+    #     for mat in mats:
+    #         key = mat_to_key(mat)
+    #         if key not in ret_dict:
+    #             ret_dict[key] = S.Zero
+    #         ret_dict[key] += coeff
+    #     return ret_dict
+
+    # @classmethod
+    # def internal_product(cls, key1, key2, coeff=S.One):
+    #     if 0 in key1 or 0 in key2:
+    #         return {}
+    #     # print(f"{key1=} {key2=}")
+    #     from sage.combinat.integer_matrices import IntegerMatrices
+
+    #     mats = list(IntegerMatrices(key1, key2))
+
+    #     def mat_to_key(mat):
+    #         res = []
+    #         for row in mat:
+    #             for val in row:
+    #                 if val != 0:
+    #                     res.append(int(val))
+    #         return tuple(res)
+
+    #     ret_dict = {}
+    #     for mat in mats:
+    #         # print(f"{mat=}")
+    #         key = mat_to_key(mat)
+    #         if key not in ret_dict:
+    #             ret_dict[key] = S.Zero
+    #         ret_dict[key] += coeff
+    #     # print(f"{ret_dict=}")
+    #     return ret_dict
+
+    @classmethod
+    def printing_term(cls, k):
+        # if all(a < 10 for a in k):
+        #     return GenericPrintingTerm("L" + "".join([str(a) for a in k]) + "]")
+        # return Symbol("L[" + " ".join([str(a) for a in k]) + "]")
+        return GenericPrintingTerm(k, "L")
+
+    # @staticmethod
+    # @cache
+    # def tup_expand(tup):
+    #     res = splugSx([])
+    #     if len(tup) == 0:
+    #         return res
+    #     if len(tup) == 1:
+    #         return splugSx(uncode(tup), 1)
+    #     mid = len(tup) // 2
+    #     return WordBasis.tup_expand(tup[:mid]) * WordBasis.tup_expand(tup[mid:])
+
+    # @staticmethod
+    # @cache
+    # def jbasis_tup_expand(tup):
+    #     JB = fa.FreeAlgebra(basis=ZBasis)
+    #     res = JB()
+    #     if len(tup) == 0:
+    #         return res
+    #     if len(tup) == 1:
+    #         if tup[0] == 0:
+    #             return res
+    #         return JB(*tup)
+    #     mid = len(tup) // 2
+    #     return WordBasis.jbasis_tup_expand(tup[:mid]) * WordBasis.jbasis_tup_expand(tup[mid:])
+
+    # @classmethod
+    # def transition_schubert(cls, key):
+    #     return dict(WordBasis.tup_expand(key))
+
+    # @classmethod
+    # def transition_jbasis(cls, key):
+    #     # return dict(WordBasis.jbasis_tup_expand(key))
+    #     FA = fa.FreeAlgebra(WordBasis)
+    #     JB = fa.FreeAlgebra(basis=ZBasis)
+    #     res = FA(*key)
+
+    #     ret = JB.from_dict({})
+    #     while res != FA.zero:
+    #         tup = next(iter(sorted(res.keys())))
+    #         c = res[tup]
+    #         val = c * JB(*tup).change_basis(WordBasis)
+    #         res -= val
+    #         ret += c * JB(*tup)
+    #     return ret
+
+    @classmethod
+    def transition_word(cls, tup):
+        from sage.all import Composition
+        pain = Composition(tup)
+        piss = list(pain.finer())
+        return {tuple([int(p) for p in pi]): (S.NegativeOne ** (sum(tup) - len(pi))) for pi in piss}
+
+    @classmethod
+    def transition(cls, other_basis):
+        # if other_basis == SchubertBasis:
+        #     return lambda x: cls.transition_schubert(x)
+        # if other_basis == WordBasis:
+        #     return lambda x: {x: S.One}
+        # if other_basis == SchubertSchurBasis:
+        return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition_word(x))
+
+
+class ZBasis(FreeAlgebraBasis):
+    @classmethod
+    def is_key(cls, x):
+        return isinstance(x, tuple | list)
+
+    @classmethod
+    def as_key(cls, x):
+        return tuple(x)
+
+    @staticmethod
+    def from_perm(perm, n):
+        cd = perm.code
+        if len(cd) < n:
+            return None
+        if 0 in cd[:n]:
+            return None
+        return cd[:n]
+
+    @staticmethod
+    def pare_schubert(perm):
+        cd = [*perm.code]
+        while len(cd) > 0 and cd[-1] == 0:
+            cd = cd[:-1]
+        if 0 in cd:
+            return None
+        # while len(cd) > 0 and cd[0] == 0:
+        #     cd = cd[1:]
+        # if 0 in cd:
+        #     return None
+        return tuple(cd)
+
+    @classmethod
+    def product(cls, key1, key2, coeff=S.One):
+        key11 = uncode([a - 1 for a in key1])
+        key22 = uncode([a - 1 for a in key2])
+
+        dct = SchubertBasis.product((key11, len(key1)), (key22, len(key2)), coeff)
+
+        JB = fa.FreeAlgebra(basis=ZBasis)
+        # FA = fa.FreeAlgebra()
+        # ASx = fa.FreeAlgebra(basis=SchubertBasis)
+        #dct_out = {}
+        dct_out = JB.zero
+
+        for (perm, n), v in dct.items():
+            # kk = ZBasis.pare_schubert(perm[0])
+            # if 0 in perm[0].code[: perm[1]]:
+            #     continue
+            cd = [*perm.code]
+            tup = [1] * n
+            for i, a in enumerate(cd[:n]):
+                tup[i] = a + 1
+            dct_out[tuple(tup)] = v
+            # print(f"{kk=} {key1=} {key2=} {perm=}")
+            #dct_out[tuple(kk)] = dct_out.get(tuple(kk), S.Zero) + v
+        return dct_out
+
+    # NDD
+
+    zero_monom = ()
+
+    @classmethod
+    def printing_term(cls, k):
+        return GenericPrintingTerm(k, "Z")
+
+    # @classmethod
+    # def transition_schubert(cls, key):
+    #     return dict(WordBasis.tup_expand(key))
+
+    # @classmethod
+    # def transition(cls, other_basis):
+    #     # if other_basis == SchubertBasis:
+    #     #     return lambda x: cls.transition_schubert(x)
+    #     # if other_basis == WordBasis:
+    #     #     return lambda x: {x: S.One}
+    #     # if other_basis == SchubertSchurBasis:
+    #     def trans(x):
+    #         ASx = fa.FreeAlgebra(basis=SchubertBasis)
+    #         dct = ASx(uncode(x)).change_basis(WordBasis)
+    #         dct_out = {}
+    #         for k, v in dct.items():
+    #             k2 = tuple(a for a in k if a != 0)
+    #             dct_out[k2] = dct_out.get(k2, S.Zero) + v
+    #         return dct_out
+    @classmethod
+    def transition(cls, other_basis):
+        from sage.all import Composition
+        # if other_basis == SchubertBasis:
+        #     return lambda x: cls.transition_schubert(x)
+        # if other_basis == WordBasis:
+        #     return lambda x: {x: S.One}
+        # if other_basis == SchubertSchurBasis:
+        def trans(x):
+            ASx = fa.FreeAlgebra(basis=SchubertBasis)
+            dct = ASx(uncode(x)).change_basis(WordBasis)
+            dct_out = {}
+            for k, v in dct.items():
+                #k2 = tuple(a for a in k if a != 0)
+                if 0 in k:
+                    continue
+                k2 = k
+                dct_out[k2] = dct_out.get(k2, S.Zero) + v
+            return dct_out
+
+        if other_basis == ZBasis:
+            return lambda x: {x: S.One}
+        if other_basis == WordBasis:
+            return trans
+
+        return lambda x: FreeAlgebraBasis.compose_transition(lambda k: WordBasis.transition(other_basis)(k), trans(x))
+        # return None
+
+
+
+# class ZBasis(FreeAlgebraBasis):
+#     @classmethod
+#     def is_key(cls, x):
+#         return isinstance(x, tuple | list)
+
+#     @classmethod
+#     def as_key(cls, x):
+#         return tuple(x)
+
+#     @staticmethod
+#     def from_perm(perm, n):
+#         cd = perm.code
+#         if len(cd) < n:
+#             return None
+#         if 0 in cd[:n]:
+#             return None
+#         return cd[:n]
+
+#     @staticmethod
+#     def pare_schubert(perm):
+#         cd = [*perm.code]
+#         while len(cd) > 0 and cd[-1] == 0:
+#             cd = cd[:-1]
+#         if 0 in cd:
+#             return None
+#         # while len(cd) > 0 and cd[0] == 0:
+#         #     cd = cd[1:]
+#         # if 0 in cd:
+#         #     return None
+#         return tuple(cd)
+
+#     # @classmethod
+#     # def product(cls, key1, key2, coeff=S.One):
+#     #     key11 = uncode([a - 1 for a in key1])
+#     #     key22 = uncode([a - 1 for a in key2])
+
+#     #     dct = SchubertBasis.product((key11, len(key1)), (key22, len(key2)), coeff)
+
+#     #     JB = fa.FreeAlgebra(basis=ZBasis)
+#     #     FA = fa.FreeAlgebra()
+#     #     ASx = fa.FreeAlgebra(basis=SchubertBasis)
+#     #     #dct_out = {}
+#     #     dct_out = JB.zero
+
+#     #     for perm, v in dct.items():
+#     #         # kk = ZBasis.pare_schubert(perm[0])
+#     #         # if 0 in perm[0].code[: perm[1]]:
+#     #         #     continue
+#     #         bento_box = ASx(*perm).change_basis(WordBasis)
+#     #         bento_box = FA.from_dict({tuple(a for a in k if a!=0): veta for k, veta in bento_box.items()})
+#     #         print(f'{bento_box=}')
+#     #         dct_out += v * bento_box.change_basis(ZBasis)
+#     #         # print(f"{kk=} {key1=} {key2=} {perm=}")
+#     #         #dct_out[tuple(kk)] = dct_out.get(tuple(kk), S.Zero) + v
+#     #     return dct_out
+
+#     # NDD
+
+#     zero_monom = ()
+
+#     @classmethod
+#     def printing_term(cls, k):
+#         return GenericPrintingTerm(k, "Z")
+
+#     # @classmethod
+#     # def transition_schubert(cls, key):
+#     #     return dict(WordBasis.tup_expand(key))
+
+#     # @classmethod
+#     # def transition(cls, other_basis):
+#     #     # if other_basis == SchubertBasis:
+#     #     #     return lambda x: cls.transition_schubert(x)
+#     #     # if other_basis == WordBasis:
+#     #     #     return lambda x: {x: S.One}
+#     #     # if other_basis == SchubertSchurBasis:
+#     #     def trans(x):
+#     #         ASx = fa.FreeAlgebra(basis=SchubertBasis)
+#     #         dct = ASx(uncode(x)).change_basis(WordBasis)
+#     #         dct_out = {}
+#     #         for k, v in dct.items():
+#     #             k2 = tuple(a for a in k if a != 0)
+#     #             dct_out[k2] = dct_out.get(k2, S.Zero) + v
+#     #         return dct_out
+#     @classmethod
+#     def transition(cls, other_basis):
+#         # if other_basis == SchubertBasis:
+#         #     return lambda x: cls.transition_schubert(x)
+#         # if other_basis == WordBasis:
+#         #     return lambda x: {x: S.One}
+#         # if other_basis == SchubertSchurBasis:
+#         def trans(x):
+#             ASx = fa.FreeAlgebra(basis=SchubertBasis)
+#             dct = ASx(uncode(x)).change_basis(WordBasis)
+#             dct_out = {}
+#             for k, v in dct.items():
+#                 #k2 = tuple(a for a in k if a != 0)
+#                 if 0 in k:
+#                     continue
+#                 k2 = k
+#                 dct_out[k2] = dct_out.get(k2, S.Zero) + v
+#             return dct_out
+
+#         if other_basis == ZBasis:
+#             return lambda x: {x: S.One}
+#         if other_basis == WordBasis:
+#             return trans
+
+#         return lambda x: FreeAlgebraBasis.compose_transition(lambda k: WordBasis.transition(other_basis)(k), trans(x))
+#         # return None

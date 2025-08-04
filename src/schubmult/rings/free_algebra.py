@@ -41,6 +41,43 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
     def parent(self):
         return self.ring
 
+    def poly_inner_product(self, poly, genset, n):
+        from schubmult.rings.variables import genset_dict_from_expr
+        from schubmult.symbolic import prod, sympify
+        wordish = self.change_basis(WordBasis)
+        result = 0
+
+        dct0 = genset_dict_from_expr(poly, genset)
+        dct = {}
+        for k, v in dct0.items():
+            if n is None:
+                k = [*k]
+                while len(k) > 0 and k[-1] == 0:
+                    k.pop()
+                dct[tuple(k)] = dct.get(tuple(k), S.Zero) + v
+                continue
+            if len(k) > n:
+                if not all(a == 0 for a in k[n:]):
+                    return 0
+                dct[k[:n]] = v
+            else:
+                kpop = tuple([*k, *([0] * (n - len(k)))])
+                dct[kpop] = v
+        # print(f"{dct=}")
+        for k, v in wordish.items():
+            result += int(v * dct.get(k, S.Zero))
+        return result
+
+    def kill_zero(self, fat=False, val=S.Zero):
+        spink = self.change_basis(WordBasis)
+        spoink = spink.ring.zero
+        for k, v in spink.items():
+            if fat:
+                if 0 in k:
+                    v *= val ** k.count(0)
+            spoink += v*spink.ring(*[a for a in k if a != 0])
+        return spoink.change_basis(self.ring._basis)
+
     def eval(self, *args):
         pass
 
@@ -214,6 +251,14 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
             res += val * self.ring.coproduct_on_basis(key)
         return res
 
+    def bcoproduct(self):
+        T = self.ring @ self.ring
+        res = T.zero
+
+        for key, val in self.items():
+            res += val * self.ring.bcoproduct_on_basis(key)
+        return res
+
     # def antipode(self):
     #     new_elem = self.change_basis(WordBasis)
     #     ret = new_elem.ring.zero
@@ -302,7 +347,7 @@ class FreeAlgebra(Ring, CompositeDomain):
         return ret
 
     def __hash__(self):
-        return hash((self.domain, "whatabong"))
+        return hash((self.domain, "whatabong", self._basis))
 
     def __eq__(self, other):
         return type(self) is type(other) and self.domain == other.domain
@@ -332,6 +377,11 @@ class FreeAlgebra(Ring, CompositeDomain):
     def coproduct_on_basis(self, key):
         T = self @ self
         return T.from_dict(self._basis.coproduct(key))
+
+    @cache
+    def bcoproduct_on_basis(self, key):
+        T = self @ self
+        return T.from_dict(self._basis.bcoproduct(key))
 
     def add(self, elem, other):
         return self.from_dict(add_perm_dict(elem, other))

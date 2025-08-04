@@ -63,7 +63,7 @@ class GenericPrintingTerm(AbstractSchubPoly):
     _pretty_schub_char = "𝔖"  # noqa: RUF001
 
     def __hash__(self):
-        return hash((self._key,self._genset,self._coeff_genset,"dasiub"))
+        return hash((self._key,self._genset,self._coeff_genset,"dasiub", self._name))
 
     def __new__(cls, k, name):
         return GenericPrintingTerm.__xnew_cached__(cls, k, name)
