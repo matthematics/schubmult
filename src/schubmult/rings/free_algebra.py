@@ -44,6 +44,7 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
     def poly_inner_product(self, poly, genset, n):
         from schubmult.rings.variables import genset_dict_from_expr
         from schubmult.symbolic import prod, sympify
+
         wordish = self.change_basis(WordBasis)
         result = 0
 
@@ -75,7 +76,7 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
             if fat:
                 if 0 in k:
                     v *= val ** k.count(0)
-            spoink += v*spink.ring(*[a for a in k if a != 0])
+            spoink += v * spink.ring(*[a for a in k if a != 0])
         return spoink.change_basis(self.ring._basis)
 
     def eval(self, *args):
@@ -188,6 +189,16 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         return self.ring.matmul(self, other)
 
     def __rmul__(self, other):
+        from .schubert_ring import DoubleSchubertElement, SingleSchubertRing
+
+        if isinstance(other, DoubleSchubertElement):
+            if not isinstance(other.ring, SingleSchubertRing):
+                other = Sx([]) * other
+            ret = self.ring.zero
+            for k, v in other.items():
+                ret += v * (self / k)
+            return ret
+
         try:
             return self.ring.rmul(self, other)
         except CoercionFailed:
@@ -303,6 +314,17 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
             # add x?
             new_elem += self.ring.from_dict({tuple([a for a in k if a != 0]): v}) * (inserter ** len([a for a in k if a == 0]))
         return new_elem
+
+    def __truediv__(self, other):
+        from schubmult.perm_lib import Permutation
+
+        if isinstance(other, list | tuple | Permutation):
+            other = Permutation(other)
+            ret = self.ring.zero
+            for k, v in self.items():
+                ret += v * self.ring.skew_element(k[0], other, k[1])
+            return ret
+        raise NotImplementedError("Division by non-permutation is not implemented.")
 
     def nsymexpand(self):
         R = NSym()
@@ -640,6 +662,16 @@ class NSymElement(FreeAlgebraElement):
             return other.__rmul__(self)
 
     def __rmul__(self, other):
+        from .schubert_ring import DoubleSchubertElement, SingleSchubertRing
+
+        if isinstance(other, DoubleSchubertElement):
+            if not isinstance(other.ring, SingleSchubertRing):
+                other = Sx([]) * other
+            ret = self.ring.zero
+            for k, v in other.items():
+                ret += v * (self / k)
+            return ret
+
         try:
             return self.ring.rmul(self, other)
         except CoercionFailed:

@@ -704,7 +704,7 @@ class SchubertBasis(FreeAlgebraBasis):
         dct = schubmult_py_down({w: S.One}, u)
         ret = {}
         for perm, v in dct.items():
-            if v != S.Zero:
+            if v != S.Zero and (perm.inv == 0 or max(perm.descents()) < n):
                 ret[(perm, n)] = v
         return ret
 

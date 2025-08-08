@@ -7,7 +7,7 @@ import schubmult.schub_lib.positivity as pos
 import schubmult.schub_lib.schub_lib as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, uncode
-from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, expand_func, is_of_func_type, sympify, sympify_sympy
+from schubmult.symbolic import Add, DomainElement, Mul, Pow, S, Symbol, expand, expand_func, is_of_func_type, sympify, sympify_sympy
 from schubmult.symmetric_polynomials import CompleteSym_base, ElemSym, ElemSym_base, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
@@ -556,6 +556,8 @@ class DoubleSchubertRing(BaseSchubertRing):
     #         #return super().from_expr(expr)
 
     def mul_expr(self, elem, x):
+        if isinstance(x, DomainElement):
+            raise TypeError(f"Cannot multiply {type(elem)} with {type(x)}")
         x = sympify(x)
         ind = self.genset.index(x)
         if ind != -1:

@@ -272,13 +272,13 @@ class BaseSchubertRing(Ring, CompositeDomain):
             # print(f"{other=} {type(other)=}")
             return self.from_dict({k: other * v for k, v in elem.items()})
         except Exception:
-            pass
-        if isinstance(other, BaseSchubertElement):
-            other = self._coerce_mul(other)
-            if not other:
-                raise CoercionFailed(f"Could not coerce {other} of type {type(other)} to {type(elem)}")
-            return self.from_dict(_mul_schub_dicts(elem, other, elem.ring, other.ring))
-        return self.mul_expr(elem, other)
+            if isinstance(other, BaseSchubertElement):
+                other = self._coerce_mul(other)
+                if not other:
+                    raise CoercionFailed(f"Could not coerce {other} of type {type(other)} to {type(elem)}")
+                return self.from_dict(_mul_schub_dicts(elem, other, elem.ring, other.ring))
+            return self.mul_expr(elem, other)
+        #return NotImplemented
 
     def to_domain(self):
         return self
@@ -326,12 +326,14 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def elem_sym_subs(self, kk): ...
 
     def domain_new(self, element, orig_domain=None):  # noqa: ARG002
-        # print(f"{element=} {type(element)=} bagels {type(sympify(element))=} {sympify(element).has(*self.symbols)=}")
-        if isinstance(element, BaseSchubertElement):
-            raise CoercionFailed("Not a domain element")
-        if not any(x in self.genset for x in sympify_sympy(element).free_symbols):
-            return sympify(element)
-        raise CoercionFailed(f"{element} contains an element of the set of generators")
+        try:
+            if isinstance(element, BaseSchubertElement) or isinstance(element, DomainElement):
+                raise CoercionFailed("Not a domain element")
+            if not any(x in self.genset for x in sympify_sympy(element).free_symbols):
+                return sympify(element)
+            raise CoercionFailed(f"{element} contains an element of the set of generators")
+        except Exception:
+            raise CoercionFailed(f"Could not coerce {element} of type {type(element)} to {self.__class__.__name__}")
 
     @property
     def genset(self):
