@@ -2,6 +2,8 @@ from functools import cache
 
 import schubmult.rings.free_algebra as fa
 from schubmult.perm_lib import Permutation, trimcode, uncode
+
+# from schubmult.rings import ASx
 from schubmult.symbolic import (
     Add,
     Integer,
@@ -12,6 +14,7 @@ from schubmult.symbolic import (
     sstr,
     sympify,
     sympify_sympy,
+    sympy_Mul,
 )
 from schubmult.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.perm_utils import add_perm_dict
@@ -96,7 +99,7 @@ class FreeAlgebraBasis:
             lambda x: _tensor_product_of_dicts_first(WordBasis.transition(cls)(x[0]), WordBasis.transition(cls)(x[1])),
             FreeAlgebraBasis.compose_transition(lambda y: WordBasis.bcoproduct(y), cls.transition(WordBasis)(key)),
         )
-    
+
     @classmethod
     @cache
     def product(cls, key1, key2, coeff=S.One):
@@ -179,7 +182,7 @@ class WordBasis(FreeAlgebraBasis):
             for k1, v1 in cp2.items():
                 ret = add_perm_dict(ret, {((*k0[0], *k1[0]), (*k0[1], *k1[1])): v0 * v1})
         return ret
-    
+
     @classmethod
     def try_internal_product(cls, key1, key2, coeff=S.One):
         from sage.combinat.integer_matrices import IntegerMatrices
@@ -283,6 +286,115 @@ class WordBasis(FreeAlgebraBasis):
         return ret
 
     @classmethod
+    def transition_jtbasis(cls, key):
+        # return dict(WordBasis.jbasis_tup_expand(key))
+        #from schubmult.rings.variables import genset_dict_from_expr
+        from schubmult.symbolic import Pow, Symbol, expand, sympify
+        FA = fa.FreeAlgebra(WordBasis)
+        JB = fa.FreeAlgebra(basis=JTBasis)
+        res = FA.from_dict(JTBasis.normalize_dct(FA(*key)))
+        #t = Symbol("t")
+        # res = res.kill_zero(True, t)
+        # print(f"{res=}")
+        #res2 = res
+        #res = FA.zero
+
+        ret = JB.from_dict({})
+        #res = res2
+
+        # print(f"{res=}")
+        while res != FA.zero:
+            res = FA.from_dict({k: v for k,v in res.items() if v != S.Zero})
+            tup = next(iter(sorted(res.keys())))
+            c = res[tup]
+            new_tup = tuple([int(a) for a in tup if a != 0])
+            pw = (len(tup) - len(new_tup))
+            #new_tup = tuple([0] * pw + new_tup)
+            # dct = expand(sympify(c))
+            # coeff = None
+            # max_pow = 0
+            # if isinstance(dct, Integer):
+            #     coeff = dct
+            #     val = coeff * JB(tup, 0).change_basis(WordBasis)
+            #     res -= val
+            #     ret += coeff * JB(tup, 0)
+            # else:
+            #     coeff = None
+            #     # print(f"{dct=}")
+            #     if isinstance(dct, Add):
+            #         for term in dct.args:
+            #             if isinstance(term, Mul):
+            #                 if isinstance(term.args[1], Symbol) and max_pow == 0:
+            #                     max_pow = 1
+            #                     coeff = term.args[0] if isinstance(term.args[0], Integer) else None
+            #                     if coeff is None:
+            #                         raise ValueError("Coefficient is not an integer: " + sstr(term))
+            #                 elif isinstance(term.args[1], Pow):
+            #                     pw = int(term.args[1].args[1])
+            #                     if pw > max_pow:
+            #                         max_pow = pw
+            #                         coeff = term.args[0] if isinstance(term.args[0], Integer) else None
+            #                         if coeff is None:
+            #                             raise ValueError("Coefficient is not an integer: " + sstr(term))
+            #             elif isinstance(term, Symbol):
+            #                 if max_pow == 0:
+            #                     max_pow = 1
+            #                     # coeff = t
+            #                     coeff = S.One
+            #             elif isinstance(term, Integer):
+            #                 if max_pow == 0:
+            #                     max_pow = 0
+            #                     coeff = term
+            #             elif isinstance(term, Pow):
+            #                 pw = term.args[1]
+            #                 if pw > max_pow:
+            #                     max_pow = pw
+            #                     #coeff = t ** pw
+            #                     coeff = S.One
+            #             else:
+            #                 raise ValueError("Unknown term in polynomial: " + sstr(term) + " "+type(term))
+            #     else:
+            #         term = dct
+            #         if isinstance(term, Mul):
+            #             if isinstance(term.args[1], Symbol) and max_pow == 0:
+            #                 max_pow = 1
+            #                 coeff = term.args[0] if isinstance(term.args[0], Integer) else None
+            #                 if coeff is None:
+            #                     raise ValueError("Coefficient is not an integer: " + sstr(term))
+            #             elif isinstance(term.args[1], Pow):
+            #                 pw = int(term.args[1].args[1])
+            #                 if pw > max_pow:
+            #                     max_pow = pw
+            #                     coeff = term.args[0] if isinstance(term.args[0], Integer) else None
+            #                     if coeff is None:
+            #                         raise ValueError("Coefficient is not an integer: " + sstr(term))
+            #         elif isinstance(term, Symbol):
+            #             if max_pow == 0:
+            #                 max_pow = 1
+            #                 # coeff = t
+            #                 coeff = S.One
+            #         elif isinstance(term, Integer):
+            #             if max_pow == 0:
+            #                 max_pow = 0
+            #                 coeff = term
+            #         elif isinstance(term, Pow):
+            #             pw = term.args[1]
+            #             if pw > max_pow:
+            #                 max_pow = pw
+            #                 #coeff = t ** pw
+            #                 coeff = S.One
+            #         else:
+            #             raise ValueError("Unknown term in polynomial: " + sstr(term) + " "+type(term))
+            #     # print(f"{coeff=}")
+            val = c * JB(new_tup, pw).change_basis(WordBasis)
+            res -= val
+            ret += c * JB(new_tup, pw)
+            # print(f"{res=}")
+
+            # print(f"{ret=}")
+        return ret
+
+    @classmethod
     def transition_zbasis(cls, key):
         # return dict(WordBasis.jbasis_tup_expand(key))
         FA = fa.FreeAlgebra(WordBasis)
@@ -317,6 +429,8 @@ class WordBasis(FreeAlgebraBasis):
         #     return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(SchubertSchurBasis), cls.transition_schubert(x))
         if other_basis == JBasis:
             return lambda x: cls.transition_jbasis(x)
+        if other_basis == JTBasis:
+            return lambda x: cls.transition_jtbasis(x)
         if other_basis == ZBasis:
             return lambda x: cls.transition_zbasis(x)
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(x))
@@ -372,7 +486,7 @@ class JBasis(FreeAlgebraBasis):
     #         #     continue
     #         bento_box = ASx(*perm).change_basis(WordBasis)
     #         bento_box = ({tuple(a for a in k if a!=0): veta for k, veta in bento_box.items()})
-    #         print(f'{bento_box=}')
+    #         # print(f'{bento_box=}')
     #         dct_out += v * bento_box.change_basis(JBasis)
     #         # print(f"{kk=} {key1=} {key2=} {perm=}")
     #         #dct_out[tuple(kk)] = dct_out.get(tuple(kk), S.Zero) + v
@@ -432,6 +546,138 @@ class JBasis(FreeAlgebraBasis):
         return lambda x: FreeAlgebraBasis.compose_transition(lambda k: WordBasis.transition(other_basis)(k), trans(x))
         # return None
 
+class JTBasis(FreeAlgebraBasis):
+    @classmethod
+    def is_key(cls, x):
+        return isinstance(x, tuple | list)
+
+    @classmethod
+    def as_key(cls, x):
+        return tuple(x)
+
+    @staticmethod
+    def from_perm(perm, n):
+        cd = perm.code
+        if len(cd) < n:
+            return None
+        if 0 in cd[:n]:
+            return None
+        return cd[:n]
+
+    @staticmethod
+    def pare_schubert(perm):
+        cd = [*perm.code]
+        while len(cd) > 0 and cd[-1] == 0:
+            cd = cd[:-1]
+        if 0 in cd:
+            return None
+        # while len(cd) > 0 and cd[0] == 0:
+        #     cd = cd[1:]
+        # if 0 in cd:
+        #     return None
+        return tuple(cd)
+
+    @staticmethod
+    def normalize_dct(dct):
+        dct_out = {}
+        for k, v in dct.items():
+            k2 = tuple([a for a in k if a != 0])
+            pw = (len(k) - len(k2))
+            k2 = tuple([0] * pw + list(k2))
+            if k2 not in dct_out:
+                dct_out[k2] = S.Zero
+            dct_out[k2] += v
+        return dct_out
+
+    # @classmethod
+    # def product(cls, key1, key2, coeff=S.One):
+    #     key11 = uncode([a - 1 for a in key1])
+    #     key22 = uncode([a - 1 for a in key2])
+
+    #     dct = SchubertBasis.product((key11, len(key1)), (key22, len(key2)), coeff)
+
+    #     JB = fa.FreeAlgebra(basis=JBasis)
+    #     FA = fa.FreeAlgebra()
+    #     ASx = fa.FreeAlgebra(basis=SchubertBasis)
+    #     #dct_out = {}
+    #     dct_out = JB.zero
+
+    #     for perm, v in dct.items():
+    #         # kk = JBasis.pare_schubert(perm[0])
+    #         # if 0 in perm[0].code[: perm[1]]:
+    #         #     continue
+    #         bento_box = ASx(*perm).change_basis(WordBasis)
+    #         bento_box = ({tuple(a for a in k if a!=0): veta for k, veta in bento_box.items()})
+    #         # print(f'{bento_box=}')
+    #         dct_out += v * bento_box.change_basis(JBasis)
+    #         # print(f"{kk=} {key1=} {key2=} {perm=}")
+    #         #dct_out[tuple(kk)] = dct_out.get(tuple(kk), S.Zero) + v
+    #     return dct_out
+
+    # NDD
+
+    zero_monom = ()
+    t = Symbol("t")
+    @classmethod
+    def printing_term(cls, k):
+        return sympy_Mul(JTBasis.t**k[1],GenericPrintingTerm((k[0],"t"), "JT"))
+
+    # @classmethod
+    # def transition_schubert(cls, key):
+    #     return dict(WordBasis.tup_expand(key))
+
+    # @classmethod
+    # def transition(cls, other_basis):
+    #     # if other_basis == SchubertBasis:
+    #     #     return lambda x: cls.transition_schubert(x)
+    #     # if other_basis == WordBasis:
+    #     #     return lambda x: {x: S.One}
+    #     # if other_basis == SchubertSchurBasis:
+    #     def trans(x):
+    #         ASx = fa.FreeAlgebra(basis=SchubertBasis)
+    #         dct = ASx(uncode(x)).change_basis(WordBasis)
+    #         dct_out = {}
+    #         for k, v in dct.items():
+    #             k2 = tuple(a for a in k if a != 0)
+    #             dct_out[k2] = dct_out.get(k2, S.Zero) + v
+    #         return dct_out
+    @classmethod
+    def transition(cls, other_basis):
+        # if other_basis == SchubertBasis:
+        #     return lambda x: cls.transition_schubert(x)
+        # if other_basis == WordBasis:
+        #     return lambda x: {x: S.One}
+        # if other_basis == SchubertSchurBasis:
+        @cache
+        def trans(x2):
+            #ASx = fa.FreeAlgebra(basis=SchubertBasis)
+            from schubmult.rings import ASx
+            if len(x2) != 2:
+                raise ValueError("JTBasis transition expects a tuple of length 2, got: " + sstr(x2))
+            x = x2[0]
+            n = x2[1]
+            # print(f"{x2=}")
+            return JTBasis.normalize_dct(ASx(uncode([0]*int(n) + list(x)),n + len(x)).change_basis(WordBasis))
+            # print(f"{dct=}")
+            # dct_out = {}
+            # for k, v in dct.items():
+            #     k2 = tuple(a for a in k if a != 0)
+            #     # if 0 in k:
+            #     #     continue
+            #     #k2 = k
+            #     pw = (len(k) - len(k2))
+            #     k2 = tuple([0]*pw + list(k2))
+            #     assert len(k) == len(k)
+            #     dct_out[k2] = dct_out.get(k2, S.Zero) + v
+
+        if other_basis == JTBasis:
+            return lambda x: {x: S.One}
+        if other_basis == WordBasis:
+            return trans
+        raise ValueError("JTBasis transition does not support the basis: " + sstr(other_basis))
+        return lambda x: FreeAlgebraBasis.compose_transition(lambda k: WordBasis.transition(other_basis)(k), trans(x))
+
+
 
 class SchubertBasis(FreeAlgebraBasis):
     @classmethod
@@ -451,6 +697,16 @@ class SchubertBasis(FreeAlgebraBasis):
         return dict(coeff * splugSx(*cls.as_key(key1)) * splugSx(*cls.as_key(key2)))
 
     zero_monom = (Permutation([]), 0)
+
+    @classmethod
+    def skew_element(cls, w, u, n):
+        from schubmult.schub_lib.single import schubmult_py_down
+        dct = schubmult_py_down({w: S.One}, u)
+        ret = {}
+        for perm, v in dct.items():
+            if v != S.Zero:
+                ret[(perm, n)] = v
+        return ret
 
     @classmethod
     @cache
@@ -1251,7 +1507,7 @@ class ZBasis(FreeAlgebraBasis):
         #     return lambda x: {x: S.One}
         # if other_basis == SchubertSchurBasis:
         def trans(x):
-            ASx = fa.FreeAlgebra(basis=SchubertBasis)
+            from schubmult.rings import ASx
             dct = ASx(uncode(x)).change_basis(WordBasis)
             dct_out = {}
             for k, v in dct.items():
@@ -1322,7 +1578,7 @@ class ZBasis(FreeAlgebraBasis):
 #     #         #     continue
 #     #         bento_box = ASx(*perm).change_basis(WordBasis)
 #     #         bento_box = FA.from_dict({tuple(a for a in k if a!=0): veta for k, veta in bento_box.items()})
-#     #         print(f'{bento_box=}')
+#     #         # print(f'{bento_box=}')
 #     #         dct_out += v * bento_box.change_basis(ZBasis)
 #     #         # print(f"{kk=} {key1=} {key2=} {perm=}")
 #     #         #dct_out[tuple(kk)] = dct_out.get(tuple(kk), S.Zero) + v

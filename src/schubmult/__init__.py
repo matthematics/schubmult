@@ -47,6 +47,7 @@ from .schub_lib.single import (
     mult_poly_py,
     schub_coprod_py,
     schubmult_py,
+    schubmult_py_down,
 )
 from .symmetric_polynomials.complete_sym import CompleteSym
 from .symmetric_polynomials.elem_sym import ElemSym
@@ -107,6 +108,7 @@ __all__ = [
     "schubmult_double_pair_generic",
     "schubmult_generic_partial_posify",
     "schubmult_py",
+    "schubmult_py_down",
     "schubmult_q",
     "schubmult_q_double",
     "schubmult_q_double_fast",

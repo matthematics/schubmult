@@ -39,6 +39,12 @@ class Permutation:
                     break
         return reduced_perm, w_J
 
+    def __truediv__(self, other):
+        """Returns a tuple of (self, other) if other is a permutation. Intended for skew elements."""
+        if isinstance(other, Permutation):
+            return (self, other)
+        raise NotImplementedError("Division by non-permutation is not implemented.")
+
     def __new__(cls, perm):
         return Permutation.__xnew_cached__(cls, tuple(perm))
 

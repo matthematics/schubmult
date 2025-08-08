@@ -61,7 +61,7 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
                     return 0
                 dct[k[:n]] = v
             else:
-                kpop = tuple([*k, *([0] * (n - len(k)))])
+                kpop = (*k, *([0] * (n - len(k))))
                 dct[kpop] = v
         # print(f"{dct=}")
         for k, v in wordish.items():
@@ -451,6 +451,10 @@ class FreeAlgebra(Ring, CompositeDomain):
             if coeff != self.domain.zero:
                 poly[monom] = coeff
         return poly
+
+    def skew_element(self, w, u, n):
+        """Skew schubert by elem sym"""
+        return self.from_dict(self._basis.skew_element(w, u, n))
 
     @property
     def zero(self):

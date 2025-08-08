@@ -11,6 +11,7 @@ from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, Genera
 from schubmult.schub_lib.schub_lib import (
     compute_vpathdicts,
     elem_sym_perms,
+    elem_sym_perms_op,
 )
 from schubmult.symbolic import Add, Mul, Pow
 from schubmult.utils.logging import get_logger, init_logging
@@ -108,6 +109,59 @@ def schubmult_py(perm_dict, v):
             for up in vpathsums:
                 inv_up = inv(up)
                 newperms = elem_sym_perms(
+                    up,
+                    min(mx_th[index], inv_mu - inv_vmu - (inv_up - inv_u)),
+                    th[index],
+                )
+                # print(f"{up=}")
+                for vp in vpathsums[up]:
+                    # print(f"{vp=} {type(vp)=} {hash(vp)=}")
+                    # print(f"{vpathsums[up]=} {vpathdicts[index]=}")
+                    sumval = vpathsums[up][vp]
+                    if sumval == 0:
+                        continue
+                    for v2, vdiff, s in vpathdicts[index][vp]:
+                        addsumval = s * sumval
+                        for up2, udiff in newperms:
+                            if vdiff + udiff == th[index]:
+                                if up2 not in newpathsums:
+                                    newpathsums[up2] = {}
+                                newpathsums[up2][v2] = newpathsums[up2].get(v2, 0) + addsumval
+            vpathsums = newpathsums
+        toget = vmu
+        ret_dict = add_perm_dict({ep: vpathsums[ep].get(toget, 0) for ep in vpathsums}, ret_dict)
+    return ret_dict
+
+def schubmult_py_down(perm_dict, v):
+    v = Permutation(v)
+    # print(f"{v=}")
+    vn1 = ~v
+    th = theta(vn1)
+    if len(th) == 0 or th[0] == 0:
+        return perm_dict
+    mu = uncode(th)
+    vmu = v * mu
+    inv_vmu = inv(vmu)
+    inv_mu = inv(mu)
+    ret_dict = {}
+    while th[-1] == 0:
+        th.pop()
+    vpathdicts = compute_vpathdicts(th, vmu)
+    mx_th = [0 for i in range(len(th))]
+    for index in range(len(th)):
+        for vp in vpathdicts[index]:
+            for v2, vdiff, s in vpathdicts[index][vp]:
+                mx_th[index] = max(mx_th[index], th[index] - vdiff)
+
+    for u, val in perm_dict.items():
+        inv_u = inv(u)
+        vpathsums = {Permutation(u): {Permutation([1, 2]): val}}
+
+        for index in range(len(th)):
+            newpathsums = {}
+            for up in vpathsums:
+                inv_up = inv(up)
+                newperms = elem_sym_perms_op(
                     up,
                     min(mx_th[index], inv_mu - inv_vmu - (inv_up - inv_u)),
                     th[index],
