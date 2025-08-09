@@ -162,6 +162,15 @@ class Permutation:
     def _cached_code(self):
         return old_code(self._perm)
 
+    @property
+    def trimcode(self):
+        if self._perm == ():
+            return []
+        return self.code[:max(self.descents(False))]
+
+    def mul_dominant(self):
+        return (~((~self).minimal_dominant_above()))
+
     @cached_property
     def inv(self):
         return sum(self.code)

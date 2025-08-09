@@ -1,4 +1,5 @@
 from functools import cache
+from itertools import zip_longest
 
 import schubmult.rings.free_algebra as fa
 from schubmult.perm_lib import Permutation, trimcode, uncode
@@ -17,7 +18,7 @@ from schubmult.symbolic import (
     sympy_Mul,
 )
 from schubmult.symmetric_polynomials import FactorialElemSym
-from schubmult.utils.perm_utils import add_perm_dict
+from schubmult.utils.perm_utils import add_perm_dict, mu_A
 
 from .abstract_schub_poly import GenericPrintingTerm
 from .schubert_ring import DSx, Sx
@@ -287,29 +288,26 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_jtbasis(cls, key):
-        # return dict(WordBasis.jbasis_tup_expand(key))
-        #from schubmult.rings.variables import genset_dict_from_expr
-        from schubmult.symbolic import Pow, Symbol, expand, sympify
         FA = fa.FreeAlgebra(WordBasis)
         JB = fa.FreeAlgebra(basis=JTBasis)
         res = FA.from_dict(JTBasis.normalize_dct(FA(*key)))
-        #t = Symbol("t")
+        # t = Symbol("t")
         # res = res.kill_zero(True, t)
         # print(f"{res=}")
-        #res2 = res
-        #res = FA.zero
+        # res2 = res
+        # res = FA.zero
 
         ret = JB.from_dict({})
-        #res = res2
+        # res = res2
 
         # print(f"{res=}")
         while res != FA.zero:
-            res = FA.from_dict({k: v for k,v in res.items() if v != S.Zero})
+            res = FA.from_dict({k: v for k, v in res.items() if v != S.Zero})
             tup = next(iter(sorted(res.keys())))
             c = res[tup]
             new_tup = tuple([int(a) for a in tup if a != 0])
-            pw = (len(tup) - len(new_tup))
-            #new_tup = tuple([0] * pw + new_tup)
+            pw = len(tup) - len(new_tup)
+            # new_tup = tuple([0] * pw + new_tup)
             # dct = expand(sympify(c))
             # coeff = None
             # max_pow = 0
@@ -413,6 +411,7 @@ class WordBasis(FreeAlgebraBasis):
     @classmethod
     def transition_nelementary(cls, tup):
         from sage.all import Composition
+
         pain = Composition(tup)
         piss = list(pain.finer())
         return {tuple([int(p) for p in pi]): (S.NegativeOne ** (sum(tup) - len(pi))) for pi in piss}
@@ -534,7 +533,7 @@ class JBasis(FreeAlgebraBasis):
                 k2 = tuple(a for a in k if a != 0)
                 # if 0 in k:
                 #     continue
-                #k2 = k
+                # k2 = k
                 dct_out[k2] = dct_out.get(k2, S.Zero) + v
             return dct_out
 
@@ -545,6 +544,7 @@ class JBasis(FreeAlgebraBasis):
 
         return lambda x: FreeAlgebraBasis.compose_transition(lambda k: WordBasis.transition(other_basis)(k), trans(x))
         # return None
+
 
 class JTBasis(FreeAlgebraBasis):
     @classmethod
@@ -582,7 +582,7 @@ class JTBasis(FreeAlgebraBasis):
         dct_out = {}
         for k, v in dct.items():
             k2 = tuple([a for a in k if a != 0])
-            pw = (len(k) - len(k2))
+            pw = len(k) - len(k2)
             k2 = tuple([0] * pw + list(k2))
             if k2 not in dct_out:
                 dct_out[k2] = S.Zero
@@ -618,9 +618,10 @@ class JTBasis(FreeAlgebraBasis):
 
     zero_monom = ()
     t = Symbol("t")
+
     @classmethod
     def printing_term(cls, k):
-        return sympy_Mul(JTBasis.t**k[1],GenericPrintingTerm((k[0],"t"), "JT"))
+        return sympy_Mul(JTBasis.t ** k[1], GenericPrintingTerm((k[0], "t"), "JT"))
 
     # @classmethod
     # def transition_schubert(cls, key):
@@ -650,14 +651,15 @@ class JTBasis(FreeAlgebraBasis):
         # if other_basis == SchubertSchurBasis:
         @cache
         def trans(x2):
-            #ASx = fa.FreeAlgebra(basis=SchubertBasis)
+            # ASx = fa.FreeAlgebra(basis=SchubertBasis)
             from schubmult.rings import ASx
+
             if len(x2) != 2:
                 raise ValueError("JTBasis transition expects a tuple of length 2, got: " + sstr(x2))
             x = x2[0]
             n = x2[1]
             # print(f"{x2=}")
-            return JTBasis.normalize_dct(ASx(uncode([0]*int(n) + list(x)),n + len(x)).change_basis(WordBasis))
+            return JTBasis.normalize_dct(ASx(uncode([0] * int(n) + list(x)), n + len(x)).change_basis(WordBasis))
             # print(f"{dct=}")
             # dct_out = {}
             # for k, v in dct.items():
@@ -674,9 +676,7 @@ class JTBasis(FreeAlgebraBasis):
             return lambda x: {x: S.One}
         if other_basis == WordBasis:
             return trans
-        raise ValueError("JTBasis transition does not support the basis: " + sstr(other_basis))
         return lambda x: FreeAlgebraBasis.compose_transition(lambda k: WordBasis.transition(other_basis)(k), trans(x))
-
 
 
 class SchubertBasis(FreeAlgebraBasis):
@@ -701,6 +701,9 @@ class SchubertBasis(FreeAlgebraBasis):
     @classmethod
     def skew_element(cls, w, u, n):
         from schubmult.schub_lib.single import schubmult_py_down
+
+        if u.inv > 0 and max(u.descents()) >= n:
+            return {}
         dct = schubmult_py_down({w: S.One}, u)
         ret = {}
         for perm, v in dct.items():
@@ -782,16 +785,32 @@ class SchubertBasis(FreeAlgebraBasis):
         # if extra == 0:
         #     return {(tuple([0] * numvars), perm, numvars): 1}
         # dom = uncode([numvars] * extra + list(range(numvars - 1, 0, -1)))
-        dom = uncode(list(range(len(perm) - 1, 0, -1)))
-        tosplit = perm * dom
-        dct = Sx(tosplit).coproduct(*list(range(1, len(perm) - k + 1)))
-        w0 = uncode(list(range(k - 1, 0, -1)))
-        w0s = uncode(list(range(len(perm) - 1, k - 1, -1)))
+        # dom = uncode(list(range(len(perm) - 1, 0, -1)))
+        # tosplit = perm * dom
+        # dct = Sx(tosplit).coproduct(*list(range(1, len(perm) - k + 1)))
+        # w0 = uncode(list(range(k - 1, 0, -1)))
+        # w0s = uncode(list(range(len(perm) - 1, k - 1, -1)))
+        # dct2 = {}
+        # for (perm0, perm1), v in dct.items():
+        #     perm0_out = perm0 * (~w0s)
+        #     perm1_out = perm1 * (w0)
+        #     dct2[(perm0_out, perm1_out, numvars)] = v
+
+        # dom0_code = perm.mul_dominant().trimcode
+        dom0_code = list(range(len(perm) - 1, 0, -1))
+        dom = uncode(dom0_code)
+        spot = len(dom0_code) - k + 2
+        tosplit = perm * (~dom)
+        dct = Sx(tosplit).coproduct(*list(range(spot, len(perm))))
+        w0 = uncode(mu_A(dom.code, list(range(spot - 1, len(perm)))))
+        w0s = uncode(mu_A(dom.code, list(range(spot - 1))))
+        # print(f"w0={w0.trimcode} w0s={w0s.trimcode} dom={dom.trimcode} spot={spot} numvars={numvars}")
+        # print(f"{dct=}")
         dct2 = {}
         for (perm0, perm1), v in dct.items():
-            perm0_out = perm0 * (~w0s)
-            perm1_out = perm1 * (w0)
-            dct2[(perm0_out, perm1_out, numvars)] = v
+            perm0_out = perm0 * (w0)
+            perm1_out = perm1 * (w0s)
+            dct2[(perm1_out, perm0_out, numvars)] = v
         return dct2
 
     @classmethod
@@ -1054,21 +1073,26 @@ class _SeparatedDescentsBasis(FreeAlgebraBasis):
         from .schubert_ring import SingleSchubertRing
         from .variables import MaskedGeneratingSet
 
-        dom = (~perm0).minimal_dominant_above()
-        first_perm = perm0 * (dom)
-        assert dom.inv - perm0.inv == first_perm.inv
-        w0 = uncode(list(range(cls.k - 1, 0, -1)))
-        lower_perm = perm1 * w0
-        # loin = max(len((~dom).code), k-1)
-        tup1, tup2 = (~dom).code, w0.code
-        if len(tup1) < len(tup2):
-            tup1, tup2 = tup2, tup1
-        new_code = [*[tup1[i] + tup2[i] for i in range(len(tup2))], *tup1[len(tup2) :]]
-        dom_perm = uncode(new_code)
-        shifted_ring = SingleSchubertRing(MaskedGeneratingSet(Sx([]).ring.genset, list(range(1, dom_perm.code[0] - cls.k + 1))))
-        start_schub = Sx(first_perm)
-        start_schub *= shifted_ring(lower_perm).in_SEM_basis()
-        return {(k1 * (dom_perm), numvars): v for k1, v in start_schub.items()}
+        mu1_code = perm0.mul_dominant().trimcode
+        # print(f"{mu1_code=}")
+        mu2_code = list(range(cls.k - 1, 0, -1))
+        # print(f"{mu2_code=}")
+        mu_code = [a + b for a, b in zip_longest(mu1_code, mu2_code, fillvalue=0)]
+
+        mu = uncode(mu_code)
+        mu1 = uncode(mu1_code)
+        mu2 = uncode(mu2_code)
+
+        mul1 = perm0 * (~mu1)
+        # print(f"{mul1=}")
+        mul2 = perm1 * (~mu2)
+        # print(f"{mul2=}")
+        shifted_ring = SingleSchubertRing(MaskedGeneratingSet(Sx([]).ring.genset, list(range(1, len((~mu).trimcode) - cls.k + 2))))
+        start_schub = Sx(mul1)
+        # print(f"{start_schub=}")
+        start_schub *= shifted_ring(mul2).in_SEM_basis()
+        # print(f"{start_schub=} after mul")
+        return {(k1 * mu, numvars): v for k1, v in start_schub.items()}
 
     @classmethod
     def transition_word(cls, perm0, perm1, n):
@@ -1400,6 +1424,7 @@ class NElementaryBasis(FreeAlgebraBasis):
     @classmethod
     def transition_word(cls, tup):
         from sage.all import Composition
+
         pain = Composition(tup)
         piss = list(pain.finer())
         return {tuple([int(p) for p in pi]): (S.NegativeOne ** (sum(tup) - len(pi))) for pi in piss}
@@ -1455,7 +1480,7 @@ class ZBasis(FreeAlgebraBasis):
         JB = fa.FreeAlgebra(basis=ZBasis)
         # FA = fa.FreeAlgebra()
         # ASx = fa.FreeAlgebra(basis=SchubertBasis)
-        #dct_out = {}
+        # dct_out = {}
         dct_out = JB.zero
 
         for (perm, n), v in dct.items():
@@ -1468,7 +1493,7 @@ class ZBasis(FreeAlgebraBasis):
                 tup[i] = a + 1
             dct_out[tuple(tup)] = v
             # print(f"{kk=} {key1=} {key2=} {perm=}")
-            #dct_out[tuple(kk)] = dct_out.get(tuple(kk), S.Zero) + v
+            # dct_out[tuple(kk)] = dct_out.get(tuple(kk), S.Zero) + v
         return dct_out
 
     # NDD
@@ -1500,18 +1525,13 @@ class ZBasis(FreeAlgebraBasis):
     #         return dct_out
     @classmethod
     def transition(cls, other_basis):
-        from sage.all import Composition
-        # if other_basis == SchubertBasis:
-        #     return lambda x: cls.transition_schubert(x)
-        # if other_basis == WordBasis:
-        #     return lambda x: {x: S.One}
-        # if other_basis == SchubertSchurBasis:
         def trans(x):
             from schubmult.rings import ASx
+
             dct = ASx(uncode(x)).change_basis(WordBasis)
             dct_out = {}
             for k, v in dct.items():
-                #k2 = tuple(a for a in k if a != 0)
+                # k2 = tuple(a for a in k if a != 0)
                 if 0 in k:
                     continue
                 k2 = k
@@ -1525,7 +1545,6 @@ class ZBasis(FreeAlgebraBasis):
 
         return lambda x: FreeAlgebraBasis.compose_transition(lambda k: WordBasis.transition(other_basis)(k), trans(x))
         # return None
-
 
 
 # class ZBasis(FreeAlgebraBasis):

@@ -189,15 +189,17 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         return self.ring.matmul(self, other)
 
     def __rmul__(self, other):
+        from .free_algebra_basis import SchubertBasis
         from .schubert_ring import DoubleSchubertElement, SingleSchubertRing
 
         if isinstance(other, DoubleSchubertElement):
             if not isinstance(other.ring, SingleSchubertRing):
                 other = Sx([]) * other
-            ret = self.ring.zero
+            ret0 = self.change_basis(SchubertBasis)
+            ret = ret0.ring.zero
             for k, v in other.items():
-                ret += v * (self / k)
-            return ret
+                ret += v * (ret0 / k)
+            return ret.change_basis(self.ring._basis)
 
         try:
             return self.ring.rmul(self, other)
@@ -270,6 +272,15 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
             res += val * self.ring.bcoproduct_on_basis(key)
         return res
 
+    def factorize(self, j):
+        from .free_algebra_basis import FreeAlgebraBasis
+        spink = self.change_basis(WordBasis)
+        ring = spink.ring @ spink.ring
+        ret = ring.zero
+
+        for k, v in spink.items():
+            ret += v * ring((k[:j], k[j:]))
+        return FreeAlgebraBasis.change_tensor_basis(ret, self.ring._basis, self.ring._basis)
     # def antipode(self):
     #     new_elem = self.change_basis(WordBasis)
     #     ret = new_elem.ring.zero
@@ -667,6 +678,7 @@ class NSymElement(FreeAlgebraElement):
         if isinstance(other, DoubleSchubertElement):
             if not isinstance(other.ring, SingleSchubertRing):
                 other = Sx([]) * other
+            #ret0 = self.change_basis(Schubert)
             ret = self.ring.zero
             for k, v in other.items():
                 ret += v * (self / k)
