@@ -1,13 +1,15 @@
 def test_schubert_mul():
-    from schubmult import ASx, uncode, Sx
+    from schubmult import ASx, uncode, Sx, Permutation
 
     perm1 = uncode([2, 0, 2])
     perm2 = uncode([0, 6, 1])
     result = ASx(perm1) * ASx(perm2)
     p, q = 3, 3
     for (k, n), v in result.items():
-        dct = Sx(k).coproduct(*list(range(1, p + 1)))
-        assert dct[(perm1, perm2)] == v
+        k0 = k * ~(perm2.shiftup(p))
+        assert k0.inv == k.inv - perm2.inv
+        dct = Sx(k0).coproduct(*list(range(1, p + 1)))
+        assert dct[(perm1, Permutation([]))] == v
 
 
 def test_schubert_coprod():

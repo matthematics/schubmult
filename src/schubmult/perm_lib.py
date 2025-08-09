@@ -171,6 +171,9 @@ class Permutation:
     def mul_dominant(self):
         return (~((~self).minimal_dominant_above()))
 
+    def shiftup(self, k):
+        return Permutation.from_code(k * [0] + self.code)
+
     @cached_property
     def inv(self):
         return sum(self.code)
