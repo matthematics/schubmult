@@ -43,7 +43,6 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
 
     def poly_inner_product(self, poly, genset, n):
         from schubmult.rings.variables import genset_dict_from_expr
-        from schubmult.symbolic import prod, sympify
 
         wordish = self.change_basis(WordBasis)
         result = 0
@@ -274,6 +273,7 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
 
     def factorize(self, j):
         from .free_algebra_basis import FreeAlgebraBasis
+
         spink = self.change_basis(WordBasis)
         ring = spink.ring @ spink.ring
         ret = ring.zero
@@ -281,6 +281,7 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         for k, v in spink.items():
             ret += v * ring((k[:j], k[j:]))
         return FreeAlgebraBasis.change_tensor_basis(ret, self.ring._basis, self.ring._basis)
+
     # def antipode(self):
     #     new_elem = self.change_basis(WordBasis)
     #     ret = new_elem.ring.zero
@@ -678,7 +679,7 @@ class NSymElement(FreeAlgebraElement):
         if isinstance(other, DoubleSchubertElement):
             if not isinstance(other.ring, SingleSchubertRing):
                 other = Sx([]) * other
-            #ret0 = self.change_basis(Schubert)
+            # ret0 = self.change_basis(Schubert)
             ret = self.ring.zero
             for k, v in other.items():
                 ret += v * (self / k)

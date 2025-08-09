@@ -256,6 +256,41 @@ class DoubleSchubertRing(BaseSchubertRing):
     def __str__(self):
         return f"Double Schubert polynomial ring in {self.genset.label} and {self.coeff_genset.label}"
 
+    def rmul(self, elem, other):
+        import schubmult.rings.free_algebra as fa
+        import schubmult.rings.free_algebra_basis as fb
+
+        if isinstance(other, fa.FreeAlgebraElement):
+            other = other.change_basis(fb.SchubertBasis)
+            manip = elem
+            ring = self
+            if not isinstance(self, SingleSchubertRing):
+                manip = SingleSchubertRing(self.genset)([]) * elem
+                ring = manip.ring
+            ret0 = manip.ring.zero
+            for (k, n), v in other.items():
+                for k1, v1 in manip.items():
+                    n2 = 0
+                    if k1.inv > 0:
+                        n2 = max(k1.descents(False))
+                    if n > n2:
+                        continue
+                    toshift = n2 - n
+                    new_k = uncode([*([0] * toshift), *k.code])
+                    if (k1 * ~new_k).inv != k1.inv - new_k.inv:
+                        continue
+                    tosplit = ring(k1 * (~new_k))
+                    dct = tosplit.coproduct(*list(range(1, toshift + 1)))
+                    for (perm1, perm2), v2 in dct.items():
+                        if perm2.inv == 0:
+                            ret0 += v * v1 * v2 * ring(perm1)
+            return self([]) * ret0
+        try:
+            other = self.domain_new(other)
+            return self.from_dict({k: v * other for k, v in elem.items()})
+        except Exception:
+            return self.mul_expr(elem, other)
+
     def positive_elem_sym_rep(self, perm, index=1):
         if perm.inv == 0:
             return S.One
