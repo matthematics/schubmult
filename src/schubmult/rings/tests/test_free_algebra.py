@@ -97,10 +97,8 @@ def test_schubert_to_elementary():
 
 
 def test_elementary_to_schubert():
-    from schubmult import ASx, uncode, Sx
+    from schubmult import Sx
     from schubmult.rings import ElementaryBasis, WordBasis, FreeAlgebra, SchubertBasis
-    from schubmult.symbolic import S
-    from schubmult.abc import e
 
     EE = FreeAlgebra(ElementaryBasis)
     tup = (1, 0, 1, 2, 3)
@@ -112,3 +110,17 @@ def test_elementary_to_schubert():
         res = Sx(perm)
         poly = res.expand()
         assert wbelem.poly_inner_product(poly, Sx.genset, n) == v
+
+def test_module_action():
+    from schubmult import ASx, uncode, Sx
+    from schubmult.symbolic import S
+
+    perm1 = uncode([2, 1, 0, 1])
+    perm2 = uncode([3, 1, 0, 2, 1])
+    w0 = uncode([5,4,3,2,1])
+    perm1i = w0 * perm1
+    perm2i = w0 * perm2
+    result = Sx(perm1) * ASx(perm2)
+    for (p2, n), v in result.items():
+        compres = Sx(perm2i) * Sx(p2)
+        assert compres.get(perm1i, S.Zero) == v
