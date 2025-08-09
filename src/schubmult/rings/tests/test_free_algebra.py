@@ -33,8 +33,8 @@ def test_schubert_to_word():
 
 
 def test_word_to_schubert():
-    from schubmult import ASx, uncode, SchubertBasis, Sx, FA
-    from schubmult.symbolic import S, prod
+    from schubmult import SchubertBasis, Sx, FA
+    from schubmult.symbolic import S
 
     tup = (3, 1, 0, 2, 1)
     word = FA(*tup)
@@ -61,7 +61,7 @@ def test_schubert_to_sepdesc():
 
 def test_sepdesc_to_schubert():
     from schubmult import uncode, Sx
-    from schubmult.rings import SeparatedDescentsBasis, SchubertBasis, FreeAlgebra, ASx, WordBasis
+    from schubmult.rings import SeparatedDescentsBasis, SchubertBasis, FreeAlgebra, WordBasis
     from schubmult.symbolic import S
 
     k = 4
