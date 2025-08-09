@@ -118,9 +118,8 @@ def test_module_action():
     perm1 = uncode([2, 1, 0, 1])
     perm2 = uncode([3, 1, 0, 2, 1])
     w0 = uncode([5,4,3,2,1])
-    perm1i = w0 * perm1
     perm2i = w0 * perm2
     result = Sx(perm1) * ASx(perm2)
+    compres = Sx(perm2i) * Sx(perm1)
     for (p2, n), v in result.items():
-        compres = Sx(perm2i) * Sx(p2)
-        assert compres.get(perm1i, S.Zero) == v
+        assert compres.get(w0 * p2, S.Zero) == v
