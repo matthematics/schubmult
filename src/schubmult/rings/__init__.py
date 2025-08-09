@@ -5,11 +5,11 @@ from .polynomial_algebra import PA, PolynomialAlgebra, PolynomialAlgebraElement
 from .polynomial_basis import ElemSymPolyBasis, MonomialBasis, PolynomialBasis, SchubertPolyBasis, SepDescPolyBasis
 from .quantum_schubert_ring import QDSx, QPDSx, QPSx, QSx, QuantumDoubleSchubertElement, QuantumDoubleSchubertRing, QuantumSingleSchubertRing, make_parabolic_quantum_basis
 from .schubert_ring import DoubleSchubertElement, DoubleSchubertRing, DSx, ElemDoubleSchubertRing, SingleSchubertRing, Sx
-from .separated_descents import SeparatedDescentsRing, SeparatedDescentsRingElement
 from .tensor_ring import TensorRing, TensorRingElement
 
 ASx = FreeAlgebra(basis=SchubertBasis)
-ADSx = SeparatedDescentsRing(DSx([]).ring)
+# Will do ADSx again
+# ADSx = SeparatedDescentsRing(DSx([]).ring)
 J = FreeAlgebra(basis=JBasis)
 L = FreeAlgebra(basis=NElementaryBasis)
 Z = FreeAlgebra(basis=ZBasis)
@@ -17,7 +17,6 @@ Z = FreeAlgebra(basis=ZBasis)
 __all__ = [
     "FA",
     "PA",
-    "ADSx",
     "ASx",
     "DSx",
     "DoubleSchubertElement",
@@ -49,8 +48,6 @@ __all__ = [
     "SchubertSchurBasis",
     "SepDescPolyBasis",
     "SeparatedDescentsBasis",
-    "SeparatedDescentsRing",
-    "SeparatedDescentsRingElement",
     "SingleSchubertRing",
     "Sx",
     "TensorRing",

@@ -3,8 +3,6 @@ from itertools import zip_longest
 
 import schubmult.rings.free_algebra as fa
 from schubmult.perm_lib import Permutation, trimcode, uncode
-
-# from schubmult.rings import ASx
 from schubmult.symbolic import (
     Add,
     Integer,
@@ -20,9 +18,9 @@ from schubmult.symbolic import (
 from schubmult.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.perm_utils import add_perm_dict, mu_A
 
+from ._separated_descents import SeparatedDescentsRing
 from .abstract_schub_poly import GenericPrintingTerm
 from .schubert_ring import DSx, Sx
-from .separated_descents import SeparatedDescentsRing
 
 splugSx = SeparatedDescentsRing(Sx([]).ring)
 ADSx = SeparatedDescentsRing(DSx([]).ring)
