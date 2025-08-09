@@ -123,3 +123,17 @@ def test_module_action():
     compres = Sx(perm2i) * Sx(perm1)
     for (p2, n), v in result.items():
         assert compres.get(w0 * p2, S.Zero) == v
+
+
+# def test_op_module_action():
+#     from schubmult import ASx, uncode, Sx
+#     from schubmult.symbolic import S
+
+#     perm1 = uncode([2, 1, 0, 1])
+#     perm2 = uncode([3, 1, 0, 2, 1])
+#     w0 = uncode([5,4,3,2,1])
+#     perm2i = w0 * perm2
+#     result = ASx(perm2) * Sx(perm1) 
+#     compres = Sx(perm2i) * Sx(perm1)
+#     for (p2, n), v in result.items():
+#         assert compres.get(w0 * p2, S.Zero) == v

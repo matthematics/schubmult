@@ -825,7 +825,7 @@ class SchubertBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_separated_descents(other_basis.k, *x)
         if other_basis == ElementaryBasis:
             return lambda x: cls.transition_elementary(*x)
-        if other_basis == ZBasis:
+        if other_basis == ZBasis or other_basis == JBasis or other_basis == JTBasis:
             return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition(WordBasis)(x))
         return None
 
