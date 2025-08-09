@@ -77,3 +77,38 @@ def test_sepdesc_to_schubert():
         assert n == 5
         poly = Sx(k1).expand()
         assert wbelem.poly_inner_product(poly, Sx.genset, n) == v
+
+def test_schubert_to_elementary():
+    from schubmult import ASx, uncode, Sx
+    from schubmult.rings import ElementaryBasis, WordBasis
+    from schubmult.symbolic import S
+    from schubmult.abc import e
+
+    perm = uncode([3, 1, 3, 0, 1])
+    result = ASx(perm).change_basis(ElementaryBasis)
+    wbelem = ASx(perm).change_basis(WordBasis)
+    for (tup, n), v in result.items():
+        assert n == 5
+        res = Sx([])
+        for i, c in enumerate(tup):
+            res *= e(c,i+1,res.ring.genset[1:]) if i <= n else e(c,n,res.ring.genset[1:])
+        poly = res.expand()
+        assert wbelem.poly_inner_product(poly, Sx.genset, n) == v
+
+
+def test_elementary_to_schubert():
+    from schubmult import ASx, uncode, Sx
+    from schubmult.rings import ElementaryBasis, WordBasis, FreeAlgebra, SchubertBasis
+    from schubmult.symbolic import S
+    from schubmult.abc import e
+
+    EE = FreeAlgebra(ElementaryBasis)
+    tup = (1, 0, 1, 2, 3)
+    numvars = 3
+    result = EE(tup,numvars).change_basis(SchubertBasis)
+    wbelem = EE(tup,numvars).change_basis(WordBasis)
+    for (perm, n), v in result.items():
+        assert n == numvars
+        res = Sx(perm)
+        poly = res.expand()
+        assert wbelem.poly_inner_product(poly, Sx.genset, n) == v
