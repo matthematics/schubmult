@@ -1,9 +1,12 @@
 from functools import cache
 
 # import schubmult.rings.free_algebra as fa
-from schubmult.perm_lib import uncode
-from schubmult.symbolic import S
+from schubmult.perm_lib import Permutation, uncode
+from schubmult.schub_lib.schub_lib import complete_sym_positional_perms_down
+from schubmult.symbolic import CoercionFailed, S, sympy_Mul
 from schubmult.utils.perm_utils import mu_A
+
+from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
 
 def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
@@ -52,3 +55,194 @@ def _single_coprod(p, n, T):
 
 def _is_code1(perm):
     return perm.inv > 0 and perm.code[0] == perm.inv
+
+
+class SeparatedDescentsRing(BaseSchubertRing):
+    @property
+    def args(self):
+        return ()
+
+    @property
+    def schub_ring(self):
+        return self._schub_ring
+
+    # pieri formula for uncode([p]), 1
+    def _single_coprod_test(self, p, tensor_elem):
+        res = tensor_elem.ring.zero
+        for (t1, t2), val in tensor_elem.items():
+            for i in range(p + 1):
+                # res += T.from_dict({((uncode([i]), n), (uncode([p-i]), n)): S.One})
+                telem1 = self.pieri_formula(i, self(*t1))
+                telem2 = self.pieri_formula(p - i, self(*t2))
+                for perm1, val1 in telem1.items():
+                    for perm2, val2 in telem2.items():
+                        res += val * val1 * val2 * tensor_elem.ring((perm1, perm2))
+        return res
+
+    def pieri_formula(self, p, elem):
+        val = self.zero
+        for (perm, num_vars), coeff in elem.items():
+            lne = len(perm)
+            if perm.inv == 0:
+                lne = 0
+            code_add = p + max(lne, num_vars)
+            big_elem = uncode([code_add, *perm.code])
+            e_list = complete_sym_positional_perms_down(big_elem, code_add - p, 1)
+
+            for to_add, deg, _ in e_list:
+                if deg == code_add - p:
+                    if to_add.inv == 0 or max(to_add.descents()) + 1 <= num_vars + 1:
+                        val += coeff * self(to_add, num_vars + 1)
+        return val
+
+    def __init__(self, ring):
+        self._schub_ring = ring
+        super().__init__(self._schub_ring.genset, self._schub_ring.coeff_genset)
+        self.zero_monom = (self._schub_ring.zero_monom, 0)
+        self.dtype = type("SeparatedDescentsRingElement", (SeparatedDescentsRingElement,), {"ring": self})
+
+    def __hash__(self):
+        return hash((self._schub_ring, "ARBLE"))
+
+    # @property
+    # def rings(self):
+    #     return self._rings
+
+    # def domain_new(self, elem1, elem2):
+    # @cache
+    # def coproduct(self, key):
+    #     # R = self @ self
+    #     R = fa.FreeAlgebra()
+    #     return R.tensor_schub_expand(R.schub_elem(*key).coproduct())
+
+    # @cache
+    # def free_element(self, perm, numvars):
+    #     return fa.FreeAlgebra().schub_elem(perm, numvars)
+
+    def coproduct_test(self, key):
+        T = self @ self
+        # if val == self.zero:
+        #     return T.zero
+        val = self(*key)
+
+        cprd_val = T.zero
+
+        while val != val.ring.zero:
+            mx = [k[0].code for k in val.keys() if val[k] != S.Zero]
+            mx.sort(reverse=True)
+            cd = mx[0]
+
+            mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
+            if len(cd) == 0:
+                return cprd_val + T.from_dict({((Permutation([]), mx_key[1]), (Permutation([]), mx_key[1])): val[mx_key] * S.One})
+            cd = [*cd]
+            fv = cd.pop(0)
+            while len(cd) > 1 and cd[-1] == 0:
+                cd.pop()
+            cf = val[mx_key]
+            cprd_val += cf * self._single_coprod_test(fv, self.coproduct_test((uncode(cd), mx_key[1] - 1)))
+            val -= cf * self.pieri_formula(fv, self(uncode(cd), mx_key[1] - 1))
+        return cprd_val
+
+    def mul(self, elem1, elem2):
+        # print(f"{elem1=}, {elem2=}")
+        try:
+            bongus = self.domain_new(elem1)
+            return self.from_dict({k: v * bongus for k, v in elem2.items()})
+        except CoercionFailed:
+            # import traceback
+            # traceback.print_exc()
+            pass
+        try:
+            bongus = self.domain_new(elem2)
+            return self.from_dict({k: v * bongus for k, v in elem1.items()})
+        except CoercionFailed:
+            # import traceback
+            # traceback.print_exc()
+            pass
+        ret = self.zero
+        for k1, v1 in elem1.items():
+            for k2, v2 in elem2.items():
+                perm1 = k1[0]
+                perm2 = k2[0]
+
+                deg1 = k1[1]
+                deg2 = k2[1]
+
+                dct = _sep_desc_mul(perm1, perm2, deg1, deg2, v1 * v2, self.schub_ring)
+                dct_update = {}
+                for k, v in dct.items():
+                    if k.inv > 0 and max(k.descents()) + 1 > deg1 + deg2:
+                        continue
+                    dct_update[(k, deg1 + deg2)] = v
+                ret += self.from_dict(dct_update)
+        # return self.from_dict(ret_dict)
+        return ret
+
+    def _coerce_add(self, x):
+        try:
+            x = self.domain_new(x)
+            return self.from_dict({self.zero_monom: x})
+        except CoercionFailed:
+            # import traceback
+            # traceback.print_exc()
+            return None
+        # return None
+
+    def _coerce_mul(self, x):  # noqa: ARG002
+        # have to pull out gens
+        # if not isinstance(x.ring, TensorRing):
+        #     if set(x.ring.genset) == set(self.genset):
+        #         return x.coproduct(*[x.ring.genset.index(v) for v in self.rings[0].genset[1:]])
+        return None
+
+    def printing_term(self, k):
+        # return Symbol(f"ASx({k[0]}, {k[1]})", commutative=False)
+        return self._schub_ring.printing_term(k, prefix="A")
+
+    @property
+    def one(self):
+        return self.from_dict({self.zero_monom: S.One})
+
+    def _get_min_deg(self, perm):
+        if perm.inv > 0:
+            return max(perm.descents()) + 1
+        return 0
+
+    def new(self, perm, deg=0):
+        if not isinstance(perm, Permutation) and not isinstance(perm, list) and not isinstance(perm, tuple):
+            elem = self._schub_ring(perm)
+            return self.from_dict({(k, self._get_min_deg(k)): v for k, v in elem.items()})
+        if deg < 0:
+            raise ValueError("Degree must be non-negative")
+        perm = Permutation(perm)
+        if perm.inv > 0:
+            deg = max(deg, max(perm.descents()) + 1)
+        return self.from_dict({(perm, deg): S.One})
+
+
+class SeparatedDescentsRingElement(BaseSchubertElement):
+    @property
+    def free_symbols(self):
+        return set()
+
+    # def coproduct(self):
+    #     T = self.ring @ self.ring
+    #     res = T.zero
+    #     for key, val in self.items():
+    #         res += val * self.ring.coproduct(key)
+    #     return res
+
+    def coproduct_test(self):
+        return self.ring.coproduct_test(self)
+
+    # def free_element(self):
+    #     ret = fa.FA([]).ring.zero
+    #     for k, v in self.items():
+    #         ret += v * self.ring.free_element(*k)
+    #     return ret
+
+    def as_ordered_terms(self, *_, **__):
+        if len(self.keys()) == 0:
+            return [S.Zero]
+        return [self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k)) for k in self.keys()]
