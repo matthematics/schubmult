@@ -247,6 +247,7 @@ class SchubertPolyBasis(PolynomialBasis):
 
     def transition_sepdesc(self, dct, other_basis):
         from schubmult.abc import e
+
         k = other_basis.k
         if k > other_basis.numvars:
             k = other_basis.numvars
@@ -258,7 +259,7 @@ class SchubertPolyBasis(PolynomialBasis):
             part2 = self.ring.one
             for i in range(k - 1):
                 try:
-                    part1 *= e(part[i],i+1,self.ring.genset[1:])
+                    part1 *= e(part[i], i + 1, self.ring.genset[1:])
                 except IndexError:
                     pass
             for i in range(k - 1, len(part)):
@@ -268,7 +269,7 @@ class SchubertPolyBasis(PolynomialBasis):
                     pass
             for v, coeff1 in part1.items():
                 for u, coeff2 in part2.items():
-                    res_dict[other_basis.as_key([u,v])] = res_dict.get(other_basis.as_key([u,v]), S.Zero) + coeff1 * coeff2 * coeff0
+                    res_dict[other_basis.as_key([u, v])] = res_dict.get(other_basis.as_key([u, v]), S.Zero) + coeff1 * coeff2 * coeff0
         # for (w, n), coeff in dct.items():
         #     if len(w) <= k:
         #         res_dict[other_basis.as_key(Permutation([]), w)] = res_dict.get(other_basis.as_key(Permutation([]), w), S.Zero) + coeff
@@ -348,19 +349,20 @@ class SchubertPolyBasis(PolynomialBasis):
             # raise NotImplementedError("The bonky cheese need to implement the elemnify")
         return None
 
+
 class SepDescPolyBasis(PolynomialBasis):
     def __hash__(self):
         return hash(self.numvars, self.ring, self.k, "fatbacon")
 
     @property
     def zero_monom(self):
-        return self.as_key([[],[]])
+        return self.as_key([[], []])
 
     def with_numvars(self, numvars):
         return self.__class__(numvars=numvars, ring=self.ring, k=self.k)
 
     def product(self, key1, key2, coeff=S.One):
-        mnb =SchubertPolyBasis(numvars=self.numvars, ring=self.ring)
+        mnb = SchubertPolyBasis(numvars=self.numvars, ring=self.ring)
         left = self.transition(mnb)({key1: coeff})
         right = self.transition(mnb)({key2: S.One})
 
@@ -466,9 +468,8 @@ class SepDescPolyBasis(PolynomialBasis):
             out_ret += self.ring.from_dict({k1: v}) * self.ring.from_dict({k2: S.One})
         return other_basis.attach_key(dict(out_ret))
 
-    def transition_sepdesc(x, other_basis):
+    def transition_sepdesc(x, other_basis):  # noqa: ARG002
         return {x: S.One}
-
 
     def from_expr(self, expr):
         return self.attach_key(self.ring.from_expr(expr))
@@ -485,7 +486,6 @@ class SepDescPolyBasis(PolynomialBasis):
             return lambda x: other_basis.transition_elementary(self.transition_schubert(x, other_basis))
             # raise NotImplementedError("The bonky cheese need to implement the elemnify")
         return None
-
 
 
 class ElemSymPolyBasis(PolynomialBasis):
@@ -545,7 +545,7 @@ class ElemSymPolyBasis(PolynomialBasis):
             to_add = S.One
             for i, a in enumerate(k[:n]):
                 # if a > i +1:
-                    # print(f"{a=} {i=} a>i+1 waffle")
+                # print(f"{a=} {i=} a>i+1 waffle")
                 to_add *= expand_func(e(a, i + 1, self.ring.genset[1:]))
                 # print(f"{to_add=}")
             for a in k[n:]:

@@ -244,7 +244,8 @@ class DoubleSchubertElement(BaseSchubertElement):
             res += val * self.ring.positive_elem_sym_rep_backward(k)
         return res
 
-#schubmult_double_down
+
+# schubmult_double_down
 class DoubleSchubertRing(BaseSchubertRing):
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, "DBS"))
@@ -683,9 +684,7 @@ class DoubleSchubertRing(BaseSchubertRing):
         return elem
 
 
-
 class DoubleSchubertRingDown(DoubleSchubertRing):
-
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, "fatcabasi"))
 
@@ -696,7 +695,7 @@ class DoubleSchubertRingDown(DoubleSchubertRing):
     @property
     def single_mul(self):
         return py.schubmult_py_down
-    
+
     @cache
     def cached_product(self, u, v, basis2):
         return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset) for k, x in yz.schubmult_double_down({u: S.One}, v, yz._vars.var_g1, yz._vars.var_g2).items()}
@@ -707,6 +706,7 @@ class DoubleSchubertRingDown(DoubleSchubertRing):
 
     def printing_term(self, k, prefix="op"):
         return spolymod.DSchubPoly(k, self.genset.label, self.coeff_genset.label, prefix=prefix)
+
 
 class SingleSchubertRing(DoubleSchubertRing):
     def __init__(self, genset):
