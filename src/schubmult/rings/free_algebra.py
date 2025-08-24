@@ -1,5 +1,7 @@
 from functools import cache
 
+from sympy import PolynomialRing
+
 from schubmult.perm_lib import uncode
 from schubmult.symbolic import (
     EXRAW,
@@ -365,6 +367,37 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
 class FreeAlgebra(Ring, CompositeDomain):
     def __str__(self):
         return self.__class__.__name__
+
+    def j_quasisymmetric(self, alphagod):
+        from sage.all import ZZ, PolynomialRing, QuasiSymmetricFunctions
+        tt = PolynomialRing(ZZ, "t")
+        QSym = QuasiSymmetricFunctions(tt)
+        M = QSym.M()
+        ret = QSym.zero()
+        stack = [[alphagod,[], tt.one()]]
+        while len(stack) > 0:
+            this_alpha = stack.pop()
+            if len(this_alpha[0]) == 0:
+                ret += this_alpha[2]*M[*this_alpha[1]]
+            else:
+                asum = sum(this_alpha[0])
+
+                stinkbag2 = Sx(uncode([0, *this_alpha[0]]))
+                pilfer2 = stinkbag2.pull_out_gen(stinkbag2.ring.genset[1])
+                for k, _ in pilfer2.items():
+                    fingbat = k.trimcode
+                    if 0 in fingbat[1:]:
+                        continue
+                    fsum = sum(fingbat)
+                    if asum != fsum and (len(fingbat)!=0 and fingbat[0] != 0):
+                        new_alpha = [*fingbat]
+                        new_data = [*this_alpha[1], asum - fsum]
+                        stack.append([new_alpha, new_data, this_alpha[2]*tt.gens()[0]])
+                    elif len(fingbat) == 0 or fingbat[0] == 0:
+                        new_alpha = [*fingbat[1:]]
+                        new_data = [*this_alpha[1], asum - fsum]
+                        stack.append([new_alpha, new_data, this_alpha[2]])
+        return ret
 
     def tensor_schub_expand(self, tensor):
         T = splugSx([]).ring @ splugSx([]).ring

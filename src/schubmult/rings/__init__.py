@@ -1,3 +1,4 @@
+from ._separated_descents import SeparatedDescentsRing
 from .free_algebra import FA, FreeAlgebra, FreeAlgebraElement
 from .free_algebra_basis import ElementaryBasis, FreeAlgebraBasis, JBasis, NElementaryBasis, SchubertBasis, SchubertSchurBasis, SeparatedDescentsBasis, WordBasis, ZBasis
 from .nil_hecke import NilHeckeRing
@@ -9,7 +10,7 @@ from .tensor_ring import TensorRing, TensorRingElement
 
 ASx = FreeAlgebra(basis=SchubertBasis)
 # Will do ADSx again
-# ADSx = SeparatedDescentsRing(DSx([]).ring)
+ADSx = SeparatedDescentsRing(DSx([]).ring)
 J = FreeAlgebra(basis=JBasis)
 L = FreeAlgebra(basis=NElementaryBasis)
 Z = FreeAlgebra(basis=ZBasis)
@@ -17,6 +18,7 @@ Z = FreeAlgebra(basis=ZBasis)
 __all__ = [
     "FA",
     "PA",
+    "ADSx",
     "ASx",
     "DSx",
     "DoubleSchubertElement",

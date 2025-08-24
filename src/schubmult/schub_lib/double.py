@@ -451,7 +451,7 @@ def schubmult_double_from_elems(perm_dict, v, var2=None, var3=None, elem_func=No
     return ret_dict
 
 
-def schubmult_down(perm_dict, v, var2=None, var3=None):
+def schubmult_double_down(perm_dict, v, var2=None, var3=None):
     vn1 = ~v
     th = theta(vn1)
     if len(th) == 0 or th[0] == 0:

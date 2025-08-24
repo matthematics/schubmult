@@ -248,6 +248,8 @@ class SchubertPolyBasis(PolynomialBasis):
     def transition_sepdesc(self, dct, other_basis):
         from schubmult.abc import e
         k = other_basis.k
+        if k > other_basis.numvars:
+            k = other_basis.numvars
         res_dict = {}
 
         dct2 = self.transition_elementary(dct, ElemSymPolyBasis(numvars=other_basis.numvars, ring=other_basis.ring))
@@ -255,9 +257,15 @@ class SchubertPolyBasis(PolynomialBasis):
             part1 = self.ring.one
             part2 = self.ring.one
             for i in range(k - 1):
-                part1 *= e(part[i],i+1,self.ring.genset[1:])
+                try:
+                    part1 *= e(part[i],i+1,self.ring.genset[1:])
+                except IndexError:
+                    pass
             for i in range(k - 1, len(part)):
-                part2 *= e(part[i], n if i + 1 > n else i + 1, self.ring.genset[1:])
+                try:
+                    part2 *= e(part[i], n if i + 1 > n else i + 1, self.ring.genset[1:])
+                except IndexError:
+                    pass
             for v, coeff1 in part1.items():
                 for u, coeff2 in part2.items():
                     res_dict[other_basis.as_key([u,v])] = res_dict.get(other_basis.as_key([u,v]), S.Zero) + coeff1 * coeff2 * coeff0
@@ -458,6 +466,8 @@ class SepDescPolyBasis(PolynomialBasis):
             out_ret += self.ring.from_dict({k1: v}) * self.ring.from_dict({k2: S.One})
         return other_basis.attach_key(dict(out_ret))
 
+    def transition_sepdesc(x, other_basis):
+        return {x: S.One}
 
 
     def from_expr(self, expr):
@@ -465,7 +475,7 @@ class SepDescPolyBasis(PolynomialBasis):
 
     def transition(self, other_basis):
         if isinstance(other_basis, SepDescPolyBasis):
-            return lambda x: x
+            return lambda x: self.transition_sepdesc(x, other_basis)
         if isinstance(other_basis, SchubertPolyBasis):
             return lambda x: self.transition_schubert(x, other_basis)
         if isinstance(other_basis, MonomialBasis):

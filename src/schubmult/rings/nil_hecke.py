@@ -1,7 +1,7 @@
 from sympy import Expr
 
 from schubmult.perm_lib import Permutation
-from schubmult.schub_lib.double import schubmult_down
+from schubmult.schub_lib.double import schubmult_double_down
 from schubmult.symbolic import (
     EXRAW,
     Add,
@@ -267,7 +267,7 @@ class NilHeckeRing(Ring, CompositeDomain):
 
         ret = self.zero
         for k, v in mul_elem.items():
-            ret += self.from_dict({k2: v * v2 for k2, v2 in schubmult_down(elem, k, self.genset, mul_elem.ring.coeff_genset).items()})
+            ret += self.from_dict({k2: v * v2 for k2, v2 in schubmult_double_down(elem, k, self.genset, mul_elem.ring.coeff_genset).items()})
         return ret
 
     def mul_perm(self, elem, perm):

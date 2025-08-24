@@ -244,7 +244,7 @@ class DoubleSchubertElement(BaseSchubertElement):
             res += val * self.ring.positive_elem_sym_rep_backward(k)
         return res
 
-
+#schubmult_double_down
 class DoubleSchubertRing(BaseSchubertRing):
     def __hash__(self):
         return hash((self.genset, self.coeff_genset, "DBS"))
@@ -683,13 +683,30 @@ class DoubleSchubertRing(BaseSchubertRing):
         return elem
 
 
-def DSx(x, genset=GeneratingSet("y"), elem_sym=False):
-    if isinstance(genset, str):
-        genset = GeneratingSet(genset)
-    if elem_sym:
-        return ElemDoubleSchubertRing(GeneratingSet("x"), genset)(x)
-    return DoubleSchubertRing(GeneratingSet("x"), genset)(x)
 
+class DoubleSchubertRingDown(DoubleSchubertRing):
+
+    def __hash__(self):
+        return hash((self.genset, self.coeff_genset, "fatcabasi"))
+
+    @property
+    def double_mul(self):
+        return yz.schubmult_double_down
+
+    @property
+    def single_mul(self):
+        return py.schubmult_py_down
+    
+    @cache
+    def cached_product(self, u, v, basis2):
+        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset) for k, x in yz.schubmult_double_down({u: S.One}, v, yz._vars.var_g1, yz._vars.var_g2).items()}
+
+    @cache
+    def cached_positive_product(self, u, v, basis2):
+        return {k: xreplace_genvars(x, self.coeff_genset, basis2.coeff_genset) for k, x in pos.schubmult_double_down({u: S.One}, v, yz._vars.var_g1, yz._vars.var_g2).items()}
+
+    def printing_term(self, k, prefix="op"):
+        return spolymod.DSchubPoly(k, self.genset.label, self.coeff_genset.label, prefix=prefix)
 
 class SingleSchubertRing(DoubleSchubertRing):
     def __init__(self, genset):
@@ -765,6 +782,16 @@ class SingleSchubertRing(DoubleSchubertRing):
     @property
     def elem_func(self):
         return ElemSym
+
+
+def DSx(x, genset=GeneratingSet("y"), elem_sym=False, down=False):
+    if isinstance(genset, str):
+        genset = GeneratingSet(genset)
+    if down:
+        return DoubleSchubertRingDown(GeneratingSet("x"), genset)(x)
+    if elem_sym:
+        return ElemDoubleSchubertRing(GeneratingSet("x"), genset)(x)
+    return DoubleSchubertRing(GeneratingSet("x"), genset)(x)
 
 
 Sx = SingleSchubertRing(GeneratingSet("x"))
