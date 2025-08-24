@@ -366,6 +366,64 @@ class FreeAlgebra(Ring, CompositeDomain):
     def __str__(self):
         return self.__class__.__name__
 
+    # @cache
+    # def j_quasisymmetric(self, alphagod):
+    #     from sage.all import ZZ, QuasiSymmetricFunctions
+
+    #     tt = ZZ["t"]
+    #     QSym = QuasiSymmetricFunctions(tt)
+    #     M = QSym.M()
+    #     ret = QSym.zero()
+    #     stack = [[[0,*alphagod], [], tt.one()]]
+    #     while len(stack) > 0:
+    #         this_alpha = stack.pop()
+    #         if len(this_alpha[0]) == 0:
+    #             ret += (tt.gens()[0]**(len(this_alpha[1])-len(alphagod)))* M[*this_alpha[1]]
+    #         else:
+    #             asum = sum(this_alpha[0])
+
+    #             stinkbag2 = Sx(uncode([*this_alpha[0]]))
+    #             pilfer2 = stinkbag2.pull_out_gen(stinkbag2.ring.genset[1])
+    #             used = set()
+    #             for k, _ in pilfer2.items():
+    #                 fingbat = k.trimcode
+    #                 if 0 in fingbat[1:]:
+    #                     continue
+    #                 fsum = sum(fingbat)
+    #                 if asum != fsum:
+    #                     if len(fingbat)>0 and fingbat[0] == 0:
+    #                         new_alpha = [*fingbat]
+    #                     elif len(fingbat) > 0:
+    #                         new_alpha = [*fingbat]
+    #                     else:
+    #                         new_alpha = [*fingbat]
+    #                     used.add(tuple(new_alpha))
+    #                     new_data = [*this_alpha[1], asum - fsum]
+    #                     arb = 0 if len(new_alpha) != len(this_alpha[0]) else 1
+    #                     stack.append([new_alpha, new_data, this_alpha[2] * (tt.gens()[0]**arb)])
+
+    #             # stinkbag2 = Sx(uncode([0, *this_alpha[0]]))
+    #             # pilfer2 = stinkbag2.pull_out_gen(stinkbag2.ring.genset[1])
+    #             # for k, _ in pilfer2.items():
+    #             #     fingbat = k.trimcode
+    #             #     if 0 in fingbat:
+    #             #         continue
+    #             #     fsum = sum(fingbat)
+    #             #     if asum != fsum:
+    #             #         new_alpha = [*fingbat]
+    #             #         if tuple(new_alpha) in used:
+    #             #             continue
+    #             #         new_data = [*this_alpha[1], asum - fsum]
+    #             #         arb = 0 if len(new_alpha) != len(this_alpha[0]) else 1
+    #             #         stack.append([new_alpha, new_data, this_alpha[2] * (tt.gens()[0]**arb)])
+    #                 # elif asum!= fsum and (len(fingbat) == 0 or fingbat[0] == 0):
+    #                 #     new_alpha = [*fingbat[1:]]
+    #                 #     new_data = [*this_alpha[1], asum - fsum]
+    #                 #     arb = 0 if len(new_alpha) != len(this_alpha[0]) else 1
+    #                 #     stack.append([new_alpha, new_data, this_alpha[2]* (tt.gens()[0]**arb)])
+    #     return ret
+
+    @cache
     def j_quasisymmetric(self, alphagod):
         from sage.all import ZZ, QuasiSymmetricFunctions
 
@@ -373,29 +431,43 @@ class FreeAlgebra(Ring, CompositeDomain):
         QSym = QuasiSymmetricFunctions(tt)
         M = QSym.M()
         ret = QSym.zero()
-        stack = [[alphagod, [], tt.one()]]
+        stack = [[[*([0]*(sum(alphagod)-len(alphagod))),*alphagod], [], [alphagod]]]
         while len(stack) > 0:
             this_alpha = stack.pop()
             if len(this_alpha[0]) == 0:
-                ret += this_alpha[2] * M[*this_alpha[1]]
+                ret += (tt.gens()[0]**(len(this_alpha[1])-len(alphagod)))* M[*list(reversed(this_alpha[1]))]
             else:
                 asum = sum(this_alpha[0])
-
-                stinkbag2 = Sx(uncode([0, *this_alpha[0]]))
-                pilfer2 = stinkbag2.pull_out_gen(stinkbag2.ring.genset[1])
+                #loin = this_alpha[2]
+                stinkbag2 = Sx(uncode([*this_alpha[0]]))
+                pilfer2 = stinkbag2.pull_out_gen(stinkbag2.ring.genset[len(this_alpha[0])])
                 for k, _ in pilfer2.items():
-                    fingbat = k.trimcode
-                    if 0 in fingbat[1:]:
-                        continue
+                    fingbat = [*k.trimcode]
                     fsum = sum(fingbat)
-                    if asum != fsum and (len(fingbat) != 0 and fingbat[0] != 0):
-                        new_alpha = [*fingbat]
-                        new_data = [*this_alpha[1], asum - fsum]
-                        stack.append([new_alpha, new_data, this_alpha[2] * tt.gens()[0]])
-                    elif len(fingbat) == 0 or fingbat[0] == 0:
-                        new_alpha = [*fingbat[1:]]
-                        new_data = [*this_alpha[1], asum - fsum]
-                        stack.append([new_alpha, new_data, this_alpha[2]])
+                    new_alpha = [*fingbat]
+                    new_data = [*this_alpha[1]]
+                    if asum != fsum:
+                        new_data = [*new_data, asum - fsum]
+                        stack.append([new_alpha, new_data, [*this_alpha[2], fingbat]])
+                # stinkbag2 = Sx(uncode([0, *this_alpha[0]]))
+                # pilfer2 = stinkbag2.pull_out_gen(stinkbag2.ring.genset[1])
+                # for k, _ in pilfer2.items():
+                #     fingbat = k.trimcode
+                #     if 0 in fingbat:
+                #         continue
+                #     fsum = sum(fingbat)
+                #     if asum != fsum:
+                #         new_alpha = [*fingbat]
+                #         if tuple(new_alpha) in used:
+                #             continue
+                #         new_data = [*this_alpha[1], asum - fsum]
+                #         arb = 0 if len(new_alpha) != len(this_alpha[0]) else 1
+                #         stack.append([new_alpha, new_data, this_alpha[2] * (tt.gens()[0]**arb)])
+                    # elif asum!= fsum and (len(fingbat) == 0 or fingbat[0] == 0):
+                    #     new_alpha = [*fingbat[1:]]
+                    #     new_data = [*this_alpha[1], asum - fsum]
+                    #     arb = 0 if len(new_alpha) != len(this_alpha[0]) else 1
+                    #     stack.append([new_alpha, new_data, this_alpha[2]* (tt.gens()[0]**arb)])
         return ret
 
     def tensor_schub_expand(self, tensor):
