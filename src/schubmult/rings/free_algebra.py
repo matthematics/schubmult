@@ -424,6 +424,36 @@ class FreeAlgebra(Ring, CompositeDomain):
     #     return ret
 
     @cache
+    def j_quasi_recurse(self, alphagod):
+        from sage.all import ZZ, QuasiSymmetricFunctions
+
+        tt = ZZ["t"]
+        QSym = QuasiSymmetricFunctions(tt)
+        M = QSym.M()
+        ret = QSym.zero()
+        if len(alphagod) == sum(alphagod):
+            return M[*alphagod]
+        zero_poly = Sx(uncode(alphagod))
+        asum = sum(alphagod)
+        dct = zero_poly.pull_out_gen(zero_poly.ring.genset[1])
+        for key, _ in dct.items():
+            oldval = self.j_quasi_recurse(tuple(key.trimcode))
+            for monom, coeff in dict(oldval).items():
+                ret += coeff * M[asum - key.inv, *monom]
+
+        new_alphagod = [0, *alphagod]
+        schub_poly = Sx(uncode(new_alphagod))
+        dct = schub_poly.pull_out_gen(schub_poly.ring.genset[1])
+        for key, _ in dct.items():
+            cd = key.trimcode
+            if len(cd) == 0 or cd[0] == 0 or asum - key.inv == 0 or len(cd) != len(alphagod) or 0 in cd:
+                continue
+            oldval = self.j_quasi_recurse(tuple(key.trimcode))
+            for monom, coeff in dict(oldval).items():
+                ret += tt.gens()[0] * coeff * M[asum - key.inv, *monom]
+        return ret
+
+    @cache
     def j_quasisymmetric(self, alphagod):
         from sage.all import ZZ, QuasiSymmetricFunctions
 
@@ -431,24 +461,30 @@ class FreeAlgebra(Ring, CompositeDomain):
         QSym = QuasiSymmetricFunctions(tt)
         M = QSym.M()
         ret = QSym.zero()
-        stack = [[[*([0]*(sum(alphagod)-len(alphagod))),*alphagod], [], [alphagod]]]
+        stack = [[[*([0]*(sum(alphagod)-len(alphagod))),*alphagod], [], [alphagod],0]]
         while len(stack) > 0:
             this_alpha = stack.pop()
-            if len(this_alpha[0]) == 0:
-                ret += (tt.gens()[0]**(len(this_alpha[1])-len(alphagod)))* M[*list(reversed(this_alpha[1]))]
+            if len(this_alpha[0]) == 0 or sum(this_alpha[0]) == 0:
+                if (2,1,2) == (2,1,2):
+                    print(this_alpha)
+                ret += (tt.gens()[0]**(len(this_alpha[1])-len(alphagod)))* M[*this_alpha[1]]
             else:
                 asum = sum(this_alpha[0])
                 #loin = this_alpha[2]
                 stinkbag2 = Sx(uncode([*this_alpha[0]]))
-                pilfer2 = stinkbag2.pull_out_gen(stinkbag2.ring.genset[len(this_alpha[0])])
+                pilfer2 = stinkbag2.pull_out_gen(stinkbag2.ring.genset[1])
                 for k, _ in pilfer2.items():
                     fingbat = [*k.trimcode]
                     fsum = sum(fingbat)
                     new_alpha = [*fingbat]
                     new_data = [*this_alpha[1]]
+                    bong_data = this_alpha[3]
                     if asum != fsum:
                         new_data = [*new_data, asum - fsum]
-                        stack.append([new_alpha, new_data, [*this_alpha[2], fingbat]])
+                    else:
+                        bong_data += 1
+                        continue
+                    stack.append([new_alpha, new_data, [*this_alpha[2], fingbat], bong_data])
                 # stinkbag2 = Sx(uncode([0, *this_alpha[0]]))
                 # pilfer2 = stinkbag2.pull_out_gen(stinkbag2.ring.genset[1])
                 # for k, _ in pilfer2.items():
