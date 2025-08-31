@@ -80,8 +80,8 @@ class TensorRing(BaseSchubertRing):
                     ret_dict = add_perm_dict(ret_dict, dct)
             return self.from_dict(ret_dict)
         except Exception:
-            import traceback
-            traceback.print_exc()
+            # import traceback
+            # traceback.print_exc()
             raise
             #return self.from_dict({self.zero_monom: elem2}) * elem1
 
