@@ -1,5 +1,5 @@
 from schubmult.perm_lib import Permutation, uncode
-from schubmult.symbolic import sympify
+from schubmult.symbolic import S, sympify
 from schubmult.utils.perm_utils import add_perm_dict
 
 from .free_algebra import FreeAlgebra, FreeAlgebraElement
@@ -77,9 +77,26 @@ class RCGraph(tuple):
 
 class RCGraphModule(dict):
 
+    def __new__(cls, *args):
+        obj = dict.__new__(cls)
+        dct = dict(*args)
+        obj.update({k: v for k, v in dct.items() if v != 0})
+        return obj
+
+    def __init__(self, *args):
+        pass
+
     def __add__(self, other):
         if isinstance(other, RCGraphModule):
             return RCGraphModule(add_perm_dict(self, other))
+        return NotImplemented
+
+    def __neg__(self):
+        return RCGraphModule({k: -v for k, v in self.items()})
+
+    def __sub__(self, other):
+        if isinstance(other, RCGraphModule):
+            return RCGraphModule(add_perm_dict(self, -other))
         return NotImplemented
 
     def __rmul__(self, other):
@@ -88,11 +105,11 @@ class RCGraphModule(dict):
             ret = {}
             for k0, v0 in self.items():
                 for k, v in wd_dict.items():
-                    addup = RCGraphModule({k0: v0})
+                    addup = RCGraphModule({k0: v0*v})
                     for a in reversed(k):
                         new_addup = RCGraphModule()
-                        for kr, v in addup.items():
-                            new_addup += RCGraphModule({r: v for r in kr.act(a)})
+                        for kr, vv in addup.items():
+                            new_addup += RCGraphModule(dict.fromkeys(kr.act(a), vv))
                         addup = new_addup
 
                     ret = add_perm_dict(ret, new_addup)
@@ -166,6 +183,10 @@ class RCGraphTensor(tuple):
         return hash((tuple(self), "RCGRAPHTENSOR"))
 
 class TensorModule(RCGraphModule):
+
+    def __new__(cls, *args):
+        return RCGraphModule.__new__(cls, *args)
+
     def __add__(self, other):
         if isinstance(other, TensorModule):
             return TensorModule(add_perm_dict(self, other))
@@ -184,12 +205,12 @@ class TensorModule(RCGraphModule):
             ret = {}
             for k0, v0 in self.items():
                 for k, v in other.items():
-                    addup = TensorModule({k0: v0})
+                    addup = TensorModule({k0: v*v0})
                     new_addup = TensorModule()
-                    for kr, v in addup.items():
+                    for kr, vv in addup.items():
                         elem1 = other.ring.rings[0](*k[0]) * RCGraphModule({kr[0]: 1})
                         elem2 = other.ring.rings[1](*k[1]) * RCGraphModule({kr[1]: 1})
-                        new_addup += v * TensorModule.ext_multiply(elem1, elem2)
+                        new_addup += vv * TensorModule.ext_multiply(elem1, elem2)
                     addup = new_addup
 
                     ret = add_perm_dict(ret, addup)
@@ -203,6 +224,7 @@ class TensorModule(RCGraphModule):
 
 
 if __name__ == "__main__":
+    from schubmult.rings.free_algebra_basis import *
     FA = FreeAlgebra(basis=SchubertBasis)
 
     spug = TensorModule({RCGraphTensor(RCGraph(()), RCGraph(())): 1})
@@ -214,12 +236,14 @@ if __name__ == "__main__":
     # print(spug2)
     res = TensorModule({})
     spurg = (FA @ FA).zero
+    bungalo = {}
     for i in range(2):
         for j in range(2):
             oil =  FA(uncode([i]),1).coproduct() * FA(uncode([j]),1).coproduct()
             spug2 =oil * spug
-            print(oil)
+            print(f"{FreeAlgebraBasis.change_tensor_basis(oil,WordBasis,WordBasis)=}")
             print(spug2)
+            print(f"{dict(spug2)=}")
             res += spug2
             spurg += oil
     # print(res)
