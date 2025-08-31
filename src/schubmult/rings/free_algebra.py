@@ -122,7 +122,7 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
             return other.__radd__(self)
         try:
             other = self.ring.domain_new(other)
-            other = self.ring.from_dict({(): other})
+            other = self.ring.from_dict({self.ring.zero_monom: other})
             return self.ring.add(self, other)
         except CoercionFailed:
             pass
@@ -135,7 +135,7 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
     def __radd__(self, other):
         try:
             other = self.ring.domain_new(other)
-            other = self.ring.from_dict({(): other})
+            other = self.ring.from_dict({self.ring.zero_monom: other})
             return self.ring.add(other, self)
         except CoercionFailed:
             pass
@@ -178,10 +178,13 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
     def __neg__(self):
         return self.ring.neg(self)
 
+    def __imul__(self, other):
+        return self * other
+
     def __mul__(self, other):
         try:
             return self.ring.mul(self, other)
-        except CoercionFailed:
+        except Exception:
             return other.__rmul__(self)
 
     def __matmul__(self, other):
@@ -422,6 +425,14 @@ class FreeAlgebra(Ring, CompositeDomain):
     #                 #     arb = 0 if len(new_alpha) != len(this_alpha[0]) else 1
     #                 #     stack.append([new_alpha, new_data, this_alpha[2]* (tt.gens()[0]**arb)])
     #     return ret
+    def mul_expr(self, elem, x):
+        try:
+            return self.from_dict({k: x * v for k, v in elem.items()})
+        except CoercionFailed:
+            # import traceback
+            # traceback.print_exc()
+            pass
+        raise CoercionFailed
 
     @cache
     def j_quasi_recurse(self, alphagod):
@@ -455,55 +466,14 @@ class FreeAlgebra(Ring, CompositeDomain):
 
     @cache
     def j_quasisymmetric(self, alphagod):
+        ret0 = self.j_quasi_recurse(alphagod)
         from sage.all import ZZ, QuasiSymmetricFunctions
 
-        tt = ZZ["t"]
-        QSym = QuasiSymmetricFunctions(tt)
-        M = QSym.M()
+        QSym = QuasiSymmetricFunctions(ZZ)
         ret = QSym.zero()
-        stack = [[[*([0]*(sum(alphagod)-len(alphagod))),*alphagod], [], [alphagod],0]]
-        while len(stack) > 0:
-            this_alpha = stack.pop()
-            if len(this_alpha[0]) == 0 or sum(this_alpha[0]) == 0:
-                if (2,1,2) == (2,1,2):
-                    print(this_alpha)
-                ret += (tt.gens()[0]**(len(this_alpha[1])-len(alphagod)))* M[*this_alpha[1]]
-            else:
-                asum = sum(this_alpha[0])
-                #loin = this_alpha[2]
-                stinkbag2 = Sx(uncode([*this_alpha[0]]))
-                pilfer2 = stinkbag2.pull_out_gen(stinkbag2.ring.genset[1])
-                for k, _ in pilfer2.items():
-                    fingbat = [*k.trimcode]
-                    fsum = sum(fingbat)
-                    new_alpha = [*fingbat]
-                    new_data = [*this_alpha[1]]
-                    bong_data = this_alpha[3]
-                    if asum != fsum:
-                        new_data = [*new_data, asum - fsum]
-                    else:
-                        bong_data += 1
-                        continue
-                    stack.append([new_alpha, new_data, [*this_alpha[2], fingbat], bong_data])
-                # stinkbag2 = Sx(uncode([0, *this_alpha[0]]))
-                # pilfer2 = stinkbag2.pull_out_gen(stinkbag2.ring.genset[1])
-                # for k, _ in pilfer2.items():
-                #     fingbat = k.trimcode
-                #     if 0 in fingbat:
-                #         continue
-                #     fsum = sum(fingbat)
-                #     if asum != fsum:
-                #         new_alpha = [*fingbat]
-                #         if tuple(new_alpha) in used:
-                #             continue
-                #         new_data = [*this_alpha[1], asum - fsum]
-                #         arb = 0 if len(new_alpha) != len(this_alpha[0]) else 1
-                #         stack.append([new_alpha, new_data, this_alpha[2] * (tt.gens()[0]**arb)])
-                    # elif asum!= fsum and (len(fingbat) == 0 or fingbat[0] == 0):
-                    #     new_alpha = [*fingbat[1:]]
-                    #     new_data = [*this_alpha[1], asum - fsum]
-                    #     arb = 0 if len(new_alpha) != len(this_alpha[0]) else 1
-                    #     stack.append([new_alpha, new_data, this_alpha[2]* (tt.gens()[0]**arb)])
+        M = QSym.M()
+        for k, v in dict(ret0).items():
+            ret += int(v.subs(1)) * M[*k]
         return ret
 
     def tensor_schub_expand(self, tensor):
@@ -558,7 +528,8 @@ class FreeAlgebra(Ring, CompositeDomain):
         return T.from_dict(self._basis.bcoproduct(key))
 
     def add(self, elem, other):
-        return self.from_dict(add_perm_dict(elem, other))
+        result = self.from_dict(add_perm_dict(elem, other))
+        return result
 
     def sub(self, elem, other):
         return self.from_dict(add_perm_dict(elem, {k: -v for k, v in other.items()}))
@@ -567,23 +538,29 @@ class FreeAlgebra(Ring, CompositeDomain):
         return self.from_dict({k: -v for k, v in elem.items()})
 
     def rmul(self, elem, other):
-        # print(f"{self=} {elem=} {other=}")
+        # print(f"rmul {self=} {elem=} {other=}")
         if isinstance(other, FreeAlgebraElement):
             raise NotImplementedError
         return self.from_dict({k: v * other for k, v in elem.items()})
 
     def mul(self, elem, other):
+        # print(f"mul {self=} {elem=} {other=}")
         try:
             other = self.domain_new(other)
             return self.from_dict({k: other * v for k, v in elem.items()})
         except Exception:
             pass
-        if isinstance(other, FreeAlgebraElement):
+        if isinstance(other, FreeAlgebraElement) or isinstance(other, self.dtype):
             ret = self.zero
             for k0, v0 in elem.items():
                 for k, v in other.items():
                     ret += self.from_dict(self._basis.product(k0, k, v * v0))
-            return ret
+            if self._basis == WordBasis or not FreeAlgebra.CAP:
+                return ret
+            n = FreeAlgebra.CAP
+            ret = {k: v for k, v in ret.items() if len(k[0]) <= n}
+            return self.from_dict(ret)
+        #print(f"{type(other)=} {other=} {other=}")
         raise CoercionFailed
 
     def matmul(self, elem, other):
@@ -599,6 +576,8 @@ class FreeAlgebra(Ring, CompositeDomain):
                     ret += self.from_dict(self._basis.internal_product(k0, k, v * v0))
             return ret
         raise CoercionFailed
+
+    CAP = None
 
     def to_domain(self):
         return self
@@ -617,7 +596,8 @@ class FreeAlgebra(Ring, CompositeDomain):
 
     @property
     def one(self):
-        return self.from_dict({(): S.One})
+        from schubmult.perm_lib import Permutation
+        return self.dtype({(Permutation(()),0): S.One})
 
     def from_dict(self, element):
         poly = self.zero
@@ -689,7 +669,12 @@ class NSym(FreeAlgebra):
         except Exception:
             pass
         if isinstance(other, NSymElement):
-            return self.from_sep(self.sepify(elem) * self.sepify(other))
+            if not FreeAlgebra.CAP:
+                return self.from_sep(self.sepify(elem) * self.sepify(other))
+            n = FreeAlgebra.CAP
+            dd = self.from_sep(self.sepify(elem) * self.sepify(other))
+            ret = {k: v for k, v in dd.items() if len(k[0]) <= n}
+            return ret
             # ret = self.zero
             # for k0, v0 in elem.items():
             #     for k, v in other.items():

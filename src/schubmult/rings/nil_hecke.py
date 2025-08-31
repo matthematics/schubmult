@@ -287,6 +287,7 @@ class NilHeckeRing(Ring, CompositeDomain):
         return self.from_dict({k: v * other for k, v in elem.items()})
 
     def mul(self, elem, other):
+        # print("Fry the leg")
         # print(f"{self=} {elem=} {other=}")
         try:
             other = self.domain_new(other)
@@ -294,6 +295,7 @@ class NilHeckeRing(Ring, CompositeDomain):
             return self.from_dict({k: other * v for k, v in elem.items()})
         except Exception:
             pass
+        # print("FasOjfao")
         if isinstance(other, NilHeckeElement):
             ret = self.zero
             for k, v in other.items():
@@ -341,6 +343,7 @@ class NilHeckeRing(Ring, CompositeDomain):
 
     def from_dict(self, element, orig_domain=None):  # noqa: ARG002
         # print(f"{element=}")
+        
         poly = self.zero
 
         for monom, coeff in element.items():

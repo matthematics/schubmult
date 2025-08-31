@@ -97,6 +97,18 @@ class Permutation:
         L.sort(key=lambda i: itera[i - 1], reverse=reverse)
         return Permutation(L)
 
+    def bruhat_leq(perm, perm2):
+        ml = max(len(perm), len(perm2))
+
+        for i in range(ml):
+            arr1 = list(perm[:i + 1])
+            arr2 = list(perm2[:i + 1])
+            arr1.sort()
+            arr2.sort()
+            if not (arr1 <= arr2):
+                return False
+        return True
+
     @classmethod
     def from_code(cls, cd):
         return uncode(cd)
