@@ -4,7 +4,7 @@ from schubmult.utils.perm_utils import add_perm_dict
 
 from .free_algebra import FreeAlgebra, FreeAlgebraElement
 from .free_algebra_basis import SchubertBasis, WordBasis
-from .tensor_ring import TensorRingElement
+from .tensor_ring import TensorRing, TensorRingElement
 
 FAS = FreeAlgebra(basis=SchubertBasis)
 
@@ -13,6 +13,12 @@ class RCGraph(tuple):
     def __new__(cls, *args):
         obj = tuple.__new__(cls, *args)
         return obj
+
+    def polyvalue(self, x):
+        ret = S.One
+        for i, row in enumerate(self):
+            ret *= x[i+1]**len(row)
+        return ret
 
     @property
     def perm(self):
@@ -83,6 +89,12 @@ class RCGraphModule(dict):
         obj.update({k: v for k, v in dct.items() if v != 0})
         return obj
 
+    def polyvalue(self, x):
+        ret = S.Zero
+        for k, v in self.items():
+            ret += v * k.polyvalue(x)
+        return ret
+
     def __init__(self, *args):
         pass
 
@@ -116,7 +128,7 @@ class RCGraphModule(dict):
             return RCGraphModule(ret)
         try:
             other = sympify(other)
-            return RCGraphModule({k: v * other for k, v in self.items()})
+            return self.__class__({k: v * other for k, v in self.items()})
         except Exception:
             return NotImplemented
 
@@ -155,6 +167,10 @@ class RCGraphModule(dict):
         return "\n".join(self.as_str_lines())
 
 class RCGraphTensor(tuple):
+
+    def polyvalue(self, x):
+        return self[0].polyvalue(x) * self[1].polyvalue(x)
+
 
     def __new__(cls, graph1, graph2):
         obj = tuple.__new__(cls, (graph1, graph2))
@@ -209,7 +225,11 @@ class TensorModule(RCGraphModule):
                     new_addup = TensorModule()
                     for kr, vv in addup.items():
                         elem1 = other.ring.rings[0](*k[0]) * RCGraphModule({kr[0]: 1})
-                        elem2 = other.ring.rings[1](*k[1]) * RCGraphModule({kr[1]: 1})
+                        if isinstance(other.ring.rings[1], TensorRing):
+                            elem2 = other.ring.rings[1](k[1]) * TensorModule({kr[1]: 1})
+                        else:
+                            elem2 = other.ring.rings[1](*k[1]) * RCGraphModule({kr[1]: 1})
+
                         new_addup += vv * TensorModule.ext_multiply(elem1, elem2)
                     addup = new_addup
 
@@ -224,27 +244,88 @@ class TensorModule(RCGraphModule):
 
 
 if __name__ == "__main__":
+    from schubmult import Sx
+    from schubmult.abc import x
     from schubmult.rings.free_algebra_basis import *
     FA = FreeAlgebra(basis=SchubertBasis)
+    FAW = FreeAlgebra(basis=WordBasis)
 
-    spug = TensorModule({RCGraphTensor(RCGraph(()), RCGraph(())): 1})
+    #spug = TensorModule({RCGraphTensor(RCGraph(()), RCGraph(())): 1})
+    spug = RCGraphModule({RCGraph(()): 1})
     
     # spug1 = FA(uncode([0,1]), 2).coproduct() * spug
     # print(spug1)
 
     # spug2 = FA(uncode([1,0]), 2).coproduct() * spug
     # print(spug2)
-    res = TensorModule({})
-    spurg = (FA @ FA).zero
+    #resspug = TensorModule({RCGraphTensor(RCGraph(()), RCGraphTensor(RCGraph(), RCGraph(()))): 1})
+
+    res = TensorModule({RCGraphTensor(RCGraph(()), RCGraph(())): 1})
+    respo = TensorModule()
+    #spurg = (FA @ FA).zero
     bungalo = {}
-    for i in range(2):
-        for j in range(2):
-            oil =  FA(uncode([i]),1).coproduct() * FA(uncode([j]),1).coproduct()
-            spug2 =oil * spug
-            print(f"{FreeAlgebraBasis.change_tensor_basis(oil,WordBasis,WordBasis)=}")
-            print(spug2)
-            print(f"{dict(spug2)=}")
-            res += spug2
-            spurg += oil
+    fratboy = {}
+    ring = FAW @ (FAW @ FAW)
+    mx = 2
+    for i in range(mx + 1):
+        for j in range(mx + 1):
+            #oil =  FA(uncode([i]),1).coproduct() * FA(uncode([j]),1).coproduct()
+            #oil = ring.ext_multiply(FAW(i,j),FAW(i,j).coproduct())
+            oil = FAW(i,j).coproduct()
+            #spud_dog = oil.change_basis(SchubertBasis)
+            respo += oil * res
+            fratboy[(i,j)] = fratboy.get((i,j), RCGraphModule()) + oil * res
+            # for k, v in spud_dog.items():
+            #     fratboy[k] = fratboy.get(k, RCGraphModule()) + v*spug2
+            #print(f"{FreeAlgebraBasis.change_tensor_basis(oil,WordBasis,WordBasis)=}")
+            # print(spug2)
+            # print(f"{dict(spug2)=}")
+            #res += spug2
+            #spurg += oil
+    foingle = {}
+    for k, v in fratboy.items():
+        foingle2 = FAW(*k).change_basis(SchubertBasis)
+        for kk, vv in foingle2.items():
+            foingle[kk] = foingle.get(kk, RCGraphModule()) + vv * v
     # print(res)
-    print(spurg)
+    # for bacon, v in fratboy.items():
+    #     print(f"{bacon=}")
+    #     print(v)
+    Permutation.print_as_code = True
+    for k, v in foingle.items():
+        if any(a > mx for a in k[0].trimcode):
+            continue
+        print(k[0].trimcode)
+        print(v)
+        print(v.polyvalue(x))
+        sm0 = S.Zero
+        sm1 = S.Zero
+        side0 = {}
+        side1 = {}
+        plathbucket = {}
+        for kk, vv in v.items():
+            if not kk[0].perm.bruhat_leq(k[0]) or not kk[1].perm.bruhat_leq(k[0]):
+                continue
+            #     print("EXCLUDE")
+            #     print(kk)
+            #     print("END EXCLUDE")
+            #     continue
+            print("GOOD GRAPH")
+            print(kk)
+            
+            key = (kk[0].perm, kk[1].perm)
+            side0[key[0]] = side0.get(key[0], 0) + vv*kk[0].polyvalue(x)
+            side1[key[1]] = side1.get(key[1], 0) + vv*kk[1].polyvalue(x)
+            plathbucket[key] = plathbucket.get(key, 0) + vv*kk[0].polyvalue(x)*kk[1].polyvalue(x)
+            # if kk[0].perm.inv ==0:
+            #     sm1 += vv * kk[1].polyvalue(x)
+            # elif kk[1].perm.inv ==0:
+            #     sm0 += vv * kk[0].polyvalue(x)
+        for perm, v in side0.items():
+            print(f"  L {perm} : {v} {Sx(v)}")
+        for perm, v in side1.items():
+            print(f"  R {perm} : {v} {Sx(v)}")
+        for (p0, p1), v in plathbucket.items():
+            print(f"  P {p0}, {p1} : {v} {Sx(v)}")
+        
+        print("-----")
