@@ -41,6 +41,15 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
     def parent(self):
         return self.ring
 
+    def __pow__(self, pw):
+        if pw < 0:
+            return NotImplemented
+        if pw == 0:
+            return self.ring.one
+        if pw == 1:
+            return self
+        return self * (self**(pw-1))
+
     def poly_inner_product(self, poly, genset, n):
         from schubmult.rings.variables import genset_dict_from_expr
 
