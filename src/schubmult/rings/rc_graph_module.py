@@ -94,14 +94,23 @@ class RCGraph(tuple):
 
         # return ret
 
+    def coproduct(self):
+        from . import FA, ASx
+        new_set_of_perms = ASx(self.perm,len(self)).coproduct()
+        rc_set = (FA(*self.length_vector()).coproduct()*TensorModule({RCGraphTensor(RCGraph(),RCGraph()): 1}))
+        result = TensorModule()
+        for (rc1, rc2), coeff in rc_set.items():
+            if ((rc1.perm, len(self)), (rc2.perm, len(self))) in new_set_of_perms:
+                result += TensorModule({RCGraphTensor(rc1, rc2): new_set_of_perms[((rc1.perm, len(self)), (rc2.perm, len(self)))]})
+        return result
+
     def prod_with_rc(self, other):
         from . import FA, ASx
         new_set_of_perms = ASx(self.perm,len(self)) * ASx(other.perm, len(other))
-        md = RCGraphModule({other: 1})
-        rc_set = FA(*self.length_vector())*RCGraphModule({other: 1})
+        rc_set = set((FA(*self.length_vector())*RCGraphModule({other: 1})).keys())
         result = RCGraphModule()
         for (perm, length), coeff in new_set_of_perms.items():
-            result += RCGraphModule({k: v for k, v in rc_set.items() if k.perm == perm})
+            result += RCGraphModule({rc: coeff for rc in rc_set if rc.perm == perm})
         return result
 
     def act(self, p):
@@ -176,6 +185,12 @@ class RCGraphModule(dict):
                 return {}
             dct2[tuple([*vec]+ [0]*(length-len(vec)))] = coeff
         return dct2
+
+    def coproduct(self):
+        res = RCGraphModule()
+        for rc, coeff in self.items():
+            res += coeff * rc.coproduct()
+        return res
 
     def apply(self, poly, genset, length):
         from . import ASx
@@ -591,7 +606,7 @@ def all_fa_degree(degree, length):
         res += FA(i) * prev
     return res
 
-def schubert_positive_product(poly1, poly2, genset, degree, length):
+def schubert_positive_product(poly1, poly2, genset, degree, length, check=False):
     FA = FreeAlgebra(WordBasis)
 
 
@@ -599,12 +614,15 @@ def schubert_positive_product(poly1, poly2, genset, degree, length):
 
     one_module = RCGraphModule({RCGraph(): 1})
     for a, cof in all_fa_degree(degree, length).items():
-        toadd = FA(*a) * one_module
-        # new_a = cof * FA(*a).coproduct()
-        # res_coeff = 0
-        # for (vec1, vec2), coeff in new_a.items():
-        #     res_coeff += coeff * FA(*vec1).poly_inner_product(poly1,genset, length)*FA(*vec2).poly_inner_product(poly2, genset, length)
-        result += cof * toadd.apply_product(poly1, poly2, genset, length)
+        toadd = Sx(*a) * one_module
+        new_a = cof * FA(*a).coproduct()
+        res_coeff = 0
+        for (vec1, vec2), coeff in new_a.items():
+            res_coeff += coeff * FA(*vec1).poly_inner_product(poly1,genset, length)*FA(*vec2).poly_inner_product(poly2, genset, length)
+        #toadd = cof * toadd.apply_product(poly1, poly2, genset, length)
+        result += res_coeff * toadd
+        if check:
+            assert all(c > 0 for c in result.values())
     return result
 
 if __name__ == "__main__":
@@ -619,7 +637,14 @@ if __name__ == "__main__":
         for perm2 in perms:
             poly2 = Sx(perm2).expand()
             print(f"{perm1.trimcode=}, {perm2.trimcode=}")
-            print(schubert_positive_product(poly1, poly2, x, perm1.inv + perm2.inv, n - 1))
+
+            rc_bungbat = schubert_positive_product(Sx(perm1).expand(), Sx(perm2).expand(), x, perm1.inv + perm2.inv, max(len(perm1.trimcode), len(perm2.trimcode)), check=False)
+
+            real_result = Sx(perm1) * Sx(perm2)
+            print(rc_bungbat)
+            # for rc, val in rc_bungbat.items():
+            #     #assert real_result.get(rc.perm, 0) == val
+            #     print(rc)
 
     # from . import ASx
     # from .variables import genset_dict_from_expr
