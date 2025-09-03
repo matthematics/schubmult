@@ -594,6 +594,7 @@ class DualTensorModule(DualRCGraphModule):
         except Exception:
             return NotImplemented
 
+@cache
 def all_fa_degree(degree, length):
     FA = FreeAlgebra(WordBasis)
     if degree < 0 or length < 0:
@@ -614,27 +615,39 @@ def schubert_positive_product(poly1, poly2, genset, degree, length, check=False)
 
     one_module = RCGraphModule({RCGraph(): 1})
     for a, cof in all_fa_degree(degree, length).items():
-        toadd = Sx(*a) * one_module
-        new_a = cof * FA(*a).coproduct()
-        res_coeff = 0
-        for (vec1, vec2), coeff in new_a.items():
-            res_coeff += coeff * FA(*vec1).poly_inner_product(poly1,genset, length)*FA(*vec2).poly_inner_product(poly2, genset, length)
-        #toadd = cof * toadd.apply_product(poly1, poly2, genset, length)
-        result += res_coeff * toadd
+        module = cof * FA(*a) * one_module
+        result += module.apply_product(poly1, poly2, genset, length)
         if check:
             assert all(c > 0 for c in result.values())
     return result
+
+def schubert_act(poly, rc_module, genset, degree, length, check=False):
+    from .schubert_ring import SingleSchubertRing
+    FA = FreeAlgebra(WordBasis)
+    ring = SingleSchubertRing(genset)
+
+    result = RCGraphModule()
+
+    one_module = RCGraphModule({RCGraph(): 1})
+    for a, cof in all_fa_degree(degree, length).items():
+        for graph, coeff in rc_module.items():
+            module = cof * FA(*[a1 + b1 for a1, b1 in zip(a, graph.length_vector())]) * one_module
+            result += coeff * module.apply_product(poly, ring(graph.perm).expand(), genset, length)
+        if check:
+            assert all(c > 0 for c in result.values())
+    return result
+
 
 if __name__ == "__main__":
     from schubmult.abc import x
     from schubmult.rings import Sx
 
-    n = 3
+    n = 4
     perms = Permutation.all_permutations(n)
 
-    for perm1 in perms:
+    for i, perm1 in enumerate(perms):
         poly1 = Sx(perm1).expand()
-        for perm2 in perms:
+        for perm2 in perms[i:]:
             poly2 = Sx(perm2).expand()
             print(f"{perm1.trimcode=}, {perm2.trimcode=}")
 
