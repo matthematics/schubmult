@@ -1,9 +1,11 @@
 from functools import cache
 
+from scipy.fftpack import dct
 from symengine import SympifyError
 
 import schubmult.schub_lib.schub_lib as schub_lib
 from schubmult.perm_lib import Permutation, uncode
+from schubmult.rings.schubert_ring import SingleSchubertRing
 from schubmult.symbolic import S, expand, sympify
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -33,7 +35,7 @@ class RCGraph(tuple):
 
     @classmethod
     @cache
-    def all_rc_graphs(cls, perm):
+    def all_rc_graphs(cls, perm, length=-1):
         if perm.inv == 0:
             return {RCGraph(())}
         if len(perm.trimcode) == 1:
@@ -48,6 +50,8 @@ class RCGraph(tuple):
             rcg_row = RCGraph(tuple(new_row))
             for old_rc in oldset:
                 nrc = RCGraph([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in old_rc]])
+                if len(nrc) < length:
+                    nrc = RCGraph((*nrc,*tuple([()]*(length - len(nrc)))))
                 assert nrc.perm == perm
                 ret.add(nrc)
         return ret
@@ -70,12 +74,63 @@ class RCGraph(tuple):
                 perm = perm.swap(p - 1, p)
         return perm
 
+    def transpose(self):
+        newrc = []
+        trimself = [list(row) for row in self]
+        i = 0
+        while len(newrc) < len(self) or any(len(row)>0 for row in trimself):
+            new_row = []
+            for index in range(len(trimself)):
+                if len(trimself[index]) > 0 and trimself[index][-1] == index + i + 1:
+                    new_row += [index + i + 1]
+                    trimself[index].pop()
+            new_row.reverse()
+            newrc.append(tuple(new_row))
+            i += 1
+        new_rc = RCGraph(newrc)
+        
+        print(tuple(new_rc))
+        print(tuple(self))
+        assert new_rc.perm == ~self.perm
+        return new_rc
+
     def dualact(self, p):
-        if len(self) == 0:
-            return {}
-        if len(self[0]) == p:
-            return {self.rowrange(1, len(self)): 1}
-        return {}
+        pm = ~self.perm
+        elem = FAS(pm, len(self))
+        bumpup = FAS(uncode([p]), 1)* elem
+        ret = set()
+        for k, v in bumpup.items():
+            perm2 = k[0]
+            new_row = [pm[i] for i in range(max(len(pm), len(perm2))) if pm[i] == perm2[i+1]]
+            new_row.sort()
+            print(f"{pm=} {k=} {new_row=}")
+            # nrc = RCGraph([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])
+            # assert nrc.perm == perm2
+            lst = [tuple([a + 1 for a in row]) for row in self]
+
+            for index in range(max(len(self)+1, max(new_row))):
+                if index < len(lst):
+                    if index + 1 in new_row:
+                        lst[index] = tuple([*lst[index],index+1])
+                else:
+                    if index + 1 in new_row:
+                        lst += [(index + 1,)]
+                    else:
+                        lst += [()]
+            nrc = RCGraph(lst)
+            print(nrc)
+            assert nrc.perm == ~perm2
+            # except AssertionError:
+            #     print(self)
+            #     print(perm2)
+            #     print(nrc.perm)
+            #     print(nrc)
+            #     print(f"{new_row=}")
+            #     raise
+            ret.add(nrc)
+        return ret
+        # elem rc
+
         # if len(self) == 0:
         #     return {}
         # ret = set()
@@ -304,6 +359,9 @@ class RCGraphModule(dict):
             return NotImplemented
         return RCGraphModule({k: v * other for k, v in self.items()})
 
+    def transpose(self):
+        return RCGraphModule({graph.transpose(): v for graph, v in self.items()})
+
     def as_str_lines(self):
         if len(self.keys()) == 0:
             return ["0"]
@@ -531,7 +589,10 @@ class TensorModule(RCGraphModule):
                         if isinstance(other.ring.rings[1], TensorRing):
                             elem2 = other.ring.rings[1](k[1]) * TensorModule({kr[1]: 1})
                         else:
-                            elem2 = other.ring.rings[1](*k[1]) * RCGraphModule({kr[1]: 1})
+                            try:
+                                elem2 = other.ring.rings[1](*k[1]) * RCGraphModule({kr[1]: 1})
+                            except Exception:
+                                elem2 = other.ring.rings[1](k[1]) * RCGraphModule({kr[1]: 1})
 
                         new_addup += vv * TensorModule.ext_multiply(elem1, elem2)
                     addup = new_addup
@@ -638,23 +699,175 @@ def schubert_act(poly, rc_module, genset, degree, length, check=False):
     return result
 
 
+def change_free_tensor_basis(tensor, old_basis, new_basis):
+    new_ring = TensorRing(FreeAlgebra(new_basis),tensor.ring.rings[1])
+    new_tensor = new_ring.zero
+    original_ring = FreeAlgebra(old_basis)
+    for (key1, key2), coeff in tensor.items():
+        new_tensor += coeff * new_ring.ext_multiply(original_ring(*key1).change_basis(new_basis), tensor.ring.rings[1](key2))
+    return new_tensor
+
+def artin_sequences(n):
+    if n == 0:
+        return set([()])
+    old_seqs = artin_sequences(n-1)
+
+    ret = set()
+    for seq in old_seqs:
+        for i in range(n+1):
+            ret.add((i,*seq))
+    return ret
+
 if __name__ == "__main__":
-    from schubmult.abc import x
-    from schubmult.rings import Sx
+    from schubmult.abc import E, x, y, z
+    from schubmult.rings import FA, ASx, DSx, ElementaryBasis, Sx
+    from schubmult.symbolic import prod
+
+    from .variables import genset_dict_from_expr
 
     n = 4
     perms = Permutation.all_permutations(n)
 
-    for i, perm1 in enumerate(perms):
-        poly1 = Sx(perm1).expand()
-        for perm2 in perms[i:]:
-            poly2 = Sx(perm2).expand()
-            print(f"{perm1.trimcode=}, {perm2.trimcode=}")
 
-            rc_bungbat = schubert_positive_product(Sx(perm1).expand(), Sx(perm2).expand(), x, perm1.inv + perm2.inv, max(len(perm1.trimcode), len(perm2.trimcode)), check=False)
+    seqs = artin_sequences(n-1)
 
-            real_result = Sx(perm1) * Sx(perm2)
-            print(rc_bungbat)
+    ring = TensorRing(FreeAlgebra(ElementaryBasis), Sx([]).ring)
+    ring0 = TensorRing(FreeAlgebra(SchubertBasis), Sx([]).ring)
+    ring2 = TensorRing(Sx([]).ring, ring0)
+    ring3 = TensorRing(FreeAlgebra(WordBasis), ring2)
+    EE=FreeAlgebra(ElementaryBasis)
+    zeppoli = ring.zero
+
+    dingbat = ring3.zero
+    u = uncode([2,0,1,3])
+    doink_poly = Sx([])
+
+    #DSx x and y
+
+    result = TensorModule()
+    for seq in seqs:
+        dingmod = FA(*seq).change_basis(SchubertBasis)
+        # stinky = list(dingmod.keys())
+        # for rc_graph in stinky:
+        #     rt = rc_graph.transpose()
+        #     vec = rt.length_vector()
+            
+        other_elem = Sx([]) * prod([x[i+1]**seq[i] for i in range(len(seq))])
+        result += TensorModule.ext_multiply(dingmod, other_elem)
+        # elem1 = ring3.rings[0](*seq)
+        # elem2 = doink_poly * prod([x[i+1] ** (seq[i]) for i in range(len(seq))])
+        # #elem2 = doink_poly * prod([E(seq[i],i+1,x[1:],z[1:]) for i in range(len(seq))])
+        # #zeppoli += ring.ext_multiply(elem1, elem2)
+        # seq = tuple(reversed(seq))
+        # dingbat2 = Sx([])*prod([E(seq[i],i+1,x[1:],[0,0,0,0,0,0,0,0]) for i in range(len(seq))])
+        # dingbat1 = EE(seq,n-1)
+        # stinker = ring.ext_multiply(dingbat1, dingbat2)
+        # farter = change_free_tensor_basis(stinker, ElementaryBasis,SchubertBasis)
+        # dingbat += ring3.ext_multiply(elem1, ring2.ext_multiply(elem2,farter))
+
+    # print(zeppoli)
+    for (graph,perm), coeff in result.items():
+        if len(perm) > n or len(graph[0]) > n:
+            continue
+        print(perm.trimcode,graph[0].trimcode)
+        print(coeff)
+        print(graph)
+    # exit()
+    exit()
+    rng = SingleSchubertRing(y)
+    da_baby = {}#TensorModule()
+    for (rc_graph, schub), coeff in result.items():
+        if len(schub) > n or len(rc_graph.perm) > n:
+            continue
+        da_baby[schub] = da_baby.get(schub, RCGraphModule()) + RCGraphModule({rc_graph: coeff})
+    
+    da_baby2 = {}
+    for schub, module in da_baby.items():
+        print(schub.trimcode)
+        print(module)
+
+    for (perm1, perm2), mod in da_baby2.items():
+        print(perm1.trimcode)
+        print(perm2.trimcode)
+        print(mod)
+    
+    exit()
+    zop = change_free_tensor_basis(dingbat, WordBasis, SchubertBasis)
+    for zingbat, doofy in zop.items():
+        if len(zingbat[0][0])>n or doofy == 0:
+            continue
+        print(f"{zingbat=}")
+        print(doofy)
+    print("PAINTED")
+    # for pants, food in dingbat.items():
+    #     if food == 0:
+    #         continue
+    #     print(f"{pants[0].trimcode} {pants[1].trimcode}")
+    #     print(food)
+
+    exit()
+    modmod = RCGraphModule({RCGraph(): 1})
+
+    addup = TensorModule()
+
+    for perm in perms:
+        addup += TensorModule.ext_multiply(ASx(perm,n-1).coproduct(), RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(perm,n-1), 1)))
+
+    save_bongbong = {}
+
+    for (elem, rc_graph), coeff in addup.items():
+        if len(elem[0][0]) <= n and len(elem[1][0]) <= n and len(rc_graph.perm) <= n:
+            print(f"{coeff=}")
+            save_bongbong[elem] = save_bongbong.get(elem, RCGraphModule()) + RCGraphModule({rc_graph: 1})
+            assert (Sx(elem[0][0])*Sx(elem[1][0])).get(rc_graph.perm,0) == coeff
+
+    for dinglestick, mod in save_bongbong.items():
+        print(dinglestick)
+        print(mod)
+    exit()
+
+    ring1 = FreeAlgebra(SchubertBasis)
+    ring2 = Sx([]).ring @ Sx([]).ring
+
+    ring = TensorRing(ring1, ring2)
+
+    
+    addup = ring.zero
+    print(seqs)
+    for seq in seqs:
+        fa_elem = FA(*seq).change_basis(SchubertBasis)
+        fa_elem = ring1.from_dict({k: v for k,v in fa_elem.items() if len(k[0])<=n})
+        ring2_elem = Sx(prod([x[i+1]**seq[i] for i in range(len(seq))]))
+        ring3_elem = Sx([])*(prod([E(n-1-i-seq[i],n-1-i,x[1:],[0,0,0,0,0]) for i in range(len(seq))]))
+        addup += ring.ext_multiply(fa_elem, ring2.ext_multiply(ring2_elem, ring3_elem))
+
+
+    print(addup)
+
+
+    save_dict = {}
+
+    for (key1, (key2, key3)), coeff in addup.items():
+        if len(key1[0]) > n:
+            continue
+        save_dict[key1] = save_dict.get(key1,0) + coeff * ring2((key2,key3))
+        # assert coeff >=0 and coeff<=1
+        # assert coeff == 0 or key1[0] == key2, f"{key1=}, {key2=} {key3=}"
+        #assert coeff == 0 or ((~key2)*key3).trimcode == list(range(n-1,0,-1)), f"{key2.trimcode=} {key3.trimcode=}"
+    for key1 in save_dict:
+        print(f"{key1=}")
+        print(f"{save_dict[key1]=}")
+    
+    # for i, perm1 in enumerate(perms):
+    #     poly1 = Sx(perm1).expand()
+    #     for perm2 in perms[i:]:
+    #         poly2 = Sx(perm2).expand()
+    #         print(f"{perm1.trimcode=}, {perm2.trimcode=}")
+
+    #         rc_bungbat = schubert_positive_product(Sx(perm1).expand(), Sx(perm2).expand(), x, perm1.inv + perm2.inv, max(len(perm1.trimcode), len(perm2.trimcode)), check=False)
+
+    #         real_result = Sx(perm1) * Sx(perm2)
+    #         print(rc_bungbat)
             # for rc, val in rc_bungbat.items():
             #     #assert real_result.get(rc.perm, 0) == val
             #     print(rc)
