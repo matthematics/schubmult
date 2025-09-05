@@ -824,7 +824,7 @@ if __name__ == "__main__":
 
     from .variables import genset_dict_from_expr
 
-    n = 4
+    n = 6
     perms = Permutation.all_permutations(n)
 
 
@@ -870,8 +870,12 @@ if __name__ == "__main__":
         print(f"{seq=}")
         print(f"{modmod=}")
         ding = ringbob.zero
+        modmod = modmod.ring.from_dict({k: v for k,v in modmod.items() if len(k)<=n})
+        coprod = FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis)
+
+        coprod = coprod.ring.from_dict({k: v for k,v in coprod.items() if len(k[0][0])<=n and len(k[1][0])<=n})
         for kingo, valval in modmod.items():
-            ding += ringbob.ext_multiply(zring(expand_seq(seq,z)),ring3333.ext_multiply(ring.rings[1](kingo),ring3.ext_multiply(ymonomring(*seq),ring2.ext_multiply(Sx(expand_seq(seq,x)),ring.ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis), ring.rings[1](kingo))))))
+            ding += ringbob.ext_multiply(zring(expand_seq(seq,z)),ring3333.ext_multiply(ring.rings[1](kingo),ring3.ext_multiply(ymonomring(*seq),ring2.ext_multiply(Sx(expand_seq(seq,x)),ring.ext_multiply(coprod, ring.rings[1](kingo))))))
         result += ding
         #result += ring2.ext_multiply(Sx(prod([x[i+1]**seq[i] for i in range(len(seq))])),ding + , ring.rings[1].one))
 
