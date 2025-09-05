@@ -1,3 +1,4 @@
+import sys
 from functools import cache
 
 from scipy.fftpack import dct
@@ -813,6 +814,9 @@ def sparkly_sequences(n, L):
     return ret
 
 
+def expand_seq(seq, genset):
+    return prod([genset[i+1]**seq[i] for i in range(len(seq))])
+
 if __name__ == "__main__":
     from schubmult.abc import E, x, y, z
     from schubmult.rings import FA, ASx, DSx, ElementaryBasis, MonomialBasis, PolynomialAlgebra, Sx
@@ -827,14 +831,20 @@ if __name__ == "__main__":
     seqs = artin_sequences(n-1)
     seqs2 = sparkly_sequences(n-1,n-1)
     #yring = SingleSchubertRing(y)
-    yring = Sx([]).ring
+    yring = SingleSchubertRing(y)
     zring = SingleSchubertRing(z)
     #ring = TensorRing(FreeAlgebra(SchubertBasis)@FreeAlgebra(SchubertBasis),NilHeckeRing(x))
     #ring = TensorRing(FreeAlgebra(SchubertBasis),NilHeckeRing(x))
     #ring = TensorRing(yring, TensorRing(FreeAlgebra(SchubertBasis)@FreeAlgebra(SchubertBasis), NilHeckeRing(x)))
     #ring = TensorRing(PolynomialAlgebra(MonomialBasis(x, n-1)), TensorRing(FreeAlgebra(SchubertBasis), NilHeckeRing(x)))
-    ring = TensorRing(FreeAlgebra(SchubertBasis)@FreeAlgebra(SchubertBasis), NilHeckeRing(x))
-    ring2 = TensorRing(Sx([]).ring, ring)
+    ymonomring = PolynomialAlgebra(MonomialBasis(y, n-1))
+    xmonomring = PolynomialAlgebra(MonomialBasis(x, n-1))
+    ring000 = TensorRing(TensorRing(xmonomring @ xmonomring,FreeAlgebra(WordBasis)@FreeAlgebra(WordBasis)), NilHeckeRing(x))
+    ring = TensorRing(TensorRing(Sx([]).ring @ Sx([]).ring,FreeAlgebra(SchubertBasis)@FreeAlgebra(SchubertBasis)), NilHeckeRing(x))
+    ring2 = TensorRing(ymonomring, ring000)
+
+
+    ring22 = TensorRing(yring, ring)
     #ring = TensorRing(TensorRing(zring,FreeAlgebra(SchubertBasis)),TensorRing(yring, NilHeckeRing(x)))
     result = ring2.zero
     
@@ -859,11 +869,20 @@ if __name__ == "__main__":
         modmod = (FA(*seq)*mod1).as_nil_hecke(x)
         print(f"{seq=}")
         print(f"{modmod=}")
-        ding = ring.zero
+        coprod = FA(*seq).coproduct()
+        
+        #FreeAlgebraBasis.change_tensor_basis(,SchubertBasis,SchubertBasis)
+        coprodprod = ring000.rings[0].zero
+
+        for (seq1, seq2), coeff in coprod.items():
+            coprodprod += coeff * ring000.rings[0](((seq1,seq1),(seq1,seq2)))
+
         for kingo, valval in modmod.items():
-            ding += ring.ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*((0,)*(n-1))).coproduct(),SchubertBasis,SchubertBasis), ring.rings[1](kingo))
-                              
-        result += ring2.ext_multiply(Sx(prod([x[i+1]**seq[i] for i in range(len(seq))])),ding + ring.ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis), ring.rings[1].one))
+            #result += ring2.ext_multiply(prod([x[i+1]**seq[i] for i in range(len(seq))])*yring(prod([y[i+1]**seq[i] for i in range(len(seq))])),ring.ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis), ring.rings[1](kingo)))            
+            result += ring2.ext_multiply(ymonomring(*seq),ring000.ext_multiply(coprodprod, ring000.rings[1](kingo)))
+
+        # if any(a != 0 for a in seq):
+        #      result += ring2.ext_multiply(prod([y[i+1]**seq[i] for i in range(len(seq))])*Sx(prod([x[i+1]**seq[i] for i in range(len(seq))])),ding + ring.ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis), ring.rings[1].one))
 
         #ring.ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis), ring.rings[1](Permutation([]))))
     # result2 = ring2.zero
@@ -871,29 +890,75 @@ if __name__ == "__main__":
     #     result += ring2.ext_multiply(Sx(coeff), ring(key))
 
     #result2 = result2.ring.from_dict({k: v for k, v in result2.items() if len(k[0])<=n and len(k[1][0][0])<=n and len(k[1][1]) <= n})
-
     print(result)
+    result2 = ring2.from_dict({**result})
+    result = ring22.zero
+
+    for fullkey, value in result2.items():
+        # if fullkey[1][1][1].inv == 0:
+        #     assert expand(value) >= 0
+    #     ring = TensorRing(TensorRing(Sx([]).ring @ Sx([]).ring,FreeAlgebra(SchubertBasis)@FreeAlgebra(SchubertBasis)), NilHeckeRing(x))
+    # ring2 = TensorRing(ymonomring, ring000)
+
+
+    # ring22 = TensorRing(yring, ring)
+        #element11 = ring22.rings[1].rings[1](fullkey[1][1][1]) #nilhecke
+        element100 = ring22.rings[1].rings[0].rings[0](fullkey[1][0][0]) # schubtensor
+        #element101 = ring22.rings[1].rings[0].rings[1](fullkey[1][0][1]) #fatensor
+
+        
+        new_element_schub0 = expand_seq(fullkey[1][0][0][0],x)
+        new_element_schub1 = expand_seq(fullkey[1][0][0][1],x)
+
+        schub_tensor_element = (Sx([]).ring@Sx([]).ring).ext_multiply(Sx(new_element_schub0),Sx(new_element_schub1))
+        free_tensor_element = FreeAlgebraBasis.change_tensor_basis((FA@FA)(fullkey[1][0][1]), SchubertBasis, SchubertBasis)
+
+        full_tensor_schub = ring22.rings[1].rings[0].ext_multiply(schub_tensor_element,free_tensor_element)
+        nh_element = NilHeckeRing(x)(fullkey[1][1])
+        full_tensor_nh = ring22.rings[1].ext_multiply(ring22.rings[1].rings[0].ext_multiply(schub_tensor_element,free_tensor_element),nh_element)
+
+        schub0_element = yring(expand_seq(fullkey[0],y))
+
+        result += value * ring22.ext_multiply(schub0_element, full_tensor_nh)
+
+        #result += ring22((schub_ten))
+        # result += ring22.ext_multiply(yring(expand_seq(fullkey[0],y)),
+        #                               ring22.rings[1].ext_multiply(
+        #                                   ring22.rings[1].rings[0].ext_multiply(ring22.rings[1].rings[0].rings[0].ext_multiply(ring22.rings[1].rings[0].rings[0].rings[0](expand_seq(fullkey[1][0][0][0],x)),
+        #                                                            ring22.rings[1].rings[0].rings[0].rings[1](expand_seq(fullkey[1][0][0][1],x)))),
+        #                                                            FreeAlgebraBasis.change_tensor_basis(ring22.rings[1].rings[0].rings[1](fullkey[1][0][1]),
+        #                                                                SchubertBasis,
+        #                                                                SchubertBasis,
+        #                                                            )),ring22.rings[1].rings[1].rings[1](fullkey[1][1][1]))
+
     Permutation.print_as_code=True
+    print(result)
     separate = {}
     for key, value in result.items():
         # if any(len(permperm) > n for permperm in (Sx(key[1][0][0][0])*Sx(key[1][0][1][0])).keys()):
         #     continue
         #assert key[0] == key[1][0][0] or key[0] == key[1][1] or key[1][0][0] == key[1][1] or value == 0, f"{key=} {value=}"
-        if key[1][1].inv == 0:
-            #separate[key[0]] = separate.get(key[0],ring2.rings[1].rings[0].zero) + value*ring2.rings[1].rings[0](key[1][0])
-            separate[key[1][0]] = separate.get(key[1][0],ring2.rings[0].zero) + value*ring2.rings[0](key[0])
-        # if key[0].inv == (n*(n-1))//2:
-        #     separate[key[1][0]] = separate.get(key[1][0],ring2.rings[1].rings[1].zero) + value*ring2.rings[1].rings[1](key[1][1])
-
+        print(key)
+        #if key[0] == key[1][1]:
+        if key[0] == key[1][1]:
+            print("bigshot")
+            separate[key[1][0][0]] = separate.get(key[1][0],yring.zero) + value*yring(key[0])
+    failed = False
     for perm in separate:
-        if any(len(permperm) > n for permperm, val in (Sx(perm[0][0])*Sx(perm[1][0])).items() if val != S.Zero):
+        #perm = permding[0]
+        print(f"{permding=}")
+        #if any(len(permperm) > n for permperm, val in (Sx(perm[])*Sx(perm[1])).items() if val != S.Zero):
+        if any(len(permperm) > n for permperm, val in (Sx(perm[0])*Sx(perm[1])).items() if val != S.Zero):
             continue
         #print(f"{(perm[0][0].trimcode,perm[1][0].trimcode)}: {separate[perm]}")
-        print(f"Test {(perm[0][0].trimcode,perm[1][0].trimcode)}: {separate[perm]}")
-        testval = (separate[perm] - Sx(perm[0][0])*Sx(perm[1][0]))
+        print(f"Test {(perm[0].trimcode,perm[1].trimcode)}: {separate[perm]}")
+        testval = (separate[perm] - yring(perm[0])*yring(perm[1]))
         if testval.expand() != S.Zero:
-            print(f"Failures for {(perm[0][0].trimcode,perm[1][0].trimcode)}: {[(perm2, key) for perm2, key in testval.items() if key != 0]}")
-    
+            print(f"Failures for {(perm[0].trimcode,perm[1].trimcode)}: {[(perm2, key) for perm2, key in testval.items() if key != 0]}")
+            failed = True
+    if not failed:
+        print("BAM! WE WIN!")
+        print("BAM! WE WIN!", file=sys.stderr)
     exit()
 
 
@@ -1562,3 +1627,4 @@ if __name__ == "__main__":
 # #         # permset.add(graph0.perm)
 # #         # print(graph0.perm.trimcode)
 # #         # print(v)
+
