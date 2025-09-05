@@ -841,6 +841,8 @@ if __name__ == "__main__":
     ring2 = TensorRing(Sx([]).ring, ring)
     ymonomring = PolynomialAlgebra(MonomialBasis(y,n-1))
     ring3 = TensorRing(yring, ring2)
+    ring3333 = TensorRing(ring.rings[1],ring3)
+    ringbob = TensorRing(zring, ring3333)
     
     #ring = TensorRing(TensorRing(zring,FreeAlgebra(SchubertBasis)),TensorRing(yring, NilHeckeRing(x)))
     result = ring3.zero
@@ -862,14 +864,14 @@ if __name__ == "__main__":
     # exit()
     mod1 = RCGraphModule({RCGraph(): 1})
     result0 = ring2.zero
-    result =ring3.zero
+    result =ringbob.zero
     for seq in seqs:
         modmod = (FA(*seq)*mod1).as_nil_hecke(x)
         print(f"{seq=}")
         print(f"{modmod=}")
-        ding = ring3.zero
+        ding = ringbob.zero
         for kingo, valval in modmod.items():
-            ding += ring3.ext_multiply(yring(expand_seq(seq,y)),ring2.ext_multiply(Sx(expand_seq(seq,x)),ring.ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis), ring.rings[1](kingo))))
+            ding += ringbob.ext_multiply(zring(expand_seq(seq,z)),ring3333.ext_multiply(ring.rings[1](kingo),ring3.ext_multiply(ymonomring(*seq),ring2.ext_multiply(Sx(expand_seq(seq,x)),ring.ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis), ring.rings[1](kingo))))))
         result += ding
         #result += ring2.ext_multiply(Sx(prod([x[i+1]**seq[i] for i in range(len(seq))])),ding + , ring.rings[1].one))
 
@@ -891,9 +893,10 @@ if __name__ == "__main__":
         # if any(len(permperm) > n for permperm in (Sx(key[1][0][0][0])*Sx(key[1][0][1][0])).keys()):
         #     continue
         #assert key[0] == key[1][0][0] or key[0] == key[1][1] or key[1][0][0] == key[1][1] or value == 0, f"{key=} {value=}"
-        if key[1][1][1] == key[1][0]:
+        if key[1][1][1][1][1] == key[1][1][1][0]:
             #separate[key[0]] = separate.get(key[0],ring2.rings[1].rings[0].zero) + value*ring2.rings[1].rings[0](key[1][0])
-            separate[key[1][1][0]] = separate.get(key[1][1][0],ring3.rings[0].zero) + value*ring3.rings[0](key[0])
+            print(f"{key[1][1][0]=} {key[0]=}",file=sys.stderr)
+            separate[key[1][1][1][1][0]] = separate.get(key[1][1][1][1][0],ring3.rings[0].zero) + value*ring3.rings[0](key[0])
         # if key[0].inv == (n*(n-1))//2:
         #     separate[key[1][0]] = separate.get(key[1][0],ring2.rings[1].rings[1].zero) + value*ring2.rings[1].rings[1](key[1][1])
 
