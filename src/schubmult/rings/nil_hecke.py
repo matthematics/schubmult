@@ -319,6 +319,9 @@ class NilHeckeRing(Ring, CompositeDomain):
             return self.from_dict({x: S.One})
         return self.mul_scalar(self.one, x)
 
+    def __hash__(self):
+        return hash(self.genset)
+
     def printing_term(self, k):
         # from sympy import Symbol
 

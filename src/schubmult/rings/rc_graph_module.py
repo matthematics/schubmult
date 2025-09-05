@@ -5,18 +5,72 @@ from symengine import SympifyError
 
 import schubmult.schub_lib.schub_lib as schub_lib
 from schubmult.perm_lib import Permutation, uncode
-from schubmult.rings.schubert_ring import SingleSchubertRing
+from schubmult.rings.nil_hecke import NilHeckeRing
+from schubmult.rings.schubert_ring import DoubleSchubertElement, SingleSchubertRing
 from schubmult.symbolic import S, expand, sympify
 from schubmult.utils.perm_utils import add_perm_dict
 
 from .free_algebra import FreeAlgebra, FreeAlgebraElement
-from .free_algebra_basis import SchubertBasis, WordBasis
+from .free_algebra_basis import FreeAlgebraBasis, SchubertBasis, WordBasis
+from .nil_hecke import NilHeckeRing
 from .tensor_ring import TensorRing, TensorRingElement
 
 FAS = FreeAlgebra(basis=SchubertBasis)
 
 class RCGraph(tuple):
 
+    # def monk_insert(self, row, reps=1):
+    #     if reps > 1:
+    #         return self.monk_insert(row, reps-1).monk_insert(row)
+
+    #     if len(self) == 0:
+    #         tup = [()]* row
+    #         tup[row - 1] = (row,)
+    #         return RCGraph(tup)
+    #     if len(self) < row:
+    #         tup = [*self, *([()]*(row - len(self)))]
+    #         tup[row - 1] = (row,)
+    #         return RCGraph(tup)
+
+    #     if row > 1:
+    #         return RCGraph([*self[:row-1],*[tuple([a + row - 1 for a in roww]) for roww in self.rowrange(row - 1, len(self)).monk_insert(1)]])
+
+    #     for j in range(1,100):
+    #         if not self.has_element(row, j):
+    #             a, b = self.right_root_at(row, i)
+    #             if a == 1:
+    #                 new_row = tuple(sorted([*self[0], j]))
+    #                 #NOTDONE
+
+    def as_nil_hecke(self, x, y=None):
+        R = NilHeckeRing(x)
+        return self.polyvalue(x, y) * R(self.perm)
+
+
+    def has_element(self, i, j):
+        return i <= len(self) and j + i in self[i-1]
+
+    def right_root_at(self, i, j):
+        # row i column j
+        from bisect import bisect_left
+        start_root = (i,j+1)
+        if i > len(self):
+            return start_root
+        row = self[i-1]
+        revved = [*row]
+        revved.reverse()
+
+        index = bisect_left(revved, i + j - 1)
+        perm = Permutation.ref_product(*revved[:index])
+        start_root = (perm[start_root[0] - 1], perm[start_root[1] - 1])
+        lower_perm = Permutation([])
+        
+        for rrow in self[i:]:
+            lower_perm *= ~Permutation.ref_product(*rrow)
+
+
+        return (lower_perm[start_root[0] - 1], lower_perm[start_root[1] - 1])
+    
     def length_vector(self):
         return tuple([len(row) for row in self])
 
@@ -27,10 +81,13 @@ class RCGraph(tuple):
     def rowrange(self, start, end):
         return RCGraph([tuple([a - start for a in row]) for row in self[start:end]])
 
-    def polyvalue(self, x):
+    def polyvalue(self, x, y=None):
         ret = S.One
         for i, row in enumerate(self):
-            ret *= x[i+1]**len(row)
+            if y is None:
+                ret *= x[i+1]**len(row)
+            else:
+                ret *= prod([x[i+1] - y[row[j] - i] for j in range(len(row))])
         return ret
 
     @classmethod
@@ -89,8 +146,8 @@ class RCGraph(tuple):
             i += 1
         new_rc = RCGraph(newrc)
         
-        print(tuple(new_rc))
-        print(tuple(self))
+        # print(tuple(new_rc))
+        # print(tuple(self))
         assert new_rc.perm == ~self.perm
         return new_rc
 
@@ -103,7 +160,7 @@ class RCGraph(tuple):
             perm2 = k[0]
             new_row = [pm[i] for i in range(max(len(pm), len(perm2))) if pm[i] == perm2[i+1]]
             new_row.sort()
-            print(f"{pm=} {k=} {new_row=}")
+            # print(f"{pm=} {k=} {new_row=}")
             # nrc = RCGraph([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])
             # assert nrc.perm == perm2
             lst = [tuple([a + 1 for a in row]) for row in self]
@@ -118,7 +175,7 @@ class RCGraph(tuple):
                     else:
                         lst += [()]
             nrc = RCGraph(lst)
-            print(nrc)
+            # print(nrc)
             assert nrc.perm == ~perm2
             # except AssertionError:
             #     print(self)
@@ -223,6 +280,8 @@ class RCGraph(tuple):
 
 class RCGraphModule(dict):
 
+    
+
     def __mul__(self, other):
         if isinstance(other, RCGraphModule):
             result = RCGraphModule()
@@ -316,10 +375,16 @@ class RCGraphModule(dict):
         obj.update({k: v for k, v in dct.items() if v != 0})
         return obj
 
-    def polyvalue(self, x):
+    def polyvalue(self, x, y=None):
         ret = S.Zero
         for k, v in self.items():
-            ret += v * k.polyvalue(x)
+            ret += v * k.polyvalue(x, y)
+        return ret
+
+    def as_nil_hecke(self, x, y=None):
+        ret = S.Zero
+        for k, v in self.items():
+            ret += v * k.as_nil_hecke(x, y)
         return ret
 
     def __init__(self, *args):
@@ -699,6 +764,24 @@ def schubert_act(poly, rc_module, genset, degree, length, check=False):
     return result
 
 
+
+def nilhecke_power(start, end, length, variable):
+    from schubmult.abc import x
+    ring = NilHeckeRing(x)
+    if length > end - start + 1:
+        return 0
+    if length < 0:
+        return 0
+    if length == 0:
+        return ring.one
+    result = ring.zero
+    result += variable * ring(Permutation([]).swap(end-1,end)) * nilhecke_power(start, end - 1, length - 1, variable)
+    result += nilhecke_power(start, end-1, length, variable)
+    return result
+         
+
+
+
 def change_free_tensor_basis(tensor, old_basis, new_basis):
     new_ring = TensorRing(FreeAlgebra(new_basis),tensor.ring.rings[1])
     new_tensor = new_ring.zero
@@ -718,9 +801,21 @@ def artin_sequences(n):
             ret.add((i,*seq))
     return ret
 
+def sparkly_sequences(n, L):
+    if L == 0:
+        return set([()])
+    old_seqs = sparkly_sequences(n, L-1)
+
+    ret = set()
+    for seq in old_seqs:
+        for i in range(n+1):
+            ret.add((i,*seq))
+    return ret
+
+
 if __name__ == "__main__":
     from schubmult.abc import E, x, y, z
-    from schubmult.rings import FA, ASx, DSx, ElementaryBasis, Sx
+    from schubmult.rings import FA, ASx, DSx, ElementaryBasis, MonomialBasis, PolynomialAlgebra, Sx
     from schubmult.symbolic import prod
 
     from .variables import genset_dict_from_expr
@@ -730,7 +825,110 @@ if __name__ == "__main__":
 
 
     seqs = artin_sequences(n-1)
+    seqs2 = sparkly_sequences(n-1,n-1)
+    #yring = SingleSchubertRing(y)
+    yring = Sx([]).ring
+    zring = SingleSchubertRing(z)
+    #ring = TensorRing(FreeAlgebra(SchubertBasis)@FreeAlgebra(SchubertBasis),NilHeckeRing(x))
+    #ring = TensorRing(FreeAlgebra(SchubertBasis),NilHeckeRing(x))
+    #ring = TensorRing(yring, TensorRing(FreeAlgebra(SchubertBasis)@FreeAlgebra(SchubertBasis), NilHeckeRing(x)))
+    ring = TensorRing(PolynomialAlgebra(MonomialBasis(x, n-1)), TensorRing(FreeAlgebra(SchubertBasis), NilHeckeRing(x)))
+    #ring = TensorRing(TensorRing(zring,FreeAlgebra(SchubertBasis)),TensorRing(yring, NilHeckeRing(x)))
+    result = ring.zero
+    dp = -1
+    def descent_pickle(perm, desc):
+        if desc < 0:
+            return True
+        return (perm.inv == 0 or max(perm.descents()) == desc - 1)
 
+    # for perm in perms:
+    #     #nil_elem = ring.rings[1].rings[1](perm)
+    #     nil_elem=ring.rings[1].rings[1].one
+    #     free_elem = ASx(perm,n-1).change_basis(WordBasis)
+    #     #result += ring((perm, ((perm,perm))))
+    #     result += ring.ext_multiply(ring.rings[0](yring(perm).expand()),ring.rings[1].ext_multiply(free_elem, nil_elem))
+
+    # print(result)
+    # exit()
+    for seq in seqs2:
+        nil_elem = ring.rings[1].rings[1].one
+        
+            #nil_elem *= nilhecke_power(index + 1, n - 1, value, 1)
+        interim_result = ring.rings[1].zero
+
+        #for perm, coeff in nil_elem.items():
+        #interim_result += ring.rings[1].ext_multiply(yring(prod([y[i+1]**seq[i] for i in range(len(seq))])),nil_elem)
+        #interim_result += ring.rings[1].ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis),nil_elem)
+        interim_result += ring.rings[1].ext_multiply(FA(*seq).change_basis(SchubertBasis),nil_elem)
+        #interim_result += ring.rings[1].ext_multiply(yring.one,nil_elem)
+
+        #result += ring.ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis), nil_elem)
+        result += ring.ext_multiply(ring.rings[0](prod([x[i+1]**seq[i] for i in range(len(seq))])), interim_result)
+        #result += ring.ext_multiply(ring.rings[0].ext_multiply(zring(prod([z[i+1]**seq[i] for i in range(len(seq))])),FA(*seq).change_basis(SchubertBasis)), interim_result)
+        #result += ring.ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis), interim_result)
+
+    #result = ring.from_dict({k: v for k, v in result.items() if len(k[1][0][0])<=n and (all([descent_pickle(k[1][0],dp), descent_pickle(k[1][1],dp)])) })
+    print(result)
+
+    # for ((perm1, (perm2, a)), (perm3, perm4)), coeff in result.items():
+    #     assert perm1 == perm2 
+    
+    exit()
+    #for (((perm1, a), (perm2, b)), (perm3, perm4)), coeff in result.items():
+    #for (perm1, (((perm2, a),(perm3,b)), perm4)), coeff in result.items():
+    for (perm1, (((perm2, a)), perm4)), coeff in result.items():
+        perm3 = Permutation([])
+        bong = Sx(perm2) * Sx(perm3)
+        if any(len(permm)>n for permm in bong):
+            continue
+        try:
+            assert perm1 != perm4 or bong.get(perm1, 0) == coeff, f"{bong=} {perm1=} {perm2=} {perm3=} {perm4=} {coeff=}"
+        except AssertionError:
+            print(f"Assertion failed: {bong.get(perm1,0)=} {perm1=} {perm2=} {perm3=} {perm4=} {coeff=}")
+            continue
+        
+    exit()
+
+    # result = TensorModule()
+    # one_mod = RCGraphModule({RCGraph(): 1})
+    # free_ring = FreeAlgebra(SchubertBasis)
+    # ring2 = TensorRing(Sx([]).ring,SingleSchubertRing(y))
+    # ring0 = TensorRing(ASx([]).ring, Sx([]).ring)
+    # #DSx((FA(*seq)*one_mod).polyvalue(x,y))
+    # tomo = ring0.one
+    # w0 = uncode(list(range(n-1,0,-1)))
+    # bismark = ring0.zero
+    # # elem
+    # for perm in perms:
+    #     bismark += ring0.ext_multiply(ASx(perm,n-1), ASx(perm,n-1)*Sx(w0))
+    
+    # print(bismark)
+    # exit()
+
+    # for seq in seqs:
+    #     #result += TensorModule.ext_multiply(FA(*seq).change_basis(SchubertBasis),Sx((FA(*seq)*one_mod).polyvalue(x,y)))
+    #     stink = FA(*seq)*one_mod
+    #     result += TensorModule.ext_multiply(FA(*seq).coproduct()*TensorModule({RCGraphTensor(RCGraph(),RCGraph()): 1}),(Sx(prod([x[i+1]**seq[i] for i in range(len(seq))]))*one_mod))
+    #     rseq = tuple(reversed(seq))
+    #     #result += TensorModule.ext_multiply(FA(*seq).change_basis(SchubertBasis),Sx(prod(E(rseq[i],rseq[i],x[1:],[y[n-1-i] for j in range(10)]) for i in range(len(seq)))))
+
+    # result2 = TensorModule()
+
+    # for ((perm1, a), perm), coeff in result.items():
+    #     if len(perm1) > n or len(perm.perm) > n:
+    #         continue
+    #     if expand(coeff) == S.Zero:
+    #         continue
+    #     print(f"{perm1.trimcode=} {perm.perm.trimcode=}")
+    # #exit()
+    
+    # # #exit()
+    #     #result2 += TensorModule.ext_multiply(ASx(perm1, a),ring2.ext_multiply(Sx(perm),ring2.rings[1](coeff)))
+    #     #print(f"{perm1.trimcode=} {perm.perm.trimcode=} {coeff=}")
+    # exit()
+    # for ((perm1, a), (perm2, perm3)), coeff in result2.items():
+    #     print(f"{perm1.trimcode=} {perm2.trimcode=} {perm3.trimcode=} {coeff=}")
+    # exit()
     ring = TensorRing(FreeAlgebra(ElementaryBasis), Sx([]).ring)
     ring0 = TensorRing(FreeAlgebra(SchubertBasis), Sx([]).ring)
     ring2 = TensorRing(Sx([]).ring, ring0)
@@ -743,7 +941,7 @@ if __name__ == "__main__":
     doink_poly = Sx([])
 
     #DSx x and y
-
+    # mul inserts column middle
     result = TensorModule()
     for seq in seqs:
         dingmod = FA(*seq).change_basis(SchubertBasis)
