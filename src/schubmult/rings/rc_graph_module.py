@@ -839,7 +839,9 @@ if __name__ == "__main__":
     #ring = TensorRing(PolynomialAlgebra(MonomialBasis(x, n-1)), TensorRing(FreeAlgebra(SchubertBasis), NilHeckeRing(x)))
     ring = TensorRing(FreeAlgebra(SchubertBasis)@FreeAlgebra(SchubertBasis), NilHeckeRing(x))
     ring2 = TensorRing(Sx([]).ring, ring)
+    ymonomring = PolynomialAlgebra(MonomialBasis(y,n-1))
     ring3 = TensorRing(yring, ring2)
+    
     #ring = TensorRing(TensorRing(zring,FreeAlgebra(SchubertBasis)),TensorRing(yring, NilHeckeRing(x)))
     result = ring3.zero
     
@@ -868,7 +870,7 @@ if __name__ == "__main__":
         ding = ring3.zero
         for kingo, valval in modmod.items():
             ding += ring3.ext_multiply(yring(expand_seq(seq,y)),ring2.ext_multiply(Sx(expand_seq(seq,x)),ring.ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis), ring.rings[1](kingo))))
-        result += ding                  
+        result += ding
         #result += ring2.ext_multiply(Sx(prod([x[i+1]**seq[i] for i in range(len(seq))])),ding + , ring.rings[1].one))
 
         #ring.ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis), ring.rings[1](Permutation([]))))
@@ -877,6 +879,9 @@ if __name__ == "__main__":
     #     result += ring2.ext_multiply(Sx(coeff), ring(key))
 
     #result2 = result2.ring.from_dict({k: v for k, v in result2.items() if len(k[0])<=n and len(k[1][0][0])<=n and len(k[1][1]) <= n})
+
+    def codelen(permm, lln):
+        return tuple([*permm.trimcode,*([0]*(lln - len(permm.trimcode)))])
 
     print(result)
     Permutation.print_as_code=True
