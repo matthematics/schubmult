@@ -833,7 +833,7 @@ if __name__ == "__main__":
     #ring = TensorRing(FreeAlgebra(SchubertBasis),NilHeckeRing(x))
     #ring = TensorRing(yring, TensorRing(FreeAlgebra(SchubertBasis)@FreeAlgebra(SchubertBasis), NilHeckeRing(x)))
     #ring = TensorRing(PolynomialAlgebra(MonomialBasis(x, n-1)), TensorRing(FreeAlgebra(SchubertBasis), NilHeckeRing(x)))
-    ring = TensorRing(FreeAlgebra(SchubertBasis)@FreeAlgebra(SchubertBasis), NilHeckeRing(x))
+    ring = TensorRing(FreeAlgebra(SchubertBasis), NilHeckeRing(x))
     ring2 = TensorRing(Sx([]).ring, ring)
     #ring = TensorRing(TensorRing(zring,FreeAlgebra(SchubertBasis)),TensorRing(yring, NilHeckeRing(x)))
     result = ring2.zero
@@ -858,10 +858,10 @@ if __name__ == "__main__":
     for seq in seqs:
         modmod = (FA(*seq)*mod1).as_nil_hecke(x)
         for kingo, valval in modmod.items():
-            result += ring2.ext_multiply(Sx(valval),ring.ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*((0,)*(n-1))).coproduct(),SchubertBasis,SchubertBasis), ring.rings[1](kingo)))
+            result += ring2.ext_multiply(Sx(valval),ring.ext_multiply(FA(*((0,)*(n-1))).change_basis(SchubertBasis), ring.rings[1](kingo)))
 
         if not all(a == 0 for a in seq):
-            result += ring2.ext_multiply(Sx(prod([x[i+1]**seq[i] for i in range(len(seq))])),ring.ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis), ring.rings[1](Permutation([]))))
+            result += ring2.ext_multiply(Sx(prod([x[i+1]**seq[i] for i in range(len(seq))])),ring.ext_multiply(FA(*seq).change_basis(SchubertBasis), ring.rings[1](Permutation([]))))
     # result2 = ring2.zero
     # for key, coeff in result0.items():
     #     result += ring2.ext_multiply(Sx(coeff), ring(key))
@@ -872,17 +872,13 @@ if __name__ == "__main__":
     Permutation.print_as_code=True
     separate = {}
     for key, value in result.items():
-        if len(key[1][0][0][0]) > n or len(key[1][0][1][0])>n:
+        if len(key[0]) > n or len(key[1][0][0]) > n or len(key[1][1]) > n:
             continue
         #assert key[0] == key[1][0][0] or key[0] == key[1][1] or key[1][0][0] == key[1][1] or value == 0, f"{key=} {value=}"
-        if key[1][1].inv == 0:
-            separate[key[0]] = separate.get(key[0],ring2.rings[1].rings[0].zero) + value*ring2.rings[1].rings[0](key[1][0])
-        # if key[0].inv == (n*(n-1))//2:
-        #     separate[key[1][0]] = separate.get(key[1][0],ring2.rings[1].rings[1].zero) + value*ring2.rings[1].rings[1](key[1][1])
+        separate[key[0]] = separate.get(key[0], ring.zero) + value*ring(key[1])
 
-    for perm in separate:
-        #print(f"{(perm[0][0].trimcode,perm[1][0].trimcode)}: {separate[perm]}")
-        print(f"{perm.trimcode}: {separate[perm]}")
+    for perm in perms:
+        print(f"{perm.trimcode=}: {separate[perm]}")
     
     exit()
 
