@@ -134,8 +134,8 @@ class MonomialBasis(PolynomialBasis):
             raise ValueError(f"Length of key {x} exceeds the number of variables {self.numvars}.")
         return (*x, *([0] * (self.numvars - len(x))))
 
-    def attach_key(self, dct):
-        return dct
+    # def attach_key(self, dct):
+    #     return dct
 
     def printing_term(self, k):
         return GenericPrintingTerm(str(self.expand_monom(k)), "")

@@ -1,4 +1,3 @@
-import sys
 from functools import cache
 
 from scipy.fftpack import dct
@@ -813,9 +812,6 @@ def sparkly_sequences(n, L):
             ret.add((i,*seq))
     return ret
 
-def expand_seq(seq, genset):
-    return prod([genset[i+1]**seq[i] for i in range(len(seq))])
-
 
 if __name__ == "__main__":
     from schubmult.abc import E, x, y, z
@@ -831,21 +827,16 @@ if __name__ == "__main__":
     seqs = artin_sequences(n-1)
     seqs2 = sparkly_sequences(n-1,n-1)
     #yring = SingleSchubertRing(y)
-    yring = SingleSchubertRing(y)
+    yring = Sx([]).ring
     zring = SingleSchubertRing(z)
     #ring = TensorRing(FreeAlgebra(SchubertBasis)@FreeAlgebra(SchubertBasis),NilHeckeRing(x))
     #ring = TensorRing(FreeAlgebra(SchubertBasis),NilHeckeRing(x))
     #ring = TensorRing(yring, TensorRing(FreeAlgebra(SchubertBasis)@FreeAlgebra(SchubertBasis), NilHeckeRing(x)))
     #ring = TensorRing(PolynomialAlgebra(MonomialBasis(x, n-1)), TensorRing(FreeAlgebra(SchubertBasis), NilHeckeRing(x)))
-    ring = TensorRing(FreeAlgebra(SchubertBasis)@FreeAlgebra(SchubertBasis), NilHeckeRing(x))
+    ring = TensorRing(FreeAlgebra(SchubertBasis), NilHeckeRing(x))
     ring2 = TensorRing(Sx([]).ring, ring)
-    ymonomring = PolynomialAlgebra(MonomialBasis(y,n-1))
-    ring3 = TensorRing(yring, ring2)
-    ring3333 = TensorRing(ring.rings[1],ring3)
-    ringbob = TensorRing(zring, ring3333)
-    
     #ring = TensorRing(TensorRing(zring,FreeAlgebra(SchubertBasis)),TensorRing(yring, NilHeckeRing(x)))
-    result = ring3.zero
+    result = ring2.zero
     
     dp = -1
     def descent_pickle(perm, desc):
@@ -864,61 +855,32 @@ if __name__ == "__main__":
     # exit()
     mod1 = RCGraphModule({RCGraph(): 1})
     result0 = ring2.zero
-    result =ringbob.zero
     for seq in seqs:
         modmod = (FA(*seq)*mod1).as_nil_hecke(x)
-        print(f"{seq=}")
-        print(f"{modmod=}")
-        ding = ringbob.zero
-        modmod = modmod.ring.from_dict({k: v for k,v in modmod.items() if len(k)<=n})
-        coprod = FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis)
-
-        coprod = coprod.ring.from_dict({k: v for k,v in coprod.items() if len(k[0][0])<=n and len(k[1][0])<=n})
         for kingo, valval in modmod.items():
-            ding += ringbob.ext_multiply(zring(expand_seq(seq,z)),ring3333.ext_multiply(ring.rings[1](kingo),ring3.ext_multiply(ymonomring(*seq),ring2.ext_multiply(Sx(expand_seq(seq,x)),ring.ext_multiply(coprod, ring.rings[1](kingo))))))
-        result += ding
-        #result += ring2.ext_multiply(Sx(prod([x[i+1]**seq[i] for i in range(len(seq))])),ding + , ring.rings[1].one))
+            result += ring2.ext_multiply(Sx(valval),ring.ext_multiply(FA(*((0,)*(n-1))).change_basis(SchubertBasis), ring.rings[1](kingo)))
 
-        #ring.ext_multiply(FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis), ring.rings[1](Permutation([]))))
+        if not all(a == 0 for a in seq):
+            result += ring2.ext_multiply(Sx(prod([x[i+1]**seq[i] for i in range(len(seq))])),ring.ext_multiply(FA(*seq).change_basis(SchubertBasis), ring.rings[1](Permutation([]))))
     # result2 = ring2.zero
     # for key, coeff in result0.items():
     #     result += ring2.ext_multiply(Sx(coeff), ring(key))
 
     #result2 = result2.ring.from_dict({k: v for k, v in result2.items() if len(k[0])<=n and len(k[1][0][0])<=n and len(k[1][1]) <= n})
 
-    def codelen(permm, lln):
-        return tuple([*permm.trimcode,*([0]*(lln - len(permm.trimcode)))])
-
     print(result)
     Permutation.print_as_code=True
     separate = {}
-    failed = False
     for key, value in result.items():
-        # if any(len(permperm) > n for permperm in (Sx(key[1][0][0][0])*Sx(key[1][0][1][0])).keys()):
-        #     continue
-        #assert key[0] == key[1][0][0] or key[0] == key[1][1] or key[1][0][0] == key[1][1] or value == 0, f"{key=} {value=}"
-        if key[1][1][1][1][1] == key[1][1][1][0]:
-            #separate[key[0]] = separate.get(key[0],ring2.rings[1].rings[0].zero) + value*ring2.rings[1].rings[0](key[1][0])
-            print(f"{key[1][1][0]=} {key[0]=}",file=sys.stderr)
-            separate[key[1][1][1][1][0]] = separate.get(key[1][1][1][1][0],ring3.rings[0].zero) + value*ring3.rings[0](key[0])
-        # if key[0].inv == (n*(n-1))//2:
-        #     separate[key[1][0]] = separate.get(key[1][0],ring2.rings[1].rings[1].zero) + value*ring2.rings[1].rings[1](key[1][1])
-
-    for perm in separate:
-        if any(len(permperm) > n for permperm, val in (Sx(perm[0][0])*Sx(perm[1][0])).items() if val != S.Zero):
+        if len(key[0]) > n or len(key[1][0][0]) > n or len(key[1][1]) > n:
             continue
-        #print(f"{(perm[0][0].trimcode,perm[1][0].trimcode)}: {separate[perm]}")
-        print(f"Test {(perm[0][0].trimcode,perm[1][0].trimcode)}: {separate[perm]}")
-        testval = (separate[perm] - yring(perm[0][0])*yring(perm[1][0]))
-        if testval.expand() != S.Zero:
-            print(f"Failures for {(perm[0][0].trimcode,perm[1][0].trimcode)}: {[(perm2, key) for perm2, key in testval.items() if key != 0]}")
-            failed = True
-    
-    if not failed:
-        print("YEAH!!!")
-        print("YEAH!!!", file=sys.stderr)
-    exit()
+        #assert key[0] == key[1][0][0] or key[0] == key[1][1] or key[1][0][0] == key[1][1] or value == 0, f"{key=} {value=}"
+        separate[key[0]] = separate.get(key[0], ring.zero) + value*ring(key[1])
 
+    for perm in perms:
+        print(f"{perm.trimcode=}: {separate[perm]}")
+    
+    exit()
 
 
     if False:

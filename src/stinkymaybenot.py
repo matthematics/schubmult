@@ -862,6 +862,62 @@ if __name__ == "__main__":
     # plus
     # print(result)
     # exit()
+    ring = TensorRing(TensorRing(FreeAlgebra(SchubertBasis), Sx([]).ring), TensorRing(TensorRing(ASx([]).ring, Sx([]).ring),ASx([]).ring@ASx([]).ring))
+    ring1 = (ASx([]).ring @ Sx([]).ring) @TensorRing(Sx([]).ring,ASx([]).ring@ASx([]).ring)
+    mod = ring1.zero
+    mod0 = RCGraphModule({RCGraph(): 1})
+    #deg = 4
+    #for i in range(deg+1):
+    Permutation.print_as_code=True
+    for seq in artin_sequences(n-1):
+        
+        #coprod = FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
+        coprod = FA(*seq).coproduct()
+        mod2 = ring1.rings[1].zero
+        boing = FA(*seq).change_basis(SchubertBasis)
+        for (seq1, seq2), coeff in coprod.items():
+            mod2 += coeff * ring1.rings[1].ext_multiply(Sx(expand_seq(seq2,x)),
+                                        ring1.rings[1].rings[1].ext_multiply(FA(*seq1).change_basis(SchubertBasis),
+                                                                             FA(*seq2).change_basis(SchubertBasis)))
+            mod += ring1.ext_multiply(ring1.rings[0].ext_multiply(boing,Sx(expand_seq(seq1,x))),mod2)
+        #TensorModule.ext_multiply(FA(*seq)*mod0,ring1.ext_multiply(Sx(expand_seq(seq,x)),
+        #                                                                    FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis)))
+    # mod0 = ring.rings[0].ext_multiply(FA(*seq).change_basis(SchubertBasis), Sx(expand_seq(seq,x)))
+    # coprod = FA(*seq).coproduct()
+    # mod1 = ring.rings[1].zero
+    # for (seq1, seq2), val in coprod.items():
+    #     mod1 += val * ring.rings[1].ext_multiply(ring.rings[1].rings[0].ext_multiply(FA(*seq).change_basis(SchubertBasis),Sx(expand_seq(seq,x))),
+    #                                              ring.rings[1].rings[1].ext_multiply(FA(*seq1).change_basis(SchubertBasis),FA(*seq2).change_basis(SchubertBasis)))
+    # mod += ring.ext_multiply(mod0, mod1)
+
+    steve_dict = {}
+    for ((fa_elem, perm1), (perm2,(as1,as2))), coeff in mod.items():
+        if perm1 == as1[0] and perm2 == as2[0]:
+            #print(f"Test {perm1=} {perm2=} {as1=} {as2=} {fa_elem[0]=}")
+            #product = Sx(as1[0])*Sx(as2[0])
+            steve_dict[(as1[0],as2[0])] = steve_dict.get((as1[0],as2[0]),Sx([]).ring.zero) + coeff*Sx(fa_elem[0])
+            #assert product.get(fa_elem[0],0) == coeff, f"{as1[0]=} {as2[0]=} {perm1=} {perm2=} {fa_elem=} {product=} {coeff=}"
+
+    for (perm1, perm2), val in steve_dict.items():
+        if any(len(permperm) > n for permperm in (Sx(perm1)*Sx(perm2)).keys() if val != S.Zero):
+            continue
+        print(f"{(perm1.trimcode, perm2.trimcode)}: {Sx(perm1)*Sx(perm2)-val}")
+
+    exit()
+    permset1 = set()
+    permset2 = set()
+    permset3 = set()
+
+    for ((perm0_1,perm0), ((perm00_1, perm00),(perm1_1,perm2_1))) , coeff in mod.items():
+        product = Sx(perm1_1[0])*Sx(perm2_1[0])
+        if perm0 == perm00:
+            permset1.add(perm0)
+            permset2.add(perm1_1[0])
+            permset3.add(perm2_1[0])
+            assert product.get(perm0,0) == coeff, f"{perm1_1[0]=} {perm2_1[0]=} {perm0=} {perm00=} {product=}"
+    
+    print(f"AFSO!!O!O! {len(permset1)=} {len(permset2)=} {len(permset3)=}")
+    exit()
     mod1 = RCGraphModule({RCGraph(): 1})
     result0 = ring2.zero
     result =ringbob.zero
@@ -896,8 +952,10 @@ if __name__ == "__main__":
     for key, value in result.items():
         # if any(len(permperm) > n for permperm in (Sx(key[1][0][0][0])*Sx(key[1][0][1][0])).keys()):
         #     continue
+        
         #assert key[0] == key[1][0][0] or key[0] == key[1][1] or key[1][0][0] == key[1][1] or value == 0, f"{key=} {value=}"
         if key[1][1][1][1][1] == key[1][1][1][0]:
+            assert key[0] == key[1][0]
             #separate[key[0]] = separate.get(key[0],ring2.rings[1].rings[0].zero) + value*ring2.rings[1].rings[0](key[1][0])
             print(f"{key[1][1][0]=} {key[0]=}",file=sys.stderr)
             separate[key[1][1][1][1][0]] = separate.get(key[1][1][1][1][0],ring3.rings[0].zero) + value*ring3.rings[0](key[0])

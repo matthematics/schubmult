@@ -8,6 +8,7 @@ import schubmult.schub_lib.schub_lib as schub_lib
 from schubmult.perm_lib import Permutation, uncode
 from schubmult.rings.nil_hecke import NilHeckeRing
 from schubmult.rings.schubert_ring import DoubleSchubertElement, SingleSchubertRing
+from schubmult.rings.variables import CustomGeneratingSet
 from schubmult.symbolic import S, expand, sympify
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -853,6 +854,100 @@ if __name__ == "__main__":
             return True
         return (perm.inv == 0 or max(perm.descents()) == desc - 1)
 
+    mod = TensorModule()
+    mod1 = RCGraphModule({RCGraph(): 1})
+
+    ring = TensorRing(FreeAlgebra(SchubertBasis),Sx([]).ring)
+    
+    ring3 = TensorRing(Sx([]).ring,ring)
+    ring2 = TensorRing(NilHeckeRing(x),ring3)
+    mod = ring2.zero
+    for seq in all_fa_degree(3, 3):
+        the_mod = FA(*seq) * mod1
+        #assert len(set(the_mod.values())) == 1, f"{set(the_mod.values())=}"
+        for mod111, coeff in the_mod.items():
+            mod += ring2.ext_multiply(NilHeckeRing(x)(mod111.perm),ring3.ext_multiply(Sx(expand_seq(seq,x)),ring.ext_multiply(FA(*seq).change_basis(SchubertBasis),Sx(expand_seq(seq,x)))))
+            #mod += ring2.ext_multiply(NilHeckeRing(x)(modbang),ring.ext_multiply(FA(*seq).change_basis(SchubertBasis),Sx(cofo)))
+                                             #ring2.ext_multiply(Sx(expand_seq(seq,x)),ring.ext_multiply(FA(*seq).change_basis(SchubertBasis),Sx(expand_seq(seq,x)))))
+
+
+    for (the_mod,(perm0, (perm1,perm2))), coeff in mod.items():
+        print("------------")
+        print(perm1[0].trimcode)
+        print(perm0.trimcode)
+        # print(perm2[0].trimcode)
+        print(perm2.trimcode)
+        print(the_mod.trimcode)
+
+    exit()
+
+    def cauchy_kernel(nn, genset0, dummy_genset):
+        ring = TensorRing(PolynomialAlgebra(MonomialBasis(genset0, nn)),NilHeckeRing(dummy_genset))
+        if nn == 1:
+            return ring.one
+        
+        new_elem = ring.one
+        for i in range(1,nn):
+            new_elem = (ring.one + ring.ext_multiply(ring.rings[0](*[1,*([0]*(nn-1))]),ring.rings[1](Permutation([]).swap(i-1, i))))*new_elem
+        old_kernel = cauchy_kernel(nn-1, CustomGeneratingSet(genset0[1:]), dummy_genset)
+
+        old_kernel = ring.from_dict({tuple([tuple([0,*k[0]]),uncode([0,*k[1].trimcode])]): v for k,v in old_kernel.items()})
+        return new_elem * old_kernel
+
+    kernel = cauchy_kernel(n,x,y)
+
+    print(f"KERNEL")
+    print(kernel)
+
+
+    ring2 = TensorRing(kernel.ring, TensorRing(kernel.ring.rings[0],ASx([]).ring@ASx([]).ring))
+    ringstick = TensorRing(TensorRing(Sx([]).ring, NilHeckeRing(y)),TensorRing(Sx([]).ring,ASx([]).ring@ASx([]).ring))
+
+    result = ring2.zero
+    for (seq, perm), coeff in kernel.items():
+        coprod = FA(*seq[:-1]).change_basis(SchubertBasis).coproduct()
+        coprod = coprod.ring.from_dict({(k1, k2): v for (k1,k2),v in coprod.items() if len(k1[0])<=n and len(k2[0])<=n})
+        result += coeff * ring2.ext_multiply(ring2.rings[0]((seq,perm)),ring2.rings[1].ext_multiply(ring2.rings[0].rings[0](*seq),coprod))
+    
+    result2 = result
+
+    result = ringstick.zero
+    #ringbasket = PolynomialAlgebra(MonomialBasis(x,n))
+    for((seq1,perm),(seq2,(perm1,perm2))), coeff in result2.items():
+        assert seq1 == seq2
+        result += coeff * ringstick.ext_multiply(ringstick.rings[0].ext_multiply(Sx(expand_seq(seq1,x)),ringstick.rings[0].rings[1](perm)),ringstick.rings[1].ext_multiply(Sx(expand_seq(seq2,x)),ringstick.rings[1].rings[1]((perm1,perm2))))
+
+    print("RESULT")
+    print(result)
+
+    save_dict = {}
+
+    
+            # if any(len(permperm) > n for permperm in (product.keys())):
+            #     continue
+            # assert product.get(perm, 0) == coeff, f"{product=} {seq2=} {permbasket=} {perm=} {perm1=} {perm2=} {coeff=}"
+
+    permset = set()
+
+    for ((permbasket,perm), (permbucket,(perm1, perm2))), coeff in result.items():
+        product = Sx(perm1[0])*Sx(perm2[0])
+        # spigeon = ringbasket(product.expand())
+        if any(len(permperm) > n for permperm in (product.keys())):
+            continue
+        if permbasket == perm and perm == permbucket:
+            assert product.get(permbucket,0)== coeff, f"{product=} {perm1=} {perm2=} {coeff=} {perm=} {permbasket=}"
+        permset.add(perm)
+
+    print(len(permset))
+
+    print("YIPPLE")
+    
+
+    
+
+    
+
+    exit()
     # for perm in perms:
     #     #nil_elem = ring.rings[1].rings[1](perm)
     #     nil_elem=ring.rings[1].rings[1].one
