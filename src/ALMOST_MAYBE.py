@@ -1,4 +1,5 @@
 import sys
+from functools import cache
 
 from schubmult import ASx, Permutation, uncode
 from schubmult.abc import x, y, z
@@ -30,45 +31,45 @@ def main():
 
         zr_elem = zring(seq)
         xr_elem = xring(seq)
-        # module1 = TensorModule.ext_multiply(rc_graph_module_term, zr_elem)
-        # module2 = TensorModule.ext_multiply(xr_elem, rc_graph_module_term)
         module1 = TensorModule.ext_multiply(rc_graph_module_term, rc_graph_module_term)
         module2 = TensorModule.ext_multiply(rc_graph_module_term, rc_graph_module_term)
-        result += TensorModule(TensorModule.ext_multiply(TensorModule.ext_multiply(module1, module2),coprod))
+        result += TensorModule.ext_multiply(TensorModule.ext_multiply(module1, module2),coprod)
 
-    # left_graph == right_graph
-    # result2 = result
+    result2 = result
 
-    # result = TensorModule()
-    result_dict = {}
-    for key, value in result.items():
-        right_graph = key[0][0][1]
+    result = TensorModule()
+
+    @cache
+    def cached_fa(seq):
+        return Sx([]).ring.from_dict({perm1[0]: coeff for perm1, coeff in FA(*seq).change_basis(SchubertBasis).items()})
+
+    for key, value in result2.items():
+        right_graph = key[0][1][1]
         left_graph = key[0][0][0]
-        left_graph2 = key[0][1][0]
-        right_graph2 = key[0][1][1]
+        right_graph2 = key[0][1][0]
         coprod_perm_pair = key[1]
-        if right_graph == right_graph2 and left_graph == right_graph and uncode(left_graph2.length_vector()) == left_graph2.perm and uncode(left_graph.length_vector()) == left_graph.perm:
-            result_dict[coprod_perm_pair] = result_dict.get(coprod_perm_pair, 0) + value * Sx(expand_seq(left_graph2.length_vector(),x))
-            # module1 = TensorModule.ext_multiply(value * Sx(left_graph.perm),Sx(expand_seq(left_graph.length_vector(),x)))
-            # module2 = TensorModule.ext_multiply(Sx(right_graph.perm),Sx(expand_seq(right_graph.length_vector(),x)))
-            # result += TensorModule.ext_multiply(TensorModule.ext_multiply(module1, module2),(ASx([]).ring@ASx([]).ring)(coprod_perm_pair))
+        left_graph2 = key[0][0][1]
+        if right_graph == right_graph2 and left_graph == left_graph2:
+            module1 = TensorModule.ext_multiply(value * Sx(left_graph.perm),cached_fa(left_graph.length_vector()))
+            module2 = TensorModule.ext_multiply(Sx(right_graph.perm),cached_fa(right_graph.length_vector()))
+            result += TensorModule.ext_multiply(TensorModule.ext_multiply(module1, module2),(ASx([]).ring@ASx([]).ring)(coprod_perm_pair))
 
 
-    # Permutation.print_as_code = True
-    # result_dict = {}
-    # failed = False
-    # for key, value in result.items():
-    #     #right_graph = key[0][1][1]
-    #     right_nil_perm = key[0][1][1]
-    #     #$right_nil_perm = key[0][1][1].perm
-    #     #left_graph = key[0][0][0]
-    #     left_nil_perm = key[0][0][0]
-    #     right_schub_perm = key[0][1][0]
-    #     coprod_perm_pair = key[1]
-    #     left_schub_perm = key[0][0][1]
-    #     if right_nil_perm == right_schub_perm and left_nil_perm == right_nil_perm:
-            
+    Permutation.print_as_code = True
+    result_dict = {}
     failed = False
+    for key, value in result.items():
+        #right_graph = key[0][1][1]
+        right_nil_perm = key[0][1][1]
+        #$right_nil_perm = key[0][1][1].perm
+        #left_graph = key[0][0][0]
+        left_nil_perm = key[0][0][0]
+        right_schub_perm = key[0][1][0]
+        coprod_perm_pair = key[1]
+        left_schub_perm = key[0][0][1]
+        if right_nil_perm == right_schub_perm and left_nil_perm == right_nil_perm:
+            result_dict[coprod_perm_pair] = result_dict.get(coprod_perm_pair, 0) + value * Sx(left_schub_perm)
+
     for coprod_key in result_dict:
         ((left_coprod_perm, _), (right_coprod_perm, _)) = coprod_key
         if any(len(permperm) > n for permperm, val in (Sx(left_coprod_perm) * Sx(right_coprod_perm)).items() if val != S.Zero):
