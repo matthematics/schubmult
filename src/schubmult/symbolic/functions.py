@@ -25,3 +25,7 @@ def sympify(val):
 
 def is_of_func_type(elem, typ):
     return isinstance(elem, typ) or (isinstance(elem, sw.PyFunction) and isinstance(elem.pyobject(), typ))
+
+
+def expand_seq(seq, genset):
+    return sympy.prod([genset[i + 1] ** seq[i] for i in range(len(seq))])

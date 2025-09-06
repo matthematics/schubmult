@@ -9,7 +9,7 @@ from schubmult.perm_lib import Permutation, uncode
 from schubmult.rings.nil_hecke import NilHeckeRing
 from schubmult.rings.schubert_ring import DoubleSchubertElement, SingleSchubertRing
 from schubmult.symbolic import S, expand, sympify
-from schubmult.utils.perm_utils import add_perm_dict
+from schubmult.utils.perm_utils import add_perm_dict, artin_sequences
 
 from .free_algebra import FreeAlgebra, FreeAlgebraElement
 from .free_algebra_basis import FreeAlgebraBasis, SchubertBasis, WordBasis
@@ -791,17 +791,6 @@ def change_free_tensor_basis(tensor, old_basis, new_basis):
         new_tensor += coeff * new_ring.ext_multiply(original_ring(*key1).change_basis(new_basis), tensor.ring.rings[1](key2))
     return new_tensor
 
-def artin_sequences(n):
-    if n == 0:
-        return set([()])
-    old_seqs = artin_sequences(n-1)
-
-    ret = set()
-    for seq in old_seqs:
-        for i in range(n+1):
-            ret.add((i,*seq))
-    return ret
-
 def sparkly_sequences(n, L):
     if L == 0:
         return set([()])
@@ -812,9 +801,6 @@ def sparkly_sequences(n, L):
         for i in range(n+1):
             ret.add((i,*seq))
     return ret
-
-def expand_seq(seq, genset):
-    return prod([genset[i+1]**seq[i] for i in range(len(seq))])
 
 
 if __name__ == "__main__":

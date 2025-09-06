@@ -75,6 +75,16 @@ def count_less_than(arr, val):
         ct += 1
     return ct
 
+def artin_sequences(n):
+    if n == 0:
+        return {()}
+    old_seqs = artin_sequences(n-1)
+
+    ret = set()
+    for seq in old_seqs:
+        for i in range(n+1):
+            ret.add((i,*seq))
+    return ret
 
 def is_parabolic(w, parabolic_index):
     for i in parabolic_index:
