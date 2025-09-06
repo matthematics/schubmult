@@ -47,18 +47,24 @@ def main():
     result_dict = {}
     failed = False
     for key, value in result.items():
-        if key[1][1][1][1] == key[1][1][0] and key[0] == key[1][1][1][1]:
-            result_dict[key[1][1][1][0]] = result_dict.get(key[1][1][1][0], yring.zero) + value * yring(key[1][0])
+        right_nil_perm = key[1][1][1][1]
+        left_nil_perm = key[0]
+        middle_schub_perm = key[1][1][0]
+        coprod_perm_pair = key[1][1][1][0]
+        left_schub_perm = key[1][0]
+        if right_nil_perm == middle_schub_perm and left_nil_perm == right_nil_perm:
+            result_dict[coprod_perm_pair] = result_dict.get(coprod_perm_pair, yring.zero) + value * yring(left_schub_perm)
 
-    for perm in result_dict:
-        if any(len(permperm) > n for permperm, val in (Sx(perm[0][0]) * Sx(perm[1][0])).items() if val != S.Zero):
+    for coprod_key in result_dict:
+        ((left_coprod_perm, _), (right_coprod_perm, _)) = coprod_key
+        if any(len(permperm) > n for permperm, val in (Sx(left_coprod_perm) * Sx(right_coprod_perm)).items() if val != S.Zero):
             continue
-        testval = result_dict[perm] - yring(perm[0][0]) * yring(perm[1][0])
+        testval = result_dict[coprod_key] - yring(left_coprod_perm) * yring(right_coprod_perm)
         if testval.expand() != S.Zero:
-            print(f"Failures for {(perm[0][0].trimcode, perm[1][0].trimcode)}: {[(perm2, key) for perm2, key in testval.items() if key != 0]}")
+            print(f"Failures for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)}: {[(perm2, key) for perm2, key in testval.items() if key != 0]}")
             failed = True
         else:
-            print(f"Success for {(perm[0][0].trimcode, perm[1][0].trimcode)}: Sx({perm[0][0].trimcode})*Sx({perm[1][0].trimcode})={result_dict[perm]}")
+            print(f"Success for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)}: Sx({left_coprod_perm.trimcode})*Sx({right_coprod_perm.trimcode})={result_dict[coprod_key]}")
 
     if not failed:
         print("YEAH!!!")
