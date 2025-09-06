@@ -38,9 +38,9 @@ def main():
         main_ring2 = main_ring.rings[0].rings[1]
         first_term = main_ring1.zero
         second_term = main_ring2.zero
-        for rc_graph1, coeff1 in rc_graph_module_term.items():
-            first_term += coeff1 * main_ring1.ext_multiply(NH(rc_graph1.perm), zring(expand_seq(seq, z)))
-            second_term += coeff1 * main_ring2.ext_multiply(Sx(expand_seq(seq, x)), NH(rc_graph1.perm))
+        for rc_graph, coeff in rc_graph_module_term.items():
+            first_term += coeff * main_ring1.ext_multiply(NH(rc_graph.perm), zring(expand_seq(seq, z)))
+            second_term += coeff * main_ring2.ext_multiply(Sx(expand_seq(seq, x)), NH(rc_graph.perm))
 
         accum_term += main_ring.ext_multiply(main_ring.rings[0].ext_multiply(first_term,second_term),coprod)
         result += accum_term
