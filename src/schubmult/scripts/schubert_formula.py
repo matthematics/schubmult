@@ -26,27 +26,17 @@ def main():
     # 100% positive!
     for seq in seqs:
         rc_graph_module_term = FA(*seq) * unit_rc_module
-        # test_elem = ASx([]).ring.from_dict({(rc.perm, len(seq)): coeff for rc, coeff in rc_graph_module_term.items()})
-        # schubert_elem = FA(*seq).change_basis(SchubertBasis)
-        # assert  test_elem == schubert_elem, f"Basis change failed for {seq}: {test_elem} != {schubert_elem}"
         # MODULE ACTION IS THE KEY
-        accum_term = main_ring.zero
         rc_graph_module_term = RCGraphModule({rc: v for rc, v in rc_graph_module_term.items() if len(rc.perm) <= n})
         coprod = FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(), SchubertBasis, SchubertBasis)
         coprod = coprod.ring.from_dict({k: v for k, v in coprod.items() if len(k[0][0]) <= n and len(k[1][0]) <= n})
-        accum_term = TensorModule()
 
-        # main_ring1 = main_ring.rings[0].rings[0]
-        # main_ring2 = main_ring.rings[0].rings[1]
-        # first_term = main_ring1.zero
-        # second_term = main_ring2.zero
         zr_elem = zring(expand_seq(seq, z))
         xr_elem = xring(expand_seq(seq, x))
         module1 = TensorModule.ext_multiply(rc_graph_module_term, zr_elem)
         module2 = TensorModule.ext_multiply(xr_elem, rc_graph_module_term)
         result += TensorModule(TensorModule.ext_multiply(TensorModule.ext_multiply(module1, module2),coprod))
-        # accum_term += main_ring.ext_multiply(main_ring.rings[0].ext_multiply(first_term,second_term),coprod)
-        # result += accum_term
+
 
     Permutation.print_as_code = True
     result_dict = {}
@@ -59,9 +49,7 @@ def main():
         right_schub_perm = key[0][1][0]
         coprod_perm_pair = key[1]
         left_schub_perm = key[0][0][1]
-        #if right_nil_perm == right_schub_perm and left_nil_perm == right_nil_perm:
         if right_nil_perm == right_schub_perm and left_graph == right_graph and left_nil_perm == right_schub_perm:
-            # print(f"{left_nil_perm.trimcode=},{right_schub_perm.trimcode=},{left_schub_perm.trimcode=},{right_nil_perm.trimcode=},{coprod_perm_pair=} contributes {value}?")
             result_dict[coprod_perm_pair] = result_dict.get(coprod_perm_pair, yring.zero) + value * yring(left_schub_perm)
 
     for coprod_key in result_dict:
