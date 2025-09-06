@@ -1,9 +1,9 @@
 import sys
 
-from schubmult import ASx, Permutation
+from schubmult import ASx, Permutation, uncode
 from schubmult.abc import x, y, z
-from schubmult.rings import FA, FreeAlgebra, FreeAlgebraBasis, NilHeckeRing, SchubertBasis, SingleSchubertRing, Sx, TensorRing
-from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule
+from schubmult.rings import FA, FreeAlgebra, FreeAlgebraBasis, MonomialBasis, NilHeckeRing, PolynomialAlgebra, SchubertBasis, SingleSchubertRing, Sx, TensorRing
+from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule, TensorModule
 from schubmult.symbolic import S, expand_seq
 from schubmult.utils.perm_utils import artin_sequences
 
@@ -13,13 +13,15 @@ def main():
 
     seqs = artin_sequences(n - 1)
     NH = NilHeckeRing(x)
+    xring = SingleSchubertRing(x)
+    
     yring = SingleSchubertRing(y)
     zring = SingleSchubertRing(z)
     dual_schub_tensor_square = TensorRing(FreeAlgebra(SchubertBasis) @ FreeAlgebra(SchubertBasis))
-    main_ring = (TensorRing(NH, zring)@TensorRing(Sx([]).ring, NH)) @ dual_schub_tensor_square
+    main_ring = (TensorRing(NH, zring)@TensorRing(xring, NH)) @ dual_schub_tensor_square
 
     unit_rc_module = RCGraphModule({RCGraph(): 1})
-    result = main_ring.zero
+    result = TensorModule()
 
     # 100% positive!
     for seq in seqs:
@@ -32,32 +34,33 @@ def main():
         rc_graph_module_term = RCGraphModule({rc: v for rc, v in rc_graph_module_term.items() if len(rc.perm) <= n})
         coprod = FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(), SchubertBasis, SchubertBasis)
         coprod = coprod.ring.from_dict({k: v for k, v in coprod.items() if len(k[0][0]) <= n and len(k[1][0]) <= n})
-        accum_term = main_ring.zero
+        accum_term = TensorModule()
 
-        main_ring1 = main_ring.rings[0].rings[0]
-        main_ring2 = main_ring.rings[0].rings[1]
-        first_term = main_ring1.zero
-        second_term = main_ring2.zero
+        # main_ring1 = main_ring.rings[0].rings[0]
+        # main_ring2 = main_ring.rings[0].rings[1]
+        # first_term = main_ring1.zero
+        # second_term = main_ring2.zero
         zr_elem = zring(expand_seq(seq, z))
-        xr_elem = Sx(expand_seq(seq, x))
-        for rc_graph, coeff in rc_graph_module_term.items():
-            first_term += coeff * main_ring1.ext_multiply(NH(rc_graph.perm), zr_elem)
-            second_term += coeff * main_ring2.ext_multiply(xr_elem, NH(rc_graph.perm))
-
-        accum_term += main_ring.ext_multiply(main_ring.rings[0].ext_multiply(first_term,second_term),coprod)
-        result += accum_term
+        xr_elem = xring(expand_seq(seq, x))
+        module1 = TensorModule.ext_multiply(rc_graph_module_term, zr_elem)
+        module2 = TensorModule.ext_multiply(xr_elem, rc_graph_module_term)
+        result += TensorModule(TensorModule.ext_multiply(TensorModule.ext_multiply(module1, module2),coprod))
+        # accum_term += main_ring.ext_multiply(main_ring.rings[0].ext_multiply(first_term,second_term),coprod)
+        # result += accum_term
 
     Permutation.print_as_code = True
     result_dict = {}
     failed = False
     for key, value in result.items():
-        right_nil_perm = key[0][1][1]
-        left_nil_perm = key[0][0][0]
+        right_graph = key[0][1][1]
+        right_nil_perm = key[0][1][1].perm
+        left_graph = key[0][0][0]
+        left_nil_perm = key[0][0][0].perm
         right_schub_perm = key[0][1][0]
         coprod_perm_pair = key[1]
         left_schub_perm = key[0][0][1]
         #if right_nil_perm == right_schub_perm and left_nil_perm == right_nil_perm:
-        if right_nil_perm == right_schub_perm and left_nil_perm == right_schub_perm:
+        if right_nil_perm == right_schub_perm and left_graph == right_graph and left_nil_perm == right_schub_perm:
             # print(f"{left_nil_perm.trimcode=},{right_schub_perm.trimcode=},{left_schub_perm.trimcode=},{right_nil_perm.trimcode=},{coprod_perm_pair=} contributes {value}?")
             result_dict[coprod_perm_pair] = result_dict.get(coprod_perm_pair, yring.zero) + value * yring(left_schub_perm)
 
@@ -67,7 +70,7 @@ def main():
             continue
         testval = result_dict[coprod_key] - yring(left_coprod_perm) * yring(right_coprod_perm)
         if testval.expand() != S.Zero:
-            print(f"Failures for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)}: {[(perm2, key) for perm2, key in testval.items() if key != 0]}")
+            print(f"Failures for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)}: {testval=} {result_dict[coprod_key]=}")
             failed = True
         else:
             print(f"Success for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)}: Sx({left_coprod_perm.trimcode})*Sx({right_coprod_perm.trimcode})={result_dict[coprod_key]}")
