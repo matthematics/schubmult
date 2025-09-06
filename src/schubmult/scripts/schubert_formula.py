@@ -49,7 +49,7 @@ def main():
         right_schub_perm = key[0][1][0]
         coprod_perm_pair = key[1]
         left_schub_perm = key[0][0][1]
-        if right_nil_perm == right_schub_perm and left_graph == right_graph and left_nil_perm == right_schub_perm:
+        if right_nil_perm == right_schub_perm and left_graph == right_graph:
             result_dict[coprod_perm_pair] = result_dict.get(coprod_perm_pair, yring.zero) + value * yring(left_schub_perm)
 
     for coprod_key in result_dict:
