@@ -59,9 +59,9 @@ def main():
                     coeff = coeff0 * coeff00
                     if rc1 == rc2 and rc1_left == rc2_left and rc1_right == rc2_right:
                         #print(f'{rc1_left.perm.trimcode, rc1_right.perm.trimcode}, coeff={coeff}, val={val}, coeff1={coeff1}, coeff2={coeff2}, seq1={seq1}, seq2={seq2}')
-                        print(f"{schub_elem1=}, {schub_elem2=}")
-                        new_coeff = val * coeff# * schub_elem1.get((rc1_left.perm, len(rc1_left)), 0) * schub_elem2.get((rc1_right.perm, len(rc1_right)), 0)
-                        print(f"{new_coeff=}")
+                        # print(f"{schub_elem1=}, {schub_elem2=}")
+                        new_coeff = coeff * schub_elem1.get((rc1_left.perm, len(rc1_left)), 0) * schub_elem2.get((rc1_right.perm, len(rc1_right)), 0)
+                        #print(f"{new_coeff=}")
                         #addup += TensorModule.ext_multiply(TensorModule.ext_multiply(RCGraphModule({rc1_left: new_coeff}), RCGraphModule({rc1_right: 1})), 
                         #                                    TensorModule.ext_multiply(ASx(rc1_left.perm,len(rc1_left)), ASx(rc1_right.perm,len(rc1_right))))
                         result += TensorModule.ext_multiply(TensorModule.ext_multiply(ASx(rc1.perm,len(rc1)), RCGraphModule({rc2: 1})),
@@ -88,6 +88,7 @@ def main():
     # exit()
     # new_result = TensorModule()
     failed = False
+    perms = set()
     for (((perm, _), result_rc), ((rc1, rc2),((left_coprod_perm, _), (right_coprod_perm, _)))), value in result.items():
         product = Sx(left_coprod_perm) * Sx(right_coprod_perm)
         if result_rc.perm != uncode(result_rc.length_vector()) or rc1.perm != uncode(rc1.length_vector()) or rc2.perm != uncode(rc2.length_vector()):
@@ -106,6 +107,7 @@ def main():
             print(rc1)
             print(rc2)
             print(result_rc)
+            perms.add(result_rc.perm)
             #print(result_dict[coprod_key])
     #print(new_result)
     # exit()
@@ -143,8 +145,8 @@ def main():
     #         print(f"Success for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)}: Sx({left_coprod_perm.trimcode})*Sx({right_coprod_perm.trimcode})={result_dict[coprod_key]}")
 
     if not failed:
-        print("YEAH!!!")
-        print("YEAH!!!", file=sys.stderr)
+        print(f"YEAH!!! {len(perms)=}")
+        print(f"YEAH!!! {len(perms)=}", file=sys.stderr)
 
 
 if __name__ == "__main__":
