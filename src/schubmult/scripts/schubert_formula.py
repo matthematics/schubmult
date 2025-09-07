@@ -89,12 +89,16 @@ def main():
     # new_result = TensorModule()
     failed = False
     perms = set()
+    perm_pairs = set()
+    perm_pairs_total = set()
     for (((perm, _), result_rc), ((rc1, rc2),((left_coprod_perm, _), (right_coprod_perm, _)))), value in result.items():
-        product = Sx(left_coprod_perm) * Sx(right_coprod_perm)
+        # if any(len(permperm) > n for permperm, val in (Sx(left_coprod_perm) * Sx(right_coprod_perm)).items() if val != S.Zero):
+        #     continue
+        perm_pairs_total.add((left_coprod_perm, right_coprod_perm))
+        
         if result_rc.perm != uncode(result_rc.length_vector()) or rc1.perm != uncode(rc1.length_vector()) or rc2.perm != uncode(rc2.length_vector()):
             continue
-        if any(len(permperm) > n for permperm, val in (Sx(left_coprod_perm) * Sx(right_coprod_perm)).items() if val != S.Zero):
-            continue
+        product = Sx(left_coprod_perm) * Sx(right_coprod_perm)
         testval = value - product.get(result_rc.perm, 0)
         if testval != S.Zero:
             print(f"Failures for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)} {perm.trimcode}")
@@ -108,6 +112,12 @@ def main():
             print(rc2)
             print(result_rc)
             perms.add(result_rc.perm)
+            perm_pairs.add((left_coprod_perm, right_coprod_perm))
+
+    
+    for perm in perm_pairs_total:
+        if perm not in perm_pairs:
+            assert len(uncode([a+b for a,b in zip(perm[0].trimcode, perm[1].trimcode)])) > n, f"Failure for {perm}"
             #print(result_dict[coprod_key])
     #print(new_result)
     # exit()
@@ -145,8 +155,8 @@ def main():
     #         print(f"Success for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)}: Sx({left_coprod_perm.trimcode})*Sx({right_coprod_perm.trimcode})={result_dict[coprod_key]}")
 
     if not failed:
-        print(f"YEAH!!! {len(perms)=}")
-        print(f"YEAH!!! {len(perms)=}", file=sys.stderr)
+        print(f"YEAH!!! {len(perms)=} {len(perm_pairs)=} {len(perm_pairs_total)=}", file=sys.stderr)
+        print(f"YEAH!!! {len(perms)=} {len(perm_pairs)=} {len(perm_pairs_total)=}", file=sys.stderr)
 
 
 if __name__ == "__main__":
