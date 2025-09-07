@@ -1,7 +1,6 @@
 import sys
 from functools import cache
 
-from scipy.fftpack import dct
 from symengine import SympifyError
 
 import schubmult.schub_lib.schub_lib as schub_lib
@@ -281,7 +280,7 @@ class RCGraph(tuple):
 
 class RCGraphModule(dict):
 
-    
+
 
     def __mul__(self, other):
         if isinstance(other, RCGraphModule):
@@ -370,10 +369,11 @@ class RCGraphModule(dict):
             md += val * FA(*key) * md0
         return md
 
-    def __new__(cls, *args):
+    def __new__(cls, *args, length_limit=-1):
         obj = dict.__new__(cls)
         dct = dict(*args)
         obj.update({k: v for k, v in dct.items() if v != 0})
+        obj._length_limit = length_limit
         return obj
 
     def polyvalue(self, x, y=None):
