@@ -565,8 +565,8 @@ class DualRCGraphModule(RCGraphModule):
 
 class RCGraphTensor(tuple):
 
-    def polyvalue(self, x):
-        return self[0].polyvalue(x) * self[1].polyvalue(x)
+    def polyvalue(self, x, y=None):
+        return self[0].polyvalue(x,y) * self[1].polyvalue(x,y)
 
 
     def __new__(cls, graph1, graph2):
