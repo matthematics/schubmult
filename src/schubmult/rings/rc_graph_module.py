@@ -42,6 +42,12 @@ class RCGraph(tuple):
     #                 new_row = tuple(sorted([*self[0], j]))
     #                 #NOTDONE
 
+    def __matmul__(self, other):
+        return TensorModule({RCGraphTensor(self, other): 1})
+
+    def __rmul__(self, other):
+        return RCGraphModule({self: other})
+
     def as_nil_hecke(self, x, y=None):
         R = NilHeckeRing(x)
         return self.polyvalue(x, y) * R(self.perm)
@@ -94,9 +100,12 @@ class RCGraph(tuple):
     @cache
     def all_rc_graphs(cls, perm, length=-1):
         if perm.inv == 0:
-            return {RCGraph(())}
+            return {RCGraph([()]*length if length >= 0 else [()])}
         if len(perm.trimcode) == 1:
-            return {RCGraph((tuple(range(perm.code[0], 0, -1)),))}
+            nrc = RCGraph((tuple(range(perm.code[0], 0, -1)),))
+            if len(nrc) < length:
+                nrc = RCGraph((*nrc,*tuple([()]*(length - len(nrc)))))
+            return {nrc}
         ret = set()
         pm = perm
         L = schub_lib.pull_out_var(1, pm)
@@ -265,6 +274,10 @@ class RCGraph(tuple):
             lines2 += [" "*(ml - len(line)) + line]
         return lines2
 
+    @property
+    def is_principal(self):
+        return self.perm == uncode(self.length_vector())
+    
     def __str__(self):
         return "\n".join(self.as_str_lines())
 
@@ -280,6 +293,8 @@ class RCGraph(tuple):
 
 class RCGraphModule(dict):
 
+    def __matmul__(self, other):
+        return TensorModule.ext_multiply(self, other)
 
 
     def __mul__(self, other):
