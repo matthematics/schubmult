@@ -122,53 +122,104 @@ def main():
     result_dict = {}
     more_addup = TensorModule()
     aseqs = artin_sequences(n-1)
-    seq_perms = {}
-    new_coeff = {}
-        
+    upmod = TensorModule()
     for seq in aseqs:
-        seq_perms[seq] = set()
-        the_elem = fa_elem_rc(seq, n)
-
-        
-        for ((perm, _), rc), stink in the_elem.items():
-            result_dict[perm] = result_dict.get(perm, RCGraphModule()) + stink * rc
-            #the_coeff = full_coeff(rc)
-            the_coeff = full_coeff(rc) * stink
-            new_coeff[(perm, seq)] = new_coeff.get((perm,seq), 0) + the_coeff
-        for (perm, seq), cf in new_coeff.items():
-            if cf != 0:
-                seq_perms[seq].add(perm)
-
-    assert all(v >= 0 for v in new_coeff.values())
-
-    for seq in aseqs:
+                # left_result = TensorModule()
+            #     addup = TensorModule()
+                #the_elem = fa_elem_rc(seq, n)
         coprod = FA(*seq).coproduct()
-        for perm in seq_perms[seq]:
-            coeff = new_coeff.get((perm,seq),0)
-            for (seq1, seq2), val in coprod.items():
-                for perm1 in seq_perms[seq1]:
-                    coeff1 = new_coeff.get((perm1,seq1),0)
-                    for perm2 in seq_perms[seq2]:
-                        coeff2 = new_coeff.get((perm2,seq2),0)
-                        more_addup += val * coeff * coeff1 * coeff2 * TensorModule.ext_multiply(Sx(perm),TensorModule.ext_multiply(Sx(perm1), Sx(perm2)))
-
-                            # more_addup += new_coeff * TensorModule.ext_multiply(RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(rc.perm, n-1),1)),
-                            #                                                     TensorModule.ext_multiply(RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(rc1.perm, n-1),1)), 
-                            #                                                                             RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(rc2.perm, n-1),1))))
-            #more_addup += stink * coeff * val * TensorModule.ext_multiply(RCGraphModule({rc: 1}),TensorModule.ext_multiply(mod1, mod2))
-
+        for (seq1, seq2), coeff in coprod.items():
+            #upmod += TensorModule.ext_multiply({seq: coeff},TensorModule.ext_multiply(FA(*seq1).change_basis(SchubertBasis),FA(*seq2).change_basis(SchubertBasis)))
+            upmod += coeff * TensorModule.ext_multiply(fa_elem_rc(seq, n), TensorModule.ext_multiply(fa_elem_rc(seq1, n), fa_elem_rc(seq2, n)))
     
+    fiddlemod = TensorModule()
 
-    more_addup2 = {}
-    more_addup3 = {}
-    #for (rc, (((perm1, _), rc1), ((perm2, _), rc2))), coeff in more_addup.items():
-    for (perm, (perm1,perm2)), coeff in more_addup.items():
-        #more_addup2[(rc1.perm, rc2.perm)] = more_addup2.get((rc1.perm, rc2.perm), RCGraphModule()) + coeff * rc
-        #more_addup3[perm] = more_addup3.get(perm, 0) + coeff * (Sx([]).ring@Sx([]).ring)((perm1, perm2))
+    for (((perm, _), rc), (((perm1, _), rc1), ((perm2, _), rc2))), coeff in upmod.items():
+        # product = Sx(perm1) * Sx(perm2)
+        # if any(len(permperm)>n for permperm in product.keys()):
+        #     continue
+        # result_dict[(perm1, perm2)] = result_dict.get((perm1, perm2), RCGraphModule()) + coeff * rc
+        fiddlemod += coeff * TensorModule.ext_multiply(TensorModule.ext_multiply(Sx(perm),Sx(rc.polyvalue(x))),
+                                                       TensorModule.ext_multiply(TensorModule.ext_multiply(Sx(perm1), Sx(rc1.polyvalue(x))),
+                                                                                 TensorModule.ext_multiply(Sx(perm2), Sx(rc2.polyvalue(x)))))
+    
+        #assert product.get(perm, 0) == coeff, f"{coeff=} {perm1.trimcode=} {perm2.trimcode=} {perm.trimcode=} {product=}"
+    
+    
+    for ((perm0, perm00), ((perm1, perm11), (perm2, perm22))), coeff in fiddlemod.items():
+        if perm0 != perm00:
+            continue
+        if perm1 != perm11 or perm2 != perm22:
+            continue
         product = Sx(perm1) * Sx(perm2)
-        assert product.get(perm, 0) == coeff, f"Failure for {perm.trimcode}: {product.get(perm,0)} != {coeff}"
-        print(f"{perm.trimcode}: ({perm1.trimcode},{perm2.trimcode}) -> {coeff} Success")
+        if any(len(permperm)>n for permperm in product.keys()):
+            continue
+        assert product.get(perm0, 0) == coeff, f"{perm0.trimcode=} {perm00.trimcode=} {perm1.trimcode=} {perm2.trimcode=} {product=} {coeff=}"
+    # for (perm1, perm2), mod in result_dict.items():
+    #     product = Sx(perm1) * Sx(perm2)
+    #     print(mod)
+    #     assert product == Sx(mod.polyvalue(x))
 
+    exit()
+
+    cprod = {}
+
+    siphon_off = {}
+    tring = ASx([]).ring @ ASx([]).ring
+    da_module = TensorModule()
+    ring = (ASx([]).ring @ Sx([]).ring) @ (ASx([]).ring @ ASx([]).ring)
+    tester_module = ring.zero
+    for ((seq1, seq2), ((perm1, _), (perm2, _))), coeff in upmod.items():
+        seq = vector_sum(seq1, seq2)
+        elem = TensorModule.ext_multiply(FA(*seq).change_basis(SchubertBasis), Sx(expand_seq(seq, x)))
+        # for rc, v in elem.items():
+        #     siphon_off[(perm1, perm2)] = siphon_off.get((perm1, perm2), RCGraphModule()) + v * coeff * rc
+        #da_module += coeff * TensorModule.ext_multiply(elem, tring(((perm1, n-1), (perm2, n-1))))
+        da_module += coeff * TensorModule.ext_multiply(TensorModule.ext_multiply(elem,{(seq1, seq2): 1}), tring(((perm1, n-1), (perm2, n-1))))
+        # tester_module += coeff * ring.ext_multiply(ring.rings[0].ext_multiply(FA(*seq1).change_basis(SchubertBasis),Sx(expand_seq(seq1,x))),
+        #                                           ring.rings[1].ext_multiply(ASx(perm1,n-1), ASx(perm2,n-1)))
+
+    # for (((perm0, _), perm00), ((perm1, _), (perm2, _))), coeff in tester_module.items():
+    #     if coeff == 0:
+    #         continue
+    #     try:
+    #         assert perm0 == perm00
+    #     except AssertionError:
+    #         continue
+    #     product = Sx(perm1) * Sx(perm2)
+    #     if any(len(permperm)>n for permperm in (product).keys()):
+    #         continue
+    #     assert product.get(perm00, 0) == coeff, f"Failure for {perm0.trimcode,perm1.trimcode,perm2.trimcode}: {product} at {perm00.trimcode} != {coeff}"
+
+    #for (((perm, _), rc), ((perm1, _), (perm2, _))), coeff in da_module.items():
+    for ((((perm, _), perm0),(seq1, seq2)), ((perm1, _), (perm2, _))), coeff in da_module.items():
+        if coeff == 0:
+            continue
+        #assert perm == perm0, f"{perm.trimcode} {perm0.trimcode} {perm1.trimcode} {perm2.trimcode} {coeff}"
+        #siphon_off[(perm1, perm2)] = siphon_off.get((perm1, perm2), RCGraphModule()) + coeff * rc
+        siphon_off[(perm1, perm2)] = siphon_off.get((perm1, perm2), 0) + coeff * Sx(perm0)
+    #for (rc, (((perm1, _), rc1), ((perm2, _), rc2))), coeff in more_addup.items():
+    # for perm, ring_elem in siphon_off.items():
+    #     coproduct = ASx(perm, n-1).coproduct()
+    #     #print(f"{perm.trimcode}: {ring_elem} vs {product}")
+    #     assert all(v == 0 for v in (ring_elem - coproduct).values()), f"Failure for {perm.trimcode}: {ring_elem} != {coproduct}"
+    #     print(f"Success for {perm.trimcode}: Sx({perm.trimcode})*Sx({perm.trimcode})")
+    #     print(perm)
+    # for (((perm, _), rc), ((perm1, _),(perm2, _))), coeff in upmod.items():
+    #     #more_addup2[(rc1.perm, rc2.perm)] = more_addup2.get((rc1.perm, rc2.perm), RCGraphModule()) + coeff * rc
+    #     #more_addup3[perm] = more_addup3.get(perm, 0) + coeff * (Sx([]).ring@Sx([]).ring)((perm1, perm2))
+    #     assert rc.perm == perm
+    #     cprod[(perm1, perm2)] = cprod.get((perm1, perm2), RCGraphModule()) + coeff * rc
+    #     product = Sx(perm1) * Sx(perm2)
+    #     #assert product.get(perm, 0) == coeff, f"Failure for {perm.trimcode}: {product.get(perm,0)} != {coeff}"
+    #     #print(f"{perm.trimcode}: ({perm1.trimcode},{perm2.trimcode}) -> {coeff} Success")
+
+    for (perm1, perm2), coeff in siphon_off.items():
+        product = Sx(perm1) * Sx(perm2)
+        if any(len(permperm)>n for permperm in (product).keys()):
+            continue
+        print(coeff)
+        assert product == coeff, f"Failure for {perm1.trimcode,perm2.trimcode,perm.trimcode}: {product}"
     # for (perm1, perm2), mod in more_addup2.items():
     #     product = Sx(perm1) * Sx(perm2)
     #     if any(len(permperm)>n for permperm in (product).keys()):
