@@ -23,20 +23,18 @@ def vector_sum(v1, v2):
 #     #return TensorModule.ext_multiply(RCGraphModule({rc: 1}), ag(*rc.length_vector()))
 #     return TensorModule.ext_multiply(RCGraphModule({rc: 1}), RCGraphModule({rc: coeff}))
 
-def rc_elem_rc(rc, n):
+def rc_elem_rc(seq, n):
+    graphs = FA(*seq) * RCGraphModule({RCGraph(): 1})
     #ag = PolynomialAlgebra(MonomialBasis(x, len(rc.perm)))
-    if len(rc.perm) > n:
-        return TensorModule()
-    left_mod = RCGraphModule({RCGraph(): 1})
-    left_mod = ASx(rc.perm, len(rc)) * left_mod
-    left_mod = RCGraphModule({r: v for r, v in left_mod.items() if len(r.perm) <= n})
-
-    # for (rc1, rc2), val in mod.items():
-    #     if len(rc1.perm) > n or len(rc2.perm) > n:
-    #         continue
-    #     coeff = ASx(rc1.perm, len(rc1)).change_basis(WordBasis).get(rc2.length_vector(), 0)
-    #     ret_mod += TensorModule.ext_multiply(RCGraphModule({rc1: val}), RCGraphModule({rc2: coeff}))
-    return TensorModule.ext_multiply(left_mod, RCGraphModule({rc: 1}))
+    addup = TensorModule()
+    for rc, coeff in graphs.items():
+        if len(rc.perm) > n:
+            return TensorModule()
+        left_mod = RCGraphModule({RCGraph(): 1})
+        left_mod = ASx(rc.perm, len(rc))# * left_mod
+        #left_mod = RCGraphModule({r: v for r, v in left_mod.items() if len(r.perm) <= n})
+        addup += TensorModule.ext_multiply(left_mod, RCGraphModule({rc: left_mod.change_basis(WordBasis).get(seq, 0) * coeff}))
+    return addup
 
 def seq_elem_rc(seq, n):
     #ag = PolynomialAlgebra(MonomialBasis(x, len(rc.perm)))
@@ -74,6 +72,23 @@ def fa_elem_rc(seq, n):
         if len(rc.perm) > n:
             continue
         ret_mod += TensorModule.ext_multiply(ASx(rc.perm, len(rc)),RCGraphModule({rc: coeff}))
+
+    # for (rc1, rc2), val in mod.items():
+    #     if len(rc1.perm) > n or len(rc2.perm) > n:
+    #         continue
+    #     coeff = ASx(rc1.perm, len(rc1)).change_basis(WordBasis).get(rc2.length_vector(), 0)
+    #     ret_mod += TensorModule.ext_multiply(RCGraphModule({rc1: val}), RCGraphModule({rc2: coeff}))
+    return ret_mod
+
+def farp_elem_rc(seq, n):
+    #ag = PolynomialAlgebra(MonomialBasis(x, len(rc.perm)))
+    mod1 = FA(*seq) * RCGraphModule({RCGraph(): 1})
+    
+    ret_mod = TensorModule()
+    for rc, coeff in mod1.items():
+        if len(rc.perm) > n:
+            continue
+        ret_mod += TensorModule.ext_multiply(ASx(rc.perm, len(rc)),RCGraphModule({rc: coeff*perm_coeff(rc)}))
 
     # for (rc1, rc2), val in mod.items():
     #     if len(rc1.perm) > n or len(rc2.perm) > n:
@@ -130,7 +145,9 @@ def main():
         coprod = FA(*seq).coproduct()
         for (seq1, seq2), coeff in coprod.items():
             #upmod += TensorModule.ext_multiply({seq: coeff},TensorModule.ext_multiply(FA(*seq1).change_basis(SchubertBasis),FA(*seq2).change_basis(SchubertBasis)))
-            upmod += coeff * TensorModule.ext_multiply(fa_elem_rc(seq, n), TensorModule.ext_multiply(fa_elem_rc(seq1, n), fa_elem_rc(seq2, n)))
+            # upmod += coeff * TensorModule.ext_multiply(fa_elem_rc(seq, n), TensorModule.ext_multiply(fa_elem_rc(seq1, n), fa_elem_rc(seq2, n)))
+            #upmod += coeff * TensorModule.ext_multiply(farp_elem_rc(seq, n), TensorModule.ext_multiply(farp_elem_rc(seq1, n), farp_elem_rc(seq2, n)))
+            upmod += coeff * TensorModule.ext_multiply(rc_elem_rc(seq, n), TensorModule.ext_multiply(rc_elem_rc(seq1, n), rc_elem_rc(seq2, n)))
     
     fiddlemod = TensorModule()
 
@@ -138,10 +155,14 @@ def main():
         # product = Sx(perm1) * Sx(perm2)
         # if any(len(permperm)>n for permperm in product.keys()):
         #     continue
-        # result_dict[(perm1, perm2)] = result_dict.get((perm1, perm2), RCGraphModule()) + coeff * rc
-        fiddlemod += coeff * TensorModule.ext_multiply(TensorModule.ext_multiply(Sx(perm),Sx(rc.polyvalue(x))),
-                                                       TensorModule.ext_multiply(TensorModule.ext_multiply(Sx(perm1), Sx(rc1.polyvalue(x))),
-                                                                                 TensorModule.ext_multiply(Sx(perm2), Sx(rc2.polyvalue(x)))))
+        # # result_dict[(perm1, perm2)] = result_dict.get((perm1, perm2), RCGraphModule()) + coeff * rc
+        # fiddlemod += coeff * TensorModule.ext_multiply(TensorModule.ext_multiply(Sx(perm),Sx(rc.polyvalue(x))),
+        #                                                TensorModule.ext_multiply(TensorModule.ext_multiply(Sx(perm1), Sx(rc1.polyvalue(x))),
+        #                                                                          TensorModule.ext_multiply(Sx(perm2), Sx(rc2.polyvalue(x)))))
+        
+        fiddlemod += coeff * TensorModule.ext_multiply(TensorModule.ext_multiply(Sx(perm),Sx(rc.perm)),
+                                                       TensorModule.ext_multiply(TensorModule.ext_multiply(Sx(perm1), Sx(rc1.perm)),
+                                                                                 TensorModule.ext_multiply(Sx(perm2), Sx(rc2.perm))))
     
         #assert product.get(perm, 0) == coeff, f"{coeff=} {perm1.trimcode=} {perm2.trimcode=} {perm.trimcode=} {product=}"
     
