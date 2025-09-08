@@ -11,11 +11,11 @@ from schubmult.utils.perm_utils import artin_sequences
 def vector_sum(v1, v2):
     return tuple([a + b for a, b in zip(v1, v2)])
 
-def fa_elem_rc(rc):
-    #ag = PolynomialAlgebra(MonomialBasis(x, len(rc.perm)))
-    coeff = ASx(rc.perm, len(rc)).change_basis(WordBasis).get(rc.length_vector(), 0)
-    #return TensorModule.ext_multiply(RCGraphModule({rc: 1}), ag(*rc.length_vector()))
-    return TensorModule.ext_multiply(FA(*rc.length_vector()).change_basis(SchubertBasis), RCGraphModule({rc: coeff}))
+# def fa_elem_rc(rc):
+#     #ag = PolynomialAlgebra(MonomialBasis(x, len(rc.perm)))
+#     coeff = ASx(rc.perm, len(rc)).change_basis(WordBasis).get(rc.length_vector(), 0)
+#     #return TensorModule.ext_multiply(RCGraphModule({rc: 1}), ag(*rc.length_vector()))
+#     return TensorModule.ext_multiply(FA(*rc.length_vector()).change_basis(SchubertBasis), RCGraphModule({rc: coeff}))
 
 # def rc_elem_rc(rc):
 #     #ag = PolynomialAlgebra(MonomialBasis(x, len(rc.perm)))
@@ -55,6 +55,51 @@ def seq_elem_rc(seq, n):
     #     ret_mod += TensorModule.ext_multiply(RCGraphModule({rc1: val}), RCGraphModule({rc2: coeff}))
     return ret_mod
 
+def len_coeff(rc):
+    return FA(*rc.length_vector()).change_basis(SchubertBasis).get((rc.perm, len(rc)), 0)
+
+
+def perm_coeff(rc):
+    return ASx(rc.perm, len(rc)).change_basis(WordBasis).get(rc.length_vector(), 0)
+
+def full_coeff(rc):
+    return len_coeff(rc) * perm_coeff(rc)
+
+def fa_elem_rc(seq, n):
+    #ag = PolynomialAlgebra(MonomialBasis(x, len(rc.perm)))
+    mod1 = FA(*seq) * RCGraphModule({RCGraph(): 1})
+    
+    ret_mod = TensorModule()
+    for rc, coeff in mod1.items():
+        if len(rc.perm) > n:
+            continue
+        ret_mod += TensorModule.ext_multiply(ASx(rc.perm, len(rc)),RCGraphModule({rc: coeff}))
+
+    # for (rc1, rc2), val in mod.items():
+    #     if len(rc1.perm) > n or len(rc2.perm) > n:
+    #         continue
+    #     coeff = ASx(rc1.perm, len(rc1)).change_basis(WordBasis).get(rc2.length_vector(), 0)
+    #     ret_mod += TensorModule.ext_multiply(RCGraphModule({rc1: val}), RCGraphModule({rc2: coeff}))
+    return ret_mod
+
+def schub_elem_rc(seq, n):
+    #ag = PolynomialAlgebra(MonomialBasis(x, len(rc.perm)))
+    mod1 = FA(*seq) * RCGraphModule({RCGraph(): 1})
+    
+    ret_mod = TensorModule()
+    for rc, coeff in mod1.items():
+        if len(rc.perm) > n:
+            continue
+        #ret_mod += TensorModule.ext_multiply(ASx(rc.perm, len(rc)),Sx(RCGraphModule({rc: coeff}).polyvalue(x)))
+        ret_mod += coeff * TensorModule.ext_multiply(ASx(rc.perm, len(rc)),Sx(expand_seq(rc.length_vector(),x)))
+
+    # for (rc1, rc2), val in mod.items():
+    #     if len(rc1.perm) > n or len(rc2.perm) > n:
+    #         continue
+    #     coeff = ASx(rc1.perm, len(rc1)).change_basis(WordBasis).get(rc2.length_vector(), 0)
+    #     ret_mod += TensorModule.ext_multiply(RCGraphModule({rc1: val}), RCGraphModule({rc2: coeff}))
+    return ret_mod
+
 
 def main():
     n = int(sys.argv[1])
@@ -66,264 +111,339 @@ def main():
     zring = PolynomialAlgebra(MonomialBasis(z,n-1))
 
     unit_rc_module = RCGraphModule({RCGraph(): 1})
-    result = TensorModule()
+    # result = TensorModule()
+    result = 0
     degree = (n*(n-1))//2
     # 100% positive!
     #ASx([]).ring @ Sx([]).ring
     test_addup = TensorModule()
     if n == 3:
         assert (0,1) in seqs
-    for deg in range(degree + 1):
-        for seq in all_fa_degree(deg, n-1):
-            # left_result = TensorModule()
-        #     addup = TensorModule()
-#                module1 = FA(*seq) * unit_rc_module
-            #     #rc_graph_module_term = RCGraphModule({rc: v for rc, v in rc_graph_module_term.items() if len(rc.perm) <= n})
-                #tmodule = TensorModule.ext_multiply(rc_graph_module_term, rc_graph_module_term)
-            #         #if rc1 == rc2:
-            # #                addup += TensorModule.ext_multiply(ASx(rc1.perm,len(rc1)), RCGraphModule({rc2: coeff}))
-
-                coprod = FA(*seq).coproduct()
-            #     #test_addup += addup
-            #     #left_result = TensorModule.ext_multiply(addup, FreeAlgebraBasis.change_tensor_basis(coprod, SchubertBasis, SchubertBasis))
-            #     left_result = addup
-            #     # # zr_elem = zring(seq)
-            #     # # xr_elem = xring(seq)
-            #     # # module1 = TensorModule.ext_multiply(rc_graph_module_term, zr_elem)
-            #     # # module2 = TensorModule.ext_multiply(xr_elem, rc_graph_module_term)
-            #     # module1 = TensorModule.ext_multiply(rc_graph_module_term, rc_graph_module_term)
-            #     # # module2 = TensorModule.ext_multiply(rc_graph_module_term, rc_graph_module_term)
-            #     right_result = TensorModule()
-            #     for (rc1, rc2), coeff00 in tmodule.items():
-            #         for (seq1, seq2), val in coprod.items():
-                tmodule1 = seq_elem_rc(seq, n)
-                for (seq1, seq2), val in coprod.items():
-                    tmodule2 = seq_elem_rc(seq1, n)
-                    tmodule3 = seq_elem_rc(seq2, n)
-
-                    result += val * TensorModule.ext_multiply(tmodule1, TensorModule.ext_multiply(tmodule2, tmodule3))
-                #             schub_elem1 = FA(*seq1).change_basis(SchubertBasis)
-                #             schub_elem2 = FA(*seq2).change_basis(SchubertBasis)
-                #             #module2 = RCGraphModule({rc: v for rc, v in module2.items() if len(rc.perm) <= n})
-                #             #module3 = RCGraphModule({rc: v for rc, v in module3.items() if len(rc.perm) <= n})
-                    #tmodule2 = TensorModule.ext_multiply(module2, module2)
-                    #tmodule3 = TensorModule.ext_multiply(module3, module3)
-
-                    # for rc1_left, coeff1 in module1.items():
-                    #     for rc2_left , coeff2 in module2.items():
-                    #         for rc3_left,  coeff3 in module3.items():
-                    #             new_coeff = coeff2 * coeff3 * coeff1*val
-                    #                 #result += new_coeff * TensorModule.ext_multiply(ASx(rc1_left.perm, len(rc1_left)),TensorModule({RCGraphTensor(rc2_left, rc3_left): 1}))
-                    #             result += new_coeff * (fa_elem_rc(rc1_left) @ (fa_elem_rc(rc2_left) @ fa_elem_rc(rc3_left)))
-            #modules = {}
-            #print(test_addup)
-            # for ((perm, _), rc), coeff in test_addup.items():
-            #     modules[perm] = modules.get(perm, RCGraphModule()) + RCGraphModule({rc: coeff})
-
-            # for perm in modules:
-            #     print(perm.trimcode)
-            #     print(modules[perm])
-            #exit()
-            #             full_tmodule = TensorModule.ext_multiply(tmodule2,tmodule3)
-            #             addup = TensorModule()
-            #             for ((rc1_left, rc2_left),(rc1_right,rc2_right)), coeff0 in full_tmodule.items():
-            #                 coeff = coeff0 * coeff00
-            #                 if rc1 == rc2 and rc1_left == rc2_left and rc1_right == rc2_right:
-            #                     #print(f'{rc1_left.perm.trimcode, rc1_right.perm.trimcode}, coeff={coeff}, val={val}, coeff1={coeff1}, coeff2={coeff2}, seq1={seq1}, seq2={seq2}')
-            #                     # print(f"{schub_elem1=}, {schub_elem2=}")
-            #                     new_coeff = coeff * schub_elem1.get((rc1_left.perm, len(rc1_left)), 0) * schub_elem2.get((rc1_right.perm, len(rc1_right)), 0)
-            #                     #print(f"{new_coeff=}")
-            #                     #addup += TensorModule.ext_multiply(TensorModule.ext_multiply(RCGraphModule({rc1_left: new_coeff}), RCGraphModule({rc1_right: 1})), 
-            #                     #                                    TensorModule.ext_multiply(ASx(rc1_left.perm,len(rc1_left)), ASx(rc1_right.perm,len(rc1_right))))
-            #                     result += TensorModule.ext_multiply(TensorModule.ext_multiply(ASx(rc1.perm,len(rc1)), RCGraphModule({rc2: new_coeff})),
-            #                                                         TensorModule.ext_multiply(TensorModule.ext_multiply(RCGraphModule({rc1_left: coeff}), RCGraphModule({rc1_right: 1})),
-            #                                                         TensorModule.ext_multiply(ASx(rc1_left.perm,len(rc1_left)), ASx(rc1_right.perm,len(rc1_right)))))
-                        #right_result += addup
-                #                                                                                             TensorModule.ext_multiply(module3,module3)),
-                #                            FreeAlgebraBasis.change_tensor_basis((FA @ FA)((seq1,seq2)),SchubertBasis,SchubertBasis)))
-                #result += TensorModule.ext_multiply(left_result,right_result)
-            # buildup_mod = {}
-            # for ((perm, _), rc), coeff in test_addup.items():
-            #     assert Sx(rc.polyvalue(x)) == Sx(perm), f"Failure for {perm.trimcode}"
-            #     assert all(rc.perm == perm for rc in test_addup[rc].keys()), f"Failure for {perm.trimcode}"
-            # left_graph == right_graph
-            #result2 = result
-
-            # result_dict = {}
-            # for ((perm, _),rc), coeff in addup.items():
-            #     result_dict[perm] = result_dict.get(perm, RCGraphModule()) + RCGraphModule({rc: coeff})
-
-            # for perm in result_dict:
-            #     assert Sx(result_dict[perm].polyvalue(x)) == Sx(perm), f"Failure for {perm.trimcode}"
-            #     assert all(rc.perm == perm for rc in result_dict[perm].keys()), f"Failure for {perm.trimcode}"
-            # exit()
-            # new_result = TensorModule()
-    failed = False
-    perms = set()
-    perm_pairs = set()
-    perm_pairs_total = set()
-    rc_addups_left = {}
-    rc_addups_right = {}
-    
-    sum1 = {}
-    sum2 = {}
-    full_addups = {}
-    # saw = False
-    addups = {}
-    
-    #for (((perm, _), seq), (((left_coprod_perm, _), seq1), ((right_coprod_perm, _), seq2))), value in result.items():
-    #for (((perm, _), rc_result), (((left_coprod_perm, _), rc1), ((right_coprod_perm, _), rc2))), value in result.items():
-    for ((rc_result_left, rc_result_right), ((rc1_left, rc1_right), (rc2_left, rc2_right))), value in result.items():
-        left_coprod_perm, right_coprod_perm = rc1_left.perm, rc2_right.perm
-
-        if any(len(permperm) > n for permperm, val in (Sx(left_coprod_perm) * Sx(right_coprod_perm)).items() if val != S.Zero):
-            continue
-        perm_pairs_total.add((left_coprod_perm, right_coprod_perm))
-        # left_coprod_perm, right_coprod_perm = rc1.perm, rc2.perm
-        # if len(perm) > n or len(left_coprod_perm) > n or len(right_coprod_perm) > n:
-        #     continue
+    result_dict = {}
+    more_addup = TensorModule()
+    aseqs = artin_sequences(n-1)
+    seq_perms = {}
+    new_coeff = {}
         
-        #if rc_result_left.perm != rc_result_right.perm or rc1_left.perm != rc1_right.perm or rc2_left.perm != rc2_right.perm or not rc_result_left.is_principal or not rc1_right.is_principal or not rc2_right.is_principal:
-        assert rc_result_left.perm == rc_result_right.perm
-        assert rc1_left.perm == rc1_right.perm
-        assert rc2_left.perm == rc2_right.perm
-        if not rc_result_left.is_principal or  \
-            not rc1_right.is_principal or \
-            not rc2_right.is_principal or \
-            vector_sum(rc1_right.length_vector(),rc2_right.length_vector()) != rc_result_right.length_vector():
-            continue
-
-        product = Sx(rc1_left.perm)*Sx(rc2_right.perm)
+    for seq in aseqs:
+        seq_perms[seq] = set()
+        the_elem = fa_elem_rc(seq, n)
 
         
+        for ((perm, _), rc), stink in the_elem.items():
+            result_dict[perm] = result_dict.get(perm, RCGraphModule()) + stink * rc
+            #the_coeff = full_coeff(rc)
+            the_coeff = full_coeff(rc) * stink
+            new_coeff[(perm, seq)] = new_coeff.get((perm,seq), 0) + the_coeff
+        for (perm, seq), cf in new_coeff.items():
+            if cf != 0:
+                seq_perms[seq].add(perm)
 
-        # coeff = 1
-        # # coeff = ASx(perm, len(rc_result)).change_basis(WordBasis).get(rc_result.length_vector(), 0) * ASx(left_coprod_perm, len(rc1)).change_basis(WordBasis).get(rc1.length_vector(), 0) * ASx(right_coprod_perm, len(rc2)).change_basis(WordBasis).get(rc2.length_vector(), 0)
-        # # if coeff == 0:
-        # #     continue
-        # perm_pairs_total.add((left_coprod_perm, right_coprod_perm))
-        # #addups[(left_coprod_perm, right_coprod_perm)] = addups.get((left_coprod_perm, right_coprod_perm), RCGraphModule()) + RCGraphModule({result_rc: value})
-        # if rc1.perm != left_coprod_perm or rc2.perm != right_coprod_perm or rc_result.perm != perm:
-        #     continue
-        product = Sx(left_coprod_perm) * Sx(right_coprod_perm)
-        perm = rc_result_left.perm
-        #RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(result_rc.perm, n-1), value))
-        #if perm != uncode(seq) or left_coprod_perm != uncode(seq1) or right_coprod_perm != uncode(seq2):
-        # if perm != rc_result.perm or left_coprod_perm != rc1.perm or right_coprod_perm != rc2.perm:
-        #     continue
-        # perm = rc_result.perm
-        testval = value - product.get(perm, 0)
-        if testval != S.Zero:
-            print(f"Failures for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)} {perm.trimcode} {value=} {product.get(perm, 0)=} {testval=}")
-            print(perm)
-            failed = True
-        else:
-            print(f"Success for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)}: Sx({left_coprod_perm.trimcode})*Sx({right_coprod_perm.trimcode})")
-            print(perm)
-            perms.add(perm)
-            perm_pairs.add((left_coprod_perm, right_coprod_perm))
-        # #assert perm == uncode(vector_sum(rc1.length_vector(), rc2.length_vector())), f"Failure for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)}"
-        # #addups[(rc1, rc2)] = addups.get((rc1, rc2), 0) + value * Sx(perm)
-        # #addups[(rc1, rc2)] = addups.get((rc1, rc2), RCGraphModule()) + value * rc_result
-        # addups[(left_coprod_perm, right_coprod_perm)] = addups.get((left_coprod_perm, right_coprod_perm), RCGraphModule()) + coeff * value * rc_result
+    assert all(v >= 0 for v in new_coeff.values())
 
-    # failed = {}
+    for seq in aseqs:
+        coprod = FA(*seq).coproduct()
+        for perm in seq_perms[seq]:
+            coeff = new_coeff.get((perm,seq),0)
+            for (seq1, seq2), val in coprod.items():
+                for perm1 in seq_perms[seq1]:
+                    coeff1 = new_coeff.get((perm1,seq1),0)
+                    for perm2 in seq_perms[seq2]:
+                        coeff2 = new_coeff.get((perm2,seq2),0)
+                        more_addup += val * coeff * coeff1 * coeff2 * TensorModule.ext_multiply(Sx(perm),TensorModule.ext_multiply(Sx(perm1), Sx(perm2)))
 
-    # for (perm1, perm2), val in addups.items():
-    #     #perm1, perm2 = rc1.perm, rc2.perm
+                            # more_addup += new_coeff * TensorModule.ext_multiply(RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(rc.perm, n-1),1)),
+                            #                                                     TensorModule.ext_multiply(RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(rc1.perm, n-1),1)), 
+                            #                                                                             RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(rc2.perm, n-1),1))))
+            #more_addup += stink * coeff * val * TensorModule.ext_multiply(RCGraphModule({rc: 1}),TensorModule.ext_multiply(mod1, mod2))
+
+    
+
+    more_addup2 = {}
+    more_addup3 = {}
+    #for (rc, (((perm1, _), rc1), ((perm2, _), rc2))), coeff in more_addup.items():
+    for (perm, (perm1,perm2)), coeff in more_addup.items():
+        #more_addup2[(rc1.perm, rc2.perm)] = more_addup2.get((rc1.perm, rc2.perm), RCGraphModule()) + coeff * rc
+        #more_addup3[perm] = more_addup3.get(perm, 0) + coeff * (Sx([]).ring@Sx([]).ring)((perm1, perm2))
+        product = Sx(perm1) * Sx(perm2)
+        assert product.get(perm, 0) == coeff, f"Failure for {perm.trimcode}: {product.get(perm,0)} != {coeff}"
+        print(f"{perm.trimcode}: ({perm1.trimcode},{perm2.trimcode}) -> {coeff} Success")
+
+    # for (perm1, perm2), mod in more_addup2.items():
     #     product = Sx(perm1) * Sx(perm2)
-    #     print("perm1, perm2 =", perm1.trimcode, perm2.trimcode)
-    #     print(val)
-    #     valu = Sx(val.polyvalue(x))
-    #     try:
-    #         assert all(v == 0 for v in (product - valu).values()), f"Failure for {(perm1.trimcode, perm2.trimcode)}: {val} != {Sx(perm1)*Sx(perm2)}"
-    #         print(f"Success for {(perm1.trimcode, perm2.trimcode)}: Sx({perm1.trimcode})*Sx({perm2.trimcode})")
-    #         failed[(perm1, perm2)] = False
-    #     except Exception as e:
-    #         print(f"Failure for {(perm1.trimcode, perm2.trimcode)}: {valu} != {Sx(perm1)*Sx(perm2)}")
-    #         if (perm1, perm2) not in failed:
-    #             failed[(perm1, perm2)] = True
-    #     assert expand(rc_addups_left[key].polyvalue(x) -  rc_addups_right[key].polyvalue(x)) == S.Zero, f"Failure for {key}: {rc_addups_left[key].polyvalue(x)} != {rc_addups_right[key]}"
-    #     print(f"{key[0].perm.trimcode,key[1].perm.trimcode,key[2].perm.trimcode}")
-    #     print(rc_addups_left[key])
-    #     print(rc_addups_right[key])
-    #     print(full_addups[key])
-    #     side_addups[(key[0].perm,key[1].perm)] = side_addups.get((key[0].perm,key[1].perm), RCGraphModule()) + rc_addups_left[key]
-    #     side_addups2[key[2].perm] = side_addups2.get(key[2].perm, TensorModule()) + rc_addups_right[key]
-    
-
-    # keys = {(key[0].perm,key[1].perm,key[2].perm) for key in rc_addups_left}
-
-    # for key in keys:
-    #     print(f"FINAL FOR {key[0].trimcode,key[1].trimcode}")
-    #     print(side_addups[(key[0],key[1])])
-    #     print(f"FINAL BUBBLE FOR {key[2].trimcode}")
-    #     print(side_addups2[key[2]])
-    
-    # for (perm1, perm2), module in addups.items():
-    #     print(f"THIS IS {(perm1.trimcode, perm2.trimcode)}")
-    #     print(module)
- 
-
-        
-
-    # for (rc1,rc2), module in rc_addups.items():
-    #     print(f"THIS IS {(rc1.trimcode, rc2.trimcode)}")
-    #     print(module)
-
-        
-
-    # for perm in perm_pairs_total:
-    #     if perm not in perm_pairs:
-    #         assert len(uncode([a+b for a,b in zip(perm[0].trimcode, perm[1].trimcode)])) > n, f"Failure for {perm}"
-            #print(result_dict[coprod_key])
-    #print(new_result)
-    # exit()
-    # result_dict = {}
-    # for key, value in result.items():
-    #     perm1, perm2 = key[0]
-    #     coprod_perm_pair = key[1]
-    #     if perm1 == perm2:
-    #         result_dict[coprod_perm_pair] = result_dict.get(coprod_perm_pair, 0) + value * Sx(perm1)
-
-    # Permutation.print_as_code = True
-    # result_dict = {}
-    # failed = False
-    # for key, value in result.items():
-    #     #right_graph = key[0][1][1]
-    #     right_nil_perm = key[0][1][1]
-    #     #$right_nil_perm = key[0][1][1].perm
-    #     #left_graph = key[0][0][0]
-    #     left_nil_perm = key[0][0][0]
-    #     right_schub_perm = key[0][1][0]
-    #     coprod_perm_pair = key[1]
-    #     left_schub_perm = key[0][0][1]
-    #     if right_nil_perm == right_schub_perm and left_nil_perm == right_nil_perm:
-            
-    
-    # for coprod_key in result_dict:
-    #     ((left_coprod_perm, _), (right_coprod_perm, _)) = coprod_key
-    #     if any(len(permperm) > n for permperm, val in (Sx(left_coprod_perm) * Sx(right_coprod_perm)).items() if val != S.Zero):
+    #     if any(len(permperm)>n for permperm in (product).keys()):
     #         continue
-    #     testval = Sx(result_dict[coprod_key].polyvalue(x)) - Sx(left_coprod_perm) * Sx(right_coprod_perm)
-    #     if testval.expand() != S.Zero:
-    #         print(f"Failures for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)}: {testval=} {result_dict[coprod_key]=}")
-    #         failed = True
-    #     else:
-    #         print(f"Success for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)}: Sx({left_coprod_perm.trimcode})*Sx({right_coprod_perm.trimcode})={result_dict[coprod_key]}")
+    #     print(f"{perm1.trimcode,perm2.trimcode}")
+    #     print(mod)
+        # for rc in mod:
+        #     assert product.get(rc.perm, 0) == coeff
+    
 
-    success = 0
-    #if all(not v for v in failed.values()):
-    if not failed:
-        print(f"YEAH!!! {len(perms)=} {len(perm_pairs)=} {len(perm_pairs_total)=}", file=sys.stderr)
-        print(f"YEAH!!! {len(perms)=} {len(perm_pairs)=} {len(perm_pairs_total)=}", file=sys.stderr)
-    # else:
-    #     for (p1,p2), v in failed.items():
-    #         if v:
-    #             print(f"FAILED FOR {(p1.trimcode,p2.trimcode)}", file=sys.stderr)
-    #         else:
-    #             success += 1
-    #     print("Number of successes:", success, file=sys.stderr)
+        
+    
+    print("HELLS YEAH")
+        #assert Sx(mod.polyvalue(x)) == product, f"Failure for {(perm1.trimcode, perm2.trimcode)}: {mod} != {product}"
+        #assert mod == product, f"Failure for {(perm1.trimcode, perm2.trimcode)}: {mod} != {product}"
+        #     module1 = FA(*seq).change_basis(SchubertBasis)
+        #     #     #rc_graph_module_term = RCGraphModule({rc: v for rc, v in rc_graph_module_term.items() if len(rc.perm) <= n})
+        #         #tmodule = TensorModule.ext_multiply(rc_graph_module_term, rc_graph_module_term)
+        #     #         #if rc1 == rc2:
+        #     # #                addup += TensorModule.ext_multiply(ASx(rc1.perm,len(rc1)), RCGraphModule({rc2: coeff}))
+
+        #     coprod = FA(*seq).coproduct()
+        #     #     #test_addup += addup
+        #     #     #left_result = TensorModule.ext_multiply(addup, FreeAlgebraBasis.change_tensor_basis(coprod, SchubertBasis, SchubertBasis))
+        #     #     left_result = addup
+        #     #     # # zr_elem = zring(seq)
+        #     #     # # xr_elem = xring(seq)
+        #     #     # # module1 = TensorModule.ext_multiply(rc_graph_module_term, zr_elem)
+        #     #     # # module2 = TensorModule.ext_multiply(xr_elem, rc_graph_module_term)
+        #     #     # module1 = TensorModule.ext_multiply(rc_graph_module_term, rc_graph_module_term)
+        #     #     # # module2 = TensorModule.ext_multiply(rc_graph_module_term, rc_graph_module_term)
+        #     #     right_result = TensorModule()
+        #     #     for (rc1, rc2), coeff00 in tmodule.items():
+        #     #         for (seq1, seq2), val in coprod.items():
+        #         #tmodule1 = seq_elem_rc(seq, n)
+        #     #tmodule1 = schub_elem_rc(seq, n)
+        #     tmodule1 = Sx(expand_seq(seq,x))
+        #     for (seq1, seq2), val in coprod.items():
+        #         #tmodule2 = fa_elem_rc(seq1, n)
+        #         tmodule2 = schub_elem_rc(seq1, n)
+        #         tmodule3 = schub_elem_rc(seq2, n)
+
+        #         result += val * TensorModule.ext_multiply(tmodule1, TensorModule.ext_multiply(tmodule2, tmodule3))
+        # print(result)
+        #         #             schub_elem1 = FA(*seq1).change_basis(SchubertBasis)
+        #         #             schub_elem2 = FA(*seq2).change_basis(SchubertBasis)
+        #         #             #module2 = RCGraphModule({rc: v for rc, v in module2.items() if len(rc.perm) <= n})
+        #         #             #module3 = RCGraphModule({rc: v for rc, v in module3.items() if len(rc.perm) <= n})
+        #             #tmodule2 = TensorModule.ext_multiply(module2, module2)
+        #             #tmodule3 = TensorModule.ext_multiply(module3, module3)
+
+        #             # for rc1_left, coeff1 in module1.items():
+        #             #     for rc2_left , coeff2 in module2.items():
+        #             #         for rc3_left,  coeff3 in module3.items():
+        #             #             new_coeff = coeff2 * coeff3 * coeff1*val
+        #             #                 #result += new_coeff * TensorModule.ext_multiply(ASx(rc1_left.perm, len(rc1_left)),TensorModule({RCGraphTensor(rc2_left, rc3_left): 1}))
+        #             #             result += new_coeff * (fa_elem_rc(rc1_left) @ (fa_elem_rc(rc2_left) @ fa_elem_rc(rc3_left)))
+        #     #modules = {}
+        #     #print(test_addup)
+        #     # for ((perm, _), rc), coeff in test_addup.items():
+        #     #     modules[perm] = modules.get(perm, RCGraphModule()) + RCGraphModule({rc: coeff})
+
+        #     # for perm in modules:
+        #     #     print(perm.trimcode)
+        #     #     print(modules[perm])
+        #     #exit()
+        #     #             full_tmodule = TensorModule.ext_multiply(tmodule2,tmodule3)
+        #     #             addup = TensorModule()
+        #     #             for ((rc1_left, rc2_left),(rc1_right,rc2_right)), coeff0 in full_tmodule.items():
+        #     #                 coeff = coeff0 * coeff00
+        #     #                 if rc1 == rc2 and rc1_left == rc2_left and rc1_right == rc2_right:
+        #     #                     #print(f'{rc1_left.perm.trimcode, rc1_right.perm.trimcode}, coeff={coeff}, val={val}, coeff1={coeff1}, coeff2={coeff2}, seq1={seq1}, seq2={seq2}')
+        #     #                     # print(f"{schub_elem1=}, {schub_elem2=}")
+        #     #                     new_coeff = coeff * schub_elem1.get((rc1_left.perm, len(rc1_left)), 0) * schub_elem2.get((rc1_right.perm, len(rc1_right)), 0)
+        #     #                     #print(f"{new_coeff=}")
+        #     #                     #addup += TensorModule.ext_multiply(TensorModule.ext_multiply(RCGraphModule({rc1_left: new_coeff}), RCGraphModule({rc1_right: 1})), 
+        #     #                     #                                    TensorModule.ext_multiply(ASx(rc1_left.perm,len(rc1_left)), ASx(rc1_right.perm,len(rc1_right))))
+        #     #                     result += TensorModule.ext_multiply(TensorModule.ext_multiply(ASx(rc1.perm,len(rc1)), RCGraphModule({rc2: new_coeff})),
+        #     #                                                         TensorModule.ext_multiply(TensorModule.ext_multiply(RCGraphModule({rc1_left: coeff}), RCGraphModule({rc1_right: 1})),
+        #     #                                                         TensorModule.ext_multiply(ASx(rc1_left.perm,len(rc1_left)), ASx(rc1_right.perm,len(rc1_right)))))
+        #                 #right_result += addup
+        #         #                                                                                             TensorModule.ext_multiply(module3,module3)),
+        #         #                            FreeAlgebraBasis.change_tensor_basis((FA @ FA)((seq1,seq2)),SchubertBasis,SchubertBasis)))
+        #         #result += TensorModule.ext_multiply(left_result,right_result)
+        #     # buildup_mod = {}
+        #     # for ((perm, _), rc), coeff in test_addup.items():
+        #     #     assert Sx(rc.polyvalue(x)) == Sx(perm), f"Failure for {perm.trimcode}"
+        #     #     assert all(rc.perm == perm for rc in test_addup[rc].keys()), f"Failure for {perm.trimcode}"
+        #     # left_graph == right_graph
+        #     #result2 = result
+
+        #     # result_dict = {}
+        #     # for ((perm, _),rc), coeff in addup.items():
+        #     #     result_dict[perm] = result_dict.get(perm, RCGraphModule()) + RCGraphModule({rc: coeff})
+
+        #     # for perm in result_dict:
+        #     #     assert Sx(result_dict[perm].polyvalue(x)) == Sx(perm), f"Failure for {perm.trimcode}"
+        #     #     assert all(rc.perm == perm for rc in result_dict[perm].keys()), f"Failure for {perm.trimcode}"
+        #     # exit()
+        #     # new_result = TensorModule()
+        # failed = False
+        # perms = set()
+        # perm_pairs = set()
+        # perm_pairs_total = set()
+        # rc_addups_left = {}
+        # rc_addups_right = {}
+        
+        # sum1 = {}
+        # sum2 = {}
+        # full_addups = {}
+        # # saw = False
+        # addups = {}
+        
+        # #for (((perm, _), seq), (((left_coprod_perm, _), seq1), ((right_coprod_perm, _), seq2))), value in result.items():
+        # #for (((perm, _), rc_result), (((left_coprod_perm, _), rc1), ((right_coprod_perm, _), rc2))), value in result.items():
+        # for (rc_result_right, ((rc1_left, rc1_right), (rc2_left, rc2_right))), value in result.items():
+        #     left_coprod_perm, right_coprod_perm = rc1_right, rc2_right
+
+        #     if any(len(permperm) > n for permperm, val in (Sx(left_coprod_perm) * Sx(right_coprod_perm)).items() if val != S.Zero):
+        #         continue
+            
+        #     perm_pairs_total.add((left_coprod_perm, right_coprod_perm))
+            
+        #     # left_coprod_perm, right_coprod_perm = rc1.perm, rc2.perm
+        #     # if len(perm) > n or len(left_coprod_perm) > n or len(right_coprod_perm) > n:
+        #     #     continue
+            
+        #     #if rc_result_left.perm != rc_result_right.perm or rc1_left.perm != rc1_right.perm or rc2_left.perm != rc2_right.perm or not rc_result_left.is_principal or not rc1_right.is_principal or not rc2_right.is_principal:
+        #     # assert rc_result_left.perm == rc_result_right.perm
+        #     # assert rc1_left.perm == rc1_right.perm
+        #     # assert rc2_left.perm == rc2_right.perm
+        #     # if rc1_right != rc1_left:
+        #     #     continue
+        #     # if rc2_right != rc2_left:
+        #     #     continue
+        #     # if not rc1_right.is_principal:
+        #     #     continue
+        #     # if not rc2_right.is_principal:
+        #     #     continue
+        #     # if vector_sum(rc1_right.length_vector(), rc2_right.length_vector()) != rc_result_right.length_vector():
+        #     #     continue
+        #     # if not rc_result_right.is_principal:
+        #     #     continue
+        #     product = Sx(left_coprod_perm)*Sx(right_coprod_perm)
+            
+            
+
+        #     # coeff = 1
+        #     # # coeff = ASx(perm, len(rc_result)).change_basis(WordBasis).get(rc_result.length_vector(), 0) * ASx(left_coprod_perm, len(rc1)).change_basis(WordBasis).get(rc1.length_vector(), 0) * ASx(right_coprod_perm, len(rc2)).change_basis(WordBasis).get(rc2.length_vector(), 0)
+        #     # # if coeff == 0:
+        #     # #     continue
+        #     # perm_pairs_total.add((left_coprod_perm, right_coprod_perm))
+        #     # #addups[(left_coprod_perm, right_coprod_perm)] = addups.get((left_coprod_perm, right_coprod_perm), RCGraphModule()) + RCGraphModule({result_rc: value})
+        #     # if rc1.perm != left_coprod_perm or rc2.perm != right_coprod_perm or rc_result.perm != perm:
+        #     #     continue
+        #     product = Sx(left_coprod_perm) * Sx(right_coprod_perm)
+        #     perm = rc_result_right
+        #     #RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(result_rc.perm, n-1), value))
+        #     #if perm != uncode(seq) or left_coprod_perm != uncode(seq1) or right_coprod_perm != uncode(seq2):
+        #     # if perm != rc_result.perm or left_coprod_perm != rc1.perm or right_coprod_perm != rc2.perm:
+        #     #     continue
+        #     # perm = rc_result.perm
+        #     testval = value - product.get(perm, 0)
+        #     if testval != S.Zero:
+        #         print(f"Failures for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)} {perm.trimcode} {value=} {product.get(perm, 0)=} {testval=}")
+        #         print(perm)
+        #         failed = True
+        #     else:
+        #         print(f"Success for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)}: Sx({left_coprod_perm.trimcode})*Sx({right_coprod_perm.trimcode})")
+        #         print(perm)
+        #         perms.add(perm)
+        #         perm_pairs.add((left_coprod_perm, right_coprod_perm))
+        #     # #assert perm == uncode(vector_sum(rc1.length_vector(), rc2.length_vector())), f"Failure for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)}"
+        #     # #addups[(rc1, rc2)] = addups.get((rc1, rc2), 0) + value * Sx(perm)
+        #     # #addups[(rc1, rc2)] = addups.get((rc1, rc2), RCGraphModule()) + value * rc_result
+        #     addups[(left_coprod_perm, right_coprod_perm)] = addups.get((left_coprod_perm, right_coprod_perm), 0) + value * Sx(perm)
+
+        # # failed = {}
+
+        # # for (perm1, perm2), val in addups.items():
+        # #     #perm1, perm2 = rc1.perm, rc2.perm
+        # #     product = Sx(perm1) * Sx(perm2)
+        # #     print("perm1, perm2 =", perm1.trimcode, perm2.trimcode)
+        # #     print(val)
+        # #     valu = Sx(val.polyvalue(x))
+        # #     try:
+        # #         assert all(v == 0 for v in (product - valu).values()), f"Failure for {(perm1.trimcode, perm2.trimcode)}: {val} != {Sx(perm1)*Sx(perm2)}"
+        # #         print(f"Success for {(perm1.trimcode, perm2.trimcode)}: Sx({perm1.trimcode})*Sx({perm2.trimcode})")
+        # #         failed[(perm1, perm2)] = False
+        # #     except Exception as e:
+        # #         print(f"Failure for {(perm1.trimcode, perm2.trimcode)}: {valu} != {Sx(perm1)*Sx(perm2)}")
+        # #         if (perm1, perm2) not in failed:
+        # #             failed[(perm1, perm2)] = True
+        # #     assert expand(rc_addups_left[key].polyvalue(x) -  rc_addups_right[key].polyvalue(x)) == S.Zero, f"Failure for {key}: {rc_addups_left[key].polyvalue(x)} != {rc_addups_right[key]}"
+        # #     print(f"{key[0].perm.trimcode,key[1].perm.trimcode,key[2].perm.trimcode}")
+        # #     print(rc_addups_left[key])
+        # #     print(rc_addups_right[key])
+        # #     print(full_addups[key])
+        # #     side_addups[(key[0].perm,key[1].perm)] = side_addups.get((key[0].perm,key[1].perm), RCGraphModule()) + rc_addups_left[key]
+        # #     side_addups2[key[2].perm] = side_addups2.get(key[2].perm, TensorModule()) + rc_addups_right[key]
+        
+
+        # # keys = {(key[0].perm,key[1].perm,key[2].perm) for key in rc_addups_left}
+
+        # # for key in keys:
+        # #     print(f"FINAL FOR {key[0].trimcode,key[1].trimcode}")
+        # #     print(side_addups[(key[0],key[1])])
+        # #     print(f"FINAL BUBBLE FOR {key[2].trimcode}")
+        # #     print(side_addups2[key[2]])
+        
+        # for (perm1, perm2), module in addups.items():
+        #     print(f"THIS IS {(perm1.trimcode, perm2.trimcode)}")
+        #     print(module)
+        #     assert module == Sx(perm1) * Sx(perm2)
+    
+
+            
+
+        # # for (rc1,rc2), module in rc_addups.items():
+        # #     print(f"THIS IS {(rc1.trimcode, rc2.trimcode)}")
+        # #     print(module)
+
+            
+
+        # # for perm in perm_pairs_total:
+        # #     if perm not in perm_pairs:
+        # #         assert len(uncode([a+b for a,b in zip(perm[0].trimcode, perm[1].trimcode)])) > n, f"Failure for {perm}"
+        #         #print(result_dict[coprod_key])
+        # #print(new_result)
+        # # exit()
+        # # result_dict = {}
+        # # for key, value in result.items():
+        # #     perm1, perm2 = key[0]
+        # #     coprod_perm_pair = key[1]
+        # #     if perm1 == perm2:
+        # #         result_dict[coprod_perm_pair] = result_dict.get(coprod_perm_pair, 0) + value * Sx(perm1)
+
+        # # Permutation.print_as_code = True
+        # # result_dict = {}
+        # # failed = False
+        # # for key, value in result.items():
+        # #     #right_graph = key[0][1][1]
+        # #     right_nil_perm = key[0][1][1]
+        # #     #$right_nil_perm = key[0][1][1].perm
+        # #     #left_graph = key[0][0][0]
+        # #     left_nil_perm = key[0][0][0]
+        # #     right_schub_perm = key[0][1][0]
+        # #     coprod_perm_pair = key[1]
+        # #     left_schub_perm = key[0][0][1]
+        # #     if right_nil_perm == right_schub_perm and left_nil_perm == right_nil_perm:
+                
+        
+        # # for coprod_key in result_dict:
+        # #     ((left_coprod_perm, _), (right_coprod_perm, _)) = coprod_key
+        # #     if any(len(permperm) > n for permperm, val in (Sx(left_coprod_perm) * Sx(right_coprod_perm)).items() if val != S.Zero):
+        # #         continue
+        # #     testval = Sx(result_dict[coprod_key].polyvalue(x)) - Sx(left_coprod_perm) * Sx(right_coprod_perm)
+        # #     if testval.expand() != S.Zero:
+        # #         print(f"Failures for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)}: {testval=} {result_dict[coprod_key]=}")
+        # #         failed = True
+        # #     else:
+        # #         print(f"Success for {(left_coprod_perm.trimcode, right_coprod_perm.trimcode)}: Sx({left_coprod_perm.trimcode})*Sx({right_coprod_perm.trimcode})={result_dict[coprod_key]}")
+
+        # success = 0
+        # #if all(not v for v in failed.values()):
+        # if not failed:
+        #     print(f"YEAH!!! {len(perms)=} {len(perm_pairs)=} {len(perm_pairs_total)=}", file=sys.stderr)
+        #     print(f"YEAH!!! {len(perms)=} {len(perm_pairs)=} {len(perm_pairs_total)=}", file=sys.stderr)
+        # # else:
+        # #     for (p1,p2), v in failed.items():
+        # #         if v:
+        # #             print(f"FAILED FOR {(p1.trimcode,p2.trimcode)}", file=sys.stderr)
+        # #         else:
+        # #             success += 1
+        # #     print("Number of successes:", success, file=sys.stderr)
 
 if __name__ == "__main__":
     main()
