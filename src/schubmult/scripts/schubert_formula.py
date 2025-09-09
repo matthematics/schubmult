@@ -139,26 +139,26 @@ def main():
     aseqs = artin_sequences(n-1)
     upmod = TensorModule()
     for seq in aseqs:
-        upmod += TensorModule.ext_multiply({seq:1},
-            TensorModule.ext_multiply(Sx(expand_seq(seq,x)), 
-                                           FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis)))
+        upmod += TensorModule.ext_multiply(fa_elem_rc(seq,n),
+                                           FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
 
     addup = {}
-    upmod2 = TensorModule()
-    for (seq, (perm, ((perm1, _), (perm2, _)))), coeff in upmod.items():
-        upmod2 += TensorModule.ext_multiply(fa_elem_rc(seq,n),TensorModule.ext_multiply(Sx(perm), 
-                                           (ASx@ASx)(((perm1, n-1),(perm2,n-1)))))
+    # upmod2 = TensorModule()
+    # for (seq, (perm, ((perm1, _), (perm2, _)))), coeff in upmod.items():
+    #     upmod2 += coeff * TensorModule.ext_multiply(fa_elem_rc(seq,n),TensorModule.ext_multiply(Sx(perm), 
+    #                                        (ASx@ASx)(((perm1, n-1),(perm2,n-1)))))
 
-    for (((perm0, _), rc), (perm, ((perm1, _), (perm2, _)))), coeff in upmod2.items():
-        if perm == perm0:
-            #addup[(perm1, perm2)] = addup.get((perm1, perm2), 0) + coeff * Sx(perm)
-            addup[(perm1, perm2)] = addup.get((perm1, perm2), RCGraphModule()) + coeff * rc
+    for ((((perm0, _), rc1)), (((perm1, _), (perm2, _)))), coeff in upmod.items():
+        #addup[(perm1, perm2)] = addup.get((perm1, perm2), 0) + coeff * rc1
+        if rc1.is_principal:
+            addup[(perm1, perm2)] = addup.get((perm1, perm2), RCGraphModule()) + coeff * rc1
 
     for (perm1, perm2), coeff in addup.items():
         product = Sx(perm1) * Sx(perm2)
         if any(len(perm) > n for perm in product.keys()):
             continue
         assert product == Sx(coeff.polyvalue(x))
+        #assert product == coeff
         print(f"Success {perm1.trimcode} {perm2.trimcode}")
         print(coeff)
 
