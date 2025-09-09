@@ -53,12 +53,15 @@ def seq_elem_rc(seq, n):
     #     ret_mod += TensorModule.ext_multiply(RCGraphModule({rc1: val}), RCGraphModule({rc2: coeff}))
     return ret_mod
 
-def len_coeff(rc):
-    return FA(*rc.length_vector()).change_basis(SchubertBasis).get((rc.perm, len(rc)), 0)
+def len_coeff(perm, seq):
+    return FA(*seq).change_basis(SchubertBasis).get((perm, len(seq)), 0)
 
 
-def perm_coeff(rc):
-    return ASx(rc.perm, len(rc)).change_basis(WordBasis).get(rc.length_vector(), 0)
+def perm_coeff(perm, seq):
+    return ASx(perm, len(seq)).change_basis(WordBasis).get(seq, 0)
+
+def sx_coeff(perm, seq):
+    return Sx(expand_seq(seq,x)).get(perm, 0)
 
 def full_coeff(rc):
     return len_coeff(rc) * perm_coeff(rc)
@@ -79,6 +82,18 @@ def fa_elem_rc(seq, n):
     #     coeff = ASx(rc1.perm, len(rc1)).change_basis(WordBasis).get(rc2.length_vector(), 0)
     #     ret_mod += TensorModule.ext_multiply(RCGraphModule({rc1: val}), RCGraphModule({rc2: coeff}))
     return ret_mod
+
+def ng_elem_rc(seq, n):
+    #ag = PolynomialAlgebra(MonomialBasis(x, len(rc.perm)))
+    return TensorModule.ext_multiply(FA(*seq).change_basis(SchubertBasis), {seq: 1})
+
+    # for (/rc1, rc2), val in mod.items():
+    #     if len(rc1.perm) > n or len(rc2.perm) > n:
+    #         continue
+    #     coeff = ASx(rc1.perm, len(rc1)).change_basis(WordBasis).get(rc2.length_vector(), 0)
+    #     ret_mod += TensorModule.ext_multiply(RCGraphModule({rc1: val}), RCGraphModule({rc2: coeff}))
+    #return ret_mod
+
 
 def farp_elem_rc(seq, n):
     #ag = PolynomialAlgebra(MonomialBasis(x, len(rc.perm)))
@@ -139,7 +154,9 @@ def main():
     aseqs = artin_sequences(n-1)
     upmod = TensorModule()
     for seq in aseqs:
-        upmod += TensorModule.ext_multiply(fa_elem_rc(seq,n),
+        # upmod += TensorModule.ext_multiply(ng_elem_rc(seq,n),
+        #                                    FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
+        upmod += TensorModule.ext_multiply(TensorModule.ext_multiply(FA(*seq).change_basis(SchubertBasis),{seq: 1}),
                                            FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
 
     addup = {}
@@ -148,17 +165,34 @@ def main():
     #     upmod2 += coeff * TensorModule.ext_multiply(fa_elem_rc(seq,n),TensorModule.ext_multiply(Sx(perm), 
     #                                        (ASx@ASx)(((perm1, n-1),(perm2,n-1)))))
 
-    for ((((perm0, _), rc1)), (((perm1, _), (perm2, _)))), coeff in upmod.items():
+    #for (((rc11, rc1)), (((perm1, _), (perm2, _)))), coeff in upmod.items():
+    for (((perm0, _), seq), (((perm1, _), (perm2, _)))), coeff in upmod.items():
         #addup[(perm1, perm2)] = addup.get((perm1, perm2), 0) + coeff * rc1
-        if rc1.is_principal:
-            addup[(perm1, perm2)] = addup.get((perm1, perm2), RCGraphModule()) + coeff * rc1
+        # elem1 = ASx(perm1, n-1).change_basis(WordBasis)
+        # elem2 = ASx(perm2, n-1).change_basis(WordBasis)
+        # sum_elem = FA.zero
+        # for seq1, coeff1 in elem1.items():
+        #     for seq2, coeff2 in elem2.items():
+        #         new_seq = vector_sum(seq1, seq2)
+        #         sum_elem += coeff1 * coeff2 * FA(*new_seq)
+        # print(sum_elem)
+        #if sum_elem.get(rc1.length_vector(), 0) != 0:
+        addup[(perm1, perm2)] = addup.get((perm1, perm2), 0) + coeff * perm_coeff(perm0, seq)*Sx(expand_seq(seq,x))
 
     for (perm1, perm2), coeff in addup.items():
         product = Sx(perm1) * Sx(perm2)
         if any(len(perm) > n for perm in product.keys()):
             continue
-        assert product == Sx(coeff.polyvalue(x))
-        #assert product == coeff
+        try:
+            assert product == coeff
+            #assert product == Sx(coeff.polyvalue(x))
+        except AssertionError:
+            print(f"Failure {perm1.trimcode} {perm2.trimcode}")
+            print("Expected")
+            print(product)
+            print("Got")
+            print(coeff)
+            continue
         print(f"Success {perm1.trimcode} {perm2.trimcode}")
         print(coeff)
 
