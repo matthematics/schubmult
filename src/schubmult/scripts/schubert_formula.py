@@ -153,20 +153,100 @@ def main():
     more_addup = TensorModule()
     aseqs = artin_sequences(n-1)
     upmod = TensorModule()
+    upmod2 = TensorModule()
     for seq in aseqs:
         # upmod += TensorModule.ext_multiply(ng_elem_rc(seq,n),
         #                                    FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
-        upmod += TensorModule.ext_multiply(TensorModule.ext_multiply(FA(*seq).change_basis(SchubertBasis),{seq: 1}),
+        upmod += TensorModule.ext_multiply(FA(*seq)*unit_rc_module,
                                            FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
-
+        upmod2 += TensorModule.ext_multiply(FA(*seq).change_basis(SchubertBasis),
+                                           FA(*seq).coproduct()*TensorModule.ext_multiply(unit_rc_module,unit_rc_module))
     addup = {}
+    addup2 = {}
+
+    ring = ASx@ASx
+    for (rc0, (rc1, rc2)), coeff in upmod.items():
+        if len(rc0.perm) > n or len(rc1[0]) > n or len(rc2[0]) > n:
+            continue
+        #addup[rc0.perm] = addup.get(rc0.perm, 0) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * ring((rc1, rc2))
+        addup[(rc1[0],rc2[0])] = addup.get((rc1[0],rc2[0]), 0) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * Sx(rc0.polyvalue(x))
+        #ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * ring((rc1, rc2))
+        #Sx(expand_seq(rc0.length_vector(),x)).get(rc0.perm,0)*coeff * ring((rc1, rc2))
+
+    for (perm1, perm2), elem in addup.items():
+        product = Sx(perm1) * Sx(perm2)
+        if any(len(perm) > n for perm in product.keys()):
+            continue
+        try:
+            #assert product == elem
+            assert product == elem
+        except AssertionError:
+            print(f"Failure {perm1.trimcode} {perm2.trimcode}")
+            print("Expected")
+            print(product)
+            print("Got")
+            print(elem)
+            continue
+        print(f"Success {perm1.trimcode} {perm2.trimcode}")
+        print(elem)
+
+    for (key, (rc1, rc2)), coeff in upmod2.items():
+        print(key, rc1, rc2, coeff)
+        if len(rc1.perm) > n or len(rc2.perm) > n:
+            continue
+        if len(key[0]) > n:
+            continue
+        #perm_coeff(rc1.perm,rc1.length_vector())*perm_coeff(rc2.perm,rc2.length_vector())
+        addup2[(rc1.perm, rc2.perm)] = addup2.get((rc1.perm, rc2.perm), 0) + coeff * ASx(*key).change_basis(WordBasis).get(vector_sum(rc1.length_vector(),rc2.length_vector()),0)*Sx(key[0])
+        #ASx(*key).change_basis(WordBasis).get(vector_sum(rc1.length_vector(),rc2.length_vector()),0)*ring(((rc1.perm,len(rc1)),(rc2.perm,len(rc2))))
+    # for perm, elem in addup2.items():
+    #     #perm = rc0.perm
+    #     #perm = rc0
+    #     diff = ASx(perm, n-1).coproduct() - elem
+    #     assert all(v == 0 for v in diff.values()), f"Failure on {perm.trimcode}\nExpected {ASx(perm, n-1).coproduct()}\nGot {elem}"
+    for (perm1, perm2), elem in addup2.items():
+        product = Sx(perm1) * Sx(perm2)
+        if any(len(perm) > n for perm in product.keys()):
+            continue
+        try:
+            #assert product == elem
+            assert product == elem
+        except AssertionError:
+            print(f"Failure {perm1.trimcode} {perm2.trimcode}")
+            print("Expected")
+            print(product)
+            print("Got")
+            print(elem)
+            continue
+        print(f"Success {perm1.trimcode} {perm2.trimcode}")
+        print(elem)
+    # for perm, elem in addup2.items():
+    #     coproduct = ASx(perm, n-1).coproduct()
+    #     if any(len(perm1[0][0]) > n or len(perm1[1][0])>n for perm1 in coproduct.keys()):
+    #         continue
+    #     try:
+    #         #assert product == elem
+    #         assert all(v == 0 for k,v in (coproduct - elem).items())
+    #     except AssertionError:
+    #         print(f"Failure {perm.trimcode}")
+    #         print("Expected")
+    #         print(coproduct)
+    #         print("Got")
+    #         print(elem)
+    #         continue
+    #     print(f"Success {perm.trimcode}")
+    #     print(elem)
+
+    exit()
     # upmod2 = TensorModule()
     # for (seq, (perm, ((perm1, _), (perm2, _)))), coeff in upmod.items():
     #     upmod2 += coeff * TensorModule.ext_multiply(fa_elem_rc(seq,n),TensorModule.ext_multiply(Sx(perm), 
     #                                        (ASx@ASx)(((perm1, n-1),(perm2,n-1)))))
 
     #for (((rc11, rc1)), (((perm1, _), (perm2, _)))), coeff in upmod.items():
-    for (((perm0, _), seq), (((perm1, _), (perm2, _)))), coeff in upmod.items():
+    #for (((perm0, _), rc1), (((perm1, _), (perm2, _)))), coeff in upmod.items():
+    upmod2 = TensorModule()
+    for (seq, (((perm1, _), (perm2, _)))), coeff in upmod.items():
         #addup[(perm1, perm2)] = addup.get((perm1, perm2), 0) + coeff * rc1
         # elem1 = ASx(perm1, n-1).change_basis(WordBasis)
         # elem2 = ASx(perm2, n-1).change_basis(WordBasis)
@@ -177,15 +257,24 @@ def main():
         #         sum_elem += coeff1 * coeff2 * FA(*new_seq)
         # print(sum_elem)
         #if sum_elem.get(rc1.length_vector(), 0) != 0:
-        addup[(perm1, perm2)] = addup.get((perm1, perm2), 0) + coeff * perm_coeff(perm0, seq)*Sx(expand_seq(seq,x))
+        # addup[(perm1, perm2)] = addup.get((perm1, perm2), RCGraphModule()) + coeff *perm_coeff(perm0, rc1.length_vector())*rc1
+        # addup[(perm1, perm2)] = addup2.get((perm1, perm2), RCGraphModule()) + coeff * rc1
+        upmod2 += coeff * TensorModule.ext_multiply(fa_elem_rc(seq,n),(Sx@Sx)((perm1,perm2)))
+
+    for (((perm0, _), rc1), ((perm1, perm2))), coeff in upmod2.items():
+        addup[(perm1, perm2)] = addup.get((perm1, perm2), RCGraphModule()) + coeff * rc1
+
+    # for (perm0, perm1, perm2), coeff in addup2.items():
+    #     if all(rc in coeff.keys() for rc in RCGraph.all_rc_graphs(perm0, n-1)):
+    #         addup[(perm1, perm2)] = addup.get((perm1, perm2), RCGraphModule()) + coeff
 
     for (perm1, perm2), coeff in addup.items():
         product = Sx(perm1) * Sx(perm2)
         if any(len(perm) > n for perm in product.keys()):
             continue
         try:
-            assert product == coeff
-            #assert product == Sx(coeff.polyvalue(x))
+            #assert product == coeff
+            assert product == Sx(coeff.polyvalue(x))
         except AssertionError:
             print(f"Failure {perm1.trimcode} {perm2.trimcode}")
             print("Expected")
