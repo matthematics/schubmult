@@ -159,8 +159,8 @@ def main():
         #                                    FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
         upmod += TensorModule.ext_multiply(FA(*seq)*unit_rc_module,
                                            FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
-        upmod2 += TensorModule.ext_multiply(FA(*seq).change_basis(SchubertBasis),
-                                           FA(*seq).coproduct()*TensorModule.ext_multiply(unit_rc_module,unit_rc_module))
+        # upmod2 += TensorModule.ext_multiply(FA(*seq).change_basis(SchubertBasis),
+        #                                    FA(*seq).coproduct()*TensorModule.ext_multiply(unit_rc_module,unit_rc_module))
     addup = {}
     addup2 = {}
 
@@ -169,7 +169,8 @@ def main():
         if len(rc0.perm) > n or len(rc1[0]) > n or len(rc2[0]) > n:
             continue
         #addup[rc0.perm] = addup.get(rc0.perm, 0) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * ring((rc1, rc2))
-        addup[(rc1[0],rc2[0])] = addup.get((rc1[0],rc2[0]), 0) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * Sx(rc0.polyvalue(x))
+        #addup[(rc1[0],rc2[0])] = addup.get((rc1[0],rc2[0]), 0) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * Sx(rc0.polyvalue(x))
+        addup[(rc1[0],rc2[0])] = addup.get((rc1[0],rc2[0]), RCGraphModule()) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * rc0
         #ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * ring((rc1, rc2))
         #Sx(expand_seq(rc0.length_vector(),x)).get(rc0.perm,0)*coeff * ring((rc1, rc2))
 
@@ -177,9 +178,11 @@ def main():
         product = Sx(perm1) * Sx(perm2)
         if any(len(perm) > n for perm in product.keys()):
             continue
+        print(perm1.trimcode,perm2.trimcode)
+        print(elem)
         try:
             #assert product == elem
-            assert product == elem
+            assert product == Sx(elem.polyvalue(x))
         except AssertionError:
             print(f"Failure {perm1.trimcode} {perm2.trimcode}")
             print("Expected")
@@ -190,6 +193,7 @@ def main():
         print(f"Success {perm1.trimcode} {perm2.trimcode}")
         print(elem)
 
+    exit()
     for (key, (rc1, rc2)), coeff in upmod2.items():
         print(key, rc1, rc2, coeff)
         if len(rc1.perm) > n or len(rc2.perm) > n:
