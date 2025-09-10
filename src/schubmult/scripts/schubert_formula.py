@@ -46,6 +46,10 @@ def main():
             # assert multiplier == 1
             # this inner products it
             # sumtiplier = 0
+            # RC graph bijection
+
+            # the coproduct of the ASx RC graphs
+            # selects a term, termwise
             for aseq, coeff, in perm_words.items(): # ASx perm word coeff is coeff
                 mod2 = FA(*aseq).coproduct() * unit_tensor_rc_module
                 # coeff is perm_words for some coeff3
