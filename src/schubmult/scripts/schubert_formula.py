@@ -177,6 +177,7 @@ def main():
         perm_modules3 = {}
         
         for aseq0 in aseqs:
+            
             perm = uncode(aseq0)
             #perm = uncode(aseq)
             perm_words = ASx(perm, n-1).change_basis(WordBasis)
@@ -184,7 +185,12 @@ def main():
             mod = ASx(perm, n-1) * unit_rc_module
             #for seq, coeff in perm_words.items():
             for aseq in perm_words:
+                # perms_with_this = FA(*aseq).change_basis(SchubertBasis)
+                # if perms_with_this.get((perm, n-1), 0) == 0:
+                #     continue
                 coeff = perm_words.get(aseq, 0)
+                if coeff == 0:
+                    continue
                 mod2 = FA(*aseq).coproduct() * unit_tensor_rc_module
             
                 for (rc1, rc2), coeff1 in mod2.items():
@@ -203,10 +209,10 @@ def main():
                 
                             posmod = FA(*aseq1) * unit_rc_module
                             perm_modules3[(perm1, perm2)] = perm_modules3.get((perm1, perm2), RCGraphModule()) + coeff * coeff1 * coeff2 * filter_perm(posmod, rc3.perm)
-                        #rc3#filter_perm(FA(*aseq) * unit_rc_module, rc3.perm)
-                        #filter_perm(mod, rc3.perm)
+                    #rc3#filter_perm(FA(*aseq) * unit_rc_module, rc3.perm)
+                    #filter_perm(mod, rc3.perm)
 
-                    #perm1, perm2 = rc1.perm, rc2.perm
+                #perm1, perm2 = rc1.perm, rc2.perm
 
                 
                 #!for rc0, coeff1 in mod.items():
