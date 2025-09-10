@@ -176,17 +176,11 @@ def main():
         perm_modules2 = {}
         perm_modules3 = {}
         
-        for perm in perms:
+        for aseq0 in aseqs:
+            perm = uncode(aseq0)
             #perm = uncode(aseq)
             perm_words = ASx(perm, n-1).change_basis(WordBasis)
             
-            #pc = perm_coeff(perm,seq)
-            #perm_words_cp = perm_words.coproduct()# * TensorModule.ext_multiply(unit_rc_module, unit_rc_module)
-            # mod2 = perm_words * unit_rc_module
-            # print(mod)
-            #print(mod2)
-            #fullmod = 0
-            seqmod = {}
             mod = ASx(perm, n-1) * unit_rc_module
             for seq, coeff in perm_words.items():
                 #mod = FA(*seq) * unit_rc_module    
@@ -220,15 +214,16 @@ def main():
                     
                 # seq = vector_sum(rc1.length_vector(),rc2.length_vector())
                 # mod2 = FA(*seq) * unit_rc_module
-            for ((perm1, _), (perm2, _)), coeff3 in perm_modules[perm].items():
+            # subsumed by perm_modules3
+            # for ((perm1, _), (perm2, _)), coeff3 in perm_modules[perm].items():
                 
                 
-                for rc3, coeff2 in mod.items():
+            #     for rc3, coeff2 in mod.items():
                     
-                    if len(rc3.perm) > n:
-                        continue
-                    #perm_modules2[(rc1.perm, rc2.perm,perm)] = perm_modules2.get((rc1.perm, rc2.perm,perm), 0) + coeff * coeff2 * Sx(rc3.perm)
-                    perm_modules2[(perm1, perm2)] = perm_modules2.get((perm1, perm2), 0) + coeff2 * coeff3 * Sx(rc3.perm)
+            #         if len(rc3.perm) > n:
+            #             continue
+            #         #perm_modules2[(rc1.perm, rc2.perm,perm)] = perm_modules2.get((rc1.perm, rc2.perm,perm), 0) + coeff * coeff2 * Sx(rc3.perm)
+            #         perm_modules2[(perm1, perm2)] = perm_modules2.get((perm1, perm2), 0) + coeff2 * coeff3 * Sx(rc3.perm)
                         
                     # #perm_modules[perm] = perm_modules.get(perm, 0) + coeff * ring((asxt(rc1), asxt(rc2)))
 
@@ -259,12 +254,11 @@ def main():
             #print(f"{perm_modules2[perm]=}")
             
 
-        for (perm1, perm2), elem in perm_modules2.items():
+        for (perm1, perm2), elem in perm_modules3.items():
             if any(len(perm) > n for perm in ((Sx(perm1)* Sx(perm2)).keys())):
                 continue
             print(perm1.trimcode, perm2.trimcode)
             print(elem)
-            print(perm_modules3[(perm1, perm2)])
         exit()
 
     # def asx_elem(rc):
