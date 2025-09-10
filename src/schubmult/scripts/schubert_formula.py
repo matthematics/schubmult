@@ -33,23 +33,21 @@ def main():
         mod = ASx(perm, n - 1) * unit_rc_module
         for aseq1 in aseqs:
             posmod = FA(*aseq1) * unit_rc_module
-            for rc3, coeff3 in mod.items():
-                if len(rc3.perm) > n:
-                    continue
-                for rc4, coeff4 in posmod.items():
-                    if rc3.perm != rc4.perm:
+            for aseq, coeff, in perm_words.items():
+                mod2 = FA(*aseq).coproduct() * unit_tensor_rc_module
+                for (rc1, rc2), coeff1 in mod2.items():
+                    if len(rc1.perm) > n or len(rc2.perm) > n:
                         continue
-                    for aseq in perm_words:
-                        coeff = perm_words.get(aseq, 0)
-                        if coeff == 0:
-                            continue
-                        mod2 = FA(*aseq).coproduct() * unit_tensor_rc_module
-                        for (rc1, rc2), coeff1 in mod2.items():
-                            if len(rc1.perm) > n or len(rc2.perm) > n:
+                    for rc4, coeff4 in posmod.items():
+                        for rc3, coeff3 in mod.items():
+                            if len(rc3.perm) > n:
                                 continue
-                            perm_modules[perm] = perm_modules.get(perm, 0) + coeff1 * ring((asxt(rc1), asxt(rc2)))
+                            if rc3.perm != rc4.perm:
+                                continue
+                            #perm_modules[perm] = perm_modules.get(perm, 0) + coeff1 * ring((asxt(rc1), asxt(rc2)))
                             perm1, perm2 = rc1.perm, rc2.perm
                             magic_coeff = coeff * coeff1 * coeff3 * coeff4
+                            #assert magic_coeff >= 0
                             perm_modules3[(perm1, perm2)] = perm_modules3.get((perm1, perm2), RCGraphModule()) + magic_coeff * rc4
 
     for (perm1, perm2), elem in perm_modules3.items():
