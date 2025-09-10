@@ -175,58 +175,60 @@ def main():
     if True:
         perm_modules2 = {}
         perm_modules3 = {}
-        for aseq in aseqs:
-            for perm in perms:
-                perm_words = ASx(perm, n-1).change_basis(WordBasis)
+        
+        for perm in perms:
+            #perm = uncode(aseq)
+            perm_words = ASx(perm, n-1).change_basis(WordBasis)
+            
+            #pc = perm_coeff(perm,seq)
+            #perm_words_cp = perm_words.coproduct()# * TensorModule.ext_multiply(unit_rc_module, unit_rc_module)
+            # mod2 = perm_words * unit_rc_module
+            # print(mod)
+            #print(mod2)
+            #fullmod = 0
+            seqmod = {}
+            mod = ASx(perm, n-1) * unit_rc_module
+            for seq, coeff in perm_words.items():
+                #mod = FA(*seq) * unit_rc_module    
                 
-                #pc = perm_coeff(perm,seq)
-                #perm_words_cp = perm_words.coproduct()# * TensorModule.ext_multiply(unit_rc_module, unit_rc_module)
-                # mod2 = perm_words * unit_rc_module
-                # print(mod)
-                #print(mod2)
-                #fullmod = 0
-                seqmod = {}
+                mod2 = FA(*seq).coproduct() * unit_tensor_rc_module
                 
-                for seq, coeff in perm_words.items():
-                    #mod = FA(*seq) * unit_rc_module    
-                    mod = ASx(perm, n-1) * unit_rc_module
-                    mod2 = FA(*seq).coproduct() * unit_tensor_rc_module
+                #the_coprod = FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis)
+                #perm_modules3[perm] = perm_modules3.get(perm, TensorModule) + coeff1 * TensorModule.ext_multiply(filter_perm, 1rc2)
+                #asx_mod = ASx(perm, n-1) * unit_rc_module
                     
-                    #the_coprod = FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis)
-                    #perm_modules3[perm] = perm_modules3.get(perm, TensorModule) + coeff1 * TensorModule.ext_multiply(filter_perm, 1rc2)
-                    #asx_mod = ASx(perm, n-1) * unit_rc_module
-                        
-                    
-                    for (rc1, rc2), coeff1 in mod2.items():
-                        if len(rc1.perm) > n or len(rc2.perm) > n:
-                                continue
-                        perm_modules[perm] = perm_modules.get(perm, 0) + coeff * coeff1 * ring((asxt(rc1), asxt(rc2)))
-                        perm1, perm2 = rc1.perm, rc2.perm
-                        for rc3, coeff2 in mod.items():
-                            if len(rc3.perm) > n:
-                                continue
-                            #perm_modules2[(rc1.perm, rc2.perm,perm)] = perm_modules2.get((rc1.perm, rc2.perm,perm), 0) + coeff * coeff2 * Sx(rc3.perm)
-
+                
+                for (rc1, rc2), coeff1 in mod2.items():
+                    if len(rc1.perm) > n or len(rc2.perm) > n:
+                            continue
+                    perm_modules[perm] = perm_modules.get(perm, 0) + coeff * coeff1 * ring((asxt(rc1), asxt(rc2)))
+                    perm1, perm2 = rc1.perm, rc2.perm
+                    for rc3, coeff2 in mod.items():
+                        if len(rc3.perm) > n:
+                            continue
+                        #perm_modules2[(rc1.perm, rc2.perm,perm)] = perm_modules2.get((rc1.perm, rc2.perm,perm), 0) + coeff * coeff2 * Sx(rc3.perm)
+                        for aseq in aseqs:
                             perm_modules3[(perm1, perm2)] = perm_modules3.get((perm1, perm2), RCGraphModule()) + coeff * coeff1 * coeff2 * filter_perm(FA(*aseq) * unit_rc_module, rc3.perm)
-                            #filter_perm(mod, rc3.perm)
+                        #filter_perm(mod, rc3.perm)
 
-                        #perm1, perm2 = rc1.perm, rc2.perm
+                    #perm1, perm2 = rc1.perm, rc2.perm
 
+                
+                #!for rc0, coeff1 in mod.items():
                     
-                    #!for rc0, coeff1 in mod.items():
-                        
-                    #for ((perm1,_), (perm2,_)), coeff2 in the_coprod.items():
-                        
-                    # seq = vector_sum(rc1.length_vector(),rc2.length_vector())
-                    # mod2 = FA(*seq) * unit_rc_module
-                    for ((perm1, _), (perm2, _)), coeff3 in perm_modules[perm].items():
-                        
-                        
-                        for rc3, coeff2 in mod.items():
-                            if len(rc3.perm) > n:
-                                continue
-                            #perm_modules2[(rc1.perm, rc2.perm,perm)] = perm_modules2.get((rc1.perm, rc2.perm,perm), 0) + coeff * coeff2 * Sx(rc3.perm)
-                            perm_modules2[(perm1, perm2)] = perm_modules2.get((perm1, perm2), 0) + coeff2 * coeff3 * Sx(rc3.perm)
+                #for ((perm1,_), (perm2,_)), coeff2 in the_coprod.items():
+                    
+                # seq = vector_sum(rc1.length_vector(),rc2.length_vector())
+                # mod2 = FA(*seq) * unit_rc_module
+            for ((perm1, _), (perm2, _)), coeff3 in perm_modules[perm].items():
+                
+                
+                for rc3, coeff2 in mod.items():
+                    
+                    if len(rc3.perm) > n:
+                        continue
+                    #perm_modules2[(rc1.perm, rc2.perm,perm)] = perm_modules2.get((rc1.perm, rc2.perm,perm), 0) + coeff * coeff2 * Sx(rc3.perm)
+                    perm_modules2[(perm1, perm2)] = perm_modules2.get((perm1, perm2), 0) + coeff2 * coeff3 * Sx(rc3.perm)
                         
                     # #perm_modules[perm] = perm_modules.get(perm, 0) + coeff * ring((asxt(rc1), asxt(rc2)))
 
