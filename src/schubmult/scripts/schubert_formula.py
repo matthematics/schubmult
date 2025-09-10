@@ -33,25 +33,27 @@ def main():
     for aseq1 in aseqs:
         posmod = FA(*aseq1) * unit_rc_module
         for rc4, coeff4 in posmod.items():
-            
+            magic_coeffs = {}
             for aseq0 in aseqs:
                 perm = uncode(aseq0)
                 perm_words = ASx(perm, n - 1).change_basis(WordBasis)
                 mod = ASx(perm, n - 1) * unit_rc_module
-                for rc3, coeff3 in mod.items():
-                    if len(rc3.perm) > n:
-                        continue
-                    if rc3.perm != rc4.perm:
-                        continue
-
-                    for aseq, coeff, in perm_words.items():
-                        mod2 = FA(*aseq).coproduct() * unit_tensor_rc_module
+                for aseq, coeff, in perm_words.items():
+                    mod2 = FA(*aseq).coproduct() * unit_tensor_rc_module
+                    for rc3, coeff3 in mod.items():
+                        if len(rc3.perm) > n:
+                            continue
+                        if rc3.perm != rc4.perm:
+                            continue
                         for (rc1, rc2), coeff1 in mod2.items():
                             if len(rc1.perm) > n or len(rc2.perm) > n:
                                 continue
+                
                             perm1, perm2 = rc1.perm, rc2.perm
-                            magic_coeff = coeff * coeff1 * coeff3 * coeff4
-                            perm_modules3[(perm1, perm2)] = perm_modules3.get((perm1, perm2), RCGraphModule()) + magic_coeff * rc4
+                            magic_coeffs[(perm1, perm2)] = magic_coeffs.get((perm1,perm2),0) + coeff * coeff1 * coeff3 * coeff4
+
+            for key, magic_coeff in magic_coeffs.items():
+                perm_modules3[key] = perm_modules3.get(key, RCGraphModule()) + magic_coeff * rc4
 
     for (perm1, perm2), elem in perm_modules3.items():
         product = Sx(perm1) * Sx(perm2)
