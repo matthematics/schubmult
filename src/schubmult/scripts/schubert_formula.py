@@ -1,6 +1,6 @@
 import sys
 
-from schubmult import ASx, Permutation, uncode
+from schubmult import ASx, Permutation
 from schubmult.abc import x
 from schubmult.rings import FA, Sx, WordBasis
 from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule, TensorModule
@@ -16,9 +16,6 @@ def main():
     unit_rc_module = RCGraphModule({RCGraph(): 1})
 
     # 100% positive!
-
-    def asxt(rc):
-        return (rc.perm, len(rc))
 
     unit_tensor_rc_module = TensorModule.ext_multiply(unit_rc_module, unit_rc_module)
 
@@ -50,22 +47,29 @@ def main():
                         continue
                     assert coeff1 == 1
                     perm1, perm2 = rc1.perm, rc2.perm
+
+                    # this works by accident
                     magic_coeffs[(perm1, perm2)] = magic_coeffs.get((perm1, perm2), 0) + coeff * coeff1
-                    if do_sum:
-                        term_coeffs[(perm1, perm2)] = term_coeffs.get((perm1, perm2), 0) + coeff * coeff1  * extra_coeff
+
+                    # This is the same as above for the principal one but 0 otherwise
                     alternative_magic_coeffs[(perm1, perm2)] = alternative_magic_coeffs.get((perm1, perm2), 0) + coeff * coeff1 * extra_coeff
 
+                    if do_sum:
+                        # this picks out the specific coefficient of the term
+                        # we get the right weight but from different Schubs
+                        term_coeffs[(perm1, perm2)] = term_coeffs.get((perm1, perm2), 0) + coeff * coeff1 * extra_coeff
 
-            # term by term (not schub by schub)
+            # term by term and schub by schub
             for key, magic_coeff in magic_coeffs.items():
                 assert magic_coeff >= 0
                 by_coefficient_dict[key] = by_coefficient_dict.get(key, RCGraphModule()) + magic_coeff * rc4
 
-            # schubpoly by schubpoly
+            # schub by schub
             for key, amagic_coeff in alternative_magic_coeffs.items():
                 assert amagic_coeff == 0 or (amagic_coeff == magic_coeffs.get(key, 0) and rc4.is_principal)
                 by_schub_dict[key] = by_schub_dict.get(key, 0) + amagic_coeff * Sx(rc4.perm)
 
+            # term by term only
             for key, term_coeff in term_coeffs.items():
                 assert term_coeff >= 0
                 by_term_dict[key] = by_term_dict.get(key, 0) + term_coeff * Sx(rc4.polyvalue(x))
@@ -76,8 +80,8 @@ def main():
         product = Sx(perm1) * Sx(perm2)
         if any(len(perm) > n for perm in product.keys()):
             continue
-        print(perm1.trimcode, perm2.trimcode)
-        print(elem)
+        print(perm1.trimcode, perm2.trimcode)  # noqa: T201
+        print(elem)  # noqa: T201
         val = Sx([]).ring.zero
         for rc, coeff in elem.items():
             assert coeff == product.get(rc.perm, 0)
@@ -85,7 +89,7 @@ def main():
         assert val == product
         assert by_schub_dict.get((perm1, perm2), 0) == product
         assert by_term_dict.get((perm1, perm2), 0) == product
-        print(f"Success {perm1.trimcode} {perm2.trimcode}")
+        print(f"Success {perm1.trimcode} {perm2.trimcode}")  # noqa: T201
     exit()
 
 
