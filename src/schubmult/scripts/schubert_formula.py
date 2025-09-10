@@ -33,7 +33,7 @@ def main():
         mod = ASx(perm, n - 1) * unit_rc_module
         for aseq1 in aseqs:
             posmod = FA(*aseq1) * unit_rc_module
-            for rc3, coeff2 in mod.items():
+            for rc3, coeff3 in mod.items():
                 if len(rc3.perm) > n:
                     continue
                 for rc4, coeff4 in posmod.items():
@@ -49,7 +49,8 @@ def main():
                                 continue
                             perm_modules[perm] = perm_modules.get(perm, 0) + coeff1 * ring((asxt(rc1), asxt(rc2)))
                             perm1, perm2 = rc1.perm, rc2.perm
-                            perm_modules3[(perm1, perm2)] = perm_modules3.get((perm1, perm2), RCGraphModule()) + coeff * coeff1 * coeff2 * coeff4 * rc4
+                            magic_coeff = coeff * coeff1 * coeff3 * coeff4
+                            perm_modules3[(perm1, perm2)] = perm_modules3.get((perm1, perm2), RCGraphModule()) + magic_coeff * rc4
 
     for (perm1, perm2), elem in perm_modules3.items():
         product = Sx(perm1) * Sx(perm2)
