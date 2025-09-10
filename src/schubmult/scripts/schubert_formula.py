@@ -183,7 +183,7 @@ def main():
             
             mod = ASx(perm, n-1) * unit_rc_module
             #for seq, coeff in perm_words.items():
-            for aseq in aseqs:
+            for aseq in perm_words:
                 coeff = perm_words.get(aseq, 0)
                 mod2 = FA(*aseq).coproduct() * unit_tensor_rc_module
             
