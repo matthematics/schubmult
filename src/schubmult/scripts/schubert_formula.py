@@ -204,9 +204,13 @@ def main():
                         #perm_modules2[(rc1.perm, rc2.perm,perm)] = perm_modules2.get((rc1.perm, rc2.perm,perm), 0) + coeff * coeff2 * Sx(rc3.perm)
                         
                         #perm_modules3[(perm1, perm2)] = perm_modules3.get((perm1, perm2), RCGraphModule()) + coeff * coeff1 * coeff2 * rc3#filter_perm(FA(*aseq) * unit_rc_module, rc3.perm)
+                        #perm_words2 = ASx(rc3.perm, len(rc3)).change_basis(WordBasis)
+
                         for aseq1 in aseqs:
-                #mod = FA(*seq) * unit_rc_module    
-                
+                #mod = FA(*seq) * unit_rc_modul    
+                            detector = FA(*aseq1).change_basis(SchubertBasis)
+                            if detector.get((rc3.perm, len(aseq1)), 0) == 0:
+                                continue
                             posmod = FA(*aseq1) * unit_rc_module
                             perm_modules3[(perm1, perm2)] = perm_modules3.get((perm1, perm2), RCGraphModule()) + coeff * coeff1 * coeff2 * filter_perm(posmod, rc3.perm)
                     #rc3#filter_perm(FA(*aseq) * unit_rc_module, rc3.perm)
