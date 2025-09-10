@@ -182,30 +182,31 @@ def main():
                 posmod = FA(*aseq1) * unit_rc_module
                 #perm = uncode(aseq)
                 perm_words = ASx(perm, n-1).change_basis(WordBasis)
-                detector = FA(*aseq1).change_basis(SchubertBasis)
+                detector = {rc.perm for rc in posmod}
                 
                 mod = ASx(perm, n-1) * unit_rc_module
                 #for seq, coeff in perm_words.items():
                 for rc3, coeff2 in mod.items():
-                    if detector.get((rc3.perm, len(aseq1)), 0) == 0:
-                            continue
-                    for aseq in perm_words:
-                        if len(rc3.perm) > n:
+                    for rc4, coeff4 in posmod.items():
+                        if rc3.perm != rc4.perm:
                                 continue
-                        
-                        # perms_with_this = FA(*aseq).change_basis(SchubertBasis)
-                        # if perms_with_this.get((perm, n-1), 0) == 0:
-                        #     continue
-                        coeff = perm_words.get(aseq, 0)
-                        if coeff == 0:
-                            continue
-                        mod2 = FA(*aseq).coproduct() * unit_tensor_rc_module
-                    
-                        for (rc1, rc2), coeff1 in mod2.items():
-                            if len(rc1.perm) > n or len(rc2.perm) > n:
+                        for aseq in perm_words:
+                            if len(rc3.perm) > n:
                                     continue
-                            perm_modules[perm] = perm_modules.get(perm, 0) + coeff1 * ring((asxt(rc1), asxt(rc2)))
-                            perm1, perm2 = rc1.perm, rc2.perm
+                            
+                            # perms_with_this = FA(*aseq).change_basis(SchubertBasis)
+                            # if perms_with_this.get((perm, n-1), 0) == 0:
+                            #     continue
+                            coeff = perm_words.get(aseq, 0)
+                            if coeff == 0:
+                                continue
+                            mod2 = FA(*aseq).coproduct() * unit_tensor_rc_module
+                        
+                            for (rc1, rc2), coeff1 in mod2.items():
+                                if len(rc1.perm) > n or len(rc2.perm) > n:
+                                        continue
+                                perm_modules[perm] = perm_modules.get(perm, 0) + coeff1 * ring((asxt(rc1), asxt(rc2)))
+                                perm1, perm2 = rc1.perm, rc2.perm
                                 
                                 #perm_modules2[(rc1.perm, rc2.perm,perm)] = perm_modules2.get((rc1.perm, rc2.perm,perm), 0) + coeff * coeff2 * Sx(rc3.perm)
                                 
@@ -213,7 +214,7 @@ def main():
                                 #perm_words2 = ASx(rc3.perm, len(rc3)).change_basis(WordBasis)
         #mod = FA(*seq) * unit_rc_modul    
                                 
-                            perm_modules3[(perm1, perm2)] = perm_modules3.get((perm1, perm2), RCGraphModule()) + coeff * coeff1 * coeff2 * filter_perm(posmod, rc3.perm)
+                                perm_modules3[(perm1, perm2)] = perm_modules3.get((perm1, perm2), RCGraphModule()) + coeff * coeff1 * coeff2 * coeff4 * rc4
                     #rc3#filter_perm(FA(*aseq) * unit_rc_module, rc3.perm)
                     #filter_perm(mod, rc3.perm)
 
