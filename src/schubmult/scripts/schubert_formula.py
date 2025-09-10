@@ -45,7 +45,8 @@ def main():
                     if rc3.perm != rc4.perm:
                         continue
                     multiplier += coeff3
-
+                # this inner products it
+                sumtiplier = 0
                 for aseq, coeff, in perm_words.items(): # ASx perm word coeff is coeff
                     mod2 = FA(*aseq).coproduct() * unit_tensor_rc_module
                     # coeff is perm_words for some coeff3
@@ -55,6 +56,8 @@ def main():
             
                         perm1, perm2 = rc1.perm, rc2.perm
                         magic_coeffs[(perm1, perm2)] = magic_coeffs.get((perm1,perm2),0) + multiplier * coeff * coeff1 
+                        sumtiplier += multiplier * coeff
+                assert sumtiplier == 0 or rc4.perm == perm
 
             for key, magic_coeff in magic_coeffs.items():
                 perm_modules3[key] = perm_modules3.get(key, RCGraphModule()) + magic_coeff * rc4
