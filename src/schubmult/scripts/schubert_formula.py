@@ -1,9 +1,8 @@
 import sys
 
-from schubmult import ASx, Permutation, uncode
+from schubmult import ASx, Permutation
 from schubmult.rings import FA, Sx, WordBasis
-from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule, RCGraphTensor, TensorModule
-from schubmult.utils.perm_utils import artin_sequences
+from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule, TensorModule
 
 
 def vector_sum(v1, v2):
@@ -27,13 +26,12 @@ def main():
 
     perm_modules3 = {}
 
-
     # this is an inner product of RCs
     perms = Permutation.all_permutations(n)
     for perm in perms:
         perm_words = ASx(perm, n - 1).change_basis(WordBasis)
         # mod = ASx(perm, n - 1) * unit_rc_module
-        for rc4 in RCGraph.all_rc_graphs(perm, n-1):
+        for rc4 in RCGraph.all_rc_graphs(perm, n - 1):
             magic_coeffs = {}
             # PUT THIS BACK IF NEEDED
             # multiplier = 0
@@ -50,20 +48,23 @@ def main():
 
             # the coproduct of the ASx RC graphs
             # selects a term, termwise
-            for aseq, coeff, in perm_words.items(): # ASx perm word coeff is coeff
+            for (
+                aseq,
+                coeff,
+            ) in perm_words.items():  # ASx perm word coeff is coeff
                 mod2 = FA(*aseq).coproduct() * unit_tensor_rc_module
                 # coeff is perm_words for some coeff3
-                for (rc1, rc2), coeff1 in mod2.items(): # positive coproduct coeff is coeff1
+                for (rc1, rc2), coeff1 in mod2.items():  # positive coproduct coeff is coeff1
                     if len(rc1.perm) > n or len(rc2.perm) > n:
                         continue
 
                     perm1, perm2 = rc1.perm, rc2.perm
-                    magic_coeffs[(perm1, perm2)] = magic_coeffs.get((perm1,perm2),0) + coeff * coeff1 
+                    magic_coeffs[(perm1, perm2)] = magic_coeffs.get((perm1, perm2), 0) + coeff * coeff1
                     # print(f"{perm1.trimcode} {perm2.trimcode} += {multiplier*coeff*coeff1}")
                     # print(RCGraphTensor(rc1, rc2))
                     # print("inner product")
                     # print(rc4)
-                    #sumtiplier += multiplier * coeff
+                    # sumtiplier += multiplier * coeff
 
             for key, magic_coeff in magic_coeffs.items():
                 assert magic_coeff >= 0
