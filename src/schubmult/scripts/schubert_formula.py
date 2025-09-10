@@ -177,14 +177,13 @@ def main():
         perm_modules3 = {}
         
         for aseq0 in aseqs:
+            perm = uncode(aseq0)
+            perm_words = ASx(perm, n-1).change_basis(WordBasis)
+            mod = ASx(perm, n-1) * unit_rc_module
             for aseq1 in aseqs:
-                perm = uncode(aseq0)
+                
                 posmod = FA(*aseq1) * unit_rc_module
                 #perm = uncode(aseq)
-                perm_words = ASx(perm, n-1).change_basis(WordBasis)
-                detector = {rc.perm for rc in posmod}
-                
-                mod = ASx(perm, n-1) * unit_rc_module
                 #for seq, coeff in perm_words.items():
                 for rc3, coeff2 in mod.items():
                     if len(rc3.perm) > n:
@@ -262,17 +261,24 @@ def main():
                 #adduptens[(rc, RCGraph())] = adduptens.get((rc, RCGraph()), 0) + coeff * perm_coeff(rc.perm, rc.length_vector())
                 #adduptens[(rc, RCGraph())] = adduptens.get((rc, RCGraph()), 0) + coeff * full_coeff(rc)
             
-        for perm, elem in perm_modules.items():
-            print(perm.trimcode)
-            print(f"{elem=}")
+        # for perm, elem in perm_modules.items():
+        #     print(perm.trimcode)
+        #     print(f"{elem=}")
             #print(f"{perm_modules2[perm]=}")
             
 
         for (perm1, perm2), elem in perm_modules3.items():
-            if any(len(perm) > n for perm in ((Sx(perm1)* Sx(perm2)).keys())):
+            product = Sx(perm1)* Sx(perm2)
+            if any(len(perm) > n for perm in product.keys()):
                 continue
             print(perm1.trimcode, perm2.trimcode)
             print(elem)
+            val = Sx([]).ring.zero
+            for rc, coeff in elem.items():
+                assert coeff == product.get(rc.perm, 0)
+                val[rc.perm] = coeff
+            assert val == product
+            print(f"Success {perm1.trimcode} {perm2.trimcode}")
         exit()
 
     # def asx_elem(rc):
