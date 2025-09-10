@@ -33,6 +33,7 @@ def main():
     for aseq1 in aseqs:
         posmod = FA(*aseq1) * unit_rc_module
         for rc4, coeff4 in posmod.items():
+            assert coeff4 == 1
             magic_coeffs = {}
             for aseq0 in aseqs:
                 perm = uncode(aseq0)
