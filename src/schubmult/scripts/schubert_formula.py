@@ -24,6 +24,7 @@ def main():
 
     by_coefficient_dict = {}
     by_schub_dict = {}
+    by_term_dict = {}
 
     # this is an inner product of RCs
     perms = Permutation.all_permutations(n)
@@ -33,6 +34,7 @@ def main():
         for rc4 in RCGraph.all_rc_graphs(perm, n - 1):
             extra_coeff = perm_words.get(rc4.length_vector(), 0)
             alternative_magic_coeffs = {}
+            term_coeffs = {}
             magic_coeffs = {}
 
             for (
@@ -40,15 +42,19 @@ def main():
                 coeff,
             ) in perm_words.items():  # ASx perm word coeff is coeff
                 mod2 = FA(*aseq).coproduct() * unit_tensor_rc_module
-                # coeff is perm_words for some coeff3
-
+                do_sum = False
+                if rc4.length_vector() == aseq:
+                    do_sum = True
                 for (rc1, rc2), coeff1 in mod2.items():  # positive coproduct coeff is coeff1
                     if len(rc1.perm) > n or len(rc2.perm) > n:
                         continue
                     assert coeff1 == 1
                     perm1, perm2 = rc1.perm, rc2.perm
                     magic_coeffs[(perm1, perm2)] = magic_coeffs.get((perm1, perm2), 0) + coeff * coeff1
+                    if do_sum:
+                        term_coeffs[(perm1, perm2)] = term_coeffs.get((perm1, perm2), 0) + coeff * coeff1  * extra_coeff
                     alternative_magic_coeffs[(perm1, perm2)] = alternative_magic_coeffs.get((perm1, perm2), 0) + coeff * coeff1 * extra_coeff
+
 
             # term by term (not schub by schub)
             for key, magic_coeff in magic_coeffs.items():
@@ -59,6 +65,10 @@ def main():
             for key, amagic_coeff in alternative_magic_coeffs.items():
                 assert amagic_coeff == 0 or (amagic_coeff == magic_coeffs.get(key, 0) and rc4.is_principal)
                 by_schub_dict[key] = by_schub_dict.get(key, 0) + amagic_coeff * Sx(rc4.perm)
+
+            for key, term_coeff in term_coeffs.items():
+                assert term_coeff >= 0
+                by_term_dict[key] = by_term_dict.get(key, 0) + term_coeff * Sx(rc4.polyvalue(x))
 
             # BIJECTION
 
@@ -74,6 +84,7 @@ def main():
             val[rc.perm] = coeff
         assert val == product
         assert by_schub_dict.get((perm1, perm2), 0) == product
+        assert by_term_dict.get((perm1, perm2), 0) == product
         print(f"Success {perm1.trimcode} {perm2.trimcode}")
     exit()
 
