@@ -2,7 +2,7 @@ import sys
 
 from schubmult import ASx, uncode
 from schubmult.rings import FA, Sx, WordBasis
-from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule, TensorModule
+from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule, RCGraphTensor, TensorModule
 from schubmult.utils.perm_utils import artin_sequences
 
 
@@ -56,10 +56,15 @@ def main():
             
                         perm1, perm2 = rc1.perm, rc2.perm
                         magic_coeffs[(perm1, perm2)] = magic_coeffs.get((perm1,perm2),0) + multiplier * coeff * coeff1 
+                        # print(f"{perm1.trimcode} {perm2.trimcode} += {multiplier*coeff*coeff1}")
+                        # print(RCGraphTensor(rc1, rc2))
+                        # print("inner product")
+                        # print(rc4)
                         sumtiplier += multiplier * coeff
                 assert sumtiplier == 0 or rc4.perm == perm
 
             for key, magic_coeff in magic_coeffs.items():
+                assert magic_coeff >= 0
                 perm_modules3[key] = perm_modules3.get(key, RCGraphModule()) + magic_coeff * rc4
 
     for (perm1, perm2), elem in perm_modules3.items():
