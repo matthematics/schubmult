@@ -187,12 +187,13 @@ def main():
                 mod = ASx(perm, n-1) * unit_rc_module
                 #for seq, coeff in perm_words.items():
                 for rc3, coeff2 in mod.items():
+                    if len(rc3.perm) > n:
+                        continue
                     for rc4, coeff4 in posmod.items():
                         if rc3.perm != rc4.perm:
                                 continue
                         for aseq in perm_words:
-                            if len(rc3.perm) > n:
-                                    continue
+                            
                             
                             # perms_with_this = FA(*aseq).change_basis(SchubertBasis)
                             # if perms_with_this.get((perm, n-1), 0) == 0:
