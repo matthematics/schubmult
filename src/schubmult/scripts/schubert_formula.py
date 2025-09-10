@@ -16,9 +16,9 @@ def main():
     unit_rc_module = RCGraphModule({RCGraph(): 1})
 
     # 100% positive!
-    aseqs = artin_sequences(n - 1)
-    perm_modules = {}
-    ring = ASx @ ASx
+    # aseqs = artin_sequences(n - 1)
+    # perm_modules = {}
+    # ring = ASx @ ASx
 
     def asxt(rc):
         return (rc.perm, len(rc))
