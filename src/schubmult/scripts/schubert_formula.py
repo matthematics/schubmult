@@ -54,11 +54,11 @@ def main():
             # term by term (not schub by schub)
             for key, magic_coeff in magic_coeffs.items():
                 assert magic_coeff >= 0
-                # assert alternative_magic_coeffs.get((*key,rc4.length_vector()), 0) == magic_coeff *
                 by_coefficient_dict[key] = by_coefficient_dict.get(key, RCGraphModule()) + magic_coeff * rc4
 
             # schubpoly by schubpoly
             for key, amagic_coeff in alternative_magic_coeffs.items():
+                assert amagic_coeff == 0 or (amagic_coeff == magic_coeffs.get(key, 0) and rc4.is_principal)
                 by_schub_dict[key] = by_schub_dict.get(key, 0) + amagic_coeff * Sx(rc4.perm)
 
             # BIJECTION
