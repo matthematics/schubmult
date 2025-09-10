@@ -160,8 +160,8 @@ def main():
     for seq in seqs:
         # upmod += TensorModule.ext_multiply(ng_elem_rc(seq,n),
         #                                    FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
-        upmod += TensorModule.ext_multiply(FA(*seq)*unit_rc_module,
-                                          FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
+        # upmod += TensorModule.ext_multiply(FA(*seq)*unit_rc_module,
+        #                                   FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
         upmod2 += TensorModule.ext_multiply(FA(*seq).change_basis(SchubertBasis),
                                             FA(*seq).coproduct()*TensorModule.ext_multiply(unit_rc_module,unit_rc_module))
     addup = {}
@@ -180,109 +180,146 @@ def main():
         return len_coeff(Rc.perm, Rc.length_vector())
     
     ring2 = Sx@Sx
-    for (rc, (key1, key2)), coeff in upmod.items():
-        addup[(key1[0], key2[0])] = addup.get((key1[0], key2[0]), RCGraphModule()) + rc_perm_coeff(rc)*coeff * rc
     for (key, (rc1, rc2)), coeff in upmod2.items():
+        if len(key[0]) > n or len(rc1.perm) > n or len(rc2.perm) > n:
+            continue
         seq = vector_sum(rc1.length_vector(),rc2.length_vector())
-        dual_addup[(rc1.perm,rc2.perm)] = dual_addup.get((rc1.perm,rc2.perm), 0) + coeff*perm_coeff(key[0],seq)*Sx(expand_seq(seq,x))
-        #ring.ext_multiply(FA(*rc1.length_vector()).change_basis(SchubertBasis),FA(*rc2.length_vector()).change_basis(SchubertBasis)) 
-        # dual_addup[rc] = dual_addup.get(rc.perm, ring.zero) + coeff * \
-        #     rc_perm_coeff(rc)*ring((key1,key2))
-        #FreeAlgebraBasis.change_tensor_basis(FA(*rc.length_vector()).coproduct(),SchubertBasis,SchubertBasis)
-
+        if uncode(seq) == key[0] and rc1.perm.bruhat_leq(key[0]) and rc2.perm.bruhat_leq(key[0]):
+            addup[(rc1.perm,rc2.perm)] = addup.get((rc1.perm,rc2.perm), 0) + coeff * Sx(key[0])
+    
     # exit()
     # for (key, (rc1, rc2)), coeff in upmod2.items():
-    #     if len(key[0]) > n or len(rc1.perm) > n or len(rc2.perm) > n:
+    #     #addup[rc.perm] = addup.get(rc.perm, 0) + rc_len_coeff(rc)*coeff * ring((key1,key2))
+    #     if len(rc1.perm) > n or len(rc2.perm) > n or len(key[0]) > n:
     #         continue
-    #     #addup[rc0.perm] = addup.get(rc0.perm, 0) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * ring((rc1, rc2))
     #     seq = vector_sum(rc1.length_vector(),rc2.length_vector())
-    #     # USE THIS TO JUST ADD AN RC
-    #     # ? addup[(rc1.perm,rc2.perm)] = addup.get((rc1.perm,rc2.perm), 0) + ASx(*key).change_basis(WordBasis).get(seq,0)*coeff *Sx(expand_seq(seq,x))
-    #     addup[(rc1.perm,rc2.perm)] = addup.get((rc1.perm,rc2.perm), 0) + ASx(*key).change_basis(WordBasis).get(seq,0)*coeff *Sx(expand_seq(seq,x))
-    #     #dual_addup[key[0]] = dual_addup.get(key[0],0) + perm_coeff(key[0],seq)*coeff * ring(((rc1.perm,len(rc1)), (rc2.perm,len(rc2))))
-    #     #dual_addup[key[0]] = dual_addup.get(key[0],0) + coeff *FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis) 
-    #     #ring.ext_multiply(FA(*rc1.length_vector()).change_basis(SchubertBasis),
-    #                                                                           #                                                 FA(*rc2.length_vector()).change_basis(SchubertBasis))
-    #     #coeff * ring(((rc1.perm,len(rc1)), (rc2.perm,len(rc2))))
-    #     #perm_coeff(key[0],seq)*len_coeff(rc1.perm,rc1.length_vector())*len_coeff(rc2.perm,rc2.length_vector())*coeff * ring(((rc1.perm,len(rc1)), (rc2.perm,len(rc2))))
-    #     #addup[(rc1.perm,rc2.perm)] = addup.get((rc1.perm,rc2.perm), RCGraphModule()) + ASx(*key).change_basis(WordBasis).get(seq,0)*coeff *rcs(seq, key[0])
-    #     #addup[key[0]] = addup.get(key[0], ring.zero) + perm_coeff(rc1.perm,rc1.length_vector())*perm_coeff(rc2.perm,rc2.length_vector())*coeff *ring(((rc1.perm,len(rc1)),(rc2.perm,len(rc2))))
-    #     #Sx(expand_seq(seq,x)) 
-    #     #ring(rc1.polyvalue(x))*Sx(rc2.polyvalue(x))
-    #     #addup[(rc1[0],rc2[0])] = addup.get((rc1[0],rc2[0]), RCGraphModule()) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * rc0
+    #     addup[(rc1.perm,rc2.perm)] = addup.get((rc1.perm,rc2.perm), 0) + perm_coeff(key[0],seq)*coeff *Sx(rc1.polyvalue(x)*rc2.polyvalue(x))
     
-    # for perm, elem in dual_addup.items():
-    #     #elem0 = ASx(perm,n-1).coproduct()
-    #     print(f"{perm=}")
-    #     #print(f"A: {elem0}")
-    #     print(f"B: {elem}")
-        #print(f"Diff {elem0 - elem}")
-    # for (rc0, (rc1, rc2)), coeff in upmod.items():
-    #     if len(rc0.perm) > n or len(rc1[0]) > n or len(rc2[0]) > n:
+    # for (perm1, perm2), elem in addup.items():
+    #     product = Sx(perm1) * Sx(perm2)
+    #     if any(len(perm) > n for perm in product.keys()):
     #         continue
-    #     #addup[rc0.perm] = addup.get(rc0.perm, 0) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * ring((rc1, rc2))
-    #     addup0[(rc1[0],rc2[0])] = addup0.get((rc1[0],rc2[0]), 0) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * Sx(rc0.polyvalue(x))
-    #     addup[(rc1[0],rc2[0])] = addup.get((rc1[0],rc2[0]), RCGraphModule()) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * rc0
-    #     #ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * ring((rc1, rc2))
-    #     #Sx(expand_seq(rc0.length_vector(),x)).get(rc0.perm,0)*coeff * ring((rc1, rc2))
-
-    #for perm, elem in addup.items():
-    #     coproduct = ASx(perm, n-1).coproduct()
-    #     if any(len(perm1[0][0]) > n or len(perm1[1][0])>n for perm1 in coproduct.keys() if coproduct[perm1]!=0):
-    #         continue
-    #     print(perm.trimcode)
+    #     print(perm1.trimcode,perm2.trimcode)
     #     print(elem)
+        
     #     try:
-    #         #assert product == elem
-    #         assert all(v == 0 for v in (coproduct-elem).values())
-            
+    #         assert product == elem
     #     except AssertionError:
-    #         print(f"Failure {perm.trimcode}")
-    #         print("Expected")
-    #         print(coproduct)
-    #         print("Got")
-    #         print(elem)
-    #         exit()
-    #     print(f"Success {perm.trimcode}")
-    #     print(elem)
-    # print(len(addup))
-    # exit()
-    # #     assert product == addup0[(perm1, perm2)], f"Failure on {perm1.trimcode} {perm2.trimcode}\nExpected {product}\nGot {addup0[(perm1, perm2)]}"
+    #         print(f"Failure {perm1.trimcode} {perm2.trimcode}")
+    #         continue
+    #     print(f"Success {perm1.trimcode} {perm2.trimcode}")
 
+    # exit()    
+    # for (perm1, perm2, perm3), elem in addup.items():
+    #     print(perm1.trimcode,perm2.trimcode,perm3.trimcode)
+    #     print(elem)
+    # exit()
+    # for (key, (rc1, rc2)), coeff in upmod2.items():
+    #     seq = vector_sum(rc1.length_vector(),rc2.length_vector())
+    #     dual_addup[key[0]] = dual_addup.get(key[0], 0) + rc_perm_coeff(rc1)*rc_perm_coeff(rc2)*coeff*ring2.ext_multiply(Sx(rc1.polyvalue(x)),Sx(rc2.polyvalue(x)))
+    #     #ring.ext_multiply(FA(*rc1.length_vector()).change_basis(SchubertBasis),FA(*rc2.length_vector()).change_basis(SchubertBasis)) 
+    #     # dual_addup[rc] = dual_addup.get(rc.perm, ring.zero) + coeff * \
+    #     #     rc_perm_coeff(rc)*ring((key1,key2))
+    #     #FreeAlgebraBasis.change_tensor_basis(FA(*rc.length_vector()).coproduct(),SchubertBasis,SchubertBasis)
+
+    # # exit()
     # # for (key, (rc1, rc2)), coeff in upmod2.items():
-    # #     #print(key, rc1, rc2, coeff)
-    # #     if len(rc1.perm) > n or len(rc2.perm) > n:
+    # #     if len(key[0]) > n or len(rc1.perm) > n or len(rc2.perm) > n:
     # #         continue
-    # #     if len(key[0]) > n:
-    # #         continue
-    # #     #perm_coeff(rc1.perm,rc1.length_vector())*perm_coeff(rc2.perm,rc2.length_vector())
+    # #     #addup[rc0.perm] = addup.get(rc0.perm, 0) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * ring((rc1, rc2))
     # #     seq = vector_sum(rc1.length_vector(),rc2.length_vector())
-    # #     #addup2[(rc1.perm, rc2.perm)] = addup2.get((rc1.perm, rc2.perm), 0) + coeff * ASx(*key).change_basis(WordBasis).get(vector_sum(rc1.length_vector(),rc2.length_vector()),0)*Sx(key[0])
-    # #     addup[(rc1.perm, rc2.perm)] = addup.get((rc1.perm, rc2.perm), 0) + coeff * ASx(*key).change_basis(WordBasis).get(seq,0)*Sx(key[0])
-    # #     #RCGraphModule({k: v for k, v in (FA(*seq)*unit_rc_module).items() if k.perm == key[0]})
-    # #     #ASx(*key).change_basis(WordBasis).get(vector_sum(rc1.length_vector(),rc2.length_vector()),0)*ring(((rc1.perm,len(rc1)),(rc2.perm,len(rc2))))
-    # # # for perm, elem in addup2.items():
-    # # #     #perm = rc0.perm
-    # # #     #perm = rc0
-    # # #     diff = ASx(perm, n-1).coproduct() - elem
-    # # #     assert all(v == 0 for v in diff.values()), f"Failure on {perm.trimcode}\nExpected {ASx(perm, n-1).coproduct()}\nGot {elem}"
-    for (perm1, perm2), elem in dual_addup.items():
+    # #     # USE THIS TO JUST ADD AN RC
+    # #     # ? addup[(rc1.perm,rc2.perm)] = addup.get((rc1.perm,rc2.perm), 0) + ASx(*key).change_basis(WordBasis).get(seq,0)*coeff *Sx(expand_seq(seq,x))
+    # #     addup[(rc1.perm,rc2.perm)] = addup.get((rc1.perm,rc2.perm), 0) + ASx(*key).change_basis(WordBasis).get(seq,0)*coeff *Sx(expand_seq(seq,x))
+    # #     #dual_addup[key[0]] = dual_addup.get(key[0],0) + perm_coeff(key[0],seq)*coeff * ring(((rc1.perm,len(rc1)), (rc2.perm,len(rc2))))
+    # #     #dual_addup[key[0]] = dual_addup.get(key[0],0) + coeff *FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis) 
+    # #     #ring.ext_multiply(FA(*rc1.length_vector()).change_basis(SchubertBasis),
+    # #                                                                           #                                                 FA(*rc2.length_vector()).change_basis(SchubertBasis))
+    # #     #coeff * ring(((rc1.perm,len(rc1)), (rc2.perm,len(rc2))))
+    # #     #perm_coeff(key[0],seq)*len_coeff(rc1.perm,rc1.length_vector())*len_coeff(rc2.perm,rc2.length_vector())*coeff * ring(((rc1.perm,len(rc1)), (rc2.perm,len(rc2))))
+    # #     #addup[(rc1.perm,rc2.perm)] = addup.get((rc1.perm,rc2.perm), RCGraphModule()) + ASx(*key).change_basis(WordBasis).get(seq,0)*coeff *rcs(seq, key[0])
+    # #     #addup[key[0]] = addup.get(key[0], ring.zero) + perm_coeff(rc1.perm,rc1.length_vector())*perm_coeff(rc2.perm,rc2.length_vector())*coeff *ring(((rc1.perm,len(rc1)),(rc2.perm,len(rc2))))
+    # #     #Sx(expand_seq(seq,x)) 
+    # #     #ring(rc1.polyvalue(x))*Sx(rc2.polyvalue(x))
+    # #     #addup[(rc1[0],rc2[0])] = addup.get((rc1[0],rc2[0]), RCGraphModule()) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * rc0
+    
+    # # for perm, elem in dual_addup.items():
+    # #     #elem0 = ASx(perm,n-1).coproduct()
+    # #     print(f"{perm=}")
+    # #     #print(f"A: {elem0}")
+    # #     print(f"B: {elem}")
+    #     #print(f"Diff {elem0 - elem}")
+    # # for (rc0, (rc1, rc2)), coeff in upmod.items():
+    # #     if len(rc0.perm) > n or len(rc1[0]) > n or len(rc2[0]) > n:
+    # #         continue
+    # #     #addup[rc0.perm] = addup.get(rc0.perm, 0) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * ring((rc1, rc2))
+    # #     addup0[(rc1[0],rc2[0])] = addup0.get((rc1[0],rc2[0]), 0) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * Sx(rc0.polyvalue(x))
+    # #     addup[(rc1[0],rc2[0])] = addup.get((rc1[0],rc2[0]), RCGraphModule()) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * rc0
+    # #     #ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * ring((rc1, rc2))
+    # #     #Sx(expand_seq(rc0.length_vector(),x)).get(rc0.perm,0)*coeff * ring((rc1, rc2))
+
+    # #for perm, elem in addup.items():
+    # #     coproduct = ASx(perm, n-1).coproduct()
+    # #     if any(len(perm1[0][0]) > n or len(perm1[1][0])>n for perm1 in coproduct.keys() if coproduct[perm1]!=0):
+    # #         continue
+    # #     print(perm.trimcode)
+    # #     print(elem)
+    # #     try:
+    # #         #assert product == elem
+    # #         assert all(v == 0 for v in (coproduct-elem).values())
+            
+    # #     except AssertionError:
+    # #         print(f"Failure {perm.trimcode}")
+    # #         print("Expected")
+    # #         print(coproduct)
+    # #         print("Got")
+    # #         print(elem)
+    # #         exit()
+    # #     print(f"Success {perm.trimcode}")
+    # #     print(elem)
+    # # print(len(addup))
+    # # exit()
+    # # #     assert product == addup0[(perm1, perm2)], f"Failure on {perm1.trimcode} {perm2.trimcode}\nExpected {product}\nGot {addup0[(perm1, perm2)]}"
+
+    # # # for (key, (rc1, rc2)), coeff in upmod2.items():
+    # # #     #print(key, rc1, rc2, coeff)
+    # # #     if len(rc1.perm) > n or len(rc2.perm) > n:
+    # # #         continue
+    # # #     if len(key[0]) > n:
+    # # #         continue
+    # # #     #perm_coeff(rc1.perm,rc1.length_vector())*perm_coeff(rc2.perm,rc2.length_vector())
+    # # #     seq = vector_sum(rc1.length_vector(),rc2.length_vector())
+    # # #     #addup2[(rc1.perm, rc2.perm)] = addup2.get((rc1.perm, rc2.perm), 0) + coeff * ASx(*key).change_basis(WordBasis).get(vector_sum(rc1.length_vector(),rc2.length_vector()),0)*Sx(key[0])
+    # # #     addup[(rc1.perm, rc2.perm)] = addup.get((rc1.perm, rc2.perm), 0) + coeff * ASx(*key).change_basis(WordBasis).get(seq,0)*Sx(key[0])
+    # # #     #RCGraphModule({k: v for k, v in (FA(*seq)*unit_rc_module).items() if k.perm == key[0]})
+    # # #     #ASx(*key).change_basis(WordBasis).get(vector_sum(rc1.length_vector(),rc2.length_vector()),0)*ring(((rc1.perm,len(rc1)),(rc2.perm,len(rc2))))
+    # # # # for perm, elem in addup2.items():
+    # # # #     #perm = rc0.perm
+    # # # #     #perm = rc0
+    # # # #     diff = ASx(perm, n-1).coproduct() - elem
+    # # # #     assert all(v == 0 for v in diff.values()), f"Failure on {perm.trimcode}\nExpected {ASx(perm, n-1).coproduct()}\nGot {elem}"
+    for (perm1, perm2), elem in addup.items():
+        print(perm1.trimcode,perm2.trimcode)
+        print(elem)
         product = Sx(perm1) * Sx(perm2)
         if any(len(perm) > n for perm in product.keys()):
             continue
         try:
             #assert product == elem
-            assert product == dual_addup[(perm1, perm2)]
-            print(dual_addup[(perm1, perm2)])
+            assert product == elem
+            
+            #print(dual_addup[(perm1, perm2, perm3)])
         except AssertionError:
             print(f"Failure {perm1.trimcode} {perm2.trimcode}")
             print("Expected")
             print(product)
             print("Got")
             print(elem)
+            continue
             
         print(f"Success {perm1.trimcode} {perm2.trimcode}")
         
+    exit()
     # for perm, elem in addup2.items():
     #     coproduct = ASx(perm, n-1).coproduct()
     #     if any(len(perm1[0][0]) > n or len(perm1[1][0])>n for perm1 in coproduct.keys()):
