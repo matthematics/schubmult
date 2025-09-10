@@ -32,10 +32,11 @@ def main():
     for perm in perms:
         perm_words = ASx(perm, n - 1).change_basis(WordBasis)
         # mod = ASx(perm, n - 1) * unit_rc_module
+        alternative_magic_coeffs = {}
         for rc4 in RCGraph.all_rc_graphs(perm, n - 1):
             extra_coeff = perm_words.get(rc4.length_vector(), 0)
             magic_coeffs = {}
-            alternative_magic_coeffs = {}
+
             # PUT THIS BACK IF NEEDED
             # multiplier = 0
             # for rc3, coeff3 in mod.items(): #mod is ASx rc graph module, coeff3 ia an ASx perm coeff
@@ -63,8 +64,8 @@ def main():
                     assert coeff1 == 1
                     perm1, perm2 = rc1.perm, rc2.perm
                     magic_coeffs[(perm1, perm2)] = magic_coeffs.get((perm1, perm2), 0) + coeff * coeff1
-                    alternative_magic_coeffs[(perm1, perm2)] = (
-                        alternative_magic_coeffs.get((perm1, perm2), 0)
+                    alternative_magic_coeffs[(perm1, perm2, perm, rc4.length_vector())] = (
+                        alternative_magic_coeffs.get((perm1, perm2, perm, rc4.length_vector()), 0)
                         + coeff
                         * coeff1
                         * extra_coeff
@@ -77,9 +78,11 @@ def main():
                 # this specifically pulls out a single coefficient
             for key, magic_coeff in magic_coeffs.items():
                 assert magic_coeff >= 0
-                if perm == uncode(rc4.length_vector()):
-                    assert alternative_magic_coeffs.get(key, 0) == magic_coeff
+                #assert alternative_magic_coeffs.get((*key,rc4.length_vector()), 0) == magic_coeff * 
                 perm_modules3[key] = perm_modules3.get(key, RCGraphModule()) + magic_coeff * rc4
+
+    for (perm1, perm2, perm, seq), val in alternative_magic_coeffs.items():
+        assert val == sum([v for rc, v in perm_modules3[(perm1, perm2)].items() if rc.length_vector() == seq and rc.perm == perm])
 
     for (perm1, perm2), elem in perm_modules3.items():
         product = Sx(perm1) * Sx(perm2)
