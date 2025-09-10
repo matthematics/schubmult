@@ -182,27 +182,28 @@ def main():
             perm_words = ASx(perm, n-1).change_basis(WordBasis)
             
             mod = ASx(perm, n-1) * unit_rc_module
-            for seq, coeff in perm_words.items():
-                #mod = FA(*seq) * unit_rc_module    
-                
-                mod2 = FA(*seq).coproduct() * unit_tensor_rc_module
-                
-                #the_coprod = FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis)
-                #perm_modules3[perm] = perm_modules3.get(perm, TensorModule) + coeff1 * TensorModule.ext_multiply(filter_perm, 1rc2)
-                #asx_mod = ASx(perm, n-1) * unit_rc_module
-                    
-                
+            #for seq, coeff in perm_words.items():
+            for aseq in aseqs:
+                coeff = perm_words.get(aseq, 0)
+                mod2 = FA(*aseq).coproduct() * unit_tensor_rc_module
+            
                 for (rc1, rc2), coeff1 in mod2.items():
                     if len(rc1.perm) > n or len(rc2.perm) > n:
                             continue
-                    perm_modules[perm] = perm_modules.get(perm, 0) + coeff * coeff1 * ring((asxt(rc1), asxt(rc2)))
+                    perm_modules[perm] = perm_modules.get(perm, 0) + coeff1 * ring((asxt(rc1), asxt(rc2)))
                     perm1, perm2 = rc1.perm, rc2.perm
                     for rc3, coeff2 in mod.items():
                         if len(rc3.perm) > n:
                             continue
                         #perm_modules2[(rc1.perm, rc2.perm,perm)] = perm_modules2.get((rc1.perm, rc2.perm,perm), 0) + coeff * coeff2 * Sx(rc3.perm)
-                        for aseq in aseqs:
-                            perm_modules3[(perm1, perm2)] = perm_modules3.get((perm1, perm2), RCGraphModule()) + coeff * coeff1 * coeff2 * filter_perm(FA(*aseq) * unit_rc_module, rc3.perm)
+                        
+                        #perm_modules3[(perm1, perm2)] = perm_modules3.get((perm1, perm2), RCGraphModule()) + coeff * coeff1 * coeff2 * rc3#filter_perm(FA(*aseq) * unit_rc_module, rc3.perm)
+                        for aseq1 in aseqs:
+                #mod = FA(*seq) * unit_rc_module    
+                
+                            posmod = FA(*aseq1) * unit_rc_module
+                            perm_modules3[(perm1, perm2)] = perm_modules3.get((perm1, perm2), RCGraphModule()) + coeff * coeff1 * coeff2 * filter_perm(posmod, rc3.perm)
+                        #rc3#filter_perm(FA(*aseq) * unit_rc_module, rc3.perm)
                         #filter_perm(mod, rc3.perm)
 
                     #perm1, perm2 = rc1.perm, rc2.perm
