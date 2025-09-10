@@ -80,24 +80,19 @@ def main():
                             * coeff1
                             * extra_coeff
                         )
-                # if do_sum:
-                #     checks[(perm, aseq)] = checks.get((perm, aseq), 0) + coeff * extra_coeff
-                    # print(f"{perm1.trimcode} {perm2.trimcode} += {multiplier*coeff*coeff1}")
-                    # print(RCGraphTensor(rc1, rc2))
-                    # print("inner product")
-                    # print(rc4)
-                    # sumtiplier += multiplier * coeff
-                # this specifically pulls out a single coefficient
+    
+            # schubpoly by schubpoly
             for key, magic_coeff in magic_coeffs.items():
                 assert magic_coeff >= 0
                 #assert alternative_magic_coeffs.get((*key,rc4.length_vector()), 0) == magic_coeff * 
                 perm_modules3[key] = perm_modules3.get(key, RCGraphModule()) + magic_coeff * rc4
 
+            # term by term (not schub by schub)
             for key, amagic_coeff in alternative_magic_coeffs.items():
                 perm_modules4[key] = perm_modules4.get(key, 0) + amagic_coeff * Sx(rc4.polyvalue(x))
 
-    # assert all(v == 1 for v in checks.values()), f"checks failed {checks}"
-
+            # BIJECTION
+    
 
     for (perm1, perm2), elem in perm_modules3.items():
         product = Sx(perm1) * Sx(perm2)
