@@ -162,8 +162,8 @@ def main():
         #                                    FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
         upmod += TensorModule.ext_multiply(FA(*seq)*unit_rc_module,
                                           FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
-        # upmod2 += TensorModule.ext_multiply(FA(*seq).change_basis(SchubertBasis),
-        #                                     FA(*seq).coproduct()*TensorModule.ext_multiply(unit_rc_module,unit_rc_module))
+        upmod2 += TensorModule.ext_multiply(FA(*seq).change_basis(SchubertBasis),
+                                            FA(*seq).coproduct()*TensorModule.ext_multiply(unit_rc_module,unit_rc_module))
     addup = {}
     addup2 = {}
     addup0 = {}
@@ -175,10 +175,20 @@ def main():
 
     def rc_perm_coeff(rc):
         return perm_coeff(rc.perm, rc.length_vector())
-    
 
+    def rc_len_coeff(Rc):
+        return len_coeff(Rc.perm, Rc.length_vector())
+    
+    ring2 = Sx@Sx
     for (rc, (key1, key2)), coeff in upmod.items():
         addup[(key1[0], key2[0])] = addup.get((key1[0], key2[0]), RCGraphModule()) + rc_perm_coeff(rc)*coeff * rc
+    for (key, (rc1, rc2)), coeff in upmod2.items():
+        seq = vector_sum(rc1.length_vector(),rc2.length_vector())
+        dual_addup[(rc1.perm,rc2.perm)] = dual_addup.get((rc1.perm,rc2.perm), 0) + coeff*perm_coeff(key[0],seq)*Sx(expand_seq(seq,x))
+        #ring.ext_multiply(FA(*rc1.length_vector()).change_basis(SchubertBasis),FA(*rc2.length_vector()).change_basis(SchubertBasis)) 
+        # dual_addup[rc] = dual_addup.get(rc.perm, ring.zero) + coeff * \
+        #     rc_perm_coeff(rc)*ring((key1,key2))
+        #FreeAlgebraBasis.change_tensor_basis(FA(*rc.length_vector()).coproduct(),SchubertBasis,SchubertBasis)
 
     # exit()
     # for (key, (rc1, rc2)), coeff in upmod2.items():
@@ -200,11 +210,13 @@ def main():
     #     #Sx(expand_seq(seq,x)) 
     #     #ring(rc1.polyvalue(x))*Sx(rc2.polyvalue(x))
     #     #addup[(rc1[0],rc2[0])] = addup.get((rc1[0],rc2[0]), RCGraphModule()) + ASx(rc0.perm, n-1).change_basis(WordBasis).get(rc0.length_vector(),0)*coeff * rc0
+    
     # for perm, elem in dual_addup.items():
-    #     elem0 = ASx(perm,n-1).coproduct()
-    #     print(f"A: {elem0}")
+    #     #elem0 = ASx(perm,n-1).coproduct()
+    #     print(f"{perm=}")
+    #     #print(f"A: {elem0}")
     #     print(f"B: {elem}")
-    #     print(f"Diff {elem0 - elem}")
+        #print(f"Diff {elem0 - elem}")
     # for (rc0, (rc1, rc2)), coeff in upmod.items():
     #     if len(rc0.perm) > n or len(rc1[0]) > n or len(rc2[0]) > n:
     #         continue
@@ -254,14 +266,14 @@ def main():
     # # #     #perm = rc0
     # # #     diff = ASx(perm, n-1).coproduct() - elem
     # # #     assert all(v == 0 for v in diff.values()), f"Failure on {perm.trimcode}\nExpected {ASx(perm, n-1).coproduct()}\nGot {elem}"
-    for (perm1, perm2), elem in addup.items():
+    for (perm1, perm2), elem in dual_addup.items():
         product = Sx(perm1) * Sx(perm2)
         if any(len(perm) > n for perm in product.keys()):
             continue
         try:
             #assert product == elem
-            assert product == Sx(addup[(perm1, perm2)].polyvalue(x))
-            print(addup[(perm1, perm2)])
+            assert product == dual_addup[(perm1, perm2)]
+            print(dual_addup[(perm1, perm2)])
         except AssertionError:
             print(f"Failure {perm1.trimcode} {perm2.trimcode}")
             print("Expected")
