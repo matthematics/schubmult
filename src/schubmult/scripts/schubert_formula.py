@@ -145,9 +145,9 @@ def main():
     result = 0
     degree = (n*(n-1))//2
     # 100% positive!
-    seqs = set()
-    for deg in range(degree+1):
-        seqs.update(all_fa_degree(deg, n-1))
+    # seqs = set()
+    # for deg in range(degree+1):
+    #     seqs.update(all_fa_degree(deg, n-1))
     #ASx([]).ring @ Sx([]).ring
     test_addup = TensorModule()
     if n == 3:
@@ -157,13 +157,18 @@ def main():
     aseqs = artin_sequences(n-1)
     upmod = TensorModule()
     upmod2 = TensorModule()
-    for seq in seqs:
+    adduptens = {}
+    for seq in aseqs:
         # upmod += TensorModule.ext_multiply(ng_elem_rc(seq,n),
         #                                    FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
         # upmod += TensorModule.ext_multiply(FA(*seq)*unit_rc_module,
         #                                   FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
-        upmod2 += TensorModule.ext_multiply(FA(*seq).change_basis(SchubertBasis),
-                                            FA(*seq).coproduct()*TensorModule.ext_multiply(unit_rc_module,unit_rc_module))
+        the_schub_elem = FA(*seq).change_basis(SchubertBasis)
+        dpmod = FA(*seq).coproduct()*TensorModule.ext_multiply(unit_rc_module,unit_rc_module)
+        for key, coeff in the_schub_elem.items():
+            adduptens[key[0]] = adduptens.get(key[0], TensorModule()) + coeff * dpmod
+        #upmod2 += TensorModule.ext_multiply(FA(*seq).change_basis(SchubertBasis),
+                                            
     addup = {}
     addup2 = {}
     addup0 = {}
@@ -180,12 +185,15 @@ def main():
         return len_coeff(Rc.perm, Rc.length_vector())
     
     ring2 = Sx@Sx
-    for (key, (rc1, rc2)), coeff in upmod2.items():
-        if len(key[0]) > n or len(rc1.perm) > n or len(rc2.perm) > n:
+    for perm, mod in adduptens.items():
+        if len(perm) > n:
             continue
-        seq = vector_sum(rc1.length_vector(),rc2.length_vector())
-        if uncode(seq) == key[0] and rc1.perm.bruhat_leq(key[0]) and rc2.perm.bruhat_leq(key[0]):
-            addup[(rc1.perm,rc2.perm)] = addup.get((rc1.perm,rc2.perm), 0) + coeff * Sx(key[0])
+        for (rc1, rc2), coeff in mod.items():
+            if len(rc1.perm) > n or len(rc2.perm) > n:
+                continue
+            seq = vector_sum(rc1.length_vector(),rc2.length_vector())
+            if uncode(seq) == perm and ASx(perm,n-1).coproduct().get(((rc1.perm,len(rc1)),(rc2.perm,len(rc2))),0) != 0:
+                addup[(rc1.perm,rc2.perm)] = addup.get((rc1.perm,rc2.perm), 0) + coeff * Sx(perm)
     
     # exit()
     # for (key, (rc1, rc2)), coeff in upmod2.items():
