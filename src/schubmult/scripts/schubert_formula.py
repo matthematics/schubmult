@@ -1,4 +1,5 @@
 import sys
+from operator import mod
 
 from schubmult import ASx, Permutation, uncode
 from schubmult.abc import x, y, z
@@ -166,27 +167,48 @@ def main():
     ring = ASx@ASx
     def asxt(rc):
         return (rc.perm, len(rc))
+    unit_tensor_rc_module = TensorModule.ext_multiply(unit_rc_module, unit_rc_module)
     if True:
         perm_modules2 = {}
         for perm in perms:
             perm_words = ASx(perm, n-1).change_basis(WordBasis)
             #pc = perm_coeff(perm,seq)
-            mod = perm_words.coproduct() * TensorModule.ext_multiply(unit_rc_module, unit_rc_module)
-            
-            print(mod)
+            #perm_words_cp = perm_words.coproduct()# * TensorModule.ext_multiply(unit_rc_module, unit_rc_module)
+            # mod2 = perm_words * unit_rc_module
+            # print(mod)
             #print(mod2)
-            fullmod = 0
-            for (rc1, rc2), coeff in mod.items():
-                if len(rc1.perm) > n or len(rc2.perm) > n:
-                        continue
-                perm_modules[perm] = perm_modules.get(perm, 0) + coeff * ring((asxt(rc1), asxt(rc2)))
-                seq = vector_sum(rc1.length_vector(),rc2.length_vector())
-                mod2 = FA(*seq) * unit_rc_module
-                for rc3, coeff2 in mod2.items():
+            #fullmod = 0
+
+            for seq, coeff in perm_words.items():
+                
+                mod2 = FA(*seq).coproduct() * unit_tensor_rc_module
+                for (rc1, rc2), coeff1 in mod2.items():
+                    if len(rc1.perm) > n or len(rc2.perm) > n:
+                            continue
+                    perm_modules[perm] = perm_modules.get(perm, 0) + coeff * coeff1 * ring((asxt(rc1), asxt(rc2)))
+                # seq = vector_sum(rc1.length_vector(),rc2.length_vector())
+                # mod2 = FA(*seq) * unit_rc_module
+            for ((perm1, _), (perm2, _)), coeff3 in perm_modules[perm].items():
+                mod = ASx(perm, n-1) * unit_rc_module
+                for rc3, coeff2 in mod.items():
                     if len(rc3.perm) > n:
                         continue
-                    perm_modules2[(rc1.perm, rc2.perm)] = perm_modules2.get((rc1.perm, rc2.perm), 0) + coeff * coeff2 * Sx(rc3.perm)
+                    #perm_modules2[(rc1.perm, rc2.perm,perm)] = perm_modules2.get((rc1.perm, rc2.perm,perm), 0) + coeff * coeff2 * Sx(rc3.perm)
+                    perm_modules2[(perm1, perm2)] = perm_modules2.get((perm1, perm2), 0) + coeff2 * coeff3 * Sx(rc3.perm)
                     # #perm_modules[perm] = perm_modules.get(perm, 0) + coeff * ring((asxt(rc1), asxt(rc2)))
+
+            # for (rc1, rc2), coeff in mod.items():
+            #     if len(rc1.perm) > n or len(rc2.perm) > n:
+            #             continue
+            #     perm_modules[perm] = perm_modules.get(perm, 0) + coeff * ring((asxt(rc1), asxt(rc2)))
+            #     seq = vector_sum(rc1.length_vector(),rc2.length_vector())
+            #     mod2 = FA(*seq) * unit_rc_module
+            #     for rc3, coeff2 in mod2.items():
+            #         if len(rc3.perm) > n:
+            #             continue
+            #         #perm_modules2[(rc1.perm, rc2.perm,perm)] = perm_modules2.get((rc1.perm, rc2.perm,perm), 0) + coeff * coeff2 * Sx(rc3.perm)
+            #         perm_modules2[(rc1.perm, rc2.perm)] = perm_modules2.get((rc1.perm, rc2.perm), 0) + coeff * coeff2 * Sx(rc3.perm)
+            #         # #perm_modules[perm] = perm_modules.get(perm, 0) + coeff * ring((asxt(rc1), asxt(rc2)))
                     
                     # perm_modules2[perm] = perm_modules2.get(perm)
                 #perm_modules[perm] = perm_modules.get(perm, TensorModule()) + coeff * TensorModule.ext_multiply(1*rc1,1*rc2)
@@ -198,7 +220,8 @@ def main():
             
         for perm, elem in perm_modules.items():
             print(perm.trimcode)
-            print(elem)
+            print(f"{elem=}")
+            #print(f"{perm_modules2[perm]=}")
             
 
         for (perm1, perm2), elem in perm_modules2.items():
