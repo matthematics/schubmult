@@ -57,7 +57,7 @@ def main():
                 for (rc1, rc2), coeff1 in mod2.items():  # positive coproduct coeff is coeff1
                     if len(rc1.perm) > n or len(rc2.perm) > n:
                         continue
-
+                    assert coeff1 == 1
                     perm1, perm2 = rc1.perm, rc2.perm
                     magic_coeffs[(perm1, perm2)] = magic_coeffs.get((perm1, perm2), 0) + coeff * coeff1
                     # print(f"{perm1.trimcode} {perm2.trimcode} += {multiplier*coeff*coeff1}")
@@ -65,7 +65,7 @@ def main():
                     # print("inner product")
                     # print(rc4)
                     # sumtiplier += multiplier * coeff
-
+                # this specifically pulls out a single coefficient
             for key, magic_coeff in magic_coeffs.items():
                 assert magic_coeff >= 0
                 perm_modules3[key] = perm_modules3.get(key, RCGraphModule()) + magic_coeff * rc4
