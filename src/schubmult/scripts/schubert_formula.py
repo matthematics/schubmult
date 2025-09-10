@@ -144,6 +144,7 @@ def main():
     # result = TensorModule()
     result = 0
     degree = (n*(n-1))//2
+    perms = Permutation.all_permutations(n)
     # 100% positive!
     # seqs = set()
     # for deg in range(degree+1):
@@ -157,16 +158,14 @@ def main():
     aseqs = artin_sequences(n-1)
     upmod = TensorModule()
     upmod2 = TensorModule()
-    adduptens = {}
+    adduptens = TensorModule()
     for seq in aseqs:
         # upmod += TensorModule.ext_multiply(ng_elem_rc(seq,n),
         #                                    FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
         # upmod += TensorModule.ext_multiply(FA(*seq)*unit_rc_module,
         #                                   FreeAlgebraBasis.change_tensor_basis(FA(*seq).coproduct(),SchubertBasis,SchubertBasis))
-        the_schub_elem = FA(*seq).change_basis(SchubertBasis)
         dpmod = FA(*seq).coproduct()*TensorModule.ext_multiply(unit_rc_module,unit_rc_module)
-        for key, coeff in the_schub_elem.items():
-            adduptens[key[0]] = adduptens.get(key[0], TensorModule()) + coeff * dpmod
+        adduptens = adduptens + dpmod
         #upmod2 += TensorModule.ext_multiply(FA(*seq).change_basis(SchubertBasis),
                                             
     addup = {}
@@ -185,16 +184,32 @@ def main():
         return len_coeff(Rc.perm, Rc.length_vector())
     
     ring2 = Sx@Sx
-    for perm, mod in adduptens.items():
-        if len(perm) > n:
-            continue
-        for (rc1, rc2), coeff in mod.items():
+    addup = {}
+    for perm in perms:
+        perm_coeffs = {}
+        for (rc1, rc2), coeff in adduptens.items():
             if len(rc1.perm) > n or len(rc2.perm) > n:
                 continue
-            seq = vector_sum(rc1.length_vector(),rc2.length_vector())
-            if uncode(seq) == perm and ASx(perm,n-1).coproduct().get(((rc1.perm,len(rc1)),(rc2.perm,len(rc2))),0) != 0:
-                addup[(rc1.perm,rc2.perm)] = addup.get((rc1.perm,rc2.perm), 0) + coeff * Sx(perm)
+            perm_coeffs[(rc1.perm,rc2.perm)] = perm_coeffs.get((rc1.perm,rc2.perm), 0) + coeff * perm_coeff(perm, vector_sum(rc1.length_vector(),rc2.length_vector()))
+        
+        bad_coeffs = {k: v for k, v in perm_coeffs.items() if v < 0}
+        try:
+            assert len(bad_coeffs) == 0
+        except AssertionError:
+            for (perm1, perm2) in bad_coeffs:
+                assert any(len(p) > n for p in (Sx(perm1)*Sx(perm2)).keys()), f"Failure on {perm.trimcode} {perm1.trimcode} {perm2.trimcode} with coeff {bad_coeffs[(perm1,perm2)]}"
+        for (perm1, perm2), coeff2 in perm_coeffs.items():
+            addup[(perm1,perm2)] = addup.get((perm1,perm2), 0) + coeff2 * Sx(perm)
     
+    #cprd = {}
+    # for (perm1, perm2, perm3), elem in addup.items():
+    #     print(perm1.trimcode,perm2.trimcode,perm3.trimcode)
+    #     print(elem)
+    #     cprd[(perm1, perm2)] = cprd.get(perm3, 0) + elem.get(perm3, 0)*Sx(perm3)
+    # for (perm1,perm2), elem in addup.items():
+    #     print(perm1.trimcode,perm2.trimcode)
+    #     print(elem)
+    # exit()
     # exit()
     # for (key, (rc1, rc2)), coeff in upmod2.items():
     #     #addup[rc.perm] = addup.get(rc.perm, 0) + rc_len_coeff(rc)*coeff * ring((key1,key2))
@@ -307,11 +322,12 @@ def main():
     # # # #     diff = ASx(perm, n-1).coproduct() - elem
     # # # #     assert all(v == 0 for v in diff.values()), f"Failure on {perm.trimcode}\nExpected {ASx(perm, n-1).coproduct()}\nGot {elem}"
     for (perm1, perm2), elem in addup.items():
-        print(perm1.trimcode,perm2.trimcode)
-        print(elem)
         product = Sx(perm1) * Sx(perm2)
         if any(len(perm) > n for perm in product.keys()):
             continue
+        print(perm1.trimcode,perm2.trimcode)
+        print(elem)
+        
         try:
             #assert product == elem
             assert product == elem
@@ -323,7 +339,7 @@ def main():
             print(product)
             print("Got")
             print(elem)
-            continue
+            exit()
             
         print(f"Success {perm1.trimcode} {perm2.trimcode}")
         
