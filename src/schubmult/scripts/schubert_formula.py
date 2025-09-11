@@ -47,7 +47,10 @@ def main():
                     assert coeff1 == 1
                     perm1, perm2 = rc1.perm, rc2.perm
 
-                    # this works by accident
+                    # this works by taking term by term inner products with the RCs in the negative terms
+                    # there's an extra inner sum with FA(*seq) * unit_rc_module times the coeff
+                    # rc's from the pos mod, <ASx(rc4),ASx(rc3)> = delta perm(rc3), perm(rc4)
+                    # rc's with the same permutation, sign of coeff, take sum of schub(rc3) adds up to schub(perm)
                     magic_coeffs[(perm1, perm2)] = magic_coeffs.get((perm1, perm2), 0) + coeff * coeff1
 
                     # This is the same as above for the principal one but 0 otherwise
