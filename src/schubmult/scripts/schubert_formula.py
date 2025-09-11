@@ -33,7 +33,6 @@ def main():
             alternative_magic_coeffs = {}
             term_coeffs = {}
             magic_coeffs = {}
-
             for (
                 aseq,
                 coeff,
@@ -57,6 +56,7 @@ def main():
                     if do_sum:
                         # this picks out the specific coefficient of the term
                         # we get the right weight but from different Schubs
+                        assert coeff == extra_coeff
                         term_coeffs[(perm1, perm2)] = term_coeffs.get((perm1, perm2), 0) + coeff * coeff1 * extra_coeff
 
             # term by term and schub by schub
