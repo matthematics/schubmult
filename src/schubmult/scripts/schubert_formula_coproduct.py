@@ -29,14 +29,22 @@ def main():
     # this is an inner product of RCs
     perms = Permutation.all_permutations(n)
     # Act ASx, principals cancel
-    aseqs = artin_sequences(n-1)
+    # aseqs = artin_sequences(n-1)
+    # for seq in aseqs:
     for perm in perms:
-        pish_mod = (ASx(perm, n-1) * unit_rc_module)
-        for rc, coeff in pish_mod.items():
+        pish_mod = ASx(perm, n-1) * unit_rc_module
+        for rc, bob in pish_mod.items():
             if len(rc.perm) > n:
                 continue
             #solution_module += coeff*TensorModule.ext_multiply(pish_mod,ASx(rc.perm, n-1).coproduct())
-            solution_module2 += coeff*TensorModule.ext_multiply(pish_mod,ASx(rc.perm, n-1).coproduct()*unit_tensor_rc_module)
+            # fist = ASx(rc.perm, n-1).coproduct()*unit_tensor_rc_module
+            # for (rc1, rc2), coeff2 in fist.items():
+            #     if vector_sum(rc1.length_vector(), rc2.length_vector()) == seq:
+            #         #print(f"Adding {(rc, (rc1, rc2))} with coeff {bob*coeff*coeff2}")
+            #solution_module2 += bob * TensorModule.ext_multiply(pish_mod,ASx(rc.perm,n-1).coproduct()*unit_tensor_rc_module)
+            solution_module2 += bob * TensorModule.ext_multiply(pish_mod,ASx(rc.perm,n-1).coproduct()*unit_tensor_rc_module)
+                    #solution_module2 += bob * coeff*TensorModule.ext_multiply(pish_mod,)
+                #solution_module2 += coeff*TensorModule.ext_multiply(pish_mod,FA(*rc.length_vector()).coproduct()*unit_tensor_rc_module)
 
     # for perm in perms:
     #     pish_mod = (ASx(perm, n-1) * unit_rc_module)
@@ -47,7 +55,8 @@ def main():
     #         solution_module2 += coeff*TensorModule.ext_multiply(pish_mod,FA(*rc.length_vector()).coproduct()*unit_tensor_rc_module)
 
             # BIJECTION
-
+    # print(solution_module2)
+    # exit()
     tring = ASx@ASx
     # for seq in aseqs:
     #     schubelem1 = FA(*seq).change_basis(SchubertBasis)
@@ -93,7 +102,8 @@ def main():
         if len(rc0.perm) > n or len(rc1.perm) > n or len(rc2.perm) > n:
             continue
         coproducts2[rc0.perm] = coproducts2.get(rc0.perm, 0) + coeff1 * tring(((rc1.perm,n-1), (rc2.perm,n-1)))
-        #products[(rc1.perm, rc2.perm)] = products.get((rc1.perm, rc2.perm), 0) + coeff1 * Sx(rc0.polyvalue(x))
+        
+        products[(rc1.perm, rc2.perm)] = products.get((rc1.perm, rc2.perm), 0) + coeff1 * Sx(rc0.perm)
 
     # for (perm1, perm2),elem in products.items():
     #     if any(len(perm) > n for perm in (Sx(perm1) * Sx(perm2)).keys()):
@@ -108,22 +118,24 @@ def main():
     #     coproducts3[rc0.perm] = coproducts3.get(rc0.perm, 0) + coeff1 * tring(((rc1.perm,n-1), (rc2.perm,n-1)))
         # products[(key1[0], key2[0])] = products.get((key1[0], key2[0]), 0) + coeff1 * Sx(rc0.polyvalue(x))
         
-    # for (perm1, perm2),elem in products.items():
-    #     if any(len(perm) > n for perm in (Sx(perm1) * Sx(perm2)).keys()):
-    #        continue 
+    for (perm1, perm2),elem in products.items():
+        if any(len(perm) > n for perm in (Sx(perm1) * Sx(perm2)).keys()):
+           continue 
+        print(perm1.trimcode, perm2.trimcode)
+        print(elem)
     #         # check
     #     assert Sx(perm1) * Sx(perm2) == elem, f"Failed check {perm1}, {perm2} {elem=} {Sx(perm1) * Sx(perm2)=}"
-
-    # for perm, elem in coproducts.items():
-    #     print(f"{perm.trimcode}")
-    #     print(elem)
-    #     print(ASx(perm, n-1).coproduct())
-
 
     for perm, elem in coproducts2.items():
         print(f"{perm.trimcode}")
         print(elem)
         print(ASx(perm, n-1).coproduct())
+
+
+    # for perm, elem in coproducts2.items():
+    #     print(f"{perm.trimcode}")
+    #     print(elem)
+    #     print(ASx(perm, n-1).coproduct())
 
     # for perm, elem in coproducts3.items():
     #     print(f"{perm.trimcode}")
