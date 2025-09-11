@@ -1,11 +1,9 @@
 import sys
 
-from schubmult import ASx, Permutation, uncode
+from schubmult import ASx, Permutation
 from schubmult.abc import x
 from schubmult.rings import FA, Sx, WordBasis
-from schubmult.rings.free_algebra_basis import FreeAlgebraBasis, SchubertBasis
-from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule, RCGraphTensor, TensorModule
-from schubmult.utils.perm_utils import artin_sequences
+from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule, TensorModule
 
 
 def vector_sum(v1, v2):
@@ -21,99 +19,80 @@ def main():
 
     unit_tensor_rc_module = TensorModule.ext_multiply(unit_rc_module, unit_rc_module)
 
-    solution_module = TensorModule()
-    solution_module2 = TensorModule()
-    solution_module3 = TensorModule()
-
+    by_coefficient_dict = {}
+    by_schub_dict = {}
+    by_term_dict = {}
 
     # this is an inner product of RCs
     perms = Permutation.all_permutations(n)
-    # Act ASx, principals cancel
-    aseqs = artin_sequences(n-1)
+
     for perm in perms:
-        pish_mod = (ASx(perm, n-1) * unit_rc_module)
-        for rc, coeff in pish_mod.items():
-            if len(rc.perm) > n:
-                continue
-            #solution_module += coeff*TensorModule.ext_multiply(pish_mod,ASx(rc.perm, n-1).coproduct())
-            solution_module2 += coeff*TensorModule.ext_multiply(pish_mod,FreeAlgebraBasis.change_tensor_basis(ASx(rc.perm, n-1).coproduct(),WordBasis,WordBasis)*unit_tensor_rc_module)
+        perm_words = ASx(perm, n - 1).change_basis(WordBasis)
+        for rc4 in RCGraph.all_rc_graphs(perm, n - 1):
+            extra_coeff = perm_words.get(rc4.length_vector(), 0)
+            alternative_magic_coeffs = {}
+            term_coeffs = {}
+            magic_coeffs = {}
+            for (
+                aseq,
+                coeff,
+            ) in perm_words.items():  # ASx perm word coeff is coeff
+                mod2 = FA(*aseq).coproduct() * unit_tensor_rc_module
+                do_sum = False
+                if rc4.length_vector() == aseq:
+                    do_sum = True
+                for (rc1, rc2), coeff1 in mod2.items():  # positive coproduct coeff is coeff1
+                    if len(rc1.perm) > n or len(rc2.perm) > n:
+                        continue
+                    assert coeff1 == 1
+                    perm1, perm2 = rc1.perm, rc2.perm
+
+                    # this works by taking term by term inner products with the RCs in the negative terms
+                    # there's an extra inner sum with FA(*seq) * unit_rc_module times the coeff
+                    # rc's from the pos mod, <ASx(rc4),ASx(rc3)> = delta perm(rc3), perm(rc4)
+                    # rc's with the same permutation, sign of coeff, take sum of schub(rc3) adds up to schub(perm)
+                    magic_coeffs[(perm1, perm2)] = magic_coeffs.get((perm1, perm2), 0) + coeff * coeff1
+
+                    # This is the same as above for the principal one but 0 otherwise
+                    alternative_magic_coeffs[(perm1, perm2)] = alternative_magic_coeffs.get((perm1, perm2), 0) + coeff * coeff1 * extra_coeff
+
+                    if do_sum:
+                        # this picks out the specific coefficient of the term
+                        # we get the right weight but from different Schubs
+                        assert coeff == extra_coeff
+                        term_coeffs[(perm1, perm2)] = term_coeffs.get((perm1, perm2), 0) + coeff * coeff1 * extra_coeff
+
+            # term by term and schub by schub
+            for key, magic_coeff in magic_coeffs.items():
+                assert magic_coeff >= 0
+                by_coefficient_dict[key] = by_coefficient_dict.get(key, RCGraphModule()) + magic_coeff * rc4
+
+            # schub by schub
+            for key, amagic_coeff in alternative_magic_coeffs.items():
+                assert amagic_coeff == 0 or (amagic_coeff == magic_coeffs.get(key, 0) and rc4.is_principal)
+                by_schub_dict[key] = by_schub_dict.get(key, 0) + amagic_coeff * Sx(rc4.perm)
+
+            # term by term only
+            for key, term_coeff in term_coeffs.items():
+                assert term_coeff >= 0
+                by_term_dict[key] = by_term_dict.get(key, 0) + term_coeff * Sx(rc4.polyvalue(x))
 
             # BIJECTION
 
-    tring = ASx@ASx
-    # for seq in aseqs:
-    #     schubelem1 = FA(*seq).change_basis(SchubertBasis)
-    #     mod = RCGraphModule()
-    #     for key, coeff in schubelem1.items():
-    #         mod += coeff * ASx(*key) * unit_rc_module
-    #     print(f"Sequence {seq}")
-    #     print(mod)
-    #     print(mod.schubvalue(Sx))
-    # baby = 0
-    # for perm in perms:
-    #     baby += ASx(perm, n-1)
-    
-    # babyword = baby.change_basis(WordBasis)
-
-    # for seq, coeff in babyword.items():
-    #     pish_mod = (FA(*seq) * unit_rc_module)
-    #     for rc, coeff2 in pish_mod.items():
-    #         solution_module2 += coeff * coeff2 * TensorModule.ext_multiply(pish_mod, FreeAlgebraBasis.change_tensor_basis(ASx(rc.perm, n-1).coproduct(),WordBasis,WordBasis)*unit_tensor_rc_module)
-
-        # cprd = schubelem1.coproduct()
-        # for key0, coeff in schubelem1.items():
-        #     for (key1, key2), coeff2 in cprd.items():
-        #         solution_module2 += ASx(*key0).change_basis(WordBasis).get(seq,0)* coeff2 * TensorModule.ext_multiply(ASx(*key0)*unit_rc_module,tring((key1,key2))*unit_tensor_rc_module)
-
-    #exit()
-    # products = {}
-    #coproducts = {}
-    coproducts2 = {}
-    #coproducts3 = {}
-    
-    # for (rc0, (rc1, rc2)), coeff1 in solution_module.items():
-    #     if len(rc0.perm) > n or len(rc1.perm) > n or len(rc2.perm) > n:
-    #         continue
-    #     if rc0.length_vector() == vector_sum(rc1.length_vector(), rc2.length_vector()):
-    #         coproducts[rc0.perm] = coproducts.get(rc0.perm, 0) + coeff1 * tring((rc1.perm, rc2.perm))
-    # for (rc0, (key1, key2)), coeff1 in solution_module.items():
-    #     if len(rc0.perm) > n or len(key1[0]) > n or len(key2[0]) > n:
-    #         continue
-    #     coproducts[rc0.perm] = coproducts.get(rc0.perm, 0) + coeff1 * tring((key1, key2))
-
-    for (rc0, (rc1, rc2)), coeff1 in solution_module2.items():
-        if len(rc0.perm) > n or len(rc1.perm) > n or len(rc2.perm) > n:
+    for (perm1, perm2), elem in by_coefficient_dict.items():
+        product = Sx(perm1) * Sx(perm2)
+        if any(len(perm) > n for perm in product.keys()):
             continue
-        coproducts2[rc0.perm] = coproducts2.get(rc0.perm, 0) + coeff1 * tring(((rc1.perm,n-1), (rc2.perm,n-1)))
-
-    # for (rc0, (rc1, rc2)), coeff1 in solution_module3.items():
-    #     if len(rc0.perm) > n or len(rc1.perm) > n or len(rc2.perm) > n:
-    #         continue
-    #     coproducts3[rc0.perm] = coproducts3.get(rc0.perm, 0) + coeff1 * tring(((rc1.perm,n-1), (rc2.perm,n-1)))
-        # products[(key1[0], key2[0])] = products.get((key1[0], key2[0]), 0) + coeff1 * Sx(rc0.polyvalue(x))
-        
-    # for (perm1, perm2),elem in products.items():
-    #     if any(len(perm) > n for perm in (Sx(perm1) * Sx(perm2)).keys()):
-    #        continue 
-    #         # check
-    #     assert Sx(perm1) * Sx(perm2) == elem, f"Failed check {perm1}, {perm2} {elem=} {Sx(perm1) * Sx(perm2)=}"
-
-    # for perm, elem in coproducts.items():
-    #     print(f"{perm.trimcode}")
-    #     print(elem)
-    #     print(ASx(perm, n-1).coproduct())
-
-
-    for perm, elem in coproducts2.items():
-        print(f"{perm.trimcode}")
-        print(elem)
-        print(ASx(perm, n-1).coproduct())
-
-    # for perm, elem in coproducts3.items():
-    #     print(f"{perm.trimcode}")
-    #     print(elem)
-    #     print(ASx(perm, n-1).coproduct())
-
+        print(perm1.trimcode, perm2.trimcode)  # noqa: T201
+        print(elem)  # noqa: T201
+        val = Sx([]).ring.zero
+        for rc, coeff in elem.items():
+            assert coeff == product.get(rc.perm, 0)
+            val[rc.perm] = coeff
+        assert val == product
+        assert by_schub_dict.get((perm1, perm2), 0) == product
+        assert by_term_dict.get((perm1, perm2), 0) == product
+        print(f"Success {perm1.trimcode} {perm2.trimcode}")  # noqa: T201
     exit()
 
 
