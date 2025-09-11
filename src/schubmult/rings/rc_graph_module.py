@@ -305,6 +305,12 @@ class RCGraphModule(dict):
                     result += coeff * coeff2 * rc_graph.prod_with_rc(other_rc_graph)
         return result
 
+    def schubvalue(self, sring):
+        ret = S.Zero
+        for k, v in self.items():
+            ret += v * sring(k.perm)
+        return ret
+
     def _produce_poly_dict(self, poly, genset, length):
         from .variables import genset_dict_from_expr
         dct = genset_dict_from_expr(poly, genset)

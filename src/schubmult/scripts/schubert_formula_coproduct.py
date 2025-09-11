@@ -45,8 +45,7 @@ def main():
             #         #print(f"Adding {(rc, (rc1, rc2))} with coeff {bob*coeff*coeff2}")
             #solution_module2 += bob * TensorModule.ext_multiply(pish_mod,ASx(rc.perm,n-1).coproduct()*unit_tensor_rc_module)
             # did the whole pish mod!!!!
-            if rc.is_principal:
-                solution_module2 += bob * TensorModule.ext_multiply(pish_mod,FA(*rc.length_vector()).coproduct()*unit_tensor_rc_module)
+            solution_module2 += TensorModule.ext_multiply(bob * rc,ASx(rc.perm,len(rc)).coproduct()*unit_tensor_rc_module)
     # for seq in aseqs:
     #     pish_mod = FA(*seq) * unit_rc_module
     #     for rc, bob in pish_mod.items():
@@ -135,7 +134,7 @@ def main():
         #coproducts2[rc0.perm] = coproducts2.get(rc0.perm, 0) + coeff1 * tring(((rc1.perm,n-1), (rc2.perm,n-1)))
         
         #shoeff = ASx(rc0.perm,n-1).change_basis(SchubertBasis).get(rc0.length_vector(),0)
-        products[(rc1.perm, rc2.perm)] = products.get((rc1.perm, rc2.perm), 0) + coeff1 *  Sx(rc0.perm)
+        products[(rc1.perm, rc2.perm)] = products.get((rc1.perm, rc2.perm), 0) + coeff1 *  Sx(rc0.polyvalue(x))
         #if rc1.is_principal and rc2.is_principal:
             #products[(rc1.perm, rc2.perm)] = products.get((rc1.perm, rc2.perm), RCGraphModule()) + coeff1 * rc0
             #
