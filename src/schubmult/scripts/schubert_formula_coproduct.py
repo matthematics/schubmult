@@ -1,7 +1,7 @@
 import math
 import sys
 
-from schubmult import ASx, Sx, uncode
+from schubmult import ASx, Permutation, Sx, uncode
 from schubmult.abc import x
 from schubmult.rings import FA, WordBasis
 from schubmult.rings.free_algebra_basis import SchubertBasis
@@ -36,12 +36,31 @@ def main():
 
     aseqs = artin_sequences(n - 1)
 
-    
-    for seq in seqs:
-        poly = Sx(expand_seq(seq, x))
+    perms = Permutation.all_permutations(n)
+
+    rc_graphs = {perm: RCGraph.all_rc_graphs(perm, n - 1) for perm in perms}
+
+    rc_graphs_by_weight = {}
+
+    for perm, rcs in rc_graphs.items():
+        for rc in rcs:
+            dct = rc_graphs_by_weight.get(perm, {})
+            st = dct.get(rc.length_vector(),set())
+            st.add(rc)
+            dct[rc.length_vector()] = st
+            rc_graphs_by_weight[perm] = dct
             
+
+    principal_rcs = {perm: next(iter([rc for rc in rc_graphs[perm] if rc.is_principal])) for perm in perms}
+
+    for seq in aseqs:
+        poly = Sx(expand_seq(seq, x))
         for perm0, coeff0 in poly.items():
-            solution_module3 += coeff0 * TensorModule.ext_multiply(ASx(perm0, n-1) * unit_rc_module,FA(*seq).coproduct() * unit_tensor_rc_module)
+            if len(perm0) > n:
+                continue
+            #solution_module3 += coeff0 * TensorModule.ext_multiply(ASx(perm0, n-1) * unit_rc_module,FA(*seq).coproduct() * unit_tensor_rc_module)
+            for rc in rc_graphs[perm0]:
+                solution_module3 += coeff0 * TensorModule.ext_multiply(RCGraphModule(dict.fromkeys(rc_graphs_by_weight[perm0].get(rc.length_vector(), set()),1)),FA(*seq).coproduct() * unit_tensor_rc_module)
 
     # THIS IS THE CORRECT COPRODUCT
     for seq in seqs:
@@ -246,11 +265,12 @@ def main():
         print(f"{perm1.trimcode}, {perm2.trimcode}")
         check = Sx(perm1)*Sx(perm2)
         sumup = 0
-        print(elem)
         for rc, coeff in elem.items():
             # diff = elem - check
             # print(diff)
-            sumup += coeff * Sx(rc.perm)
+            assert check.get(rc.perm, 0) == coeff
+            if rc.is_principal:
+                sumup += coeff * Sx(rc.perm)
         assert sumup == check
         print(f"Success {sumup}")
         num_successes += 1
