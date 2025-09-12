@@ -54,20 +54,39 @@ def main():
     principal_rcs = {perm: next(iter([rc for rc in rc_graphs[perm] if rc.is_principal])) for perm in perms}
     check3 = TensorModule()
 
+    test_val = {}
+    # for perm0 in perms:
+    #     perm_elem = ASx(perm0, n-1).change_basis(WordBasis)
+    #     for seq, coeff0 in perm_elem.items():
+    #         if coeff0 == 0:
+    #             continue
+    #         rc_module = RCGraphModule()
+    #         right_factor = FA(*seq).change_basis(SchubertBasis).coproduct()
+    #         for weight in rc_graphs_by_weight[perm0]:
+    #             rc_module += len(rc_graphs_by_weight[perm0][weight]) * coeff0 * RCGraphModule(dict.fromkeys(rc_graphs_by_weight[perm0][weight],1))
+    #             # test_val[(perm0, weight)] = test_val.get((perm0, weight), 0) + len(rc_graphs_by_weight[perm0][weight]) * coeff0
+    #         print(rc_module)
+    #         solution_module3 += TensorModule.ext_multiply(rc_module, right_factor)
+
     for perm0 in perms:
         perm_elem = ASx(perm0, n-1).change_basis(WordBasis)
-        for seq, coeff0 in perm_elem.items():
-            if coeff0 == 0:
-                continue
-            rc_module = RCGraphModule()
-            right_factor = FA(*seq).change_basis(SchubertBasis).coproduct()
-            for weight in rc_graphs_by_weight[perm0]:
-                rc_module += len(rc_graphs_by_weight[perm0][weight]) * coeff0 * RCGraphModule(dict.fromkeys(rc_graphs_by_weight[perm0][weight],1))
-            solution_module3 += TensorModule.ext_multiply(rc_module, right_factor)
+        for weight in rc_graphs_by_weight[perm0]:
+            rc_module = len(rc_graphs_by_weight[perm0][weight]) * RCGraphModule(dict.fromkeys(rc_graphs_by_weight[perm0][weight],1))
+            for seq, coeff0 in perm_elem.items():
+                if coeff0 == 0:
+                    continue
+                right_factor = FA(*seq).change_basis(SchubertBasis).coproduct()
+                solution_module3 += coeff0 * TensorModule.ext_multiply(rc_module, right_factor)
+
 
     for (rc, ((perm1, _), (perm2, _))), coeff in solution_module3.items():
         assert coeff >= 0
 
+    # print(test_val)
+
+    # for (perm0, seq), coeff in test_val.items():
+    #     assert coeff == Sx(expand_seq(seq, x)).get(perm0,0), f"Fail on {perm0} {seq} {coeff} {Sx(expand_seq(seq, x)).get(perm0,0)}"
+    # exit()
     # for seq in aseqs:
     #     schub_elem = FA(*seq).change_basis(SchubertBasis)
     #     for perm0, coeff0 in schub_elem.items():
