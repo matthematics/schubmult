@@ -55,8 +55,8 @@ def main():
     check3 = TensorModule()
     
     for perm0 in perms:
-        for seq in aseqs:
-            coeff0 = ASx(perm0, n-1).change_basis(WordBasis).get(seq,0)
+        perm_elem = ASx(perm0, n-1).change_basis(WordBasis)
+        for seq, coeff0 in perm_elem.items():
             if coeff0 == 0:
                 continue
             for weight in rc_graphs_by_weight[perm0]:
