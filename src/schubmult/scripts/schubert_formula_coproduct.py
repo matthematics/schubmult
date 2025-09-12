@@ -2,7 +2,7 @@ import math
 import sys
 
 from schubmult import ASx, uncode
-from schubmult.rings import FA, Sx, WordBasis
+from schubmult.rings import FA, WordBasis
 from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule, TensorModule
 from schubmult.utils.perm_utils import artin_sequences
 
@@ -30,13 +30,15 @@ def main():
             for word_double, coeff_double in elem.items():
                 mod = FA(*word_double) * unit_rc_module
                 for rc, coeff2 in mod.items():
-                    solution_module += coeff * coeff_double * coeff2 * TensorModule.ext_multiply(1*rc, modmod)
+                    solution_module += coeff * coeff_double * coeff2 * TensorModule.ext_multiply(1 * rc, modmod)
 
     coprods = {}
-    for (rc0, (rc1, rc2)), coeff in solution_module.items():
-        if len(rc1.perm) > n or len(rc2.perm) > n or len(rc0.perm) > n:
+    for (rc, (rc1, rc2)), coeff in solution_module.items():
+        perm = rc.perm
+        if len(rc1.perm) > n or len(rc2.perm) > n or len(perm) > n:
             continue
-        coprods[rc0.perm] = coprods.get(rc0.perm, 0) + coeff * (ASx @ ASx).ext_multiply(ASx(rc1.perm, len(rc1)), ASx(rc2.perm, len(rc2)))
+        # assert coeff >= 0 NOPE
+        coprods[perm] = coprods.get(perm, 0) + coeff * (ASx @ ASx).ext_multiply(ASx(rc1.perm, len(rc1)), ASx(rc2.perm, len(rc2)))
 
     num_successes = 0
 
