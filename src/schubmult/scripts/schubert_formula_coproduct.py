@@ -32,13 +32,20 @@ def main():
                 for rc, coeff2 in mod.items():
                     solution_module += coeff * coeff_double * coeff2 * TensorModule.ext_multiply(1 * rc, modmod)
 
+    coprods_interim = {}
     coprods = {}
     for (rc, (rc1, rc2)), coeff in solution_module.items():
         perm = rc.perm
-        if len(rc1.perm) > n or len(rc2.perm) > n or len(perm) > n:
+        perm1, perm2 = rc1.perm, rc2.perm
+        if len(perm1) > n or len(perm2) > n or len(perm) > n:
             continue
         # assert coeff >= 0 NOPE
-        coprods[perm] = coprods.get(perm, 0) + coeff * (ASx @ ASx).ext_multiply(ASx(rc1.perm, len(rc1)), ASx(rc2.perm, len(rc2)))
+        coprods_interim[rc] = coprods_interim.get(rc, 0) + coeff * (ASx @ ASx).ext_multiply(ASx(perm1, len(rc1)), ASx(perm2, len(rc2)))
+
+    for rc, elem in coprods_interim.items():
+        # assert all(v >=0 for v in elem.values()), NOPE
+        coprods[rc.perm] = coprods.get(rc.perm, 0) + elem
+        #coprods[rc.perm] += elem
 
     num_successes = 0
 
