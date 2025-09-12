@@ -1,3 +1,4 @@
+import math
 import sys
 
 from schubmult import ASx, uncode
@@ -29,13 +30,15 @@ def main():
             for word_double, coeff_double in elem.items():
                 mod = FA(*word_double) * unit_rc_module
                 for rc, coeff2 in mod.items():
-                    solution_module += coeff * coeff_double * coeff2 * TensorModule.ext_multiply((ASx @ Sx)(((perm, n - 1), rc.perm)), modmod)
+                    solution_module += coeff * coeff_double * coeff2 * TensorModule.ext_multiply(1*rc, modmod)
 
     coprods = {}
-    for (((perm, _), perm0), (rc1, rc2)), coeff in solution_module.items():
-        if len(rc1.perm) > n or len(rc2.perm) > n or len(perm) > n:
+    for (rc0, (rc1, rc2)), coeff in solution_module.items():
+        if len(rc1.perm) > n or len(rc2.perm) > n or len(rc0.perm) > n:
             continue
-        coprods[perm0] = coprods.get(perm, 0) + coeff * (ASx @ ASx).ext_multiply(ASx(rc1.perm, len(rc1)), ASx(rc2.perm, len(rc2)))
+        coprods[rc0.perm] = coprods.get(rc0.perm, 0) + coeff * (ASx @ ASx).ext_multiply(ASx(rc1.perm, len(rc1)), ASx(rc2.perm, len(rc2)))
+
+    num_successes = 0
 
     for perm, elem in coprods.items():
         print(f"{perm.trimcode}")
@@ -45,7 +48,9 @@ def main():
         diff = elem - check
         print(diff)
         assert all(v == 0 for v in diff.values()), f"Failed check on {perm}, diff = {diff}"
+        num_successes += 1
 
+    assert num_successes == math.factorial(n), f"Only {num_successes} successes, not the full group"
 
 if __name__ == "__main__":
     main()
