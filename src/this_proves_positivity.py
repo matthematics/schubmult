@@ -72,7 +72,7 @@ def main():
         perm_elem = ASx(perm0, n-1).change_basis(WordBasis)
         for weight in rc_graphs_by_weight[perm0]:
             rc_module = RCGraphModule(dict.fromkeys(rc_graphs_by_weight[perm0][weight],1))
-            right_factor = TensorModule()
+            right_factor = 0
             for seq, coeff0 in perm_elem.items():
                 if coeff0 == 0:
                     continue
