@@ -61,7 +61,7 @@ def main():
                 continue
             for weight in rc_graphs_by_weight[perm0]:
                 rc_module = RCGraphModule(dict.fromkeys(rc_graphs_by_weight[perm0][weight],1))
-                solution_module3 += len(rc_graphs_by_weight[perm0][weight]) * coeff0 * TensorModule.ext_multiply(rc_module,FA(*seq).coproduct() * unit_tensor_rc_module)
+                solution_module3 += len(rc_graphs_by_weight[perm0][weight]) * coeff0 * TensorModule.ext_multiply(rc_module,FA(*seq).change_basis(SchubertBasis).coproduct())
 
     # for seq in aseqs:
     #     schub_elem = FA(*seq).change_basis(SchubertBasis)
@@ -162,13 +162,12 @@ def main():
     #     if rc1.is_principal and rc2.is_principal:
     #         coproducts_by_bacon[rc.perm] = coproducts_by_bacon.get(rc.perm, TensorModule()) + coeff * TensorModule({RCGraphTensor(rc1,rc2): 1})
 
-    for (rc, (rc1, rc2)), coeff in solution_module3.items():
+    for (rc, ((perm1, _), (perm2, _))), coeff in solution_module3.items():
         #perm1, perm2 = key1[0], key2[0]
         # perm = rc.perm
-        perm1, perm2 = rc1.perm, rc2.perm
         if len(perm1) > n or len(perm2) > n or len(rc.perm) > n:
             continue
-        products_rc[(rc1.perm, rc2.perm)] = products_rc.get((rc1.perm, rc2.perm), RCGraphModule()) + coeff * rc
+        products_rc[(perm1, perm2)] = products_rc.get((perm1, perm2), RCGraphModule()) + coeff * rc
         #products[(rc1.perm, rc2.perm)] = products_rc.get((rc1.perm, rc2.perm), 0) + coeff * Sx(rc.polyvalue(x))
         # assert coeff >= 0 NOPE
         # coprods_interim[rc.perm] = coprods_interim.get(rc.perm, TensorModule()) + coeff * TensorModule.ext_multiply(1*rc1, ASx(perm2, len(rc2)))
