@@ -4,7 +4,7 @@ from schubmult import ASx, Permutation, uncode
 from schubmult.abc import x
 from schubmult.rings import FA, Sx, WordBasis
 from schubmult.rings.free_algebra_basis import FreeAlgebraBasis, SchubertBasis
-from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule, RCGraphTensor, TensorModule
+from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule, RCGraphTensor, TensorModule, all_fa_degree
 from schubmult.utils.perm_utils import artin_sequences
 
 
@@ -30,22 +30,79 @@ def main():
     perms = Permutation.all_permutations(n)
     # Act ASx, principals cancel
     aseqs = artin_sequences(n-1)
-    for seq in aseqs:
-    #for perm in aseqs:
+    degree = (n*(n-1))//2
+    seqs = set()
+    for deg in range(degree+1):
+        seqs.update(all_fa_degree(deg, n-1))
+    # for seq in aseqs:
+    # #for perm in aseqs:
 
-        pish_mod = FA(*seq) * unit_rc_module
-        #pish_mod = FA(*seq) * unit_rc_module
-        for rc, bob in pish_mod.items():
-            if len(rc.perm) > n:
-                continue
-            #solution_module += coeff*TensorModule.ext_multiply(pish_mod,ASx(rc.perm, n-1).coproduct())
-            # fist = ASx(rc.perm, n-1).coproduct()*unit_tensor_rc_module
-            # for (rc1, rc2), coeff2 in fist.items():
-            #     if vector_sum(rc1.length_vector(), rc2.length_vector()) == seq:
-            #         #print(f"Adding {(rc, (rc1, rc2))} with coeff {bob*coeff*coeff2}")
-            #solution_module2 += bob * TensorModule.ext_multiply(pish_mod,ASx(rc.perm,n-1).coproduct()*unit_tensor_rc_module)
-            # did the whole pish mod!!!!
-            solution_module2 += TensorModule.ext_multiply(bob * rc,ASx(rc.perm,len(rc)).coproduct()*unit_tensor_rc_module)
+    #     pish_mod = FA(*seq) * unit_rc_module
+    #     #pish_mod = FA(*seq) * unit_rc_module
+    #     for rc, bob in pish_mod.items():
+    #         if len(rc.perm) > n:
+    #             continue
+    #         #solution_module += coeff*TensorModule.ext_multiply(pish_mod,ASx(rc.perm, n-1).coproduct())
+    #         # fist = ASx(rc.perm, n-1).coproduct()*unit_tensor_rc_module
+    #         # for (rc1, rc2), coeff2 in fist.items():
+    #         #     if vector_sum(rc1.length_vector(), rc2.length_vector()) == seq:
+    #         #         #print(f"Adding {(rc, (rc1, rc2))} with coeff {bob*coeff*coeff2}")
+    #         #solution_module2 += bob * TensorModule.ext_multiply(pish_mod,ASx(rc.perm,n-1).coproduct()*unit_tensor_rc_module)
+    #         # did the whole pish mod!!!!
+    #         solution_module2 += TensorModule.ext_multiply(bob * rc,ASx(rc.perm,len(rc)).coproduct()*unit_tensor_rc_module)
+    solution_module = TensorModule()
+    pickle_module = TensorModule()
+    # for perm in perms:
+    #     acter = ASx(perm, n-1).change_basis(WordBasis)
+    #     graphs = RCGraph.all_rc_graphs(perm, n - 1)
+    #     graph_module = RCGraphModule(dict.fromkeys(graphs, 1))
+    #     for word, coeff in acter.items():
+    #         solution_module += coeff* TensorModule.ext_multiply(FA(*word).coproduct()*unit_tensor_rc_module, graph_module)
+    #         pickle_module += coeff* TensorModule.ext_multiply(FA(*word).change_basis(SchubertBasis), graph_module)
+
+    #ring = (FA@FA)@Sx
+    ring = (FA@FA)@(ASx@Sx)
+    ring2 = (ASx@ASx)@Sx
+    stink = ASx@Sx
+    solution_element = ring.zero
+    solution_element2 = ring2.zero
+    solution_pickle = stink.zero
+
+    def ring_elem_word(rc):
+        return (ASx@Sx).ext_multiply(ASx(rc.perm,len(rc)), Sx(rc.polyvalue(x)))
+
+    def ring_elem(rc):
+        return (ASx@Sx).ext_multiply(ASx(rc.perm,len(rc)), Sx(rc.perm))
+
+    solution_module = RCGraphModule()
+    for seq in seqs:
+        solution_module += ASx(uncode(seq),n-1) * unit_rc_module
+        #TensorModule.ext_multiply(FA(*word).coproduct()*unit_tensor_rc_module, FA(*word).change_basis(SchubertBasis)*unit_rc_module)
+
+    rabies = 0
+    for rc, coeff in solution_module.items():
+        if len(rc.perm) > n:
+            continue
+        rabies += coeff * ring_elem(rc)
+
+    print(rabies)
+    exit()
+
+    R = (ASx@Sx)
+    for((rc1, rc2),rc), coeff in solution_module.items():
+        solution_element = coeff*((R@R)@R).ext_multiply((R@R).ext_multiply(ring_elem(rc1, n), ring_elem(rc2, n)), ring_elem(rc,n))
+        
+        # if rc.is_principal:
+        #     solution_element2 += coeff *ring2.ext_multiply((ASx@ASx).ext_multiply(FA(*seq1).change_basis(SchubertBasis),
+        #                                                                         FA(*seq2).change_basis(SchubertBasis)), 
+        #                                                                         Sx(rc.perm))
+    for (schub,rc), coeff in pickle_module.items():
+        solution_pickle += coeff * stink((schub, rc.perm))
+
+    print(solution_element)
+    # print(solution_pickle)
+    # print(solution_element2)
+    exit()
     # for seq in aseqs:
     #     pish_mod = FA(*seq) * unit_rc_module
     #     for rc, bob in pish_mod.items():
