@@ -61,6 +61,7 @@ def main():
                 continue
             for weight in rc_graphs_by_weight[perm0]:
                 rc_module = RCGraphModule(dict.fromkeys(rc_graphs_by_weight[perm0][weight],1))
+                assert len(rc_graphs_by_weight[perm0][weight]) == FA(*weight).change_basis(SchubertBasis).get((perm0, n-1),0)
                 solution_module3 += len(rc_graphs_by_weight[perm0][weight]) * coeff0 * TensorModule.ext_multiply(rc_module,FA(*seq).change_basis(SchubertBasis).coproduct())
 
     # for seq in aseqs:
