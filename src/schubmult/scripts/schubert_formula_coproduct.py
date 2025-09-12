@@ -5,6 +5,7 @@ from schubmult.abc import x
 from schubmult.rings import FA, Sx, WordBasis
 from schubmult.rings.free_algebra_basis import FreeAlgebraBasis, SchubertBasis
 from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule, RCGraphTensor, TensorModule, all_fa_degree
+from schubmult.symbolic import expand_seq
 from schubmult.utils.perm_utils import artin_sequences
 
 
@@ -74,18 +75,52 @@ def main():
     def ring_elem(rc):
         return (ASx@Sx).ext_multiply(ASx(rc.perm,len(rc)), Sx(rc.perm))
 
-    solution_module = RCGraphModule()
-    for seq in seqs:
-        solution_module += ASx(uncode(seq),n-1) * unit_rc_module
+    solution_module = TensorModule()
+    # THIS IS THE CORRECT COPRODUCT
+    for seq in aseqs:
+        #mod  = ASx(uncode(seq),n-1) * unit_rc_module
+        perm = uncode(seq)
+        elem = ASx(perm,n-1).change_basis(WordBasis)
+
+        for word, coeff in elem.items():
+            mod = FA(*word) * unit_rc_module
+            for rc, coeff2 in mod.items():
+                solution_module += coeff * coeff2 * TensorModule.ext_multiply((ASx@Sx)(((perm,n-1),rc.perm)), FA(*word).coproduct()*unit_tensor_rc_module)
+
+        # for perm in perms:
+        #     perm_coeff  = ASx(perm,n-1).change_basis(WordBasis).get(seq,0)
+        #     if perm_coeff != 0:
+                # THIS IS IT
+        # mod = FA(*seq) * unit_rc_module
+        # for (rc1, rc2), coeff in mod.items():
+        #     if len(rc1.perm) > n or len(rc2.perm) > n:
+        #         continue
+        #     solution_module2 += coeff * TensorModule.ext_multiply(TensorModule({RCGraphTensor(rc1, rc2): 1}), ASx)
+        #     #
+        # solution_module2 += TensorModule.ext_multiply(X,FA(*seq).coproduct()*unit_tensor_rc_module)
         #TensorModule.ext_multiply(FA(*word).coproduct()*unit_tensor_rc_module, FA(*word).change_basis(SchubertBasis)*unit_rc_module)
 
-    rabies = 0
-    for rc, coeff in solution_module.items():
-        if len(rc.perm) > n:
-            continue
-        rabies += coeff * ring_elem(rc)
+    # rabies = 0
+    # for ((rc1, rc2), perm), coeff in solution_module.items():
+    #     if len(rc1.perm) > n or len(rc2.perm) > n:
+    #         continue
+    #     rabies += coeff *((ASx@ASx)@Sx).ext_multiply((ASx@ASx).ext_multiply(ASx(rc1.perm,n-1), ASx(rc2.perm,n-1)),Sx(perm))
+    # print(rabies)
 
+    # print("TEST")
+
+    rabies = 0
+    R = (ASx@Sx)
+    for (((perm, _),perm0), (rc1, rc2)), coeff in solution_module.items():
+        #perm = rc0.perm
+        if perm != perm0:
+            continue
+        #assert perm == perm0 or coeff == 0
+        if len(rc1.perm) > n or len(rc2.perm) > n or len(perm) > n:
+            continue
+        rabies += coeff *(ASx@(Sx@Sx)).ext_multiply(ASx(perm,n-1),(Sx@Sx).ext_multiply(Sx(rc1.perm), Sx(rc2.perm)))
     print(rabies)
+    
     exit()
 
     R = (ASx@Sx)
