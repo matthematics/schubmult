@@ -41,7 +41,7 @@ def main():
         poly = Sx(expand_seq(seq, x))
             
         for perm0, coeff0 in poly.items():
-            solution_module3 += coeff0 * TensorModule.ext_multiply(RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(perm0, n - 1),1)),FA(*seq).change_basis(SchubertBasis).coproduct())
+            solution_module3 += coeff0 * TensorModule.ext_multiply(ASx(perm0, n-1) * unit_rc_module,FA(*seq).coproduct() * unit_tensor_rc_module)
 
     # THIS IS THE CORRECT COPRODUCT
     for seq in seqs:
@@ -98,10 +98,10 @@ def main():
         products_rc[(rc1.perm, rc2.perm)] = products_rc.get((rc1.perm, rc2.perm), RCGraphModule()) + coeff * rc
         #products_by_weight[(perm1, perm2)] = products_by_weight.get((perm1, perm2), RCGraphModule()) + coeff * rc
 
-    for (rc, (key1, key2)), coeff in solution_module3.items():
-        perm1, perm2 = key1[0], key2[0]
+    for (rc, (rc1, rc2)), coeff in solution_module3.items():
+        #perm1, perm2 = key1[0], key2[0]
         # perm = rc.perm
-        # perm1, perm2 = rc1.perm, rc2.perm
+        perm1, perm2 = rc1.perm, rc2.perm
         if len(perm1) > n or len(perm2) > n or len(rc.perm) > n:
             continue
         # assert coeff >= 0 NOPE
@@ -109,30 +109,21 @@ def main():
         # coprods_interim_rc[rc.perm] = coprods_interim.get(rc.perm, TensorModule()) + coeff * TensorModule.ext_multiply(Sx(rc1.perm), 1 * rc2)
         # coprods_length_vector[rc.length_vector()] = coprods_length_vector.get(rc.length_vector(), 0) + coeff * (FA@FA)((rc1.length_vector(), rc2.length_vector()))
         # coprods_length_vector2[rc.length_vector()] = coprods_length_vector2.get(rc.length_vector(), 0) + coeff * (ASx@ASx)(((rc1.perm,len(rc1)), (rc2.perm,len(rc2))))
-        products_rc2[(perm1, perm2)] = products_rc2.get((perm1, perm2), 0) + coeff * Sx(rc.polyvalue(x))
-        
+        products_by_weight[(rc1.perm, rc2.perm)] = products_by_weight.get((rc1.perm, rc2.perm), RCGraphModule()) + coeff * rc
 
+    for (perm1, perm2), module in products_by_weight.items():
+        print(perm1.trimcode, perm2.trimcode)
+        print(module)
+
+    
     for (perm1, perm2), module in products.items():
         for rc, coeff in module.items():
             weight_sum[rc.length_vector()] = weight_sum.get(rc.length_vector(), 0) + coeff
 
-    # process products_rc2
-    # products_by_weight = {}
-    # rc_graphs_by_weight = {}
-    # for (perm1, perm2), module in products_rc2.items():
-    #     for rc, coeff in module.items():
-    #         if len(rc.perm) > n:
-    #             continue
-    #         if rc.is_principal:
-    #             rc_graphs_by_weight[rc.length_vector()] = rc
-    #             products_by_weight[(perm1,perm2)] = products_by_weight.get((perm1,perm2), RCGraphModule()) + coeff * rc
+    #process products_rc2
     
-    # for (perm1, perm2), module in products_rc2.items():
-    #     for rc, coeff in module.items():
-    #         if len(rc.perm) > n:
-    #             continue
-    #         if not rc.is_principal:
-    #             products_by_weight[(perm1,perm2)] += coeff * rc_graphs_by_weight[rc.length_vector()]
+
+    
 
         
     # for tup, module in products_by_weight.items():
@@ -229,14 +220,39 @@ def main():
         print(f"Success {sumup}")
         num_successes += 1
 
+    print("CHECK4!!!\n\n\n")
+
     for (perm1, perm2), elem in products_rc2.items():
         if product_too_big(perm1, perm2, n):
             continue
         print(f"{perm1.trimcode}, {perm2.trimcode}")
         check = Sx(perm1)*Sx(perm2)
+        sumup = 0
+        for rc, coeff in elem.items():
+            # diff = elem - check
+            # print(diff)
+            assert check.get(rc.perm, 0) == coeff
+            if rc.is_principal:
+                sumup += coeff * Sx(rc.perm)
+        assert sumup == check
+        print(f"Success {sumup}")
+        num_successes += 1
+
+    print("CHECK5!!!\n\n\n")
+
+    for (perm1, perm2), elem in products_by_weight.items():
+        if product_too_big(perm1, perm2, n):
+            continue
+        print(f"{perm1.trimcode}, {perm2.trimcode}")
+        check = Sx(perm1)*Sx(perm2)
+        sumup = 0
         print(elem)
-        assert elem == check
-        print(f"Success {elem}")
+        for rc, coeff in elem.items():
+            # diff = elem - check
+            # print(diff)
+            sumup += coeff * Sx(rc.perm)
+        assert sumup == check
+        print(f"Success {sumup}")
         num_successes += 1
     
     # print("CHECK4!!!\n\n\n")
