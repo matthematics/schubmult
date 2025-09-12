@@ -85,17 +85,16 @@ def main():
         perm = uncode(seq)
         elem = ASx(perm,n-1).change_basis(WordBasis)
         
-        accum_mod = TensorModule()
-        accum_elem = 0
+        # accum_mod = TensorModule()
+        # accum_elem = 0
         for word, coeff in elem.items():
-            mod = FA(*word) * unit_rc_module
-            #addum_mod = 0
-            
-            accum_mod += coeff * FA(*word).coproduct()*unit_tensor_rc_module
-            for rc, coeff2 in mod.items():
-                accum_elem += coeff * coeff2 * (ASx@Sx)(((perm,n-1),rc.perm))
-            
-        solution_module += TensorModule.ext_multiply(accum_elem, accum_mod)
+            modmod = FA(*word).coproduct()*unit_tensor_rc_module
+            for word_double, coeff_double in elem.items():
+                mod = FA(*word_double) * unit_rc_module
+                for rc, coeff2 in mod.items():
+                    solution_module += coeff * coeff_double * coeff2 * TensorModule.ext_multiply((ASx@Sx)(((perm,n-1),rc.perm)), modmod)
+            # accum_mod = TensorModule()
+        
             #coeff * coeff2 * TensorModule.ext_multiply()
 
         # for perm in perms:
