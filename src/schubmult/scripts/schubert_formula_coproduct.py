@@ -13,6 +13,9 @@ def vector_sum(v1, v2):
     return tuple([a + b for a, b in zip(v1, v2)])
 
 
+def product_too_big(perm1, perm2, n):
+    return any(len(perm)>n for perm in (Sx(perm1) * Sx(perm2)).keys())
+
 def main():
     n = int(sys.argv[1])
 
@@ -81,11 +84,19 @@ def main():
         #mod  = ASx(uncode(seq),n-1) * unit_rc_module
         perm = uncode(seq)
         elem = ASx(perm,n-1).change_basis(WordBasis)
-
+        
+        accum_mod = TensorModule()
+        accum_elem = 0
         for word, coeff in elem.items():
             mod = FA(*word) * unit_rc_module
+            #addum_mod = 0
+            
+            accum_mod += coeff * FA(*word).coproduct()*unit_tensor_rc_module
             for rc, coeff2 in mod.items():
-                solution_module += coeff * coeff2 * TensorModule.ext_multiply((ASx@Sx)(((perm,n-1),rc.perm)), FA(*word).coproduct()*unit_tensor_rc_module)
+                accum_elem += coeff * coeff2 * (ASx@Sx)(((perm,n-1),rc.perm))
+            
+        solution_module += TensorModule.ext_multiply(accum_elem, accum_mod)
+            #coeff * coeff2 * TensorModule.ext_multiply()
 
         # for perm in perms:
         #     perm_coeff  = ASx(perm,n-1).change_basis(WordBasis).get(seq,0)
@@ -111,16 +122,29 @@ def main():
 
     rabies = 0
     R = (ASx@Sx)
+    coprods = {}
     for (((perm, _),perm0), (rc1, rc2)), coeff in solution_module.items():
         #perm = rc0.perm
         if perm != perm0:
-            continue
+            print(f"{perm.trimcode} != {perm0.trimcode}")
+            print(TensorModule({RCGraphTensor(rc1, rc2): coeff}))
+            #continue
         #assert perm == perm0 or coeff == 0
         if len(rc1.perm) > n or len(rc2.perm) > n or len(perm) > n:
             continue
-        rabies += coeff *(ASx@(Sx@Sx)).ext_multiply(ASx(perm,n-1),(Sx@Sx).ext_multiply(Sx(rc1.perm), Sx(rc2.perm)))
-    print(rabies)
+        # if product_too_big(rc1.perm, rc2.perm, n):
+        #     continue
+        #coprods[perm] = coprods.get(perm, 0) + coeff *(ASx@ASx).ext_multiply(ASx(rc1.perm, len(rc1)), ASx(rc2.perm, len(rc2)))
+        coprods[perm0] = coprods.get(perm, 0) + coeff *(ASx@ASx).ext_multiply(ASx(rc1.perm, len(rc1)), ASx(rc2.perm, len(rc2)))
     
+    for perm, elem in coprods.items():
+        print(f"{perm.trimcode}")
+        print(elem)
+        check = ASx(perm, n-1).coproduct()
+        print(check)
+        diff = elem - check
+        print(diff)
+        assert all(v == 0 for v in diff.values()), f"Failed check on {perm}, diff = {diff}"
     exit()
 
     R = (ASx@Sx)
@@ -283,3 +307,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
