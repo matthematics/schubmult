@@ -53,27 +53,22 @@ def main():
 
     principal_rcs = {perm: next(iter([rc for rc in rc_graphs[perm] if rc.is_principal])) for perm in perms}
     check3 = TensorModule()
-    # for seq in aseqs:
-    #     poly = Sx(expand_seq(seq, x))
-    #     for perm0, coeff0 in poly.items():
-    #         if len(perm0) > n:
-    #             continue
-    #         #solution_module3 += coeff0 * TensorModule.ext_multiply(ASx(perm0, n-1) * unit_rc_module,FA(*seq).coproduct() * unit_tensor_rc_module)
-    #         for rc in rc_graphs[perm0]:
-    #             rc_module = RCGraphModule(dict.fromkeys(rc_graphs_by_weight[perm0].get(rc.length_vector(), set()),1))
-    #             solution_module3 += coeff0 * TensorModule.ext_multiply(rc_module,FA(*seq).coproduct() * unit_tensor_rc_module)
-
-
     for seq in aseqs:
-        perm = uncode(seq)
-        elem = ASx(perm, n - 1).change_basis(WordBasis)
-        
-        for word1, coeff1 in elem.items():
-           elem2 = FA(*word1).change_basis(SchubertBasis)
-           for (perm2, _), coeff2 in elem2.items():
-               if len(perm2) > n:
-                   continue
-               solution_module3 += coeff1 * coeff2 * ASx(perm2,n-1).change_basis(WordBasis).get(word1, 0) * TensorModule.ext_multiply(RCGraphModule({k: v for k,v in (FA(*word1) * unit_rc_module).items() if k.perm == perm}), FA(*word1).coproduct() * unit_tensor_rc_module)
+        poly = Sx(expand_seq(seq, x))
+        for perm0, coeff0 in poly.items():
+            if len(perm0) > n:
+                continue
+            #solution_module3 += coeff0 * TensorModule.ext_multiply(ASx(perm0, n-1) * unit_rc_module,FA(*seq).coproduct() * unit_tensor_rc_module)
+            for rc in rc_graphs[perm0]:
+                rc_module = RCGraphModule(dict.fromkeys(rc_graphs_by_weight[perm0].get(rc.length_vector(), set()),1))
+                solution_module3 += coeff0 * TensorModule.ext_multiply(rc_module,FA(*seq).coproduct() * unit_tensor_rc_module)
+
+
+    # for seq in aseqs:
+    #     schub_elem = FA(*seq).change_basis(SchubertBasis)
+    #     for perm0, coeff0 in schub_elem.items():
+    #         loop_elem = ASx(*perm0) * unit_rc_module
+    #         solution_module3 += coeff0 * TensorModule.ext_multiply(loop_elem,FA(*seq).coproduct() * unit_tensor_rc_module)
 
         #         for rc2 in rc_module:
         #             check3[rc] = check3.get(rc, TensorModule()) + coeff0 * (FA(*seq).coproduct() * unit_tensor_rc_module)
