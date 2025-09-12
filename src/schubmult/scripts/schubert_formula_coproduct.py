@@ -44,6 +44,7 @@ def main():
     coprods_interim_rc = {}
     products = {}
     products_rc = {}
+    weight_sum = {}
     for (rc, (rc1, rc2)), coeff in solution_module.items():
         perm = rc.perm
         perm1, perm2 = rc1.perm, rc2.perm
@@ -55,8 +56,13 @@ def main():
         # coprods_length_vector[rc.length_vector()] = coprods_length_vector.get(rc.length_vector(), 0) + coeff * (FA@FA)((rc1.length_vector(), rc2.length_vector()))
         # coprods_length_vector2[rc.length_vector()] = coprods_length_vector2.get(rc.length_vector(), 0) + coeff * (ASx@ASx)(((rc1.perm,len(rc1)), (rc2.perm,len(rc2))))
         products[(rc1.perm, rc2.perm)] = products.get((rc1.perm, rc2.perm), RCGraphModule()) + coeff * RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(rc.perm, n - 1), 1))
+
+    for (perm1, perm2), module in products.items():
+        for rc, coeff in module.items():
+            weight_sum[rc.length_vector()] = weight_sum.get(rc.length_vector(), 0) + coeff
         #products_rc[(rc1, rc2)] = products_rc.get((rc1, rc2), 0) + coeff * Sx(perm)
 
+    assert all(v > 0 for v in weight_sum.values()), f"{weight_sum}" # total sums all >= 0
     
 
     # for perm, module in coprods_interim.items():
