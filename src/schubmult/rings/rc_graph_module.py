@@ -745,7 +745,7 @@ def try_lr_module(perm, length=None):
         return unit
     lower_perm = uncode(perm.trimcode[1:])
     elem = ASx(lower_perm, length - 1)
-    lower_module1 = lr_module(lower_perm, length - 1)
+    lower_module1 = try_lr_module(lower_perm, length - 1)
     assert isinstance(lower_module1, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
     ret_elem = ASx(uncode([perm.trimcode[0]]), 1).coproduct() * lower_module1
     assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
@@ -772,7 +772,7 @@ def try_lr_module(perm, length=None):
     for key, coeff in up_elem.items():
         if key[0] != perm:
             assert coeff == 1
-            for (rc1_bad, rc2_bad), cff2 in lr_module(key[0], length).items():
+            for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
                 # to_subtract = cff2
                 # if leftover.get((rc1_bad.perm, rc2_bad.perm), 0) > 0:
                 #     to_subtract += leftover[(rc1_bad.perm, rc2_bad.perm)]
@@ -981,3 +981,26 @@ def change_free_tensor_basis(tensor, old_basis, new_basis):
     for (key1, key2), coeff in tensor.items():
         new_tensor += coeff * new_ring.ext_multiply(original_ring(*key1).change_basis(new_basis), tensor.ring.rings[1](key2))
     return new_tensor
+
+
+if __name__ == "__main__":
+    import sys
+
+    from schubmult import Permutation
+    from schubmult.rings import FA, ASx, SchubertBasis, WordBasis
+
+    perms = Permutation.all_permutations(int(sys.argv[1]))
+
+    for perm in perms:
+        elem = ASx(perm, len(perm.trimcode)).change_basis(WordBasis)
+
+        for word, coeff in elem.items():
+            if uncode(word) != perm and coeff != 0:
+                assert len([rc for rc in RCGraph.all_rc_graphs(perm, len(word)) if rc.length_vector() == word]) == 0, f"Failed for {perm} {word} {coeff}"
+        for rc in RCGraph.all_rc_graphs(perm, len(perm.trimcode)):
+            assert rc.is_principal or elem.get(rc.length_vector(), 0) == 0, f"Failed for {perm} {rc.length_vector()} {rc}"
+            if not rc.is_principal:
+                mod = FA(*rc.length_vector()) * RCGraphModule({rc: 1})
+        
+
+        print("Success for", perm)
