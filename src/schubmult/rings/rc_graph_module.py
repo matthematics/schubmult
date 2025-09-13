@@ -7,7 +7,7 @@ import schubmult.schub_lib.schub_lib as schub_lib
 from schubmult.perm_lib import Permutation, uncode
 from schubmult.rings.nil_hecke import NilHeckeRing
 from schubmult.rings.schubert_ring import DoubleSchubertElement, SingleSchubertRing
-from schubmult.symbolic import S, expand, sympify
+from schubmult.symbolic import S, expand, prod, sympify
 from schubmult.utils.perm_utils import add_perm_dict, artin_sequences
 
 from .free_algebra import FreeAlgebra, FreeAlgebraElement
@@ -58,8 +58,7 @@ class RCGraph(tuple):
         raise ValueError("Can't multiply")
 
     def asdtype(self, cls):
-        if cls == FreeAlgebraElement:
-            return cls.dtype().ring.from_rc_graph(self)
+        return cls.dtype().ring.from_rc_graph(self)
 
     def as_nil_hecke(self, x, y=None):
         R = NilHeckeRing(x)
@@ -640,7 +639,12 @@ class RCGraphTensor(tuple):
         return "\n".join(self.as_str_lines())
 
     def __hash__(self):
-        return hash((tuple(self), "RCGRAPHTENSOR"))
+        return hash(tuple(self))
+
+    def __eq__(self, other):
+        if not isinstance(other, (RCGraphTensor, tuple)):
+            return NotImplemented
+        return tuple(self) == tuple(other)
 
 
 class TensorModule(RCGraphModule):
@@ -768,7 +772,6 @@ def try_lr_module(perm, length=None):
     # ret_elem += TensorModule({RCGraphTensor(rc2, rc1): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(perm) and rc2.perm.bruhat_leq(perm) and rc1.is_principal and not rc2.is_principal})
 
     up_elem = ASx(uncode([perm.trimcode[0]]), 1) * elem
-    leftover = {}
     for key, coeff in up_elem.items():
         if key[0] != perm:
             assert coeff == 1
@@ -1001,6 +1004,5 @@ if __name__ == "__main__":
             assert rc.is_principal or elem.get(rc.length_vector(), 0) == 0, f"Failed for {perm} {rc.length_vector()} {rc}"
             if not rc.is_principal:
                 mod = FA(*rc.length_vector()) * RCGraphModule({rc: 1})
-        
 
         print("Success for", perm)
