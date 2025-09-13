@@ -74,6 +74,7 @@ def main():
     for perm0 in perms:
         perm_elem = ASx(perm0, n-1).change_basis(WordBasis)
         for weight in rc_graphs_by_weight[perm0]:
+            the_sum = 0
             weight_coeff = len(rc_graphs_by_weight[perm0][weight])
             assert weight_coeff == FA(*weight).change_basis(SchubertBasis).get((perm0, n-1))
             rc_module = RCGraphModule(dict.fromkeys(rc_graphs_by_weight[perm0][weight],1))
@@ -82,9 +83,11 @@ def main():
                 if coeff0 == 0:
                     continue
                 coprod_module = FA(*seq).coproduct() * unit_tensor_rc_module
+                the_sum += weight_coeff * coeff0
                 for (rc1, rc2), this_should_be_one in coprod_module.items():
                     assert this_should_be_one == 1
-                    right_factor += weight_coeff * coeff0 *  (ASx@ASx)(((rc1.perm, len(rc1)),(rc2.perm, len(rc2))))
+                    right_factor += weight_coeff * coeff0 *  (ASx@ASx)(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))))
+            assert the_sum == 0 or the_sum == 1
             solution_module3 += TensorModule.ext_multiply(rc_module, right_factor)
 
 
