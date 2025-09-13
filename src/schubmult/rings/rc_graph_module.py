@@ -51,7 +51,11 @@ class RCGraph(tuple):
         return TensorModule({RCGraphTensor(self, other): 1})
 
     def __rmul__(self, other):
-        return RCGraphModule({self: other})
+        if isinstance(other, FreeAlgebraElement):
+            return other * RCGraphModule({self: 1})
+        if isinstance(other, (int, float, S.__class__)):
+            return RCGraphModule({self: other})
+        raise ValueError("Can't multiply")
 
     def asdtype(self, cls):
         if cls == FreeAlgebraElement:
@@ -464,11 +468,10 @@ class RCGraphModule(dict):
 
                     ret = add_perm_dict(ret, addup)
             return RCGraphModule(ret)
-        try:
-            other = sympify(other)
-        except SympifyError:
-            return NotImplemented
-        return RCGraphModule({k: v * other for k, v in self.items()})
+        if isinstance(other, (int, float, S.__class__)):
+            other = sympify(other)        
+            return RCGraphModule({k: v * other for k, v in self.items()})
+        return NotImplemented
 
     def transpose(self):
         return RCGraphModule({graph.transpose(): v for graph, v in self.items()})
@@ -682,11 +685,24 @@ class TensorModule(RCGraphModule):
             return TensorModule(add_perm_dict(self, other))
         return NotImplemented
 
+    def __neg__(self):
+        return TensorModule({k: -v for k, v in self.items()})
+
+    def __sub__(self, other):
+        if isinstance(other, TensorModule):
+            return TensorModule(add_perm_dict(self, -other))
+        return NotImplemented
+
     @classmethod
-    def ext_multiply(cls, elem1, elem2):
+    def ext_multiply(cls, elem1, elem2, strict=False):
         ret = cls()
         for key, val in elem1.items():
+            if strict:
+                if not isinstance(key, RCGraph):
+                    raise ValueError("Not RCGraph in ext_multiply")
             for key2, val2 in elem2.items():
+                if not isinstance(key2, RCGraph):   
+                    raise ValueError("Not RCGraph in ext_multiply")
                 ret += cls({RCGraphTensor(key, key2): val * val2})
         return ret
 
@@ -700,14 +716,10 @@ class TensorModule(RCGraphModule):
                     for kr, vv in addup.items():
                         elem1 = other.ring.rings[0](*k[0]) * RCGraphModule({kr[0]: 1})
                         if isinstance(other.ring.rings[1], TensorRing):
-                            elem2 = other.ring.rings[1](k[1]) * TensorModule({kr[1]: 1})
-                        else:
-                            try:
-                                elem2 = other.ring.rings[1](*k[1]) * RCGraphModule({kr[1]: 1})
-                            except Exception:
-                                elem2 = other.ring.rings[1](k[1]) * RCGraphModule({kr[1]: 1})
+                           raise ValueError("Not implemented")
+                        elem2 = other.ring.rings[1](*k[1]) * RCGraphModule({kr[1]: 1})
 
-                        new_addup += vv * TensorModule.ext_multiply(elem1, elem2)
+                        new_addup += vv * TensorModule.ext_multiply(elem1, elem2, strict = True)
                     addup = new_addup
 
                     ret = add_perm_dict(ret, addup)
@@ -723,38 +735,27 @@ FA = FreeAlgebra(WordBasis)
 
 @cache
 def try_lr_module(perm, length=None):
+        
     if length is None:
         length = len(perm.trimcode)
     elif length < len(perm.trimcode):
-        return 0
+        raise ValueError("Length too short")
     if perm.inv == 0:
-        return TensorModule({RCGraphTensor(RCGraph(), RCGraph()): 1})
+        if length == 0:
+            return TensorModule({RCGraphTensor(RCGraph(),RCGraph()): 1})
+        unit = FA(*([0]*length)).coproduct()*TensorModule({RCGraphTensor(RCGraph(),RCGraph()): 1})
+        return unit
     lower_perm = uncode(perm.trimcode[1:])
     elem = ASx(lower_perm, length - 1)
     lower_module1 = lr_module(lower_perm, length - 1)
-    
+    assert isinstance(lower_module1, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
     ret_elem = ASx(uncode([perm.trimcode[0]]), 1).coproduct() * lower_module1
+    assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
 
-    ret_module = TensorModule({RCGraphTensor(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(perm) and rc2.perm.bruhat_leq(perm) and rc1.is_principal})
-    keys = set(ret_module.keys())
-    bad_keys = set()
-
-    for (rc1, rc2) in keys:
-        good = False
-        for (rc1_2, rc2_2) in keys:
-            if rc1_2.perm == rc2.perm and rc2_2.perm == rc1.perm:
-                good = True
-                break
-        if not good:
-            bad_keys.add((rc1, rc2))
-
-    ret_module = TensorModule({RCGraphTensor(rc1, rc2): v for (rc1, rc2), v in ret_module.items() if (rc1, rc2) not in bad_keys})
+    ret_elem = TensorModule({RCGraphTensor(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(perm) and rc2.perm.bruhat_leq(perm)})
+    
     if length == 1:
-        return ret_module
-    if perm.trimcode[0] == 0:
-        return ret_module
-    # if perm.inv == (len(perm)*(len(perm)-1))//2:
-    #     return ret_elem
+        return ret_elem
     #lower_module2 = FA(0).coproduct() * ret_elem
 
     # trim_module1 = TensorModule({RCGraphTensor(rc1.rowrange(1, len(rc1)),rc2.rowrange(1,len(rc2))): v for (rc1, rc2), v in ret_elem.items()})
@@ -769,14 +770,28 @@ def try_lr_module(perm, length=None):
     #ret_elem += TensorModule({RCGraphTensor(rc2, rc1): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(perm) and rc2.perm.bruhat_leq(perm) and rc1.is_principal and not rc2.is_principal})
     
     up_elem = ASx(uncode([perm.trimcode[0]]), 1)*elem
-
-    
+    leftover = {}
     for key, coeff in up_elem.items():
-        if key[0] != perm and coeff != 0:
-            exclude_mod = try_lr_module(key[0], length)
-            ret_module = TensorModule({RCGraphTensor(rc1, rc2): v for (rc1, rc2), v in ret_module.items() if (rc1, rc2) not in exclude_mod})
+        if key[0] != perm:
+            assert coeff == 1
+            for (rc1_bad, rc2_bad), cff2 in lr_module(key[0], length).items():
+                # to_subtract = cff2
+                # if leftover.get((rc1_bad.perm, rc2_bad.perm), 0) > 0:
+                #     to_subtract += leftover[(rc1_bad.perm, rc2_bad.perm)]
+                #     del leftover[(rc1_bad.perm, rc2_bad.perm)]
+                keys2 = set(ret_elem.keys())
+                for (rc1, rc2) in keys2:
+                   if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
+                       del ret_elem[RCGraphTensor(rc1, rc2)]
+                       break
+    # if len(leftover) > 0:
+    #     raise ValueError(f"Leftover {leftover}")
     
-    return ret_module
+    # print("RESULT COMPARE")
+    # print(trim_module2)
+    # print(ret_module)
+    assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
+    return ret_elem
 
 @cache
 def lr_module(perm, length=None):
@@ -784,20 +799,22 @@ def lr_module(perm, length=None):
     if length is None:
         length = len(perm.trimcode)
     elif length < len(perm.trimcode):
-        return 0
+        raise ValueError("Length too short")
     if perm.inv == 0:
-        return TensorModule({RCGraphTensor(RCGraph(), RCGraph()): 1})
+        if length == 0:
+            return TensorModule({RCGraphTensor(RCGraph(),RCGraph()): 1})
+        unit = FA(*([0]*length)).coproduct()*TensorModule({RCGraphTensor(RCGraph(),RCGraph()): 1})
+        return unit
     lower_perm = uncode(perm.trimcode[1:])
     elem = ASx(lower_perm, length - 1)
     lower_module1 = lr_module(lower_perm, length - 1)
-    
+    assert isinstance(lower_module1, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
     ret_elem = ASx(uncode([perm.trimcode[0]]), 1).coproduct() * lower_module1
-    
+    assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
 
     ret_elem = TensorModule({RCGraphTensor(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(perm) and rc2.perm.bruhat_leq(perm)})
+    
     if length == 1:
-        return ret_elem
-    if perm.trimcode[0] == 0:
         return ret_elem
     #lower_module2 = FA(0).coproduct() * ret_elem
 
@@ -829,9 +846,13 @@ def lr_module(perm, length=None):
                         result = cff - to_subtract
                         if cff < 0:
                             print("Found leftover")
-                            ret_elem -= TensorModule({RCGraphTensor(rc1, rc2): cff})
-                            leftover[(rc1_bad.perm, rc2_bad.perm)] = -result
+                            raise ValueError(f"Negative {rc1_bad.perm=} {rc2_bad.perm=} {to_subtract=} {cff=}")
+                            # ret_elem -= TensorModule({RCGraphTensor(rc1, rc2): cff})
+                            # leftover[(rc1_bad.perm, rc2_bad.perm)] = -result
                         else:
+                            print("Excluding")
+                            print(RCGraphTensor(rc1, rc2))
+                            assert rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()
                             ret_elem -= TensorModule({RCGraphTensor(rc1, rc2): to_subtract})
                         break
     if len(leftover) > 0:
@@ -840,6 +861,7 @@ def lr_module(perm, length=None):
     # print("RESULT COMPARE")
     # print(trim_module2)
     # print(ret_module)
+    assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
     return ret_elem
 
 class DualTensorModule(DualRCGraphModule):
