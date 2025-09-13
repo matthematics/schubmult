@@ -75,10 +75,11 @@ def main():
         perm_elem = ASx(perm0, n-1).change_basis(WordBasis)
         for perm1 in perms:
             for perm2 in perms:
-                for weight1 in rc_graphs_by_weight[perm1]:
-                    for weight2 in rc_graphs_by_weight[perm2]:               
-                        
-                        for weight in rc_graphs_by_weight[perm0]:    
+                
+                for weight in rc_graphs_by_weight[perm0]:    
+                    the_sum = 0
+                    for weight1 in rc_graphs_by_weight[perm1]:
+                        for weight2 in rc_graphs_by_weight[perm2]:               
                             for rc1 in rc_graphs_by_weight[perm1][weight1]:
                                 for rc2 in rc_graphs_by_weight[perm2][weight2]:
                                     coeff0 = perm_elem.get(vector_sum(weight1, weight2), 0)
@@ -86,10 +87,10 @@ def main():
                                     assert weight_coeff == FA(*weight).change_basis(SchubertBasis).get((perm0, n-1))
                                     rc_module = RCGraphModule(dict.fromkeys(rc_graphs_by_weight[perm0][weight],1))
                                     right_factor = 0
-                            #        the_sum += weight_coeff * coeff0
+                                    the_sum += weight_coeff * coeff0
                                     right_factor += weight_coeff * coeff0 *  (ASx@ASx)(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))))
                                     solution_module3 += TensorModule.ext_multiply(rc_module, right_factor)
-                            
+                    assert the_sum == 1 or the_sum == 0
 
     for (rc, ((perm1, _), (perm2, _))), coeff in solution_module3.items():
         assert coeff >= 0
