@@ -68,6 +68,9 @@ def main():
     #         print(rc_module)
     #         solution_module3 += TensorModule.ext_multiply(rc_module, right_factor)
 
+    # SAME FOR aLL RC GRAPHS BY WEIGHT
+    # POSITIVE FOR PRINCIPAL
+    # THEREFORE ALL POSITIVE
     for perm0 in perms:
         perm_elem = ASx(perm0, n-1).change_basis(WordBasis)
         for weight in rc_graphs_by_weight[perm0]:
