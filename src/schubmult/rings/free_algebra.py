@@ -572,6 +572,9 @@ class FreeAlgebra(Ring, CompositeDomain):
         #print(f"{type(other)=} {other=} {other=}")
         raise CoercionFailed
 
+    def from_rc_graph(self, rc_graph):
+        return self.from_dict(self._basis.from_rc_graph(rc_graph))
+
     def matmul(self, elem, other):
         try:
             other = self.domain_new(other)

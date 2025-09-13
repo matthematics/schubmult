@@ -16,6 +16,22 @@ def product_too_big(perm1, perm2, n):
 def vector_sum(v1, v2):
     return tuple([a + b for a, b in zip(v1, v2)])
 
+def lencode(perm, length):
+    cd = [*perm.trimcode]
+    return tuple(cd + [0] * (length - len(cd)))
+
+# def lr_elem(perm):
+#     if perm.inv == 0:
+#         return TensorModule({RCGraphTensor(RCGraph(),RCGraph()): 1})
+#     permset = set(Sx(perm).pull_out_get(Sx.genset[1]).keys())
+#     N = len(perm.trimcode)
+#     ret_elem = 0
+    
+        
+#     return ret_elem
+
+# THE ASX TABLEAU TELL YOU WHAT TO DO
+
 def main():
     n = int(sys.argv[1])
 
@@ -49,7 +65,25 @@ def main():
             st.add(rc)
             dct[rc.length_vector()] = st
             rc_graphs_by_weight[perm] = dct
+
+    for perm in perms:
+        elem = lr_elem(perm)
+
+        check = ASx(perm).coproduct()
+        try:
+            assert all(v == 0 for v in (elem - check).values())
+        except AssertionError:
+            print(f"Fail on {perm}")
+            print(f"A: {elem}")
+            print(f"B: {check}")
+
+        print(f"Success {perm.trimcode}")
+        # for ((perm1, _), (perm2, _)), coeff in check.items():
+        #     count = 0
             
+        #     assert count == coeff, f"Fail on {perm1.trimcode} {perm2.trimcode} {perm.trimcode} {coeff=} {count=}"
+        
+    exit()
 
     principal_rcs = {perm: next(iter([rc for rc in rc_graphs[perm] if rc.is_principal])) for perm in perms}
     check3 = TensorModule()
@@ -72,33 +106,24 @@ def main():
     # POSITIVE FOR PRINCIPAL
     # THEREFORE ALL POSITIVE
     sums = {}
-    for weight in aseqs:
-        sums[weight] = sums.get(weight, {})
-        for perm0 in perms:
-            perm_elem = ASx(perm0, n-1).change_basis(WordBasis)
-            rc_module = RCGraphModule(dict.fromkeys(rc_graphs_by_weight[perm0].get(weight, set()),1))
-            weight_coeff = len(rc_graphs_by_weight[perm0].get(weight, set()))
-            for weight1 in aseqs:
-                sums[weight][weight1] = sums[weight].get(weight1, {})
-                for weight2 in aseqs:
-                    coeff0 = perm_elem.get(vector_sum(weight1, weight2), 0)
-                    sums[weight][weight1][weight2] = sums[weight][weight1].get(weight2, 0)
-                    sums[weight][weight1][weight2] += coeff0 * weight_coeff
-                    for perm1 in perms:
-                        for perm2 in perms:                
+    for perm0 in perms:
+        for rc in rc_graphs[perm0]:
+            if not rc.is_principal:
+                continue
+            for perm1 in perms:
+                for perm2 in perms:
+                    addup = 0
+                    for rc1 in rc_graphs[perm1]:
+                        for rc2 in rc_graphs[perm2]:
+                            perm_elem = ASx(perm0, n-1).change_basis(WordBasis)
+                            coeff0 = perm_elem.get(vector_sum(rc1.length_vector(), rc2.length_vector()), 0)
+                            addup += coeff0
+                            #rc_module = RCGraphModule(dict.fromkeys(rc_graphs_by_weight[perm0].get(weight, set()),1))
+                            #weight_coeff = len(rc_graphs_by_weight[perm0].get(rc.length_vector(), set()))
+                            #solution_module3 += weight_coeff * coeff0 * TensorModule.ext_multiply(1*rc, (ASx@ASx)(((perm1, n-1),(perm2, n-1))))
+                    assert addup >= 0
+                    solution_module3 += addup * TensorModule.ext_multiply(1*rc, (ASx@ASx)(((perm1, n-1),(perm2, n-1))))
                             
-                            for rc1 in rc_graphs_by_weight[perm1].get(weight1, set()):
-                                for rc2 in rc_graphs_by_weight[perm2].get(weight2, set()):
-                                    
-                                    assert weight_coeff == FA(*weight).change_basis(SchubertBasis).get((perm0, n-1), 0)
-                                    solution_module3 += weight_coeff * coeff0 * TensorModule.ext_multiply(rc_module, (ASx@ASx)(((perm1, n-1),(perm2, n-1))))
-                            #assert the_sum == 0 or flag, f"{the_sum=} {flag=}"
-    for w1, dct in sums.items():
-        for w2, dct2 in dct.items():
-            for w3, the_sum in dct2.items():
-                if the_sum != 0:
-                    assert vector_sum(w2,w3) not in aseqs or (the_sum == 1 and vector_sum(w2,w3) == w1), f"Fail on {w1} {w2} {w3} {the_sum}"
-                                #print(f"{perm0} {w1} {w2} {the_sum}")
 
     for (rc, ((perm1, _), (perm2, _))), coeff in solution_module3.items():
         assert coeff >= 0
@@ -323,14 +348,16 @@ def main():
         check = Sx(perm1)*Sx(perm2)
         sumup = 0
         for rc, coeff in elem.items():
+            if rc.is_principal:
+                sumup += coeff * Sx(rc.perm)
             try:
                 assert check.get(rc.perm, 0) == coeff
             except AssertionError as e:
                 print(f"Fail on {rc.perm.trimcode} {coeff=} {check.get(rc.perm, 0)=} {check=}")
                 print(elem)
                 continue
-            if rc.is_principal:
-                sumup += coeff * Sx(rc.perm)
+            
+            
         assert sumup == check
         print(f"Success {sumup}")
         num_successes += 1

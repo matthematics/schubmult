@@ -31,6 +31,9 @@ class FreeAlgebraBasis:
     def is_key(cls, x): ...
 
     @classmethod
+    def from_rc_graph(cls, rc_graph): ...
+
+    @classmethod
     def as_key(cls, x): ...
 
     # @classmethod
@@ -131,6 +134,10 @@ class WordBasis(FreeAlgebraBasis):
     @classmethod
     def as_key(cls, x):
         return tuple(x)
+
+    @classmethod
+    def from_rc_graph(cls, rc_graph):
+        return {rc_graph.length_vector(): 1}
 
     @classmethod
     def product(cls, key1, key2, coeff=S.One):
@@ -681,6 +688,10 @@ class SchubertBasis(FreeAlgebraBasis):
     @classmethod
     def is_key(cls, x):
         return (len(x) == 1 and isinstance(x[0], Permutation | list | tuple)) or (len(x) == 2 and isinstance(x[0], Permutation | list | tuple) and isinstance(x[1], int))
+
+    @classmethod
+    def from_rc_graph(cls, rc_graph):
+        return {(rc_graph.perm, len(rc_graph)): 1}
 
     @classmethod
     def as_key(cls, x):

@@ -48,6 +48,10 @@ class RCGraph(tuple):
     def __rmul__(self, other):
         return RCGraphModule({self: other})
 
+    def asdtype(self, cls):
+        if cls == FreeAlgebraElement:
+            return cls.dtype().ring.from_rc_graph(self)
+
     def as_nil_hecke(self, x, y=None):
         R = NilHeckeRing(x)
         return self.polyvalue(x, y) * R(self.perm)
@@ -274,6 +278,18 @@ class RCGraph(tuple):
             lines2 += [" "*(ml - len(line)) + line]
         return lines2
 
+    def __leq__(self, other):
+        if not isinstance(other, RCGraph):
+            return NotImplemented
+        if len(self) != len(other):
+            return NotImplemented
+        for i in range(len(self)):
+            perm1 = Permutation.ref_product(*self[i])
+            perm2 = Permutation.ref_product(*other[i])
+            if not perm1.bruhat_leq(perm2):
+                return False
+        return True
+
     @property
     def is_principal(self):
         return self.perm == uncode(self.length_vector())
@@ -292,6 +308,9 @@ class RCGraph(tuple):
 
 
 class RCGraphModule(dict):
+
+    def asdtype(self, cls):
+        return sum([v * k.asdtype(cls) for k, v in self.items()])
 
     def __matmul__(self, other):
         return TensorModule.ext_multiply(self, other)
@@ -589,6 +608,9 @@ class RCGraphTensor(tuple):
     def polyvalue(self, x, y=None):
         return self[0].polyvalue(x,y) * self[1].polyvalue(x,y)
 
+    def asdtype(self, cls):
+        if cls == FreeAlgebraElement:
+            return cls.dtype().ring.from_rc_graph_tensor(self)
 
     def __new__(cls, graph1, graph2):
         obj = tuple.__new__(cls, (graph1, graph2))

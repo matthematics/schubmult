@@ -20,6 +20,9 @@ class TensorRing(BaseSchubertRing):
     def args(self):
         return ()
 
+    def from_rc_graph_tensor(self, rc_graph_tensor):
+        return self.ext_multiply(self.rings[0].from_rc_graph(rc_graph_tensor[0]), self.rings[1].from_rc_graph(rc_graph_tensor[1]))
+    
     def __init__(self, *rings):
         self._rings = rings
         genset = set()
