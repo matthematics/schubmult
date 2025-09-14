@@ -15,16 +15,88 @@ from .tensor_ring import TensorRing, TensorRingElement
 FAS = FreeAlgebra(basis=SchubertBasis)
 
 
-class RCGraph(tuple):
-    def __matmul__(self, other):
-        return TensorModule({RCGraphTensor(self, other): 1})
+class KeyType:
+    def __init__(self, *args, module_type=None, value=1, **kwargs):
+        self.value = value
+        if module_type is None:
+            raise ValueError("Must provide module_type")
+        self._module_type = module_type
+
+    def ring_act(self, elem): ...
+
+
+class ModuleType:
+    def __getitem__(self, key):
+        return self._dict.get(key, 0)
+
+    @property
+    def generic_key_type(self):
+        return self._generic_key_type
+
+    @property
+    def ring(self):
+        return self._ring
+
+    def _empy_module(self):
+        return self.__class__({}, generic_key_type=self._generic_key_type, ring=self._ring)
+
+    def __init__(self, *args, generic_key_type=None, ring=None, **kwargs):
+        start_dct = dict(*args)
+
+        if generic_key_type is None:
+            raise ValueError("Must provide generic_key_type")
+        if ring is None:
+            raise ValueError("Must provide ring")
+        self._dict = {}
+        self._ring = ring
+        self._generic_key_type = generic_key_type
+        self.keytype = type(generic_key_type.__name__, self._generic_key_type, {"module": self, "ring": self._ring})
+        for k, v in start_dct.items():
+            if not isinstance(k, self._generic_key_type):
+                raise ValueError(f"Bad key type: {type(k)}, expected {generic_key_type}")
+            value = v
+            value *= k.value
+            k2 = self.keytype(k)
+            self._dict[k2] = value
+
+    def _addkeys(self, other):
+        return self.__class__(add_perm_dict(self._dict, other._dict), generic_key_type=self._generic_key_type, ring=self._ring)
+
+    def __add__(self, other):
+        if isinstance(other, self.__class__):
+            return self._addkeys(other)
+        if isinstance(other, self._generic_key_type):
+            return self._addkeys(self.__class__({other: 1}))
+        return NotImplemented
+
+    def __sub__(self, other):
+        if isinstance(other, self.__class__):
+            return self._addkeys(self.__class__({k: -v for k, v in other._dict.items()}))
+        if isinstance(other, self._generic_key_type):
+            return self._addkeys(self.__class__({other: -1}))
+        return NotImplemented
+
+    def __neg__(self):
+        return self.__class__({k: -v for k, v in self._dict.items()}, generic_key_type=self._generic_key_type, ring=self._ring)
 
     def __rmul__(self, other):
-        if isinstance(other, FreeAlgebraElement):
-            return other * RCGraphModule({self: 1})
+        if isinstance(other, self._ring.__class__):
+            mod = self._empty_module()
+            for k, v in self._dict.items():
+                mod += k.value * v * (self.keytpe(k).ring_act(other))
+            return mod
         if isinstance(other, (int, float, S.__class__)):
-            return RCGraphModule({self: other})
-        raise ValueError("Can't multiply")
+            other = sympify(other)
+            return self.__class__({k: v * other for k, v in self._dict.items()}, generic_key_type=self._generic_key_type, ring=self._ring)
+        return NotImplemented
+
+    def __matmul__(self, other):
+        return TensorModule(self, other)
+
+
+class RCGraph(KeyType, tuple):
+    def __rmul__(self, other):
+        return other * RCGraphModule({self: 1})
 
     def asdtype(self, cls):
         return cls.dtype().ring.from_rc_graph(self)
@@ -59,7 +131,7 @@ class RCGraph(tuple):
     def length_vector(self):
         return tuple([len(row) for row in self])
 
-    def __new__(cls, *args):
+    def __new__(cls, *args, **kwargs):
         return tuple.__new__(cls, *args)
 
     def rowrange(self, start, end):
@@ -181,6 +253,16 @@ class RCGraph(tuple):
             result += RCGraphModule({rc: coeff for rc in rc_set if rc.perm == perm})
         return result
 
+    def ring_act(self, elem):
+        if isinstance(elem, FreeAlgebraElement):
+            wd_dict = elem.change_basis(WordBasis)
+            ret = {}
+            for k, v in wd_dict.items():
+                for a in reversed(k):
+                    ret = add_perm_dict(ret, dict.fromkeys(self.act(a), v * self.value))
+            return ret
+        return NotImplemented
+
     def act(self, p):
         pm = self.perm
         elem = FAS(pm, len(self))
@@ -237,24 +319,24 @@ class RCGraph(tuple):
         return hash((tuple(self), "RCGRAPH"))
 
 
-class RCGraphModule(dict):
+class RCGraphModule(ModuleType):
     def asdtype(self, cls):
-        return sum([v * k.asdtype(cls) for k, v in self.items()])
+        return sum([v * k.asdtype(cls) for k, v in self._dict.items()])
 
-    def __matmul__(self, other):
-        return TensorModule.ext_multiply(self, other)
+    def __init__(self, *args):
+        super().__init__(*args, generic_key_type=RCGraph, ring=FreeAlgebra)
 
-    def __mul__(self, other):
-        if isinstance(other, RCGraphModule):
-            result = RCGraphModule()
-            for rc_graph, coeff in self.items():
-                for other_rc_graph, coeff2 in other.items():
-                    result += coeff * coeff2 * rc_graph.prod_with_rc(other_rc_graph)
-        return result
+    # def __mul__(self, other):
+    #     if isinstance(other, RCGraphModule):
+    #         result = RCGraphModule()
+    #         for rc_graph, coeff in self._dict.items():
+    #             for other_rc_graph, coeff2 in other.items():
+    #                 result += coeff * coeff2 * rc_graph.prod_with_rc(other_rc_graph)
+    #     return result
 
     def schubvalue(self, sring):
         ret = S.Zero
-        for k, v in self.items():
+        for k, v in self._dict.items():
             ret += v * sring(k.perm)
         return ret
 
@@ -271,7 +353,7 @@ class RCGraphModule(dict):
 
     def coproduct(self):
         res = RCGraphModule()
-        for rc, coeff in self.items():
+        for rc, coeff in self._dict.items():
             res += coeff * rc.coproduct()
         return res
 
@@ -284,7 +366,7 @@ class RCGraphModule(dict):
             return RCGraphModule()
         res = RCGraphModule()
 
-        for rc, coeff_rc in self.items():
+        for rc, coeff_rc in self._dict.items():
             fa_elem = ASx(rc.perm, length).change_basis(WordBasis)
             for vec, coeff_vec in fa_elem.items():
                 res += coeff_vec * coeff_rc * dct.get(vec, 0) * RCGraphModule({rc: 1})
@@ -299,7 +381,7 @@ class RCGraphModule(dict):
 
         res = RCGraphModule()
 
-        for rc, coeff_rc in self.items():
+        for rc, coeff_rc in self._dict.items():
             fa_elem = ASx(rc.perm, length).change_basis(WordBasis).coproduct()
             for (vec1, vec2), coeff_vec in fa_elem.items():
                 res += coeff_vec * coeff_rc * dct1.get(vec1, 0) * dct2.get(vec2, 0) * RCGraphModule({rc: 1})
@@ -338,70 +420,32 @@ class RCGraphModule(dict):
             md += val * FA(*key) * md0
         return md
 
-    def __new__(cls, *args, length_limit=-1):
-        obj = dict.__new__(cls)
-        dct = dict(*args)
-        obj.update({k: v for k, v in dct.items() if v != 0})
-        obj._length_limit = length_limit
-        return obj
+    # def __new__(cls, *args):
+    #     obj = ModuleType.__new__(cls, *args)
+    #     obj.keytype = type("RCGraph", (RCGraph,), {"module": obj})
+    #     return obj
 
     def polyvalue(self, x, y=None):
         ret = S.Zero
-        for k, v in self.items():
+        for k, v in self._dict.items():
             ret += v * k.polyvalue(x, y)
         return ret
 
     def as_nil_hecke(self, x, y=None):
         ret = S.Zero
-        for k, v in self.items():
+        for k, v in self._dict.items():
             ret += v * k.as_nil_hecke(x, y)
         return ret
 
-    def __init__(self, *args):
-        pass
-
-    def __add__(self, other):
-        if isinstance(other, RCGraphModule):
-            return RCGraphModule(add_perm_dict(self, other))
-        return NotImplemented
-
-    def __neg__(self):
-        return RCGraphModule({k: -v for k, v in self.items()})
-
-    def __sub__(self, other):
-        if isinstance(other, RCGraphModule):
-            return RCGraphModule(add_perm_dict(self, -other))
-        return NotImplemented
-
-    def __rmul__(self, other):
-        if isinstance(other, FreeAlgebraElement):
-            wd_dict = other.change_basis(WordBasis)
-            ret = {}
-            for k0, v0 in self.items():
-                for k, v in wd_dict.items():
-                    addup = RCGraphModule({k0: v0 * v})
-                    for a in reversed(k):
-                        new_addup = RCGraphModule()
-                        for kr, vv in addup.items():
-                            new_addup += RCGraphModule(dict.fromkeys(kr.act(a), vv))
-                        addup = new_addup
-
-                    ret = add_perm_dict(ret, addup)
-            return RCGraphModule(ret)
-        if isinstance(other, (int, float, S.__class__)):
-            other = sympify(other)
-            return RCGraphModule({k: v * other for k, v in self.items()})
-        return NotImplemented
-
     def transpose(self):
-        return RCGraphModule({graph.transpose(): v for graph, v in self.items()})
+        return RCGraphModule({graph.transpose(): v for graph, v in self._dict.items()})
 
     def as_str_lines(self):
         if len(self.keys()) == 0:
             return ["0"]
         lines = [""]
         first = True
-        for k, v in self.items():
+        for k, v in self._dict.items():
             lines2 = k.as_str_lines()
             if len(lines) < len(lines2):
                 upstr = ""
@@ -433,113 +477,124 @@ class RCGraphModule(dict):
         return "\n".join(self.as_str_lines())
 
 
-class DualRCGraphModule(RCGraphModule):
-    def __new__(cls, *args):
-        return RCGraphModule.__new__(cls, *args)
+# class DualRCGraphModule(RCGraphModule):
+#     def __new__(cls, *args):
+#         return RCGraphModule.__new__(cls, *args)
 
-    def __init__(self, *args):
-        pass
+#     def __init__(self, *args):
+#         pass
 
-    def __add__(self, other):
-        if isinstance(other, DualRCGraphModule):
-            return DualRCGraphModule(add_perm_dict(self, other))
-        return NotImplemented
+#     def __add__(self, other):
+#         if isinstance(other, DualRCGraphModule):
+#             return DualRCGraphModule(add_perm_dict(self, other))
+#         return NotImplemented
 
-    def __neg__(self):
-        return DualRCGraphModule({k: -v for k, v in self.items()})
+#     def __neg__(self):
+#         return DualRCGraphModule({k: -v for k, v in self._dict.items()})
 
-    def __sub__(self, other):
-        if isinstance(other, DualRCGraphModule):
-            return DualRCGraphModule(add_perm_dict(self, -other))
-        return NotImplemented
+#     def __sub__(self, other):
+#         if isinstance(other, DualRCGraphModule):
+#             return DualRCGraphModule(add_perm_dict(self, -other))
+#         return NotImplemented
 
-    def __mul__(self, other):
-        if isinstance(other, FreeAlgebraElement):
-            wd_dict = other.change_basis(WordBasis)
-            ret = {}
-            for k0, v0 in self.items():
-                for k, v in wd_dict.items():
-                    addup = DualRCGraphModule({k0: v0 * v})
-                    for a in k:
-                        new_addup = DualRCGraphModule()
-                        for kr, vv in addup.items():
-                            new_addup += DualRCGraphModule(dict.fromkeys(kr.dualact(a), vv))
-                        addup = new_addup
+#     def __mul__(self, other):
+#         if isinstance(other, FreeAlgebraElement):
+#             wd_dict = other.change_basis(WordBasis)
+#             ret = {}
+#             for k0, v0 in self._dict.items():
+#                 for k, v in wd_dict.items():
+#                     addup = DualRCGraphModule({k0: v0 * v})
+#                     for a in k:
+#                         new_addup = DualRCGraphModule()
+#                         for kr, vv in addup.items():
+#                             new_addup += DualRCGraphModule(dict.fromkeys(kr.dualact(a), vv))
+#                         addup = new_addup
 
-                    ret = add_perm_dict(ret, addup)
-            return DualRCGraphModule(ret)
-        try:
-            other = sympify(other)
-        except SympifyError:
-            return NotImplemented
-        return DualRCGraphModule({k: v * other for k, v in self.items()})
+#                     ret = add_perm_dict(ret, addup)
+#             return DualRCGraphModule(ret)
+#         try:
+#             other = sympify(other)
+#         except SympifyError:
+#             return NotImplemented
+#         return DualRCGraphModule({k: v * other for k, v in self._dict.items()})
 
-    def __rmul__(self, other):
-        try:
-            other = sympify(other)
-        except SympifyError:
-            return NotImplemented
-        return DualRCGraphModule({k: v * other for k, v in self.items()})
+#     def __rmul__(self, other):
+#         try:
+#             other = sympify(other)
+#         except SympifyError:
+#             return NotImplemented
+#         return DualRCGraphModule({k: v * other for k, v in self._dict.items()})
 
-    def as_str_lines(self):
-        if len(self.keys()) == 0:
-            return ["0"]
-        lines = [""]
-        first = True
-        for k, v in self.items():
-            lines2 = k.as_str_lines()
-            if len(lines) < len(lines2):
-                upstr = ""
-                if len(lines[0]) > 0:
-                    upstr = " " * len(lines[0])
-                lines += [upstr] * (len(lines2) - len(lines))
-            padlen = 0
-            for i in range(len(lines2)):
-                coeffstr = ""
-                if not first:
-                    if i == 0:
-                        coeffstr += " + "
-                    else:
-                        coeffstr += "   "
-                if i == 0:
-                    if v == -1:
-                        coeffstr += "-"
-                    elif v != 1:
-                        coeffstr += str(v) + " * "
-                    padlen = len(coeffstr)
-                else:
-                    coeffstr = " " * padlen
+#     def as_str_lines(self):
+#         if len(self.keys()) == 0:
+#             return ["0"]
+#         lines = [""]
+#         first = True
+#         for k, v in self._dict.items():
+#             lines2 = k.as_str_lines()
+#             if len(lines) < len(lines2):
+#                 upstr = ""
+#                 if len(lines[0]) > 0:
+#                     upstr = " " * len(lines[0])
+#                 lines += [upstr] * (len(lines2) - len(lines))
+#             padlen = 0
+#             for i in range(len(lines2)):
+#                 coeffstr = ""
+#                 if not first:
+#                     if i == 0:
+#                         coeffstr += " + "
+#                     else:
+#                         coeffstr += "   "
+#                 if i == 0:
+#                     if v == -1:
+#                         coeffstr += "-"
+#                     elif v != 1:
+#                         coeffstr += str(v) + " * "
+#                     padlen = len(coeffstr)
+#                 else:
+#                     coeffstr = " " * padlen
 
-                lines[i] += coeffstr + lines2[i] + "^^"
-            first = False
-        return lines
+#                 lines[i] += coeffstr + lines2[i] + "^^"
+#             first = False
+#         return lines
 
-    def pairing(self, other):
-        if not isinstance(other, RCGraphModule):
-            return NotImplemented
-        ret = S.Zero
-        for k1, v1 in self.items():
-            for k2, v2 in other.items():
-                if k1 == k2:
-                    ret += v1 * v2
-        return ret
+#     def pairing(self, other):
+#         if not isinstance(other, RCGraphModule):
+#             return NotImplemented
+#         ret = S.Zero
+#         for k1, v1 in self._dict.items():
+#             for k2, v2 in other.items():
+#                 if k1 == k2:
+#                     ret += v1 * v2
+#         return ret
 
-    def __call__(self, other):
-        return self.pairing(other)
+#     def __call__(self, other):
+#         return self.pairing(other)
 
-    def __str__(self):
-        return "\n".join(self.as_str_lines())
+#     def __str__(self):
+#         return "\n".join(self.as_str_lines())
 
 
-class RCGraphTensor(tuple):
+class RCGraphTensor(KeyType, tuple):
     def polyvalue(self, x, y=None):
         return self[0].polyvalue(x, y) * self[1].polyvalue(x, y)
 
     def asdtype(self, cls):
         return cls.dtype().ring.from_rc_graph_tensor(self)
 
-    def __new__(cls, graph1, graph2):
-        return tuple.__new__(cls, (graph1, graph2))
+    def __init__(self, *keys, value=1):
+        new_keys = []
+        new_value = value
+        for key in keys:
+            if isinstance(key, RCGraphTensor):
+                agg_tensor = RCGraphTensor(*key)
+                new_value *= agg_tensor.value
+                new_keys.append(*agg_tensor)
+            if isinstance(key, RCGraph):
+                new_value *= key.value
+                new_keys.append(RCGraph(*key))
+            raise ValueError(f"Bad key type: {type(key)}")
+        super(KeyType).__init__(value=new_value)
 
     def as_str_lines(self):
         lines1 = self[0].as_str_lines()
@@ -569,29 +624,56 @@ class RCGraphTensor(tuple):
         return tuple(self) == tuple(other)
 
 
-class TensorModule(RCGraphModule):
-    def apply_product(self, poly1, poly2, genset, length):
-        res = TensorModule()
-        for (rc1, rc2), coeff in self.items():
-            res += TensorModule.ext_multiply(RCGraphModule({rc1: coeff}).apply(poly1, genset, length), RCGraphModule({rc2: 1}).apply(poly2, genset, length))
+class TensorModule(ModuleType):
+    # def apply_product(self, poly1, poly2, genset, length):
+    #     res = TensorModule()
+    #     for (rc1, rc2), coeff in self._dict.items():
+    #         res += TensorModule.ext_multiply(RCGraphModule({rc1: coeff}).apply(poly1, genset, length), RCGraphModule({rc2: 1}).apply(poly2, genset, length))
 
-        return res
+    #     return res
 
-    def __new__(cls, *args):
-        return RCGraphModule.__new__(cls, *args)
+    # def __new__(cls, *args, **kwargs):
+    #     obj = ModuleType.__new__(cls, *args)
+    #     obj.ringtype = type("TensorRing", (TensorRing,))
+    #     obj.keytype = type("RCGraphTensor", (RCGraphTensor,), {"module": obj}})
+    #     return obj
 
-    def __add__(self, other):
-        if isinstance(other, TensorModule):
-            return TensorModule(add_perm_dict(self, other))
-        return NotImplemented
+    def __init__(self, *args, **kwargs):
+        _dict = {}
+        # put together the keys and values
 
-    def __neg__(self):
-        return TensorModule({k: -v for k, v in self.items()})
+        modules = []
+        rings = []
+        for arg in args:
+            if isinstance(arg, ModuleType):
+                modules.append(RCGraphTensor(arg, RCGraph()))
+            else:
+                raise ValueError(f"Bad argument type: {type(arg)}, expecting Modules")
 
-    def __sub__(self, other):
-        if isinstance(other, TensorModule):
-            return TensorModule(add_perm_dict(self, -other))
-        return NotImplemented
+        if len(modules) > 0:
+            if len(modules) != len(args):
+                raise ValueError("Cannot mix modules and non-modules in TensorModule")
+            new_modules = []
+            for i, mod in enumerate(modules):
+                if isinstance(mod, TensorModule):
+                    new_modules += [*mod._modules]
+                    rings += [*mod.ring.rings]
+                else:
+                    new_modules.append(mod)
+                    rings.append(mod.module.ring)
+
+            for i, mod in enumerate(new_modules):
+                if i == 0:
+                    _dict = mod._dict
+                    continue
+                new_dict = {}
+                for key1, val1 in _dict.items():
+                    for key2, val2 in mod._dict.items():
+                        new_key = RCGraphTensor(key1, key2)
+                        new_dict[new_key] = new_dict.get(new_key, 0) + val1 * val2
+                _dict = new_dict
+            self._dict = _dict
+            self._modules = tuple(modules)
 
     @classmethod
     def ext_multiply(cls, elem1, elem2, strict=False):
@@ -606,29 +688,30 @@ class TensorModule(RCGraphModule):
                 ret += cls({RCGraphTensor(key, key2): val * val2})
         return ret
 
-    def __rmul__(self, other):
-        if isinstance(other, TensorRingElement):
-            ret = {}
-            for k0, v0 in self.items():
-                for k, v in other.items():
-                    addup = TensorModule({k0: v * v0})
-                    new_addup = TensorModule()
-                    for kr, vv in addup.items():
-                        elem1 = other.ring.rings[0](*k[0]) * RCGraphModule({kr[0]: 1})
-                        if isinstance(other.ring.rings[1], TensorRing):
-                            raise ValueError("Not implemented")
-                        elem2 = other.ring.rings[1](*k[1]) * RCGraphModule({kr[1]: 1})
+    # def __rmul__(self, other):
+    #     return super().__rmul__(self, other)
+    # if isinstance(other, TensorRingElement):
+    #     ret = {}
+    #     for k0, v0 in self._dict.items():
+    #         for k, v in other.items():
+    #             addup = TensorModule({k0: v * v0})
+    #             new_addup = TensorModule()
+    #             for kr, vv in addup.items():
+    #                 elem1 = other.ring.rings[0](*k[0]) * RCGraphModule({kr[0]: 1})
+    #                 if isinstance(other.ring.rings[1], TensorRing):
+    #                     raise ValueError("Not implemented")
+    #                 elem2 = other.ring.rings[1](*k[1]) * RCGraphModule({kr[1]: 1})
 
-                        new_addup += vv * TensorModule.ext_multiply(elem1, elem2, strict=True)
-                    addup = new_addup
+    #                 new_addup += vv * TensorModule.ext_multiply(elem1, elem2, strict=True)
+    #             addup = new_addup
 
-                    ret = add_perm_dict(ret, addup)
-            return TensorModule(ret)
-        try:
-            other = sympify(other)
-            return TensorModule({k: v * other for k, v in self.items()})
-        except Exception:
-            return NotImplemented
+    #             ret = add_perm_dict(ret, addup)
+    #     return TensorModule(ret)
+    # try:
+    #     other = sympify(other)
+    #     return TensorModule({k: v * other for k, v in self._dict.items()})
+    # except Exception:
+    #     return NotImplemented
 
 
 ASx = FreeAlgebra(SchubertBasis)
@@ -723,45 +806,45 @@ def lr_module(perm, length=None):
     return ret_elem
 
 
-class DualTensorModule(DualRCGraphModule):
-    def __new__(cls, *args):
-        return DualRCGraphModule.__new__(cls, *args)
+# class DualTensorModule(DualRCGraphModule):
+#     def __new__(cls, *args):
+#         return DualRCGraphModule.__new__(cls, *args)
 
-    def __add__(self, other):
-        if isinstance(other, DualTensorModule):
-            return DualTensorModule(add_perm_dict(self, other))
-        return NotImplemented
+#     def __add__(self, other):
+#         if isinstance(other, DualTensorModule):
+#             return DualTensorModule(add_perm_dict(self, other))
+#         return NotImplemented
 
-    def __rmul__(self, other):
-        try:
-            other = sympify(other)
-        except SympifyError:
-            return NotImplemented
-        return DualTensorModule({k: v * other for k, v in self.items()})
+#     def __rmul__(self, other):
+#         try:
+#             other = sympify(other)
+#         except SympifyError:
+#             return NotImplemented
+#         return DualTensorModule({k: v * other for k, v in self._dict.items()})
 
-    def __mul__(self, other):
-        if isinstance(other, TensorRingElement):
-            ret = {}
-            for k0, v0 in self.items():
-                for k, v in other.items():
-                    addup = DualTensorModule({k0: v * v0})
-                    new_addup = DualTensorModule()
-                    for kr, vv in addup.items():
-                        elem1 = DualRCGraphModule({kr[0]: 1}) * other.ring.rings[0](*k[0])
-                        if isinstance(other.ring.rings[1], TensorRing):
-                            elem2 = DualTensorModule({kr[1]: 1}) * other.ring.rings[1](k[1])
-                        else:
-                            elem2 = DualRCGraphModule({kr[1]: 1}) * other.ring.rings[1](*k[1])
+#     def __mul__(self, other):
+#         if isinstance(other, TensorRingElement):
+#             ret = {}
+#             for k0, v0 in self._dict.items():
+#                 for k, v in other.items():
+#                     addup = DualTensorModule({k0: v * v0})
+#                     new_addup = DualTensorModule()
+#                     for kr, vv in addup.items():
+#                         elem1 = DualRCGraphModule({kr[0]: 1}) * other.ring.rings[0](*k[0])
+#                         if isinstance(other.ring.rings[1], TensorRing):
+#                             elem2 = DualTensorModule({kr[1]: 1}) * other.ring.rings[1](k[1])
+#                         else:
+#                             elem2 = DualRCGraphModule({kr[1]: 1}) * other.ring.rings[1](*k[1])
 
-                        new_addup += vv * DualTensorModule(TensorModule.ext_multiply(elem1, elem2))
-                    addup = new_addup
-                    ret = add_perm_dict(ret, addup)
-            return DualTensorModule(ret)
-        try:
-            other = sympify(other)
-            return DualTensorModule({k: v * other for k, v in self.items()})
-        except Exception:
-            return NotImplemented
+#                         new_addup += vv * DualTensorModule(TensorModule.ext_multiply(elem1, elem2))
+#                     addup = new_addup
+#                     ret = add_perm_dict(ret, addup)
+#             return DualTensorModule(ret)
+#         try:
+#             other = sympify(other)
+#             return DualTensorModule({k: v * other for k, v in self._dict.items()})
+#         except Exception:
+#             return NotImplemented
 
 
 @cache
@@ -776,3 +859,14 @@ def all_fa_degree(degree, length):
         prev = all_fa_degree(degree - i, length - 1)
         res += FA(i) * prev
     return res
+
+
+if __name__ == "__main__":
+    # test module functionality
+    perm1 = Permutation([4, 1, 2, 5, 3])
+    graph1 = next(iter(RCGraph.all_rc_graphs(perm1)))
+    perm2 = Permutation([3, 1, 2])
+    graph2 = next(iter(RCGraph.all_rc_graphs(perm2)))
+
+    mod1 = 1 * perm1
+    mod2 = 1 * perm2
