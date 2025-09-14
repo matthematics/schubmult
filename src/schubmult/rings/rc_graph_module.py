@@ -643,7 +643,7 @@ def try_lr_module(perm, length=None):
         raise ValueError("Length too short")
     if perm.inv == 0:
         if length == 0:
-            return TensorModule({RCGraphTensor(RCGraph(), RCGraph()): 1})
+            return RCGraph() @ RCGraph()
         return FA(*([0] * length)).coproduct() * TensorModule({RCGraphTensor(RCGraph(), RCGraph()): 1})
     lower_perm = uncode(perm.trimcode[1:])
     elem = ASx(lower_perm, length - 1)
