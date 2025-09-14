@@ -16,34 +16,6 @@ FAS = FreeAlgebra(basis=SchubertBasis)
 
 
 class RCGraph(tuple):
-    # def monk_insert(self, row, reps=1):
-    #     if reps > 1:
-    #         return self.monk_insert(row, reps-1).monk_insert(row)
-
-    #     if len(self) == 0:
-    #         tup = [()]* row
-    #         tup[row - 1] = (row,)
-    #         return RCGraph(tup)
-    #     if len(self) < row:
-    #         tup = [*self, *([()]*(row - len(self)))]
-    #         tup[row - 1] = (row,)
-    #         return RCGraph(tup)
-
-    #     if row > 1:
-    #         return RCGraph([*self[:row-1],*[tuple([a + row - 1 for a in roww]) for roww in self.rowrange(row - 1, len(self)).monk_insert(1)]])
-
-    #     for j in range(1,100):
-    #         if not self.has_element(row, j):
-    #             a, b = self.right_root_at(row, i)
-    #             if a == 1:
-    #                 new_row = tuple(sorted([*self[0], j]))
-    #                 #NOTDONE
-
-    # def covers(self, other):
-    #     if not isinstance(other, RCGraph):
-    #         return NotImplemented
-    #     return all(any(a <= b for a in row_a for b in row_b) for row_a, row_b in zip(self, other))
-
     def __matmul__(self, other):
         return TensorModule({RCGraphTensor(self, other): 1})
 
@@ -65,7 +37,6 @@ class RCGraph(tuple):
         return i <= len(self) and j + i in self[i - 1]
 
     def right_root_at(self, i, j):
-        # row i column j
         from bisect import bisect_left
 
         start_root = (i, j + 1)
@@ -89,8 +60,7 @@ class RCGraph(tuple):
         return tuple([len(row) for row in self])
 
     def __new__(cls, *args):
-        obj = tuple.__new__(cls, *args)
-        return obj
+        return tuple.__new__(cls, *args)
 
     def rowrange(self, start, end):
         return RCGraph([tuple([a - start for a in row]) for row in self[start:end]])
@@ -121,7 +91,6 @@ class RCGraph(tuple):
             new_row = [new_perm[i] for i in range(max(len(pm), len(new_perm))) if new_perm[i] == pm[i + 1]]
             new_row.sort(reverse=True)
             oldset = cls.all_rc_graphs(new_perm)
-            rcg_row = RCGraph(tuple(new_row))
             for old_rc in oldset:
                 nrc = RCGraph([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in old_rc]])
                 if len(nrc) < length:
@@ -163,8 +132,6 @@ class RCGraph(tuple):
             i += 1
         new_rc = RCGraph(newrc)
 
-        # print(tuple(new_rc))
-        # print(tuple(self))
         assert new_rc.perm == ~self.perm
         return new_rc
 
@@ -177,49 +144,21 @@ class RCGraph(tuple):
             perm2 = k[0]
             new_row = [pm[i] for i in range(max(len(pm), len(perm2))) if pm[i] == perm2[i + 1]]
             new_row.sort()
-            # print(f"{pm=} {k=} {new_row=}")
-            # nrc = RCGraph([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])
-            # assert nrc.perm == perm2
             lst = [tuple([a + 1 for a in row]) for row in self]
 
-            for index in range(max(len(self) + 1, max(new_row))):
+            for index in range(max(len(self) + 1, *new_row)):
                 if index < len(lst):
                     if index + 1 in new_row:
-                        lst[index] = tuple([*lst[index], index + 1])
+                        lst[index] = (*lst[index], index + 1)
                 else:
                     if index + 1 in new_row:
                         lst += [(index + 1,)]
                     else:
                         lst += [()]
             nrc = RCGraph(lst)
-            # print(nrc)
             assert nrc.perm == ~perm2
-            # except AssertionError:
-            #     # print(self)
-            #     # print(perm2)
-            #     # print(nrc.perm)
-            #     # print(nrc)
-            #     # print(f"{new_row=}")
-            #     raise
             ret.add(nrc)
         return ret
-        # elem rc
-
-        # if len(self) == 0:
-        #     return {}
-        # ret = set()
-        # pm = self.perm
-        # L = schub_lib.pull_out_var(1, pm)
-        # perms_to_try = set()
-        # for index_list, new_perm in L:
-        #     if len(index_list) == p:
-        #         new_row = [new_perm[i] for i in range(max(len(pm), len(new_perm))) if new_perm[i] == pm[i + 1]]
-        #         new_row.sort(reverse=True)
-        #         if tuple(new_row) != self[0]:
-        #             continue
-        #         perms_to_try.add(new_perm)
-
-        # return ret
 
     def coproduct(self):
         from . import FA, ASx
@@ -253,13 +192,6 @@ class RCGraph(tuple):
             new_row.sort(reverse=True)
             nrc = RCGraph([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])
             assert nrc.perm == perm2
-            # except AssertionError:
-            #     # print(self)
-            #     # print(perm2)
-            #     # print(nrc.perm)
-            #     # print(nrc)
-            #     # print(f"{new_row=}")
-            #     raise
             ret.add(nrc)
         return ret
 
@@ -303,10 +235,6 @@ class RCGraph(tuple):
 
     def __hash__(self):
         return hash((tuple(self), "RCGRAPH"))
-
-
-# rc graph module is a module of tuples
-# backwards inserted, left action by free algebra
 
 
 class RCGraphModule(dict):
@@ -361,8 +289,6 @@ class RCGraphModule(dict):
             for vec, coeff_vec in fa_elem.items():
                 res += coeff_vec * coeff_rc * dct.get(vec, 0) * RCGraphModule({rc: 1})
 
-        # for vec, coeff in dct2.items():
-        #     res += RCGraphModule({rc: v * coeff for rc, v in self.items() if rc.length_vector() == vec})
         return res
 
     def apply_product(self, poly1, poly2, genset, length):
@@ -613,8 +539,7 @@ class RCGraphTensor(tuple):
         return cls.dtype().ring.from_rc_graph_tensor(self)
 
     def __new__(cls, graph1, graph2):
-        obj = tuple.__new__(cls, (graph1, graph2))
-        return obj
+        return tuple.__new__(cls, (graph1, graph2))
 
     def as_str_lines(self):
         lines1 = self[0].as_str_lines()
@@ -645,30 +570,7 @@ class RCGraphTensor(tuple):
 
 
 class TensorModule(RCGraphModule):
-    # def apply(self, poly1, poly2genset, length):
-    #     from . import ASx
-    #     from .variables import genset_dict_from_expr
-    #     dct = genset_dict_from_expr(poly, genset)
-    #     dct2 = {}
-    #     for vec, coeff in dct.items():
-    #         if len(vec) > length:
-    #             return RCGraphModule()
-    #         dct2[tuple([0]*(length-len(vec)) + [*vec])] = coeff
-
-    #     res = RCGraphModule()
-
-    #     for (rc1, rc2), coeff_rc in self.items():
-    #         fa_elem = ASx(rc.perm, length).change_basis(WordBasis)
-    #         for vec, coeff_vec in fa_elem.items():
-    #             res += coeff_vec * coeff_rc * dct2.get(vec, 0) * RCGraphModule({rc: 1})
-
-    #     # for vec, coeff in dct2.items():
-    #     #     res += RCGraphModule({rc: v * coeff for rc, v in self.items() if rc.length_vector() == vec})
-    #     return res
-
     def apply_product(self, poly1, poly2, genset, length):
-        from . import ASx
-
         res = TensorModule()
         for (rc1, rc2), coeff in self.items():
             res += TensorModule.ext_multiply(RCGraphModule({rc1: coeff}).apply(poly1, genset, length), RCGraphModule({rc2: 1}).apply(poly2, genset, length))
@@ -733,7 +635,6 @@ ASx = FreeAlgebra(SchubertBasis)
 FA = FreeAlgebra(WordBasis)
 
 
-# THIS APPEARS TO BE THE SOLUTION
 @cache
 def try_lr_module(perm, length=None):
     if length is None:
@@ -760,7 +661,7 @@ def try_lr_module(perm, length=None):
     for key, coeff in up_elem.items():
         if key[0] != perm:
             assert coeff == 1
-            for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():  # note we are using the LR module here. This is OK but may be required in the proof
+            for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
                 keys2 = set(ret_elem.keys())
                 for rc1, rc2 in keys2:
                     if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
@@ -771,7 +672,6 @@ def try_lr_module(perm, length=None):
     return ret_elem
 
 
-# backup LR function in case this doesn't pan out, easily could be alternative
 @cache
 def lr_module(perm, length=None):
     if length is None:
@@ -781,8 +681,8 @@ def lr_module(perm, length=None):
     if perm.inv == 0:
         if length == 0:
             return TensorModule({RCGraphTensor(RCGraph(), RCGraph()): 1})
-        unit = FA(*([0] * length)).coproduct() * TensorModule({RCGraphTensor(RCGraph(), RCGraph()): 1})
-        return unit
+        return FA(*([0] * length)).coproduct() * TensorModule({RCGraphTensor(RCGraph(), RCGraph()): 1})
+
     lower_perm = uncode(perm.trimcode[1:])
     elem = ASx(lower_perm, length - 1)
     lower_module1 = lr_module(lower_perm, length - 1)
@@ -794,18 +694,6 @@ def lr_module(perm, length=None):
 
     if length == 1:
         return ret_elem
-    # lower_module2 = FA(0).coproduct() * ret_elem
-
-    # trim_module1 = TensorModule({RCGraphTensor(rc1.rowrange(1, len(rc1)),rc2.rowrange(1,len(rc2))): v for (rc1, rc2), v in ret_elem.items()})
-    # trim_module2 = TensorModule({RCGraphTensor(rc1.rowrange(1, len(rc1)),rc2.rowrange(1,len(rc2))): v for (rc1, rc2), v in lower_module2.items() if rc1.perm.bruhat_leq(uncode([0,*perm.trimcode])) and rc2.perm.bruhat_leq(uncode([0,*perm.trimcode]))})
-
-    # print("TRIM1 compare")
-    # print(trim_module1)
-    # print(lower_module1)
-
-    # ret_elem2 = TensorModule({RCGraphTensor(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(perm) and rc2.perm.bruhat_leq(perm) and rc2.is_principal and (rc1, rc2) not in ret_elem1})
-
-    # ret_elem += TensorModule({RCGraphTensor(rc2, rc1): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(perm) and rc2.perm.bruhat_leq(perm) and rc1.is_principal and not rc2.is_principal})
 
     up_elem = ASx(uncode([perm.trimcode[0]]), 1) * elem
     leftover = {}
@@ -821,24 +709,16 @@ def lr_module(perm, length=None):
                 for rc1, rc2 in keys2:
                     if rc1.perm == rc1_bad.perm and rc2_bad.perm == rc2.perm:
                         cff = ret_elem.get((rc1, rc2), 0)
-                        result = cff - to_subtract
+
                         if cff < 0:
-                            # print("Found leftover")
                             raise ValueError(f"Negative {rc1_bad.perm=} {rc2_bad.perm=} {to_subtract=} {cff=}")
-                            # ret_elem -= TensorModule({RCGraphTensor(rc1, rc2): cff})
-                            # leftover[(rc1_bad.perm, rc2_bad.perm)] = -result
-                        else:
-                            # print("Excluding")
-                            # print(RCGraphTensor(rc1, rc2))
-                            assert rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()
-                            ret_elem -= TensorModule({RCGraphTensor(rc1, rc2): to_subtract})
+
+                        assert rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()
+                        ret_elem -= TensorModule({RCGraphTensor(rc1, rc2): to_subtract})
                         break
     if len(leftover) > 0:
         raise ValueError(f"Leftover {leftover}")
 
-    # print("RESULT COMPARE")
-    # print(trim_module2)
-    # print(ret_module)
     assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
     return ret_elem
 
@@ -851,14 +731,6 @@ class DualTensorModule(DualRCGraphModule):
         if isinstance(other, DualTensorModule):
             return DualTensorModule(add_perm_dict(self, other))
         return NotImplemented
-
-    # @classmethod
-    # def ext_multiply(cls, elem1, elem2):
-    #     ret = cls()
-    #     for key, val in elem1.items():
-    #         for key2, val2 in elem2.items():
-    #             ret += cls({RCGraphTensor(key, key2): val * val2})
-    #     return ret
 
     def __rmul__(self, other):
         try:
@@ -904,60 +776,3 @@ def all_fa_degree(degree, length):
         prev = all_fa_degree(degree - i, length - 1)
         res += FA(i) * prev
     return res
-
-
-def schubert_positive_product(poly1, poly2, genset, degree, length, check=False):
-    FA = FreeAlgebra(WordBasis)
-
-    result = RCGraphModule()
-
-    one_module = RCGraphModule({RCGraph(): 1})
-    for a, cof in all_fa_degree(degree, length).items():
-        module = cof * FA(*a) * one_module
-        result += module.apply_product(poly1, poly2, genset, length)
-        if check:
-            assert all(c > 0 for c in result.values())
-    return result
-
-
-def schubert_act(poly, rc_module, genset, degree, length, check=False):
-    from .schubert_ring import SingleSchubertRing
-
-    FA = FreeAlgebra(WordBasis)
-    ring = SingleSchubertRing(genset)
-
-    result = RCGraphModule()
-
-    one_module = RCGraphModule({RCGraph(): 1})
-    for a, cof in all_fa_degree(degree, length).items():
-        for graph, coeff in rc_module.items():
-            module = cof * FA(*[a1 + b1 for a1, b1 in zip(a, graph.length_vector())]) * one_module
-            result += coeff * module.apply_product(poly, ring(graph.perm).expand(), genset, length)
-        if check:
-            assert all(c > 0 for c in result.values())
-    return result
-
-
-def nilhecke_power(start, end, length, variable):
-    from schubmult.abc import x
-
-    ring = NilHeckeRing(x)
-    if length > end - start + 1:
-        return 0
-    if length < 0:
-        return 0
-    if length == 0:
-        return ring.one
-    result = ring.zero
-    result += variable * ring(Permutation([]).swap(end - 1, end)) * nilhecke_power(start, end - 1, length - 1, variable)
-    result += nilhecke_power(start, end - 1, length, variable)
-    return result
-
-
-def change_free_tensor_basis(tensor, old_basis, new_basis):
-    new_ring = TensorRing(FreeAlgebra(new_basis), tensor.ring.rings[1])
-    new_tensor = new_ring.zero
-    original_ring = FreeAlgebra(old_basis)
-    for (key1, key2), coeff in tensor.items():
-        new_tensor += coeff * new_ring.ext_multiply(original_ring(*key1).change_basis(new_basis), tensor.ring.rings[1](key2))
-    return new_tensor
