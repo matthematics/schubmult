@@ -16,11 +16,8 @@ FAS = FreeAlgebra(basis=SchubertBasis)
 
 
 class KeyType:
-    def __init__(self, *args, module_type=None, value=1, **kwargs):
+    def __init__(self, *args, value=1, **kwargs):
         self.value = value
-        if module_type is None:
-            raise ValueError("Must provide module_type")
-        self._module_type = module_type
 
     def ring_act(self, elem): ...
 
@@ -28,6 +25,16 @@ class KeyType:
 class ModuleType:
     def __getitem__(self, key):
         return self._dict.get(key, 0)
+
+    def items(self):
+        return self._dict.items()
+
+    def keys(self):
+        return self._dict.keys()
+
+    @property
+    def keytype(self):
+        return self._generic_key_type
 
     @property
     def generic_key_type(self):
@@ -37,20 +44,30 @@ class ModuleType:
     def ring(self):
         return self._ring
 
-    def _empy_module(self):
+    def clone(self, *args, **kwargs):
+        return self.__class__(*args, generic_key_type=self._generic_key_type, ring=self._ring, **kwargs)
+
+    def _empty_module(self):
         return self.__class__({}, generic_key_type=self._generic_key_type, ring=self._ring)
 
-    def __init__(self, *args, generic_key_type=None, ring=None, **kwargs):
+    def __init__(self, *args, generic_key_type=None, ring=None, _clone = True,**kwargs):
         start_dct = dict(*args)
 
         if generic_key_type is None:
             raise ValueError("Must provide generic_key_type")
         if ring is None:
             raise ValueError("Must provide ring")
+
+        # if _clone:
+        #     self._dict = start_dct
+        #     self._ring = ring
+        #     self._generic_key_type = generic_key_type
+        #     return
+
         self._dict = {}
         self._ring = ring
         self._generic_key_type = generic_key_type
-        self.keytype = type(generic_key_type.__name__, self._generic_key_type, {"module": self, "ring": self._ring})
+
         for k, v in start_dct.items():
             if not isinstance(k, self._generic_key_type):
                 raise ValueError(f"Bad key type: {type(k)}, expected {generic_key_type}")
@@ -80,15 +97,14 @@ class ModuleType:
         return self.__class__({k: -v for k, v in self._dict.items()}, generic_key_type=self._generic_key_type, ring=self._ring)
 
     def __rmul__(self, other):
-        if isinstance(other, self._ring.__class__):
-            mod = self._empty_module()
-            for k, v in self._dict.items():
-                mod += k.value * v * (self.keytpe(k).ring_act(other))
-            return mod
         if isinstance(other, (int, float, S.__class__)):
             other = sympify(other)
-            return self.__class__({k: v * other for k, v in self._dict.items()}, generic_key_type=self._generic_key_type, ring=self._ring)
-        return NotImplemented
+            return self.clone({k: v * other for k, v in self._dict.items()})
+        mod = self.clone()
+        for k, v in self._dict.items():
+            mod += k.value * v * self.clone(self.keytype(k).ring_act(other))
+        return mod
+        
 
     def __matmul__(self, other):
         return TensorModule(self, other)
@@ -96,7 +112,7 @@ class ModuleType:
 
 class RCGraph(KeyType, tuple):
     def __rmul__(self, other):
-        return other * RCGraphModule({self: 1})
+        return RCGraphModule({self: 1}).__rmul__(other)
 
     def asdtype(self, cls):
         return cls.dtype().ring.from_rc_graph(self)
@@ -322,9 +338,10 @@ class RCGraph(KeyType, tuple):
 class RCGraphModule(ModuleType):
     def asdtype(self, cls):
         return sum([v * k.asdtype(cls) for k, v in self._dict.items()])
+    
 
-    def __init__(self, *args):
-        super().__init__(*args, generic_key_type=RCGraph, ring=FreeAlgebra)
+    def __init__(self, *args, generic_key_type=RCGraph, ring=FreeAlgebra, **kwargs):
+        super().__init__(*args, generic_key_type=generic_key_type, ring=ring, **kwargs)
 
     # def __mul__(self, other):
     #     if isinstance(other, RCGraphModule):
@@ -575,14 +592,16 @@ class RCGraphModule(ModuleType):
 #         return "\n".join(self.as_str_lines())
 
 
-class RCGraphTensor(KeyType, tuple):
+class RCGraphTensor(KeyType):
     def polyvalue(self, x, y=None):
         return self[0].polyvalue(x, y) * self[1].polyvalue(x, y)
 
     def asdtype(self, cls):
         return cls.dtype().ring.from_rc_graph_tensor(self)
 
-    def __init__(self, *keys, value=1):
+    def __init__(self, *keys, modules=None, value=1):
+        if modules is None:
+            raise ValueError("Must provide modules")
         new_keys = []
         new_value = value
         for key in keys:
@@ -590,11 +609,21 @@ class RCGraphTensor(KeyType, tuple):
                 agg_tensor = RCGraphTensor(*key)
                 new_value *= agg_tensor.value
                 new_keys.append(*agg_tensor)
-            if isinstance(key, RCGraph):
+            else:
                 new_value *= key.value
-                new_keys.append(RCGraph(*key))
-            raise ValueError(f"Bad key type: {type(key)}")
-        super(KeyType).__init__(value=new_value)
+                new_keys.append(RCGraph(key))
+        super().__init__(value=new_value)
+        self._keys = tuple(new_keys)
+        self._modules = modules
+
+    def ring_act(self, elem):
+        if isinstance(elem, TensorRingElement) and len(elem.ring.rings) == len(self):
+            modules = []
+            for elem_key, value in elem.items():
+                for i, key in enumerate(self):
+                    modules.append(value * self._modules[i].clone(key.ring_act(elem.ring.rings(elem_key))))
+            return TensorModule(*modules)
+        return NotImplemented
 
     def as_str_lines(self):
         lines1 = self[0].as_str_lines()
@@ -616,12 +645,21 @@ class RCGraphTensor(KeyType, tuple):
         return "\n".join(self.as_str_lines())
 
     def __hash__(self):
-        return hash(tuple(self))
+        return hash(self._keys)
+
+    def __getitem__(self, index):
+        return self._keys[index]
+
+    def __len__(self):
+        return len(self._keys)
+
+    def __iter__(self):
+        return iter(self._keys)
 
     def __eq__(self, other):
         if not isinstance(other, (RCGraphTensor, tuple)):
-            return NotImplemented
-        return tuple(self) == tuple(other)
+            return False
+        return tuple(self._keys) == tuple(other)
 
 
 class TensorModule(ModuleType):
@@ -646,7 +684,7 @@ class TensorModule(ModuleType):
         rings = []
         for arg in args:
             if isinstance(arg, ModuleType):
-                modules.append(RCGraphTensor(arg, RCGraph()))
+                modules.append(arg)
             else:
                 raise ValueError(f"Bad argument type: {type(arg)}, expecting Modules")
 
@@ -660,7 +698,7 @@ class TensorModule(ModuleType):
                     rings += [*mod.ring.rings]
                 else:
                     new_modules.append(mod)
-                    rings.append(mod.module.ring)
+                    rings.append(mod.ring)
 
             for i, mod in enumerate(new_modules):
                 if i == 0:
@@ -669,7 +707,7 @@ class TensorModule(ModuleType):
                 new_dict = {}
                 for key1, val1 in _dict.items():
                     for key2, val2 in mod._dict.items():
-                        new_key = RCGraphTensor(key1, key2)
+                        new_key = RCGraphTensor(key1, key2, modules=new_modules[:i + 1])
                         new_dict[new_key] = new_dict.get(new_key, 0) + val1 * val2
                 _dict = new_dict
             self._dict = _dict
@@ -868,5 +906,12 @@ if __name__ == "__main__":
     perm2 = Permutation([3, 1, 2])
     graph2 = next(iter(RCGraph.all_rc_graphs(perm2)))
 
-    mod1 = 1 * perm1
-    mod2 = 1 * perm2
+    mod1 = FA(2) * graph1
+    mod2 = FA(3) * graph2
+
+    print(mod1)
+    print(mod2)
+
+    tmod = mod1 @ mod2
+
+    
