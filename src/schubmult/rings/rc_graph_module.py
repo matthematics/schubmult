@@ -1,17 +1,14 @@
-import sys
 from functools import cache
 
 from symengine import SympifyError
 
 import schubmult.schub_lib.schub_lib as schub_lib
 from schubmult.perm_lib import Permutation, uncode
-from schubmult.rings.nil_hecke import NilHeckeRing
-from schubmult.rings.schubert_ring import DoubleSchubertElement, SingleSchubertRing
-from schubmult.symbolic import S, expand, prod, sympify
-from schubmult.utils.perm_utils import add_perm_dict, artin_sequences
+from schubmult.symbolic import S, prod, sympify
+from schubmult.utils.perm_utils import add_perm_dict
 
 from .free_algebra import FreeAlgebra, FreeAlgebraElement
-from .free_algebra_basis import FreeAlgebraBasis, SchubertBasis, WordBasis
+from .free_algebra_basis import SchubertBasis, WordBasis
 from .nil_hecke import NilHeckeRing
 from .tensor_ring import TensorRing, TensorRingElement
 
@@ -736,6 +733,7 @@ ASx = FreeAlgebra(SchubertBasis)
 FA = FreeAlgebra(WordBasis)
 
 
+# THIS APPEARS TO BE THE SOLUTION
 @cache
 def try_lr_module(perm, length=None):
     if length is None:
@@ -745,8 +743,7 @@ def try_lr_module(perm, length=None):
     if perm.inv == 0:
         if length == 0:
             return TensorModule({RCGraphTensor(RCGraph(), RCGraph()): 1})
-        unit = FA(*([0] * length)).coproduct() * TensorModule({RCGraphTensor(RCGraph(), RCGraph()): 1})
-        return unit
+        return FA(*([0] * length)).coproduct() * TensorModule({RCGraphTensor(RCGraph(), RCGraph()): 1})
     lower_perm = uncode(perm.trimcode[1:])
     elem = ASx(lower_perm, length - 1)
     lower_module1 = try_lr_module(lower_perm, length - 1)
@@ -758,43 +755,23 @@ def try_lr_module(perm, length=None):
 
     if length == 1:
         return ret_elem
-    # lower_module2 = FA(0).coproduct() * ret_elem
-
-    # trim_module1 = TensorModule({RCGraphTensor(rc1.rowrange(1, len(rc1)),rc2.rowrange(1,len(rc2))): v for (rc1, rc2), v in ret_elem.items()})
-    # trim_module2 = TensorModule({RCGraphTensor(rc1.rowrange(1, len(rc1)),rc2.rowrange(1,len(rc2))): v for (rc1, rc2), v in lower_module2.items() if rc1.perm.bruhat_leq(uncode([0,*perm.trimcode])) and rc2.perm.bruhat_leq(uncode([0,*perm.trimcode]))})
-
-    # print("TRIM1 compare")
-    # print(trim_module1)
-    # print(lower_module1)
-
-    # ret_elem2 = TensorModule({RCGraphTensor(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(perm) and rc2.perm.bruhat_leq(perm) and rc2.is_principal and (rc1, rc2) not in ret_elem1})
-
-    # ret_elem += TensorModule({RCGraphTensor(rc2, rc1): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(perm) and rc2.perm.bruhat_leq(perm) and rc1.is_principal and not rc2.is_principal})
 
     up_elem = ASx(uncode([perm.trimcode[0]]), 1) * elem
     for key, coeff in up_elem.items():
         if key[0] != perm:
             assert coeff == 1
-            for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
-                # to_subtract = cff2
-                # if leftover.get((rc1_bad.perm, rc2_bad.perm), 0) > 0:
-                #     to_subtract += leftover[(rc1_bad.perm, rc2_bad.perm)]
-                #     del leftover[(rc1_bad.perm, rc2_bad.perm)]
+            for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():  # note we are using the LR module here. This is OK but may be required in the proof
                 keys2 = set(ret_elem.keys())
                 for rc1, rc2 in keys2:
                     if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
                         del ret_elem[RCGraphTensor(rc1, rc2)]
                         break
-    # if len(leftover) > 0:
-    #     raise ValueError(f"Leftover {leftover}")
 
-    # print("RESULT COMPARE")
-    # print(trim_module2)
-    # print(ret_module)
     assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
     return ret_elem
 
 
+# backup LR function in case this doesn't pan out, easily could be alternative
 @cache
 def lr_module(perm, length=None):
     if length is None:
@@ -984,25 +961,3 @@ def change_free_tensor_basis(tensor, old_basis, new_basis):
     for (key1, key2), coeff in tensor.items():
         new_tensor += coeff * new_ring.ext_multiply(original_ring(*key1).change_basis(new_basis), tensor.ring.rings[1](key2))
     return new_tensor
-
-
-if __name__ == "__main__":
-    import sys
-
-    from schubmult import Permutation
-    from schubmult.rings import FA, ASx, SchubertBasis, WordBasis
-
-    perms = Permutation.all_permutations(int(sys.argv[1]))
-
-    for perm in perms:
-        elem = ASx(perm, len(perm.trimcode)).change_basis(WordBasis)
-
-        for word, coeff in elem.items():
-            if uncode(word) != perm and coeff != 0:
-                assert len([rc for rc in RCGraph.all_rc_graphs(perm, len(word)) if rc.length_vector() == word]) == 0, f"Failed for {perm} {word} {coeff}"
-        for rc in RCGraph.all_rc_graphs(perm, len(perm.trimcode)):
-            assert rc.is_principal or elem.get(rc.length_vector(), 0) == 0, f"Failed for {perm} {rc.length_vector()} {rc}"
-            if not rc.is_principal:
-                mod = FA(*rc.length_vector()) * RCGraphModule({rc: 1})
-
-        print("Success for", perm)
