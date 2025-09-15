@@ -71,10 +71,15 @@ def worker(args):
 def main():
     from schubmult import Permutation
 
-    n = int(sys.argv[1])
-    filename = sys.argv[2]
-    num_processors = int(sys.argv[3]) if len(sys.argv) > 3 else max(1, cpu_count() - 2)
-    verification_filename = filename + ".verification"
+    try:
+        n = int(sys.argv[1])
+        filename = sys.argv[2]
+        num_processors = int(sys.argv[3]) if len(sys.argv) > 3 else max(1, cpu_count() - 2)
+        verification_filename = filename + ".verification"
+    except (IndexError, ValueError):
+        print("Usage: verify_lr_rule n filename [num_processors]", file=sys.stderr)
+        print("filename is the pickle file for saving intermediate results, filename.verification is used for verification results", file=sys.stderr)
+        sys.exit(1)
 
     perms = Permutation.all_permutations(n)
     perms.sort(key=lambda p: (p.inv, p.trimcode))
