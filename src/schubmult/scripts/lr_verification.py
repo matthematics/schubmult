@@ -73,6 +73,7 @@ def main():
 
     n = int(sys.argv[1])
     filename = sys.argv[2]
+    num_processors = int(sys.argv[3]) if len(sys.argv) > 3 else max(1, cpu_count() - 2)
     verification_filename = filename + ".verification"
 
     perms = Permutation.all_permutations(n)
@@ -110,7 +111,7 @@ def main():
         processes[0].start()
 
         # Use a process pool for workers
-        pool_size = max(1, cpu_count() - 2)  # leave one core for the saver
+        pool_size = num_processors
         with Pool(processes=pool_size) as pool:
             pool.map(worker, [(shared_cache_dict, shared_recording_dict, lock, perm) for perm in perms])
 
