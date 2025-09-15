@@ -161,10 +161,10 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         return (self ** (val - 1)) * self
 
     def __mul__(self, other):
-        try:
-            return self.ring.mul(self, other)
-        except Exception:
+        from .rc_graph_module import ModuleType
+        if isinstance(other, ModuleType):
             return other.__rmul__(self)
+        return self.ring.mul(self, other)
 
     def __rmul__(self, other):
         try:

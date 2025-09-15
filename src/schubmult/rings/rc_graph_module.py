@@ -1,4 +1,5 @@
 from functools import cache
+from itertools import zip_longest
 
 from symengine import SympifyError
 
@@ -15,6 +16,40 @@ from .tensor_ring import TensorRing, TensorRingElement
 FAS = FreeAlgebra(basis=SchubertBasis)
 
 
+def _multiline_join(str1, str2, joiner=" "):
+    lines1 = str1.split("\n")
+    lines2 = str2.split("\n")
+    width1 = max(len(line) for line in lines1)
+    width2 = max(len(line) for line in lines2)
+    if len(lines1) > len(lines2):
+        lines2 += [""] * (len(lines1) - len(lines2))
+    elif len(lines2) > len(lines1):
+        lines1 += [""] * (len(lines2) - len(lines1))
+    initial_line = f"{lines1[0]:<{width1}}{joiner}{lines2[0]:<{width2}}"
+    # print(f"{lines1=} {lines2=}")
+    result = "\n".join([initial_line, *[f"{l1:<{width1}}{'':{len(joiner)}}{l2:<{width2}}" for l1, l2 in zip_longest(lines1[1:], lines2[1:], fillvalue="")]])
+    # print(result)
+    return result
+
+
+def full_multiline_join(*args, joiner=" "):
+    if len(args) == 0:
+        return ""
+    if len(args) == 1:
+        return args[0]
+    return _multiline_join(args[0], full_multiline_join(*args[1:]), joiner=joiner)
+
+
+def _value_dict(dct_of_keys, keytype=None):
+    if keytype is None:
+        raise ValueError("Must provide keytype")
+    dct = {}
+    for k, v in dct_of_keys.items():
+        if v != 0 and k.value != 0:
+            dct[keytype(k)] = v * k.value
+    return dct
+
+
 class KeyType:
     def __init__(self, *args, value=1, **kwargs):
         self.value = value
@@ -24,33 +59,46 @@ class KeyType:
 
 class ModuleType:
     def __getitem__(self, key):
-        return self._dict.get(key, 0)
+        return self.value_dict[key]
+
+    def get(self, key, default=None):
+        return self.value_dict.get(key, default)
+
+    def keytype(self, *args): ...
+
+    def asdtype(self, cls):
+        return sum([v * k.asdtype(cls) for k, v in self._dict.items()])
 
     def items(self):
         return self._dict.items()
 
     def keys(self):
-        return self._dict.keys()
-
-    @property
-    def keytype(self):
-        return self._generic_key_type
+        return list(self._dict.keys())
 
     @property
     def generic_key_type(self):
         return self._generic_key_type
 
+    # ASSUME VALUE DICT ALWAYS NORMALIZED
+    @property
+    def value_dict(self):
+        return self._dict
+        # return _value_dict(self._dict, keytype=self.keytype)
+
     @property
     def ring(self):
         return self._ring
 
-    def clone(self, *args, **kwargs):
-        return self.__class__(*args, generic_key_type=self._generic_key_type, ring=self._ring, **kwargs)
+    def clone(self, *args):
+        ...
+        # if len(args) == 0:
+        #     return self.__class__(self._dict, generic_key_type=self._generic_key_type, ring=self._ring, **kwargs)
+        # return self.__class__(*args, generic_key_type=self._generic_key_type, ring=self._ring, **kwargs)
 
     def _empty_module(self):
-        return self.__class__({}, generic_key_type=self._generic_key_type, ring=self._ring)
+        return self.clone({})
 
-    def __init__(self, *args, generic_key_type=None, ring=None, _clone = True,**kwargs):
+    def __init__(self, *args, generic_key_type=None, ring=None, _clone=True, **kwargs):
         start_dct = dict(*args)
 
         if generic_key_type is None:
@@ -64,53 +112,92 @@ class ModuleType:
         #     self._generic_key_type = generic_key_type
         #     return
 
-        self._dict = {}
+        self._dict = _value_dict(start_dct, keytype=self.keytype)
         self._ring = ring
         self._generic_key_type = generic_key_type
 
-        for k, v in start_dct.items():
-            if not isinstance(k, self._generic_key_type):
-                raise ValueError(f"Bad key type: {type(k)}, expected {generic_key_type}")
-            value = v
-            value *= k.value
-            k2 = self.keytype(k)
-            self._dict[k2] = value
+        # for k, v in start_dct.items():
+        #     if not isinstance(k, self._generic_key_type):
+        #         raise ValueError(f"Bad key type: {type(k)}, expected {generic_key_type}")
+        #     value = v
+        #     value *= k.value
+        #     k2 = self.keytype(k)
+        #     self._dict[k2] = value
 
     def _addkeys(self, other):
-        return self.__class__(add_perm_dict(self._dict, other._dict), generic_key_type=self._generic_key_type, ring=self._ring)
+        return self.clone(add_perm_dict(_value_dict(self.value_dict, keytype=self.keytype), _value_dict(other.value_dict, keytype=other.keytype)))
 
     def __add__(self, other):
         if isinstance(other, self.__class__):
             return self._addkeys(other)
         if isinstance(other, self._generic_key_type):
-            return self._addkeys(self.__class__({other: 1}))
+            return self._addkeys(self.clone({other: 1}))
         return NotImplemented
 
     def __sub__(self, other):
         if isinstance(other, self.__class__):
-            return self._addkeys(self.__class__({k: -v for k, v in other._dict.items()}))
+            return self._addkeys(self.clone({k: -v for k, v in other._dict.items()}))
         if isinstance(other, self._generic_key_type):
-            return self._addkeys(self.__class__({other: -1}))
+            return self._addkeys(self.clone({other: -1}))
         return NotImplemented
 
     def __neg__(self):
-        return self.__class__({k: -v for k, v in self._dict.items()}, generic_key_type=self._generic_key_type, ring=self._ring)
+        return self.clone({k: -v for k, v in self._dict.items()})
 
     def __rmul__(self, other):
-        if isinstance(other, (int, float, S.__class__)):
+        #  #  # print(f"In rmul {self=} {other=}")
+        if not hasattr(other, "ring"):
             other = sympify(other)
-            return self.clone({k: v * other for k, v in self._dict.items()})
-        mod = self.clone()
+            #  #  # print(f"Sympified {other=}")
+            return self.clone({k: v * other for k, v in self.value_dict.items()})
+        #  #  # print("I try do this")
+        mod = self._empty_module()
+        #  #  # print(f"{self=}")
+        #  #  # print(f"Is this a tensormod? {type(self)=}")
+        #  #  # print(f"{type(mod)=}")
+        #  #  # print(f"{other=}")
+        #  #  # print(f"{self._dict=}")
         for k, v in self._dict.items():
-            mod += k.value * v * self.clone(self.keytype(k).ring_act(other))
+            #  #  # print("ASTIHASOSATMS")
+            #  #  # print(type(self.keytype(k)))
+            #  #  # print(f"ASOTN{self.keytype(k).ring_act(other)}")
+            mod += v * self.clone(self.keytype(k).ring_act(other))
+            #  #  # print(f"{mod=}")
+            #  #  # print(f"{type(mod)=}")
         return mod
-        
 
     def __matmul__(self, other):
         return TensorModule(self, other)
 
+    def __str__(self):
+        buildups = ""
+        if len(self.keys()) == 0:
+            return "<zero module>"
+        for k, v in self._dict.items():
+            st1, mul_joiner, add_joiner = self.coeffify(v)
+            to_add = _multiline_join(st1, str(k), joiner=mul_joiner)
+            if len(buildups) == 0:
+                buildups = to_add
+            else:
+                buildups = _multiline_join(buildups, to_add, joiner=add_joiner)
+        return full_multiline_join(*buildups, joiner=" + ")
+
+    def coeffify(self, v):
+        if v < 0:
+            return str(-v), " * ", " + "
+        if v == 1:
+            return "", "", " + "
+        return str(v), " * ", " + "
+
 
 class RCGraph(KeyType, tuple):
+    def __matmul__(self, other):
+        if isinstance(other, RCGraph):
+            return RCGraphModule({self: 1}) @ RCGraphModule({other: 1})
+        if isinstance(other, ModuleType):
+            return RCGraphModule({self: 1}) @ other
+        return NotImplemented
+
     def __rmul__(self, other):
         return RCGraphModule({self: 1}).__rmul__(other)
 
@@ -274,10 +361,19 @@ class RCGraph(KeyType, tuple):
             wd_dict = elem.change_basis(WordBasis)
             ret = {}
             for k, v in wd_dict.items():
+                # print(f"{k=} {v=}")
+                acted_element = {self: v}
                 for a in reversed(k):
-                    ret = add_perm_dict(ret, dict.fromkeys(self.act(a), v * self.value))
+                    acted_element2 = {}
+                    for k2, v2 in acted_element.items():
+                        # print(f"{dict.fromkeys(k2.act(a), v2)=}")
+                        acted_element2 = add_perm_dict(acted_element2, dict.fromkeys(k2.act(a), v2))
+                    acted_element = acted_element2
+                # print(f"{acted_element=}")
+                ret = add_perm_dict(ret, acted_element)
+            # print(f"{ret=}")
             return ret
-        return NotImplemented
+        raise ValueError(f"Cannot act by {type(elem)} {elem=}")
 
     def act(self, p):
         pm = self.perm
@@ -329,18 +425,27 @@ class RCGraph(KeyType, tuple):
         return self.perm == uncode(self.length_vector())
 
     def __str__(self):
-        return "\n".join(self.as_str_lines())
+        lines = self.as_str_lines()
+        lines2 = [f"|{line}|" for line in lines]
+        return "\n".join(lines2)
+
+    def __repr__(self):
+        return "RCGraph(" + ", ".join([repr(k) for k in self]) + ")"
 
     def __hash__(self):
         return hash((tuple(self), "RCGRAPH"))
 
 
 class RCGraphModule(ModuleType):
-    def asdtype(self, cls):
-        return sum([v * k.asdtype(cls) for k, v in self._dict.items()])
-    
+    def clone(self, *args):
+        if len(args) == 0:
+            return RCGraphModule(self._dict, generic_key_type=self._generic_key_type, ring=self._rings)
+        return RCGraphModule(*args, generic_key_type=self._generic_key_type, ring=self._ring)
 
-    def __init__(self, *args, generic_key_type=RCGraph, ring=FreeAlgebra, **kwargs):
+    def keytype(self, k, value=1):
+        return RCGraph(k, value=value)
+
+    def __init__(self, *args, generic_key_type=RCGraph, ring=FreeAlgebra(WordBasis), **kwargs):
         super().__init__(*args, generic_key_type=generic_key_type, ring=ring, **kwargs)
 
     # def __mul__(self, other):
@@ -457,41 +562,53 @@ class RCGraphModule(ModuleType):
     def transpose(self):
         return RCGraphModule({graph.transpose(): v for graph, v in self._dict.items()})
 
-    def as_str_lines(self):
-        if len(self.keys()) == 0:
-            return ["0"]
-        lines = [""]
-        first = True
-        for k, v in self._dict.items():
-            lines2 = k.as_str_lines()
-            if len(lines) < len(lines2):
-                upstr = ""
-                if len(lines[0]) > 0:
-                    upstr = " " * len(lines[0])
-                lines += [upstr] * (len(lines2) - len(lines))
-            padlen = 0
-            for i in range(len(lines2)):
-                coeffstr = ""
-                if not first:
-                    if i == 0:
-                        coeffstr += " + "
-                    else:
-                        coeffstr += "   "
-                if i == 0:
-                    if v == -1:
-                        coeffstr += "-"
-                    elif v != 1:
-                        coeffstr += str(v) + " * "
-                    padlen = len(coeffstr)
-                else:
-                    coeffstr = " " * padlen
+    # def as_str_lines(self):
 
-                lines[i] += coeffstr + lines2[i]
-            first = False
-        return lines
+    # return full_multiline_join(full_multiline_join(k.as_str_lines()) + f"  (coeff {v})" for k, v in self._dict.items()])
+    # # if len(self.keys()) == 0:
+    # #     return ["0"]
+    # # lines = [""]
+    # # first = True
+    # # for k, v in self._dict.items():
+    # #     lines2 = k.as_str_lines()
+    # #     if len(lines) < len(lines2):
+    # #         upstr = ""
+    # #         if len(lines[0]) > 0:
+    # #             upstr = " " * len(lines[0])
+    # #         lines += [upstr] * (len(lines2) - len(lines))
+    # #     padlen = 0
+    # #     for i in range(len(lines2)):
+    # #         coeffstr = ""
+    # #         if not first:
+    # #             if i == 0:
+    # #                 coeffstr += " + "
+    # #             else:
+    # #                 coeffstr += "   "
+    # #         if i == 0:
+    # #             if v == -1:
+    # #                 coeffstr += "-"
+    # #             elif v != 1:
+    # #                 coeffstr += str(v) + " * "
+    # #             padlen = len(coeffstr)
+    # #         else:
+    # #             coeffstr = " " * padlen
 
-    def __str__(self):
-        return "\n".join(self.as_str_lines())
+    # #         lines[i] += coeffstr + lines2[i]
+    # #     first = False
+    # # return lines
+    # buildup_str = ""
+    # for k,v in self._dict.items():
+    #     lines2 = k.as_str_lines()
+    #     width1 = max(len(line) for line in lines2)
+    #     width2 = len(str(v)) + 3
+    #     lines2 = _multiline_join(str(v) + " *", "\n".join(lines2), width2, width1)
+    #     if len(lines2) == 0:
+    #         lines2 = "0"
+    #     yield lines2
+    #     yield ""
+
+    # def __str__(self):
+    #     return "\n".join(self.as_str_lines())
 
 
 # class DualRCGraphModule(RCGraphModule):
@@ -601,29 +718,33 @@ class RCGraphTensor(KeyType):
 
     def __init__(self, *keys, modules=None, value=1):
         if modules is None:
-            raise ValueError("Must provide modules")
-        new_keys = []
-        new_value = value
-        for key in keys:
-            if isinstance(key, RCGraphTensor):
-                agg_tensor = RCGraphTensor(*key)
-                new_value *= agg_tensor.value
-                new_keys.append(*agg_tensor)
-            else:
-                new_value *= key.value
-                new_keys.append(RCGraph(key))
-        super().__init__(value=new_value)
-        self._keys = tuple(new_keys)
-        self._modules = modules
+            self._keys = keys
+        else:
+            new_keys = []
+            for key in keys:
+                if isinstance(key, RCGraphTensor):
+                    new_keys += [key._modules[i].keytype(key[i]) for i, k in enumerate(key)]
+                else:
+                    new_keys.append(RCGraph(key))
+            new_value = value * prod([k.value for k in keys])
+            super().__init__(value=new_value)
+            self._modules = modules
+            self._keys = tuple(new_keys)
+            assert all(k.value == 1 for k in self._keys)
+        #  #  # print(f"BOOGERS {self._keys=}")
 
     def ring_act(self, elem):
+        assert self.value == 1
         if isinstance(elem, TensorRingElement) and len(elem.ring.rings) == len(self):
-            modules = []
+            ret = {}
             for elem_key, value in elem.items():
-                for i, key in enumerate(self):
-                    modules.append(value * self._modules[i].clone(key.ring_act(elem.ring.rings(elem_key))))
-            return TensorModule(*modules)
-        return NotImplemented
+                modules = []
+                for i, key in enumerate(elem_key):
+                    graph = self[i]
+                    modules.append(self._modules[i].clone(dict.fromkeys(graph.ring_act(elem.ring.rings[i](*key)), 1)))
+                ret = add_perm_dict(ret, TensorModule(value * modules[0], *modules[1:], ring=elem.ring).value_dict)
+            return ret
+        raise TypeError("TOASNTOSN")
 
     def as_str_lines(self):
         lines1 = self[0].as_str_lines()
@@ -641,8 +762,11 @@ class RCGraphTensor(KeyType):
 
         return lines
 
+    def __repr__(self):
+        return "RCGraphTensor(" + ", ".join([repr(k) for k in self._keys]) + ")"
+
     def __str__(self):
-        return "\n".join(self.as_str_lines())
+        return full_multiline_join(*[str(k) for k in self._keys], joiner="  #  ")
 
     def __hash__(self):
         return hash(self._keys)
@@ -659,7 +783,7 @@ class RCGraphTensor(KeyType):
     def __eq__(self, other):
         if not isinstance(other, (RCGraphTensor, tuple)):
             return False
-        return tuple(self._keys) == tuple(other)
+        return (isinstance(other, tuple) and tuple(self) == other) or self._keys == other._keys
 
 
 class TensorModule(ModuleType):
@@ -675,43 +799,71 @@ class TensorModule(ModuleType):
     #     obj.ringtype = type("TensorRing", (TensorRing,))
     #     obj.keytype = type("RCGraphTensor", (RCGraphTensor,), {"module": obj}})
     #     return obj
+    def filter_keys(self, lambd):
+        return self.clone({k: v for k, v in self._dict.items() if lambd(k)})
 
-    def __init__(self, *args, **kwargs):
+    def keytype(self, *args):
+        key = RCGraphTensor(*args, modules=self._modules)
+        assert key.value == 1
+        return key
+
+    def clone(self, *args):
+        return TensorModule(*args, generic_key_type=self._generic_key_type, ring=self._ring, _modules=self._modules, _clone=True)
+
+    def _empty_module(self):
+        return TensorModule(generic_key_type=self._generic_key_type, ring=self._ring, _modules=self._modules, _clone=True)
+
+    def __init__(self, *args, generic_key_type=RCGraphTensor, _modules=None, ring=None, _clone=False):
+        if _clone:
+            self._modules = _modules
+            super().__init__(*args, generic_key_type=generic_key_type, ring=ring, _clone=False)
+            return
         _dict = {}
         # put together the keys and values
-
-        modules = []
+        # if len(args) == 0 or (len(args) == 1 and isinstance(args[0], dict)):
+        #     super().__init__(*args, generic_key_type=generic_key_type, **kwargs)
+        #     return
+        modules = _modules
         rings = []
-        for arg in args:
-            if isinstance(arg, ModuleType):
-                modules.append(arg)
-            else:
-                raise ValueError(f"Bad argument type: {type(arg)}, expecting Modules")
-
-        if len(modules) > 0:
-            if len(modules) != len(args):
-                raise ValueError("Cannot mix modules and non-modules in TensorModule")
-            new_modules = []
-            for i, mod in enumerate(modules):
-                if isinstance(mod, TensorModule):
-                    new_modules += [*mod._modules]
-                    rings += [*mod.ring.rings]
+        if _modules is None:
+            modules = []
+            for arg in args:
+                if isinstance(arg, ModuleType):
+                    modules.append(arg)
                 else:
-                    new_modules.append(mod)
-                    rings.append(mod.ring)
+                    raise ValueError(f"Bad argument type: {type(arg)}, expecting Modules")
 
-            for i, mod in enumerate(new_modules):
-                if i == 0:
-                    _dict = mod._dict
-                    continue
-                new_dict = {}
-                for key1, val1 in _dict.items():
-                    for key2, val2 in mod._dict.items():
-                        new_key = RCGraphTensor(key1, key2, modules=new_modules[:i + 1])
-                        new_dict[new_key] = new_dict.get(new_key, 0) + val1 * val2
-                _dict = new_dict
+            if len(modules) > 0:
+                if len(modules) != len(args):
+                    raise ValueError("Cannot mix modules and non-modules in TensorModule")
+                new_modules = []
+                for i, mod in enumerate(modules):
+                    if isinstance(mod, TensorModule):
+                        new_modules += [*mod._modules]
+                        rings += [*mod.ring.rings]
+                    else:
+                        new_modules.append(mod)
+                        rings.append(mod.ring)
+
+                for i, mod in enumerate(new_modules):
+                    if i == 0:
+                        _dict = mod._dict
+                        continue
+                    new_dict = {}
+                    for key1, val1 in _dict.items():
+                        for key2, val2 in mod._dict.items():
+                            new_key = RCGraphTensor(key1, key2, modules=new_modules[: i + 1])
+                            new_dict[new_key] = new_dict.get(new_key, 0) + val1 * val2
+                    _dict = new_dict
             self._dict = _dict
             self._modules = tuple(modules)
+        else:
+            self._modules = tuple(modules)
+            rings = [mod.ring for mod in modules]
+            _dict = {self.keytype(k): v for k, v in dict(*args).items()}
+            self._dict = _dict
+
+        super().__init__(_dict, generic_key_type=generic_key_type, ring=TensorRing(*rings), _clone=False)
 
     @classmethod
     def ext_multiply(cls, elem1, elem2, strict=False):
@@ -758,37 +910,55 @@ FA = FreeAlgebra(WordBasis)
 
 @cache
 def try_lr_module(perm, length=None):
+    # print(f"Starting {perm}")
     if length is None:
         length = len(perm.trimcode)
     elif length < len(perm.trimcode):
         raise ValueError("Length too short")
     if perm.inv == 0:
         if length == 0:
-            return RCGraph() @ RCGraph()
-        return FA(*([0] * length)).coproduct() * TensorModule({RCGraphTensor(RCGraph(), RCGraph()): 1})
+            mod = RCGraph() @ RCGraph()
+            #  #  # print(f"MOASA!! {mod=} {type(mod)=}")
+            return mod
+        return FA(*([0] * length)).coproduct() * (RCGraph() @ RCGraph())
     lower_perm = uncode(perm.trimcode[1:])
     elem = ASx(lower_perm, length - 1)
     lower_module1 = try_lr_module(lower_perm, length - 1)
     assert isinstance(lower_module1, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
+    #  #  # print(f"Coproducting {ASx(uncode([perm.trimcode[0]]), 1).coproduct()=}")
+    #  #  # print(ASx(uncode([perm.trimcode[0]]), 1).coproduct())
+    #  #  # print("Going for it")
+    #  #  # print(f"{type(lower_module1)=} {lower_module1=}")
+    #  #  # print(f"{type(ASx(uncode([perm.trimcode[0]]), 1).coproduct())=}")
     ret_elem = ASx(uncode([perm.trimcode[0]]), 1).coproduct() * lower_module1
-    assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
+    #  #  # print(f"{ret_elem=}")
+    assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {lower_perm=} {length=}"
 
-    ret_elem = TensorModule({RCGraphTensor(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(perm) and rc2.perm.bruhat_leq(perm)})
+    ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
 
     if length == 1:
         return ret_elem
-
+    keys = set(ret_elem.keys())
+    # print(f"{repr(keys)=} {perm=}")
     up_elem = ASx(uncode([perm.trimcode[0]]), 1) * elem
+    # print(f"{up_elem=}")
     for key, coeff in up_elem.items():
         if key[0] != perm:
-            assert coeff == 1
+            assert coeff == 1, f"failed coeff 1 {coeff=}"
+            # print(f"Iteration {key[0]}")
             for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
-                keys2 = set(ret_elem.keys())
+                keys2 = set(keys)
                 for rc1, rc2 in keys2:
                     if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
-                        del ret_elem[RCGraphTensor(rc1, rc2)]
+                        try:
+                            keys = set(keys2)
+                            keys.remove((rc1, rc2))
+                        except KeyError:
+                            # print(repr(keys))
+                            raise
                         break
-
+    # print(f"Done {perm}")
+    ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k in keys})
     assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
     return ret_elem
 
@@ -909,9 +1079,7 @@ if __name__ == "__main__":
     mod1 = FA(2) * graph1
     mod2 = FA(3) * graph2
 
-    print(mod1)
-    print(mod2)
+    #  #  # print(mod1)
+    #  #  # print(mod2)
 
     tmod = mod1 @ mod2
-
-    

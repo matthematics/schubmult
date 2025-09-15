@@ -32,10 +32,11 @@ def main():
             assert all(v == 0 for v in (elem - check).values())
         except AssertionError:
             print(f"Fail on {perm}")
+            print(try_mod)
             raise
 
         print(f"Success {perm.trimcode}")
-        print(try_mod)
+        #print(try_mod)
 
 
 if __name__ == "__main__":

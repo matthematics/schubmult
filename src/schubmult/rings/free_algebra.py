@@ -191,10 +191,11 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         return self * other
 
     def __mul__(self, other):
-        try:
-            return self.ring.mul(self, other)
-        except Exception:
+        #  # print("I is mul")
+        from .rc_graph_module import ModuleType
+        if isinstance(other, ModuleType):
             return other.__rmul__(self)
+        return self.ring.mul(self, other)
 
     def __matmul__(self, other):
         return self.ring.matmul(self, other)
@@ -512,7 +513,6 @@ class FreeAlgebra(Ring, CompositeDomain):
             self.domain = EXRAW
         self.dom = self.domain
         self._basis = basis
-        self.zero_monom = self._basis.zero_monom
         self.dtype = type("FreeAlgebraElement", (FreeAlgebraElement,), {"ring": self})
 
     @staticmethod
@@ -553,7 +553,7 @@ class FreeAlgebra(Ring, CompositeDomain):
         return self.from_dict({k: v * other for k, v in elem.items()})
 
     def mul(self, elem, other):
-        # print(f"mul {self=} {elem=} {other=}")
+        #  # print(f"mul {self=} {elem=} {other=}")
         try:
             other = self.domain_new(other)
             return self.from_dict({k: other * v for k, v in elem.items()})
@@ -597,6 +597,8 @@ class FreeAlgebra(Ring, CompositeDomain):
     def new(self, *x):
         if len(x) == 0 and isinstance(x, FreeAlgebraElement):
             return x
+        if len(x) == 1 and self._basis.is_key(x[0]):
+            return self.from_dict({x[0]: S.One})
         if self._basis.is_key(x):
             return self.from_dict({self._basis.as_key(x): S.One})
         return self.mul_scalar(self.one, x)
@@ -614,7 +616,7 @@ class FreeAlgebra(Ring, CompositeDomain):
     def from_dict(self, element):
         poly = self.zero
         for monom, coeff in element.items():
-            if coeff != self.domain.zero:
+            if coeff != S.Zero:
                 poly[monom] = coeff
         return poly
 
@@ -622,6 +624,10 @@ class FreeAlgebra(Ring, CompositeDomain):
         """Skew schubert by elem sym"""
         return self.from_dict(self._basis.skew_element(w, u, n))
 
+    @property
+    def zero_monom(self):
+        return self._basis.zero_monom
+    
     @property
     def zero(self):
         return self.dtype()
