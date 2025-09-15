@@ -7,6 +7,14 @@ from multiprocessing import Lock, Manager, Pool, Process, cpu_count
 from pickle import dump, load
 
 
+def safe_pickle(obj, filename):
+    temp_filename = f"{filename}.tmp"
+    with open(temp_filename, "wb") as f:
+        dump(obj, f)
+    if os.path.exists(filename):
+        os.remove(filename)
+    os.rename(temp_filename, filename)
+
 def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, verification_filename, sleep_time=5):
     last_saved_results_len_seen = 0
     last_verification_len_seen = 0
@@ -23,13 +31,11 @@ def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, ver
             if new_len > last_saved_results_len_seen:
                 print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
                 last_saved_results_len_seen = new_len
-                with open(filename, "wb") as f:
-                    dump(dict(shared_cache_dict), f)
+                safe_pickle(shared_cache_dict, filename)
             if new_verification_len > last_verification_len_seen:
                 last_verification_len_seen = new_verification_len
                 print("Saving verification to ", verification_filename, " with ", len(shared_recording_dict), "entries at ", time.ctime())
-                with open(verification_filename, "wb") as f:
-                    dump(dict(shared_recording_dict), f)
+                safe_pickle(shared_recording_dict, verification_filename)
             if new_verification_len >= max_len:
                 print("Reached max len, exiting saver at ", time.ctime())
                 return
@@ -100,7 +106,7 @@ def main():
                     loaded = load(f)
                     if isinstance(loaded, dict):
                         shared_recording_dict.update(loaded)
-                        print(f"Loaded {len(loaded)} entries from {filename}")
+                        print(f"Loaded {len(loaded)} entries from {verification_filename}")
             except Exception as e:
                 print(f"Could not load from {filename}: {e}")
 
