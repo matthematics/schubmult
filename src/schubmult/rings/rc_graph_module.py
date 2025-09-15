@@ -799,6 +799,10 @@ class TensorModule(ModuleType):
     #     obj.ringtype = type("TensorRing", (TensorRing,))
     #     obj.keytype = type("RCGraphTensor", (RCGraphTensor,), {"module": obj}})
     #     return obj
+
+    # def __reduce__(self):
+    #     return (self.__class__, (self._dict, self._generic_key_type, self._ring, self._modules))
+
     def filter_keys(self, lambd):
         return self.clone({k: v for k, v in self._dict.items() if lambd(k)})
 

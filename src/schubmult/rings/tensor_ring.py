@@ -42,7 +42,12 @@ class TensorRing(BaseSchubertRing):
         coeff_genset = tuple(coeff_genset)
         super().__init__(list(genset), list(coeff_genset))
         self.zero_monom = tuple([self.rings[i].zero_monom for i in range(len(self.rings))])
-        self.dtype = type("TensorRingElement", (TensorRingElement,), {"ring": self})
+        #self.dtype = type("TensorRingElement", (TensorRingElement,), {"ring": self})
+
+    def dtype(self):
+        elem = TensorRingElement()
+        elem.ring = self
+        return elem
 
     def __hash__(self):
         return hash(self._rings)

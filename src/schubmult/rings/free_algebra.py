@@ -513,7 +513,7 @@ class FreeAlgebra(Ring, CompositeDomain):
             self.domain = EXRAW
         self.dom = self.domain
         self._basis = basis
-        self.dtype = type("FreeAlgebraElement", (FreeAlgebraElement,), {"ring": self})
+        #self.dtype = type("FreeAlgebraElement", (FreeAlgebraElement,), {"ring": self})
 
     @staticmethod
     def right_pad(tup, n):
@@ -630,7 +630,9 @@ class FreeAlgebra(Ring, CompositeDomain):
     
     @property
     def zero(self):
-        return self.dtype()
+        elem = FreeAlgebraElement()
+        elem.ring = self
+        return elem
 
     def domain_new(self, element, orig_domain=None):  # noqa: ARG002
         if isinstance(element, FreeAlgebraElement) or isinstance(element, BaseSchubertElement):

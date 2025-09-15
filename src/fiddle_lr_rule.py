@@ -1,42 +1,268 @@
+# # import sys
+# # import time
+# # from math import factorial
+# # from multiprocessing import Lock, Manager, Process
+# # from pickle import dump, load
+
+
+# # def saver(shared_cache_dict, lock, max_len, filename, sleep_time=60):
+# #     last_len_seen = 0
+# #     with lock:
+# #         last_len_seen = len(shared_cache_dict)
+# #     while(True):
+# #         with lock:
+# #             new_len = len(shared_cache_dict)
+# #             if new_len > last_len_seen:
+# #                 print("Saving to", filename, "with", new_len, "entries at ", time.ctime())
+# #                 last_len_seen = new_len
+# #                 with open(filename, "wb") as f:
+# #                     dump(dict(shared_cache_dict), f)
+# #             if new_len >= max_len:
+# #                 print("Reached max len, exiting saver at ", time.ctime())
+# #                 return
+# #         time.sleep(sleep_time)
+
+# # def worker(shared_cache_dict, lock, perm):
+# #     from schubmult import ASx
+# #     from schubmult.rings.rc_graph_module import try_lr_module
+
+# #     try_mod = None
+# #     with lock:
+# #         if perm in shared_cache_dict:
+# #             try_mod = shared_cache_dict.get(perm, None)
+# #     if try_mod is None:
+# #         try_mod = try_lr_module(perm)
+# #         with lock:
+# #             shared_cache_dict[perm] = try_mod
+# #     elem = try_mod.asdtype(ASx @ ASx)
+
+# #     check = ASx(perm).coproduct()
+# #     try:
+# #         assert all(v == 0 for v in (elem - check).values())
+# #     except AssertionError:
+# #         print(f"Fail on {perm} at ", time.ctime())
+# #         print(try_mod)
+# #         with lock:
+# #             raise SystemExit
+
+# #     print(f"Success {perm.trimcode}")
+
+
+# # def main():
+# #     from schubmult import Permutation
+# #     n = int(sys.argv[1])
+# #     filename = sys.argv[2]
+
+# #     perms = Permutation.all_permutations(n)
+# #     perms.sort(key = lambda p: (p.inv, p.trimcode))
+
+# #     with Manager() as manager:
+# #         shared_cache_dict = manager.dict()
+# #         lock = manager.Lock()
+# #         processes = [Process(target=saver, args=(shared_cache_dict, lock, len(perms), filename))]
+# #         for perm in perms:
+# #             p = Process(target=worker, args=(shared_cache_dict, lock, perm))
+# #             processes.append(p)
+# #             p.start()
+
+# #         processes[0].join()
+
+
+# # if __name__ == "__main__":
+# #     main()
+
+# import sys
+# import time
+# from math import factorial
+# from multiprocessing import Lock, Manager, Pool, Process, cpu_count
+# from pickle import dump, load
+
+
+# def saver(shared_cache_dict, lock, max_len, filename, sleep_time=60):
+#     last_len_seen = 0
+#     with lock:
+#         last_len_seen = len(shared_cache_dict)
+#     while(True):
+#         with lock:
+#             new_len = len(shared_cache_dict)
+#             if new_len > last_len_seen:
+#                 print("Saving to", filename, "with", new_len, "entries at ", time.ctime())
+#                 last_len_seen = new_len
+#                 with open(filename, "wb") as f:
+#                     dump(dict(shared_cache_dict), f)
+#             if new_len >= max_len:
+#                 print("Reached max len, exiting saver at ", time.ctime())
+#                 return
+#         time.sleep(sleep_time)
+
+# def worker(args):
+#     shared_cache_dict, lock, perm = args
+#     from schubmult import ASx
+#     from schubmult.rings.rc_graph_module import try_lr_module
+
+#     try_mod = None
+#     with lock:
+#         if perm in shared_cache_dict:
+#             try_mod = shared_cache_dict.get(perm, None)
+#     if try_mod is None:
+#         try_mod = try_lr_module(perm)
+#         with lock:
+#             shared_cache_dict[perm] = try_mod
+#     elem = try_mod.asdtype(ASx @ ASx)
+
+#     check = ASx(perm).coproduct()
+#     try:
+#         assert all(v == 0 for v in (elem - check).values())
+#     except AssertionError:
+#         print(f"Fail on {perm} at ", time.ctime())
+#         print(try_mod)
+#         with lock:
+#             raise SystemExit
+
+#     print(f"Success {perm.trimcode}")
+
+# def main():
+#     from schubmult import Permutation
+#     n = int(sys.argv[1])
+#     filename = sys.argv[2]
+
+#     perms = Permutation.all_permutations(n)
+#     perms.sort(key = lambda p: (p.inv, p.trimcode))
+
+#     with Manager() as manager:
+#         shared_cache_dict = manager.dict()
+#         lock = manager.Lock()
+#         processes = [Process(target=saver, args=(shared_cache_dict, lock, len(perms), filename))]
+#         processes[0].start()
+
+#         # Use a process pool for workers
+#         pool_size = max(1, cpu_count() - 2)  # leave one core for the saver
+#         with Pool(processes=pool_size) as pool:
+#             pool.map(worker, [(shared_cache_dict, lock, perm) for perm in perms])
+
+#         processes[0].join()
+
+# if __name__ == "__main__":
+#     main()
+
+import os
 import sys
+import time
+from math import factorial
+from multiprocessing import Lock, Manager, Pool, Process, cpu_count
+from pickle import dump, load
 
-from schubmult import ASx, Permutation
-from schubmult.rings.rc_graph_module import RCGraph, try_lr_module
 
-# THE ASX TABLEAU TELL YOU WHAT TO DO
+def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, verification_filename, sleep_time=5):
+    last_len_seen = 0
+    last_len_seen2 = 0
+    with lock:
+        last_len_seen = len(shared_cache_dict)
+    if len(shared_cache_dict) == max_len:
+        print("Saved results that were loaded are complete, exiting saver at ", time.ctime())
+        print("Verification will be performed only.")
+        return
+    while True:
+        with lock:
+            new_len = len(shared_cache_dict)
+            new_len2 = len(shared_cache_dict)
+            if new_len > last_len_seen:
+                print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
+                last_len_seen = new_len
+                with open(filename, "wb") as f:
+                    dump(dict(shared_cache_dict), f)
+            if new_len2 > last_len_seen2:
+                last_len_seen2 = new_len2
+                print("Saving verification to ", verification_filename, " with ", len(shared_recording_dict), "entries at ", time.ctime())
+                with open(verification_filename, "wb") as f:
+                    dump(dict(shared_recording_dict), f)
+            if new_len2 >= max_len:
+                print("Reached max len, exiting saver at ", time.ctime())
+                return
+        time.sleep(sleep_time)
+
+
+def worker(args):
+    shared_cache_dict, shared_recording_dict, lock, perm = args
+    from schubmult import ASx
+    from schubmult.rings.rc_graph_module import try_lr_module
+
+    try_mod = None
+    with lock:
+        if perm in shared_recording_dict:
+            print(f"{perm} already verified, returning.")
+            return  # already verified
+        if perm in shared_cache_dict:
+            try_mod = shared_cache_dict.get(perm, None)
+    if try_mod is None:
+        try_mod = try_lr_module(perm)
+        with lock:
+            shared_cache_dict[perm] = try_mod
+    elem = try_mod.asdtype(ASx @ ASx)
+
+    check = ASx(perm).coproduct()
+    try:
+        assert all(v == 0 for v in (elem - check).values())
+    except AssertionError:
+        print(f"Fail on {perm} at ", time.ctime())
+        with lock:
+            shared_recording_dict[perm] = False
+        return
+
+    with lock:
+        shared_recording_dict[perm] = True
+    print(f"Success {perm.trimcode} at ", time.ctime())
 
 
 def main():
+    from schubmult import Permutation
+
     n = int(sys.argv[1])
+    filename = sys.argv[2]
+    verification_filename = filename + ".verification"
 
     perms = Permutation.all_permutations(n)
+    perms.sort(key=lambda p: (p.inv, p.trimcode))
 
-    rc_graphs = {perm: RCGraph.all_rc_graphs(perm, n - 1) for perm in perms}
+    with Manager() as manager:
+        shared_cache_dict = manager.dict()
+        shared_recording_dict = manager.dict()
+        lock = manager.Lock()
 
-    rc_graphs_by_weight = {}
+        # Load from file if it exists
+        if os.path.exists(filename):
+            try:
+                with open(filename, "rb") as f:
+                    loaded = load(f)
+                    if isinstance(loaded, dict):
+                        shared_cache_dict.update(loaded)
+                        print(f"Loaded {len(loaded)} entries from {filename}")
+            except Exception as e:
+                print(f"Could not load from {filename}: {e}")
+            
+        if os.path.exists(verification_filename):
+            try:
+                with open(verification_filename, "rb") as f:
+                    loaded = load(f)
+                    if isinstance(loaded, dict):
+                        shared_recording_dict.update(loaded)
+                        print(f"Loaded {len(loaded)} entries from {filename}")
+            except Exception as e:
+                print(f"Could not load from {filename}: {e}")
 
-    for perm, rcs in rc_graphs.items():
-        for rc in rcs:
-            dct = rc_graphs_by_weight.get(perm, {})
-            st = dct.get(rc.length_vector(), set())
-            st.add(rc)
-            dct[rc.length_vector()] = st
-            rc_graphs_by_weight[perm] = dct
+        print("Starting from ", len(shared_cache_dict), "entries")
+        processes = [Process(target=saver, args=(shared_cache_dict, shared_recording_dict, lock, len(perms), filename, verification_filename))]
+        processes[0].start()
 
-    for perm in perms:
-        try_mod = try_lr_module(perm)
-        elem = try_mod.asdtype(ASx @ ASx)
+        # Use a process pool for workers
+        pool_size = max(1, cpu_count() - 2)  # leave one core for the saver
+        with Pool(processes=pool_size) as pool:
+            pool.map(worker, [(shared_cache_dict, shared_recording_dict, lock, perm) for perm in perms])
 
-        check = ASx(perm).coproduct()
-        try:
-            assert all(v == 0 for v in (elem - check).values())
-        except AssertionError:
-            print(f"Fail on {perm}")
-            print(try_mod)
-            raise
+        print("All saved, waiting for verification to finish at ", time.ctime())
+        pool.join()
 
-        print(f"Success {perm.trimcode}")
-        #print(try_mod)
+        print("Verification finished.")
 
 
 if __name__ == "__main__":
