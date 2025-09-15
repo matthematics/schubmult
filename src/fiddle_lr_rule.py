@@ -6,15 +6,15 @@
 
 
 # # def saver(shared_cache_dict, lock, max_len, filename, sleep_time=60):
-# #     last_len_seen = 0
+# #     last_saved_results_len_seen = 0
 # #     with lock:
-# #         last_len_seen = len(shared_cache_dict)
+# #         last_saved_results_len_seen = len(shared_cache_dict)
 # #     while(True):
 # #         with lock:
 # #             new_len = len(shared_cache_dict)
-# #             if new_len > last_len_seen:
+# #             if new_len > last_saved_results_len_seen:
 # #                 print("Saving to", filename, "with", new_len, "entries at ", time.ctime())
-# #                 last_len_seen = new_len
+# #                 last_saved_results_len_seen = new_len
 # #                 with open(filename, "wb") as f:
 # #                     dump(dict(shared_cache_dict), f)
 # #             if new_len >= max_len:
@@ -79,15 +79,15 @@
 
 
 # def saver(shared_cache_dict, lock, max_len, filename, sleep_time=60):
-#     last_len_seen = 0
+#     last_saved_results_len_seen = 0
 #     with lock:
-#         last_len_seen = len(shared_cache_dict)
+#         last_saved_results_len_seen = len(shared_cache_dict)
 #     while(True):
 #         with lock:
 #             new_len = len(shared_cache_dict)
-#             if new_len > last_len_seen:
+#             if new_len > last_saved_results_len_seen:
 #                 print("Saving to", filename, "with", new_len, "entries at ", time.ctime())
-#                 last_len_seen = new_len
+#                 last_saved_results_len_seen = new_len
 #                 with open(filename, "wb") as f:
 #                     dump(dict(shared_cache_dict), f)
 #             if new_len >= max_len:
@@ -154,10 +154,10 @@ from pickle import dump, load
 
 
 def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, verification_filename, sleep_time=5):
-    last_len_seen = 0
-    last_len_seen2 = 0
+    last_saved_results_len_seen = 0
+    last_verification_len_seen = 0
     with lock:
-        last_len_seen = len(shared_cache_dict)
+        last_saved_results_len_seen = len(shared_cache_dict)
     if len(shared_cache_dict) == max_len:
         print("Saved results that were loaded are complete, exiting saver at ", time.ctime())
         print("Verification will be performed only.")
@@ -165,18 +165,18 @@ def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, ver
     while True:
         with lock:
             new_len = len(shared_cache_dict)
-            new_len2 = len(shared_cache_dict)
-            if new_len > last_len_seen:
+            new_verification_len = len(shared_recording_dict)
+            if new_len > last_saved_results_len_seen:
                 print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
-                last_len_seen = new_len
+                last_saved_results_len_seen = new_len
                 with open(filename, "wb") as f:
                     dump(dict(shared_cache_dict), f)
-            if new_len2 > last_len_seen2:
-                last_len_seen2 = new_len2
+            if new_verification_len > last_verification_len_seen:
+                last_verification_len_seen = new_verification_len
                 print("Saving verification to ", verification_filename, " with ", len(shared_recording_dict), "entries at ", time.ctime())
                 with open(verification_filename, "wb") as f:
                     dump(dict(shared_recording_dict), f)
-            if new_len2 >= max_len:
+            if new_verification_len >= max_len:
                 print("Reached max len, exiting saver at ", time.ctime())
                 return
         time.sleep(sleep_time)
@@ -239,7 +239,7 @@ def main():
                         print(f"Loaded {len(loaded)} entries from {filename}")
             except Exception as e:
                 print(f"Could not load from {filename}: {e}")
-            
+
         if os.path.exists(verification_filename):
             try:
                 with open(verification_filename, "rb") as f:
