@@ -148,6 +148,7 @@ schubmult_double = "schubmult.scripts.schubmult_double:main"
 schubmult_q = "schubmult.scripts.schubmult_q:main"
 schubmult_q_double = "schubmult.scripts.schubmult_q_double:main"
 schubert_formula = "schubmult.scripts.schubert_formula:main"
+verify_lr_rule = "schubmult.scripts.lr_verification:main"
 
 [tool.pytest.ini_options]
 addopts = [
