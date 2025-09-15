@@ -158,9 +158,9 @@ def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, ver
     last_verification_len_seen = 0
     with lock:
         last_saved_results_len_seen = len(shared_cache_dict)
-    if len(shared_cache_dict) == max_len:
-        print("Saved results that were loaded are complete, exiting saver at ", time.ctime())
-        print("Verification will be performed only.")
+        last_verification_len_seen = len(shared_recording_dict)
+    if last_verification_len_seen == max_len:
+        print("Saved verification results that were loaded are complete, exiting saver at ", time.ctime())
         return
     while True:
         with lock:
@@ -250,16 +250,19 @@ def main():
             except Exception as e:
                 print(f"Could not load from {filename}: {e}")
 
-        print("Starting from ", len(shared_cache_dict), "entries")
+        print("Starting from ", len(shared_cache_dict), " saved entries")
+        print("Starting from ", len(shared_recording_dict), " verified entries")
         processes = [Process(target=saver, args=(shared_cache_dict, shared_recording_dict, lock, len(perms), filename, verification_filename))]
         processes[0].start()
+        
 
         # Use a process pool for workers
         pool_size = max(1, cpu_count() - 2)  # leave one core for the saver
         with Pool(processes=pool_size) as pool:
             pool.map(worker, [(shared_cache_dict, shared_recording_dict, lock, perm) for perm in perms])
 
-        print("All saved, waiting for verification to finish at ", time.ctime())
+        processes[0].join()
+
         pool.join()
 
         print("Verification finished.")
