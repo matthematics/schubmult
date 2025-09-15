@@ -39,19 +39,13 @@ def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, ver
 def worker(args):
     shared_cache_dict, shared_recording_dict, lock, perm = args
     from schubmult import ASx
-    from schubmult.rings.rc_graph_module import try_lr_module
+    from schubmult.rings.rc_graph_module import try_lr_module_cache
 
-    try_mod = None
     with lock:
         if perm in shared_recording_dict:
             print(f"{perm} already verified, returning.")
             return  # already verified
-        if perm in shared_cache_dict:
-            try_mod = shared_cache_dict.get(perm, None)
-    if try_mod is None:
-        try_mod = try_lr_module(perm)
-        with lock:
-            shared_cache_dict[perm] = try_mod
+    try_mod = try_lr_module_cache(perm, lock=lock, cache_dict=shared_cache_dict)
     elem = try_mod.asdtype(ASx @ ASx)
 
     check = ASx(perm).coproduct()

@@ -967,6 +967,71 @@ def try_lr_module(perm, length=None):
     return ret_elem
 
 
+def try_lr_module_cache(perm, lock=None, cache_dict=None, length=None):
+    # print(f"Starting {perm}")
+    if length is None:
+        length = len(perm.trimcode)
+    ret_elem = None
+    with lock:
+        if (perm, length) in cache_dict:
+            ret_elem = cache_dict[(perm, length)]
+
+    if ret_elem is not None:
+        return ret_elem
+    if length < len(perm.trimcode):
+        raise ValueError("Length too short")
+    if perm.inv == 0:
+        if length == 0:
+            mod = RCGraph() @ RCGraph()
+            #  #  # print(f"MOASA!! {mod=} {type(mod)=}")
+            with lock:
+                cache_dict[(perm, length)] = mod
+            return mod
+        return FA(*([0] * length)).coproduct() * (RCGraph() @ RCGraph())
+    lower_perm = uncode(perm.trimcode[1:])
+    elem = ASx(lower_perm, length - 1)
+    lower_module1 = try_lr_module_cache(lower_perm, lock=lock, cache_dict=cache_dict, length=length - 1)
+    assert isinstance(lower_module1, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
+    #  #  # print(f"Coproducting {ASx(uncode([perm.trimcode[0]]), 1).coproduct()=}")
+    #  #  # print(ASx(uncode([perm.trimcode[0]]), 1).coproduct())
+    #  #  # print("Going for it")
+    #  #  # print(f"{type(lower_module1)=} {lower_module1=}")
+    #  #  # print(f"{type(ASx(uncode([perm.trimcode[0]]), 1).coproduct())=}")
+    ret_elem = ASx(uncode([perm.trimcode[0]]), 1).coproduct() * lower_module1
+    #  #  # print(f"{ret_elem=}")
+    assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {lower_perm=} {length=}"
+
+    ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
+
+    if length == 1:
+        return ret_elem
+    keys = set(ret_elem.keys())
+    # print(f"{repr(keys)=} {perm=}")
+    up_elem = ASx(uncode([perm.trimcode[0]]), 1) * elem
+    # print(f"{up_elem=}")
+    for key, coeff in up_elem.items():
+        if key[0] != perm:
+            assert coeff == 1, f"failed coeff 1 {coeff=}"
+            # print(f"Iteration {key[0]}")
+            for (rc1_bad, rc2_bad), cff2 in try_lr_module_cache(key[0], lock=lock, cache_dict=cache_dict, length=length).items():
+                keys2 = set(keys)
+                for rc1, rc2 in keys2:
+                    if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
+                        try:
+                            keys = set(keys2)
+                            keys.remove((rc1, rc2))
+                        except KeyError:
+                            # print(repr(keys))
+                            raise
+                        break
+    # print(f"Done {perm}")
+    ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k in keys})
+    assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
+    with lock:
+        cache_dict[(perm, length)] = ret_elem
+    return ret_elem
+
+
 @cache
 def lr_module(perm, length=None):
     if length is None:
