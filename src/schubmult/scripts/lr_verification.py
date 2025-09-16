@@ -1,6 +1,7 @@
 # LR rule verification script
 
 import os
+import shutil
 import sys
 import time
 from multiprocessing import Lock, Manager, Pool, Process, cpu_count
@@ -9,11 +10,18 @@ from pickle import dump, load
 
 def safe_pickle(obj, filename):
     temp_filename = f"{filename}.tmp"
-    with open(temp_filename, "wb") as f:
-        dump(obj, f)
-    if os.path.exists(filename):
-        os.remove(filename)
-    os.rename(temp_filename, filename)
+    try:
+        with open(temp_filename, "wb") as f:
+            dump(obj, f)
+        # Atomically replace the file
+        if os.path.exists(filename):
+            shutil.copy2(filename, f"{filename}.backup")  # copy, not rename
+        os.replace(temp_filename, filename)
+    except Exception as e:
+        print(f"Error during safe_pickle: {e}")
+        if os.path.exists(temp_filename):
+            os.remove(temp_filename)
+
 
 def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, verification_filename, sleep_time=5):
     last_saved_results_len_seen = 0
@@ -99,6 +107,7 @@ def main():
                         print(f"Loaded {len(loaded)} entries from {filename}")
             except Exception as e:
                 print(f"Could not load from {filename}: {e}")
+                raise
 
         if os.path.exists(verification_filename):
             try:
@@ -109,6 +118,7 @@ def main():
                         print(f"Loaded {len(loaded)} entries from {verification_filename}")
             except Exception as e:
                 print(f"Could not load from {filename}: {e}")
+                raise
 
         print("Starting from ", len(shared_cache_dict), " saved entries")
         print("Starting from ", len(shared_recording_dict), " verified entries")
