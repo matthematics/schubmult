@@ -8,12 +8,28 @@ from json import dump, load
 from multiprocessing import Lock, Manager, Pool, Process, cpu_count
 
 
+def reload_modules(dct):
+    from schubmult.rings.rc_graph_module import RCGraph
+    
+    result = {}
+    for k, v in dct.items():
+        key = eval(k) # tuple
+        result[key] = None
+        for k2, v2 in v.items():
+            g = eval(k2)
+            g1, g2 = RCGraph(g[0]), RCGraph(g[1])
+            if result[key] is None:
+                result[key] = v2 *(g1 @ g2)
+            else:
+                result[key] += v2 *(g1 @ g2)
+    return result
+
 def safe_save(obj, filename):
     from schubmult.rings.rc_graph_module import TensorModule
     temp_filename = f"{filename}.tmp"
     try:
         with open(temp_filename, "w") as f:
-            dump({repr(k): {repr(tuple(k2)): int(v2) for k2, v2 in v.value_dict.items()} if isinstance(v, TensorModule) else v for k, v in obj.items()}, f)
+            dump({repr(k): {repr(tuple([tuple(a) for a in k2])): int(v2) for k2, v2 in v.value_dict.items()} if isinstance(v, TensorModule) else v for k, v in obj.items()}, f)
         # Atomically repla  ce the file
         if os.path.exists(filename):
             shutil.copy2(filename, f"{filename}.backup")  # copy, not rename
@@ -99,15 +115,17 @@ def main():
         shared_cache_dict = manager.dict()
         shared_recording_dict = manager.dict()
         lock = manager.Lock()
-
+        cache_load_dict = {}
         # Load from file if it exists
         if os.path.exists(filename):
             try:
                 with open(filename, "r") as f:
                     loaded = load(f)
                     if isinstance(loaded, dict):
-                        shared_cache_dict.update(loaded)
+                        cache_load_dict.update(loaded)
                         print(f"Loaded {len(loaded)} entries from {filename}")
+                shared_cache_dict.update(reload_modules(cache_load_dict))
+                print("Successfully reconstructed modules")
             except Exception as e:
                 print(f"Could not load from {filename}: {e}")
                 raise
