@@ -4,21 +4,24 @@ import os
 import shutil
 import sys
 import time
+from json import dump, load
 from multiprocessing import Lock, Manager, Pool, Process, cpu_count
-from pickle import dump, load
 
 
-def safe_pickle(obj, filename):
+def safe_save(obj, filename):
+    from schubmult.rings.rc_graph_module import TensorModule
     temp_filename = f"{filename}.tmp"
     try:
-        with open(temp_filename, "wb") as f:
-            dump(obj, f)
-        # Atomically replace the file
+        with open(temp_filename, "w") as f:
+            dump({repr(k): {repr(tuple(k2)): int(v2) for k2, v2 in v.value_dict.items()} if isinstance(v, TensorModule) else v for k, v in obj.items()}, f)
+        # Atomically repla  ce the file
         if os.path.exists(filename):
             shutil.copy2(filename, f"{filename}.backup")  # copy, not rename
         os.replace(temp_filename, filename)
     except Exception as e:
-        print(f"Error during safe_pickle: {e}")
+        import traceback
+        print(f"Error during safe_save:")
+        traceback.print_exc()
         if os.path.exists(temp_filename):
             os.remove(temp_filename)
 
@@ -39,11 +42,11 @@ def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, ver
             if new_len > last_saved_results_len_seen:
                 print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
                 last_saved_results_len_seen = new_len
-                safe_pickle(shared_cache_dict, filename)
+                safe_save(shared_cache_dict, filename)
             if new_verification_len > last_verification_len_seen:
                 last_verification_len_seen = new_verification_len
                 print("Saving verification to ", verification_filename, " with ", len(shared_recording_dict), "entries at ", time.ctime())
-                safe_pickle(shared_recording_dict, verification_filename)
+                safe_save(shared_recording_dict, verification_filename)
             if new_verification_len >= max_len:
                 print("Reached max len, exiting saver at ", time.ctime())
                 return
@@ -86,7 +89,7 @@ def main():
         verification_filename = filename + ".verification"
     except (IndexError, ValueError):
         print("Usage: verify_lr_rule n filename [num_processors]", file=sys.stderr)
-        print("filename is the pickle file for saving intermediate results, filename.verification is used for verification results", file=sys.stderr)
+        print("filename is the save file for saving intermediate results, filename.verification is used for verification results", file=sys.stderr)
         sys.exit(1)
 
     perms = Permutation.all_permutations(n)
@@ -100,7 +103,7 @@ def main():
         # Load from file if it exists
         if os.path.exists(filename):
             try:
-                with open(filename, "rb") as f:
+                with open(filename, "r") as f:
                     loaded = load(f)
                     if isinstance(loaded, dict):
                         shared_cache_dict.update(loaded)
@@ -111,7 +114,7 @@ def main():
 
         if os.path.exists(verification_filename):
             try:
-                with open(verification_filename, "rb") as f:
+                with open(verification_filename, "r") as f:
                     loaded = load(f)
                     if isinstance(loaded, dict):
                         shared_recording_dict.update(loaded)
