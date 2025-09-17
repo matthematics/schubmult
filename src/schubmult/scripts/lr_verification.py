@@ -55,20 +55,24 @@ def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, ver
         print("Saved verification results that were loaded are complete, exiting saver at ", time.ctime())
         return
     while True:
+        cache_copy = {}
+        recording_copy = {}
         with lock:
             new_len = len(shared_cache_dict)
             new_verification_len = len(shared_recording_dict)
-            if new_len > last_saved_results_len_seen:
-                print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
-                last_saved_results_len_seen = new_len
-                safe_save(shared_cache_dict, filename)
-            if new_verification_len > last_verification_len_seen:
-                last_verification_len_seen = new_verification_len
-                print("Saving verification to ", verification_filename, " with ", len(shared_recording_dict), "entries at ", time.ctime())
-                safe_save(shared_recording_dict, verification_filename)
-            if new_verification_len >= max_len:
-                print("Reached max len, exiting saver at ", time.ctime())
-                return
+            cache_copy = {**shared_cache_dict}
+            recording_copy = {**shared_recording_dict}
+        if new_len > last_saved_results_len_seen:
+            print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
+            last_saved_results_len_seen = new_len
+            safe_save(cache_copy, filename)
+        if new_verification_len > last_verification_len_seen:
+            last_verification_len_seen = new_verification_len
+            print("Saving verification to ", verification_filename, " with ", len(recording_copy), "entries at ", time.ctime())
+            safe_save(recording_copy, verification_filename)
+        if new_verification_len >= max_len:
+            print("Reached max len, exiting saver at ", time.ctime())
+            return
         time.sleep(sleep_time)
 
 
