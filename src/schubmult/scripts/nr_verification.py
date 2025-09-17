@@ -7,6 +7,8 @@ import time
 from json import dump, load
 from multiprocessing import Lock, Manager, Pool, Process, cpu_count
 
+from schubmult.rings.rc_graph_module import try_lr_module
+
 
 def reload_modules(dct):
     from schubmult.rings.rc_graph_module import RCGraph
@@ -46,10 +48,10 @@ def safe_save(obj, filename):
 
 
 def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, verification_filename, sleep_time=5):
-    last_saved_results_len_seen = 0
+    #last_saved_results_len_seen = 0
     last_verification_len_seen = 0
     with lock:
-        last_saved_results_len_seen = len(shared_cache_dict)
+        #last_saved_results_len_seen = len(shared_cache_dict)
         last_verification_len_seen = len(shared_recording_dict)
     if last_verification_len_seen == max_len:
         print("Saved verification results that were loaded are complete, exiting saver at ", time.ctime())
@@ -58,10 +60,10 @@ def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, ver
         with lock:
             new_len = len(shared_cache_dict)
             new_verification_len = len(shared_recording_dict)
-            if new_len > last_saved_results_len_seen:
-                print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
-                last_saved_results_len_seen = new_len
-                safe_save(shared_cache_dict, filename)
+            # if new_len > last_saved_results_len_seen:
+            #     print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
+            #     last_saved_results_len_seen = new_len
+            #     safe_save(shared_cache_dict, filename)
             if new_verification_len > last_verification_len_seen:
                 last_verification_len_seen = new_verification_len
                 print("Saving verification to ", verification_filename, " with ", len(shared_recording_dict), "entries at ", time.ctime())
@@ -75,13 +77,13 @@ def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, ver
 def worker(args):
     shared_cache_dict, shared_recording_dict, lock, perm = args
     from schubmult import ASx
-    from schubmult.rings.rc_graph_module import try_lr_module_cache
+    from schubmult.rings.rc_graph_module import nonrecursive_lr_module
 
     with lock:
         if perm in shared_recording_dict:
             print(f"{perm} already verified, returning.")
             return  # already verified
-    try_mod = try_lr_module_cache(perm, lock=lock, cache_dict=shared_cache_dict)
+    try_mod = nonrecursive_lr_module(perm)
     elem = try_mod.asdtype(ASx @ ASx)
 
     check = ASx(perm).coproduct()
@@ -89,6 +91,10 @@ def worker(args):
         assert all(v == 0 for v in (elem - check).values())
     except AssertionError:
         print(f"Fail on {perm} at ", time.ctime())
+        print(f"Module for {perm}")
+        print(try_mod)
+        print(f"Expected module for {perm}")
+        print(try_lr_module(perm))
         with lock:
             shared_recording_dict[perm] = False
         return

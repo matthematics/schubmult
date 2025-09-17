@@ -27,7 +27,7 @@ def _multiline_join(str1, str2, joiner=" "):
         lines1 += [""] * (len(lines2) - len(lines1))
     initial_line = f"{lines1[0]:<{width1}}{joiner}{lines2[0]:<{width2}}"
     # print(f"{lines1=} {lines2=}")
-    result = "\n".join([initial_line, *[f"{l1:<{width1}}{'':{len(joiner)}}{l2:<{width2}}" for l1, l2 in zip_longest(lines1[1:], lines2[1:], fillvalue="")]])
+    result = "\n".join([initial_line, *[f"{l1:<{width1}}{'':<{len(joiner)}}{l2:<{width2}}" for l1, l2 in zip_longest(lines1[1:], lines2[1:], fillvalue=f"{'':<{width2}}")]])
     # print(result)
     return result
 
@@ -37,7 +37,10 @@ def full_multiline_join(*args, joiner=" "):
         return ""
     if len(args) == 1:
         return args[0]
-    return _multiline_join(args[0], full_multiline_join(*args[1:]), joiner=joiner)
+    buildup = args[0]
+    for arg in args[1:]:
+        buildup = _multiline_join(buildup, arg, joiner=joiner)
+    return buildup
 
 
 def _value_dict(dct_of_keys, keytype=None):
@@ -180,7 +183,7 @@ class ModuleType:
                 buildups = to_add
             else:
                 buildups = _multiline_join(buildups, to_add, joiner=add_joiner)
-        return full_multiline_join(*buildups, joiner=" + ")
+        return buildups
 
     def coeffify(self, v):
         if v < 0:
@@ -426,7 +429,7 @@ class RCGraph(KeyType, tuple):
 
     def __str__(self):
         lines = self.as_str_lines()
-        lines2 = [f"|{line}|" for line in lines]
+        lines2 = [line for line in lines]
         return "\n".join(lines2)
 
     def __repr__(self):
@@ -1029,6 +1032,66 @@ def try_lr_module_cache(perm, lock=None, cache_dict=None, length=None):
     assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
     with lock:
         cache_dict[(perm, length)] = ret_elem
+    return ret_elem
+
+
+def nonrecursive_lr_module(perm, length=None):
+    # print(f"Starting {perm}")
+    if length is None:
+        length = len(perm.trimcode)
+    elif length < len(perm.trimcode):
+        raise ValueError("Length too short")
+    if perm.inv == 0:
+        if length == 0:
+            mod = RCGraph() @ RCGraph()
+            #  #  # print(f"MOASA!! {mod=} {type(mod)=}")
+            return mod
+        return FA(*([0] * length)).coproduct() * (RCGraph() @ RCGraph())
+    lower_perm = uncode(perm.trimcode[1:])
+    lower_module1 = try_lr_module(lower_perm, length - 1)
+    assert isinstance(lower_module1, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
+    #  #  # print(f"Coproducting {ASx(uncode([perm.trimcode[0]]), 1).coproduct()=}")
+    #  #  # print(ASx(uncode([perm.trimcode[0]]), 1).coproduct())
+    #  #  # print("Going for it")
+    #  #  # print(f"{type(lower_module1)=} {lower_module1=}")
+    #  #  # print(f"{type(ASx(uncode([perm.trimcode[0]]), 1).coproduct())=}")
+    ret_elem = ASx(uncode([perm.trimcode[0]]), 1).coproduct() * lower_module1
+    #  #  # print(f"{ret_elem=}")
+    assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {lower_perm=} {length=}"
+
+    ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
+
+    if length == 1:
+        return ret_elem
+    keys = set(ret_elem.keys())
+    # print(f"{repr(keys)=} {perm=}")
+    up_elem = ASx(perm, length).change_basis(WordBasis)
+    elem = ASx(lower_perm, length - 1)
+    up_elem = ASx(uncode([perm.trimcode[0]]), 1) * elem
+    
+    # print(f"{up_elem=}")
+    def pad_vector(vec, length):
+        if len(vec) < length:
+            return (*vec, *(0,) * (length - len(vec)))
+        return tuple(vec)
+    loopkeys = [pad_vector(key[0].trimcode, length) for key, _ in up_elem.items() if key[0] != perm]
+    loopkeys.sort()
+    for key in loopkeys:
+        code_key = key
+        for (rc1_bad, rc2_bad), cff2 in (FA(*code_key).coproduct()*(RCGraph() @ RCGraph())).items():
+            keys2 = set(keys)
+            for rc1, rc2 in keys2:
+                if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
+                    try:
+                        keys = set(keys2)
+                        keys.remove((rc1, rc2))
+                    except KeyError:
+                        # print(repr(keys))
+                        raise
+                    break
+    # print(f"Done {perm}")
+    ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k in keys})
+    assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
     return ret_elem
 
 
