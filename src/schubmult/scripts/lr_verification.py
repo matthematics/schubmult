@@ -7,22 +7,29 @@ import time
 from json import dump, load
 from multiprocessing import Lock, Manager, Pool, Process, cpu_count
 
+from joblib import Parallel, delayed
 
-def reload_modules(dct):
+
+def reload_modules(dct, n_jobs=None):
     from schubmult.rings.rc_graph_module import RCGraph
 
-    result = {}
-    for k, v in dct.items():
+    def reconstruct_one(k, v):
         key = eval(k)  # tuple
-        result[key] = None
+        result_val = None
         for k2, v2 in v.items():
             g = eval(k2)
             g1, g2 = RCGraph(g[0]), RCGraph(g[1])
-            if result[key] is None:
-                result[key] = v2 * (g1 @ g2)
+            if result_val is None:
+                result_val = v2 * (g1 @ g2)
             else:
-                result[key] += v2 * (g1 @ g2)
-    return result
+                result_val += v2 * (g1 @ g2)
+        return (key, result_val)
+
+    # Use joblib to parallelize reconstruction
+    items = list(dct.items())
+    n_jobs = n_jobs or min(8, os.cpu_count() or 1)
+    results = Parallel(n_jobs=n_jobs)(delayed(reconstruct_one)(k, v) for k, v in items)
+    return dict(results)
 
 
 def safe_save(obj, filename):
@@ -124,6 +131,19 @@ def main():
         lock = manager.Lock()
         cache_load_dict = {}
         # Load from file if it exists
+        if os.path.exists(verification_filename):
+            try:
+                with open(verification_filename, "r") as f:
+                    loaded = load(f)
+                    if isinstance(loaded, dict):
+                        #assert type(eval(next(iter(loaded.keys())))) == tuple, f"{type(eval(next(iter(loaded.keys()))))=}"
+                        loaded = {Permutation(eval(k)): v for k, v in loaded.items()}
+                        shared_recording_dict.update(loaded)
+                        print(f"Loaded {len(loaded)} entries from {verification_filename}")
+            except Exception as e:
+                print(f"Could not load from {filename}: {e}")
+                raise
+
         if os.path.exists(filename):
             try:
                 with open(filename, "r") as f:
@@ -131,22 +151,13 @@ def main():
                     if isinstance(loaded, dict):
                         cache_load_dict.update(loaded)
                         print(f"Loaded {len(loaded)} entries from {filename}")
+                print("Reconstructing modules from loaded data...")
                 shared_cache_dict.update(reload_modules(cache_load_dict))
                 print("Successfully reconstructed modules")
             except Exception as e:
                 print(f"Could not load from {filename}: {e}")
                 raise
 
-        if os.path.exists(verification_filename):
-            try:
-                with open(verification_filename, "r") as f:
-                    loaded = load(f)
-                    if isinstance(loaded, dict):
-                        shared_recording_dict.update(loaded)
-                        print(f"Loaded {len(loaded)} entries from {verification_filename}")
-            except Exception as e:
-                print(f"Could not load from {filename}: {e}")
-                raise
 
         print("Starting from ", len(shared_cache_dict), " saved entries")
         print("Starting from ", len(shared_recording_dict), " verified entries")

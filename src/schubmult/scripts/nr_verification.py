@@ -107,65 +107,24 @@ def worker(args):
 def main():
     from schubmult import Permutation
 
-    try:
-        n = int(sys.argv[1])
-        filename = sys.argv[2]
-        num_processors = int(sys.argv[3]) if len(sys.argv) > 3 else max(1, cpu_count() - 2)
-        verification_filename = filename + ".verification"
-    except (IndexError, ValueError):
-        print("Usage: verify_lr_rule n filename [num_processors]", file=sys.stderr)
-        print("filename is the save file for saving intermediate results, filename.verification is used for verification results", file=sys.stderr)
-        sys.exit(1)
-
+    # try:
+    n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
-    perms.sort(key=lambda p: (p.inv, p.trimcode))
-
-    with Manager() as manager:
-        shared_cache_dict = manager.dict()
-        shared_recording_dict = manager.dict()
-        lock = manager.Lock()
-        cache_load_dict = {}
-        # Load from file if it exists
-        if os.path.exists(filename):
-            try:
-                with open(filename, "r") as f:
-                    loaded = load(f)
-                    if isinstance(loaded, dict):
-                        cache_load_dict.update(loaded)
-                        print(f"Loaded {len(loaded)} entries from {filename}")
-                shared_cache_dict.update(reload_modules(cache_load_dict))
-                print("Successfully reconstructed modules")
-            except Exception as e:
-                print(f"Could not load from {filename}: {e}")
-                raise
-
-        if os.path.exists(verification_filename):
-            try:
-                with open(verification_filename, "r") as f:
-                    loaded = load(f)
-                    if isinstance(loaded, dict):
-                        shared_recording_dict.update(loaded)
-                        print(f"Loaded {len(loaded)} entries from {verification_filename}")
-            except Exception as e:
-                print(f"Could not load from {filename}: {e}")
-                raise
-
-        print("Starting from ", len(shared_cache_dict), " saved entries")
-        print("Starting from ", len(shared_recording_dict), " verified entries")
-        processes = [Process(target=saver, args=(shared_cache_dict, shared_recording_dict, lock, len(perms), filename, verification_filename))]
-        processes[0].start()
-
-        # Use a process pool for workers
-        pool_size = num_processors
-        with Pool(processes=pool_size) as pool:
-            pool.map(worker, [(shared_cache_dict, shared_recording_dict, lock, perm) for perm in perms])
-
-        processes[0].join()
-
-        pool.join()
-
-        print("Verification finished.")
-
+    for perm in perms:
+        mod = try_lr_module(perm)
+        word_of_perm = []
+        weight_of_perm = []
+        for i, v in enumerate(perm.trimcode):
+            word_of_perm.extend(list(range(i + v, i, -1)))
+            weight_of_perm.extend([i + 1] * v)
+        for (rc1, rc2), coeff in mod.items():
+            print(f"{rc1.perm, rc2.perm} for {perm} with coeff {coeff}")
+            print(f"{[*rc1.perm_word(),*rc2.perm_word()]}")
+            print(f"{word_of_perm}")
+            print("and")
+            print(f"{[*rc1.weight_word(),*rc2.weight_word()]}")
+            print(f"{weight_of_perm}")
+            print("----")
 
 if __name__ == "__main__":
     main()

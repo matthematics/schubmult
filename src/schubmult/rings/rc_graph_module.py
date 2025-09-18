@@ -194,6 +194,20 @@ class ModuleType:
 
 
 class RCGraph(KeyType, tuple):
+
+
+    def perm_word(self):
+        ret = []
+        for row in self:
+            ret = [*ret, *row]
+        return tuple(ret)
+    
+    def weight_word(self):
+        ret = []
+        for i, row in enumerate(self):
+            ret = [*ret, *(i + 1 for _ in row)]
+        return tuple(ret)
+
     def __matmul__(self, other):
         if isinstance(other, RCGraph):
             return RCGraphModule({self: 1}) @ RCGraphModule({other: 1})
