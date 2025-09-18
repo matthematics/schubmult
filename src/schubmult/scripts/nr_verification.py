@@ -7,124 +7,62 @@ import time
 from json import dump, load
 from multiprocessing import Lock, Manager, Pool, Process, cpu_count
 
-from schubmult.rings.rc_graph_module import try_lr_module
+from schubmult.rings.rc_graph_module import RCGraph, try_lr_module
 
 
-def reload_modules(dct):
-    from schubmult.rings.rc_graph_module import RCGraph
+def co_principal_perms(perm):
+    from schubmult import ASx, uncode
 
-    result = {}
-    for k, v in dct.items():
-        key = eval(k)  # tuple
-        result[key] = None
-        for k2, v2 in v.items():
-            g = eval(k2)
-            g1, g2 = RCGraph(g[0]), RCGraph(g[1])
-            if result[key] is None:
-                result[key] = v2 * (g1 @ g2)
-            else:
-                result[key] += v2 * (g1 @ g2)
-    return result
-
-
-def safe_save(obj, filename):
-    from schubmult.rings.rc_graph_module import TensorModule
-
-    temp_filename = f"{filename}.tmp"
-    try:
-        with open(temp_filename, "w") as f:
-            dump({repr(k): {repr(tuple([tuple(a) for a in k2])): int(v2) for k2, v2 in v.value_dict.items()} if isinstance(v, TensorModule) else v for k, v in obj.items()}, f)
-        # Atomically repla  ce the file
-        if os.path.exists(filename):
-            shutil.copy2(filename, f"{filename}.backup")  # copy, not rename
-        os.replace(temp_filename, filename)
-    except Exception as e:
-        import traceback
-
-        print(f"Error during safe_save:")
-        traceback.print_exc()
-        if os.path.exists(temp_filename):
-            os.remove(temp_filename)
-
-
-def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, verification_filename, sleep_time=5):
-    #last_saved_results_len_seen = 0
-    last_verification_len_seen = 0
-    with lock:
-        #last_saved_results_len_seen = len(shared_cache_dict)
-        last_verification_len_seen = len(shared_recording_dict)
-    if last_verification_len_seen == max_len:
-        print("Saved verification results that were loaded are complete, exiting saver at ", time.ctime())
-        return
-    while True:
-        with lock:
-            new_len = len(shared_cache_dict)
-            new_verification_len = len(shared_recording_dict)
-            # if new_len > last_saved_results_len_seen:
-            #     print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
-            #     last_saved_results_len_seen = new_len
-            #     safe_save(shared_cache_dict, filename)
-            if new_verification_len > last_verification_len_seen:
-                last_verification_len_seen = new_verification_len
-                print("Saving verification to ", verification_filename, " with ", len(shared_recording_dict), "entries at ", time.ctime())
-                safe_save(shared_recording_dict, verification_filename)
-            if new_verification_len >= max_len:
-                print("Reached max len, exiting saver at ", time.ctime())
-                return
-        time.sleep(sleep_time)
-
-
-def worker(args):
-    shared_cache_dict, shared_recording_dict, lock, perm = args
-    from schubmult import ASx
-    from schubmult.rings.rc_graph_module import nonrecursive_lr_module
-
-    with lock:
-        if perm in shared_recording_dict:
-            print(f"{perm} already verified, returning.")
-            return  # already verified
-    try_mod = nonrecursive_lr_module(perm)
-    elem = try_mod.asdtype(ASx @ ASx)
-
-    check = ASx(perm).coproduct()
-    try:
-        assert all(v == 0 for v in (elem - check).values())
-    except AssertionError:
-        print(f"Fail on {perm} at ", time.ctime())
-        print(f"Module for {perm}")
-        print(try_mod)
-        print(f"Expected module for {perm}")
-        print(try_lr_module(perm))
-        with lock:
-            shared_recording_dict[perm] = False
-        return
-
-    with lock:
-        shared_recording_dict[perm] = True
-    print(f"Success {perm.trimcode} at ", time.ctime())
-
+    if len(perm.trimcode) == 0:
+        return []
+    lower_elem = ASx(uncode(perm.trimcode[1:]))
+    upper_elem = ASx(uncode([perm.trimcode[0]]), 1) * lower_elem
+    return [key[0] for key in upper_elem.keys() if key[0] != perm]
 
 def main():
     from schubmult import Permutation
 
     # try:
+    all_rc_graphs = {}
+
     n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
+    perms.sort(key=lambda p: p.trimcode, reverse=True)
+    latest_seen_left = {perm: [{} for _ in range(n)] for perm in perms}
+    latest_seen_right = {perm: [{} for _ in range(n)] for perm in perms}
     for perm in perms:
-        mod = try_lr_module(perm)
-        word_of_perm = []
-        weight_of_perm = []
-        for i, v in enumerate(perm.trimcode):
-            word_of_perm.extend(list(range(i + v, i, -1)))
-            weight_of_perm.extend([i + 1] * v)
-        for (rc1, rc2), coeff in mod.items():
-            print(f"{rc1.perm, rc2.perm} for {perm} with coeff {coeff}")
-            print(f"{[*rc1.perm_word(),*rc2.perm_word()]}")
-            print(f"{word_of_perm}")
-            print("and")
-            print(f"{[*rc1.weight_word(),*rc2.weight_word()]}")
-            print(f"{weight_of_perm}")
-            print("----")
+        all_rc_graphs[perm] = []
+        for length in range(n):
+            all_rc_graphs[perm].append({g: i for i, g in enumerate(tuple(sorted(RCGraph.all_rc_graphs(perm, length), key=lambda a: a.length_vector())))})
+    for perm in perms:
+        modules = try_lr_module(perm)
+        print(all_rc_graphs[perm])
+        for (rc1, rc2), coeff in modules.items():
+            print(f"{perm.trimcode}: {rc1.perm.trimcode} {len(rc2.perm.trimcode)}")
+            print(f"  {latest_seen_left[perm][len(rc1)].get(rc1.perm, -1)} * {latest_seen_right[perm][len(rc2)].get(rc2.perm, -1)} latest seen")
+            
+            index1 = all_rc_graphs[rc1.perm][len(rc1)][rc1]
+            index2 = all_rc_graphs[rc2.perm][len(rc2)][rc2]
+            print(f"{index1} * {index2} = {coeff}")
+            try:
+                assert (latest_seen_left[perm][len(rc1)].get(rc1.perm,-1) < index1) or (latest_seen_right[perm][len(rc2)].get(rc2.perm,-1) < index2)
+            except AssertionError:
+                print(f"Order violation: {perm.trimcode}: {rc1.perm.trimcode} {len(rc2.perm.trimcode)}")
+                print("********VIOLATION*******")
+                print(f"  {latest_seen_left[perm][len(rc1)].get(rc1.perm)} * {latest_seen_right[perm][len(rc2)].get(rc2.perm)} latest seen")
+                print(f"  {index1} * {index2}")
+                print("********END VIOLATION*******")
+            #print(f"  {index1} * {index2} = {coeff}")
+            # latest_seen_left[perm][len(rc1)][rc1.perm] = index1
+            # latest_seen_right[perm][len(rc2)][rc2.perm] = index2
+            for co_perm in co_principal_perms(rc1.perm):
+                #print(f"    Co-principal: {co_perm.trimcode} {all_rc_graphs[co_perm][len(rc1)].get(rc1)}")
+            #print(f"  {index1} * {index2} = {coeff}")
+                if len(co_perm) <= n:
+                    assert co_perm.trimcode < perm.trimcode
+                    latest_seen_left[co_perm][len(rc1)][rc1.perm] = index1 if latest_seen_left[co_perm][len(rc1)].get(rc1.perm, -1) < index1 else latest_seen_left[co_perm][len(rc1)][rc1.perm]
+                    latest_seen_right[co_perm][len(rc2)][rc2.perm] = index2 if latest_seen_right[co_perm][len(rc2)].get(rc2.perm, -1) < index2 else latest_seen_right[co_perm][len(rc2)][rc2.perm]
+        print("---------")
 
 if __name__ == "__main__":
     main()

@@ -69,6 +69,34 @@ class Permutation:
             p = p.swap(a - 1, a)
         return p
 
+
+    @property
+    def code_word(self):
+        cd = self.trimcode
+        word = []
+        for i in range(len(cd)):
+            word += list(range(i+cd[i], i, -1))
+        return tuple(word)
+
+    def right_root_at(self, index, word=None):
+        if word is None:
+            word = [*self.code_word]
+        apply = ~Permutation.ref_product(*word[index+1:])
+        return (apply[word[index]-1], apply[word[index]])
+
+    def code_index_of_index(self, index):
+        running_sum = 0
+        running_code_index = 0
+        for code_index, code_elem in enumerate(self.trimcode):
+            if code_elem == 0:
+                continue
+            running_sum += code_elem
+            if running_sum > index:
+                return running_code_index
+            running_code_index += 1
+        return len(self.trimcode)
+
+
     @staticmethod
     @cache
     def __xnew_cached__(_class, perm):

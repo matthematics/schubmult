@@ -201,12 +201,21 @@ class RCGraph(KeyType, tuple):
         for row in self:
             ret = [*ret, *row]
         return tuple(ret)
-    
+
     def weight_word(self):
-        ret = []
+        perm = self.perm
+        nz = len([a for a in perm.trimcode if a != 0])
+        root_dict = {perm.right_root_at(index): index for index in range(perm.inv)}
+        result_word = [9]*perm.inv
+        index = 0
+        perm_word = self.perm_word()
         for i, row in enumerate(self):
-            ret = [*ret, *(i + 1 for _ in row)]
-        return tuple(ret)
+            for _ in range(len(row)):
+                root = perm.right_root_at(index, word=perm_word)
+                result_word[root_dict[root]] = (nz - perm.code_index_of_index(index))
+                index += 1
+        result_word.reverse()
+        return tuple(result_word)
 
     def __matmul__(self, other):
         if isinstance(other, RCGraph):
