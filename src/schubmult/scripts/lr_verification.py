@@ -5,7 +5,7 @@ import shutil
 import sys
 import time
 from json import dump, load
-from multiprocessing import Lock, Manager, Pool, Process, cpu_count
+from multiprocessing import Event, Lock, Manager, Pool, Process, cpu_count
 
 from joblib import Parallel, delayed
 
@@ -52,23 +52,19 @@ def safe_save(obj, filename):
             os.remove(temp_filename)
 
 
-def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, verification_filename, sleep_time=5):
+def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, verification_filename, stop_event, sleep_time=5):
     last_saved_results_len_seen = 0
     last_verification_len_seen = 0
     with lock:
         last_saved_results_len_seen = len(shared_cache_dict)
         last_verification_len_seen = len(shared_recording_dict)
-    if last_verification_len_seen == max_len:
-        print("Saved verification results that were loaded are complete, exiting saver at ", time.ctime())
-        return
-    while True:
+    while not stop_event.is_set():
         cache_copy = {}
         recording_copy = {}
-        with lock:
-            new_len = len(shared_cache_dict)
-            new_verification_len = len(shared_recording_dict)
-            cache_copy = {**shared_cache_dict}
-            recording_copy = {**shared_recording_dict}
+        new_len = len(shared_cache_dict)
+        new_verification_len = len(shared_recording_dict)
+        cache_copy = {**shared_cache_dict}
+        recording_copy = {**shared_recording_dict}
         if new_len > last_saved_results_len_seen:
             print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
             last_saved_results_len_seen = new_len
@@ -77,10 +73,11 @@ def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, ver
             last_verification_len_seen = new_verification_len
             print("Saving verification to ", verification_filename, " with ", len(recording_copy), "entries at ", time.ctime())
             safe_save(recording_copy, verification_filename)
-        if new_verification_len >= max_len:
-            print("Reached max len, exiting saver at ", time.ctime())
-            return
         time.sleep(sleep_time)
+    # Final save after stop
+    safe_save({**shared_cache_dict}, filename)
+    safe_save({**shared_recording_dict}, verification_filename)
+    print("Saver process exiting.")
 
 
 def worker(args):
@@ -129,6 +126,7 @@ def main():
         shared_cache_dict = manager.dict()
         shared_recording_dict = manager.dict()
         lock = manager.Lock()
+        stop_event = manager.Event()
         cache_load_dict = {}
         # Load from file if it exists
         if os.path.exists(verification_filename):
@@ -136,7 +134,7 @@ def main():
                 with open(verification_filename, "r") as f:
                     loaded = load(f)
                     if isinstance(loaded, dict):
-                        #assert type(eval(next(iter(loaded.keys())))) == tuple, f"{type(eval(next(iter(loaded.keys()))))=}"
+                        # assert type(eval(next(iter(loaded.keys())))) == tuple, f"{type(eval(next(iter(loaded.keys()))))=}"
                         loaded = {Permutation(eval(k)): v for k, v in loaded.items()}
                         shared_recording_dict.update(loaded)
                         print(f"Loaded {len(loaded)} entries from {verification_filename}")
@@ -158,21 +156,19 @@ def main():
                 print(f"Could not load from {filename}: {e}")
                 raise
 
-
         print("Starting from ", len(shared_cache_dict), " saved entries")
         print("Starting from ", len(shared_recording_dict), " verified entries")
-        processes = [Process(target=saver, args=(shared_cache_dict, shared_recording_dict, lock, len(perms), filename, verification_filename))]
-        processes[0].start()
+        saver_proc = Process(target=saver, args=(shared_cache_dict, shared_recording_dict, lock, len(perms), filename, verification_filename, stop_event))
+        saver_proc.start()
 
         # Use a process pool for workers
         pool_size = num_processors
         with Pool(processes=pool_size) as pool:
             pool.map(worker, [(shared_cache_dict, shared_recording_dict, lock, perm) for perm in perms])
 
-        processes[0].join()
-
-        pool.join()
-
+        # Signal saver to exit
+        stop_event.set()
+        saver_proc.join()
         print("Verification finished.")
 
 
