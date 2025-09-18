@@ -126,7 +126,7 @@ def main():
         shared_cache_dict = manager.dict()
         shared_recording_dict = manager.dict()
         lock = manager.Lock()
-        stop_event = manager.Event()
+        stop_event = Event()
         cache_load_dict = {}
         # Load from file if it exists
         if os.path.exists(verification_filename):
