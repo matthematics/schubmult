@@ -34,7 +34,7 @@ def reload_modules(dct, n_jobs=None):
     return dict(results)
 
 
-def safe_save_dual(obj, filename):
+def safe_save_cache(obj, filename):
     # Pickle save
     temp_pickle = f"{filename}.pkl.tmp"
     pickle_file = f"{filename}.pkl"
@@ -82,7 +82,26 @@ def safe_save_dual(obj, filename):
             os.remove(temp_json)
 
 
-def safe_load_dual(filename):
+def safe_save_recording(obj, filename):
+    temp_json = f"{filename}.json.tmp"
+    json_file = f"{filename}.json"
+    try:
+        # keys are permutations, values are bools
+        with open(temp_json, "w") as f:
+            json.dump({repr(k): v for k, v in obj.items()}, f)
+        if os.path.exists(json_file):
+            shutil.copy2(json_file, f"{json_file}.backup")
+        os.replace(temp_json, json_file)
+    except Exception as e:
+        import traceback
+
+        print(f"Error during recording JSON save:")
+        traceback.print_exc()
+        if os.path.exists(temp_json):
+            os.remove(temp_json)
+
+
+def safe_load_cache(filename):
     pickle_file = f"{filename}.pkl"
     json_file = f"{filename}.json"
     # Try pickle first
@@ -104,6 +123,19 @@ def safe_load_dual(filename):
     return {}
 
 
+def safe_load_recording(filename, Permutation):
+    json_file = f"{filename}.json"
+    if os.path.exists(json_file):
+        try:
+            with open(json_file, "r") as f:
+                loaded = json.load(f)
+            # reconstruct keys as Permutation objects
+            return {Permutation(eval(k)): v for k, v in loaded.items()}
+        except Exception as e:
+            print(f"Recording JSON load failed: {e}")
+    return {}
+
+
 def saver(shared_cache_dict, shared_recording_dict, lock, filename, verification_filename, stop_event, sleep_time=5):
     last_saved_results_len_seen = 0
     last_verification_len_seen = 0
@@ -111,28 +143,25 @@ def saver(shared_cache_dict, shared_recording_dict, lock, filename, verification
         last_saved_results_len_seen = len(shared_cache_dict)
         last_verification_len_seen = len(shared_recording_dict)
     while not stop_event.is_set():
-        # Step 1: Copy data inside lock
         with lock:
             new_len = len(shared_cache_dict)
             new_verification_len = len(shared_recording_dict)
             cache_copy = {k: shared_cache_dict[k] for k in shared_cache_dict.keys()}
             recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
-        # Step 2: Save outside lock
         if new_len > last_saved_results_len_seen:
             print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
             last_saved_results_len_seen = new_len
-            safe_save_dual(cache_copy, filename)
+            safe_save_cache(cache_copy, filename)
         if new_verification_len > last_verification_len_seen:
             last_verification_len_seen = new_verification_len
             print("Saving verification to ", verification_filename, " with ", len(recording_copy), "entries at ", time.ctime())
-            safe_save_dual(recording_copy, verification_filename)
+            safe_save_recording(recording_copy, verification_filename)
         time.sleep(sleep_time)
-    # Final save after stop
     with lock:
         cache_copy = {k: shared_cache_dict[k] for k in shared_cache_dict.keys()}
         recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
-    safe_save_dual(cache_copy, filename)
-    safe_save_dual(recording_copy, verification_filename)
+    safe_save_cache(cache_copy, filename)
+    safe_save_recording(recording_copy, verification_filename)
     print("Saver process exiting.")
 
 
@@ -191,33 +220,22 @@ def main():
         lock = manager.Lock()
         stop_event = Event()
         cache_load_dict = {}
-        # Load from file if it exists
-        if os.path.exists(verification_filename):
-            try:
-                with open(verification_filename, "r") as f:
-                    loaded = load(f)
-                    if isinstance(loaded, dict):
-                        loaded = {Permutation(eval(k)): v for k, v in loaded.items()}
-                        shared_recording_dict.update(loaded)
-                        print(f"Loaded {len(loaded)} entries from {verification_filename}")
-            except Exception as e:
-                print(f"Could not load from {filename}: {e}")
-                raise
-
-        if os.path.exists(filename):
-            try:
-                cache_load_dict = safe_load_dual(filename)
-                print(f"Loaded {len(cache_load_dict)} entries from {filename}")
-                print("Reconstructing modules from loaded data...")
-                shared_cache_dict.update(cache_load_dict)
-                print("Successfully reconstructed modules")
-            except Exception as e:
-                print(f"Could not load from {filename}: {e}")
-                raise
+        # Load recording dict from JSON only
+        loaded_recording = safe_load_recording(verification_filename, Permutation)
+        if loaded_recording:
+            shared_recording_dict.update(loaded_recording)
+            print(f"Loaded {len(loaded_recording)} entries from {verification_filename}")
+        # Load cache dict from pickle or JSON
+        cache_load_dict = safe_load_cache(filename)
+        if cache_load_dict:
+            print(f"Loaded {len(cache_load_dict)} entries from {filename}")
+            print("Reconstructing modules from loaded data...")
+            shared_cache_dict.update(cache_load_dict)
+            print("Successfully reconstructed modules")
 
         print("Starting from ", len(shared_cache_dict), " saved entries")
         print("Starting from ", len(shared_recording_dict), " verified entries")
-        saver_proc = Process(target=saver, args=(shared_cache_dict, shared_recording_dict, lock, len(perms), filename, verification_filename, stop_event))
+        saver_proc = Process(target=saver, args=(shared_cache_dict, shared_recording_dict, lock, filename, verification_filename, stop_event))
         saver_proc.start()
 
         # Create task queue and fill with perms
@@ -377,7 +395,6 @@ if __name__ == "__main__":
 #                 with open(verification_filename, "r") as f:
 #                     loaded = load(f)
 #                     if isinstance(loaded, dict):
-#                         # assert type(eval(next(iter(loaded.keys())))) == tuple, f"{type(eval(next(iter(loaded.keys()))))=}"
 #                         loaded = {Permutation(eval(k)): v for k, v in loaded.items()}
 #                         shared_recording_dict.update(loaded)
 #                         print(f"Loaded {len(loaded)} entries from {verification_filename}")
