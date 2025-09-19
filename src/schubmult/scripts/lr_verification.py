@@ -1,6 +1,8 @@
 # LR rule verification script
 
+import json
 import os
+import pickle
 import shutil
 import sys
 import time
@@ -32,24 +34,74 @@ def reload_modules(dct, n_jobs=None):
     return dict(results)
 
 
-def safe_save(obj, filename):
-    from schubmult.rings.rc_graph_module import TensorModule
-
-    temp_filename = f"{filename}.tmp"
+def safe_save_dual(obj, filename):
+    # Pickle save
+    temp_pickle = f"{filename}.pkl.tmp"
+    pickle_file = f"{filename}.pkl"
     try:
-        with open(temp_filename, "w") as f:
-            dump({repr(k): {repr(tuple([tuple(a) for a in k2])): int(v2) for k2, v2 in v.value_dict.items()} if isinstance(v, TensorModule) else v for k, v in obj.items()}, f)
-        # Atomically replace the file
-        if os.path.exists(filename):
-            shutil.copy2(filename, f"{filename}.backup")  # copy, not rename
-        os.replace(temp_filename, filename)
+        with open(temp_pickle, "wb") as f:
+            pickle.dump(obj, f, protocol=pickle.HIGHEST_PROTOCOL)
+        if os.path.exists(pickle_file):
+            shutil.copy2(pickle_file, f"{pickle_file}.backup")
+        os.replace(temp_pickle, pickle_file)
     except Exception as e:
         import traceback
 
-        print(f"Error during safe_save:")
+        print(f"Error during pickle save:")
         traceback.print_exc()
-        if os.path.exists(temp_filename):
-            os.remove(temp_filename)
+        if os.path.exists(temp_pickle):
+            os.remove(temp_pickle)
+    # JSON backup
+    temp_json = f"{filename}.json.tmp"
+    json_file = f"{filename}.json"
+    try:
+        from schubmult.rings.rc_graph_module import TensorModule
+
+        with open(temp_json, "w") as f:
+            json.dump(
+                {
+                    repr(k): {
+                        repr(tuple([tuple(a) for a in k2])): int(v2)
+                        for k2, v2 in v.value_dict.items()
+                    }
+                    if isinstance(v, TensorModule)
+                    else v
+                    for k, v in obj.items()
+                },
+                f,
+            )
+        if os.path.exists(json_file):
+            shutil.copy2(json_file, f"{json_file}.backup")
+        os.replace(temp_json, json_file)
+    except Exception as e:
+        import traceback
+
+        print(f"Error during JSON backup:")
+        traceback.print_exc()
+        if os.path.exists(temp_json):
+            os.remove(temp_json)
+
+
+def safe_load_dual(filename):
+    pickle_file = f"{filename}.pkl"
+    json_file = f"{filename}.json"
+    # Try pickle first
+    if os.path.exists(pickle_file):
+        try:
+            with open(pickle_file, "rb") as f:
+                return pickle.load(f)
+        except Exception as e:
+            print(f"Pickle load failed: {e}")
+    # Fallback to JSON
+    if os.path.exists(json_file):
+        try:
+            with open(json_file, "r") as f:
+                loaded = json.load(f)
+            print("Reloading modules from JSON backup...")
+            return reload_modules(loaded)
+        except Exception as e:
+            print(f"JSON load failed: {e}")
+    return {}
 
 
 def saver(shared_cache_dict, shared_recording_dict, lock, filename, verification_filename, stop_event, sleep_time=5):
@@ -59,24 +111,28 @@ def saver(shared_cache_dict, shared_recording_dict, lock, filename, verification
         last_saved_results_len_seen = len(shared_cache_dict)
         last_verification_len_seen = len(shared_recording_dict)
     while not stop_event.is_set():
-        cache_copy = {}
-        recording_copy = {}
-        new_len = len(shared_cache_dict)
-        new_verification_len = len(shared_recording_dict)
-        cache_copy = {**shared_cache_dict}
-        recording_copy = {**shared_recording_dict}
+        # Step 1: Copy data inside lock
+        with lock:
+            new_len = len(shared_cache_dict)
+            new_verification_len = len(shared_recording_dict)
+            cache_copy = {k: shared_cache_dict[k] for k in shared_cache_dict.keys()}
+            recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
+        # Step 2: Save outside lock
         if new_len > last_saved_results_len_seen:
             print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
             last_saved_results_len_seen = new_len
-            safe_save(cache_copy, filename)
+            safe_save_dual(cache_copy, filename)
         if new_verification_len > last_verification_len_seen:
             last_verification_len_seen = new_verification_len
             print("Saving verification to ", verification_filename, " with ", len(recording_copy), "entries at ", time.ctime())
-            safe_save(recording_copy, verification_filename)
+            safe_save_dual(recording_copy, verification_filename)
         time.sleep(sleep_time)
     # Final save after stop
-    safe_save({**shared_cache_dict}, filename)
-    safe_save({**shared_recording_dict}, verification_filename)
+    with lock:
+        cache_copy = {k: shared_cache_dict[k] for k in shared_cache_dict.keys()}
+        recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
+    safe_save_dual(cache_copy, filename)
+    safe_save_dual(recording_copy, verification_filename)
     print("Saver process exiting.")
 
 
@@ -150,13 +206,10 @@ def main():
 
         if os.path.exists(filename):
             try:
-                with open(filename, "r") as f:
-                    loaded = load(f)
-                    if isinstance(loaded, dict):
-                        cache_load_dict.update(loaded)
-                        print(f"Loaded {len(loaded)} entries from {filename}")
+                cache_load_dict = safe_load_dual(filename)
+                print(f"Loaded {len(cache_load_dict)} entries from {filename}")
                 print("Reconstructing modules from loaded data...")
-                shared_cache_dict.update(reload_modules(cache_load_dict))
+                shared_cache_dict.update(cache_load_dict)
                 print("Successfully reconstructed modules")
             except Exception as e:
                 print(f"Could not load from {filename}: {e}")
