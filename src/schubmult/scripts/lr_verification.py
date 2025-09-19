@@ -255,7 +255,14 @@ def main():
         # Signal saver to exit
         stop_event.set()
         saver_proc.join()
-        print("Verification finished.")
+        print("Run finished.")
+        if any(v is False for v in shared_recording_dict.values()):
+            print("Failures:")
+            for k, v in shared_recording_dict.items():
+                if v is False:
+                    print(k)
+        else:
+            print("All verified successfully!")
 
 
 if __name__ == "__main__":
