@@ -34,10 +34,11 @@ def reload_modules(dct, n_jobs=None):
     return dict(results)
 
 
-def safe_save_cache(obj, filename):
+def safe_save_cache(obj, filename, save_json_backup=True):
     # Pickle save
     temp_pickle = f"{filename}.pkl.tmp"
     pickle_file = f"{filename}.pkl"
+    print("Saving cache to", pickle_file)
     try:
         with open(temp_pickle, "wb") as f:
             pickle.dump(obj, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -52,6 +53,9 @@ def safe_save_cache(obj, filename):
         if os.path.exists(temp_pickle):
             os.remove(temp_pickle)
     # JSON backup
+    if not save_json_backup:
+        return
+    print("Saving JSON backup to", f"{filename}.json")
     temp_json = f"{filename}.json.tmp"
     json_file = f"{filename}.json"
     try:
@@ -111,15 +115,26 @@ def safe_load_cache(filename):
                 return pickle.load(f)
         except Exception as e:
             print(f"Pickle load failed: {e}")
+            raise
+    else:
+        print(f"No pickle file {pickle_file} found.")
     # Fallback to JSON
+    print("Falling back to JSON load...")
     if os.path.exists(json_file):
         try:
             with open(json_file, "r") as f:
                 loaded = json.load(f)
             print("Reloading modules from JSON backup...")
-            return reload_modules(loaded)
+            ret = reload_modules(loaded)
+            print("Done.")
+            print(f"Saving as pickle to {pickle_file} for future runs...")
+            safe_save_cache(ret, filename, save_json_backup=False)
+            return ret
         except Exception as e:
             print(f"JSON load failed: {e}")
+            raise
+    else:
+        print(f"No JSON file {json_file} found.")
     return {}
 
 
@@ -130,9 +145,12 @@ def safe_load_recording(filename, Permutation):
             with open(json_file, "r") as f:
                 loaded = json.load(f)
             # reconstruct keys as Permutation objects
+            print(f"Loaded {len(loaded)} entries from {json_file}")
             return {Permutation(eval(k)): v for k, v in loaded.items()}
         except Exception as e:
             print(f"Recording JSON load failed: {e}")
+    else:
+        print(f"No recording file {json_file} found.")
     return {}
 
 
@@ -224,14 +242,12 @@ def main():
         loaded_recording = safe_load_recording(verification_filename, Permutation)
         if loaded_recording:
             shared_recording_dict.update(loaded_recording)
-            print(f"Loaded {len(loaded_recording)} entries from {verification_filename}")
+
         # Load cache dict from pickle or JSON
         cache_load_dict = safe_load_cache(filename)
         if cache_load_dict:
             print(f"Loaded {len(cache_load_dict)} entries from {filename}")
-            print("Reconstructing modules from loaded data...")
             shared_cache_dict.update(cache_load_dict)
-            print("Successfully reconstructed modules")
 
         print("Starting from ", len(shared_cache_dict), " saved entries")
         print("Starting from ", len(shared_recording_dict), " verified entries")
