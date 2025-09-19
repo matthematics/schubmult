@@ -92,7 +92,10 @@ def worker(shared_cache_dict, shared_recording_dict, lock, task_queue):
             if perm in shared_recording_dict:
                 print(f"{perm} already verified, returning.")
                 continue
-        try_mod = try_lr_module_cache(perm, lock=lock, cache_dict=shared_cache_dict)
+        cache_dict_copy = {**shared_cache_dict}
+        try_mod = try_lr_module_cache(perm, cache_dict=cache_dict_copy)
+        with lock:
+            shared_cache_dict.update(cache_dict_copy)
         elem = try_mod.asdtype(ASx @ ASx)
         check = ASx(perm).coproduct()
         try:
