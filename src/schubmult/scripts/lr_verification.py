@@ -1,5 +1,6 @@
 # LR rule verification script
 
+import gc
 import json
 import os
 import pickle
@@ -63,15 +64,7 @@ def safe_save_cache(obj, filename, save_json_backup=True):
 
         with open(temp_json, "w") as f:
             json.dump(
-                {
-                    repr(k): {
-                        repr(tuple([tuple(a) for a in k2])): int(v2)
-                        for k2, v2 in v.value_dict.items()
-                    }
-                    if isinstance(v, TensorModule)
-                    else v
-                    for k, v in obj.items()
-                },
+                {repr(k): {repr(tuple([tuple(a) for a in k2])): int(v2) for k2, v2 in v.value_dict.items()} if isinstance(v, TensorModule) else v for k, v in obj.items()},
                 f,
             )
         if os.path.exists(json_file):
@@ -186,22 +179,31 @@ def saver(shared_cache_dict, shared_recording_dict, lock, filename, verification
 def worker(shared_cache_dict, shared_recording_dict, lock, task_queue):
     from schubmult import ASx
     from schubmult.rings.rc_graph_module import try_lr_module_cache
+
     while True:
         try:
             perm = task_queue.get(timeout=2)
         except Exception:
             break  # queue empty, exit
+
         with lock:
             if perm in shared_recording_dict:
                 print(f"{perm} already verified, returning.")
                 continue
-        # local stores the new keys
+
+        # Use local cache for recursion
         local_cache_dict = {}
-        try_mod = try_lr_module_cache(perm, lock=lock, shared_cache_dict=shared_cache_dict, local_cache_dict=local_cache_dict)
+
+        # Only top-level call accesses shared dict and lock
+        try_mod = try_lr_module_cache(perm, shared_cache_dict=shared_cache_dict, local_cache_dict=local_cache_dict, lock=lock)
+
+        # Only update manager dict at top level
         with lock:
             for key in local_cache_dict:
                 if key not in shared_cache_dict:
                     shared_cache_dict[key] = local_cache_dict[key]
+        local_cache_dict.clear()
+        del local_cache_dict
         elem = try_mod.asdtype(ASx @ ASx)
         check = ASx(perm).coproduct()
         try:
@@ -211,6 +213,9 @@ def worker(shared_cache_dict, shared_recording_dict, lock, task_queue):
             with lock:
                 shared_recording_dict[perm] = False
             continue
+        del elem
+        del check
+        gc.collect()
         with lock:
             shared_recording_dict[perm] = True
         print(f"Success {perm.trimcode} at ", time.ctime())
@@ -222,11 +227,11 @@ def main():
     try:
         n = int(sys.argv[1])
         filename = sys.argv[2]
-        num_processors = int(sys.argv[3]) if len(sys.argv) > 3 else max(1, cpu_count() - 2)
+        num_processors = int(sys.argv[3])
         verification_filename = filename + ".verification"
     except (IndexError, ValueError):
-        print("Usage: verify_lr_rule n filename [num_processors]", file=sys.stderr)
-        print("filename is the save file for saving intermediate results, filename.verification is used for verification results", file=sys.stderr)
+        print("Usage: verify_lr_rule n filename num_processors", file=sys.stderr)
+        print("filename is the base file name (without extension) for saving cache results, and filename.verification is used for verification results", file=sys.stderr)
         sys.exit(1)
 
     perms = Permutation.all_permutations(n)
