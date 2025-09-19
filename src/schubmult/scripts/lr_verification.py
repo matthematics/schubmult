@@ -52,7 +52,7 @@ def safe_save(obj, filename):
             os.remove(temp_filename)
 
 
-def saver(shared_cache_dict, shared_recording_dict, lock, max_len, filename, verification_filename, stop_event, sleep_time=5):
+def saver(shared_cache_dict, shared_recording_dict, lock, filename, verification_filename, stop_event, sleep_time=5):
     last_saved_results_len_seen = 0
     last_verification_len_seen = 0
     with lock:
@@ -92,10 +92,13 @@ def worker(shared_cache_dict, shared_recording_dict, lock, task_queue):
             if perm in shared_recording_dict:
                 print(f"{perm} already verified, returning.")
                 continue
-        cache_dict_copy = {**shared_cache_dict}
-        try_mod = try_lr_module_cache(perm, cache_dict=cache_dict_copy)
+        # local stores the new keys
+        local_cache_dict = {}
+        try_mod = try_lr_module_cache(perm, lock=lock, shared_cache_dict=shared_cache_dict, local_cache_dict=local_cache_dict)
         with lock:
-            shared_cache_dict.update(cache_dict_copy)
+            for key in local_cache_dict:
+                if key not in shared_cache_dict:
+                    shared_cache_dict[key] = local_cache_dict[key]
         elem = try_mod.asdtype(ASx @ ASx)
         check = ASx(perm).coproduct()
         try:
