@@ -195,6 +195,10 @@ class ModuleType:
 
 class RCGraph(KeyType, tuple):
 
+    def __eq__(self, other):
+        if not isinstance(other, RCGraph):
+            return NotImplemented
+        return tuple(self) == tuple(other)
 
     def perm_word(self):
         ret = []
@@ -459,7 +463,7 @@ class RCGraph(KeyType, tuple):
         return "RCGraph(" + ", ".join([repr(k) for k in self]) + ")"
 
     def __hash__(self):
-        return hash((tuple(self), "RCGRAPH"))
+        return hash(tuple(self))
 
 
 class RCGraphModule(ModuleType):
@@ -997,8 +1001,7 @@ def try_lr_module_cache(perm, lock, shared_cache_dict, local_cache_dict=None, le
     # print(f"Starting {perm}")
     if length is None:
         length = len(perm.trimcode)
-    if local_cache_dict is None:
-        local_cache_dict = {}
+    local_cache_dict = None
     ret_elem = None
     if top_level and shared_cache_dict is not None and lock is not None:
         with lock:
@@ -1014,12 +1017,17 @@ def try_lr_module_cache(perm, lock, shared_cache_dict, local_cache_dict=None, le
         if length == 0:
             mod = RCGraph() @ RCGraph()
             #  #  # print(f"MOASA!! {mod=} {type(mod)=}")
-            local_cache_dict[(perm, length)] = mod
+            with lock:
+                shared_cache_dict[(perm, length)] = mod
             return mod
-        return FA(*([0] * length)).coproduct() * (RCGraph() @ RCGraph())
+        mod = FA(*([0] * length)).coproduct() * (RCGraph() @ RCGraph())
+        with lock:
+            shared_cache_dict[(perm, length)] = mod
+        return mod
     lower_perm = uncode(perm.trimcode[1:])
     elem = ASx(lower_perm, length - 1)
-    lower_module1 = try_lr_module_cache(lower_perm, lock=None, shared_cache_dict=None, local_cache_dict=local_cache_dict, length=length - 1)
+    lower_module1 = try_lr_module_cache(lower_perm, lock=lock, shared_cache_dict=shared_cache_dict, local_cache_dict=local_cache_dict, length=length - 1)
+    
     assert isinstance(lower_module1, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
     #  #  # print(f"Coproducting {ASx(uncode([perm.trimcode[0]]), 1).coproduct()=}")
     #  #  # print(ASx(uncode([perm.trimcode[0]]), 1).coproduct())
@@ -1033,6 +1041,8 @@ def try_lr_module_cache(perm, lock, shared_cache_dict, local_cache_dict=None, le
     ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
 
     if length == 1:
+        with lock:
+            shared_cache_dict[(perm, length)] = ret_elem
         return ret_elem
     keys = set(ret_elem.keys())
     # print(f"{repr(keys)=} {perm=}")
@@ -1042,7 +1052,7 @@ def try_lr_module_cache(perm, lock, shared_cache_dict, local_cache_dict=None, le
         if key[0] != perm:
             assert coeff == 1, f"failed coeff 1 {coeff=}"
             # print(f"Iteration {key[0]}")
-            for (rc1_bad, rc2_bad), cff2 in try_lr_module_cache(key[0], lock=None, shared_cache_dict=None, local_cache_dict=local_cache_dict, length=length).items():
+            for (rc1_bad, rc2_bad), cff2 in try_lr_module_cache(key[0], lock=lock, shared_cache_dict=shared_cache_dict, local_cache_dict=local_cache_dict, length=length).items():
                 keys2 = set(keys)
                 for rc1, rc2 in keys2:
                     if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
@@ -1057,7 +1067,11 @@ def try_lr_module_cache(perm, lock, shared_cache_dict, local_cache_dict=None, le
     ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k in keys})
     assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
     # we know this is not concurrent
-    local_cache_dict[(perm, length)] = ret_elem
+    if local_cache_dict is not None:
+        local_cache_dict[(perm, length)] = ret_elem
+    else:
+        with lock:
+            shared_cache_dict[(perm, length)] = ret_elem
     return ret_elem
 
 

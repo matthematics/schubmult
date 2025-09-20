@@ -147,26 +147,62 @@ def safe_load_recording(filename, Permutation):
     return {}
 
 
-def saver(shared_cache_dict, shared_recording_dict, lock, filename, verification_filename, stop_event, sleep_time=5):
-    last_saved_results_len_seen = 0
-    last_verification_len_seen = 0
-    with lock:
-        last_saved_results_len_seen = len(shared_cache_dict)
-        last_verification_len_seen = len(shared_recording_dict)
+def cache_saver(shared_cache_dict, lock, filename, stop_event, sleep_time=5):
+    last_saved_results_len_seen = -1
     while not stop_event.is_set():
-        with lock:
-            new_len = len(shared_cache_dict)
-            new_verification_len = len(shared_recording_dict)
-            cache_copy = {k: shared_cache_dict[k] for k in shared_cache_dict.keys()}
-            recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
+        new_len = len(shared_cache_dict)
         if new_len > last_saved_results_len_seen:
             print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
             last_saved_results_len_seen = new_len
+            with lock:
+                cache_copy = {k: shared_cache_dict[k] for k in shared_cache_dict.keys()}
+            safe_save_cache(cache_copy, filename)
+        time.sleep(sleep_time)
+    with lock:
+        cache_copy = {k: shared_cache_dict[k] for k in shared_cache_dict.keys()}
+    safe_save_cache(cache_copy, filename)
+    print("Cache saver process exiting.")
+
+
+def recording_saver(shared_recording_dict, lock, verification_filename, stop_event, sleep_time=5):
+    last_verification_len_seen = -1
+    while not stop_event.is_set():
+        new_verification_len = len(shared_recording_dict)
+        if new_verification_len > last_verification_len_seen:
+            last_verification_len_seen = new_verification_len
+            print("Saving verification to ", verification_filename, " with ", new_verification_len, "entries at ", time.ctime())
+            with lock:
+                recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
+            safe_save_recording(recording_copy, verification_filename)
+        time.sleep(sleep_time)
+    with lock:
+        recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
+    safe_save_recording(recording_copy, verification_filename)
+    print("Recording saver process exiting.")
+
+
+def saver(shared_cache_dict, shared_recording_dict, lock, filename, verification_filename, stop_event, sleep_time=5):
+    last_saved_results_len_seen = -1
+    last_verification_len_seen = -1
+    new_len = 0
+    new_verification_len = 0
+    while not stop_event.is_set():
+        #print("Im in ur saver")
+        new_len = len(shared_cache_dict)
+        new_verification_len = len(shared_recording_dict)
+        if new_len > last_saved_results_len_seen:
+            print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
+            last_saved_results_len_seen = new_len
+            with lock:
+                cache_copy = {k: shared_cache_dict[k] for k in shared_cache_dict.keys()}
             safe_save_cache(cache_copy, filename)
         if new_verification_len > last_verification_len_seen:
             last_verification_len_seen = new_verification_len
-            print("Saving verification to ", verification_filename, " with ", len(recording_copy), "entries at ", time.ctime())
+            print("Saving verification to ", verification_filename, " with ", len(shared_recording_dict), "entries at ", time.ctime())
+            with lock:
+                recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
             safe_save_recording(recording_copy, verification_filename)
+        # print("me sleep")
         time.sleep(sleep_time)
     with lock:
         cache_copy = {k: shared_cache_dict[k] for k in shared_cache_dict.keys()}
@@ -194,8 +230,8 @@ def worker(shared_cache_dict, shared_recording_dict, lock, task_queue):
         # Use local cache for recursion
         local_cache_dict = {}
 
-        # Only top-level call accesses shared dict and lock
-        try_mod = try_lr_module_cache(perm, shared_cache_dict=shared_cache_dict, local_cache_dict=local_cache_dict, lock=lock)
+        # Try without local cache
+        try_mod = try_lr_module_cache(perm, shared_cache_dict=shared_cache_dict, local_cache_dict=None, lock=lock)
 
         # Only update manager dict at top level
         with lock:
@@ -256,8 +292,10 @@ def main():
 
         print("Starting from ", len(shared_cache_dict), " saved entries")
         print("Starting from ", len(shared_recording_dict), " verified entries")
-        saver_proc = Process(target=saver, args=(shared_cache_dict, shared_recording_dict, lock, filename, verification_filename, stop_event))
-        saver_proc.start()
+        cache_saver_proc = Process(target=cache_saver, args=(shared_cache_dict, lock, filename, stop_event))
+        recording_saver_proc = Process(target=recording_saver, args=(shared_recording_dict, lock, verification_filename, stop_event))
+        cache_saver_proc.start()
+        recording_saver_proc.start()
 
         # Create task queue and fill with perms
         task_queue = manager.Queue()
@@ -273,9 +311,10 @@ def main():
         for p in workers:
             p.join()
 
-        # Signal saver to exit
+        # Signal savers to exit
         stop_event.set()
-        saver_proc.join()
+        cache_saver_proc.join()
+        recording_saver_proc.join()
         print("Run finished.")
         if any(v is False for v in shared_recording_dict.values()):
             print("Failures:")

@@ -1,17 +1,19 @@
-# # LR rule verification script
+# LR rule verification script
 
-# import os
-# import shutil
-# import sys
-# import time
-# from functools import cache
-# from itertools import zip_longest
-# from json import dump, load
-# from multiprocessing import Lock, Manager, Pool, Process, cpu_count
+import os
+import shutil
+import sys
+import time
+from functools import cache
+from itertools import zip_longest
+from json import dump, load
+from multiprocessing import Lock, Manager, Pool, Process, cpu_count
 
-# from schubmult.rings.rc_graph_module import FA, RCGraph, try_lr_module
+from schubmult.rings.free_algebra_basis import WordBasis
+from schubmult.rings.rc_graph_module import FA, RCGraph, try_lr_module
+from schubmult.rings.schubert_ring import Sx
 
-# all_rc_graphs = {}
+all_rc_graphs = {}
 
 # def generate_rc_graphs(perms, n):
 #     global all_rc_graphs
@@ -20,132 +22,164 @@
 #         for length in range(n):
 #             all_rc_graphs[perm].append({g: i for i, g in enumerate(tuple(sorted(RCGraph.all_rc_graphs(perm, length), key=lambda a: a.length_vector())))})
 
-# def co_principal_perms(perm, length):
-#     from schubmult import ASx, uncode
 
-#     if len(perm.trimcode) == 0:
-#         return []
-#     lower_elem = ASx(uncode(perm.trimcode[1:]), length - 1)
-#     upper_elem = ASx(uncode([perm.trimcode[0]]), 1) * lower_elem
-#     return [key[0] for key in upper_elem.keys() if key[0] != perm]
+def generate_rc_graph_set(perm, length, bruhat_perm=None):
 
-# # @cache
-# # def is_good(perm, rc1, rc2):
-# #     from schubmult import FA, uncode
-# #     if len(rc1) != len(rc2):
-# #         return False
-# #     if perm.inv == 0 and len(rc1) == 0:
-# #         return True
-# #     if uncode([a+b for a,b in zip(rc1.length_vector(), rc2.length_vector())]) != perm:
-# #         return False
-# #     if len(rc1) == 1:
-# #         return True
-# #     lower_perm = uncode(perm.trimcode[1:])
+    from schubmult import FA, ASx, uncode
+    from schubmult.rings.rc_graph_module import RCGraph
+    if not bruhat_perm:
+        bruhat_perm = perm
+
+    if length < len(perm.trimcode):
+        return set()
+    pants = [*perm.trimcode, *((0,)* (length - len(perm.trimcode)))]
+    assert len(pants) == length
+    return set((rc[0],rc[1]) for rc in (FA(*pants).coproduct()*(RCGraph()@RCGraph())).value_dict.keys())
+    # if len(perm.trimcode) == 0:
+    #     return set()
+    # lower_elem = ASx(uncode(perm.trimcode[1:]), length - 1)
+    # upper_elem = ASx(uncode([perm.trimcode[0]]), 1) * lower_elem
+    # return set(key[0] for key in upper_elem.keys() if key[0] != perm)
+
+@cache
+def co_principal_perms(perm, length):
+    from schubmult import ASx, uncode
+
+    if len(perm.trimcode) == 0:
+        return []
+    if length < len(perm.trimcode):
+        return []
+    lower_elem = ASx(uncode(perm.trimcode[1:]), length - 1)
+    upper_elem = ASx(uncode([perm.trimcode[0]]), 1) * lower_elem
+    return [key for key in upper_elem.keys() if key[0] != perm]
+
+@cache
+def good_for_perm(perm, length):
+    from schubmult import uncode
+    if perm.inv == 0 and length == 0:
+        return { (RCGraph(), RCGraph()) }
+    if length < len(perm.trimcode):
+        raise ValueError(f"Length {length} less than {len(perm.trimcode)} for {perm.trimcode}")
+    #print(f"{perm.trimcode,length}")
     
-# #     if is_good(lower_perm, rc1_lower, rc2_lower) and (rc1, rc2) in (FA(perm.trimcode[0]).coproduct() * (rc1_lower @ rc2_lower)).value_dict:
-# #         good = True
-# #         break
-# #     for perm2 in co_principal_perms(perm, len(rc1)):
-# #         for rc01 in RCGraph.all_rc_graphs(rc1.perm, len(rc1)):
-# #             for rc02 in RCGraph.all_rc_graphs(rc2.perm, len(rc2)):
-# #                 if is_good(perm2, rc01, rc02) and (rc1 >= rc01 or rc2 >= rc02):
-# #                     return False
-# #     return True
+    old_good = good_for_perm(uncode(perm.trimcode[1:]), length - 1)
 
-# def main():
-#     from schubmult import Permutation, uncode
+    new_good = set()
+    for (rc1, rc2) in old_good:
+        new_good.update([(k[0],k[1]) for k in (FA(perm.trimcode[0]).coproduct() * (rc1@rc2)).value_dict.keys() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)])
 
-#     # try:
+    good = set(new_good)
+    for (perm2, _) in co_principal_perms(perm, length):
+        for (rc1b, rc2b) in good_for_perm(perm2, length):
+            good2 = set(good)
+            for rc1, rc2 in good2:
+                if (rc1.perm == rc1b.perm and rc2.perm == rc2b.perm) and (rc1.length_vector() >= rc1b.length_vector() or rc2.length_vector() >= rc2b.length_vector()):
+                    good = set(good2)
+                    good.remove((rc1, rc2))
+                    #break
+
+    return good
+
+def code_len(perm, length):
+    cd = perm.trimcode
+    while len(cd) < length:
+        cd = (*cd, 0)
+    return cd
+
+def main():
+    from schubmult import ASx, Permutation, Sx, uncode
+    from schubmult.abc import x
+    from schubmult.rings.rc_graph_module import RCGraph
+    from schubmult.utils.perm_utils import artin_sequences
+
+    n = int(sys.argv[1])
+    perms = Permutation.all_permutations(n)
+
+#    rel = generate_co_prinipal_relation(perms, max_length=n)
     
-
-#     n = int(sys.argv[1])
-#     perms = Permutation.all_permutations(n)
-#     #extra_perms = Permutation.all_permutations(n+n)
-#     #generate_rc_graphs(extra_perms, n)
-#     #perms.sort(key=lambda p: (len(p.trimcode), p.trimcode), reverse=True)
     
-#     latest_seen_left = {perm: [{} for _ in range(n)] for perm in perms}
-#     latest_seen_right = {perm: [{} for _ in range(n)] for perm in perms}
+    # goodness_seq = {(): {(RCGraph(),RCGraph())}}
+
+    # for length in range(1, n):
+    #     this_seq = {}
+    #     seqs = artin_sequences(length)
+    #     seqs = list(sorted(seqs))
+    #     for seq in seqs:
+    #         this_seq[seq] = set()
+    #         for rc1, rc2 in goodness_seq[seq[1:]]:
+    #             this_seq[seq].update({(k[0], k[1]) for k in (FA(seq[0]).coproduct() * (rc1@rc2)).keys() if k[0].perm.bruhat_leq(uncode(seq)) and k[1].perm.bruhat_leq(uncode(seq))})
+
+    #     for seq in seqs:
+    #         for (perm2, _) in co_principal_perms(uncode(seq), length):
+    #             if len(perm2) > length + 1:
+    #                 continue
+    #             seq2 = tuple(code_len(perm2, length))
+    #             for (rc1b, rc2b) in this_seq[seq2]:
+    #                 good2 = set(this_seq[seq])
+    #                 for rc1, rc2 in good2:
+    #                     if (rc1.perm == rc1b.perm and rc2.perm == rc2b.perm) and (rc1.length_vector() >= rc1b.length_vector() or rc2.length_vector() >= rc2b.length_vector()):
+    #                         this_seq[seq] = set(good2)
+    #                         this_seq[seq].remove((rc1, rc2))
+    #                         break
+                    
+    #     goodness_seq = this_seq
+
+    # goodness = {uncode(seq): good for seq, good in goodness_seq.items()}
+
+    for perm in perms:
+        print(f"Trying {perm.trimcode}")
+        cop = (ASx@ASx).zero
+        # good = good_for_perm(perm, length=len(perm.trimcode))
+        good = good_for_perm(perm, length=len(perm.trimcode))
+        sping = iter([rc0[0]@rc0[1] for rc0 in good])
+        dingbat_module = next(sping)
+        for term in sping:
+            dingbat_module += term
+        #dingbat_module = sum([rc0[0]@rc0[1] for rc0 in good.keys()])
+        print("Correct")
+        print(try_lr_module(perm, length=len(perm.trimcode)))
+        print("Test")
+        print(dingbat_module)
+        #cop = sum([(ASx@ASx)(((rc0[0].perm,len(rc0[0])),(rc0[1].perm,len(rc0[1])))) for rc0 in good])
+        cop = dingbat_module.asdtype(ASx@ASx)
+        test_cop = ASx(perm).coproduct()
+        tester = test_cop - cop
     
-#     all_present_graphs = {}
-#     for perm in perms:
-#         # all_present_graphs[perm] = {}
-#         modules = try_lr_module(perm)
-#         # print(all_rc_graphs[perm])
-#         # length = 0
-#         graphs_to_check = FA(*perm.trimcode).coproduct() * (RCGraph()@RCGraph())
-#         result = 0 * (RCGraph()@RCGraph())
-#         for (rc1, rc2), coeff in graphs_to_check.items():
-#             if rc1.perm.bruhat_leq(perm) and rc2.perm.bruhat_leq(perm):
-#                 if is_good(perm, rc1, rc2):
-#                     result += coeff * (rc1 @ rc2)
-
-#         try:
-#             assert all(v==0 for v in (modules - result).value_dict.values())
-#         except AssertionError:
-#             print(f"Failure for {perm.trimcode}")
-#             print("Expected:")
-#             print(modules)
-#             print("Got:")
-#             print(result)
-#             continue
-#         print(f"Success for {perm.trimcode}")
-#         #for (rc1, rc2), coeff in modules.items():
-#             # length = len(rc1)
-
-#             # print(f"{perm.trimcode}: {rc1.perm.trimcode} {len(rc2.perm.trimcode)}")
-#             # print(f"  {latest_seen_left[perm][len(rc1)].get(rc1.perm, -1)} * {latest_seen_right[perm][len(rc2)].get(rc2.perm, -1)} latest seen")
-
-#             # index1 = all_rc_graphs[rc1.perm][len(rc1)][rc1]
-#             # index2 = all_rc_graphs[rc2.perm][len(rc2)][rc2]
-#             # #all_present_graphs[(rc1.perm, rc2.perm)].update([((rc1, rc2) for rc1 in all_rc_graphs(rc1.perm)[len(rc1)] if rc1 != rc1] ))
-#             # print(f"{index1} * {index2} = {coeff}")
-#             # #all_pairs = {(rc01, rc02) for rc1, rc2 in product(all_rc_graphs(rc1.perm)[len(rc1)], all_rc_graphs(rc2.perm)[len(rc2)]) if vector_sum(rc1.length_vector(), rc2.length_vector()) == vector_sum(rc01.length_vector(), rc02.length_vector())}
-
-#             # #all_present_graphs[(rc1.perm, rc2.perm)].update()
-#             # try:
-#             #     assert not ((latest_seen_left[perm][len(rc1)].get(rc1.perm, 1000000), latest_seen_right[perm][len(rc2)].get(rc2.perm, 1000000000000000)) < (index1, index2))
-#             # except AssertionError:
-#             #     print(f"Order violation: {perm.trimcode}: {rc1.perm.trimcode} {len(rc2.perm.trimcode)}")
-#             #     print("********VIOLATION*******")
-#             #     print(f"  {latest_seen_left[perm][len(rc1)].get(rc1.perm)} * {latest_seen_right[perm][len(rc2)].get(rc2.perm)} latest seen")
-#             #     print(f"  {index1} * {index2}")
-#             #     print("********END VIOLATION*******")
-#             # all_present_graphs[perm][(rc1.perm, rc2.perm)] = all_present_graphs[perm].get((rc1.perm, rc2.perm), set())
-#             # all_present_graphs[perm][(rc1.perm, rc2.perm)].add((rc1, rc2))
-#             # #print(f"  {index1} * {index2} = {coeff}")
-#             # # latest_seen_left[perm][len(rc1)][rc1.perm] = index1
-#             # # latest_seen_right[perm][len(rc2)][rc2.perm] = index2
-#             # for co_perm in co_principal_perms(perm, length):
-#             #     #print(f"    Co-principal: {co_perm.trimcode} {all_rc_graphs[co_perm][len(rc1)].get(rc1)}")
-#             # #print(f"  {index1} * {index2} = {coeff}")
-#             #     if len(co_perm) <= n:
-#             #         assert co_perm.trimcode < perm.trimcode
-#             #         latest_seen_left[co_perm][len(rc1)][rc1.perm] = index1# if (not latest_seen_left[co_perm][len(rc1)] or latest_seen_left[co_perm][len(rc1)][rc1.perm]) < index1 else latest_seen_left[co_perm][len(rc1)][rc1.perm]
-#             #         latest_seen_right[co_perm][len(rc2)][rc2.perm] = index2# if (not latest_seen_right[co_perm][len(rc2)] or latest_seen_right[co_perm][len(rc2)][rc2.perm]) < index2 else latest_seen_right[co_perm][len(rc2)][rc2.perm]
-
-#             # for (perm1, perm2), seen_set in all_present_graphs.items():
-#             #     for rc1, index1 in all_rc_graphs[perm1][length].items():
-#             #         for rc2, index2 in all_rc_graphs[perm2][length].items():
-#             #             if uncode([a+b for a,b in zip_longest(rc1.length_vector(), rc2.length_vector(), fillvalue=0)]) == perm and (latest_seen_left[perm][len(rc1)].get(rc1.perm,-1),latest_seen_right[perm][len(rc2)].get(rc2.perm,-1)) < (index1, index2) and (rc1, rc2) not in seen_set:
-#             #                 print(f"Missing graph for {perm.trimcode}: {rc1.perm.trimcode,rc1.length_vector()} {rc2.perm.trimcode,rc2.length_vector()} at length {length}")
-#             # print("---------")
-#     # for perm in perms:
-#     #     length = len(perm.trimcode)
-#     #     for co_perm in co_principal_perms(perm, length):
-#     #         if len(co_perm) > n:
-#     #             continue
-#     #         bad = False
-#     #         for (perm1, perm2), seen_set in all_present_graphs[co_perm].items():
-#     #             for (rc01, rc02) in  seen_set:
-#     #                 for rc1 in all_rc_graphs[rc01.perm][length]:
-#     #                     for rc2 in all_rc_graphs[rc02.perm][length]:
-#     #                         if uncode([a+b for a,b in zip(rc1.length_vector(), rc2.length_vector())]) == perm and not ((all_rc_graphs[rc1.perm][len(rc1)][rc01],all_rc_graphs[rc2.perm][len(rc2)][rc02]) > (all_rc_graphs[rc1.perm][len(rc1)][rc1], all_rc_graphs[rc2.perm][len(rc2)][rc2])) and (rc1, rc2) not in all_present_graphs[co_perm][(rc01.perm, rc02.perm)]:
-#     #                             print(f"Missing graph for {co_perm.trimcode}: {rc1.perm.trimcode,rc1.length_vector()} {rc2.perm.trimcode,rc2.length_vector()} {(latest_seen_left[co_perm][len(rc1)].get(rc1.perm,-1),latest_seen_right[co_perm][len(rc2)].get(rc2.perm,-1))} at length {length}")
-#     #                             bad = True
-#     #         if bad:
-#     #             print(f"Wah {co_perm.trimcode} is bad")
-
-
-# if __name__ == "__main__":
-#     main()
+                #good = {rc0: g for rc0, g  in at_least_one.items() if g}
+        # print("Correct")
+        # print(try_lr_module(perm, length=len(perm.trimcode)))
+        # print("Test")
+        
+        try:
+            assert all(v == 0 for v in tester.values()), f"Failed for {perm=} {cop=} {test_cop=}"
+        except AssertionError as e:
+            print(f"{cop=}")
+            print(f"{test_cop=}")
+            print("Difference:")
+            for k, v in tester.items():
+                if v != 0:
+                    print(f"  {k}: {v}")
+            print("Failure for ", perm.trimcode)
+            raise
+        print("Success for ", perm.trimcode)
+        #goodness[perm] = good
+    # try_sum = {}
+    # for perm in perms:
+    #     try_sum[perm] = try_sum.get(perm, {})
+    #     for (rc1, rc2) in goodness[perm]:
+    #         try_sum[perm][(rc1.perm, rc2.perm)] = try_sum.get((rc1.perm, rc2.perm), 0) + rc1.polyvalue(x) * rc2.polyvalue(x)
+    #     rc_pairs = generate_rc_graph_set(perm, length=len(perm.trimcode))
+    #     for (perm2, _) in co_principal_perms(perm, len(perm.trimcode)):
+    #         length = len(perm.trimcode)
+    #         for (rc1b, rc2b) in good_for_perm(perm2, length):
+    #             for rc1, rc2 in rc_pairs:
+    #                 if (rc1.perm == rc1b.perm and rc2.perm == rc2b.perm) and (rc1.length_vector() >= rc1b.length_vector() or rc2.length_vector() >= rc2b.length_vector()):
+    #                     try_sum[perm2]=try_sum.get(perm2,{})
+    #                     try_sum[perm2][(rc1.perm, rc2.perm)] = try_sum[perm2].get((rc1.perm, rc2.perm), 0) + rc1.polyvalue(x) * rc2.polyvalue(x)
+    # Permutation.print_as_code=True
+    # for perm in perms:
+    #     for (perm1, perm2), coeff in try_sum[perm].items():
+    #         print(f"{perm.trimcode,perm1.trimcode,perm2.trimcode}: {Sx(coeff)}")
+    #         assert Sx(coeff).get(perm, 0) == (Sx(perm1) * Sx(perm2)).get(perm, 0), f"Failed {perm.trimcode,perm1.trimcode,perm2.trimcode}: {Sx(coeff)} vs {Sx(perm1) * Sx(perm2)}"
+if __name__ == "__main__":
+    main()
