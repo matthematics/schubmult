@@ -59,6 +59,8 @@ class KeyType:
 
     def ring_act(self, elem): ...
 
+    def polyvalue(self, x, y=None): ...
+
 
 class ModuleType:
     def __getitem__(self, key):
@@ -184,6 +186,9 @@ class ModuleType:
             else:
                 buildups = _multiline_join(buildups, to_add, joiner=add_joiner)
         return buildups
+    
+    def polyvalue(self, x, y=None):
+        return sum([v * k.polyvalue(x, y) for k, v in self._dict.items()])
 
     def coeffify(self, v):
         if v < 0:
@@ -192,13 +197,37 @@ class ModuleType:
             return "", "", " + "
         return str(v), " * ", " + "
 
+class UnderlyingGraph(tuple):
+    def __new__(cls, *args, value=1):
+        new_args = tuple(tuple(arg) for arg in args)
+        return UnderlyingGraph.__xnew_cached__(cls, *new_args)
 
-class RCGraph(KeyType, tuple):
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, *args):
+        return UnderlyingGraph.__xnew__(_class, *args)
+
+    @staticmethod
+    def __xnew__(_class, *args):
+        return tuple.__new__(_class, *args)
+
+
+class RCGraph(KeyType, UnderlyingGraph):
 
     def __eq__(self, other):
         if not isinstance(other, RCGraph):
             return NotImplemented
         return tuple(self) == tuple(other)
+
+
+    def __new__(cls, *args, value=1):
+        rcc = UnderlyingGraph.__new__(cls, *args)
+        rcc.value = value
+        return rcc
+
+    def __init__(self, *args, value=1):
+        pass
+
 
     def perm_word(self):
         ret = []
@@ -264,10 +293,12 @@ class RCGraph(KeyType, tuple):
     def length_vector(self):
         return tuple([len(row) for row in self])
 
-    def __new__(cls, *args, **kwargs):
-        return tuple.__new__(cls, *args)
+    # def __new__(cls, *args, **kwargs):
+    #     return tuple.__new__(cls, *args)
 
     def rowrange(self, start, end):
+        if start == end:
+            return RCGraph(())
         return RCGraph([tuple([a - start for a in row]) for row in self[start:end]])
 
     def polyvalue(self, x, y=None):
@@ -417,6 +448,47 @@ class RCGraph(KeyType, tuple):
             nrc = RCGraph([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])
             assert nrc.perm == perm2
             ret.add(nrc)
+        assert ret == self.iterative_act(p), f"{ret=}\n{self.iterative_act(p)=}"
+        return ret
+
+    def iterative_act(self, p, insert=True):
+        if p == 0:
+            if insert:
+                return {RCGraph([(), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])}
+            return {RCGraph(self)}
+        last = self.iterative_act(p - 1, insert=insert)
+        ret = set()
+        for rc in last:
+            # top row has some stuff
+            last_desc = 0
+            old_perm = ~rc.perm
+            if len(rc[0]) > 0:
+                last_desc = rc[0][0]
+            mx = len(rc)
+            for row in rc:
+                if len(row) > 0:
+                    mx = max(mx, max(row) + 2)
+            for i in range(last_desc+1, mx + 1):
+                if old_perm[i-1] < old_perm[i]:
+                    new_perm = old_perm.swap(i-1, i)
+                    if max((~new_perm).descents()) + 1 > len(rc):
+                        continue
+                    new_top_row = [i, *rc[0]]
+                    new_rc = RCGraph([tuple(new_top_row), *rc[1:]])
+                    ret.add(new_rc)
+        return ret
+
+        # pm = self.perm
+        # elem = FAS(pm, len(self))
+        # bumpup = FAS(uncode([p]), 1) * elem
+        # ret = set()
+        # for k, v in bumpup.items():
+        #     perm2 = k[0]
+        #     new_row = [pm[i] for i in range(max(len(pm), len(perm2))) if pm[i] == perm2[i + 1]]
+        #     new_row.sort(reverse=True)
+        #     nrc = RCGraph([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])
+        #     assert nrc.perm == perm2
+        #     ret.add(nrc)
         return ret
 
     def as_str_lines(self):
@@ -748,7 +820,15 @@ class RCGraphTensor(KeyType):
 
     def __init__(self, *keys, modules=None, value=1):
         if modules is None:
-            self._keys = keys
+            new_keys = []
+            for key in keys:
+                if isinstance(key, RCGraphTensor):
+                    for key in keys:
+                        assert isinstance(key, RCGraph)
+                        new_keys.append(key)
+                else:
+                    new_keys.append(RCGraph(key))
+            self._keys = tuple(new_keys)
         else:
             new_keys = []
             for key in keys:
@@ -994,6 +1074,74 @@ def try_lr_module(perm, length=None):
     # print(f"Done {perm}")
     ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k in keys})
     assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
+    return ret_elem
+
+@cache
+def try_lr_module_inject(perm, seq = None, length=None):
+    # print(f"Starting {perm}")
+    if length is None:
+        length = len(perm.trimcode)
+    elif length < len(perm.trimcode):
+        raise ValueError("Length too short")
+    if perm.inv == 0:
+        if length == 0:
+            mod = RCGraph() @ RCGraph()
+            #  #  # print(f"MOASA!! {mod=} {type(mod)=}")
+            return mod
+        return FA(*([0] * length)).coproduct() * (RCGraph() @ RCGraph())
+    lower_perm = uncode(perm.trimcode[1:])
+    elem = ASx(lower_perm, length - 1)
+    lower_module1 = try_lr_module_inject(lower_perm, length - 1)
+    assert isinstance(lower_module1, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
+    #  #  # print(f"Coproducting {ASx(uncode([perm.trimcode[0]]), 1).coproduct()=}")
+    #  #  # print(ASx(uncode([perm.trimcode[0]]), 1).coproduct())
+    #  #  # print("Going for it")
+    #  #  # print(f"{type(lower_module1)=} {lower_module1=}")
+    #  #  # print(f"{type(ASx(uncode([perm.trimcode[0]]), 1).coproduct())=}")
+    ret_elem = ASx(uncode([perm.trimcode[0]]), 1).coproduct() * lower_module1
+    #  #  # print(f"{ret_elem=}")
+    assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {lower_perm=} {length=}"
+
+    ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
+
+    if length == 1:
+        return ret_elem
+    keys = set(ret_elem.keys())
+    # print(f"{repr(keys)=} {perm=}")
+    up_elem = ASx(uncode([perm.trimcode[0]]), 1) * elem
+    # print(f"{up_elem=}")
+    for key, coeff in up_elem.items():
+        if key[0] != perm:
+            assert coeff == 1, f"failed coeff 1 {coeff=}"
+            key_module = try_lr_module_inject(key[0], seq = tuple(perm.trimcode), length=length)
+            for (rc1, rc2) in key_module.value_dict.keys():
+                trim_rc1 = rc1.rowrange(1,len(rc1))
+                trim_rc2 = rc2.rowrange(1,  len(rc2))
+                for (rc1_check, rc2_check) in keys:
+                    trim_rc1_check  = rc1_check.rowrange(1,len(rc2_check))
+                    trim_rc2_check = rc2_check.rowrange(1,len(rc2_check))
+                    if rc1.perm == rc1_check.perm and rc2.perm == rc2_check.perm:
+                        if (trim_rc1.perm * (~trim_rc1_check.perm)).inv == trim_rc1.perm.inv - trim_rc1_check.perm.inv:
+                            if (trim_rc2.perm * (~trim_rc2_check.perm)).inv== trim_rc2.perm.inv - trim_rc2_check.perm.inv:
+                                keys.remove((rc1_check,rc2_check))
+                                break 
+            #ret_elem = ret_elem.clone({k: v for k,v in ret_elem.items() if k not in key_module.value_dict.keys()})
+            # print(f"Iteration {key[0]}")
+            # for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
+            #     keys2 = set(keys)
+            #     for rc1, rc2 in keys2:
+            #         if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
+            #             try:
+            #                 keys = set(keys2)
+            #                 keys.remove((rc1, rc2))
+            #             except KeyError:
+            #                 # print(repr(keys))
+            #                 raise
+            #             break
+    # print(f"Done {perm}")
+    ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k in keys})
+    assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
+    
     return ret_elem
 
 
