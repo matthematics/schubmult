@@ -14,25 +14,26 @@ from joblib import Parallel, delayed
 
 
 def reload_modules(dct, n_jobs=None):
-    from schubmult.rings.rc_graph_module import RCGraph
+    # from schubmult.rings.rc_graph_module import RCGraph, ASx
 
-    def reconstruct_one(k, v):
-        key = eval(k)  # tuple
-        result_val = None
-        for k2, v2 in v.items():
-            g = eval(k2)
-            g1, g2 = RCGraph(g[0]), RCGraph(g[1])
-            if result_val is None:
-                result_val = v2 * (g1 @ g2)
-            else:
-                result_val += v2 * (g1 @ g2)
-        return (key, result_val)
+    # def reconstruct_one(k, v):
+    #     key = eval(k)  # tuple
+    #     result_val = None
+    #     for k2, v2 in v.items():
+    #         g = eval(k2)
+    #         g1, g2 = RCGraph(g[0]), RCGraph(g[1])
+    #         if result_val is None:
+    #             result_val = v2 * (g1 @ g2)
+    #         else:
+    #             result_val += v2 * (g1 @ g2)
+    #     return (key, result_val)
 
-    # Use joblib to parallelize reconstruction
-    items = list(dct.items())
-    n_jobs = n_jobs or min(8, os.cpu_count() or 1)
-    results = Parallel(n_jobs=n_jobs)(delayed(reconstruct_one)(k, v) for k, v in items)
-    return dict(results)
+    # # Use joblib to parallelize reconstruction
+    # items = list(dct.items())
+    # n_jobs = n_jobs or min(8, os.cpu_count() or 1)
+    # results = Parallel(n_jobs=n_jobs)(delayed(reconstruct_one)(k, v) for k, v in items)
+    # return dict(results)
+    return dct
 
 
 def safe_save_cache(obj, filename, save_json_backup=True):
@@ -214,7 +215,7 @@ def saver(shared_cache_dict, shared_recording_dict, lock, filename, verification
 
 def worker(shared_cache_dict, shared_recording_dict, lock, task_queue):
     from schubmult import ASx
-    from schubmult.rings.rc_graph_module import try_lr_module_cache
+    from schubmult.rings.rc_graph_module import try_lr_module_biject_cache
 
     while True:
         try:
@@ -227,20 +228,13 @@ def worker(shared_cache_dict, shared_recording_dict, lock, task_queue):
                 print(f"{perm} already verified, returning.")
                 continue
 
-        # Use local cache for recursion
-        local_cache_dict = {}
-
-        # Try without local cache
-        try_mod = try_lr_module_cache(perm, shared_cache_dict=shared_cache_dict, local_cache_dict=None, lock=lock)
+        try_mod = try_lr_module_biject_cache(perm, shared_cache_dict=shared_cache_dict, lock=lock)
 
         # Only update manager dict at top level
-        with lock:
-            for key in local_cache_dict:
-                if key not in shared_cache_dict:
-                    shared_cache_dict[key] = local_cache_dict[key]
-        local_cache_dict.clear()
-        del local_cache_dict
-        elem = try_mod.asdtype(ASx @ ASx)
+
+        elem = 0
+        for (rc1, rc2) in try_mod:
+            elem += (ASx@ASx)(((rc1.perm,len(rc1)),(rc2.perm,len(rc2))))
         check = ASx(perm).coproduct()
         try:
             assert all(v == 0 for v in (elem - check).values())
