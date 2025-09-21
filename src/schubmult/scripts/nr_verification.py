@@ -203,9 +203,24 @@ def main():
 
     
     for perm in perms:
-        build_mod = try_lr_module_inject(perm)
+        #build_mod = try_lr_module_inject(perm)
+        # cd = perm.trimcode
+        # the_prin = next(iter([rc for rc in (FA(*cd)*RCGraph()).keys() if rc.is_principal]))
+        # the_mod = FA(*cd).coproduct() * (RCGraph()@RCGraph())
+        # mod_set = set(the_mod.value_dict.keys())
+        # co_prin = the_prin.transpose()
+        # the_mod_inv = FA(*co_prin.length_vector()).coproduct() * (RCGraph()@RCGraph())
+        # inv_mod_set = set([(k[0].transpose(),k[1].transpose()) for k in the_mod_inv.value_dict.keys()])
         actual_result = ASx(perm).coproduct()
         actual_mod = try_lr_module(perm)
+        # the_set = mod_set & inv_mod_set
+        # stuff = iter(the_set)
+        # rc0, rc00 = next(stuff)
+        # build_mod = rc0@rc00
+        # for rc1, rc2 in stuff:
+        #     build_mod += rc1@rc2
+        build_mod = try_lr_module_inject(perm, length=len(perm.trimcode))
+        #build_mod = actual_mod.clone({RCGraphTensor(*k): 1 for k in (mod_set & inv_mod_set)})
         tester = actual_result - build_mod.asdtype(ASx@ASx)
         try:
             assert all(v == 0 for v in tester.values()), f"Failed for {perm.trimcode=} {build_mod=} {actual_result=}"
@@ -215,9 +230,8 @@ def main():
             print("Real")
             print(actual_mod)
             print("Difference:")
-            for k, v in tester.items():
-                if v != 0:
-                    print(f"  {k}: {v}")
+            missing = actual_mod - build_mod
+            print(missing)
             print("Failure for ", perm.trimcode)
             raise
         print("Success for ", perm.trimcode)

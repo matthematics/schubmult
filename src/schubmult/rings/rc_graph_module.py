@@ -1076,6 +1076,60 @@ def try_lr_module(perm, length=None):
     assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
     return ret_elem
 
+
+def co_rc(rc11, rc222):
+    from schubmult.abc import y
+    from schubmult.rings.variables import ZeroGeneratingSet
+    from schubmult.symbolic import S, expand
+    rc1, rc2 = rc11
+    rc12, rc22 = rc222
+    if len(rc1) != len(rc12):
+        return False
+    if len(rc2) != len(rc22):
+        return False
+    if rc1.perm != rc12.perm:
+        return False
+    if rc2.perm != rc22.perm:
+        return False
+    if len(rc1) <= 1:
+        return True
+    left_vector = [a + b for a, b in zip(rc1.transpose().length_vector(), rc2.transpose().length_vector())]
+    left_vector.reverse()
+
+    stanky = FA(*left_vector).coproduct() * (RCGraph() @ RCGraph())
+    for rc_bob_1, rc_bob_2 in stanky.keys():
+        if rc_bob_1.transpose() == rc12 or rc_bob_2.transpose() == rc22:
+            return True
+    # da_vec1 = list(reversed(rc1.transpose().length_vector()))
+    # da_vec11 = list(reversed(rc12.transpose().length_vector()))
+    # da_vec2 = list(reversed(rc2.transpose().length_vector()))
+    # da_vec22 = list(reversed(rc22.transpose().length_vector()))
+
+    # da_da_vec = [a+b for a,b in zip(da_vec1, da_vec2)]
+    # da_da_vec2 = [a+b for a,b in zip(da_vec11,da_vec22)]
+    # mod1 = FA(*da_da_vec).coproduct() * (RCGraph()@RCGraph())
+    # for rc0, rc00 in mod1.keys():
+    #     if rc0.transpose() == rc12 and rc00.transpose() == rc22:
+    #         return True
+    # left is the prin
+    # bottom_left = rc1.rowrange(1,len(rc1))
+    # bottom_right = rc2.rowrange(1, len(rc2))
+    # for i in range(len(rc1)-1):
+    #     row1 = bottom_left[i]
+    #     row2 = bottom_right[i]
+    #     if len(row1) > len(row2):
+    #         return False
+    #     rev_row1 = tuple(reversed(row1))
+    #     rev_row2 = tuple(reversed(row2))
+    #     for i in range(len(rev_row1)):
+    #         if rev_row2[i] != rev_row1[i]:
+    #             return False
+    # print(bottom_left)
+    # print("Matches")
+    # print(bottom_right)
+    return False
+    
+
 @cache
 def try_lr_module_inject(perm, seq = None, length=None):
     # print(f"Starting {perm}")
@@ -1115,16 +1169,10 @@ def try_lr_module_inject(perm, seq = None, length=None):
             assert coeff == 1, f"failed coeff 1 {coeff=}"
             key_module = try_lr_module_inject(key[0], seq = tuple(perm.trimcode), length=length)
             for (rc1, rc2) in key_module.value_dict.keys():
-                trim_rc1 = rc1.rowrange(1,len(rc1))
-                trim_rc2 = rc2.rowrange(1,  len(rc2))
                 for (rc1_check, rc2_check) in keys:
-                    trim_rc1_check  = rc1_check.rowrange(1,len(rc2_check))
-                    trim_rc2_check = rc2_check.rowrange(1,len(rc2_check))
-                    if rc1.perm == rc1_check.perm and rc2.perm == rc2_check.perm:
-                        if (trim_rc1.perm * (~trim_rc1_check.perm)).inv == trim_rc1.perm.inv - trim_rc1_check.perm.inv:
-                            if (trim_rc2.perm * (~trim_rc2_check.perm)).inv== trim_rc2.perm.inv - trim_rc2_check.perm.inv:
-                                keys.remove((rc1_check,rc2_check))
-                                break 
+                    if co_rc((rc1,rc2),(rc1_check,rc2_check)):
+                        keys.remove((rc1_check,rc2_check))
+                        break 
             #ret_elem = ret_elem.clone({k: v for k,v in ret_elem.items() if k not in key_module.value_dict.keys()})
             # print(f"Iteration {key[0]}")
             # for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
