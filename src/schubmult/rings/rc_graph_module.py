@@ -1136,7 +1136,30 @@ def co_rc(rc11, rc222):
     # # print("Matches")
     # # print(bottom_right)
     # return False
-    
+
+
+def rank(rc1, rc2, n):
+    """
+    Rank of the RC graphs by lex weight/order
+    """
+    #from schubmult.utils.perm_utils import artin_sequences
+    length = len(rc1)
+    assert len(rc1) == len(rc2)
+    deg = rc1.perm.inv + rc2.perm.inv
+    seqs = all_fa_degree(deg, length)
+    weight_vec = tuple([a+b for a,b in zip(rc1.length_vector(),rc2.length_vector())])
+    seqs = tuple(sorted([seq for seq in seqs]))
+    rank = 0
+    for seq in seqs:
+        if len(uncode(seq)) > n:
+            continue
+        if seq != weight_vec:
+            rank += len([(rc[0], rc[1]) for rc in (FA(*seq).coproduct()* (RCGraph()@RCGraph())).value_dict.keys() if rc[0].perm == rc1.perm and rc[1].perm == rc2.perm and len(rc1.perm)<=n and len(rc2.perm)<=n])
+        else:
+            rank  += len([(rc[0], rc[1]) for rc in (FA(*seq).coproduct()* (RCGraph()@RCGraph())).value_dict.keys() if rc[0].perm == rc1.perm and rc[1].perm == rc2.perm and (rc[0],rc[1]) <= (rc1, rc2) ])
+            break
+    return rank
+
 
 @cache
 def try_lr_module_inject(perm, length=None):
@@ -1197,6 +1220,49 @@ def try_lr_module_inject(perm, length=None):
     assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
     
     return ret_elem
+
+@cache
+def try_lr_module_biject(perm, length=None):
+    # print(f"Starting {perm}")
+    if length is None:
+        length = len(perm.trimcode)
+    elif length < len(perm.trimcode):
+        raise ValueError("Length too short")
+    if perm.inv == 0:
+        if length == 0:
+            mod = RCGraph() @ RCGraph()
+            #  #  # print(f"MOASA!! {mod=} {type(mod)=}")
+            return mod
+        return FA(*([0] * length)).coproduct() * (RCGraph() @ RCGraph())
+    
+    rc_set = FA(*perm.trimcode)*RCGraph()
+    consideration_set = {(k[0],k[1]) for k in (FA(*perm.trimcode).coproduct() * (RCGraph() @RCGraph())).value_dict.keys() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)}
+
+    consideration_list = list(sorted(consideration_set))
+
+    ret_elem = None
+
+    for rc_graph in rc_set.value_dict.keys():
+        if rc_graph.perm != perm:
+            rcs = try_lr_module_biject(rc_graph.perm)
+            for rc in rcs.keys():
+                for (rc1, rc2) in consideration_list:
+                    if rc1.perm == rc[0].perm and rc2.perm == rc[1].perm and (rc1, rc2) in consideration_set:
+                        consideration_set.remove((rc1, rc2))
+                        break
+
+        # if rc1.perm.bruhat_leq(perm) and rc2.perm.bruhat_leq(perm) and rank(rc1, rc2) > lr_rank[(rc1.perm, rc2.perm)]:
+        #     if ret_elem is None:
+        #         ret_elem = rc1 @ rc2
+        #     else:
+        #         ret_elem += rc1 @ rc2
+    for (rc1, rc2) in consideration_set:
+        if ret_elem is None:
+            ret_elem = rc1 @ rc2
+        else:
+            ret_elem += rc1 @ rc2
+    return ret_elem
+
 
 
 def try_lr_module_cache(perm, lock, shared_cache_dict, local_cache_dict=None, length=None, top_level=True):

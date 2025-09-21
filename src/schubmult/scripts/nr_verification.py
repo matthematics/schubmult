@@ -194,7 +194,7 @@ def iterative_construct(seq):
 def main():
     from schubmult import ASx, Permutation, Sx, uncode
     from schubmult.abc import x, y, z
-    from schubmult.rings.rc_graph_module import RCGraph
+    from schubmult.rings.rc_graph_module import RCGraph, try_lr_module_biject
     from schubmult.rings.schubert_ring import DoubleSchubertRing
     from schubmult.utils.perm_utils import artin_sequences
 
@@ -219,7 +219,7 @@ def main():
         # build_mod = rc0@rc00
         # for rc1, rc2 in stuff:
         #     build_mod += rc1@rc2
-        build_mod = try_lr_module_inject(perm, length=len(perm.trimcode))
+        build_mod = try_lr_module_biject(perm, length=len(perm.trimcode))
         #build_mod = actual_mod.clone({RCGraphTensor(*k): 1 for k in (mod_set & inv_mod_set)})
         tester = actual_result - build_mod.asdtype(ASx@ASx)
         try:
