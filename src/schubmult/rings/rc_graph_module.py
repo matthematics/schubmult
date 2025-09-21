@@ -1258,7 +1258,7 @@ def try_lr_module_biject(perm):
 
 
 
-def try_lr_module_biject_cache(perm, lock, shared_cache_dict):
+def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
     # print(f"Starting {perm}")
     ret_elem = None
     with lock:
@@ -1269,20 +1269,23 @@ def try_lr_module_biject_cache(perm, lock, shared_cache_dict):
         return ret_elem
 
     if perm.inv == 0:
-        mod = [(RCGraph(),RCGraph())]
+        if length == 0:
+            mod = [(RCGraph(),RCGraph())]
+        else:
+            mod = [(RCGraph(() * length),RCGraph(() * length))]
         with lock:
             shared_cache_dict[perm] = mod
         return mod
-    rc_set = FA(*perm.trimcode)*RCGraph()
-    consideration_set = {(k[0],k[1]) for k in (FA(*perm.trimcode).coproduct() * (RCGraph() @RCGraph())).value_dict.keys() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)}
+    rc_set = {rc for rc in (FA(*perm.trimcode, *((0,)*(length-len(perm.trimcode))))*RCGraph()).value_dict.keys()}
+    consideration_set = {(k[0],k[1]) for k in (FA(*perm.trimcode, *((0,)*(length-len(perm.trimcode)))).coproduct() * (RCGraph() @RCGraph())).value_dict.keys()}
 
     consideration_list = list(sorted(consideration_set))
 
     ret_elem = None
 
-    for rc_graph in rc_set.value_dict.keys():
+    for rc_graph in rc_set:
         if rc_graph.perm != perm:
-            rcs = try_lr_module_biject_cache(rc_graph.perm, lock, shared_cache_dict)
+            rcs = try_lr_module_biject_cache(rc_graph.perm, lock, shared_cache_dict, length)
             for rc in rcs:
                 for (rc1, rc2) in consideration_list:
                     if rc1.perm == rc[0].perm and rc2.perm == rc[1].perm and (rc1, rc2) in consideration_set:

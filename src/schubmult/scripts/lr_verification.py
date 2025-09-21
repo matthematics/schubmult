@@ -213,7 +213,7 @@ def saver(shared_cache_dict, shared_recording_dict, lock, filename, verification
     print("Saver process exiting.")
 
 
-def worker(shared_cache_dict, shared_recording_dict, lock, task_queue):
+def worker(n, shared_cache_dict, shared_recording_dict, lock, task_queue):
     from schubmult import ASx
     from schubmult.rings.rc_graph_module import try_lr_module_biject_cache
 
@@ -228,18 +228,21 @@ def worker(shared_cache_dict, shared_recording_dict, lock, task_queue):
                 print(f"{perm} already verified, returning.")
                 continue
 
-        try_mod = try_lr_module_biject_cache(perm, shared_cache_dict=shared_cache_dict, lock=lock)
+        try_mod = try_lr_module_biject_cache(perm, shared_cache_dict=shared_cache_dict, lock=lock, length=n)
 
         # Only update manager dict at top level
 
         elem = 0
         for (rc1, rc2) in try_mod:
-            elem += (ASx@ASx)(((rc1.perm,len(rc1)),(rc2.perm,len(rc2))))
-        check = ASx(perm).coproduct()
+            elem += (rc1 @ rc2).asdtype(ASx @ ASx)
+        check = ASx(perm,n).coproduct()
         try:
-            assert all(v == 0 for v in (elem - check).values())
+            if perm.inv != 0:
+                assert all(v == 0 for v in (elem - check).values())
         except AssertionError:
             print(f"Fail on {perm} at ", time.ctime())
+            print(f"{elem=}")
+            print(f"{check=}")
             with lock:
                 shared_recording_dict[perm] = False
             continue
@@ -299,7 +302,7 @@ def main():
         # Start fixed number of workers
         workers = []
         for _ in range(num_processors):
-            p = Process(target=worker, args=(shared_cache_dict, shared_recording_dict, lock, task_queue))
+            p = Process(target=worker, args=(n, shared_cache_dict, shared_recording_dict, lock, task_queue))
             p.start()
             workers.append(p)
         for p in workers:
