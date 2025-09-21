@@ -219,7 +219,7 @@ def main():
         # build_mod = rc0@rc00
         # for rc1, rc2 in stuff:
         #     build_mod += rc1@rc2
-        build_mod = try_lr_module_biject(perm, length=len(perm.trimcode))
+        build_mod = try_lr_module_biject(perm)
         #build_mod = actual_mod.clone({RCGraphTensor(*k): 1 for k in (mod_set & inv_mod_set)})
         tester = actual_result - build_mod.asdtype(ASx@ASx)
         try:

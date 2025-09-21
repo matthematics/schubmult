@@ -1222,19 +1222,12 @@ def try_lr_module_inject(perm, length=None):
     return ret_elem
 
 @cache
-def try_lr_module_biject(perm, length=None):
+def try_lr_module_biject(perm):
     # print(f"Starting {perm}")
-    if length is None:
-        length = len(perm.trimcode)
-    elif length < len(perm.trimcode):
-        raise ValueError("Length too short")
     if perm.inv == 0:
-        if length == 0:
-            mod = RCGraph() @ RCGraph()
-            #  #  # print(f"MOASA!! {mod=} {type(mod)=}")
-            return mod
-        return FA(*([0] * length)).coproduct() * (RCGraph() @ RCGraph())
-    
+        mod = RCGraph() @ RCGraph()
+        return mod
+
     rc_set = FA(*perm.trimcode)*RCGraph()
     consideration_set = {(k[0],k[1]) for k in (FA(*perm.trimcode).coproduct() * (RCGraph() @RCGraph())).value_dict.keys() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)}
 
