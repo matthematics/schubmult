@@ -812,6 +812,13 @@ class RCGraphModule(ModuleType):
 
 
 class RCGraphTensor(KeyType):
+
+    def __lt__(self, other):
+        return tuple(self) < tuple(other)
+    
+    def __le__(self, other):
+        return tuple(self) <= tuple(other)
+
     def polyvalue(self, x, y=None):
         return self[0].polyvalue(x, y) * self[1].polyvalue(x, y)
 
@@ -1091,47 +1098,48 @@ def co_rc(rc11, rc222):
         return False
     if rc2.perm != rc22.perm:
         return False
-    if len(rc1) <= 1:
-        return True
-    left_vector = [a + b for a, b in zip(rc1.transpose().length_vector(), rc2.transpose().length_vector())]
-    left_vector.reverse()
+    return True
+    # if len(rc1) <= 1:
+    #     return True
+    # left_vector = [a + b for a, b in zip(rc1.transpose().length_vector(), rc2.transpose().length_vector())]
+    # left_vector.reverse()
 
-    stanky = FA(*left_vector).coproduct() * (RCGraph() @ RCGraph())
-    for rc_bob_1, rc_bob_2 in stanky.keys():
-        if rc_bob_1.transpose() == rc12 or rc_bob_2.transpose() == rc22:
-            return True
-    # da_vec1 = list(reversed(rc1.transpose().length_vector()))
-    # da_vec11 = list(reversed(rc12.transpose().length_vector()))
-    # da_vec2 = list(reversed(rc2.transpose().length_vector()))
-    # da_vec22 = list(reversed(rc22.transpose().length_vector()))
-
-    # da_da_vec = [a+b for a,b in zip(da_vec1, da_vec2)]
-    # da_da_vec2 = [a+b for a,b in zip(da_vec11,da_vec22)]
-    # mod1 = FA(*da_da_vec).coproduct() * (RCGraph()@RCGraph())
-    # for rc0, rc00 in mod1.keys():
-    #     if rc0.transpose() == rc12 and rc00.transpose() == rc22:
+    # stanky = FA(*left_vector).coproduct() * (RCGraph() @ RCGraph())
+    # for rc_bob_1, rc_bob_2 in stanky.keys():
+    #     if rc_bob_1.transpose() == rc12 and rc_bob_2.transpose() == rc22:
     #         return True
-    # left is the prin
-    # bottom_left = rc1.rowrange(1,len(rc1))
-    # bottom_right = rc2.rowrange(1, len(rc2))
-    # for i in range(len(rc1)-1):
-    #     row1 = bottom_left[i]
-    #     row2 = bottom_right[i]
-    #     if len(row1) > len(row2):
-    #         return False
-    #     rev_row1 = tuple(reversed(row1))
-    #     rev_row2 = tuple(reversed(row2))
-    #     for i in range(len(rev_row1)):
-    #         if rev_row2[i] != rev_row1[i]:
-    #             return False
-    # print(bottom_left)
-    # print("Matches")
-    # print(bottom_right)
-    return False
+    # # da_vec1 = list(reversed(rc1.transpose().length_vector()))
+    # # da_vec11 = list(reversed(rc12.transpose().length_vector()))
+    # # da_vec2 = list(reversed(rc2.transpose().length_vector()))
+    # # da_vec22 = list(reversed(rc22.transpose().length_vector()))
+
+    # # da_da_vec = [a+b for a,b in zip(da_vec1, da_vec2)]
+    # # da_da_vec2 = [a+b for a,b in zip(da_vec11,da_vec22)]
+    # # mod1 = FA(*da_da_vec).coproduct() * (RCGraph()@RCGraph())
+    # # for rc0, rc00 in mod1.keys():
+    # #     if rc0.transpose() == rc12 and rc00.transpose() == rc22:
+    # #         return True
+    # # left is the prin
+    # # bottom_left = rc1.rowrange(1,len(rc1))
+    # # bottom_right = rc2.rowrange(1, len(rc2))
+    # # for i in range(len(rc1)-1):
+    # #     row1 = bottom_left[i]
+    # #     row2 = bottom_right[i]
+    # #     if len(row1) > len(row2):
+    # #         return False
+    # #     rev_row1 = tuple(reversed(row1))
+    # #     rev_row2 = tuple(reversed(row2))
+    # #     for i in range(len(rev_row1)):
+    # #         if rev_row2[i] != rev_row1[i]:
+    # #             return False
+    # # print(bottom_left)
+    # # print("Matches")
+    # # print(bottom_right)
+    # return False
     
 
 @cache
-def try_lr_module_inject(perm, seq = None, length=None):
+def try_lr_module_inject(perm, length=None):
     # print(f"Starting {perm}")
     if length is None:
         length = len(perm.trimcode)
@@ -1164,29 +1172,27 @@ def try_lr_module_inject(perm, seq = None, length=None):
     # print(f"{repr(keys)=} {perm=}")
     up_elem = ASx(uncode([perm.trimcode[0]]), 1) * elem
     # print(f"{up_elem=}")
-    for key, coeff in up_elem.items():
+    for key in sorted(up_elem.keys(), key=lambda k: (k[0].trimcode)):
+        coeff = up_elem[key]
         if key[0] != perm:
             assert coeff == 1, f"failed coeff 1 {coeff=}"
-            key_module = try_lr_module_inject(key[0], seq = tuple(perm.trimcode), length=length)
-            for (rc1, rc2) in key_module.value_dict.keys():
-                for (rc1_check, rc2_check) in keys:
-                    if co_rc((rc1,rc2),(rc1_check,rc2_check)):
+            key_module = try_lr_module_inject(key[0], length=length)
+            lst = list(sorted(key_module.value_dict.keys()))
+            perm_count_sorted = {}
+            perm_count_sorted2 = {}
+            rank = {}
+            rank2 = {}
+            for (rc1, rc2) in lst:
+                rank[(rc1, rc2)] = perm_count_sorted.get((rc1.perm, rc2.perm), 0)
+                perm_count_sorted[(rc1.perm, rc2.perm)] = perm_count_sorted.get((rc1.perm, rc2.perm), 0) + 1
+            for (rc1, rc2) in sorted(keys):
+                rank2[(rc1, rc2)] = perm_count_sorted2.get((rc1.perm, rc2.perm), 0)
+                perm_count_sorted2[(rc1.perm, rc2.perm)] = perm_count_sorted2.get((rc1.perm, rc2.perm), 0) + 1
+            keys2 = list(sorted(keys))
+            for (rc1, rc2) in lst:
+                for (rc1_check, rc2_check) in sorted(keys2):
+                    if co_rc((rc1,rc2),(rc1_check,rc2_check)) and rank[(rc1,rc2)] == rank2[(rc1_check,rc2_check)]:
                         keys.remove((rc1_check,rc2_check))
-                        break 
-            #ret_elem = ret_elem.clone({k: v for k,v in ret_elem.items() if k not in key_module.value_dict.keys()})
-            # print(f"Iteration {key[0]}")
-            # for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
-            #     keys2 = set(keys)
-            #     for rc1, rc2 in keys2:
-            #         if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
-            #             try:
-            #                 keys = set(keys2)
-            #                 keys.remove((rc1, rc2))
-            #             except KeyError:
-            #                 # print(repr(keys))
-            #                 raise
-            #             break
-    # print(f"Done {perm}")
     ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k in keys})
     assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
     
