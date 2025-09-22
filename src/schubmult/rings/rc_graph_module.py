@@ -1260,6 +1260,7 @@ def try_lr_module_biject(perm):
 
 def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
     # print(f"Starting {perm}")
+    from schubmult import schubmult_py
     ret_elem = None
     with lock:
         if perm in shared_cache_dict:
@@ -1277,27 +1278,39 @@ def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
             shared_cache_dict[perm] = mod
         return mod
     rc_set = {rc for rc in (FA(*perm.trimcode, *((0,)*(length-len(perm.trimcode))))*RCGraph()).value_dict.keys()}
-    consideration_set = {(k[0],k[1]) for k in (FA(*perm.trimcode, *((0,)*(length-len(perm.trimcode)))).coproduct() * (RCGraph() @RCGraph())).value_dict.keys()}
+    consideration_set = {(k[0],k[1]): v for k, v in (FA(*perm.trimcode, *((0,)*(length-len(perm.trimcode)))).coproduct() * (RCGraph() @RCGraph())).value_dict.items()}
 
-    consideration_list = list(sorted(consideration_set))
+    consider_dict = {}
+    for (rc1, rc2), v in consideration_set.items():
+        consider_dict[(rc1.perm, rc2.perm)] = consider_dict.get((rc1.perm, rc2.perm), set())
+        consider_dict[(rc1.perm, rc2.perm)].add((rc1, rc2))
+    #consideration_list = {rc1.permlist(sorted(consideration_set, key=lambda rc: (rc[0].perm.trimcode, rc[1].perm.trimcode)))
 
     ret_elem = None
 
-    for rc_graph in rc_set:
-        if rc_graph.perm != perm:
-            rcs = try_lr_module_biject_cache(rc_graph.perm, lock, shared_cache_dict, length)
-            for rc in rcs:
-                for (rc1, rc2) in consideration_list:
-                    if rc1.perm == rc[0].perm and rc2.perm == rc[1].perm and (rc1, rc2) in consideration_set:
-                        consideration_set.remove((rc1, rc2))
-                        break
+    for (perm1, perm2) in consider_dict:
+        for rc_graph in sorted(rc_set):
+            if rc_graph.perm != perm:
+                val = int(schubmult_py({perm1: S.One}, perm2).get(rc_graph.perm, 0))
+                lst = list(sorted(consider_dict[(perm1, perm2)]))
+                for i in range(val):
+                    consider_dict[(perm1, perm2)].remove(lst[i])
+
 
         # if rc1.perm.bruhat_leq(perm) and rc2.perm.bruhat_leq(perm) and rank(rc1, rc2) > lr_rank[(rc1.perm, rc2.perm)]:
         #     if ret_elem is None:
         #         ret_elem = rc1 @ rc2
         #     else:
         #         ret_elem += rc1 @ rc2
-    ret_elem = list(consideration_set)
+    for k, v in consider_dict.items():
+        #if len(v)!= schubmult_py({k[0]: S.One}, k[1]).get(perm, 0):
+            # print("OH NO")
+
+        if ret_elem is None:
+            ret_elem = list(v)
+        else:
+            ret_elem += list(v)
+    # print(consider_dict)
     with lock:
         shared_cache_dict[perm] = ret_elem
     return ret_elem

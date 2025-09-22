@@ -200,7 +200,13 @@ def main():
 
     n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
-
+    length = n - 1
+    rank = {}
+    for perm in perms:
+        rcs = (FA(*perm.trimcode, *((0,)*(length-len(perm.trimcode)))).coproduct()*(RCGraph()@RCGraph())).value_dict.keys()
+        for rc1, rc2 in rcs:
+            if len(rc1.perm) <= n and len(rc2.perm) <= n:
+                rank[(rc1, rc2)] = rank.get((rc1, rc2), 0) + 1
     
     for perm in perms:
         #build_mod = try_lr_module_inject(perm)
@@ -211,31 +217,40 @@ def main():
         # co_prin = the_prin.transpose()
         # the_mod_inv = FA(*co_prin.length_vector()).coproduct() * (RCGraph()@RCGraph())
         # inv_mod_set = set([(k[0].transpose(),k[1].transpose()) for k in the_mod_inv.value_dict.keys()])
-        actual_result = ASx(perm).coproduct()
-        actual_mod = try_lr_module(perm)
-        # the_set = mod_set & inv_mod_set
-        # stuff = iter(the_set)
-        # rc0, rc00 = next(stuff)
-        # build_mod = rc0@rc00
-        # for rc1, rc2 in stuff:
-        #     build_mod += rc1@rc2
-        build_mod = try_lr_module_biject(perm)
-        #build_mod = actual_mod.clone({RCGraphTensor(*k): 1 for k in (mod_set & inv_mod_set)})
-        tester = actual_result - build_mod.asdtype(ASx@ASx)
-        try:
-            assert all(v == 0 for v in tester.values()), f"Failed for {perm.trimcode=} {build_mod=} {actual_result=}"
-        except AssertionError as e:
-            print("Didit")
-            print(build_mod)
-            print("Real")
-            print(actual_mod)
-            print("Difference:")
-            missing = actual_mod - build_mod
-            print(missing)
-            print("Failure for ", perm.trimcode)
-            raise
-        print("Success for ", perm.trimcode)
-        print(build_mod)
+        # diff num princ max co princ
+        prin_rcs = (FA(*perm.trimcode, *((0,)*(length-len(perm.trimcode)))).coproduct()*(RCGraph()@RCGraph())).value_dict.keys()
+        num_princ = {}
+        top = {}
+        for rc1, rc2 in prin_rcs:
+            if len(rc1.perm) > n or len(rc2.perm) > n:
+                continue
+            num_princ[(rc1.perm, rc2.perm)] = num_princ.get((rc1.perm, rc2.perm), 0) + 1
+            top[(rc1.perm, rc2.perm)] = min(top.get((rc1.perm, rc2.perm), 0), rank[(rc1, rc2)])
+
+        min_co_princ = perm
+
+        while True:
+            nexts = co_principal_perms(min_co_princ, n)
+            if len(nexts) == 0:
+                break
+            min_co_princ = min(nexts, key=lambda p: p.trimcode)
+
+        num_min_co_princ = {}
+        bottom = {}
+        rcs = (FA(*min_co_princ.trimcode, *((0,)*(length-len(min_co_princ.trimcode)))).coproduct()*(RCGraph()@RCGraph())).value_dict.keys()
+        for rc1, rc2 in rcs:
+            if len(rc1.perm) > n or len(rc2.perm) > n:
+                continue
+            num_min_co_princ[(rc1.perm, rc2.perm)] = num_min_co_princ.get((rc1.perm, rc2.perm), 0) + 1
+            bottom[(rc1.perm, rc2.perm)] = max(bottom.get((rc1.perm, rc2.perm), 0), rank[(rc1, rc2)])
+
+        result = ASx(perm, length).coproduct()
+        for (p1, p2), coeff in result.items():
+            cutoff = top.get((p1[0], p2[0]),0) - bottom.get((p1[0], p2[0]),0) + 1
+            result = len([k for k in prin_rcs if rank[k] > cutoff and k[0].perm == p1[0] and k[1].perm == p2[0]])
+            assert result == coeff, f"Failed principal count for {perm} at {(p1[0], p2[0])} {coeff} {result}"
+
+
     # n = int(sys.argv[1])
     # ring = DoubleSchubertRing(z,y)
     # for i0 in range(n):
