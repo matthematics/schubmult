@@ -1259,7 +1259,6 @@ def try_lr_module_biject(perm):
 
 
 def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
-    # print(f"Starting {perm}")
     from schubmult import schubmult_py
     ret_elem = None
     with lock:
@@ -1277,7 +1276,7 @@ def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
         with lock:
             shared_cache_dict[perm] = mod
         return mod
-    rc_set = {rc for rc in (FA(*perm.trimcode, *((0,)*(length-len(perm.trimcode))))*RCGraph()).value_dict.keys()}
+    rc_set = set((FA(*perm.trimcode, *((0,)*(length-len(perm.trimcode))))*RCGraph()).value_dict.keys())
     consideration_set = {(k[0],k[1]): v for k, v in (FA(*perm.trimcode, *((0,)*(length-len(perm.trimcode)))).coproduct() * (RCGraph() @RCGraph())).value_dict.items()}
 
     consider_dict = {}
@@ -1292,7 +1291,7 @@ def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
         for rc_graph in sorted(rc_set):
             if rc_graph.perm != perm:
                 val = int(schubmult_py({perm1: S.One}, perm2).get(rc_graph.perm, 0))
-                lst = list(sorted(consider_dict[(perm1, perm2)]))
+                lst = sorted(consider_dict[(perm1, perm2)])
                 for i in range(val):
                     consider_dict[(perm1, perm2)].remove(lst[i])
 
