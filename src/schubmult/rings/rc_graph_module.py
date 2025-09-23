@@ -186,7 +186,7 @@ class ModuleType:
             else:
                 buildups = _multiline_join(buildups, to_add, joiner=add_joiner)
         return buildups
-    
+
     def polyvalue(self, x, y=None):
         return sum([v * k.polyvalue(x, y) for k, v in self._dict.items()])
 
@@ -196,6 +196,7 @@ class ModuleType:
         if v == 1:
             return "", "", " + "
         return str(v), " * ", " + "
+
 
 class UnderlyingGraph(tuple):
     def __new__(cls, *args, value=1):
@@ -213,12 +214,10 @@ class UnderlyingGraph(tuple):
 
 
 class RCGraph(KeyType, UnderlyingGraph):
-
     def __eq__(self, other):
         if not isinstance(other, RCGraph):
             return NotImplemented
         return tuple(self) == tuple(other)
-
 
     def __new__(cls, *args, value=1):
         rcc = UnderlyingGraph.__new__(cls, *args)
@@ -227,7 +226,6 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     def __init__(self, *args, value=1):
         pass
-
 
     def perm_word(self):
         ret = []
@@ -239,13 +237,13 @@ class RCGraph(KeyType, UnderlyingGraph):
         perm = self.perm
         nz = len([a for a in perm.trimcode if a != 0])
         root_dict = {perm.right_root_at(index): index for index in range(perm.inv)}
-        result_word = [9]*perm.inv
+        result_word = [9] * perm.inv
         index = 0
         perm_word = self.perm_word()
         for i, row in enumerate(self):
             for _ in range(len(row)):
                 root = perm.right_root_at(index, word=perm_word)
-                result_word[root_dict[root]] = (nz - perm.code_index_of_index(index))
+                result_word[root_dict[root]] = nz - perm.code_index_of_index(index)
                 index += 1
         result_word.reverse()
         return tuple(result_word)
@@ -468,9 +466,9 @@ class RCGraph(KeyType, UnderlyingGraph):
             for row in rc:
                 if len(row) > 0:
                     mx = max(mx, max(row) + 2)
-            for i in range(last_desc+1, mx + 1):
-                if old_perm[i-1] < old_perm[i]:
-                    new_perm = old_perm.swap(i-1, i)
+            for i in range(last_desc + 1, mx + 1):
+                if old_perm[i - 1] < old_perm[i]:
+                    new_perm = old_perm.swap(i - 1, i)
                     if max((~new_perm).descents()) + 1 > len(rc):
                         continue
                     new_top_row = [i, *rc[0]]
@@ -812,10 +810,9 @@ class RCGraphModule(ModuleType):
 
 
 class RCGraphTensor(KeyType):
-
     def __lt__(self, other):
         return tuple(self) < tuple(other)
-    
+
     def __le__(self, other):
         return tuple(self) <= tuple(other)
 
@@ -1088,6 +1085,7 @@ def co_rc(rc11, rc222):
     from schubmult.abc import y
     from schubmult.rings.variables import ZeroGeneratingSet
     from schubmult.symbolic import S, expand
+
     rc1, rc2 = rc11
     rc12, rc22 = rc222
     if len(rc1) != len(rc12):
@@ -1142,21 +1140,29 @@ def rank(rc1, rc2, n):
     """
     Rank of the RC graphs by lex weight/order
     """
-    #from schubmult.utils.perm_utils import artin_sequences
+    # from schubmult.utils.perm_utils import artin_sequences
     length = len(rc1)
     assert len(rc1) == len(rc2)
     deg = rc1.perm.inv + rc2.perm.inv
     seqs = all_fa_degree(deg, length)
-    weight_vec = tuple([a+b for a,b in zip(rc1.length_vector(),rc2.length_vector())])
+    weight_vec = tuple([a + b for a, b in zip(rc1.length_vector(), rc2.length_vector())])
     seqs = tuple(sorted([seq for seq in seqs]))
     rank = 0
     for seq in seqs:
         if len(uncode(seq)) > n:
             continue
         if seq != weight_vec:
-            rank += len([(rc[0], rc[1]) for rc in (FA(*seq).coproduct()* (RCGraph()@RCGraph())).value_dict.keys() if rc[0].perm == rc1.perm and rc[1].perm == rc2.perm and len(rc1.perm)<=n and len(rc2.perm)<=n])
+            rank += len(
+                [
+                    (rc[0], rc[1])
+                    for rc in (FA(*seq).coproduct() * (RCGraph() @ RCGraph())).value_dict.keys()
+                    if rc[0].perm == rc1.perm and rc[1].perm == rc2.perm and len(rc1.perm) <= n and len(rc2.perm) <= n
+                ]
+            )
         else:
-            rank  += len([(rc[0], rc[1]) for rc in (FA(*seq).coproduct()* (RCGraph()@RCGraph())).value_dict.keys() if rc[0].perm == rc1.perm and rc[1].perm == rc2.perm and (rc[0],rc[1]) <= (rc1, rc2) ])
+            rank += len(
+                [(rc[0], rc[1]) for rc in (FA(*seq).coproduct() * (RCGraph() @ RCGraph())).value_dict.keys() if rc[0].perm == rc1.perm and rc[1].perm == rc2.perm and (rc[0], rc[1]) <= (rc1, rc2)]
+            )
             break
     return rank
 
@@ -1205,21 +1211,22 @@ def try_lr_module_inject(perm, length=None):
             perm_count_sorted2 = {}
             rank = {}
             rank2 = {}
-            for (rc1, rc2) in lst:
+            for rc1, rc2 in lst:
                 rank[(rc1, rc2)] = perm_count_sorted.get((rc1.perm, rc2.perm), 0)
                 perm_count_sorted[(rc1.perm, rc2.perm)] = perm_count_sorted.get((rc1.perm, rc2.perm), 0) + 1
-            for (rc1, rc2) in sorted(keys):
+            for rc1, rc2 in sorted(keys):
                 rank2[(rc1, rc2)] = perm_count_sorted2.get((rc1.perm, rc2.perm), 0)
                 perm_count_sorted2[(rc1.perm, rc2.perm)] = perm_count_sorted2.get((rc1.perm, rc2.perm), 0) + 1
             keys2 = list(sorted(keys))
-            for (rc1, rc2) in lst:
-                for (rc1_check, rc2_check) in sorted(keys2):
-                    if co_rc((rc1,rc2),(rc1_check,rc2_check)) and rank[(rc1,rc2)] == rank2[(rc1_check,rc2_check)]:
-                        keys.remove((rc1_check,rc2_check))
+            for rc1, rc2 in lst:
+                for rc1_check, rc2_check in sorted(keys2):
+                    if co_rc((rc1, rc2), (rc1_check, rc2_check)) and rank[(rc1, rc2)] == rank2[(rc1_check, rc2_check)]:
+                        keys.remove((rc1_check, rc2_check))
     ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k in keys})
     assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
-    
+
     return ret_elem
+
 
 @cache
 def try_lr_module_biject(perm):
@@ -1228,8 +1235,8 @@ def try_lr_module_biject(perm):
         mod = RCGraph() @ RCGraph()
         return mod
 
-    rc_set = FA(*perm.trimcode)*RCGraph()
-    consideration_set = {(k[0],k[1]) for k in (FA(*perm.trimcode).coproduct() * (RCGraph() @RCGraph())).value_dict.keys() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)}
+    rc_set = FA(*perm.trimcode) * RCGraph()
+    consideration_set = {(k[0], k[1]) for k in (FA(*perm.trimcode).coproduct() * (RCGraph() @ RCGraph())).value_dict.keys() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)}
 
     consideration_list = list(sorted(consideration_set))
 
@@ -1239,7 +1246,7 @@ def try_lr_module_biject(perm):
         if rc_graph.perm != perm:
             rcs = try_lr_module_biject(rc_graph.perm)
             for rc in rcs.keys():
-                for (rc1, rc2) in consideration_list:
+                for rc1, rc2 in consideration_list:
                     if rc1.perm == rc[0].perm and rc2.perm == rc[1].perm and (rc1, rc2) in consideration_set:
                         consideration_set.remove((rc1, rc2))
                         break
@@ -1249,7 +1256,7 @@ def try_lr_module_biject(perm):
         #         ret_elem = rc1 @ rc2
         #     else:
         #         ret_elem += rc1 @ rc2
-    for (rc1, rc2) in consideration_set:
+    for rc1, rc2 in consideration_set:
         if ret_elem is None:
             ret_elem = rc1 @ rc2
         else:
@@ -1257,9 +1264,9 @@ def try_lr_module_biject(perm):
     return ret_elem
 
 
-
 def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
     from schubmult import schubmult_py
+
     ret_elem = None
     with lock:
         if perm in shared_cache_dict:
@@ -1270,24 +1277,23 @@ def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
 
     if perm.inv == 0:
         if length == 0:
-            mod = [(RCGraph(),RCGraph())]
+            mod = [(RCGraph(), RCGraph())]
         else:
-            mod = [(RCGraph(() * length),RCGraph(() * length))]
+            mod = [(RCGraph(() * length), RCGraph(() * length))]
         with lock:
             shared_cache_dict[perm] = mod
         return mod
-    rc_set = set((FA(*perm.trimcode, *((0,)*(length-len(perm.trimcode))))*RCGraph()).value_dict.keys())
-    consideration_set = {(k[0],k[1]): v for k, v in (FA(*perm.trimcode, *((0,)*(length-len(perm.trimcode)))).coproduct() * (RCGraph() @RCGraph())).value_dict.items()}
+    rc_set = set((FA(*perm.trimcode, *((0,) * (length - len(perm.trimcode)))) * RCGraph()).value_dict.keys())
+    consideration_set = {(k[0], k[1]): v for k, v in (FA(*perm.trimcode, *((0,) * (length - len(perm.trimcode)))).coproduct() * (RCGraph() @ RCGraph())).value_dict.items()}
 
     consider_dict = {}
     for (rc1, rc2), v in consideration_set.items():
         consider_dict[(rc1.perm, rc2.perm)] = consider_dict.get((rc1.perm, rc2.perm), set())
         consider_dict[(rc1.perm, rc2.perm)].add((rc1, rc2))
-    #consideration_list = {rc1.permlist(sorted(consideration_set, key=lambda rc: (rc[0].perm.trimcode, rc[1].perm.trimcode)))
 
     ret_elem = None
 
-    for (perm1, perm2) in consider_dict:
+    for perm1, perm2 in consider_dict:
         for rc_graph in sorted(rc_set):
             if rc_graph.perm != perm:
                 val = int(schubmult_py({perm1: S.One}, perm2).get(rc_graph.perm, 0))
@@ -1295,21 +1301,11 @@ def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
                 for i in range(val):
                     consider_dict[(perm1, perm2)].remove(lst[i])
 
-
-        # if rc1.perm.bruhat_leq(perm) and rc2.perm.bruhat_leq(perm) and rank(rc1, rc2) > lr_rank[(rc1.perm, rc2.perm)]:
-        #     if ret_elem is None:
-        #         ret_elem = rc1 @ rc2
-        #     else:
-        #         ret_elem += rc1 @ rc2
     for k, v in consider_dict.items():
-        #if len(v)!= schubmult_py({k[0]: S.One}, k[1]).get(perm, 0):
-            # print("OH NO")
-
         if ret_elem is None:
             ret_elem = list(v)
         else:
             ret_elem += list(v)
-    # print(consider_dict)
     with lock:
         shared_cache_dict[perm] = ret_elem
     return ret_elem
@@ -1348,17 +1344,18 @@ def nonrecursive_lr_module(perm, length=None):
     up_elem = ASx(perm, length).change_basis(WordBasis)
     elem = ASx(lower_perm, length - 1)
     up_elem = ASx(uncode([perm.trimcode[0]]), 1) * elem
-    
+
     # print(f"{up_elem=}")
     def pad_vector(vec, length):
         if len(vec) < length:
             return (*vec, *(0,) * (length - len(vec)))
         return tuple(vec)
+
     loopkeys = [pad_vector(key[0].trimcode, length) for key, _ in up_elem.items() if key[0] != perm]
     loopkeys.sort()
     for key in loopkeys:
         code_key = key
-        for (rc1_bad, rc2_bad), cff2 in (FA(*code_key).coproduct()*(RCGraph() @ RCGraph())).items():
+        for (rc1_bad, rc2_bad), cff2 in (FA(*code_key).coproduct() * (RCGraph() @ RCGraph())).items():
             keys2 = set(keys)
             for rc1, rc2 in keys2:
                 if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
