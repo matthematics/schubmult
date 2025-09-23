@@ -243,6 +243,7 @@ def worker(n, shared_cache_dict, shared_recording_dict, lock, task_queue):
             print(f"Fail on {perm} at ", time.ctime())
             print(f"{elem=}")
             print(f"{check=}")
+            print(f"{(elem - check)=}")
             with lock:
                 shared_recording_dict[perm] = False
             continue

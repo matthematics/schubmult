@@ -336,12 +336,26 @@ class RCGraph(KeyType, UnderlyingGraph):
     def __le__(self, other):
         if not isinstance(other, RCGraph):
             return NotImplemented
-        return self.length_vector() <= other.length_vector()
+        if not isinstance(other, RCGraph):
+            return NotImplemented
+        if self.length_vector() < other.length_vector():
+            return True
+        if self.length_vector() == other.length_vector() and self.perm.bruhat_leq(other.perm) and self.perm != other.perm:
+            return True
+        if self.length_vector() == other.length_vector() and self.perm == other.perm and self.perm_word() < other.perm_word():
+            return True
+        return self.length_vector() == other.length_vector() and self.perm == other.perm and self.perm_word() == other.perm_word()
 
     def __lt__(self, other):
         if not isinstance(other, RCGraph):
             return NotImplemented
-        return self.length_vector() < other.length_vector()
+        if self.length_vector() < other.length_vector():
+            return True
+        if self.length_vector() == other.length_vector() and self.perm.bruhat_leq(other.perm) and self.perm != other.perm:
+            return True
+        if self.length_vector() == other.length_vector() and self.perm == other.perm and self.perm_word() < other.perm_word():
+            return True
+        return False
 
     @property
     def perm(self):
@@ -1264,6 +1278,7 @@ def try_lr_module_biject(perm):
     return ret_elem
 
 
+# jump through hoops to make this polynomial
 def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
     from schubmult import schubmult_py
 
@@ -1293,21 +1308,32 @@ def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
 
     ret_elem = None
 
+    secret_val = {}
+    secret_element = {}
+
     for perm1, perm2 in consider_dict:
         for rc_graph in sorted(rc_set):
             if rc_graph.perm != perm:
                 val = int(schubmult_py({perm1: S.One}, perm2).get(rc_graph.perm, 0))
-                lst = sorted(consider_dict[(perm1, perm2)])
-                for i in range(val):
-                    consider_dict[(perm1, perm2)].remove(lst[i])
-
+                secret_val[(perm1, perm2)] = secret_val.get((perm1, perm2), 0) + val
+                # lst = sorted(consider_dict[(perm1, perm2)])
+                # for i in range(val):
+                #     consider_dict[(perm1, perm2)].remove(lst[i])
+    for k, st in consider_dict.items():
+        lst = sorted(st)
+        v = secret_val.get(k, 0)
+        try:
+            secret_element[k] = lst[v]
+        except IndexError:
+            pass
+    ret_elem = []
     for k, v in consider_dict.items():
-        if ret_elem is None:
-            ret_elem = list(v)
-        else:
-            ret_elem += list(v)
+        if k in secret_element:
+            for v2 in v:
+                if secret_element[k] <= v2:
+                    ret_elem.append(v2)
     with lock:
-        shared_cache_dict[perm] = ret_elem
+        shared_cache_dict[perm] = tuple(ret_elem)
     return ret_elem
 
 
