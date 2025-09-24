@@ -547,7 +547,8 @@ class NilPlactic:
             if index < len(first_row) - 1 and first_row[index+1] == letter + 1:
                 word0, word2_0 = NilPlactic.ed_insert_rsk(word[1:], word2[1:], letter + 1, letter2)
             else:
-                word0, word2_0 = NilPlactic.ed_insert_rsk(word[1:], word2[1:], letter, letter2)
+                raise ValueError(f"Cannot perform ed insert: word is not nilplactic. DBG {index=}, {word=}, {letter=}")
+                #word0, word2_0 = NilPlactic.ed_insert_rsk(word[1:], word2[1:], letter, letter2)
             return (
                 (first_row, *word0),
                 (word2[0], *word2_0),
@@ -559,6 +560,7 @@ class NilPlactic:
         # new_word2[index] = letter2
         word0, word2_0 = NilPlactic.ed_insert_rsk(word[1:], word2[1:], bump, letter2)
         return (tuple(new_first_row),*word0), (word2[0],*word2_0)
+
 
     @staticmethod
     def standardize(word):
@@ -572,48 +574,95 @@ class NilPlactic:
         subword.insert(index, 1)
         return subword
 
-    @staticmethod
-    def inverse_ed_insert_rsk(word, word2):
-        # print(f"DBG: {word=}, {word2=}")
-        if len(word) != len(word2):
-            raise ValueError("Words must be of the same length for inverse ed insert.")
-        if len(word) == 0:
-            return (), ()
-        sputnik = NilPlactic.standardize(word2)
-        # print(f"DBG: {sputnik=}")
-        index = sputnik.index(max(sputnik))
-        new_word = [*word]
-        new_word2 = [*word2]
-        a, b = new_word.pop(index), new_word2.pop(index)
-        index2 = index
-        while index2 < len(word2) - 1 and word[index2] < word[index2 + 1]:
-            index2 += 1
-        if index2 == len(word2) - 1:
-            new_word, new_word2 = NilPlactic.inverse_ed_insert_rsk(new_word, new_word2)
-            return (*new_word, a), (*new_word2, b)
-        row_start = index2 + 1
-        index3 = row_start
-        while index3 < len(word2) - 1 and word[index3] < word[index3 + 1] and word[index3] < a:
-            index3 += 1
-        if index3 < len(word2) - 1:
-            if word[index3] < a:
-                # print("pangolin")
-                # print(f"{word=}, {word2=}, {index3=}, {a=}, {new_word=}, {new_word2=} {b=}")
-                if word[index3] == a - 1:
-                    new_word[index3 - 1] = a
-                    new_word, new_word2 = NilPlactic.inverse_ed_insert_rsk(new_word, new_word2)
-                    return (*new_word, a - 1), (*new_word2, b)
-                raise ValueError(f"Cannot perform inverse ed insert: word is not nilplactic. DBG {index3=}, {word=}, {word2=}, {a=}")
-            if word[index3] == a:
-                # print("pangolin2")
-                # print(f"{word=}, {word2=}, {index3=}, {a=}, {new_word=}, {new_word2=} {b=}")
-                new_word, new_word2 = NilPlactic.inverse_ed_insert_rsk(new_word, new_word2)
-                return (*new_word, a - 1), (*new_word2, b)
+    # @staticmethod
+    # def inverse_ed_insert_rsk(word, word2):
+    #     if len(word) != len(word2):
+    #         raise ValueError("Tableaux must be of the same shape for inverse ed insert.")
+    #     for i in range(len(word)):
+    #         if len(word[i]) != len(word2[i]):
+    #             raise ValueError("Tableaux must be of the same shape for inverse ed insert.")
+    #     if len(word) == 0:
+    #         raise ValueError("Cannot perform inverse ed insert on empty tableaux.")
+    #     first_nonempty_row = -1
+    #     for i in range(len(word) - 1, -1, -1):
+    #         if len(word[i]) > 0:
+    #             first_nonempty_row = i
+    #             break
+    #     if first_nonempty_row == -1:
+    #         raise ValueError("Cannot perform inverse ed insert on empty tableaux.")
+    #     if first_nonempty_row == 0:
+    #         # remove the last element
+    #         new_word = [*word]
+    #         new_word2 = [*word2]
+    #         a = new_word[0][-1]
+    #         b = new_word2[0][-1]
+    #         new_word[0] = new_word[0][:-1]
+    #         new_word2[0] = new_word2[0][:-1]
+    #         return (new_word, (a,)), (new_word2, (b,))
+    #     new_upper_word = [*word[:first_nonempty_row]]
+    #     # unbump
+    #     unbump = word[first_nonempty_row][-1]
+    #     second_to_last_row = word[first_nonempty_row - 1]
+    #     index = 0
+    #     to_pass = None
+    #     while index < len(second_to_last_row) and second_to_last_row[index] < unbump:
+    #         index += 1
+    #     if index == len(second_to_last_row):
+    #         raise ValueError(f"Cannot perform inverse ed insert: word is not nilplactic. DBG {index=}, {word=}, {word2=}, {unbump=}")
+    #     if second_to_last_row[index] == unbump:
+    #         if index > 0 and second_to_last_row[index - 1] == unbump - 1:
+    #             to_pass = unbump - 1
+    #         else:
+    #             raise ValueError(f"Cannot perform inverse ed insert: word is not nilplactic. DBG {index=}, {word=}, {word2=}, {unbump=}")
+    #     else:
+    #         to_pass = second_to_last_row[index]
+    #     new_second_to_last_row = [*second_to_last_row]
+    #     new_second_to_last_row[index] = unbump
+    #     new_upper_word[-1] = tuple(new_second_to_last_row)
+        
+    #     #return (new_upper_word, (*new_lower_word, to_pass)), (word2[:first_nonempty_row], (*word2[first_nonempty_row][:-1], word2[first_nonempty_row][-1]))
 
-        a2 = word[index3]
-        new_word[index3 - 1] = a
-        new_word, new_word2 = NilPlactic.inverse_ed_insert_rsk(new_word, new_word2)
-        return (*new_word, a2), (*new_word2, b)
+
+        # print(f"DBG: {word=}, {word2=}")
+        # if len(word) != len(word2):
+        #     raise ValueError("Words must be of the same length for inverse ed insert.")
+        # if len(word) == 0:
+        #     return (), ()
+        # sputnik = NilPlactic.standardize(word2)
+        # # print(f"DBG: {sputnik=}")
+        # index = sputnik.index(max(sputnik))
+        # new_word = [*word]
+        # new_word2 = [*word2]
+        # a, b = new_word.pop(index), new_word2.pop(index)
+        # index2 = index
+        # while index2 < len(word2) - 1 and word[index2] < word[index2 + 1]:
+        #     index2 += 1
+        # if index2 == len(word2) - 1:
+        #     new_word, new_word2 = NilPlactic.inverse_ed_insert_rsk(new_word, new_word2)
+        #     return (*new_word, a), (*new_word2, b)
+        # row_start = index2 + 1
+        # index3 = row_start
+        # while index3 < len(word2) - 1 and word[index3] < word[index3 + 1] and word[index3] < a:
+        #     index3 += 1
+        # if index3 < len(word2) - 1:
+        #     if word[index3] < a:
+        #         # print("pangolin")
+        #         # print(f"{word=}, {word2=}, {index3=}, {a=}, {new_word=}, {new_word2=} {b=}")
+        #         if word[index3] == a - 1:
+        #             new_word[index3 - 1] = a
+        #             new_word, new_word2 = NilPlactic.inverse_ed_insert_rsk(new_word, new_word2)
+        #             return (*new_word, a - 1), (*new_word2, b)
+        #         raise ValueError(f"Cannot perform inverse ed insert: word is not nilplactic. DBG {index3=}, {word=}, {word2=}, {a=}")
+        #     if word[index3] == a:
+        #         # print("pangolin2")
+        #         # print(f"{word=}, {word2=}, {index3=}, {a=}, {new_word=}, {new_word2=} {b=}")
+        #         new_word, new_word2 = NilPlactic.inverse_ed_insert_rsk(new_word, new_word2)
+        #         return (*new_word, a - 1), (*new_word2, b)
+
+        # a2 = word[index3]
+        # new_word[index3 - 1] = a
+        # new_word, new_word2 = NilPlactic.inverse_ed_insert_rsk(new_word, new_word2)
+        # return (*new_word, a2), (*new_word2, b)
 
     @staticmethod
     def reverse_insert_rsk(word, word2, letter, letter2):

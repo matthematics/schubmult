@@ -234,6 +234,10 @@ def worker(n, shared_cache_dict, shared_recording_dict, lock, task_queue):
         elem = 0
         for ((rc1,tab1), (rc2,tab2)) in try_mod:
             #elem += (rc1 @ rc2).asdtype(ASx @ ASx)
+            print(f"FYI {perm.trimcode} 1")
+            print(rc1@tab1)
+            print(f"FYI {perm.trimcode} 2")
+            print(rc2@tab2)
             elem += (ASx@ASx)(((rc1.perm, n),(rc2.perm, n)))
         check = ASx(perm,n).coproduct()
         try:
