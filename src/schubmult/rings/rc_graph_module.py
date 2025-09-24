@@ -1744,7 +1744,7 @@ def try_lr_module_biject(perm, length):
                     #     # print("-------")
                     ret_elem.append(pair)
                 else:
-                    pass
+                    print(f"Didn't match but is this true? {lehmer_partial_pair(pair, secret_element[(perm1, perm2)])}")
                     # print(f"THIS TAB NO GOOD FOR {pair[0][0].perm, pair[1][0].perm}")
                     # for tab in comp_them(*pair):
                     #     # print(tab)
