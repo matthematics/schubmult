@@ -302,6 +302,12 @@ class Permutation:
         # print("REMOVE THIS")
         return max(len(self._perm), 2)
 
+    def __le__(self, other):
+        return self.bruhat_leq(other)
+    
+    def __lt__(self, other):
+        return self != other and self.bruhat_leq(other)
+
     def __invert__(self):
         new_perm = [0] * len(self._perm)
         for i in range(len(self._perm)):
@@ -546,13 +552,11 @@ class NilPlactic:
         if first_row[index] == letter:
             if index < len(first_row) - 1 and first_row[index+1] == letter + 1:
                 word0, word2_0 = NilPlactic.ed_insert_rsk(word[1:], word2[1:], letter + 1, letter2)
-            else:
-                raise ValueError(f"Cannot perform ed insert: word is not nilplactic. DBG {index=}, {word=}, {letter=}")
-                #word0, word2_0 = NilPlactic.ed_insert_rsk(word[1:], word2[1:], letter, letter2)
-            return (
-                (first_row, *word0),
-                (word2[0], *word2_0),
-            )
+                return (
+                    (first_row, *word0),
+                    (word2[0], *word2_0),
+                )
+            #raise ValueError("Not nilplactic")
         new_first_row = [*first_row]
         bump = new_first_row[index]
         # bump2 = new_word2[index]

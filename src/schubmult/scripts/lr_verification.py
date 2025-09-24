@@ -222,7 +222,8 @@ def worker(n, shared_cache_dict, shared_recording_dict, lock, task_queue):
             perm = task_queue.get(timeout=2)
         except Exception:
             break  # queue empty, exit
-
+        if perm.inv == 0:
+            continue
         with lock:
             if perm in shared_recording_dict:
                 print(f"{perm} already verified, returning.")
@@ -232,13 +233,13 @@ def worker(n, shared_cache_dict, shared_recording_dict, lock, task_queue):
 
         # Only update manager dict at top level
         elem = 0
-        for ((rc1,tab1), (rc2,tab2)) in try_mod:
+        for (rc1, rc2) in try_mod:
             #elem += (rc1 @ rc2).asdtype(ASx @ ASx)
-            print(f"FYI {perm.trimcode} 1")
-            print(rc1@tab1)
-            print(f"FYI {perm.trimcode} 2")
-            print(rc2@tab2)
-            elem += (ASx@ASx)(((rc1.perm, n),(rc2.perm, n)))
+            # print(f"FYI {perm.trimcode} 1")
+            # print(rc1)
+            # print(f"FYI {perm.trimcode} 2")
+            # print(rc2)
+            elem += (ASx@ASx)(((rc1[0].perm, n),(rc2[0].perm, n)))
         check = ASx(perm,n).coproduct()
         try:
             if perm.inv != 0:

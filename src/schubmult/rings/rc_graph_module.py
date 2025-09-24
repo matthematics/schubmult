@@ -218,6 +218,9 @@ class RCGraph(KeyType, UnderlyingGraph):
         if not isinstance(other, RCGraph):
             return NotImplemented
         return tuple(self) == tuple(other)
+    
+    # def __len__(self):
+    #     return len(self.P)
 
     def __new__(cls, *args, value=1):
         rcc = UnderlyingGraph.__new__(cls, *args)
@@ -245,7 +248,10 @@ class RCGraph(KeyType, UnderlyingGraph):
                 to_insert = len(self) - i
                 word1, word2 = NilPlactic.ed_insert_rsk(word1, word2, a, to_insert)
                 index += 1
-        return RCGraphEG(Tableau(word1), Tableau(word2))
+        P = Tableau(word1)
+        Q = Tableau(word2)
+        # reg._rc_graph = self
+        return (P, Q)
 
     def weight_word(self):
         perm = self.perm
@@ -270,7 +276,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         return NotImplemented
 
     def __rmul__(self, other):
-        return RCGraphModule({self: 1}).__rmul__(other)
+        return RCGraphModule({self: 1}, generic_key_type=self.__class__).__rmul__(other)
 
     def asdtype(self, cls):
         return cls.dtype().ring.from_rc_graph(self)
@@ -607,16 +613,68 @@ class Tableau(RCGraph):
             for p in reversed(row):
                 perm = perm.swap(p - 1, p)
         return perm
+    
+    def maxvalue(self):
+        mv = 0
+        for row in self:
+            for a in row:
+                mv = max(mv, a)
+        return mv
 
 
 class RCGraphEG(RCGraph):
-    def __init__(self, P, Q):
-        if not isinstance(P, Tableau) or not isinstance(Q, Tableau):
-            raise ValueError("Must provide tableaux")
-        if P.length_vector() != Q.length_vector():
-            raise ValueError("Tableaux must have same shape")
-        self.P = P
-        self.Q = Q
+
+    def __new__(cls, *args, value=1):
+        if len(args) == 0:
+            return RCGraph.__new__(cls, value=value)
+        if isinstance(args[0], RCGraphEG):
+            return RCGraph.__new__(cls, *args, value=value)
+        if isinstance(args[0], (tuple, list)):
+            return cls.from_rc_graph(RCGraph(args[0], value=value))
+        raise ValueError(f"Don't know what to do with {args}")
+
+    def __init__(self, *args, value=1):
+        if len(args) == 0:
+            self.value = value
+            self._rc_graph = RCGraph()
+            self.P = Tableau()
+            self.Q = Tableau()
+            return
+        # if len(args) == 1:
+        if isinstance(args[0], RCGraphEG):
+            self.P, self.Q = args[0].P, args[0].Q
+            self._rc_graph = args[0]._rc_graph
+            self.value = value
+            return
+        return
+
+        # elif len(args) == 2:
+        #     P, Q = args
+        #     self._length = len(P)
+        # else:
+        #     raise ValueError("Must provide 1 or 2 arguments")
+        # if isinstance(P, tuple):
+        #     P = Tableau(P)
+        # if isinstance(Q, tuple):
+        #     Q = Tableau(Q)
+        # if not isinstance(P, Tableau) or not isinstance(Q, Tableau):
+        #     raise ValueError("Must provide tableaux")
+        # if P.length_vector() != Q.length_vector():
+        #     raise ValueError("Tableaux must have same shape")
+        # self.P = P
+        # self.Q = Q
+        # self.value = value
+        #self._length = 
+
+    @classmethod
+    def from_rc_graph(cls, rc_graph):
+        sporg = cls(rc_graph.edelman_greene())
+        sporg._rc_graph = rc_graph
+        sporg.value = rc_graph.value
+        return sporg
+
+    def __len__(self):
+        return len(self.P)
 
     def __str__(self):
         return full_multiline_join("\n".join(self.P.as_str_lines()), "\n".join(self.Q.as_str_lines()), joiner=" | ")
@@ -636,29 +694,94 @@ class RCGraphEG(RCGraph):
     def perm(self):
         return self.P.perm
 
+    def iterative_act(self, p):
+        raise NotImplementedError("Use act instead")
+
+    # def ring_act(self, elem):
+    #     if isinstance(elem, FreeAlgebraElement):
+    #         wd_dict = elem.change_basis(WordBasis)
+    #         ret = {}
+    #         for k, v in wd_dict.items():
+    #             # print(f"{k=} {v=}")
+    #             acted_element = {self: v}
+    #             # not reversed
+    #             for a in k:
+    #                 acted_element2 = {}
+    #                 for k2, v2 in acted_element.items():
+    #                     # print(f"{dict.fromkeys(k2.act(a), v2)=}")
+    #                     acted_element2 = add_perm_dict(acted_element2, dict.fromkeys(k2.act(a), v2))
+    #                 acted_element = acted_element2
+    #             # print(f"{acted_element=}")
+    #             ret = add_perm_dict(ret, acted_element)
+    #         # print(f"{ret=}")
+    #         return ret
+    #     raise ValueError(f"Cannot act by {type(elem)} {elem=}")
+
+    # def edelman_greene(self):
+    #     from schubmult.perm_lib import NilPlactic
+
+    #     word1 = []
+    #     word2 = []
+    #     index = 0
+    #     evil_self = list(reversed([list(reversed(row)) for row in self]))
+    #     for i in range(len(evil_self)):
+    #         for a in evil_self[i]:
+    #             to_insert = len(self) - i
+    #             word1, word2 = NilPlactic.ed_insert_rsk(word1, word2, a, to_insert)
+    #             index += 1
+    #     return RCGraphEG(Tableau(word1), Tableau(word2))
+
     def act(self, p):
         from schubmult.perm_lib import NilPlactic
 
-        pm = self.perm
-        elem = FAS(pm, len(self))
-        bumpup = FAS(uncode([p]), 1) * elem
-        ret = set()
-        for k, v in bumpup.items():
-            perm2 = k[0]
-            new_row = [pm[i] for i in range(max(len(pm), len(perm2))) if pm[i] == perm2[i + 1]]
-            new_row.sort()
-            newP = Tableau([tuple([a + 1 for a in row]) for row in self.P])
-            newQ = Tableau([tuple([a + 1 for a in row]) for row in self.Q])
-            newP_tup, newQ_tup = tuple(newP), tuple(newQ)
-            for char in new_row:
-                newP_tup, newQ_tup = NilPlactic.ed_insert_rsk(newP_tup, newQ_tup, char, 1)
-            newP = Tableau(newP_tup)
-            newQ = Tableau(newQ_tup)
-            nrc = RCGraphEG(newP, newQ)
-            assert nrc.perm == perm2
-            ret.add(nrc)
+        # pm = self.perm
+        # elem = FAS(pm)
+        # bumpup =  elem * FAS(uncode([p]), 1)
+        # ret = set()
+
+        # for k, v in bumpup.items():
+        #     perm2 = k[0]
+        #     new_row = [pm[i] for i in range(max(len(pm), len(perm2))) if pm[i] == (perm2)[i + 1]]
+        #     new_row.sort(reverse=True)
+        #     newP = Tableau([tuple([a + 1 for a in row]) for row in self.P])
+        #     newQ = Tableau([tuple([a + 1 for a in row]) for row in self.Q])
+        #     newP_tup, newQ_tup = tuple(newP), tuple(newQ)
+        #     for char in new_row:
+        #         newP_tup, newQ_tup = NilPlactic.ed_insert_rsk(newP_tup, newQ_tup, char, 1)
+        #     newP = Tableau(newP_tup)
+        #     newQ = Tableau(newQ_tup)
+        #     nrc = RCGraphEG(newP, newQ)
+        #     print(nrc)
+        #     #assert nrc.perm == perm2, f"{nrc.perm=} {perm2=}"
+        #     ret.add(nrc)
         # assert ret == self.iterative_act(p), f"{ret=}\n{self.iterative_act(p)=}"
-        return ret
+        # pm = ~self.perm
+        # elem = FAS(pm)
+        # bumpup =   FAS(uncode([p]), 1)*elem
+        # ret = set()
+        # print(f"INSERTING {self.perm.trimcode=}")
+        # for k, v in bumpup.items():
+        #     perm2 = k[0]
+        #     new_row = [(pm)[i] for i in range(max(len(pm), len(perm2))) if (pm)[i] == (perm2)[i + 1]]
+        #     new_row.sort()
+        #     assert len(new_row) == p
+        #     newP = Tableau([tuple([a for a in row]) for row in self.P])
+        #     newQ = Tableau([tuple([a for a in row]) for row in self.Q])
+        #     newP_tup, newQ_tup = tuple(newP), tuple(newQ)
+        #     for char in new_row:
+        #         newP_tup, newQ_tup = NilPlactic.ed_insert_rsk(newP_tup, newQ_tup, char, self._length + 1)
+        #     newP = Tableau(newP_tup)
+        #     newQ = Tableau(newQ_tup)
+        #     nrc = RCGraphEG(newP, newQ)
+        #     nrc._length = self._length + 1
+        #     print(nrc)
+        #     assert nrc.perm.inv == self.perm.inv + p, f"{nrc.perm.trimcode=} {self.perm.trimcode=}"
+        #     #assert nrc.perm == perm2, f"{nrc.perm=} {perm2=}"
+        #     ret.add(nrc)
+        # return ret
+
+        st = self._rc_graph.act(p)
+        return {RCGraphEG.from_rc_graph(rc_graph) for rc_graph in st}
 
     def __lt__(self, other):
         if not isinstance(other, RCGraphEG):
@@ -1413,9 +1536,9 @@ def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
 
     if perm.inv == 0:
         if length == 0:
-            mod = [(RCGraph().edelman_greene(), RCGraph().edelman_greene())]
+            mod = [(RCGraph(), RCGraph())]
         else:
-            mod = [(RCGraph(() * length).edelman_greene(), RCGraph(() * length).edelman_greene())]
+            mod = [(RCGraph([() * length]), RCGraph([() * length]))]
         with lock:
             shared_cache_dict[perm] = mod
         return mod
@@ -1425,7 +1548,7 @@ def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
     consider_dict = {}
     for (rc1, rc2), v in consideration_set.items():
         consider_dict[(rc1.perm, rc2.perm)] = consider_dict.get((rc1.perm, rc2.perm), set())
-        consider_dict[(rc1.perm, rc2.perm)].add((rc1.edelman_greene()), rc2.edelman_greene())
+        consider_dict[(rc1.perm, rc2.perm)].add((rc1.edelman_greene(), rc2.edelman_greene()))
 
     ret_elem = None
 
@@ -1440,20 +1563,28 @@ def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
                 exclusions[(perm1, perm2)] = exclusions.get((perm1, perm2), 0) + val
             # exclusions[(perm1, perm2)].update(old_set)
 
-    for k, st in consider_dict.items():
+    for (perm1, perm2), st in consider_dict.items():
         lst = sorted(st)
-        v = exclusions.get(k, 0)
+        v = exclusions.get((perm1, perm2), 0)
         try:
-            secret_element[k] = lst[v]
+            secret_element[(perm1, perm2)] = lst[v]
         except IndexError:
             pass
 
     ret_elem = []
-    for k, v in consider_dict.items():
-        for v2 in v:
-            if k in secret_element:
-                if secret_element[k] <= v2:
-                    ret_elem.append(v2)
+    for (perm1, perm2), st in consider_dict.items():
+        for pair in st:
+            if (perm1, perm2) in secret_element:
+                if secret_element[(perm1, perm2)] <= pair:
+                    ret_elem.append(pair)
+    # prin_rc = next(iter(k for k in (FA(*perm.trimcode,*((0,)*(length-len(perm.trimcode))))*RCGraph()).value_dict.keys() if k.is_principal))
+    # st1 = {(rc1, rc2) for (rc1, rc2) in (FA(*prin_rc.length_vector()).coproduct()*(RCGraph()@RCGraph())).value_dict.keys()}
+    # st2 = {(rc1.transpose(), rc2.transpose()) for (rc1, rc2) in (FA(*list(reversed(prin_rc.transpose().length_vector()))).coproduct()*(RCGraph()@RCGraph())).value_dict.keys()}
+    # ret_elem = []
+    # for k in st1:
+    #     rc1, rc2 = k
+    #     if rc1.perm<=perm and rc2.perm<= perm and k in st2:
+    #         ret_elem.append(k)
 
     with lock:
         shared_cache_dict[perm] = tuple(ret_elem)
