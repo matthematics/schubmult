@@ -1714,14 +1714,26 @@ def try_lr_module_biject(perm, length):
             # print(f"{perm.trimcode=}")
             # print(rc_graph)
             if rc_graph.perm != perm:
+                        # exclusions[(perm1, perm2)].add((rc1, rc2))
                 val = int(schubmult_py({perm1: S.One}, perm2).get(rc_graph.perm, 0))
                 # old_set = set(try_lr_module_biject_cache(perm0, lock, shared_cache_dict=shared_cache_dict, length=length))
                 exclusions[(perm1, perm2)] = exclusions.get((perm1, perm2), 0) + val
+            # else:
+            #     print(f"Principal {perm} yo yo yo for {perm1, perm2}")
+            #     for (rc1, rc2) in consider_dict[(perm1, perm2)]:
+            #         print(f"{rc1.lehmer_partial_leq(rc_graph)=} {rc2.lehmer_partial_leq(rc_graph)=}")
+            #     val = int(schubmult_py({perm1: S.One}, perm2).get(rc_graph.perm, 0))
+            #     print(f"btw {val=}")
             # exclusions[(perm1, perm2)].update(old_set)
 
     # def comp_them(pair1, pair2):
     #     return (pair1[0], pair2[0], pair1[1], pair2[1])
 
+    def lehmer_partial_pair(pair1, pair2):
+        return pair1[0].lehmer_partial_leq(pair2[0]) and pair1[1].lehmer_partial_leq(pair2[1])
+    minplack_elem = {}
+    minindex = {}
+    chains = {}
     for (perm1, perm2), st in consider_dict.items():
         lst = sorted(st)
         v = exclusions.get((perm1, perm2), 0)
@@ -1729,9 +1741,40 @@ def try_lr_module_biject(perm, length):
             secret_element[(perm1, perm2)] = lst[v]
         except IndexError:
             pass
-
-    def lehmer_partial_pair(pair1, pair2):
-        return pair1[0].lehmer_partial_leq(pair2[0]) and pair1[1].lehmer_partial_leq(pair2[1])
+        chains[(perm1, perm2)] = []
+        print(f"Checking {perm1.trimcode, perm2.trimcode}")
+        for j, elem in enumerate(reversed(lst)):
+            if len(chains[(perm1, perm2)]) == 0:
+                chains[(perm1, perm2)].append([elem])
+            else:
+                found = False
+                for c in chains[(perm1, perm2)]:
+                    if lehmer_partial_pair(elem, c[0]):
+                        c.insert(0,elem)
+                        found = True
+                        break
+                if not found:
+                    chains[(perm1, perm2)].append([elem])
+        for c in chains[(perm1, perm2)]:
+            if (perm1, perm2) in secret_element and secret_element[(perm1, perm2)] in c:
+                assert secret_element[(perm1, perm2)] == c[0]
+                print(f"Good chain: {c=}")
+        print(f"All chains: {chains[(perm1, perm2)]=}")
+            # if all(lehmer_partial_pair(elem, other) for other in save_set):
+            #     save_set.add(elem)
+            #     #last_element = elem
+            # else:
+            #     try:
+            #         minplack_elem[(perm1, perm2)] = lst[j + 1]
+            #         minindex[(perm1, perm2)] = j + 1
+            #         print(f"Compare: {v=} {minindex[(perm1, perm2)]=} {len(lst)=} {perm1, perm2=}")
+            #         break
+            #     except IndexError:
+            #         break
+        
+        # if last_element is not None:
+        #     secret_element[(perm1, perm2)] = last_element
+    
 
     ret_elem = []
     for (perm1, perm2), st in consider_dict.items():
