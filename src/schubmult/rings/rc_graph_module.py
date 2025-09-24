@@ -228,6 +228,19 @@ class RCGraph(KeyType, UnderlyingGraph):
                     return i0 + 1
                 index += 1
         raise ValueError("Could not find inversion")
+
+    @cache
+    def lehmer_label(self, i, j):
+        value = self.inversion_label(i, j)
+        numeros = set(list(range(1, value + 1)))
+        for ip in range(i):
+            try:
+                numeros.remove(self.inversion_label(ip, j))
+            except ValueError:
+                pass
+            except KeyError:
+                pass
+        return len(numeros)
     # def __len__(self):
     #     return len(self.P)
 
@@ -325,6 +338,17 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     # def __new__(cls, *args, **kwargs):
     #     return tuple.__new__(cls, *args)
+
+    @cache
+    def lehmer_partial_leq(self, other):
+        try:
+            for i in range(self.perm.inv):
+                a, b = self.perm.right_root_at(i)
+                if self.lehmer_label(a - 1, b - 1) > other.lehmer_label(a - 1, b - 1):
+                    return False
+        except ValueError:
+            return False
+        return True
 
     def rowrange(self, start, end):
         if start == end:
@@ -594,14 +618,21 @@ class RCGraph(KeyType, UnderlyingGraph):
     def __lt__(self, other):
         if not isinstance(other, RCGraph):
             return NotImplemented
-        if self.perm != other.perm:
-           return self.perm.bruhat_leq(other.perm) and self.perm != other.perm
-        for i in range(self.perm.inv):
-            a, b = self.perm.right_root_at(i)
-            if self.inversion_label(a - 1, b - 1) < other.inversion_label(a - 1, b - 1):
-                return True
-            if self.inversion_label(a - 1, b - 1) > other.inversion_label(a - 1, b - 1):
-                return False
+           #return self.perm.bruhat_leq(other.perm) and self.perm != other.perm
+        try:
+            for i in range(self.perm.inv):
+                a, b = self.perm.right_root_at(i)
+                # if self.inversion_label(a - 1, b - 1) < other.inversion_label(a - 1, b - 1):
+                #     return True
+                # if self.inversion_label(a - 1, b - 1) > other.inversion_label(a - 1, b - 1):
+                #     return False
+                
+                if self.lehmer_label(a - 1, b - 1) < other.lehmer_label(a - 1, b - 1):
+                    return True
+                if self.lehmer_label(a - 1, b - 1) > other.lehmer_label(a - 1, b - 1):
+                    return False
+        except ValueError:
+            return False
         return False
 
     def __le__(self, other):
@@ -1699,11 +1730,14 @@ def try_lr_module_biject(perm, length):
         except IndexError:
             pass
 
+    def lehmer_partial_pair(pair1, pair2):
+        return pair1[0].lehmer_partial_leq(pair2[0]) and pair1[1].lehmer_partial_leq(pair2[1])
+
     ret_elem = []
     for (perm1, perm2), st in consider_dict.items():
         for pair in st:
             if (perm1, perm2) in secret_element:
-                if secret_element[(perm1, perm2)] <= pair:
+                if lehmer_partial_pair(secret_element[(perm1, perm2)], pair):
                     # print(f"TAB FOR {pair[0][0].perm, pair[1][0].perm}")
                     # for tab in comp_them(*pair):
                     #     # print(tab)
