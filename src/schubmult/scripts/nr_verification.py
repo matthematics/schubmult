@@ -194,6 +194,7 @@ def iterative_construct(seq):
 def main():
     from schubmult import ASx, Permutation, Sx, uncode
     from schubmult.abc import x, y, z
+    from schubmult.perm_lib import Plactic
     from schubmult.rings.rc_graph_module import RCGraph, try_lr_module_biject
     from schubmult.rings.schubert_ring import DoubleSchubertRing
     from schubmult.utils.perm_utils import artin_sequences
@@ -208,6 +209,7 @@ def main():
             if len(rc1.perm) <= n and len(rc2.perm) <= n:
                 rank[(rc1, rc2)] = rank.get((rc1, rc2), 0) + 1
     
+    perms.sort(key=lambda p: p.trimcode)
     for perm in perms:
         #build_mod = try_lr_module_inject(perm)
         # cd = perm.trimcode
@@ -218,38 +220,33 @@ def main():
         # the_mod_inv = FA(*co_prin.length_vector()).coproduct() * (RCGraph()@RCGraph())
         # inv_mod_set = set([(k[0].transpose(),k[1].transpose()) for k in the_mod_inv.value_dict.keys()])
         # diff num princ max co princ
-        prin_rcs = (FA(*perm.trimcode, *((0,)*(length-len(perm.trimcode)))).coproduct()*(RCGraph()@RCGraph())).value_dict.keys()
-        num_princ = {}
-        top = {}
-        for rc1, rc2 in prin_rcs:
-            if len(rc1.perm) > n or len(rc2.perm) > n:
-                continue
-            num_princ[(rc1.perm, rc2.perm)] = num_princ.get((rc1.perm, rc2.perm), 0) + 1
-            top[(rc1.perm, rc2.perm)] = min(top.get((rc1.perm, rc2.perm), 0), rank[(rc1, rc2)])
-
-        min_co_princ = perm
-
-        while True:
-            nexts = co_principal_perms(min_co_princ, n)
-            if len(nexts) == 0:
-                break
-            min_co_princ = min(nexts, key=lambda p: p.trimcode)
-
-        num_min_co_princ = {}
-        bottom = {}
-        rcs = (FA(*min_co_princ.trimcode, *((0,)*(length-len(min_co_princ.trimcode)))).coproduct()*(RCGraph()@RCGraph())).value_dict.keys()
-        for rc1, rc2 in rcs:
-            if len(rc1.perm) > n or len(rc2.perm) > n:
-                continue
-            num_min_co_princ[(rc1.perm, rc2.perm)] = num_min_co_princ.get((rc1.perm, rc2.perm), 0) + 1
-            bottom[(rc1.perm, rc2.perm)] = max(bottom.get((rc1.perm, rc2.perm), 0), rank[(rc1, rc2)])
-
-        result = ASx(perm, length).coproduct()
-        for (p1, p2), coeff in result.items():
-            cutoff = top.get((p1[0], p2[0]),0) - bottom.get((p1[0], p2[0]),0) + 1
-            result = len([k for k in prin_rcs if rank[k] > cutoff and k[0].perm == p1[0] and k[1].perm == p2[0]])
-            assert result == coeff, f"Failed principal count for {perm} at {(p1[0], p2[0])} {coeff} {result}"
-
+        the_big_bucket = ASx(perm, length).change_basis(WordBasis)
+        ones_that_stick_around = None
+        for word, coeff in the_big_bucket.items():
+            rc_pairs = FA(*word).coproduct()*(RCGraph()@RCGraph())
+            for rc1, rc2 in rc_pairs.value_dict.keys():
+                tab01, tab02 = rc1.edelman_greene()
+                #tab1 = tab01 @ tab02
+                tab11, tab12 = rc2.edelman_greene()
+                #tab2 = tab11 @ tab12
+                #print(perm.trimcode)
+                #print(tab1)
+                #print(tab2)
+                # fistbump = Plactic([])
+                # for row in tab02:
+                #     for a in row:
+                #         fistbump = fistbump.rs_insert(a)
+                # for row in tab12:
+                #     for a in row:
+                #         fistbump = fistbump.rs_insert(a)
+                # print("Tooth and nail")
+                # print(fistbump)
+                if ones_that_stick_around is None:
+                    ones_that_stick_around = coeff * (tab01 @ tab11)
+                else:
+                    ones_that_stick_around += coeff * (tab01 @ tab11)
+        print(f"For {perm.trimcode} got")
+        print(ones_that_stick_around)
 
     # n = int(sys.argv[1])
     # ring = DoubleSchubertRing(z,y)

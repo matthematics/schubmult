@@ -117,9 +117,9 @@ class ModuleType:
         #     self._generic_key_type = generic_key_type
         #     return
 
-        self._dict = _value_dict(start_dct, keytype=self.keytype)
         self._ring = ring
         self._generic_key_type = generic_key_type
+        self._dict = _value_dict(start_dct, keytype=self.keytype)
 
         # for k, v in start_dct.items():
         #     if not isinstance(k, self._generic_key_type):
@@ -213,6 +213,8 @@ class UnderlyingGraph(tuple):
         return tuple.__new__(_class, *args)
 
 
+
+
 class RCGraph(KeyType, UnderlyingGraph):
     def __eq__(self, other):
         if not isinstance(other, RCGraph):
@@ -233,6 +235,19 @@ class RCGraph(KeyType, UnderlyingGraph):
             ret = [*ret, *row]
         return tuple(ret)
 
+    def edelman_greene(self):
+        from schubmult.perm_lib import NilPlactic
+        word1 = []
+        word2 = []
+        index = 0
+        evil_self = list(reversed([list(reversed(row)) for row in self]))
+        for i in range(len(evil_self)):
+            for a in evil_self[i]:
+                to_insert = len(self) - i
+                word1, word2 = NilPlactic.ed_insert_rsk(word1, word2, a, to_insert)
+                index += 1
+        return Tableau(word1), Tableau(word2)
+
     def weight_word(self):
         perm = self.perm
         nz = len([a for a in perm.trimcode if a != 0])
@@ -250,9 +265,9 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     def __matmul__(self, other):
         if isinstance(other, RCGraph):
-            return RCGraphModule({self: 1}) @ RCGraphModule({other: 1})
+            return RCGraphModule({self: 1}, generic_key_type=self.__class__) @ RCGraphModule({other: 1}, generic_key_type=self.__class__)
         if isinstance(other, ModuleType):
-            return RCGraphModule({self: 1}) @ other
+            return RCGraphModule({self: 1}, generic_key_type=self.__class__) @ other
         return NotImplemented
 
     def __rmul__(self, other):
@@ -490,18 +505,6 @@ class RCGraph(KeyType, UnderlyingGraph):
                     ret.add(new_rc)
         return ret
 
-        # pm = self.perm
-        # elem = FAS(pm, len(self))
-        # bumpup = FAS(uncode([p]), 1) * elem
-        # ret = set()
-        # for k, v in bumpup.items():
-        #     perm2 = k[0]
-        #     new_row = [pm[i] for i in range(max(len(pm), len(perm2))) if pm[i] == perm2[i + 1]]
-        #     new_row.sort(reverse=True)
-        #     nrc = RCGraph([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])
-        #     assert nrc.perm == perm2
-        #     ret.add(nrc)
-        return ret
 
     def as_str_lines(self):
         lines = []
@@ -544,10 +547,73 @@ class RCGraph(KeyType, UnderlyingGraph):
         return "\n".join(lines2)
 
     def __repr__(self):
-        return "RCGraph(" + ", ".join([repr(k) for k in self]) + ")"
+        return f"{self.__class__.__name__}(" + ", ".join([repr(k) for k in self]) + ")"
 
     def __hash__(self):
         return hash(tuple(self))
+
+class Tableau(RCGraph):
+
+    def __le__(self, other):
+        if not isinstance(other, Tableau):
+            return NotImplemented
+        # if self.perm.bruhat_leq(other.perm) and self.perm != other.perm:
+        #     return True
+        # if self.length_vector() == other.length_vector() and self.perm == other.perm and self.perm_word() < other.perm_word():
+        #     return True
+        # return self.length_vector() == other.length_vector() and self.perm == other.perm and self.perm_word() == other.perm_word()
+        return tuple(self) <= tuple(other)
+
+    def __lt__(self, other):
+        if not isinstance(other, Tableau):
+            return NotImplemented
+        return tuple(self) < tuple(other)
+
+    def __new__(cls, *args, value=1):
+        new_args = tuple(tuple(arg) for arg in args)
+        obj = Tableau.__xnew_cached__(cls, *new_args)
+        obj.value = value
+        return obj
+
+    def __init__(self, *args, value=1):
+        pass
+
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, *args):
+        return Tableau.__xnew__(_class, *args)
+
+    @staticmethod
+    def __xnew__(_class, *args):
+        return UnderlyingGraph.__new__(_class, *args)
+
+    def as_str_lines(self):
+        lines = []
+        # print(tuple(self))
+        if len(self) == 0:
+            return [""]
+        for i in range(len(self)):
+            row = self[i]
+            line = ""
+            line += " ".join([str(r) for r in row])
+            lines += [line]
+        if len(lines) == 0:
+            lines = [""]
+        lines2 = []
+        ml = max([len(line) for line in lines])
+        if len(lines[0]) < ml:
+            lines[0] =  lines[0] + " " * (ml - len(lines[0]))
+        for line in lines:
+            lines2 += [line + " " * (ml - len(line))]
+        return lines2
+
+    @property
+    def perm(self):
+        perm = Permutation([])
+        for row in self:
+            for p in reversed(row):
+                perm = perm.swap(p - 1, p)
+        return perm
 
 
 class RCGraphModule(ModuleType):
@@ -557,7 +623,7 @@ class RCGraphModule(ModuleType):
         return RCGraphModule(*args, generic_key_type=self._generic_key_type, ring=self._ring)
 
     def keytype(self, k, value=1):
-        return RCGraph(k, value=value)
+        return self.generic_key_type(k, value=value)
 
     def __init__(self, *args, generic_key_type=RCGraph, ring=FreeAlgebra(WordBasis), **kwargs):
         super().__init__(*args, generic_key_type=generic_key_type, ring=ring, **kwargs)
@@ -843,9 +909,9 @@ class RCGraphTensor(KeyType):
                 if isinstance(key, RCGraphTensor):
                     for key in keys:
                         assert isinstance(key, RCGraph)
-                        new_keys.append(key)
+                        new_keys.append(key.__class__(key, value=1))
                 else:
-                    new_keys.append(RCGraph(key))
+                    new_keys.append(key)
             self._keys = tuple(new_keys)
         else:
             new_keys = []
@@ -853,7 +919,7 @@ class RCGraphTensor(KeyType):
                 if isinstance(key, RCGraphTensor):
                     new_keys += [key._modules[i].keytype(key[i]) for i, k in enumerate(key)]
                 else:
-                    new_keys.append(RCGraph(key))
+                    new_keys.append(key.__class__(key, value=1))
             new_value = value * prod([k.value for k in keys])
             super().__init__(value=new_value)
             self._modules = modules
@@ -1292,48 +1358,52 @@ def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
 
     if perm.inv == 0:
         if length == 0:
-            mod = [(RCGraph(), RCGraph())]
+            mod = [(RCGraph().edelman_greene(), RCGraph().edelman_greene())]
         else:
-            mod = [(RCGraph(() * length), RCGraph(() * length))]
+            mod = [(RCGraph(() * length).edelman_greene(), RCGraph(() * length).edelman_greene())]
         with lock:
             shared_cache_dict[perm] = mod
         return mod
     rc_set = set((FA(*perm.trimcode, *((0,) * (length - len(perm.trimcode)))) * RCGraph()).value_dict.keys())
     consideration_set = {(k[0], k[1]): v for k, v in (FA(*perm.trimcode, *((0,) * (length - len(perm.trimcode)))).coproduct() * (RCGraph() @ RCGraph())).value_dict.items()}
 
+
     consider_dict = {}
     for (rc1, rc2), v in consideration_set.items():
         consider_dict[(rc1.perm, rc2.perm)] = consider_dict.get((rc1.perm, rc2.perm), set())
-        consider_dict[(rc1.perm, rc2.perm)].add((rc1, rc2))
+        consider_dict[(rc1.perm, rc2.perm)].add((tuple(rc1.edelman_greene()), tuple(rc2.edelman_greene())))
 
     ret_elem = None
 
-    secret_val = {}
+    exclusions = {}
     secret_element = {}
-
+    #rc_set = {rc_graph.perm for rc_graph in rc_set if rc_graph.perm != perm}
     for perm1, perm2 in consider_dict:
         for rc_graph in sorted(rc_set):
             if rc_graph.perm != perm:
                 val = int(schubmult_py({perm1: S.One}, perm2).get(rc_graph.perm, 0))
-                secret_val[(perm1, perm2)] = secret_val.get((perm1, perm2), 0) + val
-                # lst = sorted(consider_dict[(perm1, perm2)])
-                # for i in range(val):
-                #     consider_dict[(perm1, perm2)].remove(lst[i])
+            #old_set = set(try_lr_module_biject_cache(perm0, lock, shared_cache_dict=shared_cache_dict, length=length))
+                exclusions[(perm1, perm2)] = exclusions.get((perm1,perm2),0) + val
+            #exclusions[(perm1, perm2)].update(old_set)
+
     for k, st in consider_dict.items():
         lst = sorted(st)
-        v = secret_val.get(k, 0)
+        v = exclusions.get(k, 0)
         try:
             secret_element[k] = lst[v]
         except IndexError:
             pass
+    
     ret_elem = []
     for k, v in consider_dict.items():
-        if k in secret_element:
             for v2 in v:
-                if secret_element[k] <= v2:
-                    ret_elem.append(v2)
+                if k in secret_element:
+                    if secret_element[k] <= v2:
+                        ret_elem.append(v2)
+
     with lock:
         shared_cache_dict[perm] = tuple(ret_elem)
+
     return ret_elem
 
 

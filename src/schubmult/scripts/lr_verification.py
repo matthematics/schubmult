@@ -214,7 +214,7 @@ def saver(shared_cache_dict, shared_recording_dict, lock, filename, verification
 
 
 def worker(n, shared_cache_dict, shared_recording_dict, lock, task_queue):
-    from schubmult import ASx
+    from schubmult import ASx, Plactic
     from schubmult.rings.rc_graph_module import try_lr_module_biject_cache
 
     while True:
@@ -231,10 +231,10 @@ def worker(n, shared_cache_dict, shared_recording_dict, lock, task_queue):
         try_mod = try_lr_module_biject_cache(perm, shared_cache_dict=shared_cache_dict, lock=lock, length=n)
 
         # Only update manager dict at top level
-
         elem = 0
-        for (rc1, rc2) in try_mod:
-            elem += (rc1 @ rc2).asdtype(ASx @ ASx)
+        for ((rc1,tab1), (rc2,tab2)) in try_mod:
+            #elem += (rc1 @ rc2).asdtype(ASx @ ASx)
+            elem += (ASx@ASx)(((rc1.perm, n),(rc2.perm, n)))
         check = ASx(perm,n).coproduct()
         try:
             if perm.inv != 0:
