@@ -150,25 +150,21 @@ class ModuleType:
         return self.clone({k: -v for k, v in self._dict.items()})
 
     def __rmul__(self, other):
-        #  #  # print(f"In rmul {self=} {other=}")
         if not hasattr(other, "ring"):
             other = sympify(other)
-            #  #  # print(f"Sympified {other=}")
             return self.clone({k: v * other for k, v in self.value_dict.items()})
-        #  #  # print("I try do this")
         mod = self._empty_module()
-        #  #  # print(f"{self=}")
-        #  #  # print(f"Is this a tensormod? {type(self)=}")
-        #  #  # print(f"{type(mod)=}")
-        #  #  # print(f"{other=}")
-        #  #  # print(f"{self._dict=}")
         for k, v in self._dict.items():
-            #  #  # print("ASTIHASOSATMS")
-            #  #  # print(type(self.keytype(k)))
-            #  #  # print(f"ASOTN{self.keytype(k).ring_act(other)}")
             mod += v * self.clone(self.keytype(k).ring_act(other))
-            #  #  # print(f"{mod=}")
-            #  #  # print(f"{type(mod)=}")
+        return mod
+
+    def __mul__(self, other):
+        if not hasattr(other, "ring"):
+            other = sympify(other)
+            return self.clone({k: v * other for k, v in self.value_dict.items()})
+        mod = self._empty_module()
+        for k, v in self._dict.items():
+            mod += v * self.clone(self.keytype(k).right_ring_act(other))
         return mod
 
     def __matmul__(self, other):
@@ -277,6 +273,9 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     def __rmul__(self, other):
         return RCGraphModule({self: 1}, generic_key_type=self.__class__).__rmul__(other)
+
+    def __mul__(self, other):
+        return RCGraphModule({self: 1}, generic_key_type=self.__class__).__mul__(other)
 
     def asdtype(self, cls):
         return cls.dtype().ring.from_rc_graph(self)
@@ -468,6 +467,29 @@ class RCGraph(KeyType, UnderlyingGraph):
             return ret
         raise ValueError(f"Cannot act by {type(elem)} {elem=}")
 
+    def right_ring_act(self, elem):
+        if isinstance(elem, FreeAlgebraElement):
+            wd_dict = elem.change_basis(WordBasis)
+            ret = {}
+            for k, v in wd_dict.items():
+                # print(f"{k=} {v=}")
+                acted_element = {self: v}
+                for a in reversed(k):
+                    acted_element2 = {}
+                    for k2, v2 in acted_element.items():
+                        # print(f"{dict.fromkeys(k2.act(a), v2)=}")
+                        acted_element2 = add_perm_dict(acted_element2, dict.fromkeys(k2.act(a), v2))
+                    acted_element = acted_element2
+                # print(f"{acted_element=}")
+                ret = add_perm_dict(ret, acted_element)
+            # print(f"{ret=}")
+            return ret
+        raise ValueError(f"Cannot act by {type(elem)} {elem=}")
+
+    def right_act(self, p):
+        st = self.transpose().act(p)
+        return {rc.transpose() for rc in st}
+
     def act(self, p):
         pm = self.perm
         elem = FAS(pm, len(self))
@@ -558,15 +580,28 @@ class RCGraph(KeyType, UnderlyingGraph):
 
 
 class Tableau(RCGraph):
+
+    def __mul__(self, other):
+        from schubmult.perm_lib import Plactic
+        if not isinstance(other, Tableau):
+            return NotImplemented
+        # Plactic
+        working_tab = Plactic(tuple([tuple([-a for a in row]) for row in self]))
+        for row in reversed(other):
+            for a in row:
+                working_tab = working_tab.rs_insert(-a)
+        working_tab2 = (tuple([-a for a in row]) for row in working_tab._word)
+        return Tableau(working_tab2)
+
     def __le__(self, other):
         if not isinstance(other, Tableau):
             return NotImplemented
-        return tuple(self) <= tuple(other)
+        return self.length_vector() < other.length_vector() or (self.length_vector() == other.length_vector() and tuple(self) <= tuple(other))
 
     def __lt__(self, other):
         if not isinstance(other, Tableau):
             return NotImplemented
-        return tuple(self) < tuple(other)
+        return self <= other and self != other
 
     def __new__(cls, *args, value=1):
         new_args = tuple(tuple(arg) for arg in args)
@@ -1118,6 +1153,19 @@ class RCGraphTensor(KeyType):
             return ret
         raise TypeError("TOASNTOSN")
 
+    def right_ring_act(self, elem):
+        assert self.value == 1
+        if isinstance(elem, TensorRingElement) and len(elem.ring.rings) == len(self):
+            ret = {}
+            for elem_key, value in elem.items():
+                modules = []
+                for i, key in enumerate(elem_key):
+                    graph = self[i]
+                    modules.append(self._modules[i].clone(dict.fromkeys(graph.right_ring_act(elem.ring.rings[i](*key)), 1)))
+                ret = add_perm_dict(ret, TensorModule(value * modules[0], *modules[1:], ring=elem.ring).value_dict)
+            return ret
+        raise TypeError("TOASNTOSN")
+
     def as_str_lines(self):
         lines1 = self[0].as_str_lines()
         lines2 = self[1].as_str_lines()
@@ -1486,64 +1534,20 @@ def try_lr_module_inject(perm, length=None):
     return ret_elem
 
 
-@cache
-def try_lr_module_biject(perm):
-    # print(f"Starting {perm}")
-    if perm.inv == 0:
-        mod = RCGraph() @ RCGraph()
-        return mod
-
-    rc_set = FA(*perm.trimcode) * RCGraph()
-    consideration_set = {(k[0], k[1]) for k in (FA(*perm.trimcode).coproduct() * (RCGraph() @ RCGraph())).value_dict.keys() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)}
-
-    consideration_list = list(sorted(consideration_set))
-
-    ret_elem = None
-
-    for rc_graph in rc_set.value_dict.keys():
-        if rc_graph.perm != perm:
-            rcs = try_lr_module_biject(rc_graph.perm)
-            for rc in rcs.keys():
-                for rc1, rc2 in consideration_list:
-                    if rc1.perm == rc[0].perm and rc2.perm == rc[1].perm and (rc1, rc2) in consideration_set:
-                        consideration_set.remove((rc1, rc2))
-                        break
-
-        # if rc1.perm.bruhat_leq(perm) and rc2.perm.bruhat_leq(perm) and rank(rc1, rc2) > lr_rank[(rc1.perm, rc2.perm)]:
-        #     if ret_elem is None:
-        #         ret_elem = rc1 @ rc2
-        #     else:
-        #         ret_elem += rc1 @ rc2
-    for rc1, rc2 in consideration_set:
-        if ret_elem is None:
-            ret_elem = rc1 @ rc2
-        else:
-            ret_elem += rc1 @ rc2
-    return ret_elem
-
 
 # jump through hoops to make this polynomial
-def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
+def try_lr_module_biject(perm, length):
     from schubmult import schubmult_py
 
-    ret_elem = None
-    with lock:
-        if perm in shared_cache_dict:
-            ret_elem = shared_cache_dict[perm]
-
-    if ret_elem is not None:
-        return ret_elem
-
+   
     if perm.inv == 0:
         if length == 0:
             mod = [(RCGraph(), RCGraph())]
         else:
             mod = [(RCGraph([() * length]), RCGraph([() * length]))]
-        with lock:
-            shared_cache_dict[perm] = mod
         return mod
-    rc_set = set((FA(*perm.trimcode, *((0,) * (length - len(perm.trimcode)))) * RCGraph()).value_dict.keys())
-    consideration_set = {(k[0], k[1]): v for k, v in (FA(*perm.trimcode, *((0,) * (length - len(perm.trimcode)))).coproduct() * (RCGraph() @ RCGraph())).value_dict.items()}
+    rc_set = set((RCGraph()*FA(*((perm).trimcode), *((0,) * (length - len((perm).trimcode))))).value_dict.keys())
+    consideration_set = {(k[0], k[1]): v for k, v in ((RCGraph() @ RCGraph())*(FA(*(perm).trimcode, *((0,) * (length - len((perm).trimcode)))).coproduct())).value_dict.items()}
 
     consider_dict = {}
     for (rc1, rc2), v in consideration_set.items():
@@ -1557,14 +1561,19 @@ def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
     # rc_set = {rc_graph.perm for rc_graph in rc_set if rc_graph.perm != perm}
     for perm1, perm2 in consider_dict:
         for rc_graph in sorted(rc_set):
+            # print(f"{perm.trimcode=}")
+            # print(rc_graph)
             if rc_graph.perm != perm:
                 val = int(schubmult_py({perm1: S.One}, perm2).get(rc_graph.perm, 0))
                 # old_set = set(try_lr_module_biject_cache(perm0, lock, shared_cache_dict=shared_cache_dict, length=length))
                 exclusions[(perm1, perm2)] = exclusions.get((perm1, perm2), 0) + val
             # exclusions[(perm1, perm2)].update(old_set)
 
+    def comp_them(pair1, pair2):
+        return (pair1[0], pair2[0], pair1[1], pair2[1])
+
     for (perm1, perm2), st in consider_dict.items():
-        lst = sorted(st)
+        lst = sorted(st, key=lambda k: comp_them(*k))
         v = exclusions.get((perm1, perm2), 0)
         try:
             secret_element[(perm1, perm2)] = lst[v]
@@ -1575,8 +1584,18 @@ def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
     for (perm1, perm2), st in consider_dict.items():
         for pair in st:
             if (perm1, perm2) in secret_element:
-                if secret_element[(perm1, perm2)] <= pair:
+                if comp_them(*secret_element[(perm1, perm2)]) <= comp_them(*pair):
+                    # print(f"TAB FOR {pair[0][0].perm, pair[1][0].perm}")
+                    # for tab in comp_them(*pair):
+                    #     print(tab)
+                    #     print("-------")
                     ret_elem.append(pair)
+                else:
+                    pass
+                    # print(f"THIS TAB NO GOOD FOR {pair[0][0].perm, pair[1][0].perm}")
+                    # for tab in comp_them(*pair):
+                    #     print(tab)
+                    #     print("-------")
     # prin_rc = next(iter(k for k in (FA(*perm.trimcode,*((0,)*(length-len(perm.trimcode))))*RCGraph()).value_dict.keys() if k.is_principal))
     # st1 = {(rc1, rc2) for (rc1, rc2) in (FA(*prin_rc.length_vector()).coproduct()*(RCGraph()@RCGraph())).value_dict.keys()}
     # st2 = {(rc1.transpose(), rc2.transpose()) for (rc1, rc2) in (FA(*list(reversed(prin_rc.transpose().length_vector()))).coproduct()*(RCGraph()@RCGraph())).value_dict.keys()}
@@ -1585,9 +1604,6 @@ def try_lr_module_biject_cache(perm, lock, shared_cache_dict, length):
     #     rc1, rc2 = k
     #     if rc1.perm<=perm and rc2.perm<= perm and k in st2:
     #         ret_elem.append(k)
-
-    with lock:
-        shared_cache_dict[perm] = tuple(ret_elem)
 
     return ret_elem
 
