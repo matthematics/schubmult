@@ -214,7 +214,20 @@ class RCGraph(KeyType, UnderlyingGraph):
         if not isinstance(other, RCGraph):
             return NotImplemented
         return tuple(self) == tuple(other)
-    
+
+    @cache
+    def inversion_label(self, i, j):
+        if i >= j:
+            raise ValueError("i must be less than j")
+        if self.perm[i] < self.perm[j]:
+            raise ValueError("Not an inversion")
+        index = 0
+        for i0, row in enumerate(self):
+            for j0, a in enumerate(row):
+                if(self.perm.right_root_at(index, word=self.perm_word()) == (i + 1, j + 1)):
+                    return i0 + 1
+                index += 1
+        raise ValueError("Could not find inversion")
     # def __len__(self):
     #     return len(self.P)
 
@@ -352,29 +365,29 @@ class RCGraph(KeyType, UnderlyingGraph):
                 ret.add(nrc)
         return ret
 
-    def __le__(self, other):
-        if not isinstance(other, RCGraph):
-            return NotImplemented
-        if not isinstance(other, RCGraph):
-            return NotImplemented
-        if self.length_vector() < other.length_vector():
-            return True
-        if self.length_vector() == other.length_vector() and self.perm.bruhat_leq(other.perm) and self.perm != other.perm:
-            return True
-        if self.length_vector() == other.length_vector() and self.perm == other.perm and self.perm_word() < other.perm_word():
-            return True
-        return self.length_vector() == other.length_vector() and self.perm == other.perm and self.perm_word() == other.perm_word()
+    # def __le__(self, other):
+    #     if not isinstance(other, RCGraph):
+    #         return NotImplemented
+    #     if not isinstance(other, RCGraph):
+    #         return NotImplemented
+    #     if self.length_vector() < other.length_vector():
+    #         return True
+    #     if self.length_vector() == other.length_vector() and self.perm.bruhat_leq(other.perm) and self.perm != other.perm:
+    #         return True
+    #     if self.length_vector() == other.length_vector() and self.perm == other.perm and self.perm_word() < other.perm_word():
+    #         return True
+    #     return self.length_vector() == other.length_vector() and self.perm == other.perm and self.perm_word() == other.perm_word()
 
-    def __lt__(self, other):
-        if not isinstance(other, RCGraph):
-            return NotImplemented
-        if self.length_vector() < other.length_vector():
-            return True
-        if self.length_vector() == other.length_vector() and self.perm.bruhat_leq(other.perm) and self.perm != other.perm:
-            return True
-        if self.length_vector() == other.length_vector() and self.perm == other.perm and self.perm_word() < other.perm_word():
-            return True
-        return False
+    # def __lt__(self, other):
+    #     if not isinstance(other, RCGraph):
+    #         return NotImplemented
+    #     if self.length_vector() < other.length_vector():
+    #         return True
+    #     if self.length_vector() == other.length_vector() and self.perm.bruhat_leq(other.perm) and self.perm != other.perm:
+    #         return True
+    #     if self.length_vector() == other.length_vector() and self.perm == other.perm and self.perm_word() < other.perm_word():
+    #         return True
+    #     return False
 
     @property
     def perm(self):
@@ -551,17 +564,17 @@ class RCGraph(KeyType, UnderlyingGraph):
             lines2 += [" " * (ml - len(line)) + line]
         return lines2
 
-    def __leq__(self, other):
-        if not isinstance(other, RCGraph):
-            return NotImplemented
-        if len(self) != len(other):
-            return NotImplemented
-        for i in range(len(self)):
-            perm1 = Permutation.ref_product(*self[i])
-            perm2 = Permutation.ref_product(*other[i])
-            if not perm1.bruhat_leq(perm2):
-                return False
-        return True
+    # def __leq__(self, other):
+    #     if not isinstance(other, RCGraph):
+    #         return NotImplemented
+    #     if len(self) != len(other):
+    #         return NotImplemented
+    #     for i in range(len(self)):
+    #         perm1 = Permutation.ref_product(*self[i])
+    #         perm2 = Permutation.ref_product(*other[i])
+    #         if not perm1.bruhat_leq(perm2):
+    #             return False
+    #     return True
 
     @property
     def is_principal(self):
@@ -577,6 +590,24 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     def __hash__(self):
         return hash(tuple(self))
+
+    def __lt__(self, other):
+        if not isinstance(other, RCGraph):
+            return NotImplemented
+        if self.perm != other.perm:
+           return self.perm.bruhat_leq(other.perm) and self.perm != other.perm
+        for i in range(self.perm.inv):
+            a, b = self.perm.right_root_at(i)
+            if self.inversion_label(a - 1, b - 1) < other.inversion_label(a - 1, b - 1):
+                return True
+            if self.inversion_label(a - 1, b - 1) > other.inversion_label(a - 1, b - 1):
+                return False
+        return False
+
+    def __le__(self, other):
+        if not isinstance(other, RCGraph):
+            return NotImplemented
+        return self < other or self == other
 
 
 class Tableau(RCGraph):
@@ -786,7 +817,7 @@ class RCGraphEG(RCGraph):
         #     newP = Tableau(newP_tup)
         #     newQ = Tableau(newQ_tup)
         #     nrc = RCGraphEG(newP, newQ)
-        #     print(nrc)
+        #     # print(nrc)
         #     #assert nrc.perm == perm2, f"{nrc.perm=} {perm2=}"
         #     ret.add(nrc)
         # assert ret == self.iterative_act(p), f"{ret=}\n{self.iterative_act(p)=}"
@@ -809,7 +840,7 @@ class RCGraphEG(RCGraph):
         #     newQ = Tableau(newQ_tup)
         #     nrc = RCGraphEG(newP, newQ)
         #     nrc._length = self._length + 1
-        #     print(nrc)
+        #     # print(nrc)
         #     assert nrc.perm.inv == self.perm.inv + p, f"{nrc.perm.trimcode=} {self.perm.trimcode=}"
         #     #assert nrc.perm == perm2, f"{nrc.perm=} {perm2=}"
         #     ret.add(nrc)
@@ -1536,6 +1567,10 @@ def try_lr_module_inject(perm, length=None):
 
 
 # jump through hoops to make this polynomial
+
+def fa_elem(perm, length):
+    return FA(*((perm).trimcode), *((0,) * (length - len((perm).trimcode))))
+
 def try_lr_module_biject(perm, length):
     from schubmult import schubmult_py
 
@@ -1546,13 +1581,97 @@ def try_lr_module_biject(perm, length):
         else:
             mod = [(RCGraph([() * length]), RCGraph([() * length]))]
         return mod
-    rc_set = set((RCGraph()*FA(*((perm).trimcode), *((0,) * (length - len((perm).trimcode))))).value_dict.keys())
-    consideration_set = {(k[0], k[1]): v for k, v in ((RCGraph() @ RCGraph())*(FA(*(perm).trimcode, *((0,) * (length - len((perm).trimcode)))).coproduct())).value_dict.items()}
+    
+    rc_set_left = set((fa_elem(perm,length)*RCGraph()).value_dict.keys())
+    prin_rc = next(iter({rc for rc in rc_set_left if rc.is_principal}))
+
+    rc_set = set((RCGraph()*fa_elem(perm,length)).value_dict.keys())
+    consideration_set = {(k[0], k[1]): v for k, v in ((RCGraph() @ RCGraph())*fa_elem(perm,length).coproduct()).value_dict.items()}
+
+
+    consideration_set_left = {(k[0], k[1]): v for k, v in ((fa_elem(perm,length).coproduct()*(RCGraph() @ RCGraph()))).value_dict.items()}
+
+    # print(f"{rc_set_left=}")
+    # print(f"{rc_set=}")
+    first_mod = None
+    for rc in rc_set_left:
+        if first_mod is None:
+            first_mod = 1*rc
+        else:
+            first_mod += rc
+    second_mod = None
+    for rc in rc_set:
+        if second_mod is None:
+            second_mod = 1*rc
+        else:
+            second_mod += rc
+    # print("FIRST")
+    # print(first_mod)
+    # print("SECOND")
+    # print(second_mod)
+
+    perm_set = {rc.perm for rc in rc_set}
+    perm_set_left = {rc.perm for rc in rc_set_left}
+    #assert perm_set == perm_set_left, f"Perm sets not equal {perm=} {perm_set} {perm_set_left}"
+
+    actual_dict_right = {}
+    actual_dict_left = {}
 
     consider_dict = {}
+    consider_dict_left = {}
     for (rc1, rc2), v in consideration_set.items():
         consider_dict[(rc1.perm, rc2.perm)] = consider_dict.get((rc1.perm, rc2.perm), set())
-        consider_dict[(rc1.perm, rc2.perm)].add((rc1.edelman_greene(), rc2.edelman_greene()))
+        #consider_dict[(rc1.perm, rc2.perm)].add((rc1.edelman_greene(), rc2.edelman_greene()))
+        consider_dict[rc1.perm, rc2.perm].add((rc1, rc2))
+        # actual_dict_right[(rc1.perm, rc2.perm)] = actual_dict_right.get((rc1.perm, rc2.perm), set())
+        # actual_dict_right[(rc1.perm, rc2.perm)].add((rc1, rc2))
+
+    for (rc1, rc2), v in consideration_set_left.items():
+        consider_dict_left[(rc1.perm, rc2.perm)] = consider_dict_left.get((rc1.perm, rc2.perm), set())
+        consider_dict_left[(rc1.perm, rc2.perm)].add((rc1.edelman_greene(), rc2.edelman_greene()))
+        actual_dict_left[(rc1.perm, rc2.perm)] = actual_dict_left.get((rc1.perm, rc2.perm), set())
+        actual_dict_left[(rc1.perm, rc2.perm)].add((rc1, rc2))
+
+    ret_elem = []
+
+    # for key in actual_dict_left:
+    #     perm1, perm2 = key
+    #     if key in actual_dict_right:
+    #         #print("Left set only:")
+    #         for rc1, rc2 in sorted(actual_dict_left[key]):
+    #             # print(rc1)
+    #             # print("-------")
+    #             # print(rc2)
+    #             # print("=======")
+    #             if (rc1, rc2) in actual_dict_right[key]:
+    #                 if rc1.perm <= perm and rc2.perm <= perm:
+    #                     print(f"Shared {rc1,rc2}")
+    #                     ret_elem.append((rc1.edelman_greene(), rc2.edelman_greene()))
+    #         # print("Right set:")
+    #         # for rc1, rc2 in sorted(actual_dict_right[key]):
+    #         #     # print(rc1)
+    #         #     # print("-------")
+    #         #     # print(rc2)
+    #         #     # print("=======")
+    # return ret_elem
+    # # ret_elem = []
+    # # for key in actual_dict_left:
+    # #     if key not in actual_dict_right:
+    # #         #print("Left set only:")
+    # #         for rc1, rc2 in sorted(actual_dict_left[key]):
+    # #             # print(rc1)
+    # #             # print("-------")
+    # #             # print(rc2)
+    # #             # print("=======")
+    # #             ret_elem.append((rc1.edelman_greene(), rc2.edelman_greene()))
+    # #         # print("Right set:")
+    # #         # for rc1, rc2 in sorted(actual_dict_right[key]):
+    # #         #     # print(rc1)
+    # #         #     # print("-------")
+    # #         #     # print(rc2)
+    # #         #     # print("=======")
+
+    # return ret_elem
 
     ret_elem = None
 
@@ -1569,11 +1688,11 @@ def try_lr_module_biject(perm, length):
                 exclusions[(perm1, perm2)] = exclusions.get((perm1, perm2), 0) + val
             # exclusions[(perm1, perm2)].update(old_set)
 
-    def comp_them(pair1, pair2):
-        return (pair1[0], pair2[0], pair1[1], pair2[1])
+    # def comp_them(pair1, pair2):
+    #     return (pair1[0], pair2[0], pair1[1], pair2[1])
 
     for (perm1, perm2), st in consider_dict.items():
-        lst = sorted(st, key=lambda k: comp_them(*k))
+        lst = sorted(st)
         v = exclusions.get((perm1, perm2), 0)
         try:
             secret_element[(perm1, perm2)] = lst[v]
@@ -1584,18 +1703,18 @@ def try_lr_module_biject(perm, length):
     for (perm1, perm2), st in consider_dict.items():
         for pair in st:
             if (perm1, perm2) in secret_element:
-                if comp_them(*secret_element[(perm1, perm2)]) <= comp_them(*pair):
+                if secret_element[(perm1, perm2)] <= pair:
                     # print(f"TAB FOR {pair[0][0].perm, pair[1][0].perm}")
                     # for tab in comp_them(*pair):
-                    #     print(tab)
-                    #     print("-------")
+                    #     # print(tab)
+                    #     # print("-------")
                     ret_elem.append(pair)
                 else:
                     pass
                     # print(f"THIS TAB NO GOOD FOR {pair[0][0].perm, pair[1][0].perm}")
                     # for tab in comp_them(*pair):
-                    #     print(tab)
-                    #     print("-------")
+                    #     # print(tab)
+                    #     # print("-------")
     # prin_rc = next(iter(k for k in (FA(*perm.trimcode,*((0,)*(length-len(perm.trimcode))))*RCGraph()).value_dict.keys() if k.is_principal))
     # st1 = {(rc1, rc2) for (rc1, rc2) in (FA(*prin_rc.length_vector()).coproduct()*(RCGraph()@RCGraph())).value_dict.keys()}
     # st2 = {(rc1.transpose(), rc2.transpose()) for (rc1, rc2) in (FA(*list(reversed(prin_rc.transpose().length_vector()))).coproduct()*(RCGraph()@RCGraph())).value_dict.keys()}

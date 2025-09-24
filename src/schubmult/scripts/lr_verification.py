@@ -241,7 +241,7 @@ def worker(n, shared_recording_dict, lock, task_queue):
             # print(rc1)
             # print(f"FYI {perm.trimcode} 2")
             # print(rc2)
-            elem += (ASx @ ASx)(((rc1[0].perm, n), (rc2[0].perm, n)))
+            elem += (ASx @ ASx)(((rc1.perm, n), (rc2.perm, n)))
         check = ASx(perm, n).coproduct()
         try:
             if perm.inv != 0:
