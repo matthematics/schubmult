@@ -140,9 +140,14 @@ def safe_load_recording(filename, Permutation):
                 loaded = json.load(f)
             # reconstruct keys as Permutation objects
             print(f"Loaded {len(loaded)} entries from {json_file}")
-            return {Permutation(eval(k)): v for k, v in loaded.items()}
+            dct = {}
+            for k, v in loaded.items():
+                tp = eval(k)
+                dct[(Permutation(tp[0]), tp[1])] = v
+            return dct
         except Exception as e:
             print(f"Recording JSON load failed: {e}")
+            raise
     else:
         print(f"No recording file {json_file} found.")
     return {}
@@ -225,7 +230,7 @@ def worker(n, shared_recording_dict, lock, task_queue):
         if perm.inv == 0:
             continue
         with lock:
-            if perm in shared_recording_dict:
+            if (perm, n) in shared_recording_dict:
                 if shared_recording_dict[(perm, n)]:
                     print(f"{perm} already verified, returning.")
                     continue

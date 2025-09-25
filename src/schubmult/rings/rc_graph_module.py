@@ -1602,7 +1602,74 @@ def try_lr_module_inject(perm, length=None):
 def fa_elem(perm, length):
     return FA(*((perm).trimcode), *((0,) * (length - len((perm).trimcode))))
 
+@cache
 def try_lr_module_biject(perm, length):
+    from schubmult import schubmult_py
+
+   
+    rc_set = set((fa_elem(perm,length)*RCGraph()).value_dict.keys())
+    #prin_rc
+    consideration_set = [(k[0], k[1]) for k in ((fa_elem(perm,length).coproduct()*(RCGraph() @ RCGraph()))).value_dict.keys()]
+
+    
+
+    if len(rc_set) == 1:
+        # dominant
+        return consideration_set
+    consider_dict = {}
+    
+    def lehmer_partial_pair(pair1, pair2):
+        return pair1[0] < pair2[0] or (pair1[0] == pair2[0] and pair1[1] <= pair2[1])
+
+    for (rc1, rc2) in consideration_set:
+        consider_dict[(rc1.perm, rc2.perm)] = consider_dict.get((rc1.perm, rc2.perm), set())
+        consider_dict[(rc1.perm, rc2.perm)].add((rc1, rc2))
+            # if any(lehmer_partial_pair((rc1, rc2), (rc1_dom, rc2_dom)) for (rc1_dom, rc2_dom) in dom_rcs if rc1_dom.perm == rc1.perm and rc2_dom.perm == rc2.perm) and rc1.perm <= perm and rc2.perm <= perm:
+            #     consider_dict[(rc1.perm, rc2.perm)].add((rc1, rc2))
+
+    ret_elem = []
+
+    for v in consider_dict.values():
+        ret_elem = [*ret_elem, *list(v)]
+
+    ret_elem = set(ret_elem)
+
+    bijection = {}
+    for rc_graph in sorted(rc_set):
+        if rc_graph.perm == perm:
+            continue
+        old_set = try_lr_module_biject(rc_graph.perm, length)
+        for rc1_bad, rc2_bad in sorted(old_set):
+            for rc1, rc2 in sorted(consideration_set):
+                if (rc1, rc2) not in consider_dict[(rc1_bad.perm, rc2_bad.perm)]:
+                    continue
+                if (rc1,rc2) not in bijection:
+                    bijection[(rc1, rc2)] = (rc1_bad, rc2_bad)
+                    break
+                # meet = next(iter(sorted(spitzu)))
+                # bijection[meet] = (rc1_bad, rc2_bad)
+                # ret_elem.remove(meet)
+
+    for good_key, bad_key in bijection.items():
+        ret_elem.remove(good_key)
+    # coll_biject = {}
+
+    # for (rc1_bad, rc2_bad), st in bijection.items():
+    #     coll_biject[rc1_bad.perm, rc2_bad.perm] = coll_biject.get((rc1_bad.perm, rc2_bad.perm), set())
+    #     coll_biject[rc1_bad.perm, rc2_bad.perm].update(st)
+
+    # iter_biject = {k: iter(v) for k, v in coll_biject.items()}
+
+    # for (rc1, rc2), st in bijection.items():
+    #     for rcc in iter_biject[(rc1.perm, rc2.perm)]:
+    #         if rcc in ret_elem:
+    #             ret_elem.remove(rcc)
+    #             break
+
+    return tuple(ret_elem)
+
+
+def try_lr_module_biject_freeze(perm, length):
     from schubmult import schubmult_py
 
    
@@ -1676,7 +1743,7 @@ def try_lr_module_biject(perm, length):
     #             # print("=======")
     #             if (rc1, rc2) in actual_dict_right[key]:
     #                 if rc1.perm <= perm and rc2.perm <= perm:
-    #                     print(f"Shared {rc1,rc2}")
+    #                     # print(f"Shared {rc1,rc2}")
     #                     ret_elem.append((rc1.edelman_greene(), rc2.edelman_greene()))
     #         # print("Right set:")
     #         # for rc1, rc2 in sorted(actual_dict_right[key]):
@@ -1719,11 +1786,11 @@ def try_lr_module_biject(perm, length):
                 # old_set = set(try_lr_module_biject_cache(perm0, lock, shared_cache_dict=shared_cache_dict, length=length))
                 exclusions[(perm1, perm2)] = exclusions.get((perm1, perm2), 0) + val
             # else:
-            #     print(f"Principal {perm} yo yo yo for {perm1, perm2}")
+            #     # print(f"Principal {perm} yo yo yo for {perm1, perm2}")
             #     for (rc1, rc2) in consider_dict[(perm1, perm2)]:
-            #         print(f"{rc1.lehmer_partial_leq(rc_graph)=} {rc2.lehmer_partial_leq(rc_graph)=}")
+            #         # print(f"{rc1.lehmer_partial_leq(rc_graph)=} {rc2.lehmer_partial_leq(rc_graph)=}")
             #     val = int(schubmult_py({perm1: S.One}, perm2).get(rc_graph.perm, 0))
-            #     print(f"btw {val=}")
+            #     # print(f"btw {val=}")
             # exclusions[(perm1, perm2)].update(old_set)
 
     # def comp_them(pair1, pair2):
@@ -1742,7 +1809,7 @@ def try_lr_module_biject(perm, length):
         except IndexError:
             pass
         chains[(perm1, perm2)] = []
-        print(f"Checking {perm1.trimcode, perm2.trimcode}")
+        # print(f"Checking {perm1.trimcode, perm2.trimcode}")
         for j, elem in enumerate(reversed(lst)):
             if len(chains[(perm1, perm2)]) == 0:
                 chains[(perm1, perm2)].append([elem])
@@ -1758,8 +1825,8 @@ def try_lr_module_biject(perm, length):
         for c in chains[(perm1, perm2)]:
             if (perm1, perm2) in secret_element and secret_element[(perm1, perm2)] in c:
                 assert secret_element[(perm1, perm2)] == c[0]
-                print(f"Good chain: {c=}")
-        print(f"All chains: {chains[(perm1, perm2)]=}")
+                # print(f"Good chain: {c=}")
+        # print(f"All chains: {chains[(perm1, perm2)]=}")
             # if all(lehmer_partial_pair(elem, other) for other in save_set):
             #     save_set.add(elem)
             #     #last_element = elem
@@ -1767,7 +1834,7 @@ def try_lr_module_biject(perm, length):
             #     try:
             #         minplack_elem[(perm1, perm2)] = lst[j + 1]
             #         minindex[(perm1, perm2)] = j + 1
-            #         print(f"Compare: {v=} {minindex[(perm1, perm2)]=} {len(lst)=} {perm1, perm2=}")
+            #         # print(f"Compare: {v=} {minindex[(perm1, perm2)]=} {len(lst)=} {perm1, perm2=}")
             #         break
             #     except IndexError:
             #         break
@@ -1786,8 +1853,8 @@ def try_lr_module_biject(perm, length):
                     #     # print(tab)
                     #     # print("-------")
                     ret_elem.append(pair)
-                else:
-                    print(f"Didn't match but is this true? {lehmer_partial_pair(pair, secret_element[(perm1, perm2)])}")
+                # else:
+                    # print(f"Didn't match but is this true? {lehmer_partial_pair(pair, secret_element[(perm1, perm2)])}")
                     # print(f"THIS TAB NO GOOD FOR {pair[0][0].perm, pair[1][0].perm}")
                     # for tab in comp_them(*pair):
                     #     # print(tab)
