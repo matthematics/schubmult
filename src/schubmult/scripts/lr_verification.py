@@ -227,8 +227,6 @@ def worker(n, shared_recording_dict, lock, task_queue):
             perm = task_queue.get(timeout=2)
         except Exception:
             break  # queue empty, exit
-        if perm.inv == 0:
-            continue
         with lock:
             if (perm, n) in shared_recording_dict:
                 if shared_recording_dict[(perm, n)]:
@@ -238,7 +236,6 @@ def worker(n, shared_recording_dict, lock, task_queue):
 
         try_mod = try_lr_module_biject(perm, n)
 
-        # Only update manager dict at top level
         elem = 0
         for rc1, rc2 in try_mod:
             # elem += (rc1 @ rc2).asdtype(ASx @ ASx)

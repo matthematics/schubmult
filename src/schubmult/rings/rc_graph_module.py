@@ -1626,6 +1626,17 @@ def try_lr_module_biject(perm, length):
         consider_dict[(rc1.perm, rc2.perm)].add((rc1, rc2))
             # if any(lehmer_partial_pair((rc1, rc2), (rc1_dom, rc2_dom)) for (rc1_dom, rc2_dom) in dom_rcs if rc1_dom.perm == rc1.perm and rc2_dom.perm == rc2.perm) and rc1.perm <= perm and rc2.perm <= perm:
             #     consider_dict[(rc1.perm, rc2.perm)].add((rc1, rc2))
+    # relation = {}
+    # for (perm1, perm2), st in consider_dict.items():
+    #     for (rc1, rc2) in st:
+    #         for (rc1b, rc2b) in st:
+    #             if rc1.lehmer_partial_leq(rc1b) or rc2.lehmer_partial_leq(rc2b):
+    #                 relation[(rc1, rc2)] = relation.get((rc1, rc2), set())
+    #                 relation[(rc1, rc2)].add((rc1b, rc2b))
+    
+    # for key in relation:
+    #     print(key, relation[key])
+    # ret_elem = []
 
     ret_elem = []
 
@@ -1643,7 +1654,8 @@ def try_lr_module_biject(perm, length):
             for rc1, rc2 in sorted(consideration_set):
                 if (rc1, rc2) not in consider_dict[(rc1_bad.perm, rc2_bad.perm)]:
                     continue
-                if (rc1,rc2) not in bijection:
+                if (rc1,rc2) not in bijection and (lehmer_partial_pair((rc1_bad, rc2_bad), (rc1, rc2)) or (lehmer_partial_pair((rc1, rc2), (rc1_bad, rc2_bad)))):
+                #and (rc1.lehmer_partial_leq(rc1_bad) or rc2.lehmer_partial_leq(rc2_bad)):
                     bijection[(rc1, rc2)] = (rc1_bad, rc2_bad)
                     break
                 # meet = next(iter(sorted(spitzu)))
