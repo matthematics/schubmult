@@ -215,6 +215,120 @@ class RCGraph(KeyType, UnderlyingGraph):
             return NotImplemented
         return tuple(self) == tuple(other)
 
+    def right_root_at(self, i, j):
+        from bisect import bisect_left
+
+        start_root = (i, j + 1)
+        if i > len(self):
+            return start_root
+        row = self[i - 1]
+        revved = [*row]
+        revved.reverse()
+
+        index = bisect_left(revved, i + j - 1)
+        perm = Permutation.ref_product(*revved[:index])
+        start_root = (perm[start_root[0] - 1], perm[start_root[1] - 1])
+        lower_perm = Permutation([])
+
+        for rrow in self[i:]:
+            lower_perm *= ~Permutation.ref_product(*rrow)
+
+        return (lower_perm[start_root[0] - 1], lower_perm[start_root[1] - 1])
+
+    # def reverse_kogan_insert(self, descent, pair_sequence):
+    #     pair_sequence = sorted(pair_sequence, key=lambda x: x[0])
+    #     pair_dict = {}
+    #     pair_dict_rev = {}
+    #     for a, b in pair_sequence:
+    #         pair_dict[a] = pair_dict.get(a, [])
+    #         pair_dict[a].add(b)
+
+    #     for a, b in pair_sequence:
+    #         pair_dict_rev[b] = pair_dict_rev.get(b, [])
+    #         pair_dict_rev[b].add(a)
+
+    #     build_graph = [row for row in self]
+
+    #     reflections = [] 
+
+    #     for i in range(len(self)):
+    #         if len(self[i]) > 0:
+    #             for refl in self[i]:
+    #                 index = refl - i + 1
+    #                 root = self.right_root_at(i + 1, index)
+    #                 if root[0] in pair_dict:
+    #                     if root[1] in pair_dict[root[0]]:
+    #                         # do not add
+    #                         reflections.append(root)
+    #                         pair_dict[root[0]].remove(root[1])
+    #                         build_graph[i] = tuple(a for a in build_graph[i] if a != refl)
+    #                         new_rc = RCGraph(build_graph)
+    #                         for index in range(max(self[i]) - i - 1, -1, -1):
+    #                             if new_rc.has_element(index, index + 1 - index):
+    #                                 index += 1
+    #                             else:
+    #                                 break
+
+    def right_zero_act(self):
+        from schubmult.utils.perm_utils import has_bruhat_descent
+        if self.perm.inv == 0:
+            return RCGraph([*self, ()])
+        up_perms = ASx(self.perm, len(self)) * ASx(Permutation([]),1)
+        stickup_perm = Permutation([*self.perm[:len(self)],len(self.perm) + 1,*self.perm[len(self):len(self.perm)]])
+        rc_set = set()
+        for perm, _ in up_perms.keys():
+            start_perm = stickup_perm
+            working_rc = RCGraph([*self, ()])
+            word = list(working_rc.perm_word()) + list(reversed(range(len(self) + 1, len(self.perm) + 1)))
+            new_word = []
+            permball = perm
+            for ref in reversed(word):
+                if ref - 1 in permball.descents():
+                    new_word = [ref, *new_word]
+                    permball = permball.swap(ref - 1, ref)
+            assert permball.inv == 0
+            # assert Permutation.ref_product(*word) == stickup_perm
+            # while perm[len(self) - 1] != start_perm[len(self) - 1]:
+            #     for j in range(len(self), len(start_perm)):
+            #         if perm[j] != start_perm[j] and has_bruhat_descent(start_perm, len(self) - 1, j):
+            #             if perm <= start_perm.swap(len(self) - 1, j):
+            #                 permo = Permutation.ref_product(*word)
+            #                 for index in range(len(word)):
+            #                     if permo.right_root_at(index, word=tuple(word)) == (len(self), j + 1):
+            #                         word = [*word[:index], *word[index + 1:]]
+            #                 start_perm = Permutation.ref_product(*word)
+            #                 break
+
+
+            # while start_perm != perm:
+            #     for ii in range(len(self)):
+            #         if start_perm[ii] != perm[ii]:
+            #             j = len(self)
+            #             while not has_bruhat_descent(start_perm, ii, j):
+            #                 j += 1
+            #             for index in range(len(word)):
+            #                 if permo.right_root_at(index, word=tuple(word)) == (len(self), j + 1):
+            #                     word = [*word[:index], *word[index + 1:]]
+            #                     break
+            #             start_perm = Permutation.ref_product(*word)
+            #             break
+
+            new_rc = []
+            index = 0
+            for i in range(len(self)):
+                row = self[i]
+                new_row = []
+                for j in range(len(row)):
+                    new_row.append(new_word[index])
+                    index += 1
+                new_rc.append(tuple(new_row))
+            new_rc.append(())
+            rc_set.add(RCGraph(new_rc))
+        return rc_set
+
+
+
+
     @cache
     def inversion_label(self, i, j):
         if i >= j:
@@ -313,25 +427,7 @@ class RCGraph(KeyType, UnderlyingGraph):
     def has_element(self, i, j):
         return i <= len(self) and j + i in self[i - 1]
 
-    def right_root_at(self, i, j):
-        from bisect import bisect_left
-
-        start_root = (i, j + 1)
-        if i > len(self):
-            return start_root
-        row = self[i - 1]
-        revved = [*row]
-        revved.reverse()
-
-        index = bisect_left(revved, i + j - 1)
-        perm = Permutation.ref_product(*revved[:index])
-        start_root = (perm[start_root[0] - 1], perm[start_root[1] - 1])
-        lower_perm = Permutation([])
-
-        for rrow in self[i:]:
-            lower_perm *= ~Permutation.ref_product(*rrow)
-
-        return (lower_perm[start_root[0] - 1], lower_perm[start_root[1] - 1])
+    
 
     def length_vector(self):
         return tuple([len(row) for row in self])
@@ -476,14 +572,19 @@ class RCGraph(KeyType, UnderlyingGraph):
         return result
 
     def prod_with_rc(self, other):
-        from . import FA, ASx
-
-        new_set_of_perms = ASx(self.perm, len(self)) * ASx(other.perm, len(other))
-        rc_set = set((FA(*self.length_vector()) * RCGraphModule({other: 1})).keys())
-        result = RCGraphModule()
-        for (perm, length), coeff in new_set_of_perms.items():
-            result += RCGraphModule({rc: coeff for rc in rc_set if rc.perm == perm})
-        return result
+        buildup_module = 1*self
+        num_zeros = len(other)
+        for _ in range(num_zeros):
+            new_buildup_module = RCGraphModule()
+            for rc, coeff in buildup_module.items():
+                new_buildup_module += RCGraphModule(dict.fromkeys(rc.right_zero_act(), coeff))
+            buildup_module = new_buildup_module
+        ret_module = RCGraphModule()
+        for rc, coeff in buildup_module.items():
+            new_rc = RCGraph([*rc[:len(self)], *[tuple([a + len(self) for a in row]) for row in other]])
+            if new_rc.perm.inv == len(new_rc.perm_word()):
+                ret_module += coeff * new_rc
+        return ret_module
 
     def ring_act(self, elem):
         if isinstance(elem, FreeAlgebraElement):
