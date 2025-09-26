@@ -211,42 +211,10 @@ def main():
     
     perms.sort(key=lambda p: p.trimcode)
     for perm in perms:
-        #build_mod = try_lr_module_inject(perm)
-        # cd = perm.trimcode
-        # the_prin = next(iter([rc for rc in (FA(*cd)*RCGraph()).keys() if rc.is_principal]))
-        # the_mod = FA(*cd).coproduct() * (RCGraph()@RCGraph())
-        # mod_set = set(the_mod.value_dict.keys())
-        # co_prin = the_prin.transpose()
-        # the_mod_inv = FA(*co_prin.length_vector()).coproduct() * (RCGraph()@RCGraph())
-        # inv_mod_set = set([(k[0].transpose(),k[1].transpose()) for k in the_mod_inv.value_dict.keys()])
-        # diff num princ max co princ
-        the_big_bucket = ASx(perm, length).change_basis(WordBasis)
-        ones_that_stick_around = None
-        for word, coeff in the_big_bucket.items():
-            rc_pairs = FA(*word).coproduct()*(RCGraph()@RCGraph())
-            for rc1, rc2 in rc_pairs.value_dict.keys():
-                tab01, tab02 = rc1.edelman_greene()
-                #tab1 = tab01 @ tab02
-                tab11, tab12 = rc2.edelman_greene()
-                #tab2 = tab11 @ tab12
-                #print(perm.trimcode)
-                #print(tab1)
-                #print(tab2)
-                # fistbump = Plactic([])
-                # for row in tab02:
-                #     for a in row:
-                #         fistbump = fistbump.rs_insert(a)
-                # for row in tab12:
-                #     for a in row:
-                #         fistbump = fistbump.rs_insert(a)
-                # print("Tooth and nail")
-                # print(fistbump)
-                if ones_that_stick_around is None:
-                    ones_that_stick_around = coeff * (tab01 @ tab11)
-                else:
-                    ones_that_stick_around += coeff * (tab01 @ tab11)
-        print(f"For {perm.trimcode} got")
-        print(ones_that_stick_around)
+        
+        rc = RCGraph.principal_rc(perm, n-1)
+        print(rc.coproduct())
+
 
     # n = int(sys.argv[1])
     # ring = DoubleSchubertRing(z,y)
