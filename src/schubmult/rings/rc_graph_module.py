@@ -256,13 +256,13 @@ class RCGraph(KeyType, UnderlyingGraph):
             pair_dict_rev[b] = a
 
 
-        def is_relevant_crossing(root):
+        def is_relevant_crossing(root, prm):
             #min_root = max(pair_dict.keys())
             if root[0] not in pair_dict:
                 if root[0] not in pair_dict or  pair_dict_rev.get(root[0], 0) != pair_dict_rev.get(root[1], 0):
                     return False
                 return True
-            return root[1] in pair_dict[root[0]]
+            return root[1] in pair_dict[root[0]] and prm[root[0] - 1] > prm[root[1] - 1]
 
         # may have to add q, s or a_i, q
         def is_relevant_noncrossing(root):
@@ -273,10 +273,10 @@ class RCGraph(KeyType, UnderlyingGraph):
         # we are in the second case, add (ai, q) just before where (a, bi) is in the sequence.
 
         new_rc = self
-        i = 0
+        i = len(new_rc) - 1
         index = 0
         # print(pair_dict)
-        while i < len(new_rc):
+        while i >= 0:
             build_graph = [*new_rc]
             did_any = False
             # print("starting with")
@@ -284,16 +284,19 @@ class RCGraph(KeyType, UnderlyingGraph):
             if len(new_rc[i]) > 0:
                 # print("Row", i)
                 while index < max(new_rc[i]) - i:
-                    col_index = max(new_rc[i]) - i - index - 1
+                    #col_index = max(new_rc[i]) - i - index - 1
+                    col_index = index
                     refl = col_index + i + 1
                     # index = col_index + 1 + 1
-                    assert index != 0 or new_rc.has_element(i + 1, col_index + 1)
+                    #assert index != 0 or new_rc.has_element(i + 1, col_index + 1)
+                    print("Starting")
+                    print(new_rc)
                     if new_rc.has_element(i + 1, col_index + 1):
-                        # print(f"Found at {col_index + 1}")
+                        print(f"Found at {col_index + 1}")
                         root = new_rc.right_root_at(i + 1, col_index + 1)
-                        # print(f"{root=}")
-                        if is_relevant_crossing(root):
-                            # print("Relevant")
+                        print(f"{root=}")
+                        if is_relevant_crossing(root, new_rc.perm):
+                            print("Relevant")
                             did_any = True
                             if root[0] in pair_dict:
                                 pair_dict[root[0]].remove(root[1])
@@ -304,11 +307,12 @@ class RCGraph(KeyType, UnderlyingGraph):
                             build_graph[i] = tuple(a for a in build_graph[i] if a != refl)
                             start_spot = len(new_rc[i])
                             new_rc = RCGraph(build_graph)
-                            # print(f"removed")
-                            # print(build_graph[i])
-                            # print(new_rc)
-                            for index2 in range(index):
-                                col_index2 = max(new_rc[i]) - i - index2 - 1
+                            print(f"removed")
+                            #print(build_graph[i])
+                            print(new_rc)
+                            for index2 in range(index, start_spot):
+                                #col_index2 = max(new_rc[i]) - i - index2 - 1
+                                col_index2 = index2
                                 refl = col_index2 + i + 1
                                 if not new_rc.has_element(i + 1, col_index2 + 1):
                                     a, b = new_rc.right_root_at(i + 1, col_index2 + 1)
@@ -331,17 +335,18 @@ class RCGraph(KeyType, UnderlyingGraph):
                                                 break
                                         build_graph[i] = tuple(new_row)
                                         new_rc = RCGraph(build_graph)
-                                        # print("added back")
-                                        # print(new_rc)
-                                        break
+                                        print("added back")
+                                        print(new_rc)
+                                        did_any = False
                     index += 1
                     if did_any:
                         break
             # print(f"{did_any=} {index=}")
             if not did_any:
-                # print("Moving on")
-                i += 1
-                index = 0
+                i -= 1
+            else:
+                i = len(new_rc) - 1
+            index = 0
                 # print(f"{i=}")
                 # print(f"{index=}")
         assert len(pair_dict) == 0, f"{pair_dict=}, {pair_dict_rev=}, {new_rc=}, {pair_sequence=}"
@@ -350,119 +355,21 @@ class RCGraph(KeyType, UnderlyingGraph):
         return new_rc
 
     def right_p_act(self, p):
-        from schubmult.utils.perm_utils import has_bruhat_descent
+        if len(self) == 0:
+            return set((FA(p) * self).value_dict.keys())
+
         up_perms = ASx(self.perm, len(self)) * ASx(uncode([p]),1)
 
+        old_rc_set = self.rowrange(1, len(self)).right_p_act(p)
         rc_set = set()
-        for perm, _ in up_perms.keys():
-            reflections = []
 
-            # print(self.perm)
-            buildup_perm = Permutation([*self.perm[:len(self)],len(perm) + 1,*self.perm[len(self):len(self.perm)],*perm[len(self.perm):len(perm)]])
-            # print(buildup_perm)
-            pull_out_rc = RCGraph([*self, tuple(range(len(perm), len(self), -1))])
-
-            pull_out_perm = pull_out_rc.perm
-            try:
-                assert isinstance(perm, Permutation)
-                assert pull_out_perm == buildup_perm
-                assert perm <= pull_out_perm
-            except AssertionError:
-                # print(f"{perm=}")
-                # print(f"{pull_out_perm=}")
-                # print(f"{buildup_perm=}")
-                # print(pull_out_rc)
-                raise
-            while pull_out_perm != perm:
-                did_any = False
-                for i in range(len(pull_out_rc)):
-                    if pull_out_perm[i] != perm[i]:
-                        j = len(pull_out_rc)
-                        while not (has_bruhat_descent(pull_out_perm, i, j) and pull_out_perm[i] == perm[j]):
-                            j += 1
-                        reflections.append((i + 1, j + 1))
-                        pull_out_perm = pull_out_perm.swap(i, j)
-                        did_any = True
-                        break
-                if not did_any:
-                    raise ValueError(f"Could not reach {perm} from {pull_out_perm}")
-            # print("Koganing")
-            # print(pull_out_rc)
-            new_rc = pull_out_rc.reverse_kogan_insert(len(pull_out_rc), reflections)
-            assert new_rc.perm == perm
-            # need to do moves
-            if len(new_rc[-1]) > p:
-                new_new_rc = [list(row) for row in new_rc]
-                for i in range(len(new_new_rc[-1]) - p):
-                    refl = new_new_rc[-1].pop(0)
-                    for j in range(len(new_new_rc) - 1):
-                        if len(new_new_rc[j]) < len(self[j]):
-                            k = 0
-                            while k < len(new_new_rc[j]) and new_new_rc[j][k] > refl:
-                                k += 1
-                            new_new_rc[j] = [*new_new_rc[j][:k], refl, *new_new_rc[j][k:]]
-                            break
-                    new_rc = RCGraph([tuple(row) for row in new_new_rc])
-            rc_set.add(new_rc)
+        for rc in old_rc_set:
+            new_rc_set = FA(len(self[0])) * rc
+            for rc2 in new_rc_set.value_dict.keys():
+                if (rc2.perm, len(self) + 1) in up_perms.keys():
+                    rc_set.add(rc2)
         return rc_set
-        # stickup_perm = Permutation([*self.perm[:len(self)],len(self.perm) + 1,*self.perm[len(self):len(self.perm)]])
-        # rc_set = set()
-        # for perm, _ in up_perms.keys():
-        #     perm *= Permutation.ref_product(*list(reversed(range(len(self) - p + 1, len(self) + 1))))
-        #     working_rc = RCGraph([*self, ()])
-        #     word = list(working_rc.perm_word()) + list(reversed(range(len(self) + 1, len(self.perm) + 1)))
-        #     assert len(word) == Permutation.ref_product(*word).inv
-        #     assert Permutation.ref_product(*word) == stickup_perm
-        #     new_word = []
-        #     permball = perm
-        #     # for i in range(p):
-        #     #     s = word[len(word)-1-i]
-        #     #     new_word = [s, *new_word]
-        #     #     permball = permball.swap(s - 1, s)
-        #     # word = word[:-p]
-        #     for refl in reversed(word):
-        #         if permball[refl-1] >permball[refl]:
-        #             new_word = [refl, *new_word]
-        #             permball = permball.swap(refl - 1, refl)
-        #     assert permball.inv == 0, f"{permball=}, {word=}, {new_word=}"
-            # assert Permutation.ref_product(*word) == stickup_perm
-            # while perm[len(self) - 1] != start_perm[len(self) - 1]:
-            #     for j in range(len(self), len(start_perm)):
-            #         if perm[j] != start_perm[j] and has_bruhat_descent(start_perm, len(self) - 1, j):
-            #             if perm <= start_perm.swap(len(self) - 1, j):
-            #                 permo = Permutation.ref_product(*word)
-            #                 for index in range(len(word)):
-            #                     if permo.right_root_at(index, word=tuple(word)) == (len(self), j + 1):
-            #                         word = [*word[:index], *word[index + 1:]]
-            #                 start_perm = Permutation.ref_product(*word)
-            #                 break
 
-
-            # while start_perm != perm:
-            #     for ii in range(len(self)):
-            #         if start_perm[ii] != perm[ii]:
-            #             j = len(self)
-            #             while not has_bruhat_descent(start_perm, ii, j):
-            #                 j += 1
-            #             for index in range(len(word)):
-            #                 if permo.right_root_at(index, word=tuple(word)) == (len(self), j + 1):
-            #                     word = [*word[:index], *word[index + 1:]]
-            #                     break
-            #             start_perm = Permutation.ref_product(*word)
-            #             break
-
-        #     new_rc = []
-        #     index = 0
-        #     for i in range(len(self)):
-        #         row = self[i]
-        #         new_row = []
-        #         for j in range(len(row)):
-        #             new_row.append(new_word[index])
-        #             index += 1
-        #         new_rc.append(tuple(new_row))
-        #     new_rc.append(())
-        #     rc_set.add(RCGraph(new_rc))
-        # return rc_set
 
 
 
@@ -550,7 +457,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         return NotImplemented
 
     def __rmul__(self, other):
-        return RCGraphModule({self: 1}, generic_key_type=self.__class__).__rmul__(other)
+        return other * RCGraphModule({self: 1}, generic_key_type=self.__class__)
 
     def __mul__(self, other):
         return RCGraphModule({self: 1}, generic_key_type=self.__class__).__mul__(other)
@@ -760,10 +667,14 @@ class RCGraph(KeyType, UnderlyingGraph):
                 new_buildup_module += RCGraphModule(dict.fromkeys(rc.right_p_act(len(row)), coeff))
             buildup_module = new_buildup_module
         ret_module = RCGraphModule()
-        for rc, coeff in buildup_module.items():
+        up_perms = ASx(self.perm, len(self)) * ASx(other.perm, 1)
+        vset = {RCGraph([*rc[:len(self)], () * len(other)]) for rc in buildup_module.value_dict.keys() if rc.perm.inv == len(rc.perm_word())}
+        for rc in vset:
             new_rc = RCGraph([*rc[:len(self)], *[tuple([a + len(self) for a in row]) for row in other]])
             if new_rc.perm.inv == len(new_rc.perm_word()):
-                ret_module += coeff * new_rc
+                if (new_rc.perm, len(new_rc)) in up_perms.keys():
+                    coeff = up_perms[(new_rc.perm, len(new_rc))]
+                    ret_module += coeff * new_rc
         return ret_module
 
     def ring_act(self, elem):
@@ -2227,16 +2138,23 @@ def all_fa_degree(degree, length):
 
 if __name__ == "__main__":
     # test module functionality
-    perm1 = Permutation([4, 1, 2, 5, 3])
-    graph1 = next(iter(RCGraph.all_rc_graphs(perm1,4)))
-    perm2 = Permutation([3, 1, 2])
-    graph2 = next(iter(RCGraph.all_rc_graphs(perm2)))
+    perm1 = Permutation([1, 4, 2, 3])
+    graph1 = next(iter(RCGraph.all_rc_graphs(perm1,2)))
+    perm2 = Permutation([3, 1, 4, 2])
+    graph2 = next(iter(RCGraph.all_rc_graphs(perm2, 3)))
 
-    print(graph1)
-    p = 3
-    print(f"Acting with {p} on the right")
-    rc_set = graph1.right_p_act(p)
+    print(graph1 * graph2)
+    #p = 3
+    # print(f"Acting with {p} on the right")
+    # rc_set = graph1.right_p_act(p)
+    
 
-    for rc in rc_set:
-        print(rc)
-        print("-----")
+    # for rc in rc_set:
+    #     print(rc)
+    #     print("-----")
+    #     q = 2
+    #     print(f"Acting with {q} on the right")
+    #     rc_set2 = rc.right_p_act(q)
+    #     for rc2 in rc_set2:
+    #         print(rc2)
+    #         print("=====")
