@@ -619,8 +619,10 @@ class RCGraph(KeyType, UnderlyingGraph):
                 return False
         return True
 
-    def coproduct(self):
-        if len(self) == 0:
+    def coproduct(self, max_n = None):
+        if max_n is None:
+            max_n = len(self.perm)
+        if self.perm.inv == 0:
             return self @ self
         if len(self) == 1:
             m = self.perm.inv
@@ -630,23 +632,25 @@ class RCGraph(KeyType, UnderlyingGraph):
             return result
 
 
-            # result = RCGraph() @ RCGraph()
-            # for i in range(len(self)):
-            #     result *= RCGraph.one_row(len(self[i])).coproduct()
-            # coprod = 0
-            # for (rc1, rc2), coeff in result.items():
-            #     if rc1.weak_order_leq(self) and rc2.weak_order_leq(self):
-            #         coprod += coeff * (rc1 @ rc2)
-            # return coprod
-        return None
-        # if len(self[-1]) == 0:
-        #     return self.rowrange(0, len(self) - 1).coproduct() * RCGraph.one_row(0).coproduct()
-        # if self.perm == self.perm.minimal_dominant_above():
-         #     result = RCGraph()@RCGraph()
-        #     for i in range(len(self)):
-        #         result *= RCGraph.one_row(len(self[i])).coproduct()
-        #     return result
-        # return NotImplemented
+        old = self.rowrange(1, len(self)).coproduct(max_n)
+        up_perms = RCGraph.one_row(len(self[0])) * self.rowrange(1, len(self))
+        res = RCGraph.one_row(len(self[0])).coproduct(max_n) * old
+        res_old = res
+        res = 0
+        for (rc1, rc2), coeff in res_old.value_dict.items():
+            if len(rc1.perm) > max_n or len(rc2.perm) > max_n:
+                continue
+            res += coeff * (rc1 @ rc2)
+        up_perms_old = up_perms
+        up_perms = 0
+        for rc, coeff in up_perms_old.value_dict.items():
+            if len(rc.perm) > max_n:
+                continue
+            up_perms += coeff * rc 
+        for graph, coeff in up_perms.value_dict.items():
+            if graph != self:
+                res -= coeff * graph.coproduct(max_n)
+        return res
 
     @classmethod
     def principal_rc(cls, perm, length):
