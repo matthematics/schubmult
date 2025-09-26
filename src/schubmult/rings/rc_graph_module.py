@@ -175,23 +175,24 @@ class ModuleType:
         if len(self.keys()) == 0:
             return "<zero module>"
         for k, v in self._dict.items():
-            st1, mul_joiner, add_joiner = self.coeffify(v)
-            to_add = _multiline_join(st1, str(k), joiner=mul_joiner)
+            st1= self.coeffify(v)
+            if len(st1) > 0:
+                to_add = _multiline_join(st1, str(k), joiner="*")
+            else:
+                to_add = str(k)
             if len(buildups) == 0:
                 buildups = to_add
             else:
-                buildups = _multiline_join(buildups, to_add, joiner=add_joiner)
+                buildups = _multiline_join(buildups, to_add, joiner="+")
         return buildups
 
     def polyvalue(self, x, y=None):
         return sum([v * k.polyvalue(x, y) for k, v in self._dict.items()])
 
     def coeffify(self, v):
-        if v < 0:
-            return str(-v), " * ", " + "
         if v == 1:
-            return "", "", " + "
-        return str(v), " * ", " + "
+            return ""
+        return str(v) + "*"
 
 
 class UnderlyingGraph(tuple):
@@ -272,12 +273,11 @@ class RCGraph(KeyType, UnderlyingGraph):
     def right_zero_act(self):
         from schubmult.utils.perm_utils import has_bruhat_descent
         if self.perm.inv == 0:
-            return RCGraph([*self, ()])
+            return {RCGraph([*self, ()])}
         up_perms = ASx(self.perm, len(self)) * ASx(Permutation([]),1)
         stickup_perm = Permutation([*self.perm[:len(self)],len(self.perm) + 1,*self.perm[len(self):len(self.perm)]])
         rc_set = set()
         for perm, _ in up_perms.keys():
-            start_perm = stickup_perm
             working_rc = RCGraph([*self, ()])
             word = list(working_rc.perm_word()) + list(reversed(range(len(self) + 1, len(self.perm) + 1)))
             new_word = []
@@ -560,16 +560,27 @@ class RCGraph(KeyType, UnderlyingGraph):
             ret.add(nrc)
         return ret
 
-    def coproduct(self):
-        from . import FA, ASx
+    @classmethod
+    def one_row(cls, p):
+        return RCGraph((tuple(range(p, 0, -1)),))
 
-        new_set_of_perms = ASx(self.perm, len(self)).coproduct()
-        rc_set = FA(*self.length_vector()).coproduct() * TensorModule({RCGraphTensor(RCGraph(), RCGraph()): 1})
-        result = TensorModule()
-        for (rc1, rc2), coeff in rc_set.items():
-            if ((rc1.perm, len(self)), (rc2.perm, len(self))) in new_set_of_perms:
-                result += TensorModule({RCGraphTensor(rc1, rc2): new_set_of_perms[((rc1.perm, len(self)), (rc2.perm, len(self)))]})
-        return result
+    def coproduct(self):
+        if len(self) == 0:
+            return self @ self
+        if len(self) == 1:
+            m = self.perm.inv
+            result = 0
+            for i in range(m + 1):
+                result += RCGraph.one_row(i) @ RCGraph.one_row(m - i)
+            return result
+        if len(self[-1]) == 0:
+            return self.rowrange(0, len(self) - 1).coproduct() * RCGraph.one_row(0).coproduct()
+        if self.perm == self.perm.minimal_dominant_above():
+            result = RCGraph()@RCGraph()
+            for i in range(len(self)):
+                result *= RCGraph.one_row(len(self[i])).coproduct()
+            return result
+        return NotImplemented
 
     def prod_with_rc(self, other):
         buildup_module = 1*self
@@ -1004,13 +1015,18 @@ class RCGraphModule(ModuleType):
     def __init__(self, *args, generic_key_type=RCGraph, ring=FreeAlgebra(WordBasis), **kwargs):
         super().__init__(*args, generic_key_type=generic_key_type, ring=ring, **kwargs)
 
-    # def __mul__(self, other):
-    #     if isinstance(other, RCGraphModule):
-    #         result = RCGraphModule()
-    #         for rc_graph, coeff in self._dict.items():
-    #             for other_rc_graph, coeff2 in other.items():
-    #                 result += coeff * coeff2 * rc_graph.prod_with_rc(other_rc_graph)
-    #     return result
+    def __mul__(self, other):
+        if isinstance(other, RCGraph):
+            result = RCGraphModule()
+            for rc_graph, coeff in self._dict.items():
+                result += coeff * rc_graph.prod_with_rc(other)
+            return result
+        if isinstance(other, RCGraphModule):
+            result = RCGraphModule()
+            for rc_graph2, coeff2 in other._dict.items():
+                result += coeff2 * (self * rc_graph2)
+            return result
+        return super().__mul__(other)
 
     def schubvalue(self, sring):
         ret = S.Zero
@@ -1370,6 +1386,26 @@ class RCGraphTensor(KeyType):
 
 
 class TensorModule(ModuleType):
+    def __mul__(self, other):
+        if isinstance(other, RCGraphTensor) and len(other) == len(self._modules):
+            result = 0
+            for rc_graph_tensor, coeff in self._dict.items():
+                result0 = None
+                for i in range(len(rc_graph_tensor)):
+                    firstten = rc_graph_tensor[i] * other[i]
+                    if result0 is None:
+                        result0 = firstten
+                    else:
+                        result0 = result0 @ firstten
+                result += coeff * result0
+            return result
+
+        if isinstance(other, TensorModule) and len(other._modules) == len(self._modules):
+            result = 0
+            for rc_graph2, coeff2 in other._dict.items():
+                result += coeff2 * (self * rc_graph2)
+            return result
+        return super().__mul__(other)
     # def apply_product(self, poly1, poly2, genset, length):
     #     res = TensorModule()
     #     for (rc1, rc2), coeff in self._dict.items():
