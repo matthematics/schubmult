@@ -207,10 +207,7 @@ def main():
     perms.sort(key=lambda p: p.trimcode)
     for perm in perms:
         print("Trying ", perm.trimcode)
-        rc = RCGraph.principal_rc(perm, n-1)
-        print("Principal:")
-        print(rc)
-        print(rc.coproduct())
+        print(RCGraph.principal_rc(perm, length).coproduct())
 
 
     # n = int(sys.argv[1])
