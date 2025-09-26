@@ -201,32 +201,33 @@ def main():
 
     n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
-    length = n
+    length = n - 1
     rank = {}
     
     perms.sort(key=lambda p: p.trimcode)
     for perm in perms:
         print("Trying ", perm.trimcode)
         
-        full_coprod = RCGraph.full_rc_coproduct(perm, length)
+        #full_coprod = RCGraph.full_rc_coproduct(perm, length)
+        full_coprod = RCGraph.principal_rc(perm, length).coproduct()  # Precompute principal rc graphs
         print(full_coprod)
 
-        # elem = (ASx@ASx).zero
-        # for (rc1, rc2), coeff in full_coprod.value_dict.items():
-        #     if uncode([a+b for a,b in zip(rc1.length_vector(), rc2.length_vector())]) == perm:
-        #         elem += coeff * (ASx @ ASx)(((rc1.perm, length), (rc2.perm, length)))
+        elem = (ASx@ASx).zero
+        for (rc1, rc2), coeff in full_coprod.value_dict.items():
+            if uncode([a+b for a,b in zip(rc1.length_vector(), rc2.length_vector())]) == perm:
+                elem += coeff * (ASx @ ASx)(((rc1.perm, length), (rc2.perm, length)))
         
-        # check = ASx(perm, n).coproduct()
-        # try:
-        #     if perm.inv != 0:
-        #         assert all(v == 0 for v in (elem - check).values())
-        # except AssertionError:
-        #     print(f"Fail on {perm} at ", time.ctime())
-        #     print(f"{elem=}")
-        #     print(f"{check=}")
-        #     print(f"{(elem - check)=}")
-        #     continue        
-        # print("Success for ", perm.trimcode)
+        check = ASx(perm, length).coproduct()
+        try:
+            if perm.inv != 0:
+                assert all(v == 0 for v in (elem - check).values())
+        except AssertionError:
+            print(f"Fail on {perm} at ", time.ctime())
+            print(f"{elem=}")
+            print(f"{check=}")
+            print(f"{(elem - check)=}")
+            continue        
+        print("Success for ", perm.trimcode)
     # n = int(sys.argv[1])
     # ring = DoubleSchubertRing(z,y)
     # for i0 in range(n):
