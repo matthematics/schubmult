@@ -373,45 +373,7 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     @staticmethod
     def full_rc_coproduct(perm, length):
-        if length < len(perm.trimcode):
-            raise ValueError("Length too short")
-        #print(f"Trying {perm.trimcode}, {length}")
-        if perm.inv == 0:
-            if length == 0:
-                return RCGraph([()*length])@RCGraph([()*length])
-        if length == 1:
-            return RCGraph.principal_rc(perm, length).coproduct()
-        lower_perm = uncode(perm.trimcode[1:])
-        elem = ASx(lower_perm, length - 1)
-        lower_module1 = RCGraph.full_rc_coproduct(lower_perm, length - 1)
-        #print("lower_module1")
-        #print(lower_module1)
-        ret_elem = RCGraph.full_rc_coproduct(uncode([perm.trimcode[0]]),1) * lower_module1
-
-        ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k[0].perm <= perm and k[1].perm <= perm})
-
-        if length == 1:
-            return ret_elem
-        keys = set(ret_elem.keys())
-        # print(f"{repr(keys)=} {perm=}")
-        up_elem = ASx(uncode([perm.trimcode[0]]), 1) * elem
-        # print(f"{up_elem=}")
-        for key, coeff in up_elem.items():
-            if key[0] != perm:
-                assert coeff == 1
-                ret_elem -= RCGraph.full_rc_coproduct(key[0], length)
-                # for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
-                #     keys2 = set(ret_elem.keys())
-                #     for rc1, rc2 in keys2:
-                #         if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
-                #             try:
-                #                 keys = set(keys2)
-                #                 keys.remove((rc1, rc2))
-                #             except KeyError:
-                #                 # print(repr(keys))
-                #                 raise
-                #             break
-        # print(f"Done {perm}")
+        ret_elem = RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(perm, length),1)).coproduct()
         return ret_elem
 
 
@@ -727,7 +689,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                     if rc01.lehmer_partial_leq(rc1) and rc02.lehmer_partial_leq(rc2):
                         ret_elem += rc01 @ rc02
                         rc_selection.remove((rc01, rc02))
-                        break
+            assert len(ret_elem.keys()) == len(prin_elem.keys()), f"Did not use all rc graphs: {rc_selection=}, {self=}, {prin_elem=}"
         ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k[0].perm <= self.perm and k[1].perm <= self.perm})
         return ret_elem
     

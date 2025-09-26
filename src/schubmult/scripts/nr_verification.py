@@ -208,7 +208,7 @@ def main():
     for perm in perms:
         print("Trying ", perm.trimcode)
         
-        full_coprod = RCGraph.principal_rc(perm, length).coproduct()
+        full_coprod = RCGraph.full_rc_coproduct(perm, length)
         print(full_coprod)
 
         # elem = (ASx@ASx).zero
