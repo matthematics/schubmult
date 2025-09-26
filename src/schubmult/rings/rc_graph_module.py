@@ -635,7 +635,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         res_old = res
         res = 0
         for (rc1, rc2), coeff in res_old.value_dict.items():
-            if rc1.perm <= self.perm and rc2.perm <= self.perm:
+            if rc1.perm <= self.perm and (rc1.is_principal or (rc2.is_principal and rc1.perm != rc2.perm)) and rc2.perm <= self.perm:
                 res += coeff * (rc1 @ rc2)
         # up_perms_old = up_perms
         # up_perms = 0
@@ -645,12 +645,14 @@ class RCGraph(KeyType, UnderlyingGraph):
         #     up_perms += coeff * rc 
         if self.is_principal:
             return res
+        
         for (perm, _), coeff in up_perms.items():
             keys = set(k for k, v in up_graphs.value_dict.items() if v != 0)
             for graph in keys:
                 if graph != self:
                     res -= coeff * graph.coproduct()
                     up_graphs -= coeff * graph
+        
         return res
 
     @classmethod
