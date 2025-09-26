@@ -629,24 +629,28 @@ class RCGraph(KeyType, UnderlyingGraph):
 
 
         old = self.rowrange(1, len(self)).coproduct()
-        up_perms = FA(len(self[0])) * self.rowrange(1, len(self))
+        up_graphs = FA(len(self[0])) * self.rowrange(1, len(self))
+        up_perms = ASx(uncode([len(self[0])]), 1) * ASx(self.rowrange(1, len(self)).perm, len(self) - 1)
         res = FA(len(self[0])).coproduct() * old
         res_old = res
         res = 0
         for (rc1, rc2), coeff in res_old.value_dict.items():
             if rc1.perm <= self.perm and rc2.perm <= self.perm:
                 res += coeff * (rc1 @ rc2)
-        up_perms_old = up_perms
-        up_perms = 0
-        for rc, coeff in up_perms_old.value_dict.items():
-            if len(rc.perm) > len(self.perm):
-                continue
-            up_perms += coeff * rc 
+        # up_perms_old = up_perms
+        # up_perms = 0
+        # for rc, coeff in up_perms_old.value_dict.items():
+        #     if len(rc.perm) > len(self.perm):
+        #         continue
+        #     up_perms += coeff * rc 
         if self.is_principal:
             return res
-        for graph, coeff in up_perms.value_dict.items():
-            if graph != self:
-                res -= coeff * graph.coproduct()
+        for (perm, _), coeff in up_perms.items():
+            keys = set(k for k, v in up_graphs.value_dict.items() if v != 0)
+            for graph in keys:
+                if graph.perm == perm or (graph.perm == self.perm and graph != self):
+                    res -= coeff * graph.coproduct()
+                    up_graphs -= coeff * graph
         return res
 
     @classmethod
