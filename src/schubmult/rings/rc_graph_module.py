@@ -371,7 +371,48 @@ class RCGraph(KeyType, UnderlyingGraph):
         return rc_set
 
 
+    @staticmethod
+    def full_rc_coproduct(perm, length):
+        if length < len(perm.trimcode):
+            raise ValueError("Length too short")
+        #print(f"Trying {perm.trimcode}, {length}")
+        if perm.inv == 0:
+            if length == 0:
+                return RCGraph([()*length])@RCGraph([()*length])
+        if length == 1:
+            return RCGraph.principal_rc(perm, length).coproduct()
+        lower_perm = uncode(perm.trimcode[1:])
+        elem = ASx(lower_perm, length - 1)
+        lower_module1 = RCGraph.full_rc_coproduct(lower_perm, length - 1)
+        #print("lower_module1")
+        #print(lower_module1)
+        ret_elem = RCGraph.full_rc_coproduct(uncode([perm.trimcode[0]]),1) * lower_module1
 
+        ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k[0].perm <= perm and k[1].perm <= perm})
+
+        if length == 1:
+            return ret_elem
+        keys = set(ret_elem.keys())
+        # print(f"{repr(keys)=} {perm=}")
+        up_elem = ASx(uncode([perm.trimcode[0]]), 1) * elem
+        # print(f"{up_elem=}")
+        for key, coeff in up_elem.items():
+            if key[0] != perm:
+                assert coeff == 1
+                ret_elem -= RCGraph.full_rc_coproduct(key[0], length)
+                # for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
+                #     keys2 = set(ret_elem.keys())
+                #     for rc1, rc2 in keys2:
+                #         if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
+                #             try:
+                #                 keys = set(keys2)
+                #                 keys.remove((rc1, rc2))
+                #             except KeyError:
+                #                 # print(repr(keys))
+                #                 raise
+                #             break
+        # print(f"Done {perm}")
+        return ret_elem
 
 
     @cache
@@ -621,45 +662,53 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     @cache
     def coproduct(self):
+        if len(self) == 0:
+            return self @ self
         if self.perm.inv == 0:
             return self @ self
         if len(self) == 1:
             m = self.perm.inv
             return FA(m).coproduct() * (RCGraph()@RCGraph())
+        if len(self.perm) - 1< len(self):
+            forba = self.rowrange(0, len(self.perm) - 1).coproduct()
+            ret_elem = 0
+            for (rc1, rc2), coeff in forba.items():
+                ret_elem += (RCGraph([*rc1, ()*(len(self) - len(rc1))]) @ RCGraph([*rc2, ()*(len(self) - len(rc2))]))
+            return ret_elem
+        lower_graph = self.rowrange(1, len(self))
+        lower_module1 = lower_graph.coproduct()
+        #print("lower_module1")
+        #print(lower_module1)
+        ret_elem = RCGraph.one_row(len(self[0])).coproduct() * lower_module1
 
+        ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k[0].perm <= self.perm and k[1].perm <= self.perm})
 
-        old = self.rowrange(1, len(self)).coproduct()
-        up_graphs = FA(len(self[0])) * self.rowrange(1, len(self))
-        up_perms = ASx(uncode([len(self[0])]), 1) * ASx(self.rowrange(1, len(self)).perm, len(self) - 1)
-        res = FA(len(self[0])).coproduct() * old
-        res_old = res
-        res = 0
-        for (rc1, rc2), coeff in res_old.value_dict.items():
-            descs = rc1.perm.descents()
-            descs.update(rc2.perm.descents())
-            if not self.perm.descents().issubset(descs):
-                continue
-            if rc1.perm <= self.perm and  rc2.perm <= self.perm:
-                if res == 0 or not any(rc1.perm == rc11.perm and rc2.perm == rc22.perm and (rc11 == rc2 or rc22 == rc1) for (rc11, rc22), _ in res.value_dict.items()):
-                    res += coeff * (rc1 @ rc2)
-        # up_perms_old = up_perms
-        # up_perms = 0
-        # for rc, coeff in up_perms_old.value_dict.items():
-        #     if len(rc.perm) > len(self.perm):
-        #         continue
-        #     up_perms += coeff * rc 
-        if self.is_principal and self.perm.minimal_dominant_above() == self.perm:
-            return res
-        if self.is_principal:
-            return res
-        for (perm, _), coeff in up_perms.items():
-            keys = set(k for k, v in up_graphs.value_dict.items() if v != 0)
-            for graph in keys:
-                if graph != self and len(graph.perm) <= len(self.perm):
-                    res -= coeff * graph.coproduct()
-                    up_graphs -= coeff * graph
-
-        return res
+        # print(f"{repr(keys)=} {perm=}")
+        
+        #print("ret_elem")
+        #print(ret_elem)
+        up_elem = RCGraph.one_row(len(self[0])) * lower_graph
+        for key, coeff in up_elem.items():
+            if key != self and len(key.perm) <= len(self.perm):
+                assert coeff == 1
+                #print("key")
+                #print(key)
+                #print("self")
+                #print(self)
+                ret_elem -= key.coproduct()
+                # for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
+                #     keys2 = set(ret_elem.keys())
+                #     for rc1, rc2 in keys2:
+                #         if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
+                #             try:
+                #                 keys = set(keys2)
+                #                 keys.remove((rc1, rc2))
+                #             except KeyError:
+                #                 # print(repr(keys))
+                #                 raise
+                #             break
+        # print(f"Done {perm}")
+        return ret_elem
 
     @classmethod
     def principal_rc(cls, perm, length):
@@ -1139,7 +1188,7 @@ class RCGraphModule(ModuleType):
         return dct2
 
     def coproduct(self):
-        res = RCGraphModule()
+        res = 0
         for rc, coeff in self._dict.items():
             res += coeff * rc.coproduct()
         return res
