@@ -670,9 +670,12 @@ class RCGraph(KeyType, UnderlyingGraph):
                     for (rc1, rc2) in sorted(key_keys):
                         keyset2 = set(keyset)
                         for (rc1_bad, rc2_bad) in sorted(keyset2):
-                            if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
-                                keyset.remove((rc1_bad, rc2_bad))
-                                break
+                            if rc1_bad.perm <= self.perm and rc2_bad.perm <= self.perm:
+                                if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm and ((rc1.lehmer_partial_leq(rc1_bad) or rc2.lehmer_partial_leq(rc2_bad)) or (rc1.perm == rc2.perm and (rc1.lehmer_partial_leq(rc2_bad) or rc2.lehmer_partial_leq(rc1_bad)))):
+                                    keyset.remove((rc1_bad, rc2_bad))
+                                    break
+                            else:
+                                keyset2.remove((rc1_bad, rc2_bad))
                     # for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
                     #     keys2 = set(ret_elem.keys())
                     #     for rc1, rc2 in keys2:
