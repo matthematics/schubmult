@@ -643,7 +643,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         #     if len(rc.perm) > len(self.perm):
         #         continue
         #     up_perms += coeff * rc 
-        if self.is_principal:
+        if self.is_principal and len(self.perm) - 1 <= len(self):
             return res
         for (perm, _), coeff in up_perms.items():
             keys = set(k for k, v in up_graphs.value_dict.items() if v != 0)
