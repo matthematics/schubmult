@@ -640,7 +640,7 @@ class RCGraph(KeyType, UnderlyingGraph):
             if not self.perm.descents().issubset(descs):
                 continue
             if rc1.perm <= self.perm and  rc2.perm <= self.perm:
-                if res == 0 or not any(rc1.perm == rc11.perm and rc2.perm == rc22.perm and (rc11, rc22) == (rc2, rc1) for (rc11, rc22), _ in res.value_dict.items()):
+                if res == 0 or not any(rc1.perm == rc11.perm and rc2.perm == rc22.perm and (rc11 == rc2 or rc22 == rc1) for (rc11, rc22), _ in res.value_dict.items()):
                     res += coeff * (rc1 @ rc2)
         # up_perms_old = up_perms
         # up_perms = 0
