@@ -697,7 +697,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                 if rc1.perm <= self.perm and rc2.perm <= self.perm:
                     for rc01, rc02 in sorted(new_set):
 
-                        if rc01.perm == rc1.perm and rc02.perm == rc2.perm:
+                        if rc01.perm == rc1.perm and rc02.perm == rc2.perm and (rc01 != rc1 or rc02 != rc2):
                             ret_elem += rc01 @ rc02
                             rc_selection.remove((rc01, rc02))
                             break
