@@ -203,16 +203,13 @@ def main():
     perms = Permutation.all_permutations(n)
     length = n - 1
     rank = {}
-    for perm in perms:
-        rcs = (FA(*perm.trimcode, *((0,)*(length-len(perm.trimcode)))).coproduct()*(RCGraph()@RCGraph())).value_dict.keys()
-        for rc1, rc2 in rcs:
-            if len(rc1.perm) <= n and len(rc2.perm) <= n:
-                rank[(rc1, rc2)] = rank.get((rc1, rc2), 0) + 1
     
     perms.sort(key=lambda p: p.trimcode)
     for perm in perms:
-        
+        print("Trying ", perm.trimcode)
         rc = RCGraph.principal_rc(perm, n-1)
+        print("Principal:")
+        print(rc)
         print(rc.coproduct())
 
 

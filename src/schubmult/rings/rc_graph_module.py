@@ -619,37 +619,34 @@ class RCGraph(KeyType, UnderlyingGraph):
                 return False
         return True
 
-    def coproduct(self, max_n = None):
-        if max_n is None:
-            max_n = len(self.perm)
+    @cache
+    def coproduct(self):
         if self.perm.inv == 0:
             return self @ self
         if len(self) == 1:
             m = self.perm.inv
-            result = 0
-            for i in range(m + 1):
-                result += RCGraph.one_row(i) @ RCGraph.one_row(m - i)
-            return result
+            return FA(m).coproduct() * (RCGraph()@RCGraph())
 
 
-        old = self.rowrange(1, len(self)).coproduct(max_n)
-        up_perms = RCGraph.one_row(len(self[0])) * self.rowrange(1, len(self))
-        res = RCGraph.one_row(len(self[0])).coproduct(max_n) * old
+        old = self.rowrange(1, len(self)).coproduct()
+        up_perms = FA(len(self[0])) * self.rowrange(1, len(self))
+        res = FA(len(self[0])).coproduct() * old
         res_old = res
         res = 0
         for (rc1, rc2), coeff in res_old.value_dict.items():
-            if len(rc1.perm) > max_n or len(rc2.perm) > max_n:
-                continue
-            res += coeff * (rc1 @ rc2)
+            if rc1.perm <= self.perm and rc2.perm <= self.perm:
+                res += coeff * (rc1 @ rc2)
         up_perms_old = up_perms
         up_perms = 0
         for rc, coeff in up_perms_old.value_dict.items():
-            if len(rc.perm) > max_n:
+            if len(rc.perm) > len(self.perm):
                 continue
             up_perms += coeff * rc 
+        if self.is_principal:
+            return res
         for graph, coeff in up_perms.value_dict.items():
             if graph != self:
-                res -= coeff * graph.coproduct(max_n)
+                res -= coeff * graph.coproduct()
         return res
 
     @classmethod
