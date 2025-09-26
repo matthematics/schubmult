@@ -226,7 +226,7 @@ def main():
             print(f"{elem=}")
             print(f"{check=}")
             print(f"{(elem - check)=}")
-            continue        
+            raise
         print("Success for ", perm.trimcode)
     # n = int(sys.argv[1])
     # ring = DoubleSchubertRing(z,y)
