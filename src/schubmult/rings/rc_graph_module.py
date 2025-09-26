@@ -664,51 +664,73 @@ class RCGraph(KeyType, UnderlyingGraph):
     def coproduct(self):
         if len(self) == 0:
             return self @ self
-        if self.perm.inv == 0:
-            return self @ self
         if len(self) == 1:
             m = self.perm.inv
-            return FA(m).coproduct() * (RCGraph()@RCGraph())
-        if len(self.perm) - 1< len(self):
-            forba = self.rowrange(0, len(self.perm) - 1).coproduct()
+            mod = FA(m).coproduct() * (RCGraph()@RCGraph())
+            # print("mod")
+            # print(mod)
+            return mod
+        # if len(self) > len(self.perm.trimcode):
+        #     return (self.rowrange(0, len(self.perm.trimcode))).coproduct() * RCGraph([()]*(len(self)-len(self.perm.trimcode))).coproduct()
+        # if len(self.perm) - 1< len(self):
+        #     forba = self.rowrange(0, len(self.perm) - 1).coproduct()
+        #     ret_elem = 0
+        #     for (rc1, rc2), coeff in forba.items():
+        #         ret_elem += (RCGraph([*rc1, ()*(len(self) - len(rc1))]) @ RCGraph([*rc2, ()*(len(self) - len(rc2))]))
+        #     return ret_elem
+        if self.is_principal:
+            lower_graph = self.rowrange(1, len(self))
+            lower_module1 = lower_graph.coproduct()
+            #print("lower_module1")
+            #print(lower_module1)
+            ret_elem = FA(len(self[0])).coproduct() * lower_module1
+
+            
+
+            # print(f"{repr(keys)=} {perm=}")
+            
+            #print("ret_elem")
+            #print(ret_elem)
+
+            up_elem = RCGraph.one_row(len(self[0])) * lower_graph
+            for key, coeff in up_elem.items():
+                if key.perm != self.perm:
+                    assert coeff == 1
+                    assert key.perm != self.perm
+                    #print("key")
+                    #print(key)
+                    #print("self")
+                    #print(self)
+                    ret_elem -= key.coproduct()
+                    # for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
+                    #     keys2 = set(ret_elem.keys())
+                    #     for rc1, rc2 in keys2:
+                    #         if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
+                    #             try:
+                    #                 keys = set(keys2)
+                    #                 keys.remove((rc1, rc2))
+                    #             except KeyError:
+                    #                 # print(repr(keys))
+                    #                 raise
+                    #             break
+            # print(f"Done {perm}")
+            #print(ret_elem)
+        else:
+            prin_elem = RCGraph.principal_rc(self.perm, len(self)).coproduct()
             ret_elem = 0
-            for (rc1, rc2), coeff in forba.items():
-                ret_elem += (RCGraph([*rc1, ()*(len(self) - len(rc1))]) @ RCGraph([*rc2, ()*(len(self) - len(rc2))]))
-            return ret_elem
-        lower_graph = self.rowrange(1, len(self))
-        lower_module1 = lower_graph.coproduct()
-        #print("lower_module1")
-        #print(lower_module1)
-        ret_elem = RCGraph.one_row(len(self[0])).coproduct() * lower_module1
-
+            rc_selection = set((FA(*self.length_vector()).coproduct() * (RCGraph()@RCGraph())).value_dict.keys())
+            for (rc1, rc2), coeff in prin_elem.items():
+                if coeff == 0:
+                    continue
+                new_set = set(rc_selection)
+                for rc01, rc02 in sorted(new_set):
+                    if rc01.lehmer_partial_leq(rc1) and rc02.lehmer_partial_leq(rc2):
+                        ret_elem += rc01 @ rc02
+                        rc_selection.remove((rc01, rc02))
+                        break
         ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k[0].perm <= self.perm and k[1].perm <= self.perm})
-
-        # print(f"{repr(keys)=} {perm=}")
-        
-        #print("ret_elem")
-        #print(ret_elem)
-        up_elem = RCGraph.one_row(len(self[0])) * lower_graph
-        for key, coeff in up_elem.items():
-            if key != self and len(key.perm) <= len(self.perm):
-                assert coeff == 1
-                #print("key")
-                #print(key)
-                #print("self")
-                #print(self)
-                ret_elem -= key.coproduct()
-                # for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
-                #     keys2 = set(ret_elem.keys())
-                #     for rc1, rc2 in keys2:
-                #         if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
-                #             try:
-                #                 keys = set(keys2)
-                #                 keys.remove((rc1, rc2))
-                #             except KeyError:
-                #                 # print(repr(keys))
-                #                 raise
-                #             break
-        # print(f"Done {perm}")
         return ret_elem
+    
 
     @classmethod
     def principal_rc(cls, perm, length):
