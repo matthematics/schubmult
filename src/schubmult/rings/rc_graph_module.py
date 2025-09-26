@@ -637,6 +637,14 @@ class RCGraph(KeyType, UnderlyingGraph):
     def schub_hom(cls, perm, length):
         return RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(perm, length),1))
 
+    @classmethod
+    def schub_coproduct(cls, perm, length):
+        elem = ASx(perm,length).coproduct()
+        result = 0
+        for (perm1, perm2), coeff in elem.items():
+            result += coeff * cls.schub_hom(*perm1) @ cls.schub_hom(*perm2)
+        return result
+
     @cache
     def coproduct(self):
         if len(self) == 0:
@@ -2220,7 +2228,7 @@ def all_fa_degree(degree, length):
 
 if __name__ == "__main__":
     # test module functionality
-    print(RCGraph.schub_hom(uncode([3]),2)*RCGraph.schub_hom(uncode([2,1]),2))
+    print(RCGraph.schub_coproduct(uncode([1,1]),2))
     #print(RCGraph.schub_hom(ASx(uncode([2])))*RCGraph.schub_hom(ASx(uncode([3,2]))))
     #p = 3
     # print(f"Acting with {p} on the right")
