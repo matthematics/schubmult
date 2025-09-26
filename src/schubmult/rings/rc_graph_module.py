@@ -648,7 +648,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         for (perm, _), coeff in up_perms.items():
             keys = set(k for k, v in up_graphs.value_dict.items() if v != 0)
             for graph in keys:
-                if graph.perm == perm or (graph.perm == self.perm and graph != self):
+                if graph.perm == perm or (graph.perm == self.perm and graph.length_vector() < self.length_vector()):
                     res -= coeff * graph.coproduct()
                     up_graphs -= coeff * graph
         return res
