@@ -622,6 +622,21 @@ class RCGraph(KeyType, UnderlyingGraph):
                 return False
         return True
 
+    w_key_cache = {}
+    rc_cache = set()
+
+    @classmethod
+    def fa_hom(cls, *word):
+        if len(word) == 0:
+            return cls()
+        if len(word) == 1:
+            return FA(*word) * cls()
+        return cls.fa_hom(*word[:-1]) * cls.fa_hom(word[-1])
+
+    @classmethod
+    def schub_hom(cls, perm, length):
+        return RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(perm, length),1))
+
     @cache
     def coproduct(self):
         if len(self) == 0:
@@ -640,9 +655,12 @@ class RCGraph(KeyType, UnderlyingGraph):
         ret_elem = FA(len(self[0])).coproduct() * lower_module1
         up_elem = FA(len(self[0])) * lower_graph
         
-        keyset = set(ret_elem.value_dict.keys())
+        # for rc in sorted(RCGraph.all_rc_graphs(self.perm, len(self))):
+        #     if rc > self and rc not in RCGraph.rc_cache:
+        #         rc.coproduct()
 
         if self.is_principal:
+            keyset = set(ret_elem.value_dict.keys())
             # if len(self) > len(self.perm) - 1:
             #     forba = self.rowrange(0, len(self.perm) - 1).coproduct()
             #     ret_elem = 0
@@ -662,63 +680,47 @@ class RCGraph(KeyType, UnderlyingGraph):
             #print("ret_elem")
             #print(ret_elem)
 
+            def can_mul(perm1, perm2, perm3):
+                descs = set(perm1.descents())
+                descs.update(perm2.descents())
+                if not perm3.descents().issubset(descs):
+                    return False
+                return perm1 <= perm3 and perm2 <= perm3
+
             for key, coeff in up_elem.items():
                 if key != self:
                     assert coeff == 1
                     assert key.perm != self.perm
                     key_keys = set(key.coproduct().value_dict.keys())
-                    for (rc1, rc2) in sorted(key_keys):
+                    #key.coproduct()
+                    
+                    for (rc1, rc2) in key_keys:
                         keyset2 = set(keyset)
                         for (rc1_bad, rc2_bad) in sorted(keyset2):
-                            if rc1_bad.perm <= self.perm and rc2_bad.perm <= self.perm:
-                                if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm and ((rc1.lehmer_partial_leq(rc1_bad) or rc2.lehmer_partial_leq(rc2_bad)) or (rc1.perm == rc2.perm and (rc1.lehmer_partial_leq(rc2_bad) or rc2.lehmer_partial_leq(rc1_bad)))):
+                            if can_mul(rc1_bad.perm, rc2_bad.perm, self.perm):
+                                if rc1_bad.perm == rc1.perm and rc2_bad.perm == rc2.perm:
                                     keyset.remove((rc1_bad, rc2_bad))
                                     break
                             else:
-                                keyset2.remove((rc1_bad, rc2_bad))
-                    # for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
-                    #     keys2 = set(ret_elem.keys())
-                    #     for rc1, rc2 in keys2:
-                    #         if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1.length_vector() >= rc1_bad.length_vector() or rc2.length_vector() >= rc2_bad.length_vector()):
-                    #             try:
-                    #                 keys = set(keys2)
-                    #                 keys.remove((rc1, rc2))
-                    #             except KeyError:
-                    #                 # print(repr(keys))
-                    #                 raise
-                    #             break
-            # print(f"Done {perm}")
-            #print(ret_elem)
+                                keyset.remove((rc1_bad, rc2_bad))
         else:
             prin_elem = RCGraph.principal_rc(self.perm, len(self)).coproduct()
-            rc_selection = set(ret_elem.keys())
-            ret_elem = 0
+            ret_set = set(ret_elem.keys())
+            keyset = set()
             prin_keys = set(prin_elem.keys())
             for (rc1, rc2) in sorted(prin_keys):
-                new_set = set(rc_selection)
-                found = False
+                new_set = set(ret_set)
                 if rc1.perm <= self.perm and rc2.perm <= self.perm:
                     for rc01, rc02 in sorted(new_set):
-
-                        if rc01.perm == rc1.perm and rc02.perm == rc2.perm and (rc01 != rc1 or rc02 != rc2):
-                            ret_elem += rc01 @ rc02
-                            rc_selection.remove((rc01, rc02))
+                        if rc01.perm == rc1.perm and rc02.perm == rc2.perm:# and (rc01, rc02) not in RCGraph.w_key_cache.get((self.perm, len(self)), set()):
+                            ret_set.remove((rc01, rc02))
+                            keyset.add((rc01,rc02))
                             break
-            #ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k in keyset if k[0].perm <= self.perm and k[1].perm <= self.perm})
-            return ret_elem
-
-            # for (rc1, rc2), coeff in prin_elem.items():
-            #     if coeff == 0:
-            #         continue
-            #     new_set = set(rc_selection)
-            #     for rc01, rc02 in sorted(new_set):
-            #         if rc01.lehmer_partial_leq(rc1) and rc02.lehmer_partial_leq(rc2):
-            #             ret_elem += rc01 @ rc02
-            #             rc_selection.remove((rc01, rc02))
-            #             break
-
-                #assert len(ret_elem.keys()) == len(prin_elem.keys()), f"Did not use all rc graphs: {self=}, {prin_elem.keys()=} {ret_elem.keys()=}"
-        ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k in keyset if k[0].perm <= self.perm and k[1].perm <= self.perm})
+        ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k in keyset})
+        # RCGraph.w_key_cache[self.perm, len(self)] = RCGraph.w_key_cache.get((self.perm, len(self)), set())
+        # RCGraph.w_key_cache[self.perm, len(self)].update(keyset)
+        # RCGraph.rc_cache.add(self)
+        
         return ret_elem
     
 
@@ -742,7 +744,7 @@ class RCGraph(KeyType, UnderlyingGraph):
             buildup_module = new_buildup_module
         ret_module = RCGraphModule()
         up_perms = ASx(self.perm, len(self)) * ASx(other.perm, 1)
-        vset = {RCGraph([*rc[:len(self)], () * len(other)]) for rc in buildup_module.value_dict.keys() if rc.perm.inv == len(rc.perm_word())}
+        vset = {RCGraph([*rc[:len(self)], () * len(other)]) for rc in buildup_module.value_dict.keys()}
         for rc in vset:
             new_rc = RCGraph([*rc[:len(self)], *[tuple([a + len(self) for a in row]) for row in other]])
             if new_rc.perm.inv == len(new_rc.perm_word()):
@@ -890,20 +892,21 @@ class RCGraph(KeyType, UnderlyingGraph):
         if not isinstance(other, RCGraph):
             return NotImplemented
            #return self.perm.bruhat_leq(other.perm) and self.perm != other.perm
-        try:
-            for i in range(self.perm.inv):
-                a, b = self.perm.right_root_at(i)
-                # if self.inversion_label(a - 1, b - 1) < other.inversion_label(a - 1, b - 1):
-                #     return True
-                # if self.inversion_label(a - 1, b - 1) > other.inversion_label(a - 1, b - 1):
-                #     return False
-                
-                if self.inversion_label(a - 1, b - 1) < other.inversion_label(a - 1, b - 1):
-                    return True
-                if self.inversion_label(a - 1, b - 1) > other.inversion_label(a - 1, b - 1):
-                    return False
-        except ValueError:
-            return self.perm.trimcode < other.perm.trimcode
+        if self.perm.trimcode < other.perm.trimcode:
+            return True
+        if self.perm.trimcode > other.perm.trimcode:
+            return False
+        for i in range(self.perm.inv):
+            a, b = self.perm.right_root_at(i)
+            # if self.inversion_label(a - 1, b - 1) < other.inversion_label(a - 1, b - 1):
+            #     return True
+            # if self.inversion_label(a - 1, b - 1) > other.inversion_label(a - 1, b - 1):
+            #     return False
+
+            if self.inversion_label(a - 1, b - 1) < other.inversion_label(a - 1, b - 1):
+                return True
+            if self.inversion_label(a - 1, b - 1) > other.inversion_label(a - 1, b - 1):
+                return False
         return False
 
     def __le__(self, other):
@@ -2217,12 +2220,8 @@ def all_fa_degree(degree, length):
 
 if __name__ == "__main__":
     # test module functionality
-    perm1 = Permutation([1, 4, 2, 3])
-    graph1 = next(iter(RCGraph.all_rc_graphs(perm1,2)))
-    perm2 = Permutation([3, 1, 4, 2])
-    graph2 = next(iter(RCGraph.all_rc_graphs(perm2, 3)))
-
-    print(graph1 * graph2)
+    print(RCGraph.schub_hom(uncode([3]),2)*RCGraph.schub_hom(uncode([2,1]),2))
+    #print(RCGraph.schub_hom(ASx(uncode([2])))*RCGraph.schub_hom(ASx(uncode([3,2]))))
     #p = 3
     # print(f"Acting with {p} on the right")
     # rc_set = graph1.right_p_act(p)
