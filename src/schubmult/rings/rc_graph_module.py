@@ -240,7 +240,9 @@ class RCGraph(KeyType, UnderlyingGraph):
         working_rc = RCGraph([*self[:row-1],tuple(range(len(self.perm), row - 1, -1)),*[tuple([a+1 for a in rrow]) for rrow in self[row-1:]]])
         logger.debug("Starting with")
         indexes = set(indexes)
-        reflections = [working_rc.right_root_at(row, non_index) for non_index in range(1,len(working_rc[row-1])+1) if non_index not in indexes]
+        print(f"{indexes=}")
+        reflections = [working_rc.right_root_at(row, non_index) for non_index in range(len(working_rc[row-1]),0,-1) if non_index not in indexes]
+        print(f"{reflections=}")
         return working_rc.reverse_kogan_insert(row, reflections)
 
 
@@ -299,7 +301,7 @@ class RCGraph(KeyType, UnderlyingGraph):
 
         new_rc = self
         i = descent - 1
-        index = max(new_rc[i]) - i - 1 if len(new_rc[i]) > 0 else -1
+        index = new_rc.max_of_row(i) - 2 if len(new_rc[i]) > 0 else -1
         # print(pair_dict)
         while i >= 0:
             build_graph = [*new_rc]
@@ -331,12 +333,11 @@ class RCGraph(KeyType, UnderlyingGraph):
                                     del pair_dict[root[0]]
                             # may have to remember this root
                             build_graph[i] = tuple(a for a in build_graph[i] if a != refl)
-                            start_spot = len(new_rc[i])
                             new_rc = RCGraph(build_graph)
                             # print(f"removed")
                             #print(build_graph[i])
                             # print(new_rc)
-                            for index2 in range(max(new_rc[i]) - i - 1, index, -1):
+                            for index2 in range(new_rc.max_of_row(i) - 2, index, -1):
                                 #col_index2 = max(new_rc[i]) - i - index2 - 1
                                 col_index2 = index2
                                 refl = col_index2 + i + 1
@@ -373,7 +374,7 @@ class RCGraph(KeyType, UnderlyingGraph):
             if len(new_rc[i]) == 0:
                 index = -1
             else:
-                index = max(new_rc[i]) - i - 1
+                index = new_rc.max_of_row(i) - 1
                 # print(f"{i=}")
                 # print(f"{index=}")
         assert len(pair_dict) == 0, f"{pair_dict=}, {pair_dict_rev=}, {new_rc=}, {pair_sequence=}"
@@ -2454,6 +2455,24 @@ if __name__ == "__main__":
     # test module functionality
     from schubmult.utils.perm_utils import artin_sequences
     seqs = artin_sequences(5)
+    test_graph = RCGraph(((5, 2, 1),
+                          (4, 3, 2),
+                          (4,),
+                         (),
+                         (5,)))
+    print(test_graph)
+    print("Extracting row 2")
+    graph2, cert = test_graph.extract_row(2)
+    print("Done")
+    print(graph2)
+    print("Cert:")
+    print(cert)
+    print("Reinserting row 2")
+    graph3 = graph2.insert_reflections(2, [a - 1 for a in test_graph[1]])
+    print(graph3)
+    assert graph3 == test_graph
+    print("Good to go")
+    exit()
     for seq in seqs:
         if sum(seq) > 6 and max([index for index, val in enumerate(seq) if val != 0]) >= 2:
             graph = next(iter([k for k in (FA(*seq)* RCGraph()).keys() if len(k.perm) <= 6]))
