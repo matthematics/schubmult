@@ -657,7 +657,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         rev_row.reverse()
         index = bisect_left(rev_row, i + j - 1)
         if index >= len(rev_row):
-            new_row = [*row, i + j - 1]
+            new_row = [i + j - 1, *row]
         else:
             if rev_row[index] == i + j - 1:
                 new_row = [*row[:len(row) - index], *row[len(row) - index:]]
@@ -672,8 +672,8 @@ class RCGraph(KeyType, UnderlyingGraph):
         reflections = []
         times = len(perm) + 1 - perm[row - 1] - len(self[row - 1])
         working_rc, reflections = working_rc.kogan_insert(row, times)
-        print("Up")
-        print(working_rc)
+        # print("Up")
+        # print(working_rc)
         assert working_rc.perm[row - 1] == len(working_rc.perm)
         return RCGraph([*working_rc[:row - 1], *tuple(tuple([a - 1 for a in row]) for row in working_rc[row:])]), tuple(reflections)
 
@@ -691,7 +691,13 @@ class RCGraph(KeyType, UnderlyingGraph):
         # row is descent
         # inserting times
         working_rc = self
-        while working_rc.perm.inv != self.perm.inv + times:
+        last_inv = -1000
+        # print(f"{times=}")
+        while working_rc.perm.inv < self.perm.inv + times:
+            # print("New iter")
+            # print(working_rc)
+            if last_inv == working_rc.perm.inv:
+                raise ValueError("Could not insert row")
             last_inv = working_rc.perm.inv
             for i in range((max(working_rc[row - 1]))-row + 2, 0, -1):
                 flag = False
@@ -724,7 +730,9 @@ class RCGraph(KeyType, UnderlyingGraph):
                     for j in range(max((working_rc[row_below - 1])) - row_below + 1, 0, -1):
                         new_flag = False
                         if working_rc.has_element(row_below, j):
-                            a, b = working_rc.right_root_at(row_below, j)
+                            b, a = working_rc.right_root_at(row_below, j)
+                            if a > b:
+                                continue
                             if a in dict_by_a and b in dict_by_a[a]:
                                 new_rc = working_rc.insert_ref_at_spot(row_below, j)
                                 dict_by_a[a].remove(b)
@@ -763,7 +771,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         a_keys = sorted(dict_by_a.keys())
         # print(dict_by_a)
         # print(start_perm)
-        # input()
+        #input()
         for a in a_keys:
             while a in dict_by_a.keys():
                 for b in sorted(dict_by_b.keys(), reverse=True):
@@ -2411,7 +2419,7 @@ if __name__ == "__main__":
     seqs = artin_sequences(5)
     for seq in seqs:
         if sum(seq) > 6 and max([index for index, val in enumerate(seq) if val != 0]) >= 2:
-            graph = next(iter((FA(*seq)* RCGraph()).keys()))
+            graph = next(iter([k for k in (FA(*seq)* RCGraph()).keys() if len(k.perm) <= 6]))
             print(graph)
             print("Extracting row 2")
             graph2, cert = graph.extract_row(2)
