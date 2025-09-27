@@ -661,14 +661,16 @@ class RCGraph(KeyType, UnderlyingGraph):
                 new_row = [*row[:len(row) - index], i + j - 1, *row[len(row) - index:]]
         return RCGraph([*self[:i - 1], tuple(new_row), *self[i:]])
 
+    # certificate to insert the row
     def extract_row(self, row):
         perm = self.perm
         new_perm = perm
         working_rc = self
+        reflections = []
         while new_perm[row-1] != len(new_perm):
             working_rc = working_rc.kogan_insert(row, 1)
             new_perm = working_rc.perm
-        return RCGraph([*working_rc[:row - 1], *tuple(tuple([a - 1 for a in row]) for row in working_rc[row:])])
+        return RCGraph([*working_rc[:row - 1], *tuple(tuple([a - 1 for a in row]) for row in working_rc[row:])]), (tuple([perm[i] for i in range(row,len(perm)) if perm[i] == new_perm[i]]), row)
 
     def kogan_insert(self, row, times):
         dict_by_a = {}
