@@ -244,6 +244,7 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     def reverse_kogan_insert(self, descent, pair_sequence):
         # print("Here")
+        from schubmult.utils.perm_utils import has_bruhat_descent
         pair_sequence = sorted(pair_sequence, key=lambda x: x[0])
         pair_dict = {}
         pair_dict_rev = {}
@@ -258,11 +259,12 @@ class RCGraph(KeyType, UnderlyingGraph):
 
         def is_relevant_crossing(root, prm):
             #min_root = max(pair_dict.keys())
+
             if root[0] not in pair_dict:
                 if root[0] not in pair_dict or  pair_dict_rev.get(root[0], 0) != pair_dict_rev.get(root[1], 0):
                     return False
                 return True
-            return root[1] in pair_dict[root[0]] and prm[root[0] - 1] > prm[root[1] - 1]
+            return root[1] in pair_dict[root[0]] and has_bruhat_descent(prm, root[0] - 1, root[1] - 1)
 
         # may have to add q, s or a_i, q
         def is_relevant_noncrossing(root):
@@ -273,8 +275,8 @@ class RCGraph(KeyType, UnderlyingGraph):
         # we are in the second case, add (ai, q) just before where (a, bi) is in the sequence.
 
         new_rc = self
-        i = len(new_rc) - 1
-        index = 0
+        i = descent - 1
+        index = max(new_rc[i]) - i - 1 if len(new_rc[i]) > 0 else -1
         # print(pair_dict)
         while i >= 0:
             build_graph = [*new_rc]
@@ -283,20 +285,21 @@ class RCGraph(KeyType, UnderlyingGraph):
             # print(new_rc)
             if len(new_rc[i]) > 0:
                 # print("Row", i)
-                while index < max(new_rc[i]) - i:
+                while len(pair_dict) > 0 and index >= 0:
                     #col_index = max(new_rc[i]) - i - index - 1
+                    # print(pair_dict)
                     col_index = index
                     refl = col_index + i + 1
                     # index = col_index + 1 + 1
                     #assert index != 0 or new_rc.has_element(i + 1, col_index + 1)
-                    print("Starting")
-                    print(new_rc)
+                    # print("Starting")
+                    # print(new_rc)
                     if new_rc.has_element(i + 1, col_index + 1):
-                        print(f"Found at {col_index + 1}")
+                        # print(f"Found at {col_index + 1}")
                         root = new_rc.right_root_at(i + 1, col_index + 1)
-                        print(f"{root=}")
+                        # print(f"{root=}")
                         if is_relevant_crossing(root, new_rc.perm):
-                            print("Relevant")
+                            # print("Relevant")
                             did_any = True
                             if root[0] in pair_dict:
                                 pair_dict[root[0]].remove(root[1])
@@ -307,16 +310,16 @@ class RCGraph(KeyType, UnderlyingGraph):
                             build_graph[i] = tuple(a for a in build_graph[i] if a != refl)
                             start_spot = len(new_rc[i])
                             new_rc = RCGraph(build_graph)
-                            print(f"removed")
+                            # print(f"removed")
                             #print(build_graph[i])
-                            print(new_rc)
-                            for index2 in range(index, start_spot):
+                            # print(new_rc)
+                            for index2 in range(max(new_rc[i]) - i - 1, index, -1):
                                 #col_index2 = max(new_rc[i]) - i - index2 - 1
                                 col_index2 = index2
                                 refl = col_index2 + i + 1
                                 if not new_rc.has_element(i + 1, col_index2 + 1):
                                     a, b = new_rc.right_root_at(i + 1, col_index2 + 1)
-                                    root = (a, b)
+                                    root = (b, a)
                                     if is_relevant_noncrossing(root):
                                         # print(f"Putting it back")
                                         if a not in pair_dict:
@@ -335,18 +338,19 @@ class RCGraph(KeyType, UnderlyingGraph):
                                                 break
                                         build_graph[i] = tuple(new_row)
                                         new_rc = RCGraph(build_graph)
-                                        print("added back")
-                                        print(new_rc)
+                                        # print("added back")
+                                        # print(new_rc)
                                         did_any = False
-                    index += 1
+                    index -= 1
                     if did_any:
                         break
             # print(f"{did_any=} {index=}")
             if not did_any:
                 i -= 1
+            if len(new_rc[i]) == 0:
+                index = -1
             else:
-                i = len(new_rc) - 1
-            index = 0
+                index = max(new_rc[i]) - i - 1
                 # print(f"{i=}")
                 # print(f"{index=}")
         assert len(pair_dict) == 0, f"{pair_dict=}, {pair_dict_rev=}, {new_rc=}, {pair_sequence=}"
@@ -664,40 +668,49 @@ class RCGraph(KeyType, UnderlyingGraph):
     # certificate to insert the row
     def extract_row(self, row):
         perm = self.perm
-        new_perm = perm
         working_rc = self
         reflections = []
-        while new_perm[row-1] != len(new_perm):
-            working_rc = working_rc.kogan_insert(row, 1)
-            new_perm = working_rc.perm
-        return RCGraph([*working_rc[:row - 1], *tuple(tuple([a - 1 for a in row]) for row in working_rc[row:])]), (tuple([perm[i] for i in range(row,len(perm)) if perm[i] == new_perm[i]]), row)
+        times = len(perm) + 1 - perm[row - 1] - len(self[row - 1])
+        working_rc, reflections = working_rc.kogan_insert(row, times)
+        print("Up")
+        print(working_rc)
+        assert working_rc.perm[row - 1] == len(working_rc.perm)
+        return RCGraph([*working_rc[:row - 1], *tuple(tuple([a - 1 for a in row]) for row in working_rc[row:])]), tuple(reflections)
+
+    def insert_row(self, row, length, certificate):
+        perm = self.perm
+
+        working_rc = RCGraph([*self[:row - 1],tuple(range(row - 1 + length + len(certificate), row - 1, -1)),*tuple([tuple([a+1 for a in row0]) for row0 in self[row - 1:]   ])])
+        #cert = [(~working_rc.perm)[i] for i in range(row - 1, len(working_rc.perm)) if (~working_rc.perm)[i] not in certificate]
+        return working_rc.reverse_kogan_insert(row, certificate)
 
     def kogan_insert(self, row, times):
+        from schubmult.utils.perm_utils import has_bruhat_ascent
         dict_by_a = {}
         dict_by_b = {}
         # row is descent
         # inserting times
         working_rc = self
-        while working_rc.perm.inv < self.perm.inv + times:
+        while working_rc.perm.inv != self.perm.inv + times:
             last_inv = working_rc.perm.inv
             for i in range((max(working_rc[row - 1]))-row + 2, 0, -1):
                 flag = False
                 if not working_rc.has_element(row, i):
                     a, b = working_rc.right_root_at(row, i)
                     flag = False
-                    if a <= row and b > row and b not in dict_by_b:
+                    if a <= row and b > row and b not in dict_by_b and has_bruhat_ascent(working_rc.perm, a - 1, b - 1):
                         new_rc = working_rc.insert_ref_at_spot(row, i)
                         dict_by_a[a] = dict_by_a.get(a, set())
                         dict_by_a[a].add(b)
                         dict_by_b[b] = a
                         flag = True
                         working_rc = new_rc
-                    if a in dict_by_b and b not in dict_by_b:
+                    if a in dict_by_b and b not in dict_by_b and has_bruhat_ascent(working_rc.perm, dict_by_b[a] - 1, b - 1):
                         new_rc = working_rc.insert_ref_at_spot(row, i)
                         dict_by_a[dict_by_b[a]].add(b)
                         flag = True
                         working_rc = new_rc
-                    elif b in dict_by_b and a not in dict_by_b and a > row:
+                    elif b in dict_by_b and a not in dict_by_b and a > row and has_bruhat_ascent(working_rc.perm, dict_by_b[b] - 1, a - 1):
                         new_rc = working_rc.insert_ref_at_spot(row, i)
                         dict_by_a[dict_by_b[b]].add(a)
                         flag = True
@@ -708,7 +721,6 @@ class RCGraph(KeyType, UnderlyingGraph):
                 for row_below in range(row - 1, 0, -1):
                     if working_rc.perm.inv == last_inv + 1:
                         break
-                    
                     for j in range(max((working_rc[row_below - 1])) - row_below + 1, 0, -1):
                         new_flag = False
                         if working_rc.has_element(row_below, j):
@@ -739,14 +751,32 @@ class RCGraph(KeyType, UnderlyingGraph):
                             for jp in range(max(working_rc[row_below - 1]) - row_below + 1, 0, -1):
                                 if not working_rc.has_element(row_below, jp):
                                     a2, b2 = working_rc.right_root_at(row_below, jp)
-                                    if a2 <= row and b2 > row and b2 not in dict_by_b:
+                                    if a2 <= row and b2 > row and b2 not in dict_by_b and has_bruhat_ascent(working_rc.perm, a2 - 1, b2 - 1):
                                         new_rc = working_rc.insert_ref_at_spot(row_below, jp)
                                         dict_by_a[a2] = dict_by_a.get(a2, set())
                                         dict_by_a[a2].add(b2)
                                         dict_by_b[b2] = a2
                                         working_rc = new_rc
                                         break
-        return working_rc
+        reflections = []
+        start_perm = self.perm
+        a_keys = sorted(dict_by_a.keys())
+        # print(dict_by_a)
+        # print(start_perm)
+        # input()
+        for a in a_keys:
+            while a in dict_by_a.keys():
+                for b in sorted(dict_by_b.keys(), reverse=True):
+                    if has_bruhat_ascent(start_perm, a - 1, b - 1):
+                        reflections.append((a, b))
+                        start_perm = start_perm.swap(a - 1, b - 1)
+                        dict_by_a[a].remove(b)
+                        if len(dict_by_a[a]) == 0:
+                            del dict_by_a[a]
+                        del dict_by_b[b]
+                        break
+                #print(f"Did not find {a,b} start_perm={start_perm} {dict_by_a=}")
+        return working_rc, tuple(reflections)
     
     @classmethod
     def schub_hom(cls, perm, length):
@@ -2384,8 +2414,16 @@ if __name__ == "__main__":
             graph = next(iter((FA(*seq)* RCGraph()).keys()))
             print(graph)
             print("Extracting row 2")
-            graph2 = graph.extract_row(2)
+            graph2, cert = graph.extract_row(2)
+            print("Done")
             print(graph2)
+            print("Cert:")
+            print(cert)
+            print("Reinserting row 2")
+            graph3 = graph2.insert_row(2, len(graph[1]),cert)
+            print(graph3)
+            assert graph3 == graph
+            print("Good to go")
     #print(RCGraph.schub_hom(ASx(uncode([2])))*RCGraph.schub_hom(ASx(uncode([3,2]))))
     #p = 3
     # print(f"Acting with {p} on the right")
@@ -2393,11 +2431,11 @@ if __name__ == "__main__":
     
 
     # for rc in rc_set:
-    #     print(rc)
-    #     print("-----")
+    #     # print(rc)
+    #     # print("-----")
     #     q = 2
-    #     print(f"Acting with {q} on the right")
+    #     # print(f"Acting with {q} on the right")
     #     rc_set2 = rc.right_p_act(q)
     #     for rc2 in rc_set2:
-    #         print(rc2)
-    #         print("=====")
+    #         # print(rc2)
+    #         # print("=====")
