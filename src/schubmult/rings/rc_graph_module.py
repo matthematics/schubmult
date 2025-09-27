@@ -1,3 +1,4 @@
+import logging
 from functools import cache
 from itertools import zip_longest
 
@@ -12,6 +13,10 @@ from .free_algebra import FreeAlgebra, FreeAlgebraElement
 from .free_algebra_basis import SchubertBasis, WordBasis
 from .nil_hecke import NilHeckeRing
 from .tensor_ring import TensorRing, TensorRingElement
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 
 FAS = FreeAlgebra(basis=SchubertBasis)
 
@@ -220,6 +225,24 @@ class RCGraph(KeyType, UnderlyingGraph):
         if not isinstance(other, RCGraph):
             return NotImplemented
         return tuple(self) == tuple(other)
+
+    def insert_reflections(self, row, indexes):
+        """
+        Insert reflections at the indexes in the given row
+        """
+        # check if valid
+        sub_rc = self.rowrange(row-1, len(self))
+        indexes = sorted(indexes, reverse=True)
+        test_rc = RCGraph([tuple(indexes),*[tuple([a+1 for a in rrow]) for rrow in sub_rc]])
+        #logger.debug("Test RC:")
+        #logger.debug(test_rc)
+        assert test_rc.perm.inv == len(test_rc.perm_word())
+        working_rc = RCGraph([*self[:row-1],tuple(range(len(self.perm), row - 1, -1)),*[tuple([a+1 for a in rrow]) for rrow in self[row-1:]]])
+        logger.debug("Starting with")
+        indexes = set(indexes)
+        reflections = [working_rc.right_root_at(row, non_index) for non_index in range(1,len(working_rc[row-1])+1) if non_index not in indexes]
+        return working_rc.reverse_kogan_insert(row, reflections)
+
 
     def right_root_at(self, i, j):
         from bisect import bisect_left
@@ -649,7 +672,7 @@ class RCGraph(KeyType, UnderlyingGraph):
             result += RCGraph.fa_hom(*word1) @ RCGraph.fa_hom(*word2)
         return result 
     
-    def insert_ref_at_spot(self, i, j):
+    def toggle_ref_at_spot(self, i, j):
         from bisect import bisect_left
         a, b = self.right_root_at(i, j)
         row = self[i - 1]
@@ -674,7 +697,9 @@ class RCGraph(KeyType, UnderlyingGraph):
         working_rc, reflections = working_rc.kogan_insert(row, times)
         # print("Up")
         # print(working_rc)
-        assert working_rc.perm[row - 1] == len(working_rc.perm)
+        while working_rc.perm[row - 1] != len(working_rc.perm):
+            times += 1
+            working_rc, reflections = working_rc.kogan_insert(row, times)
         return RCGraph([*working_rc[:row - 1], *tuple(tuple([a - 1 for a in row]) for row in working_rc[row:])]), tuple(reflections)
 
     def insert_row(self, row, length, certificate):
@@ -683,6 +708,15 @@ class RCGraph(KeyType, UnderlyingGraph):
         working_rc = RCGraph([*self[:row - 1],tuple(range(row - 1 + length + len(certificate), row - 1, -1)),*tuple([tuple([a+1 for a in row0]) for row0 in self[row - 1:]   ])])
         #cert = [(~working_rc.perm)[i] for i in range(row - 1, len(working_rc.perm)) if (~working_rc.perm)[i] not in certificate]
         return working_rc.reverse_kogan_insert(row, certificate)
+
+    def max_of_row(self, r):
+        rc = self
+        the_max = 0
+        if len(rc[r - 1]) > 0:
+            the_max = max(rc[r - 1]) - r
+        else:
+            the_max = max([rrow[0] for rrow in rc[:r-1] if len(rrow) > 0] + [1]) - r
+        return the_max + 1
 
     def kogan_insert(self, row, times):
         from schubmult.utils.perm_utils import has_bruhat_ascent
@@ -693,31 +727,34 @@ class RCGraph(KeyType, UnderlyingGraph):
         working_rc = self
         last_inv = -1000
         # print(f"{times=}")
+        
+
         while working_rc.perm.inv < self.perm.inv + times:
             # print("New iter")
             # print(working_rc)
             if last_inv == working_rc.perm.inv:
                 raise ValueError("Could not insert row")
             last_inv = working_rc.perm.inv
-            for i in range((max(working_rc[row - 1]))-row + 2, 0, -1):
+
+            for i in range((working_rc.max_of_row(row) + 1), 0, -1):
                 flag = False
                 if not working_rc.has_element(row, i):
                     a, b = working_rc.right_root_at(row, i)
                     flag = False
                     if a <= row and b > row and b not in dict_by_b and has_bruhat_ascent(working_rc.perm, a - 1, b - 1):
-                        new_rc = working_rc.insert_ref_at_spot(row, i)
+                        new_rc = working_rc.toggle_ref_at_spot(row, i)
                         dict_by_a[a] = dict_by_a.get(a, set())
                         dict_by_a[a].add(b)
                         dict_by_b[b] = a
                         flag = True
                         working_rc = new_rc
                     if a in dict_by_b and b not in dict_by_b and has_bruhat_ascent(working_rc.perm, dict_by_b[a] - 1, b - 1):
-                        new_rc = working_rc.insert_ref_at_spot(row, i)
+                        new_rc = working_rc.toggle_ref_at_spot(row, i)
                         dict_by_a[dict_by_b[a]].add(b)
                         flag = True
                         working_rc = new_rc
                     elif b in dict_by_b and a not in dict_by_b and a > row and has_bruhat_ascent(working_rc.perm, dict_by_b[b] - 1, a - 1):
-                        new_rc = working_rc.insert_ref_at_spot(row, i)
+                        new_rc = working_rc.toggle_ref_at_spot(row, i)
                         dict_by_a[dict_by_b[b]].add(a)
                         flag = True
                         working_rc = new_rc
@@ -727,14 +764,14 @@ class RCGraph(KeyType, UnderlyingGraph):
                 for row_below in range(row - 1, 0, -1):
                     if working_rc.perm.inv == last_inv + 1:
                         break
-                    for j in range(max((working_rc[row_below - 1])) - row_below + 1, 0, -1):
+                    for j in range(working_rc.max_of_row(row_below), 0, -1):
                         new_flag = False
                         if working_rc.has_element(row_below, j):
                             b, a = working_rc.right_root_at(row_below, j)
                             if a > b:
                                 continue
                             if a in dict_by_a and b in dict_by_a[a]:
-                                new_rc = working_rc.insert_ref_at_spot(row_below, j)
+                                new_rc = working_rc.toggle_ref_at_spot(row_below, j)
                                 dict_by_a[a].remove(b)
                                 if len(dict_by_a[a]) == 0:
                                     del dict_by_a[a]
@@ -742,7 +779,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                                 working_rc = new_rc
                                 new_flag = True
                             if a in dict_by_b and b in dict_by_b and dict_by_b[a] == dict_by_b[b]:
-                                new_rc = working_rc.insert_ref_at_spot(row_below, j)
+                                new_rc = working_rc.toggle_ref_at_spot(row_below, j)
                                 if new_rc.perm[dict_by_b[a] - 1] < new_rc.perm[a - 1]:
                                     dict_by_a[dict_by_b[a]].remove(a)
                                     del dict_by_b[a]
@@ -756,11 +793,11 @@ class RCGraph(KeyType, UnderlyingGraph):
                                 working_rc = new_rc
                                 new_flag = True
                         if new_flag:
-                            for jp in range(max(working_rc[row_below - 1]) - row_below + 1, 0, -1):
+                            for jp in range(working_rc.max_of_row(row_below), 0, -1):
                                 if not working_rc.has_element(row_below, jp):
                                     a2, b2 = working_rc.right_root_at(row_below, jp)
                                     if a2 <= row and b2 > row and b2 not in dict_by_b and has_bruhat_ascent(working_rc.perm, a2 - 1, b2 - 1):
-                                        new_rc = working_rc.insert_ref_at_spot(row_below, jp)
+                                        new_rc = working_rc.toggle_ref_at_spot(row_below, jp)
                                         dict_by_a[a2] = dict_by_a.get(a2, set())
                                         dict_by_a[a2].add(b2)
                                         dict_by_b[b2] = a2
@@ -2425,10 +2462,11 @@ if __name__ == "__main__":
             graph2, cert = graph.extract_row(2)
             print("Done")
             print(graph2)
-            print("Cert:")
-            print(cert)
+            # print("Cert:")
+            # print(cert)
             print("Reinserting row 2")
-            graph3 = graph2.insert_row(2, len(graph[1]),cert)
+            #graph3 = graph2.insert_row(2, len(graph[1]),cert)
+            graph3 = graph2.insert_reflections(2, [a - 1 for a in graph[1]])
             print(graph3)
             assert graph3 == graph
             print("Good to go")
