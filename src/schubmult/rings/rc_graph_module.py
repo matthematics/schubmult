@@ -220,11 +220,88 @@ class UnderlyingGraph(tuple):
         return tuple.__new__(_class, *args)
 
 
+def _is_row_root(row, root):
+    return root[0] <= row and root[1] > row
+
 class RCGraph(KeyType, UnderlyingGraph):
     def __eq__(self, other):
         if not isinstance(other, RCGraph):
             return NotImplemented
         return tuple(self) == tuple(other)
+
+    def _toggle_root(self, row, col, roots, used_bs):
+        root = self.right_root_at(row, col)
+        #ret = None
+        if _is_row_root(row, root) and root[1] not in used_bs:
+            roots[root[0]] = roots.get(root[0], [])
+            roots[root[0]].append(root[1])
+            used_bs[root[1]] = root[1]
+            return self.toggle_ref_at(row, col), True
+        if root[0] in used_bs and root[1] not in used_bs and root[1] > row:
+            a = used_bs[root[0]]
+            roots[a].insert(roots[a].index(root[0]), root[1])
+            used_bs[root[1]] = a
+            return self.toggle_ref_at(row, col), True
+        if root[1] in used_bs and root[0] not in used_bs and root[0] > row:
+            a = used_bs[root[1]]
+            roots[a].insert(roots[a].index(root[1]), root[0])
+            used_bs[root[0]] = a
+            return self.toggle_ref_at(row, col), True
+        return self, False
+
+    def _rectify(self, row, row_below, col, roots, used_bs):
+        working_rc = self
+        if row_below <= 0:
+            return self
+        for j in range(self.max_of_row(row_below)+1, 0, -1):
+            reinsert = False
+            if self.has_element(row_below, j):
+                a, b = self.right_root_at(row_below, j)
+                if a in roots and b in roots[a]:
+                    roots[a].remove(b)
+                    if len(roots[a]) == 0:
+                        del roots[a]
+                    del used_bs[b]
+                    working_rc = self.toggle_ref_at(row_below, j)
+                    reinsert = True
+                elif a in used_bs and b in used_bs and used_bs[a] == used_bs[b]:
+                    working_rc = self.toggle_ref_at(row_below, j)
+                    if working_rc.perm[used_bs[a] - 1] < working_rc.perm[a - 1]:
+                        roots[used_bs[a]].remove(a)
+                        del used_bs[a]
+                        if len(roots[used_bs[b]]) == 0:
+                            del roots[used_bs[b]]
+                    else:
+                        roots[used_bs[b]].remove(b)
+                        del used_bs[b]
+                        if len(roots[used_bs[a]]) == 0:
+                            del roots[used_bs[a]]
+                    reinsert = True
+            if reinsert:
+                for jp in range(working_rc.max_of_row(row_below), 0, -1):
+                    if not working_rc.has_element(row_below, jp):
+                        a2, b2 = working_rc.right_root_at(row_below, jp)
+                        if _is_row_root(row, (a2, b2)) and b2 not in used_bs and has_bruhat_ascent(working_rc.perm, a2 - 1, b2 - 1):
+                            working_rc = working_rc.toggle_ref_at(row_below, jp)
+                            roots[a2] = roots.get(a2, [])
+                            roots[a2].append(b2)
+                            used_bs[b2] = a2
+        return working_rc._rectify(row, row_below - 1, col, roots, used_bs)
+
+    # kogan
+    def insert_boxes_into_row(self, row, num_boxes):
+        roots = {}
+        used_bs = {}
+        working_rc = self
+        while len(working_rc.perm_word()) < len(self.perm_word()) + num_boxes:
+            for col in range(working_rc.max_of_row(row), 0, -1):
+                if not working_rc.has_element(row, i):
+                    working_rc, did = working_rc._toggle_root(row, col, roots, used_bs)
+                    if did:
+                        working_rc = working_rc._rectify(row, col, roots, used_bs)
+                        break
+        return working_rc, roots
+
 
     def insert_reflections(self, row, indexes):
         """
@@ -236,14 +313,33 @@ class RCGraph(KeyType, UnderlyingGraph):
         test_rc = RCGraph([tuple(indexes),*[tuple([a+1 for a in rrow]) for rrow in sub_rc]])
         #logger.debug("Test RC:")
         #logger.debug(test_rc)
+        working_rc = self
         assert test_rc.perm.inv == len(test_rc.perm_word())
-        working_rc = RCGraph([*self[:row-1],tuple(range(len(self.perm), row - 1, -1)),*[tuple([a+1 for a in rrow]) for rrow in self[row-1:]]])
+        times = len(self.perm) + 1 - row#len([index for index in range(row - 1, len(self.perm)) if len(self.perm) + 1 > self.perm[index])])
+        working_rc = working_rc.insert_boxes_into_row(row, times)[0]
+
         logger.debug("Starting with")
+        print(working_rc)
         indexes = set(indexes)
         print(f"{indexes=}")
-        reflections = [working_rc.right_root_at(row, non_index) for non_index in range(len(working_rc[row-1]),0,-1) if non_index not in indexes]
-        print(f"{reflections=}")
-        return working_rc.reverse_kogan_insert(row, reflections)
+        roots = [working_rc.right_root_at(row, index) for index in range(times + 1, 0, -1) if index not in indexes]
+        reflections = {}
+        while working_rc.perm.inv != self.perm.inv + len(indexes):
+            index = 0
+            while index < len(roots):
+                inv1 = working_rc.perm.inv
+                working_rc = working_rc.toggle_ref_at(*roots[index])
+                inv2 = working_rc.perm.inv
+                print("Toggled ", roots[index])
+                print("Got")
+                print(working_rc)
+                if inv2 != inv1 - 1:
+                    raise ValueError
+                #print(f"{reflections=}")
+                reflections[roots[0]] = reflections.get(roots[0], [])
+                reflections[roots[0]].append(roots[1])
+
+        return working_rc
 
 
     def right_root_at(self, i, j):
@@ -267,19 +363,19 @@ class RCGraph(KeyType, UnderlyingGraph):
 
         return ((~lower_perm)[start_root[0] - 1], (~lower_perm)[start_root[1] - 1])
 
-    def reverse_kogan_insert(self, descent, pair_sequence):
+    def reverse_kogan_insert(self, descent, reflection_path):
         # print("Here")
         from schubmult.utils.perm_utils import has_bruhat_descent
-        pair_sequence = sorted(pair_sequence, key=lambda x: x[0])
-        pair_dict = {}
+        #pair_sequence = sorted(pair_sequence, key=lambda x: x[0]
+        pair_dict = reflection_path
         pair_dict_rev = {}
-        for a, b in pair_sequence:
-            assert a <= descent and descent < b
-            pair_dict[a] = pair_dict.get(a, set())
-            pair_dict[a].add(b)
+        #ref_by_index = {}
+        working_perm = self.perm
+        for a, b_list in enumerate(pair_dict):
+            for b in b_list:
+                assert a <= descent and descent < b
+                pair_dict_rev[b] = a
 
-        for a, b in pair_sequence:
-            pair_dict_rev[b] = a
 
 
         def is_relevant_crossing(root, prm):
@@ -303,6 +399,8 @@ class RCGraph(KeyType, UnderlyingGraph):
         i = descent - 1
         index = new_rc.max_of_row(i) - 2 if len(new_rc[i]) > 0 else -1
         # print(pair_dict)
+        
+        
         while i >= 0:
             build_graph = [*new_rc]
             did_any = False
@@ -326,6 +424,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                         if is_relevant_crossing(root, new_rc.perm):
                             # print("Relevant")
                             did_any = True
+                            working_perm = working
                             if root[0] in pair_dict:
                                 pair_dict[root[0]].remove(root[1])
                                 del pair_dict_rev[root[1]]
@@ -673,7 +772,7 @@ class RCGraph(KeyType, UnderlyingGraph):
             result += RCGraph.fa_hom(*word1) @ RCGraph.fa_hom(*word2)
         return result 
     
-    def toggle_ref_at_spot(self, i, j):
+    def toggle_ref_at(self, i, j):
         from bisect import bisect_left
         a, b = self.right_root_at(i, j)
         row = self[i - 1]
@@ -695,12 +794,16 @@ class RCGraph(KeyType, UnderlyingGraph):
         working_rc = self
         reflections = []
         times = len(perm) + 1 - perm[row - 1] - len(self[row - 1])
-        working_rc, reflections = working_rc.kogan_insert(row, times)
+        working_rc, reflections = working_rc.insert_boxes_into_row(row, times)
         # print("Up")
         # print(working_rc)
         while working_rc.perm[row - 1] != len(working_rc.perm):
+            print("Extra")
             times += 1
-            working_rc, reflections = working_rc.kogan_insert(row, times)
+            working_rc, reflections = working_rc.insert_boxes_into_row(row, times)
+            print(working_rc)
+        #print("Worked it up")
+
         return RCGraph([*working_rc[:row - 1], *tuple(tuple([a - 1 for a in row]) for row in working_rc[row:])]), tuple(reflections)
 
     def insert_row(self, row, length, certificate):
@@ -708,122 +811,33 @@ class RCGraph(KeyType, UnderlyingGraph):
 
         working_rc = RCGraph([*self[:row - 1],tuple(range(row - 1 + length + len(certificate), row - 1, -1)),*tuple([tuple([a+1 for a in row0]) for row0 in self[row - 1:]   ])])
         #cert = [(~working_rc.perm)[i] for i in range(row - 1, len(working_rc.perm)) if (~working_rc.perm)[i] not in certificate]
+        certificate = RCGraph.find_reflection_path(perm, working_rc.perm, row)
         return working_rc.reverse_kogan_insert(row, certificate)
 
     def max_of_row(self, r):
         rc = self
-        the_max = 0
-        if len(rc[r - 1]) > 0:
-            the_max = max(rc[r - 1]) - r
+        if len(self[r-1]) == 0:
+            the_max = 1
         else:
-            the_max = max([rrow[0] for rrow in rc[:r-1] if len(rrow) > 0] + [1]) - r
-        return the_max + 1
+            the_max = max(self[r-1])
+        return the_max
 
-    def kogan_insert(self, row, times):
+
+    @staticmethod
+    def find_reflection_path(bottom_perm, top_perm, row):
         from schubmult.utils.perm_utils import has_bruhat_ascent
-        dict_by_a = {}
-        dict_by_b = {}
-        # row is descent
-        # inserting times
-        working_rc = self
-        last_inv = -1000
-        # print(f"{times=}")
-        
+        reflection_path = {}
+        working_perm = bottom_perm
+        while working_perm != bottom_perm:
+            for i in range(row):
+                for j in range(len(bottom_perm)-1,row - 1, -1):
+                    if working_perm[i] == bottom_perm[j] and has_bruhat_ascent(working_perm, i, j):
+                        reflection_path[i+1] = reflection_path.get(i+1, [])
+                        reflection_path[i+1].append(j+1)
+                        working_perm = working_perm.swap(i, j)
+                        break
+        return reflection_path
 
-        while working_rc.perm.inv < self.perm.inv + times:
-            # print("New iter")
-            # print(working_rc)
-            if last_inv == working_rc.perm.inv:
-                raise ValueError("Could not insert row")
-            last_inv = working_rc.perm.inv
-
-            for i in range((working_rc.max_of_row(row) + 1), 0, -1):
-                flag = False
-                if not working_rc.has_element(row, i):
-                    a, b = working_rc.right_root_at(row, i)
-                    flag = False
-                    if a <= row and b > row and b not in dict_by_b and has_bruhat_ascent(working_rc.perm, a - 1, b - 1):
-                        new_rc = working_rc.toggle_ref_at_spot(row, i)
-                        dict_by_a[a] = dict_by_a.get(a, set())
-                        dict_by_a[a].add(b)
-                        dict_by_b[b] = a
-                        flag = True
-                        working_rc = new_rc
-                    if a in dict_by_b and b not in dict_by_b and has_bruhat_ascent(working_rc.perm, dict_by_b[a] - 1, b - 1):
-                        new_rc = working_rc.toggle_ref_at_spot(row, i)
-                        dict_by_a[dict_by_b[a]].add(b)
-                        flag = True
-                        working_rc = new_rc
-                    elif b in dict_by_b and a not in dict_by_b and a > row and has_bruhat_ascent(working_rc.perm, dict_by_b[b] - 1, a - 1):
-                        new_rc = working_rc.toggle_ref_at_spot(row, i)
-                        dict_by_a[dict_by_b[b]].add(a)
-                        flag = True
-                        working_rc = new_rc
-                    if flag:
-                        break
-            if flag:
-                for row_below in range(row - 1, 0, -1):
-                    if working_rc.perm.inv == last_inv + 1:
-                        break
-                    for j in range(working_rc.max_of_row(row_below), 0, -1):
-                        new_flag = False
-                        if working_rc.has_element(row_below, j):
-                            b, a = working_rc.right_root_at(row_below, j)
-                            if a > b:
-                                continue
-                            if a in dict_by_a and b in dict_by_a[a]:
-                                new_rc = working_rc.toggle_ref_at_spot(row_below, j)
-                                dict_by_a[a].remove(b)
-                                if len(dict_by_a[a]) == 0:
-                                    del dict_by_a[a]
-                                del dict_by_b[b]
-                                working_rc = new_rc
-                                new_flag = True
-                            if a in dict_by_b and b in dict_by_b and dict_by_b[a] == dict_by_b[b]:
-                                new_rc = working_rc.toggle_ref_at_spot(row_below, j)
-                                if new_rc.perm[dict_by_b[a] - 1] < new_rc.perm[a - 1]:
-                                    dict_by_a[dict_by_b[a]].remove(a)
-                                    del dict_by_b[a]
-                                    if len(dict_by_a[dict_by_b[b]]) == 0:
-                                        del dict_by_a[dict_by_b[b]]
-                                else:
-                                    dict_by_a[dict_by_b[b]].remove(b)
-                                    del dict_by_b[b]
-                                    if len(dict_by_a[dict_by_b[a]]) == 0:
-                                        del dict_by_a[dict_by_b[a]]
-                                working_rc = new_rc
-                                new_flag = True
-                        if new_flag:
-                            for jp in range(working_rc.max_of_row(row_below), 0, -1):
-                                if not working_rc.has_element(row_below, jp):
-                                    a2, b2 = working_rc.right_root_at(row_below, jp)
-                                    if a2 <= row and b2 > row and b2 not in dict_by_b and has_bruhat_ascent(working_rc.perm, a2 - 1, b2 - 1):
-                                        new_rc = working_rc.toggle_ref_at_spot(row_below, jp)
-                                        dict_by_a[a2] = dict_by_a.get(a2, set())
-                                        dict_by_a[a2].add(b2)
-                                        dict_by_b[b2] = a2
-                                        working_rc = new_rc
-                                        break
-        reflections = []
-        start_perm = self.perm
-        a_keys = sorted(dict_by_a.keys())
-        # print(dict_by_a)
-        # print(start_perm)
-        #input()
-        for a in a_keys:
-            while a in dict_by_a.keys():
-                for b in sorted(dict_by_b.keys(), reverse=True):
-                    if has_bruhat_ascent(start_perm, a - 1, b - 1):
-                        reflections.append((a, b))
-                        start_perm = start_perm.swap(a - 1, b - 1)
-                        dict_by_a[a].remove(b)
-                        if len(dict_by_a[a]) == 0:
-                            del dict_by_a[a]
-                        del dict_by_b[b]
-                        break
-                #print(f"Did not find {a,b} start_perm={start_perm} {dict_by_a=}")
-        return working_rc, tuple(reflections)
-    
     @classmethod
     def schub_hom(cls, perm, length):
         word_elem = ASx(perm, length).change_basis(WordBasis)
