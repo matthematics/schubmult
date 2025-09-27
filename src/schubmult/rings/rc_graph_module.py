@@ -634,15 +634,134 @@ class RCGraph(KeyType, UnderlyingGraph):
         return cls.fa_hom(*word[:-1]) * cls.fa_hom(word[-1])
 
     @classmethod
+    def fa_coprod(cls, *word):
+        if len(word) == 0:
+            return cls()@cls()
+        if all(a == 0 for a in word):
+            return cls([()*len(word)])@cls([()*len(word)])
+        cop = FA(*word).coproduct()
+        result = 0
+        for (word1, word2), coeff in cop.items():
+            result += RCGraph.fa_hom(*word1) @ RCGraph.fa_hom(*word2)
+        return result 
+    
+    def insert_ref_at_spot(self, i, j):
+        from bisect import bisect_left
+        a, b = self.right_root_at(i, j)
+        row = self[i - 1]
+        rev_row = [*row]
+        rev_row.reverse()
+        index = bisect_left(rev_row, i + j - 1)
+        if index >= len(rev_row):
+            new_row = [*row, i + j - 1]
+        else:
+            if rev_row[index] == i + j - 1:
+                new_row = [*row[:len(row) - index], *row[len(row) - index:]]
+            else:
+                new_row = [*row[:len(row) - index], i + j - 1, *row[len(row) - index:]]
+        return RCGraph([*self[:i - 1], tuple(new_row), *self[i:]])
+
+    def extract_row(self, row):
+        perm = self.perm
+        new_perm = perm
+        working_rc = self
+        while new_perm[row-1] != len(new_perm):
+            working_rc = working_rc.kogan_insert(row, 1)
+            new_perm = working_rc.perm
+        return RCGraph([*working_rc[:row - 1], *tuple(tuple([a - 1 for a in row]) for row in working_rc[row:])])
+
+    def kogan_insert(self, row, times):
+        dict_by_a = {}
+        dict_by_b = {}
+        # row is descent
+        # inserting times
+        working_rc = self
+        while working_rc.perm.inv < self.perm.inv + times:
+            last_inv = working_rc.perm.inv
+            for i in range((max(working_rc[row - 1]))-row + 2, 0, -1):
+                flag = False
+                if not working_rc.has_element(row, i):
+                    a, b = working_rc.right_root_at(row, i)
+                    flag = False
+                    if a <= row and b > row and b not in dict_by_b:
+                        new_rc = working_rc.insert_ref_at_spot(row, i)
+                        dict_by_a[a] = dict_by_a.get(a, set())
+                        dict_by_a[a].add(b)
+                        dict_by_b[b] = a
+                        flag = True
+                        working_rc = new_rc
+                    if a in dict_by_b and b not in dict_by_b:
+                        new_rc = working_rc.insert_ref_at_spot(row, i)
+                        dict_by_a[dict_by_b[a]].add(b)
+                        flag = True
+                        working_rc = new_rc
+                    elif b in dict_by_b and a not in dict_by_b and a > row:
+                        new_rc = working_rc.insert_ref_at_spot(row, i)
+                        dict_by_a[dict_by_b[b]].add(a)
+                        flag = True
+                        working_rc = new_rc
+                    if flag:
+                        break
+            if flag:
+                for row_below in range(row - 1, 0, -1):
+                    if working_rc.perm.inv == last_inv + 1:
+                        break
+                    
+                    for j in range(max((working_rc[row_below - 1])) - row_below + 1, 0, -1):
+                        new_flag = False
+                        if working_rc.has_element(row_below, j):
+                            a, b = working_rc.right_root_at(row_below, j)
+                            if a in dict_by_a and b in dict_by_a[a]:
+                                new_rc = working_rc.insert_ref_at_spot(row_below, j)
+                                dict_by_a[a].remove(b)
+                                if len(dict_by_a[a]) == 0:
+                                    del dict_by_a[a]
+                                del dict_by_b[b]
+                                working_rc = new_rc
+                                new_flag = True
+                            if a in dict_by_b and b in dict_by_b and dict_by_b[a] == dict_by_b[b]:
+                                new_rc = working_rc.insert_ref_at_spot(row_below, j)
+                                if new_rc.perm[dict_by_b[a] - 1] < new_rc.perm[a - 1]:
+                                    dict_by_a[dict_by_b[a]].remove(a)
+                                    del dict_by_b[a]
+                                    if len(dict_by_a[dict_by_b[b]]) == 0:
+                                        del dict_by_a[dict_by_b[b]]
+                                else:
+                                    dict_by_a[dict_by_b[b]].remove(b)
+                                    del dict_by_b[b]
+                                    if len(dict_by_a[dict_by_b[a]]) == 0:
+                                        del dict_by_a[dict_by_b[a]]
+                                working_rc = new_rc
+                                new_flag = True
+                        if new_flag:
+                            for jp in range(max(working_rc[row_below - 1]) - row_below + 1, 0, -1):
+                                if not working_rc.has_element(row_below, jp):
+                                    a2, b2 = working_rc.right_root_at(row_below, jp)
+                                    if a2 <= row and b2 > row and b2 not in dict_by_b:
+                                        new_rc = working_rc.insert_ref_at_spot(row_below, jp)
+                                        dict_by_a[a2] = dict_by_a.get(a2, set())
+                                        dict_by_a[a2].add(b2)
+                                        dict_by_b[b2] = a2
+                                        working_rc = new_rc
+                                        break
+        return working_rc
+    
+    @classmethod
     def schub_hom(cls, perm, length):
-        return RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(perm, length),1))
+        word_elem = ASx(perm, length).change_basis(WordBasis)
+        result = 0
+        for word, coeff in word_elem.items():
+            result += coeff * RCGraph.fa_hom(*word)
+        return result
 
     @classmethod
     def schub_coproduct(cls, perm, length):
-        elem = ASx(perm,length).coproduct()
+        word_elem = ASx(perm, length).change_basis(WordBasis)
         result = 0
-        for (perm1, perm2), coeff in elem.items():
-            result += coeff * cls.schub_hom(*perm1) @ cls.schub_hom(*perm2)
+        for word, coeff in word_elem.items():
+            cop = coeff * FA(*word).coproduct()
+            for (word1, word2), cf2 in cop.items():
+                result += cf2 * RCGraph.fa_hom(*word1) @ RCGraph.fa_hom(*word2)
         return result
 
     @cache
@@ -1756,6 +1875,34 @@ def try_lr_module(perm, length=None):
 
 
 @cache
+def coprod_mod(perm, length):
+    # print(f"Starting {perm}")
+    if perm.inv == 0 or length == 1:
+        return RCGraph.schub_coproduct(perm, length)
+    lower_perm = uncode(perm.trimcode[1:])
+    elem = ASx(lower_perm, length - 1)
+    lower_module1 = coprod_mod(lower_perm, length - 1)
+
+    ret_elem = RCGraph.schub_coproduct(uncode([perm.trimcode[0]]), 1) * lower_module1
+    #  #  # print(f"{ret_elem=}")
+
+    ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
+
+    if length == 1:
+        return ret_elem
+    keys = set(ret_elem.keys())
+    # print(f"{repr(keys)=} {perm=}")
+    up_elem = ASx(uncode([perm.trimcode[0]]), 1) * elem
+    # print(f"{up_elem=}")
+    for key, coeff in up_elem.items():
+        if key[0] != perm:
+            assert coeff == 1
+            assert key[1] == length
+            ret_elem -= coprod_mod(*key)
+    ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
+    return ret_elem
+
+@cache
 def try_lr_module_inject(perm, length=None):
     # print(f"Starting {perm}")
     if length is None:
@@ -2228,7 +2375,15 @@ def all_fa_degree(degree, length):
 
 if __name__ == "__main__":
     # test module functionality
-    print(RCGraph.schub_coproduct(uncode([1,1]),2))
+    from schubmult.utils.perm_utils import artin_sequences
+    seqs = artin_sequences(5)
+    for seq in seqs:
+        if sum(seq) > 6 and max([index for index, val in enumerate(seq) if val != 0]) >= 2:
+            graph = next(iter((FA(*seq)* RCGraph()).keys()))
+            print(graph)
+            print("Extracting row 2")
+            graph2 = graph.extract_row(2)
+            print(graph2)
     #print(RCGraph.schub_hom(ASx(uncode([2])))*RCGraph.schub_hom(ASx(uncode([3,2]))))
     #p = 3
     # print(f"Acting with {p} on the right")
