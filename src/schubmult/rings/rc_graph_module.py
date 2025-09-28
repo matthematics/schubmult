@@ -1338,13 +1338,10 @@ class RCGraph(KeyType, UnderlyingGraph):
             return RCGraphModule({RCGraph([()]): 1}) @ RCGraphModule({RCGraph([()]): 1})
         if self.perm.inv == 0:
             return RCGraphModule({RCGraph([()]*len(self)): 1}) @ RCGraphModule({RCGraph([()]*len(self)): 1})
-        if len(self) > 1:
-            h_list = trans_to_h_list(self.rowrange(len(self)-1, len(self))[0])
-        else:
-            h_list = trans_to_h_list(self[-1])
+        h_list = trans_to_h_list(self.rowrange(len(self)-1, len(self))[0])
         #if len(self) == 1:
         buildup_module = RCGraphModule({RCGraph([()]): 1}) @ RCGraphModule({RCGraph([()]): 1})
-        mul_module = RCGraph(self[:-1]).coproduct()
+        
             # print("Buildup is")
             # print(buildup_module)
         ret_elem = 0
@@ -1379,6 +1376,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         # print("ret_elem_first")
         # print(ret_elem)
         if len(self) > 1:
+            mul_module = RCGraph(self[:-1]).coproduct()
             ret_elem = mul_module * ret_elem
         
         # print("Final result for")
