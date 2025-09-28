@@ -1358,10 +1358,11 @@ class RCGraph(KeyType, UnderlyingGraph):
             return RCGraphModule({RCGraph([()]*len(self)): 1}) @ RCGraphModule({RCGraph([()]*len(self)): 1})
         buildup_module = RCGraphModule({RCGraph([]): 1}) @ RCGraphModule({RCGraph([]): 1})
         
-        for row in range(len(self)):
+        for row in range(len(self) - 1, -1, -1):
             ret_elem = 0
             #buildup_module = RCGraph.pad_tensor_module_with_zeros(buildup_module, 1)
-            h_list = trans_to_h_list(self[row])
+            the_row = self.rowrange(row, row + 1)
+            h_list = trans_to_h_list(the_row[0])
             #if len(self) == 1:
             
             
@@ -1377,27 +1378,27 @@ class RCGraph(KeyType, UnderlyingGraph):
                 
                 # print("Product is")
                 # print(prod_module)
-                rc11 = RCGraph.right_zero_act_pair(rc1,rc2)
+                rc01 = RCGraph([(),*rc1.shiftup(1)])
+                rc02 = RCGraph([(),*rc2.shiftup(1)])
                 
                 # print(f"{rc12=}")
                 # print(f"{rc11}")
                 for perm in h_list:
                     perm_set = ASx(perm).coproduct()
                     for ((p1, _), (p2, _)), _ in perm_set.items():
-                        for rc01, rc02 in rc11:
-                            rc011 = rc01
-                            rc012 = rc02
-                            if p1.inv > 0:
-                                rc011 = rc011.kogan_insert(len(p1.trimcode),[row+1]*p1.inv)
-                            if p2.inv > 0:
-                                rc012 = rc012.kogan_insert(len(p2.trimcode),[row+1]*p2.inv)
-                            if rc011.perm.bruhat_leq(self.rowrange(0,row+1).perm) and rc012.perm.bruhat_leq(self.rowrange(0,row+1).perm):
+                        rc011 = rc01
+                        rc012 = rc02
+                        if p1.inv > 0:
+                            rc011 = rc011.kogan_insert(len(p1.trimcode),[1]*p1.inv)
+                        if p2.inv > 0:
+                            rc012 = rc012.kogan_insert(len(p2.trimcode),[1]*p2.inv)
+                        #if rc011.perm.bruhat_leq(self.rowrange(0,row+1).perm) and rc012.perm.bruhat_leq(self.rowrange(0,row+1).perm):
                                 # print("Matched")
                                 # print(rc011)
                                 # print(rc012)
                                 # print("With coeff", coeff)
                                 # print("and perm", perm)
-                                ret_elem += coeff * (rc011 @ rc012)
+                        ret_elem += coeff * (rc011 @ rc012)
             buildup_module = ret_elem
             # print("mul_module")
             # print(mul_module)
