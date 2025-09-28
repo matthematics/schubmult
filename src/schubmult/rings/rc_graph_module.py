@@ -391,7 +391,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         Insert reflections at the indexes in the given row
         """
         # check if valid
-        print(f"{indexes=}")
+        # print(f"{indexes=}")
         indexes = sorted(indexes, reverse=True)
         working_rc = self
         while len(working_rc)>= row:
@@ -532,13 +532,13 @@ class RCGraph(KeyType, UnderlyingGraph):
             if not did_any:
                 i -= 1
             if i > 0:
-                print(f"{i=}")
+                # print(f"{i=}")
                 index = new_rc.max_of_row(i) - 1
                 # print(f"{i=}")
                 # print(f"{index=}")
         assert len(pair_dict_rev) == 0, f"{pair_dict=}, {pair_dict_rev=}, {new_rc=}"
-        print("Got")
-        print(new_rc)
+        # print("Got")
+        # print(new_rc)
         return new_rc
 
     def right_p_act(self, p):
@@ -858,8 +858,8 @@ class RCGraph(KeyType, UnderlyingGraph):
         if result.is_valid:
             return result
         # rectify
-        print("Result")
-        print(result)
+        # print("Result")
+        # print(result)
 
         return result._monk_rectify(descent, row)
 
@@ -892,7 +892,7 @@ class RCGraph(KeyType, UnderlyingGraph):
             interim = interim.exchange_property(max(interim.perm.descents()) + 1)
             print("Deleted descent")
             print(interim)
-            if max(interim.perm.descents()) + 1 == max(prev_interim.perm.descents()) + 1:
+            if max(interim.perm.descents()) + 1 >= max(prev_interim.perm.descents()) + 1:
                 print("Same descent")
                 for i in range(len(interim)):
                     if len(interim[i]) < len(prev_interim[i]):
@@ -903,7 +903,9 @@ class RCGraph(KeyType, UnderlyingGraph):
                 for i in range(len(interim)):
                     if len(interim[i]) < len(prev_interim[i]):
                         print(f"Found row to insert {i + 1}")
-                        interim = interim.monk_insert(max(interim.perm.descents()) + 1, i + 1)
+                        print("Descent was", max(prev_interim.perm.descents()) + 1)
+                        print("Now", max(interim.perm.descents()) + 1)
+                        interim = interim.monk_insert(max(prev_interim.perm.descents()), i + 1)
                         break
             prev_interim = interim
         return interim.rowrange(0, len(self) - 1)
@@ -938,7 +940,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         reflections = {}
         
         reflections[len(working_rc)] = [len(working_rc) + a for a in range(len(working_rc[-1])-1,0,-1)]
-        print(f"{reflections=}")
+        # print(f"{reflections=}")
         working_rc = RCGraph(working_rc.reverse_kogan_insert(len(working_rc), reflections)[:-1])
         return RCGraph(working_rc)
             #print(working_rc)
@@ -948,7 +950,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         from bisect import bisect_left
         inversions = [self.left_to_right_inversion_coord(i) for i in range(len(self.perm_word()))]
         inversions.sort(key=lambda x: (x[0], -x[1]))
-        print(f"{inversions=}")
+        # print(f"{inversions=}")
         
         return bisect_left(inversions, (row, col), key=lambda x: (x[0], -x[1]))
 
@@ -1001,13 +1003,13 @@ class RCGraph(KeyType, UnderlyingGraph):
         working_rc = self
         to_match = tuple(sorted([a - row + 1 for a in working_rc[row-1]]))
         lower_perm = None
-        print(to_match)
+        # print(to_match)
         for L, new_perm in pull_out_var(row, working_rc.perm):
-            print("Trying   ", L)
+            # print("Trying   ", L)
 
             if tuple(sorted(L)) == to_match:
                 lower_perm = new_perm
-                print("Good")
+                # print("Good")
                 break
         assert lower_perm is not None
         build_rc = RCGraph(working_rc[:-1])
@@ -1018,166 +1020,22 @@ class RCGraph(KeyType, UnderlyingGraph):
         for r in range(row - 1, 0, -1):
             to_match = tuple(sorted([a - r + 1 for a in working_rc[r-1]]))
             lower_perm2 = None
-            print(f"{lower_perm=}")
-            print(f"row {r=}")
-            print(to_match)
+            # print(f"{lower_perm=}")
+            # print(f"row {r=}")
+            # print(to_match)
             for L, new_perm in pull_out_var(r, lower_perm):
-                print("Trying   ", L)
+                # print("Trying   ", L)
                 if tuple(sorted(L)) == to_match:
                     lower_perm2 = new_perm
-                    print("Good")
+                    # print("Good")
                     break
             if lower_perm2 is None:
-                print("Failed on row ", r)
+                # print("Failed on row ", r)
                 break
             else:
                 lower_perm = lower_perm2
-                print("Succeeded on row ", r)
+                # print("Succeeded on row ", r)
         
-    def extract_row(self, row):
-        from schubmult.schub_lib.schub_lib import pull_out_var
-        working_rc = self
-        to_match = tuple(sorted([a - row + 1 for a in working_rc[row-1]]))
-        lower_perm = None
-        for L, new_perm in pull_out_var(row, working_rc.perm):
-            if tuple(sorted(L)) == to_match:
-                lower_perm = new_perm
-                break
-        assert lower_perm is not None
-        print(f"{self.perm=}")
-        up_perm = Permutation([*lower_perm[:row-1],len(lower_perm)+1,*lower_perm[row-1:]])
-        print(f"{lower_perm=}, {up_perm=}, {working_rc.perm=}")
-        insert_roots = []
-        delete_roots = []
-        working_up_perm = up_perm
-        for i in range(row, len(lower_perm) + 1):
-            root = (working_up_perm[i - 1], working_up_perm[i])
-            if root[0] < root[1]:
-                insert_roots.append((i, working_up_perm[i-1], working_up_perm[i]))
-            else:
-                delete_roots.append((i, working_up_perm[i-1], working_up_perm[i]))
-            working_up_perm = working_up_perm.swap(i-1, i)
-        assert working_up_perm == lower_perm, f"{up_perm=} {working_up_perm=}, {lower_perm=}"
-        # insert row roots
-        cycles = (~(self.perm) * up_perm).get_cycles()
-        reflections = []
-        from schubmult.utils.perm_utils import cyclic_sort_min
-        for cyc in cycles:
-            cyc = cyclic_sort_min(cyc)
-            print(f"{cyc=}")
-            for i in range(len(cyc)-1,0,-1):
-                reflections.append((cyc[0], cyc[i]))
-        
-        cycles2 = ((~lower_perm) * up_perm).get_cycles()
-        reflections2 = {}
-        for cyc in cycles2:
-            cyc = cyclic_sort_min(cyc)
-            print(f"{cyc=}")
-            for i in range(len(cyc)-1,0,-1):
-                reflections2[cyc[0]] = reflections2.get(cyc[0], [])
-                reflections2[cyc[0]].append(cyc[i])
-
-        # try to insert these reflections
-        # start at the "row"
-        new_rc = []
-        ref_spot = 0
-        root_spot = 0
-        buildup_rc = RCGraph(working_rc).insert_reflections(row, reflections)
-        assert buildup_rc.perm == up_perm, f"{buildup_rc.perm=}, {up_perm=}"
-        for i in range(row, len(lower_perm) + 1):
-            buildup_rc = buildup_rc.exchange_property(i)
-            print(buildup_rc)
-            print(buildup_rc.perm)
-        return None
-        #buildup_rc = buildup_rc.reverse_kogan_insert(row, reflections2)
-        #working_rc = working_rc.insert_reflections(row, reflections)
-        insert_delete_index = len(up_perm) - 1
-        print(f"{reflections=}")
-        
-        for current_row in range(len(working_rc)-1,0,-1):
-            
-            first_in_row = sum(len(working_rc[i]) for i in range(current_row - 1)) + 1
-            last_in_row = first_in_row + len(working_rc[current_row-1])
-            print(f"{current_row=}, {first_in_row=}, {last_in_row=}, {ref_spot=}")
-            for col in range(working_rc.max_of_row(current_row)+5, 0, -1):
-                refl = reflections[ref_spot]
-                print(f"{refl=}")
-                if not buildup_rc.has_element(current_row, col):
-                    print(f"{current_row=}, {col=}")
-                    print(f"{buildup_rc.right_root_at(current_row, col)=}")
-                    if buildup_rc.right_root_at(current_row, col) == refl:
-                        buildup_rc = buildup_rc.toggle_ref_at(current_row, col)
-                        #reflections.pop(ref_spot)
-                        #reflections.pop(ref_spot)
-                        ref_spot += 1
-                        print("Roggle")
-                        print(buildup_rc)
-                        break
-            num_in_current_row = len(working_rc[current_row-1])
-            num_in_row_below = len(working_rc[current_row-2]) if current_row != row else 0
-            if current_row < row:
-                num_in_row_below = len(working_rc[current_row])
-            # if num_in_current_row == num_in_row_below:
-            #     continue
-            if num_in_current_row < num_in_row_below:
-                print("buildup need to insert")
-                print(buildup_rc)
-                print("working")
-                print(working_rc)
-            if num_in_current_row > num_in_row_below:
-                print("buildup need to delete")
-                print(buildup_rc)
-                print("working")
-                print(working_rc)
-        # ref_spot = 0
-        # spots = {}
-        # while ref_spot < len(reflections):
-        #     for i in range(1, len(working_rc)+1):
-        #         for j in range(working_rc.max_of_row(i)+5, 0, -1):
-        #             if not working_rc.has_element(i,j):
-        #                 if working_rc.right_root_at(i,j) == reflections[ref_spot]:
-        #                     spots[i] = spots.get(i, set())
-        #                     spots[i].add(j)
-        #                     working_rc = working_rc.toggle_ref_at(i, j)
-        #                     ref_spot += 1
-        # assert working_rc.perm == up_perm
-        #working_rc_up = RCGraph([tuple(range(len(working_rc.perm)-1,0,-1)),*working_rc])
-        # now delete simple refs
-        # current_deletion_index = 1
-        # while current_deletion_index < len(working_rc.perm):
-        #     perm = ~working_rc.perm
-        #     root = (perm[current_deletion_index], perm[current_deletion_index - 1])
-        #     if root[0] < root[1]:
-        #         new_row = list(working_rc[0])
-        #         assert current_deletion_index not in new_row
-        #         new_row.append(current_deletion_index)
-        #         new_row.sort(reverse=True)
-        #         working_rc = RCGraph([tuple(new_row), *working_rc[1:]])
-        #         continue
-        #     # this is a deletion
-        #     b, a = root
-        #     root2 = (a,b)
-        #     found = False
-        #     for index in len(working_rc.perm_word()):
-        #         if working_rc.left_to_right_inversion(index) == root2:
-        #             if i+1 in spots and working_rc[i][j] - i in spots[i+1]:
-        #                 working_rc = working_rc.toggle_ref_at(i+1, working_rc[i][j])
-        #                 found = True
-        #                 break
-        #             # need to do shifting
-        #             if len(spots.get(i+1, set())) > 0:
-        #                 working_rc = working_rc.toggle_ref_at(i+1, working_rc[i][j])
-        #                 spots[i+1].remove(min(spots[i+1]))
-        #                 found = True
-        #                 break
-        #             # shift everything left
-        #             for ip in range(i, ):
-        #     if found:
-        #         break
-
-
-        return None
-
     @cache
     def _inversion_to_coord(self):
         roots_in = {}
@@ -2884,4 +2742,7 @@ if __name__ == "__main__":
     print(graph)
     zg = graph.zero_out_last_row()
     print("Got")
+    print(zg)
+    print("Again")
+    zg = zg.zero_out_last_row()
     print(zg)
