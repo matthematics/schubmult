@@ -6,6 +6,7 @@ from symengine import SympifyError
 
 import schubmult.schub_lib.schub_lib as schub_lib
 from schubmult.perm_lib import Permutation, uncode
+from schubmult.rings import ASx
 from schubmult.symbolic import S, prod, sympify
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -1297,87 +1298,60 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     @cache
     def coproduct(self):
+        # commuting h's
         if len(self) == 0:
-            return self @ self
+            return RCGraphModule({RCGraph(): 1}) @ RCGraphModule({RCGraph(): 1})
+        if len(self) == 1 and len(self[0]) == 0:
+            return RCGraphModule({RCGraph([()]): 1}) @ RCGraphModule({RCGraph([()]): 1})
+        if self.perm.inv == 0:
+            return RCGraphModule({RCGraph([()]*len(self)): 1}) @ RCGraphModule({RCGraph([()]*len(self)): 1})
         if len(self) == 1:
-            m = self.perm.inv
-            if m == 0:
-                return RCGraph([() * len(self)]) @ RCGraph([() * len(self)])
-            return FA(m).coproduct() * (RCGraph()@RCGraph())
-        
-        # if len(self) > len(self.perm.trimcode):
-        #     return (self.rowrange(0, len(self.perm.trimcode))).coproduct() * RCGraph([()]*(len(self)-len(self.perm.trimcode))).coproduct()
-
-        lower_graph = self.rowrange(1, len(self))
-        lower_module1 = lower_graph.coproduct()
-        ret_elem = FA(len(self[0])).coproduct() * lower_module1
-        up_elem = FA(len(self[0])) * lower_graph
-        
-        # for rc in sorted(RCGraph.all_rc_graphs(self.perm, len(self))):
-        #     if rc > self and rc not in RCGraph.rc_cache:
-        #         rc.coproduct()
-
-        if self.is_principal:
-            keyset = set(ret_elem.value_dict.keys())
-            # if len(self) > len(self.perm) - 1:
-            #     forba = self.rowrange(0, len(self.perm) - 1).coproduct()
-            #     ret_elem = 0
-            #     for (rc1, rc2), coeff in forba.items():
-            #         ret_elem += (RCGraph([*rc1, ()*(len(self) - len(rc1))]) @ RCGraph([*rc2, ()*(len(self) - len(rc2))]))
-            #     return ret_elem
-            # lower_graph = self.rowrange(1, len(self))
-            # lower_module1 = lower_graph.coproduct()
-            #print("lower_module1")
-            #print(lower_module1)
-            #ret_elem = FA(len(self[0])).coproduct() * lower_module1
-
-
-
-            # print(f"{repr(keys)=} {perm=}")
-
-            #print("ret_elem")
-            #print(ret_elem)
-
-            def can_mul(perm1, perm2, perm3):
-                descs = set(perm1.descents())
-                descs.update(perm2.descents())
-                if not perm3.descents().issubset(descs):
-                    return False
-                return perm1 <= perm3 and perm2 <= perm3
-
-            for key, coeff in up_elem.items():
-                if key != self:
-                    assert coeff == 1
-                    assert key.perm != self.perm
-                    key_keys = set(key.coproduct().value_dict.keys())
-                    #key.coproduct()
-                    
-                    for (rc1, rc2) in key_keys:
-                        keyset2 = set(keyset)
-                        for (rc1_bad, rc2_bad) in sorted(keyset2):
-                            if can_mul(rc1_bad.perm, rc2_bad.perm, self.perm):
-                                if rc1_bad.perm == rc1.perm and rc2_bad.perm == rc2.perm:
-                                    keyset.remove((rc1_bad, rc2_bad))
-                                    break
-                            else:
-                                keyset.remove((rc1_bad, rc2_bad))
+            # split into product of h's
+            h_list = []
+            buildup_code = []
+            cnt = 0
+            for i in range(len(self[0])):
+                if len(buildup_code) == 0:
+                    buildup_code.extend(([0]* (self[0][i] - 1)))
+                    cnt = 0
+                if i > 0 and self[0][i-1] != self[0][i] - 1:
+                    buildup_code.append(cnt)
+                    h_list.append(uncode(buildup_code))
+                    print(f"{buildup_code=}")
+                    buildup_code = []
+                    cnt = 0
+                cnt += 1
+            buildup_code.append(cnt)
+            h_list.append(uncode(buildup_code))
+            print(f"{buildup_code=}")
+            # we have the perms
+            rc_pair_set = {(RCGraph([()]), RCGraph([()]))}
+            for perm in h_list:
+                perm_set = ASx(perm).coproduct()
+                new_rc_pair_set = set()
+                for ((p1, _), (p2, _)), coeff in perm_set.items():
+                    cd = [p1.trimcode[-1] if len(p1.trimcode) > 0 else 0]
+                    cd2 = [p2.trimcode[-1] if len(p2.trimcode) > 0 else 0]
+                    add_one = list(range(len(p1.trimcode),  len(p1.trimcode) - cd[0], -1))
+                    add_two = list(range(len(p2.trimcode), len(p2.trimcode) - cd2[0], -1))
+                    for (rc1, rc2) in rc_pair_set:
+                        new_rc1 = [*rc1[0],*add_one]
+                        new_rc2 = [*rc2[0],*add_two]
+                        new_rc_pair_set.add((RCGraph([tuple(sorted(new_rc1, reverse=True))]), RCGraph([tuple(sorted(new_rc2, reverse=True))])))
+                rc_pair_set = new_rc_pair_set
+            ret_elem = 0
+            for (rc1, rc2) in rc_pair_set:
+                ret_elem = ret_elem + (1 * (rc1 @ rc2))
         else:
-            prin_elem = RCGraph.principal_rc(self.perm, len(self)).coproduct()
-            ret_set = set(ret_elem.keys())
-            keyset = set()
-            prin_keys = set(prin_elem.keys())
-            for (rc1, rc2) in sorted(prin_keys):
-                new_set = set(ret_set)
-                if rc1.perm <= self.perm and rc2.perm <= self.perm:
-                    for rc01, rc02 in sorted(new_set):
-                        if rc01.perm == rc1.perm and rc02.perm == rc2.perm:# and (rc01, rc02) not in RCGraph.w_key_cache.get((self.perm, len(self)), set()):
-                            ret_set.remove((rc01, rc02))
-                            keyset.add((rc01,rc02))
-                            break
-        ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k in keyset})
-        # RCGraph.w_key_cache[self.perm, len(self)] = RCGraph.w_key_cache.get((self.perm, len(self)), set())
-        # RCGraph.w_key_cache[self.perm, len(self)].update(keyset)
-        # RCGraph.rc_cache.add(self)
+            # print("Coproducting")
+            # print(self)
+            buildup_module = self.rowrange(0, 1).coproduct()
+            # print("Buildup is")
+            # print(buildup_module)
+            ret_elem = buildup_module
+            ret_elem *= self.rowrange(1, len(self)).coproduct()
+            # print("Result is")
+            # print(ret_elem)
         
         return ret_elem
     
@@ -2925,38 +2899,28 @@ if __name__ == "__main__":
     from schubmult.utils.perm_utils import artin_sequences
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 3
 
-    for seq in artin_sequences(n):
-        gr_mod = FA(*seq) * RCGraph()
-        graph = None
-        for gr in gr_mod.value_dict:
-            graph = gr
-            print("====================")
-            print("We have graph:")
-            print(gr)
-            print("Multiplying")
-            working_graph = graph
-            mul_up_graph = RCGraph()
-            for i in range(len(graph)):
-                row = working_graph.rowrange(i, i+1)
-                mul_up_graph = mul_up_graph * row
-                # print(f"After multiplying row {i}:")
-                # print(mul_up_graph)
-            assert len(mul_up_graph.value_dict) == 1
-            mul_up_graph = next(iter(mul_up_graph.value_dict))
-            print("To get:")
-            print(mul_up_graph)
-            assert mul_up_graph == gr, f"Failed for {seq} got {tuple(mul_up_graph)} expected {tuple(gr)}"
+    for seq in artin_sequences(n - 1):
+        #for seq2 in artin_sequences(n - 1):
+        perm = uncode(seq)
+        # perm2 = uncode(seq2)
+        # module1 = ASx(perm) * RCGraph()
+        # module2 = ASx(perm2) * RCGraph()
+        # produc = module1 * module2
+        # print(f"{perm.trimcode} * {perm2.trimcode}")
+        # print(produc)
+        # print(ASx(perm) * ASx(perm2))
+        print(f"{perm.trimcode=}")
+        rc = RCGraph.principal_rc(perm,n-1)
+        print("rc:")
+        print(rc)
+        print("lr_module:")
+        print(rc.coproduct())
+    # this product satisfies the coproduct of the Schubert module
+    # this is the coproduct of an RC graph multiplication ring
+    # hom to the free algebra by weight
+    # so we do have a coproduct from that
 
-            print("Other way")
-            mul_up_graph2 = RCGraph()
-            for i in range(len(graph)-1, -1, -1):
-                row = working_graph.rowrange(i, i+1)
-                mul_up_graph2 = row * mul_up_graph2
-                # print(f"After multiplying row {i}:")
-                # print(mul_up_graph)
-            print("To get:")
-            print(mul_up_graph2)
-            assert len(mul_up_graph2.value_dict) == 1
-            mul_up_graph2 = next(iter(mul_up_graph2.value_dict))
-            assert mul_up_graph2 == gr, f"Failed for {seq} got {mul_up_graph2} expected {gr}"
-        print("DONE")
+    # Monk's formula and assoc
+
+    # commuting h's
+            
