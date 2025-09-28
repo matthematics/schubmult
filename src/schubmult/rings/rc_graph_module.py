@@ -1398,7 +1398,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                                 # print(rc012)
                                 # print("With coeff", coeff)
                                 # print("and perm", perm)
-                        ret_elem += coeff * (rc011 @ rc012)
+                        ret_elem += coeff * ((rc011.rowrange(0,1)* rc1) @ (rc012.rowrange(0,1)* rc2))
             buildup_module = ret_elem
             # print("mul_module")
             # print(mul_module)
