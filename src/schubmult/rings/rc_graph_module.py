@@ -1009,6 +1009,8 @@ class RCGraph(KeyType, UnderlyingGraph):
         # transition formula
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
+        if self.perm.inv == 0:
+            return self.rowrange(0, len(self) - 1)
         if max(self.perm.descents()) + 1 < len(self):
             return self.rowrange(0, len(self) - 1)
         # exchange property div diff sn
@@ -1018,14 +1020,14 @@ class RCGraph(KeyType, UnderlyingGraph):
             interim = interim.exchange_property(max(interim.perm.descents()) + 1)
             # print(f"Deleted descent")
             # print(interim)
-            if max(interim.perm.descents()) + 1 == max(prev_interim.perm.descents()) + 1:
+            if interim.perm.inv > 0 and max(interim.perm.descents()) + 1 == max(prev_interim.perm.descents()) + 1:
                 # print("Same descent")
                 for i in range(len(interim)):
                     if len(interim[i]) < len(prev_interim[i]):
                         # print(f"Inserted at row {i + 1}")
                         interim = interim.monk_insert(max(prev_interim.perm.descents()) + 1, i + 1)
                         break
-            elif max(interim.perm.descents()) + 1 > max(prev_interim.perm.descents()) + 1:
+            elif interim.perm.inv > 0 and max(interim.perm.descents()) + 1 > max(prev_interim.perm.descents()) + 1:
                 # print("Increased descent")
                 diff_rows = []
                 deleted_descent = max(prev_interim.perm.descents()) + 1
@@ -1067,11 +1069,11 @@ class RCGraph(KeyType, UnderlyingGraph):
             prev_interim = interim
         return interim.rowrange(0, len(self) - 1)
 
-    def right_zero_act(self):
+    def right_zero_act(self, bruhat_perm=None):
         # print("Right zeroing")
         # print(self)
         if self.perm.inv == 0:
-            return RCGraph([*self, ()])
+            return {RCGraph([*self, ()])}
 
         up_perms = ASx(self.perm, len(self)) * ASx(uncode([0]),1)
 
@@ -1080,7 +1082,11 @@ class RCGraph(KeyType, UnderlyingGraph):
         for (perm, _), v in up_perms.items():
             for rc in RCGraph.all_rc_graphs(perm, len(self) + 1):
                 if rc.length_vector()[:-1] == self.length_vector() and rc.zero_out_last_row() == self:
-                    rc_set.add(rc)
+                    if bruhat_perm:
+                        if rc.perm.bruhat_leq(bruhat_perm):
+                            rc_set.add(rc)
+                    else:
+                        rc_set.add(rc)
         return rc_set
 
 
@@ -1308,17 +1314,17 @@ class RCGraph(KeyType, UnderlyingGraph):
             h_list = []
             buildup_code = []
             cnt = 0
-            for i in range(len(self[0])):
+            for i in range(len(self[0])-1, -1, -1):
+                cnt += 1
                 if len(buildup_code) == 0:
                     buildup_code.extend(([0]* (self[0][i] - 1)))
-                    cnt = 0
                 if i > 0 and self[0][i-1] != self[0][i] - 1:
                     buildup_code.append(cnt)
                     h_list.append(uncode(buildup_code))
                     # print(f"{buildup_code=}")
                     buildup_code = []
                     cnt = 0
-                cnt += 1
+            
             buildup_code.append(cnt)
             h_list.append(uncode(buildup_code))
             # print(f"{buildup_code=}")
@@ -1343,11 +1349,53 @@ class RCGraph(KeyType, UnderlyingGraph):
         else:
             # print("Coproducting")
             # print(self)
-            buildup_module = self.rowrange(0, 1).coproduct()
+            buildup_module = self.rowrange(0, len(self) - 1).coproduct()
             # print("Buildup is")
             # print(buildup_module)
-            ret_elem = buildup_module
-            ret_elem *= self.rowrange(1, len(self)).coproduct()
+            ret_elem = 0
+
+            h_list = []
+            buildup_code = []
+            cnt = 0
+            for i in range(len(self[-1])):
+                if len(buildup_code) == 0:
+                    buildup_code.extend(([0]* (self[-1][i] - 1)))
+                    cnt = 0
+                if i > 0 and self[-1][i-1] != self[-1][i] - 1:
+                    buildup_code.append(cnt)
+                    h_list.append(uncode(buildup_code))
+                    # print(f"{buildup_code=}")
+                    buildup_code = []
+                    cnt = 0
+                cnt += 1
+            buildup_code.append(cnt)
+            h_list.append(uncode(buildup_code))
+            for (rc1, rc2), coeff in buildup_module.items():
+                # print("Multiplying")
+                # print(rc1)
+                # print("and")
+                # print(rc2)
+                
+                # print("Product is")
+                # print(prod_module)
+                
+                for perm in h_list:
+                    perm_set = ASx(perm).coproduct()
+                    for ((p1, _), (p2, _)), _ in perm_set.items():
+                        build_rc1 = rc1.right_zero_act()
+                        build_rc2 = rc2.right_zero_act()
+                        for rc01 in build_rc1:
+                            for rc02 in build_rc2:
+                                if p1.inv > 0:
+                                    rc011 = rc01.kogan_insert(len(self) - 2 + len(p1.trimcode),[len(self)]*p1.inv)
+                                else:
+                                    rc011 = rc01
+                                if p2.inv > 0:
+                                    rc012 = rc02.kogan_insert(len(self) - 2 + len(p2.trimcode),[len(self)]*p2.inv)
+                                else:
+                                    rc012 = rc02
+                                ret_elem += coeff * (rc011 @ rc012)
+            #ret_elem *= self.rowrange(1, len(self)).coproduct()
             # print("Result is")
             # print(ret_elem)
         
@@ -2910,7 +2958,7 @@ if __name__ == "__main__":
         # print(produc)
         # print(ASx(perm) * ASx(perm2))
         print(f"{perm.trimcode=}")
-        rc = RCGraph.principal_rc(perm,n-1)
+        rc = RCGraph.principal_rc(perm,len(perm.trimcode))
         print("rc:")
         print(rc)
         print("lr_module:")
