@@ -972,6 +972,8 @@ class RCGraph(KeyType, UnderlyingGraph):
     def monk_insert(self, descent, row):
         assert row <= descent
         result =None
+        if len(self) == 0 and row == 1:
+            return RCGraph([(descent,)])
         for i in range(max(len(self[row-1]) - row + 1, descent), 0, -1):
             if not self.has_element(row, i) and _is_row_root(descent, self.right_root_at(row, i)):
                 result = self.toggle_ref_at(row, i)
@@ -1003,6 +1005,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                                 if working_rc.is_valid:
                                     return working_rc
                         return working_rc._monk_rectify(descent, row_below)
+        assert working_rc.is_valid
         return working_rc._monk_rectify(descent, row_below - 1)
     # right mul should invert this (multiple but keeps the rc the same)
     def zero_out_last_row(self):
@@ -1295,92 +1298,56 @@ class RCGraph(KeyType, UnderlyingGraph):
                 result += cf2 * RCGraph.fa_hom(*word1) @ RCGraph.fa_hom(*word2)
         return result
 
-    @cache
+    
     def coproduct(self):
         if len(self) == 0:
             return self @ self
+        if self.perm.inv == 0:
+            return self @ self
         if len(self) == 1:
-            m = self.perm.inv
-            if m == 0:
-                return RCGraph([() * len(self)]) @ RCGraph([() * len(self)])
-            return FA(m).coproduct() * (RCGraph()@RCGraph())
-        
-        # if len(self) > len(self.perm.trimcode):
-        #     return (self.rowrange(0, len(self.perm.trimcode))).coproduct() * RCGraph([()]*(len(self)-len(self.perm.trimcode))).coproduct()
+            from itertools import chain, combinations
+            # this is not enough, we need all insertions
+            def subsets(iterable):
+                """
+                Generates all possible subsets of an iterable.
+                Includes the empty set and the full set.
+                """
+                s = list(iterable)
+                # Generate combinations of all possible lengths (from 0 to len(s))
+                # and chain them together into a single iterator.
+                return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
 
-        lower_graph = self.rowrange(1, len(self))
-        lower_module1 = lower_graph.coproduct()
-        ret_elem = FA(len(self[0])).coproduct() * lower_module1
-        up_elem = FA(len(self[0])) * lower_graph
-        
-        # for rc in sorted(RCGraph.all_rc_graphs(self.perm, len(self))):
-        #     if rc > self and rc not in RCGraph.rc_cache:
-        #         rc.coproduct()
+            the_sets = subsets(set(self[0]))
+            ret_elem = 0
+            for the_set in the_sets:
+                other_set = set(self[0]) - set(the_set)
+                rc1 = RCGraph([()])
+                rc2 = RCGraph([()])
+                check = RCGraph()
+                for s in the_set:
+                    rc1 = rc1.monk_insert(s, 1)
+                    check = check.monk_insert(s, 1)
+                for s in other_set:
+                    rc2 = rc2.monk_insert(s, 1)
+                    check = check.monk_insert(s, 1)
+                # print("Checking")
+                # print(check)
+                # print("self")
+                # print(self)
+                if check == self:
+                    ret_elem += (rc1 @ rc2)
 
-        if self.is_principal:
-            keyset = set(ret_elem.value_dict.keys())
-            # if len(self) > len(self.perm) - 1:
-            #     forba = self.rowrange(0, len(self.perm) - 1).coproduct()
-            #     ret_elem = 0
-            #     for (rc1, rc2), coeff in forba.items():
-            #         ret_elem += (RCGraph([*rc1, ()*(len(self) - len(rc1))]) @ RCGraph([*rc2, ()*(len(self) - len(rc2))]))
-            #     return ret_elem
-            # lower_graph = self.rowrange(1, len(self))
-            # lower_module1 = lower_graph.coproduct()
-            #print("lower_module1")
-            #print(lower_module1)
-            #ret_elem = FA(len(self[0])).coproduct() * lower_module1
-
-
-
-            # print(f"{repr(keys)=} {perm=}")
-
-            #print("ret_elem")
-            #print(ret_elem)
-
-            def can_mul(perm1, perm2, perm3):
-                descs = set(perm1.descents())
-                descs.update(perm2.descents())
-                if not perm3.descents().issubset(descs):
-                    return False
-                return perm1 <= perm3 and perm2 <= perm3
-
-            for key, coeff in up_elem.items():
-                if key != self:
-                    assert coeff == 1
-                    assert key.perm != self.perm
-                    key_keys = set(key.coproduct().value_dict.keys())
-                    #key.coproduct()
-                    
-                    for (rc1, rc2) in key_keys:
-                        keyset2 = set(keyset)
-                        for (rc1_bad, rc2_bad) in sorted(keyset2):
-                            if can_mul(rc1_bad.perm, rc2_bad.perm, self.perm):
-                                if rc1_bad.perm == rc1.perm and rc2_bad.perm == rc2.perm:
-                                    keyset.remove((rc1_bad, rc2_bad))
-                                    break
-                            else:
-                                keyset.remove((rc1_bad, rc2_bad))
         else:
-            prin_elem = RCGraph.principal_rc(self.perm, len(self)).coproduct()
-            ret_set = set(ret_elem.keys())
-            keyset = set()
-            prin_keys = set(prin_elem.keys())
-            for (rc1, rc2) in sorted(prin_keys):
-                new_set = set(ret_set)
-                if rc1.perm <= self.perm and rc2.perm <= self.perm:
-                    for rc01, rc02 in sorted(new_set):
-                        if rc01.perm == rc1.perm and rc02.perm == rc2.perm:# and (rc01, rc02) not in RCGraph.w_key_cache.get((self.perm, len(self)), set()):
-                            ret_set.remove((rc01, rc02))
-                            keyset.add((rc01,rc02))
-                            break
-        ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k in keyset})
-        # RCGraph.w_key_cache[self.perm, len(self)] = RCGraph.w_key_cache.get((self.perm, len(self)), set())
-        # RCGraph.w_key_cache[self.perm, len(self)].update(keyset)
-        # RCGraph.rc_cache.add(self)
-        
+            # last_row = self.rowrange(len(self) - 1,len(self))
+            # rest =self.rowrange(0,len(self) - 1)
+            # ret_elem = rest.coproduct() * last_row.coproduct()
+            rest =RCGraph(self[:-1])
+            
+            last_row = self.rowrange(len(self) - 1,len(self))
+            
+            ret_elem = rest.coproduct() * last_row.coproduct()
+
         return ret_elem
-    
 
     @classmethod
     def principal_rc(cls, perm, length):
@@ -2118,6 +2085,18 @@ class RCGraphModule(ModuleType):
 class RCGraphTensor(KeyType):
     def __lt__(self, other):
         return tuple(self) < tuple(other)
+
+    def __mul__(self, other):
+        if isinstance(other, RCGraphTensor):
+            total_mod = None
+            for i in range(self):
+                elem =  self[i].prod_with_rc(other[i])
+                if total_mod is None:
+                    total_mod = elem
+                else: 
+                    total_mod = total_mod @ elem
+            return total_mod
+        return NotImplemented
 
     def __le__(self, other):
         return tuple(self) <= tuple(other)
@@ -2923,40 +2902,47 @@ if __name__ == "__main__":
     import sys
 
     from schubmult.utils.perm_utils import artin_sequences
-    n = int(sys.argv[1]) if len(sys.argv) > 1 else 3
+    n = int(sys.argv[1]) if len(sys.argv) > 1 else 2
 
     for seq in artin_sequences(n):
-        gr_mod = FA(*seq) * RCGraph()
-        graph = None
-        for gr in gr_mod.value_dict:
-            graph = gr
-            print("====================")
-            print("We have graph:")
-            print(gr)
-            print("Multiplying")
-            working_graph = graph
-            mul_up_graph = RCGraph()
-            for i in range(len(graph)):
-                row = working_graph.rowrange(i, i+1)
-                mul_up_graph = mul_up_graph * row
-                # print(f"After multiplying row {i}:")
-                # print(mul_up_graph)
-            assert len(mul_up_graph.value_dict) == 1
-            mul_up_graph = next(iter(mul_up_graph.value_dict))
-            print("To get:")
-            print(mul_up_graph)
-            assert mul_up_graph == gr, f"Failed for {seq} got {tuple(mul_up_graph)} expected {tuple(gr)}"
+        gr = RCGraph.all_rc_graphs(uncode(seq), n+1)
+        mod = 0
+        for rc in gr:
+            print("Graph")
+            print(rc)
+            print("Coproduct")
+            cop = rc.coproduct()
+            print(cop)
+            mod += cop
+        print(mod)
+            # graph = gr
+            # print("====================")
+            # print("We have graph:")
+            # print(gr)
+            # print("Multiplying")
+            # working_graph = graph
+            # mul_up_graph = RCGraph()
+            # for i in range(len(graph)):
+            #     row = working_graph.rowrange(i, i+1)
+            #     mul_up_graph = mul_up_graph * row
+            #     # print(f"After multiplying row {i}:")
+            #     # print(mul_up_graph)
+            # assert len(mul_up_graph.value_dict) == 1
+            # mul_up_graph = next(iter(mul_up_graph.value_dict))
+            # print("To get:")
+            # print(mul_up_graph)
+            # assert mul_up_graph == gr, f"Failed for {seq} got {tuple(mul_up_graph)} expected {tuple(gr)}"
 
-            print("Other way")
-            mul_up_graph2 = RCGraph()
-            for i in range(len(graph)-1, -1, -1):
-                row = working_graph.rowrange(i, i+1)
-                mul_up_graph2 = row * mul_up_graph2
-                # print(f"After multiplying row {i}:")
-                # print(mul_up_graph)
-            print("To get:")
-            print(mul_up_graph2)
-            assert len(mul_up_graph2.value_dict) == 1
-            mul_up_graph2 = next(iter(mul_up_graph2.value_dict))
-            assert mul_up_graph2 == gr, f"Failed for {seq} got {mul_up_graph2} expected {gr}"
+            # print("Other way")
+            # mul_up_graph2 = RCGraph()
+            # for i in range(len(graph)-1, -1, -1):
+            #     row = working_graph.rowrange(i, i+1)
+            #     mul_up_graph2 = row * mul_up_graph2
+            #     # print(f"After multiplying row {i}:")
+            #     # print(mul_up_graph)
+            # print("To get:")
+            # print(mul_up_graph2)
+            # assert len(mul_up_graph2.value_dict) == 1
+            # mul_up_graph2 = next(iter(mul_up_graph2.value_dict))
+            # assert mul_up_graph2 == gr, f"Failed for {seq} got {mul_up_graph2} expected {gr}"
         print("DONE")
