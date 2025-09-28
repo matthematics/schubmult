@@ -309,8 +309,8 @@ class RCGraph(KeyType, UnderlyingGraph):
             return True
         if self.perm.inv != len(self.perm_word()):
             return False
-        if max(self.perm.descents()) + 1 > len(self):
-            return False
+        # if max(self.perm.descents()) + 1 > len(self):
+        #     return False
         return True
     
     # kogan
@@ -865,6 +865,12 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     def _monk_rectify(self, descent, row_below):
         working_rc = self
+        if working_rc.is_valid:
+            return working_rc
+        if row_below <= 0:
+            print("End result")
+            print(self)
+            raise ValueError("Could not rectify")
         for j in range(working_rc.max_of_row(row_below) + 1, 0, -1):
                 if working_rc.has_element(row_below, j):
                     b, a = working_rc.right_root_at(row_below, j)
@@ -888,16 +894,32 @@ class RCGraph(KeyType, UnderlyingGraph):
         # exchange property div diff sn
         interim = self
         prev_interim = self
-        while max(interim.perm.descents()) + 1 >= len(self):
+        while max(interim.perm.descents()) + 1 != len(self) - 1:
             interim = interim.exchange_property(max(interim.perm.descents()) + 1)
-            print("Deleted descent")
+            print(f"Deleted descent {max(prev_interim.perm.descents()) + 1} to {max(interim.perm.descents()) + 1}")
             print(interim)
-            if max(interim.perm.descents()) + 1 >= max(prev_interim.perm.descents()) + 1:
+            if max(interim.perm.descents()) + 1 == max(prev_interim.perm.descents()) + 1:
                 print("Same descent")
                 for i in range(len(interim)):
                     if len(interim[i]) < len(prev_interim[i]):
+                        print(f"Inserted at row {i + 1}")
                         interim = interim.monk_insert(max(prev_interim.perm.descents()) + 1, i + 1)
                         break
+            elif max(interim.perm.descents()) + 1 > max(prev_interim.perm.descents()) + 1:
+                print("Increased descent")
+                diff_rows = []
+                for i in range(len(interim)):
+                    if len(interim[i]) < len(prev_interim[i]):
+                        rw = i + 1
+                        diff_rows.append(rw)
+                while max(interim.perm.descents()) + 1 > max(prev_interim.perm.descents()) + 1:
+                    interim = interim.exchange_property(max(interim.perm.descents()) + 1)
+                    for i in range(len(interim)):
+                        if len(interim[i]) < len(prev_interim[i]):
+                            rw = i + 1
+                            diff_rows.append(rw)
+                diff_rows = sorted(set(diff_rows), reverse=True)
+                interim = interim.kogan_insert(max(prev_interim.perm.descents()), diff_rows)
             else:
                 print("Different descent")
                 for i in range(len(interim)):
@@ -909,6 +931,23 @@ class RCGraph(KeyType, UnderlyingGraph):
                         break
             prev_interim = interim
         return interim.rowrange(0, len(self) - 1)
+
+    def right_zero_act(self):
+        if len(self) == 0:
+            return RCGraph(())
+        if self.perm.inv == 0:
+            return RCGraph([*self, ()])
+
+        up_perms = ASx(self.perm, len(self)) * ASx(uncode([0]),1)
+
+        rc_set = set()
+
+        for (perm, _), v in up_perms.items():
+            for rc in RCGraph.all_rc_graphs(perm, len(self) + 1):
+                if rc.length_vector()[:-1] == self.length_vector() and rc.zero_out_last_row() == self:
+                    rc_set.add(rc)
+        return rc_set
+
 
 
     def normalize_and_remove_last_row(self):
@@ -2732,17 +2771,17 @@ if __name__ == "__main__":
     # test module functionality
     
     from schubmult.utils.perm_utils import artin_sequences
-    gr_mod = FA(2,1,0,0) * RCGraph()
+    gr_mod = FA(2,1,0) * RCGraph()
     graph = None
     for gr in gr_mod.value_dict:
-        if max(gr.perm.descents()) > 2:
-            graph = gr
-            break
-    print("Zeroing out in")
-    print(graph)
-    zg = graph.zero_out_last_row()
-    print("Got")
-    print(zg)
-    print("Again")
-    zg = zg.zero_out_last_row()
-    print(zg)
+        graph = gr
+        print("====================")
+        print("We have graph:")
+        print(gr)
+        print("Acting:")
+        rc_set = gr.right_zero_act()
+        for rc in rc_set:
+            print("WE HAVE =============")
+            print(rc)
+            assert rc.zero_out_last_row() == gr
+    print("DONE")
