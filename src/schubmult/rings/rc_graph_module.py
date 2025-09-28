@@ -699,7 +699,7 @@ class RCGraph(KeyType, UnderlyingGraph):
     @cache
     def all_rc_graphs(cls, perm, length=-1):
         if perm.inv == 0:
-            return {RCGraph([()] * length if length >= 0 else [()])}
+            return {RCGraph([()] * length if length > 0 else [])}
         if len(perm.trimcode) == 1:
             nrc = RCGraph((tuple(range(perm.code[0], 0, -1)),))
             if len(nrc) < length:
@@ -1069,8 +1069,8 @@ class RCGraph(KeyType, UnderlyingGraph):
         return interim.rowrange(0, len(self) - 1)
 
     def right_zero_act(self):
-        if len(self) == 0:
-            return RCGraph(())
+        print("Right zeroing")
+        print(self)
         if self.perm.inv == 0:
             return RCGraph([*self, ()])
 
@@ -1393,22 +1393,36 @@ class RCGraph(KeyType, UnderlyingGraph):
         return cls(graph)
 
     def prod_with_rc(self, other):
-        buildup_module = 1*self
-        num_zeros = len(other)
-        for row in other:
+        print("Mulling")
+        print(self)
+        print("and")
+        print(other)
+        if len(other) == 0:
+            return 1 * self
+        orig_len = len(other)
+        dff = len(self) if self.perm.inv == 0 else max(self.perm.descents()) + 1 - len(self)
+        base_rc = RCGraph([*self, *[()]*max(dff, 0)])
+        dff2 = len(other) if other.perm.inv == 0 else max(other.perm.descents()) + 1 - len(other)
+        other = RCGraph([*other, *[()]*max(dff2, 0)])
+        buildup_module = 1*base_rc
+        num_zeros = min(orig_len - dff - dff2, 0)
+        for _ in range(num_zeros):
             new_buildup_module = RCGraphModule()
             for rc, coeff in buildup_module.items():
-                new_buildup_module += RCGraphModule(dict.fromkeys(rc.right_p_act(0), coeff))
+                new_buildup_module += RCGraphModule(dict.fromkeys(rc.right_zero_act(), coeff))
             buildup_module = new_buildup_module
+        print("Buildup is")
+        print(buildup_module)
         ret_module = RCGraphModule()
-        up_perms = ASx(self.perm, len(self)) * ASx(other.perm, 1)
-        vset = {RCGraph([*rc[:len(self)], () * len(other)]) for rc in buildup_module.value_dict.keys()}
-        for rc in vset:
-            new_rc = RCGraph([*rc[:len(self)], *[tuple([a + len(self) for a in row]) for row in other]])
-            if new_rc.perm.inv == len(new_rc.perm_word()):
-                if (new_rc.perm, len(new_rc)) in up_perms.keys():
-                    coeff = up_perms[(new_rc.perm, len(new_rc))]
-                    ret_module += coeff * new_rc
+        #up_perms = ASx(self.perm, len(self)) * ASx(other.perm, 1)
+        #vset = buildup_module.value_dict.keys()
+        for rc, coeff in buildup_module.items():
+            new_rc = RCGraph([*rc[:len(self)], *other.rowrange(0,orig_len).shiftup(len(self))])
+            print("Trying to match")
+            print(new_rc)
+            if new_rc.is_valid:
+                print("Matched")
+                ret_module += coeff * new_rc
         return ret_module
 
     def ring_act(self, elem):
@@ -2915,12 +2929,14 @@ if __name__ == "__main__":
         print("====================")
         print("We have graph:")
         print(gr)
-        print("Acting:")
-        rc_set = gr.right_zero_act()
-        for rc in rc_set:
-            print("WE HAVE =============")
-            print(rc)
-            assert rc.zero_out_last_row() == gr
-            print("========")
-        
+        print("Multiplying")
+        working_graph = graph
+        mul_up_graph = RCGraph()
+        for i in range(len(graph)-1):
+            row = working_graph.rowrange(i, i+1)
+            mul_up_graph = mul_up_graph * row
+            print(f"After multiplying row {i}:")
+            print(mul_up_graph)
+        print("To get:")
+        print(mul_up_graph)
     # print("DONE")
