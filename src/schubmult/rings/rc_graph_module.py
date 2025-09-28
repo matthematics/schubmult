@@ -1338,46 +1338,52 @@ class RCGraph(KeyType, UnderlyingGraph):
             return RCGraphModule({RCGraph([()]): 1}) @ RCGraphModule({RCGraph([()]): 1})
         if self.perm.inv == 0:
             return RCGraphModule({RCGraph([()]*len(self)): 1}) @ RCGraphModule({RCGraph([()]*len(self)): 1})
-        h_list = trans_to_h_list(self.rowrange(len(self)-1, len(self))[0])
-        #if len(self) == 1:
-        buildup_module = RCGraphModule({RCGraph([()]): 1}) @ RCGraphModule({RCGraph([()]): 1})
+        buildup_module = RCGraphModule({RCGraph([]): 1}) @ RCGraphModule({RCGraph([]): 1})
         
-            # print("Buildup is")
-            # print(buildup_module)
-        ret_elem = 0
+        for row in range(len(self)):
+            ret_elem = 0
+            buildup_module = RCGraph.pad_tensor_module_with_zeros(buildup_module, 1)
+            h_list = trans_to_h_list(self[row])
+            #if len(self) == 1:
+            
+            
+                # print("Buildup is")
+                # print(buildup_module)
+            
 
-        for (rc1, rc2), coeff in buildup_module.items():
-            # print("Multiplying")
-            # print(rc1)
-            # print("and")
-            # print(rc2)
-            
-            # print("Product is")
-            # print(prod_module)
-            
-            for perm in h_list:
-                perm_set = ASx(perm).coproduct()
-                for ((p1, _), (p2, _)), _ in perm_set.items():
-                    build_rc1 = {rc1}
-                    build_rc2 = {rc2}
-                    for rc01 in build_rc1:
-                        for rc02 in build_rc2:
-                            if p1.inv > 0:
-                                rc011 = rc01.kogan_insert(len(p1.trimcode),[1]*p1.inv)
-                            else:
-                                rc011 = RCGraph([()])
-                            if p2.inv > 0:
-                                rc012 = rc02.kogan_insert(len(p2.trimcode),[1]*p2.inv)
-                            else:
-                                rc012 = RCGraph([()])
-                            ret_elem += coeff * (rc011 @ rc012)
-        # print("mul_module")
-        # print(mul_module)
-        # print("ret_elem_first")
-        # print(ret_elem)
-        if len(self) > 1:
-            mul_module = RCGraph(self[:-1]).coproduct()
-            ret_elem = mul_module * ret_elem
+            for (rc1, rc2), coeff in buildup_module.items():
+                # print("Multiplying")
+                # print(rc1)
+                # print("and")
+                # print(rc2)
+                
+                # print("Product is")
+                # print(prod_module)
+                
+                for perm in h_list:
+                    perm_set = ASx(perm).coproduct()
+                    for ((p1, _), (p2, _)), _ in perm_set.items():
+                        build_rc1 = {rc1}
+                        build_rc2 = {rc2}
+                        for rc01 in build_rc1:
+                            for rc02 in build_rc2:
+                                if p1.inv > 0:
+                                    rc011 = rc01.kogan_insert(len(p1.trimcode),[row+1]*p1.inv)
+                                else:
+                                    rc011 = rc01
+                                if p2.inv > 0:
+                                    rc012 = rc02.kogan_insert(len(p2.trimcode),[row+1]*p2.inv)
+                                else:
+                                    rc012 = rc02
+                                ret_elem += coeff * (rc011 @ rc012)
+                buildup_module = ret_elem
+            # print("mul_module")
+            # print(mul_module)
+            # print("ret_elem_first")
+            # print(ret_elem)
+            # if len(self) > 1:
+            #     mul_module = RCGraph(self.rowrange(1, len(self))).coproduct()
+            #     ret_elem = ret_elem*mul_module
         
         # print("Final result for")
         # print(self)
@@ -1403,6 +1409,8 @@ class RCGraph(KeyType, UnderlyingGraph):
     def pad_with_zeros(self, num_zeros):
         return RCGraph.pad_module_with_zeros(1 * self, num_zeros)
 
+    
+
     @staticmethod
     def pad_module_with_zeros(rc_graph_module, num_zeros):
         build_module = rc_graph_module
@@ -1410,6 +1418,17 @@ class RCGraph(KeyType, UnderlyingGraph):
             new_build_module = 0
             for rc, coeff in build_module.items():
                 new_rc = RCGraphModule(dict.fromkeys(rc.right_zero_act(), coeff))
+                new_build_module += new_rc
+            build_module = new_build_module
+        return build_module
+    
+    @staticmethod
+    def pad_tensor_module_with_zeros(rc_graph_module, num_zeros):
+        build_module = rc_graph_module
+        for _ in range(num_zeros):
+            new_build_module = 0
+            for (rc1, rc2), coeff in build_module.items():
+                new_rc = RCGraphModule(dict.fromkeys(rc1.right_zero_act(), coeff))@RCGraphModule(dict.fromkeys(rc2.right_zero_act(), coeff))
                 new_build_module += new_rc
             build_module = new_build_module
         return build_module
@@ -1430,13 +1449,13 @@ class RCGraph(KeyType, UnderlyingGraph):
         #         new_base_rc_set.update(rc.right_zero_act())
         #     base_rc_set = new_base_rc_set            
         # #base_rc = RCGraph([*self, *[()]*max(dff, 0)])
-        dff2 = len(other) if other.perm.inv == 0 else max(other.perm.descents()) + 1 - len(other)
+        dff2 = len(other) if other.perm.inv == 0 else max(max(other.perm.descents()) + 1 - len(other), 0)
         # base_other_rc_set = {other}
         
         # ret_module = RCGraphModule()
         # for base_rc in base_rc_set:
         #     for base_other_rc in base_other_rc_set:
-        dff = len(self) if self.perm.inv == 0 else max(self.perm.descents()) + 1 - len(self)
+        dff = len(self) if self.perm.inv == 0 else max(max(self.perm.descents()) + 1 - len(self),0)
         first_module = self.pad_with_zeros(dff)
         #         #buildup_module = 1*base_rc
         #         buildup_module = 1 * base_rc
@@ -2988,7 +3007,7 @@ if __name__ == "__main__":
         # print(produc)
         # print(ASx(perm) * ASx(perm2))
         print(f"{perm.trimcode=}")
-        rc = RCGraph.principal_rc(perm,n)
+        rc = RCGraph.principal_rc(perm,len(perm.trimcode))
         print("rc:")
         print(rc)
         print("lr_module:")
