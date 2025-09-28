@@ -1365,11 +1365,11 @@ class RCGraph(KeyType, UnderlyingGraph):
                             if p1.inv > 0:
                                 rc011 = rc01.kogan_insert(len(p1.trimcode),[1]*p1.inv)
                             else:
-                                rc011 = rc01
+                                rc011 = RCGraph([()])
                             if p2.inv > 0:
                                 rc012 = rc02.kogan_insert(len(p2.trimcode),[1]*p2.inv)
                             else:
-                                rc012 = rc02
+                                rc012 = RCGraph([()])
                             ret_elem += coeff * (rc011 @ rc012)
         # print("mul_module")
         # print(mul_module)
@@ -1409,30 +1409,41 @@ class RCGraph(KeyType, UnderlyingGraph):
             return 1 * self
         orig_len = len(other)
         dff = len(self) if self.perm.inv == 0 else max(self.perm.descents()) + 1 - len(self)
-        base_rc = RCGraph([*self, *[()]*max(dff, 0)])
+        base_rc_set = {self}
+        for _ in range(dff):
+            new_base_rc_set = set()
+            for rc in base_rc_set:
+                new_base_rc_set.update(rc.right_zero_act())
+            base_rc_set = new_base_rc_set            
+        #base_rc = RCGraph([*self, *[()]*max(dff, 0)])
         dff2 = len(other) if other.perm.inv == 0 else max(other.perm.descents()) + 1 - len(other)
-        other = RCGraph([*other, *[()]*max(dff2, 0)])
-        buildup_module = 1*base_rc
-        num_zeros = min(orig_len - dff - dff2, 0)
-        for _ in range(num_zeros):
-            new_buildup_module = RCGraphModule()
-            for rc, coeff in buildup_module.items():
-                new_buildup_module += RCGraphModule(dict.fromkeys(rc.right_zero_act(), coeff))
-            buildup_module = new_buildup_module
-        # print("Buildup is")
-        # print(buildup_module)
+        base_other_rc_set = {other}
+        for _ in range(dff2):
+            new_base_other_rc_set = set()
+            for rc in base_other_rc_set:
+                new_base_other_rc_set.update(rc.right_zero_act())
+            base_other_rc_set = new_base_other_rc_set
         ret_module = RCGraphModule()
-        #up_perms = ASx(self.perm, len(self)) * ASx(other.perm, 1)
-        #vset = buildup_module.value_dict.keys()
-        for rc, coeff in buildup_module.items():
-            new_rc = RCGraph([*rc[:len(self)], *other.shiftup(len(self))[:orig_len]])
-            # print("new_rc")
-            # print(new_rc)
-            # print("Trying to match")
-            # print(new_rc)
-            if new_rc.is_valid:
-                # print("Matched")
-                ret_module += coeff * new_rc
+        for base_rc in base_rc_set:
+            for base_other_rc in base_other_rc_set:
+                #buildup_module = 1*base_rc
+                buildup_module = 1 * base_rc
+                num_zeros = min(orig_len - dff - dff2, 0)
+                for _ in range(num_zeros):
+                    new_buildup_module = RCGraphModule()
+                    for rc, coeff in buildup_module.items():
+                        new_buildup_module += RCGraphModule(dict.fromkeys(base_rc.right_zero_act(), coeff))
+                    buildup_module = new_buildup_module
+        
+                for rc, coeff in buildup_module.items():
+                    new_rc = RCGraph([*rc[:len(self)], *base_other_rc.shiftup(len(self))[:orig_len]])
+                    # print("new_rc")
+                    # print(new_rc)
+                    # print("Trying to match")
+                    # print(new_rc)
+                    if new_rc.is_valid:
+                        # print("Matched")
+                        ret_module += coeff * new_rc
         return ret_module
 
     def ring_act(self, elem):
@@ -2946,7 +2957,7 @@ if __name__ == "__main__":
         # print(produc)
         # print(ASx(perm) * ASx(perm2))
         print(f"{perm.trimcode=}")
-        rc = RCGraph.principal_rc(perm,len(perm.trimcode))
+        rc = RCGraph.principal_rc(perm,n)
         print("rc:")
         print(rc)
         print("lr_module:")
