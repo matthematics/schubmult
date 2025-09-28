@@ -744,6 +744,127 @@ class RCGraph(KeyType, UnderlyingGraph):
     #         return True
     #     return False
 
+    def kogan_insert(self, descent, rows):
+        from schubmult.utils.perm_utils import has_bruhat_ascent
+        dict_by_a = {}
+        dict_by_b = {}
+        # row is descent
+        # inserting times
+        working_rc = RCGraph([*self])
+        rows = list(sorted(rows, reverse=True))
+        # print(f"inserting {rows=}")
+        for index, row in enumerate(rows):
+            # print(f"Inserting {row=} at iteration {index}")
+            # print(working_rc)
+            # print(f"{working_rc.perm.inv=}, {self.perm.inv=}")
+            if row > descent:
+                raise ValueError("All rows must be less than or equal to descent")
+            last_inv = working_rc.perm.inv
+            for i in range(working_rc.max_of_row(row) + descent, 0, -1):
+                flag = False
+                # print(f"Trying column {i}")
+                if not working_rc.has_element(row, i):
+                    a, b = working_rc.right_root_at(row, i)
+                    # print(f"root is {a, b}")
+                    flag = False
+                    if a > b:
+                        continue
+                    # print("_is_row_root:", _is_row_root(descent, (a, b)))
+                    # print(f"{dict_by_b=}")
+                    if _is_row_root(descent, (a, b)) and b not in dict_by_b:
+                        new_rc = working_rc.toggle_ref_at(row, i)
+                        dict_by_a[a] = dict_by_a.get(a, set())
+                        dict_by_a[a].add(b)
+                        dict_by_b[b] = a
+                        flag = True
+                        working_rc = new_rc
+                        # print("Toggled")
+                        # print(working_rc)
+                    if a in dict_by_b and b not in dict_by_b:
+                        new_rc = working_rc.toggle_ref_at(row, i)
+                        dict_by_a[dict_by_b[a]].add(b)
+                        flag = True
+                        working_rc = new_rc
+                    elif b in dict_by_b and a not in dict_by_b and a > descent:
+                        new_rc = working_rc.toggle_ref_at(row, i)
+                        dict_by_a[dict_by_b[b]].add(a)
+                        flag = True
+                        working_rc = new_rc
+                    if flag:
+                        # print("Inserted")
+                        # print(working_rc)
+                        break
+            if flag:
+                for row_below in range(row - 1, 0, -1):
+                    for j in range(max((working_rc.max_of_row(row_below) + 1, 0, -1)), 0, -1):
+                        new_flag = False
+                        if working_rc.has_element(row_below, j):
+                            a, b = working_rc.right_root_at(row_below, j)
+                            if b > a:
+                                continue
+                            a, b = b, a
+                            if a in dict_by_a and b in dict_by_a[a]:
+                                new_rc = working_rc.toggle_ref_at(row_below, j)
+                                dict_by_a[a].remove(b)
+                                if len(dict_by_a[a]) == 0:
+                                    del dict_by_a[a]
+                                del dict_by_b[b]
+                                working_rc = new_rc
+                                new_flag = True
+                            if a in dict_by_b and b in dict_by_b and dict_by_b[a] == dict_by_b[b]:
+                                new_rc = working_rc.toggle_ref_at(row_below, j)
+                                if new_rc.perm[dict_by_b[a] - 1] < new_rc.perm[a - 1]:
+                                    dict_by_a[dict_by_b[a]].remove(a)
+                                    del dict_by_b[a]
+                                    if len(dict_by_a[dict_by_b[b]]) == 0:
+                                        del dict_by_a[dict_by_b[b]]
+                                else:
+                                    dict_by_a[dict_by_b[b]].remove(b)
+                                    del dict_by_b[b]
+                                    if len(dict_by_a[dict_by_b[a]]) == 0:
+                                        del dict_by_a[dict_by_b[a]]
+                                working_rc = new_rc
+                                new_flag = True
+                            # print("Found bad")
+                            # print("Deleted")
+                            # print(working_rc)
+                            if new_flag:
+                                break
+                    if new_flag:
+                        for jp in range(j-1, 0, -1):
+                            if not working_rc.has_element(row_below, jp):
+                                a2, b2 = working_rc.right_root_at(row_below, jp)
+                                if _is_row_root(descent, (a2, b2)) and b2 not in dict_by_b and has_bruhat_ascent(working_rc.perm, a2 - 1, b2 - 1):
+                                    new_rc = working_rc.toggle_ref_at(row_below, jp)
+                                    dict_by_a[a2] = dict_by_a.get(a2, set())
+                                    dict_by_a[a2].add(b2)
+                                    dict_by_b[b2] = a2
+                                    working_rc = new_rc
+                                    break
+            # print("Next iteration")
+            # print(working_rc)
+            # print(f"{working_rc.perm.inv=}, {self.perm.inv + index + 1=}")
+            assert working_rc.perm.inv == self.perm.inv + index + 1
+        reflections = []
+        start_perm = self.perm
+        a_keys = sorted(dict_by_a.keys())
+        # print(dict_by_a)
+        # print(start_perm)
+        # input()
+        for a in a_keys:
+            while a in dict_by_a.keys():
+                for b in sorted(dict_by_b.keys(), reverse=True):
+                    if has_bruhat_ascent(start_perm, a - 1, b - 1):
+                        reflections.append((a, b))
+                        start_perm = start_perm.swap(a - 1, b - 1)
+                        dict_by_a[a].remove(b)
+                        if len(dict_by_a[a]) == 0:
+                            del dict_by_a[a]
+                        del dict_by_b[b]
+                        break
+                #print(f"Did not find {a,b} start_perm={start_perm} {dict_by_a=}")
+        return working_rc#, tuple(reflections)
+
     @property
     def perm(self):
         perm = Permutation([])
@@ -868,8 +989,8 @@ class RCGraph(KeyType, UnderlyingGraph):
         if working_rc.is_valid:
             return working_rc
         if row_below <= 0:
-            print("End result")
-            print(self)
+            # print("End result")
+            # print(self)
             raise ValueError("Could not rectify")
         for j in range(working_rc.max_of_row(row_below) + 1, 0, -1):
                 if working_rc.has_element(row_below, j):
@@ -894,41 +1015,56 @@ class RCGraph(KeyType, UnderlyingGraph):
         # exchange property div diff sn
         interim = self
         prev_interim = self
-        while max(interim.perm.descents()) + 1 != len(self) - 1:
+        while interim.perm.inv > 0  and max(interim.perm.descents()) + 1 != len(self) - 1:
             interim = interim.exchange_property(max(interim.perm.descents()) + 1)
-            print(f"Deleted descent {max(prev_interim.perm.descents()) + 1} to {max(interim.perm.descents()) + 1}")
-            print(interim)
+            # print(f"Deleted descent")
+            # print(interim)
             if max(interim.perm.descents()) + 1 == max(prev_interim.perm.descents()) + 1:
-                print("Same descent")
+                # print("Same descent")
                 for i in range(len(interim)):
                     if len(interim[i]) < len(prev_interim[i]):
-                        print(f"Inserted at row {i + 1}")
+                        # print(f"Inserted at row {i + 1}")
                         interim = interim.monk_insert(max(prev_interim.perm.descents()) + 1, i + 1)
                         break
             elif max(interim.perm.descents()) + 1 > max(prev_interim.perm.descents()) + 1:
-                print("Increased descent")
+                # print("Increased descent")
                 diff_rows = []
+                deleted_descent = max(prev_interim.perm.descents()) + 1
                 for i in range(len(interim)):
                     if len(interim[i]) < len(prev_interim[i]):
                         rw = i + 1
                         diff_rows.append(rw)
-                while max(interim.perm.descents()) + 1 > max(prev_interim.perm.descents()) + 1:
+                        break
+                while deleted_descent > 0 and interim.perm.inv > 0  and max(interim.perm.descents()) + 1 == deleted_descent - 1:
+                    prev_prev_interim = interim
                     interim = interim.exchange_property(max(interim.perm.descents()) + 1)
+                    deleted_descent -= 1
                     for i in range(len(interim)):
-                        if len(interim[i]) < len(prev_interim[i]):
+                        if len(interim[i]) < len(prev_prev_interim[i]):
                             rw = i + 1
                             diff_rows.append(rw)
+                            break
+                        #prev_prev_interim = interim
                 diff_rows = sorted(set(diff_rows), reverse=True)
-                interim = interim.kogan_insert(max(prev_interim.perm.descents()), diff_rows)
+                # print("After delete")
+                # print(interim)
+                # print(f"Inserting at rows {diff_rows}")
+                interim = interim.kogan_insert(max(len(self) - 1,max(prev_interim.perm.descents())), diff_rows)
+                # print("After insert")
+                # print(interim)
+                assert interim.perm.inv == prev_interim.perm.inv
             else:
-                print("Different descent")
+                # print("Different descent")
+                # print("Descent is ", max(interim.perm.descents()) + 1)
                 for i in range(len(interim)):
                     if len(interim[i]) < len(prev_interim[i]):
-                        print(f"Found row to insert {i + 1}")
-                        print("Descent was", max(prev_interim.perm.descents()) + 1)
-                        print("Now", max(interim.perm.descents()) + 1)
-                        interim = interim.monk_insert(max(prev_interim.perm.descents()), i + 1)
+                        # print(f"Found row to insert {i + 1}")
+                        # print("Descent was", max(prev_interim.perm.descents()) + 1)
+                        # print("Now", max(interim.perm.descents()) + 1)
+                        interim = interim.monk_insert(max(len(self) - 1,max(prev_interim.perm.descents())), i + 1)
                         break
+                # print("After insert")
+                # print(interim)
             prev_interim = interim
         return interim.rowrange(0, len(self) - 1)
 
@@ -1096,11 +1232,12 @@ class RCGraph(KeyType, UnderlyingGraph):
         sm = 0
         for i in range(len(self)):
             sm += len(self[i])
-            if sm >= index:
+            if sm >= index and len(self[i]) > 0:
                 row = i + 1
                 break
         along = sm - index
         col_index = len(self[row-1]) - 1 - along
+        # print(f"{index=} {sm=} {along=} {len(self[row - 1])=}, {col_index=}")
         col = self[row - 1][col_index] - row + 1
         return (row, col)
 
@@ -2784,4 +2921,6 @@ if __name__ == "__main__":
             print("WE HAVE =============")
             print(rc)
             assert rc.zero_out_last_row() == gr
-    print("DONE")
+            print("========")
+        
+    # print("DONE")
