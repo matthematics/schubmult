@@ -2920,33 +2920,43 @@ def all_fa_degree(degree, length):
 
 if __name__ == "__main__":
     # test module functionality
-    
-    from schubmult.utils.perm_utils import artin_sequences
-    gr_mod = FA(2,1,0) * RCGraph()
-    graph = None
-    for gr in gr_mod.value_dict:
-        graph = gr
-        print("====================")
-        print("We have graph:")
-        print(gr)
-        print("Multiplying")
-        working_graph = graph
-        mul_up_graph = RCGraph()
-        for i in range(len(graph)):
-            row = working_graph.rowrange(i, i+1)
-            mul_up_graph = mul_up_graph * row
-            # print(f"After multiplying row {i}:")
-            # print(mul_up_graph)
-        print("To get:")
-        print(mul_up_graph)
+    import sys
 
-        print("Other way")
-        mul_up_graph2 = RCGraph()
-        for i in range(len(graph)-1, -1, -1):
-            row = working_graph.rowrange(i, i+1)
-            mul_up_graph2 = row * mul_up_graph2
-            # print(f"After multiplying row {i}:")
-            # print(mul_up_graph)
-        print("To get:")
-        print(mul_up_graph2)
-    print("DONE")
+    from schubmult.utils.perm_utils import artin_sequences
+    n = int(sys.argv[1]) if len(sys.argv) > 1 else 3
+
+    for seq in artin_sequences(n):
+        gr_mod = FA(*seq) * RCGraph()
+        graph = None
+        for gr in gr_mod.value_dict:
+            graph = gr
+            print("====================")
+            print("We have graph:")
+            print(gr)
+            print("Multiplying")
+            working_graph = graph
+            mul_up_graph = RCGraph()
+            for i in range(len(graph)):
+                row = working_graph.rowrange(i, i+1)
+                mul_up_graph = mul_up_graph * row
+                # print(f"After multiplying row {i}:")
+                # print(mul_up_graph)
+            assert len(mul_up_graph.value_dict) == 1
+            mul_up_graph = next(iter(mul_up_graph.value_dict))
+            print("To get:")
+            print(mul_up_graph)
+            assert mul_up_graph == gr, f"Failed for {seq} got {tuple(mul_up_graph)} expected {tuple(gr)}"
+
+            print("Other way")
+            mul_up_graph2 = RCGraph()
+            for i in range(len(graph)-1, -1, -1):
+                row = working_graph.rowrange(i, i+1)
+                mul_up_graph2 = row * mul_up_graph2
+                # print(f"After multiplying row {i}:")
+                # print(mul_up_graph)
+            print("To get:")
+            print(mul_up_graph2)
+            assert len(mul_up_graph2.value_dict) == 1
+            mul_up_graph2 = next(iter(mul_up_graph2.value_dict))
+            assert mul_up_graph2 == gr, f"Failed for {seq} got {mul_up_graph2} expected {gr}"
+        print("DONE")
