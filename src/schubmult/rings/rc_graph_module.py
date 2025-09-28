@@ -1302,6 +1302,35 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     @cache
     def coproduct(self):
+        def trans_to_h_list(arr):
+            h_list = []
+            buildup_code = []
+            cnt = 0
+            arr = list(reversed(arr))
+            # print(f"{arr=}")
+            first_saw = -1
+            for i in range(len(arr)):
+                cnt += 1
+                if first_saw == -1:
+                    first_saw = arr[i]
+                if i > 0 and arr[i-1] != arr[i] - 1:
+                    buildup_code = (first_saw-1) * [0]
+                    buildup_code.append(cnt)
+                    h_list.append(uncode(buildup_code))
+                    first_saw = arr[i]
+                    # print(f"{buildup_code=}")
+                    buildup_code = []
+                    cnt = 0
+                
+            
+            buildup_code = (first_saw-1) * [0]
+            buildup_code.append(cnt)
+            h_list.append(uncode(buildup_code))
+            lst = [cd.trimcode for cd in h_list]
+            # print(f"{lst=}")
+            # print(f"{arr=}")
+            assert sum(cd.inv for cd in h_list) == len(arr), f"{h_list=}, {arr=}"
+            return h_list
         # commuting h's
         if len(self) == 0:
             return RCGraphModule({RCGraph(): 1}) @ RCGraphModule({RCGraph(): 1})
@@ -1309,92 +1338,53 @@ class RCGraph(KeyType, UnderlyingGraph):
             return RCGraphModule({RCGraph([()]): 1}) @ RCGraphModule({RCGraph([()]): 1})
         if self.perm.inv == 0:
             return RCGraphModule({RCGraph([()]*len(self)): 1}) @ RCGraphModule({RCGraph([()]*len(self)): 1})
-        if len(self) == 1:
-            # split into product of h's
-            h_list = []
-            buildup_code = []
-            cnt = 0
-            for i in range(len(self[0])-1, -1, -1):
-                cnt += 1
-                if len(buildup_code) == 0:
-                    buildup_code.extend(([0]* (self[0][i] - 1)))
-                if i > 0 and self[0][i-1] != self[0][i] - 1:
-                    buildup_code.append(cnt)
-                    h_list.append(uncode(buildup_code))
-                    # print(f"{buildup_code=}")
-                    buildup_code = []
-                    cnt = 0
-            
-            buildup_code.append(cnt)
-            h_list.append(uncode(buildup_code))
-            # print(f"{buildup_code=}")
-            # we have the perms
-            rc_pair_set = {(RCGraph([()]), RCGraph([()]))}
-            for perm in h_list:
-                perm_set = ASx(perm).coproduct()
-                new_rc_pair_set = set()
-                for ((p1, _), (p2, _)), coeff in perm_set.items():
-                    cd = [p1.trimcode[-1] if len(p1.trimcode) > 0 else 0]
-                    cd2 = [p2.trimcode[-1] if len(p2.trimcode) > 0 else 0]
-                    add_one = list(range(len(p1.trimcode),  len(p1.trimcode) - cd[0], -1))
-                    add_two = list(range(len(p2.trimcode), len(p2.trimcode) - cd2[0], -1))
-                    for (rc1, rc2) in rc_pair_set:
-                        new_rc1 = [*rc1[0],*add_one]
-                        new_rc2 = [*rc2[0],*add_two]
-                        new_rc_pair_set.add((RCGraph([tuple(sorted(new_rc1, reverse=True))]), RCGraph([tuple(sorted(new_rc2, reverse=True))])))
-                rc_pair_set = new_rc_pair_set
-            ret_elem = 0
-            for (rc1, rc2) in rc_pair_set:
-                ret_elem = ret_elem + (1 * (rc1 @ rc2))
+        if len(self) > 1:
+            h_list = trans_to_h_list(self.rowrange(len(self)-1, len(self))[0])
         else:
-            # print("Coproducting")
-            # print(self)
-            buildup_module = self.rowrange(0, len(self) - 1).coproduct()
+            h_list = trans_to_h_list(self[-1])
+        #if len(self) == 1:
+        buildup_module = RCGraphModule({RCGraph([()]): 1}) @ RCGraphModule({RCGraph([()]): 1})
+        mul_module = RCGraph(self[:-1]).coproduct()
             # print("Buildup is")
             # print(buildup_module)
-            ret_elem = 0
+        ret_elem = 0
 
-            h_list = []
-            buildup_code = []
-            cnt = 0
-            for i in range(len(self[-1])):
-                if len(buildup_code) == 0:
-                    buildup_code.extend(([0]* (self[-1][i] - 1)))
-                    cnt = 0
-                if i > 0 and self[-1][i-1] != self[-1][i] - 1:
-                    buildup_code.append(cnt)
-                    h_list.append(uncode(buildup_code))
-                    # print(f"{buildup_code=}")
-                    buildup_code = []
-                    cnt = 0
-                cnt += 1
-            buildup_code.append(cnt)
-            h_list.append(uncode(buildup_code))
-            for (rc1, rc2), coeff in buildup_module.items():
-                # print("Multiplying")
-                # print(rc1)
-                # print("and")
-                # print(rc2)
-                
-                # print("Product is")
-                # print(prod_module)
-                
-                for perm in h_list:
-                    perm_set = ASx(perm).coproduct()
-                    for ((p1, _), (p2, _)), _ in perm_set.items():
-                        build_rc1 = rc1.right_zero_act()
-                        build_rc2 = rc2.right_zero_act()
-                        for rc01 in build_rc1:
-                            for rc02 in build_rc2:
-                                if p1.inv > 0:
-                                    rc011 = rc01.kogan_insert(len(self) - 2 + len(p1.trimcode),[len(self)]*p1.inv)
-                                else:
-                                    rc011 = rc01
-                                if p2.inv > 0:
-                                    rc012 = rc02.kogan_insert(len(self) - 2 + len(p2.trimcode),[len(self)]*p2.inv)
-                                else:
-                                    rc012 = rc02
-                                ret_elem += coeff * (rc011 @ rc012)
+        for (rc1, rc2), coeff in buildup_module.items():
+            # print("Multiplying")
+            # print(rc1)
+            # print("and")
+            # print(rc2)
+            
+            # print("Product is")
+            # print(prod_module)
+            
+            for perm in h_list:
+                perm_set = ASx(perm).coproduct()
+                for ((p1, _), (p2, _)), _ in perm_set.items():
+                    build_rc1 = {rc1}
+                    build_rc2 = {rc2}
+                    for rc01 in build_rc1:
+                        for rc02 in build_rc2:
+                            if p1.inv > 0:
+                                rc011 = rc01.kogan_insert(len(p1.trimcode),[1]*p1.inv)
+                            else:
+                                rc011 = rc01
+                            if p2.inv > 0:
+                                rc012 = rc02.kogan_insert(len(p2.trimcode),[1]*p2.inv)
+                            else:
+                                rc012 = rc02
+                            ret_elem += coeff * (rc011 @ rc012)
+        # print("mul_module")
+        # print(mul_module)
+        # print("ret_elem_first")
+        # print(ret_elem)
+        if len(self) > 1:
+            ret_elem = mul_module * ret_elem
+        
+        # print("Final result for")
+        # print(self)
+        # print("is")
+        # print(ret_elem)
             #ret_elem *= self.rowrange(1, len(self)).coproduct()
             # print("Result is")
             # print(ret_elem)
