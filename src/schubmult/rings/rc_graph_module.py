@@ -971,15 +971,26 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     def monk_insert(self, descent, row):
         assert row <= descent
-        result =None
-        if len(self) == 0 and row == 1:
-            return RCGraph([(descent,)])
-        for i in range(max(len(self[row-1]) - row + 1, descent), 0, -1):
-            if not self.has_element(row, i) and _is_row_root(descent, self.right_root_at(row, i)):
-                result = self.toggle_ref_at(row, i)
+        result = None
+        working_rc = self
+        # print(f"working_rc")
+        # print(working_rc)
+        if len(self) < descent:
+            working_rc = RCGraph([*self, *tuple([()] * (descent - len(self)))])
+        if row == 1 and len(self) == 0 or (len(self[0]) == 0 and len(self) <= 1):
+            return RCGraph(((descent,),))
+        for i in range(max(len(working_rc[row-1]) - row + 1, descent), 0, -1):
+            # print(f"descent = {descent} {row=} root at", working_rc.right_root_at(row, i))
+            if not working_rc.has_element(row, i) and _is_row_root(descent, working_rc.right_root_at(row, i)):
+                # print("Got it")
+                result = working_rc.toggle_ref_at(row, i)
                 break
+        # print("After insert")
+        # print(result)
         if result.is_valid:
-            return result
+            # print("returned")
+            return result.rowrange(0, len(self)) if len(self) >= 0 else result
+        # print("Not valid")
         # rectify
         # print("Result")
         # print(result)
@@ -1300,54 +1311,76 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     
     def coproduct(self):
+        from itertools import chain, combinations
+        # this is not enough, we need all insertions
+        def subsets(iterable):
+            """
+            Generates all possible subsets of an iterable.
+            Includes the empty set and the full set.
+            """
+            s = list(iterable)
+            # Generate combinations of all possible lengths (from 0 to len(s))
+            # and chain them together into a single iterator.
+            return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
+        
+        # print(the_sets)
+        ret_elem = 0
+        
         if len(self) == 0:
-            return self @ self
-        if self.perm.inv == 0:
-            return self @ self
-        if len(self) == 1:
-            from itertools import chain, combinations
-            # this is not enough, we need all insertions
-            def subsets(iterable):
-                """
-                Generates all possible subsets of an iterable.
-                Includes the empty set and the full set.
-                """
-                s = list(iterable)
-                # Generate combinations of all possible lengths (from 0 to len(s))
-                # and chain them together into a single iterator.
-                return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
+            return self@self
 
-            the_sets = subsets(set(self[0]))
-            ret_elem = 0
+        if len(self) == 1 and len(self[-1]) == 0:
+            return 1*(RCGraph([()])@RCGraph([()]))
+            
+
+        if len(self) == 1:
+            the_sets = list(subsets(set(self[0])))
+
             for the_set in the_sets:
                 other_set = set(self[0]) - set(the_set)
-                rc1 = RCGraph([()])
-                rc2 = RCGraph([()])
-                check = RCGraph()
+                buildup_rc1 = RCGraph(())
+                buildup_rc2 = RCGraph(())
+                check = RCGraph([])
+                # print("Buildup 1")
+                # print(repr(buildup_rc1))
+                # print("Buildup 2")
+                # print(repr(buildup_rc2))
+                # print("Check")
+                # print(repr(check))
+                
+                    # print(the_set)
+                    # print(other_set)
                 for s in the_set:
-                    rc1 = rc1.monk_insert(s, 1)
+                    buildup_rc1 = buildup_rc1.monk_insert(s, 1)
                     check = check.monk_insert(s, 1)
                 for s in other_set:
-                    rc2 = rc2.monk_insert(s, 1)
+                    buildup_rc2 = buildup_rc2.monk_insert(s, 1)
                     check = check.monk_insert(s, 1)
-                # print("Checking")
-                # print(check)
-                # print("self")
-                # print(self)
+                # print("Buildup 1")
+                # print(buildup_rc1)
+                # print("Buildup 2")
+                # print(buildup_rc2)
+                # print("Check")
                 if check == self:
-                    ret_elem += (rc1 @ rc2)
+                    ret_elem += (buildup_rc1 @ buildup_rc2)
+                    # print("Matched")
+                    # print(buildup_rc1)
+                    # print(buildup_rc2)
+                    # print("-------")
+            return ret_elem
 
-        else:
-            # last_row = self.rowrange(len(self) - 1,len(self))
-            # rest =self.rowrange(0,len(self) - 1)
-            # ret_elem = rest.coproduct() * last_row.coproduct()
-            rest =RCGraph(self[:-1])
-            
-            last_row = self.rowrange(len(self) - 1,len(self))
-            
-            ret_elem = rest.coproduct() * last_row.coproduct()
-
+        if len(self[-1]) == 0:
+            remainder = self.rowrange(0, len(self) - 1)
+            return remainder.coproduct() * (RCGraph([()])@RCGraph([()]))
+        remainder = self.rowrange(0, 1)
+        if remainder.perm.inv > 0:
+            return remainder.coproduct() * self.rowrange(1, len(self)).coproduct()
+        result = self.rowrange(1, len(self)).coproduct()
+        ret_elem = 0
+        for (rc1, rc2), coeff in result.items():
+            ret_elem += coeff * (RCGraph([(),*rc1.shiftup(1)]) @ RCGraph([(),*rc2.shiftup(1)]))
         return ret_elem
+
 
     @classmethod
     def principal_rc(cls, perm, length):
@@ -2905,16 +2938,19 @@ if __name__ == "__main__":
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 2
 
     for seq in artin_sequences(n):
-        gr = RCGraph.all_rc_graphs(uncode(seq), n+1)
+        if uncode(seq).inv == 0:
+            continue
+        gr = RCGraph.all_rc_graphs(uncode(seq))
         mod = 0
         for rc in gr:
             print("Graph")
             print(rc)
+            print(repr(rc))
             print("Coproduct")
             cop = rc.coproduct()
             print(cop)
             mod += cop
-        print(mod)
+        # print(mod)
             # graph = gr
             # print("====================")
             # print("We have graph:")
@@ -2945,4 +2981,4 @@ if __name__ == "__main__":
             # assert len(mul_up_graph2.value_dict) == 1
             # mul_up_graph2 = next(iter(mul_up_graph2.value_dict))
             # assert mul_up_graph2 == gr, f"Failed for {seq} got {mul_up_graph2} expected {gr}"
-        print("DONE")
+        # print("DONE")
