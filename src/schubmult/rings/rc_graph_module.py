@@ -1400,50 +1400,81 @@ class RCGraph(KeyType, UnderlyingGraph):
         graph = [*graph, *[()] * (length - len(graph))]
         return cls(graph)
 
+    def pad_with_zeros(self, num_zeros):
+        return RCGraph.pad_module_with_zeros(1 * self, num_zeros)
+
+    @staticmethod
+    def pad_module_with_zeros(rc_graph_module, num_zeros):
+        build_module = rc_graph_module
+        for _ in range(num_zeros):
+            new_build_module = 0
+            for rc, coeff in build_module.items():
+                new_rc = RCGraphModule(dict.fromkeys(rc.right_zero_act(), coeff))
+                new_build_module += new_rc
+            build_module = new_build_module
+        return build_module
+
     def prod_with_rc(self, other):
         # print("Mulling")
         # print(self)
         # print("and")
         # print(other)
-        if len(other) == 0:
-            return 1 * self
-        orig_len = len(other)
-        dff = len(self) if self.perm.inv == 0 else max(self.perm.descents()) + 1 - len(self)
-        base_rc_set = {self}
-        for _ in range(dff):
-            new_base_rc_set = set()
-            for rc in base_rc_set:
-                new_base_rc_set.update(rc.right_zero_act())
-            base_rc_set = new_base_rc_set            
-        #base_rc = RCGraph([*self, *[()]*max(dff, 0)])
-        dff2 = len(other) if other.perm.inv == 0 else max(other.perm.descents()) + 1 - len(other)
-        base_other_rc_set = {other}
-        for _ in range(dff2):
-            new_base_other_rc_set = set()
-            for rc in base_other_rc_set:
-                new_base_other_rc_set.update(rc.right_zero_act())
-            base_other_rc_set = new_base_other_rc_set
-        ret_module = RCGraphModule()
-        for base_rc in base_rc_set:
-            for base_other_rc in base_other_rc_set:
-                #buildup_module = 1*base_rc
-                buildup_module = 1 * base_rc
-                num_zeros = min(orig_len - dff, 0)
-                for _ in range(num_zeros):
-                    new_buildup_module = 0
-                    for rc, coeff in buildup_module.items():
-                        new_buildup_module += RCGraphModule(dict.fromkeys(base_rc.right_zero_act(), coeff))
-                    buildup_module = new_buildup_module
+        # if len(other) == 0:
+        #     return 1 * self
+        # orig_len = len(other)
         
-                for rc, coeff in buildup_module.items():
-                    new_rc = RCGraph([*rc[:len(self)], *base_other_rc.shiftup(len(self))[:orig_len]])
-                    # print("new_rc")
-                    # print(new_rc)
-                    # print("Trying to match")
-                    # print(new_rc)
-                    if new_rc.is_valid:
-                        # print("Matched")
-                        ret_module += coeff * new_rc
+        # base_rc_set = {self}
+        # for _ in range(dff):
+        #     new_base_rc_set = set()
+        #     for rc in base_rc_set:
+        #         new_base_rc_set.update(rc.right_zero_act())
+        #     base_rc_set = new_base_rc_set            
+        # #base_rc = RCGraph([*self, *[()]*max(dff, 0)])
+        dff2 = len(other) if other.perm.inv == 0 else max(other.perm.descents()) + 1 - len(other)
+        # base_other_rc_set = {other}
+        
+        # ret_module = RCGraphModule()
+        # for base_rc in base_rc_set:
+        #     for base_other_rc in base_other_rc_set:
+        dff = len(self) if self.perm.inv == 0 else max(self.perm.descents()) + 1 - len(self)
+        first_module = self.pad_with_zeros(dff)
+        #         #buildup_module = 1*base_rc
+        #         buildup_module = 1 * base_rc
+        #         num_zeros = min(orig_len - dff, 0)
+        #         for _ in range(num_zeros):
+        #             new_buildup_module = 0
+        #             for rc, coeff in buildup_module.items():
+        #                 new_buildup_module += RCGraphModule(dict.fromkeys(base_rc.right_zero_act(), coeff))
+        #             buildup_module = new_buildup_module
+        
+        #         new_buildup_module = 0
+        interim_ret_module = 0
+        for rc, coeff in first_module.items():
+            new_rc = RCGraph([*rc[:len(self)], *other.shiftup(len(self))])
+            interim_ret_module += coeff * new_rc
+        new_ret_module = RCGraph.pad_module_with_zeros(interim_ret_module, dff2)
+        ret_module = 0
+        for rc, coeff in new_ret_module.items():
+            ret_module += coeff * rc.rowrange(0,len(self)+len(other))
+        #             # print("new_rc")
+        #             # print(new_rc)
+        #             # print("Trying to match")
+        #             # print(new_rc)
+        #             num_zeros = dff2
+        #             new_base_other_rc_set = {base_other_rc_set}
+        #             for _ in range(dff2):
+        #                 new_new_base_other_rc_set = set()
+        #                 for rc in base_other_rc_set:
+        #                     new_base_other_rc_set.update(rc.right_zero_act())
+        #                 new_base_other_rc_set = new_base_other_rc_set
+        #             for rc, coeff in buildup_module.items():
+        #                 new_buildup_module += RCGraphModule(dict.fromkeys(base_rc.right_zero_act(), coeff))
+        #             buildup_module = new_buildup_module
+        #             if new_rc.is_valid:
+        #                 # print("Matched")
+        #                 new_buildup_module += coeff * new_rc
+        #         # for rc2, coeff2 in new_buildup_module.items():
+        #         #     ret_module += coeff2 * rc2.normalize_and_remove_last_row()
         return ret_module
 
     def ring_act(self, elem):
