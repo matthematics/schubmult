@@ -143,3 +143,8 @@ def cyclic_sort(L):
     m = max(L)
     i = L.index(m)
     return L[i + 1 :] + L[: i + 1]
+
+def cyclic_sort_min(L):
+    m = min(L)
+    i = L.index(m)
+    return L[i :] + L[:i]
