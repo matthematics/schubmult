@@ -1428,9 +1428,9 @@ class RCGraph(KeyType, UnderlyingGraph):
             for base_other_rc in base_other_rc_set:
                 #buildup_module = 1*base_rc
                 buildup_module = 1 * base_rc
-                num_zeros = min(orig_len - dff - dff2, 0)
+                num_zeros = min(orig_len - dff, 0)
                 for _ in range(num_zeros):
-                    new_buildup_module = RCGraphModule()
+                    new_buildup_module = 0
                     for rc, coeff in buildup_module.items():
                         new_buildup_module += RCGraphModule(dict.fromkeys(base_rc.right_zero_act(), coeff))
                     buildup_module = new_buildup_module
