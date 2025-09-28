@@ -1089,6 +1089,24 @@ class RCGraph(KeyType, UnderlyingGraph):
                         rc_set.add(rc)
         return rc_set
 
+    @staticmethod
+    def right_zero_act_pair(rc1, rc2):
+        # print("Right zeroing")
+        # print(self)
+        if len(rc1) == 0:
+            return {(RCGraph([()]),RCGraph([()]))}
+        up_perms = (ASx@ASx)(((rc1.perm,len(rc1)),(rc2.perm, len(rc2)))) * ASx(uncode([0]),1).coproduct()
+
+        rc_set = set()
+
+        for ((perm1, _), (perm2, _)), v in up_perms.items():
+            for rc01 in RCGraph.all_rc_graphs(perm1, len(rc1) + 1):
+                for rc02 in RCGraph.all_rc_graphs(perm2, len(rc2) + 1):
+                    #rc = RCGraph((tuple(sorted([*rc01[0], *rc02[0]])), *[tuple(sorted([*rc01[i], *[a + 1 for a in rc02[i]]])) for i in range(1, max(len(rc01), len(rc02)))]))
+                    if rc02.length_vector()[:1] == rc2.length_vector() and rc01.length_vector()[:-1] == rc1.length_vector() and rc01.zero_out_last_row() == rc1 and rc02.zero_out_last_row() == rc2:
+                        rc_set.add((rc01, rc02))
+        return rc_set
+
 
 
     def normalize_and_remove_last_row(self):
@@ -1342,7 +1360,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         
         for row in range(len(self)):
             ret_elem = 0
-            buildup_module = RCGraph.pad_tensor_module_with_zeros(buildup_module, 1)
+            #buildup_module = RCGraph.pad_tensor_module_with_zeros(buildup_module, 1)
             h_list = trans_to_h_list(self[row])
             #if len(self) == 1:
             
@@ -1359,24 +1377,28 @@ class RCGraph(KeyType, UnderlyingGraph):
                 
                 # print("Product is")
                 # print(prod_module)
+                rc11 = RCGraph.right_zero_act_pair(rc1,rc2)
                 
+                # print(f"{rc12=}")
+                # print(f"{rc11}")
                 for perm in h_list:
                     perm_set = ASx(perm).coproduct()
                     for ((p1, _), (p2, _)), _ in perm_set.items():
-                        build_rc1 = {rc1}
-                        build_rc2 = {rc2}
-                        for rc01 in build_rc1:
-                            for rc02 in build_rc2:
-                                if p1.inv > 0:
-                                    rc011 = rc01.kogan_insert(len(p1.trimcode),[row+1]*p1.inv)
-                                else:
-                                    rc011 = rc01
-                                if p2.inv > 0:
-                                    rc012 = rc02.kogan_insert(len(p2.trimcode),[row+1]*p2.inv)
-                                else:
-                                    rc012 = rc02
+                        for rc01, rc02 in rc11:
+                            rc011 = rc01
+                            rc012 = rc02
+                            if p1.inv > 0:
+                                rc011 = rc011.kogan_insert(len(p1.trimcode),[row+1]*p1.inv)
+                            if p2.inv > 0:
+                                rc012 = rc012.kogan_insert(len(p2.trimcode),[row+1]*p2.inv)
+                            if rc011.perm.bruhat_leq(self.rowrange(0,row+1).perm) and rc012.perm.bruhat_leq(self.rowrange(0,row+1).perm):
+                                # print("Matched")
+                                # print(rc011)
+                                # print(rc012)
+                                # print("With coeff", coeff)
+                                # print("and perm", perm)
                                 ret_elem += coeff * (rc011 @ rc012)
-                buildup_module = ret_elem
+            buildup_module = ret_elem
             # print("mul_module")
             # print(mul_module)
             # print("ret_elem_first")
