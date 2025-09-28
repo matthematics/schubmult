@@ -1390,15 +1390,28 @@ class RCGraph(KeyType, UnderlyingGraph):
                         rc012 = rc02
                         if p1.inv > 0:
                             rc011 = rc011.kogan_insert(len(p1.trimcode),[1]*p1.inv)
+                            rc011 = rc011.rowrange(0,1)* rc1
+                            new_rc011 = 0
+                            for rc, c in rc011.items():
+                                new_rc011 += c * (RCGraph([(),*rc[1:]]).kogan_insert(len(p1.trimcode),[1]*p1.inv))
+                            rc011 = new_rc011
                         if p2.inv > 0:
                             rc012 = rc012.kogan_insert(len(p2.trimcode),[1]*p2.inv)
+                            rc012 = rc012.rowrange(0,1)* rc2
+                            new_rc012 = 0
+                            for rc, c in rc012.items():
+                                new_rc012 += c * (RCGraph([(),*rc[1:]]).kogan_insert(len(p2.trimcode),[1]*p2.inv))
+                            rc012 = new_rc012
+                        rc011 = 1*rc011
+                        rc012 = 1*rc012
+                            #rc012 = RCGraph([(),*rc012[1:]]).kogan_insert(len(p2.trimcode),[1]*p2.inv)
                         #if rc011.perm.bruhat_leq(self.rowrange(0,row+1).perm) and rc012.perm.bruhat_leq(self.rowrange(0,row+1).perm):
                                 # print("Matched")
                                 # print(rc011)
                                 # print(rc012)
                                 # print("With coeff", coeff)
                                 # print("and perm", perm)
-                        ret_elem += coeff * ((rc011.rowrange(0,1)* rc1) @ (rc012.rowrange(0,1)* rc2))
+                        ret_elem += coeff * (rc011 @ rc012)
             buildup_module = ret_elem
             # print("mul_module")
             # print(mul_module)
