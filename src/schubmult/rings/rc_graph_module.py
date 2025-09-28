@@ -1069,8 +1069,8 @@ class RCGraph(KeyType, UnderlyingGraph):
         return interim.rowrange(0, len(self) - 1)
 
     def right_zero_act(self):
-        print("Right zeroing")
-        print(self)
+        # print("Right zeroing")
+        # print(self)
         if self.perm.inv == 0:
             return RCGraph([*self, ()])
 
@@ -1393,10 +1393,10 @@ class RCGraph(KeyType, UnderlyingGraph):
         return cls(graph)
 
     def prod_with_rc(self, other):
-        print("Mulling")
-        print(self)
-        print("and")
-        print(other)
+        # print("Mulling")
+        # print(self)
+        # print("and")
+        # print(other)
         if len(other) == 0:
             return 1 * self
         orig_len = len(other)
@@ -1411,17 +1411,17 @@ class RCGraph(KeyType, UnderlyingGraph):
             for rc, coeff in buildup_module.items():
                 new_buildup_module += RCGraphModule(dict.fromkeys(rc.right_zero_act(), coeff))
             buildup_module = new_buildup_module
-        print("Buildup is")
-        print(buildup_module)
+        # print("Buildup is")
+        # print(buildup_module)
         ret_module = RCGraphModule()
         #up_perms = ASx(self.perm, len(self)) * ASx(other.perm, 1)
         #vset = buildup_module.value_dict.keys()
         for rc, coeff in buildup_module.items():
             new_rc = RCGraph([*rc[:len(self)], *other.rowrange(0,orig_len).shiftup(len(self))])
-            print("Trying to match")
-            print(new_rc)
+            # print("Trying to match")
+            # print(new_rc)
             if new_rc.is_valid:
-                print("Matched")
+                # print("Matched")
                 ret_module += coeff * new_rc
         return ret_module
 
@@ -2932,11 +2932,11 @@ if __name__ == "__main__":
         print("Multiplying")
         working_graph = graph
         mul_up_graph = RCGraph()
-        for i in range(len(graph)-1):
+        for i in range(len(graph)):
             row = working_graph.rowrange(i, i+1)
             mul_up_graph = mul_up_graph * row
-            print(f"After multiplying row {i}:")
-            print(mul_up_graph)
+            # print(f"After multiplying row {i}:")
+            # print(mul_up_graph)
         print("To get:")
         print(mul_up_graph)
-    # print("DONE")
+    print("DONE")
