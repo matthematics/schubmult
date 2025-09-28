@@ -2939,4 +2939,14 @@ if __name__ == "__main__":
             # print(mul_up_graph)
         print("To get:")
         print(mul_up_graph)
+
+        print("Other way")
+        mul_up_graph2 = RCGraph()
+        for i in range(len(graph)-1, -1, -1):
+            row = working_graph.rowrange(i, i+1)
+            mul_up_graph2 = row * mul_up_graph2
+            # print(f"After multiplying row {i}:")
+            # print(mul_up_graph)
+        print("To get:")
+        print(mul_up_graph2)
     print("DONE")
