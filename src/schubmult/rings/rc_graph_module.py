@@ -306,8 +306,6 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     @property
     def is_valid(self):
-        if self.perm.inv == 0:
-            return True
         if self.perm.inv != len(self.perm_word()):
             return False
         # if max(self.perm.descents()) + 1 > len(self):
@@ -1317,13 +1315,13 @@ class RCGraph(KeyType, UnderlyingGraph):
                 if i > 0 and self[0][i-1] != self[0][i] - 1:
                     buildup_code.append(cnt)
                     h_list.append(uncode(buildup_code))
-                    print(f"{buildup_code=}")
+                    # print(f"{buildup_code=}")
                     buildup_code = []
                     cnt = 0
                 cnt += 1
             buildup_code.append(cnt)
             h_list.append(uncode(buildup_code))
-            print(f"{buildup_code=}")
+            # print(f"{buildup_code=}")
             # we have the perms
             rc_pair_set = {(RCGraph([()]), RCGraph([()]))}
             for perm in h_list:
@@ -1391,7 +1389,9 @@ class RCGraph(KeyType, UnderlyingGraph):
         #up_perms = ASx(self.perm, len(self)) * ASx(other.perm, 1)
         #vset = buildup_module.value_dict.keys()
         for rc, coeff in buildup_module.items():
-            new_rc = RCGraph([*rc[:len(self)], *other.rowrange(0,orig_len).shiftup(len(self))])
+            new_rc = RCGraph([*rc[:len(self)], *other.shiftup(len(self))[:orig_len]])
+            # print("new_rc")
+            # print(new_rc)
             # print("Trying to match")
             # print(new_rc)
             if new_rc.is_valid:
