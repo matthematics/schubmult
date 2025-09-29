@@ -1,18 +1,5 @@
-# Traceback (most recent call last):
-#   File "/home/matthematics/schubmult/src/schubmult/scripts/assoc_test.py", line 163, in <module>
-#     diff = hom(g1 * g2) - hom(g1) * hom(g2)
-#                ~~~^~~~
-#   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 656, in __mul__
-#     return self.prod_with_rc(other)
-#            ^^^^^^^^^^^^^^^^^^^^^^^^
-#   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 1631, in prod_with_rc
-#     new_buildup_module += RCGraphModule(dict.fromkeys(rc.right_zero_act(), coeff))
-#                                                       ^^^^^^^^^^^^^^^^^^^
-#   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 1129, in right_zero_act
-#     assert len(rc_set) == len(up_perms), f"{rc_set=}, {len(up_perms)=}, {self=} {up_perms=}"
-#            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# AssertionError: rc_set={RCGraph((1,), (2,), ()), RCGraph((1,), (3,), ())}, len(up_perms)=3, self=RCGraph((1,), (2,)) up_perms=ASx(((1, 3, 4, 2), 3)) + ASx(((2, 1, 4, 3), 3)) + ASx(((2, 3, 1), 3))
-# we need mulling 0 to give us 2 3
+# IS THIS ASSOCIATIVE?
+
 
 def hom3(rc):
     from schubmult import FA, ASx, SchubertBasis
@@ -161,13 +148,12 @@ if __name__ == "__main__":
     #         if w in dct:
     #             mod += hom(v * dct[w])
     #     print(mod)
-    for len1 in range(1,n-1):
-        for perm in perms:
-            if len(perm.trimcode) > len1:
-                continue
+    for perm in perms:
+        for len1 in range(len(perm.trimcode),n):
+        
             graphs1 = RCGraph.all_rc_graphs(perm, len1)
-            for len2 in range(1,n-1):
-                for perm2 in perms:
+            for perm2 in perms:
+                for len2 in range(len(perm2.trimcode),n):
                     if len(perm2.trimcode) > len2:
                         continue
                     graphs2 = RCGraph.all_rc_graphs(perm2, len2)
