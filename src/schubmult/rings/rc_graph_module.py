@@ -756,6 +756,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         dict_by_b = {}
         # row is descent
         # inserting times
+        ARBITRARY_MAX_VALUE = 10
         working_rc = RCGraph([*self])
         if len(rows) == 0:
             return self
@@ -774,7 +775,7 @@ class RCGraph(KeyType, UnderlyingGraph):
             #for i in range(working_rc.max_of_row(row) + descent, 0, -1):
             i = 1
             flag = False
-            while not flag:
+            while not flag and i < descent + ARBITRARY_MAX_VALUE:
                 if debug:
                     print(f"Trying column {i}")
                 if not working_rc.has_element(row, i):
@@ -783,6 +784,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                         print(f"root is {a, b}")
                     flag = False
                     if a > b:
+                        i += 1
                         continue
                     if debug:
                         print("_is_row_root:", _is_row_root(descent, (a, b)))
@@ -820,7 +822,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                     for row_below in range(row, 0, -1):
                         for j in range(1, working_rc.max_of_row(row_below) + descent+1):
                             if working_rc.has_element(row_below, j):
-                                working_rc.right_root_at(row_below, j)
+                                a, b = working_rc.right_root_at(row_below, j)
                                 if b > a:
                                     continue
                                 if debug:
@@ -894,23 +896,23 @@ class RCGraph(KeyType, UnderlyingGraph):
                     raise
                 self.kogan_insert(descent, rows, debug=True)
                 raise
-        reflections = []
-        start_perm = self.perm
-        a_keys = sorted(dict_by_a.keys())
-        # print(dict_by_a)
-        # print(start_perm)
-        # input()
-        for a in a_keys:
-            while a in dict_by_a.keys():
-                for b in sorted(dict_by_b.keys(), reverse=True):
-                    if has_bruhat_ascent(start_perm, a - 1, b - 1):
-                        reflections.append((a, b))
-                        start_perm = start_perm.swap(a - 1, b - 1)
-                        dict_by_a[a].remove(b)
-                        if len(dict_by_a[a]) == 0:
-                            del dict_by_a[a]
-                        del dict_by_b[b]
-                        break
+        # reflections = []
+        # start_perm = self.perm
+        # a_keys = sorted(dict_by_a.keys())
+        # # print(dict_by_a)
+        # # print(start_perm)
+        # # input()
+        # for a in a_keys:
+        #     while a in dict_by_a.keys():
+        #         for b in sorted(dict_by_b.keys(), reverse=True):
+        #             if has_bruhat_ascent(start_perm, a - 1, b - 1):
+        #                 reflections.append((a, b))
+        #                 start_perm = start_perm.swap(a - 1, b - 1)
+        #                 dict_by_a[a].remove(b)
+        #                 if len(dict_by_a[a]) == 0:
+        #                     del dict_by_a[a]
+        #                 del dict_by_b[b]
+        #                 break
                 #print(f"Did not find {a,b} start_perm={start_perm} {dict_by_a=}")
         return working_rc#, tuple(reflections)
 
@@ -1079,7 +1081,8 @@ class RCGraph(KeyType, UnderlyingGraph):
         #if self.perm == Permutation([1,4,3,2]):
             # print("After delete")
             # print(interim)
-            # print(f"Inserting at rows {diff_rows}")
+        # print(interim)
+        # print(f"Inserting at rows {diff_rows}")
         interim = interim.kogan_insert(len(self) - 1,diff_rows)
         #if self.perm == Permutation([1,4,3,2]):
             # print("After kogan")
