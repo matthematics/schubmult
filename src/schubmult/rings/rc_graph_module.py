@@ -763,8 +763,8 @@ class RCGraph(KeyType, UnderlyingGraph):
             # print(f"{working_rc.perm.inv=}, {self.perm.inv=}")
             if row > descent:
                 raise ValueError("All rows must be less than or equal to descent")
-            last_inv = working_rc.perm.inv
-            for i in range(working_rc.max_of_row(row) + descent, 0, -1):
+            #for i in range(working_rc.max_of_row(row) + descent, 0, -1):
+            for i in range(1,working_rc.max_of_row(row) + descent+1):
                 flag = False
                 # print(f"Trying column {i}")
                 if not working_rc.has_element(row, i):
@@ -1031,10 +1031,17 @@ class RCGraph(KeyType, UnderlyingGraph):
                     break
                 #prev_prev_interim = interim
         diff_rows = sorted(list(diff_rows), reverse=True)
-        # print("After delete")
-        # print(interim)
-        # print(f"Inserting at rows {diff_rows}")
+        if self.perm == Permutation([1,4,3,2]):
+            print("After delete")
+            print(interim)
+            print(f"Inserting at rows {diff_rows}")
         interim = interim.kogan_insert(len(self) - 1,diff_rows)
+        if self.perm == Permutation([1,4,3,2]):
+            print("After kogan")
+            print(interim)
+            print(f"Inserted at rows {diff_rows}")
+        # print("After kogan")
+        # print(interim)
         # print("After insert")
         # print(interim)
         assert interim.perm.inv == self.perm.inv
@@ -1065,10 +1072,18 @@ class RCGraph(KeyType, UnderlyingGraph):
         rc_set = set()
 
         for (perm, _), v in up_perms.items():
+            assert v == 1
             for rc in RCGraph.all_rc_graphs(perm, len(self) + 1):
-                if rc.length_vector()[:-1] == self.length_vector() and rc.zero_out_last_row() == self:
-                    rc_set.add(rc)
-        assert len(rc_set) == len(up_perms), f"{len(rc_set)=}, {len(up_perms)=}, {self=} {up_perms=}"
+                
+                if rc.length_vector()[:-1] == self.length_vector(): 
+                    if rc.zero_out_last_row() == self:
+                        rc_set.add(rc)
+                    else:
+                        print("rc:")
+                        print(rc)
+                        print("zeros to:")
+                        print(rc.zero_out_last_row())
+        assert len(rc_set) == len(up_perms), f"{rc_set=}, {len(up_perms)=}, {self=} {up_perms=}"
         return rc_set
 
     @staticmethod
