@@ -699,15 +699,21 @@ class RCGraph(KeyType, UnderlyingGraph):
                 ret *= prod([x[i + 1] - y[row[j] - i] for j in range(len(row))])
         return ret
 
+    _graph_cache = {}
+
     @classmethod
-    @cache
     def all_rc_graphs(cls, perm, length=-1):
+        if length == -1:
+            length = len(perm.trimcode)
+        if (perm, length) in cls._graph_cache:
+            return cls._graph_cache[(perm, length)]
         if perm.inv == 0:
             return {RCGraph([()] * length if length > 0 else [])}
         if len(perm.trimcode) == 1:
             nrc = RCGraph((tuple(range(perm.code[0], 0, -1)),))
             if len(nrc) < length:
                 nrc = RCGraph((*nrc, *tuple([()] * (length - len(nrc)))))
+                assert len(nrc) == length
             return {nrc}
         ret = set()
         pm = perm
@@ -721,7 +727,9 @@ class RCGraph(KeyType, UnderlyingGraph):
                 if len(nrc) < length:
                     nrc = RCGraph((*nrc, *tuple([()] * (length - len(nrc)))))
                 assert nrc.perm == perm
+                assert len(nrc) == length
                 ret.add(nrc)
+        cls._graph_cache[(perm, length)] = ret
         return ret
 
     def extend(self, extra_rows):
@@ -750,8 +758,65 @@ class RCGraph(KeyType, UnderlyingGraph):
     #         return True
     #     return False
 
-    def kogan_insert(self, descent, rows, debug=False):
-        from schubmult.utils.perm_utils import has_bruhat_ascent
+    def _kogan_insert_row(self, row, i, descent, dict_by_a, dict_by_b, debug=True):
+        working_rc = self
+        flag = False
+        if not working_rc.has_element(row, i):
+            a, b = working_rc.right_root_at(row, i)
+            if debug:
+                print(f"root is {a, b}")
+            flag = False
+            if a > b:
+                i += 1
+                return working_rc, flag
+            if debug:
+                print("_is_row_root:", _is_row_root(descent, (a, b)))
+                print(f"{dict_by_b=}")
+            if _is_row_root(descent, (a, b)) and b not in dict_by_b:
+                new_rc = working_rc.toggle_ref_at(row, i)
+                dict_by_a[a] = dict_by_a.get(a, set())
+                dict_by_a[a].add(b)
+                dict_by_b[b] = a
+                flag = True
+                working_rc = new_rc
+                if debug:
+                    print("Toggled a")
+                    print(working_rc)
+            if a in dict_by_b and b not in dict_by_b:
+                new_rc = working_rc.toggle_ref_at(row, i)
+                dict_by_a[dict_by_b[a]].add(b)
+                flag = True
+                working_rc = new_rc
+                if debug:
+                    print("Toggled b")
+                    print(working_rc)
+            elif b in dict_by_b and a not in dict_by_b and a > descent:
+                new_rc = working_rc.toggle_ref_at(row, i)
+                dict_by_a[dict_by_b[b]].add(a)
+                flag = True
+                working_rc = new_rc
+                if debug:
+                    print("Toggled c")
+                    print(working_rc)
+            if debug and flag:
+                print("Inserted")
+                print(working_rc)
+        return working_rc, flag
+
+    def _kogan_rectify(self, row_below, descent, dict_by_a, dict_by_b):
+        working_rc = self
+        if row_below == 0:
+            assert working_rc.is_valid
+            return working_rc
+        if working_rc.is_valid:
+            working_rc
+        for j in range(working_rc.max_of_row(row_below) + 1, 0, -1):
+            working_rc, flag = working_rc._kogan_insert_row(row_below, j, descent, dict_by_a, dict_by_b)
+            if flag:
+                return working_rc.kogan_rectify(row_below - 1, dict_by_a, dict_by_b)
+        return working_rc.kogan_rectify(row_below - 1, dict_by_a, dict_by_b)
+
+    def kogan_insert(self, descent, rows, debug=True):
         dict_by_a = {}
         dict_by_b = {}
         # row is descent
@@ -766,6 +831,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         if debug:
             print(f"inserting {rows=}")
         for index, row in enumerate(rows):
+            last_working_rc = working_rc
             if debug:
                 print(f"Inserting {row=} at iteration {index}")
                 print(working_rc)
@@ -776,95 +842,12 @@ class RCGraph(KeyType, UnderlyingGraph):
             i = 1
             flag = False
             while not flag and i < descent + ARBITRARY_MAX_VALUE:
+                last_working_rc = working_rc
                 if debug:
                     print(f"Trying column {i}")
-                if not working_rc.has_element(row, i):
-                    a, b = working_rc.right_root_at(row, i)
-                    if debug:
-                        print(f"root is {a, b}")
-                    flag = False
-                    if a > b:
-                        i += 1
-                        continue
-                    if debug:
-                        print("_is_row_root:", _is_row_root(descent, (a, b)))
-                        print(f"{dict_by_b=}")
-                    if _is_row_root(descent, (a, b)) and b not in dict_by_b:
-                        new_rc = working_rc.toggle_ref_at(row, i)
-                        dict_by_a[a] = dict_by_a.get(a, set())
-                        dict_by_a[a].add(b)
-                        dict_by_b[b] = a
-                        flag = True
-                        working_rc = new_rc
-                        if debug:
-                            print("Toggled a")
-                            print(working_rc)
-                    if a in dict_by_b and b not in dict_by_b:
-                        new_rc = working_rc.toggle_ref_at(row, i)
-                        dict_by_a[dict_by_b[a]].add(b)
-                        flag = True
-                        working_rc = new_rc
-                        if debug:
-                            print("Toggled b")
-                            print(working_rc)
-                    elif b in dict_by_b and a not in dict_by_b and a > descent:
-                        new_rc = working_rc.toggle_ref_at(row, i)
-                        dict_by_a[dict_by_b[b]].add(a)
-                        flag = True
-                        working_rc = new_rc
-                        if debug:
-                            print("Toggled c")
-                            print(working_rc)
-                    if debug and flag:
-                        print("Inserted")
-                        print(working_rc)
-                if flag:
-                    for row_below in range(row, 0, -1):
-                        for j in range(1, working_rc.max_of_row(row_below) + descent+1):
-                            if working_rc.has_element(row_below, j):
-                                a, b = working_rc.right_root_at(row_below, j)
-                                if b > a:
-                                    continue
-                                if debug:
-                                    print(f"Considering bad at {row_below, j}")
-                                    print(f"{dict_by_a=}, {dict_by_b=}")
-                                    print(f"root = ({a, b})")
-                                a, b = b, a
-                                if a in dict_by_a and b in dict_by_a[a]:
-
-                                    new_rc = working_rc.toggle_ref_at(row_below, j)
-                                    dict_by_a[a].remove(b)
-                                    if len(dict_by_a[a]) == 0:
-                                        del dict_by_a[a]
-                                    del dict_by_b[b]
-                                    working_rc = new_rc
-                                    flag = False
-                                    print("Toggle bad a")
-                                    print(working_rc)
-                                if a in dict_by_b and b in dict_by_b and dict_by_b[a] == dict_by_b[b]:
-                                    new_rc = working_rc.toggle_ref_at(row_below, j)
-                                    if new_rc.perm[dict_by_b[a] - 1] < new_rc.perm[a - 1]:
-                                        dict_by_a[dict_by_b[a]].remove(a)
-                                        del dict_by_b[a]
-                                        if len(dict_by_a[dict_by_b[b]]) == 0:
-                                            del dict_by_a[dict_by_b[b]]
-                                        print("Toggle bad b")
-                                    else:
-                                        dict_by_a[dict_by_b[b]].remove(b)
-                                        del dict_by_b[b]
-                                        if len(dict_by_a[dict_by_b[a]]) == 0:
-                                            del dict_by_a[dict_by_b[a]]
-                                        print("Toggle bad c")
-                                    working_rc = new_rc
-                                    flag = False
-                                    if debug:
-                                        print("Toggled bad")
-                                        print(working_rc)
-                                # if new_flag:
-                                #     if debug:
-                                #         print("Found bad")
-                                #         print("Deleted")
-                                #         print(working_rc)
+                working_rc, flag = working_rc._kogan_insert_row(row, i, descent, dict_by_a, dict_by_b, debug=debug)
+                if flag and not working_rc.is_valid:
+                    working_rc = working_rc._kogan_rectify(row - 1, descent, dict_by_a, dict_by_b)
                 i += 1
                     # if new_flag:
                     #     print("Trying to reinsert")
@@ -885,7 +868,8 @@ class RCGraph(KeyType, UnderlyingGraph):
                 print(working_rc)
                 print(f"{working_rc.perm.inv=}, {self.perm.inv + index + 1=}")
             try:
-                assert working_rc.perm.inv == self.perm.inv + index + 1
+                #assert working_rc.perm.inv == self.perm.inv + index + 1
+                assert len(working_rc[row - 1]) == len(last_working_rc[row - 1]) + 1
             except AssertionError:
                 print("Assertion failed")
                 print(working_rc)
@@ -894,7 +878,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                 print(f"{working_rc.perm=}, {self.perm=}")
                 if debug:
                     raise
-                self.kogan_insert(descent, rows, debug=True)
+                self.kogan_insert(descent, rows, debug= True)
                 raise
         # reflections = []
         # start_perm = self.perm
@@ -1006,6 +990,7 @@ class RCGraph(KeyType, UnderlyingGraph):
     
     def toggle_ref_at(self, i, j):
         from bisect import bisect_left
+        assert i>0 and j > 0
         a, b = self.right_root_at(i, j)
         row = self[i - 1]
         rev_row = [*row]
@@ -1066,7 +1051,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         if max(self.perm.descents()) + 1 <= len(self) - 1:
             return self.rowrange(0, len(self) - 1)
         # exchange property div diff sn
-        interim = self
+        interim = RCGraph([*self])
         diff_rows = []
         # we need to bump up additionally?
         # example
@@ -1084,11 +1069,14 @@ class RCGraph(KeyType, UnderlyingGraph):
                     diff_rows.append(rw)
                     break
                 #prev_prev_interim = interim
+        
         if debug:
             print("Got")
             print(interim)
             if interim.perm.inv > 0:
                 print(f"Descent is {max(interim.perm.descents()) + 1}, need to insert at {diff_rows}")
+            for i, row in enumerate(self):
+                assert len(row) == len(interim[i]) + len([a for a in diff_rows if a == i+1])
         diff_rows = sorted(list(diff_rows), reverse=True)
         #if self.perm == Permutation([1,4,3,2]):
             # print("After delete")
@@ -1107,7 +1095,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         # print(interim)
         # print("After insert")
         # print(interim)
-        assert interim.perm.inv == self.perm.inv
+        assert interim.length_vector() == self.length_vector()
         # else:
         #     # print("Different descent")
         #     # print("Descent is ", max(interim.perm.descents()) + 1)
@@ -1120,14 +1108,18 @@ class RCGraph(KeyType, UnderlyingGraph):
         #             break
             # print("After insert")
             # print(interim)
-        prev_interim = interim
+        
         return interim.rowrange(0, len(self) - 1)
 
-    def right_zero_act(self):
+    def right_zero_act(self, debug=True):
         # print("Right zeroing")
         # print(self)
         if self.perm.inv == 0:
             return {RCGraph([*self, ()])}
+        if debug:
+            print("Num rows:")
+            print(len(self))
+            print(self)
         # if len(self) >= len(self.perm) - 1:
         #     return {RCGraph([*self, ()])}
         up_perms = ASx(self.perm, len(self)) * ASx(uncode([0]),1)
@@ -1137,8 +1129,19 @@ class RCGraph(KeyType, UnderlyingGraph):
         for (perm, _), v in up_perms.items():
             assert v == 1
             for rc in RCGraph.all_rc_graphs(perm, len(self) + 1):
-                if rc.length_vector()[:-1] == self.length_vector(): 
-                    if rc.zero_out_last_row() == self:
+                if debug:
+                    print("rc num rows:")
+                    print(len(rc))
+                    assert len(rc) == len(self) + 1
+                if rc.length_vector()[:-1] == self.length_vector():
+                    z = rc.zero_out_last_row()
+                    assert len(z) == len(self)
+                    if debug:
+                        print("Zeroed out last row:")
+                        print(z)
+                    if z == self:
+                        if debug:
+                            print("Added")
                         rc_set.add(rc)
         
         assert len(rc_set) == len(up_perms), f"{rc_set=}, {len(up_perms)=}, {self=} {up_perms=}"
