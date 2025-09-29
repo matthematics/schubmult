@@ -724,6 +724,8 @@ class RCGraph(KeyType, UnderlyingGraph):
                 ret.add(nrc)
         return ret
 
+    def extend(self, extra_rows):
+        return RCGraph([*self, *tuple([()] * extra_rows)])
     # def __le__(self, other):
     #     if not isinstance(other, RCGraph):
     #         return NotImplemented
@@ -748,33 +750,43 @@ class RCGraph(KeyType, UnderlyingGraph):
     #         return True
     #     return False
 
-    def kogan_insert(self, descent, rows):
+    def kogan_insert(self, descent, rows, debug=False):
         from schubmult.utils.perm_utils import has_bruhat_ascent
         dict_by_a = {}
         dict_by_b = {}
         # row is descent
         # inserting times
         working_rc = RCGraph([*self])
+        if len(rows) == 0:
+            return self
+        if max(rows) > len(working_rc):
+            working_rc = working_rc.extend(max(rows) - len(working_rc))
         rows = list(sorted(rows, reverse=True))
-        # print(f"inserting {rows=}")
+        if debug:
+            print(f"inserting {rows=}")
         for index, row in enumerate(rows):
-            # print(f"Inserting {row=} at iteration {index}")
-            # print(working_rc)
-            # print(f"{working_rc.perm.inv=}, {self.perm.inv=}")
+            if debug:
+                print(f"Inserting {row=} at iteration {index}")
+                print(working_rc)
+                print(f"{working_rc.perm.inv=}, {self.perm.inv=}")
             if row > descent:
                 raise ValueError("All rows must be less than or equal to descent")
             #for i in range(working_rc.max_of_row(row) + descent, 0, -1):
-            for i in range(1,working_rc.max_of_row(row) + descent+1):
-                flag = False
-                # print(f"Trying column {i}")
+            i = 1
+            flag = False
+            while not flag:
+                if debug:
+                    print(f"Trying column {i}")
                 if not working_rc.has_element(row, i):
                     a, b = working_rc.right_root_at(row, i)
-                    # print(f"root is {a, b}")
+                    if debug:
+                        print(f"root is {a, b}")
                     flag = False
                     if a > b:
                         continue
-                    # print("_is_row_root:", _is_row_root(descent, (a, b)))
-                    # print(f"{dict_by_b=}")
+                    if debug:
+                        print("_is_row_root:", _is_row_root(descent, (a, b)))
+                        print(f"{dict_by_b=}")
                     if _is_row_root(descent, (a, b)) and b not in dict_by_b:
                         new_rc = working_rc.toggle_ref_at(row, i)
                         dict_by_a[a] = dict_by_a.get(a, set())
@@ -782,73 +794,106 @@ class RCGraph(KeyType, UnderlyingGraph):
                         dict_by_b[b] = a
                         flag = True
                         working_rc = new_rc
-                        # print("Toggled")
-                        # print(working_rc)
+                        if debug:
+                            print("Toggled a")
+                            print(working_rc)
                     if a in dict_by_b and b not in dict_by_b:
                         new_rc = working_rc.toggle_ref_at(row, i)
                         dict_by_a[dict_by_b[a]].add(b)
                         flag = True
                         working_rc = new_rc
+                        if debug:
+                            print("Toggled b")
+                            print(working_rc)
                     elif b in dict_by_b and a not in dict_by_b and a > descent:
                         new_rc = working_rc.toggle_ref_at(row, i)
                         dict_by_a[dict_by_b[b]].add(a)
                         flag = True
                         working_rc = new_rc
-                    if flag:
-                        # print("Inserted")
-                        # print(working_rc)
-                        break
-            if flag:
-                for row_below in range(row - 1, 0, -1):
-                    for j in range(max((working_rc.max_of_row(row_below) + 1, 0, -1)), 0, -1):
-                        new_flag = False
-                        if working_rc.has_element(row_below, j):
-                            a, b = working_rc.right_root_at(row_below, j)
-                            if b > a:
-                                continue
-                            a, b = b, a
-                            if a in dict_by_a and b in dict_by_a[a]:
-                                new_rc = working_rc.toggle_ref_at(row_below, j)
-                                dict_by_a[a].remove(b)
-                                if len(dict_by_a[a]) == 0:
-                                    del dict_by_a[a]
-                                del dict_by_b[b]
-                                working_rc = new_rc
-                                new_flag = True
-                            if a in dict_by_b and b in dict_by_b and dict_by_b[a] == dict_by_b[b]:
-                                new_rc = working_rc.toggle_ref_at(row_below, j)
-                                if new_rc.perm[dict_by_b[a] - 1] < new_rc.perm[a - 1]:
-                                    dict_by_a[dict_by_b[a]].remove(a)
-                                    del dict_by_b[a]
-                                    if len(dict_by_a[dict_by_b[b]]) == 0:
-                                        del dict_by_a[dict_by_b[b]]
-                                else:
-                                    dict_by_a[dict_by_b[b]].remove(b)
+                        if debug:
+                            print("Toggled c")
+                            print(working_rc)
+                    if debug and flag:
+                        print("Inserted")
+                        print(working_rc)
+                if flag:
+                    for row_below in range(row, 0, -1):
+                        for j in range(1, working_rc.max_of_row(row_below) + descent+1):
+                            if working_rc.has_element(row_below, j):
+                                working_rc.right_root_at(row_below, j)
+                                if b > a:
+                                    continue
+                                if debug:
+                                    print(f"Considering bad at {row_below, j}")
+                                    print(f"{dict_by_a=}, {dict_by_b=}")
+                                    print(f"root = ({a, b})")
+                                a, b = b, a
+                                if a in dict_by_a and b in dict_by_a[a]:
+
+                                    new_rc = working_rc.toggle_ref_at(row_below, j)
+                                    dict_by_a[a].remove(b)
+                                    if len(dict_by_a[a]) == 0:
+                                        del dict_by_a[a]
                                     del dict_by_b[b]
-                                    if len(dict_by_a[dict_by_b[a]]) == 0:
-                                        del dict_by_a[dict_by_b[a]]
-                                working_rc = new_rc
-                                new_flag = True
-                            # print("Found bad")
-                            # print("Deleted")
-                            # print(working_rc)
-                            if new_flag:
-                                break
-                    if new_flag:
-                        for jp in range(j-1, 0, -1):
-                            if not working_rc.has_element(row_below, jp):
-                                a2, b2 = working_rc.right_root_at(row_below, jp)
-                                if _is_row_root(descent, (a2, b2)) and b2 not in dict_by_b and has_bruhat_ascent(working_rc.perm, a2 - 1, b2 - 1):
-                                    new_rc = working_rc.toggle_ref_at(row_below, jp)
-                                    dict_by_a[a2] = dict_by_a.get(a2, set())
-                                    dict_by_a[a2].add(b2)
-                                    dict_by_b[b2] = a2
                                     working_rc = new_rc
-                                    break
-            # print("Next iteration")
-            # print(working_rc)
-            # print(f"{working_rc.perm.inv=}, {self.perm.inv + index + 1=}")
-            assert working_rc.perm.inv == self.perm.inv + index + 1
+                                    flag = False
+                                    print("Toggle bad a")
+                                    print(working_rc)
+                                if a in dict_by_b and b in dict_by_b and dict_by_b[a] == dict_by_b[b]:
+                                    new_rc = working_rc.toggle_ref_at(row_below, j)
+                                    if new_rc.perm[dict_by_b[a] - 1] < new_rc.perm[a - 1]:
+                                        dict_by_a[dict_by_b[a]].remove(a)
+                                        del dict_by_b[a]
+                                        if len(dict_by_a[dict_by_b[b]]) == 0:
+                                            del dict_by_a[dict_by_b[b]]
+                                        print("Toggle bad b")
+                                    else:
+                                        dict_by_a[dict_by_b[b]].remove(b)
+                                        del dict_by_b[b]
+                                        if len(dict_by_a[dict_by_b[a]]) == 0:
+                                            del dict_by_a[dict_by_b[a]]
+                                        print("Toggle bad c")
+                                    working_rc = new_rc
+                                    flag = False
+                                    if debug:
+                                        print("Toggled bad")
+                                        print(working_rc)
+                                # if new_flag:
+                                #     if debug:
+                                #         print("Found bad")
+                                #         print("Deleted")
+                                #         print(working_rc)
+                i += 1
+                    # if new_flag:
+                    #     print("Trying to reinsert")
+                    #     for jp in range(j+1, j + 1 + working_rc.max_of_row(row) + descent+1):
+                    #         print("Considering reinsert at ", row_below, jp)
+                    #         if not working_rc.has_element(row_below, jp):
+                    #             a2, b2 = working_rc.right_root_at(row_below, jp)
+                    #             print(f"{a2, b2=}")
+                    #             if _is_row_root(descent, (a2, b2)) and b2 not in dict_by_b and has_bruhat_ascent(working_rc.perm, a2 - 1, b2 - 1):
+                    #                 new_rc = working_rc.toggle_ref_at(row_below, jp)
+                    #                 dict_by_a[a2] = dict_by_a.get(a2, set())
+                    #                 dict_by_a[a2].add(b2)
+                    #                 dict_by_b[b2] = a2
+                    #                 working_rc = new_rc
+                    #                 break
+            if debug:
+                print("Next iteration")
+                print(working_rc)
+                print(f"{working_rc.perm.inv=}, {self.perm.inv + index + 1=}")
+            try:
+                assert working_rc.perm.inv == self.perm.inv + index + 1
+            except AssertionError:
+                print("Assertion failed")
+                print(working_rc)
+                print(f"{working_rc.perm.inv=}, {self.perm.inv + index + 1=}")
+                print(f"{dict_by_a=}, {dict_by_b=}")
+                print(f"{working_rc.perm=}, {self.perm=}")
+                if debug:
+                    raise
+                self.kogan_insert(descent, rows, debug=True)
+                raise
         reflections = []
         start_perm = self.perm
         a_keys = sorted(dict_by_a.keys())
