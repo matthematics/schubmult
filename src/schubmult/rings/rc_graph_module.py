@@ -1078,7 +1078,11 @@ class RCGraph(KeyType, UnderlyingGraph):
                                     return working_rc
                         return working_rc._monk_rectify(descent, row_below)
         return working_rc._monk_rectify(descent, row_below - 1)
-    # right mul should invert this (multiple but keeps the rc the same)
+    
+
+    # # THIS IS KEY
+    # # EXCHANGE PROPERTY GOES TO UNIQUE PERMUTATION
+    # # KOGAN INSERT ENSURES WE GO UP PROPERLY
     def zero_out_last_row(self, debug=False):
         # this is important!
         # transition formula
