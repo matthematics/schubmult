@@ -1577,7 +1577,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         if self.perm.inv == 0:
             return RCGraphModule({RCGraph([*self, *other.shiftup(len(self))]): 1})
         num_zeros = len(other) if other.perm.inv == 0 else max(len(other),len(other.perm))
-        base_rc = self.rowrange(0, len(self.perm.trimcode))
+        base_rc = self
         buildup_module = 1*base_rc
         #num_zeros += len(self) - len(base_rc)
         for _ in range(num_zeros):
