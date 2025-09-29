@@ -1100,8 +1100,10 @@ class RCGraph(KeyType, UnderlyingGraph):
             print("-------")
         total = 0
         diff_rows = []
+        descs = []
         while len(interim.perm.trimcode) > len(self) - 1:
             prev_interim = interim
+            descs += [max(interim.perm.descents()) + 1]
             interim = interim.exchange_property(max(interim.perm.descents()) + 1)
             for i in range(len(interim)):
                 if len(interim[i]) < len(prev_interim[i]):
@@ -1110,7 +1112,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                     break
 
         # go up to len interim2 - 1
-        interim2 = RCGraph([*interim[:-1], tuple(range(len(self.perm), len(self) - 1, -1))])
+        interim2 = RCGraph([*interim[:-1], tuple(sorted(descs,reverse=True))])
 
         interim = interim2.kogan_insert(len(self), diff_rows, debug=False)
 
