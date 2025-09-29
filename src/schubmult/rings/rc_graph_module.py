@@ -1016,54 +1016,41 @@ class RCGraph(KeyType, UnderlyingGraph):
             raise ValueError("Last row not empty")
         if self.perm.inv == 0:
             return self.rowrange(0, len(self) - 1)
-        if max(self.perm.descents()) + 1 < len(self):
-            return self.rowrange(0, len(self) - 1)
+        # if max(self.perm.descents()) + 1 < len(self):
+        #     return self.rowrange(0, len(self) - 1)
         # exchange property div diff sn
         interim = self
-        prev_interim = self
-        while max(interim.perm.descents()) + 1 > len(self) - 1:
+        diff_rows = []
+        while interim.perm.inv > 0 and max(interim.perm.descents()) + 1 > len(self) - 1:
+            prev_prev_interim = interim
             interim = interim.exchange_property(max(interim.perm.descents()) + 1)
-            # print(f"Deleted descent")
-            # print(interim)
-            # print("Increased descent")
-            diff_rows = []
-            deleted_descent = max(prev_interim.perm.descents()) + 1
             for i in range(len(interim)):
-                if len(interim[i]) < len(prev_interim[i]):
+                if len(interim[i]) < len(prev_prev_interim[i]):
                     rw = i + 1
                     diff_rows.append(rw)
                     break
-            while deleted_descent > 0 and interim.perm.inv > 0  and max(interim.perm.descents()) + 1 == deleted_descent - 1:
-                prev_prev_interim = interim
-                interim = interim.exchange_property(max(interim.perm.descents()) + 1)
-                deleted_descent -= 1
-                for i in range(len(interim)):
-                    if len(interim[i]) < len(prev_prev_interim[i]):
-                        rw = i + 1
-                        diff_rows.append(rw)
-                        break
-                    #prev_prev_interim = interim
-            diff_rows = sorted(set(diff_rows), reverse=True)
-            # print("After delete")
-            # print(interim)
-            # print(f"Inserting at rows {diff_rows}")
-            interim = interim.kogan_insert(max(len(self) - 1,max(prev_interim.perm.descents())), diff_rows)
+                #prev_prev_interim = interim
+        diff_rows = sorted(list(diff_rows), reverse=True)
+        # print("After delete")
+        # print(interim)
+        # print(f"Inserting at rows {diff_rows}")
+        interim = interim.kogan_insert(len(self) - 1,diff_rows)
+        # print("After insert")
+        # print(interim)
+        assert interim.perm.inv == self.perm.inv
+        # else:
+        #     # print("Different descent")
+        #     # print("Descent is ", max(interim.perm.descents()) + 1)
+        #     for i in range(len(interim)):
+        #         if len(interim[i]) < len(prev_interim[i]):
+        #             # print(f"Found row to insert {i + 1}")
+        #             # print("Descent was", max(prev_interim.perm.descents()) + 1)
+        #             # print("Now", max(interim.perm.descents()) + 1)
+        #             interim = interim.monk_insert(max(len(self) - 1,max(prev_interim.perm.descents())), i + 1)
+        #             break
             # print("After insert")
             # print(interim)
-            assert interim.perm.inv == prev_interim.perm.inv
-            # else:
-            #     # print("Different descent")
-            #     # print("Descent is ", max(interim.perm.descents()) + 1)
-            #     for i in range(len(interim)):
-            #         if len(interim[i]) < len(prev_interim[i]):
-            #             # print(f"Found row to insert {i + 1}")
-            #             # print("Descent was", max(prev_interim.perm.descents()) + 1)
-            #             # print("Now", max(interim.perm.descents()) + 1)
-            #             interim = interim.monk_insert(max(len(self) - 1,max(prev_interim.perm.descents())), i + 1)
-            #             break
-                # print("After insert")
-                # print(interim)
-            prev_interim = interim
+        prev_interim = interim
         return interim.rowrange(0, len(self) - 1)
 
     def right_zero_act(self):
