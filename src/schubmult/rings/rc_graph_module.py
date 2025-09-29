@@ -1031,15 +1031,15 @@ class RCGraph(KeyType, UnderlyingGraph):
                     break
                 #prev_prev_interim = interim
         diff_rows = sorted(list(diff_rows), reverse=True)
-        if self.perm == Permutation([1,4,3,2]):
-            print("After delete")
-            print(interim)
-            print(f"Inserting at rows {diff_rows}")
+        #if self.perm == Permutation([1,4,3,2]):
+            # print("After delete")
+            # print(interim)
+            # print(f"Inserting at rows {diff_rows}")
         interim = interim.kogan_insert(len(self) - 1,diff_rows)
-        if self.perm == Permutation([1,4,3,2]):
-            print("After kogan")
-            print(interim)
-            print(f"Inserted at rows {diff_rows}")
+        #if self.perm == Permutation([1,4,3,2]):
+            # print("After kogan")
+            # print(interim)
+            # print(f"Inserted at rows {diff_rows}")
         # print("After kogan")
         # print(interim)
         # print("After insert")
@@ -1074,15 +1074,10 @@ class RCGraph(KeyType, UnderlyingGraph):
         for (perm, _), v in up_perms.items():
             assert v == 1
             for rc in RCGraph.all_rc_graphs(perm, len(self) + 1):
-                
                 if rc.length_vector()[:-1] == self.length_vector(): 
                     if rc.zero_out_last_row() == self:
                         rc_set.add(rc)
-                    else:
-                        print("rc:")
-                        print(rc)
-                        print("zeros to:")
-                        print(rc.zero_out_last_row())
+        
         assert len(rc_set) == len(up_perms), f"{rc_set=}, {len(up_perms)=}, {self=} {up_perms=}"
         return rc_set
 
@@ -1549,8 +1544,8 @@ class RCGraph(KeyType, UnderlyingGraph):
             while index <= len(self) and mid_rc.is_valid:
                 mid_rc = working_rc.rowrange(0, index)
                 index += 1
-            print("Got")
-            print(mid_rc)
+            # print("Got")
+            # print(mid_rc)
             assert not mid_rc.is_valid
             for index2 in range(len(mid_rc.perm_word())-1, -1, -1):
                 if mid_rc.is_valid:
@@ -1562,14 +1557,14 @@ class RCGraph(KeyType, UnderlyingGraph):
                     mid_rc = mid_rc.toggle_ref_at(row, col)
                     for col2 in range(col, 0, -1):
                         a2, b2 = mid_rc.right_root_at(row, col2)
-                        print(f"{a2, b2}")
+                        # print(f"{a2, b2}")
                         if a2<b2 and has_bruhat_ascent(mid_rc.perm, a2-1, b2-1) and not mid_rc.has_element(row, col2):
-                            print("got it")
+                            # print("got it")
                             mid_rc = mid_rc.toggle_ref_at(row, col2)
                             break
                     
-            print("After")
-            print(mid_rc)
+            # print("After")
+            # print(mid_rc)
             working_rc = RCGraph([*mid_rc, *working_rc[len(mid_rc):]])
         return working_rc
     # THE ZERO MAKES SCHUB PROD
@@ -1594,14 +1589,34 @@ class RCGraph(KeyType, UnderlyingGraph):
         
         for rc, coeff in buildup_module.items():
             new_rc = RCGraph([*rc[:len(self)], *other.shiftup(len(self))])
+#             Traceback (most recent call last):
+#   File "/home/matthematics/schubmult/src/schubmult/scripts/assoc_test.py", line 163, in <module>
+#     diff = hom(g1 * g2) - hom(g1) * hom(g2)
+#                ~~~^~~~
+#   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 656, in __mul__
+#     return self.prod_with_rc(other)
+#            ^^^^^^^^^^^^^^^^^^^^^^^^
+#   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 1583, in prod_with_rc
+#     new_buildup_module += RCGraphModule(dict.fromkeys(rc.right_zero_act(), coeff))
+#                                                       ^^^^^^^^^^^^^^^^^^^
+#   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 1078, in right_zero_act
+#     if rc.zero_out_last_row() == self:
+#        ^^^^^^^^^^^^^^^^^^^^^^
+#   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 1038, in zero_out_last_row
+#     interim = interim.kogan_insert(len(self) - 1,diff_rows)
+#               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 851, in kogan_insert
+#     assert working_rc.perm.inv == self.perm.inv + index + 1
+#            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# AssertionError
             #print("Trying to match")
             # print(new_rc)
             # need not check valid and need to bump
-            if not new_rc.is_valid:
-                print("got invalid rc")
-                print(new_rc)
-                print("Should be rectifying")
-                print("Need better rect")
+            #if not new_rc.is_valid:
+                # print("got invalid rc")
+                # print(new_rc)
+                # print("Should be rectifying")
+                # print("Need better rect")
                 #new_rc = new_rc.zero_rectify()
                 # perm0 = new_rc.rowrange(0,len(self)).perm
                 # word = RCGraph([*other.shiftup(len(self))]).perm_word()
@@ -1611,15 +1626,14 @@ class RCGraph(KeyType, UnderlyingGraph):
                 #         ref = word[i]
                 #         if perm0[ref - 1] > perm0[ref]:
                 #             new_rc = new_rc._monk_rectify(len(self) + 1, len(self))
-                #             print("rectified?")
-                #             print(new_rc)
+                #             # print("rectified?")
+                #             # print(new_rc)
                 #             perm0 = new_rc.rowrange(0,len(self)).perm
                 #         perm0 = perm0.swap(ref - 1, ref)
                 # except ValueError as e:
-                #     print(f"{e=}")
+                #     # print(f"{e=}")
 
             if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(new_rc):
-                #print("Matched")
                 ret_module += coeff * new_rc
                 
         return ret_module
