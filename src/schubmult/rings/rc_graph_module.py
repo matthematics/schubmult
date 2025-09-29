@@ -1113,9 +1113,12 @@ class RCGraph(KeyType, UnderlyingGraph):
                     diff_rows.append(rw)
                     break
 
-        interim = interim.kogan_insert(len(self)-1, diff_rows, debug=False)
+        # go up to len interim2 - 1
+        interim2 = RCGraph([*interim[:-1], tuple(range(len(self.perm), len(self) - 1, -1))])
 
+        interim = interim2.kogan_insert(len(self), diff_rows, debug=False)
 
+        
         if debug:
             print("Got")
             print(interim)
