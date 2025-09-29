@@ -1081,14 +1081,17 @@ class RCGraph(KeyType, UnderlyingGraph):
             print("Zeroing out last row")
             print(self)
             print("-------")
-        while interim.perm.inv > 0 and max(interim.perm.descents()) + 1 > len(self) - 1:
+        last_descent = -1
+        while interim.perm.inv > 0 and (max(interim.perm.descents()) + 1 > len(self) - 1 or max(interim.perm.descents()) + 1 == last_descent - 1):
             prev_prev_interim = interim
+            last_descent = max(interim.perm.descents()) + 1
             interim = interim.exchange_property(max(interim.perm.descents()) + 1)
             for i in range(len(interim)):
                 if len(interim[i]) < len(prev_prev_interim[i]):
                     rw = i + 1
                     diff_rows.append(rw)
                     break
+            
                 #prev_prev_interim = interim
         
         if debug:
@@ -1171,7 +1174,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                 cannot_do += 1
 
         try:
-            assert len(rc_set) == len(up_perms), f"{rc_set=}, {len(up_perms)=}, {self=} {up_perms=} {cannot_do=}"
+            assert len(rc_set) + cannot_do == len(up_perms), f"{rc_set=}, {len(up_perms)=}, {self=} {up_perms=} {cannot_do=}"
         except AssertionError:
             print("Could not achieve some")
             lst = [perm[0] for perm in up_perms.keys() if perm[0] not in [rc.perm for rc in rc_set]]
@@ -1181,6 +1184,13 @@ class RCGraph(KeyType, UnderlyingGraph):
                 print(f"Perm: {rc.perm}")
                 print(rc)
                 print("===========")
+            
+            print("All rc's missing")
+            for perm in lst:
+                for rc in RCGraph.all_rc_graphs(perm, len(self) + 1):
+                    if rc.length_vector()[:-1] == self.length_vector() and rc not in rc_set:
+                        print(rc)
+                        print("----------")
             raise
         return rc_set
 

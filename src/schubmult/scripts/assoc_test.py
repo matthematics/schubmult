@@ -27,13 +27,13 @@ def hom(rc):
     from schubmult import FA, ASx, SchubertBasis
     from schubmult.rings import TensorRing
     from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule
-    ring = TensorRing(ASx, RCGraphModule())
+    ring = TensorRing(ASx@FA, RCGraphModule())
     
     if isinstance(rc, RCGraph):
         #return (ASx@FA)(r,rc.length_vector()))
         # print(f"{rc.length_vector()} {tuple(rc)=}")    
         #first = FA(*rc.length_vector()).change_basis(SchubertBasis).get()
-        return ASx(rc.perm,len(rc))
+        return (ASx@FA)(((rc.perm,len(rc)),rc.length_vector()))
         #return ret
     ret = 0
     for rc0, coeff in rc.items():
