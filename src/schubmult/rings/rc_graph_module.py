@@ -797,6 +797,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                     elif a in dict_by_b and b not in dict_by_b:
                         new_rc = working_rc.toggle_ref_at(row, i)
                         dict_by_a[dict_by_b[a]].add(b)
+                        dict_by_b[b] = dict_by_b[a]
                         flag = True
                         working_rc = new_rc
                         if debug:
@@ -805,6 +806,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                     elif b in dict_by_b and a not in dict_by_b and a > descent:
                         new_rc = working_rc.toggle_ref_at(row, i)
                         dict_by_a[dict_by_b[b]].add(a)
+                        dict_by_b[a] = dict_by_b[b]
                         flag = True
                         working_rc = new_rc
                         if debug:
@@ -819,38 +821,39 @@ class RCGraph(KeyType, UnderlyingGraph):
         return working_rc
 
     def _kogan_rectify(self, row_below, descent, dict_by_a, dict_by_b):
-        print("In rectify")
+        #print("In rectify")
         working_rc = self
-        debug = True
+        debug = False
         if row_below == 0:
             assert working_rc.is_valid
             return working_rc
-        # if working_rc.is_valid:
-        #     return working_rc
+        if working_rc.is_valid:
+            return working_rc
         for j in range(working_rc.max_of_row(row_below) + 1, 0, -1):
             flag = False
-            print(f"row {row_below} {j=}")
+            if working_rc.is_valid:
+                return working_rc
             if working_rc.has_element(row_below, j):
-                print("Has element")
+                #print("Has element")
                 a, b = working_rc.right_root_at(row_below, j)
-                print("root=", (a, b))
+                #print("root=", (a, b))
                 if a > b:
-                    print("Entered")
+                    #print("Entered")
                     if debug:
                         print(f"Considering bad at {row_below, j}")
                         print(f"{dict_by_a=}, {dict_by_b=}")
                         print(f"root = ({a, b})")
-                    if a in dict_by_b and b in dict_by_b[a]:
+                    if b in dict_by_a and a in dict_by_a[b]:
 
                         new_rc = working_rc.toggle_ref_at(row_below, j)
-                        dict_by_a[a].remove(b)
-                        if len(dict_by_a[a]) == 0:
-                            del dict_by_a[a]
-                        del dict_by_b[b]
+                        dict_by_a[b].remove(a)
+                        if len(dict_by_a[b]) == 0:
+                            del dict_by_a[b]
+                        del dict_by_b[a]
                         working_rc = new_rc
                         flag = True
-                        print("Toggle bad a")
-                        print(working_rc)
+                        #print("Toggle bad a")
+                        #print(working_rc)
                     elif a in dict_by_b and b in dict_by_b and dict_by_b[a] == dict_by_b[b]:
                         new_rc = working_rc.toggle_ref_at(row_below, j)
                         if new_rc.perm[dict_by_b[a] - 1] < new_rc.perm[a - 1]:
@@ -858,13 +861,13 @@ class RCGraph(KeyType, UnderlyingGraph):
                             del dict_by_b[a]
                             if len(dict_by_a[dict_by_b[b]]) == 0:
                                 del dict_by_a[dict_by_b[b]]
-                            print("Toggle bad b")
+                            #print("Toggle bad b")
                             flag = True
                         dict_by_a[dict_by_b[b]].remove(b)
                         del dict_by_b[b]
                         if len(dict_by_a[dict_by_b[a]]) == 0:
                             del dict_by_a[dict_by_b[a]]
-                        print("Toggle bad c")
+                        #print("Toggle bad c")
                 if flag:
                     working_rc = working_rc._kogan_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times = 1, debug=debug)
         return working_rc._kogan_rectify(row_below - 1, descent, dict_by_a, dict_by_b)
@@ -1076,7 +1079,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                         return working_rc._monk_rectify(descent, row_below)
         return working_rc._monk_rectify(descent, row_below - 1)
     # right mul should invert this (multiple but keeps the rc the same)
-    def zero_out_last_row(self, debug=False):
+    def zero_out_last_row_initial(self, debug=False):
         # this is important!
         # transition formula
         if len(self[-1]) != 0:
@@ -1121,7 +1124,7 @@ class RCGraph(KeyType, UnderlyingGraph):
             # print(interim)
         # print(interim)
         # print(f"Inserting at rows {diff_rows}")
-        interim = interim.kogan_insert(len(self) - 1,diff_rows)
+        interim = interim.kogan_insert(len(self) - 1,diff_rows, debug=False)
         if debug:
             print("Got")
             print(interim)
@@ -1134,6 +1137,80 @@ class RCGraph(KeyType, UnderlyingGraph):
         # print("After insert")
         # print(interim)
         assert interim.length_vector() == self.length_vector()
+        # else:
+        #     # print("Different descent")
+        #     # print("Descent is ", max(interim.perm.descents()) + 1)
+        #     for i in range(len(interim)):
+        #         if len(interim[i]) < len(prev_interim[i]):
+        #             # print(f"Found row to insert {i + 1}")
+        #             # print("Descent was", max(prev_interim.perm.descents()) + 1)
+        #             # print("Now", max(interim.perm.descents()) + 1)
+        #             interim = interim.monk_insert(max(len(self) - 1,max(prev_interim.perm.descents())), i + 1)
+        #             break
+            # print("After insert")
+            # print(interim)
+        
+        return interim.rowrange(0, len(self) - 1)
+
+    def zero_out_last_row(self, debug=False):
+        # this is important!
+        # transition formula
+        if len(self[-1]) != 0:
+            raise ValueError("Last row not empty")
+        if self.perm.inv == 0:
+            return self.rowrange(0, len(self) - 1)
+        if max(self.perm.descents()) + 1 <= len(self) - 1:
+            return self.rowrange(0, len(self) - 1)
+        # exchange property div diff sn
+        interim = RCGraph([*self])
+        diff_rows = []
+        # we need to bump up additionally?
+        # example
+        #
+        if debug:
+            print("Zeroing out last row")
+            print(self)
+            print("-------")
+        #last_descent = -1
+        # while interim.perm.inv > 0 and (max(interim.perm.descents()) + 1 > len(self) - 1 or max(interim.perm.descents()) + 1 == last_descent - 1):
+        #     prev_prev_interim = interim
+        #     last_descent = max(interim.perm.descents()) + 1
+        #     interim = interim.exchange_property(max(interim.perm.descents()) + 1)
+        #     for i in range(len(interim)):
+        #         if len(interim[i]) < len(prev_prev_interim[i]):
+        #             rw = i + 1
+        #             diff_rows.append(rw)
+        #             break
+            
+        #         #prev_prev_interim = interim
+        
+        # if debug:
+        #     print("Got")
+        #     print(interim)
+        #     if interim.perm.inv > 0:
+        #         print(f"Descent is {max(interim.perm.descents()) + 1}, need to insert at {diff_rows}")
+        #     for i, row in enumerate(self):
+        #         assert len(row) == len(interim[i]) + len([a for a in diff_rows if a == i+1])
+        # diff_rows = sorted(list(diff_rows), reverse=True)
+        #if self.perm == Permutation([1,4,3,2]):
+            # print("After delete")
+            # print(interim)
+        # print(interim)
+        # print(f"Inserting at rows {diff_rows}")
+        interim = interim.kogan_insert(len(self),list(range(1,len(self)+1)), debug=False)
+        interim = RCGraph([row[1:] for row in interim])
+        if debug:
+            print("Got")
+            print(interim)
+        #if self.perm == Permutation([1,4,3,2]):
+            # print("After kogan")
+            # print(interim)
+            # print(f"Inserted at rows {diff_rows}")
+        # print("After kogan")
+        # print(interim)
+        # print("After insert")
+        # print(interim)
+        assert interim.length_vector()[:-1] == self.length_vector()[:-1]
         # else:
         #     # print("Different descent")
         #     # print("Descent is ", max(interim.perm.descents()) + 1)
@@ -1198,13 +1275,16 @@ class RCGraph(KeyType, UnderlyingGraph):
                 print(f"Perm: {rc.perm}")
                 print(rc)
                 print("===========")
-            
+
             print("All rc's missing")
             for perm in lst:
                 for rc in RCGraph.all_rc_graphs(perm, len(self) + 1):
                     if rc.length_vector()[:-1] == self.length_vector() and rc not in rc_set:
                         print(rc)
                         print("----------")
+                        print("Zeroed")
+                        print(rc.zero_out_last_row())
+                        print("===========")
             raise
         return rc_set
 
