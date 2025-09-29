@@ -1079,82 +1079,6 @@ class RCGraph(KeyType, UnderlyingGraph):
                         return working_rc._monk_rectify(descent, row_below)
         return working_rc._monk_rectify(descent, row_below - 1)
     # right mul should invert this (multiple but keeps the rc the same)
-    # def zero_out_last_row_initial(self, debug=False):
-    #     # this is important!
-    #     # transition formula
-    #     if len(self[-1]) != 0:
-    #         raise ValueError("Last row not empty")
-    #     if self.perm.inv == 0:
-    #         return self.rowrange(0, len(self) - 1)
-    #     if max(self.perm.descents()) + 1 <= len(self) - 1:
-    #         return self.rowrange(0, len(self) - 1)
-    #     # exchange property div diff sn
-    #     interim = RCGraph([*self])
-    #     diff_rows = []
-    #     # we need to bump up additionally?
-    #     # example
-    #     #
-    #     if debug:
-    #         print("Zeroing out last row")
-    #         print(self)
-    #         print("-------")
-    #     last_descent = -1
-    #     while interim.perm.inv > 0 and (max(interim.perm.descents()) + 1 > len(self) - 1 or max(interim.perm.descents()) + 1 == last_descent - 1):
-    #         prev_prev_interim = interim
-    #         last_descent = max(interim.perm.descents()) + 1
-    #         interim = interim.exchange_property(max(interim.perm.descents()) + 1)
-    #         for i in range(len(interim)):
-    #             if len(interim[i]) < len(prev_prev_interim[i]):
-    #                 rw = i + 1
-    #                 diff_rows.append(rw)
-    #                 break
-            
-    #             #prev_prev_interim = interim
-        
-    #     if debug:
-    #         print("Got")
-    #         print(interim)
-    #         if interim.perm.inv > 0:
-    #             print(f"Descent is {max(interim.perm.descents()) + 1}, need to insert at {diff_rows}")
-    #         for i, row in enumerate(self):
-    #             assert len(row) == len(interim[i]) + len([a for a in diff_rows if a == i+1])
-    #     diff_rows = sorted(list(diff_rows), reverse=True)
-    #     #if self.perm == Permutation([1,4,3,2]):
-    #         # print("After delete")
-    #         # print(interim)
-    #     # print(interim)
-    #     # print(f"Inserting at rows {diff_rows}")
-        
-    #     for _ in range(len(self)):
-    #         interim = interim.kogan_insert(len(self) - 1,diff_rows, debug=False)
-        
-    #     if debug:
-    #         print("Got")
-    #         print(interim)
-    #     #if self.perm == Permutation([1,4,3,2]):
-    #         # print("After kogan")
-    #         # print(interim)
-    #         # print(f"Inserted at rows {diff_rows}")
-    #     # print("After kogan")
-    #     # print(interim)
-    #     # print("After insert")
-    #     # print(interim)
-    #     assert interim.length_vector() == self.length_vector()
-    #     # else:
-    #     #     # print("Different descent")
-    #     #     # print("Descent is ", max(interim.perm.descents()) + 1)
-    #     #     for i in range(len(interim)):
-    #     #         if len(interim[i]) < len(prev_interim[i]):
-    #     #             # print(f"Found row to insert {i + 1}")
-    #     #             # print("Descent was", max(prev_interim.perm.descents()) + 1)
-    #     #             # print("Now", max(interim.perm.descents()) + 1)
-    #     #             interim = interim.monk_insert(max(len(self) - 1,max(prev_interim.perm.descents())), i + 1)
-    #     #             break
-    #         # print("After insert")
-    #         # print(interim)
-        
-    #     return interim.rowrange(0, len(self) - 1)
-
     def zero_out_last_row(self, debug=False):
         # this is important!
         # transition formula
@@ -1162,8 +1086,8 @@ class RCGraph(KeyType, UnderlyingGraph):
             raise ValueError("Last row not empty")
         if self.perm.inv == 0:
             return self.rowrange(0, len(self) - 1)
-        # if max(self.perm.descents()) + 1 <= len(self) - 1:
-        #     return self.rowrange(0, len(self) - 1)
+        if max(self.perm.descents()) + 1 <= len(self) - 1:
+            return self.rowrange(0, len(self) - 1)
         # exchange property div diff sn
         interim = RCGraph([*self])
         diff_rows = []
@@ -1174,69 +1098,25 @@ class RCGraph(KeyType, UnderlyingGraph):
             print("Zeroing out last row")
             print(self)
             print("-------")
-        #last_descent = -1
-        # while interim.perm.inv > 0 and (max(interim.perm.descents()) + 1 > len(self) - 1 or max(interim.perm.descents()) + 1 == last_descent - 1):
-        #     prev_prev_interim = interim
-        #     last_descent = max(interim.perm.descents()) + 1
-        #     interim = interim.exchange_property(max(interim.perm.descents()) + 1)
-        #     for i in range(len(interim)):
-        #         if len(interim[i]) < len(prev_prev_interim[i]):
-        #             rw = i + 1
-        #             diff_rows.append(rw)
-        #             break
-            
-        #         #prev_prev_interim = interim
-        
-        # if debug:
-        #     print("Got")
-        #     print(interim)
-        #     if interim.perm.inv > 0:
-        #         print(f"Descent is {max(interim.perm.descents()) + 1}, need to insert at {diff_rows}")
-        #     for i, row in enumerate(self):
-        #         assert len(row) == len(interim[i]) + len([a for a in diff_rows if a == i+1])
-        # diff_rows = sorted(list(diff_rows), reverse=True)
-        #if self.perm == Permutation([1,4,3,2]):
-            # print("After delete")
-            # print(interim)
-        # print(interim)
-        # print(f"Inserting at rows {diff_rows}")
-        total = 1
-        row_insert = len(self)
-        while not (interim.perm[len(self) - 1] == len(interim.perm) and len(interim.perm)>=max(len(self.perm)+1,len(self)+1) and len(interim.perm.trimcode) == len(self)):
-            prev_interim = interim.kogan_insert(len(self),[row_insert] * total, debug=False)
-            if prev_interim.perm[len(self) - 1] == len(prev_interim.perm) and all(d < len(self) - 1 for d in prev_interim.perm.descents()):
-                interim = prev_interim
-                break
-            total+=1
-            #total += len(self)
-        #interim = RCGraph([*interim[:-2],interim[-1][total:],()])
-        # interim = RCGraph(RCGraph([row[cnt:] for row in interim]))
+        total = 0
+        diff_rows = []
+        while len(interim.perm.trimcode) > len(self) - 1:
+            prev_interim = interim
+            interim = interim.exchange_property(max(interim.perm.descents()) + 1)
+            for i in range(len(interim)):
+                if len(interim[i]) < len(prev_interim[i]):
+                    rw = i + 1
+                    diff_rows.append(rw)
+                    break
+
+        interim = interim.kogan_insert(len(self)-1, diff_rows, debug=False)
+
+
         if debug:
             print("Got")
             print(interim)
-        #if self.perm == Permutation([1,4,3,2]):
-            # print("After kogan")
-            # print(interim)
-            # print(f"Inserted at rows {diff_rows}")
-        # print("After kogan")
-        # print(interim)
-        # print("After insert")
-        # print(interim)
-        assert interim.length_vector()[:row_insert-1] == self.length_vector()[:row_insert-1]
-        # else:
-        #     # print("Different descent")
-        #     # print("Descent is ", max(interim.perm.descents()) + 1)
-        #     for i in range(len(interim)):
-        #         if len(interim[i]) < len(prev_interim[i]):
-        #             # print(f"Found row to insert {i + 1}")
-        #             # print("Descent was", max(prev_interim.perm.descents()) + 1)
-        #             # print("Now", max(interim.perm.descents()) + 1)
-        #             interim = interim.monk_insert(max(len(self) - 1,max(prev_interim.perm.descents())), i + 1)
-        #             break
-            # print("After insert")
-            # print(interim)
-        
-        return interim.rowrange(0, row_insert - 1).extend(len(self) - row_insert)
+        assert interim.length_vector()[:-1] == self.length_vector()[:-1]
+        return interim.rowrange(0, len(self) - 1)
 
     def right_zero_act(self, debug=False):
         # print("Right zeroing")
