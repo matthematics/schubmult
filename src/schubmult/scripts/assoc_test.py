@@ -1,4 +1,5 @@
 # IS THIS ASSOCIATIVE?
+# need associativity
 
 
 def hom3(rc):
