@@ -76,7 +76,7 @@ class ModuleType:
         if int(other) == 0:
             return self
         return NotImplemented
-    
+
     def get(self, key, default=None):
         return self.value_dict.get(key, default)
 
@@ -187,7 +187,7 @@ class ModuleType:
         if len(self.keys()) == 0:
             return "<zero module>"
         for k, v in self._dict.items():
-            st1= self.coeffify(v)
+            st1 = self.coeffify(v)
             if len(st1) > 0:
                 to_add = _multiline_join(st1, str(k), joiner="*")
             else:
@@ -225,6 +225,7 @@ class UnderlyingGraph(tuple):
 def _is_row_root(row, root):
     return root[0] <= row and root[1] > row
 
+
 class RCGraph(KeyType, UnderlyingGraph):
     def __eq__(self, other):
         if not isinstance(other, RCGraph):
@@ -233,7 +234,7 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     def _toggle_root(self, row, col, roots, used_bs, root_set):
         root = self.right_root_at(row, col)
-        #ret = None
+        # ret = None
         if root in root_set:
             roots[root[0]] = roots.get(root[0], [])
             roots[root[0]].append(root[1])
@@ -241,16 +242,16 @@ class RCGraph(KeyType, UnderlyingGraph):
             root_set.remove(root)
             working_rc = self.toggle_ref_at(row, col)
             return working_rc, not working_rc.is_valid
-        if root[0] in used_bs and (used_bs[root[0]],root[1]) in root_set:
+        if root[0] in used_bs and (used_bs[root[0]], root[1]) in root_set:
             a = used_bs[root[0]]
-            root_set.remove((used_bs[root[0]],root[1]))
+            root_set.remove((used_bs[root[0]], root[1]))
             roots[a].insert(roots[a].index(root[0]), root[1])
             used_bs[root[1]] = a
             working_rc = self.toggle_ref_at(row, col)
             return working_rc, not working_rc.is_valid
-        if root[1] in used_bs and (used_bs[root[1]],root[0]) in root_set:
+        if root[1] in used_bs and (used_bs[root[1]], root[0]) in root_set:
             a = used_bs[root[1]]
-            root_set.remove((used_bs[root[1]],root[0]))
+            root_set.remove((used_bs[root[1]], root[0]))
             roots[a].insert(roots[a].index(root[1]), root[0])
             used_bs[root[0]] = a
             working_rc = self.toggle_ref_at(row, col)
@@ -274,11 +275,11 @@ class RCGraph(KeyType, UnderlyingGraph):
                     if len(roots[a]) == 0:
                         del roots[a]
                     del used_bs[b]
-                    root_set.add((a,b))
+                    root_set.add((a, b))
                     working_rc = self.toggle_ref_at(row_below, j)
                 elif a in used_bs and b in used_bs and used_bs[a] == used_bs[b]:
                     working_rc = self.toggle_ref_at(row_below, j)
-                    root_set.add((a,b))
+                    root_set.add((a, b))
                     if working_rc.perm[used_bs[a] - 1] < working_rc.perm[a - 1]:
                         roots[used_bs[a]].remove(a)
                         del used_bs[a]
@@ -312,7 +313,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         # if max(self.perm.descents()) + 1 > len(self):
         #     return False
         return True
-    
+
     # kogan
     def fill_row_with_boxes(self, row, roots_seq):
         roots = {}
@@ -324,7 +325,7 @@ class RCGraph(KeyType, UnderlyingGraph):
 
         working_rc = self
         while len(working_rc.perm_word()) < len(self.perm_word()) + num_boxes:
-            for col in range(working_rc.max_of_row(row)+1, 0, -1):
+            for col in range(working_rc.max_of_row(row) + 1, 0, -1):
                 if not working_rc.has_element(row, col):
                     working_rc, did = working_rc._toggle_root(row, col, roots, used_bs)
                     if did:
@@ -332,7 +333,6 @@ class RCGraph(KeyType, UnderlyingGraph):
                         assert working_rc.is_valid
                         break
         return working_rc, roots
-
 
     def insert_reflections(self, row0, roots_seq):
         roots = {}
@@ -347,15 +347,15 @@ class RCGraph(KeyType, UnderlyingGraph):
         working_rc = self
         while len(roots_set) > 0:
             for row in range(row0, 0, -1):
-                for col in range(working_rc.max_of_row(row)+1, 0, -1):
+                for col in range(working_rc.max_of_row(row) + 1, 0, -1):
                     if not working_rc.has_element(row, col):
                         working_rc, did = working_rc._toggle_root(row, col, roots, used_bs, roots_set)
-                        #print(working_rc)
+                        # print(working_rc)
                         if did:
                             working_rc = working_rc._rectify(row0, row, roots, used_bs, roots_set)
                             assert working_rc.is_valid
                             break
-            #print(roots_set)
+            # print(roots_set)
         return working_rc
 
     def _rectify_remove(self, row, row_below, roots, used_bs):
@@ -394,10 +394,9 @@ class RCGraph(KeyType, UnderlyingGraph):
         # print(f"{indexes=}")
         indexes = sorted(indexes, reverse=True)
         working_rc = self
-        while len(working_rc)>= row:
+        while len(working_rc) >= row:
             working_rc = working_rc.normalize_and_remove_last_row()
-        return RCGraph([*working_rc, tuple([a + row for a in indexes]),*self.rowrange(row-1,len(self)).shiftup(row)])
-
+        return RCGraph([*working_rc, tuple([a + row for a in indexes]), *self.rowrange(row - 1, len(self)).shiftup(row)])
 
     def right_root_at(self, i, j):
         from bisect import bisect_left
@@ -423,23 +422,22 @@ class RCGraph(KeyType, UnderlyingGraph):
     def reverse_kogan_insert(self, descent, reflection_path):
         # print("Here")
         from schubmult.utils.perm_utils import has_bruhat_descent
-        #pair_sequence = sorted(pair_sequence, key=lambda x: x[0]
+
+        # pair_sequence = sorted(pair_sequence, key=lambda x: x[0]
         pair_dict = reflection_path
         pair_dict_rev = {}
-        #ref_by_index = {}
+        # ref_by_index = {}
         working_perm = self.perm
         for a, b_list in pair_dict.items():
             for b in b_list:
                 assert a <= descent and descent < b
                 pair_dict_rev[b] = a
 
-
-
         def is_relevant_crossing(root, prm):
-            #min_root = max(pair_dict.keys())
+            # min_root = max(pair_dict.keys())
 
             if root[0] not in pair_dict:
-                if root[0] not in pair_dict or  pair_dict_rev.get(root[0], 0) != pair_dict_rev.get(root[1], 0):
+                if root[0] not in pair_dict or pair_dict_rev.get(root[0], 0) != pair_dict_rev.get(root[1], 0):
                     return False
                 return True
             return root[1] in pair_dict[root[0]] and has_bruhat_descent(prm, root[0] - 1, root[1] - 1)
@@ -447,7 +445,9 @@ class RCGraph(KeyType, UnderlyingGraph):
         # may have to add q, s or a_i, q
         def is_relevant_noncrossing(root):
             top, bottom = max(root), min(root)
-            return (root[0] <= descent and descent < root[1] and root[1] not in pair_dict_rev) or ((bottom in pair_dict_rev or (bottom not in pair_dict_rev and top in pair_dict_rev)) and bottom > descent)
+            return (root[0] <= descent and descent < root[1] and root[1] not in pair_dict_rev) or (
+                (bottom in pair_dict_rev or (bottom not in pair_dict_rev and top in pair_dict_rev)) and bottom > descent
+            )
 
         # Add this intersection. If we are in the first case, insert (s, q) into the sequence (ai, bi) in the rightmost position, such that ai’s remain nondecreasing in the sequence. ((s, q) are the rows where the two strands shown in Figure 3 originate.) If
         # we are in the second case, add (ai, q) just before where (a, bi) is in the sequence.
@@ -456,8 +456,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         i = descent - 1
         index = new_rc.max_of_row(i) - 2 if len(new_rc[i]) > 0 else -1
         # print(pair_dict)
-        
-        
+
         while i >= 0:
             build_graph = [*new_rc]
             did_any = False
@@ -466,12 +465,12 @@ class RCGraph(KeyType, UnderlyingGraph):
             if len(new_rc[i]) > 0:
                 # print("Row", i)
                 while len(pair_dict) > 0 and index >= 0:
-                    #col_index = max(new_rc[i]) - i - index - 1
+                    # col_index = max(new_rc[i]) - i - index - 1
                     # print(pair_dict)
                     col_index = index
                     refl = col_index + i + 1
                     # index = col_index + 1 + 1
-                    #assert index != 0 or new_rc.has_element(i + 1, col_index + 1)
+                    # assert index != 0 or new_rc.has_element(i + 1, col_index + 1)
                     # print("Starting")
                     # print(new_rc)
                     if new_rc.has_element(i + 1, col_index + 1):
@@ -490,14 +489,14 @@ class RCGraph(KeyType, UnderlyingGraph):
                             build_graph[i] = tuple(a for a in build_graph[i] if a != refl)
                             new_rc = RCGraph(build_graph)
                             # print(f"removed")
-                            #print(build_graph[i])
+                            # print(build_graph[i])
                             # print(new_rc)
                             if new_rc.is_valid:
                                 index -= 1
                                 continue
 
                             for index2 in range(new_rc.max_of_row(i) - 2, index, -1):
-                                #col_index2 = max(new_rc[i]) - i - index2 - 1
+                                # col_index2 = max(new_rc[i]) - i - index2 - 1
                                 col_index2 = index2
                                 refl = col_index2 + i + 1
                                 if not new_rc.has_element(i + 1, col_index2 + 1):
@@ -527,7 +526,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                     index -= 1
                     if did_any:
                         break
-                    
+
             # print(f"{did_any=} {index=}")
             if not did_any:
                 i -= 1
@@ -545,7 +544,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         if len(self) == 0:
             return set((FA(p) * self).value_dict.keys())
 
-        up_perms = ASx(self.perm, len(self)) * ASx(uncode([p]),1)
+        up_perms = ASx(self.perm, len(self)) * ASx(uncode([p]), 1)
 
         old_rc_set = self.rowrange(1, len(self)).right_p_act(p)
         rc_set = set()
@@ -557,12 +556,10 @@ class RCGraph(KeyType, UnderlyingGraph):
                     rc_set.add(rc2)
         return rc_set
 
-
     @staticmethod
     def full_rc_coproduct(perm, length):
-        ret_elem = RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(perm, length),1)).coproduct()
+        ret_elem = RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(perm, length), 1)).coproduct()
         return ret_elem
-
 
     @cache
     def inversion_label(self, i, j):
@@ -573,7 +570,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         index = 0
         for i0, row in enumerate(self):
             for j0, a in enumerate(row):
-                if(self.perm.right_root_at(index, word=self.perm_word()) == (i + 1, j + 1)):
+                if self.perm.right_root_at(index, word=self.perm_word()) == (i + 1, j + 1):
                     return i0 + 1
                 index += 1
         raise ValueError("Could not find inversion")
@@ -590,6 +587,7 @@ class RCGraph(KeyType, UnderlyingGraph):
             except KeyError:
                 pass
         return len(numeros)
+
     # def __len__(self):
     #     return len(self.P)
 
@@ -666,8 +664,6 @@ class RCGraph(KeyType, UnderlyingGraph):
     def has_element(self, i, j):
         return i <= len(self) and j + i - 1 in self[i - 1]
 
-    
-
     def length_vector(self):
         return tuple([len(row) for row in self])
 
@@ -734,6 +730,7 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     def extend(self, extra_rows):
         return RCGraph([*self, *tuple([()] * extra_rows)])
+
     # def __le__(self, other):
     #     if not isinstance(other, RCGraph):
     #         return NotImplemented
@@ -759,16 +756,16 @@ class RCGraph(KeyType, UnderlyingGraph):
     #     return False
 
     def _kogan_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, debug=False, start_index=0):
-        #working_rc = self
+        # working_rc = self
         ARBITRARY_MAX_VALUE = 10
         working_rc = self
         if row > descent:
             raise ValueError("All rows must be less than or equal to descent")
-        #for i in range(working_rc.max_of_row(row) + descent, 0, -1):
+        # for i in range(working_rc.max_of_row(row) + descent, 0, -1):
         i = start_index
 
         num_done = 0
-        
+
         while num_done < num_times:
             last_rc = working_rc
             i += 1
@@ -814,14 +811,14 @@ class RCGraph(KeyType, UnderlyingGraph):
                             print(working_rc)
                 if flag:
                     num_done += 1
-                    #assert last_rc.perm.inv + 1 == working_rc.perm.inv
+                    # assert last_rc.perm.inv + 1 == working_rc.perm.inv
                     if debug:
                         print("Inserted")
                         print(working_rc)
         return working_rc
 
     def _kogan_rectify(self, row_below, descent, dict_by_a, dict_by_b):
-        #print("In rectify")
+        # print("In rectify")
         working_rc = self
         debug = False
         if row_below == 0:
@@ -834,17 +831,16 @@ class RCGraph(KeyType, UnderlyingGraph):
             if working_rc.is_valid:
                 return working_rc
             if working_rc.has_element(row_below, j):
-                #print("Has element")
+                # print("Has element")
                 a, b = working_rc.right_root_at(row_below, j)
-                #print("root=", (a, b))
+                # print("root=", (a, b))
                 if a > b:
-                    #print("Entered")
+                    # print("Entered")
                     if debug:
                         print(f"Considering bad at {row_below, j}")
                         print(f"{dict_by_a=}, {dict_by_b=}")
                         print(f"root = ({a, b})")
                     if b in dict_by_a and a in dict_by_a[b]:
-
                         new_rc = working_rc.toggle_ref_at(row_below, j)
                         dict_by_a[b].remove(a)
                         if len(dict_by_a[b]) == 0:
@@ -852,8 +848,8 @@ class RCGraph(KeyType, UnderlyingGraph):
                         del dict_by_b[a]
                         working_rc = new_rc
                         flag = True
-                        #print("Toggle bad a")
-                        #print(working_rc)
+                        # print("Toggle bad a")
+                        # print(working_rc)
                     elif a in dict_by_b and b in dict_by_b and dict_by_b[a] == dict_by_b[b]:
                         new_rc = working_rc.toggle_ref_at(row_below, j)
                         if new_rc.perm[dict_by_b[a] - 1] < new_rc.perm[a - 1]:
@@ -861,15 +857,15 @@ class RCGraph(KeyType, UnderlyingGraph):
                             del dict_by_b[a]
                             if len(dict_by_a[dict_by_b[b]]) == 0:
                                 del dict_by_a[dict_by_b[b]]
-                            #print("Toggle bad b")
+                            # print("Toggle bad b")
                             flag = True
                         dict_by_a[dict_by_b[b]].remove(b)
                         del dict_by_b[b]
                         if len(dict_by_a[dict_by_b[a]]) == 0:
                             del dict_by_a[dict_by_b[a]]
-                        #print("Toggle bad c")
+                        # print("Toggle bad c")
                 if flag:
-                    working_rc = working_rc._kogan_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times = 1, debug=debug)
+                    working_rc = working_rc._kogan_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times=1, debug=debug)
         return working_rc._kogan_rectify(row_below - 1, descent, dict_by_a, dict_by_b)
 
     def kogan_insert(self, descent, rows, debug=False):
@@ -900,12 +896,12 @@ class RCGraph(KeyType, UnderlyingGraph):
             working_rc = working_rc._kogan_insert_row(row, descent, dict_by_a, dict_by_b, num_times, debug=debug)
 
             if not working_rc.is_valid:
-                working_rc = working_rc._kogan_rectify(row, descent, dict_by_a, dict_by_b) # minus one?
+                working_rc = working_rc._kogan_rectify(row, descent, dict_by_a, dict_by_b)  # minus one?
             if debug:
                 print("Next iteration")
                 print(working_rc)
-                #print(f"{working_rc.perm.inv=}, {self.perm.inv + index + 1=}")
-            
+                # print(f"{working_rc.perm.inv=}, {self.perm.inv + index + 1=}")
+
             try:
                 assert len(working_rc[row - 1]) == len(last_working_rc[row - 1]) + num_times
             except AssertionError:
@@ -916,7 +912,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                 print(f"{working_rc.perm=}, {self.perm=}")
                 if debug:
                     raise
-                self.kogan_insert(descent, rows, debug= True)
+                self.kogan_insert(descent, rows, debug=True)
                 raise
         # reflections = []
         # start_perm = self.perm
@@ -935,8 +931,8 @@ class RCGraph(KeyType, UnderlyingGraph):
         #                     del dict_by_a[a]
         #                 del dict_by_b[b]
         #                 break
-                #print(f"Did not find {a,b} start_perm={start_perm} {dict_by_a=}")
-        return working_rc#, tuple(reflections)
+        # print(f"Did not find {a,b} start_perm={start_perm} {dict_by_a=}")
+        return working_rc  # , tuple(reflections)
 
     @property
     def perm(self):
@@ -1017,18 +1013,19 @@ class RCGraph(KeyType, UnderlyingGraph):
     @classmethod
     def fa_coprod(cls, *word):
         if len(word) == 0:
-            return cls()@cls()
+            return cls() @ cls()
         if all(a == 0 for a in word):
-            return cls([()*len(word)])@cls([()*len(word)])
+            return cls([() * len(word)]) @ cls([() * len(word)])
         cop = FA(*word).coproduct()
         result = 0
         for (word1, word2), coeff in cop.items():
             result += RCGraph.fa_hom(*word1) @ RCGraph.fa_hom(*word2)
-        return result 
-    
+        return result
+
     def toggle_ref_at(self, i, j):
         from bisect import bisect_left
-        assert i>0 and j > 0
+
+        assert i > 0 and j > 0
         a, b = self.right_root_at(i, j)
         row = self[i - 1]
         rev_row = [*row]
@@ -1038,15 +1035,15 @@ class RCGraph(KeyType, UnderlyingGraph):
             new_row = [i + j - 1, *row]
         else:
             if rev_row[index] == i + j - 1:
-                new_row = [*row[:len(row) - index - 1], *row[len(row) - index:]]
+                new_row = [*row[: len(row) - index - 1], *row[len(row) - index :]]
             else:
-                new_row = [*row[:len(row) - index], i + j - 1, *row[len(row) - index:]]
-        return RCGraph([*self[:i - 1], tuple(new_row), *self[i:]])
+                new_row = [*row[: len(row) - index], i + j - 1, *row[len(row) - index :]]
+        return RCGraph([*self[: i - 1], tuple(new_row), *self[i:]])
 
     def monk_insert(self, descent, row):
         assert row <= descent
-        result =None
-        for i in range(max(len(self[row-1]) - row + 1, descent), 0, -1):
+        result = None
+        for i in range(max(len(self[row - 1]) - row + 1, descent), 0, -1):
             if not self.has_element(row, i) and _is_row_root(descent, self.right_root_at(row, i)):
                 result = self.toggle_ref_at(row, i)
                 break
@@ -1067,18 +1064,17 @@ class RCGraph(KeyType, UnderlyingGraph):
             # print(self)
             raise ValueError("Could not rectify")
         for j in range(working_rc.max_of_row(row_below) + 1, 0, -1):
-                if working_rc.has_element(row_below, j):
-                    b, a = working_rc.right_root_at(row_below, j)
-                    if _is_row_root(descent, (a, b)):
-                        working_rc = working_rc.toggle_ref_at(row_below, j)
-                        for jp in range(working_rc.max_of_row(row_below) + 1, 0, -1):
-                            if not working_rc.has_element(row_below, jp) and _is_row_root(descent, working_rc.right_root_at(row_below, jp)):
-                                working_rc = working_rc.toggle_ref_at(row_below, jp)
-                                if working_rc.is_valid:
-                                    return working_rc
-                        return working_rc._monk_rectify(descent, row_below)
+            if working_rc.has_element(row_below, j):
+                b, a = working_rc.right_root_at(row_below, j)
+                if _is_row_root(descent, (a, b)):
+                    working_rc = working_rc.toggle_ref_at(row_below, j)
+                    for jp in range(working_rc.max_of_row(row_below) + 1, 0, -1):
+                        if not working_rc.has_element(row_below, jp) and _is_row_root(descent, working_rc.right_root_at(row_below, jp)):
+                            working_rc = working_rc.toggle_ref_at(row_below, jp)
+                            if working_rc.is_valid:
+                                return working_rc
+                    return working_rc._monk_rectify(descent, row_below)
         return working_rc._monk_rectify(descent, row_below - 1)
-    
 
     # # THIS IS KEY
     # # EXCHANGE PROPERTY GOES TO UNIQUE PERMUTATION
@@ -1118,7 +1114,6 @@ class RCGraph(KeyType, UnderlyingGraph):
 
         interim = interim2.kogan_insert(len(self), diff_rows, debug=False)
 
-        
         if debug:
             print("Got")
             print(interim)
@@ -1136,7 +1131,7 @@ class RCGraph(KeyType, UnderlyingGraph):
             print(self)
         # if len(self) >= len(self.perm) - 1:
         #     return {RCGraph([*self, ()])}
-        up_perms = ASx(self.perm, len(self)) * ASx(uncode([0]),1)
+        up_perms = ASx(self.perm, len(self)) * ASx(uncode([0]), 1)
 
         rc_set = set()
 
@@ -1192,20 +1187,18 @@ class RCGraph(KeyType, UnderlyingGraph):
         # print("Right zeroing")
         # print(self)
         if len(rc1) == 0:
-            return {(RCGraph([()]),RCGraph([()]))}
-        up_perms = (ASx@ASx)(((rc1.perm,len(rc1)),(rc2.perm, len(rc2)))) * ASx(uncode([0]),1).coproduct()
+            return {(RCGraph([()]), RCGraph([()]))}
+        up_perms = (ASx @ ASx)(((rc1.perm, len(rc1)), (rc2.perm, len(rc2)))) * ASx(uncode([0]), 1).coproduct()
 
         rc_set = set()
 
         for ((perm1, _), (perm2, _)), v in up_perms.items():
             for rc01 in RCGraph.all_rc_graphs(perm1, len(rc1) + 1):
                 for rc02 in RCGraph.all_rc_graphs(perm2, len(rc2) + 1):
-                    #rc = RCGraph((tuple(sorted([*rc01[0], *rc02[0]])), *[tuple(sorted([*rc01[i], *[a + 1 for a in rc02[i]]])) for i in range(1, max(len(rc01), len(rc02)))]))
+                    # rc = RCGraph((tuple(sorted([*rc01[0], *rc02[0]])), *[tuple(sorted([*rc01[i], *[a + 1 for a in rc02[i]]])) for i in range(1, max(len(rc01), len(rc02)))]))
                     if rc02.length_vector()[:1] == rc2.length_vector() and rc01.length_vector()[:-1] == rc1.length_vector() and rc01.zero_out_last_row() == rc1 and rc02.zero_out_last_row() == rc2:
                         rc_set.add((rc01, rc02))
         return rc_set
-
-
 
     def normalize_and_remove_last_row(self):
         if len(self) == 0:
@@ -1220,7 +1213,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         # print(f"{max(self.perm.descents())=}")
         # input()
         while working_rc.perm[len(self) - 1] != len(working_rc.perm):
-            #print("Down")
+            # print("Down")
             working_rc = working_rc.fill_row_with_boxes(len(working_rc), 1)[0]
             # print("working_rc")
             # print(working_rc)
@@ -1234,20 +1227,22 @@ class RCGraph(KeyType, UnderlyingGraph):
             # print(f"{max(working_rc.rowrange(0,len(self)-1).perm.descents())=} >= {max(self.perm.descents())=}")
             # input()
         reflections = {}
-        
-        reflections[len(working_rc)] = [len(working_rc) + a for a in range(len(working_rc[-1])-1,0,-1)]
+
+        reflections[len(working_rc)] = [len(working_rc) + a for a in range(len(working_rc[-1]) - 1, 0, -1)]
         # print(f"{reflections=}")
         working_rc = RCGraph(working_rc.reverse_kogan_insert(len(working_rc), reflections)[:-1])
         return RCGraph(working_rc)
-            #print(working_rc)
+        # print(working_rc)
+
     # certificate to insert the row
 
     def bisect_left_coords_index(self, row, col):
         from bisect import bisect_left
+
         inversions = [self.left_to_right_inversion_coord(i) for i in range(len(self.perm_word()))]
         inversions.sort(key=lambda x: (x[0], -x[1]))
         # print(f"{inversions=}")
-        
+
         return bisect_left(inversions, (row, col), key=lambda x: (x[0], -x[1]))
 
     # def find_bruhat_embedding(self, perm, skip_row):
@@ -1270,9 +1265,9 @@ class RCGraph(KeyType, UnderlyingGraph):
     #                 working_perm = working_perm.swap(desc, desc + 1)
 
     def exchange_property(self, descent):
-        for i in range(len(self.perm_word())+1):
+        for i in range(len(self.perm_word()) + 1):
             a, b = self.left_to_right_inversion(i)
-            #print(f"{descent=}, {a=}, {b=}")
+            # print(f"{descent=}, {a=}, {b=}")
             if a == descent and b == descent + 1:
                 return self.toggle_ref_at(*self.left_to_right_inversion_coord(i))
         raise ValueError("No such descent")
@@ -1280,24 +1275,26 @@ class RCGraph(KeyType, UnderlyingGraph):
     @classmethod
     def generate_permuted_rcs(cls, perm, length, ordering):
         from schubmult.schub_lib.schub_lib import pull_out_var
+
         if length == 0:
             return {cls()}
         rc_set = set()
-        
+
         for L, new_perm in pull_out_var(ordering[0], perm):
             extra = [perm[a] for a in range(ordering[0] - 1) if perm[a] != new_perm[a]]
-            add_word = tuple(sorted([*L,*extra], reverse=True))
+            add_word = tuple(sorted([*L, *extra], reverse=True))
             rc_set_old = cls.generate_permuted_rcs(new_perm, length - 1, uncode(ordering.code[1:]))
             for rc in rc_set_old:
-                new_rc = cls((tuple(add_word),*rc.shiftup(1)))
+                new_rc = cls((tuple(add_word), *rc.shiftup(1)))
                 rc_set.add(new_rc)
                 assert new_rc.perm == perm, f"{new_rc=} {new_rc.perm=}, {new_perm=} {perm=}, {new_rc}"
         return rc_set
 
     def extract_row2(self, row):
         from schubmult.schub_lib.schub_lib import pull_out_var
+
         working_rc = self
-        to_match = tuple(sorted([a - row + 1 for a in working_rc[row-1]]))
+        to_match = tuple(sorted([a - row + 1 for a in working_rc[row - 1]]))
         lower_perm = None
         # print(to_match)
         for L, new_perm in pull_out_var(row, working_rc.perm):
@@ -1314,7 +1311,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         # just strings
         # reflections at the spots
         for r in range(row - 1, 0, -1):
-            to_match = tuple(sorted([a - r + 1 for a in working_rc[r-1]]))
+            to_match = tuple(sorted([a - r + 1 for a in working_rc[r - 1]]))
             lower_perm2 = None
             # print(f"{lower_perm=}")
             # print(f"row {r=}")
@@ -1331,7 +1328,7 @@ class RCGraph(KeyType, UnderlyingGraph):
             else:
                 lower_perm = lower_perm2
                 # print("Succeeded on row ", r)
-        
+
     @cache
     def _inversion_to_coord(self):
         roots_in = {}
@@ -1347,7 +1344,7 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     def left_to_right_inversion(self, index):
         return self.right_root_at(*self.left_to_right_inversion_coord(index))
-    
+
     def left_to_right_inversion_coord(self, index):
         row = 0
         sm = 0
@@ -1357,24 +1354,24 @@ class RCGraph(KeyType, UnderlyingGraph):
                 row = i + 1
                 break
         along = sm - index
-        col_index = len(self[row-1]) - 1 - along
+        col_index = len(self[row - 1]) - 1 - along
         # print(f"{index=} {sm=} {along=} {len(self[row - 1])=}, {col_index=}")
         col = self[row - 1][col_index] - row + 1
         return (row, col)
 
     def max_of_row(self, r):
-        if len(self[r-1]) == 0:
+        if len(self[r - 1]) == 0:
             the_max = 1
-            while self.right_root_at(r, the_max + 1) != (r + the_max, r+the_max + 1):
+            while self.right_root_at(r, the_max + 1) != (r + the_max, r + the_max + 1):
                 the_max += 1
         else:
-            the_max = max(self[r-1]) - r + 1
+            the_max = max(self[r - 1]) - r + 1
         return the_max
 
-
     @staticmethod
-    def find_reflection_path(bottom_perm, top_perm, row, last_spot = 0, last_value=-1000):
+    def find_reflection_path(bottom_perm, top_perm, row, last_spot=0, last_value=-1000):
         from schubmult.utils.perm_utils import has_bruhat_ascent
+
         working_perm = bottom_perm
         # print(working_perm)
         # print(f"{top_perm=}")
@@ -1384,15 +1381,15 @@ class RCGraph(KeyType, UnderlyingGraph):
                 new_perm = working_perm.swap(i, j)
                 if new_perm == top_perm:
                     reflection_path = {}
-                    reflection_path[i+1] = reflection_path.get(i+1, [])
-                    reflection_path[i+1].append(j+1)
+                    reflection_path[i + 1] = reflection_path.get(i + 1, [])
+                    reflection_path[i + 1].append(j + 1)
                     return reflection_path
                 if new_perm.bruhat_leq(top_perm):
-                    reflection_path = RCGraph.find_reflection_path(new_perm, top_perm, row, last_spot = i, last_value=working_perm[j])
+                    reflection_path = RCGraph.find_reflection_path(new_perm, top_perm, row, last_spot=i, last_value=working_perm[j])
                     if reflection_path is not None:
                         reflection_path = dict(reflection_path)
-                        reflection_path[i+1] = reflection_path.get(i+1, [])
-                        reflection_path[i+1].insert(0, j+1)
+                        reflection_path[i + 1] = reflection_path.get(i + 1, [])
+                        reflection_path[i + 1].insert(0, j + 1)
                         last_value = working_perm[i]
                         working_perm = new_perm
                         return reflection_path
@@ -1429,17 +1426,16 @@ class RCGraph(KeyType, UnderlyingGraph):
                 cnt += 1
                 if first_saw == -1:
                     first_saw = arr[i]
-                if i > 0 and arr[i-1] != arr[i] - 1:
-                    buildup_code = (first_saw-1) * [0]
+                if i > 0 and arr[i - 1] != arr[i] - 1:
+                    buildup_code = (first_saw - 1) * [0]
                     buildup_code.append(cnt)
                     h_list.append(uncode(buildup_code))
                     first_saw = arr[i]
                     # print(f"{buildup_code=}")
                     buildup_code = []
                     cnt = 0
-                
-            
-            buildup_code = (first_saw-1) * [0]
+
+            buildup_code = (first_saw - 1) * [0]
             buildup_code.append(cnt)
             h_list.append(uncode(buildup_code))
             lst = [cd.trimcode for cd in h_list]
@@ -1447,38 +1443,37 @@ class RCGraph(KeyType, UnderlyingGraph):
             # print(f"{arr=}")
             assert sum(cd.inv for cd in h_list) == len(arr), f"{h_list=}, {arr=}"
             return h_list
+
         # commuting h's
         if len(self) == 0:
             return RCGraphModule({RCGraph(): 1}) @ RCGraphModule({RCGraph(): 1})
         if len(self) == 1 and len(self[0]) == 0:
             return RCGraphModule({RCGraph([()]): 1}) @ RCGraphModule({RCGraph([()]): 1})
         if self.perm.inv == 0:
-            return RCGraphModule({RCGraph([()]*len(self)): 1}) @ RCGraphModule({RCGraph([()]*len(self)): 1})
+            return RCGraphModule({RCGraph([()] * len(self)): 1}) @ RCGraphModule({RCGraph([()] * len(self)): 1})
         buildup_module = RCGraphModule({RCGraph([]): 1}) @ RCGraphModule({RCGraph([]): 1})
-        
+
         for row in range(len(self) - 1, -1, -1):
             ret_elem = 0
-            #buildup_module = RCGraph.pad_tensor_module_with_zeros(buildup_module, 1)
+            # buildup_module = RCGraph.pad_tensor_module_with_zeros(buildup_module, 1)
             the_row = self.rowrange(row, row + 1)
             h_list = trans_to_h_list(the_row[0])
-            #if len(self) == 1:
-            
-            
-                # print("Buildup is")
-                # print(buildup_module)
-            
+            # if len(self) == 1:
+
+            # print("Buildup is")
+            # print(buildup_module)
 
             for (rc1, rc2), coeff in buildup_module.items():
                 # print("Multiplying")
                 # print(rc1)
                 # print("and")
                 # print(rc2)
-                
+
                 # print("Product is")
                 # print(prod_module)
-                rc01 = RCGraph([(),*rc1.shiftup(1)])
-                rc02 = RCGraph([(),*rc2.shiftup(1)])
-                
+                rc01 = RCGraph([(), *rc1.shiftup(1)])
+                rc02 = RCGraph([(), *rc2.shiftup(1)])
+
                 # print(f"{rc12=}")
                 # print(f"{rc11}")
                 for perm in h_list:
@@ -1487,28 +1482,28 @@ class RCGraph(KeyType, UnderlyingGraph):
                         rc011 = rc01
                         rc012 = rc02
                         if p1.inv > 0:
-                            rc011 = rc011.kogan_insert(len(p1.trimcode),[1]*p1.inv)
-                            rc011 = rc011.rowrange(0,1)* rc1
+                            rc011 = rc011.kogan_insert(len(p1.trimcode), [1] * p1.inv)
+                            rc011 = rc011.rowrange(0, 1) * rc1
                             new_rc011 = 0
                             for rc, c in rc011.items():
-                                new_rc011 += c * (RCGraph([(),*rc[1:]]).kogan_insert(len(p1.trimcode),[1]*p1.inv))
+                                new_rc011 += c * (RCGraph([(), *rc[1:]]).kogan_insert(len(p1.trimcode), [1] * p1.inv))
                             rc011 = new_rc011
                         if p2.inv > 0:
-                            rc012 = rc012.kogan_insert(len(p2.trimcode),[1]*p2.inv)
-                            rc012 = rc012.rowrange(0,1)* rc2
+                            rc012 = rc012.kogan_insert(len(p2.trimcode), [1] * p2.inv)
+                            rc012 = rc012.rowrange(0, 1) * rc2
                             new_rc012 = 0
                             for rc, c in rc012.items():
-                                new_rc012 += c * (RCGraph([(),*rc[1:]]).kogan_insert(len(p2.trimcode),[1]*p2.inv))
+                                new_rc012 += c * (RCGraph([(), *rc[1:]]).kogan_insert(len(p2.trimcode), [1] * p2.inv))
                             rc012 = new_rc012
-                        rc011 = 1*rc011
-                        rc012 = 1*rc012
-                            #rc012 = RCGraph([(),*rc012[1:]]).kogan_insert(len(p2.trimcode),[1]*p2.inv)
-                        #if rc011.perm.bruhat_leq(self.rowrange(0,row+1).perm) and rc012.perm.bruhat_leq(self.rowrange(0,row+1).perm):
-                                # print("Matched")
-                                # print(rc011)
-                                # print(rc012)
-                                # print("With coeff", coeff)
-                                # print("and perm", perm)
+                        rc011 = 1 * rc011
+                        rc012 = 1 * rc012
+                        # rc012 = RCGraph([(),*rc012[1:]]).kogan_insert(len(p2.trimcode),[1]*p2.inv)
+                        # if rc011.perm.bruhat_leq(self.rowrange(0,row+1).perm) and rc012.perm.bruhat_leq(self.rowrange(0,row+1).perm):
+                        # print("Matched")
+                        # print(rc011)
+                        # print(rc012)
+                        # print("With coeff", coeff)
+                        # print("and perm", perm)
                         ret_elem += coeff * (rc011 @ rc012)
             buildup_module = ret_elem
             # print("mul_module")
@@ -1518,17 +1513,16 @@ class RCGraph(KeyType, UnderlyingGraph):
             # if len(self) > 1:
             #     mul_module = RCGraph(self.rowrange(1, len(self))).coproduct()
             #     ret_elem = ret_elem*mul_module
-        
+
         # print("Final result for")
         # print(self)
         # print("is")
         # print(ret_elem)
-            #ret_elem *= self.rowrange(1, len(self)).coproduct()
-            # print("Result is")
-            # print(ret_elem)
-        
+        # ret_elem *= self.rowrange(1, len(self)).coproduct()
+        # print("Result is")
+        # print(ret_elem)
+
         return ret_elem
-    
 
     @classmethod
     def principal_rc(cls, perm, length):
@@ -1543,8 +1537,6 @@ class RCGraph(KeyType, UnderlyingGraph):
     def pad_with_zeros(self, num_zeros):
         return RCGraph.pad_module_with_zeros(1 * self, num_zeros)
 
-    
-
     @staticmethod
     def pad_module_with_zeros(rc_graph_module, num_zeros):
         if num_zeros == 0:
@@ -1557,14 +1549,14 @@ class RCGraph(KeyType, UnderlyingGraph):
                 new_build_module += new_rc
             build_module = new_build_module
         return build_module
-    
+
     @staticmethod
     def pad_tensor_module_with_zeros(rc_graph_module, num_zeros):
         build_module = rc_graph_module
         for _ in range(num_zeros):
             new_build_module = 0
             for (rc1, rc2), coeff in build_module.items():
-                new_rc = RCGraphModule(dict.fromkeys(rc1.right_zero_act(), coeff))@RCGraphModule(dict.fromkeys(rc2.right_zero_act(), coeff))
+                new_rc = RCGraphModule(dict.fromkeys(rc1.right_zero_act(), coeff)) @ RCGraphModule(dict.fromkeys(rc2.right_zero_act(), coeff))
                 new_build_module += new_rc
             build_module = new_build_module
         return build_module
@@ -1577,17 +1569,17 @@ class RCGraph(KeyType, UnderlyingGraph):
     #     # if len(other) == 0:
     #     #     return 1 * self
     #     # orig_len = len(other)
-        
+
     #     # base_rc_set = {self}
     #     # for _ in range(dff):
     #     #     new_base_rc_set = set()
     #     #     for rc in base_rc_set:
     #     #         new_base_rc_set.update(rc.right_zero_act())
-    #     #     base_rc_set = new_base_rc_set            
+    #     #     base_rc_set = new_base_rc_set
     #     # #base_rc = RCGraph([*self, *[()]*max(dff, 0)])
     #     dff2 = len(other) if other.perm.inv == 0 else max(max(other.perm.descents()) + 1 - len(other), 0)
     #     # base_other_rc_set = {other}
-        
+
     #     # ret_module = RCGraphModule()
     #     # for base_rc in base_rc_set:
     #     #     for base_other_rc in base_other_rc_set:
@@ -1597,7 +1589,7 @@ class RCGraph(KeyType, UnderlyingGraph):
     #     upd = self
     #     if dff > 0:
     #         upd = RCGraph([*self, *[()]*dff])
-        
+
     #     #         #buildup_module = 1*base_rc
     #     #         buildup_module = 1 * base_rc
     #     #         num_zeros = min(orig_len - dff, 0)
@@ -1606,7 +1598,7 @@ class RCGraph(KeyType, UnderlyingGraph):
     #     #             for rc, coeff in buildup_module.items():
     #     #                 new_buildup_module += RCGraphModule(dict.fromkeys(base_rc.right_zero_act(), coeff))
     #     #             buildup_module = new_buildup_module
-        
+
     #     #         new_buildup_module = 0
     #     interim_ret_module = 0
     #     new_rc = upd.pad_with_zeros(len(other)-dff)
@@ -1641,11 +1633,12 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     def zero_rectify(self):
         from schubmult.utils.perm_utils import has_bruhat_ascent
+
         if self.is_valid:
             return self
         working_rc = self
         while not working_rc.is_valid:
-            mid_rc =RCGraph()
+            mid_rc = RCGraph()
             index = 1
             while index <= len(self) and mid_rc.is_valid:
                 mid_rc = working_rc.rowrange(0, index)
@@ -1653,7 +1646,7 @@ class RCGraph(KeyType, UnderlyingGraph):
             # print("Got")
             # print(mid_rc)
             assert not mid_rc.is_valid
-            for index2 in range(len(mid_rc.perm_word())-1, -1, -1):
+            for index2 in range(len(mid_rc.perm_word()) - 1, -1, -1):
                 if mid_rc.is_valid:
                     break
                 a, b = mid_rc.left_to_right_inversion(index2)
@@ -1664,84 +1657,85 @@ class RCGraph(KeyType, UnderlyingGraph):
                     for col2 in range(col, 0, -1):
                         a2, b2 = mid_rc.right_root_at(row, col2)
                         # print(f"{a2, b2}")
-                        if a2<b2 and has_bruhat_ascent(mid_rc.perm, a2-1, b2-1) and not mid_rc.has_element(row, col2):
+                        if a2 < b2 and has_bruhat_ascent(mid_rc.perm, a2 - 1, b2 - 1) and not mid_rc.has_element(row, col2):
                             # print("got it")
                             mid_rc = mid_rc.toggle_ref_at(row, col2)
                             break
-                    
+
             # print("After")
             # print(mid_rc)
-            working_rc = RCGraph([*mid_rc, *working_rc[len(mid_rc):]])
+            working_rc = RCGraph([*mid_rc, *working_rc[len(mid_rc) :]])
         return working_rc
+
     # THE ZERO MAKES SCHUB PROD
     def prod_with_rc(self, other):
         # if len(other) == 0:
         #     return 1 * self
         if self.perm.inv == 0:
             return RCGraphModule({RCGraph([*self, *other.shiftup(len(self))]): 1})
-        num_zeros = len(other) if other.perm.inv == 0 else max(len(other),len(other.perm))
+        num_zeros = len(other) if other.perm.inv == 0 else max(len(other), len(other.perm))
         base_rc = self
-        buildup_module = 1*base_rc
-        #num_zeros += len(self) - len(base_rc)
+        buildup_module = 1 * base_rc
+        # num_zeros += len(self) - len(base_rc)
         for _ in range(num_zeros):
             new_buildup_module = RCGraphModule()
             for rc, coeff in buildup_module.items():
                 new_buildup_module += RCGraphModule(dict.fromkeys(rc.right_zero_act(), coeff))
             buildup_module = new_buildup_module
-    
+
         # print("Buildup is")
         # print(buildup_module)
         ret_module = RCGraphModule()
-        
+
         for rc, coeff in buildup_module.items():
-            new_rc = RCGraph([*rc[:len(self)], *other.shiftup(len(self))])
-#             Traceback (most recent call last):
-#   File "/home/matthematics/schubmult/src/schubmult/scripts/assoc_test.py", line 163, in <module>
-#     diff = hom(g1 * g2) - hom(g1) * hom(g2)
-#                ~~~^~~~
-#   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 656, in __mul__
-#     return self.prod_with_rc(other)
-#            ^^^^^^^^^^^^^^^^^^^^^^^^
-#   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 1583, in prod_with_rc
-#     new_buildup_module += RCGraphModule(dict.fromkeys(rc.right_zero_act(), coeff))
-#                                                       ^^^^^^^^^^^^^^^^^^^
-#   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 1078, in right_zero_act
-#     if rc.zero_out_last_row() == self:
-#        ^^^^^^^^^^^^^^^^^^^^^^
-#   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 1038, in zero_out_last_row
-#     interim = interim.kogan_insert(len(self) - 1,diff_rows)
-#               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-#   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 851, in kogan_insert
-#     assert working_rc.perm.inv == self.perm.inv + index + 1
-#            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# AssertionError
-            #print("Trying to match")
+            new_rc = RCGraph([*rc[: len(self)], *other.shiftup(len(self))])
+            #             Traceback (most recent call last):
+            #   File "/home/matthematics/schubmult/src/schubmult/scripts/assoc_test.py", line 163, in <module>
+            #     diff = hom(g1 * g2) - hom(g1) * hom(g2)
+            #                ~~~^~~~
+            #   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 656, in __mul__
+            #     return self.prod_with_rc(other)
+            #            ^^^^^^^^^^^^^^^^^^^^^^^^
+            #   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 1583, in prod_with_rc
+            #     new_buildup_module += RCGraphModule(dict.fromkeys(rc.right_zero_act(), coeff))
+            #                                                       ^^^^^^^^^^^^^^^^^^^
+            #   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 1078, in right_zero_act
+            #     if rc.zero_out_last_row() == self:
+            #        ^^^^^^^^^^^^^^^^^^^^^^
+            #   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 1038, in zero_out_last_row
+            #     interim = interim.kogan_insert(len(self) - 1,diff_rows)
+            #               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            #   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 851, in kogan_insert
+            #     assert working_rc.perm.inv == self.perm.inv + index + 1
+            #            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            # AssertionError
+            # print("Trying to match")
             # print(new_rc)
             # need not check valid and need to bump
-            #if not new_rc.is_valid:
-                # print("got invalid rc")
-                # print(new_rc)
-                # print("Should be rectifying")
-                # print("Need better rect")
-                #new_rc = new_rc.zero_rectify()
-                # perm0 = new_rc.rowrange(0,len(self)).perm
-                # word = RCGraph([*other.shiftup(len(self))]).perm_word()
-                # print(F"{word=}")
-                # try:
-                #     for i in range(len(word)):
-                #         ref = word[i]
-                #         if perm0[ref - 1] > perm0[ref]:
-                #             new_rc = new_rc._monk_rectify(len(self) + 1, len(self))
-                #             # print("rectified?")
-                #             # print(new_rc)
-                #             perm0 = new_rc.rowrange(0,len(self)).perm
-                #         perm0 = perm0.swap(ref - 1, ref)
-                # except ValueError as e:
-                #     # print(f"{e=}")
+            # if not new_rc.is_valid:
+            # print("got invalid rc")
+            # print(new_rc)
+            # print("Should be rectifying")
+            # print("Need better rect")
+            # new_rc = new_rc.zero_rectify()
+            # perm0 = new_rc.rowrange(0,len(self)).perm
+            # word = RCGraph([*other.shiftup(len(self))]).perm_word()
+            # print(F"{word=}")
+            # try:
+            #     for i in range(len(word)):
+            #         ref = word[i]
+            #         if perm0[ref - 1] > perm0[ref]:
+            #             new_rc = new_rc._monk_rectify(len(self) + 1, len(self))
+            #             # print("rectified?")
+            #             # print(new_rc)
+            #             perm0 = new_rc.rowrange(0,len(self)).perm
+            #         perm0 = perm0.swap(ref - 1, ref)
+            # except ValueError as e:
+            #     # print(f"{e=}")
 
             if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(new_rc):
                 ret_module += coeff * new_rc
-                
+
         return ret_module
 
     def ring_act(self, elem):
@@ -1852,6 +1846,7 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     def __gt__(self, other):
         return not (self <= other)
+
     # def __leq__(self, other):
     #     if not isinstance(other, RCGraph):
     #         return NotImplemented
@@ -1882,7 +1877,7 @@ class RCGraph(KeyType, UnderlyingGraph):
     def __lt__(self, other):
         if not isinstance(other, RCGraph):
             return NotImplemented
-           #return self.perm.bruhat_leq(other.perm) and self.perm != other.perm
+        # return self.perm.bruhat_leq(other.perm) and self.perm != other.perm
         if self.perm.trimcode < other.perm.trimcode:
             return True
         if self.perm.trimcode > other.perm.trimcode:
@@ -1907,9 +1902,9 @@ class RCGraph(KeyType, UnderlyingGraph):
 
 
 class Tableau(RCGraph):
-
     def __mul__(self, other):
         from schubmult.perm_lib import Plactic
+
         if not isinstance(other, Tableau):
             return NotImplemented
         # Plactic
@@ -1975,7 +1970,7 @@ class Tableau(RCGraph):
             for p in reversed(row):
                 perm = perm.swap(p - 1, p)
         return perm
-    
+
     def maxvalue(self):
         mv = 0
         for row in self:
@@ -1985,7 +1980,6 @@ class Tableau(RCGraph):
 
 
 class RCGraphEG(RCGraph):
-
     def __new__(cls, *args, value=1):
         if len(args) == 0:
             return RCGraph.__new__(cls, value=value)
@@ -2026,7 +2020,7 @@ class RCGraphEG(RCGraph):
         # self.P = P
         # self.Q = Q
         # self.value = value
-        #self._length = 
+        # self._length =
 
     @classmethod
     def from_rc_graph(cls, rc_graph):
@@ -2572,6 +2566,7 @@ class TensorModule(ModuleType):
                 result += coeff2 * (self * rc_graph2)
             return result
         return super().__mul__(other)
+
     # def apply_product(self, poly1, poly2, genset, length):
     #     res = TensorModule()
     #     for (rc1, rc2), coeff in self._dict.items():
@@ -2779,6 +2774,7 @@ def coprod_mod(perm, length):
     ret_elem = ret_elem.clone({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
     return ret_elem
 
+
 @cache
 def try_lr_module_inject(perm, length=None):
     # print(f"Starting {perm}")
@@ -2842,37 +2838,35 @@ def try_lr_module_inject(perm, length=None):
     return ret_elem
 
 
-
 # jump through hoops to make this polynomial
+
 
 def fa_elem(perm, length):
     return FA(*((perm).trimcode), *((0,) * (length - len((perm).trimcode))))
+
 
 @cache
 def try_lr_module_biject(perm, length):
     from schubmult import schubmult_py
 
-   
-    rc_set = set((fa_elem(perm,length)*RCGraph()).value_dict.keys())
-    #prin_rc
-    consideration_set = [(k[0], k[1]) for k in ((fa_elem(perm,length).coproduct()*(RCGraph() @ RCGraph()))).value_dict.keys()]
-
-    
+    rc_set = set((fa_elem(perm, length) * RCGraph()).value_dict.keys())
+    # prin_rc
+    consideration_set = [(k[0], k[1]) for k in (fa_elem(perm, length).coproduct() * (RCGraph() @ RCGraph())).value_dict.keys()]
 
     if len(rc_set) == 1:
         # dominant
         return consideration_set
     consider_dict = {}
-    
+
     def lehmer_partial_pair(pair1, pair2):
         return pair1[0].lehmer_partial_leq(pair2[0]) or pair1[1].lehmer_partial_leq(pair2[1])
-        #(pair1[0] == pair2[0] and pair1[1] <= pair2[1])
+        # (pair1[0] == pair2[0] and pair1[1] <= pair2[1])
 
-    for (rc1, rc2) in consideration_set:
+    for rc1, rc2 in consideration_set:
         consider_dict[(rc1.perm, rc2.perm)] = consider_dict.get((rc1.perm, rc2.perm), set())
         consider_dict[(rc1.perm, rc2.perm)].add((rc1, rc2))
-            # if any(lehmer_partial_pair((rc1, rc2), (rc1_dom, rc2_dom)) for (rc1_dom, rc2_dom) in dom_rcs if rc1_dom.perm == rc1.perm and rc2_dom.perm == rc2.perm) and rc1.perm <= perm and rc2.perm <= perm:
-            #     consider_dict[(rc1.perm, rc2.perm)].add((rc1, rc2))
+        # if any(lehmer_partial_pair((rc1, rc2), (rc1_dom, rc2_dom)) for (rc1_dom, rc2_dom) in dom_rcs if rc1_dom.perm == rc1.perm and rc2_dom.perm == rc2.perm) and rc1.perm <= perm and rc2.perm <= perm:
+        #     consider_dict[(rc1.perm, rc2.perm)].add((rc1, rc2))
     # relation = {}
     # for (perm1, perm2), st in consider_dict.items():
     #     for (rc1, rc2) in st:
@@ -2880,7 +2874,7 @@ def try_lr_module_biject(perm, length):
     #             if rc1.lehmer_partial_leq(rc1b) or rc2.lehmer_partial_leq(rc2b):
     #                 relation[(rc1, rc2)] = relation.get((rc1, rc2), set())
     #                 relation[(rc1, rc2)].add((rc1b, rc2b))
-    
+
     # for key in relation:
     #     # print(key, relation[key])
     # ret_elem = []
@@ -2902,7 +2896,7 @@ def try_lr_module_biject(perm, length):
                 if (rc1, rc2) not in consider_dict[(rc1_bad.perm, rc2_bad.perm)]:
                     continue
                 if (rc1, rc2) not in bijection and (lehmer_partial_pair((rc1_bad, rc2_bad), (rc1, rc2)) or (lehmer_partial_pair((rc1, rc2), (rc1_bad, rc2_bad)))):
-                #and (rc1.lehmer_partial_leq(rc1_bad) or rc2.lehmer_partial_leq(rc2_bad)):
+                    # and (rc1.lehmer_partial_leq(rc1_bad) or rc2.lehmer_partial_leq(rc2_bad)):
                     bijection[(rc1, rc2)] = (rc1_bad, rc2_bad)
                     break
                 # meet = next(iter(sorted(spitzu)))
@@ -2931,35 +2925,33 @@ def try_lr_module_biject(perm, length):
 def try_lr_module_biject_freeze(perm, length):
     from schubmult import schubmult_py
 
-   
     if perm.inv == 0:
         if length == 0:
             mod = [(RCGraph(), RCGraph())]
         else:
             mod = [(RCGraph([() * length]), RCGraph([() * length]))]
         return mod
-    
-    rc_set_left = set((fa_elem(perm,length)*RCGraph()).value_dict.keys())
+
+    rc_set_left = set((fa_elem(perm, length) * RCGraph()).value_dict.keys())
     prin_rc = next(iter({rc for rc in rc_set_left if rc.is_principal}))
 
-    rc_set = set((RCGraph()*fa_elem(perm,length)).value_dict.keys())
-    consideration_set = {(k[0], k[1]): v for k, v in ((RCGraph() @ RCGraph())*fa_elem(perm,length).coproduct()).value_dict.items()}
+    rc_set = set((RCGraph() * fa_elem(perm, length)).value_dict.keys())
+    consideration_set = {(k[0], k[1]): v for k, v in ((RCGraph() @ RCGraph()) * fa_elem(perm, length).coproduct()).value_dict.items()}
 
-
-    consideration_set_left = {(k[0], k[1]): v for k, v in ((fa_elem(perm,length).coproduct()*(RCGraph() @ RCGraph()))).value_dict.items()}
+    consideration_set_left = {(k[0], k[1]): v for k, v in (fa_elem(perm, length).coproduct() * (RCGraph() @ RCGraph())).value_dict.items()}
 
     # print(f"{rc_set_left=}")
     # print(f"{rc_set=}")
     first_mod = None
     for rc in rc_set_left:
         if first_mod is None:
-            first_mod = 1*rc
+            first_mod = 1 * rc
         else:
             first_mod += rc
     second_mod = None
     for rc in rc_set:
         if second_mod is None:
-            second_mod = 1*rc
+            second_mod = 1 * rc
         else:
             second_mod += rc
     # print("FIRST")
@@ -2969,7 +2961,7 @@ def try_lr_module_biject_freeze(perm, length):
 
     perm_set = {rc.perm for rc in rc_set}
     perm_set_left = {rc.perm for rc in rc_set_left}
-    #assert perm_set == perm_set_left, f"Perm sets not equal {perm=} {perm_set} {perm_set_left}"
+    # assert perm_set == perm_set_left, f"Perm sets not equal {perm=} {perm_set} {perm_set_left}"
 
     actual_dict_right = {}
     actual_dict_left = {}
@@ -2978,7 +2970,7 @@ def try_lr_module_biject_freeze(perm, length):
     consider_dict_left = {}
     for (rc1, rc2), v in consideration_set.items():
         consider_dict[(rc1.perm, rc2.perm)] = consider_dict.get((rc1.perm, rc2.perm), set())
-        #consider_dict[(rc1.perm, rc2.perm)].add((rc1.edelman_greene(), rc2.edelman_greene()))
+        # consider_dict[(rc1.perm, rc2.perm)].add((rc1.edelman_greene(), rc2.edelman_greene()))
         consider_dict[rc1.perm, rc2.perm].add((rc1, rc2))
         # actual_dict_right[(rc1.perm, rc2.perm)] = actual_dict_right.get((rc1.perm, rc2.perm), set())
         # actual_dict_right[(rc1.perm, rc2.perm)].add((rc1, rc2))
@@ -3040,7 +3032,7 @@ def try_lr_module_biject_freeze(perm, length):
             # print(f"{perm.trimcode=}")
             # print(rc_graph)
             if rc_graph.perm != perm:
-                        # exclusions[(perm1, perm2)].add((rc1, rc2))
+                # exclusions[(perm1, perm2)].add((rc1, rc2))
                 val = int(schubmult_py({perm1: S.One}, perm2).get(rc_graph.perm, 0))
                 # old_set = set(try_lr_module_biject_cache(perm0, lock, shared_cache_dict=shared_cache_dict, length=length))
                 exclusions[(perm1, perm2)] = exclusions.get((perm1, perm2), 0) + val
@@ -3057,6 +3049,7 @@ def try_lr_module_biject_freeze(perm, length):
 
     def lehmer_partial_pair(pair1, pair2):
         return pair1[0].lehmer_partial_leq(pair2[0]) and pair1[1].lehmer_partial_leq(pair2[1])
+
     minplack_elem = {}
     minindex = {}
     chains = {}
@@ -3076,7 +3069,7 @@ def try_lr_module_biject_freeze(perm, length):
                 found = False
                 for c in chains[(perm1, perm2)]:
                     if lehmer_partial_pair(elem, c[0]):
-                        c.insert(0,elem)
+                        c.insert(0, elem)
                         found = True
                         break
                 if not found:
@@ -3086,21 +3079,20 @@ def try_lr_module_biject_freeze(perm, length):
                 assert secret_element[(perm1, perm2)] == c[0]
                 # print(f"Good chain: {c=}")
         # print(f"All chains: {chains[(perm1, perm2)]=}")
-            # if all(lehmer_partial_pair(elem, other) for other in save_set):
-            #     save_set.add(elem)
-            #     #last_element = elem
-            # else:
-            #     try:
-            #         minplack_elem[(perm1, perm2)] = lst[j + 1]
-            #         minindex[(perm1, perm2)] = j + 1
-            #         # print(f"Compare: {v=} {minindex[(perm1, perm2)]=} {len(lst)=} {perm1, perm2=}")
-            #         break
-            #     except IndexError:
-            #         break
-        
+        # if all(lehmer_partial_pair(elem, other) for other in save_set):
+        #     save_set.add(elem)
+        #     #last_element = elem
+        # else:
+        #     try:
+        #         minplack_elem[(perm1, perm2)] = lst[j + 1]
+        #         minindex[(perm1, perm2)] = j + 1
+        #         # print(f"Compare: {v=} {minindex[(perm1, perm2)]=} {len(lst)=} {perm1, perm2=}")
+        #         break
+        #     except IndexError:
+        #         break
+
         # if last_element is not None:
         #     secret_element[(perm1, perm2)] = last_element
-    
 
     ret_elem = []
     for (perm1, perm2), st in consider_dict.items():
@@ -3113,11 +3105,11 @@ def try_lr_module_biject_freeze(perm, length):
                     #     # print("-------")
                     ret_elem.append(pair)
                 # else:
-                    # print(f"Didn't match but is this true? {lehmer_partial_pair(pair, secret_element[(perm1, perm2)])}")
-                    # print(f"THIS TAB NO GOOD FOR {pair[0][0].perm, pair[1][0].perm}")
-                    # for tab in comp_them(*pair):
-                    #     # print(tab)
-                    #     # print("-------")
+                # print(f"Didn't match but is this true? {lehmer_partial_pair(pair, secret_element[(perm1, perm2)])}")
+                # print(f"THIS TAB NO GOOD FOR {pair[0][0].perm, pair[1][0].perm}")
+                # for tab in comp_them(*pair):
+                #     # print(tab)
+                #     # print("-------")
     # prin_rc = next(iter(k for k in (FA(*perm.trimcode,*((0,)*(length-len(perm.trimcode))))*RCGraph()).value_dict.keys() if k.is_principal))
     # st1 = {(rc1, rc2) for (rc1, rc2) in (FA(*prin_rc.length_vector()).coproduct()*(RCGraph()@RCGraph())).value_dict.keys()}
     # st2 = {(rc1.transpose(), rc2.transpose()) for (rc1, rc2) in (FA(*list(reversed(prin_rc.transpose().length_vector()))).coproduct()*(RCGraph()@RCGraph())).value_dict.keys()}
@@ -3236,6 +3228,7 @@ def lr_module(perm, length=None):
     assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
     return ret_elem
 
+
 @cache
 def all_fa_degree(degree, length):
     FA = FreeAlgebra(WordBasis)
@@ -3255,13 +3248,14 @@ if __name__ == "__main__":
     import sys
 
     from schubmult.utils.perm_utils import artin_sequences
+
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 3
 
     for seq in artin_sequences(n - 1):
-        #for seq2 in artin_sequences(n - 1):
+        # for seq2 in artin_sequences(n - 1):
         mod = FA(*seq) * RCGraph()
         if uncode(seq).inv == 0:
-            mod = RCGraph([()]*len(seq))
+            mod = RCGraph([()] * len(seq))
         # perm2 = uncode(seq2)
         # module1 = ASx(perm) * RCGraph()
         # module2 = ASx(perm2) * RCGraph()
@@ -3287,4 +3281,3 @@ if __name__ == "__main__":
     # Monk's formula and assoc
 
     # commuting h's
-            
