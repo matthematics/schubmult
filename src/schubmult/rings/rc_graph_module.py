@@ -1204,7 +1204,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         row_insert = len(self)
         while not (interim.perm[len(self) - 1] == len(interim.perm) and len(interim.perm)>=max(len(self.perm)+1,len(self)+1) and len(interim.perm.trimcode) == len(self)):
             prev_interim = interim.kogan_insert(len(self),[row_insert] * total, debug=False)
-            if prev_interim.perm[len(self) - 1] == len(prev_interim.perm):
+            if prev_interim.perm[len(self) - 1] == len(prev_interim.perm) and all(d < len(self) - 1 for d in prev_interim.perm.descents()):
                 interim = prev_interim
                 break
             total+=1
