@@ -815,6 +815,8 @@ class RCGraph(KeyType, UnderlyingGraph):
                     if debug:
                         print("Inserted")
                         print(working_rc)
+                if not working_rc.is_valid:
+                    working_rc = working_rc._kogan_rectify(row - 1, descent, dict_by_a, dict_by_b)
         return working_rc
 
     def _kogan_rectify(self, row_below, descent, dict_by_a, dict_by_b):
@@ -1086,8 +1088,8 @@ class RCGraph(KeyType, UnderlyingGraph):
             raise ValueError("Last row not empty")
         if self.perm.inv == 0:
             return self.rowrange(0, len(self) - 1)
-        if max(self.perm.descents()) + 1 <= len(self) - 1:
-            return self.rowrange(0, len(self) - 1)
+        # if max(self.perm.descents()) + 1 <= len(self) - 1:
+        #     return self.rowrange(0, len(self) - 1)
         # exchange property div diff sn
         interim = RCGraph([*self])
         diff_rows = []
@@ -1113,8 +1115,18 @@ class RCGraph(KeyType, UnderlyingGraph):
 
         # go up to len interim2 - 1
         interim2 = RCGraph([*interim[:-1], tuple(sorted(descs,reverse=True))])
+        if debug:
+            print("Transformed")
+            print(interim2)
+            print("=========")
+        if len(interim2.perm) != interim2.perm[len(self) - 1]:
+            print("Boiled gods")
+            interim2 = RCGraph([*interim[:-1], tuple(range(len(interim2.perm)-1,len(self)-1,-1))])
+            assert len(interim2.perm) == interim2.perm[len(self) - 1]
+            print(interim2)
+            print("________")
 
-        interim = interim2.kogan_insert(len(self), diff_rows, debug=False)
+        interim = interim2.kogan_insert(len(self), diff_rows, debug=debug)
 
         if debug:
             print("Got")
@@ -3251,13 +3263,17 @@ if __name__ == "__main__":
 
     from schubmult.utils.perm_utils import artin_sequences
 
-    n = int(sys.argv[1]) if len(sys.argv) > 1 else 3
+# 3
 
-    for seq in artin_sequences(n - 1):
-        # for seq2 in artin_sequences(n - 1):
-        mod = FA(*seq) * RCGraph()
-        if uncode(seq).inv == 0:
-            mod = RCGraph([()] * len(seq))
+# 5 4
+
+#
+
+# from
+
+# 4   2
+#     3
+    # graph = RCGraph(((3,),(),(5,4),()))
         # perm2 = uncode(seq2)
         # module1 = ASx(perm) * RCGraph()
         # module2 = ASx(perm2) * RCGraph()
