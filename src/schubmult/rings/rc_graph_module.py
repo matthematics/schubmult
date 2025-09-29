@@ -169,14 +169,15 @@ class ModuleType:
             mod += v * self.clone(self.keytype(k).ring_act(other))
         return mod
 
-    def __mul__(self, other):
-        if not hasattr(other, "ring"):
-            other = sympify(other)
-            return self.clone({k: v * other for k, v in self.value_dict.items()})
-        mod = self._empty_module()
-        for k, v in self._dict.items():
-            mod += v * self.clone(self.keytype(k).right_ring_act(other))
-        return mod
+    # def __mul__(self, other):
+    #     # if not hasattr(other, "ring"):
+    #     #     other = sympify(other)
+    #     #     return self.clone({k: v * other for k, v in self.value_dict.items()})
+    #     if isinstance(other, ModuleType):
+    #         mod = self._empty_module()
+    #         for k, v in self._dict.items():
+    #             mod += v * self.clone(self.keytype(k).right_ring_act(other))
+    #     return mod
 
     def __matmul__(self, other):
         return TensorModule(self, other)
@@ -646,10 +647,14 @@ class RCGraph(KeyType, UnderlyingGraph):
         return NotImplemented
 
     def __rmul__(self, other):
+        if isinstance(other, RCGraphModule):
+            return NotImplemented
         return other * RCGraphModule({self: 1}, generic_key_type=self.__class__)
 
     def __mul__(self, other):
-        return RCGraphModule({self: 1}, generic_key_type=self.__class__).__mul__(other)
+        if isinstance(other, RCGraph):
+            return self.prod_with_rc(other)
+        return NotImplemented
 
     def asdtype(self, cls):
         return cls.dtype().ring.from_rc_graph(self)
@@ -1016,65 +1021,58 @@ class RCGraph(KeyType, UnderlyingGraph):
         # exchange property div diff sn
         interim = self
         prev_interim = self
-        while interim.perm.inv > 0  and max(interim.perm.descents()) + 1 != len(self) - 1:
+        while max(interim.perm.descents()) + 1 > len(self) - 1:
             interim = interim.exchange_property(max(interim.perm.descents()) + 1)
             # print(f"Deleted descent")
             # print(interim)
-            if interim.perm.inv > 0 and max(interim.perm.descents()) + 1 == max(prev_interim.perm.descents()) + 1:
-                # print("Same descent")
+            # print("Increased descent")
+            diff_rows = []
+            deleted_descent = max(prev_interim.perm.descents()) + 1
+            for i in range(len(interim)):
+                if len(interim[i]) < len(prev_interim[i]):
+                    rw = i + 1
+                    diff_rows.append(rw)
+                    break
+            while deleted_descent > 0 and interim.perm.inv > 0  and max(interim.perm.descents()) + 1 == deleted_descent - 1:
+                prev_prev_interim = interim
+                interim = interim.exchange_property(max(interim.perm.descents()) + 1)
+                deleted_descent -= 1
                 for i in range(len(interim)):
-                    if len(interim[i]) < len(prev_interim[i]):
-                        # print(f"Inserted at row {i + 1}")
-                        interim = interim.monk_insert(max(prev_interim.perm.descents()) + 1, i + 1)
-                        break
-            elif interim.perm.inv > 0 and max(interim.perm.descents()) + 1 > max(prev_interim.perm.descents()) + 1:
-                # print("Increased descent")
-                diff_rows = []
-                deleted_descent = max(prev_interim.perm.descents()) + 1
-                for i in range(len(interim)):
-                    if len(interim[i]) < len(prev_interim[i]):
+                    if len(interim[i]) < len(prev_prev_interim[i]):
                         rw = i + 1
                         diff_rows.append(rw)
                         break
-                while deleted_descent > 0 and interim.perm.inv > 0  and max(interim.perm.descents()) + 1 == deleted_descent - 1:
-                    prev_prev_interim = interim
-                    interim = interim.exchange_property(max(interim.perm.descents()) + 1)
-                    deleted_descent -= 1
-                    for i in range(len(interim)):
-                        if len(interim[i]) < len(prev_prev_interim[i]):
-                            rw = i + 1
-                            diff_rows.append(rw)
-                            break
-                        #prev_prev_interim = interim
-                diff_rows = sorted(set(diff_rows), reverse=True)
-                # print("After delete")
-                # print(interim)
-                # print(f"Inserting at rows {diff_rows}")
-                interim = interim.kogan_insert(max(len(self) - 1,max(prev_interim.perm.descents())), diff_rows)
-                # print("After insert")
-                # print(interim)
-                assert interim.perm.inv == prev_interim.perm.inv
-            else:
-                # print("Different descent")
-                # print("Descent is ", max(interim.perm.descents()) + 1)
-                for i in range(len(interim)):
-                    if len(interim[i]) < len(prev_interim[i]):
-                        # print(f"Found row to insert {i + 1}")
-                        # print("Descent was", max(prev_interim.perm.descents()) + 1)
-                        # print("Now", max(interim.perm.descents()) + 1)
-                        interim = interim.monk_insert(max(len(self) - 1,max(prev_interim.perm.descents())), i + 1)
-                        break
+                    #prev_prev_interim = interim
+            diff_rows = sorted(set(diff_rows), reverse=True)
+            # print("After delete")
+            # print(interim)
+            # print(f"Inserting at rows {diff_rows}")
+            interim = interim.kogan_insert(max(len(self) - 1,max(prev_interim.perm.descents())), diff_rows)
+            # print("After insert")
+            # print(interim)
+            assert interim.perm.inv == prev_interim.perm.inv
+            # else:
+            #     # print("Different descent")
+            #     # print("Descent is ", max(interim.perm.descents()) + 1)
+            #     for i in range(len(interim)):
+            #         if len(interim[i]) < len(prev_interim[i]):
+            #             # print(f"Found row to insert {i + 1}")
+            #             # print("Descent was", max(prev_interim.perm.descents()) + 1)
+            #             # print("Now", max(interim.perm.descents()) + 1)
+            #             interim = interim.monk_insert(max(len(self) - 1,max(prev_interim.perm.descents())), i + 1)
+            #             break
                 # print("After insert")
                 # print(interim)
             prev_interim = interim
         return interim.rowrange(0, len(self) - 1)
 
-    def right_zero_act(self, bruhat_perm=None):
+    def right_zero_act(self):
         # print("Right zeroing")
         # print(self)
         if self.perm.inv == 0:
             return {RCGraph([*self, ()])}
-
+        # if len(self) >= len(self.perm) - 1:
+        #     return {RCGraph([*self, ()])}
         up_perms = ASx(self.perm, len(self)) * ASx(uncode([0]),1)
 
         rc_set = set()
@@ -1082,11 +1080,8 @@ class RCGraph(KeyType, UnderlyingGraph):
         for (perm, _), v in up_perms.items():
             for rc in RCGraph.all_rc_graphs(perm, len(self) + 1):
                 if rc.length_vector()[:-1] == self.length_vector() and rc.zero_out_last_row() == self:
-                    if bruhat_perm:
-                        if rc.perm.bruhat_leq(bruhat_perm):
-                            rc_set.add(rc)
-                    else:
-                        rc_set.add(rc)
+                    rc_set.add(rc)
+        assert len(rc_set) == len(up_perms), f"{len(rc_set)=}, {len(up_perms)=}, {self=} {up_perms=}"
         return rc_set
 
     @staticmethod
@@ -1449,6 +1444,8 @@ class RCGraph(KeyType, UnderlyingGraph):
 
     @staticmethod
     def pad_module_with_zeros(rc_graph_module, num_zeros):
+        if num_zeros == 0:
+            return rc_graph_module
         build_module = rc_graph_module
         for _ in range(num_zeros):
             new_build_module = 0
@@ -1469,67 +1466,160 @@ class RCGraph(KeyType, UnderlyingGraph):
             build_module = new_build_module
         return build_module
 
+    # def prod_with_rc(self, other):
+    #     # print("Mulling")
+    #     # print(self)
+    #     # print("and")
+    #     # print(other)
+    #     # if len(other) == 0:
+    #     #     return 1 * self
+    #     # orig_len = len(other)
+        
+    #     # base_rc_set = {self}
+    #     # for _ in range(dff):
+    #     #     new_base_rc_set = set()
+    #     #     for rc in base_rc_set:
+    #     #         new_base_rc_set.update(rc.right_zero_act())
+    #     #     base_rc_set = new_base_rc_set            
+    #     # #base_rc = RCGraph([*self, *[()]*max(dff, 0)])
+    #     dff2 = len(other) if other.perm.inv == 0 else max(max(other.perm.descents()) + 1 - len(other), 0)
+    #     # base_other_rc_set = {other}
+        
+    #     # ret_module = RCGraphModule()
+    #     # for base_rc in base_rc_set:
+    #     #     for base_other_rc in base_other_rc_set:
+    #     dff = 0 if self.perm.inv == 0 else max((max(self.perm.descents()) + 1)-len(self),0)
+    #     # print(dff)
+    #     # print(self)
+    #     upd = self
+    #     if dff > 0:
+    #         upd = RCGraph([*self, *[()]*dff])
+        
+    #     #         #buildup_module = 1*base_rc
+    #     #         buildup_module = 1 * base_rc
+    #     #         num_zeros = min(orig_len - dff, 0)
+    #     #         for _ in range(num_zeros):
+    #     #             new_buildup_module = 0
+    #     #             for rc, coeff in buildup_module.items():
+    #     #                 new_buildup_module += RCGraphModule(dict.fromkeys(base_rc.right_zero_act(), coeff))
+    #     #             buildup_module = new_buildup_module
+        
+    #     #         new_buildup_module = 0
+    #     interim_ret_module = 0
+    #     new_rc = upd.pad_with_zeros(len(other)-dff)
+    #     for update_rc, cf in new_rc.items():
+    #         new_new_rc = RCGraph([*update_rc[:len(self)], *other.shiftup(len(self))])
+    #         if new_new_rc.is_valid:
+    #             interim_ret_module += cf * new_new_rc
+    #     ret_module = interim_ret_module
+    #     # ret_module = 0
+    #     # for rc, coeff in interim_ret_module.items():
+    #     #     ret_module += coeff * rc.rowrange(0,len(self)+len(other))
+    #     #             # print("new_rc")
+    #     #             # print(new_rc)
+    #     #             # print("Trying to match")
+    #     #             # print(new_rc)
+    #     #             num_zeros = dff2
+    #     #             new_base_other_rc_set = {base_other_rc_set}
+    #     #             for _ in range(dff2):
+    #     #                 new_new_base_other_rc_set = set()
+    #     #                 for rc in base_other_rc_set:
+    #     #                     new_base_other_rc_set.update(rc.right_zero_act())
+    #     #                 new_base_other_rc_set = new_base_other_rc_set
+    #     #             for rc, coeff in buildup_module.items():
+    #     #                 new_buildup_module += RCGraphModule(dict.fromkeys(base_rc.right_zero_act(), coeff))
+    #     #             buildup_module = new_buildup_module
+    #     #             if new_rc.is_valid:
+    #     #                 # print("Matched")
+    #     #                 new_buildup_module += coeff * new_rc
+    #     #         # for rc2, coeff2 in new_buildup_module.items():
+    #     #         #     ret_module += coeff2 * rc2.normalize_and_remove_last_row()
+    #     return ret_module
+
+    def zero_rectify(self):
+        from schubmult.utils.perm_utils import has_bruhat_ascent
+        if self.is_valid:
+            return self
+        working_rc = self
+        while not working_rc.is_valid:
+            mid_rc =RCGraph()
+            index = 1
+            while index <= len(self) and mid_rc.is_valid:
+                mid_rc = working_rc.rowrange(0, index)
+                index += 1
+            print("Got")
+            print(mid_rc)
+            assert not mid_rc.is_valid
+            for index2 in range(len(mid_rc.perm_word())-1, -1, -1):
+                if mid_rc.is_valid:
+                    break
+                a, b = mid_rc.left_to_right_inversion(index2)
+                if a > b and mid_rc.perm[a - 1] > mid_rc.perm[b - 1]:
+                    row, col = mid_rc.left_to_right_inversion_coord(index2)
+                    assert col > 1
+                    mid_rc = mid_rc.toggle_ref_at(row, col)
+                    for col2 in range(col, 0, -1):
+                        a2, b2 = mid_rc.right_root_at(row, col2)
+                        print(f"{a2, b2}")
+                        if a2<b2 and has_bruhat_ascent(mid_rc.perm, a2-1, b2-1) and not mid_rc.has_element(row, col2):
+                            print("got it")
+                            mid_rc = mid_rc.toggle_ref_at(row, col2)
+                            break
+                    
+            print("After")
+            print(mid_rc)
+            working_rc = RCGraph([*mid_rc, *working_rc[len(mid_rc):]])
+        return working_rc
+    # THE ZERO MAKES SCHUB PROD
     def prod_with_rc(self, other):
-        # print("Mulling")
-        # print(self)
-        # print("and")
-        # print(other)
         # if len(other) == 0:
         #     return 1 * self
-        # orig_len = len(other)
+        if self.perm.inv == 0:
+            return RCGraphModule({RCGraph([*self, *other.shiftup(len(self))]): 1})
+        num_zeros = len(other) if other.perm.inv == 0 else max(len(other),len(other.perm))
+        base_rc = self.rowrange(0, len(self.perm.trimcode))
+        buildup_module = 1*base_rc
+        #num_zeros += len(self) - len(base_rc)
+        for _ in range(num_zeros):
+            new_buildup_module = RCGraphModule()
+            for rc, coeff in buildup_module.items():
+                new_buildup_module += RCGraphModule(dict.fromkeys(rc.right_zero_act(), coeff))
+            buildup_module = new_buildup_module
+    
+        # print("Buildup is")
+        # print(buildup_module)
+        ret_module = RCGraphModule()
         
-        # base_rc_set = {self}
-        # for _ in range(dff):
-        #     new_base_rc_set = set()
-        #     for rc in base_rc_set:
-        #         new_base_rc_set.update(rc.right_zero_act())
-        #     base_rc_set = new_base_rc_set            
-        # #base_rc = RCGraph([*self, *[()]*max(dff, 0)])
-        dff2 = len(other) if other.perm.inv == 0 else max(max(other.perm.descents()) + 1 - len(other), 0)
-        # base_other_rc_set = {other}
-        
-        # ret_module = RCGraphModule()
-        # for base_rc in base_rc_set:
-        #     for base_other_rc in base_other_rc_set:
-        dff = len(self) if self.perm.inv == 0 else max(max(self.perm.descents()) + 1 - len(self),0)
-        first_module = self.pad_with_zeros(dff)
-        #         #buildup_module = 1*base_rc
-        #         buildup_module = 1 * base_rc
-        #         num_zeros = min(orig_len - dff, 0)
-        #         for _ in range(num_zeros):
-        #             new_buildup_module = 0
-        #             for rc, coeff in buildup_module.items():
-        #                 new_buildup_module += RCGraphModule(dict.fromkeys(base_rc.right_zero_act(), coeff))
-        #             buildup_module = new_buildup_module
-        
-        #         new_buildup_module = 0
-        interim_ret_module = 0
-        for rc, coeff in first_module.items():
+        for rc, coeff in buildup_module.items():
             new_rc = RCGraph([*rc[:len(self)], *other.shiftup(len(self))])
-            interim_ret_module += coeff * new_rc
-        new_ret_module = RCGraph.pad_module_with_zeros(interim_ret_module, dff2)
-        ret_module = 0
-        for rc, coeff in new_ret_module.items():
-            ret_module += coeff * rc.rowrange(0,len(self)+len(other))
-        #             # print("new_rc")
-        #             # print(new_rc)
-        #             # print("Trying to match")
-        #             # print(new_rc)
-        #             num_zeros = dff2
-        #             new_base_other_rc_set = {base_other_rc_set}
-        #             for _ in range(dff2):
-        #                 new_new_base_other_rc_set = set()
-        #                 for rc in base_other_rc_set:
-        #                     new_base_other_rc_set.update(rc.right_zero_act())
-        #                 new_base_other_rc_set = new_base_other_rc_set
-        #             for rc, coeff in buildup_module.items():
-        #                 new_buildup_module += RCGraphModule(dict.fromkeys(base_rc.right_zero_act(), coeff))
-        #             buildup_module = new_buildup_module
-        #             if new_rc.is_valid:
-        #                 # print("Matched")
-        #                 new_buildup_module += coeff * new_rc
-        #         # for rc2, coeff2 in new_buildup_module.items():
-        #         #     ret_module += coeff2 * rc2.normalize_and_remove_last_row()
+            #print("Trying to match")
+            # print(new_rc)
+            # need not check valid and need to bump
+            if not new_rc.is_valid:
+                print("got invalid rc")
+                print(new_rc)
+                print("Should be rectifying")
+                print("Need better rect")
+                #new_rc = new_rc.zero_rectify()
+                # perm0 = new_rc.rowrange(0,len(self)).perm
+                # word = RCGraph([*other.shiftup(len(self))]).perm_word()
+                # print(F"{word=}")
+                # try:
+                #     for i in range(len(word)):
+                #         ref = word[i]
+                #         if perm0[ref - 1] > perm0[ref]:
+                #             new_rc = new_rc._monk_rectify(len(self) + 1, len(self))
+                #             print("rectified?")
+                #             print(new_rc)
+                #             perm0 = new_rc.rowrange(0,len(self)).perm
+                #         perm0 = perm0.swap(ref - 1, ref)
+                # except ValueError as e:
+                #     print(f"{e=}")
+
+            if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(new_rc):
+                #print("Matched")
+                ret_module += coeff * new_rc
+                
         return ret_module
 
     def ring_act(self, elem):
@@ -1597,7 +1687,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         last = self.iterative_act(p - 1, insert=insert)
         ret = set()
         for rc in last:
-            # top row has some stuff
+            # top row has som
             last_desc = 0
             old_perm = ~rc.perm
             if len(rc[0]) > 0:
@@ -1945,6 +2035,19 @@ class RCGraphEG(RCGraph):
 
 
 class RCGraphModule(ModuleType):
+    @property
+    def zero_monom(self):
+        return RCGraph()
+
+    def __call__(self, other):
+        return self.from_dict({other: 1})
+
+    def from_dict(self, dct):
+        return RCGraphModule(dct)
+
+    def printing_term(self, key):
+        return repr(key)
+
     def clone(self, *args):
         if len(args) == 0:
             return RCGraphModule(self._dict, generic_key_type=self._generic_key_type, ring=self._rings)
@@ -1967,7 +2070,7 @@ class RCGraphModule(ModuleType):
             for rc_graph2, coeff2 in other._dict.items():
                 result += coeff2 * (self * rc_graph2)
             return result
-        return super().__mul__(other)
+        return NotImplemented
 
     def schubvalue(self, sring):
         ret = S.Zero
@@ -3034,7 +3137,9 @@ if __name__ == "__main__":
 
     for seq in artin_sequences(n - 1):
         #for seq2 in artin_sequences(n - 1):
-        perm = uncode(seq)
+        mod = FA(*seq) * RCGraph()
+        if uncode(seq).inv == 0:
+            mod = RCGraph([()]*len(seq))
         # perm2 = uncode(seq2)
         # module1 = ASx(perm) * RCGraph()
         # module2 = ASx(perm2) * RCGraph()
@@ -3042,12 +3147,16 @@ if __name__ == "__main__":
         # print(f"{perm.trimcode} * {perm2.trimcode}")
         # print(produc)
         # print(ASx(perm) * ASx(perm2))
-        print(f"{perm.trimcode=}")
-        rc = RCGraph.principal_rc(perm,len(perm.trimcode))
-        print("rc:")
-        print(rc)
-        print("lr_module:")
-        print(rc.coproduct())
+        # print(f"{perm.trimcode=}")
+        # rc = RCGraph.principal_rc(perm,n)
+        # print("rc:")
+        # print(rc)
+        # print("fa mod")
+        # print(mod)
+        # print("lr_module:")
+        # print(mod.coproduct())
+    # this might work with the hom
+
     # this product satisfies the coproduct of the Schubert module
     # this is the coproduct of an RC graph multiplication ring
     # hom to the free algebra by weight
