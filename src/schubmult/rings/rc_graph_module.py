@@ -1150,15 +1150,14 @@ class RCGraph(KeyType, UnderlyingGraph):
         cannot_do = 0
         for (perm, _), v in up_perms.items():
             assert v == 1
-            if max(perm.descents()) + 1 < max([i + 1 for i in range(len(self)) if len(self[i])>0]):
-                cannot_do += 1
-                continue
+            done_any = False
             for rc in RCGraph.all_rc_graphs(perm, len(self) + 1):
                 if debug:
                     print("rc num rows:")
                     print(len(rc))
                     assert len(rc) == len(self) + 1
                 if rc.length_vector()[:-1] == self.length_vector():
+                    done_any = True
                     z = rc.zero_out_last_row()
                     assert len(z) == len(self)
                     if debug:
@@ -1168,8 +1167,21 @@ class RCGraph(KeyType, UnderlyingGraph):
                         if debug:
                             print("Added")
                         rc_set.add(rc)
+            if not done_any:
+                cannot_do += 1
 
-        assert len(rc_set) + cannot_do == len(up_perms), f"{rc_set=}, {len(up_perms)=}, {self=} {up_perms=} {cannot_do=}"
+        try:
+            assert len(rc_set) == len(up_perms), f"{rc_set=}, {len(up_perms)=}, {self=} {up_perms=} {cannot_do=}"
+        except AssertionError:
+            print("Could not achieve some")
+            lst = [perm[0] for perm in up_perms.keys() if perm[0] not in [rc.perm for rc in rc_set]]
+            print(f"Missing {lst=}")
+            print("Found:")
+            for rc in rc_set:
+                print(f"Perm: {rc.perm}")
+                print(rc)
+                print("===========")
+            raise
         return rc_set
 
     @staticmethod
