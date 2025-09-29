@@ -758,7 +758,7 @@ class RCGraph(KeyType, UnderlyingGraph):
     #         return True
     #     return False
 
-    def _kogan_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, debug=True, start_index=0):
+    def _kogan_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, debug=False, start_index=0):
         #working_rc = self
         ARBITRARY_MAX_VALUE = 10
         working_rc = self
@@ -819,18 +819,23 @@ class RCGraph(KeyType, UnderlyingGraph):
         return working_rc
 
     def _kogan_rectify(self, row_below, descent, dict_by_a, dict_by_b):
+        print("In rectify")
         working_rc = self
         debug = True
         if row_below == 0:
             assert working_rc.is_valid
             return working_rc
-        if working_rc.is_valid:
-            return working_rc
+        # if working_rc.is_valid:
+        #     return working_rc
         for j in range(working_rc.max_of_row(row_below) + 1, 0, -1):
             flag = False
+            print(f"row {row_below} {j=}")
             if working_rc.has_element(row_below, j):
+                print("Has element")
                 a, b = working_rc.right_root_at(row_below, j)
+                print("root=", (a, b))
                 if a > b:
+                    print("Entered")
                     if debug:
                         print(f"Considering bad at {row_below, j}")
                         print(f"{dict_by_a=}, {dict_by_b=}")
@@ -864,7 +869,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                     working_rc = working_rc._kogan_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times = 1, debug=debug)
         return working_rc._kogan_rectify(row_below - 1, descent, dict_by_a, dict_by_b)
 
-    def kogan_insert(self, descent, rows, debug=True):
+    def kogan_insert(self, descent, rows, debug=False):
         dict_by_a = {}
         dict_by_b = {}
         # row is descent
@@ -897,9 +902,9 @@ class RCGraph(KeyType, UnderlyingGraph):
                 print("Next iteration")
                 print(working_rc)
                 #print(f"{working_rc.perm.inv=}, {self.perm.inv + index + 1=}")
-            total_num += num_times
+            
             try:
-                assert len(working_rc[row - 1]) == len(last_working_rc[row - 1]) + total_num
+                assert len(working_rc[row - 1]) == len(last_working_rc[row - 1]) + num_times
             except AssertionError:
                 print("Assertion failed")
                 print(working_rc)
@@ -1071,7 +1076,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                         return working_rc._monk_rectify(descent, row_below)
         return working_rc._monk_rectify(descent, row_below - 1)
     # right mul should invert this (multiple but keeps the rc the same)
-    def zero_out_last_row(self, debug=True):
+    def zero_out_last_row(self, debug=False):
         # this is important!
         # transition formula
         if len(self[-1]) != 0:
@@ -1144,7 +1149,7 @@ class RCGraph(KeyType, UnderlyingGraph):
         
         return interim.rowrange(0, len(self) - 1)
 
-    def right_zero_act(self, debug=True):
+    def right_zero_act(self, debug=False):
         # print("Right zeroing")
         # print(self)
         if self.perm.inv == 0:
