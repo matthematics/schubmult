@@ -1119,12 +1119,7 @@ class RCGraph(KeyType, UnderlyingGraph):
             print("Transformed")
             print(interim2)
             print("=========")
-        if len(interim2.perm) != interim2.perm[len(self) - 1]:
-            print("Boiled gods")
-            interim2 = RCGraph([*interim[:-1], tuple(range(len(interim2.perm)-1,len(self)-1,-1))])
-            assert len(interim2.perm) == interim2.perm[len(self) - 1]
-            print(interim2)
-            print("________")
+        
 
         interim = interim2.kogan_insert(len(self), diff_rows, debug=debug)
 
