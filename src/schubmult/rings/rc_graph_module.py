@@ -1056,18 +1056,25 @@ class RCGraph(KeyType, UnderlyingGraph):
                         return working_rc._monk_rectify(descent, row_below)
         return working_rc._monk_rectify(descent, row_below - 1)
     # right mul should invert this (multiple but keeps the rc the same)
-    def zero_out_last_row(self):
+    def zero_out_last_row(self, debug=True):
         # this is important!
         # transition formula
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
         if self.perm.inv == 0:
             return self.rowrange(0, len(self) - 1)
-        # if max(self.perm.descents()) + 1 < len(self):
-        #     return self.rowrange(0, len(self) - 1)
+        if max(self.perm.descents()) + 1 <= len(self) - 1:
+            return self.rowrange(0, len(self) - 1)
         # exchange property div diff sn
         interim = self
         diff_rows = []
+        # we need to bump up additionally?
+        # example
+        #
+        if debug:
+            print("Zeroing out last row")
+            print(self)
+            print("-------")
         while interim.perm.inv > 0 and max(interim.perm.descents()) + 1 > len(self) - 1:
             prev_prev_interim = interim
             interim = interim.exchange_property(max(interim.perm.descents()) + 1)
@@ -1077,6 +1084,11 @@ class RCGraph(KeyType, UnderlyingGraph):
                     diff_rows.append(rw)
                     break
                 #prev_prev_interim = interim
+        if debug:
+            print("Got")
+            print(interim)
+            if interim.perm.inv > 0:
+                print(f"Descent is {max(interim.perm.descents()) + 1}, need to insert at {diff_rows}")
         diff_rows = sorted(list(diff_rows), reverse=True)
         #if self.perm == Permutation([1,4,3,2]):
             # print("After delete")
@@ -1084,6 +1096,9 @@ class RCGraph(KeyType, UnderlyingGraph):
         # print(interim)
         # print(f"Inserting at rows {diff_rows}")
         interim = interim.kogan_insert(len(self) - 1,diff_rows)
+        if debug:
+            print("Got")
+            print(interim)
         #if self.perm == Permutation([1,4,3,2]):
             # print("After kogan")
             # print(interim)
