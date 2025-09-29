@@ -758,7 +758,7 @@ class RCGraph(KeyType, UnderlyingGraph):
     #         return True
     #     return False
 
-    def _kogan_insert_row(self, row, descent, dict_by_a, dict_by_b, debug=False, start_index=0):
+    def _kogan_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, debug=False, start_index=0):
         #working_rc = self
         ARBITRARY_MAX_VALUE = 10
         working_rc = self
@@ -766,19 +766,20 @@ class RCGraph(KeyType, UnderlyingGraph):
             raise ValueError("All rows must be less than or equal to descent")
         #for i in range(working_rc.max_of_row(row) + descent, 0, -1):
         i = start_index
-        flag = False
-        while not flag and i < descent + ARBITRARY_MAX_VALUE:
-            if debug:
-                print(f"Trying column {i}")
+
+        num_done = 0
+        while num_done < num_times:
             i += 1
+            flag = False
+            if debug:
+                print(f"Trying column {i} {descent=}")
             if not working_rc.has_element(row, i):
                 a, b = working_rc.right_root_at(row, i)
                 if debug:
                     print(f"root is {a, b}")
                 flag = False
                 if a > b:
-                    i += 1
-                    return working_rc
+                    continue
                 if debug:
                     print("_is_row_root:", _is_row_root(descent, (a, b)))
                     print(f"{dict_by_b=}")
@@ -808,9 +809,11 @@ class RCGraph(KeyType, UnderlyingGraph):
                     if debug:
                         print("Toggled c")
                         print(working_rc)
-                if debug and flag:
-                    print("Inserted")
-                    print(working_rc)
+            if flag:
+                num_done += 1
+            if debug:
+                print("Inserted")
+                print(working_rc)
         return working_rc
 
     def _kogan_rectify(self, row_below, descent, dict_by_a, dict_by_b):
@@ -821,45 +824,43 @@ class RCGraph(KeyType, UnderlyingGraph):
             return working_rc
         if working_rc.is_valid:
             return working_rc
-        for j in range(working_rc.max_of_row(row_below) + 1):
-            a, b = working_rc.right_root_at(row_below, j)
-            if b > a:
-                continue
-            if debug:
-                print(f"Considering bad at {row_below, j}")
-                print(f"{dict_by_a=}, {dict_by_b=}")
-                print(f"root = ({a, b})")
-            a, b = b, a
-            if a in dict_by_a and b in dict_by_a[a]:
+        for j in range(1, working_rc.max_of_row(row_below) + 1):
+            flag = False
+            if working_rc.is_valid:
+                return working_rc
+            if working_rc.has_element(row_below, j):
+                a, b = working_rc.right_root_at(row_below, j)
+                if debug:
+                    print(f"Considering bad at {row_below, j}")
+                    print(f"{dict_by_a=}, {dict_by_b=}")
+                    print(f"root = ({a, b})")
+                if a in dict_by_b and b in dict_by_b[a]:
 
-                new_rc = working_rc.toggle_ref_at(row_below, j)
-                dict_by_a[a].remove(b)
-                if len(dict_by_a[a]) == 0:
-                    del dict_by_a[a]
-                del dict_by_b[b]
-                working_rc = new_rc
-                flag = False
-                print("Toggle bad a")
-                print(working_rc)
-                working_rc = working_rc._kogan_insert_row(row_below, descent, dict_by_a, dict_by_b, debug=debug, start_index = j)
-                break
-            if a in dict_by_b and b in dict_by_b and dict_by_b[a] == dict_by_b[b]:
-                new_rc = working_rc.toggle_ref_at(row_below, j)
-                if new_rc.perm[dict_by_b[a] - 1] < new_rc.perm[a - 1]:
-                    dict_by_a[dict_by_b[a]].remove(a)
-                    del dict_by_b[a]
-                    if len(dict_by_a[dict_by_b[b]]) == 0:
-                        del dict_by_a[dict_by_b[b]]
-                    print("Toggle bad b")
-                    working_rc = working_rc._kogan_insert_row(row_below, descent, dict_by_a, dict_by_b, debug=debug, start_index = j)
-                    break
-                dict_by_a[dict_by_b[b]].remove(b)
-                del dict_by_b[b]
-                if len(dict_by_a[dict_by_b[a]]) == 0:
-                    del dict_by_a[dict_by_b[a]]
-                print("Toggle bad c")
-                working_rc = working_rc._kogan_insert_row(row_below, descent, dict_by_a, dict_by_b, debug=debug, start_index = j)
-                break
+                    new_rc = working_rc.toggle_ref_at(row_below, j)
+                    dict_by_a[a].remove(b)
+                    if len(dict_by_a[a]) == 0:
+                        del dict_by_a[a]
+                    del dict_by_b[b]
+                    working_rc = new_rc
+                    flag = True
+                    print("Toggle bad a")
+                    print(working_rc)
+                if a in dict_by_b and b in dict_by_b and dict_by_b[a] == dict_by_b[b]:
+                    new_rc = working_rc.toggle_ref_at(row_below, j)
+                    if new_rc.perm[dict_by_b[a] - 1] < new_rc.perm[a - 1]:
+                        dict_by_a[dict_by_b[a]].remove(a)
+                        del dict_by_b[a]
+                        if len(dict_by_a[dict_by_b[b]]) == 0:
+                            del dict_by_a[dict_by_b[b]]
+                        print("Toggle bad b")
+                        flag = True
+                    dict_by_a[dict_by_b[b]].remove(b)
+                    del dict_by_b[b]
+                    if len(dict_by_a[dict_by_b[a]]) == 0:
+                        del dict_by_a[dict_by_b[a]]
+                    print("Toggle bad c")
+                if flag:
+                    working_rc = working_rc._kogan_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times = 1, debug=debug, start_index = j + 1)
         return working_rc._kogan_rectify(row_below - 1, descent, dict_by_a, dict_by_b)
 
     def kogan_insert(self, descent, rows, debug=False):
@@ -871,30 +872,38 @@ class RCGraph(KeyType, UnderlyingGraph):
         working_rc = RCGraph([*self])
         if len(rows) == 0:
             return self
+        rows_grouping = {}
+        total_num = 0
+        for r in rows:
+            rows_grouping[r] = rows_grouping.get(r, 0) + 1
         if max(rows) > len(working_rc):
             working_rc = working_rc.extend(max(rows) - len(working_rc))
         rows = sorted(rows, reverse=True)
         if debug:
             print(f"inserting {rows=}")
-        for index, row in enumerate(rows):
+        for row in sorted(rows_grouping.keys(), reverse=True):
+            num_times = rows_grouping[row]
             if debug:
-                print(f"Inserting {row=} at iteration {index}")
+                print(f"Inserting {row=} {num_times=}")
                 print(working_rc)
                 print(f"{working_rc.perm.inv=}, {self.perm.inv=}")
             last_working_rc = working_rc
-            working_rc = working_rc._kogan_insert_row(row, descent, dict_by_a, dict_by_b, debug=debug)
+            working_rc = working_rc._kogan_insert_row(row, descent, dict_by_a, dict_by_b, num_times, debug=debug)
+            total_num += num_times
+            assert len(working_rc[row - 1]) == len(last_working_rc[row - 1]) + total_num
             if not working_rc.is_valid:
-                working_rc = working_rc._kogan_rectify(row - 1, descent, dict_by_a, dict_by_b)
+                working_rc = working_rc._kogan_rectify(row, descent, dict_by_a, dict_by_b)
             if debug:
                 print("Next iteration")
                 print(working_rc)
-                print(f"{working_rc.perm.inv=}, {self.perm.inv + index + 1=}")
+                #print(f"{working_rc.perm.inv=}, {self.perm.inv + index + 1=}")
+            
             try:
-                assert len(working_rc[row - 1]) == len(last_working_rc[row - 1]) + 1
+                assert len(working_rc[row - 1]) == len(last_working_rc[row - 1]) + total_num
             except AssertionError:
                 print("Assertion failed")
                 print(working_rc)
-                print(f"{working_rc.perm.inv=}, {self.perm.inv + index + 1=}")
+                print(f"{working_rc.perm.inv=}, {self.perm.inv + total_num=}")
                 print(f"{dict_by_a=}, {dict_by_b=}")
                 print(f"{working_rc.perm=}, {self.perm=}")
                 if debug:
