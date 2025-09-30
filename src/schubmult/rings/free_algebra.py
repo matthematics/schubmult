@@ -192,9 +192,6 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
 
     def __mul__(self, other):
         #  # print("I is mul")
-        from .rc_graph_module import KeyType, ModuleType, RCGraph, RCGraphTensor
-        if isinstance(other, (KeyType, ModuleType, RCGraph, RCGraphTensor)):
-            return other.__rmul__(self)
         if isinstance(other, FreeAlgebraElement):
             if self.ring == other.ring:
                 return self.ring.mul(self, other)

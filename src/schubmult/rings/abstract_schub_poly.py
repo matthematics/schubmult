@@ -88,6 +88,36 @@ class GenericPrintingTerm(AbstractSchubPoly):
     def __xnew_cached__(_class, k, name):
         return GenericPrintingTerm.__xnew__(_class, k, name)
 
+
+class TypedPrintingTerm(AbstractSchubPoly):
+    is_Atom = True
+
+    _pretty_schub_char = "𝔖"  # noqa: RUF001
+
+    def __hash__(self):
+        return hash((self._key,"dasiub"))
+
+    def __new__(cls, k):
+        return TypedPrintingTerm.__xnew_cached__(cls, k)
+
+    @staticmethod
+    def __xnew__(_class, k):
+        obj = AbstractSchubPoly.__new__(_class, k, None, None, None)
+        return obj
+
+    def _sympystr(self, printer):
+        key = self._key
+        return printer.doprint(key)
+
+    def __reduce__(self):
+        return (self.__class__, self.args)
+
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, k):
+        return TypedPrintingTerm.__xnew__(_class, k)
+
+
 class DSchubPoly(AbstractSchubPoly):
     is_Atom = True
 

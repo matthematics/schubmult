@@ -1,10 +1,12 @@
+from schubmult.rings.rc_graph_ring import RCGraphRing
+
 # IS THIS ASSOCIATIVE?
 # need associativity
 
 
 def hom3(rc):
     from schubmult import FA, ASx, SchubertBasis
-    from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule
+    #from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
     if isinstance(rc, RCGraph):
         #return (ASx@FA)(r,rc.length_vector()))
         ring = ASx @ ASx
@@ -17,18 +19,19 @@ def hom3(rc):
 
 def hom_rc(elem):
     from schubmult import FA, ASx, SchubertBasis
-    from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule
+    #from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
+    ring = RCGraphRing()
     ret = 0
     for key, val in elem.items():
-        ret+=val * RCGraphModule(dict.fromkeys({RCGraph.principal_rc(*key)},1))
+        ret+=val * rc_ring.from_dict(dict.fromkeys({RCGraph.principal_rc(*key)},1))
     return ret
 
 
 def hom(rc):
     from schubmult import FA, ASx, SchubertBasis
     from schubmult.rings import TensorRing
-    from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule
-    ring = TensorRing(ASx@FA, RCGraphModule())
+    #from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
+    ring = TensorRing(ASx@FA, rc_ring.from_dict())
     
     if isinstance(rc, RCGraph):
         #return (ASx@FA)(r,rc.length_vector()))
@@ -47,8 +50,8 @@ def hom(rc):
 # def hom(rc):
 #     from schubmult import FA, ASx, SchubertBasis
 #     from schubmult.rings import TensorRing
-#     from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule
-#     ring = TensorRing(ASx, RCGraphModule())
+#     from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
+#     ring = TensorRing(ASx, rc_ring.from_dict())
     
 #     if isinstance(rc, RCGraph):
 #         #return (ASx@FA)(r,rc.length_vector()))
@@ -67,7 +70,7 @@ def hom(rc):
 
 def fa_hom(rc):
     from schubmult import FA, ASx, SchubertBasis
-    from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule
+    # from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
     if isinstance(rc, RCGraph):
         #return (ASx@FA)(r,rc.length_vector()))
         ring = FA @ (ASx@ASx)
@@ -82,7 +85,7 @@ def fa_hom(rc):
 
 def hom_cop(rc):
     from schubmult import FA, ASx, SchubertBasis
-    from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule
+    # from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
     if isinstance(rc, RCGraph):
         #return (ASx@FA)(r,rc.length_vector()))
         ring = ASx @ (ASx@ASx)
@@ -101,8 +104,8 @@ def single_rc(a):
     return RCGraph([tuple(range(a, 0, -1))])
 
 def RC(*seq):
-    from schubmult.rings.rc_graph_module import RCGraph
-    res = RCGraphModule({RCGraph(): 1})
+    from schubmult.rings.rc_graph import RCGraph
+    res = rc_ring.from_dict({RCGraph(): 1})
     for a in seq:
         res = res * single_rc(a)
     return res
@@ -115,7 +118,7 @@ def csym_rc(*weight):
             buildup.append(())
         else:
             buildup.append(tuple(range(a+i, i, -1)))
-    return RCGraphModule({RCGraph(buildup): 1})
+    return rc_ring.from_dict({RCGraph(buildup): 1})
 
 if __name__ == "__main__":
     # test module functionality
@@ -125,7 +128,7 @@ if __name__ == "__main__":
     from schubmult import FA, ASx, Permutation, SchubertBasis, WordBasis, uncode
     from schubmult.abc import x
     from schubmult.rings import MonomialBasis, PolynomialAlgebra, SchubertPolyBasis
-    from schubmult.rings.rc_graph_module import RCGraph, RCGraphModule, all_fa_degree
+    from schubmult.rings.rc_graph import RCGraph
     from schubmult.utils.perm_utils import artin_sequences
 
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 3
@@ -147,8 +150,8 @@ if __name__ == "__main__":
     #     mod = 0
     #     print(perm)
     #     for (perm1, perm2), v in bob.items():
-    #         rc1 = RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(perm1[0], perm1[1]),1))
-    #         rc2 = RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(perm2[0], perm2[1]),1))
+    #         rc1 = rc_ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(perm1[0], perm1[1]),1))
+    #         rc2 = rc_ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(perm2[0], perm2[1]),1))
     #         print(f"{perm1=} {perm2=} {v=}")
     #         print(v * (rc1 * rc2))
     #         mod = v * (rc1 * rc2)
@@ -178,6 +181,7 @@ if __name__ == "__main__":
     # print(rc1 * rc2)
     # print(rc2 * rc1)
     # exit()
+    rc_ring = RCGraphRing()
     for perm in perms:
         elem = ASx(perm).change_basis(WordBasis)
         mod = 0
@@ -185,7 +189,7 @@ if __name__ == "__main__":
         print(rc)
         print(elem)
         for w, v in elem.items():
-            elem2 = RCGraphModule({RCGraph(): v})
+            elem2 = rc_ring.from_dict({RCGraph(): v})
             index = 0
             for a in w:
                 elem2 =  elem2*csym_rc(*list((rc.length_vector()[index:index+a])))
