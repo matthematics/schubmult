@@ -48,7 +48,7 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
             return self.ring.one
         if pw == 1:
             return self
-        return self * (self**(pw-1))
+        return self * (self ** (pw - 1))
 
     def poly_inner_product(self, poly, genset, n):
         from schubmult.rings.variables import genset_dict_from_expr
@@ -196,7 +196,6 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
             if self.ring == other.ring:
                 return self.ring.mul(self, other)
         return NotImplemented
-        
 
     def __matmul__(self, other):
         return self.ring.matmul(self, other)
@@ -514,7 +513,7 @@ class FreeAlgebra(Ring, CompositeDomain):
             self.domain = EXRAW
         self.dom = self.domain
         self._basis = basis
-        #self.dtype = type("FreeAlgebraElement", (FreeAlgebraElement,), {"ring": self})
+        # self.dtype = type("FreeAlgebraElement", (FreeAlgebraElement,), {"ring": self})
 
     @staticmethod
     def right_pad(tup, n):
@@ -538,8 +537,7 @@ class FreeAlgebra(Ring, CompositeDomain):
         return T.from_dict(self._basis.bcoproduct(key))
 
     def add(self, elem, other):
-        result = self.from_dict(add_perm_dict(elem, other))
-        return result
+        return self.from_dict(add_perm_dict(elem, other))
 
     def sub(self, elem, other):
         return self.from_dict(add_perm_dict(elem, {k: -v for k, v in other.items()}))
@@ -555,7 +553,7 @@ class FreeAlgebra(Ring, CompositeDomain):
 
     def mul(self, elem, other):
         #  # print(f"mul {self=} {elem=} {other=}")
-        
+
         if isinstance(other, FreeAlgebraElement) or isinstance(other, self.dtype):
             ret = self.zero
             for k0, v0 in elem.items():
@@ -571,7 +569,7 @@ class FreeAlgebra(Ring, CompositeDomain):
             return self.from_dict({k: other * v for k, v in elem.items()})
         except Exception:
             pass
-        #print(f"{type(other)=} {other=} {other=}")
+        # print(f"{type(other)=} {other=} {other=}")
         raise CoercionFailed
 
     def from_rc_graph(self, rc_graph):
@@ -613,7 +611,8 @@ class FreeAlgebra(Ring, CompositeDomain):
     @property
     def one(self):
         from schubmult.perm_lib import Permutation
-        return self.dtype({(Permutation(()),0): S.One})
+
+        return self.dtype({(Permutation(()), 0): S.One})
 
     def from_dict(self, element):
         poly = self.zero
@@ -629,7 +628,7 @@ class FreeAlgebra(Ring, CompositeDomain):
     @property
     def zero_monom(self):
         return self._basis.zero_monom
-    
+
     @property
     def zero(self):
         elem = FreeAlgebraElement()
@@ -695,8 +694,7 @@ class NSym(FreeAlgebra):
                 return self.from_sep(self.sepify(elem) * self.sepify(other))
             n = FreeAlgebra.CAP
             dd = self.from_sep(self.sepify(elem) * self.sepify(other))
-            ret = {k: v for k, v in dd.items() if len(k[0]) <= n}
-            return ret
+            return {k: v for k, v in dd.items() if len(k[0]) <= n}
             # ret = self.zero
             # for k0, v0 in elem.items():
             #     for k, v in other.items():

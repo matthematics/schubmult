@@ -22,11 +22,10 @@ class TensorRing(BaseSchubertRing):
 
     def from_rc_graph_tensor(self, rc_graph_tensor):
         return self.ext_multiply(self.rings[0].from_rc_graph(rc_graph_tensor[0]), self.rings[1].from_rc_graph(rc_graph_tensor[1]))
-    
+
     # def sub(self, elem, other):
     #     print("Mooger")
     #     return self.from_dict(add_perm_dict(elem, {k: -v for k,v in other.items()}))
-    
 
     def __init__(self, *rings):
         self._rings = rings
@@ -47,7 +46,7 @@ class TensorRing(BaseSchubertRing):
         coeff_genset = tuple(coeff_genset)
         super().__init__(list(genset), list(coeff_genset))
         self.zero_monom = tuple([self.rings[i].zero_monom for i in range(len(self.rings))])
-        #self.dtype = type("TensorRingElement", (TensorRingElement,), {"ring": self})
+        # self.dtype = type("TensorRingElement", (TensorRingElement,), {"ring": self})
 
     def dtype(self):
         elem = TensorRingElement()
@@ -64,7 +63,7 @@ class TensorRing(BaseSchubertRing):
     def rmul(self, elem1, elem2):
         # print(f"{dict(elem1)=} {elem2=}")
         # print(f"{self.zero_monom=} {type(elem2)=}")
-        #return self.from_dict({self.zero_monom: elem2}) * elem1
+        # return self.from_dict({self.zero_monom: elem2}) * elem1
         return self.from_dict({k: v * elem2 for k, v in elem1.items()})
         # except Exception:
         #     # import traceback
@@ -72,13 +71,12 @@ class TensorRing(BaseSchubertRing):
         #     raise
 
     def from_dict(self, element):
-        dct =  self.dtype()
-        dct.update({k:v for k,v in element.items() if v!=0})
+        dct = self.dtype()
+        dct.update({k: v for k, v in element.items() if v != 0})
         return dct
-    
 
     def mul(self, elem1, elem2):
-        #print(f"{elem1=} {elem2=} {type(elem1)=} {type(elem2)=}")
+        # print(f"{elem1=} {elem2=} {type(elem1)=} {type(elem2)=}")
         try:
             ret_dict = {}
             for k1, v1 in elem1.items():
@@ -96,8 +94,7 @@ class TensorRing(BaseSchubertRing):
             # import traceback
             # traceback.print_exc()
             raise
-            #return self.from_dict({self.zero_monom: elem2}) * elem1
-
+            # return self.from_dict({self.zero_monom: elem2}) * elem1
 
     def _coerce_add(self, x):  # noqa: ARG002
         return None
@@ -189,7 +186,6 @@ class TensorBasisElement(AbstractSchubPoly):
 
 
 class TensorRingElement(BaseSchubertElement):
-
     def __init__(self):
         pass
 

@@ -12,7 +12,7 @@ class AbstractSchubPoly(ssymb.Expr):
     is_Atom = True
     is_number = False
 
-    def __new__(cls, k, genset, coeff_genset, prefix = ""):
+    def __new__(cls, k, genset, coeff_genset, prefix=""):
         obj = ssymb.Expr.__new__(cls)
         obj._prefix = prefix
         obj._key = k
@@ -22,7 +22,8 @@ class AbstractSchubPoly(ssymb.Expr):
         return obj
 
     def __hash__(self):
-        return hash((self._key,self._genset,self._coeff_genset,"AbS",self._prefix))
+        return hash((self._key, self._genset, self._coeff_genset, "AbS", self._prefix))
+
     # def __init__(self, k, genset, coeff_genset):
     #     super().__init__(k, genset, coeff_genset)
 
@@ -63,7 +64,7 @@ class GenericPrintingTerm(AbstractSchubPoly):
     _pretty_schub_char = "𝔖"  # noqa: RUF001
 
     def __hash__(self):
-        return hash((self._key,self._genset,self._coeff_genset,"dasiub", self._name))
+        return hash((self._key, self._genset, self._coeff_genset, "dasiub", self._name))
 
     def __new__(cls, k, name):
         return GenericPrintingTerm.__xnew_cached__(cls, k, name)
@@ -95,15 +96,14 @@ class TypedPrintingTerm(AbstractSchubPoly):
     _pretty_schub_char = "𝔖"  # noqa: RUF001
 
     def __hash__(self):
-        return hash((self._key,"dasiub"))
+        return hash((self._key, "dasiub"))
 
     def __new__(cls, k):
         return TypedPrintingTerm.__xnew_cached__(cls, k)
 
     @staticmethod
     def __xnew__(_class, k):
-        obj = AbstractSchubPoly.__new__(_class, k, None, None, None)
-        return obj
+        return AbstractSchubPoly.__new__(_class, k, None, None, None)
 
     def _sympystr(self, printer):
         key = self._key
@@ -124,9 +124,9 @@ class DSchubPoly(AbstractSchubPoly):
     _pretty_schub_char = "𝔖"  # noqa: RUF001
 
     def __hash__(self):
-        return hash((self._key,self._genset,self._coeff_genset,"dasiub"))
+        return hash((self._key, self._genset, self._coeff_genset, "dasiub"))
 
-    def __new__(cls, k, genset, coeff_genset, prefix = ""):
+    def __new__(cls, k, genset, coeff_genset, prefix=""):
         return DSchubPoly.__xnew_cached__(cls, k, genset, coeff_genset, prefix)
 
     @staticmethod
@@ -158,8 +158,8 @@ class DSchubPoly(AbstractSchubPoly):
             return printer._print(ssymb.S.One)
         subscript = printer._print(key)
         if self._coeff_genset is None:
-            return printer._print_Function(ssymb.Function(f"{self._prefix}"+"\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(ssymb.Symbol(gl)))
-        return printer._print_Function(ssymb.Function(f"{self._prefix}"+"\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(ssymb.Symbol(f"{{{self._genset}}}; {{{self._coeff_genset}}}")))
+            return printer._print_Function(ssymb.Function(f"{self._prefix}" + "\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(ssymb.Symbol(gl)))
+        return printer._print_Function(ssymb.Function(f"{self._prefix}" + "\\mathfrak{S}" + f"_{'{' + subscript + '}'}")(ssymb.Symbol(f"{{{self._genset}}}; {{{self._coeff_genset}}}")))
 
     def __reduce__(self):
         return (self.__class__, self.args)
@@ -174,7 +174,7 @@ class QDSchubPoly(AbstractSchubPoly):
     is_Atom = True
 
     def __hash__(self):
-        return hash((self._key,self._genset,self._coeff_genset,"AbSsf","q"))
+        return hash((self._key, self._genset, self._coeff_genset, "AbSsf", "q"))
 
     _pretty_schub_char = "𝕼𝔖"  # noqa: RUF001
 
@@ -219,7 +219,7 @@ class PQDSchubPoly(AbstractSchubPoly):
     is_Atom = True
 
     def __hash__(self):
-        return hash((self._key,self._genset,self._coeff_genset,self.index_comp,"asfafAbS"))
+        return hash((self._key, self._genset, self._coeff_genset, self.index_comp, "asfafAbS"))
 
     _pretty_schub_char = "𝕼𝔖"  # noqa: RUF001
 
@@ -227,7 +227,7 @@ class PQDSchubPoly(AbstractSchubPoly):
         return PQDSchubPoly.__xnew_cached__(cls, k, genset, coeff_genset, index_comp)
 
     @staticmethod
-    def __xnew__(_class, k, genset, coeff_genset,    index_comp):
+    def __xnew__(_class, k, genset, coeff_genset, index_comp):
         obj = AbstractSchubPoly.__new__(_class, k, genset, coeff_genset)
         obj._perm = k
         obj._key = k

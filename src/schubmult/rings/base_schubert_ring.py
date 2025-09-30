@@ -82,9 +82,9 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def __add__(self, other):
         if isinstance(other, BaseSchubertElement):
-            #if self.ring == other.ring:
+            # if self.ring == other.ring:
             return self.ring.add(self, other)
-            #return other.__radd__(self)
+            # return other.__radd__(self)
         try:
             other = self.ring.domain_new(other)
             other = self.ring.from_dict({self.ring.zero_monom: other})
@@ -132,7 +132,6 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             return self.ring.sub(other, self)
         except CoercionFailed:
             return NotImplemented
-
 
     def __neg__(self):
         return self.ring.neg(self)
@@ -248,7 +247,6 @@ class BaseSchubertRing(Ring, CompositeDomain):
             return self.mul_expr(elem, other)
 
     def mul(self, elem, other):
-        
         try:
             other = self.domain_new(other)
             # print(f"{other=} {type(other)=}")
