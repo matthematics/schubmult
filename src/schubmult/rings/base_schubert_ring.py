@@ -82,9 +82,9 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def __add__(self, other):
         if isinstance(other, BaseSchubertElement):
-            if self.ring == other.ring:
-                return self.ring.add(self, other)
-            return other.__radd__(self)
+            #if self.ring == other.ring:
+            return self.ring.add(self, other)
+            #return other.__radd__(self)
         try:
             other = self.ring.domain_new(other)
             other = self.ring.from_dict({self.ring.zero_monom: other})
@@ -98,8 +98,6 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             return other.__radd__(self)
 
     def __radd__(self, other):
-        if isinstance(other, BaseSchubertElement):
-            return MixedSchubertElement(other, self)
         try:
             other = self.ring.domain_new(other)
             other = self.ring.from_dict({self.ring.zero_monom: other})
@@ -114,9 +112,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
 
     def __sub__(self, other):
         if isinstance(other, BaseSchubertElement):
-            if self.ring == other.ring:
-                return self.ring.sub(self, other)
-            return other.__rsub__(self)
+            return self.ring.sub(self, other)
         try:
             other = self.ring.domain_new(other)
             other = self.ring.from_dict({self.ring.zero_monom: other})
@@ -130,19 +126,13 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             return other.__rsub__(self)
 
     def __rsub__(self, other):
-        if isinstance(other, BaseSchubertElement):
-            return MixedSchubertElement(other, -self)
         try:
             other = self.ring.domain_new(other)
             other = self.ring.from_dict({self.ring.zero_monom: other})
             return self.ring.sub(other, self)
         except CoercionFailed:
-            pass
-        try:
-            new_other = self.ring(other)
-            return new_other.__sub__(self)
-        except CoercionFailed:
             return NotImplemented
+
 
     def __neg__(self):
         return self.ring.neg(self)
@@ -207,12 +197,6 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         if isinstance(other, BaseSchubertElement):
             elem1 = self
             elem2 = other
-            if isinstance(self, MixedSchubertElement):
-                if isinstance(other, MixedSchubertElement):
-                    return (self - other).expand(deep=False).almosteq(S.Zero)
-                return (self - other).expand(deep=False).almosteq(S.Zero)
-            if isinstance(other, MixedSchubertElement):
-                return (self - other).expand(deep=False).almosteq(S.Zero)
             if elem1.ring == elem2.ring:
                 return (self - other).expand(deep=False).almosteq(S.Zero)
             return elem1.almosteq(elem1.ring.one * elem2)
@@ -267,6 +251,7 @@ class BaseSchubertRing(Ring, CompositeDomain):
             return self.mul_expr(elem, other)
 
     def mul(self, elem, other):
+        
         try:
             other = self.domain_new(other)
             # print(f"{other=} {type(other)=}")
@@ -278,7 +263,7 @@ class BaseSchubertRing(Ring, CompositeDomain):
                     raise CoercionFailed(f"Could not coerce {other} of type {type(other)} to {type(elem)}")
                 return self.from_dict(_mul_schub_dicts(elem, other, elem.ring, other.ring))
             return self.mul_expr(elem, other)
-        #return NotImplemented
+        return NotImplemented
 
     def to_domain(self):
         return self
@@ -374,174 +359,3 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def quantum_elem_func(self): ...
 
     def cached_schubpoly(self, k): ...
-
-
-class MixedSchubertElement(BaseSchubertElement, dict):
-    def __new__(cls, *elems):
-        obj = dict.__new__(cls)
-        for elem in elems:
-            obj[elem.ring] = elem.ring.add(obj.get(elem.ring, elem.ring.zero), elem)
-        if len(obj.keys()) == 1:
-            return next(iter(obj.values()))
-        return obj
-
-    def __init__(self, *elems):  # noqa: ARG002
-        self._ring = BaseSchubertRing([], [])
-        self._ring.dtype = type("MixedSchubertElement", (MixedSchubertElement,), {"ring": self})
-
-    def __hash__(self):
-        return hash(tuple(self.values()))
-
-    @property
-    def ring(self):
-        return self._ring
-
-    def subs(self, old, new):
-        return self.__class__({k: v.subs(old, new) for k, v in self.items()})
-
-    def __add__(self, other):
-        if isinstance(other, MixedSchubertElement):
-            return MixedSchubertElement(*list(add_perm_dict(self, other).values()))
-        if self.ring == other.ring:
-            return self.ring.add(self, other)
-        if isinstance(other, BaseSchubertElement):
-            elem = MixedSchubertElement(*list(self.values()))
-            elem[other.ring] = other.ring.add(elem.get(other.ring, other.ring.zero), other)
-            return elem
-        elem = MixedSchubertElement(*list(self.values()))
-
-        for ring in self:
-            try:
-                new_other = ring.domain_new(other)
-                new_other = ring.from_dict({Permutation([]): new_other})
-                elem[ring] = ring.add(elem.get(ring, ring.zero), new_other)
-                if elem[ring] == ring.zero:
-                    del elem[ring]
-                return MixedSchubertElement(*list(elem.values()))
-            except CoercionFailed:
-                new_other = ring.from_expr(other)
-                elem[ring] = ring.add(elem.get(ring, ring.zero), new_other)
-                if elem[ring] == ring.zero:
-                    del elem[ring]
-                return MixedSchubertElement(*list(elem.values()))
-        return NotImplemented
-
-    def __sub__(self, other):
-        if self.ring == other.ring:
-            return self.ring.sub(self, other)
-        if isinstance(other, MixedSchubertElement):
-            return MixedSchubertElement(*list(add_perm_dict(self, -other).values()))
-        if isinstance(other, BaseSchubertElement):
-            elem = MixedSchubertElement(*list(self.values()))
-            elem[other.ring] = other.ring.sub(elem.get(other.ring, other.ring.zero), other)
-            return elem
-        elem = MixedSchubertElement(*list(self.values()))
-        for ring in self:
-            try:
-                new_other = ring.domain_new(other)
-                new_other = ring.from_dict({Permutation([]): new_other})
-                elem[ring] = ring.sub(elem.get(ring, ring.zero), new_other)
-                if elem[ring] == ring.zero:
-                    del elem[ring]
-                return MixedSchubertElement(*list(elem.values()))
-            except CoercionFailed:
-                new_other = ring.from_expr(other)
-                elem[ring] = ring.sub(elem.get(ring, ring.zero), new_other)
-                if elem[ring] == ring.zero:
-                    del elem[ring]
-                return MixedSchubertElement(*list(elem.values()))
-        return NotImplemented
-
-    def __radd__(self, other):
-        if isinstance(other, BaseSchubertElement):
-            elem = MixedSchubertElement(*list(self.values()))
-            elem[other.ring] = other.ring.add(other, elem.get(other.ring, other.ring.zero))
-            return elem
-        elem = MixedSchubertElement(*list(self.values()))
-        for ring in self:
-            try:
-                new_other = ring.domain_new(other)
-                new_other = ring.from_dict({Permutation([]): new_other})
-                elem[ring] = ring.add(new_other, elem.get(ring, ring.zero))
-                if elem[ring] == ring.zero:
-                    del elem[ring]
-                return MixedSchubertElement(*list(elem.values()))
-            except CoercionFailed:
-                new_other = ring.from_expr(other)
-                elem[ring] = ring.add(new_other, elem.get(ring, ring.zero))
-                if elem[ring] == ring.zero:
-                    del elem[ring]
-                return MixedSchubertElement(*list(elem.values()))
-        return NotImplemented
-
-    def __rsub__(self, other):
-        if isinstance(other, BaseSchubertElement):
-            elem = MixedSchubertElement(*list(self.values()))
-            elem[other.ring] = other.ring.sub(other, elem.get(other.ring, other.ring.zero))
-            return elem
-        elem = MixedSchubertElement(*list(self.values()))
-        for ring in self:
-            try:
-                new_other = ring.domain_new(other)
-                new_other = ring.from_dict({Permutation([]): new_other})
-                elem[ring] = ring.sub(new_other, elem.get(ring, ring.zero))
-                if elem[ring] == ring.zero:
-                    del elem[ring]
-                return MixedSchubertElement(*list(elem.values()))
-            except CoercionFailed:
-                new_other = ring.from_expr(other)
-                elem[ring] = ring.sub(new_other, elem.get(ring, ring.zero))
-                if elem[ring] == ring.zero:
-                    del elem[ring]
-                return MixedSchubertElement(*list(elem.values()))
-        return NotImplemented
-
-    def __mul__(self, other):
-        if isinstance(other, MixedSchubertElement):
-            elem = MixedSchubertElement()
-            for v1 in self.values():
-                for v2 in other.values():
-                    elem[v1.ring] = elem.get(v1.ring, v1.ring.zero) + (v1 * v2)
-            return elem
-        if isinstance(other, BaseSchubertElement):
-            return MixedSchubertElement(*[a * other for a in self.values()])
-        elem = MixedSchubertElement(*list(self.values()))
-        for ring in elem:
-            try:
-                new_other = ring.domain_new(other)
-                new_other = ring.from_dict({Permutation([]): new_other})
-                elem[ring] = ring.mul(elem[ring], new_other)
-            except CoercionFailed:
-                new_other = ring.from_expr(other)
-                elem[ring] = ring.mul(elem[ring], new_other)
-        return elem
-
-    def __rmul__(self, other):
-        if isinstance(other, self.elem_mul_type):
-            return self.ring.mul(self, other)
-        if isinstance(other, BaseSchubertElement):
-            return MixedSchubertElement(*[other * a for a in self.values()])
-        elem = MixedSchubertElement(*list(self.values()))
-        for ring in elem:
-            try:
-                new_other = ring.domain_new(other)
-                new_other = ring.from_dict({Permutation([]): new_other})
-                elem[ring] = ring.mul(new_other, elem[ring])
-                return elem
-            except CoercionFailed:
-                new_other = ring.from_expr(other)
-                elem[ring] = ring.mul(new_other, elem[ring])
-        return elem
-
-    @property
-    def free_symbols(self):
-        ret = set()
-        for v in self.values():
-            ret.update(v.free_symbols)
-        return ret
-
-    def as_ordered_terms(self, *_, **__):
-        tms = []
-        for v in self.values():
-            tms += v.as_ordered_terms()
-        return tms

@@ -558,11 +558,7 @@ class FreeAlgebra(Ring, CompositeDomain):
 
     def mul(self, elem, other):
         #  # print(f"mul {self=} {elem=} {other=}")
-        try:
-            other = self.domain_new(other)
-            return self.from_dict({k: other * v for k, v in elem.items()})
-        except Exception:
-            pass
+        
         if isinstance(other, FreeAlgebraElement) or isinstance(other, self.dtype):
             ret = self.zero
             for k0, v0 in elem.items():
@@ -573,6 +569,11 @@ class FreeAlgebra(Ring, CompositeDomain):
             n = FreeAlgebra.CAP
             ret = {k: v for k, v in ret.items() if len(k[0]) <= n}
             return self.from_dict(ret)
+        try:
+            other = self.domain_new(other)
+            return self.from_dict({k: other * v for k, v in elem.items()})
+        except Exception:
+            pass
         #print(f"{type(other)=} {other=} {other=}")
         raise CoercionFailed
 
