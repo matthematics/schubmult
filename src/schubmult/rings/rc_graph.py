@@ -1512,52 +1512,8 @@ class RCGraph(UnderlyingGraph, DefaultPrinting):
 
         for rc, coeff in buildup_module.items():
             new_rc = RCGraph([*rc[: len(self)], *other.shiftup(len(self))])
-            #             Traceback (most recent call last):
-            #   File "/home/matthematics/schubmult/src/schubmult/scripts/assoc_test.py", line 163, in <module>
-            #     diff = hom(g1 * g2) - hom(g1) * hom(g2)
-            #                ~~~^~~~
-            #   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 656, in __mul__
-            #     return self.prod_with_rc(other)
-            #            ^^^^^^^^^^^^^^^^^^^^^^^^
-            #   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 1583, in prod_with_rc
-            #     new_buildup_module += RCGraphModule(dict.fromkeys(rc.right_zero_act(), coeff))
-            #                                                       ^^^^^^^^^^^^^^^^^^^
-            #   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 1078, in right_zero_act
-            #     if rc.zero_out_last_row() == self:
-            #        ^^^^^^^^^^^^^^^^^^^^^^
-            #   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 1038, in zero_out_last_row
-            #     interim = interim.kogan_kumar_insert(len(self) - 1,diff_rows)
-            #               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-            #   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 851, in kogan_kumar_insert
-            #     assert working_rc.perm.inv == self.perm.inv + index + 1
-            #            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-            # AssertionError
-            # logger.debug("Trying to match")
-            # logger.debug(new_rc)
-            # need not check valid and need to bump
-            # if not new_rc.is_valid:
-            # logger.debug("got invalid rc")
-            # logger.debug(new_rc)
-            # logger.debug("Should be rectifying")
-            # logger.debug("Need better rect")
-            # new_rc = new_rc.zero_rectify()
-            # perm0 = new_rc.rowrange(0,len(self)).perm
-            # word = RCGraph([*other.shiftup(len(self))]).perm_word()
-            # logger.debug(F"{word=}")
-            # try:
-            #     for i in range(len(word)):
-            #         ref = word[i]
-            #         if perm0[ref - 1] > perm0[ref]:
-            #             new_rc = new_rc._monk_rectify(len(self) + 1, len(self))
-            #             # logger.debug("rectified?")
-            #             # logger.debug(new_rc)
-            #             perm0 = new_rc.rowrange(0,len(self)).perm
-            #         perm0 = perm0.swap(ref - 1, ref)
-            # except ValueError as e:
-            #     # logger.debug(f"{e=}")
-
             if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(new_rc):
-                ret_module += coeff * new_rc
+                ret_module = add_perm_dict(ret_module, {new_rc: coeff})
 
         return ret_module
 
@@ -1710,6 +1666,7 @@ class RCGraph(UnderlyingGraph, DefaultPrinting):
     def cols(self):
         return max(max((row[i] + i for i in range(len(row))) if len(row) > 0 else [0]) for row in self) if len(self) > 0 else 0
 
+
     def __getitem__(self, key):
         # if len(args) == 1:
         #     logger.debug(repr(args),len(args))
@@ -1717,10 +1674,14 @@ class RCGraph(UnderlyingGraph, DefaultPrinting):
         if isinstance(key, int):
             return tuple(self)[key]
         if isinstance(key, tuple):
-            i, j = key
-            if self.has_element(i, j):
-                return i + j - 1
-            return None
+            if not self.has_element(*key):
+                return None
+            return key[0] + key[1] - 1
+        is_slice = isinstance(key, slice)
+
+        if is_slice:
+            values = tuple(tuple(self)[n] for n in range(len(self))[key])
+            return values
         raise ValueError(f"Bad indexing {key=}")
 
     def _format_str(self, printer=None) -> str:
@@ -1740,7 +1701,7 @@ class RCGraph(UnderlyingGraph, DefaultPrinting):
         for i in range(self.rows):
             table.append([])
             for j in range(self.cols):
-                s = printer._print(self[i, j])
+                s = printer._print(self[i, j]) if self[i, j] is not None else " "
                 table[-1].append(s)
                 maxlen[j] = max(len(s), maxlen[j])
         # Patch strings together
