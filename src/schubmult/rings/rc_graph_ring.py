@@ -29,6 +29,9 @@ class RCGraphRing(BaseSchubertRing):
         elem.update(dct)
         return elem
 
+    def __call__(self, key):
+        return self.from_dict({key: 1})
+
     def mul(self, a, b):
         # a, b are RCGraphRingElement
         result_dict = {}

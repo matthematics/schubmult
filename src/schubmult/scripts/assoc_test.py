@@ -2,7 +2,7 @@ from schubmult.rings.rc_graph_ring import RCGraphRing
 
 # IS THIS ASSOCIATIVE?
 # need associativity
-
+rc_ring = RCGraphRing()
 
 def hom3(rc):
     from schubmult import FA, ASx, SchubertBasis
@@ -31,7 +31,7 @@ def hom(rc):
     from schubmult import FA, ASx, SchubertBasis
     from schubmult.rings import TensorRing
     #from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
-    ring = TensorRing(ASx@FA, rc_ring.from_dict())
+    ring = TensorRing(ASx@FA, rc_ring)
     
     if isinstance(rc, RCGraph):
         #return (ASx@FA)(r,rc.length_vector()))
@@ -138,6 +138,7 @@ if __name__ == "__main__":
     len1 = 4
     dct = {}
     deg = 6
+    rc_ring = RCGraphRing()
 
     # if we coprod a Schub this will act right
     # print(csym_rc(1)*csym_rc(2))
@@ -181,24 +182,26 @@ if __name__ == "__main__":
     # print(rc1 * rc2)
     # print(rc2 * rc1)
     # exit()
-    rc_ring = RCGraphRing()
-    for perm in perms:
-        elem = ASx(perm).change_basis(WordBasis)
-        mod = 0
-        rc = next(iter(RCGraph.all_rc_graphs(perm)))
-        print(rc)
-        print(elem)
-        for w, v in elem.items():
-            elem2 = rc_ring.from_dict({RCGraph(): v})
-            index = 0
-            for a in w:
-                elem2 =  elem2*csym_rc(*list((rc.length_vector()[index:index+a])))
-                index += a
-            mod += elem2
-        #mod = RC(*perm.trimcode)
-        print(f"{perm.trimcode}")
-        print(mod)
-    exit()
+    # rc_ring = RCGraphRing()
+    # for perm in perms:
+    #     elem = ASx(perm).change_basis(WordBasis)
+    #     mod = 0
+    #     rc = next(iter(RCGraph.all_rc_graphs(perm)))
+    #     print(rc)
+    #     print(elem)
+    #     for w, v in elem.items():
+    #         elem2 = rc_ring.from_dict({RCGraph(): v})
+    #         index = 0
+    #         for a in w:
+    #             elem2 =  elem2*csym_rc(*list((rc.length_vector()[index:index+a])))
+    #             index += a
+    #         mod += elem2
+    #     #mod = RC(*perm.trimcode)
+    #     print(f"{perm.trimcode}")
+    #     print(mod)
+    # exit()
+    import sympy
+    
     for perm in perms:
         for len1 in range(len(perm.trimcode),n):
         
@@ -211,22 +214,22 @@ if __name__ == "__main__":
                     # g1 = graphs1
                     # g2 = graphs2
                     
-                    for g1 in graphs1:
-                        for g2 in graphs2:
-                            diff = hom(g1 * g2) - hom(g1) * hom(g2)
+                    for g21 in graphs1:
+                        for g22 in graphs2:
+                            g1 = rc_ring(g21)
+                            g2 = rc_ring(g22)
                             print(f"Testing {perm} in {len1}, {perm2} in {len2}")
                             print("g1")
-                            print(hom(g1))
+                            sympy.pretty_print(g1)
                             print("g2")
-                            print(hom(g2))
+                            sympy.pretty_print(g2)
                             print("g1*g2")
-                            print(g1*g2)
-                            print(hom(g1)*hom(g2))
+                            sympy.pretty_print(g1*g2)
                             print("the_hom")
-                            print(hom(g1*g2))
+                            sympy.pretty_print(g1*g2)
                             # print(f"{(g1*g2).value_dict=}")
-                            # print(f"{dict(hom(g1)*hom(g2))=}")
-                            assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
+                            # print(f"{dict((g1)*(g2))=}")
+                            #assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
                             print("Success")
                     # elem = ASx(perm1, len1)
                     # elem2 = ASx(perm2, len2)

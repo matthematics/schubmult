@@ -44,8 +44,8 @@ class UnderlyingGraph(tuple):
 
 
 class RCGraph(UnderlyingGraph, DefaultPrinting):
-    def __str__(self):
-        return self._sympystr()
+    # def __str__(self):
+    #     return self._sympystr()
 
     def __eq__(self, other):
         if not isinstance(other, RCGraph):
@@ -1674,9 +1674,10 @@ class RCGraph(UnderlyingGraph, DefaultPrinting):
         if isinstance(key, int):
             return tuple(self)[key]
         if isinstance(key, tuple):
-            if not self.has_element(*key):
+            i, j = key
+            if not self.has_element(i + 1, j + 1 ):
                 return None
-            return key[0] + key[1] - 1
+            return i + j + 1
         is_slice = isinstance(key, slice)
 
         if is_slice:
@@ -1720,8 +1721,8 @@ class RCGraph(UnderlyingGraph, DefaultPrinting):
             res[i] = rowstart + colsep.join(row) + rowend
         return rowsep.join(res)
 
-    def __repr__(self):
-        return f"{self.__class__.__name__}(" + ", ".join([repr(k) for k in self]) + ")"
+    # def __repr__(self):
+    #     return f"{self.__class__.__name__}(" + ", ".join([repr(k) for k in self]) + ")"
 
     def __hash__(self):
         return hash(tuple(self))
