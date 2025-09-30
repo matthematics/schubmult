@@ -422,7 +422,7 @@ class RCGraph(KeyType, UnderlyingGraph):
 
         return ((~lower_perm)[start_root[0] - 1], (~lower_perm)[start_root[1] - 1])
 
-    def reverse_kogan_insert(self, descent, reflection_path):
+    def reverse_kogan_kumar_insert(self, descent, reflection_path):
         # print("Here")
         from schubmult.utils.perm_utils import has_bruhat_descent
 
@@ -758,7 +758,7 @@ class RCGraph(KeyType, UnderlyingGraph):
     #         return True
     #     return False
 
-    def _kogan_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, debug=False, start_index=0):
+    def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, debug=False, start_index=0):
         # working_rc = self
         ARBITRARY_MAX_VALUE = 10
         working_rc = self
@@ -819,10 +819,10 @@ class RCGraph(KeyType, UnderlyingGraph):
                         print("Inserted")
                         print(working_rc)
                 if not working_rc.is_valid:
-                    working_rc = working_rc._kogan_rectify(row - 1, descent, dict_by_a, dict_by_b)
+                    working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b)
         return working_rc
 
-    def _kogan_rectify(self, row_below, descent, dict_by_a, dict_by_b):
+    def _kogan_kumar_rectify(self, row_below, descent, dict_by_a, dict_by_b):
         # print("In rectify")
         working_rc = self
         debug = False
@@ -870,10 +870,10 @@ class RCGraph(KeyType, UnderlyingGraph):
                             del dict_by_a[dict_by_b[a]]
                         # print("Toggle bad c")
                 if flag:
-                    working_rc = working_rc._kogan_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times=1, debug=debug)
-        return working_rc._kogan_rectify(row_below - 1, descent, dict_by_a, dict_by_b)
+                    working_rc = working_rc._kogan_kumar_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times=1, debug=debug)
+        return working_rc._kogan_kumar_rectify(row_below - 1, descent, dict_by_a, dict_by_b)
 
-    def kogan_insert(self, descent, rows, debug=False):
+    def kogan_kumar_insert(self, descent, rows, debug=False):
         dict_by_a = {}
         dict_by_b = {}
         # row is descent
@@ -898,10 +898,10 @@ class RCGraph(KeyType, UnderlyingGraph):
                 print(working_rc)
                 print(f"{working_rc.perm.inv=}, {self.perm.inv=}")
             last_working_rc = working_rc
-            working_rc = working_rc._kogan_insert_row(row, descent, dict_by_a, dict_by_b, num_times, debug=debug)
+            working_rc = working_rc._kogan_kumar_insert_row(row, descent, dict_by_a, dict_by_b, num_times, debug=debug)
 
             if not working_rc.is_valid:
-                working_rc = working_rc._kogan_rectify(row, descent, dict_by_a, dict_by_b)  # minus one?
+                working_rc = working_rc._kogan_kumar_rectify(row, descent, dict_by_a, dict_by_b)  # minus one?
             if debug:
                 print("Next iteration")
                 print(working_rc)
@@ -917,7 +917,7 @@ class RCGraph(KeyType, UnderlyingGraph):
                 print(f"{working_rc.perm=}, {self.perm=}")
                 if debug:
                     raise
-                self.kogan_insert(descent, rows, debug=True)
+                self.kogan_kumar_insert(descent, rows, debug=True)
                 raise
         # reflections = []
         # start_perm = self.perm
@@ -1124,7 +1124,7 @@ class RCGraph(KeyType, UnderlyingGraph):
             print("=========")
         
 
-        interim = interim2.kogan_insert(len(self), diff_rows, debug=debug)
+        interim = interim2.kogan_kumar_insert(len(self), diff_rows, debug=debug)
 
         if debug:
             print("Got")
@@ -1242,7 +1242,7 @@ class RCGraph(KeyType, UnderlyingGraph):
 
         reflections[len(working_rc)] = [len(working_rc) + a for a in range(len(working_rc[-1]) - 1, 0, -1)]
         # print(f"{reflections=}")
-        working_rc = RCGraph(working_rc.reverse_kogan_insert(len(working_rc), reflections)[:-1])
+        working_rc = RCGraph(working_rc.reverse_kogan_kumar_insert(len(working_rc), reflections)[:-1])
         return RCGraph(working_rc)
         # print(working_rc)
 
@@ -1494,22 +1494,22 @@ class RCGraph(KeyType, UnderlyingGraph):
                         rc011 = rc01
                         rc012 = rc02
                         if p1.inv > 0:
-                            rc011 = rc011.kogan_insert(len(p1.trimcode), [1] * p1.inv)
+                            rc011 = rc011.kogan_kumar_insert(len(p1.trimcode), [1] * p1.inv)
                             rc011 = rc011.rowrange(0, 1) * rc1
                             new_rc011 = 0
                             for rc, c in rc011.items():
-                                new_rc011 += c * (RCGraph([(), *rc[1:]]).kogan_insert(len(p1.trimcode), [1] * p1.inv))
+                                new_rc011 += c * (RCGraph([(), *rc[1:]]).kogan_kumar_insert(len(p1.trimcode), [1] * p1.inv))
                             rc011 = new_rc011
                         if p2.inv > 0:
-                            rc012 = rc012.kogan_insert(len(p2.trimcode), [1] * p2.inv)
+                            rc012 = rc012.kogan_kumar_insert(len(p2.trimcode), [1] * p2.inv)
                             rc012 = rc012.rowrange(0, 1) * rc2
                             new_rc012 = 0
                             for rc, c in rc012.items():
-                                new_rc012 += c * (RCGraph([(), *rc[1:]]).kogan_insert(len(p2.trimcode), [1] * p2.inv))
+                                new_rc012 += c * (RCGraph([(), *rc[1:]]).kogan_kumar_insert(len(p2.trimcode), [1] * p2.inv))
                             rc012 = new_rc012
                         rc011 = 1 * rc011
                         rc012 = 1 * rc012
-                        # rc012 = RCGraph([(),*rc012[1:]]).kogan_insert(len(p2.trimcode),[1]*p2.inv)
+                        # rc012 = RCGraph([(),*rc012[1:]]).kogan_kumar_insert(len(p2.trimcode),[1]*p2.inv)
                         # if rc011.perm.bruhat_leq(self.rowrange(0,row+1).perm) and rc012.perm.bruhat_leq(self.rowrange(0,row+1).perm):
                         # print("Matched")
                         # print(rc011)
@@ -1715,9 +1715,9 @@ class RCGraph(KeyType, UnderlyingGraph):
             #     if rc.zero_out_last_row() == self:
             #        ^^^^^^^^^^^^^^^^^^^^^^
             #   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 1038, in zero_out_last_row
-            #     interim = interim.kogan_insert(len(self) - 1,diff_rows)
+            #     interim = interim.kogan_kumar_insert(len(self) - 1,diff_rows)
             #               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-            #   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 851, in kogan_insert
+            #   File "/home/matthematics/schubmult/src/schubmult/rings/rc_graph_module.py", line 851, in kogan_kumar_insert
             #     assert working_rc.perm.inv == self.perm.inv + index + 1
             #            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
             # AssertionError
