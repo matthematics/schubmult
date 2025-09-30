@@ -95,6 +95,27 @@ def hom_cop(rc):
     return ret
 
 
+def single_rc(a):
+    if a == 0:
+        return RCGraph(((),))
+    return RCGraph([tuple(range(a, 0, -1))])
+
+def RC(*seq):
+    from schubmult.rings.rc_graph_module import RCGraph
+    res = RCGraphModule({RCGraph(): 1})
+    for a in seq:
+        res = res * single_rc(a)
+    return res
+
+
+def csym_rc(*weight):
+    buildup = []
+    for i, a in enumerate(weight):
+        if a == 0:
+            buildup.append(())
+        else:
+            buildup.append(tuple(range(a+i, i, -1)))
+    return RCGraphModule({RCGraph(buildup): 1})
 
 if __name__ == "__main__":
     # test module functionality
@@ -116,8 +137,9 @@ if __name__ == "__main__":
     deg = 6
 
     # if we coprod a Schub this will act right
-
-    
+    # print(csym_rc(1)*csym_rc(2))
+    # print(csym_rc(1)*csym_rc(2) - csym_rc(1,2) )
+    # exit() 
 
     # for perm in perms:
     #     AG = PolynomialAlgebra(SchubertPolyBasis(len(perm.trimcode)))
@@ -149,6 +171,30 @@ if __name__ == "__main__":
     #         if w in dct:
     #             mod += hom(v * dct[w])
     #     print(mod)
+    # rc1 = RCGraph([(1,)])
+    # rc2 = RCGraph([(3,),(2,)])
+    # print(rc1)
+    # print(rc2)
+    # print(rc1 * rc2)
+    # print(rc2 * rc1)
+    # exit()
+    for perm in perms:
+        elem = ASx(perm).change_basis(WordBasis)
+        mod = 0
+        rc = next(iter(RCGraph.all_rc_graphs(perm)))
+        print(rc)
+        print(elem)
+        for w, v in elem.items():
+            elem2 = RCGraphModule({RCGraph(): v})
+            index = 0
+            for a in w:
+                elem2 =  elem2*csym_rc(*list((rc.length_vector()[index:index+a])))
+                index += a
+            mod += elem2
+        #mod = RC(*perm.trimcode)
+        print(f"{perm.trimcode}")
+        print(mod)
+    exit()
     for perm in perms:
         for len1 in range(len(perm.trimcode),n):
         

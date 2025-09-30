@@ -182,6 +182,9 @@ class ModuleType:
     def __matmul__(self, other):
         return TensorModule(self, other)
 
+    def __repr__(self):
+        return str(self)
+    
     def __str__(self):
         buildups = ""
         if len(self.keys()) == 0:
@@ -2305,51 +2308,11 @@ class RCGraphModule(ModuleType):
 
     # def as_str_lines(self):
 
-    # return full_multiline_join(full_multiline_join(k.as_str_lines()) + f"  (coeff {v})" for k, v in self._dict.items()])
-    # # if len(self.keys()) == 0:
-    # #     return ["0"]
-    # # lines = [""]
-    # # first = True
-    # # for k, v in self._dict.items():
-    # #     lines2 = k.as_str_lines()
-    # #     if len(lines) < len(lines2):
-    # #         upstr = ""
-    # #         if len(lines[0]) > 0:
-    # #             upstr = " " * len(lines[0])
-    # #         lines += [upstr] * (len(lines2) - len(lines))
-    # #     padlen = 0
-    # #     for i in range(len(lines2)):
-    # #         coeffstr = ""
-    # #         if not first:
-    # #             if i == 0:
-    # #                 coeffstr += " + "
-    # #             else:
-    # #                 coeffstr += "   "
-    # #         if i == 0:
-    # #             if v == -1:
-    # #                 coeffstr += "-"
-    # #             elif v != 1:
-    # #                 coeffstr += str(v) + " * "
-    # #             padlen = len(coeffstr)
-    # #         else:
-    # #             coeffstr = " " * padlen
+    #     return full_multiline_join(*[f"  (coeff {v}) * {str(k)}" for k, v in self._dict.items()])
 
-    # #         lines[i] += coeffstr + lines2[i]
-    # #     first = False
-    # # return lines
-    # buildup_str = ""
-    # for k,v in self._dict.items():
-    #     lines2 = k.as_str_lines()
-    #     width1 = max(len(line) for line in lines2)
-    #     width2 = len(str(v)) + 3
-    #     lines2 = _multiline_join(str(v) + " *", "\n".join(lines2), width2, width1)
-    #     if len(lines2) == 0:
-    #         lines2 = "0"
-    #     yield lines2
-    #     yield ""
 
-    # def __str__(self):
-    #     return "\n".join(self.as_str_lines())
+    def __str__(self):
+        return super().__str__()
 
 
 # class DualRCGraphModule(RCGraphModule):
@@ -3294,3 +3257,26 @@ if __name__ == "__main__":
     # Monk's formula and assoc
 
     # commuting h's
+
+def csym_rc(*weight):
+    buildup = []
+    for i, a in enumerate(weight):
+        if a == 0:
+            buildup.append(())
+        else:
+            buildup.append(tuple(range(a+i, i, -1)))
+    return RCGraphModule({RCGraph(buildup): 1})
+
+def h_rc(*rows):
+    degree = sum(rows)
+    descent = len(rows)
+    seq = list(range(degree+descent-1,descent-1,-1))
+    buildup = []
+    sm = 0
+    for r in rows:
+        if r == 0:
+            buildup.append(())
+        else:
+            buildup.append(tuple(seq[sm:sm+r]))
+        sm += r
+    return RCGraphModule({RCGraph(tuple(buildup)): 1})
