@@ -515,6 +515,33 @@ class RCGraph(tuple, DefaultPrinting):
                     working_rc = working_rc._kogan_kumar_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times=1, debug=debug)
         return working_rc._kogan_kumar_rectify(row_below - 1, descent, dict_by_a, dict_by_b)
 
+    def associative_kogan_kumar_insert(self, descent, rows, debug=False):
+        if len(self.perm.trimcode) <= descent:
+            return self.kogan_kumar_insert(descent, rows, debug=debug)
+        max_desc = len(self.perm.trimcode)
+        diff_rows_stack = []
+        desc_stack = []
+        while max_desc > descent:
+            diff_rows = []
+            interim = RCGraph([*self])
+            while len(interim.perm.trimcode) > max_desc - 1:
+                prev_interim = interim
+                interim = interim.exchange_property(max(interim.perm.descents()) + 1)
+                for i in range(len(interim)):
+                    if len(interim[i]) < len(prev_interim[i]):
+                        rw = i + 1
+                        diff_rows.append(rw)
+                        break
+                desc_stack.append(max_desc)
+                diff_rows_stack.append(diff_rows)
+                max_desc = len(interim.perm.trimcode)
+        interim = interim.kogan_kumar_insert(descent, rows, debug=debug)
+        for i in range(len(diff_rows_stack) - 1, -1, -1):
+            diff_rows = diff_rows_stack[i]
+            descent = desc_stack[i]
+            interim = interim.kogan_kumar_insert(descent, diff_rows, debug=debug)
+        return interim
+
     def kogan_kumar_insert(self, descent, rows, debug=False):
         dict_by_a = {}
         dict_by_b = {}
@@ -699,16 +726,16 @@ class RCGraph(tuple, DefaultPrinting):
                 if debug:
                     logger.debug("rc num rows:")
                     logger.debug(len(rc))
-                    assert len(rc) == len(self) + 1
-                    z = rc.zero_out_last_row()
-                    assert len(z) == len(self)
+                assert len(rc) == len(self) + 1
+                z = rc.zero_out_last_row()
+                assert len(z) == len(self)
+                if debug:
+                    logger.debug("Zeroed out last row:")
+                    logger.debug(z)
+                if z == self:
                     if debug:
-                        logger.debug("Zeroed out last row:")
-                        logger.debug(z)
-                    if z == self:
-                        if debug:
-                            logger.debug("Added")
-                        rc_set.add(rc)
+                        logger.debug("Added")
+                    rc_set.add(rc)
         #     if not done_any:
         #         cannot_do += 1
 
