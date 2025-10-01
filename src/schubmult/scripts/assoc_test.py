@@ -1,4 +1,4 @@
-from sympy import pretty_print
+from sympy import init_printing, pretty_print
 
 from schubmult.rings.rc_graph_ring import RCGraphRing
 
@@ -202,40 +202,45 @@ if __name__ == "__main__":
     #     print(f"{perm.trimcode}")
     #     print(mod)
     # exit()
-    import sympy
-    sympy.init_printing(pretty=True)
     #printer = sympy.pretty()
+    init_printing(pretty=True)
     for perm in perms:
-        if perm.inv == 0:
+        if perm.inv == 0 or max(perm.descents()) == 0:
             continue
         for len1 in range(len(perm.trimcode),n):
         
             graphs1 = RCGraph.all_rc_graphs(perm, len1)
-            for perm2 in perms:
-                if perm2.inv == 0:
-                    continue
-                for len2 in range(len(perm2.trimcode),n):
-                    graphs2 = RCGraph.all_rc_graphs(perm2, len2)
-                    for perm3 in perms:
-                        if perm3.inv == 0:
-                            continue
-                        for len3 in range(len(perm3.trimcode), n):
-                            graphs3 = RCGraph.all_rc_graphs(perm3, len3)
-                            for g31 in graphs3:
-                                for g32 in graphs2:
-                                    for g33 in graphs1:
-                                        g1 = rc_ring(g31)
-                                        g2 = rc_ring(g32)
-                                        g3 = rc_ring(g33)
-                                        g = g1 * (g2 * g3)
-                                        g_ = (g1 * g2) * g3
-                                        diff = g - g_
-                                        assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
-                                        print("Success")
-                                        pretty_print(g1 + g2 + g3)
-                                        del g
-                                        del g_
-                                        # printer._print_seq(g1,g2,delimiter=" * ",parenthesize=True)printer.print = {g1}*({g2}*{g3})")
+            for g in graphs1:
+                print(type(g))
+                pretty_print(g)
+                print(g._sympystr())
+                assert g == g.associative_kogan_kumar_insert(1, [])
+                print("Success")
+            # for perm2 in perms:
+            #     if perm2.inv == 0:
+            #         continue
+            #     for len2 in range(len(perm2.trimcode),n):
+            #         graphs2 = RCGraph.all_rc_graphs(perm2, len2)
+            #         for perm3 in perms:
+            #             if perm3.inv == 0:
+            #                 continue
+            #             for len3 in range(len(perm3.trimcode), n):
+            #                 graphs3 = RCGraph.all_rc_graphs(perm3, len3)
+            #                 for g31 in graphs3:
+            #                     for g32 in graphs2:
+            #                         for g33 in graphs1:
+            #                             g1 = rc_ring(g31)
+            #                             g2 = rc_ring(g32)
+            #                             g3 = rc_ring(g33)
+            #                             g = g1 * (g2 * g3)
+            #                             g_ = (g1 * g2) * g3
+            #                             diff = g - g_
+            #                             assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
+            #                             print("Success")
+            #                             pretty_print(g1 + g2 + g3)
+            #                             del g
+            #                             del g_
+            #                             # printer._print_seq(g1,g2,delimiter=" * ",parenthesize=True)printer.print = {g1}*({g2}*{g3})")
                                         # pretty_print(g1)
                                         # pretty_print(g2)
                                         # pretty_print(g3)

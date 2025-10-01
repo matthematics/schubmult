@@ -1,10 +1,12 @@
 import logging
 from functools import cache, cached_property
 
+from sympy.printing.defaults import Printable
+
 import schubmult.schub_lib.schub_lib as schub_lib
 from schubmult.perm_lib import Permutation, uncode
 from schubmult.rings import ASx
-from schubmult.symbolic import DefaultPrinting, S, prod
+from schubmult.symbolic import S, prod
 from schubmult.utils.perm_utils import add_perm_dict
 
 from .free_algebra import FreeAlgebra, FreeAlgebraElement
@@ -23,10 +25,13 @@ FA = FreeAlgebra(WordBasis)
 FAS = FA
 
 
-class RCGraph(tuple, DefaultPrinting):
-    # def __str__(self):
-    #     return self._sympystr()
+class RCGraph(Printable, tuple):
+    def __str__(self):
+        return self._sympystr()
 
+    def _pretty(self, printer=None):
+        return self._sympystr(printer)
+    
     def __eq__(self, other):
         if not isinstance(other, RCGraph):
             return NotImplemented
@@ -521,25 +526,27 @@ class RCGraph(tuple, DefaultPrinting):
         max_desc = len(self.perm.trimcode)
         diff_rows_stack = []
         desc_stack = []
+        interim = RCGraph([*self])
         while max_desc > descent:
             diff_rows = []
-            interim = RCGraph([*self])
-            while len(interim.perm.trimcode) > max_desc - 1:
+            
+            while interim.perm.inv > 0 and len(interim.perm.trimcode) > max_desc - 1:
                 prev_interim = interim
-                interim = interim.exchange_property(max(interim.perm.descents()) + 1)
+                interim = interim.exchange_property(len(interim.perm.trimcode))
                 for i in range(len(interim)):
                     if len(interim[i]) < len(prev_interim[i]):
                         rw = i + 1
                         diff_rows.append(rw)
                         break
-                desc_stack.append(max_desc)
-                diff_rows_stack.append(diff_rows)
-                max_desc = len(interim.perm.trimcode)
+
+            diff_rows_stack.append(diff_rows)
+            desc_stack.append(max_desc)
+            max_desc = len(interim.perm.trimcode)
         interim = interim.kogan_kumar_insert(descent, rows, debug=debug)
         for i in range(len(diff_rows_stack) - 1, -1, -1):
             diff_rows = diff_rows_stack[i]
-            descent = desc_stack[i]
-            interim = interim.kogan_kumar_insert(descent, diff_rows, debug=debug)
+            prev_descent = desc_stack[i]
+            interim = interim.kogan_kumar_insert(prev_descent, diff_rows, debug=debug)
         return interim
 
     def kogan_kumar_insert(self, descent, rows, debug=False):
