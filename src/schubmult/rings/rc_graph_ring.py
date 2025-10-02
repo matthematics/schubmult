@@ -1,10 +1,16 @@
+from sympy import StrPrinter
+
 from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
 from schubmult.rings.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from schubmult.rings.rc_graph import RCGraph
 
 
 class RCGraphPrintingTerm(TypedPrintingTerm):
-    pass
+    def _sympystr(self, printer=None):
+        return printer._print(self._key)
+    
+    def _pretty(self, printer):
+        return printer._print(self._key)
 
 
 class RCGraphRingElement(BaseSchubertElement):
@@ -55,8 +61,7 @@ class RCGraphRing(BaseSchubertRing):
                     prod = g1.prod_with_rc(g2)
                     for g3, c3 in prod.items():
                         result_dict[g3] = result_dict.get(g3, 0) + c1 * c2 * c3
-        else:
-            result_dict = {k: v * b for k, v in a.items()}
+            #result_dict = {k: v * b for k, v in a.items()}
         return self.from_dict(result_dict)
 
     def zero(self):

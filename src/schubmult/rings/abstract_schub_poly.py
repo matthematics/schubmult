@@ -109,6 +109,10 @@ class TypedPrintingTerm(AbstractSchubPoly):
         key = self._key
         return printer.doprint(key)
 
+    def _pretty(self, printer):
+        key = self._key
+        return printer.doprint(key)
+
     def __reduce__(self):
         return (self.__class__, self.args)
 
