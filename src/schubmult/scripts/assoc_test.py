@@ -258,7 +258,15 @@ if __name__ == "__main__":
                                         diff = g - g_
                                         pretty_print(g)
                                         pretty_print(g_)
-                                        assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
+                                        try:
+                                            assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
+                                        except AssertionError as e:
+                                            print("FAILURE")
+                                            print(e)
+                                            pretty_print(g1)
+                                            pretty_print(g2)
+                                            pretty_print(g3)
+                                            raise
                                         print("Success")
                                         
                                         del g
