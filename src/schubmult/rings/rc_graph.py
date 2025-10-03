@@ -840,30 +840,32 @@ class RCGraph(Printable, tuple):
         # . We define
 
         interim = RCGraph([*self])
-        # diff_rows = []
-        # while(len(interim.perm.trimcode)) > len(self) - 1:
-        #     interim, diff_row = interim.exchange_property(len(interim.perm.trimcode), return_row=True)
-        #     diff_rows.append(diff_row)
-        r = len(interim.perm.trimcode)
-        if r < len(self):
-            return interim.rowrange(0, len(self) - 1)
-        s = max([i+1 for i in range(r, len(self.perm)) if self.perm[i] < self.perm[r-1]])
+        diff_rows = []
+        while(len(interim.perm.trimcode)) > len(self) - 1:
+            interim, diff_row = interim.exchange_property(len(interim.perm.trimcode), return_row=True)
+            diff_rows.append(diff_row)
+        # r = len(interim.perm.trimcode)
+        # if r < len(self):
+        #     return interim.rowrange(0, len(self) - 1)
+        # s = max([i+1 for i in range(r, len(self.perm)) if self.perm[i] < self.perm[r-1]])
 
-        diff_row = None
-        for i in range(self.inv):
-            print(f"{i=} {self.left_to_right_inversion(i)=}")
-            if self.left_to_right_inversion(i) == (r, s):
-                interim = self.toggle_ref_at(*self.left_to_right_inversion_coord(i))
-                diff_row = self.left_to_right_inversion_coord(i)[0]
-                break
-        assert diff_row is not None, f"Could not find inversion {(r,s)} in {self.perm}, {self.perm_word=}, {self=}"
+        # diff_row = None
+        # for i in range(self.inv):
+        #     print(f"{i=} {self.left_to_right_inversion(i)=}")
+        #     if self.left_to_right_inversion(i) == (r, s):
+        #         interim = self.toggle_ref_at(*self.left_to_right_inversion_coord(i))
+        #         diff_row = self.left_to_right_inversion_coord(i)[0]
+        #         break
+        # assert diff_row is not None, f"Could not find inversion {(r,s)} in {self.perm}, {self.perm_word=}, {self=}"
+        refl = RCGraph.complete_sym_perms_op(self.perm, len(diff_rows), len(self))[interim.perm]
+        interim, diff_rows = interim.reverse_kogan_kumar_insert(len(self), refl, return_rows=True)
 
         #perm_down = interim.perm
         #reflections = RCGraph.complete_sym_perms_op(self.perm, self.perm.inv - perm_down.inv, len(self))[perm_down.inv]
-        interim, reflections = interim.kogan_kumar_insert(len(self) - 1, [diff_row], return_reflections=True)
+        interim, reflections = interim.kogan_kumar_insert(len(self) - 1, diff_rows, return_reflections=True)
 
         #interim = interim.kogan_kumar_insert(len(self) - 1, diff_rows, debug=debug)
-
+        assert len(interim.perm.trimcode) < len(self)
         return interim.rowrange(0, len(self) - 1)
 
     # put the descents back
@@ -879,11 +881,9 @@ class RCGraph(Printable, tuple):
             perm_list = []
             new_total_dict = {}
             for up_perm, last in up_perm_list:
-                pos_list = [i for i in range(k) if up_perm[i] < last]
-                for j in range(k, max(k + 2, len(up_perm) + 1)):
-                    if up_perm[j] >= last:
-                        continue
-                    for i in pos_list:
+                pos_list = [j for j in range(len(orig_perm)) if up_perm[j] == orig_perm[j]]
+                for i in range(k):
+                    for j in pos_list:
                         if has_bruhat_descent(up_perm, i, j):
                             new_perm_add = up_perm.swap(i, j)
                             perm_list += [(new_perm_add, up_perm[j])]
@@ -938,28 +938,42 @@ class RCGraph(Printable, tuple):
         
         print(f"{self=} {self.perm=}")
         rc_set.add(self.extend(1))
-        for i in range(len(self.perm_word) - 1, -1, -1):
-            inver = self.left_to_right_inversion(i)
-            the_graph = None
-            if inver[1] == len(self) + 1:
-                test_graph, (diff_row,) = self.reverse_kogan_kumar_insert(len(self), [self.left_to_right_inversion(i)], return_rows=True)
-                #diff_row = self.left_to_right_inversion_coord(i)[0]
-                print("Test graph")
-                print(test_graph)
-                the_graph = test_graph.kogan_kumar_insert(len(self) + 1, [diff_row], debug=debug).extend(1)
-                # for col in range(self.cols + 1, 0, -1):
-                #     print(f"{test_graph.right_root_at(diff_row, col)=}")
-                #     if not test_graph[diff_row - 1, col - 1] and test_graph.right_root_at(diff_row, col)[0] == len(self) + 1:
-                #         the_graph = test_graph.toggle_ref_at(diff_row, col).extend(1)
-                #         break
-                print("got")
-                print(the_graph)
-                #if the_graph:
-                    #raise
-                rc_set.add(the_graph)
-                # else:
-                #     # try:
-                #     # assert the_graph.zero_out_last_row() == self, f"{tuple(the_graph.zero_out_last_row())=}, {tuple(self)=}, {the_graph=}, {perm=}"
+        for (perm, _) in up_perms.keys():
+            if perm == self.perm:
+                continue
+            nperm = perm
+            while(len(nperm.trimcode)) > len(self):
+                nperm = nperm.swap(len(nperm.trimcode) - 1,len(nperm.trimcode))
+            refl = RCGraph.complete_sym_perms_op(self.perm, self.perm.inv - nperm.inv, len(self))[nperm]
+            interim, diff_rows = self.reverse_kogan_kumar_insert(len(self), refl, return_rows=True)
+            the_graph = interim.kogan_kumar_insert(len(self) + 1, diff_rows, debug=debug).extend(1)
+            rc_set.add(the_graph)
+        # for i in range(len(self.perm_word) - 1, -1, -1):
+        #     inver = self.left_to_right_inversion(i)
+        #     the_graph = None
+        #     if inver[1] == len(self) + 1:
+        #         print(f"{inver=}")
+        #         test_graph, (diff_row,) = self.reverse_kogan_kumar_insert(len(self), [self.left_to_right_inversion(i)], return_rows=True)
+        #         #diff_row = self.left_to_right_inversion_coord(i)[0]
+        #         print("Test graph")
+        #         print(test_graph)
+        #         the_graph = test_graph.kogan_kumar_insert(len(self) + 1, [diff_row], debug=debug).extend(1)
+        #         # for col in range(self.cols + 1, 0, -1):
+        #         #     print(f"{test_graph.right_root_at(diff_row, col)=}")
+        #         #     if not test_graph[diff_row - 1, col - 1] and test_graph.right_root_at(diff_row, col)[0] == len(self) + 1:
+        #         #         the_graph = test_graph.toggle_ref_at(diff_row, col).extend(1)
+        #         #         break
+        #         print("got")
+        #         print(the_graph)
+        #         #if the_graph:
+        #             #raise
+        #         rc_set.add(the_graph)
+        #         # else:
+        #         #     # try:
+        #         try:
+        #             assert the_graph.zero_out_last_row() == self, f"{tuple(the_graph.zero_out_last_row())=}, {self=}, {the_graph=}"
+        #         except AssertionError:
+        #             continue
                 #     # except AssertionError:
                 #         # print("Assertion failed")
                 #         # print(the_graph)
@@ -1013,7 +1027,7 @@ class RCGraph(Printable, tuple):
             if a == descent and b == descent + 1:
                 row, col = self.left_to_right_inversion_coord(i)
                 if return_row:
-                    return self.toggle_ref_at(), row
+                    return self.toggle_ref_at(row, col), row
                 return self.toggle_ref_at(row, col)
         raise ValueError("No such descent")
 
