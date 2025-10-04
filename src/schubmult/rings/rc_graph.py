@@ -14,7 +14,7 @@ from .free_algebra import FreeAlgebra, FreeAlgebraElement
 from .free_algebra_basis import WordBasis
 from .nil_hecke import NilHeckeRing
 
-init_logging(debug=True)
+init_logging(debug=False)
 logger = get_logger(__name__)
 # logging.basicConfig(level=logging.DEBUG,
 #                      format='%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s',)
@@ -117,7 +117,7 @@ class RCGraph(Printable, tuple):
 
         # return ((lower_perm)[start_root[0] - 1], (lower_perm)[start_root[1] - 1])
 
-    def reverse_kogan_kumar_insert(self, descent, reflection_path, return_rows=False, flip = False, debug=True, allowed_rows=None):
+    def reverse_kogan_kumar_insert(self, descent, reflection_path, return_rows=False, flip = False, debug=False, allowed_rows=None):
         from schubmult.utils.perm_utils import has_bruhat_ascent, has_bruhat_descent
 
         # pair_sequence = sorted(pair_sequence, key=lambda x: x[0]
@@ -154,9 +154,9 @@ class RCGraph(Printable, tuple):
 
         working_rc = self
         if debug:
-            print("Starting with")
-            print(working_rc)
-            print(working_rc.perm)
+            pass  # print("Starting with")
+            pass  # print(working_rc)
+            pass  # print(working_rc.perm)
         rows = []
         if allowed_rows:
             read_rows = allowed_rows
@@ -168,13 +168,13 @@ class RCGraph(Printable, tuple):
             for col in range(1, max(descent, self.cols)+1):
                 if ((not flip and working_rc.has_element(row, col)) or (flip and not working_rc.has_element(row, col))):
                     a, b = working_rc.right_root_at(row, col)
-                    print(f"{reflection_path=}")
-                    print(f"{(a,b)=}")
+                    pass  # print(f"{reflection_path=}")
+                    pass  # print(f"{(a,b)=}")
                     if is_relevant_crossing((a, b), working_rc.perm):
                         working_rc = working_rc.toggle_ref_at(row, col)
                         if debug:
-                            print("Toggled")
-                            print(working_rc)
+                            pass  # print("Toggled")
+                            pass  # print(working_rc)
                         a2 = a
                         if a2 in pair_dict_rev:
                             a2 = pair_dict_rev[a2]
@@ -266,7 +266,7 @@ class RCGraph(Printable, tuple):
     #             # print(f"{working_rc.perm=}, {self.perm=}")
     #           #  if debug:
     #           #      raise
-    #           #  self.kogan_kumar_insert(descent, rows, debug=True)
+    #           #  self.kogan_kumar_insert(descent, rows, debug=False)
     #             raise
     #     if return_reflections:
     #         reflections = []
@@ -276,7 +276,7 @@ class RCGraph(Printable, tuple):
     #         return working_rc, tuple(reflections)
     #     return working_rc  # , tuple(reflections)
 
-    # def find_ref_spots(self, descent, reflection_path, rows, debug=True):
+    # def find_ref_spots(self, descent, reflection_path, rows, debug=False):
     #     # from schubmult.utils.perm_utils import has_bruhat_descent
 
     #     # pair_sequence = sorted(pair_sequence, key=lambda x: x[0]
@@ -631,7 +631,7 @@ class RCGraph(Printable, tuple):
     #         return True
     #     return False
 
-    def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, pair_dict_rev=None, pair_dict=None, debug=True, start_index=-1):
+    def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, pair_dict_rev=None, pair_dict=None, debug=False, start_index=-1):
         working_rc = self
         if row > descent:
             raise ValueError("All rows must be less than or equal to descent")
@@ -773,7 +773,7 @@ class RCGraph(Printable, tuple):
                     working_rc = working_rc._kogan_kumar_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times=1, debug=debug)
         return working_rc._kogan_kumar_rectify(row_below - 1, descent, dict_by_a, dict_by_b)
 
-    def associative_kogan_kumar_insert(self, descent, rows, debug=True):
+    def associative_kogan_kumar_insert(self, descent, rows, debug=False):
         if len(self.perm.trimcode) <= descent:
             return self.kogan_kumar_insert(descent, rows, debug=debug)
         max_desc = len(self.perm.trimcode)
@@ -802,7 +802,7 @@ class RCGraph(Printable, tuple):
             interim = interim.kogan_kumar_insert(prev_descent, diff_rows, debug=debug)
         return interim
 
-    def associative_product(self, other, debug=True):
+    def associative_product(self, other, debug=False):
         max_desc = len(self.perm.trimcode)
         diff_rows_stack = []
         desc_stack = []
@@ -830,7 +830,7 @@ class RCGraph(Printable, tuple):
         return other
 
     # VERIFY
-    def kogan_kumar_insert(self, descent, rows, debug=True, reflections=None, return_reflections=False):
+    def kogan_kumar_insert(self, descent, rows, debug=False, reflections=None, return_reflections=False):
         dict_by_a = {}
         dict_by_b = {}
         # row is descent
@@ -890,7 +890,7 @@ class RCGraph(Printable, tuple):
                 # print(f"{working_rc.perm=}, {self.perm=}")
                 #  if debug:
                 #      raise
-                #  self.kogan_kumar_insert(descent, rows, debug=True)
+                #  self.kogan_kumar_insert(descent, rows, debug=False)
                 raise
         if return_reflections:
             reflections = []
@@ -992,7 +992,7 @@ class RCGraph(Printable, tuple):
     # # EXCHANGE PROPERTY GOES TO UNIQUE PERMUTATION
     # # KOGAN INSERT ENSURES WE GO UP PROPERLY
 
-    def zero_out_last_row(self, debug=True):
+    def zero_out_last_row(self, debug=False):
         from schubmult.schub_lib.schub_lib import pull_out_var
 
         # this is important!
@@ -1037,7 +1037,7 @@ class RCGraph(Printable, tuple):
         # perm_down = interim.perm
         # reflections = RCGraph.complete_sym_perms_op(self.perm, self.perm.inv - perm_down.inv, len(self))[perm_down.inv]
         interim, reflections = interim.kogan_kumar_insert(len(self) - 1, diff_rows, return_reflections=True)
-        print(f"{reflections=}")
+        pass   #   print(f"{reflections=}")
 
         # interim = interim.kogan_kumar_insert(len(self) - 1, diff_rows, debug=debug)
         assert len(interim.perm.trimcode) < len(self)
@@ -1103,7 +1103,7 @@ class RCGraph(Printable, tuple):
             back = self.rowrange(row, len(self))
         return (front, back)
 
-    def right_zero_act(self, debug=True):
+    def right_zero_act(self, debug=False):
         if self.perm.inv == 0:
             return {RCGraph([*self, ()])}
 
@@ -1139,25 +1139,20 @@ class RCGraph(Printable, tuple):
             
             
             assert interim.perm == perm
-            print("Put it together")
-            print(interim)
-            print("Starting with")
-            print(rc)
+            # print("Put it together")
+            # print(interim)
+            # print("Starting with")
+            # print(rc)
             # the reflections may not remain in the same order
             diff_rows.sort()
             # tracking_perm = ~interim.perm
             # backing_perm = Permutation([])
             order_inserted = []
-            print(f"{diff_rows=}")
-            print(f"{descs=}")
-            ref_dict = RCGraph.complete_sym_perms(rc.perm, perm.inv - rc.inv, len(self) + 1)
-            print(f"{ref_dict=}")
-            reflections_to_get_in = ref_dict[perm]
-            #reflections_to_get_in = list(reversed(reflections_to_get_in))
-            # rc = rc.reverse_kogan_kumar_insert(len(self) + 1, reflections_to_get_in, flip=True, debug=True, allowed_rows = diff_rows)
-            # stick the descs in
-            print("Starting with")
-            print(rc)
+            pass   #   print(f"{diff_rows=}")
+            pass   #   print(f"{descs=}")
+            pass   #   print(f"{ref_dict=}")
+            pass   #   print("Starting with")
+            pass   #   print(rc)
             for d in descs:
                 for index, row in enumerate(diff_rows):
                     i = row - 1
@@ -1169,11 +1164,11 @@ class RCGraph(Printable, tuple):
                                 rc = rc.toggle_ref_at(i + 1, j + 1)
                                 found = True
                                 if not rc.is_valid:
-                                    print("Not valid")
-                                    print(rc)
+                                    pass   #   print("Not valid")
+                                    pass   #   print(rc)
                                     rc = rc.exchange_property(d)
-                                    print("Fixed")
-                                    print(rc)
+                                    pass   #   print("Fixed")
+                                    pass   #   print(rc)
                                 break
                         if found:
                             break
@@ -1266,11 +1261,6 @@ class RCGraph(Printable, tuple):
             #                                     found = True
             #                                     assert not interim[r2 - 1, col2 - 1]
             #                                     break
-            #                                 # else:
-            #                                 #     interim = interim.toggle_ref_at(r, j + 1)
-            #                                 #     found = False
-            #                                 #     break
-
             #                     assert found, f"{interim=} {backing_perm=} {tracking_perm=}, {r, j + 1} {a2, b2}"
 
             #                     tracking_perm = tracking_perm.swap(a - 1, a)
@@ -1282,8 +1272,8 @@ class RCGraph(Printable, tuple):
             #rc = interim  # .extend(1)
             
             assert rc.is_valid, f"{rc=}, {rc.perm=}, {self=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=}"
-            print("Finished with valid rc")
-            print(rc)
+            # print("Finished with valid rc")
+            # print(rc)
             try:
                 assert rc.perm.inv == perm.inv
                 assert rc.perm == perm, f"{rc.perm=} {perm=}, {self.perm=}, {diff_rows=}"
@@ -1523,7 +1513,7 @@ class RCGraph(Printable, tuple):
         from sympy.printing.str import StrPrinter
 
         if not printer:
-            printer = StrPrinter()
+            pass  # printer = StrPrinter()
         return printer._print_MatrixBase(self)
 
     def _pretty(self, printer):
@@ -1564,7 +1554,7 @@ class RCGraph(Printable, tuple):
         from sympy.printing import StrPrinter
 
         if not printer:
-            printer = StrPrinter()
+            pass  # printer = StrPrinter()
         # Handle zero dimensions:
         if self.rows == 1:
             return "RCGraph([%s])" % self.table(printer, rowsep=",\n")  # noqa: UP031
