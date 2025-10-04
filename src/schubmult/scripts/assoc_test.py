@@ -253,6 +253,7 @@ if __name__ == "__main__":
                                         g1 = rc_ring(g31)
                                         g2 = rc_ring(g32)
                                         g3 = rc_ring(g33)
+                                        print(f"{g32=} {len(g32)=} {g32.perm=} * {g33=} {len(g33)=} {g33.perm=} =?= ({g32}*{g33})")
                                         g = g1 * (g2 * g3)
                                         g_ = (g1 * g2) * g3
                                         diff = g - g_

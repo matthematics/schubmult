@@ -44,8 +44,8 @@ class RCGraph(Printable, tuple):
     def is_valid(self):
         if self.perm.inv != len(self.perm_word):
             return False
-        # if max(self.perm.descents()) + 1 > len(self):
-        #     return False
+        if len(self.perm.trimcode) > len(self):
+            return False
         return True
 
     def shiftup(self, shift):
@@ -169,7 +169,7 @@ class RCGraph(Printable, tuple):
         if flip:
             read_rows.reverse()
         for row in read_rows:
-            for col in range(max(descent, self.cols)+10, 0, -1):
+            for col in range(max(descent, self.cols), 0, -1):
                 if working_rc.has_element(row, col):
                     a, b = working_rc.right_root_at(row, col)
                     pass  # print(f"{reflection_path=}")
@@ -210,9 +210,10 @@ class RCGraph(Printable, tuple):
                                         working_rc = working_rc.toggle_ref_at(row, col2)
                                         rows.pop()
                                     break
+                                    
 
         assert len(pair_dict_rev) == 0, f"{pair_dict=}, {pair_dict_rev=}, {working_rc=}"
-
+        assert working_rc.perm.bruhat_leq(self.perm)
         if return_rows:
             return working_rc, rows
         return working_rc
@@ -353,7 +354,7 @@ class RCGraph(Printable, tuple):
     @cache
     def all_rc_graphs(cls, perm, length=-1, weight=None):
         if length > 0 and length < len(perm.trimcode):
-            raise ValueError("Length must be at least the last descent of the permutation")
+            raise ValueError(f"Length must be at least the last descent of the permutation, permutation has {len(perm.trimcode)} rows and {perm=}, got {length=}")
         if length < 0:
             length = len(perm.trimcode)
         if weight and len(weight) != length:
@@ -839,16 +840,16 @@ class RCGraph(Printable, tuple):
     def right_zero_act(self, debug=True):
         if self.perm.inv == 0:
             return {RCGraph([*self, ()])}
-
+        assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
         up_perms = ASx(self.perm, len(self)) * ASx(uncode([0]), 1)
 
         rc_set = set()
 
         # print(f"{self=} {self.perm=}")
-        rc_set.add(self.extend(1))
+        #rc_set.add(self.extend(1))
         for perm, _ in up_perms.keys():
-            if perm == self.perm:
-                continue
+            # if perm == self.perm:
+            #     continue
             nperm = perm
             descs = []
             while (len(nperm.trimcode)) > len(self):
@@ -870,25 +871,40 @@ class RCGraph(Printable, tuple):
             # descs.sort(reverse=True)
             # desc_word = [*descs]
             
-            rc = RCGraph([*interim.rowrange(0,len(self)), tuple(range(len(self.perm), len(self), -1))])
+            rc = RCGraph([*interim.rowrange(0,len(self)), tuple(range(len(interim.perm), len(self), -1))])
             #rc = interim.rowrange(0,len(self)).extend(1)
             
             rc = rc.kogan_kumar_insert(len(self) + 1, diff_rows)
+            print(f"{self.perm=} {rc.perm=}")
             rc = rc.rowrange(0, len(self)).extend(1)
+            assert len(rc.perm.trimcode) <= len(self) + 1, f"{rc=}, {rc.perm=}, {self=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=}, {self=}, {len(self)=}, {rc.perm.trimcode=}, {len(rc.perm.trimcode)=}"
             assert rc.is_valid, f"{rc=}, {rc.perm=}, {self=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=}"
             # print("Finished with valid rc")
             # print(rc)
-            try:
-                assert rc.perm.inv == perm.inv
+            #try:
+            assert rc.perm.inv == perm.inv
                 #assert rc.perm == perm, f"{rc.perm=} {perm=}, {self.perm=}, {diff_rows=}"
-                assert rc.zero_out_last_row() == self, f"{rc=} {rc.zero_out_last_row()=} {self=}"
-                rc_set.add(rc)
+            assert len(rc) == len(self) + 1, f"{len(rc)=}, {len(self)=}, {rc=}, {self=}"
+            assert rc.zero_out_last_row() == self, f"{rc=} {rc.zero_out_last_row()=} {self=}"
+            assert len(rc) == len(self) + 1, f"{len(rc)=}, {len(self)=}, {rc=}, {self=}"
+            rc_set.add(rc)
             # assert rc.zero_out_last_row() == self, f"{rc=} {rc.perm=} {self=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=} {rc.zero_out_last_row()=}"
-            except AssertionError:
-                for rc in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=tuple([*self.length_vector, 0])):
-                    if rc.length_vector[:-1] == self.length_vector and rc.zero_out_last_row() == self:
-                        assert rc in rc_set, f"{rc=} {rc.perm=} {self=}, {self.perm=}, {rc_set=}"
-                    # print(f"Added {rc=}, {rc.perm=}, {rc.length_vector=}")
+            # except AssertionError:
+            #     for rc in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=tuple([*self.length_vector, 0])):
+            #         if rc.length_vector[:-1] == self.length_vector and rc.zero_out_last_row() == self:
+            #             assert rc in rc_set, f"{rc=} {rc.perm=} {self=}, {self.perm=}, {rc_set=}"
+            #         # print(f"Added {rc=}, {rc.perm=}, {rc.length_vector=}")
+        try:
+            assert len(rc_set) == len(up_perms), f"{len(rc_set)=}, {len(up_perms)=}, {rc_set=}, {up_perms=}"
+            # assert rc.zero_out_last_row() == self, f"{rc=} {rc.perm=} {self=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=} {rc.zero_out_last_row()=}"
+        except AssertionError:
+            assert len(rc_set) < len(up_perms)
+            for (perm, lent) in up_perms.keys():
+                assert lent == len(self) + 1
+                for rc0 in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=tuple([*self.length_vector, 0])):
+                    if rc0.length_vector[:-1] == self.length_vector and rc0.zero_out_last_row() == self:
+                        assert rc0 in rc_set, f"{rc=} {rc.perm=} {self=}, {self.perm=}, {rc_set=}"
+                        # print(f"Added {rc=}, {rc.perm=}, {rc.length_vector=}")
 
         return rc_set
 
@@ -999,7 +1015,8 @@ class RCGraph(Printable, tuple):
     def prod_with_rc(self, other):
         if self.perm.inv == 0:
             return {RCGraph([*self, *other.shiftup(len(self))]): 1}
-        num_zeros = len(other) if other.perm.inv == 0 else max(len(other), len(other.perm))
+        num_zeros = max(len(other), len(other.perm))
+        assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
         base_rc = self
         buildup_module = {base_rc: 1}
 
@@ -1014,6 +1031,9 @@ class RCGraph(Printable, tuple):
 
         for rc, coeff in buildup_module.items():
             new_rc = RCGraph([*rc[: len(self)], *other.shiftup(len(self))])
+            assert len(new_rc) == len(self) + len(other)
+            # if len(new_rc.perm.trimcode) > len(new_rc):
+            #     new_rc = new_rc.extend(len(new_rc.perm.trimcode) - len(new_rc))
             if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(new_rc):
                 ret_module = add_perm_dict(ret_module, {new_rc: coeff})
 
