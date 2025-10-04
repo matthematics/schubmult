@@ -1291,10 +1291,9 @@ class RCGraph(Printable, tuple):
                 rc_set.add(rc)
             # assert rc.zero_out_last_row() == self, f"{rc=} {rc.perm=} {self=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=} {rc.zero_out_last_row()=}"
             except AssertionError:
-                for perm, _ in up_perms.keys():
-                    for rc in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=tuple([*self.length_vector, 0])):
-                        if rc.length_vector[:-1] == self.length_vector and rc.zero_out_last_row() == self:
-                            assert rc in rc_set, f"{rc=} {rc.perm=} {self=}, {self.perm=}, {rc_set=}"
+                for rc in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=tuple([*self.length_vector, 0])):
+                    if rc.length_vector[:-1] == self.length_vector and rc.zero_out_last_row() == self:
+                        assert rc in rc_set, f"{rc=} {rc.perm=} {self=}, {self.perm=}, {rc_set=}"
                     # print(f"Added {rc=}, {rc.perm=}, {rc.length_vector=}")
 
         return rc_set
