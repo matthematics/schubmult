@@ -1142,12 +1142,17 @@ class RCGraph(Printable, tuple):
                                                 found = True
                                                 assert not interim[r2-1, col2-1]
                                                 break
+                                            # else:
+                                            #     interim = interim.toggle_ref_at(r, j + 1)
+                                            #     found = False
+                                            #     break
+
                                 
                                 assert found, f"{interim=} {backing_perm=} {tracking_perm=}, {r,j+1} {a2,b2}"
+                            
                                 tracking_perm = tracking_perm.swap(a-1, a)
                                 backing_perm = backing_perm.swap(d-1, d)
                                 break
-                                
 
                     num += 1
             # Now pull them back
