@@ -18,6 +18,10 @@ n = 100
 
 
 class Permutation:
+
+    def act_root(self, a, b):
+        return self[a-1], self[b-1]
+
     @classmethod
     def all_permutations(cls, n):
         from itertools import permutations

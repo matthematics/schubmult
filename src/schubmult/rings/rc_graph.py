@@ -53,47 +53,69 @@ class RCGraph(Printable, tuple):
 
     @cache
     def right_root_at(self, i, j):
-        from bisect import bisect_left
-
+        # index = self.bisect_left_coords_index(i, j)
+        # refl = Permutation.ref_product(*(list(reversed(self.perm_word[index:]))))
+        # return refl.act_root(i + j -1, i + j)
         start_root = (i + j - 1, i + j)
-        if i > len(self):
-            return start_root
-        row = self[i - 1]
-        revved = [*row]
-        revved.reverse()
+        for j2 in range(j - 1, 0, -1):
+            if self[i - 1, j2 - 1]:
+                start_root = Permutation.ref_product(self[i-1, j2-1]).act_root(*start_root)
+        for i2 in range(i+1, self.rows + 1):
+            for j2 in range(1, self.cols + 1):
+                if self[i2 - 1, j2 - 1]:
+                    start_root = Permutation.ref_product(self[i2-1, j2-1]).act_root(*start_root)
+        return start_root
 
-        index = bisect_left(revved, i + j - 1)
-        assert index >= len(revved) or revved[index] != i + j - 1 or self.has_element(i, j)
-        perm = Permutation.ref_product(*revved[:index])
-        start_root = (perm[start_root[0] - 1], perm[start_root[1] - 1])
-        lower_perm = Permutation([])
+        # from bisect import bisect_left
 
-        for rrow in self[i:]:
-            lower_perm *= Permutation.ref_product(*rrow)
+        # start_root = (i + j - 1, i + j)
+        # if i > len(self):
+        #     return start_root
+        # row = self[i - 1]
+        # revved = [*row]
+        # revved.reverse()
 
-        return ((~lower_perm)[start_root[0] - 1], (~lower_perm)[start_root[1] - 1])
+        # index = bisect_left(revved, i + j - 1)
+        # assert index >= len(revved) or revved[index] != i + j - 1 or self.has_element(i, j)
+        # perm = Permutation.ref_product(*revved[:index])
+        # start_root = (perm[start_root[0] - 1], perm[start_root[1] - 1])
+        # lower_perm = Permutation([])
+
+        # for rrow in self[i:]:
+        #     lower_perm *= Permutation.ref_product(*rrow)
+
+        # return ((~lower_perm)[start_root[0] - 1], (~lower_perm)[start_root[1] - 1])
 
     @cache
     def left_root_at(self, i, j):
-        from bisect import bisect_left
-
         start_root = (i + j - 1, i + j)
-        if i > len(self):
-            return start_root
-        row = self[i - 1]
-        revved = [*row]
-        # revved.reverse()
+        for j2 in range(j + 1, self.cols):
+            if self[i - 1, j2 - 1]:
+                start_root = Permutation.ref_product(self[i-1, j2-1]).act_root(*start_root)
+        for i2 in range(i - 1, 0, -1):
+            for j2 in range(1, self.cols + 1):
+                if self[i2 - 1, j2 - 1]:
+                    start_root = Permutation.ref_product(self[i2-1, j2-1]).act_root(*start_root)
+        return start_root
+        # from bisect import bisect_right
 
-        index = bisect_left(revved, i + j - 1)
-        assert index >= len(revved) or revved[index] != i + j - 1 or self.has_element(i, j)
-        perm = Permutation.ref_product(*revved[:index])
-        start_root = (perm[start_root[0] - 1], perm[start_root[1] - 1])
-        lower_perm = Permutation([])
-        if i > 1:
-            for rrow in reversed(self[: i - 1]):
-                lower_perm *= Permutation.ref_product(*rrow)
+        # start_root = (i + j - 1, i + j)
+        # if i > len(self):
+        #     return start_root
+        # row = self[i - 1]
+        # revved = [*row]
+        # # revved.reverse()
 
-        return ((lower_perm)[start_root[0] - 1], (lower_perm)[start_root[1] - 1])
+        # index = bisect_right(revved, i + j - 1)
+        # assert index >= len(revved) or revved[index] != i + j - 1 or self.has_element(i, j)
+        # perm = Permutation.ref_product(*revved[:index])
+        # start_root = (perm[start_root[0] - 1], perm[start_root[1] - 1])
+        # lower_perm = Permutation([])
+        # if i > 1:
+        #     for rrow in reversed(self[: i - 1]):
+        #         lower_perm *= Permutation.ref_product(*rrow)
+
+        # return ((lower_perm)[start_root[0] - 1], (lower_perm)[start_root[1] - 1])
 
     def reverse_kogan_kumar_insert(self, descent, reflection_path, return_rows = False, debug=True):
         from schubmult.utils.perm_utils import has_bruhat_descent
@@ -919,22 +941,41 @@ class RCGraph(Printable, tuple):
         return cls.fa_hom(*word[:-1]) * cls.fa_hom(word[-1])
 
     def toggle_ref_at(self, i, j):
-        from bisect import bisect_left
+        from bisect import bisect_right
 
         assert i > 0 and j > 0  # noqa: PT018
-        a, b = self.right_root_at(i, j)
-        row = self[i - 1]
-        rev_row = [*row]
-        rev_row.reverse()
-        index = bisect_left(rev_row, i + j - 1)
-        if index >= len(rev_row):
-            new_row = [i + j - 1, *row]
+        # a, b = self.right_root_at(i, j)
+        # row = self[i - 1]
+        # rev_row = [*row]
+        # rev_row.reverse()
+        # print(f"{rev_row=}")
+        # print(f"{self.perm_word=}")
+        # index = bisect_right(rev_row, i + j - 1)
+        # if index >= len(rev_row):
+        #     new_row = list(reversed[i + j - 1, *row]
+        # else:
+        #     print(f"{rev_row[index]=}")
+        #     print(f"{rev_row=}")
+        #     if rev_row[index] == i + j - 1:
+        #         new_row = list(reversed([*rev_row[:index], *rev_row[index+1:]]))
+        #     else:
+        #         rev_row.insert(index, i + j - 1)
+        #         new_row = list(reversed(rev_row))
+        # return RCGraph([*self[: i - 1], tuple(new_row), *self[i:]])
+        if self[i-1, j-1]:
+            row = list(self[i-1])
+            row.remove(i + j - 1)
+            return RCGraph([*self[:i-1],tuple(row),*self[i:]])
+        row = list(self[i-1])
+        if len(row) == 0:
+            row = [i+j-1]
         else:
-            if rev_row[index] == i + j - 1:
-                new_row = [*row[: len(row) - index - 1], *row[len(row) - index :]]
-            else:
-                new_row = [*row[: len(row) - index], i + j - 1, *row[len(row) - index :]]
-        return RCGraph([*self[: i - 1], tuple(new_row), *self[i:]])
+            index = 0
+            while index < len(row) and row[index] > i + j - 1:
+                index += 1
+            index -= 1
+            row.insert(index, i + j - 1)
+        return RCGraph([*self[:i-1],tuple(row),*self[i:]])
 
     # # THIS IS KEY
     # # EXCHANGE PROPERTY GOES TO UNIQUE PERMUTATION
@@ -957,14 +998,14 @@ class RCGraph(Printable, tuple):
 
         interim = RCGraph([*self])
         diff_rows = []
-        print("self")
-        print(self)
+        # print("self")
+        # print(self)
         while(len(interim.perm.trimcode)) > len(self) - 1:
             interim, diff_row = interim.exchange_property(len(interim.perm.trimcode), return_row=True)
-            print("Removed descent ", len(interim.perm.trimcode) + 1, " at row", diff_row)
-            print(interim)
+            # print("Removed descent ", len(interim.perm.trimcode) + 1, " at row", diff_row)
+            # print(interim)
             diff_rows.append(diff_row)
-        print(f"{diff_rows=}")
+        #print(f"{diff_rows=}")
         # r = len(interim.perm.trimcode)
         # if r < len(self):
         #     return interim.rowrange(0, len(self) - 1)
@@ -987,8 +1028,8 @@ class RCGraph(Printable, tuple):
 
         #interim = interim.kogan_kumar_insert(len(self) - 1, diff_rows, debug=debug)
         assert len(interim.perm.trimcode) < len(self)
-        print("Final")
-        print(interim)
+        # print("Final")
+        # print(interim)
         return interim.rowrange(0, len(self) - 1)
 
     # put the descents back
@@ -1052,11 +1093,67 @@ class RCGraph(Printable, tuple):
             word_perm = Permutation.ref_product(*desc_word)
             refs = [word_perm.right_root_at(i) for i in range(word_perm.inv)]
             
-            print(f"{descs=}")
-            print(f"{refs=}")
-            print(f"{diff_rows=}")
-            print(interim)
-            interim = interim.kogan_kumar_insert(len(self) + 1, diff_rows, reflections=refs)
+            # print(f"{descs=}")
+            # print(f"{refs=}")
+            # print(f"{diff_rows=}")
+            
+            # stick the descents in
+            interim = RCGraph([*interim, tuple(sorted(descs, reverse=True))])
+            # print("Put it together")
+
+            assert interim.perm == perm
+            # print(interim)
+            diff_rows.sort()
+            tracking_perm = ~interim.perm
+            backing_perm = Permutation([])
+            for r in range(1, len(self) + 1):
+                num = 0
+                # almost good, need to go to the right
+
+                while num < 20 and len(interim[r-1]) != len(self[r-1]):
+                    # find a negative root in the row
+                    for j in range(self.cols, -1, -1):
+                        if not interim[r-1, j]:
+                            a, b = interim.left_root_at(r, j + 1)
+                            a, b = (~backing_perm).act_root(a,b)
+                            #print(f"{a, b}")
+
+                            if b == a + 1 and tracking_perm[a-1] > tracking_perm[a]:
+                                d = r + j
+
+                                interim = interim.toggle_ref_at(r, j + 1)
+                                # print("Toggled")
+                                # print(interim)
+                                a2, b2 = b, a
+                                found = False
+                                for r2 in range(r+1, len(self) + 2):
+                                    for col2 in range(interim.cols + 1):
+                                        if interim[r2-1, col2-1]:
+                                            a3, b3 = (~backing_perm).act_root(*interim.left_root_at(r2, col2))
+                                            #(~backing_perm).act_root(*interim.left_root_at(r2, col2))
+                                            # a3 = (~backing_perm)[a3 - 1]
+                                            # b3 = (~backing_perm)[b3 - 1]
+                                            # print(f"{(r2,col2)=}")
+                                            # print(f"{(a3, b3)=}")
+                                            if (a3, b3) == (a2, b2):
+                                                interim = interim.toggle_ref_at(r2, col2)
+                                                # print(f"Back toggled at {r2, col2}")
+                                                # print(interim)
+                                                found = True
+                                                assert not interim[r2-1, col2-1]
+                                                break
+                                
+                                assert found, f"{interim=} {backing_perm=} {tracking_perm=}, {r,j+1} {a2,b2}"
+                                tracking_perm = tracking_perm.swap(a-1, a)
+                                backing_perm = backing_perm.swap(d-1, d)
+                                break
+                                
+
+                    num += 1
+            # Now pull them back
+
+            #interim = interim.kogan_kumar_insert(len(self) + 1, diff_rows, reflections=refs)
+
             #??
             # print(f"{refs=}")
             # print(F"{diff_rows=}")
@@ -1104,9 +1201,12 @@ class RCGraph(Printable, tuple):
                             # num += 1
                             # break
                 # interim = interim.kogan_kumar_insert(len(self) + 1, [r], debug=debug)
-            
-            rc = interim.extend(1)
+
+            rc = interim#.extend(1)
+            # print(rc)
             assert rc.is_valid
+            assert rc.perm == perm
+            assert rc.zero_out_last_row() == self
             rc_set.add(rc)
             #assert rc.zero_out_last_row() == self, f"{rc=} {rc.perm=} {self=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=} {rc.zero_out_last_row()=}"
         for (perm, _) in up_perms.keys():
@@ -1125,7 +1225,17 @@ class RCGraph(Printable, tuple):
         inversions.sort(key=lambda x: (x[0], -x[1]))
         # print(f"{inversions=}")
 
-        return bisect_left(inversions, (row, col), key=lambda x: (x[0], -x[1]))
+        return bisect_left(inversions, (row, col))
+
+    @cache
+    def bisect_right_coords_index(self, row, col):
+        from bisect import bisect_right
+
+        inversions = [self.left_to_right_inversion_coord(i) for i in range(len(self.perm_word))]
+        inversions.sort(key=lambda x: (x[0], -x[1]))
+        # print(f"{inversions=}")
+
+        return bisect_right(inversions, (row, col))
 
     def exchange_property(self, descent, left=False, return_row = False):
         for i in range(len(self.perm_word) + 1):
