@@ -141,7 +141,7 @@ class RCGraph(Printable, tuple):
                 if root[0] not in pair_dict_rev or pair_dict_rev.get(root[0], 0) != pair_dict_rev.get(root[1], 0):
                     return False
                 return True
-            return root[0] in pair_dict and root[1] in pair_dict[root[0]]# and ((not flip and has_bruhat_descent(prm, root[0] - 1, root[1] - 1) or (flip and has_bruhat_ascent(prm, root[0] - 1, root[1] - 1))))
+            return root[0] in pair_dict and root[1] in pair_dict[root[0]] and has_bruhat_descent(prm, root[0] - 1, root[1] - 1)
 
         # may have to add q, s or a_i, q
         def is_relevant_noncrossing(root):
@@ -213,165 +213,6 @@ class RCGraph(Printable, tuple):
             return working_rc, rows
         return working_rc
 
-    # def insert_ref_rows(self, descent, rows, reflection_path):
-    #     dict_by_a = {}
-    #     dict_by_b = {}
-    #     # row is descent
-    #     # inserting times
-    #     pair_dict = {}
-    #     for ref in reflection_path:
-    #         a, b = ref
-    #         if a not in pair_dict:
-    #             pair_dict[a] = set()
-    #         pair_dict[a].add(b)
-    #     pair_dict_rev = {}
-    #     for a, b_list in pair_dict.items():
-    #         for b in b_list:
-    #             assert a <= descent and descent < b  # noqa: PT018
-    #             pair_dict_rev[b] = a
-    #     working_rc = RCGraph([*self])
-    #     if len(rows) == 0:
-    #         return self
-    #     rows_grouping = {}
-    #     for r in rows:
-    #         rows_grouping[r] = rows_grouping.get(r, 0) + 1
-    #     if max(rows) > len(working_rc):
-    #         working_rc = working_rc.extend(max(rows) - len(working_rc))
-    #     rows = sorted(rows, reverse=True)
-    #   #  if debug:
-    #         # print(f"inserting {rows=}")
-    #     for row in sorted(rows_grouping.keys(), reverse=True):
-    #         num_times = rows_grouping[row]
-    #       #  if debug:
-    #             # print(f"Inserting {row=} {num_times=}")
-    #             # print(working_rc)
-    #             # print(f"{working_rc.perm.inv=}, {self.perm.inv=}")
-    #         last_working_rc = working_rc
-    #         working_rc = working_rc._kogan_kumar_insert_row(row, descent, dict_by_a, dict_by_b, num_times)
-
-    #         if not working_rc.is_valid:
-    #             working_rc = working_rc._kogan_kumar_rectify(row, descent, dict_by_a, dict_by_b)  # minus one?
-    #       #  if debug:
-    #             # print("Next iteration")
-    #             # print(working_rc)
-    #             # print(f"{working_rc.perm.inv=}, {self.perm.inv + index + 1=}")
-
-    #         try:
-    #             assert len(working_rc[row - 1]) == len(last_working_rc[row - 1]) + num_times
-    #         except AssertionError:
-    #             # print("Assertion failed")
-    #             # print(working_rc)
-    #             # print(f"{working_rc.perm.inv=}, {self.perm.inv + total_num=}")
-    #             # print(f"{dict_by_a=}, {dict_by_b=}")
-    #             # print(f"{working_rc.perm=}, {self.perm=}")
-    #           #  if debug:
-    #           #      raise
-    #           #  self.kogan_kumar_insert(descent, rows, debug=False)
-    #             raise
-    #     if return_reflections:
-    #         reflections = []
-    #         for a in sorted(dict_by_a.keys()):
-    #             reflections = [*reflections, *[(a, b) for b in dict_by_a[a]]]
-    #         # print(f"Returning {working_rc=}, {reflections=}")
-    #         return working_rc, tuple(reflections)
-    #     return working_rc  # , tuple(reflections)
-
-    # def find_ref_spots(self, descent, reflection_path, rows, debug=False):
-    #     # from schubmult.utils.perm_utils import has_bruhat_descent
-
-    #     # pair_sequence = sorted(pair_sequence, key=lambda x: x[0]
-    #     pair_dict = {}
-    #     for ref in reflection_path:
-    #         a, b = ref
-    #         if a not in pair_dict:
-    #             pair_dict[a] = set()
-    #         pair_dict[a].add(b)
-    #     pair_dict_rev = {}
-    #     # ref_by_index = {}
-    #     for a, b_list in pair_dict.items():
-    #         for b in b_list:
-    #             assert a <= descent and descent < b  # noqa: PT018
-    #             pair_dict_rev[b] = a
-
-    #     def is_relevant_noncrossing(root):
-    #         # min_root = max(pair_dict.keys())
-    #         # return root[1] in pair_dict_rev and pair_dict_rev[root[1]] == root[0]
-    #         if root[0] not in pair_dict:
-    #             if root[0] not in pair_dict_rev or pair_dict_rev.get(root[0], 0) != pair_dict_rev.get(root[1], 0):
-    #                 return False
-    #             return True
-    #         return root[1] in pair_dict[root[0]]
-    #         # if root[0] not in pair_dict:
-    #         #     if root[1] in pair_dict or pair_dict_rev.get(root[0], 0) != pair_dict_rev.get(root[1], 0):
-    #         #         return False
-    #         #     return True
-    #         # return root[1] in pair_dict[root[0]] and has_bruhat_descent(prm, root[0] - 1, root[1] - 1)
-
-    #     # may have to add q, s or a_i, q
-    #     def is_relevant_crossing(root):
-    #         # top, bottom = max(root[1], root[0]), min(root[0], root[1])
-    #         return ((root[0] > descent and descent >= root[1]) and (root[0] not in pair_dict_rev or (root[1] in pair_dict_rev and root[0] > descent and root[0] not in pair_dict_rev)))
-
-    #     # Add this intersection. If we are in the first case, insert (s, q) into the sequence (ai, bi) in the rightmost position, such that ai’s remain nondecreasing in the # noqa: RUF003
-    #     # sequence. ((s, q) are the rows where the two strands shown in Figure 3 originate.) If
-    #     # we are in the second case, add (ai, q) just before where (a, bi) is in the sequence.
-
-    #     working_rc = self
-    #   #  if debug:
-    #         # print("Starting with")
-    #         # print(working_rc)
-    #         # print(working_rc.perm)
-    #     times = 0
-    #     while len(rows) > 0 and times < 10:
-    #         for row in sorted(rows):
-    #             print(row)
-    #             for col in range(self.cols + descent + 1, -1, -1):
-    #                 if not working_rc.has_element(row, col):
-    #                     a, b = working_rc.right_root_at(row, col)
-    #                     print(f"{a,b}")
-    #                     if is_relevant_noncrossing((a, b)):
-    #                         working_rc = working_rc.toggle_ref_at(row, col)
-    #                         print(working_rc)
-    #                         a2 = a
-    #                         if a2 in pair_dict_rev:
-    #                             a2 = pair_dict_rev[a2]
-    #                         pair_dict[a2].remove(b)
-    #                         if len(pair_dict[a2]) == 0:
-    #                             del pair_dict[a2]
-    #                         del pair_dict_rev[b]
-    #                         rows.remove(row)
-    #                         for col2 in range(1, col):
-    #                             if working_rc.has_element(row, col2):
-    #                                 a2, b2 = working_rc.right_root_at(row, col2)
-    #                                 if a2 < b2:
-    #                                     continue
-    #                                 if is_relevant_crossing((a2, b2)):
-    #                                     if b2 <= descent:
-    #                                         assert b2 not in pair_dict
-    #                                         if b2 not in pair_dict:
-    #                                             pair_dict[a2] = set()
-    #                                         pair_dict[a2].add(b2)
-    #                                         pair_dict_rev[b2] = a2
-    #                                         working_rc = working_rc.toggle_ref_at(row, col2)
-    #                                         rows.append(row)
-    #                                     else:
-    #                                         assert b2 in pair_dict_rev
-    #                                         assert a2 not in pair_dict_rev
-    #                                         a = pair_dict_rev[b2]
-    #                                         pair_dict[a].add(a2)
-    #                                         pair_dict_rev[a2] = a
-    #                                         working_rc = working_rc.toggle_ref_at(row, col2)
-    #                                         rows.append(row)
-
-    #                         break
-
-    #             print(rows)
-    #         times += 1
-
-    #     assert len(pair_dict_rev) == 0, f"{pair_dict=}, {pair_dict_rev=}, {working_rc=}"
-
-    #     return working_rc
-
     @cache
     def inversion_label(self, i, j):
         if i >= j:
@@ -439,20 +280,6 @@ class RCGraph(Printable, tuple):
     #     # reg._rc_graph = self
     #     return (P, Q)
 
-    def weight_word(self):
-        perm = self.perm
-        nz = len([a for a in perm.trimcode if a != 0])
-        root_dict = {perm.right_root_at(index): index for index in range(perm.inv)}
-        result_word = [9] * perm.inv
-        index = 0
-        perm_word = self.perm_word
-        for i, row in enumerate(self):
-            for _ in range(len(row)):
-                root = perm.right_root_at(index, word=perm_word)
-                result_word[root_dict[root]] = nz - perm.code_index_of_index(index)
-                index += 1
-        result_word.reverse()
-        return tuple(result_word)
 
     # def __matmul__(self, other):
     #     if isinstance(other, RCGraph):
@@ -566,47 +393,6 @@ class RCGraph(Printable, tuple):
     def extend(self, extra_rows):
         return RCGraph([*self, *tuple([()] * extra_rows)])
 
-    # this doesn't work
-    # strong exchange property
-    def extract_row(self, row):
-        debug = False
-        if row <= 0 or row > len(self):
-            raise ValueError("Row out of range")
-        interim = RCGraph([*self[:row]])
-
-        diff_rows = []
-
-        #  if debug:
-        # print("Zeroing out last row")
-        # print(self)
-        # print("-------")
-
-        diff_row = None
-        descs = []
-
-        # while len(interim.perm.trimcode) > row - 1:
-        #     prev_interim = interim
-        #     descs += [max(interim.perm.descents()) + 1]
-        #     interim = interim.exchange_property(max(interim.perm.descents()) + 1)
-        #     for i in range(len(interim)):
-        #         if len(interim[i]) < len(prev_interim[i]):
-        #             rw = i + 1
-        #             diff_rows.append(rw)
-        #             break
-        if len(interim.perm.trimcode) == len(self):
-            interim, diff_row = interim.exchange_property(len(interim.perm.trimcode), return_row=True)
-
-        if diff_row:
-            interim = interim.kogan_kumar_insert(row, diff_rows, debug=debug)
-
-        #  if debug:
-        # print("Got")
-        # print(interim)
-        # assert interim.length_vector[:-1] == self.length_vector[:-1]
-        if row != 1:
-            return RCGraph([*interim[: row - 1], *RCGraph(self[row:]).shiftup(-1)])
-        return RCGraph([*RCGraph(self[row:]).shiftup(-1)])
-
     # def __le__(self, other):
     #     if not isinstance(other, RCGraph):
     #         return NotImplemented
@@ -631,10 +417,13 @@ class RCGraph(Printable, tuple):
     #         return True
     #     return False
 
-    def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, pair_dict_rev=None, pair_dict=None, debug=False, start_index=-1):
+    def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, debug=False, start_index=-1):
         working_rc = self
         if row > descent:
             raise ValueError("All rows must be less than or equal to descent")
+
+        if row > len(self):
+            working_rc = working_rc.extend(row - len(self))
 
         i = start_index
         if i == -1:
@@ -654,40 +443,20 @@ class RCGraph(Printable, tuple):
                     flag = False
                     #  if debug:
                     # print(f"{dict_by_b=}")
-                    if _is_row_root(descent, (a, b)) and b not in dict_by_b and (pair_dict_rev is None or b in pair_dict_rev and a == pair_dict_rev[b]):
+                    if _is_row_root(descent, (a, b)) and b not in dict_by_b:
                         new_rc = working_rc.toggle_ref_at(row, i)
                         dict_by_a[a] = dict_by_a.get(a, set())
                         dict_by_a[a].add(b)
                         dict_by_b[b] = a
-                        if pair_dict_rev:
-                            pair_dict[a].remove(b)
-                            if len(pair_dict[a]) == 0:
-                                del pair_dict[a]
-                            del pair_dict_rev[b]
                         flag = True
                         working_rc = new_rc
                     #  if debug:
                     # print("Toggled a")
                     # print(working_rc)
-                    elif a in dict_by_b and b not in dict_by_b:
+                    elif a in dict_by_b and b> descent and b not in dict_by_b:
                         new_rc = working_rc.toggle_ref_at(row, i)
                         dict_by_a[dict_by_b[a]].add(b)
                         dict_by_b[b] = dict_by_b[a]
-                        flag = True
-                        working_rc = new_rc
-                    #  if debug:
-                    # print("Toggled b")
-                    # print(working_rc)
-                    elif pair_dict_rev and a in pair_dict_rev and b not in dict_by_b and b not in pair_dict_rev:
-                        new_rc = working_rc.toggle_ref_at(row, i)
-                        if pair_dict_rev[a] not in dict_by_a:
-                            dict_by_a[pair_dict_rev[a]] = set()
-                        dict_by_a[pair_dict_rev[a]].add(b)
-                        dict_by_b[b] = pair_dict_rev[a]
-                        pair_dict[pair_dict_rev[a]].remove(a)
-                        if len(pair_dict[pair_dict_rev[a]]) == 0:
-                            del pair_dict[pair_dict_rev[a]]
-                        del pair_dict_rev[a]
                         flag = True
                         working_rc = new_rc
                     #  if debug:
@@ -699,19 +468,7 @@ class RCGraph(Printable, tuple):
                         dict_by_b[a] = dict_by_b[b]
                         flag = True
                         working_rc = new_rc
-                    elif pair_dict_rev and a > descent and a not in pair_dict_rev and a not in dict_by_b and b in pair_dict_rev:
-                        new_rc = working_rc.toggle_ref_at(row, i)
-                        dict_by_a[pair_dict_rev[b]].add(a)
-                        dict_by_b[a] = pair_dict_rev[b]
-                        pair_dict[pair_dict_rev[b]].remove(b)
-                        if len(pair_dict[pair_dict_rev[b]]) == 0:
-                            del pair_dict[pair_dict_rev[b]]
-                        del pair_dict_rev[b]
-                        flag = True
-                        working_rc = new_rc
-                    #  if debug:
-                    # print("Toggled c")
-                    # print(working_rc)
+                    
                 if flag:
                     num_done += 1
                     # assert last_rc.perm.inv + 1 == working_rc.perm.inv
@@ -727,11 +484,11 @@ class RCGraph(Printable, tuple):
         working_rc = self
         debug = True
         if row_below == 0:
-            assert working_rc.is_valid
+            assert working_rc.is_valid, f"{working_rc=}, {dict_by_a=}, {dict_by_b=}"
             return working_rc
         if working_rc.is_valid:
             return working_rc
-        for j in range(working_rc.cols + descent, 0, -1):
+        for j in range(working_rc.cols + descent + 5):
             flag = False
             if working_rc.is_valid:
                 return working_rc
@@ -757,17 +514,12 @@ class RCGraph(Printable, tuple):
                         # print(working_rc)
                     elif a in dict_by_b and b in dict_by_b and dict_by_b[a] == dict_by_b[b]:
                         new_rc = working_rc.toggle_ref_at(row_below, j)
-                        if new_rc.perm[dict_by_b[a] - 1] < new_rc.perm[a - 1]:
-                            dict_by_a[dict_by_b[a]].remove(a)
-                            del dict_by_b[a]
-                            if len(dict_by_a[dict_by_b[b]]) == 0:
-                                del dict_by_a[dict_by_b[b]]
-                            # print("Toggle bad b")
-                            flag = True
-                        dict_by_a[dict_by_b[b]].remove(b)
-                        del dict_by_b[b]
-                        if len(dict_by_a[dict_by_b[a]]) == 0:
-                            del dict_by_a[dict_by_b[a]]
+                        dict_by_a[dict_by_b[a]].remove(a)
+                        del dict_by_b[a]
+                        if len(dict_by_a[dict_by_b[b]]) == 0:
+                            del dict_by_a[dict_by_b[b]]
+                        flag = True
+                        working_rc = new_rc
                         # print("Toggle bad c")
                 if flag:
                     working_rc = working_rc._kogan_kumar_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times=1, debug=debug)
@@ -842,20 +594,6 @@ class RCGraph(Printable, tuple):
                 return working_rc, ()
             return self
         rows_grouping = {}
-        pair_dict = None
-        pair_dict_rev = None
-        if reflections:
-            pair_dict = {}
-            for ref in reflections:
-                a, b = ref
-                if a not in pair_dict:
-                    pair_dict[a] = set()
-                pair_dict[a].add(b)
-            pair_dict_rev = {}
-            for a, b_list in pair_dict.items():
-                for b in b_list:
-                    assert a <= descent and descent < b  # noqa: PT018
-                    pair_dict_rev[b] = a
 
         for r in rows:
             rows_grouping[r] = rows_grouping.get(r, 0) + 1
@@ -871,10 +609,10 @@ class RCGraph(Printable, tuple):
             # print(working_rc)
             # print(f"{working_rc.perm.inv=}, {self.perm.inv=}")
             last_working_rc = working_rc
-            working_rc = working_rc._kogan_kumar_insert_row(row, descent, dict_by_a, dict_by_b, num_times, pair_dict=pair_dict, pair_dict_rev=pair_dict_rev, debug=debug)
+            working_rc = working_rc._kogan_kumar_insert_row(row, descent, dict_by_a, dict_by_b, num_times, debug=debug)
 
             if not working_rc.is_valid:
-                working_rc = working_rc._kogan_kumar_rectify(row, descent, dict_by_a, dict_by_b)  # minus one?
+                working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b)  # minus one?
             #  if debug:
             # print("Next iteration")
             # print(working_rc)
@@ -955,24 +693,6 @@ class RCGraph(Printable, tuple):
         from bisect import bisect_right
 
         assert i > 0 and j > 0  # noqa: PT018
-        # a, b = self.right_root_at(i, j)
-        # row = self[i - 1]
-        # rev_row = [*row]
-        # rev_row.reverse()
-        # print(f"{rev_row=}")
-        # print(f"{self.perm_word=}")
-        # index = bisect_right(rev_row, i + j - 1)
-        # if index >= len(rev_row):
-        #     new_row = list(reversed[i + j - 1, *row]
-        # else:
-        #     print(f"{rev_row[index]=}")
-        #     print(f"{rev_row=}")
-        #     if rev_row[index] == i + j - 1:
-        #         new_row = list(reversed([*rev_row[:index], *rev_row[index+1:]]))
-        #     else:
-        #         rev_row.insert(index, i + j - 1)
-        #         new_row = list(reversed(rev_row))
-        # return RCGraph([*self[: i - 1], tuple(new_row), *self[i:]])
         if self[i - 1, j - 1]:
             row = list(self[i - 1])
             row.remove(i + j - 1)
@@ -1037,7 +757,7 @@ class RCGraph(Printable, tuple):
         # perm_down = interim.perm
         # reflections = RCGraph.complete_sym_perms_op(self.perm, self.perm.inv - perm_down.inv, len(self))[perm_down.inv]
         interim, reflections = interim.kogan_kumar_insert(len(self) - 1, diff_rows, return_reflections=True)
-        pass   #   print(f"{reflections=}")
+        pass   #   pass  # print(f"{reflections=}")
 
         # interim = interim.kogan_kumar_insert(len(self) - 1, diff_rows, debug=debug)
         assert len(interim.perm.trimcode) < len(self)
@@ -1137,14 +857,14 @@ class RCGraph(Printable, tuple):
             rc = RCGraph([*self])
             ref_dict = RCGraph.complete_sym_perms(nperm, rc.perm.inv - nperm.inv, len(self))
             if rc.perm not in ref_dict:
-                print(f"{ref_dict=}")
+                pass  # print(f"{ref_dict=}")
                 continue
             refl = ref_dict[rc.perm]
-            #try:
-            interim, diff_rows = self.reverse_kogan_kumar_insert(len(self), refl, return_rows=True)
-            # except AssertionError:
-            #     continue
-            print(f"{interim=}")
+            try:
+                interim, diff_rows = self.reverse_kogan_kumar_insert(len(self), refl, return_rows=True)
+            except AssertionError:
+                continue
+            pass  # print(f"{interim=}")
             # descs.sort(reverse=True)
             # desc_word = [*descs]
             
