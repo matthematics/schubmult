@@ -61,7 +61,7 @@ class RCGraph(Printable, tuple):
             if self[i - 1, j2 - 1]:
                 start_root = Permutation.ref_product(self[i - 1, j2 - 1]).act_root(*start_root)
         for i2 in range(i + 1, self.rows + 1):
-            for j2 in range(1, self.cols + 1):
+            for j2 in range(self.cols, -1, -1):
                 if self[i2 - 1, j2 - 1]:
                     start_root = Permutation.ref_product(self[i2 - 1, j2 - 1]).act_root(*start_root)
         return start_root
@@ -93,7 +93,7 @@ class RCGraph(Printable, tuple):
             if self[i - 1, j2 - 1]:
                 start_root = Permutation.ref_product(self[i - 1, j2 - 1]).act_root(*start_root)
         for i2 in range(i - 1, 0, -1):
-            for j2 in range(1, self.cols + 1):
+            for j2 in range(self.cols):
                 if self[i2 - 1, j2 - 1]:
                     start_root = Permutation.ref_product(self[i2 - 1, j2 - 1]).act_root(*start_root)
         return start_root
@@ -1088,75 +1088,125 @@ class RCGraph(Printable, tuple):
             refl = RCGraph.complete_sym_perms_op(self.perm, self.perm.inv - nperm.inv, len(self))[nperm]
             interim, diff_rows = self.reverse_kogan_kumar_insert(len(self), refl, return_rows=True)
             descs.reverse()
-            desc_word = [*descs]
-            word_perm = Permutation.ref_product(*desc_word)
-            #refs = [word_perm.right_root_at(i) for i in range(word_perm.inv)]
-            refl2 = RCGraph.complete_sym_perms_op(perm, len(descs), len(self) + 1)[interim.perm]
+            
+
             # print(f"{descs=}")
             # print(f"{refs=}")
             # print(f"{diff_rows=}")
 
             # stick the descents in
-            interim = RCGraph([*interim, tuple(sorted(descs, reverse=True))])
-            
+            interim2 = RCGraph([*interim, tuple(sorted(descs, reverse=True))])
+            interim = interim.extend(1)
 
-            assert interim.perm == perm
+            assert interim2.perm == perm
             print("Put it together")
-            print(interim)
-            # the reflections may not remain in the same order
+            print(interim2)
             diff_rows.sort()
-            tracking_perm = ~interim.perm
-            backing_perm = Permutation([])
-            for r in range(1, len(self) + 1):
-                num = 0
+            # tracking_perm = ~interim.perm
+            # backing_perm = Permutation([])
+            #for r in range(1, len(self) + 1):
+                
                 # almost good, need to go to the right
+            num = 0
+            while num < 20 and len(interim2[len(self)]) > 0:
+                
+                check_row = len(self) + 1
+                
+                root = None
+                
+                for j in range(self.cols - 1, -1, -1):
+                    found = False
+                    if interim2[check_row - 1, j]:
+                        root = (check_row + j, check_row + j + 1)
+                        print("Root to match", root)
+                        print("Reflection = ", check_row + j)
+                        for index in range(len(diff_rows)):
+                            r = diff_rows[index]
+                            
+                            print(f"Checking row {r=}")
+                    
+                            print(f"{root=}")
+                            for j2 in range(self.cols):
+                                if not interim[r - 1, j2]:
+                                    root2 = interim.right_root_at(r, j2+1)
+                                    
+                                    #root2 = root2[1], root2[0]
+                                    print(f"{root2=}")
+                                    if root == root2:
+                                        #interim = interim.toggle_ref_at(check_row, j + 1)
+                                        interim = interim.toggle_ref_at(r, j2 + 1)
+                                        print("Toggled")
+                                        
+                                        interim2 = interim2.toggle_ref_at(check_row, j + 1)
+                                        interim2 = interim2.toggle_ref_at(r, j2 + 1)
+                                        print(interim2)
+                                        found = True
+                                        break
+                            if found:
+                                diff_rows.pop(index)
 
-                while num < 20 and len(interim[r - 1]) != len(self[r - 1]):
-                    # find a negative root in the row
-                    for j in range(self.cols, -1, -1):
-                        if not interim[r - 1, j]:
-                            a, b = interim.left_root_at(r, j + 1)
-                            a, b = (~backing_perm).act_root(a, b)
-                            # print(f"{a, b}")
-
-                            if b == a + 1 and tracking_perm[a - 1] > tracking_perm[a]:
-                                d = r + j
-
-                                interim = interim.toggle_ref_at(r, j + 1)
-                                print("Toggled")
-                                print(interim)
-                                a2, b2 = b, a
-                                found = False
-                                for r2 in range(r+1, len(self) + 2):
-                                    for col2 in range(interim.cols + 1):
-                                        if interim[r2 - 1, col2 - 1]:
-                                            a3, b3 = (~backing_perm).act_root(*interim.left_root_at(r2, col2))
-                                            # (~backing_perm).act_root(*interim.left_root_at(r2, col2))
-                                            # a3 = (~backing_perm)[a3 - 1]
-                                            # b3 = (~backing_perm)[b3 - 1]
-                                            # print(f"{(r2,col2)=}")
-                                            # print(f"{(a3, b3)=}")
-                                            if (a3, b3) == (a2, b2):
-                                                interim = interim.toggle_ref_at(r2, col2)
-                                                print(f"Back toggled at {r2, col2}")
-                                                print(interim)
-                                                found = True
-                                                assert not interim[r2 - 1, col2 - 1]
-                                                break
-                                            # else:
-                                            #     interim = interim.toggle_ref_at(r, j + 1)
-                                            #     found = False
-                                            #     break
-
-                                assert found, f"{interim=} {backing_perm=} {tracking_perm=}, {r, j + 1} {a2, b2}"
-
-                                tracking_perm = tracking_perm.swap(a - 1, a)
-                                backing_perm = backing_perm.swap(d - 1, d)
+                                
                                 break
+                            if found:
+                                break
+                
+            
+                # find a negative root in the row
+                #for j in range(self.cols, -1, -1):
+                # start_spot = self.cols
+                # while start_spot > 0:
+                #     if interim[r - 1, start_spot]:
+                #         start_spot += 1
+                #         break
+                #     start_spot -= 1
+                    
+                # for j in range(start_spot, self.cols):
+                # for j in range(self.cols, -1, -1):
+                #     if not interim[r - 1, j]:
+                #         a, b = interim.left_root_at(r, j + 1)
+                #         a, b = (~backing_perm).act_root(a, b)
+                #         # print(f"{a, b}")
 
-                    num += 1
+                #         if b == a + 1 and tracking_perm[a - 1] > tracking_perm[a]:
+                #             d = r + j
+
+                #             interim = interim.toggle_ref_at(r, j + 1)
+                #             print("Toggled")
+                #             print(interim)
+                #             a2, b2 = b, a
+                #             found = False
+                #             for r2 in range(r+1, len(self) + 2):
+                #                 for col2 in range(interim.cols + 1):
+                #                     if interim[r2 - 1, col2 - 1]:
+                #                         a3, b3 = (~backing_perm).act_root(*interim.left_root_at(r2, col2))
+                #                         # (~backing_perm).act_root(*interim.left_root_at(r2, col2))
+                #                         # a3 = (~backing_perm)[a3 - 1]
+                #                         # b3 = (~backing_perm)[b3 - 1]
+                #                         # print(f"{(r2,col2)=}")
+                #                         # print(f"{(a3, b3)=}")
+                #                         if (a3, b3) == (a2, b2):
+                #                             interim = interim.toggle_ref_at(r2, col2)
+                #                             print(f"Back toggled at {r2, col2}")
+                #                             print(interim)
+                #                             found = True
+                #                             assert not interim[r2 - 1, col2 - 1]
+                #                             break
+                #                         # else:
+                #                         #     interim = interim.toggle_ref_at(r, j + 1)
+                #                         #     found = False
+                #                         #     break
+
+                #             assert found, f"{interim=} {backing_perm=} {tracking_perm=}, {r, j + 1} {a2, b2}"
+
+                #             tracking_perm = tracking_perm.swap(a - 1, a)
+                #             backing_perm = backing_perm.swap(d - 1, d)
+                #             break
+
+                num += 1
 
             rc = interim  # .extend(1)
+            print("Completed")
+            print(rc)
             assert rc.is_valid
             assert rc.perm == perm
             assert rc.zero_out_last_row() == self, f"{rc=} {rc.zero_out_last_row()=} {self=}"
