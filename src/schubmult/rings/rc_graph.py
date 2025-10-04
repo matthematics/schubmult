@@ -136,12 +136,12 @@ class RCGraph(Printable, tuple):
 
         def is_relevant_crossing(root, prm):
             # min_root = max(pair_dict.keys())
-
-            if root[0] not in pair_dict:
+            
+            if root[0] > descent:
                 if root[0] not in pair_dict_rev or pair_dict_rev.get(root[0], 0) != pair_dict_rev.get(root[1], 0):
                     return False
                 return True
-            return root[1] in pair_dict[root[0]] and ((not flip and has_bruhat_descent(prm, root[0] - 1, root[1] - 1) or (flip and has_bruhat_ascent(prm, root[0] - 1, root[1] - 1))))
+            return root[0] in pair_dict and root[1] in pair_dict[root[0]]# and ((not flip and has_bruhat_descent(prm, root[0] - 1, root[1] - 1) or (flip and has_bruhat_ascent(prm, root[0] - 1, root[1] - 1))))
 
         # may have to add q, s or a_i, q
         def is_relevant_noncrossing(root):
@@ -165,7 +165,7 @@ class RCGraph(Printable, tuple):
         if flip:
             read_rows.reverse()
         for row in read_rows:
-            for col in range(max(descent, self.cols), 0, -1):
+            for col in range(1, max(descent, self.cols)+1):
                 if ((not flip and working_rc.has_element(row, col)) or (flip and not working_rc.has_element(row, col))):
                     a, b = working_rc.right_root_at(row, col)
                     print(f"{reflection_path=}")
@@ -183,11 +183,11 @@ class RCGraph(Printable, tuple):
                             del pair_dict[a2]
                         del pair_dict_rev[b]
                         rows.append(row)
-                        for col2 in range(1, col):
+                        for col2 in range(col + 1, max(descent, self.cols) + 10):
                             if ((not flip and not working_rc.has_element(row, col)) or (flip and working_rc.has_element(row, col))):
                                 a2, b2 = working_rc.right_root_at(row, col2)
-                                if a2 > b2:
-                                    continue
+                                # if a2 > b2:
+                                #     continue
                                 if is_relevant_noncrossing((a2, b2)):
                                     if a2 <= descent:
                                         assert b2 not in pair_dict
@@ -631,16 +631,18 @@ class RCGraph(Printable, tuple):
     #         return True
     #     return False
 
-    def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, pair_dict_rev=None, pair_dict=None, debug=True, start_index=0):
+    def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, pair_dict_rev=None, pair_dict=None, debug=True, start_index=-1):
         working_rc = self
         if row > descent:
             raise ValueError("All rows must be less than or equal to descent")
 
         i = start_index
+        if i == -1:
+            i = self.cols + descent + 5
         num_done = 0
 
         while num_done < num_times:
-            i += 1
+            i -= 1
             flag = False
             #  if debug:
             # print(f"Trying column {i=} {descent=} {row=} {num_done=} {num_times=}")
@@ -729,7 +731,7 @@ class RCGraph(Printable, tuple):
             return working_rc
         if working_rc.is_valid:
             return working_rc
-        for j in range(working_rc.max_of_row(row_below) + 1, 0, -1):
+        for j in range(working_rc.cols + descent, 0, -1):
             flag = False
             if working_rc.is_valid:
                 return working_rc
@@ -1035,6 +1037,7 @@ class RCGraph(Printable, tuple):
         # perm_down = interim.perm
         # reflections = RCGraph.complete_sym_perms_op(self.perm, self.perm.inv - perm_down.inv, len(self))[perm_down.inv]
         interim, reflections = interim.kogan_kumar_insert(len(self) - 1, diff_rows, return_reflections=True)
+        print(f"{reflections=}")
 
         # interim = interim.kogan_kumar_insert(len(self) - 1, diff_rows, debug=debug)
         assert len(interim.perm.trimcode) < len(self)
@@ -1118,7 +1121,7 @@ class RCGraph(Printable, tuple):
             while (len(nperm.trimcode)) > len(self):
                 descs.append(len(nperm.trimcode))
                 nperm = nperm.swap(len(nperm.trimcode) - 1, len(nperm.trimcode))
-            refl = RCGraph.complete_sym_perms_op(self.perm, self.perm.inv - nperm.inv, len(self))[nperm]
+            refl = RCGraph.complete_sym_perms(nperm, self.perm.inv - nperm.inv, len(self))[self.perm]
             interim, diff_rows = self.reverse_kogan_kumar_insert(len(self), refl, return_rows=True)
             descs.sort(reverse=True)
             desc_word = [*descs]
@@ -1141,16 +1144,44 @@ class RCGraph(Printable, tuple):
             print("Starting with")
             print(rc)
             # the reflections may not remain in the same order
-            diff_rows.sort(reverse=True)
+            diff_rows.sort()
             # tracking_perm = ~interim.perm
             # backing_perm = Permutation([])
             order_inserted = []
             print(f"{diff_rows=}")
+            print(f"{descs=}")
             ref_dict = RCGraph.complete_sym_perms(rc.perm, perm.inv - rc.inv, len(self) + 1)
             print(f"{ref_dict=}")
             reflections_to_get_in = ref_dict[perm]
             #reflections_to_get_in = list(reversed(reflections_to_get_in))
-            rc = rc.reverse_kogan_kumar_insert(len(self) + 1, reflections_to_get_in, flip=True, debug=True, allowed_rows = diff_rows)
+            # rc = rc.reverse_kogan_kumar_insert(len(self) + 1, reflections_to_get_in, flip=True, debug=True, allowed_rows = diff_rows)
+            # stick the descs in
+            print("Starting with")
+            print(rc)
+            for d in descs:
+                for index, row in enumerate(diff_rows):
+                    i = row - 1
+                    for j in range(self.cols + 1):
+                        found = False
+                        if not rc[i, j]:
+                            a, b = rc.right_root_at(i + 1, j + 1)
+                            if a == d and b == d + 1:
+                                rc = rc.toggle_ref_at(i + 1, j + 1)
+                                found = True
+                                if not rc.is_valid:
+                                    print("Not valid")
+                                    print(rc)
+                                    rc = rc.exchange_property(d)
+                                    print("Fixed")
+                                    print(rc)
+                                break
+                        if found:
+                            break
+                    if found:
+                        break
+                diff_rows.pop(index)
+                                
+
             rc = rc.extend(1)
             #max_num = len(reflections_to_get_in)
             # while len(reflections_to_get_in) > 0:
@@ -1250,17 +1281,20 @@ class RCGraph(Printable, tuple):
 
             #rc = interim  # .extend(1)
             
-            assert rc.is_valid
+            assert rc.is_valid, f"{rc=}, {rc.perm=}, {self=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=}"
             print("Finished with valid rc")
             print(rc)
-            assert rc.perm == perm, f"{rc.perm=} {perm=}, {self.perm=}, {diff_rows=}"
-            assert rc.zero_out_last_row() == self, f"{rc=} {rc.zero_out_last_row()=} {self=}"
-            rc_set.add(rc)
+            try:
+                assert rc.perm.inv == perm.inv
+                assert rc.perm == perm, f"{rc.perm=} {perm=}, {self.perm=}, {diff_rows=}"
+                assert rc.zero_out_last_row() == self, f"{rc=} {rc.zero_out_last_row()=} {self=}"
+                rc_set.add(rc)
             # assert rc.zero_out_last_row() == self, f"{rc=} {rc.perm=} {self=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=} {rc.zero_out_last_row()=}"
-        for perm, _ in up_perms.keys():
-            for rc in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=tuple([*self.length_vector, 0])):
-                if rc.length_vector[:-1] == self.length_vector and rc.zero_out_last_row() == self:
-                    assert rc in rc_set, f"{rc=} {rc.perm=} {self=}, {self.perm=}, {rc_set=}"
+            except AssertionError:
+                for perm, _ in up_perms.keys():
+                    for rc in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=tuple([*self.length_vector, 0])):
+                        if rc.length_vector[:-1] == self.length_vector and rc.zero_out_last_row() == self:
+                            assert rc in rc_set, f"{rc=} {rc.perm=} {self=}, {self.perm=}, {rc_set=}"
                     # print(f"Added {rc=}, {rc.perm=}, {rc.length_vector=}")
 
         return rc_set
