@@ -231,10 +231,12 @@ class BaseSchubertRing(Ring, CompositeDomain):
         self.zero_monom = Permutation([])
 
     def add(self, elem, other):
-        return self.from_dict(add_perm_dict(elem, other))
+        res = self.from_dict(add_perm_dict(elem, other))
+        return self.from_dict({k: v for k,v in res.items() if expand(v) != S.Zero})
 
     def sub(self, elem, other):
-        return self.from_dict(add_perm_dict(elem, {k: -v for k, v in other.items()}))
+        res = self.from_dict(add_perm_dict(elem, {k: -v for k, v in other.items()}))
+        return self.from_dict({k: v for k,v in res.items() if expand(v) != S.Zero})
 
     def neg(self, elem):
         return self.from_dict({k: -v for k, v in elem.items()})
