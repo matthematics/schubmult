@@ -117,8 +117,8 @@ class RCGraph(Printable, tuple):
 
         # return ((lower_perm)[start_root[0] - 1], (lower_perm)[start_root[1] - 1])
 
-    def reverse_kogan_kumar_insert(self, descent, reflection_path, return_rows=False, debug=True):
-        from schubmult.utils.perm_utils import has_bruhat_descent
+    def reverse_kogan_kumar_insert(self, descent, reflection_path, return_rows=False, flip = False, debug=True, allowed_rows=None):
+        from schubmult.utils.perm_utils import has_bruhat_ascent, has_bruhat_descent
 
         # pair_sequence = sorted(pair_sequence, key=lambda x: x[0]
         pair_dict = {}
@@ -141,7 +141,7 @@ class RCGraph(Printable, tuple):
                 if root[0] not in pair_dict_rev or pair_dict_rev.get(root[0], 0) != pair_dict_rev.get(root[1], 0):
                     return False
                 return True
-            return root[1] in pair_dict[root[0]] and has_bruhat_descent(prm, root[0] - 1, root[1] - 1)
+            return root[1] in pair_dict[root[0]] and ((not flip and has_bruhat_descent(prm, root[0] - 1, root[1] - 1) or (flip and has_bruhat_ascent(prm, root[0] - 1, root[1] - 1))))
 
         # may have to add q, s or a_i, q
         def is_relevant_noncrossing(root):
@@ -153,17 +153,28 @@ class RCGraph(Printable, tuple):
         # we are in the second case, add (ai, q) just before where (a, bi) is in the sequence.
 
         working_rc = self
-        #  if debug:
-        # print("Starting with")
-        # print(working_rc)
-        # print(working_rc.perm)
+        if debug:
+            print("Starting with")
+            print(working_rc)
+            print(working_rc.perm)
         rows = []
-        for row in range(1, len(self) + 1):
-            for col in range(self.cols, 0, -1):
-                if working_rc.has_element(row, col):
+        if allowed_rows:
+            read_rows = allowed_rows
+        else:
+            read_rows = list(range(1, len(self) + 1))
+        if flip:
+            read_rows.reverse()
+        for row in read_rows:
+            for col in range(max(descent, self.cols), 0, -1):
+                if ((not flip and working_rc.has_element(row, col)) or (flip and not working_rc.has_element(row, col))):
                     a, b = working_rc.right_root_at(row, col)
+                    print(f"{reflection_path=}")
+                    print(f"{(a,b)=}")
                     if is_relevant_crossing((a, b), working_rc.perm):
                         working_rc = working_rc.toggle_ref_at(row, col)
+                        if debug:
+                            print("Toggled")
+                            print(working_rc)
                         a2 = a
                         if a2 in pair_dict_rev:
                             a2 = pair_dict_rev[a2]
@@ -173,7 +184,7 @@ class RCGraph(Printable, tuple):
                         del pair_dict_rev[b]
                         rows.append(row)
                         for col2 in range(1, col):
-                            if not working_rc.has_element(row, col2):
+                            if ((not flip and not working_rc.has_element(row, col)) or (flip and working_rc.has_element(row, col))):
                                 a2, b2 = working_rc.right_root_at(row, col2)
                                 if a2 > b2:
                                     continue
@@ -1055,6 +1066,28 @@ class RCGraph(Printable, tuple):
             total_dict = new_total_dict
         return total_dict
 
+    @staticmethod
+    def complete_sym_perms(orig_perm, p, k):
+        from schubmult.utils.perm_utils import has_bruhat_ascent
+
+        orig_perm = Permutation(orig_perm)
+        total_dict = {orig_perm: []}
+        up_perm_list = [(orig_perm, 1000000000)]
+        for pp in range(p):
+            perm_list = []
+            new_total_dict = {}
+            for up_perm, last in up_perm_list:
+                pos_list = [j for j in range(len(orig_perm) + 10) if up_perm[j] == orig_perm[j]]
+                for i in range(k):
+                    for j in pos_list:
+                        if has_bruhat_ascent(up_perm, i, j):
+                            new_perm_add = up_perm.swap(i, j)
+                            perm_list += [(new_perm_add, up_perm[j])]
+                            new_total_dict[new_perm_add] =  total_dict[up_perm] + [(i + 1, j + 1)]
+            up_perm_list = perm_list
+            total_dict = new_total_dict
+        return total_dict
+
     def vertical_cut(self, row):
         if row <= 0 or row > len(self):
             raise ValueError("Row out of range")
@@ -1087,78 +1120,140 @@ class RCGraph(Printable, tuple):
                 nperm = nperm.swap(len(nperm.trimcode) - 1, len(nperm.trimcode))
             refl = RCGraph.complete_sym_perms_op(self.perm, self.perm.inv - nperm.inv, len(self))[nperm]
             interim, diff_rows = self.reverse_kogan_kumar_insert(len(self), refl, return_rows=True)
-            descs.reverse()
+            descs.sort(reverse=True)
             desc_word = [*descs]
             word_perm = Permutation.ref_product(*desc_word)
             #refs = [word_perm.right_root_at(i) for i in range(word_perm.inv)]
-            refl2 = RCGraph.complete_sym_perms_op(perm, len(descs), len(self) + 1)[interim.perm]
+            
             # print(f"{descs=}")
             # print(f"{refs=}")
-            # print(f"{diff_rows=}")
-
-            # stick the descents in
-            interim = RCGraph([*interim, tuple(sorted(descs, reverse=True))])
             
 
+            # stick the descents in
+            #rc = interim.extend(1)
+            rc = interim
+            interim = RCGraph([*interim, tuple(descs)])
+            
+            
             assert interim.perm == perm
             print("Put it together")
             print(interim)
+            print("Starting with")
+            print(rc)
             # the reflections may not remain in the same order
-            diff_rows.sort()
-            tracking_perm = ~interim.perm
-            backing_perm = Permutation([])
-            for r in range(1, len(self) + 1):
-                num = 0
-                # almost good, need to go to the right
+            diff_rows.sort(reverse=True)
+            # tracking_perm = ~interim.perm
+            # backing_perm = Permutation([])
+            order_inserted = []
+            print(f"{diff_rows=}")
+            ref_dict = RCGraph.complete_sym_perms(rc.perm, perm.inv - rc.inv, len(self) + 1)
+            print(f"{ref_dict=}")
+            reflections_to_get_in = ref_dict[perm]
+            #reflections_to_get_in = list(reversed(reflections_to_get_in))
+            rc = rc.reverse_kogan_kumar_insert(len(self) + 1, reflections_to_get_in, flip=True, debug=True, allowed_rows = diff_rows)
+            rc = rc.extend(1)
+            #max_num = len(reflections_to_get_in)
+            # while len(reflections_to_get_in) > 0:
+            #     print(f"{reflections_to_get_in=}")
+            #     found = False
+            #     for r in reflections_to_get_in:
+            #         # must insert r
+            #         for index, row in enumerate(diff_rows):
+            #             #test_rc, refs = rc.kogan_kumar_insert(len(self) + 1, [row], return_reflections=True)
+            #             found = False
+            #             for j in range(self.cols + 1):
+            #                 if not rc[row - 1, j]:
+            #                     root = rc.right_root_at(row, j + 1)
+            #                     if root == r:
+            #                         rc = rc.toggle_ref_at(row, j + 1)
+            #                         found = True
+            #                         if not rc.is_valid:
+            #                             dict_by_a = {}
+            #                             dict_by_a[r[0]] = {r[1]}
+            #                             dict_by_b = {}
+            #                             dict_by_b[r[1]] = r[0]
+            #                             rc = rc._kogan_kumar_rectify(row - 1, len(self) + 1, dict_by_a, dict_by_b)
+                                        
+            #                             break
+            #                 if found:
+            #                     break
+            #             if found:
+            #                 order_inserted.append((r, row))
+            #                 diff_rows.pop(index)
+            #                 print(f"Inserted {r} at row {row}")
+            #                 print(rc)
+            #                 break
 
-                while num < 20 and len(interim[r - 1]) != len(self[r - 1]):
-                    # find a negative root in the row
-                    for j in range(self.cols, -1, -1):
-                        if not interim[r - 1, j]:
-                            a, b = interim.left_root_at(r, j + 1)
-                            a, b = (~backing_perm).act_root(a, b)
-                            # print(f"{a, b}")
+                        # print("Tried")
+                        # print(test_rc)
+                        # print(f"{refs=} {r=}")
+                        # if refs[0] == r:
+                        #     order_inserted.append((r, row))
+                        #     rc = test_rc
+                        #     diff_rows.pop(index)
+                        #     print(f"Inserted {r} at row {row}")
+                        #     print(rc)
+                        #     found=True
+                        #     break
+            #     reflections_to_get_in = RCGraph.complete_sym_perms_op(perm, perm.inv - rc.perm.inv, len(self) + 1)[rc.perm]
+            #     if not found:
+            #         break
+            # print(f"{order_inserted=}")
+            # for r in range(1, len(self) + 1):
+            #     num = 0
+            #     # almost good, need to go to the right
 
-                            if b == a + 1 and tracking_perm[a - 1] > tracking_perm[a]:
-                                d = r + j
+            #     while num < 20 and len(interim[r - 1]) != len(self[r - 1]):
+            #         # find a negative root in the row
+            #         for j in range(self.cols, -1, -1):
+            #             if not interim[r - 1, j]:
+            #                 a, b = interim.left_root_at(r, j + 1)
+            #                 a, b = (~backing_perm).act_root(a, b)
+            #                 # print(f"{a, b}")
 
-                                interim = interim.toggle_ref_at(r, j + 1)
-                                print("Toggled")
-                                print(interim)
-                                a2, b2 = b, a
-                                found = False
-                                for r2 in range(r+1, len(self) + 2):
-                                    for col2 in range(interim.cols + 1):
-                                        if interim[r2 - 1, col2 - 1]:
-                                            a3, b3 = (~backing_perm).act_root(*interim.left_root_at(r2, col2))
-                                            # (~backing_perm).act_root(*interim.left_root_at(r2, col2))
-                                            # a3 = (~backing_perm)[a3 - 1]
-                                            # b3 = (~backing_perm)[b3 - 1]
-                                            # print(f"{(r2,col2)=}")
-                                            # print(f"{(a3, b3)=}")
-                                            if (a3, b3) == (a2, b2):
-                                                interim = interim.toggle_ref_at(r2, col2)
-                                                print(f"Back toggled at {r2, col2}")
-                                                print(interim)
-                                                found = True
-                                                assert not interim[r2 - 1, col2 - 1]
-                                                break
-                                            # else:
-                                            #     interim = interim.toggle_ref_at(r, j + 1)
-                                            #     found = False
-                                            #     break
+            #                 if b == a + 1 and tracking_perm[a - 1] > tracking_perm[a]:
+            #                     d = r + j
 
-                                assert found, f"{interim=} {backing_perm=} {tracking_perm=}, {r, j + 1} {a2, b2}"
+            #                     interim = interim.toggle_ref_at(r, j + 1)
+            #                     print("Toggled")
+            #                     print(interim)
+            #                     a2, b2 = b, a
+            #                     found = False
+            #                     for r2 in range(r+1, len(self) + 2):
+            #                         for col2 in range(interim.cols + 1):
+            #                             if interim[r2 - 1, col2 - 1]:
+            #                                 a3, b3 = (~backing_perm).act_root(*interim.left_root_at(r2, col2))
+            #                                 # (~backing_perm).act_root(*interim.left_root_at(r2, col2))
+            #                                 # a3 = (~backing_perm)[a3 - 1]
+            #                                 # b3 = (~backing_perm)[b3 - 1]
+            #                                 # print(f"{(r2,col2)=}")
+            #                                 # print(f"{(a3, b3)=}")
+            #                                 if (a3, b3) == (a2, b2):
+            #                                     interim = interim.toggle_ref_at(r2, col2)
+            #                                     print(f"Back toggled at {r2, col2}")
+            #                                     print(interim)
+            #                                     found = True
+            #                                     assert not interim[r2 - 1, col2 - 1]
+            #                                     break
+            #                                 # else:
+            #                                 #     interim = interim.toggle_ref_at(r, j + 1)
+            #                                 #     found = False
+            #                                 #     break
 
-                                tracking_perm = tracking_perm.swap(a - 1, a)
-                                backing_perm = backing_perm.swap(d - 1, d)
-                                break
+            #                     assert found, f"{interim=} {backing_perm=} {tracking_perm=}, {r, j + 1} {a2, b2}"
 
-                    num += 1
+            #                     tracking_perm = tracking_perm.swap(a - 1, a)
+            #                     backing_perm = backing_perm.swap(d - 1, d)
+            #                     break
 
-            rc = interim  # .extend(1)
+            #         num += 1
+
+            #rc = interim  # .extend(1)
+            
             assert rc.is_valid
-            assert rc.perm == perm
+            print("Finished with valid rc")
+            print(rc)
+            assert rc.perm == perm, f"{rc.perm=} {perm=}, {self.perm=}, {diff_rows=}"
             assert rc.zero_out_last_row() == self, f"{rc=} {rc.zero_out_last_row()=} {self=}"
             rc_set.add(rc)
             # assert rc.zero_out_last_row() == self, f"{rc=} {rc.perm=} {self=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=} {rc.zero_out_last_row()=}"
