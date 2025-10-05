@@ -127,7 +127,7 @@ class RCGraph(Printable, tuple):
 
     def reverse_kogan_kumar_insert(self, descent, reflection_path, return_rows=False, flip = False, debug=False, allowed_rows=None):
         from schubmult.utils.perm_utils import has_bruhat_ascent, has_bruhat_descent
-        debug = True
+        
         # pair_sequence = sorted(pair_sequence, key=lambda x: x[0]
         pair_dict = {}
         for ref in reflection_path:
@@ -180,8 +180,8 @@ class RCGraph(Printable, tuple):
             for col in range(1, max(descent, self.cols)):
                 if working_rc.has_element(row, col):
                     a, b = working_rc.right_root_at(row, col)
-                    print(f"{reflection_path=}")
-                    print(f"{(a,b)=}")
+                    # print(f"{reflection_path=}")
+                    # print(f"{(a,b)=}")
                     if is_relevant_crossing((a, b), working_rc.perm):
                         working_rc = working_rc.toggle_ref_at(row, col)
                         if debug:
@@ -207,7 +207,7 @@ class RCGraph(Printable, tuple):
                                 if a2 > b2:
                                     continue
                                 if is_relevant_noncrossing((a2, b2)):
-                                    print(f"Rect {a2, b2}")
+                                    # print(f"Rect {a2, b2}")
                                     if a2 <= descent:
                                         assert b2 not in pair_dict
                                         if a2 not in pair_dict:
@@ -972,7 +972,7 @@ class RCGraph(Printable, tuple):
                 pass  # print(f"{self.left_to_right_inversion(index)=}")
         assert row > 0
         print(f"pre-insert {rc=} {row=}")
-        rc, (ref,) = rc.kogan_kumar_insert(len(self), [row], return_reflections=True)
+        rc, (ref,) = rc.kogan_kumar_insert(len(rc.perm.trimcode) - 1, [row], return_reflections=True)
         print(f"{ref=}")
         
 
@@ -980,9 +980,10 @@ class RCGraph(Printable, tuple):
         r2 = len(rc.perm.trimcode)
         s2 = max([i + 1 for i in range(r2, len(rc.perm) + 1) if rc.perm[i] < rc.perm[r - 1]])
         print(f"{r2=} {s2=} {len(rc.perm.trimcode)=}")
+        print(f"{r, s=}{r2, s2=}")
         assert r == r2
         assert s == s2
-        pass  # print(f"{r, s=}{r2, s2=}")
+        
         row2 = -1
         for index in range(rc.perm.inv):
             pass  # print(rc.left_to_right_inversion(index))
@@ -999,10 +1000,12 @@ class RCGraph(Printable, tuple):
         print("Starting rc")
         print(f"{rc=}")
         print(f"{rc.right_root_at(row2, col)=} {row2=} {col=}, {rc.perm=}")
-        rc = rc.reverse_kogan_kumar_insert(r, [(r,s)])
+        print(f"{rc.perm=} removing {(r,s)=}")
+        rc = rc.reverse_kogan_kumar_insert(len(rc.perm.trimcode), [(r,s)])
+        print(f"{rc.perm=}")
 
-
-        assert len(rc.perm.trimcode) < len(self), f"{rc=} {rc.perm.trimcode=} {len(self)=}"
+        if len(rc.perm.trimcode) == len(self):
+            return rc.zero_out_last_row()
         # if len(rc_ret.perm.trimcode) >= len(rc_ret):
         #     return rc_ret.zero_out_last_row(debug=debug)
         return rc.rowrange(0, len(self) - 1)
