@@ -930,47 +930,69 @@ class RCGraph(Printable, tuple):
     # # EXCHANGE PROPERTY GOES TO UNIQUE PERMUTATION
     # # KOGAN INSERT ENSURES WE GO UP PROPERLY
 
+
+
     def zero_out_last_row(self, debug=False):
-        from schubmult.schub_lib.schub_lib import pull_out_var
+        from schubmult.utils.perm_utils import has_bruhat_ascent
 
         # this is important!
         # transition formula
+        print("Zeroing out last row")
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
-        if self.perm.inv == 0 or len(self.perm.trimcode) < len(self):
+        if self.perm.inv == 0:# or len(self.perm.trimcode) < len(self):
             return self.rowrange(0, len(self) - 1)
 
-        # Let r
-        # be the largest value such that w(r)>w(r+1)
-        # and s
-        # be the maximum value so that w(s)<w(r)
-        # . We define
+        r = len(self.perm.trimcode)
+        s = max([i + 1 for i in range(r, len(self.perm) + 1) if self.perm[i] < self.perm[r - 1]])
+        rc = self
+        r1 = None
+        r2 = None
+        print(f"{self=}")
+        found = False
+        rc = self
+        while not found:
+            for index in range(self.perm.inv):
 
-        interim = RCGraph([*self])
-        #print(f"{self=}")
-        diff_rows = []
-        refs = []
-        descs = []
-        while interim.perm.inv > 0 and len(interim.perm.trimcode) >= len(self):
-            d = len(interim.perm.trimcode)
-            root = (d, d+1)
-            if len(descs) > 0:
-                root = Permutation.ref_product(*descs).act_root(*root)
-            refs = [root, *refs]
-            descs = [d, *descs]
-            interim = self.reverse_kogan_kumar_insert(len(self), refs)
+                a, b = rc.left_to_right_inversion(index)
+                print(f"{a, b=} {r,s=}")
+                if a <= r and b > r:
+                    print(f"Found {a, b=} at {index=}")
+                    r1, r2 = rc.left_to_right_inversion_coord(index)
+                    assert (a,b) == rc.right_root_at(r1, r2)
+                    #rc0 = rc.toggle_ref_at(r1, r2)
+                    try:
+                        rc0, (row,), = rc.reverse_kogan_kumar_insert(r, [(a,b)], return_rows=True)
+                    except AssertionError:
+                        print("Can't reverse insert this root")
+                        continue
+                    print(f"{rc0=}")
+                    rc, (ref,) = rc0.kogan_kumar_insert(a-1, [row], return_reflections=True)
+                    print(f"aster {rc=}")
+                    print(f"{ref=}")
+                    
+                    if len(rc.perm.trimcode) < len(self):
+                        found = True
+                        break
         
-        interim, diff_rows = self.reverse_kogan_kumar_insert(len(self), refs, return_rows=True)
-        #interim = self.kogan_kumar_insert(len(self), [len(self)] * times, debug=debug)
-        print(f"{interim=}")
-        #interim = RCGraph([*interim[: len(self) - 1],tuple(range(len(interim.perm) + len(self), len(self) - 1, -1))])
-        #print(f"{interim=}")
-        diff_rows.sort(reverse=True)
-        for row in diff_rows:
-            interim = interim.kogan_kumar_insert_op(len(self) - 1, [row], debug=debug)
-        assert len(interim.perm.trimcode) <= len(interim)
-        interim = interim.rowrange(0, len(self) - 1)
-        return interim
+        # pull out a monk rook
+        # monk root < r and something > r and  < s
+
+        #rc, (row,) = self.reverse_kogan_kumar_insert(r, [(r,s)], return_rows = True)
+        # rc_ret = rc
+        # # we need to find an r root
+        # for j in range(rc.cols + r):
+        #     if not rc[r1-1, j]:
+        #         a, b = rc.right_root_at(r1, j + 1)
+        #         if b == r and has_bruhat_ascent(rc.perm, a - 1, b - 1):
+        #             print(f"Toggling at {r1, j + 1} with root {a, b}")
+        #             rc_ret = rc.toggle_ref_at(r1, j + 1)
+        #             # NEED BUMPING
+        #             break
+        assert len(rc.perm.trimcode) < len(self)
+        # if len(rc_ret.perm.trimcode) >= len(rc_ret):
+        #     return rc_ret.zero_out_last_row(debug=debug)
+        return rc.rowrange(0, len(self) - 1)
 
     # put the descents back
     # kogan reverse the non-descents
@@ -1048,40 +1070,99 @@ class RCGraph(Printable, tuple):
 
         rc_set = set()
 
-        print(f"{self=} {self.perm=}")
-        #rc_set.add(self.extend(1))
-        for perm, _ in up_perms.keys():
-            # if perm == self.perm:
-            #     continue
-            rc = RCGraph([*self, tuple(range(len(self.perm), len(self), -1))])
+        # if len(self.perm.trimcode) < len(self):
+        #     rc_set0 = self.rowrange(0, len(self) - 1).right_zero_act(debug=debug)
+        #     return {rc.extend(1) for rc in rc_set0}
 
-            # for rc in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=tuple([*self.length_vector, 0])):
-            #     if rc.zero_out_last_row() == self:
-            #         rc_set.add(rc)
-            #         print("Added")
-            #         print(rc)
-            #         continue
-            #     else:
-            #         print("Skipped")
-            #         print(rc)
-            #         print("because")
-            #         print(rc.zero_out_last_row())
-            #         print("Is not")
-            #         print(self)
-            # top_perm = self.perm * Permutation.ref_product(*tuple(range(len(self.perm), len(self), -1)))
-            top_perm = rc.perm
-            ref_path = RCGraph.complete_sym_perms(perm, top_perm.inv - perm.inv, len(self)+1)[top_perm]
-            ref_path2 = [(ref[0], ref[1] - 1) for ref in ref_path if ref[0] <= len(self)]
-            # #print(f"{ref_path=}")
-            # new_ref_path = [(root[0], root[1] - 1) for root in ref_path if root[0] <= len(self)]
-            # #print(f"{new_ref_path=}")
-            lower_rc, diff_rows = self.reverse_kogan_kumar_insert(len(self), ref_path2, return_rows=True)
+        print(f"{self=} {self.perm=}")
+        rc_set.add(self.extend(1))
+
+        # # insert monks < len(self)
+        # # pull out the r root
+        # for row in range(1, len(self.perm.trimcode) + 1):
+        #     test_rc, (ref,) = self.kogan_kumar_insert(len(self), [row], debug=debug, return_reflections=True)
+        #     # find if it has a root that makes tn length one longer
+        #     # root that goes from r to ref[1]
+        #     print("Inserted at row ", row)
+        #     print(test_rc)
+        #     print("Reflection is ", ref)
+        #     found = False
+        #     for row_below in range(1, row):
+        #         if found:
+        #             break
+        #         for j in range(test_rc.cols + len(self) + 5):
+        #             if not test_rc[row_below - 1, j]:
+        #                 a, b = test_rc.right_root_at(row, j + 1)
+        #                 if b == ref[1] and a == len(self.perm.trimcode) + 1:
+        #                     print(f"Toggling at {row, j + 1} with root {a, b}")
+        #                     new_rc = test_rc.toggle_ref_at(row, j + 1)
+                            
+        #                     print(new_rc)
+        #                     found = True
+        #                     break
+        #                     #else:
+        #                     # 
+        #     if found:
+        #         new_rc = new_rc.reverse_kogan_kumar_insert(len(self), ).extend(1)
+        #         rc_set.add(new_rc)
+        #         print("Added")
+        #     if not found:
+        #         print("Did not find root to toggle")
+        #         print(test_rc)
+        #         print(f"{self=}, {row=}, {ref=}")
+        #         #raise ValueError("Did not find root to toggle")
+                    
+
+        for perm, _ in up_perms.keys():
+            if perm == self.perm:
+                continue
+            # rc = RCGraph([*self, tuple(range(len(self.perm), len(self), -1))])
+
+            for rc in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=tuple([*self.length_vector, 0])):
+                if rc.zero_out_last_row() == self:
+                    rc_set.add(rc)
+                    print("Added")
+                    print(rc)
+                    continue
+                else:
+                    print("Skipped")
+                    print(rc)
+                    print("because")
+                    print(rc.zero_out_last_row())
+                    print("Is not")
+                    print(self)
+
+            # r = len(perm.trimcode)
+            # s = max([i + 1 for i in range(r, len(perm) + 1) if perm[i] < perm[r - 1]])
             
-            #diff_rows_low = [r for r in diff_rows if r <= len(self)]
-            rc = lower_rc.kogan_kumar_insert(len(self) + 1, diff_rows, debug=debug).rowrange(0,len(self)).extend(1)
-            print(rc)
-            assert rc.perm == perm
-            rc_set.add(rc)
+            # #if r < len(self):
+
+            # down_perm = perm.swap(r - 1, s - 1)
+            # (r2, s2) = sorted([i + 1 for i in range(len(perm)) if down_perm[i] != self.perm[i]])
+            # print(f"{r2, s2=} {r=} {perm=} {self.perm=} {down_perm=}")
+            # withdrawn_rc, (row,) = self.reverse_kogan_kumar_insert(r - 1, [(r2, s2)], return_rows=True)
+            # rc = withdrawn_rc.extend(1).kogan_kumar_insert(r, [row])
+            # print(f"Got {rc=}, {rc.perm=}, {perm=}, {row=}, {withdrawn_rc=}")
+            # #if rc.zero_out_last_row() == self:
+            # assert rc.perm == perm, f"{rc=}, {rc.perm=}, {perm=}, {row=}, {withdrawn_rc=}"
+            # rc_set.add(rc)
+            # print("Added")
+            # print(rc)
+            
+            # # top_perm = self.perm * Permutation.ref_product(*tuple(range(len(self.perm), len(self), -1)))
+            # top_perm = rc.perm
+            # ref_path = RCGraph.complete_sym_perms(perm, top_perm.inv - perm.inv, len(self)+1)[top_perm]
+            # ref_path2 = [(ref[0], ref[1] - 1) for ref in ref_path if ref[0] <= len(self)]
+            # # #print(f"{ref_path=}")
+            # # new_ref_path = [(root[0], root[1] - 1) for root in ref_path if root[0] <= len(self)]
+            # # #print(f"{new_ref_path=}")
+            # lower_rc, diff_rows = self.reverse_kogan_kumar_insert(len(self), ref_path2, return_rows=True)
+            
+            # #diff_rows_low = [r for r in diff_rows if r <= len(self)]
+            # rc = lower_rc.kogan_kumar_insert(len(self) + 1, diff_rows, debug=debug).rowrange(0,len(self)).extend(1)
+            # print(rc)
+            # assert rc.perm == perm
+            # rc_set.add(rc)
             # lower_rc = RCGraph([*lower_rc.rowrange(0,len(self)),tuple(range(len(self.perm), len(self), -1))])
             # lower_rc = lower_rc.kogan_kumar_insert(len(self) + 1, diff_rows_low, debug=debug).rowrange(0,len(self)).extend(1)
             # print(f"After pullout {lower_rc=}, {diff_rows=}, {ref_path=}, {up_perms=}, {diff_rows_low=}")
