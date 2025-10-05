@@ -956,27 +956,40 @@ class RCGraph(Printable, tuple):
         assert len(self.perm.trimcode) <= len(self), f"{self=}"
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
-        if self.perm.inv == 0:# or len(self.perm.trimcode) < len(self) - 1:
+        if self.perm.inv == 0:
             return self.rowrange(0, len(self) - 1)
         rc = self
-        if len(self.perm) - 1 > len(self):
-            rc = self.extend(len(self.perm) - 1 - len(self))
-            print(f"Extened to {rc=}")
-            while len(rc) > len(self):
-                rc = rc.zero_out_last_row()
-                print(f"Zeroed {rc=}")
-        if len(rc.perm.trimcode) <= len(self) - 1:
-            return rc.rowrange(0, len(self) - 1)
-        assert len(rc.perm.trimcode) == len(self)
+        # if len(self.perm) - 1 > len(self):
+        #     rc = self.extend(len(self.perm) - 1 - len(self))
+        #     print(f"Extened to {rc=}")
+        #     while len(rc) > len(self):
+        #         rc = rc.zero_out_last_row()
+        #         print(f"Zeroed {rc=}")
+        # if len(rc.perm.trimcode) <= len(self) - 1:
+        #     return rc.rowrange(0, len(self) - 1)
+        #assert len(rc.perm.trimcode) == len(self)
         r = len(self.perm.trimcode)
         s = max([i + 1 for i in range(r, len(self.perm) + 1) if self.perm[i] < self.perm[r - 1]])
         
-        if s == r + 1 and r == len(self):
-            if debug:
-                print("Just descent it THIS PART IS QUESTIONABLE")
-                print(f"{rc=} {self=}")
-                rc, row = rc.exchange_property(len(rc.perm.trimcode), return_row=True)
-                return rc.toggle_ref_at(row, len(self) - row).rowrange(0, len(self) - 1)
+        # if s == r + 1 and r == len(self):
+        #     if debug:
+        #         print("Just descent it THIS PART IS QUESTIONABLE")
+        #         print(f"{rc=} {self=}")
+        #         max_val_high = -1
+        #         max_val_low = 100
+        #         inversions = [rc.left_to_right_inversion(index) for index in range(rc.perm.inv)]
+        #         inversions.sort()
+                
+        #         print(f"{inversions=}")
+        #         rc, (row,) = rc.reverse_kogan_kumar_insert(len(self), [inversions[0]], return_rows=True)
+        #         rc = rc.kogan_kumar_insert(len(self) - 1, [row])
+        #         print(f"{rc=} {row=}")
+        #         return rc.rowrange(0, len(self) - 1)
+                
+                #assert len(rc.perm) - 1
+                # rc0, row = rc.reverse_kogan_kumar_insert(len(rc.perm.trimcode) - 1, return_row=True)
+                # rc1, (ref,) = rc.kogan_kumar
+                # return rc.kogan_kumar_insert(len(self) - 1, [row]).rowrange(0, len(self) - 1)
         row = -1
         for index in range(self.perm.inv):
             if self.left_to_right_inversion(index) == (r, s):
@@ -995,16 +1008,11 @@ class RCGraph(Printable, tuple):
         
         r2 = len(rc.perm.trimcode)
         s2 = max([i + 1 for i in range(r2, len(rc.perm) + 1) if rc.perm[i] < rc.perm[r - 1]])
-        if debug:
-            print(f"{r2=} {s2=} {len(rc.perm.trimcode)=}")
-            print(f"{r, s=}{r2, s2=}")
-        assert r == r2
-        assert s == s2 or s2 == r + 1
-        
+
         row2 = -1
         for index in range(rc.perm.inv):
             pass  # print(rc.left_to_right_inversion(index))
-            if rc.left_to_right_inversion(index) == (r2, s):
+            if rc.left_to_right_inversion(index) == (r2, s2):
                 pass  # print("Boing")
                 row2, col = rc.left_to_right_inversion_coord(index)
                 # print(f"Pre toggle {rc=}")
@@ -1012,6 +1020,15 @@ class RCGraph(Printable, tuple):
                 # print(f"Post toggle {rc=}")
                 break
         #if row2 != row:
+
+        if debug:
+            print(f"{r2=} {s2=} {len(rc.perm.trimcode)=}")
+            print(f"{r, s=}{r2, s2=}")
+        assert r == r2
+        assert s == s2
+        
+        
+       
         assert row2 == row, f"{rc=} {self=} {row2=} {row=}"
         #print(f"Found at {row2=} {col=}")
         if debug:
