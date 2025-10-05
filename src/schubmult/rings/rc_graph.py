@@ -54,9 +54,12 @@ class RCGraph(Printable, tuple):
     #@cache
     def right_root_at(self, i, j):
         index = self.bisect_left_coords_index(i, j)
-        print(f"{index=}")
+        
         if index < len(self.perm_word) and self.perm_word[index] == i + j - 1:
             index += 1
+        print(f"{index=} {len(self.perm_word)=} {self.perm_word=}")
+        if index >= len(self.perm_word):
+            return (i + j - 1, i + j)
         refl = Permutation.ref_product(*(list(reversed(self.perm_word[index:]))))
         return refl.act_root(i + j -1, i + j)
         # start_root = (i + j - 1, i + j)
@@ -930,22 +933,17 @@ class RCGraph(Printable, tuple):
 
     def toggle_ref_at(self, i, j):
         from bisect import bisect_right
-
-        assert i > 0 and j > 0  # noqa: PT018
-        if self[i - 1, j - 1]:
-            row = list(self[i - 1])
-            row.remove(i + j - 1)
-            return RCGraph([*self[: i - 1], tuple(row), *self[i:]])
-        row = list(self[i - 1])
-        if len(row) == 0:
-            row = [i + j - 1]
+        new_row = [*self[i-1]]
+        if i + j - 1 in new_row:
+            index = new_row.index(i + j - 1)
+            new_row = [*new_row[:index], *new_row[index+1:]]
         else:
             index = 0
-            while index < len(row) and row[index] > i + j - 1:
-                index += 1
-            index -= 1
-            row.insert(index, i + j - 1)
-        return RCGraph([*self[: i - 1], tuple(row), *self[i:]])
+            if len(new_row) > 0:
+                while index < len(new_row) and new_row[index] > i + j - 1:
+                    index += 1
+            new_row.insert(index, i + j - 1)
+        return RCGraph([*self[: i - 1], tuple(new_row), *self[i:]])
 
     # # THIS IS KEY
     # # EXCHANGE PROPERTY GOES TO UNIQUE PERMUTATION
@@ -981,6 +979,7 @@ class RCGraph(Printable, tuple):
 
             row = -1
             for index in range(rc.perm.inv):
+                print(f"{index=} {rc.left_to_right_inversion(index)=}")
                 if rc.left_to_right_inversion(index) == (r, s):
                     row = rc.left_to_right_inversion_coord(index)[0]
                     break
