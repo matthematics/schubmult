@@ -947,7 +947,7 @@ class RCGraph(Printable, tuple):
 
 
 
-    def zero_out_last_row(self, debug=False):
+    def zero_out_last_row(self, debug=True):
         from schubmult.utils.perm_utils import has_bruhat_ascent
 
         # this is important!
@@ -956,13 +956,27 @@ class RCGraph(Printable, tuple):
         assert len(self.perm.trimcode) <= len(self), f"{self=}"
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
-        if self.perm.inv == 0 or len(self.perm.trimcode) <= len(self) - 1:
+        if self.perm.inv == 0:# or len(self.perm.trimcode) < len(self) - 1:
             return self.rowrange(0, len(self) - 1)
-        assert len(self.perm.trimcode) > len(self) - 1
+        rc = self
+        if len(self.perm) - 1 > len(self):
+            rc = self.extend(len(self.perm) - 1 - len(self))
+            print(f"Extened to {rc=}")
+            while len(rc) > len(self):
+                rc = rc.zero_out_last_row()
+                print(f"Zeroed {rc=}")
+        if len(rc.perm.trimcode) <= len(self) - 1:
+            return rc.rowrange(0, len(self) - 1)
+        assert len(rc.perm.trimcode) == len(self)
         r = len(self.perm.trimcode)
         s = max([i + 1 for i in range(r, len(self.perm) + 1) if self.perm[i] < self.perm[r - 1]])
-        rc = self
         
+        if s == r + 1 and r == len(self):
+            if debug:
+                print("Just descent it THIS PART IS QUESTIONABLE")
+                print(f"{rc=} {self=}")
+                rc, row = rc.exchange_property(len(rc.perm.trimcode), return_row=True)
+                return rc.toggle_ref_at(row, len(self) - row).rowrange(0, len(self) - 1)
         row = -1
         for index in range(self.perm.inv):
             if self.left_to_right_inversion(index) == (r, s):
@@ -985,7 +999,7 @@ class RCGraph(Printable, tuple):
             print(f"{r2=} {s2=} {len(rc.perm.trimcode)=}")
             print(f"{r, s=}{r2, s2=}")
         assert r == r2
-        assert s <= s2
+        assert s == s2 or s2 == r + 1
         
         row2 = -1
         for index in range(rc.perm.inv):
@@ -1010,11 +1024,17 @@ class RCGraph(Printable, tuple):
             print(f"{rc.perm=}")
 
         
-        if len(rc.perm.trimcode) > len(self):
-            return rc.extend(1).zero_out_last_row().rowrange(0, len(self) - 1)
+        # if len(rc.perm.trimcode) > len(self):
+        #     length = len(rc.perm.trimcode)
+        #     rc = self.extend(length - len(self)).zero_out_last_row().rowrange(0, len(self))
+        #     print(f"Adjusted 1 {rc}")
+        # if len(rc.perm.trimcode) == len(self):
+        #     rc = rc.zero_out_last_row().rowrange(0, len(self))
+        #     print(f"Adjusted 2 {rc}")
         if len(rc.perm.trimcode) == len(self):
-            return rc.zero_out_last_row().rowrange(0, len(self) - 1)
-        assert len(rc.perm.trimcode) < len(self)
+            print(f"{rc=} {self=}")
+            return rc.zero_out_last_row()
+        assert len(rc.perm.trimcode) < len(self), f"{self.perm=} {rc.perm=}"
         # if len(rc_ret.perm.trimcode) >= len(rc_ret):
         #     return rc_ret.zero_out_last_row(debug=debug)
         return rc.rowrange(0, len(self) - 1)
