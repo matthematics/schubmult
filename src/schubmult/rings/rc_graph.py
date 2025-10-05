@@ -964,13 +964,15 @@ class RCGraph(Printable, tuple):
             else:
                 pass  # print(f"{self.left_to_right_inversion(index)=}")
         assert row > 0
-        
-        rc = rc.kogan_kumar_insert(r - 1, [row])
+        print(f"pre-insert {rc=} {row=}")
+        rc, (ref,) = rc.kogan_kumar_insert(len(self), [row], return_reflections=True)
+        print(f"{ref=}")
         
 
         
         r2 = len(rc.perm.trimcode)
         s2 = max([i + 1 for i in range(r2, len(rc.perm) + 1) if rc.perm[i] < rc.perm[r - 1]])
+        print(f"{r2=} {s2=} {len(rc.perm.trimcode)=}")
         assert r == r2
         assert s == s2
         pass  # print(f"{r, s=}{r2, s2=}")
@@ -979,15 +981,18 @@ class RCGraph(Printable, tuple):
             pass  # print(rc.left_to_right_inversion(index))
             if rc.left_to_right_inversion(index) == (r2, s2):
                 pass  # print("Boing")
-                row2 = rc.left_to_right_inversion_coord(index)[0]
+                row2, col = rc.left_to_right_inversion_coord(index)
                 # print(f"Pre toggle {rc=}")
                 # rc = rc.toggle_ref_at(*rc.left_to_right_inversion_coord(index))
                 # print(f"Post toggle {rc=}")
                 break
         #if row2 != row:
         assert row2 == row, f"{rc=} {self=} {row2=} {row=}"
-
-        rc = rc.reverse_kogan_kumar_insert(r-1, [(r,s)])
+        #print(f"Found at {row2=} {col=}")
+        print("Starting rc")
+        print(f"{rc=}")
+        print(f"{rc.right_root_at(row2, col)=} {row2=} {col=}")
+        rc = rc.reverse_kogan_kumar_insert(r, [(r,s)])
 
 
         assert len(rc.perm.trimcode) < len(self), f"{rc=} {rc.perm.trimcode=} {len(self)=}"
