@@ -971,23 +971,26 @@ class RCGraph(Printable, tuple):
             else:
                 pass  # print(f"{self.left_to_right_inversion(index)=}")
         assert row > 0
-        print(f"pre-insert {rc=} {row=}")
-        rc, (ref,) = rc.kogan_kumar_insert(len(rc.perm.trimcode) - 1, [row], return_reflections=True)
-        print(f"{ref=}")
+        if debug:
+            print(f"pre-insert {rc=} {row=}")
+        rc, (ref,) = rc.kogan_kumar_insert(len(rc.perm.trimcode), [row], return_reflections=True)
+        if debug:
+            print(f"{ref=}")
         
 
         
         r2 = len(rc.perm.trimcode)
         s2 = max([i + 1 for i in range(r2, len(rc.perm) + 1) if rc.perm[i] < rc.perm[r - 1]])
-        print(f"{r2=} {s2=} {len(rc.perm.trimcode)=}")
-        print(f"{r, s=}{r2, s2=}")
+        if debug:
+            print(f"{r2=} {s2=} {len(rc.perm.trimcode)=}")
+            print(f"{r, s=}{r2, s2=}")
         assert r == r2
-        assert s == s2
+        assert s <= s2
         
         row2 = -1
         for index in range(rc.perm.inv):
             pass  # print(rc.left_to_right_inversion(index))
-            if rc.left_to_right_inversion(index) == (r2, s2):
+            if rc.left_to_right_inversion(index) == (r2, s):
                 pass  # print("Boing")
                 row2, col = rc.left_to_right_inversion_coord(index)
                 # print(f"Pre toggle {rc=}")
@@ -997,15 +1000,21 @@ class RCGraph(Printable, tuple):
         #if row2 != row:
         assert row2 == row, f"{rc=} {self=} {row2=} {row=}"
         #print(f"Found at {row2=} {col=}")
-        print("Starting rc")
-        print(f"{rc=}")
-        print(f"{rc.right_root_at(row2, col)=} {row2=} {col=}, {rc.perm=}")
-        print(f"{rc.perm=} removing {(r,s)=}")
-        rc = rc.reverse_kogan_kumar_insert(len(rc.perm.trimcode), [(r,s)])
-        print(f"{rc.perm=}")
+        if debug:
+            print("Starting rc")
+            print(f"{rc=}")
+            print(f"{rc.right_root_at(row2, col)=} {row2=} {col=}, {rc.perm=}")
+            print(f"{rc.perm=} removing {(r,s)=}")
+        rc = rc.reverse_kogan_kumar_insert(r2, [(r2,s)])
+        if debug:
+            print(f"{rc.perm=}")
 
+        
+        if len(rc.perm.trimcode) > len(self):
+            return rc.extend(1).zero_out_last_row().rowrange(0, len(self) - 1)
         if len(rc.perm.trimcode) == len(self):
-            return rc.zero_out_last_row()
+            return rc.zero_out_last_row().rowrange(0, len(self) - 1)
+        assert len(rc.perm.trimcode) < len(self)
         # if len(rc_ret.perm.trimcode) >= len(rc_ret):
         #     return rc_ret.zero_out_last_row(debug=debug)
         return rc.rowrange(0, len(self) - 1)
@@ -1137,16 +1146,16 @@ class RCGraph(Printable, tuple):
             for rc in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=tuple([*self.length_vector, 0])):
                 if rc.zero_out_last_row() == self:
                     rc_set.add(rc)
-                    pass  # print("Added")
-                    pass  # print(rc)
+                    print("Added")
+                    print(rc)
                     continue
                 else:
-                    pass  # print("Skipped")
-                    pass  # print(rc)
-                    pass  # print("because")
-                    pass  # print(rc.zero_out_last_row())
-                    pass  # print("Is not")
-                    pass  # print(self)
+                    print("Skipped")
+                    print(rc)
+                    print("because")
+                    print(rc.zero_out_last_row())
+                    print("Is not")
+                    print(self)
 
             # r = len(perm.trimcode)
             # s = max([i + 1 for i in range(r, len(perm) + 1) if perm[i] < perm[r - 1]])
