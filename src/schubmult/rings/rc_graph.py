@@ -1071,17 +1071,23 @@ class RCGraph(Printable, tuple):
             # top_perm = self.perm * Permutation.ref_product(*tuple(range(len(self.perm), len(self), -1)))
             top_perm = rc.perm
             ref_path = RCGraph.complete_sym_perms(perm, top_perm.inv - perm.inv, len(self)+1)[top_perm]
+            ref_path2 = [(ref[0], ref[1] - 1) for ref in ref_path if ref[0] <= len(self)]
             # #print(f"{ref_path=}")
             # new_ref_path = [(root[0], root[1] - 1) for root in ref_path if root[0] <= len(self)]
             # #print(f"{new_ref_path=}")
-            lower_rc, diff_rows = rc.reverse_kogan_kumar_insert(len(self)+1, ref_path, return_rows=True)
-            print(f"{lower_rc=}")
-            diff_rows_low = [r for r in diff_rows if r <= len(self)]
-            lower_rc = lower_rc.rowrange(0,len(self)).extend(1)
-            lower_rc = lower_rc.kogan_kumar_insert_op(len(self) + 1, diff_rows_low, debug=debug)
-            print(f"After pullout {lower_rc=}, {diff_rows=}, {ref_path=}, {up_perms=}, {diff_rows_low=}")
-            rc_set.add(lower_rc)
-            assert lower_rc.length_vector[:-1] == self.length_vector, f"{lower_rc=}, {self=}, {diff_rows=}, {ref_path=}, {up_perms=}"
+            lower_rc, diff_rows = self.reverse_kogan_kumar_insert(len(self), ref_path2, return_rows=True)
+            
+            #diff_rows_low = [r for r in diff_rows if r <= len(self)]
+            rc = lower_rc.kogan_kumar_insert(len(self) + 1, diff_rows, debug=debug).rowrange(0,len(self)).extend(1)
+            print(rc)
+            assert rc.perm == perm
+            rc_set.add(rc)
+            # lower_rc = RCGraph([*lower_rc.rowrange(0,len(self)),tuple(range(len(self.perm), len(self), -1))])
+            # lower_rc = lower_rc.kogan_kumar_insert(len(self) + 1, diff_rows_low, debug=debug).rowrange(0,len(self)).extend(1)
+            # print(f"After pullout {lower_rc=}, {diff_rows=}, {ref_path=}, {up_perms=}, {diff_rows_low=}")
+            # assert (lower_rc.perm, len(lower_rc)) in up_perms.keys(), f"{lower_rc=}, {self=}, {diff_rows=}, {ref_path=}, {up_perms=}"
+            # # rc_set.add(lower_rc)
+            # assert lower_rc.length_vector[:-1] == self.length_vector, f"{lower_rc=}, {self=}, {diff_rows=}, {ref_path=}, {up_perms=}"
             # rc = lower_rc.kogan_kumar_insert(len(self) + 1, diff_rows, debug=debug).extend(1)
             # rc_set.add(rc)
             # nperm = perm
