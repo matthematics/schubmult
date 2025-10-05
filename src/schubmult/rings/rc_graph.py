@@ -940,7 +940,7 @@ class RCGraph(Printable, tuple):
         print("Zeroing out last row")
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
-        if self.perm.inv == 0:# or len(self.perm.trimcode) < len(self):
+        if self.perm.inv == 0 or len(self.perm.trimcode) < len(self) - 1:
             return self.rowrange(0, len(self) - 1)
 
         r = len(self.perm.trimcode)
@@ -952,11 +952,12 @@ class RCGraph(Printable, tuple):
         found = False
         rc = self
         while not found:
+            done_any = False
             for index in range(self.perm.inv):
 
                 a, b = rc.left_to_right_inversion(index)
                 print(f"{a, b=} {r,s=}")
-                if a <= r and b > r:
+                if a <= r and b > r and b <= s:
                     print(f"Found {a, b=} at {index=}")
                     r1, r2 = rc.left_to_right_inversion_coord(index)
                     assert (a,b) == rc.right_root_at(r1, r2)
@@ -970,10 +971,12 @@ class RCGraph(Printable, tuple):
                     rc, (ref,) = rc0.kogan_kumar_insert(a-1, [row], return_reflections=True)
                     print(f"aster {rc=}")
                     print(f"{ref=}")
-                    
+                    #done_any = True
                     if len(rc.perm.trimcode) < len(self):
-                        found = True
-                        break
+            #if not done_any:
+                       found = True
+                       break
+                    r = len(rc.perm.trimcode)
         
         # pull out a monk rook
         # monk root < r and something > r and  < s
