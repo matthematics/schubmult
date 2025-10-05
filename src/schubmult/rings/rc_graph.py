@@ -127,7 +127,7 @@ class RCGraph(Printable, tuple):
 
     def reverse_kogan_kumar_insert(self, descent, reflection_path, return_rows=False, flip = False, debug=False, allowed_rows=None):
         from schubmult.utils.perm_utils import has_bruhat_ascent, has_bruhat_descent
-
+        debug = True
         # pair_sequence = sorted(pair_sequence, key=lambda x: x[0]
         pair_dict = {}
         for ref in reflection_path:
@@ -150,15 +150,15 @@ class RCGraph(Printable, tuple):
             #         return False
             #     return True
             if root[0] not in pair_dict:
-                if root[0] not in pair_dict_rev or pair_dict_rev.get(root[0], 0) != pair_dict_rev.get(root[1], 0):
-                    return False
-                return True
-            return root[0] in pair_dict and root[1] in pair_dict[root[0]] and has_bruhat_descent(prm, root[0] - 1, root[1] - 1)
+                if root[0] in pair_dict_rev and root[1] in pair_dict_rev:
+                    return True
+                return False
+            return root[0] in pair_dict and root[1] in pair_dict[root[0]]
 
         # may have to add q, s or a_i, q
         def is_relevant_noncrossing(root):
-            # top, bottom = max(root[1], root[0]), min(root[0], root[1])
-            return (root[0] <= descent and descent < root[1] and root[1] not in pair_dict_rev) or (root[0] in pair_dict_rev and root[1] > descent and root[1] not in pair_dict_rev)
+            top, bottom = max(root[1], root[0]), min(root[0], root[1])
+            return (bottom <= descent and descent < top and top not in pair_dict_rev) or (bottom in pair_dict_rev and top > descent and top not in pair_dict_rev)
 
         # Add this intersection. If we are in the first case, insert (s, q) into the sequence (ai, bi) in the rightmost position, such that ai’s remain nondecreasing in the # noqa: RUF003
         # sequence. ((s, q) are the rows where the two strands shown in Figure 3 originate.) If
@@ -166,9 +166,9 @@ class RCGraph(Printable, tuple):
 
         working_rc = self
         if debug:
-            pass  # print("Starting with")
-            pass  # print(working_rc)
-            pass  # print(working_rc.perm)
+            print("Starting with")
+            print(working_rc)
+            print(working_rc.perm)
         rows = []
         if allowed_rows:
             read_rows = allowed_rows
@@ -177,30 +177,37 @@ class RCGraph(Printable, tuple):
         if flip:
             read_rows.reverse()
         for row in read_rows:
-            for col in range(max(descent, self.cols), 0, -1):
+            for col in range(1, max(descent, self.cols)):
                 if working_rc.has_element(row, col):
                     a, b = working_rc.right_root_at(row, col)
-                    pass  # print(f"{reflection_path=}")
-                    pass  # print(f"{(a,b)=}")
+                    print(f"{reflection_path=}")
+                    print(f"{(a,b)=}")
                     if is_relevant_crossing((a, b), working_rc.perm):
                         working_rc = working_rc.toggle_ref_at(row, col)
                         if debug:
-                            pass  # print("Toggled")
-                            pass  # print(working_rc)
+                            print("Toggled")
+                            print(working_rc)
                         a2 = a
                         if a2 in pair_dict_rev:
                             a2 = pair_dict_rev[a2]
+                            pair_dict[a2].remove(a)
                         pair_dict[a2].remove(b)
                         if len(pair_dict[a2]) == 0:
                             del pair_dict[a2]
                         del pair_dict_rev[b]
+                        if a in pair_dict_rev:
+                            del pair_dict_rev[a]
                         rows.append(row)
+                        if len(pair_dict_rev) == 0:
+                            break
                         for col2 in range(1, col):
                             if not working_rc.has_element(row, col):
+                                
                                 a2, b2 = working_rc.right_root_at(row, col2)
                                 if a2 > b2:
                                     continue
                                 if is_relevant_noncrossing((a2, b2)):
+                                    print(f"Rect {a2, b2}")
                                     if a2 <= descent:
                                         assert b2 not in pair_dict
                                         if a2 not in pair_dict:
@@ -210,15 +217,15 @@ class RCGraph(Printable, tuple):
                                         working_rc = working_rc.toggle_ref_at(row, col2)
                                         rows.pop()
                                     else:
-                                        assert a2 in pair_dict_rev
-                                        assert b2 not in pair_dict_rev
+                                        assert a2 not in pair_dict_rev, f"{pair_dict_rev=}"
+                                        assert b2 in pair_dict_rev, f"{pair_dict_rev=}"
                                         a = pair_dict_rev[a2]
                                         pair_dict[a].add(b2)
                                         pair_dict_rev[b2] = a
                                         working_rc = working_rc.toggle_ref_at(row, col2)
                                         rows.pop()
                                     break
-                                    
+
 
         assert len(pair_dict_rev) == 0, f"{pair_dict=}, {pair_dict_rev=}, {working_rc=}"
         assert working_rc.perm.bruhat_leq(self.perm)
@@ -991,7 +998,7 @@ class RCGraph(Printable, tuple):
         #print(f"Found at {row2=} {col=}")
         print("Starting rc")
         print(f"{rc=}")
-        print(f"{rc.right_root_at(row2, col)=} {row2=} {col=}")
+        print(f"{rc.right_root_at(row2, col)=} {row2=} {col=}, {rc.perm=}")
         rc = rc.reverse_kogan_kumar_insert(r, [(r,s)])
 
 
