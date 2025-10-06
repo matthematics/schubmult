@@ -983,7 +983,7 @@ class RCGraph(Printable, tuple):
     # # EXCHANGE PROPERTY GOES TO UNIQUE PERMUTATION
     # # KOGAN INSERT ENSURES WE GO UP PROPERLY
 
-    def zero_out_last_row(self, debug=False):
+    def zero_out_last_row(self, debug=True):
         # this is important!
         # transition formula
         if len(self[-1]) != 0:
@@ -999,30 +999,32 @@ class RCGraph(Printable, tuple):
         # example
         #
         if debug:
-            debug_print("Zeroing out last row")
-            debug_print(self)
-            debug_print("-------")
+            debug_print("Zeroing out last row", debug=debug)
+            debug_print(self, debug=debug)
+            debug_print("-------", debug=debug)
         diff_rows = []
         descs = []
         while len(interim.perm.trimcode) > len(self) - 1:
             descs += [max(interim.perm.descents()) + 1]
-            interim, row = interim.exchange_property(max(interim.perm.descents()) + 1, return_row=True)
+            interim, row = interim.exchange_property(len(interim.perm.trimcode), return_row=True)
             diff_rows += [row]
 
         interim2 = RCGraph([*interim[:-1], tuple(sorted(descs, reverse=True))])
         if debug:
-            debug_print("Transformed")
-            debug_print(interim2)
-            debug_print("=========")
+            debug_print("Transformed", debug=debug)
+            debug_print(interim2, debug=debug)
+            debug_print("=========", debug=debug)
 
         # interim = interim2.old_kk_insert(len(self), diff_rows, debug=debug)
         # need fix rect
-        interim = interim2.kogan_kumar_insert(len(self), diff_rows, debug=debug)
-
+        interim = interim2.kogan_kumar_insert(len(self) - 1, diff_rows, debug=debug)
+        interim = interim.rowrange(0, len(self) - 1).extend(1)
         if debug:
-            debug_print("Got")
-            debug_print(interim)
+            debug_print("Got", debug=debug)
+            debug_print(interim, debug=debug)
+        
         assert interim.length_vector[:-1] == self.length_vector[:-1]
+        assert len(interim.perm.trimcode) <= len(self) - 1
         return interim.rowrange(0, len(self) - 1)
 
         # from schubmult.utils.perm_utils import has_bruhat_ascent
@@ -1199,7 +1201,7 @@ class RCGraph(Printable, tuple):
         #     return {rc.extend(1) for rc in rc_set0}
 
         debug_print(f"{self=} {self.perm=}")
-        rc_set.add(self.extend(1))
+        #rc_set.add(self.extend(1))
 
         # # insert monks < len(self)
         # # pull out the r root
@@ -1237,8 +1239,7 @@ class RCGraph(Printable, tuple):
         #         #raise ValueError("Did not find root to toggle")
 
         for perm, _ in up_perms.keys():
-            if perm == self.perm:
-                continue
+            
             # rc = RCGraph([*self, tuple(range(len(self.perm), len(self), -1))])
 
             for rc in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=tuple([*self.length_vector, 0])):
@@ -1246,14 +1247,13 @@ class RCGraph(Printable, tuple):
                     rc_set.add(rc)
                     debug_print("Added")
                     debug_print(rc)
-                    continue
                 else:
                     debug_print("Skipped")
                     debug_print(rc)
                     debug_print("because")
-                    debug_print(rc.zero_out_last_row())
-                    debug_print("Is not")
-                    debug_print(self)
+                    print(rc.zero_out_last_row())
+                    print("Is not")
+                    print(self)
 
             # r = len(perm.trimcode)
             # s = max([i + 1 for i in range(r, len(perm) + 1) if perm[i] < perm[r - 1]])
@@ -1539,6 +1539,7 @@ class RCGraph(Printable, tuple):
         if self.perm.inv == 0:
             return {RCGraph([*self, *other.shiftup(len(self))]): 1}
         num_zeros = max(len(other), len(other.perm))
+        print(f"Multiplying {self=} {other=} with {num_zeros=} zeros")
         assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
         base_rc = self
         buildup_module = {base_rc: 1}

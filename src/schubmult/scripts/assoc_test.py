@@ -10,9 +10,9 @@ def hom3(rc):
     from schubmult import FA, ASx, SchubertBasis
     #from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
     if isinstance(rc, RCGraph):
-        #return (ASx@FA)(r,rc.length_vector()))
+        #return (ASx@FA)(r,rc.length_vector))
         ring = ASx @ ASx
-        #first = FA(*rc.length_vector()).change_basis(SchubertBasis).get()
+        #first = FA(*rc.length_vector).change_basis(SchubertBasis).get()
         return ring.ext_multiply(ASx(rc.perm,len(rc)),ASx(rc.perm,len(rc)))
     ret = 0
     for rc0, coeff in rc.items():
@@ -36,10 +36,10 @@ def hom(rc):
     ring = TensorRing(ASx@FA, rc_ring)
     
     if isinstance(rc, RCGraph):
-        #return (ASx@FA)(r,rc.length_vector()))
-        # print(f"{rc.length_vector()} {tuple(rc)=}")    
-        #first = FA(*rc.length_vector()).change_basis(SchubertBasis).get()
-        return (ASx@FA)(((rc.perm,len(rc)),rc.length_vector()))
+        #return (ASx@FA)(r,rc.length_vector))
+        # print(f"{rc.length_vector} {tuple(rc)=}")    
+        #first = FA(*rc.length_vector).change_basis(SchubertBasis).get()
+        return (ASx@FA)(((rc.perm,len(rc)),rc.length_vector))
         #return ret
     ret = 0
     for rc0, coeff in rc.items():
@@ -56,9 +56,9 @@ def hom(rc):
 #     ring = TensorRing(ASx, rc_ring.from_dict())
     
 #     if isinstance(rc, RCGraph):
-#         #return (ASx@FA)(r,rc.length_vector()))
-#         # print(f"{rc.length_vector()} {tuple(rc)=}")    
-#         #first = FA(*rc.length_vector()).change_basis(SchubertBasis).get()
+#         #return (ASx@FA)(r,rc.length_vector))
+#         # print(f"{rc.length_vector} {tuple(rc)=}")    
+#         #first = FA(*rc.length_vector).change_basis(SchubertBasis).get()
 #         return ASx(rc.perm,len(rc))
 #         #return ret
 #     ret = 0
@@ -74,10 +74,10 @@ def fa_hom(rc):
     from schubmult import FA, ASx, SchubertBasis
     # from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
     if isinstance(rc, RCGraph):
-        #return (ASx@FA)(r,rc.length_vector()))
+        #return (ASx@FA)(r,rc.length_vector))
         ring = FA @ (ASx@ASx)
-        first = FA(*rc.length_vector()).change_basis(SchubertBasis)
-        second = FA(*rc.length_vector()).change_basis(SchubertBasis).coproduct()
+        first = FA(*rc.length_vector).change_basis(SchubertBasis)
+        second = FA(*rc.length_vector).change_basis(SchubertBasis).coproduct()
         return ring.ext_multiply(first, second)
     ret = 0
     for rc0, coeff in rc.items():
@@ -89,10 +89,10 @@ def hom_cop(rc):
     from schubmult import FA, ASx, SchubertBasis
     # from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
     if isinstance(rc, RCGraph):
-        #return (ASx@FA)(r,rc.length_vector()))
+        #return (ASx@FA)(r,rc.length_vector))
         ring = ASx @ (ASx@ASx)
-        first = FA(*rc.length_vector()).change_basis(SchubertBasis)
-        second = FA(*rc.length_vector()).change_basis(SchubertBasis).coproduct()
+        first = FA(*rc.length_vector).change_basis(SchubertBasis)
+        second = FA(*rc.length_vector).change_basis(SchubertBasis).coproduct()
         return ring.ext_multiply(first, second)
     ret = 0
     for rc0, coeff in rc.items():
@@ -221,7 +221,7 @@ if __name__ == "__main__":
     #         elem2 = rc_ring.from_dict({RCGraph(): v})
     #         index = 0
     #         for a in w:
-    #             elem2 =  elem2*csym_rc(*list((rc.length_vector()[index:index+a])))
+    #             elem2 =  elem2*csym_rc(*list((rc.length_vector[index:index+a])))
     #             index += a
     #         mod += elem2
     #     #mod = RC(*perm.trimcode)
@@ -269,6 +269,16 @@ if __name__ == "__main__":
                                             pretty_print(g3)
                                             raise
                                         print("Success")
+                                        df = hom(g1) * (hom(g2) * hom(g3)) - hom(g)
+                                        try:
+                                            assert all(v == 0 for k, v in df.items()), f"{tuple(df.values())=}"
+                                        except AssertionError as e:
+                                            print("HOM FAILURE")
+                                            print(e)
+                                            print(hom(g1) * (hom(g2) * hom(g3)))
+                                            print(hom(g))
+                                            raise
+                                        print("Hom Success")
                                         
                                         del g
                                         del g_
