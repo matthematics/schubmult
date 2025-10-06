@@ -56,7 +56,7 @@ class RCGraph(Printable, tuple):
     def shiftup(self, shift):
         return [tuple([a + shift for a in rrow]) for rrow in self]
 
-    #####@cache
+    @cache
     def right_root_at(self, i, j, debug=False):
         if i <= 0 or j <= 0:
             raise IndexError("i and j must be positive")
@@ -126,7 +126,7 @@ class RCGraph(Printable, tuple):
 
         # return ((~lower_perm)[start_root[0] - 1], (~lower_perm)[start_root[1] - 1])
 
-    ####@cache
+    @cache
     def left_root_at(self, i, j):
         start_root = (i + j - 1, i + j)
         for j2 in range(j + 1, self.cols):
@@ -261,7 +261,7 @@ class RCGraph(Printable, tuple):
             return working_rc, rows
         return working_rc
 
-    ####@cache
+    @cache
     def inversion_label(self, i, j):
         if i >= j:
             raise ValueError("i must be less than j")
@@ -272,7 +272,7 @@ class RCGraph(Printable, tuple):
                 return self.left_to_right_inversion_coords(index)[0]
         raise ValueError("Could not find inversion")
 
-    ####@cache
+    @cache
     def lehmer_label(self, i, j):
         value = self.inversion_label(i, j)
         numeros = set(range(1, value + 1))
@@ -293,7 +293,7 @@ class RCGraph(Printable, tuple):
         return RCGraph.__xnew_cached__(cls, *new_args)
 
     @staticmethod
-    ####@cache
+    @cache
     def __xnew_cached__(_class, *args):
         return RCGraph.__xnew__(_class, *args)
 
@@ -304,7 +304,7 @@ class RCGraph(Printable, tuple):
     def __init__(self, *args):
         pass
 
-    @property
+    @cached_property
     def perm_word(self):
         ret = []
         for row in self:
@@ -352,18 +352,18 @@ class RCGraph(Printable, tuple):
         R = NilHeckeRing(x)
         return self.polyvalue(x, y) * R(self.perm)
 
-    ####@cache
+    @cache
     def has_element(self, i, j):
         return i <= len(self) and j + i - 1 in self[i - 1]
 
-    @property
+    @cached_property
     def length_vector(self):
         return tuple([len(row) for row in self])
 
     # def __new__(cls, *args, **kwargs):
     #     return tuple.__new__(cls, *args)
 
-    ####@cache
+    @cache
     def lehmer_partial_leq(self, other):
         try:
             for i in range(self.perm.inv):
@@ -393,7 +393,6 @@ class RCGraph(Printable, tuple):
     _cache_by_weight = {}  # noqa: RUF012
 
     @classmethod
-    ####@cache
     def all_rc_graphs(cls, perm, length=-1, weight=None):
         if length > 0 and length < len(perm.trimcode):
             raise ValueError(f"Length must be at least the last descent of the permutation, permutation has {len(perm.trimcode)} rows and {perm=}, got {length=}")
@@ -598,7 +597,7 @@ class RCGraph(Printable, tuple):
                     working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b)
         return working_rc
 
-    def _kogan_kumar_rectify(self, row_below, descent, dict_by_a, dict_by_b, debug=False):
+    def _kogan_kumar_rectify(self, row_below, descent, dict_by_a, dict_by_b, debug=False, backwards=True):
         debug_print(f"In rectify {row_below=} {self.is_valid=} {self=}", debug=debug)
         working_rc = self
         # debug = True
@@ -607,6 +606,7 @@ class RCGraph(Printable, tuple):
             return working_rc
         if working_rc.is_valid:
             return working_rc
+        
         for j in range(1, working_rc.cols + descent + 5):
             flag = False
             if working_rc.is_valid:
@@ -649,7 +649,7 @@ class RCGraph(Printable, tuple):
                     debug_print(f"{working_rc=}, {dict_by_a=}, {dict_by_b=}, {a=}, {b=} {row_below=} {j=}")
                     raise ValueError(f"Could not rectify at {(row_below, j)} with root {(a, b)}")
                 if flag:
-                    working_rc = working_rc._kogan_kumar_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times=1, debug=debug)
+                    working_rc = working_rc._kogan_kumar_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times=1, debug=debug, backwards=backwards)
         return working_rc._kogan_kumar_rectify(row_below - 1, descent, dict_by_a, dict_by_b)
 
     # def _kogan_kumar_rectify(self, row_below, descent, dict_by_a, dict_by_b,debug=False):
@@ -805,7 +805,7 @@ class RCGraph(Printable, tuple):
         return other
 
     # VERIFY
-    def kogan_kumar_insert(self, descent, rows, debug=False, return_reflections=False):
+    def kogan_kumar_insert(self, descent, rows, debug=False, return_reflections=False, backwards=True):
         dict_by_a = {}
         dict_by_b = {}
         # row is descent
@@ -833,10 +833,10 @@ class RCGraph(Printable, tuple):
                 debug_print(working_rc)
                 debug_print(f"{working_rc.perm.inv=}, {self.perm.inv=}")
             last_working_rc = working_rc
-            working_rc = working_rc._kogan_kumar_insert_row(row, descent, dict_by_a, dict_by_b, num_times, debug=debug)
+            working_rc = working_rc._kogan_kumar_insert_row(row, descent, dict_by_a, dict_by_b, num_times, debug=debug, backwards=backwards)
 
             if row > 1 and not working_rc.is_valid:
-                working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b)  # minus one?
+                working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards)  # minus one?
             #  if debug:
             # print("Next iteration")
             # print(working_rc)
@@ -928,7 +928,7 @@ class RCGraph(Printable, tuple):
     #     # print(f"Did not find {a,b} start_perm={start_perm} {dict_by_a=}")
     #     return working_rc  # , tuple(reflections)
 
-    @property
+    @cached_property
     def perm(self):
         perm = Permutation([])
         for row in self:
@@ -1464,7 +1464,7 @@ class RCGraph(Printable, tuple):
     def __hash__(self):
         return hash(tuple(self))
 
-    ####@cache
+    @cache
     def bisect_left_coords_index(self, row, col, debug=False):
         from bisect import bisect_left, bisect_right  # noqa: F401
         # WRONG?
@@ -1513,7 +1513,7 @@ class RCGraph(Printable, tuple):
         # assert index == len(self.perm_word)
         return final_index
 
-    ####@cache
+    @cache
     def bisect_right_coords_index(self, row, col):
         raise NotImplementedError("Right bisect not implemented")
 
@@ -1549,7 +1549,7 @@ class RCGraph(Printable, tuple):
                 assert new_rc.perm == perm, f"{new_rc=} {new_rc.perm=}, {new_perm=} {perm=}, {new_rc}"
         return rc_set
 
-    ####@cache
+    @cache
     def _inversion_to_coord(self):
         roots_in = {}
         roots_out = {}
@@ -1562,15 +1562,16 @@ class RCGraph(Printable, tuple):
                     roots_out[(a, b)] = (i + 1, j + 1)
         return roots_in, roots_out
 
-    ####@cache
+    @cache
     def left_to_right_inversion(self, index):
         return self.right_root_at(*self.left_to_right_inversion_coords(index))
 
-    ####@cache
+    @cache
     def left_to_right_left_inversion(self, index):
         # return self.left_root_at(*self.left_to_right_inversion_coords(index))
         raise NotImplementedError("Left inversions not implemented")
 
+    @cache
     def left_to_right_inversion_coords(self, index, debug=False):
         if index < 0 or index >= len(self.perm_word):
             raise ValueError(f"Index {index} out of range {self.perm.inv}")
@@ -1602,7 +1603,7 @@ class RCGraph(Printable, tuple):
 
         # assert False, f"Index {index} out of range {self.perm.inv}"
 
-    ####@cache
+    @cache
     def max_of_row(self, r):
         if len(self[r - 1]) == 0:
             the_max = 1
@@ -1767,7 +1768,7 @@ class RCGraph(Printable, tuple):
     def height(self):
         return self.rows
 
-    @property
+    @cached_property
     def cols(self):
         return max([self[i][0] - i if len(self[i]) > 0 else 0 for i in range(len(self))]) if len(self) > 0 else 0
 
