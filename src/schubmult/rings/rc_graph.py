@@ -1053,10 +1053,10 @@ class RCGraph(Printable, tuple):
             interim, row = interim.exchange_property(len(interim.perm.trimcode), return_row=True)
             diff_rows += [row]
         debug_print(f"Exchanged down to {interim=}, {diff_rows=} {descs=}", debug=debug)
-        if interim.perm.inv == 0:
-            debug_print("Special case 1", debug=debug)
-            return interim.kogan_kumar_insert(len(self) - 1, diff_rows, debug=False).rowrange(0, len(self) - 1)
-        bubble_k = len(self)
+        # if interim.perm.inv == 0:
+        #     debug_print("Special case 1", debug=debug)
+        #     return interim.kogan_kumar_insert(len(self) - 1, diff_rows, debug=False).rowrange(0, len(self) - 1)
+        # bubble_k = len(self)
         if interim.perm.inv == self.perm.inv - 1:
             debug_print("Special case 2 analyze with transition", debug=False)
             debug_print("Maybe elem sym is the issue", debug=False)
@@ -1068,13 +1068,13 @@ class RCGraph(Printable, tuple):
             #extend_amount = 2
             #return interim.kogan_kumar_insert(len(self) - 1, diff_rows, debug=False).rowrange(0, len(self) - 1)
         
-        ref_path = RCGraph.complete_sym_perms(interim.perm, self.perm.inv - interim.perm.inv, len(self.perm.trimcode))[self.perm]
-        debug_print(f"Ref path to {ref_path=}", debug=debug)
+        # ref_path = RCGraph.complete_sym_perms(interim.perm, self.perm.inv - interim.perm.inv, len(self.perm.trimcode))[self.perm]
+        # debug_print(f"Ref path to {ref_path=}", debug=debug)
         #interim, diff_rows = self.reverse_kogan_kumar_insert(len(self.perm.trimcode), ref_path, return_rows=True, debug=False)
 
         debug_print(f"Exchanged to {interim=}, {diff_rows=} {descs=}", debug=debug)
 
-        interim2 = RCGraph([*interim[:-1], ()])
+        interim2 = RCGraph([*interim[:-1], sorted(descs, reverse=True)])
         # if debug:
         #     debug_print("Transformed", debug=debug)
         #     debug_print(interim2, debug=debug)
