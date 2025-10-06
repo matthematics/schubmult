@@ -464,27 +464,34 @@ class RCGraph(Printable, tuple):
     #         return True
     #     return False
 
-    def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, debug=False, start_index=-1):
+    def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, debug=False, start_index=-1, backwards=True):
         working_rc = self
         if row > descent:
             raise ValueError("All rows must be less than or equal to descent")
-
+        if backwards:
+            debug_print("WARNING BACKWARDS IS ON", debug=False)
         # if row > len(self):
         #     working_rc = working_rc.extend(row - len(self))
 
         i = start_index
+
         if i == -1:
-            if len(self[row - 1]) == 0:
+            if backwards:
+                i = 0
+            elif len(self[row - 1]) == 0:
                 i = descent + 5
             else:
                 i = max(self[row - 1]) + descent + 5
         num_done = 0
         flag = True
         while num_done < num_times:
-            if i <= 1:
+            if i <= 1 and not backwards:
                 debug_print("Resetting i", debug=debug)
                 i = working_rc.cols + descent + 5
-            i -= 1
+            if not backwards:
+                i -= 1
+            else:
+                i += 1
             flag = False
             if debug:
                 debug_print(f"Trying column {i=} {descent=} {row=} {num_done=} {num_times=} {dict_by_a=} {dict_by_b=}", debug=debug)
@@ -1051,8 +1058,8 @@ class RCGraph(Printable, tuple):
             return interim.kogan_kumar_insert(len(self) - 1, diff_rows, debug=False).rowrange(0, len(self) - 1)
         bubble_k = len(self)
         if interim.perm.inv == self.perm.inv - 1:
-            debug_print("Special case 2 analyze with transition", debug=True)
-            debug_print("Maybe elem sym is the issue", debug=True)
+            debug_print("Special case 2 analyze with transition", debug=False)
+            debug_print("Maybe elem sym is the issue", debug=False)
             # return RCGraph([*interim.extend(1).zero_out_last_row(debug=debug)[:-2],tuple([d - 1 for d in descs])]) ?
             # if len(interim.perm) <= len(self):
             #     return RCGraph([tuple([a - 1 for a in row] for row in self[:-1])])
@@ -1063,7 +1070,7 @@ class RCGraph(Printable, tuple):
         
         ref_path = RCGraph.complete_sym_perms(interim.perm, self.perm.inv - interim.perm.inv, len(self.perm.trimcode))[self.perm]
         debug_print(f"Ref path to {ref_path=}", debug=debug)
-        interim, diff_rows = self.reverse_kogan_kumar_insert(len(self.perm.trimcode), ref_path, return_rows=True, debug=False)
+        #interim, diff_rows = self.reverse_kogan_kumar_insert(len(self.perm.trimcode), ref_path, return_rows=True, debug=False)
 
         debug_print(f"Exchanged to {interim=}, {diff_rows=} {descs=}", debug=debug)
 
