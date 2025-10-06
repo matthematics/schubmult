@@ -180,7 +180,7 @@ class RCGraph(Printable, tuple):
             #         return False
             #     return True
             if root[0] not in pair_dict:
-                if root[0] in pair_dict_rev and root[1] in pair_dict_rev:
+                if root[0] in pair_dict_rev and root[1] in pair_dict_rev and pair_dict_rev[root[0]] == pair_dict_rev[root[1]]:
                     return True
                 return False
             return root[0] in pair_dict and root[1] in pair_dict[root[0]]
@@ -200,40 +200,41 @@ class RCGraph(Printable, tuple):
             debug_print(working_rc)
             debug_print(working_rc.perm)
         rows = []
-        if allowed_rows:
-            read_rows = allowed_rows
-        else:
-            read_rows = list(range(1, len(self) + 1))
-        if flip:
-            read_rows.reverse()
-        for row in read_rows:
-            for col in range(1, max(descent, self.cols)):
+        #read_rows = list(range(1, len(self) + 1))
+        for row in range(1, len(self) + 1):
+            for col in range(1, max(descent, self.cols) + 1):
                 if working_rc.has_element(row, col):
                     a, b = working_rc.right_root_at(row, col)
+                    if debug:
+                        debug_print(f"{a,b=} at {row,col=}", debug=debug)
+                        debug_print(working_rc, debug=debug)
                     # print(f"{reflection_path=}")
                     # print(f"{(a,b)=}")
                     if is_relevant_crossing((a, b), working_rc.perm):
                         working_rc = working_rc.toggle_ref_at(row, col)
                         if debug:
-                            debug_print("Toggled", debug=debug)
-                            debug_print(working_rc)
+                            debug_print(f"Toggled {a,b=}", debug=debug)
+                            debug_print(working_rc, debug=debug)
                         a2 = a
                         if a2 in pair_dict_rev:
                             a2 = pair_dict_rev[a2]
-                            pair_dict[a2].remove(a)
+                        #     pair_dict[a2].remove(a)
+                        #     del pair_dict_rev[a]
+                        # else:
                         pair_dict[a2].remove(b)
+                        del pair_dict_rev[b]
                         if len(pair_dict[a2]) == 0:
                             del pair_dict[a2]
-                        del pair_dict_rev[b]
-                        pair_dict_rev.pop(a, None)
+                        
+                        #pair_dict_rev.pop(a, None)
                         rows.append(row)
-                        if len(pair_dict_rev) == 0:
-                            break
+                        # if len(pair_dict_rev) == 0:
+                        #     break
                         for col2 in range(1, col):
                             if not working_rc.has_element(row, col):
                                 a2, b2 = working_rc.right_root_at(row, col2)
-                                if a2 > b2:
-                                    continue
+                                # if a2 > b2:
+                                #     continue
                                 if is_relevant_noncrossing((a2, b2)):
                                     # print(f"Rect {a2, b2}")
                                     if a2 <= descent:
