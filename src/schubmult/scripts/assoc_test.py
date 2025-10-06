@@ -264,9 +264,9 @@ if __name__ == "__main__":
                                         except AssertionError as e:
                                             print("FAILURE")
                                             print(e)
-                                            pretty_print(g1)
-                                            pretty_print(g2)
-                                            pretty_print(g3)
+                                            print(f"{g=}")
+                                            print(f"{g_=}")
+                                            
                                             raise
                                         print("Success")
                                         df = hom(g1) * (hom(g2) * hom(g3)) - hom(g)
