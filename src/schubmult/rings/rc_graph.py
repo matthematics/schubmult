@@ -999,7 +999,7 @@ class RCGraph(Printable, tuple):
         # transition formula
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
-        if self.perm.inv == 0:
+        if self.perm.inv == 0 or len(self.perm.trimcode) <= len(self) - 1:
             return self.rowrange(0, len(self) - 1)
         # if max(self.perm.descents()) + 1 <= len(self) - 1:
         #     return self.rowrange(0, len(self) - 1)
@@ -1010,9 +1010,31 @@ class RCGraph(Printable, tuple):
         # we need to bump up additionally?
         # example
         #
+
+
+        # SPECIAL CASE
+        # Got
+        # RCGraph([
+        # |       |,
+        # |5      |,
+        # |       |,
+        # |      4|,
+        # |      5|])
+        # interim.perm=(1, 2, 3, 6, 5, 4)
+        # RCGraph([
+        # |       |,
+        # |5      |,
+        # |       |,
+        # |      4|])
+        # Is not
+        # RCGraph([
+        # |   |,
+        # |3  |,
+        # |   |,
+        # |  4|])
         if debug:
             debug_print("Zeroing out last row", debug=debug)
-            debug_print(self, debug=debug)
+            debug_print(f"{self=} {len(self)=}", debug=debug)
             debug_print("-------", debug=debug)
         diff_rows = []
         descs = []
@@ -1022,9 +1044,16 @@ class RCGraph(Printable, tuple):
             interim, row = interim.exchange_property(len(interim.perm.trimcode), return_row=True)
             diff_rows += [row]
         debug_print(f"Exchanged down to {interim=}, {diff_rows=} {descs=}", debug=debug)
+        if interim.perm.inv == 0:
+            debug_print("Special case 1", debug=debug)
+            return interim.kogan_kumar_insert(len(self) - 1, diff_rows, debug=False).rowrange(0, len(self) - 1)
+        # if interim.perm.inv == self.perm.inv - 1:
+        #     debug_print("Special case 2", debug=debug)
+        #     return interim.kogan_kumar_insert(len(self) - 1, diff_rows, debug=False).rowrange(0, len(self) - 1)
+        
         ref_path = RCGraph.complete_sym_perms(interim.perm, self.perm.inv - interim.perm.inv, len(self.perm.trimcode))[self.perm]
         debug_print(f"Ref path to {ref_path=}", debug=debug)
-        interim, diff_rows = self.reverse_kogan_kumar_insert(len(self.perm.trimcode), ref_path, return_rows=True, debug=debug)
+        interim, diff_rows = self.reverse_kogan_kumar_insert(len(self.perm.trimcode), ref_path, return_rows=True, debug=False)
 
         debug_print(f"Exchanged to {interim=}, {diff_rows=} {descs=}", debug=debug)
 
@@ -1048,16 +1077,23 @@ class RCGraph(Printable, tuple):
         if debug:
             debug_print("Bubbled", debug=debug)
             debug_print(f"{interim=}", debug=debug)
+            debug_print(f"{interim.perm=}", debug=debug)
+            debug_print(f"{len(interim.perm)=}", debug=debug)
+            debug_print(f"{interim.perm[len(self) - 1]=}", debug=debug)
             debug_print("=========", debug=debug)
-        interim = interim.kogan_kumar_insert(len(self) - 1, diff_rows, debug=False)
-        assert interim.perm
+        interim = interim.kogan_kumar_insert(len(self.perm.trimcode) - 1, diff_rows, debug=False)
+        #assert interim.perm
         
         if debug:
             debug_print("Got", debug=debug)
             debug_print(interim, debug=debug)
+            debug_print(f"{interim.perm=}", debug=debug)
+        if interim.perm[len(self) - 1] != len(interim.perm):
+            raise ValueError(f"Last element not fixed {interim=}, {self=}, {diff_rows=}, {descs=}, {bubbles=}")
         interim = interim.rowrange(0, len(self) - 1).extend(1)
         assert interim.length_vector[:-1] == self.length_vector[:-1]
         assert len(interim.perm.trimcode) <= len(self) - 1, f"{interim.perm.trimcode=} {self.perm.trimcode=} {interim.perm=} {self.perm=} {interim=} {self=}"
+        
         return interim.rowrange(0, len(self) - 1)
 
         # from schubmult.utils.perm_utils import has_bruhat_ascent
