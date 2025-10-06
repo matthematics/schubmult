@@ -61,70 +61,20 @@ class RCGraph(Printable, tuple):
         if i <= 0 or j <= 0:
             raise IndexError("i and j must be positive")
         if len(self.perm_word) > 0:
-            index = self.bisect_left_coords_index(i, j)  # NO?
-            # NO
-            # if index < len(self.perm_word) and self.perm_word[index] == i + j - 1:
-            #     index += 1
-            #debug_print(f"{self.perm_word=} {index=}", debug=debug)
+            index = self.bisect_left_coords_index(i, j)
             if index < len(self.perm_word):
-                #debug_print(f"{index=} {len(self.perm_word)=} {self.perm_word=} {i,j=} {self.left_to_right_inversion_coords(index)=}", debug=debug)
-                # if index >= len(self.perm_word):
-                #     return (i + j - 1, i + j)
-                # if self.left_to_right_inversion_coords(index) == (i, j):
-                #     debug_print(f"Found match at {index=} {i, j} {self.perm_word[index]=}", debug=False)
-                #     index += 1
-                #     debug_print(f"Bumping to {index=}", debug=False)
                 if self.left_to_right_inversion_coords(index) == (i, j):
-                    #debug_print(f"Found in word {self.perm_word=} {index=}", debug=debug)
                     return self.perm.right_root_at(index, word=self.perm_word)
                 word_piece = list(self.perm_word[index:])
             else:
                 word_piece = []
-            #debug_print(f"{word_piece=}", debug=debug)
             refl = ~Permutation.ref_product(*word_piece)
             result = refl.act_root(i + j - 1, i + j)
 
         else:
             result = (i + j - 1, i + j)
-        #debug_print(f"root {result=}", debug=debug)
         return result
-        # start_root = (i + j - 1, i + j)
-        # prm = Permutation([])
-        # for j2 in range(j - 1, 0, -1):
-        #     if self.has_element(i, j2):
-        #         #print(f"{self[i - 1, j2 - 1]=} {i=} {j2=}")
-        #         debug_print(f"{i + j2 - 1=}")
-        #         prm = prm.swap(i + j2 - 2, i + j2 - 1)
-        #         #start_root = Permutation.ref_product(self[i - 1, j2 - 1]).act_root(*start_root)
-        # for i2 in range(i + 1, self.rows + 1):
-        #     for j2 in range(self.cols + 1, 0, -1):
-        #         if self.has_element(i2, j2):
-        #             debug_print(f"{i2 + j2 - 1=} {i2=} {j2=}")
-        #             prm = prm.swap(i2 + j2 - 2, i2 + j2 - 1)
-        # print(f"{prm=}")
-        # start_root = (~prm).act_root(*start_root)
-        # print(f"{start_root=}")
-        # return start_root
 
-        # from bisect import bisect_left
-
-        # start_root = (i + j - 1, i + j)
-        # if i > len(self):
-        #     return start_root
-        # row = self[i - 1]
-        # revved = [*row]
-        # revved.reverse()
-
-        # index = bisect_left(revved, i + j - 1)
-        # assert index >= len(revved) or revved[index] != i + j - 1 or self.has_element(i, j)
-        # perm = Permutation.ref_product(*revved[:index])
-        # start_root = (perm[start_root[0] - 1], perm[start_root[1] - 1])
-        # lower_perm = Permutation([])
-
-        # for rrow in self[i:]:
-        #     lower_perm *= Permutation.ref_product(*rrow)
-
-        # return ((~lower_perm)[start_root[0] - 1], (~lower_perm)[start_root[1] - 1])
 
     @cache
     def left_root_at(self, i, j):
@@ -137,27 +87,8 @@ class RCGraph(Printable, tuple):
                 if self[i2 - 1, j2 - 1]:
                     start_root = Permutation.ref_product(self[i2 - 1, j2 - 1]).act_root(*start_root)
         return start_root
-        # from bisect import bisect_right
 
-        # start_root = (i + j - 1, i + j)
-        # if i > len(self):
-        #     return start_root
-        # row = self[i - 1]
-        # revved = [*row]
-        # # revved.reverse()
-
-        # index = bisect_right(revved, i + j - 1)
-        # assert index >= len(revved) or revved[index] != i + j - 1 or self.has_element(i, j)
-        # perm = Permutation.ref_product(*revved[:index])
-        # start_root = (perm[start_root[0] - 1], perm[start_root[1] - 1])
-        # lower_perm = Permutation([])
-        # if i > 1:
-        #     for rrow in reversed(self[: i - 1]):
-        #         lower_perm *= Permutation.ref_product(*rrow)
-
-        # return ((lower_perm)[start_root[0] - 1], (lower_perm)[start_root[1] - 1])
-
-    def reverse_kogan_kumar_insert(self, descent, reflection_path, return_rows=False, flip=False, debug=False, allowed_rows=None):
+    def reverse_kogan_kumar_insert(self, descent, reflection_path, return_rows=False, debug=False):
         # pair_sequence = sorted(pair_sequence, key=lambda x: x[0]
         pair_dict = {}
         for ref in reflection_path:
@@ -1288,6 +1219,7 @@ class RCGraph(Printable, tuple):
     #         top_spot -= 1
     #     return
 
+    @cache
     def right_zero_act(self, debug=False):
         # NOTE THAT THIS IS STILL USING THE OLD METHOD
         if self.perm.inv == 0:
@@ -1477,53 +1409,21 @@ class RCGraph(Printable, tuple):
         return hash(tuple(self))
 
     @cache
-    def bisect_left_coords_index(self, row, col, debug=False):
+    def bisect_left_coords_index(self, row, col, debug=False, lo=0, hi=None):
         from bisect import bisect_left, bisect_right  # noqa: F401
-        # WRONG?
-        # inversions = [self.left_to_right_inversion_coords(i) for i in range(len(self.perm_word))]
-        # debug_print(f"{inversions=}")
-        # if len(inversions) == 0:
-        #     return 0
-        # by_row = {}
-        # for index, root in enumerate(inversions):
-        #     by_row[root[0]] = by_row.get(root[0],{})
-        #     by_row[root[0]][root[1]] = index
-        # keylist = sorted(by_row.keys())
-        # row0 = bisect_left(keylist, row)
-        # if row0 >= len(keylist):
-        #     return self.perm.inv
-        # row0 = keylist[row0]
-        # keylist2 = sorted(by_row[row0].keys())
-        # col0 = keylist2[-1]
-        # if row0 == row:
-        #     col0 = bisect_left(keylist2, col)
-        #     if col0 >= len(keylist2):
-        #         return by_row[row0][keylist2[-1]]
-        #     col0 = keylist2[col0]
 
-        # return by_row[row0][col0]
-        final_index = -1
-        for index in range(len(self.perm_word)):
-            i, j = self.left_to_right_inversion_coords(index)
-            # if i < row or (i == row and j >= col):
-            #     return index
-            if i == row and j == col:
-                final_index = index
-                break
-            if i == row and j < col:
-                final_index = index
-                break
-            if i > row:
-                final_index = index
-                break
+        if hi is None:
+            hi = len(self.perm_word)
 
-        if final_index == -1:
-            debug_print("Returning end", debug=debug)
-            final_index = len(self.perm_word)
-        else:
-            debug_print(f"{row, col} {final_index=} got {self.left_to_right_inversion_coords(final_index)}", debug=debug)
-        # assert index == len(self.perm_word)
-        return final_index
+
+        while lo < hi:
+            mid = (lo + hi) // 2
+            i, j = self.left_to_right_inversion_coords(mid)
+            if i < row or (i == row and j > col):
+                lo = mid + 1
+            else:
+                hi = mid
+        return lo
 
     @cache
     def bisect_right_coords_index(self, row, col):
