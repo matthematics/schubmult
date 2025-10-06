@@ -57,28 +57,36 @@ class RCGraph(Printable, tuple):
         return [tuple([a + shift for a in rrow]) for rrow in self]
 
     #####@cache
-    def right_root_at(self, i, j, debug=False):
+    def right_root_at(self, i, j, debug=True):
         if i <= 0 or j <= 0:
             raise IndexError("i and j must be positive")
-        index = self.bisect_left_coords_index(i, j)  # NO?
-        # NO
-        # if index < len(self.perm_word) and self.perm_word[index] == i + j - 1:
-        #     index += 1
-        debug_print(f"{index=} {len(self.perm_word)=} {self.perm_word=} {i,j=} {self.left_to_right_inversion_coords(index)=}", debug=False)
-        # if index >= len(self.perm_word):
-        #     return (i + j - 1, i + j)
-        # if self.left_to_right_inversion_coords(index) == (i, j):
-        #     debug_print(f"Found match at {index=} {i, j} {self.perm_word[index]=}", debug=False)
-        #     index += 1
-        #     debug_print(f"Bumping to {index=}", debug=False)
-        if self.left_to_right_inversion_coords(index) == (i, j):
-            index += 1
-            debug_print(f"Bumping to {index=}", debug=False)
-        word_piece = list(self.perm_word[index:])
-        debug_print(f"{word_piece=}", debug=False)
-        refl = ~Permutation.ref_product(*word_piece)
-        result = refl.act_root(i + j - 1, i + j)
-        debug_print(f"root {result=}", debug=False)
+        if len(self.perm_word) > 0:
+            index = self.bisect_left_coords_index(i, j)  # NO?
+            # NO
+            # if index < len(self.perm_word) and self.perm_word[index] == i + j - 1:
+            #     index += 1
+            debug_print(f"{self.perm_word=} {index=}", debug=debug)
+            if index < len(self.perm_word):
+                debug_print(f"{index=} {len(self.perm_word)=} {self.perm_word=} {i,j=} {self.left_to_right_inversion_coords(index)=}", debug=debug)
+            # if index >= len(self.perm_word):
+            #     return (i + j - 1, i + j)
+            # if self.left_to_right_inversion_coords(index) == (i, j):
+            #     debug_print(f"Found match at {index=} {i, j} {self.perm_word[index]=}", debug=False)
+            #     index += 1
+            #     debug_print(f"Bumping to {index=}", debug=False)
+                if self.left_to_right_inversion_coords(index) == (i, j):
+                    debug_print(f"Found in word {self.perm_word=} {index=}", debug=debug)
+                    return self.perm.right_root_at(index, word=self.perm_word)
+                word_piece = list(self.perm_word[index:])
+            else:
+                word_piece = []
+            debug_print(f"{word_piece=}", debug=debug)
+            refl = ~Permutation.ref_product(*word_piece)
+            result = refl.act_root(i + j - 1, i + j)
+            
+        else:
+            result = (i + j - 1, i + j)
+        debug_print(f"root {result=}", debug=debug)
         return result
         # start_root = (i + j - 1, i + j)
         # prm = Permutation([])
@@ -586,7 +594,7 @@ class RCGraph(Printable, tuple):
                     working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b)
         return working_rc
 
-    def _kogan_kumar_rectify(self, row_below, descent, dict_by_a, dict_by_b,debug=False):
+    def _kogan_kumar_rectify(self, row_below, descent, dict_by_a, dict_by_b,debug=True):
         debug_print(f"In rectify {row_below=} {self.is_valid=} {self=}", debug=debug)
         working_rc = self
         #debug = True
@@ -967,7 +975,7 @@ class RCGraph(Printable, tuple):
             return FA(*word) * cls()
         return cls.fa_hom(*word[:-1]) * cls.fa_hom(word[-1])
 
-    def toggle_ref_at(self, i, j):
+    def toggle_ref_at(self, i, j, debug=True):
         if i <= 0 or j <= 0:
             raise IndexError()
         new_row = [*self[i - 1]]
@@ -976,10 +984,13 @@ class RCGraph(Printable, tuple):
             new_row = [*new_row[:index], *new_row[index + 1 :]]
         else:
             index = 0
+            debug_print("Searching",debug=debug)
             if len(new_row) > 0:
                 while index < len(new_row) and new_row[index] > i + j - 1:
                     index += 1
+            debug_print(f"Index {index=} inserting at row {i} column {j} the refl {i+j-1=} int {new_row=}",debug=debug)
             new_row.insert(index, i + j - 1)
+            debug_print(f"Result {new_row=}",debug=debug)
         return RCGraph([*self[: i - 1], tuple(new_row), *self[i:]])
 
     # # THIS IS KEY
@@ -1012,11 +1023,12 @@ class RCGraph(Printable, tuple):
             interim, row = interim.exchange_property(len(interim.perm.trimcode), return_row=True)
             diff_rows += [row]
 
-        interim2 = RCGraph([*interim[:-1], tuple(sorted(descs, reverse=True))])
-        if debug:
-            debug_print("Transformed", debug=debug)
-            debug_print(interim2, debug=debug)
-            debug_print("=========", debug=debug)
+        # interim2 = RCGraph([*interim[:-1], tuple(sorted(descs, reverse=True))])
+        # if debug:
+        #     debug_print("Transformed", debug=debug)
+        #     debug_print(interim2, debug=debug)
+        #     debug_print("=========", debug=debug)
+        interim2 = interim
 
         # interim = interim2.old_kk_insert(len(self), diff_rows, debug=debug)
         # need fix rect
@@ -1420,10 +1432,12 @@ class RCGraph(Printable, tuple):
                 final_index = index
                 break
 
-        debug_print(f"{row, col} {final_index=} got {self.left_to_right_inversion_coords(final_index)}", debug=debug)
+        
         if final_index == -1:
             debug_print("Returning end", debug=debug)
             final_index = len(self.perm_word)
+        else:
+            debug_print(f"{row, col} {final_index=} got {self.left_to_right_inversion_coords(final_index)}", debug=debug)
         # assert index == len(self.perm_word)
         return final_index
 
