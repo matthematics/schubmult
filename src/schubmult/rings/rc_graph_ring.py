@@ -12,7 +12,6 @@ class RCGraphPrintingTerm(TypedPrintingTerm):
 
 
 class RCGraphRingElement(BaseSchubertElement):
-    # No need to override __mul__; handled by BaseSchubertElement
     def as_expr(self):
         from sympy import Add
 
@@ -67,5 +66,5 @@ class RCGraphRing(BaseSchubertRing):
 
     def one(self):
         # Define the "one" element for RCGraphRing
-        identity_graph = RCGraph.identity()
-        return self.dtype(self, {identity_graph: 1})
+        identity_graph = RCGraph()
+        return self.from_dict({identity_graph: 1})

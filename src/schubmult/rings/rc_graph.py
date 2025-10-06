@@ -1197,7 +1197,7 @@ class RCGraph(Printable, tuple):
         return printer._print_MatrixBase(self)
 
     def _pretty(self, printer):
-        return printer._print_DiagramGrid(self)
+        return printer._print_MatrixBase(self)
 
     @property
     def rows(self):
@@ -1222,7 +1222,7 @@ class RCGraph(Printable, tuple):
         if isinstance(key, tuple):
             i, j = key
             if not self.has_element(i + 1, self.cols - j):
-                return None
+                return " "
             return i + self.cols - j
         is_slice = isinstance(key, slice)
 
