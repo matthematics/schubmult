@@ -650,7 +650,7 @@ class RCGraph(Printable, tuple):
                     raise ValueError(f"Could not rectify at {(row_below, j)} with root {(a, b)}")
                 if flag:
                     working_rc = working_rc._kogan_kumar_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times=1, debug=debug, backwards=backwards)
-        return working_rc._kogan_kumar_rectify(row_below - 1, descent, dict_by_a, dict_by_b)
+        return working_rc._kogan_kumar_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards)
 
     # def _kogan_kumar_rectify(self, row_below, descent, dict_by_a, dict_by_b,debug=False):
     #     debug_print("In rectify", debug=debug)
@@ -1039,6 +1039,18 @@ class RCGraph(Printable, tuple):
         # |3  |,
         # |   |,
         # |  4|])
+
+
+        # AssertionError: interim.perm.trimcode=[0, 0, 2, 1] self.perm.trimcode=[0, 0, 1, 2] interim.perm=(1, 2, 5, 4, 3) self.perm=(1, 2, 4, 6, 3, 5) interim=RCGraph([
+        # |   |,
+        # |3  |,
+        # |4 3|,
+        # |   |]) self=RCGraph([
+        # |     |,
+        # |  3  |,
+        # |5 4  |,
+        # |     |])
+
         if debug:
             debug_print("Zeroing out last row", debug=debug)
             debug_print(f"{self=} {len(self)=}", debug=debug)
@@ -1074,7 +1086,7 @@ class RCGraph(Printable, tuple):
 
         debug_print(f"Exchanged to {interim=}, {diff_rows=} {descs=}", debug=debug)
 
-        interim2 = RCGraph([*interim[:-1], sorted(descs, reverse=True)])
+        interim2 = RCGraph([*interim[:-1], tuple(sorted(descs, reverse=True))])
         # if debug:
         #     debug_print("Transformed", debug=debug)
         #     debug_print(interim2, debug=debug)
@@ -1083,23 +1095,23 @@ class RCGraph(Printable, tuple):
 
         # interim = interim2.old_kk_insert(len(self), diff_rows, debug=debug)
         # need fix rect
-        bubbles = []
-        while interim.perm[len(self) - 1] != len(interim.perm) or len(interim.perm) < len(self.perm) + 1:
-            bubbles += [len(self)]
-            #diff_rows += [len(self)]
-            interim = self.kogan_kumar_insert(len(self), bubbles, debug=False)
-            #interim = interim2.kogan_kumar_insert(len(self), bubbles, debug=debug)
-        interim = interim2.kogan_kumar_insert(len(self), bubbles, debug=False)
-        assert interim.perm[len(self) - 1] == len(interim.perm), f"{interim=}, {self=}, {bubbles=}"
-        if debug:
-            debug_print("Bubbled", debug=debug)
-            debug_print(f"{interim=}", debug=debug)
-            debug_print(f"{interim.perm=}", debug=debug)
-            debug_print(f"{len(interim.perm)=}", debug=debug)
-            debug_print(f"{interim.perm[len(self) - 1]=}", debug=debug)
-            debug_print("=========", debug=debug)
-        # WILL THIS WORK?
-        interim = interim.kogan_kumar_insert(len(self.perm.trimcode) - extend_amount, diff_rows, debug=False)
+        # bubbles = []
+        # while interim.perm[len(self) - 1] != len(interim.perm) or len(interim.perm) < len(self.perm) + 1:
+        #     bubbles += [len(self)]
+        #     #diff_rows += [len(self)]
+        #     interim = self.kogan_kumar_insert(len(self), bubbles, debug=False)
+        #     #interim = interim2.kogan_kumar_insert(len(self), bubbles, debug=debug)
+        # interim = interim2.kogan_kumar_insert(len(self), bubbles, debug=False)
+        # assert interim.perm[len(self) - 1] == len(interim.perm), f"{interim=}, {self=}, {bubbles=}"
+        # if debug:
+        #     debug_print("Bubbled", debug=debug)
+        #     debug_print(f"{interim=}", debug=debug)
+        #     debug_print(f"{interim.perm=}", debug=debug)
+        #     debug_print(f"{len(interim.perm)=}", debug=debug)
+        #     debug_print(f"{interim.perm[len(self) - 1]=}", debug=debug)
+        #     debug_print("=========", debug=debug)
+        # # WILL THIS WORK?
+        interim = interim2.kogan_kumar_insert(len(self.perm.trimcode) - extend_amount, diff_rows, debug=False)
         #assert interim.perm
         
         if debug:
