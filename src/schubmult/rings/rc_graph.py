@@ -532,8 +532,8 @@ class RCGraph(Printable, tuple):
                     num_done += 1
                     debug_print("did it", debug=debug)
                     debug_print(f"{working_rc=}", debug=debug)
-                # if row > 1:
-                #     working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b)
+                if row > 1 and not working_rc.is_valid:
+                    working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards)  # minus one?
         return working_rc
 
     def _old_kk_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, debug=False, start_index=-1):
