@@ -57,28 +57,28 @@ class RCGraph(Printable, tuple):
         return [tuple([a + shift for a in rrow]) for rrow in self]
 
     #####@cache
-    def right_root_at(self, i, j):
+    def right_root_at(self, i, j, debug=True):
         if i <= 0 or j <= 0:
             raise IndexError("i and j must be positive")
         index = self.bisect_left_coords_index(i, j)  # NO?
         # NO
         # if index < len(self.perm_word) and self.perm_word[index] == i + j - 1:
         #     index += 1
-        debug_print(f"{index=} {len(self.perm_word)=} {self.perm_word=} {i,j=} {self.left_to_right_inversion_coords(index)=}")
+        debug_print(f"{index=} {len(self.perm_word)=} {self.perm_word=} {i,j=} {self.left_to_right_inversion_coords(index)=}", debug=True)
         # if index >= len(self.perm_word):
         #     return (i + j - 1, i + j)
-        if self.left_to_right_inversion_coords(index) == (i, j):
-            debug_print(f"Found match at {index=} {i, j} {self.perm_word[index]=}")
-            index += 1
-            debug_print(f"Bumping to {index=}")
-        if index >= len(self.perm_word):
+        # if self.left_to_right_inversion_coords(index) == (i, j):
+        #     debug_print(f"Found match at {index=} {i, j} {self.perm_word[index]=}", debug=True)
+        #     index += 1
+        #     debug_print(f"Bumping to {index=}", debug=True)
+        if index >= len(self.perm_word) - 1:
             word_piece = []
         else:
-            word_piece = list(reversed(self.perm_word[index:]))
-        debug_print(f"{word_piece=}")
+            word_piece = list(reversed(self.perm_word[index+1:]))
+        debug_print(f"{word_piece=}", debug=True)
         refl = Permutation.ref_product(*word_piece)
         result = refl.act_root(i + j - 1, i + j)
-        debug_print(f"root {result=}")
+        debug_print(f"root {result=}", debug=True)
         return result
         # start_root = (i + j - 1, i + j)
         # prm = Permutation([])
@@ -463,8 +463,8 @@ class RCGraph(Printable, tuple):
         if row > descent:
             raise ValueError("All rows must be less than or equal to descent")
 
-        if row > len(self):
-            working_rc = working_rc.extend(row - len(self))
+        # if row > len(self):
+        #     working_rc = working_rc.extend(row - len(self))
 
         i = start_index
         if i == -1:
@@ -476,21 +476,21 @@ class RCGraph(Printable, tuple):
         flag = True
         while num_done < num_times:
             if i <= 1:
-                debug_print("Resetting i")
+                debug_print("Resetting i", debug=debug)
                 i = working_rc.cols + descent + 5
             i -= 1
             flag = False
             if debug:
-                debug_print(f"Trying column {i=} {descent=} {row=} {num_done=} {num_times=} {dict_by_a=} {dict_by_b=}")
-                debug_print(f"{working_rc=}")
+                debug_print(f"Trying column {i=} {descent=} {row=} {num_done=} {num_times=} {dict_by_a=} {dict_by_b=}", debug=debug)
+                debug_print(f"{working_rc=}", debug=debug)
             if not working_rc.has_element(row, i):
                 a, b = working_rc.right_root_at(row, i)
                 if a < b:
                     if debug:
-                        debug_print(f"root is {a, b}")
+                        debug_print(f"root is {a, b}", debug=debug)
                     flag = False
                     if debug:
-                        debug_print(f"{dict_by_b=}")
+                        debug_print(f"{dict_by_b=}", debug=debug)
                     if _is_row_root(descent, (a, b)) and b not in dict_by_b:
                         working_rc = working_rc.toggle_ref_at(row, i)
                         dict_by_a[a] = dict_by_a.get(a, set())
@@ -499,8 +499,8 @@ class RCGraph(Printable, tuple):
                         flag = True
 
                         if debug:
-                            debug_print("Toggled a")
-                            debug_print(working_rc)
+                            debug_print("Toggled a", debug=debug)
+                            debug_print(working_rc, debug=debug)
                     elif a in dict_by_b and b > descent and b not in dict_by_b:
                         working_rc = working_rc.toggle_ref_at(row, i)
                         dict_by_a[dict_by_b[a]].add(b)
@@ -508,8 +508,8 @@ class RCGraph(Printable, tuple):
                         flag = True
 
                         if debug:
-                            debug_print("Toggled b")
-                            debug_print(working_rc)
+                            debug_print("Toggled b", debug=debug)
+                            debug_print(working_rc, debug=debug)
                     # elif b in dict_by_b and a not in dict_by_b and a > descent:
                     #     working_rc = working_rc.toggle_ref_at(row, i)
                     #     dict_by_a[dict_by_b[b]].add(a)
@@ -518,8 +518,8 @@ class RCGraph(Printable, tuple):
 
                 if flag:
                     num_done += 1
-                    debug_print("did it")
-                    debug_print(f"{working_rc=}")
+                    debug_print("did it", debug=debug)
+                    debug_print(f"{working_rc=}", debug=debug)
                     if row > 1 and not working_rc.is_valid:
                         working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b)
         return working_rc
@@ -1005,7 +1005,7 @@ class RCGraph(Printable, tuple):
         diff_rows = []
         descs = []
         while len(interim.perm.trimcode) > len(self) - 1:
-            descs += [max(interim.perm.descents()) + 1]
+            descs += [len(interim.perm.trimcode)]
             interim, row = interim.exchange_property(len(interim.perm.trimcode), return_row=True)
             diff_rows += [row]
 
@@ -1251,9 +1251,9 @@ class RCGraph(Printable, tuple):
                     debug_print("Skipped")
                     debug_print(rc)
                     debug_print("because")
-                    print(rc.zero_out_last_row())
-                    print("Is not")
-                    print(self)
+                    # print(rc.zero_out_last_row())
+                    # print("Is not")
+                    # print(self)
 
             # r = len(perm.trimcode)
             # s = max([i + 1 for i in range(r, len(perm) + 1) if perm[i] < perm[r - 1]])
