@@ -65,9 +65,9 @@ class RCGraph(Printable, tuple):
             # NO
             # if index < len(self.perm_word) and self.perm_word[index] == i + j - 1:
             #     index += 1
-            debug_print(f"{self.perm_word=} {index=}", debug=debug)
+            #debug_print(f"{self.perm_word=} {index=}", debug=debug)
             if index < len(self.perm_word):
-                debug_print(f"{index=} {len(self.perm_word)=} {self.perm_word=} {i,j=} {self.left_to_right_inversion_coords(index)=}", debug=debug)
+                #debug_print(f"{index=} {len(self.perm_word)=} {self.perm_word=} {i,j=} {self.left_to_right_inversion_coords(index)=}", debug=debug)
                 # if index >= len(self.perm_word):
                 #     return (i + j - 1, i + j)
                 # if self.left_to_right_inversion_coords(index) == (i, j):
@@ -75,18 +75,18 @@ class RCGraph(Printable, tuple):
                 #     index += 1
                 #     debug_print(f"Bumping to {index=}", debug=False)
                 if self.left_to_right_inversion_coords(index) == (i, j):
-                    debug_print(f"Found in word {self.perm_word=} {index=}", debug=debug)
+                    #debug_print(f"Found in word {self.perm_word=} {index=}", debug=debug)
                     return self.perm.right_root_at(index, word=self.perm_word)
                 word_piece = list(self.perm_word[index:])
             else:
                 word_piece = []
-            debug_print(f"{word_piece=}", debug=debug)
+            #debug_print(f"{word_piece=}", debug=debug)
             refl = ~Permutation.ref_product(*word_piece)
             result = refl.act_root(i + j - 1, i + j)
 
         else:
             result = (i + j - 1, i + j)
-        debug_print(f"root {result=}", debug=debug)
+        #debug_print(f"root {result=}", debug=debug)
         return result
         # start_root = (i + j - 1, i + j)
         # prm = Permutation([])
@@ -994,12 +994,12 @@ class RCGraph(Printable, tuple):
     # # EXCHANGE PROPERTY GOES TO UNIQUE PERMUTATION
     # # KOGAN INSERT ENSURES WE GO UP PROPERLY
 
-    def zero_out_last_row(self, debug=True):
+    def zero_out_last_row(self, debug=False):
         # this is important!
         # transition formula
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
-        if self.perm.inv == 0 or len(self.perm.trimcode) <= len(self) - 1:
+        if self.perm.inv == 0:# or len(self.perm.trimcode) <= len(self) - 1:
             return self.rowrange(0, len(self) - 1)
         # if max(self.perm.descents()) + 1 <= len(self) - 1:
         #     return self.rowrange(0, len(self) - 1)
@@ -1038,6 +1038,8 @@ class RCGraph(Printable, tuple):
             debug_print("-------", debug=debug)
         diff_rows = []
         descs = []
+        extend_amount = 1
+        
         while len(interim.perm.trimcode) > len(self) - 1:
             debug_print(f"Exchanging {interim.perm=} {len(interim.perm.trimcode)=}", debug=debug)
             descs += [len(interim.perm.trimcode)]
@@ -1047,9 +1049,17 @@ class RCGraph(Printable, tuple):
         if interim.perm.inv == 0:
             debug_print("Special case 1", debug=debug)
             return interim.kogan_kumar_insert(len(self) - 1, diff_rows, debug=False).rowrange(0, len(self) - 1)
-        # if interim.perm.inv == self.perm.inv - 1:
-        #     debug_print("Special case 2", debug=debug)
-        #     return interim.kogan_kumar_insert(len(self) - 1, diff_rows, debug=False).rowrange(0, len(self) - 1)
+        bubble_k = len(self)
+        if interim.perm.inv == self.perm.inv - 1:
+            debug_print("Special case 2 analyze with transition", debug=True)
+            debug_print("Maybe elem sym is the issue", debug=True)
+            # return RCGraph([*interim.extend(1).zero_out_last_row(debug=debug)[:-2],tuple([d - 1 for d in descs])]) ?
+            # if len(interim.perm) <= len(self):
+            #     return RCGraph([tuple([a - 1 for a in row] for row in self[:-1])])
+            # if len(self.perm.trimcode) <= len(self) - 1:
+            #     return self.rowrange(0, len(self) - 1)
+            #extend_amount = 2
+            #return interim.kogan_kumar_insert(len(self) - 1, diff_rows, debug=False).rowrange(0, len(self) - 1)
         
         ref_path = RCGraph.complete_sym_perms(interim.perm, self.perm.inv - interim.perm.inv, len(self.perm.trimcode))[self.perm]
         debug_print(f"Ref path to {ref_path=}", debug=debug)
@@ -1081,7 +1091,8 @@ class RCGraph(Printable, tuple):
             debug_print(f"{len(interim.perm)=}", debug=debug)
             debug_print(f"{interim.perm[len(self) - 1]=}", debug=debug)
             debug_print("=========", debug=debug)
-        interim = interim.kogan_kumar_insert(len(self.perm.trimcode) - 1, diff_rows, debug=False)
+        # WILL THIS WORK?
+        interim = interim.kogan_kumar_insert(len(self.perm.trimcode) - extend_amount, diff_rows, debug=False)
         #assert interim.perm
         
         if debug:
@@ -1256,7 +1267,7 @@ class RCGraph(Printable, tuple):
     #         top_spot -= 1
     #     return
 
-    def right_zero_act(self, debug=True):
+    def right_zero_act(self, debug=False):
         # NOTE THAT THIS IS STILL USING THE OLD METHOD
         if self.perm.inv == 0:
             return {RCGraph([*self, ()])}
@@ -1431,7 +1442,7 @@ class RCGraph(Printable, tuple):
             assert len(rc_set) == len(up_perms), f"{len(rc_set)=}, {len(up_perms)=}, {rc_set=}, {up_perms=}"
             # assert rc.zero_out_last_row() == self, f"{rc=} {rc.perm=} {self=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=} {rc.zero_out_last_row()=}"
         except AssertionError:
-            assert len(rc_set) < len(up_perms)
+            assert len(rc_set) < len(up_perms), f"{rc_set=}, {up_perms=}, {self=}, {self.perm=}"
             for perm, lent in up_perms.keys():
                 assert lent == len(self) + 1
                 for rc0 in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=(*self.length_vector, 0)):

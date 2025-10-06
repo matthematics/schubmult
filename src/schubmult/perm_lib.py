@@ -89,11 +89,11 @@ class Permutation:
         if word is None:
             word = [*self.code_word]
         word_piece = word[index+1:]
-        print(f"{word=}")
-        print(f"{word_piece=}")
+        # print(f"{word=}")
+        # print(f"{word_piece=}")
         apply = ~Permutation.ref_product(*word_piece)
         root = apply.act_root(word[index], word[index] + 1)
-        print(f"{root=}")
+        # print(f"{root=}")
         return root
 
     def code_index_of_index(self, index):
