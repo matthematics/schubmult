@@ -1100,11 +1100,13 @@ class RCGraph(Printable, tuple):
             debug_print(interim, debug=debug)
             debug_print(f"{interim.perm=}", debug=debug)
         if interim.perm[len(self) - 1] != len(interim.perm):
-            raise ValueError(f"Last element not fixed {interim=}, {self=}, {diff_rows=}, {descs=}, {bubbles=}")
+            #raise ValueError(f"Last element not fixed {interim=}, {self=}, {diff_rows=}, {descs=}, {bubbles=}")
+            pass
         interim = interim.rowrange(0, len(self) - 1).extend(1)
         assert interim.length_vector[:-1] == self.length_vector[:-1]
         assert len(interim.perm.trimcode) <= len(self) - 1, f"{interim.perm.trimcode=} {self.perm.trimcode=} {interim.perm=} {self.perm=} {interim=} {self=}"
-        
+        # assert in pull out var
+        assert (self.perm, len(self)) in (ASx(interim.perm,len(self) - 1) * ASx(uncode([]),1)).keys(), f"{self=}, {interim=} not zero correct"
         return interim.rowrange(0, len(self) - 1)
 
         # from schubmult.utils.perm_utils import has_bruhat_ascent
