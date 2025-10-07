@@ -766,12 +766,11 @@ class RCGraph(Printable, tuple):
     #         top_spot -= 1
     #     return
 
-    @cache
     def right_zero_act(self, debug=False):
         # NOTE THAT THIS IS STILL USING THE OLD METHOD
         if self.perm.inv == 0:
             return {RCGraph([*self, ()])}
-        assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
+        # assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
         up_perms = ASx(self.perm, len(self)) * ASx(uncode([0]), 1)
 
         rc_set = set()
@@ -781,6 +780,60 @@ class RCGraph(Printable, tuple):
         #     return {rc.extend(1) for rc in rc_set0}
 
         debug_print(f"{self=} {self.perm=}", debug=debug)
+
+        # should be able to move in descents and reverse insert
+        interim = RCGraph([*self])
+        #while interim.perm[len(self)] != len(interim.perm) or len(interim.perm) != len(self.perm) + 1:
+        # insert anything and remove descents
+        # put up descents
+        # remove n-1 roots
+        # remove remaining descents
+
+        for (perm, _) in up_perms.keys():
+            interim = RCGraph([*self, tuple(range(len(self.perm), len(self), -1))])
+            # print(f"{interim.perm=}")
+            # print(f"{lower_perm=}")
+            print(f"{interim=}, {perm=}")
+            ref_dict = RCGraph.complete_sym_perms(perm, interim.perm.inv - perm.inv, len(self) + 1)
+            #print(f"{ref_dict=}")
+            ref_path = ref_dict[interim.perm]
+            #new_ref_path = [(root[0], root[1] - 1) for root in ref_path if root[0] <= len(self) + 1]
+            # THIS SHOULD WORK BUT DOESN'T
+            rc, diff_rows = interim.reverse_kogan_kumar_insert(len(self) + 1, ref_path, return_rows=True)
+            print(f"Got {rc=}, {diff_rows=}, {ref_path=}")
+            if len(rc[-1]) == 0:
+                rc_set.add(rc)
+            else:
+                descs = []
+                assert len(rc) == len(self) + 1
+                diff_rows2 = []
+                while len(rc.perm.trimcode) > len(self):
+                    descs += [len(rc.perm.trimcode)]
+                    rc, row = rc.exchange_property(len(rc.perm.trimcode), return_row=True)
+                    #diff_rows2 += [row]
+                #int_rc = RCGraph([*rc[:-1], tuple(sorted(descs, reverse=True))])
+                print(f"Took out exchange {rc=}")
+                # diff from self
+                diff_rows2 = []
+                for i in range(len(self)):
+                    if len(rc[i]) != len(self[i]):
+                        diff_rows2 += [i + 1]*(len(self[i]) - len(rc[i]))
+                rc2 = rc.kogan_kumar_insert(len(perm.trimcode), diff_rows2, debug=debug, backwards=True)
+                # remove the rows from self
+                # self_rc = RCGraph([*self, tuple(sorted(descs, reverse=True))])
+                # ref_dict2 = RCGraph.complete_sym_perms(int_rc.perm, self_rc.perm.inv - int_rc.perm.inv, len(self) + 1)
+                # print(f"{ref_dict2=}")
+                # print(f"{self_rc=}")
+                # print(f"{int_rc=}")
+                # print(f"{self_rc.perm=}")
+                # ref_path2 = ref_dict2[self_rc.perm]
+                
+                # rc2 = self_rc.reverse_kogan_kumar_insert(len(self) + 1, ref_path2, debug=debug).rowrange(0,len(self)).extend(1)
+                print(f"Got {rc2=}")
+                print(f"{rc2.zero_out_last_row()=} {self=}")
+                assert rc2.zero_out_last_row() == self
+                rc_set.add(rc2)
+                
         # rc_set.add(self.extend(1))
 
         # # insert monks < len(self)
@@ -818,21 +871,22 @@ class RCGraph(Printable, tuple):
         #         debug_print(f"{self=}, {row=}, {ref=}")
         #         #raise ValueError("Did not find root to toggle")
 
-        for perm, _ in up_perms.keys():
-            # rc = RCGraph([*self, tuple(range(len(self.perm), len(self), -1))])
 
-            for rc in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=(*self.length_vector, 0)):
-                if rc.zero_out_last_row() == self:
-                    rc_set.add(rc)
-                    debug_print("Added", debug=debug)
-                    debug_print(rc, debug=debug)
-                else:
-                    debug_print("Skipped", debug=debug)
-                    debug_print(rc, debug=debug)
-                    debug_print("because", debug=debug)
-                    debug_print(rc.zero_out_last_row(), debug=debug)
-                    debug_print("Is not", debug=debug)
-                    debug_print(self, debug=debug)
+        # for perm, _ in up_perms.keys():
+        #     # rc = RCGraph([*self, tuple(range(len(self.perm), len(self), -1))])
+
+        #     for rc in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=(*self.length_vector, 0)):
+        #         if rc.zero_out_last_row() == self:
+        #             rc_set.add(rc)
+        #             debug_print("Added", debug=debug)
+        #             debug_print(rc, debug=debug)
+        #         else:
+        #             debug_print("Skipped", debug=debug)
+        #             debug_print(rc, debug=debug)
+        #             debug_print("because", debug=debug)
+        #             debug_print(rc.zero_out_last_row(), debug=debug)
+        #             debug_print("Is not", debug=debug)
+        #             debug_print(self, debug=debug)
 
             # r = len(perm.trimcode)
             # s = max([i + 1 for i in range(r, len(perm) + 1) if perm[i] < perm[r - 1]])
@@ -1067,6 +1121,7 @@ class RCGraph(Printable, tuple):
         return cls(graph)
 
     # THE ZERO MAKES SCHUB PROD
+    @cache
     def prod_with_rc(self, other):
         if self.perm.inv == 0:
             return {RCGraph([*self, *other.shiftup(len(self))]): 1}
