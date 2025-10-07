@@ -32,19 +32,50 @@ def debug_print(*args, debug=False):
     if debug:
         print(*args)  # noqa: T201
 
+class _SparseTupleList:
 
-class RCGraph(Printable, tuple):
+    def __new__(cls, rows=None, logical_length=None):
+        obj = object.__new__(cls)
+        obj._rows = {i: row for i, row in enumerate(rows) if len(row) > 0} if rows is not None else {}
+        obj._length = logical_length if logical_length is not None else len(rows) if rows is not None else 0
+        return obj
+
+    def __init__(self, rows, logical_length=None):
+        pass
+
+    def _getitem(self, idx):
+        if isinstance(idx, int):
+            if idx >= self._length:
+                raise IndexError("Index out of range")
+            if idx < 0:
+                idx += self._length
+            return self._rows.get(idx, ())
+        elif isinstance(idx, slice):
+            return tuple(self[i] for i in range(*idx.indices(self._length)))
+        else:
+            raise TypeError("Invalid index type")
+
+    def __getitem__(self, idx):
+        raise NotImplementedError
+
+    def __len__(self):
+        return self._length
+
+    def __iter__(self):
+        for i in range(self._length):
+            yield self._rows.get(i, ())
+
+
+class RCGraph(Printable, _SparseTupleList):
     def __eq__(self, other):
         if not isinstance(other, RCGraph):
             return NotImplemented
-        return tuple(self) == tuple(other)
+        return self._rows == other._rows and self._length == other._length
 
     @property
     def is_valid(self):
         if self.perm.inv != len(self.perm_word):
             return False
-        # if len(self.perm.trimcode) > len(self):
-        #     return False
         return True
 
     def shiftup(self, shift):
@@ -218,10 +249,12 @@ class RCGraph(Printable, tuple):
         return RCGraph.__xnew__(_class, *args)
 
     @staticmethod
-    def __xnew__(_class, *args):
-        return tuple.__new__(_class, *args)
+    def __xnew__(_class, *args, **kwargs):
+        obj = _SparseTupleList.__new__(_class, *args, **kwargs)
+        obj._hashcode = hash(tuple(obj))
+        return obj
 
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         pass
 
     @cached_property
@@ -1016,7 +1049,7 @@ class RCGraph(Printable, tuple):
         return rc_set
 
     def __hash__(self):
-        return hash(tuple(self))
+        return self._hashcode
 
     @cache
     def bisect_left_coords_index(self, row, col, lo=0, hi=None):
@@ -1281,7 +1314,7 @@ class RCGraph(Printable, tuple):
     def __getitem__(self, key):
         # FLIPPED FOR PRINTING
         if isinstance(key, int):
-            return tuple(self)[key]
+            return self._getitem(key)
         if isinstance(key, tuple):
             i, j = key
             if not self.has_element(i + 1, self.cols - j):
@@ -1290,7 +1323,7 @@ class RCGraph(Printable, tuple):
         is_slice = isinstance(key, slice)
 
         if is_slice:
-            return tuple(tuple(self)[n] for n in range(len(self))[key])
+            return self._getitem(key)
 
         raise ValueError(f"Bad indexing {key=}")
 
