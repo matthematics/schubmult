@@ -379,62 +379,7 @@ class FreeAlgebra(Ring, CompositeDomain):
     def __str__(self):
         return self.__class__.__name__
 
-    # @cache
-    # def j_quasisymmetric(self, alphagod):
-    #     from sage.all import ZZ, QuasiSymmetricFunctions
-
-    #     tt = ZZ["t"]
-    #     QSym = QuasiSymmetricFunctions(tt)
-    #     M = QSym.M()
-    #     ret = QSym.zero()
-    #     stack = [[[0,*alphagod], [], tt.one()]]
-    #     while len(stack) > 0:
-    #         this_alpha = stack.pop()
-    #         if len(this_alpha[0]) == 0:
-    #             ret += (tt.gens()[0]**(len(this_alpha[1])-len(alphagod)))* M[*this_alpha[1]]
-    #         else:
-    #             asum = sum(this_alpha[0])
-
-    #             stinkbag2 = Sx(uncode([*this_alpha[0]]))
-    #             pilfer2 = stinkbag2.pull_out_gen(stinkbag2.ring.genset[1])
-    #             used = set()
-    #             for k, _ in pilfer2.items():
-    #                 fingbat = k.trimcode
-    #                 if 0 in fingbat[1:]:
-    #                     continue
-    #                 fsum = sum(fingbat)
-    #                 if asum != fsum:
-    #                     if len(fingbat)>0 and fingbat[0] == 0:
-    #                         new_alpha = [*fingbat]
-    #                     elif len(fingbat) > 0:
-    #                         new_alpha = [*fingbat]
-    #                     else:
-    #                         new_alpha = [*fingbat]
-    #                     used.add(tuple(new_alpha))
-    #                     new_data = [*this_alpha[1], asum - fsum]
-    #                     arb = 0 if len(new_alpha) != len(this_alpha[0]) else 1
-    #                     stack.append([new_alpha, new_data, this_alpha[2] * (tt.gens()[0]**arb)])
-
-    #             # stinkbag2 = Sx(uncode([0, *this_alpha[0]]))
-    #             # pilfer2 = stinkbag2.pull_out_gen(stinkbag2.ring.genset[1])
-    #             # for k, _ in pilfer2.items():
-    #             #     fingbat = k.trimcode
-    #             #     if 0 in fingbat:
-    #             #         continue
-    #             #     fsum = sum(fingbat)
-    #             #     if asum != fsum:
-    #             #         new_alpha = [*fingbat]
-    #             #         if tuple(new_alpha) in used:
-    #             #             continue
-    #             #         new_data = [*this_alpha[1], asum - fsum]
-    #             #         arb = 0 if len(new_alpha) != len(this_alpha[0]) else 1
-    #             #         stack.append([new_alpha, new_data, this_alpha[2] * (tt.gens()[0]**arb)])
-    #                 # elif asum!= fsum and (len(fingbat) == 0 or fingbat[0] == 0):
-    #                 #     new_alpha = [*fingbat[1:]]
-    #                 #     new_data = [*this_alpha[1], asum - fsum]
-    #                 #     arb = 0 if len(new_alpha) != len(this_alpha[0]) else 1
-    #                 #     stack.append([new_alpha, new_data, this_alpha[2]* (tt.gens()[0]**arb)])
-    #     return ret
+    
     def mul_expr(self, elem, x):
         try:
             return self.from_dict({k: x * v for k, v in elem.items()})
@@ -444,47 +389,47 @@ class FreeAlgebra(Ring, CompositeDomain):
             pass
         raise CoercionFailed
 
-    @cache
-    def j_quasi_recurse(self, alphagod):
-        from sage.all import ZZ, QuasiSymmetricFunctions
+    # @cache
+    # def j_quasi_recurse(self, alphagod):
+    #     from sage.all import ZZ, QuasiSymmetricFunctions
 
-        tt = ZZ["t"]
-        QSym = QuasiSymmetricFunctions(tt)
-        M = QSym.M()
-        ret = QSym.zero()
-        if len(alphagod) == sum(alphagod):
-            return M[*alphagod]
-        zero_poly = Sx(uncode(alphagod))
-        asum = sum(alphagod)
-        dct = zero_poly.pull_out_gen(zero_poly.ring.genset[1])
-        for key, _ in dct.items():
-            oldval = self.j_quasi_recurse(tuple(key.trimcode))
-            for monom, coeff in dict(oldval).items():
-                ret += coeff * M[asum - key.inv, *monom]
+    #     tt = ZZ["t"]
+    #     QSym = QuasiSymmetricFunctions(tt)
+    #     M = QSym.M()
+    #     ret = QSym.zero()
+    #     if len(alphagod) == sum(alphagod):
+    #         return M[*alphagod]
+    #     zero_poly = Sx(uncode(alphagod))
+    #     asum = sum(alphagod)
+    #     dct = zero_poly.pull_out_gen(zero_poly.ring.genset[1])
+    #     for key, _ in dct.items():
+    #         oldval = self.j_quasi_recurse(tuple(key.trimcode))
+    #         for monom, coeff in dict(oldval).items():
+    #             ret += coeff * M[asum - key.inv, *monom]
 
-        new_alphagod = [0, *alphagod]
-        schub_poly = Sx(uncode(new_alphagod))
-        dct = schub_poly.pull_out_gen(schub_poly.ring.genset[1])
-        for key, _ in dct.items():
-            cd = key.trimcode
-            if len(cd) == 0 or cd[0] == 0 or asum - key.inv == 0 or len(cd) != len(alphagod) or 0 in cd:
-                continue
-            oldval = self.j_quasi_recurse(tuple(key.trimcode))
-            for monom, coeff in dict(oldval).items():
-                ret += tt.gens()[0] * coeff * M[asum - key.inv, *monom]
-        return ret
+    #     new_alphagod = [0, *alphagod]
+    #     schub_poly = Sx(uncode(new_alphagod))
+    #     dct = schub_poly.pull_out_gen(schub_poly.ring.genset[1])
+    #     for key, _ in dct.items():
+    #         cd = key.trimcode
+    #         if len(cd) == 0 or cd[0] == 0 or asum - key.inv == 0 or len(cd) != len(alphagod) or 0 in cd:
+    #             continue
+    #         oldval = self.j_quasi_recurse(tuple(key.trimcode))
+    #         for monom, coeff in dict(oldval).items():
+    #             ret += tt.gens()[0] * coeff * M[asum - key.inv, *monom]
+    #     return ret
 
-    @cache
-    def j_quasisymmetric(self, alphagod):
-        ret0 = self.j_quasi_recurse(alphagod)
-        from sage.all import ZZ, QuasiSymmetricFunctions
+    # @cache
+    # def j_quasisymmetric(self, alphagod):
+    #     ret0 = self.j_quasi_recurse(alphagod)
+    #     from sage.all import ZZ, QuasiSymmetricFunctions
 
-        QSym = QuasiSymmetricFunctions(ZZ)
-        ret = QSym.zero()
-        M = QSym.M()
-        for k, v in dict(ret0).items():
-            ret += int(v.subs(1)) * M[*k]
-        return ret
+    #     QSym = QuasiSymmetricFunctions(ZZ)
+    #     ret = QSym.zero()
+    #     M = QSym.M()
+    #     for k, v in dict(ret0).items():
+    #         ret += int(v.subs(1)) * M[*k]
+    #     return ret
 
     def tensor_schub_expand(self, tensor):
         T = splugSx([]).ring @ splugSx([]).ring

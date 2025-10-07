@@ -657,6 +657,8 @@ class RCGraph(Printable, tuple):
     # # EXCHANGE PROPERTY GOES TO UNIQUE PERMUTATION
     # # KOGAN INSERT ENSURES WE GO UP PROPERLY
 
+    _z_cache = {}  # noqa: RUF012
+
     @cache
     def zero_out_last_row(self, debug=False):
         # this is important!
@@ -770,6 +772,9 @@ class RCGraph(Printable, tuple):
         # NOTE THAT THIS IS STILL USING THE OLD METHOD
         if self.perm.inv == 0:
             return {RCGraph([*self, ()])}
+    
+        if self in RCGraph._z_cache:
+            return RCGraph._z_cache[self]
         # assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
         up_perms = ASx(self.perm, len(self)) * ASx(uncode([0]), 1)
 
@@ -1007,7 +1012,7 @@ class RCGraph(Printable, tuple):
         #             if rc0.length_vector[:-1] == self.length_vector:
         #                 assert rc0 in rc_set, f"{rc0=} {rc0.perm=} {self=}, {self.perm=}, {rc_set=}"
         #                 # print(f"Added {rc=}, {rc.perm=}, {rc.length_vector=}")
-
+        RCGraph._z_cache[self] = rc_set
         return rc_set
 
     def __hash__(self):
@@ -1124,7 +1129,7 @@ class RCGraph(Printable, tuple):
         return cls(graph)
 
     # THE ZERO MAKES SCHUB PROD
-    @cache
+
     def prod_with_rc(self, other):
         if self.perm.inv == 0:
             return {RCGraph([*self, *other.shiftup(len(self))]): 1}
