@@ -27,55 +27,117 @@ def _is_row_root(row, root):
 FA = FreeAlgebra(WordBasis)
 FAS = FA
 
+class BitfieldRow:
+    def __init__(self, row_tuple):
+        # Accepts a tuple/list of ints and converts to bitfield
+        bitfield = 0
+        for k in row_tuple:
+            bitfield |= 1 << (k - 1)
+        self.bitfield = bitfield
+
+
+    def __contains__(self, item):
+        return (self.bitfield & (1 << (item - 1))) != 0
+
+    def __iter__(self):
+        # Iterate over set bits in descending order
+        bits = []
+        bf = self.bitfield
+        k = 1
+        while bf:
+            if bf & 1:
+                bits.append(k)
+            bf >>= 1
+            k += 1
+        yield from reversed(bits)
+
+    def __len__(self):
+        return bin(self.bitfield).count('1')
+
+    def __getitem__(self, idx):
+        bits = [i for i in self]
+        return bits[idx]
+
+    def to_tuple(self):
+        return tuple(self)
+
+    def __repr__(self):
+        return f"BitfieldRow({self.to_tuple()})"
+
+    def __hash__(self):
+        return hash(self.to_tuple())
+
+    def toggle(self, j):
+        # Toggle bit at 1-based index j
+        new_bf = self.bitfield ^ (1 << (j - 1))
+        # Convert back to tuple for constructor
+        return BitfieldRow([i for i in range(1, 64) if (new_bf & (1 << (i - 1))) != 0])
+
+    def shifted(self, shiftup=0):
+        # Shift all bits up by shiftup
+        bf = self.bitfield << shiftup
+        return BitfieldRow([i for i in range(1, 64) if (bf & (1 << (i - 1))) != 0])
+
+    def __eq__(self, other):
+        if isinstance(other, BitfieldRow):
+            return self.to_tuple() == other.to_tuple()
+        if isinstance(other, tuple):
+            return self.to_tuple() == other
+        return NotImplemented
+
+    def __lt__(self, other):
+        if isinstance(other, BitfieldRow):
+            return self.to_tuple() < other.to_tuple()
+        if isinstance(other, tuple):
+            return self.to_tuple() < other
+        return NotImplemented
+
+    def __le__(self, other):
+        if isinstance(other, BitfieldRow):
+            return self.to_tuple() <= other.to_tuple()
+        if isinstance(other, tuple):
+            return self.to_tuple() <= other
+        return NotImplemented
+
+    def __gt__(self, other):
+        if isinstance(other, BitfieldRow):
+            return self.to_tuple() > other.to_tuple()
+        if isinstance(other, tuple):
+            return self.to_tuple() > other
+        return NotImplemented
+
+    def __ge__(self, other):
+        if isinstance(other, BitfieldRow):
+            return self.to_tuple() >= other.to_tuple()
+        if isinstance(other, tuple):
+            return self.to_tuple() >= other
+        return NotImplemented
+
+    def __ne__(self, other):
+        if isinstance(other, BitfieldRow):
+            return self.to_tuple() != other.to_tuple()
+        if isinstance(other, tuple):
+            return self.to_tuple() != other
+        return NotImplemented
+
 
 def debug_print(*args, debug=False):
     if debug:
         print(*args)  # noqa: T201
 
-class _SparseTupleList:
 
-    def __new__(cls, rows=None, logical_length=None):
-        obj = object.__new__(cls)
-        obj._rows = {i: row for i, row in enumerate(rows) if len(row) > 0} if rows is not None else {}
-        obj._length = logical_length if logical_length is not None else len(rows) if rows is not None else 0
-        return obj
-
-    def __init__(self, rows, logical_length=None):
-        pass
-
-    def _getitem(self, idx):
-        if isinstance(idx, int):
-            if idx >= self._length:
-                raise IndexError("Index out of range")
-            if idx < 0:
-                idx += self._length
-            return self._rows.get(idx, ())
-        elif isinstance(idx, slice):
-            return tuple(self[i] for i in range(*idx.indices(self._length)))
-        else:
-            raise TypeError("Invalid index type")
-
-    def __getitem__(self, idx):
-        raise NotImplementedError
-
-    def __len__(self):
-        return self._length
-
-    def __iter__(self):
-        for i in range(self._length):
-            yield self._rows.get(i, ())
-
-
-class RCGraph(Printable, _SparseTupleList):
+class RCGraph(Printable, tuple):
     def __eq__(self, other):
         if not isinstance(other, RCGraph):
             return NotImplemented
-        return self._rows == other._rows and self._length == other._length
+        return tuple(self) == tuple(other)
 
     @property
     def is_valid(self):
         if self.perm.inv != len(self.perm_word):
             return False
+        # if len(self.perm.trimcode) > len(self):
+        #     return False
         return True
 
     def shiftup(self, shift):
@@ -249,12 +311,14 @@ class RCGraph(Printable, _SparseTupleList):
         return RCGraph.__xnew__(_class, *args)
 
     @staticmethod
-    def __xnew__(_class, *args, **kwargs):
-        obj = _SparseTupleList.__new__(_class, *args, **kwargs)
-        obj._hashcode = hash(tuple(obj))
-        return obj
+    def __xnew__(_class, *args):
+        if len(args) == 0:
+            return tuple.__new__(_class, ())
+        tp = args[0]
+        actual_storage = [BitfieldRow(arg) for arg in tp]
+        return tuple.__new__(_class, actual_storage)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args):
         pass
 
     @cached_property
@@ -617,7 +681,7 @@ class RCGraph(Printable, _SparseTupleList):
             return working_rc, tuple(reflections)
         return working_rc
 
-    @cached_property
+    @property
     def perm(self):
         perm = Permutation([])
         for row in self:
@@ -1018,6 +1082,22 @@ class RCGraph(Printable, _SparseTupleList):
             # #     continue
             # assert len(rc.perm.trimcode) <= len(self) + 1, f"{rc=}, {rc.perm=}, {self=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=}, {self=}, {len(self)=}, {rc.perm.trimcode=}, {len(rc.perm.trimcode)=}"  # noqa: E501
             # assert rc.is_valid, f"{rc=}, {rc.perm=}, {self=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=}"
+            # # diff_rows.sort(reverse=True)
+
+            # # #for i, r in enumerate(diff_rows):
+            # # rc = interim.rowrange(0,len(self)).extend(1)
+            # rc = rc.rowrange(0, len(self)).extend(1)
+            # rc = rc.kogan_kumar_insert(len(self), diff_rows, debug=debug)
+            # print(f"{rc=}")
+            # # # rc = rc.kogan_kumar_insert(len(self) + 1, diff_rows)
+            # # # print(f"{self.perm=} {rc.perm=}")
+            # # rc = rc.rowrange(0, len(self)).extend(1)
+            # # if len(rc.perm.trimcode) > len(self) + 1:
+            # #     debug_print(f"{rc=}")
+            # #     debug_print(f"{rc.perm=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=}")
+            # #     continue
+            # assert len(rc.perm.trimcode) <= len(self) + 1, f"{rc=}, {rc.perm=}, {self=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=}, {self=}, {len(self)=}, {rc.perm.trimcode=}, {len(rc.perm.trimcode)=}"  # noqa: E501
+            # assert rc.is_valid, f"{rc=}, {rc.perm=}, {self=}, {self.perm=}, {diff_rows=}, {refl=}, {up_perms=}"
             # # print("Finished with valid rc")
             # # print(rc)
             # #try:
@@ -1049,7 +1129,7 @@ class RCGraph(Printable, _SparseTupleList):
         return rc_set
 
     def __hash__(self):
-        return self._hashcode
+        return hash(tuple(self))
 
     @cache
     def bisect_left_coords_index(self, row, col, lo=0, hi=None):
@@ -1314,7 +1394,7 @@ class RCGraph(Printable, _SparseTupleList):
     def __getitem__(self, key):
         # FLIPPED FOR PRINTING
         if isinstance(key, int):
-            return self._getitem(key)
+            return tuple(self)[key]
         if isinstance(key, tuple):
             i, j = key
             if not self.has_element(i + 1, self.cols - j):
@@ -1323,7 +1403,7 @@ class RCGraph(Printable, _SparseTupleList):
         is_slice = isinstance(key, slice)
 
         if is_slice:
-            return self._getitem(key)
+            return tuple(tuple(self)[n] for n in range(len(self))[key])
 
         raise ValueError(f"Bad indexing {key=}")
 
