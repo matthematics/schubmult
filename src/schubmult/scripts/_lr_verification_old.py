@@ -8,7 +8,6 @@ import shutil
 import sys
 import time
 from json import dump, load
-from math import perm
 from multiprocessing import Event, Lock, Manager, Process, cpu_count
 
 from joblib import Parallel, delayed
@@ -87,7 +86,7 @@ def safe_save_recording(obj, filename):
     try:
         # keys are permutations, values are bools
         with open(temp_json, "w") as f:
-            json.dump({repr(tuple([tuple(a) for a in k])): v for k, v in obj.items()}, f)
+            json.dump({repr(k): v for k, v in obj.items()}, f)
         if os.path.exists(json_file):
             shutil.copy2(json_file, f"{json_file}.backup")
         os.replace(temp_json, json_file)
@@ -100,8 +99,40 @@ def safe_save_recording(obj, filename):
             os.remove(temp_json)
 
 
+def safe_load(filename):
+    pickle_file = f"{filename}.pkl"
+    json_file = f"{filename}.json"
+    # Try pickle first
+    if os.path.exists(pickle_file):
+        try:
+            with open(pickle_file, "rb") as f:
+                return pickle.load(f)
+        except Exception as e:
+            print(f"Pickle load failed: {e}")
+            raise
+    else:
+        print(f"No pickle file {pickle_file} found.")
+    # Fallback to JSON
+    print("Falling back to JSON load...")
+    if os.path.exists(json_file):
+        try:
+            with open(json_file, "r") as f:
+                loaded = json.load(f)
+            print("Reloading modules from JSON backup...")
+            ret = reload_modules(loaded)
+            print("Done.")
+            print(f"Saving as pickle to {pickle_file} for future runs...")
+            safe_save(ret, filename, save_json_backup=False)
+            return ret
+        except Exception as e:
+            print(f"JSON load failed: {e}")
+            raise
+    else:
+        print(f"No JSON file {json_file} found.")
+    return {}
 
-def safe_load_recording(filename):
+
+def safe_load_recording(filename, Permutation):
     json_file = f"{filename}.json"
     if os.path.exists(json_file):
         try:
@@ -112,7 +143,7 @@ def safe_load_recording(filename):
             dct = {}
             for k, v in loaded.items():
                 tp = eval(k)
-                dct[tp] = v
+                dct[(Permutation(tp[0]), tp[1])] = v
             return dct
         except Exception as e:
             print(f"Recording JSON load failed: {e}")
@@ -187,77 +218,54 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 #     print("Saver process exiting.")
 
 
-def worker(shared_recording_dict, lock, task_queue):
-    from schubmult.rings.rc_graph_ring import RCGraphRing
+def worker(n, shared_recording_dict, lock, task_queue):
+    from schubmult import ASx, Plactic
+    from schubmult.rings.rc_graph_module import try_lr_module_biject
 
-    def hom(rc):
-        from schubmult import FA, ASx
-        from schubmult.rings.rc_graph import RCGraph
-
-        if isinstance(rc, RCGraph):
-            return (ASx@FA)(((rc.perm,len(rc)),rc.length_vector))
-        ret = 0
-        for rc0, coeff in rc.items():
-            ret += coeff * hom(rc0)
-        return ret
-
-    rc_ring = RCGraphRing()
     while True:
         try:
-            key = task_queue.get(timeout=2)
-            (g31, g32, g33, (len1, len2, len3)) = key
-            g1 = rc_ring(g31.extend(len1 - len(g31)))
-            g2 = rc_ring(g32.extend(len2 - len(g32)))
-            g3 = rc_ring(g33.extend(len3 - len(g33)))
+            perm = task_queue.get(timeout=2)
         except Exception:
             break  # queue empty, exit
         with lock:
-            if key in shared_recording_dict:
-                if shared_recording_dict[key]:
-                    print(f"{key} already verified, returning.")
+            if (perm, n) in shared_recording_dict:
+                if shared_recording_dict[(perm, n)]:
+                    print(f"{perm} already verified, returning.")
                     continue
-                print(f"Previous failure on {(g1, g2, g3)}, will retry.")
-        g = g1 * (g2 * g3)
-        g_ = (g1 * g2) * g3
-        diff = g - g_
+                print(f"Previous failure on {(perm, n)}, will retry.")
+
+        try_mod = try_lr_module_biject(perm, n)
+
+        elem = 0
+        for rc1, rc2 in try_mod:
+            # elem += (rc1 @ rc2).asdtype(ASx @ ASx)
+            # print(f"FYI {perm.trimcode} 1")
+            # print(rc1)
+            # print(f"FYI {perm.trimcode} 2")
+            # print(rc2)
+            elem += (ASx @ ASx)(((rc1.perm, n), (rc2.perm, n)))
+        check = ASx(perm, n).coproduct()
         try:
-            assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
-        except AssertionError as e:
-            print("FAILURE")
-            print(e)
-            print(f"{g=}")
-            print(f"{g_=}")
-
-            raise
-        #print("Success {(g1, g2, g3)}")
-        df = hom(g1) * (hom(g2) * hom(g3)) - hom(g)
-        try:
-            assert all(v == 0 for k, v in df.items()), f"{tuple(df.values())=}"
-        except AssertionError as e:
-            print("HOM FAILURE")
-            print(e)
-            print(hom(g1) * (hom(g2) * hom(g3)))
-            print(hom(g))
-            raise
-
-        with lock:
-            shared_recording_dict[key] = True
-        print(f"Success {key} at ", time.ctime())
-
-        del g
-        del g_
-        del g1
-        del g2
-        del g3
-        del diff
-        del df
+            if perm.inv != 0:
+                assert all(v == 0 for v in (elem - check).values())
+        except AssertionError:
+            print(f"Fail on {perm} at ", time.ctime())
+            print(f"{elem=}")
+            print(f"{check=}")
+            print(f"{(elem - check)=}")
+            with lock:
+                shared_recording_dict[(perm, n)] = False
+            continue
+        del elem
+        del check
         gc.collect()
-
+        with lock:
+            shared_recording_dict[(perm, n)] = True
+        print(f"Success {perm.trimcode} at ", time.ctime())
 
 
 def main():
     from schubmult import Permutation
-    from schubmult.rings.rc_graph import RCGraph
 
     try:
         n = int(sys.argv[1])
@@ -273,12 +281,13 @@ def main():
     perms.sort(key=lambda p: (p.inv, p.trimcode))
 
     with Manager() as manager:
+        shared_dict = manager.dict()
         shared_recording_dict = manager.dict()
         lock = manager.Lock()
         stop_event = Event()
         # cache_load_dict = {}
         # Load recording dict from JSON only
-        loaded_recording = safe_load_recording(verification_filename)
+        loaded_recording = safe_load_recording(verification_filename, Permutation)
         if loaded_recording:
             shared_recording_dict.update(loaded_recording)
 
@@ -298,32 +307,12 @@ def main():
         # Create task queue and fill with perms
         task_queue = manager.Queue()
         for perm in perms:
-            if perm.inv == 0:
-                continue
-            graphs1 = RCGraph.all_rc_graphs(perm)
-            for len1 in range(len(perm.trimcode),n):
-                for perm2 in perms:
-                    if perm2.inv == 0:
-                        continue
-                    graphs2 = RCGraph.all_rc_graphs(perm2)
-                    for len2 in range(len(perm2.trimcode),n):
-                        for perm3 in perms:
-                            if perm3.inv == 0:
-                                continue
-                            graphs3 = RCGraph.all_rc_graphs(perm3)
-                            for len3 in range(len(perm3.trimcode), n):
-                                for g31 in graphs3:
-                                    for g32 in graphs2:
-                                        for g33 in graphs1:
-                                            g1 = g31
-                                            g2 = g32
-                                            g3 = g33
-                                            task_queue.put((g1, g2, g3, (len1, len2, len3)))
+            task_queue.put(perm)
 
         # Start fixed number of workers
         workers = []
         for _ in range(num_processors):
-            p = Process(target=worker, args=(shared_recording_dict, lock, task_queue))
+            p = Process(target=worker, args=(n, shared_recording_dict, lock, task_queue))
             p.start()
             workers.append(p)
         for p in workers:
