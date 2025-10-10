@@ -319,7 +319,7 @@ def main():
                                             g2 = g32
                                             g3 = g33
                                             task_queue.put((g1, g2, g3, (len1, len2, len3)))
-
+        print(f"Enqueued {task_queue.qsize()} tasks for n={n}.")
         # Start fixed number of workers
         workers = []
         for _ in range(num_processors):
