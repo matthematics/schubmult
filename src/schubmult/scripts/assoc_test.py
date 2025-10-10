@@ -236,52 +236,54 @@ if __name__ == "__main__":
         for len1 in range(len(perm.trimcode),n):
         
             graphs1 = RCGraph.all_rc_graphs(perm, len1)
-            
-            for perm2 in perms:
-                if perm2.inv == 0:
-                    continue
-                for len2 in range(len(perm2.trimcode),n):
-                    graphs2 = RCGraph.all_rc_graphs(perm2, len2)
-                    for perm3 in perms:
-                        if perm3.inv == 0:
-                            continue
-                        for len3 in range(len(perm3.trimcode), n):
-                            graphs3 = RCGraph.all_rc_graphs(perm3, len3)
-                            for g31 in graphs3:
-                                for g32 in graphs2:
-                                    for g33 in graphs1:
-                                        g1 = rc_ring(g31)
-                                        g2 = rc_ring(g32)
-                                        g3 = rc_ring(g33)
-                                        print(f"{g32=} {len(g32)=} {g32.perm=} * {g33=} {len(g33)=} {g33.perm=} =?= ({g32}*{g33})")
-                                        g = g1 * (g2 * g3)
-                                        g_ = (g1 * g2) * g3
-                                        diff = g - g_
-                                        pretty_print(g)
-                                        pretty_print(g_)
-                                        try:
-                                            assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
-                                        except AssertionError as e:
-                                            print("FAILURE")
-                                            print(e)
-                                            print(f"{g=}")
-                                            print(f"{g_=}")
+            for g in graphs1:
+                ging = rc_ring(g)
+                pretty_print(ging.vertical_coproduct())
+            # for perm2 in perms:
+            #     if perm2.inv == 0:
+            #         continue
+            #     for len2 in range(len(perm2.trimcode),n):
+            #         graphs2 = RCGraph.all_rc_graphs(perm2, len2)
+            #         for perm3 in perms:
+            #             if perm3.inv == 0:
+            #                 continue
+            #             for len3 in range(len(perm3.trimcode), n):
+            #                 graphs3 = RCGraph.all_rc_graphs(perm3, len3)
+            #                 for g31 in graphs3:
+            #                     for g32 in graphs2:
+            #                         for g33 in graphs1:
+            #                             g1 = rc_ring(g31)
+            #                             g2 = rc_ring(g32)
+            #                             g3 = rc_ring(g33)
+            #                             print(f"{g32=} {len(g32)=} {g32.perm=} * {g33=} {len(g33)=} {g33.perm=} =?= ({g32}*{g33})")
+            #                             g = g1 * (g2 * g3)
+            #                             g_ = (g1 * g2) * g3
+            #                             diff = g - g_
+            #                             pretty_print(g)
+            #                             pretty_print(g_)
+            #                             try:
+            #                                 assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
+            #                             except AssertionError as e:
+            #                                 print("FAILURE")
+            #                                 print(e)
+            #                                 print(f"{g=}")
+            #                                 print(f"{g_=}")
                                             
-                                            raise
-                                        print("Success")
-                                        df = hom(g1) * (hom(g2) * hom(g3)) - hom(g)
-                                        try:
-                                            assert all(v == 0 for k, v in df.items()), f"{tuple(df.values())=}"
-                                        except AssertionError as e:
-                                            print("HOM FAILURE")
-                                            print(e)
-                                            print(hom(g1) * (hom(g2) * hom(g3)))
-                                            print(hom(g))
-                                            raise
-                                        print("Hom Success")
+            #                                 raise
+            #                             print("Success")
+            #                             df = hom(g1) * (hom(g2) * hom(g3)) - hom(g)
+            #                             try:
+            #                                 assert all(v == 0 for k, v in df.items()), f"{tuple(df.values())=}"
+            #                             except AssertionError as e:
+            #                                 print("HOM FAILURE")
+            #                                 print(e)
+            #                                 print(hom(g1) * (hom(g2) * hom(g3)))
+            #                                 print(hom(g))
+            #                                 raise
+            #                             print("Hom Success")
                                         
-                                        del g
-                                        del g_
+            #                             del g
+            #                             del g_
                                         # printer._print_seq(g1,g2,delimiter=" * ",parenthesize=True)printer.print = {g1}*({g2}*{g3})")
                                         # pretty_print(g1)
                                         # pretty_print(g2)

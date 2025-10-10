@@ -1,5 +1,7 @@
 from functools import cache
 
+from sympy import Tuple
+
 from schubmult.symbolic import Mul, S, sympy_Mul
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
@@ -179,10 +181,10 @@ class TensorBasisElement(AbstractSchubPoly):
         return " # ".join([printer._print(self.ring.rings[i].printing_term(self._key[i])) for i in range(len(self._key))])
 
     def _pretty(self, printer):
-        return printer._print_TensorProduct(sympy_Mul(*[self.ring.rings[i].printing_term(self._key[i]) for i in range(len(self._key))]))
+        return printer._print_TensorProduct(Tuple(*[self.ring.rings[i].printing_term(self._key[i]) for i in range(len(self._key))]))
 
     def _latex(self, printer):
-        return printer._print_TensorProduct(sympy_Mul(*[self.ring.rings[i].printing_term(self._key[i]) for i in range(len(self._key))]))
+        return printer._print_TensorProduct(Tuple(*[self.ring.rings[i].printing_term(self._key[i]) for i in range(len(self._key))]))
 
 
 class TensorRingElement(BaseSchubertElement):

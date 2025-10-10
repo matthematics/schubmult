@@ -850,7 +850,7 @@ class RCGraph(Printable, tuple):
         return total_dict
 
     def vertical_cut(self, row):
-        if row <= 0 or row > len(self):
+        if row < 0 or row > len(self):
             raise ValueError("Row out of range")
         front = RCGraph([*self[:row]]).extend(len(self) - row)
         for _ in range(len(self) - row):

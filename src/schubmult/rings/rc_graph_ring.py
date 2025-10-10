@@ -23,10 +23,24 @@ class RCGraphRingElement(BaseSchubertElement):
                 terms.append(coeff * self.ring.printing_term(rc_graph))
         return Add(*terms)
 
+    def vertical_coproduct(self):
+        tring = self.ring @ self.ring
+        res = tring.zero
+        for rc_graph, coeff in self.items():
+            for i in range(len(rc_graph) + 1):
+                rc1, rc2 = rc_graph.vertical_cut(i)
+                res += tring.from_dict({(rc1, rc2): coeff})
+        return res
 
 class RCGraphRing(BaseSchubertRing):
+    _id = 0
+
     def __init__(self, *_, **__):
-        pass
+        self._ID = RCGraphRing._id
+        RCGraphRing._id += 1
+
+    def __hash__(self):
+        return hash(("Dinkberrtystoa", self._ID))
 
     @property
     def zero_monom(self):
