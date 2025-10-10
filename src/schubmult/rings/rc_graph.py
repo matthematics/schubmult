@@ -1395,7 +1395,7 @@ class RCGraph(Printable, tuple):
 
     @cached_property
     def cols(self):
-        return max([self[i][0] - i if len(self[i]) > 0 else 0 for i in range(len(self))]) if len(self) > 0 else 0
+        return max(1, *[self[i][0] - i if len(self[i]) > 0 else 0 for i in range(len(self))]) if len(self) > 0 else 0
 
     def __getitem__(self, key):
         # FLIPPED FOR PRINTING
