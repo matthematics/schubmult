@@ -317,8 +317,8 @@ class Permutation:
     def __le__(self, other):
         return self.bruhat_leq(other)
 
-    def __lt__(self, other):
-        return self != other and self.bruhat_leq(other)
+    # def __lt__(self, other):
+    #     return self != other and self.bruhat_leq(other)
 
     def __invert__(self):
         new_perm = [0] * len(self._perm)

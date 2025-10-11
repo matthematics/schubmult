@@ -110,6 +110,7 @@ ignore = [
     "ARG005",
     "PLW2901",
     "T201",
+    "RET504",
 ]
 unfixable = ["F401", "F841"]
 
@@ -117,6 +118,7 @@ unfixable = ["F401", "F841"]
 "test*.py" = ["ALL"]
 "src/schubmult/scripts/*" = ["ALL"]
 "src/schubmult/rings/*rc_graph_module.py" = ["ALL"]
+"src/schubmult/rings/GOOD*" = ["ALL"]
 "!src/*" = ["ALL"]
 "tst*.py" = ["ALL"]
 "mul_grass.py" = ["ALL"]
