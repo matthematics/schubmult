@@ -561,8 +561,10 @@ class RCGraph(Printable, tuple):
     def vertical_cut(self, row):
         if row < 0 or row > len(self):
             raise ValueError("Row out of range")
-        front = RCGraph([*self[:row]]).extend(len(self) - row)
-        for _ in range(len(self) - row):
+        front = RCGraph([*self[:row]])
+        front = front.extend(max(len(self),len(front.perm.trimcode)) - row)
+        flen = len(front)
+        for _ in range(flen - row):
             front = front.zero_out_last_row()
         if row == len(self):
             back = RCGraph()

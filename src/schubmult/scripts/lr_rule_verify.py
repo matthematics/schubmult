@@ -358,24 +358,26 @@ def try_lr_module_right(perm, length=None):
     return ret_elem
 
 
-def worker(n, shared_recording_dict, lock, task_queue):
+def worker(nn, shared_recording_dict, lock, task_queue):
     from schubmult import ASx
     from sympy import pretty_print
-    #from schubmult.rings.rc_graph_module import try_lr_module_biject
+    from schubmult.rings.rc_graph import RCGraph
+    from schubmult.rings.rc_graph_ring import RCGraphRing
 
+    ring = RCGraphRing()
     while True:
         try:
             perm = task_queue.get(timeout=2)
         except Exception:
             break  # queue empty, exit
         with lock:
-            if (perm, n) in shared_recording_dict:
-                if shared_recording_dict[(perm, n)]:
+            if (perm, nn) in shared_recording_dict:
+                if shared_recording_dict[(perm, nn)]:
                     print(f"{perm} already verified, returning.")
                     continue
-                print(f"Previous failure on {(perm, n)}, will retry.")
-
-        try_mod = try_lr_module_right(perm, n)
+                print(f"Previous failure on {(perm, nn)}, will retry.")
+        n = len(perm.trimcode)
+        try_mod = ring.coproduct_on_basis(RCGraph.principal_rc(perm, n))
         pretty_print(try_mod)
         elem = 0
         for rc1, rc2 in try_mod:
@@ -401,7 +403,7 @@ def worker(n, shared_recording_dict, lock, task_queue):
         del check
         gc.collect()
         with lock:
-            shared_recording_dict[(perm, n)] = True
+            shared_recording_dict[(perm, nn)] = True
         print(f"Success {perm.trimcode} at ", time.ctime())
 
 
