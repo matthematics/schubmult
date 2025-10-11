@@ -83,8 +83,8 @@ def main():
         product = Sx(perm1) * Sx(perm2)
         if any(len(perm) > n for perm in product.keys()):
             continue
-        print(perm1.trimcode, perm2.trimcode)  # noqa: T201
-        print(elem)  # noqa: T201
+        print(perm1.trimcode, perm2.trimcode)
+        print(elem)
         val = Sx([]).ring.zero
         for rc, coeff in elem.items():
             assert coeff == product.get(rc.perm, 0)
@@ -92,7 +92,7 @@ def main():
         assert val == product
         assert by_schub_dict.get((perm1, perm2), 0) == product
         assert by_term_dict.get((perm1, perm2), 0) == product
-        print(f"Success {perm1.trimcode} {perm2.trimcode}")  # noqa: T201
+        print(f"Success {perm1.trimcode} {perm2.trimcode}")
     exit()
 
 

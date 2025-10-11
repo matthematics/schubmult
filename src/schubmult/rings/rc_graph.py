@@ -27,7 +27,7 @@ FA = FreeAlgebra(WordBasis)
 
 def debug_print(*args, debug=False):
     if debug:
-        print(*args)  # noqa: T201
+        print(*args)
 
 
 class RCGraph(Printable, tuple):
