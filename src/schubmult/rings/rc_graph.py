@@ -25,6 +25,7 @@ def _is_row_root(row, root):
 FA = FreeAlgebra(WordBasis)
 FAS = FA
 
+
 def debug_print(*args, debug=False):
     if debug:
         print(*args)  # noqa: T201
@@ -52,7 +53,7 @@ class RCGraph(Printable, tuple):
         return [tuple([a + shift for a in rrow]) for rrow in self]
 
     @cache
-    def right_root_at(self, i, j, debug=False):  # noqa: ARG002
+    def right_root_at(self, i, j):
         if i <= 0 or j <= 0:
             raise IndexError("i and j must be positive")
         if len(self.perm_word) > 0:
@@ -82,7 +83,7 @@ class RCGraph(Printable, tuple):
                     start_root = Permutation.ref_product(self[i2 - 1, j2 - 1]).act_root(*start_root)
         return start_root
 
-    def reverse_kogan_kumar_insert(self, descent, reflection_path, return_rows=False, debug=False):
+    def reverse_kogan_kumar_insert(self, descent, reflection_path, return_rows=False):
         pair_dict = {}
         for ref in reflection_path:
             a, b = ref
@@ -113,40 +114,26 @@ class RCGraph(Printable, tuple):
         # we are in the second case, add (ai, q) just before where (a, bi) is in the sequence.
 
         working_rc = self
-        if debug:
-            pass  # debug_print("Starting with", debug=debug)
-            pass  # debug_print(working_rc)
-            pass  # debug_print(working_rc.perm)
+
         rows = []
-        # read_rows = list(range(1, len(self) + 1))
+
         for row in range(1, len(self) + 1):
             for col in range(1, max(descent, self.cols) + 1):
                 if working_rc.has_element(row, col):
                     a, b = working_rc.right_root_at(row, col)
-                    if debug:
-                        pass  # debug_print(f"{a,b=} at {row,col=}", debug=debug)
-                        pass  # debug_print(working_rc, debug=debug)
-                    # print(f"{reflection_path=}")
-                    # print(f"{(a,b)=}")
                     if is_relevant_crossing((a, b), working_rc.perm):
                         working_rc = working_rc.toggle_ref_at(row, col)
-                        if debug:
-                            pass  # debug_print(f"Toggled {a,b=}", debug=debug)
-                            pass  # debug_print(working_rc, debug=debug)
                         a2 = a
                         if a2 in pair_dict_rev:
                             a2 = pair_dict_rev[a2]
-                        #     pair_dict[a2].remove(a)
-                        #     del pair_dict_rev[a]
-                        # else:
+
                         pair_dict[a2].remove(b)
                         del pair_dict_rev[b]
                         if len(pair_dict[a2]) == 0:
                             del pair_dict[a2]
-                        # pair_dict_rev.pop(a, None)
+
                         rows.append(row)
-                        # if len(pair_dict_rev) == 0:
-                        #     break
+
                         for col2 in range(1, col):
                             if not working_rc.has_element(row, col):
                                 a2, b2 = working_rc.right_root_at(row, col2)
@@ -354,12 +341,10 @@ class RCGraph(Printable, tuple):
     def extend(self, extra_rows):
         return RCGraph([*self, *tuple([()] * extra_rows)])
 
-    def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, debug=False, start_index=-1, backwards=True):
+    def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True):
         working_rc = self
         if row > descent:
             raise ValueError("All rows must be less than or equal to descent")
-        if backwards:
-            pass  # debug_print("WARNING BACKWARDS IS ON", debug=False)
 
         i = start_index
 
@@ -374,16 +359,13 @@ class RCGraph(Printable, tuple):
         flag = True
         while num_done < num_times:
             if i <= 1 and not backwards:
-                pass  # debug_print("Resetting i", debug=debug)
                 i = working_rc.cols + descent + 5
             if not backwards:
                 i -= 1
             else:
                 i += 1
             flag = False
-            if debug:
-                pass  # debug_print(f"Trying column {i=} {descent=} {row=} {num_done=} {num_times=} {dict_by_a=} {dict_by_b=}", debug=debug)
-                pass  # debug_print(f"{working_rc=}", debug=debug)
+
             if not working_rc.has_element(row, i):
                 a, b = working_rc.right_root_at(row, i)
                 if a < b:
@@ -407,8 +389,7 @@ class RCGraph(Printable, tuple):
                     working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards)  # minus one?
         return working_rc
 
-    def _kogan_kumar_rectify(self, row_below, descent, dict_by_a, dict_by_b, debug=False, backwards=True):
-        pass  # debug_print(f"In rectify {row_below=} {self.is_valid=} {self=}", debug=debug)
+    def _kogan_kumar_rectify(self, row_below, descent, dict_by_a, dict_by_b, backwards=True):
         working_rc = self
         if row_below == 0:
             assert working_rc.is_valid, f"{working_rc=}, {dict_by_a=}, {dict_by_b=}"
@@ -419,21 +400,15 @@ class RCGraph(Printable, tuple):
             flag = False
             if working_rc.is_valid:
                 return working_rc
-            pass  # debug_print(f"Considering column {j=} {row_below=} {descent=}", debug=debug)
+
             if working_rc.has_element(row_below, j):
-                pass  # debug_print("Has element", debug=debug)
                 a, b = working_rc.right_root_at(row_below, j)
 
                 top, bottom = max(a, b), min(a, b)
-                pass  # debug_print("root=", (a, b), debug=debug)
-                pass  # debug_print("Entered", debug=debug)
+
                 if a < b:
-                    pass  # debug_print("Root is positive", debug=debug)
                     continue
-                if debug:
-                    pass  # debug_print(f"Considering bad at {row_below, j}")
-                    pass  # debug_print(f"{dict_by_a=}, {dict_by_b=}")
-                    pass  # debug_print(f"root = ({a, b})")
+
                 if bottom in dict_by_a and top in dict_by_a[bottom]:
                     new_rc = working_rc.toggle_ref_at(row_below, j)
                     dict_by_a[bottom].remove(top)
@@ -442,8 +417,7 @@ class RCGraph(Printable, tuple):
                     del dict_by_b[top]
                     working_rc = new_rc
                     flag = True
-                    pass  # debug_print("Toggle bad a", debug=debug)
-                    pass  # debug_print(working_rc)
+
                 elif bottom in dict_by_b and top in dict_by_b and dict_by_b[top] == dict_by_b[bottom]:
                     new_rc = working_rc.toggle_ref_at(row_below, j)
                     dict_by_a[dict_by_b[bottom]].remove(top)
@@ -452,16 +426,15 @@ class RCGraph(Printable, tuple):
                         del dict_by_a[dict_by_b[top]]
                     flag = True
                     working_rc = new_rc
-                    pass  # debug_print("Toggle bad c", debug=debug)
+
                 else:
-                    pass  # debug_print(f"{working_rc=}, {dict_by_a=}, {dict_by_b=}, {a=}, {b=} {row_below=} {j=}")
                     raise ValueError(f"Could not rectify at {(row_below, j)} with root {(a, b)}")
                 if flag:
-                    working_rc = working_rc._kogan_kumar_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times=1, debug=debug, backwards=backwards)
+                    working_rc = working_rc._kogan_kumar_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times=1, backwards=backwards)
         return working_rc._kogan_kumar_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards)
 
     # VERIFY
-    def kogan_kumar_insert(self, descent, rows, debug=False, return_reflections=False, backwards=True):
+    def kogan_kumar_insert(self, descent, rows, return_reflections=False, backwards=True):
         dict_by_a = {}
         dict_by_b = {}
         # row is descent
@@ -479,17 +452,10 @@ class RCGraph(Printable, tuple):
         if max(rows) > len(working_rc):
             working_rc = working_rc.extend(max(rows) - len(working_rc))
         rows = sorted(rows, reverse=True)
-        if debug:
-            pass  # debug_print(f"inserting {rows=} into")
-            pass  # debug_print(self)
         for row in sorted(rows_grouping.keys(), reverse=True):
             num_times = rows_grouping[row]
-            if debug:
-                pass  # debug_print(f"Inserting {row=} {num_times=}")
-                pass  # debug_print(working_rc)
-                pass  # debug_print(f"{working_rc.perm.inv=}, {self.perm.inv=}")
             last_working_rc = working_rc
-            working_rc = working_rc._kogan_kumar_insert_row(row, descent, dict_by_a, dict_by_b, num_times, debug=debug, backwards=backwards)
+            working_rc = working_rc._kogan_kumar_insert_row(row, descent, dict_by_a, dict_by_b, num_times, backwards=backwards)
 
             if row > 1 and not working_rc.is_valid:
                 working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards)  # minus one?
@@ -497,14 +463,6 @@ class RCGraph(Printable, tuple):
             try:
                 assert len(working_rc[row - 1]) == len(last_working_rc[row - 1]) + num_times
             except AssertionError:
-                # print("Assertion failed")
-                # print(working_rc)
-                # print(f"{working_rc.perm.inv=}, {self.perm.inv + total_num=}")
-                # print(f"{dict_by_a=}, {dict_by_b=}")
-                # print(f"{working_rc.perm=}, {self.perm=}")
-                #  if debug:
-                #      raise
-                #  self.kogan_kumar_insert(descent, rows, debug=False)
                 raise
         if return_reflections:
             reflections = []
@@ -556,7 +514,7 @@ class RCGraph(Printable, tuple):
     w_key_cache = {}  # noqa: RUF012
     rc_cache = set()  # noqa: RUF012
 
-    def toggle_ref_at(self, i, j, debug=False):
+    def toggle_ref_at(self, i, j):
         if i <= 0 or j <= 0:
             raise IndexError()
         new_row = [*self[i - 1]]
@@ -565,13 +523,10 @@ class RCGraph(Printable, tuple):
             new_row = [*new_row[:index], *new_row[index + 1 :]]
         else:
             index = 0
-            pass  # debug_print("Searching", debug=debug)
             if len(new_row) > 0:
                 while index < len(new_row) and new_row[index] > i + j - 1:
                     index += 1
-            pass  # debug_print(f"Index {index=} inserting at row {i} column {j} the refl {i+j-1=} int {new_row=}", debug=debug)
             new_row.insert(index, i + j - 1)
-            pass  # debug_print(f"Result {new_row=}", debug=debug)
         return RCGraph([*self[: i - 1], tuple(new_row), *self[i:]])
 
     # # THIS IS KEY
@@ -581,7 +536,7 @@ class RCGraph(Printable, tuple):
     _z_cache = {}  # noqa: RUF012
 
     @cache
-    def zero_out_last_row(self, debug=False):
+    def zero_out_last_row(self):
         # this is important!
         # transition formula
         if len(self[-1]) != 0:
@@ -600,7 +555,7 @@ class RCGraph(Printable, tuple):
             diff_rows += [row]
 
         interim2 = RCGraph([*interim[:-1], tuple(sorted(descs, reverse=True))])
-        interim = interim2.kogan_kumar_insert(len(self.perm.trimcode) - extend_amount, diff_rows, debug=False)
+        interim = interim2.kogan_kumar_insert(len(self.perm.trimcode) - extend_amount, diff_rows)
 
         return interim.rowrange(0, len(self) - 1)
 
@@ -616,70 +571,19 @@ class RCGraph(Printable, tuple):
             back = self.rowrange(row, len(self))
         return (front, back)
 
-    def right_zero_act(self, debug=False):
+    def right_zero_act(self):
         # NOTE THAT THIS IS STILL USING THE OLD METHOD
         if self.perm.inv == 0:
             return {RCGraph([*self, ()])}
 
         if self in RCGraph._z_cache:
             return RCGraph._z_cache[self]
-        # assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
+
         up_perms = ASx(self.perm, len(self)) * ASx(uncode([0]), 1)
 
         rc_set = set()
 
-        # should be able to move in descents and reverse insert
-        interim = RCGraph([*self])
-        
-        if False:
-            for (perm, _) in up_perms.keys():
-                interim = RCGraph([*self, tuple(range(len(self.perm), len(self), -1))])
-                # print(f"{interim.perm=}")
-                # print(f"{lower_perm=}")
-                print(f"{interim=}, {perm=}")
-                ref_dict = RCGraph.complete_sym_perms(perm, interim.perm.inv - perm.inv, len(self) + 1)
-                #print(f"{ref_dict=}")
-                ref_path = ref_dict[interim.perm]
-                #new_ref_path = [(root[0], root[1] - 1) for root in ref_path if root[0] <= len(self) + 1]
-                # THIS SHOULD WORK BUT DOESN'T
-                rc, diff_rows = interim.reverse_kogan_kumar_insert(len(self) + 1, ref_path, return_rows=True)
-                print(f"Got {rc=}, {diff_rows=}, {ref_path=}")
-                if len(rc[-1]) == 0:
-                    rc_set.add(rc)
-                else:
-                    descs = []
-                    assert len(rc) == len(self) + 1
-                    diff_rows2 = []
-                    while len(rc.perm.trimcode) > len(self):
-                        descs += [len(rc.perm.trimcode)]
-                        rc, row = rc.exchange_property(len(rc.perm.trimcode), return_row=True)
-                        #diff_rows2 += [row]
-                    #int_rc = RCGraph([*rc[:-1], tuple(sorted(descs, reverse=True))])
-                    print(f"Took out exchange {rc=}")
-                    # diff from self
-                    diff_rows2 = []
-                    for i in range(len(self)):
-                        if len(rc[i]) != len(self[i]):
-                            diff_rows2 += [i + 1]*(len(self[i]) - len(rc[i]))
-                    rc2 = rc.kogan_kumar_insert(len(perm.trimcode), diff_rows2, debug=debug, backwards=True)
-                    # remove the rows from self
-                    # self_rc = RCGraph([*self, tuple(sorted(descs, reverse=True))])
-                    # ref_dict2 = RCGraph.complete_sym_perms(int_rc.perm, self_rc.perm.inv - int_rc.perm.inv, len(self) + 1)
-                    # print(f"{ref_dict2=}")
-                    # print(f"{self_rc=}")
-                    # print(f"{int_rc=}")
-                    # print(f"{self_rc.perm=}")
-                    # ref_path2 = ref_dict2[self_rc.perm]
-                    # rc2 = self_rc.reverse_kogan_kumar_insert(len(self) + 1, ref_path2, debug=debug).rowrange(0,len(self)).extend(1)
-                    print(f"Got {rc2=}")
-                    print(f"{rc2.zero_out_last_row()=} {self=}")
-                    assert rc2.zero_out_last_row() == self
-                    rc_set.add(rc2)
-
-
         for perm, _ in up_perms.keys():
-            # rc = RCGraph([*self, tuple(range(len(self.perm), len(self), -1))])
-
             for rc in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=(*self.length_vector, 0)):
                 if rc.zero_out_last_row() == self:
                     rc_set.add(rc)
@@ -706,10 +610,6 @@ class RCGraph(Printable, tuple):
                 hi = mid
         return lo
 
-    @cache
-    def bisect_right_coords_index(self, row, col):
-        raise NotImplementedError("Right bisect not implemented")
-
     def exchange_property(self, descent, left=False, return_row=False):
         for i in range(len(self.perm_word)):
             if not left:
@@ -724,29 +624,11 @@ class RCGraph(Printable, tuple):
         raise ValueError("No such descent")
 
     @cache
-    def _inversion_to_coord(self):
-        roots_in = {}
-        roots_out = {}
-        for i in range(len(self)):
-            for j in range(max(self[i]) - i - 1, -1, -1):
-                a, b = self.right_root_at(i + 1, j + 1)
-                if self.has_element(i + 1, j + 1):
-                    roots_in[(a, b)] = (i + 1, j + 1)
-                else:
-                    roots_out[(a, b)] = (i + 1, j + 1)
-        return roots_in, roots_out
-
-    @cache
     def left_to_right_inversion(self, index):
         return self.right_root_at(*self.left_to_right_inversion_coords(index))
 
     @cache
-    def left_to_right_left_inversion(self, index):
-        # return self.left_root_at(*self.left_to_right_inversion_coords(index))
-        raise NotImplementedError("Left inversions not implemented")
-
-    @cache
-    def left_to_right_inversion_coords(self, index, debug=False):
+    def left_to_right_inversion_coords(self, index):
         if index < 0 or index >= len(self.perm_word):
             raise ValueError(f"Index {index} out of range {self.perm.inv}")
         index_find = 0
@@ -774,7 +656,6 @@ class RCGraph(Printable, tuple):
         if self.perm.inv == 0:
             return {RCGraph([*self, *other.shiftup(len(self))]): 1}
         num_zeros = max(len(other), len(other.perm))
-        pass  # debug_print(f"Multiplying {self=} {other=} with {num_zeros=} zeros")
         assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
         base_rc = self
         buildup_module = {base_rc: 1}
@@ -783,16 +664,12 @@ class RCGraph(Printable, tuple):
             new_buildup_module = {}
             for rc, coeff in buildup_module.items():
                 new_buildup_module = add_perm_dict(new_buildup_module, dict.fromkeys(rc.right_zero_act(), coeff))
-                # print("Ding")
             buildup_module = new_buildup_module
-        # print("Barg")
         ret_module = {}
 
         for rc, coeff in buildup_module.items():
             new_rc = RCGraph([*rc[: len(self)], *other.shiftup(len(self))])
             assert len(new_rc) == len(self) + len(other)
-            # if len(new_rc.perm.trimcode) > len(new_rc):
-            #     new_rc = new_rc.extend(len(new_rc.perm.trimcode) - len(new_rc))
             if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(new_rc):
                 ret_module = add_perm_dict(ret_module, {new_rc: coeff})
 
@@ -818,17 +695,13 @@ class RCGraph(Printable, tuple):
             wd_dict = elem.change_basis(WordBasis)
             ret = {}
             for k, v in wd_dict.items():
-                # print(f"{k=} {v=}")
                 acted_element = {self: v}
                 for a in reversed(k):
                     acted_element2 = {}
                     for k2, v2 in acted_element.items():
-                        # print(f"{dict.fromkeys(k2.act(a), v2)=}")
                         acted_element2 = add_perm_dict(acted_element2, dict.fromkeys(k2.act(a), v2))
                     acted_element = acted_element2
-                # print(f"{acted_element=}")
                 ret = add_perm_dict(ret, acted_element)
-            # print(f"{ret=}")
             return ret
         raise ValueError(f"Cannot act by {type(elem)} {elem=}")
 
@@ -859,7 +732,6 @@ class RCGraph(Printable, tuple):
         last = self.iterative_act(p - 1, insert=insert)
         ret = set()
         for rc in last:
-            # top row has som
             last_desc = 0
             old_perm = ~rc.perm
             if len(rc[0]) > 0:
