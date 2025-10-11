@@ -690,25 +690,6 @@ class RCGraph(Printable, tuple):
             return ret
         raise ValueError(f"Cannot act by {type(elem)} {elem=}")
 
-    def right_ring_act(self, elem):
-        if isinstance(elem, FreeAlgebraElement):
-            wd_dict = elem.change_basis(WordBasis)
-            ret = {}
-            for k, v in wd_dict.items():
-                acted_element = {self: v}
-                for a in reversed(k):
-                    acted_element2 = {}
-                    for k2, v2 in acted_element.items():
-                        acted_element2 = add_perm_dict(acted_element2, dict.fromkeys(k2.act(a), v2))
-                    acted_element = acted_element2
-                ret = add_perm_dict(ret, acted_element)
-            return ret
-        raise ValueError(f"Cannot act by {type(elem)} {elem=}")
-
-    def right_act(self, p):
-        st = self.transpose().act(p)
-        return {rc.transpose() for rc in st}
-
     def act(self, p):
         pm = self.perm
         elem = FAS(pm, len(self))
