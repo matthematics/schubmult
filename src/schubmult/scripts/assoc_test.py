@@ -238,7 +238,7 @@ if __name__ == "__main__":
             graphs1 = RCGraph.all_rc_graphs(perm, len1)
             for g in graphs1:
                 ging = rc_ring(g)
-                pretty_print(ging.vertical_coproduct())
+                pretty_print(ging*ging)
             # for perm2 in perms:
             #     if perm2.inv == 0:
             #         continue
