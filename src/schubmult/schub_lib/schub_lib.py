@@ -709,6 +709,49 @@ def elem_sym_positional_perms_q(orig_perm, p, *k, q_var=q_var):
     return total_list
 
 
+def complete_sym_perms_op(orig_perm, p, k):
+    from schubmult.utils.perm_utils import has_bruhat_descent
+
+    orig_perm = Permutation(orig_perm)
+    total_dict = {orig_perm: []}
+    up_perm_list = [(orig_perm, 1000000000)]
+    for pp in range(p):
+        perm_list = []
+        new_total_dict = {}
+        for up_perm, last in up_perm_list:
+            pos_list = [j for j in range(len(orig_perm)) if up_perm[j] == orig_perm[j]]
+            for i in range(k):
+                for j in pos_list:
+                    if has_bruhat_descent(up_perm, i, j):
+                        new_perm_add = up_perm.swap(i, j)
+                        perm_list += [(new_perm_add, up_perm[j])]
+                        new_total_dict[new_perm_add] = [(i + 1, j + 1)] + total_dict[up_perm]
+        up_perm_list = perm_list
+        total_dict = new_total_dict
+    return total_dict
+
+def complete_sym_perms(orig_perm, p, k):
+    from schubmult.utils.perm_utils import has_bruhat_ascent
+
+    orig_perm = Permutation(orig_perm)
+    total_dict = {orig_perm: []}
+    up_perm_list = [(orig_perm, 1000000000)]
+    for pp in range(p):
+        perm_list = []
+        new_total_dict = {}
+        for up_perm, last in up_perm_list:
+            pos_list = [j for j in range(len(orig_perm) + 10) if up_perm[j] == orig_perm[j]]
+            for i in range(k):
+                for j in pos_list:
+                    if has_bruhat_ascent(up_perm, i, j):
+                        new_perm_add = up_perm.swap(i, j)
+                        perm_list += [(new_perm_add, up_perm[j])]
+                        new_total_dict[new_perm_add] = total_dict[up_perm] + [(i + 1, j + 1)]
+        up_perm_list = perm_list
+        total_dict = new_total_dict
+    return total_dict
+
+
 def complete_sym_positional_perms(orig_perm, p, *k):
     k = {i - 1 for i in k}
     orig_perm = Permutation(orig_perm)
