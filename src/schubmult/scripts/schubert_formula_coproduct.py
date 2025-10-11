@@ -49,7 +49,7 @@ def main():
             st.add(rc)
             dct[rc.length_vector()] = st
             rc_graphs_by_weight[perm] = dct
-            
+
 
     principal_rcs = {perm: next(iter([rc for rc in rc_graphs[perm] if rc.is_principal])) for perm in perms}
 
@@ -66,9 +66,9 @@ def main():
     for seq in seqs:
         perm = uncode(seq)
         elem = ASx(perm, n - 1).change_basis(WordBasis)
-        
+
         for word_double, coeff_double in elem.items():
-            
+
 
 
             mod = FA(*word_double) * unit_rc_module
@@ -101,9 +101,9 @@ def main():
         # coprods_length_vector[rc.length_vector()] = coprods_length_vector.get(rc.length_vector(), 0) + coeff * (FA@FA)((rc1.length_vector(), rc2.length_vector()))
         # coprods_length_vector2[rc.length_vector()] = coprods_length_vector2.get(rc.length_vector(), 0) + coeff * (ASx@ASx)(((rc1.perm,len(rc1)), (rc2.perm,len(rc2))))
         products[(rc1.perm, rc2.perm)] = products.get((rc1.perm, rc2.perm), RCGraphModule()) + coeff * RCGraphModule(dict.fromkeys(RCGraph.all_rc_graphs(rc.perm, n - 1), 1))
-        
+
         #products_by_weight[weight] = products_by_weight.get(weight, RCGraphModule()) + coeff * , 1))
-    
+
     for (rc, (rc1, rc2)), coeff in solution_module2.items():
         perm = rc.perm
         perm1, perm2 = rc1.perm, rc2.perm
@@ -134,17 +134,17 @@ def main():
         print(perm1.trimcode, perm2.trimcode)
         print(module)
 
-    
+
     for (perm1, perm2), module in products.items():
         for rc, coeff in module.items():
             weight_sum[rc.length_vector()] = weight_sum.get(rc.length_vector(), 0) + coeff
 
     #process products_rc2
-    
 
-    
 
-        
+
+
+
     # for tup, module in products_by_weight.items():
     #     for rc, coeff in module.items():
     #         if len(rc.perm) > n:
@@ -274,7 +274,7 @@ def main():
         assert sumup == check
         print(f"Success {sumup}")
         num_successes += 1
-    
+
     # print("CHECK4!!!\n\n\n")
     # for (perm1, perm2), elem in sumup.items():
     #     print(f"{perm1.trimcode}, {perm2.trimcode}")
@@ -315,7 +315,7 @@ def main():
     #     assert elem == check
     #     num_successes += 1
 
-    
+
 
     #assert num_successes == math.factorial(n), f"Only {num_successes} successes, not the full group"
 

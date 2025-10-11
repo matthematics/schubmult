@@ -64,13 +64,13 @@ class RCGraph(tuple):
         perm = Permutation.ref_product(*revved[:index])
         start_root = (perm[start_root[0] - 1], perm[start_root[1] - 1])
         lower_perm = Permutation([])
-        
+
         for rrow in self[i:]:
             lower_perm *= ~Permutation.ref_product(*rrow)
 
 
         return (lower_perm[start_root[0] - 1], lower_perm[start_root[1] - 1])
-    
+
     def length_vector(self):
         return tuple([len(row) for row in self])
 
@@ -145,7 +145,7 @@ class RCGraph(tuple):
             newrc.append(tuple(new_row))
             i += 1
         new_rc = RCGraph(newrc)
-        
+
         # print(tuple(new_rc))
         # print(tuple(self))
         assert new_rc.perm == ~self.perm
@@ -280,7 +280,7 @@ class RCGraph(tuple):
 
 class RCGraphModule(dict):
 
-    
+
 
     def __mul__(self, other):
         if isinstance(other, RCGraphModule):
@@ -778,7 +778,7 @@ def nilhecke_power(start, end, length, variable):
     result += variable * ring(Permutation([]).swap(end-1,end)) * nilhecke_power(start, end - 1, length - 1, variable)
     result += nilhecke_power(start, end-1, length, variable)
     return result
-         
+
 
 
 
@@ -837,7 +837,7 @@ if __name__ == "__main__":
     ring2 = TensorRing(Sx([]).ring, ring)
     #ring = TensorRing(TensorRing(zring,FreeAlgebra(SchubertBasis)),TensorRing(yring, NilHeckeRing(x)))
     result = ring2.zero
-    
+
     dp = -1
     def descent_pickle(perm, desc):
         if desc < 0:
@@ -879,13 +879,13 @@ if __name__ == "__main__":
 
     for perm in perms:
         print(f"{perm.trimcode=}: {separate[perm]}")
-    
+
     exit()
 
 
     if False:
         nil_elem = ring.rings[1].rings[1].one
-        
+
             #nil_elem *= nilhecke_power(index + 1, n - 1, value, 1)
         interim_result = ring.rings[1].zero
 
@@ -904,8 +904,8 @@ if __name__ == "__main__":
     print(result)
 
     # for ((perm1, (perm2, a)), (perm3, perm4)), coeff in result.items():
-    #     assert perm1 == perm2 
-    
+    #     assert perm1 == perm2
+
     exit()
     #for (((perm1, a), (perm2, b)), (perm3, perm4)), coeff in result.items():
     #for (perm1, (((perm2, a),(perm3,b)), perm4)), coeff in result.items():
@@ -919,7 +919,7 @@ if __name__ == "__main__":
         except AssertionError:
             print(f"Assertion failed: {bong.get(perm1,0)=} {perm1=} {perm2=} {perm3=} {perm4=} {coeff=}")
             continue
-        
+
     exit()
 
     # result = TensorModule()
@@ -934,7 +934,7 @@ if __name__ == "__main__":
     # # elem
     # for perm in perms:
     #     bismark += ring0.ext_multiply(ASx(perm,n-1), ASx(perm,n-1)*Sx(w0))
-    
+
     # print(bismark)
     # exit()
 
@@ -954,7 +954,7 @@ if __name__ == "__main__":
     #         continue
     #     print(f"{perm1.trimcode=} {perm.perm.trimcode=}")
     # #exit()
-    
+
     # # #exit()
     #     #result2 += TensorModule.ext_multiply(ASx(perm1, a),ring2.ext_multiply(Sx(perm),ring2.rings[1](coeff)))
     #     #print(f"{perm1.trimcode=} {perm.perm.trimcode=} {coeff=}")
@@ -982,7 +982,7 @@ if __name__ == "__main__":
         # for rc_graph in stinky:
         #     rt = rc_graph.transpose()
         #     vec = rt.length_vector()
-            
+
         other_elem = Sx([]) * prod([x[i+1]**seq[i] for i in range(len(seq))])
         result += TensorModule.ext_multiply(dingmod, other_elem)
         # elem1 = ring3.rings[0](*seq)
@@ -1011,7 +1011,7 @@ if __name__ == "__main__":
         if len(schub) > n or len(rc_graph.perm) > n:
             continue
         da_baby[schub] = da_baby.get(schub, RCGraphModule()) + RCGraphModule({rc_graph: coeff})
-    
+
     da_baby2 = {}
     for schub, module in da_baby.items():
         print(schub.trimcode)
@@ -1021,7 +1021,7 @@ if __name__ == "__main__":
         print(perm1.trimcode)
         print(perm2.trimcode)
         print(mod)
-    
+
     exit()
     zop = change_free_tensor_basis(dingbat, WordBasis, SchubertBasis)
     for zingbat, doofy in zop.items():
@@ -1062,7 +1062,7 @@ if __name__ == "__main__":
 
     ring = TensorRing(ring1, ring2)
 
-    
+
     addup = ring.zero
     print(seqs)
     for seq in seqs:
@@ -1088,7 +1088,7 @@ if __name__ == "__main__":
     for key1 in save_dict:
         print(f"{key1=}")
         print(f"{save_dict[key1]=}")
-    
+
     # for i, perm1 in enumerate(perms):
     #     poly1 = Sx(perm1).expand()
     #     for perm2 in perms[i:]:
@@ -1156,7 +1156,7 @@ if __name__ == "__main__":
     #         #     pl2 -= val * Sx(pmm).expand()
     #         # print(mod2)
     #         # assert expand(mod2.polyvalue(x) - pl) == S.Zero
-            
+
 
 
 # dual
@@ -1243,7 +1243,7 @@ if __name__ == "__main__":
 
 #     #spug = TensorModule({RCGraphTensor(RCGraph(()), RCGraph(())): 1})
 #     spug = RCGraphModule({RCGraph(()): 1})
-    
+
 #     # spug1 = FA(uncode([0,1]), 2).coproduct() * spug
 #     # print(spug1)
 
@@ -1327,7 +1327,7 @@ if __name__ == "__main__":
 #         # for (p0, p1), v in plathbucket.items():
 #         #     print(f"  P {p0.trimcode}, {p1.trimcode} : {v} {Sx(v)}")
 #         print(graphd)
-        
+
 #         print("-----")
 
 
@@ -1342,7 +1342,7 @@ if __name__ == "__main__":
 
 #     #spug = TensorModule({RCGraphTensor(RCGraph(()), RCGraph(())): 1})
 #     spug = RCGraphModule({RCGraph(()): 1})
-    
+
 #     # spug1 = FA(uncode([0,1]), 2).coproduct() * spug
 #     # print(spug1)
 
@@ -1387,7 +1387,7 @@ if __name__ == "__main__":
 #     #     print(v)
 
 #     foingle = {}
-    
+
 #     for k, v in fratboy.items():
 #         for graph, val in v.items():
 #             foingle[(graph.perm,length)] = foingle.get((graph.perm,length), RCGraphModule()) + RCGraphModule({graph: val})
@@ -1423,7 +1423,7 @@ if __name__ == "__main__":
 
 # #     #spug = TensorModule({RCGraphTensor(RCGraph(()), RCGraph(())): 1})
 # #     spug = RCGraphModule({RCGraph(()): 1})
-    
+
 # #     # spug1 = FA(uncode([0,1]), 2).coproduct() * spug
 # #     # print(spug1)
 
@@ -1470,7 +1470,7 @@ if __name__ == "__main__":
 # #     #     print(v)
 
 # #     foingle = {}
-    
+
 # #     for k, modbob in fratboy.items():
 # #         badpairdct = {}
 # #         for (graph0, (graph1, graph2)), val in modbob.items():
@@ -1510,7 +1510,7 @@ if __name__ == "__main__":
 # #     Permutation.print_as_code = True
 # #     finglestick = foingle
 # #     # for (k0, k1, k2), v in foingle.items():
-        
+
 # #     #     # for (kk0, kk1, kk2), vv in v.items():
 # #     #     #     assert k0 == kk0.perm and k1 == kk1.perm and k2 == kk2.perm, f"Failed {k} got {kk}, expected only {k[0]}"
 # #     #     # for kk, vv in v.items():

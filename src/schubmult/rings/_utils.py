@@ -1,4 +1,3 @@
-
 class BitfieldRow:
     def __init__(self, row_tuple):
         # Accepts a tuple/list of ints and converts to bitfield
@@ -6,7 +5,6 @@ class BitfieldRow:
         for k in row_tuple:
             bitfield |= 1 << (k - 1)
         self.bitfield = bitfield
-
 
     def __contains__(self, item):
         return (self.bitfield & (1 << (item - 1))) != 0
@@ -24,10 +22,10 @@ class BitfieldRow:
         yield from reversed(bits)
 
     def __len__(self):
-        return bin(self.bitfield).count('1')
+        return bin(self.bitfield).count("1")
 
     def __getitem__(self, idx):
-        bits = [i for i in self]
+        bits = [i for i in self]  # noqa: C416
         return bits[idx]
 
     def to_tuple(self):
@@ -91,4 +89,3 @@ class BitfieldRow:
         if isinstance(other, tuple):
             return self.to_tuple() != other
         return NotImplemented
-

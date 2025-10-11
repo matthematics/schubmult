@@ -346,7 +346,7 @@ class NilHeckeRing(Ring, CompositeDomain):
 
     def from_dict(self, element, orig_domain=None):  # noqa: ARG002
         # print(f"{element=}")
-        
+
         poly = self.zero
 
         for monom, coeff in element.items():

@@ -379,7 +379,7 @@ class FreeAlgebra(Ring, CompositeDomain):
     def __str__(self):
         return self.__class__.__name__
 
-    
+
     def mul_expr(self, elem, x):
         try:
             return self.from_dict({k: x * v for k, v in elem.items()})

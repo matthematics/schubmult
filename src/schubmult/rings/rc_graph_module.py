@@ -184,7 +184,7 @@ class ModuleType:
 
     def __repr__(self):
         return str(self)
-    
+
     # def __str__(self):
     #     buildups = ""
     #     if len(self.keys()) == 0:
@@ -350,7 +350,7 @@ class RCGraphEG(RCGraph):
         return self._sympystr()
 
     def __repr__(self):
-        return f"RCGraphEG({repr(self.P)}, {repr(self.Q)})"
+        return f"RCGraphEG({self.P!r}, {self.Q!r})"
 
     def __eq__(self, other):
         if not isinstance(other, RCGraphEG):

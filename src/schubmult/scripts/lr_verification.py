@@ -51,7 +51,7 @@ def safe_save(obj, filename, save_json_backup=True):
     except Exception as e:
         import traceback
 
-        print(f"Error during pickle save:")
+        print("Error during pickle save:")
         traceback.print_exc()
         if os.path.exists(temp_pickle):
             os.remove(temp_pickle)
@@ -75,7 +75,7 @@ def safe_save(obj, filename, save_json_backup=True):
     except Exception as e:
         import traceback
 
-        print(f"Error during JSON backup:")
+        print("Error during JSON backup:")
         traceback.print_exc()
         if os.path.exists(temp_json):
             os.remove(temp_json)
@@ -94,7 +94,7 @@ def safe_save_recording(obj, filename):
     except Exception as e:
         import traceback
 
-        print(f"Error during recording JSON save:")
+        print("Error during recording JSON save:")
         traceback.print_exc()
         if os.path.exists(temp_json):
             os.remove(temp_json)
@@ -105,7 +105,7 @@ def safe_load_recording(filename):
     json_file = f"{filename}.json"
     if os.path.exists(json_file):
         try:
-            with open(json_file, "r") as f:
+            with open(json_file) as f:
                 loaded = json.load(f)
             # reconstruct keys as Permutation objects
             print(f"Loaded {len(loaded)} entries from {json_file}")

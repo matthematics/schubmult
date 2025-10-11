@@ -80,7 +80,7 @@ def good_for_perm(perm, length):
     if length < len(perm.trimcode):
         raise ValueError(f"Length {length} less than {len(perm.trimcode)} for {perm.trimcode}")
     #print(f"{perm.trimcode,length}")
-    
+
     old_good = good_for_perm(uncode(perm.trimcode[1:]), length - 1)
 
     new_good = set()
@@ -168,7 +168,7 @@ def iterative_construct(seq):
 #     if not binary_good(lower_rc1, lower_rc2):
 #         #print("Bad")
 #         return False
-    
+
 #     for seq2 in co_principal_seqs(seq):
 #         print(f"For {seq} checking {seq2}")
 #         rcs = get_rcs(seq2)
@@ -203,11 +203,11 @@ def main():
     perms = Permutation.all_permutations(n)
     length = n - 1
     rank = {}
-    
+
     perms.sort(key=lambda p: p.trimcode)
     for perm in perms:
         print("Trying ", perm.trimcode)
-        
+
         #full_coprod = RCGraph.full_rc_coproduct(perm, length)
         full_coprod = RCGraph.principal_rc(perm, length).coproduct()  # Precompute principal rc graphs
         print(full_coprod)
@@ -216,7 +216,7 @@ def main():
         for (rc1, rc2), coeff in full_coprod.value_dict.items():
             if uncode([a+b for a,b in zip(rc1.length_vector(), rc2.length_vector())]) == perm:
                 elem += coeff * (ASx @ ASx)(((rc1.perm, length), (rc2.perm, length)))
-        
+
         check = ASx(perm, length).coproduct()
         try:
             if perm.inv != 0:
@@ -238,12 +238,12 @@ def main():
     #             print(f"  {perm}: {ring(coeff)}")
     #     for i in range(n):
     #         rc = FA(i).coproduct() * (RCGraph()@RCGraph())
-            
-            
+
+
 
 #    rel = generate_co_prinipal_relation(perms, max_length=n)
-    
-    
+
+
     # goodness_seq = {(): {(RCGraph(),RCGraph())}}
 
     # for length in range(1, n):
@@ -267,7 +267,7 @@ def main():
     #                         this_seq[seq] = set(good2)
     #                         this_seq[seq].remove((rc1, rc2))
     #                         break
-                    
+
     #     goodness_seq = this_seq
 
     # goodness = {uncode(seq): good for seq, good in goodness_seq.items()}
@@ -292,12 +292,12 @@ def main():
     #     cop = dingbat_module.asdtype(ASx@ASx)
     #     test_cop = ASx(perm).coproduct()
     #     tester = test_cop - cop
-    
+
     #             #good = {rc0: g for rc0, g  in at_least_one.items() if g}
     #     # print("Correct")
     #     # print(try_lr_module(perm, length=len(perm.trimcode)))
     #     # print("Test")
-        
+
     #     try:
     #         assert all(v == 0 for v in tester.values()), f"Failed for {perm=} {cop=} {test_cop=}"
     #     except AssertionError as e:

@@ -84,7 +84,7 @@ class Permutation:
 
     def root_swap(self, root):
         return self.swap(root[0] - 1, root[1] -  1)
-    
+
     def right_root_at(self, index, word=None):
         if word is None:
             word = [*self.code_word]
@@ -316,7 +316,7 @@ class Permutation:
 
     def __le__(self, other):
         return self.bruhat_leq(other)
-    
+
     def __lt__(self, other):
         return self != other and self.bruhat_leq(other)
 
@@ -635,7 +635,7 @@ class NilPlactic:
     #     new_second_to_last_row = [*second_to_last_row]
     #     new_second_to_last_row[index] = unbump
     #     new_upper_word[-1] = tuple(new_second_to_last_row)
-        
+
     #     #return (new_upper_word, (*new_lower_word, to_pass)), (word2[:first_nonempty_row], (*word2[first_nonempty_row][:-1], word2[first_nonempty_row][-1]))
 
 

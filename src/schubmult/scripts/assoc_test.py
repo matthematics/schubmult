@@ -34,10 +34,10 @@ def hom(rc):
     from schubmult.rings import TensorRing
     #from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
     ring = TensorRing(ASx@FA, rc_ring)
-    
+
     if isinstance(rc, RCGraph):
         #return (ASx@FA)(r,rc.length_vector))
-        # print(f"{rc.length_vector} {tuple(rc)=}")    
+        # print(f"{rc.length_vector} {tuple(rc)=}")
         #first = FA(*rc.length_vector).change_basis(SchubertBasis).get()
         return (ASx@FA)(((rc.perm,len(rc)),rc.length_vector))
         #return ret
@@ -54,10 +54,10 @@ def hom(rc):
 #     from schubmult.rings import TensorRing
 #     from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
 #     ring = TensorRing(ASx, rc_ring.from_dict())
-    
+
 #     if isinstance(rc, RCGraph):
 #         #return (ASx@FA)(r,rc.length_vector))
-#         # print(f"{rc.length_vector} {tuple(rc)=}")    
+#         # print(f"{rc.length_vector} {tuple(rc)=}")
 #         #first = FA(*rc.length_vector).change_basis(SchubertBasis).get()
 #         return ASx(rc.perm,len(rc))
 #         #return ret
@@ -124,7 +124,7 @@ def csym_rc(*weight):
 
 if __name__ == "__main__":
     # test module functionality
-    
+
     import sys
 
     from schubmult import FA, ASx, Permutation, SchubertBasis, WordBasis, uncode
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     #     rc1 = rc1.associative_kogan_kumar_insert(b+1,[r + 1 for r in seq2[:b+1]])
     #     rc3 = rc1.associative_kogan_kumar_insert(c+1,[r + 1 for r in seq3[:c+1]])
     #     rc2 = rc2.associative_kogan_kumar_insert(b+1,[r + 1 for r in seq2[:b+1]])
-    #     rc2 = 
+    #     rc2 =
 
             # print(g1)
             # print(g2)
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     # if we coprod a Schub this will act right
     # print(csym_rc(1)*csym_rc(2))
     # print(csym_rc(1)*csym_rc(2) - csym_rc(1,2) )
-    # exit() 
+    # exit()
 
     # for perm in perms:
     #     AG = PolynomialAlgebra(SchubertPolyBasis(len(perm.trimcode)))
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     #         for k, v in mod.items():
     #             assert v == 0 or k.perm == perm, f"{k=}, {perm=}, {v=}, {k.perm=}"
     #     #print(mod)
-        
+
     #for deg in range((n*(n-1))//2+1):
     # for seq in all_fa_degree(deg, len1):
     #     g1 = FA(*seq[:3]) * RCGraph()
@@ -234,7 +234,7 @@ if __name__ == "__main__":
         if perm.inv == 0 or max(perm.descents()) == 0:
             continue
         for len1 in range(len(perm.trimcode),n):
-        
+
             graphs1 = RCGraph.all_rc_graphs(perm, len1)
             for g in graphs1:
                 ging = rc_ring(g)
@@ -268,7 +268,7 @@ if __name__ == "__main__":
             #                                 print(e)
             #                                 print(f"{g=}")
             #                                 print(f"{g_=}")
-                                            
+
             #                                 raise
             #                             print("Success")
             #                             df = hom(g1) * (hom(g2) * hom(g3)) - hom(g)
@@ -281,7 +281,7 @@ if __name__ == "__main__":
             #                                 print(hom(g))
             #                                 raise
             #                             print("Hom Success")
-                                        
+
             #                             del g
             #                             del g_
                                         # printer._print_seq(g1,g2,delimiter=" * ",parenthesize=True)printer.print = {g1}*({g2}*{g3})")
