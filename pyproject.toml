@@ -115,6 +115,8 @@ unfixable = ["F401", "F841"]
 
 [tool.ruff.lint.per-file-ignores]
 "test*.py" = ["ALL"]
+"src/schubmult/scripts/*" = ["ALL"]
+"src/schubmult/rings/*rc_graph_module.py" = ["ALL"]
 "!src/*" = ["ALL"]
 "tst*.py" = ["ALL"]
 "mul_grass.py" = ["ALL"]
