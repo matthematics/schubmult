@@ -80,14 +80,8 @@ class RCGraphRing(BaseSchubertRing):
         if len(basis_elem) == 1:
             return cprod
         lower_graph = basis_elem.vertical_cut(len(basis_elem) - 1)[0]
-        elem = self(lower_graph)
         lower_module1 = self.coproduct_on_basis(lower_graph)
 
-        # if p == 0:
-        #     ret = tring.zero
-        #     for (rc1, rc2), coeff in lower_module1.items():
-        #         ret += coeff * tring((rc1.extend(1), rc2.extend(1)))
-        #     return ret
         ret_elem = lower_module1 * cprod
 
         ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
@@ -95,7 +89,6 @@ class RCGraphRing(BaseSchubertRing):
         for key, coeff in up_elem2.items():
             if key[0] != basis_elem.perm:
                 assert coeff == 1
-                #ret_elem -= self.coproduct_on_basis(key)
                 for (rc1_bad, rc2_bad), cff2 in self.coproduct_on_basis(RCGraph.principal_rc(*key)).items():
                     keys2 = set(ret_elem.keys())
                     for rc1, rc2 in keys2:
