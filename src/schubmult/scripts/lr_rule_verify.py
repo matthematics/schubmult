@@ -376,7 +376,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     print(f"{perm} already verified, returning.")
                     continue
                 print(f"Previous failure on {(perm, nn)}, will retry.")
-        n = len(perm.trimcode)
+        n = nn
         try_mod = ring.coproduct_on_basis(RCGraph.principal_rc(perm, n))
         pretty_print(try_mod)
         elem = 0
