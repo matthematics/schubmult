@@ -1,5 +1,6 @@
 # LR rule verification script
 
+from functools import cache
 import gc
 import json
 import os
@@ -218,9 +219,149 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 #     print("Saver process exiting.")
 
 
+def try_lr_module(perm, length=None):
+    from schubmult.rings.rc_graph_ring import RCGraphRing
+    from schubmult.rings.rc_graph import RCGraph
+    from schubmult import ASx, uncode
+    from sympy import pretty_print
+    ring = RCGraphRing()
+    tring = ring @ ring
+    # print(f"Starting {perm}")
+    if length is None:
+        length = len(perm.trimcode)
+    elif length < len(perm.trimcode):
+        raise ValueError("Length too short")
+    if perm.inv == 0:
+        # if length == 0:
+        #     mod = tring.one
+        #     #  #  # print(f"MOASA!! {mod=} {type(mod)=}")
+        #     return mod
+        return tring((RCGraph([()]*length),RCGraph([()]*length)))
+    lower_perm = uncode(perm.trimcode[1:])
+    elem = ASx(lower_perm, length - 1)
+    lower_module1 = try_lr_module(lower_perm, length - 1)
+    # assert isinstance(lower_module1, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
+    #  #  # print(f"Coproducting {ASx(uncode([perm.trimcode[0]]), 1).coproduct()=}")
+    #  #  # print(ASx(uncode([perm.trimcode[0]]), 1).coproduct())
+    #  #  # print("Going for it")
+    #  #  # print(f"{type(lower_module1)=} {lower_module1=}")
+    #  #  # print(f"{type(ASx(uncode([perm.trimcode[0]]), 1).coproduct())=}")
+
+    cprod = tring.zero
+
+    for j in range(perm.trimcode[0] + 1):
+        cprod += tring.ext_multiply(ring(RCGraph.one_row(j)), ring(RCGraph.one_row(perm.trimcode[0] - j)))
+    #print(cprod)
+    ret_elem = cprod * lower_module1
+    #  #  # print(f"{ret_elem=}")
+    # assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
+
+    ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
+
+    if length == 1:
+        return ret_elem
+    keys = set(ret_elem.keys())
+    # print(f"{repr(keys)=} {perm=}")
+    up_elem = ASx(uncode([perm.trimcode[0]]),1) * elem
+    # print(f"{up_elem=}")
+    for key, coeff in up_elem.items():
+        if key[0] != perm:
+            assert coeff == 1
+            for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
+                keys2 = set(ret_elem.keys())
+                for rc1, rc2 in keys2:
+                    if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm):
+                        # try:
+                        #     keys = set(keys2)
+                        #     keys.remove((rc1, rc2))
+                        # except KeyError:
+                        #     # print(repr(keys))
+                        #     raise
+                        ret_elem -= tring((rc1, rc2))
+                        break
+    # print(f"Done {perm}")
+    ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k in keys})
+    # assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
+    return ret_elem
+
+def try_lr_module_right(perm, length=None):
+    from schubmult.rings.rc_graph_ring import RCGraphRing
+    from schubmult.rings.rc_graph import RCGraph
+    from schubmult import ASx, uncode
+    from sympy import pretty_print
+    ring = RCGraphRing()
+    tring = ring @ ring
+    # print(f"Starting {perm}")
+    if length is None:
+        length = len(perm.trimcode)
+    elif length < len(perm.trimcode):
+        raise ValueError("Length too short")
+    if perm.inv == 0:
+        # if length == 0:
+        #     mod = tring.one
+        #     #  #  # print(f"MOASA!! {mod=} {type(mod)=}")
+        #     return mod
+        return tring((RCGraph([()]*length),RCGraph([()]*length)))
+    if length == len(perm.trimcode):
+        lower_perm = uncode(perm.trimcode[:-1])
+    else:
+        lower_perm = perm
+    elem = ASx(lower_perm, length - 1)
+    lower_module1 = try_lr_module_right(lower_perm, length - 1)
+    # assert isinstance(lower_module1, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
+    #  #  # print(f"Coproducting {ASx(uncode([perm.trimcode[0]]), 1).coproduct()=}")
+    #  #  # print(ASx(uncode([perm.trimcode[0]]), 1).coproduct())
+    #  #  # print("Going for it")
+    #  #  # print(f"{type(lower_module1)=} {lower_module1=}")
+    #  #  # print(f"{type(ASx(uncode([perm.trimcode[0]]), 1).coproduct())=}")
+
+    cprod = tring.zero
+
+    if length > len(perm.trimcode):
+        last_elem = 0
+    else:
+        last_elem = perm.trimcode[-1]
+
+    for j in range(last_elem + 1):
+        cprod += tring.ext_multiply(ring(RCGraph.one_row(j)), ring(RCGraph.one_row(last_elem - j)))
+    #print(cprod)
+    ret_elem = lower_module1 * cprod
+    #  #  # print(f"{ret_elem=}")
+    # assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
+
+    ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
+
+    if length == 1:
+        return ret_elem
+    keys = set(ret_elem.keys())
+    # print(f"{repr(keys)=} {perm=}")
+    up_elem =  elem * ASx(uncode([last_elem]),1)
+    # print(f"{up_elem=}")
+    for key, coeff in up_elem.items():
+        if key[0] != perm:
+            assert coeff == 1
+            for (rc1_bad, rc2_bad), cff2 in try_lr_module_right(key[0], length).items():
+                keys2 = set(ret_elem.keys())
+                for rc1, rc2 in keys2:
+                    if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm):
+                        # try:
+                        #     keys = set(keys2)
+                        #     keys.remove((rc1, rc2))
+                        # except KeyError:
+                        #     # print(repr(keys))
+                        #     raise
+                        ret_elem -= tring((rc1, rc2))
+                        break
+    # print(f"Done {perm}")
+    ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k in keys})
+    # assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
+    return ret_elem
+
+
 def worker(n, shared_recording_dict, lock, task_queue):
-    from schubmult import ASx, Plactic
-    from schubmult.rings.rc_graph_module import try_lr_module_biject
+    from schubmult import ASx
+    from sympy import pretty_print
+    #from schubmult.rings.rc_graph_module import try_lr_module_biject
 
     while True:
         try:
@@ -234,8 +375,8 @@ def worker(n, shared_recording_dict, lock, task_queue):
                     continue
                 print(f"Previous failure on {(perm, n)}, will retry.")
 
-        try_mod = try_lr_module_biject(perm, n)
-
+        try_mod = try_lr_module_right(perm, n)
+        pretty_print(try_mod)
         elem = 0
         for rc1, rc2 in try_mod:
             # elem += (rc1 @ rc2).asdtype(ASx @ ASx)
