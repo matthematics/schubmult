@@ -796,13 +796,13 @@ class RCGraph(Printable, tuple):
         #     #raise ValueError(f"Last element not fixed {interim=}, {self=}, {diff_rows=}, {descs=}, {bubbles=}")
         #     pass
 
-        interim = interim.rowrange(0, len(self) - 1).extend(1)
-        if debug:
-            assert interim.length_vector[:-1] == self.length_vector[:-1]
-            assert len(interim.perm.trimcode) <= len(self) - 1, f"{interim.perm.trimcode=} {self.perm.trimcode=} {interim.perm=} {self.perm=} {interim=} {self=}"
+        # interim = interim.rowrange(0, len(self) - 1)#.extend(1)
+        # if debug:
+        #     assert interim.length_vector[:-1] == self.length_vector[:-1]
+        #     assert len(interim.perm.trimcode) <= len(self) - 1, f"{interim.perm.trimcode=} {self.perm.trimcode=} {interim.perm=} {self.perm=} {interim=} {self=}"
         # assert in pull out var
-        if debug:
-            assert (self.perm, len(self)) in (ASx(interim.perm, len(self) - 1) * ASx(uncode([]), 1)).keys(), f"{self=}, {interim=} not zero correct"
+        # if debug:
+        #     assert (self.perm, len(self)) in (ASx(interim.perm, len(self) - 1) * ASx(uncode([]), 1)).keys(), f"{self=}, {interim=} not zero correct"
         return interim.rowrange(0, len(self) - 1)
 
     @staticmethod
