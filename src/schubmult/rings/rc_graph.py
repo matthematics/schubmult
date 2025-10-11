@@ -23,7 +23,6 @@ def _is_row_root(row, root):
 
 
 FA = FreeAlgebra(WordBasis)
-FAS = FA
 
 
 def debug_print(*args, debug=False):
@@ -692,8 +691,8 @@ class RCGraph(Printable, tuple):
 
     def act(self, p):
         pm = self.perm
-        elem = FAS(pm, len(self))
-        bumpup = FAS(uncode([p]), 1) * elem
+        elem = FA(pm, len(self))
+        bumpup = FA(uncode([p]), 1) * elem
         ret = set()
         for k, v in bumpup.items():
             perm2 = k[0]
