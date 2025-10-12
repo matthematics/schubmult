@@ -558,6 +558,10 @@ class RCGraph(Printable, tuple):
 
         return interim.rowrange(0, len(self) - 1)
 
+    @property
+    def highest_weight(self):
+        raise NotImplementedError()
+
     def raising_operator(self, row):
         # RF word is just the RC word backwards
         if row >= len(self):
