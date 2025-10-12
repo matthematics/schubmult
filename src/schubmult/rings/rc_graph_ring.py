@@ -89,11 +89,14 @@ class RCGraphRing(BaseSchubertRing):
         for key, coeff in up_elem2.items():
             if key.perm != basis_elem.perm:
                 assert coeff == 1
-                for (rc1_bad, rc2_bad), cff2 in self.coproduct_on_basis(RCGraph.principal_rc(key.perm, len(key))).items():
+                key_highest_weight, raise_seq = key.to_highest_weight()
+                for (rc1_bad, rc2_bad), cff2 in self.coproduct_on_basis(key_highest_weight).items():
                 #for (rc1_bad, rc2_bad), cff2 in (self.coproduct_on_basis(key.vertical_cut(len(key)-1)[0])*self.coproduct_on_basis(RCGraph.one_row(len(key[-1])))).items():
+                    # lower the tensor
+                    rc1_bad2, rc2_bad2 = RCGraph.reverse_raise_seq_pair(rc1_bad, rc2_bad, raise_seq)
                     keys2 = set(ret_elem.keys())
                     for rc1, rc2 in keys2:
-                        if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm):
+                        if (rc1 == rc1_bad2 and rc2 == rc2_bad2):
                             ret_elem -= tring((rc1, rc2))
                             break
         ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})

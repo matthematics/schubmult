@@ -558,9 +558,37 @@ class RCGraph(Printable, tuple):
 
         return interim.rowrange(0, len(self) - 1)
 
-    @property
-    def highest_weight(self):
-        raise NotImplementedError()
+    def to_highest_weight(self):
+        rc = self
+        raise_seq = []
+        if not rc.is_principal:
+            row = max(i for i in range(1, len(rc.perm.trimcode)) if len(rc[i]) < rc.perm.trimcode[i])
+            rc = rc.raising_operator(row)
+            raise_seq.append(row)
+        return rc, tuple(raise_seq)
+
+    def reverse_raise_seq(self, raise_seq):
+        rc = self
+        for row in reversed(raise_seq):
+            rc = rc.lowering_operator(row)
+            if rc is None:
+                return None
+        return rc
+
+    @staticmethod
+    def reverse_raise_seq_pair(rc1, rc2, raise_seq):
+        rc01 = rc1
+        rc02 = rc2
+        for row in reversed(raise_seq):
+            rc01_temp = rc01.lowering_operator(row)
+            if rc01_temp is None:
+                rc02_temp = rc02.lowering_operator(row)
+                if rc02_temp is None:
+                    return None
+                rc02 = rc02_temp
+            else:
+                rc01 = rc01_temp
+        return (rc01, rc02)
 
     def raising_operator(self, row):
         # RF word is just the RC word backwards
