@@ -362,6 +362,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
     from schubmult import ASx
     from sympy import pretty_print
     from schubmult.rings.rc_graph import RCGraph
+    from schubmult.rings import TensorRing
     from schubmult.rings.rc_graph_ring import RCGraphRing
 
     ring = RCGraphRing()
@@ -376,29 +377,40 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     print(f"{rc} already verified, returning.")
                     continue
                 print(f"Previous failure on {rc}, will retry.")
-        try_mod = ring.coproduct_on_basis(rc)
-        pretty_print(try_mod)
-        elem = 0
-        for rc1, rc2 in try_mod:
-            # elem += (rc1 @ rc2).asdtype(ASx @ ASx)
-            # print(f"FYI {perm.trimcode} 1")
-            # print(rc1)
-            # print(f"FYI {perm.trimcode} 2")
-            # print(rc2)
-            elem += (ASx @ ASx)(((rc1.perm, len(rc)), (rc2.perm, len(rc))))
-        check = ASx(rc.perm, len(rc)).coproduct()
+        try_mod1 = ring.coproduct_on_basis(rc)
+        build_try_mod1 = 0
+        build_try_mod2 = 0
+        tring = TensorRing(ring,ring,ring)
+        for (rc1, rc2), v in try_mod1.items():
+            cprd = ring.coproduct_on_basis(rc2)
+            for (rc3, rc4), v2 in cprd.items():
+                build_try_mod1 += v * v2 * tring((rc1, rc3, rc4))
+            cprd2 = ring.coproduct_on_basis(rc1)
+            for (rc13, rc14), v2 in cprd2.items():
+                build_try_mod2 += v * v2 * tring((rc13, rc14, rc2))
+        diff = build_try_mod1 - build_try_mod2
+        pretty_print(diff)
+        #elem = 0
+        # for rc1, rc2 in try_mod:
+        #     # elem += (rc1 @ rc2).asdtype(ASx @ ASx)
+        #     # print(f"FYI {perm.trimcode} 1")
+        #     # print(rc1)
+        #     # print(f"FYI {perm.trimcode} 2")
+        #     # print(rc2)
+        #     elem += (ASx @ ASx)(((rc1.perm, len(rc)), (rc2.perm, len(rc))))
+        # check = ASx(rc.perm, len(rc)).coproduct()
         try:
-            assert all(v == 0 for v in (elem - check).values())
+            assert all(v == 0 for v in diff.values())
         except AssertionError:
             print(f"Fail on {rc} at ", time.ctime())
-            print(f"{elem=}")
-            print(f"{check=}")
-            print(f"{(elem - check)=}")
+            #print(f"{elem=}")
+            print(f"{diff=}")
+            #print(f"{(elem - check)=}")
             with lock:
                 shared_recording_dict[rc] = False
             continue
-        del elem
-        del check
+        del diff
+        #del check
         gc.collect()
         with lock:
             shared_recording_dict[rc] = True

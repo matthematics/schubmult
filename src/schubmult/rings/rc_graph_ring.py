@@ -63,8 +63,6 @@ class RCGraphRing(BaseSchubertRing):
         return self.from_dict({key: 1})
 
     def coproduct_on_basis(self, basis_elem):
-        from sympy import pretty_print
-
         from schubmult import ASx, uncode
         # simulate principal
         tring = self@self
@@ -85,11 +83,14 @@ class RCGraphRing(BaseSchubertRing):
         ret_elem = lower_module1 * cprod
 
         ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
-        up_elem2 = ASx(lower_graph.perm, len(lower_graph)) * ASx(uncode([p]), 1)
+        # don't do ASx here to try
+        #up_elem2 = ASx(lower_graph.perm, len(lower_graph)) * ASx(uncode([p]), 1)
+        up_elem2 = self(lower_graph) * self(RCGraph.one_row(p))
         for key, coeff in up_elem2.items():
-            if key[0] != basis_elem.perm:
+            if key.perm != basis_elem.perm:
                 assert coeff == 1
-                for (rc1_bad, rc2_bad), cff2 in self.coproduct_on_basis(RCGraph.principal_rc(*key)).items():
+                for (rc1_bad, rc2_bad), cff2 in self.coproduct_on_basis(RCGraph.principal_rc(key.perm, len(key))).items():
+                #for (rc1_bad, rc2_bad), cff2 in (self.coproduct_on_basis(key.vertical_cut(len(key)-1)[0])*self.coproduct_on_basis(RCGraph.one_row(len(key[-1])))).items():
                     keys2 = set(ret_elem.keys())
                     for rc1, rc2 in keys2:
                         if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm):

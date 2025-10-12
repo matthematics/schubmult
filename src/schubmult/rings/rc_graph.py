@@ -558,6 +558,59 @@ class RCGraph(Printable, tuple):
 
         return interim.rowrange(0, len(self) - 1)
 
+    def raising_operator(self, row):
+        # RF word is just the RC word backwards
+        if row >= len(self):
+            return None
+        row_i = [*self[row-1]]
+        row_ip1 = [*self[row]]
+
+        # pair the letters
+        pairings = []
+        unpaired = []
+
+        for letter in row_i:
+            st = [letter2 in row_ip1 if letter2 > letter]
+            if len(st) == 0:
+                unpaired.append(letter)
+            else:
+                pairings.append((letter, min(st)))
+                #row_ip1.remove(min(st))
+        if len(unpaired) == 0:
+            return None
+        b = min(unpaired)
+        t = min([j for j in range(b) if b - j - 1 not in row_i])
+        new_row_i = [s for s in row_i if s != b]
+        new_row_ip1 = sorted([b - t, *row_ip1], reverse=True)
+        return RCGraph([*self[:row-1], tuple(new_row_i), tuple(new_row_ip1), *self[row+1:]])
+
+    def lowering_operator(self, row):
+        # RF word is just the RC word backwards
+        if row >= len(self):
+            return None
+        row_i = [*self[row-1]]
+        row_ip1 = [*self[row]]
+
+        # pair the letters
+        pairings = []
+        unpaired = [*row_ip1]
+
+        for letter in row_i:
+            st = [letter2 in row_ip1 if letter2 > letter]
+            if len(st) == 0:
+                unpaired.append(letter)
+            else:
+                pairings.append((letter, min(st)))
+                unpaired.remove(min(st))
+        if len(unpaired) == 0:
+            return None
+        a = max(unpaired)
+        s = min([j for j in range(a) if a + j + 1 not in row_ip1])
+        new_row_ip1 = [l for l in row_ip1 if l != a]
+        new_row_i = sorted([a + s, *row_i], reverse=True)
+        return RCGraph([*self[:row-1], tuple(new_row_i), tuple(new_row_ip1), *self[row+1:]])
+
+
     def vertical_cut(self, row):
         if row < 0 or row > len(self):
             raise ValueError("Row out of range")
