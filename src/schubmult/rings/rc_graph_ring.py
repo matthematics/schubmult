@@ -71,9 +71,9 @@ class RCGraphRing(BaseSchubertRing):
         #basis_elem, raise_seq = elem.to_highest_weight()
         if elem.perm.inv == 0:
             return tring((elem, elem))
-        
+
         basis_elem, raise_seq = elem.to_highest_weight()
-        
+
 
         #basis_elem, raise_seq = basis_elem.to_highest_weight()
         # if basis_elem != basis_elem:

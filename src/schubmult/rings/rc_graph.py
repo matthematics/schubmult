@@ -558,6 +558,26 @@ class RCGraph(Printable, tuple):
 
         return interim.rowrange(0, len(self) - 1)
 
+    @cache
+    def epsilon(self, i):
+        rc = self
+        cnt = 0
+        while rc is not None:
+            rc = rc.lowering_operator(i)
+            if rc is not None:
+                cnt += 1
+        return cnt
+
+    @cache
+    def phi(self, i):
+        rc = self
+        cnt = 0
+        while rc is not None:
+            rc = rc.raising_operator(i)
+            if rc is not None:
+                cnt += 1
+        return cnt
+
     def to_highest_weight(self):
         rc = self
         raise_seq = []
@@ -583,18 +603,17 @@ class RCGraph(Printable, tuple):
         return rc
 
     @staticmethod
+    def pair_lower(rc1, rc2, row):
+        if rc1.epsilon(row) < rc2.phi(row):
+            return (rc1, rc2.lowering_operator(row))
+        return (rc1.lowering_operator(row), rc2)
+
+    @staticmethod
     def reverse_raise_seq_pair(rc1, rc2, raise_seq):
         rc01 = rc1
         rc02 = rc2
         for row in reversed(raise_seq):
-            rc02_temp = rc02.lowering_operator(row)
-            if rc02_temp is None:
-                rc01_temp = rc01.lowering_operator(row)
-                if rc01_temp is None:
-                    return None
-                rc01 = rc01_temp
-            else:
-                rc02 = rc02_temp
+            rc01, rc02 = RCGraph.pair_lower(rc01, rc02, row)
         return (rc01, rc02)
 
     def raising_operator(self, row):
