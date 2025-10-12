@@ -570,7 +570,7 @@ class RCGraph(Printable, tuple):
         unpaired = []
 
         for letter in row_i:
-            st = [letter2 in row_ip1 if letter2 > letter]
+            st = [letter2 for letter2 in row_ip1 if letter2 > letter]
             if len(st) == 0:
                 unpaired.append(letter)
             else:
@@ -596,7 +596,7 @@ class RCGraph(Printable, tuple):
         unpaired = [*row_ip1]
 
         for letter in row_i:
-            st = [letter2 in row_ip1 if letter2 > letter]
+            st = [letter2 for letter2 in row_ip1 if letter2 > letter]
             if len(st) == 0:
                 unpaired.append(letter)
             else:
@@ -606,10 +606,26 @@ class RCGraph(Printable, tuple):
             return None
         a = max(unpaired)
         s = min([j for j in range(a) if a + j + 1 not in row_ip1])
-        new_row_ip1 = [l for l in row_ip1 if l != a]
+        new_row_ip1 = [let for let in row_ip1 if let != a]
         new_row_i = sorted([a + s, *row_i], reverse=True)
         return RCGraph([*self[:row-1], tuple(new_row_i), tuple(new_row_ip1), *self[row+1:]])
 
+    def crystal_reflection(self, row):
+        new_rc = self
+        diff = len(self[row]) - len(self[row-1])
+        if diff >= 0:
+            for _ in range(diff):
+                new_rc2 = new_rc.lowering_operator(row)
+                if new_rc2 is None:
+                    return None
+                new_rc = new_rc2
+            return new_rc
+        for _ in range(-diff):
+            new_rc2 = new_rc.raising_operator(row)
+            if new_rc2 is None:
+                return None
+            new_rc = new_rc2
+        return new_rc
 
     def vertical_cut(self, row):
         if row < 0 or row > len(self):
