@@ -561,10 +561,17 @@ class RCGraph(Printable, tuple):
     def to_highest_weight(self):
         rc = self
         raise_seq = []
-        if not rc.is_principal:
-            row = max(i for i in range(1, len(rc.perm.trimcode)) if len(rc[i]) < rc.perm.trimcode[i])
-            rc = rc.raising_operator(row)
-            raise_seq.append(row)
+        found = True
+        while found:
+            found = False
+            for row in range(1, len(rc.perm.trimcode)):
+                rc0 = rc.raising_operator(row)
+                if rc0 is not None:
+                    found = True
+                    rc = rc0
+                    raise_seq.append(row)
+                    break
+
         return rc, tuple(raise_seq)
 
     def reverse_raise_seq(self, raise_seq):
@@ -580,14 +587,14 @@ class RCGraph(Printable, tuple):
         rc01 = rc1
         rc02 = rc2
         for row in reversed(raise_seq):
-            rc01_temp = rc01.lowering_operator(row)
-            if rc01_temp is None:
-                rc02_temp = rc02.lowering_operator(row)
-                if rc02_temp is None:
+            rc02_temp = rc02.lowering_operator(row)
+            if rc02_temp is None:
+                rc01_temp = rc01.lowering_operator(row)
+                if rc01_temp is None:
                     return None
-                rc02 = rc02_temp
-            else:
                 rc01 = rc01_temp
+            else:
+                rc02 = rc02_temp
         return (rc01, rc02)
 
     def raising_operator(self, row):
@@ -612,9 +619,15 @@ class RCGraph(Printable, tuple):
             return None
         b = min(unpaired)
         t = min([j for j in range(b) if b - j - 1 not in row_i])
+
+        if b - t < row + 1:
+            return None
         new_row_i = [s for s in row_i if s != b]
         new_row_ip1 = sorted([b - t, *row_ip1], reverse=True)
-        return RCGraph([*self[:row-1], tuple(new_row_i), tuple(new_row_ip1), *self[row+1:]])
+        ret_rc = RCGraph([*self[:row-1], tuple(new_row_i), tuple(new_row_ip1), *self[row+1:]])
+        if ret_rc.perm != self.perm:
+            return None
+        return ret_rc
 
     def lowering_operator(self, row):
         # RF word is just the RC word backwards
@@ -638,9 +651,14 @@ class RCGraph(Printable, tuple):
             return None
         a = max(unpaired)
         s = min([j for j in range(a) if a + j + 1 not in row_ip1])
+        if a + s < row:
+            return None
         new_row_ip1 = [let for let in row_ip1 if let != a]
         new_row_i = sorted([a + s, *row_i], reverse=True)
-        return RCGraph([*self[:row-1], tuple(new_row_i), tuple(new_row_ip1), *self[row+1:]])
+        ret_rc = RCGraph([*self[:row-1], tuple(new_row_i), tuple(new_row_ip1), *self[row+1:]])
+        if ret_rc.perm != self.perm:
+            return None
+        return ret_rc
 
     def crystal_reflection(self, row):
         new_rc = self
@@ -753,7 +771,7 @@ class RCGraph(Printable, tuple):
         return cls(graph)
 
     # THE ZERO MAKES SCHUB PROD
-
+    @cache
     def prod_with_rc(self, other):
         if self.perm.inv == 0:
             return {RCGraph([*self, *other.shiftup(len(self))]): 1}

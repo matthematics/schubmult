@@ -1,3 +1,5 @@
+from functools import cache
+
 from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
 from schubmult.rings.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from schubmult.rings.rc_graph import RCGraph
@@ -62,14 +64,27 @@ class RCGraphRing(BaseSchubertRing):
     def __call__(self, key):
         return self.from_dict({key: 1})
 
-    def coproduct_on_basis(self, basis_elem):
-        from schubmult import ASx, uncode
+    @cache
+    def coproduct_on_basis(self, elem):
         # simulate principal
         tring = self@self
-        if len(basis_elem) == 0:
-            return tring((RCGraph(), RCGraph()))
-        if basis_elem.perm.inv == 0:
-            return tring((basis_elem, basis_elem))
+        #basis_elem, raise_seq = elem.to_highest_weight()
+        if elem.perm.inv == 0:
+            return tring((elem, elem))
+        
+        basis_elem, raise_seq = elem.to_highest_weight()
+        
+
+        #basis_elem, raise_seq = basis_elem.to_highest_weight()
+        # if basis_elem != basis_elem:
+        #     print(f"We have {basis_elem=} {raise_seq=} {basis_elem=}")
+        #     assert basis_elem.length_vector != basis_elem.length_vector
+        #     # first do the coproduct on the highest weight vector
+        #     high_cop = self.coproduct_on_basis(basis_elem)
+        #     # then raise each component
+
+
+        #if basis_elem == elem:
         cprod = tring.zero
         p = basis_elem.length_vector[-1]
 
@@ -77,29 +92,37 @@ class RCGraphRing(BaseSchubertRing):
             cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
         if len(basis_elem) == 1:
             return cprod
+
         lower_graph = basis_elem.vertical_cut(len(basis_elem) - 1)[0]
         lower_module1 = self.coproduct_on_basis(lower_graph)
 
         ret_elem = lower_module1 * cprod
 
         ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
-        # don't do ASx here to try
-        #up_elem2 = ASx(lower_graph.perm, len(lower_graph)) * ASx(uncode([p]), 1)
         up_elem2 = self(lower_graph) * self(RCGraph.one_row(p))
         for key, coeff in up_elem2.items():
             if key.perm != basis_elem.perm:
                 assert coeff == 1
-                key_highest_weight, raise_seq = key.to_highest_weight()
-                for (rc1_bad, rc2_bad), cff2 in self.coproduct_on_basis(key_highest_weight).items():
+                cp = self.coproduct_on_basis(RCGraph.principal_rc(key.perm, len(key)))
+                # print(f"{key2=} from {key=}")
+                #     ret_elem = tring.zero
+
+                for (rc1_bad, rc2_bad), cff2 in cp.items():
                 #for (rc1_bad, rc2_bad), cff2 in (self.coproduct_on_basis(key.vertical_cut(len(key)-1)[0])*self.coproduct_on_basis(RCGraph.one_row(len(key[-1])))).items():
                     # lower the tensor
-                    rc1_bad2, rc2_bad2 = RCGraph.reverse_raise_seq_pair(rc1_bad, rc2_bad, raise_seq)
                     keys2 = set(ret_elem.keys())
                     for rc1, rc2 in keys2:
-                        if (rc1 == rc1_bad2 and rc2 == rc2_bad2):
+                        if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm):
                             ret_elem -= tring((rc1, rc2))
                             break
         ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
+        # else:
+        #     basis_cp = self.coproduct_on_basis(basis_elem)
+        #     ret_elem = tring.zero
+        #     for (rc1, rc2), cff in basis_cp.items():
+        #         ret_elem += tring(RCGraph.reverse_raise_seq_pair(rc1, rc2, raise_seq))
+        if basis_elem != elem:
+            ret_elem = tring.from_dict({(RCGraph.reverse_raise_seq_pair(rc1, rc2, raise_seq)): v for (rc1, rc2), v in ret_elem.items()})
         return ret_elem
 
     def mul(self, a, b):
