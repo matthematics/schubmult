@@ -66,8 +66,9 @@ class RCGraphRing(BaseSchubertRing):
 
     @cache
     def coproduct_on_basis(self, elem):
+        ## RIGHT ##
         # simulate principal
-        left = True
+        # left = False
         tring = self@self
         #basis_elem, raise_seq = elem.to_highest_weight()
         if elem.perm.inv == 0:
@@ -89,58 +90,58 @@ class RCGraphRing(BaseSchubertRing):
 
 
         #if basis_elem == elem:
-        if left:
-            cprod = tring.zero
-            p = basis_elem.length_vector[0]
+        # if left:
+        #     cprod = tring.zero
+        #     p = basis_elem.length_vector[0]
 
-            for j in range(p + 1):
-                cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
-            if len(basis_elem) == 1:
-                return cprod
+        #     for j in range(p + 1):
+        #         cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
+        #     if len(basis_elem) == 1:
+        #         return cprod
 
-            lower_graph = basis_elem.rowrange(1,len(basis_elem))
-            lower_module1 = self.coproduct_on_basis(lower_graph)
+        #     lower_graph = basis_elem.rowrange(1,len(basis_elem))
+        #     lower_module1 = self.coproduct_on_basis(lower_graph)
 
-            ret_elem = cprod * lower_module1
+        #     ret_elem = cprod * lower_module1
 
-            ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
-            up_elem2 = self(RCGraph.one_row(p)) * self(lower_graph)
-            for key, coeff in up_elem2.items():
-                if key.perm != basis_elem.perm:
-                    assert coeff == 1
-                    key_rc = RCGraph.principal_rc(key.perm, len(key))
-                    cp = self.coproduct_on_basis(key_rc)
-                    for (rc1_bad, rc2_bad), cff2 in cp.items():
-                        for (rc1, rc2), v in ret_elem.items():
-                            if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
-                                ret_elem -= tring((rc1, rc2))
-                                break
-        else:
-            cprod = tring.zero
-            p = basis_elem.length_vector[-1]
+        #     ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
+        #     up_elem2 = self(RCGraph.one_row(p)) * self(lower_graph)
+        #     for key, coeff in up_elem2.items():
+        #         if key.perm != basis_elem.perm:
+        #             assert coeff == 1
+        #             key_rc = RCGraph.principal_rc(key.perm, len(key))
+        #             cp = self.coproduct_on_basis(key_rc)
+        #             for (rc1_bad, rc2_bad), cff2 in cp.items():
+        #                 for (rc1, rc2), v in ret_elem.items():
+        #                     if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
+        #                         ret_elem -= tring((rc1, rc2))
+        #                         break
+        # else:
+        cprod = tring.zero
+        p = basis_elem.length_vector[-1]
 
-            for j in range(p + 1):
-                cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
-            if len(basis_elem) == 1:
-                return cprod
+        for j in range(p + 1):
+            cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
+        if len(basis_elem) == 1:
+            return cprod
 
-            lower_graph = basis_elem.vertical_cut(len(basis_elem) - 1)[0]
-            lower_module1 = self.coproduct_on_basis(lower_graph)
+        lower_graph = basis_elem.vertical_cut(len(basis_elem) - 1)[0]
+        lower_module1 = self.coproduct_on_basis(lower_graph)
 
-            ret_elem = lower_module1 * cprod
+        ret_elem = lower_module1 * cprod
 
-            ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
-            up_elem2 = self(lower_graph) * self(RCGraph.one_row(p))
-            for key, coeff in up_elem2.items():
-                if key.perm != basis_elem.perm:
-                    assert coeff == 1
-                    key_rc, seq_path = key.to_highest_weight()
-                    cp = self.coproduct_on_basis(key_rc)
-                    for (rc1_bad, rc2_bad), cff2 in cp.items():
-                        for (rc1, rc2), v in ret_elem.items():
-                            if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
-                                ret_elem -= tring((rc1, rc2))
-                                break
+        ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
+        up_elem2 = self(lower_graph) * self(RCGraph.one_row(p))
+        for key, coeff in up_elem2.items():
+            if key.perm != basis_elem.perm:
+                assert coeff == 1
+                key_rc = RCGraph.principal_rc(key.perm, len(key))
+                cp = self.coproduct_on_basis(key_rc)
+                for (rc1_bad, rc2_bad), cff2 in cp.items():
+                    for (rc1, rc2), v in ret_elem.items():
+                        if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
+                            ret_elem -= tring((rc1, rc2))
+                            break
 
         ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
 
