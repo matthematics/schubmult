@@ -376,7 +376,15 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     print(f"{rc} already verified, returning.")
                     continue
                 print(f"Previous failure on {rc}, will retry.")
-        try_mod = ring.coproduct_on_basis(rc)
+        try:
+            try_mod = ring.coproduct_on_basis(rc)
+        except Exception as e:
+            import traceback
+            print(f"Error computing coproduct_on_basis for {rc}")
+            traceback.print_exc()
+            with lock:
+                shared_recording_dict[rc] = False
+            continue
         pretty_print(try_mod)
         elem = 0
         for rc1, rc2 in try_mod:

@@ -559,7 +559,7 @@ class RCGraph(Printable, tuple):
         return interim.rowrange(0, len(self) - 1)
 
     @cache
-    def epsilon(self, i):
+    def phi(self, i):
         rc = self
         cnt = 0
         while rc is not None:
@@ -569,7 +569,7 @@ class RCGraph(Printable, tuple):
         return cnt
 
     @cache
-    def phi(self, i):
+    def epsilon(self, i):
         rc = self
         cnt = 0
         while rc is not None:
@@ -585,7 +585,7 @@ class RCGraph(Printable, tuple):
         while found:
             found = False
             for row in range(1, len(rc.perm.trimcode)):
-                rc0 = rc.raising_operator(row)
+                rc0 = rc.lowering_operator(row)
                 if rc0 is not None:
                     found = True
                     rc = rc0
@@ -597,7 +597,7 @@ class RCGraph(Printable, tuple):
     def reverse_raise_seq(self, raise_seq):
         rc = self
         for row in reversed(raise_seq):
-            rc = rc.lowering_operator(row)
+            rc = rc.raising_operator(row)
             if rc is None:
                 return None
         return rc
@@ -607,16 +607,38 @@ class RCGraph(Printable, tuple):
         if rc1.epsilon(row) < rc2.phi(row):
             return (rc1, rc2.lowering_operator(row))
         return (rc1.lowering_operator(row), rc2)
+    
+    @staticmethod
+    def pair_raise(rc1, rc2, row):
+        if rc1.epsilon(row) > rc2.phi(row):
+            return (rc1.raising_operator(row), rc2)
+        return (rc1, rc2.raising_operator(row))
 
     @staticmethod
     def reverse_raise_seq_pair(rc1, rc2, raise_seq):
         rc01 = rc1
         rc02 = rc2
         for row in reversed(raise_seq):
-            rc01, rc02 = RCGraph.pair_lower(rc01, rc02, row)
+            rc01, rc02 = RCGraph.pair_raise(rc01, rc02, row)
         return (rc01, rc02)
 
-    def raising_operator(self, row):
+    # def crystal_to_principal(self):
+    #     rc = self
+    #     ref_seq = []
+    #     found = True
+    #     while found:
+    #         found = False
+    #         for row in range(1, len(rc.perm.trimcode)):
+    #             rc0 = rc.raising_operator(row)
+    #             if rc0 is not None:
+    #                 found = True
+    #                 rc = rc0
+    #                 raise_seq.append(row)
+    #                 break
+
+    #     return rc, tuple(raise_seq)
+
+    def lowering_operator(self, row):
         # RF word is just the RC word backwards
         if row >= len(self):
             return None
@@ -626,14 +648,15 @@ class RCGraph(Printable, tuple):
         # pair the letters
         pairings = []
         unpaired = []
+        unpaired_b = [*row_ip1]
 
         for letter in row_i:
-            st = [letter2 for letter2 in row_ip1 if letter2 > letter]
+            st = [letter2 for letter2 in unpaired_b if letter2 > letter]
             if len(st) == 0:
                 unpaired.append(letter)
             else:
                 pairings.append((letter, min(st)))
-                #row_ip1.remove(min(st))
+                unpaired_b.remove(min(st))
         if len(unpaired) == 0:
             return None
         b = min(unpaired)
@@ -648,7 +671,7 @@ class RCGraph(Printable, tuple):
             return None
         return ret_rc
 
-    def lowering_operator(self, row):
+    def raising_operator(self, row):
         # RF word is just the RC word backwards
         if row >= len(self):
             return None
@@ -657,19 +680,20 @@ class RCGraph(Printable, tuple):
 
         # pair the letters
         pairings = []
-        unpaired = [*row_ip1]
+        unpaired = []
+        unpaired_b = [*row_ip1]
 
         for letter in row_i:
-            st = [letter2 for letter2 in row_ip1 if letter2 > letter]
+            st = [letter2 for letter2 in unpaired_b if letter2 > letter]
             if len(st) == 0:
                 unpaired.append(letter)
             else:
                 pairings.append((letter, min(st)))
-                unpaired.remove(min(st))
-        if len(unpaired) == 0:
+                unpaired_b.remove(min(st))
+        if len(unpaired_b) == 0:
             return None
-        a = max(unpaired)
-        s = min([j for j in range(a) if a + j + 1 not in row_ip1])
+        a = max(unpaired_b)
+        s = min([j for j in range(2 * a) if a + j + 1 not in row_ip1])
         if a + s < row:
             return None
         new_row_ip1 = [let for let in row_ip1 if let != a]

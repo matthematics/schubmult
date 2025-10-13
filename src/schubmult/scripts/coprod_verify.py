@@ -385,6 +385,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             cprd = ring.coproduct_on_basis(rc2)
             for (rc3, rc4), v2 in cprd.items():
                 build_try_mod1 += v * v2 * tring((rc1, rc3, rc4))
+        for (rc1, rc2), v in try_mod1.items():
             cprd2 = ring.coproduct_on_basis(rc1)
             for (rc13, rc14), v2 in cprd2.items():
                 build_try_mod2 += v * v2 * tring((rc13, rc14, rc2))
