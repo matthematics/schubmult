@@ -238,10 +238,12 @@ if __name__ == "__main__":
             graphs1 = RCGraph.all_rc_graphs(perm, len1)
             hw = set()
             for g in graphs1:
+                #print(f"Demazure weight: {g.demazure_weight}")
                 hw.add(g.to_highest_weight()[0])
             print(f"Highest weights for {perm=}")
             for gorble in hw:
                 pretty_print(gorble)
+                print(f"Highest weight: {gorble.demazure_weight}")
             # for perm2 in perms:
             #     if perm2.inv == 0:
             #         continue

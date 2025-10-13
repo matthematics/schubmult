@@ -560,6 +560,8 @@ class RCGraph(Printable, tuple):
 
     @cache
     def phi(self, i):
+        if i == 0:
+            return 0
         rc = self
         cnt = 0
         while rc is not None:
@@ -570,6 +572,8 @@ class RCGraph(Printable, tuple):
 
     @cache
     def epsilon(self, i):
+        if i == 0:
+            return 0
         rc = self
         cnt = 0
         while rc is not None:
@@ -578,6 +582,17 @@ class RCGraph(Printable, tuple):
                 cnt += 1
         return cnt
 
+    @property
+    def demazure_weight(self):
+        beta0 = 0
+        beta = 0
+        wt = []
+        for i in range(1, len(self)):
+            beta = (self.phi(i) - self.epsilon(i))
+            wt.append(beta0 - beta)
+            beta0 = beta0 - beta
+        return tuple(wt)
+
     def to_highest_weight(self):
         rc = self
         raise_seq = []
@@ -585,7 +600,7 @@ class RCGraph(Printable, tuple):
         while found:
             found = False
             for row in range(1, len(rc.perm.trimcode)):
-                rc0 = rc.lowering_operator(row)
+                rc0 = rc.raising_operator(row)
                 if rc0 is not None:
                     found = True
                     rc = rc0
@@ -597,7 +612,7 @@ class RCGraph(Printable, tuple):
     def reverse_raise_seq(self, raise_seq):
         rc = self
         for row in reversed(raise_seq):
-            rc = rc.raising_operator(row)
+            rc = rc.lowering_operator(row)
             if rc is None:
                 return None
         return rc
@@ -607,7 +622,7 @@ class RCGraph(Printable, tuple):
         if rc1.epsilon(row) < rc2.phi(row):
             return (rc1, rc2.lowering_operator(row))
         return (rc1.lowering_operator(row), rc2)
-    
+
     @staticmethod
     def pair_raise(rc1, rc2, row):
         if rc1.epsilon(row) > rc2.phi(row):
@@ -619,7 +634,7 @@ class RCGraph(Printable, tuple):
         rc01 = rc1
         rc02 = rc2
         for row in reversed(raise_seq):
-            rc01, rc02 = RCGraph.pair_raise(rc01, rc02, row)
+            rc01, rc02 = RCGraph.pair_lower(rc01, rc02, row)
         return (rc01, rc02)
 
     # def crystal_to_principal(self):
@@ -640,7 +655,7 @@ class RCGraph(Printable, tuple):
 
     def lowering_operator(self, row):
         # RF word is just the RC word backwards
-        if row >= len(self):
+        if row > len(self):
             return None
         row_i = [*self[row-1]]
         row_ip1 = [*self[row]]
@@ -673,7 +688,7 @@ class RCGraph(Printable, tuple):
 
     def raising_operator(self, row):
         # RF word is just the RC word backwards
-        if row >= len(self):
+        if row > len(self):
             return None
         row_i = [*self[row-1]]
         row_ip1 = [*self[row]]
