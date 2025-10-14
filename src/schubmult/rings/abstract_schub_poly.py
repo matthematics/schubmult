@@ -107,11 +107,11 @@ class TypedPrintingTerm(AbstractSchubPoly):
 
     def _sympystr(self, printer):
         key = self._key
-        return printer.doprint(key)
+        return printer._print(key)
 
     def _pretty(self, printer):
         key = self._key
-        return printer.doprint(key)
+        return printer._print(key)
 
     def __reduce__(self):
         return (self.__class__, self.args)

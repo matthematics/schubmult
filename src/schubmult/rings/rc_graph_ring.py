@@ -2,28 +2,39 @@ from functools import cache
 
 from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
 from schubmult.rings.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+from schubmult.rings.free_algebra_basis import WordBasis
 from schubmult.rings.rc_graph import RCGraph
+from schubmult.symbolic import S, sympy_Mul
 
 
 class RCGraphPrintingTerm(TypedPrintingTerm):
-    def _sympystr(self, printer=None):
-        return printer._print(self._key)
+    # def _sympystr(self, printer=None):
+    #     return printer._print(self._key)
 
-    def _pretty(self, printer):
-        return printer._print(self._key)
+    # def _pretty(self, printer):
+    #     return printer._print(self._key)
+    pass
 
 
 class RCGraphRingElement(BaseSchubertElement):
-    def as_expr(self):
-        from sympy import Add
+    # def as_expr(self):
+    #     from sympy import Add
 
-        terms = []
-        for rc_graph, coeff in self.items():
-            if coeff == 1:
-                terms.append(self.ring.printing_term(rc_graph))
-            else:
-                terms.append(coeff * self.ring.printing_term(rc_graph))
-        return Add(*terms)
+    #     terms = []
+    #     for rc_graph, coeff in self.items():
+    #         if coeff == 1:
+    #             terms.append(self.ring.printing_term(rc_graph))
+    #         else:
+    #             terms.append(coeff * self.ring.printing_term(rc_graph))
+    #     return Add(*terms)
+
+    def as_ordered_terms(self, *_, **__):
+        if len(self.keys()) == 0:
+            return [S.Zero]
+        return [
+            self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k))
+            for k in self.keys()
+        ]
 
     def vertical_coproduct(self):
         tring = self.ring @ self.ring
@@ -47,21 +58,22 @@ class RCGraphRing(BaseSchubertRing):
     def __init__(self, *_, **__):
         self._ID = RCGraphRing._id
         RCGraphRing._id += 1
+        self.dtype = type("RCGraphRingElement", (RCGraphRingElement,), {"ring": self})
 
     def __hash__(self):
         return hash(("Dinkberrtystoa", self._ID))
 
     @property
     def zero_monom(self):
-        return RCGraph()
+        return RCGraph([])
 
     def printing_term(self, key):
         return RCGraphPrintingTerm(key)
 
-    def dtype(self):
-        elem = RCGraphRingElement()
-        elem.ring = self
-        return elem
+    # def dtype(self):
+    #     elem = RCGraphRingElement()
+    #     elem.ring = self
+    #     return elem
 
     def from_dict(self, dct):
         elem = self.dtype()
@@ -70,6 +82,16 @@ class RCGraphRing(BaseSchubertRing):
 
     def __call__(self, key):
         return self.from_dict({key: 1})
+
+    def from_free_algebra_element(self, elem):
+        wordelem = elem.change_basis(WordBasis)
+        result = self.zero
+        for word, coeff in wordelem.items():
+            res = self(RCGraph([]))
+            for a in reversed(word):
+                res = self(RCGraph.one_row(a)) * res
+            result += coeff * res
+        return result
 
     @cache
     def coproduct_on_basis(self, elem):
@@ -195,9 +217,11 @@ class RCGraphRing(BaseSchubertRing):
             # result_dict = {k: v * b for k, v in a.items()}
         return self.from_dict(result_dict)
 
+    @property
     def zero(self):
         return self.dtype()
 
+    @property
     def one(self):
         # Define the "one" element for RCGraphRing
         identity_graph = RCGraph()
