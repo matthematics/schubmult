@@ -361,33 +361,23 @@ def try_lr_module_right(perm, length=None):
 def worker(nn, shared_recording_dict, lock, task_queue):
     from schubmult import ASx
     from sympy import pretty_print
-    from schubmult import ASx, FA
-    from schubmult.rings import WordBasis, SchubertBasis
     from schubmult.rings.rc_graph import RCGraph
     from schubmult.rings.rc_graph_ring import RCGraphRing
 
     ring = RCGraphRing()
-
-    def hom(elem):
-        ret = ASx.zero
-        for rc, coeff in elem.items():
-            ret += coeff * ASx(rc.perm, len(rc))
-        return ret
-
     while True:
         try:
-            rc, rc2 = task_queue.get(timeout=2)
+            rc = task_queue.get(timeout=2)
         except Exception:
             break  # queue empty, exit
         with lock:
-            if (rc, rc2) in shared_recording_dict:
-                if shared_recording_dict[(rc, rc2)]:
-                    print(f"{rc, rc2} already verified, returning.")
+            if rc in shared_recording_dict:
+                if shared_recording_dict[rc]:
+                    print(f"{rc} already verified, returning.")
                     continue
-                print(f"Previous failure on {rc, rc2}, will retry.")
+                print(f"Previous failure on {rc}, will retry.")
         try:
-            try_mod = hom(ring(rc) * ring(rc2))
-            other_mod = hom(ring(rc)) * hom(ring(rc2))
+            try_mod = ring.coproduct_on_basis(rc)
         except Exception as e:
             import traceback
             print(f"Error computing coproduct_on_basis for {rc}")
@@ -395,42 +385,32 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             with lock:
                 shared_recording_dict[rc] = False
             continue
-        print(try_mod)
-        # elem = 0
-        # for rc1, rc2 in try_mod:
-        #     # elem += (rc1 @ rc2).asdtype(ASx @ ASx)
-        #     # print(f"FYI {perm.trimcode} 1")
-        #     # print(rc1)
-        #     # print(f"FYI {perm.trimcode} 2")
-        #     # print(rc2)
-        #     elem += (ASx @ ASx)(((rc1.perm, len(rc)), (rc2.perm, len(rc))))
-        # check = ASx(rc.perm, len(rc)).coproduct()
-        # try:
-        #     assert all(v == 0 for v in (elem - check).values())
-        # except AssertionError:
-        #     print(f"Fail on {rc} at ", time.ctime())
-        #     print(f"{elem=}")
-        #     print(f"{check=}")
-        #     print(f"{(elem - check)=}")
-        #     with lock:
-        #         shared_recording_dict[rc] = False
-        #     continue
+        pretty_print(try_mod)
+        elem = 0
+        for rc1, rc2 in try_mod:
+            # elem += (rc1 @ rc2).asdtype(ASx @ ASx)
+            # print(f"FYI {perm.trimcode} 1")
+            # print(rc1)
+            # print(f"FYI {perm.trimcode} 2")
+            # print(rc2)
+            elem += (ASx @ ASx)(((rc1.perm, len(rc)), (rc2.perm, len(rc))))
+        check = ASx(rc.perm, len(rc)).coproduct()
         try:
-            assert all(v == 0 for v in (try_mod - other_mod).values())
+            assert all(v == 0 for v in (elem - check).values())
         except AssertionError:
-            print(f"Fail on {rc, rc2} at ", time.ctime())
-            print(f"{try_mod=}")
-            print(f"{other_mod=}")
-            print(f"{(try_mod - other_mod)=}")
+            print(f"Fail on {rc} at ", time.ctime())
+            print(f"{elem=}")
+            print(f"{check=}")
+            print(f"{(elem - check)=}")
             with lock:
-                shared_recording_dict[(rc,rc2)] = False
+                shared_recording_dict[rc] = False
             continue
-        del try_mod
-        del other_mod
+        del elem
+        del check
         gc.collect()
         with lock:
-            shared_recording_dict[(rc, rc2)] = True
-        print(f"Success {rc, rc2} at ", time.ctime())
+            shared_recording_dict[rc] = True
+        print(f"Success {rc} at ", time.ctime())
 
 
 def main():
@@ -478,11 +458,8 @@ def main():
         task_queue = manager.Queue()
         for perm in perms:
             for length in range(len(perm.trimcode), n):
-                for perm2 in perms:
-                    for length2 in range(len(perm2.trimcode), n):
-                        for rc in RCGraph.all_rc_graphs(perm, length):
-                            for rc2 in RCGraph.all_rc_graphs(perm2, length2):
-                                task_queue.put((rc, rc2))
+                for rc in RCGraph.all_rc_graphs(perm, length):
+                    task_queue.put(rc)
 
         # Start fixed number of workers
         workers = []

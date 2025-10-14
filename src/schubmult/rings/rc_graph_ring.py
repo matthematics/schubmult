@@ -34,6 +34,13 @@ class RCGraphRingElement(BaseSchubertElement):
                 res += tring.from_dict({(rc1, rc2): coeff})
         return res
 
+    def coproduct(self):
+        tring = self.ring @ self.ring
+        res = tring.zero
+        for rc_graph, coeff in self.items():
+            res += coeff * self.ring.coproduct_on_basis(rc_graph)
+        return res
+
 class RCGraphRing(BaseSchubertRing):
     _id = 0
 
@@ -91,21 +98,21 @@ class RCGraphRing(BaseSchubertRing):
 
         #if basis_elem == elem:
         # if left:
-        #     cprod = tring.zero
-        #     p = basis_elem.length_vector[0]
+        cprod = tring.zero
+        p = basis_elem.length_vector[0]
 
-        #     for j in range(p + 1):
-        #         cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
-        #     if len(basis_elem) == 1:
-        #         return cprod
+        for j in range(p + 1):
+            cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
+        if len(basis_elem) == 1:
+            return cprod
 
-        #     lower_graph = basis_elem.rowrange(1,len(basis_elem))
-        #     lower_module1 = self.coproduct_on_basis(lower_graph)
+        lower_graph = basis_elem.rowrange(1,len(basis_elem))
+        lower_module1 = self.coproduct_on_basis(lower_graph)
 
-        #     ret_elem = cprod * lower_module1
+        ret_elem = cprod * lower_module1
 
-        #     ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
-        #     up_elem2 = self(RCGraph.one_row(p)) * self(lower_graph)
+        # ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
+        up_elem2 = self(RCGraph.one_row(p)) * self(lower_graph)
         #     for key, coeff in up_elem2.items():
         #         if key.perm != basis_elem.perm:
         #             assert coeff == 1
@@ -117,26 +124,41 @@ class RCGraphRing(BaseSchubertRing):
         #                         ret_elem -= tring((rc1, rc2))
         #                         break
         # else:
-        cprod = tring.zero
-        p = basis_elem.length_vector[-1]
+        # cprod = tring.zero
+        # p = basis_elem.length_vector[-1]
 
-        for j in range(p + 1):
-            cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
-        if len(basis_elem) == 1:
-            return cprod
+        # for j in range(p + 1):
+        #     cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
+        # if len(basis_elem) == 1:
+        #     return cprod
 
-        lower_graph = basis_elem.vertical_cut(len(basis_elem) - 1)[0]
-        lower_module1 = self.coproduct_on_basis(lower_graph)
+        # lower_graph = basis_elem.vertical_cut(len(basis_elem) - 1)[0]
+        # lower_module1 = self.coproduct_on_basis(lower_graph)
 
-        ret_elem = lower_module1 * cprod
+        # ret_elem = lower_module1 * cprod
 
         ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
-        up_elem2 = self(lower_graph) * self(RCGraph.one_row(p))
+
+        # @cache
+        # def co_principal_perms(perm, length):
+        #     from schubmult import ASx, uncode
+
+        #     if len(perm.trimcode) == 0:
+        #         return []
+        #     if length < len(perm.trimcode):
+        #         return []
+        #     lower_elem = ASx(uncode(perm.trimcode[1:]), length - 1)
+        #     upper_elem = ASx(uncode([perm.trimcode[0]]), 1) * lower_elem
+        #     return [key[0] for key in upper_elem.keys() if key[0] != perm]
+        # if len(co_principal_perms(basis_elem.perm, len(basis_elem))) == 0:
+        #     return ret_elem
+        # up_elem2 = self(lower_graph) * self(RCGraph.one_row(p))
         for key, coeff in up_elem2.items():
             if key.perm != basis_elem.perm:
                 assert coeff == 1
                 key_rc = RCGraph.principal_rc(key.perm, len(key))
                 cp = self.coproduct_on_basis(key_rc)
+                # ret_elem -= coeff * cp
                 for (rc1_bad, rc2_bad), cff2 in cp.items():
                     for (rc1, rc2), v in ret_elem.items():
                         if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
@@ -148,13 +170,17 @@ class RCGraphRing(BaseSchubertRing):
         # else:
         #     basis_cp = self.coproduct_on_basis(basis_elem)
         #     ret_elem = tring.zero
-        #     for (rc1, rc2), cff in basis_cp.items():
-        #         ret_elem += tring(RCGraph.reverse_raise_seq_pair(rc1, rc2, raise_seq))
-        if basis_elem != elem:
-            ret_elem = tring.from_dict({(RCGraph.reverse_raise_seq_pair(rc1, rc2, raise_seq)): v for (rc1, rc2), v in ret_elem.items()})
-            elem2 = basis_elem.reverse_raise_seq(raise_seq)
-            assert elem2 == elem, f"{elem2=} {elem=}"
+        # if len(basis_elem.perm.trimcode) == len(basis_elem):
+        #     for (rc1, rc2), cff in ret_elem.items():
+        #         (rc11, rc22), raise_seq2 = RCGraph.to_highest_weight_pair(rc1, rc2)
+        #         assert rc1 == rc11 and rc2 == rc22, f"{rc1=} {rc11=} {rc2=} {rc22=}"
+        # assert at_least_one, f"No highest weight terms found in coproduct of {elem=}, got {ret_elem=}"
+        # if basis_elem != elem:
+        #     ret_elem = tring.from_dict({(RCGraph.reverse_raise_seq_pair(rc1, rc2, raise_seq)): v for (rc1, rc2), v in ret_elem.items()})
+        #     elem2 = basis_elem.reverse_raise_seq(raise_seq)
+        #     assert elem2 == elem, f"{elem2=} {elem=}"
         return ret_elem
+
 
     def mul(self, a, b):
         # a, b are RCGraphRingElemen

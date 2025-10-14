@@ -609,6 +609,23 @@ class RCGraph(Printable, tuple):
 
         return rc, tuple(raise_seq)
 
+    @staticmethod
+    def to_highest_weight_pair(rc1, rc2):
+        rc11, rc22 = rc1, rc2
+        raise_seq = []
+        found = True
+        while found:
+            found = False
+            for row in range(1, max(len(rc22.perm.trimcode), len(rc11.perm.trimcode))):
+                rc110, rc220 = RCGraph.pair_raise(rc11, rc22, row)
+                if rc110 is not None and rc220 is not None:
+                    found = True
+                    rc11, rc22 = rc110, rc220
+                    raise_seq.append(row)
+                    break
+
+        return (rc11, rc22), tuple(raise_seq)
+
     def reverse_raise_seq(self, raise_seq):
         rc = self
         for row in reversed(raise_seq):
@@ -653,7 +670,7 @@ class RCGraph(Printable, tuple):
 
     #     return rc, tuple(raise_seq)
 
-    def lowering_operator(self, row):
+    def raising_operator(self, row):
         # RF word is just the RC word backwards
         if row > len(self):
             return None
@@ -686,7 +703,7 @@ class RCGraph(Printable, tuple):
             return None
         return ret_rc
 
-    def raising_operator(self, row):
+    def lowering_operator(self, row):
         # RF word is just the RC word backwards
         if row > len(self):
             return None
