@@ -1,3 +1,6 @@
+from time import time
+
+from matplotlib.pyplot import rc
 from schubmult import *
 from schubmult.rings.rc_graph import RCGraph
 from schubmult.rings.rc_graph_ring import RCGraphRing, tensor_to_highest_weight, ring_elem_to_highest_weight
@@ -37,24 +40,24 @@ def try_lr_module(perm, length=None):
     #  #  # print(f"{ret_elem=}")
     # assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
 
-    ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
+    ret_elem = tensor_to_highest_weight(tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)}))
 
     if length == 1:
         return ret_elem
-    keys = set(ret_elem.keys())
+    #keys = set(ret_elem.keys())
     # print(f"{repr(keys)=} {perm=}")
     up_elem = ASx(uncode([perm.trimcode[0]]),1) * elem
     # print(f"{up_elem=}")
     for key, coeff in up_elem.items():
         if key[0] != perm:
             assert coeff == 1
-            for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
-                keys2 = set(ret_elem.keys())
-                ret_elem -= tring(RCGraph.to_highest_weight_pair(rc1_bad, rc2_bad)[0])
+            ret_elem -= tensor_to_highest_weight(try_lr_module(key[0], length))
+            #    ret_elem -= cff2 * tring(RCGraph.to_highest_weight_pair(rc1_bad, rc2_bad)[0])
                 #        break
     # print(f"Done {perm}")
-    ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k in keys})
+    #ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k in keys})
     # assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
+    ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
     return ret_elem
 
 
@@ -73,7 +76,25 @@ if __name__ == "__main__":
         # elem = tensor_to_highest_weight(elem)
         # elem = elem.ring.from_dict({(k1, k2): v for (k1, k2), v in elem.items() if k1.perm.bruhat_leq(perm) and k2.perm.bruhat_leq(perm)})
         print(f"Coprod of {perm.trimcode=}")
-        elem = try_lr_module(perm)
-        pretty_print(elem)
+        try_mod = try_lr_module(perm)
+        pretty_print(try_mod)
+        elem = 0
+        for (rc1, rc2), conch_shell in try_mod.items():
+            # elem += (rc1 @ rc2).asdtype(ASx @ ASx)
+            # print(f"FYI {perm.trimcode} 1")
+            # print(rc1)
+            # print(f"FYI {perm.trimcode} 2")
+            # print(rc2)
+            elem += conch_shell*(ASx @ ASx)(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))))
+        check = ASx(perm).coproduct()
+        try:
+            assert all(v == 0 for v in (elem - check).values())
+        except AssertionError:
+            print(f"Fail on {perm}")
+            print(f"{elem=}")
+            print(f"{check=}")
+            print(f"{(elem - check)=}")
+            continue
         # print("Stink_elem:")
         # pretty_print(stink_elem)
+        print(f"Stinkcess {perm}")
