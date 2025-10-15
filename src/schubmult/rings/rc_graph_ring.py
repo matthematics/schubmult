@@ -234,6 +234,14 @@ def tensor_to_highest_weight(tensor_elem):
         ret_elem += coeff * tensor_elem.ring((g1_hw, g2_hw))
     return ret_elem
 
+def tensor_to_highest_weight2(tensor_elem):
+    ret_elem = tensor_elem.ring.zero
+    for (g1, g2), coeff in tensor_elem.items():
+        g1_hw = RCGraph.principal_rc(g1.perm, len(g1))
+        g2_hw = RCGraph.principal_rc(g2.perm, len(g2))
+        ret_elem += coeff * tensor_elem.ring((g1_hw, g2_hw))
+    return ret_elem
+
 def ring_elem_to_highest_weight(ring_elem):
     ret_elem = ring_elem.ring.zero
     for g, coeff in ring_elem.items():
