@@ -10,7 +10,7 @@ import sys
 import time
 from json import dump, load
 from multiprocessing import Event, Lock, Manager, Process, cpu_count
-
+from schubmult.rings.rc_graph_ring import tensor_to_highest_weight2
 from joblib import Parallel, delayed
 
 
@@ -66,7 +66,7 @@ def safe_save(obj, filename, save_json_backup=True):
 
         with open(temp_json, "w") as f:
             json.dump(
-                {repr(k): {repr(tuple([tuple(a) for a in k2])): int(v2) for k2, v2 in v.value_dict.items()} if isinstance(v, TensorModule) else v for k, v in obj.items()},
+                {repr(k): {repr(tuple(k2)): int(v2) for k2, v2 in v.value_dict.items()} if isinstance(v, TensorModule) else v for k, v in obj.items()},
                 f,
             )
         if os.path.exists(json_file):
@@ -87,7 +87,7 @@ def safe_save_recording(obj, filename):
     try:
         # keys are permutations, values are bools
         with open(temp_json, "w") as f:
-            json.dump({repr(tuple([tuple(a) for a in k])): v for k, v in obj.items()}, f)
+            json.dump({repr(tuple(k)): v for k, v in obj.items()}, f)
         if os.path.exists(json_file):
             shutil.copy2(json_file, f"{json_file}.backup")
         os.replace(temp_json, json_file)
@@ -219,11 +219,11 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 #     print("Saver process exiting.")
 
 
+
 def try_lr_module(perm, length=None):
     from schubmult.rings.rc_graph_ring import RCGraphRing
     from schubmult.rings.rc_graph import RCGraph
     from schubmult import ASx, uncode
-    from sympy import pretty_print
     ring = RCGraphRing()
     tring = ring @ ring
     # print(f"Starting {perm}")
@@ -232,12 +232,13 @@ def try_lr_module(perm, length=None):
     elif length < len(perm.trimcode):
         raise ValueError("Length too short")
     if perm.inv == 0:
-        # if length == 0:
-        #     mod = tring.one
-        #     #  #  # print(f"MOASA!! {mod=} {type(mod)=}")
-        #     return mod
         return tring((RCGraph([()]*length),RCGraph([()]*length)))
-    lower_perm = uncode(perm.trimcode[1:])
+    if length > len(perm.trimcode):
+        mul_elem = 0
+        lower_perm = perm
+    else:
+        mul_elem = perm.trimcode[-1]
+        lower_perm = uncode(perm.trimcode[:-1])
     elem = ASx(lower_perm, length - 1)
     lower_module1 = try_lr_module(lower_perm, length - 1)
     # assert isinstance(lower_module1, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
@@ -249,114 +250,32 @@ def try_lr_module(perm, length=None):
 
     cprod = tring.zero
 
-    for j in range(perm.trimcode[0] + 1):
-        cprod += tring.ext_multiply(ring(RCGraph.one_row(j)), ring(RCGraph.one_row(perm.trimcode[0] - j)))
+    for j in range(mul_elem + 1):
+        cprod += tring.ext_multiply(ring(RCGraph.one_row(j)), ring(RCGraph.one_row(mul_elem - j)))
     #print(cprod)
-    ret_elem = cprod * lower_module1
+    ret_elem = lower_module1 *cprod
     #  #  # print(f"{ret_elem=}")
     # assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
 
-    ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
+    ret_elem = tensor_to_highest_weight2(tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)}))
 
     if length == 1:
         return ret_elem
-    keys = set(ret_elem.keys())
+    #keys = set(ret_elem.keys())
     # print(f"{repr(keys)=} {perm=}")
-    up_elem = ASx(uncode([perm.trimcode[0]]),1) * elem
+    up_elem = elem * ASx(uncode([mul_elem]),1)
     # print(f"{up_elem=}")
     for key, coeff in up_elem.items():
         if key[0] != perm:
             assert coeff == 1
-            for (rc1_bad, rc2_bad), cff2 in try_lr_module(key[0], length).items():
-                keys2 = set(ret_elem.keys())
-                for rc1, rc2 in keys2:
-                    if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm):
-                        # try:
-                        #     keys = set(keys2)
-                        #     keys.remove((rc1, rc2))
-                        # except KeyError:
-                        #     # print(repr(keys))
-                        #     raise
-                        ret_elem -= tring((rc1, rc2))
-                        break
+            ret_elem -= tensor_to_highest_weight2(try_lr_module(key[0], length))
+            #    ret_elem -= cff2 * tring(RCGraph.to_highest_weight_pair(rc1_bad, rc2_bad)[0])
+                #        break
     # print(f"Done {perm}")
-    ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k in keys})
+    #ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k in keys})
     # assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
-    return ret_elem
-
-def try_lr_module_right(perm, length=None):
-    from schubmult.rings.rc_graph_ring import RCGraphRing
-    from schubmult.rings.rc_graph import RCGraph
-    from schubmult import ASx, uncode
-    from sympy import pretty_print
-    ring = RCGraphRing()
-    tring = ring @ ring
-    # print(f"Starting {perm}")
-    if length is None:
-        length = len(perm.trimcode)
-    elif length < len(perm.trimcode):
-        raise ValueError("Length too short")
-    if perm.inv == 0:
-        # if length == 0:
-        #     mod = tring.one
-        #     #  #  # print(f"MOASA!! {mod=} {type(mod)=}")
-        #     return mod
-        return tring((RCGraph([()]*length),RCGraph([()]*length)))
-    if length == len(perm.trimcode):
-        lower_perm = uncode(perm.trimcode[:-1])
-    else:
-        lower_perm = perm
-    elem = ASx(lower_perm, length - 1)
-    lower_module1 = try_lr_module_right(lower_perm, length - 1)
-    # assert isinstance(lower_module1, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
-    #  #  # print(f"Coproducting {ASx(uncode([perm.trimcode[0]]), 1).coproduct()=}")
-    #  #  # print(ASx(uncode([perm.trimcode[0]]), 1).coproduct())
-    #  #  # print("Going for it")
-    #  #  # print(f"{type(lower_module1)=} {lower_module1=}")
-    #  #  # print(f"{type(ASx(uncode([perm.trimcode[0]]), 1).coproduct())=}")
-
-    cprod = tring.zero
-
-    if length > len(perm.trimcode):
-        last_elem = 0
-    else:
-        last_elem = perm.trimcode[-1]
-
-    for j in range(last_elem + 1):
-        cprod += tring.ext_multiply(ring(RCGraph.one_row(j)), ring(RCGraph.one_row(last_elem - j)))
-    #print(cprod)
-    ret_elem = lower_module1 * cprod
-    #  #  # print(f"{ret_elem=}")
-    # assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
-
     ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
-
-    if length == 1:
-        return ret_elem
-    keys = set(ret_elem.keys())
-    # print(f"{repr(keys)=} {perm=}")
-    up_elem =  elem * ASx(uncode([last_elem]),1)
-    # print(f"{up_elem=}")
-    for key, coeff in up_elem.items():
-        if key[0] != perm:
-            assert coeff == 1
-            for (rc1_bad, rc2_bad), cff2 in try_lr_module_right(key[0], length).items():
-                keys2 = set(ret_elem.keys())
-                for rc1, rc2 in keys2:
-                    if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm):
-                        # try:
-                        #     keys = set(keys2)
-                        #     keys.remove((rc1, rc2))
-                        # except KeyError:
-                        #     # print(repr(keys))
-                        #     raise
-                        ret_elem -= tring((rc1, rc2))
-                        break
-    # print(f"Done {perm}")
-    ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k in keys})
-    # assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
     return ret_elem
-
 
 def worker(nn, shared_recording_dict, lock, task_queue):
     from schubmult import ASx
@@ -376,61 +295,51 @@ def worker(nn, shared_recording_dict, lock, task_queue):
 
     while True:
         try:
-            rc, rc2 = task_queue.get(timeout=2)
+            perm, length = task_queue.get(timeout=2)
         except Exception:
             break  # queue empty, exit
         with lock:
-            if (rc, rc2) in shared_recording_dict:
-                if shared_recording_dict[(rc, rc2)]:
-                    print(f"{rc, rc2} already verified, returning.")
+            if (perm, length) in shared_recording_dict:
+                if shared_recording_dict[(perm, length)]:
+                    print(f"{perm, length} already verified, returning.")
                     continue
-                print(f"Previous failure on {rc, rc2}, will retry.")
+                print(f"Previous failure on {perm, length}, will retry.")
         try:
-            try_mod = hom(ring(rc) * ring(rc2))
-            other_mod = hom(ring(rc)) * hom(ring(rc2))
+            try_mod = try_lr_module(perm, length)
         except Exception as e:
             import traceback
             print(f"Error computing coproduct_on_basis for {rc}")
             traceback.print_exc()
             with lock:
-                shared_recording_dict[rc] = False
+                shared_recording_dict[(perm, length)] = False
             continue
-        print(try_mod)
-        # elem = 0
-        # for rc1, rc2 in try_mod:
-        #     # elem += (rc1 @ rc2).asdtype(ASx @ ASx)
-        #     # print(f"FYI {perm.trimcode} 1")
-        #     # print(rc1)
-        #     # print(f"FYI {perm.trimcode} 2")
-        #     # print(rc2)
-        #     elem += (ASx @ ASx)(((rc1.perm, len(rc)), (rc2.perm, len(rc))))
-        # check = ASx(rc.perm, len(rc)).coproduct()
-        # try:
-        #     assert all(v == 0 for v in (elem - check).values())
-        # except AssertionError:
-        #     print(f"Fail on {rc} at ", time.ctime())
-        #     print(f"{elem=}")
-        #     print(f"{check=}")
-        #     print(f"{(elem - check)=}")
-        #     with lock:
-        #         shared_recording_dict[rc] = False
-        #     continue
+        pretty_print(try_mod)
+        elem = 0
+        for (rc1, rc2), coeff in try_mod.items():
+            # elem += (rc1 @ rc2).asdtype(ASx @ ASx)
+            # print(f"FYI {perm.trimcode} 1")
+            # print(rc1)
+            # print(f"FYI {perm.trimcode} 2")
+            # print(rc2)
+            elem += coeff * (ASx @ ASx)(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))))
+        check = ASx(perm, length).coproduct()
         try:
-            assert all(v == 0 for v in (try_mod - other_mod).values())
+            assert all(v == 0 for v in (elem - check).values())
         except AssertionError:
-            print(f"Fail on {rc, rc2} at ", time.ctime())
-            print(f"{try_mod=}")
-            print(f"{other_mod=}")
-            print(f"{(try_mod - other_mod)=}")
+            print(f"Fail on {perm, length} at ", time.ctime())
+            print(f"{elem=}")
+            print(f"{check=}")
+            print(f"{(elem - check)=}")
             with lock:
-                shared_recording_dict[(rc,rc2)] = False
+                shared_recording_dict[(perm, length)] = False
             continue
         del try_mod
-        del other_mod
+        del elem
+        del check
         gc.collect()
         with lock:
-            shared_recording_dict[(rc, rc2)] = True
-        print(f"Success {rc, rc2} at ", time.ctime())
+            shared_recording_dict[(perm, length)] = True
+        print(f"Success {perm, length} at ", time.ctime())
 
 
 def main():
@@ -478,11 +387,7 @@ def main():
         task_queue = manager.Queue()
         for perm in perms:
             for length in range(len(perm.trimcode), n):
-                for perm2 in perms:
-                    for length2 in range(len(perm2.trimcode), n):
-                        for rc in RCGraph.all_rc_graphs(perm, length):
-                            for rc2 in RCGraph.all_rc_graphs(perm2, length2):
-                                task_queue.put((rc, rc2))
+                task_queue.put((perm, length))
 
         # Start fixed number of workers
         workers = []
