@@ -230,7 +230,13 @@ class RCGraphRing(BaseSchubertRing):
 def tensor_to_highest_weight(tensor_elem):
     ret_elem = tensor_elem.ring.zero
     for (g1, g2), coeff in tensor_elem.items():
-        g1_hw, seq1 = g1.to_highest_weight()
-        g2_hw, seq2 = g2.to_highest_weight()
+        (g1_hw, g2_hw), seq2 = RCGraph.to_highest_weight_pair(g1, g2)
         ret_elem += coeff * tensor_elem.ring((g1_hw, g2_hw))
+    return ret_elem
+
+def ring_elem_to_highest_weight(ring_elem):
+    ret_elem = ring_elem.ring.zero
+    for g, coeff in ring_elem.items():
+        g_hw, seq = g.to_highest_weight()
+        ret_elem += coeff * ring_elem.ring(g_hw)
     return ret_elem
