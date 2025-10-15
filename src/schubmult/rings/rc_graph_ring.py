@@ -52,6 +52,12 @@ class RCGraphRingElement(BaseSchubertElement):
             res += coeff * self.ring.coproduct_on_basis(rc_graph)
         return res
 
+    def crystal_reflection(self, row):
+        res = self.ring.zero
+        for rc_graph, coeff in self.items():
+            res += coeff * self.ring(rc_graph.crystal_reflection(row))
+        return res
+
 class RCGraphRing(BaseSchubertRing):
     _id = 0
 

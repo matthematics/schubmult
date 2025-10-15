@@ -231,17 +231,15 @@ if __name__ == "__main__":
     #printer = sympy.pretty()
     init_printing(pretty=True)
     for perm in perms:
-        if perm.inv == 0 or max(perm.descents()) == 0:
-            continue
         for len1 in range(len(perm.trimcode),n):
 
             graphs1 = RCGraph.all_rc_graphs(perm, len1)
-            hw = set()
             for g in graphs1:
-                hw.add(g.to_highest_weight()[0])
-            print(f"Highest weights for {perm=}")
-            for gorble in hw:
-                pretty_print(gorble)
+                print("Da graph")
+                pretty_print(g)
+                for row in range(1, len(g)):
+                    print(f"Reflect row {row}")
+                    pretty_print(g.crystal_reflection(row))
             # for perm2 in perms:
             #     if perm2.inv == 0:
             #         continue

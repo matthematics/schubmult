@@ -654,21 +654,7 @@ class RCGraph(Printable, tuple):
             rc01, rc02 = RCGraph.pair_lower(rc01, rc02, row)
         return (rc01, rc02)
 
-    # def crystal_to_principal(self):
-    #     rc = self
-    #     ref_seq = []
-    #     found = True
-    #     while found:
-    #         found = False
-    #         for row in range(1, len(rc.perm.trimcode)):
-    #             rc0 = rc.raising_operator(row)
-    #             if rc0 is not None:
-    #                 found = True
-    #                 rc = rc0
-    #                 raise_seq.append(row)
-    #                 break
-
-    #     return rc, tuple(raise_seq)
+    
 
     def raising_operator(self, row):
         # RF word is just the RC word backwards
@@ -737,19 +723,14 @@ class RCGraph(Printable, tuple):
 
     def crystal_reflection(self, row):
         new_rc = self
-        diff = len(self[row]) - len(self[row-1])
-        if diff >= 0:
-            for _ in range(diff):
-                new_rc2 = new_rc.lowering_operator(row)
-                if new_rc2 is None:
-                    return None
-                new_rc = new_rc2
-            return new_rc
-        for _ in range(-diff):
-            new_rc2 = new_rc.raising_operator(row)
-            if new_rc2 is None:
-                return None
-            new_rc = new_rc2
+        e = self.epsilon(row)
+        f = self.phi(row)
+        if e > f:
+            for _ in range(e - f):
+                new_rc = new_rc.raising_operator(row)
+        elif f > e:
+            for _ in range(f - e):
+                new_rc = new_rc.lowering_operator(row)
         return new_rc
 
     def vertical_cut(self, row):
