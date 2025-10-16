@@ -230,16 +230,20 @@ if __name__ == "__main__":
     # exit()
     #printer = sympy.pretty()
     init_printing(pretty=True)
+    ring = RCGraphRing()
     for perm in perms:
         for len1 in range(len(perm.trimcode),n):
 
             graphs1 = RCGraph.all_rc_graphs(perm, len1)
             for g in graphs1:
-                print("Da graph")
                 pretty_print(g)
-                for row in range(1, len(g)):
-                    print(f"Reflect row {row}")
-                    pretty_print(g.crystal_reflection(row))
+                print(f"{g.crystal_weight=}")
+                # for row in range(1, len1):
+                #     print(f"Row {row=}")
+                #     if g == g.crystal_reflection(row):
+                #         print("Fixed point")
+                #         print(f"Descent? {perm[row-1] > perm[row]=}")
+                        
             # for perm2 in perms:
             #     if perm2.inv == 0:
             #         continue

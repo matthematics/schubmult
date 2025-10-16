@@ -583,15 +583,16 @@ class RCGraph(Printable, tuple):
         return cnt
 
     @property
-    def demazure_weight(self):
+    def crystal_weight(self):
         beta0 = 0
         beta = 0
         wt = []
-        for i in range(1, len(self)):
-            beta = (self.phi(i) - self.epsilon(i))
-            wt.append(beta0 - beta)
-            beta0 = beta0 - beta
-        return tuple(wt)
+        for i in range(len(self) - 1, 0, -1):
+            beta = (self.phi(i) - self.epsilon(i)) # beta_i - beta_{i-1}
+            wt.append(beta + beta0)
+            beta0 = beta0 + beta
+        wt.append(beta0)
+        return tuple(reversed(wt))
 
     def to_highest_weight(self):
         rc = self
@@ -688,6 +689,18 @@ class RCGraph(Printable, tuple):
         if ret_rc.perm != self.perm:
             return None
         return ret_rc
+
+    # weak edelman green correspondence
+    # better understanding of crystal
+    #Following [Assa], for P a semi-standard Young tableau with strictly increasing rows, define the lift of P,
+# denoted by lift(P), to be the tableau of key shape obtained by raising each entry in the first column of P
+# until it equals its row index, and, once columns 1 through c − 1 have been lifted, raising entries in column
+# c from top to bottom, maintaining their relative order, placing each entry in the highest available row such
+# that there is an entry in column c − 1 that is strictly smaller.
+
+#     Definition 5.6 ([Assa]). For ρ a reduced expression, define the weak insertion tableau Pb(ρ) by Pb(ρ) =
+# lift(P(ρ)), where P(ρ) is the insertion tableau under the Edelman–Greene insertion. In addition, define the
+# weak recording tableau Qb(ρ) to be the unique standard key tableau of the same key shape as Pb(ρ) such tha
 
     def lowering_operator(self, row):
         # RF word is just the RC word backwards
