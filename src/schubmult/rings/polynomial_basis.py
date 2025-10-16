@@ -18,9 +18,7 @@ from .schubert_ring import Sx
 
 
 class PolynomialBasis:
-    @property
-    def numvars(self): ...
-
+    
     @property
     def genset(self): ...
 
@@ -31,9 +29,7 @@ class PolynomialBasis:
     def attach_key(self, dct):
         return {self.as_key(k): v for k, v in dct.items()}
 
-    def with_numvars(self, numvars):
-        return self.__class__(numvars=numvars, genset=self.genset)
-
+    
     @property
     def zero_monom(self): ...
 
@@ -106,7 +102,7 @@ class PolynomialBasis:
             for (mk1, mk2), v2 in this_coproduct.items():
                 ret_dict = add_perm_dict(
                     ret_dict,
-                    _tensor_product_of_dicts_first(self.monomial_basis.transition(self.with_numvars(len(mk1)))({mk1: v2}), self.monomial_basis.transition(self.with_numvars(len(mk2)))({mk2: S.One})),
+                    _tensor_product_of_dicts_first(self.monomial_basis.transition({mk1: v2}), self.monomial_basis.transition({mk2: S.One})),
                 )
         return ret_dict
 
@@ -127,12 +123,13 @@ class PolynomialBasis:
 
 class MonomialBasis(PolynomialBasis):
     def is_key(self, x):
-        return isinstance(x, tuple | list) and len(x) <= self.numvars
+        return isinstance(x, tuple | list)
 
     def as_key(self, x):
-        if len(x) > self.numvars:
-            raise ValueError(f"Length of key {x} exceeds the number of variables {self.numvars}.")
-        return (*x, *([0] * (self.numvars - len(x))))
+        # if len(x) > self.numvars:
+        #     raise ValueError(f"Length of key {x} exceeds the number of variables {self.numvars}.")
+        # return (*x, *([0] * (self.numvars - len(x))))
+        return tuple(x)
 
     # def attach_key(self, dct):
     #     return dct
@@ -151,16 +148,15 @@ class MonomialBasis(PolynomialBasis):
     def monomial_basis(self):
         return self
 
-    @property
-    def numvars(self):
-        return self._numvars
+    # @property
+    # def numvars(self):
+    #     return self._numvars
 
     @property
     def genset(self):
         return self._genset
 
-    def __init__(self, genset, numvars):
-        self._numvars = numvars
+    def __init__(self, genset):
         self._genset = genset
 
     def product(self, key1, key2, coeff=S.One):
@@ -171,7 +167,9 @@ class MonomialBasis(PolynomialBasis):
         #     _altbasis = self.with_numvars(key1[1])
         # else:
         #     _altbasis = self
-        return self.attach_key({tuple(a + b for a, b in zip_longest(key1, key2, fillvalue=0)): coeff})
+        if len(key1) != len(key2):
+            return {}
+        return {tuple(a + b for a, b in zip(key1, key2)): coeff}
 
     def expand_monom(self, monom):
         return Mul(*[self.genset[i + 1] ** monom[i] for i in range(len(monom))])
@@ -204,14 +202,22 @@ class MonomialBasis(PolynomialBasis):
 
 class SchubertPolyBasis(PolynomialBasis):
     def __hash__(self):
-        return hash(self.numvars, self.ring)
+        return hash(("schooboo", self.ring))
 
-    def with_numvars(self, numvars):
-        return self.__class__(numvars=numvars, ring=self.ring)
+    # def with_numvars(self, numvars):
+    #     return self.__class__(ring=self.ring)
 
-    @property
-    def numvars(self):
-        return self._numvars
+    # @property
+    # def numvars(self):
+    #     return self._numvars
+
+    def coproduct(self, key):
+        length = key[1]
+        res = {}
+        for len0 in range(length + 1):
+            cprd = dict(self.ring(key[0]).coproduct(*list(range(1, len0 + 1))))
+            res = add_perm_dict(res, {((k1, len0), (k2, length - len0)): v for (k1, k2), v in cprd.items()})
+        return res
 
     @property
     def genset(self):
@@ -224,26 +230,25 @@ class SchubertPolyBasis(PolynomialBasis):
         return isinstance(x, list | tuple | Permutation)
 
     def as_key(self, x):
-        return (Permutation(x), self.numvars)
+        return (Permutation(x), len(Permutation(x).trimcode))
 
-    def __init__(self, numvars, ring=None):
-        self._numvars = numvars
+    def __init__(self, ring=None):
+        # self._numvars = numvars
         self.ring = ring
         if self.ring is None:
             self.ring = Sx([]).ring
 
     @cached_property
     def monomial_basis(self):
-        return MonomialBasis(numvars=self.numvars, genset=self.ring.genset)
+        return MonomialBasis(genset=self.ring.genset)
 
     def product(self, key1, key2, coeff=S.One):
         if key1[1] != key2[1]:
             return {}
-        if key1[1] != self.numvars:
-            _altbasis = self.with_numvars(key1[1])
-        else:
-            _altbasis = self
-        return _altbasis.attach_key(self.ring.mul(self.ring.from_dict({key1[0]: coeff}), self.ring(key2[0])))
+        def pair_length(dct, length):
+            return {(k, length): v for k, v in dct.items()}
+
+        return pair_length(self.ring.mul(self.ring.from_dict({key1[0]: coeff}), self.ring(key2[0])), key1[1])
 
     def transition_sepdesc(self, dct, other_basis):
         from schubmult.abc import e
@@ -330,18 +335,33 @@ class SchubertPolyBasis(PolynomialBasis):
 
     @property
     def zero_monom(self):
-        return self.as_key([])
+        return (Permutation([]), 0)
 
     def from_expr(self, expr):
         return self.attach_key(self.ring.from_expr(expr))
+
+    def to_monoms(self, key):
+        from .variables import genset_dict_from_expr
+
+        def pad_tuple(tup, length):
+            return tuple([*tup, *(0,) * (length - len(tup))])
+
+        dct = {pad_tuple(k, key[1]): v for k, v in genset_dict_from_expr(self.ring.from_dict({key[0]: S.One}).as_polynomial(), self.genset).items()}
+        return dct
 
     def transition(self, other_basis):
         if isinstance(other_basis, SchubertPolyBasis):
             return lambda x: other_basis.attach_key({k[0]: v for k, v in x.items()})
         if isinstance(other_basis, MonomialBasis):
-            from .variables import genset_dict_from_expr
+            def sum_dct(*dcts):
+                res = {}
+                for dct in dcts:
+                    res = add_perm_dict(res, dct)
+                return res
+            def mul_dict(dct, coeff):
+                return {k: v * coeff for k, v in dct.items()}
 
-            return lambda x: other_basis.attach_key(genset_dict_from_expr(self.ring.from_dict({k[0]: v for k, v in x.items()}).as_polynomial(), other_basis.genset))
+            return lambda x: sum_dct(*[mul_dict(self.to_monoms(k),v) for k, v in x.items()])
         if isinstance(other_basis, ElemSymPolyBasis):
             return lambda x: self.transition_elementary(x, other_basis)
         if isinstance(other_basis, SepDescPolyBasis):
