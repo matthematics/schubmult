@@ -289,4 +289,4 @@ class PolynomialAlgebra(Ring, CompositeDomain):
         return sympify(element)
 
 
-PA = PolynomialAlgebra(MonomialBasis(abc.x, 10))
+PA = PolynomialAlgebra(MonomialBasis(abc.x))

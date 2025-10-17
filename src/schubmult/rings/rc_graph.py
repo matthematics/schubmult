@@ -724,7 +724,10 @@ class RCGraph(Printable, tuple):
         if len(unpaired_b) == 0:
             return None
         a = max(unpaired_b)
-        s = min([j for j in range(2 * a) if a + j + 1 not in row_ip1])
+        s = 0
+        while a + s + 1 in row_ip1:
+            s += 1
+
         if a + s < row:
             return None
         new_row_ip1 = [let for let in row_ip1 if let != a]

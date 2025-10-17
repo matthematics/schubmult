@@ -231,13 +231,34 @@ if __name__ == "__main__":
     #printer = sympy.pretty()
     init_printing(pretty=True)
     ring = RCGraphRing()
+
+    def test_hom_crystal(graph):
+        if len(graph) <= 1:
+            return True
+        if len(graph[-1]) != 0:
+            return True
+        for row in range(1, len(graph) - 1):
+            new_rc = graph.raising_operator(row)
+            if new_rc:
+                print("Nontrivial raising operator")
+                rc2 = graph.zero_out_last_row()
+                new_rc2 = rc2.raising_operator(row)
+                assert new_rc2 == new_rc.zero_out_last_row(), f"Raising operator doesn't commute with zeroing last row {graph=} {row=} {new_rc=} {rc2=} {new_rc2=}"
+            new_rc = graph.lowering_operator(row)
+            if new_rc:
+                print("Nontrivial lowering operator")
+                rc2 = graph.zero_out_last_row()
+                new_rc2 = rc2.lowering_operator(row)
+                assert new_rc2 == new_rc.zero_out_last_row(), f"Lowering operator doesn't commute with zeroing last row {graph=} {row=} {new_rc=} {rc2=} {new_rc2=}"
+        return True
+
     for perm in perms:
         for len1 in range(len(perm.trimcode),n):
 
             graphs1 = RCGraph.all_rc_graphs(perm, len1)
             for g in graphs1:
                 pretty_print(g)
-                print(f"{g.crystal_weight=}")
+                print(f"{test_hom_crystal(g)=}")
                 # for row in range(1, len1):
                 #     print(f"Row {row=}")
                 #     if g == g.crystal_reflection(row):
