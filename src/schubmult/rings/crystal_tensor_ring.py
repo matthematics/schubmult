@@ -1,11 +1,13 @@
-from functools import cache
-from typing import Tuple
-
-from schubmult.rings.base_schubert_ring import BaseSchubertElement
-from schubmult.symbolic import S
+from schubmult.rings.tensor_ring import TensorRing, TensorRingElement
 
 from .crystal_graph import CrystalGraph, CrystalGraphTensor
 
+
+class CrystalGraphTensorRing(TensorRing):
+    def dtype(self):
+        elem = CrystalTensorRingElement()
+        elem.ring = self
+        return elem
 
 def _make_cgt(a, b):
     """
@@ -29,7 +31,7 @@ def _extract_factors_from_cgt(obj):
     except Exception:
         return None
 
-class TwoFactorTensorElement(BaseSchubertElement, CrystalGraph):
+class CrystalTensorRingElement(TensorRingElement, CrystalGraph):
     """
     Two-factor tensor ring element (keys are 2-tuples (g1, g2)).
     Delegates two-factor tensor statistics and operators to `CrystalGraphTensor`
