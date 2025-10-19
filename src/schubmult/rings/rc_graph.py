@@ -598,22 +598,6 @@ class RCGraph(Printable, tuple, CrystalGraph):
     def crystal_length(self):
         return len(self)
 
-    # def to_highest_weight(self):
-    #     rc = self
-    #     raise_seq = []
-    #     found = True
-    #     while found:
-    #         found = False
-    #         for row in range(1, len(rc.perm.trimcode)):
-    #             rc0 = rc.raising_operator(row)
-    #             if rc0 is not None:
-    #                 found = True
-    #                 rc = rc0
-    #                 raise_seq.append(row)
-    #                 break
-
-    #     return rc, tuple(raise_seq)
-
     def raising_operator(self, row):
         # RF word is just the RC word backwards
         if row > len(self):
@@ -723,18 +707,6 @@ class RCGraph(Printable, tuple, CrystalGraph):
         if ret_rc.perm != self.perm:
             return None
         return ret_rc
-
-    def crystal_reflection(self, row):
-        new_rc = self
-        e = self.epsilon(row)
-        f = self.phi(row)
-        if e > f:
-            for _ in range(e - f):
-                new_rc = new_rc.raising_operator(row)
-        elif f > e:
-            for _ in range(f - e):
-                new_rc = new_rc.lowering_operator(row)
-        return new_rc
 
     def vertical_cut(self, row):
         if row < 0 or row > len(self):

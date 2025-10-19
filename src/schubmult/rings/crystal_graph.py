@@ -45,6 +45,19 @@ class CrystalGraph:
                 return None
         return rc
 
+    def crystal_reflection(self, index):
+        new_rc = self
+        e = self.epsilon(index)
+        f = self.phi(index)
+        if e > f:
+            for _ in range(e - f):
+                new_rc = new_rc.raising_operator(index)
+        elif f > e:
+            for _ in range(f - e):
+                new_rc = new_rc.lowering_operator(index)
+        return new_rc
+
+
 
 class CrystalGraphTensor(CrystalGraph):
     def __init__(self, factors):
