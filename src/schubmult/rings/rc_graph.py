@@ -702,6 +702,14 @@ class RCGraph(Printable, tuple):
 # lift(P(ρ)), where P(ρ) is the insertion tableau under the Edelman–Greene insertion. In addition, define the
 # weak recording tableau Qb(ρ) to be the unique standard key tableau of the same key shape as Pb(ρ) such tha
 
+#Proposition 2.57. b ⊗ b
+# ′ ∈ Y(B ⊗ B′
+# ) if and only if b
+# ′ ∈ Y(B′
+# ) and εi(b) ≤ ϕi(b
+# ′
+# ) for all i ∈ I.
+
     def lowering_operator(self, row):
         # RF word is just the RC word backwards
         if row > len(self):
