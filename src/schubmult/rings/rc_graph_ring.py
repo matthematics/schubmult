@@ -468,7 +468,7 @@ class RCGraphRing(BaseSchubertRing):
                         matching_pairs.append((L, R))
         assert len(matching_pairs)>0, "matching_pairs should be defined"
 
-        basis_elem, raise_seq = elem.to_highest_weight()
+        #basis_elem, raise_seq = elem.to_highest_weight()
 
         cprod = tring.zero
         p = basis_elem.length_vector[0]
@@ -495,9 +495,9 @@ class RCGraphRing(BaseSchubertRing):
                             ret_elem -= tring((rc1, rc2))
                             break
 
-        
-        ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)}).reverse_raise_seq(raise_seq)
 
+        ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
+        ret_elem = ret_elem.reverse_raise_seq(raise_seq)
         # for (rc1, rc2), v in ret_elem.items():
         #     if (rc1, rc2) not in matching_pairs:
         #         print(f"Found non-matching pair in coproduct of {elem=}: {(rc1, rc2)=}")

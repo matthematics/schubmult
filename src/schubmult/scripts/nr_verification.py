@@ -61,42 +61,44 @@ def main():
 
     perms = Permutation.all_permutations(n)
     suc_count = 0
+    tot = 0
     for perm in perms:
-        rc = RCGraph.principal_rc(perm, length)
+        for rc in RCGraph.all_rc_graphs(perm, n-1): 
+            
+            # permutation-level Schubert coproduct
+            fa = ASx(perm, length).coproduct()
+            fa_norm = _normalize_fa_coprod(fa)
 
-        # permutation-level Schubert coproduct
-        fa = ASx(perm, length).coproduct()
-        fa_norm = _normalize_fa_coprod(fa)
+            # RCGraph-level coproduct (tensor of RCGraph x RCGraph)
+            tr = ring.coproduct_on_basis(rc)
+            if tr is None:
+                print(f"Skipping perm {perm}: coproduct_on_basis returned None")
+                continue
+            tr_proj = _project_tensor_to_perms(tr)
 
-        # RCGraph-level coproduct (tensor of RCGraph x RCGraph)
-        tr = ring.coproduct_on_basis(rc)
-        if tr is None:
-            print(f"Skipping perm {perm}: coproduct_on_basis returned None")
-            continue
-        tr_proj = _project_tensor_to_perms(tr)
-
-        
-        # Compare multiplicities for union of keys
-        all_keys = set(fa_norm.keys()) | set(tr_proj.keys())
-        success = True
-        for k in all_keys:
-            a = fa_norm.get(k, 0)
-            b = tr_proj.get(k, 0)
-            try:
-                assert a == b, (
-                    f"Coproduct mismatch for perm {perm} (n={n}) on pair {k}:\n"
-                    f"  ASx multiplicity = {a}\n"
-                    f"  RCGraph coproduct  = {b}\n"
-                )
-            except AssertionError as e:
-                print(e)
-                success = False
-                break
-        pretty_print(tr)
-        if success:
-            print(f"Coproduct match for perm {perm} (n={n})")
-            suc_count += 1
-    print(f"Successful coproduct matches: {suc_count} / {len(perms)} for n={n}")
+            
+            # Compare multiplicities for union of keys
+            all_keys = set(fa_norm.keys()) | set(tr_proj.keys())
+            success = True
+            for k in all_keys:
+                a = fa_norm.get(k, 0)
+                b = tr_proj.get(k, 0)
+                try:
+                    assert a == b, (
+                        f"Coproduct mismatch for perm {perm} (n={n}) on pair {k}:\n"
+                        f"  ASx multiplicity = {a}\n"
+                        f"  RCGraph coproduct  = {b}\n"
+                    )
+                except AssertionError as e:
+                    print(e)
+                    success = False
+                    break
+            pretty_print(tr)
+            if success:
+                print(f"Coproduct match for perm {perm} (n={n})")
+                suc_count += 1
+            tot += 1
+    print(f"Successful coproduct matches: {suc_count} / {tot} for n={n}")
 
 if __name__ == "__main__":
     main()
