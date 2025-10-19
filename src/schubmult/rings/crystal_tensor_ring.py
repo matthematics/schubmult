@@ -3,7 +3,7 @@ from schubmult.rings.tensor_ring import TensorRing, TensorRingElement
 from .crystal_graph import CrystalGraph, CrystalGraphTensor
 
 
-class CrystalGraphTensorRing(TensorRing):
+class CrystalTensorRing(TensorRing):
     def dtype(self):
         elem = CrystalTensorRingElement()
         elem.ring = self
