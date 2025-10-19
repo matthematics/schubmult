@@ -467,33 +467,6 @@ class RCGraphRing(BaseSchubertRing):
                     if ok:
                         matching_pairs.append((L, R))
         assert len(matching_pairs)>0, "matching_pairs should be defined"
-            # if not matching_pairs:
-            #     continue
-
-        #     # Even-split multiplicity among matching pairs (deterministic); change policy if needed.
-        #     # k = len(matching_pairs)
-        #     # base = mult // k
-        #     # rem = int(mult % k) if hasattr(mult, '__mod__') else 0
-        #     # matching_pairs.sort(key=lambda lr: (tuple(lr[0].length_vector), tuple(lr[1].length_vector), repr(lr[0]), repr(lr[1])))
-        #     for idx, (L, R) in enumerate(matching_pairs):
-        #         #coeff = base + (1 if idx < rem else 0)
-        #         #if coeff != 0:
-        #         hw_tensor += tring((L, R))
-
-        # # If we built highest-weight tensor(s), lower them along raise_seq and return result
-        # #if len(hw_tensor) > 0:
-        # lowered = hw_tensor.reverse_raise_seq(raise_seq)
-        # assert lowered is not None, "Lowering along raise_seq failed unexpectedly"
-        # return lowered
-        #     # lowered = hw_tensor
-        #     # for r in reversed(raise_seq):
-        #     #     lowered = lowered.lowering_operator(r)
-        #     #     if lowered is None or len(lowered) == 0:
-        #     #         return tring.zero
-        #     # return lowered
-        # #print(f"Didn't work {elem=}")
-        # return None
-        # --- Fallback: original row-splitting / recursive coproduct algorithm ---
 
         basis_elem, raise_seq = elem.to_highest_weight()
 
@@ -522,7 +495,13 @@ class RCGraphRing(BaseSchubertRing):
                             ret_elem -= tring((rc1, rc2))
                             break
 
+        
         ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)}).reverse_raise_seq(raise_seq)
+
+        # for (rc1, rc2), v in ret_elem.items():
+        #     if (rc1, rc2) not in matching_pairs:
+        #         print(f"Found non-matching pair in coproduct of {elem=}: {(rc1, rc2)=}")
+        # print(f"{matching_pairs=}")
 
         return ret_elem
 
