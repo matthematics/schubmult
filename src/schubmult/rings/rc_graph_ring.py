@@ -391,7 +391,7 @@ class RCGraphRing(BaseSchubertRing):
         schubert_pairs = {}
         for k, mult in fa_coprod.items():
             try:
-                perm_u, perm_v = k
+                (perm_u, _), (perm_v, _) = k
             except Exception:
                 continue
             schubert_pairs[(perm_u, perm_v)] = schubert_pairs.get((perm_u, perm_v), 0) + mult
@@ -409,14 +409,14 @@ class RCGraphRing(BaseSchubertRing):
             return True
 
         phi_indices = range(1, target_len)
-        hw_tensor = tring.zero
+        #hw_tensor = tring.zero
 
         for (perm_u, perm_v), mult in schubert_pairs.items():
             # right candidates must be highest-weight and have exact length-vector length
             try:
                 right_candidates = [
                     R for R in RCGraph.all_rc_graphs(perm_v, len(basis_elem))
-                    if _is_highest_weight(R) and len(tuple(R.length_vector)) == target_len
+                    if _is_highest_weight(R)
                 ]
             except Exception:
                 right_candidates = []
@@ -460,44 +460,43 @@ class RCGraphRing(BaseSchubertRing):
                     # epsilon(L)_i <= phi(R)_i for all i in phi_indices
                     ok = True
                     for i in phi_indices:
-                        try:
-                            eps_L = L.epsilon(i)
-                        except Exception:
-                            eps_L = 0
+                        eps_L = L.epsilon(i)
                         if eps_L > phi_R.get(i, 0):
                             ok = False
                             break
                     if ok:
                         matching_pairs.append((L, R))
+        assert len(matching_pairs)>0, "matching_pairs should be defined"
+            # if not matching_pairs:
+            #     continue
 
-            if not matching_pairs:
-                continue
+        #     # Even-split multiplicity among matching pairs (deterministic); change policy if needed.
+        #     # k = len(matching_pairs)
+        #     # base = mult // k
+        #     # rem = int(mult % k) if hasattr(mult, '__mod__') else 0
+        #     # matching_pairs.sort(key=lambda lr: (tuple(lr[0].length_vector), tuple(lr[1].length_vector), repr(lr[0]), repr(lr[1])))
+        #     for idx, (L, R) in enumerate(matching_pairs):
+        #         #coeff = base + (1 if idx < rem else 0)
+        #         #if coeff != 0:
+        #         hw_tensor += tring((L, R))
 
-            # Even-split multiplicity among matching pairs (deterministic); change policy if needed.
-            k = len(matching_pairs)
-            base = mult // k
-            rem = int(mult % k) if hasattr(mult, '__mod__') else 0
-            matching_pairs.sort(key=lambda lr: (tuple(lr[0].length_vector), tuple(lr[1].length_vector), repr(lr[0]), repr(lr[1])))
-            for idx, (L, R) in enumerate(matching_pairs):
-                coeff = base + (1 if idx < rem else 0)
-                if coeff != 0:
-                    hw_tensor += coeff * tring((L, R))
-
-        # If we built highest-weight tensor(s), lower them along raise_seq and return result
-        if len(hw_tensor) > 0:
-            if len(raise_seq) == 0:
-                return hw_tensor
-            if hasattr(hw_tensor, "reverse_raise_seq"):
-                lowered = hw_tensor.reverse_raise_seq(raise_seq)
-                return lowered if lowered is not None else tring.zero
-            lowered = hw_tensor
-            for r in reversed(raise_seq):
-                lowered = lowered.lowering_operator(r)
-                if lowered is None or len(lowered) == 0:
-                    return tring.zero
-            return lowered
-
+        # # If we built highest-weight tensor(s), lower them along raise_seq and return result
+        # #if len(hw_tensor) > 0:
+        # lowered = hw_tensor.reverse_raise_seq(raise_seq)
+        # assert lowered is not None, "Lowering along raise_seq failed unexpectedly"
+        # return lowered
+        #     # lowered = hw_tensor
+        #     # for r in reversed(raise_seq):
+        #     #     lowered = lowered.lowering_operator(r)
+        #     #     if lowered is None or len(lowered) == 0:
+        #     #         return tring.zero
+        #     # return lowered
+        # #print(f"Didn't work {elem=}")
+        # return None
         # --- Fallback: original row-splitting / recursive coproduct algorithm ---
+
+        basis_elem, raise_seq = elem.to_highest_weight()
+
         cprod = tring.zero
         p = basis_elem.length_vector[0]
 
@@ -519,11 +518,11 @@ class RCGraphRing(BaseSchubertRing):
                 cp = self.coproduct_on_basis(key_rc)
                 for (rc1_bad, rc2_bad), cff2 in cp.items():
                     for (rc1, rc2), v in ret_elem.items():
-                        if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
+                        if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1, rc2) not in matching_pairs:
                             ret_elem -= tring((rc1, rc2))
                             break
 
-        ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
+        ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)}).reverse_raise_seq(raise_seq)
 
         return ret_elem
 
