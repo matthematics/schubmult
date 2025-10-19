@@ -6,6 +6,13 @@ from schubmult.rings.free_algebra_basis import WordBasis
 from schubmult.rings.rc_graph import RCGraph
 from schubmult.symbolic import S, sympy_Mul
 
+from .crystal_graph import CrystalGraph
+
+#weight wt
+# yw highest weight
+# u # yv
+# yv highest weight
+
 
 class RCGraphPrintingTerm(TypedPrintingTerm):
     # def _sympystr(self, printer=None):
@@ -15,19 +22,17 @@ class RCGraphPrintingTerm(TypedPrintingTerm):
     #     return printer._print(self._key)
     pass
 
+class RCGraphRingElement(BaseSchubertElement, CrystalGraph):
+    """
+    RCGraphRing elements are linear combinations of RCGraph basis elements.
+    This class implements crystal operations by linear extension: for each
+    basis RCGraph in the support apply the RCGraph operation and collect
+    the results into a new ring element.
+    """
 
-class RCGraphRingElement(BaseSchubertElement):
-    # def as_expr(self):
-    #     from sympy import Add
-
-    #     terms = []
-    #     for rc_graph, coeff in self.items():
-    #         if coeff == 1:
-    #             terms.append(self.ring.printing_term(rc_graph))
-    #         else:
-    #             terms.append(coeff * self.ring.printing_term(rc_graph))
-    #     return Add(*terms)
-
+    # ----------------------
+    # Presentation helpers
+    # ----------------------
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
             return [S.Zero]
@@ -36,6 +41,9 @@ class RCGraphRingElement(BaseSchubertElement):
             for k in self.keys()
         ]
 
+    # ----------------------
+    # Coalgebra helpers (already present)
+    # ----------------------
     def vertical_coproduct(self):
         tring = self.ring @ self.ring
         res = tring.zero
@@ -52,11 +60,164 @@ class RCGraphRingElement(BaseSchubertElement):
             res += coeff * self.ring.coproduct_on_basis(rc_graph)
         return res
 
-    def crystal_reflection(self, row):
+    # ----------------------
+    # Linearized crystal operations
+    # ----------------------
+
+    def raising_operator(self, index):
+        """
+        Linear extension of RCGraph.raising_operator:
+        Apply raising_operator(index) to every basis RCGraph in self, collect results.
+        Returns an RCGraphRingElement (possibly zero).
+        """
         res = self.ring.zero
         for rc_graph, coeff in self.items():
-            res += coeff * self.ring(rc_graph.crystal_reflection(row))
+            new_rc = rc_graph.raising_operator(index)
+            if new_rc is not None:
+                res += coeff * self.ring(new_rc)
         return res
+
+    def lowering_operator(self, index):
+        """
+        Linear extension of RCGraph.lowering_operator.
+        """
+        res = self.ring.zero
+        for rc_graph, coeff in self.items():
+            new_rc = rc_graph.lowering_operator(index)
+            if new_rc is not None:
+                res += coeff * self.ring(new_rc)
+        return res
+
+    def phi(self, index):
+        """
+        phi(element) := max_{basis rc in supp(element)} phi(rc)
+        If element is zero, returns 0.
+        """
+        if len(self) == 0:
+            return 0
+        m = 0
+        for rc_graph in self.keys():
+            try:
+                v = rc_graph.phi(index)
+            except Exception:
+                v = 0
+            if v > m:
+                m = v
+        return m
+
+    def epsilon(self, index):
+        """
+        epsilon(element) := max_{basis rc in supp(element)} epsilon(rc)
+        """
+        if len(self) == 0:
+            return 0
+        m = 0
+        for rc_graph in self.keys():
+            try:
+                v = rc_graph.epsilon(index)
+            except Exception:
+                v = 0
+            if v > m:
+                m = v
+        return m
+
+    def crystal_length(self):
+        """
+        Use maximum crystal length of basis graphs in support (0 for the zero element).
+        """
+        if len(self) == 0:
+            return 0
+        return max((getattr(rc_graph, "crystal_length", lambda: len(rc_graph))() for rc_graph in self.keys()))
+
+    def to_highest_weight(self):
+        """
+        Iteratively raise the element until no further raising is possible.
+        Returns (highest_weight_element, raise_seq).
+
+        Behavior notes:
+        - This is the natural linear-extension of CrystalGraph.to_highest_weight.
+        - The returned `highest_weight_element` is an RCGraphRingElement.
+        - raise_seq is the sequence of row indices applied (in order).
+        """
+        rc_elem = self
+        raise_seq = []
+        found = True
+        while found:
+            found = False
+            # iterate over possible rows: 1..crystal_length()-1 (mimic scalar version)
+            for row in range(1, rc_elem.crystal_length()):
+                rc0 = rc_elem.raising_operator(row)
+                # treat empty/zero as no raise; require that rc0 differs from rc_elem
+                if rc0 is not None and len(rc0) > 0 and rc0 != rc_elem:
+                    found = True
+                    rc_elem = rc0
+                    raise_seq.append(row)
+                    break
+        return rc_elem, tuple(raise_seq)
+
+    def reverse_raise_seq(self, raise_seq):
+        """
+        Apply lowering_operator in reverse order to `raise_seq`.
+        If the path dies (result is zero), return None (mirrors scalar behavior).
+        """
+        rc_elem = self
+        for row in reversed(raise_seq):
+            rc_elem = rc_elem.lowering_operator(row)
+            if rc_elem is None or len(rc_elem) == 0:
+                return None
+        return rc_elem
+
+    def crystal_reflection(self, index):
+        """
+        Linear extension of RCGraph.crystal_reflection:
+        For each basis RCGraph, apply its crystal_reflection(index) and collect results.
+        """
+        res = self.ring.zero
+        for rc_graph, coeff in self.items():
+            res += coeff * self.ring(rc_graph.crystal_reflection(index))
+        return res
+
+# class RCGraphRingElement(BaseSchubertElement, CrystalGraph):
+#     # def as_expr(self):
+#     #     from sympy import Add
+
+#     #     terms = []
+#     #     for rc_graph, coeff in self.items():
+#     #         if coeff == 1:
+#     #             terms.append(self.ring.printing_term(rc_graph))
+#     #         else:
+#     #             terms.append(coeff * self.ring.printing_term(rc_graph))
+#     #     return Add(*terms)
+
+#     def as_ordered_terms(self, *_, **__):
+#         if len(self.keys()) == 0:
+#             return [S.Zero]
+#         return [
+#             self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k))
+#             for k in self.keys()
+#         ]
+
+#     def vertical_coproduct(self):
+#         tring = self.ring @ self.ring
+#         res = tring.zero
+#         for rc_graph, coeff in self.items():
+#             for i in range(len(rc_graph) + 1):
+#                 rc1, rc2 = rc_graph.vertical_cut(i)
+#                 res += tring.from_dict({(rc1, rc2): coeff})
+#         return res
+
+#     def coproduct(self):
+#         tring = self.ring @ self.ring
+#         res = tring.zero
+#         for rc_graph, coeff in self.items():
+#             res += coeff * self.ring.coproduct_on_basis(rc_graph)
+#         return res
+
+#     def crystal_reflection(self, row):
+#         res = self.ring.zero
+#         for rc_graph, coeff in self.items():
+#             res += coeff * self.ring(rc_graph.crystal_reflection(row))
+#         return res
 
 class RCGraphRing(BaseSchubertRing):
     _id = 0
