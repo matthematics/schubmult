@@ -10,6 +10,7 @@ from schubmult.utils.logging import get_logger, init_logging
 from schubmult.utils.perm_utils import add_perm_dict
 
 from ._utils import BitfieldRow
+from .crystal_graph import CrystalGraph
 from .free_algebra import FreeAlgebra, FreeAlgebraElement
 from .free_algebra_basis import WordBasis
 from .nil_hecke import NilHeckeRing
@@ -30,7 +31,7 @@ def debug_print(*args, debug=False):
         print(*args)
 
 
-class RCGraph(Printable, tuple):
+class RCGraph(Printable, tuple, CrystalGraph):
     def __eq__(self, other):
         if not isinstance(other, RCGraph):
             return NotImplemented
@@ -594,68 +595,24 @@ class RCGraph(Printable, tuple):
         wt.append(beta0)
         return tuple(reversed(wt))
 
-    def to_highest_weight(self):
-        rc = self
-        raise_seq = []
-        found = True
-        while found:
-            found = False
-            for row in range(1, len(rc.perm.trimcode)):
-                rc0 = rc.raising_operator(row)
-                if rc0 is not None:
-                    found = True
-                    rc = rc0
-                    raise_seq.append(row)
-                    break
+    def crystal_length(self):
+        return len(self)
 
-        return rc, tuple(raise_seq)
+    # def to_highest_weight(self):
+    #     rc = self
+    #     raise_seq = []
+    #     found = True
+    #     while found:
+    #         found = False
+    #         for row in range(1, len(rc.perm.trimcode)):
+    #             rc0 = rc.raising_operator(row)
+    #             if rc0 is not None:
+    #                 found = True
+    #                 rc = rc0
+    #                 raise_seq.append(row)
+    #                 break
 
-    @staticmethod
-    def to_highest_weight_pair(rc1, rc2):
-        rc11, rc22 = rc1, rc2
-        raise_seq = []
-        found = True
-        while found:
-            found = False
-            for row in range(1, max(len(rc22.perm.trimcode), len(rc11.perm.trimcode))):
-                rc110, rc220 = RCGraph.pair_raise(rc11, rc22, row)
-                if rc110 is not None and rc220 is not None:
-                    found = True
-                    rc11, rc22 = rc110, rc220
-                    raise_seq.append(row)
-                    break
-
-        return (rc11, rc22), tuple(raise_seq)
-
-    def reverse_raise_seq(self, raise_seq):
-        rc = self
-        for row in reversed(raise_seq):
-            rc = rc.lowering_operator(row)
-            if rc is None:
-                return None
-        return rc
-
-    @staticmethod
-    def pair_lower(rc1, rc2, row):
-        if rc1.epsilon(row) < rc2.phi(row):
-            return (rc1, rc2.lowering_operator(row))
-        return (rc1.lowering_operator(row), rc2)
-
-    @staticmethod
-    def pair_raise(rc1, rc2, row):
-        if rc1.epsilon(row) > rc2.phi(row):
-            return (rc1.raising_operator(row), rc2)
-        return (rc1, rc2.raising_operator(row))
-
-    @staticmethod
-    def reverse_raise_seq_pair(rc1, rc2, raise_seq):
-        rc01 = rc1
-        rc02 = rc2
-        for row in reversed(raise_seq):
-            rc01, rc02 = RCGraph.pair_lower(rc01, rc02, row)
-        return (rc01, rc02)
-
-    
+    #     return rc, tuple(raise_seq)
 
     def raising_operator(self, row):
         # RF word is just the RC word backwards
@@ -693,22 +650,44 @@ class RCGraph(Printable, tuple):
     # weak edelman green correspondence
     # better understanding of crystal
     #Following [Assa], for P a semi-standard Young tableau with strictly increasing rows, define the lift of P,
-# denoted by lift(P), to be the tableau of key shape obtained by raising each entry in the first column of P
-# until it equals its row index, and, once columns 1 through c − 1 have been lifted, raising entries in column
-# c from top to bottom, maintaining their relative order, placing each entry in the highest available row such
-# that there is an entry in column c − 1 that is strictly smaller.
+    # denoted by lift(P), to be the tableau of key shape obtained by raising each entry in the first column of P
+    # until it equals its row index, and, once columns 1 through c − 1 have been lifted, raising entries in column
+    # c from top to bottom, maintaining their relative order, placing each entry in the highest available row such
+    # that there is an entry in column c − 1 that is strictly smaller.
 
-#     Definition 5.6 ([Assa]). For ρ a reduced expression, define the weak insertion tableau Pb(ρ) by Pb(ρ) =
-# lift(P(ρ)), where P(ρ) is the insertion tableau under the Edelman–Greene insertion. In addition, define the
-# weak recording tableau Qb(ρ) to be the unique standard key tableau of the same key shape as Pb(ρ) such tha
+    #     Definition 5.6 ([Assa]). For ρ a reduced expression, define the weak insertion tableau Pb(ρ) by Pb(ρ) =
+    # lift(P(ρ)), where P(ρ) is the insertion tableau under the Edelman–Greene insertion. In addition, define the
+    # weak recording tableau Qb(ρ) to be the unique standard key tableau of the same key shape as Pb(ρ) such tha
 
-#Proposition 2.57. b ⊗ b
-# ′ ∈ Y(B ⊗ B′
-# ) if and only if b
-# ′ ∈ Y(B′
-# ) and εi(b) ≤ ϕi(b
-# ′
-# ) for all i ∈ I.
+    #Proposition 2.57. b ⊗ b
+    # ′ ∈ Y(B ⊗ B′
+    # ) if and only if b
+    # ′ ∈ Y(B′
+    # ) and εi(b) ≤ ϕi(b
+    # ′
+    # ) for all i ∈ I.
+
+    #     Theorem 5.11. The operators fi and ei for 1 6 i < n define a Demazure crystal structure on RFC(w).
+    # More precisely,
+    # RFC(w) ∼=
+    # [
+    # r∈RFC(w)
+    # eir=0 ∀16i<n
+    # Bw(r)(wt(r)),
+    # where w(r) is the shortest permutation that sorts sh(Pb(r)).
+
+
+
+    #     Definition 5.6 ([Assa]). For ρ a reduced expression, define the weak insertion tableau Pb(ρ) by Pb(ρ) =
+    # lift(P(ρ)), where P(ρ) is the insertion tableau under the Edelman–Greene insertion. In addition, define the
+    # weak recording tableau Qb(ρ) to be the unique standard key tableau of the same key shape as Pb(ρ) such that
+
+
+    #     Following [Assa], for P a semi-standard Young tableau with strictly increasing rows, define the lift of P,
+    # denoted by lift(P), to be the tableau of key shape obtained by raising each entry in the first column of P
+    # until it equals its row index, and, once columns 1 through c − 1 have been lifted, raising entries in column
+    # c from top to bottom, maintaining their relative order, placing each entry in the highest available row such
+    # that there is an entry in column c − 1 that is strictly smaller.
 
     def lowering_operator(self, row):
         # RF word is just the RC word backwards
