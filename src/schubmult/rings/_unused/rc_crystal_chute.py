@@ -7,7 +7,7 @@ class RCGraphCrystalChute(RCGraph):
 
     def __hash__(self):
         return hash((RCGraphCrystalChute, tuple(self)))
-    
+
     def __eq__(self, other):
         return type(self) is type(other) and tuple(self) == tuple(other)
 

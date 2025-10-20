@@ -18,7 +18,7 @@ from .schubert_ring import Sx
 
 
 class PolynomialBasis:
-    
+
     @property
     def genset(self): ...
 
@@ -29,7 +29,7 @@ class PolynomialBasis:
     def attach_key(self, dct):
         return {self.as_key(k): v for k, v in dct.items()}
 
-    
+
     @property
     def zero_monom(self): ...
 
