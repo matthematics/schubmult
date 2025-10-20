@@ -225,10 +225,7 @@ def worker(shared_recording_dict, lock, task_queue):
         diff = g - g_
         success = True
         def sym_quo(ring_elem):
-            result = tring.zero
-            for (rc1, rc2), v in ring_elem.items():
-                result += v * tring.new(*tuple(sorted([rc2, rc1])))
-            return result
+            return ring_elem
 
         diff = sym_quo(diff)
         try:
@@ -248,7 +245,7 @@ def worker(shared_recording_dict, lock, task_queue):
             with lock:
                 shared_recording_dict[key] = False
 
-        print(f"Success {(tuple(g1), tuple(g2))}")
+        #print(f"Success {(tuple(g1), tuple(g2))}")
         # df = hom(g1) * (hom(g2) * hom(g3)) - hom(g)
         # try:
         #     assert all(v == 0 for k, v in df.items()), f"{tuple(df.values())=}"
@@ -262,7 +259,7 @@ def worker(shared_recording_dict, lock, task_queue):
         with lock:
             shared_recording_dict[key] = success
         if success:
-            print(f"Success {key} at ", time.ctime())
+            print(f"Success {tuple(g1),tuple(g2)} at ", time.ctime())
 
         
 
@@ -350,7 +347,7 @@ def main():
         if any(v is False for v in shared_recording_dict.values()):
             print("Results:")
             for k, v in shared_recording_dict.items():
-                print(f"{k}: {v}")
+                print(f"{(tuple(k[0][0]),tuple(k[0][1])),k[1]}: {v}")
         else:
             print("All verified successfully!")
 

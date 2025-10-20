@@ -389,7 +389,6 @@ def main():
             for length in range(len(perm.trimcode), n):
                 for rc in RCGraph.all_rc_graphs(perm, length):
                     task_queue.put(rc)
-                
 
         # Start fixed number of workers
         workers = []
