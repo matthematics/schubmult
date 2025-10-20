@@ -384,11 +384,12 @@ def main():
         recording_saver_proc.start()
 
         # Create task queue and fill with perms
+        from schubmult.rings.rc_graph import RCGraph
         task_queue = manager.Queue()
         for perm in perms:
             for length in range(len(perm.trimcode), n):
                 for rc in RCGraph.all_rc_graphs(perm, length):
-                    task_queue.put(rc)
+                    task_queue.put(RCGraph(rc))
 
         # Start fixed number of workers
         workers = []

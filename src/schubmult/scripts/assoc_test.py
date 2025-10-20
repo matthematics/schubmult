@@ -3,6 +3,7 @@ from sympy import init_printing, pretty_print
 from schubmult.rings.rc_graph_ring import RCGraphRing
 from schubmult.rings.crystal_graph import CrystalGraphTensor
 from schubmult.rings.crystal_tensor_ring import CrystalTensorRing
+from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute
 
 # IS THIS ASSOCIATIVE?
 # need associativity
@@ -10,8 +11,8 @@ rc_ring = RCGraphRing()
 
 def hom3(rc):
     from schubmult import FA, ASx, SchubertBasis
-    #from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
-    if isinstance(rc, RCGraph):
+    #from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute, rc_ring.from_dict
+    if isinstance(rc, RCGraphCrystalChute):
         #return (ASx@FA)(r,rc.length_vector))
         ring = ASx @ ASx
         #first = FA(*rc.length_vector).change_basis(SchubertBasis).get()
@@ -23,21 +24,21 @@ def hom3(rc):
 
 def hom_rc(elem):
     from schubmult import FA, ASx, SchubertBasis
-    #from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
+    #from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute, rc_ring.from_dict
     ring = RCGraphRing()
     ret = 0
     for key, val in elem.items():
-        ret+=val * rc_ring.from_dict(dict.fromkeys({RCGraph.principal_rc(*key)},1))
+        ret+=val * rc_ring.from_dict(dict.fromkeys({RCGraphCrystalChute.principal_rc(*key)},1))
     return ret
 
 
 def hom(rc):
     from schubmult import FA, ASx, SchubertBasis
     from schubmult.rings import TensorRing
-    #from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
+    #from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute, rc_ring.from_dict
     ring = TensorRing(ASx@FA, rc_ring)
 
-    if isinstance(rc, RCGraph):
+    if isinstance(rc, RCGraphCrystalChute):
         #return (ASx@FA)(r,rc.length_vector))
         # print(f"{rc.length_vector} {tuple(rc)=}")
         #first = FA(*rc.length_vector).change_basis(SchubertBasis).get()
@@ -54,10 +55,10 @@ def hom(rc):
 # def hom(rc):
 #     from schubmult import FA, ASx, SchubertBasis
 #     from schubmult.rings import TensorRing
-#     from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
+#     from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute, rc_ring.from_dict
 #     ring = TensorRing(ASx, rc_ring.from_dict())
 
-#     if isinstance(rc, RCGraph):
+#     if isinstance(rc, RCGraphCrystalChute):
 #         #return (ASx@FA)(r,rc.length_vector))
 #         # print(f"{rc.length_vector} {tuple(rc)=}")
 #         #first = FA(*rc.length_vector).change_basis(SchubertBasis).get()
@@ -74,8 +75,8 @@ def hom(rc):
 
 def fa_hom(rc):
     from schubmult import FA, ASx, SchubertBasis
-    # from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
-    if isinstance(rc, RCGraph):
+    # from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute, rc_ring.from_dict
+    if isinstance(rc, RCGraphCrystalChute):
         #return (ASx@FA)(r,rc.length_vector))
         ring = FA @ (ASx@ASx)
         first = FA(*rc.length_vector).change_basis(SchubertBasis)
@@ -89,8 +90,8 @@ def fa_hom(rc):
 
 def hom_cop(rc):
     from schubmult import FA, ASx, SchubertBasis
-    # from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
-    if isinstance(rc, RCGraph):
+    # from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute, rc_ring.from_dict
+    if isinstance(rc, RCGraphCrystalChute):
         #return (ASx@FA)(r,rc.length_vector))
         ring = ASx @ (ASx@ASx)
         first = FA(*rc.length_vector).change_basis(SchubertBasis)
@@ -104,12 +105,12 @@ def hom_cop(rc):
 
 def single_rc(a):
     if a == 0:
-        return RCGraph(((),))
-    return RCGraph([tuple(range(a, 0, -1))])
+        return RCGraphCrystalChute(((),))
+    return RCGraphCrystalChute([tuple(range(a, 0, -1))])
 
 def RC(*seq):
-    from schubmult.rings.rc_graph import RCGraph
-    res = rc_ring.from_dict({RCGraph(): 1})
+    from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute
+    res = rc_ring.from_dict({RCGraphCrystalChute(): 1})
     for a in seq:
         res = res * single_rc(a)
     return res
@@ -122,7 +123,7 @@ def csym_rc(*weight):
             buildup.append(())
         else:
             buildup.append(tuple(range(a+i, i, -1)))
-    return rc_ring.from_dict({RCGraph(buildup): 1})
+    return rc_ring.from_dict({RCGraphCrystalChute(buildup): 1})
 
 if __name__ == "__main__":
     # test module functionality
@@ -132,7 +133,7 @@ if __name__ == "__main__":
     from schubmult import FA, ASx, Permutation, SchubertBasis, WordBasis, uncode
     from schubmult.abc import x
     from schubmult.rings import MonomialBasis, PolynomialAlgebra, SchubertPolyBasis
-    from schubmult.rings.rc_graph import RCGraph
+    from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute
     from schubmult.utils.perm_utils import artin_sequences
 
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 3
@@ -168,8 +169,8 @@ if __name__ == "__main__":
     #     mod = 0
     #     print(perm)
     #     for (perm1, perm2), v in bob.items():
-    #         rc1 = rc_ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(perm1[0], perm1[1]),1))
-    #         rc2 = rc_ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(perm2[0], perm2[1]),1))
+    #         rc1 = rc_ring.from_dict(dict.fromkeys(RCGraphCrystalChute.all_rc_graphs(perm1[0], perm1[1]),1))
+    #         rc2 = rc_ring.from_dict(dict.fromkeys(RCGraphCrystalChute.all_rc_graphs(perm2[0], perm2[1]),1))
     #         print(f"{perm1=} {perm2=} {v=}")
     #         print(v * (rc1 * rc2))
     #         mod = v * (rc1 * rc2)
@@ -179,14 +180,14 @@ if __name__ == "__main__":
 
     #for deg in range((n*(n-1))//2+1):
     # for seq in all_fa_degree(deg, len1):
-    #     g1 = FA(*seq[:3]) * RCGraph()
-    #     g2 = FA(*seq[3:]) * RCGraph()
+    #     g1 = FA(*seq[:3]) * RCGraphCrystalChute()
+    #     g2 = FA(*seq[3:]) * RCGraphCrystalChute()
     #     print(g1 * g2)
     #     print(FA(*seq).change_basis(SchubertBasis))
 
     # for perm in perms:
     #     print(f"{perm=}")
-    #     arcs = RCGraph.all_rc_graphs(perm)
+    #     arcs = RCGraphCrystalChute.all_rc_graphs(perm)
     #     rcs = {}
     #     for rc in arcs:
     #         for i in range(len(perm.trimcode)):
@@ -197,7 +198,7 @@ if __name__ == "__main__":
     #             pretty_print(rc)
     #     for i, pdict in  rcs.items():
     #         for perm0, st in pdict.items():
-    #             assert st == RCGraph.all_rc_graphs(perm0, len(perm.trimcode)-1), f"{i=} {perm0=} {st=} {RCGraph.all_rc_graphs(perm0, len(perm.trimcode)-1)=}"
+    #             assert st == RCGraphCrystalChute.all_rc_graphs(perm0, len(perm.trimcode)-1), f"{i=} {perm0=} {st=} {RCGraphCrystalChute.all_rc_graphs(perm0, len(perm.trimcode)-1)=}"
     # exit()
     #     mod = 0
     #     wrd = ASx(perm, len1).change_basis(WordBasis)
@@ -205,8 +206,8 @@ if __name__ == "__main__":
     #         if w in dct:
     #             mod += hom(v * dct[w])
     #     print(mod)
-    # rc1 = RCGraph([(1,)])
-    # rc2 = RCGraph([(3,),(2,)])
+    # rc1 = RCGraphCrystalChute([(1,)])
+    # rc2 = RCGraphCrystalChute([(3,),(2,)])
     # print(rc1)
     # print(rc2)
     # print(rc1 * rc2)
@@ -216,11 +217,11 @@ if __name__ == "__main__":
     # for perm in perms:
     #     elem = ASx(perm).change_basis(WordBasis)
     #     mod = 0
-    #     rc = next(iter(RCGraph.all_rc_graphs(perm)))
+    #     rc = next(iter(RCGraphCrystalChute.all_rc_graphs(perm)))
     #     print(rc)
     #     print(elem)
     #     for w, v in elem.items():
-    #         elem2 = rc_ring.from_dict({RCGraph(): v})
+    #         elem2 = rc_ring.from_dict({RCGraphCrystalChute(): v})
     #         index = 0
     #         for a in w:
     #             elem2 =  elem2*csym_rc(*list((rc.length_vector[index:index+a])))
@@ -241,13 +242,13 @@ if __name__ == "__main__":
             return True
         for row in range(1, len(graph) - 1):
             new_rc = graph.raising_operator(row)
-            if new_rc:
+            if new_rc and len(new_rc[-1]) == 0:
                 print("Nontrivial raising operator")
                 rc2 = graph.zero_out_last_row()
                 new_rc2 = rc2.raising_operator(row)
                 assert new_rc2 == new_rc.zero_out_last_row(), f"Raising operator doesn't commute with zeroing last row {graph=} {row=} {new_rc=} {rc2=} {new_rc2=}"
             new_rc = graph.lowering_operator(row)
-            if new_rc:
+            if new_rc  and len(new_rc[-1]) == 0:
                 print("Nontrivial lowering operator")
                 rc2 = graph.zero_out_last_row()
                 new_rc2 = rc2.lowering_operator(row)
@@ -274,12 +275,12 @@ if __name__ == "__main__":
                     
         for row in range(1, tensor.crystal_length() - 1):
             new_rc = tensor.raising_operator(row)
-            if new_rc:
+            if new_rc and len(new_rc.factors[0][-1])  and len(new_rc.factors[1][-1]) == 0:
                 print("Nontrivial raising operator")
                 new_rc2 = tensor0.raising_operator(row)
                 assert new_rc2 == zero_tensor(new_rc), f"Raising operator doesn't commute with zeroing last row {graph1=} {graph2=} {row=} {tring(zero_tensor(new_rc).factors)=} {tring(new_rc2.factors)=}"
             new_rc = tensor.lowering_operator(row)
-            if new_rc:
+            if new_rc and len(new_rc.factors[0][-1]) == 0 and len(new_rc.factors[1][-1]) == 0:
                 print("Nontrivial lowering operator")
                 new_rc2 = tensor0.lowering_operator(row)
                 assert new_rc2 == zero_tensor(new_rc), f"Lowering operator doesn't commute with zeroing last row {graph1=} {graph2=} {row=} {tring(zero_tensor(new_rc).factors)=} {tring(new_rc2.factors)=}"
@@ -294,8 +295,8 @@ if __name__ == "__main__":
             if perm2.inv == 0:
                 continue
             for len1 in range(max(len(perm.trimcode),len(perm2.trimcode)),n):
-                graphs1 = RCGraph.all_rc_graphs(perm, len1)
-                graphs2 = RCGraph.all_rc_graphs(perm2, len1)
+                graphs1 = RCGraphCrystalChute.all_rc_graphs(perm, len1)
+                graphs2 = RCGraphCrystalChute.all_rc_graphs(perm2, len1)
                 for g in graphs1:
                     if g.length_vector[-1] != 0:
                         continue
@@ -303,7 +304,9 @@ if __name__ == "__main__":
                         if g2.length_vector[-1] != 0:
                             continue
                         pretty_print(tring((g, g2)))
-                        print(f"{test_hom_crystal_tensor(g,g2)=}")
+                        print(f"{test_hom_crystal(g)=}")
+                        print(f"{test_hom_crystal(g2)=}")
+                        #print(f"{test_hom_crystal_tensor(g,g2)=}")
                 # for row in range(1, len1):
                 #     print(f"Row {row=}")
                 #     if g == g.crystal_reflection(row):
@@ -314,12 +317,12 @@ if __name__ == "__main__":
             #     if perm2.inv == 0:
             #         continue
             #     for len2 in range(len(perm2.trimcode),n):
-            #         graphs2 = RCGraph.all_rc_graphs(perm2, len2)
+            #         graphs2 = RCGraphCrystalChute.all_rc_graphs(perm2, len2)
             #         for perm3 in perms:
             #             if perm3.inv == 0:
             #                 continue
             #             for len3 in range(len(perm3.trimcode), n):
-            #                 graphs3 = RCGraph.all_rc_graphs(perm3, len3)
+            #                 graphs3 = RCGraphCrystalChute.all_rc_graphs(perm3, len3)
             #                 for g31 in graphs3:
             #                     for g32 in graphs2:
             #                         for g33 in graphs1:

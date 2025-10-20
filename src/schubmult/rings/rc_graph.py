@@ -278,8 +278,8 @@ class RCGraph(Printable, tuple, CrystalGraph):
 
     def rowrange(self, start, end):
         if start == end:
-            return RCGraph(())
-        return RCGraph([tuple([a - start for a in row]) for row in self[start:end]])
+            return type(self)(())
+        return type(self)([tuple([a - start for a in row]) for row in self[start:end]])
 
     def polyvalue(self, x, y=None):
         ret = S.One
@@ -308,11 +308,11 @@ class RCGraph(Printable, tuple, CrystalGraph):
         elif (perm, length) in cls._graph_cache:
             return cls._graph_cache[(perm, length)]
         if perm.inv == 0:
-            return {RCGraph([()] * length if length > 0 else [])}
+            return {cls([()] * length if length > 0 else [])}
         if len(perm.trimcode) == 1:
-            nrc = RCGraph((tuple(range(perm.code[0], 0, -1)),))
+            nrc = cls((tuple(range(perm.code[0], 0, -1)),))
             if len(nrc) < length:
-                nrc = RCGraph((*nrc, *tuple([()] * (length - len(nrc)))))
+                nrc = cls((*nrc, *tuple([()] * (length - len(nrc)))))
                 assert len(nrc) == length
             return {nrc}
         ret = set()
@@ -328,7 +328,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
             else:
                 oldset = cls.all_rc_graphs(new_perm, length=length - 1)
             for old_rc in oldset:
-                nrc = RCGraph([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in old_rc]])
+                nrc = cls([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in old_rc]])
                 assert nrc.perm == perm
                 assert len(nrc) == length
                 ret.add(nrc)
@@ -339,7 +339,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
         return ret
 
     def extend(self, extra_rows):
-        return RCGraph([*self, *tuple([()] * extra_rows)])
+        return type(self)([*self, *tuple([()] * extra_rows)])
 
     def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True):
         working_rc = self
@@ -440,7 +440,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
         # row is descent
         # inserting times
 
-        working_rc = RCGraph([*self])
+        working_rc = type(self)([*self])
         if len(rows) == 0:
             if return_reflections:
                 return working_rc, ()
@@ -492,14 +492,14 @@ class RCGraph(Printable, tuple, CrystalGraph):
             new_row.reverse()
             newrc.append(tuple(new_row))
             i += 1
-        new_rc = RCGraph(newrc)
+        new_rc = type(self)(newrc)
 
         assert new_rc.perm == ~self.perm
         return new_rc
 
     @classmethod
     def one_row(cls, p):
-        return RCGraph((tuple(range(p, 0, -1)),))
+        return cls((tuple(range(p, 0, -1)),))
 
     def weak_order_leq(self, other):
         for i in range(self.perm.inv):
@@ -527,7 +527,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
                 while index < len(new_row) and new_row[index] > i + j - 1:
                     index += 1
             new_row.insert(index, i + j - 1)
-        return RCGraph([*self[: i - 1], tuple(new_row), *self[i:]])
+        return type(self)([*self[: i - 1], tuple(new_row), *self[i:]])
 
     # # THIS IS KEY
     # # EXCHANGE PROPERTY GOES TO UNIQUE PERMUTATION
@@ -543,7 +543,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
             raise ValueError("Last row not empty")
         if self.perm.inv == 0:
             return self.rowrange(0, len(self) - 1)
-        interim = RCGraph([*self])
+        interim = type(self)([*self])
 
         diff_rows = []
         descs = []
@@ -554,7 +554,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
             interim, row = interim.exchange_property(len(interim.perm.trimcode), return_row=True)
             diff_rows += [row]
 
-        interim2 = RCGraph([*interim[:-1], tuple(sorted(descs, reverse=True))])
+        interim2 = type(self)([*interim[:-1], tuple(sorted(descs, reverse=True))])
         interim = interim2.kogan_kumar_insert(len(self.perm.trimcode) - extend_amount, diff_rows)
 
         return interim.rowrange(0, len(self) - 1)
@@ -626,7 +626,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
             return None
         new_row_i = [s for s in row_i if s != b]
         new_row_ip1 = sorted([b - t, *row_ip1], reverse=True)
-        ret_rc = RCGraph([*self[:row-1], tuple(new_row_i), tuple(new_row_ip1), *self[row+1:]])
+        ret_rc = type(self)([*self[:row-1], tuple(new_row_i), tuple(new_row_ip1), *self[row+1:]])
         if ret_rc.perm != self.perm:
             return None
         return ret_rc
@@ -641,15 +641,8 @@ class RCGraph(Printable, tuple, CrystalGraph):
 
     #     Definition 5.6 ([Assa]). For ρ a reduced expression, define the weak insertion tableau Pb(ρ) by Pb(ρ) =
     # lift(P(ρ)), where P(ρ) is the insertion tableau under the Edelman–Greene insertion. In addition, define the
-    # weak recording tableau Qb(ρ) to be the unique standard key tableau of the same key shape as Pb(ρ) such tha
+    # weak recording tableau Qb(ρ) to be the unique standard key tableau of the same key shape as Pb(ρ) such that
 
-    #Proposition 2.57. b ⊗ b
-    # ′ ∈ Y(B ⊗ B′
-    # ) if and only if b
-    # ′ ∈ Y(B′
-    # ) and εi(b) ≤ ϕi(b
-    # ′
-    # ) for all i ∈ I.
 
     #     Theorem 5.11. The operators fi and ei for 1 6 i < n define a Demazure crystal structure on RFC(w).
     # More precisely,
@@ -703,7 +696,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
             return None
         new_row_ip1 = [let for let in row_ip1 if let != a]
         new_row_i = sorted([a + s, *row_i], reverse=True)
-        ret_rc = RCGraph([*self[:row-1], tuple(new_row_i), tuple(new_row_ip1), *self[row+1:]])
+        ret_rc = type(self)([*self[:row-1], tuple(new_row_i), tuple(new_row_ip1), *self[row+1:]])
         if ret_rc.perm != self.perm:
             return None
         return ret_rc
@@ -711,13 +704,13 @@ class RCGraph(Printable, tuple, CrystalGraph):
     def vertical_cut(self, row):
         if row < 0 or row > len(self):
             raise ValueError("Row out of range")
-        front = RCGraph([*self[:row]])
+        front = type(self)([*self[:row]])
         front = front.extend(max(len(self),len(front.perm.trimcode)) - row)
         flen = len(front)
         for _ in range(flen - row):
             front = front.zero_out_last_row()
         if row == len(self):
-            back = RCGraph()
+            back = type(self)()
         else:
             back = self.rowrange(row, len(self))
         return (front, back)
@@ -725,7 +718,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
     def right_zero_act(self):
         # NOTE THAT THIS IS STILL USING THE OLD METHOD
         if self.perm.inv == 0:
-            return {RCGraph([*self, ()])}
+            return {type(self)([*self, ()])}
 
         if self in RCGraph._z_cache:
             return RCGraph._z_cache[self]
@@ -735,7 +728,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
         rc_set = set()
 
         for perm, _ in up_perms.keys():
-            for rc in RCGraph.all_rc_graphs(perm, len(self) + 1, weight=(*self.length_vector, 0)):
+            for rc in type(self).all_rc_graphs(perm, len(self) + 1, weight=(*self.length_vector, 0)):
                 if rc.zero_out_last_row() == self:
                     rc_set.add(rc)
 
@@ -805,7 +798,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
     @cache
     def prod_with_rc(self, other):
         if self.perm.inv == 0:
-            return {RCGraph([*self, *other.shiftup(len(self))]): 1}
+            return {type(self)([*self, *other.shiftup(len(self))]): 1}
         num_zeros = max(len(other), len(other.perm))
         assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
         base_rc = self
@@ -819,7 +812,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
         ret_module = {}
 
         for rc, coeff in buildup_module.items():
-            new_rc = RCGraph([*rc[: len(self)], *other.shiftup(len(self))])
+            new_rc = type(rc)([*rc[: len(self)], *other.shiftup(len(self))])
             assert len(new_rc) == len(self) + len(other)
             if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(new_rc):
                 ret_module = add_perm_dict(ret_module, {new_rc: coeff})
@@ -850,7 +843,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
             perm2 = k[0]
             new_row = [pm[i] for i in range(max(len(pm), len(perm2))) if pm[i] == perm2[i + 1]]
             new_row.sort(reverse=True)
-            nrc = RCGraph([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])
+            nrc = type(self)([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])
             assert nrc.perm == perm2
             ret.add(nrc)
         assert ret == self.iterative_act(p), f"{ret=}\n{self.iterative_act(p)=}"
@@ -859,8 +852,8 @@ class RCGraph(Printable, tuple, CrystalGraph):
     def iterative_act(self, p, insert=True):
         if p == 0:
             if insert:
-                return {RCGraph([(), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])}
-            return {RCGraph(self)}
+                return {type(self)([(), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])}
+            return {type(self)([*self])}
         last = self.iterative_act(p - 1, insert=insert)
         ret = set()
         for rc in last:
@@ -878,7 +871,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
                     if max((~new_perm).descents()) + 1 > len(rc):
                         continue
                     new_top_row = [i, *rc[0]]
-                    new_rc = RCGraph([tuple(new_top_row), *rc[1:]])
+                    new_rc = type(rc)([tuple(new_top_row), *rc[1:]])
                     ret.add(new_rc)
         return ret
 
@@ -945,8 +938,8 @@ class RCGraph(Printable, tuple, CrystalGraph):
             printer = StrPrinter()
         # Handle zero dimensions:
         if self.rows == 1:
-            return "RCGraph([%s])" % self.table(printer, rowsep=",\n")  # noqa: UP031
-        return "RCGraph([\n%s])" % self.table(printer, rowsep=",\n")  # noqa: UP031
+            return type(self).__name__ + "([%s])" % self.table(printer, rowsep=",\n")  # noqa: UP031
+        return type(self).__name__ + "([\n%s])" % self.table(printer, rowsep=",\n")  # noqa: UP031
 
     def table(self, printer, rowstart="|", rowend="|", rowsep="\n", colsep=" ", align="right"):
         table: list[list[str]] = []
