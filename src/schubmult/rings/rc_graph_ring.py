@@ -321,10 +321,11 @@ class RCGraphRing(BaseSchubertRing):
                 # a_elem = ASx(key_rc.perm, len(key_rc)).coproduct()
                 if key_rc.length_vector[0] < elem.length_vector[0]:
                     bad_coprod = self(key_rc).coproduct()
+                    ret_elem -= bad_coprod
                 else:
                     bad_coprod = self(RCGraph.principal_rc(key_rc.perm,len(key_rc))).coproduct()
-                for (rc1_bad, rc2_bad), cff2 in bad_coprod.items():
-                    ret_elem -= cff2 * tring.new(*min([(rc1, rc2) for (rc1, rc2) in ret_elem.keys() if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm]))
+                    for (rc1_bad, rc2_bad), cff2 in bad_coprod.items():
+                        ret_elem -= cff2 * tring.new(*min([(rc1, rc2) for (rc1, rc2) in ret_elem.keys() if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm]))
 
         # test_elem = tring.zero
         # for (rc1, rc2), v in ret_elem.items():
