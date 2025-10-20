@@ -171,7 +171,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
             raise ValueError("i must be less than j")
         if self.perm[i] < self.perm[j]:
             raise ValueError("Not an inversion")
-        for index in len(self.perm_word):
+        for index in range(len(self.perm_word)):
             if self.left_to_right_inversion(index) == (i + 1, j + 1):
                 return self.left_to_right_inversion_coords(index)[0]
         raise ValueError("Could not find inversion")

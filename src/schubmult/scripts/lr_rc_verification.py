@@ -12,6 +12,7 @@ from math import perm
 from multiprocessing import Event, Lock, Manager, Process, cpu_count
 
 from joblib import Parallel, delayed
+from sympy import pretty_print
 
 
 def reload_modules(dct, n_jobs=None):
@@ -87,7 +88,7 @@ def safe_save_recording(obj, filename):
     try:
         # keys are permutations, values are bools
         with open(temp_json, "w") as f:
-            json.dump({repr(tuple([tuple(a) for a in k])): v for k, v in obj.items()}, f)
+            json.dump({repr(tuple((tuple(tuple(b) for b in k[0]), tuple(k[1])))): v for k, v in obj.items()}, f)
         if os.path.exists(json_file):
             shutil.copy2(json_file, f"{json_file}.backup")
         os.replace(temp_json, json_file)
@@ -188,7 +189,7 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 
 
 def worker(shared_recording_dict, lock, task_queue):
-    from schubmult.rings.rc_graph_ring import RCGraphRing
+    from schubmult.rings.rc_graph_ring import RCGraphRing, RestrictedRCGraphTensorRing
 
     def hom(rc):
         from schubmult import FA, ASx
@@ -202,15 +203,17 @@ def worker(shared_recording_dict, lock, task_queue):
         return ret
 
     rc_ring = RCGraphRing()
+    tring = RestrictedRCGraphTensorRing(rc_ring, rc_ring)
+    
     while True:
         try:
             key = task_queue.get(timeout=2)
-            (g31, g32, g33, (len1, len2, len3)) = key
+            (g31, g32), (len1, len2) = key
             g1 = rc_ring(g31.extend(len1 - len(g31)))
             g2 = rc_ring(g32.extend(len2 - len(g32)))
             # g3 = rc_ring(g33.extend(len3 - len(g33)))
         except Exception:
-            break  # queue empty, exit
+            break
         with lock:
             if key in shared_recording_dict:
                 if shared_recording_dict[key]:
@@ -221,18 +224,31 @@ def worker(shared_recording_dict, lock, task_queue):
         g_ = (g1 * g2).coproduct()
         diff = g - g_
         success = True
+        def sym_quo(ring_elem):
+            result = tring.zero
+            for (rc1, rc2), v in ring_elem.items():
+                result += v * tring.new(*tuple(sorted([rc2, rc1])))
+            return result
+
+        diff = sym_quo(diff)
         try:
             assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
         except AssertionError as e:
-            print(f"FAILURE {g1, g2}")
+            print(f"FAILURE {tuple(g1), tuple(g2)}")
             # print(e)
+            print("Product of coproducts:")
+            pretty_print(g, wrap_line=False)
+            print("Coproduct of product:")
+            pretty_print(g_, wrap_line=False)
+            print("Difference:")
+            pretty_print(diff, wrap_line=False)
             # print(f"{g=}")
             # print(f"{g_=}")
             success = False
             with lock:
                 shared_recording_dict[key] = False
-                     
-        #print("Success {(g1, g2, g3)}")
+
+        print(f"Success {(tuple(g1), tuple(g2))}")
         # df = hom(g1) * (hom(g2) * hom(g3)) - hom(g)
         # try:
         #     assert all(v == 0 for k, v in df.items()), f"{tuple(df.values())=}"
@@ -315,7 +331,7 @@ def main():
                                             g1 = g31
                                             g2 = g32
                                             #g3 = g33
-                                            task_queue.put((g1, g2, (), (len1, len2, 0)))
+                                            task_queue.put(((g1, g2), (len1, len2)))
         print(f"Enqueued {task_queue.qsize()} tasks for n={n}.")
         # Start fixed number of workers
         workers = []
@@ -332,10 +348,9 @@ def main():
         recording_saver_proc.join()
         print("Run finished.")
         if any(v is False for v in shared_recording_dict.values()):
-            print("Failures:")
+            print("Results:")
             for k, v in shared_recording_dict.items():
-                if v is False:
-                    print(k)
+                print(f"{k}: {v}")
         else:
             print("All verified successfully!")
 
