@@ -295,23 +295,23 @@ def worker(nn, shared_recording_dict, lock, task_queue):
 
     while True:
         try:
-            perm, length = task_queue.get(timeout=2)
+            rc = task_queue.get(timeout=2)
         except Exception:
             break  # queue empty, exit
         with lock:
-            if (perm, length) in shared_recording_dict:
-                if shared_recording_dict[(perm, length)]:
-                    print(f"{perm, length} already verified, returning.")
+            if rc in shared_recording_dict:
+                if shared_recording_dict[rc]:
+                    print(f"{rc} already verified, returning.")
                     continue
-                print(f"Previous failure on {perm, length}, will retry.")
+                print(f"Previous failure on {rc}, will retry.")
         try:
-            try_mod = try_lr_module(perm, length)
+            try_mod = ring(rc).coproduct()
         except Exception as e:
             import traceback
             print(f"Error computing coproduct_on_basis for {rc}")
             traceback.print_exc()
             with lock:
-                shared_recording_dict[(perm, length)] = False
+                shared_recording_dict[rc] = False
             continue
         pretty_print(try_mod)
         elem = 0
@@ -322,24 +322,24 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             # print(f"FYI {perm.trimcode} 2")
             # print(rc2)
             elem += coeff * (ASx @ ASx)(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))))
-        check = ASx(perm, length).coproduct()
+        check = ASx(rc.perm, len(rc)).coproduct()
         try:
             assert all(v == 0 for v in (elem - check).values())
         except AssertionError:
-            print(f"Fail on {perm, length} at ", time.ctime())
+            print(f"Fail on {rc} at ", time.ctime())
             print(f"{elem=}")
             print(f"{check=}")
             print(f"{(elem - check)=}")
             with lock:
-                shared_recording_dict[(perm, length)] = False
+                shared_recording_dict[rc] = False
             continue
         del try_mod
         del elem
         del check
         gc.collect()
         with lock:
-            shared_recording_dict[(perm, length)] = True
-        print(f"Success {perm, length} at ", time.ctime())
+            shared_recording_dict[rc] = True
+        print(f"Success {rc} at ", time.ctime())
 
 
 def main():
@@ -387,7 +387,9 @@ def main():
         task_queue = manager.Queue()
         for perm in perms:
             for length in range(len(perm.trimcode), n):
-                task_queue.put((perm, length))
+                for rc in RCGraph.all_rc_graphs(perm, length):
+                    task_queue.put(rc)
+                
 
         # Start fixed number of workers
         workers = []

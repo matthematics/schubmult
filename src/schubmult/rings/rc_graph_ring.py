@@ -264,32 +264,58 @@ class RCGraphRing(BaseSchubertRing):
 
 
     def coproduct_on_basis(self, elem):
+        from schubmult.perm_lib import uncode
         tring = CrystalTensorRing(self, self)
         # trivial principal case
         if elem.perm.inv == 0:
             return tring((elem, elem))
+        cprod = tring.zero
+
+        p = elem.length_vector[-1]
+        for j in range(p + 1):
+            cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
         if len(elem) == 1:
-            p = elem.length_vector[0]
-            cprod = tring.zero
-            for j in range(p + 1):
-                cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
             return cprod
-        upper_elem = elem.rowrange(1, len(elem))
-        upper_coprod = self.coproduct_on_basis(upper_elem)
-        first_row = RCGraph([*elem[0]]).extend(len(elem) - 1)
-        # commuting h_i's
-        # cycles = first_row.perm.get_cycles()
-        # h = []
-        # for c in cycles:
-        #     h.append((len(c) - 1,max(c)))
-        # what is an h coproduct?
-        a_coprod_first_row = ASx(first_row.perm, len(elem)).coproduct()
-        first_row_coprod = tring.zero
-        for ((perm1, _), (perm2, _)), coeff in a_coprod_first_row.items():
-            fr1 = RCGraph.all_rc_graphs(perm1, len(elem), weight=(perm1.inv, *first_row.length_vector[1:]))
-            fr2 = RCGraph.all_rc_graphs(perm2, len(first_row), weight=(perm2.inv, *first_row.length_vector[1:]))
-            first_row_coprod += coeff * tring((fr1, fr2))
-        return first_row_coprod * upper_coprod # WRONG
+        # if we can multiply by zero we rule the world
+
+        lower_elem = elem.vertical_cut(len(elem) - 1)[0]
+        lower_coprod = self.coproduct_on_basis(lower_elem)
+        # # commuting h_i's
+        # # cycles = first_row.perm.get_cycles()
+        # # h = []
+        # # for c in cycles:
+        # #     h.append((len(c) - 1,max(c)))
+        # # what is an h coproduct?
+        # a_coprod_first_row = ASx(first_row.perm, len(elem)).coproduct()
+        # first_row_coprod = tring.zero
+        # for ((perm1, _), (perm2, _)), coeff in a_coprod_first_row.items():
+        #     fr1 = RCGraph.all_rc_graphs(perm1, len(elem), weight=(perm1.inv, *first_row.length_vector[1:]))
+        #     fr2 = RCGraph.all_rc_graphs(perm2, len(first_row), weight=(perm2.inv, *first_row.length_vector[1:]))
+        #     first_row_coprod += coeff * tring((fr1, fr2))
+        # return first_row_coprod * upper_coprod # WRONG
+
+        candidate_coprod = lower_coprod * cprod
+
+        # this will have extra terms we need to remove
+        ret_elem = candidate_coprod
+
+        up_a_elem = self(lower_elem) * self(RCGraph.one_row(p))
+
+        def _trim_and_zero(rc):
+            rc = rc.rowrange(0, len(rc) - 1).extend(1)
+            return rc.zero_out_last_row()
+
+        for key_rc, coeff in up_a_elem.items():
+            if key_rc.perm != elem.perm:
+                assert coeff == 1
+                bad_coprod = self(RCGraph.principal_rc(key_rc.perm, len(elem))).coproduct()
+                for (rc1_bad, rc2_bad), cff2 in bad_coprod.items():
+                    for (rc1, rc2), v in ret_elem.items():
+                        if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
+                            ret_elem -= tring((rc1, rc2))
+                            break
+        ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(elem.perm) and rc2.perm.bruhat_leq(elem.perm)})
+        return ret_elem
 
     def mul(self, a, b):
         # a, b are RCGraphRingElemen
