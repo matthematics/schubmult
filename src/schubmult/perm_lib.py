@@ -337,13 +337,15 @@ class Permutation:
     def minimal_dominant_above(self):
         return uncode(theta(self))
 
-    def foundational_root(self, k):
-        mx = None
-        for i in range(k + 1, len(self)):
+    @property
+    def foundational_root(self):
+        if self.inv == 0:
+            return None
+        mx = -1
+        k = max(self.descents()) + 1
+        for i in range(k + 1, len(self) + 1):
             if self[k - 1] > self[i - 1]:
                 mx = i
-        if mx is None:
-            return None
         return (k, mx)
 
 
