@@ -38,6 +38,7 @@ class CrystalTensorRingElement(TensorRingElement, CrystalGraph):
     so existing repo tie-breaking is preserved.
     """
 
+
     # --- φ / ε : max over support of per-basis two-factor phi/epsilon ---
     def phi(self, index: int) -> int:
         if len(self) == 0:

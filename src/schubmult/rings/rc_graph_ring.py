@@ -56,7 +56,7 @@ class RCGraphRingElement(BaseSchubertElement, CrystalGraph):
         return res
 
     def coproduct(self):
-        tring = self.ring @ self.ring
+        tring = CrystalTensorRing(self.ring, self.ring)
         res = tring.zero
         for rc_graph, coeff in self.items():
             res += coeff * self.ring.coproduct_on_basis(rc_graph)
@@ -264,7 +264,6 @@ class RCGraphRing(BaseSchubertRing):
 
 
     def coproduct_on_basis(self, elem):
-        from schubmult.perm_lib import uncode
         tring = CrystalTensorRing(self, self)
         # trivial principal case
         if elem.perm.inv == 0:
@@ -314,7 +313,14 @@ class RCGraphRing(BaseSchubertRing):
                         if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
                             ret_elem -= tring((rc1, rc2))
                             break
+
+        # test_elem = tring.zero
+        # for (rc1, rc2), v in ret_elem.items():
+        #     test_elem += v * tring((_trim_and_zero(rc1), _trim_and_zero(rc2)))
+        # assert test_elem == lower_elem, f"Coproduct check failed for {elem=}: got {test_elem=}, expected {lower_elem=}"
+
         ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(elem.perm) and rc2.perm.bruhat_leq(elem.perm)})
+
         return ret_elem
 
     def mul(self, a, b):

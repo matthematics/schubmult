@@ -60,9 +60,14 @@ class CrystalGraph:
 
 
 class CrystalGraphTensor(CrystalGraph):
-    def __init__(self, factors):
-        self.factors = factors
+    def __init__(self, *factors):
+        if len(factors) == 1:
+            self.factors = factors[0]
+        else:
+            self.factors = factors
 
+    def __eq__(self, other):
+        return type(self) is type(other) and self.factors == other.factors
 
     def crystal_length(self):
         return max(factor.crystal_length() for factor in self.factors)
@@ -75,10 +80,22 @@ class CrystalGraphTensor(CrystalGraph):
 
     def lowering_operator(self, index):
         if self.factors[0].epsilon(index) < self.factors[1].phi(index):
-            return CrystalGraphTensor(self.factors[0], self.factors[1].lowering_operator(index))
-        return CrystalGraphTensor(self.factors[0].lowering_operator(index), self.factors[1])
+            tz = CrystalGraphTensor(self.factors[0], self.factors[1].lowering_operator(index))
+            if tz.factors[1] is None:
+                return None
+            return tz
+        tz = CrystalGraphTensor(self.factors[0].lowering_operator(index), self.factors[1])
+        if tz.factors[0] is None:
+            return None
+        return tz
 
     def raising_operator(self, index):
         if self.factors[0].epsilon(index) > self.factors[1].phi(index):
-            return CrystalGraphTensor(self.factors[0].raising_operator(index), self.factors[1])
-        return CrystalGraphTensor(self.factors[0], self.factors[1].raising_operator(index))
+            tz = CrystalGraphTensor(self.factors[0].raising_operator(index), self.factors[1])
+            if tz.factors[0] is None:
+                return None
+            return tz
+        tz = CrystalGraphTensor(self.factors[0], self.factors[1].raising_operator(index))
+        if tz.factors[1] is None:
+            return None
+        return tz

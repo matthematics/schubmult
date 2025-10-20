@@ -1,6 +1,8 @@
 from sympy import init_printing, pretty_print
 
 from schubmult.rings.rc_graph_ring import RCGraphRing
+from schubmult.rings.crystal_graph import CrystalGraphTensor
+from schubmult.rings.crystal_tensor_ring import CrystalTensorRing
 
 # IS THIS ASSOCIATIVE?
 # need associativity
@@ -251,14 +253,57 @@ if __name__ == "__main__":
                 new_rc2 = rc2.lowering_operator(row)
                 assert new_rc2 == new_rc.zero_out_last_row(), f"Lowering operator doesn't commute with zeroing last row {graph=} {row=} {new_rc=} {rc2=} {new_rc2=}"
         return True
+    
+    def zero_tensor(tensor):
+        from schubmult.rings.crystal_graph import CrystalGraphTensor
+        graph1, graph2 = tensor.factors
+        return CrystalGraphTensor(graph1.zero_out_last_row(), graph2.zero_out_last_row())
+    tring = CrystalTensorRing(rc_ring, rc_ring)
+    def test_hom_crystal_tensor(graph1, graph2):
+        from schubmult.rings.crystal_graph import CrystalGraphTensor
+        if len(graph1) == 0:
+            return True
+        if graph1.length_vector[-1] != 0 or graph2.length_vector[-1] != 0:
+            return True
+        gz1 = graph1.zero_out_last_row()
+        gz2 = graph2.zero_out_last_row()
 
+
+        tensor = CrystalGraphTensor(graph1, graph2)
+        tensor0 = CrystalGraphTensor(gz1, gz2)
+                    
+        for row in range(1, tensor.crystal_length() - 1):
+            new_rc = tensor.raising_operator(row)
+            if new_rc:
+                print("Nontrivial raising operator")
+                new_rc2 = tensor0.raising_operator(row)
+                assert new_rc2 == zero_tensor(new_rc), f"Raising operator doesn't commute with zeroing last row {graph1=} {graph2=} {row=} {tring(zero_tensor(new_rc).factors)=} {tring(new_rc2.factors)=}"
+            new_rc = tensor.lowering_operator(row)
+            if new_rc:
+                print("Nontrivial lowering operator")
+                new_rc2 = tensor0.lowering_operator(row)
+                assert new_rc2 == zero_tensor(new_rc), f"Lowering operator doesn't commute with zeroing last row {graph1=} {graph2=} {row=} {tring(zero_tensor(new_rc).factors)=} {tring(new_rc2.factors)=}"
+        return True
+
+    
+    
     for perm in perms:
-        for len1 in range(len(perm.trimcode),n):
-
-            graphs1 = RCGraph.all_rc_graphs(perm, len1)
-            for g in graphs1:
-                pretty_print(g)
-                print(f"{test_hom_crystal(g)=}")
+        if perm.inv == 0:
+            continue
+        for perm2 in perms:
+            if perm2.inv == 0:
+                continue
+            for len1 in range(max(len(perm.trimcode),len(perm2.trimcode)),n):
+                graphs1 = RCGraph.all_rc_graphs(perm, len1)
+                graphs2 = RCGraph.all_rc_graphs(perm2, len1)
+                for g in graphs1:
+                    if g.length_vector[-1] != 0:
+                        continue
+                    for g2 in graphs2:
+                        if g2.length_vector[-1] != 0:
+                            continue
+                        pretty_print(tring((g, g2)))
+                        print(f"{test_hom_crystal_tensor(g,g2)=}")
                 # for row in range(1, len1):
                 #     print(f"Row {row=}")
                 #     if g == g.crystal_reflection(row):
