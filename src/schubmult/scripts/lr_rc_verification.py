@@ -244,6 +244,7 @@ def worker(shared_recording_dict, lock, task_queue):
             success = False
             with lock:
                 shared_recording_dict[key] = False
+            raise SystemExit(1)
 
         #print(f"Success {(tuple(g1), tuple(g2))}")
         # df = hom(g1) * (hom(g2) * hom(g3)) - hom(g)

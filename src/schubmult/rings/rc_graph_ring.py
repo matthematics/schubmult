@@ -270,32 +270,47 @@ class RCGraphRing(BaseSchubertRing):
             res += tring.from_dict({(rc1, rc2): 1})
         return res
 
+    def _word_rc(self, word):
+        res = self(RCGraph([]))
+        for a in reversed(word):
+            res *= self(RCGraph.one_row(a))
+        return res
+    
+    def _word_cp(self, word):
+        tring = CrystalTensorRing(self, self)
+        res = tring.one
+        for a in word:
+            res *= self._one_row_cp(a)
+        return res
+
     def coproduct_on_basis(self, elem):
         # we have two coproducts: weight and schub
         from schubmult.rings.crystal_graph import CrystalGraphTensor
         tring = CrystalTensorRing(self, self)
 
-        a_coprod = ASx(elem.perm, len(elem)).coproduct()
+        a_elem = ASx(elem.perm, len(elem)).change_basis(WordBasis)
+        a_coprod = a_elem.coproduct()
+
+        r_a_coprod = tring.zero
+        for (word1, word2), coeff in a_coprod.items():
+            r_a_coprod += coeff * tring.ext_multiply(self._word_rc(word1), self._word_rc(word2))
 
         w_coprod = tring.one
 
         elem_hw, raise_seq = elem.to_highest_weight()
 
-        for letter in elem_hw.length_vector:
-            w_coprod *= self._one_row_cp(letter)
+        w_coprod = self._word_cp(elem_hw.length_vector)
         result = tring.zero
-        reserve_coprod = tring.one
 
-        for letter in elem.length_vector:
-            reserve_coprod *= self._one_row_cp(letter)
+        reserve_coprod = self._word_cp(elem.length_vector)
         cfs = {}
         for tensor in sorted(w_coprod.keys()):
             key = ((tensor[0].perm, len(tensor[0])), (tensor[1].perm, len(tensor[1])))
             if key not in cfs:
                 cfs[key] = 0
-            if key in a_coprod and cfs[key] < a_coprod[key]:
-                result += tring(tensor)
-                cfs[key] += 1
+            if key in a_coprod:# and cfs[key] < a_coprod[key]:
+                result += a_coprod[key] * tring(tensor)
+
         lower_result = tring.zero
         for tensor, coeff in result.items():
             assert coeff == 1
