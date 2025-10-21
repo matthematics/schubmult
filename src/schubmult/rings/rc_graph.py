@@ -589,7 +589,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
         beta = 0
         wt = []
         for i in range(len(self) - 1, 0, -1):
-            beta = (self.phi(i) - self.epsilon(i)) # beta_i - beta_{i-1}
+            beta = self.phi(i) - self.epsilon(i)  # beta_i - beta_{i-1}
             wt.append(beta + beta0)
             beta0 = beta0 + beta
         wt.append(beta0)
@@ -598,11 +598,11 @@ class RCGraph(Printable, tuple, CrystalGraph):
     def crystal_length(self):
         return len(self)
 
-    def raising_operator(self, row):
+    def lowering_operator(self, row):
         # RF word is just the RC word backwards
         if row > len(self):
             return None
-        row_i = [*self[row-1]]
+        row_i = [*self[row - 1]]
         row_ip1 = [*self[row]]
 
         # pair the letters
@@ -626,14 +626,14 @@ class RCGraph(Printable, tuple, CrystalGraph):
             return None
         new_row_i = [s for s in row_i if s != b]
         new_row_ip1 = sorted([b - t, *row_ip1], reverse=True)
-        ret_rc = type(self)([*self[:row-1], tuple(new_row_i), tuple(new_row_ip1), *self[row+1:]])
+        ret_rc = type(self)([*self[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *self[row + 1 :]])
         if ret_rc.perm != self.perm:
             return None
         return ret_rc
 
     # weak edelman green correspondence
     # better understanding of crystal
-    #Following [Assa], for P a semi-standard Young tableau with strictly increasing rows, define the lift of P,
+    # Following [Assa], for P a semi-standard Young tableau with strictly increasing rows, define the lift of P,
     # denoted by lift(P), to be the tableau of key shape obtained by raising each entry in the first column of P
     # until it equals its row index, and, once columns 1 through c − 1 have been lifted, raising entries in column
     # c from top to bottom, maintaining their relative order, placing each entry in the highest available row such
@@ -642,7 +642,6 @@ class RCGraph(Printable, tuple, CrystalGraph):
     #     Definition 5.6 ([Assa]). For ρ a reduced expression, define the weak insertion tableau Pb(ρ) by Pb(ρ) =
     # lift(P(ρ)), where P(ρ) is the insertion tableau under the Edelman–Greene insertion. In addition, define the
     # weak recording tableau Qb(ρ) to be the unique standard key tableau of the same key shape as Pb(ρ) such that
-
 
     #     Theorem 5.11. The operators fi and ei for 1 6 i < n define a Demazure crystal structure on RFC(w).
     # More precisely,
@@ -653,12 +652,9 @@ class RCGraph(Printable, tuple, CrystalGraph):
     # Bw(r)(wt(r)),
     # where w(r) is the shortest permutation that sorts sh(Pb(r)).
 
-
-
     #     Definition 5.6 ([Assa]). For ρ a reduced expression, define the weak insertion tableau Pb(ρ) by Pb(ρ) =
     # lift(P(ρ)), where P(ρ) is the insertion tableau under the Edelman–Greene insertion. In addition, define the
     # weak recording tableau Qb(ρ) to be the unique standard key tableau of the same key shape as Pb(ρ) such that
-
 
     #     Following [Assa], for P a semi-standard Young tableau with strictly increasing rows, define the lift of P,
     # denoted by lift(P), to be the tableau of key shape obtained by raising each entry in the first column of P
@@ -666,11 +662,11 @@ class RCGraph(Printable, tuple, CrystalGraph):
     # c from top to bottom, maintaining their relative order, placing each entry in the highest available row such
     # that there is an entry in column c − 1 that is strictly smaller.
 
-    def lowering_operator(self, row):
+    def raising_operator(self, row):
         # RF word is just the RC word backwards
         if row > len(self):
             return None
-        row_i = [*self[row-1]]
+        row_i = [*self[row - 1]]
         row_ip1 = [*self[row]]
 
         # pair the letters
@@ -696,7 +692,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
             return None
         new_row_ip1 = [let for let in row_ip1 if let != a]
         new_row_i = sorted([a + s, *row_i], reverse=True)
-        ret_rc = type(self)([*self[:row-1], tuple(new_row_i), tuple(new_row_ip1), *self[row+1:]])
+        ret_rc = type(self)([*self[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *self[row + 1 :]])
         if ret_rc.perm != self.perm:
             return None
         return ret_rc
@@ -705,7 +701,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
         if row < 0 or row > len(self):
             raise ValueError("Row out of range")
         front = type(self)([*self[:row]])
-        front = front.extend(max(len(self),len(front.perm.trimcode)) - row)
+        front = front.extend(max(len(self), len(front.perm.trimcode)) - row)
         flen = len(front)
         for _ in range(flen - row):
             front = front.zero_out_last_row()

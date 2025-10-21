@@ -3,7 +3,6 @@ from functools import cache
 from schubmult import ASx
 from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
 from schubmult.rings.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
-from schubmult.rings.crystal_graph import CrystalGraphTensor
 from schubmult.rings.free_algebra_basis import WordBasis
 from schubmult.rings.rc_graph import RCGraph
 from schubmult.symbolic import S, sympy_Mul
@@ -11,7 +10,7 @@ from schubmult.symbolic import S, sympy_Mul
 from .crystal_graph import CrystalGraph
 from .crystal_tensor_ring import CrystalTensorRing
 
-# weight wt
+#weight wt
 # yw highest weight
 # u # yv
 # yv highest weight
@@ -24,7 +23,6 @@ class RCGraphPrintingTerm(TypedPrintingTerm):
     # def _pretty(self, printer):
     #     return printer._print(self._key)
     pass
-
 
 class RCGraphRingElement(BaseSchubertElement, CrystalGraph):
     """
@@ -40,7 +38,10 @@ class RCGraphRingElement(BaseSchubertElement, CrystalGraph):
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
             return [S.Zero]
-        return [self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k)) for k in self.keys()]
+        return [
+            self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k))
+            for k in self.keys()
+        ]
 
     # ----------------------
     # Coalgebra helpers (already present)
@@ -128,7 +129,7 @@ class RCGraphRingElement(BaseSchubertElement, CrystalGraph):
         """
         if len(self) == 0:
             return 0
-        return max(getattr(rc_graph, "crystal_length", lambda: len(rc_graph))() for rc_graph in self.keys())
+        return max((getattr(rc_graph, "crystal_length", lambda: len(rc_graph))() for rc_graph in self.keys()))
 
     def to_highest_weight(self):
         """
@@ -178,7 +179,6 @@ class RCGraphRingElement(BaseSchubertElement, CrystalGraph):
             res += coeff * self.ring(rc_graph.crystal_reflection(index))
         return res
 
-
 # class RCGraphRingElement(BaseSchubertElement, CrystalGraph):
 #     # def as_expr(self):
 #     #     from sympy import Add
@@ -221,7 +221,6 @@ class RCGraphRingElement(BaseSchubertElement, CrystalGraph):
 #             res += coeff * self.ring(rc_graph.crystal_reflection(row))
 #         return res
 
-
 class RCGraphRing(BaseSchubertRing):
     _id = 0
 
@@ -263,111 +262,24 @@ class RCGraphRing(BaseSchubertRing):
             result += coeff * res
         return result
 
-    def _alt_coproduct_on_basis(self, elem):
-        from sympy import pretty_print
 
+    def coproduct_on_basis(self, elem):
+        from .crystal_graph import CrystalGraphTensor
         tring = RestrictedRCGraphTensorRing(self, self)
         # trivial principal case
         if elem.perm.inv == 0:
             return tring((elem, elem))
         cprod = tring.zero
 
-        p = elem.length_vector[-1]
+        p = elem.length_vector[0]
         for j in range(p + 1):
             cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
         if len(elem) == 1:
             return cprod
-
-        # if elem.length_vector[-1] == 0 and elem.zero_out_last_row().extend(1) == elem:
-        #     ret_elem0 = self(elem.rowrange(0, len(elem) - 1)).coproduct()
-        #     ret_elem = tring.zero
-        #     for (rc1, rc2), coeff in ret_elem0.items():
-        #         ret_elem += coeff * tring((rc1.extend(1), rc2.extend(1)))
-        #     return ret_elem
         # if we can multiply by zero we rule the world
 
-        lower_elem = elem.vertical_cut(len(elem) - 1)[0]
-        lower_coprod = self._alt_coproduct_on_basis(lower_elem)
-
-        candidate_coprod = lower_coprod * cprod
-
-        # this will have extra terms we need to remove
-        ret_elem = candidate_coprod
-
-        # hw_elem, raise_seq = elem.to_highest_weight()
-
-        # if hw_elem.length_vector[0] < elem.length_vector[0]:
-        #     return self(hw_elem).coproduct().reverse_raise_seq(raise_seq)
-
-        up_a_elem = self(lower_elem) * self(RCGraph.one_row(p))
-
-        for key_rc, coeff in up_a_elem.items():
-            if key_rc.perm != elem.perm:
-                assert coeff == 1
-                # a_elem = ASx(key_rc.perm, len(key_rc)).coproduct()
-                key_rc_hw, raise_seq2 = key_rc.to_highest_weight()
-
-                # if key_rc_hw != key_rc:
-                bad_coprod = self._alt_coproduct_on_basis(key_rc_hw).reverse_raise_seq(raise_seq2)
-                ret_elem -= bad_coprod
-                # except RecursionError:
-                #     print("Failed recursion on ")
-                #     pretty_print(key_rc)
-
-        # test_elem = tring.zero
-        # for (rc1, rc2), v in ret_elem.items():
-        #     test_elem += v * tring((_trim_and_zero(rc1), _trim_and_zero(rc2)))
-        # assert test_elem == lower_elem, f"Coproduct check failed for {elem=}: got {test_elem=}, expected {lower_elem=}"
-
-        ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(elem.perm) and rc2.perm.bruhat_leq(elem.perm)})
-
-        return ret_elem
-
-    # def root_coproduct_on_basis(self, elem):
-
-    def coproduct_on_basis(self, elem, high=True, left=False):
-        # maps of roots
-
-        from sympy import pretty_print
-
-        tring = RestrictedRCGraphTensorRing(self, self)
-        if elem.perm.inv == 0:
-            return tring((elem, elem))
-
-        if high:
-            hw_elem, raise_seq = elem.to_highest_weight()
-            if hw_elem != elem:
-                return self.coproduct_on_basis(hw_elem, high=False, left=left).reverse_raise_seq(raise_seq)
-
-        # if we can multiply by zero we rule the world
-        cprod = tring.zero
-
-        if left:
-            p = elem.length_vector[0]
-        else:
-            p = elem.length_vector[-1]
-
-        for j in range(p + 1):
-            cprod += tring.ext_multiply(self(type(elem).one_row(j)), self(type(elem).one_row(p - j)))
-        if len(elem) == 1:
-            return cprod
-
-        # if not left:
-        #     top_coprod = self.coproduct_on_basis(elem.rowrange(1, len(elem)))
-        #     bottom_coprod = self.coproduct_on_basis(elem.vertical_cut(len(elem) - 1)[0])
-        #     cand = cprod * top_coprod
-        #     ret_elem = tring.zero
-        #     for (rc1, rc2), coeff in cand.items():
-        #         (rc01, rc02) = (rc1.vertical_cut(len(elem) - 1)[0], rc2.vertical_cut(len(elem) - 1)[0])
-        #         if (rc01, rc02) in bottom_coprod.keys() and (rc1.rowrange(1, len(rc1)), rc2.rowrange(1, len(rc2))) in top_coprod.keys():
-        #             ret_elem += coeff * tring.new(rc1, rc2)
-        #     return ret_elem
-
-        if left:
-            lower_elem = elem.rowrange(1, len(elem))
-        else:
-            lower_elem = elem.vertical_cut(len(elem) - 1)[0]
-        lower_coprod = self.coproduct_on_basis(lower_elem, left=left)
+        lower_elem = elem.rowrange(1, len(elem))
+        lower_coprod = self.coproduct_on_basis(lower_elem)
         # # commuting h_i's
         # # cycles = first_row.perm.get_cycles()
         # # h = []
@@ -381,75 +293,39 @@ class RCGraphRing(BaseSchubertRing):
         #     fr2 = RCGraph.all_rc_graphs(perm2, len(first_row), weight=(perm2.inv, *first_row.length_vector[1:]))
         #     first_row_coprod += coeff * tring((fr1, fr2))
         # return first_row_coprod * upper_coprod # WRONG
-        if left:
-            candidate_coprod = cprod * lower_coprod
-        else:
-            candidate_coprod = lower_coprod * cprod
+
+        candidate_coprod = cprod * lower_coprod
+
         # this will have extra terms we need to remove
         ret_elem = candidate_coprod
 
-        if p == 0 and left:
+        if p == 0:
             return ret_elem
 
-        if left:
-            up_a_elem = self(type(elem).one_row(p)) * self(lower_elem)
-        else:
-            up_a_elem = self(lower_elem) * self(type(elem).one_row(p))
+        hw_elem, raise_seq = elem.to_highest_weight()
+
+        if hw_elem.length_vector[0] < elem.length_vector[0]:
+            return self(hw_elem).coproduct().reverse_raise_seq(raise_seq)
+
+        up_a_elem = self(RCGraph.one_row(p)) * self(lower_elem)
+
+
+
+        def _trim_and_zero(rc):
+            rc = rc.rowrange(0, len(rc) - 1).extend(1)
+            return rc.zero_out_last_row()
 
         for key_rc, coeff in up_a_elem.items():
             if key_rc.perm != elem.perm:
                 assert coeff == 1
                 # a_elem = ASx(key_rc.perm, len(key_rc)).coproduct()
-                # if high:
-                roots = [elem.left_to_right_inversion(i) for i in range(elem.perm.inv)]
-
-                # key_rc_hw, raise_seq = key_rc.to_highest_weight()
-                # # bad_coprod = self.coproduct_on_basis(key_rc_hw, high=False, left=left).reverse_raise_seq(raise_seq)
-                # if key_rc_hw != key_rc or key_rc.is_principal:
-                #     bad_coprod = self.coproduct_on_basis(key_rc_hw, high=False, left=left).reverse_raise_seq(raise_seq)
-                #     ret_elem -= bad_coprod
-                # else:
-                coprod_to_morph = self.coproduct_on_basis(type(key_rc).principal_rc(key_rc.perm, len(key_rc)), high=False, left=left)
-                coprod_to_morph0 = coprod_to_morph
-                for (rc1_bad, rc2_bad), cff2 in coprod_to_morph.items():
-                    for (rc1, rc2), cff3 in ret_elem.items():
-                        #         t1 = CrystalGraphTensor(rc1, rc2).to_highest_weight()[0]
-                        #         t2 = CrystalGraphTensor(rc1_bad, rc2_bad).to_highest_weight()[0]
-                        #         if tuple(t1.factors) == tuple(t2.factors):
-                        #             ret_elem -= tring.new(rc1, rc2)
-                        #             coprod_to_morph0 -= tring.new(rc1_bad, rc2_bad)
-                        #             break
-                        # if coprod_to_morph0 != tring.zero:
-                        #     for (rc1_bad, rc2_bad), cff2 in coprod_to_morph0.items():
-                        #         for (rc1, rc2), cff3 in ret_elem.items():
-                        if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
-                            ret_elem -= tring.new(rc1, rc2)
-                            coprod_to_morph0 -= tring.new(rc1_bad, rc2_bad)
-                            break
-                assert coprod_to_morph0 == tring.zero, "Failed to remove all bad coproduct terms"
-                # # bad_coprod = self.coproduct_on_basis(key_rc_hw.rowrange(1, len(key_rc_hw)), high=False)
-                # # bad_coprod = self.coproduct_on_basis(key_rc_hw.rowrange(1, len(key_rc_hw)), high=False)
-                # #     try:
-                # #         assert all(k in ret_elem.keys() for k in bad_coprod.keys()), f"Bad coproduct keys not in ret_elem for {elem=}, {key_rc=}: {bad_coprod.keys()} vs {ret_elem.keys()}"
-                # #     except AssertionError as e:
-                # #         print("Bad coproduct keys:")
-                # #         print("Diff")
-                # #         pretty_print(ret_elem - bad_coprod)
-                # #     ret_elem -= bad_coprod
-                # # else:
-                # #     bad_coprod = self.coproduct_on_basis(RCGraph.principal_rc(key_rc.perm, len(key_rc)), left=left)
-                # for (rc1_bad, rc2_bad), cff2 in bad_coprod.items():
-                #     #t1, _ = CrystalGraphTensor(rc1_bad, rc2_bad).to_highest_weight()
-                #     for (rc1, rc2), cff3 in ret_elem.items():
-                #         #t2, _ = CrystalGraphTensor(rc1, rc2).to_highest_weight()
-                #         #if t1 == t2:
-                #         #    ret_elem -= tring.new(rc1, rc2)
-                #         #    break
-                #         if rc1 == rc1_bad and rc2 == rc2_bad:
-                #             ret_elem -= tring.new(rc1, rc2)
-                #             break
-                # ret_elem -= bad_coprod
-                # return self.coproduct_on_basis(elem, high=False)
+                if key_rc.length_vector[0] < elem.length_vector[0]:
+                    bad_coprod = self(key_rc).coproduct()
+                    ret_elem -= bad_coprod
+                else:
+                    bad_coprod = self(RCGraph.principal_rc(key_rc.perm,len(key_rc))).coproduct()
+                    for (rc1_bad, rc2_bad), cff2 in bad_coprod.items():
+                        ret_elem -= cff2 * tring.new(*min([(rc1, rc2) for (rc1, rc2) in ret_elem.keys() if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm]))
 
         # test_elem = tring.zero
         # for (rc1, rc2), v in ret_elem.items():
@@ -483,8 +359,8 @@ class RCGraphRing(BaseSchubertRing):
         identity_graph = RCGraph()
         return self.from_dict({identity_graph: 1})
 
-
 class RestrictedRCGraphTensorRing(CrystalTensorRing):
+
     def __init__(self, r1, r2):
         super().__init__(r1, r2)
 
@@ -502,15 +378,14 @@ class RestrictedRCGraphTensorRing(CrystalTensorRing):
     def mul(self, elem1, elem2):
         # elem1, elem2 are RestrictedRCGraphTensorRing elements
         from schubmult.perm_lib import Permutation
-
         def right_zero_act(rc1, rc2):
             if (rc1, rc2) in RestrictedRCGraphTensorRing._z_cache:
                 return RestrictedRCGraphTensorRing._z_cache[(rc1, rc2)]
-            up_perms = (ASx @ ASx)(((rc1.perm, len(rc1)), (rc2.perm, len(rc2)))) * (ASx @ ASx)(((Permutation([]), 1), (Permutation([]), 1)))
+            up_perms = (ASx@ASx)(((rc1.perm, len(rc1)),(rc2.perm, len(rc2)))) * (ASx@ASx)(((Permutation([]),1),(Permutation([]),1)))
 
             rc_set = set()
 
-            for ((perm1, _), (perm2, _)), _ in up_perms.items():
+            for ((perm1, _),(perm2, _)), _ in up_perms.items():
                 for rc01 in RCGraph.all_rc_graphs(perm1, len(rc1) + 1, weight=(*rc1.length_vector, 0)):
                     if rc01.zero_out_last_row() == rc1:
                         for rc02 in RCGraph.all_rc_graphs(perm2, len(rc2) + 1, weight=(*rc2.length_vector, 0)):
@@ -519,13 +394,12 @@ class RestrictedRCGraphTensorRing(CrystalTensorRing):
 
             RestrictedRCGraphTensorRing._z_cache[(rc1, rc2)] = rc_set
             return rc_set
-
         result = self.zero
         for (rc1a, rc2a), c1 in elem1.items():
             for (rc1b, rc2b), c2 in elem2.items():
                 num_zeros = max(len(rc1b), len(rc2b), len(rc1b.perm), len(rc2b.perm))
                 base_pair = self.new(rc1a, rc2a)
-                buildup = c1 * c2 * base_pair
+                buildup = c1*c2*base_pair
 
                 for _ in range(num_zeros):
                     new_buildup = self.zero
@@ -541,14 +415,12 @@ class RestrictedRCGraphTensorRing(CrystalTensorRing):
 
         return result
 
-
 def tensor_to_highest_weight(tensor_elem):
     ret_elem = tensor_elem.ring.zero
     for (g1, g2), coeff in tensor_elem.items():
         (g1_hw, g2_hw), seq2 = RCGraph.to_highest_weight_pair(g1, g2)
         ret_elem += coeff * tensor_elem.ring((g1_hw, g2_hw))
     return ret_elem
-
 
 def tensor_to_highest_weight2(tensor_elem):
     ret_elem = tensor_elem.ring.zero
@@ -558,7 +430,6 @@ def tensor_to_highest_weight2(tensor_elem):
         ret_elem += coeff * tensor_elem.ring((g1_hw, g2_hw))
     return ret_elem
 
-
 def ring_elem_to_highest_weight(ring_elem):
     ret_elem = ring_elem.ring.zero
     for g, coeff in ring_elem.items():
@@ -567,245 +438,246 @@ def ring_elem_to_highest_weight(ring_elem):
     return ret_elem
 
 
+
 ########MOST RECENT###########
 
 # raise to highest weight and remember the raise sequence
-# basis_elem, raise_seq = elem.to_highest_weight()
+        # basis_elem, raise_seq = elem.to_highest_weight()
 
-# # --- LR / crystal matching using ASx(...).coproduct() ---
-# try:
-#     fa_coprod = ASx(basis_elem.perm, len(basis_elem)).coproduct()
-# except Exception:
-#     fa_coprod = {}
+        # # --- LR / crystal matching using ASx(...).coproduct() ---
+        # try:
+        #     fa_coprod = ASx(basis_elem.perm, len(basis_elem)).coproduct()
+        # except Exception:
+        #     fa_coprod = {}
 
-# # normalize to mapping (perm_u, perm_v) -> multiplicity
-# schubert_pairs = {}
-# for k, mult in fa_coprod.items():
-#     try:
-#         (perm_u, _), (perm_v, _) = k
-#     except Exception:
-#         continue
-#     schubert_pairs[(perm_u, perm_v)] = schubert_pairs.get((perm_u, perm_v), 0) + mult
+        # # normalize to mapping (perm_u, perm_v) -> multiplicity
+        # schubert_pairs = {}
+        # for k, mult in fa_coprod.items():
+        #     try:
+        #         (perm_u, _), (perm_v, _) = k
+        #     except Exception:
+        #         continue
+        #     schubert_pairs[(perm_u, perm_v)] = schubert_pairs.get((perm_u, perm_v), 0) + mult
 
-# target_lv = tuple(basis_elem.length_vector)
-# target_len = len(target_lv)
+        # target_lv = tuple(basis_elem.length_vector)
+        # target_len = len(target_lv)
 
-# def _is_highest_weight(rcg):
-#     for r in range(1, rcg.crystal_length()):
-#         try:
-#             if rcg.raising_operator(r) is not None:
-#                 return False
-#         except Exception:
-#             return False
-#     return True
+        # def _is_highest_weight(rcg):
+        #     for r in range(1, rcg.crystal_length()):
+        #         try:
+        #             if rcg.raising_operator(r) is not None:
+        #                 return False
+        #         except Exception:
+        #             return False
+        #     return True
 
-# phi_indices = range(1, target_len)
-# #hw_tensor = tring.zero
+        # phi_indices = range(1, target_len)
+        # #hw_tensor = tring.zero
 
-# for (perm_u, perm_v), mult in schubert_pairs.items():
-#     # right candidates must be highest-weight and have exact length-vector length
-#     try:
-#         right_candidates = [
-#             R for R in RCGraph.all_rc_graphs(perm_v, len(basis_elem))
-#             if _is_highest_weight(R)
-#         ]
-#     except Exception:
-#         right_candidates = []
+        # for (perm_u, perm_v), mult in schubert_pairs.items():
+        #     # right candidates must be highest-weight and have exact length-vector length
+        #     try:
+        #         right_candidates = [
+        #             R for R in RCGraph.all_rc_graphs(perm_v, len(basis_elem))
+        #             if _is_highest_weight(R)
+        #         ]
+        #     except Exception:
+        #         right_candidates = []
 
-#     if not right_candidates:
-#         continue
+        #     if not right_candidates:
+        #         continue
 
-#     # left candidates with exact length-vector length
-#     try:
-#         left_candidates = [
-#             L for L in RCGraph.all_rc_graphs(perm_u, len(basis_elem))
-#             if len(tuple(L.length_vector)) == target_len
-#         ]
-#     except Exception:
-#         left_candidates = []
+        #     # left candidates with exact length-vector length
+        #     try:
+        #         left_candidates = [
+        #             L for L in RCGraph.all_rc_graphs(perm_u, len(basis_elem))
+        #             if len(tuple(L.length_vector)) == target_len
+        #         ]
+        #     except Exception:
+        #         left_candidates = []
 
-#     # cheap prefilter: left length_vector entries must not exceed target entries
-#     left_candidates = [
-#         L for L in left_candidates
-#         if all(lv <= tv for lv, tv in zip(tuple(L.length_vector), target_lv))
-#     ]
+        #     # cheap prefilter: left length_vector entries must not exceed target entries
+        #     left_candidates = [
+        #         L for L in left_candidates
+        #         if all(lv <= tv for lv, tv in zip(tuple(L.length_vector), target_lv))
+        #     ]
 
-#     matching_pairs = []
-#     for R in right_candidates:
-#         # precompute phi(R) for indices of interest
-#         phi_R = {}
-#         for i in phi_indices:
-#             try:
-#                 phi_R[i] = R.phi(i)
-#             except Exception:
-#                 phi_R[i] = 0
+        #     matching_pairs = []
+        #     for R in right_candidates:
+        #         # precompute phi(R) for indices of interest
+        #         phi_R = {}
+        #         for i in phi_indices:
+        #             try:
+        #                 phi_R[i] = R.phi(i)
+        #             except Exception:
+        #                 phi_R[i] = 0
 
-#         for L in left_candidates:
-#             lvL = tuple(L.length_vector)
-#             lvR = tuple(R.length_vector)
+        #         for L in left_candidates:
+        #             lvL = tuple(L.length_vector)
+        #             lvR = tuple(R.length_vector)
 
-#             # strict same-length requirement; require elementwise sum equals target
-#             if tuple(a + b for a, b in zip(lvL, lvR)) != target_lv:
-#                 continue
+        #             # strict same-length requirement; require elementwise sum equals target
+        #             if tuple(a + b for a, b in zip(lvL, lvR)) != target_lv:
+        #                 continue
 
-#             # epsilon(L)_i <= phi(R)_i for all i in phi_indices
-#             ok = True
-#             for i in phi_indices:
-#                 eps_L = L.epsilon(i)
-#                 if eps_L > phi_R.get(i, 0):
-#                     ok = False
-#                     break
-#             if ok:
-#                 matching_pairs.append((L, R))
-# assert len(matching_pairs)>0, "matching_pairs should be defined"
+        #             # epsilon(L)_i <= phi(R)_i for all i in phi_indices
+        #             ok = True
+        #             for i in phi_indices:
+        #                 eps_L = L.epsilon(i)
+        #                 if eps_L > phi_R.get(i, 0):
+        #                     ok = False
+        #                     break
+        #             if ok:
+        #                 matching_pairs.append((L, R))
+        # assert len(matching_pairs)>0, "matching_pairs should be defined"
 
-# #basis_elem, raise_seq = elem.to_highest_weight()
+        # #basis_elem, raise_seq = elem.to_highest_weight()
 
-# cprod = tring.zero
-# p = basis_elem.length_vector[0]
+        # cprod = tring.zero
+        # p = basis_elem.length_vector[0]
 
-# for j in range(p + 1):
-#     cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
-# if len(basis_elem) == 1:
-#     return cprod
+        # for j in range(p + 1):
+        #     cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
+        # if len(basis_elem) == 1:
+        #     return cprod
 
-# lower_graph = basis_elem.rowrange(1, len(basis_elem))
-# lower_module1 = self.coproduct_on_basis(lower_graph)
+        # lower_graph = basis_elem.rowrange(1, len(basis_elem))
+        # lower_module1 = self.coproduct_on_basis(lower_graph)
 
-# ret_elem = cprod * lower_module1
+        # ret_elem = cprod * lower_module1
 
-# up_elem2 = self(RCGraph.one_row(p)) * self(lower_graph)
-# for key, coeff in up_elem2.items():
-#     if key.perm != basis_elem.perm:
-#         assert coeff == 1
-#         key_rc = RCGraph.principal_rc(key.perm, len(key))
-#         cp = self.coproduct_on_basis(key_rc)
-#         for (rc1_bad, rc2_bad), cff2 in cp.items():
-#             for (rc1, rc2), v in ret_elem.items():
-#                 if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1, rc2) not in matching_pairs:
-#                     ret_elem -= tring((rc1, rc2))
-#                     break
+        # up_elem2 = self(RCGraph.one_row(p)) * self(lower_graph)
+        # for key, coeff in up_elem2.items():
+        #     if key.perm != basis_elem.perm:
+        #         assert coeff == 1
+        #         key_rc = RCGraph.principal_rc(key.perm, len(key))
+        #         cp = self.coproduct_on_basis(key_rc)
+        #         for (rc1_bad, rc2_bad), cff2 in cp.items():
+        #             for (rc1, rc2), v in ret_elem.items():
+        #                 if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (rc1, rc2) not in matching_pairs:
+        #                     ret_elem -= tring((rc1, rc2))
+        #                     break
 
 
-# ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
-# ret_elem = ret_elem.reverse_raise_seq(raise_seq)
-# # for (rc1, rc2), v in ret_elem.items():
-# #     if (rc1, rc2) not in matching_pairs:
-# #         print(f"Found non-matching pair in coproduct of {elem=}: {(rc1, rc2)=}")
-# # print(f"{matching_pairs=}")
+        # ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
+        # ret_elem = ret_elem.reverse_raise_seq(raise_seq)
+        # # for (rc1, rc2), v in ret_elem.items():
+        # #     if (rc1, rc2) not in matching_pairs:
+        # #         print(f"Found non-matching pair in coproduct of {elem=}: {(rc1, rc2)=}")
+        # # print(f"{matching_pairs=}")
 
-# return ret_elem
+        # return ret_elem
 
 
 #################################
 
 # @cache
-# def coproduct_on_basis(self, elem):
-# ## RIGHT ##
-# # simulate principal
-# # left = False
-# tring = self@self
-# #basis_elem, raise_seq = elem.to_highest_weight()
-# if elem.perm.inv == 0:
-#     return tring((elem, elem))
-# # print(f"Trying {elem=}")
-# basis_elem, raise_seq = elem.to_highest_weight()
-# #basis_elem = elem
-# # print(f"Highest weight {basis_elem=}")
-# # if not basis_elem.is_principal:
-# #     raise NotImplementedError(f"Coproduct only implemented for principal highest weight rc graphs, got {basis_elem=}")
+    # def coproduct_on_basis(self, elem):
+        # ## RIGHT ##
+        # # simulate principal
+        # # left = False
+        # tring = self@self
+        # #basis_elem, raise_seq = elem.to_highest_weight()
+        # if elem.perm.inv == 0:
+        #     return tring((elem, elem))
+        # # print(f"Trying {elem=}")
+        # basis_elem, raise_seq = elem.to_highest_weight()
+        # #basis_elem = elem 
+        # # print(f"Highest weight {basis_elem=}")
+        # # if not basis_elem.is_principal:
+        # #     raise NotImplementedError(f"Coproduct only implemented for principal highest weight rc graphs, got {basis_elem=}")
 
-# #basis_elem, raise_seq = basis_elem.to_highest_weight()
-# # if basis_elem != basis_elem:
-# #     print(f"We have {basis_elem=} {raise_seq=} {basis_elem=}")
-# #     assert basis_elem.length_vector != basis_elem.length_vector
-# #     # first do the coproduct on the highest weight vector
-# #     high_cop = self.coproduct_on_basis(basis_elem)
-# #     # then raise each component
+        # #basis_elem, raise_seq = basis_elem.to_highest_weight()
+        # # if basis_elem != basis_elem:
+        # #     print(f"We have {basis_elem=} {raise_seq=} {basis_elem=}")
+        # #     assert basis_elem.length_vector != basis_elem.length_vector
+        # #     # first do the coproduct on the highest weight vector
+        # #     high_cop = self.coproduct_on_basis(basis_elem)
+        # #     # then raise each component
 
 
-# #if basis_elem == elem:
-# # if left:
-# cprod = tring.zero
-# p = basis_elem.length_vector[0]
+        # #if basis_elem == elem:
+        # # if left:
+        # cprod = tring.zero
+        # p = basis_elem.length_vector[0]
 
-# for j in range(p + 1):
-#     cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
-# if len(basis_elem) == 1:
-#     return cprod
+        # for j in range(p + 1):
+        #     cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
+        # if len(basis_elem) == 1:
+        #     return cprod
 
-# lower_graph = basis_elem.rowrange(1,len(basis_elem))
-# lower_module1 = self.coproduct_on_basis(lower_graph)
+        # lower_graph = basis_elem.rowrange(1,len(basis_elem))
+        # lower_module1 = self.coproduct_on_basis(lower_graph)
 
-# ret_elem = cprod * lower_module1
+        # ret_elem = cprod * lower_module1
 
-# # ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
-# up_elem2 = self(RCGraph.one_row(p)) * self(lower_graph)
-# #     for key, coeff in up_elem2.items():
-# #         if key.perm != basis_elem.perm:
-# #             assert coeff == 1
-# #             key_rc = RCGraph.principal_rc(key.perm, len(key))
-# #             cp = self.coproduct_on_basis(key_rc)
-# #             for (rc1_bad, rc2_bad), cff2 in cp.items():
-# #                 for (rc1, rc2), v in ret_elem.items():
-# #                     if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
-# #                         ret_elem -= tring((rc1, rc2))
-# #                         break
-# # else:
-# # cprod = tring.zero
-# # p = basis_elem.length_vector[-1]
+        # # ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
+        # up_elem2 = self(RCGraph.one_row(p)) * self(lower_graph)
+        # #     for key, coeff in up_elem2.items():
+        # #         if key.perm != basis_elem.perm:
+        # #             assert coeff == 1
+        # #             key_rc = RCGraph.principal_rc(key.perm, len(key))
+        # #             cp = self.coproduct_on_basis(key_rc)
+        # #             for (rc1_bad, rc2_bad), cff2 in cp.items():
+        # #                 for (rc1, rc2), v in ret_elem.items():
+        # #                     if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
+        # #                         ret_elem -= tring((rc1, rc2))
+        # #                         break
+        # # else:
+        # # cprod = tring.zero
+        # # p = basis_elem.length_vector[-1]
 
-# # for j in range(p + 1):
-# #     cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
-# # if len(basis_elem) == 1:
-# #     return cprod
+        # # for j in range(p + 1):
+        # #     cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
+        # # if len(basis_elem) == 1:
+        # #     return cprod
 
-# # lower_graph = basis_elem.vertical_cut(len(basis_elem) - 1)[0]
-# # lower_module1 = self.coproduct_on_basis(lower_graph)
+        # # lower_graph = basis_elem.vertical_cut(len(basis_elem) - 1)[0]
+        # # lower_module1 = self.coproduct_on_basis(lower_graph)
 
-# # ret_elem = lower_module1 * cprod
+        # # ret_elem = lower_module1 * cprod
 
-# ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
+        # ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
 
-# # @cache
-# # def co_principal_perms(perm, length):
-# #     from schubmult import ASx, uncode
+        # # @cache
+        # # def co_principal_perms(perm, length):
+        # #     from schubmult import ASx, uncode
 
-# #     if len(perm.trimcode) == 0:
-# #         return []
-# #     if length < len(perm.trimcode):
-# #         return []
-# #     lower_elem = ASx(uncode(perm.trimcode[1:]), length - 1)
-# #     upper_elem = ASx(uncode([perm.trimcode[0]]), 1) * lower_elem
-# #     return [key[0] for key in upper_elem.keys() if key[0] != perm]
-# # if len(co_principal_perms(basis_elem.perm, len(basis_elem))) == 0:
-# #     return ret_elem
-# # up_elem2 = self(lower_graph) * self(RCGraph.one_row(p))
-# for key, coeff in up_elem2.items():
-#     if key.perm != basis_elem.perm:
-#         assert coeff == 1
-#         key_rc = RCGraph.principal_rc(key.perm, len(key))
-#         cp = self.coproduct_on_basis(key_rc)
-#         # ret_elem -= coeff * cp
-#         for (rc1_bad, rc2_bad), cff2 in cp.items():
-#             for (rc1, rc2), v in ret_elem.items():
-#                 if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
-#                     ret_elem -= tring((rc1, rc2))
-#                     break
+        # #     if len(perm.trimcode) == 0:
+        # #         return []
+        # #     if length < len(perm.trimcode):
+        # #         return []
+        # #     lower_elem = ASx(uncode(perm.trimcode[1:]), length - 1)
+        # #     upper_elem = ASx(uncode([perm.trimcode[0]]), 1) * lower_elem
+        # #     return [key[0] for key in upper_elem.keys() if key[0] != perm]
+        # # if len(co_principal_perms(basis_elem.perm, len(basis_elem))) == 0:
+        # #     return ret_elem
+        # # up_elem2 = self(lower_graph) * self(RCGraph.one_row(p))
+        # for key, coeff in up_elem2.items():
+        #     if key.perm != basis_elem.perm:
+        #         assert coeff == 1
+        #         key_rc = RCGraph.principal_rc(key.perm, len(key))
+        #         cp = self.coproduct_on_basis(key_rc)
+        #         # ret_elem -= coeff * cp
+        #         for (rc1_bad, rc2_bad), cff2 in cp.items():
+        #             for (rc1, rc2), v in ret_elem.items():
+        #                 if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
+        #                     ret_elem -= tring((rc1, rc2))
+        #                     break
 
-# ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
+        # ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if rc1.perm.bruhat_leq(basis_elem.perm) and rc2.perm.bruhat_leq(basis_elem.perm)})
 
-# # else:
-# #     basis_cp = self.coproduct_on_basis(basis_elem)
-# #     ret_elem = tring.zero
-# # if len(basis_elem.perm.trimcode) == len(basis_elem):
-# #     for (rc1, rc2), cff in ret_elem.items():
-# #         (rc11, rc22), raise_seq2 = RCGraph.to_highest_weight_pair(rc1, rc2)
-# #         assert rc1 == rc11 and rc2 == rc22, f"{rc1=} {rc11=} {rc2=} {rc22=}"
-# # assert at_least_one, f"No highest weight terms found in coproduct of {elem=}, got {ret_elem=}"
-# # if basis_elem != elem:
-# #     ret_elem = tring.from_dict({(RCGraph.reverse_raise_seq_pair(rc1, rc2, raise_seq)): v for (rc1, rc2), v in ret_elem.items()})
-# #     elem2 = basis_elem.reverse_raise_seq(raise_seq)
-# #     assert elem2 == elem, f"{elem2=} {elem=}"
-# return ret_elem
-# @cache
+        # # else:
+        # #     basis_cp = self.coproduct_on_basis(basis_elem)
+        # #     ret_elem = tring.zero
+        # # if len(basis_elem.perm.trimcode) == len(basis_elem):
+        # #     for (rc1, rc2), cff in ret_elem.items():
+        # #         (rc11, rc22), raise_seq2 = RCGraph.to_highest_weight_pair(rc1, rc2)
+        # #         assert rc1 == rc11 and rc2 == rc22, f"{rc1=} {rc11=} {rc2=} {rc22=}"
+        # # assert at_least_one, f"No highest weight terms found in coproduct of {elem=}, got {ret_elem=}"
+        # # if basis_elem != elem:
+        # #     ret_elem = tring.from_dict({(RCGraph.reverse_raise_seq_pair(rc1, rc2, raise_seq)): v for (rc1, rc2), v in ret_elem.items()})
+        # #     elem2 = basis_elem.reverse_raise_seq(raise_seq)
+        # #     assert elem2 == elem, f"{elem2=} {elem=}"
+        # return ret_elem
+        #@cache
