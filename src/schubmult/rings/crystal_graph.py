@@ -17,6 +17,22 @@ class CrystalGraph:
         """The epsilon function for the crystal graph."""
         raise NotImplementedError
 
+    def to_lowest_weight(self):
+        """Return the lowest weight element in the connected component."""
+        g = self
+        lower_seq = []
+        found = True
+        while found:
+            found = False
+            for row in range(1, g.crystal_length()):
+                g0 = g.lowering_operator(row)
+                if g0 is not None:
+                    found = True
+                    g = g0
+                    lower_seq.append(row)
+                    break
+        return (g, tuple(lower_seq))
+
     def to_highest_weight(self):
         """Return the highest weight element in the connected component."""
         g = self
@@ -41,6 +57,14 @@ class CrystalGraph:
         rc = self
         for row in reversed(raise_seq):
             rc = rc.lowering_operator(row)
+            if rc is None:
+                return None
+        return rc
+    
+    def reverse_lower_seq(self, lower_seq):
+        rc = self
+        for row in reversed(lower_seq):
+            rc = rc.raising_operator(row)
             if rc is None:
                 return None
         return rc

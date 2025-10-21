@@ -264,7 +264,6 @@ class RCGraphRing(BaseSchubertRing):
 
 
     def coproduct_on_basis(self, elem):
-        from .crystal_graph import CrystalGraphTensor
         tring = RestrictedRCGraphTensorRing(self, self)
         # trivial principal case
         if elem.perm.inv == 0:
@@ -276,6 +275,11 @@ class RCGraphRing(BaseSchubertRing):
             cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
         if len(elem) == 1:
             return cprod
+
+        hw_elem, raise_seq = elem.to_lowest_weight()
+        if hw_elem != elem:
+            hw_coprod = self.coproduct_on_basis(hw_elem)
+            return hw_coprod.reverse_lower_seq(raise_seq)
         # if we can multiply by zero we rule the world
 
         lower_elem = elem.rowrange(1, len(elem))
@@ -302,30 +306,26 @@ class RCGraphRing(BaseSchubertRing):
         if p == 0:
             return ret_elem
 
-        hw_elem, raise_seq = elem.to_highest_weight()
-
-        if hw_elem.length_vector[0] < elem.length_vector[0]:
-            return self(hw_elem).coproduct().reverse_raise_seq(raise_seq)
-
         up_a_elem = self(RCGraph.one_row(p)) * self(lower_elem)
 
-
-
-        def _trim_and_zero(rc):
-            rc = rc.rowrange(0, len(rc) - 1).extend(1)
-            return rc.zero_out_last_row()
+        if len(up_a_elem) == 1:
+            return ret_elem
 
         for key_rc, coeff in up_a_elem.items():
             if key_rc.perm != elem.perm:
                 assert coeff == 1
                 # a_elem = ASx(key_rc.perm, len(key_rc)).coproduct()
-                if key_rc.length_vector[0] < elem.length_vector[0]:
-                    bad_coprod = self(key_rc).coproduct()
-                    ret_elem -= bad_coprod
-                else:
-                    bad_coprod = self(RCGraph.principal_rc(key_rc.perm,len(key_rc))).coproduct()
-                    for (rc1_bad, rc2_bad), cff2 in bad_coprod.items():
-                        ret_elem -= cff2 * tring.new(*min([(rc1, rc2) for (rc1, rc2) in ret_elem.keys() if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm]))
+                # key_rc_hw, raise_seq = key_rc.to_highest_weight()
+                # if key_rc_hw != key_rc:
+                #     print("pink")
+                #     bad_coprod = self(key_rc_hw).coproduct().reverse_raise_seq(raise_seq)
+                #     ret_elem -= bad_coprod
+                # else:
+                bad_coprod = self.coproduct_on_basis(RCGraph.principal_rc(key_rc.perm,len(key_rc)))
+                #bad_coprod = self.coproduct_on_basis(key_rc)
+                # ret_elem -= bad_coprod
+                for (rc1_bad, rc2_bad), cff2 in bad_coprod.items():
+                    ret_elem -= cff2 * tring.new(*min([(rc1, rc2) for (rc1, rc2) in ret_elem.keys() if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm]))
 
         # test_elem = tring.zero
         # for (rc1, rc2), v in ret_elem.items():
