@@ -272,25 +272,42 @@ class RCGraphRing(BaseSchubertRing):
 
     def coproduct_on_basis(self, elem):
         # we have two coproducts: weight and schub
+        from schubmult.rings.crystal_graph import CrystalGraphTensor
         tring = CrystalTensorRing(self, self)
 
         a_coprod = ASx(elem.perm, len(elem)).coproduct()
 
         w_coprod = tring.one
 
-        for letter in elem.length_vector:
+        elem_hw, raise_seq = elem.to_highest_weight()
+
+        for letter in elem_hw.length_vector:
             w_coprod *= self._one_row_cp(letter)
         result = tring.zero
+        reserve_coprod = tring.one
 
+        for letter in elem.length_vector:
+            reserve_coprod *= self._one_row_cp(letter)
         cfs = {}
-        for tensor, coeff in w_coprod.items():
+        for tensor in sorted(w_coprod.keys()):
             key = ((tensor[0].perm, len(tensor[0])), (tensor[1].perm, len(tensor[1])))
             if key not in cfs:
                 cfs[key] = 0
             if key in a_coprod and cfs[key] < a_coprod[key]:
                 result += tring(tensor)
                 cfs[key] += 1
-        return result
+        lower_result = tring.zero
+        for tensor, coeff in result.items():
+            assert coeff == 1
+            tensor = CrystalGraphTensor(*tensor)
+            lowered_tensor = tensor.reverse_raise_seq(raise_seq)
+            if lowered_tensor is not None:
+                lower_result += coeff * tring.from_dict({lowered_tensor.factors: 1})
+            else:
+                last_resort = CrystalGraphTensor(*min(tensor2 for tensor2 in reserve_coprod.keys() if tensor2[0].perm == tensor.factors[0].perm and tensor2[1].perm == tensor.factors[1].perm))
+                reserve_coprod -= tring.from_dict({last_resort.factors: 1})
+                lower_result += coeff * tring.from_dict({last_resort.factors: 1})
+        return lower_result
 
     def old_coproduct_on_basis(self, elem):
         tring = RestrictedRCGraphTensorRing(self, self)
