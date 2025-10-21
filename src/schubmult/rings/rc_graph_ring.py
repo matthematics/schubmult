@@ -262,8 +262,37 @@ class RCGraphRing(BaseSchubertRing):
             result += coeff * res
         return result
 
+    def _one_row_cp(self, p):
+        tring = CrystalTensorRing(self, self)
+        res = tring.zero
+        for i in range(p + 1):
+            rc1, rc2 = RCGraph.one_row(i), RCGraph.one_row(p - i)
+            res += tring.from_dict({(rc1, rc2): 1})
+        return res
 
     def coproduct_on_basis(self, elem):
+        # we have two coproducts: weight and schub
+        tring = CrystalTensorRing(self, self)
+
+        a_coprod = ASx(elem.perm, len(elem)).coproduct()
+
+        w_coprod = tring.one
+
+        for letter in elem.length_vector:
+            w_coprod *= self._one_row_cp(letter)
+        result = tring.zero
+
+        cfs = {}
+        for tensor, coeff in w_coprod.items():
+            key = ((tensor[0].perm, len(tensor[0])), (tensor[1].perm, len(tensor[1])))
+            if key not in cfs:
+                cfs[key] = 0
+            if key in a_coprod and cfs[key] < a_coprod[key]:
+                result += tring(tensor)
+                cfs[key] += 1
+        return result
+
+    def old_coproduct_on_basis(self, elem):
         tring = RestrictedRCGraphTensorRing(self, self)
         # trivial principal case
         if elem.perm.inv == 0:
@@ -278,12 +307,12 @@ class RCGraphRing(BaseSchubertRing):
 
         hw_elem, raise_seq = elem.to_lowest_weight()
         if hw_elem != elem:
-            hw_coprod = self.coproduct_on_basis(hw_elem)
+            hw_coprod = self.old_coproduct_on_basis(hw_elem)
             return hw_coprod.reverse_lower_seq(raise_seq)
         # if we can multiply by zero we rule the world
 
         lower_elem = elem.rowrange(1, len(elem))
-        lower_coprod = self.coproduct_on_basis(lower_elem)
+        lower_coprod = self.old_coproduct_on_basis(lower_elem)
         # # commuting h_i's
         # # cycles = first_row.perm.get_cycles()
         # # h = []
@@ -321,7 +350,7 @@ class RCGraphRing(BaseSchubertRing):
                 #     bad_coprod = self(key_rc_hw).coproduct().reverse_raise_seq(raise_seq)
                 #     ret_elem -= bad_coprod
                 # else:
-                bad_coprod = self.coproduct_on_basis(RCGraph.principal_rc(key_rc.perm,len(key_rc)))
+                bad_coprod = self.old_coproduct_on_basis(RCGraph.principal_rc(key_rc.perm,len(key_rc)))
                 #bad_coprod = self.coproduct_on_basis(key_rc)
                 # ret_elem -= bad_coprod
                 for (rc1_bad, rc2_bad), cff2 in bad_coprod.items():
