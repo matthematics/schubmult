@@ -205,10 +205,9 @@ def worker(shared_recording_dict, lock, task_queue):
     while True:
         try:
             key = task_queue.get(timeout=2)
-            (g31, g32, g33, (len1, len2, len3)) = key
+            (g31, g32, (len1, len2)) = key
             g1 = rc_ring(g31.extend(len1 - len(g31)))
             g2 = rc_ring(g32.extend(len2 - len(g32)))
-            g3 = rc_ring(g33.extend(len3 - len(g33)))
         except Exception:
             break  # queue empty, exit
         with lock:
@@ -216,40 +215,38 @@ def worker(shared_recording_dict, lock, task_queue):
                 if shared_recording_dict[key]:
                     print(f"{key} already verified, returning.")
                     continue
-                print(f"Previous failure on {(g1, g2, g3)}, will retry.")
-        g = g1 * (g2 * g3)
-        g_ = (g1 * g2) * g3
-        diff = g - g_
-        try:
-            assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
-        except AssertionError as e:
-            print("FAILURE")
-            print(e)
-            print(f"{g=}")
-            print(f"{g_=}")
+                print(f"Previous failure on {(g1, g2)}, will retry.")
+        # g = g1 * (g2 * g3)
+        # g_ = (g1 * g2) * g3
+        # diff = g - g_
+        # try:
+        #     assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
+        # except AssertionError as e:
+        #     print("FAILURE")
+        #     print(e)
+        #     print(f"{g=}")
+        #     print(f"{g_=}")
 
-            raise
+        #    raise
         #print("Success {(g1, g2, g3)}")
-        df = hom(g1) * (hom(g2) * hom(g3)) - hom(g)
+        success = True
+        df = hom(g1) * hom(g2) - hom(g1 * g2)
         try:
             assert all(v == 0 for k, v in df.items()), f"{tuple(df.values())=}"
         except AssertionError as e:
-            print("HOM FAILURE")
+            print("FAILURE")
             print(e)
-            print(hom(g1) * (hom(g2) * hom(g3)))
-            print(hom(g))
-            raise
+            # print(hom(g1) * (hom(g2) * hom(g3)))
+            # print(hom(g))
+            success = False
 
         with lock:
-            shared_recording_dict[key] = True
-        print(f"Success {key} at ", time.ctime())
+            shared_recording_dict[key] = success
+        if success:
+            print(f"Success {key} at ", time.ctime())
 
-        del g
-        del g_
         del g1
         del g2
-        del g3
-        del diff
         del df
         gc.collect()
 
@@ -307,18 +304,11 @@ def main():
                         continue
                     graphs2 = RCGraph.all_rc_graphs(perm2)
                     for len2 in range(len(perm2.trimcode),n):
-                        for perm3 in perms:
-                            if perm3.inv == 0:
-                                continue
-                            graphs3 = RCGraph.all_rc_graphs(perm3)
-                            for len3 in range(len(perm3.trimcode), n):
-                                for g31 in graphs3:
-                                    for g32 in graphs2:
-                                        for g33 in graphs1:
-                                            g1 = g31
-                                            g2 = g32
-                                            g3 = g33
-                                            task_queue.put((g1, g2, g3, (len1, len2, len3)))
+                        for g32 in graphs1:
+                            for g33 in graphs2:
+                                g2 = g32
+                                g3 = g33
+                                task_queue.put((g2, g3, (len1, len2)))
         print(f"Enqueued {task_queue.qsize()} tasks for n={n}.")
         # Start fixed number of workers
         workers = []

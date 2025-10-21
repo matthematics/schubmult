@@ -305,11 +305,8 @@ class RCGraphRing(BaseSchubertRing):
         reserve_coprod = self._word_cp(elem.length_vector)
         cfs = {}
         for tensor in sorted(w_coprod.keys()):
-            key = ((tensor[0].perm, len(tensor[0])), (tensor[1].perm, len(tensor[1])))
-            if key not in cfs:
-                cfs[key] = 0
-            if key in a_coprod:# and cfs[key] < a_coprod[key]:
-                result += a_coprod[key] * tring(tensor)
+            if tensor in r_a_coprod:# and cfs[key] < a_coprod[key]:
+                result += r_a_coprod[tensor] * tring(tensor)
 
         lower_result = tring.zero
         for tensor, coeff in result.items():
