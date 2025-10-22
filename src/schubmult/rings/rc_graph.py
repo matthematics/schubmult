@@ -41,6 +41,18 @@ class RCGraph(Printable, tuple, CrystalGraph):
         for row in super().__iter__():
             yield tuple(row)
 
+    def tableau_decomp(self):
+        descs = self.perm.descents()
+        if len(descs) == 0:
+            return (self,)
+        dscs = sorted([d+1 for d in descs], reverse=True)
+
+        tup = (self,)
+        for d in dscs:
+            tup = (*tup[0].vertical_cut(d), *tup[1:])
+
+        return tup[:-1]
+
     @property
     def is_valid(self):
         if self.perm.inv != len(self.perm_word):

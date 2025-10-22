@@ -158,6 +158,12 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         except CoercionFailed:
             return NotImplemented
 
+    def coproduct(self):
+        result = self.ring.zero
+        for k, v in self.items():
+            result += v * self.ring.coproduct_on_basis(k)
+        return result
+
     def as_coefficients_dict(self):
         return {self.ring.printing_term(k, self.ring): sympify(v) for k, v in self.items()}
 
@@ -271,6 +277,8 @@ class BaseSchubertRing(Ring, CompositeDomain):
     def new(self, x): ...
 
     def printing_term(self, k): ...
+
+    def coproduct_on_basis(self, k): ...
 
     def _coerce_mul(self, other): ...
 
