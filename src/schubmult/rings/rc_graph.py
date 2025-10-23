@@ -9,11 +9,13 @@ from schubmult.symbolic import S, prod
 from schubmult.utils.logging import get_logger, init_logging
 from schubmult.utils.perm_utils import add_perm_dict
 
+from ._grid_print import GridPrint
 from ._utils import BitfieldRow
 from .crystal_graph import CrystalGraph
 from .free_algebra import FreeAlgebra, FreeAlgebraElement
 from .free_algebra_basis import WordBasis
 from .nil_hecke import NilHeckeRing
+from .plactic import NilPlactic, Plactic
 
 init_logging(debug=False)
 logger = get_logger(__name__)
@@ -31,7 +33,7 @@ def debug_print(*args, debug=False):
         print(*args)
 
 
-class RCGraph(Printable, tuple, CrystalGraph):
+class RCGraph(GridPrint, tuple, CrystalGraph):
     def __eq__(self, other):
         if not isinstance(other, RCGraph):
             return NotImplemented
@@ -243,21 +245,15 @@ class RCGraph(Printable, tuple, CrystalGraph):
         return shape
 
     def edelman_greene(self):
-        from schubmult.perm_lib import NilPlactic
-
-        word1 = []
-        word2 = []
-        index = 0
-        evil_self = list(reversed([list(reversed(row)) for row in self]))
-        for i in range(len(evil_self)):
-            for a in evil_self[i]:
-                to_insert = len(self) - i
-                word1, word2 = NilPlactic.ed_insert_rsk(word1, word2, a, to_insert)
-                index += 1
+        word1, word2 = (), ()
+        for (row, col) in reversed([self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)]):
+            to_insert = row + col - 1
+            weight = row
+            word1, word2 = NilPlactic.ed_insert_rsk(word1, word2, to_insert, weight)
         P = word1
         Q = word2
         # reg._rc_graph = self
-        return (P, Q)
+        return (NilPlactic(P), Plactic(Q))
 
     # def __matmul__(self, other):
     #     if isinstance(other, RCGraph):
@@ -913,16 +909,6 @@ class RCGraph(Printable, tuple, CrystalGraph):
     def inv(self):
         return self.perm.inv
 
-    def _sympystr(self, printer=None):
-        from sympy.printing.str import StrPrinter
-
-        if not printer:
-            printer = StrPrinter()
-        return printer._print_MatrixBase(self)
-
-    def _pretty(self, printer):
-        return printer._print_MatrixBase(self)
-
     @property
     def rows(self):
         return len(self)
@@ -954,42 +940,6 @@ class RCGraph(Printable, tuple, CrystalGraph):
             return tuple(tuple(self)[n] for n in range(len(self))[key])
 
         raise ValueError(f"Bad indexing {key=}")
-
-    def _format_str(self, printer=None) -> str:
-        from sympy.printing import StrPrinter
-
-        if not printer:
-            printer = StrPrinter()
-        # Handle zero dimensions:
-        if self.rows == 1:
-            return type(self).__name__ + "([%s])" % self.table(printer, rowsep=",\n")  # noqa: UP031
-        return type(self).__name__ + "([\n%s])" % self.table(printer, rowsep=",\n")  # noqa: UP031
-
-    def table(self, printer, rowstart="|", rowend="|", rowsep="\n", colsep=" ", align="right"):
-        table: list[list[str]] = []
-        # Track per-column max lengths for pretty alignment
-        maxlen = [0] * self.cols
-        for i in range(self.rows):
-            table.append([])
-            for j in range(self.cols):
-                s = printer._print(self[i, j]) if self[i, j] is not None else " "
-                table[-1].append(s)
-                maxlen[j] = max(len(s), maxlen[j])
-        # Patch strings together
-        align = {
-            "left": "ljust",
-            "right": "rjust",
-            "center": "center",
-            "<": "ljust",
-            ">": "rjust",
-            "^": "center",
-        }[align]
-        res = [""] * len(table)
-        for i, row in enumerate(table):
-            for j, elem in enumerate(row):
-                row[j] = getattr(elem, align)(maxlen[j])
-            res[i] = rowstart + colsep.join(row) + rowend
-        return rowsep.join(res)
 
     def __lt__(self, other):
         if not isinstance(other, RCGraph):
