@@ -20,6 +20,15 @@ class Plactic(GridPrint):
         return tuple(a for row in reversed(self._word) for a in row)
 
     @property
+    def column_word(self):
+        wrd = []
+        for i in range(self.cols):
+            for j in range(self.rows - 1, -1, -1):
+                if i < len(self._word[j]):
+                    wrd.append(self._word[j][i])
+        return tuple(wrd)
+
+    @property
     def rows(self):
         return len(self._word)
 
@@ -50,26 +59,13 @@ class Plactic(GridPrint):
         """Apply fn to every entry of a tableau-like tuple-of-rows."""
         return tuple(tuple(fn(x) for x in row) for row in tuple(word))
 
-    def to_standard(self, reverse_semistandard=False):
+    def invert(self):
         """
         Return a Plactic whose entries are remapped so that standard
         (increasing) insertion order applies. If reverse_semistandard is True
         we negate entries (so larger original becomes smaller).
         """
-        if not reverse_semistandard:
-            return Plactic(self._word)
         return Plactic(Plactic._remap_word(self._word, lambda x: -int(x)))
-
-    @staticmethod
-    def from_standard(pl, reverse_semistandard=False):
-        """
-        Map a Plactic obtained in the 'standard' domain back to the original
-        semistandard domain. `pl` may be a Plactic instance or tuple-of-rows.
-        """
-        word = pl._word if isinstance(pl, Plactic) else tuple(tuple(r) for r in pl)
-        if not reverse_semistandard:
-            return Plactic(word)
-        return Plactic(Plactic._remap_word(word, lambda x: -int(x)))
 
     def __mul__(self, other):
         """
@@ -106,10 +102,9 @@ class Plactic(GridPrint):
         word = tuple(tuple(r) for r in word)
 
         if i == len(word):
-            # append a new row containing the letter
-            return tuple([*word, (letter,)])
-
-        row_i = word[i]
+            row_i = ()
+        else:
+            row_i = word[i]
         x0 = letter
 
         # If row empty or letter is >= max(row) then append to this row
@@ -120,7 +115,7 @@ class Plactic(GridPrint):
         # otherwise bump the smallest entry > x0
         x1 = min(a for a in row_i if a > x0)
         new_first_row = list(row_i)
-        idx = len(new_first_row) - 1 - new_first_row[::-1].index(x1)
+        idx = new_first_row.index(x1)
         new_first_row[idx] = x0
         new_word = tuple([*word[:i], tuple(new_first_row), *word[i + 1 :]])
         # recursively insert the bumped value into the next row

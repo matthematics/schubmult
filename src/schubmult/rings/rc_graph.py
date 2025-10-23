@@ -246,14 +246,19 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
     def edelman_greene(self):
         word1, word2 = (), ()
-        for (row, col) in reversed([self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)]):
+        index = 0
+        for index, (row, col) in enumerate(list(reversed([self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)]))):
             to_insert = row + col - 1
-            weight = row
-            word1, word2 = NilPlactic.ed_insert_rsk(word1, word2, to_insert, weight)
+            word1, word2 = NilPlactic.ed_insert_rsk(word1, word2, to_insert, index)
+            index += 1
         P = word1
-        Q = word2
+        readword = tuple([tuple([self.weight[i] for i in row]) for row in word2])
+        readword2 = []
+        for row in readword:
+            readword2 = [*readword2, *row]
+
         # reg._rc_graph = self
-        return (NilPlactic(P), Plactic(Q))
+        return (NilPlactic(P), Plactic().rs_insert(*readword2))
 
     # def __matmul__(self, other):
     #     if isinstance(other, RCGraph):
@@ -492,6 +497,13 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                 reflections = [*reflections, *[(a, b) for b in dict_by_a[a]]]
             return working_rc, tuple(reflections)
         return working_rc
+
+    @property
+    def weight(self):
+        wt = []
+        for i, row in enumerate(self):
+            wt.extend([i+1] * len(row))
+        return tuple(wt)
 
     @property
     def perm(self):
