@@ -299,6 +299,8 @@ class RCGraphRing(BaseSchubertRing):
 
         ret_elem = cprod * lower_module1
 
+        ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if elem in self.potential_products(rc1, rc2, len(elem)) or elem in self.potential_products(rc2, rc1, len(elem))})
+
         up_elem2 = self(RCGraph.one_row(p)) * self(lower_graph)
         for key, coeff in up_elem2.items():
             if key.perm != basis_elem.perm:
@@ -307,7 +309,7 @@ class RCGraphRing(BaseSchubertRing):
                 cp = self.coproduct_on_basis(key_rc)
                 for (rc1_bad, rc2_bad), cff2 in cp.items():
                     for (rc1, rc2), v in ret_elem.items():
-                        if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm) and (elem not in self.potential_products(rc1, rc2) or elem not in self.potential_products(rc2, rc1)):
+                        if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm):
                             ret_elem -= tring((rc1, rc2))
                             break
         ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(basis_elem.perm) and k[1].perm.bruhat_leq(basis_elem.perm)})
@@ -330,7 +332,7 @@ class RCGraphRing(BaseSchubertRing):
     #         ret_elem += coeff * tring((rc1_1, rc2_1))
     #     return ret_elem
 
-    def potential_products(self, left, right):
+    def potential_products(self, left, right, length):
         len0 = max(len(left.perm.trimcode), len(right.perm.trimcode)) 
         left_rc_hw = left
         right_rc_hw = right
@@ -346,7 +348,7 @@ class RCGraphRing(BaseSchubertRing):
                 while len(pain) > len0 and len(pain[-1]) == 0:
                     pain = pain.zero_out_last_row()
             if len(pain) == len0:# and pain.length_vector == tuple([a+b for a,b in zip_longest(left_rc_hw.length_vector, right_rc_hw.length_vector, fillvalue=0)]):
-                tprodst += coeff1 * self(pain)
+                tprodst += coeff1 * self(pain.resize(length))
         return set(tprodst.keys())
 
 
