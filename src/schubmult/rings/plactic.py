@@ -76,9 +76,7 @@ class Plactic(GridPrint):
             return NotImplemented
         word = [*self.row_word, *other.row_word]
         pl = Plactic()
-        for letter in word:
-            pl = pl.rs_insert(letter)
-        return pl
+        return pl.rs_insert(*word)
 
     @property
     def shape(self):

@@ -33,6 +33,7 @@ def debug_print(*args, debug=False):
         print(*args)
 
 
+
 class RCGraph(GridPrint, tuple, CrystalGraph):
     def __eq__(self, other):
         if not isinstance(other, RCGraph):
@@ -244,21 +245,37 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         shape = tuple(len(P[i]) for i in range(len(P)))
         return shape
 
+    # product = demazure crystal to demazure crystal
+    # transpose is weight preserving
+
+    def __invert__(self):
+        new_rc = RCGraph([() ]* self.cols)
+        for i in range(1, self.rows + 1):
+            for j in range(1, self.cols + 1):
+                if self.has_element(i, j):
+                    new_rc = new_rc.toggle_ref_at(j, i)
+        return new_rc
+
+    def normalize(self):
+        return self.resize(len(self.perm.trimcode))
+
+    def resize(self, new_length):
+        if new_length < len(self):
+            return self.rowrange(0, new_length)
+        return self.extend(new_length - len(self))
+
     def edelman_greene(self):
         word1, word2 = (), ()
         index = 0
         for index, (row, col) in enumerate(list(reversed([self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)]))):
             to_insert = row + col - 1
-            word1, word2 = NilPlactic.ed_insert_rsk(word1, word2, to_insert, index)
+            word1, word2 = NilPlactic.ed_insert_rsk(word1, word2, to_insert, len(self) - row + 1)
             index += 1
         P = word1
-        readword = tuple([tuple([self.weight[i] for i in row]) for row in word2])
-        readword2 = []
-        for row in readword:
-            readword2 = [*readword2, *row]
+        Q = word2
 
         # reg._rc_graph = self
-        return (NilPlactic(P), Plactic().rs_insert(*readword2))
+        return (NilPlactic(P), Plactic(Q))
 
     # def __matmul__(self, other):
     #     if isinstance(other, RCGraph):
