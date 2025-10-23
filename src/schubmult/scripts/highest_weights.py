@@ -230,20 +230,25 @@ if __name__ == "__main__":
     # exit()
     #printer = sympy.pretty()
     init_printing(pretty=True)
+    dct = {}
     for perm in perms:
-        if perm.inv == 0 or max(perm.descents()) == 0:
-            continue
-        for len1 in range(len(perm.trimcode),n):
-
+         for len1 in range(len(perm.trimcode), n):
             graphs1 = RCGraph.all_rc_graphs(perm, len1)
+            
             hw = set()
             for g in graphs1:
                 #print(f"Demazure weight: {g.crystal_weight}")
-                hw.add(g.to_highest_weight()[0])
-            print(f"Highest weights for {perm=}")
-            for gorble in hw:
-                pretty_print(gorble)
-                print(f"Highest weight: {gorble.crystal_weight}")
+                g0 = rc_ring(g)
+                g00 = g0 * rc_ring(RCGraph([()]))
+                shape1 = [len(a) for a in g.edelman_greene()[0]]
+
+                for g2 in g00.keys():
+                    shape2 = [len(a) for a in g2.edelman_greene()[0]]
+                    assert shape1 == shape2
+            # print(f"Highest weights for {perm=}")
+            # for gorble in hw:
+            #     pretty_print(gorble)
+            #     print(f"Highest weight: {gorble.crystal_weight}")
             # for perm2 in perms:
             #     if perm2.inv == 0:
             #         continue

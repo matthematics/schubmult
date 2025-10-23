@@ -82,7 +82,7 @@ class CrystalGraph:
         return new_rc
 
 
-
+# There is a decomposition here into subcrystals
 class CrystalGraphTensor(CrystalGraph):
     def __init__(self, *factors):
         if len(factors) == 1:

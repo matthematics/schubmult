@@ -738,11 +738,26 @@ class Plactic:
     def __init__(self, word):
         self._word = tuple(word)
 
+
+    def __mul__(self, other):
+        if not isinstance(other, Plactic):
+            raise NotImplementedError("Can only multiply Plactic elements by other Plactic elements.")
+        buildup = self
+        for row in reversed(other._word):
+            for letter in row:
+                buildup = buildup.rs_insert(letter)
+        return buildup
+
+
+    @property
+    def shape(self):
+        return tuple(len(row) for row in self._word)
+
     @staticmethod
     def from_word(word):
-        if len(word) <= 1:
-            return Plactic(word)
-        return Plactic.from_word(word[:-1]).rs_insert(word[-1])
+        p = Plactic()
+        p._word = word
+        return p
 
     def __hash__(self):
         return hash(self._word)

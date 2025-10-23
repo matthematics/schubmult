@@ -41,6 +41,7 @@ class RCGraph(Printable, tuple, CrystalGraph):
         for row in super().__iter__():
             yield tuple(row)
 
+    # UNIQUE
     def tableau_decomp(self):
         descs = self.perm.descents()
         if len(descs) == 0:
@@ -228,22 +229,35 @@ class RCGraph(Printable, tuple, CrystalGraph):
             ret = [*ret, *row]
         return tuple(ret)
 
-    # def edelman_greene(self):
-    #     from schubmult.perm_lib import NilPlactic
+    @property
+    def is_highest_weight(self):
+        for row in range(1, self.crystal_length()):
+            if self.raising_operator(row) is not None:
+                return False
+        return True
 
-    #     word1 = []
-    #     word2 = []
-    #     index = 0
-    #     evil_self = list(reversed([list(reversed(row)) for row in self]))
-    #     for i in range(len(evil_self)):
-    #         for a in evil_self[i]:
-    #             to_insert = len(self) - i
-    #             word1, word2 = NilPlactic.ed_insert_rsk(word1, word2, a, to_insert)
-    #             index += 1
-    #     P = Tableau(word1)
-    #     Q = Tableau(word2)
-    #     # reg._rc_graph = self
-    #     return (P, Q)
+    @property
+    def shape(self):
+        P = self.edelman_greene()[0]
+        shape = tuple(len(P[i]) for i in range(len(P)))
+        return shape
+
+    def edelman_greene(self):
+        from schubmult.perm_lib import NilPlactic
+
+        word1 = []
+        word2 = []
+        index = 0
+        evil_self = list(reversed([list(reversed(row)) for row in self]))
+        for i in range(len(evil_self)):
+            for a in evil_self[i]:
+                to_insert = len(self) - i
+                word1, word2 = NilPlactic.ed_insert_rsk(word1, word2, a, to_insert)
+                index += 1
+        P = word1
+        Q = word2
+        # reg._rc_graph = self
+        return (P, Q)
 
     # def __matmul__(self, other):
     #     if isinstance(other, RCGraph):
@@ -709,6 +723,8 @@ class RCGraph(Printable, tuple, CrystalGraph):
             return None
         return ret_rc
 
+    # preserves plactic class, but not Coxeter-Knuth
+    # preserves crystal structure. Decomposes RC graphs into key polynomials
     def vertical_cut(self, row):
         if row < 0 or row > len(self):
             raise ValueError("Row out of range")

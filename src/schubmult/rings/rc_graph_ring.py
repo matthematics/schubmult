@@ -283,45 +283,45 @@ class RCGraphRing(BaseSchubertRing):
             res *= self._one_row_cp(a)
         return res
 
+    # def coproduct_on_basis(self, elem):
+    #     # we have two coproducts: weight and schub
+    #     from schubmult.rings.crystal_graph import CrystalGraphTensor
+    #     tring = CrystalTensorRing(self, self)
+
+    #     a_elem = ASx(elem.perm, len(elem)).change_basis(WordBasis)
+    #     a_coprod = a_elem.coproduct()
+
+    #     r_a_coprod = tring.zero
+    #     for (word1, word2), coeff in a_coprod.items():
+    #         r_a_coprod += coeff * tring.ext_multiply(self._word_rc(word1), self._word_rc(word2))
+
+    #     w_coprod = tring.one
+
+    #     elem_hw, raise_seq = elem.to_highest_weight()
+
+    #     w_coprod = self._word_cp(elem_hw.length_vector)
+    #     result = tring.zero
+
+    #     reserve_coprod = self._word_cp(elem.length_vector)
+    #     cfs = {}
+    #     for tensor in sorted(w_coprod.keys()):
+    #         if tensor in r_a_coprod:# and cfs[key] < a_coprod[key]:
+    #             result += r_a_coprod[tensor] * tring(tensor)
+
+    #     lower_result = tring.zero
+    #     for tensor, coeff in result.items():
+    #         assert coeff == 1
+    #         tensor = CrystalGraphTensor(*tensor)
+    #         lowered_tensor = tensor.reverse_raise_seq(raise_seq)
+    #         if lowered_tensor is not None:
+    #             lower_result += coeff * tring.from_dict({lowered_tensor.factors: 1})
+    #         else:
+    #             last_resort = CrystalGraphTensor(*min(tensor2 for tensor2 in reserve_coprod.keys() if tensor2[0].perm == tensor.factors[0].perm and tensor2[1].perm == tensor.factors[1].perm))
+    #             reserve_coprod -= tring.from_dict({last_resort.factors: 1})
+    #             lower_result += coeff * tring.from_dict({last_resort.factors: 1})
+    #     return lower_result
+
     def coproduct_on_basis(self, elem):
-        # we have two coproducts: weight and schub
-        from schubmult.rings.crystal_graph import CrystalGraphTensor
-        tring = CrystalTensorRing(self, self)
-
-        a_elem = ASx(elem.perm, len(elem)).change_basis(WordBasis)
-        a_coprod = a_elem.coproduct()
-
-        r_a_coprod = tring.zero
-        for (word1, word2), coeff in a_coprod.items():
-            r_a_coprod += coeff * tring.ext_multiply(self._word_rc(word1), self._word_rc(word2))
-
-        w_coprod = tring.one
-
-        elem_hw, raise_seq = elem.to_highest_weight()
-
-        w_coprod = self._word_cp(elem_hw.length_vector)
-        result = tring.zero
-
-        reserve_coprod = self._word_cp(elem.length_vector)
-        cfs = {}
-        for tensor in sorted(w_coprod.keys()):
-            if tensor in r_a_coprod:# and cfs[key] < a_coprod[key]:
-                result += r_a_coprod[tensor] * tring(tensor)
-
-        lower_result = tring.zero
-        for tensor, coeff in result.items():
-            assert coeff == 1
-            tensor = CrystalGraphTensor(*tensor)
-            lowered_tensor = tensor.reverse_raise_seq(raise_seq)
-            if lowered_tensor is not None:
-                lower_result += coeff * tring.from_dict({lowered_tensor.factors: 1})
-            else:
-                last_resort = CrystalGraphTensor(*min(tensor2 for tensor2 in reserve_coprod.keys() if tensor2[0].perm == tensor.factors[0].perm and tensor2[1].perm == tensor.factors[1].perm))
-                reserve_coprod -= tring.from_dict({last_resort.factors: 1})
-                lower_result += coeff * tring.from_dict({last_resort.factors: 1})
-        return lower_result
-
-    def old_coproduct_on_basis(self, elem):
         tring = RestrictedRCGraphTensorRing(self, self)
         # trivial principal case
         if elem.perm.inv == 0:
@@ -334,14 +334,14 @@ class RCGraphRing(BaseSchubertRing):
         if len(elem) == 1:
             return cprod
 
-        hw_elem, raise_seq = elem.to_lowest_weight()
-        if hw_elem != elem:
-            hw_coprod = self.old_coproduct_on_basis(hw_elem)
-            return hw_coprod.reverse_lower_seq(raise_seq)
+        # hw_elem, raise_seq = elem.to_lowest_weight()
+        # if hw_elem != elem:
+        #     hw_coprod = self.old_coproduct_on_basis(hw_elem)
+        #     return hw_coprod.reverse_lower_seq(raise_seq)
         # if we can multiply by zero we rule the world
 
         lower_elem = elem.rowrange(1, len(elem))
-        lower_coprod = self.old_coproduct_on_basis(lower_elem)
+        lower_coprod = self.coproduct_on_basis(lower_elem)
         # # commuting h_i's
         # # cycles = first_row.perm.get_cycles()
         # # h = []
@@ -379,11 +379,21 @@ class RCGraphRing(BaseSchubertRing):
                 #     bad_coprod = self(key_rc_hw).coproduct().reverse_raise_seq(raise_seq)
                 #     ret_elem -= bad_coprod
                 # else:
-                bad_coprod = self.old_coproduct_on_basis(RCGraph.principal_rc(key_rc.perm,len(key_rc)))
+                bad_coprod = self.coproduct_on_basis(RCGraph.principal_rc(key_rc.perm,len(key_rc)))
                 #bad_coprod = self.coproduct_on_basis(key_rc)
                 # ret_elem -= bad_coprod
                 for (rc1_bad, rc2_bad), cff2 in bad_coprod.items():
-                    ret_elem -= cff2 * tring.new(*min([(rc1, rc2) for (rc1, rc2) in ret_elem.keys() if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm]))
+                    for (rc1, rc2), v in ret_elem.items():
+                        if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
+                            #and (Sx(uncode(rc1_bad.shape))*Sx(uncode(rc2_bad.shape))).get()
+                            from schubmult.perm_lib import Plactic
+                            Q1 = rc1_bad.edelman_greene()[1]
+                            Q2 = rc2_bad.edelman_greene()[1]
+                            Q = Plactic(Q1)*Plactic(Q2)
+                            if Q.shape != elem.shape:
+                                continue
+                            ret_elem -= tring((rc1, rc2))
+                            break
 
         # test_elem = tring.zero
         # for (rc1, rc2), v in ret_elem.items():
