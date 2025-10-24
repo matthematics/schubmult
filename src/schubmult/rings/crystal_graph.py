@@ -32,14 +32,16 @@ class CrystalGraph(Printable):
                 cnt += 1
         return cnt
 
-    def to_lowest_weight(self):
+    def to_lowest_weight(self, length=None):
         """Return the lowest weight element in the connected component."""
         g = self
         lower_seq = []
         found = True
+        if length is None:
+            length = self.crystal_length()
         while found:
             found = False
-            for row in range(1, g.crystal_length()):
+            for row in range(1, length):
                 g0 = g.lowering_operator(row)
                 if g0 is not None:
                     found = True
@@ -48,14 +50,16 @@ class CrystalGraph(Printable):
                     break
         return (g, tuple(lower_seq))
 
-    def to_highest_weight(self):
+    def to_highest_weight(self, length=None):
         """Return the highest weight element in the connected component."""
         g = self
         raise_seq = []
         found = True
+        if length is None:
+            length = self.crystal_length()
         while found:
             found = False
-            for row in range(1, g.crystal_length()):
+            for row in range(1, length):
                 g0 = g.raising_operator(row)
                 if g0 is not None:
                     found = True

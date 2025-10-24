@@ -20,11 +20,9 @@ def hom_rc(rc_elem, shift=0):
     Map an RCGraphRing element to a CoxeterKnuthRing element.
     """
     ck_ring = CoxeterKnuthRing()
-    pa = PlacticAlgebra(op=True)
-    tring = ck_ring @ pa
-    result = tring.zero
+    result = ck_ring.zero
     for rc, coeff in rc_elem.items():
-        result += coeff * tring(((rc.p_tableau, len(rc)), rc.weight_tableau.shiftup(shift)))
+        result += coeff * ck_ring(((rc.p_tableau, rc.weight_tableau, len(rc))))
     return result
 
 if __name__ == "__main__":
@@ -47,14 +45,17 @@ if __name__ == "__main__":
                         # ck1_elem = ck_ring((rc1.p_tableau, len(rc1)))
                         # ck2_elem = ck_ring((rc2.p_tableau, len(rc2)))
                         # mul_elem_ck = ck1_elem * ck2_elem
-                        mul_elem_rc = hom_rc(rc_ring(rc1) * rc_ring(rc2))
-                        mul_elem_as = hom_rc(rc_ring(rc1)) * hom_rc(rc_ring(rc2), shift=len(rc1))
+                        mul_elem_rc = rc_ring(rc1) * rc_ring(rc2)
+                        mul_elem_as = hom_rc(rc_ring(rc1)) * hom_rc(rc_ring(rc2))
                         try:
-                            assert all(v == 0 for v in (mul_elem_as - mul_elem_rc).values()), f"Mismatch in product for mul_elem"
+                            assert all(v == 0 for v in (mul_elem_as - hom_rc(mul_elem_rc)).values()), f"Mismatch in product for mul_elem"
                         except AssertionError as e:
                             print(e)
                             pretty_print(mul_elem_as)
                             pretty_print(mul_elem_rc)
+                            pretty_print(hom_rc(mul_elem_rc))
+                            pretty_print(hom_rc(rc_ring(rc1)))
+                            pretty_print(hom_rc(rc_ring(rc2)))
                             input()
                         # for rc, coeff in mul_elem_rc.items():
                         #     try:

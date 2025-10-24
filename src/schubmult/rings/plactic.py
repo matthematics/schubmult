@@ -319,6 +319,7 @@ class NilPlactic(Plactic):
         # find bump
         x1 = min(a for a in row_i if a > x0)
 
+
         # normal replace + recurse into next row
         if x1 != x0 + 1 or x0 not in row_i:
             new_first_row = list(row_i)
@@ -328,6 +329,9 @@ class NilPlactic(Plactic):
 
         # special case: continue bumping without changing current row
         return NilPlactic.ed_insert_rsk(word, word2, x1, letter2, i=i + 1)
+
+    def __hash__(self):
+        return hash(self._word)
 
     def __eq__(self, other):
         if isinstance(other, NilPlactic):
