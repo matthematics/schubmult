@@ -70,7 +70,7 @@ class CoxeterKnuthKey(Plactic):
     def from_rc_graph(cls, rc: RCGraph):
         return cls(rc.p_tableau, rc.weight_tableau, len(rc))
 
-    def monk_insert(self, simple_box, retry=True):
+    def monk_insert(self, simple_box, monk_top, retries = 6):
         
         """
         Candidate associative 'Monk' insertion for this CoxeterKnuthKey.
@@ -96,34 +96,39 @@ class CoxeterKnuthKey(Plactic):
         the rc_graph, pulling back the P-tableau from any produced RC-graphs.
         """
         # Normalize simple_box to a single integer entry
+        assert simple_box <= monk_top, "Cannot insert box larger than monk_top"
         box_val = simple_box
         
         # 2) attempt to produce candidate updated P-tableaux by acting on rc_graph
         rc0 = self.rc_graph
 
-        if len(rc0) < box_val:
-            rc0 = rc0.resize(box_val)
+        if len(rc0) < monk_top:
+            rc0 = rc0.resize(monk_top)
 
 
         poly = Sx(~self._p_tableau.perm)
-        poly *= Sx(uncode(([0]* (box_val - 1)) + [1]))
+        poly *= Sx(uncode(([0]* (monk_top - 1)) + [1]))
         # try rc.act(box_val)
         candidates = set()
         for perm in poly.keys():
-            out = RCGraph.all_rc_graphs(perm, len(rc0), weight=tuple([a if i != box_val - 1 else a+1 for i, a in enumerate(rc0.length_vector)]))
-            for rc in out:
-                good = True
-                for i in range(len(self._weight_tableau.shape)):
-                    if i >= len(rc.weight_tableau.shape) or self._weight_tableau.shape[i] > rc.weight_tableau.shape[i]:
-                        good = False
-                        break
-                if good:
-                    candidates.add(rc)
+            candidates.update(RCGraph.all_rc_graphs(perm, len(rc0), weight=tuple([a if i != box_val - 1 else a+1 for i, a in enumerate(rc0.length_vector)])))
         if len(candidates) == 1:
             return candidates.pop()
-        return next(iter(candidates), None)
+        for rc in candidates:
+            for j in range(1, monk_top + 1):
+                if rc.weight_tableau.shape == self._weight_tableau.rs_insert(j).shape:
+                    return rc
+        if retries > 0:
+            rc = self.shiftup(1).rc_graph.normalize()
+            rc = rc.extend(1).zero_out_last_row()
+            ck_key = CoxeterKnuthKey.from_rc_graph(rc)
+            return ck_key.monk_insert(box_val, monk_top, retries - 1)
+        return None
         # try multiplying by a one-row RCGraph corresponding to the box (fallback)
         #return CoxeterKnuthKey.from_rc_graph(RCGraph([(),*self.rc_graph.shiftup(1)])).monk_insert(box_val + 1).shiftup(-1).normalize()
+    
+    def shiftup(self, k1, k2=0):
+        return CoxeterKnuthKey(NilPlactic.from_word(self._p_tableau.shiftup(k1)), self._weight_tableau.shiftup(k2), self.length + k1)
 
 
 

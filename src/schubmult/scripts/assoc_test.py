@@ -29,20 +29,23 @@ if __name__ == "__main__":
     fail = False
     failures = []
     for perm in perms:
+        if perm.inv == 0:
+            continue
         for rc in RCGraph.all_rc_graphs(perm):
             ck_key = CoxeterKnuthKey.from_rc_graph(rc)
             for i in range(1, n + 1):
-                print("Inserting box", i, "into RCGraph with perm", perm)
-                rc_insert = ck_key.monk_insert(i)
-                pretty_print(rc_insert)
-                if rc_insert is None:
-                    fail = True
-                    failures.append((rc, i))
+                for box_val in range(1, i + 1):
+                    print(f"Inserting box {box_val=} for {i} into RCGraph with perm {perm}")
+                    rc_insert = ck_key.monk_insert(box_val, i)
+                    pretty_print(rc_insert)
+                    if rc_insert is None:
+                        fail = True
+                        failures.append((rc, i, box_val))
 
     if fail:
         print("Some insertions failed")
-        for rc, i in failures:
-            print(f"Failed insertion of box {i} into RCGraph:")
+        for rc, i, box_val in failures:
+            print(f"Failed insertion of box {box_val} for {i} into RCGraph:")
             pretty_print(rc.normalize())
     else:
         print("All insertions succeeded")

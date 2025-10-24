@@ -320,7 +320,9 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             return False
         return True
 
-    def rowrange(self, start, end):
+    def rowrange(self, start, end=None):
+        if not end:
+            end = len(self)
         if start == end:
             return type(self)(())
         return type(self)([tuple([a - start for a in row]) for row in self[start:end]])

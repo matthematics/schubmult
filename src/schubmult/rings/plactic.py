@@ -97,10 +97,10 @@ class Plactic(GridPrint, CrystalGraph):
     def shape(self):
         return tuple(len(row) for row in self._word)
 
-    @staticmethod
-    def from_word(word):
+    @classmethod
+    def from_word(cls, word):
         # accept any iterable-of-rows and normalize to tuple-of-tuples
-        return Plactic(tuple(tuple(r) for r in word))
+        return cls(tuple(tuple(r) for r in word))
 
     def __hash__(self):
         return hash(self._word)
