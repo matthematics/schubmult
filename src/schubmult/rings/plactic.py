@@ -32,6 +32,17 @@ class Plactic(GridPrint, CrystalGraph):
                     wrd.append(self._word[j][i])
         return tuple(wrd)
 
+    def transpose(self):
+        """Return the transpose of this Plactic tableau."""
+        new_word = []
+        for i in range(self.cols):
+            new_row = []
+            for j in range(self.rows):
+                if i < len(self._word[j]):
+                    new_row.append(self._word[j][i])
+            new_word.append(tuple(new_row))
+        return Plactic(tuple(new_word))
+
     @property
     def rows(self):
         return len(self._word)

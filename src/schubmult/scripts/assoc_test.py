@@ -1,129 +1,13 @@
 from sympy import init_printing, pretty_print
 
 from schubmult.rings.rc_graph_ring import RCGraphRing
-from schubmult.rings.crystal_graph import CrystalGraphTensor
-from schubmult.rings.crystal_tensor_ring import CrystalTensorRing
-from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute
+from schubmult.rings.rc_graph import RCGraph
+from schubmult.rings.ck_ring import CoxeterKnuthKey
 
 # IS THIS ASSOCIATIVE?
 # need associativity
 rc_ring = RCGraphRing()
 
-def hom3(rc):
-    from schubmult import FA, ASx, SchubertBasis
-    #from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute, rc_ring.from_dict
-    if isinstance(rc, RCGraphCrystalChute):
-        #return (ASx@FA)(r,rc.length_vector))
-        ring = ASx @ ASx
-        #first = FA(*rc.length_vector).change_basis(SchubertBasis).get()
-        return ring.ext_multiply(ASx(rc.perm,len(rc)),ASx(rc.perm,len(rc)))
-    ret = 0
-    for rc0, coeff in rc.items():
-        ret += coeff * hom(rc0)
-    return ret
-
-def hom_rc(elem):
-    from schubmult import FA, ASx, SchubertBasis
-    #from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute, rc_ring.from_dict
-    ring = RCGraphRing()
-    ret = 0
-    for key, val in elem.items():
-        ret+=val * rc_ring.from_dict(dict.fromkeys({RCGraphCrystalChute.principal_rc(*key)},1))
-    return ret
-
-
-def hom(rc):
-    from schubmult import FA, ASx, SchubertBasis
-    from schubmult.rings import TensorRing
-    #from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute, rc_ring.from_dict
-    ring = TensorRing(ASx@FA, rc_ring)
-
-    if isinstance(rc, RCGraphCrystalChute):
-        #return (ASx@FA)(r,rc.length_vector))
-        # print(f"{rc.length_vector} {tuple(rc)=}")
-        #first = FA(*rc.length_vector).change_basis(SchubertBasis).get()
-        return (ASx@FA)(((rc.perm,len(rc)),rc.length_vector))
-        #return ret
-    ret = 0
-    for rc0, coeff in rc.items():
-        # print(f"{rc=}")
-        # print(f"{w0=}")
-        # print(f"{rc0=}")
-        ret += coeff * hom(rc0)
-    return ret
-
-# def hom(rc):
-#     from schubmult import FA, ASx, SchubertBasis
-#     from schubmult.rings import TensorRing
-#     from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute, rc_ring.from_dict
-#     ring = TensorRing(ASx, rc_ring.from_dict())
-
-#     if isinstance(rc, RCGraphCrystalChute):
-#         #return (ASx@FA)(r,rc.length_vector))
-#         # print(f"{rc.length_vector} {tuple(rc)=}")
-#         #first = FA(*rc.length_vector).change_basis(SchubertBasis).get()
-#         return ASx(rc.perm,len(rc))
-#         #return ret
-#     ret = 0
-#     for rc0, coeff in rc.items():
-#         # print(f"{rc=}")
-#         # print(f"{w0=}")
-#         # print(f"{rc0=}")
-#         ret += coeff * hom(rc0)
-#     return ret
-
-
-def fa_hom(rc):
-    from schubmult import FA, ASx, SchubertBasis
-    # from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute, rc_ring.from_dict
-    if isinstance(rc, RCGraphCrystalChute):
-        #return (ASx@FA)(r,rc.length_vector))
-        ring = FA @ (ASx@ASx)
-        first = FA(*rc.length_vector).change_basis(SchubertBasis)
-        second = FA(*rc.length_vector).change_basis(SchubertBasis).coproduct()
-        return ring.ext_multiply(first, second)
-    ret = 0
-    for rc0, coeff in rc.items():
-        ret += coeff * hom_cop(rc0)
-    return ret
-
-
-def hom_cop(rc):
-    from schubmult import FA, ASx, SchubertBasis
-    # from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute, rc_ring.from_dict
-    if isinstance(rc, RCGraphCrystalChute):
-        #return (ASx@FA)(r,rc.length_vector))
-        ring = ASx @ (ASx@ASx)
-        first = FA(*rc.length_vector).change_basis(SchubertBasis)
-        second = FA(*rc.length_vector).change_basis(SchubertBasis).coproduct()
-        return ring.ext_multiply(first, second)
-    ret = 0
-    for rc0, coeff in rc.items():
-        ret += coeff * hom_cop(rc0)
-    return ret
-
-
-def single_rc(a):
-    if a == 0:
-        return RCGraphCrystalChute(((),))
-    return RCGraphCrystalChute([tuple(range(a, 0, -1))])
-
-def RC(*seq):
-    from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute
-    res = rc_ring.from_dict({RCGraphCrystalChute(): 1})
-    for a in seq:
-        res = res * single_rc(a)
-    return res
-
-
-def csym_rc(*weight):
-    buildup = []
-    for i, a in enumerate(weight):
-        if a == 0:
-            buildup.append(())
-        else:
-            buildup.append(tuple(range(a+i, i, -1)))
-    return rc_ring.from_dict({RCGraphCrystalChute(buildup): 1})
 
 if __name__ == "__main__":
     # test module functionality
@@ -133,232 +17,32 @@ if __name__ == "__main__":
     from schubmult import FA, ASx, Permutation, SchubertBasis, WordBasis, uncode
     from schubmult.abc import x
     from schubmult.rings import MonomialBasis, PolynomialAlgebra, SchubertPolyBasis
-    from schubmult.rings.rc_crystal_chute import RCGraphCrystalChute
     from schubmult.utils.perm_utils import artin_sequences
 
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 3
 
     perms = Permutation.all_permutations(n)
     modfull = 0
-    len1 = 4
     dct = {}
     deg = 6
-    rc_ring = RCGraphRing()
-
-    # for seq in artin_sequences(deg, n):
-    #     rc1 = rc1.associative_kogan_kumar_insert(a+1,[r + 1 for r in seq[:a+1]])
-    #     rc1 = rc1.associative_kogan_kumar_insert(b+1,[r + 1 for r in seq2[:b+1]])
-    #     rc3 = rc1.associative_kogan_kumar_insert(c+1,[r + 1 for r in seq3[:c+1]])
-    #     rc2 = rc2.associative_kogan_kumar_insert(b+1,[r + 1 for r in seq2[:b+1]])
-    #     rc2 =
-
-            # print(g1)
-            # print(g2)
-            # print(g1 * g2)
-            # print(FA(*seq)*FA(*seq2).change_basis(SchubertBasis))
-            # print()
-
-    # if we coprod a Schub this will act right
-    # print(csym_rc(1)*csym_rc(2))
-    # print(csym_rc(1)*csym_rc(2) - csym_rc(1,2) )
-    # exit()
-
-    # for perm in perms:
-    #     AG = PolynomialAlgebra(SchubertPolyBasis(len(perm.trimcode)))
-    #     bob = AG(perm).coproduct()
-    #     mod = 0
-    #     print(perm)
-    #     for (perm1, perm2), v in bob.items():
-    #         rc1 = rc_ring.from_dict(dict.fromkeys(RCGraphCrystalChute.all_rc_graphs(perm1[0], perm1[1]),1))
-    #         rc2 = rc_ring.from_dict(dict.fromkeys(RCGraphCrystalChute.all_rc_graphs(perm2[0], perm2[1]),1))
-    #         print(f"{perm1=} {perm2=} {v=}")
-    #         print(v * (rc1 * rc2))
-    #         mod = v * (rc1 * rc2)
-    #         for k, v in mod.items():
-    #             assert v == 0 or k.perm == perm, f"{k=}, {perm=}, {v=}, {k.perm=}"
-    #     #print(mod)
-
-    #for deg in range((n*(n-1))//2+1):
-    # for seq in all_fa_degree(deg, len1):
-    #     g1 = FA(*seq[:3]) * RCGraphCrystalChute()
-    #     g2 = FA(*seq[3:]) * RCGraphCrystalChute()
-    #     print(g1 * g2)
-    #     print(FA(*seq).change_basis(SchubertBasis))
-
-    # for perm in perms:
-    #     print(f"{perm=}")
-    #     arcs = RCGraphCrystalChute.all_rc_graphs(perm)
-    #     rcs = {}
-    #     for rc in arcs:
-    #         for i in range(len(perm.trimcode)):
-    #             rc_e = rc.extract_row(i+1)
-    #             rcs[i] = rcs.get(i, {})
-    #             rcs[i][rc_e.perm] = rcs[i].get(rc_e.perm, set())
-    #             rcs[i][rc_e.perm].add(rc_e)
-    #             pretty_print(rc)
-    #     for i, pdict in  rcs.items():
-    #         for perm0, st in pdict.items():
-    #             assert st == RCGraphCrystalChute.all_rc_graphs(perm0, len(perm.trimcode)-1), f"{i=} {perm0=} {st=} {RCGraphCrystalChute.all_rc_graphs(perm0, len(perm.trimcode)-1)=}"
-    # exit()
-    #     mod = 0
-    #     wrd = ASx(perm, len1).change_basis(WordBasis)
-    #     for w, v in wrd.items():
-    #         if w in dct:
-    #             mod += hom(v * dct[w])
-    #     print(mod)
-    # rc1 = RCGraphCrystalChute([(1,)])
-    # rc2 = RCGraphCrystalChute([(3,),(2,)])
-    # print(rc1)
-    # print(rc2)
-    # print(rc1 * rc2)
-    # print(rc2 * rc1)
-    # exit()
-    # rc_ring = RCGraphRing()
-    # for perm in perms:
-    #     elem = ASx(perm).change_basis(WordBasis)
-    #     mod = 0
-    #     rc = next(iter(RCGraphCrystalChute.all_rc_graphs(perm)))
-    #     print(rc)
-    #     print(elem)
-    #     for w, v in elem.items():
-    #         elem2 = rc_ring.from_dict({RCGraphCrystalChute(): v})
-    #         index = 0
-    #         for a in w:
-    #             elem2 =  elem2*csym_rc(*list((rc.length_vector[index:index+a])))
-    #             index += a
-    #         mod += elem2
-    #     #mod = RC(*perm.trimcode)
-    #     print(f"{perm.trimcode}")
-    #     print(mod)
-    # exit()
-    #printer = sympy.pretty()
-    init_printing(pretty=True)
-    ring = RCGraphRing()
-
-    def test_hom_crystal(graph):
-        if len(graph) <= 1:
-            return True
-        if len(graph[-1]) != 0:
-            return True
-        for row in range(1, len(graph) - 1):
-            new_rc = graph.raising_operator(row)
-            if new_rc and len(new_rc[-1]) == 0:
-                print("Nontrivial raising operator")
-                rc2 = graph.zero_out_last_row()
-                new_rc2 = rc2.raising_operator(row)
-                assert new_rc2 == new_rc.zero_out_last_row(), f"Raising operator doesn't commute with zeroing last row {graph=} {row=} {new_rc=} {rc2=} {new_rc2=}"
-            new_rc = graph.lowering_operator(row)
-            if new_rc  and len(new_rc[-1]) == 0:
-                print("Nontrivial lowering operator")
-                rc2 = graph.zero_out_last_row()
-                new_rc2 = rc2.lowering_operator(row)
-                assert new_rc2 == new_rc.zero_out_last_row(), f"Lowering operator doesn't commute with zeroing last row {graph=} {row=} {new_rc=} {rc2=} {new_rc2=}"
-        return True
     
-    def zero_tensor(tensor):
-        from schubmult.rings.crystal_graph import CrystalGraphTensor
-        graph1, graph2 = tensor.factors
-        return CrystalGraphTensor(graph1.zero_out_last_row(), graph2.zero_out_last_row())
-    tring = CrystalTensorRing(rc_ring, rc_ring)
-    def test_hom_crystal_tensor(graph1, graph2):
-        from schubmult.rings.crystal_graph import CrystalGraphTensor
-        if len(graph1) == 0:
-            return True
-        if graph1.length_vector[-1] != 0 or graph2.length_vector[-1] != 0:
-            return True
-        gz1 = graph1.zero_out_last_row()
-        gz2 = graph2.zero_out_last_row()
-
-
-        tensor = CrystalGraphTensor(graph1, graph2)
-        tensor0 = CrystalGraphTensor(gz1, gz2)
-                    
-        for row in range(1, tensor.crystal_length() - 1):
-            new_rc = tensor.raising_operator(row)
-            if new_rc and len(new_rc.factors[0][-1])  and len(new_rc.factors[1][-1]) == 0:
-                print("Nontrivial raising operator")
-                new_rc2 = tensor0.raising_operator(row)
-                assert new_rc2 == zero_tensor(new_rc), f"Raising operator doesn't commute with zeroing last row {graph1=} {graph2=} {row=} {tring(zero_tensor(new_rc).factors)=} {tring(new_rc2.factors)=}"
-            new_rc = tensor.lowering_operator(row)
-            if new_rc and len(new_rc.factors[0][-1]) == 0 and len(new_rc.factors[1][-1]) == 0:
-                print("Nontrivial lowering operator")
-                new_rc2 = tensor0.lowering_operator(row)
-                assert new_rc2 == zero_tensor(new_rc), f"Lowering operator doesn't commute with zeroing last row {graph1=} {graph2=} {row=} {tring(zero_tensor(new_rc).factors)=} {tring(new_rc2.factors)=}"
-        return True
-
-    
-    
+    fail = False
+    failures = []
     for perm in perms:
-        if perm.inv == 0:
-            continue
-        for perm2 in perms:
-            if perm2.inv == 0:
-                continue
-            for len1 in range(max(len(perm.trimcode),len(perm2.trimcode)),n):
-                graphs1 = RCGraphCrystalChute.all_rc_graphs(perm, len1)
-                graphs2 = RCGraphCrystalChute.all_rc_graphs(perm2, len1)
-                for g in graphs1:
-                    if g.length_vector[-1] != 0:
-                        continue
-                    for g2 in graphs2:
-                        if g2.length_vector[-1] != 0:
-                            continue
-                        pretty_print(tring((g, g2)))
-                        print(f"{test_hom_crystal(g)=}")
-                        print(f"{test_hom_crystal(g2)=}")
-                        #print(f"{test_hom_crystal_tensor(g,g2)=}")
-                # for row in range(1, len1):
-                #     print(f"Row {row=}")
-                #     if g == g.crystal_reflection(row):
-                #         print("Fixed point")
-                #         print(f"Descent? {perm[row-1] > perm[row]=}")
-                        
-            # for perm2 in perms:
-            #     if perm2.inv == 0:
-            #         continue
-            #     for len2 in range(len(perm2.trimcode),n):
-            #         graphs2 = RCGraphCrystalChute.all_rc_graphs(perm2, len2)
-            #         for perm3 in perms:
-            #             if perm3.inv == 0:
-            #                 continue
-            #             for len3 in range(len(perm3.trimcode), n):
-            #                 graphs3 = RCGraphCrystalChute.all_rc_graphs(perm3, len3)
-            #                 for g31 in graphs3:
-            #                     for g32 in graphs2:
-            #                         for g33 in graphs1:
-            #                             g1 = rc_ring(g31)
-            #                             g2 = rc_ring(g32)
-            #                             g3 = rc_ring(g33)
-            #                             print(f"{g32=} {len(g32)=} {g32.perm=} * {g33=} {len(g33)=} {g33.perm=} =?= ({g32}*{g33})")
-            #                             g = g1 * (g2 * g3)
-            #                             g_ = (g1 * g2) * g3
-            #                             diff = g - g_
-            #                             pretty_print(g)
-            #                             pretty_print(g_)
-            #                             try:
-            #                                 assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
-            #                             except AssertionError as e:
-            #                                 print("FAILURE")
-            #                                 print(e)
-            #                                 print(f"{g=}")
-            #                                 print(f"{g_=}")
+        for rc in RCGraph.all_rc_graphs(perm):
+            ck_key = CoxeterKnuthKey.from_rc_graph(rc)
+            for i in range(1, len(perm.trimcode)):
+                print("Inserting box", i, "into RCGraph with perm", perm)
+                rc_insert = ck_key.monk_insert(i)
+                pretty_print(rc_insert)
+                if rc_insert is None:
+                    fail = True
+                    failures.append((rc, i))
 
-            #                                 raise
-            #                             print("Success")
-            #                             df = hom(g1) * (hom(g2) * hom(g3)) - hom(g)
-            #                             try:
-            #                                 assert all(v == 0 for k, v in df.items()), f"{tuple(df.values())=}"
-            #                             except AssertionError as e:
-            #                                 print("HOM FAILURE")
-            #                                 print(e)
-            #                                 print(hom(g1) * (hom(g2) * hom(g3)))
-            #                                 print(hom(g))
-            #                                 raise
-            #                             print("Hom Success")
-
-            #                             del g
-            #                             del g_
-                                        # printer._print_seq(g1,g2,delimiter=" * ",parenthesize=True)printer.print = {g1}*({g2}*{g3})")
-                                        # pretty_print(g1)
-                                        # pretty_print(g2)
-                                        # pretty_print(g3)
+    if fail:
+        print("Some insertions failed")
+        for rc, i in failures:
+            print(f"Failed insertion of box {i} into RCGraph:")
+            pretty_print(rc.normalize())
+    else:
+        print("All insertions succeeded")
