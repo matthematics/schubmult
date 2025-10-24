@@ -134,7 +134,7 @@ class Plactic(GridPrint):
 
 class NilPlactic(Plactic):
 
-    def hw_rc(self):
+    def hw_rc(self, length=None):
         """
         Return the highest-weight RCGraph corresponding to this NilPlactic
         tableau via Edelman–Greene insertion.
@@ -150,22 +150,30 @@ class NilPlactic(Plactic):
                 # need to add empty rows in between
                 graph.append(tuple(row))
                 row = []
-            row.append(len(graph) + 1)
+            row.append(letter)
             last_letter = letter
-        return RCGraph(graph)
+        graph.append(tuple(row))
+        graph = RCGraph(graph).normalize()
+        if length:
+            graph = graph.resize(length)
+        assert graph.p_tableau == self, f"{graph.p_tableau=} {self=} {graph=}"
+        return graph
 
-    def ring_product(self, other):
-        """
-        NilPlactic product: insert entries of `other` in Edelman–Greene
-        row-reading order (top-to-bottom, left-to-right) into a copy of self.
-        """
-        if not isinstance(other, NilPlactic):
-            return NotImplemented
-        st = (other.hw_rc()).prod_with_rc(self.hw_rc())
-        ret = {}
-        for rc, coeff in st:
-            ret[rc.p_tableau] = ret.get(rc.p_tableau, 0) + coeff
-        return ret
+    def __hash__(self):
+        return hash((NilPlactic, self._word))
+
+    # def ring_product(self, other, length):
+    #     """
+    #     NilPlactic product: insert entries of `other` in Edelman–Greene
+    #     row-reading order (top-to-bottom, left-to-right) into a copy of self.
+    #     """
+    #     if not isinstance(other, NilPlactic):
+    #         return NotImplemented
+    #     st = (self.hw_rc()).prod_with_rc(other.hw_rc())
+    #     ret = {}
+    #     for rc, coeff in st.items():
+    #         ret[rc.p_tableau] = ret.get(rc.p_tableau, 0) + coeff
+    #     return ret
 
     @property
     def perm(self):

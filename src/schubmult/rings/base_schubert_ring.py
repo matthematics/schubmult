@@ -213,11 +213,10 @@ class BaseSchubertRing(Ring, CompositeDomain):
         return self.__class__.__name__
 
     def __matmul__(self, other):
-        if isinstance(other, BaseSchubertRing):
-            from .tensor_ring import TensorRing
+        from .tensor_ring import TensorRing
 
-            return TensorRing(self, other)
-        return NotImplemented
+        return TensorRing(self, other)
+        #return NotImplemented
 
     def __eq__(self, other):
         return type(self) is type(other) and self.genset == other.genset and self.coeff_genset == other.coeff_genset

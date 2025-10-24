@@ -46,7 +46,7 @@ class CoxeterKnuthRing(BaseSchubertRing):
 
     @property
     def zero_monom(self):
-        return NilPlactic()
+        return (NilPlactic(), 0)
 
     def printing_term(self, key):
         return CoxeterKnuthPrintingTerm(key)
@@ -68,12 +68,12 @@ class CoxeterKnuthRing(BaseSchubertRing):
         # a, b are CoxeterKnuthRingElemen
         if isinstance(b, CoxeterKnuthRingElement):
             result_dict = {}
-            for g1, c1 in a.items():
-                for g2, c2 in b.items():
+            for (g1, len1), c1 in a.items():
+                for (g2, len2), c2 in b.items():
                     # CoxeterKnuth.prod_with_rc returns a dict {CoxeterKnuth: coeff}
-                    prod = g1.ring_product(g2)
+                    prod = g1.hw_rc(len1).prod_with_rc(g2.hw_rc(len2))
                     for g3, c3 in prod.items():
-                        result_dict[g3] = result_dict.get(g3, 0) + c1 * c2 * c3
+                        result_dict[(g3.p_tableau,len(g3))] = result_dict.get((g3.p_tableau,len(g3)), 0) + c1 * c2 * c3
             # result_dict = {k: v * b for k, v in a.items()}
         return self.from_dict(result_dict)
 
@@ -84,6 +84,6 @@ class CoxeterKnuthRing(BaseSchubertRing):
     @property
     def one(self):
         # Define the "one" element for CoxeterKnuthRing
-        identity_graph = NilPlactic()
+        identity_graph = (NilPlactic(), 0)
         return self.from_dict({identity_graph: 1})
 
