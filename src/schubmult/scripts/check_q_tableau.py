@@ -70,12 +70,22 @@ def main(argv):
                 P_left, Q_left = eg_PQ_from_rc(left_rc)
                 P_right, Q_right = eg_PQ_from_rc(right_rc)
 
-                lefto_set = left_rc.prod_with_rc(RCGraph([()] * (len(right_rc.perm))))
+                lefto_set = left_rc.prod_with_rc(right_rc)
                 for lefto in lefto_set:
-                    while len(lefto) > len(left_rc) + len(right_rc):
-                        lefto = lefto.zero_out_last_row()
                     P_lefto, Q_lefto = eg_PQ_from_rc(lefto)
-                    assert P_lefto.shape == P_left.shape
+                    #assert P_lefto.shape == P_left.shape
+                    expected_Q = Q_left.shiftup(len(right_rc)) * Q_right
+                    ok_shape = (Q_lefto == expected_Q)
+                    try:
+                        assert ok_shape, f"Q-tableau mismatch in RCGraph product {pu}, {pv}:\n got Q={Q_lefto}, expected Q={expected_Q}"
+                    except AssertionError:
+                        print("Fail")
+                        print(f"{lefto.perm.trimcode=}")
+                        print(f"{P_lefto=}")
+                        print(f"{Q_lefto=}")
+                        print(f"{expected_Q=}")
+                        print(f"{Q_left=}")
+                        print(f"{Q_right=}")
                     # then it's right times left
                 # def calc_the_baby(left, right):
                 #     len0 = max(len(left.perm.trimcode), len(right.perm.trimcode)) 

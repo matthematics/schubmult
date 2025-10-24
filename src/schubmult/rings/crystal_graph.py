@@ -1,4 +1,3 @@
-from sympy import Tuple
 from sympy.printing.defaults import Printable
 
 
@@ -11,13 +10,27 @@ class CrystalGraph(Printable):
         """The lowering operator for the crystal graph."""
         raise NotImplementedError
 
-    def phi(self, index):
-        """The phi function for the crystal graph."""
-        raise NotImplementedError
+    def phi(self, i):
+        if i == 0:
+            return 0
+        rc = self
+        cnt = 0
+        while rc is not None:
+            rc = rc.lowering_operator(i)
+            if rc is not None:
+                cnt += 1
+        return cnt
 
-    def epsilon(self, index):
-        """The epsilon function for the crystal graph."""
-        raise NotImplementedError
+    def epsilon(self, i):
+        if i == 0:
+            return 0
+        rc = self
+        cnt = 0
+        while rc is not None:
+            rc = rc.raising_operator(i)
+            if rc is not None:
+                cnt += 1
+        return cnt
 
     def to_lowest_weight(self):
         """Return the lowest weight element in the connected component."""
@@ -60,9 +73,9 @@ class CrystalGraph(Printable):
         for row in reversed(raise_seq):
             rc = rc.lowering_operator(row)
             if rc is None:
-                return None
+                raise ValueError(f"Cannot reverse raising sequence {raise_seq} on {self}")
         return rc
-    
+
     def reverse_lower_seq(self, lower_seq):
         rc = self
         for row in reversed(lower_seq):
@@ -86,17 +99,16 @@ class CrystalGraph(Printable):
 
 # There is a decomposition here into subcrystals
 class CrystalGraphTensor(CrystalGraph):
-
     @property
     def args(self):
         return self.factors
-    
+
     def _sympystr(self, printer):
         return printer.stringify(self.factors, sep=" # ")
 
     def _pretty(self, printer):
         return printer._print_TensorProduct(self)
-    
+
     def _get_args_for_traditional_printer(self):
         return None, self.factors
 

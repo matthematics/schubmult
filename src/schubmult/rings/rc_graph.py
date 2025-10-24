@@ -610,29 +610,6 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
         return interim.rowrange(0, len(self) - 1)
 
-    @cache
-    def phi(self, i):
-        if i == 0:
-            return 0
-        rc = self
-        cnt = 0
-        while rc is not None:
-            rc = rc.lowering_operator(i)
-            if rc is not None:
-                cnt += 1
-        return cnt
-
-    @cache
-    def epsilon(self, i):
-        if i == 0:
-            return 0
-        rc = self
-        cnt = 0
-        while rc is not None:
-            rc = rc.raising_operator(i)
-            if rc is not None:
-                cnt += 1
-        return cnt
 
     @property
     def crystal_weight(self):
@@ -785,7 +762,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         return rc_set
 
     def __hash__(self):
-        return hash(tuple(self))
+        return hash(tuple([tuple(a) for a in self]))
 
     @cache
     def bisect_left_coords_index(self, row, col, lo=0, hi=None):
@@ -846,6 +823,26 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     @cached_property
     def p_tableau(self):
         return self.edelman_greene()[0]
+
+    @cached_property
+    def q_tableau(self):
+        return self.edelman_greene()[1]
+
+    @cached_property
+    def weight_tableau(self):
+        if self.is_highest_weight:
+            tb = self.p_tableau.yamanouchi()
+            trimmed_lv = list(self.length_vector)
+            while len(trimmed_lv) > 0 and trimmed_lv[-1] == 0:
+                trimmed_lv.pop()
+            trimmed_lv = tuple(trimmed_lv)
+            assert tb.shape == trimmed_lv, f"{tb.shape=}, {trimmed_lv=}"
+            return tb
+        rc_hw, raise_seq = self.to_highest_weight()
+        w_tab = rc_hw.weight_tableau
+        tb = w_tab.reverse_raise_seq(raise_seq)
+        assert tb is not None, f"Could not reverse raise seq {raise_seq} on {w_tab=} {rc_hw=} {self=}"
+        return tb
 
     # THE ZERO MAKES SCHUB PROD
     @cache

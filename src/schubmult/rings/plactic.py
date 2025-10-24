@@ -2,9 +2,10 @@
 from schubmult.perm_lib import Permutation
 
 from ._grid_print import GridPrint
+from .crystal_graph import CrystalGraph
 
 
-class Plactic(GridPrint):
+class Plactic(GridPrint, CrystalGraph):
     def __init__(self, word=()):
         # ensure we always store a flat tuple of rows (each row a tuple of ints)
         self._word = tuple(tuple(r) for r in word)
@@ -14,10 +15,13 @@ class Plactic(GridPrint):
         new_word = tuple(tuple(int(a) + k for a in row) for row in self._word)
         return Plactic(new_word)
 
+
     @property
     def row_word(self):
         """Return the row-reading word as a flat tuple."""
-        return tuple(a for row in reversed(self._word) for a in row)
+        word =  tuple(a for row in reversed(self._word) for a in row)
+        assert len(word) == sum(len(r) for r in self._word), f"Length mismatch in row_word {len(word)=} vs {self._word=}"
+        return word
 
     @property
     def column_word(self):
@@ -107,15 +111,15 @@ class Plactic(GridPrint):
 
         # If row empty or letter is >= max(row) then append to this row
         if len(row_i) == 0 or x0 >= max(row_i):
-            new_row = tuple([*row_i, x0])
-            return tuple([*word[:i], new_row, *word[i + 1 :]])
+            new_row = (*row_i, x0)
+            return (*word[:i], new_row, *word[i + 1 :])
 
         # otherwise bump the smallest entry > x0
         x1 = min(a for a in row_i if a > x0)
         new_first_row = list(row_i)
         idx = new_first_row.index(x1)
         new_first_row[idx] = x0
-        new_word = tuple([*word[:i], tuple(new_first_row), *word[i + 1 :]])
+        new_word = (*word[:i], tuple(new_first_row), *word[i + 1 :])
         # recursively insert the bumped value into the next row
         return Plactic._rs_insert(new_word, x1, i=i + 1)
 
@@ -130,6 +134,74 @@ class Plactic(GridPrint):
         if isinstance(other, Plactic):
             return self._word == other._word
         return False
+
+    # -- CrystalGraph API wrappers (delegate to the NilPlactic <-> RCGraph machinery) --
+    # These adapt the RCGraph crystal operators/queries to Plactic tableaux by
+    # converting the tableau to its highest-weight RC graph (via NilPlactic.hw_rc),
+    # delegating to the RCGraph implementation, then mapping results back to Plactic.
+
+    def raising_operator(self, i):
+        """Crystal raising operator e_i on the Plactic tableau (delegates to RCGraph)."""
+        word = [*self.row_word]
+        opening_stack = []
+        closing_stack = []
+        for index in range(len(word)):
+            if word[index] == i + 1:
+                opening_stack.append(index)
+            elif word[index] == i:
+                if len(opening_stack) > 0:
+                    opening_stack.pop()
+                else:
+                    closing_stack.append(index)
+        if len(opening_stack) == 0:
+            return None
+        index_to_change = opening_stack[0]
+        word[index_to_change] = i
+        result = Plactic().rs_insert(*word)
+        assert result.shape == self.shape, f"{result.shape=} {self.shape=}"
+        return result
+
+
+    def lowering_operator(self, i):
+        """Crystal lowering operator f_i on the Plactic tableau (delegates to RCGraph)."""
+        word = [*self.row_word]
+        opening_stack = []
+        closing_stack = []
+        for index in range(len(word)):
+            if word[index] == i + 1:
+                opening_stack.append(index)
+            elif word[index] == i:
+                if len(opening_stack) > 0:
+                    opening_stack.pop()
+                else:
+                    closing_stack.append(index)
+        if len(closing_stack) == 0:
+            return None
+        index_to_change = closing_stack[-1]
+        word[index_to_change] = i + 1
+        result = Plactic().rs_insert(*word)
+        assert result.shape == self.shape, f"{result.shape=} {self.shape=}"
+        return result
+
+    @property
+    def crystal_weight(self):
+        """Return the crystal weight of this tableau (delegated to RCGraph)."""
+
+
+    def crystal_length(self):
+        """Return the length/number of rows used for the crystal"""
+
+    def yamanouchi(self):
+        """
+        Return the Yamanouchi (highest-weight) tableau of the same shape
+        as this Plactic tableau.
+        """
+        new_word = []
+        for i in range(len(self._word)):
+            new_word.append([0] * len(self._word[i]))
+            for j in range(len(self._word[i])):
+                new_word[i][j] = i + 1
+        return Plactic(tuple(tuple(row) for row in new_word))
 
 
 class NilPlactic(Plactic):
@@ -154,13 +226,15 @@ class NilPlactic(Plactic):
             last_letter = letter
         graph.append(tuple(row))
         graph = RCGraph(graph).normalize()
-        if length:
+        if length < len(graph):
+            raise ValueError(f"Requested length {length} too small for RCGraph of size {len(graph)}")
+        if length > len(graph):
             graph = graph.resize(length)
+        assert graph.perm == ~self.perm, f"{graph.perm=} {self.perm=}"
         assert graph.p_tableau == self, f"{graph.p_tableau=} {self=} {graph=}"
         return graph
 
-    def __hash__(self):
-        return hash((NilPlactic, self._word))
+    # 
 
     # def ring_product(self, other, length):
     #     """
@@ -196,24 +270,24 @@ class NilPlactic(Plactic):
 
         # append to first row
         if index == len(row):
-            return (tuple([*row, letter]),) + tuple(word[1:])
+            return ((*row, letter), *tuple(word[1:]))
 
         # equal-case handling
         if row[index] == letter:
             if index < len(row) - 1 and row[index + 1] == letter + 1:
                 # bump into next row
-                return (row,) + NilPlactic._ed_insert(tuple(word[1:]), letter + 1)
+                return (row, *NilPlactic._ed_insert(tuple(word[1:]), letter + 1))
             # skip equal-run
             while index < len(row) and row[index] == letter:
                 index += 1
             if index == len(row):
-                return (tuple([*row, letter]),) + tuple(word[1:])
+                return ((*row, letter), *tuple(word[1:]))
 
         # bump case
         new_row = list(row)
         bump = new_row[index]
         new_row[index] = letter
-        return (tuple(new_row),) + NilPlactic._ed_insert(tuple(word[1:]), bump)
+        return (tuple(new_row), *NilPlactic._ed_insert(tuple(word[1:]), bump))
 
     @staticmethod
     def ed_insert_rsk(word, word2, letter, letter2, i=0):
@@ -238,8 +312,8 @@ class NilPlactic(Plactic):
 
         # append case (no bump in this row)
         if len(row_i) == 0 or x0 >= max(row_i):
-            new_word = tuple([*word[:i], tuple([*row_i, x0]), *word[i + 1 :]])
-            new_word2 = tuple([*word2[:i], tuple([*row2_i, letter2]), *word2[i + 1 :]])
+            new_word = (*word[:i], (*row_i, x0), *word[i + 1 :])
+            new_word2 = (*word2[:i], (*row2_i, letter2), *word2[i + 1 :])
             return new_word, new_word2
 
         # find bump
@@ -249,7 +323,7 @@ class NilPlactic(Plactic):
         if x1 != x0 + 1 or x0 not in row_i:
             new_first_row = list(row_i)
             new_first_row[new_first_row.index(x1)] = x0
-            new_word = tuple([*word[:i], tuple(new_first_row), *word[i + 1 :]])
+            new_word = (*word[:i], tuple(new_first_row), *word[i + 1 :])
             return NilPlactic.ed_insert_rsk(new_word, word2, x1, letter2, i=i + 1)
 
         # special case: continue bumping without changing current row

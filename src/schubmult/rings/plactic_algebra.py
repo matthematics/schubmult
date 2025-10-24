@@ -4,7 +4,7 @@ from schubmult import ASx
 from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
 from schubmult.rings.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from schubmult.rings.free_algebra_basis import WordBasis
-from schubmult.rings.plactic import NilPlactic
+from schubmult.rings.plactic import Plactic
 from schubmult.symbolic import S, sympy_Mul
 
 #weight wt
@@ -13,12 +13,12 @@ from schubmult.symbolic import S, sympy_Mul
 # yv highest weight
 
 
-class CoxeterKnuthPrintingTerm(TypedPrintingTerm):
+class PlacticPrintingTerm(TypedPrintingTerm):
     pass
 
-class CoxeterKnuthRingElement(BaseSchubertElement):
+class PlacticAlgebraElement(BaseSchubertElement):
     """
-    CoxeterKnuthRing elements are linear combinations of NilPlactic basis elements.
+    PlacticAlgebra elements are linear combinations of Plactic basis elements.
     """
 
     # ----------------------
@@ -31,31 +31,32 @@ class CoxeterKnuthRingElement(BaseSchubertElement):
             self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k))
             for k in self.keys()
         ]
-    
+
     def __eq__(self, other):
         return type(self) is type(other) and dict(self) == dict(other)
 
 
-class CoxeterKnuthRing(BaseSchubertRing):
+class PlacticAlgebra(BaseSchubertRing):
     _id = 0
 
-    def __init__(self, *_, **__):
-        self._ID = CoxeterKnuthRing._id
-        CoxeterKnuthRing._id += 1
-        self.dtype = type("CoxeterKnuthRingElement", (CoxeterKnuthRingElement,), {"ring": self})
+    def __init__(self, *_, op=False, **__):
+        self._ID = PlacticAlgebra._id
+        PlacticAlgebra._id += 1
+        self.dtype = type("PlacticAlgebraElement", (PlacticAlgebraElement,), {"ring": self})
+        self._op = op
 
     def __hash__(self):
         return hash(("Dinkberrtystoa", "poing", self._ID))
 
     @property
     def zero_monom(self):
-        return (NilPlactic(), 0)
+        return (Plactic(), 0)
 
     def printing_term(self, key):
-        return CoxeterKnuthPrintingTerm(key)
+        return PlacticPrintingTerm(key)
 
     # def dtype(self):
-    #     elem = CoxeterKnuthRingElement()
+    #     elem = PlacticAlgebraElement()
     #     elem.ring = self
     #     return elem
 
@@ -68,15 +69,16 @@ class CoxeterKnuthRing(BaseSchubertRing):
         return self.from_dict({key: 1})
 
     def mul(self, a, b):
-        # a, b are CoxeterKnuthRingElemen
-        if isinstance(b, CoxeterKnuthRingElement):
+        # a, b are PlacticAlgebraElemen
+        if isinstance(b, PlacticAlgebraElement):
             result_dict = {}
-            for (g1, len1), c1 in a.items():
-                for (g2, len2), c2 in b.items():
-                    # CoxeterKnuth.prod_with_rc returns a dict {CoxeterKnuth: coeff}
-                    prod = g1.hw_rc(len1).prod_with_rc(g2.hw_rc(len2))
-                    for g3, c3 in prod.items():
-                        result_dict[(g3.p_tableau,len(g3))] = result_dict.get((g3.p_tableau,len(g3)), 0) + c1 * c2 * c3
+            if self._op:
+                a, b = b, a
+            for g1, c1 in a.items():
+                for g2,  c2 in b.items():
+                    # Plactic.prod_with_rc returns a dict {Plactic: coeff}
+                    g3 = g1 * g2
+                    result_dict[g3] = result_dict.get(g3, 0) + c1 * c2
             # result_dict = {k: v * b for k, v in a.items()}
         return self.from_dict(result_dict)
 
@@ -89,7 +91,7 @@ class CoxeterKnuthRing(BaseSchubertRing):
 
     @property
     def one(self):
-        # Define the "one" element for CoxeterKnuthRing
-        identity_graph = (NilPlactic(), 0)
+        # Define the "one" element for PlacticAlgebra
+        identity_graph = (Plactic(), 0)
         return self.from_dict({identity_graph: 1})
 
