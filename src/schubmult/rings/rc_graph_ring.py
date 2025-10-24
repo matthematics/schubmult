@@ -283,8 +283,13 @@ class RCGraphRing(BaseSchubertRing):
             res *= self._one_row_cp(a)
         return res
 
-    def coproduct_on_basis(self, elem):
+    def coproduct_on_basis(self, elem, hw=True):
         tring = RestrictedRCGraphTensorRing(self, self)
+        if elem.inv == 0:
+            return tring.ext_multiply(self(elem), self(elem))
+        # if hw:
+        #     basis_elem, raise_seq = elem.to_highest_weight()
+        # else:
         basis_elem = elem
         cprod = tring.zero
         p = basis_elem.length_vector[0]
@@ -299,17 +304,17 @@ class RCGraphRing(BaseSchubertRing):
 
         ret_elem = cprod * lower_module1
 
-        ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if elem in self.potential_products(rc1, rc2, len(elem)) or elem in self.potential_products(rc2, rc1, len(elem))})
+        # ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if elem.perm in self.potential_prodperms(rc1, rc2, len(elem)) or elem.perm in self.potential_prodperms(rc2, rc1, len(elem))})
 
         up_elem2 = self(RCGraph.one_row(p)) * self(lower_graph)
         for key, coeff in up_elem2.items():
             if key.perm != basis_elem.perm:
                 assert coeff == 1
                 key_rc = RCGraph.principal_rc(key.perm, len(key))
-                cp = self.coproduct_on_basis(key_rc)
+                cp = self.coproduct_on_basis(key_rc, hw=False)
                 for (rc1_bad, rc2_bad), cff2 in cp.items():
                     for (rc1, rc2), v in ret_elem.items():
-                        if (rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm):
+                        if (rc1.edelman_greene()[0] == rc1_bad.edelman_greene()[0] and rc2.edelman_greene()[0] == rc2_bad.edelman_greene()[0]):
                             ret_elem -= tring((rc1, rc2))
                             break
         ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(basis_elem.perm) and k[1].perm.bruhat_leq(basis_elem.perm)})
@@ -332,6 +337,7 @@ class RCGraphRing(BaseSchubertRing):
     #         ret_elem += coeff * tring((rc1_1, rc2_1))
     #     return ret_elem
 
+    @cache
     def potential_products(self, left, right, length):
         len0 = max(len(left.perm.trimcode), len(right.perm.trimcode)) 
         left_rc_hw = left
@@ -351,6 +357,8 @@ class RCGraphRing(BaseSchubertRing):
                 tprodst += coeff1 * self(pain.resize(length))
         return set(tprodst.keys())
 
+    def potential_prodperms(self, left, right, length):
+        return set({rc.perm for rc in self.potential_products(left, right, length)})
 
     def mul(self, a, b):
         # a, b are RCGraphRingElemen

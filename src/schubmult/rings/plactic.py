@@ -134,6 +134,39 @@ class Plactic(GridPrint):
 
 class NilPlactic(Plactic):
 
+    def hw_rc(self):
+        """
+        Return the highest-weight RCGraph corresponding to this NilPlactic
+        tableau via Edelman–Greene insertion.
+        """
+        from schubmult.rings.rc_graph import RCGraph
+
+        perm_word = list(reversed(self.row_word))
+        graph = []
+        last_letter = -1
+        row = []
+        for letter in perm_word:
+            if last_letter != -1 and letter > last_letter:
+                # need to add empty rows in between
+                graph.append(tuple(row))
+                row = []
+            row.append(len(graph) + 1)
+            last_letter = letter
+        return RCGraph(graph)
+
+    def ring_product(self, other):
+        """
+        NilPlactic product: insert entries of `other` in Edelman–Greene
+        row-reading order (top-to-bottom, left-to-right) into a copy of self.
+        """
+        if not isinstance(other, NilPlactic):
+            return NotImplemented
+        st = (other.hw_rc()).prod_with_rc(self.hw_rc())
+        ret = {}
+        for rc, coeff in st:
+            ret[rc.p_tableau] = ret.get(rc.p_tableau, 0) + coeff
+        return ret
+
     @property
     def perm(self):
         return Permutation.ref_product(*self.row_word)

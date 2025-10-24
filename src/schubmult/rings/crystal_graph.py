@@ -1,6 +1,8 @@
+from sympy import Tuple
+from sympy.printing.defaults import Printable
 
 
-class CrystalGraph:
+class CrystalGraph(Printable):
     def raising_operator(self, index):
         """The raising operator for the crystal graph."""
         raise NotImplementedError
@@ -84,6 +86,20 @@ class CrystalGraph:
 
 # There is a decomposition here into subcrystals
 class CrystalGraphTensor(CrystalGraph):
+
+    @property
+    def args(self):
+        return self.factors
+    
+    def _sympystr(self, printer):
+        return printer.stringify(self.factors, sep=" # ")
+
+    def _pretty(self, printer):
+        return printer._print_TensorProduct(self)
+    
+    def _get_args_for_traditional_printer(self):
+        return None, self.factors
+
     def __init__(self, *factors):
         if len(factors) == 1:
             self.factors = factors[0]

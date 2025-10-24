@@ -67,36 +67,45 @@ def main(argv):
         for left_rc in RCGraph.all_rc_graphs(pu):
             for right_rc in RCGraph.all_rc_graphs(pv):
                 #left_rc_hw, _ = left_rc.to_highest_weight()
-                
-                def calc_the_baby(left, right):
-                    len0 = max(len(left.perm.trimcode), len(right.perm.trimcode)) 
-                    left_rc_hw = left
-                    right_rc_hw = right
-                    lrc = (~(left_rc_hw)).normalize()
-                    rrc = (~(right_rc_hw)).normalize()
-                    tprods =   rc_ring(lrc)* rc_ring(rrc)
-                    tprodst = rc_ring.zero
-                    for rc1, coeff1 in tprods.items():
-                        pain = (~rc1)
-                        
-                        if len(pain) < max(len0, len(pain.perm.trimcode)):
+                P_left, Q_left = eg_PQ_from_rc(left_rc)
+                P_right, Q_right = eg_PQ_from_rc(right_rc)
 
-                            pain = pain.resize(max(len0, len(pain.perm.trimcode))+5)
-                            while len(pain) > len0 and len(pain[-1]) == 0:
-                                pain = pain.zero_out_last_row()
-                        if len(pain) == len0:# and pain.length_vector == tuple([a+b for a,b in zip_longest(left_rc_hw.length_vector, right_rc_hw.length_vector, fillvalue=0)]):
-                            tprodst += coeff1 * rc_ring(pain)
-                    return tprodst
+                lefto_set = left_rc.prod_with_rc(RCGraph([()] * (len(right_rc.perm))))
+                for lefto in lefto_set:
+                    while len(lefto) > len(left_rc) + len(right_rc):
+                        lefto = lefto.zero_out_last_row()
+                    P_lefto, Q_lefto = eg_PQ_from_rc(lefto)
+                    assert P_lefto.shape == P_left.shape
+                    # then it's right times left
+                # def calc_the_baby(left, right):
+                #     len0 = max(len(left.perm.trimcode), len(right.perm.trimcode)) 
+                #     left_rc_hw = left
+                #     right_rc_hw = right
+                #     lrc = (~(left_rc_hw)).normalize()
+                #     rrc = (~(right_rc_hw)).normalize()
+                #     tprods =   rc_ring(lrc)* rc_ring(rrc)
+                #     tprodst = rc_ring.zero
+                #     for rc1, coeff1 in tprods.items():
+                #         pain = (~rc1)
+                        
+                #         if len(pain) < max(len0, len(pain.perm.trimcode)):
+
+                #             pain = pain.resize(max(len0, len(pain.perm.trimcode))+5)
+                #             while len(pain) > len0 and len(pain[-1]) == 0:
+                #                 pain = pain.zero_out_last_row()
+                #         if len(pain) == len0:# and pain.length_vector == tuple([a+b for a,b in zip_longest(left_rc_hw.length_vector, right_rc_hw.length_vector, fillvalue=0)]):
+                #             tprodst += coeff1 * rc_ring(pain)
+                #     return tprodst
                 
-                pretty_print(left_rc)
-                print("tensor")
-                pretty_print(right_rc)
-                print("=====> product")
-                tprodst = calc_the_baby(left_rc, right_rc)
-                pretty_print(tprodst)
-                tprodst2 = calc_the_baby(right_rc, left_rc)
-                pretty_print(tprodst2)
-                print("===================")
+                # pretty_print(left_rc)
+                # print("tensor")
+                # pretty_print(right_rc)
+                # print("=====> product")
+                # tprodst = calc_the_baby(left_rc, right_rc)
+                # pretty_print(tprodst)
+                # tprodst2 = calc_the_baby(right_rc, left_rc)
+                # pretty_print(tprodst2)
+                # print("===================")
 
     #                     # extract EG P/Q for left and right (may be plain table objects)
     #                     P_left, Q_left = eg_PQ_from_rc(left_rc)

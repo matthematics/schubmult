@@ -843,6 +843,10 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         graph = [*graph, *[()] * (length - len(graph))]
         return cls(graph)
 
+    @cached_property
+    def p_tableau(self):
+        return self.edelman_greene()[0]
+
     # THE ZERO MAKES SCHUB PROD
     @cache
     def prod_with_rc(self, other):
