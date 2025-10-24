@@ -31,13 +31,19 @@ if __name__ == "__main__":
     for perm in perms:
         if perm.inv == 0:
             continue
-        for rc in RCGraph.all_rc_graphs(perm):
+        for rc in RCGraph.all_rc_graphs(perm, n - 1):
             ck_key = CoxeterKnuthKey.from_rc_graph(rc)
-            for i in range(1, n + 1):
+            for i in range(1, n):
                 for box_val in range(1, i + 1):
                     print(f"Inserting box {box_val=} for {i} into RCGraph with perm {perm}")
                     rc_insert = ck_key.monk_insert(box_val, i)
-                    pretty_print(rc_insert)
+                    print("Before:")
+                    pretty_print(rc.normalize())
+                    print("After:")
+                    for rc2 in rc_insert or []:
+                        assert rc2.perm.inv == perm.inv + 1, f"Inserted RCGraph has wrong permutation: got {rc2.perm.inv}, want {perm.inv + 1}"
+                        pretty_print(rc2)
+                        print(tuple([tuple(row) for row in rc2]))
                     if rc_insert is None:
                         fail = True
                         failures.append((rc, i, box_val))

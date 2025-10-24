@@ -70,8 +70,8 @@ class CoxeterKnuthKey(Plactic):
     def from_rc_graph(cls, rc: RCGraph):
         return cls(rc.p_tableau, rc.weight_tableau, len(rc))
 
-    def monk_insert(self, simple_box, monk_top, retries = 6):
-        
+    def monk_insert(self, simple_box, monk_top, retries = 6, target_perms=None):
+
         """
         Candidate associative 'Monk' insertion for this CoxeterKnuthKey.
 
@@ -105,30 +105,44 @@ class CoxeterKnuthKey(Plactic):
         if len(rc0) < monk_top:
             rc0 = rc0.resize(monk_top)
 
-
         poly = Sx(~self._p_tableau.perm)
         poly *= Sx(uncode(([0]* (monk_top - 1)) + [1]))
+        if target_perms is not None:
+            target_perms = target_perms.intersection(set(poly.keys()))
+        else:
+            target_perms = set(poly.keys())
         # try rc.act(box_val)
         candidates = set()
-        for perm in poly.keys():
-            candidates.update(RCGraph.all_rc_graphs(perm, len(rc0), weight=tuple([a if i != box_val - 1 else a+1 for i, a in enumerate(rc0.length_vector)])))
-        if len(candidates) == 1:
-            return candidates.pop()
-        weight2 = self._weight_tableau.rs_insert(box_val).shape
+        weight = [*rc0.length_vector]
+        weight[box_val - 1] += 1
+        target_weight = tuple(weight)
+        for perm in target_perms:
+            candidates.update(RCGraph.all_rc_graphs(perm, len(rc0), weight=target_weight))
+        weight2 = self._weight_tableau.rs_insert(box_val)
+        results = set()
         for rc in candidates:
-            if rc.weight_tableau.shape == weight2:
-                return rc
+            if rc.weight_tableau == weight2:
+                assert rc.perm.inv == self._p_tableau.perm.inv + 1
+                results.add(rc)
+        if len(results) > 0:
+            return results
         if retries > 0:
-            rc = self.shiftup(1).rc_graph.normalize()
-            rc = rc.extend(1).zero_out_last_row()
-            ck_key = CoxeterKnuthKey.from_rc_graph(rc)
-            return ck_key.monk_insert(box_val, monk_top, retries - 1)
+            target_perms2 = set()
+            for perm in target_perms:
+                target_perms2.add(uncode([0, *perm.trimcode]))
+            res =  self.shiftup(1).monk_insert(box_val + 1, max(box_val + 1, len((~self._p_tableau.perm).trimcode) + 1), retries - 1, target_perms=target_perms2)
+            if res is not None:
+                for rc in res:
+                    assert rc.perm.inv == self._p_tableau.perm.inv + 1
+                    results.add(rc.rowrange(1))
+                if len(results) > 0:
+                    return results
         return None
         # try multiplying by a one-row RCGraph corresponding to the box (fallback)
         #return CoxeterKnuthKey.from_rc_graph(RCGraph([(),*self.rc_graph.shiftup(1)])).monk_insert(box_val + 1).shiftup(-1).normalize()
     
-    def shiftup(self, k1, k2=0):
-        return CoxeterKnuthKey(NilPlactic.from_word(self._p_tableau.shiftup(k1)), self._weight_tableau.shiftup(k2), self.length + k1)
+    def shiftup(self, k1):
+        return CoxeterKnuthKey(NilPlactic.from_word(self._p_tableau.shiftup(k1)), self._weight_tableau.shiftup(k1), self.length + k1)
 
 
 

@@ -190,16 +190,16 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 def worker(shared_recording_dict, lock, task_queue):
     from schubmult.rings.rc_graph_ring import RCGraphRing
 
-    def hom(rc):
-        from schubmult import FA, ASx
-        from schubmult.rings.rc_graph import RCGraph
-
-        if isinstance(rc, RCGraph):
-            return (ASx@FA)(((rc.perm,len(rc)),rc.length_vector))
-        ret = 0
-        for rc0, coeff in rc.items():
-            ret += coeff * hom(rc0)
-        return ret
+    def hom_rc(rc_elem):
+        """
+        Map an RCGraphRing element to a CoxeterKnuthRing element.
+        """
+        from schubmult.rings.ck_ring import CoxeterKnuthRing
+        ck_ring = CoxeterKnuthRing()
+        result = ck_ring.zero
+        for rc, coeff in rc_elem.items():
+            result += coeff * ck_ring(((rc.p_tableau, rc.weight_tableau, len(rc))))
+        return result
 
     rc_ring = RCGraphRing()
     while True:
@@ -230,7 +230,7 @@ def worker(shared_recording_dict, lock, task_queue):
         #    raise
         #print("Success {(g1, g2, g3)}")
         success = True
-        df = hom(g1) * hom(g2) - hom(g1 * g2)
+        df = hom_rc(g1) * hom_rc(g2) - hom_rc(g1 * g2)
         try:
             assert all(v == 0 for k, v in df.items()), f"{tuple(df.values())=}"
         except AssertionError as e:
