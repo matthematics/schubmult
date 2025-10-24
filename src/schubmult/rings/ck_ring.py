@@ -97,10 +97,7 @@ class CoxeterKnuthKey(Plactic):
         """
         # Normalize simple_box to a single integer entry
         box_val = simple_box
-        new_weight1 = self._weight_tableau.rs_insert(box_val)
         
-
-
         # 2) attempt to produce candidate updated P-tableaux by acting on rc_graph
         rc0 = self.rc_graph
 
@@ -112,19 +109,16 @@ class CoxeterKnuthKey(Plactic):
         poly *= Sx(uncode(([0]* (box_val - 1)) + [1]))
         # try rc.act(box_val)
         for perm in poly.keys():
-            out = RCGraph.all_rc_graphs(perm, len(rc0))
+            out = RCGraph.all_rc_graphs(perm, len(rc0), weight=tuple([a if i != box_val - 1 else a+1 for i, a in enumerate(rc0.length_vector)]))
             for rc in out:
-                if rc.weight_tableau == new_weight1:
+                good = True
+                for i in range(len(self._weight_tableau.shape)):
+                    if i >= len(rc.weight_tableau.shape) or self._weight_tableau.shape[i] > rc.weight_tableau.shape[i]:
+                        good = False
+                        break
+                if good:
                     return rc
 
-        if retry:
-            TEST_LEN = len(rc0)
-            for test in range(1, TEST_LEN + 1):
-                for rc in rc0.normalize().prod_with_rc(RCGraph([()] * test)):
-                    cand = CoxeterKnuthKey.from_rc_graph(rc).monk_insert(box_val, retry=False)
-                    if cand is not None:
-                        return cand
-                
         return None
         # try multiplying by a one-row RCGraph corresponding to the box (fallback)
         #return CoxeterKnuthKey.from_rc_graph(RCGraph([(),*self.rc_graph.shiftup(1)])).monk_insert(box_val + 1).shiftup(-1).normalize()

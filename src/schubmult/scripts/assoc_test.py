@@ -31,7 +31,7 @@ if __name__ == "__main__":
     for perm in perms:
         for rc in RCGraph.all_rc_graphs(perm):
             ck_key = CoxeterKnuthKey.from_rc_graph(rc)
-            for i in range(1, len(perm.trimcode)):
+            for i in range(1, n + 1):
                 print("Inserting box", i, "into RCGraph with perm", perm)
                 rc_insert = ck_key.monk_insert(i)
                 pretty_print(rc_insert)
