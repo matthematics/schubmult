@@ -108,6 +108,7 @@ class CoxeterKnuthKey(Plactic):
         poly = Sx(~self._p_tableau.perm)
         poly *= Sx(uncode(([0]* (box_val - 1)) + [1]))
         # try rc.act(box_val)
+        candidates = set()
         for perm in poly.keys():
             out = RCGraph.all_rc_graphs(perm, len(rc0), weight=tuple([a if i != box_val - 1 else a+1 for i, a in enumerate(rc0.length_vector)]))
             for rc in out:
@@ -117,9 +118,10 @@ class CoxeterKnuthKey(Plactic):
                         good = False
                         break
                 if good:
-                    return rc
-
-        return None
+                    candidates.add(rc)
+        if len(candidates) == 1:
+            return candidates.pop()
+        return next(iter(candidates), None)
         # try multiplying by a one-row RCGraph corresponding to the box (fallback)
         #return CoxeterKnuthKey.from_rc_graph(RCGraph([(),*self.rc_graph.shiftup(1)])).monk_insert(box_val + 1).shiftup(-1).normalize()
 
