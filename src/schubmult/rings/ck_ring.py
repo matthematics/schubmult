@@ -114,10 +114,10 @@ class CoxeterKnuthKey(Plactic):
             candidates.update(RCGraph.all_rc_graphs(perm, len(rc0), weight=tuple([a if i != box_val - 1 else a+1 for i, a in enumerate(rc0.length_vector)])))
         if len(candidates) == 1:
             return candidates.pop()
+        weight2 = self._weight_tableau.rs_insert(box_val).shape
         for rc in candidates:
-            for j in range(1, monk_top + 1):
-                if rc.weight_tableau.shape == self._weight_tableau.rs_insert(j).shape:
-                    return rc
+            if rc.weight_tableau.shape == weight2:
+                return rc
         if retries > 0:
             rc = self.shiftup(1).rc_graph.normalize()
             rc = rc.extend(1).zero_out_last_row()
