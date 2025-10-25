@@ -114,7 +114,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             return self.extend(k - len(self)).monk_crystal_mul(p, k)
 
         monk_rc = next(iter(RCGraph.all_rc_graphs(Permutation([]).swap(k - 1, k), len(self), weight=(*([0] * (p - 1)), 1, *([0] * (len(self) - p))))))
-        tensor_cut, raise_seq = CrystalGraphTensor(self.vertical_cut(k)[0], monk_rc.vertical_cut(k)[0]).to_highest_weight()
+        
         results = set()
         lv = [*self.length_vector]
         lv[p - 1] += 1
@@ -122,12 +122,15 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         for up_perm in up_perms:
             for rc2 in RCGraph.all_rc_graphs(up_perm, length=len(self), weight=lv):
                 try:
-                    rc2_hw, raise_seq2 = rc2.vertical_cut(k)[0].to_highest_weight()
-                    
-                    if rc2_hw.crystal_weight == tensor_cut.crystal_weight:
-                        if self.vertical_cut(k)[0].perm.bruhat_leq(rc2_hw.perm):
-                            results.add(rc2)
+                    good = True
+                    for cut in range(p, k+1):
+                        rc2_hw, raise_seq2 = rc2.vertical_cut(cut)[0].to_highest_weight()
+                        tensor_cut, raise_seq = CrystalGraphTensor(self.vertical_cut(cut)[0], monk_rc.vertical_cut(cut)[0]).to_highest_weight()
+                        if rc2_hw.crystal_weight != tensor_cut.crystal_weight:
+                            good=False
                             break
+                    if good:
+                        results.add(rc2)
                 except Exception as e:
                     continue
         try:

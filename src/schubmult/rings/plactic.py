@@ -375,7 +375,7 @@ class NilPlactic(Plactic):
             new_first_row = list(row_i)
             new_first_row[new_first_row.index(x1)] = x0
             new_word = (*word[:i], tuple(new_first_row), *word[i + 1 :])
-            return NilPlactic._ed_insert(new_word, x1, i=i + 1)
+            return NilPlactic.ed_insert(new_word, x1, i=i + 1)
 
         # special case: continue bumping without changing current row
         return NilPlactic._ed_insert(word, x1, i=i + 1)
