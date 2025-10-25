@@ -83,7 +83,7 @@ if __name__ == "__main__":
                         pretty_print(rc)
                         raise AssertionError
                     assert good
-                    # if len(results) != 1:
-                    #     print("AMBIGUOUS")
-                    #     raise AssertionError
+                    if len(results) != 1:
+                        print("AMBIGUOUS")
+                        raise AssertionError
                 
