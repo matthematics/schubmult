@@ -1,18 +1,10 @@
-from functools import cache
-
-from sympy import pretty_print
-
-from schubmult import ASx
-from schubmult.perm_lib import uncode
 from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
 from schubmult.rings.crystal_graph import CrystalGraphTensor
-from schubmult.rings.free_algebra_basis import WordBasis
 from schubmult.rings.plactic import NilPlactic, Plactic
 from schubmult.symbolic import S, sympy_Mul
 
 from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
 from .rc_graph import RCGraph
-from .schubert_ring import Sx
 
 #weight wt
 # yw highest weight

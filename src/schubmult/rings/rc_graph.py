@@ -1,7 +1,5 @@
 from functools import cache, cached_property
 
-from sympy.printing.defaults import Printable
-
 import schubmult.schub_lib.schub_lib as schub_lib
 from schubmult.perm_lib import Permutation, uncode
 from schubmult.rings import ASx
@@ -137,7 +135,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             top, bottom = max(root[1], root[0]), min(root[0], root[1])
             return (bottom <= descent and descent < top and top not in pair_dict_rev) or (bottom in pair_dict_rev and top > descent and top not in pair_dict_rev)
 
-        # Add this intersection. If we are in the first case, insert (s, q) into the sequence (ai, bi) in the rightmost position, such that ai’s remain nondecreasing in the # noqa: RUF003
+        # Add this intersection. If we are in the first case, insert (s, q) into the sequence (ai, bi) in the rightmost position, such that ai’s remain nondecreasing in the
         # sequence. ((s, q) are the rows where the two strands shown in Figure 3 originate.) If
         # we are in the second case, add (ai, q) just before where (a, bi) is in the sequence.
 

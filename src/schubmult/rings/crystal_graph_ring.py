@@ -1,5 +1,4 @@
-from functools import cache
-from typing import Any, Optional, Tuple
+from typing import Any, Tuple
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .crystal_graph import CrystalGraph
@@ -41,7 +40,7 @@ class CrystalGraphRingElement(BaseSchubertElement, CrystalGraph):
     by delegating to the underlying key's methods.
     """
 
-    
+
     def phi(self, index: int) -> int:
         if len(self) == 0:
             return 0
@@ -59,7 +58,7 @@ class CrystalGraphRingElement(BaseSchubertElement, CrystalGraph):
                 m = term
         return m
 
-    
+
     def epsilon(self, index: int) -> int:
         if len(self) == 0:
             return 0
@@ -126,14 +125,14 @@ class CrystalGraphRingElement(BaseSchubertElement, CrystalGraph):
         for key in self.keys():
             try:
                 cg = _ensure_cg(key)
-                l = cg.crystal_length()
+                L = cg.crystal_length()
             except Exception:
                 try:
-                    l = getattr(key, "crystal_length", lambda: 0)()
+                    L = getattr(key, "crystal_length", lambda: 0)()
                 except Exception:
-                    l = 0
-            if l > m:
-                m = l
+                    L = 0
+            if L > m:
+                m = L
         return m
 
     def to_highest_weight(self) -> Tuple["CrystalGraphRingElement", Tuple[int, ...]]:

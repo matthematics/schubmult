@@ -1,5 +1,4 @@
 from functools import cached_property
-from itertools import zip_longest
 
 # If you use symbolic coefficients like S.One, import S from your symbolic module
 from schubmult.perm_lib import Permutation
@@ -344,7 +343,7 @@ class SchubertPolyBasis(PolynomialBasis):
         from .variables import genset_dict_from_expr
 
         def pad_tuple(tup, length):
-            return tuple([*tup, *(0,) * (length - len(tup))])
+            return (*tup, *(0,) * (length - len(tup)))
 
         dct = {pad_tuple(k, key[1]): v for k, v in genset_dict_from_expr(self.ring.from_dict({key[0]: S.One}).as_polynomial(), self.genset).items()}
         return dct

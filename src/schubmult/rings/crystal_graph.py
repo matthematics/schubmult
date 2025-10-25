@@ -1,4 +1,3 @@
-from functools import cache
 from itertools import zip_longest
 
 from sympy.printing.defaults import Printable
@@ -162,7 +161,6 @@ class CrystalGraphTensor(CrystalGraph):
         return None, self.factors
 
     def __init__(self, *factors):
-        from schubmult.rings.plactic import B
         if len(factors) == 1:
             self.factors = factors[0]
         else:

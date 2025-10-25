@@ -498,7 +498,7 @@ class FastDoubleSchubertPolynomialRing_xbasis(CombinatorialFreeModule):
 
     def _repr_(self):
         return (
-            f"Ring of {'quantum' if self._quantum else ''} double Schubert polynomials in {self._base_varname}{',' + self._q_varname if self._quantum else ''} with {len(self._base_polynomial_ring.gens())} variables with"  # noqa: E501
+            f"Ring of {'quantum' if self._quantum else ''} double Schubert polynomials in {self._base_varname}{',' + self._q_varname if self._quantum else ''} with {len(self._base_polynomial_ring.gens())} variables with"
             f" coefficient variables {','.join(self._varlist)} over the ring {self._coeff_polynomial_ring.base_ring()} indexed by {'the Lehmer code' if self._ascode else 'permutations'}"
         )
 

@@ -1,18 +1,15 @@
 from functools import cache
 
-from schubmult import ASx
 from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
-from schubmult.rings.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from schubmult.rings.free_algebra_basis import WordBasis
 from schubmult.rings.rc_graph import RCGraph
 from schubmult.symbolic import S, sympy_Mul
 
-from .crystal_graph import CrystalGraph
 from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
 
 # from .crystal_graph_ring import CrystalTensorRing
 
-#weight wt
+# weight wt
 # yw highest weight
 # u # yv
 # yv highest weight
@@ -25,6 +22,7 @@ class RCGraphPrintingTerm(TypedPrintingTerm):
     # def _pretty(self, printer):
     #     return printer._print(self._key)
     pass
+
 
 class RCGraphRingElement(CrystalGraphRingElement):
     """
@@ -40,10 +38,7 @@ class RCGraphRingElement(CrystalGraphRingElement):
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
             return [S.Zero]
-        return [
-            self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k))
-            for k in self.keys()
-        ]
+        return [self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k)) for k in self.keys()]
 
     # ----------------------
     # Coalgebra helpers (already present)
@@ -131,7 +126,7 @@ class RCGraphRingElement(CrystalGraphRingElement):
         """
         if len(self) == 0:
             return 0
-        return max((getattr(rc_graph, "crystal_length", lambda: len(rc_graph))() for rc_graph in self.keys()))
+        return max(getattr(rc_graph, "crystal_length", lambda: len(rc_graph))() for rc_graph in self.keys())
 
     def to_highest_weight(self):
         """
@@ -181,6 +176,7 @@ class RCGraphRingElement(CrystalGraphRingElement):
             res += coeff * self.ring(rc_graph.crystal_reflection(index))
         return res
 
+
 # class RCGraphRingElement(BaseSchubertElement, CrystalGraph):
 #     # def as_expr(self):
 #     #     from sympy import Add
@@ -222,6 +218,7 @@ class RCGraphRingElement(CrystalGraphRingElement):
 #         for rc_graph, coeff in self.items():
 #             res += coeff * self.ring(rc_graph.crystal_reflection(row))
 #         return res
+
 
 class RCGraphRing(CrystalGraphRing):
     _id = 0
@@ -277,7 +274,7 @@ class RCGraphRing(CrystalGraphRing):
     #     for a in reversed(word):
     #         res *= self(RCGraph.one_row(a))
     #     return res
-    
+
     # def _word_cp(self, word):
     #     tring = CrystalTensorRing(self, self)
     #     res = tring.one
@@ -322,7 +319,6 @@ class RCGraphRing(CrystalGraphRing):
     #     ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(basis_elem.perm) and k[1].perm.bruhat_leq(basis_elem.perm)})
     #     return ret_elem
 
-
     # def coproduct_on_basis(self, elem):
     #     tring = RestrictedRCGraphTensorRing(self, self)
     #     # trivial principal case
@@ -343,21 +339,20 @@ class RCGraphRing(CrystalGraphRing):
 
     @cache
     def potential_products(self, left, right, length):
-        len0 = max(len(left.perm.trimcode), len(right.perm.trimcode)) 
+        len0 = max(len(left.perm.trimcode), len(right.perm.trimcode))
         left_rc_hw = left
         right_rc_hw = right
         lrc = (~(left_rc_hw)).normalize()
         rrc = (~(right_rc_hw)).normalize()
-        tprods =   self(lrc)* self(rrc)
+        tprods = self(lrc) * self(rrc)
         tprodst = self.zero
         for rc1, coeff1 in tprods.items():
-            pain = (~rc1)
+            pain = ~rc1
             if len(pain) < max(len0, len(pain.perm.trimcode)):
-
-                pain = pain.resize(max(len0, len(pain.perm.trimcode))+5)
+                pain = pain.resize(max(len0, len(pain.perm.trimcode)) + 5)
                 while len(pain) > len0 and len(pain[-1]) == 0:
                     pain = pain.zero_out_last_row()
-            if len(pain) == len0:# and pain.length_vector == tuple([a+b for a,b in zip_longest(left_rc_hw.length_vector, right_rc_hw.length_vector, fillvalue=0)]):
+            if len(pain) == len0:  # and pain.length_vector == tuple([a+b for a,b in zip_longest(left_rc_hw.length_vector, right_rc_hw.length_vector, fillvalue=0)]):
                 tprodst += coeff1 * self(pain.resize(length))
         return set(tprodst.keys())
 
@@ -386,6 +381,7 @@ class RCGraphRing(CrystalGraphRing):
         # Define the "one" element for RCGraphRing
         identity_graph = RCGraph()
         return self.from_dict({identity_graph: 1})
+
 
 # class RestrictedRCGraphTensorRing(CrystalTensorRing):
 

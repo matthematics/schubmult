@@ -50,7 +50,7 @@ class Plactic(GridPrint, CrystalGraph):
     @property
     def row_word(self):
         """Return the row-reading word as a flat tuple."""
-        word =  tuple(a for row in reversed(self._word) for a in row)
+        word = tuple(a for row in reversed(self._word) for a in row)
         assert len(word) == sum(len(r) for r in self._word), f"Length mismatch in row_word {len(word)=} vs {self._word=}"
         return word
 
@@ -203,7 +203,6 @@ class Plactic(GridPrint, CrystalGraph):
         assert result.shape == self.shape, f"{result.shape=} {self.shape=}"
         return result
 
-
     def lowering_operator(self, i):
         """Crystal lowering operator f_i on the Plactic tableau (delegates to RCGraph)."""
         word = [*self.row_word]
@@ -228,7 +227,6 @@ class Plactic(GridPrint, CrystalGraph):
     @property
     def crystal_weight(self):
         """Return the crystal weight of this tableau (delegated to RCGraph)."""
-
 
     def crystal_length(self):
         """Return the length/number of rows used for the crystal"""
@@ -257,6 +255,7 @@ class Plactic(GridPrint, CrystalGraph):
     #             new_word[i][j] = i + 1
     #     return Plactic(tuple(tuple(row) for row in new_word))
 
+
 class B(Plactic):
     def __init__(self, shape, max_entry):
         self._word = Plactic.yamanouchi(shape)._word
@@ -273,8 +272,8 @@ class B(Plactic):
         hw, raise_seq = shape.to_highest_weight()
         return cls(tuple(a for a in hw.crystal_weight if a != 0), max_entry).reverse_raise_seq(raise_seq)
 
-class NilPlactic(Plactic):
 
+class NilPlactic(Plactic):
     def hw_rc(self, length=None):
         """
         Return the highest-weight RCGraph corresponding to this NilPlactic
@@ -303,7 +302,7 @@ class NilPlactic(Plactic):
         assert graph.p_tableau == self, f"{graph.p_tableau=} {self=} {graph=}"
         return graph
 
-    # 
+    #
 
     # def ring_product(self, other, length):
     #     """
@@ -388,7 +387,6 @@ class NilPlactic(Plactic):
         # find bump
         x1 = min(a for a in row_i if a > x0)
 
-
         # normal replace + recurse into next row
         if x1 != x0 + 1 or x0 not in row_i:
             new_first_row = list(row_i)
@@ -406,7 +404,3 @@ class NilPlactic(Plactic):
         if isinstance(other, NilPlactic):
             return self._word == other._word
         return False
-
-
-
-
