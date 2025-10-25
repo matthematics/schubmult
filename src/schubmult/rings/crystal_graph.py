@@ -118,6 +118,7 @@ class CrystalGraph(Printable):
 
 
 # There is a decomposition here into subcrystals
+# NOT COMMUTATIVE TENSOR PRODUCT
 class CrystalGraphTensor(CrystalGraph):
 
     @property

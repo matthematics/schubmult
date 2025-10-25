@@ -9,7 +9,7 @@ from schubmult.utils.perm_utils import add_perm_dict
 
 from ._grid_print import GridPrint
 from ._utils import BitfieldRow
-from .crystal_graph import CrystalGraph
+from .crystal_graph import CrystalGraph, CrystalGraphTensor
 from .free_algebra import FreeAlgebra, FreeAlgebraElement
 from .free_algebra_basis import WordBasis
 from .nil_hecke import NilHeckeRing
@@ -41,6 +41,24 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def __iter__(self):
         for row in super().__iter__():
             yield tuple(row)
+
+    def flat_elem_sym_mul(self, k):
+        from schubmult.schub_lib.schub_lib import elem_sym_perms
+        elem_graph = RCGraph([(i,) for i in range(1, k + 1)])
+        mul_graph = self
+        if len(elem_graph) < len(self):
+            elem_graph = elem_graph.extend(len(self) - len(elem_graph))
+        if len(elem_graph) > len(self):
+            mul_graph = self.extend(len(elem_graph) - len(self))
+        tensor = CrystalGraphTensor(elem_graph, mul_graph)
+
+        hw_graph, raise_seq = tensor.to_highest_weight()
+        perm_list = [perm for (perm, w) in elem_sym_perms(self.perm, k, k) if w == k]
+        for perm in perm_list:
+            for rc in RCGraph.all_rc_graphs(perm, length=len(mul_graph), weight=hw_graph.crystal_weight):
+                if rc.is_highest_weight:
+                    return rc.reverse_raise_seq(raise_seq)
+        raise ValueError("Could not find flat elementary symmetric multiplication result")
 
     @cached_property
     def crystal_weight(self):
@@ -365,12 +383,6 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             return cls._graph_cache[(perm, length)]
         if perm.inv == 0:
             return {cls([()] * length if length > 0 else [])}
-        if len(perm.trimcode) == 1:
-            nrc = cls((tuple(range(perm.code[0], 0, -1)),))
-            if len(nrc) < length:
-                nrc = cls((*nrc, *tuple([()] * (length - len(nrc)))))
-                assert len(nrc) == length
-            return {nrc}
         ret = set()
         pm = perm
         L = schub_lib.pull_out_var(1, pm)
@@ -387,6 +399,8 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                 nrc = cls([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in old_rc]])
                 assert nrc.perm == perm
                 assert len(nrc) == length
+                if weight:
+                    assert nrc.length_vector == weight
                 ret.add(nrc)
         if weight:
             cls._cache_by_weight[(perm, tuple(weight))] = ret
