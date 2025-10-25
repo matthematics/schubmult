@@ -70,7 +70,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                 result_graph = RCGraph([*self.vertical_cut(shift)[0][:shift], *result_graph.shiftup(shift)])
         return result_graph
 
-    def monk_crystal_mul(self, p, k, prev_result=None, warn=True):
+    def monk_crystal_mul(self, p, k, warn=True):
         if k > len(self):
             return self.extend(k - len(self)).monk_crystal_mul(p, k)
 
@@ -105,23 +105,10 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         for up_perm in up_perms:
             for rc2 in RCGraph.all_rc_graphs(up_perm, length=len(self), weight=tuple(lv)):
                 if _crystal_isomorphic(tensor_cut, rc2.vertical_cut(k)[0]) and rc2[k:] == self[k:] and (p==1 or rc2.vertical_cut(p-1)[0] == self.vertical_cut(p-1)[0]):
-                    if prev_result is None:
-                        results.add(rc2)
-                        break
-                    good = True
-                    for cut in range(len(prev_result)+1):
-                        if cut < p:
-                            if rc2.vertical_cut(cut)[0] != self.vertical_cut(cut)[0]:
-                                good = False
-                                break
-                        if rc2.vertical_cut(cut)[0] != prev_result.vertical_cut(cut)[0]:
-                            good = False
-                            break
-                    if good:
-                        results.add(rc2)
-                        break
+                    results.add(rc2)
+                    break
         try:
-            assert len(results) == 1, f"Ambiguous monk crystal multiplication results for p={p}, k={k} on\n{self} \n{prev_result=}\nResults:\n" + "\n".join([str(r) for r in results])
+            assert len(results) == 1, f"Ambiguous monk crystal multiplication results for p={p}, k={k} on\n{self} \nResults:\n" + "\n".join([str(r) for r in results])
         except AssertionError as e:
             print(e)
             if not warn:
