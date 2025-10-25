@@ -14,23 +14,23 @@ if __name__ == "__main__":
     for perm in perms:
         for rc in RCGraph.all_rc_graphs(perm, n-1):
             for k in range(1, n):
-                # for p in range(1, k + 1):
-                #     result = None
-                #     # for cut in range(p, len(rc) + 1):
-                #     #     result = rc.vertical_cut(cut)[0].monk_crystal_mul(p, min(cut,k), prev_result=None)
-                #     result = rc.monk_crystal_mul(p, k)
-                #     print(f"Success {p=} {k=}")
-                #     pretty_print(rc)
-                #     print("Result:")
-                #     pretty_print(result)
-                # # if len(results) != 1:
-                #     #     print("AMBIGUOUS")
-                #     #     raise AssertionError
-                result = rc.flat_elem_sym_mul(k)
-                if result:
-                    print(f"Success {k=}")
+                for p in range(1, k + 1):
+                    result = None
+                    # for cut in range(p, len(rc) + 1):
+                    #     result = rc.vertical_cut(cut)[0].monk_crystal_mul(p, min(cut,k), prev_result=None)
+                    result = rc.monk_crystal_mul(p, k, warn=False)
+                    print(f"Success {p=} {k=}")
                     pretty_print(rc)
                     print("Result:")
                     pretty_print(result)
-                assert result is not None
+                # if len(results) != 1:
+                    #     print("AMBIGUOUS")
+                    #     raise AssertionError
+                # result = rc.flat_elem_sym_mul(k)
+                # if result:
+                #     print(f"Success {k=}")
+                #     pretty_print(rc)
+                #     print("Result:")
+                #     pretty_print(result)
+                # assert result is not None
                 

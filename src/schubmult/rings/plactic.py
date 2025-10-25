@@ -274,6 +274,24 @@ class B(Plactic):
 
 
 class NilPlactic(Plactic):
+
+    def bruhat_leq(self, other):
+        if not isinstance(other, NilPlactic):
+            return NotImplemented
+        if len(self.row_word) > len(other.row_word):
+            return False
+        if len(self.row_word) == len(other.row_word):
+            return self.row_word == other.row_word
+        if not self.perm.bruhat_leq(other.perm):
+            return False
+        for i in range(len(other.row_word)):
+            new_word = list(other.row_word[:i] + other.row_word[i + 1 :])
+            new_perm = Permutation.ref_product(*new_word)
+            if not self.perm.bruhat_leq(new_perm):
+                continue
+            return self.bruhat_leq(NilPlactic().ed_insert(*new_word))
+        return True
+
     def hw_rc(self, length=None):
         """
         Return the highest-weight RCGraph corresponding to this NilPlactic
@@ -321,41 +339,46 @@ class NilPlactic(Plactic):
     def perm(self):
         return Permutation.ref_product(*self.row_word)
 
+    def ed_insert(self, *letters):
+        """Insert a letter/entry into this NilPlactic tableau and return a new Plactic."""
+        new_word = self._word
+        for letter in letters:
+            new_word = NilPlactic._ed_insert(new_word, int(letter))
+        return NilPlactic(new_word)
+
     @staticmethod
-    def _ed_insert(word, letter):
+    def _ed_insert(word, letter, i=0):
         """
         Row insertion for NilPlactic. `word` is a tuple-of-rows (each a tuple).
         Returns a tuple-of-rows.
         """
         word = tuple(tuple(r) for r in word)
-        if len(word) == 0:
-            return ((letter,),)
+        
+        # determine current rows (safe when word2 shorter)
+        if i >= len(word):
+            row_i = ()
+        else:
+            row_i = word[i]
 
-        row = tuple(word[0])
-        index = 0
-        while index < len(row) and row[index] < letter:
-            index += 1
+        x0 = letter
 
-        # append to first row
-        if index == len(row):
-            return ((*row, letter), *tuple(word[1:]))
+        # append case (no bump in this row)
+        if len(row_i) == 0 or x0 >= max(row_i):
+            new_word = (*word[:i], (*row_i, x0), *word[i + 1 :])
+            return new_word
 
-        # equal-case handling
-        if row[index] == letter:
-            if index < len(row) - 1 and row[index + 1] == letter + 1:
-                # bump into next row
-                return (row, *NilPlactic._ed_insert(tuple(word[1:]), letter + 1))
-            # skip equal-run
-            while index < len(row) and row[index] == letter:
-                index += 1
-            if index == len(row):
-                return ((*row, letter), *tuple(word[1:]))
+        # find bump
+        x1 = min(a for a in row_i if a > x0)
 
-        # bump case
-        new_row = list(row)
-        bump = new_row[index]
-        new_row[index] = letter
-        return (tuple(new_row), *NilPlactic._ed_insert(tuple(word[1:]), bump))
+        # normal replace + recurse into next row
+        if x1 != x0 + 1 or x0 not in row_i:
+            new_first_row = list(row_i)
+            new_first_row[new_first_row.index(x1)] = x0
+            new_word = (*word[:i], tuple(new_first_row), *word[i + 1 :])
+            return NilPlactic._ed_insert(new_word, x1, i=i + 1)
+
+        # special case: continue bumping without changing current row
+        return NilPlactic._ed_insert(word, x1, i=i + 1)
 
     @staticmethod
     def ed_insert_rsk(word, word2, letter, letter2, i=0):

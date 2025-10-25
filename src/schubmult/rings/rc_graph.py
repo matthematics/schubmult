@@ -79,11 +79,13 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                     results.add(rc.reverse_raise_seq(raise_seq))
                     break
         if results:
-            assert len(results) == 1
+            assert len(results) == 1, f"Ambiguous flat elem crystal multiplication results for k={k} on\n{self} \nResults:\n" + "\n".join([str(r) for r in results]) + "\n".join([str(r.p_tableau) for r in results])
             return next(iter(results))
         return None
 
     def monk_crystal_mul(self, p, k, warn=True):
+        if p > k:
+            raise ValueError("p must be less than or equal to k")
         if k > len(self):
             return self.extend(k - len(self)).monk_crystal_mul(p, k)
 
@@ -108,18 +110,26 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             return True
 
         from schubmult.schub_lib.schub_lib import elem_sym_perms
+        if k > len(self):
+            return self.extend(k - len(self)).monk_crystal_mul(p, k)
 
         monk_rc = next(iter(RCGraph.all_rc_graphs(Permutation([]).swap(k - 1, k), len(self), weight=(*([0] * (p - 1)), 1, *([0] * (len(self) - p))))))
-        tensor_cut = CrystalGraphTensor(self.vertical_cut(k)[0], monk_rc.vertical_cut(k)[0])
+        tensor_cut, raise_seq = CrystalGraphTensor(self.vertical_cut(k)[0], monk_rc.vertical_cut(k)[0]).to_highest_weight()
         results = set()
         lv = [*self.length_vector]
         lv[p - 1] += 1
         up_perms = [pperm for pperm, L in elem_sym_perms(self.perm, 1, k) if L == 1]
         for up_perm in up_perms:
-            for rc2 in RCGraph.all_rc_graphs(up_perm, length=len(self), weight=tuple(lv)):
-                if _crystal_isomorphic(tensor_cut, rc2.vertical_cut(k)[0]) and rc2[k:] == self[k:] and (p==1 or rc2.vertical_cut(p-1)[0] == self.vertical_cut(p-1)[0]):
-                    results.add(rc2)
-                    break
+            for rc2 in RCGraph.all_rc_graphs(up_perm, length=len(self), weight=lv):
+                try:
+                    rc2_hw, raise_seq2 = rc2.vertical_cut(k)[0].to_highest_weight()
+                    
+                    if rc2_hw.crystal_weight == tensor_cut.crystal_weight:
+                        if self.p_tableau.bruhat_leq(rc2.p_tableau):
+                            results.add(rc2)
+                            break
+                except Exception as e:
+                    continue
         try:
             assert len(results) == 1, f"Ambiguous monk crystal multiplication results for p={p}, k={k} on\n{self} \nResults:\n" + "\n".join([str(r) for r in results])
         except AssertionError as e:
@@ -459,7 +469,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             if weight and len(new_row) != weight[0]:
                 continue
             new_row.sort(reverse=True)
-            if weight:
+            if weight is not None:
                 oldset = cls.all_rc_graphs(new_perm, length=length - 1, weight=weight[1:])
             else:
                 oldset = cls.all_rc_graphs(new_perm, length=length - 1)
@@ -468,7 +478,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                 assert nrc.perm == perm
                 assert len(nrc) == length
                 if weight:
-                    assert nrc.length_vector == weight
+                    assert nrc.length_vector == tuple(weight)
                 ret.add(nrc)
         if weight:
             cls._cache_by_weight[(perm, tuple(weight))] = ret
