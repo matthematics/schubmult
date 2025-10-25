@@ -124,11 +124,22 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                 try:
                     good = True
                     for cut in range(p, k+1):
-                        rc2_hw, raise_seq2 = rc2.vertical_cut(cut)[0].to_highest_weight()
+                        rc2_hw, _ = rc2.vertical_cut(cut)[0].to_highest_weight()
                         tensor_cut, raise_seq = CrystalGraphTensor(self.vertical_cut(cut)[0], monk_rc.vertical_cut(cut)[0]).to_highest_weight()
-                        if rc2_hw.crystal_weight != tensor_cut.crystal_weight:
+                        if rc2_hw.crystal_weight != tensor_cut.crystal_weight or rc2_hw.reverse_raise_seq(raise_seq) != rc2.vertical_cut(cut)[0]:
                             good=False
                             break
+                        rc2_lw, _ = rc2.vertical_cut(cut)[0].to_lowest_weight()
+                        tensor_cut_low, lower_seq = CrystalGraphTensor(self.vertical_cut(cut)[0], monk_rc.vertical_cut(cut)[0]).to_lowest_weight()
+                        if rc2_lw.crystal_weight != tensor_cut_low.crystal_weight or rc2_lw.reverse_lower_seq(lower_seq) != rc2.vertical_cut(cut)[0]:
+                            good=False
+                            break
+                    if rc2[k:] != self[k:]:
+                        good = False
+                    # tensor, raise_seq = CrystalGraphTensor(self, monk_rc).to_highest_weight()
+                    # hw_rc, _ = rc2.to_highest_weight()
+                    # if hw_rc.crystal_weight != tensor.crystal_weight:# or hw_rc.reverse_raise_seq(raise_seq) != rc2:
+                    #     good = False
                     if good:
                         results.add(rc2)
                 except Exception as e:
