@@ -70,7 +70,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                 result_graph = RCGraph([*self.vertical_cut(shift)[0][:shift], *result_graph.shiftup(shift)])
         return result_graph
 
-    def monk_crystal_mul(self, p, k):
+    def monk_crystal_mul(self, p, k, prev_result=None):
         if k > len(self):
             return self.extend(k - len(self)).monk_crystal_mul(p, k)
 
@@ -98,31 +98,29 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
         monk_rc = next(iter(RCGraph.all_rc_graphs(Permutation([]).swap(k - 1, k), len(self), weight=(*([0] * (p - 1)), 1, *([0] * (len(self) - p))))))
         tensor = CrystalGraphTensor(self, monk_rc)
-        lower_rc = self.vertical_cut(k)[0]
-        lower_perm = lower_rc.perm
-        lower_tensor = CrystalGraphTensor(lower_rc, monk_rc.resize(k))
-        up_perms = [pperm for pperm, L in elem_sym_perms(self.perm, 1, k) if L == 1]
-        results1 = set()
+        results = set()
         lv = [*self.length_vector]
         lv[p - 1] += 1
+        up_perms = [pperm for pperm, L in elem_sym_perms(self.perm, 1, k) if L == 1]
         for up_perm in up_perms:
             for rc2 in RCGraph.all_rc_graphs(up_perm, length=len(self), weight=tuple(lv)):
-                if _crystal_isomorphic(tensor, rc2, cutoff=k) and rc2[k:] == self[k:]:
-                    results1.add(rc2)
-                    break
-        results = set()
-        up_perms2 = [pperm for pperm, L in elem_sym_perms(lower_perm, 1, k) if L == 1]
-
-        lv2 = [*lower_rc.length_vector]
-        lv2[p - 1] += 1
-        for up_perm in up_perms2:
-            for rc2 in RCGraph.all_rc_graphs(up_perm, length=len(lower_rc), weight=tuple(lv2)):
-                if _crystal_isomorphic(lower_tensor, rc2, cutoff=k) and rc2[k:] == lower_rc[k:]:
-                    for rc02 in results1:
-                        if rc02.vertical_cut(k)[0] == rc2:
-                            results.add(rc02)
+                if _crystal_isomorphic(tensor, rc2, cutoff=k) and rc2[min(p+1,k):] == self[min(p+1,k):] and (p==1 or rc2.vertical_cut(p-1)[0] == self.vertical_cut(p-1)[0]):
+                    if prev_result is None:
+                        results.add(rc2)
+                        break
+                    good = True
+                    for cut in range(len(prev_result)+1):
+                        if cut < p:
+                            if rc2.vertical_cut(cut)[0] != self.vertical_cut(cut)[0]:
+                                good = False
+                                break
+                        if rc2.vertical_cut(cut)[0] != prev_result.vertical_cut(cut)[0]:
+                            good = False
                             break
-        assert len(results) == 1, f"Ambiguous monk crystal multiplication results for p={p}, k={k} on\n{self}\nResults:\n" + "\n".join([str(r) for r in results])
+                    if good:
+                        results.add(rc2)
+                        break
+        assert len(results) == 1, f"Ambiguous monk crystal multiplication results for p={p}, k={k} on\n{self} \n{prev_result=}\nResults:\n" + "\n".join([str(r) for r in results])
         return next(iter(results))
 
     @cached_property
