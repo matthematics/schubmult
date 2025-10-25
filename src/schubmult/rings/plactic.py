@@ -222,7 +222,7 @@ class Plactic(GridPrint, CrystalGraph):
         index_to_change = closing_stack[-1]
         word[index_to_change] = i + 1
         result = Plactic().rs_insert(*word)
-        assert result.shape == self.shape, f"{result.shape=} {self.shape=}"
+        assert result.shape == self.shape, f"{result.shape=} {self.shape=} {result=} {self=}"
         return result
 
     @property
@@ -233,18 +233,45 @@ class Plactic(GridPrint, CrystalGraph):
     def crystal_length(self):
         """Return the length/number of rows used for the crystal"""
 
-    def yamanouchi(self):
+    @classmethod
+    def yamanouchi(cls, shape):
         """
-        Return the Yamanouchi (highest-weight) tableau of the same shape
-        as this Plactic tableau.
+        Return the Yamanouchi (highest-weight) tableau of the given shape.
         """
         new_word = []
-        for i in range(len(self._word)):
-            new_word.append([0] * len(self._word[i]))
-            for j in range(len(self._word[i])):
+        for i in range(len(shape)):
+            new_word.append([0] * shape[i])
+            for j in range(shape[i]):
                 new_word[i][j] = i + 1
-        return Plactic(tuple(tuple(row) for row in new_word))
+        return cls(tuple(tuple(row) for row in new_word))
 
+    # def yamanouchi(self):
+    #     """
+    #     Return the Yamanouchi (highest-weight) tableau of the same shape
+    #     as this Plactic tableau.
+    #     """
+    #     new_word = []
+    #     for i in range(len(self._word)):
+    #         new_word.append([0] * len(self._word[i]))
+    #         for j in range(len(self._word[i])):
+    #             new_word[i][j] = i + 1
+    #     return Plactic(tuple(tuple(row) for row in new_word))
+
+class B(Plactic):
+    def __init__(self, shape, max_entry):
+        self._word = Plactic.yamanouchi(shape)._word
+        self._length = max_entry
+
+    def crystal_length(self):
+        return self._length
+
+    @classmethod
+    def completion(cls, shape):
+        if shape is None:
+            return None
+        max_entry = shape.crystal_length()
+        hw, raise_seq = shape.to_highest_weight()
+        return cls(tuple(a for a in hw.crystal_weight if a != 0), max_entry).reverse_raise_seq(raise_seq)
 
 class NilPlactic(Plactic):
 

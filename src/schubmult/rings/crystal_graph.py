@@ -1,4 +1,5 @@
 from functools import cache
+from itertools import zip_longest
 
 from sympy.printing.defaults import Printable
 
@@ -12,42 +13,34 @@ class CrystalGraph(Printable):
         """The lowering operator for the crystal graph."""
         raise NotImplementedError
 
+    @property
+    def crystal_weight(self):
+        """The weight of the crystal graph element."""
+        raise NotImplementedError
 
     def phi(self, i):
-        if i == 0:
+        if i < 1 or i >= self.crystal_length():
             return 0
         if hasattr(self, "_cached_phi") and i in self._cached_phi:
             return self._cached_phi[i]
-        rc = self
-        cnt = 0
-        while rc is not None:
-            rc = rc.lowering_operator(i)
-            if rc is not None:
-                cnt += 1
+        rc_hw, raise_seq = self.to_highest_weight()
+        top_phi = rc_hw.crystal_weight[i - 1] - rc_hw.crystal_weight[i]
+        for r in reversed(raise_seq):
+            if r == i:
+                top_phi -= 1
+            elif r == i + 1:
+                top_phi += 1
         if hasattr(self, "_cached_phi"):
-            self._cached_phi[i] = cnt
+            self._cached_phi[i] = top_phi
         else:
-            self._cached_phi = {i: cnt}
-        return cnt
+            self._cached_phi = {i: top_phi}
+        return top_phi
 
 
     def epsilon(self, i):
-        if i == 0:
-            return 0
-        if hasattr(self, "_cached_epsilon") and i in self._cached_epsilon:
-            return self._cached_epsilon[i]
-
-        rc = self
-        cnt = 0
-        while rc is not None:
-            rc = rc.raising_operator(i)
-            if rc is not None:
-                cnt += 1
-        if hasattr(self, "_cached_epsilon"):
-            self._cached_epsilon[i] = cnt
-        else:
-            self._cached_epsilon = {i: cnt}
-        return cnt
+        if i > 0 and i < self.crystal_length():
+            return self.crystal_weight[i - 1] - self.crystal_weight[i] + self.phi(i)
+        return 0
 
     def to_lowest_weight(self, length=None):
         """Return the lowest weight element in the connected component."""
@@ -118,7 +111,7 @@ class CrystalGraph(Printable):
         return new_rc
 
     @property
-    def full_crsytal(self):
+    def full_crystal(self):
         hw, _ = self.to_highest_weight()
         crystal = set()
         stack = [hw]
@@ -134,22 +127,29 @@ class CrystalGraph(Printable):
 
 # There is a decomposition here into subcrystals
 class CrystalGraphTensor(CrystalGraph):
+
+    @property
+    def crystal_weight(self):
+        return tuple(a + b for a, b in zip_longest(self.factors[0].crystal_weight, self.factors[1].crystal_weight, fillvalue=0))
+
+    def __hash__(self):
+        return hash(self.factors)
+
+    def __eq__(self, other):
+        return type(self) is type(other) and self.factors == other.factors
+
+
     @property
     def args(self):
         return self.factors
 
     def all_highest_weights(self):
-        right_element, _ = self.factors[1].to_highest_weight()
+        import itertools
+        right_full_crystal = self.factors[1].full_crystal
         full_crystal = self.factors[0].full_crystal
         highest_weights = set()
-        for left_element in full_crystal:
-            good = True
-            for i in range(1, self.crystal_length()):
-                if left_element.epsilon(i) > right_element.phi(i):
-                    good = False
-                    break
-            if good:
-                highest_weights.add(CrystalGraphTensor(left_element, right_element))
+        for left_element, right_element in itertools.product(full_crystal, right_full_crystal):
+            highest_weights.add(CrystalGraphTensor(left_element, right_element).to_highest_weight()[0])
         return highest_weights
 
     def _sympystr(self, printer):
@@ -162,25 +162,17 @@ class CrystalGraphTensor(CrystalGraph):
         return None, self.factors
 
     def __init__(self, *factors):
+        from schubmult.rings.plactic import B
         if len(factors) == 1:
             self.factors = factors[0]
         else:
             self.factors = factors
 
-    def __eq__(self, other):
-        return type(self) is type(other) and self.factors == other.factors
-
     def crystal_length(self):
         return max(factor.crystal_length() for factor in self.factors)
 
-    def phi(self, index):
-        return self.factors[0].phi(index) + max(0, self.factors[1].phi(index) - self.factors[0].epsilon(index))
-
-    def epsilon(self, index):
-        return self.factors[1].epsilon(index) + max(0, self.factors[0].epsilon(index) - self.factors[1].phi(index))
-
     def lowering_operator(self, index):
-        if self.factors[0].epsilon(index) < self.factors[1].phi(index):
+        if self.epsilon(index) < self.phi(index):
             tz = CrystalGraphTensor(self.factors[0], self.factors[1].lowering_operator(index))
             if tz.factors[1] is None:
                 return None
@@ -191,7 +183,7 @@ class CrystalGraphTensor(CrystalGraph):
         return tz
 
     def raising_operator(self, index):
-        if self.factors[0].epsilon(index) > self.factors[1].phi(index):
+        if self.epsilon(index) > self.phi(index):
             tz = CrystalGraphTensor(self.factors[0].raising_operator(index), self.factors[1])
             if tz.factors[0] is None:
                 return None
@@ -200,3 +192,9 @@ class CrystalGraphTensor(CrystalGraph):
         if tz.factors[1] is None:
             return None
         return tz
+
+    def phi(self, i):
+        return self.factors[0].phi(i) + max(0, self.factors[1].phi(i) - self.factors[0].epsilon(i))
+
+    def epsilon(self, i):
+        return self.factors[1].epsilon(i) + max(0, self.factors[0].epsilon(i) - self.factors[1].phi(i))

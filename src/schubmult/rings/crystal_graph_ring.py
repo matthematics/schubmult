@@ -150,3 +150,6 @@ class CrystalGraphRingElement(BaseSchubertElement, CrystalGraph):
                     found = True
                     break
         return elem, tuple(seq)
+
+    @property
+    def weight(self): ...

@@ -44,6 +44,18 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         for row in super().__iter__():
             yield tuple(row)
 
+    @cached_property
+    def crystal_weight(self):
+        if self.is_highest_weight:
+            return self.length_vector
+        hw, raise_seq = self.to_highest_weight()
+        wt = [*hw.length_vector]
+        assert len(wt) == self.crystal_length()
+        for r in reversed(raise_seq):
+            wt[r - 1] -= 1
+            wt[r] += 1
+        return tuple(wt)
+
     # UNIQUE
     def tableau_decomp(self):
         descs = self.perm.descents()
@@ -613,24 +625,12 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         return interim.rowrange(0, len(self) - 1)
 
 
-    @property
-    def crystal_weight(self):
-        beta0 = 0
-        beta = 0
-        wt = []
-        for i in range(len(self) - 1, 0, -1):
-            beta = self.phi(i) - self.epsilon(i)  # beta_i - beta_{i-1}
-            wt.append(beta + beta0)
-            beta0 = beta0 + beta
-        wt.append(beta0)
-        return tuple(reversed(wt))
-
     def crystal_length(self):
         return len(self)
 
     def lowering_operator(self, row):
         # RF word is just the RC word backwards
-        if row > len(self):
+        if row >= len(self):
             return None
         row_i = [*self[row - 1]]
         row_ip1 = [*self[row]]
@@ -694,7 +694,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
     def raising_operator(self, row):
         # RF word is just the RC word backwards
-        if row > len(self):
+        if row >= len(self):
             return None
         row_i = [*self[row - 1]]
         row_ip1 = [*self[row]]
@@ -834,7 +834,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     @cached_property
     def weight_tableau(self):
         if self.is_highest_weight:
-            tb = self.p_tableau.yamanouchi()
+            tb = Plactic.yamanouchi(self.p_tableau.shape)
             trimmed_lv = list(self.length_vector)
             while len(trimmed_lv) > 0 and trimmed_lv[-1] == 0:
                 trimmed_lv.pop()
