@@ -51,7 +51,7 @@ if __name__ == "__main__":
                     lv[p-1] += 1
                     for up_perm in up_perms:
                         for rc2 in RCGraph.all_rc_graphs(up_perm, length=n-1, weight=tuple(lv)):
-                            if crystal_isomorphic(tensor, rc2, cutoff=k):
+                            if crystal_isomorphic(tensor, rc2, cutoff=k) and rc2[k:] == rc[k:]:
                                 good = True
                                 results.add(rc2)
                                 break
@@ -65,6 +65,7 @@ if __name__ == "__main__":
                         print(f"FAIL {p=} {k=}")
                         pretty_print(rc)
                     assert good
-                    if len(results) != 1:
-                        print("AMBIGUOUS")
+                    # if len(results) != 1:
+                    #     print("AMBIGUOUS")
+                    #     raise AssertionError
                 
