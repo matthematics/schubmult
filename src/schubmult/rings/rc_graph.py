@@ -125,7 +125,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                     rc2_hw, raise_seq2 = rc2.vertical_cut(k)[0].to_highest_weight()
                     
                     if rc2_hw.crystal_weight == tensor_cut.crystal_weight:
-                        if self.p_tableau.bruhat_leq(rc2.p_tableau):
+                        if self.vertical_cut(k)[0].perm.bruhat_leq(rc2_hw.perm):
                             results.add(rc2)
                             break
                 except Exception as e:
