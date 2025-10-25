@@ -81,7 +81,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             stack = [(c1, c2)]
             if cutoff is None:
                 cutoff = c1.crystal_length()
-            if hw_1.crystal_weight[:cutoff] != hw_2.crystal_weight[:cutoff]:
+            if hw_1.crystal_weight != hw_2.crystal_weight:
                 return False
             while len(stack) > 0:
                 c1_test, c2_test = stack.pop()
@@ -97,14 +97,14 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         from schubmult.schub_lib.schub_lib import elem_sym_perms
 
         monk_rc = next(iter(RCGraph.all_rc_graphs(Permutation([]).swap(k - 1, k), len(self), weight=(*([0] * (p - 1)), 1, *([0] * (len(self) - p))))))
-        tensor = CrystalGraphTensor(self, monk_rc)
+        tensor_cut = CrystalGraphTensor(self.vertical_cut(k)[0], monk_rc.vertical_cut(k)[0])
         results = set()
         lv = [*self.length_vector]
         lv[p - 1] += 1
         up_perms = [pperm for pperm, L in elem_sym_perms(self.perm, 1, k) if L == 1]
         for up_perm in up_perms:
             for rc2 in RCGraph.all_rc_graphs(up_perm, length=len(self), weight=tuple(lv)):
-                if _crystal_isomorphic(tensor, rc2, cutoff=k) and rc2[k:] == self[k:] and (p==1 or rc2.vertical_cut(p-1)[0] == self.vertical_cut(p-1)[0]):
+                if _crystal_isomorphic(tensor_cut, rc2.vertical_cut(k)[0]) and rc2[k:] == self[k:] and (p==1 or rc2.vertical_cut(p-1)[0] == self.vertical_cut(p-1)[0]):
                     if prev_result is None:
                         results.add(rc2)
                         break

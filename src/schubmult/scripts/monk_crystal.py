@@ -16,9 +16,9 @@ if __name__ == "__main__":
             for k in range(1, n):
                 for p in range(1, k + 1):
                     result = None
-                    for cut in range(p, len(rc) + 1):
-                        result = rc.vertical_cut(cut)[0].monk_crystal_mul(p, min(cut,k), prev_result=None)
-                    #result = rc.monk_crystal_mul(p, k)
+                    # for cut in range(p, len(rc) + 1):
+                    #     result = rc.vertical_cut(cut)[0].monk_crystal_mul(p, min(cut,k), prev_result=None)
+                    result = rc.monk_crystal_mul(p, k)
                     print(f"Success {p=} {k=}")
                     pretty_print(rc)
                     print("Result:")
