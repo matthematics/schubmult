@@ -123,17 +123,19 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             for rc2 in RCGraph.all_rc_graphs(up_perm, length=len(self), weight=lv):
                 try:
                     good = True
-                    for cut in range(p, k+1):
-                        rc2_hw, _ = rc2.vertical_cut(cut)[0].to_highest_weight()
-                        tensor_cut, raise_seq = CrystalGraphTensor(self.vertical_cut(cut)[0], monk_rc.vertical_cut(cut)[0]).to_highest_weight()
-                        if rc2_hw.crystal_weight != tensor_cut.crystal_weight or rc2_hw.reverse_raise_seq(raise_seq) != rc2.vertical_cut(cut)[0]:
-                            good=False
-                            break
-                        rc2_lw, _ = rc2.vertical_cut(cut)[0].to_lowest_weight()
-                        tensor_cut_low, lower_seq = CrystalGraphTensor(self.vertical_cut(cut)[0], monk_rc.vertical_cut(cut)[0]).to_lowest_weight()
-                        if rc2_lw.crystal_weight != tensor_cut_low.crystal_weight or rc2_lw.reverse_lower_seq(lower_seq) != rc2.vertical_cut(cut)[0]:
-                            good=False
-                            break
+                    for start in range(p):
+                        pp = p - start
+                        for cut in range(pp, k+1 - start):
+                            rc2_hw, _ = rc2.rowrange(start).vertical_cut(cut)[0].to_highest_weight()
+                            tensor_cut, raise_seq = CrystalGraphTensor(self.rowrange(start).vertical_cut(cut)[0], monk_rc.rowrange(start).vertical_cut(cut)[0]).to_highest_weight()
+                            if rc2_hw.crystal_weight != tensor_cut.crystal_weight or rc2_hw.reverse_raise_seq(raise_seq) != rc2.rowrange(start).vertical_cut(cut)[0]:
+                                good=False
+                                break
+                            rc2_lw, _ = rc2.rowrange(start).vertical_cut(cut)[0].to_lowest_weight()
+                            tensor_cut_low, lower_seq = CrystalGraphTensor(self.rowrange(start).vertical_cut(cut)[0], monk_rc.rowrange(start).vertical_cut(cut)[0]).to_lowest_weight()
+                            if rc2_lw.crystal_weight != tensor_cut_low.crystal_weight or rc2_lw.reverse_lower_seq(lower_seq) != rc2.rowrange(start).vertical_cut(cut)[0]:
+                                good=False
+                                break
                     if rc2[k:] != self[k:]:
                         good = False
                     # tensor, raise_seq = CrystalGraphTensor(self, monk_rc).to_highest_weight()
