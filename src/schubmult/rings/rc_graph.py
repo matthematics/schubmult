@@ -42,23 +42,57 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         for row in super().__iter__():
             yield tuple(row)
 
-    def flat_elem_sym_mul(self, k):
+    def flat_elem_sym_mul(self, k, shift=0):
         from schubmult.schub_lib.schub_lib import elem_sym_perms
         elem_graph = RCGraph([(i,) for i in range(1, k + 1)])
         mul_graph = self
+        if shift > 0:
+            if len(mul_graph) < len(elem_graph + shift):
+                mul_graph = mul_graph.extend(len(elem_graph) + shift - len(mul_graph))
+            mul_graph = self.rowrange(shift, len(mul_graph))
         if len(elem_graph) < len(self):
             elem_graph = elem_graph.extend(len(self) - len(elem_graph))
         if len(elem_graph) > len(self):
             mul_graph = self.extend(len(elem_graph) - len(self))
         tensor = CrystalGraphTensor(elem_graph, mul_graph)
-
+        result_graph = None
         hw_graph, raise_seq = tensor.to_highest_weight()
-        perm_list = [perm for (perm, w) in elem_sym_perms(self.perm, k, k) if w == k]
+        perm_list = [perm for (perm, w) in elem_sym_perms(mul_graph.perm, k, k) if w == k]
         for perm in perm_list:
             for rc in RCGraph.all_rc_graphs(perm, length=len(mul_graph), weight=hw_graph.crystal_weight):
                 if rc.is_highest_weight:
-                    return rc.reverse_raise_seq(raise_seq)
-        raise ValueError("Could not find flat elementary symmetric multiplication result")
+                    result_graph = rc.reverse_raise_seq(raise_seq)
+                    break
+            if result_graph is not None:
+                break
+        if shift > 0:
+            if result_graph is not None:
+                result_graph = RCGraph([*self.vertical_cut(shift)[0][:shift],*result_graph.shiftup(shift)])
+        return result_graph
+
+    def monk_mul(self, p, k):
+        from schubmult.schub_lib.schub_lib import elem_sym_perms
+        monk_graph = RCGraph([() * (p-1), (k,)]).normalize()
+        mul_graph = self.vertical_cut(k)[0]
+        if len(monk_graph) < len(mul_graph):
+            monk_graph = monk_graph.extend(len(mul_graph) - len(monk_graph))
+        if len(monk_graph) > len(mul_graph):
+            mul_graph = self.extend(len(monk_graph) - len(mul_graph))
+        tensor = CrystalGraphTensor(mul_graph, monk_graph)
+        result_graph = None
+        hw_graph, raise_seq = tensor.to_highest_weight()
+        perm_list = [perm for (perm, w) in elem_sym_perms(mul_graph.perm, 1, k) if w == 1]
+        for perm in perm_list:
+            for rc in RCGraph.all_rc_graphs(perm, length=len(mul_graph), weight=hw_graph.crystal_weight):
+                if rc.is_highest_weight:
+                    result_graph0 = RCGraph([*rc.reverse_raise_seq(raise_seq).rowrange(0,k),*self[k:]])
+                    if result_graph0.is_valid:
+                        result_graph = result_graph0
+                        break
+            if result_graph is not None:
+                break
+        return result_graph
+
 
     @cached_property
     def crystal_weight(self):

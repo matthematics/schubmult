@@ -23,6 +23,45 @@ class Permutation:
     def act_root(self, a, b):
         return self[a - 1], self[b - 1]
 
+    def coset_decomp(self, *descs):
+        descs = set(descs)
+        reduced_perm = self
+        w_J = Permutation([])
+        found = True
+        while found:
+            found = False
+            for d in reduced_perm.descents():
+                if d + 1 in descs:
+                    w_J = ~((~w_J).swap(d, d + 1))
+                    reduced_perm = reduced_perm.swap(d, d + 1)
+                    found = True
+                    break
+        return reduced_perm, w_J
+
+    def min_coset_rep(self, *descs):
+        return self.coset_decomp(*descs)[0]
+
+    def max_coset_rep(self, *descs):
+        red, w_J = self.coset_decomp(*descs)
+        return red * Permutation.longest_element(*descs)
+
+    @classmethod
+    def longest_element(cls, *descs):
+        perm = Permutation([])
+        did_one = True
+        while did_one:
+            did_one = False
+            for i in range(len(descs)):
+                j = descs[i] - 1
+                if perm[j] < perm[j + 1]:
+                    perm = perm.swap(j, j + 1)
+                    did_one = True
+        return perm
+
+    @classmethod
+    def w0(cls, n):
+        return cls.from_code([n - 1 - i for i in range(n - 1)])
+
     @classmethod
     def all_permutations(cls, n):
         from itertools import permutations
@@ -177,9 +216,13 @@ class Permutation:
             return printer.doprint(trimcode(self))
         return printer.doprint(self._perm)
 
-    def __call__(self, i):
-        """1-indexed"""
-        return self[i - 1]
+    def __call__(self, *tup):
+        if len(tup) == 1: 
+            if isinstance(tup[0], (list, tuple)):
+                tup = tup[0]
+            else:
+                return self._perm[tup[0] - 1]
+        return tuple(self[i - 1] for i in tup)
 
     def zero_indexed_descents(self):
         desc = set()
