@@ -31,7 +31,6 @@ def debug_print(*args, debug=False):
         print(*args)
 
 
-
 class RCGraph(GridPrint, tuple, CrystalGraph):
     def __eq__(self, other):
         if not isinstance(other, RCGraph):
@@ -44,6 +43,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
     def flat_elem_sym_mul(self, k, shift=0):
         from schubmult.schub_lib.schub_lib import elem_sym_perms
+
         elem_graph = RCGraph([(i,) for i in range(1, k + 1)])
         mul_graph = self
         if shift > 0:
@@ -67,32 +67,63 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                 break
         if shift > 0:
             if result_graph is not None:
-                result_graph = RCGraph([*self.vertical_cut(shift)[0][:shift],*result_graph.shiftup(shift)])
+                result_graph = RCGraph([*self.vertical_cut(shift)[0][:shift], *result_graph.shiftup(shift)])
         return result_graph
 
-    def monk_mul(self, p, k):
+    def monk_crystal_mul(self, p, k):
+        if k > len(self):
+            return self.extend(k - len(self)).monk_crystal_mul(p, k)
+
+        def _crystal_isomorphic(c1, c2, cutoff=None):
+            hw_1, _ = c1.to_highest_weight(length=cutoff)
+            hw_2, _ = c2.to_highest_weight(length=cutoff)
+
+            stack = [(c1, c2)]
+            if cutoff is None:
+                cutoff = c1.crystal_length()
+            if hw_1.crystal_weight[:cutoff] != hw_2.crystal_weight[:cutoff]:
+                return False
+            while len(stack) > 0:
+                c1_test, c2_test = stack.pop()
+                for i in range(1, cutoff):
+                    c1_test0 = c1_test.lowering_operator(i)
+                    if c1_test0 is not None:
+                        c2_test0 = c2_test.lowering_operator(i)
+                        if c2_test0 is None:
+                            return False
+                        stack.append((c1_test0, c2_test0))
+            return True
+
         from schubmult.schub_lib.schub_lib import elem_sym_perms
-        monk_graph = RCGraph([() * (p-1), (k,)]).normalize()
-        mul_graph = self.vertical_cut(k)[0]
-        if len(monk_graph) < len(mul_graph):
-            monk_graph = monk_graph.extend(len(mul_graph) - len(monk_graph))
-        if len(monk_graph) > len(mul_graph):
-            mul_graph = self.extend(len(monk_graph) - len(mul_graph))
-        tensor = CrystalGraphTensor(mul_graph, monk_graph)
-        result_graph = None
-        hw_graph, raise_seq = tensor.to_highest_weight()
-        perm_list = [perm for (perm, w) in elem_sym_perms(mul_graph.perm, 1, k) if w == 1]
-        for perm in perm_list:
-            for rc in RCGraph.all_rc_graphs(perm, length=len(mul_graph), weight=hw_graph.crystal_weight):
-                if rc.is_highest_weight:
-                    result_graph0 = RCGraph([*rc.reverse_raise_seq(raise_seq).rowrange(0,k),*self[k:]])
-                    if result_graph0.is_valid:
-                        result_graph = result_graph0
-                        break
-            if result_graph is not None:
-                break
-        return result_graph
 
+        monk_rc = next(iter(RCGraph.all_rc_graphs(Permutation([]).swap(k - 1, k), len(self), weight=(*([0] * (p - 1)), 1, *([0] * (len(self) - p))))))
+        tensor = CrystalGraphTensor(self, monk_rc)
+        lower_rc = self.vertical_cut(k)[0]
+        lower_perm = lower_rc.perm
+        lower_tensor = CrystalGraphTensor(lower_rc, monk_rc.resize(k))
+        up_perms = [pperm for pperm, L in elem_sym_perms(self.perm, 1, k) if L == 1]
+        results1 = set()
+        lv = [*self.length_vector]
+        lv[p - 1] += 1
+        for up_perm in up_perms:
+            for rc2 in RCGraph.all_rc_graphs(up_perm, length=len(self), weight=tuple(lv)):
+                if _crystal_isomorphic(tensor, rc2, cutoff=k) and rc2[k:] == self[k:]:
+                    results1.add(rc2)
+                    break
+        results = set()
+        up_perms2 = [pperm for pperm, L in elem_sym_perms(lower_perm, 1, k) if L == 1]
+
+        lv2 = [*lower_rc.length_vector]
+        lv2[p - 1] += 1
+        for up_perm in up_perms2:
+            for rc2 in RCGraph.all_rc_graphs(up_perm, length=len(lower_rc), weight=tuple(lv2)):
+                if _crystal_isomorphic(lower_tensor, rc2, cutoff=k) and rc2[k:] == lower_rc[k:]:
+                    for rc02 in results1:
+                        if rc02.vertical_cut(k)[0] == rc2:
+                            results.add(rc02)
+                            break
+        assert len(results) == 1, f"Ambiguous monk crystal multiplication results for p={p}, k={k} on\n{self}\nResults:\n" + "\n".join([str(r) for r in results])
+        return next(iter(results))
 
     @cached_property
     def crystal_weight(self):
@@ -111,7 +142,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         descs = self.perm.descents()
         if len(descs) == 0:
             return (self,)
-        dscs = sorted([d+1 for d in descs], reverse=True)
+        dscs = sorted([d + 1 for d in descs], reverse=True)
 
         tup = (self,)
         for d in dscs:
@@ -311,7 +342,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     # transpose is weight preserving
 
     def __invert__(self):
-        new_rc = RCGraph([() ]* self.cols)
+        new_rc = RCGraph([()] * self.cols)
         for i in range(1, self.rows + 1):
             for j in range(1, self.cols + 1):
                 if self.has_element(i, j):
@@ -579,7 +610,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def weight(self):
         wt = []
         for i, row in enumerate(self):
-            wt.extend([i+1] * len(row))
+            wt.extend([i + 1] * len(row))
         return tuple(wt)
 
     @property
@@ -669,7 +700,6 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         interim = interim2.kogan_kumar_insert(len(self.perm.trimcode) - extend_amount, diff_rows)
 
         return interim.rowrange(0, len(self) - 1)
-
 
     def crystal_length(self):
         return len(self)
@@ -867,7 +897,6 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             graph.append(row)
         graph = [*graph, *[()] * (length - len(graph))]
         return cls(graph)
-
 
     @cached_property
     def p_tableau(self):
