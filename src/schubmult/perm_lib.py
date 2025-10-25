@@ -18,6 +18,8 @@ n = 100
 
 
 class Permutation:
+
+    """Permutation class representing permutations of positive integers."""
     def act_root(self, a, b):
         return self[a - 1], self[b - 1]
 

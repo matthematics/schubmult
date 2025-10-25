@@ -1,3 +1,4 @@
+from functools import cache
 from typing import Any, Optional, Tuple
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
@@ -40,6 +41,7 @@ class CrystalGraphRingElement(BaseSchubertElement, CrystalGraph):
     by delegating to the underlying key's methods.
     """
 
+    
     def phi(self, index: int) -> int:
         if len(self) == 0:
             return 0
@@ -57,6 +59,7 @@ class CrystalGraphRingElement(BaseSchubertElement, CrystalGraph):
                 m = term
         return m
 
+    
     def epsilon(self, index: int) -> int:
         if len(self) == 0:
             return 0

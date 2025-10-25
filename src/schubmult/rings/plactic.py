@@ -15,6 +15,37 @@ class Plactic(GridPrint, CrystalGraph):
         new_word = tuple(tuple(int(a) + k for a in row) for row in self._word)
         return Plactic(new_word)
 
+    @classmethod
+    def all_ss_tableaux(cls, shape, max_entry):
+        """Generate all semistandard tableaux of given shape with entries <= max_entry."""
+        tableaux = set()
+        current_tableau = [[0 for _ in range(row_len)] for row_len in shape]
+
+        def _recurse(row, col):
+            if row == len(shape):
+                # Base case: A complete tableau is found
+                tableaux.add(cls([tuple(r) for r in current_tableau]))
+                return
+
+            if col == shape[row]:
+                # Move to the next row if current row is filled
+                _recurse(row + 1, 0)
+                return
+
+            # Determine the minimum possible value for the current cell
+            min_val = 1
+            if col > 0:
+                min_val = max(min_val, current_tableau[row][col - 1])
+            if row > 0:
+                min_val = max(min_val, current_tableau[row - 1][col] + 1)
+
+            for val in range(min_val, max_entry + 1):
+                current_tableau[row][col] = val
+                _recurse(row, col + 1)
+                # Backtrack (no explicit removal needed as it's overwritten in next iteration)
+
+        _recurse(0, 0)
+        return tableaux
 
     @property
     def row_word(self):

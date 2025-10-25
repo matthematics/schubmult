@@ -12,6 +12,9 @@ from math import perm
 from multiprocessing import Event, Lock, Manager, Process, cpu_count
 
 from joblib import Parallel, delayed
+from sympy import pretty_print
+
+from schubmult.rings.crystal_graph import CrystalGraphTensor
 
 
 def reload_modules(dct, n_jobs=None):
@@ -189,25 +192,39 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 
 def worker(shared_recording_dict, lock, task_queue):
     from schubmult.rings.rc_graph_ring import RCGraphRing
+    from schubmult import Sx
 
-    def hom_rc(rc_elem):
+    def hom_ck(ck_elem):
         """
         Map an RCGraphRing element to a CoxeterKnuthRing element.
         """
-        from schubmult.rings.ck_ring import CoxeterKnuthRing
-        ck_ring = CoxeterKnuthRing()
-        result = ck_ring.zero
-        for rc, coeff in rc_elem.items():
-            result += coeff * ck_ring(((rc.p_tableau, rc.weight_tableau, len(rc))))
+        from schubmult.rings.rc_graph_ring import RCGraphRing
+        from schubmult.rings.rc_graph import RCGraph
+        rc_ring = RCGraphRing()
+        result = rc_ring.zero
+        for ck_key, coeff in ck_elem.items():
+            rc = ck_key.rc_graph
+            if rc:
+                result += coeff * rc_ring(rc)
+            
         return result
+    
+    def plac_prod(rc1, rc2):
+        from schubmult.rings.rc_graph_ring import RCGraphRing
+        rc_ring = RCGraphRing()
+        tensor_hw, raise_seq = CrystalGraphTensor(rc1, rc2).to_highest_weight()
+        plac_elem = hom_rc(rc_ring(tensor_hw.factors[0])) * hom_rc(rc_ring(tensor_hw.factors[1]))
+        return plac_elem.reverse_raise_seq(raise_seq)
 
     rc_ring = RCGraphRing()
     while True:
         try:
             key = task_queue.get(timeout=2)
-            (g31, g32, (len1, len2)) = key
-            g1 = rc_ring(g31.extend(len1 - len(g31)))
-            g2 = rc_ring(g32.extend(len2 - len(g32)))
+            # (g31, g32, (len1, len2)) = key
+            g11, g22 = key
+            g1 = rc_ring(g11)
+            g2 = rc_ring(g22)
+
         except Exception:
             break  # queue empty, exit
         with lock:
@@ -230,12 +247,13 @@ def worker(shared_recording_dict, lock, task_queue):
         #    raise
         #print("Success {(g1, g2, g3)}")
         success = True
-        df = hom_rc(g1) * hom_rc(g2) - hom_rc(g1 * g2)
+        df = hom_rc(g1) * hom_rc(g2) - plac_prod(g11, g22)
         try:
-            assert all(v == 0 for k, v in df.items()), f"{tuple(df.values())=}"
+            assert all(v == 0 for k, v in df.items())
         except AssertionError as e:
             print("FAILURE")
             print(e)
+            pretty_print(df)
             # print(hom(g1) * (hom(g2) * hom(g3)))
             # print(hom(g))
             success = False
@@ -297,18 +315,12 @@ def main():
         for perm in perms:
             if perm.inv == 0:
                 continue
-            graphs1 = RCGraph.all_rc_graphs(perm)
-            for len1 in range(len(perm.trimcode),n):
+            for g1 in RCGraph.all_rc_graphs(perm, n - 1):
                 for perm2 in perms:
                     if perm2.inv == 0:
                         continue
-                    graphs2 = RCGraph.all_rc_graphs(perm2)
-                    for len2 in range(len(perm2.trimcode),n):
-                        for g32 in graphs1:
-                            for g33 in graphs2:
-                                g2 = g32
-                                g3 = g33
-                                task_queue.put((g2, g3, (len1, len2)))
+                    for g2 in RCGraph.all_rc_graphs(perm2, n - 1):
+                        task_queue.put((g1, g2))
         print(f"Enqueued {task_queue.qsize()} tasks for n={n}.")
         # Start fixed number of workers
         workers = []

@@ -764,7 +764,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         return rc_set
 
     def __hash__(self):
-        return hash(tuple([tuple(a) for a in self]))
+        return hash(tuple([tuple(row) for row in self]))
 
     @cache
     def bisect_left_coords_index(self, row, col, lo=0, hi=None):

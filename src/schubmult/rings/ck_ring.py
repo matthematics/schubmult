@@ -61,89 +61,18 @@ class CoxeterKnuthKey(Plactic):
 
     @property
     def rc_graph(self):
-        rc = self._p_tableau.hw_rc(self.length)
-        _, raise_seq = self._weight_tableau.to_highest_weight(length=self.length)
-        rc = rc.reverse_raise_seq(raise_seq)
+        try:
+            rc = self._p_tableau.hw_rc(self.length)
+        except Exception:
+            return None
+        if rc:
+            _, raise_seq = self._weight_tableau.to_highest_weight(length=self.length)
+            rc = rc.reverse_raise_seq(raise_seq)
         return rc
-    
+
     @classmethod
     def from_rc_graph(cls, rc: RCGraph):
         return cls(rc.p_tableau, rc.weight_tableau, len(rc))
-
-    def monk_insert(self, simple_box, monk_top, retries = 6, target_perms=None):
-
-        """
-        Candidate associative 'Monk' insertion for this CoxeterKnuthKey.
-
-        Parameters
-        - simple_box: either a Plactic instance representing a one-box tableau,
-                      or an int giving the entry of that single box.
-
-        Behavior (candidate):
-        - Insert the simple_box into the weight tableau using rs_insert (unique).
-        - Attempt to update the P-tableau by applying the corresponding simple
-          action to the underlying RC-graph. We try several RCGraph APIs
-          (act, iterative_act, prod_with_rc) in order and collect resulting
-          RC-graphs. For each resulting RC-graph we produce a new
-          CoxeterKnuthKey whose weight tableau is the rs-inserted tableau and
-          whose P-tableau is taken from the RC-graph's p_tableau.
-        - Return: list of CoxeterKnuthKey instances (may be empty if no
-          candidate RC-graphs were produced).
-
-        Note: this is a conservative "candidate" implementation; it does not
-        attempt to prove Monk-associativity. It simply follows the natural
-        route: shift/update weight by rs_insert and propagate the action to
-        the rc_graph, pulling back the P-tableau from any produced RC-graphs.
-        """
-        # Normalize simple_box to a single integer entry
-        assert simple_box <= monk_top, "Cannot insert box larger than monk_top"
-        box_val = simple_box
-        
-        # 2) attempt to produce candidate updated P-tableaux by acting on rc_graph
-        rc0 = self.rc_graph
-
-        if len(rc0) < monk_top:
-            rc0 = rc0.resize(monk_top)
-
-        poly = Sx(~self._p_tableau.perm)
-        poly *= Sx(uncode(([0]* (monk_top - 1)) + [1]))
-        if target_perms is not None:
-            target_perms = target_perms.intersection(set(poly.keys()))
-        else:
-            target_perms = set(poly.keys())
-        # try rc.act(box_val)
-        candidates = set()
-        weight = [*rc0.length_vector]
-        weight[box_val - 1] += 1
-        target_weight = tuple(weight)
-        for perm in target_perms:
-            candidates.update(RCGraph.all_rc_graphs(perm, len(rc0), weight=target_weight))
-        weight2 = self._weight_tableau.rs_insert(box_val)
-        results = set()
-        for rc in candidates:
-            if rc.weight_tableau == weight2:
-                assert rc.perm.inv == self._p_tableau.perm.inv + 1
-                results.add(rc)
-        if len(results) > 0:
-            return results
-        if retries > 0:
-            target_perms2 = set()
-            for perm in target_perms:
-                target_perms2.add(uncode([0, *perm.trimcode]))
-            res =  self.shiftup(1).monk_insert(box_val + 1, max(box_val + 1, len((~self._p_tableau.perm).trimcode) + 1), retries - 1, target_perms=target_perms2)
-            if res is not None:
-                for rc in res:
-                    assert rc.perm.inv == self._p_tableau.perm.inv + 1
-                    results.add(rc.rowrange(1))
-                if len(results) > 0:
-                    return results
-        return None
-        # try multiplying by a one-row RCGraph corresponding to the box (fallback)
-        #return CoxeterKnuthKey.from_rc_graph(RCGraph([(),*self.rc_graph.shiftup(1)])).monk_insert(box_val + 1).shiftup(-1).normalize()
-    
-    def shiftup(self, k1):
-        return CoxeterKnuthKey(NilPlactic.from_word(self._p_tableau.shiftup(k1)), self._weight_tableau.shiftup(k1), self.length + k1)
-
 
 
 class CoxeterKnuthRing(CrystalGraphRing):

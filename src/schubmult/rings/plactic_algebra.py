@@ -2,7 +2,7 @@ from functools import cache
 
 from schubmult import ASx
 from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
-from schubmult.rings.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+from schubmult.rings.crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
 from schubmult.rings.free_algebra_basis import WordBasis
 from schubmult.rings.plactic import Plactic
 from schubmult.symbolic import S, sympy_Mul
@@ -16,7 +16,7 @@ from schubmult.symbolic import S, sympy_Mul
 class PlacticPrintingTerm(TypedPrintingTerm):
     pass
 
-class PlacticAlgebraElement(BaseSchubertElement):
+class PlacticAlgebraElement(CrystalGraphRingElement):
     """
     PlacticAlgebra elements are linear combinations of Plactic basis elements.
     """
@@ -36,7 +36,7 @@ class PlacticAlgebraElement(BaseSchubertElement):
         return type(self) is type(other) and dict(self) == dict(other)
 
 
-class PlacticAlgebra(BaseSchubertRing):
+class PlacticAlgebra(CrystalGraphRing):
     _id = 0
 
     def __init__(self, *_, op=False, **__):

@@ -1,3 +1,5 @@
+from functools import cache
+
 from sympy.printing.defaults import Printable
 
 
@@ -10,26 +12,41 @@ class CrystalGraph(Printable):
         """The lowering operator for the crystal graph."""
         raise NotImplementedError
 
+
     def phi(self, i):
         if i == 0:
             return 0
+        if hasattr(self, "_cached_phi") and i in self._cached_phi:
+            return self._cached_phi[i]
         rc = self
         cnt = 0
         while rc is not None:
             rc = rc.lowering_operator(i)
             if rc is not None:
                 cnt += 1
+        if hasattr(self, "_cached_phi"):
+            self._cached_phi[i] = cnt
+        else:
+            self._cached_phi = {i: cnt}
         return cnt
+
 
     def epsilon(self, i):
         if i == 0:
             return 0
+        if hasattr(self, "_cached_epsilon") and i in self._cached_epsilon:
+            return self._cached_epsilon[i]
+
         rc = self
         cnt = 0
         while rc is not None:
             rc = rc.raising_operator(i)
             if rc is not None:
                 cnt += 1
+        if hasattr(self, "_cached_epsilon"):
+            self._cached_epsilon[i] = cnt
+        else:
+            self._cached_epsilon = {i: cnt}
         return cnt
 
     def to_lowest_weight(self, length=None):
@@ -100,12 +117,40 @@ class CrystalGraph(Printable):
                 new_rc = new_rc.lowering_operator(index)
         return new_rc
 
+    @property
+    def full_crsytal(self):
+        hw, _ = self.to_highest_weight()
+        crystal = set()
+        stack = [hw]
+        while len(stack) > 0:
+            elem = stack.pop()
+            crystal.add(elem)
+            for i in range(1, elem.crystal_length()):
+                new_elem = elem.lowering_operator(i)
+                if new_elem is not None:
+                    stack.append(new_elem)
+        return crystal
+
 
 # There is a decomposition here into subcrystals
 class CrystalGraphTensor(CrystalGraph):
     @property
     def args(self):
         return self.factors
+
+    def all_highest_weights(self):
+        right_element, _ = self.factors[1].to_highest_weight()
+        full_crystal = self.factors[0].full_crystal
+        highest_weights = set()
+        for left_element in full_crystal:
+            good = True
+            for i in range(1, self.crystal_length()):
+                if left_element.epsilon(i) > right_element.phi(i):
+                    good = False
+                    break
+            if good:
+                highest_weights.add(CrystalGraphTensor(left_element, right_element))
+        return highest_weights
 
     def _sympystr(self, printer):
         return printer.stringify(self.factors, sep=" # ")
