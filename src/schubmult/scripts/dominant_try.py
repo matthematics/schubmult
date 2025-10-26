@@ -25,71 +25,62 @@ if __name__ == "__main__":
                 continue
             if not dom.perm.bruhat_leq(perm):
                 continue
-            tabs = {}
+            if max(len(perm0) for perm0 in (Sx(dom.perm)*Sx(perm)).keys()) > n:
+                continue
             result = {}
-            for rc in RCGraph.all_rc_graphs(perm, n-1):
-                if not rc.is_principal:
-                    continue
-                # if rc.p_tableau in tabs:
-                #     continue
-                tabs[rc.p_tableau] = {}
-                outer_shape = rc.p_tableau.shape
-                #outer_shape = RCGraph.principal_rc(perm, len(perm.trimcode)).p_tableau.shape
-                inner_shape = dom.weight_tableau.shape
-                
-                print(f"Trying {perm} {dom.perm}")
-                tab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, Permutation.w0(n), inner_shape)
-                print("Got skew tableaux")
-                
-                for tab in tab_set:
-                    if tab.perm.inv != perm.inv - dom.perm.inv:
-                        continue
-                    pretty_print("Skew tableau:")
-                    pretty_print(tab)
-                    rect_tab = tab.rectify()
-                    print("Rectified")
-                    pretty_print(rect_tab)
-                    ck_ring = CoxeterKnuthRing()
-                    if (Sx(dom.perm) * Sx(~rect_tab.perm)).get(perm, 0):# and ((~rect_tab.perm) not in tabs[rc.p_tableau] or rc not in tabs[rc.p_tableau][~rect_tab.perm]):
-                        weight=tuple([rc.length_vector[i] - dom.length_vector[i] for i in range(n-1)])
-                        rc2_set = RCGraph.all_rc_graphs(~rect_tab.perm, n-1, weight=weight)
-                        tabs[rc.p_tableau] = tabs.get(rc.p_tableau, {})
-                        tabs[rc.p_tableau][~rect_tab.perm] = tabs[rc.p_tableau].get(~rect_tab.perm, set())
-                        found = False
-                        
-                        for rc2 in rc2_set:
-                            if rc2 not in tabs[rc.p_tableau][~rect_tab.perm]:
-                                found = True
-                                tabs[rc.p_tableau][~rect_tab.perm].add(rc2)
-                                break
-                        
-                        if found:
-                            result[~rect_tab.perm] = result.get(~rect_tab.perm, 0) + 1
-                        else:
-                            print("Already found this rc tableau")
-                            print(rc2)
+            for perm2 in perms:
+                for rc2 in RCGraph.all_rc_graphs(perm2, n-1):
+                    if rc2.is_dom_perm_yamanouchi(dom.perm, perm):
+                        result[perm2] = result.get(perm2, 0) + 1
             
             matches = {}
 
-            for k in perms:                
+            for k in perms:
+                if k.inv == 0:
+                    continue         
                 product = (Sx(dom.perm) * Sx(k))
-                if len(k) > n:
+                if max(len(perm0) for perm0 in product.keys()) > n:
                     continue
                 if product.get(perm, 0) == result.get(k, 0):
+                    print("good")
                     matches[k] = True
                 else:
                     matches[k] = False
                     print(f"Warning: mismatch! {k}: expected {product.get(perm, 0)}, got {result.get(k, 0)}")
-                    print("Distinct tableaux:")
-                    for p_tab in tabs:
-                        for tab in tabs[p_tab].get(k, []):
-                            pretty_print("Outer tableau:")
-                            pretty_print(p_tab)
-                            pretty_print("Inner tableau:")
-                            pretty_print(tab)
+                    print("Distinct rcs:")
+                    for tab in tabs.get(k, []):
+                        pretty_print(tab)
+                        print(f"{(~tab.perm)=}")
+                        print("Rectified:")
+                        pretty_print(tab.rectify())
+                        print(f"{~(tab.rectify().perm)=}")
+                    print("Highest weight rcs:")
+                    for tab in components.get(k, []):
+                        print("hw_rc")
+                        pretty_print(tab)
+                        print("p_tableau")
+                        pretty_print(tab.p_tableau)
+                        print("q_tableau")
+                        pretty_print(tab.q_tableau)
+                        print("weight_tableau")
+                        pretty_print(tab.weight_tableau)
+                        print("highest_weight_tableau")
+                        pretty_print(tab.weight_tableau.to_highest_weight(length=tab.crystal_length())[0])
+                    for wt in w_tabs.get(k, []):
+                        print("lw_rc")
+                        pretty_print(wt)
+                        print("p_tableau")
+                        pretty_print(wt.p_tableau)
+                        print("q_tableau")
+                        pretty_print(wt.q_tableau)
+                        print("weight_tableau")
+                        pretty_print(wt.weight_tableau)
+                        print("highest_weight_tableau")
+                        pretty_print(wt.weight_tableau.to_highest_weight(length=wt.crystal_length())[0])
                         # pretty_print(tab)
                         # pretty_print(tab.rectify())
                     input()
                 #print(f"Matches: {matches}")
+                
                 if any(not v for v in matches.values()):
                     print("Mismatch found!")

@@ -354,12 +354,33 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             ret = [*ret, *row]
         return tuple(ret)
 
-    @property
-    def is_highest_weight(self):
-        for row in range(1, self.crystal_length()):
-            if self.raising_operator(row) is not None:
-                return False
-        return True
+    def is_dom_perm_yamanouchi(self, dom_perm, perm):
+        from schubmult.rings.schubert_ring import Sx
+        if (Sx(self.perm)*Sx(dom_perm)).get(perm, 0) == 0:
+            return False
+        length = max(len(perm.trimcode), len(dom_perm.trimcode))
+        rc = RCGraph.principal_rc(perm, length)
+        dom_rc = RCGraph.principal_rc(dom_perm, length)
+        weight = tuple([rc.length_vector[i] - dom_rc.length_vector[i] for i in range(len(rc))])
+        outer_shape = rc.p_tableau.shape
+        inner_shape = dom_rc.weight_tableau.shape
+        tab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, self.perm, inner_shape)
+        weight = tuple([rc.length_vector[i] - dom_rc.length_vector[i] for i in range(len(rc))])
+        for tab in tab_set:
+            assert (~(tab.perm)) == self.perm, f"{~tab.perm=}, {self.perm=} {tab=}"
+            rect_tab = NilPlactic().ed_insert(*tab.row_word)
+            if rect_tab.row_word == self.p_tableau.row_word:
+                tensor = CrystalGraphTensor(dom_rc, self.resize(length))
+                found = False
+                for tns_rc in tensor.full_crystal:
+                    if tns_rc.factors[1].length_vector == weight:
+                        found = True
+                        break
+                if not found:
+                    continue
+                if tensor.is_highest_weight:
+                    return True
+        return False
 
     @property
     def shape(self):
@@ -476,7 +497,8 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         elif (perm, length) in cls._graph_cache:
             return cls._graph_cache[(perm, length)]
         if perm.inv == 0:
-            return {cls([()] * length if length > 0 else [])}
+            cls._graph_cache[(perm, length)] = {cls([()] * length if length > 0 else [])}
+            return cls._graph_cache[(perm, length)]
         ret = set()
         pm = perm
         L = schub_lib.pull_out_var(1, pm)

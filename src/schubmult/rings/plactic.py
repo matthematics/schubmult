@@ -411,13 +411,8 @@ class NilPlactic(Plactic):
 
         # determine a safe upper bound for entries (simple reflection indices).
         # Use permutation length as conservative bound (perm acts on 1..n).
-        try:
-            perm_len = len(bruhat_perm)
-            # simple reflections indices range 1..(perm_len-1); allow that as max
-            max_entry = max(1, perm_len - 1)
-        except Exception:
-            # fallback: use number of rows + cols as a loose bound
-            max_entry = max(1, max(outer))
+        perm_len = len(bruhat_perm)
+        max_entry = max(1, perm_len - 1)
 
         # build list of cell coordinates in row-major (top-to-bottom, left-to-right)
         cells = []
@@ -452,13 +447,9 @@ class NilPlactic(Plactic):
             if k == len(cells):
                 # finished, construct NilPlactic and test Bruhat condition
                 tableau = tuple(tuple(rw) for rw in rows)
-                try:
-                    tpl = NilPlactic(tableau)
-                    if tpl.perm.bruhat_leq(~bruhat_perm) and tpl.perm.inv == sum(outer_shape) - sum(inner_shape):
-                        results.add(tpl)
-                except Exception:
-                    # if permission building fails, skip this filling
-                    pass
+                tpl = cls(tableau)
+                if (~(tpl.perm)).bruhat_leq(bruhat_perm) and tpl.perm.inv == sum(outer_shape) - sum(inner_shape) and len(tpl.row_word) == sum(outer_shape) - sum(inner_shape):
+                    results.add(tpl)
                 return
 
             i, j = cells[k]
@@ -482,7 +473,7 @@ class NilPlactic(Plactic):
         backtrack(0, template_rows)
 
         # cacheable return: convert to tuple for immutability
-        return tuple(sorted(results, key=lambda t: t._word))
+        return set(results)
 
     def up_jdt_slide(self, row, col):
         """

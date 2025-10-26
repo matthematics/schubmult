@@ -176,11 +176,16 @@ class Permutation:
         return Permutation(L)
 
     def bruhat_leq(perm, perm2):
+        if perm.inv == perm2.inv:
+            return perm == perm2
+        if perm.inv > perm2.inv:
+            return False
         ml = max(len(perm), len(perm2))
-
-        for i in range(ml):
-            arr1 = list(perm[: i + 1])
-            arr2 = list(perm2[: i + 1])
+        full_perm = [perm[i] for i in range(ml)]
+        full_perm2 = [perm2[i] for i in range(ml)]
+        for i in range(1, ml):
+            arr1 = list(full_perm[: i])
+            arr2 = list(full_perm2[: i])
             arr1.sort()
             arr2.sort()
             if not (arr1 <= arr2):
