@@ -114,7 +114,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             return self.extend(k - len(self)).monk_crystal_mul(p, k)
 
         monk_rc = next(iter(RCGraph.all_rc_graphs(Permutation([]).swap(k - 1, k), len(self), weight=(*([0] * (p - 1)), 1, *([0] * (len(self) - p))))))
-        
+
         results = set()
         lv = [*self.length_vector]
         lv[p - 1] += 1

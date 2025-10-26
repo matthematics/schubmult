@@ -25,42 +25,69 @@ if __name__ == "__main__":
                 continue
             if not dom.perm.bruhat_leq(perm):
                 continue
-            outer_shape = RCGraph.principal_rc(perm, len(perm.trimcode)).p_tableau.shape
-            inner_shape = dom.weight_tableau.shape
-            result = {}
-            print(f"Trying {perm} {dom.perm}")
-            tab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, Permutation.w0(n), inner_shape)
-            print("Got skew tableaux")
             tabs = {}
-            for tab in tab_set:
-                if tab.perm.inv != perm.inv - dom.perm.inv:
+            result = {}
+            for rc in RCGraph.all_rc_graphs(perm, n-1):
+                if not rc.is_principal:
                     continue
-                pretty_print("Skew tableau:")
-                pretty_print(tab)
-                rect_tab = tab.rectify()
-                print("Rectified")
-                pretty_print(rect_tab)
-                ck_ring = CoxeterKnuthRing()
-                if (Sx(dom.perm) * Sx(~rect_tab.perm)).get(perm, 0) and ((~rect_tab.perm) not in tabs or rect_tab in tabs[~rect_tab.perm]):
-                    tabs[~rect_tab.perm] = tabs.get(~rect_tab.perm, set())
-                    tabs[~rect_tab.perm].add(tab)
-                    result[~rect_tab.perm] = result.get(~rect_tab.perm, 0) + 1
-            print("Final result:")
+                # if rc.p_tableau in tabs:
+                #     continue
+                tabs[rc.p_tableau] = {}
+                outer_shape = rc.p_tableau.shape
+                #outer_shape = RCGraph.principal_rc(perm, len(perm.trimcode)).p_tableau.shape
+                inner_shape = dom.weight_tableau.shape
+                
+                print(f"Trying {perm} {dom.perm}")
+                tab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, Permutation.w0(n), inner_shape)
+                print("Got skew tableaux")
+                
+                for tab in tab_set:
+                    if tab.perm.inv != perm.inv - dom.perm.inv:
+                        continue
+                    pretty_print("Skew tableau:")
+                    pretty_print(tab)
+                    rect_tab = tab.rectify()
+                    print("Rectified")
+                    pretty_print(rect_tab)
+                    ck_ring = CoxeterKnuthRing()
+                    if (Sx(dom.perm) * Sx(~rect_tab.perm)).get(perm, 0):# and ((~rect_tab.perm) not in tabs[rc.p_tableau] or rc not in tabs[rc.p_tableau][~rect_tab.perm]):
+                        rc2_set = RCGraph.all_rc_graphs(~rect_tab.perm, n-1)
+                        tabs[rc.p_tableau] = tabs.get(rc.p_tableau, {})
+                        tabs[rc.p_tableau][~rect_tab.perm] = tabs[rc.p_tableau].get(~rect_tab.perm, set())
+                        found = False
+                        weight=tuple([rc.length_vector[i] - dom.length_vector[i] if i < len(dom.length_vector) else rc.length_vector[i] if i < len(rc.length_vector) else 0 for i in range(n-1) ])
+                        for rc2 in rc2_set:
+                            if rc2.length_vector == weight:
+                                rc2_hw, _ = rc2.to_highest_weight()
+                                if rc2_hw not in tabs[rc.p_tableau][~rect_tab.perm]:
+                                    found = True
+                                    tabs[rc.p_tableau][~rect_tab.perm].add(rc2_hw)
+                                    break
+                        
+                        if found:
+                            result[~rect_tab.perm] = result.get(~rect_tab.perm, 0) + 1
+            
             matches = {}
-            print(f"{result=}")
 
             for k in perms:                
                 product = (Sx(dom.perm) * Sx(k))
+                if len(k) > n:
+                    continue
                 if product.get(perm, 0) == result.get(k, 0):
                     matches[k] = True
                 else:
                     matches[k] = False
                     print(f"Warning: mismatch! {k}: expected {product.get(perm, 0)}, got {result.get(k, 0)}")
                     print("Distinct tableaux:")
-                    for tab in tabs.get(k, []):
-                        pretty_print(tab)
-                        pretty_print(tab.rectify())
+                    for p_tab in tabs:
+                        for tab in tabs[p_tab].get(k, []):
+                            pretty_print("Outer tableau:")
+                            pretty_print(p_tab)
+                            pretty_print("Inner tableau:")
+                            pretty_print(tab)
+                        # pretty_print(tab)
+                        # pretty_print(tab.rectify())
                     input()
-            print(f"Matches: {matches}")
-            if any(not v for v in matches.values()):
-                print("Mismatch found!")
+                #print(f"Matches: {matches}")
+                if any(not v for v in matches.values()):
+                    print("Mismatch found!")
