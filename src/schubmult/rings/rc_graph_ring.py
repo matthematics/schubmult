@@ -309,7 +309,7 @@ class RCGraphRing(CrystalGraphRing):
 
         # rectify
         #coprod_elem = ASx(self.perm, len(self)).coproduct()
-        outer_shape = elem.weight_tableau.shape
+        
         # do_it = tring.zero
         # for (rc1, rc2), _ in ret_elem.items():
         #     inner_shape = rc2.weight_tableau.shape
@@ -319,7 +319,7 @@ class RCGraphRing(CrystalGraphRing):
         #         if straight_tab == rc1.p_tableau:
         #             do_it += tring((rc1, rc2))
         # ret_elem = do_it
-
+        outer_shape = elem.weight_tableau.shape
         up_elem2 = self(RCGraph.one_row(p)) * self(lower_graph)
         for key, coeff in up_elem2.items():
             if key.perm != basis_elem.perm:
@@ -332,21 +332,33 @@ class RCGraphRing(CrystalGraphRing):
                         #     ret_elem -= tring((rc1, rc2))
                         #     break
                         found = False
-                        if rc2_bad.perm == rc2.perm:
-                            if rc1.inv == 0:
-                                ret_elem -= tring((rc1, rc2))
-                                found = True
-                            else:
-                                inner_shape = rc2.weight_tableau.shape
-                                stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc1_bad.perm, inner_shape)
-                                for nil_tab in stab_set:
-                                    straight_tab = nil_tab.rectify()
-                                    if straight_tab == rc1.p_tableau:
-                                        ret_elem -= tring((rc1, rc2))
-                                        found = True
-                                        break
-                        if found:
+                        if rc1.p_tableau == rc1_bad.p_tableau and rc2 == rc2_bad.p_tableau:
+                            ret_elem -= tring((rc1, rc2))
                             break
+                        if rc2_bad.p_tableau == rc2.p_tableau and rc1_bad.perm == rc1.perm:
+                            inner_shape = rc2.weight_tableau.shape
+                            stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc1.perm, inner_shape)
+                            for nil_tab in stab_set:
+                                straight_tab = nil_tab.rectify()
+                                if straight_tab == rc1.p_tableau:
+                                    found = True
+                                    break
+                            if found:
+                                ret_elem -= tring((rc1, rc2))
+                                break
+                        if rc1_bad.p_tableau == rc1.p_tableau and rc2_bad.perm == rc2.perm:
+                            inner_shape = rc1.weight_tableau.shape
+                            stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc2.perm, inner_shape)
+                            for nil_tab in stab_set:
+                                straight_tab = nil_tab.rectify()
+                                if straight_tab == rc2.p_tableau:
+                                    found = True
+                                    break
+                            if found:
+                                ret_elem -= tring((rc1, rc2))
+                                break
+                        
+                        #     break
         ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(basis_elem.perm) and k[1].perm.bruhat_leq(basis_elem.perm)})
         return ret_elem
 
