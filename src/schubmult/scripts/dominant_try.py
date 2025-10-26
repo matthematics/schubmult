@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     perms = Permutation.all_permutations(n)
 
-    dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1).normalize() for perm in perms}
+    dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms}
 
     
     for perm in perms:
@@ -51,18 +51,17 @@ if __name__ == "__main__":
                     pretty_print(rect_tab)
                     ck_ring = CoxeterKnuthRing()
                     if (Sx(dom.perm) * Sx(~rect_tab.perm)).get(perm, 0):# and ((~rect_tab.perm) not in tabs[rc.p_tableau] or rc not in tabs[rc.p_tableau][~rect_tab.perm]):
-                        rc2_set = RCGraph.all_rc_graphs(~rect_tab.perm, n-1)
+                        weight=tuple([rc.length_vector[i] - dom.length_vector[i] for i in range(n-1)])
+                        rc2_set = RCGraph.all_rc_graphs(~rect_tab.perm, n-1, weight=weight)
                         tabs[rc.p_tableau] = tabs.get(rc.p_tableau, {})
                         tabs[rc.p_tableau][~rect_tab.perm] = tabs[rc.p_tableau].get(~rect_tab.perm, set())
                         found = False
-                        weight=tuple([rc.length_vector[i] - dom.length_vector[i] if i < len(dom.length_vector) else rc.length_vector[i] if i < len(rc.length_vector) else 0 for i in range(n-1) ])
+                        
                         for rc2 in rc2_set:
-                            if rc2.length_vector == weight:
-                                rc2_hw, _ = rc2.to_highest_weight()
-                                if rc2_hw not in tabs[rc.p_tableau][~rect_tab.perm]:
-                                    found = True
-                                    tabs[rc.p_tableau][~rect_tab.perm].add(rc2_hw)
-                                    break
+                            if rc2 not in tabs[rc.p_tableau][~rect_tab.perm]:
+                                found = True
+                                tabs[rc.p_tableau][~rect_tab.perm].add(rc2)
+                                break
                         
                         if found:
                             result[~rect_tab.perm] = result.get(~rect_tab.perm, 0) + 1
