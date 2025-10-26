@@ -388,8 +388,9 @@ def main():
         task_queue = manager.Queue()
         for perm in perms:
             for length in range(len(perm.trimcode), n):
-                for rc in RCGraph.all_rc_graphs(perm, length):
-                    task_queue.put(RCGraph(rc))
+                # for rc in RCGraph.all_rc_graphs(perm, length):
+                #     if rc.is_highest_weight:
+                task_queue.put(RCGraph.principal_rc(perm, length))
 
         # Start fixed number of workers
         workers = []
