@@ -1,4 +1,7 @@
 
+from schubmult.rings.ck_ring import CoxeterKnuthRing
+
+
 if __name__ == "__main__":
     from schubmult import *
     from schubmult.rings.rc_graph import RCGraph
@@ -28,6 +31,7 @@ if __name__ == "__main__":
             print(f"Trying {perm} {dom.perm}")
             tab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, Permutation.w0(n), inner_shape)
             print("Got skew tableaux")
+            tabs = {}
             for tab in tab_set:
                 if tab.perm.inv != perm.inv - dom.perm.inv:
                     continue
@@ -36,7 +40,10 @@ if __name__ == "__main__":
                 rect_tab = tab.rectify()
                 print("Rectified")
                 pretty_print(rect_tab)
-                if (Sx(dom.perm) * Sx(~rect_tab.perm)).get(perm, 0) != 0:
+                ck_ring = CoxeterKnuthRing()
+                if (Sx(dom.perm) * Sx(~rect_tab.perm)).get(perm, 0) and ((~rect_tab.perm) not in tabs or rect_tab in tabs[~rect_tab.perm]):
+                    tabs[~rect_tab.perm] = tabs.get(~rect_tab.perm, set())
+                    tabs[~rect_tab.perm].add(tab)
                     result[~rect_tab.perm] = result.get(~rect_tab.perm, 0) + 1
             print("Final result:")
             matches = {}
@@ -48,4 +55,12 @@ if __name__ == "__main__":
                     matches[k] = True
                 else:
                     matches[k] = False
+                    print(f"Warning: mismatch! {k}: expected {product.get(perm, 0)}, got {result.get(k, 0)}")
+                    print("Distinct tableaux:")
+                    for tab in tabs.get(k, []):
+                        pretty_print(tab)
+                        pretty_print(tab.rectify())
+                    input()
             print(f"Matches: {matches}")
+            if any(not v for v in matches.values()):
+                print("Mismatch found!")
