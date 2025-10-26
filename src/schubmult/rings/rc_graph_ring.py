@@ -52,12 +52,13 @@ class RCGraphRingElement(CrystalGraphRingElement):
                 res += tring.from_dict({(rc1, rc2): coeff})
         return res
 
-    # def coproduct(self):
-    #     tring = CrystalTensorRing(self.ring, self.ring)
-    #     res = tring.zero
-    #     for rc_graph, coeff in self.items():
-    #         res += coeff * self.ring.coproduct_on_basis(rc_graph)
-    #     return res
+    def coproduct(self):
+
+        tring = self.ring @ self.ring
+        res = tring.zero
+        for rc_graph, coeff in self.items():
+            res += coeff * self.ring.coproduct_on_basis(rc_graph)
+        return res
 
     # ----------------------
     # Linearized crystal operations
@@ -282,42 +283,72 @@ class RCGraphRing(CrystalGraphRing):
     #         res *= self._one_row_cp(a)
     #     return res
 
-    # def coproduct_on_basis(self, elem, hw=True):
-    #     tring = RestrictedRCGraphTensorRing(self, self)
-    #     if elem.inv == 0:
-    #         return tring.ext_multiply(self(elem), self(elem))
-    #     # if hw:
-    #     #     basis_elem, raise_seq = elem.to_highest_weight()
-    #     # else:
-    #     basis_elem = elem
-    #     cprod = tring.zero
-    #     p = basis_elem.length_vector[0]
+    def coproduct_on_basis(self, elem):
+        from .plactic import NilPlactic
+        tring = self @ self
+        if elem.inv == 0:
+            return tring.ext_multiply(self(elem), self(elem))
+        # if hw:
+        #     basis_elem, raise_seq = elem.to_highest_weight()
+        # else:
+        basis_elem = elem
+        cprod = tring.zero
+        p = basis_elem.length_vector[0]
 
-    #     for j in range(p + 1):
-    #         cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
-    #     if len(basis_elem) == 1:
-    #         return cprod
+        for j in range(p + 1):
+            cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
+        if len(basis_elem) == 1:
+            return cprod
 
-    #     lower_graph = basis_elem.rowrange(1, len(basis_elem))
-    #     lower_module1 = self.coproduct_on_basis(lower_graph)
+        lower_graph = basis_elem.rowrange(1, len(basis_elem))
+        lower_module1 = self.coproduct_on_basis(lower_graph)
 
-    #     ret_elem = cprod * lower_module1
+        ret_elem = cprod * lower_module1
 
-    #     # ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if elem.perm in self.potential_prodperms(rc1, rc2, len(elem)) or elem.perm in self.potential_prodperms(rc2, rc1, len(elem))})
+        # ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if elem.perm in self.potential_prodperms(rc1, rc2, len(elem)) or elem.perm in self.potential_prodperms(rc2, rc1, len(elem))})
 
-    #     up_elem2 = self(RCGraph.one_row(p)) * self(lower_graph)
-    #     for key, coeff in up_elem2.items():
-    #         if key.perm != basis_elem.perm:
-    #             assert coeff == 1
-    #             key_rc = RCGraph.principal_rc(key.perm, len(key))
-    #             cp = self.coproduct_on_basis(key_rc, hw=False)
-    #             for (rc1_bad, rc2_bad), cff2 in cp.items():
-    #                 for (rc1, rc2), v in ret_elem.items():
-    #                     if (rc1.edelman_greene()[0] == rc1_bad.edelman_greene()[0] and rc2.edelman_greene()[0] == rc2_bad.edelman_greene()[0]):
-    #                         ret_elem -= tring((rc1, rc2))
-    #                         break
-    #     ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(basis_elem.perm) and k[1].perm.bruhat_leq(basis_elem.perm)})
-    #     return ret_elem
+        # rectify
+        #coprod_elem = ASx(self.perm, len(self)).coproduct()
+        outer_shape = elem.weight_tableau.shape
+        # do_it = tring.zero
+        # for (rc1, rc2), _ in ret_elem.items():
+        #     inner_shape = rc2.weight_tableau.shape
+        #     stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, ~rc1.perm, inner_shape)
+        #     for nil_tab in stab_set:
+        #         straight_tab = nil_tab.rectify()
+        #         if straight_tab == rc1.p_tableau:
+        #             do_it += tring((rc1, rc2))
+        # ret_elem = do_it
+
+        up_elem2 = self(RCGraph.one_row(p)) * self(lower_graph)
+        for key, coeff in up_elem2.items():
+            if key.perm != basis_elem.perm:
+                assert coeff == 1
+                key_rc = RCGraph.principal_rc(key.perm, len(key))
+                cp = self.coproduct_on_basis(key_rc)
+                for (rc1_bad, rc2_bad), cff2 in cp.items():
+                    for (rc1, rc2), v in ret_elem.items():
+                        # if (rc1.edelman_greene()[0] == rc1_bad.edelman_greene()[0] and rc2.edelman_greene()[0] == rc2_bad.edelman_greene()[0]):
+                        #     ret_elem -= tring((rc1, rc2))
+                        #     break
+                        found = False
+                        if rc2_bad.perm == rc2.perm:
+                            if rc1.inv == 0:
+                                ret_elem -= tring((rc1, rc2))
+                                found = True
+                            else:
+                                inner_shape = rc2.weight_tableau.shape
+                                stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc1_bad.perm, inner_shape)
+                                for nil_tab in stab_set:
+                                    straight_tab = nil_tab.rectify()
+                                    if straight_tab == rc1.p_tableau:
+                                        ret_elem -= tring((rc1, rc2))
+                                        found = True
+                                        break
+                        if found:
+                            break
+        ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(basis_elem.perm) and k[1].perm.bruhat_leq(basis_elem.perm)})
+        return ret_elem
 
     # def coproduct_on_basis(self, elem):
     #     tring = RestrictedRCGraphTensorRing(self, self)
