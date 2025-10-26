@@ -564,10 +564,12 @@ class NilPlactic(Plactic):
                 if down < right:
                     new_word[i][j] = down
                     i += 1
-                if down >= right:
+                if down > right:
                     new_word[i][j] = right
                     j += 1
                 if down == right:
+                    if down == 0:
+                        break
                     new_word[i][j] = down
                     new_word[i + 1][j] = new_word[i + 1][j + 1]
                     new_word[i][j + 1] = new_word[i + 1][j + 1]
