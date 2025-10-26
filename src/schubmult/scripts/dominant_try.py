@@ -65,6 +65,9 @@ if __name__ == "__main__":
                         
                         if found:
                             result[~rect_tab.perm] = result.get(~rect_tab.perm, 0) + 1
+                        else:
+                            print("Already found this rc tableau")
+                            print(rc2)
             
             matches = {}
 
