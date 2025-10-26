@@ -48,17 +48,21 @@ if __name__ == "__main__":
         matches = {}
 
         for (perm1, perm2) in itertools.product(perms, perms):
+            if perm1.inv + perm2.inv != perm.inv:
+                continue
             product = (Sx(perm1) * Sx(perm2))
             if max(len(perm0) for perm0 in product.keys()) > n:
                 continue
-            if product.get((perm1, perm2), 0) == result.get((perm1, perm2), 0):
-                print("good")
-                matches[(perm1, perm2)] = True
-            else:
-                matches[(perm1, perm2)] = False
-                print(f"Warning: mismatch! {(perm1, perm2)}: expected {product.get((perm1, perm2), 0)}, got {result.get((perm1, perm2), 0)}")
+            assert product.get((perm1, perm2), 0) == result.get((perm1, perm2), 0)
+            print(f"Success {perm1=}, {perm2=} {perm=}")
+
                 
-                #input()
-            #print(f"Matches: {matches}")
+            #     matches[(perm1, perm2)] = True
+            # else:
+            #     matches[(perm1, perm2)] = False
+            #     print(f"Warning: mismatch! {(perm1, perm2)}: expected {product.get((perm1, perm2), 0)}, got {result.get((perm1, perm2), 0)}")
+                
+            #     #input()
+            # #print(f"Matches: {matches}")
             
             
