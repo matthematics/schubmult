@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     perms = Permutation.all_permutations(n)
 
-    dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms}
+    dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1).normalize() for perm in perms}
 
     
     for perm in perms:
@@ -20,22 +20,32 @@ if __name__ == "__main__":
         for dom in dominant_graphs:
             if dom.perm.inv == 0:
                 continue
+            if not dom.perm.bruhat_leq(perm):
+                continue
+            outer_shape = RCGraph.principal_rc(perm, len(perm.trimcode)).p_tableau.shape
             inner_shape = dom.weight_tableau.shape
-            perms2 = dict(Sx(perm)*Sx(dom.perm))
-            perms2 = {k: v for k, v in perms2.items() if v != 0}
-            print(f"Trying {perm} * {dom.perm}")
-            for perm2 in perms2:
-                print(f"Trying {perm2}")
-                for rc2 in RCGraph.all_rc_graphs(perm2):
-                    outer_shape = rc2.p_tableau.shape
-                    print("Skew shape")
-                    pretty_print(outer_shape)
-                    print("--------------------")
-                    pretty_print(inner_shape)
-                    tab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, perm, inner_shape)
-                    print("Got skew tableaux")
-                    for tab in tab_set:
-                        pretty_print(tab)
-                        rect_tab = tab.rectify()
-                        print("Rectified")
-                        pretty_print(rect_tab)
+            result = {}
+            print(f"Trying {perm} {dom.perm}")
+            tab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, Permutation.w0(n), inner_shape)
+            print("Got skew tableaux")
+            for tab in tab_set:
+                if tab.perm.inv != perm.inv - dom.perm.inv:
+                    continue
+                pretty_print("Skew tableau:")
+                pretty_print(tab)
+                rect_tab = tab.rectify()
+                print("Rectified")
+                pretty_print(rect_tab)
+                if (Sx(dom.perm) * Sx(~rect_tab.perm)).get(perm, 0) != 0:
+                    result[~rect_tab.perm] = result.get(~rect_tab.perm, 0) + 1
+            print("Final result:")
+            matches = {}
+            print(f"{result=}")
+
+            for k in perms:                
+                product = (Sx(dom.perm) * Sx(k))
+                if product.get(perm, 0) == result.get(k, 0):
+                    matches[k] = True
+                else:
+                    matches[k] = False
+            print(f"Matches: {matches}")

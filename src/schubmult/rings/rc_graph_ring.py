@@ -325,7 +325,7 @@ class RCGraphRing(CrystalGraphRing):
         for key, coeff in up_elem2.items():
             if key.perm != basis_elem.perm:
                 assert coeff == 1
-                key_rc = RCGraph.principal_rc(key.perm, len(key))
+                key_rc = None
                 cp = self.coproduct_on_basis(key_rc)
                 key_rc_hw = None
                 key_rc_first = None
