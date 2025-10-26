@@ -319,7 +319,7 @@ class RCGraphRing(CrystalGraphRing):
         #         if straight_tab == rc1.p_tableau:
         #             do_it += tring((rc1, rc2))
         # ret_elem = do_it
-        outer_shape = elem.weight_tableau.shape
+        
         up_elem2 = self(RCGraph.one_row(p)) * self(lower_graph)
         for key, coeff in up_elem2.items():
             if key.perm != basis_elem.perm:
@@ -336,6 +336,7 @@ class RCGraphRing(CrystalGraphRing):
                             ret_elem -= tring((rc1, rc2))
                             break
                         if rc2_bad.p_tableau == rc2.p_tableau and rc1_bad.perm == rc1.perm:
+                            outer_shape = key_rc.p_tableau.shape
                             inner_shape = rc2.weight_tableau.shape
                             stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc1.perm, inner_shape)
                             for nil_tab in stab_set:
@@ -347,6 +348,7 @@ class RCGraphRing(CrystalGraphRing):
                                 ret_elem -= tring((rc1, rc2))
                                 break
                         if rc1_bad.p_tableau == rc1.p_tableau and rc2_bad.perm == rc2.perm:
+                            outer_shape = key_rc.p_tableau.shape
                             inner_shape = rc1.weight_tableau.shape
                             stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc2.perm, inner_shape)
                             for nil_tab in stab_set:
