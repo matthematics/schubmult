@@ -278,7 +278,7 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 #     return ret_elem
 
 def worker(nn, shared_recording_dict, lock, task_queue):
-    from schubmult import ASx
+    from schubmult import ASx, Sx
     from sympy import pretty_print
     from schubmult import ASx, FA
     from schubmult.rings import WordBasis, SchubertBasis
@@ -295,55 +295,34 @@ def worker(nn, shared_recording_dict, lock, task_queue):
 
     while True:
         try:
-            rc = task_queue.get(timeout=2)
+            (perm, perm2, dom_rc) = task_queue.get(timeout=2)
         except Exception:
             break  # queue empty, exit
         with lock:
-            if rc in shared_recording_dict:
-                if shared_recording_dict[rc]:
-                    print(f"{rc} already verified, returning.")
+            if (perm, perm2, dom_rc) in shared_recording_dict:
+                if shared_recording_dict[(perm, perm2, dom_rc)] is True:
+                    print(f"{(perm, perm2, dom_rc)} already verified, returning.")
                     continue
-                print(f"Previous failure on {rc}, will retry.")
-        try:
-            try_mod = ring(rc).coproduct()
-        except Exception as e:
-            import traceback
-            print(f"Error computing coproduct_on_basis for {rc}")
-            traceback.print_exc()
+                print(f"Previous failure on {(perm, perm2, dom_rc)}, will retry.")
+        result = 0
+        n = len(dom_rc) + 1
+        dom = RCGraph(dom_rc)
+        for rc in RCGraph.all_rc_graphs(perm2, n-1):
+            if rc.is_dom_perm_yamanouchi(dom.perm, perm):
+                result += 1
+        product = (Sx(dom.perm) * Sx(perm2))
+        if result == product.get(perm, 0):
+            print(f"Success {(perm, perm2, dom_rc)} at ", time.ctime())
             with lock:
-                shared_recording_dict[rc] = False
-            continue
-        pretty_print(try_mod)
-        elem = 0
-        for (rc1, rc2), coeff in try_mod.items():
-            # elem += (rc1 @ rc2).asdtype(ASx @ ASx)
-            # print(f"FYI {perm.trimcode} 1")
-            # print(rc1)
-            # print(f"FYI {perm.trimcode} 2")
-            # print(rc2)
-            elem += coeff * (ASx @ ASx)(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))))
-        check = ASx(rc.perm, len(rc)).coproduct()
-        try:
-            assert all(v == 0 for v in (elem - check).values())
-        except AssertionError:
-            print(f"Fail on {rc} at ", time.ctime())
-            print(f"{elem=}")
-            print(f"{check=}")
-            print(f"{(elem - check)=}")
+                shared_recording_dict[(perm, perm2, dom_rc)] = True
+        else:
             with lock:
-                shared_recording_dict[rc] = False
-            continue
-        del try_mod
-        del elem
-        del check
-        gc.collect()
-        with lock:
-            shared_recording_dict[rc] = True
-        print(f"Success {rc} at ", time.ctime())
-
+                shared_recording_dict[(perm, perm2, dom_rc)] = False
+            print(f"Warning: mismatch! {(perm, perm2, dom_rc)}: expected {product.get(perm, 0)}, got {result} at ", time.ctime())
+        
 
 def main():
-    from schubmult import Permutation
+    from schubmult import Permutation, uncode, Sx
     from schubmult.rings.rc_graph import RCGraph
 
     try:
@@ -355,8 +334,12 @@ def main():
         print("Usage: verify_lr_rule n filename num_processors", file=sys.stderr)
         print("filename is the base file name (without extension) for saving cache results, and filename.verification is used for verification results", file=sys.stderr)
         sys.exit(1)
-
+    cd = []
+    for i in range(2 * (n - 1), 0, -2):
+        cd += [i]
+    
     perms = Permutation.all_permutations(n)
+    perms2n = {perm for perm in Permutation.all_permutations(2 * n - 1) if perm.bruhat_leq(uncode(cd))}
     perms.sort(key=lambda p: (p.inv, p.trimcode))
 
     with Manager() as manager:
@@ -386,11 +369,16 @@ def main():
         # Create task queue and fill with perms
         from schubmult.rings.rc_graph import RCGraph
         task_queue = manager.Queue()
-        for perm in perms:
-            for length in range(len(perm.trimcode), n):
-                # for rc in RCGraph.all_rc_graphs(perm, length):
-                #     if rc.is_highest_weight:
-                task_queue.put(RCGraph.principal_rc(perm, length))
+        dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
+        for perm2 in perms:
+            if perm2.inv == 0:
+                continue
+            for dom in dominant_graphs:
+                if dom.perm.inv == 0:
+                    continue
+                prd = Sx(dom.perm) * Sx(perm2)
+                for perm in prd.keys():
+                    task_queue.put((perm, perm2, tuple(dom)))
 
         # Start fixed number of workers
         workers = []

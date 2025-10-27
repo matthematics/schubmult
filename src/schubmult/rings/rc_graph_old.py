@@ -362,14 +362,25 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         rc = RCGraph.principal_rc(perm, length)
         dom_rc = RCGraph.principal_rc(dom_perm, length)
         weight = tuple([rc.length_vector[i] - dom_rc.length_vector[i] for i in range(len(rc))])
-        if self.length_vector != weight:
-            return False
         outer_shape = rc.p_tableau.shape
-        inner_shape = dom_rc.p_tableau.shape
-        if NilPlactic.exists_ed_tableau_equiv(rc.p_tableau, inner_shape, outer_shape) and Plactic.exists_ss_tableau_equiv(rc.weight_tableau, inner_shape, outer_shape):
-            return True # should match highest weight of tensor
+        inner_shape = dom_rc.weight_tableau.shape
+        tab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, self.perm, inner_shape)
+        weight = tuple([rc.length_vector[i] - dom_rc.length_vector[i] for i in range(len(rc))])
+        for tab in tab_set:
+            assert (~(tab.perm)) == self.perm, f"{~tab.perm=}, {self.perm=} {tab=}"
+            rect_tab = NilPlactic().ed_insert(*tab.row_word)
+            if rect_tab.row_word == self.p_tableau.row_word:
+                tensor = CrystalGraphTensor(dom_rc, self.resize(length))
+                found = False
+                for tns_rc in tensor.full_crystal:
+                    if tns_rc.factors[1].length_vector == weight:
+                        found = True
+                        break
+                if not found:
+                    continue
+                if tensor.is_highest_weight:
+                    return True
         return False
-
 
     @property
     def shape(self):

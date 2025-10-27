@@ -31,27 +31,12 @@ if __name__ == "__main__":
     for perm in perms:
         if perm.inv == 0:
             continue
-        for rc in RCGraph.all_rc_graphs(perm, n - 1):
-            ck_key = CoxeterKnuthKey.from_rc_graph(rc)
-            for i in range(1, n):
-                for box_val in range(1, i + 1):
-                    print(f"Inserting box {box_val=} for {i} into RCGraph with perm {perm}")
-                    rc_insert = ck_key.monk_insert(box_val, i)
-                    print("Before:")
-                    pretty_print(rc.normalize())
-                    print("After:")
-                    for rc2 in rc_insert or []:
-                        assert rc2.perm.inv == perm.inv + 1, f"Inserted RCGraph has wrong permutation: got {rc2.perm.inv}, want {perm.inv + 1}"
-                        pretty_print(rc2)
-                        print(tuple([tuple(row) for row in rc2]))
-                    if rc_insert is None:
-                        fail = True
-                        failures.append((rc, i, box_val))
-
-    if fail:
-        print("Some insertions failed")
-        for rc, i, box_val in failures:
-            print(f"Failed insertion of box {box_val} for {i} into RCGraph:")
-            pretty_print(rc.normalize())
-    else:
-        print("All insertions succeeded")
+        
+        rc_prin = RCGraph.principal_rc(perm, n - 1)
+        for perm2 in perms:
+            if perm2 == perm:
+                continue
+            for rc in RCGraph.all_rc_graphs(perm2, n - 1):
+                if rc.to_highest_weight()[0].length_vector == rc_prin.to_highest_weight()[0].length_vector and rc.to_lowest_weight()[0].length_vector == rc_prin.length_vector:
+                    fail = True
+                    raise Exception(f"Failure in RCGraph insertion test {rc=} {rc_prin=}")

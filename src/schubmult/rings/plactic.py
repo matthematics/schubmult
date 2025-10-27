@@ -448,7 +448,7 @@ class NilPlactic(Plactic):
                 # finished, construct NilPlactic and test Bruhat condition
                 tableau = tuple(tuple(rw) for rw in rows)
                 tpl = cls(tableau)
-                if (~(tpl.perm)).bruhat_leq(bruhat_perm) and tpl.perm.inv == sum(outer_shape) - sum(inner_shape) and len(tpl.row_word) == sum(outer_shape) - sum(inner_shape):
+                if tpl.perm.bruhat_leq(bruhat_perm) and tpl.perm.inv == sum(outer_shape) - sum(inner_shape) and len(tpl.row_word) == sum(outer_shape) - sum(inner_shape):
                     results.add(tpl)
                 return
 

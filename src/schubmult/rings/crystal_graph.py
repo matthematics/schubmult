@@ -129,7 +129,33 @@ class CrystalGraph(Printable):
             if self.lowering_operator(row) is not None:
                 return False
         return True
+    
+    @property
+    def dual(self):
+        return CrystalGraphDual(self)
 
+class CrystalGraphDual(CrystalGraph):
+    def __init__(self, base_crystal):
+        self.base_crystal = base_crystal
+
+    @property
+    def crystal_weight(self):
+        return tuple(-w for w in self.base_crystal.crystal_weight)
+
+    def raising_operator(self, index):
+        lowered = self.base_crystal.lowering_operator(index)
+        if lowered is None:
+            return None
+        return CrystalGraphDual(lowered)
+
+    def lowering_operator(self, index):
+        raised = self.base_crystal.raising_operator(index)
+        if raised is None:
+            return None
+        return CrystalGraphDual(raised)
+
+    def crystal_length(self):
+        return self.base_crystal.crystal_length()
 
 # There is a decomposition here into subcrystals
 # NOT COMMUTATIVE TENSOR PRODUCT
