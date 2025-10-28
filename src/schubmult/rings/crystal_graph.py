@@ -133,6 +133,10 @@ class CrystalGraph(Printable):
     @property
     def dual(self):
         return CrystalGraphDual(self)
+    
+    @property
+    def reverse(self):
+        return CrystalGraphReverse(self)
 
 class CrystalGraphDual(CrystalGraph):
     def __init__(self, base_crystal):
@@ -156,6 +160,32 @@ class CrystalGraphDual(CrystalGraph):
 
     def crystal_length(self):
         return self.base_crystal.crystal_length()
+
+class CrystalGraphReverse(CrystalGraph):
+    def __init__(self, base_crystal):
+        self.base_crystal = base_crystal
+
+    @property
+    def crystal_weight(self):
+        return self.base_crystal.crystal_weight[::-1]
+
+    def raising_operator(self, index):
+        n = self.crystal_length()
+        raised = self.base_crystal.raising_operator(n + 1 - index)
+        if raised is None:
+            return None
+        return CrystalGraphReverse(raised)
+
+    def lowering_operator(self, index):
+        n = self.crystal_length()
+        lowered = self.base_crystal.lowering_operator(n + 1 - index)
+        if lowered is None:
+            return None
+        return CrystalGraphReverse(lowered)
+
+    def crystal_length(self):
+        return self.base_crystal.crystal_length()
+
 
 # There is a decomposition here into subcrystals
 # NOT COMMUTATIVE TENSOR PRODUCT

@@ -46,21 +46,19 @@ if __name__ == "__main__":
             self.start = start
             self.end = end
 
+        @property
+        def crystal_weight(self):
+            return self.base_graph.crystal_weight
+
         def crystal_length(self):
             return self.end - self.start
         
         def epsilon(self, i):
-            i += self.start
-            if i < 1 or i >= self.end:
-                return 0
-            return self.under_rc.epsilon(i)
+            return self.base_graph.epsilon(i)
         
         def phi(self, i):
-            i += self.start
-            if i < 1 or i >= self.end:
-                return 0
-            return self.under_rc.phi(i)
-        
+            return self.base_graph.phi(i)
+
         def raising_operator(self, index):
             index += self.start
             if index < 1 or index >= self.end:
@@ -78,9 +76,15 @@ if __name__ == "__main__":
             if new_val is None:
                 return None
             return RCGraphCut(new_val, self.start, self.end)
+    
+        @property
+        def base_graph(self):
+            bg = self.under_rc.rowrange(self.start)
+            if self.end - self.start < len(bg):
+                bg = bg.vertical_cut(self.end - self.start)[0]
+            return bg
+    
 
-        
-            
     hw_elems = {}
     lr = {}
     tring = rc_ring @ rc_ring
@@ -89,18 +93,44 @@ if __name__ == "__main__":
         
         #for rc in RCGraph.all_rc_graphs(perm, n-1):
         hw = set()
-        results = set()
+        hw2 = set()
+        results = {}
+        product = Sx(perm)*Sx(w0_rc.perm)
         for rc_p in RCGraph.all_rc_graphs(perm,n-1):
             prod = rc_ring(rc_p) * rc_ring(w0_rc)
+            thw = CrystalGraphTensor(w0_rc,rc_p).to_highest_weight()[0]
+            hw2.add(thw.factors[1])
             for rc, coeff in prod.items():
-                rc_hw = CrystalGraphTensor(RCGraphCut(rc, 0, n-1), RCGraphCut(rc, n-1, len(rc))).reverse.to_highest_weight()[0].base_crystal
-                full_rc_hw = RCGraph([*rc_hw.factors[0].under_rc.vertical_cut(n-1)[0], *rc_hw.factors[1].under_rc.rowrange(n-1)])
-                if full_rc_hw in hw:
-                    continue
-            hw.add(full_rc_hw)
-            results.add(full_rc_hw.vertical_cut(n-1)[0])
-        for rc_result in results.keys():
-            pretty_print(rc_result)
+                # pretty_print(rc)
+                # print(f"{len(rc)=} {coeff=}")
+                tp = CrystalGraphTensor(RCGraphCut(rc, n-1, len(rc)), RCGraphCut(rc, 0, n-1))
+                rc_hw = tp.to_highest_weight()[0]
+                frc = RCGraph([*rc_hw.factors[0].under_rc[:n-1],*rc_hw.factors[1].under_rc[n-1:]])
+                hw.add(rc_hw.factors[1].base_graph)
+                
+                # results[full_rc_hw] = results.get(full_rc_hw, set())
+                # results[full_rc_hw].add(rc_p)
+        print(f"Results for perm {perm}:")
+        print("hw")
+        for rc in hw:
+            pretty_print(rc)
+        print("hw2")
+        for rc in hw2:
+            pretty_print(rc)
+            
+        # for rc_cry, rc_result in results.items():
+        #     #print(f"{rc_result.inverse_crystal.is_lowest_weight=}")
+        #     pretty_print(rc_cry)
+        #     pretty_print(rc_cry.crystal_weight)
+            # for rc_p in rc_result:
+            #     pretty_print(rc_p)
+            #     wt = tuple(a+b for a,b in zip(rc_p.length_vector, w0_rc.length_vector))
+            #     print(wt)
+            #     print(uncode(wt))
+            #     print(f"{product.get(uncode(wt), 0)=}")
+        print(f"{len((product))=}")
+        print(f"{len(results)=}")
+        print(F"{product=}")
         input()
         # try:
         #     assert all(v == 0 for v in (cprd - our_cprd).values()), f"Mismatch in coproduct for perm {perm}"

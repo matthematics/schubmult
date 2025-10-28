@@ -1109,3 +1109,30 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         if not isinstance(other, RCGraph):
             return NotImplemented
         return self < other or self == other
+    
+    @property
+    def inverse_crystal(self):
+        return InverseRCGraph(self)
+
+class InverseRCGraph(CrystalGraph):
+    def __init__(self, base_graph):
+        self.base_graph = base_graph
+
+    @property
+    def crystal_weight(self):
+        return self.base_graph.transpose().crystal_weight
+
+    def raising_operator(self, index):
+        lowered = self.base_graph.transpose().lowering_operator(index)
+        if lowered is None:
+            return None
+        return InverseRCGraph(lowered.resize(len(self.base_graph)))
+
+    def lowering_operator(self, index):
+        raised = self.base_graph.transpose().raising_operator(index)
+        if raised is None:
+            return None
+        return InverseRCGraph(raised.resize(len(self.base_graph)))
+
+    def crystal_length(self):
+        return self.base_graph.transpose().crystal_length()
