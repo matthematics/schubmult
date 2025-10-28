@@ -1,7 +1,7 @@
 from functools import cache, cached_property
 
 import schubmult.utils.perm_utils as schub_lib
-from schubmult.perm_lib import Permutation, uncode
+from schubmult.schub_lib.perm_lib import Permutation, uncode
 from schubmult.rings import ASx
 from schubmult.symbolic import S, prod
 from schubmult.utils.logging import get_logger, init_logging

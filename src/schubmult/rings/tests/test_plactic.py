@@ -1,6 +1,6 @@
 from schubmult.rings.rc_graph import RCGraph
 from schubmult.rings.plactic import Plactic, NilPlactic
-from schubmult.perm_lib import Permutation
+from schubmult.schub_lib.perm_lib import Permutation
 
 
 def test_ed_corresp():
@@ -16,7 +16,7 @@ def test_ed_corresp():
 
 import pytest
 
-from schubmult.perm_lib import Permutation
+from schubmult.schub_lib.perm_lib import Permutation
 from schubmult.rings.plactic import Plactic, NilPlactic
 from schubmult.rings.rc_graph import RCGraph
 

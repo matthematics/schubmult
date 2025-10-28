@@ -2,7 +2,7 @@ from functools import cache
 from itertools import zip_longest
 
 import schubmult.rings.free_algebra as fa
-from schubmult.perm_lib import Permutation, trimcode, uncode
+from schubmult.schub_lib.perm_lib import Permutation, trimcode, uncode
 from schubmult.symbolic import (
     Add,
     Integer,

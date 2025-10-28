@@ -512,7 +512,7 @@ class RCGraphRing(CrystalGraphRing):
 
 #     def mul(self, elem1, elem2):
 #         # elem1, elem2 are RestrictedRCGraphTensorRing elements
-#         from schubmult.perm_lib import Permutation
+#         from schubmult.schub_lib.perm_lib import Permutation
 #         def right_zero_act(rc1, rc2):
 #             if (rc1, rc2) in RestrictedRCGraphTensorRing._z_cache:
 #                 return RestrictedRCGraphTensorRing._z_cache[(rc1, rc2)]

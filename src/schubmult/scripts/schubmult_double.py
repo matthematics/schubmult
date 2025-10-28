@@ -15,7 +15,7 @@ from schubmult import (
     theta,
     uncode,
 )
-from schubmult.perm_lib import split_perms
+from schubmult.schub_lib.perm_lib import split_perms
 from schubmult.utils.perm_utils import will_formula_work
 from schubmult.symbolic import S, expand, expand_func, init_printing, simplify, sstr, sympify
 from schubmult.symmetric_polynomials import FactorialElemSym

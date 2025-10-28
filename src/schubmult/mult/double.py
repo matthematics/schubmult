@@ -1,7 +1,7 @@
 from bisect import bisect_left
 from functools import cache
 
-from schubmult.perm_lib import (
+from schubmult.schub_lib.perm_lib import (
     Permutation,
     inv,
     theta,

@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from schubmult.perm_lib import (
+from schubmult.schub_lib.perm_lib import (
     Permutation,
     inv,
     permtrim,

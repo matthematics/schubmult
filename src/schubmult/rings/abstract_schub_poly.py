@@ -1,7 +1,7 @@
 from functools import cache
 
 import schubmult.symbolic as ssymb
-from schubmult.perm_lib import Permutation
+from schubmult.schub_lib.perm_lib import Permutation
 
 # from schubmult.rings.backend import expand, sympify
 # from schubmult.symbolic import S

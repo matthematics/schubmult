@@ -1,4 +1,4 @@
-import schubmult.perm_lib as pl
+import schubmult.schub_lib.perm_lib as pl
 import schubmult.utils.perm_utils as schub_lib
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, sympify
 

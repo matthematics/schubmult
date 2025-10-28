@@ -7,7 +7,7 @@ from cachetools import cached
 from cachetools.keys import hashkey
 from sortedcontainers import SortedList
 
-from schubmult.perm_lib import (
+from schubmult.schub_lib.perm_lib import (
     Permutation,
     code,
     cycle,

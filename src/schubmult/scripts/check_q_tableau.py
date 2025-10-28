@@ -11,7 +11,7 @@ import itertools
 from collections import Counter
 from itertools import zip_longest
 
-from schubmult.perm_lib import Permutation, uncode
+from schubmult.schub_lib.perm_lib import Permutation, uncode
 from schubmult.rings.rc_graph import RCGraph
 from schubmult.rings.rc_graph_ring import RCGraphRing
 from schubmult.rings.plactic import Plactic

@@ -1,4 +1,4 @@
-from schubmult.perm_lib import Permutation
+from schubmult.schub_lib.perm_lib import Permutation
 from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Ring, S, expand, sstr, sympify, sympify_sympy, sympy_Add, sympy_Mul
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict

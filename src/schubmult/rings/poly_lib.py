@@ -1,6 +1,6 @@
 from functools import cache, cached_property
 
-import schubmult.perm_lib as pl
+import schubmult.schub_lib.perm_lib as pl
 import schubmult.rings.variables as vv
 from schubmult.symbolic import Add, Mul, Pow, S, prod, sympify
 

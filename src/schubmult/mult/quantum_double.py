@@ -11,7 +11,7 @@ import numpy as np
 
 import schubmult.schub_lib.double as norm_yz
 import schubmult.schub_lib.positivity as pos
-from schubmult.perm_lib import Permutation, code, inv, longest_element, medium_theta, permtrim, strict_theta, uncode
+from schubmult.schub_lib.perm_lib import Permutation, code, inv, longest_element, medium_theta, permtrim, strict_theta, uncode
 from schubmult.rings.poly_lib import _vars, call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.schub_lib import check_blocks, compute_vpathdicts, double_elem_sym_q, elem_sym_perms_q, elem_sym_perms_q_op, elem_sym_positional_perms_q, reduce_q_coeff
