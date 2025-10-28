@@ -3,7 +3,7 @@ from functools import cache, cached_property
 
 import sympy.combinatorics.permutations as spp
 
-# import schubmult.schub_lib.schub_lib as sl
+# import schubmult.utils.perm_utils as sl
 import schubmult.utils.logging as lg
 from schubmult.utils.perm_utils import cyclic_sort, old_code, permtrim_list, sg
 

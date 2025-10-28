@@ -16,7 +16,7 @@ from schubmult import (
     uncode,
 )
 from schubmult.perm_lib import split_perms
-from schubmult.schub_lib.schub_lib import will_formula_work
+from schubmult.utils.perm_utils import will_formula_work
 from schubmult.symbolic import S, expand, expand_func, init_printing, simplify, sstr, sympify
 from schubmult.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.argparse import schub_argparse

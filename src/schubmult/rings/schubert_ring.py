@@ -4,7 +4,7 @@ import schubmult.rings.abstract_schub_poly as spolymod
 import schubmult.rings.quantum_schubert_ring as qsr
 import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.positivity as pos
-import schubmult.schub_lib.schub_lib as schub_lib
+import schubmult.utils.perm_utils as schub_lib
 import schubmult.schub_lib.single as py
 from schubmult.perm_lib import Permutation, uncode
 from schubmult.symbolic import Add, DomainElement, Mul, Pow, S, Symbol, expand, expand_func, is_of_func_type, sympify, sympify_sympy

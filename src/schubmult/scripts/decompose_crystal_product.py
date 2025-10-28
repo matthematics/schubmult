@@ -6,7 +6,7 @@ import itertools
 
 
 if __name__ == "__main__":
-    from schubmult.schub_lib.schub_lib import elem_sym_perms
+    from schubmult.utils.perm_utils import elem_sym_perms
     from sympy import pretty_print
     import sys
 

@@ -1,5 +1,5 @@
 import schubmult.perm_lib as pl
-import schubmult.schub_lib.schub_lib as schub_lib
+import schubmult.utils.perm_utils as schub_lib
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, sympify
 
 from .poly_lib import call_zvars

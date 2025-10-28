@@ -1,6 +1,6 @@
 from functools import cache, cached_property
 
-import schubmult.schub_lib.schub_lib as schub_lib
+import schubmult.utils.perm_utils as schub_lib
 from schubmult.perm_lib import Permutation, uncode
 from schubmult.rings import ASx
 from schubmult.symbolic import S, prod
@@ -61,7 +61,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             yield tuple(row)
 
     def flat_elem_sym_mul(self, k):
-        from schubmult.schub_lib.schub_lib import elem_sym_perms
+        from schubmult.utils.perm_utils import elem_sym_perms
 
         elem_graph = RCGraph([(i,) for i in range(1, k + 1)])
         mul_graph = self
@@ -109,7 +109,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                         stack.append((c1_test0, c2_test0))
             return True
 
-        from schubmult.schub_lib.schub_lib import elem_sym_perms
+        from schubmult.utils.perm_utils import elem_sym_perms
         if k > len(self):
             return self.extend(k - len(self)).monk_crystal_mul(p, k)
 
