@@ -16,8 +16,8 @@ from schubmult.symbolic import (
     sympy_Add,
     sympy_Mul,
 )
-from schubmult.utils.logging import get_logger
-from schubmult.utils.perm_utils import add_perm_dict
+from .logging import get_logger
+from .perm_utils import add_perm_dict
 
 from .base_schubert_ring import BaseSchubertElement
 from .polynomial_basis import MonomialBasis

@@ -7,7 +7,7 @@ from functools import cache
 from typing import ClassVar
 
 from schubmult.symbolic import Add, Mul, Pow, S, SympifyError, expand, symbols, sympify
-from schubmult.utils.logging import get_logger
+from .logging import get_logger
 
 logger = get_logger(__name__)
 

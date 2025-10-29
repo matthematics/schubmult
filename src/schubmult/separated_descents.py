@@ -1,10 +1,10 @@
 from functools import cache
 
 # import schubmult.rings.free_algebra as fa
-from schubmult.schub_lib.perm_lib import Permutation, uncode
-from schubmult.utils.perm_utils import complete_sym_positional_perms_down
+from .perm_lib import Permutation, uncode
+from .perm_utils import complete_sym_positional_perms_down
 from schubmult.symbolic import CoercionFailed, S, sympy_Mul
-from schubmult.utils.perm_utils import mu_A
+from .perm_utils import mu_A
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 

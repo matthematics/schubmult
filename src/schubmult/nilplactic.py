@@ -222,7 +222,7 @@ class NilPlactic(Plactic):
         Return the highest-weight RCGraph corresponding to this NilPlactic
         tableau via Edelman–Greene insertion.
         """
-        from schubmult.schub_lib.rc_graph import RCGraph
+        from .rc_graph import RCGraph
 
         perm_word = list(reversed(self.row_word))
         graph = []

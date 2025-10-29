@@ -152,7 +152,7 @@ def cyclic_sort_min(L):
 from functools import cache
 
 import schubmult.rings.variables as spl
-from schubmult.schub_lib.perm_lib import (
+from .perm_lib import (
     Permutation,
     code,
     inv,
@@ -163,7 +163,7 @@ from schubmult.schub_lib.perm_lib import (
     uncode,
 )
 from schubmult.symbolic import S, prod
-from schubmult.utils.perm_utils import (
+from .perm_utils import (
     count_bruhat,
     get_cycles,
     getpermval,
@@ -861,7 +861,7 @@ def elem_sym_positional_perms_q(orig_perm, p, *k, q_var=q_var):
 
 
 def complete_sym_perms_op(orig_perm, p, k):
-    from schubmult.utils.perm_utils import has_bruhat_descent
+    from .perm_utils import has_bruhat_descent
 
     orig_perm = Permutation(orig_perm)
     total_dict = {orig_perm: []}
@@ -882,7 +882,7 @@ def complete_sym_perms_op(orig_perm, p, k):
     return total_dict
 
 def complete_sym_perms(orig_perm, p, k):
-    from schubmult.utils.perm_utils import has_bruhat_ascent
+    from .perm_utils import has_bruhat_ascent
 
     orig_perm = Permutation(orig_perm)
     total_dict = {orig_perm: []}

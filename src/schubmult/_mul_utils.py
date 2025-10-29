@@ -1,5 +1,5 @@
 from schubmult.symbolic import sympify
-from schubmult.utils.perm_utils import add_perm_dict
+from .perm_utils import add_perm_dict
 
 
 def _mul_schub_dicts(dict1, dict2, basis1, basis2, best_effort_positive=False):

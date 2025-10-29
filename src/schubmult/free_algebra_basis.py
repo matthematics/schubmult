@@ -2,7 +2,7 @@ from functools import cache
 from itertools import zip_longest
 
 import schubmult.rings.free_algebra as fa
-from schubmult.schub_lib.perm_lib import Permutation, trimcode, uncode
+from .perm_lib import Permutation, trimcode, uncode
 from schubmult.symbolic import (
     Add,
     Integer,
@@ -16,7 +16,7 @@ from schubmult.symbolic import (
     sympy_Mul,
 )
 from schubmult.symmetric_polynomials import FactorialElemSym
-from schubmult.utils.perm_utils import add_perm_dict, mu_A
+from .perm_utils import add_perm_dict, mu_A
 
 from ._separated_descents import SeparatedDescentsRing
 from .abstract_schub_poly import GenericPrintingTerm
@@ -709,7 +709,7 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     def skew_element(cls, w, u, n):
-        from schubmult.schub_lib.single import schubmult_py_down
+        from .single import schubmult_py_down
 
         if u.inv > 0 and max(u.descents()) >= n:
             return {}
@@ -763,7 +763,7 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_elementary(cls, perm, numvars):
-        from schubmult.utils.perm_utils import p_trans
+        from .perm_utils import p_trans
 
         from .variables import genset_dict_from_expr
 

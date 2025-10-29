@@ -5,7 +5,7 @@ import sympy.combinatorics.permutations as spp
 
 # import schubmult.utils.perm_utils as sl
 import schubmult.utils.logging as lg
-from schubmult.utils.perm_utils import cyclic_sort, old_code, permtrim_list, sg
+from .perm_utils import cyclic_sort, old_code, permtrim_list, sg
 
 # schubmult.poly_lib.variables import GeneratingSet
 

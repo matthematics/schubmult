@@ -6,11 +6,11 @@ import schubmult.schub_lib.double as yz
 import schubmult.schub_lib.positivity as pos
 import schubmult.utils.perm_utils as schub_lib
 import schubmult.schub_lib.single as py
-from schubmult.schub_lib.perm_lib import Permutation, uncode
+from .perm_lib import Permutation, uncode
 from schubmult.symbolic import Add, DomainElement, Mul, Pow, S, Symbol, expand, expand_func, is_of_func_type, sympify, sympify_sympy
 from schubmult.symmetric_polynomials import CompleteSym_base, ElemSym, ElemSym_base, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars
-from schubmult.utils.logging import get_logger
-from schubmult.utils.perm_utils import add_perm_dict
+from .logging import get_logger
+from .perm_utils import add_perm_dict
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .poly_lib import elem_sym_poly, xreplace_genvars

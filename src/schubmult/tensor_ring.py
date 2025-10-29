@@ -3,8 +3,8 @@ from functools import cache
 from sympy import Tuple
 
 from schubmult.symbolic import Mul, S, sympy_Mul
-from schubmult.utils.logging import get_logger
-from schubmult.utils.perm_utils import add_perm_dict
+from .logging import get_logger
+from .perm_utils import add_perm_dict
 
 from ._mul_utils import _tensor_product_of_dicts, _tensor_product_of_dicts_first
 from .abstract_schub_poly import AbstractSchubPoly

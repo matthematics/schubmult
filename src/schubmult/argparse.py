@@ -4,7 +4,7 @@ from argparse import SUPPRESS, ArgumentParser, RawDescriptionHelpFormatter
 from schubmult.symbolic import init_printing, latex, pretty, sstr, sympify_sympy
 
 # from sympy import init_printing
-from schubmult.utils.logging import init_logging
+from .logging import init_logging
 
 # Indexed.sympify_sympystr = lambda x, p: f"{p.doprint(x.args[0])}_{x.args[1]}"
 

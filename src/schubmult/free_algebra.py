@@ -1,6 +1,6 @@
 from functools import cache
 
-from schubmult.schub_lib.perm_lib import uncode
+from .perm_lib import uncode
 from schubmult.symbolic import (
     EXRAW,
     Add,
@@ -17,8 +17,8 @@ from schubmult.symbolic import (
     sympy_Add,
     sympy_Mul,
 )
-from schubmult.utils.logging import get_logger
-from schubmult.utils.perm_utils import add_perm_dict
+from .logging import get_logger
+from .perm_utils import add_perm_dict
 
 from ._separated_descents import SeparatedDescentsRing
 from .abstract_schub_poly import GenericPrintingTerm
@@ -51,7 +51,7 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         return self * (self ** (pw - 1))
 
     def poly_inner_product(self, poly, genset, n):
-        from schubmult.rings.variables import genset_dict_from_expr
+        from .variables import genset_dict_from_expr
 
         wordish = self.change_basis(WordBasis)
         result = 0
@@ -341,7 +341,7 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         return new_elem
 
     def __truediv__(self, other):
-        from schubmult.schub_lib.perm_lib import Permutation
+        from .perm_lib import Permutation
 
         if isinstance(other, list | tuple | Permutation):
             other = Permutation(other)
@@ -555,7 +555,7 @@ class FreeAlgebra(Ring, CompositeDomain):
 
     @property
     def one(self):
-        from schubmult.schub_lib.perm_lib import Permutation
+        from .perm_lib import Permutation
 
         return self.dtype({(Permutation(()), 0): S.One})
 

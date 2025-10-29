@@ -1,11 +1,11 @@
 from functools import cache, cached_property
 
 import schubmult.utils.perm_utils as schub_lib
-from schubmult.schub_lib.perm_lib import Permutation, uncode
+from .perm_lib import Permutation, uncode
 from schubmult.rings import ASx
 from schubmult.symbolic import S, prod
-from schubmult.utils.logging import get_logger, init_logging
-from schubmult.utils.perm_utils import add_perm_dict
+from .logging import get_logger, init_logging
+from .perm_utils import add_perm_dict
 
 from ._grid_print import GridPrint
 from ._utils import BitfieldRow
@@ -61,7 +61,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             yield tuple(row)
 
     def flat_elem_sym_mul(self, k):
-        from schubmult.utils.perm_utils import elem_sym_perms
+        from .perm_utils import elem_sym_perms
 
         elem_graph = RCGraph([(i,) for i in range(1, k + 1)])
         mul_graph = self
@@ -109,7 +109,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                         stack.append((c1_test0, c2_test0))
             return True
 
-        from schubmult.utils.perm_utils import elem_sym_perms
+        from .perm_utils import elem_sym_perms
         if k > len(self):
             return self.extend(k - len(self)).monk_crystal_mul(p, k)
 
@@ -355,7 +355,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         return tuple(ret)
 
     def is_dom_perm_yamanouchi(self, dom_perm, perm):
-        from schubmult.rings.schubert_ring import Sx
+        from .schubert_ring import Sx
         if (Sx(self.perm)*Sx(dom_perm)).get(perm, 0) == 0:
             return False
         length = max(len(perm.trimcode), len(dom_perm.trimcode))

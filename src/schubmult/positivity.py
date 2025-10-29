@@ -7,7 +7,7 @@ from cachetools import cached
 from cachetools.keys import hashkey
 from sortedcontainers import SortedList
 
-from schubmult.schub_lib.perm_lib import (
+from .perm_lib import (
     Permutation,
     code,
     cycle,
@@ -18,9 +18,9 @@ from schubmult.schub_lib.perm_lib import (
     theta,
     uncode,
 )
-from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_poly
-from schubmult.rings.schub_poly import schubpoly
-from schubmult.schub_lib.schub_lib import (
+from .poly_lib import _vars, efficient_subs, elem_sym_poly
+from .schub_poly import schubpoly
+from .schub_lib import (
     divdiffable,
     is_coeff_irreducible,
     is_split_two,
@@ -32,7 +32,7 @@ from schubmult.schub_lib.schub_lib import (
     will_formula_work,
 )
 from schubmult.symbolic import Add, Integer, Mul, Pow, S, Symbol, expand, poly, prod, sympify, sympify_sympy
-from schubmult.utils.logging import get_logger
+from .logging import get_logger
 
 from .double import schubmult_double, schubmult_double_pair, schubmult_double_pair_generic_alt
 

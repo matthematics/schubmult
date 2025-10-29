@@ -1,4 +1,4 @@
-from schubmult.rings.variables import NotEnoughGeneratorsError
+from .variables import NotEnoughGeneratorsError
 from schubmult.symbolic import Add, Mul, Pow, S, expand, is_of_func_type, prod, sympify
 
 from .elem_sym import FactorialElemSym

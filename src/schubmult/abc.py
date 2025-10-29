@@ -1,6 +1,6 @@
 from symengine import var
 
-from schubmult.rings.variables import GeneratingSet
+from .variables import GeneratingSet
 from schubmult.symmetric_polynomials import CompleteSym, E, E_q, ElemSym, FactorialCompleteSym, FactorialElemSym, H, QFactorialElemSym, e, h  # noqa: F401
 
 var("x_(1:100)")

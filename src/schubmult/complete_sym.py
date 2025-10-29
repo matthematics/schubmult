@@ -1,10 +1,10 @@
 from functools import cache
 
-from schubmult.rings.poly_lib import complete_sym_poly
-from schubmult.rings.variables import NotEnoughGeneratorsError, ZeroGeneratingSet
+from .poly_lib import complete_sym_poly
+from .variables import NotEnoughGeneratorsError, ZeroGeneratingSet
 from schubmult.symbolic import Add, Function, Integer, Mul, Pow, S, sympify, sympify_sympy
-from schubmult.symmetric_polynomials.elem_sym import FactorialElemSym
-from schubmult.utils.logging import get_logger
+from .elem_sym import FactorialElemSym
+from .logging import get_logger
 
 from .functions import coeffvars, degree, genvars, is_of_func_type, numvars
 

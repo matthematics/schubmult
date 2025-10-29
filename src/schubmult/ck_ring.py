@@ -1,6 +1,6 @@
-from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
-from schubmult.rings.crystal_graph import CrystalGraphTensor
-from schubmult.rings.plactic import NilPlactic, Plactic
+from .abstract_schub_poly import TypedPrintingTerm
+from .crystal_graph import CrystalGraphTensor
+from .plactic import NilPlactic, Plactic
 from schubmult.symbolic import S, sympy_Mul
 
 from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement

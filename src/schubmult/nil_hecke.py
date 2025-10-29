@@ -1,7 +1,7 @@
 from sympy import Expr
 
-from schubmult.schub_lib.perm_lib import Permutation
-from schubmult.schub_lib.double import schubmult_double_down
+from .perm_lib import Permutation
+from .double import schubmult_double_down
 from schubmult.symbolic import (
     EXRAW,
     Add,
@@ -22,8 +22,8 @@ from schubmult.symbolic import (
     sympy_Add,
     sympy_Mul,
 )
-from schubmult.utils.logging import get_logger
-from schubmult.utils.perm_utils import add_perm_dict
+from .logging import get_logger
+from .perm_utils import add_perm_dict
 
 from .base_schubert_ring import BaseSchubertElement
 from .schubert_ring import DoubleSchubertElement, SingleSchubertRing

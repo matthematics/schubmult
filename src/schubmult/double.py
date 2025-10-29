@@ -1,16 +1,16 @@
 from bisect import bisect_left
 from functools import cache
 
-from schubmult.schub_lib.perm_lib import (
+from .perm_lib import (
     Permutation,
     inv,
     theta,
     uncode,
 )
-from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_func, elem_sym_poly
-from schubmult.rings.schub_poly import elem_func_func_mul
-from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
-from schubmult.schub_lib.schub_lib import (
+from .poly_lib import _vars, efficient_subs, elem_sym_func, elem_sym_poly
+from .schub_poly import elem_func_func_mul
+from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
+from .schub_lib import (
     compute_vpathdicts,
     elem_sym_perms,
     elem_sym_perms_op,
@@ -19,8 +19,8 @@ from schubmult.schub_lib.schub_lib import (
 )
 from schubmult.symbolic import Add, Mul, Pow, S, expand, expand_func, sympify
 from schubmult.symmetric_polynomials import FactorialElemSym
-from schubmult.utils.logging import get_logger
-from schubmult.utils.perm_utils import add_perm_dict
+from .logging import get_logger
+from .perm_utils import add_perm_dict
 
 zero = sympify(0)
 

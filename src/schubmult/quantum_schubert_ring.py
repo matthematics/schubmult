@@ -5,11 +5,11 @@ import schubmult.rings.schubert_ring as spr
 import schubmult.schub_lib.quantum as py
 import schubmult.schub_lib.quantum_double as yz
 import schubmult.utils.perm_utils as schub_lib
-from schubmult.schub_lib.perm_lib import Permutation, longest_element, uncode
+from .perm_lib import Permutation, longest_element, uncode
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, expand_func, sympify
 from schubmult.symmetric_polynomials import FactorialElemSym, QFactorialElemSym, coeffvars, degree, genvars, is_of_func_type, numvars
-from schubmult.utils.logging import get_logger
-from schubmult.utils.perm_utils import is_parabolic
+from .logging import get_logger
+from .perm_utils import is_parabolic
 
 from .abstract_schub_poly import PQDSchubPoly, QDSchubPoly
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
@@ -588,7 +588,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
 
     @property
     def double_mul(self):
-        from schubmult.schub_lib.quantum_double import _vars
+        from .quantum_double import _vars
 
         def do_double_mul(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
             coeff_dict = yz.schubmult_q_double_fast(perm_dict, v, var2, var3, q_var)
@@ -598,7 +598,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
 
     @property
     def single_mul(self):
-        from schubmult.schub_lib.quantum_double import _vars
+        from .quantum_double import _vars
 
         def do_single_mul(perm_dict, v, q_var=_vars.q_var):
             coeff_dict = py.schubmult_q_fast(perm_dict, v, q_var)
