@@ -8,6 +8,19 @@ from .crystal_graph import CrystalGraph
 
 
 class Plactic(GridPrint, CrystalGraph):
+
+
+    def __iter__(self):
+        for row in self._word:
+            yield from row
+
+    # in order of row row
+    @property
+    def iter_boxes(self):
+        for i in range(len(self._word) - 1, -1, -1):
+            for j in range(len(self._word[i])):
+                yield (i, j)
+
     def up_jdt_slide(self, row, col):
         """
         Perform an upward jeu de taquin slide starting from the given (row, col)
@@ -349,33 +362,85 @@ class Plactic(GridPrint, CrystalGraph):
         index -= 1
         return self.down_jdt_slide(0, index).rectify()
 
-    # def yamanouchi(self):
-    #     """
-    #     Return the Yamanouchi (highest-weight) tableau of the same shape
-    #     as this Plactic tableau.
-    #     """
-    #     new_word = []
-    #     for i in range(len(self._word)):
-    #         new_word.append([0] * len(self._word[i]))
-    #         for j in range(len(self._word[i])):
-    #             new_word[i][j] = i + 1
-    #     return Plactic(tuple(tuple(row) for row in new_word))
-
-
-class B(Plactic):
-    def __init__(self, shape, max_entry):
-        self._word = Plactic.yamanouchi(shape)._word
-        self._length = max_entry
-
-    def crystal_length(self):
-        return self._length
-
     @classmethod
-    def completion(cls, shape):
+    def superstandard(cls, shape):
         if shape is None:
             return None
-        max_entry = shape.crystal_length()
-        hw, raise_seq = shape.to_highest_weight()
-        return cls(tuple(a for a in hw.crystal_weight if a != 0), max_entry).reverse_raise_seq(raise_seq)
+        new_word = []
+        index = 1
+        for i in range(len(shape)):
+            new_word.append([0] * shape[i])
+            for j in range(shape[i]):
+                new_word[i][j] = index
+                index += 1
+        return cls(tuple(tuple(row) for row in new_word))
+
+    @property
+    def is_semistandard(self):
+        for i in range(len(self._word)):
+            for j in range(len(self._word[i])):
+                if j > 0 and self._word[i][j] < self._word[i][j - 1]:
+                    return False
+                if i > 0 and j < len(self._word[i - 1]) and self._word[i][j] <= self._word[i - 1][j]:
+                    return False
+        return True
+
+    def reverse_rsk(self, recording_tableau):
+        """
+        Inverse RSK (row-insertion) for the pair (P,Q) where `self` is P and
+        `recording_tableau` is the standard recording tableau Q of the same shape.
+
+        Returns the original word as a list of integers (in insertion order).
+        """
+        # mutable copies of P and Q rows
+        P = [list(r) for r in self._word]
+        Q = [list(r) for r in recording_tableau._word]
+
+        total = sum(len(r) for r in Q)
+        word_rev = []
+
+        for t in range(total, 0, -1):
+            # find position (i,j) of t in Q
+            pos_i = pos_j = None
+            for i, row in enumerate(Q):
+                for j, val in enumerate(row):
+                    if val == t:
+                        pos_i, pos_j = i, j
+                        break
+                if pos_i is not None:
+                    break
+            if pos_i is None:
+                raise ValueError(f"recording tableau missing entry {t}")
+
+            i, j = pos_i, pos_j
+
+            # remove the box from Q
+            Q[i].pop(j)
+            if len(Q[i]) == 0:
+                Q.pop(i)
+
+            # remove the corresponding entry from P and start reverse bumping
+            x = P[i].pop(j)
+            if len(P[i]) == 0:
+                P.pop(i)
+
+            # move upwards: in row r find rightmost entry < x, replace it and continue,
+            # if none found in a row, stop and output x
+            for r in range(i - 1, -1, -1):
+                replaced = False
+                for k in range(len(P[r]) - 1, -1, -1):
+                    if P[r][k] < x:
+                        y = P[r][k]
+                        P[r][k] = x
+                        x = y
+                        replaced = True
+                        break
+                if not replaced:
+                    break
+
+            word_rev.append(int(x))
+
+        # reverse collected letters to obtain original insertion order
+        return list(reversed(word_rev))
 
 
