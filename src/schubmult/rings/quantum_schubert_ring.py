@@ -1,11 +1,12 @@
 from bisect import bisect_left
 from functools import cache
 
+import schubmult.mult.quantum as py
+import schubmult.mult.quantum_double as yz
 import schubmult.rings.schubert_ring as spr
-import schubmult.schub_lib.quantum as py
-import schubmult.schub_lib.quantum_double as yz
-import schubmult.utils.perm_utils as schub_lib
+import schubmult.utils.schub_lib as schub_lib
 from schubmult.schub_lib.perm_lib import Permutation, longest_element, uncode
+from schubmult.schub_lib.schub_poly import schubpoly_from_elems
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, expand_func, sympify
 from schubmult.symmetric_polynomials import FactorialElemSym, QFactorialElemSym, coeffvars, degree, genvars, is_of_func_type, numvars
 from schubmult.utils.logging import get_logger
@@ -14,7 +15,6 @@ from schubmult.utils.perm_utils import is_parabolic
 from .abstract_schub_poly import PQDSchubPoly, QDSchubPoly
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .poly_lib import complete_sym_poly, elem_sym_poly, elem_sym_poly_q, xreplace_genvars
-from .schub_poly import schubpoly_from_elems
 from .variables import GeneratingSet, GeneratingSet_base, genset_dict_from_expr, poly_genset
 
 q_var = GeneratingSet("q")

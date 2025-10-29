@@ -1,5 +1,6 @@
 from functools import cached_property
 
+from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.perm_lib import (
     Permutation,
     inv,
@@ -7,16 +8,15 @@ from schubmult.schub_lib.perm_lib import (
     theta,
     uncode,
 )
-from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
-from schubmult.schub_lib.schub_lib import (
-    compute_vpathdicts,
-    elem_sym_perms,
-    elem_sym_perms_op,
-)
 from schubmult.symbolic import Add, Mul, Pow
 from schubmult.utils.logging import get_logger, init_logging
 from schubmult.utils.perm_utils import (
     add_perm_dict,
+)
+from schubmult.utils.schub_lib import (
+    compute_vpathdicts,
+    elem_sym_perms,
+    elem_sym_perms_op,
 )
 
 init_logging(debug=False)

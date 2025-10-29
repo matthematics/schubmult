@@ -1,19 +1,18 @@
 from functools import cache, cached_property
 
-import schubmult.utils.perm_utils as schub_lib
+import schubmult.utils.schub_lib as schub_lib
+from schubmult.rings.free_algebra import ASx, FreeAlgebra, FreeAlgebraElement, WordBasis
+from schubmult.rings.nil_hecke import NilHeckeRing
 from schubmult.schub_lib.perm_lib import Permutation, uncode
-from schubmult.rings import ASx
 from schubmult.symbolic import S, prod
+from schubmult.utils._grid_print import GridPrint
+from schubmult.utils.bitfield_row import BitfieldRow
 from schubmult.utils.logging import get_logger, init_logging
 from schubmult.utils.perm_utils import add_perm_dict
 
-from ._grid_print import GridPrint
-from ._utils import BitfieldRow
 from .crystal_graph import CrystalGraph, CrystalGraphTensor
-from .free_algebra import FreeAlgebra, FreeAlgebraElement
-from .free_algebra_basis import WordBasis
-from .nil_hecke import NilHeckeRing
-from .plactic import NilPlactic, Plactic
+from .nilplactic import NilPlactic
+from .plactic import Plactic
 
 init_logging(debug=False)
 logger = get_logger(__name__)
@@ -51,6 +50,15 @@ def _crystal_isomorphic(c1, c2, cutoff=None):
     return True
 
 class RCGraph(GridPrint, tuple, CrystalGraph):
+    
+    def div_diff(self, i):
+        if i >= self.crystal_length():
+            return None
+        tst = self.lowering_operator(i)
+        if tst is None:
+            return self.exchange_property(i)
+        return None
+
     def __eq__(self, other):
         if not isinstance(other, RCGraph):
             return NotImplemented
@@ -61,7 +69,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             yield tuple(row)
 
     def flat_elem_sym_mul(self, k):
-        from schubmult.utils.perm_utils import elem_sym_perms
+        from schubmult.utils.schub_lib import elem_sym_perms
 
         elem_graph = RCGraph([(i,) for i in range(1, k + 1)])
         mul_graph = self
@@ -109,7 +117,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                         stack.append((c1_test0, c2_test0))
             return True
 
-        from schubmult.utils.perm_utils import elem_sym_perms
+        from schubmult.utils.schub_lib import elem_sym_perms
         if k > len(self):
             return self.extend(k - len(self)).monk_crystal_mul(p, k)
 

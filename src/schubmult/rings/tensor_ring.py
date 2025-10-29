@@ -3,10 +3,10 @@ from functools import cache
 from sympy import Tuple
 
 from schubmult.symbolic import Mul, S, sympy_Mul
+from schubmult.utils._mul_utils import _tensor_product_of_dicts, _tensor_product_of_dicts_first
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
-from ._mul_utils import _tensor_product_of_dicts, _tensor_product_of_dicts_first
 from .abstract_schub_poly import AbstractSchubPoly
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 

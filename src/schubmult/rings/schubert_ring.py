@@ -1,12 +1,13 @@
 from functools import cache, cached_property
 
+import schubmult.mult.double as yz
+import schubmult.mult.positivity as pos
+import schubmult.mult.single as py
 import schubmult.rings.abstract_schub_poly as spolymod
 import schubmult.rings.quantum_schubert_ring as qsr
-import schubmult.schub_lib.double as yz
-import schubmult.schub_lib.positivity as pos
-import schubmult.utils.perm_utils as schub_lib
-import schubmult.schub_lib.single as py
+import schubmult.utils.schub_lib as schub_lib
 from schubmult.schub_lib.perm_lib import Permutation, uncode
+from schubmult.schub_lib.schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 from schubmult.symbolic import Add, DomainElement, Mul, Pow, S, Symbol, expand, expand_func, is_of_func_type, sympify, sympify_sympy
 from schubmult.symmetric_polynomials import CompleteSym_base, ElemSym, ElemSym_base, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars
 from schubmult.utils.logging import get_logger
@@ -14,7 +15,6 @@ from schubmult.utils.perm_utils import add_perm_dict
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from .poly_lib import elem_sym_poly, xreplace_genvars
-from .schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 from .tensor_ring import TensorRing
 from .variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base, MaskedGeneratingSet, NotEnoughGeneratorsError, genset_dict_from_expr, poly_genset
 

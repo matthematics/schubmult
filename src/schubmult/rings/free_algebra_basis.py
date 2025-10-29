@@ -18,9 +18,9 @@ from schubmult.symbolic import (
 from schubmult.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.perm_utils import add_perm_dict, mu_A
 
-from ._separated_descents import SeparatedDescentsRing
 from .abstract_schub_poly import GenericPrintingTerm
 from .schubert_ring import DSx, Sx
+from .separated_descents import SeparatedDescentsRing
 
 splugSx = SeparatedDescentsRing(Sx([]).ring)
 ADSx = SeparatedDescentsRing(DSx([]).ring)
@@ -85,7 +85,7 @@ class FreeAlgebraBasis:
     @classmethod
     @cache
     def coproduct(cls, key):
-        from ._mul_utils import _tensor_product_of_dicts_first
+        from ..utils._mul_utils import _tensor_product_of_dicts_first
 
         return FreeAlgebraBasis.compose_transition(
             lambda x: _tensor_product_of_dicts_first(WordBasis.transition(cls)(x[0]), WordBasis.transition(cls)(x[1])),
@@ -95,7 +95,7 @@ class FreeAlgebraBasis:
     @classmethod
     @cache
     def bcoproduct(cls, key):
-        from ._mul_utils import _tensor_product_of_dicts_first
+        from ..utils._mul_utils import _tensor_product_of_dicts_first
 
         return FreeAlgebraBasis.compose_transition(
             lambda x: _tensor_product_of_dicts_first(WordBasis.transition(cls)(x[0]), WordBasis.transition(cls)(x[1])),
@@ -709,7 +709,7 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     def skew_element(cls, w, u, n):
-        from schubmult.schub_lib.single import schubmult_py_down
+        from schubmult.mult.single import schubmult_py_down
 
         if u.inv > 0 and max(u.descents()) >= n:
             return {}
@@ -723,7 +723,7 @@ class SchubertBasis(FreeAlgebraBasis):
     @classmethod
     @cache
     def coproduct(cls, key):
-        from ._mul_utils import _tensor_product_of_dicts_first
+        from ..utils._mul_utils import _tensor_product_of_dicts_first
 
         # print(f"{key=}")
         dct = cls.transition_word(*key)
@@ -886,7 +886,7 @@ class SchubertSchurBasis(FreeAlgebraBasis):
     @classmethod
     @cache
     def coproduct(cls, key):
-        from ._mul_utils import _tensor_product_of_dicts_first
+        from ..utils._mul_utils import _tensor_product_of_dicts_first
 
         return FreeAlgebraBasis.compose_transition(
             lambda x: _tensor_product_of_dicts_first(SchubertBasis.transition(cls)(x[0]), SchubertBasis.transition(cls)(x[1])),

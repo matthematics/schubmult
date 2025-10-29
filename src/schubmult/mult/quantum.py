@@ -1,7 +1,7 @@
 from functools import cached_property
 
 import schubmult.rings.variables as spl
-import schubmult.schub_lib.schub_lib as sss
+import schubmult.utils.schub_lib as sss
 from schubmult.schub_lib.perm_lib import (
     Permutation,
     code,

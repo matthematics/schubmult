@@ -1,8 +1,7 @@
 import schubmult.schub_lib.perm_lib as pl
-import schubmult.utils.perm_utils as schub_lib
+import schubmult.utils.schub_lib as schub_lib
+from schubmult.rings.poly_lib import call_zvars
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, sympify
-
-from .poly_lib import call_zvars
 
 
 def perm_act(val, i, var2=None):

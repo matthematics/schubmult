@@ -20,11 +20,11 @@ from schubmult.symbolic import (
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
-from ._separated_descents import SeparatedDescentsRing
 from .abstract_schub_poly import GenericPrintingTerm
 from .base_schubert_ring import BaseSchubertElement
-from .free_algebra_basis import WordBasis
+from .free_algebra_basis import SchubertBasis, WordBasis
 from .schubert_ring import DSx, Sx
+from .separated_descents import SeparatedDescentsRing
 
 splugSx = SeparatedDescentsRing(Sx([]).ring)
 ADSx = SeparatedDescentsRing(DSx([]).ring)
@@ -795,3 +795,5 @@ class NSymElement(FreeAlgebraElement):
 
     def __str__(self):
         return sstr(self)
+
+ASx = FreeAlgebra(SchubertBasis)

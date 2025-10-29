@@ -3,9 +3,8 @@ from functools import cache, cached_property
 
 import sympy.combinatorics.permutations as spp
 
-# import schubmult.utils.perm_utils as sl
 import schubmult.utils.logging as lg
-from schubmult.utils.perm_utils import cyclic_sort, old_code, permtrim_list, sg
+import schubmult.utils.perm_utils as sl
 
 # schubmult.poly_lib.variables import GeneratingSet
 
@@ -154,14 +153,14 @@ class Permutation:
 
     @staticmethod
     def __xnew__(_class, perm):
-        p = tuple(permtrim_list([*perm]))
+        p = tuple(sl.permtrim_list([*perm]))
         # s_perm = spp.Permutation([i - 1 for i in p])
         obj = object.__new__(_class)
         obj._args = (p,)
         # obj._s_perm = tuple([i - 1 for i in p])
         obj._perm = p
         obj._hash_code = hash(p)
-        cd = old_code(p)
+        cd = sl.old_code(p)
         obj._unique_key = (len(p), sum([cd[i] * math.factorial(len(p) - 1 - i) for i in range(len(cd))]))
         return obj
 
@@ -246,7 +245,7 @@ class Permutation:
 
     @cache
     def get_cycles_cached(self):
-        return [tuple(cyclic_sort([i + 1 for i in c])) for c in spp.Permutation([k - 1 for k in self._perm]).cyclic_form]
+        return [tuple(sl.cyclic_sort([i + 1 for i in c])) for c in spp.Permutation([k - 1 for k in self._perm]).cyclic_form]
 
     @classmethod
     def from_cycles(cls, cycle_iter):
@@ -259,7 +258,7 @@ class Permutation:
 
     @cache
     def _cached_code(self):
-        return old_code(self._perm)
+        return sl.old_code(self._perm)
 
     @property
     def trimcode(self):
@@ -451,10 +450,10 @@ def longest_element(indices):
         did_one = False
         for i in range(len(indices)):
             j = indices[i] - 1
-            if sg(j, perm) == 0:
+            if sl.sg(j, perm) == 0:
                 perm = perm.swap(j, j + 1)
                 did_one = True
-    return permtrim(perm)
+    return sl.permtrim(perm)
 
 
 def theta(perm):
