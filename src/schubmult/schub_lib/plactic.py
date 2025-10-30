@@ -573,4 +573,118 @@ class Plactic(GridPrint, CrystalGraph):
         Q = cls(tuple(tuple(r) for r in Q_rows))
         return P, Q
 
+    def reverse_rectify_to_outer(self, outer_shape):
+        """
+        Deterministic reverse-rectification to a given outer shape `outer_shape`.
+
+        Given a (straight) tableau `self` of shape lambda, produce a skew tableau
+        (represented as a Plactic whose rows may contain 0's for inner cells)
+        of outer shape `outer_shape` whose rectification is `self`.
+
+        outer_shape: iterable of nonnegative ints giving the desired outer row
+                     lengths (mu_0 >= mu_1 >= ...).
+
+        Algorithm (deterministic):
+        - Let mu be the set of cells (r,c) with 0 <= r < len(mu) and 0 <= c < mu[r].
+        - While the current set of occupied cells (from the working tableau) is
+          a strict subset of mu:
+            * choose an outer corner cell (r,c) in mu\current_cells (no cell of mu
+              to its right or below). Choose the maximal such (r,c) (deterministic).
+            * create a hole at (r,c) (extend rows/cols as needed, set that cell to 0),
+              then perform an upward jeu-de-taquin slide from (r,c) using
+              up_jdt_slide to move the hole inward.
+            * adopt the resulting tableau and continue.
+        - Return the resulting Plactic (with zeros marking inner/removed cells).
+
+        Notes:
+        - Raises ValueError if outer_shape does not dominate the current shape
+          (i.e. mu must contain the current occupied cells).
+        - Raises RuntimeError if no suitable outer corner can be found or if an
+          up_jdt_slide fails (this indicates the requested outer shape is not
+          attainable by reverse-rectification).
+        """
+        # normalize outer shape
+        mu = tuple(int(x) for x in outer_shape)
+        if any(mu[i] < (mu[i + 1] if i + 1 < len(mu) else 0) for i in range(len(mu))):
+            # not required but warn if not nonincreasing
+            pass
+
+        # current tableau rows (mutable lists)
+        rows = [list(r) for r in self._word]
+
+        # helper to compute occupied cells set
+        def occupied_cells(rs):
+            cells = set()
+            for rr, row in enumerate(rs):
+                for cc in range(len(row)):
+                    # treat only real boxes (non-zero and zero both count as occupied for shape)
+                    cells.add((rr, cc))
+            return cells
+
+        # build mu cell set
+        mu_cells = set()
+        for r in range(len(mu)):
+            for c in range(mu[r]):
+                mu_cells.add((r, c))
+
+        cur_cells = occupied_cells(rows)
+
+        # sanity: current cells must be subset of mu_cells
+        if not cur_cells.issubset(mu_cells):
+            raise ValueError("outer_shape must contain the current tableau shape (componentwise domination)")
+
+        # loop until shapes match
+        while cur_cells != mu_cells:
+            # difference cells that need to be added
+            diff = mu_cells - cur_cells
+
+            # find outer-corner candidates inside diff (no mu cell to right or below)
+            candidates = []
+            for (r, c) in diff:
+                right = (r, c + 1) in mu_cells
+                down = (r + 1, c) in mu_cells
+                if (not right) and (not down):
+                    candidates.append((r, c))
+
+            if not candidates:
+                raise RuntimeError("No outer-corner candidate found while reverse-rectifying to outer shape")
+
+            # deterministic choice: maximal (r,c)
+            r, c = max(candidates)
+
+            # ensure rows has row r
+            while len(rows) <= r:
+                rows.append([])
+
+            # extend the chosen row to have column c (fill with zeros)
+            while len(rows[r]) <= c:
+                rows[r].append(0)
+
+            # build temporary tableau with the new hole and perform up_jdt_slide
+            tmp = Plactic(tuple(tuple(rr) for rr in rows))
+
+            # verify starting position is empty (should be 0)
+            val = tmp[r, c]
+            if val is None:
+                # if indexing returned None, ensure underlying list has that slot (it should)
+                raise RuntimeError(f"Unexpected missing cell at {(r,c)} when creating hole")
+            if val != 0:
+                # force the hole (overwrite); we must set it to 0 before sliding
+                tmp_rows = [list(rr) for rr in tmp._word]
+                tmp_rows[r][c] = 0
+                tmp = Plactic(tuple(tuple(rr) for rr in tmp_rows))
+
+            # perform upward slide from the hole
+            try:
+                new_tmp = tmp.up_jdt_slide(r, c)
+            except Exception as e:
+                raise RuntimeError(f"up_jdt_slide failed from corner {(r,c)}: {e}")
+
+            # adopt new rows and recompute occupied cells
+            rows = [list(rr) for rr in new_tmp._word]
+            cur_cells = occupied_cells(rows)
+
+        # return Plactic with zeros possibly marking inner cells
+        return Plactic(tuple(tuple(r) for r in rows))
+
 
