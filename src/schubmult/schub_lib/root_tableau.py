@@ -26,7 +26,7 @@ class RootTableau(CrystalGraph, GridPrint):
     """
 
     def __hash__(self) -> int:
-        return hash(self._root_grid.tobytes())
+        return hash(self._hasher)
 
 
     @classmethod
@@ -40,8 +40,8 @@ class RootTableau(CrystalGraph, GridPrint):
         for idx, letter in enumerate(rev_word):
             letter2 = idx + 1
             word, word2 = NilPlactic._ed_insert_rsk(word, word2, int(letter), int(letter2) if letter2 is not None else None)
-        num_rows = len(word)
-        num_cols = max(len(r) for r in word) if word else 0
+        num_rows = len(word2)
+        num_cols = max(len(r) for r in word2)
         grid = np.empty((num_rows, num_cols), dtype=object)
         for r in range(num_rows):
             for c in range(num_cols):
@@ -101,7 +101,8 @@ class RootTableau(CrystalGraph, GridPrint):
     #     return self._red_plactic.reverse_rsk(self._index_tableau)
 
     def __init__(self, grid=None):
-        self._root_grid = grid
+        self._root_grid = grid.copy()
+        self._hasher = tuple(tuple(tuple(b) for b in a if b is not None) for a in self._root_grid if a is not None)
 
 
     def epsilon(self, index):
@@ -160,4 +161,4 @@ class RootTableau(CrystalGraph, GridPrint):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, RootTableau):
             return False
-        return self._root_grid == other._root_grid
+        return self._hasher == other._hasher
