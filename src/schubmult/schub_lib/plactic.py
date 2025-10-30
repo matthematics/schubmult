@@ -191,7 +191,7 @@ class Plactic(GridPrint, CrystalGraph):
         if isinstance(key, tuple):
             i, j = key
             if len(self._word) == 0 or i >= len(self._word) or j >= len(self._word[i]):
-                return 0
+                return None
             return self._word[i][j]
         is_slice = isinstance(key, slice)
 
@@ -239,36 +239,48 @@ class Plactic(GridPrint, CrystalGraph):
     @staticmethod
     def _rs_insert(word, letter, i=0):
         """
-        Row-standard insertion variant that returns a new word as a tuple of rows
-        (each row itself a tuple of ints). `word` must be a tuple-of-tuples.
+        Row-insertion: insert `letter` into `word` (tuple-of-tuples) starting at row i.
+        Returns a new tuple-of-tuples representing the tableau after insertion.
+
+        Algorithm:
+        - If row i doesn't exist, append a new row with the letter.
+        - Otherwise find the first entry in row i that is > letter, replace it (bump)
+          and recursively insert the bumped value into row i+1.
+        - If no entry > letter, append letter to the end of row i.
         """
-        # Ensure word is tuple-of-tuples (idempotent if already correct)
+        # normalize input
         word = tuple(tuple(r) for r in word)
 
-        if i == len(word):
-            row_i = ()
-        else:
-            row_i = word[i]
-        x0 = letter
+        if i >= len(word):
+            # append new row containing the letter
+            return (*word, (int(letter),))
 
-        # If row empty or letter is >= max(row) then append to this row
-        if len(row_i) == 0 or x0 >= max(row_i):
-            new_row = (*row_i, x0)
-            return (*word[:i], new_row, *word[i + 1 :])
+        row = list(word[i])
+        x = int(letter)
 
-        # otherwise bump the smallest entry > x0
-        x1 = min(a for a in row_i if a > x0)
-        new_first_row = list(row_i)
-        idx = new_first_row.index(x1)
-        new_first_row[idx] = x0
-        new_word = (*word[:i], tuple(new_first_row), *word[i + 1 :])
-        # recursively insert the bumped value into the next row
-        return Plactic._rs_insert(new_word, x1, i=i + 1)
+        # find first entry strictly greater than x to bump
+        for k, val in enumerate(row):
+            if val > x:
+                bumped = val
+                row[k] = x
+                new_word = (*word[:i], tuple(row), *word[i + 1 :])
+                # recursively insert bumped into next row
+                return Plactic._rs_insert(new_word, bumped, i=i + 1)
+
+        # nothing to bump -> append to end of this row
+        row.append(x)
+        return (*word[:i], tuple(row), *word[i + 1 :])
 
     def rs_insert(self, *letters):
-        """Insert a letter/entry into this Plactic tableau and return a new Plactic."""
+        """Insert one or more letters in sequence (row-insertion) and return a new Plactic."""
+        # accept either rs_insert(a,b,...) or rs_insert([a,b,...])
+        if len(letters) == 1 and isinstance(letters[0], (list, tuple)):
+            seq = list(letters[0])
+        else:
+            seq = list(letters)
+
         new_word = self._word
-        for letter in letters:
+        for letter in seq:
             new_word = Plactic._rs_insert(new_word, int(letter))
         return Plactic(new_word)
 
@@ -323,6 +335,60 @@ class Plactic(GridPrint, CrystalGraph):
         result = Plactic().rs_insert(*word)
         assert result.shape == self.shape, f"{result.shape=} {self.shape=} {result=} {self=}"
         return result
+    # def _bracket_positions(self, i: int):
+    #     """
+    #     Bracketing scan for indices i (as '+') and i+1 (as '-') on the tableau's
+    #     row-reading word. Returns (plus_stack, minus_unpaired, word_list) where:
+    #       - plus_stack is a list of indices of unmatched i (these are the '+' positions)
+    #       - minus_unpaired is a list of indices of unmatched i+1 (these are the '-' positions)
+    #       - word_list is a mutable list copy of the row-reading word used for modification.
+    #     The scan follows the standard left->right cancellation rule.
+    #     """
+    #     word = list(self.row_word)
+    #     plus_stack = []
+    #     minus_unpaired = []
+    #     for idx, a in enumerate(word):
+    #         if a == i:
+    #             plus_stack.append(idx)
+    #         elif a == i + 1:
+    #             if plus_stack:
+    #                 # cancel with the most recent unmatched '+'
+    #                 plus_stack.pop()
+    #             else:
+    #                 # unmatched '-'
+    #                 minus_unpaired.append(idx)
+    #     return plus_stack, minus_unpaired, word
+
+    # def raising_operator(self, i):
+    #     """
+    #     Crystal raising operator e_i: change the leftmost unmatched (i+1) -> i,
+    #     if any; rebuild the Plactic from the modified row-reading word and return it.
+    #     Returns None if epsilon_i == 0.
+    #     """
+    #     plus, minus, word = self._bracket_positions(i)
+    #     if len(minus) == 0:
+    #         return None
+    #     index_to_change = minus[0]  # leftmost unmatched i+1
+    #     word[index_to_change] = i
+    #     result = Plactic().rs_insert(*word)
+    #     # shape-preserving check (crystal operators preserve shape)
+    #     assert result.shape == self.shape, f"shape changed by e_{i}: {self.shape} -> {result.shape}"
+    #     return result
+
+    # def lowering_operator(self, i):
+    #     """
+    #     Crystal lowering operator f_i: change the rightmost unmatched i -> i+1,
+    #     if any; rebuild the Plactic from the modified row-reading word and return it.
+    #     Returns None if phi_i == 0.
+    #     """
+    #     plus, minus, word = self._bracket_positions(i)
+    #     if len(plus) == 0:
+    #         return None
+    #     index_to_change = plus[-1]  # rightmost unmatched i
+    #     word[index_to_change] = i + 1
+    #     result = Plactic().rs_insert(*word)
+    #     assert result.shape == self.shape, f"shape changed by f_{i}: {self.shape} -> {result.shape}"
+    #     return result
 
     @property
     def crystal_weight(self):
@@ -442,5 +508,69 @@ class Plactic(GridPrint, CrystalGraph):
 
         # reverse collected letters to obtain original insertion order
         return list(reversed(word_rev))
+
+    @classmethod
+    def rsk_insert(cls, *letters):
+        """
+        Perform ordinary RSK (row insertion) on the given sequence of letters,
+        starting from this Plactic as the initial P-tableau. Returns a pair
+        (P_tableau, Q_tableau) where both are Plactic instances and Q is the
+        standard recording tableau with entries 1..m (in insertion order).
+
+        Usage:
+          P, Q = Plactic().rsk_insert(3,1,2,1)
+          or
+          P, Q = Plactic().rsk_insert([3,1,2,1])
+        """
+        # normalize letters accept either rsk_insert(a,b,...) or rsk_insert(iterable)
+        if len(letters) == 1 and isinstance(letters[0], (list, tuple)):
+            seq = list(letters[0])
+        else:
+            seq = list(letters)
+
+        # mutable rows for P and Q
+        P_rows = []
+        Q_rows = []
+
+        def _insert_letter(rows, x):
+            """Insert x into mutable rows (list of list) and return final (i,j)."""
+            i = 0
+            while True:
+                if i >= len(rows):
+                    rows.append([])
+                row = rows[i]
+                if len(row) == 0 or x >= max(row):
+                    row.append(x)
+                    return i, len(row) - 1
+                # bump smallest entry > x
+                for idx, val in enumerate(row):
+                    if val > x:
+                        bumped = val
+                        row[idx] = x
+                        x = bumped
+                        break
+                i += 1
+
+        # perform insertions, updating Q at appended cell each time
+        for k, letter in enumerate(seq, start=1):
+            i, j = _insert_letter(P_rows, int(letter))
+            # ensure Q has row i
+            while i >= len(Q_rows):
+                Q_rows.append([])
+            # append placeholder zeros for earlier existing length mismatches
+            # (Q_rows[i] should be same length as P_rows[i]-1 before append)
+            # append the insertion index to the new/extended cell
+            if j == len(Q_rows[i]):
+                Q_rows[i].append(k)
+            else:
+                # In typical RSK we always append a new box at the final row.
+                # However guard against unexpected states by inserting at position j.
+                Q_rows[i].insert(j, k)
+                # ensure consistency of row lengths in Q with P:
+                # if this caused earlier rows to mismatch, leave as-is (shouldn't happen)
+        # convert to Plactic objects
+        P = cls(tuple(tuple(r) for r in P_rows))
+        Q = cls(tuple(tuple(r) for r in Q_rows))
+        return P, Q
 
 
