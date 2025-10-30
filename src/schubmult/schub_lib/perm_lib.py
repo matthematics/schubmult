@@ -123,6 +123,10 @@ class Permutation:
     def root_swap(self, root):
         return self.swap(root[0] - 1, root[1] - 1)
 
+    @classmethod
+    def reflection(cls, root):
+        return cls([]).swap(root[0] - 1, root[1] - 1)
+
     def right_root_at(self, index, word=None):
         if word is None:
             word = [*self.code_word]

@@ -1,4 +1,3 @@
-
 from functools import cached_property
 from typing import Any, Optional
 
@@ -27,76 +26,46 @@ class RootTableau(CrystalGraph, GridPrint):
     """
 
     def __hash__(self) -> int:
-        return hash(tuple(self._base_word)) ^ hash(self._weight_tableau)
+        return hash(self._root_grid.tobytes())
 
-    # edelman greene highest weight
+
     @classmethod
-    def root_rsk_insert(cls, reduced_word, compatible_seq):
-        grid = np.empty((len(reduced_word), len(reduced_word)), dtype=object)
-        def _recurse(index):
-            nonlocal grid
-            if index == len(reduced_word):
-                return cls(
-                    grid,
-                )
-            if index == 0:
-                d = reduced_word[0]
-                grid[0, 0] = ((d, d + 1), compatible_seq[0])
-                return _recurse(index + 1)
-            d = reduced_word[index]
-            root_shift = np.vectorize(lambda x: (Permutation.ref_product(d).act_root(*x[0]), x[1]) if x is not None else None, otypes=[object])
-            grid = root_shift(grid)
-            to_insert = compatible_seq[index]
-            root = (d, d +  1)
-            def _root_compare(root1, root2):
-                if root1[0] == root2[0]:
-                    return 1
-                if root1[1] == root2[1]:
-                    return 1
-                if root1[0] == root2[1] or root1[1] == root2[0]:
-                    return -1
-                return 0
+    def root_insert_rsk(cls, reduced_word, compatible_seq):
+        _perm = Permutation.ref_product(*reduced_word)
+        word, word2 = (), ()
+        spunkle = len(_perm)
+        w0 = Permutation.w0(spunkle)
+        rev_word = [w0[a-1] for a in reduced_word]
 
-            for i in range(len(reduced_word)):
-                last_box = max((j for j in range(len(reduced_word)) if grid[i, j] is not None), default=-1)
-                if last_box == -1:
-                    grid[i, 0] = (root, to_insert)
-                    return _recurse(index + 1)
-                good = True
-                for k in range(last_box + 1):
-                    (a, b), entry = grid[i, k]
-                    if to_insert < entry:
-                        # bump here
-                        grid[i, k] = (root, to_insert)
-                        (root, to_insert) = (a, b), entry
-                        break
-                    if _root_compare(root, (a, b)) == -1:
-                        good = False
-                        break
-                if not good:
-                    continue
-                grid[i, last_box + 1] = (root, to_insert)
-                return _recurse(index + 1)
-            grid[i, 0] = (root, to_insert)
-            return _recurse(index + 1)
+        for idx, letter in enumerate(rev_word):
+            letter2 = idx + 1
+            word, word2 = NilPlactic._ed_insert_rsk(word, word2, int(letter), int(letter2) if letter2 is not None else None)
+        num_rows = len(word)
+        num_cols = max(len(r) for r in word) if word else 0
+        grid = np.empty((num_rows, num_cols), dtype=object)
+        for r in range(num_rows):
+            for c in range(num_cols):
+                if c < len(word2[r]):
+                    # store pair (root_tuple, letter) as before
+                    grid[r, c] = (_perm.right_root_at(word2[r][c] - 1, word=reduced_word), compatible_seq[word2[r][c] - 1])
+                else:
+                    grid[r, c] = None
 
-        return _recurse(0)
-            # how do we insert the simple reflection
-
+        return cls(grid)
 
     # skew tableaux are subword
     @classmethod
     def from_rc_graph(cls, rc: RCGraph):
-        rc_hw, raise_seq = rc.to_highest_weight()
-        weight_tableau = rc_hw.weight_tableau
-        base_word = rc.perm_word
-        return cls(base_word, weight_tableau.reverse_raise_seq(raise_seq))
+        reduced_word = rc.perm_word
+        compatible_seq = []
+        for i in range(len(rc)):
+            compatible_seq.extend([i+1] * len(rc[i]))
+        return cls.root_insert_rsk(reduced_word, compatible_seq)
 
     def delete_box(self, i, j):
         if j >= self.weight_tableau.shape[i]:
             return None
         index = sum(self.weight_tableau.shape[:i]) + j
-        
         new_word = [list(row) for row in self.weight_tableau._word]
         new_word[i][j] = None
         new_w_tab = Plactic(new_word).up_jdt_slide(i, j)
@@ -105,27 +74,6 @@ class RootTableau(CrystalGraph, GridPrint):
 
     def __getitem__(self, key: Any) -> Any:
         return self._root_grid[key]
-        # if isinstance(key, tuple):
-        #     i, j = key
-        #     if i >= self.weight_tableau.rows:
-        #         return self.weight_tableau[i - self.weight_tableau.rows, j]
-        #     if j >= self.weight_tableau.shape[i]:
-        #         return None
-        #     index = sum(self.weight_tableau.shape[:i]) + j
-        #     try:
-        #         return self.perm.right_root_at(index, word=self.base_word)
-        #     except IndexError:
-        #         return None
-        # is_slice = isinstance(key, slice)
-        # if is_slice:
-        #     start = key.start or 0
-        #     stop = key.stop or len(self.base_word)
-        #     step = key.step or 1
-        #     roots = []
-        #     for idx in range(start, stop, step):
-        #         roots.append(self.perm.right_root_at(idx, word=self.base_word))
-        #     return tuple(roots)
-        # raise TypeError(f"Invalid key type {type(key)}")
 
     @cached_property
     def rows(self):
@@ -141,21 +89,12 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def is_valid(self):
-        # check if the tableau is a valid root tableau
-        # i.e. for each box (r,c) with entry (a,b), we have a <= b
         return self.rc_graph.is_valid
 
     @property
     def perm(self):
         return self._perm
 
-    @property
-    def weight_tableau(self):
-        return self._weight_tableau
-
-    @property
-    def base_word(self):
-        return self._base_word
 
     # @property
     # def reduced_word(self):
@@ -221,4 +160,4 @@ class RootTableau(CrystalGraph, GridPrint):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, RootTableau):
             return False
-        return self._word == other._word
+        return self._root_grid == other._root_grid

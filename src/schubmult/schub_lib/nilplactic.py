@@ -306,7 +306,7 @@ class NilPlactic(Plactic):
         return NilPlactic._ed_insert(word, x1, i=i + 1)
 
     @staticmethod
-    def ed_insert_rsk(word, word2, letter, letter2, i=0):
+    def _ed_insert_rsk(word, word2, letter, letter2, i=0):
         """
         Edelman–Greene style two-row insertion.
         word and word2 are tuples-of-rows; always return pair of tuple-of-rows.
@@ -340,10 +340,20 @@ class NilPlactic(Plactic):
             new_first_row = list(row_i)
             new_first_row[new_first_row.index(x1)] = x0
             new_word = (*word[:i], tuple(new_first_row), *word[i + 1 :])
-            return NilPlactic.ed_insert_rsk(new_word, word2, x1, letter2, i=i + 1)
+            return NilPlactic._ed_insert_rsk(new_word, word2, x1, letter2, i=i + 1)
 
         # special case: continue bumping without changing current row
-        return NilPlactic.ed_insert_rsk(word, word2, x1, letter2, i=i + 1)
+        return NilPlactic._ed_insert_rsk(word, word2, x1, letter2, i=i + 1)
+
+    @classmethod
+    def ed_insert_rsk(cls, letters, letters2=()):
+        """Edelman–Greene two-row insertion for NilPlactic tableaux."""
+        word = ()
+        word2 = ()
+        for idx, letter in enumerate(letters):
+            letter2 = letters2[idx] if idx < len(letters2) else None
+            word, word2 = cls._ed_insert_rsk(word, word2, int(letter), int(letter2) if letter2 is not None else None)
+        return cls(word), Plactic(word2)
 
     def __hash__(self):
         return hash(self._word)
