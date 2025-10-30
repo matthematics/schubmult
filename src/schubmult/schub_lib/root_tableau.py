@@ -27,11 +27,12 @@ class RootTableau(CrystalGraph, GridPrint):
     def __hash__(self) -> int:
         return hash(tuple(self._base_word)) ^ hash(self._weight_tableau)
 
+    # skew tableaux are subword
     @classmethod
     def from_rc_graph(cls, rc: RCGraph):
         rc_hw, raise_seq = rc.to_highest_weight()
         weight_tableau = rc_hw.weight_tableau
-        base_word = rc_hw.perm_word
+        base_word = rc.perm_word
         return cls(base_word, weight_tableau.reverse_raise_seq(raise_seq))
 
     def delete_box(self, index):
@@ -45,15 +46,35 @@ class RootTableau(CrystalGraph, GridPrint):
         return RootTableau(reduced_word=wd), root
 
     def __getitem__(self, key: Any) -> Any:
-        return self._weight_tableau[key]
+        if isinstance(key, tuple):
+            i, j = key
+            if i >= self.weight_tableau.rows:
+                return self.weight_tableau[i - self.weight_tableau.rows, j]
+            if j >= self.weight_tableau.shape[i]:
+                return None
+            index = sum(self.weight_tableau.shape[:i]) + j
+            try:
+                return self.perm.right_root_at(index, word=self.base_word)
+            except IndexError:
+                return None
+        is_slice = isinstance(key, slice)
+        if is_slice:
+            start = key.start or 0
+            stop = key.stop or len(self.base_word)
+            step = key.step or 1
+            roots = []
+            for idx in range(start, stop, step):
+                roots.append(self.perm.right_root_at(idx, word=self.base_word))
+            return tuple(roots)
+        raise TypeError(f"Invalid key type {type(key)}")
 
     @cached_property
     def rows(self):
-        return self.weight_tableau.rows + 1
+        return self.weight_tableau.rows * 2
 
     @cached_property
     def cols(self):
-        return max(self.weight_tableau.cols,len(self.base_word))
+        return self.weight_tableau.cols
 
     # @property
     # def compatible_sequence(self):
