@@ -14,7 +14,7 @@ from .rc_graph import RCGraph
 # specific skew tableaux
 # subword
 # dual
-# rectifies to a specific subword
+# recti/fies to a specific subword
 #subword subtableaux
 
 # Dominant formula: number of standard tableaux of shape w/mu that recitfy to a subword tableau of shape u for a fixed tableau of shape w
@@ -63,14 +63,7 @@ class RootTableau(CrystalGraph, GridPrint):
         return cls.root_insert_rsk(reduced_word, compatible_seq)
 
     def delete_box(self, i, j):
-        if j >= self.weight_tableau.shape[i]:
-            return None
-        index = sum(self.weight_tableau.shape[:i]) + j
-        new_word = [list(row) for row in self.weight_tableau._word]
-        new_word[i][j] = None
-        new_w_tab = Plactic(new_word).up_jdt_slide(i, j)
-        base_word = self._base_word[:index] + self._base_word[index + 1 :]
-        return RootTableau(base_word, new_w_tab)
+        pass
 
     def __getitem__(self, key: Any) -> Any:
         return self._root_grid[key]
@@ -92,10 +85,27 @@ class RootTableau(CrystalGraph, GridPrint):
         return self.rc_graph.is_valid
 
     @property
-    def perm(self):
-        return self._perm
-
-
+    def reduced_word(self):
+        def root_shift(d):
+            return np.vectorize(lambda x: (Permutation.ref_product(d).act_root(*x[0]), x[1]) if x is not None else None, otypes=[object])
+        grid = self._root_grid.copy()
+        word = []
+        def _recurse_grid():
+            nonlocal grid, word
+            max_r, max_c = grid.shape
+            for r in range(max_r - 1, -1, -1):
+                if grid[r, 0] is not None:
+                    for c in range(max_c - 1, -1, -1):
+                        if grid[r, c] is not None:
+                            d = grid[r, c][0][0]
+                            word.append(d)
+                            grid[r, c] = None
+                            grid = root_shift(d)(grid)
+                            return True
+            return False
+        while _recurse_grid():
+            pass
+        return tuple(reversed(word))
     # @property
     # def reduced_word(self):
     #     return self._red_plactic.reverse_rsk(self._index_tableau)
@@ -104,6 +114,11 @@ class RootTableau(CrystalGraph, GridPrint):
         self._root_grid = grid.copy()
         self._hasher = tuple(tuple(tuple(b) for b in a if b is not None) for a in self._root_grid if a is not None)
 
+
+    @property
+    def weight_tableau(self):
+        _word = tuple([a for a in row if a is not None] for row in self._root_grid)
+        return Plactic(_word)
 
     def epsilon(self, index):
         return self._weight_tableau.epsilon(index)
