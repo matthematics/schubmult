@@ -28,10 +28,10 @@ from .rc_graph import RCGraph
 def _length_of_row(grid, row):
     return len([c for c in grid[row, :] if c is not None])
 
-def _count_boxes(grid, spot=(0, 0)):
+def _count_boxes(grid):
     count = 0
-    for i in range(spot[0] ,grid.shape[0]):
-        for j in range(spot[1] if i == spot[0] else 0, grid.shape[1]):
+    for i in range(grid.shape[0]):
+        for j in range(grid.shape[1]):
             cell = grid[i, j]
             if cell is not None:
                 count += 1
@@ -39,35 +39,33 @@ def _count_boxes(grid, spot=(0, 0)):
 
 def _word_from_grid(grid0, spot = (0, 0)):
     word = []
+    grid = copy.deepcopy(grid0)
     def _recurse_grid():
-        nonlocal word
-        grid = copy.deepcopy(grid0)
-        if _count_boxes(grid, spot=spot) == 0:
-            return False
+        nonlocal word, grid
+        # print("DEBUG: current grid:")
+        # pretty_print(grid)
+        # print(f"Starting with {_count_boxes(grid)} boxes from {spot=}.")
         max_r, max_c = -1, -1
-        for i in range(grid.shape[0] - 1, spot[0] - 1, -1):
+        for i in range(grid.shape[0] - 1, -1, -1):
             L = _length_of_row(grid, i)
-            if i > spot[0] or L >= spot[1]:
-                cell = grid[i, L - 1] if L > 0 else None
-                if cell is not None:
-                    root = cell[0]
-                    if root[1] == root[0] + 1:
-                        max_r, max_c = i, L - 1
-                        break
-        if max_r == -1 and max_c == -1:
-            pretty_print(grid)
-            raise ValueError("No valid root found")
+            cell = grid[i, L - 1] if L > 0 else None
+            if cell is not None:
+                root = cell[0]
+                if root[1] == root[0] + 1:
+                    max_r, max_c = i, L - 1
+                    break
+
         root = grid[max_r, max_c][0]
         assert root[1] == root[0] + 1
         word.append(root[0])
         grid = _root_shift(root[0])(grid)
         grid[max_r, max_c] = None
-        if _count_boxes(grid, spot=spot) > 0:
+        if (max_r, max_c) == spot:
             return False
         return True
     while _recurse_grid():
         pass
-    # assert _count_boxes(grid, spot=spot) == 0, f"Grid should be empty after extraction, but found {_count_boxes(grid, spot=spot)} boxes, {grid=}."
+    #assert _count_boxes(grid) == 0, f"Grid should be empty after extraction, but found {_count_boxes(grid, spot=spot)} boxes, {grid=}."
     # assert len(word) == _count_boxes(grid0, spot=spot)
     return tuple(reversed(word))
 
@@ -191,14 +189,16 @@ class RootTableau(CrystalGraph, GridPrint):
                 raise ValueError(f"No box at position {(i,j)} to delete")
 
             # root = new_grid[i, j][0]
-            new_grid[i, j] = None
+            
 
             # apply root-shift to region above the deleted box (all columns) and to
             # the part of the same row left of the hole; be defensive about shapes
             #new_grid = _root_shift_(root)(new_grid)
             letter = self.letter_at(i, j)
+            # print("Got letter:", letter)
             new_grid[i, :j] = _root_shift(letter)(new_grid[i, :j])
             new_grid[:i, :] = _root_shift(letter)(new_grid[:i, :])
+            new_grid[i, j] = None
             # perform down/right jeu-de-taquin (push boxes into the hole)
             rows, cols = new_grid.shape
             while True:
