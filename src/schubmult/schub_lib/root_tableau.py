@@ -41,6 +41,8 @@ def _word_from_grid(grid0, spot = (0, 0)):
     grid = copy.deepcopy(grid0)
     word = []
     def _recurse_grid():
+        if _count_boxes(grid, spot=spot) == 0:
+            return False
         nonlocal grid, word
         max_r, max_c = -1, -1
         for i in range(grid.shape[0] - 1, spot[0] - 1, -1):
@@ -60,11 +62,13 @@ def _word_from_grid(grid0, spot = (0, 0)):
         word.append(root[0])
         grid = _root_shift(root[0])(grid)
         grid[max_r, max_c] = None
-        return _count_boxes(grid, spot=spot)
-    while _recurse_grid() > 0:
+        if _count_boxes(grid, spot=spot) > 0:
+            return False
+        return True
+    while _recurse_grid():
         pass
-    assert _count_boxes(grid) == 0, f"Grid should be empty after extraction, but found {_count_boxes(grid)} boxes, {grid=}."
-    assert len(word) == _count_boxes(grid0)
+    assert _count_boxes(grid, spot=spot) == 0, f"Grid should be empty after extraction, but found {_count_boxes(grid, spot=spot)} boxes, {grid=}."
+    assert len(word) == _count_boxes(grid0, spot=spot)
     return tuple(reversed(word))
 
 
@@ -169,7 +173,7 @@ class RootTableau(CrystalGraph, GridPrint):
             raise ValueError(f"Missing box at position {(i, j)} cannot be deleted")
 
         # use a deep copy so we never mutate the original tableau's objects/views
-        
+
         def _delete_box_jdt():
             """
             Delete the box at (i,j) (0-indexed) by creating a hole, applying the
@@ -192,7 +196,9 @@ class RootTableau(CrystalGraph, GridPrint):
             # apply root-shift to region above the deleted box (all columns) and to
             # the part of the same row left of the hole; be defensive about shapes
             #new_grid = _root_shift_(root)(new_grid)
-            new_grid[:i + 1, :j +1] = _root_shift(self.letter_at(i, j))(new_grid[:i + 1, :j + 1])
+            letter = self.letter_at(i, j)
+            new_grid[i, :j] = _root_shift(letter)(new_grid[i, :j])
+            new_grid[:i, :] = _root_shift(letter)(new_grid[:i, :])
             # perform down/right jeu-de-taquin (push boxes into the hole)
             rows, cols = new_grid.shape
             while True:

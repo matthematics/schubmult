@@ -2,7 +2,7 @@
 if __name__ == "__main__":
     from schubmult import *
     from schubmult.rings.rc_graph import RCGraph
-    from schubmult.rings.crystal_graph import CrystalGraph, CrystalGraphTensor
+    from schubmult.schub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
     from schubmult.utils.perm_utils import elem_sym_perms
     from sympy import pretty_print
     import sys

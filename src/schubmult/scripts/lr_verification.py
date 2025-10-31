@@ -14,7 +14,7 @@ from multiprocessing import Event, Lock, Manager, Process, cpu_count
 from joblib import Parallel, delayed
 from sympy import pretty_print
 
-from schubmult.rings.crystal_graph import CrystalGraphTensor
+from schubmult.schub_lib.crystal_graph import CrystalGraphTensor
 
 
 def reload_modules(dct, n_jobs=None):

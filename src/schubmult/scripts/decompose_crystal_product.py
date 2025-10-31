@@ -1,7 +1,7 @@
 from schubmult import *
 from schubmult.rings.rc_graph import RCGraph
 from schubmult.rings.rc_graph_ring import RCGraphRing
-from schubmult.rings.crystal_graph import CrystalGraph, CrystalGraphTensor
+from schubmult.schub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
 import itertools
 
 

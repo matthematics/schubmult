@@ -1,6 +1,6 @@
 from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
 from schubmult.rings.crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
-from schubmult.rings.plactic import Plactic
+from schubmult.schub_lib.plactic import Plactic
 from schubmult.symbolic import S, sympy_Mul
 
 #weight wt

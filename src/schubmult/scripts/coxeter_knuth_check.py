@@ -2,7 +2,7 @@
 from schubmult.rings.ck_ring import CoxeterKnuthRing
 from schubmult.rings.rc_graph_ring import RCGraphRing
 from schubmult.rings.rc_graph import RCGraph
-from schubmult.rings.plactic_algebra import PlacticAlgebra
+from schubmult.schub_lib.plactic_algebra import PlacticAlgebra
 from schubmult import Permutation, ASx, FA
 import itertools
 

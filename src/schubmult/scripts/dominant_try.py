@@ -1,4 +1,4 @@
-from schubmult.rings.crystal_graph import CrystalGraph, CrystalGraphTensor
+from schubmult.schub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
 from schubmult.rings.ck_ring import CoxeterKnuthRing
 import itertools
 

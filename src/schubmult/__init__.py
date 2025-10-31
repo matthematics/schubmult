@@ -23,11 +23,8 @@ __all__: List[str] = []
 
 # Walk all submodules of this package and import classes
 for finder, modname, ispkg in pkgutil.walk_packages(__path__, prefix=__name__ + "."):
-    try:
+    if modname != "scripts":
         mod = importlib.import_module(modname)
-    except Exception:
-        # ignore modules that fail to import so package import remains robust
-        continue
 
     for attr_name, attr_val in vars(mod).items():
         # export only public classes defined in that module

@@ -1,6 +1,6 @@
 from schubmult.rings.rc_graph_ring import RCGraphRing
 from schubmult.rings.rc_graph import RCGraph
-from schubmult.rings.crystal_graph import CrystalGraph, CrystalGraphTensor
+from schubmult.schub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
 from schubmult import Permutation
 import itertools
 # contactenating with the product gives new crystal graphs

@@ -1,10 +1,11 @@
 from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
-from schubmult.rings.crystal_graph import CrystalGraphTensor
-from schubmult.rings.plactic import NilPlactic, Plactic
+from schubmult.schub_lib.crystal_graph import CrystalGraphTensor
+from schubmult.schub_lib.nilplactic import NilPlactic
+from schubmult.schub_lib.plactic import Plactic
+from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.symbolic import S, sympy_Mul
 
 from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
-from .rc_graph import RCGraph
 
 #weight wt
 # yw highest weight

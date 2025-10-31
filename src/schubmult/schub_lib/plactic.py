@@ -1,4 +1,4 @@
-# filepath: /home/matthematics/schubmult/src/schubmult/rings/plactic.py
+# filepath: /home/matthematics/schubmult/src/schubmult.schub_lib.plactic.py
 from functools import cache
 
 from schubmult.schub_lib.perm_lib import Permutation
