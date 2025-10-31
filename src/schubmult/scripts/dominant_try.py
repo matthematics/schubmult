@@ -49,8 +49,8 @@ class RCGraphCut(CrystalGraph):
 
 if __name__ == "__main__":
     from schubmult import *
-    from schubmult.rings.rc_graph import RCGraph
-    from schubmult.rings.rc_graph_ring import RCGraphRing
+    from schubmult.schub_lib.rc_graph import RCGraph
+    from schubmult.schub_lib.rc_graph_ring import RCGraphRing
     
     from schubmult.utils.perm_utils import elem_sym_perms
     from sympy import pretty_print

@@ -1,5 +1,5 @@
-from schubmult.rings.rc_graph_ring import RCGraphRing
-from schubmult.rings.rc_graph import RCGraph
+from schubmult.schub_lib.rc_graph_ring import RCGraphRing
+from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.schub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
 from schubmult import Permutation
 import itertools

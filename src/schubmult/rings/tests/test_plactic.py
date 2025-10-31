@@ -1,4 +1,4 @@
-from schubmult.rings.rc_graph import RCGraph
+from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.schub_lib.plactic import Plactic, NilPlactic
 from schubmult.schub_lib.perm_lib import Permutation
 
@@ -18,7 +18,7 @@ import pytest
 
 from schubmult.schub_lib.perm_lib import Permutation
 from schubmult.schub_lib.plactic import Plactic, NilPlactic
-from schubmult.rings.rc_graph import RCGraph
+from schubmult.schub_lib.rc_graph import RCGraph
 
 
 def check_one_rc(rc):

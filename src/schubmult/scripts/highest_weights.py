@@ -1,6 +1,6 @@
 from sympy import init_printing, pretty_print
 
-from schubmult.rings.rc_graph_ring import RCGraphRing
+from schubmult.schub_lib.rc_graph_ring import RCGraphRing
 
 # IS THIS ASSOCIATIVE?
 # need associativity
@@ -8,7 +8,7 @@ rc_ring = RCGraphRing()
 
 def hom3(rc):
     from schubmult import FA, ASx, SchubertBasis
-    #from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
+    #from schubmult.schub_lib.rc_graph import RCGraph, rc_ring.from_dict
     if isinstance(rc, RCGraph):
         #return (ASx@FA)(r,rc.length_vector))
         ring = ASx @ ASx
@@ -21,7 +21,7 @@ def hom3(rc):
 
 def hom_rc(elem):
     from schubmult import FA, ASx, SchubertBasis
-    #from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
+    #from schubmult.schub_lib.rc_graph import RCGraph, rc_ring.from_dict
     ring = RCGraphRing()
     ret = 0
     for key, val in elem.items():
@@ -32,7 +32,7 @@ def hom_rc(elem):
 def hom(rc):
     from schubmult import FA, ASx, SchubertBasis
     from schubmult.rings import TensorRing
-    #from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
+    #from schubmult.schub_lib.rc_graph import RCGraph, rc_ring.from_dict
     ring = TensorRing(ASx@FA, rc_ring)
 
     if isinstance(rc, RCGraph):
@@ -52,7 +52,7 @@ def hom(rc):
 # def hom(rc):
 #     from schubmult import FA, ASx, SchubertBasis
 #     from schubmult.rings import TensorRing
-#     from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
+#     from schubmult.schub_lib.rc_graph import RCGraph, rc_ring.from_dict
 #     ring = TensorRing(ASx, rc_ring.from_dict())
 
 #     if isinstance(rc, RCGraph):
@@ -72,7 +72,7 @@ def hom(rc):
 
 def fa_hom(rc):
     from schubmult import FA, ASx, SchubertBasis
-    # from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
+    # from schubmult.schub_lib.rc_graph import RCGraph, rc_ring.from_dict
     if isinstance(rc, RCGraph):
         #return (ASx@FA)(r,rc.length_vector))
         ring = FA @ (ASx@ASx)
@@ -87,7 +87,7 @@ def fa_hom(rc):
 
 def hom_cop(rc):
     from schubmult import FA, ASx, SchubertBasis
-    # from schubmult.rings.rc_graph import RCGraph, rc_ring.from_dict
+    # from schubmult.schub_lib.rc_graph import RCGraph, rc_ring.from_dict
     if isinstance(rc, RCGraph):
         #return (ASx@FA)(r,rc.length_vector))
         ring = ASx @ (ASx@ASx)
@@ -106,7 +106,7 @@ def single_rc(a):
     return RCGraph([tuple(range(a, 0, -1))])
 
 def RC(*seq):
-    from schubmult.rings.rc_graph import RCGraph
+    from schubmult.schub_lib.rc_graph import RCGraph
     res = rc_ring.from_dict({RCGraph(): 1})
     for a in seq:
         res = res * single_rc(a)
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     from schubmult import FA, ASx, Permutation, SchubertBasis, WordBasis, uncode
     from schubmult.abc import x
     from schubmult.rings import MonomialBasis, PolynomialAlgebra, SchubertPolyBasis
-    from schubmult.rings.rc_graph import RCGraph
+    from schubmult.schub_lib.rc_graph import RCGraph
     from schubmult.utils.perm_utils import artin_sequences
 
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 3

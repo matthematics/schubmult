@@ -1,7 +1,7 @@
 from sympy import init_printing, pretty_print
 
-from schubmult.rings.rc_graph_ring import RCGraphRing
-from schubmult.rings.rc_graph import RCGraph
+from schubmult.schub_lib.rc_graph_ring import RCGraphRing
+from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.rings.ck_ring import CoxeterKnuthKey
 
 # IS THIS ASSOCIATIVE?

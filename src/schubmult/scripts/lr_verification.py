@@ -18,7 +18,7 @@ from schubmult.schub_lib.crystal_graph import CrystalGraphTensor
 
 
 def reload_modules(dct, n_jobs=None):
-    # from schubmult.rings.rc_graph_module import RCGraph, ASx
+    # from schubmult.schub_lib.rc_graph_module import RCGraph, ASx
 
     # def reconstruct_one(k, v):
     #     key = eval(k)  # tuple
@@ -65,7 +65,7 @@ def safe_save(obj, filename, save_json_backup=True):
     temp_json = f"{filename}.json.tmp"
     json_file = f"{filename}.json"
     try:
-        from schubmult.rings.rc_graph_module import TensorModule
+        from schubmult.schub_lib.rc_graph_module import TensorModule
 
         with open(temp_json, "w") as f:
             json.dump(
@@ -191,15 +191,15 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 
 
 def worker(shared_recording_dict, lock, task_queue):
-    from schubmult.rings.rc_graph_ring import RCGraphRing
+    from schubmult.schub_lib.rc_graph_ring import RCGraphRing
     from schubmult import Sx
 
     def hom_ck(ck_elem):
         """
         Map an RCGraphRing element to a CoxeterKnuthRing element.
         """
-        from schubmult.rings.rc_graph_ring import RCGraphRing
-        from schubmult.rings.rc_graph import RCGraph
+        from schubmult.schub_lib.rc_graph_ring import RCGraphRing
+        from schubmult.schub_lib.rc_graph import RCGraph
         rc_ring = RCGraphRing()
         result = rc_ring.zero
         for ck_key, coeff in ck_elem.items():
@@ -210,7 +210,7 @@ def worker(shared_recording_dict, lock, task_queue):
         return result
     
     def plac_prod(rc1, rc2):
-        from schubmult.rings.rc_graph_ring import RCGraphRing
+        from schubmult.schub_lib.rc_graph_ring import RCGraphRing
         rc_ring = RCGraphRing()
         tensor_hw, raise_seq = CrystalGraphTensor(rc1, rc2).to_highest_weight()
         plac_elem = hom_rc(rc_ring(tensor_hw.factors[0])) * hom_rc(rc_ring(tensor_hw.factors[1]))
@@ -272,7 +272,7 @@ def worker(shared_recording_dict, lock, task_queue):
 
 def main():
     from schubmult import Permutation
-    from schubmult.rings.rc_graph import RCGraph
+    from schubmult.schub_lib.rc_graph import RCGraph
 
     try:
         n = int(sys.argv[1])
@@ -359,7 +359,7 @@ if __name__ == "__main__":
 
 
 # def reload_modules(dct, n_jobs=None):
-#     from schubmult.rings.rc_graph_module import RCGraph
+#     from schubmult.schub_lib.rc_graph_module import RCGraph
 
 #     def reconstruct_one(k, v):
 #         key = eval(k)  # tuple
@@ -381,7 +381,7 @@ if __name__ == "__main__":
 
 
 # def safe_save(obj, filename):
-#     from schubmult.rings.rc_graph_module import TensorModule
+#     from schubmult.schub_lib.rc_graph_module import TensorModule
 
 #     temp_filename = f"{filename}.tmp"
 #     try:
@@ -431,7 +431,7 @@ if __name__ == "__main__":
 # def worker(args):
 #      shared_recording_dict, lock, perm = args
 #     from schubmult import ASx
-#     from schubmult.rings.rc_graph_module import try_lr_module
+#     from schubmult.schub_lib.rc_graph_module import try_lr_module
 
 #     with lock:
 #         if perm in shared_recording_dict:
