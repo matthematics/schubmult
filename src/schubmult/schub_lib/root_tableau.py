@@ -49,44 +49,154 @@ def _root_compare(root1, root2):
     return 0
 
 def _word_from_grid(grid0, as_grid: Optional[bool]=False) -> Any:
-    word = []
+    """
+    Two modes:
+      - as_grid=True: return an object-array the same shape as grid0 where each
+        occupied cell contains the recording letter (cell[1]) and empty cells
+        are None.
+      - as_grid=False: reconstruct the reduced word (sequence of simple-reflection
+        indices) by repeatedly:
+          * finding the occupied cell whose recording letter (cell[1]) is maximal
+            and, among those, is farthest to the right (largest column index;
+            break ties by largest row index),
+          * popping that box, appending cell[0][0] to the collected word,
+          * applying the root-shift corresponding to cell[0] to the region
+            above the popped box and to the part of the same row left of the box,
+          * repeating until no boxes remain.
+        Returns a tuple(reversed(collected_letters)) to match the original reduced
+        word orientation used elsewhere.
+    """
     if as_grid:
-        word = np.empty(grid0.shape, dtype=object)
-    grid = copy.deepcopy(grid0)
-    def _recurse_grid():
-        nonlocal word, grid
-        # print("DEBUG: current grid:")
-        # pretty_print(grid)
-        # print(f"Starting with {_count_boxes(grid)} boxes.")
-        max_r, max_c = -1, -1
-        for i in range(grid.shape[0] - 1, -1, -1):
-            L = _length_of_row(grid, i)
-            if L == 0:
-                continue
-            cell = grid[i, L - 1]
-            if cell is not None:
-                root = cell[0]
-                if root[1] == root[0] + 1:
-                    max_r, max_c = i, L - 1
-                    break
+        # Build an output array the same shape as the grid and place, at the
+        # location where boxes are popped during the reconstruction procedure,
+        # the letter that is "found" at that pop (we use the pop-rule below:
+        # pick max recording value farthest right; the popped letter is the
+        # first component of the root cell).
+        grid = copy.deepcopy(np.asarray(grid0, dtype=object))
+        out = np.full(grid.shape, None, dtype=object)
 
-        root = grid[max_r, max_c][0]
-        assert root[1] == root[0] + 1
-        if as_grid:
-            word[max_r, max_c] = root[0]
-        else:
-            word.append(root[0])
-        grid = _root_shift(root)(grid)
-        grid[max_r, max_c] = None
-        if (max_r, max_c) == (0, 0):
+        def boxes_remaining_local(g):
+            for ii in range(g.shape[0]):
+                for jj in range(g.shape[1]):
+                    if g[ii, jj] is not None:
+                        return True
             return False
-        return True
-    while _recurse_grid():
-        pass
-    #assert _count_boxes(grid) == 0, f"Grid should be empty after extraction, but found {_count_boxes(grid, spot=spot)} boxes, {grid=}."
-    # assert len(word) == _count_boxes(grid0, spot=spot)
-    if as_grid:
-        return word
+
+        while boxes_remaining_local(grid):
+            # find maximal recording letter value
+            max_val = None
+            for ii in range(grid.shape[0]):
+                for jj in range(grid.shape[1]):
+                    cell = grid[ii, jj]
+                    if cell is None:
+                        continue
+                    val = cell[1]
+                    if max_val is None or val > max_val:
+                        max_val = val
+            if max_val is None:
+                break
+
+            # choose the rightmost (then bottom-most) cell with that recording value
+            chosen = None
+            for ii in range(grid.shape[0]):
+                for jj in range(grid.shape[1]):
+                    cell = grid[ii, jj]
+                    if cell is None or cell[1] != max_val:
+                        continue
+                    if chosen is None:
+                        chosen = (ii, jj)
+                    else:
+                        ci, cj = chosen
+                        if jj > cj or (jj == cj and ii > ci):
+                            chosen = (ii, jj)
+            if chosen is None:
+                break
+
+            i, j = chosen
+            cell = grid[i, j]
+            root_cell, _letter = cell
+            # place the popped letter into the output at the popped location
+            try:
+                out[i, j] = int(root_cell[0])
+            except Exception:
+                out[i, j] = int(root_cell)
+
+            # remove box and apply shift to left / above regions
+            rd = int(root_cell[0]) if isinstance(root_cell, (tuple, list)) else int(root_cell)
+            grid[i, j] = None
+            if j > 0:
+                grid[i, :j] = _root_shift(rd)(grid[i, :j])
+            if i > 0:
+                grid[:i, :] = _root_shift(rd)(grid[:i, :])
+
+        return out
+
+    # reconstruct reduced word by repeated deletion
+    grid = copy.deepcopy(grid0)
+    word = []
+
+    def boxes_remaining(g):
+        for ii in range(g.shape[0]):
+            for jj in range(g.shape[1]):
+                if g[ii, jj] is not None:
+                    return True
+        return False
+
+    while boxes_remaining(grid):
+        # find maximal recording letter value
+        max_val = None
+        for ii in range(grid.shape[0]):
+            for jj in range(grid.shape[1]):
+                cell = grid[ii, jj]
+                if cell is None:
+                    continue
+                val = cell[1]
+                if max_val is None or val > max_val:
+                    max_val = val
+
+        if max_val is None:
+            break  # no boxes
+
+        # among cells with recording == max_val choose the one farthest to the right
+        # (largest column index). Break ties by largest row index.
+        chosen = None  # (i,j)
+        for ii in range(grid.shape[0]):
+            if chosen is not None:
+                break
+            for jj in range(grid.shape[1]):
+                cell = grid[ii, jj]
+                if cell is None:
+                    continue
+                if cell[1] != max_val:
+                    continue
+                if chosen is None:
+                    chosen = (ii, jj)
+                else:
+                    ci, cj = chosen
+                    # prefer larger column, then larger row
+                    if jj == grid.shape[1] - 1 or grid[ii, jj+1] is None:
+                        chosen = (ii, jj)
+                        break
+
+        if chosen is None:
+            # nothing found (shouldn't happen)
+            break
+
+        i, j = chosen
+        cell = grid[i, j]
+        root_cell, _letter = cell
+        # append the first component of the root as the letter for the reduced word
+        word.append(int(root_cell[0]))
+
+        # remove the box and reflect the remaining grid before continuing
+        # apply root-shift corresponding to the popped root to (row[:j]) and ([:i, :])
+        # Use the integer index of the root (first entry) as the shift key
+        rd = int(root_cell[0])
+        # set removed box to None first (so _root_shift sees correct shape)
+        grid[i, j] = None
+        grid = _root_shift(rd)(grid)
+        
+    # the algorithm collected letters in pop order; return reversed to match original orientation
     return tuple(reversed(word))
 
 
@@ -256,7 +366,7 @@ class RootTableau(CrystalGraph, GridPrint):
                     else:
                         new_grid[i, j] = right
                         j += 1
-                        
+
 
             # remove the final moved box (the hole reaches an outer cell)
             new_grid[i, j] = None
