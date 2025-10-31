@@ -48,7 +48,7 @@ def _root_compare(root1, root2):
         return -1
     return 0
 
-def _word_from_grid(grid0, as_grid: Optional[bool]=False) -> Any:
+def _word_from_grid(grid0, as_grid: Optional[bool]=False, as_ordering: Optional[bool]=False, with_compatible_seq: Optional[bool]=False) -> Any:
     """
     Two modes:
       - as_grid=True: return an object-array the same shape as grid0 where each
@@ -67,6 +67,7 @@ def _word_from_grid(grid0, as_grid: Optional[bool]=False) -> Any:
         word orientation used elsewhere.
     """
     if as_grid:
+        index_val = _count_boxes(grid0)
         # Build an output array the same shape as the grid and place, at the
         # location where boxes are popped during the reconstruction procedure,
         # the letter that is "found" at that pop (we use the pop-rule below:
@@ -74,7 +75,7 @@ def _word_from_grid(grid0, as_grid: Optional[bool]=False) -> Any:
         # first component of the root cell).
         grid = copy.deepcopy(np.asarray(grid0, dtype=object))
         out = np.full(grid.shape, None, dtype=object)
-
+        ordering = np.full(grid.shape, None, dtype=object)
         def boxes_remaining_local(g):
             for ii in range(g.shape[0]):
                 for jj in range(g.shape[1]):
@@ -120,20 +121,19 @@ def _word_from_grid(grid0, as_grid: Optional[bool]=False) -> Any:
                 out[i, j] = int(root_cell[0])
             except Exception:
                 out[i, j] = int(root_cell)
-
+            ordering[i, j] = index_val - 1
+            index_val -= 1
             # remove box and apply shift to left / above regions
             rd = int(root_cell[0]) if isinstance(root_cell, (tuple, list)) else int(root_cell)
             grid[i, j] = None
-            if j > 0:
-                grid[i, :j] = _root_shift(rd)(grid[i, :j])
-            if i > 0:
-                grid[:i, :] = _root_shift(rd)(grid[:i, :])
+            grid = _root_shift(rd)(grid)
 
-        return out
+        return out if not as_ordering else ordering
 
     # reconstruct reduced word by repeated deletion
     grid = copy.deepcopy(grid0)
     word = []
+    compatible_seq = []
 
     def boxes_remaining(g):
         for ii in range(g.shape[0]):
@@ -187,6 +187,7 @@ def _word_from_grid(grid0, as_grid: Optional[bool]=False) -> Any:
         root_cell, _letter = cell
         # append the first component of the root as the letter for the reduced word
         word.append(int(root_cell[0]))
+        compatible_seq.append(_letter)
 
         # remove the box and reflect the remaining grid before continuing
         # apply root-shift corresponding to the popped root to (row[:j]) and ([:i, :])
@@ -195,13 +196,15 @@ def _word_from_grid(grid0, as_grid: Optional[bool]=False) -> Any:
         # set removed box to None first (so _root_shift sees correct shape)
         grid[i, j] = None
         grid = _root_shift(rd)(grid)
-        
+
     # the algorithm collected letters in pop order; return reversed to match original orientation
+    if with_compatible_seq:
+        return tuple(reversed(word)), tuple(compatible_seq)
     return tuple(reversed(word))
 
 
 
-def _root_shift(root):
+def _root_shift(root, spots=None):
     """
     Return a callable shift(grid_slice) -> new_grid_slice that applies the
     appropriate root-reflection action to every non-None cell of the input
@@ -224,6 +227,9 @@ def _root_shift(root):
         # support 1-D and 2-D slices (ndindex yields tuples whose length equals ndim)
         if grid_slice.ndim == 1:
             for i0 in range(grid_slice.shape[0]):
+                if spots is not None and i0 not in spots:
+                    out[i0] = grid_slice[i0]
+                    continue
                 cell = grid_slice[i0]
                 if cell is None:
                     out[i0] = None
@@ -232,10 +238,15 @@ def _root_shift(root):
                 new_root = root_cell
                 if sref is not None:
                     new_root = sref.act_root(*root_cell)
+                    if new_root[0] > new_root[1]:
+                        new_root = root_cell
                 new_root = tuple(int(x) for x in new_root)
                 out[i0] = (new_root, letter)
         else:
             for i0, j0 in np.ndindex(grid_slice.shape):
+                if spots is not None and (i0, j0) not in spots:
+                    out[i0, j0] = grid_slice[i0, j0]
+                    continue
                 cell = grid_slice[i0, j0]
                 if cell is None:
                     out[i0, j0] = None
@@ -244,16 +255,14 @@ def _root_shift(root):
                 new_root = root_cell
                 if sref is not None:
                     new_root = sref.act_root(*root_cell)
+                    if new_root[0] > new_root[1]:
+                        new_root = root_cell
                 new_root = tuple(int(x) for x in new_root)
                 out[i0, j0] = (new_root, letter)
         return out
 
     return _shift
 
-def _reflect_before(grid, row, col, letter):
-    grid[row, :col] = _root_shift(letter)(grid[row, :col])
-    grid[:row, :] = _root_shift(letter)(grid[:row, :])
-    return grid
 
 
 class RootTableau(CrystalGraph, GridPrint):
@@ -302,111 +311,46 @@ class RootTableau(CrystalGraph, GridPrint):
         return sum(self.length_of_row(r) for r in range(row)) + col
 
 
-    def delete_box(self, i, j):
-        if self[i, j] is None:
-            raise ValueError(f"Missing box at position {(i, j)} cannot be deleted")
+    def roots_before(self, row, col):
+        order_grid = _word_from_grid(self._root_grid, as_ordering=True, as_grid=True)
+        return [(i, j) for (i, j) in np.ndindex(order_grid.shape) if order_grid[i, j] is not None and order_grid[i, j] < order_grid[row, col]]
 
-        # use a deep copy so we never mutate the original tableau's objects/views
-
-        def _delete_box_jdt():
-            """
-            Delete the box at (i,j) (0-indexed) by creating a hole, applying the
-            appropriate root-shift to the regions to the left/above the hole, then
-            performing the downward/rightward jeu-de-taquin slide (push into hole).
-
-            Returns a new numpy object-array (deep-copied) with the box removed and
-            shape trimmed of trailing empty rows/columns.
-            """
-            nonlocal i, j
-            new_grid = copy.deepcopy(self._root_grid)
-
-            rows, cols = new_grid.shape
-            if new_grid[i, j] is None:
-                raise ValueError(f"No box at position {(i,j)} to delete")
-
-            # root = new_grid[i, j][0]
-            
-
-            # apply root-shift to region above the deleted box (all columns) and to
-            # the part of the same row left of the hole; be defensive about shapes
-            #new_grid = _root_shift_(root)(new_grid)
-            letter = self.letter_at(i, j)
-            # print("Got letter:", letter)
-            new_grid = _reflect_before(new_grid, i, j, letter)
-            new_grid[i, j] = None
-            # perform down/right jeu-de-taquin (push boxes into the hole)
-            rows, cols = new_grid.shape
-            while True:
-                down = new_grid[i + 1, j] if (i + 1 < rows and j < cols) else None
-                right = new_grid[i, j + 1] if (j + 1 < cols) else None
-
-                if down is None and right is None:
-                    break
-
-                if down is None and right is not None:
-                    new_grid[i, j] = right
-                    j += 1
-                elif right is None and down is not None:
-                    new_grid[i, j] = down
-                    i += 1
+    def up_jdt_slide(self, row, col):
+        if self[row, col] != None:
+            raise ValueError("Can only slide from empty box")
+        if self[row -1, col] is None and self[row, col -1] is None:
+            raise ValueError("No boxes to slide from")
+        new_grid = copy.deepcopy(self._root_grid)
+        def _recurse():
+            nonlocal row, col, new_grid
+            if row == 0 or (col > 0 and row > 0 and new_grid[row -1, col] is None):
+                # slide from left
+                new_grid[row, col] = new_grid[row, col -1]
+                new_grid[row, col -1] = None
+                col -= 1
+            elif col == 0 or (col > 0 and row > 0 and new_grid[row, col -1] is None):
+                # slide from above
+                new_grid[row, col] = new_grid[row -1, col]
+                new_grid[row -1, col] = None
+                row -= 1
+            else:
+                # both available, pick larger root
+                root_above = new_grid[row -1, col][1]
+                root_left = new_grid[row, col -1][1]
+                if root_above >= root_left:
+                    # above is larger or incomparable
+                    new_grid[row, col] = new_grid[row -1, col]
+                    new_grid[row -1, col] = None
+                    row -= 1
                 else:
-                    # pick smaller by recording letter (second component)
-                    down_val = down[1] if (isinstance(down, tuple) and len(down) > 1) else down
-                    right_val = right[1] if (isinstance(right, tuple) and len(right) > 1) else right
-                    down_root = down[0]
-                    right_root = right[0]
-                    if down_val < right_val or (down_val == right_val and self.letter_at(i + 1, j) > self.letter_at(i, j + 1)):
-                        new_grid[i, j] = down
-                        i += 1
-                    elif down_val == right_val:
-                        new_grid[i, j + 1] = (down[0], right_val)
-                        new_grid[i + 1, j] = (right[0], new_grid[i, j][1])
-                        new_grid[i, j] = (new_grid[i, j][0], down_val)
-                        i += 1
-                    else:
-                        new_grid[i, j] = right
-                        j += 1
-
-
-            # remove the final moved box (the hole reaches an outer cell)
-            new_grid[i, j] = None
-
-            # trim trailing empty columns
-            def _col_is_empty(g, c):
-                return all(g[r, c] is None for r in range(g.shape[0]))
-
-            def _row_is_empty(g, r):
-                return all(g[r, c] is None for c in range(g.shape[1]))
-
-            # trim rightmost empty columns
-            while new_grid.shape[1] > 0 and _col_is_empty(new_grid, new_grid.shape[1] - 1):
-                # build smaller array without last column
-                rcount, ccount = new_grid.shape
-                if ccount == 1:
-                    new_grid = np.empty((rcount, 0), dtype=object)
-                    break
-                tmp = np.empty((rcount, ccount - 1), dtype=object)
-                for rr in range(rcount):
-                    for cc in range(ccount - 1):
-                        tmp[rr, cc] = new_grid[rr, cc]
-                new_grid = tmp
-
-            # trim bottom empty rows
-            while new_grid.shape[0] > 0 and _row_is_empty(new_grid, new_grid.shape[0] - 1):
-                rcount, ccount = new_grid.shape
-                if rcount == 1:
-                    new_grid = np.empty((0, ccount), dtype=object)
-                    break
-                tmp = np.empty((rcount - 1, ccount), dtype=object)
-                for rr in range(rcount - 1):
-                    for cc in range(ccount):
-                        tmp[rr, cc] = new_grid[rr, cc]
-                new_grid = tmp
-
-            return new_grid
-
-        return self.__class__(_delete_box_jdt())
-
+                    # left is larger
+                    new_grid[row, col] = new_grid[row, col -1]
+                    new_grid[row, col -1] = None
+                    col -= 1
+            if row > 0 or col > 0:
+                _recurse()
+        _recurse()
+        return RootTableau(new_grid)
 
     def __getitem__(self, key: Any) -> Any:
         return self._root_grid[key]
@@ -455,33 +399,26 @@ class RootTableau(CrystalGraph, GridPrint):
         return self._weight_tableau.epsilon(index)
 
     def raising_operator(self, index):
-        new_plactic = self._weight_tableau.raising_operator(index)
-        if new_plactic is None:
+        up = self.rc_graph.raising_operator(index)
+        if up is None:
             return None
-        return RootTableau(self._base_word, new_plactic)
+        return RootTableau.from_rc_graph(up)
 
     def lowering_operator(self, index):
-        new_plactic = self._weight_tableau.lowering_operator(index)
-        if new_plactic is None:
+        down = self.rc_graph.lowering_operator(index)
+        if down is None:
             return None
-        new_tab = RootTableau(self._base_word, new_plactic)
-        if new_tab.rc_graph is None or not new_tab.rc_graph.is_valid:
-            return None
-        return new_tab
+        return RootTableau.from_rc_graph(down)
 
     @property
     def rc_graph(self):
+        reduced_word, compatible_seq = _word_from_grid(self._root_grid, with_compatible_seq=True)
         rows = []
-        for i in range(len(self._base_word)):
-            if i == 0 or (i > 0 and self._base_word[i] > self._base_word[i - 1]):
+        for i, a in enumerate(compatible_seq):
+            if i > len(rows):
                 rows.append([])
-            rows[-1].append(self._base_word[i])
-        raise_seq = self._weight_tableau.to_highest_weight(length=self.crystal_length())[1]
-        try:
-            rc = RCGraph([tuple(row) for row in rows]).normalize()
-            return rc.reverse_raise_seq(raise_seq)
-        except ValueError:
-            return None
+            rows[-1].append(a)
+        return RCGraph(rows)
 
     def crystal_length(self):
         return len(self._perm.trimcode)
