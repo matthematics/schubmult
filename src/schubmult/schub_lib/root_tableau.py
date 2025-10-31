@@ -37,18 +37,33 @@ def _count_boxes(grid):
                 count += 1
     return count
 
-def _word_from_grid(grid0, spot = (0, 0)):
+def _root_compare(root1, root2):
+    if root1 == root2:
+        return 2
+    if root1[1] == root2[1] and root1[0] != root2[0]:
+        return 1
+    if root1[0] == root2[0] and root1[1] != root2[1]:
+        return 1
+    if root1[0] == root2[1] or root1[1] == root2[0]:
+        return -1
+    return 0
+
+def _word_from_grid(grid0, as_grid: Optional[bool]=False) -> Any:
     word = []
+    if as_grid:
+        word = np.empty(grid0.shape, dtype=object)
     grid = copy.deepcopy(grid0)
     def _recurse_grid():
         nonlocal word, grid
         # print("DEBUG: current grid:")
         # pretty_print(grid)
-        # print(f"Starting with {_count_boxes(grid)} boxes from {spot=}.")
+        # print(f"Starting with {_count_boxes(grid)} boxes.")
         max_r, max_c = -1, -1
         for i in range(grid.shape[0] - 1, -1, -1):
             L = _length_of_row(grid, i)
-            cell = grid[i, L - 1] if L > 0 else None
+            if L == 0:
+                continue
+            cell = grid[i, L - 1]
             if cell is not None:
                 root = cell[0]
                 if root[1] == root[0] + 1:
@@ -57,17 +72,23 @@ def _word_from_grid(grid0, spot = (0, 0)):
 
         root = grid[max_r, max_c][0]
         assert root[1] == root[0] + 1
-        word.append(root[0])
-        grid = _root_shift(root[0])(grid)
+        if as_grid:
+            word[max_r, max_c] = root[0]
+        else:
+            word.append(root[0])
+        grid = _root_shift(root)(grid)
         grid[max_r, max_c] = None
-        if (max_r, max_c) == spot:
+        if (max_r, max_c) == (0, 0):
             return False
         return True
     while _recurse_grid():
         pass
     #assert _count_boxes(grid) == 0, f"Grid should be empty after extraction, but found {_count_boxes(grid, spot=spot)} boxes, {grid=}."
     # assert len(word) == _count_boxes(grid0, spot=spot)
+    if as_grid:
+        return word
     return tuple(reversed(word))
+
 
 
 def _root_shift(root):
@@ -100,7 +121,7 @@ def _root_shift(root):
                 root_cell, letter = cell
                 new_root = root_cell
                 if sref is not None:
-                    new_root = sref.act_root(root_cell)
+                    new_root = sref.act_root(*root_cell)
                 new_root = tuple(int(x) for x in new_root)
                 out[i0] = (new_root, letter)
         else:
@@ -118,6 +139,11 @@ def _root_shift(root):
         return out
 
     return _shift
+
+def _reflect_before(grid, row, col, letter):
+    grid[row, :col] = _root_shift(letter)(grid[row, :col])
+    grid[:row, :] = _root_shift(letter)(grid[:row, :])
+    return grid
 
 
 class RootTableau(CrystalGraph, GridPrint):
@@ -196,8 +222,7 @@ class RootTableau(CrystalGraph, GridPrint):
             #new_grid = _root_shift_(root)(new_grid)
             letter = self.letter_at(i, j)
             # print("Got letter:", letter)
-            new_grid[i, :j] = _root_shift(letter)(new_grid[i, :j])
-            new_grid[:i, :] = _root_shift(letter)(new_grid[:i, :])
+            new_grid = _reflect_before(new_grid, i, j, letter)
             new_grid[i, j] = None
             # perform down/right jeu-de-taquin (push boxes into the hole)
             rows, cols = new_grid.shape
@@ -218,12 +243,20 @@ class RootTableau(CrystalGraph, GridPrint):
                     # pick smaller by recording letter (second component)
                     down_val = down[1] if (isinstance(down, tuple) and len(down) > 1) else down
                     right_val = right[1] if (isinstance(right, tuple) and len(right) > 1) else right
-                    if down_val <= right_val:
+                    down_root = down[0]
+                    right_root = right[0]
+                    if down_val < right_val or (down_val == right_val and self.letter_at(i + 1, j) > self.letter_at(i, j + 1)):
                         new_grid[i, j] = down
+                        i += 1
+                    elif down_val == right_val:
+                        new_grid[i, j + 1] = (down[0], right_val)
+                        new_grid[i + 1, j] = (right[0], new_grid[i, j][1])
+                        new_grid[i, j] = (new_grid[i, j][0], down_val)
                         i += 1
                     else:
                         new_grid[i, j] = right
                         j += 1
+                        
 
             # remove the final moved box (the hole reaches an outer cell)
             new_grid[i, j] = None
@@ -286,16 +319,20 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def reduced_word(self):
-        return _word_from_grid(self._root_grid)
+        return _word_from_grid(self._root_grid, as_grid=False)
+
+    @property
+    def word_grid(self):
+        return _word_from_grid(self._root_grid, as_grid=True)
 
     def letter_at(self, row, col):
-        return _word_from_grid(self._root_grid, spot=(row, col))[0]
+        return self.word_grid[row, col]
     # @property
     # def reduced_word(self):
     #     return self._red_plactic.reverse_rsk(self._index_tableau)
 
-    def __init__(self, grid=None):
-        self._root_grid = copy.deepcopy(grid) if grid is not None else np.empty((0, 0), dtype=object)
+    def __init__(self, grid):
+        self._root_grid = copy.deepcopy(grid)
         self._hasher = tuple(tuple(tuple(b) for b in a if b is not None) for a in self._root_grid if a is not None)
 
 
