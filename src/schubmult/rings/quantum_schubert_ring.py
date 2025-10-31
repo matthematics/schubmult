@@ -588,7 +588,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
 
     @property
     def double_mul(self):
-        from schubmult.schub_lib.quantum_double import _vars
+        from schubmult.mult.quantum_double import _vars
 
         def do_double_mul(perm_dict, v, var2=_vars.var2, var3=_vars.var3, q_var=_vars.q_var):
             coeff_dict = yz.schubmult_q_double_fast(perm_dict, v, var2, var3, q_var)
@@ -598,7 +598,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
 
     @property
     def single_mul(self):
-        from schubmult.schub_lib.quantum_double import _vars
+        from schubmult.mult.quantum_double import _vars
 
         def do_single_mul(perm_dict, v, q_var=_vars.q_var):
             coeff_dict = py.schubmult_q_fast(perm_dict, v, q_var)

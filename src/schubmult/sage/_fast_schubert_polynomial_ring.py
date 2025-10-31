@@ -19,10 +19,10 @@ from sympy import sympify
 
 import schubmult.schub_lib.perm_lib as pl
 import schubmult.sage._fast_double_schubert_polynomial_ring as bork
-import schubmult.schub_lib.double as yz
-import schubmult.schub_lib.quantum as sq
-import schubmult.schub_lib.quantum_double as qyz
-import schubmult.schub_lib.single as py
+import schubmult.mult.double as yz
+import schubmult.mult.quantum as sq
+import schubmult.mult.quantum_double as qyz
+import schubmult.mult.single as py
 from schubmult.schub_lib.perm_lib import permtrim
 
 from ._indexing import _coerce_index
