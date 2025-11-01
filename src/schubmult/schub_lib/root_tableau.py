@@ -1,4 +1,5 @@
 import copy
+import logging
 from functools import cached_property
 from typing import Any, Optional
 
@@ -24,6 +25,40 @@ from .rc_graph import RCGraph
 # w/mu subword tableau that are a specific standard tableaux for v
 
 # we can do crazy crystal stuff
+def _is_valid_outer_corner(grid: np.ndarray, i: int, j: int) -> bool:
+    """
+    Outer-corner predicate used by up_jdt_slide.
+    Accepts hole positions that may extend the grid (i==rows or j==cols).
+    A position is valid if:
+      - there is a box above AND a box to the left, OR
+      - at least one of those exists and the hole is on/extends the outer boundary.
+    """
+    rows, cols = grid.shape
+    # treat positions outside current array as empty slots (they must be extended before sliding)
+    if 0 <= i < rows and 0 <= j < cols and grid[i, j] is not None:
+        return False
+    up_exists = (i - 1 >= 0 and (i - 1) < rows and j < cols and grid[i - 1, j] is not None)
+    left_exists = (j - 1 >= 0 and (j - 1) < cols and i < rows and grid[i, j - 1] is not None)
+    # consider hole on or beyond boundary as "outer"
+    on_or_extends_boundary = (i >= rows) or (j >= cols) or (i == rows - 1) or (j == cols - 1)
+    return (up_exists and left_exists) or ((up_exists or left_exists) and on_or_extends_boundary)
+
+
+def _is_valid_inner_corner(grid: np.ndarray, i: int, j: int) -> bool:
+    """
+    Inner-corner predicate used by down_jdt_slide.
+    Valid when the hole is inside the grid (must not extend grid) and there
+    is a box below or to the right with the same boundary rules mirrored.
+    """
+    rows, cols = grid.shape
+    if not (0 <= i < rows and 0 <= j < cols):
+        return False
+    if grid[i, j] is not None:
+        return False
+    down_exists = (i + 1 < rows and j < cols and grid[i + 1, j] is not None)
+    right_exists = (j + 1 < cols and i < rows and grid[i, j + 1] is not None)
+    on_boundary_up = (i == 0) or (j == 0)
+    return (down_exists and right_exists) or ((down_exists or right_exists) and on_boundary_up)
 
 
 def _length_of_row(grid, row):
@@ -282,6 +317,47 @@ def _root_shift(root, spots=None):
     return _shift
 
 
+_logger = logging.getLogger(__name__)
+if not _logger.handlers:
+    _h = logging.StreamHandler()
+    _h.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    _logger.addHandler(_h)
+_logger.setLevel(logging.DEBUG)
+
+
+def _validate_grid(grid: np.ndarray) -> None:
+    """Lightweight validation of a root-grid; raises on malformed cells."""
+    if grid is None:
+        raise RuntimeError("_validate_grid: grid is None")
+    if not hasattr(grid, "shape"):
+        raise RuntimeError("_validate_grid: grid missing shape")
+    for i in range(grid.shape[0]):
+        for j in range(grid.shape[1]):
+            cell = grid[i, j]
+            if cell is None:
+                continue
+            if not isinstance(cell, (tuple, list)) or len(cell) < 2:
+                raise RuntimeError(f"_validate_grid: bad cell at {(i,j)}: {repr(cell)}")
+            root, letter = cell[0], cell[1]
+            try:
+                int(letter)
+            except Exception:
+                raise RuntimeError(f"_validate_grid: non-int letter at {(i,j)}: {repr(letter)}")
+            if not (isinstance(root, (tuple, list, int))):
+                raise RuntimeError(f"_validate_grid: unexpected root at {(i,j)}: {repr(root)}")
+
+
+def _snap_grid(grid: np.ndarray):
+    """Return a compact, JSON-like snapshot of the grid for debug messages."""
+    try:
+        return [
+            [None if grid[i, j] is None else (grid[i, j][0], int(grid[i, j][1])) for j in range(grid.shape[1])]
+            for i in range(grid.shape[0])
+        ]
+    except Exception:
+        return repr(grid)
+
+
 class RootTableau(CrystalGraph, GridPrint):
     """
     Root tableau with dual knuth equivalence
@@ -334,59 +410,92 @@ class RootTableau(CrystalGraph, GridPrint):
     def perm(self):
         return Permutation.ref_product(*self.reduced_word)
 
+    def rectify(self):
+        cur = self
+        while True:
+            inner_corners = tuple(cur.iter_inner_corners())
+            if not inner_corners:
+                break
+            cur = cur.down_jdt_slide(*next(iter(inner_corners)))
+        return cur
+
     def up_jdt_slide(self, row, col):
-        if self[row, col] is not None:
-            raise ValueError("Can only slide from empty box")
+        # capture preconditions & words
+        try:
+            _validate_grid(self._root_grid)
+        except Exception as e:
+            raise RuntimeError(f"up_jdt_slide: invalid input grid before slide: {e!r}")
 
-        # Validate that (row,col) is an outer-corner hole:
-        # - up_exists: there is a box immediately above (row-1, col)
-        # - left_exists: there is a box immediately left (row, col-1)
-        # Outer-corner validity: either both neighbors exist, OR at least one exists        # ...existing code...
-        grid = self._root_grid
+        before_row_word = self.row_word
+        before_reduced_word = self.reduced_word
+
+        # allow holes that extend the grid by one; build an extended working grid
+        grid = copy.deepcopy(self._root_grid)
         rows, cols = grid.shape
-        up_exists = (row - 1 >= 0 and row - 1 < rows and col < cols and grid[row - 1, col] is not None)
-        left_exists = (col - 1 >= 0 and col - 1 < cols and row < rows and grid[row, col - 1] is not None)
-        on_boundary = (row == rows - 1) or (col == cols - 1)
+        # if hole extends grid, make a larger array and copy
+        if row >= rows or col >= cols:
+            nr = max(rows, row + 1)
+            nc = max(cols, col + 1)
+            ext = np.empty((nr, nc), dtype=object)
+            ext.fill(None)
+            for r in range(rows):
+                for c in range(cols):
+                    ext[r, c] = grid[r, c]
+            grid = ext
+            rows, cols = grid.shape
 
-        if not ((up_exists and left_exists) or ((up_exists or left_exists) and on_boundary)):
-            raise ValueError(f"Hole at {(row, col)} is not an outer corner; cannot perform up_jdt_slide")
+        if not _is_valid_outer_corner(grid, row, col):
+            raise ValueError("up_jdt_slide can only be performed from an outer-corner hole")
 
-        if self[row - 1, col] is None and self[row, col - 1] is None:
-            raise ValueError("No boxes to slide from")
-
-        new_grid = copy.deepcopy(self._root_grid)
-
-        def _recurse():
-            nonlocal row, col, new_grid
-            if row == 0 or (col > 0 and row > 0 and new_grid[row - 1, col] is None):
-                # slide from left
-                new_grid[row, col] = new_grid[row, col - 1]
-                new_grid[row, col - 1] = None
-                col -= 1
-            elif col == 0 or (col > 0 and row > 0 and new_grid[row, col - 1] is None):
-                # slide from above
-                new_grid[row, col] = new_grid[row - 1, col]
-                new_grid[row - 1, col] = None
-                row -= 1
+        new_grid = copy.deepcopy(grid)
+        r, c = row, col
+        # perform iterative slide: pull from above or left into the hole
+        while True:
+            above = (r - 1 >= 0 and new_grid[r - 1, c] is not None)
+            left = (c - 1 >= 0 and new_grid[r, c - 1] is not None)
+            if not above and not left:
+                break
+            if above and not left:
+                new_grid[r, c] = new_grid[r - 1, c]
+                new_grid[r - 1, c] = None
+                r -= 1
+                continue
+            if left and not above:
+                new_grid[r, c] = new_grid[r, c - 1]
+                new_grid[r, c - 1] = None
+                c -= 1
+                continue
+            # both available: choose larger by recording-letter (second component)
+            val_above = new_grid[r - 1, c][1]
+            val_left = new_grid[r, c - 1][1]
+            if val_above >= val_left:
+                new_grid[r, c] = new_grid[r - 1, c]
+                new_grid[r - 1, c] = None
+                r -= 1
             else:
-                # both available, pick larger root
-                root_above = new_grid[row - 1, col][1]
-                root_left = new_grid[row, col - 1][1]
-                if root_above >= root_left:
-                    # above is larger or incomparable
-                    new_grid[row, col] = new_grid[row - 1, col]
-                    new_grid[row - 1, col] = None
-                    row -= 1
-                else:
-                    # left is larger
-                    new_grid[row, col] = new_grid[row, col - 1]
-                    new_grid[row, col - 1] = None
-                    col -= 1
-            if row > 0 or col > 0:
-                _recurse()
+                new_grid[r, c] = new_grid[r, c - 1]
+                new_grid[r, c - 1] = None
+                c -= 1
 
-        _recurse()
-        return RootTableau(new_grid)
+        # leave final hole (r,c) as None and return a RootTableau
+        try:
+            _validate_grid(new_grid)
+        except Exception as e:
+            raise RuntimeError(
+                f"up_jdt_slide produced invalid grid after slide: {e!r}\nfinal_hole={(r,c)}\ngrid_snapshot={_snap_grid(new_grid)}"
+            )
+
+        after = RootTableau(new_grid)
+        # sanity-check invariants
+        if before_row_word != after.row_word or before_reduced_word != after.reduced_word:
+            raise RuntimeError(
+                "up_jdt_slide violated invariants\n"
+                f"before_row_word={before_row_word} after_row_word={after.row_word}\n"
+                f"before_reduced_word={before_reduced_word} after_reduced_word={after.reduced_word}\n"
+                f"before_grid={_snap_grid(self._root_grid)}\nafter_grid={_snap_grid(new_grid)}"
+            )
+
+        return after
 
     def down_jdt_slide(self, row, col):
         """
@@ -395,60 +504,69 @@ class RootTableau(CrystalGraph, GridPrint):
         into the hole, preferring the smaller recording letter when both exist.
         Returns a new RootTableau (does not mutate self).
         """
-        if self[row, col] is not None:
-            raise ValueError("Can only slide from empty box")
+        try:
+            _validate_grid(self._root_grid)
+        except Exception as e:
+            raise RuntimeError(f"down_jdt_slide: invalid input grid before slide: {e!r}")
+
+        if not _is_valid_inner_corner(self._root_grid, row, col):
+            raise ValueError("down_jdt_slide can only be performed from an inner-corner hole")
+
+        before_row_word = self.row_word
+        before_reduced_word = self.reduced_word
 
         new_grid = copy.deepcopy(self._root_grid)
         rows, cols = new_grid.shape
-
-        # helper to test existence of a non-empty neighbor
-        def has_down(r, c):
-            return (r + 1 < new_grid.shape[0]) and (c < new_grid.shape[1]) and (new_grid[r + 1, c] is not None)
-
-        def has_right(r, c):
-            return (c + 1 < new_grid.shape[1]) and (new_grid[r, c + 1] is not None)
-
-        if not (has_down(row, col) or has_right(row, col)):
-            raise ValueError("No boxes to slide from")
-
-        # iteratively pull from down/right into the hole until no move possible
         r, c = row, col
-        while True:
-            down_exists = has_down(r, c)
-            right_exists = has_right(r, c)
 
+        while True:
+            down_exists = (r + 1 < rows and new_grid[r + 1, c] is not None)
+            right_exists = (c + 1 < cols and new_grid[r, c + 1] is not None)
             if not down_exists and not right_exists:
                 break
-
             if down_exists and not right_exists:
-                # only down available
                 new_grid[r, c] = new_grid[r + 1, c]
                 new_grid[r + 1, c] = None
                 r += 1
-            elif right_exists and not down_exists:
-                # only right available
+                continue
+            if right_exists and not down_exists:
                 new_grid[r, c] = new_grid[r, c + 1]
                 new_grid[r, c + 1] = None
                 c += 1
+                continue
+            # both present: choose smaller by recording-letter (second component)
+            down_val = new_grid[r + 1, c][1]
+            right_val = new_grid[r, c + 1][1]
+            if down_val <= right_val:
+                new_grid[r, c] = new_grid[r + 1, c]
+                new_grid[r + 1, c] = None
+                r += 1
             else:
-                # both available: choose the smaller by recording letter (second component)
-                down_cell = new_grid[r + 1, c]
-                right_cell = new_grid[r, c + 1]
-                down_val = down_cell[1] if (isinstance(down_cell, tuple) and len(down_cell) > 1) else down_cell
-                right_val = right_cell[1] if (isinstance(right_cell, tuple) and len(right_cell) > 1) else right_cell
-                if down_val <= right_val:
-                    new_grid[r, c] = down_cell
-                    new_grid[r + 1, c] = None
-                    r += 1
-                else:
-                    new_grid[r, c] = right_cell
-                    new_grid[r, c + 1] = None
-                    c += 1
+                new_grid[r, c] = new_grid[r, c + 1]
+                new_grid[r, c + 1] = None
+                c += 1
 
-        # final hole location: clear it
+        # clear final hole and return
         new_grid[r, c] = None
 
-        return RootTableau(new_grid)
+        try:
+            _validate_grid(new_grid)
+        except Exception as e:
+            raise RuntimeError(
+                f"down_jdt_slide produced invalid grid after slide: {e!r}\nfinal_hole={(r,c)}\ngrid_snapshot={_snap_grid(new_grid)}"
+            )
+
+        after = RootTableau(new_grid)
+        # sanity-check invariants
+        if before_row_word != after.row_word or before_reduced_word != after.reduced_word:
+            raise RuntimeError(
+                "down_jdt_slide violated invariants\n"
+                f"before_row_word={before_row_word} after_row_word={after.row_word}\n"
+                f"before_reduced_word={before_reduced_word} after_reduced_word={after.reduced_word}\n"
+                f"before_grid={_snap_grid(self._root_grid)}\nafter_grid={_snap_grid(new_grid)}"
+            )
+
+        return after
 
     def __getitem__(self, key: Any) -> Any:
         return self._root_grid[key]
@@ -465,6 +583,24 @@ class RootTableau(CrystalGraph, GridPrint):
     # def compatible_sequence(self):
     #     return self._plactic.reverse_rsk(self._index_tableau)
 
+    def iter_boxes(self):
+        for i in range(self.rows):
+            for j in range(self.cols):
+                cell = self._root_grid[i, j]
+                if cell is not None:
+                    yield (i, j)
+
+    def iter_outer_corners(self):
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if _is_valid_outer_corner(self._root_grid, i, j):
+                    yield (i, j)
+
+    def iter_inner_corners(self):
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if _is_valid_inner_corner(self._root_grid, i, j):
+                    yield (i, j)
     @property
     def is_valid(self):
         return self.rc_graph.is_valid

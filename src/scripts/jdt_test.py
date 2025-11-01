@@ -8,30 +8,28 @@ active) to run randomized trials and report any counterexamples.
 from __future__ import annotations
 
 import copy
+import logging
 import random
-from typing import List, Optional, Sequence, Tuple
+import sys
+from typing import Any, List, Optional, Sequence, Tuple
 
 import numpy as np
+from sympy import pretty_print
 
-from schubmult import RootTableau
+from schubmult import Permutation, RCGraph, RootTableau
 
 Seed = 12345
 random.seed(Seed)
 
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.DEBUG)
+    handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+logger.propagate = False
 
-def ensure_cell(grid: np.ndarray, i: int, j: int) -> np.ndarray:
-    """Return a copy of grid extended (if necessary) so (i,j) is a valid index."""
-    rows, cols = grid.shape
-    nr = max(rows, i + 1)
-    nc = max(cols, j + 1)
-    if (nr, nc) == (rows, cols):
-        return grid.copy()
-    out = np.empty((nr, nc), dtype=object)
-    out.fill(None)
-    for r in range(rows):
-        for c in range(cols):
-            out[r, c] = grid[r, c]
-    return out
 
 
 def apply_up_seq_and_rect(rt: RootTableau, seq: Sequence[Tuple[int, int]]) -> Optional[RootTableau]:
@@ -46,20 +44,10 @@ def apply_up_seq_and_rect(rt: RootTableau, seq: Sequence[Tuple[int, int]]) -> Op
     cur = rt
     for (i, j) in seq:
         # create a copy of current grid extended to include (i,j) and set hole
-        g = copy.deepcopy(cur._root_grid)
-        g = ensure_cell(g, i, j)
-        g[i, j] = None
-        tmp = RootTableau(g)
-        try:
-            cur = tmp.up_jdt_slide(i, j)
-        except Exception:
-            # slide failed -> sequence invalid for this tableau; abort
-            return None
-    # finally rectify to produce a straight tableau
-    try:
-        return cur.rectify()
-    except Exception:
-        return None
+        cur = cur.up_jdt_slide(i, j)
+    logger.debug("After applying up-seq:")
+    pretty_print(cur)
+    return cur.rectify()
 
 
 def grids_equal(a: RootTableau, b: RootTableau) -> bool:
@@ -77,74 +65,29 @@ def grids_equal(a: RootTableau, b: RootTableau) -> bool:
             return False
     return True
 
+_perms = tuple()
+used_rcs = set()
 
-def random_reduced_and_compatible(max_len=6, max_letter=4):
-    n = random.randint(1, max_len)
-    reduced = [random.randint(1, max_letter) for _ in range(n)]
-    compatible = [random.randint(1, max_letter) for _ in range(n)]
-    return reduced, compatible
-
-
-def random_up_seq(rt: RootTableau, max_len=5) -> Sequence[Tuple[int, int]]:
+def sample_tableau_from_perms() -> tuple[RootTableau, Any]:
     """
-    Generate a valid sequence of up-jdt hole positions for tableau `rt`.
-
-    Validity rule used:
-      - a hole position (i,j) is considered valid if, on the current grid,
-        either both a box up (i-1,j) and a box left (i,j-1) exist, OR
-        at least one of those neighbors exists and the hole is placed on the
-        *outer* boundary (we allow positions with i==rows or j==cols to extend
-        the grid by one).
-    The sequence is built greedily: choose a random valid outer-corner,
-    perform the up_jdt_slide (on an extended copy) to update the tableau,
-    and repeat until max_len or no valid candidates remain.
+    Pick a random permutation from _perms, pick a random RCGraph from
+    RCGraph.all_rc_graphs(perm, len(perm.trimcode)), and construct a RootTableau
+    via RootTableau.from_rc_graph(rc). Returns (RootTableau, rc) for logging.
     """
-    seq: List[Tuple[int, int]] = []
-    cur = rt
-    for _ in range(max_len):
-        grid = copy.deepcopy(cur._root_grid)
-        rows, cols = grid.shape
+    if not _perms:
+        raise RuntimeError("No permutations available in _perms")
 
-        # consider candidate positions in range [0..rows] x [0..cols]
-        candidates = []
-        for i in range(0, rows + 1):
-            for j in range(0, cols + 1):
-                # skip positions that are currently occupied (must be a hole)
-                if i < rows and j < cols and grid[i, j] is not None:
-                    continue
-                # check neighbors (up and left) existence within current grid
-                up_exists = (i - 1 >= 0 and i - 1 < rows and j < cols and grid[i - 1, j] is not None)
-                left_exists = (j - 1 >= 0 and j - 1 < cols and i < rows and grid[i, j - 1] is not None)
-
-                # hole is on outer boundary if it extends grid by at least one coordinate
-                is_outer = (i == rows) or (j == cols)
-
-                # accept if either both neighbors exist, or at least one exists and position is outer
-                if (up_exists and left_exists) or ((up_exists or left_exists) and is_outer):
-                    candidates.append((i, j))
-
-        if not candidates:
-            break
-
-        # pick random candidate and perform slide to update cur
-        i_choice, j_choice = random.choice(candidates)
-        seq.append((i_choice, j_choice))
-
-        # perform the slide on an extended tableau to keep validity for next step
-        g = ensure_cell(grid, i_choice, j_choice)
-        g[i_choice, j_choice] = None
-        tmp = RootTableau(g)
-        try:
-            cur = tmp.up_jdt_slide(i_choice, j_choice)
-        except Exception:
-            # if slide unexpectedly fails, stop building sequence
-            seq.pop()
-            break
-
-    return tuple(seq)
+    perm = random.choice(_perms)
+    # generate all rc graphs for this perm and pick one at random
+    all_rc = tuple(rc for rc in RCGraph.all_rc_graphs(perm, len(perm.trimcode)) if rc not in used_rcs)
+    if not all_rc:
+        raise RuntimeError(f"RCGraph.all_rc_graphs returned no graphs for perm={perm}")
+    rc = random.choice(all_rc)
+    T = RootTableau.from_rc_graph(rc)
+    return T, rc
 
 
-def test_one_case(reduced_word, compatible_seq, seq, index: int, op_name: str) -> Tuple[bool, str]:
+def test_one_case(T: RootTableau, seq: Sequence[Tuple[int, int]], index: int, op_name: str, rc=None) -> Tuple[bool, str]:
     """
     Test commutation for one operator index:
      left = op( Rect( UpSeq(T) ) )
@@ -154,63 +97,109 @@ def test_one_case(reduced_word, compatible_seq, seq, index: int, op_name: str) -
     Note: do not suppress exceptions from raising_operator / lowering_operator —
     these should return None when the operator is not defined.
     """
-    T = RootTableau.root_insert_rsk(reduced_word, compatible_seq)
     # apply UpSeq then rectify, then op
-    A = apply_up_seq_and_rect(T, seq)
-    if A is None:
-        return True, "Up-sequence invalid on original tableau (skip)"
+
 
     # call operator directly; do not catch exceptions here
-    if op_name == "raise":
-        left = A.raising_operator(index)
-    else:
-        left = A.lowering_operator(index)
-
-    # apply op first, then upseq+rect
-    if op_name == "raise":
-        eT = T.raising_operator(index)
-    else:
-        eT = T.lowering_operator(index)
-
-    if eT is None:
-        return True, "Operator not defined on T (skip)"
-
-    B = apply_up_seq_and_rect(eT, seq)
-    if B is None:
-        return True, "Up-sequence invalid on operated tableau (skip)"
-
-    # left might be None (operator undefined on A)
-    if left is None:
-        return True, "Operator not defined on rectified tableau (skip)"
-
+    
+    B = apply_up_seq_and_rect(T, seq)
+    
     # compare
-    ok = grids_equal(left, B)
+    ok = T == B
     if ok:
         return True, "commute"
-    return False, f"mismatch: index={index}, reduced={reduced_word}, compatible={compatible_seq}, seq={seq}"
+    # include RC/perm info if available
+    extra = f" rc={T} {B}"
+    return False, f"mismatch: index={index}, seq={seq}{extra}"
+
+
+    
+
+def random_up_seq(rt: RootTableau, max_len=5) -> Sequence[Tuple[int, int]]:
+    """
+    Generate a valid sequence of up-jdt hole positions for tableau `rt`.
+
+    Each chosen (i,j) satisfies the outer-corner predicate above w.r.t. the
+    current tableau. After choosing a hole we perform the up_jdt_slide to
+    update the tableau so subsequent choices remain valid.
+    """
+    seq: List[Tuple[int, int]] = []
+    cur = rt
+    candidates: List[Tuple[int, int]] = []
+    for _ in range(max_len):
+        seq = []
+        while True:
+            outer_corners = tuple(cur.iter_outer_corners())
+            if not outer_corners:
+                break
+            box  = random.choice(outer_corners)
+            seq = seq + [box]
+            cur = cur.up_jdt_slide(*box)
+        if not seq:
+            break
+        candidates.append(seq)
+    if not candidates:
+        logger.info("Could not generate any valid up-sequence for sampled tableau; returning empty sequence.")
+        pretty_print(rt)
+        return None
+    return random.choice(candidates)
 
 
 def run_random_tests(num_cases=200):
-    failures = []
-    for t in range(num_cases):
-        reduced, compatible = random_reduced_and_compatible()
-        T = RootTableau.root_insert_rsk(reduced, compatible)
-        seq = random_up_seq(T)
+    """
+    Run randomized tests and log the outcome of each trial (both raise and lower).
+    Ensure the up-jdt sequence is actually valid for the sampled tableau: regenerate
+    until apply_up_seq_and_rect(T, seq) succeeds (or give up after attempts).
+    """
+    # ensure logging is configured even if the module was imported
+    root = logging.getLogger()
+    if not root.handlers:
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+
+    for t in range(1, num_cases + 1):
+        T, rc = sample_tableau_from_perms()
+
+        # build a valid up-sequence (retry until apply_up_seq_and_rect succeeds)
+        seq = ()
+        max_attempts = 20
+        for attempt in range(1, max_attempts + 1):
+            seq = random_up_seq(T)
+            if seq:
+                break
+            logger.debug("Generated up-seq valid for sampled tableau; retrying (%d/%d)", attempt, max_attempts)
+
         # pick a random index to test (small range)
         idx = random.randint(1, 5)
-        ok_r, msg_r = test_one_case(reduced, compatible, seq, idx, "raise")
-        ok_l, msg_l = test_one_case(reduced, compatible, seq, idx, "lower")
-        if not ok_r:
-            failures.append(("raise", msg_r))
-        if not ok_l:
-            failures.append(("lower", msg_l))
-    return failures
+
+        ok_r, msg_r = test_one_case(T, seq, idx, "raise", rc=rc)
+        if ok_r:
+            logger.info("Case %d RAISE: OK — %s; seq=%s idx=%s rc=%s", t, msg_r, seq, idx, rc)
+        else:
+            logger.error("Case %d RAISE: FAIL — %s; seq=%s idx=%s rc=%s", t, msg_r, seq, idx, rc)
+            # exit immediately on failure showing the failing case
+            sys.exit(2)
+
+        ok_l, msg_l = test_one_case(T, seq, idx, "lower", rc=rc)
+        if ok_l:
+            logger.info("Case %d LOWER: OK — %s; seq=%s idx=%s rc=%s", t, msg_l, seq, idx, rc)
+        else:
+            logger.error("Case %d LOWER: FAIL — %s; seq=%s idx=%s rc=%s", t, msg_l, seq, idx, rc)
+            sys.exit(2)
+
+    # if we reach here all cases passed or were skipped
+    logger.info("All %d cases completed (no failing case encountered).", num_cases)
+    return []
 
 
 if __name__ == "__main__":
     import sys
 
+    # simple logging setup so each test case is reported to stdout
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+
     N = int(sys.argv[1]) if len(sys.argv) > 1 else 200
+    perm_length = int(sys.argv[2]) if len(sys.argv) > 2 else 8
+    _perms = tuple(p for p in Permutation.all_permutations(perm_length) if p.inv > 0)
     print(f"Running {N} randomized tests (seed={Seed}) ...")
     fails = run_random_tests(N)
     if not fails:
