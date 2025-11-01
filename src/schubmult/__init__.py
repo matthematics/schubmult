@@ -1,3 +1,7 @@
+import inspect
+import pkgutil
+from typing import List
+
 __version__ = "4.0.0dev"
 
 """
@@ -9,11 +13,6 @@ that are defined in their module are exported.
 
 This variant avoids importlib and uses the builtin __import__ to load modules.
 """
-from __future__ import annotations
-
-import inspect
-import pkgutil
-from typing import List
 
 __all__: List[str] = []
 

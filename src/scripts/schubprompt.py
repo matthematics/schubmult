@@ -31,7 +31,7 @@ def main():
             if command.lower() == 'exit':
                 break
  
-            cmd, params = delbox.split("(")
+            cmd, params = command.split("(", 1)
             params = params[:-1]
             if cmd == "ujdt":
                 a, b = params.split(",")
@@ -55,6 +55,8 @@ def main():
                     print("Lowering operator returned None")
                 else:
                     rt = rt0
+            elif cmd == "eval":
+                eval(params)
             else:
                 print(f"Invalid command: {cmd}")
         except EOFError:  # Ctrl-D

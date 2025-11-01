@@ -330,6 +330,10 @@ class RootTableau(CrystalGraph, GridPrint):
         order_grid = _word_from_grid(self._root_grid, as_ordering=True, as_grid=True)
         return [(i, j) for (i, j) in np.ndindex(order_grid.shape) if order_grid[i, j] is not None and order_grid[i, j] < order_grid[row, col]]
 
+    @property
+    def perm(self):
+        return Permutation.ref_product(*self.reduced_word)
+
     def up_jdt_slide(self, row, col):
         if self[row, col] is not None:
             raise ValueError("Can only slide from empty box")
@@ -509,37 +513,41 @@ class RootTableau(CrystalGraph, GridPrint):
         return tuple(word)
 
     def raising_operator(self, i):
-        """Crystal raising operator e_i on the root tableau"""
-        word = [*self.row_word]
-        opening_stack = []
-        closing_stack = []
-        for index in range(len(word)):
-            if word[index] == i + 1:
-                opening_stack.append(index)
-            elif word[index] == i:
-                if len(opening_stack) > 0:
-                    opening_stack.pop()
-                else:
-                    closing_stack.append(index)
-        if len(opening_stack) == 0:
+        print("Should work for non-jdt cases")
+        rc = self.rc_graph.raising_operator(i)
+        if rc is None:
             return None
-        index_to_change = opening_stack[0]
-        word[index_to_change] = i
-        new_grid = copy.deepcopy(self._root_grid)
-        the_index = 0
-        for r in range(self.rows - 1, -1, -1):
-            for c in range(self.cols):
-                cell = self._root_grid[r, c]
-                if cell is not None:
-                    if the_index == index_to_change:
-                        root_cell, _ = cell
-                        new_grid[r, c] = (root_cell, i)
-                        print("This doesn't work")
-                        return RootTableau(new_grid)
-                    the_index += 1
-        return None
+        return RootTableau.from_rc_graph(rc)
+        # """Crystal raising operator e_i on the root tableau"""
+        # word = [*self.row_word]
+        # opening_stack = []
+        # closing_stack = []
+        # for index in range(len(word)):
+        #     if word[index] == i + 1:
+        #         opening_stack.append(index)
+        #     elif word[index] == i:
+        #         if len(opening_stack) > 0:
+        #             opening_stack.pop()
+        #         else:
+        #             closing_stack.append(index)
+        # if len(opening_stack) == 0:
+        #     return None
+        # index_to_change = opening_stack[0]
+        # word[index_to_change] = i
+        # new_grid = copy.deepcopy(self._root_grid)
+        # the_index = 0
+        # for r in range(self.rows - 1, -1, -1):
+        #     for c in range(self.cols):
+        #         cell = self._root_grid[r, c]
+        #         if cell is not None:
+        #             if the_index == index_to_change:
+        #                 root_cell, _ = cell
+        #                 new_grid[r, c] = (root_cell, i)
+        #                 print("This doesn't work")
+        #                 return RootTableau(new_grid)
+        #             the_index += 1
+        # return None
 
-        # ef raising_operator(self, row):
         # # RF word is just the RC word backwards
         # if row >= len(self):
         #     return None
@@ -575,8 +583,11 @@ class RootTableau(CrystalGraph, GridPrint):
         # return ret_rc
 
     def lowering_operator(self, index):
-
-        pass
+        print("Should work for non-jdt cases")
+        rc = self.rc_graph.lowering_operator(index)
+        if rc is None:
+            return None
+        return RootTableau.from_rc_graph(rc)
 
     @property
     def rc_graph(self):
@@ -613,3 +624,59 @@ class RootTableau(CrystalGraph, GridPrint):
         if not isinstance(other, RootTableau):
             return False
         return self._hasher == other._hasher
+
+    def rectify(self):
+        """
+        Rectify the tableau: while the top-left cell is empty, find a deterministic
+        inner-corner hole (an empty cell with a box below or to the right),
+        perform a down_jdt_slide from that hole, and repeat until (0,0) is filled
+        or no suitable hole can be found.
+        """
+        # quick exits
+        if self._root_grid.size == 0:
+            return self
+        rows, cols = self._root_grid.shape
+        if rows == 0 or cols == 0:
+            return self
+        # if top-left already filled, nothing to do
+        try:
+            if self[0, 0] is not None:
+                return self
+        except Exception:
+            return self
+
+        cur = self
+        # iterate until top-left is filled or no progress possible
+        while True:
+            # stop if top-left filled
+            try:
+                if cur[0, 0] is not None:
+                    return cur
+            except Exception:
+                return cur
+
+            grid = cur._root_grid
+            rows, cols = grid.shape
+
+            # find candidate holes: empty cells that have a non-empty box below or to the right
+            candidates = []
+            for i, j in np.ndindex(grid.shape):
+                if grid[i, j] is not None:
+                    continue
+                # neighbor below?
+                below = (i + 1 < rows) and (j < cols) and (grid[i + 1, j] is not None)
+                # neighbor right?
+                right = (j + 1 < cols) and (grid[i, j + 1] is not None)
+                if below or right:
+                    candidates.append((i, j))
+
+            if not candidates:
+                # nothing can be slid, give up
+                return cur
+
+            # choose a deterministic inner-corner: maximal (i,j)
+            i0, j0 = max(candidates)
+
+            # perform a down jdt slide from that hole
+            cur = cur.down_jdt_slide(i0, j0)
+            # loop continues; either (0,0) becomes non-None or we find no candidates next iteration
