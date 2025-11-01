@@ -331,7 +331,7 @@ class RootTableau(CrystalGraph, GridPrint):
         return [(i, j) for (i, j) in np.ndindex(order_grid.shape) if order_grid[i, j] is not None and order_grid[i, j] < order_grid[row, col]]
 
     def up_jdt_slide(self, row, col):
-        if self[row, col] != None:
+        if self[row, col] is not None:
             raise ValueError("Can only slide from empty box")
         if self[row - 1, col] is None and self[row, col - 1] is None:
             raise ValueError("No boxes to slide from")
@@ -367,6 +367,68 @@ class RootTableau(CrystalGraph, GridPrint):
                 _recurse()
 
         _recurse()
+        return RootTableau(new_grid)
+
+    def down_jdt_slide(self, row, col):
+        """
+        Perform a downward/rightward jeu-de-taquin slide starting from the given
+        (row, col) hole (0-indexed). Boxes from below or to the right are moved
+        into the hole, preferring the smaller recording letter when both exist.
+        Returns a new RootTableau (does not mutate self).
+        """
+        if self[row, col] is not None:
+            raise ValueError("Can only slide from empty box")
+
+        new_grid = copy.deepcopy(self._root_grid)
+        rows, cols = new_grid.shape
+
+        # helper to test existence of a non-empty neighbor
+        def has_down(r, c):
+            return (r + 1 < new_grid.shape[0]) and (c < new_grid.shape[1]) and (new_grid[r + 1, c] is not None)
+
+        def has_right(r, c):
+            return (c + 1 < new_grid.shape[1]) and (new_grid[r, c + 1] is not None)
+
+        if not (has_down(row, col) or has_right(row, col)):
+            raise ValueError("No boxes to slide from")
+
+        # iteratively pull from down/right into the hole until no move possible
+        r, c = row, col
+        while True:
+            down_exists = has_down(r, c)
+            right_exists = has_right(r, c)
+
+            if not down_exists and not right_exists:
+                break
+
+            if down_exists and not right_exists:
+                # only down available
+                new_grid[r, c] = new_grid[r + 1, c]
+                new_grid[r + 1, c] = None
+                r += 1
+            elif right_exists and not down_exists:
+                # only right available
+                new_grid[r, c] = new_grid[r, c + 1]
+                new_grid[r, c + 1] = None
+                c += 1
+            else:
+                # both available: choose the smaller by recording letter (second component)
+                down_cell = new_grid[r + 1, c]
+                right_cell = new_grid[r, c + 1]
+                down_val = down_cell[1] if (isinstance(down_cell, tuple) and len(down_cell) > 1) else down_cell
+                right_val = right_cell[1] if (isinstance(right_cell, tuple) and len(right_cell) > 1) else right_cell
+                if down_val <= right_val:
+                    new_grid[r, c] = down_cell
+                    new_grid[r + 1, c] = None
+                    r += 1
+                else:
+                    new_grid[r, c] = right_cell
+                    new_grid[r, c + 1] = None
+                    c += 1
+
+        # final hole location: clear it
+        new_grid[r, c] = None
+
         return RootTableau(new_grid)
 
     def __getitem__(self, key: Any) -> Any:
@@ -425,68 +487,96 @@ class RootTableau(CrystalGraph, GridPrint):
     def epsilon(self, index):
         return self._weight_tableau.epsilon(index)
 
-    def raising_operator(self, index):
-        # up = self.rc_graph.raising_operator(index)
-        # if up is None:
-        #     return None
-        # new_grid = copy.deepcopy(self._root_grid)
-        # root_map = dict([(up.left_to_right_inversions(i), up.left_to_right_inversion_coords(i)[0]) for i in range(up.perm.inv)])
-        # for i, j in new_grid.
-        raise NotImplementedError("RCGraph API not implemented will need to do it for real")
-        up = self.rc_graph.raising_operator(index)
-        if up is None:
+    @property
+    def row_word(self):
+        word = []
+        for r in range(self.rows - 1, -1, -1):
+            for c in range(self.cols):
+                cell = self._root_grid[r, c]
+                if cell is not None:
+                    word.append(cell[1])
+        return tuple(word)
+
+    @property
+    def root_row_word(self):
+        word = []
+        for r in range(self.rows - 1, -1, -1):
+            for c in range(self.cols):
+                cell = self._root_grid[r, c]
+                if cell is not None:
+                    root_cell, _letter = cell
+                    word.append(root_cell)
+        return tuple(word)
+
+    def raising_operator(self, i):
+        """Crystal raising operator e_i on the root tableau"""
+        word = [*self.row_word]
+        opening_stack = []
+        closing_stack = []
+        for index in range(len(word)):
+            if word[index] == i + 1:
+                opening_stack.append(index)
+            elif word[index] == i:
+                if len(opening_stack) > 0:
+                    opening_stack.pop()
+                else:
+                    closing_stack.append(index)
+        if len(opening_stack) == 0:
             return None
-
-        # deep copy so we don't mutate self
+        index_to_change = opening_stack[0]
+        word[index_to_change] = i
         new_grid = copy.deepcopy(self._root_grid)
+        the_index = 0
+        for r in range(self.rows - 1, -1, -1):
+            for c in range(self.cols):
+                cell = self._root_grid[r, c]
+                if cell is not None:
+                    if the_index == index_to_change:
+                        root_cell, _ = cell
+                        new_grid[r, c] = (root_cell, i)
+                        print("This doesn't work")
+                        return RootTableau(new_grid)
+                    the_index += 1
+        return None
 
-        # build mapping from whatever keys the RCGraph produces to the new recording value
-        # root_map keys/values depend on RCGraph API; be defensive when applying.
-        root_map = {up.left_to_right_inversion(i): up.left_to_right_inversion_coords(i)[0] for i in range(up.perm.inv)}
+        # ef raising_operator(self, row):
+        # # RF word is just the RC word backwards
+        # if row >= len(self):
+        #     return None
+        # row_i = [*self[row - 1]]
+        # row_ip1 = [*self[row]]
 
-        # iterate over every cell and replace the second component (recording letter)
-        # according to root_map when possible. Tuples are immutable so we construct a new tuple.
-        
-        for ii, jj in np.ndindex(new_grid.shape):
-            cell = new_grid[ii, jj]
-            if cell is None:
-                continue
-            root_cell, _ = cell
-            try:
-                new_letter = root_map[root_cell]
-            except Exception:
-                raise ValueError(f"Error looking up {root_cell} in {root_map} from RC graph {up} {up.perm=} {self=}")
+        # # pair the letters
+        # pairings = []
+        # unpaired = []
+        # unpaired_b = [*row_ip1]
 
-            new_grid[ii, jj] = (root_cell, new_letter)
+        # for letter in row_i:
+        #     st = [letter2 for letter2 in unpaired_b if letter2 > letter]
+        #     if len(st) == 0:
+        #         unpaired.append(letter)
+        #     else:
+        #         pairings.append((letter, min(st)))
+        #         unpaired_b.remove(min(st))
+        # if len(unpaired_b) == 0:
+        #     return None
+        # a = max(unpaired_b)
+        # s = 0
+        # while a + s + 1 in row_ip1:
+        #     s += 1
 
-        return RootTableau(new_grid)
+        # if a + s < row:
+        #     return None
+        # new_row_ip1 = [let for let in row_ip1 if let != a]
+        # new_row_i = sorted([a + s, *row_i], reverse=True)
+        # ret_rc = type(self)([*self[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *self[row + 1 :]])
+        # if ret_rc.perm != self.perm:
+        #     return None
+        # return ret_rc
 
     def lowering_operator(self, index):
 
-        raise NotImplementedError("RCGraph API not implemented will need to do it for real")
-        down = self.rc_graph.lowering_operator(index)
-        if down is None:
-            return None
-        # deep copy so we don't mutate self
-        new_grid = copy.deepcopy(self._root_grid)
-
-        # build mapping from whatever keys the RCGraph produces to the new recording value
-        # root_map keys/values depend on RCGraph API; be defensive when applying.
-        root_map = {down.left_to_right_inversion(i): down.left_to_right_inversion_coords(i)[0] for i in range(down.perm.inv)}
-
-        # iterate over every cell and replace the second component (recording letter)
-        # according to root_map when possible. Tuples are immutable so we construct a new tuple.
-        for ii, jj in np.ndindex(new_grid.shape):
-            cell = new_grid[ii, jj]
-            if cell is None:
-                continue
-            root_cell, _ = cell
-            # try several sensible lookups (be permissive about key types)
-            new_letter = root_map[root_cell]
-
-            new_grid[ii, jj] = (root_cell, new_letter)
-
-        return RootTableau(new_grid)
+        pass
 
     @property
     def rc_graph(self):
