@@ -22,12 +22,25 @@ if __name__ == "__main__":
                 rt = rt.up_jdt_slide(a, b)
             elif cmd == "r":
                 index = int(params)
-                rt = rt.raising_operator(index)
+                rt0 = rt.raising_operator(index)
+                if rt0 is None:
+                    print("Raising operator returned None")
+                else:
+                    rt = rt0
             elif cmd == "l":
                 index = int(params)
-                rt = rt.lowering_operator(index)
-        except Exception:
-            print(f"Error occurred: {e}")
+                rt0 = rt.lowering_operator(index)
+                if rt0 is None:
+                    print("Lowering operator returned None")
+                else:
+                    rt = rt0
+            else:
+                print(f"Invalid command: {cmd}")
+        except Exception as e:
+            import traceback
+            print("Error occurred")
+            traceback.print_exc()
+            
 
         pretty_print(rt)
         print(rt.reduced_word)

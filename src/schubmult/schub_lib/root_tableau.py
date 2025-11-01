@@ -17,7 +17,7 @@ from .rc_graph import RCGraph
 # subword
 # dual
 # recti/fies to a specific subword
-#subword subtableaux
+# subword subtableaux
 
 # Dominant formula: number of standard tableaux of shape w/mu that recitfy to a subword tableau of shape u for a fixed tableau of shape w
 # skew tableau behave dominant correctly
@@ -25,8 +25,10 @@ from .rc_graph import RCGraph
 
 # we can do crazy crystal stuff
 
+
 def _length_of_row(grid, row):
     return len([c for c in grid[row, :] if c is not None])
+
 
 def _count_boxes(grid):
     count = 0
@@ -36,6 +38,7 @@ def _count_boxes(grid):
             if cell is not None:
                 count += 1
     return count
+
 
 def _root_compare(root1, root2):
     if root1 == root2:
@@ -48,7 +51,8 @@ def _root_compare(root1, root2):
         return -1
     return 0
 
-def _word_from_grid(grid0, as_grid: Optional[bool]=False, as_ordering: Optional[bool]=False, with_compatible_seq: Optional[bool]=False) -> Any:
+
+def _word_from_grid(grid0, as_grid: Optional[bool] = False, as_ordering: Optional[bool] = False, with_compatible_seq: Optional[bool] = False) -> Any:
     """
     Two modes:
       - as_grid=True: return an object-array the same shape as grid0 where each
@@ -66,6 +70,19 @@ def _word_from_grid(grid0, as_grid: Optional[bool]=False, as_ordering: Optional[
         Returns a tuple(reversed(collected_letters)) to match the original reduced
         word orientation used elsewhere.
     """
+    ARBITRARY_BIG_NUMBER = 1000
+    def _flip_grid(grid):
+        nonlocal ARBITRARY_BIG_NUMBER
+        for ii in range(grid.shape[0]):
+            for jj in range(grid.shape[1]):
+                cell = grid[ii, jj]
+                if cell is None:
+                    continue
+                root_cell, letter = cell
+                new_root = (ARBITRARY_BIG_NUMBER - root_cell[1], ARBITRARY_BIG_NUMBER - root_cell[0])
+                grid[ii, jj] = (new_root, letter)
+    def _flip(i):
+        return ARBITRARY_BIG_NUMBER - i
     if as_grid:
         index_val = _count_boxes(grid0)
         # Build an output array the same shape as the grid and place, at the
@@ -74,8 +91,10 @@ def _word_from_grid(grid0, as_grid: Optional[bool]=False, as_ordering: Optional[
         # pick max recording value farthest right; the popped letter is the
         # first component of the root cell).
         grid = copy.deepcopy(np.asarray(grid0, dtype=object))
+        _flip_grid(grid)
         out = np.full(grid.shape, None, dtype=object)
         ordering = np.full(grid.shape, None, dtype=object)
+
         def boxes_remaining_local(g):
             for ii in range(g.shape[0]):
                 for jj in range(g.shape[1]):
@@ -117,10 +136,8 @@ def _word_from_grid(grid0, as_grid: Optional[bool]=False, as_ordering: Optional[
             cell = grid[i, j]
             root_cell, _letter = cell
             # place the popped letter into the output at the popped location
-            try:
-                out[i, j] = int(root_cell[0])
-            except Exception:
-                out[i, j] = int(root_cell)
+            out[i, j] = _flip(root_cell[1])
+
             ordering[i, j] = index_val - 1
             index_val -= 1
             # remove box and apply shift to left / above regions
@@ -132,6 +149,7 @@ def _word_from_grid(grid0, as_grid: Optional[bool]=False, as_ordering: Optional[
 
     # reconstruct reduced word by repeated deletion
     grid = copy.deepcopy(grid0)
+    _flip_grid(grid)
     word = []
     compatible_seq = []
 
@@ -174,7 +192,7 @@ def _word_from_grid(grid0, as_grid: Optional[bool]=False, as_ordering: Optional[
                 else:
                     ci, cj = chosen
                     # prefer larger column, then larger row
-                    if jj == grid.shape[1] - 1 or grid[ii, jj+1] is None:
+                    if jj == grid.shape[1] - 1 or grid[ii, jj + 1] is None:
                         chosen = (ii, jj)
                         break
 
@@ -184,9 +202,10 @@ def _word_from_grid(grid0, as_grid: Optional[bool]=False, as_ordering: Optional[
 
         i, j = chosen
         cell = grid[i, j]
+        
         root_cell, _letter = cell
         # append the first component of the root as the letter for the reduced word
-        word.append(int(root_cell[0]))
+        word.append(_flip(root_cell[1]))
         compatible_seq.append(_letter)
 
         # remove the box and reflect the remaining grid before continuing
@@ -199,9 +218,8 @@ def _word_from_grid(grid0, as_grid: Optional[bool]=False, as_ordering: Optional[
 
     # the algorithm collected letters in pop order; return reversed to match original orientation
     if with_compatible_seq:
-        return tuple(reversed(word)), tuple(compatible_seq)
+        return tuple(reversed(word)), tuple(reversed(compatible_seq))
     return tuple(reversed(word))
-
 
 
 def _root_shift(root, spots=None):
@@ -264,7 +282,6 @@ def _root_shift(root, spots=None):
     return _shift
 
 
-
 class RootTableau(CrystalGraph, GridPrint):
     """
     Root tableau with dual knuth equivalence
@@ -273,14 +290,13 @@ class RootTableau(CrystalGraph, GridPrint):
     def __hash__(self) -> int:
         return hash(self._hasher)
 
-
     @classmethod
     def root_insert_rsk(cls, reduced_word, compatible_seq):
         _perm = Permutation.ref_product(*reduced_word)
         word, word2 = (), ()
         spunkle = len(_perm)
         w0 = Permutation.w0(spunkle)
-        rev_word = [w0[a-1] for a in reduced_word]
+        rev_word = [w0[a - 1] for a in reduced_word]
 
         for idx, letter in enumerate(rev_word):
             letter2 = idx + 1
@@ -304,12 +320,11 @@ class RootTableau(CrystalGraph, GridPrint):
         reduced_word = rc.perm_word
         compatible_seq = []
         for i in range(len(rc)):
-            compatible_seq.extend([i+1] * len(rc[i]))
+            compatible_seq.extend([i + 1] * len(rc[i]))
         return cls.root_insert_rsk(reduced_word, compatible_seq)
 
     def _index_of_box(self, row, col):
         return sum(self.length_of_row(r) for r in range(row)) + col
-
 
     def roots_before(self, row, col):
         order_grid = _word_from_grid(self._root_grid, as_ordering=True, as_grid=True)
@@ -318,37 +333,39 @@ class RootTableau(CrystalGraph, GridPrint):
     def up_jdt_slide(self, row, col):
         if self[row, col] != None:
             raise ValueError("Can only slide from empty box")
-        if self[row -1, col] is None and self[row, col -1] is None:
+        if self[row - 1, col] is None and self[row, col - 1] is None:
             raise ValueError("No boxes to slide from")
         new_grid = copy.deepcopy(self._root_grid)
+
         def _recurse():
             nonlocal row, col, new_grid
-            if row == 0 or (col > 0 and row > 0 and new_grid[row -1, col] is None):
+            if row == 0 or (col > 0 and row > 0 and new_grid[row - 1, col] is None):
                 # slide from left
-                new_grid[row, col] = new_grid[row, col -1]
-                new_grid[row, col -1] = None
+                new_grid[row, col] = new_grid[row, col - 1]
+                new_grid[row, col - 1] = None
                 col -= 1
-            elif col == 0 or (col > 0 and row > 0 and new_grid[row, col -1] is None):
+            elif col == 0 or (col > 0 and row > 0 and new_grid[row, col - 1] is None):
                 # slide from above
-                new_grid[row, col] = new_grid[row -1, col]
-                new_grid[row -1, col] = None
+                new_grid[row, col] = new_grid[row - 1, col]
+                new_grid[row - 1, col] = None
                 row -= 1
             else:
                 # both available, pick larger root
-                root_above = new_grid[row -1, col][1]
-                root_left = new_grid[row, col -1][1]
+                root_above = new_grid[row - 1, col][1]
+                root_left = new_grid[row, col - 1][1]
                 if root_above >= root_left:
                     # above is larger or incomparable
-                    new_grid[row, col] = new_grid[row -1, col]
-                    new_grid[row -1, col] = None
+                    new_grid[row, col] = new_grid[row - 1, col]
+                    new_grid[row - 1, col] = None
                     row -= 1
                 else:
                     # left is larger
-                    new_grid[row, col] = new_grid[row, col -1]
-                    new_grid[row, col -1] = None
+                    new_grid[row, col] = new_grid[row, col - 1]
+                    new_grid[row, col - 1] = None
                     col -= 1
             if row > 0 or col > 0:
                 _recurse()
+
         _recurse()
         return RootTableau(new_grid)
 
@@ -381,14 +398,24 @@ class RootTableau(CrystalGraph, GridPrint):
 
     def letter_at(self, row, col):
         return self.word_grid[row, col]
+
     # @property
     # def reduced_word(self):
     #     return self._red_plactic.reverse_rsk(self._index_tableau)
 
+    @cached_property
+    def print_element(self):
+        _printing_grid = copy.deepcopy(self._root_grid)
+        for i in range(_printing_grid.shape[0]):
+            for j in range(_printing_grid.shape[1]):
+                cell = _printing_grid[i, j]
+                if cell is None:
+                    _printing_grid[i, j] = " "
+        return RootTableau(_printing_grid)
+
     def __init__(self, grid):
         self._root_grid = copy.deepcopy(grid)
         self._hasher = tuple(tuple(tuple(b) for b in a if b is not None) for a in self._root_grid if a is not None)
-
 
     @property
     def weight_tableau(self):
@@ -399,26 +426,80 @@ class RootTableau(CrystalGraph, GridPrint):
         return self._weight_tableau.epsilon(index)
 
     def raising_operator(self, index):
+        # up = self.rc_graph.raising_operator(index)
+        # if up is None:
+        #     return None
+        # new_grid = copy.deepcopy(self._root_grid)
+        # root_map = dict([(up.left_to_right_inversions(i), up.left_to_right_inversion_coords(i)[0]) for i in range(up.perm.inv)])
+        # for i, j in new_grid.
+        raise NotImplementedError("RCGraph API not implemented will need to do it for real")
         up = self.rc_graph.raising_operator(index)
         if up is None:
             return None
-        return RootTableau.from_rc_graph(up)
+
+        # deep copy so we don't mutate self
+        new_grid = copy.deepcopy(self._root_grid)
+
+        # build mapping from whatever keys the RCGraph produces to the new recording value
+        # root_map keys/values depend on RCGraph API; be defensive when applying.
+        root_map = {up.left_to_right_inversion(i): up.left_to_right_inversion_coords(i)[0] for i in range(up.perm.inv)}
+
+        # iterate over every cell and replace the second component (recording letter)
+        # according to root_map when possible. Tuples are immutable so we construct a new tuple.
+        
+        for ii, jj in np.ndindex(new_grid.shape):
+            cell = new_grid[ii, jj]
+            if cell is None:
+                continue
+            root_cell, _ = cell
+            try:
+                new_letter = root_map[root_cell]
+            except Exception:
+                raise ValueError(f"Error looking up {root_cell} in {root_map} from RC graph {up} {up.perm=} {self=}")
+
+            new_grid[ii, jj] = (root_cell, new_letter)
+
+        return RootTableau(new_grid)
 
     def lowering_operator(self, index):
+
+        raise NotImplementedError("RCGraph API not implemented will need to do it for real")
         down = self.rc_graph.lowering_operator(index)
         if down is None:
             return None
-        return RootTableau.from_rc_graph(down)
+        # deep copy so we don't mutate self
+        new_grid = copy.deepcopy(self._root_grid)
+
+        # build mapping from whatever keys the RCGraph produces to the new recording value
+        # root_map keys/values depend on RCGraph API; be defensive when applying.
+        root_map = {down.left_to_right_inversion(i): down.left_to_right_inversion_coords(i)[0] for i in range(down.perm.inv)}
+
+        # iterate over every cell and replace the second component (recording letter)
+        # according to root_map when possible. Tuples are immutable so we construct a new tuple.
+        for ii, jj in np.ndindex(new_grid.shape):
+            cell = new_grid[ii, jj]
+            if cell is None:
+                continue
+            root_cell, _ = cell
+            # try several sensible lookups (be permissive about key types)
+            new_letter = root_map[root_cell]
+
+            new_grid[ii, jj] = (root_cell, new_letter)
+
+        return RootTableau(new_grid)
 
     @property
     def rc_graph(self):
         reduced_word, compatible_seq = _word_from_grid(self._root_grid, with_compatible_seq=True)
         rows = []
+        assert len(reduced_word) == len(compatible_seq)
+        print([(a,b) for a,b in zip(reduced_word, compatible_seq)])
         for i, a in enumerate(compatible_seq):
-            if i > len(rows):
-                rows.append([])
-            rows[-1].append(a)
-        return RCGraph(rows)
+            if a > len(rows):
+                while len(rows) < a:
+                    rows.append(())
+            rows[a-1] = (*rows[a-1], reduced_word[i])
+        return RCGraph(tuple(rows)).normalize()
 
     def crystal_length(self):
         return len(self._perm.trimcode)
@@ -437,9 +518,6 @@ class RootTableau(CrystalGraph, GridPrint):
     #         sref = Permutation.ref_product(roots[0][0])
     #         roots = [sref.act_root(*r) for r in roots[1:]]
     #     return tuple(reversed(word))
-
-
-
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, RootTableau):

@@ -52,7 +52,7 @@ class GridPrint(Printable):
 
         if not printer:
             printer = StrPrinter()
-        return printer._print_MatrixBase(self)
+        return printer._print_MatrixBase(self.print_element)
 
     def __repr__(self):
         return self._sympyrepr()
@@ -61,4 +61,8 @@ class GridPrint(Printable):
         return self._sympystr()
 
     def _pretty(self, printer):
-        return printer._print_MatrixBase(self)
+        return printer._print_MatrixBase(self.print_element)
+    
+    @property
+    def print_element(self):
+        return self
