@@ -1,4 +1,3 @@
-import json
 import os
 
 from prompt_toolkit import prompt
@@ -23,7 +22,7 @@ def main():
     pretty_print(rt)
     print(rt.reduced_word)
     assert Permutation.ref_product(*rt.reduced_word) == Permutation.ref_product(4,5,1,4,6,2,3,2,5)
-    
+
     while True:
             # Use the session's prompt method for input
 
