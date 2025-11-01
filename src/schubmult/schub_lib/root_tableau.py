@@ -462,16 +462,8 @@ class RootTableau(CrystalGraph, GridPrint):
         _recurse()
         new_grid[row, col] = None
         ret = RootTableau(new_grid)
-        try:
-            assert ret.rc_graph == self.rc_graph, "up_jdt_slide does not preserve RC graph"
-        except AssertionError as e:
-            # Handle the error (e.g., log it, raise a different error, etc.)
-            print(f"AssertionError: {e}")
-          #  pretty_print(self.rc_graph)
-          #  pretty_print(ret.rc_graph)
-          #  pretty_print(self)
-          #  pretty_print(ret)
-            raise
+        assert ret.rc_graph == self.rc_graph, "up_jdt_slide does not preserve RC graph"
+        assert ret.weight_tableau == self.weight_tableau, "up_jdt_slide does not preserve tableau shape"
         return ret
 
     def down_jdt_slide(self, row, col):
@@ -525,6 +517,7 @@ class RootTableau(CrystalGraph, GridPrint):
 
         ret = RootTableau(new_grid)
         assert ret.rc_graph == self.rc_graph, "down_jdt_slide does not preserve RC graph"
+        assert ret.weight_tableau == self.weight_tableau, "down_jdt_slide does not preserve weight tableau"
         return ret
 
     def __getitem__(self, key: Any) -> Any:
@@ -595,16 +588,16 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def weight_tableau(self):
-        rows = []
-        for row in self._root_grid:
-            rows.append([])
-            for cell in row:
-                if cell is None:
-                    rows[-1].append(0)
-                else:
-                    rows[-1].append(cell[1])
+        # rows = []
+        # for row in self._root_grid:
+        #     rows.append([])
+        #     for cell in row:
+        #         if cell is None:
+        #             rows[-1].append(0)
+        #         else:
+        #             rows[-1].append(cell[1])
 
-        return Plactic(rows)
+        return Plactic().rs_insert(*self.row_word)
 
     def epsilon(self, index):
         return self._weight_tableau.epsilon(index)
