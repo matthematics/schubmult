@@ -151,13 +151,14 @@ version = {attr = "schubmult.__version__"}
 readme = {file = ["README.md"]}
 
 [project.scripts]
-schubmult_py = "schubmult.scripts.schubmult_py:main"
-schubmult_double = "schubmult.scripts.schubmult_double:main"
-schubmult_q = "schubmult.scripts.schubmult_q:main"
-schubmult_q_double = "schubmult.scripts.schubmult_q_double:main"
-schubert_formula = "schubmult.scripts.schubert_formula:main"
-verify_lr_rule = "schubmult.scripts.lr_verification:main"
-lr_rule_verify = "schubmult.scripts.lr_rule_verify:main"
+schubmult_py = "scripts.schubmult_py:main"
+schubmult_double = "scripts.schubmult_double:main"
+schubmult_q = "scripts.schubmult_q:main"
+schubmult_q_double = "scripts.schubmult_q_double:main"
+schubert_formula = "scripts.schubert_formula:main"
+schubprompt = "scripts.schubprompt:main"
+verify_lr_rule = "scripts.lr_verification:main"
+lr_rule_verify = "scripts.lr_rule_verify:main"
 
 [tool.pytest.ini_options]
 addopts = [
