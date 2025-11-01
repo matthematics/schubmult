@@ -49,7 +49,7 @@ def apply_up_seq_and_rect(rt: RootTableau, seq: Sequence[Tuple[int, int]]) -> Op
         cur = cur.up_jdt_slide(i, j)
     logger.debug("After applying up-seq:")
     # pretty_print(cur)
-    return cur.rectify()
+    return cur.rectify(randomized=True)
 
 
 def grids_equal(a: RootTableau, b: RootTableau) -> bool:
@@ -111,7 +111,7 @@ def test_one_case(T: RootTableau, index: int, op_name: str, rc=None) -> Tuple[bo
     B = apply_up_seq_and_rect(T, seq)
 
     # compare
-    ok = T.rc_graph == B.rc_graph
+    ok = T == B
     if ok:
         return True, f"unique rectification, {len(seq)=}"
     # include RC/perm info if available
@@ -161,10 +161,10 @@ def run_random_tests(num_cases=200):
         new_perm = next(perm_iter)
     rc_iter = iter(RCGraph.all_rc_graphs(new_perm, len(new_perm.trimcode)))
     for t in range(1, num_cases + 1):
-
-        try:
-            rc = next(rc_iter)
-        except StopIteration:
+        rc = None
+        for rc in rc_iter:
+            break
+        if rc is None:
             try:
                 new_perm = next(perm_iter)
             except StopIteration:
@@ -178,16 +178,55 @@ def run_random_tests(num_cases=200):
         # pick a random index to test (small range)
         idx = 0 #random.randint(1, 5)
 
-        ok_r, msg_r = test_one_case(T, idx, "rectify", rc=rc)
+        ok_r, msg_r = test_one_case(T, idx, "rectify")
         if ok_r:
-            logger.info("Case %d RECTIFY: OK — %s; idx=%s rc=%s", t, msg_r, idx, rc)
+            logger.info("Case %d RECTIFY: OK — %s; idx=%s", t, msg_r, idx)
+            pretty_print(T)
         else:
-            logger.error("Case %d RECTIFY: FAIL — %s; idx=%s rc=%s", t, msg_r, idx, rc)
+            logger.error("Case %d RECTIFY: FAIL — %s; idx=%s", t, msg_r, idx)
+            pretty_print(T)
             # exit immediately on failure showing the failing case
             sys.exit(2)
     # if we reach here all cases passed or were skipped
     logger.info("All %d cases completed (no failing case encountered).", num_cases)
     return []
+
+def run_complete_tests():
+    """
+    Run randomized tests and log the outcome of each trial (both raise and lower).
+    Ensure the up-jdt sequence is actually valid for the sampled tableau: regenerate
+    until apply_up_seq_and_rect(T, seq) succeeds (or give up after attempts).
+    """
+    # ensure logging is configured even if the module was imported
+    root = logging.getLogger()
+    if not root.handlers:
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    t = 0
+    for new_perm in _perms:
+        if new_perm.inv == 0:
+            continue
+        for rc in RCGraph.all_rc_graphs(new_perm, len(new_perm.trimcode)):
+            t += 1
+            T = RootTableau.from_rc_graph(rc)
+
+            # build a valid up-sequence (retry until apply_up_seq_and_rect succeeds)
+            # pick a random index to test (small range)
+            idx = 0 #random.randint(1, 5)
+
+            
+            ok_r, msg_r = test_one_case(T, idx, "rectify")
+            if ok_r:
+                logger.info("Case %d RECTIFY: OK — %s; idx=%s", t, msg_r, idx)
+                pretty_print(T)
+            else:
+                logger.error("Case %d RECTIFY: FAIL — %s; idx=%s", t, msg_r, idx)
+                pretty_print(T)
+                # exit immediately on failure showing the failing case
+                sys.exit(2)
+    # if we reach here all cases passed or were skipped
+    logger.info("All %d cases completed (no failing case encountered).", t)
+    return []
+
 
 
 if __name__ == "__main__":
@@ -196,11 +235,17 @@ if __name__ == "__main__":
     # simple logging setup so each test case is reported to stdout
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
-    N = int(sys.argv[1]) if len(sys.argv) > 1 else 200
-    perm_length = int(sys.argv[2]) if len(sys.argv) > 2 else 8
+    perm_length = int(sys.argv[1]) if len(sys.argv) > 1 else 8
+    if perm_length > 15:
+        raise ValueError("perm_length too large; may exhaust memory/time")
+    N = int(sys.argv[2]) if len(sys.argv) > 2 else None
+    
     _perms = Permutation.all_permutations(perm_length)
     print(f"Running {N} randomized tests (seed={Seed}) ...")
-    fails = run_random_tests(N)
+    if N is not None:
+        fails = run_random_tests(N)
+    else:
+        fails = run_complete_tests()
     if not fails:
         print("No failures found (all tested cases either commute or were skipped).")
     else:

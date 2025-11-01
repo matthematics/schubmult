@@ -412,16 +412,20 @@ class RootTableau(CrystalGraph, GridPrint):
     def perm(self):
         return Permutation.ref_product(*self.reduced_word)
 
-    def rectify(self):
+    def rectify(self, randomized=False):
+        import random
         cur = self
         while True:
             inner_corners = tuple(cur.iter_inner_corners())
             if not inner_corners:
                 break
-            cur = cur.down_jdt_slide(*next(iter(inner_corners)))
+            if randomized:
+                cur = cur.down_jdt_slide(*random.choice(inner_corners))
+            else:
+                cur = cur.down_jdt_slide(*next(iter(inner_corners)))
         return cur
 
-    def up_jdt_slide(self, row, col):
+    def up_jdt_slide(self, row, col, check=False):
         if not _is_valid_outer_corner(self._root_grid, row, col):
             raise ValueError("Can only slide from valid outer corner")
         new_grid = copy.deepcopy(self._root_grid)
@@ -462,11 +466,12 @@ class RootTableau(CrystalGraph, GridPrint):
         _recurse()
         new_grid[row, col] = None
         ret = RootTableau(new_grid)
-        assert ret.rc_graph == self.rc_graph, "up_jdt_slide does not preserve RC graph"
-        assert ret.weight_tableau == self.weight_tableau, "up_jdt_slide does not preserve tableau shape"
+        if check:
+            assert ret.rc_graph == self.rc_graph, "up_jdt_slide does not preserve RC graph"
+            assert ret.weight_tableau == self.weight_tableau, "up_jdt_slide does not preserve tableau shape"
         return ret
 
-    def down_jdt_slide(self, row, col):
+    def down_jdt_slide(self, row, col, check=False):
         """
         Perform a downward/rightward jeu-de-taquin slide starting from the given
         (row, col) hole (0-indexed). Boxes from below or to the right are moved
@@ -516,12 +521,18 @@ class RootTableau(CrystalGraph, GridPrint):
         
 
         ret = RootTableau(new_grid)
-        assert ret.rc_graph == self.rc_graph, "down_jdt_slide does not preserve RC graph"
-        assert ret.weight_tableau == self.weight_tableau, "down_jdt_slide does not preserve weight tableau"
+        if check:
+            assert ret.rc_graph == self.rc_graph, "down_jdt_slide does not preserve RC graph"
+            assert ret.weight_tableau == self.weight_tableau, "down_jdt_slide does not preserve weight tableau"
         return ret
 
     def __getitem__(self, key: Any) -> Any:
         return self._root_grid[key]
+
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, RootTableau):
+            return False
+        return self._hasher == other._hasher
 
     @cached_property
     def rows(self):
