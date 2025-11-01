@@ -85,9 +85,63 @@ def random_reduced_and_compatible(max_len=6, max_letter=4):
     return reduced, compatible
 
 
-def random_up_seq(max_len=5, max_row=4, max_col=4):
-    L = random.randint(0, max_len)
-    return [(random.randint(0, max_row), random.randint(0, max_col)) for _ in range(L)]
+def random_up_seq(rt: RootTableau, max_len=5) -> Sequence[Tuple[int, int]]:
+    """
+    Generate a valid sequence of up-jdt hole positions for tableau `rt`.
+
+    Validity rule used:
+      - a hole position (i,j) is considered valid if, on the current grid,
+        either both a box up (i-1,j) and a box left (i,j-1) exist, OR
+        at least one of those neighbors exists and the hole is placed on the
+        *outer* boundary (we allow positions with i==rows or j==cols to extend
+        the grid by one).
+    The sequence is built greedily: choose a random valid outer-corner,
+    perform the up_jdt_slide (on an extended copy) to update the tableau,
+    and repeat until max_len or no valid candidates remain.
+    """
+    seq: List[Tuple[int, int]] = []
+    cur = rt
+    for _ in range(max_len):
+        grid = copy.deepcopy(cur._root_grid)
+        rows, cols = grid.shape
+
+        # consider candidate positions in range [0..rows] x [0..cols]
+        candidates = []
+        for i in range(0, rows + 1):
+            for j in range(0, cols + 1):
+                # skip positions that are currently occupied (must be a hole)
+                if i < rows and j < cols and grid[i, j] is not None:
+                    continue
+                # check neighbors (up and left) existence within current grid
+                up_exists = (i - 1 >= 0 and i - 1 < rows and j < cols and grid[i - 1, j] is not None)
+                left_exists = (j - 1 >= 0 and j - 1 < cols and i < rows and grid[i, j - 1] is not None)
+
+                # hole is on outer boundary if it extends grid by at least one coordinate
+                is_outer = (i == rows) or (j == cols)
+
+                # accept if either both neighbors exist, or at least one exists and position is outer
+                if (up_exists and left_exists) or ((up_exists or left_exists) and is_outer):
+                    candidates.append((i, j))
+
+        if not candidates:
+            break
+
+        # pick random candidate and perform slide to update cur
+        i_choice, j_choice = random.choice(candidates)
+        seq.append((i_choice, j_choice))
+
+        # perform the slide on an extended tableau to keep validity for next step
+        g = ensure_cell(grid, i_choice, j_choice)
+        g[i_choice, j_choice] = None
+        tmp = RootTableau(g)
+        try:
+            cur = tmp.up_jdt_slide(i_choice, j_choice)
+        except Exception:
+            # if slide unexpectedly fails, stop building sequence
+            seq.pop()
+            break
+
+    return tuple(seq)
 
 
 def test_one_case(reduced_word, compatible_seq, seq, index: int, op_name: str) -> Tuple[bool, str]:
@@ -140,7 +194,8 @@ def run_random_tests(num_cases=200):
     failures = []
     for t in range(num_cases):
         reduced, compatible = random_reduced_and_compatible()
-        seq = random_up_seq()
+        T = RootTableau.root_insert_rsk(reduced, compatible)
+        seq = random_up_seq(T)
         # pick a random index to test (small range)
         idx = random.randint(1, 5)
         ok_r, msg_r = test_one_case(reduced, compatible, seq, idx, "raise")

@@ -337,8 +337,23 @@ class RootTableau(CrystalGraph, GridPrint):
     def up_jdt_slide(self, row, col):
         if self[row, col] is not None:
             raise ValueError("Can only slide from empty box")
+
+        # Validate that (row,col) is an outer-corner hole:
+        # - up_exists: there is a box immediately above (row-1, col)
+        # - left_exists: there is a box immediately left (row, col-1)
+        # Outer-corner validity: either both neighbors exist, OR at least one exists        # ...existing code...
+        grid = self._root_grid
+        rows, cols = grid.shape
+        up_exists = (row - 1 >= 0 and row - 1 < rows and col < cols and grid[row - 1, col] is not None)
+        left_exists = (col - 1 >= 0 and col - 1 < cols and row < rows and grid[row, col - 1] is not None)
+        on_boundary = (row == rows - 1) or (col == cols - 1)
+
+        if not ((up_exists and left_exists) or ((up_exists or left_exists) and on_boundary)):
+            raise ValueError(f"Hole at {(row, col)} is not an outer corner; cannot perform up_jdt_slide")
+
         if self[row - 1, col] is None and self[row, col - 1] is None:
             raise ValueError("No boxes to slide from")
+
         new_grid = copy.deepcopy(self._root_grid)
 
         def _recurse():
@@ -591,92 +606,36 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def rc_graph(self):
-        reduced_word, compatible_seq = _word_from_grid(self._root_grid, with_compatible_seq=True)
-        rows = []
-        assert len(reduced_word) == len(compatible_seq)
-        print([(a,b) for a,b in zip(reduced_word, compatible_seq)])
-        for i, a in enumerate(compatible_seq):
-            if a > len(rows):
-                while len(rows) < a:
-                    rows.append(())
-            rows[a-1] = (*rows[a-1], reduced_word[i])
-        return RCGraph(tuple(rows)).normalize()
-
-    def crystal_length(self):
-        return len(self._perm.trimcode)
-
-    @property
-    def crystal_weight(self):
-        return self._plactic.crystal_weight()
-
-    # def reduced_word(self):
-    #     recording_tableau = self.index_tableau
-    #     permutation_of_roots = self.reverse_rsk(recording_tableau)
-    #     roots = list(reversed([self._perm.right_root_at(i - 1) for i in permutation_of_roots]))
-    #     word = []
-    #     for i in range(len(roots)):
-    #         word.append(roots[0][0])
-    #         sref = Permutation.ref_product(roots[0][0])
-    #         roots = [sref.act_root(*r) for r in roots[1:]]
-    #     return tuple(reversed(word))
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, RootTableau):
-            return False
-        return self._hasher == other._hasher
-
-    def rectify(self):
         """
-        Rectify the tableau: while the top-left cell is empty, find a deterministic
-        inner-corner hole (an empty cell with a box below or to the right),
-        perform a down_jdt_slide from that hole, and repeat until (0,0) is filled
-        or no suitable hole can be found.
+        Build an RCGraph from the tableau. If anything goes wrong during
+        construction, raise a RuntimeError with a helpful debug payload
+        (grid shape, a small snapshot of the grid, partial reduced/compatible
+        sequences when available, and the original traceback).
         """
-        # quick exits
-        if self._root_grid.size == 0:
-            return self
-        rows, cols = self._root_grid.shape
-        if rows == 0 or cols == 0:
-            return self
-        # if top-left already filled, nothing to do
+        reduced_word = None
+        compatible_seq = None
         try:
-            if self[0, 0] is not None:
-                return self
-        except Exception:
-            return self
+            reduced_word, compatible_seq = _word_from_grid(self._root_grid, with_compatible_seq=True)
+            rows = []
+            if len(reduced_word) != len(compatible_seq):
+                raise ValueError(f"length mismatch: reduced_word={len(reduced_word)} compatible_seq={len(compatible_seq)}")
+            for i, a in enumerate(compatible_seq):
+                if a > len(rows):
+                    while len(rows) < a:
+                        rows.append(())
+                rows[a - 1] = (*rows[a - 1], reduced_word[i])
+            return RCGraph(tuple(rows)).normalize()
+        except Exception as exc:
+            import traceback
+            grid_shape = getattr(self._root_grid, "shape", None)
+            grid_snapshot = repr(getattr(self, "_root_grid", None))
 
-        cur = self
-        # iterate until top-left is filled or no progress possible
-        while True:
-            # stop if top-left filled
-            try:
-                if cur[0, 0] is not None:
-                    return cur
-            except Exception:
-                return cur
-
-            grid = cur._root_grid
-            rows, cols = grid.shape
-
-            # find candidate holes: empty cells that have a non-empty box below or to the right
-            candidates = []
-            for i, j in np.ndindex(grid.shape):
-                if grid[i, j] is not None:
-                    continue
-                # neighbor below?
-                below = (i + 1 < rows) and (j < cols) and (grid[i + 1, j] is not None)
-                # neighbor right?
-                right = (j + 1 < cols) and (grid[i, j + 1] is not None)
-                if below or right:
-                    candidates.append((i, j))
-
-            if not candidates:
-                # nothing can be slid, give up
-                return cur
-
-            # choose a deterministic inner-corner: maximal (i,j)
-            i0, j0 = max(candidates)
-
-            # perform a down jdt slide from that hole
-            cur = cur.down_jdt_slide(i0, j0)
-            # loop continues; either (0,0) becomes non-None or we find no candidates next iteration
+            tb = traceback.format_exc()
+            raise RuntimeError(
+                "Failed to build RCGraph from RootTableau.\n"
+                f"grid.shape = {grid_shape}\n"
+                f"grid_snapshot = {grid_snapshot}\n"
+                f"reduced_word (partial) = {reduced_word}\n"
+                f"compatible_seq (partial) = {compatible_seq}\n"
+                f"traceback:\n{tb}"
+            ) from exc
