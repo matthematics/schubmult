@@ -426,13 +426,12 @@ class RootTableau(CrystalGraph, GridPrint):
         except Exception as e:
             raise RuntimeError(f"up_jdt_slide: invalid input grid before slide: {e!r}")
 
-        before_row_word = self.row_word
+        before_weight_tableau = self.weight_tableau
         before_reduced_word = self.reduced_word
 
         # allow holes that extend the grid by one; build an extended working grid
         grid = copy.deepcopy(self._root_grid)
         rows, cols = grid.shape
-        # if hole extends grid, make a larger array and copy
         if row >= rows or col >= cols:
             nr = max(rows, row + 1)
             nc = max(cols, col + 1)
@@ -447,37 +446,66 @@ class RootTableau(CrystalGraph, GridPrint):
         if not _is_valid_outer_corner(grid, row, col):
             raise ValueError("up_jdt_slide can only be performed from an outer-corner hole")
 
-        new_grid = copy.deepcopy(grid)
+        # separate root-grid and letter-grid; letters move with the roots during jdt
+        root_grid = np.empty(grid.shape, dtype=object)
+        letter_grid = np.zeros(grid.shape, dtype=np.int32)
+        for r0, c0 in np.ndindex(grid.shape):
+            cell = grid[r0, c0]
+            if cell is None:
+                root_grid[r0, c0] = None
+                letter_grid[r0, c0] = 0
+            else:
+                root_grid[r0, c0] = cell[0]
+                letter_grid[r0, c0] = cell[1]
+
         r, c = row, col
-        # perform iterative slide: pull from above or left into the hole
         while True:
-            above = (r - 1 >= 0 and new_grid[r - 1, c] is not None)
-            left = (c - 1 >= 0 and new_grid[r, c - 1] is not None)
+            above = (r - 1 >= 0 and root_grid[r - 1, c] is not None)
+            left = (c - 1 >= 0 and root_grid[r, c - 1] is not None)
             if not above and not left:
                 break
             if above and not left:
-                new_grid[r, c] = new_grid[r - 1, c]
-                new_grid[r - 1, c] = None
+                # move from above into hole
+                root_grid[r, c] = root_grid[r - 1, c]
+                root_grid[r - 1, c] = None
+                letter_grid[r, c] = letter_grid[r - 1, c]
+                letter_grid[r - 1, c] = 0
                 r -= 1
                 continue
             if left and not above:
-                new_grid[r, c] = new_grid[r, c - 1]
-                new_grid[r, c - 1] = None
+                # move from left into hole
+                root_grid[r, c] = root_grid[r, c - 1]
+                root_grid[r, c - 1] = None
+                letter_grid[r, c] = letter_grid[r, c - 1]
+                letter_grid[r, c - 1] = 0
                 c -= 1
                 continue
-            # both available: choose larger by recording-letter (second component)
-            val_above = new_grid[r - 1, c][1]
-            val_left = new_grid[r, c - 1][1]
+            # both available: choose by letter_grid (recording letter) first
+            val_above = letter_grid[r - 1, c]
+            val_left = letter_grid[r, c - 1]
+            
             if val_above >= val_left:
-                new_grid[r, c] = new_grid[r - 1, c]
-                new_grid[r - 1, c] = None
+                root_grid[r, c] = root_grid[r - 1, c]
+                root_grid[r - 1, c] = None
+                letter_grid[r, c] = val_above
+                letter_grid[r - 1, c] = 0
                 r -= 1
             else:
-                new_grid[r, c] = new_grid[r, c - 1]
-                new_grid[r, c - 1] = None
+                root_grid[r, c] = root_grid[r, c - 1]
+                root_grid[r, c - 1] = None
+                letter_grid[r, c] = val_left
+                letter_grid[r, c - 1] = 0
                 c -= 1
+        root_grid[row, col] = None
+        letter_grid[row, col] = 0
+        # construct combined grid
+        new_grid = np.empty(root_grid.shape, dtype=object)
+        for r0, c0 in np.ndindex(root_grid.shape):
+            if root_grid[r0, c0] is None:
+                new_grid[r0, c0] = None
+            else:
+                new_grid[r0, c0] = (root_grid[r0, c0], int(letter_grid[r0, c0]))
 
-        # leave final hole (r,c) as None and return a RootTableau
         try:
             _validate_grid(new_grid)
         except Exception as e:
@@ -486,15 +514,10 @@ class RootTableau(CrystalGraph, GridPrint):
             )
 
         after = RootTableau(new_grid)
-        # sanity-check invariants
-        if before_row_word != after.row_word or before_reduced_word != after.reduced_word:
-            raise RuntimeError(
-                "up_jdt_slide violated invariants\n"
-                f"before_row_word={before_row_word} after_row_word={after.row_word}\n"
-                f"before_reduced_word={before_reduced_word} after_reduced_word={after.reduced_word}\n"
-                f"before_grid={_snap_grid(self._root_grid)}\nafter_grid={_snap_grid(new_grid)}"
-            )
-
+        # sanity-check invariants: plactic (weight) tableau should be unchanged
+        if self.rc_graph != after.rc_graph:
+            raise ValueError(f"Does not preserve bunkbaby {self.rc_graph=} {after.rc_graph=}")
+        
         return after
 
     def down_jdt_slide(self, row, col):
@@ -512,42 +535,68 @@ class RootTableau(CrystalGraph, GridPrint):
         if not _is_valid_inner_corner(self._root_grid, row, col):
             raise ValueError("down_jdt_slide can only be performed from an inner-corner hole")
 
-        before_row_word = self.row_word
+        # separate root and letter grids; letters move with the roots during jdt
+        root_grid = np.empty(self._root_grid.shape, dtype=object)
+        letter_grid = np.empty(self._root_grid.shape, dtype=object)
+        for r0, c0 in np.ndindex(self._root_grid.shape):
+            cell = self._root_grid[r0, c0]
+            if cell is None:
+                root_grid[r0, c0] = None
+                letter_grid[r0, c0] = None
+            else:
+                root_grid[r0, c0] = cell[0]
+                letter_grid[r0, c0] = cell[1]
+
+        before_weight_tableau = self.weight_tableau
         before_reduced_word = self.reduced_word
 
-        new_grid = copy.deepcopy(self._root_grid)
-        rows, cols = new_grid.shape
+        new_root_grid = copy.deepcopy(root_grid)
+        new_letter_grid = copy.deepcopy(letter_grid)
+        rows, cols = new_root_grid.shape
         r, c = row, col
 
         while True:
-            down_exists = (r + 1 < rows and new_grid[r + 1, c] is not None)
-            right_exists = (c + 1 < cols and new_grid[r, c + 1] is not None)
+            down_exists = (r + 1 < rows and new_root_grid[r + 1, c] is not None)
+            right_exists = (c + 1 < cols and new_root_grid[r, c + 1] is not None)
             if not down_exists and not right_exists:
                 break
             if down_exists and not right_exists:
-                new_grid[r, c] = new_grid[r + 1, c]
-                new_grid[r + 1, c] = None
+                new_root_grid[r, c] = new_root_grid[r + 1, c]
+                new_root_grid[r + 1, c] = None
+                new_letter_grid[r, c] = new_letter_grid[r + 1, c]
+                new_letter_grid[r + 1, c] = None
                 r += 1
                 continue
             if right_exists and not down_exists:
-                new_grid[r, c] = new_grid[r, c + 1]
-                new_grid[r, c + 1] = None
+                new_root_grid[r, c] = new_root_grid[r, c + 1]
+                new_root_grid[r, c + 1] = None
+                new_letter_grid[r, c] = new_letter_grid[r, c + 1]
+                new_letter_grid[r, c + 1] = None
                 c += 1
                 continue
-            # both present: choose smaller by recording-letter (second component)
-            down_val = new_grid[r + 1, c][1]
-            right_val = new_grid[r, c + 1][1]
-            if down_val <= right_val:
-                new_grid[r, c] = new_grid[r + 1, c]
-                new_grid[r + 1, c] = None
+            # both present: choose by anchored recording letter
+            down_letter = new_letter_grid[r + 1, c]
+            right_letter = new_letter_grid[r, c + 1]
+            if down_letter <= right_letter:
+                new_root_grid[r, c] = new_root_grid[r + 1, c]
+                new_root_grid[r + 1, c] = None
+                new_letter_grid[r, c] = new_letter_grid[r + 1, c]
+                new_letter_grid[r + 1, c] = None
                 r += 1
             else:
-                new_grid[r, c] = new_grid[r, c + 1]
-                new_grid[r, c + 1] = None
+                new_root_grid[r, c] = new_root_grid[r, c + 1]
+                new_root_grid[r, c + 1] = None
+                new_letter_grid[r, c] = new_letter_grid[r, c + 1]
+                new_letter_grid[r, c + 1] = None
                 c += 1
 
-        # clear final hole and return
-        new_grid[r, c] = None
+        # assemble final grid by attaching moved letters back to their moved roots
+        new_grid = np.empty(new_root_grid.shape, dtype=object)
+        for r0, c0 in np.ndindex(new_root_grid.shape):
+            if new_root_grid[r0, c0] is None:
+                new_grid[r0, c0] = None
+            else:
+                new_grid[r0, c0] = (new_root_grid[r0, c0], int(new_letter_grid[r0, c0]) if new_letter_grid[r0, c0] is not None else None)
 
         try:
             _validate_grid(new_grid)
@@ -557,11 +606,11 @@ class RootTableau(CrystalGraph, GridPrint):
             )
 
         after = RootTableau(new_grid)
-        # sanity-check invariants
-        if before_row_word != after.row_word or before_reduced_word != after.reduced_word:
+        # sanity-check plactic invariant
+        if before_weight_tableau != after.weight_tableau or before_reduced_word != after.reduced_word:
             raise RuntimeError(
                 "down_jdt_slide violated invariants\n"
-                f"before_row_word={before_row_word} after_row_word={after.row_word}\n"
+                f"before_weight_tableau={before_weight_tableau} after_weight_tableau={after.weight_tableau}\n"
                 f"before_reduced_word={before_reduced_word} after_reduced_word={after.reduced_word}\n"
                 f"before_grid={_snap_grid(self._root_grid)}\nafter_grid={_snap_grid(new_grid)}"
             )
@@ -636,8 +685,16 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def weight_tableau(self):
-        _word = tuple([a for a in row if a is not None] for row in self._root_grid)
-        return Plactic(_word)
+        rows = []
+        for row in self._root_grid:
+            rows.append([])
+            for cell in row:
+                if cell is None:
+                    rows[-1].append(0)
+                else:
+                    rows[-1].append(cell[1])
+
+        return Plactic(rows)
 
     def epsilon(self, index):
         return self._weight_tableau.epsilon(index)
