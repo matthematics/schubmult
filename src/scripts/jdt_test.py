@@ -105,18 +105,31 @@ def test_one_case(T: RootTableau, index: int, op_name: str, rc=None) -> Tuple[bo
 
 
     # call operator directly; do not catch exceptions here
-    seq = random_up_seq(T)
-    if len(seq) == 0:
-        return True, "empty up-seq, skipped"
-    B = apply_up_seq_and_rect(T, seq)
+    if op_name == "raise":
+        w2 = T.weight_tableau.raising_operator(index)
+        
+        
+        if w2 is None:
+            ok = T.rc_graph.raising_operator(index) is None
+            msg = "Raising annihilates both"
+        else:
+            T2 = RootTableau.from_rc_graph(T.rc_graph.raising_operator(index))
+            ok = T2.weight_tableau == w2
+            msg = "Raising commutes"
+    elif op_name == "rectify":
+        seq = random_up_seq(T)
+        if len(seq) == 0:
+            return True, "empty up-seq, skipped"
+        B = apply_up_seq_and_rect(T, seq)
 
-    # compare
-    ok = T == B
+        # compare
+        ok = T == B
+        msg = "unique rectification"
     if ok:
-        return True, f"unique rectification, {len(seq)=}"
+        return True, msg
     # include RC/perm info if available
-    extra = f" rc={T} {B}"
-    return False, f"mismatch: index={index}, seq={seq}{extra}"
+    # extra = f" rc={T} {B}"
+    return False, f"mismatch: index={index}"
 
 
     
@@ -213,16 +226,19 @@ def run_complete_tests():
             # pick a random index to test (small range)
             idx = 0 #random.randint(1, 5)
 
-            
-            ok_r, msg_r = test_one_case(T, idx, "rectify")
-            if ok_r:
-                logger.info("Case %d RECTIFY: OK — %s; idx=%s", t, msg_r, idx)
-                pretty_print(T)
-            else:
-                logger.error("Case %d RECTIFY: FAIL — %s; idx=%s", t, msg_r, idx)
-                pretty_print(T)
-                # exit immediately on failure showing the failing case
-                sys.exit(2)
+            tests = ["raise"]
+            indexes = list(range(1, rc.crystal_length()))
+            for test_op in tests:
+                for idx in indexes:
+                    ok_r, msg_r = test_one_case(T, idx, test_op)
+                    if ok_r:
+                        logger.info("Case %d %s: OK — %s; idx=%s", t, test_op, msg_r, idx)
+                        pretty_print(T)
+                    else:
+                        logger.error("Case %d %s: FAIL — %s; idx=%s", t, test_op, msg_r, idx)
+                        pretty_print(T)
+                        # exit immediately on failure showing the failing case
+                        sys.exit(2)
     # if we reach here all cases passed or were skipped
     logger.info("All %d cases completed (no failing case encountered).", t)
     return []
