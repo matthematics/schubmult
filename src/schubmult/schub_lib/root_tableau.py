@@ -41,7 +41,7 @@ def _is_valid_outer_corner(grid: np.ndarray, i: int, j: int) -> bool:
         return False
     up = grid[i - 1, j] if i - 1 >= 0 else "bob" if i == 0 else None
     left = grid[i, j - 1] if j - 1 >= 0 else "bing" if j == 0 else None
-    return grid[i, j] is None and (up is not None and left is not None)
+    return grid[i, j] is None and (up is not None and left is not None) and not (i == 0 and j == 0)
     # consider hole on or beyond boundary as "outer
 
 
@@ -60,7 +60,7 @@ def _is_valid_inner_corner(grid: np.ndarray, i: int, j: int) -> bool:
         return False
     down = grid[i + 1, j] if i + 1 < rows else "bob" if i == rows - 1 else None
     right = grid[i, j + 1] if j + 1 < cols else "bing" if j == cols - 1 else None
-    return grid[i, j] is None and (down is not None and right is not None)
+    return grid[i, j] is None and (down is not None and right is not None) and not (i == rows - 1 and j == cols - 1)
 
 
 def _length_of_row(grid, row):
@@ -481,58 +481,47 @@ class RootTableau(CrystalGraph, GridPrint):
         into the hole, preferring the smaller recording letter when both exist.
         Returns a new RootTableau (does not mutate self).
         """
-        if self[row, col] is not None:
-            raise ValueError("Can only slide from empty box")
+        if not _is_valid_inner_corner(self._root_grid, row, col):
+            raise ValueError("Can only slide from valid inner corner")
 
         new_grid = copy.deepcopy(self._root_grid)
-        rows, cols = new_grid.shape
 
-        # helper to test existence of a non-empty neighbor
-        def has_down(r, c):
-            return (r + 1 < new_grid.shape[0]) and (c < new_grid.shape[1]) and (new_grid[r + 1, c] is not None)
-
-        def has_right(r, c):
-            return (c + 1 < new_grid.shape[1]) and (new_grid[r, c + 1] is not None)
-
-        if not (has_down(row, col) or has_right(row, col)):
-            raise ValueError("No boxes to slide from")
-
-        # iteratively pull from down/right into the hole until no move possible
-        r, c = row, col
-        while True:
-            down_exists = has_down(r, c)
-            right_exists = has_right(r, c)
-
-            if not down_exists and not right_exists:
-                break
-
-            if down_exists and not right_exists:
-                # only down available
-                new_grid[r, c] = new_grid[r + 1, c]
-                new_grid[r + 1, c] = None
-                r += 1
-            elif right_exists and not down_exists:
-                # only right available
-                new_grid[r, c] = new_grid[r, c + 1]
-                new_grid[r, c + 1] = None
-                c += 1
+        def _recurse():
+            nonlocal row, col, new_grid
+            #_logger.debug(f"{row=} {col=}")
+          #  pretty_print(RootTableau(new_grid))
+            right = new_grid[row, col + 1] if col < self.cols - 1 else None
+                # slide from left
+            down = new_grid[row + 1, col] if row < self.rows - 1 else None
+                # slide from above
+            if right is None and down is None:
+                return
+            if right is None:
+                new_grid[row, col] = down
+                new_grid[row + 1, col] = None
+                row += 1
+            elif down is None:
+                new_grid[row, col] = right
+                new_grid[row, col + 1] = None
+                col += 1
             else:
-                # both available: choose the smaller by recording letter (second component)
-                down_cell = new_grid[r + 1, c]
-                right_cell = new_grid[r, c + 1]
-                down_val = down_cell[1] if (isinstance(down_cell, tuple) and len(down_cell) > 1) else down_cell
-                right_val = right_cell[1] if (isinstance(right_cell, tuple) and len(right_cell) > 1) else right_cell
-                if down_val <= right_val:
-                    new_grid[r, c] = down_cell
-                    new_grid[r + 1, c] = None
-                    r += 1
+                # both available, pick larger root
+                root_below = new_grid[row + 1, col][1]
+                root_right = new_grid[row, col + 1][1]
+                if root_below <= root_right:
+                    # below is larger or incomparable
+                    new_grid[row, col] = down
+                    new_grid[row + 1, col] = None
+                    row += 1
                 else:
-                    new_grid[r, c] = right_cell
-                    new_grid[r, c + 1] = None
-                    c += 1
-
-        # final hole location: clear it
-        new_grid[r, c] = None
+                    # right is larger
+                    new_grid[row, col] = right
+                    new_grid[row, col + 1] = None
+                    col += 1
+            _recurse()
+        _recurse()
+        new_grid[row, col] = None
+        
 
         ret = RootTableau(new_grid)
         assert ret.rc_graph == self.rc_graph, "down_jdt_slide does not preserve RC graph"

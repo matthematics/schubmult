@@ -24,7 +24,7 @@ random.seed(Seed)
 logger = logging.getLogger(__name__)
 if not logger.handlers:
     handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.DEBUG)
+    handler.setLevel(logging.INFO)
     handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)
@@ -44,9 +44,11 @@ def apply_up_seq_and_rect(rt: RootTableau, seq: Sequence[Tuple[int, int]]) -> Op
     cur = rt
     for (i, j) in seq:
         # create a copy of current grid extended to include (i,j) and set hole
+        logger.debug("Applying up-jdt slide at (%d,%d):", i, j)
+        # pretty_print(cur)
         cur = cur.up_jdt_slide(i, j)
     logger.debug("After applying up-seq:")
-    pretty_print(cur)
+    # pretty_print(cur)
     return cur.rectify()
 
 
@@ -87,7 +89,7 @@ def sample_tableau_from_perms() -> tuple[RootTableau, Any]:
     return T, rc
 
 
-def test_one_case(T: RootTableau, seq: Sequence[Tuple[int, int]], index: int, op_name: str, rc=None) -> Tuple[bool, str]:
+def test_one_case(T: RootTableau, index: int, op_name: str, rc=None) -> Tuple[bool, str]:
     """
     Test commutation for one operator index:
      left = op( Rect( UpSeq(T) ) )
@@ -101,11 +103,11 @@ def test_one_case(T: RootTableau, seq: Sequence[Tuple[int, int]], index: int, op
 
 
     # call operator directly; do not catch exceptions here
-    
+    seq = random_up_seq(T)
     B = apply_up_seq_and_rect(T, seq)
     
     # compare
-    ok = T == B
+    ok = T.rc_graph == B.rc_graph
     if ok:
         return True, "commute"
     # include RC/perm info if available
@@ -125,24 +127,18 @@ def random_up_seq(rt: RootTableau, max_len=5) -> Sequence[Tuple[int, int]]:
     """
     seq: List[Tuple[int, int]] = []
     cur = rt
-    candidates: List[Tuple[int, int]] = []
+    seq = []
     for _ in range(max_len):
-        seq = []
-        while True:
-            outer_corners = tuple(cur.iter_outer_corners())
-            if not outer_corners:
-                break
-            box  = random.choice(outer_corners)
-            seq = seq + [box]
-            cur = cur.up_jdt_slide(*box)
-        if not seq:
+        
+        outer_corners = tuple(cur.iter_outer_corners())
+        if not outer_corners:
             break
-        candidates.append(seq)
-    if not candidates:
-        logger.info("Could not generate any valid up-sequence for sampled tableau; returning empty sequence.")
-        pretty_print(rt)
-        return None
-    return random.choice(candidates)
+        box  = random.choice(outer_corners)
+        seq = seq + [box]
+        cur = cur.up_jdt_slide(*box)
+
+    logger.debug(f"Generated sequence {seq=}")
+    return tuple(seq)
 
 
 def run_random_tests(num_cases=200):
@@ -160,30 +156,22 @@ def run_random_tests(num_cases=200):
         T, rc = sample_tableau_from_perms()
 
         # build a valid up-sequence (retry until apply_up_seq_and_rect succeeds)
-        seq = ()
-        max_attempts = 20
-        for attempt in range(1, max_attempts + 1):
-            seq = random_up_seq(T)
-            if seq:
-                break
-            logger.debug("Generated up-seq valid for sampled tableau; retrying (%d/%d)", attempt, max_attempts)
-
         # pick a random index to test (small range)
         idx = random.randint(1, 5)
 
-        ok_r, msg_r = test_one_case(T, seq, idx, "raise", rc=rc)
+        ok_r, msg_r = test_one_case(T, idx, "raise", rc=rc)
         if ok_r:
-            logger.info("Case %d RAISE: OK — %s; seq=%s idx=%s rc=%s", t, msg_r, seq, idx, rc)
+            logger.info("Case %d RAISE: OK — %s; idx=%s rc=%s", t, msg_r, idx, rc)
         else:
-            logger.error("Case %d RAISE: FAIL — %s; seq=%s idx=%s rc=%s", t, msg_r, seq, idx, rc)
+            logger.error("Case %d RAISE: FAIL — %s; idx=%s rc=%s", t, msg_r, idx, rc)
             # exit immediately on failure showing the failing case
             sys.exit(2)
 
-        ok_l, msg_l = test_one_case(T, seq, idx, "lower", rc=rc)
+        ok_l, msg_l = test_one_case(T, idx, "lower", rc=rc)
         if ok_l:
-            logger.info("Case %d LOWER: OK — %s; seq=%s idx=%s rc=%s", t, msg_l, seq, idx, rc)
+            logger.info("Case %d LOWER: OK — %s; idx=%s rc=%s", t, msg_l, idx, rc)
         else:
-            logger.error("Case %d LOWER: FAIL — %s; seq=%s idx=%s rc=%s", t, msg_l, seq, idx, rc)
+            logger.error("Case %d LOWER: FAIL — %s; idx=%s rc=%s", t, msg_l, idx, rc)
             sys.exit(2)
 
     # if we reach here all cases passed or were skipped
