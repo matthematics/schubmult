@@ -52,7 +52,7 @@ def apply_up_seq_and_rect(rt: RootTableau, seq: Sequence[Tuple[int, int]], index
     if index is not None:
         cur = cur.raising_operator(index)
     if cur is not None:
-        return cur.rectify(randomized=True)
+        return cur.rectify(randomized=True, animate=True)
     return None
 
 
@@ -109,6 +109,20 @@ def test_one_case(T: RootTableau, index: int, op_name: str, rc=None) -> Tuple[bo
 
 
     # call operator directly; do not catch exceptions here
+    if op_name == "raise":
+        T2 = T.raising_operator(index)
+        if T2 is None:
+            ok = T.rc_graph.raising_operator(index) is None
+            if ok:
+                msg = "Raising annihilates both"
+            else:
+                msg = f"Raising annihilates left only, {T=} {T2=}"
+        else:
+            ok = (T2.rc_graph == T.rc_graph.raising_operator(index))
+            if ok:
+                msg = "Raising commutes"
+            else:
+                msg = f"Raising mismatch, {T=} {T.rc_graph=} vs {T2=} {T2.rc_graph=} {index=}"
     if op_name == "raiserectify":
         w2 = T.weight_tableau.raising_operator(index)
         
@@ -233,7 +247,7 @@ def run_complete_tests():
         logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     t = 0
     for new_perm in _perms:
-        if new_perm.inv == 0:
+        if new_perm.inv == 0 or len(new_perm.trimcode) < 6:
             continue
         for rc in RCGraph.all_rc_graphs(new_perm, len(new_perm.trimcode)):
             t += 1
@@ -243,7 +257,7 @@ def run_complete_tests():
             # pick a random index to test (small range)
             idx = 0 #random.randint(1, 5)
 
-            tests = ["raiserectify"]
+            tests = ["raise"]
             indexes = list(range(1, rc.crystal_length()))
             for test_op in tests:
                 for idx in indexes:
