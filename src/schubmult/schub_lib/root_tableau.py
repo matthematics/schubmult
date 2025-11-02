@@ -685,6 +685,13 @@ class RootTableau(CrystalGraph, GridPrint):
         compatible_seq = ret_rc.compatible_sequence
         ret = RootTableau.root_insert_rsk(ret_rc.perm_word, compatible_seq)
         assert ret.edelman_greene_invariant == self.edelman_greene_invariant, f"{ret.edelman_greene_invariant=} != {self.edelman_greene_invariant=}"
+        did = True
+        while did:
+            did = False
+            for _box in ret.iter_outer_corners():
+                if self._root_grid[_box] is not None:
+                    ret = ret.up_jdt_slide(*_box, check=True)
+                    did = True
         return ret
 
     def lowering_operator(self, index):
