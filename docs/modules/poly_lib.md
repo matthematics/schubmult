@@ -1,0 +1,17 @@
+<!-- filepath: src/schubmult/rings/poly_lib.py -->
+
+- `ClassDef` — `_gvars` (line 13)
+- `FunctionDef` — `sv_posify` (line 56)
+- `FunctionDef` — `act` (line 71)
+- `FunctionDef` — `elem_sym_func` (line 83)
+- `FunctionDef` — `elem_sym_func_q` (line 124)
+- `FunctionDef` — `elem_sym_poly_q` (line 152)
+- `FunctionDef` — `complete_sym_poly` (line 164)
+- `FunctionDef` — `elem_sym_poly` (line 183)
+- `FunctionDef` — `call_zvars` (line 229)
+- `FunctionDef` — `efficient_subs` (line 233)
+- `FunctionDef` — `q_vector` (line 242)
+- `FunctionDef` — `monom_sym` (line 268)
+- `FunctionDef` — `xreplace_genvars` (line 283)
+- `FunctionDef` — `divide_out_diff` (line 306)
+- `FunctionDef` — `split_up` (line 347)

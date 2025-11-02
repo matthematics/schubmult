@@ -1,0 +1,15 @@
+<!-- filepath: src/schubmult/rings/quantum_schubert_ring.py -->
+
+- `FunctionDef` — `is_fact_elem_sym` (line 25)
+- `ClassDef` — `QuantumDoubleSchubertElement` (line 29)
+- `ClassDef` — `ParabolicQuantumDoubleSchubertElement` (line 34)
+- `ClassDef` — `QuantumDoubleSchubertRing` (line 48)
+- `FunctionDef` — `QDSx` (line 259)
+- `ClassDef` — `QuantumSingleSchubertRing` (line 265)
+- `ClassDef` — `ParabolicQuantumDoubleSchubertRing` (line 368)
+- `FunctionDef` — `make_parabolic_quantum_basis` (line 685)
+- `FunctionDef` — `QPDSx_index` (line 689)
+- `FunctionDef` — `QPDSx` (line 697)
+- `ClassDef` — `ParabolicQuantumSingleSchubertRing` (line 701)
+- `FunctionDef` — `make_single_parabolic_quantum_basis` (line 786)
+- `FunctionDef` — `QPSx` (line 791)
