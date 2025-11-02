@@ -119,10 +119,16 @@ def test_one_case(T: RootTableau, index: int, op_name: str, rc=None) -> Tuple[bo
         
         if w2 is None:
             ok = B is None
-            msg = "Raising annihilates both"
+            if ok:
+                msg = "Raising annihilates both"
+            else:
+                msg = f"Raising annihilates left only, {T=} {B=}"
         else:
             ok = (B.weight_tableau == w2 and B.reduced_word == T.reduced_word)
-            msg = "Raising commutes"
+            if ok:
+                msg = "Raising commutes"
+            else:
+                msg = f"Raising mismatch, {B.weight_tableau=} vs {w2=}, {B.reduced_word=} vs {T.reduced_word=}"
     elif op_name == "rectify":
         seq = random_up_seq(T)
         if len(seq) == 0:
@@ -136,7 +142,7 @@ def test_one_case(T: RootTableau, index: int, op_name: str, rc=None) -> Tuple[bo
         return True, msg
     # include RC/perm info if available
     # extra = f" rc={T} {B}"
-    return False, f"mismatch: index={index}"
+    return False, msg
 
 
     
@@ -197,16 +203,16 @@ def run_random_tests(num_cases=200):
         # build a valid up-sequence (retry until apply_up_seq_and_rect succeeds)
         # pick a random index to test (small range)
         idx = 0 #random.randint(1, 5)
-
-        ok_r, msg_r = test_one_case(T, idx, "raiserectify")
-        if ok_r:
-            logger.info("Case %d RECTIFY: OK — %s; idx=%s", t, msg_r, idx)
-            pretty_print(T)
-        else:
-            logger.error("Case %d RECTIFY: FAIL — %s; idx=%s", t, msg_r, idx)
-            pretty_print(T)
-            # exit immediately on failure showing the failing case
-            sys.exit(2)
+        for idx in range(1, T.crystal_length()):
+            ok_r, msg_r = test_one_case(T, idx, "raiserectify")
+            if ok_r:
+                logger.info("Case %d RECTIFY: OK — %s; idx=%s", t, msg_r, idx)
+                pretty_print(T)
+            else:
+                logger.error("Case %d RECTIFY: FAIL — %s; idx=%s", t, msg_r, idx)
+                pretty_print(T)
+                # exit immediately on failure showing the failing case
+                sys.exit(2)
     # if we reach here all cases passed or were skipped
     logger.info("All %d cases completed (no failing case encountered).", num_cases)
     return []

@@ -660,18 +660,18 @@ class RootTableau(CrystalGraph, GridPrint):
         new_grid = copy.deepcopy(self._root_grid)
         opening_stack = []
         closing_stack = []
-        for i in range(len(new_grid) - 1, -1, -1):
+        for i0 in range(len(new_grid) - 1, -1, -1):
             for j in range(new_grid.shape[1]):
-                cell = new_grid[i, j]
+                cell = new_grid[i0, j]
                 if cell is not None:
                     root_cell, letter = cell
                     if letter == i + 1:
-                        opening_stack.append((i, j))
+                        opening_stack.append((i0, j))
                     elif letter == i:
                         if len(opening_stack) > 0:
                             opening_stack.pop()
                         else:
-                            closing_stack.append((i, j))
+                            closing_stack.append((i0, j))
         if len(opening_stack) == 0:
             return None
         index_to_change = opening_stack[0]
