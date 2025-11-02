@@ -191,6 +191,10 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def is_valid(self):
         if self.perm.inv != len(self.perm_word):
             return False
+        for i, row in enumerate(self):
+            for a in row:
+                if a < i + 1:
+                    return False
         # if len(self.perm.trimcode) > len(self):
         #     return False
         return True

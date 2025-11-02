@@ -713,6 +713,7 @@ class RootTableau(CrystalGraph, GridPrint):
                     root_index = ind
                 if new_grid[ind] is not None and ((new_grid[ind][0][1] == new_grid[max_ind][0][1]) and new_grid[ind][1] == i):
                     root_index2 = ind
+            assert root_index is not None
             if root_index is not None:
                 print(f"{new_grid[root_index]=}")
                 if root_index != max_ind:
@@ -724,9 +725,22 @@ class RootTableau(CrystalGraph, GridPrint):
                     swap_root2 = new_grid[root_index2][0]
                     print("Case 2")
                     print(f"{new_grid[index_to_change[0]]=} {new_grid[root_index2]=} {new_grid[max_ind]=} {new_grid[root_index]=}")
-                    swap_root2 = new_grid[max_ind][0]
-                    new_grid[max_ind], new_grid[root_index2] = (new_grid[root_index2][0], i + 1), (new_grid[index_to_change[0]][0], i)
-                    new_grid[index_to_change[0]] = (swap_root2, i)
+                    ret =  RootTableau(new_grid)
+                    if not ret.rc_graph.is_valid or ret.perm != self.perm:
+                        print(f"Not valid: {tuple(ret.rc_graph)=}")
+                        swap_root2 = new_grid[max_ind][0]
+                        new_grid[max_ind], new_grid[root_index2] = (new_grid[root_index2][0], i + 1), (new_grid[index_to_change[0]][0], i)
+                        new_grid[index_to_change[0]] = (swap_root2, i)
+                    else:
+                        print(f"Valid; {tuple(ret.rc_graph)=} moving on")
+                else:
+                    print("Case 3")
+                    new_grid[max_ind], new_grid[index_to_change[0]] = (new_grid[index_to_change[0]][0], i + 1), (new_grid[max_ind][0], i)
+                    #new_grid[max_ind], new_grid[root]
+                    for splotch in range(index_to_change[0][1] - 1, -1, -1):
+                        cur_index = (index_to_change[0][0],splotch)
+                        if _root_compare(new_grid[index_to_change[0]][0], new_grid[cur_index][0]) == 0 and new_grid[cur_index][1] == new_grid[index_to_change[0]][1] and word_grid[cur_index] < index_to_change[1]:
+                            new_grid[cur_index], new_grid[index_to_change[0]] = new_grid[index_to_change[0]], new_grid[cur_index]
                     #new_grid[max_ind] = (swap_root, i + 1)
                     # new_grid[max_ind] = (swap_root2, i + 1)
             # if root_index2 is not None:

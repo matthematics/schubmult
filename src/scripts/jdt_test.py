@@ -132,7 +132,7 @@ def test_one_case(T: RootTableau, index: int, op_name: str, rc=None) -> Tuple[bo
             if ok:
                 msg = "Raising commutes"
             else:
-                msg = f"Raising mismatch, {B.weight_tableau=} vs {w2=}, {B=} vs {T2=} {index=} {B.rc_graph=} {T2.rc_graph=} {B.perm=} vs {T.perm=} This is OK just simultaneous RC pairing"
+                msg = f"Raising mismatch, {B.weight_tableau=} vs {w2=}, {B=} vs {T2=} {index=} {B.rc_graph=} {T2.rc_graph=} {B.perm=} vs {T.perm=} This is OK just simultaneous RC pairing {T.rc_graph=}"
     elif op_name == "rectify":
         seq = random_up_seq(T)
         if len(seq) == 0:
