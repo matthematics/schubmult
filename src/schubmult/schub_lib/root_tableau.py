@@ -368,6 +368,15 @@ class RootTableau(CrystalGraph, GridPrint):
     def __hash__(self) -> int:
         return hash(self._hasher)
 
+    @property
+    def perm(self):
+        return Permutation.ref_product(*self.reduced_word)
+    @property
+    def edelman_greene_invariant(self):
+        w0 = Permutation.w0(len(self.perm))
+        rev_word = [w0[a - 1] for a in self.reduced_word]
+        return NilPlactic().ed_insert(rev_word)
+
     @classmethod
     def root_insert_rsk(cls, reduced_word, compatible_seq):
         _perm = Permutation.ref_product(*reduced_word)
@@ -469,6 +478,7 @@ class RootTableau(CrystalGraph, GridPrint):
         if check:
             assert ret.rc_graph == self.rc_graph, "up_jdt_slide does not preserve RC graph"
             assert ret.weight_tableau == self.weight_tableau, "up_jdt_slide does not preserve tableau shape"
+        assert self.edelman_greene_invariant == ret.edelman_greene_invariant
         return ret
 
     def down_jdt_slide(self, row, col, check=False):
@@ -524,6 +534,7 @@ class RootTableau(CrystalGraph, GridPrint):
         if check:
             assert ret.rc_graph == self.rc_graph, "down_jdt_slide does not preserve RC graph"
             assert ret.weight_tableau == self.weight_tableau, "down_jdt_slide does not preserve weight tableau"
+        assert self.edelman_greene_invariant == ret.edelman_greene_invariant
         return ret
 
     def __getitem__(self, key: Any) -> Any:
