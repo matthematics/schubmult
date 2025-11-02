@@ -1081,6 +1081,14 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def height(self):
         return self.rows
 
+    @property
+    def compatible_sequence(self):
+        seq = []
+        for i in range(len(self)):
+            for _ in range(len(self[i])):
+                seq.append(i + 1)
+        return tuple(seq)
+
     @cached_property
     def cols(self):
         return max(1, *[self[i][0] - i if len(self[i]) > 0 else 0 for i in range(len(self))]) if len(self) > 0 else 0

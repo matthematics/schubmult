@@ -657,165 +657,42 @@ class RootTableau(CrystalGraph, GridPrint):
 
     def raising_operator(self, i):
         """Crystal raising operator e_i on the root tableau"""
-        new_grid = copy.deepcopy(self._root_grid)
-        word_grid = self.word_grid
-        opening_stack = []
-        closing_stack = []
-        for i0 in range(len(new_grid) - 1, -1, -1):
-            for j in range(new_grid.shape[1]):
-                cell = new_grid[i0, j]
-                if cell is not None:
-                    root_cell, letter = cell
-                    if letter == i + 1:
-                        opening_stack.append(((i0, j), word_grid[i0, j]))
-                    elif letter == i:
-                        if len(opening_stack) > 0:
-                            spot = None
-                            for index_spot, ((ii, jj), letter) in enumerate(reversed(opening_stack)):
-                                if letter > word_grid[i0, j]:
-                                    spot = len(opening_stack) - 1 - index_spot
-                                    break
-                            if spot is not None:
-                                opening_stack.pop(spot)
-                        else:
-                            closing_stack.append((i0, j))
-        if len(opening_stack) == 0:
+        row = i
+        rc = self.rc_graph
+        if row >= len(rc):
             return None
-        index_to_change = opening_stack[0]
-        print(f"f{opening_stack=} {closing_stack=} {new_grid=}")
-        print("Need to change up the root/letter")
-        max_ind = None
-        a = None
-        for ind in np.ndindex(word_grid.shape):
-            cell = new_grid[ind]
-            if cell is not None and cell[1] == i + 1:
-                if max_ind is None or word_grid[ind] > a:
-                    max_ind = ind
-                    a = word_grid[ind]
-        #max_ind, a = (ind, v) for ind in max(opening_stack[ind][1] for ind in range(len(opening_stack)))
+        row_i = [*rc[row - 1]]
+        row_ip1 = [*rc[row]]
+
+        # pair the letters
+        pairings = []
+        unpaired = []
+        unpaired_b = [*row_ip1]
+
+        for letter in row_i:
+            st = [letter2 for letter2 in unpaired_b if letter2 > letter]
+            if len(st) == 0:
+                unpaired.append(letter)
+            else:
+                pairings.append((letter, min(st)))
+                unpaired_b.remove(min(st))
+        if len(unpaired_b) == 0:
+            return None
+        a = max(unpaired_b)
         s = 0
-        while a + s + 1 in [word_grid[ind] for ind in np.ndindex(word_grid.shape) if new_grid[ind] is not None and new_grid[ind][1] == i + 1]:
+        while a + s + 1 in row_ip1:
             s += 1
-        if a + s < i:
+
+        if a + s < row:
             return None
-        print("before change")
-        pretty_print(new_grid)
-        
-        swap_root = new_grid[index_to_change[0]][0]
-        print(f"{max_ind=} {index_to_change=}")
-        new_grid[index_to_change[0]] = (new_grid[index_to_change[0]][0], i)
-        if max_ind != index_to_change[0]:
-            root_index = None
-            root_index2 = None
-            for ind in np.ndindex(new_grid.shape):
-                print(f"{index_to_change=} {new_grid[max_ind]=} {new_grid[index_to_change[0]]=}")
-                if new_grid[ind] is not None and ((new_grid[ind][0][1] == new_grid[max_ind][0][1]) and new_grid[ind][1] == i + 1):
-                    root_index = ind
-                if new_grid[ind] is not None and ((new_grid[ind][0][1] == new_grid[max_ind][0][1]) and new_grid[ind][1] == i):
-                    root_index2 = ind
-            assert root_index is not None
-            if root_index is not None:
-                print(f"{new_grid[root_index]=}")
-                if root_index != max_ind:
-                    print("Case 1")
-                    new_grid[index_to_change[0]] = (new_grid[root_index][0], i)
-                    new_grid[max_ind] = (swap_root, i + 1)
-                elif root_index2 is not None:
-                    
-                    swap_root2 = new_grid[root_index2][0]
-                    print("Case 2")
-                    print(f"{new_grid[index_to_change[0]]=} {new_grid[root_index2]=} {new_grid[max_ind]=} {new_grid[root_index]=}")
-                    ret =  RootTableau(new_grid)
-                    if not ret.rc_graph.is_valid or ret.perm != self.perm:
-                        print(f"Not valid: {tuple(ret.rc_graph)=}")
-                        swap_root2 = new_grid[max_ind][0]
-                        new_grid[max_ind], new_grid[root_index2] = (new_grid[root_index2][0], i + 1), (new_grid[index_to_change[0]][0], i)
-                        new_grid[index_to_change[0]] = (swap_root2, i)
-                    else:
-                        print(f"Valid; {tuple(ret.rc_graph)=} moving on")
-                else:
-                    print("Case 3")
-                    new_grid[max_ind], new_grid[index_to_change[0]] = (new_grid[index_to_change[0]][0], i + 1), (new_grid[max_ind][0], i)
-                    #new_grid[max_ind], new_grid[root]
-                    for splotch in range(index_to_change[0][1] - 1, -1, -1):
-                        cur_index = (index_to_change[0][0],splotch)
-                        if _root_compare(new_grid[index_to_change[0]][0], new_grid[cur_index][0]) == 0 and new_grid[cur_index][1] == new_grid[index_to_change[0]][1] and word_grid[cur_index] < index_to_change[1]:
-                            new_grid[cur_index], new_grid[index_to_change[0]] = new_grid[index_to_change[0]], new_grid[cur_index]
-                    #new_grid[max_ind] = (swap_root, i + 1)
-                    # new_grid[max_ind] = (swap_root2, i + 1)
-            # if root_index2 is not None:
-            #     print(f"{new_grid[index_to_change[0]]=} {new_grid[root_index2]=} {new_grid[max_ind]=}")
-            #     new_grid[index_to_change[0]] = (swap_root, i)
-            #     new_grid[max_ind] = (new_grid[root_index2][0], i + 1)
-        print("After change")
-        pretty_print(new_grid)
-
-        # row_i = [*self[row - 1]]
-        # row_ip1 = [*self[row]]
-
-        # # pair the letters
-        # pairings = []
-        # unpaired = []
-        # unpaired_b = [*row_ip1]
-
-        # for letter in row_i:
-        #     st = [letter2 for letter2 in unpaired_b if letter2 > letter]
-        #     if len(st) == 0:
-        #         unpaired.append(letter)
-        #     else:
-        #         pairings.append((letter, min(st)))
-        #         unpaired_b.remove(min(st))
-        # if len(unpaired_b) == 0:
-        #     return None
-        # a = max(unpaired_b)
-        # s = 0
-        # while a + s + 1 in row_ip1:
-        #     s += 1
-
-        # if a + s < row:
-        #     return None
-        # new_row_ip1 = [let for let in row_ip1 if let != a]
-        # new_row_i = sorted([a + s, *row_i], reverse=True)
-        # ret_rc = type(self)([*self[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *self[row + 1 :]])
-        # if ret_rc.perm != self.perm:
-        #     return None
-        # return ret_rc
-
-        return RootTableau(new_grid)
-
-        # # RF word is just the RC word backwards
-        # if row >= len(self):
-        #     return None
-        # row_i = [*self[row - 1]]
-        # row_ip1 = [*self[row]]
-
-        # # pair the letters
-        # pairings = []
-        # unpaired = []
-        # unpaired_b = [*row_ip1]
-
-        # for letter in row_i:
-        #     st = [letter2 for letter2 in unpaired_b if letter2 > letter]
-        #     if len(st) == 0:
-        #         unpaired.append(letter)
-        #     else:
-        #         pairings.append((letter, min(st)))
-        #         unpaired_b.remove(min(st))
-        # if len(unpaired_b) == 0:
-        #     return None
-        # a = max(unpaired_b)
-        # s = 0
-        # while a + s + 1 in row_ip1:
-        #     s += 1
-
-        # if a + s < row:
-        #     return None
-        # new_row_ip1 = [let for let in row_ip1 if let != a]
-        # new_row_i = sorted([a + s, *row_i], reverse=True)
-        # ret_rc = type(self)([*self[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *self[row + 1 :]])
-        # if ret_rc.perm != self.perm:
-        #     return None
-        # return ret_rc
+        new_row_ip1 = [let for let in row_ip1 if let != a]
+        new_row_i = sorted([a + s, *row_i], reverse=True)
+        ret_rc = RCGraph([*rc[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *rc[row + 1 :]])
+        if ret_rc.perm != rc.perm:
+            return None
+        compatible_seq = ret_rc.compatible_sequence
+        ret = RootTableau.root_insert_rsk(ret_rc.perm_word, compatible_seq)
+        return ret
 
     def lowering_operator(self, index):
         print("Should work for non-jdt cases")
