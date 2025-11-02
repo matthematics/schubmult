@@ -371,18 +371,12 @@ class RootTableau(CrystalGraph, GridPrint):
     @property
     def perm(self):
         return Permutation.ref_product(*self.reduced_word)
+
+    # preserved by the crystal operators
     @property
     def edelman_greene_invariant(self):
         w0 = Permutation.w0(len(self.perm))
-        grid = self.word_grid
-        pretty_print(grid)
-        rev_word = []
-        for i in range(len(grid) - 1, -1, -1):
-            for j in range(len(grid[i])): 
-                if grid[i, j] is not None:
-                    print(f"grid[{i}, {j}]={grid[i,j]}")
-                    rev_word.append(grid[i, j])
-        print(f"Checking eg invar {rev_word=}")
+        rev_word = [w0[r - 1] for r in self.reduced_word]
         return NilPlactic().ed_insert(*rev_word)
 
     @classmethod
@@ -486,8 +480,7 @@ class RootTableau(CrystalGraph, GridPrint):
         if check:
             assert ret.rc_graph == self.rc_graph, "up_jdt_slide does not preserve RC graph"
             assert ret.weight_tableau == self.weight_tableau, "up_jdt_slide does not preserve tableau shape"
-        # nope
-        # assert self.edelman_greene_invariant == ret.edelman_greene_invariant
+        assert self.edelman_greene_invariant == ret.edelman_greene_invariant
         return ret
 
     def down_jdt_slide(self, row, col, check=False):
@@ -543,8 +536,7 @@ class RootTableau(CrystalGraph, GridPrint):
         if check:
             assert ret.rc_graph == self.rc_graph, "down_jdt_slide does not preserve RC graph"
             assert ret.weight_tableau == self.weight_tableau, "down_jdt_slide does not preserve weight tableau"
-        # nope
-        # assert self.edelman_greene_invariant == ret.edelman_greene_invariant
+        assert self.edelman_greene_invariant == ret.edelman_greene_invariant
         return ret
 
     def __getitem__(self, key: Any) -> Any:
@@ -692,6 +684,7 @@ class RootTableau(CrystalGraph, GridPrint):
             return None
         compatible_seq = ret_rc.compatible_sequence
         ret = RootTableau.root_insert_rsk(ret_rc.perm_word, compatible_seq)
+        assert ret.edelman_greene_invariant == self.edelman_greene_invariant, f"{ret.edelman_greene_invariant=} != {self.edelman_greene_invariant=}"
         return ret
 
     def lowering_operator(self, index):

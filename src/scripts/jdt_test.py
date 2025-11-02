@@ -52,7 +52,7 @@ def apply_up_seq_and_rect(rt: RootTableau, seq: Sequence[Tuple[int, int]], index
     if index is not None:
         cur = cur.raising_operator(index)
     if cur is not None:
-        return cur.rectify(randomized=True, animate=True)
+        return cur.rectify(randomized=True)
     return None
 
 
@@ -257,7 +257,7 @@ def run_complete_tests():
             # pick a random index to test (small range)
             idx = 0 #random.randint(1, 5)
 
-            tests = ["raise"]
+            tests = ["rectify"]
             indexes = list(range(1, rc.crystal_length()))
             for test_op in tests:
                 for idx in indexes:
