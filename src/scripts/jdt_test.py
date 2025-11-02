@@ -32,7 +32,7 @@ logger.propagate = False
 
 
 
-def apply_up_seq_and_rect(rt: RootTableau, seq: Sequence[Tuple[int, int]]) -> Optional[RootTableau]:
+def apply_up_seq_and_rect(rt: RootTableau, seq: Sequence[Tuple[int, int]], index=None) -> Optional[RootTableau]:
     """
     For a given RootTableau (assumed straight), apply a sequence of "create hole
     at (i,j) then up_jdt_slide(i,j)" operations and finally rectify().
@@ -49,7 +49,11 @@ def apply_up_seq_and_rect(rt: RootTableau, seq: Sequence[Tuple[int, int]]) -> Op
         cur = cur.up_jdt_slide(i, j)
     logger.debug("After applying up-seq:")
     # pretty_print(cur)
-    return cur.rectify(randomized=True)
+    if index is not None:
+        cur = cur.raising_operator(index)
+    if cur is not None:
+        return cur.rectify(randomized=True)
+    return None
 
 
 def grids_equal(a: RootTableau, b: RootTableau) -> bool:
@@ -105,16 +109,19 @@ def test_one_case(T: RootTableau, index: int, op_name: str, rc=None) -> Tuple[bo
 
 
     # call operator directly; do not catch exceptions here
-    if op_name == "raise":
+    if op_name == "raiserectify":
         w2 = T.weight_tableau.raising_operator(index)
         
+        seq = random_up_seq(T)
+        if len(seq) == 0:
+            return True, "empty up-seq, skipped"
+        B = apply_up_seq_and_rect(T, seq, index=index)
         
         if w2 is None:
-            ok = T.rc_graph.raising_operator(index) is None
+            ok = B is None
             msg = "Raising annihilates both"
         else:
-            T2 = RootTableau.from_rc_graph(T.rc_graph.raising_operator(index))
-            ok = T2.weight_tableau == w2
+            ok = (B.weight_tableau == w2 and B.reduced_word == T.reduced_word)
             msg = "Raising commutes"
     elif op_name == "rectify":
         seq = random_up_seq(T)
@@ -191,7 +198,7 @@ def run_random_tests(num_cases=200):
         # pick a random index to test (small range)
         idx = 0 #random.randint(1, 5)
 
-        ok_r, msg_r = test_one_case(T, idx, "rectify")
+        ok_r, msg_r = test_one_case(T, idx, "raiserectify")
         if ok_r:
             logger.info("Case %d RECTIFY: OK — %s; idx=%s", t, msg_r, idx)
             pretty_print(T)
@@ -226,7 +233,7 @@ def run_complete_tests():
             # pick a random index to test (small range)
             idx = 0 #random.randint(1, 5)
 
-            tests = ["raise"]
+            tests = ["raiserectify"]
             indexes = list(range(1, rc.crystal_length()))
             for test_op in tests:
                 for idx in indexes:
