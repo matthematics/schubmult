@@ -24,6 +24,7 @@ if __name__ == "__main__":
             if not u.bruhat_leq(dom.perm):
                 continue
             u_crystal_hw = RCGraph.principal_rc(u, len(u.trimcode)).to_highest_weight()[0]
+            u_tab_crystal = RootTableau.from_rc_graph(u_crystal_hw)
             #prin_rc_u = RCGraph.principal_rc(u, len(u.trimcode)).to_highest_weight()[0]
             for w in perms:
                 if not u.bruhat_leq(w):
@@ -43,6 +44,7 @@ if __name__ == "__main__":
                     rc_hw = rc_w.to_highest_weight()[0]
                     if rc_hw in crystals:
                         continue
+                    
                     low_weight = rc_w.to_lowest_weight()[0].length_vector
                     # if lw != tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)]):
                     #     print(f"{lw} != {tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)])}")
@@ -55,23 +57,32 @@ if __name__ == "__main__":
                         # the weight of the skew comes from w
                         assert tb.perm.inv == u.inv
                         reduced_word = [len(u) - a for a in tb.row_word]
-                        new_grid = copy.deepcopy(w_tab._root_grid)
-                        index_list = []
-                        print(f"{w_tab=} {tb=} {u=}")
-                        for box in w_tab.iter_boxes():
-                            if tb[box] == 0 :
-                                new_grid[box] = None
-                            else:
-                                index_list.append(w_tab.order_grid[box])
-                        index_flatten = {b: len([a for a in index_list if a < b]) for b in index_list}
-                        for box in w_tab.iter_boxes():
-                            if new_grid[box] is not None:
-                                new_grid[box] = (u.right_root_at(index_flatten[w_tab.order_grid[box]], word=reduced_word), new_grid[box][1])
-                        try:
-                            u_tab = RootTableau(new_grid).rectify()
-                        except AssertionError:
-                            print("Invalid tableau")
-                            continue
+                        # new_grid = copy.deepcopy(w_tab._root_grid)
+                        # index_list = []
+                        # print(f"{w_tab=} {tb=} {u=}")
+                        # for box in w_tab.iter_boxes():
+                        #     if tb[box] == 0 :
+                        #         new_grid[box] = None
+                        #     else:
+                        #         index_list.append(w_tab.order_grid[box])
+                        # index_flatten = {b: len([a for a in index_list if a < b]) for b in index_list}
+                        # for box in w_tab.iter_boxes():
+                        #     if new_grid[box] is not None:
+                        #         new_grid[box] = (u.right_root_at(index_flatten[w_tab.order_grid[box]], word=reduced_word), new_grid[box][1])
+                        # u_tab = RootTableau(new_grid)
+                        print("Tobblywank")
+                        pretty_print(tb)
+                        print("basifb")
+                        pretty_print(tb.row_word)
+                        print(f"Barfum {u.antiperm=}")
+                        u_tab = RootTableau.root_insert_rsk(reduced_word, )
+                        # if u_tab.edelman_greene_invariant in eg_bob:
+                        #     continue
+                        u_tab = u_tab_crystal#
+                        # print("u_tab=")
+                        # pretty_print(u_tab)
+                        # u_tab = u_tab.rectify()
+                            
                         pretty_print(u_tab)
                         
                         assert u_tab.perm == u, "Rectified tableau has wrong permutation"
