@@ -48,19 +48,52 @@ def _is_valid_outer_corner(grid: np.ndarray, i: int, j: int) -> bool:
 def _is_valid_inner_corner(grid: np.ndarray, i: int, j: int) -> bool:
     """
     Inner-corner predicate used by down_jdt_slide.
-    Valid when the hole is inside the grid (must not extend grid) and there
-    is a box below or to the right with the same boundary rules mirrored.
+    Valid when the hole is inside the occupied bounding box of the grid
+    (not extending the grid) and there is a box below or to the right that
+    can slide into the hole. Returns False for entirely empty grids.
     """
     rows, cols = grid.shape
+    # hole must be inside array bounds
+    if i < 0 or j < 0 or i >= rows or j >= cols:
+        return False
+    # hole must be empty
     if grid[i, j] is not None:
         return False
-    if i < 0 or j < 0:
+
+    # compute bounding box of occupied cells
+    max_row = -1
+    max_col = -1
+    for r in range(rows):
+        for c in range(cols):
+            if grid[r, c] is not None:
+                if r > max_row:
+                    max_row = r
+                if c > max_col:
+                    max_col = c
+
+    # empty grid -> no inner corners
+    if max_row == -1 or max_col == -1:
         return False
-    if i >= rows or j >= cols:
+
+    # convert to exclusive bounds
+    max_row += 1
+    max_col += 1
+
+    # hole must lie within the occupied bounding box
+    if i >= max_row or j >= max_col:
         return False
-    down = grid[i + 1, j] if i + 1 < rows else "bob" if i == rows - 1 else None
-    right = grid[i, j + 1] if j + 1 < cols else "bing" if j == cols - 1 else None
-    return grid[i, j] is None and (down is not None and right is not None) and not (i == rows - 1 and j == cols - 1)
+
+    # there must be a box below or to the right (within the bounding box)
+    down_exists = (i + 1 < max_row) and (grid[i + 1, j] is not None)
+    right_exists = (j + 1 < max_col) and (grid[i, j + 1] is not None)
+    if not (down_exists or right_exists):
+        return False
+
+    # exclude the southeast-most occupied corner (no box can slide into that hole)
+    if i == max_row - 1 and j == max_col - 1:
+        return False
+
+    return True
 
 
 def _length_of_row(grid, row):
