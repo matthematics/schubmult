@@ -398,7 +398,7 @@ class RootTableau(CrystalGraph, GridPrint):
             letter2 = idx + 1
             word, word2 = NilPlactic._ed_insert_rsk(word, word2, int(letter), int(letter2) if letter2 is not None else None)
         num_rows = len(word2)
-        num_cols = max(len(r) for r in word2)
+        num_cols = max([len(r) for r in word2], default=0)
         grid = np.empty((num_rows, num_cols), dtype=object)
         for r in range(num_rows):
             for c in range(num_cols):
@@ -641,6 +641,10 @@ class RootTableau(CrystalGraph, GridPrint):
         #             rows[-1].append(cell[1])
 
         return Plactic().rs_insert(*self.row_word)
+
+    @property
+    def shape(self):
+        return self.weight_tableau.shape
 
     def epsilon(self, index):
         return self._weight_tableau.epsilon(index)

@@ -2,6 +2,8 @@ import inspect
 import pkgutil
 from typing import List
 
+from .rings.schubert_ring import Sx
+
 __version__ = "4.0.0dev"
 
 """
@@ -26,8 +28,7 @@ for finder, modname, ispkg in pkgutil.walk_packages(__path__, prefix=__name__ + 
         # use builtin __import__ (no importlib) and request the module object
         mod = __import__(modname, fromlist=["*"])
     except Exception:
-        # ignore modules that fail to import so package import remains robust
-        continue
+        raise
 
     for attr_name, attr_val in vars(mod).items():
         # export only public classes defined in that module
@@ -37,5 +38,8 @@ for finder, modname, ispkg in pkgutil.walk_packages(__path__, prefix=__name__ + 
             globals()[attr_name] = attr_val
             __all__.append(attr_name)
 
+
+
+__all__.append("Sx")
 # finalize __all__
 __all__ = tuple(sorted(set(__all__)))

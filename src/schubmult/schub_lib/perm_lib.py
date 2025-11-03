@@ -22,6 +22,12 @@ class Permutation:
     def act_root(self, a, b):
         return self[a - 1], self[b - 1]
 
+
+    @property
+    def antiperm(self):
+        w0 = Permutation.w0(len(self))
+        return w0 * (self) * w0
+        
     def coset_decomp(self, *descs):
         descs = set(descs)
         reduced_perm = self
