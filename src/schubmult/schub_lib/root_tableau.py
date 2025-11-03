@@ -694,12 +694,49 @@ class RootTableau(CrystalGraph, GridPrint):
                     did = True
         return ret
 
-    def lowering_operator(self, index):
-        print("Should work for non-jdt cases")
-        rc = self.rc_graph.lowering_operator(index)
-        if rc is None:
+    def lowering_operator(self, row):
+        # RF word is just the RC word backwards
+        rc = self.rc_graph
+        if row >= len(rc):
             return None
-        return RootTableau.from_rc_graph(rc)
+        row_i = [*rc[row - 1]]
+        row_ip1 = [*rc[row]]
+
+        # pair the letters
+        pairings = []
+        unpaired = []
+        unpaired_b = [*row_ip1]
+
+        for letter in row_i:
+            st = [letter2 for letter2 in unpaired_b if letter2 > letter]
+            if len(st) == 0:
+                unpaired.append(letter)
+            else:
+                pairings.append((letter, min(st)))
+                unpaired_b.remove(min(st))
+        if len(unpaired) == 0:
+            return None
+        b = min(unpaired)
+        t = min([j for j in range(b) if b - j - 1 not in row_i])
+
+        if b - t < row + 1:
+            return None
+        new_row_i = [s for s in row_i if s != b]
+        new_row_ip1 = sorted([b - t, *row_ip1], reverse=True)
+        ret_rc = RCGraph([*rc[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *rc[row + 1 :]])
+        if ret_rc.perm != rc.perm:
+            return None
+        compatible_seq = ret_rc.compatible_sequence
+        ret = RootTableau.root_insert_rsk(ret_rc.perm_word, compatible_seq)
+        assert ret.edelman_greene_invariant == self.edelman_greene_invariant, f"{ret.edelman_greene_invariant=} != {self.edelman_greene_invariant=}"
+        did = True
+        while did:
+            did = False
+            for _box in ret.iter_outer_corners():
+                if self._root_grid[_box] is not None:
+                    ret = ret.up_jdt_slide(*_box, check=True)
+                    did = True
+        return ret
 
     @property
     def rc_graph(self):
