@@ -3,6 +3,7 @@ import pkgutil
 from typing import List
 
 from .rings.schubert_ring import Sx
+from .schub_lib.perm_lib import uncode
 
 __version__ = "4.0.0dev"
 
@@ -41,5 +42,6 @@ for finder, modname, ispkg in pkgutil.walk_packages(__path__, prefix=__name__ + 
 
 
 __all__.append("Sx")
+__all__.append("uncode")
 # finalize __all__
 __all__ = tuple(sorted(set(__all__)))

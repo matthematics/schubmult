@@ -393,9 +393,14 @@ class Plactic(GridPrint, CrystalGraph):
     @property
     def crystal_weight(self):
         """Return the crystal weight of this tableau (delegated to RCGraph)."""
+        wt = []
+        for i in range(1, max(self.row_word, default=0) + 1):
+            wt.append(sum(1 for a in self.row_word if a == i))
+        return tuple(wt)
 
     def crystal_length(self):
         """Return the length/number of rows used for the crystal"""
+        return 100000000000000
 
     @classmethod
     def yamanouchi(cls, shape):

@@ -164,15 +164,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
     @cached_property
     def crystal_weight(self):
-        if self.is_highest_weight:
-            return self.length_vector
-        hw, raise_seq = self.to_highest_weight()
-        wt = [*hw.length_vector]
-        assert len(wt) == self.crystal_length()
-        for r in reversed(raise_seq):
-            wt[r - 1] -= 1
-            wt[r] += 1
-        return tuple(wt)
+        return self.length_vector
 
     # UNIQUE
     def tableau_decomp(self):

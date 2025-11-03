@@ -1,11 +1,12 @@
 if __name__ == "__main__":
     import copy
     import sys
+    from itertools import zip_longest
 
     from sympy import pretty_print
 
-    from schubmult import CrystalGraphTensor, NilPlactic, Permutation, RCGraph, RootTableau, Sx
-    
+    from schubmult import CrystalGraphTensor, NilPlactic, Permutation, RCGraph, RootTableau, Sx, uncode
+
     n = int(sys.argv[1])
 
     perms = Permutation.all_permutations(n)
@@ -16,24 +17,40 @@ if __name__ == "__main__":
             continue
         dominant_tabs.update([RootTableau.from_rc_graph(rc) for rc in RCGraph.all_rc_graphs(perm, len(perm.trimcode))])
 
-    for u in perms:
-        if u.inv == 0:
-            continue
-        prin_rc_u = RootTableau.from_rc_graph(RCGraph.principal_rc(u, len(u.trimcode)))
-        for w in perms:
-            if not u.bruhat_leq(w):
+    for dom in dominant_tabs:
+        for u in perms:
+            if u.inv == 0:
                 continue
-            for dom in dominant_tabs:
+            if not u.bruhat_leq(dom.perm):
+                continue
+            u_crystal_hw = RCGraph.principal_rc(u, len(u.trimcode)).to_highest_weight()[0]
+            #prin_rc_u = RCGraph.principal_rc(u, len(u.trimcode)).to_highest_weight()[0]
+            for w in perms:
+                if not u.bruhat_leq(w):
+                    continue
+
                 if not dom.perm.bruhat_leq(w):
                     continue
                 if (Sx(u)*Sx(dom.perm)).get(w, 0) == 0:
                     continue
+                print(f"Moving on to {u=} {w=} {dom.perm=}")
                 coeff = 0
+                crystals = set()
+                u_highest_weights = set()
+                lowest_weights = set()
                 for rc_w in RCGraph.all_rc_graphs(w, len(w.trimcode)):
-                    w_tab = RootTableau.from_rc_graph(rc_w) # highest weight is the shape
+                    pretty_print(rc_w)
+                    rc_hw = rc_w.to_highest_weight()[0]
+                    if rc_hw in crystals:
+                        continue
                     low_weight = rc_w.to_lowest_weight()[0].length_vector
-
-                    skew_tab_set = NilPlactic.all_skew_ed_tableaux(w_tab.shape, u.antiperm, dom.shape)
+                    # if lw != tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)]):
+                    #     print(f"{lw} != {tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)])}")
+                    #     continue
+                    w_tab = RootTableau.from_rc_graph(rc_w) # highest weight is the shape
+                    
+                    
+                    skew_tab_set = set(NilPlactic.all_skew_ed_tableaux(w_tab.shape, u.antiperm, dom.shape))
                     for tb in skew_tab_set:
                         # the weight of the skew comes from w
                         assert tb.perm.inv == u.inv
@@ -50,8 +67,53 @@ if __name__ == "__main__":
                         for box in w_tab.iter_boxes():
                             if new_grid[box] is not None:
                                 new_grid[box] = (u.right_root_at(index_flatten[w_tab.order_grid[box]], word=reduced_word), new_grid[box][1])
-                        u_tab = RootTableau(new_grid).rectify()
+                        try:
+                            u_tab = RootTableau(new_grid).rectify()
+                        except AssertionError:
+                            print("Invalid tableau")
+                            continue
                         pretty_print(u_tab)
+                        
                         assert u_tab.perm == u, "Rectified tableau has wrong permutation"
                         print("Recified successfully")
+                        if u_tab.rc_graph.to_highest_weight()[0] != u_crystal_hw:
+                            print("Not the right crystal")
+                            print("Got")
+                            pretty_print(u_tab.to_highest_weight()[0])
+                            print("And we done want")
+                            pretty_print(u_crystal_hw)
+                            continue
+                        print("Constructing tensor product")
                         
+                        
+                        # tensor_lw, _ = tensor.to_lowest_weight()
+                        # lw_rc = tensor_lw.factors[1].rc_graph
+                        # print("lw_rc=")
+                        # pretty_print(tensor_lw)
+                        # print(f"{tensor_lw.crystal_weight=}")
+                        # print("Lowest weight of crystal")
+                        # pretty_print(tensor_lw)
+                        # print("low_weight")
+                        # pretty_print(low_weight)
+
+                        for u_tab2 in u_tab.full_crystal:
+                            tensor = CrystalGraphTensor(dom.rc_graph.resize(len(rc_w)), u_tab2.rc_graph.resize(len(rc_w)))
+                            print(f"{tensor=}")
+                            for tc_elem in tensor.full_crystal:
+                                if not tc_elem.is_lowest_weight:
+                                    continue
+                                if tc_elem in lowest_weights:
+                                    continue
+                                print("Lowest weight")
+                                print(f"{tc_elem=}")
+                                lowest_weights.add(tc_elem)
+                                if tc_elem.crystal_weight == low_weight:
+                                    coeff += 1
+                                    crystals.add(rc_hw)
+                                    print(f"{u=} {dom.perm=} {w=} {coeff=} {crystals=}")
+                                else:
+                                    print(f"{tc_elem.crystal_weight=}")
+                                    print(f"{low_weight=}")
+                                # input()
+                assert coeff == (Sx(dom.perm) * Sx(u)).get(w, 0), f"Fail at coeff check, {u=} {w=} {(Sx(dom.perm)*Sx(u)).get(w, 0)=} {coeff=}"
+                print("Successful coeff check")

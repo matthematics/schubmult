@@ -409,6 +409,10 @@ class RootTableau(CrystalGraph, GridPrint):
         return hash(self._hasher)
 
     @property
+    def crystal_weight(self):
+        return self.weight_tableau.crystal_weight
+
+    @property
     def perm(self):
         return Permutation.ref_product(*self.reduced_word)
 
@@ -475,6 +479,9 @@ class RootTableau(CrystalGraph, GridPrint):
             else:
                 cur = cur.down_jdt_slide(*next(iter(inner_corners)))
         return cur
+
+    def crystal_length(self):
+        return len(self.perm.trimcode)
 
     def up_jdt_slide(self, row, col, check=False):
         if not _is_valid_outer_corner(self._root_grid, row, col):
@@ -661,6 +668,7 @@ class RootTableau(CrystalGraph, GridPrint):
             for ind in self.iter_boxes():
                 if self[ind][0] is not None:
                     assert self[ind] == (self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word), self.compatible_sequence[self.order_grid[ind]]), f"RootTableau init: inconsistent root at {ind}: {self[ind][0]=} vs {self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word)=}"
+            self._weight_tableau = Plactic().rs_insert(*self.row_word)
 
     @property
     def weight_tableau(self):
@@ -672,8 +680,8 @@ class RootTableau(CrystalGraph, GridPrint):
         #             rows[-1].append(0)
         #         else:
         #             rows[-1].append(cell[1])
-
-        return Plactic().rs_insert(*self.row_word)
+        
+        return self._weight_tableau
 
     @property
     def shape(self):
