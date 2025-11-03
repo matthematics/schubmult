@@ -359,6 +359,13 @@ def _snap_grid(grid: np.ndarray):
     except Exception:
         return repr(grid)
 
+def _root_map(rc1, rc2):
+    # takes roots of rc1 return roots of rc2 (dct)
+    
+    rw1 = rc1
+    rw2 = rc2
+    perm = Permutation.ref_product(*rw1)
+    return {perm.right_root_at(i, word=rw1): perm.right_root_at(i, word=rw2) for i in range(perm.inv)}
 
 class RootTableau(CrystalGraph, GridPrint):
     """
@@ -586,8 +593,16 @@ class RootTableau(CrystalGraph, GridPrint):
         return _word_from_grid(self._root_grid, as_grid=False)
 
     @property
+    def compatible_sequence(self):
+        return _word_from_grid(self._root_grid, with_compatible_seq=True)[1]
+
+    @property
     def word_grid(self):
         return _word_from_grid(self._root_grid, as_grid=True)
+    
+    @property
+    def order_grid(self):
+        return _word_from_grid(self._root_grid, as_grid=True, as_ordering=True)
 
     def letter_at(self, row, col):
         return self.word_grid[row, col]
@@ -604,11 +619,15 @@ class RootTableau(CrystalGraph, GridPrint):
                 cell = _printing_grid[i, j]
                 if cell is None:
                     _printing_grid[i, j] = " "
-        return RootTableau(_printing_grid)
+        return RootTableau(_printing_grid, print_only=True)
 
-    def __init__(self, grid):
+    def __init__(self, grid, print_only=False):
         self._root_grid = copy.deepcopy(grid)
         self._hasher = tuple(tuple(tuple(b) for b in a if b is not None) for a in self._root_grid if a is not None)
+        if not print_only:
+            for ind in self.iter_boxes():
+                if self[ind][0] is not None:
+                    assert self[ind] == (self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word), self.compatible_sequence[self.order_grid[ind]]), f"RootTableau init: inconsistent root at {ind}: {self[ind][0]=} vs {self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word)=}"
 
     @property
     def weight_tableau(self):
@@ -646,6 +665,12 @@ class RootTableau(CrystalGraph, GridPrint):
                     root_cell, _letter = cell
                     word.append(root_cell)
         return tuple(word)
+
+    def right_root_at(self, i):
+        for ind in self.iter_boxes():
+            if self.order_grid[ind] is not None and self.order_grid[ind] == i:
+                return self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word)
+        return None
 
     def raising_operator(self, i):
         """Crystal raising operator e_i on the root tableau"""
@@ -685,6 +710,8 @@ class RootTableau(CrystalGraph, GridPrint):
         compatible_seq = ret_rc.compatible_sequence
         ret = RootTableau.root_insert_rsk(ret_rc.perm_word, compatible_seq)
         assert ret.edelman_greene_invariant == self.edelman_greene_invariant, f"{ret.edelman_greene_invariant=} != {self.edelman_greene_invariant=}"
+        retmap = RootTableau.root_insert_rsk(self.reduced_word, self.rc_graph.compatible_sequence)
+
         did = True
         while did:
             did = False
@@ -692,6 +719,26 @@ class RootTableau(CrystalGraph, GridPrint):
                 if self._root_grid[_box] is not None:
                     ret = ret.up_jdt_slide(*_box, check=True)
                     did = True
+        # try_grid = copy.deepcopy(self._root_grid)
+        # for ind in np.ndindex(self._root_grid.shape):
+        #     if self._root_grid[ind] is not None:
+               
+        #         # ind2 = np.where(retmap.order_grid == self.order_grid[ind])
+        #         # print(f"Found that {self.order_grid[ind]=} is at")
+        #         # print(ind2)
+        #         # print("In")
+        #         # print(f"{retmap.order_grid=}")
+        #         # print(ret.order_grid[*ind2])
+        #         try_grid[ind] = (ret.perm.right_root_at(self.order_grid[ind], word=ret.reduced_word), ret.compatible_sequence[self.order_grid[ind]])
+        # tret = RootTableau(try_grid)
+        # if any(self._root_grid[_box] is not None and ret._root_grid[_box] !=try_grid[_box] for _box in ret.iter_boxes()):
+        #     print("FYI ret")
+        #     pretty_print(ret)
+        #     print("tret")
+        #     pretty_print(tret)
+        #     print("self")
+        #     pretty_print(self)
+        #     input()
         return ret
 
     def lowering_operator(self, row):

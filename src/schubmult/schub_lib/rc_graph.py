@@ -366,6 +366,10 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             ret = [*ret, *row]
         return tuple(ret)
 
+    @property
+    def reduced_word(self):
+        return self.perm_word
+
     def is_dom_perm_yamanouchi(self, dom_perm, perm):
         from schubmult.rings.schubert_ring import Sx
         if (Sx(self.perm)*Sx(dom_perm)).get(perm, 0) == 0:
@@ -788,6 +792,8 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         if ret_rc.perm != self.perm:
             return None
         return ret_rc
+
+
 
     # weak edelman green correspondence
     # better understanding of crystal
