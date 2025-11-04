@@ -194,7 +194,7 @@ def random_up_seq(rt: RootTableau, max_len=25) -> Sequence[Tuple[int, int]]:
     seq = []
     for _ in range(max_len):
         
-        outer_corners = tuple(cur.iter_outer_corners())
+        outer_corners = tuple(cur.iter_outer_corners)
         if not outer_corners:
             break
         box  = random.choice(outer_corners)
@@ -273,7 +273,7 @@ def run_complete_tests():
             # pick a random index to test (small range)
             idx = 0 #random.randint(1, 5)
 
-            tests = ["raise"]
+            tests = ["raiserectify"]
             indexes = list(range(1, rc.crystal_length()))
             for test_op in tests:
                 for idx in indexes:

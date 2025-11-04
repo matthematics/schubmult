@@ -463,7 +463,7 @@ class RootTableau(CrystalGraph, GridPrint):
                 cur = cur.down_jdt_slide(*next(iter(inner_corners)))
         return cur
 
-    def up_jdt_slide(self, row, col, check=False):
+    def up_jdt_slide(self, row, col, check=True):
         if not _is_valid_outer_corner(self._root_grid, row, col):
             raise ValueError("Can only slide from valid outer corner")
         new_grid = copy.deepcopy(self._root_grid)
@@ -511,7 +511,7 @@ class RootTableau(CrystalGraph, GridPrint):
         assert self.edelman_greene_invariant == ret.edelman_greene_invariant
         return ret
 
-    def down_jdt_slide(self, row, col, check=False):
+    def down_jdt_slide(self, row, col, check=True):
         """
         Perform a downward/rightward jeu-de-taquin slide starting from the given
         (row, col) hole (0-indexed). Boxes from below or to the right are moved
@@ -783,8 +783,6 @@ class RootTableau(CrystalGraph, GridPrint):
         # for ind in self.iter_boxes:
         #     try_grid[ind] = (self.perm.right_root_at(self.order_grid[ind], word=ret.reduced_word), ret.compatible_sequence[self.order_grid[ind]])
         # assert ret == RootTableau(try_grid), "raising_operator construction mismatch"
-        
-        
         # for ind in np.ndindex(self._root_grid.shape):
         #     if self._root_grid[ind] is not None:
 
