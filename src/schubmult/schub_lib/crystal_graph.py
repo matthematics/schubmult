@@ -257,7 +257,7 @@ class CrystalGraphTensor(CrystalGraph):
         return tz
 
     def epsilon(self, i):
-        return max(self.factors[0].epsilon(i),-self.factors[1].epsilon(i) - self.factors[0].crystal_weight[i - 1] + self.factors[0].crystal_weight[i])
+        return max(self.factors[0].epsilon(i),self.factors[1].epsilon(i) - self.factors[0].crystal_weight[i - 1] + self.factors[0].crystal_weight[i])
     
     def phi(self, i):
         return max(self.factors[1].phi(i), self.factors[0].phi(i) + self.factors[1].crystal_weight[i - 1] - self.factors[1].crystal_weight[i])

@@ -100,14 +100,19 @@ if __name__ == "__main__":
                         # pretty_print(low_weight)
 
                         for u_tab2 in u_hw_rc.full_crystal:
-                            tensor = CrystalGraphTensor(dom.rc_graph.resize(len(rc_w)), u_tab2.resize(len(rc_w)))
+                            tensor = CrystalGraphTensor(dom.rc_graph, u_tab2)
                             print(f"{tensor=}")
                             if not tensor.is_highest_weight:
+                                print("Not highest weight")
                                 continue
                             tc_elem = tensor
-                            print(f"{tc_elem=}")
+                            print(f"tc_elem=")
+                            pretty_print(tc_elem)
                             if (tc_elem, rc_w) in crystals:
+                                print("Already there")
                                 continue
+                            pretty_print(dom.rc_graph)
+                            assert tc_elem.crystal_weight == tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab2.length_vector, fillvalue=0)]), f"{tc_elem.crystal_weight=} vs {tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab2.length_vector, fillvalue=0)])}"
                             if tc_elem.crystal_weight == high_weight:
                                 coeff += 1
                                 crystals.add((tc_elem, rc_w))
