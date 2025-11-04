@@ -3,6 +3,7 @@ if __name__ == "__main__":
     import sys
     from itertools import zip_longest
 
+    import sympy
     from sympy import pretty_print
 
     from schubmult import CrystalGraphTensor, NilPlactic, Permutation, RCGraph, RootTableau, Sx, uncode
@@ -82,8 +83,22 @@ if __name__ == "__main__":
                         # print(f"{reduced_word=} {compatible_seq=}")
                         # NEEEEEEEEEEEEEEEEEEEEEEEEEEEEEED DELETEL
                         u_tab = w_tab
-                        while u_tab.perm != u:
-                            u_tab = u_tab.jdt_slide_remove_inner(compatible_sequence=tb.row_word)
+                        box_grid = copy.deepcopy(u_tab._root_grid)
+                        for box in tb.iter_boxes:
+                            box_grid[box] = (u_tab[box][0], sympy.Integer(u_tab[box][1]))
+                        u_tab_mover = RootTableau(box_grid)
+                        u_roots = [u.right_root_at(index) for index in range(u.inv)]
+                        while u_tab.perm.inv != u.inv:
+                            for box in u_tab_mover.iter_boxes:
+                                if not isinstance(u_tab_mover[box][1], sympy.Integer) and u_tab_mover[box][1] is not sympy.S.One:
+                                    u_tab_test = u_tab.delete_box(box)
+                                    if u_tab_test is not None:
+                                        u_tab = u_tab_test
+                                        u_tab_mover = u_tab_mover.delete_box(box)
+                                        break
+                        if u_tab.perm != u:
+                            print("Skipping")
+                            continue
                         pretty_print(u_tab)
                         pretty_print(tb.row_word)
                         print(f"Barfum {u.antiperm=}")

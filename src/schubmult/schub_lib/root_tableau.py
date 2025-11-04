@@ -485,7 +485,7 @@ class RootTableau(CrystalGraph, GridPrint):
             raise ValueError("Box is not none")
         a, b = self[box][0]
         if not has_bruhat_descent(self.perm, a - 1, b - 1):
-            raise RuntimeError("Not a valid bruhat descent")
+            return None
         print("Made it through")
         print(f"Trying to delete {box=} from")
         pretty_print(self)
