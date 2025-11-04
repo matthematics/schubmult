@@ -444,11 +444,22 @@ class RootTableau(CrystalGraph, GridPrint):
             num_cols = 0
         grid = np.empty((num_rows, num_cols), dtype=object)
         for box in P.iter_boxes:
+            # RECORDING TABLEAU RED WORD
             grid[box] = (_perm.right_root_at(P[box] - 1, word=reduced_word), compatible_seq[P[box] - 1])
  
         return cls(grid)
 
     # skew tableaux are subword
+
+    @property
+    def recording_tableau(self):
+        reduced_word = self.reduced_word
+        word_roots = [self.perm.right_root_at(i, word=reduced_word) for i in range(len(reduced_word))]
+        try_grid = copy.deepcopy(self._root_grid)
+        for box in self.iter_boxes:
+            try_grid[box] = word_roots.index(self[box][0])
+        return try_grid
+
     @classmethod
     def from_rc_graph(cls, rc: RCGraph):
         reduced_word = rc.perm_word
@@ -672,11 +683,11 @@ class RootTableau(CrystalGraph, GridPrint):
     def __init__(self, grid, print_only=False):
         self._root_grid = copy.deepcopy(grid)
         self._hasher = tuple(tuple(tuple(b) for b in a if b is not None) for a in self._root_grid if a is not None)
-        # if not print_only:
-        #     for index, box in enumerate(self.iter_boxes_row_word_order):
-        #             assert self[box] == (self.eg_root(self.eg_row_word[index]), self.row_word[index]), (
-        #                 f"RootTableau init: inconsistent root at {box}: {self[box][0]=} {self=}"
-        #             )
+        if not print_only:
+            for index, box in enumerate(self.iter_boxes_row_word_order):
+                    assert self[box] == (self.eg_root(self.eg_row_word[index]), self.row_word[index]), (
+                        f"RootTableau init: inconsistent root at {box}: {self[box][0]=} {self=}"
+                    )
                     # assert self.perm == Permutation.ref_product(*self.grid_word), f"{self.reduced_word=} {self.grid_word=}"
                     # for index, box in enumerate(reversed(list(self.iter_boxes_row_word_order))):
                     #     assert self[box][0] == self.perm.right_root_at(index, word=list(reversed(self.grid_word)))
@@ -789,31 +800,41 @@ class RootTableau(CrystalGraph, GridPrint):
         correct_word = _plactic_raising_operator(self.row_word, i)
 
         ret = RootTableau.root_insert_rsk(ret_rc.perm_word, ret_rc.compatible_sequence)
-        # retmap = RootTableau.root_insert_rsk(self.reduced_word, self.compatible_sequence)
         
-        # index_to_retmap = Permutation([retmap.eg_row_word[index] + 1 for index in range(len(retmap.eg_row_word))])
-        # index_to_ret = Permutation([ret.eg_row_word[index] + 1 for index in range(len(ret.eg_row_word))])
-        # index_to_self = Permutation([self.eg_row_word[index] + 1 for index in range(len(ret.eg_row_word))])
-        try_grid = copy.deepcopy(self._root_grid)
-        # if ret.root_row_word != self.root_row_word:
-        #     print("Contrast")
-        #     print(f"{ret.root_row_word=}")
-        #     print(f"{self.root_row_word=}")
+        # # retmap = RootTableau.root_insert_rsk(self.reduced_word, self.compatible_sequence)
+        
+        # # index_to_retmap = Permutation([retmap.eg_row_word[index] + 1 for index in range(len(retmap.eg_row_word))])
+        # # index_to_ret = Permutation([ret.eg_row_word[index] + 1 for index in range(len(ret.eg_row_word))])
+        # # index_to_self = Permutation([self.eg_row_word[index] + 1 for index in range(len(ret.eg_row_word))])
+        # try_grid = copy.deepcopy(self._root_grid)
+        # # if ret.root_row_word != self.root_row_word:
+        # #     print("Contrast")
+        # #     print(f"{ret.root_row_word=}")
+        # #     print(f"{self.root_row_word=}")
+        # #     pretty_print(self)
+        # #     input()
+        # # relate order grid word grid
+
+        
+
+        # for index, box in enumerate(self.iter_boxes_row_word_order):
+        #     try_grid[box] = (ret_rc.perm.right_root_at(self.recording_tableau[box], word=ret_rc.reduced_word), correct_word[index])
+        # try:
+        #     ret = RootTableau(try_grid)
+        #     return ret
+        # except Exception:
         #     pretty_print(self)
-        #     input()
-        # relate order grid word grid
-
-        
-
-        for index in range(len(ret_rc.perm.inv)):
-            try_grid[box] = (self.eg_root(ret.eg_row_word[index]), correct_word[index])
-        try:
-            ret = RootTableau(try_grid)
-            return ret
-        except Exception:
-            pretty_print(self)
-            print(try_grid)
-            raise
+        #     print(try_grid)
+        #     raise
+        did = True
+        while did:
+            did = False
+            for _box in ret.iter_outer_corners:
+                if self._root_grid[_box] is not None:
+                    ret = ret.up_jdt_slide(*_box, check=False)
+                    did = True
+        #assert ret.reduced_word == ret_rc.perm_word, f"{ret.reduced_word=} {ret_rc.perm_word=}"
+        return ret
         
         # for ind in self.iter_boxes:
         #     try_grid[ind] = (self.perm.right_root_at(self.order_grid[ind], word=ret.reduced_word), ret.compatible_sequence[self.order_grid[ind]])
