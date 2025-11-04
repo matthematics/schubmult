@@ -422,7 +422,7 @@ class RootTableau(CrystalGraph, GridPrint):
         try:
             return tuple([eg_roots.index(r) for r in self.root_row_word])
         except Exception:
-            print(f"{self.root_row_word=} {eg_roots=} {self.edelman_greene_invariant=}")
+            # print(f"{self.root_row_word=} {eg_roots=} {self.edelman_greene_invariant=}")
             raise
 
     @property
@@ -486,9 +486,9 @@ class RootTableau(CrystalGraph, GridPrint):
         a, b = self[box][0]
         if not has_bruhat_descent(self.perm, a - 1, b - 1):
             return None
-        print("Made it through")
-        print(f"Trying to delete {box=} from")
-        pretty_print(self)
+        # print("Made it through")
+        # print(f"Trying to delete {box=} from")
+        # pretty_print(self)
         red_word = [*self.reduced_word]
         compat = [*self.compatible_sequence]
         index = -1
@@ -499,9 +499,9 @@ class RootTableau(CrystalGraph, GridPrint):
         red_word.pop(index)
         compat.pop(index)
         result = RootTableau.root_insert_rsk(red_word, compat)
-        print("Result:")
-        pretty_print(result)
-        print(f"{box=}")
+        # print("Result:")
+        # pretty_print(result)
+        # print(f"{box=}")
         
         for other_box in self.iter_boxes:
             if result[other_box] is None:
@@ -509,8 +509,8 @@ class RootTableau(CrystalGraph, GridPrint):
                     result = result.up_jdt_slide(*other_box)
                 except ValueError:
                     continue
-        print(f"Result of delete {box=}")
-        pretty_print(result)
+        # print(f"Result of delete {box=}")
+        # pretty_print(result)
         return result
         
 
@@ -528,24 +528,24 @@ class RootTableau(CrystalGraph, GridPrint):
     #         for box, root in roots:
     #             a, b = working_tab[box][0]
     #             if has_bruhat_descent(working_tab.perm, a-1, b-1):
-    #                 print(f"It's a bruhat {a=} {b=}")
-    #                 print(f"Trying to delete {box=} in")
-    #                 pretty_print(working_tab)
+    #                 # print(f"It's a bruhat {a=} {b=}")
+    #                 # print(f"Trying to delete {box=} in")
+    #                 # pretty_print(working_tab)
     #                 working_tab = working_tab.delete_box(box)
     #                 done_any = True
     #                 remaining_boxes = [box for box in working_tab.iter_boxes if box not in boxes]
     #                 break
-    #             print(f"not a bruhat {working_tab[box]=} {a=} {b=} {working_tab.perm=}")
+    #             # print(f"not a bruhat {working_tab[box]=} {a=} {b=} {working_tab.perm=}")
     #         if done_any:
-    #             print("Did one")
+    #             # print("Did one")
     #         else:
-    #             print("Couldn't do")
+    #             # print("Couldn't do")
             
 
             
                 
     #     if len(remaining_boxes) > 0:
-    #         pretty_print(working_tab)
+    #         # pretty_print(working_tab)
     #         raise ValueError(f"Could not extract skew tableau with given boxes {remaining_boxes=}")
     #     return working_tab
 
@@ -575,7 +575,7 @@ class RootTableau(CrystalGraph, GridPrint):
         def _recurse():
             nonlocal row, col, new_grid
             # _logger.debug(f"{row=} {col=}")
-            #  pretty_print(RootTableau(new_grid))
+            #  # pretty_print(RootTableau(new_grid))
             left = new_grid[row, col - 1] if col > 0 else None
             # slide from left
             up = new_grid[row - 1, col] if row > 0 else None
@@ -630,7 +630,7 @@ class RootTableau(CrystalGraph, GridPrint):
         def _recurse():
             nonlocal row, col, new_grid
             # _logger.debug(f"{row=} {col=}")
-            #  pretty_print(RootTableau(new_grid))
+            #  # pretty_print(RootTableau(new_grid))
             right = new_grid[row, col + 1] if col < self.cols - 1 else None
             # slide from left
             down = new_grid[row + 1, col] if row < self.rows - 1 else None
@@ -663,11 +663,11 @@ class RootTableau(CrystalGraph, GridPrint):
 
         _recurse()
         new_grid[row, col] = None
-        print("Down jdt on ")
-        pretty_print(self)
-        print("Got")
+        # print("Down jdt on ")
+        # pretty_print(self)
+        # print("Got")
         ret = RootTableau(new_grid, print_only=True)
-        pretty_print(ret)
+        # pretty_print(ret)
         ret = RootTableau(new_grid)
         if check:
             assert ret.rc_graph == self.rc_graph, "down_jdt_slide does not preserve RC graph"
@@ -871,12 +871,12 @@ class RootTableau(CrystalGraph, GridPrint):
 
         
         # if flag:
-        #     print("TEST")
-        #     pretty_print(self)
-        #     print(f"RAISE {i}")
-        #     pretty_print(ret)
-        #     print(f"{self.eg_row_word=}")
-        #     print(f"{ret.eg_row_word=}")
+        #     # print("TEST")
+        #     # pretty_print(self)
+        #     # print(f"RAISE {i}")
+        #     # pretty_print(ret)
+        #     # print(f"{self.eg_row_word=}")
+        #     # print(f"{ret.eg_row_word=}")
         #     input()
         correct_word = _plactic_raising_operator(self.row_word, i)
 
@@ -889,10 +889,10 @@ class RootTableau(CrystalGraph, GridPrint):
         # # index_to_self = Permutation([self.eg_row_word[index] + 1 for index in range(len(ret.eg_row_word))])
         # try_grid = copy.deepcopy(self._root_grid)
         # # if ret.root_row_word != self.root_row_word:
-        # #     print("Contrast")
-        # #     print(f"{ret.root_row_word=}")
-        # #     print(f"{self.root_row_word=}")
-        # #     pretty_print(self)
+        # #     # print("Contrast")
+        # #     # print(f"{ret.root_row_word=}")
+        # #     # print(f"{self.root_row_word=}")
+        # #     # pretty_print(self)
         # #     input()
         # # relate order grid word grid
 
@@ -904,8 +904,8 @@ class RootTableau(CrystalGraph, GridPrint):
         #     ret = RootTableau(try_grid)
         #     return ret
         # except Exception:
-        #     pretty_print(self)
-        #     print(try_grid)
+        #     # pretty_print(self)
+        #     # print(try_grid)
         #     raise
         did = True
         while did:
@@ -932,12 +932,12 @@ class RootTableau(CrystalGraph, GridPrint):
         #         try_grid[ind] = (ret.perm.right_root_at(self.order_grid[ind], word=ret.reduced_word), ret.compatible_sequence[self.order_grid[ind]])
         # tret = RootTableau(try_grid)
         # if any(self._root_grid[_box] is not None and ret._root_grid[_box] !=try_grid[_box] for _box in ret.iter_boxes):
-        #     print("FYI ret")
-        #     pretty_print(ret)
-        #     print("tret")
-        #     pretty_print(tret)
-        #     print("self")
-        #     pretty_print(self)
+        #     # print("FYI ret")
+        #     # pretty_print(ret)
+        #     # print("tret")
+        #     # pretty_print(tret)
+        #     # print("self")
+        #     # pretty_print(self)
         #     input()
         
         

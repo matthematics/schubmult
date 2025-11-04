@@ -18,6 +18,9 @@ if __name__ == "__main__":
             continue
         dominant_tabs.update([RootTableau.from_rc_graph(rc) for rc in RCGraph.all_rc_graphs(perm, len(perm.trimcode))])
 
+    class MarkedInteger(int):
+        pass
+
     for dom in dominant_tabs:
         for u in perms:
             if u.inv == 0:
@@ -82,15 +85,15 @@ if __name__ == "__main__":
                         # compatible_seq.sort()
                         # print(f"{reduced_word=} {compatible_seq=}")
                         # NEEEEEEEEEEEEEEEEEEEEEEEEEEEEEED DELETEL
-                        u_tab = w_tab
+                        u_tab = RootTableau.from_rc_graph(rc_w.to_lowest_weight()[0])
                         box_grid = copy.deepcopy(u_tab._root_grid)
                         for box in tb.iter_boxes:
-                            box_grid[box] = (u_tab[box][0], sympy.Integer(u_tab[box][1]))
+                            box_grid[box] = (u_tab[box][0], MarkedInteger(u_tab[box][1]))
                         u_tab_mover = RootTableau(box_grid)
                         u_roots = [u.right_root_at(index) for index in range(u.inv)]
                         while u_tab.perm.inv != u.inv:
                             for box in u_tab_mover.iter_boxes:
-                                if not isinstance(u_tab_mover[box][1], sympy.Integer) and u_tab_mover[box][1] is not sympy.S.One:
+                                if not isinstance(u_tab_mover[box][1], MarkedInteger):
                                     u_tab_test = u_tab.delete_box(box)
                                     if u_tab_test is not None:
                                         u_tab = u_tab_test
@@ -98,6 +101,9 @@ if __name__ == "__main__":
                                         break
                         if u_tab.perm != u:
                             print("Skipping")
+                            print("U_tab = ")
+                            pretty_print(u_tab)
+                            print(f"{u=} {u_tab.perm=}")
                             continue
                         pretty_print(u_tab)
                         pretty_print(tb.row_word)
