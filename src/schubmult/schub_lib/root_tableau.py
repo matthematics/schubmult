@@ -404,7 +404,19 @@ class RootTableau(CrystalGraph, GridPrint):
     def edelman_greene_invariant(self):
         w0 = Permutation.w0(len(self.perm))
         rev_word = [w0[r - 1] for r in self.reduced_word]
-        return NilPlactic().ed_insert(*rev_word)
+        np_word = list(NilPlactic().ed_insert(*rev_word).row_word)
+        assert Permutation.ref_product(*np_word) == Permutation.ref_product(*rev_word)
+        np_word = [w0[r - 1] for r in np_word]
+        assert Permutation.ref_product(*np_word) == self.perm
+        return tuple(np_word)
+
+    def eg_root(self, index):
+        return self.perm.right_root_at(index, word=self.edelman_greene_invariant)
+
+    @property
+    def eg_row_word(self):
+        eg_roots = [self.eg_root(index) for index in range(self.perm.inv)]
+        return tuple([eg_roots.index(r) for r in self.root_row_word])
 
     @property
     def shape(self):
@@ -627,7 +639,7 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def grid_word(self):
-        return tuple([self.word_grid[box] for box in self.iter_boxes_row_word_order()])
+        return tuple([self.word_grid[box] for box in self.iter_boxes_row_word_order])
 
     @property
     def order_grid(self):
@@ -654,13 +666,12 @@ class RootTableau(CrystalGraph, GridPrint):
         self._root_grid = copy.deepcopy(grid)
         self._hasher = tuple(tuple(tuple(b) for b in a if b is not None) for a in self._root_grid if a is not None)
         if not print_only:
-            for ind in self.iter_boxes:
-                if self[ind][0] is not None:
-                    assert self[ind] == (self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word), self.compatible_sequence[self.order_grid[ind]]), (
-                        f"RootTableau init: inconsistent root at {ind}: {self[ind][0]=} vs {self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word)=} {self.reduced_word=}"
+            for index, box in enumerate(self.iter_boxes_row_word_order):
+                    assert self[box] == (self.eg_root(self.eg_row_word[index]), self.row_word[index]), (
+                        f"RootTableau init: inconsistent root at {box}: {self[box][0]=}"
                     )
                     # assert self.perm == Permutation.ref_product(*self.grid_word), f"{self.reduced_word=} {self.grid_word=}"
-                    # for index, box in enumerate(reversed(list(self.iter_boxes_row_word_order()))):
+                    # for index, box in enumerate(reversed(list(self.iter_boxes_row_word_order))):
                     #     assert self[box][0] == self.perm.right_root_at(index, word=list(reversed(self.grid_word)))
 
     @property
@@ -706,6 +717,7 @@ class RootTableau(CrystalGraph, GridPrint):
                 return self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word)
         return None
 
+    @property
     def iter_boxes_row_word_order(self):
         for i in range(self._root_grid.shape[0] - 1, -1, -1):
             for j in range(self._root_grid.shape[1]):
@@ -750,11 +762,10 @@ class RootTableau(CrystalGraph, GridPrint):
         
         ret = RootTableau.root_insert_rsk(ret_rc.perm_word, ret_rc.compatible_sequence)
         assert ret.edelman_greene_invariant == self.edelman_greene_invariant, f"{ret.edelman_greene_invariant=} != {self.edelman_greene_invariant=}"
-        retmap = RootTableau.root_insert_rsk(self.reduced_word, self.compatible_sequence)
-
+        
         # # mapper = {retmap.order_grid[ind]: ret.order_grid[ind] for ind in ret.iter_boxes}
         # box_list = []
-        # for box in retmap.iter_boxes_row_word_order():
+        # for box in retmap.iter_boxes_row_word_order:
         #     root = retmap[box][0]
         #     # find root
         #     box2 = next(iter([box3 for box3 in self.iter_boxes if self[box3][0] == root]))
@@ -776,8 +787,8 @@ class RootTableau(CrystalGraph, GridPrint):
         #     pretty_print(self)
         #     input()
         # relate order grid word grid
-        for index, box in enumerate(self.iter_boxes_row_word_order()):
-            try_grid[box] = (ret.perm.right_root_at(ret.order_grid[box], word=ret_rc.reduced_word), correct_word[index])
+        for index, box in enumerate(self.iter_boxes_row_word_order):
+            try_grid[box] = (self.eg_root(ret.eg_row_word[index]), correct_word[index])
         retret = RootTableau(try_grid)
         return retret
         # for ind in self.iter_boxes:
