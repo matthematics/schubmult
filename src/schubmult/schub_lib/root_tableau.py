@@ -777,8 +777,12 @@ class RootTableau(CrystalGraph, GridPrint):
             print(f"{retmap.eg_row_word=}")
             print(f"{ret.eg_row_word=}")
             #input()
-
-        mapper = {retmap.eg_row_word[index]: self.eg_row_word[index] for index in range(ret_rc.perm.inv)}
+        index_to_retmap = Permutation([retmap.eg_row_word[index] + 1 for index in range(len(retmap.eg_row_word))])
+        index_to_ret = Permutation([ret.eg_row_word[index] + 1 for index in range(len(ret.eg_row_word))])
+        index_to_self = Permutation([self.eg_row_word[index] + 1 for index in range(len(ret.eg_row_word))])
+        retmap_to_ret = (index_to_ret * (~index_to_retmap))
+        self_to_retmap = (index_to_retmap * (~index_to_self))
+        
         # box_list = []
         # for box in retmap.iter_boxes_row_word_order:
         #     root = retmap[box][0]
@@ -811,7 +815,7 @@ class RootTableau(CrystalGraph, GridPrint):
         #     input()
         # relate order grid word grid
         for index, box in enumerate(self.iter_boxes_row_word_order):
-            try_grid[box] = (self.eg_root(mapper[ret.eg_row_word[index]]), correct_word[index])
+            try_grid[box] = (self.eg_root((index_to_self * (~index_to_retmap) * (index_to_ret))[index] - 1), correct_word[index])
         try:
             ret = RootTableau(try_grid)
             return ret
