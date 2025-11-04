@@ -19,7 +19,9 @@ class CrystalGraph(Printable):
 
     def phi(self, i):
         if i < 1 or i >= self.crystal_length():
-            return 0
+            if i - 1 < self.crystal_length():
+                return self.epsilon(i) + self.crystal_weight[i - 1]
+            return self.epsilon(i)
         return self.epsilon(i) + self.crystal_weight[i - 1] - self.crystal_weight[i]
 
 
@@ -120,6 +122,8 @@ class CrystalGraph(Printable):
     def is_highest_weight(self):
         for row in range(1, self.crystal_length()):
             if self.raising_operator(row) is not None:
+                print(f"IKINPROVENOTHIGHESTWEIGHT {row=}")
+                print(self.raising_operator(row))
                 return False
         return True
 
