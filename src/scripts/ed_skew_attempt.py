@@ -85,6 +85,7 @@ if __name__ == "__main__":
                             u_hw_rc[-1].append(r)
                             last_letter = r
                         u_hw_rc = RCGraph([tuple(row) for row in u_hw_rc]).normalize()
+                        assert u_hw_rc.perm == u
                         print("Constructing tensor product")
                         
                         
