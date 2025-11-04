@@ -45,7 +45,8 @@ if __name__ == "__main__":
                     # rc_hw = rc_w.to_highest_weight()[0]
                     # if rc_hw in crystals:
                     #     continue
-                    
+                    if not rc_w.is_highest_weight:
+                        continue
                     high_weight = rc_w.length_vector
                     # if lw != tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)]):
                     #     print(f"{lw} != {tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)])}")
@@ -101,11 +102,11 @@ if __name__ == "__main__":
                             print(f"{tensor=}")
                             tc_elem = tensor.to_highest_weight()[0]
                             print(f"{tc_elem=}")
-                            if tc_elem in crystals:
+                            if (tc_elem, rc_w) in crystals:
                                 continue
                             if tc_elem.crystal_weight == high_weight:
                                 coeff += 1
-                                crystals.add(rc_w.to_highest_weight()[0])
+                                crystals.add((tc_elem, rc_w))
                                 print(f"{u=} {dom.perm=} {w=} {coeff=} {crystals=}")
                                 highest_weights.add(tc_elem)
                             else:
