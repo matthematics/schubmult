@@ -26,6 +26,7 @@ if __name__ == "__main__":
             u_crystal_hw = RCGraph.principal_rc(u, len(u.trimcode)).to_highest_weight()[0]
             u_tab_crystal = RootTableau.from_rc_graph(u_crystal_hw)
             #prin_rc_u = RCGraph.principal_rc(u, len(u.trimcode)).to_highest_weight()[0]
+            crystals = set()
             for w in perms:
                 if not u.bruhat_leq(w):
                     continue
@@ -36,7 +37,7 @@ if __name__ == "__main__":
                     continue
                 print(f"Moving on to {u=} {w=} {dom.perm=}")
                 coeff = 0
-                crystals = set()
+                
                 u_highest_weights = set()
                 highest_weights = set()
                 for rc_w in RCGraph.all_rc_graphs(w, len(w.trimcode)):
@@ -100,6 +101,8 @@ if __name__ == "__main__":
                             print(f"{tensor=}")
                             tc_elem = tensor.to_highest_weight()[0]
                             print(f"{tc_elem=}")
+                            if tc_elem in crystals:
+                                continue
                             if tc_elem.crystal_weight == high_weight:
                                 coeff += 1
                                 crystals.add(rc_w.to_highest_weight()[0])
