@@ -637,7 +637,7 @@ class RootTableau(CrystalGraph, GridPrint):
             for ind in self.iter_boxes():
                 if self[ind][0] is not None:
                     assert self[ind] == (self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word), self.compatible_sequence[self.order_grid[ind]]), (
-                        f"RootTableau init: inconsistent root at {ind}: {self[ind][0]=} vs {self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word)=}"
+                        f"RootTableau init: inconsistent root at {ind}: {self[ind][0]=} vs {self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word)=} {self.reduced_word=}"
                     )
 
     @property
@@ -721,8 +721,14 @@ class RootTableau(CrystalGraph, GridPrint):
         compatible_seq = ret_rc.compatible_sequence
         ret = RootTableau.root_insert_rsk(ret_rc.perm_word, compatible_seq)
         assert ret.edelman_greene_invariant == self.edelman_greene_invariant, f"{ret.edelman_greene_invariant=} != {self.edelman_greene_invariant=}"
-        retmap = RootTableau.root_insert_rsk(self.reduced_word, self.rc_graph.compatible_sequence)
+        # retmap = RootTableau.root_insert_rsk(self.reduced_word, self.rc_graph.compatible_sequence)
 
+        # mapper = {retmap.order_grid[ind]: ret.order_grid[ind] for ind in ret.iter_boxes()}
+
+        # try_grid = copy.deepcopy(self._root_grid)
+        # for ind in self.iter_boxes():
+        #     try_grid[ind] = (self.perm.right_root_at(self.order_grid[ind], word=ret.reduced_word), ret.compatible_sequence[self.order_grid[ind]])
+        # assert ret == RootTableau(try_grid), "raising_operator construction mismatch"
         did = True
         while did:
             did = False
@@ -730,7 +736,7 @@ class RootTableau(CrystalGraph, GridPrint):
                 if self._root_grid[_box] is not None:
                     ret = ret.up_jdt_slide(*_box, check=True)
                     did = True
-        # try_grid = copy.deepcopy(self._root_grid)
+        
         # for ind in np.ndindex(self._root_grid.shape):
         #     if self._root_grid[ind] is not None:
 
@@ -750,7 +756,11 @@ class RootTableau(CrystalGraph, GridPrint):
         #     print("self")
         #     pretty_print(self)
         #     input()
+        
+        
+        
         return ret
+        # return ret
 
     def lowering_operator(self, row):
         # RF word is just the RC word backwards
