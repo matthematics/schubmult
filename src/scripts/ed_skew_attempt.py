@@ -27,6 +27,7 @@ if __name__ == "__main__":
             u_tab_crystal = RootTableau.from_rc_graph(u_crystal_hw)
             #prin_rc_u = RCGraph.principal_rc(u, len(u.trimcode)).to_highest_weight()[0]
             crystals = {}
+            highest_weights = set()
             for w in perms:
                 if not u.bruhat_leq(w):
                     continue
@@ -39,7 +40,7 @@ if __name__ == "__main__":
                 coeff = 0
                     
                 u_highest_weights = set()
-                highest_weights = set()
+                
                 for rc_w in RCGraph.all_rc_graphs(w, len(w.trimcode)):
                     pretty_print(rc_w)
                     # rc_hw = rc_w.to_highest_weight()[0]
@@ -58,9 +59,11 @@ if __name__ == "__main__":
                     
                     skew_tab_set = set(NilPlactic.all_skew_ed_tableaux(w_tab.shape, u.antiperm, dom.shape))
                     for tb in skew_tab_set:
+                        print('Found skew tab')
+                        pretty_print(tb)
                         # the weight of the skew comes from w
                         assert tb.perm.inv == u.inv
-                        reduced_word = [len(u) - tb[box] for box in w_tab.iter_boxes_row_word_order if box in set(tb.iter_boxes)]
+                        # reduced_word = [len(u) - tb[box] for box in w_tab.iter_boxes_row_word_order if box in set(tb.iter_boxes)]
                         # new_grid = copy.deepcopy(w_tab._root_grid)
                         # index_list = []
                         # print(f"{w_tab=} {tb=} {u=}")
@@ -73,11 +76,14 @@ if __name__ == "__main__":
                         # for box in w_tab.iter_boxes:
                         #     if new_grid[box] is not None:
                         #         new_grid[box] = (u.right_root_at(index_flatten[w_tab.order_grid[box]], word=reduced_word), new_grid[box][1])
-                        compatible_seq = [w_tab[box][1] for box in tb.iter_boxes]
+                        # compatible_seq = [w_tab[box][1] for box in tb.iter_boxes]
                         
-                        compatible_seq.sort()
-                        print(f"{reduced_word=} {compatible_seq=}")
-                        u_tab = RootTableau.root_insert_rsk(reduced_word, compatible_seq)
+                        # compatible_seq.sort()
+                        # print(f"{reduced_word=} {compatible_seq=}")
+                        # NEEEEEEEEEEEEEEEEEEEEEEEEEEEEEED DELETEL
+                        u_tab = w_tab
+                        while u_tab.perm != u:
+                            u_tab = u_tab.jdt_slide_remove_inner(compatible_sequence=tb.row_word)
                         pretty_print(u_tab)
                         pretty_print(tb.row_word)
                         print(f"Barfum {u.antiperm=}")
@@ -130,6 +136,9 @@ if __name__ == "__main__":
                     print(f"Failed coeff check at {u=} {w=} {dom.perm=}, expected {(Sx(dom.perm)*Sx(u)).get(w, 0)}, got {coeff}")
                     print("Crystals:")
                     for c in crystals:
+                        pretty_print(c)
+                    print("Highest weights:")
+                    for c in highest_weights:
                         pretty_print(c)
                     raise
                 print("Successful coeff check")

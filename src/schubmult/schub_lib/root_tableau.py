@@ -479,13 +479,84 @@ class RootTableau(CrystalGraph, GridPrint):
     def perm(self):
         return Permutation.ref_product(*self.reduced_word)
 
+    def delete_box(self, box):
+        from schubmult.utils.perm_utils import has_bruhat_descent
+        if self[box] is None:
+            raise ValueError("Box is not none")
+        a, b = self[box][0]
+        if not has_bruhat_descent(self.perm, a - 1, b - 1):
+            raise RuntimeError("Not a valid bruhat descent")
+        print("Made it through")
+        print(f"Trying to delete {box=} from")
+        pretty_print(self)
+        red_word = [*self.reduced_word]
+        compat = [*self.compatible_sequence]
+        index = -1
+        for spot in range(len(red_word)):
+            if self.perm.right_root_at(spot, word=red_word) == (a, b):
+                index = spot
+                break
+        red_word.pop(index)
+        compat.pop(index)
+        result = RootTableau.root_insert_rsk(red_word, compat)
+        print("Result:")
+        pretty_print(result)
+        print(f"{box=}")
+        
+        for other_box in self.iter_boxes:
+            if result[other_box] is None:
+                try:
+                    result = result.up_jdt_slide(*other_box)
+                except ValueError:
+                    continue
+        print(f"Result of delete {box=}")
+        pretty_print(result)
+        return result
+        
+
+    # def extract_skew_tableau(self, boxes):
+    #     from schubmult.utils.perm_utils import has_bruhat_descent
+    #     working_tab = self
+    #     roots = [(box, working_tab[box][0]) for box in self.iter_boxes if box not in boxes]
+        
+        
+    #     done_any = True
+        
+    #     while done_any and len(roots) > 0:
+    #         done_any = False
+            
+    #         for box, root in roots:
+    #             a, b = working_tab[box][0]
+    #             if has_bruhat_descent(working_tab.perm, a-1, b-1):
+    #                 print(f"It's a bruhat {a=} {b=}")
+    #                 print(f"Trying to delete {box=} in")
+    #                 pretty_print(working_tab)
+    #                 working_tab = working_tab.delete_box(box)
+    #                 done_any = True
+    #                 remaining_boxes = [box for box in working_tab.iter_boxes if box not in boxes]
+    #                 break
+    #             print(f"not a bruhat {working_tab[box]=} {a=} {b=} {working_tab.perm=}")
+    #         if done_any:
+    #             print("Did one")
+    #         else:
+    #             print("Couldn't do")
+            
+
+            
+                
+    #     if len(remaining_boxes) > 0:
+    #         pretty_print(working_tab)
+    #         raise ValueError(f"Could not extract skew tableau with given boxes {remaining_boxes=}")
+    #     return working_tab
+
+
     def rectify(self, randomized=False):
         import random
 
         cur = self
         while True:
             inner_corners = tuple(cur.iter_inner_corners)
-            if not inner_corners:
+            if len(inner_corners) == 0:
                 break
             if randomized:
                 cur = cur.down_jdt_slide(*random.choice(inner_corners))
@@ -494,9 +565,12 @@ class RootTableau(CrystalGraph, GridPrint):
         return cur
 
     def up_jdt_slide(self, row, col, check=False):
-        if not _is_valid_outer_corner(self._root_grid, row, col):
-            raise ValueError("Can only slide from valid outer corner")
         new_grid = copy.deepcopy(self._root_grid)
+        if self.rows <= row or self.cols <= col:
+            new_grid.resize((max(self.rows, row + 1), max(self.cols, col + 1)), refcheck=False)
+        if not _is_valid_outer_corner(new_grid, row, col):
+            raise ValueError("Can only slide from valid outer corner")
+        
 
         def _recurse():
             nonlocal row, col, new_grid
@@ -589,7 +663,11 @@ class RootTableau(CrystalGraph, GridPrint):
 
         _recurse()
         new_grid[row, col] = None
-
+        print("Down jdt on ")
+        pretty_print(self)
+        print("Got")
+        ret = RootTableau(new_grid, print_only=True)
+        pretty_print(ret)
         ret = RootTableau(new_grid)
         if check:
             assert ret.rc_graph == self.rc_graph, "down_jdt_slide does not preserve RC graph"
@@ -598,7 +676,10 @@ class RootTableau(CrystalGraph, GridPrint):
         return ret
 
     def __getitem__(self, key: Any) -> Any:
-        return self._root_grid[key]
+        try:
+            return self._root_grid[key]
+        except IndexError:
+            return None
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, RootTableau):
