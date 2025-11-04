@@ -60,31 +60,29 @@ if __name__ == "__main__":
                     for tb in skew_tab_set:
                         # the weight of the skew comes from w
                         assert tb.perm.inv == u.inv
-                        reduced_word = [len(u) - a for a in tb.row_word]
+                        reduced_word = [len(u) - tb[box] for box in w_tab.iter_boxes_row_word_order if box in set(tb.iter_boxes)]
                         # new_grid = copy.deepcopy(w_tab._root_grid)
                         # index_list = []
                         # print(f"{w_tab=} {tb=} {u=}")
-                        # for box in w_tab.iter_boxes():
+                        # for box in w_tab.iter_boxes:
                         #     if tb[box] == 0 :
                         #         new_grid[box] = None
                         #     else:
                         #         index_list.append(w_tab.order_grid[box])
                         # index_flatten = {b: len([a for a in index_list if a < b]) for b in index_list}
-                        # for box in w_tab.iter_boxes():
+                        # for box in w_tab.iter_boxes:
                         #     if new_grid[box] is not None:
                         #         new_grid[box] = (u.right_root_at(index_flatten[w_tab.order_grid[box]], word=reduced_word), new_grid[box][1])
-                        # u_tab = RootTableau(new_grid)
-                        pretty_print(tb)
+                        compatible_seq = [w_tab[box][1] for box in tb.iter_boxes]
+                        
+                        compatible_seq.sort()
+                        print(f"{reduced_word=} {compatible_seq=}")
+                        u_tab = RootTableau.root_insert_rsk(reduced_word, compatible_seq)
+                        pretty_print(u_tab)
                         pretty_print(tb.row_word)
                         print(f"Barfum {u.antiperm=}")
-                        u_hw_rc = []
-                        last_letter = -1
-                        for r in reduced_word:
-                            if r > last_letter:
-                                u_hw_rc.append([])
-                            u_hw_rc[-1].append(r)
-                            last_letter = r
-                        u_hw_rc = RCGraph([tuple(row) for row in u_hw_rc]).normalize()
+                        u_tab = u_tab.rectify()
+                        u_hw_rc = u_tab.rc_graph
                         assert u_hw_rc.perm == u
                         print("Constructing tensor product")
                         

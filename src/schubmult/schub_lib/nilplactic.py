@@ -71,7 +71,7 @@ class NilPlactic(Plactic):
         def backtrack(k, rows):
             if k == len(cells):
                 # finished, construct NilPlactic and test Bruhat condition
-                tableau = tuple(tuple(rw) for rw in rows)
+                tableau = tuple(tuple([entry if entry is not None and entry != 0 else None for entry in rw]) for rw in rows)
                 tpl = cls(tableau)
                 if tpl.perm.bruhat_leq(bruhat_perm) and tpl.perm.inv == sum(outer_shape) - sum(inner_shape) and len(tpl.row_word) == sum(outer_shape) - sum(inner_shape):
                     results.add(tpl)
@@ -92,11 +92,10 @@ class NilPlactic(Plactic):
                 rows[i][j] = val
                 backtrack(k + 1, rows)
                 # reset cell to 0 for cleanliness (not strictly necessary)
-                rows[i][j] = 0
+                rows[i][j] = None
 
         # start backtracking
         backtrack(0, template_rows)
-
         # cacheable return: convert to tuple for immutability
         return set(results)
 

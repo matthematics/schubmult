@@ -19,7 +19,8 @@ class Plactic(GridPrint, CrystalGraph):
     def iter_boxes(self):
         for i in range(len(self._word) - 1, -1, -1):
             for j in range(len(self._word[i])):
-                yield (i, j)
+                if self[i, j] is not None:
+                    yield (i, j)
 
     def up_jdt_slide(self, row, col):
         """
@@ -151,7 +152,7 @@ class Plactic(GridPrint, CrystalGraph):
     @property
     def row_word(self):
         """Return the row-reading word as a flat tuple."""
-        word = tuple(a for row in reversed(self._word) for a in row if a != 0)
+        word = tuple(a for row in reversed(self._word) for a in row if a != 0 and a is not None)
         return word
 
     @property
