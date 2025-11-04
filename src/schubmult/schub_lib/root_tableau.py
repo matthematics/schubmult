@@ -767,7 +767,18 @@ class RootTableau(CrystalGraph, GridPrint):
         assert ret.edelman_greene_invariant == self.edelman_greene_invariant, f"{ret.edelman_greene_invariant=} != {self.edelman_greene_invariant=}"
         retmap = RootTableau.root_insert_rsk(self.rc_graph.perm_word, self.rc_graph.compatible_sequence)
         assert retmap.edelman_greene_invariant == self.edelman_greene_invariant
-        mapper = {retmap.eg_row_word[index]: ret.eg_row_word[index] for index in range(ret_rc.perm.inv)}
+        flag = False
+        if retmap.eg_row_word != ret.eg_row_word:
+            flag = True
+            print("TEST")
+            pretty_print(retmap)
+            print(f"RAISE {i}")
+            pretty_print(ret)
+            print(f"{retmap.eg_row_word=}")
+            print(f"{ret.eg_row_word=}")
+            #input()
+
+        mapper = {retmap.eg_row_word[index]: self.eg_row_word[index] for index in range(ret_rc.perm.inv)}
         # box_list = []
         # for box in retmap.iter_boxes_row_word_order:
         #     root = retmap[box][0]
@@ -775,14 +786,21 @@ class RootTableau(CrystalGraph, GridPrint):
         #     box2 = next(iter([box3 for box3 in self.iter_boxes if self[box3][0] == root]))
         #     box_list.append(box2)
 
-        did = True
-        while did:
-            did = False
-            for _box in ret.iter_outer_corners:
-                if self._root_grid[_box] is not None:
-                    ret = ret.up_jdt_slide(*_box, check=True)
-                    did = True
-
+        # did = True
+        # while did:
+        #     did = False
+        #     for _box in ret.iter_outer_corners:
+        #         if self._root_grid[_box] is not None:
+        #             ret = ret.up_jdt_slide(*_box, check=True)
+        #             did = True
+        # if flag:
+        #     print("TEST")
+        #     pretty_print(self)
+        #     print(f"RAISE {i}")
+        #     pretty_print(ret)
+        #     print(f"{self.eg_row_word=}")
+        #     print(f"{ret.eg_row_word=}")
+        #     input()
         correct_word = _plactic_raising_operator(self.row_word, i)
         try_grid = copy.deepcopy(self._root_grid)
         # if ret.root_row_word != self.root_row_word:
@@ -793,7 +811,7 @@ class RootTableau(CrystalGraph, GridPrint):
         #     input()
         # relate order grid word grid
         for index, box in enumerate(self.iter_boxes_row_word_order):
-            try_grid[box] = (self.eg_root(ret.eg_row_word[index]), correct_word[index])
+            try_grid[box] = (self.eg_root(mapper[ret.eg_row_word[index]]), correct_word[index])
         try:
             ret = RootTableau(try_grid)
             return ret
