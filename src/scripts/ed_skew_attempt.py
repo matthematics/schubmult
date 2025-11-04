@@ -101,7 +101,9 @@ if __name__ == "__main__":
                         for u_tab2 in u_hw_rc.full_crystal:
                             tensor = CrystalGraphTensor(dom.rc_graph.resize(len(rc_w)), u_tab2.resize(len(rc_w)))
                             print(f"{tensor=}")
-                            tc_elem = tensor.to_highest_weight()[0]
+                            if not tensor.is_highest_weight:
+                                continue
+                            tc_elem = tensor
                             print(f"{tc_elem=}")
                             if (tc_elem, rc_w) in crystals:
                                 continue
