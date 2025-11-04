@@ -395,28 +395,35 @@ class RootTableau(CrystalGraph, GridPrint):
     def __hash__(self) -> int:
         return hash(self._hasher)
 
-    @property
-    def perm(self):
-        return Permutation.ref_product(*self.reduced_word)
+    # @property
+    # def perm(self):
+    #     return Permutation.ref_product(*self.reduced_word)
 
     # preserved by the crystal operators
     @property
     def edelman_greene_invariant(self):
-        w0 = Permutation.w0(len(self.perm))
-        rev_word = [w0[r - 1] for r in self.reduced_word]
+        w0 = Permutation.w0(max(self.reduced_word, default=0) + 1)
+        rev_word = [len(w0) - r for r in self.reduced_word]
         np_word = list(NilPlactic().ed_insert(*rev_word).row_word)
         assert Permutation.ref_product(*np_word) == Permutation.ref_product(*rev_word)
-        np_word = [w0[r - 1] for r in np_word]
+        assert Permutation.ref_product(*np_word).inv == len(np_word), f"{rev_word=} {np_word=}"
+        np_word = [len(w0) - r for r in np_word]
         assert Permutation.ref_product(*np_word) == self.perm
         return tuple(np_word)
 
     def eg_root(self, index):
-        return self.perm.right_root_at(index, word=self.edelman_greene_invariant)
+        eg_inv = self.edelman_greene_invariant
+        return self.perm.right_root_at(index, word=eg_inv)
 
     @property
     def eg_row_word(self):
-        eg_roots = [self.eg_root(index) for index in range(self.perm.inv)]
-        return tuple([eg_roots.index(r) for r in self.root_row_word])
+        eg_roots = [self.eg_root(index) for index in range(len(self.edelman_greene_invariant))]
+        assert len(self.root_row_word) == len(eg_roots), f"{self.root_row_word=} {eg_roots=}"
+        try:
+            return tuple([eg_roots.index(r) for r in self.root_row_word])
+        except Exception:
+            print(f"{self.root_row_word=} {eg_roots=} {self.edelman_greene_invariant=}")
+            raise
 
     @property
     def shape(self):
@@ -627,7 +634,7 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def reduced_word(self):
-        return _word_from_grid(self._root_grid, as_grid=False)
+        return _word_from_grid(self._root_grid)
 
     @property
     def compatible_sequence(self):
@@ -668,7 +675,7 @@ class RootTableau(CrystalGraph, GridPrint):
         if not print_only:
             for index, box in enumerate(self.iter_boxes_row_word_order):
                     assert self[box] == (self.eg_root(self.eg_row_word[index]), self.row_word[index]), (
-                        f"RootTableau init: inconsistent root at {box}: {self[box][0]=}"
+                        f"RootTableau init: inconsistent root at {box}: {self[box][0]=} {self=}"
                     )
                     # assert self.perm == Permutation.ref_product(*self.grid_word), f"{self.reduced_word=} {self.grid_word=}"
                     # for index, box in enumerate(reversed(list(self.iter_boxes_row_word_order))):
@@ -703,12 +710,8 @@ class RootTableau(CrystalGraph, GridPrint):
     @property
     def root_row_word(self):
         word = []
-        for r in range(self.rows - 1, -1, -1):
-            for c in range(self.cols):
-                cell = self._root_grid[r, c]
-                if cell is not None:
-                    root_cell, _letter = cell
-                    word.append(root_cell)
+        for box in self.iter_boxes_row_word_order:
+            word.append(self[box][0])
         return tuple(word)
 
     def right_root_at(self, i):
@@ -762,8 +765,9 @@ class RootTableau(CrystalGraph, GridPrint):
         
         ret = RootTableau.root_insert_rsk(ret_rc.perm_word, ret_rc.compatible_sequence)
         assert ret.edelman_greene_invariant == self.edelman_greene_invariant, f"{ret.edelman_greene_invariant=} != {self.edelman_greene_invariant=}"
-        
-        # # mapper = {retmap.order_grid[ind]: ret.order_grid[ind] for ind in ret.iter_boxes}
+        retmap = RootTableau.root_insert_rsk(self.rc_graph.perm_word, self.rc_graph.compatible_sequence)
+        assert retmap.edelman_greene_invariant == self.edelman_greene_invariant
+        mapper = {retmap.eg_row_word[index]: ret.eg_row_word[index] for index in range(ret_rc.perm.inv)}
         # box_list = []
         # for box in retmap.iter_boxes_row_word_order:
         #     root = retmap[box][0]
@@ -778,6 +782,8 @@ class RootTableau(CrystalGraph, GridPrint):
                 if self._root_grid[_box] is not None:
                     ret = ret.up_jdt_slide(*_box, check=True)
                     did = True
+        return ret
+
         correct_word = _plactic_raising_operator(self.row_word, i)
         try_grid = copy.deepcopy(self._root_grid)
         # if ret.root_row_word != self.root_row_word:
@@ -788,9 +794,15 @@ class RootTableau(CrystalGraph, GridPrint):
         #     input()
         # relate order grid word grid
         for index, box in enumerate(self.iter_boxes_row_word_order):
-            try_grid[box] = (self.eg_root(ret.eg_row_word[index]), correct_word[index])
-        retret = RootTableau(try_grid)
-        return retret
+            try_grid[box] = (self.eg_root(mapper[self.eg_row_word[index]]), correct_word[index])
+        try:
+            ret = RootTableau(try_grid)
+            return ret
+        except Exception:
+            pretty_print(self)
+            print(try_grid)
+            raise
+        
         # for ind in self.iter_boxes:
         #     try_grid[ind] = (self.perm.right_root_at(self.order_grid[ind], word=ret.reduced_word), ret.compatible_sequence[self.order_grid[ind]])
         # assert ret == RootTableau(try_grid), "raising_operator construction mismatch"
