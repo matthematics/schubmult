@@ -47,8 +47,8 @@ if __name__ == "__main__":
                     #     continue
                     if not rc_w.is_highest_weight:
                         continue
-                    if not rc_w.to_lowest_weight()[0].is_principal:
-                        continue
+                    # if not rc_w.to_lowest_weight()[0].is_principal:
+                    #     continue
                     high_weight = rc_w.length_vector
                     # if lw != tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)]):
                     #     print(f"{lw} != {tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)])}")
