@@ -26,6 +26,24 @@ from .rc_graph import RCGraph
 
 
 # we can do crazy crystal stuff
+def _plactic_raising_operator(word, i):
+    word = [*word]
+    opening_stack = []
+    closing_stack = []
+    for index in range(len(word)):
+        if word[index] == i + 1:
+            opening_stack.append(index)
+        elif word[index] == i:
+            if len(opening_stack) > 0:
+                opening_stack.pop()
+            else:
+                closing_stack.append(index)
+    if len(opening_stack) == 0:
+        return None
+    index_to_change = opening_stack[0]
+    word[index_to_change] = i
+    return tuple(word)
+
 def _is_valid_outer_corner(grid: np.ndarray, i: int, j: int) -> bool:
     """
     Outer-corner predicate used by up_jdt_slide.
@@ -683,6 +701,12 @@ class RootTableau(CrystalGraph, GridPrint):
                 return self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word)
         return None
 
+    def iter_boxes_row_word_order(self):
+        for i in range(self._root_grid.shape[0] - 1, -1, -1):
+            for j in range(self._root_grid.shape[1]):
+                if self[i, j] is not None:
+                    yield (i, j)
+
     def raising_operator(self, i):
         """Crystal raising operator e_i on the root tableau"""
         row = i
@@ -718,17 +742,19 @@ class RootTableau(CrystalGraph, GridPrint):
         ret_rc = RCGraph([*rc[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *rc[row + 1 :]])
         if ret_rc.perm != rc.perm:
             return None
-        compatible_seq = ret_rc.compatible_sequence
-        ret = RootTableau.root_insert_rsk(ret_rc.perm_word, compatible_seq)
+        
+        ret = RootTableau.root_insert_rsk(ret_rc.perm_word, ret_rc.compatible_sequence)
         assert ret.edelman_greene_invariant == self.edelman_greene_invariant, f"{ret.edelman_greene_invariant=} != {self.edelman_greene_invariant=}"
-        # retmap = RootTableau.root_insert_rsk(self.reduced_word, self.rc_graph.compatible_sequence)
+        # retmap = RootTableau.root_insert_rsk(self.reduced_word, self.compatible_sequence)
 
-        # mapper = {retmap.order_grid[ind]: ret.order_grid[ind] for ind in ret.iter_boxes()}
+        # # mapper = {retmap.order_grid[ind]: ret.order_grid[ind] for ind in ret.iter_boxes()}
+        # box_list = []
+        # for box in retmap.iter_boxes_row_word_order():
+        #     root = retmap[box][0]
+        #     # find root
+        #     box2 = next(iter([box3 for box3 in self.iter_boxes() if self[box3][0] == root]))
+        #     box_list.append(box2)
 
-        # try_grid = copy.deepcopy(self._root_grid)
-        # for ind in self.iter_boxes():
-        #     try_grid[ind] = (self.perm.right_root_at(self.order_grid[ind], word=ret.reduced_word), ret.compatible_sequence[self.order_grid[ind]])
-        # assert ret == RootTableau(try_grid), "raising_operator construction mismatch"
         did = True
         while did:
             did = False
@@ -736,6 +762,16 @@ class RootTableau(CrystalGraph, GridPrint):
                 if self._root_grid[_box] is not None:
                     ret = ret.up_jdt_slide(*_box, check=True)
                     did = True
+        correct_word = _plactic_raising_operator(self.row_word, i)
+        try_grid = copy.deepcopy(self._root_grid)
+        for index, box in enumerate(self.iter_boxes_row_word_order()):
+            try_grid[box] = (self.perm.right_root_at(ret.order_grid[box], word=ret.reduced_word),correct_word[index])
+        retret = RootTableau(try_grid)
+        return retret
+        # for ind in self.iter_boxes():
+        #     try_grid[ind] = (self.perm.right_root_at(self.order_grid[ind], word=ret.reduced_word), ret.compatible_sequence[self.order_grid[ind]])
+        # assert ret == RootTableau(try_grid), "raising_operator construction mismatch"
+        
         
         # for ind in np.ndindex(self._root_grid.shape):
         #     if self._root_grid[ind] is not None:
@@ -759,7 +795,7 @@ class RootTableau(CrystalGraph, GridPrint):
         
         
         
-        return ret
+        #return ret
         # return ret
 
     def lowering_operator(self, row):
