@@ -25,24 +25,6 @@ from .rc_graph import RCGraph
 # w/mu subword tableau that are a specific standard tableaux for v
 
 # we can do crazy crystal stuff
-def _plactic_raising_operator(word, i):
-    word = [*word]
-    opening_stack = []
-    closing_stack = []
-    for index in range(len(word)):
-        if word[index] == i + 1:
-            opening_stack.append(index)
-        elif word[index] == i:
-            if len(opening_stack) > 0:
-                opening_stack.pop()
-            else:
-                closing_stack.append(index)
-    if len(opening_stack) == 0:
-        return None
-    index_to_change = opening_stack[0]
-    word[index_to_change] = i
-    return tuple(word)
-
 def _is_valid_outer_corner(grid: np.ndarray, i: int, j: int) -> bool:
     """
     Outer-corner predicate used by up_jdt_slide.
@@ -59,58 +41,26 @@ def _is_valid_outer_corner(grid: np.ndarray, i: int, j: int) -> bool:
         return False
     up = grid[i - 1, j] if i - 1 >= 0 else "bob" if i == 0 else None
     left = grid[i, j - 1] if j - 1 >= 0 else "bing" if j == 0 else None
-    return (up is not None and left is not None) and not (i == 0 and j == 0)
+    return grid[i, j] is None and (up is not None and left is not None) and not (i == 0 and j == 0)
     # consider hole on or beyond boundary as "outer
 
 
 def _is_valid_inner_corner(grid: np.ndarray, i: int, j: int) -> bool:
     """
     Inner-corner predicate used by down_jdt_slide.
-    Valid when the hole is inside the occupied bounding box of the grid
-    (not extending the grid) and there is a box below or to the right that
-    can slide into the hole. Returns False for entirely empty grids.
+    Valid when the hole is inside the grid (must not extend grid) and there
+    is a box below or to the right with the same boundary rules mirrored.
     """
     rows, cols = grid.shape
-    # hole must be inside array bounds
-    if i < 0 or j < 0 or i >= rows or j >= cols:
+    if grid[i, j] is not None:
         return False
-    # hole must be empty
-    
-
-    # compute bounding box of occupied cells
-    max_row = -1
-    max_col = -1
-    for r in range(rows):
-        for c in range(cols):
-            if grid[r, c] is not None:
-                if r > max_row:
-                    max_row = r
-                if c > max_col:
-                    max_col = c
-
-    # empty grid -> no inner corners
-    if max_row == -1 or max_col == -1:
+    if i < 0 or j < 0:
         return False
-
-    # convert to exclusive bounds
-    max_row += 1
-    max_col += 1
-
-    # hole must lie within the occupied bounding box
-    if i >= max_row or j >= max_col:
+    if i >= rows or j >= cols:
         return False
-
-    # there must be a box below or to the right (within the bounding box)
-    down_exists = (i + 1 < max_row) and (grid[i + 1, j] is not None)
-    right_exists = (j + 1 < max_col) and (grid[i, j + 1] is not None)
-    if not (down_exists or right_exists):
-        return False
-
-    # exclude the southeast-most occupied corner (no box can slide into that hole)
-    if i == max_row - 1 and j == max_col - 1:
-        return False
-
-    return True
+    down = grid[i + 1, j] if i + 1 < rows else "bob" if i == rows - 1 else None
+    right = grid[i, j + 1] if j + 1 < cols else "bing" if j == cols - 1 else None
+    return grid[i, j] is None and (down is not None and right is not None) and not (i == rows - 1 and j == cols - 1)
 
 
 def _length_of_row(grid, row):
@@ -422,29 +372,8 @@ class RootTableau(CrystalGraph, GridPrint):
     Root tableau with dual knuth equivalence
     """
 
-    @staticmethod
-    def infusion(tab1, tab2):
-        for box in tab2.iter_boxes():
-            if box[0] < tab1.shape[0] and len(tab1.shape) > 1 and box[1] < tab1.shape[1] and tab1[box] is not None:
-                raise ValueError("Cannot infuse into non-complementary tableau")
-        new_grid = np.empty(tab2._root_grid.shape, dtype=object)
-        current_boxes = set()
-        while True:
-            inner_corner = next(iter(tab2.iter_inner_corners()), None)
-            boxes = set(tab2.iter_boxes())
-            if inner_corner is None:
-                break
-            tab2 = tab2.down_jdt_slide(*inner_corner)
-            new_box = next(box for box in boxes if box not in set(tab2.iter_boxes()))
-            new_grid[new_box] = tab1[inner_corner]
-        return RootTableau(new_grid), tab2
-
     def __hash__(self) -> int:
         return hash(self._hasher)
-
-    @property
-    def crystal_weight(self):
-        return self.weight_tableau.crystal_weight
 
     @property
     def perm(self):
@@ -453,7 +382,8 @@ class RootTableau(CrystalGraph, GridPrint):
     # preserved by the crystal operators
     @property
     def edelman_greene_invariant(self):
-        rev_word = [len(self.perm) - r for r in self.reduced_word]
+        w0 = Permutation.w0(len(self.perm))
+        rev_word = [w0[r - 1] for r in self.reduced_word]
         return NilPlactic().ed_insert(*rev_word)
 
     @classmethod
@@ -468,7 +398,7 @@ class RootTableau(CrystalGraph, GridPrint):
             letter2 = idx + 1
             word, word2 = NilPlactic._ed_insert_rsk(word, word2, int(letter), int(letter2) if letter2 is not None else None)
         num_rows = len(word2)
-        num_cols = max([len(r) for r in word2], default=0)
+        num_cols = max(len(r) for r in word2)
         grid = np.empty((num_rows, num_cols), dtype=object)
         for r in range(num_rows):
             for c in range(num_cols):
@@ -496,31 +426,9 @@ class RootTableau(CrystalGraph, GridPrint):
         order_grid = _word_from_grid(self._root_grid, as_ordering=True, as_grid=True)
         return [(i, j) for (i, j) in np.ndindex(order_grid.shape) if order_grid[i, j] is not None and order_grid[i, j] < order_grid[row, col]]
 
-    
-    def extract_box(self, row, col):
-        desc = self.word_grid[row, col]
-        val = self[row, col][1]
-        if desc is None:
-            raise ValueError("No box at given position")
-        removed = self.up_jdt_slide(row, col, act=(desc, desc + 1))
-        return (desc, val), removed
-
-    def box_at_index(self, index):
-        for i in range(self._root_grid.shape[0]):
-            for j in range(self._root_grid.shape[1]):
-                if self.order_grid[i, j] is not None and self.order_grid[i, j] == index:
-                    return (i, j)
-        return -1
-
-    def extract_subword(self, *subword_indices):
-        reduced_word = []
-        compatible_seq = []
-        for idx in subword_indices:
-            (box_desc, box_val), skew = self.extract_box(*self.box_at_index(idx))
-            reduced_word.append(box_desc)
-            compatible_seq.append(box_val)
-        return RootTableau.root_insert_rsk(reduced_word, compatible_seq), skew
-
+    @property
+    def perm(self):
+        return Permutation.ref_product(*self.reduced_word)
 
     def rectify(self, randomized=False):
         import random
@@ -535,16 +443,10 @@ class RootTableau(CrystalGraph, GridPrint):
                 cur = cur.down_jdt_slide(*next(iter(inner_corners)))
         return cur
 
-    def crystal_length(self):
-        return len(self.perm.trimcode)
-
-    def up_jdt_slide(self, row, col, act = None, check=False):
-        if act is None and not _is_valid_outer_corner(self._root_grid, row, col):
+    def up_jdt_slide(self, row, col, check=False):
+        if not _is_valid_outer_corner(self._root_grid, row, col):
             raise ValueError("Can only slide from valid outer corner")
         new_grid = copy.deepcopy(self._root_grid)
-        if act is None and new_grid[row, col] is not None:
-            raise ValueError("Can only slide from empty position unless ignore_empty=True")
-        new_grid[row, col] = None
 
         def _recurse():
             nonlocal row, col, new_grid
@@ -557,14 +459,10 @@ class RootTableau(CrystalGraph, GridPrint):
             if up is None and left is None:
                 return
             if left is None:
-                if act is not None:
-                    up = (Permutation.reflection(act).act_root(*up[0]), up[1])
                 new_grid[row, col] = up
                 new_grid[row - 1, col] = None
                 row -= 1
             elif up is None:
-                if act is not None:
-                    left = (Permutation.reflection(act).act_root(*left[0]), left[1])
                 new_grid[row, col] = left
                 new_grid[row, col - 1] = None
                 col -= 1
@@ -574,27 +472,22 @@ class RootTableau(CrystalGraph, GridPrint):
                 root_left = new_grid[row, col - 1][1]
                 if root_above >= root_left:
                     # above is larger or incomparable
-                    if act is not None:
-                        up = (Permutation.reflection(act).act_root(*up[0]), up[1])
                     new_grid[row, col] = up
                     new_grid[row - 1, col] = None
                     row -= 1
                 else:
                     # left is larger
-                    if act is not None:
-                        left = (Permutation.reflection(act).act_root(*left[0]), left[1])
                     new_grid[row, col] = left
                     new_grid[row, col - 1] = None
                     col -= 1
             _recurse()
         _recurse()
         new_grid[row, col] = None
-        pretty_print(RootTableau(new_grid, print_only=True))
         ret = RootTableau(new_grid)
         if check:
             assert ret.rc_graph == self.rc_graph, "up_jdt_slide does not preserve RC graph"
             assert ret.weight_tableau == self.weight_tableau, "up_jdt_slide does not preserve tableau shape"
-        assert act is not None or self.edelman_greene_invariant == ret.edelman_greene_invariant
+        assert self.edelman_greene_invariant == ret.edelman_greene_invariant
         return ret
 
     def down_jdt_slide(self, row, col, check=False):
@@ -606,8 +499,7 @@ class RootTableau(CrystalGraph, GridPrint):
         """
         if not _is_valid_inner_corner(self._root_grid, row, col):
             raise ValueError("Can only slide from valid inner corner")
-        if self[row, col] is not None:
-            raise ValueError("Can only slide from empty position")
+
         new_grid = copy.deepcopy(self._root_grid)
 
         def _recurse():
@@ -684,13 +576,13 @@ class RootTableau(CrystalGraph, GridPrint):
     def iter_outer_corners(self):
         for i in range(self.rows):
             for j in range(self.cols):
-                if self[i, j] is None and _is_valid_outer_corner(self._root_grid, i, j):
+                if _is_valid_outer_corner(self._root_grid, i, j):
                     yield (i, j)
 
     def iter_inner_corners(self):
         for i in range(self.rows):
             for j in range(self.cols):
-                if self[i, j] is None and _is_valid_inner_corner(self._root_grid, i, j):
+                if _is_valid_inner_corner(self._root_grid, i, j):
                     yield (i, j)
     @property
     def is_valid(self):
@@ -736,7 +628,6 @@ class RootTableau(CrystalGraph, GridPrint):
             for ind in self.iter_boxes():
                 if self[ind][0] is not None:
                     assert self[ind] == (self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word), self.compatible_sequence[self.order_grid[ind]]), f"RootTableau init: inconsistent root at {ind}: {self[ind][0]=} vs {self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word)=}"
-            self._weight_tableau = Plactic().rs_insert(*self.row_word)
 
     @property
     def weight_tableau(self):
@@ -748,12 +639,8 @@ class RootTableau(CrystalGraph, GridPrint):
         #             rows[-1].append(0)
         #         else:
         #             rows[-1].append(cell[1])
-        
-        return self._weight_tableau
 
-    @property
-    def shape(self):
-        return self.weight_tableau.shape
+        return Plactic().rs_insert(*self.row_word)
 
     def epsilon(self, index):
         return self._weight_tableau.epsilon(index)
@@ -820,19 +707,39 @@ class RootTableau(CrystalGraph, GridPrint):
         ret_rc = RCGraph([*rc[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *rc[row + 1 :]])
         if ret_rc.perm != rc.perm:
             return None
-        reduced_word = ret_rc.reduced_word
-        row_word = []
-        row_word_spots = []
-        for index0 in range(self._root_grid.shape[0] - 1, -1):
-            for index1 in range(self._root_grid.shape[1]):
-                if self[index0, index1] is not None:
-                    row_word.append(self._root_grid[index0, index1][1])
-                    row_word_spots.append((index0, index1))
-        row_word = _plactic_raising_operator(row_word, i)
-        try_grid = copy.deepcopy(self._root_grid)
-        for index, box in enumerate(row_word_spots):
-            try_grid[box] = (self.perm.right_root_at(self.order_grid[box], word=reduced_word), row_word[index])
-        return RootTableau(try_grid)
+        compatible_seq = ret_rc.compatible_sequence
+        ret = RootTableau.root_insert_rsk(ret_rc.perm_word, compatible_seq)
+        assert ret.edelman_greene_invariant == self.edelman_greene_invariant, f"{ret.edelman_greene_invariant=} != {self.edelman_greene_invariant=}"
+        retmap = RootTableau.root_insert_rsk(self.reduced_word, self.rc_graph.compatible_sequence)
+
+        did = True
+        while did:
+            did = False
+            for _box in ret.iter_outer_corners():
+                if self._root_grid[_box] is not None:
+                    ret = ret.up_jdt_slide(*_box, check=True)
+                    did = True
+        # try_grid = copy.deepcopy(self._root_grid)
+        # for ind in np.ndindex(self._root_grid.shape):
+        #     if self._root_grid[ind] is not None:
+               
+        #         # ind2 = np.where(retmap.order_grid == self.order_grid[ind])
+        #         # print(f"Found that {self.order_grid[ind]=} is at")
+        #         # print(ind2)
+        #         # print("In")
+        #         # print(f"{retmap.order_grid=}")
+        #         # print(ret.order_grid[*ind2])
+        #         try_grid[ind] = (ret.perm.right_root_at(self.order_grid[ind], word=ret.reduced_word), ret.compatible_sequence[self.order_grid[ind]])
+        # tret = RootTableau(try_grid)
+        # if any(self._root_grid[_box] is not None and ret._root_grid[_box] !=try_grid[_box] for _box in ret.iter_boxes()):
+        #     print("FYI ret")
+        #     pretty_print(ret)
+        #     print("tret")
+        #     pretty_print(tret)
+        #     print("self")
+        #     pretty_print(self)
+        #     input()
+        return ret
 
     def lowering_operator(self, row):
         # RF word is just the RC word backwards
