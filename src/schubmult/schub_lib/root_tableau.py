@@ -24,6 +24,7 @@ from .rc_graph import RCGraph
 # skew tableau behave dominant correctly
 # w/mu subword tableau that are a specific standard tableaux for v
 
+
 # we can do crazy crystal stuff
 def _is_valid_outer_corner(grid: np.ndarray, i: int, j: int) -> bool:
     """
@@ -108,6 +109,7 @@ def _word_from_grid(grid0, as_grid: Optional[bool] = False, as_ordering: Optiona
         word orientation used elsewhere.
     """
     ARBITRARY_BIG_NUMBER = 1000
+
     def _flip_grid(grid):
         nonlocal ARBITRARY_BIG_NUMBER
         for ii in range(grid.shape[0]):
@@ -118,8 +120,10 @@ def _word_from_grid(grid0, as_grid: Optional[bool] = False, as_ordering: Optiona
                 root_cell, letter = cell
                 new_root = (ARBITRARY_BIG_NUMBER - root_cell[1], ARBITRARY_BIG_NUMBER - root_cell[0])
                 grid[ii, jj] = (new_root, letter)
+
     def _flip(i):
         return ARBITRARY_BIG_NUMBER - i
+
     if as_grid:
         index_val = _count_boxes(grid0)
         # Build an output array the same shape as the grid and place, at the
@@ -239,7 +243,6 @@ def _word_from_grid(grid0, as_grid: Optional[bool] = False, as_ordering: Optiona
 
         i, j = chosen
         cell = grid[i, j]
-        
         root_cell, _letter = cell
         # append the first component of the root as the letter for the reduced word
         word.append(_flip(root_cell[1]))
@@ -339,33 +342,32 @@ def _validate_grid(grid: np.ndarray) -> None:
             if cell is None:
                 continue
             if not isinstance(cell, (tuple, list)) or len(cell) < 2:
-                raise RuntimeError(f"_validate_grid: bad cell at {(i,j)}: {repr(cell)}")
+                raise RuntimeError(f"_validate_grid: bad cell at {(i, j)}: {repr(cell)}")
             root, letter = cell[0], cell[1]
             try:
                 int(letter)
             except Exception:
-                raise RuntimeError(f"_validate_grid: non-int letter at {(i,j)}: {repr(letter)}")
+                raise RuntimeError(f"_validate_grid: non-int letter at {(i, j)}: {repr(letter)}")
             if not (isinstance(root, (tuple, list, int))):
-                raise RuntimeError(f"_validate_grid: unexpected root at {(i,j)}: {repr(root)}")
+                raise RuntimeError(f"_validate_grid: unexpected root at {(i, j)}: {repr(root)}")
 
 
 def _snap_grid(grid: np.ndarray):
     """Return a compact, JSON-like snapshot of the grid for debug messages."""
     try:
-        return [
-            [None if grid[i, j] is None else (grid[i, j][0], int(grid[i, j][1])) for j in range(grid.shape[1])]
-            for i in range(grid.shape[0])
-        ]
+        return [[None if grid[i, j] is None else (grid[i, j][0], int(grid[i, j][1])) for j in range(grid.shape[1])] for i in range(grid.shape[0])]
     except Exception:
         return repr(grid)
 
+
 def _root_map(rc1, rc2):
     # takes roots of rc1 return roots of rc2 (dct)
-    
+
     rw1 = rc1
     rw2 = rc2
     perm = Permutation.ref_product(*rw1)
     return {perm.right_root_at(i, word=rw1): perm.right_root_at(i, word=rw2) for i in range(perm.inv)}
+
 
 class RootTableau(CrystalGraph, GridPrint):
     """
@@ -386,6 +388,10 @@ class RootTableau(CrystalGraph, GridPrint):
         rev_word = [w0[r - 1] for r in self.reduced_word]
         return NilPlactic().ed_insert(*rev_word)
 
+    @property
+    def shape(self):
+        return tuple(_length_of_row(self._root_grid, r) for r in range(self._root_grid.shape[0]) if _length_of_row(self._root_grid, r) > 0)
+
     @classmethod
     def root_insert_rsk(cls, reduced_word, compatible_seq):
         _perm = Permutation.ref_product(*reduced_word)
@@ -398,7 +404,7 @@ class RootTableau(CrystalGraph, GridPrint):
             letter2 = idx + 1
             word, word2 = NilPlactic._ed_insert_rsk(word, word2, int(letter), int(letter2) if letter2 is not None else None)
         num_rows = len(word2)
-        num_cols = max(len(r) for r in word2)
+        num_cols = max([len(r) for r in word2], default=0)
         grid = np.empty((num_rows, num_cols), dtype=object)
         for r in range(num_rows):
             for c in range(num_cols):
@@ -432,6 +438,7 @@ class RootTableau(CrystalGraph, GridPrint):
 
     def rectify(self, randomized=False):
         import random
+
         cur = self
         while True:
             inner_corners = tuple(cur.iter_inner_corners())
@@ -450,12 +457,12 @@ class RootTableau(CrystalGraph, GridPrint):
 
         def _recurse():
             nonlocal row, col, new_grid
-            #_logger.debug(f"{row=} {col=}")
-          #  pretty_print(RootTableau(new_grid))
+            # _logger.debug(f"{row=} {col=}")
+            #  pretty_print(RootTableau(new_grid))
             left = new_grid[row, col - 1] if col > 0 else None
-                # slide from left
+            # slide from left
             up = new_grid[row - 1, col] if row > 0 else None
-                # slide from above
+            # slide from above
             if up is None and left is None:
                 return
             if left is None:
@@ -481,6 +488,7 @@ class RootTableau(CrystalGraph, GridPrint):
                     new_grid[row, col - 1] = None
                     col -= 1
             _recurse()
+
         _recurse()
         new_grid[row, col] = None
         ret = RootTableau(new_grid)
@@ -504,12 +512,12 @@ class RootTableau(CrystalGraph, GridPrint):
 
         def _recurse():
             nonlocal row, col, new_grid
-            #_logger.debug(f"{row=} {col=}")
-          #  pretty_print(RootTableau(new_grid))
+            # _logger.debug(f"{row=} {col=}")
+            #  pretty_print(RootTableau(new_grid))
             right = new_grid[row, col + 1] if col < self.cols - 1 else None
-                # slide from left
+            # slide from left
             down = new_grid[row + 1, col] if row < self.rows - 1 else None
-                # slide from above
+            # slide from above
             if right is None and down is None:
                 return
             if right is None:
@@ -535,9 +543,9 @@ class RootTableau(CrystalGraph, GridPrint):
                     new_grid[row, col + 1] = None
                     col += 1
             _recurse()
+
         _recurse()
         new_grid[row, col] = None
-        
 
         ret = RootTableau(new_grid)
         if check:
@@ -584,6 +592,7 @@ class RootTableau(CrystalGraph, GridPrint):
             for j in range(self.cols):
                 if _is_valid_inner_corner(self._root_grid, i, j):
                     yield (i, j)
+
     @property
     def is_valid(self):
         return self.rc_graph.is_valid
@@ -599,7 +608,7 @@ class RootTableau(CrystalGraph, GridPrint):
     @property
     def word_grid(self):
         return _word_from_grid(self._root_grid, as_grid=True)
-    
+
     @property
     def order_grid(self):
         return _word_from_grid(self._root_grid, as_grid=True, as_ordering=True)
@@ -611,15 +620,15 @@ class RootTableau(CrystalGraph, GridPrint):
     # def reduced_word(self):
     #     return self._red_plactic.reverse_rsk(self._index_tableau)
 
-    @cached_property
-    def print_element(self):
-        _printing_grid = copy.deepcopy(self._root_grid)
-        for i in range(_printing_grid.shape[0]):
-            for j in range(_printing_grid.shape[1]):
-                cell = _printing_grid[i, j]
-                if cell is None:
-                    _printing_grid[i, j] = " "
-        return RootTableau(_printing_grid, print_only=True)
+    # @cached_property
+    # def print_element(self):
+    #     _printing_grid = copy.deepcopy(self._root_grid)
+    #     for i in range(_printing_grid.shape[0]):
+    #         for j in range(_printing_grid.shape[1]):
+    #             cell = _printing_grid[i, j]
+    #             if cell is None:
+    #                 _printing_grid[i, j] = " "
+    #     return RootTableau(_printing_grid, print_only=True)
 
     def __init__(self, grid, print_only=False):
         self._root_grid = copy.deepcopy(grid)
@@ -627,7 +636,9 @@ class RootTableau(CrystalGraph, GridPrint):
         if not print_only:
             for ind in self.iter_boxes():
                 if self[ind][0] is not None:
-                    assert self[ind] == (self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word), self.compatible_sequence[self.order_grid[ind]]), f"RootTableau init: inconsistent root at {ind}: {self[ind][0]=} vs {self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word)=}"
+                    assert self[ind] == (self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word), self.compatible_sequence[self.order_grid[ind]]), (
+                        f"RootTableau init: inconsistent root at {ind}: {self[ind][0]=} vs {self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word)=}"
+                    )
 
     @property
     def weight_tableau(self):
@@ -722,7 +733,7 @@ class RootTableau(CrystalGraph, GridPrint):
         # try_grid = copy.deepcopy(self._root_grid)
         # for ind in np.ndindex(self._root_grid.shape):
         #     if self._root_grid[ind] is not None:
-               
+
         #         # ind2 = np.where(retmap.order_grid == self.order_grid[ind])
         #         # print(f"Found that {self.order_grid[ind]=} is at")
         #         # print(ind2)
@@ -808,6 +819,7 @@ class RootTableau(CrystalGraph, GridPrint):
             return RCGraph(tuple(rows)).normalize()
         except Exception as exc:
             import traceback
+
             grid_shape = getattr(self._root_grid, "shape", None)
             grid_snapshot = repr(getattr(self, "_root_grid", None))
 

@@ -62,7 +62,18 @@ class GridPrint(Printable):
 
     def _pretty(self, printer):
         return printer._print_MatrixBase(self.print_element)
-    
+
     @property
     def print_element(self):
-        return self
+        class PrintElement(GridPrint):
+            @property
+            def rows(inner_self) -> int:
+                return self.rows
+
+            @property
+            def cols(inner_self) -> int:
+                return self.cols
+
+            def __getitem__(inner_self, key):
+                return self[key] if self[key] is not None else " "
+        return PrintElement()
