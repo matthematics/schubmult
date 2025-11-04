@@ -782,7 +782,6 @@ class RootTableau(CrystalGraph, GridPrint):
                 if self._root_grid[_box] is not None:
                     ret = ret.up_jdt_slide(*_box, check=True)
                     did = True
-        return ret
 
         correct_word = _plactic_raising_operator(self.row_word, i)
         try_grid = copy.deepcopy(self._root_grid)
@@ -794,7 +793,7 @@ class RootTableau(CrystalGraph, GridPrint):
         #     input()
         # relate order grid word grid
         for index, box in enumerate(self.iter_boxes_row_word_order):
-            try_grid[box] = (self.eg_root(mapper[self.eg_row_word[index]]), correct_word[index])
+            try_grid[box] = (self.eg_root(ret.eg_row_word[index]), correct_word[index])
         try:
             ret = RootTableau(try_grid)
             return ret
