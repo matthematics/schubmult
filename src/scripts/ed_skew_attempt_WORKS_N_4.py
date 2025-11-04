@@ -47,6 +47,8 @@ if __name__ == "__main__":
                     #     continue
                     if not rc_w.is_highest_weight:
                         continue
+                    if not rc_w.to_lowest_weight()[0].is_principal:
+                        continue
                     high_weight = rc_w.length_vector
                     # if lw != tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)]):
                     #     print(f"{lw} != {tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)])}")
@@ -83,7 +85,6 @@ if __name__ == "__main__":
                             u_hw_rc[-1].append(r)
                             last_letter = r
                         u_hw_rc = RCGraph([tuple(row) for row in u_hw_rc]).normalize()
-
                         print("Constructing tensor product")
                         
                         
@@ -113,5 +114,12 @@ if __name__ == "__main__":
                                 print(f"{tc_elem.crystal_weight=}")
                                 print(f"{high_weight=}")
                                 # input()
-                assert coeff == (Sx(dom.perm) * Sx(u)).get(w, 0), f"Fail at coeff check, {u=} {w=} {(Sx(dom.perm)*Sx(u)).get(w, 0)=} {coeff=}"
+                try:
+                    assert coeff == (Sx(dom.perm) * Sx(u)).get(w, 0), f"Fail at coeff check, {u=} {w=} {(Sx(dom.perm)*Sx(u)).get(w, 0)=} {coeff=}, {crystals=}"
+                except AssertionError as e:
+                    print(f"Failed coeff check at {u=} {w=} {dom.perm=}, expected {(Sx(dom.perm)*Sx(u)).get(w, 0)}, got {coeff}")
+                    print("Crystals:")
+                    for c in crystals:
+                        pretty_print(c)
+                    raise
                 print("Successful coeff check")
