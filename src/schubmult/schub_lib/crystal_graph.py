@@ -122,8 +122,8 @@ class CrystalGraph(Printable):
     def is_highest_weight(self):
         for row in range(1, self.crystal_length()):
             if self.raising_operator(row) is not None:
-                print(f"IKINPROVENOTHIGHESTWEIGHT {row=}")
-                print(self.raising_operator(row))
+                # print(f"IKINPROVENOTHIGHESTWEIGHT {row=}")
+                # print(self.raising_operator(row))
                 return False
         return True
 
