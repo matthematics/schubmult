@@ -37,7 +37,7 @@ if __name__ == "__main__":
                     continue
                 print(f"Moving on to {u=} {w=} {dom.perm=}")
                 coeff = 0
-                
+                    
                 u_highest_weights = set()
                 highest_weights = set()
                 for rc_w in RCGraph.all_rc_graphs(w, len(w.trimcode)):
@@ -113,14 +113,15 @@ if __name__ == "__main__":
                                 continue
                             pretty_print(dom.rc_graph)
                             assert tc_elem.crystal_weight == tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab2.length_vector, fillvalue=0)]), f"{tc_elem.crystal_weight=} vs {tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab2.length_vector, fillvalue=0)])}"
-                            if tc_elem.crystal_weight == high_weight:
+                            high_weight_check = tuple([a for a, b in zip_longest(high_weight, tc_elem.crystal_weight, fillvalue=0)])
+                            if tc_elem.crystal_weight == high_weight_check:
                                 coeff += 1
                                 crystals.add((tc_elem, rc_w))
                                 print(f"{u=} {dom.perm=} {w=} {coeff=} {crystals=}")
                                 highest_weights.add(tc_elem)
                             else:
                                 print(f"{tc_elem.crystal_weight=}")
-                                print(f"{high_weight=}")
+                                print(f"{high_weight_check=}")
                                 # input()
                 try:
                     assert coeff == (Sx(dom.perm) * Sx(u)).get(w, 0), f"Fail at coeff check, {u=} {w=} {(Sx(dom.perm)*Sx(u)).get(w, 0)=} {coeff=}, {crystals=}"
