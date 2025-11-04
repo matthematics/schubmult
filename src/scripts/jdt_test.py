@@ -273,7 +273,7 @@ def run_complete_tests():
             # pick a random index to test (small range)
             idx = 0 #random.randint(1, 5)
 
-            tests = ["raiserectify"]
+            tests = ["raise"]
             indexes = list(range(1, rc.crystal_length()))
             for test_op in tests:
                 for idx in indexes:

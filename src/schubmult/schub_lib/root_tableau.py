@@ -413,25 +413,20 @@ class RootTableau(CrystalGraph, GridPrint):
     @classmethod
     def root_insert_rsk(cls, reduced_word, compatible_seq):
         _perm = Permutation.ref_product(*reduced_word)
-        word, word2 = (), ()
+        #word, word2 = (), ()
         spunkle = len(_perm)
         w0 = Permutation.w0(spunkle)
         rev_word = [w0[a - 1] for a in reduced_word]
-
-        for idx, letter in enumerate(rev_word):
-            letter2 = idx + 1
-            word, word2 = NilPlactic._ed_insert_rsk(word, word2, int(letter), int(letter2) if letter2 is not None else None)
-        num_rows = len(word2)
-        num_cols = max([len(r) for r in word2], default=0)
+        NP, P = NilPlactic.ed_insert_rsk(*rev_word)
+        num_rows = len(NP._word)
+        try:
+            num_cols = len(NP._word[0])
+        except IndexError:
+            num_cols = 0
         grid = np.empty((num_rows, num_cols), dtype=object)
-        for r in range(num_rows):
-            for c in range(num_cols):
-                if c < len(word2[r]):
-                    # store pair (root_tuple, letter) as before
-                    grid[r, c] = (_perm.right_root_at(word2[r][c] - 1, word=reduced_word), compatible_seq[word2[r][c] - 1])
-                else:
-                    grid[r, c] = None
-
+        for box in P.iter_boxes:
+            grid[box] = (_perm.right_root_at(P[box] - 1, word=reduced_word), compatible_seq[P[box] - 1])
+ 
         return cls(grid)
 
     # skew tableaux are subword
@@ -459,7 +454,7 @@ class RootTableau(CrystalGraph, GridPrint):
 
         cur = self
         while True:
-            inner_corners = tuple(cur.iter_inner_corners())
+            inner_corners = tuple(cur.iter_inner_corners)
             if not inner_corners:
                 break
             if randomized:
@@ -592,6 +587,7 @@ class RootTableau(CrystalGraph, GridPrint):
     # def compatible_sequence(self):
     #     return self._plactic.reverse_rsk(self._index_tableau)
 
+    @property
     def iter_boxes(self):
         for i in range(self.rows):
             for j in range(self.cols):
@@ -599,12 +595,14 @@ class RootTableau(CrystalGraph, GridPrint):
                 if cell is not None:
                     yield (i, j)
 
+    @property
     def iter_outer_corners(self):
         for i in range(self.rows):
             for j in range(self.cols):
                 if _is_valid_outer_corner(self._root_grid, i, j):
                     yield (i, j)
 
+    @property
     def iter_inner_corners(self):
         for i in range(self.rows):
             for j in range(self.cols):
@@ -626,6 +624,10 @@ class RootTableau(CrystalGraph, GridPrint):
     @property
     def word_grid(self):
         return _word_from_grid(self._root_grid, as_grid=True)
+
+    @property
+    def grid_word(self):
+        return tuple([self.word_grid[box] for box in self.iter_boxes_row_word_order()])
 
     @property
     def order_grid(self):
@@ -652,11 +654,14 @@ class RootTableau(CrystalGraph, GridPrint):
         self._root_grid = copy.deepcopy(grid)
         self._hasher = tuple(tuple(tuple(b) for b in a if b is not None) for a in self._root_grid if a is not None)
         if not print_only:
-            for ind in self.iter_boxes():
+            for ind in self.iter_boxes:
                 if self[ind][0] is not None:
                     assert self[ind] == (self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word), self.compatible_sequence[self.order_grid[ind]]), (
                         f"RootTableau init: inconsistent root at {ind}: {self[ind][0]=} vs {self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word)=} {self.reduced_word=}"
                     )
+                    # assert self.perm == Permutation.ref_product(*self.grid_word), f"{self.reduced_word=} {self.grid_word=}"
+                    # for index, box in enumerate(reversed(list(self.iter_boxes_row_word_order()))):
+                    #     assert self[box][0] == self.perm.right_root_at(index, word=list(reversed(self.grid_word)))
 
     @property
     def weight_tableau(self):
@@ -696,7 +701,7 @@ class RootTableau(CrystalGraph, GridPrint):
         return tuple(word)
 
     def right_root_at(self, i):
-        for ind in self.iter_boxes():
+        for ind in self.iter_boxes:
             if self.order_grid[ind] is not None and self.order_grid[ind] == i:
                 return self.perm.right_root_at(self.order_grid[ind], word=self.reduced_word)
         return None
@@ -745,30 +750,37 @@ class RootTableau(CrystalGraph, GridPrint):
         
         ret = RootTableau.root_insert_rsk(ret_rc.perm_word, ret_rc.compatible_sequence)
         assert ret.edelman_greene_invariant == self.edelman_greene_invariant, f"{ret.edelman_greene_invariant=} != {self.edelman_greene_invariant=}"
-        # retmap = RootTableau.root_insert_rsk(self.reduced_word, self.compatible_sequence)
+        retmap = RootTableau.root_insert_rsk(self.reduced_word, self.compatible_sequence)
 
-        # # mapper = {retmap.order_grid[ind]: ret.order_grid[ind] for ind in ret.iter_boxes()}
+        # # mapper = {retmap.order_grid[ind]: ret.order_grid[ind] for ind in ret.iter_boxes}
         # box_list = []
         # for box in retmap.iter_boxes_row_word_order():
         #     root = retmap[box][0]
         #     # find root
-        #     box2 = next(iter([box3 for box3 in self.iter_boxes() if self[box3][0] == root]))
+        #     box2 = next(iter([box3 for box3 in self.iter_boxes if self[box3][0] == root]))
         #     box_list.append(box2)
 
         did = True
         while did:
             did = False
-            for _box in ret.iter_outer_corners():
+            for _box in ret.iter_outer_corners:
                 if self._root_grid[_box] is not None:
                     ret = ret.up_jdt_slide(*_box, check=True)
                     did = True
         correct_word = _plactic_raising_operator(self.row_word, i)
         try_grid = copy.deepcopy(self._root_grid)
+        # if ret.root_row_word != self.root_row_word:
+        #     print("Contrast")
+        #     print(f"{ret.root_row_word=}")
+        #     print(f"{self.root_row_word=}")
+        #     pretty_print(self)
+        #     input()
+        # relate order grid word grid
         for index, box in enumerate(self.iter_boxes_row_word_order()):
-            try_grid[box] = (self.perm.right_root_at(ret.order_grid[box], word=ret.reduced_word),correct_word[index])
+            try_grid[box] = (ret.perm.right_root_at(ret.order_grid[box], word=ret_rc.reduced_word), correct_word[index])
         retret = RootTableau(try_grid)
         return retret
-        # for ind in self.iter_boxes():
+        # for ind in self.iter_boxes:
         #     try_grid[ind] = (self.perm.right_root_at(self.order_grid[ind], word=ret.reduced_word), ret.compatible_sequence[self.order_grid[ind]])
         # assert ret == RootTableau(try_grid), "raising_operator construction mismatch"
         
@@ -784,7 +796,7 @@ class RootTableau(CrystalGraph, GridPrint):
         #         # print(ret.order_grid[*ind2])
         #         try_grid[ind] = (ret.perm.right_root_at(self.order_grid[ind], word=ret.reduced_word), ret.compatible_sequence[self.order_grid[ind]])
         # tret = RootTableau(try_grid)
-        # if any(self._root_grid[_box] is not None and ret._root_grid[_box] !=try_grid[_box] for _box in ret.iter_boxes()):
+        # if any(self._root_grid[_box] is not None and ret._root_grid[_box] !=try_grid[_box] for _box in ret.iter_boxes):
         #     print("FYI ret")
         #     pretty_print(ret)
         #     print("tret")
@@ -836,7 +848,7 @@ class RootTableau(CrystalGraph, GridPrint):
         did = True
         while did:
             did = False
-            for _box in ret.iter_outer_corners():
+            for _box in ret.iter_outer_corners:
                 if self._root_grid[_box] is not None:
                     ret = ret.up_jdt_slide(*_box, check=True)
                     did = True

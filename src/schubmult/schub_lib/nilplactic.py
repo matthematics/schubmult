@@ -271,6 +271,14 @@ class NilPlactic(Plactic):
             new_word = NilPlactic._ed_insert(new_word, int(letter))
         return NilPlactic(new_word)
 
+    @classmethod
+    def ed_insert_rsk(cls, *letters):
+        """Insert a letter/entry into this NilPlactic tableau and return a new Plactic."""
+        word0, word2 = (), ()
+        for idx, letter in enumerate(letters):
+            word0, word2 = cls._ed_insert_rsk(word0, word2, int(letter), idx + 1)
+        return cls(word0), Plactic(word2)
+
     @staticmethod
     def _ed_insert(word, letter, i=0):
         """
@@ -345,15 +353,15 @@ class NilPlactic(Plactic):
         # special case: continue bumping without changing current row
         return NilPlactic._ed_insert_rsk(word, word2, x1, letter2, i=i + 1)
 
-    @classmethod
-    def ed_insert_rsk(cls, letters, letters2=()):
-        """Edelman–Greene two-row insertion for NilPlactic tableaux."""
-        word = ()
-        word2 = ()
-        for idx, letter in enumerate(letters):
-            letter2 = letters2[idx] if idx < len(letters2) else None
-            word, word2 = cls._ed_insert_rsk(word, word2, int(letter), int(letter2) if letter2 is not None else None)
-        return cls(word), Plactic(word2)
+    # @classmethod
+    # def ed_insert_rsk(cls, letters, letters2=()):
+    #     """Edelman–Greene two-row insertion for NilPlactic tableaux."""
+    #     word = ()
+    #     word2 = ()
+    #     for idx, letter in enumerate(letters):
+    #         letter2 = letters2[idx] if idx < len(letters2) else None
+    #         word, word2 = cls._ed_insert_rsk(word, word2, int(letter), int(letter2) if letter2 is not None else None)
+    #     return cls(word), Plactic(word2)
 
     def __hash__(self):
         return hash(self._word)
