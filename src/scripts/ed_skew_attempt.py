@@ -38,14 +38,14 @@ if __name__ == "__main__":
                 coeff = 0
                 crystals = set()
                 u_highest_weights = set()
-                lowest_weights = set()
+                highest_weights = set()
                 for rc_w in RCGraph.all_rc_graphs(w, len(w.trimcode)):
                     pretty_print(rc_w)
-                    rc_hw = rc_w.to_highest_weight()[0]
-                    if rc_hw in crystals:
-                        continue
+                    # rc_hw = rc_w.to_highest_weight()[0]
+                    # if rc_hw in crystals:
+                    #     continue
                     
-                    low_weight = rc_w.to_lowest_weight()[0].length_vector
+                    high_weight = rc_w.length_vector
                     # if lw != tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)]):
                     #     print(f"{lw} != {tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)])}")
                     #     continue
@@ -70,30 +70,18 @@ if __name__ == "__main__":
                         #     if new_grid[box] is not None:
                         #         new_grid[box] = (u.right_root_at(index_flatten[w_tab.order_grid[box]], word=reduced_word), new_grid[box][1])
                         # u_tab = RootTableau(new_grid)
-                        print("Tobblywank")
                         pretty_print(tb)
-                        print("basifb")
                         pretty_print(tb.row_word)
                         print(f"Barfum {u.antiperm=}")
-                        u_tab = RootTableau.root_insert_rsk(reduced_word, )
-                        # if u_tab.edelman_greene_invariant in eg_bob:
-                        #     continue
-                        u_tab = u_tab_crystal#
-                        # print("u_tab=")
-                        # pretty_print(u_tab)
-                        # u_tab = u_tab.rectify()
-                            
-                        pretty_print(u_tab)
-                        
-                        assert u_tab.perm == u, "Rectified tableau has wrong permutation"
-                        print("Recified successfully")
-                        if u_tab.rc_graph.to_highest_weight()[0] != u_crystal_hw:
-                            print("Not the right crystal")
-                            print("Got")
-                            pretty_print(u_tab.to_highest_weight()[0])
-                            print("And we done want")
-                            pretty_print(u_crystal_hw)
-                            continue
+                        u_hw_rc = []
+                        last_letter = -1
+                        for r in reduced_word:
+                            if r > last_letter:
+                                u_hw_rc.append([])
+                            u_hw_rc[-1].append(r)
+                            last_letter = r
+                        u_hw_rc = RCGraph([tuple(row) for row in u_hw_rc]).normalize()
+
                         print("Constructing tensor product")
                         
                         
@@ -107,24 +95,19 @@ if __name__ == "__main__":
                         # print("low_weight")
                         # pretty_print(low_weight)
 
-                        for u_tab2 in u_tab.full_crystal:
-                            tensor = CrystalGraphTensor(dom.rc_graph.resize(len(rc_w)), u_tab2.rc_graph.resize(len(rc_w)))
+                        for u_tab2 in u_hw_rc.full_crystal:
+                            tensor = CrystalGraphTensor(dom.rc_graph.resize(len(rc_w)), u_tab2.resize(len(rc_w)))
                             print(f"{tensor=}")
-                            for tc_elem in tensor.full_crystal:
-                                if not tc_elem.is_lowest_weight:
-                                    continue
-                                if tc_elem in lowest_weights:
-                                    continue
-                                print("Lowest weight")
-                                print(f"{tc_elem=}")
-                                lowest_weights.add(tc_elem)
-                                if tc_elem.crystal_weight == low_weight:
-                                    coeff += 1
-                                    crystals.add(rc_hw)
-                                    print(f"{u=} {dom.perm=} {w=} {coeff=} {crystals=}")
-                                else:
-                                    print(f"{tc_elem.crystal_weight=}")
-                                    print(f"{low_weight=}")
+                            tc_elem = tensor.to_highest_weight()[0]
+                            print(f"{tc_elem=}")
+                            if tc_elem.crystal_weight == high_weight:
+                                coeff += 1
+                                crystals.add(rc_w.to_highest_weight()[0])
+                                print(f"{u=} {dom.perm=} {w=} {coeff=} {crystals=}")
+                                highest_weights.add(tc_elem)
+                            else:
+                                print(f"{tc_elem.crystal_weight=}")
+                                print(f"{high_weight=}")
                                 # input()
                 assert coeff == (Sx(dom.perm) * Sx(u)).get(w, 0), f"Fail at coeff check, {u=} {w=} {(Sx(dom.perm)*Sx(u)).get(w, 0)=} {coeff=}"
                 print("Successful coeff check")
