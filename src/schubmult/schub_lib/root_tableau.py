@@ -503,12 +503,12 @@ class RootTableau(CrystalGraph, GridPrint):
         # pretty_print(result)
         # print(f"{box=}")
         
-        for other_box in self.iter_boxes:
-            if result[other_box] is None:
-                try:
-                    result = result.up_jdt_slide(*other_box)
-                except ValueError:
-                    continue
+        # for other_box in self.iter_boxes:
+        #     if result[other_box] is None:
+        #         try:
+        #             result = result.down_jdt_slide(*other_box)
+        #         except ValueError:
+        #             continue
         # print(f"Result of delete {box=}")
         # pretty_print(result)
         return result
