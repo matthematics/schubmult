@@ -26,7 +26,7 @@ if __name__ == "__main__":
             u_crystal_hw = RCGraph.principal_rc(u, len(u.trimcode)).to_highest_weight()[0]
             u_tab_crystal = RootTableau.from_rc_graph(u_crystal_hw)
             #prin_rc_u = RCGraph.principal_rc(u, len(u.trimcode)).to_highest_weight()[0]
-            crystals = set()
+            crystals = {}
             for w in perms:
                 if not u.bruhat_leq(w):
                     continue
@@ -108,22 +108,25 @@ if __name__ == "__main__":
                             tc_elem = tensor
                             print(f"tc_elem=")
                             pretty_print(tc_elem)
-                            if (tc_elem, rc_w) in crystals:
+                            if tc_elem in highest_weights:
                                 print("Already there")
+                                print(f"{highest_weights=}")
                                 continue
                             pretty_print(dom.rc_graph)
                             assert tc_elem.crystal_weight == tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab2.length_vector, fillvalue=0)]), f"{tc_elem.crystal_weight=} vs {tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab2.length_vector, fillvalue=0)])}"
                             high_weight_check = tuple([a for a, b in zip_longest(high_weight, tc_elem.crystal_weight, fillvalue=0)])
-                            if tc_elem.crystal_weight == high_weight_check:
-                                coeff += 1
-                                crystals.add((tc_elem, rc_w))
-                                print(f"{u=} {dom.perm=} {w=} {coeff=} {crystals=}")
+                            low_weight_check = tuple([a for a, b in zip_longest(rc_w.to_lowest_weight()[0].length_vector, tc_elem.crystal_weight, fillvalue=0)])
+                            if tc_elem.crystal_weight == high_weight_check and tc_elem.to_lowest_weight()[0].crystal_weight == low_weight_check:
+                                crystals[rc_w] = crystals.get(rc_w, 0) + 1
+                                print(f"{u=} {dom.perm=} {w=} {crystals=}")
                                 highest_weights.add(tc_elem)
                             else:
                                 print(f"{tc_elem.crystal_weight=}")
                                 print(f"{high_weight_check=}")
                                 # input()
                 try:
+                    any_cry = next(iter(crystals))
+                    coeff = crystals[any_cry]
                     assert coeff == (Sx(dom.perm) * Sx(u)).get(w, 0), f"Fail at coeff check, {u=} {w=} {(Sx(dom.perm)*Sx(u)).get(w, 0)=} {coeff=}, {crystals=}"
                 except AssertionError as e:
                     print(f"Failed coeff check at {u=} {w=} {dom.perm=}, expected {(Sx(dom.perm)*Sx(u)).get(w, 0)}, got {coeff}")
