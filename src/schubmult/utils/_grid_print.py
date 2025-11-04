@@ -18,8 +18,8 @@ class GridPrint(Printable):
             printer = StrPrinter()
         # Handle zero dimensions:
         if self.rows == 1:
-            return type(self).__name__ + "([%s])" % self.table(printer, rowsep=",\n")  # noqa: UP031
-        return type(self).__name__ + "([\n%s])" % self.table(printer, rowsep=",\n")  # noqa: UP031
+            return self._display_name + "([%s])" % self.table(printer, rowsep=",\n")  # noqa: UP031
+        return self._display_name + "([\n%s])" % self.table(printer, rowsep=",\n")  # noqa: UP031
 
     def table(self, printer, rowstart="|", rowend="|", rowsep="\n", colsep=" ", align="right"):
         table: list[list[str]] = []
@@ -66,6 +66,9 @@ class GridPrint(Printable):
     @property
     def print_element(self):
         class PrintElement(GridPrint):
+
+            _display_name = self.__class__.__name__
+
             @property
             def rows(inner_self) -> int:
                 return self.rows
