@@ -149,7 +149,11 @@ if __name__ == "__main__":
                                 # input()
                                 
                 try:
-                    any_cry = next(iter(crystals))
+                    any_cry = None
+                    for rcc in crystals:
+                        if rcc.perm == w:
+                            any_cry = rcc
+                            break
                     coeff = crystals[any_cry]
                     assert coeff == (Sx(dom.perm) * Sx(u)).get(w, 0), f"Fail at coeff check, {u=} {w=} {(Sx(dom.perm)*Sx(u)).get(w, 0)=} {coeff=}, {crystals=}"
                 except AssertionError as e:

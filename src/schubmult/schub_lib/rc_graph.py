@@ -1091,6 +1091,57 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def cols(self):
         return max(1, *[self[i][0] - i if len(self[i]) > 0 else 0 for i in range(len(self))]) if len(self) > 0 else 0
 
+    def leibniz_rep(self):
+        if len(self) == 0:
+            return ()
+        w0 = Permutation.w0(len(self) + 1)
+        the_perm = (~self.perm)*w0
+        cut_rc = self.shiftcut()
+        return (*cut_rc.leibniz_rep(), the_perm)
+
+    def shiftcut(self):
+        cut_rc = RCGraph([tuple([a for a in row if a > i]) for i, row in enumerate(self.shiftup(-1)[:-1])])
+        return cut_rc
+
+    def divdiff_action(self, s):
+        if self.perm.inv == 0:
+            return set()
+        if s - 1 not in self.perm.descents():
+            return set()
+        ret = set()
+        if len(self[s-1]) > 0 and self[s-1][-1] == s and (s >= len(self) or len(self[s]) == 0 or self[s][-1] != s + 1):
+            new_rc = [tuple([a for a in row]) for row in self]
+            new_row = [a for a in new_rc[s - 1] if a != s]
+            new_rc[s - 1] = tuple(new_row)
+            ret.add(RCGraph(new_rc))
+        ret_old = self.shiftcut().divdiff_action(s)
+        for old_rc in ret_old:
+            new_rc = [tuple([a + 1 for a in row]) for row in old_rc] + [self[-1]]
+            for i in range(len(new_rc) - 1  ):
+                if len(self[i]) > 0 and self[i][-1] == i + 1:
+                    new_rc[i] = (*new_rc[i], i + 1)
+            has_s = len(new_rc[s - 1]) > 0 and new_rc[s - 1][-1] == s
+            has_sp1 = s < len(new_rc) and len(new_rc[s]) > 0 and new_rc[s][-1] == s + 1
+            if has_s and not has_sp1:
+                new_row = [a for a in new_rc[s - 1] if a != s]
+                new_rc[s - 1] = tuple(new_row)
+                new_rc[s] = (*new_rc[s], s + 1)
+            if not has_s and has_sp1:
+                new_row = [a for a in new_rc[s] if a != s + 1]
+                new_rc[s] = tuple(new_row)
+                new_rc[s - 1] = (*new_rc[s - 1], s)
+            if new_rc.perm == self.perm.swap(s-1, s):
+                ret.add(RCGraph(new_rc))
+        return ret
+
+    @staticmethod
+    def divdiff_act_dict(s, dct):
+        ret = {}
+        for rc, coeff in dct.items():
+            act_set = rc.divdiff_action(s)
+            ret = add_perm_dict(ret, dict.fromkeys(act_set, coeff))
+        return ret
+
     def __getitem__(self, key):
         # FLIPPED FOR PRINTING
         if isinstance(key, int):
@@ -1098,7 +1149,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         if isinstance(key, tuple):
             i, j = key
             if not self.has_element(i + 1, self.cols - j):
-                return " "
+                return None
             return i + self.cols - j
         is_slice = isinstance(key, slice)
 
