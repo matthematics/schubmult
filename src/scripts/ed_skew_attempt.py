@@ -1,3 +1,19 @@
+def all_reduced_subwords(reduced_word, u):
+    if u.inv > len(reduced_word):
+        return set()
+    if u.inv == 0:
+        return {()}
+    ret_set = set()
+    for index in range(len(reduced_word) - 1, -1, -1):
+        a = reduced_word[index]
+        if a - 1 in u.descents():
+            new_u = u.swap(a - 1, a)
+            old_set = all_reduced_subwords(reduced_word[:index], new_u)
+            for subword in old_set:
+                new_subword = (*subword, index)
+                ret_set.add(new_subword)
+    return ret_set
+
 if __name__ == "__main__":
     import copy
     import sys
@@ -58,55 +74,35 @@ if __name__ == "__main__":
                     # if lw != tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)]):
                     #     print(f"{lw} != {tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)])}")
                     #     continue
-                    w_tab = RootTableau.from_rc_graph(rc_w) # highest weight is the shape
                     
                     
-                    skew_tab_set = set(NilPlactic.all_skew_ed_tableaux(w_tab.shape, u.antiperm, dom.shape))
-                    for tb in skew_tab_set:
-                        print('Found skew tab')
-                        pretty_print(tb)
-                        # the weight of the skew comes from w
-                        assert tb.perm.inv == u.inv
-                        # reduced_word = [len(u) - tb[box] for box in w_tab.iter_boxes_row_word_order if box in set(tb.iter_boxes)]
-                        # new_grid = copy.deepcopy(w_tab._root_grid)
-                        # index_list = []
-                        # print(f"{w_tab=} {tb=} {u=}")
-                        # for box in w_tab.iter_boxes:
-                        #     if tb[box] == 0 :
-                        #         new_grid[box] = None
-                        #     else:
-                        #         index_list.append(w_tab.order_grid[box])
-                        # index_flatten = {b: len([a for a in index_list if a < b]) for b in index_list}
-                        # for box in w_tab.iter_boxes:
-                        #     if new_grid[box] is not None:
-                        #         new_grid[box] = (u.right_root_at(index_flatten[w_tab.order_grid[box]], word=reduced_word), new_grid[box][1])
-                        # compatible_seq = [w_tab[box][1] for box in tb.iter_boxes]
-                        
-                        # compatible_seq.sort()
-                        # print(f"{reduced_word=} {compatible_seq=}")
-                        # NEEEEEEEEEEEEEEEEEEEEEEEEEEEEEED DELETEL
-                        u_tab = RootTableau.from_rc_graph(rc_w.to_lowest_weight()[0])
-                        box_grid = copy.deepcopy(u_tab._root_grid)
-                        for box in tb.iter_boxes:
-                            box_grid[box] = (u_tab[box][0], MarkedInteger(u_tab[box][1]))
-                        u_tab_mover = RootTableau(box_grid)
-                        u_roots = [u.right_root_at(index) for index in range(u.inv)]
-                        while u_tab.perm.inv != u.inv:
-                            for box in u_tab_mover.iter_boxes:
-                                if not isinstance(u_tab_mover[box][1], MarkedInteger):
+                    # skew_tab_set = set(NilPlactic.all_skew_ed_tableaux(w_tab.shape, u.antiperm, dom.shape))
+
+                        # w_tab = RootTableau.from_rc_graph(rc_w)
+                    reduced_word = rc_w.reduced_word
+                    for subword in all_reduced_subwords(reduced_word, u):
+                        compatible_seq = [MarkedInteger(a) if index in subword else a for index, a in enumerate(rc_w.compatible_sequence)]
+                        u_tab = RootTableau.root_insert_rsk(reduced_word, compatible_seq)
+                        last_inv = 1000
+                        while u_tab.perm.inv < last_inv:
+                            last_inv = u_tab.perm.inv
+                            for box in u_tab.iter_boxes:
+                                if not isinstance(u_tab[box][1], MarkedInteger):
                                     u_tab_test = u_tab.delete_box(box)
                                     if u_tab_test is not None:
                                         u_tab = u_tab_test
-                                        u_tab_mover = u_tab_mover.delete_box(box)
                                         break
-                        if u_tab.perm != u:
-                            print("Skipping")
-                            print("U_tab = ")
-                            pretty_print(u_tab)
-                            print(f"{u=} {u_tab.perm=}")
+                        if u_tab.perm.inv > u.inv:
+                            # didn't make it
                             continue
+                        # if u_tab.perm != u:
+                        #     print("Skipping")
+                        #     print("U_tab = ")
+                        #     pretty_print(u_tab)
+                        #     print(f"{u=} {u_tab.perm=}")
+                        #     continue
                         pretty_print(u_tab)
-                        pretty_print(tb.row_word)
+                        #pretty_print(tb.row_word)
                         print(f"Barfum {u.antiperm=}")
                         u_tab = u_tab.rectify()
                         u_hw_rc = u_tab.rc_graph
@@ -151,6 +147,7 @@ if __name__ == "__main__":
                                 print(f"{tc_elem.crystal_weight=}")
                                 print(f"{high_weight_check=}")
                                 # input()
+                                
                 try:
                     any_cry = next(iter(crystals))
                     coeff = crystals[any_cry]
