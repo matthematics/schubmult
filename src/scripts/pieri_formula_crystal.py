@@ -216,7 +216,7 @@ if __name__ == "__main__":
             for g, exchng_seq in completed:
                 pretty_print(g)
                 print(exchng_seq)
-            input()
+            #input()
         g, exchng_seq = completed[0]
         # except AssertionError:
         #     print("Failed to find exchange property path")
