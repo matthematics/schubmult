@@ -194,29 +194,33 @@ if __name__ == "__main__":
                     if rc1[i][j] not in rc2[i]:
                         return False
             return True
-        exchg_seq = []
+        #exchg_seq = []
         g = min_dom_graph.resize(len(the_cut0))
-        stack = [g]
+        stack = [(g, [])]
+        completed = []
         while len(stack) > 0:
-            g = stack.pop()
+            g, exchg_seq = stack.pop()
             if g.perm == the_cut0.perm:
-                break
+                completed.append((g, exchg_seq))
             for d in sorted(g.perm.descents()):
                 g0 = g.exchange_property(d + 1)
                 for g1 in g0.full_crystal:
                     if is_subgraph(the_cut0, g1):
                         exchg_seq.append(d + 1)
-                        stack.append(g1)
+                        stack.append((g1, exchg_seq))
         try:
-            assert g.perm == the_cut0.perm
+            assert len(completed) == 1
         except AssertionError:
-            print("Failed to find exchange property path")
-            print("From")
-            pretty_print(min_dom_graph)
-            print("To")
-            pretty_print(the_cut0)
-            print(f"{exchg_seq=}")
-            raise
+            print("WARNING NOT UNIQUE")
+        g, exchng_seq = completed[0]
+        # except AssertionError:
+        #     print("Failed to find exchange property path")
+        #     print("From")
+        #     pretty_print(min_dom_graph)
+        #     print("To")
+        #     pretty_print(the_cut0)
+        #     print(f"{exchg_seq=}")
+        #     raise
         g = g.to_highest_weight(length=k)[0]
         # used[(min_dom_graph, the_cut1)] = used.get((min_dom_graph,the_cut1), set())
         # if hw_tab.perm in used[(min_dom_graph, the_cut1)]:
