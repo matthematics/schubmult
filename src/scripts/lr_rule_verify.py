@@ -448,14 +448,14 @@ def worker(hw_tabs, nn, shared_recording_dict, lock, task_queue):
             good = True
             break
         #assert good, f"COMPLETE FAIL {w=}"
-        if good:
-            print(f"Success {(w, n)} at ", time.ctime())
-            with lock:
-                shared_recording_dict[(w, n)] = True
-        else:
-            with lock:
-                shared_recording_dict[(w, n)] = False
-            print(f"FAIL {(w, n)} at ", time.ctime())
+    if good:
+        print(f"Success {(w, n)} at ", time.ctime())
+        with lock:
+            shared_recording_dict[(w, n)] = True
+    else:
+        with lock:
+            shared_recording_dict[(w, n)] = False
+        print(f"FAIL {(w, n)} at ", time.ctime())
     
         
 
