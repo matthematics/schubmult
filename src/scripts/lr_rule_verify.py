@@ -420,10 +420,9 @@ def worker(hw_tabs, nn, shared_recording_dict, lock, task_queue):
                     w_rc = rc_w.resize(max_len)
                     t_elem1 = t_elem1.resize(max_len)
                     t_elem2 = t_elem2.resize(max_len)
-                    if (t_elem1, t_elem2) not in rc_w_coprods.get(w_rc, tring.zero):
-                        rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + tring((t_elem1, t_elem2))
-                    if t_elem1.perm != t_elem2.perm and (t_elem2, t_elem1) not in rc_w_coprods.get(w_rc, tring.zero):
-                        rc_w_coprods[w_rc] += tring((t_elem2, t_elem1))
+                    rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2))
+                    # if (t_elem2, t_elem1) not in rc_w_coprods.get(w_rc, tring.zero):
+                    #     rc_w_coprods[w_rc] += tring((t_elem2, t_elem1))
         total_coprod = tring.zero        
         for rc, val in rc_w_coprods.items():
             if rc.perm != w:
@@ -450,7 +449,7 @@ def worker(hw_tabs, nn, shared_recording_dict, lock, task_queue):
             # print("A fail")
             print(f"{diff=}")
             good = False
-        
+            
         #assert good, f"COMPLETE FAIL {w=}"
         if good:
             print(f"Success {(w, n)} at ", time.ctime())
