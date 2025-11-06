@@ -53,6 +53,8 @@ if __name__ == "__main__":
                 highest_weights = set()
                 perm_set = set((Sx(u)*Sx(dom.perm)).keys())
                 for w in perm_set:
+                    if len(w) > n:
+                        continue
                     # if not u.bruhat_leq(w):
                     #     continue
                     # if not dom.perm.bruhat_leq(w):
