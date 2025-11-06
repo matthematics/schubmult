@@ -160,7 +160,10 @@ if __name__ == "__main__":
                     # ???
                     # DON'T USE THE COEFF 
                     # rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2))
-                    rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + tring((t_elem1, t_elem2))
+                    if (t_elem1, t_elem2) not in rc_w_coprods.get(w_rc, tring.zero):
+                        rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + tring((t_elem1, t_elem2))
+                    if t_elem1.perm != t_elem2.perm and (t_elem2, t_elem1) not in rc_w_coprods.get(w_rc, tring.zero):
+                        rc_w_coprods[w_rc] += tring((t_elem2, t_elem1))
                     # if not t_elem2.is_highest_weight:
                     #     rc_w_coprods[w_rc] += tring((t_elem2, t_elem1))
                 #make_cocom = tring.zero
