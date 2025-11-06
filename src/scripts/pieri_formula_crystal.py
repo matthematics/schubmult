@@ -114,12 +114,14 @@ if __name__ == "__main__":
     ASx = FreeAlgebra(SchubertBasis)
     n = int(sys.argv[1])
     k = int(sys.argv[2])
+    assert n - 1 == k
 
     perms = Permutation.all_permutations(n)
 
     hw_tabs = set()
     for perm in perms:
-        
+        if perm.minimal_dominant_above() != perm:
+            continue
         hw_tabs.update([RootTableau.from_rc_graph(rc.to_highest_weight(length=k)[0]) for rc in RCGraph.all_rc_graphs(perm, n - 1)])
 
 
@@ -132,7 +134,12 @@ if __name__ == "__main__":
     # top_k_dom = {}
     used = {}
     for hw_tab0, v in itertools.product(hw_tabs, perms):
-        if hw_tab0.perm.inv == 0 or len(v.descents()) > 1 or k - 1 not in v.descents() or not set(v.trimcode).issubset({0,1}):
+        # TEMP DOM TEST
+        if hw_tab0.perm.inv == 0 or v.inv == 0:# or len(v.descents()) > 1 or k - 1 not in v.descents() or not set(v.trimcode).issubset({0,1}):
+            continue
+        # DOM TEST
+        if hw_tab0.perm.minimal_dominant_above() != hw_tab0.perm:
+            print("TEMP DOM TEST")
             continue
     #     # rc_w_coprods = {}
     #     # good = False
@@ -186,35 +193,35 @@ if __name__ == "__main__":
         
         # sm = rc_ring.from_dict({(k[0]: v for k, v in crystals.items()})
 
-        def is_subgraph(rc1, rc2):
-            for i in range(len(rc1)):
-                if len(rc2[i]) < len(rc1[i]):
-                    return False
-                for j in range(len(rc1[i])):
-                    if rc1[i][j] not in rc2[i]:
-                        return False
-            return True
-        #exchg_seq = []
-        g = min_dom_graph.resize(len(the_cut0))
-        stack = [(g, [])]
-        completed = []
-        while len(stack) > 0:
-            g, exchg_seq = stack.pop()
-            if g.perm == the_cut0.perm:
-                completed.append((g, exchg_seq))
-                continue
-            for d in sorted(g.perm.descents()):
-                g0 = g.exchange_property(d + 1)
-                for g1 in g0.full_crystal:
-                    exchg_seq2 = [*exchg_seq, d + 1]
-                    stack.append((g1, exchg_seq2))
-        try:
-            assert len(completed) == 1
-        except AssertionError:
-            print("WARNING NOT UNIQUE")
-            for g, exchng_seq in completed:
-                pretty_print(g)
-                print(exchng_seq)
+        # def is_subgraph(rc1, rc2):
+        #     for i in range(len(rc1)):
+        #         if len(rc2[i]) < len(rc1[i]):
+        #             return False
+        #         for j in range(len(rc1[i])):
+        #             if rc1[i][j] not in rc2[i]:
+        #                 return False
+        #     return True
+        # #exchg_seq = []
+        # g = min_dom_graph.resize(len(the_cut0))
+        # stack = [(g, [])]
+        # completed = []
+        # while len(stack) > 0:
+        #     g, exchg_seq = stack.pop()
+        #     if g.perm == the_cut0.perm:
+        #         completed.append((g, exchg_seq))
+        #         continue
+        #     for d in sorted(g.perm.descents()):
+        #         g0 = g.exchange_property(d + 1)
+        #         for g1 in g0.full_crystal:
+        #             exchg_seq2 = [*exchg_seq, d + 1]
+        #             stack.append((g1, exchg_seq2))
+        # try:
+        #     assert len(completed) == 1
+        # except AssertionError:
+        #     print("WARNING NOT UNIQUE")
+        #     for g, exchng_seq in completed:
+        #         pretty_print(g)
+        #         print(exchng_seq)
             #input()
         #g, exchng_seq = completed[0]
         # except AssertionError:
@@ -225,12 +232,14 @@ if __name__ == "__main__":
         #     pretty_print(the_cut0)
         #     print(f"{exchg_seq=}")
         #     raise
-        g = g.to_highest_weight(length=k)[0]
+        # g = g.to_highest_weight(length=k)[0]
         # used[(min_dom_graph, the_cut1)] = used.get((min_dom_graph,the_cut1), set())
         # if hw_tab.perm in used[(min_dom_graph, the_cut1)]:
         #     continue
         # used[(min_dom_graph, the_cut1)].add(hw_tab.perm)
         # parallel exchange property
+        #################################TEMPK=N
+
         crystals = decompose_tensor_product(RootTableau.from_rc_graph(min_dom_graph), v, length=k, n=n)
         
         print("Product:")
@@ -244,26 +253,26 @@ if __name__ == "__main__":
         sm = the_schubs.get((hw_tab0.perm, v), rc_ring.zero)
         for (the_rc, tc_elem), coeff in crystals.items():
             # ALMOST CORRECT BUT WE HAVE SOME TWOS
-            assert coeff == 1
+            # assert coeff == 1
             
-            actual_rc_new_set = the_rc.vertical_cut(k)[0].prod_with_rc(the_cut1)
-            true_set = {rc0.to_highest_weight(length=k)[0] for rc0 in actual_rc_new_set}
-            for rc_add in true_set:
-                trim_down = rc_add
-                bad = False
-                stack = [trim_down]
-                for d in exchg_seq:
-                    candidates = []
-                    for td0 in stack:
-                        if d - 1 in td0.perm.descents():
-                            td00 = td0.exchange_property(d)
-                            for trimdown1 in td00.full_crystal:
-                                candidates.append(trimdown1)
-                    stack = candidates
-                for cand in stack:
-                    cand = cand.to_highest_weight(length=k)[0]
-                    if cand.perm in (Sx(hw_tab0.perm) * Sx(v)) and cand not in sm:
-                        sm += rc_ring.from_dict({cand: 1})
+            # actual_rc_new_set = the_rc.vertical_cut(k)[0].prod_with_rc(the_cut1)
+            # true_set = {rc0.to_highest_weight(length=k)[0] for rc0 in actual_rc_new_set}
+            # for rc_add in true_set:
+            #     trim_down = rc_add
+            #     bad = False
+            #     stack = [trim_down]
+            #     for d in exchg_seq:
+            #         candidates = []
+            #         for td0 in stack:
+            #             if d - 1 in td0.perm.descents():
+            #                 td00 = td0.exchange_property(d)
+            #                 for trimdown1 in td00.full_crystal:
+            #                     candidates.append(trimdown1)
+            #         stack = candidates
+            #     for cand in stack:
+            #         cand = cand.to_highest_weight(length=k)[0]
+            #         if cand.perm in (Sx(hw_tab0.perm) * Sx(v)) and cand not in sm:
+            sm += rc_ring.from_dict({the_rc: coeff})
             #sm += rc_ring(trim_down)
         # sm = rc_ring.zero
         # for (the_rc, tc_elem), coeff in crystals.items():
