@@ -125,13 +125,14 @@ if __name__ == "__main__":
             continue
         # rc_w_coprods = {}
         # good = False
-        crystals = decompose_tensor_product(hw_tab, v)
-        sm = rc_ring.from_dict({k[0]: v for k, v in crystals.items()})
-        print("Product:")
-        pretty_print(hw_tab.rc_graph)
-        print("and")
-        pretty_print(rc_ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(v, n-1),1)))
-        pretty_print(sm)
+        for rc_v in RCGraph.all_rc_graphs(v, n-1):
+            crystals = decompose_tensor_product(hw_tab, rc_v)
+            sm = rc_ring.from_dict({k[0]: v for k, v in crystals.items()})
+            print("Product:")
+            pretty_print(hw_tab.rc_graph)
+            print("and")
+            pretty_print(rc_ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(v, n-1),1)))
+            pretty_print(sm)
         
 
         
