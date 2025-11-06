@@ -155,7 +155,17 @@ if __name__ == "__main__":
                     # DON'T USE THE COEFF 
                     # rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2))
                     rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + tring((t_elem1, t_elem2))
-
+                    # if not t_elem2.is_highest_weight:
+                    #     rc_w_coprods[w_rc] += tring((t_elem2, t_elem1))
+                #make_cocom = tring.zero
+        rc_w_coprods_old = {**rc_w_coprods}
+        rc_w_coprods = {}
+        for w_rc, val in rc_w_coprods_old.items():
+            rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + val
+            for (rc1, rc2), coeff in val.items():
+                assert coeff == 1, f"{coeff=} {rc1,rc2} {val=}"
+                if (rc2, rc1) not in val and rc1.perm != rc2.perm:
+                    rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + tring((rc2, rc1))
                 
         for rc, val in rc_w_coprods.items():
             if rc.perm != w:
