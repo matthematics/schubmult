@@ -206,9 +206,8 @@ if __name__ == "__main__":
             for d in sorted(g.perm.descents()):
                 g0 = g.exchange_property(d + 1)
                 for g1 in g0.full_crystal:
-                    if is_subgraph(the_cut0, g1) and len(g0[d]) < len(g[d]):
-                        exchg_seq2 = [*exchg_seq, d + 1]
-                        stack.append((g1, exchg_seq2))
+                    exchg_seq2 = [*exchg_seq, d + 1]
+                    stack.append((g1, exchg_seq2))
         try:
             assert len(completed) == 1
         except AssertionError:
@@ -217,7 +216,7 @@ if __name__ == "__main__":
                 pretty_print(g)
                 print(exchng_seq)
             #input()
-        g, exchng_seq = completed[0]
+        #g, exchng_seq = completed[0]
         # except AssertionError:
         #     print("Failed to find exchange property path")
         #     print("From")
@@ -252,23 +251,19 @@ if __name__ == "__main__":
             for rc_add in true_set:
                 trim_down = rc_add
                 bad = False
+                stack = [trim_down]
                 for d in exchg_seq:
-                    if d - 1 in trim_down.perm.descents():
-                        trim_down0 = trim_down.exchange_property(d)
-                        bad = True
-                        for trim_down1 in trim_down0.full_crystal:
-                            if len(trim_down1[d - 1]) < len(trim_down[d - 1]):
-                                trim_down = trim_down1
-                                bad = False
-                                break
-                    else:
-                        bad = True
-                        break
-                if bad:
-                    continue
-                trim_down = trim_down.to_highest_weight(length=k)[0]
-                if trim_down.perm in (Sx(hw_tab0.perm) * Sx(v)) and trim_down not in sm:
-                    sm += rc_ring.from_dict({trim_down: 1})
+                    candidates = []
+                    for td0 in stack:
+                        if d - 1 in td0.perm.descents():
+                            td00 = td0.exchange_property(d)
+                            for trimdown1 in td00.full_crystal:
+                                candidates.append(trimdown1)
+                    stack = candidates
+                for cand in stack:
+                    cand = cand.to_highest_weight(length=k)[0]
+                    if cand.perm in (Sx(hw_tab0.perm) * Sx(v)) and cand not in sm:
+                        sm += rc_ring.from_dict({cand: 1})
             #sm += rc_ring(trim_down)
         # sm = rc_ring.zero
         # for (the_rc, tc_elem), coeff in crystals.items():
@@ -308,9 +303,10 @@ if __name__ == "__main__":
             if hw in dd:
                 continue
             dd.add(hw)
-            for rc0 in rc.full_crystal:
+            for rc0 in hw.full_crystal:
                 the_sum += coeff * rc0.polyvalue(Sx.genset)
         prod2 = Sx(the_sum)
+        print(f"{prod=}")
         print(f"{prod2=}")
         assert prod2 - prod == Sx.zero
         print(prod)
