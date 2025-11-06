@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
                     # print(f"Moving on to {u=} {w=} {dom.perm=}")
                     for rc_w in RCGraph.all_rc_graphs(w, n - 1):
-                        pretty_print(rc_w)
+                        # pretty_print(rc_w)
                         if not rc_w.is_highest_weight:
                             continue
                         high_weight = rc_w.length_vector
@@ -90,7 +90,7 @@ if __name__ == "__main__":
                                 tensor = CrystalGraphTensor(dom.rc_graph, u_tab2)
                                 # print(f"{tensor=}")
                                 tc_elem = tensor.to_highest_weight()[0]
-                                pretty_print(tc_elem)
+                                # pretty_print(tc_elem)
                                 if tc_elem in hw_checked:
                                     # print("Already checked")
                                     # print(f"{highest_weights=}")
