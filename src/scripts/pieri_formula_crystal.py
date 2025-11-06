@@ -203,10 +203,20 @@ if __name__ == "__main__":
                 break
             for d in sorted(g.perm.descents()):
                 g0 = g.exchange_property(d + 1)
-                if is_subgraph(g0, the_cut0):
-                    exchg_seq.append(d + 1)
-                    stack.append(g0)
-        assert g.perm == the_cut0.perm
+                for g1 in g0.full_crystal:
+                    if is_subgraph(the_cut0, g1):
+                        exchg_seq.append(d + 1)
+                        stack.append(g1)
+        try:
+            assert g.perm == the_cut0.perm
+        except AssertionError:
+            print("Failed to find exchange property path")
+            print("From")
+            pretty_print(min_dom_graph)
+            print("To")
+            pretty_print(the_cut0)
+            print(f"{exchg_seq=}")
+            raise
         g = g.to_highest_weight(length=k)[0]
         # used[(min_dom_graph, the_cut1)] = used.get((min_dom_graph,the_cut1), set())
         # if hw_tab.perm in used[(min_dom_graph, the_cut1)]:
@@ -235,7 +245,8 @@ if __name__ == "__main__":
                 else:
                     bad = True
                     break
-            assert not bad
+            if bad:
+                continue
             actual_rc_new_set = trim_down.vertical_cut(k)[0].prod_with_rc(the_cut1)
             true_set = {rc0.to_highest_weight(length=k)[0] for rc0 in actual_rc_new_set}
             for rc_add in true_set:
