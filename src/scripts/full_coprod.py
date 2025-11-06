@@ -121,6 +121,8 @@ if __name__ == "__main__":
             
 
             for (rc_w, tc_elem), coeff in crystals.items():
+                if not rc_w.to_lowest_weight()[0].is_principal:
+                    continue
                 max_len = max(len(rc_w), len(tc_elem.factors[0]), len(tc_elem.factors[1]))
                 t_elem1, t_elem2 = tc_elem.factors
                 w_rc = rc_w.resize(max_len)
@@ -143,9 +145,8 @@ if __name__ == "__main__":
 
                 
     for rc, val in rc_w_coprods.items():
-        if len(rc.perm) <= n and rc.to_lowest_weight()[0].is_principal:
-            print(f"Coprod {rc=}")
-            pretty_print(val)
+        print(f"Coprod {rc=}")
+        pretty_print(val)
                 # prod = rc_ring.element_from_rc_graph(hw_tab.rc_graph) * rc_ring.element_from_rc_graph(tc_elem.factors[1])
                 # for rc_g in prod:
                 #     new_crystals[(rc_w, rc_g)] = new_crystals.get((rc_w, rc_g), 0) + coeff * prod[rc_g]
