@@ -206,7 +206,10 @@ if __name__ == "__main__":
     for (u, v), val in the_schubs.items():
         print(f"{u} * {v}=")
         pretty_print(val)
-        print(Sx(u)*Sx(v))
+        prod = Sx(u) * Sx(v)
+        for rc, coeff in val.items():
+            assert prod[rc.perm] == coeff
+        print(prod)
         
 
         
