@@ -118,14 +118,32 @@ if __name__ == "__main__":
     # u times v
     print("NOTE THIS IS CORRECT AND AN ASSOCIATIVE ACTION FOR DOMINANT PERMS")
     the_schubs = {}
-    for hw_tab, v in itertools.product(hw_tabs, perms):
-        if hw_tab.perm.inv == 0 or len(v.descents()) > 1 or k - 1 not in v.descents() or not set(v.trimcode).issubset({0,1}):
+    for hw_tab0, v in itertools.product(hw_tabs, perms):
+        if hw_tab0.perm.inv == 0 or len(v.descents()) > 1 or k - 1 not in v.descents() or not set(v.trimcode).issubset({0,1}):
             continue
         # rc_w_coprods = {}
         # good = False
-        rc = hw_tab.rc_graph.resize(n-1)
+        rc = hw_tab0.rc_graph.resize(n-1)
+        div_perm = Permutation([])
         if rc.vertical_cut(k)[0].perm != rc.vertical_cut(k)[0].perm.minimal_dominant_above():
-            continue
+            the_perm = rc.perm
+            while True:
+                found_any = False
+                for i in range(k - 1):
+                    if the_perm[i] > the_perm[i + 1]:
+                        the_perm = the_perm.swap(i, i + 1)
+                        div_perm = div_perm.swap(i, i + 1)
+                        found_any = True
+                        break
+            new_rc = None
+            for rc2 in RCGraph.all_rc_graphs(the_perm, n-1):
+                if rc2.rowrange(k) == rc.rowrange(k):
+                    new_rc = rc2
+                    break
+            assert new_rc is not None
+            hw_tab = RootTableau.from_rc_graph(new_rc)
+        else:
+            hw_tab = hw_tab0
         crystals = decompose_tensor_product(hw_tab, v, length=k)
         sm = rc_ring.from_dict({k[0]: v for k, v in crystals.items()})
         print("Product:")
