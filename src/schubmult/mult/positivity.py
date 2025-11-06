@@ -2,7 +2,6 @@ from bisect import bisect_left
 from functools import cache
 
 import psutil
-import pulp as pu
 from cachetools import cached
 from cachetools.keys import hashkey
 from sortedcontainers import SortedList
@@ -40,6 +39,7 @@ logger = get_logger(__name__)
 
 
 def compute_positive_rep(val, var2=None, var3=None, msg=False):
+    import pulp as pu
     try:
         return int(expand(val))
     except Exception:

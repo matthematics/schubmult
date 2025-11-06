@@ -1099,6 +1099,15 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         cut_rc = self.shiftcut()
         return (*cut_rc.leibniz_rep(), the_perm)
 
+    @classmethod
+    @cache
+    def all_hw_rcs(cls, perm, length):
+        ret = set()
+        for rc in cls.all_rc_graphs(perm, length):
+            rc_hw, _ = rc.to_highest_weight()
+            if rc_hw not in ret:
+                ret.add(rc_hw)
+        return ret
     # @classmethod
     # def from_leibniz_rep(cls, rep):
     #     from schubmult.utils.schub_lib import elem_sym_perms
