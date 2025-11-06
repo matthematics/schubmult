@@ -101,7 +101,7 @@ if __name__ == "__main__":
                                     continue
                                 u_tab_hw = tc_elem.factors[1]
                                 # hw_checked.add(tc_elem)
-                                pretty_print(dom.rc_graph)
+                                #pretty_print(dom.rc_graph)
                                 assert tc_elem.crystal_weight == tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab_hw.length_vector, fillvalue=0)]), f"{tc_elem.crystal_weight=} vs {tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab2.length_vector, fillvalue=0)])}"
                                 high_weight_check = tuple([a for a, b in zip_longest(high_weight, tc_elem.crystal_weight, fillvalue=0)])
                                 low_weight_check = tuple([a for a, b in zip_longest(rc_w.to_lowest_weight()[0].length_vector, tc_elem.crystal_weight, fillvalue=0)])
@@ -138,8 +138,9 @@ if __name__ == "__main__":
 
                 
     for rc, val in rc_w_coprods.items():
-        print(f"Coprod {rc=}")
-        pretty_print(val)
+        if len(rc.perm) <= n:
+            print(f"Coprod {rc=}")
+            pretty_print(val)
                 # prod = rc_ring.element_from_rc_graph(hw_tab.rc_graph) * rc_ring.element_from_rc_graph(tc_elem.factors[1])
                 # for rc_g in prod:
                 #     new_crystals[(rc_w, rc_g)] = new_crystals.get((rc_w, rc_g), 0) + coeff * prod[rc_g]
