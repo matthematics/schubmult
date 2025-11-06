@@ -161,6 +161,18 @@ if __name__ == "__main__":
                 continue
             print(f"Coprod {rc.perm.trimcode}")
             pretty_print(val)
+            tens_ring = ASx@ASx
+            check_elem = tens_ring.zero
+            for (rc1, rc2), coeff in val.items():
+                assert coeff == 1
+                check_elem += tens_ring(((rc1.perm,len(rc1)), (rc2.perm,len(rc2))))
+            diff = check_elem - coprod
+            try:
+                assert all(v == 0 for v in diff.values())
+            except AssertionError:
+                print("Blah")
+                print(f"{diff=}")
+                raise
                 # prod = rc_ring.element_from_rc_graph(hw_tab.rc_graph) * rc_ring.element_from_rc_graph(tc_elem.factors[1])
                 # for rc_g in prod:
                 #     new_crystals[(rc_w, rc_g)] = new_crystals.get((rc_w, rc_g), 0) + coeff * prod[rc_g]
