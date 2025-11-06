@@ -32,7 +32,7 @@ if __name__ == "__main__":
     hw_tabs = set()
     for perm in perms:
         
-        hw_tabs.update([RootTableau.from_rc_graph(rc.to_highest_weight()[0]) for rc in RCGraph.all_rc_graphs(perm, len(perm.trimcode))])
+        hw_tabs.update([RootTableau.from_rc_graph(rc.to_highest_weight()[0]) for rc in RCGraph.all_rc_graphs(perm, n - 1)])
 
     class MarkedInteger(int):
         pass
@@ -59,7 +59,7 @@ if __name__ == "__main__":
                     #     continue
 
                     # print(f"Moving on to {u=} {w=} {dom.perm=}")
-                    for rc_w in RCGraph.all_rc_graphs(w, len(w.trimcode)):
+                    for rc_w in RCGraph.all_rc_graphs(w, n - 1):
                         pretty_print(rc_w)
                         if not rc_w.is_highest_weight:
                             continue
@@ -82,7 +82,7 @@ if __name__ == "__main__":
                                 continue
 
                             u_tab = u_tab.rectify()
-                            u_hw_rc = u_tab.rc_graph
+                            u_hw_rc = u_tab.rc_graph.resize(n - 1)
                             assert u_hw_rc.perm == u
 
                             hw_checked = set()
