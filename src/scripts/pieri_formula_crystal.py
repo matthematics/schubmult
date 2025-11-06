@@ -171,10 +171,10 @@ if __name__ == "__main__":
 
         div_perm = (~the_cut0.perm)*the_cut0.perm.minimal_dominant_above()
         min_dom_graph = RCGraph.principal_rc(the_cut0.perm.minimal_dominant_above(), n-1)
-        used[(min_dom_graph, the_cut1)] = used.get((min_dom_graph,the_cut1), set())
-        if hw_tab.perm in used[(min_dom_graph, the_cut1)]:
-            continue
-        used[(min_dom_graph, the_cut1)].add(hw_tab.perm)
+        # used[(min_dom_graph, the_cut1)] = used.get((min_dom_graph,the_cut1), set())
+        # if hw_tab.perm in used[(min_dom_graph, the_cut1)]:
+        #     continue
+        # used[(min_dom_graph, the_cut1)].add(hw_tab.perm)
         crystals = decompose_tensor_product(RootTableau.from_rc_graph(min_dom_graph), v, length=k, n=n)
         
         print("Product:")
@@ -185,30 +185,83 @@ if __name__ == "__main__":
         # THIS IS CRYSTAL LEVEL
         
         # sm = rc_ring.from_dict({(k[0]: v for k, v in crystals.items()})
+
+        def is_subgraph(rc1, rc2):
+            for i in range(len(rc1)):
+                if len(rc2[i]) < len(rc1[i]):
+                    return False
+                for j in range(len(rc1[i])):
+                    if rc1[i][j] not in rc2[i]:
+                        return False
+            return True
+        exchg_seq = []
+        g = min_dom_graph.resize(len(the_cut0))
+        while g.perm != the_cut0.perm:
+            for d in sorted(g.perm.descents(), reverse=True):
+                g0 = g.exchange_property(d + 1)
+                if is_subgraph(g0, the_cut0):
+                    exchg_seq.append(d + 1)
+                    g = g0.to_highest_weight(length=k)[0]
+                    break
+            
+        # used[(min_dom_graph, the_cut1)] = used.get((min_dom_graph,the_cut1), set())
+        # if hw_tab.perm in used[(min_dom_graph, the_cut1)]:
+        #     continue
+        # used[(min_dom_graph, the_cut1)].add(hw_tab.perm)
+        # parallel exchange property
+        crystals = decompose_tensor_product(RootTableau.from_rc_graph(min_dom_graph), v, length=k, n=n)
+        
+        print("Product:")
+        pretty_print(hw_tab0.rc_graph)
+        print("and")
+        print(f"{v.trimcode}")
+        # MUST MODIFY SM. RULE: WEIGHT PRESERVING, DIVDIFF from div_perm
+        # THIS IS CRYSTAL LEVEL
+        
+        # sm = rc_ring.from_dict({(k[0]: v for k, v in crystals.items()})
         sm = rc_ring.zero
         for (the_rc, tc_elem), coeff in crystals.items():
             # ALMOST CORRECT BUT WE HAVE SOME TWOS
             assert coeff == 1
-            permo = the_rc.perm
-            assert len(permo.trimcode) <= k
-            if (permo * (~div_perm)).inv != permo.inv - div_perm.inv:
-                continue
-            new_perm = permo * (~div_perm)
-            tried = set()
-            if new_perm not in hw_rc_sets:
-                hw_rc_sets[new_perm] = set()
-                for rc_w in RCGraph.all_rc_graphs(new_perm, n - 1):
-                    # pretty_print(rc_w)
-                    hw_rc_sets[new_perm].add(rc_w.to_highest_weight(length=k)[0])
-            for rc_new in hw_rc_sets[new_perm]:
-                # if rc_new.rowrange(k) == the_rc.rowrange(k):
-                #     sm += rc_ring.from_dict({rc_new: 1})
-                actual_rc_new_set = rc_new.vertical_cut(k)[0].prod_with_rc(the_cut1)
-                true_set = {rc0.to_highest_weight(length=k)[0] for rc0 in actual_rc_new_set}
-                for rc_add in true_set:
+            trim_down = the_rc
+            bad = False
+            for d in exchg_seq:
+                if d - 1 in trim_down.perm.descents():
+                    trim_down = trim_down.exchange_property(d)
+                else:
+                    bad = True
+                    break
+            assert not bad
+            actual_rc_new_set = trim_down.vertical_cut(k)[0].prod_with_rc(the_cut1)
+            true_set = {rc0.to_highest_weight(length=k)[0] for rc0 in actual_rc_new_set}
+            for rc_add in true_set:
+                if rc_add.perm in (Sx(hw_tab0.perm) * Sx(v)) and rc_add not in sm:
+                    sm += rc_ring.from_dict({rc_add: 1})
+            #sm += rc_ring(trim_down)
+        # sm = rc_ring.zero
+        # for (the_rc, tc_elem), coeff in crystals.items():
+        #     # ALMOST CORRECT BUT WE HAVE SOME TWOS
+        #     assert coeff == 1
+        #     permo = the_rc.perm
+        #     assert len(permo.trimcode) <= k
+        #     if (permo * (~div_perm)).inv != permo.inv - div_perm.inv:
+        #         continue
+        #     new_perm = permo * (~div_perm)
+        #     tried = set()
+        #     if new_perm not in hw_rc_sets:
+        #         hw_rc_sets[new_perm] = set()
+        #         for rc_w in RCGraph.all_rc_graphs(new_perm, n - 1):
+        #             # pretty_print(rc_w)
+        #             hw_rc_sets[new_perm].add(rc_w.to_highest_weight(length=k)[0])
+        #     for rc_new in hw_rc_sets[new_perm]:
+        #         # if rc_new.rowrange(k) == the_rc.rowrange(k):
+        #         #     sm += rc_ring.from_dict({rc_new: 1})
+        #         actual_rc_new_set = rc_new.vertical_cut(k)[0].prod_with_rc(the_cut1)
+        #         true_set = {rc0.to_highest_weight(length=k)[0] for rc0 in actual_rc_new_set}
+        #         for rc_add in true_set:
 
-                    if rc_add.perm in (Sx(hw_tab0.perm) * Sx(v)) and rc_add not in sm:
-                        sm += rc_ring.from_dict({rc_add: 1})
+        #             if rc_add.perm in (Sx(hw_tab0.perm) * Sx(v)) and rc_add not in sm:
+        #                 sm += rc_ring.from_dict({rc_add: 1})
         pretty_print(sm)
         the_schubs[(hw_tab0.perm, v)] = the_schubs.get((hw_tab0.perm, v), rc_ring.zero) + sm
     Permutation.print_as_code = True

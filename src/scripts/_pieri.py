@@ -177,7 +177,7 @@ if __name__ == "__main__":
 
         # find an exchange property path from min_dom_graph to the crystal of the_cut0
         def is_subgraph(rc1, rc2):
-            for i in len(rc1):
+            for i in range(len(rc1)):
                 if len(rc2[i]) < len(rc1[i]):
                     return False
                 for j in range(len(rc1[i])):
@@ -188,12 +188,12 @@ if __name__ == "__main__":
         g = min_dom_graph.resize(len(the_cut0))
         while g != the_cut0:
             for d in sorted(g.perm.descents(), reverse=True):
-                g0 = g.exchange_property(d)
+                g0 = g.exchange_property(d + 1)
                 if is_subgraph(g0, the_cut0):
-                    exchg_seq.append(d)
-                    g = g0
+                    exchg_seq.append(d + 1)
+                    g = g0.to_lowest_weight(length = k)[0]
                     break
-                
+            
         # used[(min_dom_graph, the_cut1)] = used.get((min_dom_graph,the_cut1), set())
         # if hw_tab.perm in used[(min_dom_graph, the_cut1)]:
         #     continue
