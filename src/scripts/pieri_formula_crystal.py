@@ -126,9 +126,7 @@ if __name__ == "__main__":
         # good = False
         rc = hw_tab0.rc_graph.resize(n-1)
         div_perm = Permutation([])
-        if rc.perm in top_k_dom and rc in top_k_dom[rc.perm]:
-            continue
-        if rc.vertical_cut(k)[0].perm != rc.vertical_cut(k)[0].perm.minimal_dominant_above():
+        if rc.vertical_cut(k)[0].perm != rc.vertical_cut(k)[0].perm.minimal_dominant_above() or len(rc.vertical_cut(k)[0].perm.trimcode) < k:
             the_perm = rc.perm
             found_any = True
             while found_any:
@@ -159,6 +157,7 @@ if __name__ == "__main__":
         print("and")
         pretty_print(rc_ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(v, n-1),1)))
         # MUST MODIFY SM. RULE: WEIGHT PRESERVING, DIVDIFF from div_perm
+        # THIS IS CRYSTAL LEVEL
         sm = rc_ring.from_dict({k[0]: v for k, v in crystals.items()})
         sm_new = rc_ring.zero
         for graph, coeff in sm.items():
@@ -172,9 +171,8 @@ if __name__ == "__main__":
             for rc_new in RCGraph.all_rc_graphs(new_perm, n - 1):
                 if rc_new.rowrange(k) == graph.rowrange(k):
                     rc_new_hw = rc_new.to_highest_weight(length=k)[0]
-                    if rc_new_hw in tried:
+                    if rc_new_hw in sm_new:
                         continue
-                    tried.add(rc_new_hw)
                     sm_new += rc_ring.from_dict({rc_new_hw: coeff})
                     break
         pretty_print(sm_new)
