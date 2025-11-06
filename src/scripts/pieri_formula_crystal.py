@@ -176,6 +176,8 @@ def decompose_tensor_product(dom, u_rc, n):
             assert coeff == 1
             high_weight = w_rc.to_highest_weight()[0].crystal_weight
             low_weight = w_rc.to_lowest_weight()[0].crystal_weight
+            if w_rc.perm not in (Sx(dom.perm) * Sx(u_rc.perm)).keys():
+                continue
             for (rc1, u_rc2), coeff2 in up_tensor.items():
                 assert coeff2 == 1
                 tensor = CrystalGraphTensor(rc1, u_rc2)
