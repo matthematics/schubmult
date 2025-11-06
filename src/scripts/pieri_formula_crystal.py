@@ -237,21 +237,22 @@ if __name__ == "__main__":
         for (the_rc, tc_elem), coeff in crystals.items():
             # ALMOST CORRECT BUT WE HAVE SOME TWOS
             assert coeff == 1
-            trim_down = the_rc
-            bad = False
-            for d in exchg_seq:
-                if d - 1 in trim_down.perm.descents():
-                    trim_down = trim_down.exchange_property(d)
-                else:
-                    bad = True
-                    break
-            if bad:
-                continue
-            actual_rc_new_set = trim_down.vertical_cut(k)[0].prod_with_rc(the_cut1)
+            
+            actual_rc_new_set = the_rc.vertical_cut(k)[0].prod_with_rc(the_cut1)
             true_set = {rc0.to_highest_weight(length=k)[0] for rc0 in actual_rc_new_set}
             for rc_add in true_set:
-                if rc_add.perm in (Sx(hw_tab0.perm) * Sx(v)) and rc_add not in sm:
-                    sm += rc_ring.from_dict({rc_add: 1})
+                trim_down = rc_add
+                bad = False
+                for d in exchg_seq:
+                    if d - 1 in trim_down.perm.descents():
+                        trim_down = trim_down.exchange_property(d)
+                    else:
+                        bad = True
+                        break
+                if bad:
+                    continue
+                if trim_down.perm in (Sx(hw_tab0.perm) * Sx(v)) and trim_down not in sm:
+                    sm += rc_ring.from_dict({trim_down: 1})
             #sm += rc_ring(trim_down)
         # sm = rc_ring.zero
         # for (the_rc, tc_elem), coeff in crystals.items():
