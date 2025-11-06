@@ -118,6 +118,7 @@ if __name__ == "__main__":
     # u times v
     print("NOTE THIS IS CORRECT AND AN ASSOCIATIVE ACTION FOR DOMINANT PERMS")
     the_schubs = {}
+    top_k_dom = {}
     for hw_tab0, v in itertools.product(hw_tabs, perms):
         if hw_tab0.perm.inv == 0 or len(v.descents()) > 1 or k - 1 not in v.descents() or not set(v.trimcode).issubset({0,1}):
             continue
@@ -142,6 +143,10 @@ if __name__ == "__main__":
                     new_rc = rc2
                     break
             assert new_rc is not None
+            top_k_dom[new_rc] = top_k_dom.get(new_rc, set())
+            if (rc.perm, rc.rowrange(k)) in top_k_dom[new_rc]:
+                continue
+            top_k_dom[new_rc].add((rc.perm, rc.rowrange(k)))
             hw_tab = RootTableau.from_rc_graph(new_rc)
         else:
             hw_tab = hw_tab0
@@ -155,6 +160,8 @@ if __name__ == "__main__":
         sm = rc_ring.from_dict({k[0]: v for k, v in crystals.items()})
         sm_new = rc_ring.zero
         for graph, coeff in sm.items():
+            # ALMOST CORRECT BUT WE HAVE SOME TWOS
+            assert coeff == 1
             permo = graph.perm
             if (permo * (~div_perm)).inv != permo.inv - div_perm.inv:
                 continue
