@@ -434,7 +434,6 @@ def worker(hw_tabs, nn, shared_recording_dict, lock, task_queue):
                 assert coeff == 1
                 check_elem += tens_ring(((rc1.perm,len(rc1)), (rc2.perm,len(rc2))))
             diff = check_elem - coprod
-            good = True
             try:
                 assert all(v == 0 for v in diff.values())
             except AssertionError:
@@ -448,14 +447,14 @@ def worker(hw_tabs, nn, shared_recording_dict, lock, task_queue):
             good = True
             break
         #assert good, f"COMPLETE FAIL {w=}"
-    if good:
-        print(f"Success {(w, n)} at ", time.ctime())
-        with lock:
-            shared_recording_dict[(w, n)] = True
-    else:
-        with lock:
-            shared_recording_dict[(w, n)] = False
-        print(f"FAIL {(w, n)} at ", time.ctime())
+        if good:
+            print(f"Success {(w, n)} at ", time.ctime())
+            with lock:
+                shared_recording_dict[(w, n)] = True
+        else:
+            with lock:
+                shared_recording_dict[(w, n)] = False
+            print(f"FAIL {(w, n)} at ", time.ctime())
     
         
 
