@@ -38,9 +38,12 @@ if __name__ == "__main__":
     class MarkedInteger(int):
         pass
 
-    rc_w_coprods = {}
-    for hw_tab in hw_tabs:
-        for w in perms:
+    
+    for w in perms:
+        rc_w_coprods = {}
+        for hw_tab in hw_tabs:
+        
+        
             # if u.inv == 0:
             #     continue
             # needed?
@@ -48,6 +51,7 @@ if __name__ == "__main__":
             #     continue
 
             # test compose tensor product, and homomorphism of RC graph ring
+            
             @cache
             def decompose_tensor_product(dom, u):
                 crystals = {}
