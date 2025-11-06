@@ -17,14 +17,15 @@ def all_reduced_subwords(reduced_word, u):
 if __name__ == "__main__":
     import copy
     import sys
+    from functools import cache
     from itertools import zip_longest
 
     import sympy
     from sympy import pretty_print
 
-    from schubmult import CrystalGraphTensor, Permutation, RCGraph, RCGraphRing, RootTableau, Sx
+    from schubmult import CrystalGraphTensor, FreeAlgebra, Permutation, RCGraph, RCGraphRing, RootTableau, SchubertBasis, Sx
 
-
+    ASx = FreeAlgebra(SchubertBasis)
     n = int(sys.argv[1])
 
     perms = Permutation.all_permutations(n)
@@ -39,8 +40,7 @@ if __name__ == "__main__":
 
     rc_w_coprods = {}
     for hw_tab in hw_tabs:
-        
-        for u in perms:
+        for w in perms:
             # if u.inv == 0:
             #     continue
             # needed?
@@ -48,6 +48,7 @@ if __name__ == "__main__":
             #     continue
 
             # test compose tensor product, and homomorphism of RC graph ring
+            @cache
             def decompose_tensor_product(dom, u):
                 crystals = {}
                 highest_weights = set()
@@ -112,43 +113,49 @@ if __name__ == "__main__":
                                     # print(f"{u=} {dom.perm=} {w=} {crystals=}")
                                     highest_weights.add(tc_elem)
                 return crystals
-            crystals = decompose_tensor_product(hw_tab, u)
-
-            rc_ring = RCGraphRing()
-
-            tring = rc_ring @ rc_ring
-
-            
-
-            for (rc_w, tc_elem), coeff in crystals.items():
-                if not rc_w.to_lowest_weight()[0].is_principal:
+            coprod = ASx(w, n-1).coproduct()
+            for ((d, _), (u, _)) in coprod:
+                if d != hw_tab.perm:
                     continue
-                max_len = max(len(rc_w), len(tc_elem.factors[0]), len(tc_elem.factors[1]))
-                t_elem1, t_elem2 = tc_elem.factors
-                w_rc = rc_w.resize(max_len)
-                t_elem1 = t_elem1.resize(max_len)
-                t_elem2 = t_elem2.resize(max_len)
+                crystals = decompose_tensor_product(hw_tab, u)
 
-                # mul_up = tring.one
+                rc_ring = RCGraphRing()
 
-                # for index in range(max_len):
-                #     mul_up *= tring((RCGraph.one_row(len(t_elem1[index])), RCGraph.one_row(len(t_elem2[index]))))
-                #     # subtract off not there
-                #     for (rc1, rc2) in mul_up:
-                #         if rc1.rowrange(0, index + 1).perm != t_elem1.rowrange(0, index + 1).perm or rc2.rowrange(0, index + 1) != t_elem2.rowrange(0, index + 1).perm:
-                #             # rc_w_coprods[rc_w] = rc_w_coprods.get(rc_w, tring.zero) + coeff * tring((rc1, rc2))
-                #             mul_up -= tring((rc1, rc2))
-
-                # RAISE TO HIGHEST WEIGHT TO MAKE COASS?
-                # ???
-                # DON'T USE THE COEFF 
-                # rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2))
-                rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + tring((t_elem1, t_elem2))
+                tring = rc_ring @ rc_ring
 
                 
-    for rc, val in rc_w_coprods.items():
-        print(f"Coprod {rc=}")
-        pretty_print(val)
+
+                for (rc_w, tc_elem), coeff in crystals.items():
+                    if not rc_w.to_lowest_weight()[0].is_principal:
+                        continue
+                    max_len = max(len(rc_w), len(tc_elem.factors[0]), len(tc_elem.factors[1]))
+                    t_elem1, t_elem2 = tc_elem.factors
+                    w_rc = rc_w.resize(max_len)
+                    t_elem1 = t_elem1.resize(max_len)
+                    t_elem2 = t_elem2.resize(max_len)
+
+                    # mul_up = tring.one
+
+                    # for index in range(max_len):
+                    #     mul_up *= tring((RCGraph.one_row(len(t_elem1[index])), RCGraph.one_row(len(t_elem2[index]))))
+                    #     # subtract off not there
+                    #     for (rc1, rc2) in mul_up:
+                    #         if rc1.rowrange(0, index + 1).perm != t_elem1.rowrange(0, index + 1).perm or rc2.rowrange(0, index + 1) != t_elem2.rowrange(0, index + 1).perm:
+                    #             # rc_w_coprods[rc_w] = rc_w_coprods.get(rc_w, tring.zero) + coeff * tring((rc1, rc2))
+                    #             mul_up -= tring((rc1, rc2))
+
+                    # RAISE TO HIGHEST WEIGHT TO MAKE COASS?
+                    # ???
+                    # DON'T USE THE COEFF 
+                    # rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2))
+                    rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + tring((t_elem1, t_elem2))
+
+                
+            for rc, val in rc_w_coprods.items():
+                if rc.perm != w:
+                    continue
+                print(f"Coprod {rc=}")
+                pretty_print(val)
                 # prod = rc_ring.element_from_rc_graph(hw_tab.rc_graph) * rc_ring.element_from_rc_graph(tc_elem.factors[1])
                 # for rc_g in prod:
                 #     new_crystals[(rc_w, rc_g)] = new_crystals.get((rc_w, rc_g), 0) + coeff * prod[rc_g]
