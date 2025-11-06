@@ -127,10 +127,11 @@ if __name__ == "__main__":
         div_perm = Permutation([])
         if rc.vertical_cut(k)[0].perm != rc.vertical_cut(k)[0].perm.minimal_dominant_above():
             the_perm = rc.perm
-            while True:
+            found_any = True
+            while found_any:
                 found_any = False
                 for i in range(k - 1):
-                    if the_perm[i] > the_perm[i + 1]:
+                    if the_perm[i] < the_perm[i + 1]:
                         the_perm = the_perm.swap(i, i + 1)
                         div_perm = div_perm.swap(i, i + 1)
                         found_any = True
@@ -145,13 +146,30 @@ if __name__ == "__main__":
         else:
             hw_tab = hw_tab0
         crystals = decompose_tensor_product(hw_tab, v, length=k)
-        sm = rc_ring.from_dict({k[0]: v for k, v in crystals.items()})
+        
         print("Product:")
-        pretty_print(hw_tab.rc_graph)
+        pretty_print(hw_tab0.rc_graph)
         print("and")
         pretty_print(rc_ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(v, n-1),1)))
-        pretty_print(sm)
-        the_schubs[(hw_tab.perm, v)] = the_schubs.get((hw_tab.perm, v), rc_ring.zero) + sm
+        # MUST MODIFY SM. RULE: WEIGHT PRESERVING, DIVDIFF from div_perm
+        sm = rc_ring.from_dict({k[0]: v for k, v in crystals.items()})
+        sm_new = rc_ring.zero
+        for graph, coeff in sm.items():
+            permo = graph.perm
+            if (permo * (~div_perm)).inv != permo.inv - div_perm.inv:
+                continue
+            new_perm = permo * (~div_perm)
+            tried = set()
+            for rc_new in RCGraph.all_rc_graphs(new_perm, n - 1):
+                if rc_new.rowrange(k) == graph.rowrange(k):
+                    rc_new_hw = rc_new.to_highest_weight(length=k)[0]
+                    if rc_new_hw in tried:
+                        continue
+                    tried.add(rc_new_hw)
+                    sm_new += rc_ring.from_dict({rc_new_hw: coeff})
+                    break
+        pretty_print(sm_new)
+        the_schubs[(hw_tab0.perm, v)] = the_schubs.get((hw_tab0.perm, v), rc_ring.zero) + sm_new
     Permutation.print_as_code = True
     for (u, v), val in the_schubs.items():
         print(f"{u} * {v}=")
