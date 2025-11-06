@@ -91,8 +91,8 @@ def decompose_tensor_product(dom, u, length):
                     #pretty_print(dom.rc_graph)
                     assert tc_elem.crystal_weight == tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab_hw.length_vector, fillvalue=0)]), f"{tc_elem.crystal_weight=} vs {tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab2.length_vector, fillvalue=0)])}"
                     high_weight_check = tuple([a for a, b in zip_longest(high_weight, tc_elem.crystal_weight, fillvalue=0)])
-                    low_weight_check = tuple([a for a, b in zip_longest(rc_w.to_lowest_weight()[0].length_vector, tc_elem.crystal_weight, fillvalue=0)])
-                    if tc_elem.crystal_weight == high_weight_check and tc_elem.to_lowest_weight()[0].crystal_weight == low_weight_check:
+                    low_weight_check = tuple([a for a, b in zip_longest(rc_w.to_lowest_weight(length=length)[0].length_vector, tc_elem.crystal_weight, fillvalue=0)])
+                    if tc_elem.crystal_weight == high_weight_check and tc_elem.to_lowest_weight(length=length)[0].crystal_weight == low_weight_check:
                         crystals[(rc_w, tc_elem)] = crystals.get(rc_w, 0) + 1
                         # print(f"{u=} {dom.perm=} {w=} {crystals=}")
                         highest_weights.add(tc_elem)
@@ -117,11 +117,15 @@ if __name__ == "__main__":
     tot_suc = 0
     # u times v
     print("NOTE THIS IS CORRECT AND AN ASSOCIATIVE ACTION FOR DOMINANT PERMS")
+    the_schubs = {}
     for hw_tab, v in itertools.product(hw_tabs, perms):
-        if hw_tab.perm.inv == 0 or len(v.descents()) > 1 or not set(v.trimcode).issubset({0,1}):
+        if hw_tab.perm.inv == 0 or len(v.descents()) > 1 or k - 1 not in v.descents() or not set(v.trimcode).issubset({0,1}):
             continue
         # rc_w_coprods = {}
         # good = False
+        rc = hw_tab.rc_graph.resize(n-1)
+        if rc.vertical_cut(k)[0].perm != rc.vertical_cut(k)[0].perm.minimal_dominant_above():
+            continue
         crystals = decompose_tensor_product(hw_tab, v, length=k)
         sm = rc_ring.from_dict({k[0]: v for k, v in crystals.items()})
         print("Product:")
@@ -129,6 +133,12 @@ if __name__ == "__main__":
         print("and")
         pretty_print(rc_ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(v, n-1),1)))
         pretty_print(sm)
+        the_schubs[(hw_tab.perm, v)] = the_schubs.get((hw_tab.perm, v), rc_ring.zero) + sm
+    Permutation.print_as_code = True
+    for (u, v), val in the_schubs.items():
+        print(f"{u} * {v}=")
+        pretty_print(val)
+        print(Sx(u)*Sx(v))
         
 
         
