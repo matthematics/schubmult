@@ -159,7 +159,7 @@ if __name__ == "__main__":
         for rc, val in rc_w_coprods.items():
             if rc.perm != w:
                 continue
-            print(f"Coprod {rc=}")
+            print(f"Coprod {rc.perm.trimcode}")
             pretty_print(val)
                 # prod = rc_ring.element_from_rc_graph(hw_tab.rc_graph) * rc_ring.element_from_rc_graph(tc_elem.factors[1])
                 # for rc_g in prod:
