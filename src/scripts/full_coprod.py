@@ -136,7 +136,10 @@ if __name__ == "__main__":
                 #         if rc1.rowrange(0, index + 1).perm != t_elem1.rowrange(0, index + 1).perm or rc2.rowrange(0, index + 1) != t_elem2.rowrange(0, index + 1).perm:
                 #             # rc_w_coprods[rc_w] = rc_w_coprods.get(rc_w, tring.zero) + coeff * tring((rc1, rc2))
                 #             mul_up -= tring((rc1, rc2))
-                rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2))
+
+                # RAISE TO HIGHEST WEIGHT TO MAKE COASS?
+                # if t_elem2.is_highest_weight:
+                rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2.to_highest_weight()[0]))
 
                 
     for rc, val in rc_w_coprods.items():
