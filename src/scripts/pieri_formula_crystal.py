@@ -212,6 +212,10 @@ if __name__ == "__main__":
             assert len(completed) == 1
         except AssertionError:
             print("WARNING NOT UNIQUE")
+            for g, exchng_seq in completed:
+                pretty_print(g)
+                print(exchng_seq)
+            input()
         g, exchng_seq = completed[0]
         # except AssertionError:
         #     print("Failed to find exchange property path")
@@ -255,6 +259,7 @@ if __name__ == "__main__":
                         break
                 if bad:
                     continue
+                trim_down = trim_down.to_highest_weight(length=k)[0]
                 if trim_down.perm in (Sx(hw_tab0.perm) * Sx(v)) and trim_down not in sm:
                     sm += rc_ring.from_dict({trim_down: 1})
             #sm += rc_ring(trim_down)
