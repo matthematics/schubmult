@@ -1099,6 +1099,20 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         cut_rc = self.shiftcut()
         return (*cut_rc.leibniz_rep(), the_perm)
 
+    # @classmethod
+    # def from_leibniz_rep(cls, rep):
+    #     from schubmult.utils.schub_lib import elem_sym_perms
+    #     if len(rep) == 0:
+    #         return cls(())
+    #     new_rc = [()]*len(rep)
+    #     for i in range(len(rep)):
+    #         for j in range(i + 1):
+    #             if i == 0 and rep[j] == 1:
+    #                 new_rc[0] = (*new_rc[0], len(rep))
+    #             if i > 0:
+    #                 prev_perm
+    #     return cls(new_rc_rows)
+
     def shiftcut(self):
         cut_rc = RCGraph([tuple([a for a in row if a > i]) for i, row in enumerate(self.shiftup(-1)[:-1])])
         return cut_rc
@@ -1109,37 +1123,28 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         if s - 1 not in self.perm.descents():
             return set()
         ret = set()
-        if len(self[s-1]) > 0 and self[s-1][-1] == s and (s >= len(self) or len(self[s]) == 0 or self[s][-1] != s + 1):
-            new_rc = [tuple([a for a in row]) for row in self]
-            new_row = [a for a in new_rc[s - 1] if a != s]
-            new_rc[s - 1] = tuple(new_row)
-            ret.add(RCGraph(new_rc))
-        ret_old = self.shiftcut().divdiff_action(s)
+        lrep = self.leibniz_rep()
+        lrep2 = [*lrep[:-1], lrep[-1].swap(s - 1, s)]
+        upd = RCGraph.from_leibniz_rep(lrep2)
+        if upd is not None:
+            ret.add(upd)
+        ret_old = RCGraph.from_leibniz_rep(lrep[:-1]).divdiff_action(s)
         for old_rc in ret_old:
-            new_rc = [tuple([a + 1 for a in row]) for row in old_rc] + [self[-1]]
-            for i in range(len(new_rc) - 1  ):
-                if len(self[i]) > 0 and self[i][-1] == i + 1:
-                    new_rc[i] = (*new_rc[i], i + 1)
-            has_s = len(new_rc[s - 1]) > 0 and new_rc[s - 1][-1] == s
-            has_sp1 = s < len(new_rc) and len(new_rc[s]) > 0 and new_rc[s][-1] == s + 1
-            if has_s and not has_sp1:
-                new_row = [a for a in new_rc[s - 1] if a != s]
-                new_rc[s - 1] = tuple(new_row)
-                new_rc[s] = (*new_rc[s], s + 1)
-            if not has_s and has_sp1:
-                new_row = [a for a in new_rc[s] if a != s + 1]
-                new_rc[s] = tuple(new_row)
-                new_rc[s - 1] = (*new_rc[s - 1], s)
-            if new_rc.perm == self.perm.swap(s-1, s):
-                ret.add(RCGraph(new_rc))
+            lrep3 = [*old_rc.leibniz_rep(), lrep[-1].swap(s - 1, s)]
+            new_rc = RCGraph.from_leibniz_rep(lrep3)
+            if new_rc is not None:
+                ret.add(new_rc)
         return ret
 
     @staticmethod
-    def divdiff_act_dict(s, dct):
-        ret = {}
-        for rc, coeff in dct.items():
-            act_set = rc.divdiff_action(s)
-            ret = add_perm_dict(ret, dict.fromkeys(act_set, coeff))
+    def divdiff_act_dict(dct, *s_list):
+        ret = {**dct}
+        for s in reversed(s_list):
+            new_ret = {}
+            for rc, coeff in ret.items():
+                act_set = rc.divdiff_action(s)
+                new_ret = add_perm_dict(new_ret, dict.fromkeys(act_set, coeff))
+            ret = new_ret
         return ret
 
     def __getitem__(self, key):
