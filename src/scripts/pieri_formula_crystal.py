@@ -206,8 +206,8 @@ if __name__ == "__main__":
                 g0 = g.exchange_property(d + 1)
                 for g1 in g0.full_crystal:
                     if is_subgraph(the_cut0, g1):
-                        exchg_seq.append(d + 1)
-                        stack.append((g1, exchg_seq))
+                        exchg_seq2 = [*exchg_seq, d + 1]
+                        stack.append((g1, exchg_seq2))
         try:
             assert len(completed) == 1
         except AssertionError:
