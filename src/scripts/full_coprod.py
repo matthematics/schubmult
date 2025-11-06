@@ -138,12 +138,12 @@ if __name__ == "__main__":
                 #             mul_up -= tring((rc1, rc2))
 
                 # RAISE TO HIGHEST WEIGHT TO MAKE COASS?
-                # if t_elem2.is_highest_weight:
-                rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2.to_highest_weight()[0]))
+                # ???
+                rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2))
 
                 
     for rc, val in rc_w_coprods.items():
-        if len(rc.perm) <= n:
+        if len(rc.perm) <= n and rc.to_lowest_weight()[0].is_principal:
             print(f"Coprod {rc=}")
             pretty_print(val)
                 # prod = rc_ring.element_from_rc_graph(hw_tab.rc_graph) * rc_ring.element_from_rc_graph(tc_elem.factors[1])
