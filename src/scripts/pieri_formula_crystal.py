@@ -130,6 +130,7 @@ if __name__ == "__main__":
     print("NOTE THIS IS CORRECT AND AN ASSOCIATIVE ACTION FOR DOMINANT PERMS")
     the_schubs = {}
     # top_k_dom = {}
+    used = {}
     for hw_tab0, v in itertools.product(hw_tabs, perms):
         if hw_tab0.perm.inv == 0 or len(v.descents()) > 1 or k - 1 not in v.descents() or not set(v.trimcode).issubset({0,1}):
             continue
@@ -167,8 +168,14 @@ if __name__ == "__main__":
         pretty_print(hw_tab.rc_graph)
         print(f"Da cut at {k}")
         the_cut0, the_cut1 = hw_tab.rc_graph.resize(n-1).vertical_cut(k)
+
         div_perm = (~the_cut0.perm)*the_cut0.perm.minimal_dominant_above()
-        crystals = decompose_tensor_product(RootTableau.from_rc_graph(RCGraph.principal_rc(the_cut0.perm.minimal_dominant_above(), k)), v, length=k, n=n)
+        min_dom_graph = RCGraph.principal_rc(the_cut0.perm.minimal_dominant_above(), n-1)
+        used[(min_dom_graph, the_cut1)] = used.get((min_dom_graph,the_cut1), set())
+        if hw_tab.perm in used[(min_dom_graph, the_cut1)]:
+            continue
+        used[(min_dom_graph, the_cut1)].add(hw_tab.perm)
+        crystals = decompose_tensor_product(RootTableau.from_rc_graph(min_dom_graph), v, length=k, n=n)
         
         print("Product:")
         pretty_print(hw_tab0.rc_graph)
@@ -197,8 +204,10 @@ if __name__ == "__main__":
                 # if rc_new.rowrange(k) == the_rc.rowrange(k):
                 #     sm += rc_ring.from_dict({rc_new: 1})
                 actual_rc_new_set = rc_new.vertical_cut(k)[0].prod_with_rc(the_cut1)
-                for rc_add in actual_rc_new_set:
-                    if rc_add.perm in (Sx(hw_tab0.perm) * Sx(v)):
+                true_set = {rc0.to_highest_weight(length=k)[0] for rc0 in actual_rc_new_set}
+                for rc_add in true_set:
+
+                    if rc_add.perm in (Sx(hw_tab0.perm) * Sx(v)) and rc_add not in sm:
                         sm += rc_ring.from_dict({rc_add: 1})
         pretty_print(sm)
         the_schubs[(hw_tab0.perm, v)] = the_schubs.get((hw_tab0.perm, v), rc_ring.zero) + sm
