@@ -126,7 +126,7 @@ if __name__ == "__main__":
         # good = False
         rc = hw_tab0.rc_graph.resize(n-1)
         div_perm = Permutation([])
-        if rc.vertical_cut(k)[0].perm != rc.vertical_cut(k)[0].perm.minimal_dominant_above() or len(rc.vertical_cut(k)[0].perm.trimcode) < k:
+        if rc.vertical_cut(k)[0].perm != Permutation.w0(k + 1):
             the_perm = rc.perm
             found_any = True
             while found_any:
@@ -143,10 +143,10 @@ if __name__ == "__main__":
                     new_rc = rc2
                     break
             assert new_rc is not None
-            top_k_dom[rc.perm] = top_k_dom.get(rc.perm, set())
-            if new_rc in top_k_dom[rc.perm]:
+            top_k_dom[new_rc] = top_k_dom.get(new_rc, set())
+            if rc.perm in top_k_dom[new_rc]:
                 continue
-            top_k_dom[rc.perm].add(new_rc)
+            top_k_dom[new_rc].add(rc.perm)
             hw_tab = RootTableau.from_rc_graph(new_rc)
         else:
             hw_tab = hw_tab0
@@ -158,25 +158,28 @@ if __name__ == "__main__":
         pretty_print(rc_ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(v, n-1),1)))
         # MUST MODIFY SM. RULE: WEIGHT PRESERVING, DIVDIFF from div_perm
         # THIS IS CRYSTAL LEVEL
-        sm = rc_ring.from_dict({k[0]: v for k, v in crystals.items()})
-        sm_new = rc_ring.zero
-        for graph, coeff in sm.items():
+        
+        # sm = rc_ring.from_dict({(k[0]: v for k, v in crystals.items()})
+        sm = rc_ring.zero
+        for (the_rc, tc_elem), coeff in crystals.items():
             # ALMOST CORRECT BUT WE HAVE SOME TWOS
             assert coeff == 1
-            permo = graph.perm
+            permo = the_rc.perm
             if (permo * (~div_perm)).inv != permo.inv - div_perm.inv:
                 continue
             new_perm = permo * (~div_perm)
+            tc_perm1 = tc_elem.factors[0].perm * (~div_perm)
             tried = set()
-            for rc_new in RCGraph.all_rc_graphs(new_perm, n - 1):
-                if rc_new.rowrange(k) == graph.rowrange(k):
-                    rc_new_hw = rc_new.to_highest_weight(length=k)[0]
-                    if rc_new_hw in sm_new:
-                        continue
-                    sm_new += rc_ring.from_dict({rc_new_hw: coeff})
-                    break
-        pretty_print(sm_new)
-        the_schubs[(hw_tab0.perm, v)] = the_schubs.get((hw_tab0.perm, v), rc_ring.zero) + sm_new
+            if new_perm not in hw_rc_sets:
+                hw_rc_sets[new_perm] = set()
+                for rc_w in RCGraph.all_rc_graphs(new_perm, n - 1):
+                    # pretty_print(rc_w)
+                    hw_rc_sets[new_perm].add(rc_w.to_highest_weight(length=k)[0])
+            for rc_new in hw_rc_sets[new_perm]:
+                if rc_new.rowrange(k) == the_rc.rowrange(k):
+                    sm += rc_ring.from_dict({rc_new: 1})
+        pretty_print(sm)
+        the_schubs[(hw_tab0.perm, v)] = the_schubs.get((hw_tab0.perm, v), rc_ring.zero) + sm
     Permutation.print_as_code = True
     for (u, v), val in the_schubs.items():
         print(f"{u} * {v}=")
