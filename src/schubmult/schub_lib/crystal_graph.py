@@ -117,6 +117,19 @@ class CrystalGraph(Printable):
                 if new_elem is not None:
                     stack.append(new_elem)
         return crystal
+
+    def truncated_crystal(self, length):
+        hw, _ = self.to_highest_weight(length=length)
+        crystal = set()
+        stack = [hw]
+        while len(stack) > 0:
+            elem = stack.pop()
+            crystal.add(elem)
+            for i in range(1, length):
+                new_elem = elem.lowering_operator(i)
+                if new_elem is not None:
+                    stack.append(new_elem)
+        return crystal
     
     @property
     def is_highest_weight(self):

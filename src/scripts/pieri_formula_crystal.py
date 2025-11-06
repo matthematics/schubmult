@@ -254,7 +254,13 @@ if __name__ == "__main__":
                 bad = False
                 for d in exchg_seq:
                     if d - 1 in trim_down.perm.descents():
-                        trim_down = trim_down.exchange_property(d)
+                        trim_down0 = trim_down.exchange_property(d)
+                        bad = True
+                        for trim_down1 in trim_down0.full_crystal:
+                            if len(trim_down1[d - 1]) < len(trim_down[d - 1]):
+                                trim_down = trim_down1
+                                bad = False
+                                break
                     else:
                         bad = True
                         break
@@ -295,8 +301,18 @@ if __name__ == "__main__":
         print(f"{u} * {v}=")
         pretty_print(val)
         prod = Sx(u) * Sx(v)
+        the_sum = sympy.S.Zero
+        dd = set()
         for rc, coeff in val.items():
-            assert prod[rc.perm] == coeff
+            hw = rc.to_highest_weight()[0]
+            if hw in dd:
+                continue
+            dd.add(hw)
+            for rc0 in rc.full_crystal:
+                the_sum += coeff * rc0.polyvalue(Sx.genset)
+        prod2 = Sx(the_sum)
+        print(f"{prod2=}")
+        assert prod2 - prod == Sx.zero
         print(prod)
         
 
