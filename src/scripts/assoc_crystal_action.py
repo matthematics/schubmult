@@ -31,8 +31,9 @@ class MarkedInteger(int):
 
 hw_rc_sets = {}
 @cache
-def decompose_tensor_product(dom, u):
+def decompose_tensor_product(dom, u_tab_crystal):
     # global hw_rc_sets
+    u = u_tab_crystal.perm
     crystals = {}
     highest_weights = set()
     perm_set = set((Sx(u)*Sx(dom.perm)).keys())
@@ -73,7 +74,8 @@ def decompose_tensor_product(dom, u):
                 u_tab = u_tab.rectify()
                 u_hw_rc = u_tab.rc_graph.resize(n - 1)
                 assert u_hw_rc.perm == u
-
+                if u_hw_rc != u_tab_crystal.resize(n-1):
+                    continue
                 hw_checked = set()
                 for u_tab2 in u_hw_rc.full_crystal:
                     tensor = CrystalGraphTensor(dom.rc_graph, u_tab2)
