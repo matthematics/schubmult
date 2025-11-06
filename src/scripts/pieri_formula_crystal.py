@@ -202,6 +202,7 @@ if __name__ == "__main__":
             g, exchg_seq = stack.pop()
             if g.perm == the_cut0.perm:
                 completed.append((g, exchg_seq))
+                continue
             for d in sorted(g.perm.descents()):
                 g0 = g.exchange_property(d + 1)
                 for g1 in g0.full_crystal:
@@ -241,7 +242,7 @@ if __name__ == "__main__":
         # THIS IS CRYSTAL LEVEL
         
         # sm = rc_ring.from_dict({(k[0]: v for k, v in crystals.items()})
-        sm = rc_ring.zero
+        sm = the_schubs.get((hw_tab0.perm, v), rc_ring.zero)
         for (the_rc, tc_elem), coeff in crystals.items():
             # ALMOST CORRECT BUT WE HAVE SOME TWOS
             assert coeff == 1
@@ -288,7 +289,7 @@ if __name__ == "__main__":
         #             if rc_add.perm in (Sx(hw_tab0.perm) * Sx(v)) and rc_add not in sm:
         #                 sm += rc_ring.from_dict({rc_add: 1})
         pretty_print(sm)
-        the_schubs[(hw_tab0.perm, v)] = the_schubs.get((hw_tab0.perm, v), rc_ring.zero) + sm
+        the_schubs[(hw_tab0.perm, v)] = sm
     Permutation.print_as_code = True
     for (u, v), val in the_schubs.items():
         print(f"{u} * {v}=")
