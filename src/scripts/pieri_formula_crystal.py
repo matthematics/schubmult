@@ -197,7 +197,7 @@ if __name__ == "__main__":
         exchg_seq = []
         g = min_dom_graph.resize(len(the_cut0))
         while g.perm != the_cut0.perm:
-            for d in sorted(g.perm.descents(), reverse=True):
+            for d in sorted(g.perm.descents()):
                 g0 = g.exchange_property(d + 1)
                 if is_subgraph(g0, the_cut0):
                     exchg_seq.append(d + 1)
