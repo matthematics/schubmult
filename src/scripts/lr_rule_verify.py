@@ -1,6 +1,5 @@
 # LR rule verification script
 
-from functools import cache
 import gc
 import json
 import os
@@ -8,8 +7,10 @@ import pickle
 import shutil
 import sys
 import time
+from functools import cache
 from json import dump, load
 from multiprocessing import Event, Lock, Manager, Process, cpu_count
+
 #from schubmult.schub_lib.rc_graph_ring import tensor_to_highest_weight2
 from joblib import Parallel, delayed
 
@@ -277,53 +278,189 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 #     ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
 #     return ret_elem
 
-def worker(nn, shared_recording_dict, lock, task_queue):
-    from schubmult import ASx, Sx
+def worker(hw_tabs, nn, shared_recording_dict, lock, task_queue):
+    import copy
+    import sys
+    from functools import cache
+    from itertools import zip_longest
+
+    import sympy
     from sympy import pretty_print
-    from schubmult import ASx, FA
-    from schubmult.rings import WordBasis, SchubertBasis
-    from schubmult.schub_lib.rc_graph import RCGraph
-    from schubmult.schub_lib.rc_graph_ring import RCGraphRing
 
-    ring = RCGraphRing()
+    from schubmult import CrystalGraphTensor, FreeAlgebra, Permutation, RCGraph, RCGraphRing, RootTableau, SchubertBasis, Sx
 
-    def hom(elem):
-        ret = ASx.zero
-        for rc, coeff in elem.items():
-            ret += coeff * ASx(rc.perm, len(rc))
-        return ret
 
+    def all_reduced_subwords(reduced_word, u):
+        if u.inv > len(reduced_word):
+            return set()
+        if u.inv == 0:
+            return {()}
+        ret_set = set()
+        for index in range(len(reduced_word) - 1, -1, -1):
+            a = reduced_word[index]
+            if a - 1 in u.descents():
+                new_u = u.swap(a - 1, a)
+                old_set = all_reduced_subwords(reduced_word[:index], new_u)
+                for subword in old_set:
+                    new_subword = (*subword, index)
+                    ret_set.add(new_subword)
+        return ret_set
+
+    class MarkedInteger(int):
+        pass
+
+    hw_rc_sets = {}
+    @cache
+    def decompose_tensor_product(dom, u, n):
+        # global hw_rc_sets
+        crystals = {}
+        highest_weights = set()
+        perm_set = set((Sx(u)*Sx(dom.perm)).keys())
+        for w in perm_set:
+            if len(w) > n:
+                continue
+            # if not u.bruhat_leq(w):
+            #     continue
+            # if not dom.perm.bruhat_leq(w):
+            #     continue
+
+            # print(f"Moving on to {u=} {w=} {dom.perm=}")
+            if w not in hw_rc_sets:
+                hw_rc_sets[w] = set()
+                for rc_w in RCGraph.all_rc_graphs(w, n - 1):
+                    # pretty_print(rc_w)
+                    if not rc_w.is_highest_weight:
+                        continue
+                    hw_rc_sets[w].add(rc_w)
+            for rc_w in hw_rc_sets[w]:
+                # pretty_print(rc_w)
+                high_weight = rc_w.length_vector
+                reduced_word = rc_w.reduced_word
+                for subword in all_reduced_subwords(reduced_word, u):
+                    compatible_seq = [MarkedInteger(a) if index in subword else a for index, a in enumerate(rc_w.compatible_sequence)]
+                    u_tab = RootTableau.root_insert_rsk(reduced_word, compatible_seq)
+                    last_inv = 1000
+                    while u_tab.perm.inv < last_inv:
+                        last_inv = u_tab.perm.inv
+                        for box in u_tab.iter_boxes:
+                            if not isinstance(u_tab[box][1], MarkedInteger):
+                                u_tab_test = u_tab.delete_box(box)
+                                if u_tab_test is not None:
+                                    u_tab = u_tab_test
+                                    break
+                    if u_tab.perm.inv > u.inv:
+                        # didn't make it
+                        continue
+
+                    u_tab = u_tab.rectify()
+                    u_hw_rc = u_tab.rc_graph.resize(n - 1)
+                    assert u_hw_rc.perm == u
+
+                    hw_checked = set()
+                    for u_tab2 in u_hw_rc.full_crystal:
+                        tensor = CrystalGraphTensor(dom.rc_graph, u_tab2)
+                        # print(f"{tensor=}")
+                        tc_elem = tensor.to_highest_weight()[0]
+                        # pretty_print(tc_elem)
+                        if tc_elem in hw_checked:
+                            # print("Already checked")
+                            # print(f"{highest_weights=}")
+                            continue
+                        # needed!!!
+                        if tc_elem in highest_weights:
+                            # print("Already known highest weight mapped to some demazure crystal")
+                            continue
+                        u_tab_hw = tc_elem.factors[1]
+                        # hw_checked.add(tc_elem)
+                        #pretty_print(dom.rc_graph)
+                        assert tc_elem.crystal_weight == tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab_hw.length_vector, fillvalue=0)]), f"{tc_elem.crystal_weight=} vs {tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab2.length_vector, fillvalue=0)])}"
+                        high_weight_check = tuple([a for a, b in zip_longest(high_weight, tc_elem.crystal_weight, fillvalue=0)])
+                        low_weight_check = tuple([a for a, b in zip_longest(rc_w.to_lowest_weight()[0].length_vector, tc_elem.crystal_weight, fillvalue=0)])
+                        if tc_elem.crystal_weight == high_weight_check and tc_elem.to_lowest_weight()[0].crystal_weight == low_weight_check:
+                            crystals[(rc_w, tc_elem)] = crystals.get(rc_w, 0) + 1
+                            # print(f"{u=} {dom.perm=} {w=} {crystals=}")
+                            highest_weights.add(tc_elem)
+        return crystals
+
+        
+    ASx = FreeAlgebra(SchubertBasis)
     while True:
         try:
-            (perm, perm2, dom_rc) = task_queue.get(timeout=2)
+            (w, n) = task_queue.get(timeout=2)
         except Exception:
             break  # queue empty, exit
         with lock:
-            if (perm, perm2, dom_rc) in shared_recording_dict:
-                if shared_recording_dict[(perm, perm2, dom_rc)] is True:
-                    print(f"{(perm, perm2, dom_rc)} already verified, returning.")
+            if (w, n) in shared_recording_dict:
+                if shared_recording_dict[(w, n)] is True:
+                    print(f"{(w, n)} already verified, returning.")
                     continue
-                print(f"Previous failure on {(perm, perm2, dom_rc)}, will retry.")
-        result = 0
-        n = len(dom_rc) + 1
-        dom = RCGraph(dom_rc)
-        for rc in RCGraph.all_rc_graphs(perm2, n-1):
-            if rc.is_dom_perm_yamanouchi(dom.perm, perm):
-                result += 1
-        product = (Sx(dom.perm) * Sx(perm2))
-        if result == product.get(perm, 0):
-            print(f"Success {(perm, perm2, dom_rc)} at ", time.ctime())
+                print(f"Previous failure on {(w, n)}, will retry.")
+        
+        
+        rc_w_coprods = {}
+        good = False
+        for hw_tab in hw_tabs:
+            coprod = ASx(w, n-1).coproduct()
+            for ((d, _), (u, _)) in coprod:
+                if d != hw_tab.perm:
+                    continue
+                crystals = decompose_tensor_product(hw_tab, u, n)
+
+                rc_ring = RCGraphRing()
+
+                tring = rc_ring @ rc_ring
+
+                
+
+                for (rc_w, tc_elem), coeff in crystals.items():
+                    # if not rc_w.is:
+                    #     continue
+                    max_len = max(len(rc_w), len(tc_elem.factors[0]), len(tc_elem.factors[1]))
+                    t_elem1, t_elem2 = tc_elem.factors
+                    w_rc = rc_w.resize(max_len)
+                    t_elem1 = t_elem1.resize(max_len)
+                    t_elem2 = t_elem2.resize(max_len)
+                    if (t_elem1, t_elem2) not in rc_w_coprods.get(w_rc, tring.zero):
+                        rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + tring((t_elem1, t_elem2))
+                    if t_elem1.perm != t_elem2.perm and (t_elem2, t_elem1) not in rc_w_coprods.get(w_rc, tring.zero):
+                        rc_w_coprods[w_rc] += tring((t_elem2, t_elem1))
+                    
+        for rc, val in rc_w_coprods.items():
+            if rc.perm != w:
+                continue
+            tens_ring = ASx@ASx
+            check_elem = tens_ring.zero
+            for (rc1, rc2), coeff in val.items():
+                assert coeff == 1
+                check_elem += tens_ring(((rc1.perm,len(rc1)), (rc2.perm,len(rc2))))
+            diff = check_elem - coprod
+            good = True
+            try:
+                assert all(v == 0 for v in diff.values())
+            except AssertionError:
+                # print("A fail")
+                # print(f"{diff=}")
+                continue
+            print(f"Coprod {rc.perm.trimcode}")
+            pretty_print(rc)
+            pretty_print(val)
+            print("At least one success")
+            good = True
+            break
+        #assert good, f"COMPLETE FAIL {w=}"
+        if good:
+            print(f"Success {(w, n)} at ", time.ctime())
             with lock:
-                shared_recording_dict[(perm, perm2, dom_rc)] = True
+                shared_recording_dict[(w, n)] = True
         else:
             with lock:
-                shared_recording_dict[(perm, perm2, dom_rc)] = False
-            print(f"Warning: mismatch! {(perm, perm2, dom_rc)}: expected {product.get(perm, 0)}, got {result} at ", time.ctime())
+                shared_recording_dict[(w, n)] = False
+            print(f"FAIL {(w, n)} at ", time.ctime())
+    
         
 
 def main():
-    from schubmult import Permutation, uncode, Sx
-    from schubmult.schub_lib.rc_graph import RCGraph
+    from schubmult import Permutation, RCGraph, RootTableau, Sx, uncode
 
     try:
         n = int(sys.argv[1])
@@ -339,8 +476,12 @@ def main():
         cd += [i]
     
     perms = Permutation.all_permutations(n)
-    perms2n = {perm for perm in Permutation.all_permutations(2 * n - 1) if perm.bruhat_leq(uncode(cd))}
+    # perms2n = {perm for perm in Permutation.all_permutations(2 * n - 1) if perm.bruhat_leq(uncode(cd))}
     perms.sort(key=lambda p: (p.inv, p.trimcode))
+
+    hw_tabs = set()
+    for perm in perms:
+        hw_tabs.update([RootTableau.from_rc_graph(rc.to_highest_weight()[0]) for rc in RCGraph.all_rc_graphs(perm, n - 1)])
 
     with Manager() as manager:
         shared_dict = manager.dict()
@@ -369,21 +510,14 @@ def main():
         # Create task queue and fill with perms
         from schubmult.schub_lib.rc_graph import RCGraph
         task_queue = manager.Queue()
-        dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
-        for perm2 in perms:
-            if perm2.inv == 0:
-                continue
-            for dom in dominant_graphs:
-                if dom.perm.inv == 0:
-                    continue
-                prd = Sx(dom.perm) * Sx(perm2)
-                for perm in prd.keys():
-                    task_queue.put((perm, perm2, tuple(dom)))
+        # dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
+        for perm in perms:
+            task_queue.put((perm, n))
 
         # Start fixed number of workers
         workers = []
         for _ in range(num_processors):
-            p = Process(target=worker, args=(n, shared_recording_dict, lock, task_queue))
+            p = Process(target=worker, args=(hw_tabs, n, shared_recording_dict, lock, task_queue))
             p.start()
             workers.append(p)
         for p in workers:
