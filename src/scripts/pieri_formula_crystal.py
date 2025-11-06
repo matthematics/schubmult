@@ -126,6 +126,8 @@ if __name__ == "__main__":
         # good = False
         rc = hw_tab0.rc_graph.resize(n-1)
         div_perm = Permutation([])
+        if rc.perm in top_k_dom and rc in top_k_dom[rc.perm]:
+            continue
         if rc.vertical_cut(k)[0].perm != rc.vertical_cut(k)[0].perm.minimal_dominant_above():
             the_perm = rc.perm
             found_any = True
@@ -143,10 +145,10 @@ if __name__ == "__main__":
                     new_rc = rc2
                     break
             assert new_rc is not None
-            top_k_dom[new_rc] = top_k_dom.get(new_rc, set())
-            if (rc.perm, rc.rowrange(k - 1)) in top_k_dom[new_rc]:
+            top_k_dom[rc.perm] = top_k_dom.get(rc.perm, set())
+            if new_rc in top_k_dom[rc.perm]:
                 continue
-            top_k_dom[new_rc].add((rc.perm, rc.rowrange(k - 1)))
+            top_k_dom[rc.perm].add(new_rc)
             hw_tab = RootTableau.from_rc_graph(new_rc)
         else:
             hw_tab = hw_tab0
