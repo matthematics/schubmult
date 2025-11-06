@@ -196,14 +196,18 @@ if __name__ == "__main__":
             return True
         exchg_seq = []
         g = min_dom_graph.resize(len(the_cut0))
-        while g.perm != the_cut0.perm:
+        stack = [g]
+        while len(stack) > 0:
+            g = stack.pop()
+            if g.perm == the_cut0.perm:
+                break
             for d in sorted(g.perm.descents()):
                 g0 = g.exchange_property(d + 1)
                 if is_subgraph(g0, the_cut0):
                     exchg_seq.append(d + 1)
-                    g = g0.to_highest_weight(length=k)[0]
-                    break
-            
+                    stack.append(g0)
+        assert g.perm == the_cut0.perm
+        g = g.to_highest_weight(length=k)[0]
         # used[(min_dom_graph, the_cut1)] = used.get((min_dom_graph,the_cut1), set())
         # if hw_tab.perm in used[(min_dom_graph, the_cut1)]:
         #     continue
