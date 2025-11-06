@@ -31,7 +31,7 @@ class MarkedInteger(int):
 hw_rc_sets = {}
 @cache
 def decompose_tensor_product(dom, u, n):
-    global hw_rc_sets
+    # global hw_rc_sets
     crystals = {}
     highest_weights = set()
     perm_set = set((Sx(u)*Sx(dom.perm)).keys())
@@ -116,7 +116,7 @@ if __name__ == "__main__":
 
 
     
-    
+    tot_suc = 0
     for w in perms:
         rc_w_coprods = {}
         good = False
@@ -218,6 +218,7 @@ if __name__ == "__main__":
             good = True
             break
         assert good, f"COMPLETE FAIL {w=}"
+        tot_suc += 1
                 # prod = rc_ring.element_from_rc_graph(hw_tab.rc_graph) * rc_ring.element_from_rc_graph(tc_elem.factors[1])
                 # for rc_g in prod:
                 #     new_crystals[(rc_w, rc_g)] = new_crystals.get((rc_w, rc_g), 0) + coeff * prod[rc_g]
@@ -245,3 +246,4 @@ if __name__ == "__main__":
                 #     pretty_print(c)
             #     raise
             # print(f"Successful tensor decompose {dom.perm,u}")
+    assert tot_suc == len(perms)
