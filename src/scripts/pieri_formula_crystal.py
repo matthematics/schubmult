@@ -155,8 +155,8 @@ def decompose_tensor_product(dom, u_rc, n):
     cut_dom = dom.vertical_cut(n-2)[0]
     cut_u = u_rc.vertical_cut(n-2)[0]
     # print("Cutting:")
-    pretty_print(cut_dom)
-    pretty_print(cut_u)
+    # pretty_print(cut_dom)
+    # pretty_print(cut_u)
     cut_crystals = decompose_tensor_product(cut_dom, cut_u, n - 1)
     # print(f"{cut_crystals=}")
 
@@ -167,9 +167,14 @@ def decompose_tensor_product(dom, u_rc, n):
             to_add =  tring(t_elem.factors) * tring((RCGraph.one_row(len(dom[-1])),RCGraph.one_row(len(u_rc[-1]))))
             # pretty_print(to_add)
             for (rc1, rc2), coeff in to_add.items():
-                if rc1 != dom or rc2.perm != u_rc.perm:
+                if rc1 != dom:
                     continue
-                up_tensor += coeff * tring((rc1, rc2))
+                tcryst = CrystalGraphTensor(rc1, rc2)
+                for tw in tcryst.full_crystal:
+                    if tw.factors[1] == u_rc:
+                        up_tensor += coeff * tring((rc1, rc2))
+                        break
+                    #up_tensor += coeff * tring((rc1, rc2))
         # pretty_print(up_tensor)
         # pretty_print(up_rc)
         for w_rc, coeff in up_rc.items():
