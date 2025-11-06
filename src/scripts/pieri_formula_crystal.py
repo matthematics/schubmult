@@ -30,100 +30,102 @@ class MarkedInteger(int):
     pass
 
 hw_rc_sets = {}
-def decompose_tensor_product(dom, u, length, n):
+def decompose_tensor_product(dom, u_hw_rc, length, n):
     # global hw_rc_sets
+    u = u_hw_rc.perm
     crystals = {}
     highest_weights = set()
     perm_set = set((Sx(u)*Sx(dom.perm)).keys())
-    for u_hw_rc in RCGraph.all_rc_graphs(u, n - 1):
-        for w in perm_set:
-            # if not u.bruhat_leq(w):
-            #     continue
-            # if not dom.perm.bruhat_leq(w):
-            #     continue
+    #for u_hw_rc in RCGraph.all_rc_graphs(u, n - 1):
+    
+    for w in perm_set:
+        # if not u.bruhat_leq(w):
+        #     continue
+        # if not dom.perm.bruhat_leq(w):
+        #     continue
 
-            # print(f"Moving on to {u=} {w=} {dom.perm=}")
-            # if w not in hw_rc_sets:
-            #     hw_rc_sets[w] = set()
-            #     for rc_w in RCGraph.all_rc_graphs(w, n - 1):
-            #         # pretty_print(rc_w)
-            #         hw_rc_sets[w].add(rc_w.to_highest_weight(length=length)[0])
-            for rc_w in RCGraph.all_hw_rcs(w, n - 1):
-                # pretty_print(rc_w)
-                got_one = False
-                #rc_lw = rc_w.to_lowest_weight()[0]
-                high_weight = rc_w.length_vector
-                for rc_lw in rc_w.full_crystal: 
-                    reduced_word = rc_lw.reduced_word
-                    # for subword in all_reduced_subwords(reduced_word, u):
-                    #     compatible_seq = [MarkedInteger(a) if index in subword else a for index, a in enumerate(rc_lw.compatible_sequence)]
-                    #     u_tab = RootTableau.root_insert_rsk(reduced_word, compatible_seq)
-                    #     last_inv = 1000
-                    #     while u_tab.perm.inv < last_inv:
-                    #         last_inv = u_tab.perm.inv
-                    #         for box in u_tab.iter_boxes:
-                    #             if not isinstance(u_tab[box][1], MarkedInteger):
-                    #                 u_tab_test = u_tab.delete_box(box)
-                    #                 if u_tab_test is not None:
-                    #                     u_tab = u_tab_test
-                    #                     break
-                    #     if u_tab.perm.inv > u.inv:
-                    #         # didn't make it
-                    #         print(f"not sure this should happen {u_tab.perm=}!!!!!!!!!!!!111")
-                    #         pretty_print(u_tab)
-                    #         input()
-                    #         continue
+        # print(f"Moving on to {u=} {w=} {dom.perm=}")
+        # if w not in hw_rc_sets:
+        #     hw_rc_sets[w] = set()
+        #     for rc_w in RCGraph.all_rc_graphs(w, n - 1):
+        #         # pretty_print(rc_w)
+        #         hw_rc_sets[w].add(rc_w.to_highest_weight(length=length)[0])
+        for rc_w in RCGraph.all_hw_rcs(w, n - 1):
+            # pretty_print(rc_w)
+            got_one = False
+            #rc_lw = rc_w.to_lowest_weight()[0]
+            high_weight = rc_w.length_vector
+            for rc_lw in rc_w.full_crystal: 
+                reduced_word = rc_lw.reduced_word
+                # for subword in all_reduced_subwords(reduced_word, u):
+                #     compatible_seq = [MarkedInteger(a) if index in subword else a for index, a in enumerate(rc_lw.compatible_sequence)]
+                #     u_tab = RootTableau.root_insert_rsk(reduced_word, compatible_seq)
+                #     last_inv = 1000
+                #     while u_tab.perm.inv < last_inv:
+                #         last_inv = u_tab.perm.inv
+                #         for box in u_tab.iter_boxes:
+                #             if not isinstance(u_tab[box][1], MarkedInteger):
+                #                 u_tab_test = u_tab.delete_box(box)
+                #                 if u_tab_test is not None:
+                #                     u_tab = u_tab_test
+                #                     break
+                #     if u_tab.perm.inv > u.inv:
+                #         # didn't make it
+                #         print(f"not sure this should happen {u_tab.perm=}!!!!!!!!!!!!111")
+                #         pretty_print(u_tab)
+                #         input()
+                #         continue
 
-                    #     u_tab = u_tab.rectify()
-                    #     u_hw_rc = u_tab.rc_graph.resize(n - 1)
-                    #     assert u_hw_rc.perm == u
+                #     u_tab = u_tab.rectify()
+                #     u_hw_rc = u_tab.rc_graph.resize(n - 1)
+                #     assert u_hw_rc.perm == u
 
-                    hw_checked = set()
-                    for u_tab2 in u_hw_rc.full_crystal:
-                        tensor = CrystalGraphTensor(dom.rc_graph.resize(n - 1), u_tab2.resize(n - 1))
-                        # print(f"{tensor=}")
-                        tc_elem = tensor.to_highest_weight(length=length)[0]
-                        # pretty_print(tc_elem)
-                        if tc_elem in hw_checked:
-                            # print("Already checked")
-                            # print(f"{highest_weights=}")
-                            continue
-                        # needed!!!
-                        if tc_elem in highest_weights:
-                            # print("Already known highest weight mapped to some demazure crystal")
-                            continue
-                        u_tab_hw = tc_elem.factors[1]
-                        # hw_checked.add(tc_elem)
-                        #pretty_print(dom.rc_graph)
-                        # CHEK TO HIGHEST WEIGHT
-                        try:
-                            assert tc_elem.crystal_weight == tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab_hw.length_vector, fillvalue=0)]), f"{tc_elem.crystal_weight=} vs {tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab_hw.length_vector, fillvalue=0)])}"
-                        except AssertionError as e:
-                            print(e)
-                            pretty_print(tc_elem)
-                            #pretty_print(u_tab2)
-                            print("domrc")
-                            pretty_print(dom.rc_graph)
-                            print("utab")
-                            pretty_print(u_tab_hw)
-                            raise
-                        high_weight_check = tuple([a for a, b in zip_longest(high_weight, tc_elem.crystal_weight, fillvalue=0)])
-                        low_weight_check = tuple([a for a, b in zip_longest(rc_w.to_lowest_weight(length=length)[0].length_vector, tc_elem.crystal_weight, fillvalue=0)])
-                        if tc_elem.crystal_weight == high_weight_check and tc_elem.to_lowest_weight(length=length)[0].crystal_weight == low_weight_check:
-                            crystals[rc_w] = crystals.get(rc_w, set())
-                            crystals[rc_w].add(tc_elem)
-                            highest_weights.add(tc_elem)
-            #                 got_one = True
-            # try:
-            #     assert got_one
-            # except AssertionError:
-            #     print("Failed to find decomposition for")
-            #     print(f"{dom.perm=} and {u=}")
-            #     print("Trying to find rc_w:")
-            #     pretty_print(rc_w)
-            #     print("with compatible sequence:")
-            #     pretty_print(rc_w.compatible_sequence)
-            #     raise
+                hw_checked = set()
+                for u_tab2 in u_hw_rc.full_crystal:
+                    tensor = CrystalGraphTensor(dom.rc_graph.resize(n - 1), u_tab2.resize(n - 1))
+                    # print(f"{tensor=}")
+                    tc_elem = tensor.to_highest_weight(length=length)[0]
+                    # pretty_print(tc_elem)
+                    if tc_elem in hw_checked:
+                        # print("Already checked")
+                        # print(f"{highest_weights=}")
+                        continue
+                    # needed!!!
+                    if tc_elem in highest_weights:
+                        # print("Already known highest weight mapped to some demazure crystal")
+                        continue
+                    u_tab_hw = tc_elem.factors[1]
+                    # hw_checked.add(tc_elem)
+                    #pretty_print(dom.rc_graph)
+                    # CHEK TO HIGHEST WEIGHT
+                    try:
+                        assert tc_elem.crystal_weight == tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab_hw.length_vector, fillvalue=0)]), f"{tc_elem.crystal_weight=} vs {tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab_hw.length_vector, fillvalue=0)])}"
+                    except AssertionError as e:
+                        print(e)
+                        pretty_print(tc_elem)
+                        #pretty_print(u_tab2)
+                        print("domrc")
+                        pretty_print(dom.rc_graph)
+                        print("utab")
+                        pretty_print(u_tab_hw)
+                        raise
+                    high_weight_check = tuple([a for a, b in zip_longest(high_weight, tc_elem.crystal_weight, fillvalue=0)])
+                    low_weight_check = tuple([a for a, b in zip_longest(rc_w.to_lowest_weight(length=length)[0].length_vector, tc_elem.crystal_weight, fillvalue=0)])
+                    if tc_elem.crystal_weight == high_weight_check and tc_elem.to_lowest_weight(length=length)[0].crystal_weight == low_weight_check:
+                        crystals[rc_w] = crystals.get(rc_w, set())
+                        crystals[rc_w].add(tc_elem)
+                        highest_weights.add(tc_elem)
+        #                 got_one = True
+        # try:
+        #     assert got_one
+        # except AssertionError:
+        #     print("Failed to find decomposition for")
+        #     print(f"{dom.perm=} and {u=}")
+        #     print("Trying to find rc_w:")
+        #     pretty_print(rc_w)
+        #     print("with compatible sequence:")
+        #     pretty_print(rc_w.compatible_sequence)
+        #     raise
     return crystals
 
 if __name__ == "__main__":
@@ -158,167 +160,41 @@ if __name__ == "__main__":
         if hw_tab0.perm.minimal_dominant_above() != hw_tab0.perm:
             print("TEMP DOM TEST")
             continue
-    #     # rc_w_coprods = {}
-    #     # good = False
-    #     rc = hw_tab0.rc_graph.resize(n-1)
-    #     div_perm = Permutation([])
-    #     if rc.vertical_cut(k)[0].perm.inv < Permutation.w0(k + 1).inv or rc.vertical_cut(k)[0].perm != rc.vertical_cut(k)[0].perm.minimal_dominant_above():
-    #         the_perm = rc.perm
-    #         found_any = True
-    #         while found_any:
-    #             found_any = False
-    #             for i in range(k - 1):
-    #                 if the_perm[i] < the_perm[i + 1]:
-    #                     the_perm = the_perm.swap(i, i + 1)
-    #                     div_perm = div_perm.swap(i, i + 1)
-    #                     found_any = True
-    #                     break
-    #         new_rc = None
-    #         for rc2 in RCGraph.all_rc_graphs(the_perm, n-1):
-    #             if rc2.rowrange(k) == rc.rowrange(k):
-    #                 new_rc = rc2
-    #                 break
-    #         assert new_rc is not None
-    #         top_k_dom[new_rc] = top_k_dom.get(new_rc, set())
-    #         if rc.perm in top_k_dom[new_rc]:
-    #             continue
-    #         top_k_dom[new_rc].add(rc.perm)
-    #         hw_tab = RootTableau.from_rc_graph(new_rc)
-    #     else:
-    #         hw_tab = hw_tab0
         hw_tab = hw_tab0
         print("hw_tab")
    
         pretty_print(hw_tab.rc_graph)
-        # print(f"Da cut at {k}")
-        # the_cut0, the_cut1 = hw_tab.rc_graph.resize(n-1).vertical_cut(k)
-
-        # div_perm = (~the_cut0.perm)*the_cut0.perm.minimal_dominant_above()
-        # min_dom_graph = RCGraph.principal_rc(the_cut0.perm.minimal_dominant_above(), n-1)
-        # used[(min_dom_graph, the_cut1)] = used.get((min_dom_graph,the_cut1), set())
-        # if hw_tab.perm in used[(min_dom_graph, the_cut1)]:
-        #     continue
-        # used[(min_dom_graph, the_cut1)].add(hw_tab.perm)
-        # min_dom_graph = RCGraph.principal_rc(hw_tab.perm, n-1)
-        crystals = decompose_tensor_product(hw_tab, v, length=None, n=n)
-        
-        print("Product:")
-        pretty_print(hw_tab0.rc_graph)
-        print("and")
-        pretty_print(rc_ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(v, n-1),1)))
-        # MUST MODIFY SM. RULE: WEIGHT PRESERVING, DIVDIFF from div_perm
-        # THIS IS CRYSTAL LEVEL
-        
-        # sm = rc_ring.from_dict({(k[0]: v for k, v in crystals.items()})
-
-        # def is_subgraph(rc1, rc2):
-        #     for i in range(len(rc1)):
-        #         if len(rc2[i]) < len(rc1[i]):
-        #             return False
-        #         for j in range(len(rc1[i])):
-        #             if rc1[i][j] not in rc2[i]:
-        #                 return False
-        #     return True
-        # #exchg_seq = []
-        # g = min_dom_graph.resize(len(the_cut0))
-        # stack = [(g, [])]
-        # completed = []
-        # while len(stack) > 0:
-        #     g, exchg_seq = stack.pop()
-        #     if g.perm == the_cut0.perm:
-        #         completed.append((g, exchg_seq))
-        #         continue
-        #     for d in sorted(g.perm.descents()):
-        #         g0 = g.exchange_property(d + 1)
-        #         for g1 in g0.full_crystal:
-        #             exchg_seq2 = [*exchg_seq, d + 1]
-        #             stack.append((g1, exchg_seq2))
-        # try:
-        #     assert len(completed) == 1
-        # except AssertionError:
-        #     print("WARNING NOT UNIQUE")
-        #     for g, exchng_seq in completed:
-        #         pretty_print(g)
-        #         print(exchng_seq)
-            #input()
-        #g, exchng_seq = completed[0]
-        # except AssertionError:
-        #     print("Failed to find exchange property path")
-        #     print("From")
-        #     pretty_print(min_dom_graph)
-        #     print("To")
-        #     pretty_print(the_cut0)
-        #     print(f"{exchg_seq=}")
-        #     raise
-        # g = g.to_highest_weight(length=k)[0]
-        # used[(min_dom_graph, the_cut1)] = used.get((min_dom_graph,the_cut1), set())
-        # if hw_tab.perm in used[(min_dom_graph, the_cut1)]:
-        #     continue
-        # used[(min_dom_graph, the_cut1)].add(hw_tab.perm)
-        # parallel exchange property
-        #################################TEMPK=N
-
-        #crystals = decompose_tensor_product(RootTableau.from_rc_graph(min_dom_graph), v, length=k, n=n)
-        
-        print("Product:")
-        pretty_print(hw_tab0.rc_graph)
-        print("and")
-        print(f"{v.trimcode}")
-        # MUST MODIFY SM. RULE: WEIGHT PRESERVING, DIVDIFF from div_perm
-        # THIS IS CRYSTAL LEVEL
-        
-        # sm = rc_ring.from_dict({(k[0]: v for k, v in crystals.items()})
-        sm = the_schubs.get((hw_tab0.perm, v), rc_ring.zero)
-        for the_rc, st in crystals.items():
-            coeff = len(st)
-            # ALMOST CORRECT BUT WE HAVE SOME TWOS
-            # assert coeff == 1
+        exclude = set()
+        for v_rc in RCGraph.all_rc_graphs(v, n - 1):
+            # if not v_rc.is_principal:
+            #     continue
+            if v_rc in exclude:
+                continue
+            crystals = decompose_tensor_product(hw_tab, v_rc, length=None, n=n)
             
-            # actual_rc_new_set = the_rc.vertical_cut(k)[0].prod_with_rc(the_cut1)
-            # true_set = {rc0.to_highest_weight(length=k)[0] for rc0 in actual_rc_new_set}
-            # for rc_add in true_set:
-            #     trim_down = rc_add
-            #     bad = False
-            #     stack = [trim_down]
-            #     for d in exchg_seq:
-            #         candidates = []
-            #         for td0 in stack:
-            #             if d - 1 in td0.perm.descents():
-            #                 td00 = td0.exchange_property(d)
-            #                 for trimdown1 in td00.full_crystal:
-            #                     candidates.append(trimdown1)
-            #         stack = candidates
-            #     for cand in stack:
-            #         cand = cand.to_highest_weight(length=k)[0]
-            #         if cand.perm in (Sx(hw_tab0.perm) * Sx(v)) and cand not in sm:
-            sm += rc_ring.from_dict({the_rc: coeff})
-            #sm += rc_ring(trim_down)
-        # sm = rc_ring.zero
-        # for (the_rc, tc_elem), coeff in crystals.items():
-        #     # ALMOST CORRECT BUT WE HAVE SOME TWOS
-        #     assert coeff == 1
-        #     permo = the_rc.perm
-        #     assert len(permo.trimcode) <= k
-        #     if (permo * (~div_perm)).inv != permo.inv - div_perm.inv:
-        #         continue
-        #     new_perm = permo * (~div_perm)
-        #     tried = set()
-        #     if new_perm not in hw_rc_sets:
-        #         hw_rc_sets[new_perm] = set()
-        #         for rc_w in RCGraph.all_rc_graphs(new_perm, n - 1):
-        #             # pretty_print(rc_w)
-        #             hw_rc_sets[new_perm].add(rc_w.to_highest_weight(length=k)[0])
-        #     for rc_new in hw_rc_sets[new_perm]:
-        #         # if rc_new.rowrange(k) == the_rc.rowrange(k):
-        #         #     sm += rc_ring.from_dict({rc_new: 1})
-        #         actual_rc_new_set = rc_new.vertical_cut(k)[0].prod_with_rc(the_cut1)
-        #         true_set = {rc0.to_highest_weight(length=k)[0] for rc0 in actual_rc_new_set}
-        #         for rc_add in true_set:
+            print("Product:")
+            pretty_print(hw_tab0.rc_graph)
+            print("and")
+            pretty_print(v_rc)
+        # MUST MODIFY SM. RULE: WEIGHT PRESERVING, DIVDIFF from div_perm
+        # THIS IS CRYSTAL LEVEL
+        
+            print("Product:")
+            pretty_print(hw_tab0.rc_graph)
+            print("and")
+            print(f"{v.trimcode}")
+            # MUST MODIFY SM. RULE: WEIGHT PRESERVING, DIVDIFF from div_perm
+            # THIS IS CRYSTAL LEVEL
+            sm = the_schubs.get((hw_tab0.perm, v), rc_ring.zero)
+            for the_rc, st in crystals.items():
+                for td in st:
+                    if td.factors[1] in exclude:
+                        continue
+                    exclude.add(td.factors[1])
+                    sm += rc_ring.from_dict({the_rc: 1})
 
-        #             if rc_add.perm in (Sx(hw_tab0.perm) * Sx(v)) and rc_add not in sm:
-        #                 sm += rc_ring.from_dict({rc_add: 1})
-        pretty_print(sm)
-        the_schubs[(hw_tab0.perm, v)] = sm
+            pretty_print(sm)
+            the_schubs[(hw_tab0.perm, v)] = sm
         u = hw_tab0.perm
         Permutation.print_as_code = True
     #for (u, v), val in the_schubs.items():
@@ -334,6 +210,7 @@ if __name__ == "__main__":
             dd.add(hw)
             for rc0 in hw.full_crystal:
                 the_sum += coeff * rc0.polyvalue(Sx.genset)
+            #the_sum += coeff * Sx(rc.perm)
         prod2 = Sx(the_sum)
         print(f"{prod=}")
         print(f"{prod2=}")
