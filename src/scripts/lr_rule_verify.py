@@ -424,28 +424,33 @@ def worker(hw_tabs, nn, shared_recording_dict, lock, task_queue):
                         rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + tring((t_elem1, t_elem2))
                     if t_elem1.perm != t_elem2.perm and (t_elem2, t_elem1) not in rc_w_coprods.get(w_rc, tring.zero):
                         rc_w_coprods[w_rc] += tring((t_elem2, t_elem1))
-                    
+        total_coprod = tring.zero        
         for rc, val in rc_w_coprods.items():
             if rc.perm != w:
                 continue
-            tens_ring = ASx@ASx
-            check_elem = tens_ring.zero
+            
             for (rc1, rc2), coeff in val.items():
                 assert coeff == 1
-                check_elem += tens_ring(((rc1.perm,len(rc1)), (rc2.perm,len(rc2))))
-            diff = check_elem - coprod
-            try:
-                assert all(v == 0 for v in diff.values())
-            except AssertionError:
-                # print("A fail")
-                # print(f"{diff=}")
-                continue
+                if (rc1, rc2) not in total_coprod:
+                    total_coprod += tring((rc1, rc2))
+
+        tens_ring = ASx@ASx
+        check_elem = tens_ring.zero 
+        for (rc1, rc2), coeff in total_coprod.items():
+            check_elem += tens_ring(((rc1.perm,len(rc1)), (rc2.perm,len(rc2))))
+        diff = check_elem - coprod
+        try:
+            assert all(v == 0 for v in diff.values())
             print(f"Coprod {rc.perm.trimcode}")
             pretty_print(rc)
             pretty_print(val)
-            print("At least one success")
+        #print("At least one success")
             good = True
-            break
+        except AssertionError:
+            # print("A fail")
+            print(f"{diff=}")
+            good = False
+        
         #assert good, f"COMPLETE FAIL {w=}"
         if good:
             print(f"Success {(w, n)} at ", time.ctime())
