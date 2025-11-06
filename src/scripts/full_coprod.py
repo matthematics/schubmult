@@ -112,7 +112,7 @@ if __name__ == "__main__":
     
     for w in perms:
         rc_w_coprods = {}
-        bad = False
+        good = False
         for hw_tab in hw_tabs:
         
         
@@ -201,12 +201,16 @@ if __name__ == "__main__":
             try:
                 assert all(v == 0 for v in diff.values())
             except AssertionError:
-                print("A fail")
+                # print("A fail")
                 # print(f"{diff=}")
+                continue
             print(f"Coprod {rc.perm.trimcode}")
             pretty_print(rc)
             pretty_print(val)
             print("At least one success")
+            good = True
+        if not good:
+            print(f"COMPLETE FAIL {w=}")
                 # prod = rc_ring.element_from_rc_graph(hw_tab.rc_graph) * rc_ring.element_from_rc_graph(tc_elem.factors[1])
                 # for rc_g in prod:
                 #     new_crystals[(rc_w, rc_g)] = new_crystals.get((rc_w, rc_g), 0) + coeff * prod[rc_g]
