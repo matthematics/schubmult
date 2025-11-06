@@ -154,24 +154,24 @@ def decompose_tensor_product(dom, u_rc, n):
         return crystals
     cut_dom = dom.vertical_cut(n-2)[0]
     cut_u = u_rc.vertical_cut(n-2)[0]
-    print("Cutting:")
+    # print("Cutting:")
     pretty_print(cut_dom)
     pretty_print(cut_u)
     cut_crystals = decompose_tensor_product(cut_dom, cut_u, n - 1)
-    print(f"{cut_crystals=}")
+    # print(f"{cut_crystals=}")
 
     for rc_w_cut, tensor_elems in cut_crystals.items():
         up_rc =  rc_ring(rc_w_cut) * rc_ring(RCGraph.one_row(len(dom[-1]) + len(u_rc[-1])))
         up_tensor = tring.zero
         for t_elem in tensor_elems:
             to_add =  tring(t_elem.factors) * tring((RCGraph.one_row(len(dom[-1])),RCGraph.one_row(len(u_rc[-1]))))
-            pretty_print(to_add)
+            # pretty_print(to_add)
             for (rc1, rc2), coeff in to_add.items():
                 if rc1 != dom or rc2.perm != u_rc.perm:
                     continue
                 up_tensor += coeff * tring((rc1, rc2))
-        pretty_print(up_tensor)
-        pretty_print(up_rc)
+        # pretty_print(up_tensor)
+        # pretty_print(up_rc)
         for w_rc, coeff in up_rc.items():
             assert coeff == 1
             high_weight = w_rc.to_highest_weight()[0].crystal_weight
@@ -257,14 +257,14 @@ if __name__ == "__main__":
         dd = set()
         the_sum2 = Sx.zero
         for rc, coeff in sm.items():
-            hw = rc.to_highest_weight()[0]
-            if hw in dd:
-                continue
-            dd.add(hw)
-            for rc0 in hw.full_crystal:
-                the_sum += coeff * rc0.polyvalue(Sx.genset)
-                if rc0.is_principal:
-                    the_sum2 += coeff * Sx(rc.perm)
+            #hw = rc.to_highest_weight()[0]
+            # if hw in dd:
+            #     continue
+            # dd.add(hw)
+            #for rc0 in hw.full_crystal:
+            the_sum += coeff * rc.polyvalue(Sx.genset)
+            if rc.is_principal:
+                the_sum2 += coeff * Sx(rc.perm)
             #the_sum += coeff * Sx(rc.perm)
         prod2 = Sx(the_sum)
         print(f"{prod=}")
