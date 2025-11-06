@@ -144,9 +144,9 @@ if __name__ == "__main__":
                     break
             assert new_rc is not None
             top_k_dom[new_rc] = top_k_dom.get(new_rc, set())
-            if (rc.perm, rc.rowrange(k)) in top_k_dom[new_rc]:
+            if (rc.perm, rc.rowrange(k - 1)) in top_k_dom[new_rc]:
                 continue
-            top_k_dom[new_rc].add((rc.perm, rc.rowrange(k)))
+            top_k_dom[new_rc].add((rc.perm, rc.rowrange(k - 1)))
             hw_tab = RootTableau.from_rc_graph(new_rc)
         else:
             hw_tab = hw_tab0
