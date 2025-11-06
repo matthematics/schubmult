@@ -141,7 +141,9 @@ if __name__ == "__main__":
 
                 # RAISE TO HIGHEST WEIGHT TO MAKE COASS?
                 # ???
-                rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2))
+                # DON'T USE THE COEFF 
+                # rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2))
+                rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + tring((t_elem1, t_elem2))
 
                 
     for rc, val in rc_w_coprods.items():
