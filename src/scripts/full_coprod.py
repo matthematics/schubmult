@@ -131,8 +131,8 @@ if __name__ == "__main__":
                 
 
                 for (rc_w, tc_elem), coeff in crystals.items():
-                    if not rc_w.to_lowest_weight()[0].is_principal:
-                        continue
+                    # if not rc_w.is:
+                    #     continue
                     max_len = max(len(rc_w), len(tc_elem.factors[0]), len(tc_elem.factors[1]))
                     t_elem1, t_elem2 = tc_elem.factors
                     w_rc = rc_w.resize(max_len)
@@ -160,6 +160,7 @@ if __name__ == "__main__":
             if rc.perm != w:
                 continue
             print(f"Coprod {rc.perm.trimcode}")
+            pretty_print(rc)
             pretty_print(val)
             tens_ring = ASx@ASx
             check_elem = tens_ring.zero
