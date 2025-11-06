@@ -606,3 +606,19 @@ ID_PERM = Permutation([])
 @cache
 def s(i):
     return Permutation([*list(range(1, i)), i + 1, i])
+
+def all_reduced_subwords(reduced_word, u):
+    if u.inv > len(reduced_word):
+        return set()
+    if u.inv == 0:
+        return {()}
+    ret_set = set()
+    for index in range(len(reduced_word) - 1, -1, -1):
+        a = reduced_word[index]
+        if a - 1 in u.descents():
+            new_u = u.swap(a - 1, a)
+            old_set = all_reduced_subwords(reduced_word[:index], new_u)
+            for subword in old_set:
+                new_subword = (*subword, index)
+                ret_set.add(new_subword)
+    return ret_set

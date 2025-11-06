@@ -85,7 +85,7 @@ if __name__ == "__main__":
                             hw_checked = set()
                             for u_tab2 in u_hw_rc.full_crystal:
                                 tensor = CrystalGraphTensor(dom.rc_graph, u_tab2)
-                                print(f"{tensor=}")
+                                # print(f"{tensor=}")
                                 tc_elem = tensor.to_highest_weight()[0]
                                 pretty_print(tc_elem)
                                 if tc_elem in hw_checked:
@@ -110,13 +110,15 @@ if __name__ == "__main__":
             crystals = decompose_tensor_product(dom, u)
 
             try:
-                any_cry = None
-                for rcc in crystals:
-                    if rcc.perm == w:
-                        any_cry = rcc
-                        break
-                coeff = crystals[any_cry]
-                assert coeff == (Sx(dom.perm) * Sx(u)).get(w, 0), f"Fail at coeff check, {u=} {w=} {(Sx(dom.perm)*Sx(u)).get(w, 0)=} {coeff=}, {crystals=}"
+                test_prod = Sx(u)*Sx(dom.perm)
+                for w in test_prod:
+                    any_cry = None
+                    for rcc in crystals:
+                        if rcc.perm == w:
+                            any_cry = rcc
+                            break
+                    coeff = crystals[any_cry]
+                    assert coeff == test_prod[w], f"Fail at coeff check, {u=} {w=} {test_prod[w]=} {coeff=}, {crystals=}"
             except AssertionError as e:
                 print(f"Failed coeff check at {u=} {w=} {dom.perm=}, expected {(Sx(dom.perm)*Sx(u)).get(w, 0)}, got {coeff}")
                 print("Crystals:")
