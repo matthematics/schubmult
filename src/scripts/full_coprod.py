@@ -28,8 +28,10 @@ def all_reduced_subwords(reduced_word, u):
 class MarkedInteger(int):
     pass
 
+hw_rc_sets = {}
 @cache
 def decompose_tensor_product(dom, u, n):
+    global hw_rc_sets
     crystals = {}
     highest_weights = set()
     perm_set = set((Sx(u)*Sx(dom.perm)).keys())
@@ -42,10 +44,15 @@ def decompose_tensor_product(dom, u, n):
         #     continue
 
         # print(f"Moving on to {u=} {w=} {dom.perm=}")
-        for rc_w in RCGraph.all_rc_graphs(w, n - 1):
+        if w not in hw_rc_sets:
+            hw_rc_sets[w] = set()
+            for rc_w in RCGraph.all_rc_graphs(w, n - 1):
+                # pretty_print(rc_w)
+                if not rc_w.is_highest_weight:
+                    continue
+                hw_rc_sets[w].add(rc_w)
+        for rc_w in hw_rc_sets[w]:
             # pretty_print(rc_w)
-            if not rc_w.is_highest_weight:
-                continue
             high_weight = rc_w.length_vector
             reduced_word = rc_w.reduced_word
             for subword in all_reduced_subwords(reduced_word, u):
