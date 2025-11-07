@@ -399,6 +399,8 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                 for (rc1, u_rc2), coeff2 in up_tensor.items():
                     assert coeff2 == 1
                     # NOTE DOM TENSOR
+                    # if rc1.perm != left_rc.perm or u_rc2.perm != u_rc.perm:
+                    #     continue
                     tensor = CrystalGraphTensor(left_rc, u_rc2)
                     tensor_hw = tensor.to_highest_weight()[0]
                     tensor_lw = tensor.to_lowest_weight()[0]
@@ -451,10 +453,21 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                         #     if u_hw_rc == u_rc:
                         crystals[w_rc] = crystals.get(w_rc, set())
                         crystals[w_rc].add(tensor)
-                        break
+                        
                                 # fyi[w_rc] = fyi.get(w_rc, set())
                                 # fyi[w_rc].add((tensor, u_tab))            
-                    
+        get_rid = set()
+        the_prin = None
+        for ww_rc, tset in crystals.items():
+            if ww_rc.is_principal:
+               # get_rid.update(tset)
+               the_prin = ww_rc
+            else:
+                get_rid.update(tset)
+        if the_prin is not None:
+            for bonkers in get_rid:
+                if bonkers in crystals[the_prin]:
+                    crystals[the_prin].remove(bonkers)
         try:
             
             assert len(crystals) == 1
