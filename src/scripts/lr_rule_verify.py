@@ -542,11 +542,15 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     # principal_crystal = RCGraph.principal_rc(rc_w.perm, n - 1).full_crystal
                     #if rc_w.to_lowest_weight()[0].is_principal:
                         #assert len(coeff) == 1
-                    for tensor in coeff:
-                        if tensor in used_tensors:
-                            continue
-                        used_tensors.add(tensor)
-                        sm += Sx(rc_w.perm)
+                    # if hw_tab.is_principal:#rc_w.is_principal:
+                    #     for tensor in coeff:
+                    #         if tensor in used_tensors:
+                    #             continue
+                    #         used_tensors.add(tensor)
+                    #         sm += Sx(rc_w.perm)
+                    if rc_w.is_principal:
+                        sm += len(coeff) * Sx(rc_w.perm)
+                    #else
                         #used_rcs.add(rc_w)
 
 
@@ -631,8 +635,9 @@ def main():
         from schubmult.schub_lib.rc_graph import RCGraph
         task_queue = manager.Queue()
         # dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
+        dominant_only = False
         for hw_tab in perms:
-            #if hw_tab.minimal_dominant_above() == hw_tab:
+            if not dominant_only or hw_tab.minimal_dominant_above() == hw_tab:
                 for perm in perms:
         
                     task_queue.put((hw_tab, perm, n))
