@@ -390,11 +390,15 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                 for (rc1, u_rc2), coeff2 in up_tensor.items():
                     assert coeff2 == 1
                     # NOTE DOM TENSOR
-                    tensor = CrystalGraphTensor(left_rc.to_highest_weight()[0], u_rc2)
-                    #tensor = CrystalGraphTensor(RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector),n-1), u_rc2)
-                    tensor_hw = tensor.to_highest_weight()[0]
-                    tensor_lw = tensor.to_lowest_weight()[0]
-                    low_tensor_weight = tensor_lw.crystal_weight#tuple([a + b for a,b in zip(left_rc.to_lowest_weight()[0].length_vector, tensor_lw.factors[1].length_vector)])
+                    tensor = CrystalGraphTensor(left_rc, u_rc2)
+                    tensor_dom = CrystalGraphTensor(RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector),n-1), u_rc2)
+                    
+                    crystal_perm = uncode(sorted(left_rc.to_highest_weight()[0].length_vector))
+                    crystal_rc = next(iter(RCGraph.all_rc_graphs(crystal_perm, n-1, weight=left_rc.length_vector)))
+                    tensor_crystal = CrystalGraphTensor(crystal_rc, u_rc2)
+                    tensor_hw = tensor_crystal.to_highest_weight()[0]
+                    tensor_lw = tensor_dom.to_lowest_weight()[0]
+                    low_tensor_weight = tuple([a + b for a,b in zip(left_rc.to_lowest_weight()[0].length_vector, tensor_lw.factors[1].length_vector)])
                     #low_tensor_weight = tensor_lw.crystal_weight
                     w_tab = RootTableau.from_rc_graph(w_rc)
                     u = u_rc.perm
@@ -442,7 +446,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                                 continue
                             if u_hw_rc == u_rc:
                                 crystals[w_rc] = crystals.get(w_rc, set())
-                                crystals[w_rc].add(CrystalGraphTensor(left_rc, u_rc))
+                                crystals[w_rc].add(tensor)
                                 break
                                 # fyi[w_rc] = fyi.get(w_rc, set())
                                 # fyi[w_rc].add((tensor, u_tab))            
