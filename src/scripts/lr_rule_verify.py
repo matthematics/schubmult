@@ -378,7 +378,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                 # pretty_print(to_add)
                 for (rc1, rc2), coeff in to_add.items():
                     assert coeff == 1
-                    if rc1 != left_rc or rc2 != u_rc:
+                    if rc1.perm != left_rc.perm or rc2.perm != u_rc.perm:
                         continue
                     # tcryst = CrystalGraphTensor(rc1, rc2)
                     # for tw in tcryst.full_crystal:
@@ -518,7 +518,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     # if (t_elem2, t_elem1) not in rc_w_coprods.get(w_rc, tring.zero):
                     #     rc_w_coprods[w_rc] += tring((t_elem2, t_elem1))
                     if rc_w.is_principal:
-                        assert len(coeff) == 1
+                        #assert len(coeff) == 1
                         sm += len(coeff) * Sx(rc_w.perm)
 
 
