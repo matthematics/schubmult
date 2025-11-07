@@ -1,5 +1,6 @@
 # LR rule verification script
 
+import base64
 import gc
 import json
 import os
@@ -42,7 +43,7 @@ def safe_save(obj, filename, save_json_backup=True):
     # Pickle save
     temp_pickle = f"{filename}.pkl.tmp"
     pickle_file = f"{filename}.pkl"
-    print("Saving cache to", pickle_file)
+    # print("Saving cache to", pickle_file)
     try:
         with open(temp_pickle, "wb") as f:
             pickle.dump(obj, f, protocol=pickle.HIGHEST_PROTOCOL)
@@ -52,14 +53,14 @@ def safe_save(obj, filename, save_json_backup=True):
     except Exception as e:
         import traceback
 
-        print("Error during pickle save:")
+        # print("Error during pickle save:")
         traceback.print_exc()
         if os.path.exists(temp_pickle):
             os.remove(temp_pickle)
     # JSON backup
     if not save_json_backup:
         return
-    print("Saving JSON backup to", f"{filename}.json")
+    # print("Saving JSON backup to", f"{filename}.json")
     temp_json = f"{filename}.json.tmp"
     json_file = f"{filename}.json"
     try:
@@ -76,7 +77,7 @@ def safe_save(obj, filename, save_json_backup=True):
     except Exception as e:
         import traceback
 
-        print("Error during JSON backup:")
+        # print("Error during JSON backup:")
         traceback.print_exc()
         if os.path.exists(temp_json):
             os.remove(temp_json)
@@ -88,67 +89,86 @@ def safe_save_recording(obj, filename):
     try:
         # keys are permutations, values are bools
         with open(temp_json, "w") as f:
-            json.dump({repr(tuple(k)): v for k, v in obj.items()}, f)
+            json.dump({json_key_rep(k): v for k, v in obj.items()}, f)
         if os.path.exists(json_file):
             shutil.copy2(json_file, f"{json_file}.backup")
         os.replace(temp_json, json_file)
     except Exception as e:
         import traceback
 
-        print("Error during recording JSON save:")
+        # print("Error during recording JSON save:")
         traceback.print_exc()
         if os.path.exists(temp_json):
             os.remove(temp_json)
 
 
-def safe_load(filename):
-    pickle_file = f"{filename}.pkl"
-    json_file = f"{filename}.json"
-    # Try pickle first
-    if os.path.exists(pickle_file):
-        try:
-            with open(pickle_file, "rb") as f:
-                return pickle.load(f)
-        except Exception as e:
-            print(f"Pickle load failed: {e}")
-            raise
-    else:
-        print(f"No pickle file {pickle_file} found.")
-    # Fallback to JSON
-    print("Falling back to JSON load...")
-    if os.path.exists(json_file):
-        try:
-            with open(json_file) as f:
-                loaded = json.load(f)
-            print("Reloading modules from JSON backup...")
-            ret = reload_modules(loaded)
-            print("Done.")
-            print(f"Saving as pickle to {pickle_file} for future runs...")
-            safe_save(ret, filename, save_json_backup=False)
-            return ret
-        except Exception as e:
-            print(f"JSON load failed: {e}")
-            raise
-    else:
-        print(f"No JSON file {json_file} found.")
-    return {}
+def json_key_rep(k):
+    """
+    Serialize an arbitrary Python object `k` to a JSON-key-safe string.
+
+    Strategy:
+    - Primary: pickle the object and base64-encode the bytes, prefix with "PICKLE:".
+      This preserves the original Python object on load (uses pickle.loads).
+    - Fallback: if pickling fails, use "REPR:" + repr(k) and fall back to eval on load.
+    """
+    try:
+        # use the already-imported `pickle` module from this file
+        raw = pickle.dumps(k, protocol=pickle.HIGHEST_PROTOCOL)
+        return "PICKLE:" + base64.b64encode(raw).decode("ascii")
+    except Exception:
+        # best-effort fallback
+        return "REPR:" + repr(k)
 
 
-def safe_load_recording(filename, Permutation):
+def json_key_load(s):
+    """
+    Inverse of json_key_rep: reconstruct the original Python object from the string.
+
+    Accepts strings produced by json_key_rep. Raises ValueError on decode/unpickle
+    failure and returns the original string if no decoding rule matches.
+    """
+    if not isinstance(s, str):
+        raise TypeError("json_key_load expects a string")
+
+    if s.startswith("PICKLE:"):
+        payload = s[len("PICKLE:") :]
+        try:
+            raw = base64.b64decode(payload.encode("ascii"))
+            return pickle.loads(raw)
+        except Exception as e:
+            raise ValueError(f"failed to unpickle json key: {e}") from e
+
+    if s.startswith("REPR:"):
+        rep = s[len("REPR:") :]
+        try:
+            # eval is only used for the fallback REPR case
+            return eval(rep)
+        except Exception as e:
+            raise ValueError(f"failed to eval REPR json key: {e}") from e
+
+    # last resort: try to eval (keeps some backwards compatibility)
+    try:
+        return eval(s)
+    except Exception:
+        # give up and return the raw string
+        return s
+
+
+def safe_load_recording(filename):
     json_file = f"{filename}.json"
     if os.path.exists(json_file):
         try:
             with open(json_file) as f:
                 loaded = json.load(f)
             # reconstruct keys as Permutation objects
-            print(f"Loaded {len(loaded)} entries from {json_file}")
+            # print(f"Loaded {len(loaded)} entries from {json_file}")
             dct = {}
             for k, v in loaded.items():
-                tp = eval(k)
+                tp = json_key_load(k)
                 dct[tp] = v
             return dct
         except Exception as e:
-            print(f"Recording JSON load failed: {e}")
+            # print(f"Recording JSON load failed: {e}")
             raise
     else:
         print(f"No recording file {json_file} found.")
@@ -160,7 +180,7 @@ def safe_load_recording(filename, Permutation):
 #     while not stop_event.is_set():
 #         new_len = len(shared_dict)
 #         if new_len > last_saved_results_len_seen:
-#             print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
+#             # print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
 #             last_saved_results_len_seen = new_len
 #             with lock:
 #                 cache_copy = {k: shared_dict[k] for k in shared_dict.keys()}
@@ -169,7 +189,7 @@ def safe_load_recording(filename, Permutation):
 #     with lock:
 #         cache_copy = {k: shared_dict[k] for k in shared_dict.keys()}
 #     safe_save(cache_copy, filename)
-#     print("Cache saver process exiting.")
+#     # print("Cache saver process exiting.")
 
 
 def recording_saver(shared_recording_dict, lock, verification_filename, stop_event, sleep_time=5):
@@ -178,7 +198,7 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
         new_verification_len = len(shared_recording_dict)
         if new_verification_len > last_verification_len_seen:
             last_verification_len_seen = new_verification_len
-            print("Saving verification to ", verification_filename, " with ", new_verification_len, "entries at ", time.ctime())
+            # print("Saving verification to ", verification_filename, " with ", new_verification_len, "entries at ", time.ctime())
             with lock:
                 recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
             safe_save_recording(recording_copy, verification_filename)
@@ -186,7 +206,7 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
     with lock:
         recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
     safe_save_recording(recording_copy, verification_filename)
-    print("Recording saver process exiting.")
+    # print("Recording saver process exiting.")
 
 
 # def saver(shared_recording_dict, lock, filename, verification_filename, stop_event, sleep_time=5):
@@ -199,14 +219,14 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 #         # new_len = len(shared_dict)
 #         new_verification_len = len(shared_recording_dict)
 #         # if new_len > last_saved_results_len_seen:
-#         #     print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
+#         #     # print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
 #         #     last_saved_results_len_seen = new_len
 #         #     with lock:
 #         #         cache_copy = {k: shared_dict[k] for k in shared_dict.keys()}
 #         #     safe_save(cache_copy, filename)
 #         if new_verification_len > last_verification_len_seen:
 #             last_verification_len_seen = new_verification_len
-#             print("Saving verification to ", verification_filename, " with ", len(shared_recording_dict), "entries at ", time.ctime())
+#             # print("Saving verification to ", verification_filename, " with ", len(shared_recording_dict), "entries at ", time.ctime())
 #             with lock:
 #                 recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
 #             safe_save_recording(recording_copy, verification_filename)
@@ -217,7 +237,7 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 #         recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
 #     safe_save(cache_copy, filename)
 #     safe_save_recording(recording_copy, verification_filename)
-#     print("Saver process exiting.")
+#     # print("Saver process exiting.")
 
 
 
@@ -309,102 +329,147 @@ def worker(hw_tabs, nn, shared_recording_dict, lock, task_queue):
     class MarkedInteger(int):
         pass
 
-    hw_rc_sets = {}
-    @cache
-    def decompose_tensor_product(dom, u, n):
+    def decompose_tensor_product(dom, u_rc, n):
+        from schubmult import CrystalGraphTensor, RCGraphRing, RootTableau
+        rc_ring = RCGraphRing()
+        tring = rc_ring @ rc_ring
         # global hw_rc_sets
         crystals = {}
-        highest_weights = set()
-        perm_set = set((Sx(u)*Sx(dom.perm)).keys())
-        for w in perm_set:
-            if len(w) > n:
-                continue
-            # if not u.bruhat_leq(w):
-            #     continue
-            # if not dom.perm.bruhat_leq(w):
-            #     continue
-
-            # print(f"Moving on to {u=} {w=} {dom.perm=}")
-            if w not in hw_rc_sets:
-                hw_rc_sets[w] = set()
-                for rc_w in RCGraph.all_rc_graphs(w, n - 1):
-                    # pretty_print(rc_w)
-                    if not rc_w.is_highest_weight:
+        assert len(u_rc) == n - 1
+        assert len(dom) == n - 1
+        if u_rc.inv == 0:
+            crystals[dom] = {CrystalGraphTensor(dom, u_rc)}
+            return crystals
+        if dom.inv == 0:
+            crystals[u_rc] = {CrystalGraphTensor(dom, u_rc)}
+            return crystals
+        if len(u_rc) == 0:
+            assert len(dom) == 0
+            crystals[dom] = {CrystalGraphTensor(dom, u_rc)}
+            return crystals
+        if len(u_rc) == 1:
+            assert len(dom) == 1
+            crystals[RCGraph.one_row(len(dom[0]) + len(u_rc[0]))] = {CrystalGraphTensor(dom, u_rc)}
+            return crystals
+        cut_dom = dom.vertical_cut(n-2)[0]
+        cut_u = u_rc.vertical_cut(n-2)[0]
+        # print("Cutting:")
+        # pretty_print(cut_dom)
+        # pretty_print(cut_u)
+        cut_crystals = decompose_tensor_product(cut_dom, cut_u, n - 1)
+        # print(f"{cut_crystals=}")
+        fyi = {}
+        for rc_w_cut, tensor_elems in cut_crystals.items():
+            up_rc =  rc_ring(rc_w_cut) * rc_ring(RCGraph.one_row(len(dom[-1]) + len(u_rc[-1])))
+            up_tensor = tring.zero
+            for t_elem in tensor_elems:
+                to_add =  tring(t_elem.factors) * tring((RCGraph.one_row(len(dom[-1])),RCGraph.one_row(len(u_rc[-1]))))
+                # pretty_print(to_add)
+                for (rc1, rc2), coeff in to_add.items():
+                    assert coeff == 1
+                    if rc1 != dom or rc2 != u_rc:
                         continue
-                    hw_rc_sets[w].add(rc_w)
-            for rc_w in hw_rc_sets[w]:
-                # pretty_print(rc_w)
-                high_weight = rc_w.length_vector
-                reduced_word = rc_w.reduced_word
-                for subword in all_reduced_subwords(reduced_word, u):
-                    compatible_seq = [MarkedInteger(a) if index in subword else a for index, a in enumerate(rc_w.compatible_sequence)]
-                    u_tab = RootTableau.root_insert_rsk(reduced_word, compatible_seq)
-                    last_inv = 1000
-                    while u_tab.perm.inv < last_inv:
-                        last_inv = u_tab.perm.inv
-                        for box in u_tab.iter_boxes:
-                            if not isinstance(u_tab[box][1], MarkedInteger):
-                                u_tab_test = u_tab.delete_box(box)
-                                if u_tab_test is not None:
-                                    u_tab = u_tab_test
-                                    break
-                    if u_tab.perm.inv > u.inv:
-                        # didn't make it
-                        continue
-
-                    u_tab = u_tab.rectify()
-                    u_hw_rc = u_tab.rc_graph.resize(n - 1)
-                    assert u_hw_rc.perm == u
-
-                    hw_checked = set()
-                    for u_tab2 in u_hw_rc.full_crystal:
-                        tensor = CrystalGraphTensor(dom.rc_graph, u_tab2)
-                        # print(f"{tensor=}")
-                        tc_elem = tensor.to_highest_weight()[0]
-                        # pretty_print(tc_elem)
-                        if tc_elem in hw_checked:
-                            # print("Already checked")
-                            # print(f"{highest_weights=}")
-                            continue
-                        # needed!!!
-                        if tc_elem in highest_weights:
-                            # print("Already known highest weight mapped to some demazure crystal")
-                            continue
-                        u_tab_hw = tc_elem.factors[1]
-                        # hw_checked.add(tc_elem)
-                        #pretty_print(dom.rc_graph)
-                        assert tc_elem.crystal_weight == tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab_hw.length_vector, fillvalue=0)]), f"{tc_elem.crystal_weight=} vs {tuple([a + b for a,b in zip_longest(dom.rc_graph.length_vector, u_tab2.length_vector, fillvalue=0)])}"
-                        high_weight_check = tuple([a for a, b in zip_longest(high_weight, tc_elem.crystal_weight, fillvalue=0)])
-                        low_weight_check = tuple([a for a, b in zip_longest(rc_w.to_lowest_weight()[0].length_vector, tc_elem.crystal_weight, fillvalue=0)])
-                        if tc_elem.crystal_weight == high_weight_check and tc_elem.to_lowest_weight()[0].crystal_weight == low_weight_check:
-                            crystals[(rc_w, tc_elem)] = crystals.get(rc_w, 0) + 1
-                            # print(f"{u=} {dom.perm=} {w=} {crystals=}")
-                            highest_weights.add(tc_elem)
+                    # tcryst = CrystalGraphTensor(rc1, rc2)
+                    # for tw in tcryst.full_crystal:
+                    #     if tw.factors[1] == u_rc:
+                    up_tensor += coeff * tring((rc1, rc2))
+                    #        break
+                        #up_tensor += coeff * tring((rc1, rc2))
+            # print("up_tensor=")
+            # pretty_print(up_tensor)
+            # print("up_rc=")
+            # pretty_print(up_rc)
+            for w_rc, coeff in up_rc.items():
+                assert coeff == 1
+                high_weight = w_rc.to_highest_weight()[0].crystal_weight
+                low_weight = w_rc.to_lowest_weight()[0].crystal_weight
+                if w_rc.perm not in (Sx(dom.perm) * Sx(u_rc.perm)).keys():
+                    continue
+                for (rc1, u_rc2), coeff2 in up_tensor.items():
+                    assert coeff2 == 1
+                    tensor = CrystalGraphTensor(rc1, u_rc2)
+                    tensor_hw = tensor.to_highest_weight()[0]
+                    tensor_lw = tensor.to_lowest_weight()[0]
+                    w_tab = RootTableau.from_rc_graph(w_rc)
+                    u = u_rc.perm
+                    if tensor_hw.crystal_weight == high_weight and tensor_lw.crystal_weight == low_weight:# and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
+                        for subword in all_reduced_subwords(w_rc.reduced_word, u):
+                            # print("w_tab")
+                            # pretty_print(w_tab)
+                            # print(f"{w_rc.reduced_word=}")
+                            # pretty_print(dom_tab)
+                            roots = [w_tab.perm.right_root_at(index, word=w_rc.reduced_word) for index in subword]
+                            grid = copy.deepcopy(w_tab._root_grid)
+                            for box in w_tab.iter_boxes:
+                                # print(box)
+                                if grid[box][0] in roots:
+                                    grid[box] = (grid[box][0], MarkedInteger(grid[box][1]))
+                            u_tab = RootTableau(grid)
+                            last_inv = 1000
+                            
+                            while u_tab.perm.inv < last_inv:
+                                last_inv = u_tab.perm.inv
+                                for box in u_tab.iter_boxes_row_word_order:
+                                    if not isinstance(u_tab[box][1], MarkedInteger):
+                                        u_tab_test = u_tab.delete_box(box)
+                                        if u_tab_test is not None:
+                                            u_tab = u_tab_test
+                                            break
+                                    # else:
+                                    #     try:
+                                            
+                                    #         d_tab_test = d_tab.up_jdt_slide(*box, force=True)
+                                    #         if d_tab_test is not None:
+                                    #             d_tab = d_tab_test
+                                    #     except Exception:
+                                    #         froff = False
+                                    #         # print("Couldn't up jdt")
+                                    #         # pretty_print(d_tab)
+                                    #         # print(f"{box=}")
+                            if u_tab.perm.inv > u_rc.perm.inv:
+                                # didn't make it
+                                # print("No make")
+                                # print(u_tab)
+                                continue
+                            u_hw_rc = u_tab.rc_graph.resize(n-1)
+                            if u_hw_rc.perm != u:
+                                continue
+                            if u_hw_rc == u_rc:
+                                crystals[w_rc] = crystals.get(w_rc, set())
+                                crystals[w_rc].add(tensor)
+                                break
+                                # fyi[w_rc] = fyi.get(w_rc, set())
+                                # fyi[w_rc].add((tensor, u_tab))            
+                    
+        try:
+            
+            assert len(crystals) == 1
+        except AssertionError:
+            pass
         return crystals
 
         
     ASx = FreeAlgebra(SchubertBasis)
     while True:
         try:
-            (w, n) = task_queue.get(timeout=2)
+            (hw_tab, u, n) = task_queue.get(timeout=2)
         except Exception:
             break  # queue empty, exit
         with lock:
-            if (w, n) in shared_recording_dict:
-                if shared_recording_dict[(w, n)] is True:
-                    print(f"{(w, n)} already verified, returning.")
+            if (hw_tab, u, n) in shared_recording_dict:
+                if shared_recording_dict[(hw_tab, u, n)] is True:
+                    print(f"{(hw_tab, u, n)} already verified, returning.")
                     continue
-                print(f"Previous failure on {(w, n)}, will retry.")
+                print(f"Previous failure on {(hw_tab, u, n)}, will retry.")
         
         
         rc_w_coprods = {}
         good = False
-        for hw_tab in hw_tabs:
-            coprod = ASx(w, n-1).coproduct()
-            for ((d, _), (u, _)) in coprod:
-                if d != hw_tab.perm:
-                    continue
-                crystals = decompose_tensor_product(hw_tab, u, n)
+        if True:
+        # for hw_tab in hw_tabs:
+            sm = Sx.zero
+            for u_rc in RCGraph.all_rc_graphs(u, n-1):
+                crystals = decompose_tensor_product(hw_tab, u_rc, n)
 
                 rc_ring = RCGraphRing()
 
@@ -412,53 +477,44 @@ def worker(hw_tabs, nn, shared_recording_dict, lock, task_queue):
 
                 
 
-                for (rc_w, tc_elem), coeff in crystals.items():
+                for rc_w, coeff in crystals.items():
                     # if not rc_w.is:
                     #     continue
-                    max_len = max(len(rc_w), len(tc_elem.factors[0]), len(tc_elem.factors[1]))
-                    t_elem1, t_elem2 = tc_elem.factors
-                    w_rc = rc_w.resize(max_len)
-                    t_elem1 = t_elem1.resize(max_len)
-                    t_elem2 = t_elem2.resize(max_len)
-                    rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2))
+                    # max_len = max(len(rc_w), len(tc_elem.factors[0]), len(tc_elem.factors[1]))
+                    # t_elem1, t_elem2 = tc_elem.factors
+                    # w_rc = rc_w.resize(max_len)
+                    # t_elem1 = t_elem1.resize(max_len)
+                    # t_elem2 = t_elem2.resize(max_len)
+                    # rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2))
                     # if (t_elem2, t_elem1) not in rc_w_coprods.get(w_rc, tring.zero):
                     #     rc_w_coprods[w_rc] += tring((t_elem2, t_elem1))
-        total_coprod = tring.zero        
-        for rc, val in rc_w_coprods.items():
-            if rc.perm != w:
-                continue
-            
-            for (rc1, rc2), coeff in val.items():
-                assert coeff == 1
-                if (rc1, rc2) not in total_coprod:
-                    total_coprod += tring((rc1, rc2))
-
-        tens_ring = ASx@ASx
-        check_elem = tens_ring.zero 
-        for (rc1, rc2), coeff in total_coprod.items():
-            check_elem += tens_ring(((rc1.perm,len(rc1)), (rc2.perm,len(rc2))))
-        diff = check_elem - coprod
+                    if rc_w.is_principal:
+                        sm += Sx(rc_w.perm)
+        
+        
+        check_elem = Sx(hw_tab.perm) * Sx(u)
+        diff = check_elem - sm
         try:
             assert all(v == 0 for v in diff.values())
-            print(f"Coprod {rc.perm.trimcode}")
-            pretty_print(rc)
-            pretty_print(val)
+            #print(f"Coprod {rc.perm.trimcode}")
+            # pretty_print(rc)
+            # pretty_print(val)
         #print("At least one success")
             good = True
         except AssertionError:
             # print("A fail")
-            print(f"{diff=}")
+            # print(f"{diff=}")
             good = False
             
         #assert good, f"COMPLETE FAIL {w=}"
         if good:
-            print(f"Success {(w, n)} at ", time.ctime())
+            print(f"Success {(hw_tab, u, n)} at ", time.ctime())
             with lock:
-                shared_recording_dict[(w, n)] = True
+                shared_recording_dict[(hw_tab, u, n)] = True
         else:
             with lock:
-                shared_recording_dict[(w, n)] = False
-            print(f"FAIL {(w, n)} at ", time.ctime())
+                shared_recording_dict[(hw_tab, u, n)] = False
+            print(f"FAIL {(hw_tab, u, n)} at ", time.ctime())
     
         
 
@@ -471,8 +527,8 @@ def main():
         num_processors = int(sys.argv[3])
         verification_filename = filename + ".verification"
     except (IndexError, ValueError):
-        print("Usage: verify_lr_rule n filename num_processors", file=sys.stderr)
-        print("filename is the base file name (without extension) for saving cache results, and filename.verification is used for verification results", file=sys.stderr)
+        # print("Usage: verify_lr_rule n filename num_processors", file=sys.stderr)
+        # print("filename is the base file name (without extension) for saving cache results, and filename.verification is used for verification results", file=sys.stderr)
         sys.exit(1)
     cd = []
     for i in range(2 * (n - 1), 0, -2):
@@ -484,7 +540,9 @@ def main():
 
     hw_tabs = set()
     for perm in perms:
-        hw_tabs.update([RootTableau.from_rc_graph(rc.to_highest_weight()[0]) for rc in RCGraph.all_rc_graphs(perm, n - 1)])
+        if perm != perm.minimal_dominant_above():
+            continue
+        hw_tabs.update(RCGraph.all_rc_graphs(perm, n - 1))
 
     with Manager() as manager:
         shared_dict = manager.dict()
@@ -493,18 +551,18 @@ def main():
         stop_event = Event()
         # cache_load_dict = {}
         # Load recording dict from JSON only
-        loaded_recording = safe_load_recording(verification_filename, Permutation)
+        loaded_recording = safe_load_recording(verification_filename)
         if loaded_recording:
             shared_recording_dict.update(loaded_recording)
 
         # Load cache dict from pickle or JSON
         # cache_load_dict = safe_load(filename)
         # if cache_load_dict:
-        #     print(f"Loaded {len(cache_load_dict)} entries from {filename}")
+        #     # print(f"Loaded {len(cache_load_dict)} entries from {filename}")
         #     shared_dict.update(cache_load_dict)
 
         # print("Starting from ", len(shared_dict), " saved entries")
-        print("Starting from ", len(shared_recording_dict), " verified entries")
+        # print("Starting from ", len(shared_recording_dict), " verified entries")
         # cache_saver_proc = Process(target=cache_saver, args=( lock, filename, stop_event))
         recording_saver_proc = Process(target=recording_saver, args=(shared_recording_dict, lock, verification_filename, stop_event))
         # cache_saver_proc.start()
@@ -515,7 +573,8 @@ def main():
         task_queue = manager.Queue()
         # dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
         for perm in perms:
-            task_queue.put((perm, n))
+            for hw_tab in hw_tabs:
+                task_queue.put((hw_tab, perm, n))
 
         # Start fixed number of workers
         workers = []
@@ -530,9 +589,9 @@ def main():
         stop_event.set()
         # cache_saver_proc.join()
         recording_saver_proc.join()
-        print("Run finished.")
+        # print("Run finished.")
         if any(v is False for v in shared_recording_dict.values()):
-            print("Failures:")
+            # print("Failures:")
             for k, v in shared_recording_dict.items():
                 if v is False:
                     print(k)
@@ -589,7 +648,7 @@ if __name__ == "__main__":
 #     except Exception as e:
 #         import traceback
 
-#         print(f"Error during safe_save:")
+#         # print(f"Error during safe_save:")
 #         traceback.print_exc()
 #         if os.path.exists(temp_filename):
 #             os.remove(temp_filename)
@@ -609,18 +668,18 @@ if __name__ == "__main__":
 #         cache_copy = {**shared_dict}
 #         recording_copy = {**shared_recording_dict}
 #         if new_len > last_saved_results_len_seen:
-#             print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
+#             # print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
 #             last_saved_results_len_seen = new_len
 #             safe_save(cache_copy, filename)
 #         if new_verification_len > last_verification_len_seen:
 #             last_verification_len_seen = new_verification_len
-#             print("Saving verification to ", verification_filename, " with ", len(recording_copy), "entries at ", time.ctime())
+#             # print("Saving verification to ", verification_filename, " with ", len(recording_copy), "entries at ", time.ctime())
 #             safe_save(recording_copy, verification_filename)
 #         time.sleep(sleep_time)
 #     # Final save after stop
 #     safe_save({**shared_dict}, filename)
 #     safe_save({**shared_recording_dict}, verification_filename)
-#     print("Saver process exiting.")
+#     # print("Saver process exiting.")
 
 
 # def worker(args):
@@ -630,7 +689,7 @@ if __name__ == "__main__":
 
 #     with lock:
 #         if perm in shared_recording_dict:
-#             print(f"{perm} already verified, returning.")
+#             # print(f"{perm} already verified, returning.")
 #             return  # already verified
 #     try_mod = try_lr_module(perm, lock=lock, cache_dict=shared_dict)
 #     elem = try_mod.asdtype(ASx @ ASx)
@@ -639,14 +698,14 @@ if __name__ == "__main__":
 #     try:
 #         assert all(v == 0 for v in (elem - check).values())
 #     except AssertionError:
-#         print(f"Fail on {perm} at ", time.ctime())
+#         # print(f"Fail on {perm} at ", time.ctime())
 #         with lock:
 #             shared_recording_dict[perm] = False
 #         return
 
 #     with lock:
 #         shared_recording_dict[perm] = True
-#     print(f"Success {perm.trimcode} at ", time.ctime())
+#     # print(f"Success {perm.trimcode} at ", time.ctime())
 
 
 # def main():
@@ -658,8 +717,8 @@ if __name__ == "__main__":
 #         num_processors = int(sys.argv[3]) if len(sys.argv) > 3 else max(1, cpu_count() - 2)
 #         verification_filename = filename + ".verification"
 #     except (IndexError, ValueError):
-#         print("Usage: verify_lr_rule n filename [num_processors]", file=sys.stderr)
-#         print("filename is the save file for saving intermediate results, filename.verification is used for verification results", file=sys.stderr)
+#         # print("Usage: verify_lr_rule n filename [num_processors]", file=sys.stderr)
+#         # print("filename is the save file for saving intermediate results, filename.verification is used for verification results", file=sys.stderr)
 #         sys.exit(1)
 
 #     perms = Permutation.all_permutations(n)
@@ -679,9 +738,9 @@ if __name__ == "__main__":
 #                     if isinstance(loaded, dict):
 #                         loaded = {Permutation(eval(k)): v for k, v in loaded.items()}
 #                         shared_recording_dict.update(loaded)
-#                         print(f"Loaded {len(loaded)} entries from {verification_filename}")
+#                         # print(f"Loaded {len(loaded)} entries from {verification_filename}")
 #             except Exception as e:
-#                 print(f"Could not load from {filename}: {e}")
+#                 # print(f"Could not load from {filename}: {e}")
 #                 raise
 
 #         if os.path.exists(filename):
@@ -690,16 +749,16 @@ if __name__ == "__main__":
 #                     loaded = load(f)
 #                     if isinstance(loaded, dict):
 #                         cache_load_dict.update(loaded)
-#                         print(f"Loaded {len(loaded)} entries from {filename}")
-#                 print("Reconstructing modules from loaded data...")
+#                         # print(f"Loaded {len(loaded)} entries from {filename}")
+#                 # print("Reconstructing modules from loaded data...")
 #                 shared_dict.update(reload_modules(cache_load_dict))
-#                 print("Successfully reconstructed modules")
+#                 # print("Successfully reconstructed modules")
 #             except Exception as e:
-#                 print(f"Could not load from {filename}: {e}")
+#                 # print(f"Could not load from {filename}: {e}")
 #                 raise
 
-#         print("Starting from ", len(shared_dict), " saved entries")
-#         print("Starting from ", len(shared_recording_dict), " verified entries")
+#         # print("Starting from ", len(shared_dict), " saved entries")
+#         # print("Starting from ", len(shared_recording_dict), " verified entries")
 #         saver_proc = Process(target=saver, args=( shared_recording_dict, lock, len(perms), filename, verification_filename, stop_event))
 #         saver_proc.start()
 
@@ -711,7 +770,7 @@ if __name__ == "__main__":
 #         # Signal saver to exit
 #         stop_event.set()
 #         saver_proc.join()
-#         print("Verification finished.")
+#         # print("Verification finished.")
 
 
 # if __name__ == "__main__":
