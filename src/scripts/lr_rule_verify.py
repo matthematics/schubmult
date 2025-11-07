@@ -540,13 +540,13 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     #     rc_w_coprods[w_rc] += tring((t_elem2, t_elem1))
                     #if rc_w.is_highest_weight and rc_w.to_lowest_weight()[0].is_principal:
                     # principal_crystal = RCGraph.principal_rc(rc_w.perm, n - 1).full_crystal
-                    if rc_w.to_lowest_weight()[0].is_principal:
+                    #if rc_w.to_lowest_weight()[0].is_principal:
                         #assert len(coeff) == 1
-                        for tensor in coeff:
-                            if tensor in used_tensors:
-                                continue
-                            used_tensors.add(tensor)
-                            sm += Sx(rc_w.perm)
+                    for tensor in coeff:
+                        if tensor in used_tensors:
+                            continue
+                        used_tensors.add(tensor)
+                        sm += Sx(rc_w.perm)
                         #used_rcs.add(rc_w)
 
 
