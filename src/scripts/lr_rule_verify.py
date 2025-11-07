@@ -329,12 +329,14 @@ def worker(nn, shared_recording_dict, lock, task_queue):
     class MarkedInteger(int):
         pass
 
-    def decompose_tensor_product(dom, u_rc, n):
-        from schubmult import CrystalGraphTensor, RCGraphRing, RootTableau
+    def decompose_tensor_product(left_rc, u_rc, n):
+        from schubmult import CrystalGraphTensor, RCGraphRing, RootTableau, uncode
         rc_ring = RCGraphRing()
         tring = rc_ring @ rc_ring
         # global hw_rc_sets
         crystals = {}
+        dom = RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector), n -1)
+
         assert len(u_rc) == n - 1
         assert len(dom) == n - 1
         if u_rc.inv == 0:
@@ -389,10 +391,11 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     assert coeff2 == 1
                     tensor = CrystalGraphTensor(rc1, u_rc2)
                     tensor_hw = tensor.to_highest_weight()[0]
-                    tensor_lw = tensor.to_lowest_weight()[0]
+                    #tensor_lw = tensor.to_lowest_weight()[0]
+                    low_tensor_weight = tuple([a + b for a,b in zip(left_rc.length_vector, u_rc.length_vector)])
                     w_tab = RootTableau.from_rc_graph(w_rc)
                     u = u_rc.perm
-                    if tensor_hw.crystal_weight == high_weight and tensor_lw.crystal_weight == low_weight:# and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
+                    if tensor_hw.crystal_weight == high_weight and low_tensor_weight == low_weight:# and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
                         for subword in all_reduced_subwords(w_rc.reduced_word, u):
                             # print("w_tab")
                             # pretty_print(w_tab)
