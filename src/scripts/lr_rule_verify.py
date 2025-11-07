@@ -393,10 +393,10 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     tensor = CrystalGraphTensor(dom, u_rc2)
                     tensor_hw = tensor.to_highest_weight()[0]
                     tensor_lw = tensor.to_lowest_weight()[0]
-                    #low_tensor_weight = tuple([a + b for a,b in zip(left_rc.length_vector, u_rc.length_vector)])
+                    low_tensor_weight = tuple([a + b for a,b in zip(left_rc.length_vector, u_rc.length_vector)])
                     w_tab = RootTableau.from_rc_graph(w_rc)
                     u = u_rc.perm
-                    if tensor_hw.crystal_weight == high_weight and tensor_lw.crystal_weight == low_weight:# and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
+                    if tensor_hw.crystal_weight == high_weight and low_tensor_weight == low_weight:# and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
                         for subword in all_reduced_subwords(w_rc.reduced_word, u):
                             # print("w_tab")
                             # pretty_print(w_tab)
