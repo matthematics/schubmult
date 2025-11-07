@@ -340,25 +340,25 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         assert len(u_rc) == n - 1
         assert len(dom) == n - 1
         if u_rc.inv == 0:
-            crystals[dom] = {CrystalGraphTensor(dom, u_rc)}
+            crystals[left_rc] = {CrystalGraphTensor(left_rc, u_rc)}
             return crystals
         if dom.inv == 0:
-            crystals[u_rc] = {CrystalGraphTensor(dom, u_rc)}
+            crystals[u_rc] = {CrystalGraphTensor(left_rc, u_rc)}
             return crystals
         if len(u_rc) == 0:
             assert len(dom) == 0
-            crystals[dom] = {CrystalGraphTensor(dom, u_rc)}
+            crystals[left_rc] = {CrystalGraphTensor(left_rc, u_rc)}
             return crystals
         if len(u_rc) == 1:
-            assert len(dom) == 1
-            crystals[RCGraph.one_row(len(left_rc[0]) + len(u_rc[0]))] = {CrystalGraphTensor(dom, u_rc)}
+            assert len(left_rc) == 1
+            crystals[RCGraph.one_row(len(left_rc[0]) + len(u_rc[0]))] = {CrystalGraphTensor(left_rc, u_rc)}
             return crystals
-        cut_dom = left_rc.vertical_cut(n-2)[0]
+        cut_left_rc = left_rc.vertical_cut(n-2)[0]
         cut_u = u_rc.vertical_cut(n-2)[0]
         # print("Cutting:")
-        # pretty_print(cut_dom)
+        # pretty_print(cut_left_rc)
         # pretty_print(cut_u)
-        cut_crystals = decompose_tensor_product(cut_dom, cut_u, n - 1)
+        cut_crystals = decompose_tensor_product(cut_left_rc, cut_u, n - 1)
         # print(f"{cut_crystals=}")
         fyi = {}
         for rc_w_cut, tensor_elems in cut_crystals.items():
@@ -385,18 +385,18 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                 assert coeff == 1
                 high_weight = w_rc.to_highest_weight()[0].crystal_weight
                 low_weight = w_rc.to_lowest_weight()[0].crystal_weight
-                if w_rc.perm not in (Sx(dom.perm) * Sx(u_rc.perm)).keys():
+                if w_rc.perm not in (Sx(left_rc.perm) * Sx(u_rc.perm)).keys():
                     continue
                 for (rc1, u_rc2), coeff2 in up_tensor.items():
                     assert coeff2 == 1
                     # NOTE DOM TENSOR
                     tensor = CrystalGraphTensor(dom, u_rc2)
                     tensor_hw = tensor.to_highest_weight()[0]
-                    #tensor_lw = tensor.to_lowest_weight()[0]
-                    low_tensor_weight = tuple([a + b for a,b in zip(left_rc.length_vector, u_rc.length_vector)])
+                    tensor_lw = tensor.to_lowest_weight()[0]
+                    #low_tensor_weight = tuple([a + b for a,b in zip(left_rc.length_vector, u_rc.length_vector)])
                     w_tab = RootTableau.from_rc_graph(w_rc)
                     u = u_rc.perm
-                    if tensor_hw.crystal_weight == high_weight and low_tensor_weight == low_weight:# and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
+                    if tensor_hw.crystal_weight == high_weight and tensor_lw.crystal_weight == low_weight:# and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
                         for subword in all_reduced_subwords(w_rc.reduced_word, u):
                             # print("w_tab")
                             # pretty_print(w_tab)
@@ -440,7 +440,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                                 continue
                             if u_hw_rc == u_rc:
                                 crystals[w_rc] = crystals.get(w_rc, set())
-                                crystals[w_rc].add(tensor)
+                                crystals[w_rc].add(CrystalGraphTensor(left_rc, u_rc))
                                 break
                                 # fyi[w_rc] = fyi.get(w_rc, set())
                                 # fyi[w_rc].add((tensor, u_tab))            
@@ -601,9 +601,12 @@ def main():
         # print("Run finished.")
         if any(v is False for v in shared_recording_dict.values()):
             print("Failures:")
+            num_fail = 0
             for k, v in shared_recording_dict.items():
                 if v is False:
+                    num_fail += 1
                     print(k)
+            print(f"{num_fail} failures.")
         else:
             print("All verified successfully!")
 
@@ -611,176 +614,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-# import os
-# import shutil
-# import sys
-# import time
-# from json import dump, load
-# from multiprocessing import Event, Lock, Manager, Pool, Process, cpu_count
-
-# from joblib import Parallel, delayed
-
-
-# def reload_modules(dct, n_jobs=None):
-#     from schubmult.schub_lib.rc_graph_module import RCGraph
-
-#     def reconstruct_one(k, v):
-#         key = eval(k)  # tuple
-#         result_val = None
-#         for k2, v2 in v.items():
-#             g = eval(k2)
-#             g1, g2 = RCGraph(g[0]), RCGraph(g[1])
-#             if result_val is None:
-#                 result_val = v2 * (g1 @ g2)
-#             else:
-#                 result_val += v2 * (g1 @ g2)
-#         return (key, result_val)
-
-#     # Use joblib to parallelize reconstruction
-#     items = list(dct.items())
-#     n_jobs = n_jobs or min(8, os.cpu_count() or 1)
-#     results = Parallel(n_jobs=n_jobs)(delayed(reconstruct_one)(k, v) for k, v in items)
-#     return dict(results)
-
-
-# def safe_save(obj, filename):
-#     from schubmult.schub_lib.rc_graph_module import TensorModule
-
-#     temp_filename = f"{filename}.tmp"
-#     try:
-#         with open(temp_filename, "w") as f:
-#             dump({repr(k): {repr(tuple([tuple(a) for a in k2])): int(v2) for k2, v2 in v.value_dict.items()} if isinstance(v, TensorModule) else v for k, v in obj.items()}, f)
-#         # Atomically repla  ce the file
-#         if os.path.exists(filename):
-#             shutil.copy2(filename, f"{filename}.backup")  # copy, not rename
-#         os.replace(temp_filename, filename)
-#     except Exception as e:
-#         import traceback
-
-#         # print(f"Error during safe_save:")
-#         traceback.print_exc()
-#         if os.path.exists(temp_filename):
-#             os.remove(temp_filename)
-
-
-# def saver( shared_recording_dict, lock, max_len, filename, verification_filename, stop_event, sleep_time=5):
-#     last_saved_results_len_seen = 0
-#     last_verification_len_seen = 0
-#     with lock:
-#         last_saved_results_len_seen = len(shared_dict)
-#         last_verification_len_seen = len(shared_recording_dict)
-#     while not stop_event.is_set():
-#         cache_copy = {}
-#         recording_copy = {}
-#         new_len = len(shared_dict)
-#         new_verification_len = len(shared_recording_dict)
-#         cache_copy = {**shared_dict}
-#         recording_copy = {**shared_recording_dict}
-#         if new_len > last_saved_results_len_seen:
-#             # print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
-#             last_saved_results_len_seen = new_len
-#             safe_save(cache_copy, filename)
-#         if new_verification_len > last_verification_len_seen:
-#             last_verification_len_seen = new_verification_len
-#             # print("Saving verification to ", verification_filename, " with ", len(recording_copy), "entries at ", time.ctime())
-#             safe_save(recording_copy, verification_filename)
-#         time.sleep(sleep_time)
-#     # Final save after stop
-#     safe_save({**shared_dict}, filename)
-#     safe_save({**shared_recording_dict}, verification_filename)
-#     # print("Saver process exiting.")
-
-
-# def worker(args):
-#      shared_recording_dict, lock, perm = args
-#     from schubmult import ASx
-#     from schubmult.schub_lib.rc_graph_module import try_lr_module
-
-#     with lock:
-#         if perm in shared_recording_dict:
-#             # print(f"{perm} already verified, returning.")
-#             return  # already verified
-#     try_mod = try_lr_module(perm, lock=lock, cache_dict=shared_dict)
-#     elem = try_mod.asdtype(ASx @ ASx)
-
-#     check = ASx(perm).coproduct()
-#     try:
-#         assert all(v == 0 for v in (elem - check).values())
-#     except AssertionError:
-#         # print(f"Fail on {perm} at ", time.ctime())
-#         with lock:
-#             shared_recording_dict[perm] = False
-#         return
-
-#     with lock:
-#         shared_recording_dict[perm] = True
-#     # print(f"Success {perm.trimcode} at ", time.ctime())
-
-
-# def main():
-#     from schubmult import Permutation
-
-#     try:
-#         n = int(sys.argv[1])
-#         filename = sys.argv[2]
-#         num_processors = int(sys.argv[3]) if len(sys.argv) > 3 else max(1, cpu_count() - 2)
-#         verification_filename = filename + ".verification"
-#     except (IndexError, ValueError):
-#         # print("Usage: verify_lr_rule n filename [num_processors]", file=sys.stderr)
-#         # print("filename is the save file for saving intermediate results, filename.verification is used for verification results", file=sys.stderr)
-#         sys.exit(1)
-
-#     perms = Permutation.all_permutations(n)
-#     perms.sort(key=lambda p: (p.inv, p.trimcode))
-
-#     with Manager() as manager:
-#         shared_dict = manager.dict()
-#         shared_recording_dict = manager.dict()
-#         lock = manager.Lock()
-#         stop_event = Event()
-#         cache_load_dict = {}
-#         # Load from file if it exists
-#         if os.path.exists(verification_filename):
-#             try:
-#                 with open(verification_filename, "r") as f:
-#                     loaded = load(f)
-#                     if isinstance(loaded, dict):
-#                         loaded = {Permutation(eval(k)): v for k, v in loaded.items()}
-#                         shared_recording_dict.update(loaded)
-#                         # print(f"Loaded {len(loaded)} entries from {verification_filename}")
-#             except Exception as e:
-#                 # print(f"Could not load from {filename}: {e}")
-#                 raise
-
-#         if os.path.exists(filename):
-#             try:
-#                 with open(filename, "r") as f:
-#                     loaded = load(f)
-#                     if isinstance(loaded, dict):
-#                         cache_load_dict.update(loaded)
-#                         # print(f"Loaded {len(loaded)} entries from {filename}")
-#                 # print("Reconstructing modules from loaded data...")
-#                 shared_dict.update(reload_modules(cache_load_dict))
-#                 # print("Successfully reconstructed modules")
-#             except Exception as e:
-#                 # print(f"Could not load from {filename}: {e}")
-#                 raise
-
-#         # print("Starting from ", len(shared_dict), " saved entries")
-#         # print("Starting from ", len(shared_recording_dict), " verified entries")
-#         saver_proc = Process(target=saver, args=( shared_recording_dict, lock, len(perms), filename, verification_filename, stop_event))
-#         saver_proc.start()
-
-#         # Use a process pool for workers
-#         pool_size = num_processors
-#         with Pool(processes=pool_size) as pool:
-#             pool.map(worker, [( shared_recording_dict, lock, perm) for perm in perms])
-
-#         # Signal saver to exit
-#         stop_event.set()
-#         saver_proc.join()
-#         # print("Verification finished.")
-
-
-# if __name__ == "__main__":
-#     main()
