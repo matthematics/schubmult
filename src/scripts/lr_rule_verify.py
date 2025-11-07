@@ -353,19 +353,28 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             assert len(left_rc) == 1
             crystals[RCGraph.one_row(len(left_rc[0]) + len(u_rc[0]))] = {CrystalGraphTensor(left_rc, u_rc)}
             return crystals
-        cut_left_rc = left_rc.vertical_cut(n-2)[0]
+        cut_left_rc = left_rc.vertical_cut(n - 2)[0]
         cut_u = u_rc.vertical_cut(n-2)[0]
+
+        lower_left_rc = left_rc.rowrange(1)
+        lower_u = u_rc.rowrange(1)
+        
+        top_row_left = len(left_rc[0])
+        top_row_right = len(u_rc[0])
         # print("Cutting:")
         # pretty_print(cut_left_rc)
         # pretty_print(cut_u)
-        cut_crystals = decompose_tensor_product(cut_left_rc, cut_u, n - 1)
+        # cut_crystals = decompose_tensor_product(cut_left_rc, cut_u, n - 1)
+        cut_crystals = decompose_tensor_product(lower_left_rc, lower_u, n - 1)
         # print(f"{cut_crystals=}")
         fyi = {}
         for rc_w_cut, tensor_elems in cut_crystals.items():
-            up_rc =  rc_ring(rc_w_cut) * rc_ring(RCGraph.one_row(len(left_rc[-1]) + len(u_rc[-1])))
+            # up_rc =  rc_ring(rc_w_cut) * rc_ring(RCGraph.one_row(len(left_rc[-1]) + len(u_rc[-1])))
+            up_rc = rc_ring(RCGraph.one_row(top_row_left + top_row_right)) * rc_ring(rc_w_cut)
             up_tensor = tring.zero
             for t_elem in tensor_elems:
-                to_add =  tring(t_elem.factors) * tring((RCGraph.one_row(len(left_rc[-1])),RCGraph.one_row(len(u_rc[-1]))))
+                # to_add =  tring(t_elem.factors) * tring((RCGraph.one_row(len(left_rc[-1])),RCGraph.one_row(len(u_rc[-1]))))
+                to_add = tring((RCGraph.one_row(top_row_left),RCGraph.one_row(top_row_right))) * tring(t_elem.factors)
                 # pretty_print(to_add)
                 for (rc1, rc2), coeff in to_add.items():
                     assert coeff == 1
