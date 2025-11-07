@@ -394,7 +394,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     #tensor = CrystalGraphTensor(RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector),n-1), u_rc2)
                     tensor_hw = tensor.to_highest_weight()[0]
                     tensor_lw = tensor.to_lowest_weight()[0]
-                    low_tensor_weight = tuple([a + b for a,b in zip(left_rc.to_lowest_weight()[0].length_vector, tensor_lw.factors[1].length_vector)])
+                    low_tensor_weight = tensor_lw.crystal_weight#tuple([a + b for a,b in zip(left_rc.to_lowest_weight()[0].length_vector, tensor_lw.factors[1].length_vector)])
                     #low_tensor_weight = tensor_lw.crystal_weight
                     w_tab = RootTableau.from_rc_graph(w_rc)
                     u = u_rc.perm
@@ -472,9 +472,9 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         rc_w_coprods = {}
         good = False
         #if True:
-        hw_tab = RCGraph.principal_rc(u, n - 1)#.to_highest_weight()[0]
-        #for hw_tab in RCGraph.all_hw_rcs(u, n - 1):
-        if True:
+        #hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
+        for hw_tab in RCGraph.all_hw_rcs(u, n - 1):
+        #if True:
             sm = Sx.zero
             for v_rc in RCGraph.all_rc_graphs(v, n-1):
                 crystals = decompose_tensor_product(hw_tab, v_rc, n)
