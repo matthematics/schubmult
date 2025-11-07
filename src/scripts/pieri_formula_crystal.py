@@ -91,7 +91,7 @@ def decompose_tensor_product(dom, u_rc, n):
                 tensor = CrystalGraphTensor(rc1, u_rc2)
                 tensor_hw = tensor.to_highest_weight()[0]
                 tensor_lw = tensor.to_lowest_weight()[0]
-                if tensor_hw.crystal_weight == high_weight and tensor_lw.crystal_weight == low_weight:
+                if tensor_hw.crystal_weight == high_weight and tensor_lw.crystal_weight == low_weight and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
                     crystals[w_rc] = crystals.get(w_rc, set())
                     crystals[w_rc].add(tensor)
     try:
