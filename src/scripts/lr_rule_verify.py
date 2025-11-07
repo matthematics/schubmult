@@ -390,6 +390,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             # pretty_print(up_tensor)
             # print("up_rc=")
             # pretty_print(up_rc)
+            bad_tensors = set()
             for w_rc, coeff in up_rc.items():
                 assert coeff == 1
                 high_weight = w_rc.to_highest_weight()[0].crystal_weight
@@ -401,14 +402,17 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     # NOTE DOM TENSOR
                     # if rc1.perm != left_rc.perm or u_rc2.perm != u_rc.perm:
                     #     continue
-                    tensor = CrystalGraphTensor(left_rc, u_rc2)
+                    dom_rc = RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector), n - 1)
+                    tensor = CrystalGraphTensor(rc1, u_rc2)
+                    #tensor_dom = CrystalGraphTensor(dom_rc, u_rc2)
                     tensor_hw = tensor.to_highest_weight()[0]
                     tensor_lw = tensor.to_lowest_weight()[0]
                     #low_tensor_weight = tuple([a + b for a,b in zip(left_rc.to_lowest_weight()[0].length_vector, tensor_lw.factors[1].length_vector)])
                     low_tensor_weight = tensor_lw.crystal_weight
                     w_tab = RootTableau.from_rc_graph(w_rc)
                     u = u_rc.perm
-                    if tensor_hw.crystal_weight == high_weight and low_tensor_weight == low_weight:# and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
+                    if tensor_hw.crystal_weight == high_weight:
+                        # and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
                         # for subword in all_reduced_subwords(w_rc.reduced_word, u):
                         #     # print("w_tab")
                         #     # pretty_print(w_tab)
@@ -453,9 +457,10 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                         #     if u_hw_rc == u_rc:
                         crystals[w_rc] = crystals.get(w_rc, set())
                         crystals[w_rc].add(tensor)
-                        
-                                # fyi[w_rc] = fyi.get(w_rc, set())
-                                # fyi[w_rc].add((tensor, u_tab))            
+                        if low_tensor_weight != low_weight:
+                            bad_tensors.add(tensor)
+                        # fyi[w_rc] = fyi.get(w_rc, set())
+                        # fyi[w_rc].add((tensor, u_tab))
         get_rid = 0
         the_prins = set()
         for ww_rc, tset in crystals.items():
@@ -467,10 +472,9 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         for _ in range(get_rid):
             for the_prin in the_prins:
                 try:
-                    crystals[the_prin].remove(next({c for c in crystals[the_prin] if c != CrystalGraphTensor(left_rc, u_rc)}))
-                    break
+                    crystals[the_prin].remove(next({c for c in crystals[the_prin] if c in bad_tensors}))
                 except Exception:
-                    pass
+                    break
         try:
             
             assert len(crystals) == 1
