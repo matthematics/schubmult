@@ -335,18 +335,18 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         tring = rc_ring @ rc_ring
         # global hw_rc_sets
         crystals = {}
-        dom = RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector), n -1)
+        #dom = RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector), n -1)
 
         assert len(u_rc) == n - 1
-        assert len(dom) == n - 1
+        assert len(left_rc) == n - 1
         if u_rc.inv == 0:
             crystals[left_rc] = {CrystalGraphTensor(left_rc, u_rc)}
             return crystals
-        if dom.inv == 0:
+        if left_rc.inv == 0:
             crystals[u_rc] = {CrystalGraphTensor(left_rc, u_rc)}
             return crystals
         if len(u_rc) == 0:
-            assert len(dom) == 0
+            assert len(left_rc) == 0
             crystals[left_rc] = {CrystalGraphTensor(left_rc, u_rc)}
             return crystals
         if len(u_rc) == 1:
@@ -390,10 +390,12 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                 for (rc1, u_rc2), coeff2 in up_tensor.items():
                     assert coeff2 == 1
                     # NOTE DOM TENSOR
-                    tensor = CrystalGraphTensor(dom, u_rc2)
+                    tensor = CrystalGraphTensor(left_rc.to_highest_weight()[0], u_rc2)
+                    #tensor = CrystalGraphTensor(RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector),n-1), u_rc2)
                     tensor_hw = tensor.to_highest_weight()[0]
                     tensor_lw = tensor.to_lowest_weight()[0]
-                    low_tensor_weight = tuple([a + b for a,b in zip(left_rc.length_vector, u_rc.length_vector)])
+                    low_tensor_weight = tuple([a + b for a,b in zip(left_rc.to_lowest_weight()[0].length_vector, tensor_lw.factors[1].length_vector)])
+                    #low_tensor_weight = tensor_lw.crystal_weight
                     w_tab = RootTableau.from_rc_graph(w_rc)
                     u = u_rc.perm
                     if tensor_hw.crystal_weight == high_weight and low_tensor_weight == low_weight:# and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
@@ -462,7 +464,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         with lock:
             if (u, v, n) in shared_recording_dict:
                 if shared_recording_dict[(u, v, n)] is True:
-                    print(f"{(u, v, n)} already verified, returning.")
+                    #print(f"{(u, v, n)} already verified, returning.")
                     continue
                 print(f"Previous failure on {(u, v, n)}, will retry.")
         
@@ -471,7 +473,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         good = False
         #if True:
         hw_tab = RCGraph.principal_rc(u, n - 1)#.to_highest_weight()[0]
-        #for hw_tab in RCGraph.all_rc_graphs(u, n - 1):
+        #for hw_tab in RCGraph.all_hw_rcs(u, n - 1):
         if True:
             sm = Sx.zero
             for v_rc in RCGraph.all_rc_graphs(v, n-1):
@@ -511,6 +513,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         except AssertionError:
             print("A fail")
             print(f"{diff=}")
+            print(f"{sm=}")
             good = False
             
         #assert good, f"COMPLETE FAIL {w=}"
