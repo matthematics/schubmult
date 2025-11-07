@@ -514,6 +514,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         good = False
         #if True:
         #hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
+        used_tensors = set()
         for hw_tab in RCGraph.all_rc_graphs(u, n - 1):
         #if True:
             sm = Sx.zero
@@ -538,9 +539,15 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     # if (t_elem2, t_elem1) not in rc_w_coprods.get(w_rc, tring.zero):
                     #     rc_w_coprods[w_rc] += tring((t_elem2, t_elem1))
                     #if rc_w.is_highest_weight and rc_w.to_lowest_weight()[0].is_principal:
-                    if rc_w.is_principal:
+                    # principal_crystal = RCGraph.principal_rc(rc_w.perm, n - 1).full_crystal
+                    if rc_w.to_lowest_weight()[0].is_principal:
                         #assert len(coeff) == 1
-                        sm += len(coeff) * Sx(rc_w.perm)
+                        for tensor in coeff:
+                            if tensor in used_tensors:
+                                continue
+                            used_tensors.add(tensor)
+                            sm += Sx(rc_w.perm)
+                        #used_rcs.add(rc_w)
 
 
         check_elem = Sx(u) * Sx(v)
