@@ -368,10 +368,12 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         cut_crystals = decompose_tensor_product(lower_left_rc, lower_u, n - 1)
         # print(f"{cut_crystals=}")
         fyi = {}
+        up_tensor = tring.zero
+        up_rc = rc_ring.zero
         for rc_w_cut, tensor_elems in cut_crystals.items():
             # up_rc =  rc_ring(rc_w_cut) * rc_ring(RCGraph.one_row(len(left_rc[-1]) + len(u_rc[-1])))
-            up_rc = rc_ring(RCGraph.one_row(top_row_left + top_row_right)) * rc_ring(rc_w_cut)
-            up_tensor = tring.zero
+            up_rc += rc_ring(RCGraph.one_row(top_row_left + top_row_right)) * rc_ring(rc_w_cut)
+            
             for t_elem in tensor_elems:
                 # to_add =  tring(t_elem.factors) * tring((RCGraph.one_row(len(left_rc[-1])),RCGraph.one_row(len(u_rc[-1]))))
                 to_add = tring((RCGraph.one_row(top_row_left),RCGraph.one_row(top_row_right))) * tring(t_elem.factors)
@@ -383,98 +385,99 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     # tcryst = CrystalGraphTensor(rc1, rc2)
                     # for tw in tcryst.full_crystal:
                     #     if tw.factors[1] == u_rc:
-                    up_tensor += coeff * tring((rc1, rc2))
+                    if (rc1, rc2) not in up_tensor:
+                        up_tensor += coeff * tring((rc1, rc2))
                     #        break
                         #up_tensor += coeff * tring((rc1, rc2))
             # print("up_tensor=")
             # pretty_print(up_tensor)
             # print("up_rc=")
             # pretty_print(up_rc)
-            bad_tensors = set()
-            for w_rc, coeff in up_rc.items():
-                assert coeff == 1
-                high_weight = w_rc.to_highest_weight()[0].crystal_weight
-                low_weight = w_rc.to_lowest_weight()[0].crystal_weight
-                if w_rc.perm not in (Sx(left_rc.perm) * Sx(u_rc.perm)).keys():
+        bad_tensors = set()
+        for w_rc, coeff in up_rc.items():
+            assert coeff == 1
+            high_weight = w_rc.to_highest_weight()[0].crystal_weight
+            low_weight = w_rc.to_lowest_weight()[0].crystal_weight
+            
+            for (rc1, u_rc2), coeff2 in up_tensor.items():
+                assert coeff2 == 1
+                if w_rc.perm not in (Sx(rc1.perm) * Sx(u_rc2.perm)).keys():
                     continue
-                for (rc1, u_rc2), coeff2 in up_tensor.items():
-                    assert coeff2 == 1
-                    # NOTE DOM TENSOR
-                    # if rc1.perm != left_rc.perm or u_rc2.perm != u_rc.perm:
-                    #     continue
-                    dom_rc = RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector), n - 1)
-                    tensor = CrystalGraphTensor(rc1, u_rc2)
-                    #tensor_dom = CrystalGraphTensor(dom_rc, u_rc2)
-                    tensor_hw = tensor.to_highest_weight()[0]
-                    tensor_lw = tensor.to_lowest_weight()[0]
-                    #low_tensor_weight = tuple([a + b for a,b in zip(left_rc.to_lowest_weight()[0].length_vector, tensor_lw.factors[1].length_vector)])
-                    low_tensor_weight = tensor_lw.crystal_weight
-                    w_tab = RootTableau.from_rc_graph(w_rc)
-                    u = u_rc.perm
-                    if tensor_hw.crystal_weight == high_weight:
-                        # and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
-                        # for subword in all_reduced_subwords(w_rc.reduced_word, u):
-                        #     # print("w_tab")
-                        #     # pretty_print(w_tab)
-                        #     # print(f"{w_rc.reduced_word=}")
-                        #     # pretty_print(dom_tab)
-                        #     roots = [w_tab.perm.right_root_at(index, word=w_rc.reduced_word) for index in subword]
-                        #     grid = copy.deepcopy(w_tab._root_grid)
-                        #     for box in w_tab.iter_boxes:
-                        #         # print(box)
-                        #         if grid[box][0] in roots:
-                        #             grid[box] = (grid[box][0], MarkedInteger(grid[box][1]))
-                        #     u_tab = RootTableau(grid)
-                        #     last_inv = 1000
-                            
-                        #     while u_tab.perm.inv < last_inv:
-                        #         last_inv = u_tab.perm.inv
-                        #         for box in u_tab.iter_boxes_row_word_order:
-                        #             if not isinstance(u_tab[box][1], MarkedInteger):
-                        #                 u_tab_test = u_tab.delete_box(box)
-                        #                 if u_tab_test is not None:
-                        #                     u_tab = u_tab_test
-                        #                     break
-                        #             # else:
-                        #             #     try:
-                                            
-                        #             #         d_tab_test = d_tab.up_jdt_slide(*box, force=True)
-                        #             #         if d_tab_test is not None:
-                        #             #             d_tab = d_tab_test
-                        #             #     except Exception:
-                        #             #         froff = False
-                        #             #         # print("Couldn't up jdt")
-                        #             #         # pretty_print(d_tab)
-                        #             #         # print(f"{box=}")
-                        #     if u_tab.perm.inv > u_rc.perm.inv:
-                        #         # didn't make it
-                        #         # print("No make")
-                        #         # print(u_tab)
-                        #         continue
-                        #     u_hw_rc = u_tab.rc_graph.resize(n-1)
-                        #     if u_hw_rc.perm != u:
-                        #         continue
-                        #     if u_hw_rc == u_rc:
-                        crystals[w_rc] = crystals.get(w_rc, set())
-                        crystals[w_rc].add(tensor)
-                        if low_tensor_weight != low_weight:
-                            bad_tensors.add(tensor)
-                        # fyi[w_rc] = fyi.get(w_rc, set())
-                        # fyi[w_rc].add((tensor, u_tab))
-        get_rid = 0
-        the_prins = set()
-        for ww_rc, tset in crystals.items():
-            if ww_rc.is_principal:
-               # get_rid.update(tset)
-               the_prins.add(ww_rc)
-            else:
-                get_rid += len(tset)
-        for _ in range(get_rid):
-            for the_prin in the_prins:
-                try:
-                    crystals[the_prin].remove(next({c for c in crystals[the_prin] if c in bad_tensors}))
-                except Exception:
-                    break
+                # NOTE DOM TENSOR
+                # if rc1.perm != left_rc.perm or u_rc2.perm != u_rc.perm:
+                #     continue
+                dom_rc = RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector), n - 1)
+                tensor = CrystalGraphTensor(rc1, u_rc2)
+                #tensor_dom = CrystalGraphTensor(dom_rc, u_rc2)
+                tensor_hw = tensor.to_highest_weight()[0]
+                tensor_lw = tensor.to_lowest_weight()[0]
+                #low_tensor_weight = tuple([a + b for a,b in zip(left_rc.to_lowest_weight()[0].length_vector, tensor_lw.factors[1].length_vector)])
+                low_tensor_weight = tensor_lw.crystal_weight
+                w_tab = RootTableau.from_rc_graph(w_rc)
+                u = u_rc.perm
+                if tensor_hw.crystal_weight == high_weight and low_tensor_weight == low_weight:
+                    # and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
+                    # for subword in all_reduced_subwords(w_rc.reduced_word, u):
+                    #     # print("w_tab")
+                    #     # pretty_print(w_tab)
+                    #     # print(f"{w_rc.reduced_word=}")
+                    #     # pretty_print(dom_tab)
+                    #     roots = [w_tab.perm.right_root_at(index, word=w_rc.reduced_word) for index in subword]
+                    #     grid = copy.deepcopy(w_tab._root_grid)
+                    #     for box in w_tab.iter_boxes:
+                    #         # print(box)
+                    #         if grid[box][0] in roots:
+                    #             grid[box] = (grid[box][0], MarkedInteger(grid[box][1]))
+                    #     u_tab = RootTableau(grid)
+                    #     last_inv = 1000
+                        
+                    #     while u_tab.perm.inv < last_inv:
+                    #         last_inv = u_tab.perm.inv
+                    #         for box in u_tab.iter_boxes_row_word_order:
+                    #             if not isinstance(u_tab[box][1], MarkedInteger):
+                    #                 u_tab_test = u_tab.delete_box(box)
+                    #                 if u_tab_test is not None:
+                    #                     u_tab = u_tab_test
+                    #                     break
+                    #             # else:
+                    #             #     try:
+                                        
+                    #             #         d_tab_test = d_tab.up_jdt_slide(*box, force=True)
+                    #             #         if d_tab_test is not None:
+                    #             #             d_tab = d_tab_test
+                    #             #     except Exception:
+                    #             #         froff = False
+                    #             #         # print("Couldn't up jdt")
+                    #             #         # pretty_print(d_tab)
+                    #             #         # print(f"{box=}")
+                    #     if u_tab.perm.inv > u_rc.perm.inv:
+                    #         # didn't make it
+                    #         # print("No make")
+                    #         # print(u_tab)
+                    #         continue
+                    #     u_hw_rc = u_tab.rc_graph.resize(n-1)
+                    #     if u_hw_rc.perm != u:
+                    #         continue
+                    #     if u_hw_rc == u_rc:
+                    crystals[w_rc] = crystals.get(w_rc, set())
+                    crystals[w_rc].add(tensor)
+                    
+                    # fyi[w_rc] = fyi.get(w_rc, set())
+                    # fyi[w_rc].add((tensor, u_tab))
+        # get_rid = 0
+        # the_prins = set()
+        # for ww_rc, tset in crystals.items():
+        #     if ww_rc.is_principal:
+        #        # get_rid.update(tset)
+        #        the_prins.add(ww_rc)
+        #     else:
+        #        get_rid += len(tset)
+        # for _ in range(get_rid):
+        #     for the_prin in the_prins:
+        #         try:
+        #             crystals[the_prin].remove(next({c for c in crystals[the_prin] if c != CrystalGraphTensor(left_rc, u_rc)}))
+        #         except Exception:
+        #             break
         try:
             
             assert len(crystals) == 1
