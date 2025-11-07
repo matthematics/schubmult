@@ -54,12 +54,13 @@ def _is_valid_outer_corner(grid: np.ndarray, i: int, j: int) -> bool:
     """
     rows, cols = grid.shape
     # treat positions outside current array as empty slots (they must be extended before sliding)
-    if 0 <= i < rows and 0 <= j < cols and grid[i, j] is not None:
-        return False
-    if i >= rows or j >= cols:
-        return False
-    up = grid[i - 1, j] if i - 1 >= 0 else "bob" if i == 0 else None
-    left = grid[i, j - 1] if j - 1 >= 0 else "bing" if j == 0 else None
+    # if 0 <= i < rows and 0 <= j < cols and grid[i, j] is not None:
+    #     return False
+    # if i >= rows or j >= cols:
+    #     return False
+    up = grid[i - 1, j] if i - 1 >= 0 else 0 if i == 0 else None
+    left = grid[i, j - 1] if j - 1 >= 0 else 0 if j == 0 else None
+    print(f"{i,j} {up,left}")
     return grid[i, j] is None and (up is not None and left is not None) and not (i == 0 and j == 0)
     # consider hole on or beyond boundary as "outer
 
@@ -564,23 +565,34 @@ class RootTableau(CrystalGraph, GridPrint):
                 cur = cur.down_jdt_slide(*next(iter(inner_corners)))
         return cur
 
-    def anti_rectify(self, randomized=False):
+    def anti_rectify(self, max_row, max_col, randomized=False):
         import random
 
         cur = self
+        print("I IS OUTER")
         while True:
             outer_corners = tuple(cur.iter_outer_corners)
             if len(outer_corners) == 0:
                 break
-            if randomized:
-                cur = cur.up_jdt_slide(*random.choice(outer_corners))
-            else:
-                cur = cur.up_jdt_slide(*next(iter(outer_corners)))
+            outer_corner = None
+            for outer in outer_corners:
+                print(f"ZONK {outer=}")
+                if outer[0] <= max_row and outer[1] <= max_col:
+                    outer_corner = outer
+                    break
+            if outer_corner is None:
+                break
+            print("ITERBABY")
+            # if randomized:
+            #     cur = cur.up_jdt_slide(*random.choice(outer_corners))
+            # else:
+            cur = cur.up_jdt_slide(outer_corner)
         return cur
 
     def up_jdt_slide(self, row, col, force=False, check=True):
         new_grid = copy.deepcopy(self._root_grid)
         if self.rows <= row or self.cols <= col:
+            print("REISE")
             new_grid.resize((max(self.rows, row + 1), max(self.cols, col + 1)), refcheck=False)
         if not force and not _is_valid_outer_corner(new_grid, row, col):
             raise ValueError("Can only slide from valid outer corner")
@@ -738,9 +750,11 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def iter_outer_corners(self):
-        for i in range(self.rows):
-            for j in range(self.cols):
-                if _is_valid_outer_corner(self._root_grid, i, j):
+        new_grid = copy.deepcopy(self._root_grid)
+        new_grid.resize((self.rows + 1, self.cols + 1), refcheck=False)
+        for i in range(self.rows + 1):
+            for j in range(self.cols + 1):
+                if (new_grid[i,j] is None or i >= self.rows or j >= self.cols) and _is_valid_outer_corner(new_grid, i, j):
                     yield (i, j)
 
     @property

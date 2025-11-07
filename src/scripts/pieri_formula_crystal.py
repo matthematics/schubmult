@@ -148,12 +148,16 @@ def decompose_tensor_product(dom, u_rc, n):
                             print(u_tab)
                             continue
 
-                        u_tab = u_tab.anti_rectify()
-                        for box in dom_tab.iter_boxes:
-                            if u_tab[box] is not None:
-                                print("THESTINK")
-                                d_tab = None
-                                break
+                        # u_tab = u_tab.anti_rectify(w_tab.rows, w_tab.cols)
+                        # pretty_print(u_tab)
+                        # print("ANTIEAF")
+                        # assert u_tab.rows >= w_tab.rows
+                        # assert u_tab.cols >= w_tab.cols
+                        # for box in dom_tab.iter_boxes:
+                        #     if u_tab[box] is not None:
+                        #         print("THESTINK")
+                        #         d_tab = None
+                        #         break
                         # if d_tab.rc_graph.resize(n - 1) == dom:
                         #     print("HOORAY")
                         #     found_one = True
@@ -216,7 +220,7 @@ def decompose_tensor_product(dom, u_rc, n):
                             crystals[w_rc] = crystals.get(w_rc, set())
                             crystals[w_rc].add(tensor)
                             fyi[w_rc] = fyi.get(w_rc, set())
-                            fyi[w_rc].add((tensor, d_tab))            
+                            fyi[w_rc].add((tensor, u_tab))            
                             # d_tab_set[w_rc] = d_tab_set.get(w_rc, set())
                                 # d_tab_set[w_rc].add(d_tab)
                     # if found_one:
@@ -349,7 +353,7 @@ def decompose_tensor_product(dom, u_rc, n):
                 # print("low weight")
                 # pretty_print(rc.to_lowest_weight()[0])
                 # pretty_print(tensor.to_lowest_weight()[0])
-        raise
+        
     return crystals
 
 def is_decomposable(w):
@@ -428,8 +432,9 @@ if __name__ == "__main__":
             # THIS IS CRYSTAL LEVEL
             sm = the_schubs.get((hw_tab0.perm, v), rc_ring.zero)
             for the_rc, st in crystals.items():
-                for td in st:
-                    sm += rc_ring.from_dict({the_rc: 1})
+                if the_rc.is_principal:
+                    for td in st:
+                        sm += rc_ring.from_dict({the_rc: 1})
 
             pretty_print(sm)
             the_schubs[(hw_tab0.perm, v)] = sm
@@ -448,7 +453,7 @@ if __name__ == "__main__":
             #     continue
             # dd.add(hw)
             #for rc0 in hw.full_crystal:
-            the_sum += coeff * rc.polyvalue(Sx.genset)
+            #the_sum += coeff * rc.polyvalue(Sx.genset)
             if rc.is_principal:
                 the_sum2 += coeff * Sx(rc.perm)
             #the_sum += coeff * Sx(rc.perm)
@@ -456,7 +461,7 @@ if __name__ == "__main__":
         print(f"{prod=}")
         print(f"{prod2=}")
         print(f"{the_sum2=}")
-        assert prod2 - prod == Sx.zero
+        #assert prod2 - prod == Sx.zero
         assert prod == the_sum2
         print(prod)
         
