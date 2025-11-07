@@ -351,9 +351,9 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             return crystals
         if len(u_rc) == 1:
             assert len(dom) == 1
-            crystals[RCGraph.one_row(len(dom[0]) + len(u_rc[0]))] = {CrystalGraphTensor(dom, u_rc)}
+            crystals[RCGraph.one_row(len(left_rc[0]) + len(u_rc[0]))] = {CrystalGraphTensor(dom, u_rc)}
             return crystals
-        cut_dom = dom.vertical_cut(n-2)[0]
+        cut_dom = left_rc.vertical_cut(n-2)[0]
         cut_u = u_rc.vertical_cut(n-2)[0]
         # print("Cutting:")
         # pretty_print(cut_dom)
@@ -362,14 +362,14 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         # print(f"{cut_crystals=}")
         fyi = {}
         for rc_w_cut, tensor_elems in cut_crystals.items():
-            up_rc =  rc_ring(rc_w_cut) * rc_ring(RCGraph.one_row(len(dom[-1]) + len(u_rc[-1])))
+            up_rc =  rc_ring(rc_w_cut) * rc_ring(RCGraph.one_row(len(left_rc[-1]) + len(u_rc[-1])))
             up_tensor = tring.zero
             for t_elem in tensor_elems:
-                to_add =  tring(t_elem.factors) * tring((RCGraph.one_row(len(dom[-1])),RCGraph.one_row(len(u_rc[-1]))))
+                to_add =  tring(t_elem.factors) * tring((RCGraph.one_row(len(left_rc[-1])),RCGraph.one_row(len(u_rc[-1]))))
                 # pretty_print(to_add)
                 for (rc1, rc2), coeff in to_add.items():
                     assert coeff == 1
-                    if rc1 != dom or rc2 != u_rc:
+                    if rc1 != left_rc or rc2 != u_rc:
                         continue
                     # tcryst = CrystalGraphTensor(rc1, rc2)
                     # for tw in tcryst.full_crystal:
@@ -389,7 +389,8 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     continue
                 for (rc1, u_rc2), coeff2 in up_tensor.items():
                     assert coeff2 == 1
-                    tensor = CrystalGraphTensor(rc1, u_rc2)
+                    # NOTE DOM TENSOR
+                    tensor = CrystalGraphTensor(dom, u_rc2)
                     tensor_hw = tensor.to_highest_weight()[0]
                     #tensor_lw = tensor.to_lowest_weight()[0]
                     low_tensor_weight = tuple([a + b for a,b in zip(left_rc.length_vector, u_rc.length_vector)])
