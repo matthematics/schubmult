@@ -532,7 +532,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                         sm += len(coeff) * Sx(rc_w.perm)
 
 
-        check_elem = Sx(hw_tab.perm) * Sx(v)
+        check_elem = Sx(u) * Sx(v)
         diff = check_elem - sm
         try:
             assert diff == Sx.zero
