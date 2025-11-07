@@ -391,63 +391,58 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     assert coeff2 == 1
                     # NOTE DOM TENSOR
                     tensor = CrystalGraphTensor(left_rc, u_rc2)
-                    tensor_dom = CrystalGraphTensor(RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector),n-1), u_rc2)
-                    
-                    crystal_perm = uncode(sorted(left_rc.to_highest_weight()[0].length_vector))
-                    crystal_rc = next(iter(RCGraph.all_rc_graphs(crystal_perm, n-1, weight=left_rc.length_vector)))
-                    tensor_crystal = CrystalGraphTensor(crystal_rc, u_rc2)
-                    tensor_hw = tensor_crystal.to_highest_weight()[0]
-                    tensor_lw = tensor_dom.to_lowest_weight()[0]
-                    low_tensor_weight = tuple([a + b for a,b in zip(left_rc.to_lowest_weight()[0].length_vector, tensor_lw.factors[1].length_vector)])
-                    #low_tensor_weight = tensor_lw.crystal_weight
+                    tensor_hw = tensor.to_highest_weight()[0]
+                    tensor_lw = tensor.to_lowest_weight()[0]
+                    #low_tensor_weight = tuple([a + b for a,b in zip(left_rc.to_lowest_weight()[0].length_vector, tensor_lw.factors[1].length_vector)])
+                    low_tensor_weight = tensor_lw.crystal_weight
                     w_tab = RootTableau.from_rc_graph(w_rc)
                     u = u_rc.perm
                     if tensor_hw.crystal_weight == high_weight and low_tensor_weight == low_weight:# and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
-                        for subword in all_reduced_subwords(w_rc.reduced_word, u):
-                            # print("w_tab")
-                            # pretty_print(w_tab)
-                            # print(f"{w_rc.reduced_word=}")
-                            # pretty_print(dom_tab)
-                            roots = [w_tab.perm.right_root_at(index, word=w_rc.reduced_word) for index in subword]
-                            grid = copy.deepcopy(w_tab._root_grid)
-                            for box in w_tab.iter_boxes:
-                                # print(box)
-                                if grid[box][0] in roots:
-                                    grid[box] = (grid[box][0], MarkedInteger(grid[box][1]))
-                            u_tab = RootTableau(grid)
-                            last_inv = 1000
+                        # for subword in all_reduced_subwords(w_rc.reduced_word, u):
+                        #     # print("w_tab")
+                        #     # pretty_print(w_tab)
+                        #     # print(f"{w_rc.reduced_word=}")
+                        #     # pretty_print(dom_tab)
+                        #     roots = [w_tab.perm.right_root_at(index, word=w_rc.reduced_word) for index in subword]
+                        #     grid = copy.deepcopy(w_tab._root_grid)
+                        #     for box in w_tab.iter_boxes:
+                        #         # print(box)
+                        #         if grid[box][0] in roots:
+                        #             grid[box] = (grid[box][0], MarkedInteger(grid[box][1]))
+                        #     u_tab = RootTableau(grid)
+                        #     last_inv = 1000
                             
-                            while u_tab.perm.inv < last_inv:
-                                last_inv = u_tab.perm.inv
-                                for box in u_tab.iter_boxes_row_word_order:
-                                    if not isinstance(u_tab[box][1], MarkedInteger):
-                                        u_tab_test = u_tab.delete_box(box)
-                                        if u_tab_test is not None:
-                                            u_tab = u_tab_test
-                                            break
-                                    # else:
-                                    #     try:
+                        #     while u_tab.perm.inv < last_inv:
+                        #         last_inv = u_tab.perm.inv
+                        #         for box in u_tab.iter_boxes_row_word_order:
+                        #             if not isinstance(u_tab[box][1], MarkedInteger):
+                        #                 u_tab_test = u_tab.delete_box(box)
+                        #                 if u_tab_test is not None:
+                        #                     u_tab = u_tab_test
+                        #                     break
+                        #             # else:
+                        #             #     try:
                                             
-                                    #         d_tab_test = d_tab.up_jdt_slide(*box, force=True)
-                                    #         if d_tab_test is not None:
-                                    #             d_tab = d_tab_test
-                                    #     except Exception:
-                                    #         froff = False
-                                    #         # print("Couldn't up jdt")
-                                    #         # pretty_print(d_tab)
-                                    #         # print(f"{box=}")
-                            if u_tab.perm.inv > u_rc.perm.inv:
-                                # didn't make it
-                                # print("No make")
-                                # print(u_tab)
-                                continue
-                            u_hw_rc = u_tab.rc_graph.resize(n-1)
-                            if u_hw_rc.perm != u:
-                                continue
-                            if u_hw_rc == u_rc:
-                                crystals[w_rc] = crystals.get(w_rc, set())
-                                crystals[w_rc].add(tensor)
-                                break
+                        #             #         d_tab_test = d_tab.up_jdt_slide(*box, force=True)
+                        #             #         if d_tab_test is not None:
+                        #             #             d_tab = d_tab_test
+                        #             #     except Exception:
+                        #             #         froff = False
+                        #             #         # print("Couldn't up jdt")
+                        #             #         # pretty_print(d_tab)
+                        #             #         # print(f"{box=}")
+                        #     if u_tab.perm.inv > u_rc.perm.inv:
+                        #         # didn't make it
+                        #         # print("No make")
+                        #         # print(u_tab)
+                        #         continue
+                        #     u_hw_rc = u_tab.rc_graph.resize(n-1)
+                        #     if u_hw_rc.perm != u:
+                        #         continue
+                        #     if u_hw_rc == u_rc:
+                        crystals[w_rc] = crystals.get(w_rc, set())
+                        crystals[w_rc].add(tensor)
+                        break
                                 # fyi[w_rc] = fyi.get(w_rc, set())
                                 # fyi[w_rc].add((tensor, u_tab))            
                     
@@ -477,7 +472,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         good = False
         #if True:
         #hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
-        for hw_tab in RCGraph.all_hw_rcs(u, n - 1):
+        for hw_tab in RCGraph.all_rc_graphs(u, n - 1):
         #if True:
             sm = Sx.zero
             for v_rc in RCGraph.all_rc_graphs(v, n-1):
