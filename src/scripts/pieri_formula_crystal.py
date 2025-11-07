@@ -30,111 +30,11 @@ class MarkedInteger(int):
     pass
 
 hw_rc_sets = {}
-def decompose_tensor_product0(dom, u, length, n):
-    # global hw_rc_sets
-    
-    crystals = {}
-    highest_weights = set()
-    prood = Sx(u)*Sx(dom.perm)
-    perm_set = set((prood).keys())
-    for u_hw_rc in RCGraph.all_rc_graphs(u, n - 1):
-        for w in perm_set:
-            # if not u.bruhat_leq(w):
-            #     continue
-            # if not dom.perm.bruhat_leq(w):
-            #     continue
-
-            # print(f"Moving on to {u=} {w=} {dom.perm=}")
-            # if w not in hw_rc_sets:
-            #     hw_rc_sets[w] = set()
-            #     for rc_w in RCGraph.all_rc_graphs(w, n - 1):
-            #         # pretty_print(rc_w)
-            #         hw_rc_sets[w].add(rc_w.to_highest_weight(length=length)[0])
-            for rc_w in RCGraph.all_hw_rcs(w, n - 1):
-                # pretty_print(rc_w)
-                got_one = False
-                #rc_lw = rc_w.to_lowest_weight()[0]
-                high_weight = rc_w.length_vector
-                for rc_lw in rc_w.full_crystal: 
-                    reduced_word = rc_lw.reduced_word
-                    # for subword in all_reduced_subwords(reduced_word, u):
-                    #     compatible_seq = [MarkedInteger(a) if index in subword else a for index, a in enumerate(rc_lw.compatible_sequence)]
-                    #     u_tab = RootTableau.root_insert_rsk(reduced_word, compatible_seq)
-                    #     last_inv = 1000
-                    #     while u_tab.perm.inv < last_inv:
-                    #         last_inv = u_tab.perm.inv
-                    #         for box in u_tab.iter_boxes:
-                    #             if not isinstance(u_tab[box][1], MarkedInteger):
-                    #                 u_tab_test = u_tab.delete_box(box)
-                    #                 if u_tab_test is not None:
-                    #                     u_tab = u_tab_test
-                    #                     break
-                    #     if u_tab.perm.inv > u.inv:
-                    #         # didn't make it
-                    #         print(f"not sure this should happen {u_tab.perm=}!!!!!!!!!!!!111")
-                    #         pretty_print(u_tab)
-                    #         input()
-                    #         continue
-
-                    #     u_tab = u_tab.rectify()
-                    #     u_hw_rc = u_tab.resize(n - 1)
-                    #     assert u_hw_rc.perm == u
-
-                    hw_checked = set()
-                    for u_tab2 in u_hw_rc.full_crystal:
-                        tensor = CrystalGraphTensor(dom.resize(n - 1), u_tab2.resize(n - 1))
-                        # print(f"{tensor=}")
-                        tc_elem = tensor.to_highest_weight(length=length)[0]
-                        # pretty_print(tc_elem)
-                        if tc_elem in hw_checked:
-                            # print("Already checked")
-                            # print(f"{highest_weights=}")
-                            continue
-                        # needed!!!
-                        if tc_elem in highest_weights:
-                            # print("Already known highest weight mapped to some demazure crystal")
-                            continue
-                        u_tab_hw = tc_elem.factors[1]
-                        # hw_checked.add(tc_elem)
-                        #pretty_print(dom)
-                        # CHEK TO HIGHEST WEIGHT
-                        try:
-                            assert tc_elem.crystal_weight == tuple([a + b for a,b in zip_longest(dom.length_vector, u_tab_hw.length_vector, fillvalue=0)]), f"{tc_elem.crystal_weight=} vs {tuple([a + b for a,b in zip_longest(dom.length_vector, u_tab_hw.length_vector, fillvalue=0)])}"
-                        except AssertionError as e:
-                            print(e)
-                            pretty_print(tc_elem)
-                            #pretty_print(u_tab2)
-                            print("domrc")
-                            pretty_print(dom)
-                            print("utab")
-                            pretty_print(u_tab_hw)
-                            raise
-                        high_weight_check = tuple([a for a, b in zip_longest(high_weight, tc_elem.crystal_weight, fillvalue=0)])
-                        low_weight_check = tuple([a for a, b in zip_longest(rc_w.to_lowest_weight(length=length)[0].length_vector, tc_elem.crystal_weight, fillvalue=0)])
-                        if tc_elem.crystal_weight == high_weight_check and tc_elem.to_lowest_weight(length=length)[0].crystal_weight == low_weight_check:
-                            
-                            crystals[rc_w] = crystals.get(rc_w, set())
-                            crystals[rc_w].add(tc_elem)
-                            highest_weights.add(tc_elem)
-            #                 got_one = True
-            # try:
-            #     assert got_one
-            # except AssertionError:
-            #     print("Failed to find decomposition for")
-            #     print(f"{dom.perm=} and {u=}")
-            #     print("Trying to find rc_w:")
-            #     pretty_print(rc_w)
-            #     print("with compatible sequence:")
-            #     pretty_print(rc_w.compatible_sequence)
-            #     raise
-    return crystals
-
 def decompose_tensor_product(dom, u_rc, n):
     from schubmult import RCGraphRing
     rc_ring = RCGraphRing()
     tring = rc_ring @ rc_ring
     # global hw_rc_sets
-    length = None
     crystals = {}
     assert len(u_rc) == n - 1
     assert len(dom) == n - 1
@@ -167,15 +67,18 @@ def decompose_tensor_product(dom, u_rc, n):
             to_add =  tring(t_elem.factors) * tring((RCGraph.one_row(len(dom[-1])),RCGraph.one_row(len(u_rc[-1]))))
             # pretty_print(to_add)
             for (rc1, rc2), coeff in to_add.items():
-                if rc1 != dom:
+                assert coeff == 1
+                if rc1 != dom or rc2 != u_rc:
                     continue
-                tcryst = CrystalGraphTensor(rc1, rc2)
-                for tw in tcryst.full_crystal:
-                    if tw.factors[1] == u_rc:
-                        up_tensor += coeff * tring((rc1, rc2))
-                        break
+                # tcryst = CrystalGraphTensor(rc1, rc2)
+                # for tw in tcryst.full_crystal:
+                #     if tw.factors[1] == u_rc:
+                up_tensor += coeff * tring((rc1, rc2))
+                #        break
                     #up_tensor += coeff * tring((rc1, rc2))
+        # print("up_tensor=")
         # pretty_print(up_tensor)
+        # print("up_rc=")
         # pretty_print(up_rc)
         for w_rc, coeff in up_rc.items():
             assert coeff == 1
@@ -191,8 +94,29 @@ def decompose_tensor_product(dom, u_rc, n):
                 if tensor_hw.crystal_weight == high_weight and tensor_lw.crystal_weight == low_weight:
                     crystals[w_rc] = crystals.get(w_rc, set())
                     crystals[w_rc].add(tensor)
-
+    try:
+        assert len(crystals) == 1
+    except AssertionError:
+        print("Error: More than one crystal found.")
+        for rc, tensor_set in crystals.items():
+            pretty_print(rc)
+            for tensor in tensor_set:
+                pretty_print(tensor)
+                print("high weight")
+                pretty_print(rc.to_highest_weight()[0])
+                pretty_print(tensor.to_highest_weight()[0])
+                print("low weight")
+                pretty_print(rc.to_lowest_weight()[0])
+                pretty_print(tensor.to_lowest_weight()[0])
+        raise
     return crystals
+
+def is_decomposable(w):
+    for i in range(1, len(w) - 1):
+        coset, w_J = w.coset_decomp(*list(range(1, i + 1)),*list(range(i + 2, len(w)))) 
+        if coset.inv == 0 and set(w_J.code[:i+1]) != {0} and set(w_J.code[i+2:]) != {0}:
+            return True
+    return False
 
 
 if __name__ == "__main__":
@@ -206,7 +130,7 @@ if __name__ == "__main__":
 
     hw_tabs = set()
     for perm in perms:
-        if perm.minimal_dominant_above() != perm:
+        if perm.minimal_dominant_above() != perm:# or perm != Permutation.ref_product(3,2,1,2):
             continue
         hw_tabs.update([rc.to_highest_weight(length=None)[0] for rc in RCGraph.all_rc_graphs(perm, n - 1)])
 
@@ -222,6 +146,14 @@ if __name__ == "__main__":
     for hw_tab0, v in itertools.product(hw_tabs, perms):
         # TEMP DOM TEST
         if hw_tab0.perm.inv == 0 or v.inv == 0:# or len(v.descents()) > 1 or k - 1 not in v.descents() or not set(v.trimcode).issubset({0,1}):
+            continue
+        if v == Permutation.ref_product(2,4):
+            print("SKIPPING DECOMPOSABLE")
+            assert is_decomposable(v)
+            continue
+    
+        if is_decomposable(v):
+            print("SKIPPING DECOMPOSABLE")
             continue
         # DOM TEST
         if hw_tab0.perm.minimal_dominant_above() != hw_tab0.perm:
