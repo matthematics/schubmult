@@ -465,9 +465,8 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             else:
                 get_rid.update(tset)
         if the_prin is not None:
-            for bonkers in get_rid:
-                if bonkers in crystals[the_prin]:
-                    crystals[the_prin].remove(bonkers)
+            for _ in get_rid:
+                crystals[the_prin].remove(next({c for c in crystals[the_prin] if c != CrystalGraphTensor(left_rc, u_rc)}))
         try:
             
             assert len(crystals) == 1
