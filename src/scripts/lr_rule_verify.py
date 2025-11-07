@@ -394,10 +394,11 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             # pretty_print(up_tensor)
             # print("up_rc=")
             # pretty_print(up_rc)
-        bad_tensors = set()
+        used_tensors = set()
         for rc_w_cut, tensor_elems in cut_crystals.items():
             up_rc = rc_ring(RCGraph.one_row(top_row_left + top_row_right)) * rc_ring(rc_w_cut)
             for w_rc, coeff in up_rc.items():
+                assert coeff == 1
                 high_weight = w_rc.to_highest_weight()[0].crystal_weight
                 low_weight = w_rc.to_lowest_weight()[0].crystal_weight
                 for t_elem in tensor_elems:
@@ -417,6 +418,8 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                         #tensor_dom = CrystalGraphTensor(dom_rc, u_rc2)
                         tensor_hw = tensor.to_highest_weight()[0]
                         tensor_lw = tensor.to_lowest_weight()[0]
+                        if tensor_hw in used_tensors:
+                            continue
                         #low_tensor_weight = tuple([a + b for a,b in zip(left_rc.to_lowest_weight()[0].length_vector, tensor_lw.factors[1].length_vector)])
                         low_tensor_weight = tensor_lw.crystal_weight
                         w_tab = RootTableau.from_rc_graph(w_rc)
@@ -465,6 +468,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                             #     if u_hw_rc.perm != u:
                             #         continue
                             #     if u_hw_rc == u_rc:
+                            used_tensors.add(tensor_hw)
                             crystals[w_rc] = crystals.get(w_rc, set())
                             crystals[w_rc].add(tensor)
                     
@@ -533,7 +537,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     # rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2))
                     # if (t_elem2, t_elem1) not in rc_w_coprods.get(w_rc, tring.zero):
                     #     rc_w_coprods[w_rc] += tring((t_elem2, t_elem1))
-                    if rc_w.is_principal:
+                    if rc_w.is_highest_weight and rc_w.to_lowest_weight()[0].is_principal:
                         #assert len(coeff) == 1
                         sm += len(coeff) * Sx(rc_w.perm)
 
