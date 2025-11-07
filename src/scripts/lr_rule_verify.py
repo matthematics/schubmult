@@ -298,7 +298,7 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 #     ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
 #     return ret_elem
 
-def worker(hw_tabs, nn, shared_recording_dict, lock, task_queue):
+def worker(nn, shared_recording_dict, lock, task_queue):
     import copy
     import sys
     from functools import cache
@@ -452,24 +452,26 @@ def worker(hw_tabs, nn, shared_recording_dict, lock, task_queue):
     ASx = FreeAlgebra(SchubertBasis)
     while True:
         try:
-            (hw_tab, u, n) = task_queue.get(timeout=2)
+            (u, v, n) = task_queue.get(timeout=2)
         except Exception:
             break  # queue empty, exit
         with lock:
-            if (hw_tab, u, n) in shared_recording_dict:
-                if shared_recording_dict[(hw_tab, u, n)] is True:
-                    print(f"{(hw_tab, u, n)} already verified, returning.")
+            if (u, v, n) in shared_recording_dict:
+                if shared_recording_dict[(u, v, n)] is True:
+                    print(f"{(u, v, n)} already verified, returning.")
                     continue
-                print(f"Previous failure on {(hw_tab, u, n)}, will retry.")
+                print(f"Previous failure on {(u, v, n)}, will retry.")
         
         
         rc_w_coprods = {}
         good = False
+        #if True:
+        hw_tab = RCGraph.principal_rc(u, n - 1)#.to_highest_weight()[0]
+        #for hw_tab in RCGraph.all_rc_graphs(u, n - 1):
         if True:
-        # for hw_tab in hw_tabs:
             sm = Sx.zero
-            for u_rc in RCGraph.all_rc_graphs(u, n-1):
-                crystals = decompose_tensor_product(hw_tab, u_rc, n)
+            for v_rc in RCGraph.all_rc_graphs(v, n-1):
+                crystals = decompose_tensor_product(hw_tab, v_rc, n)
 
                 rc_ring = RCGraphRing()
 
@@ -489,32 +491,33 @@ def worker(hw_tabs, nn, shared_recording_dict, lock, task_queue):
                     # if (t_elem2, t_elem1) not in rc_w_coprods.get(w_rc, tring.zero):
                     #     rc_w_coprods[w_rc] += tring((t_elem2, t_elem1))
                     if rc_w.is_principal:
-                        sm += Sx(rc_w.perm)
-        
-        
-        check_elem = Sx(hw_tab.perm) * Sx(u)
+                        assert len(coeff) == 1
+                        sm += len(coeff) * Sx(rc_w.perm)
+
+
+        check_elem = Sx(hw_tab.perm) * Sx(v)
         diff = check_elem - sm
         try:
-            assert all(v == 0 for v in diff.values())
+            assert diff == Sx.zero
             #print(f"Coprod {rc.perm.trimcode}")
             # pretty_print(rc)
             # pretty_print(val)
         #print("At least one success")
             good = True
         except AssertionError:
-            # print("A fail")
-            # print(f"{diff=}")
+            print("A fail")
+            print(f"{diff=}")
             good = False
             
         #assert good, f"COMPLETE FAIL {w=}"
         if good:
-            print(f"Success {(hw_tab, u, n)} at ", time.ctime())
+            print(f"Success {(u, v, n)} at ", time.ctime())
             with lock:
-                shared_recording_dict[(hw_tab, u, n)] = True
+                shared_recording_dict[(u, v, n)] = True
         else:
             with lock:
-                shared_recording_dict[(hw_tab, u, n)] = False
-            print(f"FAIL {(hw_tab, u, n)} at ", time.ctime())
+                shared_recording_dict[(u, v, n)] = False
+            print(f"FAIL {(u, v, n)} at ", time.ctime())
     
         
 
@@ -538,11 +541,11 @@ def main():
     # perms2n = {perm for perm in Permutation.all_permutations(2 * n - 1) if perm.bruhat_leq(uncode(cd))}
     perms.sort(key=lambda p: (p.inv, p.trimcode))
 
-    hw_tabs = set()
-    for perm in perms:
-        if perm != perm.minimal_dominant_above():
-            continue
-        hw_tabs.update(RCGraph.all_rc_graphs(perm, n - 1))
+    # hw_tabs = set()
+    # for perm in perms:
+    #     # if perm != perm.minimal_dominant_above():
+    #     #     continue
+    #     hw_tabs.add(RCGraph.all_rc_graphs(perm, n - 1))
 
     with Manager() as manager:
         shared_dict = manager.dict()
@@ -572,14 +575,16 @@ def main():
         from schubmult.schub_lib.rc_graph import RCGraph
         task_queue = manager.Queue()
         # dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
-        for perm in perms:
-            for hw_tab in hw_tabs:
-                task_queue.put((hw_tab, perm, n))
+        for hw_tab in perms:
+            #if hw_tab.minimal_dominant_above() == hw_tab:
+                for perm in perms:
+        
+                    task_queue.put((hw_tab, perm, n))
 
         # Start fixed number of workers
         workers = []
         for _ in range(num_processors):
-            p = Process(target=worker, args=(hw_tabs, n, shared_recording_dict, lock, task_queue))
+            p = Process(target=worker, args=(n, shared_recording_dict, lock, task_queue))
             p.start()
             workers.append(p)
         for p in workers:
@@ -591,7 +596,7 @@ def main():
         recording_saver_proc.join()
         # print("Run finished.")
         if any(v is False for v in shared_recording_dict.values()):
-            # print("Failures:")
+            print("Failures:")
             for k, v in shared_recording_dict.items():
                 if v is False:
                     print(k)
