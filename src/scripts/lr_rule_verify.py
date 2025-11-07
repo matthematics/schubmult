@@ -456,17 +456,21 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                         
                                 # fyi[w_rc] = fyi.get(w_rc, set())
                                 # fyi[w_rc].add((tensor, u_tab))            
-        get_rid = set()
-        the_prin = None
+        get_rid = 0
+        the_prins = set()
         for ww_rc, tset in crystals.items():
             if ww_rc.is_principal:
                # get_rid.update(tset)
-               the_prin = ww_rc
+               the_prins.add(ww_rc)
             else:
-                get_rid.update(tset)
-        if the_prin is not None:
-            for _ in get_rid:
-                crystals[the_prin].remove(next({c for c in crystals[the_prin] if c != CrystalGraphTensor(left_rc, u_rc)}))
+                get_rid += len(tset)
+        for _ in range(get_rid):
+            for the_prin in the_prins:
+                try:
+                    crystals[the_prin].remove(next({c for c in crystals[the_prin] if c != CrystalGraphTensor(left_rc, u_rc)}))
+                    break
+                except Exception:
+                    pass
         try:
             
             assert len(crystals) == 1
