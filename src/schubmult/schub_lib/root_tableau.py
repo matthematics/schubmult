@@ -578,13 +578,24 @@ class RootTableau(CrystalGraph, GridPrint):
                 cur = cur.up_jdt_slide(*next(iter(outer_corners)))
         return cur
 
-    def up_jdt_slide(self, row, col, force=False, check=False):
+    def up_jdt_slide(self, row, col, force=False, check=True):
         new_grid = copy.deepcopy(self._root_grid)
         if self.rows <= row or self.cols <= col:
             new_grid.resize((max(self.rows, row + 1), max(self.cols, col + 1)), refcheck=False)
         if not force and not _is_valid_outer_corner(new_grid, row, col):
             raise ValueError("Can only slide from valid outer corner")
-        new_grid[row, col] = None
+        #new_grid[row, col] = None
+        if force:
+            print("BANGINGFORCE MAYBE DO SOME DELETION")
+            sput_tab = self.delete_box((row, col))
+            eg_spot = self.eg_grid[row, col]
+            if sput_tab is None:
+                print("Could not delete")
+            new_grid = copy.deepcopy(sput_tab._root_grid)
+            for box2 in self.iter_boxes_row_word_order:
+                if new_grid[box2] is not None:
+                    if self.eg_grid[box2] > eg_spot:
+                        new_grid[box2] = sput_tab.eg_root(self.eg_grid[box2] - 1)
 
         def _recurse():
             nonlocal row, col, new_grid
@@ -624,9 +635,14 @@ class RootTableau(CrystalGraph, GridPrint):
         new_grid[row, col] = None
         ret = RootTableau(new_grid)
         if check:
-            assert ret.rc_graph == self.rc_graph, "up_jdt_slide does not preserve RC graph"
-            assert ret.weight_tableau == self.weight_tableau, "up_jdt_slide does not preserve tableau shape"
+            try:
+                assert ret.rc_graph == self.rc_graph, "up_jdt_slide does not preserve RC graph"
+                assert ret.weight_tableau == self.weight_tableau, "up_jdt_slide does not preserve tableau shape"
+            except AssertionError as e:
+                print(e)
+                return None
         # assert self.edelman_greene_invariant == ret.edelman_greene_invariant
+        print("CLARKGABLE")
         return ret
 
     def down_jdt_slide(self, row, col, check=False):

@@ -121,34 +121,42 @@ def decompose_tensor_product(dom, u_rc, n):
                         #     continue
                         last_inv = 1000
                         
-                        d_tab = RootTableau.from_rc_graph(w_rc.to_highest_weight()[0])
+                        d_tab = RootTableau.from_rc_graph(w_rc)
+                        froff = False
                         while u_tab.perm.inv < last_inv:
                             last_inv = u_tab.perm.inv
-                            for box in u_tab.iter_boxes:
+                            for box in u_tab.iter_boxes_row_word_order:
                                 if not isinstance(u_tab[box][1], MarkedInteger):
                                     u_tab_test = u_tab.delete_box(box)
                                     if u_tab_test is not None:
                                         u_tab = u_tab_test
                                         break
-                                else:
-                                    try:
-                                        d_tab_test = d_tab.up_jdt_slide(*box, force=True)
-                                        if d_tab_test is not None:
-                                            d_tab = d_tab_test
-                                    except Exception:
-                                        print("Couldn't up jdt")
-                                        pretty_print(d_tab)
-                                        print(f"{box=}")
+                                # else:
+                                #     try:
+                                        
+                                #         d_tab_test = d_tab.up_jdt_slide(*box, force=True)
+                                #         if d_tab_test is not None:
+                                #             d_tab = d_tab_test
+                                #     except Exception:
+                                #         froff = False
+                                #         print("Couldn't up jdt")
+                                #         pretty_print(d_tab)
+                                #         print(f"{box=}")
                         if u_tab.perm.inv > u_rc.perm.inv:
                             # didn't make it
                             print("No make")
                             print(u_tab)
                             continue
 
-                        u_tab = u_tab.rectify()
-                        if d_tab.rc_graph.resize(n - 1) == dom:
-                            print("HOORAY")
-                            found_one = True
+                        u_tab = u_tab.anti_rectify()
+                        for box in dom_tab.iter_boxes:
+                            if u_tab[box] is not None:
+                                print("THESTINK")
+                                d_tab = None
+                                break
+                        # if d_tab.rc_graph.resize(n - 1) == dom:
+                        #     print("HOORAY")
+                        #     found_one = True
                         
                         #d_tab = d_tab.anti_rectify()
                         # d_tab = RootTableau.from_rc_graph(w_rc.to_highest_weight()[0])
@@ -187,6 +195,7 @@ def decompose_tensor_product(dom, u_rc, n):
                         #     d_tab = RootTableau(new_d_tab_grid).rectify()
                         # except Exception:
                         #     print("Couldn't do it")
+                        
                         print("u_tab")
                         pretty_print(u_tab)
                         u_hw_rc = u_tab.rc_graph.resize(n-1)
@@ -199,28 +208,139 @@ def decompose_tensor_product(dom, u_rc, n):
                             continue
                         if u_hw_rc == u_rc:
                             print("Got the identical crystal")
+                            # if d_tab.perm.inv == dom.perm.inv:
+                            #     print("THEPERMIVN")
+                            #     pretty_print(d_tab)
+                            #     assert d_tab.rc_graph.resize(n-1).length_vector == dom.length_vector
+                            #     print("EHHOG")
                             crystals[w_rc] = crystals.get(w_rc, set())
                             crystals[w_rc].add(tensor)
                             fyi[w_rc] = fyi.get(w_rc, set())
                             fyi[w_rc].add((tensor, d_tab))            
                             # d_tab_set[w_rc] = d_tab_set.get(w_rc, set())
                                 # d_tab_set[w_rc].add(d_tab)
-                    if found_one:
-                        fyi[w_rc] = fyi.get(w_rc, set())
-                        fyi[w_rc].add((tensor, d_tab, found_one))
+                    # if found_one:
+                    #     print("FOOOOOFUND")
+                    #     fyi[w_rc] = fyi.get(w_rc, set())
+                    #     fyi[w_rc].add((tensor, found_one))
+                # for subword in all_reduced_subwords(w_rc.reduced_word, dom.perm):
+                        
+                #         w_rc2 = w_rc#.to_highest_weight()[0]
+                #         print(f"{w_rc2.reduced_word=}")
+                #         pretty_print(dom_tab)
+                #         print("w_tab2 DOMDOM")
+                #         w_tab2 = RootTableau.from_rc_graph(w_rc2)
+                #         pretty_print(w_tab2)
+                #         roots = [w_tab.perm.right_root_at(index, word=w_rc2.reduced_word) for index in subword]
+                #         grid = copy.deepcopy(w_tab2._root_grid)
+                #         for box in w_tab2.iter_boxes:
+                #             print(box)
+                #             if grid[box][0] in roots:
+                #                 grid[box] = (grid[box][0], MarkedInteger(grid[box][1]))
+                #         d_tab = RootTableau(grid)
+                #         # compatible_seq = [MarkedInteger(a) if index in subword else a for index, a in enumerate(compatible_sequence)]
+                #         # u_tab = RootTableau.root_insert_rsk(reduced_word, compatible_seq)
+                #         # skip = False
+                #         # for box in dom_tab.iter_boxes:
+                #         #     if isinstance(u_tab[box][1], MarkedInteger):
+                #         #         skip = True
+                #         #         break
+                #         # if skip:
+                #         #     continue
+                #         last_inv = 1000
+                        
+                #         #d_tab = RootTableau.from_rc_graph(w_rc)
+                #         while d_tab.perm.inv < last_inv:
+                #             last_inv = d_tab.perm.inv
+                #             for box in d_tab.iter_boxes:
+                #                 if not isinstance(d_tab[box][1], MarkedInteger):
+                #                     d_tab_test = d_tab.delete_box(box)
+                #                     if d_tab_test is not None:
+                #                         d_tab = d_tab_test
+                #                         break
+                                
+                #         if d_tab.perm.inv > dom.perm.inv:
+                #             # didn't make it
+                #             print("No make")
+                #             print(d_tab)
+                #             continue
+
+                #         d_tab = d_tab.rectify()
+                #         # if d_tab.rc_graph.resize(n - 1) == dom:
+                #         #     print("HOORAY")
+                #         #     found_one = True
+                        
+                #         #d_tab = d_tab.anti_rectify()
+                #         # d_tab = RootTableau.from_rc_graph(w_rc.to_highest_weight()[0])
+                #         # last_inv = 1000
+                #         # while d_tab.perm.inv < last_inv:
+                #         #     last_inv = d_tab.perm.inv
+                #         #     for box in d_tab.iter_boxes:
+                #         #         if dom_tab[box] is None:
+                #         #             try:
+                #         #                 d_tab_test = d_tab.delete_box(box)
+                #         #                 if d_tab_test is not None:
+                #         #                     d_tab = d_tab_test
+                #         #             except Exception:
+                #         #                 print("Bleh")
+                #         # print(root_grid)
+                #         # try:
+                #         #     d_tab = RootTableau(root_grid)
+                #         #     d_tab = d_tab.anti_rectify()
+                #         # except Exception:
+                #         #     print("oops")
+                #         #     d_tab = w_tab
+                #         # # unrectify
+                #         # d_tab2 = RootTableau.from_rc_graph(dom)
+                #         # while len(list(d_tab2.iter_outer_corners)) > 0:
+                #         #     for box in d_tab2.iter_outer_corners:
+                #         #         d_tab2 = d_tab2.up_jdt_slide(*box)
+                #         #         break
+                #         # new_d_tab_grid = copy.deepcopy(d_tab._root_grid)
+                #         # for box2 in d_tab2.iter_boxes:
+                #         #     if new_d_tab_grid[box2] is None:
+                #         #         print("Could not")
+                #         #         pretty_print(d_tab)
+                #         #         break
+                #         #     new_d_tab_grid[box2] = (d_tab2[box2][0],d_tab2[box2][1])
+                #         # try:
+                #         #     d_tab = RootTableau(new_d_tab_grid).rectify()
+                #         # except Exception:
+                #         #     print("Couldn't do it")
+                #         print("d_tab")
+                #         pretty_print(d_tab)
+                #         dom_hw_rc = d_tab.rc_graph.resize(n-1)
+                #         if dom_hw_rc.perm != dom.perm:
+                #             print("Got")
+                #             pretty_print(dom_hw_rc)
+                #             print("Perm is not")
+                #             print(u)
+                #             print(f"{dom.perm.antiperm=}")
+                #             continue
+                #         if dom_hw_rc == dom:
+                #             print("Got the identical crystal DOMDOM")
+                #             fyi[w_rc] = fyi.get(w_rc, set())
+                #             fyi[w_rc].add((w_rc, d_tab))            
+                #             # d_tab_set[w_rc] = d_tab_set.get(w_rc, set())
+                #                 # d_tab_set[w_rc].add(d_tab)
+                
     try:
         
         assert len(crystals) == 1
     except AssertionError:
-        print("Error: More than one crystal found.")
+        print("Error: More than one crystal found FOR ")
+        pretty_print(u_rc)
         for rc, tensor_set in fyi.items():
             pretty_print(rc)
             for tensor, d_tab in tensor_set:
+                if isinstance(tensor, RCGraph):
+                    print("THISISRC")
                 pretty_print(tensor)
                 print("d_tab - maybe can infuse?")
                 pretty_print(d_tab)
                 print("rc for d_tab")
-                pretty_print(d_tab.rc_graph)
+                if isinstance(d_tab, RootTableau):
+                    pretty_print(d_tab.rc_graph)
                 print("dom")
                 pretty_print(dom)
                 # print("high weight")
@@ -245,7 +365,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("n",action="store",type=int)
-    parser.add_argument("--case",action="extend",type=int,nargs="+")
+    parser.add_argument("--case",action="append",type=int,nargs="+")
+    parser.add_argument("-",nargs="+",action="append",type=int,dest="case")
     args = parser.parse_args()
     ASx = FreeAlgebra(SchubertBasis)
     n = args.n
@@ -262,7 +383,9 @@ if __name__ == "__main__":
         if perm.minimal_dominant_above() != perm:# or perm != Permutation.ref_product(3,2,1,2):
             continue
         if case is not None:
-            if perm != Permutation.ref_product(*case):
+            if len(case) == 1 and perm != Permutation.ref_product(*case):
+                continue
+            elif len(case) == 2 and perm != Permutation.ref_product(*case[0]):
                 continue
         hw_tabs.update([rc.to_highest_weight(length=None)[0] for rc in RCGraph.all_rc_graphs(perm, n - 1)])
 
@@ -279,7 +402,8 @@ if __name__ == "__main__":
         # TEMP DOM TEST
         if hw_tab0.perm.inv == 0 or v.inv == 0:# or len(v.descents()) > 1 or k - 1 not in v.descents() or not set(v.trimcode).issubset({0,1}):
             continue
-        
+        if case is not None and len(case) > 1 and Permutation.ref_product(*case[1]) != v:
+            continue
         # DOM TEST
         if hw_tab0.perm.minimal_dominant_above() != hw_tab0.perm:
             print("TEMP DOM TEST")
