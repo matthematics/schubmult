@@ -564,13 +564,27 @@ class RootTableau(CrystalGraph, GridPrint):
                 cur = cur.down_jdt_slide(*next(iter(inner_corners)))
         return cur
 
-    def up_jdt_slide(self, row, col, check=False):
+    def anti_rectify(self, randomized=False):
+        import random
+
+        cur = self
+        while True:
+            outer_corners = tuple(cur.iter_outer_corners)
+            if len(outer_corners) == 0:
+                break
+            if randomized:
+                cur = cur.up_jdt_slide(*random.choice(outer_corners))
+            else:
+                cur = cur.up_jdt_slide(*next(iter(outer_corners)))
+        return cur
+
+    def up_jdt_slide(self, row, col, force=False, check=False):
         new_grid = copy.deepcopy(self._root_grid)
         if self.rows <= row or self.cols <= col:
             new_grid.resize((max(self.rows, row + 1), max(self.cols, col + 1)), refcheck=False)
-        if not _is_valid_outer_corner(new_grid, row, col):
+        if not force and not _is_valid_outer_corner(new_grid, row, col):
             raise ValueError("Can only slide from valid outer corner")
-        
+        new_grid[row, col] = None
 
         def _recurse():
             nonlocal row, col, new_grid
