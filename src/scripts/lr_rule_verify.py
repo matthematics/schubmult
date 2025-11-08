@@ -515,7 +515,9 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #if True:
         #hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
         used_tensors = set()
-        for hw_tab in RCGraph.all_rc_graphs(u, n - 1):
+        mdom = ~((~u).minimal_dominant_above())
+        diff_perm = u * (~mdom)
+        for hw_tab in RCGraph.all_rc_graphs(mdom, n - 1):
         #if True:
             sm = Sx.zero
             for v_rc in RCGraph.all_rc_graphs(v, n-1):
@@ -548,8 +550,8 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     #             continue
                     #         used_tensors.add(tensor)
                     #         sm += Sx(rc_w.perm)
-                    if rc_w.is_principal:
-                        sm += len(coeff) * Sx(rc_w.perm)
+                    if rc_w.is_principal and (diff_perm * rc_w.perm).inv == rc_w.perm.inv - diff_perm.inv:
+                        sm += len(coeff) * Sx(diff_perm * rc_w.perm)
                     #else
                         #used_rcs.add(rc_w)
 
