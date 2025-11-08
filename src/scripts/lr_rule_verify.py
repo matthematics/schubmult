@@ -540,6 +540,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                                         # w0 on all, same as v
                                         if u_rc.is_principal:# and v_rc.is_principal and (w0*rc_w.perm).inv == rc_w.perm.inv - w0.inv:
                                         #if u_rc.is_principal and v_rc.is_principal:
+                                            # ALWAYAS REMEMBER: rc_w principal, the crytsal is isomorphic to v_rc, with w0 weight removed
                                             for bong in t_elem.full_crystal:
                                                 sm += Sx(u) * bong.factors[1].polyvalue(Sx.genset)
 
