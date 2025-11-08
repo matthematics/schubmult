@@ -516,7 +516,6 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
         used_tensors = set()
         mdom = ~((~u).minimal_dominant_above())
-        diff_perm = u * (~mdom)
         for hw_tab in RCGraph.all_rc_graphs(mdom, n - 1):
         #if True:
             sm = Sx.zero
@@ -556,15 +555,14 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                             sm += len(coeff) * Sx(rc_w.perm)
                         else:
                             for t_elem in coeff:
-                                u_rc = RCGraph.principal_rc(u, n - 1)
+                                mdom2 = ~((~v).minimal_dominant_above())
+                                prin2 = RCGraph.principal_rc(mdom2, n - 1)
                                 # u_rc tensor v_rc
-                                lowest_weights = set()
-                                for uu in u_rc.full_crystal:
-                                    tensor = CrystalGraphTensor(uu, v_rc)
-                                    lowest_weights.add(tensor.to_lowest_weight()[0])
-                                    
-                                for elem in lowest_weights:
-                                    sm += Sx(uncode(elem.crystal_weight))
+                                for u_rc in RCGraph.all_rc_graphs(u, n - 1):
+                                    decomp = decompose_tensor_product(prin2, u_rc, n)
+                                    for rc_w2, coeff2 in decomp.items():
+                                        if rc_w2.is_principal:
+                                            sm += Sx(rc_w2.perm)
                     #else
                         #used_rcs.add(rc_w)
 
