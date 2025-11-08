@@ -522,6 +522,8 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         w0_prin = RCGraph.principal_rc(mdom, n)
         sm = Sx.zero
         rc_ring = RCGraphRing()
+        # W0 IS SPECIAL. THIS IS THE RC/CRYSTAL LEVEL DECOMPOSITION, NO ELEMENT
+        # OTHER THAN w0 WORKS
         for u_rc in RCGraph.all_rc_graphs(u, n):
         #if True:
             # crystals0 = decompose_tensor_product(w0_prin, u_rc, n + 1)
