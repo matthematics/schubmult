@@ -521,22 +521,16 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         poly_cache = {}
         w0_prin = RCGraph.principal_rc(Permutation.w0(n), n)
         sm = Sx.zero
+        rc_ring = RCGraphRing()
         for u_rc in RCGraph.all_rc_graphs(u, n):
         #if True:
             crystals0 = decompose_tensor_product(w0_prin, u_rc, n + 1)
             for rc_w_1, coeff1 in crystals0.items():
                 if rc_w_1.is_principal:
-                    for t_elem0 in coeff1:
-                        for v_rc in RCGraph.all_rc_graphs(v, n):
-                            crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
-
-                            rc_ring = RCGraphRing()
-
-                            tring = rc_ring @ rc_ring
-
-                            
-
-                            for rc_w, coeff in crystals.items():
+                    for v_rc in RCGraph.all_rc_graphs(v, n):
+                        crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
+                        for rc_w, coeff in crystals.items():
+                            for t_elem0 in coeff1:
                                 if rc_w.is_principal:
                                     for t_elem in coeff:
                                         #sm += Sx(diff_perm * rc_w.perm)
@@ -611,6 +605,13 @@ def worker(nn, shared_recording_dict, lock, task_queue):
     
         
 
+def is_decomposable(w):
+    for i in range(1, len(w) - 1):
+        coset, w_J = w.coset_decomp(*list(range(1, i + 1)),*list(range(i + 2, len(w))))
+        if coset.inv == 0 and set(w_J.code[:i+1]) != {0} and set(w_J.code[i+2:]) != {0}:
+            return True
+    return False
+
 def main():
     from schubmult import Permutation, RCGraph, RootTableau, Sx, uncode
 
@@ -667,9 +668,14 @@ def main():
         # dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
         dominant_only = False
         sep_descs = False
+        indec = False
         for hw_tab in perms:
+            if indec and is_decomposable(hw_tab):
+                continue
             if not dominant_only or hw_tab.minimal_dominant_above() == hw_tab:
                 for perm in perms:
+                    if indec and is_decomposable(perm):
+                        continue
                     if sep_descs:
                         if hw_tab.inv == 0 or perm.inv == 0 or max(hw_tab.descents()) <= min(perm.descents()):
                             task_queue.put((hw_tab, perm, n))
