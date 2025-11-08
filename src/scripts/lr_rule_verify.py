@@ -525,75 +525,15 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         # W0 IS SPECIAL. THIS IS THE RC/CRYSTAL LEVEL DECOMPOSITION, NO ELEMENT
         # OTHER THAN w0 WORKS
         for u_rc in RCGraph.all_rc_graphs(u, n):
-        #if True:
-            # crystals0 = decompose_tensor_product(w0_prin, u_rc, n + 1)
-            # for rc_w_1, coeff1 in crystals0.items():
-            #     if rc_w_1.is_principal:
-            #         for t_elem0 in coeff1:
-                        for v_rc in RCGraph.all_rc_graphs(v, n):
-                            crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
-                            for rc_w, coeff in crystals.items():
-                                from schubmult import uncode
-                                if rc_w.is_principal:
-                                    for t_elem in coeff:
-                                        #sm += Sx(diff_perm * rc_w.perm)
-                                        #if v_rc.is_highest_weight:
-                                        #if v_rc.is_principal:
-                                        hw_v = t_elem.to_highest_weight()[0].factors[1]
-                                        for w_rc in rc_w.full_crystal:
-                                            hw, raise_seq = w_rc.to_highest_weight()
-                                            sm += Sx(u_rc.polyvalue(Sx.genset)) * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
-                                            #for bong0 in t_elem0.full_crystal:
-                                            # THE NUMBER OF W_RCS IS THE NUMBER OF OCCURENCES OF THIS CRYSTAL
-                                            
-                                            # for bong in v_rc.full_crystal:
-                                            #     sm += Sx(u_rc.polyvalue(Sx.genset)) * Sx(bong.polyvalue(Sx.genset))
-                                            # from schubmult import uncode
-                                            # sm += Sx(uncode(tuple(a + b for a, b in zip(t_elem0.factors[1].length_vector, v_rc.length_vector))))
-
-                                        # for bong0 in t_elem0.full_crystal:
-                                        #     for bong in t_elem.full_crystal:
-                                        #         sm += bong0.factors[1].polyvalue(Sx.genset) * bong.factors[1].polyvalue(Sx.genset)
-                                    
-
-                            
-                                # take this rc_w and remove the non-u roots
-                                # prin_tab = RootTableau.from_rc_graph(rc_w)
-                                # dom_roots = [mdom.right_root_at(i) for i in range(mdom.inv)]
-                                # u_roots = [u.right_root_at(i) for i in range(u.inv)]
-                                # last_inv = 1000
-                                # while prin_tab.perm.inv > u.inv + v.inv and last_inv > prin_tab.perm.inv:
-                                #     last_inv = prin_tab.perm.inv
-                                #     for box in prin_tab.iter_boxes:
-                                #         if prin_tab[box][0] in dom_roots and prin_tab[box][0] not in u_roots:
-                                #             prin_tab_test = prin_tab.delete_box(box)
-                                #             if prin_tab_test is not None:
-                                #                 prin_tab = prin_tab_test
-                                #                 break
-                                # if prin_tab.perm.inv == u.inv + v.inv:
-                                #     sm += Sx(prin_tab.perm)
-
-
-                                #mdom2 = uncode(
-                                # for u_rc in RCGraph.all_rc_graphs(u, n - 1):
-                                #     #sm += Sx(CrystalGraphTensor(u_rc, v_rc).to_lowest_weight()[0])
-                                #     crystals = decompose_tensor_product(u_rc, v_rc, n)
-                                #     for rc_w2, coeff2 in crystals.items():
-                                #         if rc_w2.is_principal:
-                                #             sm += len(coeff2) * Sx(rc_w2.perm)
-                                # u_rc tensor v_rc
-                                # for u_rc in RCGraph.all_rc_graphs(u, n - 1):
-                                #     # decomp = decompose_tensor_product(prin2, u_rc, n)
-                                #     # for rc_w2, coeff2 in decomp.items():
-                                #     #     if rc_w2.is_principal:
-                                #     #         minus_vec = tuple([a - b for a,b in zip(rc_w2.length_vector, prin2.length_vector)])
-                                #     #         for t_elem_elem in coeff2:
-                                #     #             sm += Sx(uncode(tuple([a+b for a,b in zip(minus_vec, v_rc.length_vector)])))
-                                #     #             break
-                                #     raise NotImplementedError("Needs work, dominant has unique subword of rc_w and this permutes and div diffs v_rc")
-                    #else
-                        #used_rcs.add(rc_w)
-
+            for v_rc in RCGraph.all_rc_graphs(v, n):
+                crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
+                for rc_w, coeff in crystals.items():
+                    if rc_w.is_principal:
+                        for t_elem in coeff:
+                            hw_v = t_elem.to_highest_weight()[0].factors[1]
+                            for w_rc in rc_w.full_crystal:
+                                hw, raise_seq = w_rc.to_highest_weight()
+                                sm += Sx(u_rc.polyvalue(Sx.genset)) * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
 
         check_elem = Sx(u) * Sx(v)
         diff = check_elem - sm

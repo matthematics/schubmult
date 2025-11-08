@@ -189,61 +189,62 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 
 
 def worker(shared_recording_dict, lock, task_queue):
-    from schubmult.schub_lib.rc_graph_ring import RCGraphRing, RestrictedRCGraphTensorRing
+    from schubmult import RCGraph, RCGraphRing
 
-    def hom(rc):
-        from schubmult import FA, ASx
-        from schubmult.schub_lib.rc_graph import RCGraph
-
-        if isinstance(rc, RCGraph):
-            return (ASx@FA)(((rc.perm,len(rc)),rc.length_vector))
-        ret = 0
-        for rc0, coeff in rc.items():
-            ret += coeff * hom(rc0)
-        return ret
-
+    
     rc_ring = RCGraphRing()
-    tring = RestrictedRCGraphTensorRing(rc_ring, rc_ring)
     
     while True:
         try:
             key = task_queue.get(timeout=2)
-            (g31, g32), (len1, len2) = key
-            g1 = rc_ring(g31.extend(len1 - len(g31)))
-            g2 = rc_ring(g32.extend(len2 - len(g32)))
+            (g31,) = key
+            rc_g = RCGraph(g31)
+            g1 = rc_ring(rc_g)
+            #g2 = rc_ring(g32.extend(len2 - len(g32)))
             # g3 = rc_ring(g33.extend(len3 - len(g33)))
         except Exception:
-            break
+            pass
         with lock:
             if key in shared_recording_dict:
                 if shared_recording_dict[key]:
                     print(f"{key} already verified, returning.")
                     continue
                 print(f"Previous failure on {(g1, g2)}, will retry.")
-        g = g1.coproduct()*g2.coproduct()
-        g_ = (g1 * g2).coproduct()
-        diff = g - g_
-        success = True
-        def sym_quo(ring_elem):
-            return ring_elem
+        from schubmult import FreeAlgebra, SchubertBasis
+        ASx = FreeAlgebra(SchubertBasis)
+        gg = g1.coproduct()
+        tring = ASx@ASx
+        g = tring.zero
+        for (rc1, rc2), coeff in gg.items():
+            assert coeff == 1
+            g += tring(((rc1.perm, len(rc1)),(rc2.perm,len(rc2))))
+        test_elem = ASx(rc_g.perm, len(rc_g)).coproduct()
 
-        diff = sym_quo(diff)
+        # g_ = (g1 * g2).coproduct()
+        # diff = g - g_
+        success = True
+        # def sym_quo(ring_elem):
+        #     return ring_elem
+        # print(g)
+        # print(test_elem)
+        diff = g - test_elem
         try:
             assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
         except AssertionError as e:
-            print(f"FAILURE {tuple(g1), tuple(g2)}")
+            print(f"FAILURE {tuple(g1)}")
             # print(e)
-            print("Product of coproducts:")
-            pretty_print(g, wrap_line=False)
-            print("Coproduct of product:")
-            pretty_print(g_, wrap_line=False)
-            print("Difference:")
-            pretty_print(diff, wrap_line=False)
+            # print("Product of coproducts:")
+            # pretty_print(g, wrap_line=False)
+            # print("Coproduct of product:")
+            # pretty_print(g_, wrap_line=False)
+            # print("Difference:")
+            print(f"{diff=}")
             # print(f"{g=}")
             # print(f"{g_=}")
             success = False
             with lock:
                 shared_recording_dict[key] = False
+            continue
             #raise SystemExit(1)
 
         #print(f"Success {(tuple(g1), tuple(g2))}")
@@ -260,7 +261,7 @@ def worker(shared_recording_dict, lock, task_queue):
         with lock:
             shared_recording_dict[key] = success
         if success:
-            print(f"Success {tuple(g1),tuple(g2)} at ", time.ctime())
+            print(f"Success {tuple(g1)} at ", time.ctime())
 
         
 
@@ -302,34 +303,32 @@ def main():
         # print("Starting from ", len(shared_dict), " saved entries")
         print("Starting from ", len(shared_recording_dict), " verified entries")
         # cache_saver_proc = Process(target=cache_saver, args=( lock, filename, stop_event))
-        recording_saver_proc = Process(target=recording_saver, args=(shared_recording_dict, lock, verification_filename, stop_event))
-        # cache_saver_proc.start()
-        recording_saver_proc.start()
+        # recording_saver_proc = Process(target=recording_saver, args=(shared_recording_dict, lock, verification_filename, stop_event))
+        # # cache_saver_proc.start()
+        # recording_saver_proc.start()
 
         # Create task queue and fill with perms
         task_queue = manager.Queue()
         for perm in perms:
-            if perm.inv == 0:
-                continue
-            graphs3 = RCGraph.all_rc_graphs(perm)
-            for len1 in range(len(perm.trimcode),n):
-                for perm2 in perms:
-                    if perm2.inv == 0:
-                        continue
-                    graphs2 = RCGraph.all_rc_graphs(perm2)
-                    for len2 in range(len(perm2.trimcode),n):
-                        # for perm3 in perms:
-                        #     if perm3.inv == 0:
-                        #         continue
-                            #graphs3 = RCGraph.all_rc_graphs(perm3)
-                            # for len3 in range(len(perm3.trimcode), n):
-                                for g31 in graphs3:
-                                    for g32 in graphs2:
-                                        #for g33 in graphs1:
-                                            g1 = g31
-                                            g2 = g32
-                                            #g3 = g33
-                                            task_queue.put(((g1, g2), (len1, len2)))
+            graphs3 = RCGraph.principal_rc(perm, n)
+            # for len1 in range(len(perm.trimcode),n):
+            #     for perm2 in perms:
+            #         if perm2.inv == 0:
+            #             continue
+            #         graphs2 = RCGraph.all_rc_graphs(perm2)
+            #         for len2 in range(len(perm2.trimcode),n):
+            #             # for perm3 in perms:
+            #             #     if perm3.inv == 0:
+            #             #         continue
+            #                 #graphs3 = RCGraph.all_rc_graphs(perm3)
+            #                 # for len3 in range(len(perm3.trimcode), n):
+            #                     for g31 in graphs3:
+            #                         for g32 in graphs2:
+            #                             #for g33 in graphs1:
+            #                                 g1 = g31
+            #                                 g2 = g32
+            #                                 #g3 = g33
+            task_queue.put((graphs3,))
         print(f"Enqueued {task_queue.qsize()} tasks for n={n}.")
         # Start fixed number of workers
         workers = []
@@ -343,12 +342,13 @@ def main():
         # Signal savers to exit
         stop_event.set()
         # cache_saver_proc.join()
-        recording_saver_proc.join()
+        #recording_saver_proc.join()
         print("Run finished.")
         if any(v is False for v in shared_recording_dict.values()):
             print("Results:")
             for k, v in shared_recording_dict.items():
-                print(f"{(tuple(k[0][0]),tuple(k[0][1])),k[1]}: {v}")
+                if not v:
+                    print(f"{k}")
         else:
             print("All verified successfully!")
 
