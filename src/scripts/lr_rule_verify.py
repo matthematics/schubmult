@@ -337,7 +337,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         crystals = {}
         #dom = RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector), n -1)
 
-        assert len(u_rc) == n - 1
+        assert u_rc.crystal_length() == n - 1
         assert len(left_rc) == n - 1
         if u_rc.inv == 0:
             crystals[left_rc] = {CrystalGraphTensor(left_rc, u_rc)}
@@ -519,49 +519,30 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         # left diff
         diff_perm = u * (~mdom)
         poly_cache = {}
-        for hw_tab in RCGraph.all_rc_graphs(mdom, n):
+        w0_prin = RCGraph.principal_rc(Permutation.w0(n), n)
+        sm = Sx.zero
+        for u_rc in RCGraph.all_rc_graphs(u, n):
         #if True:
-            sm = Sx.zero
-            for v_rc in RCGraph.all_rc_graphs(v, n):
-                crystals = decompose_tensor_product(hw_tab, v_rc, n + 1)
+            crystals0 = decompose_tensor_product(w0_prin, u_rc, n + 1)
+            for rc_w_1, coeff1 in crystals0.items():
+                if rc_w_1.is_principal:
+                    for t_elem0 in coeff1:
+                        for v_rc in RCGraph.all_rc_graphs(v, n):
+                            crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
 
-                rc_ring = RCGraphRing()
+                            rc_ring = RCGraphRing()
 
-                tring = rc_ring @ rc_ring
+                            tring = rc_ring @ rc_ring
 
-                
+                            
 
-                for rc_w, coeff in crystals.items():
-                    # if not rc_w.is:
-                    #     continue
-                    # max_len = max(len(rc_w), len(tc_elem.factors[0]), len(tc_elem.factors[1]))
-                    # t_elem1, t_elem2 = tc_elem.factors
-                    # w_rc = rc_w.resize(max_len)
-                    # t_elem1 = t_elem1.resize(max_len)
-                    # t_elem2 = t_elem2.resize(max_len)
-                    # rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2))
-                    # if (t_elem2, t_elem1) not in rc_w_coprods.get(w_rc, tring.zero):
-                    #     rc_w_coprods[w_rc] += tring((t_elem2, t_elem1))
-                    #if rc_w.is_highest_weight and rc_w.to_lowest_weight()[0].is_principal:
-                    # principal_crystal = RCGraph.principal_rc(rc_w.perm, n - 1).full_crystal
-                    #if rc_w.to_lowest_weight()[0].is_principal:
-                        #assert len(coeff) == 1
-                    # if hw_tab.is_principal:#rc_w.is_principal:
-                    #     for tensor in coeff:
-                    #         if tensor in used_tensors:
-                    #             continue
-                    #         used_tensors.add(tensor)
-                    #         sm += Sx(rc_w.perm)
-                    if rc_w.is_principal:
-                        from schubmult import uncode
-                        # if mdom == u: 
-                        #     sm += len(coeff) * Sx(rc_w.perm)
-                        # else:
-                            #if (diff_perm * rc_w.perm).inv == rc_w.perm.inv - diff_perm.inv:
-                        for t_elem in coeff:
-                            #sm += Sx(diff_perm * rc_w.perm)
-                            for bong in t_elem.full_crystal:
-                                sm += Sx(u) * bong.factors[1].polyvalue(Sx.genset)
+                            for rc_w, coeff in crystals.items():
+                                if rc_w.is_principal:
+                                    for t_elem in coeff:
+                                        #sm += Sx(diff_perm * rc_w.perm)
+                                        for bong0 in t_elem0.full_crystal:
+                                            for bong in t_elem.full_crystal:
+                                                sm += bong0.factors[1].polyvalue(Sx.genset) * bong.factors[1].polyvalue(Sx.genset)
                                     
 
                             
