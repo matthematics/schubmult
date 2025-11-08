@@ -535,10 +535,10 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                                 if rc_w.is_principal:
                                     for t_elem in coeff:
                                         #sm += Sx(diff_perm * rc_w.perm)
-                                        #if u_rc.is_principal and v_rc.is_principal:
+                                        if u_rc.is_principal and v_rc.is_highest_weight:
                                         #for bong0 in u_rc.full_crystal:
-                                        #for bong in v_rc.full_crystal:
-                                        sm += Sx(t_elem0.factors[1].polyvalue(Sx.genset)) * Sx(t_elem.factors[1].polyvalue(Sx.genset))
+                                            for bong in v_rc.full_crystal:
+                                                sm += Sx(u) * Sx(bong.polyvalue(Sx.genset))
 
                                         # for bong0 in t_elem0.full_crystal:
                                         #     for bong in t_elem.full_crystal:
