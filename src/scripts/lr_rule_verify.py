@@ -531,15 +531,21 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                         for v_rc in RCGraph.all_rc_graphs(v, n):
                             crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
                             for rc_w, coeff in crystals.items():
-                            
+                                from schubmult import uncode
                                 if rc_w.is_principal:
                                     for t_elem in coeff:
                                         #sm += Sx(diff_perm * rc_w.perm)
-                                        if v_rc.is_highest_weight:
+                                        #if v_rc.is_highest_weight:
+                                        #if v_rc.is_principal:
+                                        hw_v = t_elem.to_highest_weight()[0].factors[1]
+                                        for w_rc in rc_w.full_crystal:
+                                            hw, raise_seq = w_rc.to_highest_weight()
+                                            sm += Sx(u_rc.polyvalue(Sx.genset)) * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
                                             #for bong0 in t_elem0.full_crystal:
                                             # THE NUMBER OF W_RCS IS THE NUMBER OF OCCURENCES OF THIS CRYSTAL
-                                            for bong in v_rc.full_crystal:
-                                                sm += Sx(u_rc.polyvalue(Sx.genset)) * Sx(bong.polyvalue(Sx.genset))
+                                            
+                                            # for bong in v_rc.full_crystal:
+                                            #     sm += Sx(u_rc.polyvalue(Sx.genset)) * Sx(bong.polyvalue(Sx.genset))
                                             # from schubmult import uncode
                                             # sm += Sx(uncode(tuple(a + b for a, b in zip(t_elem0.factors[1].length_vector, v_rc.length_vector))))
 
