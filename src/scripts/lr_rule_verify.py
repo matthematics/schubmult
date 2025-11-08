@@ -515,9 +515,10 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #if True:
         #hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
         
-        mdom = Permutation([])#u.minimal_dominant_above()
+        mdom = Permutation.w0(n)#u.minimal_dominant_above()
         # left diff
         diff_perm = u * (~mdom)
+        poly_cache = {}
         for hw_tab in RCGraph.all_rc_graphs(mdom, n):
         #if True:
             sm = Sx.zero
@@ -553,14 +554,17 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     #         sm += Sx(rc_w.perm)
                     if rc_w.is_principal:
                         from schubmult import uncode
-                        if mdom == u: 
-                            sm += len(coeff) * Sx(rc_w.perm)
-                        else:
+                        # if mdom == u: 
+                        #     sm += len(coeff) * Sx(rc_w.perm)
+                        # else:
                             #if (diff_perm * rc_w.perm).inv == rc_w.perm.inv - diff_perm.inv:
-                            for t_elem in coeff:
-                                #sm += Sx(diff_perm * rc_w.perm)
-                                for tompkin in t_elem.full_crystal:
-                                    sm += Sx(u) * tompkin.factors[1].polyvalue(Sx.genset)   
+                        for t_elem in coeff:
+                            #sm += Sx(diff_perm * rc_w.perm)
+                            for bong in t_elem.full_crystal:
+                                sm += Sx(u) * bong.factors[1].polyvalue(Sx.genset)
+                                    
+
+                            
                                 # take this rc_w and remove the non-u roots
                                 # prin_tab = RootTableau.from_rc_graph(rc_w)
                                 # dom_roots = [mdom.right_root_at(i) for i in range(mdom.inv)]
