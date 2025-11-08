@@ -562,7 +562,9 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                                     decomp = decompose_tensor_product(prin2, u_rc, n)
                                     for rc_w2, coeff2 in decomp.items():
                                         if rc_w2.is_principal:
-                                            sm += Sx(rc_w2.perm)
+                                            for t_elem_elem in coeff2:
+                                                u_u_rc = t_elem_elem.to_lowest_weight()[0].factors[1]
+                                                sm += Sx(uncode(tuple([a+b for a,b in zip(u_u_rc.length_vector, v_rc.length_vector)])))
                     #else
                         #used_rcs.add(rc_w)
 
