@@ -524,6 +524,9 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         rc_ring = RCGraphRing()
         # W0 IS SPECIAL. THIS IS THE RC/CRYSTAL LEVEL DECOMPOSITION, NO ELEMENT
         # OTHER THAN w0 WORKS
+        from itertools import zip_longest
+
+        from schubmult import uncode
         for u_rc in RCGraph.all_rc_graphs(u, n):
             crystals0 = decompose_tensor_product(w0_prin, u_rc, n + 1)
             for rc_w0, coeff0 in crystals0.items():
@@ -534,13 +537,20 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                             if rc_w.is_principal:
                                 for t_elem in coeff:
                                     for t_elem0 in coeff0:
-                                        hw_u = t_elem0.to_highest_weight()[0].factors[1]
-                                        hw_v = t_elem.to_highest_weight()[0].factors[1]
-                                        for w_rc in rc_w.full_crystal:
-                                            for w_rc0 in rc_w0.full_crystal:
-                                                hw0, raise_seq0 = w_rc0.to_highest_weight()
-                                                hw, raise_seq = w_rc.to_highest_weight()
-                                                sm += Sx(hw_u.reverse_raise_seq(raise_seq0).polyvalue(Sx.genset)) * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
+                                        big_w = Sx(rc_w0.perm) * Sx(rc_w.perm)
+                                        for www, coeff in big_w.items():
+                                            prin_www = RCGraph.principal_rc(www, n)
+                                            for bogus in prin_www.full_crystal:
+                                                import sympy
+                                                vect = tuple([a - 2*b for a,b in zip_longest(bogus.length_vector, mdom.trimcode, fillvalue=0)])
+                                                sm += coeff * sympy.prod([Sx.genset[i+1]**vect[i] for i in range(len(vect))])
+                                        # hw_u = t_elem0.to_highest_weight()[0].factors[1]
+                                        # hw_v = t_elem.to_highest_weight()[0].factors[1]
+                                        # for w_rc in rc_w.full_crystal:
+                                        #     for w_rc0 in rc_w0.full_crystal:
+                                        #         hw0, raise_seq0 = w_rc0.to_highest_weight()
+                                        #         hw, raise_seq = w_rc.to_highest_weight()
+                                        #         sm += Sx(hw_u.reverse_raise_seq(raise_seq0).polyvalue(Sx.genset)) * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
 
         check_elem = Sx(u) * Sx(v)
         diff = check_elem - sm
