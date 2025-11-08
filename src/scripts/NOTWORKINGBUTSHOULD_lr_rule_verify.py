@@ -516,6 +516,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
         
         mdom = Permutation.w0(n)#u.minimal_dominant_above()
+        w0 = mdom
         # left diff
         diff_perm = u * (~mdom)
         poly_cache = {}
@@ -523,20 +524,23 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         sm = Sx.zero
         rc_ring = RCGraphRing()
         for u_rc in RCGraph.all_rc_graphs(u, n):
+            for v_rc in RCGraph.all_rc_graphs(v, n):
+                
         #if True:
-            crystals0 = decompose_tensor_product(w0_prin, u_rc, n + 1)
-            for rc_w_1, coeff1 in crystals0.items():
-                if rc_w_1.is_principal:
-                    for t_elem0 in coeff1:
-                        for v_rc in RCGraph.all_rc_graphs(v, n):
+                crystals0 = decompose_tensor_product(w0_prin, u_rc, n + 1)
+                for rc_w_1, coeff1 in crystals0.items():
+                    if rc_w_1.is_principal:
+                        
+                        for t_elem0 in coeff1:
                             crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
                             for rc_w, coeff in crystals.items():
                             
                                 if rc_w.is_principal:
                                     for t_elem in coeff:
                                         #sm += Sx(diff_perm * rc_w.perm)
-                                        if u_rc.is_principal and v_rc.is_principal:
-                                            sm += Sx(u) * Sx(v)
+                                        if (u * w0 * rc_w_1.perm).inv == rc_w_1.perm.inv - w0.inv + u.inv:# and (v * w0 * rc_w.perm).inv == rc_w.perm.inv - w0.inv + v.inv:
+                                            if v_rc.is_principal:
+                                                sm += Sx(u * w0 * rc_w_1.perm) * Sx(v)
 
                                         # for bong0 in t_elem0.full_crystal:
                                         #     for bong in t_elem.full_crystal:
