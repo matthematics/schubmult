@@ -515,11 +515,11 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #if True:
         #hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
         
-        mdom = Permutation.w0(n + 1)#u.minimal_dominant_above()
+        mdom = Permutation.w0(n)#u.minimal_dominant_above()
         # left diff
         diff_perm = u * (~mdom)
         poly_cache = {}
-        w0_prin = RCGraph.principal_rc(Permutation.w0(n + 1), n)
+        w0_prin = RCGraph.principal_rc(mdom, n)
         sm = Sx.zero
         rc_ring = RCGraphRing()
         for u_rc in RCGraph.all_rc_graphs(u, n):
