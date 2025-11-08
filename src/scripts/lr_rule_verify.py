@@ -515,8 +515,9 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #if True:
         #hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
         
-        mdom = ~((~u).minimal_dominant_above())
-        diff_perm = (u * ~mdom)
+        mdom = Permutation.w0(n)#u.minimal_dominant_above()
+        # left diff
+        diff_perm = u * (~mdom)
         for hw_tab in RCGraph.all_rc_graphs(mdom, n - 1):
         #if True:
             sm = Sx.zero
@@ -555,11 +556,11 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                         if mdom == u: 
                             sm += len(coeff) * Sx(rc_w.perm)
                         else:
-                            #if (diff_perm*rc_w.perm).inv == rc_w.perm.inv - diff_perm.inv:
+                            #if (diff_perm * rc_w.perm).inv == rc_w.perm.inv - diff_perm.inv:
                             for t_elem in coeff:
-                                for vv in t_elem.full_crystal:
-                                    sm += Sx(u) * vv.factors[1].polyvalue(Sx.genset)
-
+                                #sm += Sx(diff_perm * rc_w.perm)
+                                for tompkin in t_elem.full_crystal:
+                                    sm += Sx(u) * tompkin.factors[1].polyvalue(Sx.genset)   
                                 # take this rc_w and remove the non-u roots
                                 # prin_tab = RootTableau.from_rc_graph(rc_w)
                                 # dom_roots = [mdom.right_root_at(i) for i in range(mdom.inv)]
@@ -680,11 +681,15 @@ def main():
         task_queue = manager.Queue()
         # dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
         dominant_only = False
+        sep_descs = False
         for hw_tab in perms:
             if not dominant_only or hw_tab.minimal_dominant_above() == hw_tab:
                 for perm in perms:
-        
-                    task_queue.put((hw_tab, perm, n))
+                    if sep_descs:
+                        if hw_tab.inv == 0 or perm.inv == 0 or max(hw_tab.descents()) <= min(perm.descents()):
+                            task_queue.put((hw_tab, perm, n))
+                    else:
+                        task_queue.put((hw_tab, perm, n))
 
         # Start fixed number of workers
         workers = []
