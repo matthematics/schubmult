@@ -535,10 +535,12 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                                 if rc_w.is_principal:
                                     for t_elem in coeff:
                                         #sm += Sx(diff_perm * rc_w.perm)
-                                        if u_rc.is_principal and v_rc.is_highest_weight:
-                                        #for bong0 in u_rc.full_crystal:
-                                            for bong in v_rc.full_crystal:
-                                                sm += Sx(u) * Sx(bong.polyvalue(Sx.genset))
+                                        if u_rc.is_highest_weight and v_rc.is_highest_weight:
+                                            for bong0 in u_rc.full_crystal:
+                                                for bong in v_rc.full_crystal:
+                                                    sm += Sx(bong0.polyvalue(Sx.genset)) * Sx(bong.polyvalue(Sx.genset))
+                                            # from schubmult import uncode
+                                            # sm += Sx(uncode(tuple(a + b for a, b in zip(t_elem0.factors[1].length_vector, v_rc.length_vector))))
 
                                         # for bong0 in t_elem0.full_crystal:
                                         #     for bong in t_elem.full_crystal:
