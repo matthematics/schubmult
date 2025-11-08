@@ -515,14 +515,14 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #if True:
         #hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
         
-        mdom = Permutation.w0(n)#u.minimal_dominant_above()
+        mdom = Permutation.w0(2)#u.minimal_dominant_above()
         # left diff
         diff_perm = u * (~mdom)
-        for hw_tab in RCGraph.all_rc_graphs(mdom, n - 1):
+        for hw_tab in RCGraph.all_rc_graphs(mdom, n):
         #if True:
             sm = Sx.zero
-            for v_rc in RCGraph.all_rc_graphs(v, n-1):
-                crystals = decompose_tensor_product(hw_tab, v_rc, n)
+            for v_rc in RCGraph.all_rc_graphs(v, n):
+                crystals = decompose_tensor_product(hw_tab, v_rc, n + 1)
 
                 rc_ring = RCGraphRing()
 
