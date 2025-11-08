@@ -535,10 +535,11 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                                 if rc_w.is_principal:
                                     for t_elem in coeff:
                                         #sm += Sx(diff_perm * rc_w.perm)
-                                        #if v_rc.is_highest_weight:
+                                        if v_rc.is_highest_weight:
                                             #for bong0 in t_elem0.full_crystal:
-                                            for bong in t_elem.full_crystal:
-                                                sm += Sx(u_rc.polyvalue(Sx.genset)) * Sx(bong.factors[1].polyvalue(Sx.genset))
+                                            # THE NUMBER OF W_RCS IS THE NUMBER OF OCCURENCES OF THIS CRYSTAL
+                                            for bong in v_rc.full_crystal:
+                                                sm += Sx(u_rc.polyvalue(Sx.genset)) * Sx(bong.polyvalue(Sx.genset))
                                             # from schubmult import uncode
                                             # sm += Sx(uncode(tuple(a + b for a, b in zip(t_elem0.factors[1].length_vector, v_rc.length_vector))))
 
