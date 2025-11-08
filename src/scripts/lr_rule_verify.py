@@ -515,7 +515,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #if True:
         #hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
         
-        mdom = Permutation.w0(2)#u.minimal_dominant_above()
+        mdom = Permutation([])#u.minimal_dominant_above()
         # left diff
         diff_perm = u * (~mdom)
         for hw_tab in RCGraph.all_rc_graphs(mdom, n):
