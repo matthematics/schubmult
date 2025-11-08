@@ -527,10 +527,11 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             crystals0 = decompose_tensor_product(w0_prin, u_rc, n + 1)
             for rc_w_1, coeff1 in crystals0.items():
                 if rc_w_1.is_principal:
-                    for v_rc in RCGraph.all_rc_graphs(v, n):
-                        crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
-                        for rc_w, coeff in crystals.items():
-                            for t_elem0 in coeff1:
+                    for t_elem0 in coeff1:
+                        for v_rc in RCGraph.all_rc_graphs(v, n):
+                            crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
+                            for rc_w, coeff in crystals.items():
+                            
                                 if rc_w.is_principal:
                                     for t_elem in coeff:
                                         #sm += Sx(diff_perm * rc_w.perm)
