@@ -525,15 +525,22 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         # W0 IS SPECIAL. THIS IS THE RC/CRYSTAL LEVEL DECOMPOSITION, NO ELEMENT
         # OTHER THAN w0 WORKS
         for u_rc in RCGraph.all_rc_graphs(u, n):
-            for v_rc in RCGraph.all_rc_graphs(v, n):
-                crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
-                for rc_w, coeff in crystals.items():
-                    if rc_w.is_principal:
-                        for t_elem in coeff:
-                            hw_v = t_elem.to_highest_weight()[0].factors[1]
-                            for w_rc in rc_w.full_crystal:
-                                hw, raise_seq = w_rc.to_highest_weight()
-                                sm += Sx(u_rc.polyvalue(Sx.genset)) * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
+            crystals0 = decompose_tensor_product(w0_prin, u_rc, n + 1)
+            for rc_w0, coeff0 in crystals0.items():
+                if rc_w0.is_principal:
+                    for v_rc in RCGraph.all_rc_graphs(v, n):
+                        crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
+                        for rc_w, coeff in crystals.items():
+                            if rc_w.is_principal:
+                                for t_elem in coeff:
+                                    for t_elem0 in coeff0:
+                                        hw_u = t_elem0.to_highest_weight()[0].factors[1]
+                                        hw_v = t_elem.to_highest_weight()[0].factors[1]
+                                        for w_rc in rc_w.full_crystal:
+                                            for w_rc0 in rc_w0.full_crystal:
+                                                hw0, raise_seq0 = w_rc0.to_highest_weight()
+                                                hw, raise_seq = w_rc.to_highest_weight()
+                                                sm += Sx(hw_u.reverse_raise_seq(raise_seq0).polyvalue(Sx.genset)) * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
 
         check_elem = Sx(u) * Sx(v)
         diff = check_elem - sm
