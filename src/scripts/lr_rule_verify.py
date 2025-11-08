@@ -550,8 +550,21 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     #             continue
                     #         used_tensors.add(tensor)
                     #         sm += Sx(rc_w.perm)
-                    if rc_w.is_principal and (diff_perm * rc_w.perm).inv == rc_w.perm.inv - diff_perm.inv:
-                        sm += len(coeff) * Sx(diff_perm * rc_w.perm)
+                    if rc_w.is_principal:
+                        from schubmult import uncode
+                        if mdom == u: 
+                            sm += len(coeff) * Sx(rc_w.perm)
+                        else:
+                            for t_elem in coeff:
+                                u_rc = RCGraph.principal_rc(u, n - 1)
+                                # u_rc tensor v_rc
+                                lowest_weights = set()
+                                for uu in u_rc.full_crystal:
+                                    tensor = CrystalGraphTensor(uu, v_rc)
+                                    lowest_weights.add(tensor.to_lowest_weight()[0])
+                                    
+                                for elem in lowest_weights:
+                                    sm += Sx(uncode(elem.crystal_weight))
                     #else
                         #used_rcs.add(rc_w)
 
