@@ -529,20 +529,24 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             for rc_w_1, coeff1 in crystals0.items():
                 if rc_w_1.is_principal:
                     for t_elem0 in coeff1:
-                        for v_rc in RCGraph.all_rc_graphs(v, n):
-                            crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
-                            for rc_w, coeff in crystals.items():
+                        # for v_rc in RCGraph.all_rc_graphs(v, n):
+                        #     crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
+                            crystals = Sx(w0) * Sx(v)
+                            for w, coeff in crystals.items():
                                 # SANITY REMOVE PRINCIPAL
                                 # rc_W principal => bijection with v_rc
-                                if rc_w.is_principal:
-                                    for t_elem in coeff:
+                                #length_vector = tuple( a - b for a, b in zip_longest(w.trimcode, w0_prin.length_vector, fillvalue=0))
+                                    #for t_elem in coeff:
                                         #sm += Sx(diff_perm * rc_w.perm)
                                         # w0 on all, same as v
-                                        if u_rc.is_principal:# and v_rc.is_principal and (w0*rc_w.perm).inv == rc_w.perm.inv - w0.inv:
-                                        #if u_rc.is_principal and v_rc.is_principal:
-                                            # ALWAYAS REMEMBER: rc_w principal, the crytsal is isomorphic to v_rc, with w0 weight removed
-                                            for bong in t_elem.full_crystal:
-                                                sm += Sx(u) * bong.factors[1].polyvalue(Sx.genset)
+                                if u_rc.is_principal:# and v_rc.is_principal and (w0*rc_w.perm).inv == rc_w.perm.inv - w0.inv:
+                                #if u_rc.is_principal and v_rc.is_principal:
+                                    # ALWAYAS REMEMBER: rc_w principal, the crytsal is isomorphic to v_rc, with w0 weight removed
+                                    #for bong in t_elem.full_crystal:
+                                    w_rc = RCGraph.principal_rc(w, n)
+                                    for vv in w_rc.full_crystal:
+                                        from symengine import expand
+                                        sm += coeff * Sx(u) * expand(vv.polyvalue(Sx.genset)/w0_prin.polyvalue(Sx.genset))
 
                                         # for bong0 in t_elem0.full_crystal:
                                         #     for bong in t_elem.full_crystal:
