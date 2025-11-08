@@ -555,6 +555,8 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                             sm += len(coeff) * Sx(rc_w.perm)
                         else:
                             for t_elem in coeff:
+                                for rc in v_rc.full_crystal:
+                                    sm += Sx(u) * rc.polyvalue(Sx.genset)
                                 # take this rc_w and remove the non-u roots
                                 # prin_tab = RootTableau.from_rc_graph(rc_w)
                                 # dom_roots = [mdom.right_root_at(i) for i in range(mdom.inv)]
@@ -573,12 +575,12 @@ def worker(nn, shared_recording_dict, lock, task_queue):
 
 
                                 #mdom2 = uncode(
-                                for u_rc in RCGraph.all_rc_graphs(u, n - 1):
-                                    #sm += Sx(CrystalGraphTensor(u_rc, v_rc).to_lowest_weight()[0])
-                                    crystals = decompose_tensor_product(u_rc, v_rc, n)
-                                    for rc_w2, coeff2 in crystals.items():
-                                        if rc_w2.is_principal:
-                                            sm += len(coeff2) * Sx(rc_w2.perm)
+                                # for u_rc in RCGraph.all_rc_graphs(u, n - 1):
+                                #     #sm += Sx(CrystalGraphTensor(u_rc, v_rc).to_lowest_weight()[0])
+                                #     crystals = decompose_tensor_product(u_rc, v_rc, n)
+                                #     for rc_w2, coeff2 in crystals.items():
+                                #         if rc_w2.is_principal:
+                                #             sm += len(coeff2) * Sx(rc_w2.perm)
                                 # u_rc tensor v_rc
                                 # for u_rc in RCGraph.all_rc_graphs(u, n - 1):
                                 #     # decomp = decompose_tensor_product(prin2, u_rc, n)
