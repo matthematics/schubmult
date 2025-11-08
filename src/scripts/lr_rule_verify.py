@@ -525,10 +525,10 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         rc_ring = RCGraphRing()
         for u_rc in RCGraph.all_rc_graphs(u, n):
         #if True:
-            # crystals0 = decompose_tensor_product(w0_prin, u_rc, n + 1)
-            # for rc_w_1, coeff1 in crystals0.items():
-            #     if rc_w_1.is_principal:
-            #         for t_elem0 in coeff1:
+            crystals0 = decompose_tensor_product(w0_prin, u_rc, n + 1)
+            for rc_w_1, coeff1 in crystals0.items():
+                if rc_w_1.is_principal:
+                    for t_elem0 in coeff1:
                         for v_rc in RCGraph.all_rc_graphs(v, n):
                             crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
                             for rc_w, coeff in crystals.items():
@@ -541,8 +541,9 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                                         #if u_rc.is_principal:# and v_rc.is_principal and (w0*rc_w.perm).inv == rc_w.perm.inv - w0.inv:
                                         #if u_rc.is_principal and v_rc.is_principal:
                                             # ALWAYAS REMEMBER: rc_w principal, the crytsal is isomorphic to v_rc, with w0 weight removed
+                                        for bong0 in t_elem0.full_crystal:
                                             for bong in t_elem.full_crystal:
-                                                sm += Sx(u_rc.polyvalue(Sx.genset) * bong.factors[1].polyvalue(Sx.genset))
+                                                sm += Sx(bong0.factors[1].polyvalue(Sx.genset) * bong.factors[1].polyvalue(Sx.genset))
 
                                         # for bong0 in t_elem0.full_crystal:
                                         #     for bong in t_elem.full_crystal:
