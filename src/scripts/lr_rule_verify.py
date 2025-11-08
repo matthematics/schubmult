@@ -520,7 +520,6 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         diff_perm = u * (~mdom)
         poly_cache = {}
         w0_prin = RCGraph.principal_rc(mdom, n)
-        w0 = w0_prin.perm
         sm = Sx.zero
         rc_ring = RCGraphRing()
         for u_rc in RCGraph.all_rc_graphs(u, n):
@@ -532,18 +531,14 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                         for v_rc in RCGraph.all_rc_graphs(v, n):
                             crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
                             for rc_w, coeff in crystals.items():
-                                # SANITY REMOVE PRINCIPAL
-                                # rc_W principal => bijection with v_rc
+                            
                                 if rc_w.is_principal:
                                     for t_elem in coeff:
                                         #sm += Sx(diff_perm * rc_w.perm)
-                                        # w0 on all, same as v
-                                        #if u_rc.is_principal:# and v_rc.is_principal and (w0*rc_w.perm).inv == rc_w.perm.inv - w0.inv:
                                         #if u_rc.is_principal and v_rc.is_principal:
-                                            # ALWAYAS REMEMBER: rc_w principal, the crytsal is isomorphic to v_rc, with w0 weight removed
-                                        for bong0 in t_elem0.full_crystal:
-                                            for bong in t_elem.full_crystal:
-                                                sm += Sx(bong0.factors[1].polyvalue(Sx.genset) * bong.factors[1].polyvalue(Sx.genset))
+                                        #for bong0 in u_rc.full_crystal:
+                                        #for bong in v_rc.full_crystal:
+                                        sm += Sx(t_elem0.factors[1].polyvalue(Sx.genset)) * Sx(t_elem.factors[1].polyvalue(Sx.genset))
 
                                         # for bong0 in t_elem0.full_crystal:
                                         #     for bong in t_elem.full_crystal:
