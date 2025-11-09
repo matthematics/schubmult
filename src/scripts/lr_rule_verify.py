@@ -324,8 +324,8 @@ def divdiff_rc_desc(the_rc0, desc):
 
 def divdiffable_rc(v_rc, u):
     from schubmult import RCGraph
-    if not v_rc.is_highest_weight:
-        return set()
+    # if not v_rc.is_highest_weight:
+    #     return set()
     #     vr_hw, raise_seq = v_rc.to_highest_weight()
     #     hw_set = divdiffable_rc(vr_hw, u)
     #     ret = set()
@@ -352,6 +352,8 @@ def divdiffable_rc(v_rc, u):
 
 def dualpieri(mu, v_rc, w):
     from schubmult import Permutation, RCGraph, pull_out_var
+    if mu.inv == 0:
+        return [[[], divdiffable_rc(v_rc, w)]]
     cycle = Permutation.cycle
     lm = (~mu).trimcode
     cn1w = (~w).trimcode
@@ -365,11 +367,11 @@ def dualpieri(mu, v_rc, w):
         c = cycle(i - len(lm) + 1, cn1w[i]) * c
     # c = permtrim(c)
     # logger.debug("Recording line number")
-    res = [[[], v_rc]]
+    res = {((), v_rc)}
     # logger.debug(f"{v=} {type(v)=}")
     for i in range(len(lm)):
         # logger.debug(f"{res=}")
-        res2 = []
+        res2 = set()
         for vlist, v_rc_0 in res:
             vp = v_rc_0
             vpl_list = divdiffable_rc(vp, cycle(lm[i] + 1, cn1w[i] - lm[i]))
@@ -379,23 +381,31 @@ def dualpieri(mu, v_rc, w):
             for vpl in vpl_list:
                 vl = pull_out_var(lm[i] + 1, vpl.perm)
                 # logger.debug(f"{vl=}")
-                rc_to_match = vpl.vertical_cut(lm[i] - 1)[0]
+                if lm[i] > 0:
+                    rc_to_match = vpl.vertical_cut(lm[i] - 1)[0]
+                else:
+                    rc_to_match = vpl
                 for pw, vpl2 in vl:
                     for vpl2_rc in RCGraph.all_rc_graphs(vpl2, max(len(vpl2.trimcode),len(v_rc_0) - 1)):
                         if vpl2_rc.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1) == vpl.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1):
-                            if vpl2_rc.vertical_cut(lm[i] - 1)[0] == rc_to_match:
-                                res2 += [[[*vlist,pw], vpl2_rc]]
+                            if lm[i] > 0:
+                                if vpl2_rc.vertical_cut(lm[i] - 1)[0] == rc_to_match:
+                                    res2.add(((*vlist,pw), vpl2_rc))
+                            else:
+                                if vpl2_rc == rc_to_match:
+                                    res2.add(((*vlist,pw), vpl2_rc))
+
         res = res2
     if len(lm) == len(cn1w):
         return res
-    res2 = []
+    res2 = set()
     for vlist, v_rc_0 in res:
         vp = v_rc_0
         vpl_list = divdiffable_rc(vp, c)
         if len(vpl_list) == 0:
             continue
         for vpl in vpl_list:
-            res2 += [[vlist, vpl]]
+            res2.add((tuple(vlist), vpl))
     # logger.debug(f"{res2=}")
     return res2
 
@@ -633,27 +643,27 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         from schubmult import RCGraphRing, uncode
         rc_ring = RCGraphRing()
 
-        good = False
+        good = True
 
         # lst = divdiffable_rc(w0_prin, ~v * mdom)
         if v == v.minimal_dominant_above():
             continue
         #bob = DSx(w0) * DSx(v, "z")
         bob = Sx(w0) * Sx(v)
-        for boing, coeff in bob.items():
-            # if coeff.expand() == S.Zero:
-            #     continue
-            print(f"w={boing} mu={mdom} coeff={coeff}")
-            for v_rc in RCGraph.all_hw_rcs(v, n):
-                print("rc=")
-                pretty_print(v_rc)
-                lst = dualpieri(mdom, v_rc=v_rc, w=boing)
-            #print(coeff)
-                print("result=")
-                for bobb in lst:
-                    print(bobb[:-1])
-                    pretty_print(bobb[-1])
-                #print([tuple(bobb[-1]) for bobb in lst])
+        # for boing, coeff in bob.items():
+        #     # if coeff.expand() == S.Zero:
+        #     #     continue
+        #     print(f"w={boing} mu={mdom} coeff={coeff}")
+        #     for v_rc in RCGraph.all_hw_rcs(v, n):
+        #         print("rc=")
+        #         pretty_print(v_rc)
+        #         lst = dualpieri(mdom, v_rc=v_rc, w=boing)
+        #     #print(coeff)
+        #         print("result=")
+        #         for bobb in lst:
+        #             print(bobb[:-1])
+        #             pretty_print(bobb[-1])
+        #         #print([tuple(bobb[-1]) for bobb in lst])
 
         if False:
             crystals = {}
@@ -665,57 +675,102 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                 crystals[v] = {}
                 for v_rc in RCGraph.all_rc_graphs(v, n):
                     crystals[v][v_rc] = decompose_tensor_product(w0_prin, v_rc, n + 1)
+        product = Sx(u) * Sx(v)
+        sm = Sx.zero
+        w0 = u.minimal_dominant_above()
+        pord = Sx(u) * Sx(v)
+        bongs = set()
+        bings = set()
+        sm0 = Sx.zero
+        for u_rc in RCGraph.all_hw_rcs(u, n):
+            for v_rc in RCGraph.all_rc_graphs(v, n):
+                crystals = decompose_tensor_product(u_rc, v_rc, n + 1)
+                #for w, coeff in pord.items():
+                for rc_w, tensors in crystals.items():
+                    
+                    if rc_w.is_principal:
+                        w = rc_w.perm
+                        #for rc_tensor in tensors:
+                        sm += Sx(rc_w.perm)
+                        dualpocket = dualpieri(u_rc.perm, v_rc,  w)
+                        sm0 += Sx(w)
+                        # if len(dualpocket) > 1:
+                        #     print(f"{dualpocket}: {u_rc.perm=} {v_rc=}")
+                
+                        
+                            
+                        # if len(lst) > 0:
+                        #     if (ww*((~u)*w0)).inv == ww.inv - ((~u)*w0).inv:
+                        #         w = ww*(~u)*w0
+                        #         rcs = set()
+                        #         rcs.update(u_rc.full_crystal)
+                        #         rcs.update(v_rc.full_crystal)
+                        #         for (uu_rc, vv_rc) in itertools.combinations_with_replacement(rcs, 2):
+                        #             if uu_rc.perm == u and vv_rc.perm == v:
+                                    
+                        #                 for vv_rc in v_rc.full_crystal:
+                                            
+                        #                     if tuple([a+b for a,b in zip(uu_rc.length_vector, vv_rc.length_vector)]) == RCGraph.principal_rc(w, n).length_vector:
+                        #                         sm += Sx(w)
+                                    
+                                    
+            # for u_rc, crystals0 in crystals[u].items():
+            #     for rc_w0, coeff0 in crystals0.items():
+            #         if rc_w0.is_principal:
+            #             for v_rc, crystals1 in crystals[v].items():    
+            #                 for rc_w, coeff in crystals1.items():
+            #                     #lst = dualpieri(mdom, v_rc, rc_w.perm)
+            #                     lst = divdiffable_rc(w0_prin, ~v_rc.perm * mdom)
+            #                     print(coeff)
+            #                     rr = sum([rc_ring(rc) for rc in lst])
+            #                     pretty_print(rr)
+            #                     if rc_w.is_principal:
+            #                         assert (Sx(w0) * Sx(v)).get(rc_w.perm, 0) == len(coeff)
+            #                         for t_elem in coeff:
+            #                             for t_elem0 in coeff0:
+            #                                 # big_w = Sx(rc_w0.perm) * Sx(rc_w.perm)
+            #                                 # for www, coeff in big_w.items():
+            #                                 #     prin_www = RCGraph.principal_rc(www, n)
+            #                                 #     for bogus in prin_www.full_crystal:
+            #                                 #         import sympy
+            #                                 #         vect = tuple([a - 2*b for a,b in zip_longest(bogus.length_vector, mdom.trimcode, fillvalue=0)])
+            #                                 #         sm += coeff * sympy.prod([Sx.genset[i+1]**vect[i] for i in range(len(vect))])
 
-            for u_rc, crystals0 in crystals[u].items():
-                for rc_w0, coeff0 in crystals0.items():
-                    if rc_w0.is_principal:
-                        for v_rc, crystals1 in crystals[v].items():    
-                            for rc_w, coeff in crystals1.items():
-                                #lst = dualpieri(mdom, v_rc, rc_w.perm)
-                                lst = divdiffable_rc(w0_prin, ~v_rc.perm * mdom)
-                                print(coeff)
-                                rr = sum([rc_ring(rc) for rc in lst])
-                                pretty_print(rr)
-                                if rc_w.is_principal:
-                                    assert (Sx(w0) * Sx(v)).get(rc_w.perm, 0) == len(coeff)
-                                    for t_elem in coeff:
-                                        for t_elem0 in coeff0:
-                                            # big_w = Sx(rc_w0.perm) * Sx(rc_w.perm)
-                                            # for www, coeff in big_w.items():
-                                            #     prin_www = RCGraph.principal_rc(www, n)
-                                            #     for bogus in prin_www.full_crystal:
-                                            #         import sympy
-                                            #         vect = tuple([a - 2*b for a,b in zip_longest(bogus.length_vector, mdom.trimcode, fillvalue=0)])
-                                            #         sm += coeff * sympy.prod([Sx.genset[i+1]**vect[i] for i in range(len(vect))])
-
-                                            ## UNCOMMENT FOR SANITY CHECK
-                                            #hw_u = t_elem0.to_highest_weight()[0].factors[1]
-                                            # hw_v = t_elem.to_highest_weight()[0].factors[1]
-                                            # u_part = Sx(u_rc.polyvalue(Sx.genset))
-                                            for w_rc in RCGraph.all_rc_graphs(rc_w.perm, n):
-                                                for w_rc0 in RCGraph.all_rc_graphs(rc_w0.perm, n):
-                                                    #hw0, raise_seq0 = w_rc0.to_highest_weight()
-                                                    #hw, raise_seq = w_rc.to_highest_weight()
-                                                    #sm += Sx(hw_u.reverse_raise_seq(raise_seq0).polyvalue(Sx.genset)) * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
-                                                    # sm += u_part * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
-                                                    vect = tuple([a + b for a,b in zip_longest(w_rc.length_vector, w_rc0.length_vector, fillvalue=0)])
-                                                    vect = tuple([a-2*b for a,b in zip_longest(vect, mdom.trimcode, fillvalue=0)])
-                                                    sm += sympy.prod([Sx.genset[i+1]**vect[i] for i in range(len(vect))])
-
-            check_elem = Sx(u) * Sx(v)
-            diff = check_elem - sm
-            try:
-                assert diff == Sx.zero
-                #print(f"Coprod {rc.perm.trimcode}")
-                # pretty_print(rc)
-                # pretty_print(val)
-            #print("At least one success")
-                good = True
-            except AssertionError:
-                print("A fail")
-                print(f"{diff=}")
-                print(f"{sm=}")
-                good = False
+            #                                 ## UNCOMMENT FOR SANITY CHECK
+            #                                 #hw_u = t_elem0.to_highest_weight()[0].factors[1]
+            #                                 # hw_v = t_elem.to_highest_weight()[0].factors[1]
+            #                                 # u_part = Sx(u_rc.polyvalue(Sx.genset))
+            #                                 for w_rc in RCGraph.all_rc_graphs(rc_w.perm, n):
+            #                                     for w_rc0 in RCGraph.all_rc_graphs(rc_w0.perm, n):
+            #                                         #hw0, raise_seq0 = w_rc0.to_highest_weight()
+            #                                         #hw, raise_seq = w_rc.to_highest_weight()
+            #                                         #sm += Sx(hw_u.reverse_raise_seq(raise_seq0).polyvalue(Sx.genset)) * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
+            #                                         # sm += u_part * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
+            #                                         vect = tuple([a + b for a,b in zip_longest(w_rc.length_vector, w_rc0.length_vector, fillvalue=0)])
+            #                                         vect = tuple([a-2*b for a,b in zip_longest(vect, mdom.trimcode, fillvalue=0)])
+            #                                         sm += sympy.prod([Sx.genset[i+1]**vect[i] for i in range(len(vect))])
+        good = True
+        check_elem = Sx(u) * Sx(v)
+        diff = check_elem - sm0
+        diff2 = check_elem - sm
+        try:
+            #assert diff2 == Sx.zero, "Noit zor1"
+            assert diff == Sx.zero, "Noit zor0"
+            
+            #assert good
+            #print(f"Coprod {rc.perm.trimcode}")
+            # pretty_print(rc)
+            # pretty_print(val)
+        #print("At least one success")
+            #good = True
+        except AssertionError as e:
+            print(f"A fail {e=}")
+            print(f"{u_rc.perm=}")
+            print(f"{v=}")
+            print(f"{diff=}")
+            print(f"{sm0=}")
+            print(f"{check_elem=}")
+            good = False
             
         #assert good, f"COMPLETE FAIL {w=}"
         if good:
@@ -790,13 +845,15 @@ def main():
         from schubmult.schub_lib.rc_graph import RCGraph
         task_queue = manager.Queue()
         # dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
-        dominant_only = False
+        dominant_only = True
+        w0_only  =False
         sep_descs = False
-        indec = False
+        indec = True
+        w0 = Permutation.w0(n)
         for hw_tab in perms:
             if indec and is_decomposable(hw_tab):
                 continue
-            if not dominant_only or hw_tab.minimal_dominant_above() == hw_tab:
+            if (not dominant_only or hw_tab.minimal_dominant_above() == hw_tab) and (not w0_only or hw_tab == w0):
                 for perm in perms:
                     if indec and is_decomposable(perm):
                         continue
@@ -820,7 +877,7 @@ def main():
         # cache_saver_proc.join()
         recording_saver_proc.join()
         # print("Run finished.")
-        print_failures = False
+        print_failures = True
         if print_failures:
             if any(v is False for v in shared_recording_dict.values()):
                 print("Failures:")

@@ -291,9 +291,9 @@ def pull_out_var(vnum, v):
     v = Permutation(v)
     vup = v
     if vnum >= len(v):
-        return [[[], v]]
+        return {((), v)}
     vpm_list = [(vup, 0)]
-    ret_list = []
+    ret_list = set()
     for p in range(len(v) + 1 - vnum):
         vpm_list2 = []
         for vpm, b in vpm_list:
@@ -301,12 +301,12 @@ def pull_out_var(vnum, v):
                 vpm2 = [*vpm]
                 vpm2.pop(vnum - 1)
                 vp = permtrim(vpm2)
-                ret_list += [
-                    [
-                        [v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))],
+                ret_list.add(
+                    (
+                        tuple([v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))]),
                         vp,
-                    ],
-                ]
+                    )
+                )
             for j in range(vnum, len(vup) + 2):
                 if vpm[j] <= b:
                     continue
@@ -319,12 +319,13 @@ def pull_out_var(vnum, v):
             vpm2 = [*vpm]
             vpm2.pop(vnum - 1)
             vp = permtrim(vpm2)
-            ret_list += [
-                [
-                    [v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))],
+            ret_list.add(
+                (
+                    tuple([v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))]),
                     vp,
-                ],
-            ]
+                )
+            )
+
     return ret_list
 
 
