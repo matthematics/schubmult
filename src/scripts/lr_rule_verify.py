@@ -302,10 +302,10 @@ def divdiff_rc_desc(the_rc0, desc):
     from sympy import pretty_print
 
     from schubmult import RCGraph
-    #the_rc, raise_seq = the_rc0.to_highest_weight()
+    the_rc, raise_seq = the_rc0.to_highest_weight()
     ret = set()
     for down_rc in RCGraph.all_rc_graphs(the_rc0.perm.swap(desc-1,desc), max(len(the_rc0),len(the_rc0.perm.swap(desc-1,desc).trimcode))):
-        if down_rc == the_rc0.resize(len(down_rc)).exchange_property(desc):
+        if down_rc == the_rc.resize(len(down_rc)).exchange_property(desc):
             addup, row = the_rc0.to_lowest_weight()[0].resize(max(len(down_rc),len(the_rc0))).exchange_property(desc, return_row=True)
             #if row >= desc - 1:
             # print(f"Div diff {desc=} on ")
@@ -325,7 +325,7 @@ def divdiff_rc_desc(the_rc0, desc):
 def divdiffable_rc(v_rc, u):
     from schubmult import RCGraph
     # if not v_rc.is_highest_weight:
-    #     return set()
+    #     raise ValueError("Crystal")
     #     vr_hw, raise_seq = v_rc.to_highest_weight()
     #     hw_set = divdiffable_rc(vr_hw, u)
     #     ret = set()
@@ -344,7 +344,8 @@ def divdiffable_rc(v_rc, u):
         working_perm = working_perm.swap(desc - 1, desc)
         for the_rc in ret:
             assert desc-1 in the_rc.perm.descents()
-            working_set.update(divdiff_rc_desc(the_rc, desc))
+            for the_rc0 in the_rc.full_crystal:
+                working_set.update(divdiff_rc_desc(the_rc0, desc))
 
         ret = working_set
     return ret
@@ -353,10 +354,9 @@ def divdiffable_rc(v_rc, u):
 def dualpieri(mu, v_rc, w):
     from schubmult import Permutation, RCGraph, pull_out_var
     if mu.inv == 0:
-        ret = set()
-        for v_rc2 in v_rc.full_crystal:
-            ret.update({((), rc) for rc in divdiffable_rc(v_rc2, w)})
-        return ret
+        #ret = set()
+        return set({((), v_rc)})
+        
     cycle = Permutation.cycle
     lm = (~mu).trimcode
     cn1w = (~w).trimcode
@@ -586,7 +586,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                             #     if u_hw_rc == u_rc:
                             #used_tensors.add(tensor_hw)
                             crystals[w_rc] = crystals.get(w_rc, set())
-                            crystals[w_rc].add(tensor)
+                            crystals[w_rc].add(tensor_lw)
                     
                     # fyi[w_rc] = fyi.get(w_rc, set())
                     # fyi[w_rc].add((tensor, u_tab))
@@ -650,8 +650,9 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         good = True
 
         # lst = divdiffable_rc(w0_prin, ~v * mdom)
-        if v == v.minimal_dominant_above():
-            continue
+        # SKIP DDOM
+        # if v == v.minimal_dominant_above():
+        #     continue
         #bob = DSx(w0) * DSx(v, "z")
         bob = Sx(w0) * Sx(v)
         # for boing, coeff in bob.items():
@@ -689,16 +690,27 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         y = GeneratingSet("y")
         z = GeneratingSet("z")
         #check_elem = DSx([]).ring.from_dict({k: v for k, v in (DSx(u, "y") * DSx(v, "z")).items() if v.expand() != S.Zero})
-        check_elem = DSx(u) * DSx(v, "z")
+        # check_elem = DSx(u) * DSx(v, "z")
         # x = Sx.genset
-        for w in check_elem:
-            for u_rc in RCGraph.all_hw_rcs(u, n):
-                for v_rc in RCGraph.all_hw_rcs(v, n):
-                    #crystals = decompose_tensor_product(u_rc, v_rc, n + 1)
+        check_elem = Sx(u) * Sx(v)
+        for u_rc in RCGraph.all_rc_graphs(u, n):
+            for v_rc in RCGraph.all_hw_rcs(v, n):
+                #for w in check_elem:
+                    crystals = None
+                    for v_rc_cry in v_rc.full_crystal:
+                        if crystals is None:
+                            crystals = decompose_tensor_product(u_rc, v_rc_cry, n + 1)
+                        else:
+                            crystals0 = decompose_tensor_product(u_rc, v_rc_cry, n + 1)
+                            for rc_w1 in crystals0:
+                                if rc_w1 in crystals:
+                                    crystals[rc_w1].update(crystals0[rc_w1])
+                                else:
+                                    crystals[rc_w1] = crystals0[rc_w1]
                     # # #for w, coeff in pord.items():
-                    # for rc_w, tensors in crystals.items():
+                    for rc_w, tensors in crystals.items():
                         
-                    #     if rc_w.is_principal:
+                        #if rc_w.is_principal:
                     # #         w = rc_w.perm
                     # #             # if not w.bruhat_leq(rc_w.perm):
                     #             #     continue
@@ -707,19 +719,20 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     # #         sm += Sx(rc_w.perm)
                     #         w = rc_w.perm
                     ## ONE PER CRYSTAL AND BREAK
-                    for cry_rc in v_rc.full_crystal:
-                        dualpocket = dualpieri(u_rc.perm, cry_rc,  w)
-                        
-                        # print(f"{dualpocket=}")   
-                        if len(dualpocket) > 0:
-                            for vlist, rc in dualpocket:
-                                toadd = S.One
-                                for i in range(len(vlist)):
-                                    for j in range(len(vlist[i])):
-                                        toadd *= y[i + 1] - z[vlist[i][j]]
-                                for cry_rc in rc.full_crystal:
-                                    sm0 += toadd * cry_rc.polyvalue(y[len(vlist):], z) * DSx(w)
-                            break
+                            for t_elem in tensors:
+                                #for vv_rc in t_elem.full_crystal:
+
+                                    dualpocket = dualpieri(u_rc.perm, t_elem.factors[1],  rc_w.perm)
+                                    
+                                    # print(f"{dualpocket=}")   
+                                    if len(dualpocket) > 0:
+                                        for vlist, rc in dualpocket:
+                                            # toadd = S.One
+                                            # for i in range(len(vlist)):
+                                            #     for j in range(len(vlist[i])):
+                                            #         toadd *= y[i + 1] - z[vlist[i][j]]
+                                            sm0 += Sx(rc_w.polyvalue(Sx.genset))
+                            
                             
                         #break
                                 # if len(dualpocket) > 1:
@@ -877,19 +890,19 @@ def main():
         dominant_only = True
         w0_only  =False
         sep_descs = False
-        indec = True
+        indec = False
         w0 = Permutation.w0(n)
         for hw_tab in perms:
             if indec and is_decomposable(hw_tab):
                 continue
             if (not dominant_only or hw_tab.minimal_dominant_above() == hw_tab) and (not w0_only or hw_tab == w0):
-                for perm in perms:
-                    if indec and is_decomposable(perm):
-                        continue
-                    if sep_descs:
-                        if hw_tab.inv == 0 or perm.inv == 0 or max(hw_tab.descents()) <= min(perm.descents()):
-                            task_queue.put((hw_tab, perm, n))
-                    else:
+                    # if indec and is_decomposable(perm):
+                    #     continue
+                    # if sep_descs:
+                    #     if hw_tab.inv == 0 or perm.inv == 0 or max(hw_tab.descents()) <= min(perm.descents()):
+                    #         task_queue.put((hw_tab, perm, n))
+                    # else:
+                    for perm in perms:
                         task_queue.put((hw_tab, perm, n))
 
         # Start fixed number of workers

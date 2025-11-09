@@ -468,13 +468,18 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             return type(self)(())
         return type(self)([tuple([a - start for a in row]) for row in self[start:end]])
 
-    def polyvalue(self, x, y=None):
+    def polyvalue(self, x, y=None, crystal = False):
         ret = S.One
-        for i, row in enumerate(self):
-            if y is None:
-                ret *= x[i + 1] ** len(row)
-            else:
-                ret *= prod([x[i + 1] - y[row[j] - i] for j in range(len(row))])
+        if not crystal:
+            for i, row in enumerate(self):
+                if y is None:
+                    ret *= x[i + 1] ** len(row)
+                else:
+                    ret *= prod([x[i + 1] - y[row[j] - i] for j in range(len(row))])
+            return ret
+        ret = S.Zero
+        for rc in self.full_crystal:
+            ret += rc.polyvalue(x,y)
         return ret
 
     _graph_cache = {}  # noqa: RUF012
@@ -1111,6 +1116,16 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             if rc_hw not in ret:
                 ret.add(rc_hw)
         return ret
+
+    @classmethod
+    @cache
+    def all_lw_rcs(cls, perm, length):
+        ret = set()
+        for rc in cls.all_rc_graphs(perm, length):
+            rc_lw, _ = rc.to_lowest_weight()
+            if rc_lw not in ret:
+                ret.add(rc_lw)
+        return ret
     # @classmethod
     # def from_leibniz_rep(cls, rep):
     #     from schubmult.utils.schub_lib import elem_sym_perms
@@ -1128,6 +1143,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def shiftcut(self):
         cut_rc = RCGraph([tuple([a for a in row if a > i]) for i, row in enumerate(self.shiftup(-1)[:-1])])
         return cut_rc
+
 
     def divdiff_action(self, s):
         if self.perm.inv == 0:
