@@ -299,20 +299,33 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 #     return ret_elem
 
 def divdiff_rc_desc(the_rc0, desc):
+    from sympy import pretty_print
+
     from schubmult import RCGraph
     the_rc, raise_seq = the_rc0.to_highest_weight()
     ret = set()
     for down_rc in RCGraph.all_hw_rcs(the_rc.perm.swap(desc-1,desc), max(len(the_rc),len(the_rc.perm.swap(desc-1,desc).trimcode))):
         if down_rc == the_rc.resize(len(down_rc)).exchange_property(desc):
-            addup = the_rc0.resize(max(len(down_rc),len(the_rc))).exchange_property(desc)
-            ret.update(addup.full_crystal)
+            addup, row = the_rc0.to_lowest_weight()[0].resize(max(len(down_rc),len(the_rc))).exchange_property(desc, return_row=True)
+            #if row >= desc - 1:
+            # print(f"Div diff {desc=} on ")
+            # pretty_print(the_rc0)
+            # print("Got")
+            # pretty_print(addup)
+            # print(f"with row {row=}")
+            if row == desc:
+                addup_hw = addup.to_highest_weight()[0]
+                # print("Addup hw")
+                #pretty_print(addup_hw)
+                ret.add(addup_hw)
             # if the_rc0.is_lowest_weight:
             #     ret.update(addup.crystal_beneath)
     return ret
 
 def divdiffable_rc(v_rc, u):
     from schubmult import RCGraph
-    # if not v_rc.is_highest_weight:
+    if not v_rc.is_highest_weight:
+        return set()
     #     vr_hw, raise_seq = v_rc.to_highest_weight()
     #     hw_set = divdiffable_rc(vr_hw, u)
     #     ret = set()
@@ -371,7 +384,7 @@ def dualpieri(mu, v_rc, w):
                     for vpl2_rc in RCGraph.all_rc_graphs(vpl2, max(len(vpl2.trimcode),len(v_rc_0) - 1)):
                         if vpl2_rc.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1) == vpl.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1):
                             if vpl2_rc.vertical_cut(lm[i] - 1)[0] == rc_to_match:
-                                res2 += [[[*vlist, pw], vpl2_rc]]
+                                res2 += [[[*vlist,pw], vpl2_rc]]
         res = res2
     if len(lm) == len(cn1w):
         return res
@@ -587,6 +600,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         
     ASx = FreeAlgebra(SchubertBasis)
     while True:
+        from sympy import S
         try:
             (u, v, n) = task_queue.get(timeout=2)
         except Exception:
@@ -622,12 +636,23 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         good = False
 
         # lst = divdiffable_rc(w0_prin, ~v * mdom)
-        bob = DSx(w0) * Sx(v)
+        if v == v.minimal_dominant_above():
+            continue
+        bob = DSx(w0) * DSx(v, "z")
         for boing, coeff in bob.items():
-            for v_rc in RCGraph.all_rc_graphs(v, n):
+            if coeff.expand() == S.Zero:
+                continue
+            print(f"w={boing} mu={mdom} coeff={coeff}")
+            for v_rc in RCGraph.all_hw_rcs(v, n):
+                print("rc=")
+                pretty_print(v_rc)
                 lst = dualpieri(mdom, v_rc=v_rc, w=boing)
             #print(coeff)
-                print(lst)
+                print("result=")
+                for bobb in lst:
+                    print(bobb[:-1])
+                    pretty_print(bobb[-1])
+                #print([tuple(bobb[-1]) for bobb in lst])
 
         if False:
             crystals = {}
