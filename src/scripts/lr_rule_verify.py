@@ -369,7 +369,7 @@ def dualpieri(mu, v_rc, w):
                 rc_to_match = vpl.vertical_cut(lm[i] - 1)[0]
                 for pw, vpl2 in vl:
                     for vpl2_rc in RCGraph.all_rc_graphs(vpl2, max(len(vpl2.trimcode),len(v_rc_0) - 1)):
-                        if vpl2_rc.rowrange(lm[i] + 1) == vpl.rowrange(lm[i] + 1):
+                        if vpl2_rc.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1) == vpl.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1):
                             if vpl2_rc.vertical_cut(lm[i] - 1)[0] == rc_to_match:
                                 res2 += [[[*vlist, pw], vpl2_rc]]
         res = res2
