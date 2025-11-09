@@ -353,7 +353,10 @@ def divdiffable_rc(v_rc, u):
 def dualpieri(mu, v_rc, w):
     from schubmult import Permutation, RCGraph, pull_out_var
     if mu.inv == 0:
-        return {((), rc) for rc in divdiffable_rc(v_rc, w)}
+        ret = set()
+        for v_rc2 in v_rc.full_crystal:
+            ret.update({((), rc) for rc in divdiffable_rc(v_rc2, w)})
+        return ret
     cycle = Permutation.cycle
     lm = (~mu).trimcode
     cn1w = (~w).trimcode
@@ -378,22 +381,23 @@ def dualpieri(mu, v_rc, w):
             # logger.debug(f"{vpl=} {type(vpl)=}")
             if len(vpl_list) == 0:
                 continue
-            for vpl in vpl_list:
-                vl = pull_out_var(lm[i] + 1, vpl.perm)
+            for vpl_hw in vpl_list:
+                vl = pull_out_var(lm[i] + 1, vpl_hw.perm)
                 # logger.debug(f"{vl=}")
-                if lm[i] > 0:
-                    rc_to_match = vpl.vertical_cut(lm[i] - 1)[0]
-                else:
-                    rc_to_match = vpl
-                for pw, vpl2 in vl:
-                    for vpl2_rc in RCGraph.all_rc_graphs(vpl2, max(len(vpl2.trimcode),len(v_rc_0) - 1)):
-                        if vpl2_rc.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1) == vpl.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1):
-                            if lm[i] > 0:
-                                if vpl2_rc.vertical_cut(lm[i] - 1)[0] == rc_to_match:
-                                    res2.add(((*vlist,pw), vpl2_rc))
-                            else:
-                                if vpl2_rc == rc_to_match:
-                                    res2.add(((*vlist,pw), vpl2_rc))
+                for vpl in vpl_hw.full_crystal:
+                    if lm[i] > 0:
+                        rc_to_match = vpl.vertical_cut(lm[i] - 1)[0]
+                    else:
+                        rc_to_match = vpl
+                    for pw, vpl2 in vl:
+                        for vpl2_rc in RCGraph.all_rc_graphs(vpl2, max(len(vpl2.trimcode),len(v_rc_0) - 1)):
+                            if vpl2_rc.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1) == vpl.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1):
+                                if lm[i] > 0:
+                                    if vpl2_rc.vertical_cut(lm[i] - 1)[0] == rc_to_match:
+                                        res2.add(((*vlist,pw), vpl2_rc.to_highest_weight()[0]))
+                                else:
+                                    if vpl2_rc == rc_to_match:
+                                        res2.add(((*vlist,pw), vpl2_rc.to_highest_weight()[0]))
 
         res = res2
     if len(lm) == len(cn1w):
