@@ -298,6 +298,53 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 #     ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
 #     return ret_elem
 
+def dualpieri(mu, v_rc, w):
+    from schubmult import Permutation, RCGraph, cycle, divdiffable, pull_out_var
+    lm = (~mu).trimcode
+    cn1w = (~w).trimcode
+    if len(cn1w) < len(lm):
+        return []
+    for i in range(len(lm)):
+        if lm[i] > cn1w[i]:
+            return []
+    c = Permutation([])
+    for i in range(len(lm), len(cn1w)):
+        c = cycle(i - len(lm) + 1, cn1w[i]) * c
+    # c = permtrim(c)
+    # logger.debug("Recording line number")
+    res = [[[], v_rc]]
+    # logger.debug(f"{v=} {type(v)=}")
+    for i in range(len(lm)):
+        # logger.debug(f"{res=}")
+        res2 = []
+        for vlist, v_rc_0 in res:
+            vp = v_rc_0
+            vpl = divdiffable_rc(vp.perm, cycle(lm[i] + 1, cn1w[i] - lm[i]))
+            # logger.debug(f"{vpl=} {type(vpl)=}")
+            if len(vpl) == 0:
+                continue
+            vl = pull_out_var(lm[i] + 1, vpl)
+            # logger.debug(f"{vl=}")
+            rc_to_match = v_rc_0.vertical_cut(lm[i] - 1)[0]
+            for pw, vpl2 in vl:
+                for vpl2_rc in RCGraph.all_rc_graphs(vpl2, len(v_rc_0) - 1):
+                    if vpl2_rc.rowrange(lm[i] - 1) == v_rc_0.rowrange(lm[i]):
+                        if vpl2_rc.vertical_cut(lm[i] - 1) == rc_to_match:
+                            res2 += [[[*vlist, pw], vpl2_rc]]
+        res = res2
+    if len(lm) == len(cn1w):
+        return res
+    res2 = []
+    for vlist, v_rc_0 in res:
+        vp = v_rc_0
+        vpl = divdiffable_rc(vp, c)
+        if len(vpl) == 0:
+            continue
+        res2 += [[vlist, vpl]]
+    # logger.debug(f"{res2=}")
+    return res2
+
+
 def worker(nn, shared_recording_dict, lock, task_queue):
     import copy
     import sys
@@ -516,6 +563,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
         
         mdom = Permutation.w0(n)#u.minimal_dominant_above()
+        w0 = mdom
         # left diff
         diff_perm = u * (~mdom)
         poly_cache = {}
@@ -544,22 +592,30 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     for v_rc, crystals1 in crystals[v].items():    
                         for rc_w, coeff in crystals1.items():
                             if rc_w.is_principal:
+                                assert (Sx(w0) * Sx(v)).get(rc_w.perm, 0) == len(coeff)
                                 for t_elem in coeff:
                                     for t_elem0 in coeff0:
-                                        big_w = Sx(rc_w0.perm) * Sx(rc_w.perm)
-                                        for www, coeff in big_w.items():
-                                            prin_www = RCGraph.principal_rc(www, n)
-                                            for bogus in prin_www.full_crystal:
-                                                import sympy
-                                                vect = tuple([a - 2*b for a,b in zip_longest(bogus.length_vector, mdom.trimcode, fillvalue=0)])
-                                                sm += coeff * sympy.prod([Sx.genset[i+1]**vect[i] for i in range(len(vect))])
-                                        # hw_u = t_elem0.to_highest_weight()[0].factors[1]
+                                        # big_w = Sx(rc_w0.perm) * Sx(rc_w.perm)
+                                        # for www, coeff in big_w.items():
+                                        #     prin_www = RCGraph.principal_rc(www, n)
+                                        #     for bogus in prin_www.full_crystal:
+                                        #         import sympy
+                                        #         vect = tuple([a - 2*b for a,b in zip_longest(bogus.length_vector, mdom.trimcode, fillvalue=0)])
+                                        #         sm += coeff * sympy.prod([Sx.genset[i+1]**vect[i] for i in range(len(vect))])
+
+                                        ## UNCOMMENT FOR SANITY CHECK
+                                        #hw_u = t_elem0.to_highest_weight()[0].factors[1]
                                         # hw_v = t_elem.to_highest_weight()[0].factors[1]
-                                        # for w_rc in rc_w.full_crystal:
-                                        #     for w_rc0 in rc_w0.full_crystal:
-                                        #         hw0, raise_seq0 = w_rc0.to_highest_weight()
-                                        #         hw, raise_seq = w_rc.to_highest_weight()
-                                        #         sm += Sx(hw_u.reverse_raise_seq(raise_seq0).polyvalue(Sx.genset)) * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
+                                        # u_part = Sx(u_rc.polyvalue(Sx.genset))
+                                        for w_rc in RCGraph.all_rc_graphs(rc_w.perm, n):
+                                            for w_rc0 in RCGraph.all_rc_graphs(rc_w0.perm, n):
+                                                #hw0, raise_seq0 = w_rc0.to_highest_weight()
+                                                #hw, raise_seq = w_rc.to_highest_weight()
+                                                #sm += Sx(hw_u.reverse_raise_seq(raise_seq0).polyvalue(Sx.genset)) * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
+                                                # sm += u_part * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
+                                                vect = tuple([a + b for a,b in zip_longest(w_rc.length_vector, w_rc0.length_vector, fillvalue=0)])
+                                                vect = tuple([a-2*b for a,b in zip_longest(vect, mdom.trimcode, fillvalue=0)])
+                                                sm += sympy.prod([Sx.genset[i+1]**vect[i] for i in range(len(vect))])
 
         check_elem = Sx(u) * Sx(v)
         diff = check_elem - sm
