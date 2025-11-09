@@ -527,13 +527,22 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         from itertools import zip_longest
 
         from schubmult import uncode
+
+        crystals = {}
+        crystals[u] = {}
         for u_rc in RCGraph.all_rc_graphs(u, n):
-            crystals0 = decompose_tensor_product(w0_prin, u_rc, n + 1)
+            crystals[u][u_rc] = decompose_tensor_product(w0_prin, u_rc, n + 1)
+
+        if u != v:
+            crystals[v] = {}
+            for v_rc in RCGraph.all_rc_graphs(v, n):
+                crystals[v][v_rc] = decompose_tensor_product(w0_prin, v_rc, n + 1)
+
+        for u_rc, crystals0 in crystals[u].items():
             for rc_w0, coeff0 in crystals0.items():
                 if rc_w0.is_principal:
-                    for v_rc in RCGraph.all_rc_graphs(v, n):
-                        crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
-                        for rc_w, coeff in crystals.items():
+                    for v_rc, crystals1 in crystals[v].items():    
+                        for rc_w, coeff in crystals1.items():
                             if rc_w.is_principal:
                                 for t_elem in coeff:
                                     for t_elem0 in coeff0:
