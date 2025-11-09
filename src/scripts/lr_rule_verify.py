@@ -305,9 +305,9 @@ def divdiff_rc_desc(the_rc0, desc):
     for down_rc in RCGraph.all_hw_rcs(the_rc.perm.swap(desc-1,desc), len(the_rc0)):
         if down_rc == the_rc.exchange_property(desc):
             addup = the_rc0.exchange_property(desc)
-            ret.add(addup)
-            if the_rc0.is_lowest_weight:
-                ret.update(addup.crystal_beneath)
+            ret.update(addup.full_crystal)
+            # if the_rc0.is_lowest_weight:
+            #     ret.update(addup.crystal_beneath)
     return ret
 
 def divdiffable_rc(v_rc, u):
@@ -615,67 +615,77 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         # OTHER THAN w0 WORKS
         from itertools import zip_longest
 
-        from schubmult import uncode
+        from schubmult import RCGraphRing, uncode
+        rc_ring = RCGraphRing()
 
-        crystals = {}
-        crystals[u] = {}
-        for u_rc in RCGraph.all_rc_graphs(u, n):
-            crystals[u][u_rc] = decompose_tensor_product(w0_prin, u_rc, n + 1)
+        good = False
 
-        if u != v:
-            crystals[v] = {}
-            for v_rc in RCGraph.all_rc_graphs(v, n):
-                crystals[v][v_rc] = decompose_tensor_product(w0_prin, v_rc, n + 1)
+        lst = divdiffable_rc(w0_prin, ~v * mdom)
+        #print(coeff)
+        rr = sum([rc_ring(rc) for rc in lst])
+        pretty_print(rr)
 
-        for u_rc, crystals0 in crystals[u].items():
-            for rc_w0, coeff0 in crystals0.items():
-                if rc_w0.is_principal:
-                    for v_rc, crystals1 in crystals[v].items():    
-                        for rc_w, coeff in crystals1.items():
-                            # lst = dualpieri(mdom, v_rc, rc_w.perm)
-                            lst = divdiffable_rc(v_rc, Permutation.ref_product(max(v_rc.perm.descents(),default=0) + 1 ))
-                            print(coeff)
-                            print(lst)
-                            if rc_w.is_principal:
-                                assert (Sx(w0) * Sx(v)).get(rc_w.perm, 0) == len(coeff)
-                                for t_elem in coeff:
-                                    for t_elem0 in coeff0:
-                                        # big_w = Sx(rc_w0.perm) * Sx(rc_w.perm)
-                                        # for www, coeff in big_w.items():
-                                        #     prin_www = RCGraph.principal_rc(www, n)
-                                        #     for bogus in prin_www.full_crystal:
-                                        #         import sympy
-                                        #         vect = tuple([a - 2*b for a,b in zip_longest(bogus.length_vector, mdom.trimcode, fillvalue=0)])
-                                        #         sm += coeff * sympy.prod([Sx.genset[i+1]**vect[i] for i in range(len(vect))])
+        if False:
+            crystals = {}
+            crystals[u] = {}
+            for u_rc in RCGraph.all_rc_graphs(u, n):
+                crystals[u][u_rc] = decompose_tensor_product(w0_prin, u_rc, n + 1)
 
-                                        ## UNCOMMENT FOR SANITY CHECK
-                                        #hw_u = t_elem0.to_highest_weight()[0].factors[1]
-                                        # hw_v = t_elem.to_highest_weight()[0].factors[1]
-                                        # u_part = Sx(u_rc.polyvalue(Sx.genset))
-                                        for w_rc in RCGraph.all_rc_graphs(rc_w.perm, n):
-                                            for w_rc0 in RCGraph.all_rc_graphs(rc_w0.perm, n):
-                                                #hw0, raise_seq0 = w_rc0.to_highest_weight()
-                                                #hw, raise_seq = w_rc.to_highest_weight()
-                                                #sm += Sx(hw_u.reverse_raise_seq(raise_seq0).polyvalue(Sx.genset)) * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
-                                                # sm += u_part * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
-                                                vect = tuple([a + b for a,b in zip_longest(w_rc.length_vector, w_rc0.length_vector, fillvalue=0)])
-                                                vect = tuple([a-2*b for a,b in zip_longest(vect, mdom.trimcode, fillvalue=0)])
-                                                sm += sympy.prod([Sx.genset[i+1]**vect[i] for i in range(len(vect))])
+            if u != v:
+                crystals[v] = {}
+                for v_rc in RCGraph.all_rc_graphs(v, n):
+                    crystals[v][v_rc] = decompose_tensor_product(w0_prin, v_rc, n + 1)
 
-        check_elem = Sx(u) * Sx(v)
-        diff = check_elem - sm
-        try:
-            assert diff == Sx.zero
-            #print(f"Coprod {rc.perm.trimcode}")
-            # pretty_print(rc)
-            # pretty_print(val)
-        #print("At least one success")
-            good = True
-        except AssertionError:
-            print("A fail")
-            print(f"{diff=}")
-            print(f"{sm=}")
-            good = False
+            for u_rc, crystals0 in crystals[u].items():
+                for rc_w0, coeff0 in crystals0.items():
+                    if rc_w0.is_principal:
+                        for v_rc, crystals1 in crystals[v].items():    
+                            for rc_w, coeff in crystals1.items():
+                                #lst = dualpieri(mdom, v_rc, rc_w.perm)
+                                lst = divdiffable_rc(w0_prin, ~v_rc.perm * mdom)
+                                print(coeff)
+                                rr = sum([rc_ring(rc) for rc in lst])
+                                pretty_print(rr)
+                                if rc_w.is_principal:
+                                    assert (Sx(w0) * Sx(v)).get(rc_w.perm, 0) == len(coeff)
+                                    for t_elem in coeff:
+                                        for t_elem0 in coeff0:
+                                            # big_w = Sx(rc_w0.perm) * Sx(rc_w.perm)
+                                            # for www, coeff in big_w.items():
+                                            #     prin_www = RCGraph.principal_rc(www, n)
+                                            #     for bogus in prin_www.full_crystal:
+                                            #         import sympy
+                                            #         vect = tuple([a - 2*b for a,b in zip_longest(bogus.length_vector, mdom.trimcode, fillvalue=0)])
+                                            #         sm += coeff * sympy.prod([Sx.genset[i+1]**vect[i] for i in range(len(vect))])
+
+                                            ## UNCOMMENT FOR SANITY CHECK
+                                            #hw_u = t_elem0.to_highest_weight()[0].factors[1]
+                                            # hw_v = t_elem.to_highest_weight()[0].factors[1]
+                                            # u_part = Sx(u_rc.polyvalue(Sx.genset))
+                                            for w_rc in RCGraph.all_rc_graphs(rc_w.perm, n):
+                                                for w_rc0 in RCGraph.all_rc_graphs(rc_w0.perm, n):
+                                                    #hw0, raise_seq0 = w_rc0.to_highest_weight()
+                                                    #hw, raise_seq = w_rc.to_highest_weight()
+                                                    #sm += Sx(hw_u.reverse_raise_seq(raise_seq0).polyvalue(Sx.genset)) * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
+                                                    # sm += u_part * Sx(hw_v.reverse_raise_seq(raise_seq).polyvalue(Sx.genset))
+                                                    vect = tuple([a + b for a,b in zip_longest(w_rc.length_vector, w_rc0.length_vector, fillvalue=0)])
+                                                    vect = tuple([a-2*b for a,b in zip_longest(vect, mdom.trimcode, fillvalue=0)])
+                                                    sm += sympy.prod([Sx.genset[i+1]**vect[i] for i in range(len(vect))])
+
+            check_elem = Sx(u) * Sx(v)
+            diff = check_elem - sm
+            try:
+                assert diff == Sx.zero
+                #print(f"Coprod {rc.perm.trimcode}")
+                # pretty_print(rc)
+                # pretty_print(val)
+            #print("At least one success")
+                good = True
+            except AssertionError:
+                print("A fail")
+                print(f"{diff=}")
+                print(f"{sm=}")
+                good = False
             
         #assert good, f"COMPLETE FAIL {w=}"
         if good:
