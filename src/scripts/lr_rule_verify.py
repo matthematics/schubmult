@@ -302,9 +302,9 @@ def divdiff_rc_desc(the_rc0, desc):
     from schubmult import RCGraph
     the_rc, raise_seq = the_rc0.to_highest_weight()
     ret = set()
-    for down_rc in RCGraph.all_hw_rcs(the_rc.perm.swap(desc-1,desc), len(the_rc0)):
-        if down_rc == the_rc.exchange_property(desc):
-            addup = the_rc0.exchange_property(desc)
+    for down_rc in RCGraph.all_hw_rcs(the_rc.perm.swap(desc-1,desc), max(len(the_rc),len(the_rc.perm.swap(desc-1,desc).trimcode))):
+        if down_rc == the_rc.resize(len(down_rc)).exchange_property(desc):
+            addup = the_rc0.resize(max(len(down_rc),len(the_rc))).exchange_property(desc)
             ret.update(addup.full_crystal)
             # if the_rc0.is_lowest_weight:
             #     ret.update(addup.crystal_beneath)
@@ -321,7 +321,7 @@ def divdiffable_rc(v_rc, u):
     v = v_rc.perm
     perm2 = v * (~u)
     if perm2.inv != v.inv - u.inv:
-        return []
+        return set()
     # return perm2
     ret = {v_rc}
     working_perm = u
@@ -330,6 +330,7 @@ def divdiffable_rc(v_rc, u):
         desc = max(working_perm.descents()) + 1
         working_perm = working_perm.swap(desc - 1, desc)
         for the_rc in ret:
+            assert desc-1 in the_rc.perm.descents()
             working_set.update(divdiff_rc_desc(the_rc, desc))
 
         ret = working_set
@@ -367,8 +368,8 @@ def dualpieri(mu, v_rc, w):
                 # logger.debug(f"{vl=}")
                 rc_to_match = vpl.vertical_cut(lm[i] - 1)[0]
                 for pw, vpl2 in vl:
-                    for vpl2_rc in RCGraph.all_rc_graphs(vpl2, len(v_rc_0) - 1):
-                        if vpl2_rc.rowrange(lm[i]) == vpl.rowrange(lm[i]):
+                    for vpl2_rc in RCGraph.all_rc_graphs(vpl2, max(len(vpl2.trimcode),len(v_rc_0) - 1)):
+                        if vpl2_rc.rowrange(lm[i] + 1) == vpl.rowrange(lm[i] + 1):
                             if vpl2_rc.vertical_cut(lm[i] - 1)[0] == rc_to_match:
                                 res2 += [[[*vlist, pw], vpl2_rc]]
         res = res2
@@ -620,10 +621,13 @@ def worker(nn, shared_recording_dict, lock, task_queue):
 
         good = False
 
-        lst = divdiffable_rc(w0_prin, ~v * mdom)
-        #print(coeff)
-        rr = sum([rc_ring(rc) for rc in lst])
-        pretty_print(rr)
+        # lst = divdiffable_rc(w0_prin, ~v * mdom)
+        bob = Sx(w0) * Sx(v)
+        for boing, coeff in bob.items():
+            for v_rc in RCGraph.all_rc_graphs(v, n):
+                lst = dualpieri(mdom, v_rc=v_rc, w=boing)
+            #print(coeff)
+                print(lst)
 
         if False:
             crystals = {}
@@ -790,16 +794,18 @@ def main():
         # cache_saver_proc.join()
         recording_saver_proc.join()
         # print("Run finished.")
-        if any(v is False for v in shared_recording_dict.values()):
-            print("Failures:")
-            num_fail = 0
-            for k, v in shared_recording_dict.items():
-                if v is False:
-                    num_fail += 1
-                    print(k)
-            print(f"{num_fail} failures.")
-        else:
-            print("All verified successfully!")
+        print_failures = False
+        if print_failures:
+            if any(v is False for v in shared_recording_dict.values()):
+                print("Failures:")
+                num_fail = 0
+                for k, v in shared_recording_dict.items():
+                    if v is False:
+                        num_fail += 1
+                        print(k)
+                print(f"{num_fail} failures.")
+            else:
+                print("All verified successfully!")
 
 
 if __name__ == "__main__":
