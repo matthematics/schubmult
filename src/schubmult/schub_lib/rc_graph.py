@@ -6,7 +6,8 @@ from schubmult.rings.nil_hecke import NilHeckeRing
 from schubmult.schub_lib.perm_lib import Permutation, uncode
 from schubmult.symbolic import S, prod
 from schubmult.utils._grid_print import GridPrint
-from schubmult.utils.bitfield_row import BitfieldRow
+
+#from schubmult.utils.bitfield_row import BitfieldRow
 from schubmult.utils.logging import get_logger, init_logging
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -345,7 +346,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         if len(args) == 0:
             return tuple.__new__(_class, ())
         tp = args[0]
-        actual_storage = [BitfieldRow(arg) for arg in tp]
+        actual_storage = [tuple(arg) for arg in tp]
         return tuple.__new__(_class, actual_storage)
 
     def __init__(self, *args):
@@ -669,7 +670,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                 perm = perm.swap(p - 1, p)
         return perm
 
-    def transpose(self):
+    def transpose(self, length=None):
         newrc = []
         trimself = [list(row) for row in self]
         i = 0
@@ -682,9 +683,11 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             new_row.reverse()
             newrc.append(tuple(new_row))
             i += 1
-        new_rc = type(self)(newrc)
+        new_rc = (type(self)(newrc)).normalize()
 
         assert new_rc.perm == ~self.perm
+        if length is not None:
+            new_rc = new_rc.resize(length)
         return new_rc
 
     @classmethod

@@ -1,8 +1,6 @@
 from sympy import init_printing, pretty_print
 
-from schubmult.schub_lib.rc_graph_ring import RCGraphRing
-from schubmult.schub_lib.rc_graph import RCGraph
-from schubmult.rings.ck_ring import CoxeterKnuthKey
+from schubmult import RCGraphRing
 
 # IS THIS ASSOCIATIVE?
 # need associativity
@@ -12,31 +10,36 @@ rc_ring = RCGraphRing()
 if __name__ == "__main__":
     # test module functionality
 
+    import itertools
     import sys
 
-    from schubmult import FA, ASx, Permutation, SchubertBasis, WordBasis, uncode
-    from schubmult.abc import x
-    from schubmult.rings import MonomialBasis, PolynomialAlgebra, SchubertPolyBasis
-    from schubmult.utils.perm_utils import artin_sequences
+    from symengine import S
+    from sympy import pretty_print
 
-    n = int(sys.argv[1]) if len(sys.argv) > 1 else 3
+    from schubmult import CrystalGraphTensor, MonomialBasis, Permutation, PolynomialAlgebra, RCGraph, SchubertBasis, SchubertPolyBasis, WordBasis, uncode
+    from schubmult.abc import x
+    #from schubmult.utils.perm_utils import artin_sequences
+
+    n = int(sys.argv[1])
 
     perms = Permutation.all_permutations(n)
-    modfull = 0
-    dct = {}
-    deg = 6
     
-    fail = False
-    failures = []
-    for perm in perms:
-        if perm.inv == 0:
-            continue
-        
-        rc_prin = RCGraph.principal_rc(perm, n - 1)
-        for perm2 in perms:
-            if perm2 == perm:
+    for perm1 in perms:
+        touched = set()
+        val0 = S.Zero
+        val1 = S.Zero
+        for rc1 in RCGraph.all_rc_graphs(perm1, n - 1):
+            
+            rc2 = rc1.transpose().resize(n-1).to_highest_weight()[0]
+            if rc2 in touched:
                 continue
-            for rc in RCGraph.all_rc_graphs(perm2, n - 1):
-                if rc.to_highest_weight()[0].length_vector == rc_prin.to_highest_weight()[0].length_vector and rc.to_lowest_weight()[0].length_vector == rc_prin.length_vector:
-                    fail = True
-                    raise Exception(f"Failure in RCGraph insertion test {rc=} {rc_prin=}")
+            cut_spot = (n - 1)//2
+            for rc02 in rc2.full_crystal:
+                left, right = rc02.vertical_cut(cut_spot)
+                val0 += left.transpose().polyvalue(x) * right.transpose().polyvalue(x)
+                val1 += rc02.transpose().polyvalue(x)
+                pretty_print(rc02.transpose())
+                pretty_print(CrystalGraphTensor(left.transpose(),right.transpose()))
+        print(f"{val0=}")
+        print(f"{val1=}")
+
