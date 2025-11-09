@@ -298,8 +298,43 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 #     ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
 #     return ret_elem
 
+def divdiffable_rc(v_rc, u):
+    from schubmult import RCGraph
+    v = v_rc.perm
+    perm2 = v * (~u)
+    if perm2.inv != v.perm.inv - u.inv:
+        return []
+    # return perm2
+    ret = {v_rc}
+    working_perm = u
+    while working_perm.inv > 0:
+        working_set = set()
+        desc = max(working_perm.descents()) + 1
+        working_perm = working_perm.swap(desc - 1, desc)
+        for the_rc in working_set.items():
+            lv_d = [a - 1 if i == desc - 1 else a for i, a in enumerate(the_rc.length_vector)]
+            for down_rc in RCGraph.all_rc_graphs(working_perm, len(v_rc), weight=lv_d):
+                lower_good = desc - 1 == 0 or (desc >= 1 and down_rc.rowrange(0, desc - 2) == the_rc.rowrange(0, desc - 2))
+                upper_good = desc - 1 == len(v_rc) - 1 or (desc - 1 < len(v_rc) - 1 and down_rc.rowrange(desc - 1) == the_rc.rowrange(desc - 1))
+                if not (lower_good and upper_good):
+                    continue
+                working_set.add(down_rc)
+
+            if desc < len(v_rc):
+                lv_dp1 = [a - 1 if i == desc else a for i, a in enumerate(the_rc.length_vector)]
+                for down_rc in RCGraph.all_rc_graphs(working_perm, len(v_rc), weight=lv_dp1):
+                    lower_good = down_rc.rowrange(0, desc - 1) == the_rc.rowrange(0, desc - 1)
+                    upper_good = desc == len(v_rc) - 1 or (desc < len(v_rc) - 1 and down_rc.rowrange(desc) == the_rc.rowrange(desc))
+                if not (lower_good and upper_good):
+                    continue
+                working_set.add(down_rc)
+            
+        ret = working_set
+    return ret
+
+
 def dualpieri(mu, v_rc, w):
-    from schubmult import Permutation, RCGraph, cycle, divdiffable, pull_out_var
+    from schubmult import Permutation, RCGraph, cycle, pull_out_var
     lm = (~mu).trimcode
     cn1w = (~w).trimcode
     if len(cn1w) < len(lm):
@@ -319,28 +354,30 @@ def dualpieri(mu, v_rc, w):
         res2 = []
         for vlist, v_rc_0 in res:
             vp = v_rc_0
-            vpl = divdiffable_rc(vp.perm, cycle(lm[i] + 1, cn1w[i] - lm[i]))
+            vpl_list = divdiffable_rc(vp, cycle(lm[i] + 1, cn1w[i] - lm[i]))
             # logger.debug(f"{vpl=} {type(vpl)=}")
-            if len(vpl) == 0:
+            if len(vpl_list) == 0:
                 continue
-            vl = pull_out_var(lm[i] + 1, vpl)
-            # logger.debug(f"{vl=}")
-            rc_to_match = v_rc_0.vertical_cut(lm[i] - 1)[0]
-            for pw, vpl2 in vl:
-                for vpl2_rc in RCGraph.all_rc_graphs(vpl2, len(v_rc_0) - 1):
-                    if vpl2_rc.rowrange(lm[i] - 1) == v_rc_0.rowrange(lm[i]):
-                        if vpl2_rc.vertical_cut(lm[i] - 1) == rc_to_match:
-                            res2 += [[[*vlist, pw], vpl2_rc]]
+            for vpl in vpl_list:
+                vl = pull_out_var(lm[i] + 1, vpl.perm)
+                # logger.debug(f"{vl=}")
+                rc_to_match = vpl.vertical_cut(lm[i] - 1)[0]
+                for pw, vpl2 in vl:
+                    for vpl2_rc in RCGraph.all_rc_graphs(vpl2, len(v_rc_0) - 1):
+                        if vpl2_rc.rowrange(lm[i]) == vpl.rowrange(lm[i]):
+                            if vpl2_rc.vertical_cut(lm[i] - 1)[0] == rc_to_match:
+                                res2 += [[[*vlist, pw], vpl2_rc]]
         res = res2
     if len(lm) == len(cn1w):
         return res
     res2 = []
     for vlist, v_rc_0 in res:
         vp = v_rc_0
-        vpl = divdiffable_rc(vp, c)
-        if len(vpl) == 0:
+        vpl_list = divdiffable_rc(vp, c)
+        if len(vpl_list) == 0:
             continue
-        res2 += [[vlist, vpl]]
+        for vpl in vpl_list:
+            res2 += [[vlist, vpl]]
     # logger.debug(f"{res2=}")
     return res2
 
