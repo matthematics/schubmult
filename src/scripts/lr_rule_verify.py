@@ -353,15 +353,15 @@ def divdiffable_rc(v_rc, u):
 def dualpieri(mu, v_rc, w):
     from schubmult import Permutation, RCGraph, pull_out_var
     if mu.inv == 0:
-        return [[[], divdiffable_rc(v_rc, w)]]
+        return {((), rc) for rc in divdiffable_rc(v_rc, w)}
     cycle = Permutation.cycle
     lm = (~mu).trimcode
     cn1w = (~w).trimcode
     if len(cn1w) < len(lm):
-        return []
+        return set()
     for i in range(len(lm)):
         if lm[i] > cn1w[i]:
-            return []
+            return set()
     c = Permutation([])
     for i in range(len(lm), len(cn1w)):
         c = cycle(i - len(lm) + 1, cn1w[i]) * c
@@ -640,7 +640,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         # OTHER THAN w0 WORKS
         from itertools import zip_longest
 
-        from schubmult import RCGraphRing, uncode
+        from schubmult import GeneratingSet, RCGraphRing, uncode
         rc_ring = RCGraphRing()
 
         good = True
@@ -681,20 +681,38 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         pord = Sx(u) * Sx(v)
         bongs = set()
         bings = set()
-        sm0 = Sx.zero
-        for u_rc in RCGraph.all_hw_rcs(u, n):
-            for v_rc in RCGraph.all_rc_graphs(v, n):
-                crystals = decompose_tensor_product(u_rc, v_rc, n + 1)
-                #for w, coeff in pord.items():
-                for rc_w, tensors in crystals.items():
-                    
-                    if rc_w.is_principal:
-                        w = rc_w.perm
-                        #for rc_tensor in tensors:
-                        sm += Sx(rc_w.perm)
-                        dualpocket = dualpieri(u_rc.perm, v_rc,  w)
-                        sm0 += Sx(w)
-                        # if len(dualpocket) > 1:
+        sm0 = S.Zero
+        y = GeneratingSet("y")
+        z = GeneratingSet("z")
+        #check_elem = DSx([]).ring.from_dict({k: v for k, v in (DSx(u, "y") * DSx(v, "z")).items() if v.expand() != S.Zero})
+        check_elem = Sx(u) * Sx(v)
+        for w in check_elem:
+            for u_rc in RCGraph.all_hw_rcs(u, n):
+                for v_rc in RCGraph.all_hw_rcs(v, n):
+                    # crystals = decompose_tensor_product(u_rc, v_rc, n + 1)
+                    # # #for w, coeff in pord.items():
+                    # for rc_w, tensors in crystals.items():
+                        
+                    #      if rc_w.is_principal:
+                    #         w = rc_w.perm
+                    #             # if not w.bruhat_leq(rc_w.perm):
+                                #     continue
+                            #w = rc_w.perm
+                    #         #for rc_tensor in tensors:
+                    #         sm += Sx(rc_w.perm)
+                    for cry in v_rc.full_crystal:
+                        dualpocket = dualpieri(u_rc.perm, cry,  w)
+                        if len(dualpocket) == 0:
+                            continue
+                        # print(f"{dualpocket=}")   
+                        for vlist, rc in dualpocket:
+                            toadd = S.One
+                            for i in range(len(vlist)):
+                                for j in range(len(vlist[i])):
+                                    toadd *= y[i + 1] - z[vlist[i][j]]
+                            sm0 += toadd * rc.polyvalue(y[len(vlist):], z) * Sx(w)
+                        break
+                                # if len(dualpocket) > 1:
                         #     print(f"{dualpocket}: {u_rc.perm=} {v_rc=}")
                 
                         
@@ -750,12 +768,12 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             #                                         vect = tuple([a-2*b for a,b in zip_longest(vect, mdom.trimcode, fillvalue=0)])
             #                                         sm += sympy.prod([Sx.genset[i+1]**vect[i] for i in range(len(vect))])
         good = True
-        check_elem = Sx(u) * Sx(v)
+        
         diff = check_elem - sm0
-        diff2 = check_elem - sm
+        #diff2 = check_elem - sm
         try:
             #assert diff2 == Sx.zero, "Noit zor1"
-            assert diff == Sx.zero, "Noit zor0"
+            assert all(v == S.Zero for v in diff.values()), "Noit zor0"
             
             #assert good
             #print(f"Coprod {rc.perm.trimcode}")
