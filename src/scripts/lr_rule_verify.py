@@ -695,43 +695,44 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         check_elem = Sx(u) * Sx(v)
         for u_rc in RCGraph.all_rc_graphs(u, n):
             for v_rc in RCGraph.all_hw_rcs(v, n):
-                #for w in check_elem:
-                    crystals = None
-                    for v_rc_cry in v_rc.full_crystal:
-                        if crystals is None:
-                            crystals = decompose_tensor_product(u_rc, v_rc_cry, n + 1)
-                        else:
-                            crystals0 = decompose_tensor_product(u_rc, v_rc_cry, n + 1)
-                            for rc_w1 in crystals0:
-                                if rc_w1 in crystals:
-                                    crystals[rc_w1].update(crystals0[rc_w1])
-                                else:
-                                    crystals[rc_w1] = crystals0[rc_w1]
-                    # # #for w, coeff in pord.items():
-                    for rc_w, tensors in crystals.items():
-                        
-                        #if rc_w.is_principal:
-                    # #         w = rc_w.perm
-                    # #             # if not w.bruhat_leq(rc_w.perm):
-                    #             #     continue
-                    #         #w = rc_w.perm
-                    # #         #for rc_tensor in tensors:
-                    # #         sm += Sx(rc_w.perm)
+                for w in check_elem:
+                    # crystals = None
+                    #for v_rc_cry in v_rc.full_crystal:
+                    # #     if crystals is None:
+                    #     crystals = decompose_tensor_product(u_rc, v_rc_cry, n + 1)
+                    # #     else:
+                    # #         crystals0 = decompose_tensor_product(u_rc, v_rc_cry, n + 1)
+                    # #         for rc_w1 in crystals0:
+                    # #             if rc_w1 in crystals:
+                    # #                 crystals[rc_w1].update(crystals0[rc_w1])
+                    # #             else:
+                    # #                 crystals[rc_w1] = crystals0[rc_w1]
+                    # # # # #for w, coeff in pord.items():
+                    #     for rc_w, tensors in crystals.items():
                     #         w = rc_w.perm
-                    ## ONE PER CRYSTAL AND BREAK
-                            for t_elem in tensors:
-                                #for vv_rc in t_elem.full_crystal:
+                    #         if rc_w.is_principal:
+                    # # # #         w = rc_w.perm
+                    # # #             # if not w.bruhat_leq(rc_w.perm):
+                    # #             #     continue
+                    # #         #w = rc_w.perm
+                    # # #         #for rc_tensor in tensors:
+                    # # #         sm += Sx(rc_w.perm)
+                    # #         w = rc_w.perm
+                    # ## ONE PER CRYSTAL AND BREAK
+                    #         for t_elem in tensors:
+                    #             for vv_rc in t_elem.full_crystal:
 
-                                    dualpocket = dualpieri(u_rc.perm, t_elem.factors[1],  rc_w.perm)
-                                    
-                                    # print(f"{dualpocket=}")   
-                                    if len(dualpocket) > 0:
-                                        for vlist, rc in dualpocket:
-                                            # toadd = S.One
-                                            # for i in range(len(vlist)):
-                                            #     for j in range(len(vlist[i])):
-                                            #         toadd *= y[i + 1] - z[vlist[i][j]]
-                                            sm0 += Sx(rc_w.polyvalue(Sx.genset))
+                        dualpocket = dualpieri(u_rc.perm, v_rc,  w)
+                        
+                        # print(f"{dualpocket=}")   
+                        if len(dualpocket) > 0:
+                            for vlist, rc in dualpocket:
+                                # toadd = S.One
+                                # for i in range(len(vlist)):
+                                #     for j in range(len(vlist[i])):
+                                #         toadd *= y[i + 1] - z[vlist[i][j]]
+                                sm0 += Sx(w)
+                            
                             
                             
                         #break
@@ -895,7 +896,7 @@ def main():
         for hw_tab in perms:
             if indec and is_decomposable(hw_tab):
                 continue
-            if (not dominant_only or hw_tab.minimal_dominant_above() == hw_tab) and (not w0_only or hw_tab == w0):
+            if (not dominant_only or hw_tab.minimal_dominant_above() == hw_tab):# and (not w0_only or hw_tab == w0):
                     # if indec and is_decomposable(perm):
                     #     continue
                     # if sep_descs:
