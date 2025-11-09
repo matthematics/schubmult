@@ -638,10 +638,11 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         # lst = divdiffable_rc(w0_prin, ~v * mdom)
         if v == v.minimal_dominant_above():
             continue
-        bob = DSx(w0) * DSx(v, "z")
+        #bob = DSx(w0) * DSx(v, "z")
+        bob = Sx(w0) * Sx(v)
         for boing, coeff in bob.items():
-            if coeff.expand() == S.Zero:
-                continue
+            # if coeff.expand() == S.Zero:
+            #     continue
             print(f"w={boing} mu={mdom} coeff={coeff}")
             for v_rc in RCGraph.all_hw_rcs(v, n):
                 print("rc=")
