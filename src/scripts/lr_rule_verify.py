@@ -396,7 +396,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
     import sympy
     from sympy import pretty_print
 
-    from schubmult import CrystalGraphTensor, FreeAlgebra, Permutation, RCGraph, RCGraphRing, RootTableau, SchubertBasis, Sx
+    from schubmult import CrystalGraphTensor, DSx, FreeAlgebra, Permutation, RCGraph, RCGraphRing, RootTableau, SchubertBasis, Sx
 
 
     def all_reduced_subwords(reduced_word, u):
@@ -622,7 +622,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         good = False
 
         # lst = divdiffable_rc(w0_prin, ~v * mdom)
-        bob = Sx(w0) * Sx(v)
+        bob = DSx(w0) * Sx(v)
         for boing, coeff in bob.items():
             for v_rc in RCGraph.all_rc_graphs(v, n):
                 lst = dualpieri(mdom, v_rc=v_rc, w=boing)
@@ -711,7 +711,7 @@ def is_decomposable(w):
     return False
 
 def main():
-    from schubmult import Permutation, RCGraph, RootTableau, Sx, uncode
+    from schubmult import DSx, Permutation, RCGraph, RootTableau, Sx, uncode
 
     try:
         n = int(sys.argv[1])
