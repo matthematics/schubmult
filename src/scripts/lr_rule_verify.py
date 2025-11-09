@@ -686,32 +686,36 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         z = GeneratingSet("z")
         #check_elem = DSx([]).ring.from_dict({k: v for k, v in (DSx(u, "y") * DSx(v, "z")).items() if v.expand() != S.Zero})
         check_elem = Sx(u) * Sx(v)
+        x = Sx.genset
         for w in check_elem:
             for u_rc in RCGraph.all_hw_rcs(u, n):
                 for v_rc in RCGraph.all_hw_rcs(v, n):
-                    # crystals = decompose_tensor_product(u_rc, v_rc, n + 1)
+                    #crystals = decompose_tensor_product(u_rc, v_rc, n + 1)
                     # # #for w, coeff in pord.items():
                     # for rc_w, tensors in crystals.items():
                         
-                    #      if rc_w.is_principal:
+                    #     if rc_w.is_principal:
+                    # #         w = rc_w.perm
+                    # #             # if not w.bruhat_leq(rc_w.perm):
+                    #             #     continue
+                    #         #w = rc_w.perm
+                    # #         #for rc_tensor in tensors:
+                    # #         sm += Sx(rc_w.perm)
                     #         w = rc_w.perm
-                    #             # if not w.bruhat_leq(rc_w.perm):
-                                #     continue
-                            #w = rc_w.perm
-                    #         #for rc_tensor in tensors:
-                    #         sm += Sx(rc_w.perm)
-                    for cry in v_rc.full_crystal:
-                        dualpocket = dualpieri(u_rc.perm, cry,  w)
-                        if len(dualpocket) == 0:
-                            continue
+                    ## ONE PER CRYSTAL AND BREAK
+                    for cry_rc in v_rc.full_crystal:
+                        dualpocket = dualpieri(u_rc.perm, cry_rc,  w)
+                        
                         # print(f"{dualpocket=}")   
-                        for vlist, rc in dualpocket:
-                            toadd = S.One
-                            for i in range(len(vlist)):
-                                for j in range(len(vlist[i])):
-                                    toadd *= y[i + 1] - z[vlist[i][j]]
-                            sm0 += toadd * rc.polyvalue(y[len(vlist):], z) * Sx(w)
-                        break
+                        if len(dualpocket) > 0:
+                            for vlist, rc in dualpocket:
+                                toadd = S.One
+                                for i in range(len(vlist)):
+                                    for j in range(len(vlist[i])):
+                                        toadd *= y[i + 1] - z[vlist[i][j]]
+                                sm0 += toadd * rc.polyvalue(y[len(vlist):], z) * Sx(w)
+                            break
+                        #break
                                 # if len(dualpocket) > 1:
                         #     print(f"{dualpocket}: {u_rc.perm=} {v_rc=}")
                 
