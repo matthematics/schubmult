@@ -302,11 +302,11 @@ def divdiff_rc_desc(the_rc0, desc):
     from sympy import pretty_print
 
     from schubmult import RCGraph
-    the_rc, raise_seq = the_rc0.to_highest_weight()
+    #the_rc, raise_seq = the_rc0.to_highest_weight()
     ret = set()
-    for down_rc in RCGraph.all_hw_rcs(the_rc.perm.swap(desc-1,desc), max(len(the_rc),len(the_rc.perm.swap(desc-1,desc).trimcode))):
-        if down_rc == the_rc.resize(len(down_rc)).exchange_property(desc):
-            addup, row = the_rc0.to_lowest_weight()[0].resize(max(len(down_rc),len(the_rc))).exchange_property(desc, return_row=True)
+    for down_rc in RCGraph.all_rc_graphs(the_rc0.perm.swap(desc-1,desc), max(len(the_rc0),len(the_rc0.perm.swap(desc-1,desc).trimcode))):
+        if down_rc == the_rc0.resize(len(down_rc)).exchange_property(desc):
+            addup, row = the_rc0.to_lowest_weight()[0].resize(max(len(down_rc),len(the_rc0))).exchange_property(desc, return_row=True)
             #if row >= desc - 1:
             # print(f"Div diff {desc=} on ")
             # pretty_print(the_rc0)
@@ -316,7 +316,7 @@ def divdiff_rc_desc(the_rc0, desc):
             if row == desc:
                 addup_hw = addup.to_highest_weight()[0]
                 # print("Addup hw")
-                #pretty_print(addup_hw)
+                # pretty_print(addup_hw)
                 ret.add(addup_hw)
             # if the_rc0.is_lowest_weight:
             #     ret.update(addup.crystal_beneath)
@@ -685,8 +685,8 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         y = GeneratingSet("y")
         z = GeneratingSet("z")
         #check_elem = DSx([]).ring.from_dict({k: v for k, v in (DSx(u, "y") * DSx(v, "z")).items() if v.expand() != S.Zero})
-        check_elem = Sx(u) * Sx(v)
-        x = Sx.genset
+        check_elem = DSx(u) * DSx(v, "z")
+        # x = Sx.genset
         for w in check_elem:
             for u_rc in RCGraph.all_hw_rcs(u, n):
                 for v_rc in RCGraph.all_hw_rcs(v, n):
@@ -713,8 +713,10 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                                 for i in range(len(vlist)):
                                     for j in range(len(vlist[i])):
                                         toadd *= y[i + 1] - z[vlist[i][j]]
-                                sm0 += toadd * rc.polyvalue(y[len(vlist):], z) * Sx(w)
+                                for cry_rc in rc.full_crystal:
+                                    sm0 += toadd * cry_rc.polyvalue(y[len(vlist):], z) * DSx(w)
                             break
+                            
                         #break
                                 # if len(dualpocket) > 1:
                         #     print(f"{dualpocket}: {u_rc.perm=} {v_rc=}")
@@ -777,7 +779,8 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #diff2 = check_elem - sm
         try:
             #assert diff2 == Sx.zero, "Noit zor1"
-            assert all(v == S.Zero for v in diff.values()), "Noit zor0"
+            from sympy import expand
+            assert all(expand(v) == S.Zero for v in diff.values()), "Noit zor0"
             
             #assert good
             #print(f"Coprod {rc.perm.trimcode}")
