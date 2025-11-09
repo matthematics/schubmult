@@ -157,6 +157,14 @@ class Permutation:
         return len(self.trimcode)
 
     @staticmethod
+    def cycle(p, q):
+        """
+        Construct the cycle permutation used elsewhere in the code.
+        Kept as a staticmethod on Permutation for call sites like Permutation.cycle(p,q).
+        """
+        return Permutation(list(range(1, p)) + [i + 1 for i in range(p, p + q)] + [p])
+
+    @staticmethod
     @cache
     def __xnew_cached__(_class, perm):
         return Permutation.__xnew__(_class, perm)
@@ -484,7 +492,8 @@ def trimcode(perm):
 
 
 def cycle(p, q):
-    return Permutation(list(range(1, p)) + [i + 1 for i in range(p, p + q)] + [p])
+    # keep a thin module-level wrapper for backwards compatibility
+    return Permutation.cycle(p, q)
 
 
 def phi1(u):
@@ -607,18 +616,3 @@ ID_PERM = Permutation([])
 def s(i):
     return Permutation([*list(range(1, i)), i + 1, i])
 
-def all_reduced_subwords(reduced_word, u):
-    if u.inv > len(reduced_word):
-        return set()
-    if u.inv == 0:
-        return {()}
-    ret_set = set()
-    for index in range(len(reduced_word) - 1, -1, -1):
-        a = reduced_word[index]
-        if a - 1 in u.descents():
-            new_u = u.swap(a - 1, a)
-            old_set = all_reduced_subwords(reduced_word[:index], new_u)
-            for subword in old_set:
-                new_subword = (*subword, index)
-                ret_set.add(new_subword)
-    return ret_set

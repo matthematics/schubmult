@@ -1,8 +1,12 @@
+from __future__ import annotations
+
+import ast
 import importlib
 import inspect
 import pkgutil
 import warnings
-from typing import List
+from pathlib import Path
+from typing import Dict, List, Set
 
 __version__ = "4.0.0dev"
 
@@ -17,26 +21,46 @@ optional heavy dependencies (e.g. pulp/mosek).
 
 __all__: List[str] = []
 # map exported name -> module that originally defined it (for lazy re-importing)
-_module_map = {}
+_module_map: Dict[str, str] = {}
 
-# Walk submodules and import them where possible. Skip scripts and skip on errors.
-for finder, modname, ispkg in pkgutil.walk_packages(__path__, prefix=__name__ + "."):
-    if modname.startswith(__name__ + ".scripts"):
+# Build a mapping name -> module (relative import path) by scanning source files.
+# This uses AST only (no module imports), so it's safe at package import time.
+_package_root = Path(__file__).resolve().parent
+_skipped_dirs = {"__pycache__", "tests", "docs", "scripts", "build"}
+
+for py in _package_root.rglob("*.py"):
+    # skip this file and any in skipped directories
+    if py.samefile(Path(__file__)):
         continue
+    if any(part in _skipped_dirs for part in py.parts):
+        continue
+    # compute module name like "schubmult.sub.module"
     try:
-        mod = __import__(modname, fromlist=["*"])
-    except Exception as e:
-        # Don't fail import of the whole package if a submodule has heavy deps.
-        warnings.warn(f"skipping import of {modname!r} due to error: {e!r}", RuntimeWarning)
+        rel = py.relative_to(_package_root.parent)
+    except Exception:
         continue
+    modname = ".".join(rel.with_suffix("").parts)
+    # parse AST and collect top-level defs/assigns (public names)
+    try:
+        src = py.read_text(encoding="utf8")
+        tree = ast.parse(src)
+    except Exception:
+        continue
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            name = node.name
+            if not name.startswith("_") and name not in _module_map:
+                _module_map[name] = modname
+        elif isinstance(node, ast.Assign):
+            # collect simple targets (NAME = ...)
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    name = target.id
+                    if not name.startswith("_") and name not in _module_map:
+                        _module_map[name] = modname
 
-    for attr_name, attr_val in vars(mod).items():
-        if attr_name.startswith("_"):
-            continue
-        if inspect.isclass(attr_val) and getattr(attr_val, "__module__", None) == mod.__name__:
-            globals()[attr_name] = attr_val
-            __all__.append(attr_name)
-            _module_map[attr_name] = mod.__name__
+# Export the discovered public names; keep as a sorted tuple for reproducibility.
+__all__ = tuple(sorted(set(_module_map.keys())))
 
 # Commonly exported helpers that we prefer to lazy-load
 # we do not import them eagerly to avoid triggering heavy dependencies.

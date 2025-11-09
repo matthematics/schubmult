@@ -107,8 +107,12 @@ class CrystalGraph(Printable):
     @property
     def full_crystal(self):
         hw, _ = self.to_highest_weight()
+        return hw.crystal_beneath
+
+    @property
+    def crystal_beneath(self):
         crystal = set()
-        stack = [hw]
+        stack = [self]
         while len(stack) > 0:
             elem = stack.pop()
             crystal.add(elem)
