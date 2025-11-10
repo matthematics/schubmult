@@ -434,16 +434,27 @@ def dualpieri(mu, v_rc, w):
                 pw = ()
                 # print("Before")
                 # pretty_print(vpl_new)
-                for ref_spot_i in range(lm[i] + 1, len(vpl) - 1):
-                    # print(f"Before ref {ref_spot_i=}")
-                    # pretty_print(vpl_new)
-                    vpl_new = vpl_new.weight_reflection(ref_spot_i)
-                    # print(f"Reflected {ref_spot_i=}")
-                    # pretty_print(vpl_new)
-                    # if vpl_new.perm != working_perm:
-                    #     raise ValueError
-                vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode))[0].resize(len(vpl))
-                vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode) - 1)[0] if lm[i] + 1 <= len(vpl.perm.trimcode) else vpl_new
+                if lm[i] + 1 <= len(vpl.perm.trimcode):
+                    for ref_spot_i in range(lm[i], 0, -1):
+                        # print(f"Before ref {ref_spot_i=}")
+                        # pretty_print(vpl_new)
+                        vpl_new = vpl_new.weight_reflection(ref_spot_i)
+                        # print(f"Reflected {ref_spot_i=}")
+                        # pretty_print(vpl_new)
+                        # if vpl_new.perm != working_perm:
+                        #     raise ValueError
+                    vpl_new = vpl_new.vertical_cut(len(vpl.perm) - 1)[0]
+                    vpl_new = vpl_new.rowrange(1)
+                
+                # if lm[i] + 1 <= len(vpl.perm.trimcode):
+                #      vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode) - 1)[0]
+                
+                # if lm[i] + 1 < len(vpl.perm) - 1:
+                #     vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode) - 1)[0]
+                # if len(vpl_new.perm) > len(vpl.perm):
+                #     vpl_new = vpl_new.shiftup(len(vpl.perm) - len(vpl_new.perm))
+                #vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode) - 1)[0] if lm[i] + 1 <= len(vpl.perm.trimcode) else vpl_new
+                
                 
                 
                     #print("After")
@@ -490,11 +501,14 @@ def dualpieri(mu, v_rc, w):
                 #pw = tuple([v[ii] for ii in range(lm[i], len(v)) if ((ii > len(vpl_new.perm) and v[ii] == ii) or (ii <= len(vpl_new.perm) and v[ii] == vpl_new.perm[ii - 1]))])
                 if vpl_new.perm not in {vv[-1] for vv in vl}:
                     print(f"OH NO NOT NULL OUT {lm[i] + 1}")
+                    print("WENEEDFIX")
                     pretty_print(vpl)
                     print("ohas")
                     pretty_print(vpl_new)
                     print(f"{vl=}")
-                    raise AssertionError
+                    print(f"{vpl.perm}")
+                    print(f"{vpl_new.perm}")
+                    raise ValueError
                 pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
                 #print(f"{vl=} {vpl_new.perm=} {pw=}")
                 # if len(pw) + v.inv != vpl.perm.inv:
@@ -805,9 +819,16 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         # x = Sx.genset
         check_elem = DSx(u) * DSx(v, "z")
         sm0 = DSx([]).ring.zero
+        good = True
         for w in check_elem:
+            if not good:
+                break
             for v_rc in RCGraph.all_rc_graphs(v, n):
-                dualpocket = dualpieri(u, v_rc,  w)
+                try:
+                    dualpocket = dualpieri(u, v_rc,  w)
+                except ValueError:
+                    good = False
+                    break
                 if len(dualpocket) > 0:
                     #print(f"{u=} {w=} {v_rc=} {dualpocket=}")   
                     for vlist, rc in dualpocket:
@@ -816,7 +837,11 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                             for j in range(len(vlist[i])):
                                 toadd *= y[i + 1] - z[vlist[i][j]]
                         sm0 += toadd * rc.polyvalue(y[len(vlist):], z) * DSx(w)
-        good = True
+        if not good:
+            with lock:
+                shared_recording_dict[(u, v, n)] = False
+            print(f"FAIL {(u, v, n)} at ", time.ctime())
+            continue
         
         diff = check_elem - sm0
         diff = DSx([]).ring.from_dict({k: sympy.sympify(vv).expand() for k, vv in diff.items() if sympy.sympify(vv).expand() != S.Zero})
@@ -929,7 +954,7 @@ def main():
         task_queue = manager.Queue()
         # dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
         dominant_only = True
-        w0_only  = True
+        w0_only  = False
         sep_descs = False
         indec = False
         w0 = Permutation.w0(n)
