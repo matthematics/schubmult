@@ -468,19 +468,15 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             return type(self)(())
         return type(self)([tuple([a - start for a in row]) for row in self[start:end]])
 
-    def polyvalue(self, x, y=None, crystal = False):
+    def polyvalue(self, x, y=None):
         ret = S.One
-        if not crystal:
-            for i, row in enumerate(self):
-                if y is None:
-                    ret *= x[i + 1] ** len(row)
-                else:
-                    ret *= prod([x[i + 1] - y[row[j] - i] for j in range(len(row))])
-            return ret
-        ret = S.Zero
-        for rc in self.full_crystal:
-            ret += rc.polyvalue(x,y)
+        for i, row in enumerate(self):
+            if y is None:
+                ret *= x[i + 1] ** len(row)
+            else:
+                ret *= prod([x[i + 1] - y[row[j] - i] for j in range(len(row))])
         return ret
+        
 
     _graph_cache = {}  # noqa: RUF012
 
