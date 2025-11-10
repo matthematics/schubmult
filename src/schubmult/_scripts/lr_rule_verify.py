@@ -395,7 +395,8 @@ def divdiffable_rc(v_rc, u):
 def dualpieri(mu, v_rc, w):
     from sympy import pretty_print
 
-    from schubmult import Permutation, RCGraph, pull_out_var
+    from schubmult import FreeAlgebra, Permutation, RCGraph, WordBasis, pull_out_var
+    FA = FreeAlgebra(WordBasis)
     if mu.inv == 0:
         #ret = set()
         return set({((), rc) for rc in divdiffable_rc(v_rc, w)})
@@ -435,70 +436,19 @@ def dualpieri(mu, v_rc, w):
                 # print("Before")
                 # pretty_print(vpl_new)
                 if lm[i] + 1 <= len(vpl.perm.trimcode):
+                    # shift up
+                    # pull the row down
+                    # divdiff it
+                    #vpl_new = FA(([0] * (max(vpl_vpl_new.shiftup(1)
                     for ref_spot_i in range(lm[i], 0, -1):
                         # print(f"Before ref {ref_spot_i=}")
                         # pretty_print(vpl_new)
+                        vpl_new_old = vpl_new
                         vpl_new = vpl_new.weight_reflection(ref_spot_i)
-                        # print(f"Reflected {ref_spot_i=}")
-                        # pretty_print(vpl_new)
-                        # if vpl_new.perm != working_perm:
-                        #     raise ValueError
-                    vpl_new = vpl_new.vertical_cut(len(vpl.perm) - 1)[0]
-                    vpl_new = vpl_new.rowrange(1)
-                
-                # if lm[i] + 1 <= len(vpl.perm.trimcode):
-                #      vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode) - 1)[0]
-                
-                # if lm[i] + 1 < len(vpl.perm) - 1:
-                #     vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode) - 1)[0]
-                # if len(vpl_new.perm) > len(vpl.perm):
-                #     vpl_new = vpl_new.shiftup(len(vpl.perm) - len(vpl_new.perm))
-                #vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode) - 1)[0] if lm[i] + 1 <= len(vpl.perm.trimcode) else vpl_new
-                
-                
-                
-                    #print("After")
-                    # vpl_new = vpl_new.vertical_cut(1)[1]
-                    # if len(vpl_new) >= len(vpl):
-                    #     vpl_new = vpl_new.vertical_cut(len(vpl) - 1)[0]
-                    #vpl_new = vpl_new.rowrange(1)
-                    #pretty_print(vpl_new)
-                
-                
-                
-                
-                    # print("After")
-                    # pretty_print(vpl_new)
-                # vpl_new = vpl_new.extend(1)
-                # print(f"After all reflections {shift_down=}")
-                
-                # last_code = 12000000
-                # print("Pre cut")
-                # pretty_print(vpl)
-                # #pretty_print(vpl_new)
-                
-                # print("After cut")
-                # pretty_print(vpl_new)
-                #assert len(vpl_new) == len(vpl.perm.trimcode) and vpl_new.inv == vpl.inv
-
-                
-                
-                # pw = tuple([a for a in vpl_new[0]])
-                
-                
-                
-
+                        assert (vpl_new_old.length_vector[ref_spot_i - 1], vpl_new_old.length_vector[ref_spot_i]) == (vpl_new.length_vector[ref_spot_i], vpl_new.length_vector[ref_spot_i - 1])
+                    vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode))[0].rowrange(1)
                     
-                    #     for i in range(len(vpl_new) - 1, 0, -1):
-                    #         vpl_new_test = vpl_new.raising_operator(i)
-                    #         if vpl_new_test is not None:                                
-                    #             vpl_new = vpl_new_test
-                    
-                    
-                    
-
-                # v = vpl.perm
-                #pw = tuple([v[ii] for ii in range(lm[i], len(v)) if ((ii > len(vpl_new.perm) and v[ii] == ii) or (ii <= len(vpl_new.perm) and v[ii] == vpl_new.perm[ii - 1]))])
+                
                 if vpl_new.perm not in {vv[-1] for vv in vl}:
                     print(f"OH NO NOT NULL OUT {lm[i] + 1}")
                     print("WENEEDFIX")
