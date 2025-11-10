@@ -347,6 +347,8 @@ def divdiffable_rc(v_rc, u):
 
 
 def dualpieri(mu, v_rc, w):
+    from sympy import pretty_print
+
     from schubmult import Permutation, RCGraph, pull_out_var
     if mu.inv == 0:
         #ret = set()
@@ -373,24 +375,29 @@ def dualpieri(mu, v_rc, w):
         res2 = set()
         for vlist, v_rc_0 in res:
             vp = v_rc_0
+            
             vpl_list = divdiffable_rc(vp, cycle(lm[i] + 1, cn1w[i] - lm[i]))
             # logger.debug(f"{vpl=} {type(vpl)=}")
             if len(vpl_list) == 0:
                 continue
             for vpl in vpl_list:
                 #vl = pull_out_var(lm[i] + 1, vpl.perm)
-                vpl_new = vpl
-                ref_spot = lm[i]
-                if ref_spot <= len(vpl) - 1:
-                    pw = tuple([a - ref_spot for a in vpl[ref_spot]])
-                else:
-                    pw = ()
+                print(f"Begin rc pulling out lm[i] + 1={lm[i] + 1}")
+                pretty_print(vp)
+                vpl_new = vpl.extend(1)
+                pw = ()
+                if lm[i] < len(vpl_new):
+                    pw = tuple([a - lm[i] for a in vpl_new[lm[i]]])
+                print(f"{pw=}")
+                assert len(vpl_new) <= lm[i] + 1 or len(pw) == len(vpl_new[lm[i]])
                 for ref_spot_i in range(lm[i], 0, -1):
-                    if ref_spot_i >= len(vpl):
-                        continue
+                    # print(f"Before ref {ref_spot_i=}")
+                    # pretty_print(vpl_new)
                     vpl_new = vpl_new.weight_reflection(ref_spot_i)
+                    # print("After")
+                    # pretty_print(vpl_new)
                 vpl_new = vpl_new.rowrange(1)
-                while len(vpl_new.perm.trimcode) >= len(vpl.perm.trimcode) and len(vpl_new) > 0 and len(vpl_new[-1]) == 0:
+                while vpl_new.perm.inv > 0 and len(vpl_new.perm.trimcode) >= len(vpl.perm.trimcode) and len(vpl_new) > 0 and len(vpl_new[-1]) == 0:
                     vpl_new = vpl_new.zero_out_last_row()
                 res2.add(((*vlist, pw), vpl_new))
                     
@@ -702,14 +709,13 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             for v_rc in RCGraph.all_rc_graphs(v, n):
                 dualpocket = dualpieri(u, v_rc,  w)
                 if len(dualpocket) > 0:
-                    #print(f"{u=} {w=} {v_rc=} {dualpocket=}")   
+                    print(f"{u=} {w=} {v_rc=} {dualpocket=}")   
                     for vlist, rc in dualpocket:
                         toadd = S.One
                         for i in range(len(vlist)):
                             for j in range(len(vlist[i])):
                                 toadd *= y[i + 1] - z[vlist[i][j]]
-                        shiftsub = {y[i]: y[i + len(vlist)] for i in range(30)}
-                        sm0 += toadd * rc.polyvalue(x=y,y=z).xreplace(shiftsub) * DSx(w)
+                        sm0 += toadd * rc.polyvalue(y[len(vlist):], z) * DSx(w)
         good = True
         
         diff = check_elem - sm0

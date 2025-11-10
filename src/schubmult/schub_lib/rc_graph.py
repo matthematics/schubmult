@@ -346,11 +346,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
     @staticmethod
     def __xnew__(_class, *args):
-        if len(args) == 0:
-            return tuple.__new__(_class, ())
-        tp = args[0]
-        actual_storage = [tuple(arg) for arg in tp]
-        return tuple.__new__(_class, actual_storage)
+        return tuple.__new__(_class, *args)
 
     def __init__(self, *args):
         pass
@@ -899,7 +895,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         return rc_set
 
     def __hash__(self):
-        return hash(tuple([tuple(row) for row in self]))
+        return hash(tuple(self))
 
     @cache
     def bisect_left_coords_index(self, row, col, lo=0, hi=None):
