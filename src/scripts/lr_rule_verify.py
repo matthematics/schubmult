@@ -298,28 +298,24 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 #     ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
 #     return ret_elem
 
-def divdiff_rc_desc(the_rc0, desc):
+def divdiff_rc_desc(the_rc, desc):
     from sympy import pretty_print
 
     from schubmult import RCGraph
-    the_rc, raise_seq = the_rc0.to_highest_weight()
     ret = set()
-    for down_rc in RCGraph.all_rc_graphs(the_rc0.perm.swap(desc-1,desc), max(len(the_rc0),len(the_rc0.perm.swap(desc-1,desc).trimcode))):
-        if down_rc == the_rc.resize(len(down_rc)).exchange_property(desc):
-            addup, row = the_rc0.to_lowest_weight()[0].resize(max(len(down_rc),len(the_rc0))).exchange_property(desc, return_row=True)
-            #if row >= desc - 1:
-            # print(f"Div diff {desc=} on ")
-            # pretty_print(the_rc0)
-            # print("Got")
-            # pretty_print(addup)
-            # print(f"with row {row=}")
-            if row == desc:
-                addup_hw = addup.to_highest_weight()[0]
-                # print("Addup hw")
-                # pretty_print(addup_hw)
-                ret.add(addup_hw)
-            # if the_rc0.is_lowest_weight:
-            #     ret.update(addup.crystal_beneath)
+    rc, row = the_rc.exchange_property(desc, return_row=True)
+    rc = rc.normalize()
+    if row != desc:
+        return ret
+    if rc.raising_operator(desc) is not None:
+        return ret
+    ret.add(rc)
+    while rc is not None:
+        rc = rc.lowering_operator(desc)
+        if rc is not None:
+            ret.add(rc)
+                # if the_rc0.is_lowest_weight:
+                #     ret.update(addup.crystal_beneath)
     return ret
 
 def divdiffable_rc(v_rc, u):
@@ -344,8 +340,7 @@ def divdiffable_rc(v_rc, u):
         working_perm = working_perm.swap(desc - 1, desc)
         for the_rc in ret:
             assert desc-1 in the_rc.perm.descents()
-            for the_rc0 in the_rc.full_crystal:
-                working_set.update(divdiff_rc_desc(the_rc0, desc))
+            working_set.update(divdiff_rc_desc(the_rc, desc))
 
         ret = working_set
     return ret
@@ -693,45 +688,50 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         # check_elem = DSx(u) * DSx(v, "z")
         # x = Sx.genset
         check_elem = Sx(u) * Sx(v)
-        for u_rc in RCGraph.all_rc_graphs(u, n):
-            for v_rc in RCGraph.all_hw_rcs(v, n):
-                for w in check_elem:
-                    # crystals = None
-                    #for v_rc_cry in v_rc.full_crystal:
-                    # #     if crystals is None:
-                    #     crystals = decompose_tensor_product(u_rc, v_rc_cry, n + 1)
-                    # #     else:
-                    # #         crystals0 = decompose_tensor_product(u_rc, v_rc_cry, n + 1)
-                    # #         for rc_w1 in crystals0:
-                    # #             if rc_w1 in crystals:
-                    # #                 crystals[rc_w1].update(crystals0[rc_w1])
-                    # #             else:
-                    # #                 crystals[rc_w1] = crystals0[rc_w1]
-                    # # # # #for w, coeff in pord.items():
-                    #     for rc_w, tensors in crystals.items():
-                    #         w = rc_w.perm
-                    #         if rc_w.is_principal:
-                    # # # #         w = rc_w.perm
-                    # # #             # if not w.bruhat_leq(rc_w.perm):
-                    # #             #     continue
-                    # #         #w = rc_w.perm
-                    # # #         #for rc_tensor in tensors:
-                    # # #         sm += Sx(rc_w.perm)
-                    # #         w = rc_w.perm
-                    # ## ONE PER CRYSTAL AND BREAK
-                    #         for t_elem in tensors:
-                    #             for vv_rc in t_elem.full_crystal:
+        #for u_rc in RCGraph.all_rc_graphs(u, n):
+        bob = Sx.zero
+        for v_rc in RCGraph.all_rc_graphs(v, n):
+            dd = divdiffable_rc(v_rc, u)
+            #print(f"{dd=} {v_rc=} {u=}")
+            bob += Sx(sum([rc.polyvalue(Sx.genset) for rc in dd]))
+        
+                # for w in check_elem:
+                #     # crystals = None
+                #     #for v_rc_cry in v_rc.full_crystal:
+                #     # #     if crystals is None:
+                #     #     crystals = decompose_tensor_product(u_rc, v_rc_cry, n + 1)
+                #     # #     else:
+                #     # #         crystals0 = decompose_tensor_product(u_rc, v_rc_cry, n + 1)
+                #     # #         for rc_w1 in crystals0:
+                #     # #             if rc_w1 in crystals:
+                #     # #                 crystals[rc_w1].update(crystals0[rc_w1])
+                #     # #             else:
+                #     # #                 crystals[rc_w1] = crystals0[rc_w1]
+                #     # # # # #for w, coeff in pord.items():
+                #     #     for rc_w, tensors in crystals.items():
+                #     #         w = rc_w.perm
+                #     #         if rc_w.is_principal:
+                #     # # # #         w = rc_w.perm
+                #     # # #             # if not w.bruhat_leq(rc_w.perm):
+                #     # #             #     continue
+                #     # #         #w = rc_w.perm
+                #     # # #         #for rc_tensor in tensors:
+                #     # # #         sm += Sx(rc_w.perm)
+                #     # #         w = rc_w.perm
+                #     # ## ONE PER CRYSTAL AND BREAK
+                #     #         for t_elem in tensors:
+                #     #             for vv_rc in t_elem.full_crystal:
 
-                        dualpocket = dualpieri(u_rc.perm, v_rc,  w)
+                #         dualpocket = dualpieri(u_rc.perm, v_rc,  w)
                         
-                        # print(f"{dualpocket=}")   
-                        if len(dualpocket) > 0:
-                            for vlist, rc in dualpocket:
-                                # toadd = S.One
-                                # for i in range(len(vlist)):
-                                #     for j in range(len(vlist[i])):
-                                #         toadd *= y[i + 1] - z[vlist[i][j]]
-                                sm0 += Sx(w)
+                #         # print(f"{dualpocket=}")   
+                #         if len(dualpocket) > 0:
+                #             for vlist, rc in dualpocket:
+                #                 # toadd = S.One
+                #                 # for i in range(len(vlist)):
+                #                 #     for j in range(len(vlist[i])):
+                #                 #         toadd *= y[i + 1] - z[vlist[i][j]]
+                #                 sm0 += Sx(w)
                             
                             
                             
@@ -793,12 +793,13 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             #                                         sm += sympy.prod([Sx.genset[i+1]**vect[i] for i in range(len(vect))])
         good = True
         
-        diff = check_elem - sm0
+        # diff = check_elem - sm0
         #diff2 = check_elem - sm
         try:
             #assert diff2 == Sx.zero, "Noit zor1"
-            from sympy import expand
-            assert all(expand(v) == S.Zero for v in diff.values()), "Noit zor0"
+            # from sympy import expand
+            # assert all(expand(v) == S.Zero for v in diff.values()), "Noit zor0"
+            assert (bob == Sx.zero) or (bob == Sx(v*(~u)))
             
             #assert good
             #print(f"Coprod {rc.perm.trimcode}")
@@ -807,12 +808,12 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #print("At least one success")
             #good = True
         except AssertionError as e:
-            print(f"A fail {e=}")
-            print(f"{u_rc.perm=}")
-            print(f"{v=}")
-            print(f"{diff=}")
-            print(f"{sm0=}")
-            print(f"{check_elem=}")
+            print(f"A fail {e=} {bob=} {u=} {v=}")
+            # print(f"{u_rc.perm=}")
+            # print(f"{v=}")
+            # print(f"{diff=}")
+            # print(f"{sm0=}")
+            # print(f"{check_elem=}")
             good = False
             
         #assert good, f"COMPLETE FAIL {w=}"
@@ -888,7 +889,7 @@ def main():
         from schubmult.schub_lib.rc_graph import RCGraph
         task_queue = manager.Queue()
         # dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
-        dominant_only = True
+        dominant_only = False
         w0_only  =False
         sep_descs = False
         indec = False
