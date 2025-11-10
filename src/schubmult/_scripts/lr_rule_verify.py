@@ -432,35 +432,27 @@ def dualpieri(mu, v_rc, w):
                 # pretty_print(vp)
                 vpl_new = vpl
                 pw = ()
-                print("Before")
-                pretty_print(vpl_new)
-                if lm[i] + 1 <= len(vpl.perm.trimcode):
-                    for ref_spot_i in range(lm[i] + 1, len(vpl) - 1):
-                        # print(f"Before ref {ref_spot_i=}")
-                        # pretty_print(vpl_new)
-                        vpl_new = vpl_new.weight_reflection(ref_spot_i)
-                        # print(f"Reflected {ref_spot_i=}")
-                        # pretty_print(vpl_new)
-                        # if vpl_new.perm != working_perm:
-                        #     raise ValueError
-                    vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode) - 1)[0].resize(len(vpl) - 1)
-                    
-                    # for ref_spot_i in range(1, len(vpl)):
-                    #     # print(f"Before ref {ref_spot_i=}")
-                    #     # pretty_print(vpl_new)
-                    #     vpl_new = vpl_new.weight_reflection(ref_spot_i)
-                    #     # print(f"Reflected {ref_spot_i=}")
-                    #     # pretty_print(vpl_new)
-                    #     # if vpl_new.perm != working_perm:
-                    #     #     raise ValueError
-                    print("After")
+                # print("Before")
+                # pretty_print(vpl_new)
+                for ref_spot_i in range(lm[i] + 1, len(vpl) - 1):
+                    # print(f"Before ref {ref_spot_i=}")
+                    # pretty_print(vpl_new)
+                    vpl_new = vpl_new.weight_reflection(ref_spot_i)
+                    # print(f"Reflected {ref_spot_i=}")
+                    # pretty_print(vpl_new)
+                    # if vpl_new.perm != working_perm:
+                    #     raise ValueError
+                vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode))[0].resize(len(vpl))
+                vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode) - 1)[0] if lm[i] + 1 <= len(vpl.perm.trimcode) else vpl_new
+                
+                
+                    #print("After")
                     # vpl_new = vpl_new.vertical_cut(1)[1]
                     # if len(vpl_new) >= len(vpl):
                     #     vpl_new = vpl_new.vertical_cut(len(vpl) - 1)[0]
                     #vpl_new = vpl_new.rowrange(1)
-                    pretty_print(vpl_new)
-                else:
-                    vpl_new = vpl
+                    #pretty_print(vpl_new)
+                
                 
                 
                 
@@ -496,16 +488,13 @@ def dualpieri(mu, v_rc, w):
 
                 # v = vpl.perm
                 #pw = tuple([v[ii] for ii in range(lm[i], len(v)) if ((ii > len(vpl_new.perm) and v[ii] == ii) or (ii <= len(vpl_new.perm) and v[ii] == vpl_new.perm[ii - 1]))])
-                try:
-                    assert vpl_new.perm in {vv[-1] for vv in vl}
-                except AssertionError:
+                if vpl_new.perm not in {vv[-1] for vv in vl}:
                     print(f"OH NO NOT NULL OUT {lm[i] + 1}")
                     pretty_print(vpl)
                     print("ohas")
                     pretty_print(vpl_new)
                     print(f"{vl=}")
-                    raise
-                    
+                    raise AssertionError
                 pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
                 #print(f"{vl=} {vpl_new.perm=} {pw=}")
                 # if len(pw) + v.inv != vpl.perm.inv:
