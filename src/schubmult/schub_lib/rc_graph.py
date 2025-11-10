@@ -864,8 +864,10 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     # preserves plactic class, but not Coxeter-Knuth
     # preserves crystal structure. Decomposes RC graphs into key polynomials
     def vertical_cut(self, row):
-        if row < 0 or row > len(self):
+        if row < 0:
             raise ValueError("Row out of range")
+        if row >= len(self):
+            return self, RCGraph()
         front = type(self)([*self[:row]])
         front = front.extend(max(len(self), len(front.perm.trimcode)) - row)
         flen = len(front)

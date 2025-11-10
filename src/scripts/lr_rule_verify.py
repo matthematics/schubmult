@@ -350,7 +350,7 @@ def dualpieri(mu, v_rc, w):
     from schubmult import Permutation, RCGraph, pull_out_var
     if mu.inv == 0:
         #ret = set()
-        return set({((), v_rc)})
+        return set({((), rc) for rc in divdiffable_rc(v_rc, w)})
         
     cycle = Permutation.cycle
     lm = (~mu).trimcode
@@ -381,8 +381,8 @@ def dualpieri(mu, v_rc, w):
                 # logger.debug(f"{vl=}")
                 rc_to_match = vpl.vertical_cut(lm[i])[0]
                 for pw, vpl2 in vl:
-                    for vpl2_rc in RCGraph.all_rc_graphs(vpl2, max(len(vpl2.trimcode),len(v_rc_0))):
-                        if vpl2_rc.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1).normalize() == vpl.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1).normalize():
+                    for vpl2_rc in RCGraph.all_rc_graphs(vpl2, len(vpl)):
+                        if lm[i] + 1 >= len(vpl) or vpl2_rc.rowrange(lm[i] + 1).normalize() == vpl.rowrange(lm[i] + 1).normalize():
                             if vpl2_rc.vertical_cut(lm[i])[0].normalize() == rc_to_match.normalize():
                                 res2.add(((*vlist,pw), vpl2_rc))
                             
@@ -679,16 +679,16 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #check_elem = DSx([]).ring.from_dict({k: v for k, v in (DSx(u, "y") * DSx(v, "z")).items() if v.expand() != S.Zero})
         # check_elem = DSx(u) * DSx(v, "z")
         # x = Sx.genset
-        check_elem = Sx(u) * Sx(v)
-        bob = Sx.zero
+        check_elem = DSx(u) * DSx(v, "z")
+        bob = DSx([]).ring.zero
         for w in check_elem:
             # for u_rc in RCGraph.all_rc_graphs(u, n):
             
                 for v_rc in RCGraph.all_rc_graphs(v, n):
-                    dd = dualpieri(u, v_rc, w)
-                    print(f"{u=} {dd=} {v_rc=} {u=} {w=}")
+                    # dd = dualpieri(u, v_rc, w)
+                    # print(f"{u=} {dd=} {v_rc=} {u=} {w=}")
                 
-                    bob += len([rc for rc in dd if rc[-1].perm.inv == 0]) * Sx(w)
+                    # bob += len([rc for rc in dd if rc[-1].perm.inv == 0]) * Sx(w)
         
                 # for w in check_elem:
                 #     # crystals = None
@@ -717,16 +717,16 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                 #     #         for t_elem in tensors:
                 #     #             for vv_rc in t_elem.full_crystal:
 
-                #         dualpocket = dualpieri(u_rc.perm, v_rc,  w)
-                        
-                #         # print(f"{dualpocket=}")   
-                #         if len(dualpocket) > 0:
-                #             for vlist, rc in dualpocket:
-                #                 # toadd = S.One
-                #                 # for i in range(len(vlist)):
-                #                 #     for j in range(len(vlist[i])):
-                #                 #         toadd *= y[i + 1] - z[vlist[i][j]]
-                #                 sm0 += Sx(w)
+                    dualpocket = dualpieri(u, v_rc,  w)
+                    
+                    # print(f"{dualpocket=}")   
+                    if len(dualpocket) > 0:
+                        for vlist, rc in dualpocket:
+                            toadd = S.One
+                            for i in range(len(vlist)):
+                                for j in range(len(vlist[i])):
+                                    toadd *= y[i + 1] - z[vlist[i][j]]
+                            bob += toadd * rc.polyvalue(y[len(vlist):],z) * DSx(w)
                             
                             
                             
@@ -794,14 +794,14 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             #assert diff2 == Sx.zero, "Noit zor1"
             # from sympy import expand
             # assert all(expand(v) == S.Zero for v in diff.values()), "Noit zor0"
-            assert bob == check_elem
-            
+            assert all(v.expand() == S.Zero for v in (bob - check_elem).values())
+
             #assert good
             #print(f"Coprod {rc.perm.trimcode}")
             # pretty_print(rc)
             # pretty_print(val)
         #print("At least one success")
-            #good = True
+            good = True
         except AssertionError as e:
             print(f"A fail {e=} {bob=} {u=} {v=}")
             # print(f"{u_rc.perm=}")
