@@ -345,6 +345,52 @@ def divdiffable_rc(v_rc, u):
         ret = working_set
     return ret
 
+# def dualpieri(mu, v, w):
+#     # logger.debug(f"dualpieri {mu=} {v=} {w=}")
+#     lm = code(~mu)
+#     cn1w = code(~w)
+#     while len(lm) > 0 and lm[-1] == 0:
+#         lm.pop()
+#     while len(cn1w) > 0 and cn1w[-1] == 0:
+#         cn1w.pop()
+#     if len(cn1w) < len(lm):
+#         return []
+#     for i in range(len(lm)):
+#         if lm[i] > cn1w[i]:
+#             return []
+#     c = Permutation([1, 2])
+#     for i in range(len(lm), len(cn1w)):
+#         c = cycle(i - len(lm) + 1, cn1w[i]) * c
+#     # c = permtrim(c)
+#     # logger.debug("Recording line number")
+#     res = [[[], v]]
+#     # logger.debug(f"{v=} {type(v)=}")
+#     for i in range(len(lm)):
+#         # logger.debug(f"{res=}")
+#         res2 = []
+#         for vlist, vplist in res:
+#             vp = vplist
+#             vpl = divdiffable(vp, cycle(lm[i] + 1, cn1w[i] - lm[i]))
+#             # logger.debug(f"{vpl=} {type(vpl)=}")
+#             if len(vpl) == 0:
+#                 continue
+#             vl = pull_out_var(lm[i] + 1, vpl)
+#             # logger.debug(f"{vl=}")
+#             for pw, vpl2 in vl:
+#                 res2 += [[[*vlist, pw], vpl2]]
+#         res = res2
+#     if len(lm) == len(cn1w):
+#         return res
+#     res2 = []
+#     for vlist, vplist in res:
+#         vp = vplist
+#         vpl = divdiffable(vp, c)
+#         if len(vpl) == 0:
+#             continue
+#         res2 += [[vlist, vpl]]
+#     # logger.debug(f"{res2=}")
+#     return res2
+
 
 def dualpieri(mu, v_rc, w):
     from sympy import pretty_print
@@ -393,26 +439,31 @@ def dualpieri(mu, v_rc, w):
                 #     continue
                 shift_down = 0
                 working_perm = vpl.perm
-                print("Starting")
-                pretty_print(vpl)
+                # print("Starting")
+                # pretty_print(vpl)
                 for ref_spot_i in range(lm[i], 0, -1):
                     # print(f"Before ref {ref_spot_i=}")
                     # pretty_print(vpl_new)
                     vpl_new = vpl_new.weight_reflection(ref_spot_i)
-                    print(f"Reflected {ref_spot_i=}")
-                    pretty_print(vpl_new)
+                    # print(f"Reflected {ref_spot_i=}")
+                    # pretty_print(vpl_new)
                     if vpl_new.perm != working_perm:
                         shift_down += 1
                         working_perm = vpl_new.perm
                     # print("After")
                     # pretty_print(vpl_new)
                 # vpl_new = vpl_new.extend(1)
-                print(f"After all reflections {shift_down=}")
+                # print(f"After all reflections {shift_down=}")
                 
                 for _ in range(shift_down):
                     vpl_new = vpl_new.zero_out_last_row()
                 # pw = tuple([a for a in vpl_new[0]])
                 vpl_new = vpl_new.rowrange(1)
+                try:
+                    while vpl_new.perm.inv > 0 and len(vpl_new.perm.trimcode) >= len(vpl.perm.trimcode):
+                        vpl_new = vpl_new.zero_out_last_row()
+                except ValueError:
+                    continue
                 # v = vpl.perm
                 #pw = tuple([v[ii] for ii in range(lm[i], len(v)) if ((ii > len(vpl_new.perm) and v[ii] == ii) or (ii <= len(vpl_new.perm) and v[ii] == vpl_new.perm[ii - 1]))])
                 if vpl_new.perm not in {vv[-1] for vv in vl}:
