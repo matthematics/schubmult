@@ -194,9 +194,12 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
     def shiftup(self, shift = 1):
         rc = self
-        if len(self) < len(self.perm.trimcode) + shift:
-            rc = rc.extend(len(self.perm.trimcode) + shift - len(self))
-        return RCGraph([tuple([a + shift for a in rrow]) for rrow in rc])
+        # if len(self) < len(self.perm.trimcode) + shift:
+        #     rc = rc.extend(len(self.perm.trimcode) + shift - len(self))
+        
+        ret = RCGraph([tuple([a + shift for a in rrow]) for rrow in rc])
+        assert ret.is_valid
+        return ret
 
     @cache
     def right_root_at(self, i, j):
@@ -1215,7 +1218,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         except Exception:
             rc = None
         if rc is None:
-            rc2 = self.shiftup(1).crystal_reflection(i)
+            rc2 = self.extend(1).shiftup(1).crystal_reflection(i)
             assert rc2 is not None
             return rc2
         return rc

@@ -381,24 +381,44 @@ def dualpieri(mu, v_rc, w):
             if len(vpl_list) == 0:
                 continue
             for vpl in vpl_list:
-                #vl = pull_out_var(lm[i] + 1, vpl.perm)
-                print(f"Begin rc pulling out lm[i] + 1={lm[i] + 1}")
-                pretty_print(vp)
-                vpl_new = vpl.extend(1)
+                # print(f"Begin rc pulling out lm[i] + 1={lm[i] + 1}")
+                # pretty_print(vp)
+                vpl_new = vpl.resize(max(lm[i] + 1, len(vpl)))
                 pw = ()
-                if lm[i] < len(vpl_new):
-                    pw = tuple([a - lm[i] for a in vpl_new[lm[i]]])
-                print(f"{pw=}")
-                assert len(vpl_new) <= lm[i] + 1 or len(pw) == len(vpl_new[lm[i]])
+
+                
+                #print(f"{pw=}")
+                # if (len(vpl_new) <= lm[i] and len(pw) != 0) or (len(vpl_new) > lm[i] and len(pw) != len(vpl_new[lm[i]])):
+                #     continue
+                shift_down = 0
+                working_perm = vpl.perm
+                print("Starting")
+                pretty_print(vpl)
                 for ref_spot_i in range(lm[i], 0, -1):
                     # print(f"Before ref {ref_spot_i=}")
                     # pretty_print(vpl_new)
                     vpl_new = vpl_new.weight_reflection(ref_spot_i)
+                    print(f"Reflected {ref_spot_i=}")
+                    pretty_print(vpl_new)
+                    if vpl_new.perm != working_perm:
+                        shift_down += 1
+                        working_perm = vpl_new.perm
                     # print("After")
                     # pretty_print(vpl_new)
-                vpl_new = vpl_new.rowrange(1)
-                while vpl_new.perm.inv > 0 and len(vpl_new.perm.trimcode) >= len(vpl.perm.trimcode) and len(vpl_new) > 0 and len(vpl_new[-1]) == 0:
+                # vpl_new = vpl_new.extend(1)
+                print(f"After all reflections {shift_down=}")
+                
+                for _ in range(shift_down):
                     vpl_new = vpl_new.zero_out_last_row()
+                pw = tuple([a for a in vpl_new[0]])
+                vpl_new = vpl_new.rowrange(1)
+                
+                v = vpl_new.perm
+                # if v not in [vv[-1] for vv in vl]:
+                #     continue
+                # pw = tuple([v[ii] for ii in range(lm[i], len(v)) if ((ii > len(vpl.perm) and v[ii] == ii) or (ii <= len(vpl.perm) and v[ii] == vpl.perm[ii - 1]))])
+                # if len(pw) + v.inv != vpl.perm.inv:
+                #     continue
                 res2.add(((*vlist, pw), vpl_new))
                     
 
@@ -741,14 +761,14 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             # print(f"{u_rc.perm=}")
             # print(f"{v=}")
             print("diff=")
-            # for w11, v0 in check_elem.items():
+            for w11, v0 in check_elem.items():
                 
-            #     if diff.get(w11, S.Zero).expand() == S.Zero:
-            #         continue
-            #     print("======")
-            #     print(f"{w11}: {v0.expand()}")
-            #     print("vs")
-            #     print(f"{w11}: {sympy.sympify(sm0.get(w11, 0)).expand()}")
+                if diff.get(w11, S.Zero).expand() == S.Zero:
+                    continue
+                print("======")
+                print(f"{w11}: {v0.expand()}")
+                print("vs")
+                print(f"{w11}: {sympy.sympify(sm0.get(w11, 0)).expand()}")
             # print(f"{sm0=}")
             # print(f"{check_elem=}")
             good = False
