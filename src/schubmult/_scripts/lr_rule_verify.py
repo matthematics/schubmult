@@ -441,33 +441,52 @@ def dualpieri(mu, v_rc, w):
                 working_perm = vpl.perm
                 # print("Starting")
                 # pretty_print(vpl)
-                for ref_spot_i in range(lm[i], 0, -1):
-                    # print(f"Before ref {ref_spot_i=}")
-                    # pretty_print(vpl_new)
-                    vpl_new = vpl_new.weight_reflection(ref_spot_i)
-                    # print(f"Reflected {ref_spot_i=}")
-                    # pretty_print(vpl_new)
-                    if vpl_new.perm != working_perm:
-                        shift_down += 1
-                        working_perm = vpl_new.perm
+                print(f"{lm[i] + 1=}")
+                if lm[i] + 1 <= len(vpl.perm.trimcode):
+                    for ref_spot_i in range(lm[i] + 1, len(vpl.perm.trimcode) - 1):
+                        # print(f"Before ref {ref_spot_i=}")
+                        # pretty_print(vpl_new)
+                        vpl_new = vpl_new.weight_reflection(ref_spot_i)
+                        # print(f"Reflected {ref_spot_i=}")
+                        # pretty_print(vpl_new)
+                        if vpl_new.perm != working_perm:
+                            raise ValueError
+                    vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode) - 1)[0]
+                else:
+                    vpl_new = vpl
                     # print("After")
                     # pretty_print(vpl_new)
                 # vpl_new = vpl_new.extend(1)
                 # print(f"After all reflections {shift_down=}")
                 
-                for _ in range(shift_down):
-                    vpl_new = vpl_new.zero_out_last_row()
+                # last_code = 12000000
+                print("Pre cut")
+                pretty_print(vpl)
+                #pretty_print(vpl_new)
+                
+                print("After cut")
+                pretty_print(vpl_new)
+                #assert len(vpl_new) == len(vpl.perm.trimcode) and vpl_new.inv == vpl.inv
+
+                
+                
                 # pw = tuple([a for a in vpl_new[0]])
-                vpl_new = vpl_new.rowrange(1)
-                try:
-                    while vpl_new.perm.inv > 0 and len(vpl_new.perm.trimcode) >= len(vpl.perm.trimcode):
-                        vpl_new = vpl_new.zero_out_last_row()
-                except ValueError:
-                    continue
+                
+                
+                
+
+                    
+                    #     for i in range(len(vpl_new) - 1, 0, -1):
+                    #         vpl_new_test = vpl_new.raising_operator(i)
+                    #         if vpl_new_test is not None:                                
+                    #             vpl_new = vpl_new_test
+                    
+                    
+                    
+
                 # v = vpl.perm
                 #pw = tuple([v[ii] for ii in range(lm[i], len(v)) if ((ii > len(vpl_new.perm) and v[ii] == ii) or (ii <= len(vpl_new.perm) and v[ii] == vpl_new.perm[ii - 1]))])
-                if vpl_new.perm not in {vv[-1] for vv in vl}:
-                    continue
+                assert vpl_new.perm in {vv[-1] for vv in vl}
                 pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
                 print(f"{vl=} {vpl_new.perm=} {pw=}")
                 # if len(pw) + v.inv != vpl.perm.inv:
