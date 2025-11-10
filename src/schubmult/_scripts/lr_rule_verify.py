@@ -431,22 +431,31 @@ def dualpieri(mu, v_rc, w):
                 vl = pull_out_var(lm[i] + 1, vpl.perm)
                 # print(f"Begin rc pulling out lm[i] + 1={lm[i] + 1}")
                 # pretty_print(vp)
-                vpl_new = vpl
+                vpl_new = vpl.resize(len(vpl.perm) - 1)
                 pw = ()
                 # print("Before")
                 # pretty_print(vpl_new)
-                if lm[i] + 1 <= len(vpl.perm.trimcode):
+                if lm[i] <= len(vpl.perm.trimcode):
                     # shift up
                     # pull the row down
                     # divdiff it
                     #vpl_new = FA(([0] * (max(vpl_vpl_new.shiftup(1)
+                    vpl_new = vpl_new.extend(1)
                     for ref_spot_i in range(lm[i], 0, -1):
                         # print(f"Before ref {ref_spot_i=}")
                         # pretty_print(vpl_new)
                         vpl_new_old = vpl_new
                         vpl_new = vpl_new.weight_reflection(ref_spot_i)
                         assert (vpl_new_old.length_vector[ref_spot_i - 1], vpl_new_old.length_vector[ref_spot_i]) == (vpl_new.length_vector[ref_spot_i], vpl_new.length_vector[ref_spot_i - 1])
-                    vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode))[0].rowrange(1)
+                    vpl_new = vpl_new.rowrange(1)
+                    if len(vpl_new) > len(vpl) - 1:
+                        vpl_new = vpl_new.vertical_cut(len(vpl) - 1)[0]
+                if lm[i] + 1 == len(vpl.perm.trimcode):
+                    vpl_new = vpl.rowrange(0, len(vpl.perm.trimcode) - 1)
+                    
+                    
+                    
+                    #vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode))[0].rowrange(1)
                     
                 
                 if vpl_new.perm not in {vv[-1] for vv in vl}:
