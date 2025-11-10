@@ -65,9 +65,9 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             return NotImplemented
         return tuple(self) == tuple(other)
 
-    def __iter__(self):
-        for row in super().__iter__():
-            yield tuple(row)
+    # def __iter__(self):
+    #     for row in super().__iter__():
+    #         yield tuple(row)
 
     def flat_elem_sym_mul(self, k):
         from schubmult.utils.schub_lib import elem_sym_perms
@@ -192,8 +192,11 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         #     return False
         return True
 
-    def shiftup(self, shift):
-        return [tuple([a + shift for a in rrow]) for rrow in self]
+    def shiftup(self, shift = 1):
+        rc = self
+        if len(self) < len(self.perm.trimcode) + shift:
+            rc = rc.extend(len(self.perm.trimcode) + shift - len(self))
+        return RCGraph([tuple([a + shift for a in rrow]) for rrow in rc])
 
     @cache
     def right_root_at(self, i, j):
@@ -1209,7 +1212,18 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         if not isinstance(other, RCGraph):
             return NotImplemented
         return self < other or self == other
-    
+
+    def weight_reflection(self, i):
+        try:
+            rc = self.crystal_reflection(i)
+        except Exception:
+            rc = None
+        if rc is None:
+            rc2 = self.shiftup(1).crystal_reflection(i)
+            assert rc2 is not None
+            return rc2
+        return rc
+
     @property
     def inverse_crystal(self):
         return InverseRCGraph(self)

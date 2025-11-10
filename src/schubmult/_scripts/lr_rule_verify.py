@@ -378,15 +378,30 @@ def dualpieri(mu, v_rc, w):
             if len(vpl_list) == 0:
                 continue
             for vpl in vpl_list:
-                vl = pull_out_var(lm[i] + 1, vpl.perm)
-                
+                #vl = pull_out_var(lm[i] + 1, vpl.perm)
+                vpl_new = vpl
+                ref_spot = lm[i]
+                if ref_spot <= len(vpl) - 1:
+                    pw = tuple([a - ref_spot for a in vpl[ref_spot]])
+                else:
+                    pw = ()
+                for ref_spot_i in range(lm[i], 0, -1):
+                    if ref_spot_i >= len(vpl):
+                        continue
+                    vpl_new = vpl_new.weight_reflection(ref_spot_i)
+                vpl_new = vpl_new.rowrange(1)
+                while len(vpl_new.perm.trimcode) >= len(vpl.perm.trimcode) and len(vpl_new) > 0 and len(vpl_new[-1]) == 0:
+                    vpl_new = vpl_new.zero_out_last_row()
+                res2.add(((*vlist, pw), vpl_new))
+                    
+
                 # logger.debug(f"{vl=}")
-                rc_to_match = vpl.vertical_cut(lm[i])[0]
-                for pw, vpl2 in vl:
-                    for vpl2_rc in RCGraph.all_rc_graphs(vpl2, len(vpl)):
-                        if lm[i] + 1 >= len(vpl) or vpl2_rc.rowrange(lm[i] + 1) == vpl.rowrange(lm[i] + 1):
-                            if vpl2_rc.vertical_cut(lm[i])[0] == rc_to_match:
-                                res2.add(((*vlist,pw), vpl2_rc))
+                # rc_to_match = vpl.vertical_cut(lm[i])[0]
+                # for pw, vpl2 in vl:
+                #     for vpl2_rc in RCGraph.all_rc_graphs(vpl2, len(vpl)):
+                #         if lm[i] + 1 >= len(vpl) or vpl2_rc.rowrange(lm[i] + 1) == vpl.rowrange(lm[i] + 1):
+                #             if vpl2_rc.vertical_cut(lm[i])[0] == rc_to_match:
+                #                 res2.add(((*vlist,pw), vpl2_rc))
                             
         res = res2
     if len(lm) == len(cn1w):
@@ -713,19 +728,21 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #print("At least one success")
             good = True
         except AssertionError as e:
-            print(f"A fail {e=} {check_elem=} {sm0=} {u=} {v=}")
+            print(f"A fail {e=} {sm0=} {u=} {v=}")
+            print(f"{sm0=}")
+            print(f"{check_elem=}")
             #print(f"{expand(sm0 - check_elem)=}")
             # print(f"{u_rc.perm=}")
             # print(f"{v=}")
             print("diff=")
-            for w11, v0 in check_elem.items():
+            # for w11, v0 in check_elem.items():
                 
-                if diff.get(w11, S.Zero).expand() == S.Zero:
-                    continue
-                print("======")
-                print(f"{w11}: {v0.expand()}")
-                print("vs")
-                print(f"{w11}: {sympy.sympify(sm0.get(w11, 0)).expand()}")
+            #     if diff.get(w11, S.Zero).expand() == S.Zero:
+            #         continue
+            #     print("======")
+            #     print(f"{w11}: {v0.expand()}")
+            #     print("vs")
+            #     print(f"{w11}: {sympy.sympify(sm0.get(w11, 0)).expand()}")
             # print(f"{sm0=}")
             # print(f"{check_elem=}")
             good = False

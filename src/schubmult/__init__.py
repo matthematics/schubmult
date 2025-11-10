@@ -4,6 +4,7 @@ import ast
 import importlib
 import inspect
 import pkgutil
+import types
 import warnings
 from pathlib import Path
 from typing import Dict, List, Set
@@ -94,12 +95,38 @@ def __getattr__(name: str):
             raise AttributeError(f"cannot import {name!r} from {_lazy_exports[name]!r}: {e}") from e
     # names discovered during the initial scan
     if name in _module_map:
+        modname = _module_map[name]
         try:
-            mod = importlib.import_module(_module_map[name])
+            mod = importlib.import_module(modname)
             val = getattr(mod, name)
             globals()[name] = val
             return val
         except Exception as e:
+            # If the failing module lives under schubmult._scripts, be lenient:
+            # warn the user but return a lightweight proxy that raises a clear
+            # error when used. This lets `import schubmult` succeed while still
+            # giving a helpful message if the script is actually executed.
+            if modname.startswith(__name__ + "._scripts"):
+                warnings.warn(
+                    f"optional script module {modname!r} could not be imported: {e!r}; "
+                    "accessing this symbol will raise when called.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+
+                def _broken_callable(*args, _name=name, _mod=modname, _err=e, **kwargs):
+                    raise RuntimeError(
+                        f"attempted to use {_name!r} from {_mod!r} but importing the module failed: {_err!r}"
+                    )
+
+                # attach some attributes to help introspection / debugging
+                broken = _broken_callable
+                broken.__name__ = f"broken_{name}"
+                broken.__doc__ = f"Placeholder for {name} from {modname}; import failed: {e!r}"
+                globals()[name] = broken
+                return broken
+
+            # otherwise behave as before
             raise AttributeError(f"cannot import {name!r} from {_module_map[name]!r}: {e}") from e
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
