@@ -376,24 +376,16 @@ def dualpieri(mu, v_rc, w):
             # logger.debug(f"{vpl=} {type(vpl)=}")
             if len(vpl_list) == 0:
                 continue
-            for vpl_hw in vpl_list:
-                vl = pull_out_var(lm[i] + 1, vpl_hw.perm)
+            for vpl in vpl_list:
+                vl = pull_out_var(lm[i] + 1, vpl.perm)
                 # logger.debug(f"{vl=}")
-                for vpl in vpl_hw.full_crystal:
-                    if lm[i] > 0:
-                        rc_to_match = vpl.vertical_cut(lm[i] - 1)[0]
-                    else:
-                        rc_to_match = vpl
-                    for pw, vpl2 in vl:
-                        for vpl2_rc in RCGraph.all_rc_graphs(vpl2, max(len(vpl2.trimcode),len(v_rc_0) - 1)):
-                            if vpl2_rc.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1) == vpl.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1):
-                                if lm[i] > 0:
-                                    if vpl2_rc.vertical_cut(lm[i] - 1)[0] == rc_to_match:
-                                        res2.add(((*vlist,pw), vpl2_rc.to_highest_weight()[0]))
-                                else:
-                                    if vpl2_rc == rc_to_match:
-                                        res2.add(((*vlist,pw), vpl2_rc.to_highest_weight()[0]))
-
+                rc_to_match = vpl.vertical_cut(lm[i])[0]
+                for pw, vpl2 in vl:
+                    for vpl2_rc in RCGraph.all_rc_graphs(vpl2, max(len(vpl2.trimcode),len(v_rc_0))):
+                        if vpl2_rc.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1).normalize() == vpl.resize(max(len(vpl),len(vpl2_rc))).rowrange(lm[i] + 1).normalize():
+                            if vpl2_rc.vertical_cut(lm[i])[0].normalize() == rc_to_match.normalize():
+                                res2.add(((*vlist,pw), vpl2_rc))
+                            
         res = res2
     if len(lm) == len(cn1w):
         return res
@@ -688,12 +680,15 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         # check_elem = DSx(u) * DSx(v, "z")
         # x = Sx.genset
         check_elem = Sx(u) * Sx(v)
-        #for u_rc in RCGraph.all_rc_graphs(u, n):
         bob = Sx.zero
-        for v_rc in RCGraph.all_rc_graphs(v, n):
-            dd = divdiffable_rc(v_rc, u)
-            #print(f"{dd=} {v_rc=} {u=}")
-            bob += Sx(sum([rc.polyvalue(Sx.genset) for rc in dd]))
+        for w in check_elem:
+            # for u_rc in RCGraph.all_rc_graphs(u, n):
+            
+                for v_rc in RCGraph.all_rc_graphs(v, n):
+                    dd = dualpieri(u, v_rc, w)
+                    print(f"{u=} {dd=} {v_rc=} {u=} {w=}")
+                
+                    bob += len([rc for rc in dd if rc[-1].perm.inv == 0]) * Sx(w)
         
                 # for w in check_elem:
                 #     # crystals = None
@@ -793,13 +788,13 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             #                                         sm += sympy.prod([Sx.genset[i+1]**vect[i] for i in range(len(vect))])
         good = True
         
-        # diff = check_elem - sm0
+        diff = check_elem - bob
         #diff2 = check_elem - sm
         try:
             #assert diff2 == Sx.zero, "Noit zor1"
             # from sympy import expand
             # assert all(expand(v) == S.Zero for v in diff.values()), "Noit zor0"
-            assert (bob == Sx.zero) or (bob == Sx(v*(~u)))
+            assert bob == check_elem
             
             #assert good
             #print(f"Coprod {rc.perm.trimcode}")
@@ -811,9 +806,9 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             print(f"A fail {e=} {bob=} {u=} {v=}")
             # print(f"{u_rc.perm=}")
             # print(f"{v=}")
-            # print(f"{diff=}")
+            print(f"{diff=}")
             # print(f"{sm0=}")
-            # print(f"{check_elem=}")
+            print(f"{check_elem=}")
             good = False
             
         #assert good, f"COMPLETE FAIL {w=}"
@@ -889,7 +884,7 @@ def main():
         from schubmult.schub_lib.rc_graph import RCGraph
         task_queue = manager.Queue()
         # dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
-        dominant_only = False
+        dominant_only = True
         w0_only  =False
         sep_descs = False
         indec = False
