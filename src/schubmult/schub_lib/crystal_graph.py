@@ -104,6 +104,7 @@ class CrystalGraph(Printable):
                 new_rc = new_rc.lowering_operator(index)
         return new_rc
 
+
     @property
     def full_crystal(self):
         hw, _ = self.to_highest_weight()
@@ -134,6 +135,20 @@ class CrystalGraph(Printable):
                 if new_elem is not None:
                     stack.append(new_elem)
         return crystal
+
+    def weight_bump(self):
+        ...
+
+    def weight_reflection(self, index):
+        res = self
+        try:
+            res = res.crystal_reflection(index)
+        except Exception:
+            res = None
+        if res is None:
+            res = self.weight_bump()
+            return res.crystal_reflection(index)
+        return res
 
     @property
     def is_highest_weight(self):
@@ -227,6 +242,9 @@ class CrystalGraphTensor(CrystalGraph):
     @property
     def args(self):
         return self.factors
+
+    def weight_bump(self):
+        return type(self)(self.factors[0].weight_bump(), self.factors[1].weight_bump())
 
     def all_highest_weights(self):
         import itertools

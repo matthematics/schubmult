@@ -1158,9 +1158,9 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         ret = set()
         the_rc = self
         rc, row = the_rc.exchange_property(desc, return_row=True)
-        rc = rc.normalize()
         if row != desc:
             return ret
+        rc = rc.normalize()
         if rc.raising_operator(desc) is not None:
             return ret
         ret.add(rc)
@@ -1224,10 +1224,25 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                     vl = pull_out_var(lm[i] + 1, vpl.perm)
 
                     if lm[i] + 1 > len(vpl.perm.trimcode):
-                        rcs = {vpl}
+                        rcs = {vpl.extend(1) if len(vpl[-1]) > 0 else vpl}
                     else:
-                        vpl_bottom, vpl_top = vpl.vertical_cut(lm[i])
-                        rcs = rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))
+                        # vpl_bottom, vpl_top = vpl.vertical_cut(lm[i])
+                        # rcs = rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1)) 
+                        # ABOVE WORKS BUT WITH DUPLICTES
+                        vpl_bottom, vpl_top = vpl.vertical_cut(lm[i] + 1)
+                        vpl_bottom = RCGraph([*vpl_bottom[:-1], ()]).normalize()
+                        if vpl_bottom.inv == 0:
+                            vpl_bottom = vpl_bottom.rowrange(0, len(vpl_bottom) - 1)
+                            
+                        while vpl_bottom.inv > 0 and len(vpl_bottom) > lm[i] - 1 and len(vpl_bottom[-1]) == 0:
+                            vpl_bottom = vpl_bottom.zero_out_last_row()
+                        rcs = rc_ring(vpl_bottom) * rc_ring(vpl_top)
+                        # try:
+                        #     while vepl.perm.inv > 0 and vepl.perm[0] == 1:
+                        #         vepl = vepl.shiftup(-1)
+                        # except Exception:S
+                        #     pass
+                        #rcs = rc_ring(vepl) * rc_ring(RCGraph([()] * (len(vpl.perm) - 1 - len(vpl.perm.trimcode))))
 
                     for vpl_new in rcs:
                         if vpl_new.perm not in {vv[-1] for vv in vl}:
@@ -1297,14 +1312,17 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         return self < other or self == other
 
     # WE CAN DO STUFF WITH THIS
-    def weight_reflection(self, i):
-        try:
-            rc = self.crystal_reflection(i)
-        except Exception:
-            rc = None
-        if rc is None:
-            rc = self.extend(1).shiftup(1).crystal_reflection(i)
-        return rc
+    def weight_bump(self):
+        return self.extend(1).shiftup(1)
+
+    # def weight_reflection(self, i):
+    #     try:
+    #         rc = self.crystal_reflection(i)
+    #     except Exception:
+    #         rc = None
+    #     if rc is None:
+    #         rc = self.extend(1).shiftup(1).crystal_reflection(i)
+    #     return rc
 
     @property
     def inverse_crystal(self):
