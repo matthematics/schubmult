@@ -1292,7 +1292,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                         # rcs = {self._new_rc([*vpl_bottom_cut, *vpl_top])} # chaned this row to zero lm[i] rather than cutting
                         #vpl = vpl.resize(len(vpl) + 1)
                         vep = vpl.extend(3)
-                        for ref in range(lm[i] + 1, len(vep)):
+                        for ref in range(lm[i] + 1, len(vpl.perm.trimcode) + 1):
                             vep = vep.weight_reflection(ref)
                         vep = vep.rowrange(0, len(vpl))
                         vep = vep.vertical_cut(len(vpl.perm.trimcode) - 1)[0]
