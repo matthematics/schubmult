@@ -1209,7 +1209,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         for i in range(len(lm), len(cn1w)):
             c = cycle(i - len(lm) + 1, cn1w[i]) * c
 
-        res = {((), (), self)}
+        res = {((), (), self.normalize())}
 
         for i in range(len(lm)):
             res2 = set()
@@ -1224,34 +1224,36 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                     vl = pull_out_var(lm[i] + 1, vpl.perm)
 
                     if lm[i] + 1 > len(vpl.perm.trimcode):
-                        rcs1 = {vpl.extend(1) if len(vpl[-1]) > 0 else vpl}
-                        rcs2 = {vpl.extend(1) if len(vpl[-1]) > 0 else vpl}
-                    else:
-                        move_spot = lm[i] + 1
-                        while move_spot > 0 and vpl.perm[move_spot - 1] < vpl.perm[move_spot]:
-                            move_spot += 1
-                        vpl_bottom, vpl_top = vpl.vertical_cut(move_spot - 1)
-                        assert len(vpl_bottom) == move_spot - 1
-                        rcs1 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))).keys())
-                        # ABOVE WORKS BUT WITH DUPLICTES
-                        vpl_bottom, vpl_top = vpl.vertical_cut(move_spot)
-                        vpl_bottom = RCGraph([*vpl_bottom[:-1], ()])
-                        if len(vpl_bottom.perm.trimcode) > len(vpl_bottom):
-                            vpl_bottom = vpl_bottom.normalize()
+                        if lm[i] + 1 > len(vpl):
+                            res2.add(((*vlist, ()), (*perm_list, vpl.perm), vpl))
+                        else:
+                            res2.add(((*vlist, ()), (*perm_list, vpl.perm), vpl.rowrange(0, len(vpl) - 1)))
+                        continue
+                    move_spot = lm[i] + 1
+                    while move_spot > 0 and vpl.perm[move_spot - 1] < vpl.perm[move_spot]:
+                        move_spot += 1
+                    vpl_bottom, vpl_top = vpl.vertical_cut(move_spot - 1)
+                    assert len(vpl_bottom) == move_spot - 1
+                    rcs1 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))).keys())
+                    # ABOVE WORKS BUT WITH DUPLICTES
+                    vpl_bottom, vpl_top = vpl.vertical_cut(move_spot)
+                    vpl_bottom = RCGraph([*vpl_bottom[:-1], ()])
+                    if len(vpl_bottom.perm.trimcode) > len(vpl_bottom):
+                        vpl_bottom = vpl_bottom.normalize()
 
-                        vpl_bottom.zero_out_last_row()
-                        while len(vpl_bottom) > move_spot - 1:
-                            vpl_bottom = vpl_bottom.zero_out_last_row()
-                        if len(vpl_bottom) != move_spot - 1:
-                            assert vpl_bottom.inv == 0
-                            vpl_bottom = vpl_bottom.resize(move_spot - 1)
-                        # vpl_bottom = vpl_bottom.zero_out_last_row()
+                    vpl_bottom.zero_out_last_row()
+                    while len(vpl_bottom) > move_spot - 1:
+                        vpl_bottom = vpl_bottom.zero_out_last_row()
+                    if len(vpl_bottom) != move_spot - 1:
+                        assert vpl_bottom.inv == 0
+                        vpl_bottom = vpl_bottom.resize(move_spot - 1)
+                    # vpl_bottom = vpl_bottom.zero_out_last_row()
                         # if vpl_bottom.inv == 0:
                         #     vpl_bottom = vpl_bottom.rowrange(0, len(vpl_bottom) - 1)
 
                         # while vpl_bottom.inv > 0 and len(vpl_bottom) > lm[i] - 1 and len(vpl_bottom[-1]) == 0:
                         #     vpl_bottom = vpl_bottom.zero_out_last_row()
-                        rcs2 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top)).keys())
+                    rcs2 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top)).keys())
                         # try:
                         #     while vepl.perm.inv > 0 and vepl.perm[0] == 1:
                         #         vepl = vepl.shiftup(-1)
@@ -1263,7 +1265,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                         if vpl_new.perm not in {vv[-1] for vv in vl}:
                             continue
                         pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
-                        res2.add(((*vlist, tuple(pw)), (*perm_list, vpl.perm), vpl_new))
+                        res2.add(((*vlist, tuple(pw)), (*perm_list, vpl.perm), vpl_new.resize(len(vpl) - 1)))
 
             res = res2
         if len(lm) == len(cn1w):

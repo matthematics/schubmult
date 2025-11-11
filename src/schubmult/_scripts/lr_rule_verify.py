@@ -360,6 +360,8 @@ def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
         sm0 = DSx([]).ring.zero
         dualps = {}
         for w in check_elem:
+            # if w != u:
+            #     continue
             for v_rc in RCGraph.all_rc_graphs(v, n):
                 dualpocket = v_rc.dualpieri(u, w)
                 if len(dualpocket) > 0:
@@ -376,7 +378,9 @@ def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
                         sm0 += toadd * rc.polyvalue(y[len(vlist) :], z) * DSx(w)
 
         good = True
-
+        ########################333
+        #check_elem = check_elem.ring.from_dict({u: check_elem[u]})
+        #############3
         diff = check_elem - sm0
         diff = DSx([]).ring.from_dict({k: sympy.sympify(vv).expand() for k, vv in diff.items() if sympy.sympify(vv).expand() != S.Zero})
 
@@ -467,6 +471,7 @@ def main():
         indec = False
         skip_id = True
         w0 = Permutation.w0(n)
+        print("### TEMP TEST GROUP ACTION ONLY###")
         for hw_tab in perms:
             if skip_id and hw_tab.inv == 0:
                 continue
