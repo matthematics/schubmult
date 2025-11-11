@@ -1,8 +1,9 @@
 import sys
 
+from schubmultsymbolic import sstr, sympify
+from schubmultutils.argparse import schub_argparse
+
 from schubmult import GeneratingSet, Permutation, apply_peterson_woodward, schubmult_q, schubmult_q_fast, uncode
-from schubmult.symbolic import sstr, sympify
-from schubmult.utils.argparse import schub_argparse
 
 q_var = GeneratingSet("q")
 

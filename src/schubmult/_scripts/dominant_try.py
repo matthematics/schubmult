@@ -1,7 +1,7 @@
 import itertools
 
-from schubmult.rings.ck_ring import CoxeterKnuthRing
-from schubmult.schub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
+from schubmultrings.ck_ring import CoxeterKnuthRing
+from schubmultschub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
 
 
 class RCGraphCut(CrystalGraph):
@@ -52,12 +52,12 @@ class RCGraphCut(CrystalGraph):
 if __name__ == "__main__":
     import sys
 
+    from schubmultschub_lib.rc_graph import RCGraph
+    from schubmultschub_lib.rc_graph_ring import RCGraphRing
+    from schubmultutils.perm_utils import elem_sym_perms
     from sympy import pretty_print
 
     from schubmult import *
-    from schubmult.schub_lib.rc_graph import RCGraph
-    from schubmult.schub_lib.rc_graph_ring import RCGraphRing
-    from schubmult.utils.perm_utils import elem_sym_perms
 
     n = int(sys.argv[1])
     rc_ring = RCGraphRing()

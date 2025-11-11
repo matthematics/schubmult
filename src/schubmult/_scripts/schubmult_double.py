@@ -1,6 +1,17 @@
 import sys
 from functools import cached_property
 
+from schubmultschub_lib.perm_lib import split_perms
+from schubmultsymbolic import S, expand, expand_func, init_printing, simplify, sstr, sympify
+from schubmultsymmetric_polynomials import FactorialElemSym
+from schubmultutils.argparse import schub_argparse
+from schubmultutils.logging import get_logger
+from schubmultutils.perm_utils import (
+    add_perm_dict,
+    mu_A,
+    will_formula_work,
+)
+
 from schubmult import (
     GeneratingSet,
     Permutation,
@@ -14,16 +25,6 @@ from schubmult import (
     schubmult_double_alt_from_elems,
     theta,
     uncode,
-)
-from schubmult.schub_lib.perm_lib import split_perms
-from schubmult.symbolic import S, expand, expand_func, init_printing, simplify, sstr, sympify
-from schubmult.symmetric_polynomials import FactorialElemSym
-from schubmult.utils.argparse import schub_argparse
-from schubmult.utils.logging import get_logger
-from schubmult.utils.perm_utils import (
-    add_perm_dict,
-    mu_A,
-    will_formula_work,
 )
 
 logger = get_logger(__name__)

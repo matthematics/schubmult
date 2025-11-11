@@ -1,16 +1,16 @@
 import itertools
 
+from schubmultschub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
+from schubmultschub_lib.rc_graph import RCGraph
+from schubmultschub_lib.rc_graph_ring import RCGraphRing
+
 from schubmult import *
-from schubmult.schub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
-from schubmult.schub_lib.rc_graph import RCGraph
-from schubmult.schub_lib.rc_graph_ring import RCGraphRing
 
 if __name__ == "__main__":
     import sys
 
+    from schubmultutils.perm_utils import elem_sym_perms
     from sympy import pretty_print
-
-    from schubmult.utils.perm_utils import elem_sym_perms
 
     n = int(sys.argv[1])
     rc_ring = RCGraphRing()

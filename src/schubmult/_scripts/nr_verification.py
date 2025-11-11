@@ -1,8 +1,8 @@
+from schubmultschub_lib.rc_graph import RCGraph
+from schubmultschub_lib.rc_graph_ring import RCGraphRing
 from sympy import pretty_print
 
 from schubmult import ASx, Permutation
-from schubmult.schub_lib.rc_graph import RCGraph
-from schubmult.schub_lib.rc_graph_ring import RCGraphRing
 
 
 def _normalize_fa_coprod(fa_coprod):

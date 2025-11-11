@@ -1,11 +1,12 @@
 # check if CoxeterKnuth tensor free algebra is isomoprhic to RCGraphRing
 import itertools
 
+from schubmultrings.ck_ring import CoxeterKnuthRing
+from schubmultschub_lib.plactic_algebra import PlacticAlgebra
+from schubmultschub_lib.rc_graph import RCGraph
+from schubmultschub_lib.rc_graph_ring import RCGraphRing
+
 from schubmult import FA, ASx, Permutation
-from schubmult.rings.ck_ring import CoxeterKnuthRing
-from schubmult.schub_lib.plactic_algebra import PlacticAlgebra
-from schubmult.schub_lib.rc_graph import RCGraph
-from schubmult.schub_lib.rc_graph_ring import RCGraphRing
 
 
 def hom(ck_elem):

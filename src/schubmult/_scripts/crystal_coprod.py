@@ -1,16 +1,17 @@
 from time import time
 
 from matplotlib.pyplot import rc
+from schubmultschub_lib.rc_graph import RCGraph
+from schubmultschub_lib.rc_graph_ring import RCGraphRing, ring_elem_to_highest_weight, tensor_to_highest_weight, tensor_to_highest_weight2
 from sympy import pretty_print
 
 from schubmult import *
-from schubmult.schub_lib.rc_graph import RCGraph
-from schubmult.schub_lib.rc_graph_ring import RCGraphRing, ring_elem_to_highest_weight, tensor_to_highest_weight, tensor_to_highest_weight2
 
 
 def try_lr_module0(perm, length=None):
+    from schubmultschub_lib.rc_graph_ring import RCGraphRing
+
     from schubmult import ASx, uncode
-    from schubmult.schub_lib.rc_graph_ring import RCGraphRing
     ring = RCGraphRing()
     tring = ring @ ring
     # print(f"Starting {perm}")
@@ -60,8 +61,9 @@ def try_lr_module0(perm, length=None):
     return ret_elem
 
 def try_lr_module(perm, length=None):
+    from schubmultschub_lib.rc_graph_ring import RCGraphRing
+
     from schubmult import ASx, uncode
-    from schubmult.schub_lib.rc_graph_ring import RCGraphRing
     ring = RCGraphRing()
     tring = ring @ ring
     # print(f"Starting {perm}")

@@ -1,10 +1,10 @@
 import sys
 
 from schubmult import Permutation, schub_coprod_py, schubmult_py, uncode
-from schubmult.schub_lib.perm_lib import trimcode
-from schubmult.symbolic import S
-from schubmult.utils.argparse import schub_argparse
-from schubmult.utils.perm_utils import mu_A, p_trans
+from schubmultschub_lib.perm_lib import trimcode
+from schubmultsymbolic import S
+from schubmultutils.argparse import schub_argparse
+from schubmultutils.perm_utils import mu_A, p_trans
 
 
 def is_grass(perm):

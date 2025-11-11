@@ -1,9 +1,10 @@
 import itertools
 
+from schubmultschub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
+from schubmultschub_lib.rc_graph import RCGraph
+from schubmultschub_lib.rc_graph_ring import RCGraphRing
+
 from schubmult import Permutation
-from schubmult.schub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
-from schubmult.schub_lib.rc_graph import RCGraph
-from schubmult.schub_lib.rc_graph_ring import RCGraphRing
 
 # contactenating with the product gives new crystal graphs
 # the tensor product is contained in it

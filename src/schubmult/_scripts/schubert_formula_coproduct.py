@@ -1,13 +1,14 @@
 import math
 import sys
 
+from schubmultabc import x
+from schubmultrings import FA, WordBasis
+from schubmultrings.free_algebra_basis import SchubertBasis
+from schubmultschub_lib.rc_graph_module import RCGraph, RCGraphModule, TensorModule, all_fa_degree
+from schubmultsymbolic import S, expand_seq
+from schubmultutils.perm_utils import artin_sequences
+
 from schubmult import ASx, Permutation, Sx, uncode
-from schubmult.abc import x
-from schubmult.rings import FA, WordBasis
-from schubmult.rings.free_algebra_basis import SchubertBasis
-from schubmult.schub_lib.rc_graph_module import RCGraph, RCGraphModule, TensorModule, all_fa_degree
-from schubmult.symbolic import S, expand_seq
-from schubmult.utils.perm_utils import artin_sequences
 
 
 def product_too_big(perm1, perm2, n):

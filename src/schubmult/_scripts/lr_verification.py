@@ -103,7 +103,6 @@ def safe_save_recording(obj, filename):
             os.remove(temp_json)
 
 
-
 def safe_load_recording(filename):
     json_file = f"{filename}.json"
     if os.path.exists(json_file):
@@ -238,7 +237,6 @@ def worker(shared_recording_dict, lock, task_queue):
         gc.collect()
 
 
-
 def main():
     from schubmult import Permutation, RCGraph
 
@@ -267,12 +265,15 @@ def main():
         recording_saver_proc = Process(target=recording_saver, args=(shared_recording_dict, lock, verification_filename, stop_event))
         recording_saver_proc.start()
         import itertools
+
         # Create task queue and fill with perms
         task_queue = manager.Queue()
-        for (perm, perm2, perm3) in itertools.product(perms, perms, perms):
-            for (len1, len2, len3) in itertools.product(range(len(perm.trimcode), n), range(len(perm2.trimcode), n), range(len(perm3.trimcode), n)):
-                for (g1, g2, g3) in itertools.product(RCGraph.all_rc_graphs(perm, len(perm.trimcode)), RCGraph.all_rc_graphs(perm2, len(perm2.trimcode)), RCGraph.all_rc_graphs(perm3, len(perm3.trimcode))):
-                        task_queue.put((g1, g2, g3, (len1, len2, len3)))
+        for perm, perm2, perm3 in itertools.product(perms, perms, perms):
+            for len1, len2, len3 in itertools.product(range(len(perm.trimcode), n), range(len(perm2.trimcode), n), range(len(perm3.trimcode), n)):
+                for g1, g2, g3 in itertools.product(
+                    RCGraph.all_rc_graphs(perm, len(perm.trimcode)), RCGraph.all_rc_graphs(perm2, len(perm2.trimcode)), RCGraph.all_rc_graphs(perm3, len(perm3.trimcode)),
+                ):
+                    task_queue.put((g1, g2, g3, (len1, len2, len3)))
         print(f"Enqueued {task_queue.qsize()} tasks for n={n}.")
         # Start fixed number of workers
         workers = []

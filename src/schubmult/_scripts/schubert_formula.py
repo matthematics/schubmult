@@ -1,9 +1,10 @@
 import sys
 
+from schubmultabc import x
+from schubmultrings import FA, Sx, WordBasis
+from schubmultschub_lib.rc_graph_module import RCGraph, RCGraphModule, TensorModule
+
 from schubmult import ASx, Permutation
-from schubmult.abc import x
-from schubmult.rings import FA, Sx, WordBasis
-from schubmult.schub_lib.rc_graph_module import RCGraph, RCGraphModule, TensorModule
 
 
 def vector_sum(v1, v2):

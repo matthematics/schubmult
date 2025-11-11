@@ -15,7 +15,7 @@ from joblib import Parallel, delayed
 
 
 def reload_modules(dct, n_jobs=None):
-    # from schubmult.schub_lib.rc_graph_module import RCGraph, ASx
+    # from schubmultschub_lib.rc_graph_module import RCGraph, ASx
 
     # def reconstruct_one(k, v):
     #     key = eval(k)  # tuple
@@ -62,7 +62,7 @@ def safe_save(obj, filename, save_json_backup=True):
     temp_json = f"{filename}.json.tmp"
     json_file = f"{filename}.json"
     try:
-        from schubmult.schub_lib.rc_graph_module import TensorModule
+        from schubmultschub_lib.rc_graph_module import TensorModule
 
         with open(temp_json, "w") as f:
             json.dump(
@@ -220,11 +220,11 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 
 
 def try_lr_module(perm, length=None):
+    from schubmultschub_lib.rc_graph import RCGraph
+    from schubmultschub_lib.rc_graph_ring import RCGraphRing
     from sympy import pretty_print
 
     from schubmult import ASx, uncode
-    from schubmult.schub_lib.rc_graph import RCGraph
-    from schubmult.schub_lib.rc_graph_ring import RCGraphRing
     ring = RCGraphRing()
     tring = ring @ ring
     # print(f"Starting {perm}")
@@ -286,11 +286,11 @@ def try_lr_module(perm, length=None):
     return ret_elem
 
 def try_lr_module_right(perm, length=None):
+    from schubmultschub_lib.rc_graph import RCGraph
+    from schubmultschub_lib.rc_graph_ring import RCGraphRing
     from sympy import pretty_print
 
     from schubmult import ASx, uncode
-    from schubmult.schub_lib.rc_graph import RCGraph
-    from schubmult.schub_lib.rc_graph_ring import RCGraphRing
     ring = RCGraphRing()
     tring = ring @ ring
     # print(f"Starting {perm}")
@@ -361,11 +361,11 @@ def try_lr_module_right(perm, length=None):
 
 
 def worker(nn, shared_recording_dict, lock, task_queue):
+    from schubmultschub_lib.rc_graph import RCGraph
+    from schubmultschub_lib.rc_graph_ring import RCGraphRing
     from sympy import pretty_print
 
     from schubmult import ASx
-    from schubmult.schub_lib.rc_graph import RCGraph
-    from schubmult.schub_lib.rc_graph_ring import RCGraphRing
 
     ring = RCGraphRing()
     while True:
@@ -417,8 +417,9 @@ def worker(nn, shared_recording_dict, lock, task_queue):
 
 
 def main():
+    from schubmultschub_lib.rc_graph import RCGraph
+
     from schubmult import Permutation
-    from schubmult.schub_lib.rc_graph import RCGraph
 
     try:
         n = int(sys.argv[1])
@@ -501,7 +502,7 @@ if __name__ == "__main__":
 
 
 # def reload_modules(dct, n_jobs=None):
-#     from schubmult.schub_lib.rc_graph_module import RCGraph
+#     from schubmultschub_lib.rc_graph_module import RCGraph
 
 #     def reconstruct_one(k, v):
 #         key = eval(k)  # tuple
@@ -523,7 +524,7 @@ if __name__ == "__main__":
 
 
 # def safe_save(obj, filename):
-#     from schubmult.schub_lib.rc_graph_module import TensorModule
+#     from schubmultschub_lib.rc_graph_module import TensorModule
 
 #     temp_filename = f"{filename}.tmp"
 #     try:
@@ -573,7 +574,7 @@ if __name__ == "__main__":
 # def worker(args):
 #      shared_recording_dict, lock, perm = args
 #     from schubmult import ASx
-#     from schubmult.schub_lib.rc_graph_module import try_lr_module
+#     from schubmultschub_lib.rc_graph_module import try_lr_module
 
 #     with lock:
 #         if perm in shared_recording_dict:

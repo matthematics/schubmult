@@ -1,6 +1,5 @@
+from schubmultschub_lib.rc_graph import RCGraph
 from sympy import pretty_print
-
-from schubmult.schub_lib.rc_graph import RCGraph
 
 
 def _partitions(k, max_part):

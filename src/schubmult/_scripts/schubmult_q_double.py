@@ -1,6 +1,9 @@
 import sys
 from functools import cached_property
 
+from schubmultsymbolic import simplify, sstr, sympify
+from schubmultutils.argparse import schub_argparse
+
 from schubmult import (
     GeneratingSet,
     Permutation,
@@ -14,8 +17,6 @@ from schubmult import (
     schubmult_q_double_fast,
     uncode,
 )
-from schubmult.symbolic import simplify, sstr, sympify
-from schubmult.utils.argparse import schub_argparse
 
 
 class _gvars:
