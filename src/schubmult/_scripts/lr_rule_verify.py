@@ -365,8 +365,8 @@ def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
                 if len(dualpocket) > 0:
                     dualps[w] = dualps.get(w, set())
                     for vlist, perm_list, rc in dualpocket:
-                        if (vlist, perm_list, rc) in dualps[w]:
-                            continue
+                        # if (vlist, perm_list, rc) in dualps[w]:
+                        #     continue
 
                         dualps[w].add((vlist, perm_list, rc))
                         toadd = S.One
@@ -464,8 +464,11 @@ def main():
         w0_only = False
         sep_descs = False
         indec = False
+        skip_id = True
         w0 = Permutation.w0(n)
         for hw_tab in perms:
+            if skip_id and hw_tab.inv == 0:
+                continue
             if indec and is_decomposable(hw_tab):
                 continue
             if (not dominant_only or hw_tab.minimal_dominant_above() == hw_tab) and (not w0_only or hw_tab == w0):

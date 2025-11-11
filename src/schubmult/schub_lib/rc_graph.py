@@ -1182,6 +1182,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         return ret
 
     def dualpieri(self, mu, w):
+        # Why is this not unique for permute?
         from schubmult.rings.rc_graph_ring import RCGraphRing
         from schubmult.utils.schub_lib import pull_out_var
 
@@ -1215,16 +1216,25 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                 for vpl in vpl_list:
                     vl = pull_out_var(lm[i] + 1, vpl.perm)
 
+                    saved_row = ()
                     if lm[i] + 1 > len(vpl.perm.trimcode):
                         rcs = {vpl}
                     else:
-                        vpl_bottom, vpl_top = vpl.vertical_cut(lm[i])
-                        rcs = rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))
+                        saved_row = vpl[lm[i]]
+                        vpl_bottom, vpl_top = vpl.vertical_cut(lm[i] + 1)
+                        
+                        vpl_bottom_cut = vpl_bottom.vertical_cut(lm[i])[0]
+                        assert len(vpl_bottom_cut) == len(vpl_bottom) - 1
+                        rcs = rc_ring(vpl_bottom_cut) * rc_ring(vpl_top) # chaned this row to zero lm[i] rather than cutting
+                        #rcs = {RCGraph([*vpl_bottom_cut, *vpl_top])} # chaned this row to zero lm[i] rather than cutting
 
                     for vpl_new in rcs:
                         if vpl_new.perm not in {vv[-1] for vv in vl}:
                             continue
                         pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
+                        # saved_row_columns = tuple([a - lm[i] for a in saved_row]) # make bijective here somewhere
+                        # if pw != saved_row_columns:
+                        #     continue
                         res2.add(((*vlist, tuple(pw)), (*perm_list, vpl.perm), vpl_new))
 
             res = res2
