@@ -184,14 +184,20 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
         return tup[:-1]
 
+
     @property
-    def is_valid(self):
-        if self.perm.inv != len(self.perm_word):
-            return False
+    def is_rc(self):
         for i, row in enumerate(self):
             for a in row:
                 if a < i + 1:
                     return False
+        return True
+
+    @property
+    def is_valid(self):
+        if self.perm.inv != len(self.perm_word):
+            return False
+        
         # if len(self.perm.trimcode) > len(self):
         #     return False
         return True
@@ -345,6 +351,8 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def __new__(cls, *args):
         new_args = tuple(tuple(arg) for arg in args)
         return RCGraph.__xnew_cached__(cls, *new_args)
+        
+        
 
     @staticmethod
     @cache
@@ -450,7 +458,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
     @cache
     def has_element(self, i, j):
-        return i <= len(self) and j + i - 1 in self[i - 1]
+        return i <= len(self) and i + j  - 1 in self[i - 1]
 
     @cached_property
     def length_vector(self):
@@ -1096,7 +1104,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                 seq.append(i + 1)
         return tuple(seq)
 
-    @cached_property
+    @property
     def cols(self):
         return max(1, *[self[i][0] - i if len(self[i]) > 0 else 0 for i in range(len(self))]) if len(self) > 0 else 0
 
@@ -1288,15 +1296,14 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             return NotImplemented
         return self < other or self == other
 
+    # WE CAN DO STUFF WITH THIS
     def weight_reflection(self, i):
         try:
             rc = self.crystal_reflection(i)
         except Exception:
             rc = None
         if rc is None:
-            rc2 = self.extend(1).shiftup(1).crystal_reflection(i)
-            assert rc2 is not None
-            return rc2
+            rc = self.extend(1).shiftup(1).crystal_reflection(i)
         return rc
 
     @property
