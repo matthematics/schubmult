@@ -73,7 +73,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def flat_elem_sym_mul(self, k):
         from schubmult.utils.schub_lib import elem_sym_perms
 
-        elem_graph = self._new_rc([(i,) for i in range(1, k + 1)])
+        elem_graph = RCGraph([(i,) for i in range(1, k + 1)])
         mul_graph = self
         if len(elem_graph) != len(mul_graph):
             length = max(len(elem_graph), len(mul_graph))
@@ -162,7 +162,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         try:
             assert len(results) == 1, f"Ambiguous monk crystal multiplication results for p={p}, k={k} on\n{self} \nResults:\n" + "\n".join([str(r) for r in results])
         except AssertionError as e:
-            # print(e)
+            print(e)
             if not warn:
                 raise
         return next(iter(results))
@@ -188,23 +188,22 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def is_valid(self):
         if self.perm.inv != len(self.perm_word):
             return False
-        # for i, row in enumerate(self):
-        #     for a in row:
-        #         if a < i + 1:
-        #             return False
+        for i, row in enumerate(self):
+            for a in row:
+                if a < i + 1:
+                    return False
         # if len(self.perm.trimcode) > len(self):
         #     return False
         return True
-    
-    
 
     def shiftup(self, shift=1):
         rc = self
         # if len(self) < len(self.perm.trimcode) + shift:
         #     rc = rc.extend(len(self.perm.trimcode) + shift - len(self))
 
-        rc = self._new_rc([tuple([a + shift for a in row]) for row in rc])
-        return rc
+        ret = RCGraph([tuple([a + shift for a in rrow]) for rrow in rc])
+        assert ret.is_valid
+        return ret
 
     @cache
     def right_root_at(self, i, j):
@@ -345,27 +344,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
     def __new__(cls, *args):
         new_args = tuple(tuple(arg) for arg in args)
-        obj = RCGraph.__xnew_cached__(cls, *new_args)
-        obj._shift = 0
-        return obj
-
-    @property
-    def print_element(self):
-        class PrintElement(GridPrint):
-
-            _display_name = self.__class__.__name__
-
-            @property
-            def rows(inner_self) -> int:
-                return self.rows
-
-            @property
-            def cols(inner_self) -> int:
-                return self.cols
-
-            def __getitem__(inner_self, key):
-                return self[key] if self[key] is not None else " "
-        return PrintElement()
+        return RCGraph.__xnew_cached__(cls, *new_args)
 
     @staticmethod
     @cache
@@ -378,30 +357,6 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
     def __init__(self, *args):
         pass
-
-    # --- helper factories to ensure _shift is preserved on all returned RCGraph objects ---
-    def _new_rc(self, rows, shift=None):
-        """
-        Factory returning a new RCGraph of the same concrete type as self,
-        with its _shift preserved (unless an explicit shift is provided).
-
-        Usage: replace direct `self._new_rc(rows)` and subsequent `ret._shift = ...`
-        with `self._new_rc(rows)`.
-        """
-        ret = RCGraph(rows)
-        ret._shift = self._shift if shift is None else shift
-        return ret
-
-    @classmethod
-    def _new_rc_cls(cls, rows, shift=0):
-        """
-        Class-level factory returning an RCGraph with given shift.
-        Use this from classmethods or where no `self` is available.
-        """
-        ret = cls(rows)
-        ret._shift = shift
-        return ret
-    # --- end helpers ---
 
     @cached_property
     def perm_word(self):
@@ -441,7 +396,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     # transpose is weight preserving
 
     def __invert__(self):
-        new_rc = self._new_rc([()] * self.cols)
+        new_rc = RCGraph([()] * self.cols)
         for i in range(1, self.rows + 1):
             for j in range(1, self.cols + 1):
                 if self.has_element(i, j):
@@ -495,7 +450,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
     @cache
     def has_element(self, i, j):
-        return i <= len(self) and j + i - 1  - self._shift in self[i - 1]
+        return i <= len(self) and j + i - 1 in self[i - 1]
 
     @cached_property
     def length_vector(self):
@@ -513,11 +468,11 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         return True
 
     def rowrange(self, start, end=None):
-        if end is None:
+        if not end:
             end = len(self)
         if start == end:
-            return self._new_rc(())
-        return self._new_rc([tuple([a - start for a in row]) for row in self[start:end]])
+            return type(self)(())
+        return type(self)([tuple([a - start for a in row]) for row in self[start:end]])
 
     def polyvalue(self, x, y=None):
         ret = S.One
@@ -574,7 +529,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         return ret
 
     def extend(self, extra_rows):
-        return self._new_rc([*self, *tuple([()] * extra_rows)])
+        return type(self)([*self, *tuple([()] * extra_rows)])
 
     def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True):
         working_rc = self
@@ -675,7 +630,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         # row is descent
         # inserting times
 
-        working_rc = self._new_rc([*self])
+        working_rc = type(self)([*self])
         if len(rows) == 0:
             if return_reflections:
                 return working_rc, ()
@@ -734,7 +689,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             new_row.reverse()
             newrc.append(tuple(new_row))
             i += 1
-        new_rc = (self._new_rc(newrc)).normalize()
+        new_rc = (type(self)(newrc)).normalize()
 
         assert new_rc.perm == ~self.perm
         if length is not None:
@@ -771,7 +726,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                 while index < len(new_row) and new_row[index] > i + j - 1:
                     index += 1
             new_row.insert(index, i + j - 1)
-        return self._new_rc([*self[: i - 1], tuple(new_row), *self[i:]])
+        return type(self)([*self[: i - 1], tuple(new_row), *self[i:]])
 
     # # THIS IS KEY
     # # EXCHANGE PROPERTY GOES TO UNIQUE PERMUTATION
@@ -783,14 +738,11 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def zero_out_last_row(self):
         # this is important!
         # transition formula
-        if not self.is_rc_graph:
-            raise ValueError("Not an RC graph")
-
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
         if self.perm.inv == 0:
             return self.rowrange(0, len(self) - 1)
-        interim = self._new_rc([*self])
+        interim = type(self)([*self])
 
         diff_rows = []
         descs = []
@@ -801,9 +753,9 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             interim, row = interim.exchange_property(len(interim.perm.trimcode), return_row=True)
             diff_rows += [row]
 
-        interim2 = self._new_rc([*interim[:-1], tuple(sorted(descs, reverse=True))])
+        interim2 = type(self)([*interim[:-1], tuple(sorted(descs, reverse=True))])
         interim = interim2.kogan_kumar_insert(len(self.perm.trimcode) - extend_amount, diff_rows)
-        interim._shift = self._shift
+
         return interim.rowrange(0, len(self) - 1)
 
     def crystal_length(self):
@@ -833,11 +785,11 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         b = min(unpaired)
         t = min([j for j in range(b) if b - j - 1 not in row_i])
 
-        # if b - t < row + 1:
-        #     return None
+        if b - t < row + 1:
+            return None
         new_row_i = [s for s in row_i if s != b]
         new_row_ip1 = sorted([b - t, *row_ip1], reverse=True)
-        ret_rc = self._new_rc([*self[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *self[row + 1 :]])
+        ret_rc = type(self)([*self[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *self[row + 1 :]])
         if ret_rc.perm != self.perm:
             return None
         return ret_rc
@@ -899,11 +851,11 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         while a + s + 1 in row_ip1:
             s += 1
 
-        # if a + s < row:
-        #     return None
+        if a + s < row:
+            return None
         new_row_ip1 = [let for let in row_ip1 if let != a]
         new_row_i = sorted([a + s, *row_i], reverse=True)
-        ret_rc = self._new_rc([*self[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *self[row + 1 :]])
+        ret_rc = type(self)([*self[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *self[row + 1 :]])
         if ret_rc.perm != self.perm:
             return None
         return ret_rc
@@ -914,14 +866,14 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         if row < 0:
             raise ValueError("Row out of range")
         if row >= len(self):
-            return self, self._new_rc(())
-        front = self._new_rc(self[:row])
+            return self, RCGraph()
+        front = type(self)([*self[:row]])
         front = front.extend(max(len(self), len(front.perm.trimcode)) - row)
         flen = len(front)
         for _ in range(flen - row):
             front = front.zero_out_last_row()
         if row == len(self):
-            back = self._new_rc(())
+            back = type(self)()
         else:
             back = self.rowrange(row, len(self))
         return (front, back)
@@ -929,7 +881,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def right_zero_act(self):
         # NOTE THAT THIS IS STILL USING THE OLD METHOD
         if self.perm.inv == 0:
-            return {self._new_rc([*self, ()])}
+            return {type(self)([*self, ()])}
 
         if self in RCGraph._z_cache:
             return RCGraph._z_cache[self]
@@ -940,7 +892,6 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
         for perm, _ in up_perms.keys():
             for rc in type(self).all_rc_graphs(perm, len(self) + 1, weight=(*self.length_vector, 0)):
-                rc = self._new_rc(tuple(rc))
                 if rc.zero_out_last_row() == self:
                     rc_set.add(rc)
 
@@ -1034,7 +985,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     @cache
     def prod_with_rc(self, other):
         if self.perm.inv == 0:
-            return {self._new_rc([*self, *other.shiftup(len(self))]): 1}
+            return {type(self)([*self, *other.shiftup(len(self))]): 1}
         num_zeros = max(len(other), len(other.perm))
         assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
         base_rc = self
@@ -1079,7 +1030,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             perm2 = k[0]
             new_row = [pm[i] for i in range(max(len(pm), len(perm2))) if pm[i] == perm2[i + 1]]
             new_row.sort(reverse=True)
-            nrc = self._new_rc([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])
+            nrc = type(self)([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])
             assert nrc.perm == perm2
             ret.add(nrc)
         assert ret == self.iterative_act(p), f"{ret=}\n{self.iterative_act(p)=}"
@@ -1088,8 +1039,8 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def iterative_act(self, p, insert=True):
         if p == 0:
             if insert:
-                return {self._new_rc([(), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])}
-            return {self._new_rc([*self])}
+                return {type(self)([(), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])}
+            return {type(self)([*self])}
         last = self.iterative_act(p - 1, insert=insert)
         ret = set()
         for rc in last:
@@ -1191,34 +1142,24 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     #                 prev_perm
     #     return cls(new_rc_rows)
 
-    @property
-    def is_rc_graph(self):
-        for i, row in enumerate(self):
-            if any(a < i + 1 for a in row):
-                return False
-        return True
-
     def shiftcut(self):
-        cut_rc = self._new_rc([tuple([a for a in row if a > i]) for i, row in enumerate(self.shiftup(-1)[:-1])])
+        cut_rc = RCGraph([tuple([a for a in row if a > i]) for i, row in enumerate(self.shiftup(-1)[:-1])])
         return cut_rc
 
     def divdiff_desc(self, desc):
         ret = set()
-        if not self.is_rc_graph:
-            return ret
         the_rc = self
         rc, row = the_rc.exchange_property(desc, return_row=True)
         rc = rc.normalize()
         if row != desc:
             return ret
-        if rc.raising_operator(desc) is not None and rc.raising_operator(desc).is_rc_graph:
+        if rc.raising_operator(desc) is not None:
             return ret
         ret.add(rc)
-        while rc is not None and rc.is_rc_graph:
+        while rc is not None:
             rc = rc.lowering_operator(desc)
-            if rc is not None and rc.is_rc_graph:
+            if rc is not None:
                 ret.add(rc)
-        #ret._shift = self._shift
         return ret
 
     def divdiff_perm(self, u):
@@ -1241,7 +1182,6 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         return ret
 
     def dualpieri(self, mu, w):
-        # Why is this not unique for permute?
         from schubmult.rings.rc_graph_ring import RCGraphRing
         from schubmult.utils.schub_lib import pull_out_var
 
@@ -1275,58 +1215,17 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                 for vpl in vpl_list:
                     vl = pull_out_var(lm[i] + 1, vpl.perm)
 
-                    # saved_row = self._new_rc([()])
                     if lm[i] + 1 > len(vpl.perm.trimcode):
                         rcs = {vpl}
-
                     else:
-                        # vpl_bottom, vpl_top = vpl.vertical_cut(lm[i] + 1)
-                        # saved_row = vpl.rowrange(lm[i])
-                        # vpl_bottom_cut = vpl_bottom.vertical_cut(lm[i])[0]
+                        vpl_bottom, vpl_top = vpl.vertical_cut(lm[i])
+                        rcs = rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))
 
-                        # # saver = rc_ring(saved_row) * rc_ring(vpl_top)
-                        # # this should be there
-                        # # TRANPOSE WEIGHT REFLECT
-                        # assert len(vpl_bottom_cut) == len(vpl_bottom) - 1
-                        # rcs = rc_ring(vpl_bottom_cut) * rc_ring(vpl_top)  # chaned this row to zero lm[i] rather than cutting
-                        # rcs = {self._new_rc([*vpl_bottom_cut, *vpl_top])} # chaned this row to zero lm[i] rather than cutting
-                        #vpl = vpl.resize(len(vpl) + 1)
-                        vep = vpl.extend(3)
-                        for ref in range(lm[i] + 1, len(vpl.perm.trimcode) + 1):
-                            vep = vep.weight_reflection(ref)
-                        vep = vep.rowrange(0, len(vpl))
-                        vep = vep.vertical_cut(len(vpl.perm.trimcode) - 1)[0]
-                        from sympy import pretty_print
-                        # print("vpl")
-                        # pretty_print(vpl)
-                        # print("vep")
-                        # vep._shift = vpl._shift
-                        # pretty_print(vep)
-                        
-                        rcs = {vep}
-                    # saved_row = tuple([a - lm[i] for a in saved_row])
                     for vpl_new in rcs:
-                        from sympy import pretty_print
                         if vpl_new.perm not in {vv[-1] for vv in vl}:
-                            print("No good vpl:")
-                            pretty_print(vpl)
-                            print(f"And vep {vep.perm=}")
-                            pretty_print(vpl_new)
-                            print(f"{vl=}")
                             continue
-                        # THERE SHOULD BE AT MOST ONE
                         pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
-                        # WE JUST NEED SOME KIND OF BIJECTION
-                        # if pw != saved_row[0]:
-                        #     continue
-                        # if len([rc00 for rc00 in saver if rc00[0] == tuple(sorted(pw, reverse=True))]) == 0:
-                        # if
-                        #     continue # TRY CONDITION
-                        # saved_row_columns = tuple([a - lm[i] for a in saved_row]) # make bijective here somewhere
-                        # if pw != saved_row_columns:
-                        #     continue
                         res2.add(((*vlist, tuple(pw)), (*perm_list, vpl.perm), vpl_new))
-                        break  # CHEAP TRY BREAK BUT WE NEED SMARTER WAY
 
             res = res2
         if len(lm) == len(cn1w):
@@ -1355,16 +1254,16 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def __getitem__(self, key):
         # FLIPPED FOR PRINTING
         if isinstance(key, int):
-            return tuple([a - self._shift for a in tuple(self)[key]])
+            return tuple(self)[key]
         if isinstance(key, tuple):
             i, j = key
             if not self.has_element(i + 1, self.cols - j):
                 return None
-            return i + self.cols - j - self._shift
+            return i + self.cols - j
         is_slice = isinstance(key, slice)
 
         if is_slice:
-            return tuple(self[n] for n in range(len(self))[key])
+            return tuple(tuple(self)[n] for n in range(len(self))[key])
 
         raise ValueError(f"Bad indexing {key=}")
 
@@ -1395,89 +1294,35 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         except Exception:
             rc = None
         if rc is None:
-            rc2 = self.extend(1).shiftup().crystal_reflection(i).resize(len(self))
-            rc2._shift = self._shift + 1
+            rc2 = self.extend(1).shiftup(1).crystal_reflection(i)
             assert rc2 is not None
             return rc2
         return rc
 
-    # def col_reflection(self, i):
-    #     try:
-    #         rc = self.transpose(len(self)).crystal_reflection(i).transpose(len(self))
-    #     except Exception:
-    #         rc = None
-    #     if rc is None:
-    #         rc2 = self.extend(1).transpose(len(self) + 1).shiftup(1).crystal_reflection(i).transpose(len(self) + 1)
-    #         rc2._shift = self._shift + 1
-    #         assert rc2 is not None
-    #         return rc2
-    #     return rc
-
-    # @property
-    # def inverse_crystal(self):
-    #     return Inverseself._new_rc(self)
+    @property
+    def inverse_crystal(self):
+        return InverseRCGraph(self)
 
 
-# class Inverseself._new_rc(CrystalGraph):
-#     def __init__(self, base_graph):
-#         self.base_graph = base_graph
+class InverseRCGraph(CrystalGraph):
+    def __init__(self, base_graph):
+        self.base_graph = base_graph
 
-#     @property
-#     def crystal_weight(self):
-#         return self.base_graph.transpose().crystal_weight
+    @property
+    def crystal_weight(self):
+        return self.base_graph.transpose().crystal_weight
 
-#     def raising_operator(self, index):
-#         lowered = self.base_graph.transpose().lowering_operator(index)
-#         if lowered is None:
-#             return None
-#         return Inverseself._new_rc(lowered.resize(len(self.base_graph)))
+    def raising_operator(self, index):
+        lowered = self.base_graph.transpose().lowering_operator(index)
+        if lowered is None:
+            return None
+        return InverseRCGraph(lowered.resize(len(self.base_graph)))
 
-#     def lowering_operator(self, index):
-#         raised = self.base_graph.transpose().raising_operator(index)
-#         if raised is None:
-#             return None
-#         return Inverseself._new_rc(raised.resize(len(self.base_graph)))
+    def lowering_operator(self, index):
+        raised = self.base_graph.transpose().raising_operator(index)
+        if raised is None:
+            return None
+        return InverseRCGraph(raised.resize(len(self.base_graph)))
 
-#     def crystal_length(self):
-#         return self.base_graph.transpose().crystal_length()
-
-
-# class Anchoredself._new_rc(RCGraph):
-#     def __new__(cls, args, *, shift_back=0):
-#         obj = RCGraph.__new__(cls, args)
-#         obj._shift_back = shift_back
-#         return obj
-
-#     def __init__(self, args, *, shift_back=0):
-#         pass
-
-#     # @property
-#     # def cols(self):
-#     #     return super().cols + self._shift_back
-
-#     # @property
-#     # def shift_back(self):
-#     #     return self._shift_back
-
-#     # # @property
-#     # # def cols(self):
-#     # #     return super().cols + self.shift_back
-
-#     # # def has_element(self, row, col):
-#     # #     return super().has_element(row, col - self.shift_back)
-
-#     # # def __getitem__(self, key):
-#     # #     if isinstance(key, int):
-#     # #         return tuple([a - self.shift_back for a in tuple(self)[key]])
-#     # #     if isinstance(key, tuple):
-#     # #         i, j = key
-#     # #         if not self.has_element(i + 1, self.cols - j):
-#     # #             return None
-#     # #         return i + self.cols - j
-#     # #     is_slice = isinstance(key, slice)
-#     # #     if is_slice:
-#     # #         return tuple(self[n] for n in range(len(self))[key])
-#     # #     raise ValueError(f"Bad indexing {key=}")
-
-#     # def __iter__(self):
-#     #     yield from (tuple(a - self.shift_back for a in row) for row in super().__iter__())
+    def crystal_length(self):
+        return self.base_graph.transpose().crystal_length()
