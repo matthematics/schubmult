@@ -1146,24 +1146,99 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         cut_rc = RCGraph([tuple([a for a in row if a > i]) for i, row in enumerate(self.shiftup(-1)[:-1])])
         return cut_rc
 
-    def divdiff_action(self, s):
-        if self.perm.inv == 0:
-            return set()
-        if s - 1 not in self.perm.descents():
-            return set()
+    def divdiff_desc(self, desc):
         ret = set()
-        lrep = self.leibniz_rep()
-        lrep2 = [*lrep[:-1], lrep[-1].swap(s - 1, s)]
-        upd = RCGraph.from_leibniz_rep(lrep2)
-        if upd is not None:
-            ret.add(upd)
-        ret_old = RCGraph.from_leibniz_rep(lrep[:-1]).divdiff_action(s)
-        for old_rc in ret_old:
-            lrep3 = [*old_rc.leibniz_rep(), lrep[-1].swap(s - 1, s)]
-            new_rc = RCGraph.from_leibniz_rep(lrep3)
-            if new_rc is not None:
-                ret.add(new_rc)
+        the_rc = self
+        rc, row = the_rc.exchange_property(desc, return_row=True)
+        rc = rc.normalize()
+        if row != desc:
+            return ret
+        if rc.raising_operator(desc) is not None:
+            return ret
+        ret.add(rc)
+        while rc is not None:
+            rc = rc.lowering_operator(desc)
+            if rc is not None:
+                ret.add(rc)
         return ret
+
+    def divdiff_perm(self, u):
+        v = self.perm
+        perm2 = v * (~u)
+        if perm2.inv != v.inv - u.inv:
+            return set()
+        # return perm2
+        ret = {self}
+        working_perm = u
+        while working_perm.inv > 0:
+            working_set = set()
+            desc = max(working_perm.descents()) + 1
+            working_perm = working_perm.swap(desc - 1, desc)
+            for the_rc in ret:
+                assert desc - 1 in the_rc.perm.descents()
+                working_set.update(the_rc.divdiff_desc(desc))
+
+            ret = working_set
+        return ret
+
+    def dualpieri(self, mu, w):
+        from schubmult.rings.rc_graph_ring import RCGraphRing
+        from schubmult.utils.schub_lib import pull_out_var
+
+        rc_ring = RCGraphRing()
+        if mu.inv == 0:
+            return set({((), (), rc) for rc in self.divdiff_perm(w)})
+
+        cycle = Permutation.cycle
+        lm = (~mu).trimcode
+        cn1w = (~w).trimcode
+        if len(cn1w) < len(lm):
+            return set()
+        for i in range(len(lm)):
+            if lm[i] > cn1w[i]:
+                return set()
+        c = Permutation([])
+        for i in range(len(lm), len(cn1w)):
+            c = cycle(i - len(lm) + 1, cn1w[i]) * c
+
+        res = {((), (), self)}
+
+        for i in range(len(lm)):
+            res2 = set()
+            for vlist, perm_list, self_0 in res:
+                vp = self_0
+
+                vpl_list = vp.divdiff_perm(cycle(lm[i] + 1, cn1w[i] - lm[i]))
+
+                if len(vpl_list) == 0:
+                    continue
+                for vpl in vpl_list:
+                    vl = pull_out_var(lm[i] + 1, vpl.perm)
+
+                    if lm[i] + 1 > len(vpl.perm.trimcode):
+                        rcs = {vpl}
+                    else:
+                        vpl_bottom, vpl_top = vpl.vertical_cut(lm[i])
+                        rcs = rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))
+
+                    for vpl_new in rcs:
+                        if vpl_new.perm not in {vv[-1] for vv in vl}:
+                            continue
+                        pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
+                        res2.add(((*vlist, tuple(pw)), (*perm_list, vpl.perm), vpl_new))
+
+            res = res2
+        if len(lm) == len(cn1w):
+            return res
+        res2 = set()
+        for vlist, perm_list, self_0 in res:
+            vp = self_0
+            vpl_list = vp.divdiff_perm(c)
+            if len(vpl_list) == 0:
+                continue
+            for vpl in vpl_list:
+                res2.add((tuple(vlist), perm_list, vpl))
+        return res2
 
     @staticmethod
     def divdiff_act_dict(dct, *s_list):

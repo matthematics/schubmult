@@ -136,107 +136,6 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
     # print("Recording saver process exiting.")
 
 
-def divdiff_rc_desc(the_rc, desc):
-    ret = set()
-    rc, row = the_rc.exchange_property(desc, return_row=True)
-    rc = rc.normalize()
-    if row != desc:
-        return ret
-    if rc.raising_operator(desc) is not None:
-        return ret
-    ret.add(rc)
-    while rc is not None:
-        rc = rc.lowering_operator(desc)
-        if rc is not None:
-            ret.add(rc)
-            # if the_rc0.is_lowest_weight:
-            #     ret.update(addup.crystal_beneath)
-    return ret
-
-
-def divdiffable_rc(v_rc, u):
-    from schubmult import RCGraph  # noqa: F401
-
-    v = v_rc.perm
-    perm2 = v * (~u)
-    if perm2.inv != v.inv - u.inv:
-        return set()
-    # return perm2
-    ret = {v_rc}
-    working_perm = u
-    while working_perm.inv > 0:
-        working_set = set()
-        desc = max(working_perm.descents()) + 1
-        working_perm = working_perm.swap(desc - 1, desc)
-        for the_rc in ret:
-            assert desc - 1 in the_rc.perm.descents()
-            working_set.update(divdiff_rc_desc(the_rc, desc))
-
-        ret = working_set
-    return ret
-
-
-def dualpieri(mu, v_rc, w):
-    from sympy import pretty_print  # noqa: F401
-
-    from schubmult import Permutation, RCGraphRing, pull_out_var
-
-    rc_ring = RCGraphRing()
-    if mu.inv == 0:
-        return set({((), (), rc) for rc in divdiffable_rc(v_rc, w)})
-
-    cycle = Permutation.cycle
-    lm = (~mu).trimcode
-    cn1w = (~w).trimcode
-    if len(cn1w) < len(lm):
-        return set()
-    for i in range(len(lm)):
-        if lm[i] > cn1w[i]:
-            return set()
-    c = Permutation([])
-    for i in range(len(lm), len(cn1w)):
-        c = cycle(i - len(lm) + 1, cn1w[i]) * c
-
-    res = {((), (), v_rc)}
-
-    for i in range(len(lm)):
-        res2 = set()
-        for vlist, perm_list, v_rc_0 in res:
-            vp = v_rc_0
-
-            vpl_list = divdiffable_rc(vp, cycle(lm[i] + 1, cn1w[i] - lm[i]))
-
-            if len(vpl_list) == 0:
-                continue
-            for vpl in vpl_list:
-                vl = pull_out_var(lm[i] + 1, vpl.perm)
-
-                if lm[i] + 1 > len(vpl.perm.trimcode):
-                    rcs = {vpl}
-                else:
-                    vpl_bottom, vpl_top = vpl.vertical_cut(lm[i])
-                    rcs = rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))
-
-                for vpl_new in rcs:
-                    if vpl_new.perm not in {vv[-1] for vv in vl}:
-                        continue
-                    pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
-                    res2.add(((*vlist, tuple(pw)), (*perm_list, vpl.perm), vpl_new))
-
-        res = res2
-    if len(lm) == len(cn1w):
-        return res
-    res2 = set()
-    for vlist, perm_list, v_rc_0 in res:
-        vp = v_rc_0
-        vpl_list = divdiffable_rc(vp, c)
-        if len(vpl_list) == 0:
-            continue
-        for vpl in vpl_list:
-            res2.add((tuple(vlist), perm_list, vpl))
-    return res2
-
-
 def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
     import sympy
 
@@ -452,48 +351,17 @@ def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
 
         good = True
 
-        # lst = divdiffable_rc(w0_prin, ~v * mdom)
-        # SKIP DDOM
-        # if v == v.minimal_dominant_above():
-        #     continue
-        # bob = DSx(w0) * DSx(v, "z")
-        # for boing, coeff in bob.items():
-        #     # if coeff.expand() == S.Zero:
-        #     #     continue
-        #     print(f"w={boing} mu={mdom} coeff={coeff}")
-        #     for v_rc in RCGraph.all_hw_rcs(v, n):
-        #         print("rc=")
-        #         pretty_print(v_rc)
-        #         lst = dualpieri(mdom, v_rc=v_rc, w=boing)
-        #     #print(coeff)
-        #         print("result=")
-        #         for bobb in lst:
-        #             print(bobb[:-1])
-        #             pretty_print(bobb[-1])
-        #         #print([tuple(bobb[-1]) for bobb in lst])
-
-        if False:
-            crystals = {}
-            crystals[u] = {}
-            for u_rc in RCGraph.all_rc_graphs(u, n):
-                crystals[u][u_rc] = decompose_tensor_product(w0_prin, u_rc, n + 1)
-
-            if u != v:
-                crystals[v] = {}
-                for v_rc in RCGraph.all_rc_graphs(v, n):
-                    crystals[v][v_rc] = decompose_tensor_product(w0_prin, v_rc, n + 1)
         sm0 = S.Zero
         y = GeneratingSet("y")
         z = GeneratingSet("z")
-        # check_elem = DSx([]).ring.from_dict({k: v for k, v in (DSx(u, "y") * DSx(v, "z")).items() if v.expand() != S.Zero})
+
         check_elem = DSx(u) * DSx(v, "z")
-        # x = Sx.genset
-        # check_elem = Sx(u) * Sx(v)
+
         sm0 = DSx([]).ring.zero
         dualps = {}
         for w in check_elem:
             for v_rc in RCGraph.all_rc_graphs(v, n):
-                dualpocket = dualpieri(u, v_rc, w)
+                dualpocket = v_rc.dualpieri(u, w)
                 if len(dualpocket) > 0:
                     dualps[w] = dualps.get(w, set())
                     for vlist, perm_list, rc in dualpocket:
@@ -511,27 +379,17 @@ def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
 
         diff = check_elem - sm0
         diff = DSx([]).ring.from_dict({k: sympy.sympify(vv).expand() for k, vv in diff.items() if sympy.sympify(vv).expand() != S.Zero})
-        # diff2 = check_elem - sm
+
         try:
-            # assert diff2 == Sx.zero, "Noit zor1"
             from sympy import expand
 
             assert all(expand(v99) == S.Zero for v99 in diff.values()), "Noit zor0"
-            # assert diff == DSx([]).ring.zero
 
-            # assert good
-            # print(f"Coprod {rc.perm.trimcode}")
-            # pretty_print(rc)
-            # pretty_print(val)
-            # print("At least one success")
             good = True
         except AssertionError as e:
             print(f"A fail {e=} {sm0=} {u=} {v=}")
             print(f"{sm0=}")
             print(f"{check_elem=}")
-            # print(f"{expand(sm0 - check_elem)=}")
-            # print(f"{u_rc.perm=}")
-            # print(f"{v=}")
             print("diff=")
             for w11, v0 in check_elem.items():
                 if diff.get(w11, S.Zero).expand() == S.Zero:
@@ -544,11 +402,8 @@ def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
                     for domp in dual:
                         print(domp)
                 print(f"{w11}: {sm0.get(w11)}")
-            # print(f"{sm0=}")
-            # print(f"{check_elem=}")
             good = False
 
-        # assert good, f"COMPLETE FAIL {w=}"
         if good:
             print(f"Success {(u, v, n)} at ", time.ctime())
             with lock:
@@ -572,52 +427,39 @@ def main():
 
     try:
         n = int(sys.argv[1])
-        filename = sys.argv[2]
-        num_processors = int(sys.argv[3])
-        verification_filename = filename + ".verification"
+        filename = None
+        verification_filename = None
+        num_processors = int(sys.argv[2])
+        if len(sys.argv) > 3:
+            filename = sys.argv[2]
+            verification_filename = filename + ".verification"
+        else:
+            print("No verification filename provided, not saving results to disk.", file=sys.stderr)
+
     except (IndexError, ValueError):
-        # print("Usage: verify_lr_rule n filename num_processors", file=sys.stderr)
-        # print("filename is the base file name (without extension) for saving cache results, and filename.verification is used for verification results", file=sys.stderr)
+        print("Usage: lr_rule_verify n num_processors <filename>", file=sys.stderr)
+        print("filename.verification.json is used for loading/saving verification results if provided", file=sys.stderr)
         sys.exit(1)
-    cd = []
-    for i in range(2 * (n - 1), 0, -2):
-        cd += [i]
 
     perms = Permutation.all_permutations(n)
-    # perms2n = {perm for perm in Permutation.all_permutations(2 * n - 1) if perm.bruhat_leq(uncode(cd))}
-    perms.sort(key=lambda p: (p.inv, p.trimcode))
 
-    # hw_tabs = set()
-    # for perm in perms:
-    #     # if perm != perm.minimal_dominant_above():
-    #     #     continue
-    #     hw_tabs.add(RCGraph.all_rc_graphs(perm, n - 1))
+    perms.sort(key=lambda p: (p.inv, p.trimcode))
 
     with Manager() as manager:
         shared_recording_dict = manager.dict()
         lock = manager.Lock()
         stop_event = Event()
-        # cache_load_dict = {}
+
         # Load recording dict from JSON only
-        loaded_recording = safe_load_recording(verification_filename)
-        if loaded_recording:
-            shared_recording_dict.update(loaded_recording)
+        if verification_filename is not None:
+            loaded_recording = safe_load_recording(verification_filename)
+            if loaded_recording:
+                shared_recording_dict.update(loaded_recording)
 
-        # Load cache dict from pickle or JSON
-        # cache_load_dict = safe_load(filename)
-        # if cache_load_dict:
-        #     # print(f"Loaded {len(cache_load_dict)} entries from {filename}")
-        #     shared_dict.update(cache_load_dict)
-
-        # print("Starting from ", len(shared_dict), " saved entries")
-        # print("Starting from ", len(shared_recording_dict), " verified entries")
-        # cache_saver_proc = Process(target=cache_saver, args=( lock, filename, stop_event))
-        recording_saver_proc = Process(target=recording_saver, args=(shared_recording_dict, lock, verification_filename, stop_event))
-        # cache_saver_proc.start()
-        recording_saver_proc.start()
+            recording_saver_proc = Process(target=recording_saver, args=(shared_recording_dict, lock, verification_filename, stop_event))
+            recording_saver_proc.start()
 
         task_queue = manager.Queue()
-        # dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
         dominant_only = True
         w0_only = False
         sep_descs = False
@@ -638,6 +480,7 @@ def main():
 
         # Start fixed number of workers
         workers = []
+
         for _ in range(num_processors):
             p = Process(target=worker, args=(n, shared_recording_dict, lock, task_queue))
             p.start()
@@ -648,7 +491,8 @@ def main():
         # Signal savers to exit
         stop_event.set()
         # cache_saver_proc.join()
-        recording_saver_proc.join()
+        if verification_filename is not None:
+            recording_saver_proc.join()
         # print("Run finished.")
         print_failures = True
         if print_failures:
