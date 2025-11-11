@@ -1292,7 +1292,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                         # rcs = {self._new_rc([*vpl_bottom_cut, *vpl_top])} # chaned this row to zero lm[i] rather than cutting
                         #vpl = vpl.resize(len(vpl) + 1)
                         vep = vpl.extend(3)
-                        for ref in range(lm[i] + 1, len(vpl)):
+                        for ref in range(lm[i] + 1, len(vep)):
                             vep = vep.weight_reflection(ref)
                         vep = vep.rowrange(0, len(vpl))
                         vep = vep.vertical_cut(len(vpl.perm.trimcode) - 1)[0]
@@ -1308,11 +1308,11 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                     for vpl_new in rcs:
                         from sympy import pretty_print
                         if vpl_new.perm not in {vv[-1] for vv in vl}:
-                            # print("No good vpl:")
-                            # pretty_print(vpl)
-                            # print(f"And vep {vep.perm=}")
-                            # pretty_print(vpl_new)
-                            # print(f"{vl=}")
+                            print("No good vpl:")
+                            pretty_print(vpl)
+                            print(f"And vep {vep.perm=}")
+                            pretty_print(vpl_new)
+                            print(f"{vl=}")
                             continue
                         # THERE SHOULD BE AT MOST ONE
                         pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))

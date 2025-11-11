@@ -431,7 +431,7 @@ def main():
         verification_filename = None
         num_processors = int(sys.argv[2])
         if len(sys.argv) > 3:
-            filename = sys.argv[2]
+            filename = sys.argv[3]
             verification_filename = filename + ".verification"
         else:
             print("No verification filename provided, not saving results to disk.", file=sys.stderr)
