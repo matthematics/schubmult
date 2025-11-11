@@ -783,6 +783,9 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def zero_out_last_row(self):
         # this is important!
         # transition formula
+        if not self.is_rc_graph:
+            raise ValueError("Not an RC graph")
+
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
         if self.perm.inv == 0:
@@ -1188,23 +1191,32 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     #                 prev_perm
     #     return cls(new_rc_rows)
 
+    @property
+    def is_rc_graph(self):
+        for i, row in enumerate(self):
+            if any(a < i + 1 for a in row):
+                return False
+        return True
+
     def shiftcut(self):
         cut_rc = self._new_rc([tuple([a for a in row if a > i]) for i, row in enumerate(self.shiftup(-1)[:-1])])
         return cut_rc
 
     def divdiff_desc(self, desc):
         ret = set()
+        if not self.is_rc_graph:
+            return ret
         the_rc = self
         rc, row = the_rc.exchange_property(desc, return_row=True)
         rc = rc.normalize()
         if row != desc:
             return ret
-        if rc.raising_operator(desc) is not None:
+        if rc.raising_operator(desc) is not None and rc.raising_operator(desc).is_rc_graph:
             return ret
         ret.add(rc)
-        while rc is not None:
+        while rc is not None and rc.is_rc_graph:
             rc = rc.lowering_operator(desc)
-            if rc is not None:
+            if rc is not None and rc.is_rc_graph:
                 ret.add(rc)
         #ret._shift = self._shift
         return ret
@@ -1278,10 +1290,12 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                         # assert len(vpl_bottom_cut) == len(vpl_bottom) - 1
                         # rcs = rc_ring(vpl_bottom_cut) * rc_ring(vpl_top)  # chaned this row to zero lm[i] rather than cutting
                         # rcs = {self._new_rc([*vpl_bottom_cut, *vpl_top])} # chaned this row to zero lm[i] rather than cutting
-                        vpl = vpl.resize(len(vpl) + 1)
+                        #vpl = vpl.resize(len(vpl) + 1)
+                        vep = vpl.extend(3)
                         for ref in range(lm[i] + 1, len(vpl)):
-                            vpl = vpl.weight_reflection(ref)
-                        vep = vpl.vertical_cut(len(vpl) - 1)[0]
+                            vep = vep.weight_reflection(ref)
+                        vep = vep.rowrange(0, len(vpl))
+                        vep = vep.vertical_cut(len(vpl.perm.trimcode) - 1)[0]
                         from sympy import pretty_print
                         # print("vpl")
                         # pretty_print(vpl)
