@@ -12,7 +12,7 @@ from functools import cache
 from json import dump, load
 from multiprocessing import Event, Lock, Manager, Process, cpu_count
 
-#from schubmult.schub_lib.rc_graph_ring import tensor_to_highest_weight2
+# from schubmult.schub_lib.rc_graph_ring import tensor_to_highest_weight2
 from joblib import Parallel, delayed
 
 
@@ -240,7 +240,6 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 #     # print("Saver process exiting.")
 
 
-
 # def try_lr_module(perm, length=None):
 #     from schubmult.schub_lib.rc_graph_ring import RCGraphRing
 #     from schubmult.schub_lib.rc_graph import RCGraph
@@ -298,10 +297,12 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 #     ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
 #     return ret_elem
 
+
 def divdiff_rc_desc(the_rc, desc):
     from sympy import pretty_print
 
     from schubmult import RCGraph
+
     ret = set()
     rc, row = the_rc.exchange_property(desc, return_row=True)
     rc = rc.normalize()
@@ -314,12 +315,14 @@ def divdiff_rc_desc(the_rc, desc):
         rc = rc.lowering_operator(desc)
         if rc is not None:
             ret.add(rc)
-                # if the_rc0.is_lowest_weight:
-                #     ret.update(addup.crystal_beneath)
+            # if the_rc0.is_lowest_weight:
+            #     ret.update(addup.crystal_beneath)
     return ret
+
 
 def divdiffable_rc(v_rc, u):
     from schubmult import RCGraph
+
     # if not v_rc.is_highest_weight:
     #     raise ValueError("Crystal")
     #     vr_hw, raise_seq = v_rc.to_highest_weight()
@@ -339,11 +342,12 @@ def divdiffable_rc(v_rc, u):
         desc = max(working_perm.descents()) + 1
         working_perm = working_perm.swap(desc - 1, desc)
         for the_rc in ret:
-            assert desc-1 in the_rc.perm.descents()
+            assert desc - 1 in the_rc.perm.descents()
             working_set.update(divdiff_rc_desc(the_rc, desc))
 
         ret = working_set
     return ret
+
 
 # def dualpieri(mu, v, w):
 #     # logger.debug(f"dualpieri {mu=} {v=} {w=}")
@@ -396,11 +400,12 @@ def dualpieri(mu, v_rc, w):
     from sympy import pretty_print
 
     from schubmult import Permutation, RCGraph, RCGraphRing, pull_out_var
+
     rc_ring = RCGraphRing()
     if mu.inv == 0:
-        #ret = set()
+        # ret = set()
         return set({((), rc) for rc in divdiffable_rc(v_rc, w)})
-        
+
     cycle = Permutation.cycle
     lm = (~mu).trimcode
     cn1w = (~w).trimcode
@@ -409,10 +414,10 @@ def dualpieri(mu, v_rc, w):
     for i in range(len(lm)):
         if lm[i] > cn1w[i]:
             return set()
-    #lm = [*lm, *([0] * (len(cn1w) - len(lm)))]
+    # lm = [*lm, *([0] * (len(cn1w) - len(lm)))]
     c = Permutation([])
     for i in range(len(lm), len(cn1w)):
-        c = cycle(i - len(lm) + 1, cn1w[i]) * c 
+        c = cycle(i - len(lm) + 1, cn1w[i]) * c
     # c = permtrim(c)
     # logger.debug("Recording line number")
     res = {((), v_rc)}
@@ -422,7 +427,7 @@ def dualpieri(mu, v_rc, w):
         res2 = set()
         for vlist, v_rc_0 in res:
             vp = v_rc_0
-            
+
             vpl_list = divdiffable_rc(vp, cycle(lm[i] + 1, cn1w[i] - lm[i]))
             # logger.debug(f"{vpl=} {type(vpl)=}")
             if len(vpl_list) == 0:
@@ -437,77 +442,12 @@ def dualpieri(mu, v_rc, w):
                     vpl_bottom, vpl_top = vpl.vertical_cut(lm[i])
                     rcs = rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))
 
-                pw = ()
-                # print("Before")
-                # pretty_print(vpl_new)
-                
-                
-                
-                    #print("After")
-                    # vpl_new = vpl_new.vertical_cut(1)[1]
-                    # if len(vpl_new) >= len(vpl):
-                    #     vpl_new = vpl_new.vertical_cut(len(vpl) - 1)[0]
-                    #vpl_new = vpl_new.rowrange(1)
-                    #pretty_print(vpl_new)
-                
-                
-                
-                
-                    # print("After")
-                    # pretty_print(vpl_new)
-                # vpl_new = vpl_new.extend(1)
-                # print(f"After all reflections {shift_down=}")
-                
-                # last_code = 12000000
-                # print("Pre cut")
-                # pretty_print(vpl)
-                # #pretty_print(vpl_new)
-                
-                # print("After cut")
-                # pretty_print(vpl_new)
-                #assert len(vpl_new) == len(vpl.perm.trimcode) and vpl_new.inv == vpl.inv
-
-                
-                
-                # pw = tuple([a for a in vpl_new[0]])
-                
-                
-                
-
-                    
-                    #     for i in range(len(vpl_new) - 1, 0, -1):
-                    #         vpl_new_test = vpl_new.raising_operator(i)
-                    #         if vpl_new_test is not None:                                
-                    #             vpl_new = vpl_new_test
-                    
-                    
-                    
-
-                # v = vpl.perm
-                #pw = tuple([v[ii] for ii in range(lm[i], len(v)) if ((ii > len(vpl_new.perm) and v[ii] == ii) or (ii <= len(vpl_new.perm) and v[ii] == vpl_new.perm[ii - 1]))])
                 for vpl_new in rcs:
                     if vpl_new.perm not in {vv[-1] for vv in vl}:
-                        # print(f"OH NO NOT NULL OUT {lm[i] + 1}")
-                        # pretty_print(vpl)
-                        # print("ohas")
-                        # pretty_print(vpl_new)
-                        # print(f"{vl=}")
                         continue
                     pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
-                    #print(f"{vl=} {vpl_new.perm=} {pw=}")
-                    # if len(pw) + v.inv != vpl.perm.inv:
-                    #     continue
-                    res2.add(((*vlist, pw), vpl_new))
-                    
+                    res2.add(tuple([(*vlist, tuple(pw)), vpl_new]))
 
-                # logger.debug(f"{vl=}")
-                # rc_to_match = vpl.vertical_cut(lm[i])[0]
-                # for pw, vpl2 in vl:
-                #     for vpl2_rc in RCGraph.all_rc_graphs(vpl2, len(vpl)):
-                #         if lm[i] + 1 >= len(vpl) or vpl2_rc.rowrange(lm[i] + 1) == vpl.rowrange(lm[i] + 1):
-                #             if vpl2_rc.vertical_cut(lm[i])[0] == rc_to_match:
-                #                 res2.add(((*vlist,pw), vpl2_rc))
-                            
         res = res2
     if len(lm) == len(cn1w):
         return res
@@ -534,7 +474,6 @@ def worker(nn, shared_recording_dict, lock, task_queue):
 
     from schubmult import CrystalGraphTensor, DSx, FreeAlgebra, Permutation, RCGraph, RCGraphRing, RootTableau, SchubertBasis, Sx
 
-
     def all_reduced_subwords(reduced_word, u):
         if u.inv > len(reduced_word):
             return set()
@@ -556,11 +495,12 @@ def worker(nn, shared_recording_dict, lock, task_queue):
 
     def decompose_tensor_product(left_rc, u_rc, n):
         from schubmult import CrystalGraphTensor, RCGraphRing, RootTableau, uncode
+
         rc_ring = RCGraphRing()
         tring = rc_ring @ rc_ring
         # global hw_rc_sets
         crystals = {}
-        #dom = RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector), n -1)
+        # dom = RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector), n -1)
 
         assert u_rc.crystal_length() == n - 1
         assert len(left_rc) == n - 1
@@ -579,11 +519,11 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             crystals[RCGraph.one_row(len(left_rc[0]) + len(u_rc[0]))] = {CrystalGraphTensor(left_rc, u_rc)}
             return crystals
         cut_left_rc = left_rc.vertical_cut(n - 2)[0]
-        cut_u = u_rc.vertical_cut(n-2)[0]
+        cut_u = u_rc.vertical_cut(n - 2)[0]
 
         lower_left_rc = left_rc.rowrange(1)
         lower_u = u_rc.rowrange(1)
-        
+
         top_row_left = len(left_rc[0])
         top_row_right = len(u_rc[0])
         # print("Cutting:")
@@ -597,11 +537,11 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         up_rc = rc_ring.zero
         # for rc_w_cut, tensor_elems in cut_crystals.items():
         #     # up_rc =  rc_ring(rc_w_cut) * rc_ring(RCGraph.one_row(len(left_rc[-1]) + len(u_rc[-1])))
-            
+
         #     up_rc += rc_ring(RCGraph.one_row(top_row_left + top_row_right)) * rc_ring(rc_w_cut)
         #     for t_elem in tensor_elems:
         #         # to_add =  tring(t_elem.factors) * tring((RCGraph.one_row(len(left_rc[-1])),RCGraph.one_row(len(u_rc[-1]))))
-                
+
         #         to_add = tring((RCGraph.one_row(top_row_left),RCGraph.one_row(top_row_right))) * tring(t_elem.factors)
         #         # pretty_print(to_add)
         #         for (rc1, rc2), coeff in to_add.items():
@@ -615,11 +555,11 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #                 up_tensor += coeff * tring((rc1, rc2))
         #             #        break
         #                 #up_tensor += coeff * tring((rc1, rc2))
-            # print("up_tensor=")
-            # pretty_print(up_tensor)
-            # print("up_rc=")
-            # pretty_print(up_rc)
-        #used_tensors = set()
+        # print("up_tensor=")
+        # pretty_print(up_tensor)
+        # print("up_rc=")
+        # pretty_print(up_rc)
+        # used_tensors = set()
         for rc_w_cut, tensor_elems in cut_crystals.items():
             up_rc = rc_ring(RCGraph.one_row(top_row_left + top_row_right)) * rc_ring(rc_w_cut)
             for w_rc, coeff in up_rc.items():
@@ -627,8 +567,8 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                 high_weight = w_rc.to_highest_weight()[0].crystal_weight
                 low_weight = w_rc.to_lowest_weight()[0].crystal_weight
                 for t_elem in tensor_elems:
-                    #up_rc =  rc_ring(rc_w_cut) * rc_ring(RCGraph.one_row(len(left_rc[-1]) + len(u_rc[-1])))
-                    up_tensor = tring((RCGraph.one_row(top_row_left),RCGraph.one_row(top_row_right))) * tring(t_elem.factors)
+                    # up_rc =  rc_ring(rc_w_cut) * rc_ring(RCGraph.one_row(len(left_rc[-1]) + len(u_rc[-1])))
+                    up_tensor = tring((RCGraph.one_row(top_row_left), RCGraph.one_row(top_row_right))) * tring(t_elem.factors)
                     for (rc1, u_rc2), coeff2 in up_tensor.items():
                         assert coeff2 == 1
                         if rc1.perm != left_rc.perm or u_rc2.perm != u_rc.perm:
@@ -640,12 +580,12 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                         #     continue
                         # dom_rc = RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector), n - 1)
                         tensor = CrystalGraphTensor(rc1, u_rc2)
-                        #tensor_dom = CrystalGraphTensor(dom_rc, u_rc2)
+                        # tensor_dom = CrystalGraphTensor(dom_rc, u_rc2)
                         tensor_hw = tensor.to_highest_weight()[0]
                         tensor_lw = tensor.to_lowest_weight()[0]
                         # if tensor_hw in used_tensors:
                         #     continue
-                        #low_tensor_weight = tuple([a + b for a,b in zip(left_rc.to_lowest_weight()[0].length_vector, tensor_lw.factors[1].length_vector)])
+                        # low_tensor_weight = tuple([a + b for a,b in zip(left_rc.to_lowest_weight()[0].length_vector, tensor_lw.factors[1].length_vector)])
                         low_tensor_weight = tensor_lw.crystal_weight
                         w_tab = RootTableau.from_rc_graph(w_rc)
                         u = u_rc.perm
@@ -664,7 +604,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                             #             grid[box] = (grid[box][0], MarkedInteger(grid[box][1]))
                             #     u_tab = RootTableau(grid)
                             #     last_inv = 1000
-                                
+
                             #     while u_tab.perm.inv < last_inv:
                             #         last_inv = u_tab.perm.inv
                             #         for box in u_tab.iter_boxes_row_word_order:
@@ -675,7 +615,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                             #                     break
                             #             # else:
                             #             #     try:
-                                                
+
                             #             #         d_tab_test = d_tab.up_jdt_slide(*box, force=True)
                             #             #         if d_tab_test is not None:
                             #             #             d_tab = d_tab_test
@@ -693,10 +633,10 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                             #     if u_hw_rc.perm != u:
                             #         continue
                             #     if u_hw_rc == u_rc:
-                            #used_tensors.add(tensor_hw)
+                            # used_tensors.add(tensor_hw)
                             crystals[w_rc] = crystals.get(w_rc, set())
                             crystals[w_rc].add(tensor_lw)
-                    
+
                     # fyi[w_rc] = fyi.get(w_rc, set())
                     # fyi[w_rc].add((tensor, u_tab))
         # get_rid = 0
@@ -714,16 +654,15 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #         except Exception:
         #             break
         try:
-            
             assert len(crystals) == 1
         except AssertionError:
             pass
         return crystals
 
-        
     ASx = FreeAlgebra(SchubertBasis)
     while True:
         from sympy import S
+
         try:
             (u, v, n) = task_queue.get(timeout=2)
         except Exception:
@@ -731,17 +670,16 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         with lock:
             if (u, v, n) in shared_recording_dict:
                 if shared_recording_dict[(u, v, n)] is True:
-                    #print(f"{(u, v, n)} already verified, returning.")
+                    # print(f"{(u, v, n)} already verified, returning.")
                     continue
                 print(f"Previous failure on {(u, v, n)}, will retry.")
-        
-        
+
         rc_w_coprods = {}
         good = False
-        #if True:
-        #hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
-        
-        mdom = Permutation.w0(n)#u.minimal_dominant_above()
+        # if True:
+        # hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
+
+        mdom = Permutation.w0(n)  # u.minimal_dominant_above()
         w0 = mdom
         # left diff
         diff_perm = u * (~mdom)
@@ -754,6 +692,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         from itertools import zip_longest
 
         from schubmult import GeneratingSet, RCGraphRing, uncode
+
         rc_ring = RCGraphRing()
 
         good = True
@@ -762,7 +701,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         # SKIP DDOM
         # if v == v.minimal_dominant_above():
         #     continue
-        #bob = DSx(w0) * DSx(v, "z")
+        # bob = DSx(w0) * DSx(v, "z")
         sm9 = Sx(w0) * Sx(v)
         # for boing, coeff in bob.items():
         #     # if coeff.expand() == S.Zero:
@@ -801,59 +740,66 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         # check_elem = DSx([]).ring.from_dict({k: v for k, v in (DSx(u, "y") * DSx(v, "z")).items() if v.expand() != S.Zero})
         check_elem = DSx(u) * DSx(v, "z")
         # x = Sx.genset
-        #check_elem = Sx(u) * Sx(v)
+        # check_elem = Sx(u) * Sx(v)
         sm0 = DSx([]).ring.zero
+        dualps = {}
         for w in check_elem:
             for v_rc in RCGraph.all_rc_graphs(v, n):
-                dualpocket = dualpieri(u, v_rc,  w)
+                dualpocket = dualpieri(u, v_rc, w)
                 if len(dualpocket) > 0:
-                    #print(f"{u=} {w=} {v_rc=} {dualpocket=}")   
+                    dualps[w] = dualps.get(w, set())
+                    # print(f"{u=} {w=} {v_rc=} {dualpocket=}")
                     for vlist, rc in dualpocket:
+                        if (vlist, rc) in dualps[w]:
+                            continue
+                        dualps[w].add((vlist, rc))
                         toadd = S.One
                         for i in range(len(vlist)):
                             for j in range(len(vlist[i])):
                                 toadd *= y[i + 1] - z[vlist[i][j]]
-                        sm0 += toadd * rc.polyvalue(y[len(vlist):], z) * DSx(w)
+                        sm0 += toadd * rc.polyvalue(y[len(vlist) :], z) * DSx(w)
         good = True
-        
+
         diff = check_elem - sm0
         diff = DSx([]).ring.from_dict({k: sympy.sympify(vv).expand() for k, vv in diff.items() if sympy.sympify(vv).expand() != S.Zero})
-        #diff2 = check_elem - sm
+        # diff2 = check_elem - sm
         try:
-            #assert diff2 == Sx.zero, "Noit zor1"
+            # assert diff2 == Sx.zero, "Noit zor1"
             from sympy import expand
-            assert all(expand(v99) == S.Zero for v99 in diff.values()), "Noit zor0"
-            #assert diff == DSx([]).ring.zero
 
-            #assert good
-            #print(f"Coprod {rc.perm.trimcode}")
+            assert all(expand(v99) == S.Zero for v99 in diff.values()), "Noit zor0"
+            # assert diff == DSx([]).ring.zero
+
+            # assert good
+            # print(f"Coprod {rc.perm.trimcode}")
             # pretty_print(rc)
             # pretty_print(val)
-        #print("At least one success")
+            # print("At least one success")
             good = True
         except AssertionError as e:
             print(f"A fail {e=} {sm0=} {u=} {v=}")
             print(f"{sm0=}")
             print(f"{check_elem=}")
-            #print(f"{expand(sm0 - check_elem)=}")
+            # print(f"{expand(sm0 - check_elem)=}")
             # print(f"{u_rc.perm=}")
             # print(f"{v=}")
             print("diff=")
             for w11, v0 in check_elem.items():
-                
                 if diff.get(w11, S.Zero).expand() == S.Zero:
                     continue
                 print("======")
                 print("Actual")
                 print(f"{w11}: {v0.expand()}")
                 print("vs")
-                print("Nope")
-                print(f"{w11}: {sympy.sympify(sm0.get(w11, 0)).expand()}")
+                for dual in dualps.get(w11, set()):
+                    for domp in dual:
+                        print(domp)
+                print(f"{w11}: {sm0.get(w11)}")
             # print(f"{sm0=}")
             # print(f"{check_elem=}")
             good = False
-            
-        #assert good, f"COMPLETE FAIL {w=}"
+
+        # assert good, f"COMPLETE FAIL {w=}"
         if good:
             print(f"Success {(u, v, n)} at ", time.ctime())
             with lock:
@@ -862,15 +808,15 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             with lock:
                 shared_recording_dict[(u, v, n)] = False
             print(f"FAIL {(u, v, n)} at ", time.ctime())
-    
-        
+
 
 def is_decomposable(w):
     for i in range(1, len(w) - 1):
-        coset, w_J = w.coset_decomp(*list(range(1, i + 1)),*list(range(i + 2, len(w))))
-        if coset.inv == 0 and set(w_J.code[:i+1]) != {0} and set(w_J.code[i+2:]) != {0}:
+        coset, w_J = w.coset_decomp(*list(range(1, i + 1)), *list(range(i + 2, len(w))))
+        if coset.inv == 0 and set(w_J.code[: i + 1]) != {0} and set(w_J.code[i + 2 :]) != {0}:
             return True
     return False
+
 
 def main():
     from schubmult import DSx, Permutation, RCGraph, RootTableau, Sx, uncode
@@ -887,7 +833,7 @@ def main():
     cd = []
     for i in range(2 * (n - 1), 0, -2):
         cd += [i]
-    
+
     perms = Permutation.all_permutations(n)
     # perms2n = {perm for perm in Permutation.all_permutations(2 * n - 1) if perm.bruhat_leq(uncode(cd))}
     perms.sort(key=lambda p: (p.inv, p.trimcode))
@@ -924,10 +870,11 @@ def main():
 
         # Create task queue and fill with perms
         from schubmult.schub_lib.rc_graph import RCGraph
+
         task_queue = manager.Queue()
         # dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
         dominant_only = True
-        w0_only  = False
+        w0_only = False
         sep_descs = False
         indec = False
         w0 = Permutation.w0(n)
@@ -935,14 +882,14 @@ def main():
             if indec and is_decomposable(hw_tab):
                 continue
             if (not dominant_only or hw_tab.minimal_dominant_above() == hw_tab) and (not w0_only or hw_tab == w0):
-                    # if indec and is_decomposable(perm):
-                    #     continue
-                    # if sep_descs:
-                    #     if hw_tab.inv == 0 or perm.inv == 0 or max(hw_tab.descents()) <= min(perm.descents()):
-                    #         task_queue.put((hw_tab, perm, n))
-                    # else:
-                    for perm in perms:
-                        task_queue.put((hw_tab, perm, n))
+                # if indec and is_decomposable(perm):
+                #     continue
+                # if sep_descs:
+                #     if hw_tab.inv == 0 or perm.inv == 0 or max(hw_tab.descents()) <= min(perm.descents()):
+                #         task_queue.put((hw_tab, perm, n))
+                # else:
+                for perm in perms:
+                    task_queue.put((hw_tab, perm, n))
 
         # Start fixed number of workers
         workers = []
@@ -974,4 +921,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
