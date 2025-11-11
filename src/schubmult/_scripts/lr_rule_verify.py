@@ -404,7 +404,7 @@ def dualpieri(mu, v_rc, w):
     rc_ring = RCGraphRing()
     if mu.inv == 0:
         # ret = set()
-        return set({((), rc) for rc in divdiffable_rc(v_rc, w)})
+        return set({((), (), rc) for rc in divdiffable_rc(v_rc, w)})
 
     cycle = Permutation.cycle
     lm = (~mu).trimcode
@@ -420,12 +420,12 @@ def dualpieri(mu, v_rc, w):
         c = cycle(i - len(lm) + 1, cn1w[i]) * c
     # c = permtrim(c)
     # logger.debug("Recording line number")
-    res = {((), v_rc)}
+    res = {((), (), v_rc)}
     # logger.debug(f"{v=} {type(v)=}")
     for i in range(len(lm)):
         # logger.debug(f"{res=}")
         res2 = set()
-        for vlist, v_rc_0 in res:
+        for vlist, perm_list, v_rc_0 in res:
             vp = v_rc_0
 
             vpl_list = divdiffable_rc(vp, cycle(lm[i] + 1, cn1w[i] - lm[i]))
@@ -446,19 +446,19 @@ def dualpieri(mu, v_rc, w):
                     if vpl_new.perm not in {vv[-1] for vv in vl}:
                         continue
                     pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
-                    res2.add(tuple([(*vlist, tuple(pw)), vpl_new]))
+                    res2.add(tuple([(*vlist, tuple(pw)), (*perm_list, vpl.perm), vpl_new]))
 
         res = res2
     if len(lm) == len(cn1w):
         return res
     res2 = set()
-    for vlist, v_rc_0 in res:
+    for vlist, perm_list, v_rc_0 in res:
         vp = v_rc_0
         vpl_list = divdiffable_rc(vp, c)
         if len(vpl_list) == 0:
             continue
         for vpl in vpl_list:
-            res2.add((tuple(vlist), vpl))
+            res2.add((tuple(vlist), perm_list, vpl))
     # logger.debug(f"{res2=}")
     return res2
 
@@ -748,16 +748,18 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                 dualpocket = dualpieri(u, v_rc, w)
                 if len(dualpocket) > 0:
                     dualps[w] = dualps.get(w, set())
-                    # print(f"{u=} {w=} {v_rc=} {dualpocket=}")
-                    for vlist, rc in dualpocket:
-                        if (vlist, rc) in dualps[w]:
+                    for vlist, perm_list, rc in dualpocket:
+                        if (vlist, perm_list, rc) in dualps[w]:
                             continue
-                        dualps[w].add((vlist, rc))
+                            
+                        dualps[w].add((vlist, perm_list, rc))
                         toadd = S.One
                         for i in range(len(vlist)):
                             for j in range(len(vlist[i])):
                                 toadd *= y[i + 1] - z[vlist[i][j]]
                         sm0 += toadd * rc.polyvalue(y[len(vlist) :], z) * DSx(w)
+                        
+                        
         good = True
 
         diff = check_elem - sm0
