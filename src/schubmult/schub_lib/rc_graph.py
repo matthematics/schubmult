@@ -7,7 +7,7 @@ from schubmult.schub_lib.perm_lib import Permutation, uncode
 from schubmult.symbolic import S, prod
 from schubmult.utils._grid_print import GridPrint
 
-#from schubmult.utils.bitfield_row import BitfieldRow
+# from schubmult.utils.bitfield_row import BitfieldRow
 from schubmult.utils.logging import get_logger, init_logging
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -30,6 +30,7 @@ def debug_print(*args, debug=False):
     if debug:
         print(*args)
 
+
 def _crystal_isomorphic(c1, c2, cutoff=None):
     hw_1, _ = c1.to_highest_weight(length=cutoff)
     hw_2, _ = c2.to_highest_weight(length=cutoff)
@@ -50,8 +51,8 @@ def _crystal_isomorphic(c1, c2, cutoff=None):
                 stack.append((c1_test0, c2_test0))
     return True
 
-class RCGraph(GridPrint, tuple, CrystalGraph):
 
+class RCGraph(GridPrint, tuple, CrystalGraph):
     def div_diff(self, i):
         if i >= self.crystal_length():
             return None
@@ -88,7 +89,9 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                     results.add(rc.reverse_raise_seq(raise_seq))
                     break
         if results:
-            assert len(results) == 1, f"Ambiguous flat elem crystal multiplication results for k={k} on\n{self} \nResults:\n" + "\n".join([str(r) for r in results]) + "\n".join([str(r.p_tableau) for r in results])
+            assert len(results) == 1, (
+                f"Ambiguous flat elem crystal multiplication results for k={k} on\n{self} \nResults:\n" + "\n".join([str(r) for r in results]) + "\n".join([str(r.p_tableau) for r in results])
+            )
             return next(iter(results))
         return None
 
@@ -119,6 +122,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             return True
 
         from schubmult.utils.schub_lib import elem_sym_perms
+
         if k > len(self):
             return self.extend(k - len(self)).monk_crystal_mul(p, k)
 
@@ -134,16 +138,16 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                     good = True
                     for start in range(p):
                         pp = p - start
-                        for cut in range(pp, k+1 - start):
+                        for cut in range(pp, k + 1 - start):
                             rc2_hw, _ = rc2.rowrange(start).vertical_cut(cut)[0].to_highest_weight()
                             tensor_cut, raise_seq = CrystalGraphTensor(self.rowrange(start).vertical_cut(cut)[0], monk_rc.rowrange(start).vertical_cut(cut)[0]).to_highest_weight()
                             if rc2_hw.crystal_weight != tensor_cut.crystal_weight or rc2_hw.reverse_raise_seq(raise_seq) != rc2.rowrange(start).vertical_cut(cut)[0]:
-                                good=False
+                                good = False
                                 break
                             rc2_lw, _ = rc2.rowrange(start).vertical_cut(cut)[0].to_lowest_weight()
                             tensor_cut_low, lower_seq = CrystalGraphTensor(self.rowrange(start).vertical_cut(cut)[0], monk_rc.rowrange(start).vertical_cut(cut)[0]).to_lowest_weight()
                             if rc2_lw.crystal_weight != tensor_cut_low.crystal_weight or rc2_lw.reverse_lower_seq(lower_seq) != rc2.rowrange(start).vertical_cut(cut)[0]:
-                                good=False
+                                good = False
                                 break
                     if rc2[k:] != self[k:]:
                         good = False
@@ -153,7 +157,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                     #     good = False
                     if good:
                         results.add(rc2)
-                except Exception as e:
+                except Exception as e:  # noqa: F841
                     continue
         try:
             assert len(results) == 1, f"Ambiguous monk crystal multiplication results for p={p}, k={k} on\n{self} \nResults:\n" + "\n".join([str(r) for r in results])
@@ -192,7 +196,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         #     return False
         return True
 
-    def shiftup(self, shift = 1):
+    def shiftup(self, shift=1):
         rc = self
         # if len(self) < len(self.perm.trimcode) + shift:
         #     rc = rc.extend(len(self.perm.trimcode) + shift - len(self))
@@ -367,7 +371,8 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
     def is_dom_perm_yamanouchi(self, dom_perm, perm):
         from schubmult.rings.schubert_ring import Sx
-        if (Sx(self.perm)*Sx(dom_perm)).get(perm, 0) == 0:
+
+        if (Sx(self.perm) * Sx(dom_perm)).get(perm, 0) == 0:
             return False
         length = max(len(perm.trimcode), len(dom_perm.trimcode))
         rc = RCGraph.principal_rc(perm, length)
@@ -378,9 +383,8 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         outer_shape = rc.p_tableau.shape
         inner_shape = dom_rc.p_tableau.shape
         if NilPlactic.exists_ed_tableau_equiv(rc.p_tableau, inner_shape, outer_shape) and Plactic.exists_ss_tableau_equiv(rc.weight_tableau, inner_shape, outer_shape):
-            return True # should match highest weight of tensor
+            return True  # should match highest weight of tensor
         return False
-
 
     @property
     def shape(self):
@@ -478,7 +482,6 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             else:
                 ret *= prod([x[i + 1] - y[row[j] - i] for j in range(len(row))])
         return ret
-
 
     _graph_cache = {}  # noqa: RUF012
 
@@ -791,8 +794,6 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             return None
         return ret_rc
 
-
-
     # weak edelman green correspondence
     # better understanding of crystal
     # Following [Assa], for P a semi-standard Young tableau with strictly increasing rows, define the lift of P,
@@ -1103,7 +1104,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         if len(self) == 0:
             return ()
         w0 = Permutation.w0(len(self) + 1)
-        the_perm = (~self.perm)*w0
+        the_perm = (~self.perm) * w0
         cut_rc = self.shiftcut()
         return (*cut_rc.leibniz_rep(), the_perm)
 
@@ -1126,6 +1127,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             if rc_lw not in ret:
                 ret.add(rc_lw)
         return ret
+
     # @classmethod
     # def from_leibniz_rep(cls, rep):
     #     from schubmult.utils.schub_lib import elem_sym_perms
@@ -1143,7 +1145,6 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def shiftcut(self):
         cut_rc = RCGraph([tuple([a for a in row if a > i]) for i, row in enumerate(self.shiftup(-1)[:-1])])
         return cut_rc
-
 
     def divdiff_action(self, s):
         if self.perm.inv == 0:
@@ -1226,6 +1227,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     @property
     def inverse_crystal(self):
         return InverseRCGraph(self)
+
 
 class InverseRCGraph(CrystalGraph):
     def __init__(self, base_graph):

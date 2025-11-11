@@ -53,7 +53,6 @@ class CoRCGraphRingElement(CrystalGraphRingElement):
         return res
 
     def coproduct(self):
-
         tring = self.ring @ self.ring
         res = tring.zero
         for rc_graph, coeff in self.items():
@@ -179,10 +178,12 @@ class CoRCGraphRingElement(CrystalGraphRingElement):
 
     def polyvalue(self, genset):
         from symengine import S
+
         res = S.Zero
         for rc, coeff in self.items():
             res += coeff * rc.polyvalue(genset)
         return res
+
 
 # class CoRCGraphRingElement(BaseSchubertElement, CrystalGraph):
 #     # def as_expr(self):
@@ -290,139 +291,7 @@ class CoRCGraphRing(CrystalGraphRing):
     #     return res
 
     def coproduct_on_basis(self, elem):
-        if not elem.is_principal:
-            raise NotImplementedError
-        tring = self @ self
-        if elem.inv == 0:
-            return tring.ext_multiply(self(elem), self(elem))
-        # if hw:
-        #     basis_elem, raise_seq = elem.to_highest_weight()
-        # else:
-        basis_elem = elem
-        cprod = tring.zero
-        p = basis_elem.length_vector[-1]
-
-        for j in range(p + 1):
-            cprod += tring.ext_multiply(self(RCGraph.one_row(j)), self(RCGraph.one_row(p - j)))
-        if len(basis_elem) == 1:
-            return cprod
-
-        lower_graph = basis_elem.vertical_cut(len(basis_elem)-1)[0]
-        lower_module1 = self.coproduct_on_basis(lower_graph)
-
-        ret_elem = lower_module1 * cprod
-
-        # ret_elem = tring.from_dict({(rc1, rc2): v for (rc1, rc2), v in ret_elem.items() if elem.perm in self.potential_prodperms(rc1, rc2, len(elem)) or elem.perm in self.potential_prodperms(rc2, rc1, len(elem))})
-
-        # rectify
-        #coprod_elem = ASx(self.perm, len(self)).coproduct()
-
-        # do_it = tring.zero
-        # for (rc1, rc2), _ in ret_elem.items():
-        #     inner_shape = rc2.weight_tableau.shape
-        #     stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, ~rc1.perm, inner_shape)
-        #     for nil_tab in stab_set:
-        #         straight_tab = nil_tab.rectify()
-        #         if straight_tab == rc1.p_tableau:
-        #             do_it += tring((rc1, rc2))
-        # ret_elem = do_it
-        from schubmult import CrystalGraphTensor, Permutation
-        up_elem2 =  self(lower_graph) * self(RCGraph.one_row(p))
-        #elem_hw, raise_seq = elem.to_highest_weight()
-        #old_ret_elem = ret_elem
-        #ret_elem = tring.zero
-        w0_prin = RCGraph.principal_rc(Permutation.w0(len(elem.perm)), len(elem) + 1)
-        # found_one = True
-        # while found_one:
-        #     found_one = False
-        #     for (rc1, rc2), coeff in ret_elem.items():
-        #         if not CrystalGraphTensor(w0_prin, rc2.extend(1)).is_lowest_weight:
-        #             ret_elem -= tring((rc1, rc2))
-        #             found_one = True
-        #             break
-        #ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(basis_elem.perm) and k[1].perm.bruhat_leq(basis_elem.perm)})
-        for key, coeff in up_elem2.items():
-            if key.perm != elem.perm:
-                key_coprod = self.coproduct_on_basis(RCGraph.principal_rc(key.perm, len(elem)))
-
-                for (rc1_bad, rc2_bad), coeff1 in key_coprod.items():
-                    #if CrystalGraphTensor(w0_prin, rc2_bad).is_lowest_weight:
-                        for (rc1, rc2), coeff in ret_elem.items():
-            #good_weight = tuple(Cr)
-
-                            if rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm:
-            #rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm and CrystalGraphTensor(w0_prin, rc2).to_highest_weight()[0].crystal_weight != elem.length_vector:
-                                assert coeff == 1
-                                if True:#CrystalGraphTensor(w0_prin, rc1_bad.extend(1)).to_lowest_weight()[0] == CrystalGraphTensor(w0_prin, rc1.extend(1)).to_lowest_weight()[0]:
-                                #lw_rc2 = CrystalGraphTensor(w0_prin, rc2_bad).to_lowest_weight()[0].factors[1]
-                                #lw_rc22 = CrystalGraphTensor(w0_prin, rc2).to_lowest_weight()[0].factors[1]
-                                #if rc2_bad == lw_rc22:
-                                    ret_elem -= tring((rc1, rc2))
-                                    break
-                            # if not CrystalGraphTensor(w0_prin, rc2).is_lowest_weight:
-                            #     ret_elem -= tring((rc1, rc2))
-                            #     break
-                                #break
-                        # if (rc1.edelman_greene()[0] == rc1_bad.edelman_greene()[0] and rc2.edelman_greene()[0] == rc2_bad.edelman_greene()[0]):
-                        #     ret_elem -= tring((rc1, rc2))
-                        #     break
-                        # if rc1.p_tableau == rc1_bad.p_tableau and rc2.p_tableau == rc2_bad.p_tableau:
-                        #     ret_elem -= tring((rc1, rc2))
-                        #     break
-                        # if rc2_bad.p_tableau == rc2.p_tableau and rc1_bad.perm == rc1.perm and rc1.p_tableau.shape == rc1_bad.p_tableau.shape:
-                        #     # outer_shape = key_rc.p_tableau.shape
-                        #     # inner_shape = rc2.weight_tableau.shape
-                        #     # stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc1.perm, inner_shape)
-                        #     # for nil_tab in stab_set:
-                        #     #     straight_tab = nil_tab.rectify()
-                        #     #     if straight_tab == rc1.p_tableau:
-                        #     #         found = True
-                        #     #         break
-                        #     # if found:
-                        #     ret_elem -= tring((rc1, rc2))
-                        #     break
-                        # if rc2_bad.perm == rc2.perm and rc2_bad.p_tableau.shape == rc2.p_tableau.shape and rc1_bad.perm == rc1.perm:
-                        #     # outer_shape = key_rc.p_tableau.shape
-                        #     # inner_shape = rc2.weight_tableau.shape
-                        #     # stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc1.perm, inner_shape)
-                        #     # for nil_tab in stab_set:
-                        #     #     straight_tab = nil_tab.rectify()
-                        #     #     if straight_tab == rc1.p_tableau:
-                        #     #         found = True
-                        #     #         break
-                        #     # if found:
-                        #     ret_elem -= tring((rc1, rc2))
-                        #     break
-                        # if rc2_bad.pe
-                        # if rc2_bad.perm == rc2.perm and rc1_bad.perm == rc1.perm:
-                        #     # outer_shape = key_rc.p_tableau.shape
-                        #     # inner_shape = rc2.weight_tableau.shape
-                        #     # stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc1.perm, inner_shape)
-                        #     # for nil_tab in stab_set:
-                        #     #     straight_tab = nil_tab.rectify()
-                        #     #     if straight_tab == rc1.p_tableau:
-                        #     #         found = True
-                        #     #         break
-                        #     # if found:
-                        #     ret_elem -= tring((rc1, rc2))
-                        #     break
-                        # if rc1_bad.p_tableau == rc1.p_tableau and rc2_bad.perm == rc2.perm:
-                        #     outer_shape = key_rc.p_tableau.shape
-                        #     inner_shape = rc1.weight_tableau.shape
-                        #     stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc2.perm, inner_shape)
-                        #     for nil_tab in stab_set:
-                        #         straight_tab = nil_tab.rectify()
-                        #         if straight_tab == rc2.p_tableau:
-                        #             found = True
-                        #             break
-                        #     if found:
-                        #         ret_elem -= tring((rc1, rc2))
-                        #         break
-
-                        #     break
-        ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(basis_elem.perm) and k[1].perm.bruhat_leq(basis_elem.perm)})
-        #assert all(C)
-        return ret_elem
+        raise NotImplementedError
 
     # def coproduct_on_basis(self, elem):
     #     tring = RestrictedCoRCGraphTensorRing(self, self)
@@ -478,7 +347,7 @@ class CoRCGraphRing(CrystalGraphRing):
                         # while len(g3) > max(len(g1.perm.trimcode), len(g2.perm.trimcode), 1) and len(g3[-1]) == 0:
                         #     g3 = g3.zero_out_last_row()
                         g3t = g3.transpose()
-                        while len(g3t) > max(len(g1.perm.trimcode),len(g2.perm.trimcode), 1) and len(g3t[-1]) == 0:
+                        while len(g3t) > max(len(g1.perm.trimcode), len(g2.perm.trimcode), 1) and len(g3t[-1]) == 0:
                             g3t = g3t.zero_out_last_row()
                         if len(g3t) > len(g1):
                             continue

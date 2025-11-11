@@ -113,13 +113,14 @@ ignore = [
     "T201",
     "RET504",
     "RUF002",
-    "E501"
+    "E501",
+    "TID252"
 ]
 unfixable = ["F401", "F841"]
 
 [tool.ruff.lint.per-file-ignores]
 "test*.py" = ["ALL"]
-"src/schubmult/scripts/*" = ["ALL"]
+"src/schubmult/_scripts/*" = ["ALL"]
 "src/schubmult/rings/*rc_graph_module.py" = ["ALL"]
 "src/schubmult/rings/GOOD*" = ["ALL"]
 "!src/*" = ["ALL"]

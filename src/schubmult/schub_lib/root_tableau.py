@@ -4,7 +4,7 @@ from functools import cached_property
 from typing import Any, Optional
 
 import numpy as np
-from sympy import pretty_print
+from sympy import pretty_print  # noqa: F401
 
 from schubmult.utils._grid_print import GridPrint
 
@@ -44,6 +44,7 @@ def _plactic_raising_operator(word, i):
     word[index_to_change] = i
     return tuple(word)
 
+
 def _is_valid_outer_corner(grid: np.ndarray, i: int, j: int) -> bool:
     """
     Outer-corner predicate used by up_jdt_slide.
@@ -60,7 +61,7 @@ def _is_valid_outer_corner(grid: np.ndarray, i: int, j: int) -> bool:
     #     return False
     up = grid[i - 1, j] if i - 1 >= 0 else 0 if i == 0 else None
     left = grid[i, j - 1] if j - 1 >= 0 else 0 if j == 0 else None
-    print(f"{i,j} {up,left}")
+    print(f"{i, j} {up, left}")
     return grid[i, j] is None and (up is not None and left is not None) and not (i == 0 and j == 0)
     # consider hole on or beyond boundary as "outer
 
@@ -433,7 +434,7 @@ class RootTableau(CrystalGraph, GridPrint):
     @classmethod
     def root_insert_rsk(cls, reduced_word, compatible_seq):
         _perm = Permutation.ref_product(*reduced_word)
-        #word, word2 = (), ()
+        # word, word2 = (), ()
         spunkle = len(_perm)
         w0 = Permutation.w0(spunkle)
         rev_word = [w0[a - 1] for a in reduced_word]
@@ -482,6 +483,7 @@ class RootTableau(CrystalGraph, GridPrint):
 
     def delete_box(self, box):
         from schubmult.utils.perm_utils import has_bruhat_descent
+
         if self[box] is None:
             raise ValueError("Box is not none")
         a, b = self[box][0]
@@ -514,12 +516,10 @@ class RootTableau(CrystalGraph, GridPrint):
         # pretty_print(result)
         return result
 
-
     # def extract_skew_tableau(self, boxes):
     #     from schubmult.utils.perm_utils import has_bruhat_descent
     #     working_tab = self
     #     roots = [(box, working_tab[box][0]) for box in self.iter_boxes if box not in boxes]
-
 
     #     done_any = True
 
@@ -542,14 +542,10 @@ class RootTableau(CrystalGraph, GridPrint):
     #         else:
     #             # print("Couldn't do")
 
-
-
-
     #     if len(remaining_boxes) > 0:
     #         # pretty_print(working_tab)
     #         raise ValueError(f"Could not extract skew tableau with given boxes {remaining_boxes=}")
     #     return working_tab
-
 
     def rectify(self, randomized=False):
         import random
@@ -565,29 +561,29 @@ class RootTableau(CrystalGraph, GridPrint):
                 cur = cur.down_jdt_slide(*next(iter(inner_corners)))
         return cur
 
-    def anti_rectify(self, max_row, max_col, randomized=False):
-        import random
+    # def anti_rectify(self, max_row, max_col, randomized=False):
+    #     import random
 
-        cur = self
-        print("I IS OUTER")
-        while True:
-            outer_corners = tuple(cur.iter_outer_corners)
-            if len(outer_corners) == 0:
-                break
-            outer_corner = None
-            for outer in outer_corners:
-                print(f"ZONK {outer=}")
-                if outer[0] <= max_row and outer[1] <= max_col:
-                    outer_corner = outer
-                    break
-            if outer_corner is None:
-                break
-            print("ITERBABY")
-            # if randomized:
-            #     cur = cur.up_jdt_slide(*random.choice(outer_corners))
-            # else:
-            cur = cur.up_jdt_slide(outer_corner)
-        return cur
+    #     cur = self
+    #     print("I IS OUTER")
+    #     while True:
+    #         outer_corners = tuple(cur.iter_outer_corners)
+    #         if len(outer_corners) == 0:
+    #             break
+    #         outer_corner = None
+    #         for outer in outer_corners:
+    #             print(f"ZONK {outer=}")
+    #             if outer[0] <= max_row and outer[1] <= max_col:
+    #                 outer_corner = outer
+    #                 break
+    #         if outer_corner is None:
+    #             break
+    #         print("ITERBABY")
+    #         # if randomized:
+    #         #     cur = cur.up_jdt_slide(*random.choice(outer_corners))
+    #         # else:
+    #         cur = cur.up_jdt_slide(outer_corner)
+    #     return cur
 
     def up_jdt_slide(self, row, col, force=False, check=True):
         new_grid = copy.deepcopy(self._root_grid)
@@ -596,7 +592,7 @@ class RootTableau(CrystalGraph, GridPrint):
             new_grid.resize((max(self.rows, row + 1), max(self.cols, col + 1)), refcheck=False)
         if not force and not _is_valid_outer_corner(new_grid, row, col):
             raise ValueError("Can only slide from valid outer corner")
-        #new_grid[row, col] = None
+        # new_grid[row, col] = None
         if force:
             print("BANGINGFORCE MAYBE DO SOME DELETION")
             sput_tab = self.delete_box((row, col))
@@ -754,7 +750,7 @@ class RootTableau(CrystalGraph, GridPrint):
         new_grid.resize((self.rows + 1, self.cols + 1), refcheck=False)
         for i in range(self.rows + 1):
             for j in range(self.cols + 1):
-                if (new_grid[i,j] is None or i >= self.rows or j >= self.cols) and _is_valid_outer_corner(new_grid, i, j):
+                if (new_grid[i, j] is None or i >= self.rows or j >= self.cols) and _is_valid_outer_corner(new_grid, i, j):
                     yield (i, j)
 
     @property
@@ -810,12 +806,10 @@ class RootTableau(CrystalGraph, GridPrint):
         self._hasher = tuple(tuple(tuple(b) for b in a if b is not None) for a in self._root_grid if a is not None)
         if not print_only:
             for index, box in enumerate(self.iter_boxes_row_word_order):
-                    assert self[box] == (self.eg_root(self.eg_row_word[index]), self.row_word[index]), (
-                        f"RootTableau init: inconsistent root at {box}: {self[box][0]=} {self=}"
-                    )
-                    # assert self.perm == Permutation.ref_product(*self.grid_word), f"{self.reduced_word=} {self.grid_word=}"
-                    # for index, box in enumerate(reversed(list(self.iter_boxes_row_word_order))):
-                    #     assert self[box][0] == self.perm.right_root_at(index, word=list(reversed(self.grid_word)))
+                assert self[box] == (self.eg_root(self.eg_row_word[index]), self.row_word[index]), f"RootTableau init: inconsistent root at {box}: {self[box][0]=} {self=}"
+                # assert self.perm == Permutation.ref_product(*self.grid_word), f"{self.reduced_word=} {self.grid_word=}"
+                # for index, box in enumerate(reversed(list(self.iter_boxes_row_word_order))):
+                #     assert self[box][0] == self.perm.right_root_at(index, word=list(reversed(self.grid_word)))
 
     @property
     def weight_tableau(self):
@@ -913,7 +907,6 @@ class RootTableau(CrystalGraph, GridPrint):
         #     box2 = next(iter([box3 for box3 in self.iter_boxes if self[box3][0] == root]))
         #     box_list.append(box2)
 
-
         # if flag:
         #     # print("TEST")
         #     # pretty_print(self)
@@ -922,7 +915,7 @@ class RootTableau(CrystalGraph, GridPrint):
         #     # print(f"{self.eg_row_word=}")
         #     # print(f"{ret.eg_row_word=}")
         #     input()
-        correct_word = _plactic_raising_operator(self.row_word, i)
+        # correct_word = _plactic_raising_operator(self.row_word, i)
 
         ret = RootTableau.root_insert_rsk(ret_rc.perm_word, ret_rc.compatible_sequence)
 
@@ -940,8 +933,6 @@ class RootTableau(CrystalGraph, GridPrint):
         # #     input()
         # # relate order grid word grid
 
-
-
         # for index, box in enumerate(self.iter_boxes_row_word_order):
         #     try_grid[box] = (ret_rc.perm.right_root_at(self.recording_tableau[box], word=ret_rc.reduced_word), correct_word[index])
         # try:
@@ -958,7 +949,7 @@ class RootTableau(CrystalGraph, GridPrint):
                 if self._root_grid[_box] is not None:
                     ret = ret.up_jdt_slide(*_box, check=False)
                     did = True
-        #assert ret.reduced_word == ret_rc.perm_word, f"{ret.reduced_word=} {ret_rc.perm_word=}"
+        # assert ret.reduced_word == ret_rc.perm_word, f"{ret.reduced_word=} {ret_rc.perm_word=}"
         return ret
 
         # for ind in self.iter_boxes:
@@ -984,9 +975,7 @@ class RootTableau(CrystalGraph, GridPrint):
         #     # pretty_print(self)
         #     input()
 
-
-
-        #return ret
+        # return ret
         # return ret
 
     def lowering_operator(self, row):
