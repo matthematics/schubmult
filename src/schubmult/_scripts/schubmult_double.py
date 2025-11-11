@@ -16,7 +16,6 @@ from schubmult import (
     uncode,
 )
 from schubmult.schub_lib.perm_lib import split_perms
-from schubmult.utils.perm_utils import will_formula_work
 from schubmult.symbolic import S, expand, expand_func, init_printing, simplify, sstr, sympify
 from schubmult.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.argparse import schub_argparse
@@ -24,6 +23,7 @@ from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import (
     add_perm_dict,
     mu_A,
+    will_formula_work,
 )
 
 logger = get_logger(__name__)

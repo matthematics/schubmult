@@ -134,7 +134,7 @@ class CrystalGraph(Printable):
                 if new_elem is not None:
                     stack.append(new_elem)
         return crystal
-    
+
     @property
     def is_highest_weight(self):
         for row in range(1, self.crystal_length()):
@@ -150,11 +150,11 @@ class CrystalGraph(Printable):
             if self.lowering_operator(row) is not None:
                 return False
         return True
-    
+
     @property
     def dual(self):
         return CrystalGraphDual(self)
-    
+
     @property
     def reverse(self):
         return CrystalGraphReverse(self)
@@ -222,7 +222,7 @@ class CrystalGraphTensor(CrystalGraph):
     def __eq__(self, other):
         return type(self) is type(other) and self.factors == other.factors
 
-    
+
 
     @property
     def args(self):
@@ -279,7 +279,7 @@ class CrystalGraphTensor(CrystalGraph):
 
     def epsilon(self, i):
         return max(self.factors[0].epsilon(i),self.factors[1].epsilon(i) - self.factors[0].crystal_weight[i - 1] + self.factors[0].crystal_weight[i])
-    
+
     def phi(self, i):
         return max(self.factors[1].phi(i), self.factors[0].phi(i) + self.factors[1].crystal_weight[i - 1] - self.factors[1].crystal_weight[i])
 

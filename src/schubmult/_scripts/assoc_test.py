@@ -23,13 +23,13 @@ if __name__ == "__main__":
     n = int(sys.argv[1])
 
     perms = Permutation.all_permutations(n)
-    
+
     for perm1 in perms:
         touched = set()
         val0 = S.Zero
         val1 = S.Zero
         for rc1 in RCGraph.all_rc_graphs(perm1, n - 1):
-            
+
             rc2 = rc1.transpose().resize(n-1).to_highest_weight()[0]
             if rc2 in touched:
                 continue

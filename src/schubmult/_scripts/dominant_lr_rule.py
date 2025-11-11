@@ -58,9 +58,9 @@ if __name__ == "__main__":
                     continue
                 print(f"Moving on to {u=} {w=} {dom.perm=}")
                 coeff = 0
-                    
+
                 u_highest_weights = set()
-                
+
                 for rc_w in RCGraph.all_rc_graphs(w, len(w.trimcode)):
                     pretty_print(rc_w)
                     # rc_hw = rc_w.to_highest_weight()[0]
@@ -74,8 +74,8 @@ if __name__ == "__main__":
                     # if lw != tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)]):
                     #     print(f"{lw} != {tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)])}")
                     #     continue
-                    
-                    
+
+
                     # skew_tab_set = set(NilPlactic.all_skew_ed_tableaux(w_tab.shape, u.antiperm, dom.shape))
 
                         # w_tab = RootTableau.from_rc_graph(rc_w)
@@ -108,8 +108,8 @@ if __name__ == "__main__":
                         u_hw_rc = u_tab.rc_graph
                         assert u_hw_rc.perm == u
                         print("Constructing tensor product")
-                        
-                        
+
+
                         # tensor_lw, _ = tensor.to_lowest_weight()
                         # lw_rc = tensor_lw.factors[1].rc_graph
                         # print("lw_rc=")
@@ -124,7 +124,7 @@ if __name__ == "__main__":
                             tensor = CrystalGraphTensor(dom.rc_graph, u_tab2)
                             print(f"{tensor=}")
                             tc_elem = tensor.to_highest_weight()[0]
-                            print(f"tc_elem=")
+                            print("tc_elem=")
                             pretty_print(tc_elem)
                             if tc_elem in hw_checked:
                                 print("Already checked")
@@ -147,7 +147,7 @@ if __name__ == "__main__":
                                 print(f"{tc_elem.crystal_weight=}")
                                 print(f"{high_weight_check=}")
                                 # input()
-                                
+
                 try:
                     any_cry = next(iter(crystals))
                     coeff = crystals[any_cry]

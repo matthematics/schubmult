@@ -1,6 +1,5 @@
 # LR rule verification script
 
-from functools import cache
 import gc
 import json
 import os
@@ -8,6 +7,7 @@ import pickle
 import shutil
 import sys
 import time
+from functools import cache
 from json import dump, load
 from multiprocessing import Event, Lock, Manager, Process, cpu_count
 
@@ -220,10 +220,11 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 
 
 def try_lr_module(perm, length=None):
-    from schubmult.schub_lib.rc_graph_ring import RCGraphRing
-    from schubmult.schub_lib.rc_graph import RCGraph
-    from schubmult import ASx, uncode
     from sympy import pretty_print
+
+    from schubmult import ASx, uncode
+    from schubmult.schub_lib.rc_graph import RCGraph
+    from schubmult.schub_lib.rc_graph_ring import RCGraphRing
     ring = RCGraphRing()
     tring = ring @ ring
     # print(f"Starting {perm}")
@@ -285,10 +286,11 @@ def try_lr_module(perm, length=None):
     return ret_elem
 
 def try_lr_module_right(perm, length=None):
-    from schubmult.schub_lib.rc_graph_ring import RCGraphRing
-    from schubmult.schub_lib.rc_graph import RCGraph
-    from schubmult import ASx, uncode
     from sympy import pretty_print
+
+    from schubmult import ASx, uncode
+    from schubmult.schub_lib.rc_graph import RCGraph
+    from schubmult.schub_lib.rc_graph_ring import RCGraphRing
     ring = RCGraphRing()
     tring = ring @ ring
     # print(f"Starting {perm}")
@@ -359,8 +361,9 @@ def try_lr_module_right(perm, length=None):
 
 
 def worker(nn, shared_recording_dict, lock, task_queue):
-    from schubmult import ASx
     from sympy import pretty_print
+
+    from schubmult import ASx
     from schubmult.schub_lib.rc_graph import RCGraph
     from schubmult.schub_lib.rc_graph_ring import RCGraphRing
 

@@ -305,7 +305,7 @@ def pull_out_var(vnum, v):
                     (
                         tuple([v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))]),
                         vp,
-                    )
+                    ),
                 )
             for j in range(vnum, len(vup) + 2):
                 if vpm[j] <= b:
@@ -323,7 +323,7 @@ def pull_out_var(vnum, v):
                 (
                     tuple([v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))]),
                     vp,
-                )
+                ),
             )
 
     return ret_list

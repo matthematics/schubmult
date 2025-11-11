@@ -37,7 +37,7 @@ if __name__ == "__main__":
                     continue
                 print(f"Moving on to {u=} {w=} {dom.perm=}")
                 coeff = 0
-                
+
                 u_highest_weights = set()
                 highest_weights = set()
                 for rc_w in RCGraph.all_rc_graphs(w, len(w.trimcode)):
@@ -54,8 +54,8 @@ if __name__ == "__main__":
                     #     print(f"{lw} != {tuple([a + b for a, b in zip_longest(prin_rc_u.length_vector, dom.rc_graph.length_vector, fillvalue=0)])}")
                     #     continue
                     w_tab = RootTableau.from_rc_graph(rc_w) # highest weight is the shape
-                    
-                    
+
+
                     skew_tab_set = set(NilPlactic.all_skew_ed_tableaux(w_tab.shape, u.antiperm, dom.shape))
                     for tb in skew_tab_set:
                         # the weight of the skew comes from w
@@ -86,8 +86,8 @@ if __name__ == "__main__":
                             last_letter = r
                         u_hw_rc = RCGraph([tuple(row) for row in u_hw_rc]).normalize()
                         print("Constructing tensor product")
-                        
-                        
+
+
                         # tensor_lw, _ = tensor.to_lowest_weight()
                         # lw_rc = tensor_lw.factors[1].rc_graph
                         # print("lw_rc=")

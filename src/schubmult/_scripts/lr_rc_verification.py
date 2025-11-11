@@ -191,9 +191,9 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 def worker(shared_recording_dict, lock, task_queue):
     from schubmult import RCGraph, RCGraphRing
 
-    
+
     rc_ring = RCGraphRing()
-    
+
     while True:
         try:
             key = task_queue.get(timeout=2)
@@ -263,7 +263,7 @@ def worker(shared_recording_dict, lock, task_queue):
         if success:
             print(f"Success {tuple(g1)} at ", time.ctime())
 
-        
+
 
 
 

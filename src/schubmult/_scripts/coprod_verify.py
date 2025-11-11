@@ -1,6 +1,5 @@
 # LR rule verification script
 
-from functools import cache
 import gc
 import json
 import os
@@ -8,6 +7,7 @@ import pickle
 import shutil
 import sys
 import time
+from functools import cache
 from json import dump, load
 from multiprocessing import Event, Lock, Manager, Process, cpu_count
 
@@ -359,11 +359,12 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 
 
 def worker(nn, shared_recording_dict, lock, task_queue):
-    from schubmult import ASx
     from sympy import pretty_print
-    from schubmult.schub_lib.rc_graph import RCGraph
-    from schubmult.rings.dischubert_algebra import DischubertAlgebra
+
+    from schubmult import ASx
     from schubmult.rings import TensorRing
+    from schubmult.rings.dischubert_algebra import DischubertAlgebra
+    from schubmult.schub_lib.rc_graph import RCGraph
     from schubmult.schub_lib.rc_graph_ring import RCGraphRing
 
     ring = DischubertAlgebra()

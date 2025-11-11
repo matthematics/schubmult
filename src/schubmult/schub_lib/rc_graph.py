@@ -51,7 +51,7 @@ def _crystal_isomorphic(c1, c2, cutoff=None):
     return True
 
 class RCGraph(GridPrint, tuple, CrystalGraph):
-    
+
     def div_diff(self, i):
         if i >= self.crystal_length():
             return None
@@ -196,7 +196,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         rc = self
         # if len(self) < len(self.perm.trimcode) + shift:
         #     rc = rc.extend(len(self.perm.trimcode) + shift - len(self))
-        
+
         ret = RCGraph([tuple([a + shift for a in rrow]) for rrow in rc])
         assert ret.is_valid
         return ret
@@ -478,7 +478,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             else:
                 ret *= prod([x[i + 1] - y[row[j] - i] for j in range(len(row))])
         return ret
-        
+
 
     _graph_cache = {}  # noqa: RUF012
 

@@ -5,11 +5,13 @@ Usage:
     python -m schubmult.scripts.check_q_tableau N
 This script is exploratory / best-effort.
 """
-import sys
 import itertools
+import sys
 from collections import Counter
 from itertools import zip_longest
+
 from schubmult import *
+
 
 def main(argv):
     n = int(argv[1]) if len(argv) > 1 else 3

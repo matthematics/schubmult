@@ -361,14 +361,14 @@ def _validate_grid(grid: np.ndarray) -> None:
             if cell is None:
                 continue
             if not isinstance(cell, (tuple, list)) or len(cell) < 2:
-                raise RuntimeError(f"_validate_grid: bad cell at {(i, j)}: {repr(cell)}")
+                raise RuntimeError(f"_validate_grid: bad cell at {(i, j)}: {cell!r}")
             root, letter = cell[0], cell[1]
             try:
                 int(letter)
             except Exception:
-                raise RuntimeError(f"_validate_grid: non-int letter at {(i, j)}: {repr(letter)}")
+                raise RuntimeError(f"_validate_grid: non-int letter at {(i, j)}: {letter!r}")
             if not (isinstance(root, (tuple, list, int))):
-                raise RuntimeError(f"_validate_grid: unexpected root at {(i, j)}: {repr(root)}")
+                raise RuntimeError(f"_validate_grid: unexpected root at {(i, j)}: {root!r}")
 
 
 def _snap_grid(grid: np.ndarray):
@@ -447,7 +447,7 @@ class RootTableau(CrystalGraph, GridPrint):
         for box in P.iter_boxes:
             # RECORDING TABLEAU RED WORD
             grid[box] = (_perm.right_root_at(P[box] - 1, word=reduced_word), compatible_seq[P[box] - 1])
- 
+
         return cls(grid)
 
     # skew tableaux are subword
@@ -503,7 +503,7 @@ class RootTableau(CrystalGraph, GridPrint):
         # print("Result:")
         # pretty_print(result)
         # print(f"{box=}")
-        
+
         # for other_box in self.iter_boxes:
         #     if result[other_box] is None:
         #         try:
@@ -513,19 +513,19 @@ class RootTableau(CrystalGraph, GridPrint):
         # print(f"Result of delete {box=}")
         # pretty_print(result)
         return result
-        
+
 
     # def extract_skew_tableau(self, boxes):
     #     from schubmult.utils.perm_utils import has_bruhat_descent
     #     working_tab = self
     #     roots = [(box, working_tab[box][0]) for box in self.iter_boxes if box not in boxes]
-        
-        
+
+
     #     done_any = True
-        
+
     #     while done_any and len(roots) > 0:
     #         done_any = False
-            
+
     #         for box, root in roots:
     #             a, b = working_tab[box][0]
     #             if has_bruhat_descent(working_tab.perm, a-1, b-1):
@@ -541,10 +541,10 @@ class RootTableau(CrystalGraph, GridPrint):
     #             # print("Did one")
     #         else:
     #             # print("Couldn't do")
-            
 
-            
-                
+
+
+
     #     if len(remaining_boxes) > 0:
     #         # pretty_print(working_tab)
     #         raise ValueError(f"Could not extract skew tableau with given boxes {remaining_boxes=}")
@@ -903,9 +903,9 @@ class RootTableau(CrystalGraph, GridPrint):
         ret_rc = RCGraph([*rc[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *rc[row + 1 :]])
         if ret_rc.perm != rc.perm:
             return None
-        
+
         # assert retmap.edelman_greene_invariant == self.edelman_greene_invariant
-        
+
         # box_list = []
         # for box in retmap.iter_boxes_row_word_order:
         #     root = retmap[box][0]
@@ -913,7 +913,7 @@ class RootTableau(CrystalGraph, GridPrint):
         #     box2 = next(iter([box3 for box3 in self.iter_boxes if self[box3][0] == root]))
         #     box_list.append(box2)
 
-        
+
         # if flag:
         #     # print("TEST")
         #     # pretty_print(self)
@@ -925,9 +925,9 @@ class RootTableau(CrystalGraph, GridPrint):
         correct_word = _plactic_raising_operator(self.row_word, i)
 
         ret = RootTableau.root_insert_rsk(ret_rc.perm_word, ret_rc.compatible_sequence)
-        
+
         # # retmap = RootTableau.root_insert_rsk(self.reduced_word, self.compatible_sequence)
-        
+
         # # index_to_retmap = Permutation([retmap.eg_row_word[index] + 1 for index in range(len(retmap.eg_row_word))])
         # # index_to_ret = Permutation([ret.eg_row_word[index] + 1 for index in range(len(ret.eg_row_word))])
         # # index_to_self = Permutation([self.eg_row_word[index] + 1 for index in range(len(ret.eg_row_word))])
@@ -940,7 +940,7 @@ class RootTableau(CrystalGraph, GridPrint):
         # #     input()
         # # relate order grid word grid
 
-        
+
 
         # for index, box in enumerate(self.iter_boxes_row_word_order):
         #     try_grid[box] = (ret_rc.perm.right_root_at(self.recording_tableau[box], word=ret_rc.reduced_word), correct_word[index])
@@ -960,7 +960,7 @@ class RootTableau(CrystalGraph, GridPrint):
                     did = True
         #assert ret.reduced_word == ret_rc.perm_word, f"{ret.reduced_word=} {ret_rc.perm_word=}"
         return ret
-        
+
         # for ind in self.iter_boxes:
         #     try_grid[ind] = (self.perm.right_root_at(self.order_grid[ind], word=ret.reduced_word), ret.compatible_sequence[self.order_grid[ind]])
         # assert ret == RootTableau(try_grid), "raising_operator construction mismatch"
@@ -983,9 +983,9 @@ class RootTableau(CrystalGraph, GridPrint):
         #     # print("self")
         #     # pretty_print(self)
         #     input()
-        
-        
-        
+
+
+
         #return ret
         # return ret
 
@@ -1067,5 +1067,5 @@ class RootTableau(CrystalGraph, GridPrint):
                 f"grid_snapshot = {grid_snapshot}\n"
                 f"reduced_word (partial) = {reduced_word}\n"
                 f"compatible_seq (partial) = {compatible_seq}\n"
-                f"traceback:\n{tb}"
+                f"traceback:\n{tb}",
             ) from exc

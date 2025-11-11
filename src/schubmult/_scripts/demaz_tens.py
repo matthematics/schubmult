@@ -1,13 +1,16 @@
-from schubmult.schub_lib.rc_graph_ring import RCGraphRing
-from schubmult.schub_lib.rc_graph import RCGraph
-from schubmult.schub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
-from schubmult import Permutation
 import itertools
+
+from schubmult import Permutation
+from schubmult.schub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
+from schubmult.schub_lib.rc_graph import RCGraph
+from schubmult.schub_lib.rc_graph_ring import RCGraphRing
+
 # contactenating with the product gives new crystal graphs
 # the tensor product is contained in it
 
 if __name__ == "__main__":
     import sys
+
     from sympy import pretty_print
     rc_ring = RCGraphRing()
     n = int(sys.argv[1])
@@ -18,12 +21,12 @@ if __name__ == "__main__":
                 rc_tensor = CrystalGraphTensor(rc.resize(n-1), rc2.resize(n-1))
                 rc_elem_tensors = rc_ring.potential_products(rc2.resize(n-1), rc.resize(n-1), n-1)
                 rc_tensor_set = set(rc_elem_tensors)
-                
+
                 pretty_print(rc_tensor)
                 for i in range(1, n-1):
                     got_one_raise = False
                     got_one_lower = False
-                    if rc_tensor.raising_operator(i):                     
+                    if rc_tensor.raising_operator(i):
                         for rct in rc_tensor_set:
                             if rct.length_vector != tuple([a+b for a, b in zip(rc.resize(n-1).length_vector, rc2.resize(n-1).length_vector)]):
                                 continue

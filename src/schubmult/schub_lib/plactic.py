@@ -580,7 +580,7 @@ class Plactic(GridPrint, CrystalGraph):
         return P, Q
 
     def reverse_rectify_to_outer(self, outer_shape):
-        """
+        r"""
         Deterministic reverse-rectification to a given outer shape `outer_shape`.
 
         Given a (straight) tableau `self` of shape lambda, produce a skew tableau

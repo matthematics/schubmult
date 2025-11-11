@@ -102,7 +102,7 @@ def decompose_tensor_product(dom, u, n):
     return crystals
 
 if __name__ == "__main__":
-    
+
     ASx = FreeAlgebra(SchubertBasis)
     n = int(sys.argv[1])
 
@@ -110,19 +110,19 @@ if __name__ == "__main__":
 
     hw_tabs = set()
     for perm in perms:
-        
+
         hw_tabs.update([RootTableau.from_rc_graph(rc.to_highest_weight()[0]) for rc in RCGraph.all_rc_graphs(perm, n - 1)])
 
 
 
-    
+
     tot_suc = 0
     for w in perms:
         rc_w_coprods = {}
         good = False
         for hw_tab in hw_tabs:
-        
-        
+
+
             # if u.inv == 0:
             #     continue
             # needed?
@@ -130,8 +130,8 @@ if __name__ == "__main__":
             #     continue
 
             # test compose tensor product, and homomorphism of RC graph ring
-            
-            
+
+
             coprod = ASx(w, n-1).coproduct()
             for ((d, _), (u, _)) in coprod:
                 if d != hw_tab.perm:
@@ -142,7 +142,7 @@ if __name__ == "__main__":
 
                 tring = rc_ring @ rc_ring
 
-                
+
 
                 for (rc_w, tc_elem), coeff in crystals.items():
                     # if not rc_w.is:
@@ -165,7 +165,7 @@ if __name__ == "__main__":
 
                     # RAISE TO HIGHEST WEIGHT TO MAKE COASS?
                     # ???
-                    # DON'T USE THE COEFF 
+                    # DON'T USE THE COEFF
                     # rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2))
                     #if (t_elem1, t_elem2) not in rc_w_coprods.get(w_rc, tring.zero):
                     rc_w_coprods[w_rc] = rc_w_coprods.get(w_rc, tring.zero) + coeff * tring((t_elem1, t_elem2))
@@ -194,7 +194,7 @@ if __name__ == "__main__":
         #             if (t_elem1, t_elem2) not in rc_w_coprods[w_rc]:
         #                 rc_w_coprods[w_rc] += tring((t_elem1, t_elem2))
 
-                
+
         for rc, val in rc_w_coprods.items():
             if rc.perm != w:
                 continue

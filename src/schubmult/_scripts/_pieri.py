@@ -113,7 +113,7 @@ def decompose_tensor_product(dom, u_rc, length, n):
     return crystals
 
 if __name__ == "__main__":
-    
+
     ASx = FreeAlgebra(SchubertBasis)
     n = int(sys.argv[1])
     k = int(sys.argv[2])
@@ -122,7 +122,7 @@ if __name__ == "__main__":
 
     hw_tabs = set()
     for perm in perms:
-        
+
         hw_tabs.update([RootTableau.from_rc_graph(rc.to_highest_weight(length=k)[0]) for rc in RCGraph.all_rc_graphs(perm, n - 1)])
 
 
@@ -167,7 +167,7 @@ if __name__ == "__main__":
     #         hw_tab = hw_tab0
         hw_tab = hw_tab0
         print("hw_tab")
-   
+
         pretty_print(hw_tab.rc_graph)
         print(f"Da cut at {k}")
         the_cut0, the_cut1 = hw_tab.rc_graph.resize(n-1).vertical_cut(k)
@@ -193,7 +193,7 @@ if __name__ == "__main__":
                     exchg_seq.append(d + 1)
                     g = g0.to_lowest_weight(length = k)[0]
                     break
-            
+
         # used[(min_dom_graph, the_cut1)] = used.get((min_dom_graph,the_cut1), set())
         # if hw_tab.perm in used[(min_dom_graph, the_cut1)]:
         #     continue
@@ -201,14 +201,14 @@ if __name__ == "__main__":
         # parallel exchange property
         for rc_v in RCGraph.all_rc_graphs(v, n - 1):
             crystals = decompose_tensor_product(RootTableau.from_rc_graph(min_dom_graph), rc_v, length=k, n=n)
-            
+
             print("Product:")
             pretty_print(hw_tab0.rc_graph)
             print("and")
             pretty_print(rc_v)
             # MUST MODIFY SM. RULE: WEIGHT PRESERVING, DIVDIFF from div_perm
             # THIS IS CRYSTAL LEVEL
-            
+
             # sm = rc_ring.from_dict({(k[0]: v for k, v in crystals.items()})
             sm = rc_ring.zero
             for (the_rc, tc_elem), coeff in crystals.items():
@@ -255,6 +255,5 @@ if __name__ == "__main__":
         for rc, coeff in val.items():
             assert prod[rc.perm] == coeff
         print(prod)
-        
 
-        
+

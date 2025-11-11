@@ -116,7 +116,7 @@ def __getattr__(name: str):
 
                 def _broken_callable(*args, _name=name, _mod=modname, _err=e, **kwargs):
                     raise RuntimeError(
-                        f"attempted to use {_name!r} from {_mod!r} but importing the module failed: {_err!r}"
+                        f"attempted to use {_name!r} from {_mod!r} but importing the module failed: {_err!r}",
                     )
 
                 # attach some attributes to help introspection / debugging

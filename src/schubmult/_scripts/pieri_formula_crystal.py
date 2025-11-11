@@ -120,7 +120,7 @@ def decompose_tensor_product(dom, u_rc, n):
                         # if skip:
                         #     continue
                         last_inv = 1000
-                        
+
                         d_tab = RootTableau.from_rc_graph(w_rc)
                         froff = False
                         while u_tab.perm.inv < last_inv:
@@ -133,7 +133,7 @@ def decompose_tensor_product(dom, u_rc, n):
                                         break
                                 # else:
                                 #     try:
-                                        
+
                                 #         d_tab_test = d_tab.up_jdt_slide(*box, force=True)
                                 #         if d_tab_test is not None:
                                 #             d_tab = d_tab_test
@@ -161,7 +161,7 @@ def decompose_tensor_product(dom, u_rc, n):
                         # if d_tab.rc_graph.resize(n - 1) == dom:
                         #     print("HOORAY")
                         #     found_one = True
-                        
+
                         #d_tab = d_tab.anti_rectify()
                         # d_tab = RootTableau.from_rc_graph(w_rc.to_highest_weight()[0])
                         # last_inv = 1000
@@ -199,7 +199,7 @@ def decompose_tensor_product(dom, u_rc, n):
                         #     d_tab = RootTableau(new_d_tab_grid).rectify()
                         # except Exception:
                         #     print("Couldn't do it")
-                        
+
                         print("u_tab")
                         pretty_print(u_tab)
                         u_hw_rc = u_tab.rc_graph.resize(n-1)
@@ -220,7 +220,7 @@ def decompose_tensor_product(dom, u_rc, n):
                             crystals[w_rc] = crystals.get(w_rc, set())
                             crystals[w_rc].add(tensor)
                             fyi[w_rc] = fyi.get(w_rc, set())
-                            fyi[w_rc].add((tensor, u_tab))            
+                            fyi[w_rc].add((tensor, u_tab))
                             # d_tab_set[w_rc] = d_tab_set.get(w_rc, set())
                                 # d_tab_set[w_rc].add(d_tab)
                     # if found_one:
@@ -228,7 +228,7 @@ def decompose_tensor_product(dom, u_rc, n):
                     #     fyi[w_rc] = fyi.get(w_rc, set())
                     #     fyi[w_rc].add((tensor, found_one))
                 # for subword in all_reduced_subwords(w_rc.reduced_word, dom.perm):
-                        
+
                 #         w_rc2 = w_rc#.to_highest_weight()[0]
                 #         print(f"{w_rc2.reduced_word=}")
                 #         pretty_print(dom_tab)
@@ -252,7 +252,7 @@ def decompose_tensor_product(dom, u_rc, n):
                 #         # if skip:
                 #         #     continue
                 #         last_inv = 1000
-                        
+
                 #         #d_tab = RootTableau.from_rc_graph(w_rc)
                 #         while d_tab.perm.inv < last_inv:
                 #             last_inv = d_tab.perm.inv
@@ -262,7 +262,7 @@ def decompose_tensor_product(dom, u_rc, n):
                 #                     if d_tab_test is not None:
                 #                         d_tab = d_tab_test
                 #                         break
-                                
+
                 #         if d_tab.perm.inv > dom.perm.inv:
                 #             # didn't make it
                 #             print("No make")
@@ -273,7 +273,7 @@ def decompose_tensor_product(dom, u_rc, n):
                 #         # if d_tab.rc_graph.resize(n - 1) == dom:
                 #         #     print("HOORAY")
                 #         #     found_one = True
-                        
+
                 #         #d_tab = d_tab.anti_rectify()
                 #         # d_tab = RootTableau.from_rc_graph(w_rc.to_highest_weight()[0])
                 #         # last_inv = 1000
@@ -324,12 +324,12 @@ def decompose_tensor_product(dom, u_rc, n):
                 #         if dom_hw_rc == dom:
                 #             print("Got the identical crystal DOMDOM")
                 #             fyi[w_rc] = fyi.get(w_rc, set())
-                #             fyi[w_rc].add((w_rc, d_tab))            
+                #             fyi[w_rc].add((w_rc, d_tab))
                 #             # d_tab_set[w_rc] = d_tab_set.get(w_rc, set())
                 #                 # d_tab_set[w_rc].add(d_tab)
-                
+
     try:
-        
+
         assert len(crystals) == 1
     except AssertionError:
         print("Error: More than one crystal found FOR ")
@@ -353,12 +353,12 @@ def decompose_tensor_product(dom, u_rc, n):
                 # print("low weight")
                 # pretty_print(rc.to_lowest_weight()[0])
                 # pretty_print(tensor.to_lowest_weight()[0])
-        
+
     return crystals
 
 def is_decomposable(w):
     for i in range(1, len(w) - 1):
-        coset, w_J = w.coset_decomp(*list(range(1, i + 1)),*list(range(i + 2, len(w)))) 
+        coset, w_J = w.coset_decomp(*list(range(1, i + 1)),*list(range(i + 2, len(w))))
         if coset.inv == 0 and set(w_J.code[:i+1]) != {0} and set(w_J.code[i+2:]) != {0}:
             return True
     return False
@@ -414,7 +414,7 @@ if __name__ == "__main__":
             continue
         hw_tab = hw_tab0
         print("hw_tab")
-   
+
         pretty_print(hw_tab)
         #exclude = set()
         for v_rc in RCGraph.all_rc_graphs(v, n - 1):
@@ -422,12 +422,12 @@ if __name__ == "__main__":
             pretty_print(hw_tab0)
             print("and")
             print(f"{v.trimcode}")
-         
+
             crystals = decompose_tensor_product(hw_tab, v_rc, n)
             for rc_w in crystals:
                 pretty_print(rc_w)
                 pretty_print(crystals[rc_w])
-         
+
             # MUST MODIFY SM. RULE: WEIGHT PRESERVING, DIVDIFF from div_perm
             # THIS IS CRYSTAL LEVEL
             sm = the_schubs.get((hw_tab0.perm, v), rc_ring.zero)
@@ -464,6 +464,5 @@ if __name__ == "__main__":
         #assert prod2 - prod == Sx.zero
         assert prod == the_sum2
         print(prod)
-        
 
-        
+

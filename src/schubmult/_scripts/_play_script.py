@@ -27,10 +27,10 @@ def main():
             # Use the session's prompt method for input
 
         try:
-            command = session.prompt('> ') 
+            command = session.prompt('> ')
             if command.lower() == 'exit':
                 break
- 
+
             cmd, params = delbox.split("(")
             params = params[:-1]
             if cmd == "ujdt":

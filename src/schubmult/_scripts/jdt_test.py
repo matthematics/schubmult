@@ -128,7 +128,7 @@ def test_one_case(T: RootTableau, index: int, op_name: str, rc=None) -> Tuple[bo
                 msg = f"Raising mismatch, {T=} {T.rc_graph=} vs {T2=} {T2.rc_graph=} {index=}"
     if op_name == "raiserectify":
         w2 = T.weight_tableau.raising_operator(index)
-        
+
         seq = random_up_seq(T)
         if len(seq) == 0:
             return True, "empty up-seq, skipped"
@@ -179,7 +179,7 @@ def test_one_case(T: RootTableau, index: int, op_name: str, rc=None) -> Tuple[bo
     return False, msg
 
 
-    
+
 
 def random_up_seq(rt: RootTableau, max_len=25) -> Sequence[Tuple[int, int]]:
     """
@@ -193,7 +193,7 @@ def random_up_seq(rt: RootTableau, max_len=25) -> Sequence[Tuple[int, int]]:
     cur = rt
     seq = []
     for _ in range(max_len):
-        
+
         outer_corners = tuple(cur.iter_outer_corners)
         if not outer_corners:
             break
@@ -302,7 +302,7 @@ if __name__ == "__main__":
     if perm_length > 15:
         raise ValueError("perm_length too large; may exhaust memory/time")
     N = int(sys.argv[2]) if len(sys.argv) > 2 else None
-    
+
     _perms = Permutation.all_permutations(perm_length)
     print(f"Running {N} randomized tests (seed={Seed}) ...")
     if N is not None:

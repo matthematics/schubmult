@@ -17,12 +17,12 @@ from sage.rings.polynomial.multi_polynomial_ring import MPolynomialRing_base
 from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sympy import sympify
 
-import schubmult.schub_lib.perm_lib as pl
-import schubmult.sage._fast_double_schubert_polynomial_ring as bork
 import schubmult.mult.double as yz
 import schubmult.mult.quantum as sq
 import schubmult.mult.quantum_double as qyz
 import schubmult.mult.single as py
+import schubmult.sage._fast_double_schubert_polynomial_ring as bork
+import schubmult.schub_lib.perm_lib as pl
 from schubmult.schub_lib.perm_lib import permtrim
 
 from ._indexing import _coerce_index

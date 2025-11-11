@@ -1,6 +1,8 @@
-from schubmult.schub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
-from schubmult.rings.ck_ring import CoxeterKnuthRing
 import itertools
+
+from schubmult.rings.ck_ring import CoxeterKnuthRing
+from schubmult.schub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
+
 
 class RCGraphCut(CrystalGraph):
 
@@ -15,10 +17,10 @@ class RCGraphCut(CrystalGraph):
 
     def crystal_length(self):
         return self.end - self.start
-    
+
     def epsilon(self, i):
         return self.base_graph.epsilon(i)
-    
+
     def phi(self, i):
         return self.base_graph.phi(i)
 
@@ -48,13 +50,14 @@ class RCGraphCut(CrystalGraph):
         return bg
 
 if __name__ == "__main__":
+    import sys
+
+    from sympy import pretty_print
+
     from schubmult import *
     from schubmult.schub_lib.rc_graph import RCGraph
     from schubmult.schub_lib.rc_graph_ring import RCGraphRing
-    
     from schubmult.utils.perm_utils import elem_sym_perms
-    from sympy import pretty_print
-    import sys
 
     n = int(sys.argv[1])
     rc_ring = RCGraphRing()
@@ -85,7 +88,7 @@ if __name__ == "__main__":
                 print(f"{dom.perm,perm=}")
                 nhw += coeff * dct.get((dom.perm,Permutation([])), 0)
             for rc in RCGraph.all_rc_graphs(perm, n - 1):
-                
+
                 rcs = dom.prod_with_rc(rc)
                 for graph in rcs:
                     zop = 0

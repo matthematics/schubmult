@@ -1,10 +1,12 @@
 # check if CoxeterKnuth tensor free algebra is isomoprhic to RCGraphRing
-from schubmult.rings.ck_ring import CoxeterKnuthRing
-from schubmult.schub_lib.rc_graph_ring import RCGraphRing
-from schubmult.schub_lib.rc_graph import RCGraph
-from schubmult.schub_lib.plactic_algebra import PlacticAlgebra
-from schubmult import Permutation, ASx, FA
 import itertools
+
+from schubmult import FA, ASx, Permutation
+from schubmult.rings.ck_ring import CoxeterKnuthRing
+from schubmult.schub_lib.plactic_algebra import PlacticAlgebra
+from schubmult.schub_lib.rc_graph import RCGraph
+from schubmult.schub_lib.rc_graph_ring import RCGraphRing
+
 
 def hom(ck_elem):
     """
@@ -22,11 +24,12 @@ def hom_rc(rc_elem, shift=0):
     ck_ring = CoxeterKnuthRing()
     result = ck_ring.zero
     for rc, coeff in rc_elem.items():
-        result += coeff * ck_ring(((rc.p_tableau, rc.weight_tableau, len(rc))))
+        result += coeff * ck_ring((rc.p_tableau, rc.weight_tableau, len(rc)))
     return result
 
 if __name__ == "__main__":
     import sys
+
     from sympy import pretty_print
 
     n = int(sys.argv[1])
@@ -34,7 +37,7 @@ if __name__ == "__main__":
     rc_ring = RCGraphRing()
     ck_ring = CoxeterKnuthRing()
     tring = ck_ring @ PlacticAlgebra()
-    
+
     for perm1, perm2 in itertools.product(perms, perms):
         if perm1.inv == 0 or perm2.inv == 0:
             continue
@@ -48,7 +51,7 @@ if __name__ == "__main__":
                         mul_elem_rc = rc_ring(rc1) * rc_ring(rc2)
                         mul_elem_as = hom_rc(rc_ring(rc1)) * hom_rc(rc_ring(rc2))
                         try:
-                            assert all(v == 0 for v in (mul_elem_as - hom_rc(mul_elem_rc)).values()), f"Mismatch in product for mul_elem"
+                            assert all(v == 0 for v in (mul_elem_as - hom_rc(mul_elem_rc)).values()), "Mismatch in product for mul_elem"
                         except AssertionError as e:
                             print(e)
                             pretty_print(mul_elem_as)
@@ -85,4 +88,3 @@ if __name__ == "__main__":
                 #                 pretty_print(rc0)
                 #                 pretty_print(rc0.p_tableau)
                 #                 input()
-                

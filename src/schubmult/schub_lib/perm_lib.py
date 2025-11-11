@@ -27,7 +27,7 @@ class Permutation:
     def antiperm(self):
         w0 = Permutation.w0(len(self))
         return w0 * (self) * w0
-        
+
     def coset_decomp(self, *descs):
         descs = set(descs)
         reduced_perm = self
@@ -239,7 +239,7 @@ class Permutation:
         return printer.doprint(self._perm)
 
     def __call__(self, *tup):
-        if len(tup) == 1: 
+        if len(tup) == 1:
             if isinstance(tup[0], (list, tuple)):
                 tup = tup[0]
             else:

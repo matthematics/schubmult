@@ -1,11 +1,13 @@
 
 if __name__ == "__main__":
-    from schubmult import *
-    from schubmult.schub_lib.rc_graph import RCGraph
-    from schubmult.schub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
-    from schubmult.utils.perm_utils import elem_sym_perms
-    from sympy import pretty_print
     import sys
+
+    from sympy import pretty_print
+
+    from schubmult import *
+    from schubmult.schub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
+    from schubmult.schub_lib.rc_graph import RCGraph
+    from schubmult.utils.perm_utils import elem_sym_perms
 
     n = int(sys.argv[1])
 
@@ -33,4 +35,3 @@ if __name__ == "__main__":
                 #     print("Result:")
                 #     pretty_print(result)
                 # assert result is not None
-                

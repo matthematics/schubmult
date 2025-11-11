@@ -103,7 +103,7 @@ def decompose_tensor_product(dom, u_tab_crystal):
     return crystals
 
 if __name__ == "__main__":
-    
+
     ASx = FreeAlgebra(SchubertBasis)
     n = int(sys.argv[1])
 
@@ -111,7 +111,7 @@ if __name__ == "__main__":
 
     hw_tabs = set()
     for perm in perms:
-        
+
         hw_tabs.update([RootTableau.from_rc_graph(rc.to_highest_weight()[0]) for rc in RCGraph.all_rc_graphs(perm, n - 1)])
 
 
@@ -133,6 +133,5 @@ if __name__ == "__main__":
             print("and")
             pretty_print(rc_ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(v, n-1),1)))
             pretty_print(sm)
-        
 
-        
+

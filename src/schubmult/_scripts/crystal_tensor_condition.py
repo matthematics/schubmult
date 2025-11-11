@@ -1,4 +1,5 @@
 from sympy import pretty_print
+
 from schubmult.schub_lib.rc_graph import RCGraph
 
 
@@ -28,9 +29,10 @@ def _fix(weight):
     return descents
 
 if __name__ == "__main__":
-    from schubmult import *
-    import sys
     import itertools
+    import sys
+
+    from schubmult import *
     n = int(sys.argv[1])
     m = int(sys.argv[2]) if len(sys.argv) > 2 else n
 

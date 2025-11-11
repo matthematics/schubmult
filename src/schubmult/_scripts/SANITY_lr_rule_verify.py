@@ -301,7 +301,6 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 def worker(nn, shared_recording_dict, lock, task_queue):
     import copy
     import sys
-    from functools import cache
     from itertools import zip_longest
 
     import sympy
@@ -330,7 +329,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         pass
 
     def decompose_tensor_product(left_rc, u_rc, n):
-        from schubmult import CrystalGraphTensor, RCGraphRing, RootTableau, uncode
+        from schubmult import RCGraphRing, uncode
         rc_ring = RCGraphRing()
         tring = rc_ring @ rc_ring
         # global hw_rc_sets
@@ -358,7 +357,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
 
         lower_left_rc = left_rc.rowrange(1)
         lower_u = u_rc.rowrange(1)
-        
+
         top_row_left = len(left_rc[0])
         top_row_right = len(u_rc[0])
         # print("Cutting:")
@@ -372,11 +371,11 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         up_rc = rc_ring.zero
         # for rc_w_cut, tensor_elems in cut_crystals.items():
         #     # up_rc =  rc_ring(rc_w_cut) * rc_ring(RCGraph.one_row(len(left_rc[-1]) + len(u_rc[-1])))
-            
+
         #     up_rc += rc_ring(RCGraph.one_row(top_row_left + top_row_right)) * rc_ring(rc_w_cut)
         #     for t_elem in tensor_elems:
         #         # to_add =  tring(t_elem.factors) * tring((RCGraph.one_row(len(left_rc[-1])),RCGraph.one_row(len(u_rc[-1]))))
-                
+
         #         to_add = tring((RCGraph.one_row(top_row_left),RCGraph.one_row(top_row_right))) * tring(t_elem.factors)
         #         # pretty_print(to_add)
         #         for (rc1, rc2), coeff in to_add.items():
@@ -439,7 +438,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                             #             grid[box] = (grid[box][0], MarkedInteger(grid[box][1]))
                             #     u_tab = RootTableau(grid)
                             #     last_inv = 1000
-                                
+
                             #     while u_tab.perm.inv < last_inv:
                             #         last_inv = u_tab.perm.inv
                             #         for box in u_tab.iter_boxes_row_word_order:
@@ -450,7 +449,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                             #                     break
                             #             # else:
                             #             #     try:
-                                                
+
                             #             #         d_tab_test = d_tab.up_jdt_slide(*box, force=True)
                             #             #         if d_tab_test is not None:
                             #             #             d_tab = d_tab_test
@@ -471,7 +470,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                             #used_tensors.add(tensor_hw)
                             crystals[w_rc] = crystals.get(w_rc, set())
                             crystals[w_rc].add(tensor)
-                    
+
                     # fyi[w_rc] = fyi.get(w_rc, set())
                     # fyi[w_rc].add((tensor, u_tab))
         # get_rid = 0
@@ -489,13 +488,13 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         #         except Exception:
         #             break
         try:
-            
+
             assert len(crystals) == 1
         except AssertionError:
             pass
         return crystals
 
-        
+
     ASx = FreeAlgebra(SchubertBasis)
     while True:
         try:
@@ -508,13 +507,13 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     #print(f"{(u, v, n)} already verified, returning.")
                     continue
                 print(f"Previous failure on {(u, v, n)}, will retry.")
-        
-        
+
+
         rc_w_coprods = {}
         good = False
         #if True:
         #hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
-        
+
         mdom = Permutation.w0(n)#u.minimal_dominant_above()
         # left diff
         diff_perm = u * (~mdom)
@@ -531,7 +530,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                         for v_rc in RCGraph.all_rc_graphs(v, n):
                             crystals = decompose_tensor_product(w0_prin, v_rc, n + 1)
                             for rc_w, coeff in crystals.items():
-                            
+
                                 if rc_w.is_principal:
                                     for t_elem in coeff:
                                         #sm += Sx(diff_perm * rc_w.perm)
@@ -541,9 +540,9 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                                         # for bong0 in t_elem0.full_crystal:
                                         #     for bong in t_elem.full_crystal:
                                         #         sm += bong0.factors[1].polyvalue(Sx.genset) * bong.factors[1].polyvalue(Sx.genset)
-                                    
 
-                            
+
+
                                 # take this rc_w and remove the non-u roots
                                 # prin_tab = RootTableau.from_rc_graph(rc_w)
                                 # dom_roots = [mdom.right_root_at(i) for i in range(mdom.inv)]
@@ -596,7 +595,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             print(f"{diff=}")
             print(f"{sm=}")
             good = False
-            
+
         #assert good, f"COMPLETE FAIL {w=}"
         if good:
             print(f"Success {(u, v, n)} at ", time.ctime())
@@ -606,8 +605,8 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             with lock:
                 shared_recording_dict[(u, v, n)] = False
             print(f"FAIL {(u, v, n)} at ", time.ctime())
-    
-        
+
+
 
 def is_decomposable(w):
     for i in range(1, len(w) - 1):
@@ -631,7 +630,7 @@ def main():
     cd = []
     for i in range(2 * (n - 1), 0, -2):
         cd += [i]
-    
+
     perms = Permutation.all_permutations(n)
     # perms2n = {perm for perm in Permutation.all_permutations(2 * n - 1) if perm.bruhat_leq(uncode(cd))}
     perms.sort(key=lambda p: (p.inv, p.trimcode))

@@ -1,4 +1,5 @@
 from sympy import pretty_print
+
 from schubmult import ASx, Permutation
 from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.schub_lib.rc_graph_ring import RCGraphRing
@@ -52,6 +53,7 @@ import os
 import shutil
 import sys
 
+
 def main():
 
     n = int(sys.argv[1])
@@ -63,8 +65,8 @@ def main():
     suc_count = 0
     tot = 0
     for perm in perms:
-        for rc in RCGraph.all_rc_graphs(perm, n-1): 
-            
+        for rc in RCGraph.all_rc_graphs(perm, n-1):
+
             # permutation-level Schubert coproduct
             fa = ASx(perm, length).coproduct()
             fa_norm = _normalize_fa_coprod(fa)
@@ -76,7 +78,7 @@ def main():
                 continue
             tr_proj = _project_tensor_to_perms(tr)
 
-            
+
             # Compare multiplicities for union of keys
             all_keys = set(fa_norm.keys()) | set(tr_proj.keys())
             success = True
