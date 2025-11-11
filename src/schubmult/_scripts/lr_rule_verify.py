@@ -1,86 +1,13 @@
 # LR rule verification script
 
 import base64
-import gc
 import json
 import os
 import pickle
 import shutil
 import sys
 import time
-from functools import cache
-from json import dump, load
-from multiprocessing import Event, Lock, Manager, Process, cpu_count
-
-# from schubmult.schub_lib.rc_graph_ring import tensor_to_highest_weight2
-from joblib import Parallel, delayed
-
-
-def reload_modules(dct, n_jobs=None):
-    # from schubmult.schub_lib.rc_graph_module import RCGraph, ASx
-
-    # def reconstruct_one(k, v):
-    #     key = eval(k)  # tuple
-    #     result_val = None
-    #     for k2, v2 in v.items():
-    #         g = eval(k2)
-    #         g1, g2 = RCGraph(g[0]), RCGraph(g[1])
-    #         if result_val is None:
-    #             result_val = v2 * (g1 @ g2)
-    #         else:
-    #             result_val += v2 * (g1 @ g2)
-    #     return (key, result_val)
-
-    # # Use joblib to parallelize reconstruction
-    # items = list(dct.items())
-    # n_jobs = n_jobs or min(8, os.cpu_count() or 1)
-    # results = Parallel(n_jobs=n_jobs)(delayed(reconstruct_one)(k, v) for k, v in items)
-    # return dict(results)
-    return dct
-
-
-def safe_save(obj, filename, save_json_backup=True):
-    # Pickle save
-    temp_pickle = f"{filename}.pkl.tmp"
-    pickle_file = f"{filename}.pkl"
-    # print("Saving cache to", pickle_file)
-    try:
-        with open(temp_pickle, "wb") as f:
-            pickle.dump(obj, f, protocol=pickle.HIGHEST_PROTOCOL)
-        if os.path.exists(pickle_file):
-            shutil.copy2(pickle_file, f"{pickle_file}.backup")
-        os.replace(temp_pickle, pickle_file)
-    except Exception as e:
-        import traceback
-
-        # print("Error during pickle save:")
-        traceback.print_exc()
-        if os.path.exists(temp_pickle):
-            os.remove(temp_pickle)
-    # JSON backup
-    if not save_json_backup:
-        return
-    # print("Saving JSON backup to", f"{filename}.json")
-    temp_json = f"{filename}.json.tmp"
-    json_file = f"{filename}.json"
-    try:
-        from schubmult.schub_lib.rc_graph_module import TensorModule
-
-        with open(temp_json, "w") as f:
-            json.dump(
-                {repr(k): {repr(tuple(k2)): int(v2) for k2, v2 in v.value_dict.items()} if isinstance(v, TensorModule) else v for k, v in obj.items()},
-                f,
-            )
-        if os.path.exists(json_file):
-            shutil.copy2(json_file, f"{json_file}.backup")
-        os.replace(temp_json, json_file)
-    except Exception as e:
-        import traceback
-
-        # print("Error during JSON backup:")
-        traceback.print_exc()
-        if os.path.exists(temp_json):
-            os.remove(temp_json)
+from multiprocessing import Event, Manager, Process
 
 
 def safe_save_recording(obj, filename):
@@ -93,7 +20,7 @@ def safe_save_recording(obj, filename):
         if os.path.exists(json_file):
             shutil.copy2(json_file, f"{json_file}.backup")
         os.replace(temp_json, json_file)
-    except Exception as e:
+    except Exception:
         import traceback
 
         # print("Error during recording JSON save:")
@@ -167,7 +94,7 @@ def safe_load_recording(filename):
                 tp = json_key_load(k)
                 dct[tp] = v
             return dct
-        except Exception as e:
+        except Exception:
             # print(f"Recording JSON load failed: {e}")
             raise
     else:
@@ -209,100 +136,7 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
     # print("Recording saver process exiting.")
 
 
-# def saver(shared_recording_dict, lock, filename, verification_filename, stop_event, sleep_time=5):
-#     # last_saved_results_len_seen = -1
-#     last_verification_len_seen = -1
-#     new_len = 0
-#     new_verification_len = 0
-#     while not stop_event.is_set():
-#         # print("Im in ur saver")
-#         # new_len = len(shared_dict)
-#         new_verification_len = len(shared_recording_dict)
-#         # if new_len > last_saved_results_len_seen:
-#         #     # print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
-#         #     last_saved_results_len_seen = new_len
-#         #     with lock:
-#         #         cache_copy = {k: shared_dict[k] for k in shared_dict.keys()}
-#         #     safe_save(cache_copy, filename)
-#         if new_verification_len > last_verification_len_seen:
-#             last_verification_len_seen = new_verification_len
-#             # print("Saving verification to ", verification_filename, " with ", len(shared_recording_dict), "entries at ", time.ctime())
-#             with lock:
-#                 recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
-#             safe_save_recording(recording_copy, verification_filename)
-#         # print("me sleep")
-#         time.sleep(sleep_time)
-#     with lock:
-#         cache_copy = {k: shared_dict[k] for k in shared_dict.keys()}
-#         recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
-#     safe_save(cache_copy, filename)
-#     safe_save_recording(recording_copy, verification_filename)
-#     # print("Saver process exiting.")
-
-
-# def try_lr_module(perm, length=None):
-#     from schubmult.schub_lib.rc_graph_ring import RCGraphRing
-#     from schubmult.schub_lib.rc_graph import RCGraph
-#     from schubmult import ASx, uncode
-#     ring = RCGraphRing()
-#     tring = ring @ ring
-#     # print(f"Starting {perm}")
-#     if length is None:
-#         length = len(perm.trimcode)
-#     elif length < len(perm.trimcode):
-#         raise ValueError("Length too short")
-#     if perm.inv == 0:
-#         return tring((RCGraph([()]*length),RCGraph([()]*length)))
-#     if length > len(perm.trimcode):
-#         mul_elem = 0
-#         lower_perm = perm
-#     else:
-#         mul_elem = perm.trimcode[-1]
-#         lower_perm = uncode(perm.trimcode[:-1])
-#     elem = ASx(lower_perm, length - 1)
-#     lower_module1 = try_lr_module(lower_perm, length - 1)
-#     # assert isinstance(lower_module1, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
-#     #  #  # print(f"Coproducting {ASx(uncode([perm.trimcode[0]]), 1).coproduct()=}")
-#     #  #  # print(ASx(uncode([perm.trimcode[0]]), 1).coproduct())
-#     #  #  # print("Going for it")
-#     #  #  # print(f"{type(lower_module1)=} {lower_module1=}")
-#     #  #  # print(f"{type(ASx(uncode([perm.trimcode[0]]), 1).coproduct())=}")
-
-#     cprod = tring.zero
-
-#     for j in range(mul_elem + 1):
-#         cprod += tring.ext_multiply(ring(RCGraph.one_row(j)), ring(RCGraph.one_row(mul_elem - j)))
-#     #print(cprod)
-#     ret_elem = lower_module1 *cprod
-#     #  #  # print(f"{ret_elem=}")
-#     # assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(lower_module1)} {lower_perm=} {length=}"
-
-#     ret_elem = tensor_to_highest_weight2(tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)}))
-
-#     if length == 1:
-#         return ret_elem
-#     #keys = set(ret_elem.keys())
-#     # print(f"{repr(keys)=} {perm=}")
-#     up_elem = elem * ASx(uncode([mul_elem]),1)
-#     # print(f"{up_elem=}")
-#     for key, coeff in up_elem.items():
-#         if key[0] != perm:
-#             assert coeff == 1
-#             ret_elem -= tensor_to_highest_weight2(try_lr_module(key[0], length))
-#             #    ret_elem -= cff2 * tring(RCGraph.to_highest_weight_pair(rc1_bad, rc2_bad)[0])
-#                 #        break
-#     # print(f"Done {perm}")
-#     #ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k in keys})
-#     # assert isinstance(ret_elem, TensorModule), f"Not TensorModule {type(ret_elem)} {perm.trimcode=}"
-#     ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(perm) and k[1].perm.bruhat_leq(perm)})
-#     return ret_elem
-
-
 def divdiff_rc_desc(the_rc, desc):
-    from sympy import pretty_print
-
-    from schubmult import RCGraph
-
     ret = set()
     rc, row = the_rc.exchange_property(desc, return_row=True)
     rc = rc.normalize()
@@ -321,15 +155,8 @@ def divdiff_rc_desc(the_rc, desc):
 
 
 def divdiffable_rc(v_rc, u):
-    from schubmult import RCGraph
+    from schubmult import RCGraph  # noqa: F401
 
-    # if not v_rc.is_highest_weight:
-    #     raise ValueError("Crystal")
-    #     vr_hw, raise_seq = v_rc.to_highest_weight()
-    #     hw_set = divdiffable_rc(vr_hw, u)
-    #     ret = set()
-    #     for vv_hw in hw_set:
-    #         ret.add(vv_hw.reverse_raise_seq(raise_seq))
     v = v_rc.perm
     perm2 = v * (~u)
     if perm2.inv != v.inv - u.inv:
@@ -349,61 +176,13 @@ def divdiffable_rc(v_rc, u):
     return ret
 
 
-# def dualpieri(mu, v, w):
-#     # logger.debug(f"dualpieri {mu=} {v=} {w=}")
-#     lm = code(~mu)
-#     cn1w = code(~w)
-#     while len(lm) > 0 and lm[-1] == 0:
-#         lm.pop()
-#     while len(cn1w) > 0 and cn1w[-1] == 0:
-#         cn1w.pop()
-#     if len(cn1w) < len(lm):
-#         return []
-#     for i in range(len(lm)):
-#         if lm[i] > cn1w[i]:
-#             return []
-#     c = Permutation([1, 2])
-#     for i in range(len(lm), len(cn1w)):
-#         c = cycle(i - len(lm) + 1, cn1w[i]) * c
-#     # c = permtrim(c)
-#     # logger.debug("Recording line number")
-#     res = [[[], v]]
-#     # logger.debug(f"{v=} {type(v)=}")
-#     for i in range(len(lm)):
-#         # logger.debug(f"{res=}")
-#         res2 = []
-#         for vlist, vplist in res:
-#             vp = vplist
-#             vpl = divdiffable(vp, cycle(lm[i] + 1, cn1w[i] - lm[i]))
-#             # logger.debug(f"{vpl=} {type(vpl)=}")
-#             if len(vpl) == 0:
-#                 continue
-#             vl = pull_out_var(lm[i] + 1, vpl)
-#             # logger.debug(f"{vl=}")
-#             for pw, vpl2 in vl:
-#                 res2 += [[[*vlist, pw], vpl2]]
-#         res = res2
-#     if len(lm) == len(cn1w):
-#         return res
-#     res2 = []
-#     for vlist, vplist in res:
-#         vp = vplist
-#         vpl = divdiffable(vp, c)
-#         if len(vpl) == 0:
-#             continue
-#         res2 += [[vlist, vpl]]
-#     # logger.debug(f"{res2=}")
-#     return res2
-
-
 def dualpieri(mu, v_rc, w):
-    from sympy import pretty_print
+    from sympy import pretty_print  # noqa: F401
 
-    from schubmult import Permutation, RCGraph, RCGraphRing, pull_out_var
+    from schubmult import Permutation, RCGraphRing, pull_out_var
 
     rc_ring = RCGraphRing()
     if mu.inv == 0:
-        # ret = set()
         return set({((), (), rc) for rc in divdiffable_rc(v_rc, w)})
 
     cycle = Permutation.cycle
@@ -414,28 +193,24 @@ def dualpieri(mu, v_rc, w):
     for i in range(len(lm)):
         if lm[i] > cn1w[i]:
             return set()
-    # lm = [*lm, *([0] * (len(cn1w) - len(lm)))]
     c = Permutation([])
     for i in range(len(lm), len(cn1w)):
         c = cycle(i - len(lm) + 1, cn1w[i]) * c
-    # c = permtrim(c)
-    # logger.debug("Recording line number")
+
     res = {((), (), v_rc)}
-    # logger.debug(f"{v=} {type(v)=}")
+
     for i in range(len(lm)):
-        # logger.debug(f"{res=}")
         res2 = set()
         for vlist, perm_list, v_rc_0 in res:
             vp = v_rc_0
 
             vpl_list = divdiffable_rc(vp, cycle(lm[i] + 1, cn1w[i] - lm[i]))
-            # logger.debug(f"{vpl=} {type(vpl)=}")
+
             if len(vpl_list) == 0:
                 continue
             for vpl in vpl_list:
                 vl = pull_out_var(lm[i] + 1, vpl.perm)
-                # print(f"Begin rc pulling out lm[i] + 1={lm[i] + 1}")
-                # pretty_print(vp)
+
                 if lm[i] + 1 > len(vpl.perm.trimcode):
                     rcs = {vpl}
                 else:
@@ -446,7 +221,7 @@ def dualpieri(mu, v_rc, w):
                     if vpl_new.perm not in {vv[-1] for vv in vl}:
                         continue
                     pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
-                    res2.add(tuple([(*vlist, tuple(pw)), (*perm_list, vpl.perm), vpl_new]))
+                    res2.add(((*vlist, tuple(pw)), (*perm_list, vpl.perm), vpl_new))
 
         res = res2
     if len(lm) == len(cn1w):
@@ -459,19 +234,13 @@ def dualpieri(mu, v_rc, w):
             continue
         for vpl in vpl_list:
             res2.add((tuple(vlist), perm_list, vpl))
-    # logger.debug(f"{res2=}")
     return res2
 
 
-def worker(nn, shared_recording_dict, lock, task_queue):
-    import copy
-    import sys
-    from itertools import zip_longest
-
+def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
     import sympy
-    from sympy import pretty_print
 
-    from schubmult import CrystalGraphTensor, DSx, FreeAlgebra, Permutation, RCGraph, RCGraphRing, RootTableau, SchubertBasis, Sx
+    from schubmult import CrystalGraphTensor, DSx, FreeAlgebra, Permutation, RCGraph, RCGraphRing, RootTableau, SchubertBasis, Sx  # noqa: F401
 
     def all_reduced_subwords(reduced_word, u):
         if u.inv > len(reduced_word):
@@ -493,13 +262,10 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         pass
 
     def decompose_tensor_product(left_rc, u_rc, n):
-        from schubmult import RCGraphRing
-
         rc_ring = RCGraphRing()
         tring = rc_ring @ rc_ring
-        # global hw_rc_sets
+
         crystals = {}
-        # dom = RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector), n -1)
 
         assert u_rc.crystal_length() == n - 1
         assert len(left_rc) == n - 1
@@ -517,8 +283,9 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             assert len(left_rc) == 1
             crystals[RCGraph.one_row(len(left_rc[0]) + len(u_rc[0]))] = {CrystalGraphTensor(left_rc, u_rc)}
             return crystals
-        cut_left_rc = left_rc.vertical_cut(n - 2)[0]
-        cut_u = u_rc.vertical_cut(n - 2)[0]
+
+        # cut_left_rc = left_rc.vertical_cut(n - 2)[0]
+        # cut_u = u_rc.vertical_cut(n - 2)[0]
 
         lower_left_rc = left_rc.rowrange(1)
         lower_u = u_rc.rowrange(1)
@@ -531,7 +298,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         # cut_crystals = decompose_tensor_product(cut_left_rc, cut_u, n - 1)
         cut_crystals = decompose_tensor_product(lower_left_rc, lower_u, n - 1)
         # print(f"{cut_crystals=}")
-        fyi = {}
+
         up_tensor = tring.zero
         up_rc = rc_ring.zero
         # for rc_w_cut, tensor_elems in cut_crystals.items():
@@ -586,8 +353,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                         #     continue
                         # low_tensor_weight = tuple([a + b for a,b in zip(left_rc.to_lowest_weight()[0].length_vector, tensor_lw.factors[1].length_vector)])
                         low_tensor_weight = tensor_lw.crystal_weight
-                        w_tab = RootTableau.from_rc_graph(w_rc)
-                        u = u_rc.perm
+
                         if tensor_hw.crystal_weight == high_weight and low_tensor_weight == low_weight:
                             # and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
                             # for subword in all_reduced_subwords(w_rc.reduced_word, u):
@@ -658,7 +424,6 @@ def worker(nn, shared_recording_dict, lock, task_queue):
             pass
         return crystals
 
-    ASx = FreeAlgebra(SchubertBasis)
     while True:
         from sympy import S
 
@@ -673,25 +438,17 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                     continue
                 print(f"Previous failure on {(u, v, n)}, will retry.")
 
-        rc_w_coprods = {}
         good = False
         # if True:
         # hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
 
         mdom = Permutation.w0(n)  # u.minimal_dominant_above()
-        w0 = mdom
-        # left diff
-        diff_perm = u * (~mdom)
-        poly_cache = {}
+
         w0_prin = RCGraph.principal_rc(mdom, n)
-        sm = Sx.zero
-        rc_ring = RCGraphRing()
-        # W0 IS SPECIAL. THIS IS THE RC/CRYSTAL LEVEL DECOMPOSITION, NO ELEMENT
-        # OTHER THAN w0 WORKS
 
-        from schubmult import GeneratingSet, RCGraphRing, uncode
+        from schubmult import GeneratingSet
 
-        rc_ring = RCGraphRing()
+        # rc_ring = RCGraphRing()
 
         good = True
 
@@ -700,7 +457,6 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         # if v == v.minimal_dominant_above():
         #     continue
         # bob = DSx(w0) * DSx(v, "z")
-        sm9 = Sx(w0) * Sx(v)
         # for boing, coeff in bob.items():
         #     # if coeff.expand() == S.Zero:
         #     #     continue
@@ -726,12 +482,6 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                 crystals[v] = {}
                 for v_rc in RCGraph.all_rc_graphs(v, n):
                     crystals[v][v_rc] = decompose_tensor_product(w0_prin, v_rc, n + 1)
-        product = Sx(u) * Sx(v)
-        sm = Sx.zero
-        w0 = u.minimal_dominant_above()
-        pord = Sx(u) * Sx(v)
-        bongs = set()
-        bings = set()
         sm0 = S.Zero
         y = GeneratingSet("y")
         z = GeneratingSet("z")
@@ -756,7 +506,6 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                             for j in range(len(vlist[i])):
                                 toadd *= y[i + 1] - z[vlist[i][j]]
                         sm0 += toadd * rc.polyvalue(y[len(vlist) :], z) * DSx(w)
-
 
         good = True
 
@@ -819,7 +568,7 @@ def is_decomposable(w):
 
 
 def main():
-    from schubmult import DSx, Permutation, RCGraph, RootTableau, Sx, uncode
+    from schubmult import DSx, Permutation, RCGraph, RootTableau, Sx, uncode  # noqa: F401
 
     try:
         n = int(sys.argv[1])
@@ -845,7 +594,6 @@ def main():
     #     hw_tabs.add(RCGraph.all_rc_graphs(perm, n - 1))
 
     with Manager() as manager:
-        shared_dict = manager.dict()
         shared_recording_dict = manager.dict()
         lock = manager.Lock()
         stop_event = Event()
@@ -868,9 +616,6 @@ def main():
         # cache_saver_proc.start()
         recording_saver_proc.start()
 
-        # Create task queue and fill with perms
-        from schubmult.schub_lib.rc_graph import RCGraph
-
         task_queue = manager.Queue()
         # dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
         dominant_only = True
@@ -882,14 +627,14 @@ def main():
             if indec and is_decomposable(hw_tab):
                 continue
             if (not dominant_only or hw_tab.minimal_dominant_above() == hw_tab) and (not w0_only or hw_tab == w0):
-                # if indec and is_decomposable(perm):
-                #     continue
-                # if sep_descs:
-                #     if hw_tab.inv == 0 or perm.inv == 0 or max(hw_tab.descents()) <= min(perm.descents()):
-                #         task_queue.put((hw_tab, perm, n))
-                # else:
                 for perm in perms:
-                    task_queue.put((hw_tab, perm, n))
+                    if indec and is_decomposable(perm):
+                        continue
+                    if sep_descs:
+                        if hw_tab.inv == 0 or perm.inv == 0 or max(hw_tab.descents()) <= min(perm.descents()):
+                            task_queue.put((hw_tab, perm, n))
+                    else:
+                        task_queue.put((hw_tab, perm, n))
 
         # Start fixed number of workers
         workers = []
