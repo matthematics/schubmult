@@ -395,8 +395,8 @@ def divdiffable_rc(v_rc, u):
 def dualpieri(mu, v_rc, w):
     from sympy import pretty_print
 
-    from schubmult import FreeAlgebra, Permutation, RCGraph, WordBasis, pull_out_var
-    FA = FreeAlgebra(WordBasis)
+    from schubmult import Permutation, RCGraph, RCGraphRing, pull_out_var
+    rc_ring = RCGraphRing()
     if mu.inv == 0:
         #ret = set()
         return set({((), rc) for rc in divdiffable_rc(v_rc, w)})
@@ -431,48 +431,73 @@ def dualpieri(mu, v_rc, w):
                 vl = pull_out_var(lm[i] + 1, vpl.perm)
                 # print(f"Begin rc pulling out lm[i] + 1={lm[i] + 1}")
                 # pretty_print(vp)
-                vpl_new = vpl.resize(len(vpl.perm) - 1)
+                if lm[i] + 1 > len(vpl.perm.trimcode):
+                    rcs = {vpl}
+                else:
+                    vpl_bottom, vpl_top = vpl.vertical_cut(lm[i])
+                    rcs = rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))
+
                 pw = ()
                 # print("Before")
                 # pretty_print(vpl_new)
-                if lm[i] <= len(vpl.perm.trimcode):
-                    # shift up
-                    # pull the row down
-                    # divdiff it
-                    #vpl_new = FA(([0] * (max(vpl_vpl_new.shiftup(1)
-                    vpl_new = vpl_new.extend(1)
-                    for ref_spot_i in range(lm[i], 0, -1):
-                        # print(f"Before ref {ref_spot_i=}")
-                        # pretty_print(vpl_new)
-                        vpl_new_old = vpl_new
-                        vpl_new = vpl_new.weight_reflection(ref_spot_i)
-                        assert (vpl_new_old.length_vector[ref_spot_i - 1], vpl_new_old.length_vector[ref_spot_i]) == (vpl_new.length_vector[ref_spot_i], vpl_new.length_vector[ref_spot_i - 1])
-                    vpl_new = vpl_new.rowrange(1)
-                    if len(vpl_new) > len(vpl) - 1:
-                        vpl_new = vpl_new.vertical_cut(len(vpl) - 1)[0]
-                if lm[i] + 1 == len(vpl.perm.trimcode):
-                    vpl_new = vpl.rowrange(0, len(vpl.perm.trimcode) - 1)
-                    
-                    
-                    
-                    #vpl_new = vpl_new.vertical_cut(len(vpl.perm.trimcode))[0].rowrange(1)
-                    
                 
-                if vpl_new.perm not in {vv[-1] for vv in vl}:
-                    print(f"OH NO NOT NULL OUT {lm[i] + 1}")
-                    print("WENEEDFIX")
-                    pretty_print(vpl)
-                    print("ohas")
-                    pretty_print(vpl_new)
-                    print(f"{vl=}")
-                    print(f"{vpl.perm}")
-                    print(f"{vpl_new.perm}")
-                    raise ValueError
-                pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
-                #print(f"{vl=} {vpl_new.perm=} {pw=}")
-                # if len(pw) + v.inv != vpl.perm.inv:
-                #     continue
-                res2.add(((*vlist, pw), vpl_new))
+                
+                
+                    #print("After")
+                    # vpl_new = vpl_new.vertical_cut(1)[1]
+                    # if len(vpl_new) >= len(vpl):
+                    #     vpl_new = vpl_new.vertical_cut(len(vpl) - 1)[0]
+                    #vpl_new = vpl_new.rowrange(1)
+                    #pretty_print(vpl_new)
+                
+                
+                
+                
+                    # print("After")
+                    # pretty_print(vpl_new)
+                # vpl_new = vpl_new.extend(1)
+                # print(f"After all reflections {shift_down=}")
+                
+                # last_code = 12000000
+                # print("Pre cut")
+                # pretty_print(vpl)
+                # #pretty_print(vpl_new)
+                
+                # print("After cut")
+                # pretty_print(vpl_new)
+                #assert len(vpl_new) == len(vpl.perm.trimcode) and vpl_new.inv == vpl.inv
+
+                
+                
+                # pw = tuple([a for a in vpl_new[0]])
+                
+                
+                
+
+                    
+                    #     for i in range(len(vpl_new) - 1, 0, -1):
+                    #         vpl_new_test = vpl_new.raising_operator(i)
+                    #         if vpl_new_test is not None:                                
+                    #             vpl_new = vpl_new_test
+                    
+                    
+                    
+
+                # v = vpl.perm
+                #pw = tuple([v[ii] for ii in range(lm[i], len(v)) if ((ii > len(vpl_new.perm) and v[ii] == ii) or (ii <= len(vpl_new.perm) and v[ii] == vpl_new.perm[ii - 1]))])
+                for vpl_new in rcs:
+                    if vpl_new.perm not in {vv[-1] for vv in vl}:
+                        # print(f"OH NO NOT NULL OUT {lm[i] + 1}")
+                        # pretty_print(vpl)
+                        # print("ohas")
+                        # pretty_print(vpl_new)
+                        # print(f"{vl=}")
+                        continue
+                    pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
+                    #print(f"{vl=} {vpl_new.perm=} {pw=}")
+                    # if len(pw) + v.inv != vpl.perm.inv:
+                    #     continue
+                    res2.add(((*vlist, pw), vpl_new))
                     
 
                 # logger.debug(f"{vl=}")
@@ -773,21 +798,14 @@ def worker(nn, shared_recording_dict, lock, task_queue):
         sm0 = S.Zero
         y = GeneratingSet("y")
         z = GeneratingSet("z")
-        #check_elem = DSx([]).ring.from_dict({k: v for k, v in (DSx(u, "y") * DSx(v, "z")).items() if v.expand() != S.Zero})
-        # check_elem = DSx(u) * DSx(v, "z")
-        # x = Sx.genset
+        # check_elem = DSx([]).ring.from_dict({k: v for k, v in (DSx(u, "y") * DSx(v, "z")).items() if v.expand() != S.Zero})
         check_elem = DSx(u) * DSx(v, "z")
+        # x = Sx.genset
+        #check_elem = Sx(u) * Sx(v)
         sm0 = DSx([]).ring.zero
-        good = True
         for w in check_elem:
-            if not good:
-                break
             for v_rc in RCGraph.all_rc_graphs(v, n):
-                try:
-                    dualpocket = dualpieri(u, v_rc,  w)
-                except ValueError:
-                    good = False
-                    break
+                dualpocket = dualpieri(u, v_rc,  w)
                 if len(dualpocket) > 0:
                     #print(f"{u=} {w=} {v_rc=} {dualpocket=}")   
                     for vlist, rc in dualpocket:
@@ -796,11 +814,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):
                             for j in range(len(vlist[i])):
                                 toadd *= y[i + 1] - z[vlist[i][j]]
                         sm0 += toadd * rc.polyvalue(y[len(vlist):], z) * DSx(w)
-        if not good:
-            with lock:
-                shared_recording_dict[(u, v, n)] = False
-            print(f"FAIL {(u, v, n)} at ", time.ctime())
-            continue
+        good = True
         
         diff = check_elem - sm0
         diff = DSx([]).ring.from_dict({k: sympy.sympify(vv).expand() for k, vv in diff.items() if sympy.sympify(vv).expand() != S.Zero})
