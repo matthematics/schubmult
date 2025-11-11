@@ -14,11 +14,11 @@ from multiprocessing import Event, Lock, Manager, Process, cpu_count
 from joblib import Parallel, delayed
 from sympy import pretty_print
 
-from schubmult.schub_lib.crystal_graph import CrystalGraphTensor
+from schubmult import CrystalGraphTensor
 
 
 def reload_modules(dct, n_jobs=None):
-    # from schubmult.schub_lib.rc_graph_module import RCGraph, ASx
+    # from schubmult import RCGraph, ASx
 
     # def reconstruct_one(k, v):
     #     key = eval(k)  # tuple
@@ -65,7 +65,7 @@ def safe_save(obj, filename, save_json_backup=True):
     temp_json = f"{filename}.json.tmp"
     json_file = f"{filename}.json"
     try:
-        from schubmult.schub_lib.rc_graph_module import TensorModule
+        from schubmult import TensorModule
 
         with open(temp_json, "w") as f:
             json.dump(
@@ -191,39 +191,17 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 
 
 def worker(shared_recording_dict, lock, task_queue):
-    from schubmult.schub_lib.rc_graph_ring import RCGraphRing
-    from schubmult import Sx
-
-    def hom_ck(ck_elem):
-        """
-        Map an RCGraphRing element to a CoxeterKnuthRing element.
-        """
-        from schubmult.schub_lib.rc_graph_ring import RCGraphRing
-        from schubmult.schub_lib.rc_graph import RCGraph
-        rc_ring = RCGraphRing()
-        result = rc_ring.zero
-        for ck_key, coeff in ck_elem.items():
-            rc = ck_key.rc_graph
-            if rc:
-                result += coeff * rc_ring(rc)
-            
-        return result
-    
-    def plac_prod(rc1, rc2):
-        from schubmult.schub_lib.rc_graph_ring import RCGraphRing
-        rc_ring = RCGraphRing()
-        tensor_hw, raise_seq = CrystalGraphTensor(rc1, rc2).to_highest_weight()
-        plac_elem = hom_rc(rc_ring(tensor_hw.factors[0])) * hom_rc(rc_ring(tensor_hw.factors[1]))
-        return plac_elem.reverse_raise_seq(raise_seq)
+    from schubmult import RCGraphRing, Sx
 
     rc_ring = RCGraphRing()
     while True:
         try:
             key = task_queue.get(timeout=2)
             # (g31, g32, (len1, len2)) = key
-            g11, g22 = key
-            g1 = rc_ring(g11)
-            g2 = rc_ring(g22)
+            g11, g22, g33, (len1, len2, len3) = key
+            g1 = rc_ring(g11.resize(len1))
+            g2 = rc_ring(g22.resize(len2))
+            g3 = rc_ring(g33.resize(len3))
 
         except Exception:
             break  # queue empty, exit
@@ -233,29 +211,17 @@ def worker(shared_recording_dict, lock, task_queue):
                     print(f"{key} already verified, returning.")
                     continue
                 print(f"Previous failure on {(g1, g2)}, will retry.")
-        # g = g1 * (g2 * g3)
-        # g_ = (g1 * g2) * g3
-        # diff = g - g_
-        # try:
-        #     assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
-        # except AssertionError as e:
-        #     print("FAILURE")
-        #     print(e)
-        #     print(f"{g=}")
-        #     print(f"{g_=}")
-
-        #    raise
-        #print("Success {(g1, g2, g3)}")
-        success = True
-        df = hom_rc(g1) * hom_rc(g2) - plac_prod(g11, g22)
+        g = g1 * (g2 * g3)
+        g_ = (g1 * g2) * g3
+        diff = g - g_
         try:
-            assert all(v == 0 for k, v in df.items())
+            assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
+            success = True
         except AssertionError as e:
             print("FAILURE")
             print(e)
-            pretty_print(df)
-            # print(hom(g1) * (hom(g2) * hom(g3)))
-            # print(hom(g))
+            print(f"{g=}")
+            print(f"{g_=}")
             success = False
 
         with lock:
@@ -265,14 +231,16 @@ def worker(shared_recording_dict, lock, task_queue):
 
         del g1
         del g2
-        del df
+        del g3
+        del g
+        del g_
+        del diff
         gc.collect()
 
 
 
 def main():
-    from schubmult import Permutation
-    from schubmult.schub_lib.rc_graph import RCGraph
+    from schubmult import Permutation, RCGraph
 
     try:
         n = int(sys.argv[1])
@@ -291,36 +259,20 @@ def main():
         shared_recording_dict = manager.dict()
         lock = manager.Lock()
         stop_event = Event()
-        # cache_load_dict = {}
-        # Load recording dict from JSON only
         loaded_recording = safe_load_recording(verification_filename)
         if loaded_recording:
             shared_recording_dict.update(loaded_recording)
 
-        # Load cache dict from pickle or JSON
-        # cache_load_dict = safe_load(filename)
-        # if cache_load_dict:
-        #     print(f"Loaded {len(cache_load_dict)} entries from {filename}")
-        #     shared_dict.update(cache_load_dict)
-
-        # print("Starting from ", len(shared_dict), " saved entries")
         print("Starting from ", len(shared_recording_dict), " verified entries")
-        # cache_saver_proc = Process(target=cache_saver, args=( lock, filename, stop_event))
         recording_saver_proc = Process(target=recording_saver, args=(shared_recording_dict, lock, verification_filename, stop_event))
-        # cache_saver_proc.start()
         recording_saver_proc.start()
-
+        import itertools
         # Create task queue and fill with perms
         task_queue = manager.Queue()
-        for perm in perms:
-            if perm.inv == 0:
-                continue
-            for g1 in RCGraph.all_rc_graphs(perm, n - 1):
-                for perm2 in perms:
-                    if perm2.inv == 0:
-                        continue
-                    for g2 in RCGraph.all_rc_graphs(perm2, n - 1):
-                        task_queue.put((g1, g2))
+        for (perm, perm2, perm3) in itertools.product(perms, perms, perms):
+            for (len1, len2, len3) in itertools.product(range(len(perm.trimcode), n), range(len(perm2.trimcode), n), range(len(perm3.trimcode), n)):
+                for (g1, g2, g3) in itertools.product(RCGraph.all_rc_graphs(perm, len(perm.trimcode)), RCGraph.all_rc_graphs(perm2, len(perm2.trimcode)), RCGraph.all_rc_graphs(perm3, len(perm3.trimcode))):
+                        task_queue.put((g1, g2, g3, (len1, len2, len3)))
         print(f"Enqueued {task_queue.qsize()} tasks for n={n}.")
         # Start fixed number of workers
         workers = []
@@ -359,7 +311,7 @@ if __name__ == "__main__":
 
 
 # def reload_modules(dct, n_jobs=None):
-#     from schubmult.schub_lib.rc_graph_module import RCGraph
+#     from schubmult import RCGraph
 
 #     def reconstruct_one(k, v):
 #         key = eval(k)  # tuple
@@ -381,7 +333,7 @@ if __name__ == "__main__":
 
 
 # def safe_save(obj, filename):
-#     from schubmult.schub_lib.rc_graph_module import TensorModule
+#     from schubmult import TensorModule
 
 #     temp_filename = f"{filename}.tmp"
 #     try:
@@ -431,7 +383,7 @@ if __name__ == "__main__":
 # def worker(args):
 #      shared_recording_dict, lock, perm = args
 #     from schubmult import ASx
-#     from schubmult.schub_lib.rc_graph_module import try_lr_module
+#     from schubmult import try_lr_module
 
 #     with lock:
 #         if perm in shared_recording_dict:
