@@ -462,7 +462,7 @@ def main():
         task_queue = manager.Queue()
         dominant_only = True
         w0_only = False
-        base_level = True
+        base_level = False
         sep_descs = False
         indec = False
         skip_id = True

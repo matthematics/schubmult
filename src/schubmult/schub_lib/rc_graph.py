@@ -1227,17 +1227,24 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                         rcs1 = {vpl.extend(1) if len(vpl[-1]) > 0 else vpl}
                         rcs2 = {vpl.extend(1) if len(vpl[-1]) > 0 else vpl}
                     else:
-                        vpl_bottom, vpl_top = vpl.vertical_cut(lm[i])
+                        move_spot = lm[i] + 1
+                        while move_spot > 0 and vpl.perm[move_spot - 1] < vpl.perm[move_spot]:
+                            move_spot += 1
+                        vpl_bottom, vpl_top = vpl.vertical_cut(move_spot - 1)
+                        assert len(vpl_bottom) == move_spot - 1
                         rcs1 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))).keys())
                         # ABOVE WORKS BUT WITH DUPLICTES
-                        vpl_bottom, vpl_top = vpl.vertical_cut(lm[i] + 1)
+                        vpl_bottom, vpl_top = vpl.vertical_cut(move_spot)
                         vpl_bottom = RCGraph([*vpl_bottom[:-1], ()])
                         if len(vpl_bottom.perm.trimcode) > len(vpl_bottom):
                             vpl_bottom = vpl_bottom.normalize()
 
                         vpl_bottom.zero_out_last_row()
-                        while len(vpl_bottom) > lm[i]:
+                        while len(vpl_bottom) > move_spot - 1:
                             vpl_bottom = vpl_bottom.zero_out_last_row()
+                        if len(vpl_bottom) != move_spot - 1:
+                            assert vpl_bottom.inv == 0
+                            vpl_bottom = vpl_bottom.resize(move_spot - 1)
                         # vpl_bottom = vpl_bottom.zero_out_last_row()
                         # if vpl_bottom.inv == 0:
                         #     vpl_bottom = vpl_bottom.rowrange(0, len(vpl_bottom) - 1)
