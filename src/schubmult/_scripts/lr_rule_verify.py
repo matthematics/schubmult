@@ -462,6 +462,7 @@ def main():
         task_queue = manager.Queue()
         dominant_only = True
         w0_only = False
+        base_level = True
         sep_descs = False
         indec = False
         skip_id = True
@@ -474,6 +475,8 @@ def main():
             if (not dominant_only or hw_tab.minimal_dominant_above() == hw_tab) and (not w0_only or hw_tab == w0):
                 for perm in perms:
                     if indec and is_decomposable(perm):
+                        continue
+                    if base_level and perm[0] == 1:
                         continue
                     if sep_descs:
                         if hw_tab.inv == 0 or perm.inv == 0 or max(hw_tab.descents()) <= min(perm.descents()):

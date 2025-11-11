@@ -1224,26 +1224,34 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                     vl = pull_out_var(lm[i] + 1, vpl.perm)
 
                     if lm[i] + 1 > len(vpl.perm.trimcode):
-                        rcs = {vpl.extend(1) if len(vpl[-1]) > 0 else vpl}
+                        rcs1 = {vpl.extend(1) if len(vpl[-1]) > 0 else vpl}
+                        rcs2 = {vpl.extend(1) if len(vpl[-1]) > 0 else vpl}
                     else:
-                        # vpl_bottom, vpl_top = vpl.vertical_cut(lm[i])
-                        # rcs = rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1)) 
+                        vpl_bottom, vpl_top = vpl.vertical_cut(lm[i])
+                        rcs1 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))).keys())
                         # ABOVE WORKS BUT WITH DUPLICTES
                         vpl_bottom, vpl_top = vpl.vertical_cut(lm[i] + 1)
-                        vpl_bottom = RCGraph([*vpl_bottom[:-1], ()]).normalize()
-                        if vpl_bottom.inv == 0:
-                            vpl_bottom = vpl_bottom.rowrange(0, len(vpl_bottom) - 1)
-                            
-                        while vpl_bottom.inv > 0 and len(vpl_bottom) > lm[i] - 1 and len(vpl_bottom[-1]) == 0:
+                        vpl_bottom = RCGraph([*vpl_bottom[:-1], ()])
+                        if len(vpl_bottom.perm.trimcode) > len(vpl_bottom):
+                            vpl_bottom = vpl_bottom.normalize()
+
+                        vpl_bottom.zero_out_last_row()
+                        while len(vpl_bottom) > lm[i]:
                             vpl_bottom = vpl_bottom.zero_out_last_row()
-                        rcs = rc_ring(vpl_bottom) * rc_ring(vpl_top)
+                        # vpl_bottom = vpl_bottom.zero_out_last_row()
+                        # if vpl_bottom.inv == 0:
+                        #     vpl_bottom = vpl_bottom.rowrange(0, len(vpl_bottom) - 1)
+
+                        # while vpl_bottom.inv > 0 and len(vpl_bottom) > lm[i] - 1 and len(vpl_bottom[-1]) == 0:
+                        #     vpl_bottom = vpl_bottom.zero_out_last_row()
+                        rcs2 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top)).keys())
                         # try:
                         #     while vepl.perm.inv > 0 and vepl.perm[0] == 1:
                         #         vepl = vepl.shiftup(-1)
                         # except Exception:S
                         #     pass
                         #rcs = rc_ring(vepl) * rc_ring(RCGraph([()] * (len(vpl.perm) - 1 - len(vpl.perm.trimcode))))
-
+                    rcs = rcs1.intersection(rcs2)
                     for vpl_new in rcs:
                         if vpl_new.perm not in {vv[-1] for vv in vl}:
                             continue
