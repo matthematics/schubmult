@@ -1231,19 +1231,19 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                         continue
                     
                     current_vpl = vpl
-                    move_spot = min([a + 1 for a in current_vpl.perm.descents() if a >= lm[i]])
-                    # while move_spot > 1:
-                    #     vpl_try = current_vpl.weight_reflection(move_spot - 1)
-                    #     if vpl_try.perm == current_vpl.perm:
-                    #         current_vpl = vpl_try
-                    #         move_spot -= 1
-                    #     else:
-                    #         break
-                    # assert current_vpl.perm == vpl.perm
-                    # if move_spot == 1:
-                    #     res2.add(((*vlist, current_vpl[0]), (*perm_list, vpl.perm), current_vpl.rowrange(1)))
-                    #     continue
-                    current_vpl = vpl
+                    # move_spot = min([a + 1 for a in current_vpl.perm.descents() if a >= lm[i]])
+                    # # while move_spot > 1:
+                    # #     vpl_try = current_vpl.weight_reflection(move_spot - 1)
+                    # #     if vpl_try.perm == current_vpl.perm:
+                    # #         current_vpl = vpl_try
+                    # #         move_spot -= 1
+                    # #     else:
+                    # #         break
+                    # # assert current_vpl.perm == vpl.perm
+                    # # if move_spot == 1:
+                    # #     res2.add(((*vlist, current_vpl[0]), (*perm_list, vpl.perm), current_vpl.rowrange(1)))
+                    # #     continue
+                    # current_vpl = vpl
                     move_spot = min([a + 1 for a in current_vpl.perm.descents() if a >= lm[i]])
                     vpl_bottom, vpl_top = current_vpl.vertical_cut(move_spot - 1)
                     assert len(vpl_bottom) == move_spot - 1

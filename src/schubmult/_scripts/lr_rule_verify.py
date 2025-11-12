@@ -1,139 +1,88 @@
-# LR rule verification script
-
+import argparse
 import base64
-import json
-import os
 import pickle
 import shutil
 import sys
 import time
+import os
+import json
 from multiprocessing import Event, Manager, Process
 
 
-def safe_save_recording(obj, filename):
+def json_key_rep(k):
+    """
+    Serialize an arbitrary Python object `k` to a JSON-key-safe string.
+    Uses pickle + base64 with a 'PICKLE:' prefix; falls back to repr.
+    """
+    try:
+        raw = pickle.dumps(k, protocol=pickle.HIGHEST_PROTOCOL)
+        return "PICKLE:" + base64.b64encode(raw).decode("ascii")
+    except Exception:
+        return "REPR:" + repr(k)
+
+
+def json_key_load(s):
+    """
+    Inverse of json_key_rep.
+    """
+    if not isinstance(s, str):
+        raise TypeError("json_key_load expects a string")
+    if s.startswith("PICKLE:"):
+        payload = s[len("PICKLE:") :]
+        raw = base64.b64decode(payload.encode("ascii"))
+        return pickle.loads(raw)
+    if s.startswith("REPR:"):
+        rep = s[len("REPR:") :]
+        return eval(rep)
+    try:
+        return eval(s)
+    except Exception:
+        return s
+
+
+def safe_save_recording(obj, filename, meta=None):
+    """
+    Save {meta: {...}, records: {json_key: value}} atomically.
+    """
     temp_json = f"{filename}.json.tmp"
     json_file = f"{filename}.json"
     try:
-        # keys are permutations, values are bools
+        payload = {"meta": meta or {}, "records": {json_key_rep(k): v for k, v in obj.items()}}
         with open(temp_json, "w") as f:
-            json.dump({json_key_rep(k): v for k, v in obj.items()}, f)
+            json.dump(payload, f)
         if os.path.exists(json_file):
             shutil.copy2(json_file, f"{json_file}.backup")
         os.replace(temp_json, json_file)
     except Exception:
         import traceback
 
-        # print("Error during recording JSON save:")
         traceback.print_exc()
         if os.path.exists(temp_json):
             os.remove(temp_json)
 
 
-def json_key_rep(k):
-    """
-    Serialize an arbitrary Python object `k` to a JSON-key-safe string.
-
-    Strategy:
-    - Primary: pickle the object and base64-encode the bytes, prefix with "PICKLE:".
-      This preserves the original Python object on load (uses pickle.loads).
-    - Fallback: if pickling fails, use "REPR:" + repr(k) and fall back to eval on load.
-    """
-    try:
-        # use the already-imported `pickle` module from this file
-        raw = pickle.dumps(k, protocol=pickle.HIGHEST_PROTOCOL)
-        return "PICKLE:" + base64.b64encode(raw).decode("ascii")
-    except Exception:
-        # best-effort fallback
-        return "REPR:" + repr(k)
-
-
-def json_key_load(s):
-    """
-    Inverse of json_key_rep: reconstruct the original Python object from the string.
-
-    Accepts strings produced by json_key_rep. Raises ValueError on decode/unpickle
-    failure and returns the original string if no decoding rule matches.
-    """
-    if not isinstance(s, str):
-        raise TypeError("json_key_load expects a string")
-
-    if s.startswith("PICKLE:"):
-        payload = s[len("PICKLE:") :]
-        try:
-            raw = base64.b64decode(payload.encode("ascii"))
-            return pickle.loads(raw)
-        except Exception as e:
-            raise ValueError(f"failed to unpickle json key: {e}") from e
-
-    if s.startswith("REPR:"):
-        rep = s[len("REPR:") :]
-        try:
-            # eval is only used for the fallback REPR case
-            return eval(rep)
-        except Exception as e:
-            raise ValueError(f"failed to eval REPR json key: {e}") from e
-
-    # last resort: try to eval (keeps some backwards compatibility)
-    try:
-        return eval(s)
-    except Exception:
-        # give up and return the raw string
-        return s
-
-
 def safe_load_recording(filename):
+    """
+    Load the verification JSON.
+    Returns (records_dict, meta_dict).
+    Backwards compatible with old flat mapping format (treats file as records and meta={}).
+    """
     json_file = f"{filename}.json"
     if os.path.exists(json_file):
-        try:
-            with open(json_file) as f:
-                loaded = json.load(f)
-            # reconstruct keys as Permutation objects
-            # print(f"Loaded {len(loaded)} entries from {json_file}")
-            dct = {}
-            for k, v in loaded.items():
-                tp = json_key_load(k)
-                dct[tp] = v
-            return dct
-        except Exception:
-            # print(f"Recording JSON load failed: {e}")
-            raise
-    else:
-        print(f"No recording file {json_file} found.")
-    return {}
-
-
-# def cache_saver(lock, filename, stop_event, sleep_time=5):
-#     last_saved_results_len_seen = -1
-#     while not stop_event.is_set():
-#         new_len = len(shared_dict)
-#         if new_len > last_saved_results_len_seen:
-#             # print("Saving results to", filename, "with", new_len, "entries at ", time.ctime())
-#             last_saved_results_len_seen = new_len
-#             with lock:
-#                 cache_copy = {k: shared_dict[k] for k in shared_dict.keys()}
-#             safe_save(cache_copy, filename)
-#         time.sleep(sleep_time)
-#     with lock:
-#         cache_copy = {k: shared_dict[k] for k in shared_dict.keys()}
-#     safe_save(cache_copy, filename)
-#     # print("Cache saver process exiting.")
-
-
-def recording_saver(shared_recording_dict, lock, verification_filename, stop_event, sleep_time=5):
-    last_verification_len_seen = -1
-    while not stop_event.is_set():
-        new_verification_len = len(shared_recording_dict)
-        if new_verification_len > last_verification_len_seen:
-            last_verification_len_seen = new_verification_len
-            # print("Saving verification to ", verification_filename, " with ", new_verification_len, "entries at ", time.ctime())
-            with lock:
-                recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
-            safe_save_recording(recording_copy, verification_filename)
-        time.sleep(sleep_time)
-    with lock:
-        recording_copy = {k: shared_recording_dict[k] for k in shared_recording_dict.keys()}
-    safe_save_recording(recording_copy, verification_filename)
-    # print("Recording saver process exiting.")
+        with open(json_file) as f:
+            loaded = json.load(f)
+        if isinstance(loaded, dict) and "records" in loaded:
+            raw_records = loaded.get("records", {})
+            meta = loaded.get("meta", {}) or {}
+        else:
+            raw_records = loaded
+            meta = {}
+        dct = {}
+        for k, v in raw_records.items():
+            tp = json_key_load(k)
+            dct[tp] = v
+        return dct, meta
+    return {}, {}
 
 
 def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
@@ -327,15 +276,19 @@ def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
         from sympy import S
 
         try:
-            (u, v, n) = task_queue.get(timeout=2)
+            item = task_queue.get()
+            if item is None:
+                break
+            (key, check_val) = item
+            (u, v, w, n) = key
         except Exception:
             break  # queue empty, exit
         with lock:
-            if (u, v, n) in shared_recording_dict:
-                if shared_recording_dict[(u, v, n)] is True:
-                    # print(f"{(u, v, n)} already verified, returning.")
+            if key in shared_recording_dict:
+                if shared_recording_dict[key] is True:
+                    # print(f"{(key, check_val)} already verified, returning.")
                     continue
-                print(f"Previous failure on {(u, v, n)}, will retry.")
+                print(f"Previous failure on {key}, will retry.")
 
         good = False
         # if True:
@@ -355,69 +308,68 @@ def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
         y = GeneratingSet("y")
         z = GeneratingSet("z")
 
-        check_elem = DSx(u) * DSx(v, "z")
+        
 
-        sm0 = DSx([]).ring.zero
+        sm0 = S.Zero
         dualps = {}
-        for w in check_elem:
+        # for w in check_elem:
             # if w != u:
             #     continue
-            for v_rc in RCGraph.all_rc_graphs(v, n):
-                dualpocket = v_rc.dualpieri(u, w)
-                if len(dualpocket) > 0:
-                    dualps[w] = dualps.get(w, set())
-                    for vlist, perm_list, rc in dualpocket:
-                        # if (vlist, perm_list, rc) in dualps[w]:
-                        #     continue
+        for v_rc in RCGraph.all_rc_graphs(v, n):
+            dualpocket = v_rc.dualpieri(u, w)
+            if len(dualpocket) > 0:
+                dualps[w] = dualps.get(w, set())
+                for vlist, perm_list, rc in dualpocket:
+                    # if (vlist, perm_list, rc) in dualps[w]:
+                    #     continue
 
-                        dualps[w].add((vlist, perm_list, rc))
-                        toadd = S.One
-                        for i in range(len(vlist)):
-                            for j in range(len(vlist[i])):
-                                toadd *= y[i + 1] - z[vlist[i][j]]
-                        sm0 += toadd * rc.polyvalue(y[len(vlist) :], z) * DSx(w)
+                    dualps[w].add((vlist, perm_list, rc))
+                    toadd = S.One
+                    for i in range(len(vlist)):
+                        for j in range(len(vlist[i])):
+                            toadd *= y[i + 1] - z[vlist[i][j]]
+                    sm0 += toadd * rc.polyvalue(y[len(vlist) :], z)# * DSx(w)
 
         good = True
         ########################333
         #check_elem = check_elem.ring.from_dict({u: check_elem[u]})
         #############3
-        diff = check_elem - sm0
-        diff = DSx([]).ring.from_dict({k: sympy.sympify(vv).expand() for k, vv in diff.items() if sympy.sympify(vv).expand() != S.Zero})
+        from sympy import expand
+        diff = expand(check_val - sm0)
+        # diff = DSx([]).ring.from_dict({k: sympy.sympify(vv).expand() for k, vv in diff.items() if sympy.sympify(vv).expand() != S.Zero})
 
         try:
-            from sympy import expand
+            
 
-            assert all(expand(v99) == S.Zero for v99 in diff.values()), "Noit zor0"
-
+            # assert all(expand(v99) == S.Zero for v99 in diff.values()), "Noit zor0"
+            assert diff == S.Zero, "Noit zor0"
             good = True
         except AssertionError as e:
-            print(f"A fail {e=} {sm0=} {u=} {v=}")
+            print(f"A fail {e=} {sm0=} {u=} {v=} {w=}")
             print(f"{sm0=}")
-            print(f"{check_elem=}")
-            print("diff=")
-            for w11, v0 in check_elem.items():
-                if diff.get(w11, S.Zero).expand() == S.Zero:
-                    continue
-                print("======")
-                print("Actual")
-                print(f"{w11}: {v0.expand()}")
-                print("vs")
-                for dual in dualps.get(w11, set()):
-                    print("=================================")
-                    print(dual)
-                print(f"{w11}: {sm0.get(w11)}")
+            print(f"{diff=}")
+            # for w11, v0 in check_elem.items():
+            #     if diff.get(w11, S.Zero).expand() == S.Zero:
+            #         continue
+                # print("======")
+                # print("Actual")
+                # print(f"{w11}: {v0.expand()}")
+                # print("vs")
+            for dual in dualps.get(w, set()):
+                print("=================================")
+                print(dual)
                 print("=================************============")
+            print(f"{w}: {sm0}")
             good = False
 
         if good:
-            print(f"Success {(u, v, n)} at ", time.ctime())
+            print(f"Success {key} at ", time.ctime())
             with lock:
-                shared_recording_dict[(u, v, n)] = True
+                shared_recording_dict[key] = True
         else:
             with lock:
-                shared_recording_dict[(u, v, n)] = False
-            print(f"FAIL {(u, v, n)} at ", time.ctime())
-
+                shared_recording_dict[key] = False
+            print(f"FAIL {key} at ", time.ctime())
 
 def is_decomposable(w):
     for i in range(1, len(w) - 1):
@@ -430,24 +382,58 @@ def is_decomposable(w):
 def main():
     from schubmult import DSx, Permutation, RCGraph, RootTableau, Sx, uncode  # noqa: F401
 
-    try:
-        n = int(sys.argv[1])
-        filename = None
-        verification_filename = None
-        num_processors = int(sys.argv[2])
-        if len(sys.argv) > 3:
-            filename = sys.argv[3]
-            verification_filename = filename + ".verification"
-        else:
-            print("No verification filename provided, not saving results to disk.", file=sys.stderr)
+    parser = argparse.ArgumentParser(description="LR rule verification")
+    parser.add_argument("n", type=int)
+    parser.add_argument("num_processors", type=int)
+    parser.add_argument("filename", nargs="?", help="base filename for verification output (json will be filename.json)")
+    # three-state options: mutually exclusive for each bool so we can detect "not provided"
+    def bool_group(pref, default=None):
+        g = parser.add_mutually_exclusive_group()
+        g.add_argument(f"--{pref.replace('_','-')}", dest=pref, action="store_true", help=f"enable {pref}")
+        g.add_argument(f"--no-{pref.replace('_','-')}", dest=pref, action="store_false", help=f"disable {pref}")
+        parser.set_defaults(**{pref: default})
 
-    except (IndexError, ValueError):
-        print("Usage: lr_rule_verify n num_processors <filename>", file=sys.stderr)
-        print("filename.verification.json is used for loading/saving verification results if provided", file=sys.stderr)
-        sys.exit(1)
+    # defaults used when neither CLI nor file meta specify
+    defaults = {
+        "dominant_only": True,
+        "w0_only": False,
+        "base_level": False,
+        "sep_descs": False,
+        "irreducible": True,
+        "skip_id": True,
+    }
+
+    bool_group("dominant_only", None)
+    bool_group("w0_only", None)
+    bool_group("base_level", None)
+    bool_group("sep_descs", None)
+    bool_group("irreducible", None)
+    bool_group("skip_id", None)
+
+    args = parser.parse_args()
+    n = args.n
+    num_processors = args.num_processors
+    filename = args.filename
+    verification_filename = None
+    if filename:
+        verification_filename = filename + ".verification"
+
+    # Load recording and meta from JSON (if present)
+    loaded_recording = {}
+    loaded_meta = {}
+    if verification_filename is not None:
+        loaded_recording, loaded_meta = safe_load_recording(verification_filename)
+
+    # Merge meta: CLI args override file meta; file meta overrides defaults
+    meta_config = {}
+    for k in defaults:
+        arg_val = getattr(args, k)
+        if arg_val is not None:
+            meta_config[k] = bool(arg_val)
+        else:
+            meta_config[k] = bool(loaded_meta.get(k, defaults[k]))
 
     perms = Permutation.all_permutations(n)
-
     perms.sort(key=lambda p: (p.inv, p.trimcode))
 
     with Manager() as manager:
@@ -455,45 +441,72 @@ def main():
         lock = manager.Lock()
         stop_event = Event()
 
-        # Load recording dict from JSON only
-        if verification_filename is not None:
-            loaded_recording = safe_load_recording(verification_filename)
-            if loaded_recording:
-                shared_recording_dict.update(loaded_recording)
+        # preload records from file only (not meta)
+        if verification_filename is not None and loaded_recording:
+            shared_recording_dict.update(loaded_recording)
 
-            recording_saver_proc = Process(target=recording_saver, args=(shared_recording_dict, lock, verification_filename, stop_event))
+        # start saver (pass meta so saved JSON includes it)
+        if verification_filename is not None:
+            recording_saver_proc = Process(
+                target=recording_saver, args=(shared_recording_dict, lock, verification_filename, stop_event, meta_config)
+            )
             recording_saver_proc.start()
 
         task_queue = manager.Queue()
-        dominant_only = True
-        w0_only = False
-        base_level = False
-        sep_descs = False
-        indec = False
-        skip_id = True
+        # load runtime flags from meta_config
+        dominant_only = meta_config["dominant_only"]
+        w0_only = meta_config["w0_only"]
+        base_level = meta_config["base_level"]
+        sep_descs = meta_config["sep_descs"]
+        irreducible = meta_config["irreducible"]
+        skip_id = meta_config["skip_id"]
+
         w0 = Permutation.w0(n)
-        print("### TEMP TEST GROUP ACTION ONLY###")
+        if irreducible:
+            print("Only verifying irreducible RC graphs.")
+        if dominant_only:
+            print("Only verifying dominant multipliers.")
+        if w0_only:
+            print("Only verifying w0 RC.")
+        if sep_descs:
+            print("Testing only separated descents.")
+        if skip_id:
+            print("Skipping identity.")
+
+        # queue population (unchanged logic), but skip enqueuing items already True in shared_recording_dict
         for hw_tab in perms:
             if skip_id and hw_tab.inv == 0:
                 continue
-            if indec and is_decomposable(hw_tab):
+            if irreducible and is_decomposable(hw_tab):
                 continue
             if (not dominant_only or hw_tab.minimal_dominant_above() == hw_tab) and (not w0_only or hw_tab == w0):
                 for perm in perms:
-                    if indec and is_decomposable(perm):
+                    if irreducible and is_decomposable(perm):
                         continue
                     if base_level and perm[0] == 1:
                         continue
                     if sep_descs:
                         if hw_tab.inv == 0 or perm.inv == 0 or max(hw_tab.descents()) <= min(perm.descents()):
+                            key = (hw_tab, perm, n)
+                            if shared_recording_dict.get(key) is True:
+                                continue
                             task_queue.put((hw_tab, perm, n))
                     else:
-                        task_queue.put((hw_tab, perm, n))
+                        check_elem = DSx(hw_tab) * DSx(perm, "z")
+                        keys = set(check_elem.keys())
+                        for w in keys:
+                            val = check_elem[w]
+                            key = (hw_tab, perm, w, n)
+                            if shared_recording_dict.get(key) is True:
+                                continue
+                            task_queue.put((key, val))
+                        for w in keys:
+                            del check_elem[w]
 
-        # Start fixed number of workers
+        # Start fixed number of workers and place sentinels so they exit cleanly
         workers = []
-
         for _ in range(num_processors):
+            task_queue.put(None)  # sentinel
             p = Process(target=worker, args=(n, shared_recording_dict, lock, task_queue))
             p.start()
             workers.append(p)
@@ -502,10 +515,10 @@ def main():
 
         # Signal savers to exit
         stop_event.set()
-        # cache_saver_proc.join()
         if verification_filename is not None:
             recording_saver_proc.join()
-        # print("Run finished.")
+
+        # report results
         print_failures = True
         if print_failures:
             if any(v is False for v in shared_recording_dict.values()):
@@ -522,3 +535,52 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def recording_saver(shared_recording_dict, lock, verification_filename, stop_event, meta=None, sleep_time=10):
+    """
+    Background process that periodically snapshots `shared_recording_dict` and
+    writes it to `verification_filename`. The lock is held only briefly to
+    snapshot keys; the potentially slow file I/O and proxy lookups are done
+    outside the lock so workers are not blocked.
+    """
+    last_verification_len_seen = -1
+    while not stop_event.is_set():
+        try:
+            new_verification_len = len(shared_recording_dict)
+        except Exception:
+            new_verification_len = last_verification_len_seen
+
+        if new_verification_len > last_verification_len_seen:
+            last_verification_len_seen = new_verification_len
+            print("Saving verification to", verification_filename, "with", new_verification_len, "entries at", time.ctime(), flush=True)
+
+            # Snapshot keys quickly while holding the lock
+            with lock:
+                keys = list(shared_recording_dict.keys())
+
+            # Build a stable copy outside the lock
+            recording_copy = {}
+            for k in keys:
+                try:
+                    recording_copy[k] = shared_recording_dict[k]
+                except Exception:
+                    # key vanished since snapshot; skip it
+                    continue
+
+            safe_save_recording(recording_copy, verification_filename, meta=meta or {})
+
+        time.sleep(sleep_time)
+
+    # Final save on exit: snapshot keys under lock, then copy outside
+    with lock:
+        keys = list(shared_recording_dict.keys())
+
+    recording_copy = {}
+    for k in keys:
+        try:
+            recording_copy[k] = shared_recording_dict[k]
+        except Exception:
+            continue
+
+    safe_save_recording(recording_copy, verification_filename, meta=meta or {})
