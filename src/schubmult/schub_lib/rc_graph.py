@@ -1157,7 +1157,10 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def divdiff_desc(self, desc):
         ret = set()
         the_rc = self
-        rc, row = the_rc.exchange_property(desc, return_row=True)
+        try:
+            rc, row = the_rc.exchange_property(desc, return_row=True)
+        except ValueError:
+            return ret
         if row != desc:
             return ret
         rc = rc.normalize()
