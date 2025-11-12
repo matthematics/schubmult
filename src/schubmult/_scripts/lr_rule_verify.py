@@ -403,9 +403,10 @@ def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
                 print(f"{w11}: {v0.expand()}")
                 print("vs")
                 for dual in dualps.get(w11, set()):
-                    for domp in dual:
-                        print(domp)
+                    print("=================================")
+                    print(dual)
                 print(f"{w11}: {sm0.get(w11)}")
+                print("=================************============")
             good = False
 
         if good:
