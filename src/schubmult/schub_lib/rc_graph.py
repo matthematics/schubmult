@@ -1218,7 +1218,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
         for i in range(len(lm)):
             res2 = set()
-            for vlist, perm_list, self_0 in res:
+            for vlist, self_0 in res:
                 vp = self_0
 
                 vpl_list = vp.divdiff_perm(cycle(lm[i] + 1, cn1w[i] - lm[i]))
@@ -1293,7 +1293,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         if len(lm) == len(cn1w):
             return res
         res2 = set()
-        for vlist, perm_list, self_0 in res:
+        for vlist, self_0 in res:
             vp = self_0
             vpl_list = vp.divdiff_perm(c)
             if len(vpl_list) == 0:

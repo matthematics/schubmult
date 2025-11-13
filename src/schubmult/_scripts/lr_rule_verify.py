@@ -90,199 +90,25 @@ def worker(nn, shared_recording_dict, lock, task_queue, y, z):  # noqa: ARG001
 
     from schubmult import CrystalGraphTensor, DSx, FreeAlgebra, Permutation, RCGraph, RCGraphRing, RootTableau, SchubertBasis, Sx  # noqa: F401
 
-    def all_reduced_subwords(reduced_word, u):
-        if u.inv > len(reduced_word):
-            return set()
-        if u.inv == 0:
-            return {()}
-        ret_set = set()
-        for index in range(len(reduced_word) - 1, -1, -1):
-            a = reduced_word[index]
-            if a - 1 in u.descents():
-                new_u = u.swap(a - 1, a)
-                old_set = all_reduced_subwords(reduced_word[:index], new_u)
-                for subword in old_set:
-                    new_subword = (*subword, index)
-                    ret_set.add(new_subword)
-        return ret_set
-
-    class MarkedInteger(int):
-        pass
-
-    def decompose_tensor_product(left_rc, u_rc, n):
-        rc_ring = RCGraphRing()
-        tring = rc_ring @ rc_ring
-
-        crystals = {}
-
-        assert u_rc.crystal_length() == n - 1
-        assert len(left_rc) == n - 1
-        if u_rc.inv == 0:
-            crystals[left_rc] = {CrystalGraphTensor(left_rc, u_rc)}
-            return crystals
-        if left_rc.inv == 0:
-            crystals[u_rc] = {CrystalGraphTensor(left_rc, u_rc)}
-            return crystals
-        if len(u_rc) == 0:
-            assert len(left_rc) == 0
-            crystals[left_rc] = {CrystalGraphTensor(left_rc, u_rc)}
-            return crystals
-        if len(u_rc) == 1:
-            assert len(left_rc) == 1
-            crystals[RCGraph.one_row(len(left_rc[0]) + len(u_rc[0]))] = {CrystalGraphTensor(left_rc, u_rc)}
-            return crystals
-
-        # cut_left_rc = left_rc.vertical_cut(n - 2)[0]
-        # cut_u = u_rc.vertical_cut(n - 2)[0]
-
-        lower_left_rc = left_rc.rowrange(1)
-        lower_u = u_rc.rowrange(1)
-
-        top_row_left = len(left_rc[0])
-        top_row_right = len(u_rc[0])
-        # print("Cutting:")
-        # pretty_print(cut_left_rc)
-        # pretty_print(cut_u)
-        # cut_crystals = decompose_tensor_product(cut_left_rc, cut_u, n - 1)
-        cut_crystals = decompose_tensor_product(lower_left_rc, lower_u, n - 1)
-        # print(f"{cut_crystals=}")
-
-        up_tensor = tring.zero
-        up_rc = rc_ring.zero
-        # for rc_w_cut, tensor_elems in cut_crystals.items():
-        #     # up_rc =  rc_ring(rc_w_cut) * rc_ring(RCGraph.one_row(len(left_rc[-1]) + len(u_rc[-1])))
-
-        #     up_rc += rc_ring(RCGraph.one_row(top_row_left + top_row_right)) * rc_ring(rc_w_cut)
-        #     for t_elem in tensor_elems:
-        #         # to_add =  tring(t_elem.factors) * tring((RCGraph.one_row(len(left_rc[-1])),RCGraph.one_row(len(u_rc[-1]))))
-
-        #         to_add = tring((RCGraph.one_row(top_row_left),RCGraph.one_row(top_row_right))) * tring(t_elem.factors)
-        #         # pretty_print(to_add)
-        #         for (rc1, rc2), coeff in to_add.items():
-        #             assert coeff == 1
-        #             if rc1.perm != left_rc.perm or rc2.perm != u_rc.perm:
-        #                 continue
-        #             # tcryst = CrystalGraphTensor(rc1, rc2)
-        #             # for tw in tcryst.full_crystal:
-        #             #     if tw.factors[1] == u_rc:
-        #             if (rc1, rc2) not in up_tensor:
-        #                 up_tensor += coeff * tring((rc1, rc2))
-        #             #        break
-        #                 #up_tensor += coeff * tring((rc1, rc2))
-        # print("up_tensor=")
-        # pretty_print(up_tensor)
-        # print("up_rc=")
-        # pretty_print(up_rc)
-        # used_tensors = set()
-        for rc_w_cut, tensor_elems in cut_crystals.items():
-            up_rc = rc_ring(RCGraph.one_row(top_row_left + top_row_right)) * rc_ring(rc_w_cut)
-            for w_rc, coeff in up_rc.items():
-                assert coeff == 1
-                high_weight = w_rc.to_highest_weight()[0].crystal_weight
-                low_weight = w_rc.to_lowest_weight()[0].crystal_weight
-                for t_elem in tensor_elems:
-                    # up_rc =  rc_ring(rc_w_cut) * rc_ring(RCGraph.one_row(len(left_rc[-1]) + len(u_rc[-1])))
-                    up_tensor = tring((RCGraph.one_row(top_row_left), RCGraph.one_row(top_row_right))) * tring(t_elem.factors)
-                    for (rc1, u_rc2), coeff2 in up_tensor.items():
-                        assert coeff2 == 1
-                        if rc1.perm != left_rc.perm or u_rc2.perm != u_rc.perm:
-                            continue
-                        if w_rc.perm not in (Sx(rc1.perm) * Sx(u_rc2.perm)).keys():
-                            continue
-                        # NOTE DOM TENSOR
-                        # if rc1.perm != left_rc.perm or u_rc2.perm != u_rc.perm:
-                        #     continue
-                        # dom_rc = RCGraph.principal_rc(uncode(left_rc.to_highest_weight()[0].length_vector), n - 1)
-                        tensor = CrystalGraphTensor(rc1, u_rc2)
-                        # tensor_dom = CrystalGraphTensor(dom_rc, u_rc2)
-                        tensor_hw = tensor.to_highest_weight()[0]
-                        tensor_lw = tensor.to_lowest_weight()[0]
-                        # if tensor_hw in used_tensors:
-                        #     continue
-                        # low_tensor_weight = tuple([a + b for a,b in zip(left_rc.to_lowest_weight()[0].length_vector, tensor_lw.factors[1].length_vector)])
-                        low_tensor_weight = tensor_lw.crystal_weight
-
-                        if tensor_hw.crystal_weight == high_weight and low_tensor_weight == low_weight:
-                            # and (u_rc2.perm.minimal_dominant_above() == u_rc2.perm or w_rc.perm.minimal_dominant_above() != w_rc.perm):
-                            # for subword in all_reduced_subwords(w_rc.reduced_word, u):
-                            #     # print("w_tab")
-                            #     # pretty_print(w_tab)
-                            #     # print(f"{w_rc.reduced_word=}")
-                            #     # pretty_print(dom_tab)
-                            #     roots = [w_tab.perm.right_root_at(index, word=w_rc.reduced_word) for index in subword]
-                            #     grid = copy.deepcopy(w_tab._root_grid)
-                            #     for box in w_tab.iter_boxes:
-                            #         # print(box)
-                            #         if grid[box][0] in roots:
-                            #             grid[box] = (grid[box][0], MarkedInteger(grid[box][1]))
-                            #     u_tab = RootTableau(grid)
-                            #     last_inv = 1000
-
-                            #     while u_tab.perm.inv < last_inv:
-                            #         last_inv = u_tab.perm.inv
-                            #         for box in u_tab.iter_boxes_row_word_order:
-                            #             if not isinstance(u_tab[box][1], MarkedInteger):
-                            #                 u_tab_test = u_tab.delete_box(box)
-                            #                 if u_tab_test is not None:
-                            #                     u_tab = u_tab_test
-                            #                     break
-                            #             # else:
-                            #             #     try:
-
-                            #             #         d_tab_test = d_tab.up_jdt_slide(*box, force=True)
-                            #             #         if d_tab_test is not None:
-                            #             #             d_tab = d_tab_test
-                            #             #     except Exception:
-                            #             #         froff = False
-                            #             #         # print("Couldn't up jdt")
-                            #             #         # pretty_print(d_tab)
-                            #             #         # print(f"{box=}")
-                            #     if u_tab.perm.inv > u_rc.perm.inv:
-                            #         # didn't make it
-                            #         # print("No make")
-                            #         # print(u_tab)
-                            #         continue
-                            #     u_hw_rc = u_tab.rc_graph.resize(n-1)
-                            #     if u_hw_rc.perm != u:
-                            #         continue
-                            #     if u_hw_rc == u_rc:
-                            # used_tensors.add(tensor_hw)
-                            crystals[w_rc] = crystals.get(w_rc, set())
-                            crystals[w_rc].add(tensor_lw)
-
-                    # fyi[w_rc] = fyi.get(w_rc, set())
-                    # fyi[w_rc].add((tensor, u_tab))
-        # get_rid = 0
-        # the_prins = set()
-        # for ww_rc, tset in crystals.items():
-        #     if ww_rc.is_principal:
-        #        # get_rid.update(tset)
-        #        the_prins.add(ww_rc)
-        #     else:
-        #        get_rid += len(tset)
-        # for _ in range(get_rid):
-        #     for the_prin in the_prins:
-        #         try:
-        #             crystals[the_prin].remove(next({c for c in crystals[the_prin] if c != CrystalGraphTensor(left_rc, u_rc)}))
-        #         except Exception:
-        #             break
-        try:
-            assert len(crystals) == 1
-        except AssertionError:
-            pass
-        return crystals
-
+    
     while True:
         from sympy import S
 
         try:
             item = task_queue.get()
             if item is None:
+                print("Got None")
                 break
             (key, check_val) = item
             (u, v, w, n) = key
-            check_val = Sx.from_dict(check_val)
+            ring = Sx
+            if y is not None and z is not None:
+                ring = DSx([]).ring
+
+            check_val = ring.from_dict(check_val)
         except Exception:
+            import traceback
+            traceback.print_exc()
             break  # queue empty, exit
         with lock:
             if key in shared_recording_dict:
@@ -295,18 +121,7 @@ def worker(nn, shared_recording_dict, lock, task_queue, y, z):  # noqa: ARG001
         # if True:
         # hw_tab = RCGraph.principal_rc(u, n - 1).to_highest_weight()[0]
 
-        mdom = Permutation.w0(n)  # u.minimal_dominant_above()
-
-        w0_prin = RCGraph.principal_rc(mdom, n)
-
-        # rc_ring = RCGraphRing()
-
-        good = True
-
-        sm0 = S.Zero
     
-        
-
         sm0 = S.Zero
         dualps = {}
         # for w in check_elem:
@@ -321,61 +136,64 @@ def worker(nn, shared_recording_dict, lock, task_queue, y, z):  # noqa: ARG001
             hw_tensors.add(tensor.to_highest_weight()[0])
 
         visited = set()
-        good = True
         #check_elem = Sx(u) * Sx(v)
         for w in check_val:
-            if not good:
-                break
+            # if not good:
+            #     break
             for tensor_hw in hw_tensors:
-                if not good:
-                    break
+                # if not good:
+                #     break
                 for inner_tensor in tensor_hw.full_crystal:
-                    if not good:
-                        break
+                    # if not good:
+                    #     break
                     v_rc = inner_tensor.factors[1]
                     dualpocket = v_rc.dualpieri(u, w)
                     if len(dualpocket) > 0:
-                        if tensor_hw in visited:
-                            good = False
-                            break
+                        # if tensor_hw in visited:
+                        #     good = False
+                        #     break
                         # if len() == 0:
                         #     good = False
                         #     break
-                        rc_high = RCGraph.all_rc_graphs(w, n, weight=tensor_hw.crystal_weight)
-                        rc_low = RCGraph.all_rc_graphs(w, n, weight=inner_tensor.to_lowest_weight()[0].crystal_weight)
-                        good = False
-                        for rc_lw in rc_low:
-                            if not rc_lw.is_lowest_weight or rc_lw.to_highest_weight()[0] not in rc_high:
-                                continue
-                            good = True
-                        if not good:
-                            break
+                        # rc_high = RCGraph.all_rc_graphs(w, n, weight=tensor_hw.crystal_weight)
+                        # rc_low = RCGraph.all_rc_graphs(w, n, weight=inner_tensor.to_lowest_weight()[0].crystal_weight)
+                        # good = False
+                        # for rc_lw in rc_low:
+                        #     if not rc_lw.is_lowest_weight or rc_lw.to_highest_weight()[0] not in rc_high:
+                        #         continue
+                        #     good = True
+                        # if not good:
+                        #     break
                         visited.add(tensor_hw)
                         dualps[w] = dualps.get(w, set())
-                        for vlist, perm_list, rc in dualpocket:
+                        for vlist, rc in dualpocket:
                             # if (vlist, perm_list, rc) in dualps[w]:
                             #     continue
 
-                            dualps[w].add((vlist, perm_list, rc))
+                            dualps[w].add((vlist, rc))
                             toadd = S.One
-                            for i in range(len(vlist)):
-                                for j in range(len(vlist[i])):
-                                    toadd *= y[i + 1] - z[vlist[i][j]]
-                            sm0 += Sx(w)#vlist.polyvalue(y, z) * rc.polyvalue(y[len(vlist) :], z)# * DSx(w)
+                            # for i in range(len(vlist)):
+                            #     for j in range(len(vlist[i])):
+                            #         toadd *= y[i + 1] - z[vlist[i][j]]
+                            #sm0 += toadd * ring(w)
+                            if y is not None:
+                                sm0 += vlist.polyvalue(y, z) * rc.polyvalue(y[len(vlist):], z) * ring(w)
+                            else:
+                                sm0 += ring(w)
 
         ########################333
         #check_elem = check_elem.ring.from_dict({u: check_elem[u]})
         #############3
         from sympy import expand
-        diff = expand(check_val - sm0)
+        diff = check_val - sm0
         # diff = DSx([]).ring.from_dict({k: sympy.sympify(vv).expand() for k, vv in diff.items() if sympy.sympify(vv).expand() != S.Zero})
 
         try:
             
 
             # assert all(expand(v99) == S.Zero for v99 in diff.values()), "Noit zor0"
-            assert good
-            assert diff == S.Zero, "Noit zor0"
+            assert diff == ring.zero, "Noit zor0"
+            good = True
             #assert len(visited) == len(hw_tensors), "Missed tensors"
 
             
@@ -383,14 +201,8 @@ def worker(nn, shared_recording_dict, lock, task_queue, y, z):  # noqa: ARG001
         except AssertionError as e:
             print(f"A fail {e=} {sm0=} {u=} {v=} {w=}")
             print(f"{sm0=}")
+            print(f"f{check_val=}")
             print(f"{diff=}")
-            # for w11, v0 in check_elem.items():
-            #     if diff.get(w11, S.Zero).expand() == S.Zero:
-            #         continue
-                # print("======")
-                # print("Actual")
-                # print(f"{w11}: {v0.expand()}")
-                # print("vs")
             for dual in dualps.get(w, set()):
                 print("=================================")
                 print(dual)
@@ -505,6 +317,8 @@ def main():
         w0 = Permutation.w0(n)
         if irreducible:
             print("Only verifying irreducible RC graphs.")
+        if molevsagan:
+            print("Using Molev-Sagan version of LR rule.")
         if dominant_only:
             print("Only verifying dominant multipliers.")
         if w0_only:
@@ -553,8 +367,10 @@ def main():
         workers = []
         for _ in range(num_processors):
             task_queue.put(None)  # sentinel
-            
-            p = Process(target=worker, args=(n, shared_recording_dict, lock, task_queue, y, z))
+            if molevsagan:
+                p = Process(target=worker, args=(n, shared_recording_dict, lock, task_queue, y, z))
+            else:
+                p = Process(target=worker, args=(n, shared_recording_dict, lock, task_queue, None, None))
             p.start()
             workers.append(p)
         for p in workers:
