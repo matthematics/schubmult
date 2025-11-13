@@ -3,7 +3,7 @@
 if __name__ == "__main__":
     import sys
 
-    from schubmultschub_lib.rc_graph import *
+    from schubmult import *
     from sympy import pretty_print
 
     from schubmult import *

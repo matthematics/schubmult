@@ -1,5 +1,5 @@
-from schubmultschub_lib.rc_graph import RCGraph
-from schubmultschub_lib.rc_graph_ring import RCGraphRing
+from schubmult import RCGraph
+from schubmult import RCGraphRing
 from sympy import pretty_print
 
 from schubmult import ASx, Permutation

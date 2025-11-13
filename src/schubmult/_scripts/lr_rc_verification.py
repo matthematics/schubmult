@@ -16,7 +16,7 @@ from sympy import pretty_print
 
 
 def reload_modules(dct, n_jobs=None):
-    # from schubmultschub_lib.rc_graph_module import RCGraph, ASx
+    # from schubmult import RCGraph, ASx
 
     # def reconstruct_one(k, v):
     #     key = eval(k)  # tuple
@@ -63,7 +63,7 @@ def safe_save(obj, filename, save_json_backup=True):
     temp_json = f"{filename}.json.tmp"
     json_file = f"{filename}.json"
     try:
-        from schubmultschub_lib.rc_graph_module import TensorModule
+        from schubmult import TensorModule
 
         with open(temp_json, "w") as f:
             json.dump(
@@ -268,7 +268,7 @@ def worker(shared_recording_dict, lock, task_queue):
 
 
 def main():
-    from schubmultschub_lib.rc_graph import RCGraph
+    from schubmult import RCGraph
 
     from schubmult import Permutation
 
@@ -368,7 +368,7 @@ if __name__ == "__main__":
 
 
 # def reload_modules(dct, n_jobs=None):
-#     from schubmultschub_lib.rc_graph_module import RCGraph
+#     from schubmult import RCGraph
 
 #     def reconstruct_one(k, v):
 #         key = eval(k)  # tuple
@@ -390,7 +390,7 @@ if __name__ == "__main__":
 
 
 # def safe_save(obj, filename):
-#     from schubmultschub_lib.rc_graph_module import TensorModule
+#     from schubmult import TensorModule
 
 #     temp_filename = f"{filename}.tmp"
 #     try:
@@ -440,7 +440,7 @@ if __name__ == "__main__":
 # def worker(args):
 #      shared_recording_dict, lock, perm = args
 #     from schubmult import ASx
-#     from schubmultschub_lib.rc_graph_module import try_lr_module
+#     from schubmult import try_lr_module
 
 #     with lock:
 #         if perm in shared_recording_dict:

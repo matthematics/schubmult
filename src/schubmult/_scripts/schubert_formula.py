@@ -1,8 +1,8 @@
 import sys
 
-from schubmultabc import x
-from schubmultrings import FA, Sx, WordBasis
-from schubmultschub_lib.rc_graph_module import RCGraph, RCGraphModule, TensorModule
+from schubmult import x
+from schubmult import FA, Sx, WordBasis
+from schubmult import RCGraph, RCGraphModule, TensorModule
 
 from schubmult import ASx, Permutation
 

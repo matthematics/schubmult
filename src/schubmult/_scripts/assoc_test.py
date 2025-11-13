@@ -10,12 +10,12 @@ if __name__ == "__main__":
     import itertools
     import sys
 
-    from schubmult.abc import x
+    from schubmult import x
     from symengine import S
     from sympy import pretty_print
 
     from schubmult import Permutation, RCGraph, RCGraphRing
-    # from schubmultutils.perm_utils import artin_sequences
+    # from schubmult.utils.perm_utils import artin_sequences
 
     n = int(sys.argv[1])
 

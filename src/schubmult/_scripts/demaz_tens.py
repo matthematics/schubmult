@@ -1,8 +1,8 @@
 import itertools
 
-from schubmultschub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
-from schubmultschub_lib.rc_graph import RCGraph
-from schubmultschub_lib.rc_graph_ring import RCGraphRing
+from schubmult import CrystalGraph, CrystalGraphTensor
+from schubmult import RCGraph
+from schubmult import RCGraphRing
 
 from schubmult import Permutation
 

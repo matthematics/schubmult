@@ -12,12 +12,12 @@ from functools import cache
 from json import dump, load
 from multiprocessing import Event, Lock, Manager, Process, cpu_count
 
-#from schubmultschub_lib.rc_graph_ring import tensor_to_highest_weight2
+#from schubmult import tensor_to_highest_weight2
 from joblib import Parallel, delayed
 
 
 def reload_modules(dct, n_jobs=None):
-    # from schubmultschub_lib.rc_graph_module import RCGraph, ASx
+    # from schubmult import RCGraph, ASx
 
     # def reconstruct_one(k, v):
     #     key = eval(k)  # tuple
@@ -64,7 +64,7 @@ def safe_save(obj, filename, save_json_backup=True):
     temp_json = f"{filename}.json.tmp"
     json_file = f"{filename}.json"
     try:
-        from schubmultschub_lib.rc_graph_module import TensorModule
+        from schubmult import TensorModule
 
         with open(temp_json, "w") as f:
             json.dump(
@@ -242,8 +242,8 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 
 
 # def try_lr_module(perm, length=None):
-#     from schubmultschub_lib.rc_graph_ring import RCGraphRing
-#     from schubmultschub_lib.rc_graph import RCGraph
+#     from schubmult import RCGraphRing
+#     from schubmult import RCGraph
 #     from schubmult import ASx, uncode
 #     ring = RCGraphRing()
 #     tring = ring @ ring
@@ -670,7 +670,7 @@ def main():
         recording_saver_proc.start()
 
         # Create task queue and fill with perms
-        from schubmultschub_lib.rc_graph import RCGraph
+        from schubmult import RCGraph
         task_queue = manager.Queue()
         # dominant_graphs = {RCGraph.principal_rc(perm.minimal_dominant_above(), n-1) for perm in perms if perm.inv > 0 and (len(perm) - 1) <= n//2}
         dominant_only = False

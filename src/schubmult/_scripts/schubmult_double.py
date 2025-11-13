@@ -1,12 +1,12 @@
 import sys
 from functools import cached_property
 
-from schubmultschub_lib.perm_lib import split_perms
-from schubmultsymbolic import S, expand, expand_func, init_printing, simplify, sstr, sympify
-from schubmultsymmetric_polynomials import FactorialElemSym
-from schubmultutils.argparse import schub_argparse
-from schubmultutils.logging import get_logger
-from schubmultutils.perm_utils import (
+from schubmult import split_perms
+from schubmult.symbolic import S, expand, expand_func, init_printing, simplify, sstr, sympify
+from schubmult import FactorialElemSym
+from schubmult.utils.argparse import schub_argparse
+from schubmult.utils.logging import get_logger
+from schubmult import (
     add_perm_dict,
     mu_A,
     will_formula_work,
@@ -340,7 +340,7 @@ def main(argv=None):
                 if not same:
                     check_coeff_dict = {k: expand_func(expand(v)) for k, v in elem_dict.items()}
                 if args.secret:
-                    check_coeff_dict = {k: expand(v) for k, v in elem_dict.items() if expand(v,func=True) != S.Zero}
+                    check_coeff_dict = {k: expand(v) for k, v in elem_dict.items() if expand(v, func=True) != S.Zero}
             else:
                 for perm in orig_perms[1:]:
                     check_coeff_dict = schubmult_double(check_coeff_dict, perm, var2, var3)

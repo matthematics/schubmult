@@ -85,7 +85,7 @@ def safe_load_recording(filename):
     return {}, {}
 
 
-def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
+def worker(nn, shared_recording_dict, lock, task_queue, y, z):  # noqa: ARG001
     import sympy
 
     from schubmult import CrystalGraphTensor, DSx, FreeAlgebra, Permutation, RCGraph, RCGraphRing, RootTableau, SchubertBasis, Sx  # noqa: F401
@@ -281,6 +281,7 @@ def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
                 break
             (key, check_val) = item
             (u, v, w, n) = key
+            check_val = Sx.from_dict(check_val)
         except Exception:
             break  # queue empty, exit
         with lock:
@@ -298,16 +299,12 @@ def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
 
         w0_prin = RCGraph.principal_rc(mdom, n)
 
-        from schubmult import GeneratingSet
-
         # rc_ring = RCGraphRing()
 
         good = True
 
         sm0 = S.Zero
-        y = GeneratingSet("y")
-        z = GeneratingSet("z")
-
+    
         
 
         sm0 = S.Zero
@@ -315,22 +312,57 @@ def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
         # for w in check_elem:
             # if w != u:
             #     continue
+        #for v_rc in RCGraph.all_rc_graphs(v, n):
+
+        hw_tensors = set()
+        dom_rc = RCGraph.principal_rc(u, n)
         for v_rc in RCGraph.all_rc_graphs(v, n):
-            dualpocket = v_rc.dualpieri(u, w)
-            if len(dualpocket) > 0:
-                dualps[w] = dualps.get(w, set())
-                for vlist, perm_list, rc in dualpocket:
-                    # if (vlist, perm_list, rc) in dualps[w]:
-                    #     continue
+            tensor = CrystalGraphTensor(dom_rc, v_rc)
+            hw_tensors.add(tensor.to_highest_weight()[0])
 
-                    dualps[w].add((vlist, perm_list, rc))
-                    toadd = S.One
-                    for i in range(len(vlist)):
-                        for j in range(len(vlist[i])):
-                            toadd *= y[i + 1] - z[vlist[i][j]]
-                    sm0 += toadd * rc.polyvalue(y[len(vlist) :], z)# * DSx(w)
-
+        visited = set()
         good = True
+        #check_elem = Sx(u) * Sx(v)
+        for w in check_val:
+            if not good:
+                break
+            for tensor_hw in hw_tensors:
+                if not good:
+                    break
+                for inner_tensor in tensor_hw.full_crystal:
+                    if not good:
+                        break
+                    v_rc = inner_tensor.factors[1]
+                    dualpocket = v_rc.dualpieri(u, w)
+                    if len(dualpocket) > 0:
+                        if tensor_hw in visited:
+                            good = False
+                            break
+                        # if len() == 0:
+                        #     good = False
+                        #     break
+                        rc_high = RCGraph.all_rc_graphs(w, n, weight=tensor_hw.crystal_weight)
+                        rc_low = RCGraph.all_rc_graphs(w, n, weight=inner_tensor.to_lowest_weight()[0].crystal_weight)
+                        good = False
+                        for rc_lw in rc_low:
+                            if not rc_lw.is_lowest_weight or rc_lw.to_highest_weight()[0] not in rc_high:
+                                continue
+                            good = True
+                        if not good:
+                            break
+                        visited.add(tensor_hw)
+                        dualps[w] = dualps.get(w, set())
+                        for vlist, perm_list, rc in dualpocket:
+                            # if (vlist, perm_list, rc) in dualps[w]:
+                            #     continue
+
+                            dualps[w].add((vlist, perm_list, rc))
+                            toadd = S.One
+                            for i in range(len(vlist)):
+                                for j in range(len(vlist[i])):
+                                    toadd *= y[i + 1] - z[vlist[i][j]]
+                            sm0 += Sx(w)#vlist.polyvalue(y, z) * rc.polyvalue(y[len(vlist) :], z)# * DSx(w)
+
         ########################333
         #check_elem = check_elem.ring.from_dict({u: check_elem[u]})
         #############3
@@ -342,8 +374,12 @@ def worker(nn, shared_recording_dict, lock, task_queue):  # noqa: ARG001
             
 
             # assert all(expand(v99) == S.Zero for v99 in diff.values()), "Noit zor0"
+            assert good
             assert diff == S.Zero, "Noit zor0"
-            good = True
+            #assert len(visited) == len(hw_tensors), "Missed tensors"
+
+            
+            
         except AssertionError as e:
             print(f"A fail {e=} {sm0=} {u=} {v=} {w=}")
             print(f"{sm0=}")
@@ -401,6 +437,7 @@ def main():
         "sep_descs": False,
         "irreducible": True,
         "skip_id": True,
+        "molevsagan": False,
     }
 
     bool_group("dominant_only", None)
@@ -409,6 +446,7 @@ def main():
     bool_group("sep_descs", None)
     bool_group("irreducible", None)
     bool_group("skip_id", None)
+    bool_group("molevsagan", None)
 
     args = parser.parse_args()
     n = args.n
@@ -460,6 +498,9 @@ def main():
         sep_descs = meta_config["sep_descs"]
         irreducible = meta_config["irreducible"]
         skip_id = meta_config["skip_id"]
+        molevsagan = meta_config["molevsagan"]
+
+        
 
         w0 = Permutation.w0(n)
         if irreducible:
@@ -492,22 +533,28 @@ def main():
                                 continue
                             task_queue.put((hw_tab, perm, n))
                     else:
-                        check_elem = DSx(hw_tab) * DSx(perm, "z")
-                        keys = set(check_elem.keys())
-                        for w in keys:
-                            val = check_elem[w]
-                            key = (hw_tab, perm, w, n)
-                            if shared_recording_dict.get(key) is True:
-                                continue
-                            task_queue.put((key, val))
-                        for w in keys:
-                            del check_elem[w]
+                        if molevsagan:
+                            check_elem = DSx(hw_tab) * DSx(perm, "z")
+                        else:
+                            check_elem = Sx(hw_tab) * Sx(perm)
+                        #keys = set(check_elem.keys())
+                        #for w in keys:
+                        val = check_elem
+                        #key = (hw_tab, perm, w, n)
+                        key = (hw_tab, perm, None, n)
+                        if shared_recording_dict.get(key) is True:
+                            continue
+                        task_queue.put((key, dict(val)))
+                        # for w in keys:
+                        #     del check_elem[w]
 
         # Start fixed number of workers and place sentinels so they exit cleanly
+        from schubmult import y, z
         workers = []
         for _ in range(num_processors):
             task_queue.put(None)  # sentinel
-            p = Process(target=worker, args=(n, shared_recording_dict, lock, task_queue))
+            
+            p = Process(target=worker, args=(n, shared_recording_dict, lock, task_queue, y, z))
             p.start()
             workers.append(p)
         for p in workers:

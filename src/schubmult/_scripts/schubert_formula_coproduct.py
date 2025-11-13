@@ -1,12 +1,12 @@
 import math
 import sys
 
-from schubmultabc import x
-from schubmultrings import FA, WordBasis
-from schubmultrings.free_algebra_basis import SchubertBasis
-from schubmultschub_lib.rc_graph_module import RCGraph, RCGraphModule, TensorModule, all_fa_degree
-from schubmultsymbolic import S, expand_seq
-from schubmultutils.perm_utils import artin_sequences
+from schubmult import x
+from schubmult import FA, WordBasis
+from schubmult.free_algebra_basis import SchubertBasis
+from schubmult import RCGraph, RCGraphModule, TensorModule, all_fa_degree
+from schubmult.symbolic import S, expand_seq
+from schubmult.utils.perm_utils import artin_sequences
 
 from schubmult import ASx, Permutation, Sx, uncode
 

@@ -1,4 +1,4 @@
-from schubmultschub_lib.rc_graph import RCGraph
+from schubmult import RCGraph
 from sympy import pretty_print
 
 

@@ -1,15 +1,15 @@
 import itertools
 
-from schubmultschub_lib.crystal_graph import CrystalGraph, CrystalGraphTensor
-from schubmultschub_lib.rc_graph import RCGraph
-from schubmultschub_lib.rc_graph_ring import RCGraphRing
+from schubmult import CrystalGraph, CrystalGraphTensor
+from schubmult import RCGraph
+from schubmult import RCGraphRing
 
 from schubmult import *
 
 if __name__ == "__main__":
     import sys
 
-    from schubmultutils.perm_utils import elem_sym_perms
+    from schubmult.utils.perm_utils import elem_sym_perms
     from sympy import pretty_print
 
     n = int(sys.argv[1])

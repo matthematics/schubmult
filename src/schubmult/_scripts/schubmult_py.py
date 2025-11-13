@@ -1,7 +1,7 @@
 import sys
 
-from schubmultsymbolic import sstr, sympify
-from schubmultutils.argparse import schub_argparse
+from schubmult import sstr, sympify
+from schubmult.utils.argparse import schub_argparse
 
 from schubmult import Permutation, mult_poly_py, permtrim, schub_coprod_py, schubmult_py, theta, uncode
 
