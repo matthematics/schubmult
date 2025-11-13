@@ -25,7 +25,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices):
 
 
 def parse_ret(lines, ascode, coprod):
-    from schubmult import permtrim, uncode
+    from schubmult import uncode
 
     ret_dict = {}
     if not coprod:
@@ -39,7 +39,7 @@ def parse_ret(lines, ascode, coprod):
                 v = int(v)
             except ValueError:
                 continue
-            ret_dict[(permtrim(literal_eval(k)) if not ascode else uncode(literal_eval(k)))] = (
+            ret_dict[((literal_eval(k)) if not ascode else uncode(literal_eval(k)))] = (
                 int(v)
             )
     else:
@@ -53,8 +53,8 @@ def parse_ret(lines, ascode, coprod):
                 v, f = vf.split(second_split)
                 k1, k2 = literal_eval(f"({second_split}{f + jn + s})")
                 if ascode:
-                    k1 = (permtrim(uncode(k1)))
-                    k2 = (permtrim(uncode(k2)))
+                    k1 = ((uncode(k1)))
+                    k2 = ((uncode(k2)))
                 k = (k1, k2)
             except ValueError:
                 print(f"{line=}")
@@ -71,12 +71,12 @@ json_files_data_args = load_json_test_names(base_dir)
 
 @pytest.mark.parametrize("json_file", json_files_data_args)
 def test_with_same_args_exec(capsys, json_file):
-    from schubmult import permtrim, uncode
+    from schubmult import uncode
     from schubmult import Permutation
 
     args = get_json(f"{base_dir}/{json_file}")
     print(f"{json_file=} {args=} input_data")
-    from schubmult.scripts.schubmult_py import main
+    from schubmult._scripts.schubmult_py import main
 
     mult = args["mult"]  # noqa: F841
     mulstring = args["mulstring"]  # noqa: F841
@@ -105,7 +105,7 @@ def test_with_same_args_exec(capsys, json_file):
         if not coprod
         else (Permutation(perms[0]) if not ascode else (uncode(perms[0])))
     )
-    input_dict = {(permtrim(perms[0])) if not ascode else (permtrim(uncode(perms[0]))): 1}
+    input_dict = {((perms[0])) if not ascode else ((uncode(perms[0]))): 1}
     indices = tuple(perms[1])
     print(f"{v_tuple=} {input_dict=} {indices=}")
     assert_dict_good(v_tuple, input_dict, ret_dict, coprod, indices)

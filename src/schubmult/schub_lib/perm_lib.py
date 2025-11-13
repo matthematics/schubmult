@@ -471,7 +471,7 @@ def longest_element(indices):
             if sl.sg(j, perm) == 0:
                 perm = perm.swap(j, j + 1)
                 did_one = True
-    return sl.permtrim(perm)
+    return perm
 
 
 def theta(perm):

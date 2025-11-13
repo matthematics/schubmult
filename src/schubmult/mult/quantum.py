@@ -7,7 +7,6 @@ from schubmult.schub_lib.perm_lib import (
     code,
     inv,
     medium_theta,
-    permtrim,
     strict_theta,
     uncode,
 )
@@ -92,8 +91,8 @@ def schubmult_q_fast(perm_dict, v, q_var=_vars.q_var):
         return perm_dict
     while th[-1] == 0:
         th.pop()
-    mu = permtrim(uncode(th))
-    vmu = permtrim(v * mu)
+    mu = uncode(th)
+    vmu = v * mu
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
     ret_dict = {}
@@ -182,7 +181,7 @@ def schubmult_q_fast(perm_dict, v, q_var=_vars.q_var):
 
 def schubmult_q(perm_dict, v):
     th = strict_theta(~v)
-    mu = permtrim(uncode(th))
+    mu = uncode(th)
     vmu = v * mu
     inv_vmu = inv(vmu)
     inv_mu = inv(mu)
@@ -271,7 +270,7 @@ def grass_q_replace(perm, k, d, n):
         if grass_rep[i] == 2:
             new_perm[k2 + pos_3] = i + 1
             pos_3 += 1
-    return tuple(permtrim(new_perm))
+    return new_perm
 
 
 def to_two_step(perm, k1, k2, n):

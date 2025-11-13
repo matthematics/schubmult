@@ -41,30 +41,6 @@ def test_expr_trans_parabolic():
     assert expand(schub.as_polynomial() - expr) == S.Zero
 
 
-# def test_subs():
-#     from schubmult.symbolic import expand, S
-#     from schubmult import QDSx, GeneratingSet
-#     x = GeneratingSet("x")
-#     z = GeneratingSet("z")
-#     perm = [4, 1, 3, 2]
-#     old = x[3]
-#     new = x[1]
-#     A = QDSx(perm,"z").subs(old, new).as_polynomial()
-#     B = QDSx(perm,"z").as_polynomial().subs(old, new)
-#     assert expand(A - B) == S.Zero
-#     old = z[1]
-#     new = 3
-#     print(f"{perm=}")
-#     A = QDSx(perm,"z").subs(old, new).expand(deep=False)
-#     print(f"{perm=}")
-#     B = QDSx(perm,"z").as_polynomial().subs(old, new)
-#     print(f"{perm=}")
-#     C = expand(A.as_polynomial() - B)
-#     print(f"{C=}")
-#     quality = (C == S.Zero)
-#     assert quality
-    
-
 def test_associative():
     """
     Test associative on some large perms

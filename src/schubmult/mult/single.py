@@ -3,8 +3,6 @@ from functools import cached_property
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.perm_lib import (
     Permutation,
-    inv,
-    permtrim,
     theta,
     uncode,
 )
@@ -88,8 +86,8 @@ def schubmult_py(perm_dict, v):
         return perm_dict
     mu = uncode(th)
     vmu = v * mu
-    inv_vmu = inv(vmu)
-    inv_mu = inv(mu)
+    inv_vmu = vmu.inv
+    inv_mu = mu.inv
     ret_dict = {}
     while th[-1] == 0:
         th.pop()
@@ -101,13 +99,13 @@ def schubmult_py(perm_dict, v):
                 mx_th[index] = max(mx_th[index], th[index] - vdiff)
 
     for u, val in perm_dict.items():
-        inv_u = inv(u)
+        inv_u = u.inv
         vpathsums = {Permutation(u): {Permutation([1, 2]): val}}
 
         for index in range(len(th)):
             newpathsums = {}
             for up in vpathsums:
-                inv_up = inv(up)
+                inv_up = up.inv
                 newperms = elem_sym_perms(
                     up,
                     min(mx_th[index], inv_mu - inv_vmu - (inv_up - inv_u)),
@@ -141,8 +139,8 @@ def schubmult_py_down(perm_dict, v):
         return perm_dict
     mu = uncode(th)
     vmu = v * mu
-    inv_vmu = inv(vmu)
-    inv_mu = inv(mu)
+    inv_vmu = vmu.inv
+    inv_mu = mu.inv
     ret_dict = {}
     while th[-1] == 0:
         th.pop()
@@ -154,13 +152,13 @@ def schubmult_py_down(perm_dict, v):
                 mx_th[index] = max(mx_th[index], th[index] - vdiff)
 
     for u, val in perm_dict.items():
-        inv_u = inv(u)
+        inv_u = u.inv
         vpathsums = {Permutation(u): {Permutation([1, 2]): val}}
 
         for index in range(len(th)):
             newpathsums = {}
             for up in vpathsums:
-                inv_up = inv(up)
+                inv_up = up.inv
                 newperms = elem_sym_perms_op(
                     up,
                     min(mx_th[index], inv_mu - inv_vmu - (inv_up - inv_u)),
@@ -201,7 +199,7 @@ def schub_coprod_py(perm, indices):
     #logger.debug(f"{kperm.code}*{mperm.code}")
     coeff_dict = schubmult_py(coeff_dict, mperm)
 
-    inv_kperm = inv(kperm)
+    inv_kperm = kperm.inv
     inverse_kperm = ~kperm
     # total_sum = 0
     for perm, val in coeff_dict.items():
@@ -209,7 +207,7 @@ def schub_coprod_py(perm, indices):
             continue
         # pperm = [*perm]
         downperm = perm * inverse_kperm
-        if inv(downperm) == inv(perm) - inv_kperm:
+        if downperm.inv == perm.inv - inv_kperm:
             flag = True
             for i in range(N):
                 if downperm[i] > N:
@@ -217,7 +215,7 @@ def schub_coprod_py(perm, indices):
                     break
             if not flag:
                 continue
-            firstperm = permtrim(list(downperm[0:N]))
-            secondperm = permtrim([downperm[i] - N for i in range(N, len(downperm))])
+            firstperm = downperm[0:N]
+            secondperm = Permutation([downperm[i] - N for i in range(N, len(downperm))])
             ret_dict[(firstperm, secondperm)] = val
     return ret_dict

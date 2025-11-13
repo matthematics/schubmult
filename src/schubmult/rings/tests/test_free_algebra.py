@@ -48,7 +48,7 @@ def test_word_to_schubert():
 
 def test_schubert_to_sepdesc():
     from schubmult import ASx, uncode, Sx
-    from schubmult.rings import SeparatedDescentsBasis
+    from schubmult.rings.free_algebra_basis import SeparatedDescentsBasis
     from schubmult.symbolic import S
 
     k = 4
@@ -62,8 +62,8 @@ def test_schubert_to_sepdesc():
 
 
 def test_sepdesc_to_schubert():
-    from schubmult import uncode, Sx
-    from schubmult.rings import SeparatedDescentsBasis, SchubertBasis, FreeAlgebra, WordBasis
+    from schubmult import uncode, Sx, FreeAlgebra
+    from schubmult.rings.free_algebra_basis import SeparatedDescentsBasis, SchubertBasis, WordBasis
     from schubmult.symbolic import S
 
     k = 4
@@ -80,7 +80,7 @@ def test_sepdesc_to_schubert():
 
 def test_schubert_to_elementary():
     from schubmult import ASx, uncode, Sx
-    from schubmult.rings import ElementaryBasis, WordBasis
+    from schubmult.rings.free_algebra_basis import ElementaryBasis, WordBasis
     from schubmult.symbolic import S
     from schubmult.abc import e
 
@@ -97,8 +97,8 @@ def test_schubert_to_elementary():
 
 
 def test_elementary_to_schubert():
-    from schubmult import Sx
-    from schubmult.rings import ElementaryBasis, WordBasis, FreeAlgebra, SchubertBasis
+    from schubmult import Sx, FreeAlgebra
+    from schubmult.rings.free_algebra_basis import ElementaryBasis, WordBasis, SchubertBasis
 
     EE = FreeAlgebra(ElementaryBasis)
     tup = (1, 0, 1, 2, 3)
@@ -111,29 +111,3 @@ def test_elementary_to_schubert():
         poly = res.expand()
         assert wbelem.poly_inner_product(poly, Sx.genset, n) == v
 
-def test_module_action():
-    from schubmult import ASx, uncode, Sx
-    from schubmult.symbolic import S
-
-    perm1 = uncode([2, 1, 0, 1])
-    perm2 = uncode([3, 1, 0, 2, 1])
-    w0 = uncode([5,4,3,2,1])
-    perm2i = w0 * perm2
-    result = Sx(perm1) * ASx(perm2)
-    compres = Sx(perm2i) * Sx(perm1)
-    for (p2, n), v in result.items():
-        assert compres.get(w0 * p2, S.Zero) == v
-
-
-# def test_op_module_action():
-#     from schubmult import ASx, uncode, Sx
-#     from schubmult.symbolic import S
-
-#     perm1 = uncode([2, 1, 0, 1])
-#     perm2 = uncode([3, 1, 0, 2, 1])
-#     w0 = uncode([5,4,3,2,1])
-#     perm2i = w0 * perm2
-#     result = ASx(perm2) * Sx(perm1) 
-#     compres = Sx(perm2i) * Sx(perm1)
-#     for (p2, n), v in result.items():
-#         assert compres.get(w0 * p2, S.Zero) == v

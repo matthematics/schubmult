@@ -1,9 +1,9 @@
 import sys
 
-from schubmult import sstr, sympify
+from schubmult.symbolic import sstr, sympify
 from schubmult.utils.argparse import schub_argparse
 
-from schubmult import Permutation, mult_poly_py, permtrim, schub_coprod_py, schubmult_py, theta, uncode
+from schubmult import Permutation, mult_poly_py, schub_coprod_py, schubmult_py, theta, uncode
 
 
 def main(argv=None):
@@ -54,12 +54,12 @@ def main(argv=None):
         else:
             if ascode:
                 for i in range(len(perms)):
-                    perms[i] = permtrim(uncode(perms[i]))
+                    perms[i] = Permutation(uncode(perms[i]))
             else:
-                perms = [permtrim(perm) for perm in perms]
+                perms = [Permutation(perm) for perm in perms]
             perms.sort(reverse=True, key=lambda x: sum(theta(~x)) - x.inv)
 
-            coeff_dict = {permtrim([*perms[0]]): 1}
+            coeff_dict = {Permutation([*perms[0]]): 1}
 
             for perm in perms[1:]:
                 coeff_dict = schubmult_py(coeff_dict, Permutation(perm))

@@ -33,7 +33,7 @@ def assert_dict_good(v_tuple, input_dict, ret_dict, parabolic):
 
 
 def parse_ret(lines, ascode,unformat):
-    from schubmult import uncode, permtrim
+    from schubmult import uncode
 
     ret_dict = {}
     for line in lines:
@@ -46,7 +46,7 @@ def parse_ret(lines, ascode,unformat):
             v = unformat(v)
         except ValueError:
             continue
-        ret_dict[(permtrim(literal_eval(k)) if not ascode else (uncode(literal_eval(k))))] = (
+        ret_dict[((literal_eval(k)) if not ascode else (uncode(literal_eval(k))))] = (
             unformat(v)
         )
     return ret_dict
@@ -61,11 +61,11 @@ json_files_data_args = load_json_test_names(base_dir)
 def test_with_same_args_exec(capsys, json_file):
     from schubmult.utils.test_utils import get_json, load_json_test_names
     from schubmult.utils.parsing import parse_coeff
-    from schubmult import permtrim, uncode
+    from schubmult import uncode
 
     args = get_json(f"{base_dir}/{json_file}")
     print(f"{json_file=} {args=} input_data")
-    from schubmult.scripts.schubmult_q import main
+    from schubmult._scripts.schubmult_q import main
 
     mult = args["mult"]  # noqa: F841
     mulstring = args["mulstring"]  # noqa: F841
@@ -93,9 +93,9 @@ def test_with_same_args_exec(capsys, json_file):
         ret_dict = parse_ret(lines, ascode, unformat[disp_mode])
     elif ascode:
         ret_dict = {tuple(uncode(k)): v for k, v in ret_dict.items()}
-    v_tuple = permtrim(perms[1]) if not ascode else uncode(perms[1])
+    v_tuple = (perms[1]) if not ascode else uncode(perms[1])
 
-    input_dict = {permtrim(perms[0]) if not ascode else uncode(perms[0]): 1}
+    input_dict = {(perms[0]) if not ascode else uncode(perms[0]): 1}
     print(f"{v_tuple=} {input_dict=}")
     assert_dict_good(v_tuple, input_dict, ret_dict, parabolic)
 
