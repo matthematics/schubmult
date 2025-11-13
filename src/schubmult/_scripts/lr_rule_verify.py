@@ -249,7 +249,7 @@ def main():
         "sep_descs": False,
         "irreducible": True,
         "skip_id": True,
-        "molevsagan": False,
+        "molevsagan": True,
     }
 
     bool_group("dominant_only", None)
