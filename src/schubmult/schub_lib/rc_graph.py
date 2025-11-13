@@ -1200,7 +1200,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
         rc_ring = RCGraphRing()
         if mu.inv == 0:
-            return set({(RCGraph(()), (), rc) for rc in self.divdiff_perm(w)})
+            return set({(RCGraph(()), rc) for rc in self.divdiff_perm(w)})
 
         cycle = Permutation.cycle
         lm = (~mu).trimcode
@@ -1214,7 +1214,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         for i in range(len(lm), len(cn1w)):
             c = cycle(i - len(lm) + 1, cn1w[i]) * c
 
-        res = {(RCGraph(()), (), self)}
+        res = {(RCGraph(()), self)}
 
         for i in range(len(lm)):
             res2 = set()
@@ -1231,12 +1231,12 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                     if lm[i] + 1 > len(vpl.perm.trimcode):
                         if lm[i] + 1 > len(vpl):
                             #try:
-                            res2.add((RCGraph([*vlist, ()]), (*perm_list, vpl.perm), vpl))
+                            res2.add((RCGraph([*vlist, ()]), vpl))
                             # except AssertionError:
                             #     print("Could not shiftup")
                             #     pretty_print(vlist)
                         else:
-                            res2.add((RCGraph([*vlist, ()]), (*perm_list, vpl.perm), vpl.rowrange(0, len(vpl) - 1)))
+                            res2.add((RCGraph([*vlist, ()]), vpl.rowrange(0, len(vpl) - 1)))
                         continue
                     
                     current_vpl = vpl
@@ -1287,7 +1287,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                         if vpl_new.perm not in {vv[-1] for vv in vl}:
                             continue
                         pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
-                        res2.add((RCGraph([*vlist, tuple([a + len(vlist) for a in tuple(sorted(pw,reverse=True))])]), (*perm_list, vpl.perm), vpl_new.resize(len(vpl) - 1)))
+                        res2.add((RCGraph([*vlist, tuple([a + len(vlist) for a in tuple(sorted(pw,reverse=True))])]), vpl_new.resize(len(vpl) - 1)))
 
             res = res2
         if len(lm) == len(cn1w):
@@ -1299,7 +1299,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             if len(vpl_list) == 0:
                 continue
             for vpl in vpl_list:
-                res2.add((vlist, perm_list, vpl))
+                res2.add((vlist, vpl))
         return res2
 
     @staticmethod
