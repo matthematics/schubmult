@@ -45,6 +45,26 @@ def _plactic_raising_operator(word, i):
     return tuple(word)
 
 
+def _plactic_lowering_operator(word, i):
+    """Classical f_i: change leftmost unmatched i to i+1."""
+    word = [*word]
+    opening_stack = []
+    closing_stack = []
+    for index in range(len(word)):
+        if word[index] == i + 1:
+            opening_stack.append(index)
+        elif word[index] == i:
+            if len(opening_stack) > 0:
+                opening_stack.pop()
+            else:
+                closing_stack.append(index)
+    if len(closing_stack) == 0:
+        return None  # f_i not defined
+    index_to_change = closing_stack[-1]  # leftmost unmatched i
+    word[index_to_change] = i + 1
+    return tuple(word)
+
+
 def _is_valid_outer_corner(grid: np.ndarray, i: int, j: int) -> bool:
     """
     Outer-corner predicate used by up_jdt_slide.
@@ -59,9 +79,12 @@ def _is_valid_outer_corner(grid: np.ndarray, i: int, j: int) -> bool:
     #     return False
     # if i >= rows or j >= cols:
     #     return False
-    up = grid[i - 1, j] if i - 1 >= 0 else 0 if i == 0 else None
-    left = grid[i, j - 1] if j - 1 >= 0 else 0 if j == 0 else None
-    print(f"{i, j} {up, left}")
+    if 0 <= i < rows and 0 <= j < cols and grid[i, j] is not None:
+        return False
+    if i >= rows or j >= cols:
+        return False
+    up = grid[i - 1, j] if i - 1 >= 0 else "bob" if i == 0 else None
+    left = grid[i, j - 1] if j - 1 >= 0 else "bing" if j == 0 else None
     return grid[i, j] is None and (up is not None and left is not None) and not (i == 0 and j == 0)
     # consider hole on or beyond boundary as "outer
 
@@ -447,6 +470,7 @@ class RootTableau(CrystalGraph, GridPrint):
         grid = np.empty((num_rows, num_cols), dtype=object)
         for box in P.iter_boxes:
             # RECORDING TABLEAU RED WORD
+            # for the compatible condition, seq[i] <= root[i][0]
             grid[box] = (_perm.right_root_at(P[box] - 1, word=reduced_word), compatible_seq[P[box] - 1])
 
         return cls(grid)
@@ -585,25 +609,13 @@ class RootTableau(CrystalGraph, GridPrint):
     #         cur = cur.up_jdt_slide(outer_corner)
     #     return cur
 
-    def up_jdt_slide(self, row, col, force=False, check=True):
+    def up_jdt_slide(self, row, col, check=False):
         new_grid = copy.deepcopy(self._root_grid)
         if self.rows <= row or self.cols <= col:
-            print("REISE")
             new_grid.resize((max(self.rows, row + 1), max(self.cols, col + 1)), refcheck=False)
-        if not force and not _is_valid_outer_corner(new_grid, row, col):
+        if not _is_valid_outer_corner(new_grid, row, col):
             raise ValueError("Can only slide from valid outer corner")
-        # new_grid[row, col] = None
-        if force:
-            print("BANGINGFORCE MAYBE DO SOME DELETION")
-            sput_tab = self.delete_box((row, col))
-            eg_spot = self.eg_grid[row, col]
-            if sput_tab is None:
-                print("Could not delete")
-            new_grid = copy.deepcopy(sput_tab._root_grid)
-            for box2 in self.iter_boxes_row_word_order:
-                if new_grid[box2] is not None:
-                    if self.eg_grid[box2] > eg_spot:
-                        new_grid[box2] = sput_tab.eg_root(self.eg_grid[box2] - 1)
+
 
         def _recurse():
             nonlocal row, col, new_grid
@@ -643,14 +655,9 @@ class RootTableau(CrystalGraph, GridPrint):
         new_grid[row, col] = None
         ret = RootTableau(new_grid)
         if check:
-            try:
-                assert ret.rc_graph == self.rc_graph, "up_jdt_slide does not preserve RC graph"
-                assert ret.weight_tableau == self.weight_tableau, "up_jdt_slide does not preserve tableau shape"
-            except AssertionError as e:
-                print(e)
-                return None
+            assert ret.rc_graph == self.rc_graph, "up_jdt_slide does not preserve RC graph"
+            assert ret.weight_tableau == self.weight_tableau, "up_jdt_slide does not preserve tableau shape"
         # assert self.edelman_greene_invariant == ret.edelman_greene_invariant
-        print("CLARKGABLE")
         return ret
 
     def down_jdt_slide(self, row, col, check=False):
@@ -747,10 +754,9 @@ class RootTableau(CrystalGraph, GridPrint):
     @property
     def iter_outer_corners(self):
         new_grid = copy.deepcopy(self._root_grid)
-        new_grid.resize((self.rows + 1, self.cols + 1), refcheck=False)
-        for i in range(self.rows + 1):
-            for j in range(self.cols + 1):
-                if (new_grid[i, j] is None or i >= self.rows or j >= self.cols) and _is_valid_outer_corner(new_grid, i, j):
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if _is_valid_outer_corner(new_grid, i, j):
                     yield (i, j)
 
     @property
@@ -852,6 +858,21 @@ class RootTableau(CrystalGraph, GridPrint):
             word.append(self[box][0])
         return tuple(word)
 
+    @property
+    def rc_graph(self):
+        """Reconstruct the RC-graph from the root tableau."""
+        reduced_word = self.reduced_word
+        compatible_seq = self.compatible_sequence
+
+        # Build rows: group compatible sequence by value
+        rows = []
+        max_letter = max(compatible_seq) if compatible_seq else 0
+        for letter in range(1, max_letter + 1):
+            row = tuple(sorted([reduced_word[i] for i in range(len(compatible_seq)) if compatible_seq[i] == letter], reverse=True))
+            rows.append(row)
+
+        return RCGraph(rows)
+
     def right_root_at(self, i):
         return self.eg_root(self.eg_word[i])
 
@@ -864,84 +885,42 @@ class RootTableau(CrystalGraph, GridPrint):
 
     def raising_operator(self, i):
         """Crystal raising operator e_i on the root tableau"""
-        row = i
         rc = self.rc_graph
-        if row >= len(rc):
+        # if row >= len(rc):
+        #     return None
+        # row_i = [*rc[row - 1]]
+        # row_ip1 = [*rc[row]]
+
+        # # pair the letters
+        # pairings = []
+        # unpaired = []
+        # unpaired_b = [*row_ip1]
+
+        # for letter in row_i:
+        #     st = [letter2 for letter2 in unpaired_b if letter2 > letter]
+        #     if len(st) == 0:
+        #         unpaired.append(letter)
+        #     else:
+        #         pairings.append((letter, min(st)))
+        #         unpaired_b.remove(min(st))
+        # if len(unpaired_b) == 0:
+        #     return None
+        # a = max(unpaired_b)
+        # s = 0
+        # while a + s + 1 in row_ip1:
+        #     s += 1
+
+        # if a + s < row:
+        #     return None
+        # new_row_ip1 = [let for let in row_ip1 if let != a]
+        # new_row_i = sorted([a + s, *row_i], reverse=True)
+        # ret_rc = RCGraph([*rc[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *rc[row + 1 :]])
+        ret_rc = rc.raising_operator(i)
+        if ret_rc is None or ret_rc.perm != rc.perm:
             return None
-        row_i = [*rc[row - 1]]
-        row_ip1 = [*rc[row]]
-
-        # pair the letters
-        pairings = []
-        unpaired = []
-        unpaired_b = [*row_ip1]
-
-        for letter in row_i:
-            st = [letter2 for letter2 in unpaired_b if letter2 > letter]
-            if len(st) == 0:
-                unpaired.append(letter)
-            else:
-                pairings.append((letter, min(st)))
-                unpaired_b.remove(min(st))
-        if len(unpaired_b) == 0:
-            return None
-        a = max(unpaired_b)
-        s = 0
-        while a + s + 1 in row_ip1:
-            s += 1
-
-        if a + s < row:
-            return None
-        new_row_ip1 = [let for let in row_ip1 if let != a]
-        new_row_i = sorted([a + s, *row_i], reverse=True)
-        ret_rc = RCGraph([*rc[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *rc[row + 1 :]])
-        if ret_rc.perm != rc.perm:
-            return None
-
-        # assert retmap.edelman_greene_invariant == self.edelman_greene_invariant
-
-        # box_list = []
-        # for box in retmap.iter_boxes_row_word_order:
-        #     root = retmap[box][0]
-        #     # find root
-        #     box2 = next(iter([box3 for box3 in self.iter_boxes if self[box3][0] == root]))
-        #     box_list.append(box2)
-
-        # if flag:
-        #     # print("TEST")
-        #     # pretty_print(self)
-        #     # print(f"RAISE {i}")
-        #     # pretty_print(ret)
-        #     # print(f"{self.eg_row_word=}")
-        #     # print(f"{ret.eg_row_word=}")
-        #     input()
-        # correct_word = _plactic_raising_operator(self.row_word, i)
 
         ret = RootTableau.root_insert_rsk(ret_rc.perm_word, ret_rc.compatible_sequence)
 
-        # # retmap = RootTableau.root_insert_rsk(self.reduced_word, self.compatible_sequence)
-
-        # # index_to_retmap = Permutation([retmap.eg_row_word[index] + 1 for index in range(len(retmap.eg_row_word))])
-        # # index_to_ret = Permutation([ret.eg_row_word[index] + 1 for index in range(len(ret.eg_row_word))])
-        # # index_to_self = Permutation([self.eg_row_word[index] + 1 for index in range(len(ret.eg_row_word))])
-        # try_grid = copy.deepcopy(self._root_grid)
-        # # if ret.root_row_word != self.root_row_word:
-        # #     # print("Contrast")
-        # #     # print(f"{ret.root_row_word=}")
-        # #     # print(f"{self.root_row_word=}")
-        # #     # pretty_print(self)
-        # #     input()
-        # # relate order grid word grid
-
-        # for index, box in enumerate(self.iter_boxes_row_word_order):
-        #     try_grid[box] = (ret_rc.perm.right_root_at(self.recording_tableau[box], word=ret_rc.reduced_word), correct_word[index])
-        # try:
-        #     ret = RootTableau(try_grid)
-        #     return ret
-        # except Exception:
-        #     # pretty_print(self)
-        #     # print(try_grid)
-        #     raise
         did = True
         while did:
             did = False
@@ -949,34 +928,7 @@ class RootTableau(CrystalGraph, GridPrint):
                 if self._root_grid[_box] is not None:
                     ret = ret.up_jdt_slide(*_box, check=False)
                     did = True
-        # assert ret.reduced_word == ret_rc.perm_word, f"{ret.reduced_word=} {ret_rc.perm_word=}"
         return ret
-
-        # for ind in self.iter_boxes:
-        #     try_grid[ind] = (self.perm.right_root_at(self.order_grid[ind], word=ret.reduced_word), ret.compatible_sequence[self.order_grid[ind]])
-        # assert ret == RootTableau(try_grid), "raising_operator construction mismatch"
-        # for ind in np.ndindex(self._root_grid.shape):
-        #     if self._root_grid[ind] is not None:
-
-        #         # ind2 = np.where(retmap.order_grid == self.order_grid[ind])
-        #         # print(f"Found that {self.order_grid[ind]=} is at")
-        #         # print(ind2)
-        #         # print("In")
-        #         # print(f"{retmap.order_grid=}")
-        #         # print(ret.order_grid[*ind2])
-        #         try_grid[ind] = (ret.perm.right_root_at(self.order_grid[ind], word=ret.reduced_word), ret.compatible_sequence[self.order_grid[ind]])
-        # tret = RootTableau(try_grid)
-        # if any(self._root_grid[_box] is not None and ret._root_grid[_box] !=try_grid[_box] for _box in ret.iter_boxes):
-        #     # print("FYI ret")
-        #     # pretty_print(ret)
-        #     # print("tret")
-        #     # pretty_print(tret)
-        #     # print("self")
-        #     # pretty_print(self)
-        #     input()
-
-        # return ret
-        # return ret
 
     def lowering_operator(self, row):
         # RF word is just the RC word backwards
@@ -1022,39 +974,174 @@ class RootTableau(CrystalGraph, GridPrint):
                     did = True
         return ret
 
-    @property
-    def rc_graph(self):
+    def raising_operator_direct(self, i):
         """
-        Build an RCGraph from the tableau. If anything goes wrong during
-        construction, raise a RuntimeError with a helpful debug payload
-        (grid shape, a small snapshot of the grid, partial reduced/compatible
-        sequences when available, and the original traceback).
+        Direct crystal raising operator e_i that avoids RC-graph round-trip and JDT slides.
+
+        Algorithm:
+          1. Apply classical e_i to compatible sequence (changes RSK-insertion tableau)
+          2. Use RC-graph transformation once to get the new reduced word
+          3. Directly rebuild the grid: same box positions, new roots from new reduced word
+
+        The key insight: RSK-recording tableau is fixed, so box positions don't change.
+        Only the roots move (because EG-recording changes with the new reduced word).
         """
-        reduced_word = None
-        compatible_seq = None
+        # Step 1: Apply classical e_i to compatible sequence
+        new_compatible = _plactic_raising_operator(self.row_word, i)
+        if new_compatible is None:
+            return None
+
+        # Step 2: Get new reduced word via RC-graph transformation (once)
+        rc = self.rc_graph
+        row = i
+        if row >= len(rc):
+            return None
+
+        row_i = [*rc[row - 1]]
+        row_ip1 = [*rc[row]]
+
+        # Apply the pairing logic from your asfraising_operator
+        unpaired_b = [*row_ip1]
+        for letter in row_i:
+            st = [letter2 for letter2 in unpaired_b if letter2 > letter]
+            if len(st) > 0:
+                unpaired_b.remove(min(st))
+
+        if len(unpaired_b) == 0:
+            return None
+
+        a = max(unpaired_b)
+        s = 0
+        while a + s + 1 in row_ip1:
+            s += 1
+
+        if a + s < row:
+            return None
+
+        new_row_ip1 = [let for let in row_ip1 if let != a]
+        new_row_i = sorted([a + s, *row_i], reverse=True)
+        new_rc = RCGraph([*rc[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *rc[row + 1 :]])
+
+        if new_rc.perm != rc.perm:
+            return None
+
+        new_reduced_word = new_rc.perm_word
+
+        # Step 3: Build root lookup from new reduced word
+        # The set of roots is the same, but they appear at different indices in new_reduced_word
         try:
-            reduced_word, compatible_seq = _word_from_grid(self._root_grid, with_compatible_seq=True)
-            rows = []
-            if len(reduced_word) != len(compatible_seq):
-                raise ValueError(f"length mismatch: reduced_word={len(reduced_word)} compatible_seq={len(compatible_seq)}")
-            for i, a in enumerate(compatible_seq):
-                if a > len(rows):
-                    while len(rows) < a:
-                        rows.append(())
-                rows[a - 1] = (*rows[a - 1], reduced_word[i])
-            return RCGraph(tuple(rows)).normalize()
-        except Exception as exc:
-            import traceback
+            root_to_new_index = {}
+            for j in range(len(new_reduced_word)):
+                root = self.perm.right_root_at(j, word=new_reduced_word)
+                if root in root_to_new_index:
+                    # Duplicate root - this shouldn't happen in a valid reduced word
+                    return None
+                root_to_new_index[root] = j
+        except Exception:
+            return None
 
-            grid_shape = getattr(self._root_grid, "shape", None)
-            grid_snapshot = repr(getattr(self, "_root_grid", None))
+        # Step 4: Rebuild grid directly preserving the original skew shape
+        # Key insight: boxes stay in same positions (RSK-recording is fixed)
+        # Only roots and letters change
+        # IMPORTANT: Copy the original grid structure including None entries (for skew shapes)
+        new_grid = np.empty_like(self._root_grid)
+        new_grid[:] = None  # Initialize all to None to preserve skew structure
 
-            tb = traceback.format_exc()
-            raise RuntimeError(
-                "Failed to build RCGraph from RootTableau.\n"
-                f"grid.shape = {grid_shape}\n"
-                f"grid_snapshot = {grid_snapshot}\n"
-                f"reduced_word (partial) = {reduced_word}\n"
-                f"compatible_seq (partial) = {compatible_seq}\n"
-                f"traceback:\n{tb}",
-            ) from exc
+        for index, box in enumerate(self.iter_boxes_row_word_order):
+            old_root, _old_letter = self[box]
+
+            if index >= len(new_compatible):
+                # Safety check - should not happen
+                return None
+
+            new_letter = new_compatible[index]
+
+            # Find where this root appears in the new reduced word
+            if old_root not in root_to_new_index:
+                # Root disappeared - this shouldn't happen
+                return None
+
+            new_eg_index = root_to_new_index[old_root]
+            new_root = self.perm.right_root_at(new_eg_index, word=new_reduced_word)
+
+            # Sanity check: root should be the same object (just at a different position)
+            if new_root != old_root:
+                # Root mismatch - logic error
+                return None
+
+            # Validate compatibility constraint (Demazure crystal condition)
+            if new_letter > new_root[0]:
+                return None  # Invalid in Demazure crystal
+
+            new_grid[box] = (new_root, new_letter)
+
+        return RootTableau(new_grid)
+
+    def lowering_operator_direct(self, i):
+        """
+        Direct crystal lowering operator f_i (mirrors raising_operator_direct).
+        """
+        # Step 1: Apply classical f_i to compatible sequence
+        new_compatible = _plactic_lowering_operator(self.row_word, i)
+        if new_compatible is None:
+            return None
+
+        # Step 2: Get new reduced word via RC-graph transformation
+        rc = self.rc_graph
+        row = i
+        if row >= len(rc):
+            return None
+
+        row_i = [*rc[row - 1]]
+        row_ip1 = [*rc[row]]
+
+        # Apply the pairing logic from your lowering_operator
+        unpaired = []
+        unpaired_b = [*row_ip1]
+
+        for letter in row_i:
+            st = [letter2 for letter2 in unpaired_b if letter2 > letter]
+            if len(st) == 0:
+                unpaired.append(letter)
+            else:
+                unpaired_b.remove(min(st))
+
+        if len(unpaired) == 0:
+            return None
+
+        b = min(unpaired)
+        t = min([j for j in range(b) if b - j - 1 not in row_i])
+
+        if b - t < row + 1:
+            return None
+
+        new_row_i = [s for s in row_i if s != b]
+        new_row_ip1 = sorted([b - t, *row_ip1], reverse=True)
+        new_rc = RCGraph([*rc[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *rc[row + 1 :]])
+
+        if new_rc.perm != rc.perm:
+            return None
+
+        new_reduced_word = new_rc.perm_word
+
+        # Step 3: Build root lookup
+        root_to_new_index = {self.perm.right_root_at(j, word=new_reduced_word): j for j in range(len(new_reduced_word))}
+
+        # Step 4: Rebuild grid directly
+        new_grid = np.empty(self._root_grid.shape, dtype=object)
+
+        for index, box in enumerate(self.iter_boxes_row_word_order):
+            old_root, _old_letter = self[box]
+            new_letter = new_compatible[index]
+
+            new_eg_index = root_to_new_index[old_root]
+            new_root = self.perm.right_root_at(new_eg_index, word=new_reduced_word)
+
+            assert new_root == old_root, f"Root mismatch at {box}: {new_root} != {old_root}"
+
+            if new_letter > new_root[0]:
+                return None  # Invalid in Demazure crystal
+
+            new_grid[box] = (new_root, new_letter)
+
+        return RootTableau(new_grid)
