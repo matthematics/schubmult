@@ -37,7 +37,7 @@ def test_raising_operator_direct_vs_roundtrip():
                     'i': i,
                     'roundtrip': result_roundtrip,
                     'direct': result_direct,
-                    'reason': 'One returned None, other did not'
+                    'reason': f'result_roundtrip returned {result_roundtrip}, other returned {result_direct}'
                 })
                 continue
             
@@ -68,7 +68,7 @@ def test_lowering_operator_direct_vs_roundtrip():
     # Generate test cases
     for n in range(3, 6):
         for perm in Permutation.all_permutations(n):
-            rc = RCGraph.principal_rc(perm, n - 1)
+            rc = RCGraph.principal_rc(perm, n - 1).to_highest_weight()[0] # needs to be highest weight because principal is already lowest weight
             rt = RootTableau.from_rc_graph(rc)
             test_cases.append((rt, perm))
     
@@ -93,7 +93,7 @@ def test_lowering_operator_direct_vs_roundtrip():
                     'i': i,
                     'roundtrip': result_roundtrip,
                     'direct': result_direct,
-                    'reason': 'One returned None, other did not'
+                    'reason': f'result_roundtrip returned {result_roundtrip}, other returned {result_direct}'
                 })
                 continue
             
@@ -137,6 +137,28 @@ def test_direct_operator_preserves_invariants():
                 # Check EG-invariant
                 assert result.edelman_greene_invariant == rt.edelman_greene_invariant, \
                     f"EG-invariant changed: {rt.edelman_greene_invariant} -> {result.edelman_greene_invariant}"
+
+def test_original_operator_preserves_invariants():
+    """Verify that direct operators preserve the key invariants."""
+    for n in range(3, 5):
+        for perm in Permutation.all_permutations(n):
+            rc = RCGraph.principal_rc(perm, n - 1)
+            rt = RootTableau.from_rc_graph(rc)
+            
+            for i in range(1, len(perm.trimcode)):
+                result = rt.raising_operator(i)
+                if result is None:
+                    continue
+                
+                # Check invariants
+                assert result.perm == rt.perm, f"Permutation changed: {rt.perm} -> {result.perm}"
+                assert result.shape == rt.shape, f"Shape changed: {rt.shape} -> {result.shape}"
+                #assert result.rc_graph == rt.rc_graph, f"RC-graph changed"
+                
+                # Check EG-invariant
+                assert result.edelman_greene_invariant == rt.edelman_greene_invariant, \
+                    f"EG-invariant changed: {rt.edelman_greene_invariant} -> {result.edelman_greene_invariant}"
+
 
 
 def test_direct_operator_simple_case():

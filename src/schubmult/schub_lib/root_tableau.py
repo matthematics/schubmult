@@ -442,13 +442,23 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def eg_row_word(self):
-        eg_roots = [self.eg_root(index) for index in range(len(self.edelman_greene_invariant))]
-        # assert len(self.root_row_word) == len(eg_roots), f"{self.root_row_word=} {eg_roots=}"
-        try:
-            return tuple([eg_roots.index(r) for r in self.root_row_word])
-        except Exception:
-            # print(f"{self.root_row_word=} {eg_roots=} {self.edelman_greene_invariant=}")
-            raise
+        roots = self.root_row_word
+        def _word_from_right_roots(right_roots):
+            right_roots = [*right_roots]
+            word = []
+            while len(right_roots) > 0:
+                index = len(right_roots) - 1
+                while index >= 0:
+                    a, b = right_roots[index]
+                    if b == a + 1:
+                        break
+                    index -= 1
+                word.append(a)
+                right_roots = [Permutation.ref_product(a).act_root(*rr) for rr in right_roots[:index]]
+                if index + 1 < len(right_roots):
+                    right_roots.extend(right_roots[index + 1 :])
+            return tuple(reversed(word))
+        return _word_from_right_roots(roots)
 
     @property
     def shape(self):
@@ -616,7 +626,6 @@ class RootTableau(CrystalGraph, GridPrint):
         if not _is_valid_outer_corner(new_grid, row, col):
             raise ValueError("Can only slide from valid outer corner")
 
-
         def _recurse():
             nonlocal row, col, new_grid
             # _logger.debug(f"{row=} {col=}")
@@ -675,7 +684,7 @@ class RootTableau(CrystalGraph, GridPrint):
         def _recurse():
             nonlocal row, col, new_grid
             # _logger.debug(f"{row=} {col=}")
-            #  # pretty_print(RootTableau(new_grid))
+            #  # pretty_print(RootTableau(new_grid
             right = new_grid[row, col + 1] if col < self.cols - 1 else None
             # slide from left
             down = new_grid[row + 1, col] if row < self.rows - 1 else None
@@ -812,7 +821,7 @@ class RootTableau(CrystalGraph, GridPrint):
         self._hasher = tuple(tuple(tuple(b) for b in a if b is not None) for a in self._root_grid if a is not None)
         if not print_only:
             for index, box in enumerate(self.iter_boxes_row_word_order):
-                assert self[box] == (self.eg_root(self.eg_row_word[index]), self.row_word[index]), f"RootTableau init: inconsistent root at {box}: {self[box][0]=} {self=}"
+                assert self[box] == (self.eg_root(self.eg_index_word[index]), self.row_word[index]), f"RootTableau init: inconsistent root at {box}: {self[box][0]=} {self=}"
                 # assert self.perm == Permutation.ref_product(*self.grid_word), f"{self.reduced_word=} {self.grid_word=}"
                 # for index, box in enumerate(reversed(list(self.iter_boxes_row_word_order))):
                 #     assert self[box][0] == self.perm.right_root_at(index, word=list(reversed(self.grid_word)))
@@ -835,11 +844,16 @@ class RootTableau(CrystalGraph, GridPrint):
 
     @property
     def eg_grid(self):
-        boxes = {box: self.eg_row_word[index] for index, box in enumerate(self.iter_boxes_row_word_order)}
+        boxes = {box: self.eg_index_word[index] for index, box in enumerate(self.iter_boxes_row_word_order)}
         eg_grid = np.full(self._root_grid.shape, None, dtype=object)
         for box in boxes:
             eg_grid[box] = boxes[box]
         return eg_grid
+
+    @property
+    def eg_index_word(self):
+        eg_roots = [self.eg_root(i) for i in range(len(self.reduced_word))]
+        return tuple([eg_roots.index(self[box][0]) for box in self.iter_boxes_row_word_order])
 
     @property
     def row_word(self):
@@ -854,7 +868,7 @@ class RootTableau(CrystalGraph, GridPrint):
     @property
     def root_row_word(self):
         word = []
-        for box in self.iter_boxes_row_word_order:
+        for box in self.iter_boxes_root_row_word_order:
             word.append(self[box][0])
         return tuple(word)
 
@@ -874,11 +888,18 @@ class RootTableau(CrystalGraph, GridPrint):
         return RCGraph(rows)
 
     def right_root_at(self, i):
-        return self.eg_root(self.eg_word[i])
+        return self.eg_root(self.eg_index_word[i])
 
     @property
     def iter_boxes_row_word_order(self):
         for i in range(self._root_grid.shape[0] - 1, -1, -1):
+            for j in range(self._root_grid.shape[1]):
+                if self[i, j] is not None:
+                    yield (i, j)
+
+    @property
+    def iter_boxes_root_row_word_order(self):
+        for i in range(self._root_grid.shape[0]):
             for j in range(self._root_grid.shape[1]):
                 if self[i, j] is not None:
                     yield (i, j)
@@ -976,22 +997,15 @@ class RootTableau(CrystalGraph, GridPrint):
 
     def raising_operator_direct(self, i):
         """
-        Direct crystal raising operator e_i that avoids RC-graph round-trip and JDT slides.
-
-        Algorithm:
-          1. Apply classical e_i to compatible sequence (changes RSK-insertion tableau)
-          2. Use RC-graph transformation once to get the new reduced word
-          3. Directly rebuild the grid: same box positions, new roots from new reduced word
-
-        The key insight: RSK-recording tableau is fixed, so box positions don't change.
-        Only the roots move (because EG-recording changes with the new reduced word).
+        Direct crystal raising operator e_i using EG invariant tracking.
+        
+        The key: boxes stay in the same positions in the skew shape, but we need
+        to know which EG-equivalent root each box now contains after applying e_i.
         """
-        # Step 1: Apply classical e_i to compatible sequence
         new_compatible = _plactic_raising_operator(self.row_word, i)
         if new_compatible is None:
             return None
 
-        # Step 2: Get new reduced word via RC-graph transformation (once)
         rc = self.rc_graph
         row = i
         if row >= len(rc):
@@ -1000,7 +1014,6 @@ class RootTableau(CrystalGraph, GridPrint):
         row_i = [*rc[row - 1]]
         row_ip1 = [*rc[row]]
 
-        # Apply the pairing logic from your asfraising_operator
         unpaired_b = [*row_ip1]
         for letter in row_i:
             st = [letter2 for letter2 in unpaired_b if letter2 > letter]
@@ -1027,51 +1040,30 @@ class RootTableau(CrystalGraph, GridPrint):
 
         new_reduced_word = new_rc.perm_word
 
-        # Step 3: Build root lookup from new reduced word
-        # The set of roots is the same, but they appear at different indices in new_reduced_word
-        try:
-            root_to_new_index = {}
-            for j in range(len(new_reduced_word)):
-                root = self.perm.right_root_at(j, word=new_reduced_word)
-                if root in root_to_new_index:
-                    # Duplicate root - this shouldn't happen in a valid reduced word
-                    return None
-                root_to_new_index[root] = j
-        except Exception:
-            return None
+        # Compute new EG invariant for the new tableau
+        w0 = Permutation.w0(max(new_reduced_word, default=0) + 1)
+        rev_word = [len(w0) - r for r in new_reduced_word]
+        np_word = list(NilPlactic().ed_insert(*rev_word).row_word)
+        new_eg_word = tuple([len(w0) - r for r in np_word])
+        
+        # Build mapping: old EG position → new EG root
+        new_eg_roots = [self.perm.right_root_at(idx, word=new_eg_word) for idx in range(len(new_eg_word))]
 
-        # Step 4: Rebuild grid directly preserving the original skew shape
-        # Key insight: boxes stay in same positions (RSK-recording is fixed)
-        # Only roots and letters change
-        # IMPORTANT: Copy the original grid structure including None entries (for skew shapes)
         new_grid = np.empty_like(self._root_grid)
-        new_grid[:] = None  # Initialize all to None to preserve skew structure
+        new_grid[:] = None
 
         for index, box in enumerate(self.iter_boxes_row_word_order):
             old_root, _old_letter = self[box]
-
-            if index >= len(new_compatible):
-                # Safety check - should not happen
-                return None
-
             new_letter = new_compatible[index]
 
-            # Find where this root appears in the new reduced word
-            if old_root not in root_to_new_index:
-                # Root disappeared - this shouldn't happen
-                return None
+            # Get the EG position of this box in the old tableau
+            old_eg_position = self.eg_index_word[index]
+            
+            # The new root at this box is the EG root at the same EG position in the new tableau
+            new_root = new_eg_roots[old_eg_position]
 
-            new_eg_index = root_to_new_index[old_root]
-            new_root = self.perm.right_root_at(new_eg_index, word=new_reduced_word)
-
-            # Sanity check: root should be the same object (just at a different position)
-            if new_root != old_root:
-                # Root mismatch - logic error
-                return None
-
-            # Validate compatibility constraint (Demazure crystal condition)
             if new_letter > new_root[0]:
-                return None  # Invalid in Demazure crystal
+                return None
 
             new_grid[box] = (new_root, new_letter)
 
@@ -1079,14 +1071,12 @@ class RootTableau(CrystalGraph, GridPrint):
 
     def lowering_operator_direct(self, i):
         """
-        Direct crystal lowering operator f_i (mirrors raising_operator_direct).
+        Direct crystal lowering operator f_i using EG invariant tracking.
         """
-        # Step 1: Apply classical f_i to compatible sequence
         new_compatible = _plactic_lowering_operator(self.row_word, i)
         if new_compatible is None:
             return None
 
-        # Step 2: Get new reduced word via RC-graph transformation
         rc = self.rc_graph
         row = i
         if row >= len(rc):
@@ -1095,7 +1085,6 @@ class RootTableau(CrystalGraph, GridPrint):
         row_i = [*rc[row - 1]]
         row_ip1 = [*rc[row]]
 
-        # Apply the pairing logic from your lowering_operator
         unpaired = []
         unpaired_b = [*row_ip1]
 
@@ -1124,24 +1113,38 @@ class RootTableau(CrystalGraph, GridPrint):
 
         new_reduced_word = new_rc.perm_word
 
-        # Step 3: Build root lookup
-        root_to_new_index = {self.perm.right_root_at(j, word=new_reduced_word): j for j in range(len(new_reduced_word))}
+        # Compute new EG invariant
+        w0 = Permutation.w0(max(new_reduced_word, default=0) + 1)
+        rev_word = [len(w0) - r for r in new_reduced_word]
+        np_word = list(NilPlactic().ed_insert(*rev_word).row_word)
+        new_eg_word = tuple([len(w0) - r for r in np_word])
+        
+        new_eg_roots = [self.perm.right_root_at(idx, word=new_eg_word) for idx in range(len(new_eg_word))]
 
-        # Step 4: Rebuild grid directly
-        new_grid = np.empty(self._root_grid.shape, dtype=object)
+        new_grid = np.empty_like(self._root_grid)
+        new_grid[:] = None
 
         for index, box in enumerate(self.iter_boxes_row_word_order):
             old_root, _old_letter = self[box]
             new_letter = new_compatible[index]
 
-            new_eg_index = root_to_new_index[old_root]
-            new_root = self.perm.right_root_at(new_eg_index, word=new_reduced_word)
-
-            assert new_root == old_root, f"Root mismatch at {box}: {new_root} != {old_root}"
+            old_eg_position = self.eg_index_word[index]
+            new_root = new_eg_roots[old_eg_position]
 
             if new_letter > new_root[0]:
-                return None  # Invalid in Demazure crystal
+                return None
 
             new_grid[box] = (new_root, new_letter)
 
         return RootTableau(new_grid)
+
+
+def _rc_position_in_word(rc_graph, row_idx, element):
+    """
+    Find the position of an element in a specific row of the RC-graph
+    within the reduced word (reading rows left-to-right, top-to-bottom).
+    """
+    row = rc_graph[row_idx]
+    position_in_row = len(row) - 1 - row.index(element)
+    position = position_in_row + sum(len(rc_graph[row_above]) for row_above in range(row_idx))
+    return position
