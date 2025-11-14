@@ -7,6 +7,7 @@ import time
 import os
 import json
 from multiprocessing import Event, Manager, Process
+import gc
 
 
 def json_key_rep(k):
@@ -227,6 +228,99 @@ def is_decomposable(w):
     return False
 
 
+def recording_saver(shared_recording_dict, lock, verification_filename, stop_event, meta=None, sleep_time=10):
+    """
+    Background process that periodically snapshots `shared_recording_dict` and
+    writes it to `verification_filename`. The lock is held only briefly to
+    snapshot keys; the potentially slow file I/O and proxy lookups are done
+    outside the lock so workers are not blocked.
+    """
+    last_verification_len_seen = -1
+    while not stop_event.is_set():
+        try:
+            new_verification_len = len(shared_recording_dict)
+        except Exception:
+            new_verification_len = last_verification_len_seen
+
+        if new_verification_len > last_verification_len_seen:
+            last_verification_len_seen = new_verification_len
+            print("Saving verification to", verification_filename, "with", new_verification_len, "entries at", time.ctime(), flush=True)
+
+            # Snapshot keys quickly while holding the lock
+            with lock:
+                keys = list(shared_recording_dict.keys())
+
+            # Build a stable copy outside the lock
+            recording_copy = {}
+            for k in keys:
+                try:
+                    recording_copy[k] = shared_recording_dict[k]
+                except Exception:
+                    # key vanished since snapshot; skip it
+                    continue
+
+            safe_save_recording(recording_copy, verification_filename, meta=meta or {})
+
+        time.sleep(sleep_time)
+
+    # Final save on exit: snapshot keys under lock, then copy outside
+    with lock:
+        keys = list(shared_recording_dict.keys())
+
+    recording_copy = {}
+    for k in keys:
+        try:
+            recording_copy[k] = shared_recording_dict[k]
+        except Exception:
+            continue
+
+    safe_save_recording(recording_copy, verification_filename, meta=meta or {})
+
+
+def queue_producer(task_queue, perms, n, num_processors, skip_id, irreducible, base_level, sep_descs, dominant_only, w0_only, shared_recording_dict, molevsagan):
+    """Producer with periodic garbage collection."""
+    from schubmult import Permutation, DSx, Sx
+    w0 = Permutation.w0(n)
+    task_count = 0
+    
+    for hw_tab in perms:
+        if skip_id and hw_tab.inv == 0:
+            continue
+        if irreducible and is_decomposable(hw_tab):
+            continue
+        if (not dominant_only or hw_tab.minimal_dominant_above() == hw_tab) and (not w0_only or hw_tab == w0):
+            for perm in perms:
+                if irreducible and is_decomposable(perm):
+                    continue
+                if base_level and perm[0] == 1:
+                    continue
+                if sep_descs:
+                    if hw_tab.inv == 0 or perm.inv == 0 or max(hw_tab.descents()) <= min(perm.descents()):
+                        key = (hw_tab, perm, n)
+                        if shared_recording_dict.get(key) is True:
+                            continue
+                        task_queue.put((hw_tab, perm, n))
+                else:
+                    key = (hw_tab, perm, None, n)
+                    if shared_recording_dict.get(key) is True:
+                        continue
+                    if molevsagan:
+                        check_elem = DSx(hw_tab) * DSx(perm, "z")
+                    else:
+                        check_elem = Sx(hw_tab) * Sx(perm)
+                    # Process and delete keys immediately to free memory
+                    
+                    task_queue.put((key, dict(check_elem)))
+                    task_count += 1
+                    del check_elem  # ensure cleanup
+        if task_count % 100 == 0:
+            gc.collect()
+    
+    # signal workers to exit
+    for _ in range(num_processors):
+        task_queue.put(None)
+    
+
 def main():
     from schubmult import DSx, Permutation, RCGraph, RootTableau, Sx, uncode  # noqa: F401
 
@@ -247,18 +341,21 @@ def main():
         "w0_only": False,
         "base_level": False,
         "sep_descs": False,
-        "irreducible": True,
-        "skip_id": True,
-        "molevsagan": True,
+        "irreducible": False,
+        "skip_id": False,
+        "molevsagan": False,
     }
 
     bool_group("dominant_only", None)
     bool_group("w0_only", None)
     bool_group("base_level", None)
     bool_group("sep_descs", None)
-    bool_group("irreducible", None)
+    bool_group("irreducible", True)
     bool_group("skip_id", None)
     bool_group("molevsagan", None)
+
+    # Add command-line option to process subset of permutations
+    parser.add_argument("--perm-range", nargs=2, type=int, help="Process perms[start:end] only")
 
     args = parser.parse_args()
     n = args.n
@@ -329,50 +426,34 @@ def main():
             print("Skipping identity.")
 
         # queue population (unchanged logic), but skip enqueuing items already True in shared_recording_dict
-        for hw_tab in perms:
-            if skip_id and hw_tab.inv == 0:
-                continue
-            if irreducible and is_decomposable(hw_tab):
-                continue
-            if (not dominant_only or hw_tab.minimal_dominant_above() == hw_tab) and (not w0_only or hw_tab == w0):
-                for perm in perms:
-                    if irreducible and is_decomposable(perm):
-                        continue
-                    if base_level and perm[0] == 1:
-                        continue
-                    if sep_descs:
-                        if hw_tab.inv == 0 or perm.inv == 0 or max(hw_tab.descents()) <= min(perm.descents()):
-                            key = (hw_tab, perm, n)
-                            if shared_recording_dict.get(key) is True:
-                                continue
-                            task_queue.put((hw_tab, perm, n))
-                    else:
-                        if molevsagan:
-                            check_elem = DSx(hw_tab) * DSx(perm, "z")
-                        else:
-                            check_elem = Sx(hw_tab) * Sx(perm)
-                        #keys = set(check_elem.keys())
-                        #for w in keys:
-                        val = check_elem
-                        #key = (hw_tab, perm, w, n)
-                        key = (hw_tab, perm, None, n)
-                        if shared_recording_dict.get(key) is True:
-                            continue
-                        task_queue.put((key, dict(val)))
-                        # for w in keys:
-                        #     del check_elem[w]
+        
+        # Process range specified, use subset of perms
+        if args.perm_range:
+            start, end = args.perm_range
+            perms = perms[start:end]
+            print(f"Processing permutation range [{start}:{end}] ({len(perms)} perms)", flush=True)
+
+        # Start producer process to populate queue concurrently with workers
+        producer_proc = Process(
+            target=queue_producer,
+            args=(task_queue, perms, n, num_processors, skip_id, irreducible, base_level, sep_descs, dominant_only, w0_only, shared_recording_dict, molevsagan),
+        )
+        producer_proc.start()
 
         # Start fixed number of workers and place sentinels so they exit cleanly
         from schubmult import y, z
         workers = []
         for _ in range(num_processors):
-            task_queue.put(None)  # sentinel
             if molevsagan:
                 p = Process(target=worker, args=(n, shared_recording_dict, lock, task_queue, y, z))
             else:
                 p = Process(target=worker, args=(n, shared_recording_dict, lock, task_queue, None, None))
             p.start()
             workers.append(p)
+        
+        # Wait for producer to finish (it sends sentinels after all tasks)
+        producer_proc.join()
+        
         for p in workers:
             p.join()
 
@@ -398,52 +479,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-def recording_saver(shared_recording_dict, lock, verification_filename, stop_event, meta=None, sleep_time=10):
-    """
-    Background process that periodically snapshots `shared_recording_dict` and
-    writes it to `verification_filename`. The lock is held only briefly to
-    snapshot keys; the potentially slow file I/O and proxy lookups are done
-    outside the lock so workers are not blocked.
-    """
-    last_verification_len_seen = -1
-    while not stop_event.is_set():
-        try:
-            new_verification_len = len(shared_recording_dict)
-        except Exception:
-            new_verification_len = last_verification_len_seen
-
-        if new_verification_len > last_verification_len_seen:
-            last_verification_len_seen = new_verification_len
-            print("Saving verification to", verification_filename, "with", new_verification_len, "entries at", time.ctime(), flush=True)
-
-            # Snapshot keys quickly while holding the lock
-            with lock:
-                keys = list(shared_recording_dict.keys())
-
-            # Build a stable copy outside the lock
-            recording_copy = {}
-            for k in keys:
-                try:
-                    recording_copy[k] = shared_recording_dict[k]
-                except Exception:
-                    # key vanished since snapshot; skip it
-                    continue
-
-            safe_save_recording(recording_copy, verification_filename, meta=meta or {})
-
-        time.sleep(sleep_time)
-
-    # Final save on exit: snapshot keys under lock, then copy outside
-    with lock:
-        keys = list(shared_recording_dict.keys())
-
-    recording_copy = {}
-    for k in keys:
-        try:
-            recording_copy[k] = shared_recording_dict[k]
-        except Exception:
-            continue
-
-    safe_save_recording(recording_copy, verification_filename, meta=meta or {})
