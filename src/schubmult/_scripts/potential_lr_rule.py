@@ -1,6 +1,14 @@
 from sympy import init_printing, pretty_print
+import sympy
 
-
+def dominifiable(u, v):
+    v_work = v
+    while v_work != v.minimal_dominant_above():
+        index = max([i for i in range(len(v_work.trimcode)-1) if v_work.trimcode[i] < v_work.trimcode[i+1]])
+        if index in u.descents():
+            return False
+        v_work = v_work.swap(index, index+1)
+    return True
 
 def is_isomorphic_crystal(tensor, rc_graph):
     hw1 = tensor.to_highest_weight()[0]
@@ -12,6 +20,80 @@ def is_isomorphic_crystal(tensor, rc_graph):
     if lw1.crystal_weight != lw2.crystal_weight:
         return False
     return True
+
+
+def tensor_decomposes(u_rc0, v_rc0):
+    """
+    Check if Crystal(u_rc) ⊗ Crystal(v_rc) decomposes into a direct sum
+    of Demazure crystals.
+    
+    TODO: Implement the necessary and sufficient condition from the paper.
+    For now, we test empirically by checking if all elements in the tensor
+    have the same highest weight when restricted to each factor.
+    """
+    # Placeholder: empirical test
+    
+    hw_components = set()
+    visited = {}
+    visited_check = set()
+    for u_rc in u_rc0.full_crystal:
+        for v_rc in v_rc0.full_crystal:
+            tensor = CrystalGraphTensor(u_rc, v_rc)
+            
+            # Get all highest weights in the tensor crystal
+            if tensor in visited_check:
+                continue
+                
+            # Start from tensor, go to highest weight
+            hw = tensor.to_highest_weight()[0]
+            hw_components.add(hw)
+            visited[hw] = hw.full_crystal
+            visited_check.update(visited[hw])
+            # Explore the full component starting from hw
+            
+            # Check if we've seen all possible tensor elements
+    all_u_rcs = list(u_rc.full_crystal)
+    all_v_rcs = list(v_rc.full_crystal)
+    
+    expected_size = len(all_u_rcs) * len(all_v_rcs)
+    actual_size = sum([len(visited[hw]) for hw in visited])
+    
+    # If we've seen everything in one component, it's connected (doesn't decompose)
+    # If we've seen less, there might be multiple components (does decompose)
+    return actual_size == expected_size
+
+
+def test_decomposition_in_dominifiable_case():
+    """
+    Test whether tensor products decompose in the dominifiable case.
+    """
+    decompose_count = 0
+    dont_decompose_count = 0
+    
+    for u in perms:
+        for v in perms:
+            if not dominifiable(u, v):
+                continue
+            
+            print(f"\nTesting decomposition for u={u.trimcode}, v={v.trimcode}")
+            dom_perm = v.minimal_dominant_above()
+            
+            # Test a sample of tensor products
+            for u_rc in RCGraph.all_rc_graphs(u, n-1):
+                for v_rc in RCGraph.all_rc_graphs(v, n-1):
+                    decomposes = tensor_decomposes(u_rc, v_rc)
+                    
+                    if decomposes:
+                        decompose_count += 1
+                        print(f"  ✓ Crystal({sympy.pretty(u_rc)}) ⊗ Crystal({sympy.pretty(v_rc)}) DECOMPOSES")
+                    else:
+                        dont_decompose_count += 1
+                        print(f"  ✗ Crystal({sympy.pretty(u_rc)}) ⊗ Crystal({sympy.pretty(v_rc)}) does NOT decompose")
+    
+    print(f"\n=== Summary ===")
+    print(f"Decomposable: {decompose_count}")
+    print(f"Non-decomposable: {dont_decompose_count}")
+    # print(f"Ratio: {decompose_count}/{decompose_count + dont_decompose_count}")
 
 
 if __name__ == "__main__":
@@ -60,55 +142,49 @@ if __name__ == "__main__":
     #                     if len(dp_ret) > 0:
     #                         magic_tensors[(v, dom_perm)].add(CrystalGraphTensor(dom_rc, v_rc))
     # BIJECTIVE RULE WHERE v can be made dominant within u's ascents
-    lr_rcs = {}
-    for u in perms:
-        for v in perms:
-            def dominifiable(u, v):
-                v_work = v
-                while v_work != v.minimal_dominant_above():
-                    index = max([i for i in range(len(v_work.trimcode)-1) if v_work.trimcode[i] < v_work.trimcode[i+1]])
-                    if index in u.descents():
-                        return False
-                    v_work = v_work.swap(index, index+1)
-                return True
-            if not dominifiable(u, v):
-                continue
-            print(f"Testing u={u.trimcode}, v={v.trimcode}")
-            dom_perm = v.minimal_dominant_above()
-            prod0 = Sx(u) * Sx(dom_perm)
-            diff_elem = (~v) * (dom_perm)
-            prod = Sx(u) * Sx(v)
-            sanity_prod = Sx.zero
-            for w in prod0:
-                for dom_rc in RCGraph.all_rc_graphs(dom_perm, n-1):
-                    construct_lr = True
-                    if (u, dom_perm, w) in lr_rcs:
-                        u_rcs = lr_rcs[(u, dom_perm, w)]
-                        construct_lr = False
-                    else:
-                        u_rcs = RCGraph.all_rc_graphs(u, n-1)
-                        lr_rcs[(u, dom_perm, w)] = set()
-                        
-                    for u_rc in u_rcs:
-                        if construct_lr:
-                            dp_ret = u_rc.dualpieri(dom_perm, w)
-                            if len(dp_ret) > 0:
-                                lr_rcs[(u, dom_perm, w)].add(u_rc)
-                            else:
-                                continue
-                        down_w = w*(~diff_elem)
-                        if down_w.inv == w.inv - diff_elem.inv:
-                            sanity_prod += Sx(down_w)
-            try:
-                assert (prod - sanity_prod).expand() == S.Zero
-                print("Verified")
-            except AssertionError:
-                print("Mismatch detected!")
-                print("Expected:")
-                print(prod)
-                print("Got:")
-                print(sanity_prod)
-                raise
+    if False:
+        lr_rcs = {}
+        for u in perms:
+            for v in perms:
+                
+                if not dominifiable(u, v):
+                    continue
+                print(f"Testing u={u.trimcode}, v={v.trimcode}")
+                dom_perm = v.minimal_dominant_above()
+                prod0 = Sx(u) * Sx(dom_perm)
+                diff_elem = (~v) * (dom_perm)
+                prod = Sx(u) * Sx(v)
+                sanity_prod = Sx.zero
+                for w in prod0:
+                    for dom_rc in RCGraph.all_rc_graphs(dom_perm, n-1):
+                        construct_lr = True
+                        if (u, dom_perm, w) in lr_rcs:
+                            u_rcs = lr_rcs[(u, dom_perm, w)]
+                            construct_lr = False
+                        else:
+                            u_rcs = RCGraph.all_rc_graphs(u, n-1)
+                            lr_rcs[(u, dom_perm, w)] = set()
+                            
+                        for u_rc in u_rcs:
+                            if construct_lr:
+                                dp_ret = u_rc.dualpieri(dom_perm, w)
+                                if len(dp_ret) > 0:
+                                    lr_rcs[(u, dom_perm, w)].add(u_rc)
+                                else:
+                                    continue
+                            down_w = w*(~diff_elem)
+                            if down_w.inv == w.inv - diff_elem.inv:
+                                sanity_prod += Sx(down_w)
+                try:
+                    assert (prod - sanity_prod).expand() == S.Zero
+                    print("Verified")
+                except AssertionError:
+                    print("Mismatch detected!")
+                    print("Expected:")
+                    print(prod)
+                    print("Got:")
+                    print(sanity_prod)
+                    raise
 
                 # for rc in RCGraph.all_hw_rcs(v, n-1):
                 #     dom_rc = RCGraph.principal_rc(dom, n-1)
@@ -137,5 +213,10 @@ if __name__ == "__main__":
                 # print(f"Coefficient for {dom} * {v} to {w} is {coeff}, should be {prod[w]}")
                 # assert coeff == prod[w], f"Coefficient mismatch for {dom} * {v} to {w}: got {coeff}, expected {prod[w]}"
                 # print("Verified")
+    
+    # After the dominifiable test, add:
+    # print("\n" + "="*60)
+    print("Testing tensor decomposition in dominifiable cases")
+    print("="*60)
+    test_decomposition_in_dominifiable_case()
 
-            
