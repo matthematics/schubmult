@@ -30,9 +30,7 @@ if __name__ == "__main__":
     n = int(sys.argv[1])
 
     perms = Permutation.all_permutations(n)
-    # sKEW DIV DIFF WEIGHT
-    # is dual pieri Cauchy?
-    dom_perms = {perm.minimal_dominant_above() for perm in perms}
+    # dom_perms = {perm.minimal_dominant_above() for perm in perms}
     # THIS WORKS NOTE
     # for dom in dom_perms:
     #     for v in perms:
@@ -61,11 +59,18 @@ if __name__ == "__main__":
     #                     dp_ret = v_rc.dualpieri(dom_perm, w)
     #                     if len(dp_ret) > 0:
     #                         magic_tensors[(v, dom_perm)].add(CrystalGraphTensor(dom_rc, v_rc))
+    # BIJECTIVE RULE WHERE v can be made dominant within u's ascents
     for u in perms:
         for v in perms:
-            def has_separated_descents(u, v):
-                return max(v.descents(), default=0) <= min(u.descents(), default=n)
-            if not has_separated_descents(u, v):
+            def dominifiable(u, v):
+                v_work = v
+                while v_work != v.minimal_dominant_above():
+                    index = max([i for i in range(len(v_work.trimcode)-1) if v_work.trimcode[i] < v_work.trimcode[i+1]])
+                    if index in u.descents():
+                        return False
+                    v_work = v_work.swap(index, index+1)
+                return True
+            if not dominifiable(u, v):
                 continue
             print(f"Testing u={u.trimcode}, v={v.trimcode}")
             dom_perm = v.minimal_dominant_above()
@@ -73,9 +78,6 @@ if __name__ == "__main__":
             diff_elem = (~v) * (dom_perm)
             prod = Sx(u) * Sx(v)
             sanity_prod = Sx.zero
-            # for w in prod:
-            #     print(f"Checking {u} * {v} to {w}")
-            #     coeff = 0
             for w in prod0:
                 for dom_rc in RCGraph.all_rc_graphs(dom_perm, n-1):
                     for u_rc in RCGraph.all_rc_graphs(u, n-1):
