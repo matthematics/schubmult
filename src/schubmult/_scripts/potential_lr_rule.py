@@ -24,78 +24,166 @@ def is_isomorphic_crystal(tensor, rc_graph):
 
 def tensor_decomposes(u_rc0, v_rc0):
     """
-    Check if Crystal(u_rc) ⊗ Crystal(v_rc) decomposes into a direct sum
-    of Demazure crystals.
+    Returns True if Crystal(u_rc0) ⊗ Crystal(v_rc0) decomposes into 
+    a direct sum of Demazure crystals.
     
-    TODO: Implement the necessary and sufficient condition from the paper.
-    For now, we test empirically by checking if all elements in the tensor
-    have the same highest weight when restricted to each factor.
+    Method: Check if every tensor element is reachable from some highest weight.
     """
-    # Placeholder: empirical test
-    
-    hw_components = set()
-    visited = {}
-    visited_check = set()
+    # Collect all tensor elements
+    all_tensors = set()
     for u_rc in u_rc0.full_crystal:
         for v_rc in v_rc0.full_crystal:
-            tensor = CrystalGraphTensor(u_rc, v_rc)
-            
-            # Get all highest weights in the tensor crystal
-            if tensor in visited_check:
-                continue
-                
-            # Start from tensor, go to highest weight
-            hw = tensor.to_highest_weight()[0]
-            hw_components.add(hw)
-            visited[hw] = hw.full_crystal
-            visited_check.update(visited[hw])
-            # Explore the full component starting from hw
-            
-            # Check if we've seen all possible tensor elements
-    all_u_rcs = list(u_rc0.full_crystal)
-    all_v_rcs = list(v_rc0.full_crystal)
+            all_tensors.add(CrystalGraphTensor(u_rc, v_rc))
     
-    expected_size = len(all_u_rcs) * len(all_v_rcs)
-    actual_size = len(visited_check)
+    # Find all highest weight components
+    visited = set()
+    components = []
     
-    # If we've seen everything in one component, it's connected (doesn't decompose)
-    # If we've seen less, there might be multiple components (does decompose)
-    return actual_size == expected_size
+    for tensor in all_tensors:
+        if tensor in visited:
+            continue
+        
+        # Go to highest weight
+        hw = tensor.to_highest_weight()[0]
+        
+        # Get full crystal component from this highest weight
+        component = hw.full_crystal
+        components.append(hw)
+        visited.update(component)
+    
+    # Decomposes ⟺ we visited everything
+    return len(visited) == len(all_tensors)
+
+
+def is_demazure_crystal(component):
+    """
+    Check if a crystal component is actually a Demazure crystal.
+    
+    A Demazure crystal must have:
+    - Unique highest weight
+    - Unique lowest weight
+    """
+    highest_weights = set()
+    lowest_weights = set()
+    
+    for element in component:
+        # Check if this is a highest weight (all e_i return None)
+        is_hw = True
+        for i in range(1, element.crystal_length()):
+            if element.raising_operator(i) is not None:
+                is_hw = False
+                break
+        if is_hw:
+            highest_weights.add(element)
+        
+        # Check if this is a lowest weight (all f_i return None)
+        is_lw = True
+        for i in range(1, element.crystal_length()):
+            if element.lowering_operator(i) is not None:
+                is_lw = False
+                break
+        if is_lw:
+            lowest_weights.add(element)
+    
+    # Demazure crystal has exactly one highest and one lowest weight
+    return len(highest_weights) == 1 and len(lowest_weights) == 1
+
+
+def tensor_decomposes_into_demazure(u_rc0, v_rc0):
+    """
+    Returns True if Crystal(u_rc0) ⊗ Crystal(v_rc0) decomposes into 
+    a direct sum of DEMAZURE crystals.
+    
+    Checks:
+    1. All elements are reachable (components partition the tensor)
+    2. Each component is a Demazure crystal (unique highest/lowest weight)
+    """
+    # Collect all tensor elements
+    all_tensors = set()
+    for u_rc in u_rc0.full_crystal:
+        for v_rc in v_rc0.full_crystal:
+            all_tensors.add(CrystalGraphTensor(u_rc, v_rc))
+    
+    # Find all components
+    visited = set()
+    components = []
+    
+    for tensor in all_tensors:
+        if tensor in visited:
+            continue
+        
+        # Go to highest weight
+        hw = tensor.to_highest_weight()[0]
+        
+        # Get full crystal component from this highest weight
+        component = set(hw.full_crystal)
+        components.append(component)
+        visited.update(component)
+    
+    # Check 1: All elements covered (already known to pass)
+    if len(visited) != len(all_tensors):
+        return False
+    
+    # Check 2: Each component is a Demazure crystal
+    for component in components:
+        if not is_demazure_crystal(component):
+            print(f"  Component is NOT Demazure (size {len(component)})")
+            # Debug: how many highest/lowest weights?
+            hw_count = sum(1 for e in component if all(
+                e.raising_operator(i) is None 
+                for i in range(1, e.crystal_length())
+            ))
+            lw_count = sum(1 for e in component if all(
+                e.lowering_operator(i) is None 
+                for i in range(1, e.crystal_length())
+            ))
+            print(f"    Highest weights: {hw_count}")
+            print(f"    Lowest weights: {lw_count}")
+            return False
+    
+    return True
 
 
 def test_decomposition(dominifiable_case=True):
     """
-    Test whether tensor products decompose
+    Test whether tensor products decompose into Demazure crystals
     """
     decompose_count = 0
     dont_decompose_count = 0
+    non_demazure_examples = []
     
     for u in perms:
         for v in perms:
             if dominifiable_case and not dominifiable(u, v):
                 continue
             
-            # print(f"\nTesting decomposition for u={u.trimcode}, v={v.trimcode}")
-            # dom_perm = v.minimal_dominant_above()
-            
-            # Test a sample of tensor products
             for u_rc in RCGraph.all_hw_rcs(u, n-1):
                 for v_rc in RCGraph.all_hw_rcs(v, n-1):
-                    decomposes = tensor_decomposes(u_rc, v_rc)
+                    decomposes = tensor_decomposes_into_demazure(u_rc, v_rc)
                     
                     if decomposes:
                         decompose_count += 1
-                        if False:
-                            print(f"  ✓ Crystal({sympy.pretty(u_rc)}) ⊗ Crystal({sympy.pretty(v_rc)}) DECOMPOSES")
                     else:
                         dont_decompose_count += 1
-                        if False:
-                            print(f"  ✗ Crystal({sympy.pretty(u_rc)}) ⊗ Crystal({sympy.pretty(v_rc)}) does NOT decompose")
+                        non_demazure_examples.append({
+                            'u': u.trimcode,
+                            'v': v.trimcode,
+                            'u_rc': u_rc,
+                            'v_rc': v_rc
+                        })
+                        print(f"\n!!! NON-DEMAZURE COMPONENT FOUND !!!")
+                        print(f"u={u.trimcode}, v={v.trimcode}")
     
     print(f"\n=== Summary ===")
-    print(f"Decomposable: {decompose_count}")
-    print(f"Non-decomposable: {dont_decompose_count}")
-    # print(f"Ratio: {decompose_count}/{decompose_count + dont_decompose_count}")
+    print(f"Decomposes into Demazure: {decompose_count}")
+    print(f"Has non-Demazure components: {dont_decompose_count}")
+    
+    if len(non_demazure_examples) > 0:
+        print(f"\nFound {len(non_demazure_examples)} cases with non-Demazure components!")
+    else:
+        print("\nAll tensor products decompose into Demazure crystals!")
+    
+    return non_demazure_examples
 
 
 if __name__ == "__main__":
@@ -220,6 +308,6 @@ if __name__ == "__main__":
     # print("\n" + "="*60)
     print("Testing tensor decomposition in dominifiable cases")
     print("="*60)
-    test_decomposition(dominifiable_case=True)
+    #test_decomposition(dominifiable_case=True)
     test_decomposition(dominifiable_case=False)
-    
+
