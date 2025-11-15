@@ -60,6 +60,7 @@ if __name__ == "__main__":
     #                     if len(dp_ret) > 0:
     #                         magic_tensors[(v, dom_perm)].add(CrystalGraphTensor(dom_rc, v_rc))
     # BIJECTIVE RULE WHERE v can be made dominant within u's ascents
+    lr_rcs = {}
     for u in perms:
         for v in perms:
             def dominifiable(u, v):
@@ -80,12 +81,24 @@ if __name__ == "__main__":
             sanity_prod = Sx.zero
             for w in prod0:
                 for dom_rc in RCGraph.all_rc_graphs(dom_perm, n-1):
-                    for u_rc in RCGraph.all_rc_graphs(u, n-1):
-                        dp_ret = u_rc.dualpieri(dom_perm, w)
-                        if len(dp_ret) > 0:
-                            down_w = w*(~diff_elem)
-                            if down_w.inv == w.inv - diff_elem.inv:
-                                sanity_prod += Sx(down_w)
+                    construct_lr = True
+                    if (u, dom_perm, w) in lr_rcs:
+                        u_rcs = lr_rcs[(u, dom_perm, w)]
+                        construct_lr = False
+                    else:
+                        u_rcs = RCGraph.all_rc_graphs(u, n-1)
+                        lr_rcs[(u, dom_perm, w)] = set()
+                        
+                    for u_rc in u_rcs:
+                        if construct_lr:
+                            dp_ret = u_rc.dualpieri(dom_perm, w)
+                            if len(dp_ret) > 0:
+                                lr_rcs[(u, dom_perm, w)].add(u_rc)
+                            else:
+                                continue
+                        down_w = w*(~diff_elem)
+                        if down_w.inv == w.inv - diff_elem.inv:
+                            sanity_prod += Sx(down_w)
             try:
                 assert (prod - sanity_prod).expand() == S.Zero
                 print("Verified")
