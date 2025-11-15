@@ -52,8 +52,8 @@ def tensor_decomposes(u_rc0, v_rc0):
             # Explore the full component starting from hw
             
             # Check if we've seen all possible tensor elements
-    all_u_rcs = list(u_rc.full_crystal)
-    all_v_rcs = list(v_rc.full_crystal)
+    all_u_rcs = list(u_rc0.full_crystal)
+    all_v_rcs = list(v_rc0.full_crystal)
     
     expected_size = len(all_u_rcs) * len(all_v_rcs)
     actual_size = sum([len(visited[hw]) for hw in visited])
@@ -63,32 +63,34 @@ def tensor_decomposes(u_rc0, v_rc0):
     return actual_size == expected_size
 
 
-def test_decomposition_in_dominifiable_case():
+def test_decomposition(dominifiable_case=True):
     """
-    Test whether tensor products decompose in the dominifiable case.
+    Test whether tensor products decompose
     """
     decompose_count = 0
     dont_decompose_count = 0
     
     for u in perms:
         for v in perms:
-            if not dominifiable(u, v):
+            if dominifiable_case and not dominifiable(u, v):
                 continue
             
-            print(f"\nTesting decomposition for u={u.trimcode}, v={v.trimcode}")
+            # print(f"\nTesting decomposition for u={u.trimcode}, v={v.trimcode}")
             dom_perm = v.minimal_dominant_above()
             
             # Test a sample of tensor products
-            for u_rc in RCGraph.all_rc_graphs(u, n-1):
-                for v_rc in RCGraph.all_rc_graphs(v, n-1):
+            for u_rc in RCGraph.all_hw_rcs(u, n-1):
+                for v_rc in RCGraph.all_hw_rcs(v, n-1):
                     decomposes = tensor_decomposes(u_rc, v_rc)
                     
                     if decomposes:
                         decompose_count += 1
-                        print(f"  ✓ Crystal({sympy.pretty(u_rc)}) ⊗ Crystal({sympy.pretty(v_rc)}) DECOMPOSES")
+                        if False:
+                            print(f"  ✓ Crystal({sympy.pretty(u_rc)}) ⊗ Crystal({sympy.pretty(v_rc)}) DECOMPOSES")
                     else:
                         dont_decompose_count += 1
-                        print(f"  ✗ Crystal({sympy.pretty(u_rc)}) ⊗ Crystal({sympy.pretty(v_rc)}) does NOT decompose")
+                        if False:
+                            print(f"  ✗ Crystal({sympy.pretty(u_rc)}) ⊗ Crystal({sympy.pretty(v_rc)}) does NOT decompose")
     
     print(f"\n=== Summary ===")
     print(f"Decomposable: {decompose_count}")
@@ -218,5 +220,6 @@ if __name__ == "__main__":
     # print("\n" + "="*60)
     print("Testing tensor decomposition in dominifiable cases")
     print("="*60)
-    test_decomposition_in_dominifiable_case()
-
+    test_decomposition(dominifiable_case=True)
+    test_decomposition(dominifiable_case=False)
+    
