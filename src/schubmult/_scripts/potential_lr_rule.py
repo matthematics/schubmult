@@ -56,7 +56,7 @@ def tensor_decomposes(u_rc0, v_rc0):
     all_v_rcs = list(v_rc0.full_crystal)
     
     expected_size = len(all_u_rcs) * len(all_v_rcs)
-    actual_size = sum([len(visited[hw]) for hw in visited])
+    actual_size = len(visited_check)
     
     # If we've seen everything in one component, it's connected (doesn't decompose)
     # If we've seen less, there might be multiple components (does decompose)
@@ -76,7 +76,7 @@ def test_decomposition(dominifiable_case=True):
                 continue
             
             # print(f"\nTesting decomposition for u={u.trimcode}, v={v.trimcode}")
-            dom_perm = v.minimal_dominant_above()
+            # dom_perm = v.minimal_dominant_above()
             
             # Test a sample of tensor products
             for u_rc in RCGraph.all_hw_rcs(u, n-1):
