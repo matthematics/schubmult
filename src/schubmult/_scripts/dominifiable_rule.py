@@ -551,10 +551,12 @@ def is_isomorphic_crystal(tensor, rc_graph):
         return False
     return True
 
-def crystal_dom_product(dom_rc, u):
+# crystal level dominant product
+def crystal_dom_product(dom_rc, u_rc_hw):
     from schubmult import RCGraphRing, Sx
     ring = RCGraphRing()
     res = ring.zero
+    u = u_rc_hw.perm
     cheat_prod = Sx(dom_rc.perm) * Sx(u)
     # if len(cheat_prod) == 1:
     #     w = next(iter(cheat_prod))
@@ -565,18 +567,17 @@ def crystal_dom_product(dom_rc, u):
     #         return ring(w_prin)
     #     return res
     for w in cheat_prod:
-        for u_rc_hw in RCGraph.all_hw_rcs(u, n-1):
-            for u_rc in u_rc_hw.full_crystal:
-                    dp_ret = u_rc.dualpieri(dom_rc.perm, w)
-                    if len(dp_ret) > 0:
-                        pants =  CrystalGraphTensor(dom_rc, u_rc).to_lowest_weight()[0]
-                        wt = pants.to_lowest_weight()[0].crystal_weight
-                        wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n-1, weight=wt) if rc.is_lowest_weight]
-                        wp_rc = wp_rcs[0]
-                    
-                        if wp_rc.to_highest_weight()[0].crystal_weight == pants.to_highest_weight()[0].crystal_weight:
-                            res += ring(wp_rc)
-                        # NOT ACTUALLY UNIQUE RC
+        for u_rc in u_rc_hw.full_crystal:
+                dp_ret = u_rc.dualpieri(dom_rc.perm, w)
+                if len(dp_ret) > 0:
+                    pants =  CrystalGraphTensor(dom_rc, u_rc).to_lowest_weight()[0]
+                    wt = pants.to_lowest_weight()[0].crystal_weight
+                    wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n-1, weight=wt) if rc.is_lowest_weight]
+                    wp_rc = wp_rcs[0]
+                
+                    if wp_rc.to_highest_weight()[0].crystal_weight == pants.to_highest_weight()[0].crystal_weight:
+                        res += ring(wp_rc.to_highest_weight()[0])
+                    # NOT ACTUALLY UNIQUE RC
                         
     return res
 
@@ -647,7 +648,9 @@ if __name__ == "__main__":
             prod = Sx(u) * Sx(v)
             diff_elem = (~v) * (dom_perm)
             sanity_prod = Sx.zero
-            rc_prod = crystal_dom_product(RCGraph.principal_rc(dom_perm, n-1), u)
+            rc_prod = rc_ring.zero
+            for u_hw_rc in RCGraph.all_hw_rcs(u, n-1):
+                rc_prod += crystal_dom_product(RCGraph.principal_rc(dom_perm, n-1), u_hw_rc)
             pretty_print(rc_prod)
             sanity_prod = sum([coeff * Sx(rc.perm) for rc, coeff in rc_prod.items()])
 
