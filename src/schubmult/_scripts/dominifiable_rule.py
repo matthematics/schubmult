@@ -1,19 +1,6 @@
 from sympy import init_printing, pretty_print
 import sympy
 
-from schubmult.schub_lib.perm_lib import Permutation
-from schubmult.schub_lib.rc_graph import RCGraph
-from schubmult.schub_lib.crystal_graph import CrystalGraphTensor
-from schubmult.rings.schubert_ring import Sx
-from schubmult.rings.rc_graph_ring import RCGraphRing
-
-init_printing()
-
-# n = 3  # Rank
-
-# Get all permutations
-
-
 def dominifiable(u, v):
     v_work = v
     while v_work != v.minimal_dominant_above():
@@ -23,16 +10,6 @@ def dominifiable(u, v):
         v_work = v_work.swap(index, index+1)
     return True
 
-def is_isomorphic_crystal(tensor, rc_graph):
-    hw1 = tensor.to_highest_weight()[0]
-    hw2 = rc_graph.to_highest_weight()[0]
-    if hw1.crystal_weight != hw2.crystal_weight:
-        return False
-    lw1 = hw1.to_lowest_weight()[0]
-    lw2 = hw2.to_lowest_weight()[0]
-    if lw1.crystal_weight != lw2.crystal_weight:
-        return False
-    return True
 
 
 def tensor_decomposes(u_rc0, v_rc0):
@@ -563,305 +540,263 @@ def test_transposed_decomposition(dominifiable_case=True):
     
     return dont_decompose_count == 0
 
+def is_isomorphic_crystal(tensor, rc_graph):
+    hw1 = tensor.to_highest_weight()[0]
+    hw2 = rc_graph.to_highest_weight()[0]
+    if hw1.crystal_weight != hw2.crystal_weight:
+        return False
+    lw1 = hw1.to_lowest_weight()[0]
+    lw2 = hw2.to_lowest_weight()[0]
+    if lw1.crystal_weight != lw2.crystal_weight:
+        return False
+    return True
 
-def test_divided_difference_preserves_crystal():
-    """
-    Test that divided difference preserves crystal structure in dominifiable case.
-    
-    The divided difference should:
-    1. Not affect the u part (by construction)
-    2. Map crystals bijectively: w_dom_crystal → w_crystal
-    3. Preserve crystal weights
-    """
-    print("\n" + "="*60)
-    print("Testing Divided Difference Preserves Crystal Structure")
-    print("="*60)
-    
-    for u in perms:
-        for v in perms:
-            if not dominifiable(u, v):
-                continue
-            
-            dom_perm = v.minimal_dominant_above()
-            diff_elem = (~v) * dom_perm
-            
-            # For each w_dom in u * dom_perm
-            prod_dom = Sx(u) * Sx(dom_perm)
-            
-            for w_dom in prod_dom:
-                w = w_dom * (~diff_elem)
+def crystal_dom_product(dom_rc, u):
+    from schubmult import RCGraphRing, Sx
+    ring = RCGraphRing()
+    res = ring.zero
+    cheat_prod = Sx(dom_rc.perm) * Sx(u)
+    # if len(cheat_prod) == 1:
+    #     w = next(iter(cheat_prod))
+    #     pants =  CrystalGraphTensor(dom_rc, u_rc_lw).to_lowest_weight()[0]
+    #     wt = pants.to_lowest_weight()[0].crystal_weight
+    #     w_prin = RCGraph.principal_rc(w, len(dom_rc))
+    #     if w_prin.crystal_weight == wt:
+    #         return ring(w_prin)
+    #     return res
+    for u_rc_lw in RCGraph.all_lw_rcs(u, n-1):
+        for u_rc in u_rc_lw.full_crystal:
+            for w in cheat_prod:
+                dp_ret = u_rc.dualpieri(dom_rc.perm, w)
+                if len(dp_ret) > 0:
+                    pants =  CrystalGraphTensor(dom_rc, u_rc).to_lowest_weight()[0]
+                    wt = pants.to_lowest_weight()[0].crystal_weight
+                    wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n-1, weight=wt) if rc.is_lowest_weight]
+                    wp_rc = wp_rcs[0]
                 
-                if w.inv != w_dom.inv - diff_elem.inv:
-                    continue
-                
-                # For each w_dom_rc crystal
-                for w_dom_rc in RCGraph.all_hw_rcs(w_dom, n-1):
-                    w_dom_weight = w_dom_rc.crystal_weight
-                    w_dom_crystal_size = len(list(w_dom_rc.full_crystal))
-                    
-                    # Apply divided difference to get w_rcs
-                    w_rcs = w_dom_rc.divdiff_perm(diff_elem)
-                    
-                    if len(w_rcs) == 0:
-                        print(f"WARNING: divdiff kills w_dom_rc for w_dom={w_dom.trimcode}")
-                        continue
-                    
-                    print(f"\nw_dom={w_dom.trimcode} -> w={w.trimcode}")
-                    print(f"  divdiff produces {len(w_rcs)} w_rcs")
-                    
-                    # Check crystal sizes match
-                    for w_rc in w_rcs:
-                        w_crystal_size = len(list(w_rc.full_crystal))
-                        w_rc_weight = w_rc.crystal_weight
-                        
-                        print(f"    w_rc: weight={w_rc_weight}, crystal_size={w_crystal_size}")
-                        
-                        if w_crystal_size == w_dom_crystal_size:
-                            print(f"      ✓ Crystal sizes match: {w_crystal_size}")
-                            
-                            # Check if weights match
-                            if w_rc_weight == w_dom_weight:
-                                print(f"      ✓ Crystal weights match: {w_dom_weight}")
-                                
-                                # Check if they're isomorphic
-                                if is_isomorphic_crystal(w_dom_rc, w_rc):
-                                    print(f"      ✓ Crystals are isomorphic!")
-                        else:
-                            print(f"      ✗ Crystal size mismatch: {w_dom_crystal_size} -> {w_crystal_size}")
+                    if wp_rc.to_highest_weight()[0].crystal_weight == pants.to_highest_weight()[0].crystal_weight:
+                        res += ring(wp_rcs[0])
+    return res
 
 
-def test_crystal_correspondence_dominifiable():
-    """
-    Test the crystal-level correspondence in the dominifiable case.
-    
-    For u * v where v is dominifiable:
-    1. Raise v to dom_perm
-    2. Crystal(u_rc) ⊗ Crystal(dom_rc) decomposes
-    3. Each component is isomorphic to a w_rc crystal
-    4. Apply divided difference: should preserve the correspondence
-    """
-    print("\n" + "="*60)
-    print("Testing Crystal Correspondence in Dominifiable Case")
-    print("="*60)
-    
-    for u in perms:
-        for v in perms:
-            if not dominifiable(u, v):
-                continue
-            
-            dom_perm = v.minimal_dominant_above()
-            diff_elem = (~v) * dom_perm
-            
-            print(f"\nu={u.trimcode}, v={v.trimcode}, dom={dom_perm.trimcode}")
-            print(f"diff_elem={diff_elem.trimcode} (length {diff_elem.inv})")
-            
-            # Compute both products
-            prod_dom = Sx(u) * Sx(dom_perm)  # Dominant case
-            prod_v = Sx(u) * Sx(v)           # Target product
-            
-            for w_dom in prod_dom:
-                # Apply divided difference to get w
-                w = w_dom * (~diff_elem)
-                
-                if w.inv != w_dom.inv - diff_elem.inv:
-                    # Divided difference kills this term
-                    continue
-                
-                print(f"\n  w_dom={w_dom.trimcode} -> w={w.trimcode}")
-                
-                # For each u_rc that contributes to w_dom
-                for u_rc in RCGraph.all_hw_rcs(u, n-1):
-                    for dom_rc in RCGraph.all_hw_rcs(dom_perm, n-1):
-                        # Check if this (u_rc, dom_rc) contributes to w_dom
-                        dp_ret = u_rc.dualpieri(dom_perm, w_dom)
-                        
-                        if len(dp_ret) == 0:
-                            continue
-                        
-                        print(f"    Found contribution from u_rc, dom_rc via dualpieri")
-                        
-                        # For each w_dom_rc that dualpieri found
-                        for coeff, w_dom_rc in dp_ret:
-                            print(f"      w_dom_rc: weight={w_dom_rc.crystal_weight}")
-                            
-                            # Apply divided difference to w_dom_rc
-                            w_rcs = w_dom_rc.divdiff_perm(diff_elem)
-                            
-                            print(f"        divdiff produces {len(w_rcs)} w_rcs")
-                            
-                            for w_rc in w_rcs:
-                                print(f"          w_rc: perm={w_rc.perm.trimcode}, weight={w_rc.crystal_weight}")
-                                
-                                # This w_rc should contribute to c^w_{u,v}
-                                if w_rc.perm == w:
-                                    print(f"          ✓ Correct permutation!")
-                                    
-                                    # Check if it's a valid contribution
-                                    # (Should we verify it appears in the actual product?)
-                                    expected_in_prod = w in prod_v
-                                    if expected_in_prod:
-                                        print(f"          ✓ w is in u*v product")
-                                else:
-                                    print(f"          ✗ Wrong permutation: got {w_rc.perm.trimcode}, expected {w.trimcode}")
-
-
-def verify_dominifiable_lr_rule_crystal_level():
-    """
-    Verify the complete dominifiable LR rule at the crystal level.
-    
-    The rule should be:
-    c^w_{u,v} = number of contributions where:
-    1. (u_rc, dom_rc) contributes to w_dom via dualpieri
-    2. w_dom_rc.divdiff_perm(diff_elem) gives w_rcs
-    3. All w_rcs from same w_dom_rc should have same highest weight
-    4. Count one contribution per (u_rc, dom_rc, w_hw) triple
-    """
-    print("\n" + "="*60)
-    print("Verifying Dominifiable LR Rule at Crystal Level")
-    print("="*60)
-    
-    for u in perms:
-        for v in perms:
-            if not dominifiable(u, v):
-                continue
-            
-            dom_perm = v.minimal_dominant_above()
-            diff_elem = (~v) * dom_perm
-            prod = Sx(u) * Sx(v)
-            
-            for w in prod:
-                expected_coeff = prod[w]
-                
-                # Find w_dom
-                w_dom = w * diff_elem
-                if Sx(u) * Sx(dom_perm) == 0 or w_dom not in (Sx(u) * Sx(dom_perm)):
-                    continue
-                
-                # Count at crystal level using divdiff_perm
-                computed_coeff = 0
-                
-                for u_rc in RCGraph.all_hw_rcs(u, n-1):
-                    for dom_rc in RCGraph.all_hw_rcs(dom_perm, n-1):
-                        # Check if contributes to w_dom
-                        dp_ret = u_rc.dualpieri(dom_perm, w_dom)
-                        
-                        for coeff_dp, w_dom_rc in dp_ret:
-                            # Apply divided difference
-                            w_rcs = w_dom_rc.divdiff_perm(diff_elem)
-                            
-                            # Check that all w_rcs with perm == w have same highest weight
-                            w_matching_rcs = [rc for rc in w_rcs if rc.perm == w]
-                            
-                            if len(w_matching_rcs) > 0:
-                                # Get highest weights
-                                hw_weights = set()
-                                for w_rc in w_matching_rcs:
-                                    w_hw = w_rc.to_highest_weight()[0]
-                                    hw_weights.add(w_hw.crystal_weight)
-                                
-                                if len(hw_weights) > 1:
-                                    print(f"WARNING: Multiple highest weights for w={w.trimcode}")
-                                    print(f"  u={u.trimcode}, v={v.trimcode}")
-                                    print(f"  Highest weights: {hw_weights}")
-                                
-                                # Count this as ONE contribution (one crystal component)
-                                computed_coeff += 1
-                
-                if computed_coeff == expected_coeff:
-                    print(f"✓ u={u.trimcode}, v={v.trimcode}, w={w.trimcode}: {computed_coeff}")
-                else:
-                    print(f"✗ MISMATCH: u={u.trimcode}, v={v.trimcode}, w={w.trimcode}")
-                    print(f"  Expected: {expected_coeff}, Got: {computed_coeff}")
-                    if computed_coeff > expected_coeff:
-                        print(f"  Over-counted by {computed_coeff - expected_coeff}")
-                    else:
-                        print(f"  Under-counted by {expected_coeff - computed_coeff}")
-
-
-# Add to main block
 if __name__ == "__main__":
-    # print("Testing Dominifiable LR Rule")
+    # test module functionality
+
+    import itertools
+    import sys
+
+    from schubmult.abc import x
+    from symengine import S
+    from sympy import pretty_print
+
+    from schubmult import Permutation, RCGraph, RCGraphRing, RootTableau, Sx, CrystalGraphTensor, uncode, DSx
+    # from schubmultutils.perm_utils import artin_sequences
+
+    n = int(sys.argv[1])
+
+    perms = Permutation.all_permutations(n)
+    # dom_perms = {perm.minimal_dominant_above() for perm in perms}
+    # THIS WORKS NOTE
+    # for dom in dom_perms:
+    #     for v in perms:
+    #         prod = Sx(dom) * Sx(v)
+    #         for w in prod:
+    #             print(f"{w.trimcode}")
+    #             coeff = 0
+    #             for dom_rc in RCGraph.all_rc_graphs(dom, n-1):
+    #                 for v_rc in RCGraph.all_rc_graphs(v, n-1):
+    #                     dp_ret = v_rc.dualpieri(dom, w)
+    #                     if len(dp_ret) > 0:
+    #                         coeff += 1
+
+    # TRY w0 only
+    
+    # magic_tensors = {}
+    # for dom_perm in dom_perms:
+    #     for v in perms:        
+    #         magic_tensors[(v, dom_perm)] = set()
+    #         prod = Sx(dom_perm) * Sx(v)
+    #         for w in prod:
+    #             print(f"{w.trimcode}")
+    #             coeff = 0
+    #             for dom_rc in RCGraph.all_rc_graphs(dom_perm, n):
+    #                 for v_rc in RCGraph.all_rc_graphs(v, n):
+    #                     dp_ret = v_rc.dualpieri(dom_perm, w)
+    #                     if len(dp_ret) > 0:
+    #                         magic_tensors[(v, dom_perm)].add(CrystalGraphTensor(dom_rc, v_rc))
+    # BIJECTIVE RULE WHERE v can be made dominant within u's ascents
+    from schubmult import RCGraphRing
+    rc_ring = RCGraphRing()
+    lr_rcs = {}
+    for u in perms:
+        for v in perms:
+            
+            if not dominifiable(u, v):
+                continue
+
+            print(f"Testing u={u.trimcode}, v={v.trimcode}")
+            dom_perm = v.minimal_dominant_above()
+            if v != dom_perm:
+                print("TESTING DOMINANT ONLY TEMP")
+                continue
+            tensor_hw = set()
+            # dom_perm = v
+            prod0 = Sx(u) * Sx(dom_perm)
+            prod = Sx(u) * Sx(v)
+            diff_elem = (~v) * (dom_perm)
+            sanity_prod = Sx.zero
+            rc_prod = crystal_dom_product(RCGraph.principal_rc(dom_perm, n-1), u)
+            pretty_print(rc_prod)
+            sanity_prod = sum([coeff * Sx(rc.perm) for rc, coeff in rc_prod.items()])
+
+            # test_sum = S.Zero
+            # crystals = set()
+            # all_tensor_hw = set()
+            # u_rcs = RCGraph.all_rc_graphs(u, n-1)
+            # for w in prod0:
+            #     for dom_rc in RCGraph.all_rc_graphs(dom_perm, n-1):
+            #         # construct_lr = True
+            #         # if (u, dom_perm, w) in lr_rcs:
+            #         #     u_rcs = lr_rcs[(u, dom_perm, w)]
+            #         #     construct_lr = False
+            #         # else:
+                    
+            #         #     lr_rcs[(u, dom_perm, w)] = set()
+                        
+            #         for u_rc in u_rcs:
+            #             all_tensor_hw.add(CrystalGraphTensor(dom_rc, u_rc).to_highest_weight()[0])
+            #             dp_ret = u_rc.dualpieri(dom_perm, w)
+            #             if len(dp_ret) > 0:
+            #                 # lr_rcs[(u, dom_perm, w)].add(u_rc)
+            #                 pants =  CrystalGraphTensor(dom_rc, u_rc).to_highest_weight()[0]
+            #                 if pants not in crystals:   
+            #                     crystals.add(pants)
+            #                     wt = pants.to_lowest_weight()[0].crystal_weight
+            #                     wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n-1, weight=wt) if rc.is_lowest_weight]
+            #                     assert len(wp_rcs) == 1
+            #                     wp_rc = wp_rcs[0]
+            #                     try:
+            #                         assert wt == wp_rc.length_vector
+            #                     except AssertionError:
+            #                         print("Weight mismatch detected!")
+            #                         pretty_print(pants)
+            #                         print(f"Expected weight: {RCGraph.principal_rc(w, n-1).length_vector}, got {wt}")
+            #                         pretty_print(wp_rc)
+            #                         assert False
+
+            #                 else:
+            #                     print("Duplicate crystal detected!")
+            #                     pretty_print(pants)
+            #                     assert False
+            #                 down_w = w*(~diff_elem)
+            #                 if down_w.inv == w.inv - diff_elem.inv:
+            #                     sanity_prod += Sx(down_w)        
+            #                 # print("For fun:")
+            #                 # print(f"{u_rc.dualpieri(v, down_w)=}")
+            try:
+                assert (prod - sanity_prod).expand() == S.Zero
+                print("Verified")
+            except AssertionError:
+                print("Mismatch detected!")
+                print("Expected:")
+                print(prod)
+                print("Got:")
+                print(sanity_prod)
+                raise
+            # print("Missed tensor crystals:")
+            # for atw in all_tensor_hw:
+            #     if atw not in crystals:
+            #         pretty_print(atw)
+                # for rc in RCGraph.all_hw_rcs(v, n-1):
+                #     dom_rc = RCGraph.principal_rc(dom, n-1)
+                #     tensor_hw = set()
+                #     for v_rc in rc.full_crystal:
+                #         tensor = CrystalGraphTensor(dom_rc, v_rc)
+                #         tensor_hw.add(tensor.to_highest_weight()[0])
+                    
+                #     for thw in tensor_hw:
+                #         for indiv_tensor in thw.full_crystal:
+                #             dp_ret = indiv_tensor.factors[1].dualpieri(dom, w)
+                #             if len(dp_ret) > 0:
+                #                 # check if crystal isomorphic
+                #                 w_rcs = RCGraph.all_rc_graphs(w, n-1, weight=indiv_tensor.crystal_weight)
+                #                 assert len(w_rcs) > 0, f"No RC graphs for {w} with weight {indiv_tensor.crystal_weight}"
+                #                 found_isomorphic = False
+                #                 for w_rc in w_rcs:
+                #                     if is_isomorphic_crystal(indiv_tensor, w_rc):
+                #                         found_isomorphic = True
+                #                         break
+                #                 assert found_isomorphic, f"No isomorphic crystal found for tensor {indiv_tensor} and w {w}"
+                #                 print("Successfully verified isomorphic crystal for tensor and w")
+                #                 assert len(w_rcs) == 1
+                #                 print("This crystal is unique")
+                #                coeff += 1
+                # print(f"Coefficient for {dom} * {v} to {w} is {coeff}, should be {prod[w]}")
+                # assert coeff == prod[w], f"Coefficient mismatch for {dom} * {v} to {w}: got {coeff}, expected {prod[w]}"
+                # print("Verified")
+    
+    # After the dominifiable test, add:
+    # print("\n" + "="*60)
+    # print("Testing tensor decomposition in dominifiable cases")
+    # print("="*60)
+    # test_decomposition(dominifiable_case=True)
+    # test_decomposition(dominifiable_case=False)
+
+    # attempt
+    # lr_rcs = {}
+    # zob = [0 for _ in range(20)]
+    # for k in range(1, n):
+    #     for v in perms:
+    #         dom_perm = uncode([1] * k)
+    #         print(f"Testing k={k}, v={v.trimcode}")
+    #         ring = DSx([]).ring
+    #         prod = Sx(v) * ring(dom_perm)
+    #         prod0 = ring(dom_perm) * ring(v)
+    #         sanity_prod = Sx.zero
+    #         for w in prod0:
+    #             for dom_rc in RCGraph.all_rc_graphs(dom_perm, n-1):  
+    #                 for v_rc in RCGraph.all_rc_graphs(v, n-1):
+    #                     dp_ret = v_rc.dualpieri(dom_perm, w)
+    #                     if len(dp_ret) > 0:
+    #                         #assert len(dp_ret) == 1
+    #                         for pr in dp_ret:
+
+    #                             # assert pr[1].perm.inv == 0
+    #                             # pretty_print(pr)
+    #                             sanity_prod += (ring.coeff_genset[1] ** (w.inv - dom_perm.inv - v.inv)) * Sx(w)
+    #         try:
+    #             assert (prod.expand() - sanity_prod.expand()).expand() == S.Zero
+    #             print("Verified")
+    #         except AssertionError:
+    #             print("Mismatch detected!")
+    #             print("Expected:")
+    #             print(f"{prod=}")
+    #             print(prod.expand())
+    #             print("Got:")
+    #             print(f"{sanity_prod=}")
+    #             print(sanity_prod.expand())
+    #             print(f"{(prod.expand() - sanity_prod.expand()).expand()=}")
+    #             raise
+    
+    # Add at the end:
+    # print("\n" + "="*60)
+    # print("TESTING INTERLEAVING HYPOTHESIS")
     # print("="*60)
     
-    # # Test 1: Check decomposition
-    # # print("\n1. Testing tensor decomposition (dominifiable cases):")
-    # # non_demazure_examples = test_decomposition(dominifiable_case=True)
+    # # Test simple concatenation first (known to work for pairs)
+    # print("\n1. Testing simple concatenation (u_first):")
+    # concatenation_works = test_interleaving_lr_rule(pattern='u_first')
     
-    # # print("\n2. Testing tensor decomposition (all cases):")
-    # # all_non_demazure = test_decomposition(dominifiable_case=False)
+    # # Test alternating interleaving (the general case)
+    # print("\n2. Testing alternating interleaving:")
+    # alternating_works = test_interleaving_lr_rule(pattern='alternating')
     
-    # # # Test 2: Interleaving
-    # # print("\n3. Testing interleaving (u_first):")
-    # # test_interleaving_lr_rule(pattern='u_first')
+    # if concatenation_works:
+    #     print("\n✓ Simple concatenation works (as expected)")
     
-    # # print("\n4. Testing interleaving (alternating):")
-    # # test_interleaving_lr_rule(pattern='alternating')
-    
-    # # # Test 3: Transposed crystal
-    # # print("\n5. Testing transposed crystal (dominifiable):")
-    # # test_transposed_decomposition(dominifiable_case=True)
-    
-    # # print("\n6. Testing transposed crystal (all):")
-    # # test_transposed_decomposition(dominifiable_case=False)
-    
-    # # Test 4: Crystal correspondence
-    # print("\n7. Testing crystal correspondence:")
-    # test_crystal_correspondence_dominifiable()
-    
-    # print("\n8. Testing divided difference preservation:")
-    # test_divided_difference_preserves_crystal()
-    
-    # print("\n9. Verifying LR rule at crystal level:")
-    # verify_dominifiable_lr_rule_crystal_level()
-
-    # middle insertion
-    # import sys
-    # n = int(sys.argv[1])
-    # perms = Permutation.all_permutations(n)
-    # for w in perms:
-    #     # for rc in RCGraph.all_rc_graphs(w, n - 1):
-    #     #     print("w_rc")
-    #     #     pretty_print(rc)
-    #     #     start = 1
-    #     #     end  = len(rc) - 1
-    #     #     rc_ring = RCGraphRing()
-    #     #     middle_rc, bottom_rc = rc.rowrange(start).vertical_cut(end - start)
-    #     #     top_rc = rc.vertical_cut(start)[0]
-    #     #     print(Sx(w).coproduct(*list(range(1, n - 1))))
-    #     #     print("top * bottom")
-    #     #     r_elem1 = rc_ring(top_rc) * rc_ring(bottom_rc)
-    #     #     pretty_print(r_elem1)
-    #     #     pretty_print(middle_rc)
-    #     #     r_elem = rc_ring(top_rc) * rc_ring(middle_rc) * rc_ring(bottom_rc)
-    #     #     print("top * middle * bottom coeff")
-    #     #     print(r_elem.get(rc))
-    #     #     print("Coeff in coprod")
-    #     tm = len(w.trimcode)
-    #     if tm < 4:
-    #         continue
-    #     copfot = Sx(w).coproduct(*list(range(2, tm)))
-    #     fopcot = {}
-    #     print(f"{copfot}")
-        rc_ring = RCGraphRing()
-
-    #     for (perm11, perm22), coeff in copfot.items():
-    #         perm1, perm2 = Permutation(perm11), Permutation(perm22)
-    #         working_perm2 = perm2
-    #         working_w = w
-    #         while len(working_perm2.trimcode) > 1:
-    #             d = max(working_perm2.descents())
-    #             working_perm2 = working_perm2.swap(d, d + 1)
-    #             working_w = working_w.swap(d, d + 1)
-    #         rc1 = RCGraph.principal_rc(perm1, tm - 2)
-    #         rc2 = RCGraph.principal_rc(working_perm2, 1)
-    #         for w_rc in RCGraph.all_rc_graphs(working_w, tm):
-    #             if w_rc.vertical_cut(1) == (rc2, rc1.extend(1)):
-    #                 fopcot[(perm1, perm2)] = fopcot.get((perm1, perm2), 0) + 1
-    #     print(f"fopcot: {fopcot}")
-    #     for key in copfot:
-    #         if copfot[key] != fopcot.get(key, 0):
-    #             print(f"Mismatch for {key}: copfot={copfot[key]}, fopcot={fopcot.get((Permutation(key[0]), Permutation(key[1])), 0)}")
-    #         else:
-    #             print(f"Match for {key}: {copfot[key]}")
-            
-            
+    # if alternating_works:
+    #     print("\n🎉 MIRACLE: Alternating interleaving works!")
+    #     print("This gives a fully general bijective LR rule!")
+    # else:
+    #     print("\nAlternating interleaving doesn't work directly")
+    #     print("Need to understand the pattern of failures...")

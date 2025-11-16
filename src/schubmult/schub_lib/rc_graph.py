@@ -1354,6 +1354,15 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def weight_bump(self):
         return self.extend(1).shiftup(1)
 
+    def inverse_crystal_product(self, other):
+        from schubmult.rings.rc_graph_ring import RCGraphRing
+        rc_ring = RCGraphRing()
+        prod = rc_ring(self) * rc_ring(other)
+        res = rc_ring.zero
+        for w_rc, coeff in prod.items():
+            res += coeff * rc_ring(w_rc.to_highest_weight()[0])
+        return res
+
     # def weight_reflection(self, i):
     #     try:
     #         rc = self.crystal_reflection(i)
@@ -1376,17 +1385,19 @@ class InverseRCGraph(CrystalGraph):
     def crystal_weight(self):
         return self.base_graph.transpose().crystal_weight
 
-    def raising_operator(self, index):
+    def lowering_operator(self, index):
         lowered = self.base_graph.transpose().lowering_operator(index)
         if lowered is None:
             return None
-        return InverseRCGraph(lowered.resize(len(self.base_graph)))
+        lowered = lowered.transpose(len(self.base_graph))
+        return InverseRCGraph(lowered)
 
-    def lowering_operator(self, index):
+    def raising_operator(self, index):
         raised = self.base_graph.transpose().raising_operator(index)
         if raised is None:
             return None
-        return InverseRCGraph(raised.resize(len(self.base_graph)))
+        raised = raised.transpose(len(self.base_graph))
+        return InverseRCGraph(raised)
 
     def crystal_length(self):
         return self.base_graph.transpose().crystal_length()

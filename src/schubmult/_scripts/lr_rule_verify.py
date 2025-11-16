@@ -288,7 +288,9 @@ def queue_producer(task_queue, perms, n, num_processors, skip_id, irreducible, b
             continue
         if irreducible and is_decomposable(hw_tab):
             continue
-        if (not dominant_only or hw_tab.minimal_dominant_above() == hw_tab) and (not w0_only or hw_tab == w0):
+        #if (not dominant_only or hw_tab.minimal_dominant_above() == hw_tab) and (not w0_only or hw_tab == w0):
+        # TEMP
+        if (not dominant_only or set(hw_tab.trimcode) == {1}):
             for perm in perms:
                 if irreducible and is_decomposable(perm):
                     continue

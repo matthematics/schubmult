@@ -139,20 +139,9 @@ class RCGraphRingElement(CrystalGraphRingElement):
         - raise_seq is the sequence of row indices applied (in order).
         """
         rc_elem = self
-        raise_seq = []
-        found = True
-        while found:
-            found = False
-            # iterate over possible rows: 1..crystal_length()-1 (mimic scalar version)
-            for row in range(1, rc_elem.crystal_length()):
-                rc0 = rc_elem.raising_operator(row)
-                # treat empty/zero as no raise; require that rc0 differs from rc_elem
-                if rc0 is not None and len(rc0) > 0 and rc0 != rc_elem:
-                    found = True
-                    rc_elem = rc0
-                    raise_seq.append(row)
-                    break
-        return rc_elem, tuple(raise_seq)
+        for rc, coeff in self.items():
+            rc_elem += coeff * self.ring(rc.to_highest_weight()[0])
+        return rc_elem, None
 
     def reverse_raise_seq(self, raise_seq):
         """
