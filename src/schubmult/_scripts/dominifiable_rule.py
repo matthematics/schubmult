@@ -552,35 +552,33 @@ def is_isomorphic_crystal(tensor, rc_graph):
     return True
 
 # crystal level dominant product
-def crystal_dom_product(dom_rc, u_rc_hw):
-    from schubmult import RCGraphRing, Sx
+# def crystal_dom_product(dom_rc, u_rc_hw):
+#     from schubmult import RCGraphRing, Sx
+#     u = u_rc_hw.perm
+#     for w in cheat_prod:
+#         for u_rc in u_rc_hw.full_crystal:
+#             res += _rc_dom_product(dom_rc, u_rc, w, ring)
+#     return res
+
+def rc_dom_product(dom_rc, u_rc):
     ring = RCGraphRing()
     res = ring.zero
-    u = u_rc_hw.perm
-    cheat_prod = Sx(dom_rc.perm) * Sx(u)
-    # if len(cheat_prod) == 1:
-    #     w = next(iter(cheat_prod))
-    #     pants =  CrystalGraphTensor(dom_rc, u_rc_lw).to_lowest_weight()[0]
-    #     wt = pants.to_lowest_weight()[0].crystal_weight
-    #     w_prin = RCGraph.principal_rc(w, len(dom_rc))
-    #     if w_prin.crystal_weight == wt:
-    #         return ring(w_prin)
-    #     return res
+    cheat_prod = Sx(dom_rc.perm) * Sx(u_rc.perm)
     for w in cheat_prod:
-        for u_rc in u_rc_hw.full_crystal:
-                dp_ret = u_rc.dualpieri(dom_rc.perm, w)
-                if len(dp_ret) > 0:
-                    pants =  CrystalGraphTensor(dom_rc, u_rc).to_lowest_weight()[0]
-                    wt = pants.to_lowest_weight()[0].crystal_weight
-                    wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n-1, weight=wt) if rc.is_lowest_weight]
-                    wp_rc = wp_rcs[0]
-                
-                    if wp_rc.to_highest_weight()[0].crystal_weight == pants.to_highest_weight()[0].crystal_weight:
-                        res += ring(wp_rc.to_highest_weight()[0])
-                    # NOT ACTUALLY UNIQUE RC
-                        
+        res += _rc_dom_product(dom_rc, u_rc, w, ring)
     return res
 
+def _rc_dom_product(dom_rc, u_rc, w, ring):
+    dp_ret = u_rc.dualpieri(dom_rc.perm, w)
+    if len(dp_ret) > 0:
+        pants =  CrystalGraphTensor(dom_rc, u_rc)
+        wt = pants.to_lowest_weight()[0].crystal_weight
+        wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n-1, weight=wt) if rc.is_lowest_weight]
+        wp_rc = wp_rcs[0]
+        pants_hw, raise_seq = pants.to_highest_weight()
+        if wp_rc.to_highest_weight()[0].crystal_weight == pants_hw.crystal_weight:
+            return ring(wp_rc.to_highest_weight()[0].reverse_raise_seq(raise_seq))
+    return ring.zero
 
 if __name__ == "__main__":
     # test module functionality
@@ -649,8 +647,8 @@ if __name__ == "__main__":
             diff_elem = (~v) * (dom_perm)
             sanity_prod = Sx.zero
             rc_prod = rc_ring.zero
-            for u_hw_rc in RCGraph.all_hw_rcs(u, n-1):
-                rc_prod += crystal_dom_product(RCGraph.principal_rc(dom_perm, n-1), u_hw_rc)
+            for u_rc in RCGraph.all_rc_graphs(u, n-1):
+                rc_prod += rc_dom_product(RCGraph.principal_rc(dom_perm, n-1), u_rc)
             pretty_print(rc_prod)
             sanity_prod = sum([coeff * Sx(rc.perm) for rc, coeff in rc_prod.items()])
 
