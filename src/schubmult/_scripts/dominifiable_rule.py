@@ -564,18 +564,20 @@ def crystal_dom_product(dom_rc, u):
     #     if w_prin.crystal_weight == wt:
     #         return ring(w_prin)
     #     return res
-    for u_rc_lw in RCGraph.all_lw_rcs(u, n-1):
-        for u_rc in u_rc_lw.full_crystal:
-            for w in cheat_prod:
-                dp_ret = u_rc.dualpieri(dom_rc.perm, w)
-                if len(dp_ret) > 0:
-                    pants =  CrystalGraphTensor(dom_rc, u_rc).to_lowest_weight()[0]
-                    wt = pants.to_lowest_weight()[0].crystal_weight
-                    wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n-1, weight=wt) if rc.is_lowest_weight]
-                    wp_rc = wp_rcs[0]
-                
-                    if wp_rc.to_highest_weight()[0].crystal_weight == pants.to_highest_weight()[0].crystal_weight:
-                        res += ring(wp_rcs[0])
+    for w in cheat_prod:
+        for u_rc_hw in RCGraph.all_hw_rcs(u, n-1):
+            for u_rc in u_rc_hw.full_crystal:
+                    dp_ret = u_rc.dualpieri(dom_rc.perm, w)
+                    if len(dp_ret) > 0:
+                        pants =  CrystalGraphTensor(dom_rc, u_rc).to_lowest_weight()[0]
+                        wt = pants.to_lowest_weight()[0].crystal_weight
+                        wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n-1, weight=wt) if rc.is_lowest_weight]
+                        wp_rc = wp_rcs[0]
+                    
+                        if wp_rc.to_highest_weight()[0].crystal_weight == pants.to_highest_weight()[0].crystal_weight:
+                            res += ring(wp_rc)
+                        # NOT ACTUALLY UNIQUE RC
+                        
     return res
 
 
@@ -702,6 +704,7 @@ if __name__ == "__main__":
                 print(prod)
                 print("Got:")
                 print(sanity_prod)
+                pretty_print(rc_prod)
                 raise
             # print("Missed tensor crystals:")
             # for atw in all_tensor_hw:
