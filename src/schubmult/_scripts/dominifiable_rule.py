@@ -617,15 +617,20 @@ def rc_dom_single_product(dom_rc, u_rc):
         
         return rc_ring(w_rc.reverse_raise_seq(raise_seq))
     collected_rcs = {}
-    for w_rc in RCGraph.all_hw_rcs(w, n-1):
-        if w_rc not in w_hw_map.values():
-            collected_rcs[RootTableau.from_rc_graph(w_rc).weight_tableau] = w_rc
+    for w in cheat_prod:
+        for w_rc in RCGraph.all_hw_rcs(w, n-1):
+            if w_rc not in w_hw_map.values():
+                collected_rcs[RootTableau.from_rc_graph(w_rc).weight_tableau] = w_rc
 
     tab1 = RootTableau.from_rc_graph(dom_rc).weight_tableau
     tab2 = RootTableau.from_rc_graph(tensor.factors[1]).weight_tableau
 
     total_tab = Plactic().rs_insert(*tab1.row_word, *tab2.row_word)
-    return rc_ring(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
+    try:
+        return rc_ring(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
+    except KeyError:
+        total_tab = Plactic().rs_insert(*tab2.row_word, *tab1.row_word)
+        return rc_ring(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
         # WEIGHT TABLEAU INSERT
     
     
