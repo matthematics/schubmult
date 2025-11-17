@@ -604,7 +604,10 @@ def rc_dom_crystal_product(dom_rc, u_rc_hw):
         res += rc_ring.from_dict(dict.fromkeys(w_rc.full_crystal,1))
         # for u_rc_hw in RCGraph.all_hw_rcs(u_rc.perm, n-1):
         #     # INSERT DOMINANT RC INTO u_rc_hw
-            
+    for tensor_hw in tensor_hw_map.values():
+        if tensor_hw not in w_hw_map:
+            print("MISSING TENSOR HW:")
+            pretty_print(tensor_hw)
     return res
 
 #def lr_ed_decomp(dom_rc, perm):
@@ -668,7 +671,7 @@ if __name__ == "__main__":
             print(f"Testing u={u.trimcode}, v={v.trimcode}")
             dom_perm = v.minimal_dominant_above()
             if v != dom_perm:#Permutation.w0(n):
-                print("TESTING w0 ONLY TEMP")
+                print("TESTING DOM ONLY TEMP")
                 continue
             tensor_hw = set()
             # dom_perm = v
