@@ -573,6 +573,7 @@ def rc_dom_crystal_product(dom_rc, u_rc_hw):
     rc_ring = RCGraphRing()
     tensor_hw_map = {}
     w_hw_map = {}
+    n = len(dom_rc) + 1
     cheat_prod = Sx(dom_rc.perm) * Sx(u_rc_hw.perm)
     for u_rc_crystal in u_rc_hw.full_crystal:
         tensor_hw_map[u_rc_crystal] = CrystalGraphTensor(dom_rc, u_rc_crystal).to_highest_weight()[0]
@@ -604,10 +605,10 @@ def rc_dom_crystal_product(dom_rc, u_rc_hw):
         res += rc_ring.from_dict(dict.fromkeys(w_rc.full_crystal,1))
         # for u_rc_hw in RCGraph.all_hw_rcs(u_rc.perm, n-1):
         #     # INSERT DOMINANT RC INTO u_rc_hw
-    for tensor_hw in tensor_hw_map.values():
-        if tensor_hw not in w_hw_map:
-            print("MISSING TENSOR HW:")
-            pretty_print(tensor_hw)
+        for w_rc, coeff in res.items():
+            for rc_hw in RCGraph.all_hw_rcs(w_rc.perm, n-1):
+                if rc_hw not in res.keys():
+                    res += rc_ring.from_dict(dict.fromkeys(rc_hw.full_crystal,coeff))
     return res
 
 #def lr_ed_decomp(dom_rc, perm):
