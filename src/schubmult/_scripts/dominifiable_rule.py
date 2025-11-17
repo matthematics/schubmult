@@ -568,17 +568,39 @@ def rc_dom_product(dom_rc, u_rc):
         res += _rc_dom_product(dom_rc, u_rc, w, ring)
     return res
 
-def _rc_dom_product(dom_rc, u_rc, w, ring):
-    dp_ret = u_rc.dualpieri(dom_rc.perm, w)
-    if len(dp_ret) > 0:
-        pants =  CrystalGraphTensor(dom_rc, u_rc)
-        wt = pants.to_lowest_weight()[0].crystal_weight
-        wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n-1, weight=wt) if rc.is_lowest_weight]
-        wp_rc = wp_rcs[0]
-        pants_hw, raise_seq = pants.to_highest_weight()
-        if wp_rc.to_highest_weight()[0].crystal_weight == pants_hw.crystal_weight:
-            return ring(wp_rc.to_highest_weight()[0].reverse_raise_seq(raise_seq))
-    return ring.zero
+def rc_dom_crystal_product(dom_rc, u_rc_hw):
+    # INSERTION WEIGHT TABLEAU
+    rc_ring = RCGraphRing()
+    tensor_hw_map = {}
+    w_hw_map = {}
+    cheat_prod = Sx(dom_rc.perm) * Sx(u_rc_hw.perm)
+    for u_rc_crystal in u_rc_hw.full_crystal:
+        tensor_hw_map[u_rc_crystal] = CrystalGraphTensor(dom_rc, u_rc_crystal).to_highest_weight()[0]
+        for w in cheat_prod:
+            dp_ret = u_rc_crystal.dualpieri(dom_rc.perm, w)
+            if len(dp_ret) > 0:
+                pants =  tensor_hw_map[u_rc_crystal]
+                wt = pants.to_lowest_weight()[0].crystal_weight
+                wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n-1, weight=wt) if rc.is_lowest_weight]
+                wp_rc = wp_rcs[0]
+                if wp_rc.to_highest_weight()[0].crystal_weight == pants.crystal_weight:
+                    w_hw_map[pants] = wp_rc.to_highest_weight()[0]
+
+    
+
+        # WEIGHT TABLEAU INSERT
+    
+    #tab1 = dom_rc.weight_tableau
+    res = rc_ring.zero
+    for _, w_rc in w_hw_map.items():
+        res += rc_ring.from_dict(dict.fromkeys(w_rc.full_crystal, 1))
+        # for u_rc_hw in RCGraph.all_hw_rcs(u_rc.perm, n-1):
+        #     # INSERT DOMINANT RC INTO u_rc_hw
+            
+    return res
+
+#def lr_ed_decomp(dom_rc, perm):
+
 
 if __name__ == "__main__":
     # test module functionality
@@ -649,8 +671,13 @@ if __name__ == "__main__":
             sanity_prod = Sx.zero
             rc_prod = rc_ring.zero
             full_rc_prod = rc_ring.zero
-            for u_rc in RCGraph.all_rc_graphs(u, n-1):
-                term = rc_dom_product(RCGraph.principal_rc(dom_perm, n-1), u_rc).divdiff_perm(diff_elem)
+
+
+            # REPRESENTATION THEORETIC WAY TO GO ABOUT THIS
+            # FIRST DECOMPOSE FULL CRYSTALS LR RULE
+            # THEN APPLY WEIGHTS
+            for u_rc in RCGraph.all_hw_rcs(u, n-1):
+                term = rc_dom_crystal_product(RCGraph.principal_rc(dom_perm, n-1), u_rc)
                 print(f"{term=}")
                 rc_prod += term
                 # for pip in term:
@@ -664,10 +691,11 @@ if __name__ == "__main__":
             #sanity_prod = sum([coeff * Sx(rc.perm) for rc, coeff in rc_prod.items()])
 
             # THIS ABSOLUTELY WORKS BUT WE WANT TO DO IT BIJECTIVELY
-            for rc, coeff in rc_prod.items():
-                for rc_hw in RCGraph.all_hw_rcs(rc.perm, n - 1):
-                    full_rc_prod += rc_ring.from_dict(dict.fromkeys(rc_hw.full_crystal, coeff)).divdiff_perm(diff_elem)
-            sanity_prod = sum([coeff * Sx(rc.polyvalue(Sx.genset)) for rc, coeff in full_rc_prod.items()])
+            # IS THIS BRAID MOVE COVARIANT??????
+            # for rc, coeff in rc_prod.items():
+            #     for rc_hw in RCGraph.all_hw_rcs(rc.perm, n - 1):
+            #         full_rc_prod += rc_ring.from_dict(dict.fromkeys(rc_hw.full_crystal, coeff)).divdiff_perm(diff_elem)
+            sanity_prod = sum([coeff * Sx(rc.polyvalue(Sx.genset)) for rc, coeff in rc_prod.items()])
 
             # test_sum = S.Zero
             # crystals = set()
