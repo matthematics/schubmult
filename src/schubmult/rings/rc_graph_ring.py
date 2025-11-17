@@ -40,6 +40,18 @@ class RCGraphRingElement(CrystalGraphRingElement):
             return [S.Zero]
         return [self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k)) for k in self.keys()]
 
+    def divdiff_perm(self, perm):
+        """
+        Apply divided difference operator for `perm` to self.
+        Linear extension of RCGraph.divdiff_perm.
+        """
+        res = self.ring.zero
+        for rc_graph, coeff in self.items():
+            new_rc_set = rc_graph.divdiff_perm(perm)
+            for new_rc in new_rc_set:
+                res += coeff * self.ring(new_rc)
+        return res
+
     # ----------------------
     # Coalgebra helpers (already present)
     # ----------------------

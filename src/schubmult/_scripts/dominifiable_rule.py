@@ -637,20 +637,31 @@ if __name__ == "__main__":
 
             print(f"Testing u={u.trimcode}, v={v.trimcode}")
             dom_perm = v.minimal_dominant_above()
-            if v != dom_perm:
-                print("TESTING DOMINANT ONLY TEMP")
+            if v != dom_perm:#Permutation.w0(n):
+                print("TESTING w0 ONLY TEMP")
                 continue
             tensor_hw = set()
             # dom_perm = v
+            dom_rc = RCGraph.principal_rc(dom_perm, n-1)
             prod0 = Sx(u) * Sx(dom_perm)
             prod = Sx(u) * Sx(v)
             diff_elem = (~v) * (dom_perm)
             sanity_prod = Sx.zero
             rc_prod = rc_ring.zero
             for u_rc in RCGraph.all_rc_graphs(u, n-1):
-                rc_prod += rc_dom_product(RCGraph.principal_rc(dom_perm, n-1), u_rc)
+                term = rc_dom_product(RCGraph.principal_rc(dom_perm, n-1), u_rc).divdiff_perm(diff_elem)
+                print(f"{term=}")
+                rc_prod += term
+                # for pip in term:
+                #     assert pip.length_vector == tuple([a + b for a, b in zip(dom_rc.length_vector, u_rc.length_vector)])
+                # if all(v == 0 for v in term.values()) and dom_perm == Permutation.w0(n):
+                #     print("We got a zero divisor")
+                #     pretty_print(u_rc)
+                # else:
+                #     assert u_rc.is_principal
             pretty_print(rc_prod)
-            sanity_prod = sum([coeff * Sx(rc.perm) for rc, coeff in rc_prod.items()])
+            #sanity_prod = sum([coeff * Sx(rc.perm) for rc, coeff in rc_prod.items()])
+            sanity_prod = sum([coeff * Sx(rc.perm*(~diff_elem)) if (rc.perm*(~diff_elem)).inv == rc.perm.inv - diff_elem.inv else Sx.zero for rc, coeff in rc_prod.items()])
 
             # test_sum = S.Zero
             # crystals = set()
@@ -804,3 +815,4 @@ if __name__ == "__main__":
     # else:
     #     print("\nAlternating interleaving doesn't work directly")
     #     print("Need to understand the pattern of failures...")
+    
