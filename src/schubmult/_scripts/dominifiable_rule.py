@@ -590,10 +590,18 @@ def rc_dom_crystal_product(dom_rc, u_rc_hw):
 
         # WEIGHT TABLEAU INSERT
     
+    
+
     #tab1 = dom_rc.weight_tableau
     res = rc_ring.zero
-    for tensor_hw in set(tensor_hw_map.values()):
-        res += rc_ring.from_dict(dict.fromkeys(w_hw_map[tensor_hw].full_crystal, 1))
+    for w_rc in w_hw_map.values():
+        # THIS MAY FAIL: WHICH CRYSTALS MISSING? WEIGHT TABLEAU?
+        # if tensor_hw not in w_hw_map:
+        #     tab0 = RootTableau.from_rc_graph(tensor_hw.factors[0])
+        #     tab1 = RootTableau.from_rc_graph(tensor_hw.factors[1])
+        #     full_weight_tableau = Plactic().rs_insert(*tab0.weight_tableau, *tab1.weight_tableau)     
+            # WILL HAVE SAME SHAPE
+        res += rc_ring.from_dict(dict.fromkeys(w_rc.full_crystal,1))
         # for u_rc_hw in RCGraph.all_hw_rcs(u_rc.perm, n-1):
         #     # INSERT DOMINANT RC INTO u_rc_hw
             
