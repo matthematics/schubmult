@@ -549,6 +549,8 @@ def is_isomorphic_crystal(tensor, rc_graph):
     lw2 = hw2.to_lowest_weight()[0]
     if lw1.crystal_weight != lw2.crystal_weight:
         return False
+    if len(tensor.full_crystal) != len(rc_graph.full_crystal):
+        return False
     return True
 
 # crystal level dominant product
@@ -587,29 +589,81 @@ def rc_dom_crystal_product(dom_rc, u_rc_hw):
                 if wp_rc.to_highest_weight()[0].crystal_weight == pants.crystal_weight:
                     w_hw_map[pants] = wp_rc.to_highest_weight()[0]
 
-    
 
+def rc_dom_single_product(dom_rc, u_rc):
+    # INSERTION WEIGHT TABLEAU
+    from schubmult import Plactic
+    rc_ring = RCGraphRing()
+    tensor_hw_map = {}
+    w_hw_map = {}
+    n = len(dom_rc) + 1
+    cheat_prod = Sx(dom_rc.perm) * Sx(u_rc.perm)
+    for u_rc_crystal in u_rc.full_crystal:
+        tensor_hw_map[u_rc_crystal] = CrystalGraphTensor(dom_rc, u_rc_crystal).to_highest_weight()[0]
+        for w in cheat_prod:
+            dp_ret = u_rc_crystal.dualpieri(dom_rc.perm, w)
+            if len(dp_ret) > 0:
+                pants =  tensor_hw_map[u_rc_crystal]
+                wt = pants.to_lowest_weight()[0].crystal_weight
+                wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n-1, weight=wt) if rc.is_lowest_weight]
+                wp_rc = wp_rcs[0]
+                if wp_rc.to_highest_weight()[0].crystal_weight == pants.crystal_weight:
+                    w_hw_map[pants] = wp_rc.to_highest_weight()[0]
+    tensor =  tensor_hw_map[u_rc]
+    tensor0 = CrystalGraphTensor(dom_rc, u_rc)
+    tensor0_hw, raise_seq = tensor0.to_highest_weight()
+    if tensor in w_hw_map:
+        w_rc = w_hw_map[tensor]
+        
+        return rc_ring(w_rc.reverse_raise_seq(raise_seq))
+    collected_rcs = {}
+    for w_rc in RCGraph.all_hw_rcs(w, n-1):
+        if w_rc not in w_hw_map.values():
+            collected_rcs[RootTableau.from_rc_graph(w_rc).weight_tableau] = w_rc
+
+    tab1 = RootTableau.from_rc_graph(dom_rc).weight_tableau
+    tab2 = RootTableau.from_rc_graph(tensor.factors[1]).weight_tableau
+
+    total_tab = Plactic().rs_insert(*tab1.row_word, *tab2.row_word)
+    return rc_ring(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
         # WEIGHT TABLEAU INSERT
     
     
 
     #tab1 = dom_rc.weight_tableau
-    res = rc_ring.zero
-    for w_rc in w_hw_map.values():
-        # THIS MAY FAIL: WHICH CRYSTALS MISSING? WEIGHT TABLEAU?
-        # if tensor_hw not in w_hw_map:
-        #     tab0 = RootTableau.from_rc_graph(tensor_hw.factors[0])
-        #     tab1 = RootTableau.from_rc_graph(tensor_hw.factors[1])
-        #     full_weight_tableau = Plactic().rs_insert(*tab0.weight_tableau, *tab1.weight_tableau)     
-            # WILL HAVE SAME SHAPE
-        res += rc_ring.from_dict(dict.fromkeys(w_rc.full_crystal,1))
-        # for u_rc_hw in RCGraph.all_hw_rcs(u_rc.perm, n-1):
-        #     # INSERT DOMINANT RC INTO u_rc_hw
-        for w_rc, coeff in res.items():
-            for rc_hw in RCGraph.all_hw_rcs(w_rc.perm, n-1):
-                if rc_hw not in res.keys():
-                    res += rc_ring.from_dict(dict.fromkeys(rc_hw.full_crystal,coeff))
-    return res
+    # res = rc_ring.zero
+    # for w_rc in w_hw_map.values():
+    #     # THIS MAY FAIL: WHICH CRYSTALS MISSING? WEIGHT TABLEAU?
+    #     # if tensor_hw not in w_hw_map:
+    #     #     tab0 = RootTableau.from_rc_graph(tensor_hw.factors[0])
+    #     #     tab1 = RootTableau.from_rc_graph(tensor_hw.factors[1])
+    #     #     full_weight_tableau = Plactic().rs_insert(*tab0.weight_tableau, *tab1.weight_tableau)     
+    #         # WILL HAVE SAME SHAPE
+    #     res += rc_ring.from_dict(dict.fromkeys(w_rc.full_crystal,1))
+    #     # for u_rc_hw in RCGraph.all_hw_rcs(u_rc.perm, n-1):
+    #     #     # INSERT DOMINANT RC INTO u_rc_hw
+    # while len(set(tensor_hw_map.values())) != len(w_hw_map):
+    #     oldvals = set(tensor_hw_map.values())
+    #     for tensor in oldvals:
+    #         if tensor in w_hw_map:
+    #             continue
+    #         keyset = set(res.keys())
+    #         perms_hit = set()
+    #         for w_rc in keyset:
+    #             w_rc_hw = w_rc.to_highest_weight()[0]
+    #             for rc_hw in RCGraph.all_hw_rcs(w_rc.perm, n-1):
+    #                 # if rc_hw in rcs_hit:
+    #                 #     continue
+                    
+    #                 if is_isomorphic_crystal(tensor, rc_hw):
+    #                     # missing crystal
+    #                     coeff = res[w_rc]
+    #                     res += rc_ring.from_dict(dict.fromkeys(rc_hw.full_crystal,coeff))
+    #                     w_hw_map[tensor] = rc_hw
+    #                     break
+    #                 # rcs_hit.add(rc_hw)
+    #                 # break
+    # return res
 
 #def lr_ed_decomp(dom_rc, perm):
 
@@ -688,8 +742,8 @@ if __name__ == "__main__":
             # REPRESENTATION THEORETIC WAY TO GO ABOUT THIS
             # FIRST DECOMPOSE FULL CRYSTALS LR RULE
             # THEN APPLY WEIGHTS
-            for u_rc in RCGraph.all_hw_rcs(u, n-1):
-                term = rc_dom_crystal_product(RCGraph.principal_rc(dom_perm, n-1), u_rc)
+            for u_rc in RCGraph.all_rc_graphs(u, n-1):
+                term = rc_dom_single_product(RCGraph.principal_rc(dom_perm, n-1), u_rc)
                 print(f"{term=}")
                 rc_prod += term.divdiff_perm(diff_elem)
                 # for pip in term:
