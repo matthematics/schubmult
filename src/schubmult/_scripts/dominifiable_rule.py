@@ -648,6 +648,7 @@ if __name__ == "__main__":
             diff_elem = (~v) * (dom_perm)
             sanity_prod = Sx.zero
             rc_prod = rc_ring.zero
+            full_rc_prod = rc_ring.zero
             for u_rc in RCGraph.all_rc_graphs(u, n-1):
                 term = rc_dom_product(RCGraph.principal_rc(dom_perm, n-1), u_rc).divdiff_perm(diff_elem)
                 print(f"{term=}")
@@ -661,7 +662,12 @@ if __name__ == "__main__":
                 #     assert u_rc.is_principal
             pretty_print(rc_prod)
             #sanity_prod = sum([coeff * Sx(rc.perm) for rc, coeff in rc_prod.items()])
-            sanity_prod = sum([coeff * Sx(rc.perm*(~diff_elem)) if (rc.perm*(~diff_elem)).inv == rc.perm.inv - diff_elem.inv else Sx.zero for rc, coeff in rc_prod.items()])
+
+            # THIS ABSOLUTELY WORKS BUT WE WANT TO DO IT BIJECTIVELY
+            for rc, coeff in rc_prod.items():
+                for rc_hw in RCGraph.all_hw_rcs(rc.perm, n - 1):
+                    full_rc_prod += rc_ring.from_dict(dict.fromkeys(rc_hw.full_crystal, coeff)).divdiff_perm(diff_elem)
+            sanity_prod = sum([coeff * Sx(rc.polyvalue(Sx.genset)) for rc, coeff in full_rc_prod.items()])
 
             # test_sum = S.Zero
             # crystals = set()
