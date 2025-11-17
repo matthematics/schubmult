@@ -671,9 +671,9 @@ if __name__ == "__main__":
 
             print(f"Testing u={u.trimcode}, v={v.trimcode}")
             dom_perm = v.minimal_dominant_above()
-            if v != dom_perm:#Permutation.w0(n):
-                print("TESTING DOM ONLY TEMP")
-                continue
+            # if v != dom_perm:#Permutation.w0(n):
+            #     print("TESTING DOM ONLY TEMP")
+            #     continue
             tensor_hw = set()
             # dom_perm = v
             dom_rc = RCGraph.principal_rc(dom_perm, n-1)
@@ -691,7 +691,7 @@ if __name__ == "__main__":
             for u_rc in RCGraph.all_hw_rcs(u, n-1):
                 term = rc_dom_crystal_product(RCGraph.principal_rc(dom_perm, n-1), u_rc)
                 print(f"{term=}")
-                rc_prod += term
+                rc_prod += term.divdiff_perm(diff_elem)
                 # for pip in term:
                 #     assert pip.length_vector == tuple([a + b for a, b in zip(dom_rc.length_vector, u_rc.length_vector)])
                 # if all(v == 0 for v in term.values()) and dom_perm == Permutation.w0(n):
