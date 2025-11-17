@@ -590,11 +590,12 @@ def rc_dom_crystal_product(dom_rc, u_rc_hw):
                     w_hw_map[pants] = wp_rc.to_highest_weight()[0]
 
 
-def rc_dom_single_product(dom_rc, u_rc):
+def rc_dom_single_product(u_rc, v_rc):
     # INSERTION WEIGHT TABLEAU
     from schubmult import Plactic
     rc_ring = RCGraphRing()
-    if dom_rc.minimal_dominant_above() == dom_rc.perm:
+    if v_rc.perm.minimal_dominant_above() == v_rc.perm:
+        dom_rc = v_rc
         tensor_hw_map = {}
         w_hw_map = {}
         n = len(dom_rc) + 1
@@ -632,12 +633,36 @@ def rc_dom_single_product(dom_rc, u_rc):
         except KeyError:
             total_tab = Plactic().rs_insert(*tab2.row_word, *tab1.row_word)
             return rc_ring(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
-    elif dominifiable(u_rc.perm, dom_rc.perm):
-        print("Warning: not fully working")
-        actual_dom = dom_rc.perm.minimal_dominant_above()
-        diff_elem = (~dom_rc.perm)*actual_dom
-        initial_prod = rc_dom_single_product(RCGraph.principal_rc(actual_dom, len(dom_rc)), u_rc)
-        return initial_prod.divdiff_perm(diff_elem)
+    # elif dominifiable(u_rc.perm, v_rc.perm):
+    #     print("Warning: not fully working")
+    #     actual_dom = v_rc.perm.minimal_dominant_above()
+    #     diff_elem = (~v_rc.perm)*actual_dom
+    #     dom_rc = RCGraph.principal_rc(actual_dom, len(v_rc))
+    #     initial_prod = rc_dom_single_product(u_rc, dom_rc)
+    #     candidates = initial_prod.divdiff_perm(diff_elem)
+    #     try:
+    #         return rc_ring(next(iter([rc for rc in candidates if rc.length_vector == CrystalGraphTensor(v_rc, u_rc).crystal_weight])))
+    #     except StopIteration:
+    #         print("No matching RC found in candidates")
+    #         pretty_print(candidates)
+    #         pretty_print(CrystalGraphTensor(v_rc, u_rc))
+    #         raise
+        # tensor_dom = CrystalGraphTensor(dom_rc, u_rc)
+        # tensor_dom_hw, _ = tensor_dom.to_highest_weight()
+        # tensor_hw, raise_seq = CrystalGraphTensor(v_rc, tensor_dom_hw.factors[1]).to_highest_weight()
+        # collected_rcs = {}
+        # for w_rc in candidates.keys():
+        #     w_rc_hw = w_rc.to_highest_weight()[0]
+        #     collected_rcs[RootTableau.from_rc_graph(w_rc_hw).weight_tableau] = w_rc_hw
+        # tab1 = RootTableau.from_rc_graph(tensor_hw.factors[0]).weight_tableau
+        # tab2 = RootTableau.from_rc_graph(tensor_hw.factors[1]).weight_tableau
+
+        # total_tab = Plactic().rs_insert(*tab1.row_word, *tab2.row_word)
+        # try:
+        #     return rc_ring(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
+        # except KeyError:
+        #     total_tab = Plactic().rs_insert(*tab2.row_word, *tab1.row_word)
+        #     return rc_ring(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
     raise NotImplementedError("General case not implemented yet")
         # WEIGHT TABLEAU INSERT
     
@@ -736,14 +761,20 @@ if __name__ == "__main__":
     # BRANCH TEST IF CAN REPRESENT WITH ELEMNT SYMS BY PRODUCT
     for u in perms:
         for v in perms:
-            result = rc_ring.zero
+            cheat_prod = Sx(v) * Sx(u)
+    
+            
             if dominifiable(u, v):
                 print(f"\n=== Testing dominifiable pair u={u.trimcode}, v={v.trimcode} ===")
-                for u_rc in RCGraph.all_hw_rcs(u, n-1):
-                    for v_rc in RCGraph.all_hw_rcs(v, n-1):
-                        prod = rc_dom_product(RCGraph.principal_rc(v.minimal_dominant_above(), n-1), u_rc)
-                        diff_elem = (~v)*v.minimal_dominant_above()
-                        final_prod = prod.divdiff_perm(diff_elem)
-                        cheat_prod = Sx(v) * Sx(u)
-                        total_count = sum(cheat_prod[w] for w in final_prod.keys())
-                        print(f"  u_rc perm={u_rc.perm.trimcode}, v_rc perm={v_rc.perm.trimcode} => count={total_count}")
+                result = rc_ring.zero
+                dom_rc = RCGraph.principal_rc(v.minimal_dominant_above(), n-1)
+                for u_rc in RCGraph.all_rc_graphs(u, n-1):
+                    result += rc_dom_single_product(u_rc, dom_rc).divdiff_perm((~v)*dom_rc.perm)
+                        # diff_elem = (~v)*v.minimal_dominant_above()
+                        # final_prod = prod.divdiff_perm(diff_elem)
+                        # cheat_prod = Sx(v) * Sx(u)
+                        # total_count = sum(cheat_prod[w] for w in final_prod.keys())
+                        # print(f"  u_rc perm={u_rc.perm.trimcode}, v_rc perm={v_rc.perm.trimcode} => count={total_count}")
+                pretty_print(result)
+                test_prod = Sx(sum([coeff * rc.polyvalue(Sx.genset) for rc, coeff in result.items()]))
+                assert (test_prod - cheat_prod).expand() == S.Zero
