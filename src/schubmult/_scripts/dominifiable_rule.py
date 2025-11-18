@@ -769,7 +769,7 @@ if __name__ == "__main__":
                 result = rc_ring.zero
                 dom_rc = RCGraph.principal_rc(v.minimal_dominant_above(), n-1)
                 for u_rc in RCGraph.all_rc_graphs(u, n-1):
-                    result += rc_dom_single_product(u_rc, dom_rc).divdiff_perm((~v)*dom_rc.perm)
+                    result += (rc_ring(u_rc) % rc_ring(dom_rc)).divdiff_perm((~v)*dom_rc.perm)
                         # diff_elem = (~v)*v.minimal_dominant_above()
                         # final_prod = prod.divdiff_perm(diff_elem)
                         # cheat_prod = Sx(v) * Sx(u)

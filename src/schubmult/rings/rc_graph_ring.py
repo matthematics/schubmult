@@ -40,6 +40,9 @@ class RCGraphRingElement(CrystalGraphRingElement):
             return [S.Zero]
         return [self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k)) for k in self.keys()]
 
+    def __mod__(self, other):
+        return self.ring.rc_product(self, other)
+
     def divdiff_perm(self, perm):
         """
         Apply divided difference operator for `perm` to self.
@@ -418,6 +421,13 @@ class RCGraphRing(CrystalGraphRing):
         ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(basis_elem.perm) and k[1].perm.bruhat_leq(basis_elem.perm)})
         # assert all(C)
         return ret_elem
+
+    def rc_product(self, elem1, elem2):
+        res = self.zero
+        for u_rc, coeff_u in elem1.items():
+            for v_rc, coeff_v in elem2.items():
+                res += coeff_u * coeff_v * self.rc_single_product(u_rc, v_rc)
+        return res
 
     def rc_single_product(self, u_rc, v_rc):
         # INSERTION WEIGHT TABLEAU
