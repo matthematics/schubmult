@@ -419,6 +419,50 @@ class RCGraphRing(CrystalGraphRing):
         # assert all(C)
         return ret_elem
 
+    def rc_single_product(self, u_rc, v_rc):
+        # INSERTION WEIGHT TABLEAU
+        from schubmult import CrystalGraphTensor, Plactic, RootTableau, Sx
+        if v_rc.perm.minimal_dominant_above() == v_rc.perm:
+            dom_rc = v_rc
+            tensor_hw_map = {}
+            w_hw_map = {}
+            n = len(dom_rc) + 1
+            cheat_prod = Sx(dom_rc.perm) * Sx(u_rc.perm)
+            for u_rc_crystal in u_rc.full_crystal:
+                tensor_hw_map[u_rc_crystal] = CrystalGraphTensor(dom_rc, u_rc_crystal).to_highest_weight()[0]
+                for w in cheat_prod:
+                    dp_ret = u_rc_crystal.dualpieri(dom_rc.perm, w)
+                    if len(dp_ret) > 0:
+                        pants =  tensor_hw_map[u_rc_crystal]
+                        wt = pants.to_lowest_weight()[0].crystal_weight
+                        wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n-1, weight=wt) if rc.is_lowest_weight]
+                        wp_rc = wp_rcs[0]
+                        if wp_rc.to_highest_weight()[0].crystal_weight == pants.crystal_weight:
+                            w_hw_map[pants] = wp_rc.to_highest_weight()[0]
+            tensor =  tensor_hw_map[u_rc]
+            tensor0 = CrystalGraphTensor(dom_rc, u_rc)
+            tensor0_hw, raise_seq = tensor0.to_highest_weight()
+            if tensor in w_hw_map:
+                w_rc = w_hw_map[tensor]
+                return self(w_rc.reverse_raise_seq(raise_seq))
+            collected_rcs = {}
+            for w in cheat_prod:
+                for w_rc in RCGraph.all_hw_rcs(w, n-1):
+                    if w_rc not in w_hw_map.values():
+                        collected_rcs[RootTableau.from_rc_graph(w_rc).weight_tableau] = w_rc
+
+            tab1 = RootTableau.from_rc_graph(dom_rc).weight_tableau
+            tab2 = RootTableau.from_rc_graph(tensor.factors[1]).weight_tableau
+
+            total_tab = Plactic().rs_insert(*tab1.row_word, *tab2.row_word)
+            try:
+                return self(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
+            except KeyError:
+                total_tab = Plactic().rs_insert(*tab2.row_word, *tab1.row_word)
+                return self(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
+        raise NotImplementedError
+
+
     # def coproduct_on_basis(self, elem):
     #     tring = RestrictedRCGraphTensorRing(self, self)
     #     # trivial principal case

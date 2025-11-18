@@ -762,8 +762,8 @@ if __name__ == "__main__":
     for u in perms:
         for v in perms:
             cheat_prod = Sx(v) * Sx(u)
-    
-            
+            # CRYSTAL MONK
+            # dominifiable cauchy
             if dominifiable(u, v):
                 print(f"\n=== Testing dominifiable pair u={u.trimcode}, v={v.trimcode} ===")
                 result = rc_ring.zero
