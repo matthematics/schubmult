@@ -801,23 +801,24 @@ if __name__ == "__main__":
     # BRANCH TEST IF CAN REPRESENT WITH ELEMNT SYMS BY PRODUCT
     for u in perms:
         for v in perms:
-            # cheat_prod = Sx(v) * Sx(u)
+            cheat_prod = Sx(v) * Sx(u)
             # CRYSTAL MONK
             # dominifiable cauchy
             # if dominifiable(u, v):
             #     print(f"\n=== Testing dominifiable pair u={u.trimcode}, v={v.trimcode} ===")
             # result = rc_ring.zero
             # dom_rc = RCGraph.principal_rc(v.minimal_dominant_above(), n-1)
+            result = rc_ring.zero
             for u_rc in RCGraph.all_rc_graphs(u, n-1):
                 for v_rc in RCGraph.all_rc_graphs(v, n-1):
-                    print("ATTEMPT")
-                    pretty_print(CrystalGraphTensor(u_rc, v_rc))
-                    try:
-                        pretty_print(recursive_try_product(u_rc, v_rc, rc_ring))
-                    except Exception as e:
-                        import traceback
-                        print("FAILED TO COMPUTE PRODUCT:")
-                        traceback.print_exc(file=sys.stdout)
+                    # print("ATTEMPT")
+                    # pretty_print(CrystalGraphTensor(u_rc, v_rc))
+                    result += recursive_try_product(u_rc, v_rc, rc_ring)
+                    # except Exception as e:
+                    #     import traceback
+                    #     print("FAILED TO COMPUTE PRODUCT:")
+                    #     traceback.print_exc(file=sys.stdout)
+            #assert 
                         #print(f"FAILED TO COMPUTE PRODUCT: {e}")
             #         if v_rc.perm.minimal_dominant_above() != v_rc.perm:
             #             continue
@@ -829,5 +830,7 @@ if __name__ == "__main__":
             #         # total_count = sum(cheat_prod[w] for w in final_prod.keys())
             #         # print(f"  u_rc perm={u_rc.perm.trimcode}, v_rc perm={v_rc.perm.trimcode} => count={total_count}")
             # pretty_print(result)
-            # test_prod = Sx(sum([coeff * rc.polyvalue(Sx.genset) for rc, coeff in result.items()]))
-            # assert (test_prod - cheat_prod).expand() == S.Zero
+            test_prod = Sx(sum([coeff * rc.polyvalue(Sx.genset) for rc, coeff in result.items()]))
+            assert (test_prod - cheat_prod).expand() == S.Zero
+            print(f"Successfully computed product for u={u.trimcode}, v={v.trimcode}")
+            pretty_print(result)
