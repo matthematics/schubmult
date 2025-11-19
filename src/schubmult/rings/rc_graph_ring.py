@@ -431,7 +431,13 @@ class RCGraphRing(CrystalGraphRing):
 
     def rc_single_product(self, u_rc, v_rc):
         # INSERTION WEIGHT TABLEAU
+        #from symengine import S
+
         from schubmult import CrystalGraphTensor, Plactic, RootTableau, Sx
+
+        # from .schubert_ring import DSx
+        # from .variables import GeneratingSet
+        # z = GeneratingSet("z")
         if v_rc.perm.minimal_dominant_above() == v_rc.perm:
             dom_rc = v_rc
             tensor_hw_map = {}
@@ -443,12 +449,15 @@ class RCGraphRing(CrystalGraphRing):
                 for w in cheat_prod:
                     dp_ret = u_rc_crystal.dualpieri(dom_rc.perm, w)
                     if len(dp_ret) > 0:
-                        pants =  tensor_hw_map[u_rc_crystal]
-                        wt = pants.to_lowest_weight()[0].crystal_weight
-                        wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n-1, weight=wt) if rc.is_lowest_weight]
-                        wp_rc = wp_rcs[0]
-                        if wp_rc.to_highest_weight()[0].crystal_weight == pants.crystal_weight:
-                            w_hw_map[pants] = wp_rc.to_highest_weight()[0]
+                        for spoing in dp_ret:
+                            if spoing[-1].perm.inv == 0:
+                                pants =  tensor_hw_map[u_rc_crystal]
+                                wt = pants.to_lowest_weight()[0].crystal_weight
+                                wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n-1, weight=wt) if rc.is_lowest_weight]
+                                wp_rc = wp_rcs[0]
+                                if wp_rc.to_highest_weight()[0].crystal_weight == pants.crystal_weight:
+                                    w_hw_map[pants] = wp_rc.to_highest_weight()[0]
+                                break
             tensor =  tensor_hw_map[u_rc]
             tensor0 = CrystalGraphTensor(dom_rc, u_rc)
             tensor0_hw, raise_seq = tensor0.to_highest_weight()

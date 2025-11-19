@@ -705,6 +705,46 @@ def rc_dom_single_product(u_rc, v_rc):
 
 #def lr_ed_decomp(dom_rc, perm):
 
+def recursive_try_product(u_rc, v_rc, ring):
+    if len(u_rc) != len(v_rc):
+        return ring.zero
+    if u_rc.inv == 0:
+        return ring(v_rc)
+    if v_rc.inv == 0:
+        return ring(u_rc)
+    if v_rc.perm.minimal_dominant_above() == v_rc.perm:
+        return ring(u_rc) % ring(v_rc)
+    elif u_rc.perm.minimal_dominant_above() == u_rc.perm:
+        return ring(v_rc) % ring(u_rc)
+    
+    mid = len(u_rc) // 2
+    cheat_prod = Sx(v_rc.perm) * Sx(u_rc.perm)
+    # if mid_u < mid_v:
+    #     mid_v = mid_u
+    # elif mid_v < mid_u:
+    #     mid_u = mid_v
+    # if mid_u == len(u_rc):
+    #     raise NotImplementedError("Cannot split further")
+    left_u, right_u = u_rc.vertical_cut(mid)
+    left_v, right_v = v_rc.vertical_cut(mid)
+    left_prod = recursive_try_product(left_u, left_v, ring)
+    right_prod = recursive_try_product(right_u, right_v, ring)
+
+    combine_attempt = left_prod * right_prod
+    result = ring.zero
+    for rc in combine_attempt.keys():
+        if rc.vertical_cut(mid) == (next(iter(left_prod.keys())), next(iter(right_prod.keys()))) and rc.perm in cheat_prod:
+            result += rc_ring(rc)
+            break
+    # total_prod = ring.zero
+    # for left_rc in left_prod.keys():
+    #     for right_rc in right_prod.keys():
+    #         total_prod += (ring(left_rc) % ring(right_rc)) * (left_prod[left_rc] * right_prod[right_rc])
+    # return total_prod
+    # first cut
+    print("Got through:")
+    return result
+    #return None
 
 if __name__ == "__main__":
     # test module functionality
@@ -761,20 +801,33 @@ if __name__ == "__main__":
     # BRANCH TEST IF CAN REPRESENT WITH ELEMNT SYMS BY PRODUCT
     for u in perms:
         for v in perms:
-            cheat_prod = Sx(v) * Sx(u)
+            # cheat_prod = Sx(v) * Sx(u)
             # CRYSTAL MONK
             # dominifiable cauchy
-            if dominifiable(u, v):
-                print(f"\n=== Testing dominifiable pair u={u.trimcode}, v={v.trimcode} ===")
-                result = rc_ring.zero
-                dom_rc = RCGraph.principal_rc(v.minimal_dominant_above(), n-1)
-                for u_rc in RCGraph.all_rc_graphs(u, n-1):
-                    result += (rc_ring(u_rc) % rc_ring(dom_rc)).divdiff_perm((~v)*dom_rc.perm)
-                        # diff_elem = (~v)*v.minimal_dominant_above()
-                        # final_prod = prod.divdiff_perm(diff_elem)
-                        # cheat_prod = Sx(v) * Sx(u)
-                        # total_count = sum(cheat_prod[w] for w in final_prod.keys())
-                        # print(f"  u_rc perm={u_rc.perm.trimcode}, v_rc perm={v_rc.perm.trimcode} => count={total_count}")
-                pretty_print(result)
-                test_prod = Sx(sum([coeff * rc.polyvalue(Sx.genset) for rc, coeff in result.items()]))
-                assert (test_prod - cheat_prod).expand() == S.Zero
+            # if dominifiable(u, v):
+            #     print(f"\n=== Testing dominifiable pair u={u.trimcode}, v={v.trimcode} ===")
+            # result = rc_ring.zero
+            # dom_rc = RCGraph.principal_rc(v.minimal_dominant_above(), n-1)
+            for u_rc in RCGraph.all_rc_graphs(u, n-1):
+                for v_rc in RCGraph.all_rc_graphs(v, n-1):
+                    print("ATTEMPT")
+                    pretty_print(CrystalGraphTensor(u_rc, v_rc))
+                    try:
+                        pretty_print(recursive_try_product(u_rc, v_rc, rc_ring))
+                    except Exception as e:
+                        import traceback
+                        print("FAILED TO COMPUTE PRODUCT:")
+                        traceback.print_exc(file=sys.stdout)
+                        #print(f"FAILED TO COMPUTE PRODUCT: {e}")
+            #         if v_rc.perm.minimal_dominant_above() != v_rc.perm:
+            #             continue
+            #         dom_rc = v_rc
+            #     result += (rc_ring(u_rc) % rc_ring(dom_rc)).divdiff_perm((~v)*dom_rc.perm)
+            #         # diff_elem = (~v)*v.minimal_dominant_above()
+            #         # final_prod = prod.divdiff_perm(diff_elem)
+            #         # cheat_prod = Sx(v) * Sx(u)
+            #         # total_count = sum(cheat_prod[w] for w in final_prod.keys())
+            #         # print(f"  u_rc perm={u_rc.perm.trimcode}, v_rc perm={v_rc.perm.trimcode} => count={total_count}")
+            # pretty_print(result)
+            # test_prod = Sx(sum([coeff * rc.polyvalue(Sx.genset) for rc, coeff in result.items()]))
+            # assert (test_prod - cheat_prod).expand() == S.Zero

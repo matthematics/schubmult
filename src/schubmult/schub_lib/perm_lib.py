@@ -2,6 +2,7 @@ import math
 from functools import cache, cached_property
 
 import sympy.combinatorics.permutations as spp
+from sympy.printing.defaults import Printable
 
 import schubmult.utils.logging as lg
 import schubmult.utils.perm_utils as sl
@@ -16,7 +17,7 @@ n = 100
 # TODO: permutations act
 
 
-class Permutation:
+class Permutation(Printable):
 
     """Permutation class representing permutations of positive integers."""
     def act_root(self, a, b):
@@ -213,10 +214,10 @@ class Permutation:
     def from_code(cls, cd):
         return uncode(cd)
 
-    def _latex(self, printer):
-        if Permutation.print_as_code:
-            return printer.doprint(trimcode(self))
-        return printer.doprint(list(self._perm))
+    # def _latex(self, printer):
+    #     if Permutation.print_as_code:
+    #         return printer._print(trimcode(self))
+    #     return printer._print(list(self._perm))
 
     # pattern is a list, not a permutation
     def has_pattern(self, pattern):
@@ -233,10 +234,16 @@ class Permutation:
                 return True
         return False
 
-    def _sympystr(self, printer):
+    def _pretty(self, printer = None):
+        return self._sympystr(printer)
+
+    def _sympystr(self, printer = None):
+        from sympy.printing.str import StrPrinter
+        if printer is None:
+            printer = StrPrinter()
         if Permutation.print_as_code:
             return printer.doprint(trimcode(self))
-        return printer.doprint(self._perm)
+        return printer.doprint(tuple(self._perm))
 
     def __call__(self, *tup):
         if len(tup) == 1:
@@ -337,8 +344,8 @@ class Permutation:
     def __getslice__(self, i, j):
         return self._perm[i:j]
 
-    def __str__(self):
-        return str(self._perm)
+    # def __str__(self):
+    #     return str(self._perm)
 
     def __add__(self, other):
         if not isinstance(other, list):
@@ -349,8 +356,8 @@ class Permutation:
         except Exception:
             return permlist
 
-    def _sympyrepr(self, printer):  # noqa: ARG002
-        return f"Permutation({list(self._perm)})"
+    # def _sympyrepr(self, printer):  # noqa: ARG002
+    #     return f"Permutation({list(self._perm)})"
 
     def __radd__(self, other):
         if not isinstance(other, list):
