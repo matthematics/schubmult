@@ -846,3 +846,10 @@ if __name__ == "__main__":
             # print(f"Successfully computed product for u={u.trimcode}, v={v.trimcode}")
             # pretty_print(result)
             # print(f"Comparison: {cheat_prod}")
+
+
+            # THEOREM: There is an action of the ring of dominant RC graphs on the module
+            # of all RC graphs, and there is a surjective weight preserving homomorphism of coalgebras
+            # and homomorphism of DRC-modules
+            # from the module of all RC graphs to the polynomial ring that coincides with the action
+            # and commutes with divided difference operators on the Schubert submodule.
