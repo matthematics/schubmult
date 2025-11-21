@@ -136,6 +136,18 @@ class CrystalGraph(Printable):
                     stack.append(new_elem)
         return crystal
 
+    @property
+    def params(self):
+        param_list = []
+        rc = self
+        for i in range(1, self.crystal_length()):
+            ai = 0
+            while rc.raising_operator(i) is not None:
+                rc = rc.raising_operator(i)
+                ai += 1
+            param_list.append(ai)
+        return tuple(param_list)
+
     def weight_bump(self):
         ...
 

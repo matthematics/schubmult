@@ -765,6 +765,14 @@ if __name__ == "__main__":
     n = int(sys.argv[1])
 
     perms = Permutation.all_permutations(n)
+
+    for perm in perms:
+        for rc in RCGraph.all_rc_graphs(perm, n-1):
+            pretty_print(rc)
+            print(f"{rc.params=}")
+
+    input()
+
     dom_perms = {perm.minimal_dominant_above() for perm in perms}
     # THIS WORKS NOTE
     # for dom in dom_perms:
