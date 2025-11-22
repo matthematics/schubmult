@@ -1,11 +1,12 @@
 from functools import cache
 
 from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
-from schubmult.rings.free_algebra_basis import WordBasis
+from schubmult.rings.free_algebra_basis import SchubertBasis, WordBasis
 from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.symbolic import S, sympy_Mul
 
 from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
+from .free_algebra import FreeAlgebra
 
 # from .crystal_graph_ring import CrystalTensorRing
 
@@ -27,9 +28,11 @@ class RCGraphPrintingTerm(TypedPrintingTerm):
 class RCGraphRingElement(CrystalGraphRingElement):
     """
     RCGraphRing elements are linear combinations of RCGraph basis elements.
-    This class implements crystal operations by linear extension: for each
-    basis RCGraph in the support apply the RCGraph operation and collect
-    the results into a new ring element.
+
+    The product % is the polynomial product. Currently only defined when the right side
+    is a dominant RC graph.
+
+    The product * is well defined for any pair of RC graphs and is the dual product.
     """
 
     # ----------------------
@@ -180,48 +183,23 @@ class RCGraphRingElement(CrystalGraphRingElement):
             res += coeff * self.ring(rc_graph.crystal_reflection(index))
         return res
 
+    def to_free_algebra_element(self):
+        ASx = FreeAlgebra(SchubertBasis)
+        ret = ASx.zero
+        for rc_graph, coeff in self.items():
+            ret += coeff * ASx(rc_graph.perm, len(rc_graph))
+        return ret
 
-# class RCGraphRingElement(BaseSchubertElement, CrystalGraph):
-#     # def as_expr(self):
-#     #     from sympy import Add
+    def polyvalue(self, x, y=None):
+        """
+        Evaluate the RC graph polynomial at variables x (and y, if provided).
+        Linear extension of RCGraph.polyvalue.
+        """
+        res = S.Zero
+        for rc_graph, coeff in self.items():
+            res += coeff * rc_graph.polyvalue(x, y)
+        return res
 
-#     #     terms = []
-#     #     for rc_graph, coeff in self.items():
-#     #         if coeff == 1:
-#     #             terms.append(self.ring.printing_term(rc_graph))
-#     #         else:
-#     #             terms.append(coeff * self.ring.printing_term(rc_graph))
-#     #     return Add(*terms)
-
-#     def as_ordered_terms(self, *_, **__):
-#         if len(self.keys()) == 0:
-#             return [S.Zero]
-#         return [
-#             self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k))
-#             for k in self.keys()
-#         ]
-
-#     def vertical_coproduct(self):
-#         tring = self.ring @ self.ring
-#         res = tring.zero
-#         for rc_graph, coeff in self.items():
-#             for i in range(len(rc_graph) + 1):
-#                 rc1, rc2 = rc_graph.vertical_cut(i)
-#                 res += tring.from_dict({(rc1, rc2): coeff})
-#         return res
-
-#     def coproduct(self):
-#         tring = self.ring @ self.ring
-#         res = tring.zero
-#         for rc_graph, coeff in self.items():
-#             res += coeff * self.ring.coproduct_on_basis(rc_graph)
-#         return res
-
-#     def crystal_reflection(self, row):
-#         res = self.ring.zero
-#         for rc_graph, coeff in self.items():
-#             res += coeff * self.ring(rc_graph.crystal_reflection(row))
-#         return res
 
 
 class RCGraphRing(CrystalGraphRing):
@@ -438,7 +416,7 @@ class RCGraphRing(CrystalGraphRing):
         # from .schubert_ring import DSx
         # from .variables import GeneratingSet
         # z = GeneratingSet("z")
-        if v_rc.perm.minimal_dominant_above() == v_rc.perm:
+        if v_rc.perm.is_dominant:
             dom_rc = v_rc
             tensor_hw_map = {}
             w_hw_map = {}
@@ -479,26 +457,8 @@ class RCGraphRing(CrystalGraphRing):
             except KeyError:
                 total_tab = Plactic().rs_insert(*tab2.row_word, *tab1.row_word)
                 return self(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
-        raise NotImplementedError
+        raise NotImplementedError("Multiplication only implemented for dominant right factor.")
 
-
-    # def coproduct_on_basis(self, elem):
-    #     tring = RestrictedRCGraphTensorRing(self, self)
-    #     # trivial principal case
-    #     ret_elem = tring.zero
-    #     elem2 = ~elem
-
-    #     cprd = self(elem2).vertical_coproduct()
-
-    #     for (rc1, rc2), coeff in cprd.items():
-    #         rc1_1 = ~rc1
-    #         if len(rc1_1) < len(elem):
-    #             rc1_1 = rc1_1.extend(len(elem) - len(rc1_1))
-    #         rc2_1 = ~rc2
-    #         if len(rc2_1) < len(elem):
-    #             rc2_1 = rc2_1.extend(len(elem) - len(rc2_1))
-    #         ret_elem += coeff * tring((rc1_1, rc2_1))
-    #     return ret_elem
 
     @cache
     def potential_products(self, left, right, length):
@@ -522,6 +482,7 @@ class RCGraphRing(CrystalGraphRing):
     def potential_prodperms(self, left, right, length):
         return set({rc.perm for rc in self.potential_products(left, right, length)})
 
+    # dual product
     def mul(self, a, b):
         # a, b are RCGraphRingElemen
         if isinstance(b, RCGraphRingElement):
@@ -544,82 +505,3 @@ class RCGraphRing(CrystalGraphRing):
         # Define the "one" element for RCGraphRing
         identity_graph = RCGraph()
         return self.from_dict({identity_graph: 1})
-
-
-# class RestrictedRCGraphTensorRing(CrystalTensorRing):
-
-#     def __init__(self, r1, r2):
-#         super().__init__(r1, r2)
-
-#     def new(self, *args):
-#         try:
-#             rc1, rc2 = args
-#         except Exception:
-#             raise ValueError("RestrictedRCGraphTensorRing.new expects two RCGraph arguments")
-#         if len(rc1) != len(rc2):
-#             raise ValueError("RestrictedRCGraphTensorRing.new expects RCGraphs of the same length")
-#         return self.from_dict({(rc1, rc2): 1})
-
-#     _z_cache = {}
-
-#     def mul(self, elem1, elem2):
-#         # elem1, elem2 are RestrictedRCGraphTensorRing elements
-#         from schubmult.schub_lib.perm_lib import Permutation
-#         def right_zero_act(rc1, rc2):
-#             if (rc1, rc2) in RestrictedRCGraphTensorRing._z_cache:
-#                 return RestrictedRCGraphTensorRing._z_cache[(rc1, rc2)]
-#             up_perms = (ASx@ASx)(((rc1.perm, len(rc1)),(rc2.perm, len(rc2)))) * (ASx@ASx)(((Permutation([]),1),(Permutation([]),1)))
-
-#             rc_set = set()
-
-#             for ((perm1, _),(perm2, _)), _ in up_perms.items():
-#                 for rc01 in RCGraph.all_rc_graphs(perm1, len(rc1) + 1, weight=(*rc1.length_vector, 0)):
-#                     if rc01.zero_out_last_row() == rc1:
-#                         for rc02 in RCGraph.all_rc_graphs(perm2, len(rc2) + 1, weight=(*rc2.length_vector, 0)):
-#                             if rc02.zero_out_last_row() == rc2:
-#                                 rc_set.add((rc01, rc02))
-
-#             RestrictedRCGraphTensorRing._z_cache[(rc1, rc2)] = rc_set
-#             return rc_set
-#         result = self.zero
-#         for (rc1a, rc2a), c1 in elem1.items():
-#             for (rc1b, rc2b), c2 in elem2.items():
-#                 num_zeros = max(len(rc1b), len(rc2b), len(rc1b.perm), len(rc2b.perm))
-#                 base_pair = self.new(rc1a, rc2a)
-#                 buildup = c1*c2*base_pair
-
-#                 for _ in range(num_zeros):
-#                     new_buildup = self.zero
-#                     for (rc01, rc02), coeff in buildup.items():
-#                         new_buildup += self.from_dict(dict.fromkeys(right_zero_act(rc01, rc02), coeff))
-#                     buildup = new_buildup
-
-#                 for (rc01, rc02), coeff in buildup.items():
-#                     new_rc1 = RCGraph([*rc01[: len(rc1a)], *rc1b.shiftup(len(rc1a))])
-#                     new_rc2 = RCGraph([*rc02[: len(rc2a)], *rc2b.shiftup(len(rc2a))])
-#                     if new_rc1.is_valid and len(new_rc1.perm.trimcode) <= len(new_rc1) and new_rc2.is_valid and len(new_rc2.perm.trimcode) <= len(new_rc2):
-#                         result += coeff * self.new(new_rc1, new_rc2)
-
-#         return result
-
-# def tensor_to_highest_weight(tensor_elem):
-#     ret_elem = tensor_elem.ring.zero
-#     for (g1, g2), coeff in tensor_elem.items():
-#         (g1_hw, g2_hw), seq2 = RCGraph.to_highest_weight_pair(g1, g2)
-#         ret_elem += coeff * tensor_elem.ring((g1_hw, g2_hw))
-#     return ret_elem
-
-# def tensor_to_highest_weight2(tensor_elem):
-#     ret_elem = tensor_elem.ring.zero
-#     for (g1, g2), coeff in tensor_elem.items():
-#         g1_hw = RCGraph.principal_rc(g1.perm, len(g1))
-#         g2_hw = RCGraph.principal_rc(g2.perm, len(g2))
-#         ret_elem += coeff * tensor_elem.ring((g1_hw, g2_hw))
-#     return ret_elem
-
-# def ring_elem_to_highest_weight(ring_elem):
-#     ret_elem = ring_elem.ring.zero
-#     for g, coeff in ring_elem.items():
-#         g_hw, seq = g.to_highest_weight()
-#         ret_elem += coeff * ring_elem.ring(g_hw)
-#     return ret_elem

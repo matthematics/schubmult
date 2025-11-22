@@ -18,11 +18,10 @@ n = 100
 
 
 class Permutation(Printable):
-
     """Permutation class representing permutations of positive integers."""
+
     def act_root(self, a, b):
         return self[a - 1], self[b - 1]
-
 
     @property
     def antiperm(self):
@@ -202,8 +201,8 @@ class Permutation(Printable):
         full_perm = [perm[i] for i in range(ml)]
         full_perm2 = [perm2[i] for i in range(ml)]
         for i in range(1, ml):
-            arr1 = list(full_perm[: i])
-            arr2 = list(full_perm2[: i])
+            arr1 = list(full_perm[:i])
+            arr2 = list(full_perm2[:i])
             arr1.sort()
             arr2.sort()
             if not (arr1 <= arr2):
@@ -234,11 +233,12 @@ class Permutation(Printable):
                 return True
         return False
 
-    def _pretty(self, printer = None):
+    def _pretty(self, printer=None):
         return self._sympystr(printer)
 
-    def _sympystr(self, printer = None):
+    def _sympystr(self, printer=None):
         from sympy.printing.str import StrPrinter
+
         if printer is None:
             printer = StrPrinter()
         if Permutation.print_as_code:
@@ -300,6 +300,10 @@ class Permutation(Printable):
     @cached_property
     def inv(self):
         return sum(self.code)
+
+    @property
+    def is_dominant(self):
+        return self.minimal_dominant_above() == self
 
     def __reduce__(self):
         return (self.__class__, (self._perm,))
@@ -589,8 +593,6 @@ def split_perms(perms):
     return perms2
 
 
-
-
 bad_classical_patterns = [Permutation([1, 4, 2, 3]), Permutation([1, 4, 3, 2]), Permutation([4, 1, 3, 2]), Permutation([3, 1, 4, 2])]
 
 
@@ -622,4 +624,3 @@ ID_PERM = Permutation([])
 @cache
 def s(i):
     return Permutation([*list(range(1, i)), i + 1, i])
-
