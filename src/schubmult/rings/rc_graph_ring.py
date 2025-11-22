@@ -32,6 +32,9 @@ class RCGraphRingElement(CrystalGraphRingElement):
     The product % is the polynomial product. Currently only defined when the right side
     is a dominant RC graph.
 
+    The Leibniz rule should hold for % somehow. Claude's idea is to define the ambiguous term in the Leibniz formula instead of trying
+    to do this directly.
+
     The product * is well defined for any pair of RC graphs and is the dual product.
     """
 
@@ -44,6 +47,10 @@ class RCGraphRingElement(CrystalGraphRingElement):
         return [self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k)) for k in self.keys()]
 
     def __mod__(self, other):
+        """
+        Polynomial product: self % other.
+        Currently only defined when `other` is a dominant RC graph.
+        """
         return self.ring.rc_product(self, other)
 
     def divdiff_perm(self, perm):
@@ -57,11 +64,27 @@ class RCGraphRingElement(CrystalGraphRingElement):
             for new_rc in new_rc_set:
                 res += coeff * self.ring(new_rc)
         return res
+    
+    def divdiff(self, i):
+        """
+        Apply divided difference operator for `perm` to self.
+        Linear extension of RCGraph.divdiff_perm.
+        """
+        res = self.ring.zero
+        for rc_graph, coeff in self.items():
+            new_rc_set = rc_graph.divdiff_desc(i)
+            for new_rc in new_rc_set:
+                res += coeff * self.ring(new_rc)
+        return res
 
     # ----------------------
     # Coalgebra helpers (already present)
     # ----------------------
     def vertical_coproduct(self):
+        """
+        Coproduct of RC graphs, coincides with the coproduct on Schubert polynomials
+        and induces the mul product.
+        """
         tring = self.ring @ self.ring
         res = tring.zero
         for rc_graph, coeff in self.items():
@@ -184,6 +207,9 @@ class RCGraphRingElement(CrystalGraphRingElement):
         return res
 
     def to_free_algebra_element(self):
+        """
+        Convert to FreeAlgebra element in Schubert basis.
+        """
         ASx = FreeAlgebra(SchubertBasis)
         ret = ASx.zero
         for rc_graph, coeff in self.items():
@@ -199,7 +225,6 @@ class RCGraphRingElement(CrystalGraphRingElement):
         for rc_graph, coeff in self.items():
             res += coeff * rc_graph.polyvalue(x, y)
         return res
-
 
 
 class RCGraphRing(CrystalGraphRing):
@@ -409,7 +434,7 @@ class RCGraphRing(CrystalGraphRing):
 
     def rc_single_product(self, u_rc, v_rc):
         # INSERTION WEIGHT TABLEAU
-        #from symengine import S
+        # from symengine import S
 
         from schubmult import CrystalGraphTensor, Plactic, RootTableau, Sx
 
@@ -429,14 +454,14 @@ class RCGraphRing(CrystalGraphRing):
                     if len(dp_ret) > 0:
                         for spoing in dp_ret:
                             if spoing[-1].perm.inv == 0:
-                                pants =  tensor_hw_map[u_rc_crystal]
+                                pants = tensor_hw_map[u_rc_crystal]
                                 wt = pants.to_lowest_weight()[0].crystal_weight
-                                wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n-1, weight=wt) if rc.is_lowest_weight]
+                                wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n - 1, weight=wt) if rc.is_lowest_weight]
                                 wp_rc = wp_rcs[0]
                                 if wp_rc.to_highest_weight()[0].crystal_weight == pants.crystal_weight:
                                     w_hw_map[pants] = wp_rc.to_highest_weight()[0]
                                 break
-            tensor =  tensor_hw_map[u_rc]
+            tensor = tensor_hw_map[u_rc]
             tensor0 = CrystalGraphTensor(dom_rc, u_rc)
             tensor0_hw, raise_seq = tensor0.to_highest_weight()
             if tensor in w_hw_map:
@@ -444,7 +469,7 @@ class RCGraphRing(CrystalGraphRing):
                 return self(w_rc.reverse_raise_seq(raise_seq))
             collected_rcs = {}
             for w in cheat_prod:
-                for w_rc in RCGraph.all_hw_rcs(w, n-1):
+                for w_rc in RCGraph.all_hw_rcs(w, n - 1):
                     if w_rc not in w_hw_map.values():
                         collected_rcs[RootTableau.from_rc_graph(w_rc).weight_tableau] = w_rc
 
@@ -458,7 +483,6 @@ class RCGraphRing(CrystalGraphRing):
                 total_tab = Plactic().rs_insert(*tab2.row_word, *tab1.row_word)
                 return self(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
         raise NotImplementedError("Multiplication only implemented for dominant right factor.")
-
 
     @cache
     def potential_products(self, left, right, length):
