@@ -64,7 +64,7 @@ class RCGraphRingElement(CrystalGraphRingElement):
             for new_rc in new_rc_set:
                 res += coeff * self.ring(new_rc)
         return res
-    
+
     def divdiff(self, i):
         """
         Apply divided difference operator for `perm` to self.
@@ -346,13 +346,11 @@ class RCGraphRing(CrystalGraphRing):
         # ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(basis_elem.perm) and k[1].perm.bruhat_leq(basis_elem.perm)})
         for key, coeff in up_elem2.items():
             if key.perm != elem.perm:
-                
-
                 keytrim = key.vertical_cut(len(key) - 1)[0]
 
-                #lower_key_coprod = self.coproduct_on_basis(RCGraph.principal_rc(keytrim.perm, len(keytrim)))
+                # lower_key_coprod = self.coproduct_on_basis(RCGraph.principal_rc(keytrim.perm, len(keytrim)))
                 key_coprod = self.coproduct_on_basis(RCGraph.principal_rc(key.perm, len(key)))
-                #key_coprod2 = lower_key_coprod * cprod
+                # key_coprod2 = lower_key_coprod * cprod
                 lower_asx_coprod = ASx(keytrim.perm, len(keytrim)).coproduct()
 
                 for (rc1_bad, rc2_bad), coeff1 in key_coprod.items():
