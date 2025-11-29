@@ -443,6 +443,7 @@ class RootTableau(CrystalGraph, GridPrint):
     @property
     def eg_row_word(self):
         roots = self.root_row_word
+
         def _word_from_right_roots(right_roots):
             right_roots = [*right_roots]
             word = []
@@ -458,6 +459,7 @@ class RootTableau(CrystalGraph, GridPrint):
                 if index + 1 < len(right_roots):
                     right_roots.extend(right_roots[index + 1 :])
             return tuple(reversed(word))
+
         return _word_from_right_roots(roots)
 
     @property
@@ -998,7 +1000,7 @@ class RootTableau(CrystalGraph, GridPrint):
     def raising_operator_direct(self, i):
         """
         Direct crystal raising operator e_i using EG invariant tracking.
-        
+
         Key insight: EG invariant is preserved, but eg_index_word changes.
         """
         new_compatible = _plactic_raising_operator(self.row_word, i)
@@ -1037,47 +1039,46 @@ class RootTableau(CrystalGraph, GridPrint):
         if new_rc.perm != rc.perm:
             return None
 
-        new_reduced_word = new_rc.perm_word
-
         # THE BUG: We're computing a NEW EG word, but the EG invariant should be PRESERVED!
         # Let's verify this first with the working operator:
         working_result = self.raising_operator(i)
         if working_result is not None:
             # Verify EG invariant is preserved
-            assert self.edelman_greene_invariant == working_result.edelman_greene_invariant, \
+            assert self.edelman_greene_invariant == working_result.edelman_greene_invariant, (
                 f"EG invariant not preserved! {self.edelman_greene_invariant=} != {working_result.edelman_greene_invariant=}"
-            
+            )
+
             # The EG invariant stays the same!
             eg_inv = self.edelman_greene_invariant
-            
+
             # What changes is: which position in eg_inv each box points to
             # working_result.eg_index_word tells us the NEW positions
-            
+
             # For debugging: print how eg_index_word changed
             print(f"Old eg_index_word: {self.eg_index_word}")
             print(f"New eg_index_word: {working_result.eg_index_word}")
             print(f"Old compatible: {self.row_word}")
             print(f"New compatible: {new_compatible}")
-            
+
             # Try to build the result using the working eg_index_word
             new_grid = np.empty_like(self._root_grid)
             new_grid[:] = None
-            
+
             for index, box in enumerate(self.iter_boxes_row_word_order):
                 new_letter = new_compatible[index]
                 # Use the NEW eg_index_word from the working result
                 new_eg_position = working_result.eg_index_word[index]
                 # But use the SAME (preserved) EG invariant
                 new_root = self.perm.right_root_at(new_eg_position, word=eg_inv)
-                
+
                 if new_letter > new_root[0]:
                     print(f"Compatible condition failed at box {box}: {new_letter} > {new_root[0]}")
                     return None
-                
+
                 new_grid[box] = (new_root, new_letter)
-            
+
             test_result = RootTableau(new_grid)
-            
+
             # Verify this matches the working result
             if test_result == working_result:
                 print("SUCCESS: Reconstructed using preserved EG invariant!")
@@ -1085,9 +1086,9 @@ class RootTableau(CrystalGraph, GridPrint):
                 print("MISMATCH: Something else is different")
                 print(f"Test result: {test_result}")
                 print(f"Working result: {working_result}")
-            
+
             return test_result
-        
+
         return None
 
     def lowering_operator_direct(self, i):
@@ -1135,26 +1136,27 @@ class RootTableau(CrystalGraph, GridPrint):
         # Similar verification for lowering operator
         working_result = self.lowering_operator(i)
         if working_result is not None:
-            assert self.edelman_greene_invariant == working_result.edelman_greene_invariant, \
+            assert self.edelman_greene_invariant == working_result.edelman_greene_invariant, (
                 f"EG invariant not preserved in lowering! {self.edelman_greene_invariant=} != {working_result.edelman_greene_invariant=}"
-            
+            )
+
             eg_inv = self.edelman_greene_invariant
-            
+
             new_grid = np.empty_like(self._root_grid)
             new_grid[:] = None
-            
+
             for index, box in enumerate(self.iter_boxes_row_word_order):
                 new_letter = new_compatible[index]
                 new_eg_position = working_result.eg_index_word[index]
                 new_root = self.perm.right_root_at(new_eg_position, word=eg_inv)
-                
+
                 if new_letter > new_root[0]:
                     return None
-                
+
                 new_grid[box] = (new_root, new_letter)
-            
+
             return RootTableau(new_grid)
-        
+
         return None
 
 

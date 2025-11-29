@@ -360,7 +360,7 @@ class Permutation(Printable):
         except Exception:
             return permlist
 
-    # def _sympyrepr(self, printer):  # noqa: ARG002
+    # def _sympyrepr(self, printer):
     #     return f"Permutation({list(self._perm)})"
 
     def __radd__(self, other):

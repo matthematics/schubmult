@@ -326,7 +326,7 @@ class RCGraphRing(CrystalGraphRing):
         #         if straight_tab == rc1.p_tableau:
         #             do_it += tring((rc1, rc2))
         # ret_elem = do_it
-        from schubmult import CrystalGraphTensor, FreeAlgebra, Permutation, SchubertBasis
+        from schubmult import CrystalGraphTensor, FreeAlgebra, Permutation, SchubertBasis  # noqa: F401
 
         ASx = FreeAlgebra(SchubertBasis)
 
@@ -346,6 +346,7 @@ class RCGraphRing(CrystalGraphRing):
         # ret_elem = tring.from_dict({k: v for k, v in ret_elem.items() if k[0].perm.bruhat_leq(basis_elem.perm) and k[1].perm.bruhat_leq(basis_elem.perm)})
         for key, coeff in up_elem2.items():
             if key.perm != elem.perm:
+
                 def check_compat(key_rc, rc1, rc2):
                     if len(key_rc) == 1:
                         return rc1.perm.inv + rc2.perm.inv == key_rc.perm.inv
@@ -356,7 +357,8 @@ class RCGraphRing(CrystalGraphRing):
                     lower_asx_coprod = ASx(lower_key.perm, len(lower_key)).coproduct()
                     lower_asx_coeff = lower_asx_coprod.get(((lower_rc1.perm, len(lower_rc1)), (lower_rc2.perm, len(lower_rc2))), 0)
                     return lower_asx_coeff != 0
-                #keytrim = key.vertical_cut(len(key) - 1)[0]
+
+                # keytrim = key.vertical_cut(len(key) - 1)[0]
 
                 # lower_key_coprod = self.coproduct_on_basis(RCGraph.principal_rc(keytrim.perm, len(keytrim)))
                 # key_coprod = self.coproduct_on_basis(RCGraph.principal_rc(key.perm, len(key)))
@@ -366,9 +368,9 @@ class RCGraphRing(CrystalGraphRing):
                 for (rc1, rc2), coeff in ret_elem.items():
                     if check_compat(key, rc1, rc2) and working_key_coprod.get(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))), 0) != 0:
                         ret_elem -= tring((rc1, rc2))
-                        working_key_coprod -= (ASx@ASx)(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))))
-                            # rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm and CrystalGraphTensor(w0_prin, rc2).to_highest_weight()[0].crystal_weight != elem.length_vector
-                            # trim key
+                        working_key_coprod -= (ASx @ ASx)(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))))
+                        # rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm and CrystalGraphTensor(w0_prin, rc2).to_highest_weight()[0].crystal_weight != elem.length_vector
+                        # trim key
 
                         # if not CrystalGraphTensor(w0_prin, rc2).is_lowest_weight:
                         #     ret_elem -= tring((rc1, rc2))

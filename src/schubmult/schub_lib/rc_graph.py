@@ -184,7 +184,6 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
         return tup[:-1]
 
-
     @property
     def is_rc(self):
         for i, row in enumerate(self):
@@ -197,7 +196,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def is_valid(self):
         if self.perm.inv != len(self.perm_word):
             return False
-        
+
         # if len(self.perm.trimcode) > len(self):
         #     return False
         return True
@@ -351,8 +350,6 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def __new__(cls, *args):
         new_args = tuple(tuple(arg) for arg in args)
         return RCGraph.__xnew_cached__(cls, *new_args)
-        
-        
 
     @staticmethod
     @cache
@@ -458,7 +455,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
     @cache
     def has_element(self, i, j):
-        return i <= len(self) and i + j  - 1 in self[i - 1]
+        return i <= len(self) and i + j - 1 in self[i - 1]
 
     @cached_property
     def length_vector(self):
@@ -485,7 +482,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def polyvalue(self, x, y=None, crystal=False):
         ret = S.One
         if crystal:
-            ret=S.Zero
+            ret = S.Zero
             for rc in self.full_crystal:
                 ret += rc.polyvalue(x, y=y, crystal=False)
             return ret
@@ -1201,7 +1198,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         return ret
 
     def dualpieri(self, mu, w):
-        from sympy import pretty_print
+        from sympy import pretty_print  # noqa: F401
 
         from schubmult.rings.rc_graph_ring import RCGraphRing
         from schubmult.utils.schub_lib import pull_out_var
@@ -1239,14 +1236,14 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                     if lm[i] + 1 > len(vpl.perm.trimcode):
                         # if lm[i] + 1 > len(vpl):
                         #     #try:
-                        res2.add((tuple([*vlist, ()]), vpl))
-                            # except AssertionError:
-                            #     print("Could not shiftup")
-                            #     pretty_print(vlist)
+                        res2.add(((*vlist, ()), vpl))
+                        # except AssertionError:
+                        #     print("Could not shiftup")
+                        #     pretty_print(vlist)
                         # else:
                         #     res2.add((tuple([*vlist, ()]), vpl.rowrange(0, len(vpl) - 1)))
                         continue
-                    
+
                     current_vpl = vpl
                     # move_spot = min([a + 1 for a in current_vpl.perm.descents() if a >= lm[i]])
                     # # while move_spot > 1:
@@ -1278,24 +1275,24 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                         assert vpl_bottom.inv == 0
                         vpl_bottom = vpl_bottom.resize(move_spot - 1)
                     # vpl_bottom = vpl_bottom.zero_out_last_row()
-                        # if vpl_bottom.inv == 0:
-                        #     vpl_bottom = vpl_bottom.rowrange(0, len(vpl_bottom) - 1)
+                    # if vpl_bottom.inv == 0:
+                    #     vpl_bottom = vpl_bottom.rowrange(0, len(vpl_bottom) - 1)
 
-                        # while vpl_bottom.inv > 0 and len(vpl_bottom) > lm[i] - 1 and len(vpl_bottom[-1]) == 0:
-                        #     vpl_bottom = vpl_bottom.zero_out_last_row()
+                    # while vpl_bottom.inv > 0 and len(vpl_bottom) > lm[i] - 1 and len(vpl_bottom[-1]) == 0:
+                    #     vpl_bottom = vpl_bottom.zero_out_last_row()
                     rcs2 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top)).keys())
-                        # try:
-                        #     while vepl.perm.inv > 0 and vepl.perm[0] == 1:
-                        #         vepl = vepl.shiftup(-1)
-                        # except Exception:S
-                        #     pass
-                        #rcs = rc_ring(vepl) * rc_ring(RCGraph([()] * (len(vpl.perm) - 1 - len(vpl.perm.trimcode))))
+                    # try:
+                    #     while vepl.perm.inv > 0 and vepl.perm[0] == 1:
+                    #         vepl = vepl.shiftup(-1)
+                    # except Exception:S
+                    #     pass
+                    # rcs = rc_ring(vepl) * rc_ring(RCGraph([()] * (len(vpl.perm) - 1 - len(vpl.perm.trimcode))))
                     rcs = rcs1.intersection(rcs2)
                     for vpl_new in rcs:
                         if vpl_new.perm not in {vv[-1] for vv in vl}:
                             continue
                         pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
-                        res2.add((tuple([*vlist, tuple([a + len(vlist) for a in tuple(sorted(pw,reverse=True))])]), vpl_new.resize(len(vpl) - 1)))
+                        res2.add(((*vlist, tuple([a + len(vlist) for a in tuple(sorted(pw, reverse=True))])), vpl_new.resize(len(vpl) - 1)))
 
             res = res2
         if len(lm) == len(cn1w):
@@ -1364,6 +1361,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
     def inverse_crystal_product(self, other):
         from schubmult.rings.rc_graph_ring import RCGraphRing
+
         rc_ring = RCGraphRing()
         prod = rc_ring(self) * rc_ring(other)
         res = rc_ring.zero

@@ -9,6 +9,8 @@ name = "schubmult"
 license = {file = "LICENSE"}
 dependencies = [
         "numpy",
+        "joblib",
+        "latex2sympy2_extended",
         "PuLP>=2.7.0",
         "symengine>=0.14.1",
         "sympy>=1.14.0",

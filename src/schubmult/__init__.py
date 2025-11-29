@@ -107,7 +107,7 @@ def __getattr__(name: str):
             # error when used. This lets `import schubmult` succeed while still
             # giving a helpful message if the script is actually executed.
             if modname.startswith(__name__ + "._scripts"):
-                def _broken_callable(*args, _name=name, _mod=modname, _err=e, **kwargs):
+                def _broken_callable(*_, _name=name, _mod=modname, _err=e, **__):
                     raise RuntimeError(
                         f"attempted to use {_name!r} from {_mod!r} but importing the module failed: {_err!r}",
                     )
