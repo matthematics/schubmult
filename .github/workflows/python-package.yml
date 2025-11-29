@@ -33,7 +33,7 @@ jobs:
     - name: Lint with ruff
       run: |
         # Run ruff linter with your local configuration from pyproject.toml from pyproject.toml
-        ruff check . --config pyproject.toml --config pyproject.toml
+        ruff check . --config pyproject.toml
     - name: Test with pytest
       run: |
         pytest tests/ -v || echo "No tests found or tests failed" tests found or tests failed"
