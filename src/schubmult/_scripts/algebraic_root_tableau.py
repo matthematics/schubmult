@@ -1,4 +1,7 @@
 if __name__ == "__main__":
+    from functools import cache
+    
+    @cache
     def eg_weak_order(rc1, rc2):
         if rc1.perm.inv > rc2.perm.inv:
             return False

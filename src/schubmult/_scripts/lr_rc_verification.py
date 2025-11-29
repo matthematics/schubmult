@@ -191,28 +191,34 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
 def worker(shared_recording_dict, lock, task_queue):
     from schubmult import RCGraph, RCGraphRing
 
-
     rc_ring = RCGraphRing()
 
     while True:
         try:
             key = task_queue.get(timeout=2)
-            (g31,) = key
-            rc_g = RCGraph(g31)
-            g1 = rc_ring(rc_g)
-            #g2 = rc_ring(g32.extend(len2 - len(g32)))
-            # g3 = rc_ring(g33.extend(len3 - len(g33)))
+            if key is None:  # Poison pill to signal end
+                break
         except Exception:
-            pass
+            # Timeout - check if queue is truly empty
+            if task_queue.empty():
+                break
+            continue
+            
+        (g31,) = key
+        rc_g = RCGraph(g31)
+        g1 = rc_ring(rc_g)
+        
         with lock:
             if key in shared_recording_dict:
                 if shared_recording_dict[key]:
                     print(f"{key} already verified, returning.")
                     continue
-                print(f"Previous failure on {(g1, g2)}, will retry.")
+                print(f"Previous failure on {g1}, will retry.")
+                
         from schubmult import FreeAlgebra, SchubertBasis
         ASx = FreeAlgebra(SchubertBasis)
         gg = g1.coproduct()
+        pretty_print(gg)
         tring = ASx@ASx
         g = tring.zero
         for (rc1, rc2), coeff in gg.items():
@@ -220,51 +226,22 @@ def worker(shared_recording_dict, lock, task_queue):
             g += tring(((rc1.perm, len(rc1)),(rc2.perm,len(rc2))))
         test_elem = ASx(rc_g.perm, len(rc_g)).coproduct()
 
-        # g_ = (g1 * g2).coproduct()
-        # diff = g - g_
         success = True
-        # def sym_quo(ring_elem):
-        #     return ring_elem
-        # print(g)
-        # print(test_elem)
         diff = g - test_elem
         try:
             assert all(v == 0 for k, v in diff.items()), f"{tuple(diff.items())=}"
         except AssertionError as e:
             print(f"FAILURE {tuple(g1)}")
-            # print(e)
-            # print("Product of coproducts:")
-            # pretty_print(g, wrap_line=False)
-            # print("Coproduct of product:")
-            # pretty_print(g_, wrap_line=False)
-            # print("Difference:")
             print(f"{diff=}")
-            # print(f"{g=}")
-            # print(f"{g_=}")
             success = False
             with lock:
                 shared_recording_dict[key] = False
             continue
-            #raise SystemExit(1)
-
-        #print(f"Success {(tuple(g1), tuple(g2))}")
-        # df = hom(g1) * (hom(g2) * hom(g3)) - hom(g)
-        # try:
-        #     assert all(v == 0 for k, v in df.items()), f"{tuple(df.values())=}"
-        # except AssertionError as e:
-        #     print("HOM FAILURE")
-        #     print(e)
-        #     print(hom(g1) * (hom(g2) * hom(g3)))
-        #     print(hom(g))
-        #     raise
 
         with lock:
             shared_recording_dict[key] = success
         if success:
             print(f"Success {tuple(g1)} at ", time.ctime())
-
-
-
 
 
 def main():
@@ -331,19 +308,29 @@ def main():
             #                                 #g3 = g33
             task_queue.put((graphs3,))
         print(f"Enqueued {task_queue.qsize()} tasks for n={n}.")
+        
         # Start fixed number of workers
         workers = []
         for _ in range(num_processors):
             p = Process(target=worker, args=(shared_recording_dict, lock, task_queue))
             p.start()
             workers.append(p)
+        
+        # Wait for queue to be empty
+        while not task_queue.empty():
+            time.sleep(1)
+        
+        # Send poison pills to workers
+        for _ in range(num_processors):
+            task_queue.put(None)
+        
+        # Wait for all workers to finish
         for p in workers:
             p.join()
 
         # Signal savers to exit
         stop_event.set()
-        # cache_saver_proc.join()
-        #recording_saver_proc.join()
+        
         print("Run finished.")
         if any(v is False for v in shared_recording_dict.values()):
             print("Results:")
