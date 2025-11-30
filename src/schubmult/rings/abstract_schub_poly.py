@@ -150,7 +150,7 @@ class DSchubPoly(AbstractSchubPoly):
         gl = self._genset
         if key == Permutation([]):
             return printer._print(ssymb.S.One)
-        subscript = printer._print(int("".join([str(i) for i in key])))
+        subscript = printer._print(key)
         if self._coeff_genset is None:
             return printer._print_Function(ssymb.Function(f"{self._prefix}{self.__class__._pretty_schub_char}_{subscript}")(ssymb.Symbol(gl)))
         return printer._print_Function(ssymb.Function(f"{self._prefix}{self.__class__._pretty_schub_char}_{subscript}")(ssymb.Symbol(f"{self._genset}; {self._coeff_genset}")))
