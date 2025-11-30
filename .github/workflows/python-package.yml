@@ -32,5 +32,8 @@ jobs:
         python -m pip install -e .
     - name: Lint with ruff
       run: |
-        # Run ruff linter with your local configuration from pyproject.toml from pyproject.toml
+        # Run ruff linter with your local configuration from pyproject.toml
         ruff check . --config pyproject.toml
+    - name: Test with pytest
+      run: |
+        pytest tests/ -v

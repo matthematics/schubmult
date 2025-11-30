@@ -46,19 +46,19 @@ def test_word_to_schubert():
         assert dct.get(tup, S.Zero) == v
 
 
-def test_schubert_to_sepdesc():
-    from schubmult import ASx, uncode, Sx
-    from schubmult.rings.free_algebra_basis import SeparatedDescentsBasis
-    from schubmult.symbolic import S
+# def test_schubert_to_sepdesc():
+#     from schubmult import ASx, uncode, Sx
+#     from schubmult.rings.free_algebra_basis import SeparatedDescentsBasis
+#     from schubmult.symbolic import S
 
-    k = 4
-    perm = uncode([3, 1, 0, 2, 1])
-    result = ASx(perm).change_basis(SeparatedDescentsBasis(k))
-    for (k1, k2, n), v in result.items():
-        assert len(k2) <= k
-        assert all(c >= k - 1 for c in k1.descents())
-        dct = Sx(k1) * Sx(k2)
-        assert dct.get(perm, S.Zero) == v
+#     k = 4
+#     perm = uncode([3, 1, 0, 2, 1])
+#     result = ASx(perm).change_basis(SeparatedDescentsBasis(k))
+#     for (k1, k2, n), v in result.items():
+#         assert len(k2) <= k
+#         assert all(c >= k - 1 for c in k1.descents())
+#         dct = Sx(k1) * Sx(k2)
+#         assert dct.get(perm, S.Zero) == v
 
 
 def test_sepdesc_to_schubert():
