@@ -60,6 +60,7 @@ def omega(i, qv):
         return 2 * qv[-1] - qv[-2]
     return 2 * qv[i] - qv[i - 1] - qv[i + 1]
 
+
 # def q_phi_d(d):
 #     from schubmult.schub_lib.perm_lib import Permutation
 #     m = max(d, default=-1)
@@ -76,8 +77,6 @@ def omega(i, qv):
 #         partial_perm[L - 1 -j] = jumps[j] + 1
 
 
-
-
 def sg(i, w):
     if i >= len(w) - 1 or w[i] < w[i + 1]:
         return 0
@@ -92,16 +91,18 @@ def count_less_than(arr, val):
         ct += 1
     return ct
 
+
 def artin_sequences(n):
     if n == 0:
         return {()}
-    old_seqs = artin_sequences(n-1)
+    old_seqs = artin_sequences(n - 1)
 
     ret = set()
     for seq in old_seqs:
-        for i in range(n+1):
-            ret.add((i,*seq))
+        for i in range(n + 1):
+            ret.add((i, *seq))
     return ret
+
 
 def is_parabolic(w, parabolic_index):
     for i in parabolic_index:
@@ -161,10 +162,12 @@ def cyclic_sort(L):
     i = L.index(m)
     return L[i + 1 :] + L[: i + 1]
 
+
 def cyclic_sort_min(L):
     m = min(L)
     i = L.index(m)
-    return L[i :] + L[:i]
+    return L[i:] + L[:i]
+
 
 # from functools import cache
 
@@ -1045,161 +1048,161 @@ def cyclic_sort_min(L):
 #     return False
 
 
-def q_phi_d(d, n_list):
-    """
-    Compute phi_d permutation from Definition 3.7 of "On Equivariant Quantum Schubert Calculus for G/P".
-    
-    Args:
-        d: nonnegative integer vector (d_1, ..., d_k) that increases then decreases
-        n_list: list of dimensions [n_1, ..., n_k] for flag variety Fl_{n_1,...,n_k; n+1}
-    
-    Returns:
-        Permutation object representing phi_d
-    """
-    from schubmult import Permutation
-    
-    k = len(d)
-    n = n_list[-1] if n_list else k
-    
-    # Find maximum value m in d
-    m = max(d) if d else 0
-    if m == 0:
-        return Permutation([])
-    
-    # Find jump positions h_j (where d increases from j-1 to j)
-    h = [0]  # h_0 = 0 by convention
-    for j in range(1, m + 1):
-        for i in range(k):
-            if i == 0:
-                if d[i] == j:
-                    h.append(i + 1)
-                    break
-            else:
-                if d[i - 1] == j - 1 and d[i] == j:
-                    h.append(i + 1)
-                    break
-    
-    # Find jump positions l_j (where d decreases from j to j-1)
-    l = [0] * (m + 2)  # l[m+1] will be k+1
-    l[m + 1] = k + 1
-    for j in range(1, m + 1):
-        for i in range(k):
-            if i == k - 1:
-                if d[i] == j:
-                    l[j] = i + 1
-                    break
-            else:
-                if d[i] == j and d[i + 1] == j - 1:
-                    l[j] = i + 1
-                    break
-    
-    # Build n_extended = [0, n_1, ..., n_k, n+1]
-    n_extended = [0] + n_list + [n + 1]
-    
-    # Build the permutation mapping
-    # phi_d(n_{l_j} - j + 1) = n_{h_{j-1}} + 1 for j = 1, ..., m
-    mapping = {}
-    for j in range(1, m + 1):
-        source = n_extended[l[j]] - j + 1
-        target = n_extended[h[j - 1]] + 1
-        mapping[source] = target
-    
-    # Create the full permutation preserving order on remaining elements
-    domain = list(range(1, n + 2))
-    codomain = []
-    used_targets = set(mapping.values())
-    available_targets = [x for x in domain if x not in used_targets]
-    
-    result = [None] * (n + 1)
-    for i in range(1, n + 2):
-        if i in mapping:
-            result[i - 1] = mapping[i]
-        else:
-            # Take next available target preserving order
-            result[i - 1] = available_targets.pop(0) if available_targets else i
-    
-    # Trim trailing fixed points
-    while result and result[-1] == len(result):
-        result.pop()
-    
-    return Permutation(result)
+# def q_phi_d(d, n_list):
+#     """
+#     Compute phi_d permutation from Definition 3.7 of "On Equivariant Quantum Schubert Calculus for G/P".
+
+#     Args:
+#         d: nonnegative integer vector (d_1, ..., d_k) that increases then decreases
+#         n_list: list of dimensions [n_1, ..., n_k] for flag variety Fl_{n_1,...,n_k; n+1}
+
+#     Returns:
+#         Permutation object representing phi_d
+#     """
+#     from schubmult import Permutation
+
+#     k = len(d)
+#     n = n_list[-1] if n_list else k
+
+#     # Find maximum value m in d
+#     m = max(d) if d else 0
+#     if m == 0:
+#         return Permutation([])
+
+#     # Find jump positions h_j (where d increases from j-1 to j)
+#     h = [0]  # h_0 = 0 by convention
+#     for j in range(1, m + 1):
+#         for i in range(k):
+#             if i == 0:
+#                 if d[i] == j:
+#                     h.append(i + 1)
+#                     break
+#             else:
+#                 if d[i - 1] == j - 1 and d[i] == j:
+#                     h.append(i + 1)
+#                     break
+
+#     # Find jump positions l_j (where d decreases from j to j-1)
+#     l = [0] * (m + 2)  # l[m+1] will be k+1
+#     l[m + 1] = k + 1
+#     for j in range(1, m + 1):
+#         for i in range(k):
+#             if i == k - 1:
+#                 if d[i] == j:
+#                     l[j] = i + 1
+#                     break
+#             else:
+#                 if d[i] == j and d[i + 1] == j - 1:
+#                     l[j] = i + 1
+#                     break
+
+#     # Build n_extended = [0, n_1, ..., n_k, n+1]
+#     n_extended = [0] + n_list + [n + 1]
+
+#     # Build the permutation mapping
+#     # phi_d(n_{l_j} - j + 1) = n_{h_{j-1}} + 1 for j = 1, ..., m
+#     mapping = {}
+#     for j in range(1, m + 1):
+#         source = n_extended[l[j]] - j + 1
+#         target = n_extended[h[j - 1]] + 1
+#         mapping[source] = target
+
+#     # Create the full permutation preserving order on remaining elements
+#     domain = list(range(1, n + 2))
+#     codomain = []
+#     used_targets = set(mapping.values())
+#     available_targets = [x for x in domain if x not in used_targets]
+
+#     result = [None] * (n + 1)
+#     for i in range(1, n + 2):
+#         if i in mapping:
+#             result[i - 1] = mapping[i]
+#         else:
+#             # Take next available target preserving order
+#             result[i - 1] = available_targets.pop(0) if available_targets else i
+
+#     # Trim trailing fixed points
+#     while result and result[-1] == len(result):
+#         result.pop()
+
+#     return Permutation(result)
 
 
-def q_tau_d(d, n_list):
-    """
-    Compute tau_d permutation from Definition 3.7 of "On Equivariant Quantum Schubert Calculus for G/P".
-    
-    Args:
-        d: nonnegative integer vector (d_1, ..., d_k) that increases then decreases
-        n_list: list of dimensions [n_1, ..., n_k] for flag variety Fl_{n_1,...,n_k; n+1}
-    
-    Returns:
-        Permutation object representing tau_d
-    """
-    from schubmult import Permutation
-    
-    k = len(d)
-    n = n_list[-1] if n_list else k
-    
-    # Find maximum value m in d
-    m = max(d) if d else 0
-    if m == 0:
-        return Permutation([])
-    
-    # Find jump positions h_j (where d increases from j-1 to j)
-    h = [0]  # h_0 = 0 by convention
-    for j in range(1, m + 1):
-        for i in range(k):
-            if i == 0:
-                if d[i] == j:
-                    h.append(i + 1)
-                    break
-            else:
-                if d[i - 1] == j - 1 and d[i] == j:
-                    h.append(i + 1)
-                    break
-    
-    # Find jump positions l_j (where d decreases from j to j-1)
-    l = [0] * (m + 2)  # l[m+1] will be k+1
-    l[m + 1] = k + 1
-    for j in range(1, m + 1):
-        for i in range(k):
-            if i == k - 1:
-                if d[i] == j:
-                    l[j] = i + 1
-                    break
-            else:
-                if d[i] == j and d[i + 1] == j - 1:
-                    l[j] = i + 1
-                    break
-    
-    # Build n_extended = [0, n_1, ..., n_k, n+1]
-    n_extended = [0] + n_list + [n + 1]
-    
-    # Build the permutation mapping
-    # tau_d(n_{l_{j+1}} - j + 1) = n_{h_j} for j = 1, ..., m
-    mapping = {}
-    for j in range(1, m + 1):
-        source = n_extended[l[j + 1]] - j + 1
-        target = n_extended[h[j]]
-        mapping[source] = target
-    
-    # Create the full permutation preserving order on remaining elements
-    domain = list(range(1, n + 2))
-    codomain = []
-    used_targets = set(mapping.values())
-    available_targets = [x for x in domain if x not in used_targets]
-    
-    result = [None] * (n + 1)
-    for i in range(1, n + 2):
-        if i in mapping:
-            result[i - 1] = mapping[i]
-        else:
-            # Take next available target preserving order
-            result[i - 1] = available_targets.pop(0) if available_targets else i
-    
-    # Trim trailing fixed points
-    while result and result[-1] == len(result):
-        result.pop()
-    
-    return Permutation(result)
+# def q_tau_d(d, n_list):
+#     """
+#     Compute tau_d permutation from Definition 3.7 of "On Equivariant Quantum Schubert Calculus for G/P".
+
+#     Args:
+#         d: nonnegative integer vector (d_1, ..., d_k) that increases then decreases
+#         n_list: list of dimensions [n_1, ..., n_k] for flag variety Fl_{n_1,...,n_k; n+1}
+
+#     Returns:
+#         Permutation object representing tau_d
+#     """
+#     from schubmult import Permutation
+
+#     k = len(d)
+#     n = n_list[-1] if n_list else k
+
+#     # Find maximum value m in d
+#     m = max(d) if d else 0
+#     if m == 0:
+#         return Permutation([])
+
+#     # Find jump positions h_j (where d increases from j-1 to j)
+#     h = [0]  # h_0 = 0 by convention
+#     for j in range(1, m + 1):
+#         for i in range(k):
+#             if i == 0:
+#                 if d[i] == j:
+#                     h.append(i + 1)
+#                     break
+#             else:
+#                 if d[i - 1] == j - 1 and d[i] == j:
+#                     h.append(i + 1)
+#                     break
+
+#     # Find jump positions l_j (where d decreases from j to j-1)
+#     l = [0] * (m + 2)  # l[m+1] will be k+1
+#     l[m + 1] = k + 1
+#     for j in range(1, m + 1):
+#         for i in range(k):
+#             if i == k - 1:
+#                 if d[i] == j:
+#                     l[j] = i + 1
+#                     break
+#             else:
+#                 if d[i] == j and d[i + 1] == j - 1:
+#                     l[j] = i + 1
+#                     break
+
+#     # Build n_extended = [0, n_1, ..., n_k, n+1]
+#     n_extended = [0] + n_list + [n + 1]
+
+#     # Build the permutation mapping
+#     # tau_d(n_{l_{j+1}} - j + 1) = n_{h_j} for j = 1, ..., m
+#     mapping = {}
+#     for j in range(1, m + 1):
+#         source = n_extended[l[j + 1]] - j + 1
+#         target = n_extended[h[j]]
+#         mapping[source] = target
+
+#     # Create the full permutation preserving order on remaining elements
+#     domain = list(range(1, n + 2))
+#     codomain = []
+#     used_targets = set(mapping.values())
+#     available_targets = [x for x in domain if x not in used_targets]
+
+#     result = [None] * (n + 1)
+#     for i in range(1, n + 2):
+#         if i in mapping:
+#             result[i - 1] = mapping[i]
+#         else:
+#             # Take next available target preserving order
+#             result[i - 1] = available_targets.pop(0) if available_targets else i
+
+#     # Trim trailing fixed points
+#     while result and result[-1] == len(result):
+#         result.pop()
+
+#     return Permutation(result)
