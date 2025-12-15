@@ -288,7 +288,7 @@ class Permutation(Printable):
     @classmethod
     def from_partial(cls, partial_perm):
         max_required = max(partial_perm)
-        search_space = set([i for i in partial_perm if i is not None])
+        search_space = {i for i in partial_perm if i is not None}
         full_perm = [i + 1 for i in range(max_required) if i + 1 not in search_space]
         perm = [*partial_perm]
         j = 0
