@@ -285,6 +285,19 @@ class Permutation(Printable):
     def _cached_code(self):
         return sl.old_code(self._perm)
 
+    @classmethod
+    def from_partial(cls, partial_perm):
+        max_required = max(partial_perm)
+        search_space = set([i for i in partial_perm if i is not None])
+        full_perm = [i + 1 for i in range(max_required) if i + 1 not in search_space]
+        perm = [*partial_perm]
+        j = 0
+        for i in range(len(perm)):
+            if perm[i] is None:
+                perm[i] = full_perm[j]
+                j += 1
+        return cls(perm)
+
     @property
     def trimcode(self):
         if self._perm == ():
