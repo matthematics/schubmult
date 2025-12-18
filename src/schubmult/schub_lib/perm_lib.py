@@ -287,9 +287,11 @@ class Permutation(Printable):
 
     @classmethod
     def from_partial(cls, partial_perm):
-        max_required = max(partial_perm)
+        max_required = max([a for a in partial_perm if a is not None], default=0)
         search_space = {i for i in partial_perm if i is not None}
-        full_perm = [i + 1 for i in range(max_required) if i + 1 not in search_space]
+
+        # Need enough values to fill all None positions
+        full_perm = [i + 1 for i in range(max(max_required, len(partial_perm))) if i + 1 not in search_space]
         perm = [*partial_perm]
         j = 0
         for i in range(len(perm)):
