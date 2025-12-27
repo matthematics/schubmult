@@ -100,6 +100,11 @@ class TypedPrintingTerm(AbstractSchubPoly):
 
     def __new__(cls, k):
         return TypedPrintingTerm.__xnew_cached__(cls, k)
+    
+    @property
+    def args(self):
+        # Return the key wrapped in a tuple to prevent sympy from trying to traverse it
+        return (self._key,)
 
     @staticmethod
     def __xnew__(_class, k):
@@ -110,6 +115,10 @@ class TypedPrintingTerm(AbstractSchubPoly):
         return printer._print(key)
 
     def _pretty(self, printer):
+        key = self._key
+        return printer._print(key)
+    
+    def _latex(self, printer):
         key = self._key
         return printer._print(key)
 

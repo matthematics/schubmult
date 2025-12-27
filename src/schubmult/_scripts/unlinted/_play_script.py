@@ -1,84 +1,77 @@
-from schubmult import Permutation, elem_sym_perms, elem_sym_perms_q, q_vector
+from schubmult import Permutation, elem_sym_perms, elem_sym_perms_q, q_vector, phi_d, tau_d, RCGraph
 
-def h_vector(q_vector):
-    h = []
-    val = 0
-    for i in range(len(q_vector)):
-        val2 = q_vector[i]
-        if val2 < val:
-            break
-        if val2 > val:
-            h += [i + 1]
-        val = val2
-    return tuple(h)
+def reverse_kk_insert(rc: RCGraph, d, reflections):
+    pair_dict = {}
+    pair_dict_rev = {}
+    for a,b in reflections:
+        pair_dict[a] = pair_dict.get(a, [])
+        pair_dict[a].append(b)
+        pair_dict_rev[b] = a
+    
+    working_rc = rc
+    rows = []
+    for row in range(1, len(rc) + 1):
+        for col in range(working_rc.cols + 5, 0, -1):
+            if working_rc.has_element(row, col):
+                q, s = working_rc.right_root_at(row, col)
+                look_right = False
+                if s in pair_dict_rev and q == pair_dict_rev[s]:
+                    working_rc = working_rc.toggle_ref_at(row, col)
+                    del pair_dict_rev[s]
+                    pair_dict[q].remove(s)
+                    if len(pair_dict[q]) == 0:
+                        del pair_dict[q]
+                elif s in pair_dict_rev and q in pair_dict_rev and pair_dict_rev[s] == pair_dict_rev[q]:
+                    working_rc = working_rc.toggle_ref_at(row, col)
+                    pair_dict[pair_dict_rev[s]].remove(s)
+                    if len(pair_dict[pair_dict_rev[s]]) == 0:
+                        del pair_dict[pair_dict_rev[s]]
+                    del pair_dict_rev[s]
 
-def l_vector(q_vector):
-    """Find l_j = last position where d equals j (where d decreases from j to j-1)."""
-    l = []
-    val = 0
-    for i in range(len(q_vector)):
-        val2 = q_vector[i]
-        if val2 < val:
-            # Record the PREVIOUS position (i) as the last position with value val
-            l += [i]
-        val = val2
-    return tuple(reversed(l))
-
-def tau_d(d):
-    lv = l_vector(d)
-    hv = h_vector(d)
-
-    tau = [None] * len(d)
-    for i in range(len(lv)):
-        if lv[i] - i >= len(d):
-            tau += [None] * (lv[i] - i - len(d) + 1)
-        tau[lv[i] - i] = hv[i]
-    return Permutation.from_partial(tau)
-
-def phi_d(d):
-    hv = h_vector(d)
-    lv = l_vector(d)
-
-    phi = [None] * len(d)
-    for i in range(len(hv)):
-        if lv[i] - 1 - i >= len(d):
-            phi += [None] * (lv[i] - 1 - i - len(d) + 1)
-        phi[lv[i] - 1 - i] = hv[i]
-    return Permutation.from_partial(phi)
+                    rows.append(row)
+                else:
+                    continue
+                found = False
+                for col2 in range(col + 1, working_rc.cols + 1):
+                    if not working_rc.has_element(row, col2):
+                        q2, s2 = working_rc.right_root_at(row, col2)
+                        if q2 > s2:
+                            continue
+                        if q2 <= d and s2 > d and s2 not in pair_dict_rev:
+                            working_rc = working_rc.toggle_ref_at(row, col2)
+                            pair_dict_rev[q2] = s2
+                            pair_dict[q2] = pair_dict.get(q2, [])
+                            pair_dict[q2].append(s2)
+                            found = True
+                            break
+                        elif d < q2 and s2 in pair_dict_rev and q2 not in pair_dict_rev:
+                            working_rc = working_rc.toggle_ref_at(row, col2)
+                            pair_dict_rev[q2] = pair_dict_rev[s2]
+                            pair_dict[pair_dict_rev[s2]].append(q2)
+                            found = True
+                            break
+                if not found:
+                    rows.append(row)
+    assert len(pair_dict) == 0, f"Not all reflections used up: {pair_dict} {working_rc}"
+    return working_rc, tuple(reversed(rows))
 
 # Test
 if __name__ == "__main__":
-    from schubmult import *
     #from schubmult.utils.schub_lib import elem_sym_perms_q
     import sys
 
     n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
 
-    for k in range(1, n):
-        for p in range(1, k + 1):
-            for u in perms:
-                print(f"{p=} {k=} {u=}")
-                qlist = elem_sym_perms_q(u, p, k)
-                for w, wdiff, qpow in qlist:
-                    d = list(q_vector(qpow)) + [0] * (n - len(q_vector(qpow)))
-                    print(f"{phi_d(d)=} {tau_d(d)=}")
-                    n_i = k
-                    pieri_spot = n_i - d[k - 1] if k - 1 < len(d) else n_i
-                    eperms = elem_sym_perms(u * tau_d(d), pieri_spot, pieri_spot)
-                    good = False
-                    for up, udiff in eperms:
-                        if up == w * phi_d(d):
-                            good = True
-                            break
-                    if not good:
-                        print("Test failed for n =", n, "k =", k, "p =", p)
-                        print("u =", u, "w =", w, "d =", d)
-                        print("w * phi_d(d) =", w * phi_d(d))
-                        print("u * tau_d(d) =", u * tau_d(d))
-                        print("pieri_spot =", pieri_spot)
-                        print("elem_sym_perms(u * tau_d(d), pieri_spot, pieri_spot) =")
-                        for up, udiff in eperms:
-                            print(" ", up, "diff =", udiff)
-                    else:
-                        print("Test passed for n =", n, "k =", k, "p =", p, "u =", u, "w =", w, "d =", d)
+    for perm in perms:
+        rc: RCGraph
+        for rc in RCGraph.all_rc_graphs(perm, n - 1):
+            for d in range(1, n):
+                for r in range(1, d + 1):
+                    rc2, reflections = rc.kogan_kumar_insert(d, [r], return_reflections=True)
+                    print(f"Testing perm {perm}, d={d}, r={r}, rc={rc}, rc2={rc2}, reflections={reflections}")
+                    rc_reversed, rows = reverse_kk_insert(rc2, d, reflections)
+                    assert rc_reversed == rc, f"Failed on perm {perm}, d={d}, r={r}, rc={rc} rc2={rc2} rc_reversed={rc_reversed}"
+                    print("Success")
+
+    

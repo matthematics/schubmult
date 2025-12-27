@@ -53,6 +53,11 @@ def _crystal_isomorphic(c1, c2, cutoff=None):
 
 
 class RCGraph(GridPrint, tuple, CrystalGraph):
+    @property
+    def args(self):
+        """Return args for sympy compatibility - prevents traversal into tuple contents."""
+        return ()
+    
     def div_diff(self, i):
         if i >= self.crystal_length():
             return None
@@ -254,6 +259,11 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             for b in b_list:
                 assert a <= descent and descent < b  # noqa: PT018
                 pair_dict_rev[b] = a
+        
+        # Process reflections in reverse order (LIFO - last in, first out)
+        reflection_list = list(reflection_path)
+        reflection_list.reverse()
+        reflection_set = set(reflection_list)
 
         def is_relevant_crossing(root, prm):  # noqa: ARG001
             if root[0] not in pair_dict:
@@ -275,47 +285,83 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
         rows = []
 
-        for row in range(1, len(self) + 1):
-            for col in range(1, max(descent, self.cols) + 1):
-                if working_rc.has_element(row, col):
-                    a, b = working_rc.right_root_at(row, col)
-                    if is_relevant_crossing((a, b), working_rc.perm):
-                        working_rc = working_rc.toggle_ref_at(row, col)
-                        a2 = a
-                        if a2 in pair_dict_rev:
-                            a2 = pair_dict_rev[a2]
-
-                        pair_dict[a2].remove(b)
-                        del pair_dict_rev[b]
-                        if len(pair_dict[a2]) == 0:
-                            del pair_dict[a2]
-
-                        rows.append(row)
-
-                        for col2 in range(1, col):
-                            if not working_rc.has_element(row, col):
-                                a2, b2 = working_rc.right_root_at(row, col2)
-                                # if a2 > b2:
-                                #     continue
-                                if is_relevant_noncrossing((a2, b2)):
-                                    # print(f"Rect {a2, b2}")
-                                    if a2 <= descent:
-                                        assert b2 not in pair_dict
-                                        if a2 not in pair_dict:
-                                            pair_dict[a2] = set()
-                                        pair_dict[a2].add(b2)
-                                        pair_dict_rev[b2] = a2
-                                        working_rc = working_rc.toggle_ref_at(row, col2)
-                                        rows.pop()
+        # Scan row by row from top, looking right-to-left for reflections to remove
+        while len(reflection_set) > 0:
+            for row in range(1, len(self) + 1):
+                # Search from right to left within each row  
+                for col in range(max(descent, working_rc.cols), 0, -1):
+                    if working_rc.has_element(row, col):
+                        a, b = working_rc.right_root_at(row, col)
+                        # Check if this is any reflection we're looking for
+                        if (a, b) in reflection_set or (a in pair_dict_rev and (pair_dict_rev[a], b) in reflection_set):
+                            # Remove this reflection from the set
+                            if (a, b) in reflection_set:
+                                reflection_set.remove((a, b))
+                                target_a, target_b = a, b
+                            else:
+                                reflection_set.remove((pair_dict_rev[a], b))
+                                target_a = pair_dict_rev[a]
+                                target_b = b
+                            
+                            found = True
+                            working_rc = working_rc.toggle_ref_at(row, col)
+                            
+                            # Check if RC became invalid and needs rectification
+                            if not working_rc.is_valid and row < len(working_rc):
+                                # Rectify the row below
+                                for rect_row in range(row + 1, len(working_rc) + 1):
+                                    if not working_rc.is_valid:
+                                        for rect_col in range(1, max(descent, working_rc.cols) + 1):
+                                            if working_rc.has_element(rect_row, rect_col):
+                                                rect_a, rect_b = working_rc.right_root_at(rect_row, rect_col)
+                                                if rect_a > rect_b:  # Reversed root - toggle to rectify
+                                                    working_rc = working_rc.toggle_ref_at(rect_row, rect_col)
+                                                    break
                                     else:
-                                        assert a2 not in pair_dict_rev, f"{pair_dict_rev=}"
-                                        assert b2 in pair_dict_rev, f"{pair_dict_rev=}"
-                                        a = pair_dict_rev[a2]
-                                        pair_dict[a].add(b2)
-                                        pair_dict_rev[b2] = a
-                                        working_rc = working_rc.toggle_ref_at(row, col2)
-                                        rows.pop()
-                                    break
+                                        break
+                            
+                            a2 = a
+                            if a2 in pair_dict_rev:
+                                a2 = pair_dict_rev[a2]
+
+                            pair_dict[a2].remove(target_b)
+                            del pair_dict_rev[target_b]
+                            if len(pair_dict[a2]) == 0:
+                                del pair_dict[a2]
+
+                            rows.append(row)
+
+                            # After removing intersection, look to its RIGHT for Figure 10 configurations
+                            # Only do this if there are still reflections being tracked
+                            if len(pair_dict) > 0:
+                                for col2 in range(col + 1, max(descent, working_rc.cols) + 1):
+                                    if not working_rc.has_element(row, col2):
+                                        a2, b2 = working_rc.right_root_at(row, col2)
+                                        # if a2 > b2:
+                                        #     continue
+                                        if is_relevant_noncrossing((a2, b2)):
+                                            # print(f"Rect {a2, b2}")
+                                            if a2 <= descent:
+                                                assert b2 not in pair_dict
+                                                if a2 not in pair_dict:
+                                                    pair_dict[a2] = set()
+                                                pair_dict[a2].add(b2)
+                                                pair_dict_rev[b2] = a2
+                                                working_rc = working_rc.toggle_ref_at(row, col2)
+                                                rows.pop()
+                                            else:
+                                                assert a2 not in pair_dict_rev, f"{pair_dict_rev=}"
+                                                assert b2 in pair_dict_rev, f"{pair_dict_rev=}"
+                                                a = pair_dict_rev[a2]
+                                                pair_dict[a].add(b2)
+                                                pair_dict_rev[b2] = a
+                                                working_rc = working_rc.toggle_ref_at(row, col2)
+                                                rows.pop()
+                                            break
+
+            
+            if not found:
+                assert False, f"Could not find reflection ({target_a}, {target_b}) in working_rc:\n{working_rc}\npair_dict={pair_dict}, pair_dict_rev={pair_dict_rev}"
 
         assert len(pair_dict_rev) == 0, f"{pair_dict=}, {pair_dict_rev=}, {working_rc=}"
         assert working_rc.perm.bruhat_leq(self.perm)
@@ -1324,6 +1370,10 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             return tuple(self)[key]
         if isinstance(key, tuple):
             i, j = key
+            if isinstance(i, slice):
+                return tuple([self[a, j] for a in range(len(self))[i]])
+            if isinstance(j, slice):
+                return tuple([self[i, b] for b in range(self.cols)[j]])
             if not self.has_element(i + 1, self.cols - j):
                 return None
             return i + self.cols - j

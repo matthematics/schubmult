@@ -63,6 +63,9 @@ class GridPrint(Printable):
     def _pretty(self, printer):
         return printer._print_MatrixBase(self.print_element)
 
+    def _latex(self, printer):
+        return printer._print_MatrixBase(self.print_element)
+
     @property
     def print_element(self):
         class PrintElement(GridPrint):
@@ -78,5 +81,10 @@ class GridPrint(Printable):
                 return self.cols
 
             def __getitem__(inner_self, key):
-                return self[key] if self[key] is not None else " "
+                item = self[key]
+                if item is None:
+                    return " "
+                if isinstance(item, tuple):
+                    return tuple([i if i is not None else " " for i in item])
+                return item
         return PrintElement()
