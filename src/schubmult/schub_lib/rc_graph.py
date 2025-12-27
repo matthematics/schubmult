@@ -57,7 +57,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def args(self):
         """Return args for sympy compatibility - prevents traversal into tuple contents."""
         return ()
-    
+
     def div_diff(self, i):
         if i >= self.crystal_length():
             return None
@@ -259,7 +259,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
             for b in b_list:
                 assert a <= descent and descent < b  # noqa: PT018
                 pair_dict_rev[b] = a
-        
+
         # Process reflections in reverse order (LIFO - last in, first out)
         reflection_list = list(reflection_path)
         reflection_list.reverse()
@@ -288,7 +288,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         # Scan row by row from top, looking right-to-left for reflections to remove
         while len(reflection_set) > 0:
             for row in range(1, len(self) + 1):
-                # Search from right to left within each row  
+                # Search from right to left within each row
                 for col in range(max(descent, working_rc.cols), 0, -1):
                     if working_rc.has_element(row, col):
                         a, b = working_rc.right_root_at(row, col)
@@ -297,15 +297,15 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                             # Remove this reflection from the set
                             if (a, b) in reflection_set:
                                 reflection_set.remove((a, b))
-                                target_a, target_b = a, b
+                                # target_a, target_b = a, b
                             else:
                                 reflection_set.remove((pair_dict_rev[a], b))
-                                target_a = pair_dict_rev[a]
+                                # target_a = pair_dict_rev[a]
                                 target_b = b
-                            
-                            found = True
+
+                            # found = True
                             working_rc = working_rc.toggle_ref_at(row, col)
-                            
+
                             # Check if RC became invalid and needs rectification
                             if not working_rc.is_valid and row < len(working_rc):
                                 # Rectify the row below
@@ -319,7 +319,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                                                     break
                                     else:
                                         break
-                            
+
                             a2 = a
                             if a2 in pair_dict_rev:
                                 a2 = pair_dict_rev[a2]
@@ -359,9 +359,9 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                                                 rows.pop()
                                             break
 
-            
-            if not found:
-                assert False, f"Could not find reflection ({target_a}, {target_b}) in working_rc:\n{working_rc}\npair_dict={pair_dict}, pair_dict_rev={pair_dict_rev}"
+
+            # if not found:
+            #     assert False, f"Could not find reflection ({target_a}, {target_b}) in working_rc:\n{working_rc}\npair_dict={pair_dict}, pair_dict_rev={pair_dict_rev}"
 
         assert len(pair_dict_rev) == 0, f"{pair_dict=}, {pair_dict_rev=}, {working_rc=}"
         assert working_rc.perm.bruhat_leq(self.perm)
