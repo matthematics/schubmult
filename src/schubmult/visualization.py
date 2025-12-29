@@ -5,11 +5,12 @@ This module provides functions to visualize combinatorial structures like
 pipe dreams from RC graphs.
 """
 
+import matplotlib.patheffects as path_effects
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arc
 
 
-def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True, top_labeled=False):
+def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True, top_labeled=False, show_refs=True):
     """
     Draw a pipe dream visualization of an RC graph.
 
@@ -34,6 +35,7 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True
         ax: Optional matplotlib axes to draw on (creates new figure if None)
         flip_horizontal: If True, reflect horizontally (default: True)
         top_labeled: If True, swap which side shows input vs output labels (default: False)
+        show_refs: If True, display reflection numbers at crossings in green (default: False)
 
     Returns:
         tuple: (fig, ax) matplotlib figure and axes objects
@@ -60,13 +62,15 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True
     else:
         fig = ax.get_figure()
 
-    # Track which positions have elements (crossings)
+    # Track which positions have elements (crossings) and their reflection values
     crossings = set()
+    crossing_values = {}  # Maps (row, col) to reflection value
     for row_idx, row in enumerate(rc, start=1):
         for element in row:
             col = element - row_idx + 1
             if 1 <= col <= max_size:
                 crossings.add((row_idx, col))
+                crossing_values[(row_idx, col)] = element
 
     # Draw grid lines (light)
     for i in range(max_size + 1):
@@ -121,6 +125,20 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True
                     if not on_diagonal:
                         arc2 = Arc((x_pos, y_pos - 1), 1, 1, angle=0, theta1=90, theta2=180, color="red", linewidth=2.5, zorder=10)
                         ax.add_patch(arc2)
+
+    # Draw reflection numbers at crossings if requested
+    if show_refs:
+        for row, col in crossings:
+            y_pos = max_size - row + 1
+            if flip_horizontal:
+                x_pos = max_size - col + 1
+            else:
+                x_pos = col
+
+            # Display the reflection value (simple reflection number)
+            ref_value = crossing_values[(row, col)]
+            text = ax.text(x_pos - 0.5, y_pos - 0.5, str(ref_value), ha="center", va="center", fontsize=20, fontweight="bold", color="forestgreen", zorder=20)
+            text.set_path_effects([path_effects.Stroke(linewidth=3, foreground='white'), path_effects.Normal()])
 
     if flip_horizontal:
         if top_labeled:
