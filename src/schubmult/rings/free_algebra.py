@@ -38,6 +38,10 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
 
     __sympy__ = True
 
+    @property
+    def is_zero(self):
+        return all(v == S.Zero for v in self.values())
+
     def parent(self):
         return self.ring
 

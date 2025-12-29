@@ -7,14 +7,10 @@ from sympy.printing.defaults import Printable
 import schubmult.utils.logging as lg
 import schubmult.utils.perm_utils as sl
 
-# schubmult.poly_lib.variables import GeneratingSet
-
 logger = lg.get_logger(__name__)
 
 zero = 0
 n = 100
-
-# TODO: permutations act
 
 
 class Permutation(Printable):
@@ -284,6 +280,31 @@ class Permutation(Printable):
     @cache
     def _cached_code(self):
         return sl.old_code(self._perm)
+
+    @property
+    def graph(self):
+        return {(i + 1, self[i]) for i in range(len(self._perm))}
+
+    @property
+    def shape(self):
+        return tuple(sorted(self.code, reverse=True))
+
+    @property
+    def inversion_set(self):
+        inv_set = set()
+        for i in range(len(self._perm)):
+            for j in range(i + 1, len(self._perm)):
+                if self[i] > self[j]:
+                    inv_set.add((i + 1, j + 1))
+        return inv_set
+
+    @property
+    def diagram(self):
+        diag = set()
+        for i in range(len(self._perm)):
+            for j in range(i + 1, len(self._perm)):
+                diag.add((i + 1, self[j]))
+        return diag
 
     @classmethod
     def from_partial(cls, partial_perm):

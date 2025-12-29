@@ -297,10 +297,9 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                             # Remove this reflection from the set
                             if (a, b) in reflection_set:
                                 reflection_set.remove((a, b))
-                                # target_a, target_b = a, b
+                                target_b = b
                             else:
                                 reflection_set.remove((pair_dict_rev[a], b))
-                                # target_a = pair_dict_rev[a]
                                 target_b = b
 
                             # found = True
@@ -590,12 +589,13 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def extend(self, extra_rows):
         return type(self)([*self, *tuple([()] * extra_rows)])
 
-    def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True):
+    def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True, reflection_rows=None, target_row=None):
         working_rc = self
         if row > descent:
             raise ValueError("All rows must be less than or equal to descent")
 
         i = start_index
+        new_reflections = []  # Track reflections added in THIS call
 
         if i == -1:
             if backwards:
@@ -624,21 +624,25 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                         dict_by_a[a] = dict_by_a.get(a, set())
                         dict_by_a[a].add(b)
                         dict_by_b[b] = a
+                        if reflection_rows is not None and target_row is not None:
+                            reflection_rows[(a, b)] = target_row
+                            new_reflections.append((a, b))
                         flag = True
-
                     elif a in dict_by_b and b > descent and b not in dict_by_b:
                         working_rc = working_rc.toggle_ref_at(row, i)
                         dict_by_a[dict_by_b[a]].add(b)
                         dict_by_b[b] = dict_by_b[a]
+                        if reflection_rows is not None and target_row is not None:
+                            reflection_rows[(dict_by_b[a], b)] = target_row
+                            new_reflections.append((dict_by_b[a], b))
                         flag = True
-
                 if flag:
                     num_done += 1
                 if row > 1 and not working_rc.is_valid:
-                    working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards)  # minus one?
-        return working_rc
+                    working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows)  # minus one?
+        return working_rc, new_reflections
 
-    def _kogan_kumar_rectify(self, row_below, descent, dict_by_a, dict_by_b, backwards=True):
+    def _kogan_kumar_rectify(self, row_below, descent, dict_by_a, dict_by_b, backwards=True, reflection_rows=None, target_row=None):
         working_rc = self
         if row_below == 0:
             assert working_rc.is_valid, f"{working_rc=}, {dict_by_a=}, {dict_by_b=}"
@@ -679,13 +683,14 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                 else:
                     raise ValueError(f"Could not rectify at {(row_below, j)} with root {(a, b)}")
                 if flag:
-                    working_rc = working_rc._kogan_kumar_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times=1, backwards=backwards)
-        return working_rc._kogan_kumar_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards)
+                    working_rc, _ = working_rc._kogan_kumar_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times=1, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row)
+        return working_rc._kogan_kumar_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row)
 
     # VERIFY
     def kogan_kumar_insert(self, descent, rows, return_reflections=False, backwards=True):
         dict_by_a = {}
         dict_by_b = {}
+        reflection_rows = {}  # Track which row each reflection was added to
         # row is descent
         # inserting times
 
@@ -701,23 +706,25 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         if max(rows) > len(working_rc):
             working_rc = working_rc.extend(max(rows) - len(working_rc))
         rows = sorted(rows, reverse=True)
+        reflections = []
         for row in sorted(rows_grouping.keys(), reverse=True):
             num_times = rows_grouping[row]
             last_working_rc = working_rc
-            working_rc = working_rc._kogan_kumar_insert_row(row, descent, dict_by_a, dict_by_b, num_times, backwards=backwards)
-
+            working_rc, new_reflections = working_rc._kogan_kumar_insert_row(row, descent, dict_by_a, dict_by_b, num_times, backwards=backwards, reflection_rows=reflection_rows, target_row=row)
+            reflections += new_reflections
             if row > 1 and not working_rc.is_valid:
-                working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards)  # minus one?
-
+                working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=row)  # minus one?
             try:
                 assert len(working_rc[row - 1]) == len(last_working_rc[row - 1]) + num_times
             except AssertionError:
                 raise
         if return_reflections:
-            reflections = []
-            for a in sorted(dict_by_a.keys()):
-                reflections = [*reflections, *[(a, b) for b in dict_by_a[a]]]
-            return working_rc, tuple(reflections)
+            # Build list of (row, reflection) pairs
+            result = []
+            for reflection in reflections:
+                target_row = reflection_rows.get(reflection, None)
+                result.append((target_row, reflection))
+            return working_rc, tuple(result)
         return working_rc
 
     @property

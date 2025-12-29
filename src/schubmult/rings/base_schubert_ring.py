@@ -17,6 +17,10 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def __reduce__(self):
         return (self.__class__, self.items())
 
+    @property
+    def is_zero(self):
+        return all(v == S.Zero for v in self.values())
+
     def parent(self):
         return self.ring
 
