@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Arc
 
 
-def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True):
+def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True, top_labeled=False):
     """
     Draw a pipe dream visualization of an RC graph.
 
@@ -17,12 +17,15 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True
     - Positions with elements: strands CROSS (go straight through)
     - Empty positions: strands AVOID (make 90-degree elbow turns)
 
-    When flip_horizontal=True (default):
-        Strands start at the right border and end at the top border.
-        Top labels show column numbers, right labels show permutation values (output).
-    When flip_horizontal=False:
-        Strands start at the left border and end at the top border.
-        Top labels show permutation values (output), left labels show column numbers.
+    Label positioning depends on flip_horizontal and top_labeled:
+    - flip_horizontal=True, top_labeled=False (default):
+      Top shows column numbers, right shows permutation output
+    - flip_horizontal=True, top_labeled=True:
+      Top shows permutation output, right shows row numbers (1,2,3,...)
+    - flip_horizontal=False, top_labeled=False:
+      Left shows permutation output, top shows column numbers
+    - flip_horizontal=False, top_labeled=True:
+      Left shows row numbers (1,2,3,...), top shows permutation output
 
     Args:
         rc: RCGraph object to visualize
@@ -30,6 +33,7 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True
         title: Optional title for the plot
         ax: Optional matplotlib axes to draw on (creates new figure if None)
         flip_horizontal: If True, reflect horizontally (default: True)
+        top_labeled: If True, swap which side shows input vs output labels (default: False)
 
     Returns:
         tuple: (fig, ax) matplotlib figure and axes objects
@@ -119,32 +123,67 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True
                         ax.add_patch(arc2)
 
     if flip_horizontal:
-        # Add labels for column positions (top border) - fixed labels counting down
-        for col in range(1, max_size + 1):
-            # Reflect column position: rightmost is column 1, leftmost is column max_size
-            x_pos = max_size - col + 0.5
-            ax.text(x_pos, max_size + 0.3, str(col), ha="center", va="bottom", fontsize=12, fontweight="bold", color="blue")
+        if top_labeled:
+            # Top shows permutation output, right shows row numbers
+            for col in range(1, max_size + 1):
+                # Find which row ends up in this column
+                row_label = None
+                for row in range(1, max_size + 1):
+                    if perm[row - 1] == col:
+                        row_label = str(row)
+                        break
+                if row_label:
+                    x_pos = max_size - col + 0.5
+                    ax.text(x_pos, max_size + 0.3, row_label, ha="center", va="bottom", fontsize=12, fontweight="bold", color="red")
 
-        # Add labels for output positions (right border) - show permutation values
-        for row in range(1, max_size + 1):
-            y_pos = max_size - row + 0.5
-            # Row i enters from right and exits at column perm[i-1]
-            output_col = perm[row - 1]
-            ax.text(max_size + 0.3, y_pos, str(output_col), ha="left", va="center", fontsize=12, fontweight="bold", color="red")
+            # Right border shows row numbers (input)
+            for row in range(1, max_size + 1):
+                y_pos = max_size - row + 0.5
+                ax.text(max_size + 0.3, y_pos, str(row), ha="left", va="center", fontsize=12, fontweight="bold", color="blue")
+        else:
+            # Add labels for column positions (top border) - fixed labels counting down
+            for col in range(1, max_size + 1):
+                # Reflect column position: rightmost is column 1, leftmost is column max_size
+                x_pos = max_size - col + 0.5
+                ax.text(x_pos, max_size + 0.3, str(col), ha="center", va="bottom", fontsize=12, fontweight="bold", color="blue")
+
+            # Add labels for output positions (right border) - show permutation values
+            for row in range(1, max_size + 1):
+                y_pos = max_size - row + 0.5
+                # Row i enters from right and exits at column perm[i-1]
+                output_col = perm[row - 1]
+                ax.text(max_size + 0.3, y_pos, str(output_col), ha="left", va="center", fontsize=12, fontweight="bold", color="red")
 
         ax.set_xlim(-0.5, max_size + 0.8)
     else:
-        # Add labels for output positions (left border) - show permutation values (same vertical as flipped mode)
-        for row in range(1, max_size + 1):
-            y_pos = max_size - row + 0.5
-            # Row i outputs to column perm[i-1]
-            output_col = perm[row - 1]
-            ax.text(-0.3, y_pos, str(output_col), ha="right", va="center", fontsize=12, fontweight="bold", color="red")
+        if top_labeled:
+            # Top shows permutation output (which input row ends up in each output column), left shows row numbers
+            # Need inverse permutation: for each output column, find which input row goes there
+            inverse_perm = [0] * max_size
+            for row in range(1, max_size + 1):
+                output_col = perm[row - 1]
+                inverse_perm[output_col - 1] = row
 
-        # Add labels for column positions (top border) - show column numbers in increasing order
-        for col in range(1, max_size + 1):
-            # Normal position: leftmost is 1, rightmost is max_size
-            ax.text(col - 0.5, max_size + 0.3, str(col), ha="center", va="bottom", fontsize=12, fontweight="bold", color="blue")
+            for col in range(1, max_size + 1):
+                x_pos = col - 0.5
+                ax.text(x_pos, max_size + 0.3, str(inverse_perm[col - 1]), ha="center", va="bottom", fontsize=12, fontweight="bold", color="red")
+
+            # Left border shows row numbers (input)
+            for row in range(1, max_size + 1):
+                y_pos = max_size - row + 0.5
+                ax.text(-0.3, y_pos, str(row), ha="right", va="center", fontsize=12, fontweight="bold", color="blue")
+        else:
+            # Add labels for output positions (left border) - show permutation values (same vertical as flipped mode)
+            for row in range(1, max_size + 1):
+                y_pos = max_size - row + 0.5
+                # Row i outputs to column perm[i-1]
+                output_col = perm[row - 1]
+                ax.text(-0.3, y_pos, str(output_col), ha="right", va="center", fontsize=12, fontweight="bold", color="red")
+
+            # Add labels for column positions (top border) - show column numbers in increasing order
+            for col in range(1, max_size + 1):
+                # Normal position: leftmost is 1, rightmost is max_size
+                ax.text(col - 0.5, max_size + 0.3, str(col), ha="center", va="bottom", fontsize=12, fontweight="bold", color="blue")
 
         ax.set_xlim(-0.8, max_size + 0.5)
 
