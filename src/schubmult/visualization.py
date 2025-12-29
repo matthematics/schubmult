@@ -17,8 +17,8 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None):
     - Positions with elements: strands CROSS (go straight through)
     - Empty positions: strands AVOID (make 90-degree elbow turns)
 
-    Strands start at the left border (indices 1, 2, ...) and end at the top
-    border showing the permutation values (which row ends up in each column).
+    Strands start at the right border and end at the top border.
+    Top labels show column numbers (input), right labels show permutation values (output).
 
     Args:
         rc: RCGraph object to visualize
@@ -75,47 +75,45 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None):
             on_diagonal = row + col == perm_size + 1
 
             y_pos = max_size - row + 1
+            # Reflect x-coordinates horizontally
+            x_pos = max_size - col + 1
 
             if (row, col) in crossings:
                 # CROSSING: strands go straight through
-                # Horizontal strand (blue, from left)
-                ax.plot([col - 1, col], [y_pos - 0.5, y_pos - 0.5], "b-", linewidth=2.5, zorder=10, solid_capstyle="round")
+                # Horizontal strand (blue, from right to left after reflection)
+                ax.plot([x_pos, x_pos - 1], [y_pos - 0.5, y_pos - 0.5], "b-", linewidth=2.5, zorder=10, solid_capstyle="round")
                 # Vertical strand (red, from bottom)
-                ax.plot([col - 0.5, col - 0.5], [y_pos - 1, y_pos], "r-", linewidth=2.5, zorder=10, solid_capstyle="round")
+                ax.plot([x_pos - 0.5, x_pos - 0.5], [y_pos - 1, y_pos], "r-", linewidth=2.5, zorder=10, solid_capstyle="round")
             else:
                 # ELBOW: strands avoid each other with 90-degree curves
-                # Blue arc: from left to up, centered at lower-left corner
-                arc1 = Arc((col - 1, y_pos), 1, 1, angle=0, theta1=270, theta2=360, color="blue", linewidth=2.5, zorder=10)
+                # Blue arc: from right to up (reflected), centered at lower-right corner
+                arc1 = Arc((x_pos, y_pos), 1, 1, angle=0, theta1=180, theta2=270, color="blue", linewidth=2.5, zorder=10)
                 ax.add_patch(arc1)
 
-                # Red arc: from bottom to right, centered at upper-right corner
+                # Red arc: from bottom to left (reflected), centered at upper-left corner
                 # Only draw if NOT on the diagonal (boundary cells only need upper arc)
                 if not on_diagonal:
-                    arc2 = Arc((col, y_pos - 1), 1, 1, angle=0, theta1=90, theta2=180, color="red", linewidth=2.5, zorder=10)
+                    arc2 = Arc((x_pos - 1, y_pos - 1), 1, 1, angle=0, theta1=0, theta2=90, color="red", linewidth=2.5, zorder=10)
                     ax.add_patch(arc2)
 
-    # Add labels for initial positions (left border)
-    for i in range(1, max_size + 1):
-        y_pos = max_size - i + 0.5
-        ax.text(-0.3, y_pos, str(i), ha="right", va="center", fontsize=12, fontweight="bold", color="blue")
-
-    # Add labels for final positions (top border) - show which row ends up in each column
+    # Add labels for column positions (top border) - fixed labels counting down
     for col in range(1, max_size + 1):
-        # Find which row's strand ends up in this column by looking at the permutation
-        # perm[i-1] gives the column where row i ends up, so we need the inverse
-        row_label = None
-        for row in range(1, max_size + 1):
-            if perm[row - 1] == col:
-                row_label = str(row)
-                break
-        if row_label:
-            ax.text(col - 0.5, max_size + 0.3, row_label, ha="center", va="bottom", fontsize=12, fontweight="bold", color="red")
+        # Reflect column position: rightmost is column 1, leftmost is column max_size
+        x_pos = max_size - col + 0.5
+        ax.text(x_pos, max_size + 0.3, str(col), ha="center", va="bottom", fontsize=12, fontweight="bold", color="blue")
+
+    # Add labels for output positions (right border) - show permutation values
+    for row in range(1, max_size + 1):
+        y_pos = max_size - row + 0.5
+        # Row i enters from right and exits at column perm[i-1]
+        output_col = perm[row - 1]
+        ax.text(max_size + 0.3, y_pos, str(output_col), ha="left", va="center", fontsize=12, fontweight="bold", color="red")
 
     # Title
     if title:
         ax.set_title(title, fontsize=14, fontweight="bold", pad=20)
 
-    ax.set_xlim(-0.8, max_size + 0.5)
+    ax.set_xlim(-0.5, max_size + 0.8)
     ax.set_ylim(-0.5, max_size + 0.8)
     ax.set_aspect("equal")
     ax.axis("off")
