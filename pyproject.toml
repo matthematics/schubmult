@@ -135,7 +135,7 @@ unfixable = ["F401", "F841"]
 "__init__.py" = ["F401"]
 
 [project.optional-dependencies]
-sage = ["sagemath-standard"]
+visualization = ["matplotlib>=3.0"]
 
 
 [project.urls]
