@@ -50,11 +50,16 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True
     """
     # Get the permutation size from the RC graph's permutation
     perm = rc.perm
-    perm_size = len(perm) if len(perm) > 0 else 2
+    perm_size = len(perm) if len(perm) > 0 else 0
 
-    # Use perm_size as the grid size if not specified
+    # Calculate the actual grid size needed from RC graph elements (for unreduced graphs)
     if max_size is None:
-        max_size = perm_size
+        max_size = perm_size if perm_size > 0 else 1
+        # Check all elements in the RC graph to ensure grid is large enough
+        for row_idx, row in enumerate(rc, start=1):
+            if len(row) > 0:
+                max_element = max(row)
+                max_size = max(max_size, max_element, row_idx)
 
     # Create figure if no axes provided
     if ax is None:
@@ -68,7 +73,7 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True
     for row_idx, row in enumerate(rc, start=1):
         for element in row:
             col = element - row_idx + 1
-            if 1 <= col <= max_size:
+            if 1 <= col <= max_size and row_idx <= max_size:
                 crossings.add((row_idx, col))
                 crossing_values[(row_idx, col)] = element
 
@@ -246,11 +251,16 @@ def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=Fa
     """
     # Get the permutation size from the RC graph's permutation
     perm = rc.perm
-    perm_size = len(perm) if len(perm) > 0 else 2
+    perm_size = len(perm) if len(perm) > 0 else 0
 
-    # Use perm_size as the grid size if not specified
+    # Calculate the actual grid size needed from RC graph elements (for unreduced graphs)
     if max_size is None:
-        max_size = perm_size
+        max_size = perm_size if perm_size > 0 else 1
+        # Check all elements in the RC graph to ensure grid is large enough
+        for row_idx, row in enumerate(rc, start=1):
+            if len(row) > 0:
+                max_element = max(row)
+                max_size = max(max_size, max_element, row_idx)
 
     # Track which positions have elements (crossings) and their reflection values
     crossings = set()
@@ -258,7 +268,7 @@ def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=Fa
     for row_idx, row in enumerate(rc, start=1):
         for element in row:
             col = element - row_idx + 1
-            if 1 <= col <= max_size:
+            if 1 <= col <= max_size and row_idx <= max_size:
                 crossings.add((row_idx, col))
                 crossing_values[(row_idx, col)] = element
 
@@ -286,11 +296,11 @@ def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=Fa
     for row in range(1, row_limit):
         for col in range(1, max_size + 1):
             # Skip cells beyond the anti-diagonal
-            if row + col > perm_size + 1:
+            if row + col > max_size + 1:
                 continue
 
             # Check if we're on the anti-diagonal (boundary cells)
-            on_diagonal = row + col == perm_size + 1
+            on_diagonal = row + col == max_size + 1
 
             # TikZ coordinates (y increases upward, so we flip row)
             y_pos = max_size - row
