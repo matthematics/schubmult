@@ -128,6 +128,8 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True
 
     # Draw reflection numbers at crossings if requested
     if show_refs:
+        # Scale fontsize with grid size for consistency
+        ref_fontsize = max(8, min(20, max_size * 2.5))
         for row, col in crossings:
             y_pos = max_size - row + 1
             if flip_horizontal:
@@ -137,8 +139,8 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True
 
             # Display the reflection value (simple reflection number)
             ref_value = crossing_values[(row, col)]
-            text = ax.text(x_pos - 0.5, y_pos - 0.5, str(ref_value), ha="center", va="center", fontsize=20, fontweight="bold", color="forestgreen", zorder=20)
-            text.set_path_effects([path_effects.Stroke(linewidth=3, foreground='white'), path_effects.Normal()])
+            text = ax.text(x_pos - 0.5, y_pos - 0.5, str(ref_value), ha="center", va="center", fontsize=ref_fontsize, fontweight="bold", color="forestgreen", zorder=20)
+            text.set_path_effects([path_effects.Stroke(linewidth=3, foreground="white"), path_effects.Normal()])
 
     if flip_horizontal:
         if top_labeled:
@@ -215,3 +217,199 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True
 
     plt.tight_layout()
     return fig, ax
+
+
+def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=False, show_refs=True, scale=1.0, outline_rows=None, clip_at_outline=True):
+    """
+    Generate TikZ code for a pipe dream visualization of an RC graph.
+
+    Args:
+        rc: RCGraph object to visualize
+        max_size: Maximum grid size to display (default: determined from permutation)
+        flip_horizontal: If True, reflect horizontally (default: True)
+        top_labeled: If True, swap which side shows input vs output labels (default: False)
+        show_refs: If True, display reflection numbers at crossings (default: True)
+        scale: Scale factor for the TikZ picture (default: 1.0)
+        outline_rows: If provided, draw a thick black outline around this many rows from bottom (default: None)
+        clip_at_outline: If True and outline_rows is set, clip strands at outline_rows + 1 (default: False)
+
+    Returns:
+        str: TikZ code as a string
+
+    Examples:
+        >>> from schubmult import Permutation, RCGraph
+        >>> from schubmult.visualization import draw_pipe_dream_tikz
+        >>> perm = Permutation([2, 1, 3])
+        >>> rc = list(RCGraph.all_rc_graphs(perm, 2))[0]
+        >>> tikz_code = draw_pipe_dream_tikz(rc)
+        >>> print(tikz_code)
+    """
+    # Get the permutation size from the RC graph's permutation
+    perm = rc.perm
+    perm_size = len(perm) if len(perm) > 0 else 2
+
+    # Use perm_size as the grid size if not specified
+    if max_size is None:
+        max_size = perm_size
+
+    # Track which positions have elements (crossings) and their reflection values
+    crossings = set()
+    crossing_values = {}
+    for row_idx, row in enumerate(rc, start=1):
+        for element in row:
+            col = element - row_idx + 1
+            if 1 <= col <= max_size:
+                crossings.add((row_idx, col))
+                crossing_values[(row_idx, col)] = element
+
+    # Start building TikZ code
+    lines = []
+    lines.append("\\begin{tikzpicture}[scale=" + str(scale) + "]")
+
+    # Draw grid lines (light gray)
+    if clip_at_outline and outline_rows is not None:
+        # Only draw grid in the clipped region
+        y_min = max_size - outline_rows
+        for i in range(outline_rows + 1):
+            y = y_min + i
+            lines.append(f"  \\draw[lightgray, very thin, opacity=0.3] (0,{y}) -- ({max_size},{y});")
+        for i in range(max_size + 1):
+            lines.append(f"  \\draw[lightgray, very thin, opacity=0.3] ({i},{y_min}) -- ({i},{max_size});")
+    else:
+        # Draw full grid
+        for i in range(max_size + 1):
+            lines.append(f"  \\draw[lightgray, very thin, opacity=0.3] (0,{i}) -- ({max_size},{i});")
+            lines.append(f"  \\draw[lightgray, very thin, opacity=0.3] ({i},0) -- ({i},{max_size});")
+
+    # Draw all pipe segments
+    row_limit = outline_rows + 1 if (outline_rows is not None and clip_at_outline) else max_size + 1
+    for row in range(1, row_limit):
+        for col in range(1, max_size + 1):
+            # Skip cells beyond the anti-diagonal
+            if row + col > perm_size + 1:
+                continue
+
+            # Check if we're on the anti-diagonal (boundary cells)
+            on_diagonal = row + col == perm_size + 1
+
+            # TikZ coordinates (y increases upward, so we flip row)
+            y_pos = max_size - row
+
+            if flip_horizontal:
+                x_pos = max_size - col
+            else:
+                x_pos = col - 1
+
+            if (row, col) in crossings:
+                # CROSSING: strands go straight through
+                if flip_horizontal:
+                    # Horizontal strand (blue, from right to left)
+                    lines.append(f"  \\draw[blue, line width=2.5pt, line cap=round] ({x_pos + 1},{y_pos + 0.5}) -- ({x_pos},{y_pos + 0.5});")
+                else:
+                    # Horizontal strand (blue, from left to right)
+                    lines.append(f"  \\draw[blue, line width=2.5pt, line cap=round] ({x_pos},{y_pos + 0.5}) -- ({x_pos + 1},{y_pos + 0.5});")
+                # Vertical strand (red, from bottom to top)
+                lines.append(f"  \\draw[red, line width=2.5pt, line cap=round] ({x_pos + 0.5},{y_pos}) -- ({x_pos + 0.5},{y_pos + 1});")
+            else:
+                # ELBOW: strands avoid each other with 90-degree curves
+                if flip_horizontal:
+                    # Blue arc: from right to up (starts horizontal from right, ends vertical going up)
+                    # Control points: first keeps horizontal tangent, second keeps vertical tangent
+                    lines.append(
+                        f"  \\draw[blue, line width=2.5pt] ({x_pos + 1},{y_pos + 0.5}) .. controls ({x_pos + 0.7},{y_pos + 0.5}) and ({x_pos + 0.5},{y_pos + 0.7}) .. ({x_pos + 0.5},{y_pos + 1});",
+                    )
+                    # Red arc: from bottom to left (starts vertical from bottom, ends horizontal going left)
+                    if not on_diagonal:
+                        lines.append(f"  \\draw[red, line width=2.5pt] ({x_pos + 0.5},{y_pos}) .. controls ({x_pos + 0.5},{y_pos + 0.3}) and ({x_pos + 0.3},{y_pos + 0.5}) .. ({x_pos},{y_pos + 0.5});")
+                else:
+                    # Blue arc: from left to up (starts horizontal from left, ends vertical going up)
+                    lines.append(
+                        f"  \\draw[blue, line width=2.5pt] ({x_pos},{y_pos + 0.5}) .. controls ({x_pos + 0.3},{y_pos + 0.5}) and ({x_pos + 0.5},{y_pos + 0.7}) .. ({x_pos + 0.5},{y_pos + 1});",
+                    )
+                    # Red arc: from bottom to right (starts vertical from bottom, ends horizontal going right)
+                    if not on_diagonal:
+                        lines.append(
+                            f"  \\draw[red, line width=2.5pt] ({x_pos + 0.5},{y_pos}) .. controls ({x_pos + 0.5},{y_pos + 0.3}) and ({x_pos + 0.7},{y_pos + 0.5}) .. ({x_pos + 1},{y_pos + 0.5});",
+                        )
+
+    # Draw reflection numbers at crossings if requested
+    if show_refs:
+        for row, col in crossings:
+            y_pos = max_size - row
+            if flip_horizontal:
+                x_pos = max_size - col
+            else:
+                x_pos = col - 1
+
+            ref_value = crossing_values[(row, col)]
+            lines.append(f"  \\node[font=\\Large\\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at ({x_pos + 0.5},{y_pos + 0.5}) {{{ref_value}}};")
+
+    # Add labels
+    if flip_horizontal:
+        if top_labeled:
+            # Top shows permutation output
+            for col in range(1, max_size + 1):
+                row_label = None
+                for row in range(1, max_size + 1):
+                    if perm[row - 1] == col:
+                        row_label = str(row)
+                        break
+                if row_label:
+                    x_pos = max_size - col
+                    lines.append(f"  \\node[font=\\bfseries, text=red, anchor=south] at ({x_pos + 0.5},{max_size + 0.3}) {{{row_label}}};")
+
+            # Right shows row numbers
+            row_range = range(1, outline_rows + 1) if (clip_at_outline and outline_rows is not None) else range(1, max_size + 1)
+            for row in row_range:
+                y_pos = max_size - row
+                lines.append(f"  \\node[font=\\bfseries, text=blue, anchor=west] at ({max_size + 0.3},{y_pos + 0.5}) {{{row}}};")
+        else:
+            # Top shows column numbers
+            for col in range(1, max_size + 1):
+                x_pos = max_size - col
+                lines.append(f"  \\node[font=\\bfseries, text=blue, anchor=south] at ({x_pos + 0.5},{max_size + 0.3}) {{{col}}};")
+
+            # Right shows permutation output
+            row_range = range(1, outline_rows + 1) if (clip_at_outline and outline_rows is not None) else range(1, max_size + 1)
+            for row in row_range:
+                y_pos = max_size - row
+                output_col = perm[row - 1]
+                lines.append(f"  \\node[font=\\bfseries, text=red, anchor=west] at ({max_size + 0.3},{y_pos + 0.5}) {{{output_col}}};")
+    else:
+        if top_labeled:
+            # Top shows permutation output (inverse permutation)
+            inverse_perm = [0] * max_size
+            for row in range(1, max_size + 1):
+                output_col = perm[row - 1]
+                inverse_perm[output_col - 1] = row
+
+            for col in range(1, max_size + 1):
+                x_pos = col - 1
+                lines.append(f"  \\node[font=\\bfseries, text=red, anchor=south] at ({x_pos + 0.5},{max_size + 0.3}) {{{inverse_perm[col - 1]}}};")
+
+            # Left shows row numbers
+            row_range = range(1, outline_rows + 1) if (clip_at_outline and outline_rows is not None) else range(1, max_size + 1)
+            for row in row_range:
+                y_pos = max_size - row
+                lines.append(f"  \\node[font=\\bfseries, text=blue, anchor=east] at ({-0.3},{y_pos + 0.5}) {{{row}}};")
+        else:
+            # Left shows permutation output
+            row_range = range(1, outline_rows + 1) if (clip_at_outline and outline_rows is not None) else range(1, max_size + 1)
+            for row in row_range:
+                y_pos = max_size - row
+                output_col = perm[row - 1]
+                lines.append(f"  \\node[font=\\bfseries, text=red, anchor=east] at ({-0.3},{y_pos + 0.5}) {{{output_col}}};")
+
+            # Top shows column numbers
+            for col in range(1, max_size + 1):
+                x_pos = col - 1
+                lines.append(f"  \\node[font=\\bfseries, text=blue, anchor=south] at ({x_pos + 0.5},{max_size + 0.3}) {{{col}}};")
+
+    # Draw thick black outline if requested
+    if outline_rows is not None:
+        # Outline the TOP outline_rows rows (from y = max_size - outline_rows to y = max_size)
+        lines.append(f"  \\draw[black, line width=3pt] (0,{max_size - outline_rows}) rectangle ({max_size},{max_size});")
+
+    lines.append("\\end{tikzpicture}")
+
+    return "\n".join(lines)
