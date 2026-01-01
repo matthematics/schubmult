@@ -110,7 +110,7 @@
 \newcommand{\shup}{{\uparrow}}
 \newcommand{\downvar}[1]{\stackrel{#1}{\searrow}}
 \newcommand{\wof}[1]{w_{#1}}
-\newcommand{\rcdd}{\mathfrak{D}}
+\newcommand{\rcdd}{\mathfrak{F}}
 \newcommand{\wtt}{\mathtt{wt}}
 \newcommand{\tom}[1]{\xrightarrow{#1}}
 \newcommand{\Tom}[1]{\xRightarrow{#1}}
@@ -1370,24 +1370,13 @@ via reflections $t_{ab}$ such that $n\leq b\leq n+m$. Let $w' = \wof{R'}$. We al
 $$\widetilde{w}\Tom{n}\varphi_{n, N}(w')$$
 via only reflections $t_{nb}$ such that $b>n+m$. We claim that
 $$w\Tom{n} \varphi_{n, N}(w')$$
-This can only fail if $\widetilde{w}(n)\neq w(n)$ by the observations above. 
-
-%However, by construction we have that $\code_n(w) = \code_n(\widetilde{w})$. Suppose $w(n) - w(n + m) = 1$. Then it could not be the case that $\code_n(w) = \code_n(\widetilde{w})$ with $\widetilde{w}(n)\neq w(n)$, since this would imply that $\widetilde{w}(n + m) > \widetilde{w}(n)$, so that $\code_n(\widetilde{w}) < \code_n(w)$. Thus, we must have $\widetilde{w}(n) = w(n)$ in this case. Otherwise, we must have that
-% $$w(n+m) < w(a) < w(n)$$
-
-
-We have the characterization of the relation $w\Tom{n-1}\widetilde{w}$ via the following conditions on reflections $t_{a_1b_1},\ldots,t_{a_kb_k}$. Write
-$$w^{(i)} = wt_{a_1b_1}t_{a_2b_2}\cdots t_{a_ib_i}$$
-Then the necessary and sufficient conditions for $w\Tom{n-1}\widetilde{w}$ are
-\begin{enumerate}
-\item $a_i\leq n-1 < b_i$ for all $i$.
-\item $w^{(i)}(a_i) < w^{(i+1)}(a_{i+1})$ for all $i$.
-\end{enumerate}
-If $b_i=n$ for some $i$, it follows by the second condition that $i = k$. We may assume without loss of generality that in Algorithm \ref{algorithm:zero}, the corresponding insertion is into row $1$.
-
-If we are inserting $(1,j)$, then $\rtt_R(1,j) = (i, n)$ for some $i < n$. For all $j'$ with $i < j' < j$, we must have that $(1,j')\in R$ by Lemma \ref{lemma:rowcol}, perhaps after some moves. Also, for all $i'$ with $1<i'<n-j+1$, we must have that $(i', j)\in R$ by the same lemma.
-
-
+This can only fail if $\widetilde{w}(n)\neq w(n)$ by the observations above. However, the pipe labeled $n$, by virtue of the fact that we have $(n,1),\ldots,(n,m)$ populated, will always lie to the right of pipes $n+1,n+2,\ldots,n+m$ in the wiring diagram for $\widetilde{w}$ or any intermediate stage. Inserting into any row that contained a crossing $(n, n+p)$, there must be a valid empty space to the left of the pipe labeled $n$ since we have deleted these crossings. By virtue of the fact that the leftmost is always chosen, no reflection $(i,n)$ will ever be inserted. This ensures that $\widetilde{w}(n) = w(n)$, as desired.
+% \begin{enumerate}
+% \item $a_i\leq n-1 < b_i$ for all $i$.
+% \item $w^{(i)}(a_i) < w^{(i+1)}(a_{i+1})$ for all $i$.
+% \end{enumerate}
+% If $b_i=n$ for some $i$, it follows by the second condition that $i = k$. We may assume without loss of generality that in Algorithm \ref{algorithm:zero}, the corresponding insertion is into row $1$.
+% If we are inserting $(1,j)$, then $\rtt_R(1,j) = (i, n)$ for some $i < n$. For all $j'$ with $i < j' < j$, we must have that $(1,j')\in R$ by Lemma \ref{lemma:rowcol}, perhaps after some moves. Also, for all $i'$ with $1<i'<n-j+1$, we must have that $(i', j)\in R$ by the same lemma.
 % Recall \cite[Theorem~1.1.2]{coprod} that $u\preceq_{n-1} v$ if and only if the following conditions are satisfied:
 % \begin{itemize}
 % 	\item $a\leq n-1 < b$ implies $u(a)\leq v(a)$ and $u(b)\geq v(b)$
@@ -1484,62 +1473,147 @@ By the previous lemma, it suffices to show that $\zeromap$ is surjective. Howeve
 
 We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(R,n) = 0$ if row $n$ in $R$ is not empty. Then we have the following result.
 
-\begin{theorem}
+\begin{theorem} \label{theorem:transition}
 	Let $w$ be a permutation with last descent at most $n$. Suppose
 	$$\sch_w(x_1,\ldots,x_{n-1}, 0) = \sum_{w'}\sch_{w'}(x_1,\ldots,x_{n-1})$$
 	Then
 	$$\zeromap(\mathcal{S}_w(n))=\sum_{w'}\mathcal{S}_{w'}(n-1)$$
 \end{theorem} 
 
-\begin{definition}
-	Define another map $\zeromap_{(k)}:\BRC\to \BRC$ on bounded RC graphs for $1\leq i\leq n$ as follows.
+% \begin{definition}
+% 	Define another map $\zeromap_{(k)}:\BRC\to \BRC$ on bounded RC graphs for $1\leq i\leq n$ as follows.
 
 
-\begin{algorithm}[H]
-	\caption{Map $\zeromap_{(k)}(R, n)$ zeroing out row $k$}
-	\label{algorithm:zerok}
-	\begin{algorithmic}[1]
-		\State \textbf{Input:} A bounded RC graph $(R, n)$ with row $k$ empty.
-		\State \textbf{Output:} A bounded RC graph $(R', n-1)$ such that $|R'|=|R|$ del $k$ and $\wof{R}\downvar{k} \wof{R'}$.
+% \begin{algorithm}[H]
+% 	\caption{Map $\zeromap_{(k)}(R, n)$ zeroing out row $k$}
+% 	\label{algorithm:zerok}
+% 	\begin{algorithmic}[1]
+% 		\State \textbf{Input:} A bounded RC graph $(R, n)$ with row $k$ empty.
+% 		\State \textbf{Output:} A bounded RC graph $(R', n-1)$ such that $|R'|=|R|$ del $k$ and $\wof{R}\downvar{k} \wof{R'}$.
 		
-		\State Let $R_0 \gets R$.
-		\State Let $d=\maxd(\wof{R[\leq k]})$. Find the maximal $p$ and sequence $\{(i_m, j_m)\}_{m=1}^p$ such that:
-		\State \quad $\rtt_{R_{m-1}[\leq k]}(i_m, j_m) = (d, d + m)$ for each $m$, where $R_m = R_{m-1}\setminus\{(i_m, j_m)\}$ for each $m\geq 1$.
-		\State $R^- \gets R \setminus \{(i_1, j_1), \ldots, (i_p, j_p)\}$.
-		\State Let $I \gets (i_1, i_2, \ldots, i_p)$.
-		\State $D \gets R^- \cup \{(k, 1), (k, 2), \ldots, (k, p)\}$.
-		\State $D' \gets \textproc{Insert}(D, k - 1, I)$ \Comment{Using Algorithm \ref{algorithm:insertion}}
-		\State $R' \gets D'[<k]\cup \trm(D'[\geq k])$.
-		\State \Return $(R', n-1)$.
+% 		\State Let $R_0 \gets R$.
+% 		\State Let $d=\maxd(\wof{R[\leq k]})$. Find the maximal $p$ and sequence $\{(i_m, j_m)\}_{m=1}^p$ such that:
+% 		\State \quad $\rtt_{R_{m-1}[\leq k]}(i_m, j_m) = (d, d + m)$ for each $m$, where $R_m = R_{m-1}\setminus\{(i_m, j_m)\}$ for each $m\geq 1$.
+% 		\State $R^- \gets R \setminus \{(i_1, j_1), \ldots, (i_p, j_p)\}$.
+% 		\State Let $I \gets (i_1, i_2, \ldots, i_p)$.
+% 		\State $D \gets R^- \cup \{(k, 1), (k, 2), \ldots, (k, p)\}$.
+% 		\State $D' \gets \textproc{Insert}(D, k - 1, I)$ \Comment{Using Algorithm \ref{algorithm:insertion}}
+% 		\State $R' \gets D'[<k]\cup \trm(D'[\geq k])$.
+% 		\State \Return $(R', n-1)$.
 		
-	\end{algorithmic}
-\end{algorithm}
-\end{definition}
+% 	\end{algorithmic}
+% \end{algorithm}
+% \end{definition}
 
-\begin{theorem}
-Let $w\in S_\infty$ be such that $\maxd(w)\leq n$. Let $\mathcal{RC}^0_{(k)}(w,n)$ be the subset of bounded RC graphs $(R,n)$ with $\wof{R}=w$ such that row $k$ is empty. Then the function
-$$\zeromap_{(k)}:\mathcal{RC}^0_{(k)}(w,n)\to \bigcup_{w\downvar{k} w'}\mathcal{RC}(w', n-1)$$
-is a bijection.
-\end{theorem}
+% \begin{theorem}
+% Let $w\in S_\infty$ be such that $\maxd(w)\leq n$. Let $\mathcal{RC}^0_{(k)}(w,n)$ be the subset of bounded RC graphs $(R,n)$ with $\wof{R}=w$ such that row $k$ is empty. Then the function
+% $$\zeromap_{(k)}:\mathcal{RC}^0_{(k)}(w,n)\to \bigcup_{w\downvar{k} w'}\mathcal{RC}(w', n-1)$$
+% is a bijection.
+% \end{theorem}
 
 
-\begin{definition}
-Let $w$ be a Schubert polynomial and let $r$ be an index. A generalized transition formula for $w$ at index $r$ is an expression of the form
-$$\sch_w(x_1,\ldots,x_n) = \sum_{w'}x_r^{\ell(w',w)}\sch_{w'}(x_1,\ldots,x_{r-1},x_{r+1},\ldots,x_n)$$
-where the sum is over all $w'$ such that $w\downvar{r} w'$.
-\end{definition}
-% \begin{equation*}
-% \begin{split}
-% \left[\begin{matrix}\mathtt{\text{ }} & \mathtt{\text{ }} & 2 & 1\\5 & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & 4 & 3\end{matrix}\right] + \left[\begin{matrix}\mathtt{\text{ }} & \mathtt{\text{ }} & 2 & 1\\5 & 4 & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\end{matrix}\right] + 
-% \left[\begin{matrix}\mathtt{\text{ }} & \mathtt{\text{ }} & 2 & 1\\5 & 4 & 3 & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\end{matrix}\right] + \left[\begin{matrix}\mathtt{\text{ }} & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\5 & 4 & 3\end{matrix}\right] + \left[\begin{matrix}5 & \mathtt{\text{ }} & \mathtt{\text{ }} & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 4 & 3\end{matrix}\right] + \left[\begin{matrix}5 & \mathtt{\text{ }} & \mathtt{\text{ }} & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & 4 & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & 	\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\end{matrix}\right] \\
-% + \left[\begin{matrix}5 & \mathtt{\text{ }} & \mathtt{\text{ }} & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & 4 & 3 & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\end{matrix}\right] + \left[\begin{matrix}5 & 4 & \mathtt{\text{ }} & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\end{matrix}\right] + \left[\begin{matrix}5 & 4 & \mathtt{\text{ }} & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3 & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\end{matrix}\right]
-% \end{split}
-% \end{equation*}
+% \begin{definition}
+% Let $w$ be a Schubert polynomial and let $r$ be an index. A generalized transition formula for $w$ at index $r$ is an expression of the form
+% $$\sch_w(x_1,\ldots,x_n) = \sum_{w'}x_r^{\ell(w',w)}\sch_{w'}(x_1,\ldots,x_{r-1},x_{r+1},\ldots,x_n)$$
+% where the sum is over all $w'$ such that $w\downvar{r} w'$.
+% \end{definition}
+% % \begin{equation*}
+% % \begin{split}
+% % \left[\begin{matrix}\mathtt{\text{ }} & \mathtt{\text{ }} & 2 & 1\\5 & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & 4 & 3\end{matrix}\right] + \left[\begin{matrix}\mathtt{\text{ }} & \mathtt{\text{ }} & 2 & 1\\5 & 4 & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\end{matrix}\right] + 
+% % \left[\begin{matrix}\mathtt{\text{ }} & \mathtt{\text{ }} & 2 & 1\\5 & 4 & 3 & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\end{matrix}\right] + \left[\begin{matrix}\mathtt{\text{ }} & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\5 & 4 & 3\end{matrix}\right] + \left[\begin{matrix}5 & \mathtt{\text{ }} & \mathtt{\text{ }} & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 4 & 3\end{matrix}\right] + \left[\begin{matrix}5 & \mathtt{\text{ }} & \mathtt{\text{ }} & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & 4 & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & 	\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\end{matrix}\right] \\
+% % + \left[\begin{matrix}5 & \mathtt{\text{ }} & \mathtt{\text{ }} & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & 4 & 3 & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\end{matrix}\right] + \left[\begin{matrix}5 & 4 & \mathtt{\text{ }} & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\end{matrix}\right] + \left[\begin{matrix}5 & 4 & \mathtt{\text{ }} & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3 & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\end{matrix}\right]
+% % \end{split}
+% % \end{equation*}
 
-% \begin{equation*}
-% \left[\begin{matrix}\mathtt{\text{ }} & 2 & 1\\4 & 3 & 2\end{matrix}\right] + \left[\begin{matrix}4 & \mathtt{\text{ }} & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & 3 & 2\end{matrix}\right] + \left[\begin{matrix}4 & 3 & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 2\end{matrix}\right]
+% % \begin{equation*}
+% % \left[\begin{matrix}\mathtt{\text{ }} & 2 & 1\\4 & 3 & 2\end{matrix}\right] + \left[\begin{matrix}4 & \mathtt{\text{ }} & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & 3 & 2\end{matrix}\right] + \left[\begin{matrix}4 & 3 & 2 & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 2\end{matrix}\right]
 % \end{equation*}
 % \end{example}
+
+\subsection{Preservation of the Assaf-Schilling Demazure crystal structure}
+
+RC-graphs have a Demazure crystal structure defined by Assaf and Schilling in \cite{assaf2018demazure}. Namely, they define operators $e_i:\RC(w)\to\RC(w)\cup\{\emptyset\}$ and $f_i:\RC(w)\to\RC(w)\cup\{\emptyset\}$ for each $i\geq 1$ as follows. 
+
+\begin{definition}
+Consider elements $(i, j)\in R$ and $(i+1, k)\in R$. The pairing algorithm starts with the largest $j$ in row $i$ and pairs $(i, j)$ with $(i+1, k)$ where $k$ is the smallest such that $k \geq j$. If no such $k$ exists, then $(i, j)$ is unpaired. The algorithm continues by considering the next largest $j$ in row $i$ and repeating the process until all elements in row $i$ have been considered.
+
+Define $R_i$ to be the set of unpaired elements in row $i$ after applying the pairing algorithm between rows $i$ and $i+1$, and define $L_i$ to be the set of unpaired elements in row $i+1$. Then $f_i(R)$ is defined by removing the leftmost element $(i, j)$ from $R_i$ and adding the element $(i + 1, k)$ to $R$, where $k$ is the largest value such that $(i+1,k)\notin R$ and $k < j$. If $R_i$ is empty or $k$ does not exist, then $f_i(R) = \emptyset$. Similarly, $e_i(R)$ is defined by removing the rightmost element $(i + 1, k)$ from $L_i$ and adding the element $(i, j)$ to $R$, where $j$ is the smallest value such that $(i,j)\notin R$ and $j > k$. If $L_i$ is empty, then $e_i(R) = \emptyset$.
+\end{definition}
+
+We may transport this structure to bounded RC graphs as  operators $e_i:\mathcal{RC}(w,n)\to\mathcal{RC}(w,n)\cup\{\emptyset\}$ and $f_i:\mathcal{RC}(w,n)\to\mathcal{RC}(w,n)\cup\{\emptyset\}$ by
+$$e_i(R,n) = (e_i(R), n)$$
+and
+$$f_i(R, n)=(f_i(R), n)$$
+
+% \begin{lemma}
+% 	Let $(R, n)$ be a bounded RC graph. If $f_i(R)\neq \emptyset$ and $\zeromap(R', n+1)=(R, n)$, then $f_i(R')\neq \emptyset$ and
+% 	$$\zeromap(f_i(R'), n + 1)=(f_i(R), n)$$	
+% \end{lemma}
+
+
+\newcommand{\ckeq}{\sim}
+\newcommand{\ege}{\widetilde{\mathrm{eg}}}
+\begin{definition}
+An RC graph $R$ has a uniquely associated reduced word $\mathrm{word}(R)=(s_{i_1},\ldots,s_{i_N})$. Recall the Coxeter-Knuth relation $\ege$ defined by
+$$j\ i\ k \ckeq j\ k\ i$$
+and
+$$k\ i\ j \ckeq i\ k\ j$$
+if $i<j<k$, and
+$$i\ i+1\ i \ckeq i+1\ i\ i+1$$
+For an RC graph $R$, define $N(R)$ to be the maximum letter in $R$. Then define
+$$\ege(R) = (N(R) + 1 - i_1, \ldots, N(R) + 1 - i_N)$$
+Via the Edelman-Greene insertion algorithm, we may define a pair
+$$(P, Q)$$
+of tableaux of the same shape such that the reading word of $P$ is CK-equivalent to $\ege(R)$ and $Q$, the recording tableau, is standard. Define $\mathtt{tab}(R)$ to be the tableau of the same shape as $Q$ such that the entry in box $(i, j)$ is the row index of the box in $R$ that was inserted to create box $(i, j)$ in $P$.
+\end{definition}
+
+\begin{lemma}
+	We have that $\mathtt{tab}(R)$ is a semi-standard Young tableau of shape $\mathrm{shape}(Q)$, and the map
+	$$R\mapsto \mathtt{tab}(R)$$
+	 induces a morphism of crystal graphs into $B(\mathrm{shape}(Q))$. 
+\end{lemma}
+\begin{proof}
+Suppose $R$ is a highest weight. Then $\wtt(R)$ is a partition. By the highest weight condition, the longest increasing subsequence of $\ege(R)$ is of length $\wtt(R)_1$ and is precisely the first row read in the grid order. By the Edelman-Greene correspondence \cite{edelman1987balanced}, the first row of $P$ has length equal to the length of the longest increasing subsequence of $\ege(R)$. Hence, the first row of $P$ has length $\wtt(R)_1$. By similar reasoning on the subsequent rows, we have that $\mathrm{shape}(P) = \wtt(R)$. We then have that $\mathtt{tab}(R)$ is the unique Yamanouchi tableau of shape $\wtt(R)$, establishing the claim for highest weights. The general case follows from the rigidity of the Demazure crystal structure \cite{assaf2018demazure}; since the function is weight-preserving, it is a morphism of crystal graphs.
+\end{proof}
+
+\begin{theorem}
+	% Let $R,R'$ be RC graphs. Then $\mathrm{hw}(R) = \mathrm{hw}(R')$ if and only if $\ege(R) \ckeq \ege(R')$.
+  The distinct Demazure crystals that make up $\RC(w)$ are in bijection with the Coxeter-Knuth equivalence classes of reduced words for $w_0ww_0$ via the map $R\mapsto \ege(R)$, with $R\mapsto \mathtt{tab}(R)$ being a homomorphism of crystal graphs into $B(\lambda)$, where $\lambda=\mathrm{shape}(P(\ege(R)))$.
+\end{theorem}
+\begin{proof}
+By \cite[Theorem~4.11]{morse2016crystal}, if $e_i(R)\neq \emptyset$, then $R$ and $e_i(R)$ have the same Edelman-Greene insertion tableau. Since conjugation by $w_0$ is an automorphism of Coxeter-Knuth equivalence, so do $\ege(R)$ and $\ege(e_i(R))$. However, the shape
+\end{proof}
+
+\begin{definition}
+Let $\RC(w, n)^0$ be the set of bounded RC graphs $(R, n)$ such that $\wof{R} = w$ and row $n$ is empty. We define a function $\zeromap_*^R:I(w)\to I(w')$, where $\zeromap(R,n) = (R',n-1)$ and $w'=\wof{R'}$, as follows. Suppose $\code_n(w) = m$. Let $c=s_{n + m -1}\cdots s_n$. Then there exist unique reflections $t_{a_1b_1}, \ldots, t_{a_mb_m}$ such that
+$$wc^{-1} = w't_{a_mb_m}\cdots t_{a_1b_1}$$
+and each reflection satisfies $a_i\leq n-1 < b_i$, inducing a Bruhat covering relation. At this base level, there is a sub-RC-graph of each of $R$. and $R'$, say $R''$, on which we may partially define the map of inversion sets. That is, if $(i,j)\in R''$, then
+$$\zeromap_*^R(\rtt_R(i,j)) = \rtt_{R'}(i,j)$$
+In the word of $R'$, the right roots $(a_1,b_1),\ldots,(a_m, b_m)$ occur in a specific order, say $r_1,\ldots, r_m$. On the remaining roots in $R$, we define 
+$$\zeromap_*^R(n, n + m + 1 - i) = r_i$$
+% Then for all $R$ and $(i,j)$ we have
+% $$T_R(i,j) = T_{R'}(\zeromap_*^R(i,j))$$
+\end{definition}
+
+\begin{lemma}
+  The map $\zeromap_*^R:I(w)\to I(w')$ depends only on $w$ and $w'$, not on the choice of $R$ (besides the fact that it determines $w'$).
+\end{lemma}
+\begin{proof}
+  This is clear if $\maxd(R)<n$. Otherwise, we prove this by induction on $\code_n(\wof{R})$. If $\code_n(\wof{R})=1$, then given $w'$ the $(n,n+1)$ root from $I(w)$ can only map to one root in $I(w')$, namely the root $(a,b)$ such that $ws_n = w't_{ab}$. Now suppose the result holds for $\code_n(\wof{R})<m$ for some $m>1$, and let $\code_n(\wof{R})=m$. Let $R_1 = R\setminus \{(i,j)\}$ where $\rtt_R(i,j) = (n, n + m)$, and let $\zeromap(R_1, n) = (\widetilde{R}, n-1)$. By the inductive hypothesis, the map $\zeromap_*^{R_1}:I(\wof{R_1})\to I(\wof{\widetilde{R}})$ is independent of the choice of $R_1$. By construction of the algorithm, we have that $\widetilde{R} =  R'\setminus\{(i,k)\}$ for some $k$. Hence $\zeromap_*^R$ is determined by $\zeromap_*^{R_1}$ along with the image of $(n, n + m)$, which is determined by $w$ and $w'$ alone.
+\end{proof}
+
+\begin{theorem}
+	Let $w\in S_\infty$ and $n>0$ be such that $\maxd(w)\leq n$. Then 
+	$$\zeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
+	is an isomorphism of crystal graphs.
+\end{theorem}
+\begin{proof}
+Suppose $\zeromap(R, n) = (R', n-1)$. We claim that for any $R''\in \RC(\wof{R'}, n-1)$, we may define a function $T_{R''}^*$ by
+$$T_{R''}^*(i, j) = T_{R''}(\zeromap_*^R(i,j))$$
+and $T_{R''}^*$ is an inversion tableau for $\wof{R}$. Since $e_i$ and $f_i$ preserve the permutation $\wof{R'}$, it follows that there is at least a crystal raising operator $e_i^*:\RC(w, n)^0\to \RC(w, n)^0$ defined by
+$$T_{e_i(R'')} = e_i^*(T_{R''}^*)$$
+and similarly for $f_i^*$. It is clear that these operators are inverses of each other when defined, and hence we have a crystal structure on $\RC(w, n)^0$ transported from $\bigcup_{w\downvar{n} w'}\RC(w', n-1)$. Since $\zeromap$ is weight-preserving bijection and crystals do not have any nontrivial automorphisms that preserve weight, it follows that in fact $e_i=e_i^*$ for all $i$, and hence $\zeromap$ is an isomorphism of crystal graphs.
+\end{proof}
 
 \subsection{Definition of the ring product}
 \begin{definition}
@@ -1558,12 +1632,19 @@ What is in question is associativity. Let $(R, m+n)$ be a bounded RC graph, and 
 $$R_{\leq m} = \{(i, j)\in R \mid i\leq m\}$$
 also let 
 $$R_{> m} = \{(i - m, j)\in R \mid i > m\}$$
-Then it is clear that there is a unique $R'$ such that $R_{\leq m}\in \mathscr{P}_{m,n}(R', \wof{R_{> m}})$, namely 
+Then there is a unique $R'$ such that $R_{\leq m}\in \mathscr{P}_{m,n}(R', \wof{R_{> m}})$, namely 
 $$R' = \zeromap^N(R_{\leq m + N}, m + N)$$ 
 for sufficiently large $N$. Hence there is a well-defined function 
-$$S:\mathcal{RC}(n)\times \mathcal{C}(m, n)\to \mathcal{RC}(\alpha_k)$$
+$$S_{p,q,r}:\mathcal{RC}(p+q+r)\to \RC(p)\times \RC(q)\times \RC(r)$$
 such that
-$$\diamond(R_1,\ldots, R_m) = \sum_{R\in S^{-1}(R_1,\ldots, R_m)}(R, n)$$
+$$S_{p,q,r}(R) = (\zeromap^N(R_{\leq p + N}, p + N), \zeromap^M(R_{> p, \leq p + q + M}, q + M), R_{> p + q})$$
+for which
+$$(R_1, p)\diamond ((R_2, q)\diamond (R_3, r)) = \sum_{S_{p,q,r}(R) = (R_1, R_2, R_3)}(R, p + q + r) = ((R_1, p)\diamond (R_2, q))\diamond (R_3, r)$$
+Associativity follows. $\omega:\BRC\to \dcoma$ is easily seen to be a homomorphism of rings. Proving that $\alpha:\BRC\to \dcoma$ is a homomorphism of rings is nontrivial. However, by Theorem \ref{theorem:transition}, we have the identity
+$$(\phi\otimes \phi)\circ S = \Delta\circ \phi$$
+where $\Delta:\coma\to \coma\otimes \coma$ is the coproduct on $\coma$. Since the product in $\dcoma$ is dual to this and
+$$(R_1, m)\diamond (R_2, n) = \sum_{S_{m,n}(R) = (R_1,R_2)}(R, m + n)$$
+the property of being a homomorphism follows.
 \end{proof}
 
 
@@ -2415,45 +2496,6 @@ $$\diamond(R_1,\ldots, R_m) = \sum_{R\in S^{-1}(R_1,\ldots, R_m)}(R, n)$$
 
 
 
-\subsection{Preservation of the Assaf-Schilling Demazure crystal structure}
-
-RC-graphs have a Demazure crystal structure defined by Assaf and Schilling in \cite{assaf2018demazure}. We may transport this structure to bounded RC graphs as  operators $e_i:\mathcal{RC}\to\mathcal{RC}\cup\{\emptyset\}$ and $f_i:\mathcal{RC}\to\mathcal{RC}\cup\{\emptyset\}$ by
-$$e_i(R,n) = (e_i(R), n)$$
-and
-$$f_i(R, n)=(f_i(R), n)$$
-
-\begin{lemma}
-	Let $(R, n)$ be a bounded RC graph. If $f_i(R)\neq \emptyset$ and $\zeromap(R', n+1)=(R, n)$, then $f_i(R')\neq \emptyset$ and
-	$$\zeromap(f_i(R'), n + 1)=(f_i(R), n)$$	
-\end{lemma}
-
-\begin{theorem}
-	Let $(R, n)$ be a highest weight bounded RC graph and let $B(R, n)$ be the corresponding Demazure crystal. Let $B(R, n)^0$ be the subset of $B(R, n)$ such that the last row is empty. Then 
-	$$\zeromap:B(R, n)^0\to \bigcup_{R'\in B(R,n)^0}B(\zeromap(R', n))$$ 
-	is an isomorphism of crystal graphs.
-\end{theorem}
-
-An RC graph $R$ has a uniquely associated reduced word $\mathrm{word}(R)=(s_{i_1},\ldots,s_{i_N})$. Recall the Coxeter-Knuth relation $\sim_{\mathrm{CK}}$ defined by
-$$j\ i\ k \sim_{\mathrm{CK}} j\ k\ i$$
-and
-$$k\ i\ j \sim_{\mathrm{CK}} i\ k\ j$$
-if $i<j<k$, and
-$$i\ i+1\ i \sim_{\mathrm{CK}} i+1\ i\ i+1$$
-For an element $w\in S_\infty$, define $N(w)$ to be the minimal $N$ such that $w\in S_N$. For an RC graph $R$, define
-$$\widetilde{\mathrm{eg}}(R) = (N(\wof{R}) - i_1, \ldots, N(\wof{R}) - i_N)$$
-Via the Edelman-Greene insertion algorithm, we may define a pair
-$$(P, Q)$$
-of tableaux of the same shape such that the reading word of $P$ is CK-equivalent to $\widetilde{\mathrm{eg}}(R)$ and $Q$ has the same weight as $R$.
-
-\begin{lemma}
-	We have that
-	$$R\mapsto Q$$
-	 induces a morphism of crystal graphs into $B(\mathrm{shape}(Q))$. 
-\end{lemma}
-
-\begin{theorem}
-	Let $R,R'$ be RC graphs. Then $\mathrm{hw}(R) = \mathrm{hw}(R')$ if and only if $\widetilde{\mathrm{eg}}(R) \sim_{\mathrm{CK}} \widetilde{\mathrm{eg}}(R')$.
-\end{theorem}
 
 
 \subsection{Crystal divided differences and the dominant Pieri formula}
@@ -2580,7 +2622,7 @@ $$R_{212}^{(p,q,r)} = f_{i+1}^r( (f_{i}^q (f_{i+1}^p (R\setminus\{(i+1,k)\}))\se
 
 
 \bibliographystyle{acm}
-\bibliography{formschub}
+\bibliography{schubert_bialgebra}
 
 
 \end{document}
