@@ -275,6 +275,9 @@ def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=Fa
     # Start building TikZ code
     lines = []
     lines.append("\\begin{tikzpicture}[scale=" + str(scale) + "]")
+    
+    # Scale line width with the scale parameter
+    line_width = 2.5 * scale
 
     # Draw grid lines (light gray)
     if clip_at_outline and outline_rows is not None:
@@ -314,32 +317,32 @@ def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=Fa
                 # CROSSING: strands go straight through
                 if flip_horizontal:
                     # Horizontal strand (blue, from right to left)
-                    lines.append(f"  \\draw[blue, line width=2.5pt, line cap=round] ({x_pos + 1},{y_pos + 0.5}) -- ({x_pos},{y_pos + 0.5});")
+                    lines.append(f"  \\draw[blue, line width={line_width}pt, line cap=round] ({x_pos + 1},{y_pos + 0.5}) -- ({x_pos},{y_pos + 0.5});")
                 else:
                     # Horizontal strand (blue, from left to right)
-                    lines.append(f"  \\draw[blue, line width=2.5pt, line cap=round] ({x_pos},{y_pos + 0.5}) -- ({x_pos + 1},{y_pos + 0.5});")
+                    lines.append(f"  \\draw[blue, line width={line_width}pt, line cap=round] ({x_pos},{y_pos + 0.5}) -- ({x_pos + 1},{y_pos + 0.5});")
                 # Vertical strand (red, from bottom to top)
-                lines.append(f"  \\draw[red, line width=2.5pt, line cap=round] ({x_pos + 0.5},{y_pos}) -- ({x_pos + 0.5},{y_pos + 1});")
+                lines.append(f"  \\draw[red, line width={line_width}pt, line cap=round] ({x_pos + 0.5},{y_pos}) -- ({x_pos + 0.5},{y_pos + 1});")
             else:
                 # ELBOW: strands avoid each other with 90-degree curves
                 if flip_horizontal:
                     # Blue arc: from right to up (starts horizontal from right, ends vertical going up)
                     # Control points: first keeps horizontal tangent, second keeps vertical tangent
                     lines.append(
-                        f"  \\draw[blue, line width=2.5pt] ({x_pos + 1},{y_pos + 0.5}) .. controls ({x_pos + 0.7},{y_pos + 0.5}) and ({x_pos + 0.5},{y_pos + 0.7}) .. ({x_pos + 0.5},{y_pos + 1});",
+                        f"  \\draw[blue, line width={line_width}pt] ({x_pos + 1},{y_pos + 0.5}) .. controls ({x_pos + 0.7},{y_pos + 0.5}) and ({x_pos + 0.5},{y_pos + 0.7}) .. ({x_pos + 0.5},{y_pos + 1});",
                     )
                     # Red arc: from bottom to left (starts vertical from bottom, ends horizontal going left)
                     if not on_diagonal:
-                        lines.append(f"  \\draw[red, line width=2.5pt] ({x_pos + 0.5},{y_pos}) .. controls ({x_pos + 0.5},{y_pos + 0.3}) and ({x_pos + 0.3},{y_pos + 0.5}) .. ({x_pos},{y_pos + 0.5});")
+                        lines.append(f"  \\draw[red, line width={line_width}pt] ({x_pos + 0.5},{y_pos}) .. controls ({x_pos + 0.5},{y_pos + 0.3}) and ({x_pos + 0.3},{y_pos + 0.5}) .. ({x_pos},{y_pos + 0.5});")
                 else:
                     # Blue arc: from left to up (starts horizontal from left, ends vertical going up)
                     lines.append(
-                        f"  \\draw[blue, line width=2.5pt] ({x_pos},{y_pos + 0.5}) .. controls ({x_pos + 0.3},{y_pos + 0.5}) and ({x_pos + 0.5},{y_pos + 0.7}) .. ({x_pos + 0.5},{y_pos + 1});",
+                        f"  \\draw[blue, line width={line_width}pt] ({x_pos},{y_pos + 0.5}) .. controls ({x_pos + 0.3},{y_pos + 0.5}) and ({x_pos + 0.5},{y_pos + 0.7}) .. ({x_pos + 0.5},{y_pos + 1});",
                     )
                     # Red arc: from bottom to right (starts vertical from bottom, ends horizontal going right)
                     if not on_diagonal:
                         lines.append(
-                            f"  \\draw[red, line width=2.5pt] ({x_pos + 0.5},{y_pos}) .. controls ({x_pos + 0.5},{y_pos + 0.3}) and ({x_pos + 0.7},{y_pos + 0.5}) .. ({x_pos + 1},{y_pos + 0.5});",
+                            f"  \\draw[red, line width={line_width}pt] ({x_pos + 0.5},{y_pos}) .. controls ({x_pos + 0.5},{y_pos + 0.3}) and ({x_pos + 0.7},{y_pos + 0.5}) .. ({x_pos + 1},{y_pos + 0.5});",
                         )
 
     # Draw reflection numbers at crossings if requested
@@ -418,7 +421,8 @@ def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=Fa
     # Draw thick black outline if requested
     if outline_rows is not None:
         # Outline the TOP outline_rows rows (from y = max_size - outline_rows to y = max_size)
-        lines.append(f"  \\draw[black, line width=3pt] (0,{max_size - outline_rows}) rectangle ({max_size},{max_size});")
+        outline_width = 3 * scale
+        lines.append(f"  \\draw[black, line width={outline_width}pt] (0,{max_size - outline_rows}) rectangle ({max_size},{max_size});")
 
     lines.append("\\end{tikzpicture}")
 

@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../../.."
+		}
+	],
+	"settings": {
+		"notebook.compactView": false,
+		"notebook.output.scrolling": true,
+		"github.copilot.advanced": {}
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": []
+	}
+}
