@@ -275,7 +275,7 @@ def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=Fa
     # Start building TikZ code
     lines = []
     lines.append("\\begin{tikzpicture}[scale=" + str(scale) + "]")
-    
+
     # Scale line width with the scale parameter
     line_width = 2.5 * scale
 
