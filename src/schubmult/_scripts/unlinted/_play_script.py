@@ -1,4 +1,5 @@
-from schubmult import Permutation, elem_sym_perms, elem_sym_perms_q, q_vector, phi_d, tau_d, RCGraph, SchubertBasis, ASx, WordBasis, FA
+from schubmult import Permutation, elem_sym_perms, elem_sym_perms_q, q_vector, phi_d, tau_d, RCGraph, SchubertBasis, ASx, WordBasis, FA, Sx, RCGraphRing
+from schubmult.abc import x
 from symengine import S
 
 def antipode(fa_elem):
@@ -290,31 +291,19 @@ if __name__ == "__main__":
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 3
     perms = Permutation.all_permutations(n)
 
-    # for perm1, perm2 in itertools.product(perms, perms):
-    #     for m in range(len(perm1.trimcode), n):
-    #         for n in range(len(perm2.trimcode), n):
-    #             e1 = ASx(perm1, m)
-    #             a1 = antipode(e1)
-    #             e2 = ASx(perm2, n)
-    #             a2 = antipode(e2)
-    #             prod1 = antipode(e1 * e2)
-    #             prod2 = a2 * a1
-    #             diff = prod1 - prod2
-    #             if not diff.is_zero:
-    #                 print(f"Failure for {e1} * {e2}:")
-    #                 print(f"antipode({e1 * e2}) = {prod1}")
-    #                 print(f"antipode({e2}) * antipode({e1}) = {prod2}")
-    #                 print(f"Difference: {diff}")
-
-    for perm in perms:
-        for m in range(len(perm.trimcode), n):
-            cprd = ASx(perm, m).coproduct()
-            elem2 = ASx.zero
-
-            for (e1, e2), coeff in cprd.items():
-                elem2 += coeff * ASx(*e1) * antipode(ASx(*e2))
-            if not elem2.is_zero and (perm.inv > 0 or m > 0):
-                print(f"Failure for coproduct of {ASx(perm, m)}:")
-                print(f"Sum e1 ⊗ antipode(e2) = {elem2}")
+    grass_perms = {}
+    for p in perms:
+        if len(p.descents()) <= 1:
+            grass_perms[len(p.trimcode)] = grass_perms.get(len(p.trimcode), [])
+            grass_perms[len(p.trimcode)].append(p)
+    ring = RCGraphRing()
+    for perm in perms:        
+        for karp in range(len(perm.trimcode), n):
+            ring_elem = ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(perm, karp),1))
+            for gp in grass_perms[karp]:
+                gp_elem = ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(gp, karp),1))
+                prod1 = (ring_elem % gp_elem)
+                prod2 = Sx(perm) * Sx(gp)
+                assert all(prod1[rc] == prod2[rc.perm] for rc in prod1.keys()), f"Mismatch for {perm} * {gp}: {prod1} != {prod2}"
 
     

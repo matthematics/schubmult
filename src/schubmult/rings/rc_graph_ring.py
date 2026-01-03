@@ -453,7 +453,11 @@ class RCGraphRing(CrystalGraphRing):
         # from .schubert_ring import DSx
         # from .variables import GeneratingSet
         # z = GeneratingSet("z")
+        if len(v_rc.perm.descents()) <= 1 and len(v_rc.perm.trimcode) == len(v_rc) and len(u_rc) == len(v_rc):
+            return self(u_rc.squash_product(v_rc))
+
         if v_rc.perm.is_dominant:
+            # dominant case
             dom_rc = v_rc
             tensor_hw_map = {}
             w_hw_map = {}

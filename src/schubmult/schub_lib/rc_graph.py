@@ -800,6 +800,20 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
     _z_cache = {}  # noqa: RUF012
 
+    def squash_product(self, rc):
+        if len(self) != len(rc):
+            raise ValueError("RC graphs must have the same number of rows")
+        if self.perm.inv == 0:
+            return rc
+        rowmax = [max(self[i], default=0) for i in range(len(self))]
+        N = max(rowmax)
+        shift_rc = RCGraph([tuple([a + N for a in row]) for row in rc]).resize(len(rc) + N)
+        rc_self = self.resize(len(rc) + N)
+        combined_rc = type(self)([shift_rc[i] + rc_self[i] for i in range(len(rc_self))])
+        while len(combined_rc) > len(self):
+            combined_rc = combined_rc.zero_out_last_row()
+        return combined_rc
+
     @cache
     def zero_out_last_row(self):
         # this is important!

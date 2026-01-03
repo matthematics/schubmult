@@ -53,33 +53,34 @@ def generate_multiplication_equation(rc1, rc2, result_rcs, terms_per_line=3, sca
     return "\n".join(lines)
 
 
-# Define the RC graphs
-rc1 = RCGraph([(3, 1), (2,)])
-rc2 = RCGraph([(1,), (2,)])
+if __name__ == "__main__":
+    # Define the RC graphs
+    rc1 = RCGraph([(3, 1), (2,)])
+    rc2 = RCGraph([(1,), (2,)])
 
-result_rcs = [
-    RCGraph([(3, 2), (5,), (3,), (4,)]),
-    RCGraph([(3, 1), (2,), (3,), (4,)]),
-    RCGraph([(3, 2), (4,), (3,), (4,)]),
-    RCGraph([(4, 1), (2,), (3,), (4,)]),
-    RCGraph([(4, 2), (5,), (3,), (4,)]),
-    RCGraph([(5, 1), (2,), (3,), (4,)]),
-    RCGraph([(5, 1), (4,), (3,), (4,)]),
-    RCGraph([(5, 2), (4,), (3,), (4,)]),
-    RCGraph([(5, 4), (5,), (3,), (4,)]),
-    RCGraph([(6, 1), (5,), (3,), (4,)]),
-    RCGraph([(6, 2), (5,), (3,), (4,)]),
-    RCGraph([(6, 4), (5,), (3,), (4,)]),
-]
+    result_rcs = [
+        RCGraph([(3, 2), (5,), (3,), (4,)]),
+        RCGraph([(3, 1), (2,), (3,), (4,)]),
+        RCGraph([(3, 2), (4,), (3,), (4,)]),
+        RCGraph([(4, 1), (2,), (3,), (4,)]),
+        RCGraph([(4, 2), (5,), (3,), (4,)]),
+        RCGraph([(5, 1), (2,), (3,), (4,)]),
+        RCGraph([(5, 1), (4,), (3,), (4,)]),
+        RCGraph([(5, 2), (4,), (3,), (4,)]),
+        RCGraph([(5, 4), (5,), (3,), (4,)]),
+        RCGraph([(6, 1), (5,), (3,), (4,)]),
+        RCGraph([(6, 2), (5,), (3,), (4,)]),
+        RCGraph([(6, 4), (5,), (3,), (4,)]),
+    ]
 
-# Generate the equation
-latex_code = generate_multiplication_equation(rc1, rc2, result_rcs, terms_per_line=3, scale=0.4)
+    # Generate the equation
+    latex_code = generate_multiplication_equation(rc1, rc2, result_rcs, terms_per_line=3, scale=0.4)
 
-print(latex_code)
-print("\n\n% To use this in a LaTeX document:")
-print("% \\documentclass{article}")
-print("% \\usepackage{amsmath}")
-print("% \\usepackage{tikz}")
-print("% \\begin{document}")
-print("% [paste the generated code here]")
-print("% \\end{document}")
+    print(latex_code)
+    print("\n\n% To use this in a LaTeX document:")
+    print("% \\documentclass{article}")
+    print("% \\usepackage{amsmath}")
+    print("% \\usepackage{tikz}")
+    print("% \\begin{document}")
+    print("% [paste the generated code here]")
+    print("% \\end{document}")
