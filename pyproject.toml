@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 
@@ -151,8 +151,11 @@ include = ["schubmult*"]  # package names should match these glob patterns (["*"
 namespaces = false
 
 [tool.setuptools.dynamic]
-version = {attr = "schubmult.__version__"} 
 readme = {file = ["README.md"]}
+
+[tool.setuptools_scm]
+version_file = "src/schubmult/_version.py"
+fallback_version = "4.0.0.dev0"
 
 [project.scripts]
 schubmult_py = "schubmult._scripts.schubmult_py:main"

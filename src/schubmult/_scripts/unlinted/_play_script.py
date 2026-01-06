@@ -1,4 +1,4 @@
-from schubmult import Permutation, elem_sym_perms, elem_sym_perms_q, q_vector, phi_d, tau_d, RCGraph, SchubertBasis, ASx, WordBasis, FA, Sx, RCGraphRing
+from schubmult import Permutation, elem_sym_perms, elem_sym_perms_q, q_vector, phi_d, tau_d, RCGraph, SchubertBasis, ASx, WordBasis, FA, Sx, RCGraphRing, Plactic, RootTableau
 from schubmult.abc import x
 from symengine import S
 
@@ -283,27 +283,93 @@ def antipode(fa_elem):
 #     return working_rc, tuple(reversed(rows))
 
 # Test
+
+def anti_crystal(rc):
+    rc = rc.resize(len(rc.perm) - 1)
+    rc_t_list = [list(row) for row in rc.transpose(len(rc))]
+    result_list = [[] * (len(rc))]
+    for col_num in range(len(rc)):
+        try:
+            result_list[col_num].append(len(rc.perm) - rc_t_list[col_num].pop())
+        except IndexError:
+            pass
+    return RCGraph([tuple(row) for row in result_list]).normalize()
+
+def seq_product(seq1, seq2):
+    result = RCGraph()
+    n = len(seq1)
+    for i in range(n):
+        result = result.resize(i+1).squash_product(seq1[i].resize(i+1)).squash_product(seq2[i].resize(i+1))
+    return result
+
+def rc_from_seq(seq):
+    result_rc = RCGraph([()])
+    for i, rc in enumerate(seq):
+        result_rc = result_rc.resize(i+1).squash_product(rc.resize(i+1)).resize(len(seq))
+    return result_rc
+
+# def grass_tableau_rep(grass_rc):
+
+def factorize(rc_graph):
+    rc_graph = rc_graph.normalize()
+    if len(rc_graph) == 1:
+        return [rc_graph]
+    if len(rc_graph.perm.descents()) <= 1:
+        return [rc_graph]
+
 if __name__ == "__main__":
     #from schubmult.utils.schub_lib import elem_sym_perms_q
     import sys
     import itertools
 
-    n = int(sys.argv[1]) if len(sys.argv) > 1 else 3
+    n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
 
     grass_perms = {}
     for p in perms:
-        if len(p.descents()) <= 1:
+        if len(p.descents()) <= 1 and max(p.trimcode, default=0) == 1:
             grass_perms[len(p.trimcode)] = grass_perms.get(len(p.trimcode), [])
             grass_perms[len(p.trimcode)].append(p)
-    ring = RCGraphRing()
-    for perm in perms:        
-        for karp in range(len(perm.trimcode), n):
-            ring_elem = ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(perm, karp),1))
-            for gp in grass_perms[karp]:
-                gp_elem = ring.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(gp, karp),1))
-                prod1 = (ring_elem % gp_elem)
-                prod2 = Sx(perm) * Sx(gp)
-                assert all(prod1[rc] == prod2[rc.perm] for rc in prod1.keys()), f"Mismatch for {perm} * {gp}: {prod1} != {prod2}"
+    # for i in range(1, n):
+    #     rc_map2 = {rc.resize(i): seq + (RCGraph().resize(i),) for rc, seq in rc_map.items()}
+    #     for gp in grass_perms[i]:
+            
+    #         for rc in RCGraph.all_rc_graphs(gp, i):
+    for perm in perms:
+        if perm.inv == 0:
+            continue
+        for rc in RCGraph.all_rc_graphs(perm, len(perm.trimcode)):
+            # for k in  range(len(perm.trimcode), n):
+            for perm2 in perms:
+                if perm2.inv == 0:
+                    continue
+                if max(perm2.descents(), default=0) <= min(perm.descents(), default=0):
+                    bottom_size = min(perm.descents()) + 1
+                    for rc2 in RCGraph.all_rc_graphs(perm2, bottom_size):
+                        rc_mul = RCGraph([*rc2.squash_product(rc.vertical_cut(bottom_size)[0]), *rc[bottom_size:]])
+                        # tab = RootTableau.from_rc_graph(rc_g).weight_tableau
+                        # print(f"Testing {perm}, {gp}, {rc=}, {rc_g=} {tab=}")
+                        # rc_mul = rc.resize(k)
+                        # for letter in reversed(tab.row_word):
+                        #     rc_mul = rc_mul.squash_product(RCGraph(tuple([()]*(letter-1)) + ((k,),)).resize(k))
+                        assert (Sx(perm) * Sx(perm2)).get(rc_mul.perm, 0) != S.Zero, f"Dammit on {perm}, {perm2}, {rc=}, {rc2=} {rc_mul=}"
+
+                
+                
+    #     rc_map = rc_map2
+    # print(rc_map)
+    # print(len(rc_map))
+    # print(sum(len(RCGraph.all_rc_graphs(perm, len(perm.trimcode))) for perm in perms))
+    # for rc1, rc2 in itertools.product(rc_map.keys(), repeat=2):
+    #     seq1 = rc_map[rc1]
+    #     seq2 = rc_map[rc2]
+    #     perm1 = rc1.perm
+    #     perm2 = rc2.perm
+    #     if len(perm1.trimcode) < n-1 or len(perm2.trimcode) < n-1:
+    #         continue
+    #     prod_rc = seq_product(seq1, seq2)
+    #     #prod_rc = rc_from_seq(prod_seq)
+    #     assert (Sx(perm1)*Sx(perm2)).get(prod_rc.perm, 0) != S.Zero, f"Failed on {perm1}, {perm2}, {rc1=} {rc2=} {prod_rc=} {seq1=} {seq2=}"
+    #     print("Yay pgieons")
 
     

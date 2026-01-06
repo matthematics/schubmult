@@ -9,7 +9,11 @@ import warnings
 from pathlib import Path
 from typing import Dict, List, Set
 
-__version__ = "4.0.0dev"
+# Version is managed by setuptools-scm
+try:
+    from schubmult._version import version as __version__
+except ImportError:
+    __version__ = "4.0.0.dev0"
 
 """
 Top-level schubmult package initializer.

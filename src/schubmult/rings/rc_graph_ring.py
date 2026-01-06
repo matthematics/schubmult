@@ -289,6 +289,15 @@ class RCGraphRing(CrystalGraphRing):
     #         res *= self._one_row_cp(a)
     #     return res
 
+    def schub(self, perm, n=None):
+        """
+        Return the RCGraphRing element corresponding to the Schubert polynomial
+        indexed by `perm` in `S_n` (if n is None, n = len(perm) is used).
+        """
+        if n is None:
+            n = len(perm.trimcode)
+        return self.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(perm, n), S.One))
+
     def coproduct_on_basis(self, elem):
         # if not elem.is_principal:
         #     raise NotImplementedError
@@ -498,7 +507,7 @@ class RCGraphRing(CrystalGraphRing):
             except KeyError:
                 total_tab = Plactic().rs_insert(*tab2.row_word, *tab1.row_word)
                 return self(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
-        raise NotImplementedError("Multiplication only implemented for dominant right factor.")
+        raise NotImplementedError("Multiplication only implemented for dominant right factor or Grassmannian with large enough descent.")
 
     @cache
     def potential_products(self, left, right, length):
