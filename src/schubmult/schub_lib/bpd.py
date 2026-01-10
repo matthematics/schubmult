@@ -202,6 +202,7 @@ class BPD:
                 return TileType.VERT
             if self.DEBUG:
                 print(f"Returning SE elbow for cell with {left_tile=}, {down_tile=}, {up_tile=}, {right_tile=}, line={__import__('inspect').currentframe().f_back.f_lineno}")
+            return TileType.ELBOW_SE
         if left_tile.feeds_right:
             if up_tile.entrance_from_bottom:
                 return TileType.ELBOW_NW
