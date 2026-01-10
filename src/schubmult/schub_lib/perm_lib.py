@@ -230,7 +230,7 @@ class Permutation(Printable):
         return False
 
     def _pretty(self, printer=None):
-        return self._sympystr(printer)
+        return printer._print_Tuple(tuple(self))
 
     def _sympystr(self, printer=None):
         from sympy.printing.str import StrPrinter

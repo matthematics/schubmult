@@ -45,6 +45,11 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
     def parent(self):
         return self.ring
 
+    def __matmul__(self, other):
+        from schubmult.rings.tensor_ring import TensorRing
+        tring = TensorRing(self.ring, other.ring)
+        return tring.ext_multiply(self, other)
+
     def __pow__(self, pw):
         if pw < 0:
             return NotImplemented
@@ -200,9 +205,6 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
             if self.ring == other.ring:
                 return self.ring.mul(self, other)
         return NotImplemented
-
-    def __matmul__(self, other):
-        return self.ring.matmul(self, other)
 
     def __rmul__(self, other):
         from .free_algebra_basis import SchubertBasis

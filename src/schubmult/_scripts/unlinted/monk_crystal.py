@@ -4,34 +4,30 @@ if __name__ == "__main__":
 
     from schubmult import CrystalGraph, CrystalGraphTensor
     from schubmult import RCGraph
-    from schubmult.utils.perm_utils import elem_sym_perms
-    from sympy import pretty_print
-
+    import itertools
     from schubmult import *
 
     n = int(sys.argv[1])
 
     perms = Permutation.all_permutations(n)
 
-    for perm in perms:
-        for rc in RCGraph.all_rc_graphs(perm, n-1):
-            for k in range(1, n):
-                for p in range(1, k + 1):
-                    result = None
-                    # for cut in range(p, len(rc) + 1):
-                    #     result = rc.vertical_cut(cut)[0].monk_crystal_mul(p, min(cut,k), prev_result=None)
-                    result = rc.monk_crystal_mul(p, k, warn=False)
-                    print(f"Success {p=} {k=}")
-                    pretty_print(rc)
-                    print("Result:")
-                    pretty_print(result)
-                # if len(results) != 1:
-                    #     print("AMBIGUOUS")
-                    #     raise AssertionError
-                # result = rc.flat_elem_sym_mul(k)
-                # if result:
-                #     print(f"Success {k=}")
-                #     pretty_print(rc)
-                #     print("Result:")
-                #     pretty_print(result)
-                # assert result is not None
+    for perm1, perm2, perm3 in itertools.product(perms, repeat=3):
+        for rc1, rc2, rc3 in itertools.product(
+            RCGraph.all_rc_graphs(perm1, n - 1),
+            RCGraph.all_rc_graphs(perm2, n - 1),
+            RCGraph.all_rc_graphs(perm3, n - 1),
+        ):
+            p1 = rc1.squash_product(rc2.squash_product(rc3))
+            p2 = (rc1.squash_product(rc2)).squash_product(rc3)
+            if p1 != p2:
+                print("FAIL")
+                print(perm1, perm2, perm3)
+                print(rc1)
+                print(rc2)
+                print(rc3)
+                print("Left:")
+                print(p1)
+                print("Right:")
+                print(p2)
+                sys.exit(1)
+            print("PASS", perm1, perm2, perm3)

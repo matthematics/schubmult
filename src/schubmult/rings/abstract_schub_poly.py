@@ -61,7 +61,7 @@ class AbstractSchubPoly(ssymb.Expr):
 class GenericPrintingTerm(AbstractSchubPoly):
     is_Atom = True
 
-    _pretty_schub_char = "𝔖"  # noqa: RUF001
+    _pretty_schub_char = "𝔖"
 
     def __hash__(self):
         return hash((self._key, self._genset, self._coeff_genset, "dasiub", self._name))
@@ -93,7 +93,7 @@ class GenericPrintingTerm(AbstractSchubPoly):
 class TypedPrintingTerm(AbstractSchubPoly):
     is_Atom = True
 
-    _pretty_schub_char = "𝔖"  # noqa: RUF001
+    _pretty_schub_char = "𝔖"
 
     def __hash__(self):
         return hash((self._key, "dasiub"))
@@ -134,7 +134,7 @@ class TypedPrintingTerm(AbstractSchubPoly):
 class DSchubPoly(AbstractSchubPoly):
     is_Atom = True
 
-    _pretty_schub_char = "𝔖"  # noqa: RUF001
+    _pretty_schub_char = "𝔖"
 
     def __hash__(self):
         return hash((self._key, self._genset, self._coeff_genset, "dasiub"))
@@ -189,7 +189,7 @@ class QDSchubPoly(AbstractSchubPoly):
     def __hash__(self):
         return hash((self._key, self._genset, self._coeff_genset, "AbSsf", "q"))
 
-    _pretty_schub_char = "𝕼𝔖"  # noqa: RUF001
+    _pretty_schub_char = "𝕼𝔖"
 
     def __new__(cls, k, genset, coeff_genset):
         return QDSchubPoly.__xnew_cached__(cls, k, genset, coeff_genset)
@@ -234,7 +234,7 @@ class PQDSchubPoly(AbstractSchubPoly):
     def __hash__(self):
         return hash((self._key, self._genset, self._coeff_genset, self.index_comp, "asfafAbS"))
 
-    _pretty_schub_char = "𝕼𝔖"  # noqa: RUF001
+    _pretty_schub_char = "𝕼𝔖"
 
     def __new__(cls, k, genset, coeff_genset, index_comp):
         return PQDSchubPoly.__xnew_cached__(cls, k, genset, coeff_genset, index_comp)

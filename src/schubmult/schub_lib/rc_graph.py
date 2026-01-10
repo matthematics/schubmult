@@ -486,10 +486,15 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     #         return NotImplemented
     #     return other * RCGraphModule({self: 1}, generic_key_type=self.__class__)
 
-    # def __mul__(self, other):
-    #     if isinstance(other, RCGraph):
-    #         return self.prod_with_rc(other)
-    #     return NotImplemented
+    def __mul__(self, other):
+        if isinstance(other, RCGraph):
+            from schubmult.rings.rc_graph_ring import RCGraphRing
+            ring = RCGraphRing()
+            return ring(self)*ring(other)
+        if hasattr(other, "ring"):
+            ring = other.ring
+            return ring(self) * other
+        return NotImplemented
 
     def asdtype(self, cls):
         return cls.dtype().ring.from_rc_graph(self)
@@ -1085,6 +1090,57 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                 ret_module = add_perm_dict(ret_module, {new_rc: coeff})
 
         return ret_module
+
+    def is_potential_coproduct(self, rc1, rc2):
+        if len(rc1) != len(self) or len(rc2) != len(self):
+            return False
+        if not self.perm.descents().issubset(rc1.perm.descents().union(rc2.perm.descents())):
+            return False
+        if not rc1.perm.bruhat_leq(self.perm) or not rc2.perm.bruhat_leq(self.perm):
+            return False
+        if rc2.perm.inv == 0:
+            return rc1 == self
+        if rc1.perm.inv == 0:
+            return rc2 == self
+        if any(rc1.length_vector[i] + rc2.length_vector[i] != self.length_vector[i] for i in range(len(self))):
+            return False
+        max_desc = max(rc2.perm.descents()) + 1
+        if max_desc == len(rc2) and len(rc2.perm.descents()) == 1:
+            return self == rc1.squash_product(rc2)
+        # if len(rc2.perm.descents()) == 1:
+        #     cut_point = max_desc
+        # else:
+        #     cut_point = min(d + 1 for d in rc2.perm.descents() if d + 1 < max_desc)
+        cut_point = len(rc2) - 1
+        if cut_point == 0:
+            return True
+        return all(s.is_potential_coproduct(r1, r2) for s, r1, r2 in ((self.vertical_cut(cut_point)[0], rc1.vertical_cut(cut_point)[0], (rc2.vertical_cut(cut_point))[0]),))
+        #self.rowrange(max_desc).is_potential_coproduct(rc1.rowrange(max_desc), rc2.rowrange(max_desc))
+
+
+
+    # @cache
+    # def column_prod_with_rc(self, other):
+    #     self_t = self.transpose(self.cols).normalize()
+    #     other_t = other.transpose(other.cols).normalize()
+    #     num_zeros = max(len(self_t), len(self_t.perm))
+    #     base_rc = other_t
+    #     buildup_module = {base_rc: 1}
+
+    #     for _ in range(num_zeros):
+    #         new_buildup_module = {}
+    #         for rc, coeff in buildup_module.items():
+    #             new_buildup_module = add_perm_dict(new_buildup_module, dict.fromkeys(rc.right_zero_act(), coeff))
+    #         buildup_module = new_buildup_module
+    #     ret_module = {}
+
+    #     for rc, coeff in buildup_module.items():
+    #         new_rc = (type(rc)([*rc[: len(self)], *self_t.shiftup(len(other_t))])).transpose(len(self))
+    #         assert len(new_rc) == len(self) + len(other)
+    #         if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(new_rc):
+    #             ret_module = add_perm_dict(ret_module, {new_rc: coeff})
+
+    #     return ret_module
 
     def ring_act(self, elem):
         if isinstance(elem, FreeAlgebraElement):
