@@ -482,143 +482,44 @@ class BPD:
                 return self.trace_pipe(i, j - 1, direction="left")
         raise ValueError("Invalid tile for tracing pipe")
 
-    def undroop_elbow(self, r, c, from_spot=None):
-        """
-        Inverse operation of droop_elbow. Takes an NW elbow and moves it back up and left.
-
-        Args:
-            r, c: Position of the NW elbow to undroop (bottom-right corner of rectangle)
-            from_spot: Optional (row, col) of where to place the SE elbow (top-left corner)
-
-        Returns:
-            New BPD with the elbow undrooped
-        """
-
-        if from_spot is None:
-            # Find the closest strictly northwest EMPTY position
-            # Start from (r-1, c-1) and search outward
-            pot_from_spot = (r - 1, c - 1)
-            while self.grid[pot_from_spot[0], pot_from_spot[1]] != TileType.EMPTY:
-                if pot_from_spot[1] > 0:
-                    pot_from_spot = (pot_from_spot[0], pot_from_spot[1] - 1)
-                elif pot_from_spot[0] > 0:
-                    pot_from_spot = (pot_from_spot[0] - 1, c - 1)
-                else:
-                    raise ValueError("No available empty spot northwest to undroop elbow")
-            from_spot = pot_from_spot
-
-        new_bpd = self.copy()
-
-        # Place SE elbow at original position - removes one EMPTY
-        new_bpd.grid[from_spot[0], from_spot[1]] = TileType.ELBOW_SE
-
-        # Remove the NW elbow at destination - creates one EMPTY (net zero EMPTYs)
-        new_bpd.grid[r, c] = TileType.EMPTY
-
-        # Revert top horizontal edge from (from_spot[0], from_spot[1]+1) to (from_spot[0], c)
-        for j in range(from_spot[1] + 1, c + 1):
-            if new_bpd.grid[from_spot[0], j] == TileType.CROSS:
-                new_bpd.grid[from_spot[0], j] = TileType.VERT
-            elif new_bpd.grid[from_spot[0], j] == TileType.HORIZ:
-                new_bpd.grid[from_spot[0], j] = TileType.EMPTY
-            elif new_bpd.grid[from_spot[0], j] == TileType.ELBOW_SE:
-                # This was a corner elbow, revert to VERT or EMPTY
-                new_bpd.grid[from_spot[0], j] = TileType.EMPTY
-
-        # Revert right vertical edge from (from_spot[0]+1, c) to (r)
-        for i in range(from_spot[0] + 1, r + 1):
-            if new_bpd.grid[i, c] == TileType.CROSS:
-                new_bpd.grid[i, c] = TileType.HORIZ
-            elif new_bpd.grid[i, c] == TileType.VERT:
-                new_bpd.grid[i, c] = TileType.EMPTY
-
-        # Revert bottom horizontal edge from (r, from_spot[1]) to (r, c)
-        for j in range(from_spot[1], c):
-            if new_bpd.grid[r, j] == TileType.CROSS:
-                new_bpd.grid[r, j] = TileType.VERT
-            elif new_bpd.grid[r, j] == TileType.HORIZ:
-                new_bpd.grid[r, j] = TileType.EMPTY
-            elif new_bpd.grid[r, j] == TileType.ELBOW_NW:
-                # This was a corner elbow, revert to HORIZ or EMPTY
-                new_bpd.grid[r, j] = TileType.EMPTY
-
-        # Revert left vertical edge from (from_spot[0]+1, from_spot[1]) to (r-1, from_spot[1])
-        for i in range(from_spot[0] + 1, r):
-            if new_bpd.grid[i, from_spot[1]] == TileType.CROSS:
-                new_bpd.grid[i, from_spot[1]] = TileType.HORIZ
-            elif new_bpd.grid[i, from_spot[1]] == TileType.VERT:
-                new_bpd.grid[i, from_spot[1]] = TileType.EMPTY
-
-        return new_bpd
-
-    def droop_elbow(self, r, c, to_spot=None):
-        if self.grid[r, c] != TileType.ELBOW_SE:
-            raise ValueError("No SE elbow at given position to droop")
+    def droop_elbow_to_empty(self, r, c, to_spot=None):
+        # assume (r, c) is empty
+        # to_spot is empty
         if to_spot is None:
-            # find lowest empty spot southeast of (r, c)
-            pot_to_spot = (r + 1, c + 1)
-            while self.grid[pot_to_spot[0], pot_to_spot[1]] != TileType.EMPTY:
-                if pot_to_spot[1] < self.n - 1:
-                    pot_to_spot = (pot_to_spot[0], pot_to_spot[1] + 1)
-                elif pot_to_spot[0] < self.n - 1:
-                    pot_to_spot = (pot_to_spot[0] + 1, c + 1)
+            # find cloest se elbow spot nw of (r, c)
+            pot_to_spot = (r - 1, c - 1)
+            while self.grid[pot_to_spot[0], pot_to_spot[1]] != TileType.ELBOW_SE:
+                if pot_to_spot[1] > 0:
+                    pot_to_spot = (pot_to_spot[0], pot_to_spot[1] - 1)
+                elif pot_to_spot[0] > 0:
+                    pot_to_spot = (pot_to_spot[0] - 1, c - 1)
                 else:
                     raise ValueError("No available spot to droop elbow")
             to_spot = pot_to_spot
 
-        new_bpd = self.copy()
+        new_bpd = np.full(self.grid.shape, TileType.TBD)
 
-        # Remove SE elbow at origin - creates one EMPTY
-        new_bpd.grid[r, c] = TileType.EMPTY
+        # move the empty
 
-        # Place destination elbow - removes one EMPTY (net zero EMPTYs)
-        new_bpd.grid[to_spot[0], to_spot[1]] = TileType.ELBOW_NW
+        for i in range(self.n):
+            for j in range(self.n):
+                if i <= r and (j == to_spot[1]) and i >= to_spot[0]:
+                    continue
+                if j <= c and (i == to_spot[0]) and j >= to_spot[1]:
+                    continue
+                new_bpd[i, j] = self.grid[i, j] if self.grid[i, j] in (TileType.CROSS, TileType.EMPTY) else TileType.TBD
 
-        # Top horizontal edge from (r, c+1) to (r, to_spot[1])
-        for j in range(c + 1, to_spot[1] + 1):
-            if new_bpd.grid[r, j] == TileType.VERT:
-                new_bpd.grid[r, j] = TileType.CROSS
-            elif new_bpd.grid[r, j] == TileType.EMPTY:
-                new_bpd.grid[r, j] = TileType.HORIZ
+        for j in range(to_spot[1] + 1, c):
+            if self.grid[r, j] == TileType.VERT:
+                new_bpd[r, j] = TileType.CROSS
+        for i in range(to_spot[0] + 1, r):
+            if self.grid[i, c] == TileType.HORIZ:
+                new_bpd[i, c] = TileType.CROSS
 
-        # Corner: turn the horizontal pipe down at (r, to_spot[1])
-        if new_bpd.grid[r, to_spot[1]] == TileType.HORIZ:
-            new_bpd.grid[r, to_spot[1]] = TileType.ELBOW_SE
-        elif new_bpd.grid[r, to_spot[1]] == TileType.CROSS:
-            # If there was already a vertical pipe, keep it as CROSS
-            pass
+        new_bpd[to_spot[0], to_spot[1]] = TileType.EMPTY
 
-        # Right vertical edge from (r+1, to_spot[1]) to (to_spot[0])
-        for i in range(r + 1, to_spot[0] + 1):
-            if new_bpd.grid[i, to_spot[1]] == TileType.HORIZ:
-                new_bpd.grid[i, to_spot[1]] = TileType.CROSS
-            elif new_bpd.grid[i, to_spot[1]] == TileType.EMPTY:
-                new_bpd.grid[i, to_spot[1]] = TileType.VERT
-
-        # Bottom horizontal edge from (to_spot[0], c) to (to_spot[0], to_spot[1])
-        for j in range(c, to_spot[1] + 1):
-            if new_bpd.grid[to_spot[0], j] == TileType.VERT:
-                new_bpd.grid[to_spot[0], j] = TileType.CROSS
-            elif new_bpd.grid[to_spot[0], j] == TileType.EMPTY:
-                new_bpd.grid[to_spot[0], j] = TileType.HORIZ
-
-        # Corner: turn the vertical pipe left at (to_spot[0], c)
-        if new_bpd.grid[to_spot[0], c] == TileType.VERT:
-            new_bpd.grid[to_spot[0], c] = TileType.ELBOW_NW
-        elif new_bpd.grid[to_spot[0], c] == TileType.CROSS:
-            # If there was already a horizontal pipe, keep it as CROSS
-            pass
-
-        # Left vertical edge from (r+1, c) to (to_spot[0])
-        for i in range(r + 1, to_spot[0]):
-            if new_bpd.grid[i, c] == TileType.HORIZ:
-                new_bpd.grid[i, c] = TileType.CROSS
-            elif new_bpd.grid[i, c] == TileType.EMPTY:
-                new_bpd.grid[i, c] = TileType.VERT
-
-        return new_bpd
-
-        return new_bpd
+        new_bpd[r, c] = TileType.TBD
+        return BPD(new_bpd)
 
     # def delta_op(self):
     #     r = min(i for i in range(self.n) if any(self.grid[i, j] == TileType.EMPTY for j in range(self.n)))
