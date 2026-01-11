@@ -126,7 +126,7 @@ class BPD:
         #     print(f"Returning SE elbow for cell with {left_tile=}, {down_tile=}, {up_tile=}, {right_tile=}, line={__import__('inspect').currentframe().f_back.f_lineno}")
         return TileType.ELBOW_SE
 
-    DEBUG = True
+    DEBUG = False
 
     def build(self, validate=False):
         """Build internal structures if needed (currently a placeholder)"""
@@ -719,7 +719,7 @@ class BPD:
                                 new_bpd.grid[z - 1, y] = TileType.CROSS
                             else:
                                 new_bpd.grid[z, y + 1] = TileType.TBD
-                                new_bpd.grid[z, y] = TileType.CROSS
+                                new_bpd.grid[z - 1, y] = TileType.CROSS
 
                 if self.DEBUG:
                     print(f"Before rebuild:\n{new_bpd}\n")
@@ -783,9 +783,9 @@ class BPD:
 
     def zero_out_last_row(self):
         a, b = self.perm.maximal_corner
-        assert self[a, b] == TileType.ELBOW_NW
+        assert self[a - 1, b - 1] == TileType.ELBOW_NW
         # find nearest CROSS strictly SE of this
-        r, c = a + 1, b + 1
+        r, c = a, b
         while r < self.n and c < self.n and self[r, c] != TileType.CROSS:
             if c < self.n - 1:
                 c += 1
@@ -795,7 +795,7 @@ class BPD:
         if r == self.n or c == self.n:
             raise ValueError("No CROSS found strictly SE of maximal corner")
         res_bpd = self.copy()
-        res_bpd.grid[a, b] = TileType.CROSS
+        res_bpd.grid[a - 1, b - 1] = TileType.CROSS
         res_bpd.grid[r, c] = TileType.TBD
         res_bpd.rebuild()
         return res_bpd
