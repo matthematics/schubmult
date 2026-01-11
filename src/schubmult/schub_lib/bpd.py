@@ -656,7 +656,7 @@ class BPD:
 
                 if self.DEBUG:
                     print(f"Found crossing at ({x_prime}, {y + 1})")
-                    print(f"Shifting kinks right: CROSSes from column {y} to column {y + 1} in rows ({x + 1}, {x_prime})")
+                    print(f"Shifting kinks right: CROSSes and BLANKs from column {y} to column {y + 1} in rows ({x + 1}, {x_prime})")
 
                 new_bpd = current_bpd.copy()
 
@@ -667,6 +667,11 @@ class BPD:
                             print(f"  Moving CROSS from ({z}, {y}) to ({z}, {y + 1})")
                         new_bpd.grid[z, y] = TileType.TBD
                         new_bpd.grid[z, y + 1] = TileType.CROSS
+                    elif current_bpd[z, y] == TileType.BLANK:
+                        if self.DEBUG:
+                            print(f"  Moving BLANK from ({z}, {y}) to ({z}, {y + 1})")
+                        new_bpd.grid[z, y] = TileType.TBD
+                        new_bpd.grid[z, y + 1] = TileType.BLANK
 
                 # Remove the crossing at (x', y+1) and the empty at (x, y)
                 if self.DEBUG:
