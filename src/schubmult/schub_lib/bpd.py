@@ -211,6 +211,31 @@ class BPD:
         """Alias for perm property"""
         return self.perm
 
+    @classmethod
+    def from_asm(cls, asm):
+        """
+        Create a BPD from an ASM (Alternating Sign Matrix).
+
+        Args:
+            asm: n×n array-like of integers (-1, 0, 1)
+        Returns:
+            BPD object
+        """
+        corner_sum = np.cumsum(np.cumsum(asm, axis=0), axis=1)
+        n = asm.shape[0]
+        grid = np.full((n, n), fill_value=TileType.TBD, dtype=TileType)
+        def is_blank(i, j):
+            return corner_sum[i, j] - (corner_sum[i - 1, j - 1] if i > 0 and j > 0 else 0) == 0
+        def is_crossing(i, j):
+            return corner_sum[i, j] - (corner_sum[i - 1, j - 1] if i > 0 and j > 0 else 0) == 2
+        for i in range(n):
+            for j in range(n):
+                if is_blank(i, j):
+                    grid[i, j] = TileType.BLANK
+                elif is_crossing(i, j):
+                    grid[i, j] = TileType.CROSS
+        return cls(grid)
+
     @cached_property
     def weight(self) -> Tuple[int, ...]:
         """
