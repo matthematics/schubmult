@@ -302,8 +302,9 @@ class Permutation(Printable):
     def diagram(self):
         diag = set()
         for i in range(len(self._perm)):
-            for j in range(i + 1, len(self._perm)):
-                diag.add((i + 1, self[j]))
+            for j in range(len(self._perm)):
+                if self[i] > j + 1 and (~self)[j] > i + 1:
+                    diag.add((i + 1, j + 1))
         return diag
 
     @property

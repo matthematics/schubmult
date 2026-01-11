@@ -10,7 +10,6 @@ For general pipe dreams, there are 6 possible tile types.
 """
 
 from enum import IntEnum
-from functools import cached_property
 from typing import Tuple
 
 import numpy as np
@@ -103,7 +102,8 @@ class BPD:
         self.build()
 
 
-    def _get_tbd_tile(self, left_tile, up_tile) -> TileType:
+    @classmethod
+    def _get_tbd_tile(cls, left_tile, up_tile) -> TileType:
         if up_tile is None:
             if left_tile is None or not left_tile.feeds_right:
                 # if self.DEBUG:
@@ -169,7 +169,7 @@ class BPD:
             result.append("".join(row))
         return "\n".join(result)
 
-    @cached_property
+    @property
     def perm(self) -> Permutation:
         """
         Compute the permutation associated with this BPD.
@@ -236,7 +236,24 @@ class BPD:
                     grid[i, j] = TileType.CROSS
         return cls(grid)
 
-    @cached_property
+
+    @classmethod
+    def rothe_bpd(cls, perm):
+        n = len(perm)
+        grid = np.full((n, n), fill_value=TileType.TBD, dtype=TileType)
+        bpd = BPD(grid)
+        for a, b in perm.diagram:
+            bpd.grid[a - 1, b - 1] = TileType.BLANK
+        graph = perm.graph
+        for i in range(n):
+            for j in range(n):
+                if bpd[i , j] != TileType.BLANK:
+                    if any(tup[0] == i + 1 and tup[1] - 1 < j for tup in graph) and any(tup[0] - 1 < i and tup[1] == j + 1 for tup in graph):
+                        bpd.grid[i, j] = TileType.CROSS
+        bpd.rebuild()
+        return bpd
+
+    @property
     def weight(self) -> Tuple[int, ...]:
         """
         Compute the weight of this BPD.
@@ -247,9 +264,9 @@ class BPD:
         Returns:
             Tuple of integers representing the weight
         """
-        return tuple(int(np.sum(self[:, j] == 0)) for j in range(self.n))
+        return tuple(int(np.sum(self[:, j] == TileType.BLANK)) for j in range(self.n))
 
-    @cached_property
+    @property
     def word(self) -> Tuple[int, ...]:
         """
         Compute a reduced word for the permutation represented by this BPD.
@@ -276,12 +293,12 @@ class BPD:
 
         return tuple(word)
 
-    @cached_property
+    @property
     def reduced_word(self) -> Tuple[int, ...]:
         """
         Compute the reduced word by reading crossings row by row from top to bottom.
 
-        For each crossing at position (i,j), the word value is the number of pipes
+       For each crossing at position (i,j), the word value is the number of pipes
         weakly northeast of the crossing minus 1.
 
         Returns:
