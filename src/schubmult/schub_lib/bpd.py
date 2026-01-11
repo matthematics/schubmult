@@ -102,105 +102,19 @@ class BPD:
 
         self.build()
 
-    # def _get_tbd_tile(self, left_tile, right_tile, down_tile, up_tile) -> TileType:
-    #     # bottom left, vert or elbow
-    #     if down_tile is None:
-    #         if left_tile is None:
-    #             if right_tile.entrance_from_left:
-    #                 if up_tile.entrance_from_bottom:
-    #                     raise ValueError("Cannot have both right and up tiles not feeding into bottom-left tile")
-    #                 return TileType.ELBOW_SE
-    #             if up_tile.entrance_from_bottom:
-    #                 return TileType.VERT
-    #             raise ValueError("At least one of right or up tiles must feed into bottom-left tile")
-    #         if left_tile.feeds_right:
-    #             if not up_tile.entrance_from_bottom:
-    #                 raise ValueError("Cannot have both left and up tiles not feeding into bottom-left tile")
-    #             return TileType.CROSS
-    #         if right_tile is None or right_tile.entrance_from_left:
-    #             if up_tile.entrance_from_bottom:
-    #                 raise ValueError("Cannot have both left and up tiles not feeding into bottom-left tile")
-    #             return TileType.ELBOW_SE
-    #         return TileType.VERT
-    #     if left_tile is None:
-    #         # must have bottom feed
-    #         if up_tile is None or not up_tile.entrance_from_bottom:
-    #             return TileType.ELBOW_SE
-    #         if right_tile is not None and right_tile.entrance_from_left:
-    #             raise ValueError("Cannot have both right and up tiles feeding into bottom-left tile")
-    #         return TileType.VERT
-    #     if not left_tile.feeds_right and not down_tile.feeds_up:
-    #         raise ValueError("Down or left must feed into tile that is not on the bottom or left")
-    #     if up_tile is None:
-    #         # something must feed in
-    #         if right_tile is not None and not right_tile.entrance_from_left:
-    #             raise ValueError("Upper TBD tile must exit right")
-    #         if left_tile.feeds_right and down_tile.feeds_up:
-    #             raise ValueError("Cannot have both left and down tiles feeding into upper tile")
-    #         if left_tile.feeds_right:
-    #             return TileType.HORIZ
-    #         return TileType.ELBOW_SE
-    #     if (left_tile.feeds_right and down_tile.feeds_up) and (not up_tile.entrance_from_bottom or (right_tile is not None and right_tile.entrance_from_left)):
-    #         raise ValueError("Entrance from left and down must feed both ways")
-    #     if right_tile is None:
-    #         if left_tile.feeds_right and down_tile.feeds_up:
-    #             return TileType.CROSS
-    #         if left_tile.feeds_right:
-    #             return TileType.HORIZ
-    #         return TileType.ELBOW_SE
-    #     if not right_tile.entrance_from_left and not up_tile.entrance_from_bottom:
-    #         raise ValueError("Middle TBD tile must feed out right or up")
-    #     if (right_tile.entrance_from_left and up_tile.entrance_from_bottom) and (not left_tile.feeds_right or not down_tile.feeds_up):
-    #         raise ValueError("Entrance from right and up must feed both ways")
-    #     if (left_tile.feeds_right and down_tile.feeds_up) and (right_tile.entrance_from_left and up_tile.entrance_from_bottom):
-    #         return TileType.CROSS
-    #     if left_tile.feeds_right:
-    #         if up_tile.entrance_from_bottom:
-    #             return TileType.ELBOW_NW
-    #         return TileType.HORIZ
-    #     if up_tile.entrance_from_bottom:
-    #         return TileType.VERT
-    #     return TileType.ELBOW_SE
 
-    def _get_tbd_tile(self, left_tile, right_tile, down_tile, up_tile) -> TileType:
-        # bottom left, vert or elbow
-        # if down_tile is None:
-        #     if left_tile is None or not left_tile.feeds_right:
-        #         if right_tile is None or right_tile == TileType.CROSS:
-        #             if self.DEBUG:
-        #                 print(f"Returning SE elbow for cell with {left_tile=}, {down_tile=}, {up_tile=}, {right_tile=}, line={__import__('inspect').currentframe().f_back.f_lineno}")
-
-        #             return TileType.ELBOW_SE
-        #         return TileType.VERT
-        #     raise ValueError("If bottom tile is not a cross, left tile cannot feed right")
-        # if left_tile is None:
-        #     if not down_tile.feeds_up:
-        #         raise ValueError("Down tile must feed into left tile")
-        #     if up_tile is None:
-        #         if right_tile == TileType.EMPTY:
-        #             raise ValueError("Upper left corner can only be SE elbow if not empty")
-        #         if self.DEBUG:
-        #             print(f"Returning SE elbow for cell with {left_tile=}, {down_tile=}, {up_tile=}, {right_tile=}, line={__import__('inspect').currentframe().f_back.f_lineno}")
-
-        #         return TileType.ELBOW_SE
-        #     if right_tile in (TileType.EMPTY, TileType.TBD):
-        #         return TileType.VERT
-        #     return TileType.ELBOW_SE
-        # if left_tile.feeds_right and down_tile.feeds_up:
-        #     raise ValueError("Cannot have both left and down tiles feeding into TBD tile")
-        # if not left_tile.feeds_right and not down_tile.feeds_up:
-        #     raise ValueError("Something must feed into TBD tile")
+    def _get_tbd_tile(self, left_tile, up_tile) -> TileType:
         if up_tile is None:
             if left_tile is None or not left_tile.feeds_right:
-                if self.DEBUG:
-                    print(f"Returning SE elbow for cell with {left_tile=}, {down_tile=}, {up_tile=}, {right_tile=}, line={__import__('inspect').currentframe().f_back.f_lineno}")
+                # if self.DEBUG:
+                #     print(f"Returning SE elbow for cell with {left_tile=}, {down_tile=}, {up_tile=}, {right_tile=}, line={__import__('inspect').currentframe().f_back.f_lineno}")
                 return TileType.ELBOW_SE
             return TileType.HORIZ
         if left_tile is None:
             if up_tile.entrance_from_bottom:
                 return TileType.VERT
-            if self.DEBUG:
-                print(f"Returning SE elbow for cell with {left_tile=}, {down_tile=}, {up_tile=}, {right_tile=}, line={__import__('inspect').currentframe().f_back.f_lineno}")
+            # if self.DEBUG:
+            #     print(f"Returning SE elbow for cell with {left_tile=}, {down_tile=}, {up_tile=}, {right_tile=}, line={__import__('inspect').currentframe().f_back.f_lineno}")
             return TileType.ELBOW_SE
         if left_tile.feeds_right:
             if up_tile.entrance_from_bottom:
@@ -208,8 +122,8 @@ class BPD:
             return TileType.HORIZ
         if up_tile.entrance_from_bottom:
             return TileType.VERT
-        if self.DEBUG:
-            print(f"Returning SE elbow for cell with {left_tile=}, {down_tile=}, {up_tile=}, {right_tile=}, line={__import__('inspect').currentframe().f_back.f_lineno}")
+        # if self.DEBUG:
+        #     print(f"Returning SE elbow for cell with {left_tile=}, {down_tile=}, {up_tile=}, {right_tile=}, line={__import__('inspect').currentframe().f_back.f_lineno}")
         return TileType.ELBOW_SE
 
     DEBUG = False
@@ -221,12 +135,10 @@ class BPD:
                 if self[row, col] == TileType.TBD:
                     self.grid[row, col] = self._get_tbd_tile(
                         TileType(self[row, col - 1]) if col > 0 else None,
-                        TileType(self[row, col + 1]) if col < self.n - 1 else None,
-                        TileType(self[row + 1, col]) if row < self.n - 1 else None,
                         TileType(self[row - 1, col]) if row > 0 else None,
                     )
-                if self.DEBUG:
-                    print(f"After building cell ({row}, {col}):\n{self}")
+                # if self.DEBUG:
+                #     print(f"After building cell ({row}, {col}):\n{self}")
         assert self.is_valid(), f"Built BPD is not valid: \n{self}"
 
     def __len__(self):
@@ -619,60 +531,121 @@ class BPD:
 
         while True:
             # Step (1): Move mark to rightmost empty in contiguous block
+            if self.DEBUG:
+                print("\n=== Step (1): Moving mark to rightmost empty in contiguous block ===")
+                print(f"Starting position: ({x}, {y})")
+                print(f"Current state:\n{current_bpd}\n")
+
             while y + 1 < self.n and current_bpd.grid[x, y + 1] == TileType.EMPTY:
                 y = y + 1
                 if self.DEBUG:
                     print(f"Step (1): Moving mark right to ({x}, {y})")
+                    print(f"Current state:\n{current_bpd}\n")
 
             if self.DEBUG:
                 print(f"Mark is now at ({x}, {y})")
                 print(f"Current state:\n{current_bpd}\n")
 
+            if self.DEBUG:
+                print(f"Tracing pipe from ({x}, {y + 1})...")
             p = current_bpd.trace_pipe(x, y + 1, direction="down")
             if p is None:
                 p = current_bpd.trace_pipe(x, y + 1, direction="left")
             if self.DEBUG:
                 print(f"Traced pipe from ({x}, {y + 1}) to column {p} (1-indexed)")
+                print(f"Checking if p ({p}) != y + 2 ({y + 2})")
             if p != y + 2:
                 # find x_prime
+                if self.DEBUG:
+                    print("\n=== Step (2a): Column move (p != y+2) ===")
+                    print(f"Finding x' where ELBOW_NW is in column {y + 1}")
+
                 x_prime = x
                 while x_prime < self.n and current_bpd.grid[x_prime, y + 1] != TileType.ELBOW_NW:
                     x_prime += 1
 
                 if self.DEBUG:
                     print(f"Step (2a): Found x' at ({x_prime}, {y + 1})")
+                    print(f"Shifting crossings from column {y + 1} to column {y} in rows [{x + 1}, {x_prime})")
+                    print(f"Before shift:\n{current_bpd}\n")
+
                 new_bpd = current_bpd.copy()
                 for z in range(x + 1, x_prime):
                     if new_bpd.grid[z, y + 1] == TileType.CROSS:
-                        new_bpd.grid[z, y] = TileType.CROSS
+                        if self.DEBUG:
+                            print(f"  Shifting CROSS from ({z}, {y + 1}) to ({z + 1}, {y})")
+                        new_bpd.grid[z + 1, y] = TileType.CROSS
                         new_bpd.grid[z, y + 1] = TileType.TBD
-                new_bpd.grid[x, y] = TileType.TBD
+                empty_row = x
+                empty_col = y
+                while new_bpd.grid[empty_row, empty_col] == TileType.EMPTY:
+                    empty_row += 1
+                empty_row -= 1
+                if self.DEBUG:
+                    print(f"Removing empty at ({empty_row}, {empty_col}), placing empty at ({x_prime}, {y + 1})")
+                new_bpd.grid[empty_row, empty_col] = TileType.TBD
                 new_bpd.grid[x_prime, y + 1] = TileType.EMPTY
+
+                if self.DEBUG:
+                    print(f"Before rebuild:\n{new_bpd}\n")
+                    print("Calling rebuild()...")
+
                 new_bpd.rebuild()
+
+                if self.DEBUG:
+                    print(f"After rebuild:\n{new_bpd}\n")
+                    print(f"Updating position: x = {x_prime}, y = {y + 1}")
+
                 current_bpd = new_bpd
                 x = x_prime
                 y = y + 1
             else:
                 if self.DEBUG:
-                    print(f"Step (2b): Performing final move at ({x}, {y})")
+                    print("\n=== Step (2b): Final move (p == y+2) ===")
+                    print(f"Current position: ({x}, {y})")
+                    print(f"Current state:\n{current_bpd}\n")
+
                 # x, y may not be the empty spot
                 empty_row = x
                 empty_col = y
+                while current_bpd.grid[empty_row, empty_col] == TileType.EMPTY:
+                    empty_row += 1
+                empty_row -= 1
+
+                if self.DEBUG:
+                    print(f"Found bottom empty at ({empty_row}, {empty_col})")
+                    print(f"Removing empty at ({empty_row}, {empty_col})")
 
                 current_bpd.grid[empty_row, empty_col] = TileType.TBD
+
+                if self.DEBUG:
+                    print(f"Looking for CROSS in column {y + 1} starting from row {x + 1}")
+
                 x_prime = x + 1
                 for z in range(x + 1, self.n):
                     if current_bpd.grid[z, y + 1] == TileType.CROSS:
                         x_prime = z
                         break
+
                 if self.DEBUG:
                     print(f"Final x' found at ({x_prime}, {y + 1})")
+                    print(f"Removing CROSS at ({x_prime}, {y + 1})")
+
                 current_bpd.grid[x_prime, y + 1] = TileType.TBD
-                for z in range(x + 1, x_prime):
-                    if current_bpd.grid[z, y + 1] == TileType.CROSS:
-                        current_bpd.grid[z, y] = TileType.CROSS
-                        current_bpd.grid[z, y + 1] = TileType.TBD
+                # for z in range(x + 1, x_prime):
+                #     if current_bpd.grid[z, y] == TileType.CROSS:
+                #         current_bpd.grid[z, y + 1] = TileType.CROSS
+                #         current_bpd.grid[z, y] = TileType.TBD
+
+                if self.DEBUG:
+                    print(f"Before rebuild:\n{current_bpd}\n")
+                    print("Calling rebuild()...")
+
                 current_bpd.rebuild()
+
+                if self.DEBUG:
+                    print(f"After rebuild:\n{current_bpd}\n")
+                    print(f"Returning position: ({y + 1}, {orig_r + 1}) (1-indexed)")
 
                 return current_bpd, (y + 1, orig_r + 1)  # return 1-indexed position
 
