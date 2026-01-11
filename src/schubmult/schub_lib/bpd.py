@@ -781,6 +781,25 @@ class BPD:
                     self.grid[i, j] = TileType.TBD
         self.build()
 
+    def zero_out_last_row(self):
+        a, b = self.perm.maximal_corner
+        assert self[a, b] == TileType.ELBOW_NW
+        # find nearest CROSS strictly SE of this
+        r, c = a + 1, b + 1
+        while r < self.n and c < self.n and self[r, c] != TileType.CROSS:
+            if c < self.n - 1:
+                c += 1
+            else:
+                r += 1
+                c = b + 1
+        if r == self.n or c == self.n:
+            raise ValueError("No CROSS found strictly SE of maximal corner")
+        res_bpd = self.copy()
+        res_bpd.grid[a, b] = TileType.CROSS
+        res_bpd.grid[r, c] = TileType.TBD
+        res_bpd.rebuild()
+        return res_bpd
+
     def to_rc_graph(self):
         """
         Convert this BPD to an RC-graph representation.
@@ -791,12 +810,12 @@ class BPD:
         from schubmult.schub_lib.rc_graph import RCGraph
 
         # RC-graph rows contain the column positions of crossings in each row
-        rows = []
-        for i in range(self.n):
-            row_crossings = []
-            for j in range(self.n):
-                if self[i, j] == TileType.CROSS:
-                    row_crossings.append(j + 1)  # 1-indexed
-            rows.append(tuple(row_crossings))
+        code_len = len(self.perm.trimcode)
+        rows = [[]] * code_len
+        work_bpd = self
 
-        return RCGraph(tuple(rows))
+        while work_bpd.perm.inv > 0:
+            work_bpd, (reflection, row) = work_bpd.delta_op()
+            rows[row - 1] = rows[row - 1] + [reflection]
+
+        return RCGraph([tuple(r) for r in rows])
