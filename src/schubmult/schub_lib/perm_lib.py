@@ -306,6 +306,12 @@ class Permutation(Printable):
                 diag.add((i + 1, self[j]))
         return diag
 
+    @property
+    def maximal_corner(self):
+        maxd = len(self.trimcode)
+        end_spot = max(self[i] for i in range(maxd, len(self)) if self[i] < self[maxd - 1])
+        return (maxd, end_spot)
+
     @classmethod
     def from_partial(cls, partial_perm):
         max_required = max([a for a in partial_perm if a is not None], default=0)
