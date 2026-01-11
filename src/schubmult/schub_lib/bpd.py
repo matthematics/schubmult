@@ -213,29 +213,35 @@ class BPD:
             print(f"Returning SE elbow for cell with {left_tile=}, {down_tile=}, {up_tile=}, {right_tile=}, line={__import__('inspect').currentframe().f_back.f_lineno}")
         return TileType.ELBOW_SE
 
-    DEBUG = True
+    DEBUG = False
 
     def build(self):
         """Build internal structures if needed (currently a placeholder)"""
         for col in range(self.n):
             for row in range(self.n):
-                if self.grid[row, col] == TileType.TBD:
+                if self[row, col] == TileType.TBD:
                     self.grid[row, col] = self._get_tbd_tile(
-                        TileType(self.grid[row, col - 1]) if col > 0 else None,
-                        TileType(self.grid[row, col + 1]) if col < self.n - 1 else None,
-                        TileType(self.grid[row + 1, col]) if row < self.n - 1 else None,
-                        TileType(self.grid[row - 1, col]) if row > 0 else None,
+                        TileType(self[row, col - 1]) if col > 0 else None,
+                        TileType(self[row, col + 1]) if col < self.n - 1 else None,
+                        TileType(self[row + 1, col]) if row < self.n - 1 else None,
+                        TileType(self[row - 1, col]) if row > 0 else None,
                     )
                 if self.DEBUG:
                     print(f"After building cell ({row}, {col}):\n{self}")
+        assert self.is_valid(), f"Built BPD is not valid: \n{self}"
 
     def __len__(self):
         """Return the size n of the n×n grid"""
         return self.n
 
     def __getitem__(self, key):
-        """Access grid elements"""
-        return self.grid[key]
+        """Access grid elements, casting to TileType"""
+        result = self.grid[key]
+        # If it's a numpy array (from slicing), cast each element
+        if isinstance(result, np.ndarray):
+            return result.astype(TileType)
+        # Otherwise it's a scalar, cast directly
+        return TileType(result)
 
     def __repr__(self):
         return f"BPD({self.grid.tolist()})"
@@ -246,7 +252,7 @@ class BPD:
         for i in range(self.n):
             row = []
             for j in range(self.n):
-                tile = TileType(self.grid[i, j])
+                tile = TileType(self[i, j])
                 row.append(str(tile))
             result.append("".join(row))
         return "\n".join(result)
@@ -269,7 +275,7 @@ class BPD:
             current_col = col
             going_up = True
             while current_col < self.n and current_row >= 0:
-                tile = TileType(self.grid[current_row, current_col])
+                tile = TileType(self[current_row, current_col])
                 if tile == TileType.ELBOW_NW:
                     # Elbow NW: go left
                     assert not going_up, "Invalid pipe direction at ELBOW_NW"
@@ -304,7 +310,7 @@ class BPD:
         Returns:
             Tuple of integers representing the weight
         """
-        return tuple(int(np.sum(self.grid[:, j] == 0)) for j in range(self.n))
+        return tuple(int(np.sum(self[:, j] == 0)) for j in range(self.n))
 
     @cached_property
     def word(self) -> Tuple[int, ...]:
@@ -323,7 +329,7 @@ class BPD:
         # Read crossings from bottom to top, left to right
         for row in range(self.n - 1, -1, -1):
             for col in range(self.n):
-                if self.grid[row, col] == 1:
+                if self[row, col] == 1:
                     # Count pipes weakly northeast of this crossing
                     # Weakly northeast: r <= row and c >= col
                     pipes_northeast = self.n - col
@@ -349,7 +355,7 @@ class BPD:
         # Read from top to bottom, left to right
         for row in range(self.n):
             for col in range(self.n):
-                if self.grid[row, col] == 1:
+                if self[row, col] == 1:
                     # Count pipes weakly northeast of this crossing
                     pipes_northeast = self.n - col
                     word.append(pipes_northeast)
@@ -367,38 +373,60 @@ class BPD:
         Returns:
             True if valid, False otherwise
         """
-        try:
-            # Check that following pipes does not go out of bounds
-            for start_col in range(self.n):
-                current_col = start_col
-                coming_from = "bottom"
+        # sanity checks
+        for row in range(self.n):
+            if self[row, 0] in (TileType.ELBOW_NW, TileType.CROSS, TileType.HORIZ):
+                return False
+            if self[row, self.n - 1] in (TileType.ELBOW_NW, TileType.VERT):
+                return False
+        for col in range(self.n):
+            if self[self.n - 1, col] in (TileType.ELBOW_NW, TileType.HORIZ):
+                return False
+            if self[0, col] in (TileType.ELBOW_NW, TileType.VERT, TileType.CROSS):
+                return False
+        for row in range(1, self.n - 1):
+            for col in range(1, self.n - 1):
+                if self[row, col].feeds_right and not self[row, col + 1].entrance_from_left:
+                    return False
+                if self[row, col].feeds_up and not self[row - 1, col].entrance_from_bottom:
+                    return False
+                if self[row, col].entrance_from_left and not self[row, col - 1].feeds_right:
+                    return False
+                if self[row, col].entrance_from_bottom and not self[row + 1, col].feeds_up:
+                    return False
+        return True
+        # try:
+        #     # Check that following pipes does not go out of bounds
+        #     for start_col in range(self.n):
+        #         current_col = start_col
+        #         coming_from = "bottom"
 
-                for row in range(self.n - 1, -1, -1):
-                    if current_col < 0 or current_col >= self.n:
-                        return False
+        #         for row in range(self.n - 1, -1, -1):
+        #             if current_col < 0 or current_col >= self.n:
+        #                 return False
 
-                    tile = TileType(self.grid[row, current_col])
+        #             tile = TileType(self[row, current_col])
 
-                    # Update position based on tile
-                    if tile == TileType.CROSS and coming_from == "bottom":
-                        current_col += 1
-                        coming_from = "left"
-                    elif tile == TileType.ELBOW_NE and coming_from == "bottom":
-                        current_col += 1
-                        coming_from = "left"
-                    elif tile == TileType.ELBOW_NW:
-                        if coming_from == "left":
-                            coming_from = "bottom"
-                        elif coming_from == "bottom":
-                            current_col -= 1
-                            coming_from = "left"
-                    # Empty and other tiles continue straight
+        #             # Update position based on tile
+        #             if tile == TileType.CROSS and coming_from == "bottom":
+        #                 current_col += 1
+        #                 coming_from = "left"
+        #             elif tile == TileType.ELBOW_NE and coming_from == "bottom":
+        #                 current_col += 1
+        #                 coming_from = "left"
+        #             elif tile == TileType.ELBOW_NW:
+        #                 if coming_from == "left":
+        #                     coming_from = "bottom"
+        #                 elif coming_from == "bottom":
+        #                     current_col -= 1
+        #                     coming_from = "left"
+        #             # Empty and other tiles continue straight
 
-            # Check that the permutation is valid
-            perm = self.perm
-            return sorted(perm) == list(range(1, self.n + 1))
-        except Exception:
-            return False
+        #     # Check that the permutation is valid
+        #     perm = self.perm
+        #     return sorted(perm) == list(range(1, self.n + 1))
+        # except Exception:
+        #     return False
 
     # @classmethod
     # def from_permutation(cls, perm: Permutation, positions: Optional[List[Tuple[int, int]]] = None):
@@ -453,34 +481,35 @@ class BPD:
         return int(np.sum(self.grid == TileType.CROSS))
 
     def trace_pipe(self, i, j, direction=None):
-        if self.grid[i, j] == TileType.ELBOW_NW:
+        if self[i, j] == TileType.ELBOW_NW:
             if direction == "left":
                 return None
             return self.trace_pipe(i, j - 1, direction="left")
-        if self.grid[i, j] == TileType.ELBOW_SE:
+        if self[i, j] == TileType.ELBOW_SE:
             if direction == "down":
                 return None
             if i == self.n - 1:
                 return j + 1
             return self.trace_pipe(i + 1, j, direction="down")
-        if self.grid[i, j] == TileType.HORIZ:
+        if self[i, j] == TileType.HORIZ:
             if direction == "down":
                 return None
             return self.trace_pipe(i, j - 1, direction="left")
-        if self.grid[i, j] == TileType.VERT:
+        if self[i, j] == TileType.VERT:
             if direction == "left":
                 return None
             if i == self.n - 1:
                 return j + 1
             return self.trace_pipe(i + 1, j, direction="down")
-        if self.grid[i, j] == TileType.CROSS:
+        if self[i, j] == TileType.CROSS:
             if direction == "down":
                 if i == self.n - 1:
                     return j + 1
                 return self.trace_pipe(i + 1, j, direction="down")
             if direction == "left":
                 return self.trace_pipe(i, j - 1, direction="left")
-        raise ValueError("Invalid tile for tracing pipe")
+            raise ValueError("Must specify direction when tracing through a crossing")
+        raise ValueError(f"Invalid tile for tracing pipe at ({i}, {j}): {self[i, j]}")
 
     def droop_elbow_to_empty(self, r, c, to_spot=None):
         # assume (r, c) is empty
@@ -488,7 +517,7 @@ class BPD:
         if to_spot is None:
             # find cloest se elbow spot nw of (r, c)
             pot_to_spot = (r - 1, c - 1)
-            while self.grid[pot_to_spot[0], pot_to_spot[1]] != TileType.ELBOW_SE:
+            while self[pot_to_spot[0], pot_to_spot[1]] != TileType.ELBOW_SE:
                 if pot_to_spot[1] > 0:
                     pot_to_spot = (pot_to_spot[0], pot_to_spot[1] - 1)
                 elif pot_to_spot[0] > 0:
@@ -497,7 +526,7 @@ class BPD:
                     raise ValueError("No available spot to droop elbow")
             to_spot = pot_to_spot
 
-        new_bpd = np.full(self.grid.shape, TileType.TBD)
+        new_bpd = np.full(self.grid.shape, TileType.TBD, dtype=TileType)
 
         # move the empty
 
@@ -507,13 +536,13 @@ class BPD:
                     continue
                 if j <= c and (i == to_spot[0]) and j >= to_spot[1]:
                     continue
-                new_bpd[i, j] = self.grid[i, j] if self.grid[i, j] in (TileType.CROSS, TileType.EMPTY) else TileType.TBD
+                new_bpd[i, j] = self[i, j] if self[i, j] in (TileType.CROSS, TileType.EMPTY) else TileType.TBD
 
         for j in range(to_spot[1] + 1, c):
-            if self.grid[r, j] == TileType.VERT:
+            if self[r, j] == TileType.VERT:
                 new_bpd[r, j] = TileType.CROSS
         for i in range(to_spot[0] + 1, r):
-            if self.grid[i, c] == TileType.HORIZ:
+            if self[i, c] == TileType.HORIZ:
                 new_bpd[i, c] = TileType.CROSS
 
         new_bpd[to_spot[0], to_spot[1]] = TileType.EMPTY
@@ -521,48 +550,140 @@ class BPD:
         new_bpd[r, c] = TileType.TBD
         return BPD(new_bpd)
 
-    # def delta_op(self):
-    #     r = min(i for i in range(self.n) if any(self.grid[i, j] == TileType.EMPTY for j in range(self.n)))
-    #     mark = max(j for j in range(self.n) if self.grid[r, j] == TileType.EMPTY)
-    #     new_bpd = self.copy()
-    #     while True:
-    #         assert new_bpd.grid[r, mark] == TileType.EMPTY
-    #         while mark < self.n - 1 and new_bpd.grid[r, mark + 1] == TileType.EMPTY:
-    #             mark = mark + 1
-    #         pipe = new_bpd.trace_pipe(r, mark + 1)
-    #         print(f"da pipe iz {pipe=}")
-    #         if pipe != mark + 2:
-    #             # find the elbow
-    #             print("I iz to elbow the the")
-    #             elbow_pos = r + 1
-    #             while elbow_pos < self.n and new_bpd.grid[elbow_pos, mark + 1] != TileType.ELBOW_NW:
-    #                 elbow_pos += 1
-    #             if elbow_pos == self.n:
-    #                 raise ValueError("No elbow found for delta operation")
-    #             for middle_spot in range(r + 1, elbow_pos):
-    #                 crossing_pipe = new_bpd.trace_pipe(middle_spot, mark + 1, direction="left")
-    #                 if new_bpd.grid[middle_spot, mark] == TileType.ELBOW_SE:
-    #                     # want to swap crossing_pipe
-    #                     for other_elbow_pos in range(middle_spot + 1, self.n):
-    #                         if new_bpd.grid[other_elbow_pos, mark] == TileType.ELBOW_NW:
-    #                             # found it
-    #                             new_bpd = self.copy()
-    #                             new_bpd = new_bpd.droop_elbow(middle_spot, mark, to_spot=(other_elbow_pos, mark+1))
-    #                             new_bpd.grid[middle_spot, mark + 1] = TileType.RC_EMPTY
-    #             new_bpd = new_bpd.undroop_elbow(elbow_pos, mark + 1, from_spot=(r, mark))
-    #             mark = mark + 1
-    #             r = elbow_pos
+    def undroop_elbow_to_empty(self, r, c, from_spot=None):
+        """
+        Reverse of droop_elbow_to_empty.
+        Assumes (r, c) is empty and finds SE elbow strictly southeast to move to (r, c).
+        Crossings may appear on west and north edges (opposite of droop).
+        """
+        if from_spot is None:
+            # find closest SE elbow strictly southeast of (r, c)
+            pot_from_spot = (r + 1, c + 1)
+            while self[pot_from_spot[0], pot_from_spot[1]] != TileType.ELBOW_NW:
+                if pot_from_spot[1] < self.n - 1:
+                    pot_from_spot = (pot_from_spot[0], pot_from_spot[1] + 1)
+                elif pot_from_spot[0] < self.n - 1:
+                    pot_from_spot = (pot_from_spot[0] + 1, c + 1)
+                else:
+                    raise ValueError("No available NW elbow southeast to undroop")
+            from_spot = pot_from_spot
 
-    #         else:
-    #             print("I ain't sticknk")
-    #             cross_pos = r + 1
-    #             while cross_pos < self.n and new_bpd.grid[cross_pos, mark + 1] != TileType.CROSS:
-    #                 cross_pos += 1
-    #             if cross_pos == self.n:
-    #                 raise ValueError(f"No crossing found for delta operation \n{new_bpd}\n{r=} {mark=} ")
-    #             new_bpd = new_bpd.undroop_elbow(cross_pos, mark + 1, from_spot=(r, mark))
-    #             new_bpd.grid[cross_pos, mark + 1] = TileType.ELBOW_SE
-    #             return new_bpd
+        new_bpd = np.full(self.grid.shape, TileType.TBD, dtype=TileType)
+
+        # Copy CROSS and EMPTY tiles, excluding the rectangle edges
+        for i in range(self.n):
+            for j in range(self.n):
+                if i >= r and (j == from_spot[1]) and i <= from_spot[0]:
+                    continue
+                if j >= c and (i == from_spot[0]) and j <= from_spot[1]:
+                    continue
+                new_bpd[i, j] = self[i, j] if self[i, j] in (TileType.CROSS, TileType.EMPTY) else TileType.TBD
+
+        # Add crossings on west edge where vertical pipes cross new horizontal path
+        for i in range(r + 1, from_spot[0]):
+            if self[i, c] == TileType.HORIZ:
+                new_bpd[i, c] = TileType.CROSS
+
+        # Add crossings on north edge where horizontal pipes cross new vertical path
+        for j in range(c + 1, from_spot[1]):
+            if self[r, j] == TileType.VERT:
+                new_bpd[r, j] = TileType.CROSS
+
+        # Move the empty from from_spot to (r, c)
+        new_bpd[from_spot[0], from_spot[1]] = TileType.EMPTY
+        new_bpd[r, c] = TileType.TBD
+
+        return BPD(new_bpd)
+
+    def delta_op(self):
+        """
+        Perform the delta operation on a pipe dream according to Definition 3.1.
+        Only manipulates CROSS and EMPTY tiles, uses build() to reconstruct pipes.
+
+        Returns:
+            Tuple of (new_bpd, position) where position is 1-indexed (col, row)
+        """
+        # Find the smallest row index r that contains empty tiles
+        r = min(i for i in range(self.n) if any(self[i, j] == TileType.EMPTY for j in range(self.n)))
+
+        # Find the rightmost empty in that row - this is our initial mark
+        y = max(j for j in range(self.n) if self[r, j] == TileType.EMPTY)
+        x = r
+        orig_r = r
+
+        if self.DEBUG:
+            print(f"Initial mark at ({x}, {y}) (0-indexed)")
+            print(f"Initial state:\n{self}\n")
+
+        # Work on a copy
+        current_bpd = self.copy()
+
+        while True:
+            # Step (1): Move mark to rightmost empty in contiguous block
+            while y + 1 < self.n and current_bpd.grid[x, y + 1] == TileType.EMPTY:
+                y = y + 1
+                if self.DEBUG:
+                    print(f"Step (1): Moving mark right to ({x}, {y})")
+
+            if self.DEBUG:
+                print(f"Mark is now at ({x}, {y})")
+                print(f"Current state:\n{current_bpd}\n")
+
+            p = current_bpd.trace_pipe(x, y + 1, direction="down")
+            if p is None:
+                p = current_bpd.trace_pipe(x, y + 1, direction="left")
+            if self.DEBUG:
+                print(f"Traced pipe from ({x}, {y + 1}) to column {p} (1-indexed)")
+            if p != y + 2:
+                # find x_prime
+                x_prime = x
+                while x_prime < self.n and current_bpd.grid[x_prime, y + 1] != TileType.ELBOW_NW:
+                    x_prime += 1
+
+                if self.DEBUG:
+                    print(f"Step (2a): Found x' at ({x_prime}, {y + 1})")
+                new_bpd = current_bpd.copy()
+                for z in range(x + 1, x_prime):
+                    if new_bpd.grid[z, y + 1] == TileType.CROSS:
+                        new_bpd.grid[z, y] = TileType.CROSS
+                        new_bpd.grid[z, y + 1] = TileType.TBD
+                new_bpd.grid[x, y] = TileType.TBD
+                new_bpd.grid[x_prime, y + 1] = TileType.EMPTY
+                new_bpd.rebuild()
+                current_bpd = new_bpd
+                x = x_prime
+                y = y + 1
+            else:
+                if self.DEBUG:
+                    print(f"Step (2b): Performing final move at ({x}, {y})")
+                # x, y may not be the empty spot
+                empty_row = x
+                empty_col = y
+
+                current_bpd.grid[empty_row, empty_col] = TileType.TBD
+                x_prime = x + 1
+                for z in range(x + 1, self.n):
+                    if current_bpd.grid[z, y + 1] == TileType.CROSS:
+                        x_prime = z
+                        break
+                if self.DEBUG:
+                    print(f"Final x' found at ({x_prime}, {y + 1})")
+                current_bpd.grid[x_prime, y + 1] = TileType.TBD
+                for z in range(x + 1, x_prime):
+                    if current_bpd.grid[z, y + 1] == TileType.CROSS:
+                        current_bpd.grid[z, y] = TileType.CROSS
+                        current_bpd.grid[z, y + 1] = TileType.TBD
+                current_bpd.rebuild()
+
+                return current_bpd, (y + 1, orig_r + 1)  # return 1-indexed position
+
+    def rebuild(self):
+        """Rebuild the BPD to resolve any TBD tiles"""
+        for i in range(self.n):
+            for j in range(self.n):
+                if self[i, j] not in (TileType.EMPTY, TileType.CROSS):
+                    self.grid[i, j] = TileType.TBD
+        self.build()
 
     def to_rc_graph(self):
         """
@@ -578,7 +699,7 @@ class BPD:
         for i in range(self.n):
             row_crossings = []
             for j in range(self.n):
-                if self.grid[i, j] == TileType.CROSS:
+                if self[i, j] == TileType.CROSS:
                     row_crossings.append(j + 1)  # 1-indexed
             rows.append(tuple(row_crossings))
 
