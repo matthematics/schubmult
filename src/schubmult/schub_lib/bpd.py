@@ -530,6 +530,7 @@ class BPD:
 
         # Work on a copy
         current_bpd = self.copy()
+        final_col = None  # Will track the column for return value
 
         while True:
             # Step (1): Move mark to rightmost empty in contiguous block
@@ -547,6 +548,10 @@ class BPD:
             if self.DEBUG:
                 print(f"Mark is now at ({x}, {y})")
                 print(f"Current state:\n{current_bpd}\n")
+
+            # Save this y value - it's the left column of a potential rectangle move
+            if final_col is None:
+                final_col = y
 
             if self.DEBUG:
                 print(f"Tracing pipe from ({x}, {y + 1})...")
@@ -641,12 +646,17 @@ class BPD:
                 # Step 3: Final move (p == y+2)
                 if self.DEBUG:
                     print("\n=== Step (3): Final move (p == y+2) ===")
-                    print(f"Current position: ({x}, {y})")
+                    print(f"Current position: ({x}, {y}), orig_r = {orig_r}")
+                    print(f"Will return position: ({y + 1}, {orig_r + 1}) (1-indexed)")
                     print(f"Current state:\n{current_bpd}\n")
 
                 # Find where pipes y and y+1 intersect in column y+1
                 if self.DEBUG:
                     print(f"Looking for CROSS in column {y + 1} (where pipes {y} and {y+1} intersect)")
+                    print(f"Crossings in column {y + 1} BEFORE any shifts:")
+                    for z in range(self.n):
+                        if current_bpd[z, y + 1] == TileType.CROSS:
+                            print(f"  Row {z}: CROSS")
 
                 x_prime = None
                 for z in range(x + 1, self.n):
@@ -680,8 +690,58 @@ class BPD:
                 new_bpd.grid[x_prime, y + 1] = TileType.TBD
                 new_bpd.grid[x, y] = TileType.TBD
 
+                # Per Figure 3: shift ALL remaining crossings from column y+1 to column y
+                # Check against current_bpd (before shifts) to see what's in column y+1
+                if self.DEBUG:
+                    print(f"Shifting all CROSSes from column {y + 1} to column {y} (per Figure 3)")
+                for z in range(self.n):
+                    # Skip the crossing we just removed
+                    if z == x_prime:
+                        continue
+                    # Look at what was in current_bpd before any shifts
+                    if current_bpd[z, y + 1] == TileType.CROSS:
+                        # Check if this crossing was already shifted right in the kink shift
+                        # If so, it's now at a different location in new_bpd
+                        if x + 1 <= z < x_prime:
+                            # This one was already shifted from column y to y+1, so it's still there
+                            # We need to move it back to column y
+                            if self.DEBUG:
+                                print(f"  Moving CROSS from ({z}, {y + 1}) back to ({z}, {y})")
+                            new_bpd.grid[z, y + 1] = TileType.TBD
+                            new_bpd.grid[z, y] = TileType.CROSS
+                        else:
+                            # This crossing was originally in column y+1 and not touched by kink shift
+                            if self.DEBUG:
+                                print(f"  Moving CROSS from ({z}, {y + 1}) to ({z}, {y})")
+                            # Special case: for bottom row, mark both as TBD and let rebuild decide
+                            if z == self.n - 1:
+                                new_bpd.grid[z, y + 1] = TileType.TBD
+                                new_bpd.grid[z - 1, y] = TileType.CROSS
+                            else:
+                                new_bpd.grid[z, y + 1] = TileType.TBD
+                                new_bpd.grid[z, y] = TileType.CROSS
+
                 if self.DEBUG:
                     print(f"Before rebuild:\n{new_bpd}\n")
+                    print("Tile inventory before rebuild():")
+                    print(f"  Column {y}:")
+                    for z in range(self.n):
+                        tile = new_bpd.grid[z, y]
+                        if tile == TileType.CROSS:
+                            print(f"    Row {z}: CROSS")
+                        elif tile == TileType.BLANK:
+                            print(f"    Row {z}: BLANK")
+                        elif tile == TileType.TBD:
+                            print(f"    Row {z}: TBD")
+                    print(f"  Column {y + 1}:")
+                    for z in range(self.n):
+                        tile = new_bpd.grid[z, y + 1]
+                        if tile == TileType.CROSS:
+                            print(f"    Row {z}: CROSS")
+                        elif tile == TileType.BLANK:
+                            print(f"    Row {z}: BLANK")
+                        elif tile == TileType.TBD:
+                            print(f"    Row {z}: TBD")
                     print("Calling rebuild()...")
 
                 new_bpd.rebuild()
@@ -693,10 +753,25 @@ class BPD:
                 if not new_bpd.is_valid():
                     raise ValueError(f"BPD is invalid after step 3 rebuild:\n{new_bpd}")
 
-                if self.DEBUG:
-                    print(f"Valid! Returning position: ({y + 1}, {orig_r + 1}) (1-indexed)")
+                # Check that the resulting permutation is s_y * original_perm
+                from schubmult.schub_lib.perm_lib import Permutation
+                s_y = Permutation.ref_product(y + 1)
+                expected_perm = s_y * self.perm
+                if new_bpd.perm != expected_perm:
+                    if self.DEBUG:
+                        print("WARNING: Permutation mismatch!")
+                        print(f"  Expected: {expected_perm} (s_{y+1} * {self.perm})")
+                        print(f"  Got: {new_bpd.perm}")
 
-                return new_bpd, (y + 1, orig_r + 1)  # return 1-indexed position
+                # The return column should be where pipe orig_r exits in the new BPD
+                # This is given by new_bpd.perm[orig_r] - 1 (converting to 0-indexed)
+                exit_col = new_bpd.perm[orig_r] - 1
+
+                if self.DEBUG:
+                    print(f"Pipe {orig_r} (1-indexed: {orig_r + 1}) exits at column {exit_col} (1-indexed: {exit_col + 1})")
+                    print(f"Valid! Returning position: ({exit_col + 1}, {orig_r + 1}) (1-indexed)")
+
+                return new_bpd, (y + 1, orig_r + 1)
 
     def rebuild(self):
         """Rebuild the BPD to resolve any TBD tiles"""
