@@ -680,31 +680,61 @@ class BPD:
         if x == -1:
             raise ValueError("No elbow found in specified column for inverse pop operation")
         D.grid[x, y] = TileType.BLANK
+
+        for z in range(x + 1, x_):
+            if D[z, y] == TileType.VERT and D[z, y + 1] == TileType.BLANK:
+                D.grid[z, y] = TileType.BLANK
+                D.grid[z, y + 1] = TileType.VERT
+            elif D[z, y] == TileType.CROSS:
+                D.grid[z, y] = TileType.TBD
+                D.grid[z, y + 1] = TileType.CROSS
+            elif D[z, y] == TileType.VERT and D[z, y + 1] == TileType.ELBOW_SE:
+                D.grid[z, y] = TileType.ELBOW_SE
+                D.grid[z, y + 1] = TileType.CROSS
+
         D.rebuild()
 
         while True:
-            if x + 1 == r:
+            # --- STEP 1 --- #
+            # move the mark to the rightmost blank tile in the block
+            if x == r - 1:
                 break
-            D.grid[x, y] = TileType.ELBOW_NW
+            
 
-            # look for SE elbow
-
-            x_ = x - 1
-            while x_ >= 0 and D[x_, y] != TileType.ELBOW_SE:
-                x_ -= 1
-            if x_ == -1:
-                raise ValueError("No elbow found in specified column for inverse pop operation")
-            D.grid[x_, y] = TileType.CROSS
+            # find x_
+            x_ = x
             y = y - 1
+            # replace with NW elbow
+            assert D[x_, y + 1] == TileType.BLANK, "Expected NW elbow during inverse pop operation"
+            D.grid[x_, y + 1] = TileType.ELBOW_NW
 
+            # find x at SE elbow
             x = x_ - 1
             while x >= 0 and D[x, y] != TileType.ELBOW_SE:
                 x -= 1
             if x == -1:
                 raise ValueError("No elbow found in specified column for inverse pop operation")
+
+
+            # [x, y] becomes BLANK
             D.grid[x, y] = TileType.BLANK
+
+            # then this is the fix logic
+
+            for z in range(x + 1, x_):
+                if D[z, y] == TileType.VERT and D[z, y + 1] == TileType.BLANK:
+                    D.grid[z, y] = TileType.BLANK
+                    D.grid[z, y + 1] = TileType.VERT
+                elif D[z, y] == TileType.CROSS:
+                    D.grid[z, y] = TileType.TBD
+                    D.grid[z, y + 1] = TileType.CROSS
+                elif D[z, y] == TileType.VERT and D[z, y + 1] == TileType.ELBOW_SE:
+                    D.grid[z, y] = TileType.ELBOW_SE
+                    D.grid[z, y + 1] = TileType.CROSS
+
             D.rebuild()
 
+        D.rebuild()
         return D
 
         # r = min([i for i in range(D.n) for j in range(D.n) if D[i, j] == TileType.BLANK])
