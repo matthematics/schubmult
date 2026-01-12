@@ -659,6 +659,17 @@ class BPD:
         D.rebuild()
         return D
 
+    @classmethod
+    def from_rc_graph(cls, rc_graph):
+        n = len(rc_graph.perm)
+        bpd = BPD(np.full((n, n), fill_value=TileType.TBD, dtype=TileType))
+        coords = [rc_graph.left_to_right_inversion_coords(i) for i in range(rc_graph.perm.inv)]
+        coords.reverse()
+        for (i, j) in coords:
+            bpd = bpd.inverse_pop_op(i + j - 1, i)
+            rc_graph = rc_graph.toggle_ref_at(i, j)
+        return bpd
+
     def inverse_pop_op(self, a, r):
         D = self.copy()
         # check if D has a blank tile (i.e., the coxeter length of D.w is zero)
@@ -685,7 +696,10 @@ class BPD:
             if D[z, y] == TileType.VERT and D[z, y + 1] == TileType.BLANK:
                 D.grid[z, y] = TileType.BLANK
                 D.grid[z, y + 1] = TileType.VERT
-            elif D[z, y] == TileType.CROSS:
+            elif D[z, y] == TileType.CROSS and D[z, y + 1] == TileType.ELBOW_NW:
+                D.grid[z, y] = TileType.TBD
+                D.grid[z, y + 1] = TileType.TBD
+            elif D[z, y] == TileType.CROSS and D[z, y + 1] == TileType.HORIZ:
                 D.grid[z, y] = TileType.TBD
                 D.grid[z, y + 1] = TileType.CROSS
             elif D[z, y] == TileType.VERT and D[z, y + 1] == TileType.ELBOW_SE:
@@ -699,7 +713,7 @@ class BPD:
             # move the mark to the rightmost blank tile in the block
             if x == r - 1:
                 break
-            
+
 
             # find x_
             x_ = x
@@ -725,12 +739,13 @@ class BPD:
                 if D[z, y] == TileType.VERT and D[z, y + 1] == TileType.BLANK:
                     D.grid[z, y] = TileType.BLANK
                     D.grid[z, y + 1] = TileType.VERT
-                elif D[z, y] == TileType.CROSS:
+                elif D[z, y] == TileType.CROSS and D[z, y + 1] == TileType.ELBOW_NW:
                     D.grid[z, y] = TileType.TBD
-                    D.grid[z, y + 1] = TileType.CROSS
+                    D.grid[z, y + 1] = TileType.TBD
                 elif D[z, y] == TileType.VERT and D[z, y + 1] == TileType.ELBOW_SE:
                     D.grid[z, y] = TileType.ELBOW_SE
                     D.grid[z, y + 1] = TileType.CROSS
+
 
             D.rebuild()
 
