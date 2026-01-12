@@ -483,20 +483,18 @@ class BPD:
         raise ValueError(f"Invalid tile for tracing pipe at ({i}, {j}): {self[i, j]}")
 
     def all_se_elbow_spots(self):
-        elbows = set()
-        for i in range(self.n):
-            for j in range(self.n):
-                if self[i, j] == TileType.ELBOW_SE:
-                    elbows.add((i, j))
-        return elbows
+        return self.all_tiles_of_type(TileType.ELBOW_SE)
 
     def all_blank_spots(self):
-        blanks = set()
+        return self.all_tiles_of_type(TileType.BLANK)
+
+    def all_tiles_of_type(self, tile_type: TileType):
+        tiles = set()
         for i in range(self.n):
             for j in range(self.n):
-                if self[i, j] == TileType.BLANK:
-                    blanks.add((i, j))
-        return blanks
+                if self[i, j] == tile_type:
+                    tiles.add((i, j))
+        return tiles
 
     def droop_moves(self):
         import itertools
