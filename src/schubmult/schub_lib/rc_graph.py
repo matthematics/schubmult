@@ -594,6 +594,9 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
     def extend(self, extra_rows):
         return type(self)([*self, *tuple([()] * extra_rows)])
 
+    def prepend(self, extra_rows):
+        return type(self)([*tuple([()] * extra_rows), *self.shiftup(extra_rows)])
+
     def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True, reflection_rows=None, target_row=None):
         working_rc = self
         if row > descent:
