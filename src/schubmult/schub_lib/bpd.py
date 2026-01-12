@@ -33,7 +33,7 @@ class TileType(IntEnum):
     VERT = 6
 
     def __str__(self):
-        symbols = {TileType.BLANK: "·", TileType.CROSS: "┼", TileType.ELBOW_NW: "╯", TileType.ELBOW_SE: "╭", TileType.HORIZ: "─", TileType.VERT: "│", TileType.TBD: "?"}
+        symbols = {TileType.BLANK: "□", TileType.CROSS: "┼", TileType.ELBOW_NW: "╯", TileType.ELBOW_SE: "╭", TileType.HORIZ: "─", TileType.VERT: "│", TileType.TBD: "?"}
         return symbols.get(self, "?")
 
     @property
@@ -754,101 +754,6 @@ class BPD:
 
         D.rebuild()
         return D
-
-        # r = min([i for i in range(D.n) for j in range(D.n) if D[i, j] == TileType.BLANK])
-
-        # # initialize the mark X at the blank tile (x,y)
-        # x = r
-        # y = max([j for i in range(D.n) for j in range(D.n) if D[i, j] == TileType.BLANK and i == r])
-
-        # while True:
-        #     # --- STEP 1 --- #
-        #     # move the mark to the rightmost blank tile in the block
-        #     j = y
-        #     while j < D.n and D[x, j] == TileType.BLANK:
-        #         j += 1
-        #     y = j - 1
-
-        #     # --- STEP 2 --- #
-        #     # find first j-elbow (x_,y+1) with x_>x, if not found then set x_=0 (in which case p==y+1)
-        #     x_ = 0
-        #     for i in range(x + 1, D.n):
-        #         if D[i, y + 1] == TileType.ELBOW_NW:
-        #             x_ = i
-        #             break
-        #     if x_ == 0:  # p==y+1
-        #         break
-
-        #     for z in range(x + 1, x_):
-        #         if D[z, y] == TileType.BLANK:
-        #             D.grid[z, y] = TileType.VERT
-        #             D.grid[z, y + 1] = TileType.BLANK
-        #         elif D[z, y] == TileType.CROSS:
-        #             continue
-        #         elif D[z, y] == TileType.HORIZ:
-        #             D.grid[z, y] = TileType.CROSS
-        #             D.grid[z, y + 1] = TileType.HORIZ
-        #         elif D[z, y] == TileType.VERT:
-        #             continue
-        #         elif D[z, y] == TileType.ELBOW_SE:
-        #             D.grid[z, y] = TileType.VERT
-        #             D.grid[z, y + 1] = TileType.ELBOW_SE
-        #         elif D[z, y] == TileType.ELBOW_NW:
-        #             D.grid[z, y] = TileType.CROSS
-        #             D.grid[z, y + 1] = TileType.ELBOW_NW
-        #     D.grid[x, y] = TileType.ELBOW_SE  # NW-corner
-        #     D.grid[x_, y + 1] = TileType.BLANK  # SE-corner
-        #     if D[x_, y] == TileType.ELBOW_SE:  # SW-corner
-        #         D.grid[x_, y] = TileType.VERT
-        #     else:  # D.grid[x_,y] == TileType.HORIZ
-        #         D.grid[x_, y] = TileType.ELBOW_NW
-        #     if D[x, y + 1] == TileType.ELBOW_SE:  # NE-corner
-        #         D.grid[x, y + 1] = TileType.HORIZ
-        #     else:  # D.grid[x,y+1] == TileType.VERT
-        #         D.grid[x, y + 1] = TileType.ELBOW_NW
-
-        #     # move the mark X to the SE-corner of U
-        #     x = x_
-        #     y = y + 1
-
-        # # --- STEP 3 --- #
-        # a = y  # where (x,y) is the final position of the mark X
-
-        # x_ = 0
-        # for i in range(D.n - 1, x, -1):
-        #     if D[i, y] == TileType.ELBOW_SE:
-        #         x_ = i
-        #         break
-
-        # # copied from above
-        # for z in range(x + 1, x_):
-        #     if D[z, y] == TileType.BLANK:
-        #         D.grid[z, y] = TileType.VERT
-        #         D.grid[z, y + 1] = TileType.BLANK
-        #     elif D[z, y] == TileType.CROSS:
-        #         continue
-        #     elif D[z, y] == TileType.HORIZ:
-        #         D.grid[z, y] = TileType.CROSS
-        #         D.grid[z, y + 1] = TileType.HORIZ
-        #     elif D[z, y] == TileType.VERT:
-        #         continue
-        #     elif D[z, y] == TileType.ELBOW_SE:
-        #         D.grid[z, y] = TileType.VERT
-        #         D.grid[z, y + 1] = TileType.ELBOW_SE
-        #     elif D[z, y] == TileType.ELBOW_NW:
-        #         D.grid[z, y] = TileType.CROSS
-        #         D.grid[z, y + 1] = TileType.ELBOW_NW
-
-        # D.grid[x, y] = TileType.ELBOW_SE  # NW-corner
-        # D.grid[x_, y + 1] = TileType.ELBOW_SE  # SE-corner
-        # D.grid[x_, y] = TileType.VERT  # SW-corner
-        # if D[x, y + 1] == TileType.ELBOW_SE:  # NE-corner
-        #     D.grid[x, y + 1] = TileType.HORIZ
-        # else:  # D.grid[x,y+1] == TileType.VERT
-        #     D.grid[x, y + 1] = TileType.ELBOW_NW
-
-        # D.rebuild()
-        # return D, (a + 1, r + 1)
 
     def rebuild(self):
         """Rebuild the BPD to resolve any TBD tiles"""
