@@ -673,15 +673,15 @@ class BPD:
     def inverse_pop_op(self, a, r):
         D = self.copy()
         # check if D has a blank tile (i.e., the coxeter length of D.w is zero)
-        if D.n <= a or D.n < r:
-            new_n = max(D.n, a + 1, r)
+        if D.n <= a or D.n <= r:
+            new_n = max(D.n, a + 1, r + 1)
             D = D.resize(new_n)
         # find first elbow in column a
         x_ = D.n - 1
         while x_ >= 0 and D[x_, a] != TileType.ELBOW_SE:
             x_ -= 1
         if x_ == -1:
-            raise ValueError("No elbow found in specified column for inverse pop operation")
+            raise ValueError("No elbow found in specified column for inverse pop operation when inserting ")
         D.grid[x_, a] = TileType.CROSS
         y = a - 1
         # find x in column y, it will be an SE elbow
@@ -720,7 +720,10 @@ class BPD:
             y = y - 1
             # replace with NW elbow
             assert D[x_, y + 1] == TileType.BLANK, "Expected NW elbow during inverse pop operation"
+            while y >= 0 and D[x_, y] == TileType.BLANK:
+                y -= 1
             D.grid[x_, y + 1] = TileType.ELBOW_NW
+
 
             # find x at SE elbow
             x = x_ - 1
@@ -734,7 +737,6 @@ class BPD:
             D.grid[x, y] = TileType.BLANK
 
             # then this is the fix logic
-
             for z in range(x + 1, x_):
                 if D[z, y] == TileType.VERT and D[z, y + 1] == TileType.BLANK:
                     D.grid[z, y] = TileType.BLANK
@@ -742,6 +744,9 @@ class BPD:
                 elif D[z, y] == TileType.CROSS and D[z, y + 1] == TileType.ELBOW_NW:
                     D.grid[z, y] = TileType.TBD
                     D.grid[z, y + 1] = TileType.TBD
+                elif D[z, y] == TileType.CROSS and D[z, y + 1] == TileType.HORIZ:
+                    D.grid[z, y] = TileType.TBD
+                    D.grid[z, y + 1] = TileType.CROSS
                 elif D[z, y] == TileType.VERT and D[z, y + 1] == TileType.ELBOW_SE:
                     D.grid[z, y] = TileType.ELBOW_SE
                     D.grid[z, y + 1] = TileType.CROSS
