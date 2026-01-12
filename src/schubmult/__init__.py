@@ -39,13 +39,13 @@ _package_root = Path(__file__).resolve().parent
 
 def _scan_modules():
     """Deferred AST scan - only called when needed"""
-    global _scanned, _module_map
+    global _scanned  # noqa: PLW0603
     if _scanned:
         return
     _scanned = True
-    
+
     _skipped_dirs = {"__pycache__", "tests", "docs", "scripts", "build", "_scripts"}
-    
+
     for py in _package_root.rglob("*.py"):
         if py.samefile(Path(__file__)):
             continue
@@ -56,13 +56,13 @@ def _scan_modules():
         except Exception:
             continue
         modname = ".".join(rel.with_suffix("").parts)
-        
+
         try:
             src = py.read_text(encoding="utf8")
             tree = ast.parse(src)
         except Exception:
             continue
-            
+
         for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
                 name = node.name
@@ -82,7 +82,7 @@ def __getattr__(name: str):
     """
     if name in globals():
         return globals()[name]
-    
+
     # Known lazy exports - try these first without scanning
     if name in _lazy_exports:
         try:
@@ -92,10 +92,10 @@ def __getattr__(name: str):
             return val
         except Exception as e:
             raise AttributeError(f"cannot import {name!r} from {_lazy_exports[name]!r}: {e}") from e
-    
+
     # Not in known exports - scan modules if we haven't yet
     _scan_modules()
-    
+
     if name in _module_map:
         modname = _module_map[name]
         try:
@@ -123,7 +123,7 @@ def __getattr__(name: str):
 
             # otherwise behave as before
             raise AttributeError(f"cannot import {name!r} from {_module_map[name]!r}: {e}") from e
-    
+
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 def __dir__():
