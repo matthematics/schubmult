@@ -21,12 +21,44 @@ attribute is accessed for the first time.
 
 # Commonly exported helpers - only these are in __all__ initially
 _lazy_exports = {
-    "Sx": "schubmult.rings.schubert_ring",
-    "uncode": "schubmult.schub_lib.perm_lib",
+    # Core Schubert structures
     "Permutation": "schubmult.schub_lib.perm_lib",
+    "uncode": "schubmult.schub_lib.perm_lib",
     "RCGraph": "schubmult.schub_lib.rc_graph",
     "BPD": "schubmult.schub_lib.bpd",
     "TileType": "schubmult.schub_lib.bpd",
+    # Rings
+    "Sx": "schubmult.rings.schubert_ring",
+    "ASx": "schubmult.rings.free_algebra",
+    "ADSx": "schubmult.rings.free_algebra",
+    "DoubleSchubertRing": "schubmult.rings.schubert_ring",
+    "SingleSchubertRing": "schubmult.rings.schubert_ring",
+    "DoubleSchubertElement": "schubmult.rings.schubert_ring",
+    "RCGraphRing": "schubmult.rings.rc_graph_ring",
+    "RCGraphRingElement": "schubmult.rings.rc_graph_ring",
+    "PlacticAlgebra": "schubmult.rings.plactic_algebra",
+    "PlacticAlgebraElement": "schubmult.rings.plactic_algebra",
+    "CoxeterKnuthRing": "schubmult.rings.ck_ring",
+    "FreeAlgebra": "schubmult.rings.free_algebra",
+    "NSym": "schubmult.rings.free_algebra",
+    "NilHeckeRing": "schubmult.rings.nil_hecke",
+    "PolynomialAlgebra": "schubmult.rings.polynomial_algebra",
+    "TensorRing": "schubmult.rings.tensor_ring",
+    # Variables
+    "GeneratingSet": "schubmult.rings.variables",
+    # Crystal structures
+    "RootTableau": "schubmult.schub_lib.root_tableau",
+    "Plactic": "schubmult.schub_lib.plactic",
+    # Free algebra bases
+    "FreeAlgebraBasis": "schubmult.rings.free_algebra_basis",
+    "WordBasis": "schubmult.rings.free_algebra_basis",
+    "JBasis": "schubmult.rings.free_algebra_basis",
+    "JTBasis": "schubmult.rings.free_algebra_basis",
+    "SchubertBasis": "schubmult.rings.free_algebra_basis",
+    "SchubertSchurBasis": "schubmult.rings.free_algebra_basis",
+    "ElementaryBasis": "schubmult.rings.free_algebra_basis",
+    "NElementaryBasis": "schubmult.rings.free_algebra_basis",
+    "ZBasis": "schubmult.rings.free_algebra_basis",
 }
 
 __all__: List[str] = list(_lazy_exports.keys())
