@@ -33,7 +33,7 @@ class TileType(IntEnum):
     VERT = 6
 
     def __str__(self):
-        symbols = {TileType.BLANK: "□", TileType.CROSS: "┼", TileType.ELBOW_NW: "╯", TileType.ELBOW_SE: "╭", TileType.HORIZ: "─", TileType.VERT: "│", TileType.TBD: "?"}
+        symbols = {TileType.BLANK: "▢", TileType.CROSS: "┼", TileType.ELBOW_NW: "╯", TileType.ELBOW_SE: "╭", TileType.HORIZ: "─", TileType.VERT: "│", TileType.TBD: "?"}
         return symbols.get(self, "?")
 
     @property
