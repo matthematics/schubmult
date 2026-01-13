@@ -26,6 +26,7 @@ _lazy_exports = {
     "Permutation": "schubmult.schub_lib.perm_lib",
     "RCGraph": "schubmult.schub_lib.rc_graph",
     "BPD": "schubmult.schub_lib.bpd",
+    "TileType": "schubmult.schub_lib.bpd",
 }
 
 __all__: List[str] = list(_lazy_exports.keys())
