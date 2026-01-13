@@ -205,20 +205,22 @@ class BPD(DefaultPrinting):
             label = str(printer._print(j + 1))
             col_widths.append(max(1, len(label)))
 
+        # Use maximum column width for all columns
+        max_col_width = max(col_widths)
+
         # Build rows with proper tile extensions
         rows = []
-        perm_values = list(self.perm)
+        perm = self.perm
+        perm_values = [perm[i] for i in range(self.n)]
 
         for i in range(self.n):
             row_parts = []
             for j in range(self.n):
                 tile = TileType(self[i, j])
                 tile_str = str(tile)
-                width = col_widths[j]
 
-                # Symmetric padding to center tile in column
-                    # Split padding between left and right
-                total_pad = max(width - 1,2)
+                # Symmetric padding to center tile in column using max width
+                total_pad = max(max_col_width - 1, 2)
                 left_pad = total_pad // 2
                 right_pad = total_pad - left_pad
 
@@ -249,11 +251,16 @@ class BPD(DefaultPrinting):
 
         # Add column labels at the bottom with proper spacing and alignment
         col_labels = []
+        # Each column is 1 (tile) + total_pad wide
+        total_pad = max(max_col_width - 1, 2)
+        column_width = 1 + total_pad
+
         for j in range(self.n):
             label = str(printer._print(j + 1))
-            # Center label in its column width, add space separator
-            col_labels.append(label.center(col_widths[j] + 1))
-        rows.append(" ".join(col_labels))
+            col_labels.append(label.center(column_width))
+
+        # Add leading space to match prettyForm's handling
+        rows.append("".join(col_labels)+ (" " * max_col_width) + " ")
 
         return prettyForm("\n".join(rows))
 
