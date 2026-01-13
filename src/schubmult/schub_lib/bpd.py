@@ -13,6 +13,7 @@ from enum import IntEnum
 from typing import Tuple
 
 import numpy as np
+from sympy.printing.defaults import DefaultPrinting
 
 from schubmult.schub_lib.perm_lib import Permutation
 
@@ -72,7 +73,7 @@ class TileType(IntEnum):
         return self in (TileType.HORIZ, TileType.ELBOW_NW, TileType.CROSS)
 
 
-class BPD:
+class BPD(DefaultPrinting):
     """
     Bumpless Pipe Dream representation.
 
@@ -170,11 +171,15 @@ class BPD:
         # Otherwise it's a scalar, cast directly
         return TileType(result)
 
-    def __repr__(self):
-        return f"BPD({self.grid.tolist()})"
+    def _sympyrepr(self, printer=None):
+        """SymPy repr representation"""
+        grid_list = self.grid.tolist()
+        if printer is None:
+            return f"BPD({grid_list})"
+        return f"BPD({printer._print(grid_list)})"
 
-    def __str__(self):
-        """String representation of the BPD using tile symbols"""
+    def _sympystr(self, printer=None):
+        """SymPy str representation of the BPD using tile symbols"""
         result = []
         for i in range(self.n):
             row = []
@@ -182,7 +187,75 @@ class BPD:
                 tile = TileType(self[i, j])
                 row.append(str(tile))
             result.append("".join(row))
-        return "\n".join(result)
+        if printer is None:
+            return "\n".join(result)
+        return printer._print("\n".join(result))
+
+    def _pretty(self, printer=None):
+        """Pretty printing with row and column labels"""
+        from sympy.printing.pretty.stringpict import prettyForm
+
+        if printer is None:
+            # Fallback to simple string representation
+            return prettyForm(self._sympystr(None))
+
+        # Calculate column widths based on labels (minimum 1 for tile)
+        col_widths = []
+        for j in range(self.n):
+            label = str(printer._print(j + 1))
+            col_widths.append(max(1, len(label)))
+
+        # Build rows with proper tile extensions
+        rows = []
+        perm_values = list(self.perm)
+
+        for i in range(self.n):
+            row_parts = []
+            for j in range(self.n):
+                tile = TileType(self[i, j])
+                tile_str = str(tile)
+                width = col_widths[j]
+
+                # Symmetric padding to center tile in column
+                    # Split padding between left and right
+                total_pad = max(width - 1,2)
+                left_pad = total_pad // 2
+                right_pad = total_pad - left_pad
+
+                horiz_str = str(TileType.HORIZ)
+                space_str = " "
+
+                # Determine left padding character
+                if tile.entrance_from_left:
+                    left_str = horiz_str * left_pad
+                else:
+                    left_str = space_str * left_pad
+
+                # Determine right padding character
+                if tile.feeds_right:
+                    right_str = horiz_str * right_pad
+                else:
+                    right_str = space_str * right_pad
+
+                tile_str = left_str + tile_str + right_str
+
+                row_parts.append(tile_str)
+
+            row_str = "".join(row_parts)
+            # Add permutation value as row label on the right
+            perm_label = str(printer._print(perm_values[i]))
+            row_str += f" {perm_label}"
+            rows.append(row_str)
+
+        # Add column labels at the bottom with proper spacing and alignment
+        col_labels = []
+        for j in range(self.n):
+            label = str(printer._print(j + 1))
+            # Center label in its column width, add space separator
+            col_labels.append(label.center(col_widths[j] + 1))
+        rows.append(" ".join(col_labels))
+
+        return prettyForm("\n".join(rows))
 
     @property
     def perm(self) -> Permutation:
@@ -648,13 +721,10 @@ class BPD:
         return D, (a + 1, r + 1)
 
     def resize(self, new_n):
-        D = self.copy()
-        D.grid.resize((new_n, new_n), refcheck=False)
-        for i in range(D.n, new_n):
-            for j in range(D.n, new_n):
-                D.grid[i, j] = TileType.TBD
-        D.n = new_n
-        D.rebuild()
+        if new_n > self.n:
+            D = BPD(np.pad(self.grid, ((0, new_n - self.n), (0, new_n - self.n)), mode="constant", constant_values=TileType.TBD))
+        else:
+            D = BPD(self.grid[:new_n, :new_n])
         return D
 
     @classmethod
@@ -663,10 +733,24 @@ class BPD:
         bpd = BPD(np.full((n, n), fill_value=TileType.TBD, dtype=TileType))
         coords = [rc_graph.left_to_right_inversion_coords(i) for i in range(rc_graph.perm.inv)]
         coords.reverse()
-        for (i, j) in coords:
+        for i, j in coords:
             bpd = bpd.inverse_pop_op(i + j - 1, i)
             rc_graph = rc_graph.toggle_ref_at(i, j)
         return bpd
+
+    def prod_with_bpd(self, other):
+        pop_other = []
+        other_work = other
+        while other_work.perm.inv > 0:
+            other_work, pos = other_work.pop_op()
+            pop_other.append(pos)
+        pop_other.reverse()
+        len_cd = len(self.perm.trimcode)
+        pop_other_shifted = [(a + len_cd, b + len_cd) for (a, b) in pop_other]
+        new_bpd = self.copy()
+        for a, b in pop_other_shifted:
+            new_bpd = new_bpd.inverse_pop_op(a, b)
+        return new_bpd
 
     def inverse_pop_op(self, a, r):
         D = self.copy()
@@ -712,7 +796,6 @@ class BPD:
             if x == r - 1:
                 break
 
-
             # find x_
             x_ = x
             y = y - 1
@@ -722,14 +805,12 @@ class BPD:
                 y -= 1
             D.grid[x_, y + 1] = TileType.ELBOW_NW
 
-
             # find x at SE elbow
             x = x_ - 1
             while x >= 0 and D[x, y] != TileType.ELBOW_SE:
                 x -= 1
             if x == -1:
                 raise ValueError("No elbow found in specified column for inverse pop operation")
-
 
             # [x, y] becomes BLANK
             D.grid[x, y] = TileType.BLANK
@@ -748,7 +829,6 @@ class BPD:
                 elif D[z, y] == TileType.VERT and D[z, y + 1] == TileType.ELBOW_SE:
                     D.grid[z, y] = TileType.ELBOW_SE
                     D.grid[z, y + 1] = TileType.CROSS
-
 
             D.rebuild()
 
@@ -781,6 +861,37 @@ class BPD:
         res_bpd.grid[r, c] = TileType.TBD
         res_bpd.rebuild()
         return res_bpd
+
+    def right_zero_act(self):
+        # find crosses, untransition them
+        if self.perm.inv == 0:
+            return {self}
+        results = set()
+        a, b = self.perm.maximal_corner
+        if a == self.n:
+            D = self.resize(self.n + 1)
+        else:
+            D = self
+        se_elbows = {spot for spot in D.all_se_elbow_spots() if spot[0] >= a and spot[1] >= b}
+        for piv_a, piv_b in se_elbows:
+            if self[piv_a - 1, piv_b - 1] == TileType.CROSS:
+                new_bpd = self.copy()
+                new_bpd.grid[piv_a - 1, piv_b - 1] = TileType.TBD
+                # find nearest SE elbow strictly SE of (piv_a, piv_b)
+                r, c = piv_a, piv_b
+                while r < self.n and c < self.n and new_bpd[r, c] != TileType.ELBOW_SE:
+                    if c < self.n - 1:
+                        c += 1
+                    else:
+                        r += 1
+                        c = piv_b + 1
+                if r == self.n or c == self.n:
+                    print("No ELBOW_SE found strictly SE of pivot")
+                    continue
+                new_bpd.grid[r, c] = TileType.CROSS
+                new_bpd.rebuild()
+                results.add(new_bpd)
+        return results
 
     def to_rc_graph(self):
         """

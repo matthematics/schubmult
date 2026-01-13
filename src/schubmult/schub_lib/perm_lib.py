@@ -328,6 +328,27 @@ class Permutation(Printable):
                 j += 1
         return cls(perm)
 
+    def pivots(self, a, b):
+        piv = set()
+        for i in range(1, len(self) + 1):
+            j = self[i - 1]
+            if i >= a or j >= b:
+                continue
+            good = True
+            for i_prime in range(i, a + 1):
+                if not good:
+                    break
+                for j_prime in range(j, b + 1):
+                    if (i == i_prime and j == j_prime) or (i == a and j == b):
+                        continue
+                    if self[i_prime - 1] == j_prime:
+                        good = False
+                        break
+            if good:
+                piv.add((i, j))
+        return piv
+
+
     @property
     def trimcode(self):
         if self._perm == ():
