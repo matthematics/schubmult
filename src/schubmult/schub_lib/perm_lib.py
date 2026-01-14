@@ -315,7 +315,7 @@ class Permutation(Printable):
 
     @classmethod
     def from_partial(cls, partial_perm):
-        max_required = max([a for a in partial_perm if a is not None], default=0)
+        max_required = max([a for a in partial_perm if a is not None], default=len(partial_perm))
         search_space = {i for i in partial_perm if i is not None}
 
         # Need enough values to fill all None positions

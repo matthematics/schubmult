@@ -959,37 +959,6 @@ We observe that in the above RC graph, the position $(1,5)$ does not have this c
 \end{tikzpicture}
 \end{figure}
 
-\subsection{Bijection with inversion tableaux}
-
-
-\cite{axelrodfreed2025inversionstableaux}
-
-\begin{definition}
-An \emph{inversion tableau} is a function $T:(\mathbb{Z}_{> 0}\times \mathbb{Z}_{> 0})^+\to \mathbb{Z}_{>0}\cup\{-\infty\}$ such that only finitely many values are nonzero. Note $-\infty < a$ for all $a$, including $a=-\infty$.  In addition, we have the following requirements:
-\begin{enumerate}
-\item For each $i<j<k$ we have either
-$$T(i,j)\leq T(i,k)< T(j,k)$$
-or
-$$T(j,k)< T(i,k)\leq T(i,j)$$
-\item For each $i\geq 1$ we have
-$$T(i, i+1)\leq i$$
-\end{enumerate}
-If $R$ is an RC graph, we define an associated inversions tableau $T_R$ as in the proof of \cite[Theorem~3.13]{axelrodfreed2025inversionstableaux} by
-$$T_R(a,b) = \begin{cases}
- i& \text{if } (i,j) \in R\mbox{ and }(a,b)=\rtt_R^{-1}(i,j)\\
- -\infty& \text{otherwise}
- \end{cases}$$
-\end{definition}
-
-\begin{lemma} \label{lemma:rowcol}
-We have the following for an RC graph $R$:
-\begin{enumerate}
-	\item Suppose $(i, j), (i, j+1)\in R$. Then $\rtt_R(i, j) = (a, c)$ and $\rtt_R(i, j+1) = (a, b)$ for some $a < b < c$.
-	\item Suppose $(i, j), (i+1, j)\in R$. Then $\rtt_R(i, j) = (a, c)$ and $\rtt_R(i+1, j) = (b, c)$ for some $a < b < c$.
-\end{enumerate}
-
-\end{lemma}
-
 \subsection{Zeroing out the last row}
 
 We proceed now to define a product on $\BRC$ turning it into a ring. To do this, we need to be able to define a function $Z:\BRC\to\BRC$ trimming empty rows from the bottom instead of from the top. This is far more complicated.
@@ -1008,46 +977,54 @@ We proceed now to define a product on $\BRC$ turning it into a ring. To do this,
 %\end{algorithm}
 
 % Define the main algorithm
-\begin{algorithm} 
-	\caption{RC insertion algorithm}
-	\label{algorithm:insertion}
-	\begin{algorithmic}[1]
-		\State \textbf{Input:} An RC graph $R$, parameter $k$, and sequence $k\geq i_1 \geq i_2 \geq \cdots \geq i_m \geq 1$.
-		\State \textbf{Output:} A modified RC graph $R'$.
-		\State \textbf{Initialize:} Let $L \gets [\,]$ (empty list of pairs $(a, b)$ where $a \leq k < b$), and $r\gets [\,]$ (empty list).
-		\For{each $i \in (i_1, \ldots, i_m)$}
-		\State Find leftmost position $(i, j) \notin R$ in row $i$ satisfying $j>j'$ for all $(i,j')\in r$ such that either:
-		\State \quad a) $\rtt_R(i, j) = (s, q)$ where $s \leq k < q$ and $q \notin \{b \mid (a, b) \in L\}$.
-		\State \quad b) $\rtt_R(i, j) = (b_r, q)$ where $q > k$, $b_r<q$, and $q \notin \{b \mid (a, b) \in L\}$.
-		\State $R \gets R \cup \{(i, j)\}$ and $r\gets r\cup \{(i, j)\}$
-		\State Update $L$ by adding $(s, q)$ or replacing $(a_r, b_r)$ with $(a_r, q)$ and $(a_r, b_r)$.
-		\State $(R, L) \gets \textproc{Rectify}(R, L, i - 1)$ (Algorithm \ref{algorithm:rectify})
-		\EndFor
+
+% Leadsto arrow with text above
+\newcommand{\xleadsto}[2][]{\overset{#2}{\leadsto}}
+
+\newcommand{\ins}[2]{{#2\xleadsto{#1}}}
+
+\begin{algorithm}
+\caption{Basic monk insertion $\ins{k}{i} R$}
+\label{algorithm:monk}
+\begin{algorithmic}[1]
+		\State \textbf{Input:} An RC graph $R$, parameter $k$, and an integer $i$ with $1\leq i\leq k$.
+		\State \textbf{Output:} A modified RC graph $R'$ with $\wtt_j(R')=\wtt_j(R)$  for $j\neq i$ and $\wtt_i(R')=\wtt_i(R)+1$ such that $\wof{R}\tom{k} \wof{R'}$.
+		\State Find leftmost position $(i, j) \notin R$ in row $i$ such that if $\rtt_R(i, j)=(a,b)$, then $a\leq k < b$.
+		\State $R \gets R \cup \{(i, j)\}$
+    \If{there exists $(i', j') \in R$ with $\rtt_R(i', j') \in \Phi^-$}
+        \State $R \gets R \setminus \{(i', j')\}$
+        \State Return to step 3 substituting $a = i'$.
+    \EndIf
 		\State \Return $R$
 	\end{algorithmic}
 \end{algorithm}
 
-% Define the Subroutine
-\begin{algorithm}
-	\caption{Subroutine: Rectify}
-	\label{algorithm:rectify}
+\begin{algorithm} 
+	\caption{Pieri insertion $\ins{k}{I} R$}
+	\label{algorithm:insertion}
 	\begin{algorithmic}[1]
-		\Procedure{Rectify}{$R, L, i$}
-		\If{$R$ is an RC graph or $i = 0$} 
-		\State \Return $(R, L)$
-		\EndIf
-		\For{minimal $j$ such that $(i,j) \in R$ and $\rtt_R(i, j) \in \Phi^-$}
-		\State $R \gets R \setminus \{(i, j)\}$
-		\State Let $\rtt_R(i, j) = (q, s)$
+		\State \textbf{Input:} An RC graph $R$, parameter $k$, and sequence $I = \{i_1, \ldots, i_m\}$ with $k\geq i_1 \geq i_2 \geq \cdots \geq i_m \geq 1$.
+		\State \textbf{Output:} A modified RC graph $R'$ with $\wtt_i(R')=\wtt_i(R)$ for $i\notin I$ and $\wtt_i(R')=\wtt_i(R)+\#\{j \mid i_j = i\}$ for $i\in I$ such that $\wof{R}\Tom{k} \wof{R'}$.
+		\State \textbf{Initialize:} Let $L \gets [\,]$ (empty list of pairs $(a, b)$ where $a \leq k < b$), and $U\gets [\,]$ (empty list of positions).
+		\For{each $i \in (i_1, \ldots, i_m)$}
+		\State Find leftmost position $(i, j) \notin R$ in row $i$ satisfying $j>j'$ for all $(i,j')\in U$ such that either:
+		\State \quad a) $\rtt_R(i, j) = (s, q)$ where $s \leq k < q$ and $q \notin \{b \mid (a, b) \in L\}$.
+		\State \quad b) $\rtt_R(i, j) = (b_r, q)$ where $q > k$, $b_r<q$, and $q \notin \{b \mid (a, b) \in L\}$.
+		\State $R \gets R \cup \{(i, j)\}$ and $U\gets U \cup \{(i, j)\}$
+		\State Update $L$ by adding $(s, q)$ or replacing $(a_r, b_r)$ with $(a_r, q)$ and $(a_r, b_r)$.
+		\If{there exists $(i', j') \in R$ with $\rtt_R(i', j') \in \Phi^-$}
+        
+    \State $R \gets R \setminus \{(i', j')\}$
+		\State Let $\rtt_R(i', j') = (q, s)$
 		\If{$(s, q) \in L$}
 		\State Remove $(s, q)$ from $L$
 		\Else
 		\State Remove $(a_r, q)$ from $L$, where $(a_r, q),(a_r,s)\in L$
 		\EndIf
-		\State Perform new insertion step at row $i$ using criteria from Algorithm \ref{algorithm:insertion} Step 5.
+		\State Return to step 5 to insert $i'$.
+    \EndIf
 		\EndFor
-		\State \Return \Call{Rectify}{$R, L, i - 1$}
-		\EndProcedure
+		\State \Return $R$
 	\end{algorithmic}
 \end{algorithm}
 
@@ -1068,14 +1045,24 @@ We proceed now to define a product on $\BRC$ turning it into a ring. To do this,
 		\State $R^- \gets R \setminus \{(i_1, j_1), \ldots, (i_p, j_p)\}$.
 		\State Let $I \gets (i_1, i_2, \ldots, i_p)$.
 		\State $D \gets R^- \cup \{(n, 1), (n, 2), \ldots, (n, p)\}$.
-		\State $D' \gets \textproc{Insert}(D, n-1, I)$ \Comment{Using Algorithm \ref{algorithm:insertion}}
+		\State $D' \gets \ins{n-1}{I} D$
 		\State $R' \gets \{(i, j) \in D' \mid i < n\}$.
 		\State \Return $(R', n-1)$.
 		\EndIf
 	\end{algorithmic}
 \end{algorithm}
 
-See Figure \ref{fig:zeroing} for an example of the zeroing operation (Algorithm \ref{algorithm:zero}).
+See Figure \ref{fig:zeroing} for an example of the zeroing operation (Algorithm \ref{algorithm:zero}). 
+
+\def\multiset#1#2{\ensuremath{\left(\kern-.3em\left(\genfrac{}{}{0pt}{}{#1}{#2}\right)\kern-.3em\right)}}
+
+
+Note that Algorithm \ref{algorithm:insertion} is \emph{not} a realization of Sottile's Pieri formula for complete symmetric polynomials, despite preserving the relevant Bruhat relation. This is because the map 
+$$\multiset{k}{p}\times\RC(w)\to \RC(n)$$
+given by 
+$$(I, R)\mapsto \ins{k}{I} R$$ 
+need not be injective.
+
 
 \begin{figure}[htbp]
 \centering
@@ -1303,6 +1290,7 @@ See Figure \ref{fig:zeroing} for an example of the zeroing operation (Algorithm 
 \end{figure}
 
 
+
 \begin{lemma} \label{lemma:insertworks}
 Given an RC graph $R$, an integer $k$, and $k\geq i_1\geq\cdots\geq i_m\geq 1$, Algorithm \ref{algorithm:insertion} produces a valid RC graph $R'$ satisfying
 $$\wtt_i(R') = \wtt_i(R) + \#\{j \mid i_j = i\}$$
@@ -1333,7 +1321,7 @@ $$\wtt(R') = \wtt(R)$$
 % $$\lambda(\wof{R'})\geq\lambda(\wof{R})$$
 \end{lemma}
 \begin{proof}
-	Stripping out the crossings at roots $(n, n+1), (n+1, n+2), \ldots, (n + p - 1, n + p)$ removes exactly one crossing from each of rows $i_1, i_2, \ldots, i_p$, and moving them to the last row to obtain $R_1$ ensures that $\wof{R}=\wof{R_1}$. By construction, the portion of the RC graph in rows with index less than $n$ is valid (meaning its max descent is at most $n-1$). Applying Algorithm \ref{algorithm:insertion} to insert at rows $i_1, i_2, \ldots, i_p$ adds back the removed crossings to preserve the weights of each row without adding descents past index $n$ in the permutation, by Lemma \ref{lemma:insertworks}. Trimming off row $n$ then yields a valid bounded RC graph $(R', n-1)$ with the desired properties. 
+	Stripping out the crossings at roots $(n, n+1), (n+1, n+2), \ldots, (n + p - 1, n + p)$ removes exactly one crossing from each of rows $i_1, i_2, \ldots, i_p$, and moving them to the last row to obtain $R_1$ ensures that $\wof{R}=\wof{R_1}$. By construction, the portion of the RC graph in rows with index less than $n$ is valid (meaning its max descent is at most $n-1$). Applying Algorithm \ref{algorithm:insertion} to insert at rows $i_1, i_2, \ldots, i_p$ adds different crossings to preserve the number of elements in each row without adding descents past index $n$ in the permutation, by Lemma \ref{lemma:insertworks}. Trimming off row $n$ then yields a valid bounded RC graph $(R', n-1)$ with the desired properties. 
 	% The relation $\lambda(\wof{R'}) \geq \lambda(\wof{R})$ follows from Lemma \ref{lemma:insertworks} and Lemma \ref{lemma:code_change}. We are applying Bruhat coverings of the form $wt_{ab}$ where $a\leq n-1 < b$. This gives us operators $T_1,T_2,\ldots,T_m$ satisfying
 	% $$T_iv = t_{a_ib_i}v + c_i\mathbf{e}_{a_i} - c_i\mathbf{e}_{b_i}$$
 	% for some $a_i, b_i, c_i$ with $a_i\leq n-1 < b_i$ and $c_i\geq 0$, as well as operators $A_1,\ldots,A_m$ satisfying
@@ -1350,7 +1338,7 @@ $$\wtt(R') = \wtt(R)$$
 \begin{theorem} \label{theorem:zero_bijection}
 Let $w$ be a permutation with last descent at most $n$. Let $\mathcal{RC}(w,n)^0$ be the set of bounded RC graphs $(R, n)$ such that $\wof{R}=w$ and row $n$ is empty. Then
 $$\zeromap:\mathcal{RC}(w, n)^{0}\to \bigcup_{w\downvar{n} w'}\mathcal{RC}(w', n-1)$$
-is a bijection.
+is a weight-preserving bijection.
 \end{theorem}
 
 To prove Theorem \ref{theorem:zero_bijection} for $n=2$, we may characterize the bounded RC graphs $(R, 2)$ such that row $2$ is empty and $\maxd(\wof{R})=2$ as those for permutations $w=s_k s_{k-1}\cdots s_2$ for some $k>1$. Algorithm \ref{algorithm:zero} in this case consists moves the entirety of the crossings in row $1$ to row $2$. The procedure then inserts $k-1$ crossings into row $1$ in order from left to right, which must have roots $t_q - t_s$ such that $q=1$. Thus $R'$ is precisely $\{(1,1), (1,2), (1,3), \ldots, (1, k-1)\}$, which is the unique bounded RC graph for the permutation $w' = s_{k-1} s_{k-2}\cdots s_1$ with one row. This establishes the base case.
@@ -1480,6 +1468,15 @@ We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(
 	$$\zeromap(\mathcal{S}_w(n))=\sum_{w'}\mathcal{S}_{w'}(n-1)$$
 \end{theorem} 
 
+\subsection{Relation to the bijection with bumpless pipe dreams}
+
+\newcommand{\BPD}{\mathscr{BPD}}
+
+\begin{definition}
+  Denote by $\BPD(w,n)$ the set of bumpless pipe dreams for a permutation $w$ with an associated integer $n$, where $n\geq \maxd(w)$.
+\end{definition}
+
+Recall that 
 % \begin{definition}
 % 	Define another map $\zeromap_{(k)}:\BRC\to \BRC$ on bounded RC graphs for $1\leq i\leq n$ as follows.
 
