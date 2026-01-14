@@ -32,9 +32,10 @@ class TileType(IntEnum):
     ELBOW_NW = 4  # Elbow: bottom-right to top-left (╯)
     ELBOW_SE = 5  # Elbow: top-left to bottom-right (╮)
     VERT = 6
+    BUMP = 7  # Bump/osculating tile (pipes touch at corner)
 
     def __str__(self):
-        symbols = {TileType.BLANK: "▢", TileType.CROSS: "┼", TileType.ELBOW_NW: "╯", TileType.ELBOW_SE: "╭", TileType.HORIZ: "─", TileType.VERT: "│", TileType.TBD: "?"}
+        symbols = {TileType.BLANK: "▢", TileType.CROSS: "┼", TileType.ELBOW_NW: "╯", TileType.ELBOW_SE: "╭", TileType.HORIZ: "─", TileType.VERT: "│", TileType.BUMP: "╬", TileType.TBD: "?"}
         return symbols.get(self, "?")
 
     @property

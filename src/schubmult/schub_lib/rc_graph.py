@@ -274,7 +274,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
 
         # may have to add q, s or a_i, q
         def is_relevant_noncrossing(root):
-            top, bottom = max(root[1], root[0]), min(root[0], root[1])
+            bottom, top = root
             return (bottom <= descent and descent < top and top not in pair_dict_rev) or (bottom in pair_dict_rev and top > descent and top not in pair_dict_rev)
 
         # Add this intersection. If we are in the first case, insert (s, q) into the sequence (ai, bi) in the rightmost position, such that ai’s remain nondecreasing in the
@@ -289,7 +289,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
         while len(reflection_set) > 0:
             for row in range(1, len(self) + 1):
                 # Search from right to left within each row
-                for col in range(max(descent, working_rc.cols), 0, -1):
+                for col in range(1, max(descent, working_rc.cols) + 1):
                     if working_rc.has_element(row, col):
                         a, b = working_rc.right_root_at(row, col)
                         # Check if this is any reflection we're looking for
@@ -297,76 +297,108 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                             # Remove this reflection from the set
                             if (a, b) in reflection_set:
                                 reflection_set.remove((a, b))
-                                target_b = b
                             else:
                                 reflection_set.remove((pair_dict_rev[a], b))
-                                target_b = b
+                            pair_dict[a].remove(b)
+                            if len(pair_dict[a]) == 0:
+                                del pair_dict[a]
+                            del pair_dict_rev[b]
+                            rows.append(row)
+
 
                             # found = True
                             working_rc = working_rc.toggle_ref_at(row, col)
 
-                            # Check if RC became invalid and needs rectification
-                            if not working_rc.is_valid and row < len(working_rc):
-                                # Rectify the row below
-                                for rect_row in range(row + 1, len(working_rc) + 1):
-                                    if not working_rc.is_valid:
-                                        for rect_col in range(1, max(descent, working_rc.cols) + 1):
-                                            if working_rc.has_element(rect_row, rect_col):
-                                                rect_a, rect_b = working_rc.right_root_at(rect_row, rect_col)
-                                                if rect_a > rect_b:  # Reversed root - toggle to rectify
-                                                    working_rc = working_rc.toggle_ref_at(rect_row, rect_col)
-                                                    break
-                                    else:
+                            #leftify it
+                            for col2 in range(col - 1, 0, -1):
+                                if not working_rc.has_element(row, col2):
+                                    a2, b2 = working_rc.left_root_at(row, col2)
+                                    if b2 > a2:
+                                        continue
+                                    if is_relevant_noncrossing((a2, b2)):
+                                        # print(f"Leftify {a2, b2}")
+                                        working_rc = working_rc.toggle_ref_at(row, col2)
+                                        if a2 <= descent:
+                                            pair_dict_rev[b2] = a2
+                                            if a2 not in pair_dict:
+                                                pair_dict[a2] = set()
+                                            pair_dict[a2].add(b2)
+                                            reflection_set.add((a2, b2))
+                                        else:
+                                            a_key = pair_dict_rev[a2]
+                                            pair_dict[a_key].add(b2)
+                                            reflection_set.add((a_key, b2))
+                                        col = col2 - 1
+                                        rows.pop()
                                         break
-
-                            a2 = a
-                            if a2 in pair_dict_rev:
-                                a2 = pair_dict_rev[a2]
-
-                            pair_dict[a2].remove(target_b)
-                            del pair_dict_rev[target_b]
-                            if len(pair_dict[a2]) == 0:
-                                del pair_dict[a2]
-
-                            rows.append(row)
-
-                            # After removing intersection, look to its RIGHT for Figure 10 configurations
-                            # Only do this if there are still reflections being tracked
-                            if len(pair_dict) > 0:
-                                for col2 in range(col + 1, max(descent, working_rc.cols) + 1):
-                                    if not working_rc.has_element(row, col2):
-                                        a2, b2 = working_rc.right_root_at(row, col2)
-                                        # if a2 > b2:
-                                        #     continue
-                                        if is_relevant_noncrossing((a2, b2)):
-                                            # print(f"Rect {a2, b2}")
-                                            if a2 <= descent:
-                                                assert b2 not in pair_dict
-                                                if a2 not in pair_dict:
-                                                    pair_dict[a2] = set()
-                                                pair_dict[a2].add(b2)
-                                                pair_dict_rev[b2] = a2
-                                                working_rc = working_rc.toggle_ref_at(row, col2)
-                                                rows.pop()
-                                            else:
-                                                assert a2 not in pair_dict_rev, f"{pair_dict_rev=}"
-                                                assert b2 in pair_dict_rev, f"{pair_dict_rev=}"
-                                                a = pair_dict_rev[a2]
-                                                pair_dict[a].add(b2)
-                                                pair_dict_rev[b2] = a
-                                                working_rc = working_rc.toggle_ref_at(row, col2)
-                                                rows.pop()
-                                            break
-
-
-            # if not found:
-            #     assert False, f"Could not find reflection ({target_a}, {target_b}) in working_rc:\n{working_rc}\npair_dict={pair_dict}, pair_dict_rev={pair_dict_rev}"
-
-        assert len(pair_dict_rev) == 0, f"{pair_dict=}, {pair_dict_rev=}, {working_rc=}"
-        assert working_rc.perm.bruhat_leq(self.perm)
         if return_rows:
-            return working_rc, rows
+            return working_rc, tuple(rows)
         return working_rc
+
+
+        # original DINGBAT
+        #                     # Check if RC became invalid and needs rectification
+        #                     if not working_rc.is_valid and row < len(working_rc):
+        #                         # Rectify the row below
+        #                         for rect_row in range(row + 1, len(working_rc) + 1):
+        #                             if not working_rc.is_valid:
+        #                                 for rect_col in range(1, max(descent, working_rc.cols) + 1):
+        #                                     if working_rc.has_element(rect_row, rect_col):
+        #                                         rect_a, rect_b = working_rc.right_root_at(rect_row, rect_col)
+        #                                         if rect_a > rect_b:  # Reversed root - toggle to rectify
+        #                                             working_rc = working_rc.toggle_ref_at(rect_row, rect_col)
+        #                                             break
+        #                             else:
+        #                                 break
+
+        #                     a2 = a
+        #                     if a2 in pair_dict_rev:
+        #                         a2 = pair_dict_rev[a2]
+
+        #                     pair_dict[a2].remove(target_b)
+        #                     del pair_dict_rev[target_b]
+        #                     if len(pair_dict[a2]) == 0:
+        #                         del pair_dict[a2]
+
+        #                     rows.append(row)
+        #                     working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, pair_dict, pair_dict_rev)
+        #                     # After removing intersection, look to its RIGHT for Figure 10 configurations
+        #                     # Only do this if there are still reflections being tracked
+        #                     if len(pair_dict) > 0:
+        #                         for col2 in range(col + 1, max(descent, working_rc.cols) + 1):
+        #                             if not working_rc.has_element(row, col2):
+        #                                 a2, b2 = working_rc.right_root_at(row, col2)
+        #                                 # if a2 > b2:
+        #                                 #     continue
+        #                                 if is_relevant_noncrossing((a2, b2)):
+        #                                     # print(f"Rect {a2, b2}")
+        #                                     if a2 <= descent:
+        #                                         assert b2 not in pair_dict
+        #                                         if a2 not in pair_dict:
+        #                                             pair_dict[a2] = set()
+        #                                         pair_dict[a2].add(b2)
+        #                                         pair_dict_rev[b2] = a2
+        #                                         working_rc = working_rc.toggle_ref_at(row, col2)
+        #                                         rows.pop()
+        #                                     else:
+        #                                         assert a2 not in pair_dict_rev, f"{pair_dict_rev=}"
+        #                                         assert b2 in pair_dict_rev, f"{pair_dict_rev=}"
+        #                                         a = pair_dict_rev[a2]
+        #                                         pair_dict[a].add(b2)
+        #                                         pair_dict_rev[b2] = a
+        #                                         working_rc = working_rc.toggle_ref_at(row, col2)
+        #                                         rows.pop()
+        #                                     break
+
+
+        #     # if not found:
+        #     #     assert False, f"Could not find reflection ({target_a}, {target_b}) in working_rc:\n{working_rc}\npair_dict={pair_dict}, pair_dict_rev={pair_dict_rev}"
+
+        # assert len(pair_dict_rev) == 0, f"{pair_dict=}, {pair_dict_rev=}, {working_rc=}"
+        # assert working_rc.perm.bruhat_leq(self.perm)
+        # if return_rows:
+        #     return working_rc, rows
+        # return working_rc
 
     @cache
     def inversion_label(self, i, j):
@@ -728,11 +760,7 @@ class RCGraph(GridPrint, tuple, CrystalGraph):
                 raise
         if return_reflections:
             # Build list of (row, reflection) pairs
-            result = []
-            for reflection in reflections:
-                target_row = reflection_rows.get(reflection, None)
-                result.append((target_row, reflection))
-            return working_rc, tuple(result)
+            return working_rc, tuple(reflections)
         return working_rc
 
     @property
