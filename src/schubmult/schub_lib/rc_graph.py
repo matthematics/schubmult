@@ -4,6 +4,7 @@ import schubmult.utils.schub_lib as schub_lib
 from schubmult.rings.free_algebra import ASx, FreeAlgebra, FreeAlgebraElement, WordBasis
 from schubmult.rings.nil_hecke import NilHeckeRing
 from schubmult.schub_lib.perm_lib import Permutation, uncode
+from schubmult.schub_lib.schubert_monomial_graph import SchubertMonomialGraph
 from schubmult.symbolic import S, prod
 from schubmult.utils._grid_print import GridPrint
 
@@ -52,7 +53,7 @@ def _crystal_isomorphic(c1, c2, cutoff=None):
     return True
 
 
-class RCGraph(GridPrint, tuple, CrystalGraph):
+class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     @property
     def args(self):
         """Return args for sympy compatibility - prevents traversal into tuple contents."""

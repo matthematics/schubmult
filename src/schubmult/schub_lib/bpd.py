@@ -16,6 +16,7 @@ import numpy as np
 from sympy.printing.defaults import DefaultPrinting
 
 from schubmult.schub_lib.perm_lib import Permutation
+from schubmult.schub_lib.schubert_monomial_graph import SchubertMonomialGraph
 
 
 class TileType(IntEnum):
@@ -74,7 +75,7 @@ class TileType(IntEnum):
         return self in (TileType.HORIZ, TileType.ELBOW_NW, TileType.CROSS)
 
 
-class BPD(DefaultPrinting):
+class BPD(SchubertMonomialGraph, DefaultPrinting):
     """
     Bumpless Pipe Dream representation.
 
