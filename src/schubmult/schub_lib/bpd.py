@@ -9,6 +9,9 @@ Represented as an n x n grid where:
 For general pipe dreams, there are 6 possible tile types.
 """
 
+from __future__ import annotations
+
+from collections.abc import Sequence
 from enum import IntEnum
 from typing import Tuple
 
@@ -16,6 +19,7 @@ import numpy as np
 from sympy.printing.defaults import DefaultPrinting
 
 from schubmult.schub_lib.perm_lib import Permutation
+from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.schub_lib.schubert_monomial_graph import SchubertMonomialGraph
 from schubmult.symbolic import Expr
 
@@ -36,7 +40,7 @@ class TileType(IntEnum):
     VERT = 6
     BUMP = 7  # Bump/osculating tile (pipes touch at corner)
 
-    def __str__(self):
+    def __str__(self) -> str:
         symbols = {TileType.BLANK: "▢", TileType.CROSS: "┼", TileType.ELBOW_NW: "╯", TileType.ELBOW_SE: "╭", TileType.HORIZ: "─", TileType.VERT: "│", TileType.BUMP: "╬", TileType.TBD: "?"}
         return symbols.get(self, "?")
 
@@ -88,7 +92,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     Each BPD corresponds to a permutation and has an associated weight.
     """
 
-    def __init__(self, grid, column_perm=None):
+    def __init__(self, grid, column_perm: Permutation | None = None) -> None:
         """
         Initialize a BPD from a grid.
 
@@ -104,15 +108,15 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         self.build()
 
     @property
-    def rows(self):
+    def rows(self) -> int:
         return self.grid.shape[0]
 
     @property
-    def cols(self):
+    def cols(self) -> int:
         return self.grid.shape[1]
 
     @classmethod
-    def all_bpds(cls, w):
+    def all_bpds(cls, w: Permutation) -> set[BPD]:
         pipes = set()
         new_pipes = [BPD.rothe_bpd(w)]
 
@@ -128,7 +132,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return pipes
 
     @classmethod
-    def _get_tbd_tile(cls, left_tile, up_tile) -> TileType:
+    def _get_tbd_tile(cls, left_tile: TileType | None, up_tile: TileType | None) -> TileType:
         if up_tile is None:
             if left_tile is None or not left_tile.feeds_right:
                 # if self.DEBUG:
@@ -157,7 +161,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     DEBUG = False
 
-    def build(self, validate=False):
+    def build(self, validate: bool = False) -> None:
         """Build internal structures if needed (currently a placeholder)"""
         for col in range(self.cols):
             for row in range(self.rows):
@@ -171,11 +175,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         if validate:
             assert self.is_valid(), f"Built BPD is not valid: \n{self}"
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Return the size n of the n×n grid"""
         return self.rows
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> TileType | np.ndarray:
         """Access grid elements, casting to TileType"""
         result = self.grid[key]
         # If it's a numpy array (from slicing), cast each element
@@ -184,14 +188,14 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         # Otherwise it's a scalar, cast directly
         return TileType(result)
 
-    def _sympyrepr(self, printer=None):
+    def _sympyrepr(self, printer=None) -> str:
         """SymPy repr representation"""
         grid_list = self.grid.tolist()
         if printer is None:
             return f"BPD({grid_list})"
         return f"BPD({printer._print(grid_list)})"
 
-    def _sympystr(self, printer=None):
+    def _sympystr(self, printer=None) -> str:
         """SymPy str representation of the BPD using tile symbols"""
         result = []
         for i in range(self.rows):
@@ -330,7 +334,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return self.perm
 
     @property
-    def length_vector(self):
+    def length_vector(self) -> tuple[int, ...]:
         """
         Compute the length vector of the permutation represented by this BPD.
 
@@ -343,7 +347,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return tuple(int(np.sum(self[i, :] == TileType.BLANK)) for i in range(self.rows))
 
     @classmethod
-    def from_asm(cls, asm):
+    def from_asm(cls, asm) -> BPD:
         """
         Create a BPD from an ASM (Alternating Sign Matrix).
 
@@ -371,7 +375,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return cls(grid)
 
     @classmethod
-    def rothe_bpd(cls, perm, num_rows):
+    def rothe_bpd(cls, perm: Permutation, num_rows: int) -> BPD:
         n = max(num_rows, len(perm))
         grid = np.full((num_rows, n), fill_value=TileType.TBD, dtype=TileType)
         bpd = BPD(grid)
@@ -484,17 +488,17 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return True
 
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Check equality of two BPDs"""
         if not isinstance(other, BPD):
             return False
         return np.array_equal(self.grid, other.grid)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Hash for use in sets and dicts"""
         return hash(self.grid.tobytes())
 
-    def copy(self):
+    def copy(self) -> BPD:
         """Create a copy of this BPD"""
         return BPD(self.grid.copy(), column_perm=self._column_perm)
 
@@ -503,7 +507,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """Total number of crossings in the BPD"""
         return int(np.sum(self.grid == TileType.CROSS))
 
-    def trace_pipe(self, i, j, direction=None):
+    def trace_pipe(self, i: int, j: int, direction: str | None = None) -> int | None:
         if self[i, j] == TileType.ELBOW_NW:
             if direction == "left":
                 return None
@@ -534,13 +538,13 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             raise ValueError("Must specify direction when tracing through a crossing")
         raise ValueError(f"Invalid tile for tracing pipe at ({i}, {j}): {self[i, j]}")
 
-    def all_se_elbow_spots(self):
+    def all_se_elbow_spots(self) -> set[tuple[int, int]]:
         return self.all_tiles_of_type(TileType.ELBOW_SE)
 
-    def all_blank_spots(self):
+    def all_blank_spots(self) -> set[tuple[int, int]]:
         return self.all_tiles_of_type(TileType.BLANK)
 
-    def all_tiles_of_type(self, tile_type: TileType):
+    def all_tiles_of_type(self, tile_type: TileType) -> set[tuple[int, int]]:
         tiles = set()
         for i in range(self.rows):
             for j in range(self.cols):
@@ -548,7 +552,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                     tiles.add((i, j))
         return tiles
 
-    def droop_moves(self):
+    def droop_moves(self) -> set[tuple[tuple[int, int], tuple[int, int]]]:
         import itertools
 
         droop_moves = set()
@@ -563,7 +567,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                     droop_moves.add(((ri, rj), (bi, bj)))
         return droop_moves
 
-    def do_droop_move(self, move):
+    def do_droop_move(self, move: tuple[tuple[int, int], tuple[int, int]]) -> BPD:
         D = self.copy()
         (ri, rj) = move[0]
         (bi, bj) = move[1]
@@ -596,7 +600,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         D.rebuild()
         return D
 
-    def normalize(self):
+    def normalize(self) -> BPD:
         if len(self) >= len(self.perm):
             return self.copy()
         snap_size = max(len(self.perm), self.cols)
@@ -607,7 +611,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         ret.rebuild()
         return ret
 
-    def pop_op(self):
+    def pop_op(self) -> tuple[BPD, tuple[int, int]]:
         # --- STEP 0 --- #
         D = self.normalize()
         # check if D has a blank tile (i.e., the coxeter length of D.w is zero)
@@ -712,7 +716,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         #     D._column_perm = left_simple_ref * self._column_perm
         return D.resize(self.rows), (a + 1, r + 1)
 
-    def column_perm_at_row(self, row):
+    def column_perm_at_row(self, row: int) -> Permutation:
         build_perm = []
         for col in range(self.cols):
             if self[row, col].entrance_from_bottom:
@@ -724,7 +728,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 build_perm.append(None)
         return Permutation.from_partial(build_perm)
 
-    def resize(self, new_num_rows, column_perm=None):
+    def resize(self, new_num_rows: int, column_perm: Permutation | None = None) -> BPD:
         if new_num_rows > self.rows:
             return BPD.from_rc_graph(self.to_rc_graph().resize(new_num_rows), column_perm=column_perm)
         if new_num_rows < len(self.perm):
@@ -732,7 +736,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return BPD(self.grid[:new_num_rows, :], column_perm=column_perm)
 
     @classmethod
-    def from_rc_graph(cls, rc_graph, column_perm=None):
+    def from_rc_graph(cls, rc_graph, column_perm: Permutation | None = None) -> BPD:
         num_rows = len(rc_graph)
         n = max(num_rows, len(rc_graph.perm))
         bpd = BPD(np.full((n, n), fill_value=TileType.TBD, dtype=TileType))
@@ -747,7 +751,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             return bpd.resize(num_rows, column_perm=column_perm)
         return bpd
 
-    def prod_with_bpd(self, other):
+    def prod_with_bpd(self, other: BPD) -> BPD:
         pop_other = []
         other_work = other
         while other_work.perm.inv > 0:
@@ -761,7 +765,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             new_bpd = new_bpd.inverse_pop_op(a, b)
         return new_bpd
 
-    def inverse_pop_op(self, a, r):
+    def inverse_pop_op(self, a: int, r: int) -> BPD:
         D = self.normalize()
         # check if D has a blank tile (i.e., the coxeter length of D.w is zero)
         if D.rows <= a or D.rows <= r:
@@ -848,7 +852,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         return D
 
-    def rebuild(self):
+    def rebuild(self) -> None:
         """Rebuild the BPD to resolve any TBD tiles"""
         for i in range(self.rows):
             for j in range(self.cols):
@@ -856,34 +860,10 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                     self.grid[i, j] = TileType.TBD
         self.build()
 
-    def zero_out_last_row(self):
-        # if len(self.perm.trimcode) < self.rows:
-        #     return self.resize(self.rows - 1)
-        # search_bpd = self
-        # if self.rows < len(self.perm):
-        #     search_bpd = search_bpd.resize(len(self.perm))
-        # a, b = search_bpd.perm.maximal_corner
-        # assert search_bpd[a - 1, b - 1] == TileType.ELBOW_NW
-        # # find nearest CROSS strictly SE of this
-        # r, c = a, b
-        # while r < search_bpd.rows and c < search_bpd.cols and search_bpd[r, c] != TileType.CROSS:
-        #     if c < search_bpd.cols - 1:
-        #         c += 1
-        #     else:
-        #         r += 1
-        #         c = b + 1
-        # if r == search_bpd.rows or c == search_bpd.cols:
-        #     raise ValueError("No CROSS found strictly SE of maximal corner")
-        # res_bpd = search_bpd.copy()
-        # res_bpd.grid[a - 1, b - 1] = TileType.CROSS
-        # res_bpd.grid[r, c] = TileType.TBD
-        # res_bpd.rebuild()
-        # if len(res_bpd.perm.trimcode) < self.rows:
-        #     return res_bpd.resize(self.rows - 1)
-        # print("Needed to f")
+    def zero_out_last_row(self) -> BPD:
         return self.resize(self.rows - 1, column_perm=Permutation([]))
 
-    def right_zero_act(self):
+    def right_zero_act(self) -> set[BPD]:
         # find crosses, untransition them
         if self.perm.inv == 0:
             return {self}
@@ -914,28 +894,27 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 results.add(new_bpd)
         return results
 
-    def polyvalue(self, x, y=None, **kwargs) -> Expr:
+    def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, **_kwargs) -> Expr:
         """
         Compute the Schubert polynomial value for this BPD.
 
         Args:
             x: Variable or list of variables for polynomial
             y: Optional second set of variables for double Schubert polynomial
-            **kwargs: Additional keyword arguments for polynomial computation
+            **_kwargs: Additional keyword arguments for polynomial computation (unused)
         """
         from schubmult.symbolic import prod
         if y is None:
             return prod(x[i + 1] for i, _ in self.all_blank_spots())
         return prod(x[i + 1] - y[j + 1] for i, j in self.all_blank_spots())
 
-    def to_rc_graph(self):
+    def to_rc_graph(self) -> RCGraph:
         """
         Convert this BPD to an RC-graph representation.
 
         Returns:
             RCGraph object (if available in the module)
         """
-        from schubmult.schub_lib.rc_graph import RCGraph
 
         # RC-graph rows contain the column positions of crossings in each row
         rows = [[] for _ in range(self.rows)]
