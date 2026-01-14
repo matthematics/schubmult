@@ -711,13 +711,13 @@ class BPD(DefaultPrinting):
 
     def resize(self, new_num_rows, column_perm=None):
         if new_num_rows > self.rows:
-            return BPD.from_rc_graph(self.to_rc_graph().resize(new_num_rows, column_perm=column_perm))
+            return BPD.from_rc_graph(self.to_rc_graph().resize(new_num_rows), column_perm=column_perm)
         if new_num_rows < len(self.perm):
             return BPD(self.grid[:new_num_rows, :], column_perm=self.column_perm_at_row(new_num_rows - 1) if column_perm is None else column_perm)
         return BPD(self.grid[:new_num_rows, :], column_perm=column_perm)
 
     @classmethod
-    def from_rc_graph(cls, rc_graph):
+    def from_rc_graph(cls, rc_graph, column_perm=None):
         num_rows = len(rc_graph)
         n = max(num_rows, len(rc_graph.perm))
         bpd = BPD(np.full((n, n), fill_value=TileType.TBD, dtype=TileType))
@@ -729,7 +729,7 @@ class BPD(DefaultPrinting):
 
         assert bpd.perm.inv == len(bpd.all_blank_spots())
         if n > len(rc_graph):
-            return bpd.resize(num_rows)
+            return bpd.resize(num_rows, column_perm=column_perm)
         return bpd
 
     def prod_with_bpd(self, other):
