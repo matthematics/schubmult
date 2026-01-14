@@ -86,15 +86,15 @@ class BPD(DefaultPrinting):
     Each BPD corresponds to a permutation and has an associated weight.
     """
 
-    def __init__(self, grid):
+    def __init__(self, grid, column_perm=None):
         """
         Initialize a BPD from a grid.
 
         Args:
             grid: n×n array-like of TileType values, integers 0-5, or list of lists
-        """
+        s"""
         self.grid = np.array(grid, dtype=TileType)
-
+        self._column_perm = column_perm if column_perm else Permutation([])
         # Validate grid is square
         # if len(self.grid.shape) != 2 or self.grid.shape[0] != self.grid.shape[1]:
         #     raise ValueError("BPD grid must be square (n×n)")
@@ -126,7 +126,7 @@ class BPD(DefaultPrinting):
         return pipes
 
     @classmethod
-    def _get_tbd_tile(cls, left_tile, up_tile, right_edge=False) -> TileType:
+    def _get_tbd_tile(cls, left_tile, up_tile) -> TileType:
         if up_tile is None:
             if left_tile is None or not left_tile.feeds_right:
                 # if self.DEBUG:
@@ -141,13 +141,13 @@ class BPD(DefaultPrinting):
             return TileType.ELBOW_SE
         if left_tile.feeds_right:
             if up_tile.entrance_from_bottom:
-                if right_edge:
-                    return TileType.CROSS
+                # if right_edge:
+                #     return TileType.CROSS
                 return TileType.ELBOW_NW
             return TileType.HORIZ
         if up_tile.entrance_from_bottom:
-            if right_edge:
-                return TileType.CROSS
+            # if right_edge:
+            #     return TileType.CROSS
             return TileType.VERT
         # if self.DEBUG:
         #     print(f"Returning SE elbow for cell with {left_tile=}, {down_tile=}, {up_tile=}, {right_tile=}, line={__import__('inspect').currentframe().f_back.f_lineno}")
@@ -163,7 +163,6 @@ class BPD(DefaultPrinting):
                     self.grid[row, col] = self._get_tbd_tile(
                         self[row, col - 1] if col > 0 else None,
                         self[row - 1, col] if row > 0 else None,
-                        right_edge = (col == self.cols - 1),
                     )
                 # if self.DEBUG:
                 #     print(f"After building cell ({row}, {col}):\n{self}")
@@ -214,7 +213,7 @@ class BPD(DefaultPrinting):
         # Calculate column widths based on labels (minimum 1 for tile)
         col_widths = []
         for j in range(self.cols):
-            label = str(printer._print(j + 1))
+            label = str(printer._print(self._column_perm[j]))
             col_widths.append(max(1, len(label)))
 
         # Use maximum column width for all columns
@@ -268,7 +267,7 @@ class BPD(DefaultPrinting):
         column_width = 1 + total_pad
 
         for j in range(self.cols):
-            label = str(printer._print(j + 1))
+            label = str(printer._print(self._column_perm[j]))
             col_labels.append(label.center(column_width))
 
         # Add leading space to match prettyForm's handling
@@ -321,7 +320,7 @@ class BPD(DefaultPrinting):
                     raise ValueError(f"Invalid tile type {tile} in BPD")
             buildperm.append(current_col + 1)
         n = max(buildperm)
-        return Permutation.from_partial(buildperm + [None] * (n - len(buildperm)))
+        return self._column_perm * Permutation.from_partial(buildperm + [None] * (n - len(buildperm)))
 
     @property
     def permutation(self) -> Permutation:
@@ -498,7 +497,7 @@ class BPD(DefaultPrinting):
             if direction == "down":
                 return None
             if i == self.rows - 1:
-                return j + 1
+                return self._column_perm[j]
             return self.trace_pipe(i + 1, j, direction="down")
         if self[i, j] == TileType.HORIZ:
             if direction == "down":
@@ -508,12 +507,12 @@ class BPD(DefaultPrinting):
             if direction == "left":
                 return None
             if i == self.rows - 1:
-                return j + 1
+                return self._column_perm[j]
             return self.trace_pipe(i + 1, j, direction="down")
         if self[i, j] == TileType.CROSS:
             if direction == "down":
                 if i == self.rows - 1:
-                    return j + 1
+                    return self._column_perm[j]
                 return self.trace_pipe(i + 1, j, direction="down")
             if direction == "left":
                 return self.trace_pipe(i, j - 1, direction="left")
@@ -682,33 +681,40 @@ class BPD(DefaultPrinting):
             D.grid[x, y + 1] = TileType.ELBOW_NW
 
         D.rebuild()
-        return D, (a + 1, r + 1)
+        return D, (self._column_perm[a], r + 1)
+
+    def column_perm_at_row(self, row):
+        build_perm = []
+        for col in range(self.cols):
+            if self[row, col].entrance_from_bottom:
+                try:
+                    build_perm.append(self.trace_pipe(row, col))
+                except ValueError:
+                    build_perm.append(self.trace_pipe(row, col, direction="down"))
+            else:
+                build_perm.append(None)
+        return Permutation.from_partial(build_perm)
 
     def resize(self, new_num_rows):
         if new_num_rows > self.rows:
-            new_grid = np.pad(self.grid, ((0, new_num_rows - self.rows), (0, max(new_num_rows - self.cols, 0))), mode="constant", constant_values=TileType.TBD)
-            # add crosses
-            perm = self.perm
-            graph = perm.graph
-            for row in range(self.rows, new_num_rows):
-                for col in range(self.cols):
-                    #if any(tup[0] == row + 1 and tup[1] - 1 < col for tup in graph) and any(tup[0] - 1 < row and tup[1] == col + 1 for tup in graph):
-                    if any(tup[0] == row + 1 and tup[1] - 1 < col for tup in graph) and any(tup[0] - 1 < row and tup[1] == col + 1 for tup in graph):
-                        new_grid[row, col] = TileType.CROSS
-            return BPD(new_grid)
+            return BPD.from_rc_graph(self.to_rc_graph().resize(new_num_rows))
+        if new_num_rows < len(self.perm):
+            return BPD(self.grid[:new_num_rows, :], column_perm=self.column_perm_at_row(new_num_rows - 1))
         return BPD(self.grid[:new_num_rows, :])
 
     @classmethod
     def from_rc_graph(cls, rc_graph):
         num_rows = len(rc_graph)
-        n = len(rc_graph.perm)
-        bpd = BPD(np.full((num_rows, n), fill_value=TileType.TBD, dtype=TileType))
+        n = max(num_rows, len(rc_graph.perm))
+        bpd = BPD(np.full((n, n), fill_value=TileType.TBD, dtype=TileType))
         coords = [rc_graph.left_to_right_inversion_coords(i) for i in range(rc_graph.perm.inv)]
         coords.reverse()
         for i, j in coords:
             bpd = bpd.inverse_pop_op(i + j - 1, i)
             rc_graph = rc_graph.toggle_ref_at(i, j)
-        return bpd.resize(num_rows)
+        if n != len(rc_graph):
+            return bpd.resize(num_rows)
+        return bpd
 
     def prod_with_bpd(self, other):
         pop_other = []
@@ -816,23 +822,31 @@ class BPD(DefaultPrinting):
         self.build()
 
     def zero_out_last_row(self):
-        a, b = self.perm.maximal_corner
-        assert self[a - 1, b - 1] == TileType.ELBOW_NW
+        if len(self.perm.trimcode) < self.rows:
+            return self.resize(self.rows - 1)
+        search_bpd = self
+        if self.rows < len(self.perm):
+            search_bpd = search_bpd.resize(len(self.perm))
+        a, b = search_bpd.perm.maximal_corner
+        assert search_bpd[a - 1, b - 1] == TileType.ELBOW_NW
         # find nearest CROSS strictly SE of this
         r, c = a, b
-        while r < self.rows and c < self.cols and self[r, c] != TileType.CROSS:
-            if c < self.cols - 1:
+        while r < search_bpd.rows and c < search_bpd.cols and search_bpd[r, c] != TileType.CROSS:
+            if c < search_bpd.cols - 1:
                 c += 1
             else:
                 r += 1
                 c = b + 1
-        if r == self.rows or c == self.cols:
+        if r == search_bpd.rows or c == search_bpd.cols:
             raise ValueError("No CROSS found strictly SE of maximal corner")
-        res_bpd = self.copy()
+        res_bpd = search_bpd.copy()
         res_bpd.grid[a - 1, b - 1] = TileType.CROSS
         res_bpd.grid[r, c] = TileType.TBD
         res_bpd.rebuild()
-        return res_bpd
+        if len(res_bpd.perm.trimcode) < self.rows:
+            return res_bpd.resize(self.rows - 1)
+        print("Needed to f")
+        return res_bpd.resize(self.rows).zero_out_last_row()
 
     def right_zero_act(self):
         # find crosses, untransition them
