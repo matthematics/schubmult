@@ -584,8 +584,9 @@ class BPD(DefaultPrinting):
     def snap(self):
         if len(self) >= len(self.perm):
             return self.copy()
-        new_grid = np.pad(self.grid, ((0, len(self.perm) - len(self)), (0, len(self.perm) - self.cols)), constant_values=TileType.TBD)
-        bottom_portion = BPD.rothe_bpd(self.perm.min_coset_rep(*(list(range(self.rows)) + list(range(self.rows + 1, len(self.perm))))), len(self.perm))
+        snap_size = max(len(self.perm), self.cols)
+        new_grid = np.pad(self.grid, ((0, snap_size - len(self)), (0, max(0, snap_size - self.cols))), constant_values=TileType.TBD)
+        bottom_portion = BPD.rothe_bpd(self.perm.min_coset_rep(*(list(range(self.rows)) + list(range(self.rows + 1, snap_size)))), snap_size)
         new_grid[self.rows:, :] = bottom_portion.grid[self.rows:, :]
         ret = BPD(new_grid)
         ret.rebuild()
