@@ -357,7 +357,7 @@ class BPD(DefaultPrinting):
 
     @classmethod
     def rothe_bpd(cls, perm, num_rows):
-        n = len(perm)
+        n = max(num_rows, len(perm))
         grid = np.full((num_rows, n), fill_value=TileType.TBD, dtype=TileType)
         bpd = BPD(grid)
         for a, b in perm.diagram:
@@ -481,7 +481,7 @@ class BPD(DefaultPrinting):
 
     def copy(self):
         """Create a copy of this BPD"""
-        return BPD(self.grid.copy())
+        return BPD(self.grid.copy(), column_perm=self._column_perm)
 
     @property
     def num_crossings(self) -> int:
@@ -581,9 +581,19 @@ class BPD(DefaultPrinting):
         D.rebuild()
         return D
 
+    def snap(self):
+        if len(self) >= len(self.perm):
+            return self.copy()
+        new_grid = np.pad(self.grid, ((0, len(self.perm) - len(self)), (0, len(self.perm) - self.cols)), constant_values=TileType.TBD)
+        bottom_portion = BPD.rothe_bpd(self.perm.min_coset_rep(*(list(range(self.rows)) + list(range(self.rows + 1, len(self.perm))))), len(self.perm))
+        new_grid[self.rows:, :] = bottom_portion.grid[self.rows:, :]
+        ret = BPD(new_grid)
+        ret.rebuild()
+        return ret
+
     def pop_op(self):
         # --- STEP 0 --- #
-        D = self.copy()
+        D = self.snap()
         # check if D has a blank tile (i.e., the coxeter length of D.w is zero)
         if self.perm.inv == 0:
             return D
@@ -681,7 +691,10 @@ class BPD(DefaultPrinting):
             D.grid[x, y + 1] = TileType.ELBOW_NW
 
         D.rebuild()
-        return D, (self._column_perm[a], r + 1)
+        # left_simple_ref = Permutation.ref_product(self._column_perm[a])
+        # if D.perm != left_simple_ref * self.perm:
+        #     D._column_perm = left_simple_ref * self._column_perm
+        return D.resize(self.rows), (a + 1, r + 1)
 
     def column_perm_at_row(self, row):
         build_perm = []
@@ -695,12 +708,12 @@ class BPD(DefaultPrinting):
                 build_perm.append(None)
         return Permutation.from_partial(build_perm)
 
-    def resize(self, new_num_rows):
+    def resize(self, new_num_rows, column_perm=None):
         if new_num_rows > self.rows:
-            return BPD.from_rc_graph(self.to_rc_graph().resize(new_num_rows))
+            return BPD.from_rc_graph(self.to_rc_graph().resize(new_num_rows, column_perm=column_perm))
         if new_num_rows < len(self.perm):
-            return BPD(self.grid[:new_num_rows, :], column_perm=self.column_perm_at_row(new_num_rows - 1))
-        return BPD(self.grid[:new_num_rows, :])
+            return BPD(self.grid[:new_num_rows, :], column_perm=self.column_perm_at_row(new_num_rows - 1) if column_perm is None else column_perm)
+        return BPD(self.grid[:new_num_rows, :], column_perm=column_perm)
 
     @classmethod
     def from_rc_graph(cls, rc_graph):
@@ -712,7 +725,9 @@ class BPD(DefaultPrinting):
         for i, j in coords:
             bpd = bpd.inverse_pop_op(i + j - 1, i)
             rc_graph = rc_graph.toggle_ref_at(i, j)
-        if n != len(rc_graph):
+
+        assert bpd.perm.inv == len(bpd.all_blank_spots())
+        if n > len(rc_graph):
             return bpd.resize(num_rows)
         return bpd
 
@@ -731,7 +746,7 @@ class BPD(DefaultPrinting):
         return new_bpd
 
     def inverse_pop_op(self, a, r):
-        D = self.copy()
+        D = self.snap()
         # check if D has a blank tile (i.e., the coxeter length of D.w is zero)
         if D.rows <= a or D.rows <= r:
             new_num_rows = max(D.rows, a + 1, r + 1)
@@ -811,6 +826,10 @@ class BPD(DefaultPrinting):
             D.rebuild()
 
         D.rebuild()
+
+        # if D.perm != Permutation.ref_product(self._column_perm[a]) * self.perm:
+        #     D._column_perm = Permutation.ref_product(self._column_perm[a]) * self._column_perm
+
         return D
 
     def rebuild(self):
@@ -822,31 +841,31 @@ class BPD(DefaultPrinting):
         self.build()
 
     def zero_out_last_row(self):
-        if len(self.perm.trimcode) < self.rows:
-            return self.resize(self.rows - 1)
-        search_bpd = self
-        if self.rows < len(self.perm):
-            search_bpd = search_bpd.resize(len(self.perm))
-        a, b = search_bpd.perm.maximal_corner
-        assert search_bpd[a - 1, b - 1] == TileType.ELBOW_NW
-        # find nearest CROSS strictly SE of this
-        r, c = a, b
-        while r < search_bpd.rows and c < search_bpd.cols and search_bpd[r, c] != TileType.CROSS:
-            if c < search_bpd.cols - 1:
-                c += 1
-            else:
-                r += 1
-                c = b + 1
-        if r == search_bpd.rows or c == search_bpd.cols:
-            raise ValueError("No CROSS found strictly SE of maximal corner")
-        res_bpd = search_bpd.copy()
-        res_bpd.grid[a - 1, b - 1] = TileType.CROSS
-        res_bpd.grid[r, c] = TileType.TBD
-        res_bpd.rebuild()
-        if len(res_bpd.perm.trimcode) < self.rows:
-            return res_bpd.resize(self.rows - 1)
-        print("Needed to f")
-        return res_bpd.resize(self.rows).zero_out_last_row()
+        # if len(self.perm.trimcode) < self.rows:
+        #     return self.resize(self.rows - 1)
+        # search_bpd = self
+        # if self.rows < len(self.perm):
+        #     search_bpd = search_bpd.resize(len(self.perm))
+        # a, b = search_bpd.perm.maximal_corner
+        # assert search_bpd[a - 1, b - 1] == TileType.ELBOW_NW
+        # # find nearest CROSS strictly SE of this
+        # r, c = a, b
+        # while r < search_bpd.rows and c < search_bpd.cols and search_bpd[r, c] != TileType.CROSS:
+        #     if c < search_bpd.cols - 1:
+        #         c += 1
+        #     else:
+        #         r += 1
+        #         c = b + 1
+        # if r == search_bpd.rows or c == search_bpd.cols:
+        #     raise ValueError("No CROSS found strictly SE of maximal corner")
+        # res_bpd = search_bpd.copy()
+        # res_bpd.grid[a - 1, b - 1] = TileType.CROSS
+        # res_bpd.grid[r, c] = TileType.TBD
+        # res_bpd.rebuild()
+        # if len(res_bpd.perm.trimcode) < self.rows:
+        #     return res_bpd.resize(self.rows - 1)
+        # print("Needed to f")
+        return self.resize(self.rows - 1, column_perm=Permutation([]))
 
     def right_zero_act(self):
         # find crosses, untransition them
