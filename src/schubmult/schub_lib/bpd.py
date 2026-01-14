@@ -17,6 +17,7 @@ from sympy.printing.defaults import DefaultPrinting
 
 from schubmult.schub_lib.perm_lib import Permutation
 from schubmult.schub_lib.schubert_monomial_graph import SchubertMonomialGraph
+from schubmult.symbolic import Expr
 
 
 class TileType(IntEnum):
@@ -328,6 +329,19 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """Alias for perm property"""
         return self.perm
 
+    @property
+    def length_vector(self):
+        """
+        Compute the length vector of the permutation represented by this BPD.
+
+        The length vector is a tuple (l_1, l_2, ..., l_n) where l_i is the number
+        of crossings in row i.
+
+        Returns:
+            Tuple of integers representing the length vector
+        """
+        return tuple(int(np.sum(self[i, :] == TileType.BLANK)) for i in range(self.rows))
+
     @classmethod
     def from_asm(cls, asm):
         """
@@ -582,7 +596,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         D.rebuild()
         return D
 
-    def snap(self):
+    def normalize(self):
         if len(self) >= len(self.perm):
             return self.copy()
         snap_size = max(len(self.perm), self.cols)
@@ -595,7 +609,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def pop_op(self):
         # --- STEP 0 --- #
-        D = self.snap()
+        D = self.normalize()
         # check if D has a blank tile (i.e., the coxeter length of D.w is zero)
         if self.perm.inv == 0:
             return D
@@ -748,7 +762,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return new_bpd
 
     def inverse_pop_op(self, a, r):
-        D = self.snap()
+        D = self.normalize()
         # check if D has a blank tile (i.e., the coxeter length of D.w is zero)
         if D.rows <= a or D.rows <= r:
             new_num_rows = max(D.rows, a + 1, r + 1)
@@ -900,6 +914,20 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 results.add(new_bpd)
         return results
 
+    def polyvalue(self, x, y=None, **kwargs) -> Expr:
+        """
+        Compute the Schubert polynomial value for this BPD.
+
+        Args:
+            x: Variable or list of variables for polynomial
+            y: Optional second set of variables for double Schubert polynomial
+            **kwargs: Additional keyword arguments for polynomial computation
+        """
+        from schubmult.symbolic import prod
+        if y is None:
+            return prod(x[i + 1] for i, _ in self.all_blank_spots())
+        return prod(x[i + 1] - y[j + 1] for i, j in self.all_blank_spots())
+
     def to_rc_graph(self):
         """
         Convert this BPD to an RC-graph representation.
@@ -910,7 +938,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         from schubmult.schub_lib.rc_graph import RCGraph
 
         # RC-graph rows contain the column positions of crossings in each row
-        rows = [[]] * self.rows
+        rows = [[] for _ in range(self.rows)]
         work_bpd = self
 
         while work_bpd.perm.inv > 0:

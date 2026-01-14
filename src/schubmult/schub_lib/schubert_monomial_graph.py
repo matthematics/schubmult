@@ -6,20 +6,22 @@ monomials in Schubert polynomials via grid-based diagrams.
 """
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 from schubmult.schub_lib.perm_lib import Permutation
+from schubmult.symbolic import Expr
 
 
 class SchubertMonomialGraph(ABC):
     """
     Abstract base class for Schubert monomial graph structures.
-    
+
     This class provides a common interface for combinatorial objects that:
     - Represent monomials in Schubert polynomials
     - Have a grid/matrix-like structure with rows and columns
     - Correspond to a permutation
     - Have a weight (as a vector or tuple)
-    
+
     Concrete implementations include:
     - RCGraph: Reduced-compatible graphs with crystal structure
     - BPD: Bumpless pipe dreams
@@ -30,39 +32,39 @@ class SchubertMonomialGraph(ABC):
     def perm(self) -> Permutation:
         """
         Return the permutation associated with this monomial graph.
-        
+
         Returns:
             Permutation object
         """
-        pass
+        ...
 
     @property
     @abstractmethod
     def rows(self) -> int:
         """
         Number of rows in the grid representation.
-        
+
         Returns:
             Number of rows
         """
-        pass
+        ...
 
     @property
     @abstractmethod
     def cols(self) -> int:
         """
         Number of columns in the grid representation.
-        
+
         Returns:
             Number of columns
         """
-        pass
+        ...
 
     @property
     def width(self) -> int:
         """
         Width of the grid (alias for cols).
-        
+
         Returns:
             Number of columns
         """
@@ -72,7 +74,7 @@ class SchubertMonomialGraph(ABC):
     def height(self) -> int:
         """
         Height of the grid (alias for rows).
-        
+
         Returns:
             Number of rows
         """
@@ -82,21 +84,44 @@ class SchubertMonomialGraph(ABC):
     def permutation(self) -> Permutation:
         """
         Alias for perm property.
-        
+
         Returns:
             Permutation object
         """
         return self.perm
 
     @abstractmethod
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> Any:
         """
         Access elements of the grid.
-        
+
         Args:
             key: Index or tuple of indices
-            
+
         Returns:
             Element(s) at the specified position
         """
-        pass
+        ...
+
+    @abstractmethod
+    def normalize(self) -> "SchubertMonomialGraph":
+        """
+        Return a normalized version of the monomial graph.
+
+        Normalization may involve reordering or simplifying the structure
+        while preserving its combinatorial properties.
+
+        Returns:
+            Normalized SchubertMonomialGraph object
+        """
+        ...
+
+    @abstractmethod
+    def polyvalue(self, x, y=None, **kwargs) -> Expr:
+        """
+        Compute the polynomial value represented by this monomial graph.
+
+        Returns:
+            Polynomial representation (e.g., as a SymPy expression)
+        """
+        ...
