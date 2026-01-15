@@ -277,7 +277,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             col_labels.append(label.center(column_width))
 
         # Add leading space to match prettyForm's handling
-        rows.append("".join(col_labels)+ (" " * max_col_width) + " ")
+        rows.append("".join(col_labels) + (" " * max_col_width) + " ")
 
         return prettyForm("\n".join(rows))
 
@@ -316,7 +316,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                         current_col -= 1
                     else:
                         current_row += 1
-                elif tile ==TileType.HORIZ:
+                elif tile == TileType.HORIZ:
                     assert going_left
                     current_col -= 1
                 elif tile == TileType.VERT:
@@ -375,7 +375,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return cls(grid)
 
     @classmethod
-    def rothe_bpd(cls, perm: Permutation, num_rows: int) -> BPD:
+    def rothe_bpd(cls, perm: Permutation, num_rows: int | None = None) -> BPD:
+        if num_rows is None:
+            num_rows = len(perm)
         n = max(num_rows, len(perm))
         grid = np.full((num_rows, n), fill_value=TileType.TBD, dtype=TileType)
         bpd = BPD(grid)
@@ -486,7 +488,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 if self[row, col].entrance_from_bottom and not self[row + 1, col].feeds_up:
                     return False
         return True
-
 
     def __eq__(self, other: object) -> bool:
         """Check equality of two BPDs"""
@@ -606,7 +607,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         snap_size = max(len(self.perm), self.cols)
         new_grid = np.pad(self.grid, ((0, snap_size - len(self)), (0, max(0, snap_size - self.cols))), constant_values=TileType.TBD)
         bottom_portion = BPD.rothe_bpd(self.perm.min_coset_rep(*(list(range(self.rows)) + list(range(self.rows + 1, snap_size)))), snap_size)
-        new_grid[self.rows:, :] = bottom_portion.grid[self.rows:, :]
+        new_grid[self.rows :, :] = bottom_portion.grid[self.rows :, :]
         ret = BPD(new_grid)
         ret.rebuild()
         return ret
@@ -904,6 +905,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             **_kwargs: Additional keyword arguments for polynomial computation (unused)
         """
         from schubmult.symbolic import prod
+
         if y is None:
             return prod(x[i + 1] for i, _ in self.all_blank_spots())
         return prod(x[i + 1] - y[j + 1] for i, j in self.all_blank_spots())
