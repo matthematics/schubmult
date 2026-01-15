@@ -1,9 +1,9 @@
 from functools import cache
 
-from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
 from schubmult.rings.free_algebra_basis import SchubertBasis, WordBasis
+from schubmult.rings.schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
 from schubmult.schub_lib.rc_graph import RCGraph
-from schubmult.symbolic import S, sympy_Mul
+from schubmult.symbolic import S
 
 from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
 from .free_algebra import FreeAlgebra
@@ -16,16 +16,7 @@ from .free_algebra import FreeAlgebra
 # yv highest weight
 
 
-class RCGraphPrintingTerm(TypedPrintingTerm):
-    # def _sympystr(self, printer=None):
-    #     return printer._print(self._key)
-
-    # def _pretty(self, printer):
-    #     return printer._print(self._key)
-    pass
-
-
-class RCGraphRingElement(CrystalGraphRingElement):
+class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
     """
     RCGraphRing elements are linear combinations of RCGraph basis elements.
 
@@ -41,10 +32,6 @@ class RCGraphRingElement(CrystalGraphRingElement):
     # ----------------------
     # Presentation helpers
     # ----------------------
-    def as_ordered_terms(self, *_, **__):
-        if len(self.keys()) == 0:
-            return [S.Zero]
-        return [self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k)) for k in self.keys()]
 
     def __mod__(self, other):
         """
@@ -216,18 +203,8 @@ class RCGraphRingElement(CrystalGraphRingElement):
             ret += coeff * ASx(rc_graph.perm, len(rc_graph))
         return ret
 
-    def polyvalue(self, x, y=None):
-        """
-        Evaluate the RC graph polynomial at variables x (and y, if provided).
-        Linear extension of RCGraph.polyvalue.
-        """
-        res = S.Zero
-        for rc_graph, coeff in self.items():
-            res += coeff * rc_graph.polyvalue(x, y)
-        return res
 
-
-class RCGraphRing(CrystalGraphRing):
+class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
     _id = 0
 
     def __init__(self, *_, **__):
@@ -242,21 +219,10 @@ class RCGraphRing(CrystalGraphRing):
     def zero_monom(self):
         return RCGraph([])
 
-    def printing_term(self, key):
-        return RCGraphPrintingTerm(key)
-
     # def dtype(self):
     #     elem = RCGraphRingElement()
     #     elem.ring = self
     #     return elem
-
-    def from_dict(self, dct):
-        elem = self.dtype()
-        elem.update(dct)
-        return elem
-
-    def __call__(self, key):
-        return self.from_dict({key: 1})
 
     def from_free_algebra_element(self, elem):
         wordelem = elem.change_basis(WordBasis)
@@ -344,7 +310,6 @@ class RCGraphRing(CrystalGraphRing):
 
         for key, coeff in up_elem2.items():
             if key != elem:
-
                 # def check_compat(key_rc, rc1, rc2):
                 #     if len(key_rc) == 1:
                 #         return rc1.perm.inv + rc2.perm.inv == key_rc.perm.inv
@@ -376,7 +341,7 @@ class RCGraphRing(CrystalGraphRing):
                     if c != 0:
                         key_count[(rc1.perm, rc2.perm)] = key_count.get((rc1.perm, rc2.perm), 0) + c
 
-                for (rc1, rc2) in rset:
+                for rc1, rc2 in rset:
                     if (rc1.perm, rc2.perm) in key_count and not elem.is_potential_coproduct(rc1, rc2):
                         del ret_elem[(rc1, rc2)]
                         key_count[(rc1.perm, rc2.perm)] -= 1
@@ -385,82 +350,81 @@ class RCGraphRing(CrystalGraphRing):
 
                 rset_leftover = {k for k, v in ret_elem.items() if v != 0}
 
-
                 if len(key_count) > 0:
                     # print(f"Meh {key_count=}")
                     assert all(elem.is_potential_coproduct(rc1, rc2) for (rc1, rc2) in rset_leftover if (rc1.perm, rc2.perm) in key_count)
-                    for (rc1, rc2) in rset_leftover:
+                    for rc1, rc2 in rset_leftover:
                         if (rc1.perm, rc2.perm) in key_count:
                             ret_elem -= tring((rc1, rc2))
                             key_count[(rc1.perm, rc2.perm)] -= 1
                             if key_count[(rc1.perm, rc2.perm)] == 0:
                                 del key_count[(rc1.perm, rc2.perm)]
-                #else:
-                    # print("Yay")
-                        # rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm and CrystalGraphTensor(w0_prin, rc2).to_highest_weight()[0].crystal_weight != elem.length_vector
-                        # trim key
+                # else:
+                # print("Yay")
+                # rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm and CrystalGraphTensor(w0_prin, rc2).to_highest_weight()[0].crystal_weight != elem.length_vector
+                # trim key
 
-                        # if not CrystalGraphTensor(w0_prin, rc2).is_lowest_weight:
-                        #     ret_elem -= tring((rc1, rc2))
-                        #     break
-                        # break
-                    # if (rc1.edelman_greene()[0] == rc1_bad.edelman_greene()[0] and rc2.edelman_greene()[0] == rc2_bad.edelman_greene()[0]):
-                    #     ret_elem -= tring((rc1, rc2))
-                    #     break
-                    # if rc1.p_tableau == rc1_bad.p_tableau and rc2.p_tableau == rc2_bad.p_tableau:
-                    #     ret_elem -= tring((rc1, rc2))
-                    #     break
-                    # if rc2_bad.p_tableau == rc2.p_tableau and rc1_bad.perm == rc1.perm and rc1.p_tableau.shape == rc1_bad.p_tableau.shape:
-                    #     # outer_shape = key_rc.p_tableau.shape
-                    #     # inner_shape = rc2.weight_tableau.shape
-                    #     # stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc1.perm, inner_shape)
-                    #     # for nil_tab in stab_set:
-                    #     #     straight_tab = nil_tab.rectify()
-                    #     #     if straight_tab == rc1.p_tableau:
-                    #     #         found = True
-                    #     #         break
-                    #     # if found:
-                    #     ret_elem -= tring((rc1, rc2))
-                    #     break
-                    # if rc2_bad.perm == rc2.perm and rc2_bad.p_tableau.shape == rc2.p_tableau.shape and rc1_bad.perm == rc1.perm:
-                    #     # outer_shape = key_rc.p_tableau.shape
-                    #     # inner_shape = rc2.weight_tableau.shape
-                    #     # stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc1.perm, inner_shape)
-                    #     # for nil_tab in stab_set:
-                    #     #     straight_tab = nil_tab.rectify()
-                    #     #     if straight_tab == rc1.p_tableau:
-                    #     #         found = True
-                    #     #         break
-                    #     # if found:
-                    #     ret_elem -= tring((rc1, rc2))
-                    #     break
-                    # if rc2_bad.pe
-                    # if rc2_bad.perm == rc2.perm and rc1_bad.perm == rc1.perm:
-                    #     # outer_shape = key_rc.p_tableau.shape
-                    #     # inner_shape = rc2.weight_tableau.shape
-                    #     # stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc1.perm, inner_shape)
-                    #     # for nil_tab in stab_set:
-                    #     #     straight_tab = nil_tab.rectify()
-                    #     #     if straight_tab == rc1.p_tableau:
-                    #     #         found = True
-                    #     #         break
-                    #     # if found:
-                    #     ret_elem -= tring((rc1, rc2))
-                    #     break
-                    # if rc1_bad.p_tableau == rc1.p_tableau and rc2_bad.perm == rc2.perm:
-                    #     outer_shape = key_rc.p_tableau.shape
-                    #     inner_shape = rc1.weight_tableau.shape
-                    #     stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc2.perm, inner_shape)
-                    #     for nil_tab in stab_set:
-                    #         straight_tab = nil_tab.rectify()
-                    #         if straight_tab == rc2.p_tableau:
-                    #             found = True
-                    #             break
-                    #     if found:
-                    #         ret_elem -= tring((rc1, rc2))
-                    #         break
+                # if not CrystalGraphTensor(w0_prin, rc2).is_lowest_weight:
+                #     ret_elem -= tring((rc1, rc2))
+                #     break
+                # break
+                # if (rc1.edelman_greene()[0] == rc1_bad.edelman_greene()[0] and rc2.edelman_greene()[0] == rc2_bad.edelman_greene()[0]):
+                #     ret_elem -= tring((rc1, rc2))
+                #     break
+                # if rc1.p_tableau == rc1_bad.p_tableau and rc2.p_tableau == rc2_bad.p_tableau:
+                #     ret_elem -= tring((rc1, rc2))
+                #     break
+                # if rc2_bad.p_tableau == rc2.p_tableau and rc1_bad.perm == rc1.perm and rc1.p_tableau.shape == rc1_bad.p_tableau.shape:
+                #     # outer_shape = key_rc.p_tableau.shape
+                #     # inner_shape = rc2.weight_tableau.shape
+                #     # stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc1.perm, inner_shape)
+                #     # for nil_tab in stab_set:
+                #     #     straight_tab = nil_tab.rectify()
+                #     #     if straight_tab == rc1.p_tableau:
+                #     #         found = True
+                #     #         break
+                #     # if found:
+                #     ret_elem -= tring((rc1, rc2))
+                #     break
+                # if rc2_bad.perm == rc2.perm and rc2_bad.p_tableau.shape == rc2.p_tableau.shape and rc1_bad.perm == rc1.perm:
+                #     # outer_shape = key_rc.p_tableau.shape
+                #     # inner_shape = rc2.weight_tableau.shape
+                #     # stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc1.perm, inner_shape)
+                #     # for nil_tab in stab_set:
+                #     #     straight_tab = nil_tab.rectify()
+                #     #     if straight_tab == rc1.p_tableau:
+                #     #         found = True
+                #     #         break
+                #     # if found:
+                #     ret_elem -= tring((rc1, rc2))
+                #     break
+                # if rc2_bad.pe
+                # if rc2_bad.perm == rc2.perm and rc1_bad.perm == rc1.perm:
+                #     # outer_shape = key_rc.p_tableau.shape
+                #     # inner_shape = rc2.weight_tableau.shape
+                #     # stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc1.perm, inner_shape)
+                #     # for nil_tab in stab_set:
+                #     #     straight_tab = nil_tab.rectify()
+                #     #     if straight_tab == rc1.p_tableau:
+                #     #         found = True
+                #     #         break
+                #     # if found:
+                #     ret_elem -= tring((rc1, rc2))
+                #     break
+                # if rc1_bad.p_tableau == rc1.p_tableau and rc2_bad.perm == rc2.perm:
+                #     outer_shape = key_rc.p_tableau.shape
+                #     inner_shape = rc1.weight_tableau.shape
+                #     stab_set = NilPlactic.all_skew_ed_tableaux(outer_shape, rc2.perm, inner_shape)
+                #     for nil_tab in stab_set:
+                #         straight_tab = nil_tab.rectify()
+                #         if straight_tab == rc2.p_tableau:
+                #             found = True
+                #             break
+                #     if found:
+                #         ret_elem -= tring((rc1, rc2))
+                #         break
 
-                    #     break
+                #     break
                 assert len(key_count) == 0, f"Leftover counts {key_count=}"
         bad_bucket = False
         for (rc1, rc2), v in ret_elem.items():
@@ -473,12 +437,12 @@ class RCGraphRing(CrystalGraphRing):
         if bad_bucket:
             raise AssertionError("Failed potential coproduct check.")
         rcpd = ASx(basis_elem.perm, len(basis_elem)).coproduct()
-        collected_cpd = (ASx@ASx).zero
+        collected_cpd = (ASx @ ASx).zero
         for (rc1, rc2), c in ret_elem.items():
             assert c == 1
-            collected_cpd += c * (ASx@ASx).ext_multiply(ASx(rc1.perm, len(rc1)), ASx(rc2.perm, len(rc2)))
+            collected_cpd += c * (ASx @ ASx).ext_multiply(ASx(rc1.perm, len(rc1)), ASx(rc2.perm, len(rc2)))
         assert all(v == 0 for v in (rcpd - collected_cpd).values()), f"Mismatch coproducts {rcpd - collected_cpd}"
-        #assert all(elem.is_potential_coproduct(k1, k2) for (k1, k2), spuh in ret_elem.items() if spuh != 0)
+        # assert all(elem.is_potential_coproduct(k1, k2) for (k1, k2), spuh in ret_elem.items() if spuh != 0)
         # assert all(C)
         return ret_elem
 
@@ -579,12 +543,8 @@ class RCGraphRing(CrystalGraphRing):
                     prod = g1.prod_with_rc(g2)
                     for g3, c3 in prod.items():
                         result_dict[g3] = result_dict.get(g3, 0) + c1 * c2 * c3
-            # result_dict = {k: v * b for k, v in a.items()}
-        return self.from_dict(result_dict)
-
-    @property
-    def zero(self):
-        return self.dtype()
+            return self.from_dict(result_dict)
+        return super().mul(a,b)
 
     @property
     def one(self):

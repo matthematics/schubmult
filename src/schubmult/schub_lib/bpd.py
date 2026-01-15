@@ -334,6 +334,18 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return self.perm
 
     @property
+    def inv(self) -> int:
+        """
+        Return the inversion count of the associated permutation.
+
+        This is a convenience property that delegates to perm.inv.
+
+        Returns:
+            Number of inversions in the permutation
+        """
+        return self.perm.inv
+
+    @property
     def length_vector(self) -> tuple[int, ...]:
         """
         Compute the length vector of the permutation represented by this BPD.

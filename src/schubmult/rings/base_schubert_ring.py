@@ -1,6 +1,8 @@
+from sympy import pretty
+
 from schubmult.schub_lib.perm_lib import Permutation
 from schubmult.schub_lib.schub_poly import schubpoly_from_elems
-from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Ring, S, expand, sstr, sympify, sympify_sympy, sympy_Add, sympy_Mul
+from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Ring, S, expand, sympify, sympify_sympy, sympy_Add, sympy_Mul
 from schubmult.utils._mul_utils import _mul_schub_dicts
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
@@ -53,11 +55,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         return result
 
     def _sympystr(self, printer):
-        if len(self.keys()) == 0:
-            return printer._print(S.Zero)
-        if printer.order in ("old", "none"):  # needed to avoid infinite recursion
-            return printer._print_Add(sympy_Add(*self.as_ordered_terms()), order="lex")
-        return printer._print_Add(sympy_Add(*self.as_ordered_terms()))
+        return printer._print(pretty(self, use_unicode=False))
 
     def _pretty(self, printer):
         if len(self.keys()) == 0:
@@ -207,9 +205,6 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             return elem1.almosteq(elem1.ring.one * elem2)
         return (self - self.ring.from_expr(other)).expand(deep=False) == self.ring.zero
 
-    def __str__(self):
-        return sstr(self)
-
 
 class BaseSchubertRing(Ring, CompositeDomain):
     def __str__(self):
@@ -219,7 +214,7 @@ class BaseSchubertRing(Ring, CompositeDomain):
         from .tensor_ring import TensorRing
 
         return TensorRing(self, other)
-        #return NotImplemented
+        # return NotImplemented
 
     def __eq__(self, other):
         return type(self) is type(other) and self.genset == other.genset and self.coeff_genset == other.coeff_genset
@@ -240,11 +235,11 @@ class BaseSchubertRing(Ring, CompositeDomain):
 
     def add(self, elem, other):
         res = self.from_dict(add_perm_dict(elem, other))
-        return self.from_dict({k: v for k,v in res.items() if expand(v) != S.Zero})
+        return self.from_dict({k: v for k, v in res.items() if expand(v) != S.Zero})
 
     def sub(self, elem, other):
         res = self.from_dict(add_perm_dict(elem, {k: -v for k, v in other.items()}))
-        return self.from_dict({k: v for k,v in res.items() if expand(v) != S.Zero})
+        return self.from_dict({k: v for k, v in res.items() if expand(v) != S.Zero})
 
     def neg(self, elem):
         return self.from_dict({k: -v for k, v in elem.items()})
