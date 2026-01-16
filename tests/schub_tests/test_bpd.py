@@ -30,3 +30,18 @@ def test_bpd_product():
     prod = bpd1.product(bpd2)
 
     assert prod == expected_bpd
+
+def test_gao_huang():
+    from schubmult import RCGraph, BPD, Permutation
+
+    n = 5
+    perms = Permutation.all_permutations(n)
+    
+    for perm in perms:
+        for length in range(len(perm.trimcode), n):
+            for rc in RCGraph.all_rc_graphs(perm, length):
+                rc_test = BPD.from_rc_graph(rc).to_rc_graph()
+                assert rc == rc_test                
+            for bpd in BPD.all_bpds(perm, length):
+                bpd_test = BPD.from_rc_graph(bpd.to_rc_graph())
+                assert bpd == bpd_test
