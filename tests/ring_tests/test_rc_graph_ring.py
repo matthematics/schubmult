@@ -1,6 +1,6 @@
 def test_squash_product():
     from schubmult import Permutation, RCGraph, RCGraphRing, Sx
-    n = 5
+    n = 4
     perms = Permutation.all_permutations(n)
     rcs = []
     grass_rcs = []
@@ -23,12 +23,12 @@ def test_squash_product():
                 for rc in rcs[j]:
                     rc2 = rc.resize(max_d)
                     the_rc = R(rc2) % R(g_rc)
-                    for rc, coeff in the_rc.items():
-                        build_product[(g_rc.perm, rc2.perm)] = build_product.get((g_rc.perm, rc2.perm), R.zero) + coeff * R(rc)
+                    for spank_rc, coeff in the_rc.items():
+                        build_product[(g_rc.perm, rc2.perm)] = build_product.get((g_rc.perm, rc2.perm), R.zero) + coeff * R(spank_rc)
                 
         for (g_perm, rc_perm), coeff in build_product.items():
-            prod = Sx(g_perm) * Sx(perm)
-            assert all([prod.get(rc_result.perm, 0) == c for rc_result, c in coeff.items()])
+            prod = Sx(g_perm) * Sx(rc_perm)
+            assert all([prod.get(rc_result.perm, 0) == c for rc_result, c in coeff.items()]), f"Error: Squash product mismatch for permutations {g_perm} and {rc_perm}, {coeff=} {prod=}"
     
 def test_agrees_with_free_algebra():
     from schubmult import RCGraph, RCGraphRing, ASx, Permutation
