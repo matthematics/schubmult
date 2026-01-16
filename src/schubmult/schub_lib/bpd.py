@@ -784,7 +784,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         n = max(num_rows, len(rc_graph.perm))
         bpd = BPD(np.full((n, n), fill_value=TileType.TBD, dtype=TileType))
         coords = [rc_graph.left_to_right_inversion_coords(i) for i in range(rc_graph.perm.inv)]
-        coords.reverse()
         # for i, j in coords:
         #     bpd = bpd.inverse_pop_op((i + j - 1, i))
         #     rc_graph = rc_graph.toggle_ref_at(i, j)
@@ -834,11 +833,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """Compute the product of this BPD with another."""
         from schubmult.utils.perm_utils import add_perm_dict
         other_graph = other.to_rc_graph()
-        # other_reduced_compatible = [(a + len(self), r + len(self)) for a, r in other.as_reduced_compatible()]
+        other_reduced_compatible = [(a + len(self), r + len(self)) for a, r in other.as_reduced_compatible()]
         # other_reduced_compatible.reverse()
         if self.perm.inv == 0:
-            # return {BPD.rothe_bpd(Permutation([]), len(self) + len(other)).inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other)): 1}
-            return {BPD.from_rc_graph(other_graph.prepend(len(self))): 1}
+            return {BPD.rothe_bpd(Permutation([]), len(self) + len(other)).inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other)): 1}
+            # return {BPD.from_rc_graph(other_graph.prepend(len(self))): 1}
         num_zeros = max(len(other), len(other.perm))
         assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
         base_bpd = self.copy()
@@ -877,7 +876,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         if len(interlaced_rc) == 2 and isinstance(interlaced_rc[0], int):
             interlaced_rc = [interlaced_rc]
         else:
-            interlaced_rc = list(reversed(interlaced_rc))
+            interlaced_rc = list(interlaced_rc)
         while len(interlaced_rc) > 0:
             a, r = interlaced_rc.pop()
             if D.rows <= a or D.rows <= r:
@@ -970,7 +969,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         while work_bpd.perm.inv > 0:
             work_bpd, (reflection, row) = work_bpd.pop_op()
             ret.append((reflection, row))
-        ret.reverse()
         return tuple(ret)
 
     def rebuild(self) -> None:
@@ -1040,7 +1038,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         rows = [[] for _ in range(self.rows)]
         # work_bpd = self
         rc = self.as_reduced_compatible()
-        for (reflection, row) in reversed(rc):
+        for (reflection, row) in rc:
             rows[row - 1] = rows[row - 1] + [reflection]
 
         return RCGraph([tuple(r) for r in rows])
