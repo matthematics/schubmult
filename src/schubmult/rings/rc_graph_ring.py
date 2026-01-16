@@ -539,8 +539,8 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
             result_dict = {}
             for g1, c1 in a.items():
                 for g2, c2 in b.items():
-                    # RCGraph.prod_with_rc returns a dict {RCGraph: coeff}
-                    prod = g1.prod_with_rc(g2)
+                    # RCGraph.product returns a dict {RCGraph: coeff}
+                    prod = g1.product(g2)
                     for g3, c3 in prod.items():
                         result_dict[g3] = result_dict.get(g3, 0) + c1 * c2 * c3
             return self.from_dict(result_dict)

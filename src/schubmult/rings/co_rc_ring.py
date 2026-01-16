@@ -341,8 +341,8 @@ class CoRCGraphRing(CrystalGraphRing):
                 for g2, c2 in b.items():
                     if len(g1) != len(g2):
                         continue
-                    # RCGraph.prod_with_rc returns a dict {CoRCGraph: coeff}
-                    prod = g1.transpose().normalize().prod_with_rc(g2.transpose().normalize())
+                    # RCGraph.product returns a dict {CoRCGraph: coeff}
+                    prod = g1.transpose().normalize().product(g2.transpose().normalize())
                     for g3, c3 in prod.items():
                         # while len(g3) > max(len(g1.perm.trimcode), len(g2.perm.trimcode), 1) and len(g3[-1]) == 0:
                         #     g3 = g3.zero_out_last_row()

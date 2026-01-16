@@ -125,3 +125,41 @@ class SchubertMonomialGraph(ABC):
             Polynomial representation (e.g., as a SymPy expression)
         """
         ...
+
+    @abstractmethod
+    def shiftup(self, shift: int = 1) -> "SchubertMonomialGraph":
+        """
+        Shift up the monomial graph by a given amount.
+
+        Args:
+            shift: Amount to shift (default 1)
+
+        Returns:
+            Shifted monomial graph
+        """
+        ...
+
+    @abstractmethod
+    def right_zero_act(self) -> set["SchubertMonomialGraph"]:
+        """
+        Compute the right action of a zero (adding a row/column).
+
+        Returns:
+            Set of resulting monomial graphs
+        """
+        ...
+
+    @abstractmethod
+    def product(self, other: "SchubertMonomialGraph") -> dict["SchubertMonomialGraph", int]:
+        """
+        Compute the product of this monomial graph with another.
+
+        This represents the Schubert polynomial multiplication at the monomial level.
+
+        Args:
+            other: Another monomial graph to multiply with
+
+        Returns:
+            Dictionary mapping result monomial graphs to their coefficients
+        """
+        ...

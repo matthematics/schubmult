@@ -106,8 +106,8 @@ class CoxeterKnuthRing(CrystalGraphRing):
             result_dict = {}
             for g1, c1 in a.items():
                 for g2, c2 in b.items():
-                    # CoxeterKnuth.prod_with_rc returns a dict {CoxeterKnuth: coeff}
-                    prod = g1.rc_graph.prod_with_rc(g2.rc_graph)
+                    # CoxeterKnuth.product returns a dict {CoxeterKnuth: coeff}
+                    prod = g1.rc_graph.product(g2.rc_graph)
                     for g3, c3 in prod.items():
                         result_dict[CoxeterKnuthKey(g3.p_tableau,g3.weight_tableau,len(g3))] = result_dict.get(CoxeterKnuthKey(g3.p_tableau,g3.weight_tableau,len(g3)), 0) + c1 * c2 * c3
             # result_dict = {k: v * b for k, v in a.items()}

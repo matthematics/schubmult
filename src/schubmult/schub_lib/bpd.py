@@ -764,7 +764,43 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             return bpd.resize(num_rows, column_perm=column_perm)
         return bpd
 
-    def prod_with_bpd(self, other: BPD) -> BPD:
+    def shiftup(self, shift: int = 1) -> BPD:
+        """Shift the BPD up by a given amount."""
+        # Create new grid with shifted dimensions
+        new_rows = self.rows + shift
+        new_cols = self.cols + shift
+        new_grid = np.full((new_rows, new_cols), TileType.ELBOW_SE, dtype=TileType)
+
+        # Shift the grid contents
+        for i in range(self.rows):
+            for j in range(self.cols):
+                new_grid[i + shift, j + shift] = self[i, j]
+
+        # Fill the top-left portion with identity pattern
+        for i in range(shift):
+            for j in range(shift):
+                if i == j:
+                    new_grid[i, j] = TileType.ELBOW_SE
+                elif i < j:
+                    new_grid[i, j] = TileType.HORIZ
+                else:
+                    new_grid[i, j] = TileType.VERT
+
+        # Connect the identity to shifted content
+        for i in range(shift):
+            for j in range(shift, new_cols):
+                new_grid[i, j] = TileType.HORIZ
+        for i in range(shift, new_rows):
+            for j in range(shift):
+                new_grid[i, j] = TileType.VERT
+
+        # Shift the column permutation
+        new_column_perm = Permutation([p + shift for p in self._column_perm] if self._column_perm else [])
+
+        return BPD(new_grid, column_perm=new_column_perm)
+
+    def product(self, other: BPD) -> dict[BPD, int]:
+        """Compute the product of this BPD with another."""
         pop_other = []
         other_work = other
         while other_work.perm.inv > 0:
@@ -776,7 +812,12 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         new_bpd = self.copy()
         for a, b in pop_other_shifted:
             new_bpd = new_bpd.inverse_pop_op(a, b)
-        return new_bpd
+        return {new_bpd: 1}
+
+    def prod_with_bpd(self, other: BPD) -> BPD:
+        """Deprecated: Use product() instead. Returns the single BPD from product dictionary."""
+        result = self.product(other)
+        return next(iter(result.keys()))
 
     def inverse_pop_op(self, a: int, r: int) -> BPD:
         D = self.normalize()

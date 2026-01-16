@@ -1062,7 +1062,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     # THE ZERO MAKES SCHUB PROD
     @cache
-    def prod_with_rc(self, other) -> set[RCGraph]:
+    def product(self, other: RCGraph) -> dict[RCGraph, int]:
+        """Compute the product of this RC graph with another."""
         if self.perm.inv == 0:
             return {type(self)([*self, *other.shiftup(len(self))]): 1}
         num_zeros = max(len(other), len(other.perm))
@@ -1084,6 +1085,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 ret_module = add_perm_dict(ret_module, {new_rc: coeff})
 
         return ret_module
+
+    def prod_with_rc(self, other: RCGraph) -> dict[RCGraph, int]:
+        """Deprecated: Use product() instead."""
+        return self.product(other)
 
     def is_potential_coproduct(self, rc1: RCGraph, rc2: RCGraph) -> bool:
         if len(rc1) != len(self) or len(rc2) != len(self):
