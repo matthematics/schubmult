@@ -831,10 +831,10 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         from schubmult.utils.perm_utils import add_perm_dict
         other_graph = other.to_rc_graph()
         # other_reduced_compatible = [(a + len(self), r + len(self)) for a, r in other.as_reduced_compatible()]
-        #other_reduced_compatible.reverse()
+        # other_reduced_compatible.reverse()
         if self.perm.inv == 0:
             # return {BPD.rothe_bpd(Permutation([]), len(self) + len(other)).inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other)): 1}
-            return {other.shiftup(len(self)): 1}
+            return {BPD.from_rc_graph(other_graph.prepend(len(self))): 1}
         num_zeros = max(len(other), len(other.perm))
         assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
         base_bpd = self.copy()
