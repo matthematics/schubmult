@@ -198,16 +198,16 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def _sympystr(self, printer=None) -> str:
         """SymPy str representation of the BPD using tile symbols"""
-        result = []
-        for i in range(self.rows):
-            row = []
-            for j in range(self.cols):
-                tile = TileType(self[i, j])
-                row.append(str(tile))
-            result.append("".join(row))
-        if printer is None:
-            return "\n".join(result)
-        return printer._print("\n".join(result))
+        # result = []
+        # for i in range(self.rows):
+        #     row = []
+        #     for j in range(self.cols):
+        #         tile = TileType(self[i, j])
+        #         row.append(str(tile))
+        #     result.append("".join(row))
+        # if printer is None:
+        #     return "\n".join(result)
+        return printer._print(pretty(self))
 
     def _pretty(self, printer=None):
         """Pretty printing with row and column labels"""
@@ -781,9 +781,10 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         bpd = BPD(np.full((n, n), fill_value=TileType.TBD, dtype=TileType))
         coords = [rc_graph.left_to_right_inversion_coords(i) for i in range(rc_graph.perm.inv)]
         coords.reverse()
-        for i, j in coords:
-            bpd = bpd.inverse_pop_op(i + j - 1, i)
-            rc_graph = rc_graph.toggle_ref_at(i, j)
+        # for i, j in coords:
+        #     bpd = bpd.inverse_pop_op((i + j - 1, i))
+        #     rc_graph = rc_graph.toggle_ref_at(i, j)
+        bpd = bpd.inverse_pop_op(*[(i + j - 1, i) for i, j in coords])
 
         assert bpd.perm.inv == len(bpd.all_blank_spots())
         if n > len(rc_graph):
@@ -829,7 +830,10 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """Compute the product of this BPD with another."""
         from schubmult.utils.perm_utils import add_perm_dict
         other_graph = other.to_rc_graph()
+        # other_reduced_compatible = [(a + len(self), r + len(self)) for a, r in other.as_reduced_compatible()]
+        #other_reduced_compatible.reverse()
         if self.perm.inv == 0:
+            # return {BPD.rothe_bpd(Permutation([]), len(self) + len(other)).inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other)): 1}
             return {other.shiftup(len(self)): 1}
         num_zeros = max(len(other), len(other.perm))
         assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
@@ -845,8 +849,13 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         for bpd, coeff in buildup_module.items():
             assert bpd.is_valid, f"Invalid BPD in product buildup: {pretty(bpd)}"
+            # try:
+            #     new_bpd = bpd.inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other))
+            # except Exception:
+            #     continue
             new_bpd = BPD.from_rc_graph(RCGraph([*bpd.to_rc_graph()[: len(self)], *other_graph.shiftup(len(self))]))
             assert len(new_bpd) == len(self) + len(other)
+
             if new_bpd.is_valid and new_bpd.perm.inv == self.perm.inv + other.perm.inv and len(new_bpd.perm.trimcode) <= len(new_bpd):
                 ret_module = add_perm_dict(ret_module, {new_bpd: coeff})
 
@@ -856,70 +865,34 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """Deprecated: Use product() instead. Returns the single BPD from product dictionary."""
         return self.product(other)
 
-    def inverse_pop_op(self, a: int, r: int) -> BPD:
+    def inverse_pop_op(self, *interlaced_rc) -> BPD:
         D = self.normalize()
-        # check if D has a blank tile (i.e., the coxeter length of D.w is zero)
-        if D.rows <= a or D.rows <= r:
-            new_num_rows = max(D.rows, a + 1, r + 1)
-            D = D.resize(new_num_rows)
-        # find first elbow in column a
-        x_ = D.rows - 1
-        while x_ >= 0 and D[x_, a] != TileType.ELBOW_SE:
-            x_ -= 1
-        if x_ == -1:
-            raise ValueError("No elbow found in specified column for inverse pop operation when inserting ")
-        D.grid[x_, a] = TileType.CROSS
-        y = a - 1
-        # find x in column y, it will be an SE elbow
-        x = x_ - 1
-        while x >= 0 and D[x, y] != TileType.ELBOW_SE:
-            x -= 1
-        if x == -1:
-            raise ValueError("No elbow found in specified column for inverse pop operation")
-        D.grid[x, y] = TileType.BLANK
 
-        for z in range(x + 1, x_):
-            if D[z, y] == TileType.VERT and D[z, y + 1] == TileType.BLANK:
-                D.grid[z, y] = TileType.BLANK
-                D.grid[z, y + 1] = TileType.VERT
-            elif D[z, y] == TileType.CROSS and D[z, y + 1] == TileType.ELBOW_NW:
-                D.grid[z, y] = TileType.TBD
-                D.grid[z, y + 1] = TileType.TBD
-            elif D[z, y] == TileType.CROSS and D[z, y + 1] == TileType.HORIZ:
-                D.grid[z, y] = TileType.TBD
-                D.grid[z, y + 1] = TileType.CROSS
-            elif D[z, y] == TileType.VERT and D[z, y + 1] == TileType.ELBOW_SE:
-                D.grid[z, y] = TileType.ELBOW_SE
-                D.grid[z, y + 1] = TileType.CROSS
-
-        D.rebuild()
-
-        while True:
-            # --- STEP 1 --- #
-            # move the mark to the rightmost blank tile in the block
-            if x == r - 1:
-                break
-
-            # find x_
-            x_ = x
-            y = y - 1
-            # replace with NW elbow
-            assert D[x_, y + 1] == TileType.BLANK, "Expected NW elbow during inverse pop operation"
-            while y >= 0 and D[x_, y] == TileType.BLANK:
-                y -= 1
-            D.grid[x_, y + 1] = TileType.ELBOW_NW
-
-            # find x at SE elbow
+        if len(interlaced_rc) == 2 and isinstance(interlaced_rc[0], int):
+            interlaced_rc = [interlaced_rc]
+        else:
+            interlaced_rc = list(reversed(interlaced_rc))
+        while len(interlaced_rc) > 0:
+            a, r = interlaced_rc.pop()
+            if D.rows <= a or D.rows <= r:
+                new_num_rows = max(D.rows, a + 1, r + 1)
+                D = D.resize(new_num_rows)
+            # find first elbow in column a
+            x_ = D.rows - 1
+            while x_ >= 0 and D[x_, a] != TileType.ELBOW_SE:
+                x_ -= 1
+            if x_ == -1:
+                raise ValueError("No elbow found in specified column for inverse pop operation when inserting ")
+            D.grid[x_, a] = TileType.CROSS
+            y = a - 1
+            # find x in column y, it will be an SE elbow
             x = x_ - 1
             while x >= 0 and D[x, y] != TileType.ELBOW_SE:
                 x -= 1
             if x == -1:
                 raise ValueError("No elbow found in specified column for inverse pop operation")
-
-            # [x, y] becomes BLANK
             D.grid[x, y] = TileType.BLANK
 
-            # then this is the fix logic
             for z in range(x + 1, x_):
                 if D[z, y] == TileType.VERT and D[z, y + 1] == TileType.BLANK:
                     D.grid[z, y] = TileType.BLANK
@@ -936,12 +909,63 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
             D.rebuild()
 
+            while True:
+                # --- STEP 1 --- #
+                # move the mark to the rightmost blank tile in the block
+                if x == r - 1:
+                    break
+
+                # find x_
+                x_ = x
+                y = y - 1
+                # replace with NW elbow
+                assert D[x_, y + 1] == TileType.BLANK, "Expected NW elbow during inverse pop operation"
+                while y >= 0 and D[x_, y] == TileType.BLANK:
+                    y -= 1
+                D.grid[x_, y + 1] = TileType.ELBOW_NW
+
+                # find x at SE elbow
+                x = x_ - 1
+                while x >= 0 and D[x, y] != TileType.ELBOW_SE:
+                    x -= 1
+                if x == -1:
+                    raise ValueError("No elbow found in specified column for inverse pop operation")
+
+                # [x, y] becomes BLANK
+                D.grid[x, y] = TileType.BLANK
+
+                # then this is the fix logic
+                for z in range(x + 1, x_):
+                    if D[z, y] == TileType.VERT and D[z, y + 1] == TileType.BLANK:
+                        D.grid[z, y] = TileType.BLANK
+                        D.grid[z, y + 1] = TileType.VERT
+                    elif D[z, y] == TileType.CROSS and D[z, y + 1] == TileType.ELBOW_NW:
+                        D.grid[z, y] = TileType.TBD
+                        D.grid[z, y + 1] = TileType.TBD
+                    elif D[z, y] == TileType.CROSS and D[z, y + 1] == TileType.HORIZ:
+                        D.grid[z, y] = TileType.TBD
+                        D.grid[z, y + 1] = TileType.CROSS
+                    elif D[z, y] == TileType.VERT and D[z, y + 1] == TileType.ELBOW_SE:
+                        D.grid[z, y] = TileType.ELBOW_SE
+                        D.grid[z, y + 1] = TileType.CROSS
+
+                D.rebuild()
+
         D.rebuild()
 
         # if D.perm != Permutation.ref_product(self._column_perm[a]) * self.perm:
         #     D._column_perm = Permutation.ref_product(self._column_perm[a]) * self._column_perm
 
         return D
+
+    def as_reduced_compatible(self):
+        work_bpd = self
+        ret = []
+        while work_bpd.perm.inv > 0:
+            work_bpd, (reflection, row) = work_bpd.pop_op()
+            ret.append((reflection, row))
+        ret.reverse()
+        return tuple(ret)
 
     def rebuild(self) -> None:
         """Rebuild the BPD to resolve any TBD tiles"""
@@ -1008,10 +1032,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         # RC-graph rows contain the column positions of crossings in each row
         rows = [[] for _ in range(self.rows)]
-        work_bpd = self
-
-        while work_bpd.perm.inv > 0:
-            work_bpd, (reflection, row) = work_bpd.pop_op()
+        # work_bpd = self
+        rc = self.as_reduced_compatible()
+        for (reflection, row) in reversed(rc):
             rows[row - 1] = rows[row - 1] + [reflection]
 
         return RCGraph([tuple(r) for r in rows])
