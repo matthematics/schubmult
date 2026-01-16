@@ -117,7 +117,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return self.grid.shape[1]
 
     @classmethod
-    def all_bpds(cls, w: Permutation, length: int = None) -> set[BPD]:
+    def all_bpds(cls, w: Permutation, length: int | None = None) -> set[BPD]:
         if length is None:
             length = len(w)
         pipes = set()
