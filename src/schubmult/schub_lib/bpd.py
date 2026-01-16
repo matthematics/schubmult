@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from enum import IntEnum
+from functools import cache
 from typing import Tuple
 
 import numpy as np
@@ -117,6 +118,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return self.grid.shape[1]
 
     @classmethod
+    @cache
     def all_bpds(cls, w: Permutation, length: int | None = None) -> set[BPD]:
         if length is None:
             length = len(w)

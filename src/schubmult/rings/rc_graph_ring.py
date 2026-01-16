@@ -1,12 +1,11 @@
 from functools import cache
 
-from schubmult.rings.free_algebra_basis import SchubertBasis, WordBasis
+from schubmult.rings.free_algebra_basis import WordBasis
 from schubmult.rings.schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
 from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.symbolic import S
 
 from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
-from .free_algebra import FreeAlgebra
 
 # from .crystal_graph_ring import CrystalTensorRing
 
@@ -192,16 +191,6 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
         for rc_graph, coeff in self.items():
             res += coeff * self.ring(rc_graph.crystal_reflection(index))
         return res
-
-    def to_free_algebra_element(self):
-        """
-        Convert to FreeAlgebra element in Schubert basis.
-        """
-        ASx = FreeAlgebra(SchubertBasis)
-        ret = ASx.zero
-        for rc_graph, coeff in self.items():
-            ret += coeff * ASx(rc_graph.perm, len(rc_graph))
-        return ret
 
 
 class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
