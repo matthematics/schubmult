@@ -1004,7 +1004,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                     new_bpd.grid[i, j] = TileType.TBD
                 new_bpd.rebuild()
                 if new_bpd.is_valid:
-                    baggage = new_bpd.resize(self.rows + 1, column_perm=Permutation([]))
+                    baggage = new_bpd.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(new_bpd.rows, len(new_bpd.perm)))
                     if baggage.is_valid:
                         results.add(baggage)
         return results
