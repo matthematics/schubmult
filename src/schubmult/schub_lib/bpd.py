@@ -952,7 +952,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
                 D.rebuild()
 
-        # D.rebuild()
+        D.rebuild()
 
         # if D.perm != Permutation.ref_product(self._column_perm[a]) * self.perm:
         #     D._column_perm = Permutation.ref_product(self._column_perm[a]) * self._column_perm
@@ -970,8 +970,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def rebuild(self) -> None:
         """Rebuild the BPD to resolve any TBD tiles"""
-        if len(self.all_tiles_of_type(TileType.TBD)) == 0 and self.is_valid:
-            return
         for i in range(self.rows):
             for j in range(self.cols):
                 if self[i, j] not in (TileType.BLANK, TileType.CROSS):
