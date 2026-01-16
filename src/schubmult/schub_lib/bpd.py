@@ -17,7 +17,7 @@ from functools import cache
 from typing import Tuple
 
 import numpy as np
-from sympy import pretty
+from sympy import pretty, pretty_print
 from sympy.printing.defaults import DefaultPrinting
 
 from schubmult.schub_lib.perm_lib import Permutation
@@ -775,7 +775,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         if new_num_rows > self.rows:
             return BPD.from_rc_graph(self.to_rc_graph().resize(new_num_rows), column_perm=column_perm)
         if new_num_rows < len(self.perm):
-            return BPD(self.grid[:new_num_rows, :], column_perm=self.column_perm_at_row(new_num_rows - 1) if column_perm is None else column_perm)
+            return BPD(self.grid[:new_num_rows, :],  column_perm=self.column_perm_at_row(new_num_rows - 1) if column_perm is None else column_perm)
         return BPD(self.grid[:new_num_rows, :], column_perm=column_perm)
 
     @classmethod
@@ -833,36 +833,39 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """Compute the product of this BPD with another."""
         from schubmult.utils.perm_utils import add_perm_dict
         other_graph = other.to_rc_graph()
-        other_reduced_compatible = [(a + len(self), r + len(self)) for a, r in other.as_reduced_compatible()]
+        # other_reduced_compatible = [(a + len(self), r + len(self)) for a, r in other.as_reduced_compatible()]
         # other_reduced_compatible.reverse()
         if self.perm.inv == 0:
-            return {BPD.rothe_bpd(Permutation([]), len(self) + len(other)).inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other)): 1}
+            #return {BPD.rothe_bpd(Permutation([]), len(self) + len(other)).inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other)): 1}
+            return {BPD.from_rc_graph(other_graph.prepend(len(self))): 1}
             # return {BPD.from_rc_graph(other_graph.prepend(len(self))): 1}
         num_zeros = max(len(other), len(other.perm))
         assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
         base_bpd = self.copy()
         buildup_module = {base_bpd: 1}
-
         for _ in range(num_zeros):
-            new_buildup_module = {}
-            for bpd, coeff in buildup_module.items():
-                new_buildup_module = add_perm_dict(new_buildup_module, dict.fromkeys(bpd.right_zero_act(), coeff))
-            buildup_module = new_buildup_module
+           new_buildup_module = {}
+           for bpd, coeff in buildup_module.items():
+               new_buildup_module = add_perm_dict(new_buildup_module, dict.fromkeys(bpd.right_zero_act(), coeff))
+           buildup_module = new_buildup_module
         ret_module = {}
 
         for bpd, coeff in buildup_module.items():
             assert bpd.is_valid, f"Invalid BPD in product buildup: {pretty(bpd)}"
+            # new_bpd = BPD(np.full((n, n), fill_value=TileType.TBD, dtype=TileType))
             # try:
-            #     new_bpd = bpd.inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other))
+            #     #print([*(bpd.as_reduced_compatible()), *other_reduced_compatible])
+            #     #new_bpd = new_bpd.inverse_pop_op(*bpd.as_reduced_compatible()), *other_reduced_compatible)
+            #     new_bpd = new_bpd.inverse_pop_op(*other_reduced_compatible).inverse_pop_op(*bpd.as_reduced_compatible())
             # except Exception:
             #     continue
             new_rc = RCGraph([*bpd.to_rc_graph()[: len(self)], *other_graph.shiftup(len(self))])
             if new_rc.is_valid:
                 new_bpd = BPD.from_rc_graph(new_rc)
-                assert len(new_bpd) == len(self) + len(other)
+            #   assert len(new_bpd) == len(self) + len(other)
 
-                if new_bpd.is_valid and new_bpd.perm.inv == self.perm.inv + other.perm.inv and len(new_bpd.perm.trimcode) <= len(new_bpd):
-                    ret_module = add_perm_dict(ret_module, {new_bpd: coeff})
+            if new_bpd.is_valid and new_bpd.perm.inv == self.perm.inv + other.perm.inv and len(new_bpd.perm.trimcode) <= len(self) + len(other):
+                ret_module = add_perm_dict(ret_module, {new_bpd: coeff})
 
         return ret_module
 
@@ -1006,7 +1009,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                     new_bpd.grid[i, j] = TileType.TBD
                 new_bpd.rebuild()
                 if new_bpd.is_valid:
-                    baggage = new_bpd.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(new_bpd.rows, len(new_bpd.perm)))
+                    baggage = new_bpd.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(self.rows + 1, len(new_bpd.perm)))
                     if baggage.is_valid:
                         results.add(baggage)
         return results
