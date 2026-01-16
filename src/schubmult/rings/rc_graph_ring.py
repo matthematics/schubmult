@@ -532,20 +532,6 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
     def potential_prodperms(self, left, right, length):
         return set({rc.perm for rc in self.potential_products(left, right, length)})
 
-    # dual product
-    def mul(self, a, b):
-        # a, b are RCGraphRingElemen
-        if isinstance(b, RCGraphRingElement):
-            result_dict = {}
-            for g1, c1 in a.items():
-                for g2, c2 in b.items():
-                    # RCGraph.product returns a dict {RCGraph: coeff}
-                    prod = g1.product(g2)
-                    for g3, c3 in prod.items():
-                        result_dict[g3] = result_dict.get(g3, 0) + c1 * c2 * c3
-            return self.from_dict(result_dict)
-        return super().mul(a,b)
-
     @property
     def one(self):
         # Define the "one" element for RCGraphRing
