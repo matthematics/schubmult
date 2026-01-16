@@ -45,3 +45,5 @@ def test_gao_huang():
             for bpd in BPD.all_bpds(perm, length):
                 bpd_test = BPD.from_rc_graph(bpd.to_rc_graph())
                 assert bpd == bpd_test
+
+            assert len(BPD.all_bpds(perm, length)) == len(RCGraph.all_rc_graphs(perm, length)), f"Error: Number of BPDs and RC graphs do not match for permutation {perm} with length {length}"
