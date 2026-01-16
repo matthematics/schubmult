@@ -16,6 +16,7 @@ from enum import IntEnum
 from typing import Tuple
 
 import numpy as np
+from sympy import pretty
 from sympy.printing.defaults import DefaultPrinting
 
 from schubmult.schub_lib.perm_lib import Permutation
@@ -467,6 +468,24 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         return tuple(word)
 
+    def set_width(self, width):
+        """Set the width of the BPD by adding empty columns on the right if needed."""
+        if width < self.cols:
+            if len(self.perm) > width:
+                raise ValueError("New width must be at least the length of the permutation")
+            new_grid = np.full((self.rows, width), fill_value=TileType.TBD, dtype=TileType)
+            new_grid[:, :width] = self.grid[:, :width]
+            bop = BPD(new_grid, column_perm=self._column_perm)
+            bop.rebuild()
+            assert bop.is_valid, f"Resulting BPD is not valid after reducing width, {pretty(self)} {width} "
+            return bop
+        if width == self.cols:
+            return self
+        new_grid = np.full((self.rows, width), fill_value=TileType.TBD, dtype=TileType)
+        new_grid[:, : self.cols] = self.grid
+        return BPD(new_grid, column_perm=self._column_perm)
+
+    @property
     def is_valid(self) -> bool:
         """
         Check if this is a valid pipe dream.
@@ -489,8 +508,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             #     return False
             if self[0, col] in (TileType.ELBOW_NW, TileType.VERT, TileType.CROSS):
                 return False
-        for row in range(self.rows):
-            for col in range(self.cols):
+        for row in range(1, self.rows - 1):
+            for col in range(1, self.cols - 1):
                 if self[row, col].feeds_right and not self[row, col + 1].entrance_from_left:
                     return False
                 if self[row, col].feeds_up and not self[row - 1, col].entrance_from_bottom:
@@ -499,7 +518,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                     return False
                 if self[row, col].entrance_from_bottom and not self[row + 1, col].feeds_up:
                     return False
-        return True
+        try:
+            self.to_rc_graph()
+            return self.perm.inv == sum(self.length_vector)
+        except Exception:
+            return False
 
     def __eq__(self, other: object) -> bool:
         """Check equality of two BPDs"""
@@ -556,6 +579,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def all_blank_spots(self) -> set[tuple[int, int]]:
         return self.all_tiles_of_type(TileType.BLANK)
+
+    def all_crossings(self) -> set[tuple[int, int]]:
+        return self.all_tiles_of_type(TileType.CROSS)
 
     def all_tiles_of_type(self, tile_type: TileType) -> set[tuple[int, int]]:
         tiles = set()
@@ -741,7 +767,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 build_perm.append(None)
         return Permutation.from_partial(build_perm)
 
-    def resize(self, new_num_rows: int, column_perm: Permutation | None = None) -> BPD:
+    def resize(self, new_num_rows: int, column_perm: Permutation = Permutation([])) -> BPD:
         if new_num_rows > self.rows:
             return BPD.from_rc_graph(self.to_rc_graph().resize(new_num_rows), column_perm=column_perm)
         if new_num_rows < len(self.perm):
@@ -801,23 +827,34 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def product(self, other: BPD) -> dict[BPD, int]:
         """Compute the product of this BPD with another."""
-        pop_other = []
-        other_work = other
-        while other_work.perm.inv > 0:
-            other_work, pos = other_work.pop_op()
-            pop_other.append(pos)
-        pop_other.reverse()
-        len_cd = len(self.perm.trimcode)
-        pop_other_shifted = [(a + len_cd, b + len_cd) for (a, b) in pop_other]
-        new_bpd = self.copy()
-        for a, b in pop_other_shifted:
-            new_bpd = new_bpd.inverse_pop_op(a, b)
-        return {new_bpd: 1}
+        from schubmult.utils.perm_utils import add_perm_dict
+        other_graph = other.to_rc_graph()
+        if self.perm.inv == 0:
+            return {other.shiftup(len(self)): 1}
+        num_zeros = max(len(other), len(other.perm))
+        assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
+        base_bpd = self.copy()
+        buildup_module = {base_bpd: 1}
+
+        for _ in range(num_zeros):
+            new_buildup_module = {}
+            for bpd, coeff in buildup_module.items():
+                new_buildup_module = add_perm_dict(new_buildup_module, dict.fromkeys(bpd.right_zero_act(), coeff))
+            buildup_module = new_buildup_module
+        ret_module = {}
+
+        for bpd, coeff in buildup_module.items():
+            assert bpd.is_valid, f"Invalid BPD in product buildup: {pretty(bpd)}"
+            new_bpd = BPD.from_rc_graph(RCGraph([*bpd.to_rc_graph()[: len(self)], *other_graph.shiftup(len(self))]))
+            assert len(new_bpd) == len(self) + len(other)
+            if new_bpd.is_valid and new_bpd.perm.inv == self.perm.inv + other.perm.inv and len(new_bpd.perm.trimcode) <= len(new_bpd):
+                ret_module = add_perm_dict(ret_module, {new_bpd: coeff})
+
+        return ret_module
 
     def prod_with_bpd(self, other: BPD) -> BPD:
         """Deprecated: Use product() instead. Returns the single BPD from product dictionary."""
-        result = self.product(other)
-        return next(iter(result.keys()))
+        return self.product(other)
 
     def inverse_pop_op(self, a: int, r: int) -> BPD:
         D = self.normalize()
@@ -917,35 +954,33 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     def zero_out_last_row(self) -> BPD:
         return self.resize(self.rows - 1, column_perm=Permutation([]))
 
+    def set_tile(self, i: int, j: int, tile_type: TileType) -> None:
+        new_bpd = self.copy()
+        new_bpd.grid[i, j] = tile_type
+        new_bpd.rebuild()
+        return new_bpd
+
+
     def right_zero_act(self) -> set[BPD]:
         # find crosses, untransition them
-        if self.perm.inv == 0:
-            return {self}
+        import itertools
+        if not self.is_valid:
+            return set()
+        resized = self.resize(self.rows + 1)
+        if resized.cols < len(self.perm) + 1:
+            resized = resized.set_width(len(self.perm) + 1)
         results = set()
-        a, b = self.perm.maximal_corner
-        if a == self.rows:
-            D = self.resize(self.rows + 1)
-        else:
-            D = self
-        se_elbows = {spot for spot in D.all_se_elbow_spots() if spot[0] >= a and spot[1] >= b}
-        for piv_a, piv_b in se_elbows:
-            if self[piv_a - 1, piv_b - 1] == TileType.CROSS:
-                new_bpd = self.copy()
-                new_bpd.grid[piv_a - 1, piv_b - 1] = TileType.TBD
-                # find nearest SE elbow strictly SE of (piv_a, piv_b)
-                r, c = piv_a, piv_b
-                while r < self.rows and c < self.cols and new_bpd[r, c] != TileType.ELBOW_SE:
-                    if c < self.cols - 1:
-                        c += 1
-                    else:
-                        r += 1
-                        c = piv_b + 1
-                if r == self.rows or c == self.cols:
-                    print("No ELBOW_SE found strictly SE of pivot")
-                    continue
-                new_bpd.grid[r, c] = TileType.CROSS
+        crossings = [(i, j) for (i, j) in resized.all_crossings() if i == self.rows]
+        for r in range(len(crossings) + 1):
+            for cross_subset in itertools.combinations(crossings, r):
+                new_bpd = resized.copy()
+                for (i, j) in cross_subset:
+                    new_bpd.grid[i, j] = TileType.TBD
                 new_bpd.rebuild()
-                results.add(new_bpd)
+                if new_bpd.is_valid:
+                    baggage = new_bpd.resize(self.rows + 1, column_perm=Permutation([]))
+                    if baggage.is_valid:
+                        results.add(baggage)
         return results
 
     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, **_kwargs) -> Expr:
