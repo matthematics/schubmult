@@ -326,7 +326,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 else:
                     raise ValueError(f"Invalid tile type {tile} in BPD")
             buildperm.append(current_col + 1)
-        n = max(buildperm)
+        n = max(buildperm, default=1)
         return self._column_perm * Permutation.from_partial(buildperm + [None] * (n - len(buildperm)))
 
     @property
@@ -787,7 +787,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         bpd = bpd.inverse_pop_op(*[(i + j - 1, i) for i, j in coords])
 
         assert bpd.perm.inv == len(bpd.all_blank_spots())
-        if n > len(rc_graph):
+        if len(bpd) != len(rc_graph):
             return bpd.resize(num_rows, column_perm=column_perm)
         return bpd
 
@@ -853,11 +853,13 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             #     new_bpd = bpd.inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other))
             # except Exception:
             #     continue
-            new_bpd = BPD.from_rc_graph(RCGraph([*bpd.to_rc_graph()[: len(self)], *other_graph.shiftup(len(self))]))
-            assert len(new_bpd) == len(self) + len(other)
+            new_rc = RCGraph([*bpd.to_rc_graph()[: len(self)], *other_graph.shiftup(len(self))])
+            if new_rc.is_valid:
+                new_bpd = BPD.from_rc_graph(new_rc)
+                assert len(new_bpd) == len(self) + len(other)
 
-            if new_bpd.is_valid and new_bpd.perm.inv == self.perm.inv + other.perm.inv and len(new_bpd.perm.trimcode) <= len(new_bpd):
-                ret_module = add_perm_dict(ret_module, {new_bpd: coeff})
+                if new_bpd.is_valid and new_bpd.perm.inv == self.perm.inv + other.perm.inv and len(new_bpd.perm.trimcode) <= len(new_bpd):
+                    ret_module = add_perm_dict(ret_module, {new_bpd: coeff})
 
         return ret_module
 

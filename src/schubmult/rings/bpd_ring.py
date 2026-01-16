@@ -52,10 +52,14 @@ class BPDRing(SchubertMonomialRing):
 
     def mul(self, a: BPDRingElement, b: BPDRingElement) -> BPDRingElement:
         if isinstance(b, BPDRingElement):
-            a_elem = a.to_rc_graph_ring_element()
-            b_elem = b.to_rc_graph_ring_element(a_elem.ring)
-            return self.from_rc_graph_ring_element(a_elem.ring.mul(a_elem,b_elem))
-
+            result_dict = {}
+            for g1, c1 in a.items():
+                for g2, c2 in b.items():
+                    # RCGraph.product returns a dict {RCGraph: coeff}
+                    prod = g1.product(g2)
+                    for g3, c3 in prod.items():
+                        result_dict[g3] = result_dict.get(g3, 0) + c1 * c2 * c3
+            return self.from_dict(result_dict)
         return super().mul(a, b)
 
     @property
