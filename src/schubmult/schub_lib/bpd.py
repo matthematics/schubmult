@@ -326,7 +326,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 else:
                     raise ValueError(f"Invalid tile type {tile} in BPD")
             buildperm.append(current_col + 1)
-        n = max(buildperm, default = 1)
+        n = max(buildperm)
         return self._column_perm * Permutation.from_partial(buildperm + [None] * (n - len(buildperm)))
 
     @property
@@ -749,7 +749,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         else:  # D.grid[x,y+1] == TileType.VERT
             D.grid[x, y + 1] = TileType.ELBOW_NW
 
-        # D.rebuild()
+        D.rebuild()
         # left_simple_ref = Permutation.ref_product(self._column_perm[a])
         # if D.perm != left_simple_ref * self.perm:
         #     D._column_perm = left_simple_ref * self._column_perm
@@ -829,12 +829,12 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     def product(self, other: BPD) -> dict[BPD, int]:
         """Compute the product of this BPD with another."""
         from schubmult.utils.perm_utils import add_perm_dict
-        # other_graph = other.to_rc_graph()
-        other_reduced_compatible = [(a + len(self), r + len(self)) for a, r in other.as_reduced_compatible()]
+        other_graph = other.to_rc_graph()
+        # other_reduced_compatible = [(a + len(self), r + len(self)) for a, r in other.as_reduced_compatible()]
         # other_reduced_compatible.reverse()
         if self.perm.inv == 0:
-            return {BPD.rothe_bpd(Permutation([]), len(self) + len(other)).inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other)): 1}
-            # return {BPD.from_rc_graph(other_graph.prepend(len(self))): 1}
+            # return {BPD.rothe_bpd(Permutation([]), len(self) + len(other)).inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other)): 1}
+            return {BPD.from_rc_graph(other_graph.prepend(len(self))): 1}
         num_zeros = max(len(other), len(other.perm))
         assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
         base_bpd = self.copy()
@@ -849,12 +849,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         for bpd, coeff in buildup_module.items():
             assert bpd.is_valid, f"Invalid BPD in product buildup: {pretty(bpd)}"
-            new_bpd = bpd
-            try:
-                new_bpd = new_bpd.inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other))
-            except Exception:
-                continue
-            # new_bpd = BPD.from_rc_graph(RCGraph([*bpd.to_rc_graph()[: len(self)], *other_graph.shiftup(len(self))]))
+            # try:
+            #     new_bpd = bpd.inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other))
+            # except Exception:
+            #     continue
+            new_bpd = BPD.from_rc_graph(RCGraph([*bpd.to_rc_graph()[: len(self)], *other_graph.shiftup(len(self))]))
             assert len(new_bpd) == len(self) + len(other)
 
             if new_bpd.is_valid and new_bpd.perm.inv == self.perm.inv + other.perm.inv and len(new_bpd.perm.trimcode) <= len(new_bpd):
