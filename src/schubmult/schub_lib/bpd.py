@@ -103,6 +103,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         s"""
         self._grid = np.array(grid, dtype=TileType)
         self._column_perm = column_perm if column_perm else Permutation([])
+        self._perm = None
         # Validate grid is square
         # if len(self._grid.shape) != 2 or self._grid.shape[0] != self._grid.shape[1]:
         #     raise ValueError("BPD grid must be square (n×n)")
@@ -138,47 +139,58 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     @classmethod
     def _get_tbd_tile(cls, left_tile: TileType | None, up_tile: TileType | None) -> TileType:
+        left_tile_feeds_right = left_tile.feeds_right if left_tile is not None else False
+        up_tile_entrance_from_bottom = up_tile.entrance_from_bottom if up_tile is not None else False
         if up_tile is None:
-            if left_tile is None or not left_tile.feeds_right:
-                # if self.DEBUG:
-                #     print(f"Returning SE elbow for cell with {left_tile=}, {down_tile=}, {up_tile=}, {right_tile=}, line={__import__('inspect').currentframe().f_back.f_lineno}")
+            if left_tile is None or not left_tile_feeds_right:
                 return TileType.ELBOW_SE
             return TileType.HORIZ
         if left_tile is None:
-            if up_tile.entrance_from_bottom:
+            if up_tile_entrance_from_bottom:
                 return TileType.VERT
-            # if self.DEBUG:
-            #     print(f"Returning SE elbow for cell with {left_tile=}, {down_tile=}, {up_tile=}, {right_tile=}, line={__import__('inspect').currentframe().f_back.f_lineno}")
             return TileType.ELBOW_SE
-        if left_tile.feeds_right:
-            if up_tile.entrance_from_bottom:
-                # if right_edge:
-                #     return TileType.CROSS
+        if left_tile_feeds_right:
+            if up_tile_entrance_from_bottom:
                 return TileType.ELBOW_NW
             return TileType.HORIZ
-        if up_tile.entrance_from_bottom:
-            # if right_edge:
-            #     return TileType.CROSS
+        if up_tile_entrance_from_bottom:
             return TileType.VERT
-        # if self.DEBUG:
-        #     print(f"Returning SE elbow for cell with {left_tile=}, {down_tile=}, {up_tile=}, {right_tile=}, line={__import__('inspect').currentframe().f_back.f_lineno}")
         return TileType.ELBOW_SE
 
     DEBUG = False
 
-    def build(self, validate: bool = False) -> None:
-        """Build internal structures if needed (currently a placeholder)"""
-        for col in range(self.cols):
-            for row in range(self.rows):
-                if self[row, col] == TileType.TBD:
+    def build(self) -> None:
+        """Build internal structures by resolving TBD tiles using vectorized operations where possible."""
+        if self.rows == 0:
+            return
+
+        # Find all TBD positions
+        tbd_mask = self._grid == TileType.TBD
+
+        # Corner case
+        if tbd_mask[0, 0]:
+            self._grid[0, 0] = self._get_tbd_tile(None, None)
+
+        # First column (no left neighbor)
+        tbd_first_col = tbd_mask[1 : self.rows, 0]
+        if np.any(tbd_first_col):
+            for row in np.where(tbd_first_col)[0] + 1:
+                self._grid[row, 0] = self._get_tbd_tile(None, self._grid[row - 1, 0])
+
+        # Process column by column (dependencies require sequential processing)
+        for col in range(1, self.cols):
+            # Top row (no up neighbor)
+            if tbd_mask[0, col]:
+                self._grid[0, col] = self._get_tbd_tile(self._grid[0, col - 1], None)
+
+            # Interior cells - check entire column at once
+            tbd_col = tbd_mask[1 : self.rows, col]
+            if np.any(tbd_col):
+                for row in np.where(tbd_col)[0] + 1:
                     self._grid[row, col] = self._get_tbd_tile(
-                        self[row, col - 1] if col > 0 else None,
-                        self[row - 1, col] if row > 0 else None,
+                        self._grid[row, col - 1],
+                        self._grid[row - 1, col],
                     )
-                # if self.DEBUG:
-                #     print(f"After building cell ({row}, {col}):\n{self}")
-        if validate:
-            assert self.is_valid(), f"Built BPD is not valid: \n{self}"
 
     def __len__(self) -> int:
         """Return the size n of the n×n grid"""
@@ -292,6 +304,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         Returns:
             Permutation object
         """
+        if self._perm is not None:
+            return self._perm
         buildperm = []
 
         for row in range(self.rows):
@@ -326,7 +340,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                     raise ValueError(f"Invalid tile type {tile} in BPD")
             buildperm.append(current_col + 1)
         n = max(buildperm, default=1)
-        return self._column_perm * Permutation.from_partial(buildperm + [None] * (n - len(buildperm)))
+        self._perm = self._column_perm * Permutation.from_partial(buildperm + [None] * (n - len(buildperm)))
+        return self._perm
 
     @property
     def permutation(self) -> Permutation:
@@ -387,6 +402,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return cls(grid)
 
     @classmethod
+    @cache
     def rothe_bpd(cls, perm: Permutation, num_rows: int | None = None) -> BPD:
         if num_rows is None:
             num_rows = len(perm)
@@ -777,7 +793,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             if new_bpd.rows < new_num_rows:
                 new_bpd._grid = np.pad(new_bpd._grid, ((0, new_num_rows - new_bpd.rows), (0, max(0, new_num_rows - self.cols))), constant_values=TileType.TBD)
             elif new_bpd.rows > new_num_rows:
-                new_bpd._grid = new_bpd._grid[:new_num_rows, :max(new_num_rows, len(self.perm))]
+                new_bpd._grid = new_bpd._grid[:new_num_rows, : max(new_num_rows, len(self.perm))]
             new_bpd.rebuild()
             assert new_bpd.is_valid, f"Resulting BPD is not valid after increasing size, {pretty(self)} {new_num_rows} "
             return new_bpd
@@ -840,14 +856,18 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     def product(self, other: BPD) -> dict[BPD, int]:
         """Compute the product of this BPD with another."""
         from schubmult.utils.perm_utils import add_perm_dict
+
         other_graph = other.to_rc_graph()
         # other_reduced_compatible = [(a + len(self), r + len(self)) for a, r in other.as_reduced_compatible()]
         # other_reduced_compatible.reverse()
-        if self.perm.inv == 0:
+        self_perm = self.perm
+        if self_perm.inv == 0:
             # return {BPD.rothe_bpd(Permutation([]), len(self) + len(other)).inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other)): 1}
             return {BPD.from_rc_graph(other_graph.prepend(len(self))): 1}
-        num_zeros = max(len(other), len(other.perm))
-        assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
+        self_len = len(self)
+        other_perm_len = len(other.perm)
+        num_zeros = max(len(other), other_perm_len)
+        assert len(self_perm.trimcode) <= self_len, f"{self=}, {self_perm=}"
         base_bpd = self.copy()
         buildup_module = {base_bpd: 1}
 
@@ -858,18 +878,22 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             buildup_module = new_buildup_module
         ret_module = {}
 
+        self_perm_inv = self_perm.inv
+        other_perm_inv = other.perm.inv
+        target_inv = self_perm_inv + other_perm_inv
         for bpd, coeff in buildup_module.items():
             assert bpd.is_valid, f"Invalid BPD in product buildup: {pretty(bpd)}"
             # try:
             #     new_bpd = bpd.inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other))
             # except Exception:
             #     continue
-            new_rc = RCGraph([*bpd.to_rc_graph()[: len(self)], *other_graph.shiftup(len(self))])
+            new_rc = RCGraph([*bpd.to_rc_graph()[:self_len], *other_graph.shiftup(self_len)])
             if new_rc.is_valid:
                 new_bpd = BPD.from_rc_graph(new_rc)
-                assert len(new_bpd) == len(self) + len(other)
+                assert len(new_bpd) == self_len + len(other)
 
-                if new_bpd.is_valid and new_bpd.perm.inv == self.perm.inv + other.perm.inv and len(new_bpd.perm.trimcode) <= len(new_bpd):
+                new_bpd_perm = new_bpd.perm
+                if new_bpd.is_valid and new_bpd_perm.inv == target_inv and len(new_bpd_perm.trimcode) <= len(new_bpd):
                     ret_module = add_perm_dict(ret_module, {new_bpd: coeff})
 
         return ret_module
@@ -982,10 +1006,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def rebuild(self) -> None:
         """Rebuild the BPD to resolve any TBD tiles"""
-        for i in range(self.rows):
-            for j in range(self.cols):
-                if self[i, j] not in (TileType.BLANK, TileType.CROSS):
-                    self._grid[i, j] = TileType.TBD
+        # Keep only BLANK and CROSS tiles, wipe out everything else to TBD
+        self._grid[~((self._grid == TileType.BLANK) | (self._grid == TileType.CROSS))] = TileType.TBD
+        self._perm = None
         self.build()
 
     def zero_out_last_row(self) -> BPD:
@@ -997,21 +1020,22 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         new_bpd.rebuild()
         return new_bpd
 
-
     def right_zero_act(self) -> set[BPD]:
         # find crosses, untransition them
         import itertools
+
         if not self.is_valid:
             return set()
         resized = self.resize(self.rows + 1)
-        if resized.cols < len(self.perm) + 1:
-            resized = resized.set_width(len(self.perm) + 1)
+        min_width = len(self.perm) + 1
+        if resized.cols < min_width:
+            resized = resized.set_width(min_width)
         results = set()
         crossings = [(i, j) for (i, j) in resized.all_crossings() if i == self.rows]
         for r in range(len(crossings) + 1):
             for cross_subset in itertools.combinations(crossings, r):
                 new_bpd = resized.copy()
-                for (i, j) in cross_subset:
+                for i, j in cross_subset:
                     new_bpd._grid[i, j] = TileType.TBD
                 new_bpd.rebuild()
                 if new_bpd.is_valid:
@@ -1047,7 +1071,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         rows = [[] for _ in range(self.rows)]
         # work_bpd = self
         rc = self.as_reduced_compatible()
-        for (reflection, row) in reversed(rc):
+        for reflection, row in reversed(rc):
             rows[row - 1] = rows[row - 1] + [reflection]
 
         return RCGraph([tuple(r) for r in rows])

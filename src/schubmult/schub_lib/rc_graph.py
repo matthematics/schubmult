@@ -1064,10 +1064,11 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     @cache
     def product(self, other: RCGraph) -> dict[RCGraph, int]:
         """Compute the product of this RC graph with another."""
+        self_len = len(self)
         if self.perm.inv == 0:
-            return {type(self)([*self, *other.shiftup(len(self))]): 1}
+            return {type(self)([*self, *other.shiftup(self_len)]): 1}
         num_zeros = max(len(other), len(other.perm))
-        assert len(self.perm.trimcode) <= len(self), f"{self=}, {self.perm=}"
+        assert len(self.perm.trimcode) <= self_len, f"{self=}, {self.perm=}"
         base_rc = self
         buildup_module = {base_rc: 1}
 
@@ -1077,10 +1078,12 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 new_buildup_module = add_perm_dict(new_buildup_module, dict.fromkeys(rc.right_zero_act(), coeff))
             buildup_module = new_buildup_module
         ret_module = {}
+        other_shifted = other.shiftup(self_len)
+        target_len = self_len + len(other)
 
         for rc, coeff in buildup_module.items():
-            new_rc = type(rc)([*rc[: len(self)], *other.shiftup(len(self))])
-            assert len(new_rc) == len(self) + len(other)
+            new_rc = type(rc)([*rc[:self_len], *other_shifted])
+            assert len(new_rc) == target_len
             if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(new_rc):
                 ret_module = add_perm_dict(ret_module, {new_rc: coeff})
 
