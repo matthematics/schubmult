@@ -36,12 +36,12 @@ def test_agrees_with_free_algebra():
     n = 4
     
     perms = Permutation.all_permutations(n)
-
+    R = RCGraphRing()
+                    
     for perm1, perm2 in itertools.product(perms, repeat=2):
         for len1 in range(len(perm1.trimcode), n):
             for len2 in range(len(perm2.trimcode), n):
                 for rc1, rc2 in itertools.product(RCGraph.all_rc_graphs(perm1, len1), RCGraph.all_rc_graphs(perm2, len2)):
-                    R = RCGraphRing()
                     rc_elem = R(rc1) * R(rc2)
 
                     free_algebra_elem = ASx(rc1.perm, len(rc1)) * ASx(rc2.perm, len(rc2))

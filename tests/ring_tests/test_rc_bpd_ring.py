@@ -15,3 +15,21 @@ def test_rc_bpd_ring_multiplication():
                     rc_elem = ring1(rc1) * ring1(rc2)
                     bpd_elem = ring2(BPD.from_rc_graph(rc1)) * ring2(BPD.from_rc_graph(rc2))
                     assert all(v == S.Zero for v in (rc_elem - bpd_elem.to_rc_graph_ring_element()).values()), f"Error: RC graph ring element multiplication mismatch for permutations {perm1}, {perm2}:\nRC1:\n{rc1}\nRC2:\n{rc2}\nRC elem:\n{rc_elem}\nBPD elem:\n{bpd_elem.to_rc_graph_ring_element()}"
+
+def test_agrees_with_free_algebra():
+    from schubmult import BPD, BPDRing, ASx, Permutation
+    import itertools
+    n = 3
+    
+    perms = Permutation.all_permutations(n)
+    R = BPDRing()
+    for perm1, perm2 in itertools.product(perms, repeat=2):
+        for len1 in range(len(perm1.trimcode), n):
+            for len2 in range(len(perm2.trimcode), n):
+                for rc1, rc2 in itertools.product(BPD.all_bpds(perm1, len1), BPD.all_bpds(perm2, len2)):
+                    
+                    bpd_elem = R(rc1) * R(rc2)
+
+                    free_algebra_elem = ASx(rc1.perm, len(rc1)) * ASx(rc2.perm, len(rc2))
+                    free_elem_test = bpd_elem.to_free_algebra_element()
+                    assert all(v == 0 for v in (free_algebra_elem - free_elem_test).values())
