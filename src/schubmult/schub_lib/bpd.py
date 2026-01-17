@@ -549,36 +549,59 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     @property
     def is_valid(self) -> bool:
         """
-        Check if this is a valid pipe dream.
-
-        A valid pipe dream must satisfy:
-        1. Each pipe path from bottom to top does not go out of bounds
-        2. The resulting permutation is valid
+        Check if this is a valid bpd.
 
         Returns:
             True if valid, False otherwise
         """
-        # sanity checks
-        for row in range(self.rows):
-            if self[row, 0] in (TileType.ELBOW_NW, TileType.CROSS, TileType.HORIZ):
+        # Left column boundary check - vectorized
+        left_col = self._grid[: self.rows, 0]
+        if np.any((left_col == TileType.ELBOW_NW) | (left_col == TileType.CROSS) | (left_col == TileType.HORIZ)):
+            return False
+
+        # Right column boundary check - vectorized
+        right_col = self._grid[: self.rows, self.cols - 1]
+        if np.any((right_col == TileType.ELBOW_NW) | (right_col == TileType.VERT)):
+            return False
+
+        # Top row boundary check - vectorized
+        top_row = self._grid[0, : self.cols]
+        if np.any((top_row == TileType.ELBOW_NW) | (top_row == TileType.VERT) | (top_row == TileType.CROSS)):
+            return False
+
+        # Interior connectivity checks - vectorized using boolean masks
+        if self.rows > 2 and self.cols > 2:
+            # Get interior cells
+            interior = self._grid[1 : self.rows - 1, 1 : self.cols - 1]
+            right_neighbors = self._grid[1 : self.rows - 1, 2 : self.cols]
+            left_neighbors = self._grid[1 : self.rows - 1, 0 : self.cols - 2]
+            up_neighbors = self._grid[0 : self.rows - 2, 1 : self.cols - 1]
+            down_neighbors = self._grid[2 : self.rows, 1 : self.cols - 1]
+
+            # Check right connectivity: feeds_right requires entrance_from_left
+            feeds_right = (interior == TileType.HORIZ) | (interior == TileType.ELBOW_SE) | (interior == TileType.CROSS)
+            entrance_left = (right_neighbors == TileType.HORIZ) | (right_neighbors == TileType.ELBOW_NW) | (right_neighbors == TileType.CROSS)
+            if np.any(feeds_right & ~entrance_left):
                 return False
-            if self[row, self.cols - 1] in (TileType.ELBOW_NW, TileType.VERT):
+
+            # Check up connectivity: feeds_up requires entrance_from_bottom
+            feeds_up = (interior == TileType.VERT) | (interior == TileType.ELBOW_NW) | (interior == TileType.CROSS)
+            entrance_bottom = (up_neighbors == TileType.VERT) | (up_neighbors == TileType.ELBOW_SE) | (up_neighbors == TileType.CROSS)
+            if np.any(feeds_up & ~entrance_bottom):
                 return False
-        for col in range(self.cols):
-            # if self[self.rows - 1, col] in (TileType.ELBOW_NW, TileType.HORIZ):
-            #     return False
-            if self[0, col] in (TileType.ELBOW_NW, TileType.VERT, TileType.CROSS):
+
+            # Check left connectivity: entrance_from_left requires feeds_right
+            entrance_left_interior = (interior == TileType.HORIZ) | (interior == TileType.ELBOW_NW) | (interior == TileType.CROSS)
+            feeds_right_left = (left_neighbors == TileType.HORIZ) | (left_neighbors == TileType.ELBOW_SE) | (left_neighbors == TileType.CROSS)
+            if np.any(entrance_left_interior & ~feeds_right_left):
                 return False
-        for row in range(1, self.rows - 1):
-            for col in range(1, self.cols - 1):
-                if self[row, col].feeds_right and not self[row, col + 1].entrance_from_left:
-                    return False
-                if self[row, col].feeds_up and not self[row - 1, col].entrance_from_bottom:
-                    return False
-                if self[row, col].entrance_from_left and not self[row, col - 1].feeds_right:
-                    return False
-                if self[row, col].entrance_from_bottom and not self[row + 1, col].feeds_up:
-                    return False
+
+            # Check bottom connectivity: entrance_from_bottom requires feeds_up
+            entrance_bottom_interior = (interior == TileType.VERT) | (interior == TileType.ELBOW_SE) | (interior == TileType.CROSS)
+            feeds_up_down = (down_neighbors == TileType.VERT) | (down_neighbors == TileType.ELBOW_NW) | (down_neighbors == TileType.CROSS)
+            if np.any(entrance_bottom_interior & ~feeds_up_down):
+                return False
+
         try:
             return self.perm.inv == sum(self.length_vector)
         except Exception:
@@ -644,12 +667,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return self.all_tiles_of_type(TileType.CROSS)
 
     def all_tiles_of_type(self, tile_type: TileType) -> set[tuple[int, int]]:
-        tiles = set()
-        for i in range(self.rows):
-            for j in range(self.cols):
-                if self[i, j] == tile_type:
-                    tiles.add((i, j))
-        return tiles
+        return set(zip(*np.where(self._grid == tile_type)))
 
     def droop_moves(self) -> set[tuple[tuple[int, int], tuple[int, int]]]:
         import itertools
