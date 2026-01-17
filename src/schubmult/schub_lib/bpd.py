@@ -200,7 +200,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def build(self) -> None:
         """Build internal structures by resolving TBD tiles using lookup table."""
-        if self.rows == 0:
+        # Cache shape to avoid property access overhead
+        rows = self._grid.shape[0]
+        cols = self._grid.shape[1]
+
+        if rows == 0:
             return
 
         # Initialize lookup table if needed
@@ -215,21 +219,21 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             self._grid[0, 0] = BPD._TBD_LOOKUP[8, 8]  # (None, None)
 
         # First column [1:, 0] - must process sequentially as each row depends on previous
-        if self.rows > 1:
+        if rows > 1:
             tbd_rows = np.where(tbd_mask[1:, 0])[0] + 1
             for row in tbd_rows:
                 up_tile = int(self._grid[row - 1, 0])
                 self._grid[row, 0] = BPD._TBD_LOOKUP[8, up_tile]
 
         # Process column by column (dependencies require sequential processing)
-        for col in range(1, self.cols):
+        for col in range(1, cols):
             # Top row [0, col] - single lookup with (left_tile, None)
             if tbd_mask[0, col]:
                 left_tile = int(self._grid[0, col - 1])
                 self._grid[0, col] = BPD._TBD_LOOKUP[left_tile, 8]
 
             # Interior cells [1:, col] - must process sequentially as each row depends on previous
-            if self.rows > 1:
+            if rows > 1:
                 tbd_rows = np.where(tbd_mask[1:, col])[0] + 1
                 for row in tbd_rows:
                     left_tile = int(self._grid[row, col - 1])
@@ -413,8 +417,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """
         # Cache grid access and compute all at once
         grid = self._grid
-        rows = grid.shape[0]
-        return tuple(int(np.sum(grid[i, :] == TileType.BLANK)) for i in range(rows))
+        return tuple(int(np.sum(grid[i, :] == TileType.BLANK)) for i in range(self.rows))
 
     @classmethod
     def from_asm(cls, asm) -> BPD:
@@ -569,29 +572,33 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         Returns:
             True if valid, False otherwise
         """
+        # Cache shape to avoid property access overhead
+        rows = self._grid.shape[0]
+        cols = self._grid.shape[1]
+
         # Left column boundary check - vectorized
-        left_col = self._grid[: self.rows, 0]
+        left_col = self._grid[:rows, 0]
         if np.any((left_col == TileType.ELBOW_NW) | (left_col == TileType.CROSS) | (left_col == TileType.HORIZ)):
             return False
 
         # Right column boundary check - vectorized
-        right_col = self._grid[: self.rows, self.cols - 1]
+        right_col = self._grid[:rows, cols - 1]
         if np.any((right_col == TileType.ELBOW_NW) | (right_col == TileType.VERT)):
             return False
 
         # Top row boundary check - vectorized
-        top_row = self._grid[0, : self.cols]
+        top_row = self._grid[0, :cols]
         if np.any((top_row == TileType.ELBOW_NW) | (top_row == TileType.VERT) | (top_row == TileType.CROSS)):
             return False
 
         # Interior connectivity checks - vectorized using boolean masks
-        if self.rows > 2 and self.cols > 2:
+        if rows > 2 and cols > 2:
             # Get interior cells
-            interior = self._grid[1 : self.rows - 1, 1 : self.cols - 1]
-            right_neighbors = self._grid[1 : self.rows - 1, 2 : self.cols]
-            left_neighbors = self._grid[1 : self.rows - 1, 0 : self.cols - 2]
-            up_neighbors = self._grid[0 : self.rows - 2, 1 : self.cols - 1]
-            down_neighbors = self._grid[2 : self.rows, 1 : self.cols - 1]
+            interior = self._grid[1 : rows - 1, 1 : cols - 1]
+            right_neighbors = self._grid[1 : rows - 1, 2:cols]
+            left_neighbors = self._grid[1 : rows - 1, 0 : cols - 2]
+            up_neighbors = self._grid[0 : rows - 2, 1 : cols - 1]
+            down_neighbors = self._grid[2:rows, 1 : cols - 1]
 
             # Check right connectivity: feeds_right requires entrance_from_left
             feeds_right = (interior == TileType.HORIZ) | (interior == TileType.ELBOW_SE) | (interior == TileType.CROSS)
