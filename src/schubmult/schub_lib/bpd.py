@@ -735,47 +735,53 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         if self.perm.inv == 0:
             return D
 
-        # find the first row r with a blank tile
-        r = min([i for i in range(D.rows) for j in range(D.cols) if D[i, j] == TileType.BLANK])
+        # find the first row r with a blank tile - vectorized
+        blank_positions = np.argwhere(D._grid[: D.rows, : D.cols] == TileType.BLANK)
+        if len(blank_positions) == 0:
+            return D
+        r = blank_positions[0, 0]
 
         # initialize the mark X at the blank tile (x,y)
         x = r
-        y = max([j for i in range(D.rows) for j in range(D.cols) if D[i, j] == TileType.BLANK and i == r])
+        y = np.max(blank_positions[blank_positions[:, 0] == r, 1])
+
         while True:
             # --- STEP 1 --- #
-            # move the mark to the rightmost blank tile in the block
-            j = y
-            while j < D.cols and D[x, j] == TileType.BLANK:
-                j += 1
-            y = j - 1
+            # move the mark to the rightmost blank tile in the block - vectorized
+            row_blanks = D._grid[x, y : D.cols] == TileType.BLANK
+            if np.any(row_blanks):
+                y = y + np.where(~row_blanks)[0][0] - 1 if np.any(~row_blanks) else D.cols - 1
 
             # --- STEP 2 --- #
-            # find first j-elbow (x_,y+1) with x_>x, if not found then set x_=0 (in which case p==y+1)
-            x_ = 0
-            for i in range(x + 1, D.rows):
-                if D[i, y + 1] == TileType.ELBOW_NW:
-                    x_ = i
-                    break
+            # find first j-elbow (x_,y+1) with x_>x - vectorized search
+            if y + 1 >= D.cols:
+                break
+            elbow_positions = np.where(D._grid[x + 1 : D.rows, y + 1] == TileType.ELBOW_NW)[0]
+            x_ = elbow_positions[0] + x + 1 if len(elbow_positions) > 0 else 0
+
             if x_ == 0:  # p==y+1
                 break
 
-            for z in range(x + 1, x_):
-                if D[z, y] == TileType.BLANK:
-                    D._grid[z, y] = TileType.VERT
-                    D._grid[z, y + 1] = TileType.BLANK
-                elif D[z, y] == TileType.CROSS:
-                    continue
-                elif D[z, y] == TileType.HORIZ:
-                    D._grid[z, y] = TileType.CROSS
-                    D._grid[z, y + 1] = TileType.HORIZ
-                elif D[z, y] == TileType.VERT:
-                    continue
-                elif D[z, y] == TileType.ELBOW_SE:
-                    D._grid[z, y] = TileType.VERT
-                    D._grid[z, y + 1] = TileType.ELBOW_SE
-                elif D[z, y] == TileType.ELBOW_NW:
-                    D._grid[z, y] = TileType.CROSS
-                    D._grid[z, y + 1] = TileType.ELBOW_NW
+            # Vectorized tile transformation for z in range(x+1, x_)
+            z_range = slice(x + 1, x_)
+            col_y_tiles = D._grid[z_range, y].copy()
+
+            # Create masks for each tile type
+            blank_mask = col_y_tiles == TileType.BLANK
+            horiz_mask = col_y_tiles == TileType.HORIZ
+            elbow_se_mask = col_y_tiles == TileType.ELBOW_SE
+            elbow_nw_mask = col_y_tiles == TileType.ELBOW_NW
+
+            # Apply transformations
+            D._grid[z_range, y][blank_mask] = TileType.VERT
+            D._grid[z_range, y + 1][blank_mask] = TileType.BLANK
+            D._grid[z_range, y][horiz_mask] = TileType.CROSS
+            D._grid[z_range, y + 1][horiz_mask] = TileType.HORIZ
+            D._grid[z_range, y][elbow_se_mask] = TileType.VERT
+            D._grid[z_range, y + 1][elbow_se_mask] = TileType.ELBOW_SE
+            D._grid[z_range, y][elbow_nw_mask] = TileType.CROSS
+            D._grid[z_range, y + 1][elbow_nw_mask] = TileType.ELBOW_NW
+
             D._grid[x, y] = TileType.ELBOW_SE  # NW-corner
             D._grid[x_, y + 1] = TileType.BLANK  # SE-corner
             if D[x_, y] == TileType.ELBOW_SE:  # SW-corner
@@ -794,43 +800,43 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         # --- STEP 3 --- #
         a = y  # where (x,y) is the final position of the mark X
 
-        x_ = 0
-        for i in range(D.rows - 1, x, -1):
-            if D[i, y] == TileType.ELBOW_SE:
-                x_ = i
-                break
+        # Find x_ - vectorized search from bottom
+        if y < D.cols:
+            elbow_positions = np.where(D._grid[x + 1 : D.rows, y] == TileType.ELBOW_SE)[0]
+            x_ = elbow_positions[-1] + x + 1 if len(elbow_positions) > 0 else 0
+        else:
+            x_ = 0
 
-        # copied from above
-        for z in range(x + 1, x_):
-            if D[z, y] == TileType.BLANK:
-                D._grid[z, y] = TileType.VERT
-                D._grid[z, y + 1] = TileType.BLANK
-            elif D[z, y] == TileType.CROSS:
-                continue
-            elif D[z, y] == TileType.HORIZ:
-                D._grid[z, y] = TileType.CROSS
-                D._grid[z, y + 1] = TileType.HORIZ
-            elif D[z, y] == TileType.VERT:
-                continue
-            elif D[z, y] == TileType.ELBOW_SE:
-                D._grid[z, y] = TileType.VERT
-                D._grid[z, y + 1] = TileType.ELBOW_SE
-            elif D[z, y] == TileType.ELBOW_NW:
-                D._grid[z, y] = TileType.CROSS
-                D._grid[z, y + 1] = TileType.ELBOW_NW
+        # Vectorized tile transformation for z in range(x+1, x_)
+        if x_ > x + 1:
+            z_range = slice(x + 1, x_)
+            col_y_tiles = D._grid[z_range, y].copy()
 
-        D._grid[x, y] = TileType.ELBOW_SE  # NW-corner
-        D._grid[x_, y + 1] = TileType.ELBOW_SE  # SE-corner
-        D._grid[x_, y] = TileType.VERT  # SW-corner
-        if D[x, y + 1] == TileType.ELBOW_SE:  # NE-corner
-            D._grid[x, y + 1] = TileType.HORIZ
-        else:  # D._grid[x,y+1] == TileType.VERT
-            D._grid[x, y + 1] = TileType.ELBOW_NW
+            # Create masks for each tile type
+            blank_mask = col_y_tiles == TileType.BLANK
+            horiz_mask = col_y_tiles == TileType.HORIZ
+            elbow_se_mask = col_y_tiles == TileType.ELBOW_SE
+            elbow_nw_mask = col_y_tiles == TileType.ELBOW_NW
 
-        D.rebuild()
-        # left_simple_ref = Permutation.ref_product(self._column_perm[a])
-        # if D.perm != left_simple_ref * self.perm:
-        #     D._column_perm = left_simple_ref * self._column_perm
+            # Apply transformations
+            D._grid[z_range, y][blank_mask] = TileType.VERT
+            D._grid[z_range, y + 1][blank_mask] = TileType.BLANK
+            D._grid[z_range, y][horiz_mask] = TileType.CROSS
+            D._grid[z_range, y + 1][horiz_mask] = TileType.HORIZ
+            D._grid[z_range, y][elbow_se_mask] = TileType.VERT
+            D._grid[z_range, y + 1][elbow_se_mask] = TileType.ELBOW_SE
+            D._grid[z_range, y][elbow_nw_mask] = TileType.CROSS
+            D._grid[z_range, y + 1][elbow_nw_mask] = TileType.ELBOW_NW
+
+        if x_ > 0:
+            D._grid[x, y] = TileType.ELBOW_SE  # NW-corner
+            D._grid[x_, y + 1] = TileType.ELBOW_SE  # SE-corner
+            D._grid[x_, y] = TileType.VERT  # SW-corner
+            if D[x, y + 1] == TileType.ELBOW_SE:  # NE-corner
+                D._grid[x, y + 1] = TileType.HORIZ
+            else:  # D._grid[x,y+1] == TileType.VERT
+                D._grid[x, y + 1] = TileType.ELBOW_NW
+
         return D.resize(self.rows), (a + 1, r + 1)
 
     def column_perm_at_row(self, row: int) -> Permutation:
@@ -847,12 +853,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def resize(self, new_num_rows: int, column_perm: Permutation = Permutation([])) -> BPD:
         if new_num_rows > self.rows:
-            # new_grid = np.full((new_num_rows, max(new_num_rows, self.cols)), fill_value=TileType.TBD, dtype=TileType)
-            # new_grid[: self.rows, : self.cols] = self._grid
-            # new_bpd = BPD(new_grid)
-            # new_bpd.rebuild()
-            # assert new_bpd.is_valid, f"Resulting BPD is not valid after increasing size, {pretty(self)} {new_num_rows} "
-            # return new_bpd
             new_bpd = self.normalize()
             if new_bpd.rows < new_num_rows:
                 new_bpd._grid = np.pad(new_bpd._grid, ((0, new_num_rows - new_bpd.rows), (0, max(0, new_num_rows - self.cols))), constant_values=TileType.TBD)
@@ -870,11 +870,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         num_rows = len(rc_graph)
         n = max(num_rows, len(rc_graph.perm))
         bpd = BPD(np.full((n, n), fill_value=TileType.TBD, dtype=TileType))
-        coords = [rc_graph.left_to_right_inversion_coords(i) for i in range(rc_graph.perm.inv)]
-        coords.reverse()
-        # for i, j in coords:
-        #     bpd = bpd.inverse_pop_op((i + j - 1, i))
-        #     rc_graph = rc_graph.toggle_ref_at(i, j)
+        coords = [rc_graph.left_to_right_inversion_coords(i) for i in range(rc_graph.perm.inv - 1, -1, -1)]
+
         bpd = bpd.inverse_pop_op(*[(i + j - 1, i) for i, j in coords])
 
         assert bpd.perm.inv == len(bpd.all_blank_spots())
@@ -947,10 +944,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         target_inv = self_perm_inv + other_perm_inv
         for bpd, coeff in buildup_module.items():
             assert bpd.is_valid, f"Invalid BPD in product buildup: {pretty(bpd)}"
-            # try:
-            #     new_bpd = bpd.inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other))
-            # except Exception:
-            #     continue
             new_rc = RCGraph([*bpd.to_rc_graph()[:self_len], *other_graph.shiftup(self_len)])
             if new_rc.is_valid:
                 new_bpd = BPD.from_rc_graph(new_rc)
@@ -973,40 +966,51 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             interlaced_rc = [interlaced_rc]
         else:
             interlaced_rc = list(reversed(interlaced_rc))
+
         while len(interlaced_rc) > 0:
             a, r = interlaced_rc.pop()
             if D.rows <= a or D.rows <= r:
                 new_num_rows = max(D.rows, a + 1, r + 1)
                 D = D.resize(new_num_rows)
-            # find first elbow in column a
-            x_ = D.rows - 1
-            while x_ >= 0 and D[x_, a] != TileType.ELBOW_SE:
-                x_ -= 1
-            if x_ == -1:
+            # find first elbow in column a - vectorized search
+            elbow_positions = np.where(D._grid[: D.rows, a] == TileType.ELBOW_SE)[0]
+            if len(elbow_positions) == 0:
                 raise ValueError("No elbow found in specified column for inverse pop operation when inserting ")
+            x_ = elbow_positions[-1]  # Last (bottom-most) elbow
             D._grid[x_, a] = TileType.CROSS
             y = a - 1
-            # find x in column y, it will be an SE elbow
-            x = x_ - 1
-            while x >= 0 and D[x, y] != TileType.ELBOW_SE:
-                x -= 1
-            if x == -1:
+            # find x in column y, it will be an SE elbow - vectorized search
+            if y >= 0:
+                elbow_positions = np.where(D._grid[:x_, y] == TileType.ELBOW_SE)[0]
+                if len(elbow_positions) == 0:
+                    raise ValueError("No elbow found in specified column for inverse pop operation")
+                x = elbow_positions[-1]  # Last (bottom-most) elbow before x_
+            else:
+                x = -1
                 raise ValueError("No elbow found in specified column for inverse pop operation")
             D._grid[x, y] = TileType.BLANK
 
-            for z in range(x + 1, x_):
-                if D[z, y] == TileType.VERT and D[z, y + 1] == TileType.BLANK:
-                    D._grid[z, y] = TileType.BLANK
-                    D._grid[z, y + 1] = TileType.VERT
-                elif D[z, y] == TileType.CROSS and D[z, y + 1] == TileType.ELBOW_NW:
-                    D._grid[z, y] = TileType.TBD
-                    D._grid[z, y + 1] = TileType.TBD
-                elif D[z, y] == TileType.CROSS and D[z, y + 1] == TileType.HORIZ:
-                    D._grid[z, y] = TileType.TBD
-                    D._grid[z, y + 1] = TileType.CROSS
-                elif D[z, y] == TileType.VERT and D[z, y + 1] == TileType.ELBOW_SE:
-                    D._grid[z, y] = TileType.ELBOW_SE
-                    D._grid[z, y + 1] = TileType.CROSS
+            # Vectorized tile transformation for z in range(x+1, x_)
+            if x_ > x + 1:
+                z_range = slice(x + 1, x_)
+                col_y = D._grid[z_range, y].copy()
+                col_y1 = D._grid[z_range, y + 1].copy()
+
+                # Create masks for tile patterns
+                mask1 = (col_y == TileType.VERT) & (col_y1 == TileType.BLANK)
+                mask2 = (col_y == TileType.CROSS) & (col_y1 == TileType.ELBOW_NW)
+                mask3 = (col_y == TileType.CROSS) & (col_y1 == TileType.HORIZ)
+                mask4 = (col_y == TileType.VERT) & (col_y1 == TileType.ELBOW_SE)
+
+                # Apply transformations
+                D._grid[z_range, y][mask1] = TileType.BLANK
+                D._grid[z_range, y + 1][mask1] = TileType.VERT
+                D._grid[z_range, y][mask2] = TileType.TBD
+                D._grid[z_range, y + 1][mask2] = TileType.TBD
+                D._grid[z_range, y][mask3] = TileType.TBD
+                D._grid[z_range, y + 1][mask3] = TileType.CROSS
+                D._grid[z_range, y][mask4] = TileType.ELBOW_SE
+                D._grid[z_range, y + 1][mask4] = TileType.CROSS
 
             D.rebuild()
 
@@ -1021,44 +1025,56 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 y = y - 1
                 # replace with NW elbow
                 assert D[x_, y + 1] == TileType.BLANK, "Expected NW elbow during inverse pop operation"
-                while y >= 0 and D[x_, y] == TileType.BLANK:
-                    y -= 1
+                # Vectorized search: find first non-blank from left in row
+                if y >= 0:
+                    row_non_blanks = D._grid[x_, : y + 1] != TileType.BLANK
+                    non_blank_positions = np.where(row_non_blanks)[0]
+                    if len(non_blank_positions) > 0:
+                        y = non_blank_positions[-1]  # Rightmost non-blank
+                    else:
+                        y = -1
+                else:
+                    y = -1
                 D._grid[x_, y + 1] = TileType.ELBOW_NW
 
-                # find x at SE elbow
-                x = x_ - 1
-                while x >= 0 and D[x, y] != TileType.ELBOW_SE:
-                    x -= 1
-                if x == -1:
+                # find x at SE elbow - vectorized search
+                if y >= 0:
+                    elbow_positions = np.where(D._grid[:x_, y] == TileType.ELBOW_SE)[0]
+                    if len(elbow_positions) == 0:
+                        raise ValueError("No elbow found in specified column for inverse pop operation")
+                    x = elbow_positions[-1]
+                else:
                     raise ValueError("No elbow found in specified column for inverse pop operation")
 
                 # [x, y] becomes BLANK
                 D._grid[x, y] = TileType.BLANK
 
-                # then this is the fix logic
-                for z in range(x + 1, x_):
-                    if D[z, y] == TileType.VERT and D[z, y + 1] == TileType.BLANK:
-                        D._grid[z, y] = TileType.BLANK
-                        D._grid[z, y + 1] = TileType.VERT
-                    elif D[z, y] == TileType.CROSS and D[z, y + 1] == TileType.ELBOW_NW:
-                        D._grid[z, y] = TileType.TBD
-                        D._grid[z, y + 1] = TileType.TBD
-                    elif D[z, y] == TileType.CROSS and D[z, y + 1] == TileType.HORIZ:
-                        D._grid[z, y] = TileType.TBD
-                        D._grid[z, y + 1] = TileType.CROSS
-                    elif D[z, y] == TileType.VERT and D[z, y + 1] == TileType.ELBOW_SE:
-                        D._grid[z, y] = TileType.ELBOW_SE
-                        D._grid[z, y + 1] = TileType.CROSS
+                # Vectorized tile transformation for z in range(x+1, x_)
+                if x_ > x + 1:
+                    z_range = slice(x + 1, x_)
+                    col_y = D._grid[z_range, y].copy()
+                    col_y1 = D._grid[z_range, y + 1].copy()
+
+                    # Create masks for tile patterns
+                    mask1 = (col_y == TileType.VERT) & (col_y1 == TileType.BLANK)
+                    mask2 = (col_y == TileType.CROSS) & (col_y1 == TileType.ELBOW_NW)
+                    mask3 = (col_y == TileType.CROSS) & (col_y1 == TileType.HORIZ)
+                    mask4 = (col_y == TileType.VERT) & (col_y1 == TileType.ELBOW_SE)
+
+                    # Apply transformations
+                    D._grid[z_range, y][mask1] = TileType.BLANK
+                    D._grid[z_range, y + 1][mask1] = TileType.VERT
+                    D._grid[z_range, y][mask2] = TileType.TBD
+                    D._grid[z_range, y + 1][mask2] = TileType.TBD
+                    D._grid[z_range, y][mask3] = TileType.TBD
+                    D._grid[z_range, y + 1][mask3] = TileType.CROSS
+                    D._grid[z_range, y][mask4] = TileType.ELBOW_SE
+                    D._grid[z_range, y + 1][mask4] = TileType.CROSS
 
                 D.rebuild()
-
-        D.rebuild()
-
-        # if D.perm != Permutation.ref_product(self._column_perm[a]) * self.perm:
-        #     D._column_perm = Permutation.ref_product(self._column_perm[a]) * self._column_perm
-
         return D
 
+    @cache
     def as_reduced_compatible(self):
         work_bpd = self
         ret = []
@@ -1086,8 +1102,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def right_zero_act(self) -> set[BPD]:
         # find crosses, untransition them
-        import itertools
-
         if not self.is_valid:
             return set()
         resized = self.resize(self.rows + 1)
@@ -1095,12 +1109,28 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         if resized.cols < min_width:
             resized = resized.set_width(min_width)
         results = set()
-        crossings = [(i, j) for (i, j) in resized.all_crossings() if i == self.rows]
-        for r in range(len(crossings) + 1):
-            for cross_subset in itertools.combinations(crossings, r):
+
+        # Get all crossings in the new row as numpy array for vectorization
+        crossings = np.array([(i, j) for (i, j) in resized.all_crossings() if i == self.rows], dtype=np.int32)
+
+        if len(crossings) == 0:
+            # No crossings, just rebuild and validate
+            resized.rebuild()
+            if resized.is_valid:
+                baggage = resized.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(resized.rows, len(resized.perm)))
+                if baggage.is_valid:
+                    results.add(baggage)
+        else:
+            # Generate all 2^n binary masks for subsets
+            n_crossings = len(crossings)
+            for mask in range(1 << n_crossings):  # 2^n combinations
                 new_bpd = resized.copy()
-                for i, j in cross_subset:
-                    new_bpd._grid[i, j] = TileType.TBD
+                # Apply mask: set to TBD where mask bit is 1
+                for idx in range(n_crossings):
+                    if mask & (1 << idx):
+                        i, j = crossings[idx]
+                        new_bpd._grid[i, j] = TileType.TBD
+
                 new_bpd.rebuild()
                 if new_bpd.is_valid:
                     baggage = new_bpd.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(new_bpd.rows, len(new_bpd.perm)))
@@ -1131,9 +1161,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             RCGraph object (if available in the module)
         """
 
-        # RC-graph rows contain the column positions of crossings in each row
         rows = [[] for _ in range(self.rows)]
-        # work_bpd = self
         rc = self.as_reduced_compatible()
         for reflection, row in reversed(rc):
             rows[row - 1] = rows[row - 1] + [reflection]
