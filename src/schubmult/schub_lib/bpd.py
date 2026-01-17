@@ -518,7 +518,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 if self[row, col].entrance_from_bottom and not self[row + 1, col].feeds_up:
                     return False
         try:
-            self.to_rc_graph()
             return self.perm.inv == sum(self.length_vector)
         except Exception:
             return False
