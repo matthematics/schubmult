@@ -94,20 +94,18 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     Each BPD corresponds to a permutation and has an associated weight.
     """
 
-    def __init__(self, grid, column_perm: Permutation | None = None) -> None:
+    def __init__(self, grid, column_perm: Permutation | None = None, *, _is_copy=False) -> None:
         """
         Initialize a BPD from a grid.
 
         Args:
             grid: n×n array-like of TileType values, integers 0-5, or list of lists
         s"""
+        if _is_copy:
+            return
         self._grid = np.array(grid, dtype=TileType)
         self._column_perm = column_perm if column_perm else Permutation([])
         self._perm = None
-        # Validate grid is square
-        # if len(self._grid.shape) != 2 or self._grid.shape[0] != self._grid.shape[1]:
-        #     raise ValueError("BPD grid must be square (n×n)")
-
         self.build()
 
     @property
@@ -255,15 +253,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def _sympystr(self, printer=None) -> str:
         """SymPy str representation of the BPD using tile symbols"""
-        # result = []
-        # for i in range(self.rows):
-        #     row = []
-        #     for j in range(self.cols):
-        #         tile = TileType(self[i, j])
-        #         row.append(str(tile))
-        #     result.append("".join(row))
-        # if printer is None:
-        #     return "\n".join(result)
         return printer._print(pretty(self))
 
     def _pretty(self, printer=None):
@@ -354,13 +343,18 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             return self._perm
         buildperm = []
 
-        for row in range(self.rows):
+        # Cache property access to avoid overhead in tight loop
+        rows = self._grid.shape[0]
+        cols = self._grid.shape[1]
+        grid = self._grid  # Direct array access
+
+        for row in range(rows):
             # trace from the right
             going_left = True
             current_row = row
-            current_col = self.cols - 1
-            while current_col >= 0 and current_row < self.rows:
-                tile = self[current_row, current_col]
+            current_col = cols - 1
+            while current_col >= 0 and current_row < rows:
+                tile = grid[current_row, current_col]
                 if tile == TileType.ELBOW_NW:
                     # Elbow NW: go down
                     assert not going_left, "Invalid pipe direction at ELBOW_NW"
@@ -417,7 +411,10 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         Returns:
             Tuple of integers representing the length vector
         """
-        return tuple(int(np.sum(self[i, :] == TileType.BLANK)) for i in range(self.rows))
+        # Cache grid access and compute all at once
+        grid = self._grid
+        rows = grid.shape[0]
+        return tuple(int(np.sum(grid[i, :] == TileType.BLANK)) for i in range(rows))
 
     @classmethod
     def from_asm(cls, asm) -> BPD:
@@ -619,7 +616,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def copy(self) -> BPD:
         """Create a copy of this BPD"""
-        return BPD(self._grid.copy(), column_perm=self._column_perm)
+        new_bpd =  BPD(None, _is_copy=True)
+        new_bpd._grid = self._grid.copy()
+        new_bpd._column_perm = self._column_perm
+        new_bpd._perm = self._perm
+        return new_bpd
 
     @property
     def num_crossings(self) -> int:
@@ -764,7 +765,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
             # Vectorized tile transformation for z in range(x+1, x_)
             z_range = slice(x + 1, x_)
-            col_y_tiles = D._grid[z_range, y].copy()
+            col_y_tiles = D._grid[z_range, y]
 
             # Create masks for each tile type
             blank_mask = col_y_tiles == TileType.BLANK
@@ -810,7 +811,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         # Vectorized tile transformation for z in range(x+1, x_)
         if x_ > x + 1:
             z_range = slice(x + 1, x_)
-            col_y_tiles = D._grid[z_range, y].copy()
+            col_y_tiles = D._grid[z_range, y]
 
             # Create masks for each tile type
             blank_mask = col_y_tiles == TileType.BLANK
@@ -894,7 +895,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         other_perm_len = len(other.perm)
         num_zeros = max(len(other), other_perm_len)
         assert len(self_perm.trimcode) <= self_len, f"{self=}, {self_perm=}"
-        base_bpd = self.copy()
+        base_bpd = self
         buildup_module = {base_bpd: 1}
 
         for _ in range(num_zeros):
@@ -958,8 +959,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             # Vectorized tile transformation for z in range(x+1, x_)
             if x_ > x + 1:
                 z_range = slice(x + 1, x_)
-                col_y = D._grid[z_range, y].copy()
-                col_y1 = D._grid[z_range, y + 1].copy()
+                col_y = D._grid[z_range, y]
+                col_y1 = D._grid[z_range, y + 1]
 
                 # Create masks for tile patterns
                 mask1 = (col_y == TileType.VERT) & (col_y1 == TileType.BLANK)
@@ -1017,8 +1018,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 # Vectorized tile transformation for z in range(x+1, x_)
                 if x_ > x + 1:
                     z_range = slice(x + 1, x_)
-                    col_y = D._grid[z_range, y].copy()
-                    col_y1 = D._grid[z_range, y + 1].copy()
+                    col_y = D._grid[z_range, y]
+                    col_y1 = D._grid[z_range, y + 1]
 
                     # Create masks for tile patterns
                     mask1 = (col_y == TileType.VERT) & (col_y1 == TileType.BLANK)
@@ -1085,14 +1086,17 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         else:
             # Generate all 2^n binary masks for subsets
             n_crossings = len(crossings)
+            base_grid = resized._grid.copy()
             for mask in range(1 << n_crossings):  # 2^n combinations
-                new_bpd = resized.copy()
+                # Start from base grid instead of full BPD copy
+                working_grid = base_grid.copy()
                 # Apply mask: set to TBD where mask bit is 1
                 for idx in range(n_crossings):
                     if mask & (1 << idx):
                         i, j = crossings[idx]
-                        new_bpd._grid[i, j] = TileType.TBD
+                        working_grid[i, j] = TileType.TBD
 
+                new_bpd = BPD(working_grid, column_perm=resized._column_perm)
                 new_bpd.rebuild()
                 if new_bpd.is_valid:
                     results.add(new_bpd.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(new_bpd.rows, len(new_bpd.perm))))
