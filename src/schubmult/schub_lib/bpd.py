@@ -879,41 +879,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             return bpd.resize(num_rows, column_perm=column_perm)
         return bpd
 
-    def shiftup(self, shift: int = 1) -> BPD:
-        """Shift the BPD up by a given amount."""
-        # Create new grid with shifted dimensions
-        new_rows = self.rows + shift
-        new_cols = self.cols + shift
-        new_grid = np.full((new_rows, new_cols), TileType.ELBOW_SE, dtype=TileType)
-
-        # Shift the grid contents
-        for i in range(self.rows):
-            for j in range(self.cols):
-                new_grid[i + shift, j + shift] = self[i, j]
-
-        # Fill the top-left portion with identity pattern
-        for i in range(shift):
-            for j in range(shift):
-                if i == j:
-                    new_grid[i, j] = TileType.ELBOW_SE
-                elif i < j:
-                    new_grid[i, j] = TileType.HORIZ
-                else:
-                    new_grid[i, j] = TileType.VERT
-
-        # Connect the identity to shifted content
-        for i in range(shift):
-            for j in range(shift, new_cols):
-                new_grid[i, j] = TileType.HORIZ
-        for i in range(shift, new_rows):
-            for j in range(shift):
-                new_grid[i, j] = TileType.VERT
-
-        # Shift the column permutation
-        new_column_perm = Permutation([p + shift for p in self._column_perm] if self._column_perm else [])
-
-        return BPD(new_grid, column_perm=new_column_perm)
-
     def product(self, other: BPD) -> dict[BPD, int]:
         """Compute the product of this BPD with another."""
         from schubmult.utils.perm_utils import add_perm_dict
@@ -1115,11 +1080,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         if len(crossings) == 0:
             # No crossings, just rebuild and validate
-            resized.rebuild()
             if resized.is_valid:
-                baggage = resized.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(resized.rows, len(resized.perm)))
-                if baggage.is_valid:
-                    results.add(baggage)
+                results.add(resized.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(resized.rows, len(resized.perm))))
         else:
             # Generate all 2^n binary masks for subsets
             n_crossings = len(crossings)
@@ -1133,9 +1095,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
                 new_bpd.rebuild()
                 if new_bpd.is_valid:
-                    baggage = new_bpd.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(new_bpd.rows, len(new_bpd.perm)))
-                    if baggage.is_valid:
-                        results.add(baggage)
+                    results.add(new_bpd.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(new_bpd.rows, len(new_bpd.perm))))
         return results
 
     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, **_kwargs) -> Expr:
