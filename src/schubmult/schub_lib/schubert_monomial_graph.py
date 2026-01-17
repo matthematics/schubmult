@@ -127,19 +127,6 @@ class SchubertMonomialGraph(ABC):
         ...
 
     @abstractmethod
-    def shiftup(self, shift: int = 1) -> "SchubertMonomialGraph":
-        """
-        Shift up the monomial graph by a given amount.
-
-        Args:
-            shift: Amount to shift (default 1)
-
-        Returns:
-            Shifted monomial graph
-        """
-        ...
-
-    @abstractmethod
     def right_zero_act(self) -> set["SchubertMonomialGraph"]:
         """
         Compute the right action of a zero (adding a row/column).
