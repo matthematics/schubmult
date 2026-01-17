@@ -89,36 +89,16 @@ def _invalidate_grid(grid: np.ndarray) -> None:
     grid[~mask] = TileType.TBD
 
 
-def _get_northeast_pipe_count(grid, target_row, target_col):
-    """
-    Computes the number of pipes weakly northeast of a crossing at (target_row, target_col).
-    Grid is a 2D list of TileType.
-    """
-    # r[i][j] stores the corner sum r_A(i, j)
-    # Using n+1 to handle 0-th row/col boundary conditions easily
-    r = np.zeros((grid.shape[0] + 1, grid.shape[1] + 1), dtype=int)
-
-    for i in range(1, grid.shape[0] + 1):
-        for j in range(1, grid.shape[1] + 1):
-            tile = grid[i - 1, j - 1]
-
-            # Based on Lemma 3.5 and 3.8:
-            # r(i,j) - r(i-1, j-1) is:
-            # 0 if BLANK, 2 if CROSS, 1 otherwise.
-            nw_val = r[i - 1, j - 1]
-
-            if tile == TileType.BLANK:
-                diff = 0
-            elif tile == TileType.CROSS:
-                diff = 2
-            else:
-                diff = 1
-
-            r[i, j] = nw_val + diff
-
-    # The label is r_A(i, j) - 1.
-    # Therefore, the total count weakly northeast is simply r_A(i, j).
-    return r[target_row + 1, target_col + 1]
+# def _get_northeast_pipe_count(grid, target_row, target_col):
+#     """
+#     Computes the number of pipes weakly northeast of a crossing at (target_row, target_col).
+#     Grid is a 2D list of TileType.
+#     """
+#     # r[i][j] stores the corner sum r_A(i, j)
+#     # Using n+1 to handle 0-th row/col boundary conditions easily
+#     # r = np.zeros((grid.shape[0] + 1, grid.shape[1] + 1), dtype=int)
+#     r = np.cumsum(np.cumsum(asm[:target_row + 2, :target_col + 2], axis=0), axis=1)
+#     return r[target_row + 1, target_col + 1]
 
 
 def _is_asm(arr):
@@ -455,7 +435,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         build_perm = [good_cols[small_perm[i] - 1] if small_perm[i] - 1 < len(good_cols) else small_perm[i] - 1 for i in range(len(good_cols))] + [None] * (
             max(good_cols, default=0) + 1 - len(good_cols)
         )
-        self._perm = self._column_perm * Permutation.from_partial(build_perm)
+        self._perm = Permutation.from_partial(build_perm)
         return self._perm
         # if self._perm is not None:
         #     return self._perm
@@ -653,17 +633,28 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """
         if self._word is not None:
             return self._word
+
         word = []
 
-        # Read crossings from bottom to top, left to right
+        nrows, ncols = self._grid.shape
+        # Map tiles to their diff values
+        diff = np.ones_like(self._grid, dtype=int)
+        diff[self._grid == TileType.BLANK] = 0
+        diff[self._grid == TileType.CROSS] = 2
+        # Create r array with shape (nrows+1, ncols+1)
+        r = np.zeros((nrows + 1, ncols + 1), dtype=int)
+        # Fill r using vectorized diagonal update
+        # r[i, j] = r[i-1, j-1] + diff[i-1, j-1]
+        # This is not a standard summed-area table, so we need to fill diagonals
+        for i in range(1, nrows + 1):
+            for j in range(1, ncols + 1):
+                r[i, j] = r[i - 1, j - 1] + diff[i - 1, j - 1]
+        # return r[target_row + 1, target_col + 1]
         for col in range(self.cols):
             for row in range(self.rows - 1, -1, -1):
                 if self[row, col] == TileType.CROSS:
-                    # Count pipes weakly northeast of this crossing
-                    # Weakly northeast: r <= row and c >= col
-
-                    word.append(_get_northeast_pipe_count(self._grid, row, col) - 1)
-
+                    pipes_northeast = r[row + 1, col + 1]#self.cols] - r[row + 1, col]
+                    word.append(pipes_northeast - 1)
         self._word = tuple(word)
         return self._word
 
@@ -1099,6 +1090,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     @classmethod
     def from_rc_graph(cls, rc_graph) -> BPD:
         assert len(rc_graph.perm.trimcode) <= len(rc_graph), f"RC graph permutation length exceeds RC graph size: {rc_graph.perm} vs {len(rc_graph)}"
+        assert rc_graph.perm.inv == sum(len(rc_graph[i]) for i in range(len(rc_graph))), f"RC graph permutation inversion count does not match RC graph crossings: {rc_graph.perm} vs {rc_graph}"
         num_rows = len(rc_graph)
         n = max(num_rows, len(rc_graph.perm))
         bpd = BPD(np.full((n, n), fill_value=TileType.TBD, dtype=TileType))
@@ -1398,3 +1390,4 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             rows[row - 1] = rows[row - 1] + [reflection]
 
         return RCGraph([tuple(r) for r in rows])
+
