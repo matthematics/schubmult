@@ -451,15 +451,33 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             num_rows = len(perm)
         n = max(num_rows, len(perm))
         grid = np.full((num_rows, n), fill_value=TileType.TBD, dtype=TileType)
-        bpd = BPD(grid)
-        for a, b in perm.diagram:
-            bpd._grid[a - 1, b - 1] = TileType.BLANK
+
+        # Set blanks from diagram
+        diagram = perm.diagram
+        if diagram:
+            diagram_arr = np.array(list(diagram), dtype=np.int32)
+            grid[diagram_arr[:, 0] - 1, diagram_arr[:, 1] - 1] = TileType.BLANK
+
+        # Vectorize cross detection using graph coordinates
         graph = perm.graph
-        for i in range(num_rows):
-            for j in range(n):
-                if bpd[i, j] != TileType.BLANK:
-                    if any(tup[0] == i + 1 and tup[1] - 1 < j for tup in graph) and any(tup[0] - 1 < i and tup[1] == j + 1 for tup in graph):
-                        bpd._grid[i, j] = TileType.CROSS
+        if graph and len(graph) > 0:
+            graph_arr = np.array(list(graph), dtype=np.int32)
+
+            # Get mask of non-blank positions
+            non_blank_mask = grid != TileType.BLANK
+            non_blank_coords = np.argwhere(non_blank_mask)
+
+            if len(non_blank_coords) > 0:
+                # For each non-blank position, check graph conditions
+                for i, j in non_blank_coords:
+                    # Check if any graph point has row == i+1 and col < j+1
+                    has_row_below = np.any((graph_arr[:, 0] == i + 1) & (graph_arr[:, 1] - 1 < j))
+                    # Check if any graph point has row < i+1 and col == j+1
+                    has_col_left = np.any((graph_arr[:, 0] - 1 < i) & (graph_arr[:, 1] == j + 1))
+                    if has_row_below and has_col_left:
+                        grid[i, j] = TileType.CROSS
+
+        bpd = BPD(grid)
         bpd.rebuild()
         return bpd
 
@@ -616,7 +634,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def copy(self) -> BPD:
         """Create a copy of this BPD"""
-        new_bpd =  BPD(None, _is_copy=True)
+        new_bpd = BPD(None, _is_copy=True)
         new_bpd._grid = self._grid.copy()
         new_bpd._column_perm = self._column_perm
         new_bpd._perm = self._perm
