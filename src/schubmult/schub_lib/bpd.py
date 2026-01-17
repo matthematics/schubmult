@@ -84,7 +84,91 @@ class TileType(IntEnum):
 
 def _invalidate_grid(grid: np.ndarray) -> None:
     """Helper function to invalidate a grid by setting TBD tiles"""
-    grid[~((grid == TileType.BLANK) | (grid == TileType.CROSS))] = TileType.TBD
+    # Compute mask once: keep only BLANK and CROSS tiles
+    mask = (grid == TileType.BLANK) | (grid == TileType.CROSS)
+    grid[~mask] = TileType.TBD
+
+
+def _get_northeast_pipe_count(grid, target_row, target_col):
+    """
+    Computes the number of pipes weakly northeast of a crossing at (target_row, target_col).
+    Grid is a 2D list of TileType.
+    """
+    # r[i][j] stores the corner sum r_A(i, j)
+    # Using n+1 to handle 0-th row/col boundary conditions easily
+    r = np.zeros((grid.shape[0] + 1, grid.shape[1] + 1), dtype=int)
+
+    for i in range(1, grid.shape[0] + 1):
+        for j in range(1, grid.shape[1] + 1):
+            tile = grid[i - 1, j - 1]
+
+            # Based on Lemma 3.5 and 3.8:
+            # r(i,j) - r(i-1, j-1) is:
+            # 0 if BLANK, 2 if CROSS, 1 otherwise.
+            nw_val = r[i - 1, j - 1]
+
+            if tile == TileType.BLANK:
+                diff = 0
+            elif tile == TileType.CROSS:
+                diff = 2
+            else:
+                diff = 1
+
+            r[i, j] = nw_val + diff
+
+    # The label is r_A(i, j) - 1.
+    # Therefore, the total count weakly northeast is simply r_A(i, j).
+    return r[target_row + 1, target_col + 1]
+
+
+def _is_asm(arr):
+    # Ensure it's a square numpy array
+    n, m = arr.shape
+    if n != m:
+        return False
+
+    # 1. Check Row and Column Sums (Must be exactly 1)
+    if not np.all(arr.sum(axis=0) == 1) or not np.all(arr.sum(axis=1) == 1):
+        return False
+
+    # 2. Check Allowed Values (Only 0, 1, -1)
+    # Using absolute value is a fast way to check this
+    # if not np.all(np.abs(arr) <= 1):
+    #     return False
+
+    # 3. Check Alternating Signs and Boundary +1s
+    # In a valid ASM, the cumulative sum along any row/column
+    # must stay between 0 and 1 at all times.
+    # Because row sums are 1, the first/last non-zero must be 1
+    # if the prefix sums are always 0 or 1.
+
+    # Check rows
+    row_cumsum = np.cumsum(arr, axis=1)
+    if np.any((row_cumsum < 0) | (row_cumsum > 1)):
+        return False
+
+    # Check columns
+    col_cumsum = np.cumsum(arr, axis=0)
+    if np.any((col_cumsum < 0) | (col_cumsum > 1)):
+        return False
+
+    # 4. Final verification: The non-zero entries must actually change.
+    # Example of a failure mode for cumsum alone: [1, 0, 0] is fine,
+    # but [1, 1, -1] has cumsums [1, 2, 1], which is caught above.
+    # The only thing left is to ensure we don't have two 1s or two -1s in a row.
+    # We can do this by checking if the absolute difference of non-zero entries is 2.
+
+    for axis in [0, 1]:
+        # Flattened check for each row/column
+        for line in arr if axis == 1 else arr.T:
+            non_zeros = line[line != 0]
+            # Since we know they sum to 1 and cumsum is 0/1,
+            # we just need to ensure no two adjacent non-zeros are the same.
+            if np.any(np.diff(non_zeros) == 0):
+                return False
+
+    return True
+
 
 class BPD(SchubertMonomialGraph, DefaultPrinting):
     """
@@ -110,6 +194,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         self._grid = np.array(grid, dtype=TileType)
         self._column_perm = column_perm if column_perm else Permutation([])
         self._perm = None
+        self._valid = None
+        self._word = None
         self.build()
 
     @property
@@ -261,7 +347,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def _sympystr(self, printer=None) -> str:
         """SymPy str representation of the BPD using tile symbols"""
-        return printer._print(pretty(self))
+        return printer._print("BPD(\n" + pretty(self) + ")")
 
     def _pretty(self, printer=None):
         """Pretty printing with row and column labels"""
@@ -349,47 +435,71 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """
         if self._perm is not None:
             return self._perm
-        buildperm = []
+        if self.rows == 0:
+            self._perm = Permutation([])
+            return self._perm
+        # self._perm = Permutation.ref_product(*self.word)
 
-        # Cache property access to avoid overhead in tight loop
-        rows = self._grid.shape[0]
-        cols = self._grid.shape[1]
-        grid = self._grid  # Direct array access
+        good_cols = []
+        for col in range(self.cols):
+            if self[self.rows - 1, col].entrance_from_bottom:
+                good_cols.append(col + 1)
+            elif self[self.rows - 1, col] == TileType.TBD:
+                raise ValueError("Cannot compute permutation with unresolved TBD tiles")
+        # if len(good_cols) == 0:
+        #     self._perm = Permutation([])
+        #     print(self)
+        #     return self._perm
 
-        for row in range(rows):
-            # trace from the right
-            going_left = True
-            current_row = row
-            current_col = cols - 1
-            while current_col >= 0 and current_row < rows:
-                tile = grid[current_row, current_col]
-                if tile == TileType.ELBOW_NW:
-                    # Elbow NW: go down
-                    assert not going_left, "Invalid pipe direction at ELBOW_NW"
-                    current_col -= 1
-                    going_left = True
-                elif tile == TileType.ELBOW_SE:
-                    # Elbow SE: go right
-                    assert going_left, "Invalid pipe direction at ELBOW_SE"
-                    current_row += 1
-                    going_left = False
-                elif tile == TileType.CROSS:
-                    if going_left:
-                        current_col -= 1
-                    else:
-                        current_row += 1
-                elif tile == TileType.HORIZ:
-                    assert going_left
-                    current_col -= 1
-                elif tile == TileType.VERT:
-                    assert not going_left
-                    current_row += 1
-                else:
-                    raise ValueError(f"Invalid tile type {tile} in BPD")
-            buildperm.append(current_col + 1)
-        n = max(buildperm, default=1)
-        self._perm = self._column_perm * Permutation.from_partial(buildperm + [None] * (n - len(buildperm)))
+        small_perm = Permutation.ref_product(*self.word)
+        build_perm = [good_cols[small_perm[i] - 1] if small_perm[i] - 1 < len(good_cols) else small_perm[i] - 1 for i in range(len(good_cols))] + [None] * (
+            max(good_cols, default=0) + 1 - len(good_cols)
+        )
+        self._perm = self._column_perm * Permutation.from_partial(build_perm)
         return self._perm
+        # if self._perm is not None:
+        #     return self._perm
+        # buildperm = []
+
+        # # Cache property access to avoid overhead in tight loop
+        # rows = self._grid.shape[0]
+        # cols = self._grid.shape[1]
+        # grid = self._grid  # Direct array access
+
+        # for row in range(rows):
+        #     # trace from the right
+        #     going_left = True
+        #     current_row = row
+        #     current_col = cols - 1
+        #     while current_col >= 0 and current_row < rows:
+        #         tile = grid[current_row, current_col]
+        #         if tile == TileType.ELBOW_NW:
+        #             # Elbow NW: go down
+        #             assert not going_left, "Invalid pipe direction at ELBOW_NW"
+        #             current_col -= 1
+        #             going_left = True
+        #         elif tile == TileType.ELBOW_SE:
+        #             # Elbow SE: go right
+        #             assert going_left, "Invalid pipe direction at ELBOW_SE"
+        #             current_row += 1
+        #             going_left = False
+        #         elif tile == TileType.CROSS:
+        #             if going_left:
+        #                 current_col -= 1
+        #             else:
+        #                 current_row += 1
+        #         elif tile == TileType.HORIZ:
+        #             assert going_left
+        #             current_col -= 1
+        #         elif tile == TileType.VERT:
+        #             assert not going_left
+        #             current_row += 1
+        #         else:
+        #             raise ValueError(f"Invalid tile type {tile} in BPD")
+        #     buildperm.append(current_col + 1)
+        # n = max(buildperm, default=1)
+        # self._perm = self._column_perm * Permutation.from_partial(buildperm + [None] * (n - len(buildperm)))
+        # return self._perm
 
     @property
     def permutation(self) -> Permutation:
@@ -419,9 +529,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         Returns:
             Tuple of integers representing the length vector
         """
-        # Cache grid access and compute all at once
-        grid = self._grid
-        return tuple(int(np.sum(grid[i, :] == TileType.BLANK)) for i in range(self.rows))
+        # Vectorized: compute all row sums at once
+        blank_counts = np.sum(self._grid == TileType.BLANK, axis=1)
+        return tuple(int(x) for x in blank_counts)
 
     @classmethod
     def from_asm(cls, asm) -> BPD:
@@ -437,19 +547,39 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         n = asm.shape[0]
         grid = np.full((n, n), fill_value=TileType.TBD, dtype=TileType)
 
-        def is_blank(i, j):
-            return corner_sum[i, j] - (corner_sum[i - 1, j - 1] if i > 0 and j > 0 else 0) == 0
+        def asm_tile(i, j):
+            if corner_sum[i, j] - (corner_sum[i - 1, j - 1] if i > 0 and j > 0 else 0) == 2:
+                return TileType.CROSS
+            if corner_sum[i, j] - (corner_sum[i - 1, j - 1] if i > 0 and j > 0 else 0) == 0:
+                return TileType.BLANK
+            if (corner_sum[i - 1, j] if i > 0 else 0) - (corner_sum[i, j - 1] if j > 0 else 0) == -1:
+                return TileType.HORIZ
+            if (corner_sum[i - 1, j] if i > 0 else 0) - (corner_sum[i, j - 1] if j > 0 else 0) == 1:
+                return TileType.VERT
 
-        def is_crossing(i, j):
-            return corner_sum[i, j] - (corner_sum[i - 1, j - 1] if i > 0 and j > 0 else 0) == 2
+            raise ValueError(f"Invalid ASM corner sum at ({i}, {j})")
 
-        for i in range(n):
-            for j in range(n):
-                if is_blank(i, j):
-                    grid[i, j] = TileType.BLANK
-                elif is_crossing(i, j):
-                    grid[i, j] = TileType.CROSS
+        asm = np.array(asm, dtype=np.int8)
+        grid[asm == 1] = TileType.ELBOW_SE
+        grid[asm == -1] = TileType.ELBOW_NW
+        rows, cols = np.where(asm == 0)
+        grid[rows, cols] = np.vectorize(asm_tile, otypes=[TileType])(rows, cols)
         return cls(grid)
+
+    def to_asm(self):
+        to_trans = self.normalize()
+        n = max(to_trans.rows, to_trans.cols)
+        asm = np.full(shape=(n, n), fill_value=0, dtype=np.int8)
+        se_elbows = to_trans.all_se_elbows()
+        if len(se_elbows) > 0:
+            rows, cols = zip(*se_elbows)
+            asm[rows, cols] = 1
+        nw_elbows = to_trans.all_nw_elbows()
+        if len(nw_elbows) > 0:
+            rows, cols = zip(*nw_elbows)
+            asm[rows, cols] = -1
+        # print(asm)
+        return asm
 
     @classmethod
     @cache
@@ -485,6 +615,16 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                         grid[i, j] = TileType.CROSS
 
         return BPD(grid)
+        # asm = np.zeros(shape=(len(perm), len(perm)), dtype=np.int8)
+        # graph = [(i - 1, j - 1) for (i, j) in perm.graph]
+        # rows, cols = zip(*graph) if graph else ([], [])
+        # asm[rows, cols] = 1
+        # bpd = cls.from_asm(asm)
+        # # print(asm)
+        # # print(bpd)
+        # if num_rows is None or num_rows == len(perm):
+        #     return bpd
+        # return bpd.resize(num_rows)
 
     @property
     def weight(self) -> Tuple[int, ...]:
@@ -511,20 +651,21 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         Returns:
             Tuple of integers representing the reduced word (1-indexed positions)
         """
+        if self._word is not None:
+            return self._word
         word = []
 
         # Read crossings from bottom to top, left to right
-        for row in range(self.rows - 1, -1, -1):
-            for col in range(self.cols):
-                if self[row, col] == 1:
+        for col in range(self.cols):
+            for row in range(self.rows - 1, -1, -1):
+                if self[row, col] == TileType.CROSS:
                     # Count pipes weakly northeast of this crossing
                     # Weakly northeast: r <= row and c >= col
-                    pipes_northeast = self.cols - col
 
-                    # Word value is pipes_northeast - 1 (1-indexed)
-                    word.append(pipes_northeast)
+                    word.append(_get_northeast_pipe_count(self._grid, row, col) - 1)
 
-        return tuple(word)
+        self._word = tuple(word)
+        return self._word
 
     @property
     def reduced_word(self) -> Tuple[int, ...]:
@@ -556,7 +697,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 raise ValueError("New width must be at least the length of the permutation")
             new_grid = np.full((self.rows, width), fill_value=TileType.TBD, dtype=TileType)
             new_grid[:, :width] = self._grid[:, :width]
-            bop = BPD(new_grid, column_perm=self._column_perm)
+            bop = BPD(new_grid)
             bop.rebuild()
             assert bop.is_valid, f"Resulting BPD is not valid after reducing width, {pretty(self)} {width} "
             return bop
@@ -564,7 +705,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             return self
         new_grid = np.full((self.rows, width), fill_value=TileType.TBD, dtype=TileType)
         new_grid[:, : self.cols] = self._grid
-        return BPD(new_grid, column_perm=self._column_perm)
+        return BPD(new_grid)
 
     @property
     def is_valid(self) -> bool:
@@ -574,62 +715,67 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         Returns:
             True if valid, False otherwise
         """
+        if self._valid is not None:
+            return self._valid
+        self._valid = _is_asm(self.to_asm())
+        return self._valid
+
         # Cache shape to avoid property access overhead
-        rows = self._grid.shape[0]
-        cols = self._grid.shape[1]
+        # rows = self._grid.shape[0]
+        # cols = self._grid.shape[1]
 
-        # Left column boundary check - vectorized
-        left_col = self._grid[:rows, 0]
-        if np.any((left_col == TileType.ELBOW_NW) | (left_col == TileType.CROSS) | (left_col == TileType.HORIZ)):
-            return False
+        # # Left column boundary check - vectorized
+        # left_col = self._grid[:rows, 0]
+        # if np.any((left_col == TileType.ELBOW_NW) | (left_col == TileType.CROSS) | (left_col == TileType.HORIZ)):
+        #     return False
 
-        # Right column boundary check - vectorized
-        right_col = self._grid[:rows, cols - 1]
-        if np.any((right_col == TileType.ELBOW_NW) | (right_col == TileType.VERT)):
-            return False
+        # # Right column boundary check - vectorized
+        # right_col = self._grid[:rows, cols - 1]
+        # if np.any((right_col == TileType.ELBOW_NW) | (right_col == TileType.VERT)):
+        #     return False
 
-        # Top row boundary check - vectorized
-        top_row = self._grid[0, :cols]
-        if np.any((top_row == TileType.ELBOW_NW) | (top_row == TileType.VERT) | (top_row == TileType.CROSS)):
-            return False
+        # # Top row boundary check - vectorized
+        # top_row = self._grid[0, :cols]
+        # if np.any((top_row == TileType.ELBOW_NW) | (top_row == TileType.VERT) | (top_row == TileType.CROSS)):
+        #     return False
 
-        # Interior connectivity checks - vectorized using boolean masks
-        if rows > 2 and cols > 2:
-            # Get interior cells
-            interior = self._grid[1 : rows - 1, 1 : cols - 1]
-            right_neighbors = self._grid[1 : rows - 1, 2:cols]
-            left_neighbors = self._grid[1 : rows - 1, 0 : cols - 2]
-            up_neighbors = self._grid[0 : rows - 2, 1 : cols - 1]
-            down_neighbors = self._grid[2:rows, 1 : cols - 1]
+        # # Interior connectivity checks - vectorized using boolean masks
+        # if rows > 2 and cols > 2:
+        #     # Get interior cells
+        #     interior = self._grid[1 : rows - 1, 1 : cols - 1]
+        #     right_neighbors = self._grid[1 : rows - 1, 2:cols]
+        #     left_neighbors = self._grid[1 : rows - 1, 0 : cols - 2]
+        #     up_neighbors = self._grid[0 : rows - 2, 1 : cols - 1]
+        #     down_neighbors = self._grid[2:rows, 1 : cols - 1]
 
-            # Check right connectivity: feeds_right requires entrance_from_left
-            feeds_right = (interior == TileType.HORIZ) | (interior == TileType.ELBOW_SE) | (interior == TileType.CROSS)
-            entrance_left = (right_neighbors == TileType.HORIZ) | (right_neighbors == TileType.ELBOW_NW) | (right_neighbors == TileType.CROSS)
-            if np.any(feeds_right & ~entrance_left):
-                return False
+        #     # Check right connectivity: feeds_right requires entrance_from_left
+        #     feeds_right = (interior == TileType.HORIZ) | (interior == TileType.ELBOW_SE) | (interior == TileType.CROSS)
+        #     entrance_left = (right_neighbors == TileType.HORIZ) | (right_neighbors == TileType.ELBOW_NW) | (right_neighbors == TileType.CROSS)
+        #     if np.any(feeds_right & ~entrance_left):
+        #         return False
 
-            # Check up connectivity: feeds_up requires entrance_from_bottom
-            feeds_up = (interior == TileType.VERT) | (interior == TileType.ELBOW_NW) | (interior == TileType.CROSS)
-            entrance_bottom = (up_neighbors == TileType.VERT) | (up_neighbors == TileType.ELBOW_SE) | (up_neighbors == TileType.CROSS)
-            if np.any(feeds_up & ~entrance_bottom):
-                return False
+        #     # Check up connectivity: feeds_up requires entrance_from_bottom
+        #     feeds_up = (interior == TileType.VERT) | (interior == TileType.ELBOW_NW) | (interior == TileType.CROSS)
+        #     entrance_bottom = (up_neighbors == TileType.VERT) | (up_neighbors == TileType.ELBOW_SE) | (up_neighbors == TileType.CROSS)
+        #     if np.any(feeds_up & ~entrance_bottom):
+        #         return False
 
-            # Check left connectivity: entrance_from_left requires feeds_right
-            entrance_left_interior = (interior == TileType.HORIZ) | (interior == TileType.ELBOW_NW) | (interior == TileType.CROSS)
-            feeds_right_left = (left_neighbors == TileType.HORIZ) | (left_neighbors == TileType.ELBOW_SE) | (left_neighbors == TileType.CROSS)
-            if np.any(entrance_left_interior & ~feeds_right_left):
-                return False
+        #     # Check left connectivity: entrance_from_left requires feeds_right
+        #     entrance_left_interior = (interior == TileType.HORIZ) | (interior == TileType.ELBOW_NW) | (interior == TileType.CROSS)
+        #     feeds_right_left = (left_neighbors == TileType.HORIZ) | (left_neighbors == TileType.ELBOW_SE) | (left_neighbors == TileType.CROSS)
+        #     if np.any(entrance_left_interior & ~feeds_right_left):
+        #         return False
 
-            # Check bottom connectivity: entrance_from_bottom requires feeds_up
-            entrance_bottom_interior = (interior == TileType.VERT) | (interior == TileType.ELBOW_SE) | (interior == TileType.CROSS)
-            feeds_up_down = (down_neighbors == TileType.VERT) | (down_neighbors == TileType.ELBOW_NW) | (down_neighbors == TileType.CROSS)
-            if np.any(entrance_bottom_interior & ~feeds_up_down):
-                return False
+        #     # Check bottom connectivity: entrance_from_bottom requires feeds_up
+        #     entrance_bottom_interior = (interior == TileType.VERT) | (interior == TileType.ELBOW_SE) | (interior == TileType.CROSS)
+        #     feeds_up_down = (down_neighbors == TileType.VERT) | (down_neighbors == TileType.ELBOW_NW) | (down_neighbors == TileType.CROSS)
+        #     if np.any(entrance_bottom_interior & ~feeds_up_down):
+        #         return False
 
-        try:
-            return self.perm.inv == sum(self.length_vector)
-        except Exception:
-            return False
+        # try:
+        #     return self.perm.inv == sum(self.length_vector)
+        # except Exception:
+        #     return False
 
     def __eq__(self, other: object) -> bool:
         """Check equality of two BPDs"""
@@ -647,12 +793,52 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         new_bpd._grid = self._grid.copy()
         new_bpd._column_perm = self._column_perm
         new_bpd._perm = self._perm
+        new_bpd._valid = self._valid
+        new_bpd._word = self._word
         return new_bpd
 
     @property
     def num_crossings(self) -> int:
         """Total number of crossings in the BPD"""
         return int(np.sum(self._grid == TileType.CROSS))
+
+    def inversion_at_cross(self, i: int, j: int) -> int:
+        """
+        Compute the inversion associated with the crossing at position (i, j).
+
+        The inversion is determined by tracing the pipes through the BPD.
+
+        Args:
+            i: Row index of the crossing
+            j: Column index of the crossing
+        Returns:
+            The inversion value as an integer
+        """
+        if self[i, j] != TileType.CROSS:
+            return None
+
+        # up and right
+        up_r = i - 1
+        up_c = j
+
+        while up_r >= 0 and up_c < self.cols:
+            tile = self[up_r, up_c]
+            if tile.feeds_up:
+                up_r -= 1
+            else:
+                up_c += 1
+
+        right_r = i
+        right_c = j + 1
+
+        while right_r >= 0 and right_c < self.cols:
+            tile = self[right_r, right_c]
+            if tile.feeds_right:
+                right_c += 1
+            else:
+                right_r -= 1
+        assert up_r < right_r
+        return up_r, right_r
 
     def trace_pipe(self, i: int, j: int, direction: str | None = None) -> int | None:
         if self[i, j] == TileType.ELBOW_NW:
@@ -685,10 +871,13 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             raise ValueError("Must specify direction when tracing through a crossing")
         raise ValueError(f"Invalid tile for tracing pipe at ({i}, {j}): {self[i, j]}")
 
-    def all_se_elbow_spots(self) -> set[tuple[int, int]]:
+    def all_se_elbows(self) -> set[tuple[int, int]]:
         return self.all_tiles_of_type(TileType.ELBOW_SE)
 
-    def all_blank_spots(self) -> set[tuple[int, int]]:
+    def all_nw_elbows(self) -> set[tuple[int, int]]:
+        return self.all_tiles_of_type(TileType.ELBOW_NW)
+
+    def all_blanks(self) -> set[tuple[int, int]]:
         return self.all_tiles_of_type(TileType.BLANK)
 
     def all_crossings(self) -> set[tuple[int, int]]:
@@ -701,7 +890,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         import itertools
 
         droop_moves = set()
-        for (ri, rj), (bi, bj) in itertools.product(self.all_se_elbow_spots(), self.all_blank_spots()):
+        for (ri, rj), (bi, bj) in itertools.product(self.all_se_elbows(), self.all_blanks()):
             if bi > ri and bj > rj:
                 LEGAL = True
                 for i, j in itertools.product(range(ri, bi + 1), range(rj, bj + 1)):
@@ -746,18 +935,33 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return D
 
     def normalize(self) -> BPD:
-        if len(self) >= len(self.perm):
-            return self.copy()
-        snap_size = max(len(self.perm), self.cols)
-        new_grid = np.pad(self._grid, ((0, snap_size - len(self)), (0, max(0, snap_size - self.cols))), constant_values=TileType.TBD)
+        if len(self) == len(self.perm):
+            if len(self.perm) == self.cols:
+                return self.copy()
+            return self.set_width(len(self.perm))
+        snap_size = len(self.perm)
+        new_grid = self._grid.copy()
+        if snap_size < self.cols:
+            if snap_size < len(self):
+                new_grid = new_grid[:snap_size, :snap_size]
+            else:
+                new_grid = new_grid[:, :snap_size]
+        if snap_size > new_grid.shape[0] or snap_size > new_grid.shape[1]:
+            new_grid = np.pad(new_grid, ((0, snap_size - new_grid.shape[0]), (0, max(0, snap_size - new_grid.shape[1]))), constant_values=TileType.TBD)
         bottom_portion = BPD.rothe_bpd(self.perm.min_coset_rep(*(list(range(self.rows)) + list(range(self.rows + 1, snap_size)))), snap_size)
         new_grid[self.rows :, :] = bottom_portion._grid[self.rows :, :]
         _invalidate_grid(new_grid)
-        return BPD(new_grid)
+        new_bpd = BPD(new_grid)
+        assert new_bpd.rows == new_bpd.cols == snap_size
+        return new_bpd
 
     def pop_op(self) -> tuple[BPD, tuple[int, int]]:
         # --- STEP 0 --- #
-        D = self.normalize()
+        if len(self) < len(self.perm):
+            D = self.normalize()
+        else:
+            D = self.copy()
+
         # check if D has a blank tile (i.e., the coxeter length of D.w is zero)
         if self.perm.inv == 0:
             return D
@@ -886,14 +1090,15 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             elif new_bpd.rows > new_num_rows:
                 new_bpd._grid = new_bpd._grid[:new_num_rows, : max(new_num_rows, len(self.perm))]
             new_bpd.rebuild()
-            assert new_bpd.is_valid, f"Resulting BPD is not valid after increasing size, {pretty(self)} {new_num_rows} "
+            assert new_bpd.is_valid, f"Resulting BPD is not valid after increasing size, \n{pretty(self)} {new_num_rows} "
             return new_bpd
         if new_num_rows < len(self.perm):
             return BPD(self._grid[:new_num_rows, :], column_perm=self.column_perm_at_row(new_num_rows - 1) if column_perm is None else column_perm)
         return BPD(self._grid[:new_num_rows, :], column_perm=column_perm)
 
     @classmethod
-    def from_rc_graph(cls, rc_graph, column_perm: Permutation | None = None) -> BPD:
+    def from_rc_graph(cls, rc_graph) -> BPD:
+        assert len(rc_graph.perm.trimcode) <= len(rc_graph), f"RC graph permutation length exceeds RC graph size: {rc_graph.perm} vs {len(rc_graph)}"
         num_rows = len(rc_graph)
         n = max(num_rows, len(rc_graph.perm))
         bpd = BPD(np.full((n, n), fill_value=TileType.TBD, dtype=TileType))
@@ -901,9 +1106,10 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         bpd = bpd.inverse_pop_op(*[(i + j - 1, i) for i, j in coords])
 
-        assert bpd.perm.inv == len(bpd.all_blank_spots())
+        assert bpd.perm.inv == len(bpd.all_blanks())
+        assert bpd.perm == rc_graph.perm
         if len(bpd) != len(rc_graph):
-            return bpd.resize(num_rows, column_perm=column_perm)
+            return bpd.resize(num_rows)
         return bpd
 
     def product(self, other: BPD) -> dict[BPD, int]:
@@ -911,6 +1117,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         from schubmult.utils.perm_utils import add_perm_dict
 
         other_graph = other.to_rc_graph()
+        assert len(other.perm.trimcode) <= len(other_graph), f"{other=}, {other_graph=}"
         # other_reduced_compatible = [(a + len(self), r + len(self)) for a, r in other.as_reduced_compatible()]
         # other_reduced_compatible.reverse()
         self_perm = self.perm
@@ -937,7 +1144,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         for bpd, coeff in buildup_module.items():
             assert bpd.is_valid, f"Invalid BPD in product buildup: {pretty(bpd)}"
             new_rc = RCGraph([*bpd.to_rc_graph()[:self_len], *other_graph.shiftup(self_len)])
-            if new_rc.is_valid:
+            if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(new_rc):
                 new_bpd = BPD.from_rc_graph(new_rc)
                 assert len(new_bpd) == self_len + len(other)
 
@@ -952,7 +1159,10 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return self.product(other)
 
     def inverse_pop_op(self, *interlaced_rc) -> BPD:
-        D = self.normalize()
+        if self.rows < len(self.perm):
+            D = self.normalize()
+        else:
+            D = self.copy()
 
         if len(interlaced_rc) == 2 and isinstance(interlaced_rc[0], int):
             interlaced_rc = [interlaced_rc]
@@ -1038,7 +1248,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 else:
                     raise ValueError("No elbow found in specified column for inverse pop operation")
 
-                # [x, y] becomes BLANK
+                # [x, y] becomes
                 D._grid[x, y] = TileType.BLANK
 
                 # Vectorized tile transformation for z in range(x+1, x_)
@@ -1066,12 +1276,25 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 D.rebuild()
         return D
 
+    @property
+    def is_reduced(self):
+        if not self.is_valid:
+            return False
+        return self.perm.inv == sum(self.length_vector)
+
     @cache
     def as_reduced_compatible(self):
+        if not self.is_valid:
+            raise ValueError("BPD is not valid, cannot compute reduced compatible sequence")
+        if not self.is_reduced:
+            raise ValueError("BPD is not reduced, cannot compute reduced compatible sequence")
         work_bpd = self
         ret = []
+        last_inv = work_bpd.perm.inv
         while work_bpd.perm.inv > 0:
             work_bpd, (reflection, row) = work_bpd.pop_op()
+            assert work_bpd.perm.inv == last_inv - 1, "Invariant violated in as_reduced_compatible"
+            last_inv = work_bpd.perm.inv
             ret.append((reflection, row))
         ret.reverse()
         return tuple(ret)
@@ -1081,7 +1304,10 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         # Keep only BLANK and CROSS tiles, wipe out everything else to TBD
         _invalidate_grid(self._grid)
         self._perm = None
+        self._valid = None
+        self._word = None
         self.build()
+        return self.is_valid
 
     def zero_out_last_row(self) -> BPD:
         return self.resize(self.rows - 1, column_perm=Permutation([]))
@@ -1092,8 +1318,14 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         new_bpd.rebuild()
         return new_bpd
 
+    # def __setitem__(self, key: tuple[int, int], value: TileType) -> None:
+    #     i, j = key
+    #     self._grid[i, j] = value
+    #     self.rebuild()
+
     def right_zero_act(self) -> set[BPD]:
-        # find crosses, untransition them
+        # # find crosses, untransition them
+        # from schubmult import ASx
         if not self.is_valid:
             return set()
         resized = self.resize(self.rows + 1)
@@ -1102,30 +1334,39 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             resized = resized.set_width(min_width)
         results = set()
 
+        # the_perm = self.perm
+
+        # up_perms = [L[0] for L in (ASx(the_perm, self.rows)*ASx(Permutation([]), 1)).keys()]
+        # for up_perm in up_perms:
+
+        #     new_bpd = resized.copy()
+
+        # return results
         # Get all crossings in the new row as numpy array for vectorization
         crossings = np.array([(i, j) for (i, j) in resized.all_crossings() if i == self.rows], dtype=np.int32)
 
-        if len(crossings) == 0:
-            # No crossings, just rebuild and validate
-            if resized.is_valid:
-                results.add(resized.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(resized.rows, len(resized.perm))))
-        else:
-            # Generate all 2^n binary masks for subsets
-            n_crossings = len(crossings)
-            base_grid = resized._grid.copy()
-            for mask in range(1 << n_crossings):  # 2^n combinations
-                # Start from base grid instead of full BPD copy
-                working_grid = base_grid.copy()
-                # Apply mask: set to TBD where mask bit is 1
-                for idx in range(n_crossings):
-                    if mask & (1 << idx):
-                        i, j = crossings[idx]
-                        working_grid[i, j] = TileType.TBD
-                _invalidate_grid(working_grid)
-                new_bpd = BPD(working_grid, column_perm=resized._column_perm)
+        # if len(crossings) == 0:
+        #     # No crossings, just rebuild and validate
+        #     if resized.is_valid:
+        #         results.add(resized.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(resized.rows, len(resized.perm))))
+        # else:
+        # Generate all 2^n binary masks for subsets
+        n_crossings = len(crossings)
+        base_grid = resized._grid.copy()
+        for mask in range(1 << n_crossings):  # 2^n combinations
+            # Start from base grid instead of full BPD copy
+            working_grid = base_grid.copy()
+            # Apply mask: set to TBD where mask bit is 1
+            for idx in range(n_crossings):
+                if mask & (1 << idx):
+                    i, j = crossings[idx]
+                    working_grid[i, j] = TileType.TBD
+            _invalidate_grid(working_grid)
+            new_bpd = BPD(working_grid, column_perm=resized._column_perm)
 
-                if new_bpd.is_valid:
-                    results.add(new_bpd.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(new_bpd.rows, len(new_bpd.perm))))
+            if new_bpd.is_valid and new_bpd.is_reduced:
+                results.add(new_bpd.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(new_bpd.rows, len(new_bpd.perm))))
+
         return results
 
     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, **_kwargs) -> Expr:
@@ -1140,8 +1381,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         from schubmult.symbolic import prod
 
         if y is None:
-            return prod(x[i + 1] for i, _ in self.all_blank_spots())
-        return prod(x[i + 1] - y[j + 1] for i, j in self.all_blank_spots())
+            return prod(x[i + 1] for i, _ in self.all_blanks())
+        return prod(x[i + 1] - y[j + 1] for i, j in self.all_blanks())
 
     def to_rc_graph(self) -> RCGraph:
         """

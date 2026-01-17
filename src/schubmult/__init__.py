@@ -29,6 +29,7 @@ _lazy_exports = {
     "TileType": "schubmult.schub_lib.bpd",
     # Rings
     "Sx": "schubmult.rings.schubert_ring",
+    "DSx": "schubmult.rings.schubert_ring",
     "ASx": "schubmult.rings.free_algebra",
     "ADSx": "schubmult.rings.free_algebra",
     "DoubleSchubertRing": "schubmult.rings.schubert_ring",

@@ -261,12 +261,14 @@ class Permutation(Printable):
             return self.zero_indexed_descents()
         return {i + 1 for i in self.zero_indexed_descents()}
 
-    def get_cycles(self):
-        return self.get_cycles_cached()
+    def get_cycles(self, sort_min=False):
+        return self.get_cycles_cached(sort_min)
 
     @cache
-    def get_cycles_cached(self):
-        return [tuple(sl.cyclic_sort([i + 1 for i in c])) for c in spp.Permutation([k - 1 for k in self._perm]).cyclic_form]
+    def get_cycles_cached(self, sort_min):
+        if not sort_min:
+            return [tuple(sl.cyclic_sort([i + 1 for i in c])) for c in spp.Permutation([k - 1 for k in self._perm]).cyclic_form]
+        return [tuple(sl.cyclic_sort_min([i + 1 for i in c])) for c in spp.Permutation([k - 1 for k in self._perm]).cyclic_form]
 
     @classmethod
     def from_cycles(cls, cycle_iter):

@@ -1,3 +1,20 @@
+def test_all_bpds():
+    from schubmult import RCGraph, BPD, Permutation, Sx, DSx
+
+    n = 5
+    perms = Permutation.all_permutations(n)
+    ring = DSx([]).ring
+    for perm in perms:
+        bpd_set = BPD.all_bpds(perm, n - 1)
+        for bpd in bpd_set:
+            assert bpd.perm == perm
+            for i in range(n - 1, len(bpd.perm.trimcode) - 1):
+                assert bpd.perm == bpd.resize(i).perm, f"Error: BPD resize permutation mismatch for permutation {perm} with len {i}:\nBPD:\n{bpd}\nResized BPD:\n{bpd.resize(i)}"
+        assert sum([Sx(bpd.polyvalue(Sx.genset)) for bpd in bpd_set]) == Sx(perm), f"Error: BPD all_bpds polynomial value mismatch for permutation {perm}:\nSum of BPD polyvalues:\n{sum(Sx(bpd.polyvalue(Sx.genset) for bpd in bpd_set))}\nExpected:\n{Sx(perm)}"      
+        
+                
+            
+
 def test_bpd_zeroing():
     from schubmult import RCGraph, BPD
 
