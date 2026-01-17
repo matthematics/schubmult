@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from enum import IntEnum
-from functools import cache
+from functools import cache, cached_property
 from typing import Tuple
 
 import numpy as np
@@ -46,37 +46,37 @@ class TileType(IntEnum):
         symbols = {TileType.BLANK: "▢", TileType.CROSS: "┼", TileType.ELBOW_NW: "╯", TileType.ELBOW_SE: "╭", TileType.HORIZ: "─", TileType.VERT: "│", TileType.BUMP: "╬", TileType.TBD: "?"}
         return symbols.get(self, "?")
 
-    @property
+    @cached_property
     def is_crossing(self) -> bool:
         """True if this tile is a crossing"""
         return self == TileType.CROSS
 
-    @property
+    @cached_property
     def is_elbow(self) -> bool:
         """True if this tile is any type of elbow"""
         return self in (TileType.ELBOW_NW, TileType.ELBOW_SE)
 
-    @property
+    @cached_property
     def is_empty(self) -> bool:
         """True if this tile is empty (pipes go straight)"""
         return self == TileType.BLANK
 
-    @property
+    @cached_property
     def feeds_right(self) -> bool:
         """True if the horizontal pipe continues to the right"""
         return self in (TileType.HORIZ, TileType.ELBOW_SE, TileType.CROSS)
 
-    @property
+    @cached_property
     def feeds_up(self) -> bool:
         """True if the vertical pipe continues upwards"""
         return self in (TileType.VERT, TileType.ELBOW_NW, TileType.CROSS)
 
-    @property
+    @cached_property
     def entrance_from_bottom(self) -> bool:
         """True if a pipe can enter from the bottom"""
         return self in (TileType.VERT, TileType.ELBOW_SE, TileType.CROSS)
 
-    @property
+    @cached_property
     def entrance_from_left(self) -> bool:
         """True if a pipe can enter from the left"""
         return self in (TileType.HORIZ, TileType.ELBOW_NW, TileType.CROSS)
@@ -137,60 +137,106 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                     pipes.add(new_pipe)
         return pipes
 
+    # Static lookup table for TBD tile resolution
+    # Index by (left_tile_value, up_tile_value) where None is represented as -1
+    # Pre-computed based on feeds_right and entrance_from_bottom properties
+    _TBD_LOOKUP = None
+
+    @classmethod
+    def _init_tbd_lookup(cls):
+        """Initialize the static TBD tile lookup table."""
+        if cls._TBD_LOOKUP is not None:
+            return
+
+        # Create lookup table: shape (9, 9) for tile types 0-7 plus None (-1 -> index 8)
+        lookup = np.full((9, 9), TileType.ELBOW_SE, dtype=TileType)
+
+        # Map None to index 8
+        none_idx = 8
+
+        # For each combination of (left_tile, up_tile), compute result
+        for left_val in range(-1, 8):  # -1 for None, 0-7 for tile types
+            left_idx = none_idx if left_val == -1 else left_val
+            left_feeds_right = False if left_val == -1 else TileType(left_val).feeds_right if left_val < 8 else False
+
+            for up_val in range(-1, 8):
+                up_idx = none_idx if up_val == -1 else up_val
+                up_entrance = False if up_val == -1 else TileType(up_val).entrance_from_bottom if up_val < 8 else False
+
+                # Apply the logic from _get_tbd_tile
+                if up_val == -1:  # up_tile is None
+                    if left_val == -1 or not left_feeds_right:
+                        lookup[left_idx, up_idx] = TileType.ELBOW_SE
+                    else:
+                        lookup[left_idx, up_idx] = TileType.HORIZ
+                elif left_val == -1:  # left_tile is None, up_tile is not
+                    if up_entrance:
+                        lookup[left_idx, up_idx] = TileType.VERT
+                    else:
+                        lookup[left_idx, up_idx] = TileType.ELBOW_SE
+                else:  # Both not None
+                    if left_feeds_right:
+                        if up_entrance:
+                            lookup[left_idx, up_idx] = TileType.ELBOW_NW
+                        else:
+                            lookup[left_idx, up_idx] = TileType.HORIZ
+                    else:
+                        if up_entrance:
+                            lookup[left_idx, up_idx] = TileType.VERT
+                        else:
+                            lookup[left_idx, up_idx] = TileType.ELBOW_SE
+
+        cls._TBD_LOOKUP = lookup
+
     @classmethod
     def _get_tbd_tile(cls, left_tile: TileType | None, up_tile: TileType | None) -> TileType:
-        left_tile_feeds_right = left_tile.feeds_right if left_tile is not None else False
-        up_tile_entrance_from_bottom = up_tile.entrance_from_bottom if up_tile is not None else False
-        if up_tile is None:
-            if left_tile is None or not left_tile_feeds_right:
-                return TileType.ELBOW_SE
-            return TileType.HORIZ
-        if left_tile is None:
-            if up_tile_entrance_from_bottom:
-                return TileType.VERT
-            return TileType.ELBOW_SE
-        if left_tile_feeds_right:
-            if up_tile_entrance_from_bottom:
-                return TileType.ELBOW_NW
-            return TileType.HORIZ
-        if up_tile_entrance_from_bottom:
-            return TileType.VERT
-        return TileType.ELBOW_SE
+        """Fast lookup-based TBD tile resolution."""
+        if cls._TBD_LOOKUP is None:
+            cls._init_tbd_lookup()
+
+        left_idx = 8 if left_tile is None else int(left_tile)
+        up_idx = 8 if up_tile is None else int(up_tile)
+        return cls._TBD_LOOKUP[left_idx, up_idx]
 
     DEBUG = False
 
     def build(self) -> None:
-        """Build internal structures by resolving TBD tiles using vectorized operations where possible."""
+        """Build internal structures by resolving TBD tiles using lookup table."""
         if self.rows == 0:
             return
+
+        # Initialize lookup table if needed
+        if BPD._TBD_LOOKUP is None:
+            BPD._init_tbd_lookup()
 
         # Find all TBD positions
         tbd_mask = self._grid == TileType.TBD
 
-        # Corner case
+        # Corner case [0,0]
         if tbd_mask[0, 0]:
-            self._grid[0, 0] = self._get_tbd_tile(None, None)
+            self._grid[0, 0] = BPD._TBD_LOOKUP[8, 8]  # (None, None)
 
-        # First column (no left neighbor)
-        tbd_first_col = tbd_mask[1 : self.rows, 0]
-        if np.any(tbd_first_col):
-            for row in np.where(tbd_first_col)[0] + 1:
-                self._grid[row, 0] = self._get_tbd_tile(None, self._grid[row - 1, 0])
+        # First column [1:, 0] - must process sequentially as each row depends on previous
+        if self.rows > 1:
+            tbd_rows = np.where(tbd_mask[1:, 0])[0] + 1
+            for row in tbd_rows:
+                up_tile = int(self._grid[row - 1, 0])
+                self._grid[row, 0] = BPD._TBD_LOOKUP[8, up_tile]
 
         # Process column by column (dependencies require sequential processing)
         for col in range(1, self.cols):
-            # Top row (no up neighbor)
+            # Top row [0, col] - single lookup with (left_tile, None)
             if tbd_mask[0, col]:
-                self._grid[0, col] = self._get_tbd_tile(self._grid[0, col - 1], None)
+                left_tile = int(self._grid[0, col - 1])
+                self._grid[0, col] = BPD._TBD_LOOKUP[left_tile, 8]
 
-            # Interior cells - check entire column at once
-            tbd_col = tbd_mask[1 : self.rows, col]
-            if np.any(tbd_col):
-                for row in np.where(tbd_col)[0] + 1:
-                    self._grid[row, col] = self._get_tbd_tile(
-                        self._grid[row, col - 1],
-                        self._grid[row - 1, col],
-                    )
+            # Interior cells [1:, col] - must process sequentially as each row depends on previous
+            if self.rows > 1:
+                tbd_rows = np.where(tbd_mask[1:, col])[0] + 1
+                for row in tbd_rows:
+                    left_tile = int(self._grid[row, col - 1])
+                    up_tile = int(self._grid[row - 1, col])
+                    self._grid[row, col] = BPD._TBD_LOOKUP[left_tile, up_tile]
 
     def __len__(self) -> int:
         """Return the size n of the n×n grid"""
