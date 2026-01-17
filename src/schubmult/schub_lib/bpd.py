@@ -82,6 +82,10 @@ class TileType(IntEnum):
         return self in (TileType.HORIZ, TileType.ELBOW_NW, TileType.CROSS)
 
 
+def _invalidate_grid(grid: np.ndarray) -> None:
+    """Helper function to invalidate a grid by setting TBD tiles"""
+    grid[~((grid == TileType.BLANK) | (grid == TileType.CROSS))] = TileType.TBD
+
 class BPD(SchubertMonomialGraph, DefaultPrinting):
     """
     Bumpless Pipe Dream representation.
@@ -480,9 +484,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                     if has_row_below and has_col_left:
                         grid[i, j] = TileType.CROSS
 
-        bpd = BPD(grid)
-        bpd.rebuild()
-        return bpd
+        return BPD(grid)
 
     @property
     def weight(self) -> Tuple[int, ...]:
@@ -750,9 +752,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         new_grid = np.pad(self._grid, ((0, snap_size - len(self)), (0, max(0, snap_size - self.cols))), constant_values=TileType.TBD)
         bottom_portion = BPD.rothe_bpd(self.perm.min_coset_rep(*(list(range(self.rows)) + list(range(self.rows + 1, snap_size)))), snap_size)
         new_grid[self.rows :, :] = bottom_portion._grid[self.rows :, :]
-        ret = BPD(new_grid)
-        ret.rebuild()
-        return ret
+        _invalidate_grid(new_grid)
+        return BPD(new_grid)
 
     def pop_op(self) -> tuple[BPD, tuple[int, int]]:
         # --- STEP 0 --- #
@@ -1078,7 +1079,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     def rebuild(self) -> None:
         """Rebuild the BPD to resolve any TBD tiles"""
         # Keep only BLANK and CROSS tiles, wipe out everything else to TBD
-        self._grid[~((self._grid == TileType.BLANK) | (self._grid == TileType.CROSS))] = TileType.TBD
+        _invalidate_grid(self._grid)
         self._perm = None
         self.build()
 
@@ -1120,9 +1121,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                     if mask & (1 << idx):
                         i, j = crossings[idx]
                         working_grid[i, j] = TileType.TBD
-
+                _invalidate_grid(working_grid)
                 new_bpd = BPD(working_grid, column_perm=resized._column_perm)
-                new_bpd.rebuild()
+
                 if new_bpd.is_valid:
                     results.add(new_bpd.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(new_bpd.rows, len(new_bpd.perm))))
         return results
