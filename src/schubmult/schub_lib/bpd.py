@@ -279,14 +279,12 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         if tbd_mask[0, 0]:
             self._grid[0, 0] = BPD._TBD_LOOKUP[8, 8]  # (None, None)
 
-
         # First column [1:, 0] - must process sequentially as each row depends on previous
         if rows > 1:
             tbd_rows = np.where(tbd_mask[1:, 0])[0] + 1
             for row in tbd_rows:
                 up_tile = int(self._grid[row - 1, 0])
                 self._grid[row, 0] = BPD._TBD_LOOKUP[8, up_tile]
-
 
         # Process column by column (dependencies require sequential processing)
         for col in range(1, cols):
@@ -426,7 +424,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 new_grid[i, j] = TileType.VERT
         return BPD(new_grid)
 
-
     @property
     def perm(self) -> Permutation:
         """
@@ -445,14 +442,19 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             return self._perm
         # self._perm = Permutation.ref_product(*self.word)
 
-        good_cols = []
-        for col in range(self.cols):
-            if self[self.rows - 1, col].entrance_from_bottom:
-                good_cols.append(col + 1)
-            elif self[self.rows - 1, col] == TileType.TBD:
-                raise ValueError("Cannot compute permutation with unresolved TBD tiles")
-        small_perm = Permutation([])
         nrows, ncols = self._grid.shape
+        bottom_row = self._grid[nrows - 1, :]
+
+        # Check for TBD in bottom row
+        if np.any(bottom_row == TileType.TBD):
+            raise ValueError("Cannot compute permutation with unresolved TBD tiles")
+
+        # Vectorized: find columns with entrance_from_bottom
+        # entrance_from_bottom is True for VERT, CROSS, ELBOW_NW
+        entrance_mask = (bottom_row == TileType.VERT) | (bottom_row == TileType.CROSS) | (bottom_row == TileType.ELBOW_SE)
+        good_cols = (np.where(entrance_mask)[0] + 1).tolist()
+
+        small_perm = Permutation([])
         # Map tiles to their diff values
         diff = np.ones_like(self._grid, dtype=int)
         diff[self._grid == TileType.BLANK] = 0
@@ -467,7 +469,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         for col in range(self.cols):
             for row in range(self.rows - 1, -1, -1):
                 if self[row, col] == TileType.CROSS:
-                    pipes_northeast = r[row + 1, col + 1]#self.cols] - r[row + 1, col]
+                    pipes_northeast = r[row + 1, col + 1]  # self.cols] - r[row + 1, col]
                     small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
 
         build_perm = [good_cols[small_perm[i] - 1] if small_perm[i] - 1 < len(good_cols) else small_perm[i] - 1 for i in range(len(good_cols))] + [None] * (
@@ -636,7 +638,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         for col in range(self.cols):
             for row in range(self.rows - 1, -1, -1):
                 if self[row, col] == TileType.CROSS:
-                    pipes_northeast = r[row + 1, col + 1]#self.cols] - r[row + 1, col]
+                    pipes_northeast = r[row + 1, col + 1]  # self.cols] - r[row + 1, col]
                     word.append(pipes_northeast - 1)
         self._word = tuple(word)
         return self._word
@@ -1325,4 +1327,3 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             rows[row - 1] = rows[row - 1] + [reflection]
 
         return RCGraph([tuple(r) for r in rows])
-
