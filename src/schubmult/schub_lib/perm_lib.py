@@ -409,9 +409,7 @@ class Permutation(Printable):
         return self._hash_code
 
     def __mul__(self, other):
-        if len(other._perm) > len(self._perm):
-            return Permutation([self[other._perm[i] - 1] for i in range(len(other._perm))])
-        return Permutation([*[self._perm[other._perm[i] - 1] for i in range(len(other._perm))], *self._perm[len(other._perm) :]])
+        return Permutation([*[self[other[i] - 1] for i in range(max(len(self._perm), len(other._perm)))]])
 
     def __iter__(self):
         yield from self._perm.__iter__()
