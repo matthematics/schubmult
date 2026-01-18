@@ -708,7 +708,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """
         if self._valid is not None:
             return self._valid
-        self._valid = _is_asm(self.to_asm())
+        try:
+            self._valid = _is_asm(self.to_asm())
+        except Exception:
+            self._valid = False
+
         return self._valid
 
         # Cache shape to avoid property access overhead
@@ -1104,6 +1108,10 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             return bpd.resize(num_rows)
         return bpd
 
+    def combine(self, other, shift=None) -> BPD:
+        """Shift the BPD up by adding empty rows at the bottom."""
+        return BPD.from_rc_graph(RCGraph([*self.to_rc_graph()[:shift], *other.to_rc_graph().shiftup(shift)]))
+
     def product(self, other: BPD) -> dict[BPD, int]:
         """Compute the product of this BPD with another."""
         from schubmult.utils.perm_utils import add_perm_dict
@@ -1116,6 +1124,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         if self_perm.inv == 0:
             # return {BPD.rothe_bpd(Permutation([]), len(self) + len(other)).inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other)): 1}
             return {BPD.from_rc_graph(other_graph.prepend(len(self))): 1}
+        if other.rows == 0:
+            return {self: 1}
         self_len = len(self)
         other_perm_len = len(other.perm)
         num_zeros = max(len(other), other_perm_len)
@@ -1133,16 +1143,16 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         self_perm_inv = self_perm.inv
         other_perm_inv = other.perm.inv
         target_inv = self_perm_inv + other_perm_inv
+        shifted_other = other_graph.shiftup(self_len)
         for bpd, coeff in buildup_module.items():
             assert bpd.is_valid, f"Invalid BPD in product buildup: {pretty(bpd)}"
-            new_rc = RCGraph([*bpd.to_rc_graph()[:self_len], *other_graph.shiftup(self_len)])
-            if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(new_rc):
-                new_bpd = BPD.from_rc_graph(new_rc)
-                assert len(new_bpd) == self_len + len(other)
-
-                new_bpd_perm = new_bpd.perm
-                if new_bpd.is_valid and new_bpd_perm.inv == target_inv and len(new_bpd_perm.trimcode) <= len(new_bpd):
-                    ret_module = add_perm_dict(ret_module, {new_bpd: coeff})
+            # new_rc = RCGraph([*bpd.to_rc_graph()[:self_len], *other_graph.shiftup(self_len)])
+            try:
+                new_bpd = BPD.from_rc_graph(RCGraph([*bpd.to_rc_graph()[:self.rows], *shifted_other]))
+            except Exception:
+                continue
+            if new_bpd.is_valid and new_bpd.is_reduced and new_bpd.perm.inv == target_inv and len(new_bpd.perm.trimcode) <= len(self) + len(other):
+                ret_module = add_perm_dict(ret_module, {new_bpd: coeff})
 
         return ret_module
 
@@ -1163,8 +1173,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         while len(interlaced_rc) > 0:
             a, r = interlaced_rc.pop()
-            if D.rows <= a or D.rows <= r:
-                new_num_rows = max(D.rows, a + 1, r + 1)
+            if D.cols <= a or D.rows <= r:
+                new_num_rows = max(D.rows, D.cols, a + 1, r + 1)
                 D = D.resize(new_num_rows)
             # find first elbow in column a - vectorized search
             elbow_positions = np.where(D._grid[: D.rows, a] == TileType.ELBOW_SE)[0]
@@ -1310,14 +1320,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         new_bpd.rebuild()
         return new_bpd
 
-    # def __setitem__(self, key: tuple[int, int], value: TileType) -> None:
-    #     i, j = key
-    #     self._grid[i, j] = value
-    #     self.rebuild()
-
     def right_zero_act(self) -> set[BPD]:
         # # find crosses, untransition them
-        # from schubmult import ASx
         if not self.is_valid:
             return set()
         resized = self.resize(self.rows + 1)
@@ -1326,23 +1330,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             resized = resized.set_width(min_width)
         results = set()
 
-        # the_perm = self.perm
-
-        # up_perms = [L[0] for L in (ASx(the_perm, self.rows)*ASx(Permutation([]), 1)).keys()]
-        # for up_perm in up_perms:
-
-        #     new_bpd = resized.copy()
-
-        # return results
-        # Get all crossings in the new row as numpy array for vectorization
         crossings = np.array([(i, j) for (i, j) in resized.all_crossings() if i == self.rows], dtype=np.int32)
 
-        # if len(crossings) == 0:
-        #     # No crossings, just rebuild and validate
-        #     if resized.is_valid:
-        #         results.add(resized.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(resized.rows, len(resized.perm))))
-        # else:
-        # Generate all 2^n binary masks for subsets
         n_crossings = len(crossings)
         base_grid = resized._grid.copy()
         for mask in range(1 << n_crossings):  # 2^n combinations
