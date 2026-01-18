@@ -1,6 +1,7 @@
 import math
 from functools import cache, cached_property
 
+import numpy as np
 import sympy.combinatorics.permutations as spp
 from sympy.printing.defaults import Printable
 
@@ -177,6 +178,11 @@ class Permutation(Printable):
         cd = sl.old_code(p)
         obj._unique_key = (len(p), sum([cd[i] * math.factorial(len(p) - 1 - i) for i in range(len(cd))]))
         return obj
+
+    @cached_property
+    def _arr(self):
+        """Cached numpy array representation (1-indexed values)."""
+        return np.array(self._perm, dtype=np.int32)
 
     @property
     def args(self):
@@ -380,14 +386,18 @@ class Permutation(Printable):
         return (self.__class__, (self._perm,))
 
     def swap(self, i, j):
-        new_perm = [*self._perm]
-        # print(f"SWAP {new_perm=}")
         if i > j:
             i, j = j, i
-        if j >= len(new_perm):
+        if j >= len(self._perm):
+            # Need to extend - fall back to list operations
+            new_perm = [*self._perm]
             new_perm.extend(range(len(new_perm) + 1, j + 2))
-        new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
-        return Permutation(new_perm)
+            new_perm[i], new_perm[j] = new_perm[j], new_perm[i]
+            return Permutation(new_perm)
+        # Fast path using numpy
+        new_arr = self._arr.copy()
+        new_arr[i], new_arr[j] = new_arr[j], new_arr[i]
+        return Permutation(new_arr)
 
     def rslice(self, start, stop):
         ttup = [*self._perm, *list(range(len(self._perm) + 1, stop + 2))]
@@ -409,7 +419,21 @@ class Permutation(Printable):
         return self._hash_code
 
     def __mul__(self, other):
-        return Permutation([*[self[other[i] - 1] for i in range(max(len(self._perm), len(other._perm)))]])
+        max_len = max(len(self._perm), len(other._perm))
+        # Extend arrays if needed
+        if len(self._perm) < max_len:
+            self_arr = np.arange(1, max_len + 1, dtype=np.int32)
+            self_arr[:len(self._perm)] = self._arr
+        else:
+            self_arr = self._arr
+        if len(other._perm) < max_len:
+            other_arr = np.arange(1, max_len + 1, dtype=np.int32)
+            other_arr[:len(other._perm)] = other._arr
+        else:
+            other_arr = other._arr
+        # Composition: self[other[i] - 1] but other[i] is 1-indexed, so use other_arr - 1
+        result = self_arr[other_arr - 1]
+        return Permutation(result)
 
     def __iter__(self):
         yield from self._perm.__iter__()
@@ -465,10 +489,9 @@ class Permutation(Printable):
     #     return self != other and self.bruhat_leq(other)
 
     def __invert__(self):
-        new_perm = [0] * len(self._perm)
-        for i in range(len(self._perm)):
-            new_perm[self[i] - 1] = i + 1
-        return Permutation(new_perm)
+        new_arr = np.empty(len(self._perm), dtype=np.int32)
+        new_arr[self._arr - 1] = np.arange(1, len(self._perm) + 1, dtype=np.int32)
+        return Permutation(new_arr)
 
     def __repr__(self):
         return self.__str__()
