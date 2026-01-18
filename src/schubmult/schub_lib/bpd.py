@@ -455,8 +455,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         good_cols = (np.where(entrance_mask)[0] + 1).tolist()
 
         small_perm = Permutation([])
-        # Map tiles to their diff values
-        diff = np.ones_like(self._grid, dtype=int)
+        # Vectorized: Map tiles to their diff values
+        diff = np.ones((nrows, ncols), dtype=int)
         diff[self._grid == TileType.BLANK] = 0
         diff[self._grid == TileType.CROSS] = 2
         # Create r array with shape (nrows+1, ncols+1)
@@ -465,12 +465,18 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         for i in range(1, nrows + 1):
             for j in range(1, ncols + 1):
                 r[i, j] = r[i - 1, j - 1] + diff[i - 1, j - 1]
-        # return r[target_row + 1, target_col + 1]
-        for col in range(self.cols):
-            for row in range(self.rows - 1, -1, -1):
-                if self[row, col] == TileType.CROSS:
-                    pipes_northeast = r[row + 1, col + 1]  # self.cols] - r[row + 1, col]
-                    small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
+
+        # Pre-compute all cross positions and their pipes_northeast values
+        cross_positions = np.argwhere(self._grid == TileType.CROSS)
+        if len(cross_positions) > 0:
+            # Sort by column first, then by row descending (for correct swap order)
+            sort_indices = np.lexsort((-cross_positions[:, 0], cross_positions[:, 1]))
+            cross_positions = cross_positions[sort_indices]
+            # Get pipes_northeast for each cross position
+            pipes_northeast_values = r[cross_positions[:, 0] + 1, cross_positions[:, 1] + 1]
+            # Apply swaps sequentially
+            for pipes_northeast in pipes_northeast_values:
+                small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
 
         build_perm = [good_cols[small_perm[i] - 1] if small_perm[i] - 1 < len(good_cols) else small_perm[i] - 1 for i in range(len(good_cols))] + [None] * (
             max(good_cols, default=0) + 1 - len(good_cols)
