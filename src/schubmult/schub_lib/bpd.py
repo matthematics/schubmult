@@ -954,8 +954,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     @classmethod
     def from_rc_graph(cls, rc_graph) -> BPD:
-        assert len(rc_graph.perm.trimcode) <= len(rc_graph), f"RC graph permutation length exceeds RC graph size: {rc_graph.perm} vs {len(rc_graph)}"
-        assert rc_graph.perm.inv == sum(len(rc_graph[i]) for i in range(len(rc_graph))), f"RC graph permutation inversion count does not match RC graph crossings: {rc_graph.perm} vs {rc_graph}"
+        if cls.DEBUG:
+            assert len(rc_graph.perm.trimcode) <= len(rc_graph), f"RC graph permutation length exceeds RC graph size: {rc_graph.perm} vs {len(rc_graph)}"
+            assert rc_graph.perm.inv == sum(len(rc_graph[i]) for i in range(len(rc_graph))), f"RC graph permutation inversion count does not match RC graph crossings: {rc_graph.perm} vs {rc_graph}"
         num_rows = len(rc_graph)
         n = max(num_rows, len(rc_graph.perm))
         bpd = BPD(np.full((n, n), fill_value=TileType.TBD, dtype=TileType))
@@ -963,8 +964,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         bpd = bpd.inverse_pop_op(*[(i + j - 1, i) for i, j in coords])
 
-        assert bpd.perm.inv == len(bpd.all_blanks())
-        assert bpd.perm == rc_graph.perm
+        if cls.DEBUG:
+            assert bpd.perm.inv == len(bpd.all_blanks())
+            assert bpd.perm == rc_graph.perm
         if len(bpd) != len(rc_graph):
             return bpd.resize(num_rows)
         return bpd
@@ -978,7 +980,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         from schubmult.utils.perm_utils import add_perm_dict
 
         other_graph = other.to_rc_graph()
-        assert len(other.perm.trimcode) <= len(other_graph), f"{other=}, {other_graph=}"
+        if self.DEBUG:
+            assert len(other.perm.trimcode) <= len(other_graph), f"{other=}, {other_graph=}"
         # other_reduced_compatible = [(a + len(self), r + len(self)) for a, r in other.as_reduced_compatible()]
         # other_reduced_compatible.reverse()
         self_perm = self.perm
@@ -988,7 +991,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         self_len = len(self)
         other_perm_len = len(other.perm)
         num_zeros = max(len(other), other_perm_len)
-        assert len(self_perm.trimcode) <= self_len, f"{self=}, {self_perm=}"
+        if self.DEBUG:
+            assert len(self_perm.trimcode) <= self_len, f"{self=}, {self_perm=}"
         base_bpd = self
         buildup_module = {base_bpd: 1}
 
@@ -998,19 +1002,20 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 new_buildup_module = add_perm_dict(new_buildup_module, dict.fromkeys(bpd.right_zero_act(), coeff))
             buildup_module = new_buildup_module
         ret_module = {}
-
+        other_len = other.rows
         self_perm_inv = self_perm.inv
         other_perm_inv = other.perm.inv
         target_inv = self_perm_inv + other_perm_inv
         shifted_other = other_graph.shiftup(self_len)
         for bpd, coeff in buildup_module.items():
-            assert bpd.is_valid, f"Invalid BPD in product buildup: {pretty(bpd)}"
-            try:
-                new_bpd = BPD.from_rc_graph(RCGraph([*bpd.to_rc_graph()[:self_len], *shifted_other]))
-            except Exception:
+            if self.DEBUG:
+                assert len(bpd.perm.trimcode) <= len(bpd), f"{bpd=}, {bpd.perm=}"
+            new_rc = RCGraph([*bpd.to_rc_graph()[:self_len], *shifted_other])
+            if not new_rc.is_valid or new_rc.perm.inv != target_inv or len(new_rc.perm.trimcode) > self_len + other_len:
                 continue
+            new_bpd = BPD.from_rc_graph(new_rc)
             new_bpd_perm = new_bpd.perm
-            if new_bpd.is_valid and new_bpd.is_reduced and new_bpd_perm.inv == target_inv and len(new_bpd_perm.trimcode) <= len(new_bpd):
+            if new_bpd.is_valid and new_bpd.is_reduced and new_bpd_perm.inv == target_inv and len(new_bpd_perm.trimcode) <= self_len + other_len:
                 ret_module = add_perm_dict(ret_module, {new_bpd: coeff})
 
         return ret_module
@@ -1086,8 +1091,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 # find x_
                 x_ = x
                 y = y - 1
-                # replace with NW elbow
-                assert D[x_, y + 1] == TileType.BLANK, "Expected NW elbow during inverse pop operation"
+                if self.DEBUG:
+                    assert D[x_, y + 1] == TileType.BLANK, "Expected NW elbow during inverse pop operation"
                 # Vectorized search: find first non-blank from left in row
                 if y >= 0:
                     row_non_blanks = D._grid[x_, : y + 1] != TileType.BLANK
@@ -1154,7 +1159,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         last_inv = work_bpd.perm.inv
         while work_bpd.perm.inv > 0:
             work_bpd, (reflection, row) = work_bpd.pop_op()
-            assert work_bpd.perm.inv == last_inv - 1, "Invariant violated in as_reduced_compatible"
+            if self.DEBUG:
+                assert work_bpd.perm.inv == last_inv - 1, "Invariant violated in as_reduced_compatible"
             last_inv = work_bpd.perm.inv
             ret.append((reflection, row))
         ret.reverse()
