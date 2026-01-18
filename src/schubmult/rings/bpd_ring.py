@@ -23,6 +23,8 @@ class BPDRingElement(SchubertMonomialRingElement):
         return rc_ring.from_dict(result_dict)
 
 
+
+
 class BPDRing(SchubertMonomialRing):
     _id = 0
 
@@ -61,6 +63,7 @@ class BPDRing(SchubertMonomialRing):
     @property
     def zero_monom(self):
         return BPD.rothe_bpd(Permutation([]), 0)
+
 
     def from_rc_graph_ring_element(self, rc_element: RCGraphRingElement) -> BPDRingElement:
         result_dict = {}

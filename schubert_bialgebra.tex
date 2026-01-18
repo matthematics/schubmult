@@ -404,11 +404,11 @@ It is possible to find a combinatorial formula for each factor in the product, k
 $$\sigma(P)=\sum_i \sigma_i(u_{i-1},u_i)$$
 %$$\sch_w^n = \sum_{P:1\xrightarrow{\lambda} w\lambda^{-1}} (-1)^{|\lambda| - \ell(w) + \sigma(P)}e_{\alpha(P,\lambda),\lambda}^n$$
 Then we define
-$$E^{\alpha;n}_w = \sum_{\substack{P:1\xrightarrow{1,2,\ldots,n} w\lambda^{-1}\\\alpha(P)=\alpha}}(-1)^{|\lambda|-\ell(w)+\sigma(P)}$$
+$$E^{\alpha;n}_w = \sum_{\substack{P:1\xrightarrow{\lambda} w\lambda^{-1}\\\alpha(P)=\alpha}}(-1)^{|\lambda|-\ell(w)+\sigma(P)}$$
 
 \begin{theorem}
 	For each $w$, we have
-	$$\sch_w^n = \sum_{\alpha}E_w^{\alpha}e_{\alpha}^n$$
+	$$\sch_w^n = \sum_{\alpha}E_w^{\alpha;n}e_{\alpha}^n$$
 \end{theorem}
 These numbers are stable for fixed $w$ as soon as the number of variables is at least as large as the value of $n$ such that $w\in S_n$, and are well-studied but poorly understood.
 
@@ -1473,10 +1473,22 @@ We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(
 \newcommand{\BPD}{\mathcal{BPD}}
 
 \begin{definition}
-  Denote by $\BPD(w,n)$ the set of bumpless pipe dreams for a permutation $w$ with an associated integer $n$, where $n\geq \maxd(w)$.
+  Denote by $\BPD(w,n)$ the set of (reduced) bumpless pipe dreams for a permutation $w$ with an associated integer $n$, where $n\geq \maxd(w)$. There is a canonical bijection $\varphi:\BPD(w,n)\to \mathcal{RC}(w,n)$ defined in \cite{GaoHuang2023} that preserves weight.
 \end{definition}
 
-Recall that 
+\newcommand{\bzeromap}{\mathbf{t}}
+
+We define a funcion $\bzeromap:\BPD\to \BPD$, found in \cite{WEIGANDT2021105470}, as follows. Given a bumpless pipe dream $(B, n)$, we simply remove row $n$ then rebuild the grid by adding in the necessary tiles to ensure that it is valid.
+
+\begin{theorem}
+We have the formula
+$$\varphi\circ \bzeromap = \zeromap \circ \varphi$$
+\end{theorem}
+
+\begin{corollary}
+The Gao-Huang bijection $\varphi:\BPD \to \BRC$ is an isomorphism of rings.
+\end{corollary}
+
 % \begin{definition}
 % 	Define another map $\zeromap_{(k)}:\BRC\to \BRC$ on bounded RC graphs for $1\leq i\leq n$ as follows.
 
