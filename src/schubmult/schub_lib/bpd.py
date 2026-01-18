@@ -626,7 +626,10 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """
         if self._valid is not None:
             return self._valid
-        self._valid = _is_asm(self.to_asm())
+        try:
+            self._valid = _is_asm(self.to_asm())
+        except Exception:
+            self._valid = False
 
         return self._valid
 
