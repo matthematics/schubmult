@@ -1,12 +1,5 @@
 """
 Bumpless Pipe Dreams (BPD) module
-
-A bumpless pipe dream is a pipe dream diagram with no elbows - only crossings and empty boxes.
-Represented as an n x n grid where:
-- 1 = crossing (pipes cross)
-- 0 = empty box (pipes go straight through)
-
-For general pipe dreams, there are 6 possible tile types.
 """
 
 from __future__ import annotations
@@ -87,18 +80,6 @@ def _invalidate_grid(grid: np.ndarray) -> None:
     # Compute mask once: keep only BLANK and CROSS tiles
     mask = (grid == TileType.BLANK) | (grid == TileType.CROSS)
     grid[~mask] = TileType.TBD
-
-
-# def _get_northeast_pipe_count(grid, target_row, target_col):
-#     """
-#     Computes the number of pipes weakly northeast of a crossing at (target_row, target_col).
-#     Grid is a 2D list of TileType.
-#     """
-#     # r[i][j] stores the corner sum r_A(i, j)
-#     # Using n+1 to handle 0-th row/col boundary conditions easily
-#     # r = np.zeros((grid.shape[0] + 1, grid.shape[1] + 1), dtype=int)
-#     r = np.cumsum(np.cumsum(asm[:target_row + 2, :target_col + 2], axis=0), axis=1)
-#     return r[target_row + 1, target_col + 1]
 
 
 # def _is_asm(arr):
