@@ -981,7 +981,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             elif new_bpd.rows > new_num_rows:
                 new_bpd._grid = new_bpd._grid[:new_num_rows, : max(new_num_rows, len(self.perm))]
             new_bpd.rebuild()
-            assert new_bpd.is_valid, f"Resulting BPD is not valid after increasing size, \n{pretty(self)} {new_num_rows} {repr(new_bpd)}"
+            assert new_bpd.is_valid, f"Resulting BPD is not valid after increasing size, \n{pretty(self)} {new_num_rows} {new_bpd!r}"
             return new_bpd
         if new_num_rows < len(self.perm):
             return BPD(self._grid[:new_num_rows, :], column_perm=self.column_perm_at_row(new_num_rows - 1) if column_perm is None else column_perm)
