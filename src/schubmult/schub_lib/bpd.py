@@ -101,53 +101,63 @@ def _invalidate_grid(grid: np.ndarray) -> None:
 #     return r[target_row + 1, target_col + 1]
 
 
-def _is_asm(arr):
-    # Ensure it's a square numpy array
-    n, m = arr.shape
-    if n != m:
-        return False
+# def _is_asm(arr):
+#     # Ensure it's a square numpy array
+#     n, m = arr.shape
+#     if n != m:
+#         return False
 
-    # 1. Check Row and Column Sums (Must be exactly 1)
-    if not np.all(arr.sum(axis=0) == 1) or not np.all(arr.sum(axis=1) == 1):
-        return False
+#     # 1. Check Row and Column Sums (Must be exactly 1)
+#     if not np.all(arr.sum(axis=0) == 1) or not np.all(arr.sum(axis=1) == 1):
+#         return False
 
-    # 2. Check Allowed Values (Only 0, 1, -1)
-    # Using absolute value is a fast way to check this
-    # if not np.all(np.abs(arr) <= 1):
-    #     return False
+#     # 2. Check Allowed Values (Only 0, 1, -1)
+#     # Using absolute value is a fast way to check this
+#     # if not np.all(np.abs(arr) <= 1):
+#     #     return False
 
-    # 3. Check Alternating Signs and Boundary +1s
-    # In a valid ASM, the cumulative sum along any row/column
-    # must stay between 0 and 1 at all times.
-    # Because row sums are 1, the first/last non-zero must be 1
-    # if the prefix sums are always 0 or 1.
+#     # 3. Check Alternating Signs and Boundary +1s
+#     # In a valid ASM, the cumulative sum along any row/column
+#     # must stay between 0 and 1 at all times.
+#     # Because row sums are 1, the first/last non-zero must be 1
+#     # if the prefix sums are always 0 or 1.
 
-    # Check rows
-    row_cumsum = np.cumsum(arr, axis=1)
-    if np.any((row_cumsum < 0) | (row_cumsum > 1)):
-        return False
+#     # Check rows
+#     row_cumsum = np.cumsum(arr, axis=1)
+#     if np.any((row_cumsum < 0) | (row_cumsum > 1)):
+#         return False
 
-    # Check columns
-    col_cumsum = np.cumsum(arr, axis=0)
-    if np.any((col_cumsum < 0) | (col_cumsum > 1)):
-        return False
+#     # Check columns
+#     col_cumsum = np.cumsum(arr, axis=0)
+#     if np.any((col_cumsum < 0) | (col_cumsum > 1)):
+#         return False
 
-    # 4. Final verification: The non-zero entries must actually change.
-    # Example of a failure mode for cumsum alone: [1, 0, 0] is fine,
-    # but [1, 1, -1] has cumsums [1, 2, 1], which is caught above.
-    # The only thing left is to ensure we don't have two 1s or two -1s in a row.
-    # We can do this by checking if the absolute difference of non-zero entries is 2.
+#     # 4. Final verification: The non-zero entries must actually change.
+#     # Example of a failure mode for cumsum alone: [1, 0, 0] is fine,
+#     # but [1, 1, -1] has cumsums [1, 2, 1], which is caught above.
+#     # The only thing left is to ensure we don't have two 1s or two -1s in a row.
+#     # We can do this by checking if the absolute difference of non-zero entries is 2.
 
-    for axis in [0, 1]:
-        # Flattened check for each row/column
-        for line in arr if axis == 1 else arr.T:
-            non_zeros = line[line != 0]
-            # Since we know they sum to 1 and cumsum is 0/1,
-            # we just need to ensure no two adjacent non-zeros are the same.
-            if np.any(np.diff(non_zeros) == 0):
-                return False
 
-    return True
+#     # Vectorized adjacent nonzero check for rows and columns
+#     for axis in [0, 1]:
+#         lines = arr if axis == 1 else arr.T
+#         # Create a mask of nonzero entries
+#         mask = lines != 0
+#         # Pad with False at the end to align for diff
+#         mask_shifted = np.roll(mask, -1, axis=1)
+#         mask_shifted[:, -1] = False
+#         # Find indices of nonzero entries
+#         # For each line, get the nonzero values and check adjacent diffs
+#         # We'll use a trick: for each line, get the indices of nonzeros, then check if any adjacent values are equal
+#         # This is still a little tricky to fully vectorize, but we can batch it with list comprehension
+#         if np.any([
+#             np.any(np.diff(line[line != 0]) == 0)
+#             for line in lines
+#         ]):
+#             return False
+
+#     return True
 
 
 class BPD(SchubertMonomialGraph, DefaultPrinting):
@@ -626,11 +636,36 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """
         if self._valid is not None:
             return self._valid
-        try:
-            self._valid = _is_asm(self.to_asm())
-        except Exception:
+        if self.rows == 0:
+            self._valid = True
+            return self._valid
+        if self.perm.inv != sum(self.length_vector):
             self._valid = False
-
+            return self._valid
+        if any(self[0, j].feeds_up for j in range(self.cols)):
+            self._valid = False
+            return self._valid
+        if any(self[i, 0].entrance_from_left for i in range(self.rows)):
+            self._valid = False
+            return self._valid
+        if any(not self[i, self.cols - 1].feeds_right for i in range(self.rows)):
+            self._valid = False
+            return self._valid
+        for i in range(1, self.rows):
+            for j in range(1, self.cols - 1):
+                if self[i, j].entrance_from_left and not self[i, j - 1].feeds_right:
+                    self._valid = False
+                    return self._valid
+                if self[i, j].feeds_up and not self[i - 1, j].entrance_from_bottom:
+                    self._valid = False
+                    return self._valid
+                if self[i, j].feeds_right and not self[i, j + 1].entrance_from_left:
+                    self._valid = False
+                    return self._valid
+                if self[i, j].entrance_from_bottom and i < self.rows - 1 and not self[i + 1, j].feeds_up:
+                    self._valid = False
+                    return self._valid
+        self._valid = True
         return self._valid
 
     def __eq__(self, other: object) -> bool:
@@ -942,11 +977,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         if new_num_rows > self.rows:
             new_bpd = self.normalize()
             if new_bpd.rows < new_num_rows:
-                new_bpd._grid = np.pad(new_bpd._grid, ((0, new_num_rows - new_bpd.rows), (0, max(0, new_num_rows - self.cols))), constant_values=TileType.TBD)
+                new_bpd._grid = np.pad(new_bpd._grid, ((0, new_num_rows - new_bpd.rows), (0, max(0, new_num_rows - new_bpd.cols))), constant_values=TileType.TBD)
             elif new_bpd.rows > new_num_rows:
                 new_bpd._grid = new_bpd._grid[:new_num_rows, : max(new_num_rows, len(self.perm))]
             new_bpd.rebuild()
-            assert new_bpd.is_valid, f"Resulting BPD is not valid after increasing size, \n{pretty(self)} {new_num_rows} "
+            assert new_bpd.is_valid, f"Resulting BPD is not valid after increasing size, \n{pretty(self)} {new_num_rows} {repr(new_bpd)}"
             return new_bpd
         if new_num_rows < len(self.perm):
             return BPD(self._grid[:new_num_rows, :], column_perm=self.column_perm_at_row(new_num_rows - 1) if column_perm is None else column_perm)
@@ -1144,9 +1179,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     @property
     def is_reduced(self):
-        if not self.is_valid:
-            return False
-        return self.perm.inv == sum(self.length_vector)
+        return True
 
     @cache
     def as_reduced_compatible(self):
@@ -1174,7 +1207,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         self._valid = None
         self._word = None
         self.build()
-        return self.is_valid
 
     def zero_out_last_row(self) -> BPD:
         return self.resize(self.rows - 1, column_perm=Permutation([]))
