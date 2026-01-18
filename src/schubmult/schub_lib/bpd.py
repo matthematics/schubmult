@@ -451,8 +451,25 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 good_cols.append(col + 1)
             elif self[self.rows - 1, col] == TileType.TBD:
                 raise ValueError("Cannot compute permutation with unresolved TBD tiles")
+        small_perm = Permutation([])
+        nrows, ncols = self._grid.shape
+        # Map tiles to their diff values
+        diff = np.ones_like(self._grid, dtype=int)
+        diff[self._grid == TileType.BLANK] = 0
+        diff[self._grid == TileType.CROSS] = 2
+        # Create r array with shape (nrows+1, ncols+1)
+        r = np.zeros((nrows + 1, ncols + 1), dtype=int)
 
-        small_perm = Permutation.ref_product(*self.word)
+        for i in range(1, nrows + 1):
+            for j in range(1, ncols + 1):
+                r[i, j] = r[i - 1, j - 1] + diff[i - 1, j - 1]
+        # return r[target_row + 1, target_col + 1]
+        for col in range(self.cols):
+            for row in range(self.rows - 1, -1, -1):
+                if self[row, col] == TileType.CROSS:
+                    pipes_northeast = r[row + 1, col + 1]#self.cols] - r[row + 1, col]
+                    small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
+
         build_perm = [good_cols[small_perm[i] - 1] if small_perm[i] - 1 < len(good_cols) else small_perm[i] - 1 for i in range(len(good_cols))] + [None] * (
             max(good_cols, default=0) + 1 - len(good_cols)
         )
