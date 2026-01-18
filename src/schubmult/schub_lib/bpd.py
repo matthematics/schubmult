@@ -167,6 +167,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         self._perm = None
         self._valid = None
         self._word = None
+        self._unzero_cache = None
         self.build()
 
     @property
@@ -818,6 +819,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return self.all_tiles_of_type(TileType.CROSS)
 
     def all_tiles_of_type(self, tile_type: TileType) -> set[tuple[int, int]]:
+        if isinstance(tile_type, (list, tuple)):
+            result = set()
+            for t in tile_type:
+                result.update(self.all_tiles_of_type(t))
+            return result
         return set(zip(*np.where(self._grid == tile_type)))
 
     def droop_moves(self) -> set[tuple[tuple[int, int], tuple[int, int]]]:
@@ -828,12 +834,58 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             if bi > ri and bj > rj:
                 LEGAL = True
                 for i, j in itertools.product(range(ri, bi + 1), range(rj, bj + 1)):
-                    if (i, j) != (ri, rj) and (self[i, j] == TileType.ELBOW_SE or self[i, j] == TileType.ELBOW_NW):  # if not NW-corner, check if elbow
+                    if (i, j) != (ri, rj) and (self[i, j] == TileType.ELBOW_SE or self[i, j] == TileType.ELBOW_NW or self[i, j] == TileType.BUMP):  # if not NW-corner, check if elbow
                         LEGAL = False
                         break
                 if LEGAL:
                     droop_moves.add(((ri, rj), (bi, bj)))
         return droop_moves
+
+    def min_droop_moves(self) -> set[tuple[tuple[int, int], tuple[int, int]]]:
+        droop_moves = set()
+        ARBITRARY_LARGE = 200
+        for (a, b) in self.all_tiles_of_type((TileType.ELBOW_SE, TileType.BUMP)):
+            x = np.min(np.where(self._grid[a + 1 :, b] != TileType.CROSS), initial=ARBITRARY_LARGE) - a
+            if x == ARBITRARY_LARGE - a:
+                continue
+            y = np.min(np.where(self._grid[a, b + 1 :] != TileType.CROSS), initial=ARBITRARY_LARGE) - b
+            if y == ARBITRARY_LARGE - b:
+                continue
+            droop_moves.add(((a, b), (a + x, b + y)))
+        return droop_moves
+
+
+    def do_min_droop_move(self, move: tuple[tuple[int, int], tuple[int, int]]) -> BPD:
+        D = self.copy()
+        (ri, rj) = move[0]
+        (bi, bj) = move[1]
+
+        D._grid[ri, rj] = TileType.BLANK if self[ri, rj] == TileType.ELBOW_SE else TileType.ELBOW_NW  # NW-corner
+        D._grid[bi, bj] = TileType.ELBOW_NW if self[bi, bj] == TileType.BLANK else TileType.BUMP  # SE-corner
+        D._grid[bi, rj] = TileType.ELBOW_SE  # SW-corner
+        D._grid[ri, bj] = TileType.ELBOW_SE  # NE-corner
+
+        # top and bottom
+        for j in range(rj + 1, bj):
+            if self[ri, j] == TileType.HORIZ:
+                D._grid[ri, j] = TileType.BLANK
+            else:  # self[ri, j] == TileType.CROSS
+                D._grid[ri, j] = TileType.VERT
+            if self[bi, j] == TileType.BLANK:
+                D._grid[bi, j] = TileType.HORIZ
+            else:  # self[bi, j] == TileType.VERT
+                D._grid[bi, j] = TileType.CROSS
+        # left and right
+        for i in range(ri + 1, bi):
+            if self[i, rj] == TileType.VERT:
+                D._grid[i, rj] = TileType.BLANK
+            else:  # self[i, rj] == TileType.CROSS
+                D._grid[i, rj] = TileType.HORIZ
+            if self[i, bj] == TileType.BLANK:
+                D._grid[i, bj] = TileType.VERT
+            else:  # self[i, bj] == TileType.HORIZ
+                D._grid[i, bj] = TileType.CROSS
+        return D
 
     def do_droop_move(self, move: tuple[tuple[int, int], tuple[int, int]]) -> BPD:
         D = self.copy()
@@ -1016,7 +1068,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 build_perm.append(None)
         return Permutation.from_partial(build_perm)
 
-    def resize(self, new_num_rows: int, column_perm: Permutation = Permutation([])) -> BPD:
+    def resize(self, new_num_rows: int) -> BPD:
         if new_num_rows > self.rows:
             new_bpd = self.normalize()
             if new_bpd.rows < new_num_rows:
@@ -1027,8 +1079,10 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             assert new_bpd.is_valid, f"Resulting BPD is not valid after increasing size, \n{pretty(self)} {new_num_rows} {new_bpd!r}"
             return new_bpd
         if new_num_rows < len(self.perm):
-            return BPD(self._grid[:new_num_rows, :], column_perm=self.column_perm_at_row(new_num_rows - 1) if column_perm is None else column_perm)
-        return BPD(self._grid[:new_num_rows, :], column_perm=column_perm)
+            new_bpd = BPD(self._grid[:new_num_rows, :])
+            new_bpd.rebuild()
+            return new_bpd
+        return BPD(self._grid[:new_num_rows, :])
 
     @classmethod
     def from_rc_graph(cls, rc_graph) -> BPD:
@@ -1257,10 +1311,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         self._perm = None
         self._valid = None
         self._word = None
+        self._unzero_cache = None
         self.build()
 
     def zero_out_last_row(self) -> BPD:
-        return self.resize(self.rows - 1, column_perm=Permutation([]))
+        return self.resize(self.rows - 1)
 
     def set_tile(self, i: int, j: int, tile_type: TileType) -> None:
         new_bpd = self.copy()
@@ -1270,9 +1325,12 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def right_zero_act(self) -> set[BPD]:
         # # find crosses, untransition them
+        if self._unzero_cache is not None:
+            return self._unzero_cache
         if not self.is_valid:
             return set()
         resized = self.resize(self.rows + 1)
+        results = set()
         min_width = len(self.perm) + 1
         if resized.cols < min_width:
             resized = resized.set_width(min_width)
@@ -1296,7 +1354,66 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             if new_bpd.is_valid and new_bpd.is_reduced:
                 results.add(new_bpd)
 
+        self._unzero_cache = results
         return results
+
+    def set_tiles(self, a, b, value: TileType) -> None:
+        ret = self.copy()
+        ret._grid[a, b] = value
+        ret.rebuild()
+        return ret
+
+
+    #        for p in range(len(v) + 1 - vnum):
+    #     vpm_list2 = []
+    #     for vpm, b in vpm_list:
+    #         if vpm[vnum - 1] == len(v) + 1:
+    #             vpm2 = [*vpm]
+    #             vpm2.pop(vnum - 1)
+    #             vp = permtrim(vpm2)
+    #             ret_list.add(
+    #                 (
+    #                     tuple([v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))]),
+    #                     vp,
+    #                 ),
+    #             )
+    #         for j in range(vnum, len(vup) + 2):
+    #             if vpm[j] <= b:
+    #                 continue
+    #             for i in range(vnum):
+    #                 if has_bruhat_ascent(vpm, i, j):
+    #                     vpm_list2 += [(vpm.swap(i, j), vpm[j])]
+    #     vpm_list = vpm_list2
+    # for vpm, b in vpm_list:
+    #     if vpm[vnum - 1] == len(v) + 1:
+    #         vpm2 = [*vpm]
+    #         vpm2.pop(vnum - 1)
+    #         vp = permtrim(vpm2)
+    #         ret_list.add(
+    #             (
+    #                 tuple([v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))]),
+    #                 vp,
+    #             ),
+    #         )
+
+
+        # n_crossings = len(crossings)
+        # base_grid = resized._grid.copy()
+        # for mask in range(1 << n_crossings):  # 2^n combinations
+        #     # Start from base grid instead of full BPD copy
+        #     working_grid = base_grid.copy()
+        #     # Apply mask: set to TBD where mask bit is 1
+        #     for idx in range(n_crossings):
+        #         if mask & (1 << idx):
+        #             i, j = crossings[idx]
+        #             working_grid[i, j] = TileType.TBD
+        #     _invalidate_grid(working_grid)
+        #     new_bpd = BPD(working_grid).snap_width()
+
+        #     if new_bpd.is_valid and new_bpd.is_reduced:
+        #         results.add(new_bpd)
+
+        #return results
 
     def snap_width(self) -> BPD:
         """Snap the width of the BPD to the length of its permutation."""

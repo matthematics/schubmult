@@ -433,7 +433,7 @@ class Permutation(Printable):
             other_arr = other._arr
         # Composition: self[other[i] - 1] but other[i] is 1-indexed, so use other_arr - 1
         result = self_arr[other_arr - 1]
-        return Permutation(result)
+        return Permutation(result.tolist())
 
     def __iter__(self):
         yield from self._perm.__iter__()
