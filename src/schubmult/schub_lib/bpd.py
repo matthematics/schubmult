@@ -626,10 +626,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """
         if self._valid is not None:
             return self._valid
-        try:
-            self._valid = _is_asm(self.to_asm())
-        except Exception:
-            self._valid = False
+        self._valid = _is_asm(self.to_asm())
 
         return self._valid
 
@@ -985,8 +982,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         if self_perm.inv == 0:
             # return {BPD.rothe_bpd(Permutation([]), len(self) + len(other)).inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other)): 1}
             return {BPD.from_rc_graph(other_graph.prepend(len(self))): 1}
-        if other.rows == 0:
-            return {self: 1}
         self_len = len(self)
         other_perm_len = len(other.perm)
         num_zeros = max(len(other), other_perm_len)
@@ -1004,16 +999,16 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         self_perm_inv = self_perm.inv
         other_perm_inv = other.perm.inv
         target_inv = self_perm_inv + other_perm_inv
+        shifted_other = other_graph.shiftup(self_len)
         for bpd, coeff in buildup_module.items():
             assert bpd.is_valid, f"Invalid BPD in product buildup: {pretty(bpd)}"
-            new_rc = RCGraph([*bpd.to_rc_graph()[:self_len], *other_graph.shiftup(self_len)])
-            if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(new_rc):
-                new_bpd = BPD.from_rc_graph(new_rc)
-                assert len(new_bpd) == self_len + len(other)
-
-                new_bpd_perm = new_bpd.perm
-                if new_bpd.is_valid and new_bpd_perm.inv == target_inv and len(new_bpd_perm.trimcode) <= len(new_bpd):
-                    ret_module = add_perm_dict(ret_module, {new_bpd: coeff})
+            try:
+                new_bpd = BPD.from_rc_graph(RCGraph([*bpd.to_rc_graph()[:self_len], *shifted_other]))
+            except Exception:
+                continue
+            new_bpd_perm = new_bpd.perm
+            if new_bpd.is_valid and new_bpd.is_reduced and new_bpd_perm.inv == target_inv and len(new_bpd_perm.trimcode) <= len(new_bpd):
+                ret_module = add_perm_dict(ret_module, {new_bpd: coeff})
 
         return ret_module
 
@@ -1034,8 +1029,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         while len(interlaced_rc) > 0:
             a, r = interlaced_rc.pop()
-            if D.cols <= a or D.rows <= r:
-                new_num_rows = max(D.rows, D.cols, a + 1, r + 1)
+            if D.rows <= a or D.rows <= r:
+                new_num_rows = max(D.rows, a + 1, r + 1)
                 D = D.resize(new_num_rows)
             # find first elbow in column a - vectorized search
             elbow_positions = np.where(D._grid[: D.rows, a] == TileType.ELBOW_SE)[0]
