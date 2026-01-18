@@ -308,6 +308,9 @@ class Permutation(Printable):
                 if self[i] > j + 1 and (~self)[j] > i + 1:
                     diag.add((i + 1, j + 1))
         return diag
+    @property
+    def rothe_diagram(self):
+        return {(i + 1, self[i]) for i in range(len(self))}
 
     @property
     def maximal_corner(self):
@@ -318,6 +321,8 @@ class Permutation(Printable):
     @classmethod
     def from_partial(cls, partial_perm):
         max_required = max([a for a in partial_perm if a is not None], default=len(partial_perm))
+        if len(partial_perm) < max_required:
+            partial_perm += [None] * (max_required - len(partial_perm))
         search_space = {i for i in partial_perm if i is not None}
 
         # Need enough values to fill all None positions

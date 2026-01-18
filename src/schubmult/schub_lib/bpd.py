@@ -454,6 +454,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         entrance_mask = (bottom_row == TileType.VERT) | (bottom_row == TileType.CROSS) | (bottom_row == TileType.ELBOW_SE)
         good_cols = (np.where(entrance_mask)[0] + 1).tolist()
 
+        good_cols = Permutation.from_partial(good_cols)
+
         small_perm = Permutation([])
         # Vectorized: Map tiles to their diff values
         diff = np.ones((nrows, ncols), dtype=int)
@@ -478,9 +480,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             for pipes_northeast in pipes_northeast_values:
                 small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
 
-        build_perm = [good_cols[small_perm[i] - 1] if small_perm[i] - 1 < len(good_cols) else small_perm[i] - 1 for i in range(len(good_cols))] + [None] * (
-            max(good_cols, default=0) + 1 - len(good_cols)
-        )
+        build_perm = good_cols * small_perm
+
         self._perm = Permutation.from_partial(build_perm)
         return self._perm
 
