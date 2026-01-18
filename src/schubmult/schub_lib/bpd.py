@@ -279,12 +279,14 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         if tbd_mask[0, 0]:
             self._grid[0, 0] = BPD._TBD_LOOKUP[8, 8]  # (None, None)
 
+
         # First column [1:, 0] - must process sequentially as each row depends on previous
         if rows > 1:
             tbd_rows = np.where(tbd_mask[1:, 0])[0] + 1
             for row in tbd_rows:
                 up_tile = int(self._grid[row - 1, 0])
                 self._grid[row, 0] = BPD._TBD_LOOKUP[8, up_tile]
+
 
         # Process column by column (dependencies require sequential processing)
         for col in range(1, cols):
@@ -392,6 +394,38 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         rows.append("".join(col_labels) + (" " * max_col_width) + " ")
 
         return prettyForm("\n".join(rows))
+
+    def shiftup(self, shift: int = 1) -> BPD:
+        """Shift the BPD up by a given amount."""
+        # Create new grid with shifted dimensions
+        new_rows = self.rows + shift
+        new_cols = self.cols + shift
+        new_grid = np.full((new_rows, new_cols), TileType.ELBOW_SE, dtype=TileType)
+
+        # Shift the grid contents
+        for i in range(self.rows):
+            for j in range(self.cols):
+                new_grid[i + shift, j + shift] = self[i, j]
+
+        # Fill the top-left portion with identity pattern
+        for i in range(shift):
+            for j in range(shift):
+                if i == j:
+                    new_grid[i, j] = TileType.ELBOW_SE
+                elif i < j:
+                    new_grid[i, j] = TileType.HORIZ
+                else:
+                    new_grid[i, j] = TileType.VERT
+
+        # Connect the identity to shifted content
+        for i in range(shift):
+            for j in range(shift, new_cols):
+                new_grid[i, j] = TileType.HORIZ
+        for i in range(shift, new_rows):
+            for j in range(shift):
+                new_grid[i, j] = TileType.VERT
+        return BPD(new_grid)
+
 
     @property
     def perm(self) -> Permutation:
@@ -599,7 +633,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             new_grid[:, :width] = self._grid[:, :width]
             bop = BPD(new_grid)
             bop.rebuild()
-            assert bop.is_valid, f"Resulting BPD is not valid after reducing width, {pretty(self)} {width} "
             return bop
         if width == self.cols:
             return self
@@ -646,6 +679,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 if self[i, j].entrance_from_bottom and i < self.rows - 1 and not self[i + 1, j].feeds_up:
                     self._valid = False
                     return self._valid
+        if len(self.perm.trimcode) > self.rows:
+            self._valid = False
+            return self._valid
         self._valid = True
         return self._valid
 
@@ -995,26 +1031,29 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """Compute the product of this BPD with another."""
         from schubmult.utils.perm_utils import add_perm_dict
 
-        other_graph = other.to_rc_graph()
-        if self.DEBUG:
-            assert len(other.perm.trimcode) <= len(other_graph), f"{other=}, {other_graph=}"
-        # other_reduced_compatible = [(a + len(self), r + len(self)) for a, r in other.as_reduced_compatible()]
-        # other_reduced_compatible.reverse()
+        if len(other) == 0:
+            return {self: 1}
         self_perm = self.perm
+        other_shift = other.shiftup(len(self))
         if self_perm.inv == 0:
             # return {BPD.rothe_bpd(Permutation([]), len(self) + len(other)).inverse_pop_op(*other_reduced_compatible).resize(len(self) + len(other)): 1}
-            return {BPD.from_rc_graph(other_graph.prepend(len(self))): 1}
+            return {other_shift: 1}
         self_len = len(self)
         other_perm_len = len(other.perm)
         num_zeros = max(len(other), other_perm_len)
         if self.DEBUG:
             assert len(self_perm.trimcode) <= self_len, f"{self=}, {self_perm=}"
         base_bpd = self
+        # print("BASE")
+        # print(base_bpd)
         buildup_module = {base_bpd: 1}
 
         for _ in range(num_zeros):
             new_buildup_module = {}
+            # print("FATPANT")
             for bpd, coeff in buildup_module.items():
+                # print("BOIP")
+                # print(bpd)
                 new_buildup_module = add_perm_dict(new_buildup_module, dict.fromkeys(bpd.right_zero_act(), coeff))
             buildup_module = new_buildup_module
         ret_module = {}
@@ -1022,16 +1061,21 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         self_perm_inv = self_perm.inv
         other_perm_inv = other.perm.inv
         target_inv = self_perm_inv + other_perm_inv
-        shifted_other = other_graph.shiftup(self_len)
         for bpd, coeff in buildup_module.items():
+            # print(bpd)
+
             if self.DEBUG:
                 assert len(bpd.perm.trimcode) <= len(bpd), f"{bpd=}, {bpd.perm=}"
-            new_rc = RCGraph([*bpd.to_rc_graph()[:self_len], *shifted_other])
-            if not new_rc.is_valid or new_rc.perm.inv != target_inv or len(new_rc.perm.trimcode) > self_len + other_len:
+            if (bpd.perm * other_shift.perm).inv != bpd.perm.inv + other_perm_inv:
                 continue
-            new_bpd = BPD.from_rc_graph(new_rc)
+            new_bpd = other_shift.inverse_pop_op(*bpd.as_reduced_compatible())
             new_bpd_perm = new_bpd.perm
-            if new_bpd.is_valid and new_bpd.is_reduced and new_bpd_perm.inv == target_inv and len(new_bpd_perm.trimcode) <= self_len + other_len:
+            if len(new_bpd_perm.trimcode) > other_len + self_len:
+                continue
+            new_bpd = new_bpd.resize(other_len + self_len).snap_width()
+            if new_bpd_perm != new_bpd.perm:
+                continue
+            if new_bpd.is_valid and new_bpd.is_reduced and new_bpd_perm.inv == target_inv and len(new_bpd) <= self_len + other_len:
                 ret_module = add_perm_dict(ret_module, {new_bpd: coeff})
 
         return ret_module
@@ -1221,12 +1265,19 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                     i, j = crossings[idx]
                     working_grid[i, j] = TileType.TBD
             _invalidate_grid(working_grid)
-            new_bpd = BPD(working_grid, column_perm=resized._column_perm)
+            new_bpd = BPD(working_grid).snap_width()
 
             if new_bpd.is_valid and new_bpd.is_reduced:
-                results.add(new_bpd.resize(self.rows + 1, column_perm=Permutation([])).set_width(max(new_bpd.rows, len(new_bpd.perm))))
+                results.add(new_bpd)
 
         return results
+
+    def snap_width(self) -> BPD:
+        """Snap the width of the BPD to the length of its permutation."""
+        perm_length = len(self.perm)
+        if self.cols == perm_length or (self.rows > perm_length and self.cols == self.rows):
+            return self
+        return self.set_width(max(self.rows, perm_length))
 
     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, **_kwargs) -> Expr:
         """
