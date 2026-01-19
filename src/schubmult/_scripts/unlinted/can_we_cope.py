@@ -93,7 +93,7 @@ if __name__ == "__main__":
     #     for rc1,rc2 in itertools.product(RCGraph.all_rc_graphs(perm1, length), RCGraph.all_rc_graphs(perm2, length)):
     #         # are distinct
     ring = RCDQRing()
-    
+    perms = {uncode([0, 1, 3, 4])}
     for perm in perms:
         
         def orc(p):
@@ -132,6 +132,10 @@ if __name__ == "__main__":
         print("------------------------------{perm}----------------------------")
         print("TEST:")
         print(test_elem)
+        the_cprod = ASx(perm, len(perm.trimcode)).coproduct()
+        assert all(v >= 0 for v in test_elem.values()), f"Error: Negative coefficient in coproduct for permutation {perm}:\n{test_elem}"
+        for (rc1, rc2), coeff in test_elem.items():
+            assert coeff == the_cprod.get(((rc1.perm, len(rc1)),(rc2.perm, len(rc2))), S.Zero), f"Error: Coproduct coefficient mismatch for permutation {perm} on pair ({rc1.perm}, {len(rc1)}) and ({rc2.perm}, {len(rc2)}):\nComputed: {coeff}\nExpected: {the_cprod.get((rc1.perm, len(rc1)), S.Zero).get((rc2.perm, len(rc2)), S.Zero)}"
         
             
                 

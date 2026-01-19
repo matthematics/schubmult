@@ -1060,6 +1060,32 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         assert tb is not None, f"Could not reverse raise seq {raise_seq} on {w_tab=} {rc_hw=} {self=}"
         return tb
 
+    def m_operation(self, a, b):
+        assert self.perm[a - 1] > self.perm[b - 1], f"{self=}, {a=}, {b=}"
+        new_rc = self
+        for i in range(self.perm.inv):
+            if new_rc.left_to_right_inversion(i) == (a, b):
+                row, col = new_rc.left_to_right_inversion_coords(i)
+                new_rc = new_rc.toggle_ref_at(row, col)
+                for j in range(col + 1, new_rc.cols + 10):
+                    if not new_rc.has_element(row, j):
+                        new_rc = new_rc.toggle_ref_at(row, j)
+                        break
+                while not new_rc.is_valid:
+                    for bad_i in range(self.perm.inv):
+                        a_bad, b_bad = new_rc.left_to_right_inversion(bad_i)
+                        if a_bad > b_bad:
+                            row_bad, col = new_rc.left_to_right_inversion_coords(bad_i)
+                            new_rc = new_rc.toggle_ref_at(row_bad, col)
+                            for j in range(col + 1, new_rc.cols + 10):
+                                if not new_rc.has_element(row_bad, j):
+                                    new_rc = new_rc.toggle_ref_at(row_bad, j)
+                                    break
+                            break
+        if len(new_rc.perm.trimcode) > len(new_rc):
+            new_rc = new_rc.normalize()
+        return new_rc
+
     # THE ZERO MAKES SCHUB PROD
     @cache
     def product(self, other: RCGraph) -> dict[RCGraph, int]:
