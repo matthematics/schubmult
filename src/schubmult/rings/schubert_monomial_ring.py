@@ -105,7 +105,7 @@ class SchubertMonomialRing(BaseSchubertRing):
             result_dict = {k: v * sympify(b) for k, v in a.items()}
             return self.from_dict(result_dict)
         except Exception:
-            raise NotImplementedError(f"Multiplication with {type(b)} not implemented for SchubertMonomialRingElement")
+            raise NotImplementedError("Multiplication with fs not implemented for SchubertMonomialRingElement")
 
     @property
     def zero(self):
