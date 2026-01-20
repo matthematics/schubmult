@@ -2636,6 +2636,9 @@ $$\lzeromap=\zeromap$$
   Denote by $\BPD(w,n)$ the set of (reduced) $n$-row bumpless pipe dreams for a permutation $w$, where $n\geq \maxd(w)$. These are $n\times N$ grids, where $N$ is at least the length of $w$, populated with $6$ possible tiles, shown in Figure \ref{figure:bpdtiles}, satisfying the conditions that pipes must enter from the bottom and exit on the right, and no two pipes may cross twice. We may assign a permutation to such a BPD as follows.
 
   Let $(B, n)$ be an $n$-row BPD. Let $c_1,\ldots,c_m$ be the columns such that the pipes on the bottom edge have an entrance from the bottom. If the pipe coming from $c_i$ exits on row $j$ on the right, then $w(c_i) = j$. To fill in the remaining elements of the permutation, we set $w(m + k) = d_k$, where $d_1,\ldots,d_k$ are the remaining columns with no entrance in increasing order.
+
+  
+
 \end{definition}
 
 \begin{figure}[htbp]
@@ -2695,10 +2698,13 @@ $$\lzeromap=\zeromap$$
 \end{figure}
 
 
-\begin{lemma}[\cite{WEIGANDT2021105470}]
-  Let $(B, N)$ be an ordinary reduced BPD for a permutation $w$, so that $w(M) = M$ for all $M>N$ and $B$ is $N\times N$. Let $n\geq \maxd(w)$ be an integer. Then $w(B', n) = w(B, N)$, where $B'$ is equal to the first $n$ rows of $B$ without modification.
+\begin{lemma}[\cite{WEIGANDT2021105470}] \label{lemma:bpd_completion}
+  Let $(B, N)$ be an ordinary reduced BPD for a permutation $w$, so that $w(M) = M$ for all $M>N$ and $B$ is $N\times N$. Let $n\geq \maxd(w)$ be an integer. Then the BPD $B'$ obtained by only retaining the first $n$ rows of $B$ satisfies $w(B', n) = w(B, N)$ and uniquely determines $B$.
 \end{lemma}
 
+\begin{definition}
+There is a bijection $\varphi:\BPD(w,n)\to \mathcal{RC}(w,n)$, where $w\in S_n$, defined in \cite{GaoHuang2023} that preserves weight. It is viewed as ``canonical'' because it also provides bijective correspondences between certain insertion/bumping operations on BPDs and RC graphs, showing that they agree in a strong way. In light of Lemma \ref{lemma:bpd_completion}, we may extend this bijection to $w\in S_\infty$ with $\maxd(w)\leq n$ by first expanding the BPD to a square BPD with sufficiently many rows and columns, then applying the bijection, and finally truncating the resulting RC graph to $n$ rows.
+\end{definition}
 
 \begin{figure}[htbp]
 \centering
@@ -2804,11 +2810,10 @@ $$\lzeromap=\zeromap$$
 \begin{definition}
 We define a function $\bzeromap:\BPD(n)^0\to \BPD(n-1)$, found in \cite{WEIGANDT2021105470} in a more general context, as follows. Given a bumpless pipe dream $(B, n)$ with no blank tiles in row $n$, we simply remove row $n$ to obtain $B'$. Then
 $$\bzeromap(B, n) = (B', n-1)$$
-One may ask oneself here whether anything changes at all. Indeed, all that changes are the labels of the incoming pipes, as shown in Figure \ref{figure:transition}.
+One may ask oneself here whether anything changes at all. Indeed, all that changes are the labels of the incoming pipes, as shown in Figure \ref{figure:transition}, and this only happens if $\maxd(w) = n$.
 \end{definition}
 
 
-There is a canonical bijection $\varphi:\BPD(w,n)\to \mathcal{RC}(w,n)$ defined in \cite{GaoHuang2023} that preserves weight.
 
 
 
@@ -3001,9 +3006,9 @@ Little bumps on last descent
 
 \begin{definition}
 Let $(B, p)$ be a BPD and let $(C, q)$ be another BPD. We define an operation $B\looparrowright C$ as follows. First, let $\varphi(B) = ((a_1, r_1), (a_2, r_2), \ldots, (a_m, r_m))$. Then define
-$$B\looparrowright C = \Delta(((a_1 + n, r_1), (a_2 + n, r_2), \ldots, (a_m + n, r_m)),C\shup^n)$$
+$$B\looparrowright C = \Delta(((a_1, r_1), (a_2, r_2), \ldots, (a_m, r_m)),C\shup^p)$$
 
-Define 
+We may define a ring product on $\BPD$, independently of the bijection, by declaring that 
 $$(B, p)\diamond (C, q) = \sum_{\mathbf{t}^N(B', p + N) = (B,n)} (B'\looparrowright C, p+q)$$
 \end{definition}
 

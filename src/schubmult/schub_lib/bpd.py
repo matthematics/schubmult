@@ -764,28 +764,31 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         if self[i, j] not in (TileType.CROSS, TileType.BUMP):
             return None
 
-        # up and right
-        up_r = i - 1
-        up_c = j
+        nrows, ncols = self._grid.shape
+        # Map tiles to their diff values
+        diff = np.ones_like(self._grid, dtype=int)
+        diff[self._grid == TileType.BLANK] = 0
+        diff[self._grid == TileType.CROSS] = 2
+        # Create r array with shape (nrows+1, ncols+1)
+        r = np.zeros((nrows + 1, ncols + 1), dtype=int)
 
-        while up_r >= 0 and up_c < self.cols:
-            tile = self[up_r, up_c]
-            if tile.feeds_up:
-                up_r -= 1
-            else:
-                up_c += 1
+        a, b = 0, 0
 
-        right_r = i
-        right_c = j + 1
-
-        while right_r >= 0 and right_c < self.cols:
-            tile = self[right_r, right_c]
-            if tile.feeds_right:
-                right_c += 1
-            else:
-                right_r -= 1
-        assert up_r < right_r
-        return up_r + 1, right_r + 1
+        for ai in range(1, nrows + 1):
+            for aj in range(1, ncols + 1):
+                r[ai, aj] = r[ai - 1, aj - 1] + diff[ai - 1, aj - 1]
+        # return r[target_row + 1, target_col + 1]
+        for col in range(j, self.cols):
+            for row in range(self.rows - 1, -1, -1):
+                if row > i and col == j:
+                    continue
+                if row == i and col == j:
+                    a, b = r[row + 1, col + 1] - 1, r[row + 1, col + 1]
+                    continue
+                if self[row, col] == TileType.CROSS:
+                    a, b = Permutation.ref_product(r[row + 1, col + 1] - 1).act_root(a,b)  # self.cols] - r[row + 1, col]
+        return a, b
+                    #word.append(pipes_northeast - 1)
 
     # def inversion_at_bump(self, i: int, j: int) -> int:
     #     """
