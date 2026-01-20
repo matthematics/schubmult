@@ -553,7 +553,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return cls(grid)
 
     def to_asm(self):
-        to_trans = self.normalize()
+        to_trans = self.resize(len(self.perm))
         n = max(to_trans.rows, to_trans.cols)
         asm = np.full(shape=(n, n), fill_value=0, dtype=np.int8)
         se_elbows = to_trans.all_se_elbows()
@@ -654,19 +654,20 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def set_width(self, width):
         """Set the width of the BPD by adding empty columns on the right if needed."""
-        if width < self.cols:
-            if len(self.perm) > width:
-                raise ValueError("New width must be at least the length of the permutation")
-            new_grid = np.full((self.rows, width), fill_value=TileType.TBD, dtype=TileType)
-            new_grid[:, :width] = self._grid[:, :width]
-            bop = BPD(new_grid)
-            bop.rebuild()
-            return bop
-        if width == self.cols:
-            return self
-        new_grid = np.full((self.rows, width), fill_value=TileType.TBD, dtype=TileType)
-        new_grid[:, : self.cols] = self._grid
-        return BPD(new_grid)
+        # if width < self.cols:
+        #     if len(self.perm) > width:
+        #         raise ValueError("New width must be at least the length of the permutation")
+        #     new_grid = np.full((self.rows, width), fill_value=TileType.TBD, dtype=TileType)
+        #     new_grid[:, :width] = self._grid[:, :width]
+        #     bop = BPD(new_grid)
+        #     bop.rebuild()
+        #     return bop
+        # if width == self.cols:
+        #     return self
+        # new_grid = np.full((self.rows, width), fill_value=TileType.TBD, dtype=TileType)
+        # new_grid[:, : self.cols] = self._grid
+        # return BPD(new_grid)
+        raise NotImplementedError("set_width is not implemented yet")
 
     @property
     def is_valid(self) -> bool:
@@ -680,6 +681,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             return self._valid
         if self.rows == 0:
             self._valid = True
+            return self._valid
+        if len(self.all_blanks()) != self.perm.inv:
+            self._valid = False
             return self._valid
         # if self.perm.inv != sum(self.length_vector):
         #     self._valid = False
@@ -731,6 +735,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         new_bpd._perm = self._perm
         new_bpd._valid = self._valid
         new_bpd._word = self._word
+        new_bpd._unzero_cache = self._unzero_cache
         return new_bpd
 
     @property
@@ -868,11 +873,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         (ri, rj) = move[0]
         (bi, bj) = move[1]
 
-        # if bi >= D.rows:
-        #     D = D.resize(bi + 2, check_valid=False)
-        # if bj >= D.cols:
-        #     D = D.set_width(bj + 2)
-        orig_self = self.resize(D.rows, check_valid=False).set_width(D.cols)
+        if bj >= D.cols or bi >= D.rows:
+            D = D.resize(max(bi + 2, bj + 2))
+        orig_self = self.resize(D.rows)
         D._grid[ri, rj] = TileType.BLANK if orig_self[ri, rj] == TileType.ELBOW_SE else TileType.ELBOW_NW  # NW-corner
         D._grid[bi, bj] = TileType.ELBOW_NW if orig_self[bi, bj] == TileType.BLANK else TileType.BUMP  # SE-corner
         D._grid[bi, rj] = TileType.ELBOW_SE  # SW-corner
@@ -945,14 +948,14 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     def monk_insert(self, row):
         """RETURNS NORMALIZED"""
         # find easternmost tile
-        working_bpd = self.normalize()
+        working_bpd = self.copy()
         alpha = row - 1
         col_coord = np.max(np.argwhere(self._grid[alpha, :] == TileType.ELBOW_SE))
         x, y = alpha, col_coord
         return working_bpd._monk_iterate(x, y)
 
     def _monk_iterate(self, x, y) -> BPD:
-        working_bpd = self.resize(self.rows + 1).set_width(self.cols + 1)
+        working_bpd = self.resize(self.rows + 1)
         x_iter, y_iter = x, y
         while True:
             min_droops = working_bpd.min_droop_moves()
@@ -981,37 +984,35 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                     if (p1 == pipe1 and p2 == pipe2) or (p1 == pipe2 and p2 == pipe1):
                         found = True
                         break
-                if tile == TileType.BUMP:
+                    # CROSS tile: continue following the current direction
+                    if going_down:
+                        z_prime += 1
+                    else:
+                        w_prime -= 1
+                elif tile == TileType.BUMP:
                     if going_down:
                         going_down = False
                         w_prime -= 1
                     else:
                         going_down = True
                         z_prime += 1
-                if tile == TileType.ELBOW_SE:
+                elif tile == TileType.ELBOW_SE:
                     assert not going_down
                     going_down = True
                     z_prime += 1
-                if tile == TileType.ELBOW_NW:
+                elif tile == TileType.ELBOW_NW:
                     assert going_down
                     going_down = False
                     w_prime -= 1
-                if tile == TileType.HORIZ:
+                elif tile == TileType.HORIZ:
                     assert not going_down
                     w_prime -= 1
-                if tile == TileType.VERT:
+                elif tile == TileType.VERT:
                     assert going_down
                     z_prime += 1
-                if tile == TileType.CROSS:
-                    if going_down:
-                        z_prime += 1
-                    else:
-                        w_prime -= 1
-                if tile == TileType.BUMP:
-                    if going_down:
-                        w_prime -= 1
-                    else:
-                        z_prime += 1
+                else:
+                    # Unknown or TBD tile, break to avoid infinite loop
+                    break
             if found:
                 # z_prime, w_prime is a crossing
                 working_bpd._grid[z, w], working_bpd._grid[z_prime, w_prime] = working_bpd._grid[z_prime, w_prime], working_bpd._grid[z, w]
@@ -1022,41 +1023,44 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         return working_bpd
 
     def normalize(self) -> BPD:
-        if len(self) == len(self.perm):
-            if len(self.perm) == self.cols:
-                return self.copy()
-            return self.set_width(len(self.perm))
-        snap_size = len(self.perm)
-        new_grid = self._grid.copy()
-        if snap_size < self.cols:
-            if snap_size < len(self):
-                new_grid = new_grid[:snap_size, :snap_size]
-            else:
-                new_grid = new_grid[:, :snap_size]
-        if snap_size > new_grid.shape[0] or snap_size > new_grid.shape[1]:
-            new_grid = np.pad(new_grid, ((0, snap_size - new_grid.shape[0]), (0, max(0, snap_size - new_grid.shape[1]))), constant_values=TileType.TBD)
-        bottom_portion = BPD.rothe_bpd(self.perm.min_coset_rep(*(list(range(self.rows)) + list(range(self.rows + 1, snap_size)))), snap_size)
-        new_grid[self.rows :, :] = bottom_portion._grid[self.rows :, :]
-        _invalidate_grid(new_grid)
-        new_bpd = BPD(new_grid)
-        assert new_bpd.rows == new_bpd.cols == snap_size
-        return new_bpd
+        raise NotImplementedError("normalize method is not implemented yet")
+        # if len(self) == len(self.perm):
+        #     if len(self.perm) == self.cols:
+        #         return self.copy()
+        #     return self.set_width(len(self.perm))
+        # snap_size = len(self.perm)
+        # new_grid = self._grid.copy()
+        # if snap_size < self.cols:
+        #     if snap_size < len(self):
+        #         new_grid = new_grid[:snap_size, :snap_size]
+        #     else:
+        #         new_grid = new_grid[:, :snap_size]
+        # if snap_size > new_grid.shape[0] or snap_size > new_grid.shape[1]:
+        #     new_grid = np.pad(new_grid, ((0, snap_size - new_grid.shape[0]), (0, max(0, snap_size - new_grid.shape[1]))), constant_values=TileType.TBD)
+        # bottom_portion = BPD.rothe_bpd(self.perm.min_coset_rep(*(list(range(self.rows)) + list(range(self.rows + 1, snap_size)))), snap_size)
+        # new_grid[self.rows :, :] = bottom_portion._grid[self.rows :, :]
+        # _invalidate_grid(new_grid)
+        # new_bpd = BPD(new_grid)
+        # assert new_bpd.rows == new_bpd.cols == snap_size
+        # return new_bpd
 
     def pop_op(self) -> tuple[BPD, tuple[int, int]]:
         # --- STEP 0 --- #
-        if len(self) < len(self.perm):
-            D = self.normalize()
-        else:
-            D = self.copy()
+        # if len(self) < len(self.perm):
+        #     # D = self.normalize()
+        #     D = self.resize(len(self.perm))
+        # else:
+        D = self.resize(max(self.rows, len(self.perm)))
 
+        assert D.is_reduced
         # check if D has a blank tile (i.e., the coxeter length of D.w is zero)
-        if self.perm.inv == 0:
-            return D
+        # if self.perm.inv == 0:
+        #     raise ValueError("Cannot perform pop_op on a BPD with zero Coxeter length")
 
         # find the first row r with a blank tile - vectorized
-        blank_positions = np.argwhere(D._grid[: D.rows, : D.cols] == TileType.BLANK)
-        if len(blank_positions) == 0:
-            return D
+        blank_positions = np.argwhere(D._grid == TileType.BLANK)
+        # if len(blank_positions) == 0:
+        #     raise ValueError("Cannot perform pop_op on a BPD with no blanks")
         r = blank_positions[0, 0]
 
         # initialize the mark X at the blank tile (x,y)
@@ -1155,7 +1159,10 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             else:  # D._grid[x,y+1] == TileType.VERT
                 D._grid[x, y + 1] = TileType.ELBOW_NW
 
-        return D.resize(self.rows), (a + 1, r + 1)
+        D = D.resize(self.rows)
+        if self.DEBUG:
+            assert D.perm.inv == self.perm.inv - 1, f"Resulting BPD inversion count incorrect after pop_op: {D.perm.inv} vs {self.perm.inv - 1} \n{D}\n{self=}"
+        return D, (a + 1, r + 1)
 
     def column_perm_at_row(self, row: int) -> Permutation:
         build_perm = []
@@ -1169,24 +1176,46 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 build_perm.append(None)
         return Permutation.from_partial(build_perm)
 
-    def resize(self, new_num_rows: int, check_valid=True) -> BPD:
+    def resize(self, new_num_rows: int) -> BPD:
+        self._perm = None  # Invalidate cached permutation
         if new_num_rows > self.rows:
             new_bpd = self.copy()
-            if check_valid:
-                new_bpd = self.normalize()
-            if new_bpd.rows < new_num_rows:
-                new_bpd._grid = np.pad(new_bpd._grid, ((0, new_num_rows - new_bpd.rows), (0, max(0, new_num_rows - new_bpd.cols))), constant_values=TileType.TBD)
-            elif new_bpd.rows > new_num_rows:
-                new_bpd._grid = new_bpd._grid[:new_num_rows, : max(new_num_rows, len(self.perm))]
-            new_bpd.rebuild()
-            if check_valid:
-                assert new_bpd.is_valid, f"Resulting BPD is not valid after increasing size, \n{pretty(self)} {new_num_rows} {new_bpd!r}"
+            # if new_num_rows > self.cols:
+            #     new_bpd.set_width(new_num_rows)
+            new_grid = np.pad(new_bpd._grid, ((0, new_num_rows - new_bpd.rows), (0, max(0, max(new_num_rows,len(self.perm)) - new_bpd.cols))), constant_values=TileType.TBD)
+            # elif new_bpd.rows > new_num_rows:
+            #     new_bpd._grid = new_bpd._grid[:new_num_rows, : max(new_num_rows, len(self.perm))]
+            # bottom_portion = BPD.rothe_bpd(self.perm.min_coset_rep(*(list(range(self.rows)) + list(range(self.rows + 1, max(len(self.perm),new_num_rows)))))
+            # new_grid[self.rows :, :] = bottom_portion._grid[self.rows :, :]
+            # for r in range(self.rows):
+            #     current_col = self.cols
+            #     while current_col < new_grid.shape[1]:
+            #         if new_grid[r, current_col] == TileType.TBD:
+            #             new_grid[r, current_col] = TileType.HORIZ
+            #             current_col += 1
+            # _invalidate_grid(new_grid)
+            bottom_portion = BPD.rothe_bpd(self.perm, new_num_rows)
+
+            new_grid[self.rows :, :bottom_portion.cols] = bottom_portion._grid[self.rows :, :]
+            _invalidate_grid(new_grid)
+            new_bpd = BPD(new_grid)
+            if new_bpd.cols > max(new_num_rows,len(new_bpd.perm)):
+                new_bpd._grid = new_bpd._grid[:, : max(new_num_rows,len(new_bpd.perm))]
+                new_bpd.rebuild()
+            assert new_bpd.is_valid, f"Resulting BPD is not valid after increasing size, \n{pretty(self)} {new_num_rows} {new_bpd!r}"
             return new_bpd
-        if check_valid and new_num_rows < len(self.perm):
-            new_bpd = BPD(self._grid[:new_num_rows, :])
+        if new_num_rows < self.rows:
+            new_bpd = BPD(self._grid[:new_num_rows, :max(len(self.perm), new_num_rows)])
             new_bpd.rebuild()
+            if new_bpd.cols > max(new_num_rows,len(new_bpd.perm)):
+                new_bpd._grid = new_bpd._grid[:, : max(new_num_rows,len(new_bpd.perm))]
+                new_bpd.rebuild()
             return new_bpd
-        return BPD(self._grid[:new_num_rows, :])
+        new_bpd = self.copy()
+        if new_bpd.cols > max(new_num_rows,len(new_bpd.perm)):
+            new_bpd._grid = new_bpd._grid[:, : max(new_num_rows,len(new_bpd.perm))]
+            new_bpd.rebuild()
+        return new_bpd
 
     @classmethod
     def from_rc_graph(cls, rc_graph) -> BPD:
@@ -1203,8 +1232,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         if cls.DEBUG:
             assert bpd.perm.inv == len(bpd.all_blanks())
             assert bpd.perm == rc_graph.perm
-        if len(bpd) != len(rc_graph):
+        if len(bpd) != len(rc_graph) or bpd.cols != max(len(bpd.perm), len(rc_graph)):
             return bpd.resize(num_rows)
+        # assert bpd.cols == len(bpd.perm)
         return bpd
 
     def combine(self, other, shift=None) -> BPD:
@@ -1283,7 +1313,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def inverse_pop_op(self, *interlaced_rc) -> BPD:
         if self.rows < len(self.perm):
-            D = self.normalize()
+            D = self.resize(len(self.perm))
         else:
             D = self.copy()
 
@@ -1413,14 +1443,15 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             raise ValueError("BPD is not reduced, cannot compute reduced compatible sequence")
         work_bpd = self
         ret = []
-        last_inv = work_bpd.perm.inv
+        # last_inv = work_bpd.perm.inv
         while work_bpd.perm.inv > 0:
             work_bpd, (reflection, row) = work_bpd.pop_op()
-            if self.DEBUG:
-                assert work_bpd.perm.inv == last_inv - 1, "Invariant violated in as_reduced_compatible"
-            last_inv = work_bpd.perm.inv
+            # assert work_bpd.perm.inv == last_inv - 1, "Invariant violated in as_reduced_compatible"
+            # last_inv = work_bpd.perm.inv
             ret.append((reflection, row))
         ret.reverse()
+        if self.DEBUG:
+            assert len(ret) == self.perm.inv
         return tuple(ret)
 
     def rebuild(self) -> None:
@@ -1448,11 +1479,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             return self._unzero_cache
         if not self.is_valid:
             return set()
-        resized = self.resize(self.rows + 1)
+        resized = self.resize(len(self.perm) + 1)
         results = set()
-        min_width = len(self.perm) + 1
-        if resized.cols < min_width:
-            resized = resized.set_width(min_width)
+        # min_width = len(self.perm) + 1
+        # if resized.cols < min_width:
+        #     resized = resized.set_width(min_width)
         results = set()
 
         crossings = np.array([(i, j) for (i, j) in resized.all_crossings() if i == self.rows], dtype=np.int32)
@@ -1467,12 +1498,15 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 if mask & (1 << idx):
                     i, j = crossings[idx]
                     working_grid[i, j] = TileType.TBD
+            working_grid = working_grid[:self.rows+1, :]
             _invalidate_grid(working_grid)
-            new_bpd = BPD(working_grid).snap_width()
+            new_bpd = BPD(working_grid)
 
             if new_bpd.is_valid and new_bpd.is_reduced:
+                if new_bpd.rows != self.rows + 1 or new_bpd.cols != max(self.rows + 1, len(new_bpd.perm)):
+                    new_bpd = new_bpd.resize(self.rows + 1)
                 results.add(new_bpd)
-        results = set()
+        # results = set()
 
         # up_perms = [perm for perm, _ in ASx(self.perm, self.rows) * ASx([], 1)]
 
@@ -1554,7 +1588,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         perm_length = len(self.perm)
         if self.cols == perm_length or (self.rows > perm_length and self.cols == self.rows):
             return self
-        return self.set_width(max(self.rows, perm_length))
+        new_bpd = self.copy()
+        new_bpd._grid = new_bpd._grid[:, :perm_length]
+        # _invalidate_grid(new_bpd._grid)
+        # return self.set_width(max(self.rows, perm_length))
+        return new_bpd
 
     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, **_kwargs) -> Expr:
         """
