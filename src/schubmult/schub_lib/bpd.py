@@ -749,7 +749,48 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         """Total number of crossings in the BPD"""
         return int(np.sum(self._grid == TileType.CROSS))
 
-    def inversion_at_cross(self, i: int, j: int) -> int:
+    def right_root_at(self, i: int, j: int) -> int:
+        """
+        Compute the inversion associated with the crossing at position (i, j).
+
+        The inversion is determined by tracing the pipes through the BPD.
+
+        Args:
+            i: Row index of the crossing
+            j: Column index of the crossing
+        Returns:
+            The inversion value as an integer
+        """
+        if self[i, j] not in (TileType.CROSS, TileType.BUMP):
+            return None
+        bpd = self.resize(len(self.perm))
+        nrows, ncols = bpd._grid.shape
+        # Map tiles to their diff values
+        diff = np.ones_like(bpd._grid, dtype=int)
+        diff[bpd._grid == TileType.BLANK] = 0
+        diff[bpd._grid == TileType.CROSS] = 2
+        # Create r array with shape (nrows+1, ncols+1)
+        r = np.zeros((nrows + 1, ncols + 1), dtype=int)
+
+        a, b = 0, 0
+
+        for ai in range(1, nrows + 1):
+            for aj in range(1, ncols + 1):
+                r[ai, aj] = r[ai - 1, aj - 1] + diff[ai - 1, aj - 1]
+        # return r[target_row + 1, target_col + 1]
+        for col in range(j, bpd.cols):
+            for row in range(bpd.rows - 1, -1, -1):
+                if row > i and col == j:
+                    continue
+                if row == i and col == j:
+                    a, b = r[row + 1, col + 1] - 1, r[row + 1, col + 1]
+                    continue
+                if bpd[row, col] == TileType.CROSS:
+                    a, b = Permutation.ref_product(r[row + 1, col + 1] - 1).act_root(a,b)  # self.cols] - r[row + 1, col]
+        return a, b
+
+
+    def left_root_at(self, i: int, j: int) -> int:
         """
         Compute the inversion associated with the crossing at position (i, j).
 
@@ -778,9 +819,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             for aj in range(1, ncols + 1):
                 r[ai, aj] = r[ai - 1, aj - 1] + diff[ai - 1, aj - 1]
         # return r[target_row + 1, target_col + 1]
-        for col in range(j, self.cols):
-            for row in range(self.rows - 1, -1, -1):
-                if row > i and col == j:
+        for col in range(j, -1, -1):
+            for row in range(self.rows):
+                if row < i and col == j:
                     continue
                 if row == i and col == j:
                     a, b = r[row + 1, col + 1] - 1, r[row + 1, col + 1]
@@ -865,7 +906,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                     return self._column_perm[j]
                 return self.trace_pipe(i + 1, j, direction="down")
             raise ValueError("Must specify direction when tracing through a crossing")
-        raise ValueError(f"Invalid tile for tracing pipe at ({i}, {j}): {self[i, j]}")
+        raise ValueError(f"Invalid tile for tracing pipe at ({i}, {j}): {self[i, j]}\n{self=}")
 
     def all_se_elbows(self) -> set[tuple[int, int]]:
         return self.all_tiles_of_type(TileType.ELBOW_SE)
@@ -904,14 +945,19 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def min_droop_moves(self) -> set[tuple[tuple[int, int], tuple[int, int]]]:
         droop_moves = set()
-        ARBITRARY_LARGE = 200
         for a, b in self.all_tiles_of_type((TileType.ELBOW_SE, TileType.BUMP)):
-            x = np.min(np.argwhere(self._grid[a + 1 :, b] != TileType.CROSS), initial=ARBITRARY_LARGE) + a + 1
-            if x > ARBITRARY_LARGE:
-                x = self.cols
-            y = np.min(np.argwhere(self._grid[a, b + 1 :] != TileType.CROSS), initial=ARBITRARY_LARGE) + b + 1
-            if y > ARBITRARY_LARGE:
-                y = self.rows
+            # Find min x coordinate in column b where tile is not CROSS and x > a
+            non_cross_positions = np.argwhere((self._grid[:, b] != TileType.CROSS) & (np.arange(self.rows) > a))
+            if len(non_cross_positions) > 0:
+                x = non_cross_positions[0][0]
+            else:
+                continue
+            non_cross_positions = np.argwhere((self._grid[a, :] != TileType.CROSS) & (np.arange(self.cols) > b))
+            #y = np.min(np.argwhere(self._grid[a, b + 1 :] != TileType.CROSS), initial=ARBITRARY_LARGE) + b + 1
+            if len(non_cross_positions) > 0:
+                y = non_cross_positions[0][0]
+            else:
+                continue
             droop_moves.add(((a, b), (x, y)))
         return droop_moves
 
@@ -920,9 +966,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         (ri, rj) = move[0]
         (bi, bj) = move[1]
 
-        if bj >= D.cols or bi >= D.rows:
-            D = D.resize(max(bi + 2, bj + 2))
-        orig_self = self.resize(D.rows)
+        # if bj >= self.cols or bi >= self.rows:
+        #     D = self.resize(max(bi + 2, bj + 2))
+        orig_self = self.copy()
         D._grid[ri, rj] = TileType.BLANK if orig_self[ri, rj] == TileType.ELBOW_SE else TileType.ELBOW_NW  # NW-corner
         D._grid[bi, bj] = TileType.ELBOW_NW if orig_self[bi, bj] == TileType.BLANK else TileType.BUMP  # SE-corner
         D._grid[bi, rj] = TileType.ELBOW_SE  # SW-corner
@@ -985,26 +1031,32 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def huang_bump(self, a, b):
         # perm_inverse = ~self.perm
-        working_bpd = self.resize(len(self.perm))
-        the_cross_list = [(i, j) for (i, j) in working_bpd.all_crossings() if working_bpd.inversion_at_cross(i, j) == (a, b)]
+        working_bpd = self.copy()#resize(len(self.perm))
+        the_cross_list = [(i, j) for (i, j) in working_bpd.all_crossings() if working_bpd.right_root_at(i, j) == (a, b)]
         if len(the_cross_list) == 0:
             raise ValueError(f"No crossing found for inversion ({a}, {b})")
         x, y = the_cross_list[0]
         working_bpd._grid[x, y] = TileType.BUMP
-        return working_bpd._monk_iterate(x, y)
+        working_bpd.rebuild()
+        return working_bpd._monk_iterate(x, y, x + 1, self.perm.swap(a-1,b-1)[x])
+
+    @classmethod
+    def random_bpd(cls, perm, num_rows):
+        import random
+        return random.choice(list(cls.all_bpds(perm, num_rows)))
 
     def monk_insert(self, row):
         """RETURNS NORMALIZED"""
         # find easternmost tile
-        working_bpd = self.resize(max(row, len(self.perm)))
+        working_bpd = self.copy() #resize(max(row, len(self.perm), self.rows))
         # if len(working_bpd) < row:
         #     working_bpd = working_bpd.resize(row)
         alpha = row - 1
         col_coord = np.max(np.argwhere(working_bpd._grid[alpha, :] == TileType.ELBOW_SE))
         x, y = alpha, col_coord
-        return working_bpd._monk_iterate(x, y).resize(max(row, self.rows))
+        return working_bpd._monk_iterate(x, y, row, self.perm[row - 1]).resize(max(row, self.rows))
 
-    def _monk_iterate(self, x, y) -> BPD:
+    def _monk_iterate(self, x, y, row, row_val) -> BPD:
         x_iter, y_iter = x, y
         working_bpd = self.copy()
         while True:
@@ -1017,23 +1069,32 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 raise
             working_bpd = working_bpd.do_min_droop_move(the_move)
             if working_bpd[the_move[1][0], the_move[1][1]] == TileType.ELBOW_NW:
-                x_iter, y_iter = the_move[1]
+                # find the elbow SE
+                spots = [(a,b) for (a, b) in working_bpd.all_se_elbows() if working_bpd.trace_pipe(a, b) == row_val and a == the_move[1][0]]
+                if len(spots) == 0:
+                    raise ValueError(f"No SE elbow found for pipe {row} after droop move in monk iteration.")
+                assert len(spots) == 1
+                x_iter, y_iter = spots[0]
+                # working_bpd._grid[x_iter, y_iter] = TileType.BUMP
                 continue
             z, w = the_move[1]
+            assert working_bpd[z, w] == TileType.BUMP
             # FOLLOW THE PIPE
             # z_prime, w_prime = z, w
             # found = False
             # going_down = True
-            pipe1, pipe2 = working_bpd.inversion_at_cross(z, w)
-            any_cross = [(zp, wp) for (zp, wp) in working_bpd.all_crossings() if set(working_bpd.inversion_at_cross(zp, wp)) == {pipe1, pipe2}]
+            pipe1, pipe2 = working_bpd.right_root_at(z, w)
+            # assert pipe2 == x + 1, "Monk insert pipe tracing error {pipe2} != {x+1} {pipe1=} {pipe2=}"
+            any_cross = [(zp, wp) for (zp, wp) in working_bpd.all_crossings() if set(working_bpd.left_root_at(zp, wp)) == {pipe1, pipe2} and zp != z and wp != w]
             if any_cross:
                 z_prime, w_prime = any_cross[0]
                 working_bpd._grid[z, w], working_bpd._grid[z_prime, w_prime] = working_bpd._grid[z_prime, w_prime], working_bpd._grid[z, w]
+                working_bpd.rebuild()
                 x_iter, y_iter = z_prime, w_prime
                 continue
             working_bpd._grid[z, w] = TileType.CROSS
             break
-        working_bpd._invalidate_cache()
+        working_bpd.rebuild()
         return working_bpd
 
     def normalize(self) -> BPD:
