@@ -1069,22 +1069,15 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 raise
             working_bpd = working_bpd.do_min_droop_move(the_move)
             if working_bpd[the_move[1][0], the_move[1][1]] == TileType.ELBOW_NW:
-                # find the elbow SE
                 spots = [(a,b) for (a, b) in working_bpd.all_se_elbows() if working_bpd.trace_pipe(a, b) == row_val and a == the_move[1][0]]
                 if len(spots) == 0:
                     raise ValueError(f"No SE elbow found for pipe {row} after droop move in monk iteration.")
                 assert len(spots) == 1
                 x_iter, y_iter = spots[0]
-                # working_bpd._grid[x_iter, y_iter] = TileType.BUMP
                 continue
             z, w = the_move[1]
             assert working_bpd[z, w] == TileType.BUMP
-            # FOLLOW THE PIPE
-            # z_prime, w_prime = z, w
-            # found = False
-            # going_down = True
             pipe1, pipe2 = working_bpd.right_root_at(z, w)
-            # assert pipe2 == x + 1, "Monk insert pipe tracing error {pipe2} != {x+1} {pipe1=} {pipe2=}"
             any_cross = [(zp, wp) for (zp, wp) in working_bpd.all_crossings() if set(working_bpd.left_root_at(zp, wp)) == {pipe1, pipe2} and zp != z and wp != w]
             if any_cross:
                 z_prime, w_prime = any_cross[0]
@@ -1556,10 +1549,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         if not self.is_valid:
             return set()
         resized = self.resize(len(self.perm) + 1)
-        results = set()
-        # min_width = len(self.perm) + 1
-        # if resized.cols < min_width:
-        #     resized = resized.set_width(min_width)
         results = set()
 
         crossings = np.array([(i, j) for (i, j) in resized.all_crossings() if i == self.rows], dtype=np.int32)
