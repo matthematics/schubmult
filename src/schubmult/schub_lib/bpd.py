@@ -804,6 +804,14 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             if direction == "left":
                 return self.trace_pipe(i, j - 1, direction="left")
             raise ValueError("Must specify direction when tracing through a crossing")
+        if self[i, j] == TileType.BUMP:
+            if direction == "down":
+                return self.trace_pipe(i, j - 1, direction="left")
+            if direction == "left":
+                if i == self.rows - 1:
+                    return self._column_perm[j]
+                return self.trace_pipe(i + 1, j, direction="down")
+            raise ValueError("Must specify direction when tracing through a crossing")
         raise ValueError(f"Invalid tile for tracing pipe at ({i}, {j}): {self[i, j]}")
 
     def all_se_elbows(self) -> set[tuple[int, int]]:
@@ -844,46 +852,54 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     def min_droop_moves(self) -> set[tuple[tuple[int, int], tuple[int, int]]]:
         droop_moves = set()
         ARBITRARY_LARGE = 200
-        for (a, b) in self.all_tiles_of_type((TileType.ELBOW_SE, TileType.BUMP)):
-            x = np.min(np.where(self._grid[a + 1 :, b] != TileType.CROSS), initial=ARBITRARY_LARGE) - a
-            if x == ARBITRARY_LARGE - a:
-                continue
-            y = np.min(np.where(self._grid[a, b + 1 :] != TileType.CROSS), initial=ARBITRARY_LARGE) - b
-            if y == ARBITRARY_LARGE - b:
-                continue
-            droop_moves.add(((a, b), (a + x, b + y)))
+        for a, b in self.all_tiles_of_type((TileType.ELBOW_SE, TileType.BUMP)):
+            x = np.min(np.argwhere(self._grid[a + 1 :, b] != TileType.CROSS), initial=ARBITRARY_LARGE) + a + 1
+            if x > ARBITRARY_LARGE:
+                x = self.rows + 1
+            y = np.min(np.argwhere(self._grid[a, b + 1 :] != TileType.CROSS), initial=ARBITRARY_LARGE) + b + 1
+            if y > ARBITRARY_LARGE:
+                y = self.cols + 1
+            droop_moves.add(((a, b), (x, y)))
         return droop_moves
-
 
     def do_min_droop_move(self, move: tuple[tuple[int, int], tuple[int, int]]) -> BPD:
         D = self.copy()
         (ri, rj) = move[0]
         (bi, bj) = move[1]
 
-        D._grid[ri, rj] = TileType.BLANK if self[ri, rj] == TileType.ELBOW_SE else TileType.ELBOW_NW  # NW-corner
-        D._grid[bi, bj] = TileType.ELBOW_NW if self[bi, bj] == TileType.BLANK else TileType.BUMP  # SE-corner
+        if bi >= D.rows:
+            D = D.resize(bi + 1)
+        if bj >= D.cols:
+            D = D.set_width(bj + 1)
+        orig_self = self.resize(D.rows).set_width(D.cols)
+        D._grid[ri, rj] = TileType.BLANK if orig_self[ri, rj] == TileType.ELBOW_SE else TileType.ELBOW_NW  # NW-corner
+        D._grid[bi, bj] = TileType.ELBOW_NW if orig_self[bi, bj] == TileType.BLANK else TileType.BUMP  # SE-corner
         D._grid[bi, rj] = TileType.ELBOW_SE  # SW-corner
         D._grid[ri, bj] = TileType.ELBOW_SE  # NE-corner
 
         # top and bottom
         for j in range(rj + 1, bj):
-            if self[ri, j] == TileType.HORIZ:
+            if orig_self[ri, j] == TileType.HORIZ:
                 D._grid[ri, j] = TileType.BLANK
             else:  # self[ri, j] == TileType.CROSS
                 D._grid[ri, j] = TileType.VERT
-            if self[bi, j] == TileType.BLANK:
+            if orig_self[bi, j] == TileType.BLANK:
                 D._grid[bi, j] = TileType.HORIZ
+            elif D._grid[bi, j] == TileType.BUMP:  # self[bi, j] == TileType.HORIZ
+                D._grid[bi, j] = TileType.BUMP
             else:  # self[bi, j] == TileType.VERT
                 D._grid[bi, j] = TileType.CROSS
         # left and right
         for i in range(ri + 1, bi):
-            if self[i, rj] == TileType.VERT:
+            if orig_self[i, rj] == TileType.VERT:
                 D._grid[i, rj] = TileType.BLANK
             else:  # self[i, rj] == TileType.CROSS
                 D._grid[i, rj] = TileType.HORIZ
-            if self[i, bj] == TileType.BLANK:
+            if orig_self[i, bj] == TileType.BLANK:
                 D._grid[i, bj] = TileType.VERT
-            else:  # self[i, bj] == TileType.HORIZ
+            elif orig_self[i, bj] == TileType.BUMP:  # self[i, bj] == TileType.HORIZ
+                D._grid[i, bj] = TileType.BUMP
+            else:
                 D._grid[i, bj] = TileType.CROSS
         return D
 
@@ -919,6 +935,41 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 D._grid[i, bj] = TileType.CROSS
         D.rebuild()
         return D
+
+    def monk_insert(self, row):
+        """RETURNS NORMALIZED"""
+        # find easternmost tile
+        alpha = row - 1
+        col_coord = np.max(np.argwhere(self._grid[alpha, :] == TileType.ELBOW_SE))
+        x, y = alpha, col_coord
+        working_bpd = self.normalize()
+        while True:
+            min_droops = working_bpd.min_droop_moves()
+            the_move = next(((a, b), (c, d)) for ((a, b), (c, d)) in min_droops if (a == x) and (b == y))
+            working_bpd = working_bpd.do_min_droop_move(the_move)
+            if working_bpd[the_move[1][0], the_move[1][1]] == TileType.ELBOW_NW:
+                x, y = the_move[1]
+                continue
+            z, w = the_move[1]
+            # FOLLOW THE PIPE
+            z_prime, w_prime = z + 1, w
+            found = False
+            while z_prime < working_bpd.rows and w_prime >= 0:
+                tile = working_bpd[z_prime, w_prime]
+                if tile == TileType.CROSS:
+                    found = True
+                    break
+                if tile.entrance_from_left:
+                    w_prime -= 1
+                else:
+                    z_prime += 1
+            if found:
+                # z_prime, w_prime is a crossing
+                working_bpd._grid[z, w], working_bpd._grid[z_prime, w_prime] = working_bpd._grid[z_prime, w_prime], working_bpd._grid[z, w]
+                continue
+            working_bpd._grid[z, w] = TileType.CROSS
+            break
+        return working_bpd
 
     def normalize(self) -> BPD:
         if len(self) == len(self.perm):
@@ -1106,6 +1157,19 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     def combine(self, other, shift=None) -> BPD:
         """Shift the BPD up by adding empty rows at the bottom."""
         return BPD.from_rc_graph(RCGraph([*self.to_rc_graph()[:shift], *other.to_rc_graph().shiftup(shift)]))
+
+    # def complete_partial(self, partition = None) -> BPD:
+    #     """Complete a partial BPD to a full BPD."""
+    #     if partition is None:
+    #         partition = [self.cols] * self.rows
+    #     if len(partition) < len(self.perm):
+    #         partition = partition + [0] * (len(self.perm) - len(partition))
+    #     new_grid = self._grid.copy()
+    #     new_grid = np.pad(new_grid, ((0, self.rows - len(partition)), (0, max(0, len(self.perm) - self.cols))), constant_values=TileType.TBD)
+
+    # def left_row_act(self, p: int):
+    #     new_grid = self._grid.copy()
+    #     new_grid = np.pad(new_grid, ((1, 0), (0,1)), constant_values=TileType.TBD)
 
     def product(self, other: BPD) -> dict[BPD, int]:
         """Compute the product of this BPD with another."""
@@ -1353,6 +1417,23 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
             if new_bpd.is_valid and new_bpd.is_reduced:
                 results.add(new_bpd)
+        results = set()
+
+        # up_perms = [perm for perm, _ in ASx(self.perm, self.rows) * ASx([], 1)]
+
+        # self_perm = self.perm
+        # self_snap = self.snap_width()
+        # for up_perm in up_perms:
+        #     # want
+        #     if up_perm == self_perm:
+        #         results.add(self_snap.resize(self.rows + 1))
+        #         continue
+        #     new_grid = self_snap._grid.copy()
+        #     row_pad = 1
+        #     if len(up_perm) > len(self_perm):
+        #         col_pad = len(up_perm) - len(self_perm)
+        #     new_grid = np.pad(new_grid, ((0, row_pad), (0, col_pad)), constant_values=TileType.TBD)
+        #     moving_perm =
 
         self._unzero_cache = results
         return results
@@ -1362,7 +1443,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         ret._grid[a, b] = value
         ret.rebuild()
         return ret
-
 
     #        for p in range(len(v) + 1 - vnum):
     #     vpm_list2 = []
@@ -1396,24 +1476,23 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     #             ),
     #         )
 
+    # n_crossings = len(crossings)
+    # base_grid = resized._grid.copy()
+    # for mask in range(1 << n_crossings):  # 2^n combinations
+    #     # Start from base grid instead of full BPD copy
+    #     working_grid = base_grid.copy()
+    #     # Apply mask: set to TBD where mask bit is 1
+    #     for idx in range(n_crossings):
+    #         if mask & (1 << idx):
+    #             i, j = crossings[idx]
+    #             working_grid[i, j] = TileType.TBD
+    #     _invalidate_grid(working_grid)
+    #     new_bpd = BPD(working_grid).snap_width()
 
-        # n_crossings = len(crossings)
-        # base_grid = resized._grid.copy()
-        # for mask in range(1 << n_crossings):  # 2^n combinations
-        #     # Start from base grid instead of full BPD copy
-        #     working_grid = base_grid.copy()
-        #     # Apply mask: set to TBD where mask bit is 1
-        #     for idx in range(n_crossings):
-        #         if mask & (1 << idx):
-        #             i, j = crossings[idx]
-        #             working_grid[i, j] = TileType.TBD
-        #     _invalidate_grid(working_grid)
-        #     new_bpd = BPD(working_grid).snap_width()
+    #     if new_bpd.is_valid and new_bpd.is_reduced:
+    #         results.add(new_bpd)
 
-        #     if new_bpd.is_valid and new_bpd.is_reduced:
-        #         results.add(new_bpd)
-
-        #return results
+    # return results
 
     def snap_width(self) -> BPD:
         """Snap the width of the BPD to the length of its permutation."""

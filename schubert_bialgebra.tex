@@ -961,7 +961,7 @@ We observe that in the above RC graph, the position $(1,5)$ does not have this c
 
 \subsection{Zeroing out the last row}
 
-We proceed now to define a product on $\BRC$ turning it into a ring. To do this, we need to be able to define a function $Z:\BRC\to\BRC$ trimming empty rows from the bottom instead of from the top. This is far more complicated.
+We proceed now to define a product on $\BRC$ turning it into a ring. To do this, we need to be able to define a function $\zeromap:\BRC\to\BRC$ trimming empty rows from the bottom instead of from the top. This is far more complicated.
 
 
 %\begin{algorithm} 
@@ -2425,55 +2425,218 @@ the property of being a homomorphism follows.
 % Let $(R,n)$ be a bounded RC graph with row $k$ empty, with $k<n$. Suppose also that $k$ is a descent of $\wof{R}$. Let $(R_1, k-1) = \zeromap^N(R_{\leq k-1}, k-1+N)$ and let $R_2=R_{>k}$.
 \newcommand{\clp}{\mathtt{clip}}
 
-\begin{lemma} \label{lemma:descentbijection}
-Let $w$ be a permutation, let $k$ be a positive integer, and let $n>k$ be an integer such that $n$ is a descent of $w$. Let $\mathcal{D}_n^{(n)}(w)$ be the set of permutations $w'\in\mathcal{D}_k(w)$ such that $n$ is a descent of $w'$. Then the map $w'\mapsto w's_n$ is a bijection $\mathcal{D}_k^{(n)}(w)\to \mathcal{D}_k(ws_n)$.
-\end{lemma}
+% \begin{lemma} \label{lemma:descentbijection}
+% Let $w$ be a permutation, let $k$ be a positive integer, and let $n>k$ be an integer such that $n$ is a descent of $w$. Let $\mathcal{D}_n^{(n)}(w)$ be the set of permutations $w'\in\mathcal{D}_k(w)$ such that $n$ is a descent of $w'$. Then the map $w'\mapsto w's_n$ is a bijection $\mathcal{D}_k^{(n)}(w)\to \mathcal{D}_k(ws_n)$.
+% \end{lemma}
 
-\begin{proposition} \label{proposition:emptypullout}
-For each bounded RC graph $(R, n)$ such that row $k$ is empty and $k$ is a descent of $\wof{R}$, there is a unique bounded RC graph $(R', n-1)$ such that $R'\in \mathscr{P}_{k-1,n-k}(\clp^{k-1}(R),\trm^{k}(R))$ and $\wof{R}\downvar{k}\wof{R'}$.
-\end{proposition}
-\begin{proof}
-Suppose first that $|\trm^{k}(R)|=0$. Let $R'$ be such that 
-$$\zeromap(R, k) = (R', k-1)$$
-Then $\wof{R}\downvar{k}\wof{R'}$ and $R'\in \mathscr{P}_{k-1,n-k}(\clp^{k-1}(R),\trm^{k}(R))$. We prove uniqueness in this case by induction on $n$. If $n=k$, we know already that the result is unique. If $n>k$ and $$R''\in\mathscr{P}_{k-1,n-k}(\clp^{k-1}(R),\trm^{k}(R))$$
-consider $\zeromap(R'', n-1) = (R_1'', n-2)$. If $R_1''\neq R''$, then $\maxd(\wof{R''})=n-1\geq k$, so we cannot have $\wof{R}\downvar{k}\wof{R''}$. If $R_1''=R''$, then by the uniqueness of the base case, we must have $R''=R'$.
+% \begin{proposition} \label{proposition:emptypullout}
+% For each bounded RC graph $(R, n)$ such that row $k$ is empty and $k$ is a descent of $\wof{R}$, there is a unique bounded RC graph $(R', n-1)$ such that $R'\in \mathscr{P}_{k-1,n-k}(\clp^{k-1}(R),\trm^{k}(R))$ and $\wof{R}\downvar{k}\wof{R'}$.
+% \end{proposition}
+% \begin{proof}
+% Suppose first that $|\trm^{k}(R)|=0$. Let $R'$ be such that 
+% $$\zeromap(R, k) = (R', k-1)$$
+% Then $\wof{R}\downvar{k}\wof{R'}$ and $R'\in \mathscr{P}_{k-1,n-k}(\clp^{k-1}(R),\trm^{k}(R))$. We prove uniqueness in this case by induction on $n$. If $n=k$, we know already that the result is unique. If $n>k$ and $$R''\in\mathscr{P}_{k-1,n-k}(\clp^{k-1}(R),\trm^{k}(R))$$
+% consider $\zeromap(R'', n-1) = (R_1'', n-2)$. If $R_1''\neq R''$, then $\maxd(\wof{R''})=n-1\geq k$, so we cannot have $\wof{R}\downvar{k}\wof{R''}$. If $R_1''=R''$, then by the uniqueness of the base case, we must have $R''=R'$.
 
-Using Lemma \ref{lemma:descentbijection}, we can inductively reduce the general case to the previous one. Suppose
-$$|\trm^{k}(R)|>0$$ 
-and let $(i,j)\in R$ be such that $i>k$ and $\rtt_R(i,j)=(p, p+1)$ for some $p$ (necessarily greater than $k$). Let $R_1 = R\setminus \{(i,j)\}$. By the induction hypothesis, there is a unique bounded RC graph $(R_1', n-1)$ such that $R_1'\in \mathscr{P}_{k-1,n-k}(\clp^{k-1}(R_1),\trm^{k}(R_1))$ and $\wof{R_1}\downvar{k}\wof{R_1'}$. Let $R'=R_1'\cup\{(i-1,j)\}$. By Lemma \ref{lemma:descentbijection}, $\wof{R}\downvar{k}\wof{R'}$, and since $\clp^{k-1}(R_1) = \clp^{k-1}(R)$ and
-$$\mathscr{P}_{k-1,n-k}(\clp^{k-1}(R),\trm^{n-k}(R)) = \mathscr{P}_{k-1,n-k}(\clp^{k-1}(R_1),\trm^{k}(R_1)\cup\{(i-k,j)\})$$
-we have $R'\in \mathscr{P}_{k-1,n-k}(\clp^{k-1}(R),\trm^{n-k}(R))$. Any additional $R''$ satisfying the same properties would give rise to an $R_1''$ in the original set, contradicting the induction hypothesis, so uniqueness holds.
-\end{proof}
+% Using Lemma \ref{lemma:descentbijection}, we can inductively reduce the general case to the previous one. Suppose
+% $$|\trm^{k}(R)|>0$$ 
+% and let $(i,j)\in R$ be such that $i>k$ and $\rtt_R(i,j)=(p, p+1)$ for some $p$ (necessarily greater than $k$). Let $R_1 = R\setminus \{(i,j)\}$. By the induction hypothesis, there is a unique bounded RC graph $(R_1', n-1)$ such that $R_1'\in \mathscr{P}_{k-1,n-k}(\clp^{k-1}(R_1),\trm^{k}(R_1))$ and $\wof{R_1}\downvar{k}\wof{R_1'}$. Let $R'=R_1'\cup\{(i-1,j)\}$. By Lemma \ref{lemma:descentbijection}, $\wof{R}\downvar{k}\wof{R'}$, and since $\clp^{k-1}(R_1) = \clp^{k-1}(R)$ and
+% $$\mathscr{P}_{k-1,n-k}(\clp^{k-1}(R),\trm^{n-k}(R)) = \mathscr{P}_{k-1,n-k}(\clp^{k-1}(R_1),\trm^{k}(R_1)\cup\{(i-k,j)\})$$
+% we have $R'\in \mathscr{P}_{k-1,n-k}(\clp^{k-1}(R),\trm^{n-k}(R))$. Any additional $R''$ satisfying the same properties would give rise to an $R_1''$ in the original set, contradicting the induction hypothesis, so uniqueness holds.
+% \end{proof}
+
+% \begin{definition}
+% Let $(R,n)$ be a bounded RC graph and let $k$ be a positive integer such that row $k$ of $R$ is empty and $k$ is a descent of $\wof{R}$. We define $P_k(R,n)$ to be the unique bounded RC graph $(R', n-1)$ such that $R'\in \mathscr{P}_{k-1,n-k}(\clp^{k-1}(R),\trm^{k}(R))$ and $\wof{R}\downvar{k}\wof{R'}$, as is guaranteed to exist by Proposition \ref{proposition:emptypullout}.
+% \end{definition}
+
+% \begin{lemma} \label{lemma:smackdescent}
+% Let $1\leq i < n$ be an integer and let $(R,n+1)$ be a bounded RC graph. Let $(R', n) = \zeromap(R, n+1)$. Then $s_i$ is a descent of $\wof{R'}$ if and only if $s_i$ is a descent of $\wof{R}$.
+% \end{lemma}
+% \begin{proof}
+% By construction of the algorithm, $\zeromap$ cannot reverse a descent smaller than the target last row. Thus, if $\wof{R'}$ has $s_i$ as a descent, so does $\wof{R}$. Conversely, if $\wof{R}$ has $s_i$ as a descent, since $\wof{R}\downvar{n+1}\wof{R'}$, it follows that $\wof{R'}$ also has $s_i$ as a descent. 
+% \end{proof}
+
+% \begin{lemma}
+% Suppose $(R,n)$ is a bounded RC graph where $\wof{R}$ is Grassmannian. If $(R', n+1)$ is such that $\zeromap(R', n+1) = (R,n)$ and $n$ is not a descent of $\wof{R'}$, then $\wof{R'}$ is also Grassmannian.
+% \end{lemma}
+% \begin{proof}
+% By Lemma \ref{lemma:smackdescent}, any descent of $\wof{R'}$ less than or equal to $n$ is also a descent of $\wof{R}$. Since $\wof{R}$ is Grassmannian, it has at most one descent, so if $\wof{R'}$ has a descent, it must be greater than or equal to $n$. If $n$ is not a descent, then the only descent is $n+1$, hence $\wof{R'}$ is $(n+1)$-Grassmannian.
+% \end{proof}
+
+% \begin{definition}
+% Let $(d_1,\ldots,d_k)$ be a sequence with $1\leq d_1<d_2<\cdots<d_k\leq n$. Define a function $I_d$ from the set of bounded RC graphs $(R,n)$ such that $\wof{R}$ has its descents contained in $\{d_1,\ldots,d_k\}$ to the set
+% $$\mathcal{P}_{d_1}\times\mathcal{P}_{d_2-d_1}\times \cdots \times \mathcal{P}_{d_k - d_{k-1}}$$
+% by setting
+% $$I_d(R, n) = (\clp^{d_1}(R), \clp^{d_2 - d_1}(\trm^{d_1}(R)), \ldots, \clp^{d_k - d_{k-1}}(\trm^{d_{k-1}}(R)))$$
+
+% \end{definition}
+
+
+
+
+
+\subsection{Preservation of the Demazure crystal structure}
+
+RC-graphs have a Demazure crystal structure defined by Assaf and Schilling in \cite{assaf2018demazure}. Namely, they define operators $e_i:\RC(w)\to\RC(w)\cup\{\emptyset\}$ and $f_i:\RC(w)\to\RC(w)\cup\{\emptyset\}$ for each $i\geq 1$ as follows. 
 
 \begin{definition}
-Let $(R,n)$ be a bounded RC graph and let $k$ be a positive integer such that row $k$ of $R$ is empty and $k$ is a descent of $\wof{R}$. We define $P_k(R,n)$ to be the unique bounded RC graph $(R', n-1)$ such that $R'\in \mathscr{P}_{k-1,n-k}(\clp^{k-1}(R),\trm^{k}(R))$ and $\wof{R}\downvar{k}\wof{R'}$, as is guaranteed to exist by Proposition \ref{proposition:emptypullout}.
+Consider elements $(i, j)\in R$ and $(i+1, k)\in R$. The pairing algorithm starts with the largest $j$ in row $i$ and pairs $(i, j)$ with $(i+1, k)$ where $k$ is the smallest such that $k \geq j$. If no such $k$ exists, then $(i, j)$ is unpaired. The algorithm continues by considering the next largest $j$ in row $i$ and repeating the process until all elements in row $i$ have been considered.
+
+Define $R_i$ to be the set of unpaired elements in row $i$ after applying the pairing algorithm between rows $i$ and $i+1$, and define $L_i$ to be the set of unpaired elements in row $i+1$. Then $f_i(R)$ is defined by removing the leftmost element $(i, j)$ from $R_i$ and adding the element $(i + 1, k)$ to $R$, where $k$ is the largest value such that $(i+1,k)\notin R$ and $k < j$. If $R_i$ is empty or $k$ does not exist, then $f_i(R) = \emptyset$. Similarly, $e_i(R)$ is defined by removing the rightmost element $(i + 1, k)$ from $L_i$ and adding the element $(i, j)$ to $R$, where $j$ is the smallest value such that $(i,j)\notin R$ and $j > k$. If $L_i$ is empty, then $e_i(R) = \emptyset$.
 \end{definition}
 
-\begin{lemma} \label{lemma:smackdescent}
-Let $1\leq i < n$ be an integer and let $(R,n+1)$ be a bounded RC graph. Let $(R', n) = \zeromap(R, n+1)$. Then $s_i$ is a descent of $\wof{R'}$ if and only if $s_i$ is a descent of $\wof{R}$.
-\end{lemma}
-\begin{proof}
-By construction of the algorithm, $\zeromap$ cannot reverse a descent smaller than the target last row. Thus, if $\wof{R'}$ has $s_i$ as a descent, so does $\wof{R}$. Conversely, if $\wof{R}$ has $s_i$ as a descent, since $\wof{R}\downvar{n+1}\wof{R'}$, it follows that $\wof{R'}$ also has $s_i$ as a descent. 
-\end{proof}
+We may transport this structure to bounded RC graphs as  operators $e_i:\mathcal{RC}(w,n)\to\mathcal{RC}(w,n)\cup\{\emptyset\}$ and $f_i:\mathcal{RC}(w,n)\to\mathcal{RC}(w,n)\cup\{\emptyset\}$ by
+$$e_i(R,n) = (e_i(R), n)$$
+and
+$$f_i(R, n)=(f_i(R), n)$$
+
+% \begin{lemma}
+% 	Let $(R, n)$ be a bounded RC graph. If $f_i(R)\neq \emptyset$ and $\zeromap(R', n+1)=(R, n)$, then $f_i(R')\neq \emptyset$ and
+% 	$$\zeromap(f_i(R'), n + 1)=(f_i(R), n)$$	
+% \end{lemma}
+
+
+\newcommand{\ckeq}{\sim}
+\newcommand{\ege}{\widetilde{\mathrm{eg}}}
+\begin{definition}
+An RC graph $R$ has a uniquely associated reduced word $\mathrm{word}(R)=(s_{i_1},\ldots,s_{i_N})$. Recall the Coxeter-Knuth relation $\ege$ defined by
+$$j\ i\ k \ckeq j\ k\ i$$
+and
+$$k\ i\ j \ckeq i\ k\ j$$
+if $i<j<k$, and
+$$i\ i+1\ i \ckeq i+1\ i\ i+1$$
+For an RC graph $R$, define $N(R)$ to be the maximum letter in $R$. Then define
+$$\ege(R) = (N(R) + 1 - i_1, \ldots, N(R) + 1 - i_N)$$
+Via the Edelman-Greene insertion algorithm, we may define a pair
+$$(P, Q)$$
+of tableaux of the same shape such that the reading word of $P$ is CK-equivalent to $\ege(R)$ and $Q$, the recording tableau, is standard. Define $\mathtt{tab}(R)$ to be the tableau of the same shape as $Q$ such that the entry in box $(i, j)$ is the row index of the box in $R$ that was inserted to create box $(i, j)$ in $P$.
+\end{definition}
 
 \begin{lemma}
-Suppose $(R,n)$ is a bounded RC graph where $\wof{R}$ is Grassmannian. If $(R', n+1)$ is such that $\zeromap(R', n+1) = (R,n)$ and $n$ is not a descent of $\wof{R'}$, then $\wof{R'}$ is also Grassmannian.
+	We have that $\mathtt{tab}(R)$ is a semistandard Young tableau of shape $\mathrm{shape}(Q)$, and the map
+	$$R\mapsto \mathtt{tab}(R)$$
+	 is a morphism of crystal graphs into $B(\mathrm{shape}(Q))$. 
 \end{lemma}
 \begin{proof}
-By Lemma \ref{lemma:smackdescent}, any descent of $\wof{R'}$ less than or equal to $n$ is also a descent of $\wof{R}$. Since $\wof{R}$ is Grassmannian, it has at most one descent, so if $\wof{R'}$ has a descent, it must be greater than or equal to $n$. If $n$ is not a descent, then the only descent is $n+1$, hence $\wof{R'}$ is $(n+1)$-Grassmannian.
+Suppose $R$ is a highest weight. Then $\wtt(R)$ is a partition. By the highest weight condition, the longest increasing subsequence of $\ege(R)$ is of length $\wtt(R)_1$ and is precisely the first row read in the grid order. By the Edelman-Greene correspondence \cite{edelman1987balanced}, the first row of $P$ has length equal to the length of the longest increasing subsequence of $\ege(R)$. Hence, the first row of $P$ has length $\wtt(R)_1$. By similar reasoning on the subsequent rows, we have that $\mathrm{shape}(P) = \wtt(R)$. We then have that $\mathtt{tab}(R)$ is the unique Yamanouchi tableau of shape $\wtt(R)$, establishing the claim for highest weights. The general case follows from the rigidity of the Demazure crystal structure \cite{assaf2018demazure}; since the function is weight-preserving, it is a morphism of crystal graphs.
+\end{proof}
+
+\begin{theorem}
+	% Let $R,R'$ be RC graphs. Then $\mathrm{hw}(R) = \mathrm{hw}(R')$ if and only if $\ege(R) \ckeq \ege(R')$.
+  The distinct Demazure crystals that make up $\RC(w)$ are in bijection with the Coxeter-Knuth equivalence classes of reduced words for $w_0ww_0$ via the map $R\mapsto \ege(R)$, with $R\mapsto \mathtt{tab}(R)$ being a homomorphism of crystal graphs into $B(\lambda)$, where $\lambda=\mathrm{shape}(P(\ege(R)))$.
+\end{theorem}
+\begin{proof}
+By \cite[Theorem~4.11]{morse2016crystal}, if $e_i(R)\neq \emptyset$, then $R$ and $e_i(R)$ have the same Edelman-Greene insertion tableau. Since conjugation by $w_0$ is an automorphism of Coxeter-Knuth equivalence, so do $\ege(R)$ and $\ege(e_i(R))$. The shape is determined inductively. Suppose $R$ is a highest weight element and consider $\mathtt{word}(R)$. The first row of $R$ forms a word that corresponds to an initial increasing subsequence of $\ege(R)$. If there were a letter in some row below the first that is smaller than the last letter of the first row, then some raising operator would yield a nonempty result, contradicting the fact that $R$ is a highest weight. Thus, the first row of $P(\ege(R))$ has length equal to the length of the first row of $R$. The rest follows by induction on the remaining rows.
 \end{proof}
 
 \begin{definition}
-Let $(d_1,\ldots,d_k)$ be a sequence with $1\leq d_1<d_2<\cdots<d_k\leq n$. Define a function $I_d$ from the set of bounded RC graphs $(R,n)$ such that $\wof{R}$ has its descents contained in $\{d_1,\ldots,d_k\}$ to the set
-$$\mathcal{P}_{d_1}\times\mathcal{P}_{d_2-d_1}\times \cdots \times \mathcal{P}_{d_k - d_{k-1}}$$
-by setting
-$$I_d(R, n) = (\clp^{d_1}(R), \clp^{d_2 - d_1}(\trm^{d_1}(R)), \ldots, \clp^{d_k - d_{k-1}}(\trm^{d_{k-1}}(R)))$$
+Let $\RC(w, n)^0$ be the set of bounded RC graphs $(R, n)$ such that $\wof{R} = w$ and row $n$ is empty. We define a function $\zeromap_*^R:R\to R'$, where $\zeromap(R,n) = (R',n-1)$ and $w'=\wof{R'}$, as follows. Clearly if $\code_n(w) = 0$, then $\zeromap_*^R$ is the identity map. 
 
+Consider now the case where $\code_n(w) = 1$. The initial deletion of $(i,j)$ with $\rtt_R(i,j) = (n, n+1)$ results in an RC graph $R_0 = R\setminus\{(i,j)\}$ with $\wof{R_1} = w s_n$, after which we add $(n,1)$ to obtain $R_1$. Let
+$$f_1:R_1\to R$$
+be the identity. Afterwards, $(i_1, j_1)$ is inserted into $R_1$ to obtain $R_2$. Set
+$$f_1(i_1,j_1) = (i,j)$$
+and
+$$f_1(a,b) = (a,b)$$
+otherwise.
+
+At this point, rectification may be required. In that case, we delete some root $(i_1', j_1')$ from $R_2$ such that $i_1'<i_1$ and $\rtt_{R_2}(i_1', j_1') = \rtt_{R_2}(i_1, j_1)$. Afterwards, we add $(i_1', j_2)$ to obtain $R_2'$. Set
+$$f_1'(i_1', j_2) = (i_1', j_1')$$
+and
+$$f_1'(a,b) = f_1(a,b)$$
+otherwise. Continuing in this manner, we eventually obtain $R'$. Composing all of the maps defined at each step gives the desired map. The same method works for $\code_n(w) > 1$ by induction.
+% Suppose $\code_n(w) = m$. Let $c=s_{n + m -1}\cdots s_n$. Then there exist unique reflections $t_{a_1b_1}, \ldots, t_{a_mb_m}$ such that
+% $$wc^{-1} = w't_{a_mb_m}\cdots t_{a_1b_1}$$
+% and each reflection satisfies $a_i\leq n-1 < b_i$, inducing a Bruhat covering relation. At this base level, there is a sub-RC-graph of each of $R$. and $R'$, say $R''$, on which we may partially define the map of inversion sets. That is, if $(i,j)\in R''$, then
+% $$\zeromap_*^R(\rtt_R(i,j)) = \rtt_{R'}(i,j)$$
+% In the word of $R'$, the right roots $(a_1,b_1),\ldots,(a_m, b_m)$ occur in a specific order, say $r_1,\ldots, r_m$. On the remaining roots in $R$, we define 
+% $$\zeromap_*^R(n, n + m + 1 - i) = r_i$$
+% Then for all $R$ and $(i,j)$ we have
+% $$T_R(i,j) = T_{R'}(\zeromap_*^R(i,j))$$
 \end{definition}
+
+\begin{lemma}
+Let $(R, n)\in \RC(w, n)^0$ and suppose $\zeromap(R, n) = (R', n-1)$. Then for any $(a,b)\in R'$, $(a,b)$ is paired in the $i,i+1$ pairing in $R'$ if any only if $\zeromap_*^R(a,b)$ is paired in the $i,i+1$ pairing in $R$.
+\end{lemma}
+\begin{proof}
+  This is true for $a=i$ because at most one root is changed in row $i$ and it has moved to the left. For $a=i+1$, the only way that the pairing status could change is if a root in row $i$ moved past an unpaired root in row $i+1$. However, by construction of the insertion algorithm, this cannot happen since a root that was already inserted into row $i+1$ was deleted from row $i$ in the rectification process, and the new inserted root occurs to the left.
+\end{proof}
+
+\begin{theorem}
+	Let $w\in S_\infty$ and $n>0$ be such that $\maxd(w)\leq n$. Then 
+	$$\zeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
+	is a weight-preserving isomorphism of crystal graphs.
+\end{theorem}
+\begin{proof}
+The existence of the map $\zeromap_*^R$ and the previous lemma establish that $\zeromap$ is a bijection (by Theorem \ref{theorem:zero_bijection}) that preserves both weights and the lengths of $i$-strings. Hence it is a weight-preserving isomorphism of crystal graphs.
+\end{proof}
+
+\subsection{Relation to Little bumps}
+
+\newcommand{\ltb}{\mathrm{little}}
+\newcommand{\lzeromap}{\mathscr{Z}}
+\newcommand{\lmap}{\mathscr{L}}
+Define a function $\lmap:\BRC^0(n)\to\BRC(n+1)$ as follows. Assume $n=\maxd(\wof{R})$, and suppose $\rtt_R(i, j) = (n, n + 1)$, where $i < n$. Set 
+$$R'= (R\setminus \{(i, j)\})\cup \{(n,1)\}$$
+Then define
+$$\lmap(R, n) = ((\ins{n-1}{i} R')\setminus\{(n, 1)\}, n + 1)$$
+Then define $\lzeromap:\BRC^0(n)\to \BRC(n-1)$ by iterating $\lmap$ and stopping as soon as the result has $\maxd(\wof{R})\leq n-1$.
+
+\begin{proposition} \label{proposition:little_bump}
+  Let $(R, n)\in \BRC^0(n)$ be a bounded RC graph such that $\maxd(\wof{R}) = n$. Suppose 
+  $$\mathrm{word}(R) = a_1 a_2 \cdots a_k$$ 
+  and 
+  $$\mathrm{seq}(R) = r_1 r_2 \cdots r_k,$$ 
+  suppose $\rtt_R(i,j)=(n,n+1)$, and let $p$ be the index such that $r_p=i$ and $r_p + j - 1 = a_p$. Then
+  $$\mathrm{word}(\lmap(R, n)) = \ltb_{p}(\mathrm{word}(R, n))$$
+\end{proposition}
+\begin{proof}
+Consider the biword
+$$\begin{matrix}
+r_1& r_2& \cdots & r_{p-1} & r_p & r_{p+1} & \cdots & r_k\\
+a_1& a_2& \cdots & a_{p-1} & a_p & a_{p+1} & \cdots & a_k
+\end{matrix}$$
+The first deletion yields
+$$\begin{matrix}
+r_1& r_2& \cdots & r_{p-1} &  r_{p+1} & \cdots & r_k& n\\
+a_1& a_2& \cdots & a_{p-1} &  a_{p+1} & \cdots & a_k& n
+\end{matrix}$$
+Necessarily, we must have $a_p > 1$. If we have $a_p=1$, then we would have $r_p=1$. The only way for position $(1,1)$ in an RC graph to be a right descent is if it is the unique right descent. By assumption, that descent would have to be $n$, so that $n=1$. In that case, however, it would not be possible for the last row to be empty. 
+
+We also must have that $r_p < a_p$, because there is a sequence of chute moves involving this crossing that moves it to position $(n, 1)$ by \cite[Theorem~3.7]{bbrc}. Assume first that $p = k$. Then the insertion algorithm will insert $a_p - 1=n-1$ into row $r_k$. If this word is reduced, then we are done, and this clearly coincides with the Little bump. If it is not reduced, the descent $n-1$ occurs somewhere to the left, say at position $j$. The insertion algorithm would delete this letter then try to insert another one. However, we can see that recursively this is the same as applying $\zeromap_+$ to the biword obtained by removing all letters after position $j$ and then reinserting them afterwards. By the inductive hypothesis, this coincides with applying the Little bump at position $j$, which would indeed be the next step in the recursion of applying the Little bump at position $k$. Thus, the two coincide by induction.
+\end{proof}
+
+\begin{theorem}[{\cite[Theorem~4.4]{hamaker2014relating}}]
+Let $\mathrm{w}$ be a reduced word for a permutation $w\in S_\infty$. Then
+$$Q(\mathrm{w}) = Q(\ltb_p(\mathrm{w}))$$
+for any valid $p$.
+\end{theorem}
+
+\begin{corollary}
+  $\lmap:\BRC^0(n)\to \BRC(n+1)$ is a weight-preserving injection that preserves the recording tableau under the Edelman-Greene correspondence.
+\end{corollary}
+
+\begin{corollary}
+$$\lzeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
+	is a weight-preserving isomorphism of crystal graphs.
+\end{corollary}
+
+
+\begin{corollary}
+  We have the equality
+$$\lzeromap=\zeromap$$ 
+\end{corollary}
 
 \subsection{Relation to the bijection with bumpless pipe dreams}
 
 \newcommand{\BPD}{\mathcal{BPD}}
+
+
+\begin{definition}
+  Denote by $\BPD(w,n)$ the set of (reduced) $n$-row bumpless pipe dreams for a permutation $w$, where $n\geq \maxd(w)$. These are $n\times N$ grids, where $N$ is at least the length of $w$, populated with $6$ possible tiles, shown in Figure \ref{figure:bpdtiles}, satisfying the conditions that pipes must enter from the bottom and exit on the right, and no two pipes may cross twice. We may assign a permutation to such a BPD as follows.
+
+  Let $(B, n)$ be an $n$-row BPD. Let $c_1,\ldots,c_m$ be the columns such that the pipes on the bottom edge have an entrance from the bottom. If the pipe coming from $c_i$ exits on row $j$ on the right, then $w(c_i) = j$. To fill in the remaining elements of the permutation, we set $w(m + k) = d_k$, where $d_1,\ldots,d_k$ are the remaining columns with no entrance in increasing order.
+\end{definition}
 
 \begin{figure}[htbp]
 \centering
@@ -2531,13 +2694,8 @@ $$I_d(R, n) = (\clp^{d_1}(R), \clp^{d_2 - d_1}(\trm^{d_1}(R)), \ldots, \clp^{d_k
 \label{figure:bpdtiles}
 \end{figure}
 
-\begin{definition}
-  Denote by $\BPD(w,n)$ the set of (reduced) $n$-row bumpless pipe dreams for a permutation $w$, where $n\geq \maxd(w)$. These are $n\times N$ grids, where $N$ is at least the length of $w$, populated with $6$ possible tiles, shown in Figure \ref{figure:bpdtiles}, satisfying the conditions that pipes must enter from the bottom and exit on the right, and no two pipes may cross twice. We may assign a permutation to such a BPD as follows.
 
-  Let $(B, n)$ be an $n$-row BPD. Let $c_1,\ldots,c_m$ be the columns such that the pipes on the bottom edge have an entrance from the bottom. If the pipe coming from $c_i$ exits on row $j$ on the right, then $w(c_i) = j$. To fill in the remaining elements of the permutation, we set $w(m + k) = d_k$, where $d_1,\ldots,d_k$ are the remaining columns with no entrance in increasing order.
-\end{definition}
-
-\begin{lemma}
+\begin{lemma}[\cite{WEIGANDT2021105470}]
   Let $(B, N)$ be an ordinary reduced BPD for a permutation $w$, so that $w(M) = M$ for all $M>N$ and $B$ is $N\times N$. Let $n\geq \maxd(w)$ be an integer. Then $w(B', n) = w(B, N)$, where $B'$ is equal to the first $n$ rows of $B$ without modification.
 \end{lemma}
 
@@ -2837,6 +2995,17 @@ There is a canonical bijection $\varphi:\BPD(w,n)\to \mathcal{RC}(w,n)$ defined 
 We have the formula
 $$\varphi\circ \bzeromap = \zeromap \circ \varphi$$
 \end{theorem}
+\begin{proof}
+Little bumps on last descent
+\end{proof}
+
+\begin{definition}
+Let $(B, p)$ be a BPD and let $(C, q)$ be another BPD. We define an operation $B\looparrowright C$ as follows. First, let $\varphi(B) = ((a_1, r_1), (a_2, r_2), \ldots, (a_m, r_m))$. Then define
+$$B\looparrowright C = \Delta(((a_1 + n, r_1), (a_2 + n, r_2), \ldots, (a_m + n, r_m)),C\shup^n)$$
+
+Define 
+$$(B, p)\diamond (C, q) = \sum_{\mathbf{t}^N(B', p + N) = (B,n)} (B'\looparrowright C, p+q)$$
+\end{definition}
 
 
 
@@ -2844,205 +3013,47 @@ $$\varphi\circ \bzeromap = \zeromap \circ \varphi$$
 
 
 
-
-
-
-
-\begin{corollary}
+\begin{theorem}
 The Gao-Huang bijection $\varphi:\BPD \to \BRC$ is an isomorphism of rings.
-\end{corollary}
+\end{theorem}
 
 
+% \subsection{Crystal divided differences and the dominant Pieri formula}
 
-
-\subsection{Preservation of the Demazure crystal structure}
-
-RC-graphs have a Demazure crystal structure defined by Assaf and Schilling in \cite{assaf2018demazure}. Namely, they define operators $e_i:\RC(w)\to\RC(w)\cup\{\emptyset\}$ and $f_i:\RC(w)\to\RC(w)\cup\{\emptyset\}$ for each $i\geq 1$ as follows. 
-
-\begin{definition}
-Consider elements $(i, j)\in R$ and $(i+1, k)\in R$. The pairing algorithm starts with the largest $j$ in row $i$ and pairs $(i, j)$ with $(i+1, k)$ where $k$ is the smallest such that $k \geq j$. If no such $k$ exists, then $(i, j)$ is unpaired. The algorithm continues by considering the next largest $j$ in row $i$ and repeating the process until all elements in row $i$ have been considered.
-
-Define $R_i$ to be the set of unpaired elements in row $i$ after applying the pairing algorithm between rows $i$ and $i+1$, and define $L_i$ to be the set of unpaired elements in row $i+1$. Then $f_i(R)$ is defined by removing the leftmost element $(i, j)$ from $R_i$ and adding the element $(i + 1, k)$ to $R$, where $k$ is the largest value such that $(i+1,k)\notin R$ and $k < j$. If $R_i$ is empty or $k$ does not exist, then $f_i(R) = \emptyset$. Similarly, $e_i(R)$ is defined by removing the rightmost element $(i + 1, k)$ from $L_i$ and adding the element $(i, j)$ to $R$, where $j$ is the smallest value such that $(i,j)\notin R$ and $j > k$. If $L_i$ is empty, then $e_i(R) = \emptyset$.
-\end{definition}
-
-We may transport this structure to bounded RC graphs as  operators $e_i:\mathcal{RC}(w,n)\to\mathcal{RC}(w,n)\cup\{\emptyset\}$ and $f_i:\mathcal{RC}(w,n)\to\mathcal{RC}(w,n)\cup\{\emptyset\}$ by
-$$e_i(R,n) = (e_i(R), n)$$
-and
-$$f_i(R, n)=(f_i(R), n)$$
-
-% \begin{lemma}
-% 	Let $(R, n)$ be a bounded RC graph. If $f_i(R)\neq \emptyset$ and $\zeromap(R', n+1)=(R, n)$, then $f_i(R')\neq \emptyset$ and
-% 	$$\zeromap(f_i(R'), n + 1)=(f_i(R), n)$$	
+% Let $R$ be an RC graph and let $i>0$ be an integer. We define $\rcdd^iR$, an element of $\RC$, as follows. Define
+% $$\rcdd^iR=0$$
+% unless $s_i$ is a right descent of $\wof{R}$ and there exists $(i,j)\in R$ such that $\rtt_R(i, j) = (i, i+1)$. If these latter two conditions are satisfied, define 
+% $$R'=R\setminus \{(i, j)\}$$
+% where $\rtt_R(i,j) = (i, i+1)$. If $e_i(R')\neq \emptyset$, define $\rcdd^iR=0$. Otherwise, define
+% $$\rcdd^iR = \sum_{p=0}^{\varphi_i(R')}f_i^pR'$$
+% \begin{lemma} \label{lemma:divdiffunique}
+% 	Let $R$ be an RC graph and let $i>0$ be an integer. If $s_i$ is not a right descent of $\wof{R}$, then there is a unique $R'$ such that the coefficient of $R$ in $\rcdd^iR'$ is $1$, and for other $R'$ the coefficient is $0$.
 % \end{lemma}
+% \begin{proof}
+% 	Suppose $s_i$ is not a right descent of $\wof{R}$. Assume without loss of generality that $e_iR = \emptyset$. If $(i+1, 1)\notin R$, then $(i,1)\notin R$ because $s_i$ is not a right descent of $\wof{R}$. In that case, let $R' = R\cup\{(i,1)\}$. Then 
+% 	$$\rcdd^iR' = R + \text{other terms}$$ 
+% 	If instead $(i+1, 1)\in R$, since $e_i(R)=\emptyset$ it follows that $(i, 1)\in R$, and if $j$ is the maximum value such that $(i+1,j')\in R$ for all $j'<j$, it follows that $(i,j')\in R$ for all $j'<j$. We must have that $(i,j+1)\notin R$, because $\rtt_R(i, j+1)=(i, i+1)$. Setting $R'=R\cup \{(i, j+1)\}$ gives us the result.
+% \end{proof}
 
+% \begin{theorem} \label{theorem:divdiffschubert}
+% 	Suppose $w\in S_\infty$ and $i >0$. If $i$ is not a right descent of $w$, then
+% 	$$\rcdd^i\mathcal{S}_w(n) = 0$$
+% 	Otherwise,
+% 	$$\rcdd^i\mathcal{S}_w(n) = \mathcal{S}_{ws_i}(n)$$
+% \end{theorem}
+% \begin{proof}
+% 	The result is trivial if $i$ is not a right descent of $w$. Suppose $i$ is a right descent of $w$. By Lemma \ref{lemma:divdiffunique}, for each RC graph $R$ such that $\wof{R} = ws_i$, there is a unique RC graph $R'$ such that the coefficient of $R$ in $\rcdd^iR'$ is $1$. Since $\wof{R'} = w$, the result follows.
+% \end{proof}
 
-\newcommand{\ckeq}{\sim}
-\newcommand{\ege}{\widetilde{\mathrm{eg}}}
-\begin{definition}
-An RC graph $R$ has a uniquely associated reduced word $\mathrm{word}(R)=(s_{i_1},\ldots,s_{i_N})$. Recall the Coxeter-Knuth relation $\ege$ defined by
-$$j\ i\ k \ckeq j\ k\ i$$
-and
-$$k\ i\ j \ckeq i\ k\ j$$
-if $i<j<k$, and
-$$i\ i+1\ i \ckeq i+1\ i\ i+1$$
-For an RC graph $R$, define $N(R)$ to be the maximum letter in $R$. Then define
-$$\ege(R) = (N(R) + 1 - i_1, \ldots, N(R) + 1 - i_N)$$
-Via the Edelman-Greene insertion algorithm, we may define a pair
-$$(P, Q)$$
-of tableaux of the same shape such that the reading word of $P$ is CK-equivalent to $\ege(R)$ and $Q$, the recording tableau, is standard. Define $\mathtt{tab}(R)$ to be the tableau of the same shape as $Q$ such that the entry in box $(i, j)$ is the row index of the box in $R$ that was inserted to create box $(i, j)$ in $P$.
-\end{definition}
+% \begin{definition}
+% For a permutation $w$, define the \emph{principal RC graph} $R^0(w)$ of $w$ to be
+% $$R^0(w) = \{(i,j)\mid 1\leq j\leq \code^*_i(w)\}$$
+% \end{definition}
 
-\begin{lemma}
-	We have that $\mathtt{tab}(R)$ is a semistandard Young tableau of shape $\mathrm{shape}(Q)$, and the map
-	$$R\mapsto \mathtt{tab}(R)$$
-	 is a morphism of crystal graphs into $B(\mathrm{shape}(Q))$. 
-\end{lemma}
-\begin{proof}
-Suppose $R$ is a highest weight. Then $\wtt(R)$ is a partition. By the highest weight condition, the longest increasing subsequence of $\ege(R)$ is of length $\wtt(R)_1$ and is precisely the first row read in the grid order. By the Edelman-Greene correspondence \cite{edelman1987balanced}, the first row of $P$ has length equal to the length of the longest increasing subsequence of $\ege(R)$. Hence, the first row of $P$ has length $\wtt(R)_1$. By similar reasoning on the subsequent rows, we have that $\mathrm{shape}(P) = \wtt(R)$. We then have that $\mathtt{tab}(R)$ is the unique Yamanouchi tableau of shape $\wtt(R)$, establishing the claim for highest weights. The general case follows from the rigidity of the Demazure crystal structure \cite{assaf2018demazure}; since the function is weight-preserving, it is a morphism of crystal graphs.
-\end{proof}
-
-\begin{theorem}
-	% Let $R,R'$ be RC graphs. Then $\mathrm{hw}(R) = \mathrm{hw}(R')$ if and only if $\ege(R) \ckeq \ege(R')$.
-  The distinct Demazure crystals that make up $\RC(w)$ are in bijection with the Coxeter-Knuth equivalence classes of reduced words for $w_0ww_0$ via the map $R\mapsto \ege(R)$, with $R\mapsto \mathtt{tab}(R)$ being a homomorphism of crystal graphs into $B(\lambda)$, where $\lambda=\mathrm{shape}(P(\ege(R)))$.
-\end{theorem}
-\begin{proof}
-By \cite[Theorem~4.11]{morse2016crystal}, if $e_i(R)\neq \emptyset$, then $R$ and $e_i(R)$ have the same Edelman-Greene insertion tableau. Since conjugation by $w_0$ is an automorphism of Coxeter-Knuth equivalence, so do $\ege(R)$ and $\ege(e_i(R))$. The shape is determined inductively. Suppose $R$ is a highest weight element and consider $\mathtt{word}(R)$. The first row of $R$ forms a word that corresponds to an initial increasing subsequence of $\ege(R)$. If there were a letter in some row below the first that is smaller than the last letter of the first row, then some raising operator would yield a nonempty result, contradicting the fact that $R$ is a highest weight. Thus, the first row of $P(\ege(R))$ has length equal to the length of the first row of $R$. The rest follows by induction on the remaining rows.
-\end{proof}
-
-\begin{definition}
-Let $\RC(w, n)^0$ be the set of bounded RC graphs $(R, n)$ such that $\wof{R} = w$ and row $n$ is empty. We define a function $\zeromap_*^R:R\to R'$, where $\zeromap(R,n) = (R',n-1)$ and $w'=\wof{R'}$, as follows. Clearly if $\code_n(w) = 0$, then $\zeromap_*^R$ is the identity map. 
-
-Consider now the case where $\code_n(w) = 1$. The initial deletion of $(i,j)$ with $\rtt_R(i,j) = (n, n+1)$ results in an RC graph $R_0 = R\setminus\{(i,j)\}$ with $\wof{R_1} = w s_n$, after which we add $(n,1)$ to obtain $R_1$. Let
-$$f_1:R_1\to R$$
-be the identity. Afterwards, $(i_1, j_1)$ is inserted into $R_1$ to obtain $R_2$. Set
-$$f_1(i_1,j_1) = (i,j)$$
-and
-$$f_1(a,b) = (a,b)$$
-otherwise.
-
-At this point, rectification may be required. In that case, we delete some root $(i_1', j_1')$ from $R_2$ such that $i_1'<i_1$ and $\rtt_{R_2}(i_1', j_1') = \rtt_{R_2}(i_1, j_1)$. Afterwards, we add $(i_1', j_2)$ to obtain $R_2'$. Set
-$$f_1'(i_1', j_2) = (i_1', j_1')$$
-and
-$$f_1'(a,b) = f_1(a,b)$$
-otherwise. Continuing in this manner, we eventually obtain $R'$. Composing all of the maps defined at each step gives the desired map. The same method works for $\code_n(w) > 1$ by induction.
-% Suppose $\code_n(w) = m$. Let $c=s_{n + m -1}\cdots s_n$. Then there exist unique reflections $t_{a_1b_1}, \ldots, t_{a_mb_m}$ such that
-% $$wc^{-1} = w't_{a_mb_m}\cdots t_{a_1b_1}$$
-% and each reflection satisfies $a_i\leq n-1 < b_i$, inducing a Bruhat covering relation. At this base level, there is a sub-RC-graph of each of $R$. and $R'$, say $R''$, on which we may partially define the map of inversion sets. That is, if $(i,j)\in R''$, then
-% $$\zeromap_*^R(\rtt_R(i,j)) = \rtt_{R'}(i,j)$$
-% In the word of $R'$, the right roots $(a_1,b_1),\ldots,(a_m, b_m)$ occur in a specific order, say $r_1,\ldots, r_m$. On the remaining roots in $R$, we define 
-% $$\zeromap_*^R(n, n + m + 1 - i) = r_i$$
-% Then for all $R$ and $(i,j)$ we have
-% $$T_R(i,j) = T_{R'}(\zeromap_*^R(i,j))$$
-\end{definition}
-
-\begin{lemma}
-Let $(R, n)\in \RC(w, n)^0$ and suppose $\zeromap(R, n) = (R', n-1)$. Then for any $(a,b)\in R'$, $(a,b)$ is paired in the $i,i+1$ pairing in $R'$ if any only if $\zeromap_*^R(a,b)$ is paired in the $i,i+1$ pairing in $R$.
-\end{lemma}
-\begin{proof}
-  This is true for $a=i$ because at most one root is changed in row $i$ and it has moved to the left. For $a=i+1$, the only way that the pairing status could change is if a root in row $i$ moved past an unpaired root in row $i+1$. However, by construction of the insertion algorithm, this cannot happen since a root that was already inserted into row $i+1$ was deleted from row $i$ in the rectification process, and the new inserted root occurs to the left.
-\end{proof}
-
-\begin{theorem}
-	Let $w\in S_\infty$ and $n>0$ be such that $\maxd(w)\leq n$. Then 
-	$$\zeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
-	is a weight-preserving isomorphism of crystal graphs.
-\end{theorem}
-\begin{proof}
-The existence of the map $\zeromap_*^R$ and the previous lemma establish that $\zeromap$ is a bijection (by Theorem \ref{theorem:zero_bijection}) that preserves both weights and the lengths of $i$-strings. Hence it is a weight-preserving isomorphism of crystal graphs.
-\end{proof}
-
-\subsection{Relation to Little bumps}
-
-\newcommand{\ltb}{\mathrm{little}}
-\newcommand{\lzeromap}{\mathscr{Z}}
-\newcommand{\lmap}{\mathscr{L}}
-Define a function $\lmap:\BRC^0(n)\to\BRC(n+1)$ as follows. Assume $n=\maxd(\wof{R})$, and suppose $\rtt_R(i, j) = (n, n + 1)$, where $i < n$. Set 
-$$R'= (R\setminus \{(i, j)\})\cup \{(n,1)\}$$
-Then define
-$$\lmap(R, n) = ((\ins{n-1}{i} R')\setminus\{(n, 1)\}, n + 1)$$
-Then define $\lzeromap:\BRC^0(n)\to \BRC(n-1)$ by iterating $\lmap$ and stopping as soon as the result has $\maxd(\wof{R})\leq n-1$.
-
-\begin{proposition} \label{proposition:little_bump}
-  Let $(R, n)\in \BRC^0(n)$ be a bounded RC graph such that $\maxd(\wof{R}) = n$. Suppose 
-  $$\mathrm{word}(R) = a_1 a_2 \cdots a_k$$ 
-  and 
-  $$\mathrm{seq}(R) = r_1 r_2 \cdots r_k,$$ 
-  suppose $\rtt_R(i,j)=(n,n+1)$, and let $p$ be the index such that $r_p=i$ and $r_p + j - 1 = a_p$. Then
-  $$\mathrm{word}(\lmap(R, n)) = \ltb_{p}(\mathrm{word}(R, n))$$
-\end{proposition}
-\begin{proof}
-Consider the biword
-$$\begin{matrix}
-r_1& r_2& \cdots & r_{p-1} & r_p & r_{p+1} & \cdots & r_k\\
-a_1& a_2& \cdots & a_{p-1} & a_p & a_{p+1} & \cdots & a_k
-\end{matrix}$$
-The first deletion yields
-$$\begin{matrix}
-r_1& r_2& \cdots & r_{p-1} &  r_{p+1} & \cdots & r_k& n\\
-a_1& a_2& \cdots & a_{p-1} &  a_{p+1} & \cdots & a_k& n
-\end{matrix}$$
-Necessarily, we must have $a_p > 1$. If we have $a_p=1$, then we would have $r_p=1$. The only way for position $(1,1)$ in an RC graph to be a right descent is if it is the unique right descent. By assumption, that descent would have to be $n$, so that $n=1$. In that case, however, it would not be possible for the last row to be empty. 
-
-We also must have that $r_p < a_p$, because there is a sequence of chute moves involving this crossing that moves it to position $(n, 1)$ by \cite[Theorem~3.7]{bbrc}. Assume first that $p = k$. Then the insertion algorithm will insert $a_p - 1=n-1$ into row $r_k$. If this word is reduced, then we are done, and this clearly coincides with the Little bump. If it is not reduced, the descent $n-1$ occurs somewhere to the left, say at position $j$. The insertion algorithm would delete this letter then try to insert another one. However, we can see that recursively this is the same as applying $\zeromap_+$ to the biword obtained by removing all letters after position $j$ and then reinserting them afterwards. By the inductive hypothesis, this coincides with applying the Little bump at position $j$, which would indeed be the next step in the recursion of applying the Little bump at position $k$. Thus, the two coincide by induction.
-\end{proof}
-
-\begin{theorem}[{\cite[Theorem~4.4]{hamaker2014relating}}]
-Let $\mathrm{w}$ be a reduced word for a permutation $w\in S_\infty$. Then
-$$Q(\mathrm{w}) = Q(\ltb_p(\mathrm{w}))$$
-for any valid $p$.
-\end{theorem}
-
-\begin{corollary}
-  $\lmap:\BRC^0(n)\to \BRC(n+1)$ is a weight-preserving injection that preserves the recording tableau under the Edelman-Greene correspondence.
-\end{corollary}
-
-\begin{corollary}
-$$\lzeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
-	is a weight-preserving isomorphism of crystal graphs.
-\end{corollary}
-
-
-\begin{corollary}
-  We have the equality
-$$\lzeromap=\zeromap$$ 
-\end{corollary}
-
-\subsection{Crystal divided differences and the dominant Pieri formula}
-
-Let $R$ be an RC graph and let $i>0$ be an integer. We define $\rcdd^iR$, an element of $\RC$, as follows. Define
-$$\rcdd^iR=0$$
-unless $s_i$ is a right descent of $\wof{R}$ and there exists $(i,j)\in R$ such that $\rtt_R(i, j) = (i, i+1)$. If these latter two conditions are satisfied, define 
-$$R'=R\setminus \{(i, j)\}$$
-where $\rtt_R(i,j) = (i, i+1)$. If $e_i(R')\neq \emptyset$, define $\rcdd^iR=0$. Otherwise, define
-$$\rcdd^iR = \sum_{p=0}^{\varphi_i(R')}f_i^pR'$$
-\begin{lemma} \label{lemma:divdiffunique}
-	Let $R$ be an RC graph and let $i>0$ be an integer. If $s_i$ is not a right descent of $\wof{R}$, then there is a unique $R'$ such that the coefficient of $R$ in $\rcdd^iR'$ is $1$, and for other $R'$ the coefficient is $0$.
-\end{lemma}
-\begin{proof}
-	Suppose $s_i$ is not a right descent of $\wof{R}$. Assume without loss of generality that $e_iR = \emptyset$. If $(i+1, 1)\notin R$, then $(i,1)\notin R$ because $s_i$ is not a right descent of $\wof{R}$. In that case, let $R' = R\cup\{(i,1)\}$. Then 
-	$$\rcdd^iR' = R + \text{other terms}$$ 
-	If instead $(i+1, 1)\in R$, since $e_i(R)=\emptyset$ it follows that $(i, 1)\in R$, and if $j$ is the maximum value such that $(i+1,j')\in R$ for all $j'<j$, it follows that $(i,j')\in R$ for all $j'<j$. We must have that $(i,j+1)\notin R$, because $\rtt_R(i, j+1)=(i, i+1)$. Setting $R'=R\cup \{(i, j+1)\}$ gives us the result.
-\end{proof}
-
-\begin{theorem} \label{theorem:divdiffschubert}
-	Suppose $w\in S_\infty$ and $i >0$. If $i$ is not a right descent of $w$, then
-	$$\rcdd^i\mathcal{S}_w(n) = 0$$
-	Otherwise,
-	$$\rcdd^i\mathcal{S}_w(n) = \mathcal{S}_{ws_i}(n)$$
-\end{theorem}
-\begin{proof}
-	The result is trivial if $i$ is not a right descent of $w$. Suppose $i$ is a right descent of $w$. By Lemma \ref{lemma:divdiffunique}, for each RC graph $R$ such that $\wof{R} = ws_i$, there is a unique RC graph $R'$ such that the coefficient of $R$ in $\rcdd^iR'$ is $1$. Since $\wof{R'} = w$, the result follows.
-\end{proof}
-
-\begin{definition}
-For a permutation $w$, define the \emph{principal RC graph} $R^0(w)$ of $w$ to be
-$$R^0(w) = \{(i,j)\mid 1\leq j\leq \code^*_i(w)\}$$
-\end{definition}
-
-\begin{proposition} \label{proposition:divdiffprincipal}
-Let $R$ be an RC graph and let $w=\wof{R}$. Then for any reduced word $(s_{i_1}, s_{i_2}, \ldots, s_{i_m})$ for $w$, we have
-$$\rcdd^{i_1}\rcdd^{i_2}\cdots \rcdd^{i_m}R = \delta_{R,R^0(w)}\emptyset$$
-\end{proposition}
+% \begin{proposition} \label{proposition:divdiffprincipal}
+% Let $R$ be an RC graph and let $w=\wof{R}$. Then for any reduced word $(s_{i_1}, s_{i_2}, \ldots, s_{i_m})$ for $w$, we have
+% $$\rcdd^{i_1}\rcdd^{i_2}\cdots \rcdd^{i_m}R = \delta_{R,R^0(w)}\emptyset$$
+% \end{proposition}
 
 % Let $\RC^C$ be the submodule of $\RC$ consisting of formal sums of RC graphs
 % $$\sum_R c_R R$$
@@ -3102,52 +3113,52 @@ $$\rcdd^{i_1}\rcdd^{i_2}\cdots \rcdd^{i_m}R = \delta_{R,R^0(w)}\emptyset$$
 
 
 
-\begin{definition}
-	Let $R$ be an RC graph. We define a $\{0,1\}$-valued function $\rcdd_\mu^w$ for a dominant permutation $\mu$ and an arbitrary permutation $w$ via the following construction. For integers $p, q$, let $d[p, q] = s_p s_{p+1} \cdots s_{p+q-1}$ be a product of simple reflections.
+% \begin{definition}
+% 	Let $R$ be an RC graph. We define a $\{0,1\}$-valued function $\rcdd_\mu^w$ for a dominant permutation $\mu$ and an arbitrary permutation $w$ via the following construction. For integers $p, q$, let $d[p, q] = s_p s_{p+1} \cdots s_{p+q-1}$ be a product of simple reflections.
 		
-	Let $m$ be the length of $\code^*(\mu)$. Initialize $R_0 = R$. For each $i$ from $1$ to $m$:
-	\begin{enumerate}
-		\item If $\code^*_i(\mu) > \code^*_i(w)$, terminate and set $\rcdd_\mu^wR = 0$.
-		\item Otherwise, let $k = \code^*_i(w) - \code^*_i(\mu)$ and apply the crystal divided difference operator:
-		\[
-		R' = \rcdd^{d[\code_i^*(\mu)+1, \, k]}R_{i-1}
-		\]
-		\item If row $\code_i^*(\mu)+1$ is not empty in $R'$, terminate and set $\rcdd_\mu^wR = 0$.
-		\item If the row is empty, define the next state:
-		\[
-		R_i = P_{(\code_i^*(\mu)+1)}(R')
-		\]
-	\end{enumerate}
+% 	Let $m$ be the length of $\code^*(\mu)$. Initialize $R_0 = R$. For each $i$ from $1$ to $m$:
+% 	\begin{enumerate}
+% 		\item If $\code^*_i(\mu) > \code^*_i(w)$, terminate and set $\rcdd_\mu^wR = 0$.
+% 		\item Otherwise, let $k = \code^*_i(w) - \code^*_i(\mu)$ and apply the crystal divided difference operator:
+% 		\[
+% 		R' = \rcdd^{d[\code_i^*(\mu)+1, \, k]}R_{i-1}
+% 		\]
+% 		\item If row $\code_i^*(\mu)+1$ is not empty in $R'$, terminate and set $\rcdd_\mu^wR = 0$.
+% 		\item If the row is empty, define the next state:
+% 		\[
+% 		R_i = P_{(\code_i^*(\mu)+1)}(R')
+% 		\]
+% 	\end{enumerate}
 	
-	If the loop completes, for any remaining indices $i > m$ where $\code^*_i(w) > 0$, incrementally update the graph:
-	\[
-	R_i = \rcdd^{d[i+1-m, \, \code^*_i(w)]}R_{i-1}
-	\]
-	Finally, define $\rcdd_\mu^wR = 1$ if $R_N = \emptyset$ for sufficiently large $N$, and $\rcdd_\mu^wR = 0$ otherwise.
-\end{definition}
+% 	If the loop completes, for any remaining indices $i > m$ where $\code^*_i(w) > 0$, incrementally update the graph:
+% 	\[
+% 	R_i = \rcdd^{d[i+1-m, \, \code^*_i(w)]}R_{i-1}
+% 	\]
+% 	Finally, define $\rcdd_\mu^wR = 1$ if $R_N = \emptyset$ for sufficiently large $N$, and $\rcdd_\mu^wR = 0$ otherwise.
+% \end{definition}
 
-\begin{theorem}
-	Let $\mu$ be a dominant permutation and let $v,w$ be permutations such that $\ell(\mu) + \ell(v)=\ell(w)$. Then
-	$$c_{\mu,v}^w=\sum_{R\in\RC(v)}\rcdd_\mu^w(R)$$
-\end{theorem}
+% \begin{theorem}
+% 	Let $\mu$ be a dominant permutation and let $v,w$ be permutations such that $\ell(\mu) + \ell(v)=\ell(w)$. Then
+% 	$$c_{\mu,v}^w=\sum_{R\in\RC(v)}\rcdd_\mu^w(R)$$
+% \end{theorem}
 
-Consider the module $\BRC_n \otimes \mathscr{RF}_n$. Note that $\mathscr{RF}_n$ has a an action of $S_n$ given by the crystal reflection operators. We may define $\rcdd^i$ on $\mathscr{RF}_n$ the same way as on $\BRC_n$ except in the case where $(i, i+1)$ is in row $i+1$, which cannot happen in $\BRC_n$, we define
-$$R' = R\setminus\{(i+1, j)\}$$
-where $\rtt_R(i+1, j) = (i, i+1)$, and then if $e_iR'\neq \emptyset$, define
-$$\rcdd^iR = 0$$
-Otherwise, define
-$$\rcdd^iR = -\sum_{p=0}^{\varphi_i(R')}f_i^pR'$$
-We define an action of $\rcdd^i$ on $\BRC_n\otimes \mathscr{RF}_n$ by the Leibniz formula
-$$\rcdd^i(R_1\otimes R_2) = \rcdd^iR_1\otimes \widetilde{s}_iR_2 + R_1\otimes \rcdd^iR_2$$
+% Consider the module $\BRC_n \otimes \mathscr{RF}_n$. Note that $\mathscr{RF}_n$ has a an action of $S_n$ given by the crystal reflection operators. We may define $\rcdd^i$ on $\mathscr{RF}_n$ the same way as on $\BRC_n$ except in the case where $(i, i+1)$ is in row $i+1$, which cannot happen in $\BRC_n$, we define
+% $$R' = R\setminus\{(i+1, j)\}$$
+% where $\rtt_R(i+1, j) = (i, i+1)$, and then if $e_iR'\neq \emptyset$, define
+% $$\rcdd^iR = 0$$
+% Otherwise, define
+% $$\rcdd^iR = -\sum_{p=0}^{\varphi_i(R')}f_i^pR'$$
+% We define an action of $\rcdd^i$ on $\BRC_n\otimes \mathscr{RF}_n$ by the Leibniz formula
+% $$\rcdd^i(R_1\otimes R_2) = \rcdd^iR_1\otimes \widetilde{s}_iR_2 + R_1\otimes \rcdd^iR_2$$
 
 
-Let us be more specific. Let $(R, n)$ be a bounded RC graph and let $(D, n)$ be a bounded RC graph such that $D$ is the RC graph of a dominant permutation $\mu$. Suppose $\mathscr{C}$ is the crystal for which $Y(R)$ is the highest weight. Suppose there exists an $R'\in \mathscr{C}$ and a $w$ such that $\rcdd_\mu^wR' = 1$ and $\mathscr{C}$ is isomorphic to $\mathscr{C}^0(w)$. Suppose
-$$R = f_{1}^{i_1}\cdots f_k^{i_k}Y(R)$$
-Then  define
-$$R * D = f_1^{i_1}\cdots f_k^{i_k}Y(R^0(w))$$
-where $H(w)$ is the highest weight RC graph of $\mathscr{C}^0(w)$. 
+% Let us be more specific. Let $(R, n)$ be a bounded RC graph and let $(D, n)$ be a bounded RC graph such that $D$ is the RC graph of a dominant permutation $\mu$. Suppose $\mathscr{C}$ is the crystal for which $Y(R)$ is the highest weight. Suppose there exists an $R'\in \mathscr{C}$ and a $w$ such that $\rcdd_\mu^wR' = 1$ and $\mathscr{C}$ is isomorphic to $\mathscr{C}^0(w)$. Suppose
+% $$R = f_{1}^{i_1}\cdots f_k^{i_k}Y(R)$$
+% Then  define
+% $$R * D = f_1^{i_1}\cdots f_k^{i_k}Y(R^0(w))$$
+% where $H(w)$ is the highest weight RC graph of $\mathscr{C}^0(w)$. 
 
-It is possible that no such $R'$ and $w$ exist. SWUASH IT
+% It is possible that no such $R'$ and $w$ exist. SWUASH IT
 
 %Let $w$ be such that $\rcdd_\mu^wR = 1$. Let $\pi$ be the highest weight of  $\{D\}\otimes\mathscr{C}(R)$ contained in the same component as $D\otimes R$, let $H(w)$ be the highest weight RC graph of  $\mathscr{C}(R^0(w))$, and suppose
 
@@ -3169,14 +3180,6 @@ It is possible that no such $R'$ and $w$ exist. SWUASH IT
 
 \subsection{The squash product}
 
-% Let $(R_1, n)$ and $(R_2, n)$ be bounded RC graphs. We define their \emph{squash product} 
-% $$(R_1, n)\star (R_2, n)$$ 
-% as follows. Suppose $N>i+j-1$ for all $(i,j) \in R_1$. Define
-
-% Then
-% $$(R_1, n)\star (R_2, n) = \zeromap^{N}(R_1 \cup {\Uparrow^{N}} R_2, N + n)$$
-
-% Define
 
 Given RC graphs $R_1$ and $R_2$, define their star product $R_1\star R_2$ as follows. First define
 $${\Uparrow^{k}}R = \{(i, j + k) \mid (i,j) \in R\}$$
@@ -3334,6 +3337,11 @@ Grassmannian mimic dual algebra formula.
 % 	We have
 % 	$$\sch_u^q(x;y)E_{p,n_k}^q(x;z) = \sum_{{(d_1,\ldots,d_n)\in \scriptstyle{\mathrm{Pie}_{k, p}(u)}}} \sum_{u\tau_{\mathbf{d}}\tom{k} w\phi_{\mathbf{d}}} E_{p-F_{n_k}(u,w),n_k-F_{n_k}(u,w)}(y_{P_{n_k}(u,w)};z)q^{d_1}\cdots q^{d_n}\sch_w^q(x;y)$$
 % \end{theorem}
+
+% \subsection{Hom from tensor dual}
+
+% We define a homomorphism of rings into $H:\dcoma\to\BRC$ in the word basis by
+% $$H(\alpha) = \sum_{\substack{\wtt(R)=\alpha\\\wof{R}=w}} (R,|\alpha|) R$$
 
 
 \bibliographystyle{acm}
