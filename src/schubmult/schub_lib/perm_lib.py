@@ -168,7 +168,7 @@ class Permutation(Printable):
 
     @staticmethod
     def __xnew__(_class, perm):
-        p = tuple(sl.permtrim_list([*perm]))
+        p = tuple([int(x) for x in sl.permtrim_list([*perm])])
         # s_perm = spp.Permutation([i - 1 for i in p])
         obj = object.__new__(_class)
         obj._args = (p,)
@@ -182,7 +182,7 @@ class Permutation(Printable):
     @cached_property
     def _arr(self):
         """Cached numpy array representation (1-indexed values)."""
-        return np.array(self._perm, dtype=np.int32)
+        return np.array(self._perm, dtype=int)
 
     @property
     def args(self):
@@ -422,12 +422,12 @@ class Permutation(Printable):
         max_len = max(len(self._perm), len(other._perm))
         # Extend arrays if needed
         if len(self._perm) < max_len:
-            self_arr = np.arange(1, max_len + 1, dtype=np.int32)
+            self_arr = np.arange(1, max_len + 1, dtype=int)
             self_arr[:len(self._perm)] = self._arr
         else:
             self_arr = self._arr
         if len(other._perm) < max_len:
-            other_arr = np.arange(1, max_len + 1, dtype=np.int32)
+            other_arr = np.arange(1, max_len + 1, dtype=int)
             other_arr[:len(other._perm)] = other._arr
         else:
             other_arr = other._arr
@@ -489,8 +489,8 @@ class Permutation(Printable):
     #     return self != other and self.bruhat_leq(other)
 
     def __invert__(self):
-        new_arr = np.empty(len(self._perm), dtype=np.int32)
-        new_arr[self._arr - 1] = np.arange(1, len(self._perm) + 1, dtype=np.int32)
+        new_arr = np.empty(len(self._perm), dtype=int)
+        new_arr[self._arr - 1] = np.arange(1, len(self._perm) + 1, dtype=int)
         return Permutation(new_arr)
 
     def __repr__(self):

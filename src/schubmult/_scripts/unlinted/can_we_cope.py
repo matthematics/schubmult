@@ -100,27 +100,27 @@ if __name__ == "__main__":
         A = ASx(perm, len(perm.trimcode)).change_basis(WordBasis)
         # res = (ring@ring).zero
         ring = R
-        test_elem = R(RCGraph.principal_rc(perm, len(perm.trimcode)))
-        try_elem = R.zero
-        for w, coeff in A.items():
-            try_elem += coeff * fa_to_rc_ring(w, perm.trimcode, n)
-        assert all(v == 0 for v in (test_elem - try_elem).values()), f"Error: Coproduct mismatch for permutation {perm}:\nComputed: \n{try_elem}\nExpected: \n{test_elem}"
-        print(f"BANG THE GONG {perm} PASSED")
+        # test_elem = R(RCGraph.principal_rc(perm, len(perm.trimcode)))
+        # try_elem = R.zero
         # for w, coeff in A.items():
-        #     #res += coeff * word_orc(*w)
-        #     cprd = FA(*w).coproduct()
-        #     code_prod = FA(*perm.trimcode).coproduct()
-        #     for w1, w2 in cprd.keys():
-        #         for c1, c2 in code_prod.keys():
-        #             test_elem += coeff * T.ext_multiply(fa_to_rc_ring(w1, c1, 100), fa_to_rc_ring(w2, c2, 100))
-        # #res = (ring@ring).from_dict({k: v for k, v in res.items() if v != 0 and len(k[0][1][0])<=n and len(k[1][1][0])<=n})
-        # print("------------------------------{perm}----------------------------")
-        # print("TEST:")
-        # print(test_elem)
-        # the_cprod = ASx(perm, len(perm.trimcode)).coproduct()
-        # assert all(v >= 0 for v in test_elem.values()), f"Error: Negative coefficient in coproduct for permutation {perm}:\n{test_elem}"
-        # for (rc1, rc2), coeff in test_elem.items():
-        #     assert coeff == the_cprod.get(((rc1.perm, len(rc1)),(rc2.perm, len(rc2))), S.Zero), f"Error: Coproduct coefficient mismatch for permutation {perm} on pair ({rc1.perm}, {len(rc1)}) and ({rc2.perm}, {len(rc2)}):\nComputed: {coeff}\nExpected: {the_cprod.get((rc1.perm, len(rc1)), S.Zero).get((rc2.perm, len(rc2)), S.Zero)}"
+        #     try_elem += coeff * fa_to_rc_ring(w, perm.trimcode, n)
+        # assert all(v == 0 for v in (test_elem - try_elem).values()), f"Error: Coproduct mismatch for permutation {perm}:\nComputed: \n{try_elem}\nExpected: \n{test_elem}"
+        # print(f"BANG THE GONG {perm} PASSED")
+        for w, coeff in A.items():
+            res += coeff * word_orc(*w)
+            cprd = FA(*w).coproduct()
+            code_prod = FA(*perm.trimcode).coproduct()
+            for w1, w2 in cprd.keys():
+                for c1, c2 in code_prod.keys():
+                    test_elem += coeff * T.ext_multiply(fa_to_rc_ring(w1, c1, 100), fa_to_rc_ring(w2, c2, 100))
+        #res = (ring@ring).from_dict({k: v for k, v in res.items() if v != 0 and len(k[0][1][0])<=n and len(k[1][1][0])<=n})
+        print("------------------------------{perm}----------------------------")
+        print("TEST:")
+        print(test_elem)
+        the_cprod = ASx(perm, len(perm.trimcode)).coproduct()
+        assert all(v >= 0 for v in test_elem.values()), f"Error: Negative coefficient in coproduct for permutation {perm}:\n{test_elem}"
+        for (rc1, rc2), coeff in test_elem.items():
+            assert coeff == the_cprod.get(((rc1.perm, len(rc1)),(rc2.perm, len(rc2))), S.Zero), f"Error: Coproduct coefficient mismatch for permutation {perm} on pair ({rc1.perm}, {len(rc1)}) and ({rc2.perm}, {len(rc2)}):\nComputed: {coeff}\nExpected: {the_cprod.get((rc1.perm, len(rc1)), S.Zero).get((rc2.perm, len(rc2)), S.Zero)}"
 
         
             

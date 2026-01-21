@@ -75,7 +75,7 @@ def fa_to_rc_ring(w, w2, n):
         if len(perm) > n:
             continue
         for rc in RCGraph.all_rc_graphs(perm, length, weight=w2):
-            ret += coeff * rc_ring(rc)
+            ret += rc.polyvalue(Sx.genset) * rc_ring(rc)
     return ret
 
 if __name__ == "__main__":
@@ -96,25 +96,6 @@ if __name__ == "__main__":
     
     for perm in perms:
         
-        def orc(p):
-            T = ring @ ring
-            sm = T.zero
-            for q in range(p + 1):
-                sm += T.ext_multiply(ring(RCGraph.one_row(p - q)), ring(RCGraph.one_row(q)))
-            return sm
-        def word_orc(*w):
-            T = ring @ ring
-            sm = T.one
-            for p in w:
-                sm = sm * orc(p)
-            return sm
-
-        def word_one_row(*w):
-            sm = ring.one
-            for p in w:
-                sm = sm * ring(RCGraph.one_row(p))
-            return sm
-
         A = ASx(perm, len(perm.trimcode)).change_basis(WordBasis)
         # res = (ring@ring).zero
         ring = RCGraphRing()

@@ -551,7 +551,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
             raise ValueError(f"Invalid ASM corner sum at ({i}, {j})")
 
-        asm = np.array(asm, dtype=np.int8)
+        asm = np.array(asm, dtype=int)
         grid[asm == 1] = TileType.ELBOW_SE
         grid[asm == -1] = TileType.ELBOW_NW
         rows, cols = np.where(asm == 0)
@@ -561,7 +561,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     def to_asm(self):
         to_trans = self.resize(len(self.perm))
         n = max(to_trans.rows, to_trans.cols)
-        asm = np.full(shape=(n, n), fill_value=0, dtype=np.int8)
+        asm = np.full(shape=(n, n), fill_value=0, dtype=int)
         se_elbows = to_trans.all_se_elbows()
         if len(se_elbows) > 0:
             rows, cols = zip(*se_elbows)
@@ -584,13 +584,13 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         # Set blanks from diagram
         diagram = perm.diagram
         if diagram:
-            diagram_arr = np.array(list(diagram), dtype=np.int32)
+            diagram_arr = np.array(list(diagram), dtype=int)
             grid[diagram_arr[:, 0] - 1, diagram_arr[:, 1] - 1] = TileType.BLANK
 
         # Vectorize cross detection using graph coordinates
         graph = perm.graph
         if graph and len(graph) > 0:
-            graph_arr = np.array(list(graph), dtype=np.int32)
+            graph_arr = np.array(list(graph), dtype=int)
 
             # Get mask of non-blank positions
             non_blank_mask = grid != TileType.BLANK
@@ -1551,7 +1551,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         resized = self.resize(len(self.perm) + 1)
         results = set()
 
-        crossings = np.array([(i, j) for (i, j) in resized.all_crossings() if i == self.rows], dtype=np.int32)
+        crossings = np.array([(i, j) for (i, j) in resized.all_crossings() if i == self.rows], dtype=int)
 
         n_crossings = len(crossings)
         base_grid = resized._grid.copy()

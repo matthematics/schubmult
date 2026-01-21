@@ -107,6 +107,9 @@ class SchubertMonomialRing(BaseSchubertRing):
         except Exception:
             raise NotImplementedError("Multiplication with fs not implemented for SchubertMonomialRingElement")
 
+    def rmul(self, a, b):
+        return self.from_dict({k: v * sympify(b) for k, v in a.items()})
+
     @property
     def zero(self):
         return self.dtype()

@@ -39,6 +39,44 @@ def debug_print(*args: object, debug: bool = False) -> None:
         print(*args)
 
 
+def w_i(word, i):
+        return word[:i] + word[i + 1:]
+
+def w_i_minus(word, i):
+    letter = word[i]
+    if letter > 1:
+        return word[:i] + [letter - 1] + word[i + 1:]
+    return [a + 1 for a in word[:i]] + [letter] + [b + 1 for b in word[i + 1:]]
+
+def find_reduced_fail(word, inserted):
+    from schubmult.schub_lib.perm_lib import Permutation
+    perm = Permutation.ref_product(*word)
+    a_start, b_start = perm.right_root_at(inserted, word=word)
+    positive = False
+    if a_start > b_start:
+        positive = True
+    for i in range(len(word)):
+        if i == inserted:
+            continue
+        a, b = perm.right_root_at(i, word=word)
+        if not positive and a > b:
+            return i
+        if positive and a == b_start and b == a_start:
+            return i
+    return None
+
+def is_reduced(word):
+    return Permutation.ref_product(*word).inv == len(word)
+
+def little_bump(word, i):
+    assert is_reduced(w_i(word, i))
+    new_word = w_i_minus(word, i)
+    while not is_reduced(new_word):
+        i = find_reduced_fail(new_word, i)
+        new_word = w_i_minus(new_word, i)
+    return new_word
+
+
 def _crystal_isomorphic(c1: CrystalGraph, c2: CrystalGraph, cutoff: int | None = None) -> bool:
     hw_1, _ = c1.to_highest_weight(length=cutoff)
     hw_2, _ = c2.to_highest_weight(length=cutoff)
@@ -107,6 +145,47 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             )
             return next(iter(results))
         return None
+
+    #def monk_insert(self, row):
+
+    def loc_of_inversion(self, a, b):
+        lookup = {self.left_to_right_inversion(i): self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)}
+        return lookup[(a, b)]
+
+    def index_of_inversion(self, a, b):
+        lookup = {self.left_to_right_inversion(i): i for i in range(self.perm.inv)}
+        return lookup.get((a, b), -1)
+
+
+    def as_reduced_compatible(self):
+        word = self.perm_word
+        seq = tuple([self.left_to_right_inversion_coords(i)[0] for i in range(self.perm.inv)])
+        return word, seq
+
+    def little_bump(self, i, j):
+        index_list = [ii for ii in range(self.perm.inv) if self.left_to_right_inversion(ii) == (i, j)]
+        if len(index_list) != 1:
+            raise ValueError
+        index = index_list[0]
+        word, seq = self.as_reduced_compatible()
+        word = [*word]
+        # m is index
+        while True:
+            word[index] = word[index] + 1
+            if is_reduced(word):
+                break
+            index = find_reduced_fail(word, index)
+        return RCGraph.from_reduced_compatible(word, seq)
+
+
+    @classmethod
+    def from_reduced_compatible(cls, word, seq):
+        rows = []
+        for elem, row in zip(word, seq):
+            while row > len(rows):
+                rows += [[]]
+            rows[-1] += [elem]
+        return cls([tuple(row) for row in rows])
 
     def monk_crystal_mul(self, p: int, k: int, warn: bool = True) -> RCGraph | None:
         if p > k:
@@ -208,6 +287,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     @property
     def is_valid(self) -> bool:
         if self.perm.inv != len(self.perm_word):
+            return False
+        if any(r <= index for index, row in enumerate(self) for r in row):
             return False
 
         # if len(self.perm.trimcode) > len(self):
@@ -556,6 +637,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         if start == end:
             return type(self)(())
         return type(self)([tuple([a - start for a in row]) for row in self[start:end]])
+
 
     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, crystal: bool = False) -> Expr:
         ret = S.One
@@ -1060,7 +1142,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         assert tb is not None, f"Could not reverse raise seq {raise_seq} on {w_tab=} {rc_hw=} {self=}"
         return tb
 
-    def m_operation(self, a, b):
+    def huang_bump(self, a, b):
         assert self.perm[a - 1] > self.perm[b - 1], f"{self=}, {a=}, {b=}"
         new_rc = self
         for i in range(self.perm.inv):
