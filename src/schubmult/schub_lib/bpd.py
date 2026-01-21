@@ -1439,8 +1439,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             D.rebuild()
 
             while True:
-                # --- STEP 1 --- #
-                # move the mark to the rightmost blank tile in the block
                 if x == r - 1:
                     break
 

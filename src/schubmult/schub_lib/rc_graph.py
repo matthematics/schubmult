@@ -658,6 +658,11 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     _cache_by_weight: dict[tuple[Permutation, tuple[int, ...]], set[RCGraph]] = {}  # noqa: RUF012
 
     @classmethod
+    def random_rc_graph(cls, perm: Permutation, length: int = -1) -> RCGraph:
+        import random
+        return random.choice(list(RCGraph.all_rc_graphs(perm, length)))
+
+    @classmethod
     def all_rc_graphs(cls, perm: Permutation, length: int = -1, weight: tuple[int, ...] | None = None) -> set[RCGraph]:
         if length > 0 and length < len(perm.trimcode):
             raise ValueError(f"Length must be at least the last descent of the permutation, permutation has {len(perm.trimcode)} rows and {perm=}, got {length=}")
