@@ -51,17 +51,20 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
                 res += coeff * self.ring(new_rc)
         return res
 
-    def divdiff(self, i):
+    def divdiff(self, *seq):
         """
         Apply divided difference operator for `perm` to self.
         Linear extension of RCGraph.divdiff_perm.
         """
-        res = self.ring.zero
-        for rc_graph, coeff in self.items():
-            new_rc_set = rc_graph.divdiff_desc(i)
-            for new_rc in new_rc_set:
-                res += coeff * self.ring(new_rc)
-        return res
+        total = self
+        for i in reversed(seq):
+            res = self.ring.zero
+            for rc_graph, coeff in total.items():
+                new_rc_set = rc_graph.divdiff_desc(i)
+                for new_rc in new_rc_set:
+                    res += coeff * self.ring(new_rc)
+            total = res
+        return total
 
     # ----------------------
     # Coalgebra helpers (already present)

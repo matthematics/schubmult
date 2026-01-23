@@ -93,6 +93,26 @@ class E(ElemSym_base):
             return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[0]), tuple(args[1]))
         return FactorialElemSym.__xnew_cached__(cls, int(p), int(k), tuple(args[: int(k)]), tuple(args[k : 2 * k + 1 - p]))
 
+    @staticmethod
+    def cauchy(fnc, genset):
+        cauchy = E.cauchy
+        if not isinstance(fnc, FactorialElemSym):
+            return fnc
+        if fnc.degree == 0:
+            return S.One
+        genset = genset[:len(fnc.coeffvars)]
+        genset = sorted(genset, key=lambda x: genset.index(x))
+        cfv = sorted(fnc.coeffvars, key=lambda x: fnc.coeffvars.index(x))
+
+        diff_indexes = [i for i, v in enumerate(cfv) if genset[i] != v  ]
+        if len(diff_indexes) == 0:
+            return fnc
+        bucket = [*cfv]
+        bucket[diff_indexes[0]] = genset[diff_indexes[0]]
+        retval = cauchy(fnc.func(fnc.degree, fnc.numvars, fnc.genvars, bucket), genset)
+        retval += (cfv[diff_indexes[0]] - genset[diff_indexes[0]]) * cauchy(fnc.func(fnc.degree - 1, fnc.numvars - 1, fnc.genvars, bucket), genset)
+        return retval
+
     @property
     def free_symbols(self):
         return {*self._genvars, *self._coeffvars}

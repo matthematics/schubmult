@@ -592,6 +592,16 @@ We characterize it with an explicit formula.
 	from which we see that the coefficient is correct.
 \end{proof}
 
+By definition, the coefficient of $\alpha$ in $\dsch_u^n(y)$ is the coefficient of $\sch_u^n(x;y)$ in $x_\alpha(y)$. This can be derived from the Cauchy formula for double Schubert polynomials. Note that for any permutation $\mu$ as laid out in the statement of the theorem, $\ell(u\mu^{-1})=\ell(\mu)-\ell(u)$. Thus,
+	$$\partial_y^{u\mu^{-1}}\sch_\mu(x;y) = \sch_u(x;y)$$
+	We have that
+	$$\sch_\mu(x;y)=\sum_u \sch_u(x;z)\sch_{\mu u^{-1}}(z;y)$$
+	Expressing the second factor in the $e_{\alpha,\lambda}(y)$ basis, we have
+	$$\sch_\mu(x;-y)=\sum_{u,\alpha} \sch_u(x)E_{u\mu^{-1}}^{\code(\mu)-\alpha,\code(\mu)}e_{\code(\mu)-\alpha,\code(\mu)}(y)$$
+	An alternative expression for $\sch_\mu(x;-y)$ is
+	$$\sch_\mu(x;-y)=\sum_{\alpha} x_\alpha(z) e_{\code(\mu)-\alpha,\code(\mu)}(z;y)$$
+	from which we see that the coefficient is correct.
+
 This is not stable for fixed $u$ as $n$ increases, and this is expected.
 
 
@@ -3023,164 +3033,164 @@ The Gao-Huang bijection $\varphi:\BPD \to \BRC$ is an isomorphism of rings.
 \end{theorem}
 
 
-% \subsection{Crystal divided differences and the dominant Pieri formula}
+\subsection{Crystal divided differences and the dominant Pieri formula}
 
-% Let $R$ be an RC graph and let $i>0$ be an integer. We define $\rcdd^iR$, an element of $\RC$, as follows. Define
-% $$\rcdd^iR=0$$
-% unless $s_i$ is a right descent of $\wof{R}$ and there exists $(i,j)\in R$ such that $\rtt_R(i, j) = (i, i+1)$. If these latter two conditions are satisfied, define 
-% $$R'=R\setminus \{(i, j)\}$$
-% where $\rtt_R(i,j) = (i, i+1)$. If $e_i(R')\neq \emptyset$, define $\rcdd^iR=0$. Otherwise, define
-% $$\rcdd^iR = \sum_{p=0}^{\varphi_i(R')}f_i^pR'$$
-% \begin{lemma} \label{lemma:divdiffunique}
-% 	Let $R$ be an RC graph and let $i>0$ be an integer. If $s_i$ is not a right descent of $\wof{R}$, then there is a unique $R'$ such that the coefficient of $R$ in $\rcdd^iR'$ is $1$, and for other $R'$ the coefficient is $0$.
-% \end{lemma}
-% \begin{proof}
-% 	Suppose $s_i$ is not a right descent of $\wof{R}$. Assume without loss of generality that $e_iR = \emptyset$. If $(i+1, 1)\notin R$, then $(i,1)\notin R$ because $s_i$ is not a right descent of $\wof{R}$. In that case, let $R' = R\cup\{(i,1)\}$. Then 
-% 	$$\rcdd^iR' = R + \text{other terms}$$ 
-% 	If instead $(i+1, 1)\in R$, since $e_i(R)=\emptyset$ it follows that $(i, 1)\in R$, and if $j$ is the maximum value such that $(i+1,j')\in R$ for all $j'<j$, it follows that $(i,j')\in R$ for all $j'<j$. We must have that $(i,j+1)\notin R$, because $\rtt_R(i, j+1)=(i, i+1)$. Setting $R'=R\cup \{(i, j+1)\}$ gives us the result.
-% \end{proof}
+Let $R$ be an RC graph and let $i>0$ be an integer. We define $\rcdd^iR$, an element of $\RC$, as follows. Define
+$$\rcdd^iR=0$$
+unless $s_i$ is a right descent of $\wof{R}$ and there exists $(i,j)\in R$ such that $\rtt_R(i, j) = (i, i+1)$. If these latter two conditions are satisfied, define 
+$$R'=R\setminus \{(i, j)\}$$
+where $\rtt_R(i,j) = (i, i+1)$. If $e_i(R')\neq \emptyset$, define $\rcdd^iR=0$. Otherwise, define
+$$\rcdd^iR = \sum_{p=0}^{\varphi_i(R')}f_i^pR'$$
+\begin{lemma} \label{lemma:divdiffunique}
+	Let $R$ be an RC graph and let $i>0$ be an integer. If $s_i$ is not a right descent of $\wof{R}$, then there is a unique $R'$ such that the coefficient of $R$ in $\rcdd^iR'$ is $1$, and for other $R'$ the coefficient is $0$.
+\end{lemma}
+\begin{proof}
+	Suppose $s_i$ is not a right descent of $\wof{R}$. Assume without loss of generality that $e_iR = \emptyset$. If $(i+1, 1)\notin R$, then $(i,1)\notin R$ because $s_i$ is not a right descent of $\wof{R}$. In that case, let $R' = R\cup\{(i,1)\}$. Then 
+	$$\rcdd^iR' = R + \text{other terms}$$ 
+	If instead $(i+1, 1)\in R$, since $e_i(R)=\emptyset$ it follows that $(i, 1)\in R$, and if $j$ is the maximum value such that $(i+1,j')\in R$ for all $j'<j$, it follows that $(i,j')\in R$ for all $j'<j$. We must have that $(i,j+1)\notin R$, because $\rtt_R(i, j+1)=(i, i+1)$. Setting $R'=R\cup \{(i, j+1)\}$ gives us the result.
+\end{proof}
 
-% \begin{theorem} \label{theorem:divdiffschubert}
-% 	Suppose $w\in S_\infty$ and $i >0$. If $i$ is not a right descent of $w$, then
-% 	$$\rcdd^i\mathcal{S}_w(n) = 0$$
-% 	Otherwise,
-% 	$$\rcdd^i\mathcal{S}_w(n) = \mathcal{S}_{ws_i}(n)$$
-% \end{theorem}
-% \begin{proof}
-% 	The result is trivial if $i$ is not a right descent of $w$. Suppose $i$ is a right descent of $w$. By Lemma \ref{lemma:divdiffunique}, for each RC graph $R$ such that $\wof{R} = ws_i$, there is a unique RC graph $R'$ such that the coefficient of $R$ in $\rcdd^iR'$ is $1$. Since $\wof{R'} = w$, the result follows.
-% \end{proof}
+\begin{theorem} \label{theorem:divdiffschubert}
+	Suppose $w\in S_\infty$ and $i >0$. If $i$ is not a right descent of $w$, then
+	$$\rcdd^i\mathcal{S}_w(n) = 0$$
+	Otherwise,
+	$$\rcdd^i\mathcal{S}_w(n) = \mathcal{S}_{ws_i}(n)$$
+\end{theorem}
+\begin{proof}
+	The result is trivial if $i$ is not a right descent of $w$. Suppose $i$ is a right descent of $w$. By Lemma \ref{lemma:divdiffunique}, for each RC graph $R$ such that $\wof{R} = ws_i$, there is a unique RC graph $R'$ such that the coefficient of $R$ in $\rcdd^iR'$ is $1$. Since $\wof{R'} = w$, the result follows.
+\end{proof}
 
-% \begin{definition}
-% For a permutation $w$, define the \emph{principal RC graph} $R^0(w)$ of $w$ to be
-% $$R^0(w) = \{(i,j)\mid 1\leq j\leq \code^*_i(w)\}$$
-% \end{definition}
+\begin{definition}
+For a permutation $w$, define the \emph{principal RC graph} $R^0(w)$ of $w$ to be
+$$R^0(w) = \{(i,j)\mid 1\leq j\leq \code^*_i(w)\}$$
+\end{definition}
 
-% \begin{proposition} \label{proposition:divdiffprincipal}
-% Let $R$ be an RC graph and let $w=\wof{R}$. Then for any reduced word $(s_{i_1}, s_{i_2}, \ldots, s_{i_m})$ for $w$, we have
-% $$\rcdd^{i_1}\rcdd^{i_2}\cdots \rcdd^{i_m}R = \delta_{R,R^0(w)}\emptyset$$
-% \end{proposition}
+\begin{proposition} \label{proposition:divdiffprincipal}
+Let $R$ be an RC graph and let $w=\wof{R}$. Then for any reduced word $(s_{i_1}, s_{i_2}, \ldots, s_{i_m})$ for $w$, we have
+$$\rcdd^{i_1}\rcdd^{i_2}\cdots \rcdd^{i_m}R = \delta_{R,R^0(w)}\emptyset$$
+\end{proposition}
 
-% Let $\RC^C$ be the submodule of $\RC$ consisting of formal sums of RC graphs
-% $$\sum_R c_R R$$
-% such that if $e_iR\neq \emptyset$, then $c_{e_iR} = c_R$, and if $f_iR\neq \emptyset$, then $c_{f_iR} = c_R$, for all $i>0$.
+Let $\RC^C$ be the submodule of $\RC$ consisting of formal sums of RC graphs
+$$\sum_R c_R R$$
+such that if $e_iR\neq \emptyset$, then $c_{e_iR} = c_R$, and if $f_iR\neq \emptyset$, then $c_{f_iR} = c_R$, for all $i>0$.
 
-% \begin{lemma}
-% The submodule $\RC^C$ is stable under the crystal divided difference operators $\rcdd^i$ for all $i>0$.
-% \end{lemma}
-% \begin{proof}
+\begin{lemma}
+The submodule $\RC^C$ is stable under the crystal divided difference operators $\rcdd^i$ for all $i>0$.
+\end{lemma}
+\begin{proof}
 
-% \end{proof}
+\end{proof}
 
-% \begin{theorem}
-% The crystal divided difference operators satisfy the relations:
-% $$\rcdd^i\rcdd^i = 0$$
-% $$\rcdd^i\rcdd^j = \rcdd^j\rcdd^i\quad\mbox{for }|i-j|>1$$
-% and on the submodule $\RC^C$,
-% $$\rcdd^i\rcdd^{i+1}\rcdd^i = \rcdd^{i+1}\rcdd^i\rcdd^{i+1}$$
-% \end{theorem}
-% \begin{proof}
-% By Proposition \ref{proposition:divdiffprincipal}, these identities hold when applied to any principal RC graph. Ason
-% \end{proof}
+\begin{theorem}
+The crystal divided difference operators satisfy the relations:
+$$\rcdd^i\rcdd^i = 0$$
+$$\rcdd^i\rcdd^j = \rcdd^j\rcdd^i\quad\mbox{for }|i-j|>1$$
+and on the submodule $\RC^C$,
+$$\rcdd^i\rcdd^{i+1}\rcdd^i = \rcdd^{i+1}\rcdd^i\rcdd^{i+1}$$
+\end{theorem}
+\begin{proof}
+By Proposition \ref{proposition:divdiffprincipal}, these identities hold when applied to any principal RC graph. Ason
+\end{proof}
 
-%\begin{definition}
-%	For integers $p,q$, define a permutation
-%	$$d[p,q] = s_ps_{p+1}\cdots s_{p+q-1}$$
-%	For a bounded RC graph $(R,n)$ and an integer $1\leq i\leq n$ such that row $i$ is empty, define $\zeromap_{(i)}(R, n)$ as follows. Let 
-%	$$R^-=\{(a,b)\mid (a,b)\in R\mbox{ and }a<i\}$$
-%	and
-%	$$R^+=\{(a,b)\mid (a,b)\in R\mbox{ and }a>i\}$$
-%	Then define $R'$ to be the unique RC graph such that
-%	$$(R', i-1) = Z^{n-i+1}(R^-, n)$$ 
-%	Finally, define
-%	$$R_{(i)}=R'\cup\trm(R^+)$$
-%	and
-%	$$\zeromap_{(i)}(R, n) = (R_{(i)}, n-1)$$
-%	
-%	Let $\mu$ be a dominant permutation, let $w$ be an arbitrary permutation, and let $R$ be an RC graph. We define an integer $\rcdd_\mu^w(R)\in\{0,1\}$ by the following algorithm. Set $R_0=R$ and begin iterating, setting $i=1$. If $\code^*_i(\mu)>\code^*_i(w)$, terminate and set $\rcdd_\mu^w(R)=0$. Otherwise, define
-%	$$R' = \partial^{d[\code_i^*(\mu)+1,\code^*_i(w)-\code^*_i(\mu)]}(R_{i-1})$$
-%	If row $\code_i^*(\mu)+1$ is not empty in $R'$, terminate and set $\rcdd_\mu^w(R) = 0$. Otherwise, let 
-%	$$R_i = \zeromap_{(\code_i^*(\mu)+1)}(R', n - i + 1)$$
-%	 Let $m$ be the length of $\code^*(\mu)$, and proceed as $i$ ranges from $1$ to $m$. After this procedure, we end with the RC graph $R_m$. If there is an index past $m$ such that $\code^*(w)$ is nonzero, proceed incrementally for each $i > m$ by applying
-%	 $$R_i = \partial^{d[i+1-m, \code^*_i(w)]}(R_{i-1})$$
-%	 then define
-%	 $$\rcdd_\mu^w(R) = 1$$
-%	 if $R_N=(\emptyset, 0)$ for sufficiently large $N$.
-%\end{definition}
-
-% \begin{definition}
-% $\widetilde{s}_i$ is the operator on bounded RC graphs defined by
-
-% For an RC graph $R$ with row $k$ empty, suppose $k$ is not a  descent of $\wof{R}$. Let $m>k$ be the smallest integer such that $m$ is a descent of $\wof{R}$. Define
-% $$\widetilde{R} = \widetilde{s}_{m-1}\widetilde{s}_{m-2}\cdots \widetilde{s}_k R$$
-% Then define
-% $$\zeromap_k(R, n) = \zeromap_m(\widetilde{R}, n)$$
-% \end{definition}
-
-
-
-% \begin{definition}
-% 	Let $R$ be an RC graph. We define a $\{0,1\}$-valued function $\rcdd_\mu^w$ for a dominant permutation $\mu$ and an arbitrary permutation $w$ via the following construction. For integers $p, q$, let $d[p, q] = s_p s_{p+1} \cdots s_{p+q-1}$ be a product of simple reflections.
-		
-% 	Let $m$ be the length of $\code^*(\mu)$. Initialize $R_0 = R$. For each $i$ from $1$ to $m$:
-% 	\begin{enumerate}
-% 		\item If $\code^*_i(\mu) > \code^*_i(w)$, terminate and set $\rcdd_\mu^wR = 0$.
-% 		\item Otherwise, let $k = \code^*_i(w) - \code^*_i(\mu)$ and apply the crystal divided difference operator:
-% 		\[
-% 		R' = \rcdd^{d[\code_i^*(\mu)+1, \, k]}R_{i-1}
-% 		\]
-% 		\item If row $\code_i^*(\mu)+1$ is not empty in $R'$, terminate and set $\rcdd_\mu^wR = 0$.
-% 		\item If the row is empty, define the next state:
-% 		\[
-% 		R_i = P_{(\code_i^*(\mu)+1)}(R')
-% 		\]
-% 	\end{enumerate}
+\begin{definition}
+	For integers $p,q$, define a permutation
+	$$d[p,q] = s_ps_{p+1}\cdots s_{p+q-1}$$
+	For a bounded RC graph $(R,n)$ and an integer $1\leq i\leq n$ such that row $i$ is empty, define $\zeromap_{(i)}(R, n)$ as follows. Let 
+	$$R^-=\{(a,b)\mid (a,b)\in R\mbox{ and }a<i\}$$
+	and
+	$$R^+=\{(a,b)\mid (a,b)\in R\mbox{ and }a>i\}$$
+	Then define $R'$ to be the unique RC graph such that
+	$$(R', i-1) = Z^{n-i+1}(R^-, n)$$ 
+	Finally, define
+	$$R_{(i)}=R'\cup\trm(R^+)$$
+	and
+	$$\zeromap_{(i)}(R, n) = (R_{(i)}, n-1)$$
 	
-% 	If the loop completes, for any remaining indices $i > m$ where $\code^*_i(w) > 0$, incrementally update the graph:
-% 	\[
-% 	R_i = \rcdd^{d[i+1-m, \, \code^*_i(w)]}R_{i-1}
-% 	\]
-% 	Finally, define $\rcdd_\mu^wR = 1$ if $R_N = \emptyset$ for sufficiently large $N$, and $\rcdd_\mu^wR = 0$ otherwise.
-% \end{definition}
+	Let $\mu$ be a dominant permutation, let $w$ be an arbitrary permutation, and let $R$ be an RC graph. We define an integer $\rcdd_\mu^w(R)\in\{0,1\}$ by the following algorithm. Set $R_0=R$ and begin iterating, setting $i=1$. If $\code^*_i(\mu)>\code^*_i(w)$, terminate and set $\rcdd_\mu^w(R)=0$. Otherwise, define
+	$$R' = \partial^{d[\code_i^*(\mu)+1,\code^*_i(w)-\code^*_i(\mu)]}(R_{i-1})$$
+	If row $\code_i^*(\mu)+1$ is not empty in $R'$, terminate and set $\rcdd_\mu^w(R) = 0$. Otherwise, let 
+	$$R_i = \zeromap_{(\code_i^*(\mu)+1)}(R', n - i + 1)$$
+	 Let $m$ be the length of $\code^*(\mu)$, and proceed as $i$ ranges from $1$ to $m$. After this procedure, we end with the RC graph $R_m$. If there is an index past $m$ such that $\code^*(w)$ is nonzero, proceed incrementally for each $i > m$ by applying
+	 $$R_i = \partial^{d[i+1-m, \code^*_i(w)]}(R_{i-1})$$
+	 then define
+	 $$\rcdd_\mu^w(R) = 1$$
+	 if $R_N=(\emptyset, 0)$ for sufficiently large $N$.
+\end{definition}
 
-% \begin{theorem}
-% 	Let $\mu$ be a dominant permutation and let $v,w$ be permutations such that $\ell(\mu) + \ell(v)=\ell(w)$. Then
-% 	$$c_{\mu,v}^w=\sum_{R\in\RC(v)}\rcdd_\mu^w(R)$$
-% \end{theorem}
+\begin{definition}
+$\widetilde{s}_i$ is the operator on bounded RC graphs defined by
 
-% Consider the module $\BRC_n \otimes \mathscr{RF}_n$. Note that $\mathscr{RF}_n$ has a an action of $S_n$ given by the crystal reflection operators. We may define $\rcdd^i$ on $\mathscr{RF}_n$ the same way as on $\BRC_n$ except in the case where $(i, i+1)$ is in row $i+1$, which cannot happen in $\BRC_n$, we define
-% $$R' = R\setminus\{(i+1, j)\}$$
-% where $\rtt_R(i+1, j) = (i, i+1)$, and then if $e_iR'\neq \emptyset$, define
-% $$\rcdd^iR = 0$$
-% Otherwise, define
-% $$\rcdd^iR = -\sum_{p=0}^{\varphi_i(R')}f_i^pR'$$
-% We define an action of $\rcdd^i$ on $\BRC_n\otimes \mathscr{RF}_n$ by the Leibniz formula
-% $$\rcdd^i(R_1\otimes R_2) = \rcdd^iR_1\otimes \widetilde{s}_iR_2 + R_1\otimes \rcdd^iR_2$$
+For an RC graph $R$ with row $k$ empty, suppose $k$ is not a  descent of $\wof{R}$. Let $m>k$ be the smallest integer such that $m$ is a descent of $\wof{R}$. Define
+$$\widetilde{R} = \widetilde{s}_{m-1}\widetilde{s}_{m-2}\cdots \widetilde{s}_k R$$
+Then define
+$$\zeromap_k(R, n) = \zeromap_m(\widetilde{R}, n)$$
+\end{definition}
 
 
-% Let us be more specific. Let $(R, n)$ be a bounded RC graph and let $(D, n)$ be a bounded RC graph such that $D$ is the RC graph of a dominant permutation $\mu$. Suppose $\mathscr{C}$ is the crystal for which $Y(R)$ is the highest weight. Suppose there exists an $R'\in \mathscr{C}$ and a $w$ such that $\rcdd_\mu^wR' = 1$ and $\mathscr{C}$ is isomorphic to $\mathscr{C}^0(w)$. Suppose
-% $$R = f_{1}^{i_1}\cdots f_k^{i_k}Y(R)$$
-% Then  define
-% $$R * D = f_1^{i_1}\cdots f_k^{i_k}Y(R^0(w))$$
-% where $H(w)$ is the highest weight RC graph of $\mathscr{C}^0(w)$. 
 
-% It is possible that no such $R'$ and $w$ exist. SWUASH IT
+\begin{definition}
+	Let $R$ be an RC graph. We define a $\{0,1\}$-valued function $\rcdd_\mu^w$ for a dominant permutation $\mu$ and an arbitrary permutation $w$ via the following construction. For integers $p, q$, let $d[p, q] = s_p s_{p+1} \cdots s_{p+q-1}$ be a product of simple reflections.
+		
+	Let $m$ be the length of $\code^*(\mu)$. Initialize $R_0 = R$. For each $i$ from $1$ to $m$:
+	\begin{enumerate}
+		\item If $\code^*_i(\mu) > \code^*_i(w)$, terminate and set $\rcdd_\mu^wR = 0$.
+		\item Otherwise, let $k = \code^*_i(w) - \code^*_i(\mu)$ and apply the crystal divided difference operator:
+		\[
+		R' = \rcdd^{d[\code_i^*(\mu)+1, \, k]}R_{i-1}
+		\]
+		\item If row $\code_i^*(\mu)+1$ is not empty in $R'$, terminate and set $\rcdd_\mu^wR = 0$.
+		\item If the row is empty, define the next state:
+		\[
+		R_i = P_{(\code_i^*(\mu)+1)}(R')
+		\]
+	\end{enumerate}
+	
+	If the loop completes, for any remaining indices $i > m$ where $\code^*_i(w) > 0$, incrementally update the graph:
+	\[
+	R_i = \rcdd^{d[i+1-m, \, \code^*_i(w)]}R_{i-1}
+	\]
+	Finally, define $\rcdd_\mu^wR = 1$ if $R_N = \emptyset$ for sufficiently large $N$, and $\rcdd_\mu^wR = 0$ otherwise.
+\end{definition}
 
-%Let $w$ be such that $\rcdd_\mu^wR = 1$. Let $\pi$ be the highest weight of  $\{D\}\otimes\mathscr{C}(R)$ contained in the same component as $D\otimes R$, let $H(w)$ be the highest weight RC graph of  $\mathscr{C}(R^0(w))$, and suppose
+\begin{theorem}
+	Let $\mu$ be a dominant permutation and let $v,w$ be permutations such that $\ell(\mu) + \ell(v)=\ell(w)$. Then
+	$$c_{\mu,v}^w=\sum_{R\in\RC(v)}\rcdd_\mu^w(R)$$
+\end{theorem}
 
-% We define a partial product $\RC\times \RC\to \RC$ as follows. If $D$ is an RC graph for a dominant permutation $\mu$, and $R$ is an arbitrary RC graph, suppose $w$ is such that that $\rcdd_\mu^wR = 1$. Let $\pi$ be the highest weight of  $\{D\}\otimes\mathscr{C}(R)$ contained in the same component as $D\otimes R$, let $H(w)$ be the highest weight RC graph of $\mathscr{C}(R^0(w))$, and suppose
-% $$D\otimes R = f_1^{i_1}\cdots f_n^{i_n}\pi$$
-% Then define
-% $$D* R = f_1^{i_1}\cdots f_n^{i_n}H(w)$$
-% Isomorphism between some subset and the principal crystals of the product. Suppose $D$ is a single column. We define a bijection
-% $$F_D:I(R')\to I(R)\sqcup I(D)$$
-% as follows. We know we may delete roots from $R'$ in place to obtain an injection of $I(R)$ with a uniquely determined subset of $I(R')$. Moves between crystals
+Consider the module $\BRC_n \otimes \mathscr{RF}_n$. Note that $\mathscr{RF}_n$ has a an action of $S_n$ given by the crystal reflection operators. We may define $\rcdd^i$ on $\mathscr{RF}_n$ the same way as on $\BRC_n$ except in the case where $(i, i+1)$ is in row $i+1$, which cannot happen in $\BRC_n$, we define
+$$R' = R\setminus\{(i+1, j)\}$$
+where $\rtt_R(i+1, j) = (i, i+1)$, and then if $e_iR'\neq \emptyset$, define
+$$\rcdd^iR = 0$$
+Otherwise, define
+$$\rcdd^iR = -\sum_{p=0}^{\varphi_i(R')}f_i^pR'$$
+We define an action of $\rcdd^i$ on $\BRC_n\otimes \mathscr{RF}_n$ by the Leibniz formula
+$$\rcdd^i(R_1\otimes R_2) = \rcdd^iR_1\otimes \widetilde{s}_iR_2 + R_1\otimes \rcdd^iR_2$$
 
-% \newcommand{\URC}{\widetilde{\RC}}
-% \newcommand{\ws}{\widetilde{s}}
-% Define $\URC$ to be the set of \emph{unrestricted RC graphs}, meaning that we allow any pair of integers $(i, j)$ such that $i>0$ and $i+j-1>0$. We extend $\rcdd$ to this set by adding, additionally, the rule that
-% $$\rcdd^iR = -\rcdd^i\ws_iR$$
-% We define an action of $\rcdd^i$ on $\URC\otimes \URC$ by
-% $$\rcdd^i(R_1\otimes R_2) = \rcdd^iR_1\otimes \ws_iR_2 + R_1\otimes \rcdd^iR_2$$
+
+Let us be more specific. Let $(R, n)$ be a bounded RC graph and let $(D, n)$ be a bounded RC graph such that $D$ is the RC graph of a dominant permutation $\mu$. Suppose $\mathscr{C}$ is the crystal for which $Y(R)$ is the highest weight. Suppose there exists an $R'\in \mathscr{C}$ and a $w$ such that $\rcdd_\mu^wR' = 1$ and $\mathscr{C}$ is isomorphic to $\mathscr{C}^0(w)$. Suppose
+$$R = f_{1}^{i_1}\cdots f_k^{i_k}Y(R)$$
+Then  define
+$$R * D = f_1^{i_1}\cdots f_k^{i_k}Y(R^0(w))$$
+where $H(w)$ is the highest weight RC graph of $\mathscr{C}^0(w)$. 
+
+It is possible that no such $R'$ and $w$ exist. SWUASH IT
+
+Let $w$ be such that $\rcdd_\mu^wR = 1$. Let $\pi$ be the highest weight of  $\{D\}\otimes\mathscr{C}(R)$ contained in the same component as $D\otimes R$, let $H(w)$ be the highest weight RC graph of  $\mathscr{C}(R^0(w))$, and suppose
+
+We define a partial product $\RC\times \RC\to \RC$ as follows. If $D$ is an RC graph for a dominant permutation $\mu$, and $R$ is an arbitrary RC graph, suppose $w$ is such that that $\rcdd_\mu^wR = 1$. Let $\pi$ be the highest weight of  $\{D\}\otimes\mathscr{C}(R)$ contained in the same component as $D\otimes R$, let $H(w)$ be the highest weight RC graph of $\mathscr{C}(R^0(w))$, and suppose
+$$D\otimes R = f_1^{i_1}\cdots f_n^{i_n}\pi$$
+Then define
+$$D* R = f_1^{i_1}\cdots f_n^{i_n}H(w)$$
+Isomorphism between some subset and the principal crystals of the product. Suppose $D$ is a single column. We define a bijection
+$$F_D:I(R')\to I(R)\sqcup I(D)$$
+as follows. We know we may delete roots from $R'$ in place to obtain an injection of $I(R)$ with a uniquely determined subset of $I(R')$. Moves between crystals
+
+\newcommand{\URC}{\widetilde{\RC}}
+\newcommand{\ws}{\widetilde{s}}
+Define $\URC$ to be the set of \emph{unrestricted RC graphs}, meaning that we allow any pair of integers $(i, j)$ such that $i>0$ and $i+j-1>0$. We extend $\rcdd$ to this set by adding, additionally, the rule that
+$$\rcdd^iR = -\rcdd^i\ws_iR$$
+We define an action of $\rcdd^i$ on $\URC\otimes \URC$ by
+$$\rcdd^i(R_1\otimes R_2) = \rcdd^iR_1\otimes \ws_iR_2 + R_1\otimes \rcdd^iR_2$$
 
 
 \subsection{The squash product}
