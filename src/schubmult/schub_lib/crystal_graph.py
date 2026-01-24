@@ -54,7 +54,7 @@ class CrystalGraph(Printable):
                     break
         return (g, tuple(lower_seq))
 
-    def to_highest_weight(self, length=None):
+    def to_highest_weight(self, length=None, start=1):
         """Return the highest weight element in the connected component."""
         g = self
         raise_seq = []
@@ -63,7 +63,7 @@ class CrystalGraph(Printable):
             length = self.crystal_length()
         while found:
             found = False
-            for row in range(1, length):
+            for row in range(start, length):
                 g0 = g.raising_operator(row)
                 if g0 is not None:
                     found = True
@@ -99,9 +99,13 @@ class CrystalGraph(Printable):
         if e > f:
             for _ in range(e - f):
                 new_rc = new_rc.raising_operator(index)
+                if new_rc is None:
+                    return None
         elif f > e:
             for _ in range(f - e):
                 new_rc = new_rc.lowering_operator(index)
+                if new_rc is None:
+                    return None
         return new_rc
 
 
@@ -123,14 +127,14 @@ class CrystalGraph(Printable):
                     stack.append(new_elem)
         return crystal
 
-    def truncated_crystal(self, length):
+    def truncated_crystal(self, length, start=1):
         hw, _ = self.to_highest_weight(length=length)
         crystal = set()
         stack = [hw]
         while len(stack) > 0:
             elem = stack.pop()
             crystal.add(elem)
-            for i in range(1, length):
+            for i in range(start, length):
                 new_elem = elem.lowering_operator(i)
                 if new_elem is not None:
                     stack.append(new_elem)
