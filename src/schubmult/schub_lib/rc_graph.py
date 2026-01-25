@@ -295,13 +295,14 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         #     return False
         return True
 
-    def shiftup(self, shift: int = 1) -> RCGraph:
+    def shiftup(self, shift: int = 1, check_valid=True) -> RCGraph:
         rc = self
         # if len(self) < len(self.perm.trimcode) + shift:
         #     rc = rc.extend(len(self.perm.trimcode) + shift - len(self))
 
         ret = RCGraph([tuple([a + shift for a in rrow]) for rrow in rc])
-        assert ret.is_valid
+        if check_valid:
+            assert ret.is_valid
         return ret
 
     @cache
@@ -1399,9 +1400,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return ret
 
     def dualpieri(self, mu: Permutation, w: Permutation) -> set[tuple[tuple, RCGraph]]:
-        from sympy import pretty_print  # noqa: F401
+        from sympy import pretty_print
 
         from schubmult.rings.rc_graph_ring import RCGraphRing
+        from schubmult.schub_lib.bpd import BPD  # noqa: F401
         from schubmult.utils.schub_lib import pull_out_var
 
         rc_ring = RCGraphRing()
@@ -1421,13 +1423,13 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             c = cycle(i - len(lm) + 1, cn1w[i]) * c
 
         res = {((), self)}
-
+        r = RCGraphRing()
         for i in range(len(lm)):
             res2 = set()
             for vlist, self_0 in res:
                 vp = self_0
 
-                vpl_list = vp.divdiff_perm(cycle(lm[i] + 1, cn1w[i] - lm[i]))
+                vpl_list = r(vp).divdiff_perm(cycle(lm[i] + 1, cn1w[i] - lm[i]))
 
                 if len(vpl_list) == 0:
                     continue
@@ -1459,10 +1461,17 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                     # #     res2.add(((*vlist, current_vpl[0]), (*perm_list, vpl.perm), current_vpl.rowrange(1)))
                     # #     continue
                     # current_vpl = vpl
+                    # if not current_vpl.rowrange(lm[i]).is_principal:
+                    #     continue
                     move_spot = min([a + 1 for a in current_vpl.perm.descents() if a >= lm[i]])
+                    # the_vl = pull_out_var(move_spot, vpl.perm)
+
                     vpl_bottom, vpl_top = current_vpl.vertical_cut(move_spot - 1)
                     assert len(vpl_bottom) == move_spot - 1
-                    rcs1 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))).keys())
+                    # if len(vpl_bottom.perm.trimcode) <= len(vpl_bottom):
+                    #     rcs1 = {RCGraph([*vpl_bottom,*vpl_top.rowrange(1)])}
+                    # else:
+                    # rcs1 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))).keys())
                     # ABOVE WORKS BUT WITH DUPLICTES
                     vpl_bottom, vpl_top = current_vpl.vertical_cut(move_spot)
                     vpl_bottom = RCGraph([*vpl_bottom[:-1], ()])
@@ -1475,26 +1484,57 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                     if len(vpl_bottom) != move_spot - 1:
                         assert vpl_bottom.inv == 0
                         vpl_bottom = vpl_bottom.resize(move_spot - 1)
-                    # vpl_bottom = vpl_bottom.zero_out_last_row()
-                    # if vpl_bottom.inv == 0:
-                    #     vpl_bottom = vpl_bottom.rowrange(0, len(vpl_bottom) - 1)
+                    # # vpl_bottom = vpl_bottom.zero_out_last_row()
+                    # # if vpl_bottom.inv == 0:
+                    # #     vpl_bottom = vpl_bottom.rowrange(0, len(vpl_bottom) - 1)
 
-                    # while vpl_bottom.inv > 0 and len(vpl_bottom) > lm[i] - 1 and len(vpl_bottom[-1]) == 0:
-                    #     vpl_bottom = vpl_bottom.zero_out_last_row()
+                    # # while vpl_bottom.inv > 0 and len(vpl_bottom) > lm[i] - 1 and len(vpl_bottom[-1]) == 0:
+                    # #     vpl_bottom = vpl_bottom.zero_out_last_row()
                     rcs2 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top)).keys())
-                    # try:
-                    #     while vepl.perm.inv > 0 and vepl.perm[0] == 1:
-                    #         vepl = vepl.shiftup(-1)
-                    # except Exception:S
-                    #     pass
-                    # rcs = rc_ring(vepl) * rc_ring(RCGraph([()] * (len(vpl.perm) - 1 - len(vpl.perm.trimcode))))
-                    rcs = rcs1.intersection(rcs2)
-                    for vpl_new in rcs:
+                    # rcs2 = rcs1
+                    # # try:
+                    # #     while vepl.perm.inv > 0 and vepl.perm[0] == 1:
+                    # #         vepl = vepl.shiftup(-1)
+                    # # except Exception:S
+                    # #     pass
+                    # # rcs = rc_ring(vepl) * rc_ring(RCGraph([()] * (len(vpl.perm) - 1 - len(vpl.perm.trimcode))))
+                    # rcs = rcs1.intersection(rcs2)
+                    rcs = rcs2
+                    did = 0
+                    candidates = set()
+                    old_candidates = set()
+                    # spongle = BPD.from_rc_graph(current_vpl)
+                    # bpd_cols = {col for row, col in spongle.all_blanks() if row == move_spot - 1}
+                    onofafa = False
+                    for vpl_new in sorted(rcs, key=lambda x: -len(x.perm)):
                         if vpl_new.perm not in {vv[-1] for vv in vl}:
                             continue
-                        pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
-                        res2.add(((*vlist, tuple([a + len(vlist) for a in tuple(sorted(pw, reverse=True))])), vpl_new.resize(len(vpl) - 1)))
+                        if len(candidates) > 0:
+                            print("OH NO FAFA")
+                            onofafa = True
 
+                        did += 1
+                        pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
+                        # if set(pw) != bpd_cols:
+                        #     continue
+                        if onofafa:
+                            old_candidates.update(candidates)
+                            old_candidates.add((vpl_new, pw))
+                        candidates = {(vpl_new, pw)}
+                        #res2.add(((*vlist, tuple(sorted(pw, reverse=True))), vpl_new.resize(len(vpl) - 1)))
+                    vpl_new, pw = next(iter(candidates))
+                    res2.add(((*vlist, tuple(sorted(pw, reverse=True))), vpl_new.resize(len(vpl) - 1)))
+                    #    added = True
+                    # assert did == 1, f"Fail {did=}\n{self}\n{rcs}\n{vpl}\n{vl}"
+                    if onofafa:
+                        print("OLD CANDIDATES:")
+                        for cc, pp in old_candidates:
+                            pretty_print(cc)
+                            pretty_print(pp)
+                        print("ALL TA LIFT")
+                        pretty_print(current_vpl)
+                        # print("I didst useth")
+                        # pretty_print(candidates)
             res = res2
         if len(lm) == len(cn1w):
             return res

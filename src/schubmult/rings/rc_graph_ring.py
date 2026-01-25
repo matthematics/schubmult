@@ -212,6 +212,24 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
             res += coeff * self.ring(rc_graph.prepend(k))
         return res
 
+    def zero_out_last_row(self):
+        res = self.ring.zero
+        for rc_graph, coeff in self.items():
+            res += coeff * self.ring(rc_graph.zero_out_last_row())
+        return res
+
+    def resize(self, n):
+        res = self.ring.zero
+        for rc_graph, coeff in self.items():
+            res += coeff * self.ring(rc_graph.resize(n))
+        return res
+
+    def clip(self, n):
+        res = self.ring.zero
+        for rc_graph, coeff in self.items():
+            res += coeff * self.ring(rc_graph.vertical_cut(n)[0])
+        return res
+
 
 class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
     _id = 0
