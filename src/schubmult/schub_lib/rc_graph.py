@@ -40,16 +40,19 @@ def debug_print(*args: object, debug: bool = False) -> None:
 
 
 def w_i(word, i):
-        return word[:i] + word[i + 1:]
+    return word[:i] + word[i + 1 :]
+
 
 def w_i_minus(word, i):
     letter = word[i]
     if letter > 1:
-        return word[:i] + [letter - 1] + word[i + 1:]
-    return [a + 1 for a in word[:i]] + [letter] + [b + 1 for b in word[i + 1:]]
+        return word[:i] + [letter - 1] + word[i + 1 :]
+    return [a + 1 for a in word[:i]] + [letter] + [b + 1 for b in word[i + 1 :]]
+
 
 def find_reduced_fail(word, inserted):
     from schubmult.schub_lib.perm_lib import Permutation
+
     perm = Permutation.ref_product(*word)
     a_start, b_start = perm.right_root_at(inserted, word=word)
     positive = False
@@ -65,8 +68,10 @@ def find_reduced_fail(word, inserted):
             return i
     return None
 
+
 def is_reduced(word):
     return Permutation.ref_product(*word).inv == len(word)
+
 
 def little_bump(word, i):
     assert is_reduced(w_i(word, i))
@@ -146,7 +151,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             return next(iter(results))
         return None
 
-    #def monk_insert(self, row):
+    # def monk_insert(self, row):
 
     def loc_of_inversion(self, a, b):
         lookup = {self.left_to_right_inversion(i): self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)}
@@ -155,7 +160,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     def index_of_inversion(self, a, b):
         lookup = {self.left_to_right_inversion(i): i for i in range(self.perm.inv)}
         return lookup.get((a, b), -1)
-
 
     def as_reduced_compatible(self):
         word = self.perm_word
@@ -176,7 +180,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 break
             index = find_reduced_fail(word, index)
         return RCGraph.from_reduced_compatible(word, seq)
-
 
     @classmethod
     def from_reduced_compatible(cls, word, seq):
@@ -395,11 +398,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                             del pair_dict_rev[b]
                             rows.append(row)
 
-
                             # found = True
                             working_rc = working_rc.toggle_ref_at(row, col)
 
-                            #leftify it
+                            # leftify it
                             for col2 in range(col - 1, 0, -1):
                                 if not working_rc.has_element(row, col2):
                                     a2, b2 = working_rc.left_root_at(row, col2)
@@ -424,7 +426,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         if return_rows:
             return working_rc, tuple(rows)
         return working_rc
-
 
         # original DINGBAT
         #                     # Check if RC became invalid and needs rectification
@@ -479,7 +480,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         #                                         working_rc = working_rc.toggle_ref_at(row, col2)
         #                                         rows.pop()
         #                                     break
-
 
         #     # if not found:
         #     #     assert False, f"Could not find reflection ({target_a}, {target_b}) in working_rc:\n{working_rc}\npair_dict={pair_dict}, pair_dict_rev={pair_dict_rev}"
@@ -599,8 +599,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     def __mul__(self, other: object) -> object:
         if isinstance(other, RCGraph):
             from schubmult.rings.rc_graph_ring import RCGraphRing
+
             ring = RCGraphRing()
-            return ring(self)*ring(other)
+            return ring(self) * ring(other)
         if hasattr(other, "ring"):
             ring = other.ring
             return ring(self) * other
@@ -639,7 +640,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             return type(self)(())
         return type(self)([tuple([a - start for a in row]) for row in self[start:end]])
 
-
     def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, crystal: bool = False) -> Expr:
         ret = S.One
         if crystal:
@@ -661,6 +661,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     @classmethod
     def random_rc_graph(cls, perm: Permutation, length: int = -1) -> RCGraph:
         import random
+
         return random.choice(list(RCGraph.all_rc_graphs(perm, length)))
 
     @classmethod
@@ -807,7 +808,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 else:
                     raise ValueError(f"Could not rectify at {(row_below, j)} with root {(a, b)}")
                 if flag:
-                    working_rc, _ = working_rc._kogan_kumar_insert_row(row_below, descent, dict_by_a, dict_by_b, num_times=1, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row)
+                    working_rc, _ = working_rc._kogan_kumar_insert_row(
+                        row_below, descent, dict_by_a, dict_by_b, num_times=1, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row,
+                    )
         return working_rc._kogan_kumar_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row)
 
     # VERIFY
@@ -1032,6 +1035,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     def vertical_cut(self, row: int) -> tuple[RCGraph, RCGraph]:
         if row < 0:
             raise ValueError("Row out of range")
+        if row == 0:
+            return RCGraph(), self
         if row >= len(self):
             return self, RCGraph()
         front = type(self)([*self[:row]])
@@ -1231,8 +1236,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         if cut_point == 0:
             return True
         return all(s.is_potential_coproduct(r1, r2) for s, r1, r2 in ((self.vertical_cut(cut_point)[0], rc1.vertical_cut(cut_point)[0], (rc2.vertical_cut(cut_point))[0]),))
-        #self.rowrange(max_desc).is_potential_coproduct(rc1.rowrange(max_desc), rc2.rowrange(max_desc))
-
+        # self.rowrange(max_desc).is_potential_coproduct(rc1.rowrange(max_desc), rc2.rowrange(max_desc))
 
     def ring_act(self, elem: FreeAlgebraElement) -> dict[RCGraph, Expr]:
         if isinstance(elem, FreeAlgebraElement):
@@ -1356,7 +1360,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 ret.add(rc_lw)
         return ret
 
-
     def shiftcut(self) -> RCGraph:
         cut_rc = RCGraph([tuple([a for a in row if a > i]) for i, row in enumerate(self.shiftup(-1)[:-1])])
         return cut_rc
@@ -1399,14 +1402,35 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             ret = working_set
         return ret
 
-    def dualpieri(self, mu: Permutation, w: Permutation) -> set[tuple[tuple, RCGraph]]:
-        from sympy import pretty_print
+    def pull_out_row(self, row: int) -> tuple[tuple, RCGraph]:  # noqa: ARG002
+        # from schubmult.utils.schub_lib import pull_out_var
 
+        # if row == len(self):
+        #     return {(self.vertical_cut(row - 1)[0], tuple(range(len(self[-1]), 0, -1)))}
+        # if row > len(self):
+        #     return {(self, ())}
+        # # recurse_set = self.vertical_cut(len(self) - 1)[0].pull_out_row(row)
+        # # #assert len(recurse) == len(self) - 2, f"{recurse=}, {self=}, {row=}"
+        # # permlist = pull_out_var(row, self.perm)
+        # # results = set()
+        # # for recurse, pw in recurse_set:
+        # #     for vlist, perm in permlist:
+        # #         if len(vlist) == len(pw):
+        # #             graphs = RCGraph.all_rc_graphs(perm, len(self) - 1, weight=(*recurse.length_vector, len(self[-1])))
+        # #             for result in graphs:
+        # #                 if result.vertical_cut(len(self) - 2)[0] == recurse and result.rowrange(row) == self.rowrange(row + 1):
+        # #                     results.add((result, tuple(sorted(vlist, reverse=True))))
+        # build_rc = self.vertical_cut(row - 1)[0]
+        # for r in range(row, len(self)):
+        #     new_build_rc = RCGraph([*build_rc, self[r]]).normalize()
+        # #return set(results)
+        # # return results
+        return None
+
+    def dualpieri(self, mu: Permutation, w: Permutation) -> set[tuple[tuple, RCGraph]]:
         from schubmult.rings.rc_graph_ring import RCGraphRing
         from schubmult.schub_lib.bpd import BPD  # noqa: F401
-        from schubmult.utils.schub_lib import pull_out_var
 
-        rc_ring = RCGraphRing()
         if mu.inv == 0:
             return set({((), rc) for rc in self.divdiff_perm(w)})
 
@@ -1434,107 +1458,92 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 if len(vpl_list) == 0:
                     continue
                 for vpl in vpl_list:
-                    vl = pull_out_var(lm[i] + 1, vpl.perm)
+                    # vl = pull_out_var(lm[i] + 1, vpl.perm)
 
-                    if lm[i] + 1 > len(vpl.perm.trimcode):
-                        # if lm[i] + 1 > len(vpl):
-                        #     #try:
-                        res2.add(((*vlist, ()), vpl))
-                        # except AssertionError:
-                        #     print("Could not shiftup")
-                        #     pretty_print(vlist)
-                        # else:
-                        #     res2.add((tuple([*vlist, ()]), vpl.rowrange(0, len(vpl) - 1)))
-                        continue
-
-                    current_vpl = vpl
-                    # move_spot = min([a + 1 for a in current_vpl.perm.descents() if a >= lm[i]])
-                    # # while move_spot > 1:
-                    # #     vpl_try = current_vpl.weight_reflection(move_spot - 1)
-                    # #     if vpl_try.perm == current_vpl.perm:
-                    # #         current_vpl = vpl_try
-                    # #         move_spot -= 1
-                    # #     else:
-                    # #         break
-                    # # assert current_vpl.perm == vpl.perm
-                    # # if move_spot == 1:
-                    # #     res2.add(((*vlist, current_vpl[0]), (*perm_list, vpl.perm), current_vpl.rowrange(1)))
-                    # #     continue
-                    # current_vpl = vpl
-                    # if not current_vpl.rowrange(lm[i]).is_principal:
+                    # if lm[i] + 1 > len(vpl.perm.trimcode):
+                    #     # if lm[i] + 1 > len(vpl):
+                    #     #     #try:
+                    #     res2.add(((*vlist, ()), vpl))
+                    #     # except AssertionError:
+                    #     #     print("Could not shiftup")
+                    #     #     pretty_print(vlist)
+                    #     # else:
+                    #     #     res2.add((tuple([*vlist, ()]), vpl.rowrange(0, len(vpl) - 1)))
                     #     continue
-                    move_spot = min([a + 1 for a in current_vpl.perm.descents() if a >= lm[i]])
-                    # the_vl = pull_out_var(move_spot, vpl.perm)
 
-                    vpl_bottom, vpl_top = current_vpl.vertical_cut(move_spot - 1)
-                    assert len(vpl_bottom) == move_spot - 1
-                    # if len(vpl_bottom.perm.trimcode) <= len(vpl_bottom):
-                    #     rcs1 = {RCGraph([*vpl_bottom,*vpl_top.rowrange(1)])}
-                    # else:
-                    # rcs1 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))).keys())
-                    # ABOVE WORKS BUT WITH DUPLICTES
-                    vpl_bottom, vpl_top = current_vpl.vertical_cut(move_spot)
-                    vpl_bottom = RCGraph([*vpl_bottom[:-1], ()])
-                    if len(vpl_bottom.perm.trimcode) > len(vpl_bottom):
-                        vpl_bottom = vpl_bottom.normalize()
+                    # current_vpl = vpl
+                    # # move_spot = min([a + 1 for a in current_vpl.perm.descents() if a >= lm[i]])
+                    # # # while move_spot > 1:
+                    # # #     vpl_try = current_vpl.weight_reflection(move_spot - 1)
+                    # # #     if vpl_try.perm == current_vpl.perm:
+                    # # #         current_vpl = vpl_try
+                    # # #         move_spot -= 1
+                    # # #     else:
+                    # # #         break
+                    # # # assert current_vpl.perm == vpl.perm
+                    # # # if move_spot == 1:
+                    # # #     res2.add(((*vlist, current_vpl[0]), (*perm_list, vpl.perm), current_vpl.rowrange(1)))
+                    # # #     continue
+                    # # current_vpl = vpl
+                    # # if not current_vpl.rowrange(lm[i]).is_principal:
+                    # #     continue
+                    # move_spot = min([a + 1 for a in current_vpl.perm.descents() if a >= lm[i]])
+                    # # the_vl = pull_out_var(move_spot, vpl.perm)
 
-                    vpl_bottom.zero_out_last_row()
-                    while len(vpl_bottom) > move_spot - 1:
-                        vpl_bottom = vpl_bottom.zero_out_last_row()
-                    if len(vpl_bottom) != move_spot - 1:
-                        assert vpl_bottom.inv == 0
-                        vpl_bottom = vpl_bottom.resize(move_spot - 1)
-                    # # vpl_bottom = vpl_bottom.zero_out_last_row()
-                    # # if vpl_bottom.inv == 0:
-                    # #     vpl_bottom = vpl_bottom.rowrange(0, len(vpl_bottom) - 1)
+                    # vpl_bottom, vpl_top = current_vpl.vertical_cut(move_spot - 1)
+                    # assert len(vpl_bottom) == move_spot - 1
+                    # # if len(vpl_bottom.perm.trimcode) <= len(vpl_bottom):
+                    # #     rcs1 = {RCGraph([*vpl_bottom,*vpl_top.rowrange(1)])}
+                    # # else:
+                    # # rcs1 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))).keys())
+                    # # ABOVE WORKS BUT WITH DUPLICTES
+                    # vpl_bottom, vpl_top = current_vpl.vertical_cut(move_spot)
+                    # vpl_bottom = RCGraph([*vpl_bottom[:-1], ()])
+                    # if len(vpl_bottom.perm.trimcode) > len(vpl_bottom):
+                    #     vpl_bottom = vpl_bottom.normalize()
 
-                    # # while vpl_bottom.inv > 0 and len(vpl_bottom) > lm[i] - 1 and len(vpl_bottom[-1]) == 0:
-                    # #     vpl_bottom = vpl_bottom.zero_out_last_row()
-                    rcs2 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top)).keys())
-                    # rcs2 = rcs1
-                    # # try:
-                    # #     while vepl.perm.inv > 0 and vepl.perm[0] == 1:
-                    # #         vepl = vepl.shiftup(-1)
-                    # # except Exception:S
-                    # #     pass
-                    # # rcs = rc_ring(vepl) * rc_ring(RCGraph([()] * (len(vpl.perm) - 1 - len(vpl.perm.trimcode))))
-                    # rcs = rcs1.intersection(rcs2)
-                    rcs = rcs2
-                    did = 0
-                    candidates = set()
-                    old_candidates = set()
-                    # spongle = BPD.from_rc_graph(current_vpl)
-                    # bpd_cols = {col for row, col in spongle.all_blanks() if row == move_spot - 1}
-                    onofafa = False
-                    for vpl_new in sorted(rcs, key=lambda x: -len(x.perm)):
-                        if vpl_new.perm not in {vv[-1] for vv in vl}:
-                            continue
-                        if len(candidates) > 0:
-                            print("OH NO FAFA")
-                            onofafa = True
+                    # vpl_bottom.zero_out_last_row()
+                    # while len(vpl_bottom) > move_spot - 1:
+                    #     vpl_bottom = vpl_bottom.zero_out_last_row()
+                    # if len(vpl_bottom) != move_spot - 1:
+                    #     assert vpl_bottom.inv == 0
+                    #     vpl_bottom = vpl_bottom.resize(move_spot - 1)
+                    # # # vpl_bottom = vpl_bottom.zero_out_last_row()
+                    # # # if vpl_bottom.inv == 0:
+                    # # #     vpl_bottom = vpl_bottom.rowrange(0, len(vpl_bottom) - 1)
 
-                        did += 1
-                        pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
-                        # if set(pw) != bpd_cols:
-                        #     continue
-                        if onofafa:
-                            old_candidates.update(candidates)
-                            old_candidates.add((vpl_new, pw))
-                        candidates = {(vpl_new, pw)}
-                        #res2.add(((*vlist, tuple(sorted(pw, reverse=True))), vpl_new.resize(len(vpl) - 1)))
-                    vpl_new, pw = next(iter(candidates))
-                    res2.add(((*vlist, tuple(sorted(pw, reverse=True))), vpl_new.resize(len(vpl) - 1)))
+                    # # # while vpl_bottom.inv > 0 and len(vpl_bottom) > lm[i] - 1 and len(vpl_bottom[-1]) == 0:
+                    # # #     vpl_bottom = vpl_bottom.zero_out_last_row()
+                    # rcs2 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top)).keys())
+                    # # rcs2 = rcs1
+                    # # # try:
+                    # # #     while vepl.perm.inv > 0 and vepl.perm[0] == 1:
+                    # # #         vepl = vepl.shiftup(-1)
+                    # # # except Exception:S
+                    # # #     pass
+                    # # # rcs = rc_ring(vepl) * rc_ring(RCGraph([()] * (len(vpl.perm) - 1 - len(vpl.perm.trimcode))))
+                    # # rcs = rcs1.intersection(rcs2)
+                    # rcs = rcs2
+                    # did = 0
+                    # candidates = set()
+                    # old_candidates = set()
+                    # # spongle = BPD.from_rc_graph(current_vpl)
+                    # # bpd_cols = {col for row, col in spongle.all_blanks() if row == move_spot - 1}
+                    # onofafa = False
+                    vpl_set = vpl.pull_out_row(lm[i] + 1)
+                    for vpl_new, pw in vpl_set:
+                        res2.add(((*vlist, pw), vpl_new.normalize()))
                     #    added = True
                     # assert did == 1, f"Fail {did=}\n{self}\n{rcs}\n{vpl}\n{vl}"
-                    if onofafa:
-                        print("OLD CANDIDATES:")
-                        for cc, pp in old_candidates:
-                            pretty_print(cc)
-                            pretty_print(pp)
-                        print("ALL TA LIFT")
-                        pretty_print(current_vpl)
-                        # print("I didst useth")
-                        # pretty_print(candidates)
+                    # if onofafa:
+                    #     print("OLD CANDIDATES:")
+                    #     for cc, pp in old_candidates:
+                    #         pretty_print(cc)
+                    #         pretty_print(pp)
+                    #     print("ALL TA LIFT")
+                    #     pretty_print(current_vpl)
+                    # print("I didst useth")
+                    # pretty_print(candidates)
             res = res2
         if len(lm) == len(cn1w):
             return res

@@ -5,12 +5,12 @@ from multiprocessing import Pool, cpu_count
 from functools import partial
 
 def is_decomposable(w):
-    # return False
-    for i in range(1, len(w) - 1):
-        coset, w_J = w.coset_decomp(*list(range(1, i + 1)), *list(range(i + 2, len(w))))
-        if coset.inv == 0 and set(w_J.code[: i + 1]) != {0} and set(w_J.code[i + 2 :]) != {0}:
-            return True
     return False
+    # for i in range(1, len(w) - 1):
+    #     coset, w_J = w.coset_decomp(*list(range(1, i + 1)), *list(range(i + 2, len(w))))
+    #     if coset.inv == 0 and set(w_J.code[: i + 1]) != {0} and set(w_J.code[i + 2 :]) != {0}:
+    #         return True
+    # return False
 
 def decompose(w):
     for i in range(1, len(w) - 1):
@@ -22,7 +22,7 @@ def decompose(w):
 def test_perm_pair(dom_perm, perm):
     """Test a single (dominant_perm, perm) pair."""
     
-    test_prod = DSx(dom_perm) * DSx(perm, "z")
+    test_prod = DSx(dom_perm) * Sx(perm)
     failures = []
     
     for w, v in test_prod.items():
@@ -43,7 +43,7 @@ def test_perm_pair(dom_perm, perm):
             for dp in dpset:
                 vlist = dp[0]
                 the_rc = dp[1]
-                result += prod([prod([y[i+1] - z[a] for a in vc]) for i, vc in enumerate(vlist)]) * the_rc.polyvalue(y[len(vlist):], z)
+                result += prod([prod([y[i+1] for a in vc]) for i, vc in enumerate(vlist)]) * the_rc.polyvalue(y[len(vlist):])
 
         sputnik = expand(v - result)
         if sputnik != S.Zero:
