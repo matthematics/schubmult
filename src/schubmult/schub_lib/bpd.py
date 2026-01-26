@@ -343,16 +343,23 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         Create a BPD from a Bruhat path.
         """
         n = len(path)
-        path = list(reversed(path))
-        path = [*path, Permutation.w0(n)]
-        for i in range(n - 1):
-            path[i] = path[i] * Permutation.w0(i).shiftup(n - i)
-        print(path)
-        # path = [path[i] * Permutation.w0(n - i).shiftup(i) for i in range(n - 1, -1, -1)]
         grid = np.full((n, n), TileType.TBD, dtype=TileType)
 
-        for row in range(1, len(path)):
-            grid[row - 1, :] = BPD.row_from_k_chain(path[row - 1], path[row], row, n)
+        for row in range(len(path) -1, 0, -1):
+            grid[n - 1 - row, :] = BPD.row_from_k_chain(path[row - 1], path[row], n - row, n)
+            change_col = path[row][n - row - 1]
+            if grid[n - 1 - row, change_col - 1] == TileType.ELBOW_NW:
+                grid[n - 1 - row, change_col - 1] = TileType.HORIZ
+            elif grid[n - 1 - row, change_col - 1] == TileType.VERT:
+                grid[n - 1 - row, change_col - 1] = TileType.ELBOW_SE
+            for j in range(n):
+                if j > change_col - 1:
+                    grid[n - 1 - row, j] = TileType.CROSS
+        change_col = path[0][n - 1]
+        for j in range(n):
+            if j > change_col - 1:
+                grid[n - 1, j] = TileType.CROSS
+            # change (1, w(k)) from
                 # col = permo[rcol] - 1
                 # if col <= rowand path[row][col] == path[row - 1][col]:
                 #     grid[row - 1, col] = TileType.BLANK
@@ -395,48 +402,64 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         cycles = ((~u) * w).get_cycles()
 
-        smaller_only = set()
-        larger_only = set()
-        both = set()
+        bacon = u
+        swaps_by_a = {}
+        swaps_by_b = {}
         for cyc in cycles:
             cyc = [*cyc]
-            mx = max(cyc)
-            smaller_only.add(mx)
-            cyc.remove(mx)
-            mn = min(cyc)
-            larger_only.add(mn)
-            cyc.remove(mn)
-            both.update(cyc)
-
+            a = min(cyc)
+            cyc.remove(a)
+            while len(cyc) > 0:
+                bindex = min(list(range(len(cyc))), key=lambda x: bacon[cyc[x] - 1])
+                b = cyc.pop(bindex)
+                assert bacon[a - 1] < bacon[b - 1]
+                swaps_by_a[bacon[a - 1]] = bacon[b - 1]
+                swaps_by_b[bacon[b - 1]] = bacon[a - 1]
+                bacon = bacon.swap(a - 1, b - 1)
+        assert bacon == w
         # For each column c (1-indexed in definition, 0-indexed in array)
         for c in range(1, n + 1):
             # Determine what values the chain swaps with c
 
-            swaps_with_larger = c in larger_only
-            swaps_with_smaller = c in smaller_only
+            swaps_with_larger = c in swaps_by_a
+            swaps_with_smaller = c in swaps_by_b
 
             # Determine tile type based on Definition 3.15
             tile = TileType.TBD
 
-                # Chain swaps c
-            if swaps_with_larger:
+            # Chain swaps c
+            if swaps_with_larger and not swaps_with_smaller:
                 tile = TileType.ELBOW_SE  # ⌜
-            elif swaps_with_smaller:
-                tile = TileType.ELBOW_NW  # ╋
-            elif c in both:
-                tile = TileType.HORIZ  # ⌟
+            elif swaps_with_smaller and not swaps_with_larger:
+                tile = TileType.ELBOW_NW  # ⌟
+            elif swaps_with_larger and swaps_with_smaller:
+                tile = TileType.HORIZ  # ─
             else:
                 # c stays unswapped
                 if c not in first_k_numbers:
                     tile = TileType.BLANK  # □
                 else:
                     # Check if chain ever swaps values a,b with a < c < b
-                    swaps_bracketing = False
-                    for cyc in cycles:
-                        if c < max(cyc) and c > min(cyc):
-                            swaps_bracketing = True
-                            break
+                    swaps_bracketing = any(swaps_by_a[a] > c > a for a in swaps_by_a)
+                    # print(f"{c=}")
+                    # print(f"{swaps_by_a=}")
+                    # print(f"{swaps_bracketing=}")
+                    # bacon = u
+                    # for cyc in cycles:
+                    #     cyc = [*cyc]
+                    #     a = min(cyc)
+                    #     cyc.remove(a)
+                    #     while len(cyc) > 0:
+                    #         bindex = min(list(range(len(cyc))), key=lambda x: bacon[cyc[x] - 1])
+                    #         b = cyc.pop(bindex)
+                    #         # Check if the VALUES being swapped bracket c
+                    #         val_a = bacon[a - 1]
+                    #         val_b = bacon[b - 1]
+                    #         if val_a < c < val_b or val_b < c < val_a:
+                    #             swaps_bracketing = True
+                    #         bacon = bacon.swap(a - 1, b - 1)
 
+                    # assert bacon == w
                     if swaps_bracketing:
                         tile = TileType.CROSS  # ╬
                     else:
@@ -447,84 +470,84 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         return row_tiles
 
-    @staticmethod
-    def _find_k_chain(u: Permutation, w: Permutation, k: int) -> list[Permutation]:
-        """
-        Find a maximal k-chain from u to w.
+    # @staticmethod
+    # def _find_k_chain(u: Permutation, w: Permutation, k: int) -> list[Permutation]:
+    #     """
+    #     Find a maximal k-chain from u to w.
 
-        A k-chain is a saturated chain in Bruhat order where all transpositions
-        involve at least one position among the first k positions.
+    #     A k-chain is a saturated chain in Bruhat order where all transpositions
+    #     involve at least one position among the first k positions.
 
-        Args:
-            u: Starting permutation
-            w: Ending permutation (must satisfy u ≤ w in Bruhat order)
-            k: Chain parameter (only swap positions involving first k positions)
+    #     Args:
+    #         u: Starting permutation
+    #         w: Ending permutation (must satisfy u ≤ w in Bruhat order)
+    #         k: Chain parameter (only swap positions involving first k positions)
 
-        Returns:
-            List of permutations forming the k-chain from u to w
-        """
-        if u == w:
-            return [u]
+    #     Returns:
+    #         List of permutations forming the k-chain from u to w
+    #     """
+    #     if u == w:
+    #         return [u]
 
-        chain = [u]
-        current = u
+    #     chain = [u]
+    #     current = u
 
-        # Greedily build a chain by finding valid covers
-        while current != w:
-            found_next = False
-            # Try all possible transpositions that could move us closer to w
-            for i in range(len(current)):
-                for j in range(i + 1, len(current) + 1):
-                    # Check if this is a valid k-chain move (involves first k positions)
-                    if i >= k and j >= k:
-                        continue
+    #     # Greedily build a chain by finding valid covers
+    #     while current != w:
+    #         found_next = False
+    #         # Try all possible transpositions that could move us closer to w
+    #         for i in range(len(current)):
+    #             for j in range(i + 1, len(current) + 1):
+    #                 # Check if this is a valid k-chain move (involves first k positions)
+    #                 if i >= k and j >= k:
+    #                     continue
 
-                    # Try swapping positions i and j
-                    candidate = current.swap(i, j)
+    #                 # Try swapping positions i and j
+    #                 candidate = current.swap(i, j)
 
-                    # Check if this is a Bruhat cover and moves us toward w
-                    if candidate.bruhat_leq(w) and current.inv + 1 == candidate.inv:
-                        current = candidate
-                        chain.append(current)
-                        found_next = True
-                        break
-                if found_next:
-                    break
+    #                 # Check if this is a Bruhat cover and moves us toward w
+    #                 if candidate.bruhat_leq(w) and current.inv + 1 == candidate.inv:
+    #                     current = candidate
+    #                     chain.append(current)
+    #                     found_next = True
+    #                     break
+    #             if found_next:
+    #                 break
 
-            if not found_next:
-                # No valid move found; this shouldn't happen if u ≤ w
-                raise ValueError(f"Cannot find k-chain from {u} to {w} with k={k}")
+    #         if not found_next:
+    #             # No valid move found; this shouldn't happen if u ≤ w
+    #             raise ValueError(f"Cannot find k-chain from {u} to {w} with k={k}")
 
-        return chain
+    #     return chain
 
-    @classmethod
-    def from_k_chains(cls, w: Permutation, u_dict: dict[int, Permutation]) -> BPD:
-        """
-        Create a BPD from a collection of starting permutations, one for each row.
+    # @classmethod
+    # def from_k_chains(cls, w: Permutation, u_dict: dict[int, Permutation]) -> BPD:
+    #     """
+    #     Create a BPD from a collection of starting permutations, one for each row.
 
-        For row k (1-indexed), construct a k-chain from u_k to w and use it
-        to determine the tiles in that row.
+    #     For row k (1-indexed), construct a k-chain from u_k to w and use it
+    #     to determine the tiles in that row.
 
-        Args:
-            w: The target permutation
-            u_dict: Dictionary mapping k (row number, 1-indexed) to starting permutation u_k
+    #     Args:
+    #         w: The target permutation
+    #         u_dict: Dictionary mapping k (row number, 1-indexed) to starting permutation u_k
 
-        Returns:
-            BPD object constructed from the k-chains
-        """
-        n = len(w)
-        grid = np.full((n, n), TileType.TBD, dtype=TileType)
+    #     Returns:
+    #         BPD object constructed from the k-chains
+    #     """
+    #     n = len(w)
+    #     grid = np.full((n, n), TileType.TBD, dtype=TileType)
 
-        for k in range(1, n + 1):
-            if k not in u_dict:
-                raise ValueError(f"Missing starting permutation for row {k}")
-            u_k = u_dict[k]
-            # Construct row k-1 (0-indexed) using a k-chain from u_k to w
-            grid[k - 1, :] = cls.from_k_chain(u_k, w, k)
+    #     for k in range(1, n + 1):
+    #         if k not in u_dict:
+    #             raise ValueError(f"Missing starting permutation for row {k}")
+    #         u_k = u_dict[k]
+    #         # Construct row k-1 (0-indexed) using a k-chain from u_k to w
+    #         grid[k - 1, :] = cls.from_k_chain(u_k, w, k)
 
-        ret = cls(grid)
-        ret.rebuild()
-        return ret
+    #     ret = cls(grid)
+    #     ret.rebuild()
+    #     return ret
 
     def to_bruhat_path(self):
         n = len(self.perm)
@@ -1387,8 +1410,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             try:
                 the_move = next(((a, b), (c, d)) for ((a, b), (c, d)) in min_droops if (a == x_iter) and (b == y_iter))
             except StopIteration:
-                print(f"No droop move found for position ({x_iter}, {y_iter}) in BPD:\n{working_bpd}")
-                print(f"{min_droops=}")
+                # print(f"No droop move found for position ({x_iter}, {y_iter}) in BPD:\n{working_bpd}")
+                # print(f"{min_droops=}")
                 raise
             working_bpd = working_bpd.do_min_droop_move(the_move)
             if working_bpd[the_move[1][0], the_move[1][1]] == TileType.ELBOW_NW:
