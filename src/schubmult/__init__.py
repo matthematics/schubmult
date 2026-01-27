@@ -27,6 +27,8 @@ _lazy_exports = {
     "RCGraph": "schubmult.schub_lib.rc_graph",
     "BPD": "schubmult.schub_lib.bpd",
     "TileType": "schubmult.schub_lib.bpd",
+    "HPD": "schubmult.schub_lib.hpd",
+    "HPDTile": "schubmult.schub_lib.hpd",
     # Rings
     "Sx": "schubmult.rings.schubert_ring",
     "DSx": "schubmult.rings.schubert_ring",
@@ -52,9 +54,11 @@ _lazy_exports = {
     "TensorRing": "schubmult.rings.tensor_ring",
     # Variables
     "GeneratingSet": "schubmult.rings.variables",
+    "pull_out_var": "schubmult.utils.schub_lib",
     # Crystal structures
     "RootTableau": "schubmult.schub_lib.root_tableau",
     "Plactic": "schubmult.schub_lib.plactic",
+    "NilPlactic": "schubmult.schub_lib.nilplactic",
     # Free algebra bases
     "FreeAlgebraBasis": "schubmult.rings.free_algebra_basis",
     "WordBasis": "schubmult.rings.free_algebra_basis",

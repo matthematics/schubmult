@@ -1402,7 +1402,109 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             ret = working_set
         return ret
 
-    def pull_out_row(self, row: int) -> tuple[tuple, RCGraph]:  # noqa: ARG002
+    def zero_out_empty_row(self, row: int) -> RCGraph:
+        from schubmult import pull_out_var
+        from schubmult.rings.rc_graph_ring import RCGraphRing
+        vl = pull_out_var(row, self.perm)
+        rc_ring = RCGraphRing()
+        move_spot = min([a + 1 for a in self.perm.descents() if a >= row - 1])
+        working_rc = self
+        if len(working_rc[move_spot - 1]) != 0:
+            return None
+        # if move_spot != row:
+        #     working_rc = RCGraph([*self[: row - 1], *self[row:move_spot + 1], () ,*self[move_spot + 1:]])
+        vpl_bottom, vpl_top = working_rc.vertical_cut(move_spot - 1)
+        assert len(vpl_bottom) == move_spot - 1
+        rcs1 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))).keys())
+        # ABOVE WORKS BUT WITH DUPLICTES
+        vpl_bottom, vpl_top = working_rc.vertical_cut(move_spot)
+        vpl_bottom = RCGraph([*vpl_bottom[:-1], ()])
+        if len(vpl_bottom.perm.trimcode) > len(vpl_bottom):
+            vpl_bottom = vpl_bottom.normalize()
+
+        vpl_bottom.zero_out_last_row()
+        while len(vpl_bottom) > move_spot - 1:
+            vpl_bottom = vpl_bottom.zero_out_last_row()
+        if len(vpl_bottom) != move_spot - 1:
+            assert vpl_bottom.inv == 0
+            vpl_bottom = vpl_bottom.resize(move_spot - 1)
+                    # vpl_bottom = vpl_bottom.zero_out_last_row()
+        rcs2 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top)).keys())
+        rcs = rcs1.intersection(rcs2)
+        res = set()
+        for vpl_new in rcs:
+            if vpl_new.perm not in {vv[-1] for vv in vl}:
+                continue
+            pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
+            res.add((tuple(sorted(pw, reverse=True)), vpl_new.resize(len(self) - 1)))
+        return res
+
+    def pull_out_row(self, row: int) -> tuple[tuple, RCGraph]:
+        if row - 1 not in self.perm.descents():
+            raise ValueError("Row not a descent")
+        if row == 1:
+            return {(self[0], self.rowrange(1))}
+        from schubmult import pull_out_var
+        from schubmult.rings.rc_graph_ring import RCGraphRing
+        vl = pull_out_var(row, self.perm)
+        rc_ring = RCGraphRing()
+        move_spot = row
+        working_rc = self
+        # if move_spot != row:
+        #     working_rc = RCGraph([*self[: row - 1], *self[row:move_spot + 1], () ,*self[move_spot + 1:]])
+        vpl_bottom, vpl_top = working_rc.vertical_cut(move_spot - 1)
+        assert len(vpl_bottom) == move_spot - 1
+        rcs1 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))).keys())
+        # # ABOVE WORKS BUT WITH DUPLICTES
+        # vpl_bottom, vpl_top = working_rc.vertical_cut(move_spot)
+        # vpl_bottom = RCGraph([*vpl_bottom[:-1], ()])
+        # if len(vpl_bottom.perm.trimcode) > len(vpl_bottom):
+        #     vpl_bottom = vpl_bottom.normalize()
+
+        # vpl_bottom.zero_out_last_row()
+        # while len(vpl_bottom) > move_spot - 1:
+        #     vpl_bottom = vpl_bottom.zero_out_last_row()
+        #     if vpl_bottom.inv == 0:
+        #         break
+        # if len(vpl_bottom) != move_spot - 1:
+        #     assert vpl_bottom.inv == 0
+        #     vpl_bottom = vpl_bottom.resize(move_spot - 1)
+        #             # vpl_bottom = vpl_bottom.zero_out_last_row()
+        # rcs2 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top)).keys())
+        # rcs = rcs1.intersection(rcs2)
+        rcs = rcs1
+        res = set()
+        for vpl_new in rcs:
+            if vpl_new.perm not in {vv[-1] for vv in vl}:
+                continue
+            pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
+            # x_weight = self.length_vector
+            # y_weight = [*vpl_new.transpose(max(max(pw, default=0),max((~self.perm).descents(), default=0)) + 1).length_vector]
+            # for a in pw:
+            #     y_weight[a - 1] += 1
+            # stinker = RCGraph.all_rc_graphs(~self.perm, len(y_weight), weight=tuple(y_weight))
+            # if len(stinker) == 0:
+            #     continue
+            # if all(self != rc.transpose(self.rows) for rc in stinker):
+            #     continue
+            res.add((tuple(sorted(pw, reverse=True)), vpl_new.resize(len(self) - 1)))
+        if len(res) > 1:
+            from schubmult.schub_lib.bpd import BPD
+
+            bpd = BPD.from_rc_graph(self)
+            for pw, rc in res:
+                pp = BPD.from_rc_graph(rc)
+                if len(bpd.all_crossings()) == len(pp.all_crossings()):
+                    res = {(pw, rc)}
+                    break
+        #     res2 = {(pw, rc) for pw, rc in res if pw == self[row - 1]}
+        #     if len(res2) == 0:
+        #         print("This didn't work")
+        #         print(res)
+        #         print(self)
+        #         print(self[row - 1])
+        #     res = res2
+        return res
         # from schubmult.utils.schub_lib import pull_out_var
 
         # if row == len(self):
@@ -1425,7 +1527,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         #     new_build_rc = RCGraph([*build_rc, self[r]]).normalize()
         # #return set(results)
         # # return results
-        return None
+        #return None
 
     def dualpieri(self, mu: Permutation, w: Permutation) -> set[tuple[tuple, RCGraph]]:
         from schubmult.rings.rc_graph_ring import RCGraphRing
