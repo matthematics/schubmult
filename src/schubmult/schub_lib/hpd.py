@@ -952,8 +952,12 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         # good_cols = Permutation.from_partial(good_cols)
         # left_rows = (np.where(left_entrance_mask)[0]).tolist()
         # right_rows = (np.where(right_entrance_mask)[0]).tolist()
-        left_rows = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 0]
-        right_rows = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 1]
+        left_spots = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 0]
+        left_labels = [ i + 1 for i, j in enumerate(left_spots)]
+        left_rows = list(zip(left_spots, left_labels))
+        right_spots = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 1]
+        right_labels = [ len(right_spots) - i for i, j in enumerate(right_spots)]
+        right_rows = list(zip(right_spots, right_labels))
         top_pop = [0] * self.cols
 
         def _new_direction(this_row, col, tile, going_right, going_up):
@@ -1004,7 +1008,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
                     raise ValueError("Invalid BUMP direction")
             return this_row, col, going_right, going_up
 
-        for row in left_rows:
+        for row, label in left_rows:
             # trace row
             tile = HPDTile(self._grid[row, 0])
             col = 0
@@ -1018,9 +1022,9 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
                 # print(f"At ({this_row}, {col}) tile {tile}")
                 tile = HPDTile(self._grid[this_row, col])
                 this_row, col, going_right, going_up = _new_direction(this_row, col, tile, going_right, going_up)
-            top_pop[col] = row + 1
+            top_pop[col] = label
 
-        for row in right_rows:
+        for row, label in right_rows:
             # trace row
             col = self.cols - 1
             this_row = row
@@ -1030,7 +1034,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
                 # Switch on all tile types
                 tile = HPDTile(self._grid[this_row, col])
                 this_row, col, going_right, going_up = _new_direction(this_row, col, tile, going_right, going_up)
-            top_pop[col] = self.rows - row
+            top_pop[col] = label
         # print(top_pop)
         # small_perm = Permutation([])
         # Vectorized: Map tiles to their diff values
