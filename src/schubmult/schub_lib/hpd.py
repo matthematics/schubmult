@@ -13,6 +13,7 @@ import numpy as np
 from sympy import pretty
 from sympy.printing.defaults import DefaultPrinting
 
+from schubmult.schub_lib.bpd import BPD, TileType
 from schubmult.schub_lib.perm_lib import Permutation
 from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.schub_lib.schubert_monomial_graph import SchubertMonomialGraph
@@ -41,8 +42,36 @@ class HPDTile(IntEnum):
     BUMP = 12  # Bump/osculating tile (pipes touch at corner)
 
     def __str__(self) -> str:
-        symbols = {HPDTile.WBLANK: "░", HPDTile.UBLANK: "□", HPDTile.WCROSS: "╋", HPDTile.UCROSS: "┼", HPDTile.WHORIZ: "━", HPDTile.UHORIZ: "─", HPDTile.ELBOW_NW: "╯", HPDTile.ELBOW_SE: "╭", HPDTile.ELBOW_NE: "┕", HPDTile.ELBOW_SW: "┑", HPDTile.VERT: "│", HPDTile.BUMP: "╬", HPDTile.TBD: "?"}
+        symbols = {
+            HPDTile.WBLANK: "░",
+            HPDTile.UBLANK: "□",
+            HPDTile.WCROSS: "╋",
+            HPDTile.UCROSS: "┼",
+            HPDTile.WHORIZ: "━",
+            HPDTile.UHORIZ: "─",
+            HPDTile.ELBOW_NW: "╯",
+            HPDTile.ELBOW_SE: "╭",
+            HPDTile.ELBOW_NE: "┕",
+            HPDTile.ELBOW_SW: "┑",
+            HPDTile.VERT: "│",
+            HPDTile.BUMP: "╬",
+            HPDTile.TBD: "?",
+        }
         return symbols.get(self, "?")
+
+    @classmethod
+    def from_tiletype(cls, tile: TileType) -> HPDTile:
+        """Convert from TileType to HPDTile"""
+        mapping = {
+            TileType.BLANK: HPDTile.WBLANK,
+            TileType.CROSS: HPDTile.UCROSS,
+            TileType.ELBOW_NW: HPDTile.ELBOW_SW,
+            TileType.ELBOW_SE: HPDTile.ELBOW_NE,
+            TileType.VERT: HPDTile.VERT,
+            TileType.HORIZ: HPDTile.UHORIZ,
+            TileType.BUMP: HPDTile.BUMP,
+        }
+        return mapping[tile]
 
     @cached_property
     def is_crossing(self) -> bool:
@@ -67,7 +96,7 @@ class HPDTile(IntEnum):
     @cached_property
     def feeds_right(self) -> bool:
         """True if the horizontal pipe continues to the right"""
-        return self in (HPDTile.WHORIZ, HPDTile.UHORIZ, HPDTile.ELBOW_SE, HPDTile.WCROSS, HPDTile.UCROSS,HPDTile.BUMP, HPDTile.ELBOW_NE)
+        return self in (HPDTile.WHORIZ, HPDTile.UHORIZ, HPDTile.ELBOW_SE, HPDTile.WCROSS, HPDTile.UCROSS, HPDTile.BUMP, HPDTile.ELBOW_NE)
 
     @cached_property
     def feeds_up(self) -> bool:
@@ -77,7 +106,7 @@ class HPDTile(IntEnum):
     @cached_property
     def entrance_from_bottom(self) -> bool:
         """True if a pipe can enter from the bottom"""
-        return self in (HPDTile.VERT, HPDTile.ELBOW_SE, HPDTile.ELBOW_SW,HPDTile.WCROSS, HPDTile.UCROSS, HPDTile.BUMP)
+        return self in (HPDTile.VERT, HPDTile.ELBOW_SE, HPDTile.ELBOW_SW, HPDTile.WCROSS, HPDTile.UCROSS, HPDTile.BUMP)
 
     @cached_property
     def entrance_from_left(self) -> bool:
@@ -124,11 +153,20 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         self._word = None
         self._unzero_cache = None
         self._id_vector = id_vector
-        #self.build()
+        # self.build()
 
     def is_classic_row(self, row: int) -> bool:
         """Get the tile type at (row, col)"""
         return self._id_vector[row] == 0
+
+    @classmethod
+    def from_bpd(cls, bpd: BPD) -> HPD:
+        bpd_grid = np.flipud(bpd.resize(len(bpd.perm))._grid)
+        # Vectorize the conversion function to work on arrays
+        vectorized_convert = np.vectorize(lambda tile: HPDTile.from_tiletype(TileType(tile)))
+        grid = vectorized_convert(bpd_grid).astype(HPDTile)
+
+        return HPD(grid, (1,) * len(bpd.perm))
 
     @classmethod
     def from_rc_graph(cls, rc: RCGraph) -> HPD:
@@ -149,6 +187,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             grid[i, n - 1 - i] = HPDTile.ELBOW_NW
         ret = cls(grid, (0,) * n)
         return ret
+
     # def swap_rows(self, row: int) -> HPD:
     #     if self.is_classic_row(row):
     #         assert row < len(self) - 1
@@ -248,7 +287,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         # while current_row > 0 and new_grid[current_row, col] == HPDTile.CROSS:
         #     current_row -= 1
         while current_row < self.rows:
-        #     new_grid[current_row, col : self.cols - 1] = new_grid[current_row, col + 1 :]
+            #     new_grid[current_row, col : self.cols - 1] = new_grid[current_row, col + 1 :]
             # if deleted_tile.entrance_from_left:
             # for j in range(self.cols):
             #     if j > change_col - 1:
@@ -301,9 +340,9 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             elif self[current_row, col] == HPDTile.ELBOW_NW:
                 col -= 1
                 going_left = True
-        #new_grid = np.concatenate([new_grid[:row - 1, : self.cols - 1], new_grid[row:, : self.cols - 1]], axis=0)
-        new_grid = np.concatenate([new_grid[:row - 1, : self.cols - 1], new_grid[row:, : self.cols - 1]], axis=0)
-        #new_grid = np.delete(new_grid, row - 1, axis=0)
+        # new_grid = np.concatenate([new_grid[:row - 1, : self.cols - 1], new_grid[row:, : self.cols - 1]], axis=0)
+        new_grid = np.concatenate([new_grid[: row - 1, : self.cols - 1], new_grid[row:, : self.cols - 1]], axis=0)
+        # new_grid = np.delete(new_grid, row - 1, axis=0)
 
         ret = HPD(new_grid)
         ret.rebuild()
@@ -322,53 +361,53 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
     #     while len(cut_list) < n:
     #         cut_list.append(cut_list[-1])
     #     pathfat = tuple([cut_list[i] * Permutation.w0(n - i).shiftup(i) for i in range(n - 1, -1, -1)])
-    #     print(pathfat)
+    #     # print(pathfat)
     #     return HPD.from_bruhat_path(pathfat).resize(start_row + other.rows)
-        # perm = self.perm * other.perm.shiftup(start_row)
-        # solf = self.resize(len(perm))
-        # new_grid = solf._grid.copy()
+    # perm = self.perm * other.perm.shiftup(start_row)
+    # solf = self.resize(len(perm))
+    # new_grid = solf._grid.copy()
 
-        # last_tbd_col = 0
-        # first_tbd_col = -1
-        # for col in range(new_grid.shape[1]):
-        #     if HPDTile(new_grid[start_row - 1, col]).entrance_from_bottom:
-        #         new_grid[start_row:, col] = HPDTile.VERT
-        #     else:
-        #         new_grid[start_row:, col] = HPDTile.TBD
-        #         if first_tbd_col == -1:
-        #             first_tbd_col = col
-        #         last_tbd_col = col
-        # _display_grid(new_grid)
-        # for row in range(other.rows):
-        #     other_col = other.cols - 1
-        #     for col in range(new_grid.shape[1] - 1, first_tbd_col - 1, -1):
-        #         if col > last_tbd_col:
-        #             new_grid[row + start_row, col] = HPDTile.CROSS
-        #             continue
+    # last_tbd_col = 0
+    # first_tbd_col = -1
+    # for col in range(new_grid.shape[1]):
+    #     if HPDTile(new_grid[start_row - 1, col]).entrance_from_bottom:
+    #         new_grid[start_row:, col] = HPDTile.VERT
+    #     else:
+    #         new_grid[start_row:, col] = HPDTile.TBD
+    #         if first_tbd_col == -1:
+    #             first_tbd_col = col
+    #         last_tbd_col = col
+    # _display_grid(new_grid)
+    # for row in range(other.rows):
+    #     other_col = other.cols - 1
+    #     for col in range(new_grid.shape[1] - 1, first_tbd_col - 1, -1):
+    #         if col > last_tbd_col:
+    #             new_grid[row + start_row, col] = HPDTile.CROSS
+    #             continue
 
-                # if other_col >= other.cols:
-                #     if HPDTile(new_grid[row, col]) == HPDTile.TBD:
-                #         new_grid[row + self.rows, col] = HPDTile.HORIZ
-                #     elif HPDTile(new_grid[row, col]) == HPDTile.VERT:
-                #         new_grid[row + self.rows, col] = HPDTile.CROSS
-                #     continue
-                # wasafeed = False
-                # if other_col == 0:
-                #     while col < new_grid.shape[1] and HPDTile(new_grid[row + self.rows, col]) == HPDTile.TBD:
-                #         new_grid[row + self.rows, col] = HPDTile.HORIZ
-                #         col += 1
-                #         wasafeed = True
-                # while col < new_grid.shape[1] and HPDTile(new_grid[row + self.rows, col]) != HPDTile.TBD:
-                #     if (wasafeed and other_col == 0) or (other_col > 0 and other[row, other_col].entrance_from_left  and other[row, other_col - 1].feeds_right):
-                #         new_grid[row + start_row, col] = HPDTile.CROSS
-                #     col += 1
-        #         if HPDTile(new_grid[row + start_row, col]) == HPDTile.TBD:
-        #             new_grid[row + start_row, col] = other[row, other_col]
-        #             other_col -= 1
-        #         elif other[row, other_col].feeds_right:
-        #             new_grid[row + start_row, col] = HPDTile.CROSS
-        #         _display_grid(new_grid)
-        # return HPD(new_grid)
+    # if other_col >= other.cols:
+    #     if HPDTile(new_grid[row, col]) == HPDTile.TBD:
+    #         new_grid[row + self.rows, col] = HPDTile.HORIZ
+    #     elif HPDTile(new_grid[row, col]) == HPDTile.VERT:
+    #         new_grid[row + self.rows, col] = HPDTile.CROSS
+    #     continue
+    # wasafeed = False
+    # if other_col == 0:
+    #     while col < new_grid.shape[1] and HPDTile(new_grid[row + self.rows, col]) == HPDTile.TBD:
+    #         new_grid[row + self.rows, col] = HPDTile.HORIZ
+    #         col += 1
+    #         wasafeed = True
+    # while col < new_grid.shape[1] and HPDTile(new_grid[row + self.rows, col]) != HPDTile.TBD:
+    #     if (wasafeed and other_col == 0) or (other_col > 0 and other[row, other_col].entrance_from_left  and other[row, other_col - 1].feeds_right):
+    #         new_grid[row + start_row, col] = HPDTile.CROSS
+    #     col += 1
+    #         if HPDTile(new_grid[row + start_row, col]) == HPDTile.TBD:
+    #             new_grid[row + start_row, col] = other[row, other_col]
+    #             other_col -= 1
+    #         elif other[row, other_col].feeds_right:
+    #             new_grid[row + start_row, col] = HPDTile.CROSS
+    #         _display_grid(new_grid)
+    # return HPD(new_grid)
 
     def append(self, other: HPD) -> HPD:
         perm = self.perm * other.perm.shiftup(self.rows)
@@ -417,8 +456,6 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
                 _display_grid(new_grid)
         return HPD(new_grid)
 
-
-
     @classmethod
     def from_bruhat_path(cls, path: Sequence[Permutation]) -> HPD:
         """
@@ -427,7 +464,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         n = len(path)
         grid = np.full((n, n), HPDTile.TBD, dtype=HPDTile)
 
-        for row in range(len(path) -1, 0, -1):
+        for row in range(len(path) - 1, 0, -1):
             grid[n - 1 - row, :] = HPD.row_from_k_chain(path[row - 1], path[row], n - row, n)
             change_col = path[row][n - row - 1]
             if grid[n - 1 - row, change_col - 1] == HPDTile.ELBOW_NW:
@@ -442,13 +479,13 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             if j > change_col - 1:
                 grid[n - 1, j] = HPDTile.CROSS
             # change (1, w(k)) from
-                # col = permo[rcol] - 1
-                # if col <= rowand path[row][col] == path[row - 1][col]:
-                #     grid[row - 1, col] = HPDTile.BLANK
-                # elif col > row and path[row][col] == path[row - 1][col] and path[row][col] != Permutation.w0(n)[col]:
-                #     grid[row - 1, col] = HPDTile.CROSS
+            # col = permo[rcol] - 1
+            # if col <= rowand path[row][col] == path[row - 1][col]:
+            #     grid[row - 1, col] = HPDTile.BLANK
+            # elif col > row and path[row][col] == path[row - 1][col] and path[row][col] != Permutation.w0(n)[col]:
+            #     grid[row - 1, col] = HPDTile.CROSS
         ret = cls(grid)
-        #ret.rebuild()
+        # ret.rebuild()
         return ret
 
     @staticmethod
@@ -803,16 +840,33 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
                 row_parts.append(tile_str)
 
             row_str = "".join(row_parts)
-            # Add permutation value as row label on left or right depending on id_vector
-            row_label = str(printer._print(i + 1))
-            if self._id_vector[i] == 0:
-                # Label on the left
-                row_str = f"{row_label} " + row_str
-            else:
-                # Label on the right
-                row_str += f" {row_label}"
             rows.append(row_str)
-            #rows.insert(0, f"{row_label} ")  # Add space between rows for readability
+
+        # Calculate max label widths for left and right sides
+        max_left_label_width = 0
+        max_right_label_width = 0
+        for i in range(self.rows):
+            row_label_len = len(str(printer._print(i + 1)))
+            if self._id_vector[i] == 0:
+                max_left_label_width = max(max_left_label_width, row_label_len)
+            else:
+                max_right_label_width = max(max_right_label_width, row_label_len)
+
+        # Now add labels to each row with consistent padding on both sides
+        for i in range(len(rows)):
+            if self._id_vector[i] == 0:
+                # Label on the left (normal order)
+                row_label = str(printer._print(i + 1))
+                left_part = row_label.ljust(max_left_label_width) + " "
+                right_part = " " * (max_right_label_width + 1) if max_right_label_width > 0 else ""
+                rows[i] = left_part + rows[i] + right_part
+            else:
+                # Label on the right (reverse order)
+                row_label = str(printer._print(self.rows - i))
+                left_part = " " * (max_left_label_width + 1) if max_left_label_width > 0 else ""
+                right_part = " " + row_label.rjust(max_right_label_width)
+                rows[i] = left_part + rows[i] + right_part
+            # rows.insert(0, f"{row_label} ")  # Add space between rows for readability
 
         # Add column labels at the top with proper spacing and alignment
         col_labels = []
@@ -824,11 +878,11 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             label = str(printer._print((~self.perm)[j]))
             col_labels.append(label.center(column_width))
 
-        # Add leading space to align with row labels and trailing space
-        # Find max row label width to align properly
-        max_row_label_width = max(len(str(printer._print(i + 1))) for i in range(self.rows))
-        leading_space = " " * (max_row_label_width + 1)  # +1 for the space after label
-        rows.insert(0, leading_space + "".join(col_labels))
+        # Add leading and trailing space to align with row labels
+        leading_space = " " * (max_left_label_width + 1) if max_left_label_width > 0 else ""
+        trailing_space = " " * (max_right_label_width + 1) if max_right_label_width > 0 else ""
+
+        rows.insert(0, leading_space + "".join(col_labels) + trailing_space)
 
         return prettyForm("\n".join(rows))
 
@@ -946,7 +1000,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
                     going_up = True
                     going_right = False
                 else:
-                    print("BADAAD")
+                    # print("BADAAD")
                     raise ValueError("Invalid BUMP direction")
             return this_row, col, going_right, going_up
 
@@ -955,13 +1009,13 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             tile = HPDTile(self._grid[row, 0])
             col = 0
             this_row = row
-            print(f"ROW: {row}")
+            # print(f"ROW: {row}")
             going_right = True
             going_up = False
 
             while this_row >= 0:
-            # Switch on all tile types
-                print(f"At ({this_row}, {col}) tile {tile}")
+                # Switch on all tile types
+                # print(f"At ({this_row}, {col}) tile {tile}")
                 tile = HPDTile(self._grid[this_row, col])
                 this_row, col, going_right, going_up = _new_direction(this_row, col, tile, going_right, going_up)
             top_pop[col] = row + 1
@@ -973,12 +1027,12 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             going_right = False
             going_up = False
             while this_row >= 0:
-            # Switch on all tile types
+                # Switch on all tile types
                 tile = HPDTile(self._grid[this_row, col])
                 this_row, col, going_right, going_up = _new_direction(this_row, col, tile, going_right, going_up)
-            top_pop[col] = row + 1
+            top_pop[col] = self.rows - row
         # print(top_pop)
-        #small_perm = Permutation([])
+        # small_perm = Permutation([])
         # Vectorized: Map tiles to their diff values
         # diff = np.ones((nrows, ncols), dtype=int)
         # diff[self._grid == HPDTile.BLANK] = 0
@@ -1003,7 +1057,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         #         small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
 
         # build_perm = good_cols * small_perm
-        print(top_pop)
+        # print(top_pop)
         self._perm = ~Permutation(top_pop)
         return self._perm
 
@@ -2023,7 +2077,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         self._valid = None
         self._word = None
         self._unzero_cache = None
-        #self.build()
+        # self.build()
 
     def zero_out_last_row(self) -> HPD:
         return self.resize(self.rows - 1)
