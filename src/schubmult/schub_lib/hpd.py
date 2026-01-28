@@ -178,6 +178,60 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             return self[row, col] == HPDTile.BLANK
         return self[row, col] == HPDTile.HORIZ or self[row, col] == HPDTile.CROSS
 
+    def row_index_to_label(self, row_index: int) -> int:
+        """
+        Map physical row index (0-based) to row label.
+
+        Row labels are assigned counterclockwise:
+        - _id_vector == 1 rows: labeled 1, 2, ... on RIGHT side, going UPWARD (bottom to top)
+        - _id_vector == 0 rows: labeled next, on LEFT side, going DOWNWARD (top to bottom)
+
+        Args:
+            row_index: Physical row index (0-based, top to bottom)
+
+        Returns:
+            Row label (1-based)
+        """
+        # Count how many _id_vector == 1 rows exist
+        right_rows = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 1]
+        left_rows = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 0]
+
+        if self._id_vector[row_index] == 1:
+            # Right side: count from bottom to top
+            # Find position of row_index in right_rows when reversed
+            position_from_bottom = len(right_rows) - right_rows.index(row_index)
+            return position_from_bottom
+            # Left side: continue numbering after right rows, count top to bottom
+        offset = len(right_rows)
+        position_from_top = left_rows.index(row_index) + 1
+        return offset + position_from_top
+
+    def row_label_to_index(self, label: int) -> int:
+        """
+        Map row label (1-based) to physical row index (0-based).
+
+        Inverse of row_index_to_label.
+
+        Args:
+            label: Row label (1-based)
+
+        Returns:
+            Physical row index (0-based, top to bottom)
+        """
+        right_rows = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 1]
+        left_rows = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 0]
+
+        num_right = len(right_rows)
+
+        if label <= num_right:
+            # Right side label: map from bottom to top
+            # label 1 is bottommost right row, label num_right is topmost right row
+            return right_rows[num_right - label]
+        # Left side label: map from top to bottom
+        # label num_right+1 is topmost left row
+        left_position = label - num_right - 1
+        return left_rows[left_position]
+
     @classmethod
     def from_bpd(cls, bpd: BPD) -> HPD:
         bpd_grid = np.flipud(bpd.resize(len(bpd.perm))._grid)
@@ -806,6 +860,11 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         """SymPy str representation of the HPD using tile symbols"""
         return printer._print("HPD(\n" + pretty(self) + ")")
 
+    def toggle_bottom_row(self) -> HPD:
+        new_id_vector = (*self.id_vector[:-1], 1 - self.id_vector[-1])
+        if new_id_vector[-1] == 0:
+            pass
+
     def _pretty(self, printer=None):
         """Pretty printing with row and column labels"""
         from sympy.printing.pretty.stringpict import prettyForm
@@ -867,7 +926,8 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         max_left_label_width = 0
         max_right_label_width = 0
         for i in range(self.rows):
-            row_label_len = len(str(printer._print(i + 1)))
+            row_label = self.row_index_to_label(i)
+            row_label_len = len(str(printer._print(row_label)))
             if self._id_vector[i] == 0:
                 max_left_label_width = max(max_left_label_width, row_label_len)
             else:
@@ -875,15 +935,14 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
 
         # Now add labels to each row with consistent padding on both sides
         for i in range(len(rows)):
+            row_label = str(printer._print(self.row_index_to_label(i)))
             if self._id_vector[i] == 0:
-                # Label on the left (normal order)
-                row_label = str(printer._print(i + 1))
+                # Label on the left
                 left_part = row_label.ljust(max_left_label_width) + " "
                 right_part = " " * (max_right_label_width + 1) if max_right_label_width > 0 else ""
                 rows[i] = left_part + rows[i] + right_part
             else:
-                # Label on the right (reverse order)
-                row_label = str(printer._print(self.rows - i))
+                # Label on the right
                 left_part = " " * (max_left_label_width + 1) if max_left_label_width > 0 else ""
                 right_part = " " + row_label.rjust(max_right_label_width)
                 rows[i] = left_part + rows[i] + right_part
@@ -1109,14 +1168,28 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         Compute the length vector of the permutation represented by this HPD.
 
         The length vector is a tuple (l_1, l_2, ..., l_n) where l_i is the number
-        of crossings in row i.
+        of weighty tiles in row i. Which tiles are weighty depends on _id_vector[i]:
+        - If _id_vector[i] == 1: BLANK tiles are weighty
+        - If _id_vector[i] == 0: CROSS and HORIZ tiles are weighty
 
         Returns:
             Tuple of integers representing the length vector
         """
-        # Vectorized: compute all row sums at once
-        blank_counts = np.sum(self._grid == HPDTile.BLANK, axis=1)
-        return tuple(int(x) for x in blank_counts)
+        # Vectorized approach: different tiles count based on _id_vector
+        id_vec = np.array(self._id_vector)[:, np.newaxis]  # Shape (n, 1) for broadcasting
+
+        # Create masks for different tile types
+        is_blank = self._grid == HPDTile.BLANK
+        is_cross = self._grid == HPDTile.CROSS
+        is_horiz = self._grid == HPDTile.HORIZ
+
+        # For id_vector == 1 rows: count BLANK tiles
+        # For id_vector == 0 rows: count CROSS and HORIZ tiles
+        weighty_mask = np.where(id_vec == 1, is_blank, is_cross | is_horiz)
+
+        # Sum along each row
+        weighted_counts = np.sum(weighty_mask, axis=1)
+        return tuple(int(weighted_counts[self.row_index_to_label(i) - 1]) for i in range(len(weighted_counts)))
 
     @classmethod
     def from_asm(cls, asm) -> HPD:
