@@ -196,14 +196,14 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         right_rows = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 1]
         left_rows = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 0]
 
-        if self._id_vector[row_index] == 1:
+        if self._id_vector[row_index] == 0:
             # Right side: count from bottom to top
             # Find position of row_index in right_rows when reversed
-            position_from_bottom = len(right_rows) - right_rows.index(row_index)
-            return position_from_bottom
+
+            return left_rows.index(row_index) + 1
             # Left side: continue numbering after right rows, count top to bottom
-        offset = len(right_rows)
-        position_from_top = left_rows.index(row_index) + 1
+        offset = len(left_rows)
+        position_from_top = len(right_rows) - right_rows.index(row_index)
         return offset + position_from_top
 
     def row_label_to_index(self, label: int) -> int:
@@ -221,16 +221,16 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         right_rows = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 1]
         left_rows = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 0]
 
-        num_right = len(right_rows)
+        num_left = len(left_rows)
 
-        if label <= num_right:
+        if label <= num_left:
             # Right side label: map from bottom to top
             # label 1 is bottommost right row, label num_right is topmost right row
-            return right_rows[num_right - label]
+            return left_rows[label - 1]
         # Left side label: map from top to bottom
         # label num_right+1 is topmost left row
-        left_position = label - num_right - 1
-        return left_rows[left_position]
+        right_position = len(right_rows) - label + num_left
+        return right_rows[right_position]
 
     @classmethod
     def from_bpd(cls, bpd: BPD) -> HPD:
@@ -863,7 +863,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
     def toggle_bottom_row(self) -> HPD:
         new_id_vector = (*self.id_vector[:-1], 1 - self.id_vector[-1])
         if new_id_vector[-1] == 0:
-            pass
+            length = self.length_vector[-1]  # noqa: F841
 
     def _pretty(self, printer=None):
         """Pretty printing with row and column labels"""
