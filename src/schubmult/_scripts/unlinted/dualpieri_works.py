@@ -5,12 +5,11 @@ from multiprocessing import Pool, cpu_count
 from functools import partial
 
 def is_decomposable(w):
+    for i in range(1, len(w) - 1):
+        coset, w_J = w.coset_decomp(*list(range(1, i + 1)), *list(range(i + 2, len(w))))
+        if coset.inv == 0 and set(w_J.code[: i + 1]) != {0} and set(w_J.code[i + 2 :]) != {0}:
+            return True
     return False
-    # for i in range(1, len(w) - 1):
-    #     coset, w_J = w.coset_decomp(*list(range(1, i + 1)), *list(range(i + 2, len(w))))
-    #     if coset.inv == 0 and set(w_J.code[: i + 1]) != {0} and set(w_J.code[i + 2 :]) != {0}:
-    #         return True
-    # return False
 
 def decompose(w):
     for i in range(1, len(w) - 1):

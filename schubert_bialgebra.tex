@@ -1549,37 +1549,44 @@ We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(
 % \end{algorithm}
 
 \subsection{Definition of the ring product}
-\begin{definition}
-Suppose we have two bounded RC graphs $(R_1, m)$ and $(R_2,n)$. The product of these is a sum of bounded RC graphs defined as follows. Define $\mathscr{P}_{m,n}(R_1, v)$ to be the set of RC graphs $R'$ such that there exists an $N\geq n$ for which
-$$\zeromap^N(R', m + N) = (R_1, m)$$
-and $\wof{R'}\shup^m v$ is a reduced product with $\maxd(\wof{R'}\shup^m v)\leq m + n$. Then the product is defined by
 
-$$(R_1, m)\diamond (R_2, n) = \sum_{R'\in\mathscr{P}_{m,n}(R_1,\wof{R_2})}(R'\cup \shup^m(R_2), m + n)$$  
+\newcommand{\clp}{\mathtt{clip}}
+
+\begin{definition}
+Suppose we have two bounded RC graphs $(R_1, m)$ and $(R_2,n)$. The product of these is defined by
+$$(R_1, m)\diamond (R_2, n) = \sum_{\clp^m(R')=R_1,\trm^m(R')=R_2}(R', m + n)$$  
 \end{definition}
+
+\begin{theorem} \label{theorem:howyouslice}
+  Let $r>0$ be an integer and suppose $p\geq 0$ is an integer such that $p\leq r$. Then the map $\BRC(r)\to \BRC(p)\times \BRC(r - p)\times S_\infty$ defined by
+  $$(R, r)\mapsto (\clp^p(R, r), \trm^{p}(R, r), \wof{R})$$
+  is injective.
+\end{theorem}
+\begin{proof}
+For $p = 0$ this is trivial, and for $p = 1$ this is due to the fact that any subset of the first row of an RC graph corresponds to a unique permutation, so that if we know $\trm^1(R, r) = (R', r - 1)$ and we know $\wof{R}$, then $R$ is the unique RC graph such that the first row corresponds to the permutation $u$ such that $u\wof{R'}=\wof{R}$ and $\trm^1(R, r) = (R', r-1)$. 
+
+For $p=r-1$, we use the fact that row $r$ of a bounded RC graph $(R,r)$ is uniquely determined by its weight. It therefore suffices to prove the result when this weight is $0$, which is covered by Theorem \ref{theorem:zero_bijection}. We have thus proved the theorem for $r=2$.
+
+For larger $r$, we prove the result by induction on $p$, keeping in mind the solutions for the cases $p=0,1,r-1$. We know that $(R,r)$ is uniquely determined by $(\clp^{r-1}(R), \wof{R})$ and we may use the inductive hypothesis to reason that it is therefore uniquely determined by $(\clp^{p}(R), \trm^p(\clp^{r-1}(R)), \wof{R})$. Furthermore, Let $u=\wof{\clp^{p}(R)}$. Then the pair $(\trm^{p-1}(\clp^{r-1}(R)), u^{-1}\wof{R})$ uniquely determines $\trm^p(R)$ by the inductive hypothesis. Hence $(\clp^{p}(R), \trm^{p}(R), \wof{R})$ uniquely determines $(R, r)$, establishing injectivity.
+\end{proof}
+
 
 \begin{theorem}
 	 The product $\diamond$ turns $\BRC$ into a ring, and $\omega\otimes \alpha:\BRC\to \dcoma\otimes \dcoma$ is a homomorphism of rings.
 \end{theorem}
 \begin{proof}
-What is in question is associativity. Let $(R, m+n)$ be a bounded RC graph, and let
-$$R_{\leq m} = \{(i, j)\in R \mid i\leq m\}$$
-also let 
-$$R_{> m} = \{(i - m, j)\in R \mid i > m\}$$
-Then there is a unique $R'$ such that $R_{\leq m}\in \mathscr{P}_{m,n}(R', \wof{R_{> m}})$, namely 
-$$R' = \zeromap^N(R_{\leq m + N}, m + N)$$ 
-for sufficiently large $N$. Hence there is a well-defined function 
-$$S_{p,q,r}:\mathcal{RC}(p+q+r)\to \RC(p)\times \RC(q)\times \RC(r)$$
-such that
-$$S_{p,q,r}(R) = (\zeromap^N(R_{\leq p + N}, p + N), \zeromap^M(R_{> p, \leq p + q + M}, q + M), R_{> p + q})$$
-for which
-$$(R_1, p)\diamond ((R_2, q)\diamond (R_3, r)) = \sum_{S_{p,q,r}(R) = (R_1, R_2, R_3)}(R, p + q + r) = ((R_1, p)\diamond (R_2, q))\diamond (R_3, r)$$
-Associativity follows. $\omega:\BRC\to \dcoma$ is easily seen to be a homomorphism of rings, since the product is weight preserving. For the homomorphism $\alpha:\BRC\to \dcoma$, consider a bounded RC graph $(R, n)$ and an empty bounded RC graph $(\emptyset, 1)$. Then by definition of $\zeromap$ we have that
-$$(R, n)\diamond (\emptyset, 1) = \sum_{\zeromap(R', n+1) = (R,n)}(R', n + 1)$$
-and
-$$\alpha*(R, n)\alpha(\emptyset, 1) = \dsch_{\wof{R}}^n\dsch_{e}^1 = \sum_{\substack{w'\downvar{n+1} w\\\ell(w)=\ell(w')}}\dsch_{w'}^{n+1}=\sum_{\zeromap(R',n+1) = (R,n)}\alpha(R', n+1)$$
-More generally,
-$$\alpha(R, n)\alpha(r_p, 1) = \dsch_{\wof{R}}^n[p] = \sum_{\substack{w'\downvar{n+1} w\\\ell(w,w') = p}}\dsch_{w'}^{n+1}=\sum_{\zeromap(R',n+1) = (R,n)}\alpha(R'\cup \shup^{n}r_p, n+1)$$
-Associativity gives us the result.
+What is in question is associativity. Suppose we are given three bounded RC graphs $(R_1, p)$, $(R_2, q)$, and $(R_3, r)$, and we want to show that the order of bracketing the product is irrelevant. Consider the set $A$ of pairs of permutations $(u,w)$ such that there exists an RC graph $R_u$ with $\clp^p(R_u) = R_1$, $\trm^q(R_u) = R_2$, as well as an RC graph $R_w$ such that $\clp^{p+q}(R_w)=R_u$ and $\trm^{p+q}(R_w) = R_3$. The bracketing in the first order yields the sum
+$$\sum_{(u,w)\in A}(R_w, p+q+r)$$
+Similarly, let $B$ be the set of permutations $(w, v)$ such that there exists an RC graph $R_v$ with $\clp^q(R_v) = R_2$, $\trm^r(R_v) = R_3$, as well as an RC graph $R_w$ such that $\clp^{p}(R_w)=R_1$ and $\trm^{p}(R_w) = R_v$. The bracketing in the second order yields the sum
+$$\sum_{(w,v)\in B}(R_w, p+q+r)$$
+Then we claim that $(u, w)\mapsto (w, \wof{\trm^p(R_w)})$ is a bijection between $A$ and $B$ that preserves the sum (since $w$ is the same). To construct the inverse, note that the pair $(R_2, R_3)$ together with $v=\wof{\trm^p(R_w)}$ determine a unique RC graph $R_v$ such that $\trm^q(R_v) = \trm^{p+q}(R_w) = R_3$. $R_3$ together with $\clp^{p+q}(R_w)$ and $w$ uniquely determine $R_w$, and the associated permutation of $\clp^{p+q}(R_w)$ is precisely $u$. This establishes associativity.
+% there is at most one bounded RC graph $(R_1', p + q)$ for each $u\in S_\infty$ such that $\clp^p(R_1') = R_1$, $\trm^p(R_1') = R_2$, and $\wof{R_1'} = u$. Given this RC graph and a permutation $w$, there is at most one bounded RC graph $(R'', p + q + r)$ such that $\clp^{p+q}(R'') = (R_1')$, $\trm^{p+q}(R'') = (R_3, r)$, and $\wof{R''} = w$.
+
+% Now we may slice $R''$ at $p$ to obtain $(R_1, p)$ and $\trm^p(R'')$, which together with $w$ uniquely determine $R''$. We also know that $\trm^q(\trm^p(R'')) = R_3$ and $\trm^q(\clp^{p+q}(R'')) = R_2$. Thus the unique choice of permutation $u'$ yielding the result for the opposite bracketing is $\wof{R''_{\leq p}}^{-1}w$. This establishes associativity.
+
+$\omega:\BRC\to \dcoma$ is easily seen to be a homomorphism of rings, since the product is weight preserving in the correct way. For the map $\alpha:\BRC\to \dcoma$, we utilize the formula for the coefficient $d_{u,v}^w(p,q)$ as the coefficient of $\sch_u(x_1,\ldots,x_p)$ when we set $x_{p+1}=\cdots=x_{p+q}=0$ in the polynomial
+$$\partial^{\shup^p v}\sch_w(x_1,\ldots,x_{p+q})$$
+We claim that if we fix an RC graph $R_u$ for $u$ and an RC graph $R_v$ for $v$, then this coefficient is the same as the number of BRCs $(R, p+q)$ for $w$ such that $\trm^p(R)=R_v$ and $\clp^p(R) = R_u$. If we assume that $v$ is the identity, this follows from Theorem \ref{theorem:zero_bijection}. The divided difference operator characterization means that for $\ell(v)>0$, we can replace the empty space with any (shifted up) RC graph for $v$ $(R_v, q)$ and get the result as desired. 
 \end{proof}
 
 %We would also like a combinatorial interpretation of this product.
@@ -2437,7 +2444,7 @@ Associativity gives us the result.
 % \subsection{Zeroing out other rows}
 
 % Let $(R,n)$ be a bounded RC graph with row $k$ empty, with $k<n$. Suppose also that $k$ is a descent of $\wof{R}$. Let $(R_1, k-1) = \zeromap^N(R_{\leq k-1}, k-1+N)$ and let $R_2=R_{>k}$.
-\newcommand{\clp}{\mathtt{clip}}
+
 
 % \begin{lemma} \label{lemma:descentbijection}
 % Let $w$ be a permutation, let $k$ be a positive integer, and let $n>k$ be an integer such that $n$ is a descent of $w$. Let $\mathcal{D}_n^{(n)}(w)$ be the set of permutations $w'\in\mathcal{D}_k(w)$ such that $n$ is a descent of $w'$. Then the map $w'\mapsto w's_n$ is a bijection $\mathcal{D}_k^{(n)}(w)\to \mathcal{D}_k(ws_n)$.
