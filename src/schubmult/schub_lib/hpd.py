@@ -1033,10 +1033,10 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         # left_rows = (np.where(left_entrance_mask)[0]).tolist()
         # right_rows = (np.where(right_entrance_mask)[0]).tolist()
         left_spots = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 0]
-        left_labels = [i + 1 for i, j in enumerate(left_spots)]
+        left_labels = [self.row_index_to_label(i) for i in left_spots]
         left_rows = list(zip(left_spots, left_labels))
         right_spots = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 1]
-        right_labels = [len(right_spots) - i for i, j in enumerate(right_spots)]
+        right_labels = [self.row_index_to_label(i) for i in right_spots]
         right_rows = list(zip(right_spots, right_labels))
         top_pop = [0] * self.cols
 
