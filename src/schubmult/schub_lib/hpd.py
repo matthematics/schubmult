@@ -22,33 +22,37 @@ from schubmult.symbolic import Expr
 
 class HPDTile(IntEnum):
     """
-    Enumeration of the 6 possible tile types in a pipe dream.
+    Enumeration of the possible tile types in a pipe dream.
 
     Each tile represents how two pipes (horizontal and vertical) interact in a square.
+    Note: Whether a tile is "weighty" depends on the row's _id_vector value, not the tile itself.
     """
 
     TBD = 0  # Placeholder for uninitialized tile
-    UBLANK = 1  # Both pipes go straight (no crossing, no elbow)
-    WBLANK = 2  # Both pipes go straight (no crossing, no elbow)
-    WCROSS = 3  # Pipes cross each other
-    UCROSS = 4  # Pipes cross each other
-    WHORIZ = 5
-    UHORIZ = 6
-    ELBOW_NW = 7  # Elbow: bottom-right to top-left (╯)
-    ELBOW_SE = 8  # Elbow: top-left to bottom-right (╮)
-    ELBOW_NE = 9  # Elbow: bottom-right to top-left (╯)
-    ELBOW_SW = 10  # Elbow: top-left to bottom-right (╮)
-    VERT = 11
-    BUMP = 12  # Bump/osculating tile (pipes touch at corner)
+    BLANK = 1  # Both pipes go straight (no crossing, no elbow)
+    CROSS = 2  # Pipes cross each other
+    HORIZ = 3  # Horizontal pipe
+    ELBOW_NW = 4  # Elbow: bottom-right to top-left (╯)
+    ELBOW_SE = 5  # Elbow: top-left to bottom-right (╮)
+    ELBOW_NE = 6  # Elbow: bottom-right to top-left (╯)
+    ELBOW_SW = 7  # Elbow: top-left to bottom-right (╮)
+    VERT = 8
+    BUMP = 9  # Bump/osculating tile (pipes touch at corner)
+
+    # Legacy aliases for backward compatibility
+    UBLANK = 1
+    WBLANK = 1
+    UCROSS = 2
+    WCROSS = 2
+    UHORIZ = 3
+    WHORIZ = 3
 
     def __str__(self) -> str:
+        """Return base display symbol (use get_display_symbol() for context-aware rendering)"""
         symbols = {
-            HPDTile.WBLANK: "░",
-            HPDTile.UBLANK: "□",
-            HPDTile.WCROSS: "╋",
-            HPDTile.UCROSS: "┼",
-            HPDTile.WHORIZ: "━",
-            HPDTile.UHORIZ: "─",
+            HPDTile.BLANK: "□",
+            HPDTile.CROSS: "┼",
+            HPDTile.HORIZ: "─",
             HPDTile.ELBOW_NW: "╯",
             HPDTile.ELBOW_SE: "╭",
             HPDTile.ELBOW_NE: "┕",
@@ -59,16 +63,27 @@ class HPDTile(IntEnum):
         }
         return symbols.get(self, "?")
 
+    def get_display_symbol(self, is_weighty: bool) -> str:
+        """Get display symbol based on whether the tile is in a weighty row"""
+        if is_weighty:
+            weighty_symbols = {
+                HPDTile.BLANK: "░",
+                HPDTile.CROSS: "╋",
+                HPDTile.HORIZ: "━",
+            }
+            return weighty_symbols.get(self, str(self))
+        return str(self)
+
     @classmethod
     def from_tiletype(cls, tile: TileType) -> HPDTile:
         """Convert from TileType to HPDTile"""
         mapping = {
-            TileType.BLANK: HPDTile.WBLANK,
-            TileType.CROSS: HPDTile.UCROSS,
+            TileType.BLANK: HPDTile.BLANK,
+            TileType.CROSS: HPDTile.CROSS,
             TileType.ELBOW_NW: HPDTile.ELBOW_SW,
             TileType.ELBOW_SE: HPDTile.ELBOW_NE,
             TileType.VERT: HPDTile.VERT,
-            TileType.HORIZ: HPDTile.UHORIZ,
+            TileType.HORIZ: HPDTile.HORIZ,
             TileType.BUMP: HPDTile.BUMP,
         }
         return mapping[tile]
@@ -76,7 +91,7 @@ class HPDTile(IntEnum):
     @cached_property
     def is_crossing(self) -> bool:
         """True if this tile is a crossing"""
-        return self in (HPDTile.WCROSS, HPDTile.UCROSS)
+        return self == HPDTile.CROSS
 
     @cached_property
     def is_elbow(self) -> bool:
@@ -88,30 +103,28 @@ class HPDTile(IntEnum):
         """True if this tile is empty (pipes go straight)"""
         return self == HPDTile.BLANK
 
-    @cached_property
-    def is_weighty(self):
-        """True if this tile contributes to the weight (crossings and bumps)"""
-        return self in (HPDTile.WCROSS, HPDTile.WHORIZ, HPDTile.WBLANK)
+    # Removed is_weighty - now context-dependent on row's _id_vector
+    # Use HPD.is_weighty_position(row, col) instead
 
     @cached_property
     def feeds_right(self) -> bool:
         """True if the horizontal pipe continues to the right"""
-        return self in (HPDTile.WHORIZ, HPDTile.UHORIZ, HPDTile.ELBOW_SE, HPDTile.WCROSS, HPDTile.UCROSS, HPDTile.BUMP, HPDTile.ELBOW_NE)
+        return self in (HPDTile.HORIZ, HPDTile.ELBOW_SE, HPDTile.CROSS, HPDTile.BUMP, HPDTile.ELBOW_NE)
 
     @cached_property
     def feeds_up(self) -> bool:
         """True if the vertical pipe continues upwards"""
-        return self in (HPDTile.VERT, HPDTile.ELBOW_NW, HPDTile.WCROSS, HPDTile.UCROSS, HPDTile.BUMP, HPDTile.ELBOW_NE)
+        return self in (HPDTile.VERT, HPDTile.ELBOW_NW, HPDTile.CROSS, HPDTile.BUMP, HPDTile.ELBOW_NE)
 
     @cached_property
     def entrance_from_bottom(self) -> bool:
         """True if a pipe can enter from the bottom"""
-        return self in (HPDTile.VERT, HPDTile.ELBOW_SE, HPDTile.ELBOW_SW, HPDTile.WCROSS, HPDTile.UCROSS, HPDTile.BUMP)
+        return self in (HPDTile.VERT, HPDTile.ELBOW_SE, HPDTile.ELBOW_SW, HPDTile.CROSS, HPDTile.BUMP)
 
     @cached_property
     def entrance_from_left(self) -> bool:
         """True if a pipe can enter from the left"""
-        return self in (HPDTile.WHORIZ, HPDTile.UHORIZ, HPDTile.ELBOW_NW, HPDTile.WCROSS, HPDTile.UCROSS, HPDTile.BUMP, HPDTile.ELBOW_SW)
+        return self in (HPDTile.HORIZ, HPDTile.ELBOW_NW, HPDTile.CROSS, HPDTile.BUMP, HPDTile.ELBOW_SW)
 
 
 def _invalidate_grid(grid: np.ndarray) -> None:
@@ -156,8 +169,14 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         # self.build()
 
     def is_classic_row(self, row: int) -> bool:
-        """Get the tile type at (row, col)"""
+        """Check if row is a classic row (id_vector[row] == 0)"""
         return self._id_vector[row] == 0
+
+    def is_weighty_position(self, row: int, col: int) -> bool:
+        """Check if a position is in; a weighty row (id_vector[row] == 1)"""
+        if self._id_vector[row] == 1:
+            return self[row, col] == HPDTile.BLANK
+        return self[row, col] == HPDTile.HORIZ or self[row, col] == HPDTile.CROSS
 
     @classmethod
     def from_bpd(cls, bpd: BPD) -> HPD:
@@ -177,11 +196,11 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             rc: RCGraph instance
         """
         n = len(rc.perm)
-        grid = np.full((n, n), HPDTile.UBLANK, dtype=HPDTile)
+        grid = np.full((n, n), HPDTile.BLANK, dtype=HPDTile)
         for i in range(n):
             for j in range(n - i):
                 if rc.has_element(i + 1, j + 1):
-                    grid[i, j] = HPDTile.WCROSS
+                    grid[i, j] = HPDTile.CROSS
                 else:
                     grid[i, j] = HPDTile.BUMP
             grid[i, n - 1 - i] = HPDTile.ELBOW_NW
@@ -552,19 +571,19 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             elif swaps_with_smaller and not swaps_with_larger:
                 tile = HPDTile.ELBOW_NW if c in first_k_numbers else HPDTile.ELBOW_SW
             elif swaps_with_larger and swaps_with_smaller:
-                tile = HPDTile.WHORIZ if c in first_k_numbers else HPDTile.UHORIZ
+                tile = HPDTile.HORIZ
             else:
                 # c stays unswapped
                 if c not in first_k_numbers:
-                    tile = HPDTile.UBLANK
+                    tile = HPDTile.BLANK
                 else:
                     # Check if chain ever swaps values a,b with a < c < b
                     swaps_bracketing = any(swaps_by_a[a] > c > a for a in swaps_by_a)
 
                     if swaps_bracketing:
-                        tile = HPDTile.WCROSS
+                        tile = HPDTile.CROSS
                     else:
-                        tile = HPDTile.WBLANK
+                        tile = HPDTile.BLANK
 
             # Set the tile at column c-1 (0-indexed)
             row_tiles[c - 1] = tile
@@ -813,14 +832,16 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             row_parts = []
             for j in range(self.cols):
                 tile = self[i, j]
-                tile_str = str(tile)
+                is_weighty = self.is_weighty_position(i, j)
+                # Use context-aware display symbol
+                tile_str = tile.get_display_symbol(is_weighty)
 
                 # Symmetric padding to center tile in column using max width
                 total_pad = max(max_col_width - 1, 2)
                 left_pad = total_pad // 2
                 right_pad = total_pad - left_pad
 
-                horiz_str = str(HPDTile.UHORIZ)
+                horiz_str = str(HPDTile.HORIZ)
                 space_str = " "
 
                 # Determine left padding character
@@ -953,10 +974,10 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         # left_rows = (np.where(left_entrance_mask)[0]).tolist()
         # right_rows = (np.where(right_entrance_mask)[0]).tolist()
         left_spots = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 0]
-        left_labels = [ i + 1 for i, j in enumerate(left_spots)]
+        left_labels = [i + 1 for i, j in enumerate(left_spots)]
         left_rows = list(zip(left_spots, left_labels))
         right_spots = [i for i in range(len(self._id_vector)) if self._id_vector[i] == 1]
-        right_labels = [ len(right_spots) - i for i, j in enumerate(right_spots)]
+        right_labels = [len(right_spots) - i for i, j in enumerate(right_spots)]
         right_rows = list(zip(right_spots, right_labels))
         top_pop = [0] * self.cols
 
