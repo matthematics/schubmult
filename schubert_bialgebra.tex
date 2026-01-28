@@ -1575,11 +1575,18 @@ For larger $r$, we prove the result by induction on $p$, keeping in mind the sol
 	 The product $\diamond$ turns $\BRC$ into a ring, and $\omega\otimes \alpha:\BRC\to \dcoma\otimes \dcoma$ is a homomorphism of rings.
 \end{theorem}
 \begin{proof}
-What is in question is associativity. Suppose we are given three bounded RC graphs $(R_1, p)$, $(R_2, q)$, and $(R_3, r)$, and we want to show that the order of bracketing the product is irrelevant. Consider the set $A$ of pairs of permutations $(u,w)$ such that there exists an RC graph $R_u$ with $\clp^p(R_u) = R_1$, $\trm^q(R_u) = R_2$, as well as an RC graph $R_w$ such that $\clp^{p+q}(R_w)=R_u$ and $\trm^{p+q}(R_w) = R_3$. The bracketing in the first order yields the sum
-$$\sum_{(u,w)\in A}(R_w, p+q+r)$$
-Similarly, let $B$ be the set of permutations $(w, v)$ such that there exists an RC graph $R_v$ with $\clp^q(R_v) = R_2$, $\trm^r(R_v) = R_3$, as well as an RC graph $R_w$ such that $\clp^{p}(R_w)=R_1$ and $\trm^{p}(R_w) = R_v$. The bracketing in the second order yields the sum
-$$\sum_{(w,v)\in B}(R_w, p+q+r)$$
-Then we claim that $(u, w)\mapsto (w, \wof{\trm^p(R_w)})$ is a bijection between $A$ and $B$ that preserves the sum (since $w$ is the same). To construct the inverse, note that the pair $(R_2, R_3)$ together with $v=\wof{\trm^p(R_w)}$ determine a unique RC graph $R_v$ such that $\trm^q(R_v) = \trm^{p+q}(R_w) = R_3$. $R_3$ together with $\clp^{p+q}(R_w)$ and $w$ uniquely determine $R_w$, and the associated permutation of $\clp^{p+q}(R_w)$ is precisely $u$. This establishes associativity.
+What is in question is associativity. Suppose we are given three bounded RC graphs $(R_1, p)$, $(R_2, q)$, and $(R_3, r)$, and we want to show that the order of bracketing the product is irrelevant. This is because if $R_w$ is a term in the product, 
+$$\clp^p(\clp^{p+q}(R_w)) = R_1 = \clp^p(R_w)$$
+$$\trm^p(\clp^{p+q}(R_w)) = R_2 = \clp^q(\trm^p(R_w))$$ 
+and 
+$$\trm^{p+q}(R_w) = R_3 = \trm^q(\trm^{p}(R_w))$$
+and each term in the product has a coefficient of $1$.
+
+% Consider the set $A$ of pairs of permutations $(u,w)$ such that there exists an RC graph $R_u$ with $\clp^p(R_u) = R_1$, $\trm^q(R_u) = R_2$, as well as an RC graph $R_w$ such that $\clp^{p+q}(R_w)=R_u$ and $\trm^{p+q}(R_w) = R_3$. The bracketing in the first order yields the sum
+% $$\sum_{(u,w)\in A}(R_w, p+q+r)$$
+% Similarly, let $B$ be the set of permutations $(w, v)$ such that there exists an RC graph $R_v$ with $\clp^q(R_v) = R_2$, $\trm^r(R_v) = R_3$, as well as an RC graph $R_w$ such that $\clp^{p}(R_w)=R_1$ and $\trm^{p}(R_w) = R_v$. The bracketing in the second order yields the sum
+% $$\sum_{(w,v)\in B}(R_w, p+q+r)$$
+% Then we claim that $(u, w)\mapsto (w, \wof{\trm^p(R_w)})$ is a bijection between $A$ and $B$ that preserves the sum (since $w$ is the same). To construct the inverse, note that the pair $(R_2, R_3)$ together with $v=\wof{\trm^p(R_w)}$ determine a unique RC graph $R_v$ such that $\trm^q(R_v) = \trm^{p+q}(R_w) = R_3$. $R_3$ together with $\clp^{p+q}(R_w)$ and $w$ uniquely determine $R_w$, and the associated permutation of $\clp^{p+q}(R_w)$ is precisely $u$. This establishes associativity.
 % there is at most one bounded RC graph $(R_1', p + q)$ for each $u\in S_\infty$ such that $\clp^p(R_1') = R_1$, $\trm^p(R_1') = R_2$, and $\wof{R_1'} = u$. Given this RC graph and a permutation $w$, there is at most one bounded RC graph $(R'', p + q + r)$ such that $\clp^{p+q}(R'') = (R_1')$, $\trm^{p+q}(R'') = (R_3, r)$, and $\wof{R''} = w$.
 
 % Now we may slice $R''$ at $p$ to obtain $(R_1, p)$ and $\trm^p(R'')$, which together with $w$ uniquely determine $R''$. We also know that $\trm^q(\trm^p(R'')) = R_3$ and $\trm^q(\clp^{p+q}(R'')) = R_2$. Thus the unique choice of permutation $u'$ yielding the result for the opposite bracketing is $\wof{R''_{\leq p}}^{-1}w$. This establishes associativity.
