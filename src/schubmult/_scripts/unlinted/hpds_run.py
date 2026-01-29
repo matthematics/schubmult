@@ -9,12 +9,15 @@ if __name__ == "__main__":
     BBB = HPD.from_bpd(BPD.from_rc_graph(rc))
     print(BBB)
     print(BBB.length_vector)
+    print("THE TOG")
+    print(BBB.toggle_bottom_row())
     grid = np.array([[HPDTile.CROSS, HPDTile.BUMP, HPDTile.CROSS, HPDTile.ELBOW_NW],
                      [HPDTile.VERT, HPDTile.ELBOW_NE, HPDTile.CROSS, HPDTile.HORIZ],
                      [HPDTile.ELBOW_NW, HPDTile.ELBOW_SE, HPDTile.ELBOW_NW, HPDTile.BLANK],
                      [HPDTile.HORIZ, HPDTile.ELBOW_NW, HPDTile.BLANK, HPDTile.BLANK]])
     hpd = HPD(grid, (0,1,0,0))
     print(hpd)
+    
     grid = np.array([[HPDTile.CROSS, HPDTile.BUMP, HPDTile.CROSS, HPDTile.ELBOW_NW],
                      [HPDTile.VERT, HPDTile.ELBOW_NE, HPDTile.CROSS, HPDTile.HORIZ],
                      [HPDTile.ELBOW_NW, HPDTile.ELBOW_SE, HPDTile.ELBOW_NW, HPDTile.BLANK],

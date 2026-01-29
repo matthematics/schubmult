@@ -138,6 +138,17 @@ def _display_grid(grid: np.ndarray) -> str:
     rows = ["".join(str(HPDTile(grid[i, j])) for j in range(grid.shape[1])) for i in range(grid.shape[0])]
     print("\n".join(rows))
 
+def _classical_bottom_row(weight, length):
+    row = np.array([HPDTile.BLANK] * length)
+    row[:weight] = HPDTile.HORIZ
+    row[weight] = HPDTile.ELBOW_NW
+    return row
+
+def _bpd_bottom_row(weight, length):
+    row = np.array([HPDTile.BLANK] * length)
+    row[weight] = HPDTile.ELBOW_NE
+    row[weight:] = HPDTile.HORIZ
+    return row
 
 class HPD(SchubertMonomialGraph, DefaultPrinting):
     """
@@ -861,9 +872,16 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         return printer._print("HPD(\n" + pretty(self) + ")")
 
     def toggle_bottom_row(self) -> HPD:
-        new_id_vector = (*self.id_vector[:-1], 1 - self.id_vector[-1])
+        new_id_vector = (*self._id_vector[:-1], 1 - self._id_vector[-1])
+
+        new_grid = self._grid.copy()
         if new_id_vector[-1] == 0:
-            length = self.length_vector[-1]  # noqa: F841
+            weight = np.sum(np.where(self._grid[-1, :] == HPDTile.BLANK, 1, 0))
+            new_grid[-1, :] = _classical_bottom_row(weight, self.cols)
+        else:
+            weight = np.sum(np.where((self._grid[-1, :] == HPDTile.CROSS) | (self._grid[-1, :] == HPDTile.HORIZ), 1, 0))
+            new_grid[-1, :] = _bpd_bottom_row(weight, self.cols)
+        return HPD(new_grid, id_vector=new_id_vector)
 
     def _pretty(self, printer=None):
         """Pretty printing with row and column labels"""
