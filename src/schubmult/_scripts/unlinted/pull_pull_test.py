@@ -15,17 +15,18 @@ if __name__ == "__main__":
     n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
     for perm in perms:
-        if is_decomposable(perm):
-            continue
         for i in perm.descents(zero_indexed=False):
             summ = S.Zero
             for rc in RCGraph.all_rc_graphs(perm, len(perm.trimcode)):
+                if len(rc[i - 1]) != 0:
+                    continue 
                 pullout = rc.pull_out_row(i)
                 # print(f"{perm=} {i=} pullout")
                 # print(pullout)
                 # print(rc.perm.inv - pullout.perm.inv)
                 
-                for pw, rc0 in pullout:
-                    summ += (x[i]**len(pw))*rc0.polyvalue(x[:i] + x[i+1:])
-            assert expand(summ - Sx(perm).expand()) == S.Zero, f"Error: pull out variable mismatch for permutation {perm} at row {i}:\nComputed sum:\n{summ}\nExpected:\n{Sx(perm).expand()}\n{pullout}"
+                # for pw, rc0 in pullout:
+                #     summ += (x[i]**len(pw))*rc0.polyvalue(x[:i] + x[i+1:])
+                summ += pullout.polyvalue(x[:i] + x[i+1:])
+            assert expand(summ - Sx(perm).expand().subs(x[i], S.Zero)) == S.Zero, f"Error: pull out variable mismatch for permutation {perm} at row {i}:\nComputed sum:\n{summ}\nExpected:\n{Sx(perm).expand().subs(x[i], S.Zero)}\n{pullout}"
             print(f"Permutation: {perm}, length: {i}, verified.")

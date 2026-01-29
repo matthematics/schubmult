@@ -1548,6 +1548,9 @@ We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(
 %     \end{algorithmic}
 % \end{algorithm}
 
+\begin{definition}
+Let $(R,n)$ be a bounded RC graph and let $p$ be a descent of $\wof{R}$ such that row $p$ of $R$ is empty. Now, $\maxd(R_{\leq p})$ could be greater than $p$. If it is less than or equal to $p$, define $\zeromap^{(p)}(R,n) = (\zeromap(R_{\leq p})\cup {\downarrow R_{>p}},n-1)$. Otherwise, let $J$ be the set of all simple reflections in $S_\infty$ excluding all $d\in \mathcal{D}(w)$ such that $d\leq p$. Let $w^J$ be the minimal length coset representative of $wW_j$. Using the exchange property, we extract $w_J$ uniquely from $R$ to obtain an RC graph $R^J$ such that $\wof{R^J} = w^J$. We may define $\zeromap^{(p)}(R^J,n)$ as above, then insert the $w_J$ elements back in.
+\end{definition}
 \subsection{Definition of the ring product}
 
 \newcommand{\clp}{\mathtt{clip}}
@@ -2568,11 +2571,11 @@ and
 $$f_1(a,b) = (a,b)$$
 otherwise.
 
-At this point, rectification may be required. In that case, we delete some root $(i_1', j_1')$ from $R_2$ such that $i_1'<i_1$ and $\rtt_{R_2}(i_1', j_1') = \rtt_{R_2}(i_1, j_1)$. Afterwards, we add $(i_1', j_2)$ to obtain $R_2'$. Set
-$$f_1'(i_1', j_2) = (i_1', j_1')$$
+At this point, rectification may be required. In that case, we delete some element $(i_1', j_1')$ from $R_2$ such that $i_1'<i_1$ and $\rtt_{R_2}(i_1', j_1') = \rtt_{R_2}(i_1, j_1)$. Afterwards, we add $(i_1', j_2)$ to obtain $R_2'$. Set
+$$f_2(i_1', j_2) = (i_1', j_1')$$
 and
-$$f_1'(a,b) = f_1(a,b)$$
-otherwise. Continuing in this manner, we eventually obtain $R'$. Composing all of the maps defined at each step gives the desired map. The same method works for $\code_n(w) > 1$ by induction.
+$$f_2(a,b) = f_1(a,b)$$
+otherwise. Continuing in this manner, we eventually obtain $R'$. Pieicing all of the maps defined at each step gives the desired map. The same method works for $\code_n(w) > 1$ by induction.
 % Suppose $\code_n(w) = m$. Let $c=s_{n + m -1}\cdots s_n$. Then there exist unique reflections $t_{a_1b_1}, \ldots, t_{a_mb_m}$ such that
 % $$wc^{-1} = w't_{a_mb_m}\cdots t_{a_1b_1}$$
 % and each reflection satisfies $a_i\leq n-1 < b_i$, inducing a Bruhat covering relation. At this base level, there is a sub-RC-graph of each of $R$. and $R'$, say $R''$, on which we may partially define the map of inversion sets. That is, if $(i,j)\in R''$, then
