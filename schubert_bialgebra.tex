@@ -15,6 +15,7 @@
 \usepackage{caption}
 \usepackage{xcolor}
 \usepackage{tikz}
+\usepackage{tikz-cd}
 \usepackage{mathtools}
 \usetikzlibrary{calc}
 \usepackage{centernot}
@@ -1692,10 +1693,8 @@ By the previous lemma, it suffices to show that $\zeromap$ is surjective. Howeve
 We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(R,n) = 0$ if row $n$ in $R$ is not empty. Then we have the following result.
 
 \begin{theorem} \label{theorem:transition}
-	Let $w$ be a permutation with last descent at most $n$. Suppose
-	$$\sch_w(x_1,\ldots,x_{n-1}, 0) = \sum_{w'}\sch_{w'}(x_1,\ldots,x_{n-1})$$
-	Then
-	$$\zeromap(\mathcal{S}_w(n))=\sum_{w'}\mathcal{S}_{w'}(n-1)$$
+	Let $w$ be a permutation with last descent at most $n$. Then
+	$$\zeromap(\mathcal{S}_w(n))=\sum_{\substack{w\downvar{n} w'\\\ell(w)=\ell(w')}}\mathcal{S}_{w'}(n-1)$$
 \end{theorem} 
 
 
@@ -1768,12 +1767,832 @@ We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(
 %     \end{algorithmic}
 % \end{algorithm}
 
-\begin{definition}
+\newcommand{\clp}{\mathtt{clip}}
+
+
+
+\begin{definition}[Spittoon]
 Let $(R,n)$ be a bounded RC graph and let $p$ be a descent of $\wof{R}$ such that row $p$ of $R$ is empty. Now, $\maxd(R_{\leq p})$ could be greater than $p$. If it is less than or equal to $p$, define $\zeromap^{(p)}(R,n) = (\zeromap(R_{\leq p})\cup {\downarrow R_{>p}},n-1)$. Otherwise, let $J$ be the set of all simple reflections in $S_\infty$ excluding all $d\in \mathcal{D}(w)$ such that $d\leq p$. Let $w^J$ be the minimal length coset representative of $wW_j$. Using the exchange property, we extract $w_J$ uniquely from $R$ to obtain an RC graph $R^J$ such that $\wof{R^J} = w^J$. We may define $\zeromap^{(p)}(R^J,n)$ as above, then insert the $w_J$ elements back in.
 \end{definition}
-\subsection{Definition of the ring product}
 
-\newcommand{\clp}{\mathtt{clip}}
+
+\subsection{Preservation of the Demazure crystal structure}
+
+RC-graphs have a Demazure crystal structure defined by Assaf and Schilling in \cite{assaf2018demazure}. Namely, they define operators $e_i:\RC(w)\to\RC(w)\cup\{\emptyset\}$ and $f_i:\RC(w)\to\RC(w)\cup\{\emptyset\}$ for each $i\geq 1$ as follows. 
+
+\begin{definition}
+Consider elements $(i, j)\in R$ and $(i+1, k)\in R$. The pairing algorithm starts with the largest $j$ in row $i$ and pairs $(i, j)$ with $(i+1, k)$ where $k$ is the smallest such that $k \geq j$. If no such $k$ exists, then $(i, j)$ is unpaired. The algorithm continues by considering the next largest $j$ in row $i$ and repeating the process until all elements in row $i$ have been considered.
+
+Define $R_i$ to be the set of unpaired elements in row $i$ after applying the pairing algorithm between rows $i$ and $i+1$, and define $L_i$ to be the set of unpaired elements in row $i+1$. Then $f_i(R)$ is defined by removing the leftmost element $(i, j)$ from $R_i$ and adding the element $(i + 1, k)$ to $R$, where $k$ is the largest value such that $(i+1,k)\notin R$ and $k < j$. If $R_i$ is empty or $k$ does not exist, then $f_i(R) = \emptyset$. Similarly, $e_i(R)$ is defined by removing the rightmost element $(i + 1, k)$ from $L_i$ and adding the element $(i, j)$ to $R$, where $j$ is the smallest value such that $(i,j)\notin R$ and $j > k$. If $L_i$ is empty, then $e_i(R) = \emptyset$.
+\end{definition}
+
+We may transport this structure to bounded RC graphs as  operators $e_i:\mathcal{RC}(w,n)\to\mathcal{RC}(w,n)\cup\{\emptyset\}$ and $f_i:\mathcal{RC}(w,n)\to\mathcal{RC}(w,n)\cup\{\emptyset\}$ by
+$$e_i(R,n) = (e_i(R), n)$$
+and
+$$f_i(R, n)=(f_i(R), n)$$
+
+% \begin{lemma}
+% 	Let $(R, n)$ be a bounded RC graph. If $f_i(R)\neq \emptyset$ and $\zeromap(R', n+1)=(R, n)$, then $f_i(R')\neq \emptyset$ and
+% 	$$\zeromap(f_i(R'), n + 1)=(f_i(R), n)$$	
+% \end{lemma}
+
+
+\newcommand{\ckeq}{\sim}
+\newcommand{\ege}{\widetilde{\mathrm{eg}}}
+\begin{definition}
+An RC graph $R$ has a uniquely associated reduced word $\mathrm{word}(R)=(s_{i_1},\ldots,s_{i_N})$. Recall the Coxeter-Knuth relation $\ege$ defined by
+$$j\ i\ k \ckeq j\ k\ i$$
+and
+$$k\ i\ j \ckeq i\ k\ j$$
+if $i<j<k$, and
+$$i\ i+1\ i \ckeq i+1\ i\ i+1$$
+For an RC graph $R$, define $N(R)$ to be the maximum letter in $R$. Then define
+$$\ege(R) = (N(R) + 1 - i_1, \ldots, N(R) + 1 - i_N)$$
+Via the Edelman-Greene insertion algorithm, we may define a pair
+$$(P, Q)$$
+of tableaux of the same shape such that the reading word of $P$ is CK-equivalent to $\ege(R)$ and $Q$, the recording tableau, is standard. Define $\mathtt{tab}(R)$ to be the tableau of the same shape as $Q$ such that the entry in box $(i, j)$ is the row index of the box in $R$ that was inserted to create box $(i, j)$ in $P$.
+\end{definition}
+
+\begin{lemma}
+	We have that $\mathtt{tab}(R)$ is a semistandard Young tableau of shape $\mathrm{shape}(Q)$, and the map
+	$$R\mapsto \mathtt{tab}(R)$$
+	 is a morphism of crystal graphs into $B(\mathrm{shape}(Q))$. 
+\end{lemma}
+\begin{proof}
+Suppose $R$ is a highest weight. Then $\wtt(R)$ is a partition. By the highest weight condition, the longest increasing subsequence of $\ege(R)$ is of length $\wtt(R)_1$ and is precisely the first row read in the grid order. By the Edelman-Greene correspondence \cite{edelman1987balanced}, the first row of $P$ has length equal to the length of the longest increasing subsequence of $\ege(R)$. Hence, the first row of $P$ has length $\wtt(R)_1$. By similar reasoning on the subsequent rows, we have that $\mathrm{shape}(P) = \wtt(R)$. We then have that $\mathtt{tab}(R)$ is the unique Yamanouchi tableau of shape $\wtt(R)$, establishing the claim for highest weights. The general case follows from the rigidity of the Demazure crystal structure \cite{assaf2018demazure}; since the function is weight-preserving, it is a morphism of crystal graphs.
+\end{proof}
+
+\begin{theorem}
+	% Let $R,R'$ be RC graphs. Then $\mathrm{hw}(R) = \mathrm{hw}(R')$ if and only if $\ege(R) \ckeq \ege(R')$.
+  The distinct Demazure crystals that make up $\RC(w)$ are in bijection with the Coxeter-Knuth equivalence classes of reduced words for $w_0ww_0$ via the map $R\mapsto \ege(R)$, with $R\mapsto \mathtt{tab}(R)$ being a homomorphism of crystal graphs into $B(\lambda)$, where $\lambda=\mathrm{shape}(P(\ege(R)))$.
+\end{theorem}
+\begin{proof}
+By \cite[Theorem~4.11]{morse2016crystal}, if $e_i(R)\neq \emptyset$, then $R$ and $e_i(R)$ have the same Edelman-Greene insertion tableau. Since conjugation by $w_0$ is an automorphism of Coxeter-Knuth equivalence, so do $\ege(R)$ and $\ege(e_i(R))$. The shape is determined inductively. Suppose $R$ is a highest weight element and consider $\mathtt{word}(R)$. The first row of $R$ forms a word that corresponds to an initial increasing subsequence of $\ege(R)$. If there were a letter in some row below the first that is smaller than the last letter of the first row, then some raising operator would yield a nonempty result, contradicting the fact that $R$ is a highest weight. Thus, the first row of $P(\ege(R))$ has length equal to the length of the first row of $R$. The rest follows by induction on the remaining rows.
+\end{proof}
+
+\begin{definition}
+Let $\RC(w, n)^0$ be the set of bounded RC graphs $(R, n)$ such that $\wof{R} = w$ and row $n$ is empty. We define a function $\zeromap_*^R:R\to R'$, where $\zeromap(R,n) = (R',n-1)$ and $w'=\wof{R'}$, as follows. Clearly if $\code_n(w) = 0$, then $\zeromap_*^R$ is the identity map. 
+
+Consider now the case where $\code_n(w) = 1$. The initial deletion of $(i,j)$ with $\rtt_R(i,j) = (n, n+1)$ results in an RC graph $R_0 = R\setminus\{(i,j)\}$ with $\wof{R_1} = w s_n$, after which we add $(n,1)$ to obtain $R_1$. Let
+$$f_1:R_1\to R$$
+be the identity. Afterwards, $(i_1, j_1)$ is inserted into $R_1$ to obtain $R_2$. Set
+$$f_1(i_1,j_1) = (i,j)$$
+and
+$$f_1(a,b) = (a,b)$$
+otherwise.
+
+At this point, rectification may be required. In that case, we delete some element $(i_1', j_1')$ from $R_2$ such that $i_1'<i_1$ and $\rtt_{R_2}(i_1', j_1') = \rtt_{R_2}(i_1, j_1)$. Afterwards, we add $(i_1', j_2)$ to obtain $R_2'$. Set
+$$f_2(i_1', j_2) = (i_1', j_1')$$
+and
+$$f_2(a,b) = f_1(a,b)$$
+otherwise. Continuing in this manner, we eventually obtain $R'$. Pieicing all of the maps defined at each step gives the desired map. The same method works for $\code_n(w) > 1$ by induction.
+% Suppose $\code_n(w) = m$. Let $c=s_{n + m -1}\cdots s_n$. Then there exist unique reflections $t_{a_1b_1}, \ldots, t_{a_mb_m}$ such that
+% $$wc^{-1} = w't_{a_mb_m}\cdots t_{a_1b_1}$$
+% and each reflection satisfies $a_i\leq n-1 < b_i$, inducing a Bruhat covering relation. At this base level, there is a sub-RC-graph of each of $R$. and $R'$, say $R''$, on which we may partially define the map of inversion sets. That is, if $(i,j)\in R''$, then
+% $$\zeromap_*^R(\rtt_R(i,j)) = \rtt_{R'}(i,j)$$
+% In the word of $R'$, the right roots $(a_1,b_1),\ldots,(a_m, b_m)$ occur in a specific order, say $r_1,\ldots, r_m$. On the remaining roots in $R$, we define 
+% $$\zeromap_*^R(n, n + m + 1 - i) = r_i$$
+% Then for all $R$ and $(i,j)$ we have
+% $$T_R(i,j) = T_{R'}(\zeromap_*^R(i,j))$$
+\end{definition}
+
+\begin{lemma}
+Let $(R, n)\in \RC(w, n)^0$ and suppose $\zeromap(R, n) = (R', n-1)$. Then for any $(a,b)\in R'$, $(a,b)$ is paired in the $i,i+1$ pairing in $R'$ if any only if $\zeromap_*^R(a,b)$ is paired in the $i,i+1$ pairing in $R$.
+\end{lemma}
+\begin{proof}
+  This is true for $a=i$ because at most one root is changed in row $i$ and it has moved to the left. For $a=i+1$, the only way that the pairing status could change is if a root in row $i$ moved past an unpaired root in row $i+1$. However, by construction of the insertion algorithm, this cannot happen since a root that was already inserted into row $i+1$ was deleted from row $i$ in the rectification process, and the new inserted root occurs to the left.
+\end{proof}
+
+\begin{theorem}
+	Let $w\in S_\infty$ and $n>0$ be such that $\maxd(w)\leq n$. Then 
+	$$\zeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
+	is a weight-preserving isomorphism of crystal graphs.
+\end{theorem}
+\begin{proof}
+The existence of the map $\zeromap_*^R$ and the previous lemma establish that $\zeromap$ is a bijection (by Theorem \ref{theorem:zero_bijection}) that preserves both weights and the lengths of $i$-strings. Hence it is a weight-preserving isomorphism of crystal graphs.
+\end{proof}
+
+
+\subsection{Crystal divided differences}
+
+Let $R$ be an RC graph and let $i>0$ be an integer. We define $\rcdd^iR$, an element of $\RC$, as follows. Define
+$$\rcdd^iR=0$$
+unless $s_i$ is a right descent of $\wof{R}$ and there exists $(i,j)\in R$ such that $\rtt_R(i, j) = (i, i+1)$. If these latter two conditions are satisfied, define 
+$$R'=R\setminus \{(i, j)\}$$
+where $\rtt_R(i,j) = (i, i+1)$. If $e_i(R')\neq \emptyset$, define $\rcdd^iR=0$. Otherwise, define
+$$\rcdd^iR = \sum_{p=0}^{\varphi_i(R')}f_i^pR'$$
+\begin{lemma} \label{lemma:divdiffunique}
+	Let $R$ be an RC graph and let $i>0$ be an integer. If $s_i$ is not a right descent of $\wof{R}$, then there is a unique $R'$ such that the coefficient of $R$ in $\rcdd^iR'$ is $1$, and for other $R'$ the coefficient is $0$.
+\end{lemma}
+\begin{proof}
+	Suppose $s_i$ is not a right descent of $\wof{R}$. Assume without loss of generality that $e_iR = \emptyset$. If $(i+1, 1)\notin R$, then $(i,1)\notin R$ because $s_i$ is not a right descent of $\wof{R}$. In that case, let $R' = R\cup\{(i,1)\}$. Then 
+	$$\rcdd^iR' = R + \text{other terms}$$ 
+	If instead $(i+1, 1)\in R$, since $e_i(R)=\emptyset$ it follows that $(i, 1)\in R$, and if $j$ is the maximum value such that $(i+1,j')\in R$ for all $j'<j$, it follows that $(i,j')\in R$ for all $j'<j$. We must have that $(i,j+1)\notin R$, because $\rtt_R(i, j+1)=(i, i+1)$. Setting $R'=R\cup \{(i, j+1)\}$ gives us the result.
+\end{proof}
+
+\begin{theorem} \label{theorem:divdiffschubert}
+	Suppose $w\in S_\infty$ and $i >0$. If $i$ is not a right descent of $w$, then
+	$$\rcdd^i\mathcal{S}_w(n) = 0$$
+	Otherwise,
+	$$\rcdd^i\mathcal{S}_w(n) = \mathcal{S}_{ws_i}(n)$$
+\end{theorem}
+\begin{proof}
+	The result is trivial if $i$ is not a right descent of $w$. Suppose $i$ is a right descent of $w$. By Lemma \ref{lemma:divdiffunique}, for each RC graph $R$ such that $\wof{R} = ws_i$, there is a unique RC graph $R'$ such that the coefficient of $R$ in $\rcdd^iR'$ is $1$. Since $\wof{R'} = w$, the result follows.
+\end{proof}
+
+\begin{corollary} \label{corollary:generateschubert}
+Suppose $R$ is an RC graph such that $\wof{R} = w$ is dominant. Then for any reduced word $(s_{i_1}, s_{i_2}, \ldots, s_{i_m})$ for a permutation $u$ such that
+$$\ell(wu^{-1}) = \ell(w) - \ell(u)$$
+we have that
+$$\rcdd^{i_1}\rcdd^{i_2}\cdots \rcdd^{i_m}R = \mathcal{S}_{wu^{-1}}(n)$$
+for sufficiently large $n$.
+\end{corollary}
+
+
+\begin{definition}
+For a permutation $w$, define the \emph{principal RC graph} $R^0(w)$ of $w$ to be
+$$R^0(w) = \{(i,j)\mid 1\leq j\leq \code_i(w)\}$$
+
+We say that row $i$ of an RC graph $R$ has a \emph{ledge} at column $j$ if the configuration of boxes in rows $i$ and $i+1$ satisfy $(i,j)\in R$, $(i+1,j)\notin  R$, $\rtt_R(i,j)=(i,i+1)$, and for all $j' < j$ we have that $(i,j')\in R$ and $(i+1,j')\in R$, as shown in in Figure \ref{figure:ledge}.
+\end{definition}
+
+\begin{proposition} \label{proposition:divdiffprincipal}
+Let $R$ be an RC graph and let $w=\wof{R}$. Then the following are equivalent.
+\begin{enumerate}
+\item for any reduced word $(s_{i_1}, s_{i_2}, \ldots, s_{i_m})$ for $w$, we have
+$$\rcdd^{i_1}\rcdd^{i_2}\cdots \rcdd^{i_m}R \neq 0$$
+
+\item $R = R^0(w)$.
+\end{enumerate}
+\end{proposition}
+\begin{proof}
+For (1)$\Rightarrow$(2), we proceed by induction on length. For (1) to be true, in particular if $n=\maxd(\wof{R})$ we have that $(n,1)\in R$. Applying $\rcdd^n$ and lowering operators (necessarily maximally) results in a term being an RC graph which has the same recursive property, which by the inductive hypothesis is $R^0(ws_n)$, which implies that row $n$ of $R$ has length $\code_n(w)$. Choosing our reduced word carefully, we obtain in the process as some nonzero term an RC graph for $w'$ with $\code_k(w') = \code_k(w)$ for all $k<n$ and $\code_n(w')=0$ that has the same property, and hence is prinicipal by the induction hypothesis. It follows that $R$ is principal as well.
+
+For (2)$\Rightarrow$(1), we again proceed by induction on length. If $w$ has no descents, the statement is vacuous. For a principal RC graph $R^0(w)$ for some $w$ with $\ell(w)>0$ and we have the result for smaller lengths, suppose $i$ is a descent of $w$. Then $\code_i(w) > \code_{i+1}(w)$. In particular, if we let $j = \code_{i+1}(w) + 1$, then $(i,j)$ is a ledge of $R^0(w)$. Applying $\rcdd^iR^0(w)$, the lowest weight in the sum is in fact $R^0(ws_i)$. It follows by induction that applying the sequence of divided difference operators corresponding to a reduced word for $w$ to $R^0(w)$ yields the empty RC graph with a coefficient of $1$.
+\end{proof}
+
+  \begin{definition}
+We say that row $i$ of an RC graph $R$ has a \emph{ledge} at column $j$ if the configuration of boxes in rows $i$ and $i+1$ satisfy $(i,j)\in R$, $(i+1,j)\notin  R$, $\rtt_R(i,j)=(i,i+1)$, and for all $j' < j$ we have that $(i,j')\in R$ and $(i+1,j')\in R$, as shown in Figure \ref{figure:ledge}.
+\end{definition}
+
+\begin{lemma} \label{lemma:block_structure}
+Suppose $\rcdd^iR\neq 0$. Then the following hold:
+\begin{enumerate}
+\item \label{item:e_i_empty} $e_iR=\emptyset$.
+\item \label{item:blocky} There exists a $j\geq 1$ such that $R$ has a ledge at column $j$.
+\end{enumerate}
+\end{lemma}
+\begin{proof}
+If $\rcdd^iR\neq 0$, this means that the root $(i, i+1)$ is in row $i$. This happens precisely when we have an element $(i,j)\in R$ such that $(i+1, j)\notin R$, but $(i, j')\in R$ and $(i+1, j')\in R$ for all $1\leq j'<j$. It follows that if $e_iR\neq \emptyset$, then $e_i(R\setminus\{(i,j)\})\neq \emptyset$. This means that $\rcdd^iR=0$, which contradicts the assumption and proves (\ref{item:e_i_empty}).
+
+For (\ref{item:blocky}), by assumption we knnow that there exists some $(i,j)\in R$ with $\rtt_R(i,j)=(i,i+1)$. Recall that $\rtt_R(i,j) = (\wof{R[i,j]}^{-1}(i + j -1), \wof{R[i,j]}^{-1}(i+j))$. Reasoning directly shows that in order for the first component to be $i$, the graph must satisfy the condition that for all $j' < j$ we have that $(i,j')\in R$. Furthermore, in order to satisfy the condition that $R[i,j]^{-1}(i+j) = i+1$, we cannot have that $(i+1,j)\in R$, and this also imposes the requirement that for all $j' < j$ we have that $(i+1,j')\in R$.
+\end{proof}
+
+
+
+% Let $\RC^C$ be the submodule of $\RC$ consisting of formal sums of RC graphs
+% $$\sum_R c_R R$$
+% such that if $e_iR\neq \emptyset$, then $c_{e_iR} = c_R$, and if $f_iR\neq \emptyset$, then $c_{f_iR} = c_R$, for all $i>0$.
+
+% \begin{lemma}
+% The submodule $\RC^C$ is stable under the crystal divided difference operators $\rcdd^i$ for all $i>0$.
+% \end{lemma}
+% \begin{proof}
+
+% \end{proof}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.8]
+  % Draw grid
+  \draw[lightgray, very thin] (0,0) -- (9,0);
+  \draw[lightgray, very thin] (0,1) -- (9,1);
+  \draw[lightgray, very thin] (0,2) -- (9,2);
+  
+  % Row i boxes - columns 1 and 2
+  \foreach \x in {0,1} {
+    \fill[blue!30] (\x,1) rectangle (\x+1,2);
+    \draw (\x,1) rectangle (\x+1,2);
+  }
+  
+  % Row i+1 boxes - columns 1 and 2
+  \foreach \x in {0,1} {
+    \fill[blue!30] (\x,0) rectangle (\x+1,1);
+    \draw (\x,0) rectangle (\x+1,1);
+  }
+  
+  % Ellipses between 2 and j-1
+  \node at (2.5,1.5) {$\cdots$};
+  \node at (2.5,0.5) {$\cdots$};
+  
+  % Column j-1
+  \fill[blue!30] (3,1) rectangle (4,2);
+  \draw (3,1) rectangle (4,2);
+  \fill[blue!30] (3,0) rectangle (4,1);
+  \draw (3,0) rectangle (4,1);
+  
+  % Position (i,j) - nonempty
+  \fill[green!40] (4,1) rectangle (5,2);
+  \draw[thick] (4,1) rectangle (5,2);
+  \node at (4.5,1.5) {$\bullet$};
+  
+  % Position (i+1,j) - empty (white)
+  \fill[white] (4,0) rectangle (5,1);
+  \draw[thick] (4,0) rectangle (5,1);
+  \node at (4.5,0.5) {$\circ$};
+  
+  % Visual ellipses for "anything can happen" to the right
+  \draw[dashed, gray] (5,1) rectangle (6,2);
+  \node at (5.5,1.5) {$\cdots$};
+  \draw[dashed, gray] (5,0) rectangle (6,1);
+  \node at (5.5,0.5) {$\cdots$};
+  
+  \draw[dashed, gray] (6,1) rectangle (7,2);
+  \draw[dashed, gray] (6,0) rectangle (7,1);
+  
+  % Labels
+  \node[left] at (0,1.5) {row $i$};
+  \node[left] at (0,0.5) {row $i+1$};
+  
+  % Column labels
+  \node[below] at (0.5,-0.3) {$1$};
+  \node[below] at (1.5,-0.3) {$2$};
+  \node[below] at (2.5,-0.3) {$\cdots$};
+  \node[below] at (3.5,-0.3) {$j-1$};
+  \node[below] at (4.5,-0.3) {$j$};
+  \node[below] at (5.5,-0.3) {$j+1$};
+  
+  % Legend
+  \node[anchor=west, align=left] at (7.5,1.5) {\small Filled: nonempty};
+  \node[anchor=west, align=left] at (7.5,1) {\small $\bullet$: position $(i,j)$};
+  \node[anchor=west, align=left] at (7.5,0.5) {\small $\circ$: empty};
+  \node[anchor=west, align=left] at (7.5,0) {\small Dashed: arbitrary};
+\end{tikzpicture}
+\caption{Configuration for rows $i$ and $i+1$ for a ledge at $(i,j)$.}
+\label{figure:ledge}
+\end{figure}
+% \begin{proof}
+
+
+
+% \begin{lemma} \label{lemma:block_structure}
+% Suppose $\rcdd^iR\neq 0$. Then the following hold:
+% \begin{enumerate}
+% \item \label{item:e_i_empty} $e_iR=\emptyset$.
+% \item \label{item:blocky} There exists a $j\geq 1$ such that $R$ has a ledge at column $j$.
+% \end{enumerate}
+% \end{lemma}
+% \begin{proof}
+% If $\rcdd^iR\neq 0$, this means that the root $(i, i+1)$ is in row $i$. This happens precisely when we have an element $(i,j)\in R$ such that $(i+1, j)\notin R$, but $(i, j')\in R$ and $(i+1, j')\in R$ for all $1\leq j'<j$. It follows that if $e_iR\neq \emptyset$, then $e_i(R\setminus\{(i,j)\})\neq \emptyset$. This means that $\rcdd^iR=0$, which contradicts the assumption and proves (\ref{item:e_i_empty}).
+
+% For (\ref{item:blocky}), by assumption we knnow that there exists some $(i,j)\in R$ with $\rtt_R(i,j)=(i,i+1)$. Recall that $\rtt_R(i,j) = (\wof{R[i,j]}^{-1}(i + j -1), \wof{R[i,j]}^{-1}(i+j))$. Reasoning directly shows that in order for the first component to be $i$, the graph must satisfy the condition that for all $j' < j$ we have that $(i,j')\in R$. Furthermore, in order to satisfy the condition that $R[i,j]^{-1}(i+j) = i+1$, we cannot have that $(i+1,j)\in R$, and this also imposes the requirement that for all $j' < j$ we have that $(i+1,j')\in R$.
+% \end{proof}
+
+
+
+
+\begin{theorem}
+The crystal divided difference operators satisfy the relations:
+$$\rcdd^i\rcdd^i = 0$$
+$$\rcdd^i\rcdd^j = \rcdd^j\rcdd^i\quad\mbox{for }|i-j|>1$$
+$$\rcdd^i\rcdd^{i+1}\rcdd^i = \rcdd^{i+1}\rcdd^i\rcdd^{i+1}$$
+\end{theorem}
+
+\begin{proof}
+The first and second relations are not difficult. Otherwise, assume without loss of generality that $i=1$. For an RC graph with precisely three rows, let us consider applying $\rcdd^1\rcdd^2\rcdd^1$. Suppose $\code(w) = (a, b, c)$. It is well known that if $m=\min(a, b, c)$, then the first $m$ columns of $R$ are completely full, hence without loss of generality let us assume that $m=0$. The only way the braid relation can apply to yield a nonzero result, therefore, is if $a>b>c=0$. Since this yields a dominant permutation, it follows that $R$ is the unique RC graph for $w$. Applying the braid relation in either direction yields the complete sum of RC graphs for the permutation with code $(0, a - 1, b - 2)$ by application of Corollary \ref{corollary:generateschubert}. By transfer, this result also applies to the last two or three rows of any RC graph with respect to the code.
+
+Considering a general RC graph, we may similarly assume that $\code_3(w)=0$ by removing full columns, since only ledges will yield nonzero results. If there are extra elements in the first three rows that are not in the implied dominant block, then they all satisfy $r + c - 1 > \code_r(w) + 1$, where $r\in \{1,2,3\}$ and the extra element is at row $(r,c)$, since they have come down from a row past row $4$ (with respect to the principal RC graph). Elements with $r + c - 1 > \code_1(w) + 1$ can be seen to have no essential interaction with rows $1$, $2$, and $3$ and can be disregarded. We are left with the configuration in Figure \ref{figure:whatsleft}.
+
+In this situation, without ambiguity, application of the braid triple in either direction will delete the immobile $(2,1)$, $(1, \code_2(w) + 1)$, and $(1,1)$. Without application of any lowering operators, simply deleting these elements yields the highest weight of the crystal component containing $R$ with respect to the first three rows. Since we may apply $\clp^3(R)$ to obtain a Demazure crystal, the lowering operators transitively generate the sum. To see that we indeed get all of them, we note that for this highest weight $R' = \clp^3(R)$, application of $\rcdd^1\rcdd^2\rcdd^1$ should yield elements of the form
+$$f_1^{a_1}f_2^{a_2}f_1^{a_3}R'$$
+and for the other direction,
+$$f_2^{b_1}f_1^{b_2}f_2^{b_3}R'$$
+These are two distinct parametrizations of the Demazure crystal $B_{s_1s_2s_1}(\lambda)=B_{s_2s_1s_2}(\lambda)$ with highest weight $\lambda$, yielding the same elements.
+\end{proof}
+
+
+\newcommand{\BRF}{\mathcal{BRF}}
+\newcommand{\RF}{\mathcal{RF}}
+\newcommand{\cs}{\widetilde{s}}
+
+% To prove this, we will take an algebraic detour. \emph{Reduced factorizations} are essentially RC graphs where negative columns are allowed. We may define $\BRF$ similarily to $\BRC$, where an element of $\BRF$ is a pair $(R, n)$ where $R$ is a reduced factorization and $\maxd(\wof{R})\leq n$. An element $(R,n)$ in $\BRF$ generates a full Kashiwara crystal under the crystal operators defined previously, with the reflection operators satisfying
+% $$\wtt(\cs_i(R, n)) = s_i\wtt((R,n))$$
+
+%We extend the definition of $\rcdd^i$ to $\BRF$ by using the same definition if $(R,n)$ is an RC graph in rows $i$ and $i+1$. We extend the definition to $\BRF$ as follows. We declare that if $(R,n)$ is not an RC graph in rows $i$ and $i+1$, then $\rcdd^i(R,n)=0$ unless there is a $j$ (necessarily negative) such that $(i+1,j)\in R$ and $\rtt_R(i+1,j) = (i, i+1)$, In that case, define $R'=R\setminus\{(i+1,j)\}$. Then if $f_i(R')\neq \emptyset$, define $\rcdd^i(R,n)=0$. Otherwise, define
+%$$\rcdd^i(R,n) = -\sum_{p=0}^{\varepsilon_i(R')}e_i^pR'$$
+
+% We consider the module $\mathbb{Q}(x)\otimes\BRF$ now, and quotient by the $S_\infty$-invariant submodule $D$ generated by elements of the form
+% $$(R,n) - \cs_i(R,n) - (x_{i} - x_{i+1})\otimes\rcdd^i(R,n),$$
+% to obtain the module $\widetilde{\BRF}=(\mathbb{Z}[x]\otimes\BRF)/D$. $D$ is easily seen to be a submodule that is $S_\infty$-invariant. 
+
+% \begin{lemma}
+% The elements $(R,n)$ for $(R, n)\in \BRF$ remain distinct in the quotient $\widetilde{\BRF}$ of degree $\ell(\wof{R})$, forming a $\mathbb{Z}$-basis of a $\mathbb{Z}$-submodule of $\widetilde{\BRF}$ isomorphic to $\BRF$.
+% \end{lemma}
+% \begin{proof}
+% This follows by the fact that $(R,n)$ and $\cs_i(R,n)$ are of the same degree as $R$, and $\rcdd^i(R,n)$ is of degree one less than that of $R$ with nonzero coefficient. Over $\mathbb{Z}$, no linear combinations of elements of these two forms can be equal unless they are zero, since $\mathbb{Z}[x]\otimes \BRF$ is free over $\mathbb{Z}[x]$ with basis the elements $(R,n)$.
+% \end{proof}
+
+% \begin{lemma}
+% The submodule $D$ of $\mathbb{Z}[x]\otimes \BRF$ is $S_\infty$-invariant.
+% \end{lemma}
+% \begin{proof}
+% The key fact that causes this to be true is that the basis element $(R,n)-\cs_i(R,n) - (x_i - x_{i+1})\otimes \rcdd^i(R,n)$ is mapped to a linear combination of similar basis elements under the action of any simple reflection $s_j$. This follows from the fact that the simple reflections and crystal operators satisfy the Coxeter relations, and that the divided difference operators satisfy the braid relations.
+%  \end{proof}
+%The module $\widetilde{BRF}$ is still graded by degree and has the elements $(R,n)$ as a basis of homogeneous elements.
+
+
+% Let $\mathcal{N}$ be the nil-Hecke ring over $\mathbb{Q}(x)$. We define an action of $\mathcal{N}$ on $\BRF_{\mathbb{Q}(x)}$ by declaring that
+% $$\partial^ip(x)(R,n) = (\partial^ip(x))(R, n)+(s_ip(x))\frac{1}{x_i - x_{i+1}}((R,n) - \cs_i(R, n))$$
+
+
+% \begin{lemma}
+% The action of the nil-Hecke ring $\mathcal{N}$ on $\BRF_{\mathbb{Q}(x)}$ defined above is well-defined and intertwines with the homomorphism of $\BRF_{\mathbb{Q}(x)}$ into $\mathbb{Q}(x)$.
+% \end{lemma}
+
+% \begin{lemma}
+% Suppose $(R,n) \in \BRC$. Then $\rcdd^i(R,n)=0$ if and only if $\cs_i(R,n) = (R,n)$.
+% \end{lemma}
+
+% Define a homomorphism $P:\BRF_{\mathbb{Q}(x)}\to \BRC_{\mathbb{Q}(x)}$ by declaring that $P(R,n) = (R,n)$ if $(R,n)$ is an RC graph, and $P(R,n)=0$ otherwise.
+
+% \begin{proposition}
+% For any RC graph $(R,n)\in \BRF$, we have 
+% $$P(\partial^i(R,n)) = \rcdd^iP(R,n)$$
+% \end{proposition}
+
+% The first equation is immediate, and the second follows from the fact that the simple reflections and crystal operators satisfy this condition. 
+
+% For the third condition, we make use of Lemma \ref{lemma:block_structure}. Assume that the LHS is nonzero. Then by Lemma \ref{lemma:block_structure}, rows $i$ and $i+1$ must have the configuration in Figure \ref{figure:divdiff_braid_lhs}. When applying $\rcdd^i$, we start by deleting $(i,j)$, then propogate down the $i$-string of the resulting RC graph. In the case that in row $i+2$ we have that $(i+2, j')\in R$ for all $j'<j-1$, and $(i+2, j-1)\notin R$ as well, the deletion sequence is clear. 
+
+% If $(i+2, j-1)\in R$, the situation is more complex. Since there is no ``ledge'' initially in row $i+1$ after deleting $(i,j)$, in order for $\rcdd^{i+1}$ application to be nonzero there must be some boxes in row $i$ starting at column $j+1$ (and possibly extending further). We could consider the possibility that the the box that moves from $(i, j+1)$ to $(i+1,j)$ is the root $(i+1, i+2)$ in row $i+1$ that we are deleting (which happens if and only if row $i+2$ has no space before column $j$). After this deletion, however, we are stuck: there is no root in row $i$ to delete. It follows that if $(i+2, j-1)\in R$ and the LHS is nonzero, there is a $p<j-1$ such that $(i+2, p)\notin R$. In that case, assuming $p$ is minimal, we have that $(i+1,p)$ is the root to delete. After deleting this root, we apply lowering operators to row $i+1$, moving a portion of the row to row $i+2$, clearing a space for a ledge for the $(i,i+1)$ root, which occurs precisely at $(i, p)$. 
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.8]
+  % Row 1 (top row) - fully filled
+  \fill[blue!30] (0,2) rectangle (1,3);
+  \draw (0,2) rectangle (1,3);
+  \fill[blue!30] (1,2) rectangle (2,3);
+  \draw (1,2) rectangle (2,3);
+  \fill[blue!30] (2,2) rectangle (3,3);
+  \draw (2,2) rectangle (3,3);
+  \fill[blue!30] (3,2) rectangle (4,3);
+  \draw (3,2) rectangle (4,3);
+  \fill[blue!30] (4,2) rectangle (5,3);
+  \draw (4,2) rectangle (5,3);
+  \fill[blue!30] (5,2) rectangle (6,3);
+  \draw (5,2) rectangle (6,3);
+  \fill[blue!30] (6,2) rectangle (7,3);
+  \draw (6,2) rectangle (7,3);
+  \fill[blue!30] (7,2) rectangle (8,3);
+  \draw (7,2) rectangle (8,3);
+  
+  % Row 2 (middle row) - filled, empty, filled, empty
+  \fill[blue!30] (0,1) rectangle (1,2);
+  \draw (0,1) rectangle (1,2);
+  \fill[blue!30] (1,1) rectangle (2,2);
+  \draw (1,1) rectangle (2,2);
+  \draw[thick] (2,1) rectangle (3,2);
+  \node at (2.5,1.5) {$\circ$};
+  \draw[thick] (3,1) rectangle (4,2);
+  \node at (3.5,1.5) {$\circ$};
+  \draw[thick] (4,1) rectangle (5,2);
+  \node at (4.5,1.5) {$\circ$};
+  \fill[blue!30] (5,1) rectangle (6,2);
+  \draw (5,1) rectangle (6,2);
+  \fill[blue!30] (6,1) rectangle (7,2);
+  \draw (6,1) rectangle (7,2);
+  \draw[thick] (7,1) rectangle (8,2);
+  \node at (7.5,1.5) {$\circ$};
+  
+  % Row 3 (bottom row) - empty, filled, empty
+  \draw[thick] (0,0) rectangle (1,1);
+  \node at (0.5,0.5) {$\circ$};
+  \fill[blue!30] (1,0) rectangle (2,1);
+  \draw (1,0) rectangle (2,1);
+  \draw[thick] (2,0) rectangle (3,1);
+  \node at (2.5,0.5) {$\circ$};
+  \draw[thick] (3,0) rectangle (4,1);
+  \node at (3.5,0.5) {$\circ$};
+  \draw[thick] (4,0) rectangle (5,1);
+  \node at (4.5,0.5) {$\circ$};
+  \draw[thick] (5,0) rectangle (6,1);
+  \node at (5.5,0.5) {$\circ$};
+  \draw[thick] (6,0) rectangle (7,1);
+  \node at (6.5,0.5) {$\circ$};
+  \draw[thick] (7,0) rectangle (8,1);
+  \node at (7.5,0.5) {$\circ$};
+  
+\end{tikzpicture}
+\caption{Configuration in the final steps of the proof of the braid relation.}
+\label{figure:whatsleft}
+\end{figure}
+
+%there is a single term, which is easily seen to be equal to both sides. Therefore, consider the case that at column $c<j-1$, with $c$ minimal, we have an empty space at $(i+2,c)$. When $(i,j)$ is deleted from $R$, we then apply lowering operators to row $i$ as much as we can to obtain all of the terms in the sum.  No application of any power of $f_i$ will change the elements of $R$ in row $i+1$ before column $j$. Since by assumption some term has $\rcdd^{i+1}$ nonzero, we must have had that $\rtt_R(i+1,c) = (i+1,i+2)$ by Lemma \ref{lemma:block_structure}. The same argument fixes the position of $(i, i+1)$ at $(i, c)$ after application of $\rcdd^{i+1}\rcdd^i$.
+
+
+% \begin{figure}[h]
+% \centering
+% \begin{tikzpicture}[scale=0.6]
+%   % Panel 1: Initial configuration
+%   \begin{scope}[shift={(0,0)}]
+%     \node[above] at (3.5,4.5) {\textbf{Initial: $R$}};
+    
+%     % Row i - boxes from left up to and including position before j, then (i,j) filled
+%     \fill[blue!30] (0,3) rectangle (1,4);
+%     \draw (0,3) rectangle (1,4);
+%     \node at (1.5,3.5) {$\cdots$};
+%     \fill[blue!30] (1.8,3) rectangle (2,4);
+%     \draw (1.8,3) rectangle (2,4);
+%     \fill[blue!30] (2,3) rectangle (3,4);
+%     \draw (2,3) rectangle (3,4);
+%     \fill[blue!30] (3,3) rectangle (4,4);
+%     \draw (3,3) rectangle (4,4);
+%     \node at (3.5,3.5) {$\cdots$};
+%     \fill[blue!30] (4,3) rectangle (5,4);
+%     \draw (4,3) rectangle (5,4);
+%     \fill[green!40] (5,3) rectangle (6,4);
+%     \draw[thick] (5,3) rectangle (6,4);
+%     \node at (5.5,3.5) {$\bullet$};
+%     \draw[dashed] (6,3) rectangle (7,4);
+    
+%     % Row i+1 - boxes up to p-1, then target at p, then boxes from p+1 to j-1, empty at j
+%     \fill[blue!30] (0,2) rectangle (1,3);
+%     \draw (0,2) rectangle (1,3);
+%     \node at (1.5,2.5) {$\cdots$};
+%     \fill[blue!30] (1.8,2) rectangle (2,3);
+%     \draw (1.8,2) rectangle (2,3);
+%     \fill[blue!30] (2,2) rectangle (3,3);
+%     \draw (2,2) rectangle (3,3);
+%     \fill[blue!30] (3,2) rectangle (4,3);
+%     \draw (3,2) rectangle (4,3);
+%     \node at (3.5,2.5) {$\cdots$};
+%     \fill[blue!30] (4,2) rectangle (5,3);
+%     \draw (4,2) rectangle (5,3);
+%     \draw[thick] (5,2) rectangle (6,3);
+%     \node at (5.5,2.5) {$\circ$};
+%     \draw[dashed] (6,2) rectangle (7,3);
+    
+%     % Row i+2 - boxes up to just before p
+%     \fill[blue!30] (0,1) rectangle (1,2);
+%     \draw (0,1) rectangle (1,2);
+%     \node at (1.5,1.5) {$\cdots$};
+%     \fill[blue!30] (1.8,1) rectangle (2,2);
+%     \draw (1.8,1) rectangle (2,2);
+%     \draw[thick] (2,1) rectangle (3,2);
+%     \node at (2.5,1.5) {$\circ$};
+%     \draw[dashed] (3,1) rectangle (4,2);
+%     \draw[dashed] (4,1) rectangle (5,2);
+%     \draw[dashed] (5,1) rectangle (6,2);
+%     \draw[dashed] (6,1) rectangle (7,2);
+    
+%     \node[left] at (0,3.5) {$i$};
+%     \node[left] at (0,2.5) {$i+1$};
+%     \node[left] at (0,1.5) {$i+2$};
+%     \node[below] at (2.5,0.8) {$p$};
+%     \node[below] at (5.5,0.8) {$j$};
+%   \end{scope}
+  
+%   % Arrow
+%   \draw[->,thick] (7.5,2.5) -- (8.5,2.5) node[midway,above] {$\rcdd^i$};
+  
+%   % Panel 2: After rcdd^i (delete (i,j) and apply f_i)
+%   \begin{scope}[shift={(9,0)}]
+%     \node[above] at (3.5,4.5) {\textbf{After $\rcdd^i$}};
+    
+%     % Row i - lowering operators have moved things, creating a ledge at position p
+%     \fill[blue!30] (0,3) rectangle (1,4);
+%     \draw (0,3) rectangle (1,4);
+%     \node at (1.5,3.5) {$\cdots$};
+%     \fill[blue!30] (1.8,3) rectangle (2,4);
+%     \draw (1.8,3) rectangle (2,4);
+%     \fill[blue!30] (2,3) rectangle (3,4);
+%     \draw (2,3) rectangle (3,4);
+%     \fill[blue!30] (3,3) rectangle (4,4);
+%     \draw (3,3) rectangle (4,4);
+%     \node at (3.5,3.5) {$\cdots$};
+%     \fill[blue!30] (4,3) rectangle (5,4);
+%     \draw (4,3) rectangle (5,4);
+%     \draw[thick] (5,3) rectangle (6,4);
+%     \node at (5.5,3.5) {$\circ$};
+%     \draw[dashed] (6,3) rectangle (7,4);
+    
+%     % Row i+1 - unchanged before j, target at p is important
+%     \fill[blue!30] (0,2) rectangle (1,3);
+%     \draw (0,2) rectangle (1,3);
+%     \node at (1.5,2.5) {$\cdots$};
+%     \fill[blue!30] (1.8,2) rectangle (2,3);
+%     \draw (1.8,2) rectangle (2,3);
+%     \fill[yellow!40] (2,2) rectangle (3,3);
+%     \draw (2,2) rectangle (3,3);
+%     \node at (2.5,2.5) {$\bullet$};
+%     \fill[blue!30] (3,2) rectangle (4,3);
+%     \draw (3,2) rectangle (4,3);
+%     \node at (3.5,2.5) {$\cdots$};
+%     \fill[blue!30] (4,2) rectangle (5,3);
+%     \draw (4,2) rectangle (5,3);
+%     \draw[thick] (5,2) rectangle (6,3);
+%     \node at (5.5,2.5) {$\circ$};
+%     \draw[dashed] (6,2) rectangle (7,3);
+    
+%     % Row i+2
+%     \fill[blue!30] (0,1) rectangle (1,2);
+%     \draw (0,1) rectangle (1,2);
+%     \node at (1.5,1.5) {$\cdots$};
+%     \fill[blue!30] (1.8,1) rectangle (2,2);
+%     \draw (1.8,1) rectangle (2,2);
+%     \draw[thick] (2,1) rectangle (3,2);
+%     \node at (2.5,1.5) {$\circ$};
+%     \draw[dashed] (3,1) rectangle (4,2);
+%     \draw[dashed] (4,1) rectangle (5,2);
+%     \draw[dashed] (5,1) rectangle (6,2);
+%     \draw[dashed] (6,1) rectangle (7,2);
+    
+%     \node[left] at (0,3.5) {$i$};
+%     \node[left] at (0,2.5) {$i+1$};
+%     \node[left] at (0,1.5) {$i+2$};
+%     \node[below] at (2.5,0.8) {$p$};
+%     \node[below] at (5.5,0.8) {$j$};
+    
+%     \node[anchor=north,align=center,text width=4cm] at (3.5,0) {\tiny $\rtt(i+1,p)=(i+1,i+2)$};
+%   \end{scope}
+  
+%   % Arrow
+%   \draw[->,thick] (16.5,2.5) -- (17.5,2.5) node[midway,above] {$\rcdd^{i+1}$};
+  
+%   % Panel 3: After rcdd^{i+1}rcdd^i
+%   \begin{scope}[shift={(18,0)}]
+%     \node[above] at (3.5,4.5) {\textbf{After $\rcdd^{i+1}\rcdd^i$}};
+    
+%     % Row i - position at (i,p) has the (i,i+1) root
+%     \fill[blue!30] (0,3) rectangle (1,4);
+%     \draw (0,3) rectangle (1,4);
+%     \node at (1.5,3.5) {$\cdots$};
+%     \fill[blue!30] (1.8,3) rectangle (2,4);
+%     \draw (1.8,3) rectangle (2,4);
+%     \fill[orange!40] (2,3) rectangle (3,4);
+%     \draw[very thick] (2,3) rectangle (3,4);
+%     \node at (2.5,3.5) {$\diamondsuit$};
+%     \fill[blue!30] (3,3) rectangle (4,4);
+%     \draw (3,3) rectangle (4,4);
+%     \node at (3.5,3.5) {$\cdots$};
+%     \fill[blue!30] (4,3) rectangle (5,4);
+%     \draw (4,3) rectangle (5,4);
+%     \draw[thick] (5,3) rectangle (6,4);
+%     \node at (5.5,3.5) {$\circ$};
+%     \draw[dashed] (6,3) rectangle (7,4);
+    
+%     % Row i+1 - the target at p has been deleted, creating a ledge
+%     \fill[blue!30] (0,2) rectangle (1,3);
+%     \draw (0,2) rectangle (1,3);
+%     \node at (1.5,2.5) {$\cdots$};
+%     \fill[blue!30] (1.8,2) rectangle (2,3);
+%     \draw (1.8,2) rectangle (2,3);
+%     \draw[thick] (2,2) rectangle (3,3);
+%     \node at (2.5,2.5) {$\circ$};
+%     \fill[blue!30] (3,2) rectangle (4,3);
+%     \draw (3,2) rectangle (4,3);
+%     \node at (3.5,2.5) {$\cdots$};
+%     \fill[blue!30] (4,2) rectangle (5,3);
+%     \draw (4,2) rectangle (5,3);
+%     \draw[thick] (5,2) rectangle (6,3);
+%     \node at (5.5,2.5) {$\circ$};
+%     \draw[dashed] (6,2) rectangle (7,3);
+    
+%     % Row i+2
+%     \fill[blue!30] (0,1) rectangle (1,2);
+%     \draw (0,1) rectangle (1,2);
+%     \node at (1.5,1.5) {$\cdots$};
+%     \fill[blue!30] (1.8,1) rectangle (2,2);
+%     \draw (1.8,1) rectangle (2,2);
+%     \draw[thick] (2,1) rectangle (3,2);
+%     \node at (2.5,1.5) {$\circ$};
+%     \draw[dashed] (3,1) rectangle (4,2);
+%     \draw[dashed] (4,1) rectangle (5,2);
+%     \draw[dashed] (5,1) rectangle (6,2);
+%     \draw[dashed] (6,1) rectangle (7,2);
+    
+%     \node[left] at (0,3.5) {$i$};
+%     \node[left] at (0,2.5) {$i+1$};
+%     \node[left] at (0,1.5) {$i+2$};
+%     \node[below] at (2.5,0.8) {$p$};
+%     \node[below] at (5.5,0.8) {$j$};
+    
+%     \node[anchor=north,align=center,text width=4cm] at (3.5,0) {\tiny $(i,i+1)$ at $(i,p)$};
+%   \end{scope}
+% \end{tikzpicture}
+% \caption{Visualization of the braid relation argument. Starting from configuration with $(i,j)$ filled (green $\bullet$) and minimal empty column $p<j-1$ in row $i+2$ (marked $\star$ at $(i+1,p)$). Row $i$ and row $i+1$ have boxes between columns $p$ and $j$. After $\rcdd^i$: $(i,j)$ is deleted, a ledge is created at $(i,p)$ (orange $\diamondsuit$).}
+% \label{figure:braid_relation_flow}
+% \end{figure}
+
+% Consider now assuming that the RHS is nonzero and applying $\rcdd^{i+1}$ first, then $\rcdd^i$. As before, we know there is a ledge in row $i+1$ at $(i+1,p)$ for some $c$. Deleting this box then should make an $(i, i+1)$ root available. Since row $i+1$ is full to the left of column $p$, the $(i,i+1)$ must occur at $(i, p)$. Now, without applying lowering operators, there is no ledge in row $i+1$, since the box at $(i+1, p)$ was deleted, the box at $(i+2,p)$ was not initially present, and both rows are full to the left of column $p$. A ledge much therefore have been created by lowering operators weakly to the right of column $p$. 
+
+% \begin{figure}[h]
+% \centering
+% \begin{tikzpicture}[scale=0.7]
+%   % TOP LEFT: Panel 1 - Initial configuration (RHS nonzero)
+%   \begin{scope}[shift={(0,5)}]
+%     \node[above] at (2,4.5) {\textbf{(1) Initial}};
+    
+%     % Row i
+%     \fill[blue!30] (0,3) rectangle (1,4);
+%     \draw (0,3) rectangle (1,4);
+%     \node at (1.5,3.5) {$\cdots$};
+%     \fill[blue!30] (1.8,3) rectangle (2,4);
+%     \draw (1.8,3) rectangle (2,4);
+%     \fill[orange!40] (2,3) rectangle (3,4);
+%     \draw[thick] (2,3) rectangle (3,4);
+%     \node at (2.5,3.5) {$\diamondsuit$};
+%     \draw[dashed] (3,3) rectangle (4,4);
+    
+%     % Row i+1
+%     \fill[blue!30] (0,2) rectangle (1,3);
+%     \draw (0,2) rectangle (1,3);
+%     \node at (1.5,2.5) {$\cdots$};
+%     \fill[blue!30] (1.8,2) rectangle (2,3);
+%     \draw (1.8,2) rectangle (2,3);
+%     \fill[purple!40] (2,2) rectangle (3,3);
+%     \draw[thick] (2,2) rectangle (3,3);
+%     \node at (2.5,2.5) {$\star$};
+%     \draw[dashed] (3,2) rectangle (4,3);
+    
+%     % Row i+2
+%     \fill[blue!30] (0,1) rectangle (1,2);
+%     \draw (0,1) rectangle (1,2);
+%     \node at (1.5,1.5) {$\cdots$};
+%     \fill[blue!30] (1.8,1) rectangle (2,2);
+%     \draw (1.8,1) rectangle (2,2);
+%     \draw[thick] (2,1) rectangle (3,2);
+%     \node at (2.5,1.5) {$\circ$};
+%     \draw[dashed] (3,1) rectangle (4,2);
+    
+%     \node[left] at (0,3.5) {$i$};
+%     \node[left] at (0,2.5) {$i+1$};
+%     \node[left] at (0,1.5) {$i+2$};
+%     \node[below] at (2.5,0.8) {$c$};
+%   \end{scope}
+  
+%   % TOP RIGHT: Panel 2 - After first rcdd^{i+1}, now delete (i,c)
+%   \begin{scope}[shift={(6,5)}]
+%     \node[above] at (2.5,4.5) {\textbf{(2) Apply $\rcdd^{i}$}};
+    
+%     % Row i - we now know (i,c+1) is nonempty
+%     \fill[blue!30] (0,3) rectangle (1,4);
+%     \draw (0,3) rectangle (1,4);
+%     \node at (1.5,3.5) {$\cdots$};
+%     \fill[blue!30] (1.8,3) rectangle (2,4);
+%     \draw (1.8,3) rectangle (2,4);
+%     \fill[orange!40] (2,3) rectangle (3,4);
+%     \draw[very thick] (2,3) rectangle (3,4);
+%     \node at (2.5,3.5) {$\diamondsuit$};
+%     \fill[green!40] (3,3) rectangle (4,4);
+%     \draw[thick] (3,3) rectangle (4,4);
+%     \node at (3.5,3.5) {$\bullet$};
+%     \draw[dashed] (4,3) rectangle (5,4);
+    
+%     % Row i+1 - (i+1,c) is now deleted
+%     \fill[blue!30] (0,2) rectangle (1,3);
+%     \draw (0,2) rectangle (1,3);
+%     \node at (1.5,2.5) {$\cdots$};
+%     \fill[blue!30] (1.8,2) rectangle (2,3);
+%     \draw (1.8,2) rectangle (2,3);
+%     \draw[thick] (2,2) rectangle (3,3);
+%     \node at (2.5,2.5) {$\circ$};
+%     \draw[dashed] (3,2) rectangle (4,3);
+%     \draw[dashed] (4,2) rectangle (5,3);
+    
+%     % Row i+2
+%     \fill[blue!30] (0,1) rectangle (1,2);
+%     \draw (0,1) rectangle (1,2);
+%     \node at (1.5,1.5) {$\cdots$};
+%     \fill[blue!30] (1.8,1) rectangle (2,2);
+%     \draw (1.8,1) rectangle (2,2);
+%     \fill[white] (2,1) rectangle (3,2);
+%     \draw (2,1) rectangle (3,2);
+%     \draw[dashed] (3,1) rectangle (4,2);
+%     \draw[dashed] (4,1) rectangle (5,2);
+    
+%     \node[left] at (0,3.5) {$i$};
+%     \node[left] at (0,2.5) {$i+1$};
+%     \node[left] at (0,1.5) {$i+2$};
+%     \node[below] at (2.5,0.8) {$c$};
+%     \node[below] at (3.5,0.8) {$c+1$};
+%   \end{scope}
+  
+%   % BOTTOM LEFT: Panel 3 - After rcdd^i, showing green tile and filled box beneath it
+%   \begin{scope}[shift={(0,0)}]
+%     \node[above] at (3,4.5) {\textbf{(3) After $\rcdd^{i}\rcdd^{i+1}$}};
+    
+%     % Row i - (i,c+1) deleted, green tile still visible
+%     \fill[blue!30] (0,3) rectangle (1,4);
+%     \draw (0,3) rectangle (1,4);
+%     \node at (1.5,3.5) {$\cdots$};
+%     \fill[blue!30] (1.8,3) rectangle (2,4);
+%     \draw (1.8,3) rectangle (2,4);
+%     \draw[thick] (2,3) rectangle (3,4);
+%     \node at (2.5,3.5) {$\circ$};
+%     \fill[green!40] (3,3) rectangle (4,4);
+%     \draw[thick] (3,3) rectangle (4,4);
+%     \node at (3.5,3.5) {$\bullet$};
+%     \draw[dashed] (4,3) rectangle (5,4);
+%     \draw[dashed] (5,3) rectangle (6,4);
+    
+%     % Row i+1 - filled box beneath green tile
+%     \fill[blue!30] (0,2) rectangle (1,3);
+%     \draw (0,2) rectangle (1,3);
+%     \node at (1.5,2.5) {$\cdots$};
+%     \fill[blue!30] (1.8,2) rectangle (2,3);
+%     \draw (1.8,2) rectangle (2,3);
+%     \draw[thick] (2,2) rectangle (3,3);
+%     \node at (2.5,2.5) {$\circ$};
+%     \fill[blue!30] (3,2) rectangle (4,3);
+%     \draw[thick] (3,2) rectangle (4,3);
+%     \node at (3.5,2.5) {$\bullet$};
+%     \draw[dashed] (4,2) rectangle (5,3);
+%     \draw[dashed] (5,2) rectangle (6,3);
+    
+%     % Arrow showing column c+1 moving down as a block
+%     \draw[->,very thick,red] (3.5,2.8) -- (3.5,2.2);
+    
+%     % Row i+2 - where deletion will happen
+%     \fill[blue!30] (0,1) rectangle (1,2);
+%     \draw (0,1) rectangle (1,2);
+%     \node at (1.5,1.5) {$\cdots$};
+%     \fill[blue!30] (1.8,1) rectangle (2,2);
+%     \draw (1.8,1) rectangle (2,2);
+%     \fill[white] (2,1) rectangle (3,2);
+%     \draw (2,1) rectangle (3,2);
+%     \draw[dashed] (3,1) rectangle (4,2);
+%     \draw[dashed] (4,1) rectangle (5,2);
+%     \draw[dashed] (5,1) rectangle (6,2);
+    
+%     \node[left] at (0,3.5) {$i$};
+%     \node[left] at (0,2.5) {$i+1$};
+%     \node[left] at (0,1.5) {$i+2$};
+%     \node[below] at (2.5,0.8) {$c$};
+%     \node[below] at (3.5,0.8) {$c+1$};
+%   \end{scope}
+  
+%   % Legend at bottom
+%   \node[anchor=north,align=left] at (4,-1.5) {\small $\diamondsuit$: $\rtt(i,c)=(i,i+1)$ root; $\star$: target at $(i+1,c)$; $\bullet$: $(i+1,i+2)$ root moving};
+% \end{tikzpicture}
+% \caption{Reverse direction of the braid relation: applying $\rcdd^{i+1}\rcdd^{i}\rcdd^{i+1}$ (RHS). (1) Initially $\star$ marks $(i+1,c)$ to delete (purple). (2) After $\rcdd^{i+1}$, $(i,c)$ has $(i,i+1)$ root and $(i,c+1)$ is nonempty (green $\bullet$). (3) After $\rcdd^{i}$ deletes $(i,c+1)$, the green tile remains while the $(i+1,i+2)$ root moves southwest (arrow) from $(i+1,c+1)$ to its final position, where it will be deleted by the final $\rcdd^{i+1}$.}
+% \label{figure:braid_relation_rhs}
+% \end{figure}
+
+% %By Proposition \ref{proposition:divdiffprincipal}, these identities hold when applied to any principal RC graph. Since only the exchange property and lowering operators are used in the definition, the opertors do indeed satisfy the Edelman-Greene relations.
+% \end{proof}
+
+% \begin{definition}
+% 	For integers $p,q$, define a permutation
+% 	$$d[p,q] = s_ps_{p+1}\cdots s_{p+q-1}$$
+% 	For a bounded RC graph $(R,n)$ and an integer $1\leq i\leq n$ such that row $i$ is empty, define $\zeromap_{(i)}(R, n)$ as follows. Let 
+% 	$$R^-=\{(a,b)\mid (a,b)\in R\mbox{ and }a<i\}$$
+% 	and
+% 	$$R^+=\{(a,b)\mid (a,b)\in R\mbox{ and }a>i\}$$
+% 	Then define $R'$ to be the unique RC graph such that
+% 	$$(R', i-1) = Z^{n-i+1}(R^-, n)$$ 
+% 	Finally, define
+% 	$$R_{(i)}=R'\cup\trm(R^+)$$
+% 	and
+% 	$$\zeromap_{(i)}(R, n) = (R_{(i)}, n-1)$$
+	
+% 	Let $\mu$ be a dominant permutation, let $w$ be an arbitrary permutation, and let $R$ be an RC graph. We define an integer $\rcdd_\mu^w(R)\in\{0,1\}$ by the following algorithm. Set $R_0=R$ and begin iterating, setting $i=1$. If $\code^*_i(\mu)>\code^*_i(w)$, terminate and set $\rcdd_\mu^w(R)=0$. Otherwise, define
+% 	$$R' = \partial^{d[\code_i^*(\mu)+1,\code^*_i(w)-\code^*_i(\mu)]}(R_{i-1})$$
+% 	If row $\code_i^*(\mu)+1$ is not empty in $R'$, terminate and set $\rcdd_\mu^w(R) = 0$. Otherwise, let 
+% 	$$R_i = \zeromap_{(\code_i^*(\mu)+1)}(R', n - i + 1)$$
+% 	 Let $m$ be the length of $\code^*(\mu)$, and proceed as $i$ ranges from $1$ to $m$. After this procedure, we end with the RC graph $R_m$. If there is an index past $m$ such that $\code^*(w)$ is nonzero, proceed incrementally for each $i > m$ by applying
+% 	 $$R_i = \partial^{d[i+1-m, \code^*_i(w)]}(R_{i-1})$$
+% 	 then define
+% 	 $$\rcdd_\mu^w(R) = 1$$
+% 	 if $R_N=(\emptyset, 0)$ for sufficiently large $N$.
+% \end{definition}
+
+% \begin{definition}
+% $\widetilde{s}_i$ is the operator on bounded RC graphs defined by
+
+% For an RC graph $R$ with row $k$ empty, suppose $k$ is not a  descent of $\wof{R}$. Let $m>k$ be the smallest integer such that $m$ is a descent of $\wof{R}$. Define
+% $$\widetilde{R} = \widetilde{s}_{m-1}\widetilde{s}_{m-2}\cdots \widetilde{s}_k R$$
+% Then define
+% $$\zeromap_k(R, n) = \zeromap_m(\widetilde{R}, n)$$
+% \end{definition}
+
+\begin{definition}[The natural map $\mathcal{U}_i:\BRC(s_iw, n)\to \BRC(w,n)$]
+Suppose $R_1, R_2$ are RC graphs and $s_i$ is a left descent of $\wof{R_1}$. Then $I(R_2)\subseteq I(R_1)$, and hence the inclusion $R_2\hookrightarrow R_1$ preserves right inversions. We can turn this into a canonical map 
+$$\mathcal{U}_i:\BRC(s_iw, n)\to \BRC(w,n)$$
+by choosing $R_1$ to be the unique RC graph in $\BRC(w,n)$ such that $R_2^T$ has a nonzero coefficient in $\rcdd^i(R_1^T)$ (which exists by Lemma \ref{lemma:divdiffunique} and Theorem \ref{theorem:divdiffschubert}).
+\end{definition}
+
+\begin{theorem} \label{theorem:commutative_diagram}
+Let $w\in S_\infty$ satisfy $\maxd(w)\leq n$ and suppose $i$ is a left descent of $w$. Then we have a commutative diagram
+\[
+\begin{tikzcd}
+\BRC(s_iw, n) \arrow[r, "\clp^{n-1}"] \arrow[d, "\mathcal{U}_i"] & \displaystyle\bigcup_{s_iw\downvar{n} s_iw'}\BRC(s_iw', n-1) \arrow[d, "\mathcal{U}_i"] \\
+\BRC(w, n) \arrow[r, "\clp^{n-1}"] & \displaystyle\bigcup_{w\downvar{n} w'}\BRC(w', n-1)
+\end{tikzcd}
+\]
+\end{theorem}
+
 
 \begin{definition}
 Let $R$ be an RC graph and let $p$ be an integer. Define $\clp^p(R)$ to be the RC graph obtained as follows. Let $R_{\leq p}$ be the subgraph of $R$ consisting of rows $1,2,\ldots,p$, and suppose $\maxd(\wof{R_{\leq p}}) = p + m$. If $m\leq 0$, set $\clp^p(R) = R_{\leq p}$. Otherwise, define
@@ -1784,7 +2603,7 @@ Suppose we have two bounded RC graphs $(R_1, m)$ and $(R_2,n)$. The product of t
 $$(R_1, m)\diamond (R_2, n) = \sum_{\clp^m(R')=R_1,\trm^m(R')=R_2}(R', m + n)$$  
 \end{definition}
 
-\begin{lemma}
+\begin{lemma} \label{lemma:assoc_clip}
   We have the following equations for an RC graph $R$ and two integers $p$ and $q$:
 $$\clp^p(\clp^{p+q}(R)) = \clp^p(R)$$
 $$\trm^p(\clp^{p+q}(R)) = \clp^q(\trm^p(R))$$ 
@@ -1792,9 +2611,13 @@ and
 $$\trm^{p+q}(R) = \trm^q(\trm^{p}(R))$$
 \end{lemma}
 \begin{proof}
-The first statement is equivalent to saying that if $m\leq n$, then
-$$\clp^m(\clp^n(R))=\clp^m(R)$$
-It suffices to prove this for $n=m+1$.
+Suppose $(R, n)$ is a bounded RC graph. We prove that $\clp^{n-2}(\clp^{n-1}(R)) = \clp^{n-2}(R)$. For $n=2$, this is trivial. As an additional base case, we also need $n=3$, which is not trivial, but true because a bounded RC graph $(R,1)$ is uniquely determined by its size. We proceed by induction on $n$. Without loss of generality, assume that row $n$ is empty. Then $\clp^{n-1}(R) = \zeromap(R, n)$. We have
+$$\clp^{n-2}(R) = \zeromap^2(R_{\leq n-2}, n)=\zeromap(\zeromap(R_{\leq n-2}, n))$$
+$$\clp^{n-2}(\clp^{n-1}(R)) = \zeromap(\zeromap(R, n)_{\leq n-2}, n-1)$$
+IF $\maxd(\wof{R_{\leq n-2}})\leq n-1$, then both sides are equal to $\zeromap(R_{\leq n-2}, n-1)$. Otherwise, by Lemma \ref{lemma:ztrim}, we have
+$$\trm(\clp^{n-2}(R)) = \trm(\zeromap(\zeromap(R_{\leq n-2}, n))) =\zeromap(\zeromap(\trm(R)_{\leq n-3}, n - 1))$$
+$$\trm(\clp^{n-2}(\clp^{n-1}(R))) = \zeromap(\zeromap(\trm(R), n - 1)_{\leq n-3}, n-2)$$
+Thus, $\clp^{n-2}(\clp^{n-1}(R))$ and $\clp^{n-2}(R)$ agree on all rows except possibly the first row. We proceed by induction on the number of elements of $R$ in the first row. For zero elements, the result is obvious. If we have proved the result for $k-1$ elements in the first row, let $(1, i)$ be the rightmost such element. Then $R\setminus\{(1,i)\}$ has $k-1$ elements in the first row, so by the inductive hypothesis, $\clp^{n-2}(\clp^{n-1}(R\setminus\{(1,i)\})) = \clp^{n-2}(R\setminus\{(1,i)\})$. Applying Theorem \ref{theorem:commutative_diagram}, we see that adding back in the element $(1,i)$ to both sides preserves equality, due to the commutativity of the diagram. This establishes the first equation. The second equation easily follows from repeated application of Lemma \ref{lemma:ztrim}, and the third equation is the definition of $\trm$.
 \end{proof}
 
 \begin{theorem} \label{theorem:howyouslice}
@@ -1810,43 +2633,33 @@ For $p=r-1$, we use the fact that row $r$ of a bounded RC graph $(R,r)$ is uniqu
 For larger $r$, we prove the result by induction on $p$, keeping in mind the solutions for the cases $p=0,1,r-1$. We know that $(R,r)$ is uniquely determined by $(\clp^{r-1}(R), \wof{R})$ and we may use the inductive hypothesis to reason that it is therefore uniquely determined by $(\clp^{p}(R), \trm^p(\clp^{r-1}(R)), \wof{R})$. Furthermore, Let $u=\wof{\clp^{p}(R)}$. Then the pair $(\trm^{p-1}(\clp^{r-1}(R)), u^{-1}\wof{R})$ uniquely determines $\trm^p(R)$ by the inductive hypothesis. Hence $(\clp^{p}(R), \trm^{p}(R), \wof{R})$ uniquely determines $(R, r)$, establishing injectivity.
 \end{proof}
 
+\subsection{Definition of the ring product}
+
+
 
 \begin{theorem}
 	 The product $\diamond$ turns $\BRC$ into a ring, and $\omega\otimes \alpha:\BRC\to \dcoma\otimes \dcoma$ is a homomorphism of rings.
 \end{theorem}
 \begin{proof}
-What is in question is associativity. Suppose we are given three bounded RC graphs $(R_1, p)$, $(R_2, q)$, and $(R_3, r)$, and we want to show that the order of bracketing the product is irrelevant. This is because if $R_w$ is a term in the product, 
+What is in question is associativity. Suppose we are given three bounded RC graphs $(R_1, p)$, $(R_2, q)$, and $(R_3, r)$, and we want to show that the order of bracketing the product is irrelevant. This is because if $R_w$ is a term in the expansion of the product, 
 $$\clp^p(\clp^{p+q}(R_w)) = R_1 = \clp^p(R_w)$$
 $$\trm^p(\clp^{p+q}(R_w)) = R_2 = \clp^q(\trm^p(R_w))$$ 
 and 
 $$\trm^{p+q}(R_w) = R_3 = \trm^q(\trm^{p}(R_w))$$
-and each term in the product has a coefficient of $1$.
+by Lemma \ref{lemma:assoc_clip}, and each term in the expansion of the product has a coefficient of $1$.
 
-% Consider the set $A$ of pairs of permutations $(u,w)$ such that there exists an RC graph $R_u$ with $\clp^p(R_u) = R_1$, $\trm^q(R_u) = R_2$, as well as an RC graph $R_w$ such that $\clp^{p+q}(R_w)=R_u$ and $\trm^{p+q}(R_w) = R_3$. The bracketing in the first order yields the sum
-% $$\sum_{(u,w)\in A}(R_w, p+q+r)$$
-% Similarly, let $B$ be the set of permutations $(w, v)$ such that there exists an RC graph $R_v$ with $\clp^q(R_v) = R_2$, $\trm^r(R_v) = R_3$, as well as an RC graph $R_w$ such that $\clp^{p}(R_w)=R_1$ and $\trm^{p}(R_w) = R_v$. The bracketing in the second order yields the sum
-% $$\sum_{(w,v)\in B}(R_w, p+q+r)$$
-% Then we claim that $(u, w)\mapsto (w, \wof{\trm^p(R_w)})$ is a bijection between $A$ and $B$ that preserves the sum (since $w$ is the same). To construct the inverse, note that the pair $(R_2, R_3)$ together with $v=\wof{\trm^p(R_w)}$ determine a unique RC graph $R_v$ such that $\trm^q(R_v) = \trm^{p+q}(R_w) = R_3$. $R_3$ together with $\clp^{p+q}(R_w)$ and $w$ uniquely determine $R_w$, and the associated permutation of $\clp^{p+q}(R_w)$ is precisely $u$. This establishes associativity.
-% there is at most one bounded RC graph $(R_1', p + q)$ for each $u\in S_\infty$ such that $\clp^p(R_1') = R_1$, $\trm^p(R_1') = R_2$, and $\wof{R_1'} = u$. Given this RC graph and a permutation $w$, there is at most one bounded RC graph $(R'', p + q + r)$ such that $\clp^{p+q}(R'') = (R_1')$, $\trm^{p+q}(R'') = (R_3, r)$, and $\wof{R''} = w$.
-
-% Now we may slice $R''$ at $p$ to obtain $(R_1, p)$ and $\trm^p(R'')$, which together with $w$ uniquely determine $R''$. We also know that $\trm^q(\trm^p(R'')) = R_3$ and $\trm^q(\clp^{p+q}(R'')) = R_2$. Thus the unique choice of permutation $u'$ yielding the result for the opposite bracketing is $\wof{R''_{\leq p}}^{-1}w$. This establishes associativity.
-
-$\omega:\BRC\to \dcoma$ is easily seen to be a homomorphism of rings, since the product is weight preserving in the correct way. For the map $\alpha:\BRC\to \dcoma$, we utilize the formula for the coefficient $d_{u,v}^w(p,q)$ as the coefficient of $\sch_u(x_1,\ldots,x_p)$ when we set $x_{p+1}=\cdots=x_{p+q}=0$ in the polynomial
+To prove the map $\alpha:\BRC\to \dcoma$ is a homomorphism of rings, we utilize the formula for the coefficient $d_{u,v}^w(p,q)$ as the coefficient of $\sch_u(x_1,\ldots,x_p)$ when we set $x_{p+1}=\cdots=x_{p+q}=0$ in the polynomial
 $$\partial^{\shup^p v}\sch_w(x_1,\ldots,x_{p+q})$$
-We claim that if we fix an RC graph $R_u$ for $u$ and an RC graph $R_v$ for $v$, then this coefficient is the same as the number of BRCs $(R, p+q)$ for $w$ such that $\trm^p(R)=R_v$ and $\clp^p(R) = R_u$. If we assume that $v$ is the identity, this follows from Theorem \ref{theorem:zero_bijection}. The divided difference operator characterization means that for $\ell(v)>0$, we can replace the empty space with any (shifted up) RC graph for $v$ $(R_v, q)$ and get the result as desired. 
+(that is, Theorem \ref{theorem:LRdual}). We claim that if we fix an RC graph $R_u$ for $u$ and an RC graph $R_v$ for $v$, then this coefficient is the same as the number of BRCs $(R, p+q)$ for $w$ such that $\trm^p(R)=R_v$ and $\clp^p(R) = R_u$. If we assume that $v$ is the identity, this follows from Theorem \ref{theorem:transition} and Theorem \ref{theorem:zero_bijection}. The divided difference operator characterization means that for $\ell(v)>0$, we can replace the empty space with any (shifted up) RC graph for $v$ $(R_v, q)$ and get the result as desired. 
+
+Despite the algebra $\dcoma$ being free on the word generating set, the map $\omega:\BRC\to \dcoma$ is not immediately seen to be a homomorphism of rings, because the single row RC graphs are not a generating set of $\BRC$.
 \end{proof}
 
 %We would also like a combinatorial interpretation of this product.
 
 
 \begin{example}
-%	\begin{align*}
-%		\left[\begin{matrix}3 & \mathtt{\text{ }} & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & 2\end{matrix}\right]\cdot \left[\begin{matrix} 1\\2\end{matrix}\right]&=\left[\begin{matrix}\mathtt{\text{ }} & 3 & 2 & \mathtt{\text{ }}\\5 & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 4\end{matrix}\right] + \left[\begin{matrix}3 & \mathtt{\text{ }} & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & 2\\\mathtt{\text{ }} & \mathtt{\text{ }} & 3\\\mathtt{\text{ }} & \mathtt{\text{ }} & 4\end{matrix}\right] + \left[\begin{matrix}3 & 2 & \mathtt{\text{ }}\\4 & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & 3\\\mathtt{\text{ }} & \mathtt{\text{ }} & 4\end{matrix}\right] + \left[\begin{matrix}4 & \mathtt{\text{ }} & \mathtt{\text{ }} & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 2\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 4\end{matrix}\right] \\
-%		&+ \left[\begin{matrix}4 & \mathtt{\text{ }} & 2 & \mathtt{\text{ }}\\5 & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 4\end{matrix}\right] + \left[\begin{matrix}5 & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 2\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 4\end{matrix}\right] + \left[\begin{matrix}5 & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & 4 & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 4\end{matrix}\right] \\
-%		& + \left[\begin{matrix}5 & \mathtt{\text{ }} & \mathtt{\text{ }} & 2 & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & 4 & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 4\end{matrix}\right] + \left[\begin{matrix}5 & 4 & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & 5 & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 4\end{matrix}\right] + \left[\begin{matrix}6 & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 1\\\mathtt{\text{ }} & \mathtt{\text{ }} & 5 & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 4\end{matrix}\right] \\
-%		&+ \left[\begin{matrix}6 & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 2 & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & 5 & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 4\end{matrix}\right] + \left[\begin{matrix}6 & \mathtt{\text{ }} & 4 & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & 5 & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }}\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 3\\\mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & \mathtt{\text{ }} & 4\end{matrix}\right]
-%	\end{align*}
-
+We compute the product of two bounded RC graphs $(R_1, 2)\in\BRC(2413,2)$ and $(R_2, 2)\in\BRC(231,2)$:
 \begin{align*}
   &
   \vcenter{\hbox{\begin{tikzpicture}[scale=0.4]
@@ -2743,101 +3556,6 @@ We claim that if we fix an RC graph $R_u$ for $u$ and an RC graph $R_v$ for $v$,
 
 
 
-\subsection{Preservation of the Demazure crystal structure}
-
-RC-graphs have a Demazure crystal structure defined by Assaf and Schilling in \cite{assaf2018demazure}. Namely, they define operators $e_i:\RC(w)\to\RC(w)\cup\{\emptyset\}$ and $f_i:\RC(w)\to\RC(w)\cup\{\emptyset\}$ for each $i\geq 1$ as follows. 
-
-\begin{definition}
-Consider elements $(i, j)\in R$ and $(i+1, k)\in R$. The pairing algorithm starts with the largest $j$ in row $i$ and pairs $(i, j)$ with $(i+1, k)$ where $k$ is the smallest such that $k \geq j$. If no such $k$ exists, then $(i, j)$ is unpaired. The algorithm continues by considering the next largest $j$ in row $i$ and repeating the process until all elements in row $i$ have been considered.
-
-Define $R_i$ to be the set of unpaired elements in row $i$ after applying the pairing algorithm between rows $i$ and $i+1$, and define $L_i$ to be the set of unpaired elements in row $i+1$. Then $f_i(R)$ is defined by removing the leftmost element $(i, j)$ from $R_i$ and adding the element $(i + 1, k)$ to $R$, where $k$ is the largest value such that $(i+1,k)\notin R$ and $k < j$. If $R_i$ is empty or $k$ does not exist, then $f_i(R) = \emptyset$. Similarly, $e_i(R)$ is defined by removing the rightmost element $(i + 1, k)$ from $L_i$ and adding the element $(i, j)$ to $R$, where $j$ is the smallest value such that $(i,j)\notin R$ and $j > k$. If $L_i$ is empty, then $e_i(R) = \emptyset$.
-\end{definition}
-
-We may transport this structure to bounded RC graphs as  operators $e_i:\mathcal{RC}(w,n)\to\mathcal{RC}(w,n)\cup\{\emptyset\}$ and $f_i:\mathcal{RC}(w,n)\to\mathcal{RC}(w,n)\cup\{\emptyset\}$ by
-$$e_i(R,n) = (e_i(R), n)$$
-and
-$$f_i(R, n)=(f_i(R), n)$$
-
-% \begin{lemma}
-% 	Let $(R, n)$ be a bounded RC graph. If $f_i(R)\neq \emptyset$ and $\zeromap(R', n+1)=(R, n)$, then $f_i(R')\neq \emptyset$ and
-% 	$$\zeromap(f_i(R'), n + 1)=(f_i(R), n)$$	
-% \end{lemma}
-
-
-\newcommand{\ckeq}{\sim}
-\newcommand{\ege}{\widetilde{\mathrm{eg}}}
-\begin{definition}
-An RC graph $R$ has a uniquely associated reduced word $\mathrm{word}(R)=(s_{i_1},\ldots,s_{i_N})$. Recall the Coxeter-Knuth relation $\ege$ defined by
-$$j\ i\ k \ckeq j\ k\ i$$
-and
-$$k\ i\ j \ckeq i\ k\ j$$
-if $i<j<k$, and
-$$i\ i+1\ i \ckeq i+1\ i\ i+1$$
-For an RC graph $R$, define $N(R)$ to be the maximum letter in $R$. Then define
-$$\ege(R) = (N(R) + 1 - i_1, \ldots, N(R) + 1 - i_N)$$
-Via the Edelman-Greene insertion algorithm, we may define a pair
-$$(P, Q)$$
-of tableaux of the same shape such that the reading word of $P$ is CK-equivalent to $\ege(R)$ and $Q$, the recording tableau, is standard. Define $\mathtt{tab}(R)$ to be the tableau of the same shape as $Q$ such that the entry in box $(i, j)$ is the row index of the box in $R$ that was inserted to create box $(i, j)$ in $P$.
-\end{definition}
-
-\begin{lemma}
-	We have that $\mathtt{tab}(R)$ is a semistandard Young tableau of shape $\mathrm{shape}(Q)$, and the map
-	$$R\mapsto \mathtt{tab}(R)$$
-	 is a morphism of crystal graphs into $B(\mathrm{shape}(Q))$. 
-\end{lemma}
-\begin{proof}
-Suppose $R$ is a highest weight. Then $\wtt(R)$ is a partition. By the highest weight condition, the longest increasing subsequence of $\ege(R)$ is of length $\wtt(R)_1$ and is precisely the first row read in the grid order. By the Edelman-Greene correspondence \cite{edelman1987balanced}, the first row of $P$ has length equal to the length of the longest increasing subsequence of $\ege(R)$. Hence, the first row of $P$ has length $\wtt(R)_1$. By similar reasoning on the subsequent rows, we have that $\mathrm{shape}(P) = \wtt(R)$. We then have that $\mathtt{tab}(R)$ is the unique Yamanouchi tableau of shape $\wtt(R)$, establishing the claim for highest weights. The general case follows from the rigidity of the Demazure crystal structure \cite{assaf2018demazure}; since the function is weight-preserving, it is a morphism of crystal graphs.
-\end{proof}
-
-\begin{theorem}
-	% Let $R,R'$ be RC graphs. Then $\mathrm{hw}(R) = \mathrm{hw}(R')$ if and only if $\ege(R) \ckeq \ege(R')$.
-  The distinct Demazure crystals that make up $\RC(w)$ are in bijection with the Coxeter-Knuth equivalence classes of reduced words for $w_0ww_0$ via the map $R\mapsto \ege(R)$, with $R\mapsto \mathtt{tab}(R)$ being a homomorphism of crystal graphs into $B(\lambda)$, where $\lambda=\mathrm{shape}(P(\ege(R)))$.
-\end{theorem}
-\begin{proof}
-By \cite[Theorem~4.11]{morse2016crystal}, if $e_i(R)\neq \emptyset$, then $R$ and $e_i(R)$ have the same Edelman-Greene insertion tableau. Since conjugation by $w_0$ is an automorphism of Coxeter-Knuth equivalence, so do $\ege(R)$ and $\ege(e_i(R))$. The shape is determined inductively. Suppose $R$ is a highest weight element and consider $\mathtt{word}(R)$. The first row of $R$ forms a word that corresponds to an initial increasing subsequence of $\ege(R)$. If there were a letter in some row below the first that is smaller than the last letter of the first row, then some raising operator would yield a nonempty result, contradicting the fact that $R$ is a highest weight. Thus, the first row of $P(\ege(R))$ has length equal to the length of the first row of $R$. The rest follows by induction on the remaining rows.
-\end{proof}
-
-\begin{definition}
-Let $\RC(w, n)^0$ be the set of bounded RC graphs $(R, n)$ such that $\wof{R} = w$ and row $n$ is empty. We define a function $\zeromap_*^R:R\to R'$, where $\zeromap(R,n) = (R',n-1)$ and $w'=\wof{R'}$, as follows. Clearly if $\code_n(w) = 0$, then $\zeromap_*^R$ is the identity map. 
-
-Consider now the case where $\code_n(w) = 1$. The initial deletion of $(i,j)$ with $\rtt_R(i,j) = (n, n+1)$ results in an RC graph $R_0 = R\setminus\{(i,j)\}$ with $\wof{R_1} = w s_n$, after which we add $(n,1)$ to obtain $R_1$. Let
-$$f_1:R_1\to R$$
-be the identity. Afterwards, $(i_1, j_1)$ is inserted into $R_1$ to obtain $R_2$. Set
-$$f_1(i_1,j_1) = (i,j)$$
-and
-$$f_1(a,b) = (a,b)$$
-otherwise.
-
-At this point, rectification may be required. In that case, we delete some element $(i_1', j_1')$ from $R_2$ such that $i_1'<i_1$ and $\rtt_{R_2}(i_1', j_1') = \rtt_{R_2}(i_1, j_1)$. Afterwards, we add $(i_1', j_2)$ to obtain $R_2'$. Set
-$$f_2(i_1', j_2) = (i_1', j_1')$$
-and
-$$f_2(a,b) = f_1(a,b)$$
-otherwise. Continuing in this manner, we eventually obtain $R'$. Pieicing all of the maps defined at each step gives the desired map. The same method works for $\code_n(w) > 1$ by induction.
-% Suppose $\code_n(w) = m$. Let $c=s_{n + m -1}\cdots s_n$. Then there exist unique reflections $t_{a_1b_1}, \ldots, t_{a_mb_m}$ such that
-% $$wc^{-1} = w't_{a_mb_m}\cdots t_{a_1b_1}$$
-% and each reflection satisfies $a_i\leq n-1 < b_i$, inducing a Bruhat covering relation. At this base level, there is a sub-RC-graph of each of $R$. and $R'$, say $R''$, on which we may partially define the map of inversion sets. That is, if $(i,j)\in R''$, then
-% $$\zeromap_*^R(\rtt_R(i,j)) = \rtt_{R'}(i,j)$$
-% In the word of $R'$, the right roots $(a_1,b_1),\ldots,(a_m, b_m)$ occur in a specific order, say $r_1,\ldots, r_m$. On the remaining roots in $R$, we define 
-% $$\zeromap_*^R(n, n + m + 1 - i) = r_i$$
-% Then for all $R$ and $(i,j)$ we have
-% $$T_R(i,j) = T_{R'}(\zeromap_*^R(i,j))$$
-\end{definition}
-
-\begin{lemma}
-Let $(R, n)\in \RC(w, n)^0$ and suppose $\zeromap(R, n) = (R', n-1)$. Then for any $(a,b)\in R'$, $(a,b)$ is paired in the $i,i+1$ pairing in $R'$ if any only if $\zeromap_*^R(a,b)$ is paired in the $i,i+1$ pairing in $R$.
-\end{lemma}
-\begin{proof}
-  This is true for $a=i$ because at most one root is changed in row $i$ and it has moved to the left. For $a=i+1$, the only way that the pairing status could change is if a root in row $i$ moved past an unpaired root in row $i+1$. However, by construction of the insertion algorithm, this cannot happen since a root that was already inserted into row $i+1$ was deleted from row $i$ in the rectification process, and the new inserted root occurs to the left.
-\end{proof}
-
-\begin{theorem}
-	Let $w\in S_\infty$ and $n>0$ be such that $\maxd(w)\leq n$. Then 
-	$$\zeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
-	is a weight-preserving isomorphism of crystal graphs.
-\end{theorem}
-\begin{proof}
-The existence of the map $\zeromap_*^R$ and the previous lemma establish that $\zeromap$ is a bijection (by Theorem \ref{theorem:zero_bijection}) that preserves both weights and the lengths of $i$-strings. Hence it is a weight-preserving isomorphism of crystal graphs.
-\end{proof}
 
 \subsection{Relation to Little bumps}
 
@@ -2966,9 +3684,10 @@ $$\lzeromap=\zeromap$$
 \end{figure}
 
 
-\begin{lemma}[\cite{WEIGANDT2021105470}] \label{lemma:bpd_completion}
+\begin{lemma}[{\cite[Theorem~3.6]{Yu2025EmbeddingBP}}] \label{lemma:bpd_completion}
   Let $(B, N)$ be an ordinary reduced BPD for a permutation $w$, so that $w(M) = M$ for all $M>N$ and $B$ is $N\times N$. Let $n\geq \maxd(w)$ be an integer. Then the BPD $B'$ obtained by only retaining the first $n$ rows of $B$ satisfies $w(B', n) = w(B, N)$ and uniquely determines $B$.
 \end{lemma}
+
 
 \begin{definition}
 There is a bijection $\varphi:\BPD(w,n)\to \mathcal{RC}(w,n)$, where $w\in S_n$, defined in \cite{GaoHuang2023} that preserves weight. It is viewed as ``canonical'' because it also provides bijective correspondences between certain insertion/bumping operations on BPDs and RC graphs, showing that they agree in a strong way. In light of Lemma \ref{lemma:bpd_completion}, we may extend this bijection to $w\in S_\infty$ with $\maxd(w)\leq n$ by first expanding the BPD to a square BPD with sufficiently many rows and columns, then applying the bijection, and finally truncating the resulting RC graph to $n$ rows.
@@ -3274,10 +3993,10 @@ Little bumps on last descent
 
 \begin{definition}
 Let $(B, p)$ be a BPD and let $(C, q)$ be another BPD. We define an operation $B\looparrowright C$ as follows. First, let $\varphi(B) = ((a_1, r_1), (a_2, r_2), \ldots, (a_m, r_m))$. Then define
-$$B\looparrowright C = \Delta(((a_1, r_1), (a_2, r_2), \ldots, (a_m, r_m)),C\shup^p)$$
+$$B\looparrowright^p C = \Delta(((a_1, r_1), (a_2, r_2), \ldots, (a_m, r_m)),C\shup^p)$$
 
-We may define a ring product on $\BPD$, independently of the bijection, by declaring that 
-$$(B, p)\diamond (C, q) = \sum_{\mathbf{t}^N(B', p + N) = (B,n)} (B'\looparrowright C, p+q)$$
+We may define a ring product on $\BPD$, somewhat independently of the bijection, by declaring that 
+$$(B, p)\diamond (C, q) = \sum_{\mathbf{t}^N(B', p + N) = (B,n)} (B'\looparrowright^p C, p+q)$$
 \end{definition}
 
 
@@ -3291,710 +4010,7 @@ The Gao-Huang bijection $\varphi:\BPD \to \BRC$ is an isomorphism of rings.
 \end{theorem}
 
 
-\subsection{Crystal divided differences and the dominant Pieri formula}
-
-Let $R$ be an RC graph and let $i>0$ be an integer. We define $\rcdd^iR$, an element of $\RC$, as follows. Define
-$$\rcdd^iR=0$$
-unless $s_i$ is a right descent of $\wof{R}$ and there exists $(i,j)\in R$ such that $\rtt_R(i, j) = (i, i+1)$. If these latter two conditions are satisfied, define 
-$$R'=R\setminus \{(i, j)\}$$
-where $\rtt_R(i,j) = (i, i+1)$. If $e_i(R')\neq \emptyset$, define $\rcdd^iR=0$. Otherwise, define
-$$\rcdd^iR = \sum_{p=0}^{\varphi_i(R')}f_i^pR'$$
-\begin{lemma} \label{lemma:divdiffunique}
-	Let $R$ be an RC graph and let $i>0$ be an integer. If $s_i$ is not a right descent of $\wof{R}$, then there is a unique $R'$ such that the coefficient of $R$ in $\rcdd^iR'$ is $1$, and for other $R'$ the coefficient is $0$.
-\end{lemma}
-\begin{proof}
-	Suppose $s_i$ is not a right descent of $\wof{R}$. Assume without loss of generality that $e_iR = \emptyset$. If $(i+1, 1)\notin R$, then $(i,1)\notin R$ because $s_i$ is not a right descent of $\wof{R}$. In that case, let $R' = R\cup\{(i,1)\}$. Then 
-	$$\rcdd^iR' = R + \text{other terms}$$ 
-	If instead $(i+1, 1)\in R$, since $e_i(R)=\emptyset$ it follows that $(i, 1)\in R$, and if $j$ is the maximum value such that $(i+1,j')\in R$ for all $j'<j$, it follows that $(i,j')\in R$ for all $j'<j$. We must have that $(i,j+1)\notin R$, because $\rtt_R(i, j+1)=(i, i+1)$. Setting $R'=R\cup \{(i, j+1)\}$ gives us the result.
-\end{proof}
-
-\begin{theorem} \label{theorem:divdiffschubert}
-	Suppose $w\in S_\infty$ and $i >0$. If $i$ is not a right descent of $w$, then
-	$$\rcdd^i\mathcal{S}_w(n) = 0$$
-	Otherwise,
-	$$\rcdd^i\mathcal{S}_w(n) = \mathcal{S}_{ws_i}(n)$$
-\end{theorem}
-\begin{proof}
-	The result is trivial if $i$ is not a right descent of $w$. Suppose $i$ is a right descent of $w$. By Lemma \ref{lemma:divdiffunique}, for each RC graph $R$ such that $\wof{R} = ws_i$, there is a unique RC graph $R'$ such that the coefficient of $R$ in $\rcdd^iR'$ is $1$. Since $\wof{R'} = w$, the result follows.
-\end{proof}
-
-\begin{corollary} \label{corollary:generateschubert}
-Suppose $R$ is an RC graph such that $\wof{R} = w$ is dominant. Then for any reduced word $(s_{i_1}, s_{i_2}, \ldots, s_{i_m})$ for a permutation $u$ such that
-$$\ell(wu^{-1}) = \ell(w) - \ell(u)$$
-we have that
-$$\rcdd^{i_1}\rcdd^{i_2}\cdots \rcdd^{i_m}R = \mathcal{S}_{wu^{-1}}(n)$$
-for sufficiently large $n$.
-\end{corollary}
-
-
-\begin{definition}
-For a permutation $w$, define the \emph{principal RC graph} $R^0(w)$ of $w$ to be
-$$R^0(w) = \{(i,j)\mid 1\leq j\leq \code_i(w)\}$$
-
-We say that row $i$ of an RC graph $R$ has a \emph{ledge} at column $j$ if the configuration of boxes in rows $i$ and $i+1$ satisfy $(i,j)\in R$, $(i+1,j)\notin  R$, $\rtt_R(i,j)=(i,i+1)$, and for all $j' < j$ we have that $(i,j')\in R$ and $(i+1,j')\in R$, as shown in in Figure \ref{figure:ledge}.
-\end{definition}
-
-\begin{proposition} \label{proposition:divdiffprincipal}
-Let $R$ be an RC graph and let $w=\wof{R}$. Then the following are equivalent.
-\begin{enumerate}
-\item for any reduced word $(s_{i_1}, s_{i_2}, \ldots, s_{i_m})$ for $w$, we have
-$$\rcdd^{i_1}\rcdd^{i_2}\cdots \rcdd^{i_m}R \neq 0$$
-
-\item $R = R^0(w)$.
-\end{enumerate}
-\end{proposition}
-\begin{proof}
-For (1)$\Rightarrow$(2), we proceed by induction on length. For (1) to be true, in particular if $n=\maxd(\wof{R})$ we have that $(n,1)\in R$. Applying $\rcdd^n$ and lowering operators (necessarily maximally) results in a term being an RC graph which has the same recursive property, which by the inductive hypothesis is $R^0(ws_n)$, which implies that row $n$ of $R$ has length $\code_n(w)$. Choosing our reduced word carefully, we obtain in the process as some nonzero term an RC graph for $w'$ with $\code_k(w') = \code_k(w)$ for all $k<n$ and $\code_n(w')=0$ that has the same property, and hence is prinicipal by the induction hypothesis. It follows that $R$ is principal as well.
-
-For (2)$\Rightarrow$(1), we again proceed by induction on length. If $w$ has no descents, the statement is vacuous. For a principal RC graph $R^0(w)$ for some $w$ with $\ell(w)>0$ and we have the result for smaller lengths, suppose $i$ is a descent of $w$. Then $\code_i(w) > \code_{i+1}(w)$. In particular, if we let $j = \code_{i+1}(w) + 1$, then $(i,j)$ is a ledge of $R^0(w)$. Applying $\rcdd^iR^0(w)$, the lowest weight in the sum is in fact $R^0(ws_i)$. It follows by induction that applying the sequence of divided difference operators corresponding to a reduced word for $w$ to $R^0(w)$ yields the empty RC graph with a coefficient of $1$.
-\end{proof}
-
-  \begin{definition}
-We say that row $i$ of an RC graph $R$ has a \emph{ledge} at column $j$ if the configuration of boxes in rows $i$ and $i+1$ satisfy $(i,j)\in R$, $(i+1,j)\notin  R$, $\rtt_R(i,j)=(i,i+1)$, and for all $j' < j$ we have that $(i,j')\in R$ and $(i+1,j')\in R$, as shown in Figure \ref{figure:ledge}.
-\end{definition}
-
-\begin{lemma} \label{lemma:block_structure}
-Suppose $\rcdd^iR\neq 0$. Then the following hold:
-\begin{enumerate}
-\item \label{item:e_i_empty} $e_iR=\emptyset$.
-\item \label{item:blocky} There exists a $j\geq 1$ such that $R$ has a ledge at column $j$.
-\end{enumerate}
-\end{lemma}
-\begin{proof}
-If $\rcdd^iR\neq 0$, this means that the root $(i, i+1)$ is in row $i$. This happens precisely when we have an element $(i,j)\in R$ such that $(i+1, j)\notin R$, but $(i, j')\in R$ and $(i+1, j')\in R$ for all $1\leq j'<j$. It follows that if $e_iR\neq \emptyset$, then $e_i(R\setminus\{(i,j)\})\neq \emptyset$. This means that $\rcdd^iR=0$, which contradicts the assumption and proves (\ref{item:e_i_empty}).
-
-For (\ref{item:blocky}), by assumption we knnow that there exists some $(i,j)\in R$ with $\rtt_R(i,j)=(i,i+1)$. Recall that $\rtt_R(i,j) = (\wof{R[i,j]}^{-1}(i + j -1), \wof{R[i,j]}^{-1}(i+j))$. Reasoning directly shows that in order for the first component to be $i$, the graph must satisfy the condition that for all $j' < j$ we have that $(i,j')\in R$. Furthermore, in order to satisfy the condition that $R[i,j]^{-1}(i+j) = i+1$, we cannot have that $(i+1,j)\in R$, and this also imposes the requirement that for all $j' < j$ we have that $(i+1,j')\in R$.
-\end{proof}
-
-
-
-% Let $\RC^C$ be the submodule of $\RC$ consisting of formal sums of RC graphs
-% $$\sum_R c_R R$$
-% such that if $e_iR\neq \emptyset$, then $c_{e_iR} = c_R$, and if $f_iR\neq \emptyset$, then $c_{f_iR} = c_R$, for all $i>0$.
-
-% \begin{lemma}
-% The submodule $\RC^C$ is stable under the crystal divided difference operators $\rcdd^i$ for all $i>0$.
-% \end{lemma}
-% \begin{proof}
-
-% \end{proof}
-
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}[scale=0.8]
-  % Draw grid
-  \draw[lightgray, very thin] (0,0) -- (9,0);
-  \draw[lightgray, very thin] (0,1) -- (9,1);
-  \draw[lightgray, very thin] (0,2) -- (9,2);
-  
-  % Row i boxes - columns 1 and 2
-  \foreach \x in {0,1} {
-    \fill[blue!30] (\x,1) rectangle (\x+1,2);
-    \draw (\x,1) rectangle (\x+1,2);
-  }
-  
-  % Row i+1 boxes - columns 1 and 2
-  \foreach \x in {0,1} {
-    \fill[blue!30] (\x,0) rectangle (\x+1,1);
-    \draw (\x,0) rectangle (\x+1,1);
-  }
-  
-  % Ellipses between 2 and j-1
-  \node at (2.5,1.5) {$\cdots$};
-  \node at (2.5,0.5) {$\cdots$};
-  
-  % Column j-1
-  \fill[blue!30] (3,1) rectangle (4,2);
-  \draw (3,1) rectangle (4,2);
-  \fill[blue!30] (3,0) rectangle (4,1);
-  \draw (3,0) rectangle (4,1);
-  
-  % Position (i,j) - nonempty
-  \fill[green!40] (4,1) rectangle (5,2);
-  \draw[thick] (4,1) rectangle (5,2);
-  \node at (4.5,1.5) {$\bullet$};
-  
-  % Position (i+1,j) - empty (white)
-  \fill[white] (4,0) rectangle (5,1);
-  \draw[thick] (4,0) rectangle (5,1);
-  \node at (4.5,0.5) {$\circ$};
-  
-  % Visual ellipses for "anything can happen" to the right
-  \draw[dashed, gray] (5,1) rectangle (6,2);
-  \node at (5.5,1.5) {$\cdots$};
-  \draw[dashed, gray] (5,0) rectangle (6,1);
-  \node at (5.5,0.5) {$\cdots$};
-  
-  \draw[dashed, gray] (6,1) rectangle (7,2);
-  \draw[dashed, gray] (6,0) rectangle (7,1);
-  
-  % Labels
-  \node[left] at (0,1.5) {row $i$};
-  \node[left] at (0,0.5) {row $i+1$};
-  
-  % Column labels
-  \node[below] at (0.5,-0.3) {$1$};
-  \node[below] at (1.5,-0.3) {$2$};
-  \node[below] at (2.5,-0.3) {$\cdots$};
-  \node[below] at (3.5,-0.3) {$j-1$};
-  \node[below] at (4.5,-0.3) {$j$};
-  \node[below] at (5.5,-0.3) {$j+1$};
-  
-  % Legend
-  \node[anchor=west, align=left] at (7.5,1.5) {\small Filled: nonempty};
-  \node[anchor=west, align=left] at (7.5,1) {\small $\bullet$: position $(i,j)$};
-  \node[anchor=west, align=left] at (7.5,0.5) {\small $\circ$: empty};
-  \node[anchor=west, align=left] at (7.5,0) {\small Dashed: arbitrary};
-\end{tikzpicture}
-\caption{Configuration for rows $i$ and $i+1$ for a ledge at $(i,j)$.}
-\label{figure:ledge}
-\end{figure}
-% \begin{proof}
-
-
-
-% \begin{lemma} \label{lemma:block_structure}
-% Suppose $\rcdd^iR\neq 0$. Then the following hold:
-% \begin{enumerate}
-% \item \label{item:e_i_empty} $e_iR=\emptyset$.
-% \item \label{item:blocky} There exists a $j\geq 1$ such that $R$ has a ledge at column $j$.
-% \end{enumerate}
-% \end{lemma}
-% \begin{proof}
-% If $\rcdd^iR\neq 0$, this means that the root $(i, i+1)$ is in row $i$. This happens precisely when we have an element $(i,j)\in R$ such that $(i+1, j)\notin R$, but $(i, j')\in R$ and $(i+1, j')\in R$ for all $1\leq j'<j$. It follows that if $e_iR\neq \emptyset$, then $e_i(R\setminus\{(i,j)\})\neq \emptyset$. This means that $\rcdd^iR=0$, which contradicts the assumption and proves (\ref{item:e_i_empty}).
-
-% For (\ref{item:blocky}), by assumption we knnow that there exists some $(i,j)\in R$ with $\rtt_R(i,j)=(i,i+1)$. Recall that $\rtt_R(i,j) = (\wof{R[i,j]}^{-1}(i + j -1), \wof{R[i,j]}^{-1}(i+j))$. Reasoning directly shows that in order for the first component to be $i$, the graph must satisfy the condition that for all $j' < j$ we have that $(i,j')\in R$. Furthermore, in order to satisfy the condition that $R[i,j]^{-1}(i+j) = i+1$, we cannot have that $(i+1,j)\in R$, and this also imposes the requirement that for all $j' < j$ we have that $(i+1,j')\in R$.
-% \end{proof}
-
-
-
-
-\begin{theorem}
-The crystal divided difference operators satisfy the relations:
-$$\rcdd^i\rcdd^i = 0$$
-$$\rcdd^i\rcdd^j = \rcdd^j\rcdd^i\quad\mbox{for }|i-j|>1$$
-$$\rcdd^i\rcdd^{i+1}\rcdd^i = \rcdd^{i+1}\rcdd^i\rcdd^{i+1}$$
-\end{theorem}
-
-\begin{proof}
-The first and second relations are not difficult. Otherwise, assume without loss of generality that $i=1$. For an RC graph with precisely three rows, let us consider applying $\rcdd^1\rcdd^2\rcdd^1$. Suppose $\code(w) = (a, b, c)$. It is well known that if $m=\min(a, b, c)$, then the first $m$ columns of $R$ are completely full, hence without loss of generality let us assume that $m=0$. The only way the braid relation can apply to yield a nonzero result, therefore, is if $a>b>c=0$. Since this yields a dominant permutation, it follows that $R$ is the unique RC graph for $w$. Applying the braid relation in either direction yields the complete sum of RC graphs for the permutation with code $(0, a - 1, b - 2)$ by application of Corollary \ref{corollary:generateschubert}. By transfer, this result also applies to the last two or three rows of any RC graph with respect to the code.
-
-Considering a general RC graph, we may similarly assume that $\code_3(w)=0$ by removing full columns, since only ledges will yield nonzero results. If there are extra elements in the first three rows that are not in the implied dominant block, then they all satisfy $r + c - 1 > \code_r(w) + 1$, where $r\in \{1,2,3\}$ and the extra element is at row $(r,c)$, since they have come down from a row past row $4$ (with respect to the principal RC graph). Elements with $r + c - 1 > \code_1(w) + 1$ can be seen to have no essential interaction with rows $1$, $2$, and $3$ and can be disregarded. We are left with the configuration in Figure \ref{figure:whatsleft}.
-
-In this situation, without ambiguity, application of the braid triple in either direction will delete the immobile $(2,1)$, $(1, \code_2(w) + 1)$, and $(1,1)$. Without application of any lowering operators, simply deleting these elements yields the highest weight of the crystal component containing $R$ with respect to the first three rows. Since we may apply $\clp^3(R)$ to obtain a Demazure crystal, the lowering operators transitively generate the sum. To see that we indeed get all of them, we note that for this highest weight $R' = \clp^3(R)$, application of $\rcdd^1\rcdd^2\rcdd^1$ should yield elements of the form
-$$f_1^{a_1}f_2^{a_2}f_1^{a_3}R'$$
-and for the other direction,
-$$f_2^{b_1}f_1^{b_2}f_2^{b_3}R'$$
-These are two distinct parametrizations of the Demazure crystal $B_{s_1s_2s_1}(\lambda)=B_{s_2s_1s_2}(\lambda)$ with highest weight $\lambda$, yielding the same elements.
-\end{proof}
-
-\newcommand{\BRF}{\mathcal{BRF}}
-\newcommand{\RF}{\mathcal{RF}}
-\newcommand{\cs}{\widetilde{s}}
-
-% To prove this, we will take an algebraic detour. \emph{Reduced factorizations} are essentially RC graphs where negative columns are allowed. We may define $\BRF$ similarily to $\BRC$, where an element of $\BRF$ is a pair $(R, n)$ where $R$ is a reduced factorization and $\maxd(\wof{R})\leq n$. An element $(R,n)$ in $\BRF$ generates a full Kashiwara crystal under the crystal operators defined previously, with the reflection operators satisfying
-% $$\wtt(\cs_i(R, n)) = s_i\wtt((R,n))$$
-
-%We extend the definition of $\rcdd^i$ to $\BRF$ by using the same definition if $(R,n)$ is an RC graph in rows $i$ and $i+1$. We extend the definition to $\BRF$ as follows. We declare that if $(R,n)$ is not an RC graph in rows $i$ and $i+1$, then $\rcdd^i(R,n)=0$ unless there is a $j$ (necessarily negative) such that $(i+1,j)\in R$ and $\rtt_R(i+1,j) = (i, i+1)$, In that case, define $R'=R\setminus\{(i+1,j)\}$. Then if $f_i(R')\neq \emptyset$, define $\rcdd^i(R,n)=0$. Otherwise, define
-%$$\rcdd^i(R,n) = -\sum_{p=0}^{\varepsilon_i(R')}e_i^pR'$$
-
-% We consider the module $\mathbb{Q}(x)\otimes\BRF$ now, and quotient by the $S_\infty$-invariant submodule $D$ generated by elements of the form
-% $$(R,n) - \cs_i(R,n) - (x_{i} - x_{i+1})\otimes\rcdd^i(R,n),$$
-% to obtain the module $\widetilde{\BRF}=(\mathbb{Z}[x]\otimes\BRF)/D$. $D$ is easily seen to be a submodule that is $S_\infty$-invariant. 
-
-% \begin{lemma}
-% The elements $(R,n)$ for $(R, n)\in \BRF$ remain distinct in the quotient $\widetilde{\BRF}$ of degree $\ell(\wof{R})$, forming a $\mathbb{Z}$-basis of a $\mathbb{Z}$-submodule of $\widetilde{\BRF}$ isomorphic to $\BRF$.
-% \end{lemma}
-% \begin{proof}
-% This follows by the fact that $(R,n)$ and $\cs_i(R,n)$ are of the same degree as $R$, and $\rcdd^i(R,n)$ is of degree one less than that of $R$ with nonzero coefficient. Over $\mathbb{Z}$, no linear combinations of elements of these two forms can be equal unless they are zero, since $\mathbb{Z}[x]\otimes \BRF$ is free over $\mathbb{Z}[x]$ with basis the elements $(R,n)$.
-% \end{proof}
-
-% \begin{lemma}
-% The submodule $D$ of $\mathbb{Z}[x]\otimes \BRF$ is $S_\infty$-invariant.
-% \end{lemma}
-% \begin{proof}
-% The key fact that causes this to be true is that the basis element $(R,n)-\cs_i(R,n) - (x_i - x_{i+1})\otimes \rcdd^i(R,n)$ is mapped to a linear combination of similar basis elements under the action of any simple reflection $s_j$. This follows from the fact that the simple reflections and crystal operators satisfy the Coxeter relations, and that the divided difference operators satisfy the braid relations.
-%  \end{proof}
-%The module $\widetilde{BRF}$ is still graded by degree and has the elements $(R,n)$ as a basis of homogeneous elements.
-
-
-% Let $\mathcal{N}$ be the nil-Hecke ring over $\mathbb{Q}(x)$. We define an action of $\mathcal{N}$ on $\BRF_{\mathbb{Q}(x)}$ by declaring that
-% $$\partial^ip(x)(R,n) = (\partial^ip(x))(R, n)+(s_ip(x))\frac{1}{x_i - x_{i+1}}((R,n) - \cs_i(R, n))$$
-
-
-% \begin{lemma}
-% The action of the nil-Hecke ring $\mathcal{N}$ on $\BRF_{\mathbb{Q}(x)}$ defined above is well-defined and intertwines with the homomorphism of $\BRF_{\mathbb{Q}(x)}$ into $\mathbb{Q}(x)$.
-% \end{lemma}
-
-% \begin{lemma}
-% Suppose $(R,n) \in \BRC$. Then $\rcdd^i(R,n)=0$ if and only if $\cs_i(R,n) = (R,n)$.
-% \end{lemma}
-
-% Define a homomorphism $P:\BRF_{\mathbb{Q}(x)}\to \BRC_{\mathbb{Q}(x)}$ by declaring that $P(R,n) = (R,n)$ if $(R,n)$ is an RC graph, and $P(R,n)=0$ otherwise.
-
-% \begin{proposition}
-% For any RC graph $(R,n)\in \BRF$, we have 
-% $$P(\partial^i(R,n)) = \rcdd^iP(R,n)$$
-% \end{proposition}
-
-% The first equation is immediate, and the second follows from the fact that the simple reflections and crystal operators satisfy this condition. 
-
-% For the third condition, we make use of Lemma \ref{lemma:block_structure}. Assume that the LHS is nonzero. Then by Lemma \ref{lemma:block_structure}, rows $i$ and $i+1$ must have the configuration in Figure \ref{figure:divdiff_braid_lhs}. When applying $\rcdd^i$, we start by deleting $(i,j)$, then propogate down the $i$-string of the resulting RC graph. In the case that in row $i+2$ we have that $(i+2, j')\in R$ for all $j'<j-1$, and $(i+2, j-1)\notin R$ as well, the deletion sequence is clear. 
-
-% If $(i+2, j-1)\in R$, the situation is more complex. Since there is no ``ledge'' initially in row $i+1$ after deleting $(i,j)$, in order for $\rcdd^{i+1}$ application to be nonzero there must be some boxes in row $i$ starting at column $j+1$ (and possibly extending further). We could consider the possibility that the the box that moves from $(i, j+1)$ to $(i+1,j)$ is the root $(i+1, i+2)$ in row $i+1$ that we are deleting (which happens if and only if row $i+2$ has no space before column $j$). After this deletion, however, we are stuck: there is no root in row $i$ to delete. It follows that if $(i+2, j-1)\in R$ and the LHS is nonzero, there is a $p<j-1$ such that $(i+2, p)\notin R$. In that case, assuming $p$ is minimal, we have that $(i+1,p)$ is the root to delete. After deleting this root, we apply lowering operators to row $i+1$, moving a portion of the row to row $i+2$, clearing a space for a ledge for the $(i,i+1)$ root, which occurs precisely at $(i, p)$. 
-
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}[scale=0.8]
-  % Row 1 (top row) - fully filled
-  \fill[blue!30] (0,2) rectangle (1,3);
-  \draw (0,2) rectangle (1,3);
-  \fill[blue!30] (1,2) rectangle (2,3);
-  \draw (1,2) rectangle (2,3);
-  \fill[blue!30] (2,2) rectangle (3,3);
-  \draw (2,2) rectangle (3,3);
-  \fill[blue!30] (3,2) rectangle (4,3);
-  \draw (3,2) rectangle (4,3);
-  \fill[blue!30] (4,2) rectangle (5,3);
-  \draw (4,2) rectangle (5,3);
-  \fill[blue!30] (5,2) rectangle (6,3);
-  \draw (5,2) rectangle (6,3);
-  \fill[blue!30] (6,2) rectangle (7,3);
-  \draw (6,2) rectangle (7,3);
-  \fill[blue!30] (7,2) rectangle (8,3);
-  \draw (7,2) rectangle (8,3);
-  
-  % Row 2 (middle row) - filled, empty, filled, empty
-  \fill[blue!30] (0,1) rectangle (1,2);
-  \draw (0,1) rectangle (1,2);
-  \fill[blue!30] (1,1) rectangle (2,2);
-  \draw (1,1) rectangle (2,2);
-  \draw[thick] (2,1) rectangle (3,2);
-  \node at (2.5,1.5) {$\circ$};
-  \draw[thick] (3,1) rectangle (4,2);
-  \node at (3.5,1.5) {$\circ$};
-  \draw[thick] (4,1) rectangle (5,2);
-  \node at (4.5,1.5) {$\circ$};
-  \fill[blue!30] (5,1) rectangle (6,2);
-  \draw (5,1) rectangle (6,2);
-  \fill[blue!30] (6,1) rectangle (7,2);
-  \draw (6,1) rectangle (7,2);
-  \draw[thick] (7,1) rectangle (8,2);
-  \node at (7.5,1.5) {$\circ$};
-  
-  % Row 3 (bottom row) - empty, filled, empty
-  \draw[thick] (0,0) rectangle (1,1);
-  \node at (0.5,0.5) {$\circ$};
-  \fill[blue!30] (1,0) rectangle (2,1);
-  \draw (1,0) rectangle (2,1);
-  \draw[thick] (2,0) rectangle (3,1);
-  \node at (2.5,0.5) {$\circ$};
-  \draw[thick] (3,0) rectangle (4,1);
-  \node at (3.5,0.5) {$\circ$};
-  \draw[thick] (4,0) rectangle (5,1);
-  \node at (4.5,0.5) {$\circ$};
-  \draw[thick] (5,0) rectangle (6,1);
-  \node at (5.5,0.5) {$\circ$};
-  \draw[thick] (6,0) rectangle (7,1);
-  \node at (6.5,0.5) {$\circ$};
-  \draw[thick] (7,0) rectangle (8,1);
-  \node at (7.5,0.5) {$\circ$};
-  
-\end{tikzpicture}
-\caption{Configuration in the final steps of the proof of the braid relation.}
-\label{figure:whatsleft}
-\end{figure}
-
-%there is a single term, which is easily seen to be equal to both sides. Therefore, consider the case that at column $c<j-1$, with $c$ minimal, we have an empty space at $(i+2,c)$. When $(i,j)$ is deleted from $R$, we then apply lowering operators to row $i$ as much as we can to obtain all of the terms in the sum.  No application of any power of $f_i$ will change the elements of $R$ in row $i+1$ before column $j$. Since by assumption some term has $\rcdd^{i+1}$ nonzero, we must have had that $\rtt_R(i+1,c) = (i+1,i+2)$ by Lemma \ref{lemma:block_structure}. The same argument fixes the position of $(i, i+1)$ at $(i, c)$ after application of $\rcdd^{i+1}\rcdd^i$.
-
-
-% \begin{figure}[h]
-% \centering
-% \begin{tikzpicture}[scale=0.6]
-%   % Panel 1: Initial configuration
-%   \begin{scope}[shift={(0,0)}]
-%     \node[above] at (3.5,4.5) {\textbf{Initial: $R$}};
-    
-%     % Row i - boxes from left up to and including position before j, then (i,j) filled
-%     \fill[blue!30] (0,3) rectangle (1,4);
-%     \draw (0,3) rectangle (1,4);
-%     \node at (1.5,3.5) {$\cdots$};
-%     \fill[blue!30] (1.8,3) rectangle (2,4);
-%     \draw (1.8,3) rectangle (2,4);
-%     \fill[blue!30] (2,3) rectangle (3,4);
-%     \draw (2,3) rectangle (3,4);
-%     \fill[blue!30] (3,3) rectangle (4,4);
-%     \draw (3,3) rectangle (4,4);
-%     \node at (3.5,3.5) {$\cdots$};
-%     \fill[blue!30] (4,3) rectangle (5,4);
-%     \draw (4,3) rectangle (5,4);
-%     \fill[green!40] (5,3) rectangle (6,4);
-%     \draw[thick] (5,3) rectangle (6,4);
-%     \node at (5.5,3.5) {$\bullet$};
-%     \draw[dashed] (6,3) rectangle (7,4);
-    
-%     % Row i+1 - boxes up to p-1, then target at p, then boxes from p+1 to j-1, empty at j
-%     \fill[blue!30] (0,2) rectangle (1,3);
-%     \draw (0,2) rectangle (1,3);
-%     \node at (1.5,2.5) {$\cdots$};
-%     \fill[blue!30] (1.8,2) rectangle (2,3);
-%     \draw (1.8,2) rectangle (2,3);
-%     \fill[blue!30] (2,2) rectangle (3,3);
-%     \draw (2,2) rectangle (3,3);
-%     \fill[blue!30] (3,2) rectangle (4,3);
-%     \draw (3,2) rectangle (4,3);
-%     \node at (3.5,2.5) {$\cdots$};
-%     \fill[blue!30] (4,2) rectangle (5,3);
-%     \draw (4,2) rectangle (5,3);
-%     \draw[thick] (5,2) rectangle (6,3);
-%     \node at (5.5,2.5) {$\circ$};
-%     \draw[dashed] (6,2) rectangle (7,3);
-    
-%     % Row i+2 - boxes up to just before p
-%     \fill[blue!30] (0,1) rectangle (1,2);
-%     \draw (0,1) rectangle (1,2);
-%     \node at (1.5,1.5) {$\cdots$};
-%     \fill[blue!30] (1.8,1) rectangle (2,2);
-%     \draw (1.8,1) rectangle (2,2);
-%     \draw[thick] (2,1) rectangle (3,2);
-%     \node at (2.5,1.5) {$\circ$};
-%     \draw[dashed] (3,1) rectangle (4,2);
-%     \draw[dashed] (4,1) rectangle (5,2);
-%     \draw[dashed] (5,1) rectangle (6,2);
-%     \draw[dashed] (6,1) rectangle (7,2);
-    
-%     \node[left] at (0,3.5) {$i$};
-%     \node[left] at (0,2.5) {$i+1$};
-%     \node[left] at (0,1.5) {$i+2$};
-%     \node[below] at (2.5,0.8) {$p$};
-%     \node[below] at (5.5,0.8) {$j$};
-%   \end{scope}
-  
-%   % Arrow
-%   \draw[->,thick] (7.5,2.5) -- (8.5,2.5) node[midway,above] {$\rcdd^i$};
-  
-%   % Panel 2: After rcdd^i (delete (i,j) and apply f_i)
-%   \begin{scope}[shift={(9,0)}]
-%     \node[above] at (3.5,4.5) {\textbf{After $\rcdd^i$}};
-    
-%     % Row i - lowering operators have moved things, creating a ledge at position p
-%     \fill[blue!30] (0,3) rectangle (1,4);
-%     \draw (0,3) rectangle (1,4);
-%     \node at (1.5,3.5) {$\cdots$};
-%     \fill[blue!30] (1.8,3) rectangle (2,4);
-%     \draw (1.8,3) rectangle (2,4);
-%     \fill[blue!30] (2,3) rectangle (3,4);
-%     \draw (2,3) rectangle (3,4);
-%     \fill[blue!30] (3,3) rectangle (4,4);
-%     \draw (3,3) rectangle (4,4);
-%     \node at (3.5,3.5) {$\cdots$};
-%     \fill[blue!30] (4,3) rectangle (5,4);
-%     \draw (4,3) rectangle (5,4);
-%     \draw[thick] (5,3) rectangle (6,4);
-%     \node at (5.5,3.5) {$\circ$};
-%     \draw[dashed] (6,3) rectangle (7,4);
-    
-%     % Row i+1 - unchanged before j, target at p is important
-%     \fill[blue!30] (0,2) rectangle (1,3);
-%     \draw (0,2) rectangle (1,3);
-%     \node at (1.5,2.5) {$\cdots$};
-%     \fill[blue!30] (1.8,2) rectangle (2,3);
-%     \draw (1.8,2) rectangle (2,3);
-%     \fill[yellow!40] (2,2) rectangle (3,3);
-%     \draw (2,2) rectangle (3,3);
-%     \node at (2.5,2.5) {$\bullet$};
-%     \fill[blue!30] (3,2) rectangle (4,3);
-%     \draw (3,2) rectangle (4,3);
-%     \node at (3.5,2.5) {$\cdots$};
-%     \fill[blue!30] (4,2) rectangle (5,3);
-%     \draw (4,2) rectangle (5,3);
-%     \draw[thick] (5,2) rectangle (6,3);
-%     \node at (5.5,2.5) {$\circ$};
-%     \draw[dashed] (6,2) rectangle (7,3);
-    
-%     % Row i+2
-%     \fill[blue!30] (0,1) rectangle (1,2);
-%     \draw (0,1) rectangle (1,2);
-%     \node at (1.5,1.5) {$\cdots$};
-%     \fill[blue!30] (1.8,1) rectangle (2,2);
-%     \draw (1.8,1) rectangle (2,2);
-%     \draw[thick] (2,1) rectangle (3,2);
-%     \node at (2.5,1.5) {$\circ$};
-%     \draw[dashed] (3,1) rectangle (4,2);
-%     \draw[dashed] (4,1) rectangle (5,2);
-%     \draw[dashed] (5,1) rectangle (6,2);
-%     \draw[dashed] (6,1) rectangle (7,2);
-    
-%     \node[left] at (0,3.5) {$i$};
-%     \node[left] at (0,2.5) {$i+1$};
-%     \node[left] at (0,1.5) {$i+2$};
-%     \node[below] at (2.5,0.8) {$p$};
-%     \node[below] at (5.5,0.8) {$j$};
-    
-%     \node[anchor=north,align=center,text width=4cm] at (3.5,0) {\tiny $\rtt(i+1,p)=(i+1,i+2)$};
-%   \end{scope}
-  
-%   % Arrow
-%   \draw[->,thick] (16.5,2.5) -- (17.5,2.5) node[midway,above] {$\rcdd^{i+1}$};
-  
-%   % Panel 3: After rcdd^{i+1}rcdd^i
-%   \begin{scope}[shift={(18,0)}]
-%     \node[above] at (3.5,4.5) {\textbf{After $\rcdd^{i+1}\rcdd^i$}};
-    
-%     % Row i - position at (i,p) has the (i,i+1) root
-%     \fill[blue!30] (0,3) rectangle (1,4);
-%     \draw (0,3) rectangle (1,4);
-%     \node at (1.5,3.5) {$\cdots$};
-%     \fill[blue!30] (1.8,3) rectangle (2,4);
-%     \draw (1.8,3) rectangle (2,4);
-%     \fill[orange!40] (2,3) rectangle (3,4);
-%     \draw[very thick] (2,3) rectangle (3,4);
-%     \node at (2.5,3.5) {$\diamondsuit$};
-%     \fill[blue!30] (3,3) rectangle (4,4);
-%     \draw (3,3) rectangle (4,4);
-%     \node at (3.5,3.5) {$\cdots$};
-%     \fill[blue!30] (4,3) rectangle (5,4);
-%     \draw (4,3) rectangle (5,4);
-%     \draw[thick] (5,3) rectangle (6,4);
-%     \node at (5.5,3.5) {$\circ$};
-%     \draw[dashed] (6,3) rectangle (7,4);
-    
-%     % Row i+1 - the target at p has been deleted, creating a ledge
-%     \fill[blue!30] (0,2) rectangle (1,3);
-%     \draw (0,2) rectangle (1,3);
-%     \node at (1.5,2.5) {$\cdots$};
-%     \fill[blue!30] (1.8,2) rectangle (2,3);
-%     \draw (1.8,2) rectangle (2,3);
-%     \draw[thick] (2,2) rectangle (3,3);
-%     \node at (2.5,2.5) {$\circ$};
-%     \fill[blue!30] (3,2) rectangle (4,3);
-%     \draw (3,2) rectangle (4,3);
-%     \node at (3.5,2.5) {$\cdots$};
-%     \fill[blue!30] (4,2) rectangle (5,3);
-%     \draw (4,2) rectangle (5,3);
-%     \draw[thick] (5,2) rectangle (6,3);
-%     \node at (5.5,2.5) {$\circ$};
-%     \draw[dashed] (6,2) rectangle (7,3);
-    
-%     % Row i+2
-%     \fill[blue!30] (0,1) rectangle (1,2);
-%     \draw (0,1) rectangle (1,2);
-%     \node at (1.5,1.5) {$\cdots$};
-%     \fill[blue!30] (1.8,1) rectangle (2,2);
-%     \draw (1.8,1) rectangle (2,2);
-%     \draw[thick] (2,1) rectangle (3,2);
-%     \node at (2.5,1.5) {$\circ$};
-%     \draw[dashed] (3,1) rectangle (4,2);
-%     \draw[dashed] (4,1) rectangle (5,2);
-%     \draw[dashed] (5,1) rectangle (6,2);
-%     \draw[dashed] (6,1) rectangle (7,2);
-    
-%     \node[left] at (0,3.5) {$i$};
-%     \node[left] at (0,2.5) {$i+1$};
-%     \node[left] at (0,1.5) {$i+2$};
-%     \node[below] at (2.5,0.8) {$p$};
-%     \node[below] at (5.5,0.8) {$j$};
-    
-%     \node[anchor=north,align=center,text width=4cm] at (3.5,0) {\tiny $(i,i+1)$ at $(i,p)$};
-%   \end{scope}
-% \end{tikzpicture}
-% \caption{Visualization of the braid relation argument. Starting from configuration with $(i,j)$ filled (green $\bullet$) and minimal empty column $p<j-1$ in row $i+2$ (marked $\star$ at $(i+1,p)$). Row $i$ and row $i+1$ have boxes between columns $p$ and $j$. After $\rcdd^i$: $(i,j)$ is deleted, a ledge is created at $(i,p)$ (orange $\diamondsuit$).}
-% \label{figure:braid_relation_flow}
-% \end{figure}
-
-% Consider now assuming that the RHS is nonzero and applying $\rcdd^{i+1}$ first, then $\rcdd^i$. As before, we know there is a ledge in row $i+1$ at $(i+1,p)$ for some $c$. Deleting this box then should make an $(i, i+1)$ root available. Since row $i+1$ is full to the left of column $p$, the $(i,i+1)$ must occur at $(i, p)$. Now, without applying lowering operators, there is no ledge in row $i+1$, since the box at $(i+1, p)$ was deleted, the box at $(i+2,p)$ was not initially present, and both rows are full to the left of column $p$. A ledge much therefore have been created by lowering operators weakly to the right of column $p$. 
-
-% \begin{figure}[h]
-% \centering
-% \begin{tikzpicture}[scale=0.7]
-%   % TOP LEFT: Panel 1 - Initial configuration (RHS nonzero)
-%   \begin{scope}[shift={(0,5)}]
-%     \node[above] at (2,4.5) {\textbf{(1) Initial}};
-    
-%     % Row i
-%     \fill[blue!30] (0,3) rectangle (1,4);
-%     \draw (0,3) rectangle (1,4);
-%     \node at (1.5,3.5) {$\cdots$};
-%     \fill[blue!30] (1.8,3) rectangle (2,4);
-%     \draw (1.8,3) rectangle (2,4);
-%     \fill[orange!40] (2,3) rectangle (3,4);
-%     \draw[thick] (2,3) rectangle (3,4);
-%     \node at (2.5,3.5) {$\diamondsuit$};
-%     \draw[dashed] (3,3) rectangle (4,4);
-    
-%     % Row i+1
-%     \fill[blue!30] (0,2) rectangle (1,3);
-%     \draw (0,2) rectangle (1,3);
-%     \node at (1.5,2.5) {$\cdots$};
-%     \fill[blue!30] (1.8,2) rectangle (2,3);
-%     \draw (1.8,2) rectangle (2,3);
-%     \fill[purple!40] (2,2) rectangle (3,3);
-%     \draw[thick] (2,2) rectangle (3,3);
-%     \node at (2.5,2.5) {$\star$};
-%     \draw[dashed] (3,2) rectangle (4,3);
-    
-%     % Row i+2
-%     \fill[blue!30] (0,1) rectangle (1,2);
-%     \draw (0,1) rectangle (1,2);
-%     \node at (1.5,1.5) {$\cdots$};
-%     \fill[blue!30] (1.8,1) rectangle (2,2);
-%     \draw (1.8,1) rectangle (2,2);
-%     \draw[thick] (2,1) rectangle (3,2);
-%     \node at (2.5,1.5) {$\circ$};
-%     \draw[dashed] (3,1) rectangle (4,2);
-    
-%     \node[left] at (0,3.5) {$i$};
-%     \node[left] at (0,2.5) {$i+1$};
-%     \node[left] at (0,1.5) {$i+2$};
-%     \node[below] at (2.5,0.8) {$c$};
-%   \end{scope}
-  
-%   % TOP RIGHT: Panel 2 - After first rcdd^{i+1}, now delete (i,c)
-%   \begin{scope}[shift={(6,5)}]
-%     \node[above] at (2.5,4.5) {\textbf{(2) Apply $\rcdd^{i}$}};
-    
-%     % Row i - we now know (i,c+1) is nonempty
-%     \fill[blue!30] (0,3) rectangle (1,4);
-%     \draw (0,3) rectangle (1,4);
-%     \node at (1.5,3.5) {$\cdots$};
-%     \fill[blue!30] (1.8,3) rectangle (2,4);
-%     \draw (1.8,3) rectangle (2,4);
-%     \fill[orange!40] (2,3) rectangle (3,4);
-%     \draw[very thick] (2,3) rectangle (3,4);
-%     \node at (2.5,3.5) {$\diamondsuit$};
-%     \fill[green!40] (3,3) rectangle (4,4);
-%     \draw[thick] (3,3) rectangle (4,4);
-%     \node at (3.5,3.5) {$\bullet$};
-%     \draw[dashed] (4,3) rectangle (5,4);
-    
-%     % Row i+1 - (i+1,c) is now deleted
-%     \fill[blue!30] (0,2) rectangle (1,3);
-%     \draw (0,2) rectangle (1,3);
-%     \node at (1.5,2.5) {$\cdots$};
-%     \fill[blue!30] (1.8,2) rectangle (2,3);
-%     \draw (1.8,2) rectangle (2,3);
-%     \draw[thick] (2,2) rectangle (3,3);
-%     \node at (2.5,2.5) {$\circ$};
-%     \draw[dashed] (3,2) rectangle (4,3);
-%     \draw[dashed] (4,2) rectangle (5,3);
-    
-%     % Row i+2
-%     \fill[blue!30] (0,1) rectangle (1,2);
-%     \draw (0,1) rectangle (1,2);
-%     \node at (1.5,1.5) {$\cdots$};
-%     \fill[blue!30] (1.8,1) rectangle (2,2);
-%     \draw (1.8,1) rectangle (2,2);
-%     \fill[white] (2,1) rectangle (3,2);
-%     \draw (2,1) rectangle (3,2);
-%     \draw[dashed] (3,1) rectangle (4,2);
-%     \draw[dashed] (4,1) rectangle (5,2);
-    
-%     \node[left] at (0,3.5) {$i$};
-%     \node[left] at (0,2.5) {$i+1$};
-%     \node[left] at (0,1.5) {$i+2$};
-%     \node[below] at (2.5,0.8) {$c$};
-%     \node[below] at (3.5,0.8) {$c+1$};
-%   \end{scope}
-  
-%   % BOTTOM LEFT: Panel 3 - After rcdd^i, showing green tile and filled box beneath it
-%   \begin{scope}[shift={(0,0)}]
-%     \node[above] at (3,4.5) {\textbf{(3) After $\rcdd^{i}\rcdd^{i+1}$}};
-    
-%     % Row i - (i,c+1) deleted, green tile still visible
-%     \fill[blue!30] (0,3) rectangle (1,4);
-%     \draw (0,3) rectangle (1,4);
-%     \node at (1.5,3.5) {$\cdots$};
-%     \fill[blue!30] (1.8,3) rectangle (2,4);
-%     \draw (1.8,3) rectangle (2,4);
-%     \draw[thick] (2,3) rectangle (3,4);
-%     \node at (2.5,3.5) {$\circ$};
-%     \fill[green!40] (3,3) rectangle (4,4);
-%     \draw[thick] (3,3) rectangle (4,4);
-%     \node at (3.5,3.5) {$\bullet$};
-%     \draw[dashed] (4,3) rectangle (5,4);
-%     \draw[dashed] (5,3) rectangle (6,4);
-    
-%     % Row i+1 - filled box beneath green tile
-%     \fill[blue!30] (0,2) rectangle (1,3);
-%     \draw (0,2) rectangle (1,3);
-%     \node at (1.5,2.5) {$\cdots$};
-%     \fill[blue!30] (1.8,2) rectangle (2,3);
-%     \draw (1.8,2) rectangle (2,3);
-%     \draw[thick] (2,2) rectangle (3,3);
-%     \node at (2.5,2.5) {$\circ$};
-%     \fill[blue!30] (3,2) rectangle (4,3);
-%     \draw[thick] (3,2) rectangle (4,3);
-%     \node at (3.5,2.5) {$\bullet$};
-%     \draw[dashed] (4,2) rectangle (5,3);
-%     \draw[dashed] (5,2) rectangle (6,3);
-    
-%     % Arrow showing column c+1 moving down as a block
-%     \draw[->,very thick,red] (3.5,2.8) -- (3.5,2.2);
-    
-%     % Row i+2 - where deletion will happen
-%     \fill[blue!30] (0,1) rectangle (1,2);
-%     \draw (0,1) rectangle (1,2);
-%     \node at (1.5,1.5) {$\cdots$};
-%     \fill[blue!30] (1.8,1) rectangle (2,2);
-%     \draw (1.8,1) rectangle (2,2);
-%     \fill[white] (2,1) rectangle (3,2);
-%     \draw (2,1) rectangle (3,2);
-%     \draw[dashed] (3,1) rectangle (4,2);
-%     \draw[dashed] (4,1) rectangle (5,2);
-%     \draw[dashed] (5,1) rectangle (6,2);
-    
-%     \node[left] at (0,3.5) {$i$};
-%     \node[left] at (0,2.5) {$i+1$};
-%     \node[left] at (0,1.5) {$i+2$};
-%     \node[below] at (2.5,0.8) {$c$};
-%     \node[below] at (3.5,0.8) {$c+1$};
-%   \end{scope}
-  
-%   % Legend at bottom
-%   \node[anchor=north,align=left] at (4,-1.5) {\small $\diamondsuit$: $\rtt(i,c)=(i,i+1)$ root; $\star$: target at $(i+1,c)$; $\bullet$: $(i+1,i+2)$ root moving};
-% \end{tikzpicture}
-% \caption{Reverse direction of the braid relation: applying $\rcdd^{i+1}\rcdd^{i}\rcdd^{i+1}$ (RHS). (1) Initially $\star$ marks $(i+1,c)$ to delete (purple). (2) After $\rcdd^{i+1}$, $(i,c)$ has $(i,i+1)$ root and $(i,c+1)$ is nonempty (green $\bullet$). (3) After $\rcdd^{i}$ deletes $(i,c+1)$, the green tile remains while the $(i+1,i+2)$ root moves southwest (arrow) from $(i+1,c+1)$ to its final position, where it will be deleted by the final $\rcdd^{i+1}$.}
-% \label{figure:braid_relation_rhs}
-% \end{figure}
-
-% %By Proposition \ref{proposition:divdiffprincipal}, these identities hold when applied to any principal RC graph. Since only the exchange property and lowering operators are used in the definition, the opertors do indeed satisfy the Edelman-Greene relations.
-% \end{proof}
-
-% \begin{definition}
-% 	For integers $p,q$, define a permutation
-% 	$$d[p,q] = s_ps_{p+1}\cdots s_{p+q-1}$$
-% 	For a bounded RC graph $(R,n)$ and an integer $1\leq i\leq n$ such that row $i$ is empty, define $\zeromap_{(i)}(R, n)$ as follows. Let 
-% 	$$R^-=\{(a,b)\mid (a,b)\in R\mbox{ and }a<i\}$$
-% 	and
-% 	$$R^+=\{(a,b)\mid (a,b)\in R\mbox{ and }a>i\}$$
-% 	Then define $R'$ to be the unique RC graph such that
-% 	$$(R', i-1) = Z^{n-i+1}(R^-, n)$$ 
-% 	Finally, define
-% 	$$R_{(i)}=R'\cup\trm(R^+)$$
-% 	and
-% 	$$\zeromap_{(i)}(R, n) = (R_{(i)}, n-1)$$
-	
-% 	Let $\mu$ be a dominant permutation, let $w$ be an arbitrary permutation, and let $R$ be an RC graph. We define an integer $\rcdd_\mu^w(R)\in\{0,1\}$ by the following algorithm. Set $R_0=R$ and begin iterating, setting $i=1$. If $\code^*_i(\mu)>\code^*_i(w)$, terminate and set $\rcdd_\mu^w(R)=0$. Otherwise, define
-% 	$$R' = \partial^{d[\code_i^*(\mu)+1,\code^*_i(w)-\code^*_i(\mu)]}(R_{i-1})$$
-% 	If row $\code_i^*(\mu)+1$ is not empty in $R'$, terminate and set $\rcdd_\mu^w(R) = 0$. Otherwise, let 
-% 	$$R_i = \zeromap_{(\code_i^*(\mu)+1)}(R', n - i + 1)$$
-% 	 Let $m$ be the length of $\code^*(\mu)$, and proceed as $i$ ranges from $1$ to $m$. After this procedure, we end with the RC graph $R_m$. If there is an index past $m$ such that $\code^*(w)$ is nonzero, proceed incrementally for each $i > m$ by applying
-% 	 $$R_i = \partial^{d[i+1-m, \code^*_i(w)]}(R_{i-1})$$
-% 	 then define
-% 	 $$\rcdd_\mu^w(R) = 1$$
-% 	 if $R_N=(\emptyset, 0)$ for sufficiently large $N$.
-% \end{definition}
-
-% \begin{definition}
-% $\widetilde{s}_i$ is the operator on bounded RC graphs defined by
-
-% For an RC graph $R$ with row $k$ empty, suppose $k$ is not a  descent of $\wof{R}$. Let $m>k$ be the smallest integer such that $m$ is a descent of $\wof{R}$. Define
-% $$\widetilde{R} = \widetilde{s}_{m-1}\widetilde{s}_{m-2}\cdots \widetilde{s}_k R$$
-% Then define
-% $$\zeromap_k(R, n) = \zeromap_m(\widetilde{R}, n)$$
-% \end{definition}
-
-
+\subsection{gaboop}
 \begin{proposition}
 Suppose $(R,n)$ is a bounded RC graph and $i$ is an integer such that $1\leq i\leq n$ and $i$ is a descent of $\wof{R}$. Then there is a unique bounded RC graph $(R', n-1)$ such that $\clp^{i-1}(R) = \clp^{i-1}(R')$, $\trm^{i+1}(R) = \trm^{i}(R')$, and $\wof{R}\downvar{i}\wof{R'}$.
 \end{proposition}
