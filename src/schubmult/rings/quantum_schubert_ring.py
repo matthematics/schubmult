@@ -5,7 +5,7 @@ import schubmult.mult.quantum as py
 import schubmult.mult.quantum_double as yz
 import schubmult.rings.schubert_ring as spr
 import schubmult.utils.schub_lib as schub_lib
-from schubmult.schub_lib.perm_lib import Permutation, longest_element, uncode
+from schubmult.schub_lib.permutation import Permutation, longest_element, uncode
 from schubmult.schub_lib.schub_poly import schubpoly_from_elems
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, expand_func, sympify
 from schubmult.symmetric_polynomials import FactorialElemSym, QFactorialElemSym, coeffvars, degree, genvars, is_of_func_type, numvars

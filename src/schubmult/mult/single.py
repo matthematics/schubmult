@@ -1,7 +1,7 @@
 from functools import cached_property
 
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
-from schubmult.schub_lib.perm_lib import (
+from schubmult.schub_lib.permutation import (
     Permutation,
     theta,
     uncode,

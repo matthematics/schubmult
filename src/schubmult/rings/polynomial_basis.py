@@ -3,7 +3,7 @@ from functools import cached_property
 from schubmult.rings.abstract_schub_poly import GenericPrintingTerm
 
 # If you use symbolic coefficients like S.One, import S from your symbolic module
-from schubmult.schub_lib.perm_lib import Permutation
+from schubmult.schub_lib.permutation import Permutation
 from schubmult.symbolic import Add, Mul, S
 
 # Utility for combining dictionaries with permutation keys
@@ -291,7 +291,7 @@ class SchubertPolyBasis(PolynomialBasis):
 
     def transition_elementary(self, dct, other_basis):
         from schubmult.rings import FA
-        from schubmult.schub_lib.perm_lib import uncode
+        from schubmult.schub_lib.permutation import uncode
 
         def elem_func(p, k, *_):
             return FA(p, k)
@@ -438,7 +438,7 @@ class SepDescPolyBasis(PolynomialBasis):
 
     def transition_schubert(self, dct, other_basis):
         # print(f"{dct=}")
-        # from schubmult.schub_lib.perm_lib import uncode
+        # from schubmult.schub_lib.permutation import uncode
         # from schubmult.rings import FA
 
         # def elem_func(p, k, *_):

@@ -13,7 +13,7 @@ import numpy as np
 from sympy import pretty
 from sympy.printing.defaults import DefaultPrinting
 
-from schubmult.schub_lib.perm_lib import Permutation
+from schubmult.schub_lib.permutation import Permutation
 from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.schub_lib.schubert_monomial_graph import SchubertMonomialGraph
 from schubmult.symbolic import Expr

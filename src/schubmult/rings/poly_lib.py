@@ -1,7 +1,7 @@
 from functools import cache, cached_property
 
 import schubmult.rings.variables as vv
-import schubmult.schub_lib.perm_lib as pl
+import schubmult.schub_lib.permutation as pl
 from schubmult.symbolic import Add, Mul, Pow, S, prod, sympify
 
 # import vv.GeneratingSet, vv.base_index

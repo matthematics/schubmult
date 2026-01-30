@@ -1,6 +1,6 @@
 from sympy import pretty
 
-from schubmult.schub_lib.perm_lib import Permutation
+from schubmult.schub_lib.permutation import Permutation
 from schubmult.schub_lib.schub_poly import schubpoly_from_elems
 from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Ring, S, expand, sympify, sympify_sympy, sympy_Add, sympy_Mul
 from schubmult.utils._mul_utils import _mul_schub_dicts

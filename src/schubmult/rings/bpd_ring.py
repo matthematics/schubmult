@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from schubmult.rings.schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
 from schubmult.schub_lib.bpd import BPD
-from schubmult.schub_lib.perm_lib import Permutation
+from schubmult.schub_lib.permutation import Permutation
 
 if TYPE_CHECKING:
     from schubmult.rings.rc_graph_ring import RCGraphRing, RCGraphRingElement

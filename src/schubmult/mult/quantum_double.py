@@ -13,7 +13,7 @@ import schubmult.mult.double as norm_yz
 import schubmult.mult.positivity as pos
 from schubmult.rings.poly_lib import _vars, call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet_base
-from schubmult.schub_lib.perm_lib import Permutation, code, inv, longest_element, medium_theta, strict_theta, uncode
+from schubmult.schub_lib.permutation import Permutation, code, inv, longest_element, medium_theta, strict_theta, uncode
 from schubmult.symbolic import Add, Mul, Pow, S, expand, sympify
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import (

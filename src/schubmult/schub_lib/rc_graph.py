@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import schubmult.utils.schub_lib as schub_lib
 from schubmult.rings.free_algebra import ASx, FreeAlgebra, FreeAlgebraElement, WordBasis
 from schubmult.rings.nil_hecke import NilHeckeRing
-from schubmult.schub_lib.perm_lib import Permutation, uncode
+from schubmult.schub_lib.permutation import Permutation, uncode
 from schubmult.schub_lib.schubert_monomial_graph import SchubertMonomialGraph
 from schubmult.symbolic import Expr, S, prod
 from schubmult.utils._grid_print import GridPrint
@@ -51,7 +51,7 @@ def w_i_minus(word, i):
 
 
 def find_reduced_fail(word, inserted):
-    from schubmult.schub_lib.perm_lib import Permutation
+    from schubmult.schub_lib.permutation import Permutation
 
     perm = Permutation.ref_product(*word)
     a_start, b_start = perm.right_root_at(inserted, word=word)

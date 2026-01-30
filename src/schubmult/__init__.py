@@ -22,8 +22,8 @@ attribute is accessed for the first time.
 # Commonly exported helpers - only these are in __all__ initially
 _lazy_exports = {
     # Core Schubert structures
-    "Permutation": "schubmult.schub_lib.perm_lib",
-    "uncode": "schubmult.schub_lib.perm_lib",
+    "Permutation": "schubmult.schub_lib.permutation",
+    "uncode": "schubmult.schub_lib.permutation",
     "RCGraph": "schubmult.schub_lib.rc_graph",
     "BPD": "schubmult.schub_lib.bpd",
     "TileType": "schubmult.schub_lib.bpd",

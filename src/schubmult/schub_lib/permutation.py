@@ -247,6 +247,11 @@ class Permutation(Printable):
             return printer.doprint(trimcode(self))
         return printer.doprint(tuple(self._perm))
 
+    def _latex(self, printer):
+        if Permutation.print_as_code:
+            return printer.doprint(trimcode(self))
+        return printer.doprint(tuple(self._perm))
+
     def __call__(self, *tup):
         if len(tup) == 1:
             if isinstance(tup[0], (list, tuple)):

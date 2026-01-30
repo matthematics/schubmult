@@ -1,5 +1,5 @@
 # filepath: /home/matthematics/schubmult/src/schubmult.schub_lib.plactic.py
-from schubmult.schub_lib.perm_lib import Permutation  # noqa: F401
+from schubmult.schub_lib.permutation import Permutation  # noqa: F401
 
 from ..utils._grid_print import GridPrint
 from .crystal_graph import CrystalGraph

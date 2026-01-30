@@ -1,7 +1,7 @@
 from functools import cache
 
 import schubmult.symbolic as ssymb
-from schubmult.schub_lib.perm_lib import Permutation
+from schubmult.schub_lib.permutation import Permutation
 
 # from schubmult.rings.backend import expand, sympify
 # from schubmult.symbolic import S
@@ -55,7 +55,8 @@ class AbstractSchubPoly(ssymb.Expr):
 
     @property
     def args(self):
-        return ((*self._key,), self._genset, self._coeff_genset)
+        # Return empty tuple since all subclasses are Atoms - SymPy shouldn't traverse into them
+        return ()
 
 
 class GenericPrintingTerm(AbstractSchubPoly):
@@ -181,6 +182,59 @@ class DSchubPoly(AbstractSchubPoly):
     @cache
     def __xnew_cached__(_class, k, genset, coeff_genset, prefix):
         return DSchubPoly.__xnew__(_class, k, genset, coeff_genset, prefix)
+
+
+class SepDescSchubPoly(AbstractSchubPoly):
+    """Printing term for SeparatedDescentsRing: Xi_{perm}^{length}"""
+    is_Atom = True
+
+    _pretty_schub_char = "Ξ"
+
+    def __hash__(self):
+        return hash((self._key, self._genset, self._coeff_genset, "SepDesc"))
+
+    def __new__(cls, k, genset, coeff_genset):
+        return SepDescSchubPoly.__xnew_cached__(cls, k, genset, coeff_genset)
+
+    @staticmethod
+    def __xnew__(_class, k, genset, coeff_genset):
+        # k is a tuple (perm, length)
+        return AbstractSchubPoly.__new__(_class, k, genset, coeff_genset, "")
+
+    @property
+    def args(self):
+        # Return empty tuple since we're an Atom - SymPy shouldn't traverse into us
+        return ()
+
+    def _sympystr(self, printer):
+        perm, length = self._key
+        if perm == Permutation([]):
+            return printer.doprint(ssymb.S.One)
+        return printer.doprint(f"Xi_{{{printer.doprint(perm)}}}^{{{length}}}")
+
+    def _pretty(self, printer):
+        perm, length = self._key
+        if perm == Permutation([]):
+            return printer._print(ssymb.S.One)
+        subscript = printer._print(perm)
+        superscript = printer._print(length)
+        return printer._print(ssymb.Symbol(f"{self._pretty_schub_char}_{subscript}^{superscript}"))
+
+    def _latex(self, printer):
+        perm, length = self._key
+        if perm == Permutation([]):
+            return printer._print(ssymb.S.One)
+        # Format permutation as tuple for LaTeX
+        perm_str = ''.join(str(x) for x in perm)
+        return f"\\Xi_{{{perm_str}}}^{{{length}}}"
+
+    def __reduce__(self):
+        return (self.__class__, self.args)
+
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, k, genset, coeff_genset):
+        return SepDescSchubPoly.__xnew__(_class, k, genset, coeff_genset)
 
 
 class QDSchubPoly(AbstractSchubPoly):

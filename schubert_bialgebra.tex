@@ -605,6 +605,16 @@ By definition, the coefficient of $\alpha$ in $\dsch_u^n(y)$ is the coefficient 
 This is not stable for fixed $u$ as $n$ increases, and this is expected.
 
 
+\begin{example}
+Suppose $w = [1,4,5,2,3]$. Then
+$$\dsch_w^3 = [022] - [013]$$
+If we chose $[1,3,5,7,2,4,6]$ instead, we have
+$$\dsch_{1357246} = [0015] - [0033] - [0114] + [0123]$$
+For $w=[4,2,7,1,3,5,6]$,
+$$\dsch_{4271356}^3 = -[026] + [035] + [125] - [134] + [206] - [215] - [305] + [314]$$
+SURELY USE GENERATE RC RING
+\end{example}
+
 \begin{lemma}
 	Let $u,v\in S_\infty$ and $p,q>0$ be integers. Write
 	$$\dsch_u^p\dsch_v^q = \sum_w d_{u,v}^w(p,q)\dsch_w^{p+q}$$
@@ -620,6 +630,152 @@ Let $a\geq 0$ be an integer and $w\in S_\infty$. Then we have
 $$[a]\cdot \dsch_{w}^{n} = \sum_{\substack{w\in\mathcal{D}_1(w')\\\ell(w,w')=a}} \dsch_{w'}^{n+1}$$
 \end{lemma}
 
+We also have
+\begin{lemma} \label{lemma:dpieriend}
+Let $a\geq 0$ be an integer and $w\in S_\infty$. Then we have
+$$\dsch_{w}^{n}\cdot [a] = \sum_{\substack{w\in\mathcal{D}_{n+1}(w')\\\ell(w,w')=a}} \dsch_{w'}^{n+1}$$
+\end{lemma}
+
+
+This is actually sufficient to get a full LR rule.
+
+\begin{lemma}
+Suppose
+$$\dsch_u^p\dsch_v^q=\sum_{w}d_{u,v}^w(p,q)\dsch_w^{p+q}$$
+Then
+$$\dsch_u^p[0]^q=\sum_{\ell(w(\shup^{p}v)^{-1})=\ell(w)-\ell(v)}d_{u,v}^w(p,q)\dsch_{w(\shup^{p}v)^{-1}}^{p+q}$$
+\end{lemma}
+
+\begin{theorem} \label{theorem:LRdual}
+Let $u,v\in S_\infty$ and $p,q>0$ be integers. Write
+$$\dsch_u^p\dsch_v^q = \sum_w d_{u,v}^w(p,q)\dsch_w^{p+q}$$
+Then $d_{u,v}^w(p,q)=0$ unless $\ell(w(\shup^{p}v)^{-1}) = \ell(w)-\ell(v)$ and $\ell(u)+\ell(v)=\ell(w)$. If these conditions are satisfied, then $d_{u,v}^w(p,q)$ is the number of sequences of permutations $(\sigma_0,\ldots,\sigma_q)$ such that $\sigma_0 = w(\shup^{p}v)^{-1}$, $\sigma_q = u$, and
+$$\sigma_0\downvar{p+q}\sigma_2\downvar{p+q-1}\cdots \downvar{p+1}\sigma_{q}$$
+\end{theorem}
+
+\begin{example} \label{example:coproduct}
+What is most interesting in this construction is the coproduct. Consider our example $w=[4,2,7,1,3,5,6]$. Using the word basis, it is a triviality to compute the coproduct $\Delta(\dsch_w^3)$:
+%\begin{align*}
+% &[0000] \otimes [0015] - [0000] \otimes [0033] - [0000] \otimes [0114] + [0000] \otimes [0123] \\
+% &+ [0001] \otimes [0014] - [0001] \otimes [0032] - [0001] \otimes [0113] + [0001] \otimes [0122] \\
+% &+ [0002] \otimes [0013] - [0002] \otimes [0031] - [0002] \otimes [0112] + [0002] \otimes [0121] \\
+% &+ [0003] \otimes [0012] - [0003] \otimes [0030] - [0003] \otimes [0111] + [0003] \otimes [0120] \\
+% &+ [0004] \otimes [0011] - [0004] \otimes [0110] + [0005] \otimes [0010] + [0010] \otimes [0005] \\
+% &- [0010] \otimes [0023] - [0010] \otimes [0104] + [0010] \otimes [0113] + [0011] \otimes [0004] \\
+% &- [0011] \otimes [0022] - [0011] \otimes [0103] + [0011] \otimes [0112] + [0012] \otimes [0003] \\
+% &- [0012] \otimes [0021] - [0012] \otimes [0102] + [0012] \otimes [0111] + [0013] \otimes [0002] \\
+% &- [0013] \otimes [0020] - [0013] \otimes [0101] + [0013] \otimes [0110] + [0014] \otimes [0001] \\
+% &- [0014] \otimes [0100] + [0015] \otimes [0000] - [0020] \otimes [0013] + [0020] \otimes [0103] \\
+% &- [0021] \otimes [0012] + [0021] \otimes [0102] - [0022] \otimes [0011] + [0022] \otimes [0101] \\
+% &- [0023] \otimes [0010] + [0023] \otimes [0100] - [0030] \otimes [0003] - [0031] \otimes [0002] \\
+% &- [0032] \otimes [0001] - [0033] \otimes [0000] - [0100] \otimes [0014] + [0100] \otimes [0023] \\
+% &- [0101] \otimes [0013] + [0101] \otimes [0022] - [0102] \otimes [0012] + [0102] \otimes [0021] \\
+% &- [0103] \otimes [0011] + [0103] \otimes [0020] - [0104] \otimes [0010] - [0110] \otimes [0004] \\
+% &+ [0110] \otimes [0013] - [0111] \otimes [0003] + [0111] \otimes [0012] - [0112] \otimes [0002] \\
+% &+ [0112] \otimes [0011] - [0113] \otimes [0001] + [0113] \otimes [0010] - [0114] \otimes [0000] \\
+% &+ [0120] \otimes [0003] + [0121] \otimes [0002] + [0122] \otimes [0001] + [0123] \otimes [0000]
+\begin{align*}
+&= - [000] \otimes [026] + [000] \otimes [035] + [000] \otimes [125] - [000] \otimes [134] + [000] \otimes [206] - [000] \otimes [215] \\
+&\quad - [000] \otimes [305] + [000] \otimes [314] - [001] \otimes [025] + [001] \otimes [034] + [001] \otimes [124] - [001] \otimes [133] \\
+&\quad + [001] \otimes [205] - [001] \otimes [214] - [001] \otimes [304] + [001] \otimes [313] - [002] \otimes [024] + [002] \otimes [033] \\
+&\quad + [002] \otimes [123] - [002] \otimes [132] + [002] \otimes [204] - [002] \otimes [213] - [002] \otimes [303] + [002] \otimes [312] \\
+&\quad - [003] \otimes [023] + [003] \otimes [032] + [003] \otimes [122] - [003] \otimes [131] + [003] \otimes [203] - [003] \otimes [212] \\
+&\quad - [003] \otimes [302] + [003] \otimes [311] - [004] \otimes [022] + [004] \otimes [031] + [004] \otimes [121] - [004] \otimes [130] \\
+&\quad + [004] \otimes [202] - [004] \otimes [211] - [004] \otimes [301] + [004] \otimes [310] - [005] \otimes [021] + [005] \otimes [030] \\
+&\quad + [005] \otimes [120] + [005] \otimes [201] - [005] \otimes [210] - [005] \otimes [300] - [006] \otimes [020] + [006] \otimes [200] \\
+&\quad - [010] \otimes [016] + [010] \otimes [025] + [010] \otimes [115] - [010] \otimes [124] - [010] \otimes [205] + [010] \otimes [304] \\
+&\quad - [011] \otimes [015] + [011] \otimes [024] + [011] \otimes [114] - [011] \otimes [123] - [011] \otimes [204] + [011] \otimes [303] \\
+&\quad - [012] \otimes [014] + [012] \otimes [023] + [012] \otimes [113] - [012] \otimes [122] - [012] \otimes [203] + [012] \otimes [302] \\
+&\quad - [013] \otimes [013] + [013] \otimes [022] + [013] \otimes [112] - [013] \otimes [121] - [013] \otimes [202] + [013] \otimes [301] \\
+&\quad - [014] \otimes [012] + [014] \otimes [021] + [014] \otimes [111] - [014] \otimes [120] - [014] \otimes [201] + [014] \otimes [300] \\
+&\quad - [015] \otimes [011] + [015] \otimes [020] + [015] \otimes [110] - [015] \otimes [200] - [016] \otimes [010] - [020] \otimes [006] \\
+&\quad + [020] \otimes [015] + [020] \otimes [105] - [020] \otimes [114] - [021] \otimes [005] + [021] \otimes [014] + [021] \otimes [104] \\
+&\quad - [021] \otimes [113] - [022] \otimes [004] + [022] \otimes [013] + [022] \otimes [103] - [022] \otimes [112] - [023] \otimes [003] \\
+&\quad + [023] \otimes [012] + [023] \otimes [102] - [023] \otimes [111] - [024] \otimes [002] + [024] \otimes [011] + [024] \otimes [101] \\
+&\quad - [024] \otimes [110] - [025] \otimes [001] + [025] \otimes [010] + [025] \otimes [100] - [026] \otimes [000] + [030] \otimes [005] \\
+&\quad - [030] \otimes [104] + [031] \otimes [004] - [031] \otimes [103] + [032] \otimes [003] - [032] \otimes [102] + [033] \otimes [002] \\
+&\quad - [033] \otimes [101] + [034] \otimes [001] - [034] \otimes [100] + [035] \otimes [000] + [100] \otimes [025] - [100] \otimes [034] \\
+&\quad + [100] \otimes [106] - [100] \otimes [115] - [100] \otimes [205] + [100] \otimes [214] + [101] \otimes [024] - [101] \otimes [033] \\
+&\quad + [101] \otimes [105] - [101] \otimes [114] - [101] \otimes [204] + [101] \otimes [213] + [102] \otimes [023] - [102] \otimes [032] \\
+&\quad + [102] \otimes [104] - [102] \otimes [113] - [102] \otimes [203] + [102] \otimes [212] + [103] \otimes [022] - [103] \otimes [031] \\
+&\quad + [103] \otimes [103] - [103] \otimes [112] - [103] \otimes [202] + [103] \otimes [211] + [104] \otimes [021] - [104] \otimes [030] \\
+&\quad + [104] \otimes [102] - [104] \otimes [111] - [104] \otimes [201] + [104] \otimes [210] + [105] \otimes [020] + [105] \otimes [101] \\
+&\quad - [105] \otimes [110] - [105] \otimes [200] + [106] \otimes [100] + [110] \otimes [015] - [110] \otimes [024] - [110] \otimes [105] \\
+&\quad + [110] \otimes [204] + [111] \otimes [014] - [111] \otimes [023] - [111] \otimes [104] + [111] \otimes [203] + [112] \otimes [013] \\
+&\quad - [112] \otimes [022] - [112] \otimes [103] + [112] \otimes [202] + [113] \otimes [012] - [113] \otimes [021] - [113] \otimes [102] \\
+&\quad + [113] \otimes [201] + [114] \otimes [011] - [114] \otimes [020] - [114] \otimes [101] + [114] \otimes [200] + [115] \otimes [010] \\
+&\quad - [115] \otimes [100] + [120] \otimes [005] - [120] \otimes [014] + [121] \otimes [004] - [121] \otimes [013] + [122] \otimes [003] \\
+&\quad - [122] \otimes [012] + [123] \otimes [002] - [123] \otimes [011] + [124] \otimes [001] - [124] \otimes [010] + [125] \otimes [000] \\
+&\quad - [130] \otimes [004] - [131] \otimes [003] - [132] \otimes [002] - [133] \otimes [001] - [134] \otimes [000] + [200] \otimes [006] \\
+&\quad - [200] \otimes [015] - [200] \otimes [105] + [200] \otimes [114] + [201] \otimes [005] - [201] \otimes [014] - [201] \otimes [104] \\
+&\quad + [201] \otimes [113] + [202] \otimes [004] - [202] \otimes [013] - [202] \otimes [103] + [202] \otimes [112] + [203] \otimes [003] \\
+&\quad - [203] \otimes [012] - [203] \otimes [102] + [203] \otimes [111] + [204] \otimes [002] - [204] \otimes [011] - [204] \otimes [101] \\
+&\quad + [204] \otimes [110] + [205] \otimes [001] - [205] \otimes [010] - [205] \otimes [100] + [206] \otimes [000] - [210] \otimes [005] \\
+&\quad + [210] \otimes [104] - [211] \otimes [004] + [211] \otimes [103] - [212] \otimes [003] + [212] \otimes [102] - [213] \otimes [002] \\
+&\quad + [213] \otimes [101] - [214] \otimes [001] + [214] \otimes [100] - [215] \otimes [000] - [300] \otimes [005] + [300] \otimes [014] \\
+&\quad - [301] \otimes [004] + [301] \otimes [013] - [302] \otimes [003] + [302] \otimes [012] - [303] \otimes [002] + [303] \otimes [011] \\
+&\quad - [304] \otimes [001] + [304] \otimes [010] - [305] \otimes [000] + [310] \otimes [004] + [311] \otimes [003] + [312] \otimes [002] \\
+&\quad + [313] \otimes [001] + [314] \otimes [000]
+\end{align*}
+Reexpressing this in the dual Schubert basis, e.g. with Lemma \ref{lemma:dpieri}, we have 
+% \begin{align*}
+% &1 \otimes \Xi_{1357246}^{4} + \Xi_{12354}^{4} \otimes \Xi_{1257346}^{4} + \Xi_{12354}^{4} \otimes \Xi_{1347256}^{4} \\
+% &+ \Xi_{12354}^{4} \otimes \Xi_{135624}^{4} + \Xi_{123645}^{4} \otimes \Xi_{1247356}^{4} + \Xi_{123645}^{4} \otimes \Xi_{125634}^{4} \\
+% &+ \Xi_{123645}^{4} \otimes \Xi_{1327456}^{4} + \Xi_{123645}^{4} \otimes \Xi_{134625}^{4} + \Xi_{123645}^{4} \otimes \Xi_{13542}^{4} \\
+% &+ \Xi_{1237456}^{4} \otimes \Xi_{124635}^{4} + \Xi_{1237456}^{4} \otimes \Xi_{12543}^{4} + \Xi_{1237456}^{4} \otimes \Xi_{132645}^{4} \\
+% &+ \Xi_{1237456}^{4} \otimes \Xi_{13524}^{4} + \Xi_{1243}^{4} \otimes \Xi_{1257346}^{4} + \Xi_{1243}^{4} \otimes \Xi_{1347256}^{4} \\
+% &+ \Xi_{12453}^{4} \otimes \Xi_{1247356}^{4} + \Xi_{12453}^{4} \otimes \Xi_{125634}^{4} + \Xi_{12453}^{4} \otimes \Xi_{134625}^{4} \\
+% &+ \Xi_{124635}^{4} \otimes \Xi_{1237456}^{4} + 2 \Xi_{124635}^{4} \otimes \Xi_{124635}^{4} + \Xi_{124635}^{4} \otimes \Xi_{12543}^{4} \\
+% &+ \Xi_{124635}^{4} \otimes \Xi_{132645}^{4} + \Xi_{124635}^{4} \otimes \Xi_{13452}^{4} + \Xi_{1247356}^{4} \otimes \Xi_{123645}^{4} \\
+% &+ \Xi_{1247356}^{4} \otimes \Xi_{12453}^{4} + \Xi_{1247356}^{4} \otimes \Xi_{12534}^{4} + \Xi_{1247356}^{4} \otimes \Xi_{13254}^{4} \\
+% &+ \Xi_{1247356}^{4} \otimes \Xi_{1342}^{4} + \Xi_{12534}^{4} \otimes \Xi_{1247356}^{4} + \Xi_{12534}^{4} \otimes \Xi_{1327456}^{4} \\
+% &+ \Xi_{12543}^{4} \otimes \Xi_{1237456}^{4} + \Xi_{12543}^{4} \otimes \Xi_{124635}^{4} + \Xi_{12543}^{4} \otimes \Xi_{132645}^{4} \\
+% &+ \Xi_{125634}^{4} \otimes \Xi_{123645}^{4} + \Xi_{125634}^{4} \otimes \Xi_{12453}^{4} + \Xi_{125634}^{4} \otimes \Xi_{13254}^{4} \\
+% &+ \Xi_{1257346}^{4} \otimes \Xi_{12354}^{4} + \Xi_{1257346}^{4} \otimes \Xi_{1243}^{4} + \Xi_{1257346}^{4} \otimes \Xi_{132}^{4} \\
+% &+ \Xi_{132}^{4} \otimes \Xi_{1257346}^{4} + \Xi_{13254}^{4} \otimes \Xi_{1247356}^{4} + \Xi_{13254}^{4} \otimes \Xi_{125634}^{4} \\
+% &+ \Xi_{132645}^{4} \otimes \Xi_{1237456}^{4} + \Xi_{132645}^{4} \otimes \Xi_{124635}^{4} + \Xi_{132645}^{4} \otimes \Xi_{12543}^{4} \\
+% &+ \Xi_{1327456}^{4} \otimes \Xi_{123645}^{4} + \Xi_{1327456}^{4} \otimes \Xi_{12534}^{4} + \Xi_{1342}^{4} \otimes \Xi_{1247356}^{4} \\
+% &+ \Xi_{13452}^{4} \otimes \Xi_{124635}^{4} + \Xi_{134625}^{4} \otimes \Xi_{123645}^{4} + \Xi_{134625}^{4} \otimes \Xi_{12453}^{4} \\
+% &+ \Xi_{1347256}^{4} \otimes \Xi_{12354}^{4} + \Xi_{1347256}^{4} \otimes \Xi_{1243}^{4} + \Xi_{13524}^{4} \otimes \Xi_{1237456}^{4} \\
+% &+ \Xi_{13542}^{4} \otimes \Xi_{123645}^{4} + \Xi_{135624}^{4} \otimes \Xi_{12354}^{4} + \Xi_{1357246}^{4} \otimes 1
+%\end{align*}
+\begin{align*}
+&= 1 \otimes \Xi_{4271356}^{3} + \Xi_{1243}^{3} \otimes \Xi_{3271456}^{3} + \Xi_{1243}^{3} \otimes \Xi_{4172356}^{3} + \Xi_{1243}^{3} \otimes \Xi_{426135}^{3} \\
+&\quad + \Xi_{12534}^{3} \otimes \Xi_{3172456}^{3} + \Xi_{12534}^{3} \otimes \Xi_{326145}^{3} + \Xi_{12534}^{3} \otimes \Xi_{416235}^{3} + \Xi_{12534}^{3} \otimes \Xi_{42513}^{3} \\
+&\quad + \Xi_{126345}^{3} \otimes \Xi_{316245}^{3} + \Xi_{126345}^{3} \otimes \Xi_{32514}^{3} + \Xi_{126345}^{3} \otimes \Xi_{41523}^{3} + \Xi_{126345}^{3} \otimes \Xi_{4231}^{3} \\
+&\quad + \Xi_{1273456}^{3} \otimes \Xi_{31524}^{3} + \Xi_{1273456}^{3} \otimes \Xi_{4132}^{3} + \Xi_{1273456}^{3} \otimes \Xi_{4213}^{3} + \Xi_{132}^{3} \otimes \Xi_{3271456}^{3} \\
+&\quad + \Xi_{132}^{3} \otimes \Xi_{4172356}^{3} + \Xi_{1342}^{3} \otimes \Xi_{3172456}^{3} + \Xi_{1342}^{3} \otimes \Xi_{326145}^{3} + \Xi_{1342}^{3} \otimes \Xi_{416235}^{3} \\
+&\quad + \Xi_{13524}^{3} \otimes \Xi_{2173456}^{3} + 2 \Xi_{13524}^{3} \otimes \Xi_{316245}^{3} + \Xi_{13524}^{3} \otimes \Xi_{32514}^{3} + \Xi_{13524}^{3} \otimes \Xi_{41523}^{3} \\
+&\quad + \Xi_{136245}^{3} \otimes \Xi_{216345}^{3} + 2 \Xi_{136245}^{3} \otimes \Xi_{31524}^{3} + \Xi_{136245}^{3} \otimes \Xi_{3241}^{3} + \Xi_{136245}^{3} \otimes \Xi_{4132}^{3} \\
+&\quad + \Xi_{1372456}^{3} \otimes \Xi_{21534}^{3} + \Xi_{1372456}^{3} \otimes \Xi_{3142}^{3} + \Xi_{1372456}^{3} \otimes \Xi_{321}^{3} + \Xi_{1372456}^{3} \otimes \Xi_{4123}^{3} \\
+&\quad + \Xi_{1423}^{3} \otimes \Xi_{3172456}^{3} + \Xi_{1432}^{3} \otimes \Xi_{2173456}^{3} + \Xi_{1432}^{3} \otimes \Xi_{316245}^{3} + \Xi_{14523}^{3} \otimes \Xi_{216345}^{3} \\
+&\quad + \Xi_{14523}^{3} \otimes \Xi_{31524}^{3} + \Xi_{146235}^{3} \otimes \Xi_{21534}^{3} + \Xi_{146235}^{3} \otimes \Xi_{3142}^{3} + \Xi_{1472356}^{3} \otimes \Xi_{2143}^{3} \\
+&\quad + \Xi_{1472356}^{3} \otimes \Xi_{312}^{3} + \Xi_{21}^{3} \otimes \Xi_{2471356}^{3} + \Xi_{21}^{3} \otimes \Xi_{3271456}^{3} + \Xi_{2143}^{3} \otimes \Xi_{1472356}^{3} \\
+&\quad + \Xi_{2143}^{3} \otimes \Xi_{2371456}^{3} + \Xi_{2143}^{3} \otimes \Xi_{246135}^{3} + \Xi_{2143}^{3} \otimes \Xi_{3172456}^{3} + \Xi_{2143}^{3} \otimes \Xi_{326145}^{3} \\
+&\quad + \Xi_{21534}^{3} \otimes \Xi_{1372456}^{3} + \Xi_{21534}^{3} \otimes \Xi_{146235}^{3} + \Xi_{21534}^{3} \otimes \Xi_{2173456}^{3} + \Xi_{21534}^{3} \otimes \Xi_{236145}^{3} \\
+&\quad + \Xi_{21534}^{3} \otimes \Xi_{24513}^{3} + \Xi_{21534}^{3} \otimes \Xi_{316245}^{3} + \Xi_{21534}^{3} \otimes \Xi_{32514}^{3} + \Xi_{216345}^{3} \otimes \Xi_{136245}^{3} \\
+&\quad + \Xi_{216345}^{3} \otimes \Xi_{14523}^{3} + \Xi_{216345}^{3} \otimes \Xi_{216345}^{3} + \Xi_{216345}^{3} \otimes \Xi_{23514}^{3} + \Xi_{216345}^{3} \otimes \Xi_{2431}^{3} \\
+&\quad + \Xi_{216345}^{3} \otimes \Xi_{31524}^{3} + \Xi_{216345}^{3} \otimes \Xi_{3241}^{3} + \Xi_{2173456}^{3} \otimes \Xi_{13524}^{3} + \Xi_{2173456}^{3} \otimes \Xi_{1432}^{3} \\
+&\quad + \Xi_{2173456}^{3} \otimes \Xi_{21534}^{3} + \Xi_{2173456}^{3} \otimes \Xi_{2413}^{3} + \Xi_{2173456}^{3} \otimes \Xi_{3142}^{3} + \Xi_{2173456}^{3} \otimes \Xi_{321}^{3} \\
+&\quad + \Xi_{231}^{3} \otimes \Xi_{3172456}^{3} + \Xi_{2341}^{3} \otimes \Xi_{316245}^{3} + \Xi_{23514}^{3} \otimes \Xi_{216345}^{3} + \Xi_{23514}^{3} \otimes \Xi_{31524}^{3} \\
+&\quad + \Xi_{236145}^{3} \otimes \Xi_{21534}^{3} + \Xi_{236145}^{3} \otimes \Xi_{3142}^{3} + \Xi_{2371456}^{3} \otimes \Xi_{2143}^{3} + \Xi_{2371456}^{3} \otimes \Xi_{312}^{3} \\
+&\quad + \Xi_{2413}^{3} \otimes \Xi_{2173456}^{3} + \Xi_{2431}^{3} \otimes \Xi_{216345}^{3} + \Xi_{24513}^{3} \otimes \Xi_{21534}^{3} + \Xi_{246135}^{3} \otimes \Xi_{2143}^{3} \\
+&\quad + \Xi_{2471356}^{3} \otimes \Xi_{21}^{3} + \Xi_{312}^{3} \otimes \Xi_{1472356}^{3} + \Xi_{312}^{3} \otimes \Xi_{2371456}^{3} + \Xi_{3142}^{3} \otimes \Xi_{1372456}^{3} \\
+&\quad + \Xi_{3142}^{3} \otimes \Xi_{146235}^{3} + \Xi_{3142}^{3} \otimes \Xi_{2173456}^{3} + \Xi_{3142}^{3} \otimes \Xi_{236145}^{3} + \Xi_{31524}^{3} \otimes \Xi_{1273456}^{3} \\
+&\quad + 2 \Xi_{31524}^{3} \otimes \Xi_{136245}^{3} + \Xi_{31524}^{3} \otimes \Xi_{14523}^{3} + \Xi_{31524}^{3} \otimes \Xi_{216345}^{3} + \Xi_{31524}^{3} \otimes \Xi_{23514}^{3} \\
+&\quad + \Xi_{316245}^{3} \otimes \Xi_{126345}^{3} + 2 \Xi_{316245}^{3} \otimes \Xi_{13524}^{3} + \Xi_{316245}^{3} \otimes \Xi_{1432}^{3} + \Xi_{316245}^{3} \otimes \Xi_{21534}^{3} \\
+&\quad + \Xi_{316245}^{3} \otimes \Xi_{2341}^{3} + \Xi_{3172456}^{3} \otimes \Xi_{12534}^{3} + \Xi_{3172456}^{3} \otimes \Xi_{1342}^{3} + \Xi_{3172456}^{3} \otimes \Xi_{1423}^{3} \\
+&\quad + \Xi_{3172456}^{3} \otimes \Xi_{2143}^{3} + \Xi_{3172456}^{3} \otimes \Xi_{231}^{3} + \Xi_{321}^{3} \otimes \Xi_{1372456}^{3} + \Xi_{321}^{3} \otimes \Xi_{2173456}^{3} \\
+&\quad + \Xi_{3241}^{3} \otimes \Xi_{136245}^{3} + \Xi_{3241}^{3} \otimes \Xi_{216345}^{3} + \Xi_{32514}^{3} \otimes \Xi_{126345}^{3} + \Xi_{32514}^{3} \otimes \Xi_{13524}^{3} \\
+&\quad + \Xi_{32514}^{3} \otimes \Xi_{21534}^{3} + \Xi_{326145}^{3} \otimes \Xi_{12534}^{3} + \Xi_{326145}^{3} \otimes \Xi_{1342}^{3} + \Xi_{326145}^{3} \otimes \Xi_{2143}^{3} \\
+&\quad + \Xi_{3271456}^{3} \otimes \Xi_{1243}^{3} + \Xi_{3271456}^{3} \otimes \Xi_{132}^{3} + \Xi_{3271456}^{3} \otimes \Xi_{21}^{3} + \Xi_{4123}^{3} \otimes \Xi_{1372456}^{3} \\
+&\quad + \Xi_{4132}^{3} \otimes \Xi_{1273456}^{3} + \Xi_{4132}^{3} \otimes \Xi_{136245}^{3} + \Xi_{41523}^{3} \otimes \Xi_{126345}^{3} + \Xi_{41523}^{3} \otimes \Xi_{13524}^{3} \\
+&\quad + \Xi_{416235}^{3} \otimes \Xi_{12534}^{3} + \Xi_{416235}^{3} \otimes \Xi_{1342}^{3} + \Xi_{4172356}^{3} \otimes \Xi_{1243}^{3} + \Xi_{4172356}^{3} \otimes \Xi_{132}^{3} \\
+&\quad + \Xi_{4213}^{3} \otimes \Xi_{1273456}^{3} + \Xi_{4231}^{3} \otimes \Xi_{126345}^{3} + \Xi_{42513}^{3} \otimes \Xi_{12534}^{3} + \Xi_{426135}^{3} \otimes \Xi_{1243}^{3} \\
+&\quad + \Xi_{4271356}^{3} \otimes 1
+\end{align*}
+Now we may ask: how do we interpret this?
+\end{example}
 % Due to the fact that we have a positive formula for the coproduct of $\coma$, we have a Littlewood-Richardson rule for $\dcoma$ in the Schubert basis.
 % \begin{theorem}[Littlewood-Richardson rule for $\dcoma$]
 % 	We have
@@ -651,6 +807,70 @@ $$\Delta(\dsch_w^n) = \sum_{u,v} c_{u,v}^w\dsch_u^n\otimes \dsch_v^n$$
 the coefficients $c_{u,v}^w$ are the structure constants of Schubert polynomials. That is, the entire multiplicative structure of Schubert polynomials is encoded in the coproduct.
 \end{observation}
 
+\begin{example}
+Consider the term 2 $\Xi_{31524}^{3} \otimes \Xi_{136245}^{4}$ in Example \ref{example:coproduct}. This indicates that the structure constant $c_{31524,136245}^{4271356}=2$. Indeed, we have
+
+%\sch_{124635}(x)\sch_{124635}(x) &= \mathfrak{S}_{12583467}{\left(x \right)} + \mathfrak{S}_{1267345}{\left(x \right)} + \mathfrak{S}_{13482567}{\left(x \right)} \\
+%                                 & + 2 \mathfrak{S}_{1357246}{\left(x \right)} + \mathfrak{S}_{145623}{\left(x \right)} + \mathfrak{S}_{2347156}{\left(x \right)} \\
+%                                 & + \mathfrak{S}_{235614}{\left(x \right)}
+\begin{align*}
+\sch_{31524}(x)\sch_{136245}(x)&=\mathfrak{S}_{3  2  8  1  4  5  6  7}{\left(x \right)} + \mathfrak{S}_{3  4  7  1  2  5  6}{\left(x \right)} + \mathfrak{S}_{3  5  6  1  2  4}{\left(x \right)} + \mathfrak{S}_{4  1  8  2  3  5  6  7}{\left(x \right)} \\
+&+ 2 \mathfrak{S}_{4  2  7  1  3  5  6}{\left(x \right)} + \mathfrak{S}_{4  3  6  1  2  5}{\left(x \right)} + \mathfrak{S}_{5  1  7  2  3  4  6}{\left(x \right)}+ \mathfrak{S}_{5  2  6  1  3  4}{\left(x \right)}
+\end{align*}
+which confirms that this is in fact the case.
+\end{example}
+
+\subsection{Generalization to double Schubert polynomials}
+ Consider the algebra $\coma[y]$, where $y$ is a similar infinite set of variables indexed by positive integers. As a ring, there is very little difference between $\coma[y]$ and $\coma$, besides the change of coefficient ring. However, we consider $\coma[y]$ as a graded module over $\mathbb{Z}[y]$ with the following decomposition:
+ $$\coma[y] = \bigoplus_{n=0}^\infty \left(\mathbb{Z}[y]\otimes\coma_n\right)$$
+ where the tensor product is over $\mathbb{Z}$.
+
+ There are some unfortunate technicalities here that result in the monomial basis not yielding a ``good'' dual algebra. However, we do have a basis of double Schubert polynomials $\sch_w(x_1,\ldots,x_n;y)$ for $\coma_n[y]$ as a module over $\mathbb{Z}[y]$, with precisely the same coproduct:
+ $$\Delta(\sch_w^r(x;y)) = \sum_{u,v}d_{u,v}^w(p,q;y)\sch_u^p(x;y)\otimes \sch_v^q(x;y)$$
+ where $p+q=r$ and the coefficients $d_{u,v}^w(p,q;y)$ are polynomials in the $y$ variables. The nature of these coefficients is well known, and indeed we can provide a positive formula for them (in terms of the simple roots $y_i-y_{i+1}$).
+
+ We take the dual of $\coma[y]$ as a graded module over $\mathbb{Z}[y]$ by both length and base degree to obtain $\dcoma_y$. This lends us a dual Schubert basis $\dsch_w^n(y)$ as a module over $\mathbb{Z}[y]$ defined by
+  $$\langle \dsch_u^n(y), \sch_v^n(x;y)\rangle = \delta_{u,v}$$
+  where the pairing is over $\mathbb{Z}[y]$. 
+  
+  In terms of the relation to double Schubert calculus, the analogy is complete. The computational aspects are less desirable; in particular, there is no analogous monomial basis to easily get a handle on the Schubert basis from first principles, though the structure constants are indeed understood through other methods.
+
+  \begin{theorem} \label{theorem:LRdualdouble}
+Let $u,v\in S_\infty$ and $p,q>0$ be integers. Write
+$$\dsch_u^p(y)\dsch_v^q(y) = \sum_w d_{u,v}^w(p,q;y)\dsch_w^{p+q}(y)$$
+Then $d_{u,v}^w(p,q;y)=0$ unless $\ell(w(\shup^{p}v)^{-1}) = \ell(w)-\ell(v)$. If that condition is satisfied, then $d_{u,v}^w(p,q;y)$ is the sum over all sequences of permutations $(\sigma_0,\ldots,\sigma_q)$ such that $\sigma_0 = w(\shup^{p}v)^{-1}$, $\sigma_q = u$ and
+$$\sigma_0\downvar{p+q}\sigma_2\downvar{p+q-1}\cdots \downvar{p+1}\sigma_{q}$$
+of the products
+$$\prod_{i=1}^{q}\prod_{a\in Q_{p+q+1-i}(\sigma_{i},\sigma_{i-1})}(y_{p+q+1 - i} - y_a)$$
+\end{theorem}
+
+\begin{example}
+We have
+  \begin{align*}
+\dsch_{1243}^3(y)\dsch_{2314}^2(y)&=\left(\alpha_{2} + 2 \alpha_{3} + \alpha_{4} + \alpha_{5}\right) \Xi_{124653}^{5}(y) \\
+&\quad + \left(\alpha_{2} + 2 \alpha_{3} + 2 \alpha_{4} + \alpha_{5}\right) \Xi_{1236745}^{5}(y) \\
+&\quad + \left(\alpha_{2} + 2 \alpha_{3} + 2 \alpha_{4} + 2 \alpha_{5} + \alpha_{6}\right) \Xi_{1237546}^{5}(y) \\
+&\quad + \left(\alpha_{2} + 2 \alpha_{3} + 2 \alpha_{4} + 2 \alpha_{5} + \alpha_{6}\right) \Xi_{1245736}^{5}(y) \\
+&\quad + \left(\alpha_{3}(\alpha_{2} + \alpha_{3}) + (\alpha_{4} + \alpha_{5})(\alpha_{2} + 2\alpha_{3} + \alpha_{4} + \alpha_{5})\right) \Xi_{1246735}^{5}(y) \\
+&\quad + \left(\alpha_{3}(\alpha_{2} + 2\alpha_{3} + 2\alpha_{4} + 2\alpha_{5} + \alpha_{6})\right. \\
+&\quad\quad \left. + (\alpha_{2} + \alpha_{3} + \alpha_{4} + \alpha_{5})(\alpha_{2} + \alpha_{3} + \alpha_{4} + \alpha_{5} + \alpha_{6})\right) \Xi_{1247536}^{5}(y) \\
+&\quad + \left(\alpha_{2} + 2 \alpha_{3} + 2 \alpha_{4} + \alpha_{5}\right) \left(\alpha_{2} + 2 \alpha_{3} + 2 \alpha_{4} + 2 \alpha_{5} + \alpha_{6}\right) \Xi_{1237645}^{5}(y) \\
+&\quad + \left((\alpha_{2} + \alpha_{3} + \alpha_{4} + \alpha_{5})\right. \\
+&\quad\quad \left.\left(\alpha_{3}(\alpha_{2} + 2\alpha_{3} + 2\alpha_{4} + 2\alpha_{5} + \alpha_{6})\right.\right. \\
+&\quad\quad \left.\left. + (\alpha_{4} + \alpha_{5})(\alpha_{2} + \alpha_{3} + \alpha_{4} + \alpha_{5} + \alpha_{6})\right)\right) \Xi_{1247635}^{5}(y) \\
+&\quad + \Xi_{1235746}^{5}(y) + \Xi_{123654}^{5}(y) + \Xi_{124563}^{5}(y)
+\end{align*}
+\end{example}
+
+There is, indeed, an alternative positive formula that we state here.
+\begin{theorem}\label{theorem:doublecoprodpos}
+Suppose $w\in S_\infty$ and let $\mu$ be a dominant permutation such that $\ell(w\mu)=\ell(\mu)-\ell(w)$. Let $A=[p]$ and let $B=[p+1,p+q]$. Then
+$$d_{u,v}^w(p,q;y) = c_{u\mu_A,v\mu_B}^{w\mu}(-y)$$
+That is to say, fixing $\mu$, we have that $d_{u,v}^w{y}=0$ unless $\ell(u\mu_A)=\ell(\mu_A)-\ell(u)$ and $\ell(v\mu_B)=\ell(\mu_B)-\ell(v)$, in which case
+$$d_{u,v}^w(y)=c_{u\mu_A,v\mu_B}^{w\mu}(-y)$$
+\end{theorem}
+
+This is positive because $u\mu_A$ and $v\mu_B$ have separated descents in the direction computable by \cite[Theorem~3.1]{samuelmolev}.
 
 \section{The ring of bounded RC graphs}
 
@@ -1556,9 +1776,26 @@ Let $(R,n)$ be a bounded RC graph and let $p$ be a descent of $\wof{R}$ such tha
 \newcommand{\clp}{\mathtt{clip}}
 
 \begin{definition}
+Let $R$ be an RC graph and let $p$ be an integer. Define $\clp^p(R)$ to be the RC graph obtained as follows. Let $R_{\leq p}$ be the subgraph of $R$ consisting of rows $1,2,\ldots,p$, and suppose $\maxd(\wof{R_{\leq p}}) = p + m$. If $m\leq 0$, set $\clp^p(R) = R_{\leq p}$. Otherwise, define
+$$\clp^p(R) = \zeromap^m(R_{\leq p}, p + m)$$
+Also, we define $\trm^p(R)$ as
+$$\trm^p(R) = \{(i - p, j) \mid (i, j)\in R, i > p\}$$
 Suppose we have two bounded RC graphs $(R_1, m)$ and $(R_2,n)$. The product of these is defined by
 $$(R_1, m)\diamond (R_2, n) = \sum_{\clp^m(R')=R_1,\trm^m(R')=R_2}(R', m + n)$$  
 \end{definition}
+
+\begin{lemma}
+  We have the following equations for an RC graph $R$ and two integers $p$ and $q$:
+$$\clp^p(\clp^{p+q}(R)) = \clp^p(R)$$
+$$\trm^p(\clp^{p+q}(R)) = \clp^q(\trm^p(R))$$ 
+and 
+$$\trm^{p+q}(R) = \trm^q(\trm^{p}(R))$$
+\end{lemma}
+\begin{proof}
+The first statement is equivalent to saying that if $m\leq n$, then
+$$\clp^m(\clp^n(R))=\clp^m(R)$$
+It suffices to prove this for $n=m+1$.
+\end{proof}
 
 \begin{theorem} \label{theorem:howyouslice}
   Let $r>0$ be an integer and suppose $p\geq 0$ is an integer such that $p\leq r$. Then the map $\BRC(r)\to \BRC(p)\times \BRC(r - p)\times S_\infty$ defined by

@@ -10,7 +10,7 @@ from schubmult.utils._grid_print import GridPrint
 
 from .crystal_graph import CrystalGraph
 from .nilplactic import NilPlactic
-from .perm_lib import Permutation
+from .permutation import Permutation
 from .plactic import Plactic
 from .rc_graph import RCGraph
 

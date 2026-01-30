@@ -242,6 +242,12 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
     def __hash__(self):
         return hash(("Dinkberrtystoa", self._ID))
 
+    def monomial(self, *tup):
+        elem = self.one
+        for a in tup:
+            elem = elem * self(RCGraph.one_row(a))
+        return elem
+
     @property
     def zero_monom(self):
         return RCGraph([])

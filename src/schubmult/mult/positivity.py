@@ -7,7 +7,7 @@ from cachetools.keys import hashkey
 from sortedcontainers import SortedList
 
 from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_poly
-from schubmult.schub_lib.perm_lib import (
+from schubmult.schub_lib.permutation import (
     Permutation,
     code,
     cycle,

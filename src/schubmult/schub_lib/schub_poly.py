@@ -1,4 +1,4 @@
-import schubmult.schub_lib.perm_lib as pl
+import schubmult.schub_lib.permutation as pl
 import schubmult.utils.schub_lib as schub_lib
 from schubmult.rings.poly_lib import call_zvars
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, sympify

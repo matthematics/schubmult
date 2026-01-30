@@ -6,7 +6,7 @@ import schubmult.mult.single as py
 import schubmult.rings.abstract_schub_poly as spolymod
 import schubmult.rings.quantum_schubert_ring as qsr
 import schubmult.utils.schub_lib as schub_lib
-from schubmult.schub_lib.perm_lib import Permutation, uncode
+from schubmult.schub_lib.permutation import Permutation, uncode
 from schubmult.schub_lib.schub_poly import schubpoly_classical_from_elems, schubpoly_from_elems
 from schubmult.symbolic import Add, DomainElement, Mul, Pow, S, Symbol, expand, expand_func, is_of_func_type, sympify, sympify_sympy
 from schubmult.symmetric_polynomials import CompleteSym_base, ElemSym, ElemSym_base, FactorialElemSym, coeffvars, degree, genvars, numvars, split_out_vars

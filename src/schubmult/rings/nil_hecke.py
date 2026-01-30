@@ -1,7 +1,7 @@
 from sympy import Expr
 
 from schubmult.mult.double import schubmult_double_down
-from schubmult.schub_lib.perm_lib import Permutation
+from schubmult.schub_lib.permutation import Permutation
 from schubmult.symbolic import (
     EXRAW,
     Add,

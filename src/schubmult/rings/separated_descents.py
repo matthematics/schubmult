@@ -1,8 +1,8 @@
 from functools import cache
 
 # import schubmult.rings.free_algebra as fa
-from schubmult.schub_lib.perm_lib import Permutation, uncode
-from schubmult.symbolic import CoercionFailed, S, sympy_Mul
+from schubmult.schub_lib.permutation import Permutation, uncode
+from schubmult.symbolic import CoercionFailed, S, sympify, sympify_sympy, sympy_Mul
 from schubmult.utils.perm_utils import has_bruhat_descent, mu_A
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
@@ -222,8 +222,12 @@ class SeparatedDescentsRing(BaseSchubertRing):
         return None
 
     def printing_term(self, k):
-        # return Symbol(f"ASx({k[0]}, {k[1]})", commutative=False)
-        return self._schub_ring.printing_term(k, prefix="A")
+        # k is a tuple (perm, length)
+        from schubmult.rings.abstract_schub_poly import SepDescSchubPoly
+        coeff_label = None
+        if self.coeff_genset is not NotImplemented and self.coeff_genset is not None:
+            coeff_label = self.coeff_genset.label
+        return SepDescSchubPoly(k, self.genset.label, coeff_label)
 
     @property
     def one(self):
@@ -269,5 +273,7 @@ class SeparatedDescentsRingElement(BaseSchubertElement):
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
-            return [S.Zero]
-        return [self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k)) for k in self.keys()]
+            return [sympify(S.Zero)]
+        # Keys are (perm, length) tuples - sort by perm.inv and perm, then by length
+        sorted_keys = sorted(self.keys(), key=lambda k: (k[0].inv, tuple(k[0]), k[1]) if k != self.ring.zero_monom else (-1, (), 0))
+        return [sympify_sympy(self[k]) if k == self.ring.zero_monom else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k)) for k in sorted_keys]

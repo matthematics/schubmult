@@ -386,7 +386,7 @@ class CoRCGraphRing(CrystalGraphRing):
 
 #     def mul(self, elem1, elem2):sssss/
 #         # elem1, elem2 are RestrictedCoRCGraphTensorRing elements
-#         from schubmult.schub_lib.perm_lib import Permutation
+#         from schubmult.schub_lib.permutation import Permutation
 #         def right_zero_act(rc1, rc2):
 #             if (rc1, rc2) in RestrictedCoRCGraphTensorRing._z_cache:
 #                 return RestrictedCoRCGraphTensorRing._z_cache[(rc1, rc2)]

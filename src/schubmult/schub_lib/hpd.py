@@ -14,7 +14,7 @@ from sympy import pretty
 from sympy.printing.defaults import DefaultPrinting
 
 from schubmult.schub_lib.bpd import BPD, TileType
-from schubmult.schub_lib.perm_lib import Permutation
+from schubmult.schub_lib.permutation import Permutation
 from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.schub_lib.schubert_monomial_graph import SchubertMonomialGraph
 from schubmult.symbolic import Expr
@@ -272,7 +272,59 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         ret = cls(grid, (0,) * n)
         return ret
 
-    # def swap_rows(self, row: int) -> HPD:
+    def swap_rows(self, row: int) -> HPD:
+        """
+        Swap a classic row with the row below it.
+
+        Args:
+            row: Index of the classic row to swap (0-based)
+
+        Returns:
+            New HPD with the specified rows swapped
+        """
+        if self._id_vector[row - 1] == self._id_vector[row]:
+            raise ValueError("Cannot swap rows, they are the same type")
+        new_grid = self._grid.copy()
+        new_id_vector = list(self._id_vector)
+        # Swap the rows in the grid
+        #new_grid[[row, row + 1], :] = new_grid[[row + 1, row], :]
+        # Swap the id_vector entries
+        new_id_vector[row], new_id_vector[row + 1] = new_id_vector[row + 1], new_id_vector[row]
+        bpd_row, classic_row = new_grid[row - 1, :], new_grid[row, :]
+        bpd_index, classic_index = row - 1, row
+        if self._id_vector[row - 1] == 0:
+            classic_row, bpd_row = bpd_row, classic_row
+            classic_index, bpd_index = bpd_index, classic_index
+        for col in range(self.cols):
+            # swap the rows
+            if (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.CROSS, HPDTile.CROSS):
+                # nothing to do
+                pass
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.CROSS, HPDTile.ELBOW_NE):
+                new_grid[bpd_index, col] = HPDTile.HORIZ
+                new_grid[classic_index, col] = HPDTile.ELBOW_NE
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.CROSS, HPDTile.VERT):
+                new_grid[bpd_index, col] = HPDTile.CROSS
+                new_grid[classic_index, col] = HPDTile.VERT
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.HORIZ, HPDTile.HORIZ):
+                # nothing to do
+                pass
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.HORIZ, HPDTile.ELBOW_SW):
+                new_grid[bpd_index, col] = HPDTile.CROSS
+                new_grid[classic_index, col] = HPDTile.ELBOW_SW
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.HORIZ, HPDTile.BLANK):
+                new_grid[bpd_index, col] = HPDTile.HORIZ
+                new_grid[classic_index, col] = HPDTile.BLANK
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_NW, HPDTile.HORIZ):
+                new_grid[bpd_index, col] = HPDTile.CROSS
+                new_grid[classic_index, col] = HPDTile.ELBOW_NW
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_NW, HPDTile.HORIZ):
+                new_grid[bpd_index, col] = HPDTile.CROSS
+                new_grid[classic_index, col] = HPDTile.ELBOW_NW
+
+        ret = HPD(new_grid, tuple(new_id_vector))
+        ret._invalidate_cache()
+        return ret
     #     if self.is_classic_row(row):
     #         assert row < len(self) - 1
     #         UC = HPDTile.UCROSS
@@ -1104,6 +1156,8 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
                 else:
                     # print("BADAAD")
                     raise ValueError("Invalid BUMP direction")
+            else:
+                raise ValueError(f"Invalid tile {tile} encountered during tracing")
             return this_row, col, going_right, going_up
 
         for row, label in left_rows:

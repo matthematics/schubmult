@@ -3,7 +3,7 @@ from functools import cache
 
 from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_func, elem_sym_poly
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
-from schubmult.schub_lib.perm_lib import (
+from schubmult.schub_lib.permutation import (
     Permutation,
     inv,
     theta,

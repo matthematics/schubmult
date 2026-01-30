@@ -2,7 +2,7 @@ import pytest
 
 from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.schub_lib.rc_graph_ring import RCGraphRing
-from schubmult.schub_lib.perm_lib import Permutation
+from schubmult.schub_lib.permutation import Permutation
 
 def _pad_left(t, length):
     if len(t) >= length:

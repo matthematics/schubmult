@@ -181,7 +181,7 @@ def l_vector(q_vector):
 
 
 def tau_d(d):
-    from schubmult.schub_lib.perm_lib import Permutation
+    from schubmult.schub_lib.permutation import Permutation
 
     lv = l_vector(d)
     hv = h_vector(d)
@@ -195,7 +195,7 @@ def tau_d(d):
 
 
 def phi_d(d):
-    from schubmult.schub_lib.perm_lib import Permutation
+    from schubmult.schub_lib.permutation import Permutation
 
     hv = h_vector(d)
     lv = l_vector(d)
