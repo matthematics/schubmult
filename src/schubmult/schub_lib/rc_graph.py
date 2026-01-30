@@ -109,47 +109,39 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         """Return args for sympy compatibility - prevents traversal into tuple contents."""
         return ()
 
-    def div_diff(self, i: int) -> RCGraph | None:
-        if i >= self.crystal_length():
-            return None
-        tst = self.lowering_operator(i)
-        if tst is None:
-            return self.exchange_property(i)
-        return None
-
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, RCGraph):
             return NotImplemented
         return tuple(self) == tuple(other)
 
-    # def __iter__(self):
-    #     for row in super().__iter__():
-    #         yield tuple(row)
+    # # def __iter__(self):
+    # #     for row in super().__iter__():
+    # #         yield tuple(row)
 
-    def flat_elem_sym_mul(self, k: int) -> RCGraph | None:
-        from schubmult.utils.schub_lib import elem_sym_perms
+    # def flat_elem_sym_mul(self, k: int) -> RCGraph | None:
+    #     from schubmult.utils.schub_lib import elem_sym_perms
 
-        elem_graph = RCGraph([(i,) for i in range(1, k + 1)])
-        mul_graph = self
-        if len(elem_graph) != len(mul_graph):
-            length = max(len(elem_graph), len(mul_graph))
-            elem_graph = elem_graph.resize(length)
-            mul_graph = mul_graph.resize(length)
-        tensor = CrystalGraphTensor(elem_graph, mul_graph)
-        hw_rc, raise_seq = tensor.to_highest_weight()
-        perm_list = [perm for (perm, w) in elem_sym_perms(mul_graph.perm, k, k) if w == k]
-        results = set()
-        for perm in perm_list:
-            for rc in RCGraph.all_rc_graphs(perm, length=len(mul_graph), weight=hw_rc.crystal_weight):
-                if rc.is_highest_weight and _crystal_isomorphic(hw_rc, rc):
-                    results.add(rc.reverse_raise_seq(raise_seq))
-                    break
-        if results:
-            assert len(results) == 1, (
-                f"Ambiguous flat elem crystal multiplication results for k={k} on\n{self} \nResults:\n" + "\n".join([str(r) for r in results]) + "\n".join([str(r.p_tableau) for r in results])
-            )
-            return next(iter(results))
-        return None
+    #     elem_graph = RCGraph([(i,) for i in range(1, k + 1)])
+    #     mul_graph = self
+    #     if len(elem_graph) != len(mul_graph):
+    #         length = max(len(elem_graph), len(mul_graph))
+    #         elem_graph = elem_graph.resize(length)
+    #         mul_graph = mul_graph.resize(length)
+    #     tensor = CrystalGraphTensor(elem_graph, mul_graph)
+    #     hw_rc, raise_seq = tensor.to_highest_weight()
+    #     perm_list = [perm for (perm, w) in elem_sym_perms(mul_graph.perm, k, k) if w == k]
+    #     results = set()
+    #     for perm in perm_list:
+    #         for rc in RCGraph.all_rc_graphs(perm, length=len(mul_graph), weight=hw_rc.crystal_weight):
+    #             if rc.is_highest_weight and _crystal_isomorphic(hw_rc, rc):
+    #                 results.add(rc.reverse_raise_seq(raise_seq))
+    #                 break
+    #     if results:
+    #         assert len(results) == 1, (
+    #             f"Ambiguous flat elem crystal multiplication results for k={k} on\n{self} \nResults:\n" + "\n".join([str(r) for r in results]) + "\n".join([str(r.p_tableau) for r in results])
+    #         )
+    #         return next(iter(results))
+    #     return None
 
     # def monk_insert(self, row):
 
@@ -182,13 +174,16 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return RCGraph.from_reduced_compatible(word, seq)
 
     @classmethod
-    def from_reduced_compatible(cls, word, seq):
+    def from_reduced_compatible(cls, word, seq, length=None):
         rows = []
         for elem, row in zip(word, seq):
             while row > len(rows):
                 rows += [[]]
             rows[-1] += [elem]
-        return cls([tuple(row) for row in rows])
+        ret = cls([tuple(row) for row in rows])
+        if length is None:
+            return ret.normalize()
+        return ret.resize(length)
 
     def monk_crystal_mul(self, p: int, k: int, warn: bool = True) -> RCGraph | None:
         if p > k:

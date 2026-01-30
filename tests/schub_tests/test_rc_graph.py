@@ -24,3 +24,44 @@ def test_rc_product():
     prod = rc1.product(rc2)
 
     assert prod == expected
+
+def test_from_reduced_compatible():
+    from schubmult import RCGraph
+
+    redc = [(2,3,2), (1,2,2)]
+    expected = RCGraph([(2,),(3,2),()])
+    
+    assert RCGraph.from_reduced_compatible(*redc) == expected
+    assert RCGraph.from_reduced_compatible(*redc, 6) == expected.resize(6)
+
+def test_as_reduced_compatible():
+    from schubmult import RCGraph
+
+    rc = RCGraph([(2,),(3,2),()])
+    expected = ((2,3,2), (1,2,2))
+
+    assert rc.as_reduced_compatible() == expected
+
+def test_loc_of_inversion():
+    from schubmult import RCGraph
+
+    rc = RCGraph([(2,),(3,2),()])
+    expected = (1,2)
+
+    assert rc.loc_of_inversion(3,4) == expected
+
+    expected = (2,1)
+
+    assert rc.loc_of_inversion(2,3) == expected
+
+def test_index_of_inversion():
+    from schubmult import RCGraph
+
+    rc = RCGraph([(2,),(3,2),()])
+    expected = 0
+
+    assert rc.index_of_inversion(3,4) == expected
+
+    expected = 2
+
+    assert rc.index_of_inversion(2,3) == expected
