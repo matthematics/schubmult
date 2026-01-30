@@ -65,3 +65,24 @@ def test_index_of_inversion():
     expected = 2
 
     assert rc.index_of_inversion(2,3) == expected
+
+def test_little_bump():
+    from schubmult import RCGraph
+
+    rc = RCGraph([(4,2,),(3,2),()])
+    expected = RCGraph([(5,2),(3,2),(),(),()])
+
+    assert rc.little_bump(2,5) == expected
+
+    expected = RCGraph([(4,3),(4,2),(),()])
+
+    assert rc.little_bump(3,4) == expected
+
+def test_tableau_decomp():
+    from schubmult import RCGraph
+
+    rc = RCGraph(((5, 4, 3, 2, 1), (6, 5, 3, 2), (6, 4), (5,), ()))
+
+    expected = (RCGraph([(5, 4, 3, 2, 1)]), RCGraph([(4, 3, 2, 1)]), RCGraph(((3, 1), (2,))), RCGraph([()]))
+
+    assert rc.tableau_decomp() == expected
