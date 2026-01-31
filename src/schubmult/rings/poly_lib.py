@@ -293,7 +293,7 @@ def xreplace_genvars(poly, vars1, vars2):
 
 
 # def schub_horner(poly, vr):
-#     qd = factor_out_q_keep_factored(poly, [vr])
+#     qd = factor_out_q(poly, [vr])
 #     updated_dict = {0 if isinstance(k, int) else (1 if not isinstance(k, Pow) else int(k.args[1])): v for k, v in qd.items()}
 #     start = max(updated_dict.keys())
 #     ret = 0

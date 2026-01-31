@@ -14,10 +14,10 @@ def check_positive(v2, same, subs_dict2, var2, var3, q_var):
 
     from schubmult import compute_positive_rep
     
-    from schubmult import factor_out_q_keep_factored
+    from schubmult import factor_out_q
     
 
-    q_dict = factor_out_q_keep_factored(v2)
+    q_dict = factor_out_q(v2)
     for k, v in q_dict.items():
         if same:
             v = expand(efficient_subs(parse_coeff(v),subs_dict2))

@@ -2577,6 +2577,15 @@ These are two distinct parametrizations of the Demazure crystal $B_{s_1s_2s_1}(\
 % $$\zeromap_k(R, n) = \zeromap_m(\widetilde{R}, n)$$
 % \end{definition}
 
+
+
+\begin{definition}
+Let $R$ be an RC graph and let $p$ be an integer. Define $\clp^p(R)$ to be the RC graph obtained as follows. Let $R_{\leq p}$ be the subgraph of $R$ consisting of rows $1,2,\ldots,p$, and suppose $\maxd(\wof{R_{\leq p}}) = p + m$. If $m\leq 0$, set $\clp^p(R) = R_{\leq p}$. Otherwise, define
+$$\clp^p(R) = \zeromap^m(R_{\leq p}, p + m)$$
+Also, we define $\trm^p(R)$ as
+$$\trm^p(R) = \{(i - p, j) \mid (i, j)\in R, i > p\}$$
+\end{definition}
+
 \begin{definition}[The natural map $\mathcal{U}_i:\BRC(s_iw, n)\to \BRC(w,n)$]
 Suppose $R_1, R_2$ are RC graphs and $s_i$ is a left descent of $\wof{R_1}$. Then $I(R_2)\subseteq I(R_1)$, and hence the inclusion $R_2\hookrightarrow R_1$ preserves right inversions. We can turn this into a canonical map 
 $$\mathcal{U}_i:\BRC(s_iw, n)\to \BRC(w,n)$$
@@ -2593,15 +2602,6 @@ Let $w\in S_\infty$ satisfy $\maxd(w)\leq n$ and suppose $i$ is a left descent o
 \]
 \end{theorem}
 
-
-\begin{definition}
-Let $R$ be an RC graph and let $p$ be an integer. Define $\clp^p(R)$ to be the RC graph obtained as follows. Let $R_{\leq p}$ be the subgraph of $R$ consisting of rows $1,2,\ldots,p$, and suppose $\maxd(\wof{R_{\leq p}}) = p + m$. If $m\leq 0$, set $\clp^p(R) = R_{\leq p}$. Otherwise, define
-$$\clp^p(R) = \zeromap^m(R_{\leq p}, p + m)$$
-Also, we define $\trm^p(R)$ as
-$$\trm^p(R) = \{(i - p, j) \mid (i, j)\in R, i > p\}$$
-Suppose we have two bounded RC graphs $(R_1, m)$ and $(R_2,n)$. The product of these is defined by
-$$(R_1, m)\diamond (R_2, n) = \sum_{\clp^m(R')=R_1,\trm^m(R')=R_2}(R', m + n)$$  
-\end{definition}
 
 \begin{lemma} \label{lemma:assoc_clip}
   We have the following equations for an RC graph $R$ and two integers $p$ and $q$:
@@ -2635,7 +2635,10 @@ For larger $r$, we prove the result by induction on $p$, keeping in mind the sol
 
 \subsection{Definition of the ring product}
 
-
+\begin{definition}
+Suppose we have two bounded RC graphs $(R_1, m)$ and $(R_2,n)$. The product of these is defined by
+$$(R_1, m)\diamond (R_2, n) = \sum_{\clp^m(R')=R_1,\trm^m(R')=R_2}(R', m + n)$$  
+\end{definition}
 
 \begin{theorem}
 	 The product $\diamond$ turns $\BRC$ into a ring, and $\omega\otimes \alpha:\BRC\to \dcoma\otimes \dcoma$ is a homomorphism of rings.
