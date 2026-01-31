@@ -1771,8 +1771,16 @@ We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(
 
 
 
-\begin{definition}[Spittoon]
-Let $(R,n)$ be a bounded RC graph and let $p$ be a descent of $\wof{R}$ such that row $p$ of $R$ is empty. Now, $\maxd(R_{\leq p})$ could be greater than $p$. If it is less than or equal to $p$, define $\zeromap^{(p)}(R,n) = (\zeromap(R_{\leq p})\cup {\downarrow R_{>p}},n-1)$. Otherwise, let $J$ be the set of all simple reflections in $S_\infty$ excluding all $d\in \mathcal{D}(w)$ such that $d\leq p$. Let $w^J$ be the minimal length coset representative of $wW_j$. Using the exchange property, we extract $w_J$ uniquely from $R$ to obtain an RC graph $R^J$ such that $\wof{R^J} = w^J$. We may define $\zeromap^{(p)}(R^J,n)$ as above, then insert the $w_J$ elements back in.
+\begin{definition}[Pulling out an empty row]
+Let $(R,n)$ be a bounded RC graph and let $p$ be a descent of $\wof{R}$ such that row $p$ of $R$ is empty. Now, $\maxd(R_{\leq p})$ could be greater than $p$. If it is less than or equal to $p$, define 
+$$\zeromap^{(p)}(R,n) = (\zeromap(R_{\leq p})\cup {\downarrow R_{>p}},n-1)$$ 
+Otherwise, define $R' = R_{\leq p}$ and let $d_0 = \maxd(\wof{R'})$ and set $R_0 = R'$. While $\maxd(R_i) > p$, do:
+
+While $\maxd(R') \geq d_i$, delete $\maxd(R')$ from $R'$ and record the row. Store these rows in $A_i$. When $\maxd(R')<d_i$, set $R_{i+1}= R'$ and set $d_{i+1}= \maxd(R_{i+1})$. 
+
+At termination, set
+$$\zeromap^{(p)}(R,n) = (\ins{d_1 - 1}{A_1}\cdots\ins{d_k - 1}{A_k}\zeromap(R_k, p))\cup {\downarrow} R_{>p}, n-1)$$
+where $k$ is such that $\maxd(R_k)\leq p$.
 \end{definition}
 
 
@@ -3555,8 +3563,14 @@ We compute the product of two bounded RC graphs $(R_1, 2)\in\BRC(2413,2)$ and $(
 
 % \end{definition}
 
-
-
+\subsection{Generating the RC graph ring}
+\newcommand{\BRCC}{\overline{\BRC}}
+% multiplying by empty row ordering
+We enlarge the module $\BRC$ to include bounded RC graphs $(R, n)$ that do not necessarily satisfy the condition that $\maxd(\wof{R})\leq n$, only that $R$ has at most $n$ rows. We denote this larger module by $\BRCC$. For $(R, p)\in \BRCC$, define $(R, p)^T\in \BRC$ by $(R^T,\maxd(\wof{R}^{-1}))$. We may define an associative product on $\BRCC$ by
+$$(R_1, p)\spadesuit(R_2,q) = \mathtt{sz}_{p+q}(((R_1, p)^T\diamond (R_2, q)^T)^T)$$
+where $\mathtt{sz}_n:\BRCC\to \BRCC$ is defined on basis elements by 
+$$\mathtt{sz}_n(R, m) = \begin{cases}(R, n) & \text{if } i\leq n\text{ for all }(i, j)\in R\\
+0 & \text{otherwise}\end{cases}$$
 
 
 
@@ -3615,6 +3629,7 @@ $$\lzeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$
   We have the equality
 $$\lzeromap=\zeromap$$ 
 \end{corollary}
+
 
 \subsection{Relation to the bijection with bumpless pipe dreams}
 
@@ -3688,7 +3703,7 @@ $$\lzeromap=\zeromap$$
 
 
 \begin{lemma}[{\cite[Theorem~3.6]{Yu2025EmbeddingBP}}] \label{lemma:bpd_completion}
-  Let $(B, N)$ be an ordinary reduced BPD for a permutation $w$, so that $w(M) = M$ for all $M>N$ and $B$ is $N\times N$. Let $n\geq \maxd(w)$ be an integer. Then the BPD $B'$ obtained by only retaining the first $n$ rows of $B$ satisfies $w(B', n) = w(B, N)$ and uniquely determines $B$.
+  Let $(B, N)$ be an ordinary reduced BPD for a permutation $w$, so that $w(M) = M$ for all $M>N$ and $B$ is $N\times N$. Let $n\geq \maxd(w)$ be an integer. Then the BPD $B'$ obtained by only retaining the first $n$ rows of $B$ satisfies $w(B', n) = w(B, N)$ and uniquely determines $B$ under this assumption.
 \end{lemma}
 
 

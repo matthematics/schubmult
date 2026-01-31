@@ -660,8 +660,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return random.choice(list(RCGraph.all_rc_graphs(perm, length)))
 
     @classmethod
-    def all_rc_graphs(cls, perm: Permutation, length: int = -1, weight: tuple[int, ...] | None = None) -> set[RCGraph]:
-        if length > 0 and length < len(perm.trimcode):
+    def all_rc_graphs(cls, perm: Permutation, length: int = -1, weight: tuple[int, ...] | None = None, *, check_length=False) -> set[RCGraph]:
+        if check_length and length > 0 and length < len(perm.trimcode):
             raise ValueError(f"Length must be at least the last descent of the permutation, permutation has {len(perm.trimcode)} rows and {perm=}, got {length=}")
         if length < 0:
             length = len(perm.trimcode)
@@ -679,6 +679,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         pm = perm
         L = schub_lib.pull_out_var(1, pm)
         for _, new_perm in L:
+            if length == 1 and new_perm.inv != 0:
+                continue
             new_row = [new_perm[i] for i in range(max(len(pm), len(new_perm))) if new_perm[i] == pm[i + 1]]
             if weight and len(new_row) != weight[0]:
                 continue
@@ -687,10 +689,11 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 oldset = cls.all_rc_graphs(new_perm, length=length - 1, weight=weight[1:])
             else:
                 oldset = cls.all_rc_graphs(new_perm, length=length - 1)
+
             for old_rc in oldset:
                 nrc = cls([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in old_rc]])
                 assert nrc.perm == perm
-                assert len(nrc) == length
+                assert len(nrc) == length, f"{nrc=}, {length=}, {old_rc=}, {new_row=}"
                 try:
                     if weight:
                         assert nrc.length_vector == tuple(weight)
@@ -956,6 +959,31 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
         return interim.rowrange(0, len(self) - 1)
 
+    def zero_out_in_place(self) -> RCGraph:
+        # this is important!
+        # transition formula
+        if len(self.perm.trimcode) <= len(self):
+            return self
+
+        norm = self.normalize()
+        return norm.zero_out_last_row().resize(len(self))
+
+    def alt_product(self, other):
+        zero_up = {self.normalize() if len(self) < len(self.perm.trimcode) else self}
+        self_len = len(self)
+        other_shifted = other.shiftup(self_len)
+        while not any(RCGraph([*rc[:self_len], *other_shifted]).is_valid for rc in zero_up):
+            new_set = set()
+            for rc in zero_up:
+                new_set.update(rc.right_zero_act())
+            zero_up = new_set
+        ret_module = {}
+        for rc in zero_up:
+            new_rc = type(rc)([*rc[:self_len], *other_shifted])
+            if new_rc.is_valid:
+                ret_module = add_perm_dict(ret_module, {new_rc: 1})
+        return ret_module
+
     def crystal_length(self) -> int:
         return len(self)
 
@@ -1115,7 +1143,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return (i + 1, self[i][(index - index_find)] - i)
 
     @classmethod
-    def principal_rc(cls, perm: Permutation, length: int) -> RCGraph:
+    def principal_rc(cls, perm: Permutation, length: int | None = None) -> RCGraph:
+        if length is None:
+            length = len(perm.trimcode)
         cd = perm.trimcode
         graph = []
         for i in range(len(cd)):
@@ -1445,6 +1475,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         if len(bottom_cut.perm.trimcode) <= len(bottom_cut):
             bottom_cut = bottom_cut.zero_out_last_row()
             return RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
+        print("pants")
         bottom_cut = bottom_cut.normalize()
         topd = len(bottom_cut.perm.trimcode)
         rows_by_descent = {topd: []}
@@ -1454,13 +1485,13 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 rows_by_descent[topd] += [the_row]
             topd = len(bottom_cut.perm.trimcode)
             rows_by_descent[topd] = []
+        assert topd <= row
         bottom_cut = bottom_cut.resize(row).zero_out_last_row()
-        # reinsert
         for descent in sorted(rows_by_descent.keys()):
             rows = rows_by_descent[descent]
             if len(rows) == 0:
                 continue
-            bottom_cut = bottom_cut.kogan_kumar_insert(descent, rows)
+            bottom_cut = bottom_cut.kogan_kumar_insert(descent - 1, rows)
         return RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
 
     def dualpieri(self, mu: Permutation, w: Permutation) -> set[tuple[tuple, RCGraph]]:

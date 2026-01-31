@@ -3,21 +3,21 @@ from functools import cache
 from schubmult.rings.free_algebra_basis import WordBasis
 from schubmult.rings.schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
 from schubmult.schub_lib.rc_graph import RCGraph
-from schubmult.symbolic import S
+from schubmult.symbolic import S, sympify
 
 from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
 
 # from .crystal_graph_ring import CrystalTensorRing
 
-# weight wt
+# weight wts
 # yw highest weight
 # u # yv
 # yv highest weight
 
 
-class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
+class AltRCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
     """
-    RCGraphRing elements are linear combinations of RCGraph basis elements.
+    AltRCGraphRing elements are linear combinations of RCGraph basis elements.
 
     The product % is the polynomial product. Currently only defined when the right side
     is a dominant RC graph.
@@ -96,7 +96,7 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
         """
         Linear extension of RCGraph.raising_operator:
         Apply raising_operator(index) to every basis RCGraph in self, collect results.
-        Returns an RCGraphRingElement (possibly zero).
+        Returns an AltRCGraphRingElement (possibly zero).
         """
         res = self.ring.zero
         for rc_graph, coeff in self.items():
@@ -164,7 +164,7 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
 
         Behavior notes:
         - This is the natural linear-extension of CrystalGraph.to_highest_weight.
-        - The returned `highest_weight_element` is an RCGraphRingElement.
+        - The returned `highest_weight_element` is an AltRCGraphRingElement.
         - raise_seq is the sequence of row indices applied (in order).
         """
         rc_elem = self
@@ -230,23 +230,33 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
             res += coeff * self.ring(rc_graph.vertical_cut(n)[0])
         return res
 
-    def transpose(self, length):
-        res = self.ring.zero
-        for rc_graph, coeff in self.items():
-            res += coeff * self.ring(rc_graph.transpose(length))
-        return res
 
-
-class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
+class AltRCGraphRing(SchubertMonomialRing, CrystalGraphRing):
     _id = 0
 
     def __init__(self, *_, **__):
-        self._ID = RCGraphRing._id
-        RCGraphRing._id += 1
-        self.dtype = type("RCGraphRingElement", (RCGraphRingElement,), {"ring": self})
+        self._ID = AltRCGraphRing._id
+        AltRCGraphRing._id += 1
+        self.dtype = type("AltRCGraphRingElement", (AltRCGraphRingElement,), {"ring": self})
 
     def __hash__(self):
         return hash(("Dinkberrtystoa", self._ID))
+
+    def mul(self, a, b):
+        if isinstance(b, SchubertMonomialRingElement):
+            result_dict = {}
+            for g1, c1 in a.items():
+                for g2, c2 in b.items():
+                    # RCGraph.product returns a dict {RCGraph: coeff}
+                    prod = g1.alt_product(g2)
+                    for g3, c3 in prod.items():
+                        result_dict[g3] = result_dict.get(g3, 0) + c1 * c2 * c3
+            return self.from_dict(result_dict)
+        try:
+            result_dict = {k: v * sympify(b) for k, v in a.items()}
+            return self.from_dict(result_dict)
+        except Exception:
+            raise NotImplementedError("Multiplication with fs not implemented for SchubertMonomialRingElement")
 
     def monomial(self, *tup):
         elem = self.one
@@ -259,7 +269,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         return RCGraph([])
 
     # def dtype(self):
-    #     elem = RCGraphRingElement()
+    #     elem = AltRCGraphRingElement()
     #     elem.ring = self
     #     return elem
 
@@ -296,7 +306,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
 
     def schub(self, perm, n=None):
         """
-        Return the RCGraphRing element corresponding to the Schubert polynomial
+        Return the AltRCGraphRing element corresponding to the Schubert polynomial
         indexed by `perm` in `S_n` (if n is None, n = len(perm) is used).
         """
         if n is None:
@@ -573,6 +583,6 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
 
     @property
     def one(self):
-        # Define the "one" element for RCGraphRing
+        # Define the "one" element for AltRCGraphRing
         identity_graph = RCGraph()
         return self.from_dict({identity_graph: 1})

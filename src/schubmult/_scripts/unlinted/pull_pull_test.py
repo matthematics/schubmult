@@ -27,6 +27,10 @@ if __name__ == "__main__":
                 
                 # for pw, rc0 in pullout:
                 #     summ += (x[i]**len(pw))*rc0.polyvalue(x[:i] + x[i+1:])
-                summ += pullout.polyvalue(x[:i] + x[i+1:])
+                
+                print(f"RC:\n{rc}")
+                print(tuple(pullout))
+                assert pullout.perm.inv == perm.inv
+                summ += (x[i] ** (perm.inv - pullout.perm.inv)) * pullout.polyvalue(x[:i] + x[i+1:])
             assert expand(summ - Sx(perm).expand().subs(x[i], S.Zero)) == S.Zero, f"Error: pull out variable mismatch for permutation {perm} at row {i}:\nComputed sum:\n{summ}\nExpected:\n{Sx(perm).expand().subs(x[i], S.Zero)}\n{pullout}"
             print(f"Permutation: {perm}, length: {i}, verified.")
