@@ -4,8 +4,6 @@ import schubmult.rings.variables as spl
 import schubmult.utils.schub_lib as sss
 from schubmult.schub_lib.permutation import (
     Permutation,
-    code,
-    inv,
     medium_theta,
     strict_theta,
     uncode,
@@ -84,7 +82,7 @@ def mult_poly_q(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
 
 
 def schubmult_q_fast(perm_dict, v, q_var=_vars.q_var):
-    if inv(v) == 0:
+    if v.inv == 0:
         return perm_dict
     th = medium_theta(~v)
     if len(th) == 0:
@@ -93,8 +91,8 @@ def schubmult_q_fast(perm_dict, v, q_var=_vars.q_var):
         th.pop()
     mu = uncode(th)
     vmu = v * mu
-    inv_vmu = inv(vmu)
-    inv_mu = inv(mu)
+    inv_vmu = vmu.inv
+    inv_mu = mu.inv
     ret_dict = {}
 
     thL = len(th)
@@ -103,7 +101,7 @@ def schubmult_q_fast(perm_dict, v, q_var=_vars.q_var):
     vpathdicts = sss.compute_vpathdicts(th, vmu)
     # print(f"{vpathdicts=}")
     for u, val in perm_dict.items():
-        inv_u = inv(u)
+        inv_u = u.inv
         vpathsums = {u: {Permutation([1, 2]): val}}
         for index in range(thL):
             if index > 0 and th[index - 1] == th[index]:
@@ -120,7 +118,7 @@ def schubmult_q_fast(perm_dict, v, q_var=_vars.q_var):
                 newpathsums = {}
                 for up in vpathsums:
                     newpathsums0 = {}
-                    inv_up = inv(up)
+                    inv_up = up.inv
                     newperms = sss.double_elem_sym_q(up, mx_th, mx_th1, th[index], q_var)
                     for v in vpathdicts[index]:
                         sumval = vpathsums[up].get(v, 0)
@@ -153,7 +151,7 @@ def schubmult_q_fast(perm_dict, v, q_var=_vars.q_var):
             else:
                 newpathsums = {}
                 for up in vpathsums:
-                    inv_up = inv(up)
+                    inv_up = up.inv
                     newperms = sss.elem_sym_perms_q(
                         up,
                         min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu),
@@ -183,8 +181,8 @@ def schubmult_q(perm_dict, v):
     th = strict_theta(~v)
     mu = uncode(th)
     vmu = v * mu
-    inv_vmu = inv(vmu)
-    inv_mu = inv(mu)
+    inv_vmu = vmu.inv
+    inv_mu = mu.inv
     ret_dict = {}
     if len(th) == 0:
         return perm_dict
@@ -193,7 +191,7 @@ def schubmult_q(perm_dict, v):
     thL = len(th)
     vpathdicts = sss.compute_vpathdicts(th, vmu)
     for u, val in perm_dict.items():
-        inv_u = inv(u)
+        inv_u = u.inv
         vpathsums = {u: {Permutation([]): val}}
         for index in range(thL):
             mx_th = 0
@@ -202,7 +200,7 @@ def schubmult_q(perm_dict, v):
                     mx_th = max(mx_th, th[index] - vdiff)
             newpathsums = {}
             for up in vpathsums:
-                inv_up = inv(up)
+                inv_up = up.inv
                 newperms = sss.elem_sym_perms_q(
                     up,
                     min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu),
@@ -225,62 +223,3 @@ def schubmult_q(perm_dict, v):
             ret_dict,
         )
     return ret_dict
-
-
-def grass_q_replace(perm, k, d, n):
-    if k - d < 0:
-        return None
-    cd = code(perm)
-    for i in range(k - d, k):
-        if i >= len(cd) or cd[i] < d:
-            return None
-    grass_rep = [0 for i in range(n)]
-    perm2 = [*perm] + [i + 1 for i in range(len(perm), n)]
-    for i in range(k, n):
-        grass_rep[perm2[i] - 1] = 2
-    num_0 = 0
-    # print(f"{grass_rep=} {d=}")
-    for i in range(len(grass_rep) - 1, -1, -1):
-        if num_0 == d:
-            break
-        if grass_rep[i] == 0:
-            grass_rep[i] = 1
-            num_0 += 1
-    num_2 = 0
-    for i in range(len(grass_rep)):
-        if num_2 == d:
-            break
-        if grass_rep[i] == 2:
-            grass_rep[i] = 1
-            num_2 += 1
-    # print(f"New {grass_rep=}")
-    k1 = k - d
-    k2 = k + d
-    pos_1 = 0
-    pos_2 = 0
-    pos_3 = 0
-    new_perm = [0 for i in range(n)]
-    for i in range(len(grass_rep)):
-        if grass_rep[i] == 0:
-            new_perm[pos_1] = i + 1
-            pos_1 += 1
-        if grass_rep[i] == 1:
-            new_perm[k1 + pos_2] = i + 1
-            pos_2 += 1
-        if grass_rep[i] == 2:
-            new_perm[k2 + pos_3] = i + 1
-            pos_3 += 1
-    return new_perm
-
-
-def to_two_step(perm, k1, k2, n):
-    rep = [0 for i in range(n)]
-    perm2 = [*perm] + [i + 1 for i in range(len(perm), n)]
-    for i in range(n):
-        if i < k1:
-            rep[perm2[i] - 1] = 0
-        elif i < k2:
-            rep[perm2[i] - 1] = 1
-        else:
-            rep[perm2[i] - 1] = 2
-    return rep

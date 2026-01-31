@@ -9,7 +9,6 @@ from functools import cache
 
 import numpy as np
 
-import schubmult.mult.double as norm_yz
 import schubmult.mult.positivity as pos
 from schubmult.rings.poly_lib import _vars, call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet_base
@@ -186,7 +185,7 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
     except Exception:
         # logger.debug("Line number")
         val2 = 0
-        q_dict = factor_out_q_keep_factored(val)
+        q_dict = factor_out_q(val)
         # logger.debug(f"{q_dict=}")
         # logger.debug("Line number")
         for q_part in q_dict:
@@ -239,115 +238,6 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
     return val2
 
 
-# def q_posify(u, v, w, val, var2, var3, q_var, msg):
-#     if expand(val) != 0:
-#         try:
-#             int(val)
-#         except Exception:
-#             val2 = 0
-#             q_dict = factor_out_q_keep_factored(val)
-#             for q_part in q_dict:
-#                 try:
-#                     val2 += q_part * int(q_dict[q_part])
-#                 except Exception:
-#                     # if same:
-#                     #     to_add = q_part * expand(sympify(q_dict[q_part]).xreplace(subs_dict2))
-#                     #     val2 += to_add
-#                     # else:
-#                     try:
-#                         if code(~v) == medium_theta(~v):
-#                             val2 += q_part * q_dict[q_part]
-#                         else:
-#                             q_part2 = q_part
-#                             qv = q_vector(q_part)
-#                             u2, v2, w2 = u, v, w
-#                             u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-#                             while did_one:
-#                                 u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-#                             q_part2 = np.prod(
-#                                 [q_var[i + 1] ** qv[i] for i in range(len(qv))],
-#                             )
-#                             if q_part2 == 1:
-#                                 # reduced to classical coefficient
-#                                 val2 += q_part * pos.posify(
-#                                     q_dict[q_part],
-#                                     u2,
-#                                     v2,
-#                                     w2,
-#                                     var2,
-#                                     var3,
-#                                     msg,
-#                                     False,
-#                                 )
-#                             else:
-#                                 val2 += q_part * pos.compute_positive_rep(
-#                                     q_dict[q_part],
-#                                     var2,
-#                                     var3,
-#                                     msg,
-#                                     False,
-#                                 )
-#                     except Exception as e:
-#                         # print(f"Exception: {e}")
-#                         import traceback
-
-#                         traceback.print_exc()
-#                         exit(1)
-#             if expand(val - val2) != 0:
-#                raise Exception
-#             val = val2
-#         return val
-#     return 0
-
-
-def old_q_posify(u, v, w, val, var2, var3, q_var, msg):
-    val2 = 0
-    q_dict = factor_out_q_keep_factored(val)
-    for q_part in q_dict:
-        try:
-            val2 += q_part * int(q_dict[q_part])
-        except Exception:
-            try:
-                q_part2 = q_part
-                qv = q_vector(q_part)
-                u2, v2, w2 = u, v, w
-                u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-                while did_one:
-                    u2, v2, w2, qv, did_one = reduce_q_coeff(u2, v2, w2, qv)
-                q_part2 = np.prod(
-                    [q_var[i + 1] ** qv[i] for i in range(len(qv))],
-                )
-                if q_part2 == 1:
-                    # reduced to classical coefficient
-                    val2 += q_part * pos.posify(
-                        q_dict[q_part],
-                        u2,
-                        v2,
-                        w2,
-                        var2,
-                        var3,
-                        msg,
-                        False,
-                    )
-                else:
-                    val2 += q_part * pos.compute_positive_rep(
-                        q_dict[q_part],
-                        var2,
-                        var3,
-                        msg,
-                        False,
-                    )
-            except Exception:
-                # print(f"Exception: {e}")
-                import traceback
-
-                traceback.print_exc()
-                exit(1)
-    if expand(val - val2) != 0:
-        raise Exception
-    return val2
-
-
 def q_partial_posify_generic(val, u, v, w):
     if not v.has_pattern([1, 4, 3, 2]) and not v.has_pattern([3, 1, 2]):
         return val
@@ -356,7 +246,7 @@ def q_partial_posify_generic(val, u, v, w):
     except Exception:
         val2 = 0
         # logger.debug(f"{val=}")
-        q_dict = factor_out_q_keep_factored(val)
+        q_dict = factor_out_q(val)
         # logger.debug(f"{q_dict=}")
         for q_part in q_dict:
             try:
@@ -404,7 +294,7 @@ def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var):
     coeff_dict_update = {}
     for w_1 in coeff_dict.keys():
         val = coeff_dict[w_1]
-        q_dict = factor_out_q_keep_factored(val)
+        q_dict = factor_out_q(val)
         for q_part in q_dict:
             qv = q_vector(q_part)
             w = w_1
@@ -717,13 +607,6 @@ def schubmult_q_double_fast(perm_dict, v, var2=None, var3=None, q_var=_vars.q_va
     return ret_dict
 
 
-
-def div_diff(v, w, var2=None, var3=None):
-    coeff_dict = {v: 1}
-    coeff_dict = norm_yz.schubmult_down(coeff_dict, w, var2, var3)
-    return coeff_dict.get(Permutation([1, 2]), 0)
-
-
 def sum_q_dict(q_dict1, q_dict2):
     ret = {**q_dict1}
     for key in q_dict2:
@@ -740,7 +623,7 @@ def mul_q_dict(q_dict1, q_dict2):
     return ret
 
 
-def factor_out_q_keep_factored(poly, q_var=_vars.q_var):
+def factor_out_q(poly, q_var=_vars.q_var):
     ret = {}
     # if str(poly).find("q") == -1:
     #     ret[1] = poly
@@ -764,61 +647,23 @@ def factor_out_q_keep_factored(poly, q_var=_vars.q_var):
         return ret
     if isinstance(poly, Add):
         ag = poly.args
-        ret = factor_out_q_keep_factored(ag[0], q_var)
+        ret = factor_out_q(ag[0], q_var)
         for i in range(1, len(ag)):
-            ret = sum_q_dict(ret, factor_out_q_keep_factored(ag[i], q_var))
+            ret = sum_q_dict(ret, factor_out_q(ag[i], q_var))
         return ret
     if isinstance(poly, Mul):
         ag = poly.args
-        ret = factor_out_q_keep_factored(ag[0], q_var)
+        ret = factor_out_q(ag[0], q_var)
         for i in range(1, len(ag)):
-            ret = mul_q_dict(ret, factor_out_q_keep_factored(ag[i], q_var))
+            ret = mul_q_dict(ret, factor_out_q(ag[i], q_var))
         return ret
     if isinstance(poly, Pow):
         base = poly.args[0]
         exponent = int(poly.args[1])
 
-        ret = factor_out_q_keep_factored(base, q_var)
+        ret = factor_out_q(base, q_var)
         ret0 = dict(ret)
         for _ in range(exponent - 1):
             ret = mul_q_dict(ret, ret0)
         return ret
     raise ValueError
-
-
-def factor_out_q(poly):
-    coeff_dict = expand(poly).as_coefficients_dict()
-    ret = {}
-    for key in coeff_dict:
-        coeff = coeff_dict[key]
-        if coeff == 0:
-            continue
-        q_part = 1
-        yz_part = coeff
-        if isinstance(key, Mul):
-            for var_maybe_pow in key.args:
-                if isinstance(var_maybe_pow, Pow):
-                    real_var = var_maybe_pow.args[0]
-                    if real_var in _vars.q_var:
-                        q_part *= var_maybe_pow
-                    else:
-                        yz_part *= var_maybe_pow
-                else:
-                    real_var = var_maybe_pow
-                    if real_var in _vars.q_var:
-                        q_part *= var_maybe_pow
-                    else:
-                        yz_part *= var_maybe_pow
-        elif isinstance(key, Pow):
-            real_var = key.args[0]
-            if real_var in _vars.q_var:
-                q_part *= key
-            else:
-                yz_part *= key
-        elif key in _vars.q_var:
-            q_part *= key
-        else:
-            yz_part *= key
-
-        ret[q_part] = ret.get(q_part, 0) + yz_part
-    return ret

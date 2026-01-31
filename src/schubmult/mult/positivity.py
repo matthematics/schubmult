@@ -1,10 +1,8 @@
-from bisect import bisect_left
 from functools import cache
 
 import psutil
 from cachetools import cached
 from cachetools.keys import hashkey
-from sortedcontainers import SortedList
 
 from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_poly
 from schubmult.schub_lib.permutation import (
@@ -19,7 +17,7 @@ from schubmult.schub_lib.permutation import (
     uncode,
 )
 from schubmult.schub_lib.schub_poly import schubpoly
-from schubmult.symbolic import Add, Integer, Mul, Pow, S, Symbol, expand, poly, prod, sympify, sympify_sympy
+from schubmult.symbolic import S, expand, poly, prod, sympify, sympify_sympy
 from schubmult.utils.logging import get_logger
 from schubmult.utils.schub_lib import (
     divdiffable,
@@ -40,6 +38,7 @@ logger = get_logger(__name__)
 
 def compute_positive_rep(val, var2=None, var3=None, msg=False):
     import pulp as pu
+
     try:
         return int(expand(val))
     except Exception:
@@ -703,266 +702,6 @@ def posify(
 def shiftsub(pol, var2=None):
     subs_dict = {var2[i]: var2[i + 1] for i in range(99)}
     return efficient_subs(sympify(pol), subs_dict)
-
-
-def shiftsubz(pol, var3=None):
-    subs_dict = {var3[i]: var3[i + 1] for i in range(99)}
-    return efficient_subs(sympify(pol), subs_dict)
-
-
-def split_flat_term(arg, genset):
-    arg = expand(arg)
-    ys = []
-    zs = []
-    for arg2 in arg.args:
-        if any(genset.index(x) != -1 for x in arg2.free_symbols):
-            if isinstance(arg2, Mul):
-                for i in range(int(arg2.args[0])):
-                    ys += [arg2.args[1]]
-            else:
-                ys += [arg2]
-        elif isinstance(arg2, Mul):
-            for i in range(abs(int(arg2.args[0]))):
-                zs += [-arg2.args[1]]
-        else:
-            zs += [arg2]
-    return ys, zs
-
-
-def is_flat_term(term):
-    if isinstance(term, Integer) or isinstance(term, int):
-        return True
-    dc = expand(term).as_coefficients_dict()
-    return all(isinstance(x, Symbol) for x in dc.keys())
-
-
-def flatten_factors(term):
-    found_one = False
-    if is_flat_term(term):
-        return term, False
-    if isinstance(term, Pow):
-        if is_flat_term(term.args[0]) and len(term.args[0].args) > 2:
-            ys, zs = split_flat_term(term.args[0])
-            terms = [1]
-            for i in range(len(ys)):
-                terms2 = []
-                for j in range(len(term.args[1])):
-                    for t in terms:
-                        terms2 += [t * (ys[i] + zs[i])]
-                terms = terms2
-            return Add(*terms)
-        if is_flat_term(term.args[0]):
-            return term, False
-        return flatten_factors(term.args[0]) ** term.args[1], True
-    if isinstance(term, Mul):
-        terms = [1]
-        for arg in term.args:
-            terms2 = []
-            if isinstance(arg, Add) and not is_flat_term(expand(arg)):
-                found_one = True
-                for term3 in terms:
-                    for arg2 in arg.args:
-                        flat, found = flatten_factors(arg2)
-                        terms2 += [term3 * flat]
-            elif isinstance(arg, Add) and is_flat_term(arg) and len(arg.args) > 2:
-                found_one = True
-                ys, zs = split_flat_term(arg)
-                for term3 in terms:
-                    for i in range(len(ys)):
-                        terms2 += [term3 * (ys[i] + zs[i])]
-            else:
-                flat, found = flatten_factors(arg)
-                if found:
-                    found_one = True
-                for term3 in terms:
-                    terms2 += [term3 * flat]
-            terms = terms2
-        if len(terms) == 1:
-            term = terms[0]
-        else:
-            term = Add(*terms)
-        return term, found_one
-    if isinstance(term, Add):
-        res = 0
-        for arg in term.args:
-            flat, found = flatten_factors(arg)
-            if found:
-                found_one = True
-            res += flat
-        return res, found_one
-    return None
-
-
-def fres(v):
-    for s in v.free_symbols:
-        return s
-    return None
-
-
-def split_mul(arg0, var2=None, var3=None):
-    monoms = SortedList()
-
-    var2s = {fres(var2[i]): i for i in range(len(var2))}
-    var3s = {fres(var3[i]): i for i in range(len(var3))}
-    # print(f"{type(arg0)=} {arg0=}")
-    if isinstance(arg0, Pow):
-        arg = arg0
-        arg2 = expand(arg.args[0])
-        yval = arg2.args[0]
-        zval = arg2.args[1]
-        if str(yval).find("z") != -1:
-            yval, zval = zval, yval
-        if str(zval).find("-") != -1:
-            zval = -zval
-        if str(yval).find("-") != -1:
-            yval = -yval
-        tup = (var2s[fres(yval)], var3s[fres(zval)])
-        for i in range(int(arg0.args[1])):
-            monoms += [tup]
-    else:
-        for arg in arg0.args:
-            if is_flat_term(arg):
-                if isinstance(arg, Integer) or isinstance(arg, int):
-                    continue
-                arg = expand(arg)
-                if arg == 0:
-                    break
-                yval = arg.args[0]
-                zval = arg.args[1]
-                if str(yval).find("z") != -1:
-                    yval, zval = zval, yval
-                if str(zval).find("-") != -1:
-                    zval = -zval
-                if str(yval).find("-") != -1:
-                    yval = -yval
-                monoms += [(var2s[fres(yval)], var3s[fres(zval)])]
-            elif isinstance(arg, Pow):
-                arg2 = arg.args[0]
-                yval = arg2.args[0]
-                zval = arg2.args[1]
-                if str(yval).find("z") != -1:
-                    yval, zval = zval, yval
-                if str(zval).find("-") != -1:
-                    zval = -zval
-                if str(yval).find("-") != -1:
-                    yval = -yval
-                tup = (var2s[fres(yval)], var3s[fres(zval)])
-                for i in range(int(arg.args[1])):
-                    monoms += [tup]
-    return monoms
-
-
-def split_monoms(pos_part, var2, var3):
-    arrs = SortedList()
-    if isinstance(pos_part, Add):
-        for arg0 in pos_part.args:
-            monoms = split_mul(arg0, var2, var3)
-            arrs += [monoms]
-    elif isinstance(pos_part, Mul) or isinstance(pos_part, Pow):
-        monoms = split_mul(pos_part, var2, var3)
-        arrs += [monoms]
-    else:
-        return [pos_part]
-    return arrs
-
-
-def is_negative(term):
-    sign = 1
-    if isinstance(term, Integer) or isinstance(term, int):
-        return term < 0
-    if isinstance(term, Mul):
-        for arg in term.args:
-            if isinstance(arg, Integer):
-                sign *= arg
-            elif isinstance(arg, Add):
-                if str(arg).find("-y") != -1:
-                    sign *= -1
-            elif isinstance(arg, Pow):
-                mulsign = 1
-                if str(arg.args[0]).find("-y") != -1:
-                    mulsign = -1
-                sign *= mulsign**term.index
-    elif isinstance(term, Pow):
-        mulsign = 1
-        if str(term.args[0]).find("-y") != -1:
-            mulsign = -1
-        sign *= mulsign**term.index
-    return sign < 0
-
-
-def find_base_vectors(monom_list, var2, var3, depth):
-    size = 0
-    mn_fullcount = {}
-    # pairs_checked = set()
-    monom_list = {tuple(mn) for mn in monom_list}
-    ct = 0
-    while ct < depth and size != len(monom_list):
-        size = len(monom_list)
-        monom_list2 = set(monom_list)
-        additional_set2 = set()
-        for mn in monom_list:
-            mncount = mn_fullcount.get(mn, {})
-            if mncount == {}:
-                for tp in mn:
-                    mncount[tp] = mncount.get(tp, 0) + 1
-                mn_fullcount[mn] = mncount
-            for mn2 in monom_list:
-                mn2count = mn_fullcount.get(mn2, {})
-                if mn2count == {}:
-                    for tp in mn2:
-                        mn2count[tp] = mn2count.get(tp, 0) + 1
-                    mn_fullcount[mn2] = mn2count
-                num_diff = 0
-                for tp in mncount:
-                    pt = mn2count.get(tp, 0) - mncount[tp]
-                    num_diff += abs(pt)
-                    if num_diff > 1:
-                        break
-                if num_diff == 1:
-                    diff_term1 = None
-                    diff_term2 = None
-                    for tp in mn2count:
-                        if mn2count[tp] > mncount.get(tp, 0):
-                            diff_term2 = tp
-                            break
-                    for tp2 in mncount:
-                        if mncount[tp2] > mn2count.get(tp2, 0):
-                            diff_term1 = tp2
-                            break
-                    # print(f"{mn,mn2}")
-                    if diff_term1 is None or diff_term2 is None:
-                        raise Exception(f"{mn=} {mn2=}")
-                    if diff_term2[1] == diff_term1[1]:
-                        continue
-                    new_term1 = (diff_term1[0], diff_term2[1])
-                    new_term2 = (diff_term2[0], diff_term1[1])
-                    # mn3 = [*mn]
-                    # mn4 = list(mn2)
-                    index = bisect_left(mn, diff_term1)
-                    mn3 = list(mn[:index]) + list(mn[index + 1 :])
-                    index = bisect_left(mn3, new_term1)
-                    mn3_t = tuple(mn3[:index] + [new_term1] + mn3[index:])
-                    index2 = bisect_left(mn2, diff_term2)
-                    mn4 = list(mn2[:index2]) + list(mn2[index2 + 1 :])
-                    index2 = bisect_left(mn4, new_term2)
-                    mn4_t = tuple(mn4[:index2] + [new_term2] + mn4[index2:])
-                    if mn3_t not in monom_list2:
-                        additional_set2.add(mn3_t)
-                    monom_list2.add(mn3_t)
-                    if mn4_t not in monom_list2:
-                        additional_set2.add(mn4_t)
-                    monom_list2.add(mn4_t)
-        monom_list = monom_list2
-        ct += 1
-    ret = []
-    for mn in monom_list:
-        if len(mn) != len(set(mn)):
-            continue
-        res = 1
-        for tp in mn:
-            res *= var2[tp[0]] - var3[tp[1]]
-        ret += [res]
-    return ret, monom_list
 
 
 def posify_generic_partial(val, u2, v2, w2):
