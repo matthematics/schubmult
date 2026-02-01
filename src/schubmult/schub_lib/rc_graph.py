@@ -334,157 +334,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                     start_root = Permutation.ref_product(self[i2 - 1, j2 - 1]).act_root(*start_root)
         return start_root
 
-    def reverse_kogan_kumar_insert(self, descent, reflection_path, return_rows=False):
-        pair_dict = {}
-        for ref in reflection_path:
-            a, b = ref
-            if a not in pair_dict:
-                pair_dict[a] = set()
-            pair_dict[a].add(b)
-        pair_dict_rev = {}
-        # ref_by_index = {}
-        for a, b_list in pair_dict.items():
-            for b in b_list:
-                assert a <= descent and descent < b  # noqa: PT018
-                pair_dict_rev[b] = a
-
-        # Process reflections in reverse order (LIFO - last in, first out)
-        reflection_list = list(reflection_path)
-        reflection_list.reverse()
-        reflection_set = set(reflection_list)
-
-        def is_relevant_crossing(root, prm):  # noqa: ARG001
-            if root[0] not in pair_dict:
-                if root[0] in pair_dict_rev and root[1] in pair_dict_rev and pair_dict_rev[root[0]] == pair_dict_rev[root[1]]:
-                    return True
-                return False
-            return root[0] in pair_dict and root[1] in pair_dict[root[0]]
-
-        # may have to add q, s or a_i, q
-        def is_relevant_noncrossing(root):
-            bottom, top = root
-            return (bottom <= descent and descent < top and top not in pair_dict_rev) or (bottom in pair_dict_rev and top > descent and top not in pair_dict_rev)
-
-        # Add this intersection. If we are in the first case, insert (s, q) into the sequence (ai, bi) in the rightmost position, such that ai’s remain nondecreasing in the
-        # sequence. ((s, q) are the rows where the two strands shown in Figure 3 originate.) If
-        # we are in the second case, add (ai, q) just before where (a, bi) is in the sequence.
-
-        working_rc = self
-
-        rows = []
-
-        # Scan row by row from top, looking right-to-left for reflections to remove
-        while len(reflection_set) > 0:
-            for row in range(1, len(self) + 1):
-                # Search from right to left within each row
-                for col in range(1, max(descent, working_rc.cols) + 1):
-                    if working_rc.has_element(row, col):
-                        a, b = working_rc.right_root_at(row, col)
-                        # Check if this is any reflection we're looking for
-                        if (a, b) in reflection_set or (a in pair_dict_rev and (pair_dict_rev[a], b) in reflection_set):
-                            # Remove this reflection from the set
-                            if (a, b) in reflection_set:
-                                reflection_set.remove((a, b))
-                            else:
-                                reflection_set.remove((pair_dict_rev[a], b))
-                            pair_dict[a].remove(b)
-                            if len(pair_dict[a]) == 0:
-                                del pair_dict[a]
-                            del pair_dict_rev[b]
-                            rows.append(row)
-
-                            # found = True
-                            working_rc = working_rc.toggle_ref_at(row, col)
-
-                            # leftify it
-                            for col2 in range(col - 1, 0, -1):
-                                if not working_rc.has_element(row, col2):
-                                    a2, b2 = working_rc.left_root_at(row, col2)
-                                    if b2 > a2:
-                                        continue
-                                    if is_relevant_noncrossing((a2, b2)):
-                                        # print(f"Leftify {a2, b2}")
-                                        working_rc = working_rc.toggle_ref_at(row, col2)
-                                        if a2 <= descent:
-                                            pair_dict_rev[b2] = a2
-                                            if a2 not in pair_dict:
-                                                pair_dict[a2] = set()
-                                            pair_dict[a2].add(b2)
-                                            reflection_set.add((a2, b2))
-                                        else:
-                                            a_key = pair_dict_rev[a2]
-                                            pair_dict[a_key].add(b2)
-                                            reflection_set.add((a_key, b2))
-                                        col = col2 - 1
-                                        rows.pop()
-                                        break
-        if return_rows:
-            return working_rc, tuple(rows)
-        return working_rc
-
-        # original DINGBAT
-        #                     # Check if RC became invalid and needs rectification
-        #                     if not working_rc.is_valid and row < len(working_rc):
-        #                         # Rectify the row below
-        #                         for rect_row in range(row + 1, len(working_rc) + 1):
-        #                             if not working_rc.is_valid:
-        #                                 for rect_col in range(1, max(descent, working_rc.cols) + 1):
-        #                                     if working_rc.has_element(rect_row, rect_col):
-        #                                         rect_a, rect_b = working_rc.right_root_at(rect_row, rect_col)
-        #                                         if rect_a > rect_b:  # Reversed root - toggle to rectify
-        #                                             working_rc = working_rc.toggle_ref_at(rect_row, rect_col)
-        #                                             break
-        #                             else:
-        #                                 break
-
-        #                     a2 = a
-        #                     if a2 in pair_dict_rev:
-        #                         a2 = pair_dict_rev[a2]
-
-        #                     pair_dict[a2].remove(target_b)
-        #                     del pair_dict_rev[target_b]
-        #                     if len(pair_dict[a2]) == 0:
-        #                         del pair_dict[a2]
-
-        #                     rows.append(row)
-        #                     working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, pair_dict, pair_dict_rev)
-        #                     # After removing intersection, look to its RIGHT for Figure 10 configurations
-        #                     # Only do this if there are still reflections being tracked
-        #                     if len(pair_dict) > 0:
-        #                         for col2 in range(col + 1, max(descent, working_rc.cols) + 1):
-        #                             if not working_rc.has_element(row, col2):
-        #                                 a2, b2 = working_rc.right_root_at(row, col2)
-        #                                 # if a2 > b2:
-        #                                 #     continue
-        #                                 if is_relevant_noncrossing((a2, b2)):
-        #                                     # print(f"Rect {a2, b2}")
-        #                                     if a2 <= descent:
-        #                                         assert b2 not in pair_dict
-        #                                         if a2 not in pair_dict:
-        #                                             pair_dict[a2] = set()
-        #                                         pair_dict[a2].add(b2)
-        #                                         pair_dict_rev[b2] = a2
-        #                                         working_rc = working_rc.toggle_ref_at(row, col2)
-        #                                         rows.pop()
-        #                                     else:
-        #                                         assert a2 not in pair_dict_rev, f"{pair_dict_rev=}"
-        #                                         assert b2 in pair_dict_rev, f"{pair_dict_rev=}"
-        #                                         a = pair_dict_rev[a2]
-        #                                         pair_dict[a].add(b2)
-        #                                         pair_dict_rev[b2] = a
-        #                                         working_rc = working_rc.toggle_ref_at(row, col2)
-        #                                         rows.pop()
-        #                                     break
-
-        #     # if not found:
-        #     #     assert False, f"Could not find reflection ({target_a}, {target_b}) in working_rc:\n{working_rc}\npair_dict={pair_dict}, pair_dict_rev={pair_dict_rev}"
-
-        # assert len(pair_dict_rev) == 0, f"{pair_dict=}, {pair_dict_rev=}, {working_rc=}"
-        # assert working_rc.perm.bruhat_leq(self.perm)
-        # if return_rows:
-        #     return working_rc, rows
-        # return working_rc
-
     @cache
     def inversion_label(self, i: int, j: int) -> int:
         if i >= j:
@@ -712,149 +561,71 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     def prepend(self, extra_rows: int) -> RCGraph:
         return type(self)([*tuple([()] * extra_rows), *self.shiftup(extra_rows)])
 
-    def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True, reflection_rows=None, target_row=None):
-        working_rc = self
-        if row > descent:
-            raise ValueError("All rows must be less than or equal to descent")
-
-        i = start_index
-        new_reflections = []  # Track reflections added in THIS call
-
-        if i == -1:
-            if backwards:
-                i = 0
-            elif len(self[row - 1]) == 0:
-                i = descent + 5
-            else:
-                i = max(self[row - 1]) + descent + 5
-        num_done = 0
-        flag = True
-        while num_done < num_times:
-            if i <= 1 and not backwards:
-                i = working_rc.cols + descent + 5
-            if not backwards:
-                i -= 1
-            else:
-                i += 1
-            flag = False
-
-            if not working_rc.has_element(row, i):
-                a, b = working_rc.right_root_at(row, i)
-                if a < b:
-                    flag = False
-                    if _is_row_root(descent, (a, b)) and b not in dict_by_b:
-                        working_rc = working_rc.toggle_ref_at(row, i)
-                        dict_by_a[a] = dict_by_a.get(a, set())
-                        dict_by_a[a].add(b)
-                        dict_by_b[b] = a
-                        if reflection_rows is not None and target_row is not None:
-                            reflection_rows[(a, b)] = target_row
-                            new_reflections.append((a, b))
-                        flag = True
-                    elif a in dict_by_b and b > descent and b not in dict_by_b:
-                        working_rc = working_rc.toggle_ref_at(row, i)
-                        dict_by_a[dict_by_b[a]].add(b)
-                        dict_by_b[b] = dict_by_b[a]
-                        if reflection_rows is not None and target_row is not None:
-                            reflection_rows[(dict_by_b[a], b)] = target_row
-                            new_reflections.append((dict_by_b[a], b))
-                        flag = True
-                if flag:
-                    num_done += 1
-                if row > 1 and not working_rc.is_valid:
-                    working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows)  # minus one?
-        return working_rc, new_reflections
-
-    def _kogan_kumar_rectify(self, row_below, descent, dict_by_a, dict_by_b, backwards=True, reflection_rows=None, target_row=None):
-        working_rc = self
-        if row_below == 0:
-            assert working_rc.is_valid, f"{working_rc=}, {dict_by_a=}, {dict_by_b=}"
-            return working_rc
-        if working_rc.is_valid:
-            return working_rc
-        for j in range(1, working_rc.cols + descent + 5):
-            flag = False
-            if working_rc.is_valid:
-                return working_rc
-
-            if working_rc.has_element(row_below, j):
-                a, b = working_rc.right_root_at(row_below, j)
-
-                top, bottom = max(a, b), min(a, b)
-
-                if a < b:
-                    continue
-
-                if bottom in dict_by_a and top in dict_by_a[bottom]:
-                    new_rc = working_rc.toggle_ref_at(row_below, j)
-                    dict_by_a[bottom].remove(top)
-                    if len(dict_by_a[bottom]) == 0:
-                        del dict_by_a[bottom]
-                    del dict_by_b[top]
-                    working_rc = new_rc
-                    flag = True
-
-                elif bottom in dict_by_b and top in dict_by_b and dict_by_b[top] == dict_by_b[bottom]:
-                    new_rc = working_rc.toggle_ref_at(row_below, j)
-                    dict_by_a[dict_by_b[bottom]].remove(top)
-
-                    if len(dict_by_a[dict_by_b[top]]) == 0:
-                        del dict_by_a[dict_by_b[top]]
-                    del dict_by_b[top]
-                    flag = True
-                    working_rc = new_rc
-
-                else:
-                    raise ValueError(f"Could not rectify at {(row_below, j)} with root {(a, b)}")
-                if flag:
-                    working_rc, _ = working_rc._kogan_kumar_insert_row(
-                        row_below,
-                        descent,
-                        dict_by_a,
-                        dict_by_b,
-                        num_times=1,
-                        backwards=backwards,
-                        reflection_rows=reflection_rows,
-                        target_row=target_row,
-                    )
-        return working_rc._kogan_kumar_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row)
-
-    # VERIFY
-    def kogan_kumar_insert(self, descent, rows, return_reflections=False, backwards=True):
+    def pseudo_pieri_insert(self, descent, rows, return_reflections=False):
         dict_by_a = {}
         dict_by_b = {}
-        reflection_rows = {}  # Track which row each reflection was added to
-        # row is descent
-        # inserting times
 
         working_rc = type(self)([*self])
         if len(rows) == 0:
             if return_reflections:
                 return working_rc, ()
             return self
-        rows_grouping = {}
 
-        for r in rows:
-            rows_grouping[r] = rows_grouping.get(r, 0) + 1
         if max(rows) > len(working_rc):
             working_rc = working_rc.extend(max(rows) - len(working_rc))
         rows = sorted(rows, reverse=True)
         reflections = []
-        for row in sorted(rows_grouping.keys(), reverse=True):
-            num_times = rows_grouping[row]
+        for row in rows:
             last_working_rc = working_rc
-            working_rc, new_reflections = working_rc._kogan_kumar_insert_row(row, descent, dict_by_a, dict_by_b, num_times, backwards=backwards, reflection_rows=reflection_rows, target_row=row)
+            working_rc, new_spot = working_rc.monk_insert(row)
+            start_col = 1
+            the_row, col = new_spot
+            new_reflections = []
+            while True:
+                a, b = working_rc.right_root_at(the_row, col)
+                if _is_row_root(descent, (a, b)) and b not in dict_by_b:
+                    dict_by_a[a] = dict_by_a.get(a, set())
+                    dict_by_a[a].add(b)
+                    dict_by_b[b] = a
+                    new_reflections.append((a, b))
+                    break
+                if a in dict_by_b and b > descent and b not in dict_by_b:
+                    dict_by_a[dict_by_b[a]].add(b)
+                    dict_by_b[b] = dict_by_b[a]
+                    new_reflections.append((dict_by_b[a], b))
+                    break
+                # assert not _is_row_root(descent, (a, b))
+                working_rc = last_working_rc
+                start_col = start_col + 1 # SLOW
+                working_rc, new_spot = working_rc.monk_insert(row, start_col=start_col)
+                the_row, col = new_spot
             reflections += new_reflections
-            if row > 1 and not working_rc.is_valid:
-                working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=row)  # minus one?
-            try:
-                assert len(working_rc[row - 1]) == len(last_working_rc[row - 1]) + num_times
-            except AssertionError:
-                raise
+
         if return_reflections:
-            # Build list of (row, reflection) pairs
             return working_rc, tuple(reflections)
         return working_rc
+
+    def monk_insert(self, row, start_col = None):
+        working_rc = self
+        col = start_col if start_col is not None else 1
+        while True:
+            if not working_rc.has_element(row, col):
+                a, b = working_rc.right_root_at(row, col)
+                if a < b:
+                    working_rc = working_rc.toggle_ref_at(row, col)
+                    if not working_rc.is_valid:
+                        for index in range(len(working_rc.perm_word)):
+                            a2, b2 = working_rc.left_to_right_inversion(index)
+                            if a2 == b and b2 == a:
+                                old_row = row
+                                row, col = working_rc.left_to_right_inversion_coords(index)
+                                assert row < old_row
+                                working_rc = working_rc.toggle_ref_at(row, col)
+                                break
+                    else:
+                        return working_rc, (row, col)
+            col += 1
+
 
     @property
     def weight(self) -> tuple[int, ...]:
@@ -963,7 +734,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             diff_rows += [row]
 
         interim2 = type(self)([*interim[:-1], tuple(sorted(descs, reverse=True))])
-        interim = interim2.kogan_kumar_insert(len(self.perm.trimcode) - extend_amount, diff_rows)
+        interim = interim2.pseudo_pieri_insert(len(self.perm.trimcode) - extend_amount, diff_rows)
 
         return interim.rowrange(0, len(self) - 1)
 
@@ -1193,24 +964,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             if new_rc.left_to_right_inversion(i) == (a, b):
                 row, col = new_rc.left_to_right_inversion_coords(i)
                 new_rc = new_rc.toggle_ref_at(row, col)
-                for j in range(col + 1, new_rc.cols + 10):
-                    if not new_rc.has_element(row, j):
-                        new_rc = new_rc.toggle_ref_at(row, j)
-                        break
-                while not new_rc.is_valid:
-                    for bad_i in range(self.perm.inv):
-                        a_bad, b_bad = new_rc.left_to_right_inversion(bad_i)
-                        if a_bad > b_bad:
-                            row_bad, col = new_rc.left_to_right_inversion_coords(bad_i)
-                            new_rc = new_rc.toggle_ref_at(row_bad, col)
-                            for j in range(col + 1, new_rc.cols + 10):
-                                if not new_rc.has_element(row_bad, j):
-                                    new_rc = new_rc.toggle_ref_at(row_bad, j)
-                                    break
-                            break
-        if len(new_rc.perm.trimcode) > len(new_rc):
-            new_rc = new_rc.normalize()
-        return new_rc
+                return new_rc.monk_insert(row, start_col=col + 1)
+        raise ValueError("No such inversion")
 
     # THE ZERO MAKES SCHUB PROD
     @cache
@@ -1500,7 +1255,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             rows = [r for r in rows if r != row]
             if len(rows) == 0:
                 continue
-            bottom_cut = bottom_cut.kogan_kumar_insert(descent - 1, rows)
+            bottom_cut = bottom_cut.pseudo_pieri_insert(descent - 1, rows)
         candidate = RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
         # if not candidate.is_valid:
         #     while not candidate.is_valid:

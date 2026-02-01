@@ -1068,16 +1068,33 @@ We proceed now to define a product on $\BRC$ turning it into a ring. To do this,
 \newcommand{\ins}[2]{{#2\xleadsto{#1}}}
 
 \begin{algorithm}
-\caption{Basic monk insertion $\ins{k}{i} R$}
+\caption{Basic monk insertion $\ins{}{i} R$}
 \label{algorithm:monk}
 \begin{algorithmic}[1]
-		\State \textbf{Input:} An RC graph $R$, parameter $k$, and an integer $i$ with $1\leq i\leq k$.
-		\State \textbf{Output:} A modified RC graph $R'$ with $\wtt_j(R')=\wtt_j(R)$  for $j\neq i$ and $\wtt_i(R')=\wtt_i(R)+1$ such that $\wof{R}\tom{k} \wof{R'}$.
-		\State Find leftmost position $(i, j) \notin R$ in row $i$ such that if $\rtt_R(i, j)=(a,b)$, then $a\leq k < b$.
+		\State \textbf{Input:} An RC graph $R$ and an integer $i\geq 1$.
+		\State \textbf{Output:} A modified RC graph $R'$ with $\wtt_j(R')=\wtt_j(R)$  for $j\neq i$ and $\wtt_i(R')=\wtt_i(R)+1$ such that $\wof{R}\tom{} \wof{R'}$.
+		\State Find leftmost position $(i, j) \notin R$ in row $i$.
 		\State $R \gets R \cup \{(i, j)\}$
     \If{there exists $(i', j') \in R$ with $\rtt_R(i', j') \in \Phi^-$}
         \State $R \gets R \setminus \{(i', j')\}$
         \State Return to step 3 substituting $i = i'$.
+    \EndIf
+		\State \Return $R$
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Bumping operation $m_{ab}(R)$}
+\label{algorithm:monk}
+\begin{algorithmic}[1]
+		\State \textbf{Input:} An RC graph $R$ and a pair of positive integers $a<b$ such that $\wof{R}t_{ab}\preceq \wof{R}$.
+		\State \textbf{Output:} A modified RC graph $R'$ with $\wtt(R')=\wtt(R)$  and a $c>b$ such that $\wof{R}t_{ab}=\wof{R'}t_{ac}\preceq \wof{R'}$.
+		\State Delete the element $(i,j)$ such that $\rtt_R(i,j) = (a,b)$ to obtain $R'$. 
+    \State Find leftmost position $(i, j') \notin R'$ with $j'>j$
+		\State $R \gets R \cup \{(i, j')\}$
+    \If{there exists $(i'', j'') \in R$ with $\rtt_R(i'', j'') \in \Phi^-$}
+        \State $R \gets R \setminus \{(i'', j'')\}$
+        \State Return to step 3 substituting $i = i''$, $j=0$.
     \EndIf
 		\State \Return $R$
 	\end{algorithmic}
@@ -1091,23 +1108,16 @@ We proceed now to define a product on $\BRC$ turning it into a ring. To do this,
 		\State \textbf{Output:} A modified RC graph $R'$ with $\wtt_i(R')=\wtt_i(R)$ for $i\notin I$ and $\wtt_i(R')=\wtt_i(R)+\#\{j \mid i_j = i\}$ for $i\in I$ such that $\wof{R}\Tom{k} \wof{R'}$.
 		\State \textbf{Initialize:} Let $L \gets [\,]$ (empty list of pairs $(a, b)$ where $a \leq k < b$), and $U\gets [\,]$ (empty list of positions).
 		\For{each $i \in (i_1, \ldots, i_m)$}
-		\State Find leftmost position $(i, j) \notin R$ in row $i$ satisfying $j>j'$ for all $(i,j')\in U$ such that either:
-		\State \quad a) $\rtt_R(i, j) = (s, q)$ where $s \leq k < q$ and $q \notin \{b \mid (a, b) \in L\}$.
-		\State \quad b) $\rtt_R(i, j) = (b_r, q)$ where $q > k$, $b_r<q$, and $q \notin \{b \mid (a, b) \in L\}$.
-		\State $R \gets R \cup \{(i, j)\}$ and $U\gets U \cup \{(i, j)\}$
-		\State Update $L$ by adding $(s, q)$ or replacing $(a_r, b_r)$ with $(a_r, q)$ and $(a_r, b_r)$.
-		\If{there exists $(i', j') \in R$ with $\rtt_R(i', j') \in \Phi^-$}
-        
-    \State $R \gets R \setminus \{(i', j')\}$
-		\State Let $\rtt_R(i', j') = (q, s)$
-		\If{$(s, q) \in L$}
-		\State Remove $(s, q)$ from $L$
-		\Else
-		\State Remove $(a_r, q)$ from $L$, where $(a_r, q),(a_r,s)\in L$
-		\EndIf
-		\State Return to step 5 to insert $i'$.
+		\State Compute $\ins{}{i} R$. Say that the final reflection was added at some position $(i',j')$.
+    \If{One of the following holds:\\
+		\quad a) $\rtt_R(i', j') = (s, q)$ where $s \leq k < q$ and $q \notin \{b \mid (a, b) \in L\}$.\\
+		\quad b) $\rtt_R(i', j') = (b_r, q)$ where $q > k$, $b_r<q$, and $q \notin \{b \mid (a, b) \in L\}$\\
+    }
+		\State Update $L$ by adding $(s, q)$ or replacing $(a_r, b_r)$ with $(a_r, q)$ and $(a_r, b_r)$ and resume the loop at step 4.
+    \Else
+    \State Set $R=m_{ab}(R)$ where $(a,b)=\rtt_R(i',j')$. Replace $(i', j')$ with the newly added position in $R$ and return to step 6.
     \EndIf
-		\EndFor
+    \EndFor
 		\State \Return $R$
 	\end{algorithmic}
 \end{algorithm}
@@ -1475,7 +1485,7 @@ as a bounded RC graph with $\hr(R)-1$ rows. Otherwise, define $R' = R_{\leq p}$,
 
 Set $R'=R_i$. While $\maxd(R') \geq d_i$, delete the element $(a,b)\in R'$ such that $\rtt_{R'}(a,b)=(\maxd(R'),\maxd(R')+1)$ from $R'$ and store $a$ in the list (multiset) $A_i$. After enough iterations such that $\maxd(R')<d_i$, set $R_{i+1}= R'$ and set $d_{i+1}= \maxd(R_{i+1})$, then repeat. 
 
-At termination, say at step $k$, set
+At termination, say at step $k$, let
 $$\zeromap^{(p)}(R) = (\ins{d_1 - 1}{A_1}\cdots\ins{d_k - 1}{A_k}\zeromap(R_k))\cup {\downarrow} R_{>p}$$
 be the desired bounded RC graph with $\hr(R)-1$ rows.
 
@@ -1786,11 +1796,18 @@ We show an example in Figure \ref{figure:zpexample}.
 \label{figure:zpexample}
 \end{figure}
 
+\begin{definition}
+Let $R$ be an RC graph. We define $\nabla(R)$ to be the RC graph obtained by deleting the element $(i, j)$ in $R$ such that $i$ is minimal, and $j$ is maximal given this. This is simply the leftmost element of the reduced word of $R$.
+\end{definition}
+
 \begin{theorem}
 Let $R\in\BRC(w,n)^{(0,p)}$ be the set of all bounded RC graphs with $\hr(R)=n$ such that row $p$ of $R$ is empty. Then we have that the restriction of $\zeromap^{(p)}$ is a bijection
-$$\zeromap^{(p)}:\BRC(w,n)^{(0,p)}=\bigcup_{\substack{w\downvar{p} w'\\\ell(w)=\ell(w')}} \BRC(w', n-1)$$
+$$\zeromap^{(p)}:\BRC(w,n)^{(0,p)}\to\bigcup_{\substack{w\downvar{p} w'\\\ell(w)=\ell(w')}} \BRC(w', n-1)$$
 satisfying $\wtt(\zeromap^{(p)}(R)) = (i_1,\ldots,i_{p-1},i_{p+1},\ldots,i_{n})$, where $\wtt(R)=(i_1,\ldots,i_n)$.
 \end{theorem}
+\begin{proof}
+  If $\maxd(R_k) < p$, then $\zeromap(R_k) = R_k$.
+\end{proof}
 
 \subsection{Preservation of the Demazure crystal structure}
 
