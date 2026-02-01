@@ -1786,11 +1786,40 @@ We show an example in Figure \ref{figure:zpexample}.
 \label{figure:zpexample}
 \end{figure}
 
+\begin{definition}
+Let $R$ be an RC graph. We define an RC graph $\overline{R}$ and a sequence $\mathtt{strip}(R)$ as follows. Let $\maxd(R)=n$, set $R_0=R$, and set $A_0=()$. While $\maxd(R_i)> n -1$, delete the element $(a,b)\in R_i$ such that $\rtt_{R_i}(a,b)=(\maxd(R_i), \maxd(R_i) + 1)$ to obtain $R_{i+1}$, and add $a$ to $A_i$ to obtain $A_{i+1}$. When the algorithm terminates at step $k$, set
+$$\mathtt{strip}(R) = A_k$$
+and set $\overline{R} = R_k$.
+\end{definition}
+
+\begin{lemma} \label{lemma:reconstruct}
+Let $R$ be an RC graph. Then
+$$R = \ins{\maxd(R)}{\mathtt{strip}(R)} \overline{R}$$
+\end{lemma}
+\begin{proof}
+Let $n=\maxd(R)$. We prove this by induction on $\code_n(R)$. Let $(i,j)$ be the location of the descent $n$ in $R$. If $\code_n(R)=1$, then we know that insertion of $i$ into $\overline{R}$ returns an RC graph with the same weight and permutation as $R$, the latter assertion because the only $n$-reflection that increases the length of $\wof{\overline{R}}$ by exactly $1$ is $s_n$. By the exchange property, there is precisely one location in row $i$ that this $n$-reflection can be inserted, and we have the result when $\code_{n}(R)=1$.
+
+Assume the inductive hypothesis that we have the result for $\code_n(R) = k$ for some $k\geq 1$ and additionally that insertion order of reflections has been $(n, n+1),\ldots,(n,n+k)$. Assume $\mathtt{strip}(R) = (r_1,\ldots,r_{k+1})$ in increasing order and we have inserted all of $r_2,\ldots,r_{k+1}$ in Algorithm \ref{algorithm:insertion}. By the induction hypothesis, the RC graph $R'$ we have at this point has permutation $\code_i{R'} = \code_i{R}$ for $i<n$ and $\code_n(R') = k$, and we have equality of $R'$ with $R$ except deletion of the root $(n, n+k + 1)$. Since $\wof{R'}(n) < \wof{R'}(n+k+1)$, the only $n$-reflection that can be inserted to increase the length of $\wof{R'}$ by $1$ is $(n, n+k+1)$. By pipe considerations, this must be inserted in column $c = n + k + 1 - r_1$. Since this is the only possible insertion location and the permutation is the same as $\wof{R}$, we have the result by induction.
+\end{proof}
+
 \begin{theorem}
 Let $R\in\BRC(w,n)^{(0,p)}$ be the set of all bounded RC graphs with $\hr(R)=n$ such that row $p$ of $R$ is empty. Then we have that the restriction of $\zeromap^{(p)}$ is a bijection
 $$\zeromap^{(p)}:\BRC(w,n)^{(0,p)}=\bigcup_{\substack{w\downvar{p} w'\\\ell(w)=\ell(w')}} \BRC(w', n-1)$$
 satisfying $\wtt(\zeromap^{(p)}(R)) = (i_1,\ldots,i_{p-1},i_{p+1},\ldots,i_{n})$, where $\wtt(R)=(i_1,\ldots,i_n)$.
 \end{theorem}
+\begin{proof}
+Consider first the special case that $R_{>p}$ is empty. Let $w_0 = \wof{\zeromap(R_k)}$. Then we know that
+$$R_k\downvar{p} \zeromap(R_k)$$
+Since every element of $A_k$ is less than $p$ and $d_k>p$, the insertion $\ins{d_k-1}{A_k}\zeromap(R_k)$ only adds right roots $(a,b)$ with $a<p$ and $b>p$. Thus
+$$\ins{d_k}{A_k}R_k\downvar{p} \ins{d_k-1}{A_k}\zeromap(R_k)$$
+We assert the (descending) inductive hypothesis that for some index $j$ we have
+$$\ins{d_j}{A_j}\cdots\ins{d_k}{A_k}R_k\downvar{p} \ins{d_j-1}{A_j}\cdots\ins{d_k-1}{A_k}\zeromap(R_k)$$
+Then the induction step follows with precisely the same reasoning; since every element of $A_{j-1}$ is less than $p$ and $d_{j-1}>p$, the insertion $\ins{d_{j-1}-1}{A_{j-1}}$ only adds right roots $(a,b)$ with $a<p$ and $b>p$. Thus
+$$\ins{d_{j-1}}{A_{j-1}}\cdots\ins{d_k}{A_k}R_k\downvar{p} \ins{d_{j-1}-1}{A_{j-1}}\cdots\ins{d_k-1}{A_k}\zeromap(R_k)$$
+and the result follows by induction in the special case that $R_{>p}$ is empty, where we invoke Lemma \ref{lemma:reconstruct} to assert that the left-hand side is equal to $R$.
+
+Since the row was initially empty, we have at our disposal the exchange property on $R_{>p}$, shifting the reflections down a row to obtain the general case.
+\end{proof}
 
 \subsection{Preservation of the Demazure crystal structure}
 
