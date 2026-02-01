@@ -1511,6 +1511,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     def dualpieri(self, mu: Permutation, w: Permutation) -> set[tuple[tuple, RCGraph]]:
         from schubmult.rings.rc_graph_ring import RCGraphRing
         from schubmult.schub_lib.bpd import BPD  # noqa: F401
+        from schubmult.utils.schub_lib import pull_out_var
 
         if mu.inv == 0:
             return set({((), rc) for rc in self.divdiff_perm(w)})
@@ -1539,7 +1540,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 if len(vpl_list) == 0:
                     continue
                 for vpl in vpl_list:
-                    # vl = pull_out_var(lm[i] + 1, vpl.perm)
+                    vl = pull_out_var(lm[i] + 1, vpl.perm)
 
                     # if lm[i] + 1 > len(vpl.perm.trimcode):
                     #     # if lm[i] + 1 > len(vpl):
@@ -1611,9 +1612,12 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                     # # spongle = BPD.from_rc_graph(current_vpl)
                     # # bpd_cols = {col for row, col in spongle.all_blanks() if row == move_spot - 1}
                     # onofafa = False
-                    vpl_set = vpl.pull_out_row(lm[i] + 1)
-                    for vpl_new, pw in vpl_set:
+                    try:
+                        vpl_new = vpl.pull_out_row(lm[i] + 1)
+                        pw = tuple(reversed(next(iter([pww for pww, pp in vl if pp == vpl_new.perm]))))
                         res2.add(((*vlist, pw), vpl_new.normalize()))
+                    except Exception:
+                        pass
                     #    added = True
                     # assert did == 1, f"Fail {did=}\n{self}\n{rcs}\n{vpl}\n{vl}"
                     # if onofafa:

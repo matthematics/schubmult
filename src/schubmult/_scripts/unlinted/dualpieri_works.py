@@ -21,8 +21,11 @@ def decompose(w):
 def test_perm_pair(dom_perm, perm):
     """Test a single (dominant_perm, perm) pair."""
     
-    test_prod = DSx(dom_perm) * Sx(perm)
+    test_prod = Sx(dom_perm) * Sx(perm)
     failures = []
+    
+    if not test_prod:
+        return failures  # Empty product, nothing to test
     
     for w, v in test_prod.items():
         result = S.Zero
@@ -52,10 +55,22 @@ def test_perm_pair(dom_perm, perm):
 
 def process_dom_perm(dom_perm, perms):
     """Process all perms for a given dominant permutation."""
+    import sys
+    print(f"Worker started for dom_perm {dom_perm}", file=sys.stderr, flush=True)
     all_failures = []
+    count = 0
     for perm in perms:
-        failures = test_perm_pair(dom_perm, perm)
-        all_failures.extend(failures)
+        try:
+            failures = test_perm_pair(dom_perm, perm)
+            all_failures.extend(failures)
+            count += 1
+        except Exception as e:
+            print(f"ERROR testing {dom_perm} * {perm}: {e}", file=sys.stderr, flush=True)
+            all_failures.extend(failures)
+            count += 1
+            # import traceback
+            # traceback.print_exc(file=sys.stderr)
+    print(f"  Completed dom_perm {dom_perm}: tested {count} perms, found {len(all_failures)} failures", file=sys.stderr, flush=True)
     return all_failures
 
 if __name__ == "__main__":
@@ -68,12 +83,21 @@ if __name__ == "__main__":
     perms = [perm for perm in Permutation.all_permutations(n)]
     dom_perms = [p for p in perms if p == p.minimal_dominant_above()]
     
+    print(f"n={n}: Found {len(perms)} total permutations, {len(dom_perms)} dominant")
     print(f"Testing {len(dom_perms)} dominant permutations against {len(perms)} permutations using {num_processes} processes")
+    print(f"Total test pairs: {len(dom_perms) * len(perms)}")
+    print(f"First few dom_perms: {dom_perms[:3]}")
+    print("")
     
     # Parallelize over dominant permutations
+    print("Starting multiprocessing pool...")
     with Pool(num_processes) as pool:
         worker = partial(process_dom_perm, perms=perms)
-        results = pool.map(worker, dom_perms)
+        results = []
+        print(f"Submitting {len(dom_perms)} tasks to pool...")
+        for i, result in enumerate(pool.imap_unordered(worker, dom_perms), 1):
+            results.append(result)
+            print(f"Progress: {i}/{len(dom_perms)} dominant permutations completed ({i*100//len(dom_perms)}%)", flush=True)
     
     # Collect all failures
     all_failures = []

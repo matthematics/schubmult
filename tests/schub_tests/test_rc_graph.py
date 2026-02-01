@@ -86,3 +86,22 @@ def test_tableau_decomp():
     expected = (RCGraph([(5, 4, 3, 2, 1)]), RCGraph([(4, 3, 2, 1)]), RCGraph(((3, 1), (2,))), RCGraph([()]))
 
     assert rc.tableau_decomp() == expected
+
+
+def test_pull_out_empty_row():
+    from schubmult import RCGraph, Permutation
+    n = 5
+    perms = Permutation.all_permutations(n)
+    for perm in perms:
+        lower_perms = {}
+        for i in range(2, len(perm.trimcode)):
+            lower_perms = {}
+            for rc in RCGraph.all_rc_graphs(perm, len(perm.trimcode)):
+                if len(rc[i-1]) != 0:
+                    continue
+                pullout = rc.pull_out_row(i)
+                lower_perms[pullout.perm] = lower_perms.get(pullout.perm, set())
+                lower_perms[pullout.perm].add(pullout)
+
+        for perm2 in lower_perms:
+            assert lower_perms[perm2] == RCGraph.all_rc_graphs(perm2, len(perm.trimcode) - 1), f"Error: missing RC graphs for permutation {perm2} from pull out of {perm} at row {i}."    
