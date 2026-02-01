@@ -797,9 +797,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 elif bottom in dict_by_b and top in dict_by_b and dict_by_b[top] == dict_by_b[bottom]:
                     new_rc = working_rc.toggle_ref_at(row_below, j)
                     dict_by_a[dict_by_b[bottom]].remove(top)
-                    del dict_by_b[top]
+
                     if len(dict_by_a[dict_by_b[top]]) == 0:
                         del dict_by_a[dict_by_b[top]]
+                    del dict_by_b[top]
                     flag = True
                     working_rc = new_rc
 
@@ -807,7 +808,14 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                     raise ValueError(f"Could not rectify at {(row_below, j)} with root {(a, b)}")
                 if flag:
                     working_rc, _ = working_rc._kogan_kumar_insert_row(
-                        row_below, descent, dict_by_a, dict_by_b, num_times=1, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row,
+                        row_below,
+                        descent,
+                        dict_by_a,
+                        dict_by_b,
+                        num_times=1,
+                        backwards=backwards,
+                        reflection_rows=reflection_rows,
+                        target_row=target_row,
                     )
         return working_rc._kogan_kumar_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row)
 
@@ -1430,6 +1438,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     def zero_out_empty_row(self, row: int) -> RCGraph:
         from schubmult import pull_out_var
         from schubmult.rings.rc_graph_ring import RCGraphRing
+
         vl = pull_out_var(row, self.perm)
         rc_ring = RCGraphRing()
         move_spot = min([a + 1 for a in self.perm.descents() if a >= row - 1])
@@ -1453,7 +1462,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         if len(vpl_bottom) != move_spot - 1:
             assert vpl_bottom.inv == 0
             vpl_bottom = vpl_bottom.resize(move_spot - 1)
-                    # vpl_bottom = vpl_bottom.zero_out_last_row()
+            # vpl_bottom = vpl_bottom.zero_out_last_row()
         rcs2 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top)).keys())
         rcs = rcs1.intersection(rcs2)
         res = set()
@@ -1465,18 +1474,17 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return res
 
     def pull_out_row(self, row: int) -> tuple[tuple, RCGraph]:
-        if row - 1 not in self.perm.descents():
-            raise ValueError("Row not a descent")
-        if len(self[row - 1]) != 0:
-            raise ValueError("Row not empty")
+        # if row - 1 not in self.perm.descents():
+        #     raise ValueError("Row not a descent")
+        # if len(self[row - 1]) != 0:
+        #     raise ValueError("Row not empty")
         if row == 1:
             return self.rowrange(1)
-        bottom_cut = self.rowrange(0, row)
+        bottom_cut = self.rowrange(0, row - 1).extend(1)
         if len(bottom_cut.perm.trimcode) <= len(bottom_cut):
             bottom_cut = bottom_cut.zero_out_last_row()
             return RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
-        print("pants")
-        bottom_cut = bottom_cut.normalize()
+
         topd = len(bottom_cut.perm.trimcode)
         rows_by_descent = {topd: []}
         while topd > row:
@@ -1486,13 +1494,19 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             topd = len(bottom_cut.perm.trimcode)
             rows_by_descent[topd] = []
         assert topd <= row
-        bottom_cut = bottom_cut.resize(row).zero_out_last_row()
+        bottom_cut = bottom_cut.resize(row - 1).extend(1).zero_out_last_row()
         for descent in sorted(rows_by_descent.keys()):
             rows = rows_by_descent[descent]
+            rows = [r for r in rows if r != row]
             if len(rows) == 0:
                 continue
             bottom_cut = bottom_cut.kogan_kumar_insert(descent - 1, rows)
-        return RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
+        candidate = RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
+        # if not candidate.is_valid:
+        #     while not candidate.is_valid:
+        #         bottom_cut = bottom_cut.normalize().zero_out_last_row()
+        #         candidate = RCGraph([*bottom_cut[:row-1], *RCGraph(self[row:]).shiftup(-1)])
+        return candidate
 
     def dualpieri(self, mu: Permutation, w: Permutation) -> set[tuple[tuple, RCGraph]]:
         from schubmult.rings.rc_graph_ring import RCGraphRing

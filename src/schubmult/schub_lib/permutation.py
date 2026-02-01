@@ -332,6 +332,7 @@ class Permutation(Printable):
     @classmethod
     def from_partial(cls, partial_perm):
         max_required = max([a for a in partial_perm if a is not None], default=len(partial_perm))
+        partial_perm = list(partial_perm)
         if len(partial_perm) < max_required:
             partial_perm += [None] * (max_required - len(partial_perm))
         search_space = {i for i in partial_perm if i is not None}
@@ -371,7 +372,7 @@ class Permutation(Printable):
     def trimcode(self):
         if self._perm == ():
             return []
-        return self.code[: max(self.descents(False))]
+        return self.code[: max(self.descents(False), default=0)]
 
     def mul_dominant(self):
         return ~((~self).minimal_dominant_above())

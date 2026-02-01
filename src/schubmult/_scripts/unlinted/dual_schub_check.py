@@ -1,28 +1,18 @@
 if __name__ == "__main__":
     from schubmult import *
     import sys
-    from sympy import pretty_print
-    from schubmult.symbolic import S, expand
-    from schubmult.abc import x
-    from schubmult.utils.perm_utils import has_bruhat_descent
-
+    import itertools
+    import numpy as np
     n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
-    
-    def dual_schub(perm, x):
-        if perm.inv == 0:
-            return S.One
-        res = S.Zero
-        for a in range(len(perm) - 1):
-            for b in range(a + 1, len(perm)):
-                if has_bruhat_descent(perm, a, b):
-                    #res += ((x[a + 1]-x[a]) - (x[b + 1]-x[b])) * dual_schub(perm.swap(a, b), x)
-                    res += sum([x[i] for i in range(a + 1, b + 1)]) * dual_schub(perm.swap(a, b), x)
-        return res
+    r = RCGraphRing()
 
-    for perm in perms:
-        ds = expand(dual_schub(perm, x))
-        sch = ASx(perm, n).change_basis(WordBasis)
-        print(perm.trimcode)
-        print(ds)
-        print(sch)
+    for perm1, perm2 in itertools.product(perms, repeat=2):
+        for rc1, rc2 in itertools.product(RCGraph.all_rc_graphs(perm1, n-1), RCGraph.all_rc_graphs(perm2, n-1)):
+            fung = r.zero
+            prod_perms = Sx(perm1) * Sx(perm2)
+            weight = (np.array(rc1.length_vector,dtype=int)+np.array(rc2.length_vector,dtype=int)).tolist()
+            for perm, coeff in prod_perms.items():
+                rc_graphs = RCGraph.all_rc_graphs(perm, n-1, weight=weight)
+                fung += r.from_dict(dict.fromkeys(rc_graphs, coeff))
+            print(fung)

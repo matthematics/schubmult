@@ -15,12 +15,15 @@ if __name__ == "__main__":
     n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
     for perm in perms:
-        for i in perm.descents(zero_indexed=False):
+        # for i in perm.descents(zero_indexed=False):
+        for i in range(1, len(perm.trimcode) + 1):
             summ = S.Zero
+            lower_perms = {}
             for rc in RCGraph.all_rc_graphs(perm, len(perm.trimcode)):
                 if len(rc[i - 1]) != 0:
                     continue 
                 pullout = rc.pull_out_row(i)
+                assert pullout.perm in [rrr for _, rrr in pull_out_var(i, rc.perm)], f"Error: pull out variable produced invalid permutation for permutation {perm} at row {i}.\nRC Graph:\n{rc}\nPullout:\n{pullout}"
                 # print(f"{perm=} {i=} pullout")
                 # print(pullout)
                 # print(rc.perm.inv - pullout.perm.inv)
@@ -28,9 +31,20 @@ if __name__ == "__main__":
                 # for pw, rc0 in pullout:
                 #     summ += (x[i]**len(pw))*rc0.polyvalue(x[:i] + x[i+1:])
                 
-                print(f"RC:\n{rc}")
-                print(tuple(pullout))
-                assert pullout.perm.inv == perm.inv
-                summ += (x[i] ** (perm.inv - pullout.perm.inv)) * pullout.polyvalue(x[:i] + x[i+1:])
-            assert expand(summ - Sx(perm).expand().subs(x[i], S.Zero)) == S.Zero, f"Error: pull out variable mismatch for permutation {perm} at row {i}:\nComputed sum:\n{summ}\nExpected:\n{Sx(perm).expand().subs(x[i], S.Zero)}\n{pullout}"
-            print(f"Permutation: {perm}, length: {i}, verified.")
+                # print(f"RC:\n{rc}")
+                # print(tuple(pullout))
+                # assert pullout.perm.inv == perm.inv
+                # summ += (x[i] ** (perm.inv - pullout.perm.inv)) * pullout.polyvalue(x[:i] + x[i+1:])
+                lower_perms[pullout.perm] = lower_perms.get(pullout.perm, set())
+                lower_perms[pullout.perm].add(pullout)
+            # assert expand(summ - Sx(perm).expand()) == S.Zero, f"Error: pull out variable mismatch for permutation {perm} at row {i}:\nComputed sum:\n{summ}\nExpected:\n{Sx(perm)}\n{pullout}"
+            # print(f"Well yeah {perm}, length: {i}, verified.")
+            # assert expand(summ - Sx(perm).expand()) == S.Zero, f"Error: pull out variable mismatch for permutation {perm} at row {i}:\nComputed sum:\n{summ}\nExpected:\n{Sx(perm).expand()}\n{pullout}"
+            # print(f"Permutation: {perm}, length: {i}, verified.")
+            # for perm2 in lower_perms:
+            #     try:
+            #         assert lower_perms[perm2] == RCGraph.all_rc_graphs(perm2, len(perm.trimcode) - 1), f"Error: missing RC graphs for permutation {perm2} from pull out of {perm} at row {i}."
+            #     except AssertionError as e:
+            #         print(e)
+            #         print(f"From permutation {perm} at row {i}, expected RC graphs for {perm2}:")
+            #     print(f"yay {perm2}")

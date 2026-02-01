@@ -17,6 +17,7 @@ from schubmult.schub_lib.permutation import Permutation
 from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.schub_lib.schubert_monomial_graph import SchubertMonomialGraph
 from schubmult.symbolic import Expr
+from schubmult.utils.schub_lib import pull_out_var  # noqa: F401
 
 
 class TileType(IntEnum):
@@ -1011,6 +1012,30 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             asm[rows, cols] = -1
         # print(asm)
         return asm
+
+    # _graph_cache: dict[tuple[Permutation, int], set[BPD]] = {}
+
+    # @classmethod
+    # def all_bpds_bruh(cls, perm: Permutation, length: int = -1, diff=0) -> set[BPD]:
+    #     ret = set()
+    #     stack = [(len(perm), BPD.rothe_bpd(perm, num_rows=len(perm)))]
+    #     while len(stack) > 0:
+    #         current_row, current_bpd = stack.pop()
+    #         if current_row == 0:
+    #             ret.add(current_bpd)
+    #             continue
+    #         if current_row > len(current_bpd.perm.trimcode):
+    #             stack.append((current_row - 1, current_bpd))
+    #             continue
+    #         bpath = current_bpd.to_bruhat_path()
+    #         for _, new_perm in pull_out_var(current_row, bpath[current_row - 1]):
+    #             new_bpd = current_bpd.copy()
+    #             rperm = Permutation.from_partial(new_perm[:current_row])
+    #             rbpd = BPD.rothe_bpd(rperm, num_rows=current_row-1)
+    #             rbpd = rbpd.resize(len(perm))
+    #             new_bpd._grid[:current_row - 1] = rbpd._grid[:current_row - 1]
+    #             stack.append((current_row - 1, new_bpd))
+    #     return ret
 
     @classmethod
     @cache
