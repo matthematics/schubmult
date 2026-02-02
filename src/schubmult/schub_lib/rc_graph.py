@@ -511,10 +511,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 if flag:
                     num_done += 1
                 if row > 1 and not working_rc.is_valid:
-                    working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows)  # minus one?
+                    working_rc = working_rc._pieri_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows)  # minus one?
         return working_rc, new_reflections
 
-    def _kogan_kumar_rectify(self, row_below, descent, dict_by_a, dict_by_b, backwards=True, reflection_rows=None, target_row=None):
+    def _pieri_rectify(self, row_below, descent, dict_by_a, dict_by_b, backwards=True, reflection_rows=None, target_row=None):
         working_rc = self
         if row_below == 0:
             assert working_rc.is_valid, f"{working_rc=}, {dict_by_a=}, {dict_by_b=}"
@@ -566,7 +566,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                         reflection_rows=reflection_rows,
                         target_row=target_row,
                     )
-        return working_rc._kogan_kumar_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row)
+        return working_rc._pieri_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row)
 
     # VERIFY
     def pieri_insert(self, descent, rows, return_reflections=False, backwards=True):
@@ -595,7 +595,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             working_rc, new_reflections = working_rc._pieri_insert_row(row, descent, dict_by_a, dict_by_b, num_times, backwards=backwards, reflection_rows=reflection_rows, target_row=row)
             reflections += new_reflections
             if row > 1 and not working_rc.is_valid:
-                working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=row)  # minus one?
+                working_rc = working_rc._pieri_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=row)  # minus one?
             try:
                 assert len(working_rc[row - 1]) == len(last_working_rc[row - 1]) + num_times
             except AssertionError:
@@ -1197,6 +1197,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             ret = RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
             # while not ret.is_valid:
             #     ret = RCGraph([*ret.rowrange(0, row - 1).little_bump(), *RCGraph(self[row:]).shiftup(-1)])
+            if not ret.is_valid:
+                return ret._pieri_rectify(row - 1, row - 1, {}, {})
             return ret
 
         topd = len(bottom_cut.perm.trimcode)
@@ -1216,6 +1218,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 continue
             bottom_cut = bottom_cut.pieri_insert(descent - 1, rows)
         ret = RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
+        if not ret.is_valid:
+            return ret._pieri_rectify(row - 1, row - 1, {}, {})
         # while not ret.is_valid:
         #     ret = RCGraph([*ret.rowrange(0, row - 1).little_bump_desc(), *RCGraph(self[row:]).shiftup(-1)])
         return ret
