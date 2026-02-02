@@ -5,7 +5,6 @@ from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_func, elem_
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.permutation import (
     Permutation,
-    inv,
     theta,
     uncode,
 )
@@ -171,13 +170,13 @@ def nilhecke_mult(coeff_dict1, coeff_dict2):
     ret = {}
     for w in coeff_dict2:
         w1 = w
-        inv_w1 = inv(w1)
+        inv_w1 = w1.inv
         poly = coeff_dict2[w]
         did_mul = mult_poly_down(coeff_dict1, poly)
         for v in did_mul:
             v1 = [*v]
             addperm = v1 * w1
-            if inv(addperm) == inv(v1) + inv_w1:
+            if addperm.inv == v1.inv + inv_w1:
                 toadd = addperm
                 ret[toadd] = ret.get(toadd, 0) + did_mul[v]
     return ret
@@ -195,7 +194,7 @@ def schubmult_double_pair_generic(perm1, perm2):
 
 @cache
 def schubmult_double_pair_generic_alt(perm1, perm2):
-    return {k: expand_func(expand(v)) for k,v in schubmult_double_alt_from_elems({perm1: S.One}, perm2, _vars.var_g1, _vars.var_g2, elem_func=FactorialElemSym).items()}
+    return {k: expand_func(expand(v)) for k, v in schubmult_double_alt_from_elems({perm1: S.One}, perm2, _vars.var_g1, _vars.var_g2, elem_func=FactorialElemSym).items()}
 
 
 def schubmult_double_dict(perm_dict1, perm_dict2, var2=None, var3=None):
@@ -216,15 +215,15 @@ def schubmult_double(perm_dict, v, var2=None, var3=None):
         return perm_dict
     mu = uncode(th)
     vmu = v * mu
-    inv_vmu = inv(vmu)
-    inv_mu = inv(mu)
+    inv_vmu = vmu.inv
+    inv_mu = mu.inv
     ret_dict = {}
     while th[-1] == 0:
         th.pop()
     thL = len(th)
     vpathdicts = compute_vpathdicts(th, vmu)
     for u, val in perm_dict.items():
-        inv_u = inv(u)
+        inv_u = u.inv
         vpathsums = {u: {Permutation([1, 2]): val}}
         for index in range(thL):
             mx_th = 0
@@ -233,7 +232,7 @@ def schubmult_double(perm_dict, v, var2=None, var3=None):
                     mx_th = max(mx_th, th[index] - vdiff)
             newpathsums = {}
             for up in vpathsums:
-                inv_up = inv(up)
+                inv_up = up.inv
                 newperms = elem_sym_perms(
                     up,
                     min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu),
@@ -288,6 +287,7 @@ def schubmult_double_alt(perm_dict, v, var2=None, var3=None, index=1):
         ret_dict = add_perm_dict(ret_dict, schubmult_double_alt(interim_dict, ~new_v, var2, var3, index + 1))
     return ret_dict
 
+
 # forwards backwards
 def schubmult_double_alt_from_elems_forwards(perm_dict, v, var2=None, var3=None, index=1, elem_func=None):
     if v.inv == 0:
@@ -308,6 +308,7 @@ def schubmult_double_alt_from_elems_forwards(perm_dict, v, var2=None, var3=None,
                 )
         ret_dict = add_perm_dict(ret_dict, schubmult_double_alt_from_elems_forwards(interim_dict, ~new_v, var2, var3, index + 1, elem_func))
     return ret_dict
+
 
 # backwards mul after
 # def schubmult_double_alt_from_elems(perm_dict, v, var2=None, var3=None, elem_func=None):
@@ -330,7 +331,8 @@ def schubmult_double_alt_from_elems_forwards(perm_dict, v, var2=None, var3=None,
 #         ret_dict = add_perm_dict(ret_dict, schubmult_double_alt_from_elems(interim_dict, ~new_v, var2, var3, elem_func))
 #     return ret_dict
 
-#backwards mul before
+
+# backwards mul before
 def schubmult_double_alt_from_elems_backwards(perm_dict, v, var2=None, var3=None, elem_func=None):
     if v.inv == 0:
         return perm_dict
@@ -357,13 +359,14 @@ def schubmult_double_alt_from_elems_backwards(perm_dict, v, var2=None, var3=None
         # ret_dict = add_perm_dict(ret_dict,schubmult_double_alt_from_elems_backwards(interim_dict, ~new_v, var2, var3, elem_func))
     return ret_dict
 
+
 def schubmult_double_alt_from_elems_backwards_backwards(perm_dict, v, var2=None, var3=None, elem_func=None):
     if v.inv == 0:
         return perm_dict
     ret_dict = {}
     index = max((~v).descents()) + 1
     L = pull_out_var(index, ~v)
-    #_cache = {}
+    # _cache = {}
     for index_list, new_v in L:
         # if new_v not in _cache:
         #     _cache[new_v] = schubmult_double_alt_from_elems_backwards(perm_dict, ~new_v, var2, var3, elem_func)
@@ -380,7 +383,7 @@ def schubmult_double_alt_from_elems_backwards_backwards(perm_dict, v, var2=None,
                     [var3[index]],
                 )
         # ret_dict = add_perm_dict(ret_dict, interim_dict)
-        ret_dict = add_perm_dict(ret_dict,schubmult_double_alt_from_elems_backwards_backwards(interim_dict, ~new_v, var2, var3, elem_func))
+        ret_dict = add_perm_dict(ret_dict, schubmult_double_alt_from_elems_backwards_backwards(interim_dict, ~new_v, var2, var3, elem_func))
     return ret_dict
 
 
@@ -398,15 +401,15 @@ def schubmult_double_from_elems(perm_dict, v, var2=None, var3=None, elem_func=No
         return perm_dict
     mu = uncode(th)
     vmu = v * mu
-    inv_vmu = inv(vmu)
-    inv_mu = inv(mu)
+    inv_vmu = vmu.inv
+    inv_mu = mu.inv
     ret_dict = {}
     while th[-1] == 0:
         th.pop()
     thL = len(th)
     vpathdicts = compute_vpathdicts(th, vmu)
     for u, val in perm_dict.items():
-        inv_u = inv(u)
+        inv_u = u.inv
         vpathsums = {u: {Permutation([1, 2]): val}}
         for index in range(thL):
             mx_th = 0
@@ -415,7 +418,7 @@ def schubmult_double_from_elems(perm_dict, v, var2=None, var3=None, elem_func=No
                     mx_th = max(mx_th, th[index] - vdiff)
             newpathsums = {}
             for up in vpathsums:
-                inv_up = inv(up)
+                inv_up = up.inv
                 newperms = elem_sym_perms(
                     up,
                     min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu),
@@ -513,7 +516,7 @@ def schub_coprod_double(mperm, indices, var2=None, var3=None):
     kcd2 = kcd + [0 for i in range(len(kcd), max_required)] + [0]
     N = len(kcd)
     kperm = ~uncode(kcd2)
-    inv_kperm = inv(kperm)
+    inv_kperm = kperm.inv
     vn = GeneratingSet("soible")
 
     for i in range(1, N * 2 + 1):
@@ -530,7 +533,7 @@ def schub_coprod_double(mperm, indices, var2=None, var3=None):
     ret_dict = {}
     for perm in coeff_dict:
         downperm = perm * inverse_kperm
-        if inv(downperm) == inv(perm) - inv_kperm:
+        if downperm.inv == perm.inv - inv_kperm:
             flag = True
             for i in range(N):
                 if downperm[i] > N:
