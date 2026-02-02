@@ -4,7 +4,6 @@ import schubmult.rings.variables as spl
 from schubmult.schub_lib.permutation import (
     Permutation,
     one_dominates,
-    permtrim,
     theta,
     uncode,
 )
@@ -296,7 +295,7 @@ def pull_out_var(vnum, v):
             if vpm[vnum - 1] == len(v) + 1:
                 vpm2 = [*vpm]
                 vpm2.pop(vnum - 1)
-                vp = permtrim(vpm2)
+                vp = Permutation(vpm2)
                 ret_list.add(
                     (
                         tuple([v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))]),
@@ -314,7 +313,7 @@ def pull_out_var(vnum, v):
         if vpm[vnum - 1] == len(v) + 1:
             vpm2 = [*vpm]
             vpm2.pop(vnum - 1)
-            vp = permtrim(vpm2)
+            vp = Permutation(vpm2)
             ret_list.add(
                 (
                     tuple([v[i] for i in range(vnum, len(v)) if ((i > len(vp) and v[i] == i) or (i <= len(vp) and v[i] == vp[i - 1]))]),
