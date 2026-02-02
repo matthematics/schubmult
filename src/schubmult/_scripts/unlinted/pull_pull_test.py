@@ -17,15 +17,28 @@ if __name__ == "__main__":
     for perm in perms:
         # for i in perm.descents(zero_indexed=False):
         lower_perms = {}
+        
         for i in range(2, len(perm.trimcode)):
-            summ = S.Zero
+            smm = S.Zero
             lower_perms = {}
             for rc in RCGraph.all_rc_graphs(perm, len(perm.trimcode)):
-                if len(rc[i-1]) != 0:
-                    continue
+                # if len(rc[i-1]) != 0:
+                #     continue
                 pullout = rc.pull_out_row(i)
-                lower_perms[pullout.perm] = lower_perms.get(pullout.perm, set())
-                lower_perms[pullout.perm].add(pullout)
+                assert pullout.is_valid
+                smm += (x[i] ** (perm.inv - pullout.perm.inv)) * pullout.polyvalue(x[:i] + x[i + 1 :])
+        #         lower_perms[pullout.perm] = lower_perms.get(pullout.perm, set())
+        #         lower_perms[pullout.perm].add(pullout)
 
-        for perm2 in lower_perms:
-            assert lower_perms[perm2] == RCGraph.all_rc_graphs(perm2, len(perm.trimcode) - 1), f"Error: missing RC graphs for permutation {perm2} from pull out of {perm} at row {i}."
+        # for perm2 in lower_perms:
+        #     assert lower_perms[perm2] == RCGraph.all_rc_graphs(perm2, len(perm.trimcode) - 1), f"Error: missing RC graphs for permutation {perm2} from pull out of {perm} at row {i}."
+            expected = Sx(perm).expand()
+            try:
+                assert expand(smm - expected) == S.Zero, f"Error in pull out of row {i} for permutation {perm}: got {smm}, expected {expected}."
+            except AssertionError as e:
+                print(e)
+                print("Got")
+                print(smm)
+                print("Expected")
+                print(expected)
+                raise e

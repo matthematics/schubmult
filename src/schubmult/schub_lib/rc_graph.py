@@ -86,7 +86,33 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         seq = tuple([self.left_to_right_inversion_coords(i)[0] for i in range(self.perm.inv)])
         return word, seq
 
-    def little_bump(self, i, j):
+    def little_bump_desc(self):
+        if self.perm.inv == 0:
+            return self
+        last_desc = max(self.perm.descents()) + 1
+        if len(self) > last_desc:
+            return self
+        if len(self) < last_desc:
+            rc = self.normalize()
+            return rc.little_bump_desc()
+        # if len(self[last_desc - 1]) != 0:
+        #     raise ValueError("Last row not empty")
+        rc, row = self.exchange_property(last_desc, return_row=True)
+        rc = rc.toggle_ref_at(last_desc, 1)
+        rc = rc.pieri_insert(last_desc - 1, [row]).toggle_ref_at(last_desc, 1)
+        return rc
+        # if max(rc.perm.descents(), default=-1) + 1 < last_desc:
+        #     return rc.resize(last_desc - 1)
+        # return rc.little_bump_zero().resize(last_desc - 1)
+
+
+    def little_bump(self, i=None, j=None):
+        if i is not None or j is not None:
+            assert i is not None
+            assert j is not None
+        else:
+            i = len(self.perm.trimcode)
+            j = len(self.perm.trimcode) + 1
         index_list = [ii for ii in range(self.perm.inv) if self.left_to_right_inversion(ii) == (i, j)]
         if len(index_list) != 1:
             raise ValueError
@@ -96,6 +122,24 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         # m is index
         while True:
             word[index] = word[index] + 1
+            if is_reduced(word):
+                break
+            index = find_reduced_fail(word, index)
+        return RCGraph.from_reduced_compatible(word, seq)
+
+    def little_bump_down(self, i, j):
+        index_list = [ii for ii in range(self.perm.inv) if self.left_to_right_inversion(ii) == (i, j)]
+        if len(index_list) != 1:
+            raise ValueError
+        index = index_list[0]
+        word, seq = self.as_reduced_compatible()
+        word = [*word]
+        # m is index
+        while True:
+            if word[index] == 1:
+                word[index] = word[index] + 1
+            else:
+                word[index] = word[index] - 1
             if is_reduced(word):
                 break
             index = find_reduced_fail(word, index)
@@ -1147,10 +1191,13 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         #     raise ValueError("Row not empty")
         if row == 1:
             return self.rowrange(1)
-        bottom_cut = self.rowrange(0, row - 1).extend(1)
+        bottom_cut = self.rowrange(0, row)
         if len(bottom_cut.perm.trimcode) <= len(bottom_cut):
-            bottom_cut = bottom_cut.zero_out_last_row()
-            return RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
+            bottom_cut = bottom_cut.resize(row - 1).extend(1).zero_out_last_row()
+            ret = RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
+            # while not ret.is_valid:
+            #     ret = RCGraph([*ret.rowrange(0, row - 1).little_bump(), *RCGraph(self[row:]).shiftup(-1)])
+            return ret
 
         topd = len(bottom_cut.perm.trimcode)
         rows_by_descent = {topd: []}
@@ -1168,7 +1215,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             if len(rows) == 0:
                 continue
             bottom_cut = bottom_cut.pieri_insert(descent - 1, rows)
-        return RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
+        ret = RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
+        # while not ret.is_valid:
+        #     ret = RCGraph([*ret.rowrange(0, row - 1).little_bump_desc(), *RCGraph(self[row:]).shiftup(-1)])
+        return ret
 
     def little_bump_zero(self):
         if self.perm.inv == 0:
