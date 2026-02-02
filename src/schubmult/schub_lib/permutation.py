@@ -539,10 +539,6 @@ def uncode(cd):
     return Permutation(perm)
 
 
-def inverse(perm):
-    return ~perm
-
-
 def permtrim(perm):
     return Permutation(perm)
 

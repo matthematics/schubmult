@@ -3,7 +3,6 @@ from functools import cache
 import schubmult.rings.variables as spl
 from schubmult.schub_lib.permutation import (
     Permutation,
-    inverse,
     one_dominates,
     permtrim,
     theta,
@@ -75,7 +74,7 @@ def double_elem_sym_q(u, p1, p2, k, q_var=q_var):
             if c[-1] not in cycles1_dict:
                 cycles1_dict[c[-1]] = []
             cycles1_dict[c[-1]] += [set(c)]
-        ip1 = inverse(perm1)
+        ip1 = ~perm1
         for perm2, udiff2, mul_val2 in perms2:
             cycles2 = get_cycles(ip1 * perm2)
             good = True
@@ -221,8 +220,8 @@ def try_reduce_v(u, v, w):
 
 
 def reduce_coeff(u, v, w):
-    t_mu_u_t = theta(inverse(u))
-    t_mu_v_t = theta(inverse(v))
+    t_mu_u_t = theta(~u)
+    t_mu_v_t = theta(~v)
 
     mu_u_inv = uncode(t_mu_u_t)
     mu_v_inv = uncode(t_mu_v_t)
@@ -248,7 +247,7 @@ def reduce_coeff(u, v, w):
     vmu = v * mu_v_inv
     wmu = w * mu_uv_inv
 
-    t_mu_w = theta(inverse(wmu))
+    t_mu_w = theta(~wmu)
 
     mu_w = uncode(t_mu_w)
 
