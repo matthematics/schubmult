@@ -1,10 +1,3 @@
-# from ._vars import (
-#     var_y,
-#     var_x,
-#     var2,
-#     var3,
-#     q_var2,
-# )
 from functools import cache
 
 import numpy as np
@@ -12,7 +5,7 @@ import numpy as np
 import schubmult.mult.positivity as pos
 from schubmult.rings.poly_lib import _vars, call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet_base
-from schubmult.schub_lib.permutation import Permutation, code, inv, longest_element, medium_theta, strict_theta, uncode
+from schubmult.schub_lib.permutation import Permutation, longest_element, medium_theta, strict_theta, uncode
 from schubmult.symbolic import Add, Mul, Pow, S, expand, sympify
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import (
@@ -194,7 +187,7 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
             except Exception:
                 try:
                     # logger.debug("Line number")
-                    if code(~v) == medium_theta(~v):
+                    if (~v).code == medium_theta(~v):
                         val2 += q_part * q_dict[q_part]
                     else:
                         q_part2 = q_part
@@ -253,7 +246,7 @@ def q_partial_posify_generic(val, u, v, w):
                 val2 += q_part * int(q_dict[q_part])
             except Exception:
                 try:
-                    if code(~v) == medium_theta(~v):
+                    if (~v).code == medium_theta(~v):
                         val2 += q_part * q_dict[q_part]
                     else:
                         q_part2 = q_part
@@ -361,8 +354,8 @@ def schubpoly_quantum(v, var_x=None, var_y=None, q_var=_vars.q_var, coeff=1):
         th.pop()
     vpathdicts = compute_vpathdicts(th, vmu)
     vpathsums = {Permutation([1, 2]): {Permutation([1, 2]): coeff}}
-    inv_mu = inv(mu)
-    inv_vmu = inv(vmu)
+    inv_mu = mu.inv
+    inv_vmu = vmu.inv
     inv_u = 0
     ret_dict = {}
     for index in range(len(th)):
@@ -372,7 +365,7 @@ def schubpoly_quantum(v, var_x=None, var_y=None, q_var=_vars.q_var, coeff=1):
                 mx_th = max(mx_th, th[index] - vdiff)
         newpathsums = {}
         for up in vpathsums:
-            inv_up = inv(up)
+            inv_up = up.inv
             newperms = elem_sym_perms_q(
                 up,
                 min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu),
@@ -415,8 +408,8 @@ def schubmult_q_double(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var):
     th = strict_theta(~v)
     mu = uncode(th)
     vmu = v * mu
-    inv_vmu = inv(vmu)
-    inv_mu = inv(mu)
+    inv_vmu = vmu.inv
+    inv_mu = mu.inv
     ret_dict = {}
     if len(th) == 0:
         return perm_dict
@@ -425,7 +418,7 @@ def schubmult_q_double(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var):
     thL = len(th)
     vpathdicts = compute_vpathdicts(th, vmu)
     for u, val in perm_dict.items():
-        inv_u = inv(u)
+        inv_u = u.inv
         vpathsums = {u: {Permutation([1, 2]): val}}
         for index in range(thL):
             mx_th = 0
@@ -434,7 +427,7 @@ def schubmult_q_double(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var):
                     mx_th = max(mx_th, th[index] - vdiff)
             newpathsums = {}
             for up in vpathsums:
-                inv_up = inv(up)
+                inv_up = up.inv
                 newperms = elem_sym_perms_q(
                     up,
                     min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu),
@@ -487,14 +480,14 @@ def schubmult_q_double_fast(perm_dict, v, var2=None, var3=None, q_var=_vars.q_va
         th.pop()
     mu = uncode(th)
     vmu = v * mu
-    inv_vmu = inv(vmu)
-    inv_mu = inv(mu)
+    inv_vmu = vmu.inv
+    inv_mu = mu.inv
     ret_dict = {}
 
     thL = len(th)
     vpathdicts = compute_vpathdicts(th, vmu)
     for u, val in perm_dict.items():
-        inv_u = inv(u)
+        inv_u = u.inv
         vpathsums = {u: {Permutation([]): val}}
         for index in range(thL):
             if index > 0 and th[index - 1] == th[index]:
@@ -511,7 +504,7 @@ def schubmult_q_double_fast(perm_dict, v, var2=None, var3=None, q_var=_vars.q_va
                 newpathsums = {}
                 for up in vpathsums:
                     newpathsums0 = {}
-                    inv_up = inv(up)
+                    inv_up = up.inv
                     newperms = double_elem_sym_q(up, mx_th, mx_th1, th[index], q_var)
                     for v in vpathdicts[index]:
                         sumval = vpathsums[up].get(v, 0)
@@ -571,7 +564,7 @@ def schubmult_q_double_fast(perm_dict, v, var2=None, var3=None, q_var=_vars.q_va
             else:
                 newpathsums = {}
                 for up in vpathsums:
-                    inv_up = inv(up)
+                    inv_up = up.inv
                     newperms = elem_sym_perms_q(
                         up,
                         min(mx_th, (inv_mu - (inv_up - inv_u)) - inv_vmu),
