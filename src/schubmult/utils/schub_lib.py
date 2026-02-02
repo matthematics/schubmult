@@ -3,8 +3,6 @@ from functools import cache
 import schubmult.rings.variables as spl
 from schubmult.schub_lib.permutation import (
     Permutation,
-    code,
-    inv,
     inverse,
     one_dominates,
     permtrim,
@@ -106,7 +104,7 @@ def will_formula_work(u, v):
     u, v = Permutation(u), Permutation(v)
     muv = uncode(theta(v))
     vn1muv = (~v) * muv
-    while inv(vn1muv) > 0:
+    while vn1muv.inv > 0:
         found_one = False
         for i in range(len(vn1muv) - 1):
             if vn1muv[i] > vn1muv[i + 1]:
@@ -127,7 +125,7 @@ def try_reduce_u(u, v, w):
     u2 = u
     v2 = v
     w2 = w
-    cu = code(u)
+    cu = u.code
     for i in range(len(u2) - 2, -1, -1):
         if cu[i] == 0 and i < len(cu) - 1 and cu[i + 1] != 0:
             if i >= len(v2) - 1 or v2[i] < v2[i + 1]:
@@ -161,7 +159,7 @@ def reduce_descents(u, v, w):
     w2 = Permutation(w)
     while found_one:
         found_one = False
-        if will_formula_work(u2, v2) or will_formula_work(v2, u2) or one_dominates(u2, w2) or is_reducible(v2) or inv(w2) - inv(u2) == 1:
+        if will_formula_work(u2, v2) or will_formula_work(v2, u2) or one_dominates(u2, w2) or is_reducible(v2) or w2.inv - u2.inv == 1:
             break
         for i in range(len(w2) - 2, -1, -1):
             if w2[i] > w2[i + 1] and i < len(v2) - 1 and v2[i] > v2[i + 1] and (i >= len(u2) - 1 or u2[i] < u2[i + 1]):
@@ -179,7 +177,7 @@ def reduce_descents(u, v, w):
 
 
 def is_reducible(v):
-    c03 = code(v)
+    c03 = v.code
     found0 = False
     good = True
     for i in range(len(c03)):
@@ -198,7 +196,7 @@ def try_reduce_v(u, v, w):
     u2 = u
     v2 = v
     w2 = w
-    cv = code(v2)
+    cv = v2.code
     for i in range(len(v2) - 2, -1, -1):
         if cv[i] == 0 and i < len(cv) - 1 and cv[i + 1] != 0:
             if i >= len(u2) - 1 or u2[i] < u2[i + 1]:
@@ -240,7 +238,7 @@ def reduce_coeff(u, v, w):
 
     mu_uv_inv = uncode(t_mu_uv_t)
 
-    if inv(w * mu_uv_inv) != inv(mu_uv_inv) - inv(w):
+    if (w * mu_uv_inv).inv != mu_uv_inv.inv - w.inv:
         return u, v, w
 
     # umu = mulperm(list(u), mu_u_inv)
@@ -281,8 +279,8 @@ def reduce_coeff(u, v, w):
         else:
             B += [index]
 
-    mu_w_A = uncode(mu_A(code(mu_w), A))
-    mu_w_B = uncode(mu_A(code(mu_w), B))
+    mu_w_A = uncode(mu_A(mu_w.code, A))
+    mu_w_B = uncode(mu_A(mu_w.code, B))
 
     return (umu * mu_w_A, vmu * mu_w_B, w_prime)
 
@@ -330,10 +328,10 @@ def pull_out_var(vnum, v):
 
 
 def divdiffable(v, u):
-    inv_v = inv(v)
-    inv_u = inv(u)
+    inv_v = v.inv
+    inv_u = u.inv
     perm2 = v * (~u)
-    if inv(perm2) != inv_v - inv_u:
+    if perm2.inv != inv_v - inv_u:
         return []
     return perm2
 
@@ -383,10 +381,10 @@ def divdiffable(v, u):
 def kdown_perms(perm, monoperm, p, k):
     perm = Permutation(perm)
     monoperm = Permutation(monoperm)
-    inv_m = inv(monoperm)
-    inv_p = inv(perm)
+    inv_m = monoperm.inv
+    inv_p = perm.inv
     full_perm_list = []
-    if inv(perm * monoperm) == inv_m - inv_p:
+    if (perm * monoperm).inv == inv_m - inv_p:
         full_perm_list += [(perm, 0, 1)]
 
     down_perm_list = [(perm, S.One)]
@@ -406,14 +404,14 @@ def kdown_perms(perm, monoperm, p, k):
                 if has_bruhat_descent(perm2, b, a2):
                     new_perm = perm2.swap(b, a2)
                     down_perm_list2 += [(new_perm, s2)]
-                    if inv(new_perm * monoperm) == g_inv:
+                    if (new_perm * monoperm).inv == g_inv:
                         full_perm_list += [(new_perm, pp, s2)]
             rg = [i for i in range(k, L) if perm2[i] == perm[i]]
             for b in rg:
                 if has_bruhat_descent(perm2, a2, b):
                     new_perm = perm2.swap(a2, b)
                     down_perm_list2 += [(new_perm, s)]
-                    if inv(new_perm * monoperm) == g_inv:
+                    if (new_perm * monoperm).inv == g_inv:
                         full_perm_list += [(new_perm, pp, s)]
         down_perm_list = down_perm_list2
     return full_perm_list
@@ -439,13 +437,13 @@ def compute_vpathdicts_cached(th, vmu):
     vpathdicts[-1][vmu] = None
     thL = len(th)
 
-    top = code(~Permutation(uncode(th)))
+    top = (~Permutation(uncode(th))).code
     for i in range(thL - 1, -1, -1):
-        top2 = code(~Permutation(uncode(top)))
+        top2 = (~Permutation(uncode(top))).code
         while top2[-1] == 0:
             top2.pop()
         top2.pop()
-        top = code(~Permutation(uncode(top2)))
+        top = (~Permutation(uncode(top2))).code
         # print(f"{top=}")
         monoperm = Permutation(uncode(top))
         # print(f"{monoperm=}")
@@ -825,7 +823,7 @@ def elem_sym_perms_op(orig_perm, p, k):
 
 
 def is_split_two(u, v, w):
-    if inv(w) - inv(u) != 2:
+    if w.inv - u.inv != 2:
         return False, []
     diff_perm = (~v) * w
     identity = [i + 1 for i in range(len(diff_perm))]
@@ -854,9 +852,9 @@ def is_coeff_irreducible(u, v, w):
         and not will_formula_work(v, u)
         and not one_dominates(u, w)
         and not is_reducible(v)
-        and inv(w) - inv(u) > 1
+        and w.inv - u.inv > 1
         and not is_split_two(u, v, w)[0]
-        and len([i for i in code(v) if i != 0]) > 1
+        and len([i for i in v.code if i != 0]) > 1
     )
 
 
