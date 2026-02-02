@@ -40,7 +40,7 @@ def elem_func_func_mul(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, elem_fu
 
 def schubpoly_from_elems(v, var_x=None, var_y=None, elem_func=None, mumu=None):
     if mumu:
-        th = pl.code(mumu)
+        th = mumu.code
         mu = mumu
     else:
         th = pl.strict_theta(~pl.Permutation(v))

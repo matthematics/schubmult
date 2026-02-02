@@ -525,14 +525,6 @@ class Permutation(Printable):
         return (k, mx)
 
 
-def inv(perm):
-    return perm.inv
-
-
-def code(perm):
-    return perm.code
-
-
 def uncode(cd):
     cd2 = [*cd]
     if cd2 == []:
@@ -584,7 +576,7 @@ def longest_element(indices):
 
 
 def theta(perm):
-    cd = code(perm)
+    cd = perm.code
     for i in range(len(cd) - 1, 0, -1):
         for j in range(i - 1, -1, -1):
             if cd[j] < cd[i]:
@@ -630,16 +622,16 @@ def one_dominates(u, w):
 def dominates(u, w):
     u2 = u
     w2 = w
-    while inv(u2) > 0 and one_dominates(u2, w2):
+    while u2.inv > 0 and one_dominates(u2, w2):
         u2 = phi1(u2)
         w2 = phi1(w2)
-    if inv(u2) == 0:
+    if u2.inv == 0:
         return True
     return False
 
 
 def medium_theta(perm):
-    cd = code(perm)
+    cd = perm.code
     found_one = True
     while found_one:
         found_one = False
@@ -658,7 +650,7 @@ def medium_theta(perm):
 def split_perms(perms):
     perms2 = [perms[0]]
     for perm in perms[1:]:
-        cd = code(perm)
+        cd = perm.code
         index = -1
         not_zero = False
         did = False
@@ -692,29 +684,6 @@ def split_perms(perms):
 
 
 bad_classical_patterns = [Permutation([1, 4, 2, 3]), Permutation([1, 4, 3, 2]), Permutation([4, 1, 3, 2]), Permutation([3, 1, 4, 2])]
-
-
-# def perm_to_key(perm):
-#     if len(perm) == 0:
-#         return {NilPlactic(()): S.One}
-
-#     ret = {}
-#     stack = [(perm, NilPlactic(()), 1, S.One)]
-
-#     while len(stack) > 0:
-#         current_perm, word, index, poly = stack.pop()
-#         if current_perm.inv == 0:
-#             np_elem = word
-#             ret[np_elem] = ret.get(np_elem, S.Zero) + poly
-#             continue
-#         # L = sl.pull_out_var(1, current_perm)
-#         for index_list, new_perm in L:
-#             index_list.sort(reverse=True)
-#             new_word = word
-#             for index2 in index_list:
-#                 new_word = new_word.ed_insert(index + index2 - 1)
-#             stack.append((new_perm, new_word, index + 1, poly * prod([x[index] - y[a] for a in index_list])))
-#     return ret
 
 ID_PERM = Permutation([])
 
