@@ -418,6 +418,20 @@ def kdown_perms(perm, monoperm, p, k):
         down_perm_list = down_perm_list2
     return full_perm_list
 
+def rc_graph_set(perm):
+    if perm.inv == 0:
+        return {((),())}
+    ret = set()
+    L = pull_out_var(1, perm)
+    for index_list, new_perm in L:
+        rc_set = rc_graph_set(new_perm)
+        lsort = sorted(index_list, reverse=True)
+        for labels, word in rc_set:
+            new_labels = tuple(([1]*len(index_list)) + [label + 1 for label in labels])
+            new_word = tuple(lsort+[word_s + 1 for word_s in word])
+            ret.add((new_labels, new_word))
+    return ret
+
 
 @cache
 def compute_vpathdicts_cached(th, vmu):

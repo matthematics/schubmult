@@ -1,6 +1,12 @@
 from bisect import bisect_left
 
 
+def getpermval(perm, index):
+    if index < len(perm):
+        return perm[index]
+    return index + 1
+
+
 def permtrim_list(perm):
     L = len(perm)
     while L > 0 and perm[-1] == L:

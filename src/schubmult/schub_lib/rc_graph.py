@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 from schubmult.utils.logging import get_logger, init_logging
 from schubmult.utils.perm_utils import add_perm_dict
 
-from .crystal_graph import CrystalGraph
+from .crystal_graph import CrystalGraph, CrystalGraphTensor
 from .nilplactic import NilPlactic
 from .plactic import Plactic
 
@@ -34,9 +34,20 @@ def _is_row_root(row: int, root: tuple[int, int]) -> bool:
 FA = FreeAlgebra(WordBasis)
 
 
-def debug_print(*args: object, debug: bool = False) -> None: # pragma: no cover
+def debug_print(*args: object, debug: bool = False) -> None:
     if debug:
         print(*args)
+
+
+def w_i(word, i):
+    return word[:i] + word[i + 1 :]
+
+
+def w_i_minus(word, i):
+    letter = word[i]
+    if letter > 1:
+        return word[:i] + [letter - 1] + word[i + 1 :]
+    return [a + 1 for a in word[:i]] + [letter] + [b + 1 for b in word[i + 1 :]]
 
 
 def find_reduced_fail(word, inserted):
@@ -60,6 +71,36 @@ def find_reduced_fail(word, inserted):
 
 def is_reduced(word):
     return Permutation.ref_product(*word).inv == len(word)
+
+
+def little_bump(word, i):
+    assert is_reduced(w_i(word, i))
+    new_word = w_i_minus(word, i)
+    while not is_reduced(new_word):
+        i = find_reduced_fail(new_word, i)
+        new_word = w_i_minus(new_word, i)
+    return new_word
+
+
+def _crystal_isomorphic(c1: CrystalGraph, c2: CrystalGraph, cutoff: int | None = None) -> bool:
+    hw_1, _ = c1.to_highest_weight(length=cutoff)
+    hw_2, _ = c2.to_highest_weight(length=cutoff)
+
+    stack = [(c1, c2)]
+    if cutoff is None:
+        cutoff = c1.crystal_length()
+    if hw_1.crystal_weight != hw_2.crystal_weight:
+        return False
+    while len(stack) > 0:
+        c1_test, c2_test = stack.pop()
+        for i in range(1, cutoff):
+            c1_test0 = c1_test.lowering_operator(i)
+            if c1_test0 is not None:
+                c2_test0 = c2_test.lowering_operator(i)
+                if c2_test0 is None:
+                    return False
+                stack.append((c1_test0, c2_test0))
+    return True
 
 
 class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
@@ -144,6 +185,78 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             return ret.normalize()
         return ret.resize(length)
 
+    def monk_crystal_mul(self, p: int, k: int, warn: bool = True) -> RCGraph | None:
+        if p > k:
+            raise ValueError("p must be less than or equal to k")
+        if k > len(self):
+            return self.extend(k - len(self)).monk_crystal_mul(p, k)
+
+        def _crystal_isomorphic(c1, c2, cutoff=None):
+            hw_1, _ = c1.to_highest_weight(length=cutoff)
+            hw_2, _ = c2.to_highest_weight(length=cutoff)
+
+            stack = [(c1, c2)]
+            if cutoff is None:
+                cutoff = c1.crystal_length()
+            if hw_1.crystal_weight != hw_2.crystal_weight:
+                return False
+            while len(stack) > 0:
+                c1_test, c2_test = stack.pop()
+                for i in range(1, cutoff):
+                    c1_test0 = c1_test.lowering_operator(i)
+                    if c1_test0 is not None:
+                        c2_test0 = c2_test.lowering_operator(i)
+                        if c2_test0 is None:
+                            return False
+                        stack.append((c1_test0, c2_test0))
+            return True
+
+        from schubmult.utils.schub_lib import elem_sym_perms
+
+        if k > len(self):
+            return self.extend(k - len(self)).monk_crystal_mul(p, k)
+
+        monk_rc = next(iter(RCGraph.all_rc_graphs(Permutation([]).swap(k - 1, k), len(self), weight=(*([0] * (p - 1)), 1, *([0] * (len(self) - p))))))
+
+        results = set()
+        lv = [*self.length_vector]
+        lv[p - 1] += 1
+        up_perms = [pperm for pperm, L in elem_sym_perms(self.perm, 1, k) if L == 1]
+        for up_perm in up_perms:
+            for rc2 in RCGraph.all_rc_graphs(up_perm, length=len(self), weight=lv):
+                try:
+                    good = True
+                    for start in range(p):
+                        pp = p - start
+                        for cut in range(pp, k + 1 - start):
+                            rc2_hw, _ = rc2.rowrange(start).vertical_cut(cut)[0].to_highest_weight()
+                            tensor_cut, raise_seq = CrystalGraphTensor(self.rowrange(start).vertical_cut(cut)[0], monk_rc.rowrange(start).vertical_cut(cut)[0]).to_highest_weight()
+                            if rc2_hw.crystal_weight != tensor_cut.crystal_weight or rc2_hw.reverse_raise_seq(raise_seq) != rc2.rowrange(start).vertical_cut(cut)[0]:
+                                good = False
+                                break
+                            rc2_lw, _ = rc2.rowrange(start).vertical_cut(cut)[0].to_lowest_weight()
+                            tensor_cut_low, lower_seq = CrystalGraphTensor(self.rowrange(start).vertical_cut(cut)[0], monk_rc.rowrange(start).vertical_cut(cut)[0]).to_lowest_weight()
+                            if rc2_lw.crystal_weight != tensor_cut_low.crystal_weight or rc2_lw.reverse_lower_seq(lower_seq) != rc2.rowrange(start).vertical_cut(cut)[0]:
+                                good = False
+                                break
+                    if rc2[k:] != self[k:]:
+                        good = False
+                    # tensor, raise_seq = CrystalGraphTensor(self, monk_rc).to_highest_weight()
+                    # hw_rc, _ = rc2.to_highest_weight()
+                    # if hw_rc.crystal_weight != tensor.crystal_weight:# or hw_rc.reverse_raise_seq(raise_seq) != rc2:
+                    #     good = False
+                    if good:
+                        results.add(rc2)
+                except Exception as e:  # noqa: F841
+                    continue
+        try:
+            assert len(results) == 1, f"Ambiguous monk crystal multiplication results for p={p}, k={k} on\n{self} \nResults:\n" + "\n".join([str(r) for r in results])
+        except AssertionError as e:
+            print(e)
+            if not warn:
+                raise
+        return next(iter(results))
+
     @cached_property
     def crystal_weight(self):
         return self.length_vector
@@ -220,6 +333,157 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 if self[i2 - 1, j2 - 1]:
                     start_root = Permutation.ref_product(self[i2 - 1, j2 - 1]).act_root(*start_root)
         return start_root
+
+    def reverse_kogan_kumar_insert(self, descent, reflection_path, return_rows=False):
+        pair_dict = {}
+        for ref in reflection_path:
+            a, b = ref
+            if a not in pair_dict:
+                pair_dict[a] = set()
+            pair_dict[a].add(b)
+        pair_dict_rev = {}
+        # ref_by_index = {}
+        for a, b_list in pair_dict.items():
+            for b in b_list:
+                assert a <= descent and descent < b  # noqa: PT018
+                pair_dict_rev[b] = a
+
+        # Process reflections in reverse order (LIFO - last in, first out)
+        reflection_list = list(reflection_path)
+        reflection_list.reverse()
+        reflection_set = set(reflection_list)
+
+        def is_relevant_crossing(root, prm):  # noqa: ARG001
+            if root[0] not in pair_dict:
+                if root[0] in pair_dict_rev and root[1] in pair_dict_rev and pair_dict_rev[root[0]] == pair_dict_rev[root[1]]:
+                    return True
+                return False
+            return root[0] in pair_dict and root[1] in pair_dict[root[0]]
+
+        # may have to add q, s or a_i, q
+        def is_relevant_noncrossing(root):
+            bottom, top = root
+            return (bottom <= descent and descent < top and top not in pair_dict_rev) or (bottom in pair_dict_rev and top > descent and top not in pair_dict_rev)
+
+        # Add this intersection. If we are in the first case, insert (s, q) into the sequence (ai, bi) in the rightmost position, such that ai’s remain nondecreasing in the
+        # sequence. ((s, q) are the rows where the two strands shown in Figure 3 originate.) If
+        # we are in the second case, add (ai, q) just before where (a, bi) is in the sequence.
+
+        working_rc = self
+
+        rows = []
+
+        # Scan row by row from top, looking right-to-left for reflections to remove
+        while len(reflection_set) > 0:
+            for row in range(1, len(self) + 1):
+                # Search from right to left within each row
+                for col in range(1, max(descent, working_rc.cols) + 1):
+                    if working_rc.has_element(row, col):
+                        a, b = working_rc.right_root_at(row, col)
+                        # Check if this is any reflection we're looking for
+                        if (a, b) in reflection_set or (a in pair_dict_rev and (pair_dict_rev[a], b) in reflection_set):
+                            # Remove this reflection from the set
+                            if (a, b) in reflection_set:
+                                reflection_set.remove((a, b))
+                            else:
+                                reflection_set.remove((pair_dict_rev[a], b))
+                            pair_dict[a].remove(b)
+                            if len(pair_dict[a]) == 0:
+                                del pair_dict[a]
+                            del pair_dict_rev[b]
+                            rows.append(row)
+
+                            # found = True
+                            working_rc = working_rc.toggle_ref_at(row, col)
+
+                            # leftify it
+                            for col2 in range(col - 1, 0, -1):
+                                if not working_rc.has_element(row, col2):
+                                    a2, b2 = working_rc.left_root_at(row, col2)
+                                    if b2 > a2:
+                                        continue
+                                    if is_relevant_noncrossing((a2, b2)):
+                                        # print(f"Leftify {a2, b2}")
+                                        working_rc = working_rc.toggle_ref_at(row, col2)
+                                        if a2 <= descent:
+                                            pair_dict_rev[b2] = a2
+                                            if a2 not in pair_dict:
+                                                pair_dict[a2] = set()
+                                            pair_dict[a2].add(b2)
+                                            reflection_set.add((a2, b2))
+                                        else:
+                                            a_key = pair_dict_rev[a2]
+                                            pair_dict[a_key].add(b2)
+                                            reflection_set.add((a_key, b2))
+                                        col = col2 - 1
+                                        rows.pop()
+                                        break
+        if return_rows:
+            return working_rc, tuple(rows)
+        return working_rc
+
+        # original DINGBAT
+        #                     # Check if RC became invalid and needs rectification
+        #                     if not working_rc.is_valid and row < len(working_rc):
+        #                         # Rectify the row below
+        #                         for rect_row in range(row + 1, len(working_rc) + 1):
+        #                             if not working_rc.is_valid:
+        #                                 for rect_col in range(1, max(descent, working_rc.cols) + 1):
+        #                                     if working_rc.has_element(rect_row, rect_col):
+        #                                         rect_a, rect_b = working_rc.right_root_at(rect_row, rect_col)
+        #                                         if rect_a > rect_b:  # Reversed root - toggle to rectify
+        #                                             working_rc = working_rc.toggle_ref_at(rect_row, rect_col)
+        #                                             break
+        #                             else:
+        #                                 break
+
+        #                     a2 = a
+        #                     if a2 in pair_dict_rev:
+        #                         a2 = pair_dict_rev[a2]
+
+        #                     pair_dict[a2].remove(target_b)
+        #                     del pair_dict_rev[target_b]
+        #                     if len(pair_dict[a2]) == 0:
+        #                         del pair_dict[a2]
+
+        #                     rows.append(row)
+        #                     working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, pair_dict, pair_dict_rev)
+        #                     # After removing intersection, look to its RIGHT for Figure 10 configurations
+        #                     # Only do this if there are still reflections being tracked
+        #                     if len(pair_dict) > 0:
+        #                         for col2 in range(col + 1, max(descent, working_rc.cols) + 1):
+        #                             if not working_rc.has_element(row, col2):
+        #                                 a2, b2 = working_rc.right_root_at(row, col2)
+        #                                 # if a2 > b2:
+        #                                 #     continue
+        #                                 if is_relevant_noncrossing((a2, b2)):
+        #                                     # print(f"Rect {a2, b2}")
+        #                                     if a2 <= descent:
+        #                                         assert b2 not in pair_dict
+        #                                         if a2 not in pair_dict:
+        #                                             pair_dict[a2] = set()
+        #                                         pair_dict[a2].add(b2)
+        #                                         pair_dict_rev[b2] = a2
+        #                                         working_rc = working_rc.toggle_ref_at(row, col2)
+        #                                         rows.pop()
+        #                                     else:
+        #                                         assert a2 not in pair_dict_rev, f"{pair_dict_rev=}"
+        #                                         assert b2 in pair_dict_rev, f"{pair_dict_rev=}"
+        #                                         a = pair_dict_rev[a2]
+        #                                         pair_dict[a].add(b2)
+        #                                         pair_dict_rev[b2] = a
+        #                                         working_rc = working_rc.toggle_ref_at(row, col2)
+        #                                         rows.pop()
+        #                                     break
+
+        #     # if not found:
+        #     #     assert False, f"Could not find reflection ({target_a}, {target_b}) in working_rc:\n{working_rc}\npair_dict={pair_dict}, pair_dict_rev={pair_dict_rev}"
+
+        # assert len(pair_dict_rev) == 0, f"{pair_dict=}, {pair_dict_rev=}, {working_rc=}"
+        # assert working_rc.perm.bruhat_leq(self.perm)
+        # if return_rows:
+        #     return working_rc, rows
+        # return working_rc
 
     @cache
     def inversion_label(self, i: int, j: int) -> int:
@@ -390,7 +654,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     _cache_by_weight: dict[tuple[Permutation, tuple[int, ...]], set[RCGraph]] = {}  # noqa: RUF012
 
     @classmethod
-    def random_rc_graph(cls, perm: Permutation, length: int = -1) -> RCGraph: # pragma: no cover
+    def random_rc_graph(cls, perm: Permutation, length: int = -1) -> RCGraph:
         import random
 
         return random.choice(list(RCGraph.all_rc_graphs(perm, length)))
@@ -977,7 +1241,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
         return ret_module
 
-    def prod_with_rc(self, other: RCGraph) -> dict[RCGraph, int]: # pragma: no cover
+    def prod_with_rc(self, other: RCGraph) -> dict[RCGraph, int]:
         """Deprecated: Use product() instead."""
         return self.product(other)
 
@@ -1171,6 +1435,44 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             ret = working_set
         return ret
 
+    def zero_out_empty_row(self, row: int) -> RCGraph:
+        from schubmult import pull_out_var
+        from schubmult.rings.rc_graph_ring import RCGraphRing
+
+        vl = pull_out_var(row, self.perm)
+        rc_ring = RCGraphRing()
+        move_spot = min([a + 1 for a in self.perm.descents() if a >= row - 1])
+        working_rc = self
+        if len(working_rc[move_spot - 1]) != 0:
+            return None
+        # if move_spot != row:
+        #     working_rc = RCGraph([*self[: row - 1], *self[row:move_spot + 1], () ,*self[move_spot + 1:]])
+        vpl_bottom, vpl_top = working_rc.vertical_cut(move_spot - 1)
+        assert len(vpl_bottom) == move_spot - 1
+        rcs1 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))).keys())
+        # ABOVE WORKS BUT WITH DUPLICTES
+        vpl_bottom, vpl_top = working_rc.vertical_cut(move_spot)
+        vpl_bottom = RCGraph([*vpl_bottom[:-1], ()])
+        if len(vpl_bottom.perm.trimcode) > len(vpl_bottom):
+            vpl_bottom = vpl_bottom.normalize()
+
+        vpl_bottom.zero_out_last_row()
+        while len(vpl_bottom) > move_spot - 1:
+            vpl_bottom = vpl_bottom.zero_out_last_row()
+        if len(vpl_bottom) != move_spot - 1:
+            assert vpl_bottom.inv == 0
+            vpl_bottom = vpl_bottom.resize(move_spot - 1)
+            # vpl_bottom = vpl_bottom.zero_out_last_row()
+        rcs2 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top)).keys())
+        rcs = rcs1.intersection(rcs2)
+        res = set()
+        for vpl_new in rcs:
+            if vpl_new.perm not in {vv[-1] for vv in vl}:
+                continue
+            pw = tuple(next(vv[0] for vv in vl if vv[-1] == vpl_new.perm))
+            res.add((tuple(sorted(pw, reverse=True)), vpl_new.resize(len(self) - 1)))
+        return res
+
     def pull_out_row(self, row: int) -> tuple[tuple, RCGraph]:
         # if row - 1 not in self.perm.descents():
         #     raise ValueError("Row not a descent")
@@ -1199,25 +1501,12 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             if len(rows) == 0:
                 continue
             bottom_cut = bottom_cut.kogan_kumar_insert(descent - 1, rows)
-        return RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
-
-    def little_bump_zero(self):
-        if self.perm.inv == 0:
-            return self
-        last_desc = max(self.perm.descents()) + 1
-        if len(self) > last_desc:
-            return self.resize(last_desc)
-        if len(self) < last_desc:
-            rc = self.normalize()
-            return rc.little_bump_zero()
-        if len(self[last_desc - 1]) != 0:
-            raise ValueError("Last row not empty")
-        rc, row = self.exchange_property(last_desc, return_row=True)
-        rc = rc.toggle_ref_at(last_desc, 1)
-        rc = rc.kogan_kumar_insert(last_desc - 1, [row]).toggle_ref_at(last_desc, 1)
-        if max(rc.perm.descents(), default=-1) + 1 < last_desc:
-            return rc.resize(last_desc - 1)
-        return rc.little_bump_zero().resize(last_desc - 1)
+        candidate = RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
+        # if not candidate.is_valid:
+        #     while not candidate.is_valid:
+        #         bottom_cut = bottom_cut.normalize().zero_out_last_row()
+        #         candidate = RCGraph([*bottom_cut[:row-1], *RCGraph(self[row:]).shiftup(-1)])
+        return candidate
 
     def dualpieri(self, mu: Permutation, w: Permutation) -> set[tuple[tuple, RCGraph]]:
         from schubmult.rings.rc_graph_ring import RCGraphRing
@@ -1252,12 +1541,94 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                     continue
                 for vpl in vpl_list:
                     vl = pull_out_var(lm[i] + 1, vpl.perm)
+
+                    # if lm[i] + 1 > len(vpl.perm.trimcode):
+                    #     # if lm[i] + 1 > len(vpl):
+                    #     #     #try:
+                    #     res2.add(((*vlist, ()), vpl))
+                    #     # except AssertionError:
+                    #     #     print("Could not shiftup")
+                    #     #     pretty_print(vlist)
+                    #     # else:
+                    #     #     res2.add((tuple([*vlist, ()]), vpl.rowrange(0, len(vpl) - 1)))
+                    #     continue
+
+                    # current_vpl = vpl
+                    # # move_spot = min([a + 1 for a in current_vpl.perm.descents() if a >= lm[i]])
+                    # # # while move_spot > 1:
+                    # # #     vpl_try = current_vpl.weight_reflection(move_spot - 1)
+                    # # #     if vpl_try.perm == current_vpl.perm:
+                    # # #         current_vpl = vpl_try
+                    # # #         move_spot -= 1
+                    # # #     else:
+                    # # #         break
+                    # # # assert current_vpl.perm == vpl.perm
+                    # # # if move_spot == 1:
+                    # # #     res2.add(((*vlist, current_vpl[0]), (*perm_list, vpl.perm), current_vpl.rowrange(1)))
+                    # # #     continue
+                    # # current_vpl = vpl
+                    # # if not current_vpl.rowrange(lm[i]).is_principal:
+                    # #     continue
+                    # move_spot = min([a + 1 for a in current_vpl.perm.descents() if a >= lm[i]])
+                    # # the_vl = pull_out_var(move_spot, vpl.perm)
+
+                    # vpl_bottom, vpl_top = current_vpl.vertical_cut(move_spot - 1)
+                    # assert len(vpl_bottom) == move_spot - 1
+                    # # if len(vpl_bottom.perm.trimcode) <= len(vpl_bottom):
+                    # #     rcs1 = {RCGraph([*vpl_bottom,*vpl_top.rowrange(1)])}
+                    # # else:
+                    # # rcs1 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top.rowrange(1))).keys())
+                    # # ABOVE WORKS BUT WITH DUPLICTES
+                    # vpl_bottom, vpl_top = current_vpl.vertical_cut(move_spot)
+                    # vpl_bottom = RCGraph([*vpl_bottom[:-1], ()])
+                    # if len(vpl_bottom.perm.trimcode) > len(vpl_bottom):
+                    #     vpl_bottom = vpl_bottom.normalize()
+
+                    # vpl_bottom.zero_out_last_row()
+                    # while len(vpl_bottom) > move_spot - 1:
+                    #     vpl_bottom = vpl_bottom.zero_out_last_row()
+                    # if len(vpl_bottom) != move_spot - 1:
+                    #     assert vpl_bottom.inv == 0
+                    #     vpl_bottom = vpl_bottom.resize(move_spot - 1)
+                    # # # vpl_bottom = vpl_bottom.zero_out_last_row()
+                    # # # if vpl_bottom.inv == 0:
+                    # # #     vpl_bottom = vpl_bottom.rowrange(0, len(vpl_bottom) - 1)
+
+                    # # # while vpl_bottom.inv > 0 and len(vpl_bottom) > lm[i] - 1 and len(vpl_bottom[-1]) == 0:
+                    # # #     vpl_bottom = vpl_bottom.zero_out_last_row()
+                    # rcs2 = set((rc_ring(vpl_bottom) * rc_ring(vpl_top)).keys())
+                    # # rcs2 = rcs1
+                    # # # try:
+                    # # #     while vepl.perm.inv > 0 and vepl.perm[0] == 1:
+                    # # #         vepl = vepl.shiftup(-1)
+                    # # # except Exception:S
+                    # # #     pass
+                    # # # rcs = rc_ring(vepl) * rc_ring(RCGraph([()] * (len(vpl.perm) - 1 - len(vpl.perm.trimcode))))
+                    # # rcs = rcs1.intersection(rcs2)
+                    # rcs = rcs2
+                    # did = 0
+                    # candidates = set()
+                    # old_candidates = set()
+                    # # spongle = BPD.from_rc_graph(current_vpl)
+                    # # bpd_cols = {col for row, col in spongle.all_blanks() if row == move_spot - 1}
+                    # onofafa = False
                     try:
                         vpl_new = vpl.pull_out_row(lm[i] + 1)
                         pw = tuple(reversed(next(iter([pww for pww, pp in vl if pp == vpl_new.perm]))))
                         res2.add(((*vlist, pw), vpl_new.normalize()))
                     except Exception:
                         pass
+                    #    added = True
+                    # assert did == 1, f"Fail {did=}\n{self}\n{rcs}\n{vpl}\n{vl}"
+                    # if onofafa:
+                    #     print("OLD CANDIDATES:")
+                    #     for cc, pp in old_candidates:
+                    #         pretty_print(cc)
+                    #         pretty_print(pp)
+                    #     print("ALL TA LIFT")
+                    #     pretty_print(current_vpl)
+                    # print("I didst useth")
+                    # pretty_print(candidates)
             res = res2
         if len(lm) == len(cn1w):
             return res
