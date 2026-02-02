@@ -78,6 +78,17 @@ def test_little_bump():
 
     assert rc.little_bump(3,4) == expected
 
+def test_little_bump_zero_equivalent():
+    from schubmult import RCGraph, Permutation
+    n = 6
+    perms = Permutation.all_permutations(n)
+    for perm in perms:
+        for rc in RCGraph.all_rc_graphs(perm, len(perm.trimcode)):
+            if rc.perm.inv == 0 or len(rc[-1]) != 0:
+                continue
+            assert rc.little_bump_zero() == rc.zero_out_last_row()
+
+
 def test_tableau_decomp():
     from schubmult import RCGraph
 
@@ -97,7 +108,7 @@ def test_pull_out_empty_row():
         for i in range(2, len(perm.trimcode)):
             lower_perms = {}
             for rc in RCGraph.all_rc_graphs(perm, len(perm.trimcode)):
-                if len(rc[i-1]) != 0:
+                if rc.perm.inv == 0 or len(rc[i-1]) != 0:
                     continue
                 pullout = rc.pull_out_row(i)
                 lower_perms[pullout.perm] = lower_perms.get(pullout.perm, set())
