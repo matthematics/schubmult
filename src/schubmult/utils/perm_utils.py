@@ -15,10 +15,18 @@ def permtrim_list(perm):
 
 
 def has_bruhat_descent(perm, i, j):
-    if perm[i] < perm[j]:
+    """Check if perm has a Bruhat descent from position i to j.
+
+    Optimized version assuming perm is a Permutation object with direct indexing.
+    """
+    perm_i = perm[i]
+    perm_j = perm[j]
+    if perm_i < perm_j:
         return False
+    # Check if there's any value between perm[i] and perm[j] in positions i+1 to j-1
     for p in range(i + 1, j):
-        if perm[p] > perm[j] and perm[i] > perm[p]:
+        perm_p = perm[p]
+        if perm_p > perm_j and perm_i > perm_p:
             return False
     return True
 
@@ -38,10 +46,18 @@ def count_bruhat(perm, i, j):
 
 
 def has_bruhat_ascent(perm, i, j):
-    if perm[i] > perm[j]:
+    """Check if perm has a Bruhat ascent from position i to j.
+
+    Optimized version assuming perm is a Permutation object with direct indexing.
+    """
+    perm_i = perm[i]
+    perm_j = perm[j]
+    if perm_i > perm_j:
         return False
+    # Check if there's any value between perm[i] and perm[j] in positions i+1 to j-1
     for p in range(i + 1, j):
-        if perm[i] < perm[p] and perm[p] < perm[j]:
+        perm_p = perm[p]
+        if perm_i < perm_p < perm_j:
             return False
     return True
 
@@ -151,7 +167,6 @@ def cyclic_sort_min(L):
     m = min(L)
     i = L.index(m)
     return L[i:] + L[:i]
-
 
 
 def h_vector(q_vector):
