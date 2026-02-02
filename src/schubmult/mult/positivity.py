@@ -7,10 +7,8 @@ from cachetools.keys import hashkey
 from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_poly
 from schubmult.schub_lib.permutation import (
     Permutation,
-    code,
     cycle,
     dominates,
-    inv,
     one_dominates,
     phi1,
     theta,
@@ -191,7 +189,7 @@ def posify(
         return schubmult_double({u2: 1}, v2, var2, var3).get(w2, 0)
     # logger.debug(f"NEW {val=} {u2=} {v2=} {w2=}")
     oldval = val
-    if inv(u2) + inv(v2) - inv(w2) == 0:
+    if u2.inv + v2.inv - w2.inv == 0:
         # logger.debug(f"Hmm this is probably not or val inty true {val=}")
         return val
 
@@ -231,18 +229,18 @@ def posify(
                 u, v, w = u3, v3, w3
     split_two_b, split_two = is_split_two(u, v, w)
     # logger.debug("Recording line number")
-    if len([i for i in code(v) if i != 0]) == 1:
+    if len([i for i in v.code if i != 0]) == 1:
         # logger.debug("Recording line number")
         if sign_only:
             return 0
-        cv = code(v)
+        cv = v.code
         for i in range(len(cv)):
             if cv[i] != 0:
                 k = i + 1
                 p = cv[i]
                 break
-        inv_u = inv(u)
-        r = inv(w) - inv_u
+        inv_u = u.inv
+        r = w.inv - inv_u
         val = 0
         w2 = w
         hvarset = [w2[i] for i in range(min(len(w2), k))] + [i + 1 for i in range(len(w2), k)] + [w2[b] for b in range(k, len(u)) if u[b] != w2[b]] + [w2[b] for b in range(len(u), len(w2))]
@@ -320,7 +318,7 @@ def posify(
         logger.debug("Recording new characterization was used")
         return schubmult_double({u: 1}, v, var2, var3).get(w, 0)
 
-    if inv(w) - inv(u) == 1:
+    if w.inv - u.inv == 1:
         # logger.debug("Recording line number")
         if sign_only:
             return 0
@@ -576,8 +574,8 @@ def posify(
     # c02 = code(w)
     # c03 = code(v)
 
-    c1 = code(~u)
-    c2 = code(~w)
+    c1 = (~u).code
+    c2 = (~w).code
 
     if one_dominates(u, w):
         if sign_only:
@@ -589,7 +587,7 @@ def posify(
             # v[c2[0] - 1], v[c2[0]] = v[c2[0]], v[c2[0] - 1]
             # w = tuple(w)
             # v = tuple(v)
-            c2 = code(~w)
+            c2 = (~w).code
             # c03 = code(v)
             # c01 = code(u)
             # c02 = code(w)
@@ -680,7 +678,7 @@ def posify(
             # if elem_sym:
             #     # print(f"{elem_sym=}")
             #     val2 = compute_positive_rep_new(elem_sym, var2, var3, msg, False)
-            if inv(u) + inv(v) - inv(w) == 1:
+            if u.inv + v.inv - w.inv == 1:
                 val2 = compute_positive_rep(val, var2, var3, msg)
             else:
                 val2 = compute_positive_rep(val, var2, var3, msg)
@@ -725,7 +723,7 @@ def forwardcoeff(u, v, perm, var2=None, var3=None):
     vmun1 = (~v) * muv
 
     w = perm * vmun1
-    if inv(w) == inv(vmun1) + inv(perm):
+    if w.inv == vmun1.inv + perm.inv:
         coeff_dict = schubmult_double_pair(u, muv, var2, var3)
         # logger.debug(f"{coeff_dict.get(w,0)=} {w=} {perm=} {vmun1=} {v=} {muv=}")
         return coeff_dict.get(w, 0)
@@ -733,10 +731,10 @@ def forwardcoeff(u, v, perm, var2=None, var3=None):
 
 
 def dualcoeff(u, v, perm, var2=None, var3=None):
-    if inv(u) == 0:
+    if u.inv == 0:
         # logger.debug("Recording line number")
         vp = v * (~perm)
-        if inv(vp) == inv(v) - inv(perm):
+        if vp.inv == v.inv - perm.inv:
             return schubpoly(vp, var2, var3)
     dpret = []
     ret = 0
@@ -753,7 +751,7 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
         # logger.debug("spiggle")
         # logger.debug(f"{u=} {muu=} {v=} {w=} {perm=}")
         # logger.debug(f"{w=} {perm=}")
-        if inv(w) == inv(umun1) + inv(perm):
+        if w.inv == umun1.inv + perm.inv:
             dpret = dualpieri(muu, v, w)
             # logger.debug(f"{muu=} {v=} {w=}")
             # logger.debug(f"{dpret=}")
@@ -777,8 +775,8 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
 
 def dualpieri(mu, v, w):
     # logger.debug(f"dualpieri {mu=} {v=} {w=}")
-    lm = code(~mu)
-    cn1w = code(~w)
+    lm = (~mu).code
+    cn1w = (~w).code
     while len(lm) > 0 and lm[-1] == 0:
         lm.pop()
     while len(cn1w) > 0 and cn1w[-1] == 0:
