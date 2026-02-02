@@ -1,37 +1,8 @@
-from functools import cache
-
-# import schubmult.rings.free_algebra as fa
 from schubmult.schub_lib.permutation import Permutation, uncode
 from schubmult.symbolic import CoercionFailed, S, sympify, sympify_sympy, sympy_Mul
-from schubmult.utils.perm_utils import has_bruhat_descent, mu_A
+from schubmult.utils.perm_utils import mu_A
 
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
-
-
-def complete_sym_positional_perms_down(orig_perm, p, *k, hack_off=None):
-    k = {i - 1 for i in k}
-    orig_perm = Permutation(orig_perm)
-    total_list = {(orig_perm, 0, 1)}
-    up_perm_list = {(orig_perm, 1)}
-    # print(f"{orig_perm=}")
-    for pp in range(p):
-        perm_list = set()
-        for up_perm, sign in up_perm_list:
-            # pos_list = [i for i in range(k) if up_perm[i] < last]
-            rg = [q for q in range(len(up_perm) if hack_off is None else min(len(up_perm),hack_off)) if q not in k and up_perm[q] == orig_perm[q]]
-            for j in rg:
-                for i in k:
-                    a, b = (i, j) if i < j else (j, i)
-                    if has_bruhat_descent(up_perm, a, b):
-                        # print(f"bruhat ascent on {up_perm=} at {(a,b)=}")
-                        new_perm_add = up_perm.swap(a, b)
-                        # print(f"{up_perm.inv - orig_perm.inv=}")
-                        # print(f"{new_perm_add.inv - orig_perm.inv=}")
-                        new_sign = sign if i < j else -sign
-                        perm_list.add((new_perm_add, new_sign))
-                        total_list.add((new_perm_add, pp + 1, new_sign))
-        up_perm_list = perm_list
-#     return total_list
 
 
 def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
@@ -54,7 +25,6 @@ def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
     pmu1 = uncode(mu1)
     pmu2 = uncode(mu2)
     pmu = uncode(bigmu)
-    # print(f"{bigmu=}, {mu1=}, {mu2=}, {pmu1=}, {pmu2=}, {pmu=} {perm=}, {perm2=}")
     assert (perm * pmu1).inv == pmu1.inv - perm.inv
     assert (perm2 * pmu2).inv == pmu2.inv - perm2.inv
     bingo = ring.from_dict({perm * pmu1: coeff}) * ring.from_dict({perm2 * pmu2: S.One})
@@ -70,18 +40,6 @@ def _sep_desc_mul(perm, perm2, p, q, coeff, ring):
     return dct
 
 
-@cache
-def _single_coprod(p, n, T):
-    res = T.zero
-    for i in range(p + 1):
-        res += T.from_dict({((uncode([i]), n), (uncode([p - i]), n)): S.One})
-    return res
-
-
-def _is_code1(perm):
-    return perm.inv > 0 and perm.code[0] == perm.inv
-
-
 class SeparatedDescentsRing(BaseSchubertRing):
     @property
     def args(self):
@@ -91,35 +49,6 @@ class SeparatedDescentsRing(BaseSchubertRing):
     def schub_ring(self):
         return self._schub_ring
 
-    # pieri formula for uncode([p]), 1
-    def _single_coprod_test(self, p, tensor_elem):
-        res = tensor_elem.ring.zero
-        for (t1, t2), val in tensor_elem.items():
-            for i in range(p + 1):
-                # res += T.from_dict({((uncode([i]), n), (uncode([p-i]), n)): S.One})
-                telem1 = self.pieri_formula(i, self(*t1))
-                telem2 = self.pieri_formula(p - i, self(*t2))
-                for perm1, val1 in telem1.items():
-                    for perm2, val2 in telem2.items():
-                        res += val * val1 * val2 * tensor_elem.ring((perm1, perm2))
-        return res
-
-    def pieri_formula(self, p, elem):
-        val = self.zero
-        for (perm, num_vars), coeff in elem.items():
-            lne = len(perm)
-            if perm.inv == 0:
-                lne = 0
-            code_add = p + max(lne, num_vars)
-            big_elem = uncode([code_add, *perm.code])
-            e_list = complete_sym_positional_perms_down(big_elem, code_add - p, 1)
-
-            for to_add, deg, _ in e_list:
-                if deg == code_add - p:
-                    if to_add.inv == 0 or max(to_add.descents()) + 1 <= num_vars + 1:
-                        val += coeff * self(to_add, num_vars + 1)
-        return val
-
     def __init__(self, ring):
         self._schub_ring = ring
         super().__init__(self._schub_ring.genset, self._schub_ring.coeff_genset)
@@ -128,46 +57,6 @@ class SeparatedDescentsRing(BaseSchubertRing):
 
     def __hash__(self):
         return hash((self._schub_ring, "ARBLE"))
-
-    # @property
-    # def rings(self):
-    #     return self._rings
-
-    # def domain_new(self, elem1, elem2):
-    # @cache
-    # def coproduct(self, key):
-    #     # R = self @ self
-    #     R = fa.FreeAlgebra()
-    #     return R.tensor_schub_expand(R.schub_elem(*key).coproduct())
-
-    # @cache
-    # def free_element(self, perm, numvars):
-    #     return fa.FreeAlgebra().schub_elem(perm, numvars)
-
-    def coproduct_test(self, key):
-        T = self @ self
-        # if val == self.zero:
-        #     return T.zero
-        val = self(*key)
-
-        cprd_val = T.zero
-
-        while val != val.ring.zero:
-            mx = [k[0].code for k in val.keys() if val[k] != S.Zero]
-            mx.sort(reverse=True)
-            cd = mx[0]
-
-            mx_key = next(iter([k for k in val.keys() if k[0].code == cd]))
-            if len(cd) == 0:
-                return cprd_val + T.from_dict({((Permutation([]), mx_key[1]), (Permutation([]), mx_key[1])): val[mx_key] * S.One})
-            cd = [*cd]
-            fv = cd.pop(0)
-            while len(cd) > 1 and cd[-1] == 0:
-                cd.pop()
-            cf = val[mx_key]
-            cprd_val += cf * self._single_coprod_test(fv, self.coproduct_test((uncode(cd), mx_key[1] - 1)))
-            val -= cf * self.pieri_formula(fv, self(uncode(cd), mx_key[1] - 1))
-        return cprd_val
 
     def mul(self, elem1, elem2):
         # print(f"{elem1=}, {elem2=}")
@@ -224,6 +113,7 @@ class SeparatedDescentsRing(BaseSchubertRing):
     def printing_term(self, k):
         # k is a tuple (perm, length)
         from schubmult.rings.abstract_schub_poly import SepDescSchubPoly
+
         coeff_label = None
         if self.coeff_genset is not NotImplemented and self.coeff_genset is not None:
             coeff_label = self.coeff_genset.label

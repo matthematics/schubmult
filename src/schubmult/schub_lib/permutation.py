@@ -70,21 +70,6 @@ class Permutation(Printable):
 
         return [cls(perm) for perm in list(permutations(list(range(1, n + 1))))]
 
-    def parabolic_reduce(self, *descs):
-        descs = set(descs)
-        reduced_perm = self
-        w_J = Permutation([])
-        found = True
-        while found:
-            found = False
-            for d in reduced_perm.descents():
-                if d not in descs:
-                    w_J = ~((~w_J).swap(d, d + 1))
-                    reduced_perm = reduced_perm.swap(d, d + 1)
-                    found = True
-                    break
-        return reduced_perm, w_J
-
     def __truediv__(self, other):
         """Returns a tuple of (self, other) if other is a permutation. Intended for skew elements."""
         if isinstance(other, Permutation):
@@ -93,18 +78,6 @@ class Permutation(Printable):
 
     def __new__(cls, perm):
         return Permutation.__xnew_cached__(cls, tuple(perm))
-
-    # @classmethod
-    # def _af_new(cls, p):
-    #     obj = object.__new__(cls)
-    #     p = tuple(p)
-    #     obj._args = (p,)
-    #     # obj._s_perm = tuple([i - 1 for i in p])
-    #     obj._perm = p
-    #     obj._hash_code = hash(p)
-    #     cd = old_code(p)
-    #     obj._unique_key = (len(p), sum([cd[i] * math.factorial(len(p) - 1 - i) for i in range(len(cd))]))
-    #     return obj
 
     print_as_code = False
 

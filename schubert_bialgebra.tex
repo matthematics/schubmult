@@ -1112,31 +1112,40 @@ We proceed now to define a product on $\BRC$ turning it into a ring. To do this,
 	\end{algorithmic}
 \end{algorithm}
 
+\begin{definition}
+Let $R$ be an RC graph. We define an RC graph $\overline{R}$ and a sequence $\mathtt{strip}(R)$ as follows. Let $\maxd(R)=n$, set $R_0=R$, and set $A_0=()$. While $\maxd(R_i)> n -1$, delete the element $(a,b)\in R_i$ such that $\rtt_{R_i}(a,b)=(\maxd(R_i), \maxd(R_i) + 1)$ to obtain $R_{i+1}$, and add $a$ to $A_i$ to obtain $A_{i+1}$. When the algorithm terminates at step $k$, set
+$$\mathtt{strip}(R) = A_k$$
+and set $\overline{R} = R_k$.
+\end{definition}
 
-\begin{algorithm}
-	\caption{Map $\zeromap(R)$ zeroing out last row}
-	\label{algorithm:zero}
-	\begin{algorithmic}[1]
-		\State \textbf{Input:} A bounded RC graph $R$ with $\hr(R)=n$ and row $n$ empty.
-		\State \textbf{Output:} A bounded RC graph $R'$ with $\hr(R')=n-1$, $|R'|=|R|$ (same number of crossings), and $\wof{R}\downvar{n} \wof{R'}$.
+\begin{definition}[Zeroing out the last row] \label{definition:zero}
+  Let $R\in \BRC^0(n)$ be a bounded RC graph with $\hr(R) = n$ such that row $n$ is empty. If $\maxd(R)<n$, set $$\zeromap(R)=R$$ while declaring that $\hr(R)=n-1$. If $\maxd(R)=n$, then we define
+  $$\zeromap(R) = \ins{n-1}{\mathtt{strip}(R)} \overline{R}$$
+\end{definition}
+% \begin{algorithm}
+% 	\caption{Map $\zeromap(R)$ zeroing out last row}
+% 	\label{algorithm:zero}
+% 	\begin{algorithmic}[1]
+% 		\State \textbf{Input:} A bounded RC graph $R$ with $\hr(R)=n$ and row $n$ empty.
+% 		\State \textbf{Output:} A bounded RC graph $R'$ with $\hr(R')=n-1$, $|R'|=|R|$ (same number of crossings), and $\wof{R}\downvar{n} \wof{R'}$.
 		
-		\If{$R$ with last row removed is a valid bounded RC graph}
-		\State \Return $R$ with last row removed
-		\Else
-		\State Let $R_0 \gets R$.
-		\State Find the maximal $p$ and sequence $\{(i_m, j_m)\}_{m=1}^p$ such that:
-		\State \quad $\rtt_{R_{m-1}}(i_m, j_m) = (n+m-1,n+m)$ for each $m$, where $R_m = R_{m-1}\setminus\{(i_m, j_m)\}$ for each $m\geq 1$.
-		\State $R^- \gets R \setminus \{(i_1, j_1), \ldots, (i_p, j_p)\}$.
-		\State Let $I \gets (i_1, i_2, \ldots, i_p)$.
-		\State $D \gets R^- \cup \{(n, 1), (n, 2), \ldots, (n, p)\}$.
-		\State $D' \gets \ins{n-1}{I} D$
-		\State $R' \gets \{(i, j) \in D' \mid i < n\}$ as a bounded RC graph with $n-1$ rows.
-		\State \Return $R'$.
-		\EndIf
-	\end{algorithmic}
-\end{algorithm}
+% 		\If{$R$ with last row removed is a valid bounded RC graph}
+% 		\State \Return $R$ with last row removed
+% 		\Else
+% 		\State Let $R_0 \gets R$.
+% 		\State Find the maximal $p$ and sequence $\{(i_m, j_m)\}_{m=1}^p$ such that:
+% 		\State \quad $\rtt_{R_{m-1}}(i_m, j_m) = (n+m-1,n+m)$ for each $m$, where $R_m = R_{m-1}\setminus\{(i_m, j_m)\}$ for each $m\geq 1$.
+% 		\State $R^- \gets R \setminus \{(i_1, j_1), \ldots, (i_p, j_p)\}$.
+% 		\State Let $I \gets (i_1, i_2, \ldots, i_p)$.
+% 		\State $D \gets R^- \cup \{(n, 1), (n, 2), \ldots, (n, p)\}$.
+% 		\State $D' \gets \ins{n-1}{I} D$
+% 		\State $R' \gets \{(i, j) \in D' \mid i < n\}$ as a bounded RC graph with $n-1$ rows.
+% 		\State \Return $R'$.
+% 		\EndIf
+% 	\end{algorithmic}
+% \end{algorithm}
 
-See Figure \ref{fig:zeroing} for an example of the zeroing operation (Algorithm \ref{algorithm:zero}). 
+See Figure \ref{fig:zeroing} for an example of the zeroing operation (Definition \ref{definition:zero}). 
 
 \def\multiset#1#2{\ensuremath{\left(\kern-.3em\left(\genfrac{}{}{0pt}{}{#1}{#2}\right)\kern-.3em\right)}}
 
@@ -1393,7 +1402,7 @@ This ensures that the product remains as desired if the RC graph is valid. Howev
 
 
 \begin{lemma}
-Given a bounded RC graph $R$ with $\hr(R)=n$ such that row $n$ is empty, Algorithm \ref{algorithm:zero} produces a valid bounded RC graph $R'$ with $\hr(R')=n-1$ satisfying
+Given a bounded RC graph $R$ with $\hr(R)=n$ such that row $n$ is empty, Definition \ref{definition:zero} produces a valid bounded RC graph $R'$ with $\hr(R')=n-1$ satisfying
 $$\wtt(R') = \wtt(R)$$
 \end{lemma}
 \begin{proof}
@@ -1408,7 +1417,7 @@ $$\zeromap:\mathcal{RC}(w, n)^{0}\to \bigcup_{w\downvar{n} w'}\mathcal{RC}(w', n
 is a weight-preserving bijection.
 \end{theorem}
 
-To prove Theorem \ref{theorem:zero_bijection} for $n=2$, we may characterize the bounded RC graphs $R$ with $|R|=2$ such that row $2$ is empty and $\maxd(\wof{R})=2$ as those for permutations $w=s_k s_{k-1}\cdots s_2$ for some $k>1$. Algorithm \ref{algorithm:zero} in this case consists moves the entirety of the crossings in row $1$ to row $2$. The procedure then inserts $k-1$ crossings into row $1$ in order from left to right, which must have roots $t_q - t_s$ such that $q=1$. Thus $R'$ is precisely $\{(1,1), (1,2), (1,3), \ldots, (1, k-1)\}$, which is the unique bounded RC graph for the permutation $w' = s_{k-1} s_{k-2}\cdots s_1$ with one row. This establishes the base case.
+To prove Theorem \ref{theorem:zero_bijection} for $n=2$, we may characterize the bounded RC graphs $R$ with $|R|=2$ such that row $2$ is empty and $\maxd(\wof{R})=2$ as those for permutations $w=s_k s_{k-1}\cdots s_2$ for some $k>1$. Definition \ref{definition:zero} in this case consists moves the entirety of the crossings in row $1$ to row $2$. The procedure then inserts $k-1$ crossings into row $1$ in order from left to right, which must have roots $t_q - t_s$ such that $q=1$. Thus $R'$ is precisely $\{(1,1), (1,2), (1,3), \ldots, (1, k-1)\}$, which is the unique bounded RC graph for the permutation $w' = s_{k-1} s_{k-2}\cdots s_1$ with one row. This establishes the base case.
 
 For the induction step, we require the following lemmas.
 
@@ -1417,7 +1426,7 @@ Let $R$ be a bounded RC graph with $\hr(R)=n\geq 2$ such that row $n$ is empty. 
 $$\wof{R}\downvar{n} \wof{R'}$$
 \end{lemma}
 \begin{proof}
-Let $w=\wof{R}$ and suppose $\code_n(w) = m$. By construction, the second to last step of Algorithm \ref{algorithm:zero} yields a bounded RC graph $\widetilde{R}$ with $|\widetilde{R}|=n$ such that if $\widetilde{w} = \wof{\widetilde{R}}$, then
+Let $w=\wof{R}$ and suppose $\code_n(w) = m$. By construction, the second to last step of Definition \ref{definition:zero} yields a bounded RC graph $\widetilde{R}$ with $|\widetilde{R}|=n$ such that if $\widetilde{w} = \wof{\widetilde{R}}$, then
 $$\widetilde{w}(n) > \widetilde{w}(n+1) < \widetilde{w}(n+2) < \cdots < \widetilde{w}(n + m)$$
 and
 $$w\Tom{n-1}\widetilde{w}$$
@@ -1467,15 +1476,12 @@ We may extend $\zeromap$ to an endomorphism $\BRC\to\BRC$ by defining $\zeromap(
 \newcommand{\clp}{\mathtt{clip}}
 
 
-
 \begin{definition}[Pulling out an empty row]
 Let $R$ be a bounded RC graph with $\hr(R)=n$ and let $p\leq n$ be such that row $p$ of $R$ is empty. Let $R_{\leq p}$ denote the RC-graph consisting of the first $p$ rows and $R_{>p}$ the RC-graph consisting of rows $p+1$ through $n$. Now, $\maxd(R_{\leq p})$ could be greater than $p$. If it is less than or equal to $p$, define 
 $$\zeromap^{(p)}(R) = \zeromap(R_{\leq p})\cup {\downarrow R_{>p}}$$ 
-as a bounded RC graph with $\hr(R)-1$ rows. Otherwise, define $R' = R_{\leq p}$, let $d_1 = \maxd(\wof{R'})$ and set $R_1 = R'$. While $\maxd(R_i) > p$, do:
+as a bounded RC graph with $\hr(R)-1$ rows. Otherwise, define $R' = R_{\leq p}$, let $d_1 = \maxd(\wof{R'})$ and set $R_1 = R'$. While $d_i > p$, recursively set $A_{i+1} = \mathtt{strip}(R_i)$, set $R_{i+1} = \overline{R_i}$, and set $d_{i+1} = \maxd(R_{i+1})$. 
 
-Set $R'=R_i$. While $\maxd(R') \geq d_i$, delete the element $(a,b)\in R'$ such that $\rtt_{R'}(a,b)=(\maxd(R'),\maxd(R')+1)$ from $R'$ and store $a$ in the list (multiset) $A_i$. After enough iterations such that $\maxd(R')<d_i$, set $R_{i+1}= R'$ and set $d_{i+1}= \maxd(R_{i+1})$, then repeat. 
-
-At termination, say at step $k$, set
+At termination, say at step $k$, let
 $$\zeromap^{(p)}(R) = (\ins{d_1 - 1}{A_1}\cdots\ins{d_k - 1}{A_k}\zeromap(R_k))\cup {\downarrow} R_{>p}$$
 be the desired bounded RC graph with $\hr(R)-1$ rows.
 
@@ -1719,7 +1725,7 @@ We show an example in Figure \ref{figure:zpexample}.
 % Step 5: Final with R>p
 \begin{minipage}{0.45\textwidth}
 \centering
-\begin{tikzpicture}[scale=0.5]
+\begin{tikzpicture}[scale=0.7]
   \draw[lightgray, very thin, opacity=0.3] (0,1) grid[step=1] (6,4);
   % Row 1: crossings at 1,2,5
   \draw[blue, line width=1.0pt, line cap=round] (0,3.5) -- (1,3.5);
@@ -1786,11 +1792,7 @@ We show an example in Figure \ref{figure:zpexample}.
 \label{figure:zpexample}
 \end{figure}
 
-\begin{definition}
-Let $R$ be an RC graph. We define an RC graph $\overline{R}$ and a sequence $\mathtt{strip}(R)$ as follows. Let $\maxd(R)=n$, set $R_0=R$, and set $A_0=()$. While $\maxd(R_i)> n -1$, delete the element $(a,b)\in R_i$ such that $\rtt_{R_i}(a,b)=(\maxd(R_i), \maxd(R_i) + 1)$ to obtain $R_{i+1}$, and add $a$ to $A_i$ to obtain $A_{i+1}$. When the algorithm terminates at step $k$, set
-$$\mathtt{strip}(R) = A_k$$
-and set $\overline{R} = R_k$.
-\end{definition}
+
 
 \begin{lemma} \label{lemma:reconstruct}
 Let $R$ be an RC graph. Then
@@ -2174,22 +2176,6 @@ Let $w\in S_\infty$ satisfy $\maxd(w)\leq n$ and suppose $i$ is a left descent o
 \end{theorem}
 
 
-\begin{lemma} \label{lemma:assoc_clip}
-  We have the following equations for an RC graph $R$ and two integers $p$ and $q$:
-$$\clp^p(\clp^{p+q}(R)) = \clp^p(R)$$
-$$\trm^p(\clp^{p+q}(R)) = \clp^q(\trm^p(R))$$ 
-and 
-$$\trm^{p+q}(R) = \trm^q(\trm^{p}(R))$$
-\end{lemma}
-\begin{proof}
-Suppose $(R, n)$ is a bounded RC graph. We prove that $\clp^{n-2}(\clp^{n-1}(R)) = \clp^{n-2}(R)$. For $n=2$, this is trivial. As an additional base case, we also need $n=3$, which is not trivial, but true because a bounded RC graph $(R,1)$ is uniquely determined by its size. We proceed by induction on $n$. Without loss of generality, assume that row $n$ is empty. Then $\clp^{n-1}(R) = \zeromap(R)$. We have
-$$\clp^{n-2}(R) = \zeromap^2(R_{\leq n-2}, n)=\zeromap(\zeromap(R_{\leq n-2}))$$
-$$\clp^{n-2}(\clp^{n-1}(R)) = \zeromap(\zeromap(R)_{\leq n-2}, n-1)$$
-IF $\maxd(\wof{R_{\leq n-2}})\leq n-1$, then both sides are equal to $\zeromap(R_{\leq n-2})$. Otherwise, by Lemma \ref{lemma:ztrim}, we have
-$$\trm(\clp^{n-2}(R)) = \trm(\zeromap(\zeromap(R_{\leq n-2}))) =\zeromap(\zeromap(\trm(R)_{\leq n-3}))$$
-$$\trm(\clp^{n-2}(\clp^{n-1}(R))) = \zeromap(\zeromap(\trm(R))_{\leq n-3}, n-2)$$
-Thus, $\clp^{n-2}(\clp^{n-1}(R))$ and $\clp^{n-2}(R)$ agree on all rows except possibly the first row. We proceed by induction on the number of elements of $R$ in the first row. For zero elements, the result is obvious. If we have proved the result for $k-1$ elements in the first row, let $(1, i)$ be the rightmost such element. Then $R\setminus\{(1,i)\}$ has $k-1$ elements in the first row, so by the inductive hypothesis, $\clp^{n-2}(\clp^{n-1}(R\setminus\{(1,i)\})) = \clp^{n-2}(R\setminus\{(1,i)\})$. Applying Theorem \ref{theorem:commutative_diagram}, we see that adding back in the element $(1,i)$ to both sides preserves equality, due to the commutativity of the diagram. This establishes the first equation. The second equation easily follows from repeated application of Lemma \ref{lemma:ztrim}, and the third equation is the definition of $\trm$.
-\end{proof}
 
 \begin{theorem} \label{theorem:howyouslice}
   Let $r>0$ be an integer and suppose $p\geq 0$ is an integer such that $p\leq r$. Then the map $\BRC(r)\to \BRC(p)\times \BRC(r - p)\times S_\infty$ defined by
@@ -2204,6 +2190,461 @@ For $p=r-1$, we use the fact that row $r$ of a bounded RC graph $(R,r)$ is uniqu
 For larger $r$, we prove the result by induction on $p$, keeping in mind the solutions for the cases $p=0,1,r-1$. We know that $(R,r)$ is uniquely determined by $(\clp^{r-1}(R), \wof{R})$ and we may use the inductive hypothesis to reason that it is therefore uniquely determined by $(\clp^{p}(R), \trm^p(\clp^{r-1}(R)), \wof{R})$. Furthermore, Let $u=\wof{\clp^{p}(R)}$. Then the pair $(\trm^{p-1}(\clp^{r-1}(R)), u^{-1}\wof{R})$ uniquely determines $\trm^p(R)$ by the inductive hypothesis. Hence $(\clp^{p}(R), \trm^{p}(R), \wof{R})$ uniquely determines $(R, r)$, establishing injectivity.
 \end{proof}
 
+
+
+
+\subsection{Relation to Little bumps}
+
+\newcommand{\ltb}{\mathrm{little}}
+\newcommand{\lzeromap}{\mathscr{Z}}
+\newcommand{\lmap}{\mathscr{L}}
+Define a function $\lmap:\BRC^0(n)\to\BRC(n+1)$ as follows. Assume $n=\maxd(\wof{R})$, and suppose $\rtt_R(i, j) = (n, n + 1)$, where $i < n$. Set 
+$$R'= (R\setminus \{(i, j)\})\cup \{(n,1)\}$$
+Then define
+$$\lmap(R) = ((\ins{n-1}{i} R')\setminus\{(n, 1)\}, n + 1)$$
+Then define $\lzeromap:\BRC^0(n)\to \BRC(n-1)$ by iterating $\lmap$ and stopping as soon as the result has $\maxd(\wof{R})\leq n-1$.
+
+\begin{proposition} \label{proposition:little_bump}
+  Let $R\in \BRC^0(n)$ be a bounded RC graph such that $\maxd(\wof{R}) = n$. Suppose 
+  $$\mathrm{word}(R) = a_1 a_2 \cdots a_k$$ 
+  and 
+  $$\mathrm{seq}(R) = r_1 r_2 \cdots r_k,$$ 
+  suppose $\rtt_R(i,j)=(n,n+1)$, and let $p$ be the index such that $r_p=i$ and $r_p + j - 1 = a_p$. Then
+  $$\mathrm{word}(\lmap(R)) = \ltb_{p}(\mathrm{word}(R))$$
+\end{proposition}
+\begin{proof}
+Consider the biword
+$$\begin{matrix}
+r_1& r_2& \cdots & r_{p-1} & r_p & r_{p+1} & \cdots & r_k\\
+a_1& a_2& \cdots & a_{p-1} & a_p & a_{p+1} & \cdots & a_k
+\end{matrix}$$
+The first deletion yields
+$$\begin{matrix}
+r_1& r_2& \cdots & r_{p-1} &  r_{p+1} & \cdots & r_k& n\\
+a_1& a_2& \cdots & a_{p-1} &  a_{p+1} & \cdots & a_k& n
+\end{matrix}$$
+Necessarily, we must have $a_p > 1$. If we have $a_p=1$, then we would have $r_p=1$. The only way for position $(1,1)$ in an RC graph to be a right descent is if it is the unique right descent. By assumption, that descent would have to be $n$, so that $n=1$. In that case, however, it would not be possible for the last row to be empty. 
+
+We also must have that $r_p < a_p$, because there is a sequence of chute moves involving this crossing that moves it to position $(n, 1)$ by \cite[Theorem~3.7]{bbrc}. Assume first that $p = k$. Then the insertion algorithm will insert $a_p - 1=n-1$ into row $r_k$. If this word is reduced, then we are done, and this clearly coincides with the Little bump. If it is not reduced, the descent $n-1$ occurs somewhere to the left, say at position $j$. The insertion algorithm would delete this letter then try to insert another one. However, we can see that recursively this is the same as applying $\zeromap_+$ to the biword obtained by removing all letters after position $j$ and then reinserting them afterwards. By the inductive hypothesis, this coincides with applying the Little bump at position $j$, which would indeed be the next step in the recursion of applying the Little bump at position $k$. Thus, the two coincide by induction.
+\end{proof}
+
+\begin{theorem}[{\cite[Theorem~4.4]{hamaker2014relating}}]
+Let $\mathrm{w}$ be a reduced word for a permutation $w\in S_\infty$. Then
+$$Q(\mathrm{w}) = Q(\ltb_p(\mathrm{w}))$$
+for any valid $p$.
+\end{theorem}
+
+\begin{corollary}
+  $\lmap:\BRC^0(n)\to \BRC(n+1)$ is a weight-preserving injection that preserves the recording tableau under the Edelman-Greene correspondence.
+\end{corollary}
+
+\begin{corollary}
+$$\lzeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
+	is a weight-preserving isomorphism of crystal graphs.
+\end{corollary}
+
+
+\begin{corollary}
+  We have the equality
+$$\lzeromap=\zeromap$$ 
+\end{corollary}
+
+
+\subsection{Relation to the bijection with bumpless pipe dreams}
+
+\newcommand{\BPD}{\mathcal{BPD}}
+
+
+\begin{definition}
+  Denote by $\BPD(w,n)$ the set of (reduced) $n$-row bumpless pipe dreams for a permutation $w$, where $n\geq \maxd(w)$. These are $n\times N$ grids, where $N$ is at least the length of $w$, populated with $6$ possible tiles, shown in Figure \ref{figure:bpdtiles}, satisfying the conditions that pipes must enter from the bottom and exit on the right, and no two pipes may cross twice. We may assign a permutation to such a BPD as follows.
+
+  Let $(B, n)$ be an $n$-row BPD. Let $c_1,\ldots,c_m$ be the columns such that the pipes on the bottom edge have an entrance from the bottom. If the pipe coming from $c_i$ exits on row $j$ on the right, then $w(c_i) = j$. To fill in the remaining elements of the permutation, we set $w(m + k) = d_k$, where $d_1,\ldots,d_k$ are the remaining columns with no entrance in increasing order.
+
+  
+
+\end{definition}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=0.8]
+% Define common parameters
+\def\tilesize{1.2}
+\def\pipewidth{1pt}
+
+% Tile 1: NW Elbow
+\begin{scope}[shift={(0,0)}]
+  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
+  \draw[line width=\pipewidth, blue] (0,0.5*\tilesize) 
+    arc[start angle=-90, end angle=0, radius=0.5*\tilesize];
+  \node[below] at (0.5*\tilesize,-0.3) {NW Elbow};
+\end{scope}
+
+% Tile 2: SE Elbow
+\begin{scope}[shift={(2*\tilesize,0)}]
+  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
+  \draw[line width=\pipewidth, blue] (0.5*\tilesize,0) 
+    arc[start angle=180, end angle=90, radius=0.5*\tilesize];
+  \node[below] at (0.5*\tilesize,-0.3) {SE Elbow};
+\end{scope}
+
+% Tile 3: Cross
+\begin{scope}[shift={(4*\tilesize,0)}]
+  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
+  \draw[line width=\pipewidth, blue] (0,0.5*\tilesize) -- (\tilesize,0.5*\tilesize);
+  \draw[line width=\pipewidth, blue] (0.5*\tilesize,0) -- (0.5*\tilesize,\tilesize);
+  \node[below] at (0.5*\tilesize,-0.3) {Cross};
+\end{scope}
+
+% Tile 4: Vertical
+\begin{scope}[shift={(6*\tilesize,0)}]
+  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
+  \draw[line width=\pipewidth, blue] (0.5*\tilesize,0) -- (0.5*\tilesize,\tilesize);
+  \node[below] at (0.5*\tilesize,-0.3) {Vertical};
+\end{scope}
+
+% Tile 5: Horizontal
+\begin{scope}[shift={(0,-2*\tilesize)}]
+  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
+  \draw[line width=\pipewidth, blue] (0,0.5*\tilesize) -- (\tilesize,0.5*\tilesize);
+  \node[below] at (0.5*\tilesize,-0.3) {Horizontal};
+\end{scope}
+
+% Tile 6: Blank
+\begin{scope}[shift={(2*\tilesize,-2*\tilesize)}]
+  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
+  \node[below] at (0.5*\tilesize,-0.3) {Blank};
+\end{scope}
+
+\end{tikzpicture}
+\caption{The six possible tiles in bumpless pipe dreams. Pipes enter from the left or bottom and exit at the top or right.}
+\label{figure:bpdtiles}
+\end{figure}
+
+
+\begin{lemma}[{\cite[Theorem~3.6]{Yu2025EmbeddingBP}}] \label{lemma:bpd_completion}
+  Let $(B, N)$ be an ordinary reduced BPD for a permutation $w$, so that $w(M) = M$ for all $M>N$ and $B$ is $N\times N$. Let $n\geq \maxd(w)$ be an integer. Then the BPD $B'$ obtained by only retaining the first $n$ rows of $B$ satisfies $w(B', n) = w(B, N)$ and uniquely determines $B$ under this assumption.
+\end{lemma}
+
+
+\begin{definition}
+There is a bijection $\varphi:\BPD(w,n)\to \mathcal{RC}(w,n)$, where $w\in S_n$, defined in \cite{GaoHuang2023} that preserves weight. It is viewed as ``canonical'' because it also provides bijective correspondences between certain insertion/bumping operations on BPDs and RC graphs, showing that they agree in a strong way. In light of Lemma \ref{lemma:bpd_completion}, we may extend this bijection to $w\in S_\infty$ with $\maxd(w)\leq n$ by first expanding the BPD to a square BPD with sufficiently many rows and columns, then applying the bijection, and finally truncating the resulting RC graph to $n$ rows.
+\end{definition}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=0.7]
+\def\s{0.8}  % tile size
+\def\pw{1pt} % pipe width
+
+% Row 0 (bottom): vert, blank, vert, se, horiz, cross
+% Col 0: vertical
+\draw[gray] (0,0) rectangle (\s,\s);
+\draw[line width=\pw, blue] (0.5*\s,0) -- (0.5*\s,\s);
+% Col 1: blank
+\draw[gray] (\s,0) rectangle (2*\s,\s);
+% Col 2: vertical
+\draw[gray] (2*\s,0) rectangle (3*\s,\s);
+\draw[line width=\pw, blue] (2.5*\s,0) -- (2.5*\s,\s);
+% Col 3: se elbow
+\draw[gray] (3*\s,0) rectangle (4*\s,\s);
+\draw[line width=\pw, blue] (3.5*\s,0) arc[start angle=180, end angle=90, radius=0.5*\s];
+% Col 4: horizontal
+\draw[gray] (4*\s,0) rectangle (5*\s,\s);
+\draw[line width=\pw, blue] (4*\s,0.5*\s) -- (5*\s,0.5*\s);
+% Col 5: cross
+\draw[gray] (5*\s,0) rectangle (6*\s,\s);
+\draw[line width=\pw, blue] (5*\s,0.5*\s) -- (6*\s,0.5*\s);
+\draw[line width=\pw, blue] (5.5*\s,0) -- (5.5*\s,\s);
+
+% Row 1: vert, blank, se, horiz, nw, se
+% Col 0: vertical
+\draw[gray] (0,\s) rectangle (\s,2*\s);
+\draw[line width=\pw, blue] (0.5*\s,\s) -- (0.5*\s,2*\s);
+% Col 1: blank
+\draw[gray] (\s,\s) rectangle (2*\s,2*\s);
+% Col 2: se elbow
+\draw[gray] (2*\s,\s) rectangle (3*\s,2*\s);
+\draw[line width=\pw, blue] (2.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+% Col 3: horizontal
+\draw[gray] (3*\s,\s) rectangle (4*\s,2*\s);
+\draw[line width=\pw, blue] (3*\s,1.5*\s) -- (4*\s,1.5*\s);
+% Col 4: nw elbow
+\draw[gray] (4*\s,\s) rectangle (5*\s,2*\s);
+\draw[line width=\pw, blue] (4*\s,1.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
+% Col 5: se elbow
+\draw[gray] (5*\s,\s) rectangle (6*\s,2*\s);
+\draw[line width=\pw, blue] (5.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+
+% Row 2: se, horiz, nw, blank, se, horiz
+% Col 0: se elbow
+\draw[gray] (0,2*\s) rectangle (\s,3*\s);
+\draw[line width=\pw, blue] (0.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+% Col 1: horizontal
+\draw[gray] (\s,2*\s) rectangle (2*\s,3*\s);
+\draw[line width=\pw, blue] (\s,2.5*\s) -- (2*\s,2.5*\s);
+% Col 2: nw elbow
+\draw[gray] (2*\s,2*\s) rectangle (3*\s,3*\s);
+\draw[line width=\pw, blue] (2*\s,2.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
+% Col 3: blank
+\draw[gray] (3*\s,2*\s) rectangle (4*\s,3*\s);
+% Col 4: se elbow
+\draw[gray] (4*\s,2*\s) rectangle (5*\s,3*\s);
+\draw[line width=\pw, blue] (4.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+% Col 5: horizontal
+\draw[gray] (5*\s,2*\s) rectangle (6*\s,3*\s);
+\draw[line width=\pw, blue] (5*\s,2.5*\s) -- (6*\s,2.5*\s);
+
+% Row 3 (top): blank, blank, se, horiz, horiz, horiz
+% Col 0: blank
+\draw[gray] (0,3*\s) rectangle (\s,4*\s);
+% Col 1: blank
+\draw[gray] (\s,3*\s) rectangle (2*\s,4*\s);
+% Col 2: se elbow
+\draw[gray] (2*\s,3*\s) rectangle (3*\s,4*\s);
+\draw[line width=\pw, blue] (2.5*\s,3*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+% Col 3: horizontal
+\draw[gray] (3*\s,3*\s) rectangle (4*\s,4*\s);
+\draw[line width=\pw, blue] (3*\s,3.5*\s) -- (4*\s,3.5*\s);
+% Col 4: horizontal
+\draw[gray] (4*\s,3*\s) rectangle (5*\s,4*\s);
+\draw[line width=\pw, blue] (4*\s,3.5*\s) -- (5*\s,3.5*\s);
+% Col 5: horizontal
+\draw[gray] (5*\s,3*\s) rectangle (6*\s,4*\s);
+\draw[line width=\pw, blue] (5*\s,3.5*\s) -- (6*\s,3.5*\s);
+
+% Column labels at bottom
+\foreach \i in {1,...,6} {
+  \node[below] at (\i*\s-0.5*\s,-0.3) {\i};
+}
+
+% Row exit labels on right
+\node[right] at (6*\s+0.2,3.5*\s) {1};
+\node[right] at (6*\s+0.2,2.5*\s) {3};
+\node[right] at (6*\s+0.2,1.5*\s) {6};
+\node[right] at (6*\s+0.2,0.5*\s) {4};
+
+\end{tikzpicture}
+\caption{An example of a $4$-row bumpless pipe dream for a permutation of length $6$. Pipes enter from the bottom at columns 1, 3, 4, and 6, and exit on the right at the labeled rows. The associated permutation is $[1,3,6,4,2,5]$.}
+\label{figure:bpdexample}
+\end{figure}
+
+\newcommand{\bzeromap}{\mathbf{t}}
+
+
+\begin{definition}
+We define a function $\bzeromap:\BPD(n)^0\to \BPD(n-1)$, found in \cite{WEIGANDT2021105470} in a more general context, as follows. Given a bumpless pipe dream $(B, n)$ with no blank tiles in row $n$, we simply remove row $n$ to obtain $B'$. Then
+$$\bzeromap(B, n) = (B', n-1)$$
+One may ask oneself here whether anything changes at all. Indeed, all that changes are the labels of the incoming pipes, as shown in Figure \ref{figure:transition}, and this only happens if $\maxd(w) = n$.
+\end{definition}
+
+
+
+
+
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=0.55]
+\def\s{0.8}
+\def\pw{1pt}
+
+% First BPD (left side) - 5 rows x 7 cols
+\begin{scope}
+% Row 0 (bottom, will be removed): VERT, VERT, SE, HORIZ, NW, VERT, SE
+\draw[gray] (0,0) rectangle (\s,\s);
+\draw[line width=\pw, blue] (0.5*\s,0) -- (0.5*\s,\s);
+\draw[gray] (\s,0) rectangle (2*\s,\s);
+\draw[line width=\pw, blue] (1.5*\s,0) -- (1.5*\s,\s);
+\draw[gray] (2*\s,0) rectangle (3*\s,\s);
+\draw[line width=\pw, blue] (2.5*\s,0) arc[start angle=180, end angle=90, radius=0.5*\s];
+\draw[gray] (3*\s,0) rectangle (4*\s,\s);
+\draw[line width=\pw, blue] (3*\s,0.5*\s) -- (4*\s,0.5*\s);
+\draw[gray] (4*\s,0) rectangle (5*\s,\s);
+\draw[line width=\pw, blue] (4*\s,0.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
+\draw[gray] (5*\s,0) rectangle (6*\s,\s);
+\draw[line width=\pw, blue] (5.5*\s,0) -- (5.5*\s,\s);
+\draw[gray] (6*\s,0) rectangle (7*\s,\s);
+\draw[line width=\pw, blue] (6.5*\s,0) arc[start angle=180, end angle=90, radius=0.5*\s];
+
+% Row 1: VERT, SE, HORIZ, NW, SE, CROSS, HORIZ
+\draw[gray] (0,\s) rectangle (\s,2*\s);
+\draw[line width=\pw, blue] (0.5*\s,\s) -- (0.5*\s,2*\s);
+\draw[gray] (\s,\s) rectangle (2*\s,2*\s);
+\draw[line width=\pw, blue] (1.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+\draw[gray] (2*\s,\s) rectangle (3*\s,2*\s);
+\draw[line width=\pw, blue] (2*\s,1.5*\s) -- (3*\s,1.5*\s);
+\draw[gray] (3*\s,\s) rectangle (4*\s,2*\s);
+\draw[line width=\pw, blue] (3*\s,1.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
+\draw[gray] (4*\s,\s) rectangle (5*\s,2*\s);
+\draw[line width=\pw, blue] (4.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+\draw[gray] (5*\s,\s) rectangle (6*\s,2*\s);
+\draw[line width=\pw, blue] (5*\s,1.5*\s) -- (6*\s,1.5*\s);
+\draw[line width=\pw, blue] (5.5*\s,\s) -- (5.5*\s,2*\s);
+\draw[gray] (6*\s,\s) rectangle (7*\s,2*\s);
+\draw[line width=\pw, blue] (6*\s,1.5*\s) -- (7*\s,1.5*\s);
+
+% Row 2: SE, NW, BLANK, SE, HORIZ, CROSS, HORIZ
+\draw[gray] (0,2*\s) rectangle (\s,3*\s);
+\draw[line width=\pw, blue] (0.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+\draw[gray] (\s,2*\s) rectangle (2*\s,3*\s);
+\draw[line width=\pw, blue] (\s,2.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
+\draw[gray] (2*\s,2*\s) rectangle (3*\s,3*\s);
+\draw[gray] (3*\s,2*\s) rectangle (4*\s,3*\s);
+\draw[line width=\pw, blue] (3.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+\draw[gray] (4*\s,2*\s) rectangle (5*\s,3*\s);
+\draw[line width=\pw, blue] (4*\s,2.5*\s) -- (5*\s,2.5*\s);
+\draw[gray] (5*\s,2*\s) rectangle (6*\s,3*\s);
+\draw[line width=\pw, blue] (5*\s,2.5*\s) -- (6*\s,2.5*\s);
+\draw[line width=\pw, blue] (5.5*\s,2*\s) -- (5.5*\s,3*\s);
+\draw[gray] (6*\s,2*\s) rectangle (7*\s,3*\s);
+\draw[line width=\pw, blue] (6*\s,2.5*\s) -- (7*\s,2.5*\s);
+
+% Row 3: BLANK, SE, NW, BLANK, BLANK, SE, HORIZ
+\draw[gray] (0,3*\s) rectangle (\s,4*\s);
+\draw[gray] (\s,3*\s) rectangle (2*\s,4*\s);
+\draw[line width=\pw, blue] (1.5*\s,3*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+\draw[gray] (2*\s,3*\s) rectangle (3*\s,4*\s);
+\draw[line width=\pw, blue] (2*\s,3.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
+\draw[gray] (3*\s,3*\s) rectangle (4*\s,4*\s);
+\draw[gray] (4*\s,3*\s) rectangle (5*\s,4*\s);
+\draw[gray] (5*\s,3*\s) rectangle (6*\s,4*\s);
+\draw[line width=\pw, blue] (5.5*\s,3*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+\draw[gray] (6*\s,3*\s) rectangle (7*\s,4*\s);
+\draw[line width=\pw, blue] (6*\s,3.5*\s) -- (7*\s,3.5*\s);
+
+% Row 4 (top): BLANK, BLANK, SE, HORIZ, HORIZ, HORIZ, HORIZ
+\draw[gray] (0,4*\s) rectangle (\s,5*\s);
+\draw[gray] (\s,4*\s) rectangle (2*\s,5*\s);
+\draw[gray] (2*\s,4*\s) rectangle (3*\s,5*\s);
+\draw[line width=\pw, blue] (2.5*\s,4*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+\draw[gray] (3*\s,4*\s) rectangle (4*\s,5*\s);
+\draw[line width=\pw, blue] (3*\s,4.5*\s) -- (4*\s,4.5*\s);
+\draw[gray] (4*\s,4*\s) rectangle (5*\s,5*\s);
+\draw[line width=\pw, blue] (4*\s,4.5*\s) -- (5*\s,4.5*\s);
+\draw[gray] (5*\s,4*\s) rectangle (6*\s,5*\s);
+\draw[line width=\pw, blue] (5*\s,4.5*\s) -- (6*\s,4.5*\s);
+\draw[gray] (6*\s,4*\s) rectangle (7*\s,5*\s);
+\draw[line width=\pw, blue] (6*\s,4.5*\s) -- (7*\s,4.5*\s);
+
+% Column labels at bottom
+\foreach \i in {1,...,7} {
+  \node[below] at (\i*\s-0.5*\s,-0.3) {\scriptsize \i};
+}
+% Exit labels on right (showing which row each pipe exits)
+\node[right] at (7*\s+0.2,0.5*\s) {\scriptsize 7};
+\node[right] at (7*\s+0.2,1.5*\s) {\scriptsize 3};
+\node[right] at (7*\s+0.2,2.5*\s) {\scriptsize 2};
+\node[right] at (7*\s+0.2,3.5*\s) {\scriptsize 6};
+\node[right] at (7*\s+0.2,4.5*\s) {\scriptsize 1};
+\end{scope}
+
+% Arrow and label
+\node at (9*\s,2.5*\s) {\Large $\xrightarrow{\bzeromap}$};
+
+% Second BPD (right side) - 4 rows (bottom row removed)
+\begin{scope}[shift={(11*\s,\s)}]
+% Start from row 1 (skipping the bottom row from left BPD)
+% Row 0 (was row 1): VERT, SE, HORIZ, NW, SE, CROSS, HORIZ
+\draw[gray] (0,0) rectangle (\s,\s);
+\draw[line width=\pw, blue] (0.5*\s,0) -- (0.5*\s,\s);
+\draw[gray] (\s,0) rectangle (2*\s,\s);
+\draw[line width=\pw, blue] (1.5*\s,0) arc[start angle=180, end angle=90, radius=0.5*\s];
+\draw[gray] (2*\s,0) rectangle (3*\s,\s);
+\draw[line width=\pw, blue] (2*\s,0.5*\s) -- (3*\s,0.5*\s);
+\draw[gray] (3*\s,0) rectangle (4*\s,\s);
+\draw[line width=\pw, blue] (3*\s,0.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
+\draw[gray] (4*\s,0) rectangle (5*\s,\s);
+\draw[line width=\pw, blue] (4.5*\s,0) arc[start angle=180, end angle=90, radius=0.5*\s];
+\draw[gray] (5*\s,0) rectangle (6*\s,\s);
+\draw[line width=\pw, blue] (5*\s,0.5*\s) -- (6*\s,0.5*\s);
+\draw[line width=\pw, blue] (5.5*\s,0) -- (5.5*\s,\s);
+\draw[gray] (6*\s,0) rectangle (7*\s,\s);
+\draw[line width=\pw, blue] (6*\s,0.5*\s) -- (7*\s,0.5*\s);
+
+% Row 1 (was row 2): SE, NW, BLANK, SE, HORIZ, CROSS, HORIZ
+\draw[gray] (0,\s) rectangle (\s,2*\s);
+\draw[line width=\pw, blue] (0.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+\draw[gray] (\s,\s) rectangle (2*\s,2*\s);
+\draw[line width=\pw, blue] (\s,1.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
+\draw[gray] (2*\s,\s) rectangle (3*\s,2*\s);
+\draw[gray] (3*\s,\s) rectangle (4*\s,2*\s);
+\draw[line width=\pw, blue] (3.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+\draw[gray] (4*\s,\s) rectangle (5*\s,2*\s);
+\draw[line width=\pw, blue] (4*\s,1.5*\s) -- (5*\s,1.5*\s);
+\draw[gray] (5*\s,\s) rectangle (6*\s,2*\s);
+\draw[line width=\pw, blue] (5*\s,1.5*\s) -- (6*\s,1.5*\s);
+\draw[line width=\pw, blue] (5.5*\s,\s) -- (5.5*\s,2*\s);
+\draw[gray] (6*\s,\s) rectangle (7*\s,2*\s);
+\draw[line width=\pw, blue] (6*\s,1.5*\s) -- (7*\s,1.5*\s);
+
+% Row 2 (was row 3): BLANK, SE, NW, BLANK, BLANK, SE, HORIZ
+\draw[gray] (0,2*\s) rectangle (\s,3*\s);
+\draw[gray] (\s,2*\s) rectangle (2*\s,3*\s);
+\draw[line width=\pw, blue] (1.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+\draw[gray] (2*\s,2*\s) rectangle (3*\s,3*\s);
+\draw[line width=\pw, blue] (2*\s,2.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
+\draw[gray] (3*\s,2*\s) rectangle (4*\s,3*\s);
+\draw[gray] (4*\s,2*\s) rectangle (5*\s,3*\s);
+\draw[gray] (5*\s,2*\s) rectangle (6*\s,3*\s);
+\draw[line width=\pw, blue] (5.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+\draw[gray] (6*\s,2*\s) rectangle (7*\s,3*\s);
+\draw[line width=\pw, blue] (6*\s,2.5*\s) -- (7*\s,2.5*\s);
+
+% Row 3 (was row 4): BLANK, BLANK, SE, HORIZ, HORIZ, HORIZ, HORIZ
+\draw[gray] (0,3*\s) rectangle (\s,4*\s);
+\draw[gray] (\s,3*\s) rectangle (2*\s,4*\s);
+\draw[gray] (2*\s,3*\s) rectangle (3*\s,4*\s);
+\draw[line width=\pw, blue] (2.5*\s,3*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
+\draw[gray] (3*\s,3*\s) rectangle (4*\s,4*\s);
+\draw[line width=\pw, blue] (3*\s,3.5*\s) -- (4*\s,3.5*\s);
+\draw[gray] (4*\s,3*\s) rectangle (5*\s,4*\s);
+\draw[line width=\pw, blue] (4*\s,3.5*\s) -- (5*\s,3.5*\s);
+\draw[gray] (5*\s,3*\s) rectangle (6*\s,4*\s);
+\draw[line width=\pw, blue] (5*\s,3.5*\s) -- (6*\s,3.5*\s);
+\draw[gray] (6*\s,3*\s) rectangle (7*\s,4*\s);
+\draw[line width=\pw, blue] (6*\s,3.5*\s) -- (7*\s,3.5*\s);
+
+% Column labels at bottom
+\foreach \i in {1,...,7} {
+  \node[below] at (\i*\s-0.5*\s,-0.3) {\scriptsize \i};
+}
+% Exit labels on right (showing which row each pipe exits after bzeromap)
+\node[right] at (7*\s+0.2,0.5*\s) {\scriptsize 5};
+\node[right] at (7*\s+0.2,1.5*\s) {\scriptsize 2};
+\node[right] at (7*\s+0.2,2.5*\s) {\scriptsize 6};
+\node[right] at (7*\s+0.2,3.5*\s) {\scriptsize 1};
+\end{scope}
+
+\end{tikzpicture}
+\caption{The $\bzeromap$ transformation on a bumpless pipe dream with permutation $[1,6,2,3,7,4,5]$. The bottom row is removed, resulting in a BPD with one fewer row and permutation $[1,6,2,5,3,4]$.}
+\label{figure:transition}
+\end{figure}
+
+\begin{theorem} \label{theorem:bpdzero}
+We have the formula
+$$\varphi\circ \bzeromap = \zeromap \circ \varphi$$
+\end{theorem}
+\begin{proof}
+Little bumps on last descent
+\end{proof}
+
+
+\begin{definition}
+Let $(B, p)$ be a BPD and let $(C, q)$ be another BPD. We define an operation $B\looparrowright C$ as follows. First, let $\varphi(B) = ((a_1, r_1), (a_2, r_2), \ldots, (a_m, r_m))$. Then define
+$$B\looparrowright^p C = \Delta(((a_1, r_1), (a_2, r_2), \ldots, (a_m, r_m)),C\shup^p)$$
+
+We may define a ring product on $\BPD$, somewhat independently of the bijection, by declaring that 
+$$(B, p)\diamond (C, q) = \sum_{\mathbf{t}^N(B', p + N) = (B,n)} (B'\looparrowright^p C, p+q)$$
+\end{definition}
+
+
+
+\begin{theorem}
+The Gao-Huang bijection $\varphi:\BPD \to \BRC$ is an isomorphism of rings.
+\end{theorem}
+
+Maybe easify BPD right zero act
+
 \subsection{Definition of the ring product}
 
 \begin{definition}
@@ -2214,6 +2655,18 @@ where $R'$ ranges over bounded RC graphs with $\hr(R')=m+n$.
 Define a map $D:\BRC\to \dcoma\otimes \dcoma$ by
 $$D(R) = \dsch_{\wof{R}}^{\hr(R)}\otimes [\wtt(R)]$$
 \end{definition}
+
+\begin{lemma} \label{lemma:assoc_clip}
+  We have the following equations for an RC graph $R$ and two integers $p$ and $q$:
+$$\clp^p(\clp^{p+q}(R)) = \clp^p(R)$$
+$$\trm^p(\clp^{p+q}(R)) = \clp^q(\trm^p(R))$$ 
+and 
+$$\trm^{p+q}(R) = \trm^q(\trm^{p}(R))$$
+\end{lemma}
+\begin{proof}
+The first equation is trivial for the map $\mathbf{t}$ on BPDs, which transfers by Theorem \ref{theorem:bpdzero} directly to RC graphs. The remaining equations are trivial.
+\end{proof}
+
 
 \begin{theorem}
 	 The product $\diamond$ turns $\BRC$ into a ring, and $D:\BRC\to \dcoma\otimes \dcoma$ is a homomorphism of rings.
@@ -3071,460 +3524,6 @@ where $\mathtt{sz}_n:\BRCC\to \BRCC$ is defined on basis elements by
 $$\mathtt{sz}_n(R, m) = \begin{cases}(R, n) & \text{if } i\leq n\text{ for all }(i, j)\in R\\
 0 & \text{otherwise}\end{cases}$$
 
-
-
-\subsection{Relation to Little bumps}
-
-\newcommand{\ltb}{\mathrm{little}}
-\newcommand{\lzeromap}{\mathscr{Z}}
-\newcommand{\lmap}{\mathscr{L}}
-Define a function $\lmap:\BRC^0(n)\to\BRC(n+1)$ as follows. Assume $n=\maxd(\wof{R})$, and suppose $\rtt_R(i, j) = (n, n + 1)$, where $i < n$. Set 
-$$R'= (R\setminus \{(i, j)\})\cup \{(n,1)\}$$
-Then define
-$$\lmap(R, n) = ((\ins{n-1}{i} R')\setminus\{(n, 1)\}, n + 1)$$
-Then define $\lzeromap:\BRC^0(n)\to \BRC(n-1)$ by iterating $\lmap$ and stopping as soon as the result has $\maxd(\wof{R})\leq n-1$.
-
-\begin{proposition} \label{proposition:little_bump}
-  Let $(R, n)\in \BRC^0(n)$ be a bounded RC graph such that $\maxd(\wof{R}) = n$. Suppose 
-  $$\mathrm{word}(R) = a_1 a_2 \cdots a_k$$ 
-  and 
-  $$\mathrm{seq}(R) = r_1 r_2 \cdots r_k,$$ 
-  suppose $\rtt_R(i,j)=(n,n+1)$, and let $p$ be the index such that $r_p=i$ and $r_p + j - 1 = a_p$. Then
-  $$\mathrm{word}(\lmap(R, n)) = \ltb_{p}(\mathrm{word}(R, n))$$
-\end{proposition}
-\begin{proof}
-Consider the biword
-$$\begin{matrix}
-r_1& r_2& \cdots & r_{p-1} & r_p & r_{p+1} & \cdots & r_k\\
-a_1& a_2& \cdots & a_{p-1} & a_p & a_{p+1} & \cdots & a_k
-\end{matrix}$$
-The first deletion yields
-$$\begin{matrix}
-r_1& r_2& \cdots & r_{p-1} &  r_{p+1} & \cdots & r_k& n\\
-a_1& a_2& \cdots & a_{p-1} &  a_{p+1} & \cdots & a_k& n
-\end{matrix}$$
-Necessarily, we must have $a_p > 1$. If we have $a_p=1$, then we would have $r_p=1$. The only way for position $(1,1)$ in an RC graph to be a right descent is if it is the unique right descent. By assumption, that descent would have to be $n$, so that $n=1$. In that case, however, it would not be possible for the last row to be empty. 
-
-We also must have that $r_p < a_p$, because there is a sequence of chute moves involving this crossing that moves it to position $(n, 1)$ by \cite[Theorem~3.7]{bbrc}. Assume first that $p = k$. Then the insertion algorithm will insert $a_p - 1=n-1$ into row $r_k$. If this word is reduced, then we are done, and this clearly coincides with the Little bump. If it is not reduced, the descent $n-1$ occurs somewhere to the left, say at position $j$. The insertion algorithm would delete this letter then try to insert another one. However, we can see that recursively this is the same as applying $\zeromap_+$ to the biword obtained by removing all letters after position $j$ and then reinserting them afterwards. By the inductive hypothesis, this coincides with applying the Little bump at position $j$, which would indeed be the next step in the recursion of applying the Little bump at position $k$. Thus, the two coincide by induction.
-\end{proof}
-
-\begin{theorem}[{\cite[Theorem~4.4]{hamaker2014relating}}]
-Let $\mathrm{w}$ be a reduced word for a permutation $w\in S_\infty$. Then
-$$Q(\mathrm{w}) = Q(\ltb_p(\mathrm{w}))$$
-for any valid $p$.
-\end{theorem}
-
-\begin{corollary}
-  $\lmap:\BRC^0(n)\to \BRC(n+1)$ is a weight-preserving injection that preserves the recording tableau under the Edelman-Greene correspondence.
-\end{corollary}
-
-\begin{corollary}
-$$\lzeromap:\RC(w, n)^0\to \bigcup_{w\downvar{n} w'}\RC(w', n-1)$$ 
-	is a weight-preserving isomorphism of crystal graphs.
-\end{corollary}
-
-
-\begin{corollary}
-  We have the equality
-$$\lzeromap=\zeromap$$ 
-\end{corollary}
-
-
-\subsection{Relation to the bijection with bumpless pipe dreams}
-
-\newcommand{\BPD}{\mathcal{BPD}}
-
-
-\begin{definition}
-  Denote by $\BPD(w,n)$ the set of (reduced) $n$-row bumpless pipe dreams for a permutation $w$, where $n\geq \maxd(w)$. These are $n\times N$ grids, where $N$ is at least the length of $w$, populated with $6$ possible tiles, shown in Figure \ref{figure:bpdtiles}, satisfying the conditions that pipes must enter from the bottom and exit on the right, and no two pipes may cross twice. We may assign a permutation to such a BPD as follows.
-
-  Let $(B, n)$ be an $n$-row BPD. Let $c_1,\ldots,c_m$ be the columns such that the pipes on the bottom edge have an entrance from the bottom. If the pipe coming from $c_i$ exits on row $j$ on the right, then $w(c_i) = j$. To fill in the remaining elements of the permutation, we set $w(m + k) = d_k$, where $d_1,\ldots,d_k$ are the remaining columns with no entrance in increasing order.
-
-  
-
-\end{definition}
-
-\begin{figure}[htbp]
-\centering
-\begin{tikzpicture}[scale=0.8]
-% Define common parameters
-\def\tilesize{1.2}
-\def\pipewidth{1pt}
-
-% Tile 1: NW Elbow
-\begin{scope}[shift={(0,0)}]
-  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
-  \draw[line width=\pipewidth, blue] (0,0.5*\tilesize) 
-    arc[start angle=-90, end angle=0, radius=0.5*\tilesize];
-  \node[below] at (0.5*\tilesize,-0.3) {NW Elbow};
-\end{scope}
-
-% Tile 2: SE Elbow
-\begin{scope}[shift={(2*\tilesize,0)}]
-  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
-  \draw[line width=\pipewidth, blue] (0.5*\tilesize,0) 
-    arc[start angle=180, end angle=90, radius=0.5*\tilesize];
-  \node[below] at (0.5*\tilesize,-0.3) {SE Elbow};
-\end{scope}
-
-% Tile 3: Cross
-\begin{scope}[shift={(4*\tilesize,0)}]
-  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
-  \draw[line width=\pipewidth, blue] (0,0.5*\tilesize) -- (\tilesize,0.5*\tilesize);
-  \draw[line width=\pipewidth, blue] (0.5*\tilesize,0) -- (0.5*\tilesize,\tilesize);
-  \node[below] at (0.5*\tilesize,-0.3) {Cross};
-\end{scope}
-
-% Tile 4: Vertical
-\begin{scope}[shift={(6*\tilesize,0)}]
-  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
-  \draw[line width=\pipewidth, blue] (0.5*\tilesize,0) -- (0.5*\tilesize,\tilesize);
-  \node[below] at (0.5*\tilesize,-0.3) {Vertical};
-\end{scope}
-
-% Tile 5: Horizontal
-\begin{scope}[shift={(0,-2*\tilesize)}]
-  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
-  \draw[line width=\pipewidth, blue] (0,0.5*\tilesize) -- (\tilesize,0.5*\tilesize);
-  \node[below] at (0.5*\tilesize,-0.3) {Horizontal};
-\end{scope}
-
-% Tile 6: Blank
-\begin{scope}[shift={(2*\tilesize,-2*\tilesize)}]
-  \draw[gray] (0,0) rectangle (\tilesize,\tilesize);
-  \node[below] at (0.5*\tilesize,-0.3) {Blank};
-\end{scope}
-
-\end{tikzpicture}
-\caption{The six possible tiles in bumpless pipe dreams. Pipes enter from the left or bottom and exit at the top or right.}
-\label{figure:bpdtiles}
-\end{figure}
-
-
-\begin{lemma}[{\cite[Theorem~3.6]{Yu2025EmbeddingBP}}] \label{lemma:bpd_completion}
-  Let $(B, N)$ be an ordinary reduced BPD for a permutation $w$, so that $w(M) = M$ for all $M>N$ and $B$ is $N\times N$. Let $n\geq \maxd(w)$ be an integer. Then the BPD $B'$ obtained by only retaining the first $n$ rows of $B$ satisfies $w(B', n) = w(B, N)$ and uniquely determines $B$ under this assumption.
-\end{lemma}
-
-
-\begin{definition}
-There is a bijection $\varphi:\BPD(w,n)\to \mathcal{RC}(w,n)$, where $w\in S_n$, defined in \cite{GaoHuang2023} that preserves weight. It is viewed as ``canonical'' because it also provides bijective correspondences between certain insertion/bumping operations on BPDs and RC graphs, showing that they agree in a strong way. In light of Lemma \ref{lemma:bpd_completion}, we may extend this bijection to $w\in S_\infty$ with $\maxd(w)\leq n$ by first expanding the BPD to a square BPD with sufficiently many rows and columns, then applying the bijection, and finally truncating the resulting RC graph to $n$ rows.
-\end{definition}
-
-\begin{figure}[htbp]
-\centering
-\begin{tikzpicture}[scale=0.7]
-\def\s{0.8}  % tile size
-\def\pw{1pt} % pipe width
-
-% Row 0 (bottom): vert, blank, vert, se, horiz, cross
-% Col 0: vertical
-\draw[gray] (0,0) rectangle (\s,\s);
-\draw[line width=\pw, blue] (0.5*\s,0) -- (0.5*\s,\s);
-% Col 1: blank
-\draw[gray] (\s,0) rectangle (2*\s,\s);
-% Col 2: vertical
-\draw[gray] (2*\s,0) rectangle (3*\s,\s);
-\draw[line width=\pw, blue] (2.5*\s,0) -- (2.5*\s,\s);
-% Col 3: se elbow
-\draw[gray] (3*\s,0) rectangle (4*\s,\s);
-\draw[line width=\pw, blue] (3.5*\s,0) arc[start angle=180, end angle=90, radius=0.5*\s];
-% Col 4: horizontal
-\draw[gray] (4*\s,0) rectangle (5*\s,\s);
-\draw[line width=\pw, blue] (4*\s,0.5*\s) -- (5*\s,0.5*\s);
-% Col 5: cross
-\draw[gray] (5*\s,0) rectangle (6*\s,\s);
-\draw[line width=\pw, blue] (5*\s,0.5*\s) -- (6*\s,0.5*\s);
-\draw[line width=\pw, blue] (5.5*\s,0) -- (5.5*\s,\s);
-
-% Row 1: vert, blank, se, horiz, nw, se
-% Col 0: vertical
-\draw[gray] (0,\s) rectangle (\s,2*\s);
-\draw[line width=\pw, blue] (0.5*\s,\s) -- (0.5*\s,2*\s);
-% Col 1: blank
-\draw[gray] (\s,\s) rectangle (2*\s,2*\s);
-% Col 2: se elbow
-\draw[gray] (2*\s,\s) rectangle (3*\s,2*\s);
-\draw[line width=\pw, blue] (2.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-% Col 3: horizontal
-\draw[gray] (3*\s,\s) rectangle (4*\s,2*\s);
-\draw[line width=\pw, blue] (3*\s,1.5*\s) -- (4*\s,1.5*\s);
-% Col 4: nw elbow
-\draw[gray] (4*\s,\s) rectangle (5*\s,2*\s);
-\draw[line width=\pw, blue] (4*\s,1.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-% Col 5: se elbow
-\draw[gray] (5*\s,\s) rectangle (6*\s,2*\s);
-\draw[line width=\pw, blue] (5.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-
-% Row 2: se, horiz, nw, blank, se, horiz
-% Col 0: se elbow
-\draw[gray] (0,2*\s) rectangle (\s,3*\s);
-\draw[line width=\pw, blue] (0.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-% Col 1: horizontal
-\draw[gray] (\s,2*\s) rectangle (2*\s,3*\s);
-\draw[line width=\pw, blue] (\s,2.5*\s) -- (2*\s,2.5*\s);
-% Col 2: nw elbow
-\draw[gray] (2*\s,2*\s) rectangle (3*\s,3*\s);
-\draw[line width=\pw, blue] (2*\s,2.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-% Col 3: blank
-\draw[gray] (3*\s,2*\s) rectangle (4*\s,3*\s);
-% Col 4: se elbow
-\draw[gray] (4*\s,2*\s) rectangle (5*\s,3*\s);
-\draw[line width=\pw, blue] (4.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-% Col 5: horizontal
-\draw[gray] (5*\s,2*\s) rectangle (6*\s,3*\s);
-\draw[line width=\pw, blue] (5*\s,2.5*\s) -- (6*\s,2.5*\s);
-
-% Row 3 (top): blank, blank, se, horiz, horiz, horiz
-% Col 0: blank
-\draw[gray] (0,3*\s) rectangle (\s,4*\s);
-% Col 1: blank
-\draw[gray] (\s,3*\s) rectangle (2*\s,4*\s);
-% Col 2: se elbow
-\draw[gray] (2*\s,3*\s) rectangle (3*\s,4*\s);
-\draw[line width=\pw, blue] (2.5*\s,3*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-% Col 3: horizontal
-\draw[gray] (3*\s,3*\s) rectangle (4*\s,4*\s);
-\draw[line width=\pw, blue] (3*\s,3.5*\s) -- (4*\s,3.5*\s);
-% Col 4: horizontal
-\draw[gray] (4*\s,3*\s) rectangle (5*\s,4*\s);
-\draw[line width=\pw, blue] (4*\s,3.5*\s) -- (5*\s,3.5*\s);
-% Col 5: horizontal
-\draw[gray] (5*\s,3*\s) rectangle (6*\s,4*\s);
-\draw[line width=\pw, blue] (5*\s,3.5*\s) -- (6*\s,3.5*\s);
-
-% Column labels at bottom
-\foreach \i in {1,...,6} {
-  \node[below] at (\i*\s-0.5*\s,-0.3) {\i};
-}
-
-% Row exit labels on right
-\node[right] at (6*\s+0.2,3.5*\s) {1};
-\node[right] at (6*\s+0.2,2.5*\s) {3};
-\node[right] at (6*\s+0.2,1.5*\s) {6};
-\node[right] at (6*\s+0.2,0.5*\s) {4};
-
-\end{tikzpicture}
-\caption{An example of a $4$-row bumpless pipe dream for a permutation of length $6$. Pipes enter from the bottom at columns 1, 3, 4, and 6, and exit on the right at the labeled rows. The associated permutation is $[1,3,6,4,2,5]$.}
-\label{figure:bpdexample}
-\end{figure}
-
-\newcommand{\bzeromap}{\mathbf{t}}
-
-
-\begin{definition}
-We define a function $\bzeromap:\BPD(n)^0\to \BPD(n-1)$, found in \cite{WEIGANDT2021105470} in a more general context, as follows. Given a bumpless pipe dream $(B, n)$ with no blank tiles in row $n$, we simply remove row $n$ to obtain $B'$. Then
-$$\bzeromap(B, n) = (B', n-1)$$
-One may ask oneself here whether anything changes at all. Indeed, all that changes are the labels of the incoming pipes, as shown in Figure \ref{figure:transition}, and this only happens if $\maxd(w) = n$.
-\end{definition}
-
-
-
-
-
-
-\begin{figure}[htbp]
-\centering
-\begin{tikzpicture}[scale=0.55]
-\def\s{0.8}
-\def\pw{1pt}
-
-% First BPD (left side) - 5 rows x 7 cols
-\begin{scope}
-% Row 0 (bottom, will be removed): VERT, VERT, SE, HORIZ, NW, VERT, SE
-\draw[gray] (0,0) rectangle (\s,\s);
-\draw[line width=\pw, blue] (0.5*\s,0) -- (0.5*\s,\s);
-\draw[gray] (\s,0) rectangle (2*\s,\s);
-\draw[line width=\pw, blue] (1.5*\s,0) -- (1.5*\s,\s);
-\draw[gray] (2*\s,0) rectangle (3*\s,\s);
-\draw[line width=\pw, blue] (2.5*\s,0) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (3*\s,0) rectangle (4*\s,\s);
-\draw[line width=\pw, blue] (3*\s,0.5*\s) -- (4*\s,0.5*\s);
-\draw[gray] (4*\s,0) rectangle (5*\s,\s);
-\draw[line width=\pw, blue] (4*\s,0.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-\draw[gray] (5*\s,0) rectangle (6*\s,\s);
-\draw[line width=\pw, blue] (5.5*\s,0) -- (5.5*\s,\s);
-\draw[gray] (6*\s,0) rectangle (7*\s,\s);
-\draw[line width=\pw, blue] (6.5*\s,0) arc[start angle=180, end angle=90, radius=0.5*\s];
-
-% Row 1: VERT, SE, HORIZ, NW, SE, CROSS, HORIZ
-\draw[gray] (0,\s) rectangle (\s,2*\s);
-\draw[line width=\pw, blue] (0.5*\s,\s) -- (0.5*\s,2*\s);
-\draw[gray] (\s,\s) rectangle (2*\s,2*\s);
-\draw[line width=\pw, blue] (1.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (2*\s,\s) rectangle (3*\s,2*\s);
-\draw[line width=\pw, blue] (2*\s,1.5*\s) -- (3*\s,1.5*\s);
-\draw[gray] (3*\s,\s) rectangle (4*\s,2*\s);
-\draw[line width=\pw, blue] (3*\s,1.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-\draw[gray] (4*\s,\s) rectangle (5*\s,2*\s);
-\draw[line width=\pw, blue] (4.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (5*\s,\s) rectangle (6*\s,2*\s);
-\draw[line width=\pw, blue] (5*\s,1.5*\s) -- (6*\s,1.5*\s);
-\draw[line width=\pw, blue] (5.5*\s,\s) -- (5.5*\s,2*\s);
-\draw[gray] (6*\s,\s) rectangle (7*\s,2*\s);
-\draw[line width=\pw, blue] (6*\s,1.5*\s) -- (7*\s,1.5*\s);
-
-% Row 2: SE, NW, BLANK, SE, HORIZ, CROSS, HORIZ
-\draw[gray] (0,2*\s) rectangle (\s,3*\s);
-\draw[line width=\pw, blue] (0.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (\s,2*\s) rectangle (2*\s,3*\s);
-\draw[line width=\pw, blue] (\s,2.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-\draw[gray] (2*\s,2*\s) rectangle (3*\s,3*\s);
-\draw[gray] (3*\s,2*\s) rectangle (4*\s,3*\s);
-\draw[line width=\pw, blue] (3.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (4*\s,2*\s) rectangle (5*\s,3*\s);
-\draw[line width=\pw, blue] (4*\s,2.5*\s) -- (5*\s,2.5*\s);
-\draw[gray] (5*\s,2*\s) rectangle (6*\s,3*\s);
-\draw[line width=\pw, blue] (5*\s,2.5*\s) -- (6*\s,2.5*\s);
-\draw[line width=\pw, blue] (5.5*\s,2*\s) -- (5.5*\s,3*\s);
-\draw[gray] (6*\s,2*\s) rectangle (7*\s,3*\s);
-\draw[line width=\pw, blue] (6*\s,2.5*\s) -- (7*\s,2.5*\s);
-
-% Row 3: BLANK, SE, NW, BLANK, BLANK, SE, HORIZ
-\draw[gray] (0,3*\s) rectangle (\s,4*\s);
-\draw[gray] (\s,3*\s) rectangle (2*\s,4*\s);
-\draw[line width=\pw, blue] (1.5*\s,3*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (2*\s,3*\s) rectangle (3*\s,4*\s);
-\draw[line width=\pw, blue] (2*\s,3.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-\draw[gray] (3*\s,3*\s) rectangle (4*\s,4*\s);
-\draw[gray] (4*\s,3*\s) rectangle (5*\s,4*\s);
-\draw[gray] (5*\s,3*\s) rectangle (6*\s,4*\s);
-\draw[line width=\pw, blue] (5.5*\s,3*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (6*\s,3*\s) rectangle (7*\s,4*\s);
-\draw[line width=\pw, blue] (6*\s,3.5*\s) -- (7*\s,3.5*\s);
-
-% Row 4 (top): BLANK, BLANK, SE, HORIZ, HORIZ, HORIZ, HORIZ
-\draw[gray] (0,4*\s) rectangle (\s,5*\s);
-\draw[gray] (\s,4*\s) rectangle (2*\s,5*\s);
-\draw[gray] (2*\s,4*\s) rectangle (3*\s,5*\s);
-\draw[line width=\pw, blue] (2.5*\s,4*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (3*\s,4*\s) rectangle (4*\s,5*\s);
-\draw[line width=\pw, blue] (3*\s,4.5*\s) -- (4*\s,4.5*\s);
-\draw[gray] (4*\s,4*\s) rectangle (5*\s,5*\s);
-\draw[line width=\pw, blue] (4*\s,4.5*\s) -- (5*\s,4.5*\s);
-\draw[gray] (5*\s,4*\s) rectangle (6*\s,5*\s);
-\draw[line width=\pw, blue] (5*\s,4.5*\s) -- (6*\s,4.5*\s);
-\draw[gray] (6*\s,4*\s) rectangle (7*\s,5*\s);
-\draw[line width=\pw, blue] (6*\s,4.5*\s) -- (7*\s,4.5*\s);
-
-% Column labels at bottom
-\foreach \i in {1,...,7} {
-  \node[below] at (\i*\s-0.5*\s,-0.3) {\scriptsize \i};
-}
-% Exit labels on right (showing which row each pipe exits)
-\node[right] at (7*\s+0.2,0.5*\s) {\scriptsize 7};
-\node[right] at (7*\s+0.2,1.5*\s) {\scriptsize 3};
-\node[right] at (7*\s+0.2,2.5*\s) {\scriptsize 2};
-\node[right] at (7*\s+0.2,3.5*\s) {\scriptsize 6};
-\node[right] at (7*\s+0.2,4.5*\s) {\scriptsize 1};
-\end{scope}
-
-% Arrow and label
-\node at (9*\s,2.5*\s) {\Large $\xrightarrow{\bzeromap}$};
-
-% Second BPD (right side) - 4 rows (bottom row removed)
-\begin{scope}[shift={(11*\s,\s)}]
-% Start from row 1 (skipping the bottom row from left BPD)
-% Row 0 (was row 1): VERT, SE, HORIZ, NW, SE, CROSS, HORIZ
-\draw[gray] (0,0) rectangle (\s,\s);
-\draw[line width=\pw, blue] (0.5*\s,0) -- (0.5*\s,\s);
-\draw[gray] (\s,0) rectangle (2*\s,\s);
-\draw[line width=\pw, blue] (1.5*\s,0) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (2*\s,0) rectangle (3*\s,\s);
-\draw[line width=\pw, blue] (2*\s,0.5*\s) -- (3*\s,0.5*\s);
-\draw[gray] (3*\s,0) rectangle (4*\s,\s);
-\draw[line width=\pw, blue] (3*\s,0.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-\draw[gray] (4*\s,0) rectangle (5*\s,\s);
-\draw[line width=\pw, blue] (4.5*\s,0) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (5*\s,0) rectangle (6*\s,\s);
-\draw[line width=\pw, blue] (5*\s,0.5*\s) -- (6*\s,0.5*\s);
-\draw[line width=\pw, blue] (5.5*\s,0) -- (5.5*\s,\s);
-\draw[gray] (6*\s,0) rectangle (7*\s,\s);
-\draw[line width=\pw, blue] (6*\s,0.5*\s) -- (7*\s,0.5*\s);
-
-% Row 1 (was row 2): SE, NW, BLANK, SE, HORIZ, CROSS, HORIZ
-\draw[gray] (0,\s) rectangle (\s,2*\s);
-\draw[line width=\pw, blue] (0.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (\s,\s) rectangle (2*\s,2*\s);
-\draw[line width=\pw, blue] (\s,1.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-\draw[gray] (2*\s,\s) rectangle (3*\s,2*\s);
-\draw[gray] (3*\s,\s) rectangle (4*\s,2*\s);
-\draw[line width=\pw, blue] (3.5*\s,\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (4*\s,\s) rectangle (5*\s,2*\s);
-\draw[line width=\pw, blue] (4*\s,1.5*\s) -- (5*\s,1.5*\s);
-\draw[gray] (5*\s,\s) rectangle (6*\s,2*\s);
-\draw[line width=\pw, blue] (5*\s,1.5*\s) -- (6*\s,1.5*\s);
-\draw[line width=\pw, blue] (5.5*\s,\s) -- (5.5*\s,2*\s);
-\draw[gray] (6*\s,\s) rectangle (7*\s,2*\s);
-\draw[line width=\pw, blue] (6*\s,1.5*\s) -- (7*\s,1.5*\s);
-
-% Row 2 (was row 3): BLANK, SE, NW, BLANK, BLANK, SE, HORIZ
-\draw[gray] (0,2*\s) rectangle (\s,3*\s);
-\draw[gray] (\s,2*\s) rectangle (2*\s,3*\s);
-\draw[line width=\pw, blue] (1.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (2*\s,2*\s) rectangle (3*\s,3*\s);
-\draw[line width=\pw, blue] (2*\s,2.5*\s) arc[start angle=-90, end angle=0, radius=0.5*\s];
-\draw[gray] (3*\s,2*\s) rectangle (4*\s,3*\s);
-\draw[gray] (4*\s,2*\s) rectangle (5*\s,3*\s);
-\draw[gray] (5*\s,2*\s) rectangle (6*\s,3*\s);
-\draw[line width=\pw, blue] (5.5*\s,2*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (6*\s,2*\s) rectangle (7*\s,3*\s);
-\draw[line width=\pw, blue] (6*\s,2.5*\s) -- (7*\s,2.5*\s);
-
-% Row 3 (was row 4): BLANK, BLANK, SE, HORIZ, HORIZ, HORIZ, HORIZ
-\draw[gray] (0,3*\s) rectangle (\s,4*\s);
-\draw[gray] (\s,3*\s) rectangle (2*\s,4*\s);
-\draw[gray] (2*\s,3*\s) rectangle (3*\s,4*\s);
-\draw[line width=\pw, blue] (2.5*\s,3*\s) arc[start angle=180, end angle=90, radius=0.5*\s];
-\draw[gray] (3*\s,3*\s) rectangle (4*\s,4*\s);
-\draw[line width=\pw, blue] (3*\s,3.5*\s) -- (4*\s,3.5*\s);
-\draw[gray] (4*\s,3*\s) rectangle (5*\s,4*\s);
-\draw[line width=\pw, blue] (4*\s,3.5*\s) -- (5*\s,3.5*\s);
-\draw[gray] (5*\s,3*\s) rectangle (6*\s,4*\s);
-\draw[line width=\pw, blue] (5*\s,3.5*\s) -- (6*\s,3.5*\s);
-\draw[gray] (6*\s,3*\s) rectangle (7*\s,4*\s);
-\draw[line width=\pw, blue] (6*\s,3.5*\s) -- (7*\s,3.5*\s);
-
-% Column labels at bottom
-\foreach \i in {1,...,7} {
-  \node[below] at (\i*\s-0.5*\s,-0.3) {\scriptsize \i};
-}
-% Exit labels on right (showing which row each pipe exits after bzeromap)
-\node[right] at (7*\s+0.2,0.5*\s) {\scriptsize 5};
-\node[right] at (7*\s+0.2,1.5*\s) {\scriptsize 2};
-\node[right] at (7*\s+0.2,2.5*\s) {\scriptsize 6};
-\node[right] at (7*\s+0.2,3.5*\s) {\scriptsize 1};
-\end{scope}
-
-\end{tikzpicture}
-\caption{The $\bzeromap$ transformation on a bumpless pipe dream with permutation $[1,6,2,3,7,4,5]$. The bottom row is removed, resulting in a BPD with one fewer row and permutation $[1,6,2,5,3,4]$.}
-\label{figure:transition}
-\end{figure}
-
-\begin{theorem}
-We have the formula
-$$\varphi\circ \bzeromap = \zeromap \circ \varphi$$
-\end{theorem}
-\begin{proof}
-Little bumps on last descent
-\end{proof}
-
-\begin{definition}
-Let $(B, p)$ be a BPD and let $(C, q)$ be another BPD. We define an operation $B\looparrowright C$ as follows. First, let $\varphi(B) = ((a_1, r_1), (a_2, r_2), \ldots, (a_m, r_m))$. Then define
-$$B\looparrowright^p C = \Delta(((a_1, r_1), (a_2, r_2), \ldots, (a_m, r_m)),C\shup^p)$$
-
-We may define a ring product on $\BPD$, somewhat independently of the bijection, by declaring that 
-$$(B, p)\diamond (C, q) = \sum_{\mathbf{t}^N(B', p + N) = (B,n)} (B'\looparrowright^p C, p+q)$$
-\end{definition}
-
-
-
-Squash prod BPDs
-
-
-
-\begin{theorem}
-The Gao-Huang bijection $\varphi:\BPD \to \BRC$ is an isomorphism of rings.
-\end{theorem}
 
 
 \subsection{gaboop}
