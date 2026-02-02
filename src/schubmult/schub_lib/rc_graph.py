@@ -73,37 +73,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             return NotImplemented
         return tuple(self) == tuple(other)
 
-    # # def __iter__(self):
-    # #     for row in super().__iter__():
-    # #         yield tuple(row)
-
-    # def flat_elem_sym_mul(self, k: int) -> RCGraph | None:
-    #     from schubmult.utils.schub_lib import elem_sym_perms
-
-    #     elem_graph = RCGraph([(i,) for i in range(1, k + 1)])
-    #     mul_graph = self
-    #     if len(elem_graph) != len(mul_graph):
-    #         length = max(len(elem_graph), len(mul_graph))
-    #         elem_graph = elem_graph.resize(length)
-    #         mul_graph = mul_graph.resize(length)
-    #     tensor = CrystalGraphTensor(elem_graph, mul_graph)
-    #     hw_rc, raise_seq = tensor.to_highest_weight()
-    #     perm_list = [perm for (perm, w) in elem_sym_perms(mul_graph.perm, k, k) if w == k]
-    #     results = set()
-    #     for perm in perm_list:
-    #         for rc in RCGraph.all_rc_graphs(perm, length=len(mul_graph), weight=hw_rc.crystal_weight):
-    #             if rc.is_highest_weight and _crystal_isomorphic(hw_rc, rc):
-    #                 results.add(rc.reverse_raise_seq(raise_seq))
-    #                 break
-    #     if results:
-    #         assert len(results) == 1, (
-    #             f"Ambiguous flat elem crystal multiplication results for k={k} on\n{self} \nResults:\n" + "\n".join([str(r) for r in results]) + "\n".join([str(r.p_tableau) for r in results])
-    #         )
-    #         return next(iter(results))
-    #     return None
-
-    # def monk_insert(self, row):
-
     def loc_of_inversion(self, a, b):
         lookup = {self.left_to_right_inversion(i): self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)}
         return lookup[(a, b)]
@@ -448,7 +417,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     def prepend(self, extra_rows: int) -> RCGraph:
         return type(self)([*tuple([()] * extra_rows), *self.shiftup(extra_rows)])
 
-    def _kogan_kumar_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True, reflection_rows=None, target_row=None):
+    def _pieri_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True, reflection_rows=None, target_row=None):
         working_rc = self
         if row > descent:
             raise ValueError("All rows must be less than or equal to descent")
@@ -543,7 +512,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 else:
                     raise ValueError(f"Could not rectify at {(row_below, j)} with root {(a, b)}")
                 if flag:
-                    working_rc, _ = working_rc._kogan_kumar_insert_row(
+                    working_rc, _ = working_rc._pieri_insert_row(
                         row_below,
                         descent,
                         dict_by_a,
@@ -556,7 +525,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return working_rc._kogan_kumar_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row)
 
     # VERIFY
-    def kogan_kumar_insert(self, descent, rows, return_reflections=False, backwards=True):
+    def pieri_insert(self, descent, rows, return_reflections=False, backwards=True):
         dict_by_a = {}
         dict_by_b = {}
         reflection_rows = {}  # Track which row each reflection was added to
@@ -579,7 +548,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         for row in sorted(rows_grouping.keys(), reverse=True):
             num_times = rows_grouping[row]
             last_working_rc = working_rc
-            working_rc, new_reflections = working_rc._kogan_kumar_insert_row(row, descent, dict_by_a, dict_by_b, num_times, backwards=backwards, reflection_rows=reflection_rows, target_row=row)
+            working_rc, new_reflections = working_rc._pieri_insert_row(row, descent, dict_by_a, dict_by_b, num_times, backwards=backwards, reflection_rows=reflection_rows, target_row=row)
             reflections += new_reflections
             if row > 1 and not working_rc.is_valid:
                 working_rc = working_rc._kogan_kumar_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=row)  # minus one?
@@ -699,7 +668,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             diff_rows += [row]
 
         interim2 = type(self)([*interim[:-1], tuple(sorted(descs, reverse=True))])
-        interim = interim2.kogan_kumar_insert(len(self.perm.trimcode) - extend_amount, diff_rows)
+        interim = interim2.pieri_insert(len(self.perm.trimcode) - extend_amount, diff_rows)
 
         return interim.rowrange(0, len(self) - 1)
 
@@ -1198,7 +1167,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             rows = [r for r in rows if r != row]
             if len(rows) == 0:
                 continue
-            bottom_cut = bottom_cut.kogan_kumar_insert(descent - 1, rows)
+            bottom_cut = bottom_cut.pieri_insert(descent - 1, rows)
         return RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
 
     def little_bump_zero(self):
@@ -1214,7 +1183,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             raise ValueError("Last row not empty")
         rc, row = self.exchange_property(last_desc, return_row=True)
         rc = rc.toggle_ref_at(last_desc, 1)
-        rc = rc.kogan_kumar_insert(last_desc - 1, [row]).toggle_ref_at(last_desc, 1)
+        rc = rc.pieri_insert(last_desc - 1, [row]).toggle_ref_at(last_desc, 1)
         if max(rc.perm.descents(), default=-1) + 1 < last_desc:
             return rc.resize(last_desc - 1)
         return rc.little_bump_zero().resize(last_desc - 1)
