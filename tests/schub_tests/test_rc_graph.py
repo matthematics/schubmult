@@ -78,6 +78,19 @@ def test_little_bump():
 
     assert rc.little_bump(3,4) == expected
 
+def test_computes_double_schub():
+    from schubmult import RCGraph, Permutation, DSx
+    from schubmult.symbolic import S, expand
+    from schubmult.abc import x, y
+    n = 5
+    perms = Permutation.all_permutations(n)
+    
+    for perm in perms:
+        rc_graphs = RCGraph.all_rc_graphs(perm, len(perm.trimcode))
+        the_sum = sum([rc.polyvalue(x,y) for rc in rc_graphs])
+        assert expand(the_sum - DSx(perm).expand()) == S.Zero
+
+
 def test_little_bump_zero_equivalent():
     from schubmult import RCGraph, Permutation
     n = 6

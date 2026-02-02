@@ -11,7 +11,20 @@ def test_all_bpds():
             for i in range(n - 1, len(bpd.perm.trimcode) - 1):
                 assert bpd.perm == bpd.resize(i).perm, f"Error: BPD resize permutation mismatch for permutation {perm} with len {i}:\nBPD:\n{bpd}\nResized BPD:\n{bpd.resize(i)}"
         assert sum([Sx(bpd.polyvalue(Sx.genset)) for bpd in bpd_set]) == Sx(perm), f"Error: BPD all_bpds polynomial value mismatch for permutation {perm}:\nSum of BPD polyvalues:\n{sum(Sx(bpd.polyvalue(Sx.genset) for bpd in bpd_set))}\nExpected:\n{Sx(perm)}"      
-        
+
+def test_computes_double_schub():
+    from schubmult import BPD, Permutation, DSx
+    from schubmult.symbolic import S, expand
+    from schubmult.abc import x, y
+    n = 5
+    perms = Permutation.all_permutations(n)
+    
+    for perm in perms:
+        bpd_set = BPD.all_bpds(perm, len(perm.trimcode))
+        the_sum = sum([bpd.polyvalue(x,y) for bpd in bpd_set])
+        assert expand(the_sum - DSx(perm).expand()) == S.Zero
+
+
 def test_bruhat_path_reconstruct():
     from schubmult import BPD, Permutation
     n = 5
