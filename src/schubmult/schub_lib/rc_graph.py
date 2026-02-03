@@ -509,6 +509,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                             reflection_rows[(dict_by_b[a], b)] = target_row
                             new_reflections.append((dict_by_b[a], b))
                         flag = True
+                    elif descent is None:
+                        working_rc = working_rc.toggle_ref_at(row, i)
+                        flag = True
                 if flag:
                     num_done += 1
                 if row > 1 and not working_rc.is_valid:
@@ -1188,6 +1191,17 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
             ret = working_set
         return ret
+
+    def last_descent_strip(self) -> tuple[int, ...]:
+        if self.perm.inv == 0:
+            return ()
+        last_desc = max(self.perm.descents()) + 1
+        strip = []
+        working_rc = self
+        while working_rc.perm.inv > 0 and max(working_rc.perm.descents()) + 1 >= last_desc:
+            working_rc, row = working_rc.exchange_property(max(working_rc.perm.descents()) + 1, return_row=True)
+            strip.append(row)
+        return working_rc, tuple(strip)
 
     def pull_out_row(self, row: int) -> tuple[tuple, RCGraph]:
         # if row - 1 not in self.perm.descents():

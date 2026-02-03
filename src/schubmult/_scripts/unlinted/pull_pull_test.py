@@ -22,8 +22,8 @@ if __name__ == "__main__":
             smm = S.Zero
             lower_perms = {}
             for rc in RCGraph.all_rc_graphs(perm, len(perm.trimcode)):
-                if len(rc[i-1]) != 0:
-                    continue
+                # if len(rc[i-1]) != 0:
+                #     continue
                 pullout = rc.pull_out_row(i)
                 assert pullout.is_valid
                 assert pullout.perm in [p for _, p in pull_out_var(i, rc.perm)]
@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
         # for perm2 in lower_perms:
         #     assert lower_perms[perm2] == RCGraph.all_rc_graphs(perm2, len(perm.trimcode) - 1), f"Error: missing RC graphs for permutation {perm2} from pull out of {perm} at row {i}."
-            expected = Sx(perm).expand().subs(x[i], S.Zero)
+            expected = Sx(perm).expand()#.subs(x[i], S.Zero)
             try:
                 assert expand(smm - expected) == S.Zero, f"Error in pull out of row {i} for permutation {perm}: got {smm}, expected {expected}."
             except AssertionError as e:

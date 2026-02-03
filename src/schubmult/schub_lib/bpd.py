@@ -216,77 +216,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def delete_row(self, row: int) -> BPD:
         new_grid = self._grid.copy()
-        # bad_crosses = sorted([(i, j) for (i, j) in self.all_crossings() if 1 in set(self.right_root_at(i, j))])
-        # for (i, j) in bad_crosses:
-        #     new_grid[i, j: self.cols - 1] = new_grid[i, j + 1 :]
         col = self.cols - 1
         current_row = row - 1
 
-        # if current_row > 0:
-        #     for check_col in range(self.cols - 1):
-        #         if self[current_row, check_col] == TileType.ELBOW_NW:
-        #             if self[current_row - 1, check_col] == TileType.CROSS:
-        #                 new_grid[current_row - 1, check_col] = TileType.HORIZ
-        #             elif self[current_row - 1, check_col] == TileType.VERT:
-        #                 new_grid[current_row - 1, check_col] = TileType.ELBOW_NW
-        #             elif self[current_row - 1, check_col] == TileType.ELBOW_SE:
-        #                 new_grid[current_row - 1, check_col] = TileType.HORIZ
-        #             #new_grid[current_row - 1, check_col] = TileType.VERT
-
         going_left = True
-        # if current_row < self.rows - 1:
-        #     for check_col in range(self.cols - 1):
-        #         if self[current_row + 1, check_col] == TileType.CROSS:
-        #             new_grid[current_row + 1, check_col] = TileType.HORIZ
-        #         elif self[current_row + 1, check_col] == TileType.VERT:
-        #             new_grid[current_row + 1, check_col] = TileType.ELBOW_SE
-        #         elif self[current_row + 1, check_col] == TileType.ELBOW_NW:
-        #             new_grid[current_row + 1, check_col] = TileType.HORIZ
-        # if current_row > 0:
-        #     for check_col in range(self.cols - 1):
-        #         if self[current_row - 1, check_col] == TileType.CROSS:
-        #             new_grid[current_row - 1, check_col] = TileType.HORIZ
-        #         elif self[current_row - 1, check_col] == TileType.VERT:
-        #             new_grid[current_row - 1, check_col] = TileType.ELBOW_NW
-        #         elif self[current_row - 1, check_col] == TileType.ELBOW_SE:
-        #             new_grid[current_row - 1, check_col] = TileType.HORIZ
-        # while current_row > 0 and new_grid[current_row, col] == TileType.CROSS:
-        #     current_row -= 1
         while current_row < self.rows:
-        #     new_grid[current_row, col : self.cols - 1] = new_grid[current_row, col + 1 :]
-            # if deleted_tile.entrance_from_left:
-            # for j in range(self.cols):
-            #     if j > change_col - 1:
-            #         grid[n - 1 - row, j] = TileType.CROSS
-            # for check_row in range(self.rows):
-            #     if check_row == row - 1:
-            #         continue
-            #     if col > 0:
-            #         if self[check_row, col - 1] == TileType.HORIZ:
-            #             new_grid[check_row, col - 1] = TileType.ELBOW_NW
-            #         elif self[check_row, col - 1] == TileType.ELBOW_SE:
-            #             new_grid[check_row, col - 1] = TileType.VERT
-            #         elif self[check_row, col - 1] == TileType.CROSS:
-            #             new_grid[check_row, col - 1] = TileType.VERT
-            #     # else:
-            #     #     if self[check_row, col] == TileType.HORIZ:
-            #     #         new_grid[check_row, col] = TileType.ELBOW_SE
-            #     #     elif self[check_row, col] == TileType.ELBOW_NW:
-            #     #         new_grid[check_row, col] = TileType.VERT
-            #     #     elif self[check_row, col] == TileType.CROSS:
-            #     #         new_grid[check_row, col] = TileType.VERT
-            #     if col < self.cols - 1:
-            #         if self[check_row, col] == TileType.HORIZ:
-            #             new_grid[check_row, col] = TileType.ELBOW_SE
-            #         elif self[check_row, col] == TileType.ELBOW_NW:
-            #             new_grid[check_row, col] = TileType.VERT
-            #         elif self[check_row, col] == TileType.CROSS:
-            #             new_grid[check_row, col] = TileType.VERT
-            #     else:
-            #         if self[check_row, col] == TileType.HORIZ:
-            #             new_grid[check_row, col] = TileType.ELBOW_SE
-            #         elif self[check_row, col] == TileType.CROSS:
-            #             new_grid[check_row, col] = TileType.HORIZ
             new_grid[current_row, col] = TileType.TBD
             if self[current_row, col] == TileType.HORIZ:
                 col -= 1
@@ -312,6 +246,83 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         ret = BPD(new_grid)
         ret.rebuild()
+        return ret
+
+    def prepend_row(self, value_of_row: int) -> BPD:
+        the_self = self.resize(len(self) + 1)
+        new_grid = the_self._grid.copy()
+        new_grid = np.resize(new_grid, (the_self.rows, self.cols + 1))
+        col = the_self.cols
+
+        perm = [*the_self.perm]
+
+        if value_of_row in perm:
+            for index in range(len(perm)):
+                if perm[index] >= value_of_row:
+                    perm[index] += 1
+        perm = Permutation.from_partial([value_of_row, *perm])
+
+        # going_left = True
+
+        # construct rop row
+        new_grid[0, :perm[0] - 1] = TileType.BLANK
+        new_grid[0, perm[0] - 1] = TileType.ELBOW_SE
+        new_grid[0, perm[0]:] = TileType.HORIZ
+
+        current_row = 1
+        col = perm[0] - 1
+
+        # new_grid[current_row, :col] = self[current_row - 1, :col]
+        # new_grid[current_row, col+1:] = self[current_row - 1, col:]
+
+        while current_row < the_self.rows:
+            new_grid[current_row, :col] = self._grid[current_row - 1, :col]
+            new_grid[current_row, col+1:] = self._grid[current_row - 1, col:]
+            if col > 0:
+                if self[current_row - 1, col - 1].feeds_right:# and new_grid[current_row - 1, col].entrance_from_bottom:
+                    if (col == the_self.cols - 1 or self[current_row - 1, col].entrance_from_left):
+                        new_grid[current_row, col] = TileType.CROSS
+                    #going_left=False
+                    else:# self[current_row - 1, col - 1].feeds_right and new_grid[current_row - 1, col].entrance_from_bottom and not (col == the_self.cols - 1 or self[current_row - 1, col].entrance_from_left):
+                        new_grid[current_row, col] = TileType.ELBOW_NW
+                        col -= 1
+                # elif new_grid[current_row - 1, col].entrance_from_bottom:
+                #     if (col == the_self.cols - 1 or self[current_row - 1, col].entrance_from_left):
+                else:
+                    new_grid[current_row, col] = TileType.VERT
+            else:
+                # if self[current_row - 1, col].entrance_from_left:
+                #     new_grid[current_row, col] = TileType.ELBOW_NW
+                # else:# self[current_row - 1, col - 1].feeds_right and new_grid[current_row - 1, col].entrance_from_bottom and not (col == the_self.cols - 1 or self[current_row - 1, col].entrance_from_left):
+                new_grid[current_row, col] = TileType.VERT
+            current_row += 1
+                    #going_left=False
+                    #col -= 1
+        #     new_grid[current_row, col] = TileType.TBD
+        #     if the_self[current_row, col] == TileType.HORIZ:
+        #         col -= 1
+        #         going_left = True
+        #     elif the_self[current_row, col] == TileType.VERT:
+        #         current_row += 1
+        #         going_left = False
+        #     elif the_self[current_row, col] == TileType.CROSS:
+        #         if going_left:
+        #             col -= 1
+
+        #         else:
+        #             current_row += 1
+        #     elif the_self[current_row, col] == TileType.ELBOW_SE:
+        #         current_row += 1
+        #         going_left = False
+        #     elif the_self[current_row, col] == TileType.ELBOW_NW:
+        #         col -= 1
+        #         going_left = True
+        # #new_grid = np.concatenate([new_grid[:row - 1, : self.cols - 1], new_grid[row:, : self.cols - 1]], axis=0)
+        # new_grid = np.concatenate([new_grid[:row - 1, : self.cols - 1], new_grid[row:, : self.cols - 1]], axis=0)
+        # #new_grid = np.delete(new_grid, row - 1, axis=0)
+
+        ret = BPD(new_grid)
+        # ret.rebuild()
         return ret
 
     # def interlace(self, other: BPD, start_row: int) -> BPD:
