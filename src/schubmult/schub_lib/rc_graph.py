@@ -28,7 +28,7 @@ logger = get_logger(__name__)
 
 
 def _is_row_root(row: int, root: tuple[int, int]) -> bool:
-    return root[0] <= row and root[1] > row
+    return row is None or (root[0] <= row and root[1] > row)
 
 
 FA = FreeAlgebra(WordBasis)
@@ -113,9 +113,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         else:
             i = len(self.perm.trimcode)
             j = len(self.perm.trimcode) + 1
-        index_list = [ii for ii in range(self.perm.inv) if self.left_to_right_inversion(ii) == (i, j)]
-        if len(index_list) != 1:
-            raise ValueError
+        index_list = [ii for ii in range(len(self.perm_word)) if self.left_to_right_inversion(ii) == (i, j)]
+        if len(index_list) == 0:
+            raise ValueError("RC graph has no such inversion")
         index = index_list[0]
         word, seq = self.as_reduced_compatible()
         word = [*word]
@@ -125,12 +125,13 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             if is_reduced(word):
                 break
             index = find_reduced_fail(word, index)
+        assert Permutation.ref_product(*word).inv == self.perm.inv
         return RCGraph.from_reduced_compatible(word, seq)
 
     def little_bump_down(self, i, j):
-        index_list = [ii for ii in range(self.perm.inv) if self.left_to_right_inversion(ii) == (i, j)]
-        if len(index_list) != 1:
-            raise ValueError
+        index_list = [ii for ii in range(len(self.perm_word)) if self.left_to_right_inversion(ii) == (i, j)]
+        if len(index_list) == 0:
+            raise ValueError("RC graph has no such inversion")
         index = index_list[0]
         word, seq = self.as_reduced_compatible()
         word = [*word]
@@ -463,7 +464,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     def _pieri_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True, reflection_rows=None, target_row=None):
         working_rc = self
-        if row > descent:
+        if descent is not None and row > descent:
             raise ValueError("All rows must be less than or equal to descent")
 
         i = start_index
@@ -521,7 +522,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             return working_rc
         if working_rc.is_valid:
             return working_rc
-        for j in range(1, working_rc.cols + descent + 5):
+        extra = descent if descent is not None else 0
+        for j in range(1, working_rc.cols + extra + 5):
             flag = False
             if working_rc.is_valid:
                 return working_rc
@@ -552,7 +554,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                     del dict_by_b[top]
                     flag = True
                     working_rc = new_rc
-
+                elif descent is None:
+                    working_rc = working_rc.toggle_ref_at(row_below, j)
+                    flag = True
                 else:
                     raise ValueError(f"Could not rectify at {(row_below, j)} with root {(a, b)}")
                 if flag:
@@ -567,6 +571,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                         target_row=target_row,
                     )
         return working_rc._pieri_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row)
+
 
     # VERIFY
     def pieri_insert(self, descent, rows, return_reflections=False, backwards=True):
@@ -1192,25 +1197,30 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         if row == 1:
             return self.rowrange(1)
         bottom_cut = self.rowrange(0, row)
-        if len(bottom_cut.perm.trimcode) <= len(bottom_cut):
-            bottom_cut = bottom_cut.resize(row - 1).extend(1).zero_out_last_row()
-            ret = RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
-            # while not ret.is_valid:
-            #     ret = RCGraph([*ret.rowrange(0, row - 1).little_bump(), *RCGraph(self[row:]).shiftup(-1)])
-            if not ret.is_valid:
-                return ret._pieri_rectify(row - 1, row - 1, {}, {})
-            return ret
+        # if len(bottom_cut.perm.trimcode) <= len(bottom_cut):
+        #     bottom_cut = bottom_cut.resize(row - 1).extend(1).zero_out_last_row()
+        #     ret = RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
+        #     # while not ret.is_valid:
+        #     #     ret = RCGraph([*ret.rowrange(0, row - 1).little_bump(), *RCGraph(self[row:]).shiftup(-1)])
+        #     if not ret.is_valid:
+        #         while not ret.is_valid:
+        #             for i in range(len(ret.perm_word)):
+        #                 a, b = ret.left_to_right_inversion(i)
+        #                 if a > b:
+        #                     ret = ret.little_bump_down(a, b)
+        #                     break
+        #     return ret
 
         topd = len(bottom_cut.perm.trimcode)
         rows_by_descent = {topd: []}
-        while topd > row:
+        while topd > row or len(bottom_cut[row - 1]) != 0:
             while len(bottom_cut.perm.trimcode) >= topd:
                 bottom_cut, the_row = bottom_cut.exchange_property(len(bottom_cut.perm.trimcode), return_row=True)
                 rows_by_descent[topd] += [the_row]
             topd = len(bottom_cut.perm.trimcode)
             rows_by_descent[topd] = []
         assert topd <= row
-        bottom_cut = bottom_cut.resize(row - 1).extend(1).zero_out_last_row()
+        bottom_cut = bottom_cut.zero_out_last_row()
         for descent in sorted(rows_by_descent.keys()):
             rows = rows_by_descent[descent]
             rows = [r for r in rows if r != row]
@@ -1219,7 +1229,14 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             bottom_cut = bottom_cut.pieri_insert(descent - 1, rows)
         ret = RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
         if not ret.is_valid:
-            return ret._pieri_rectify(row - 1, row - 1, {}, {})
+            ret = ret._pieri_rectify(row - 1, descent=None, dict_by_a={}, dict_by_b={})
+            # while not ret.is_valid:
+            #     for i in range(len(ret.perm_word)):
+            #         a, b = ret.left_to_right_inversion(i)
+            #         if a > b:
+            #             ret = ret.little_bump(a, b)
+            #             break
+        assert ret.perm.inv == self.perm.inv - len(self[row - 1]), f"\n{tuple(ret)=}, \n{self=} {row=}\n{rows_by_descent=}"
         # while not ret.is_valid:
         #     ret = RCGraph([*ret.rowrange(0, row - 1).little_bump_desc(), *RCGraph(self[row:]).shiftup(-1)])
         return ret
