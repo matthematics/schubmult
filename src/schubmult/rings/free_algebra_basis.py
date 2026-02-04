@@ -2,7 +2,7 @@ from functools import cache
 from itertools import zip_longest
 
 import schubmult.rings.free_algebra as fa
-from schubmult.schub_lib.permutation import Permutation, trimcode, uncode
+from schubmult.schub_lib.permutation import Permutation, uncode
 from schubmult.symbolic import (
     Add,
     Integer,
@@ -755,7 +755,7 @@ class SchubertBasis(FreeAlgebraBasis):
         dct2 = {}
         for (lambd, perm0), v in dct.items():
             perm1 = perm0 * w0
-            lambd2 = tuple(trimcode(lambd * (~w0s)))
+            lambd2 = tuple((lambd * (~w0s)).trimcode)
             dct2[(lambd2, perm1)] = v
         return {(k[0], *([0] * (numvars - len(k[0]))), k[1]): v for k, v in dct2.items()}
 

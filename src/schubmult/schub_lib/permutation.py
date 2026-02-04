@@ -211,7 +211,7 @@ class Permutation(Printable):
 
     # def _latex(self, printer):
     #     if Permutation.print_as_code:
-    #         return printer._print(trimcode(self))
+    #         return printer._print(self.trimcode)
     #     return printer._print(list(self._perm))
 
     # pattern is a list, not a permutation
@@ -238,12 +238,12 @@ class Permutation(Printable):
         if printer is None:
             printer = StrPrinter()
         if Permutation.print_as_code:
-            return printer.doprint(trimcode(self))
+            return printer.doprint(self.trimcode)
         return printer.doprint(tuple(self._perm))
 
     def _latex(self, printer):
         if Permutation.print_as_code:
-            return printer.doprint(trimcode(self))
+            return printer.doprint(self.trimcode)
         return printer.doprint(tuple(self._perm))
 
     def __call__(self, *tup):
@@ -362,7 +362,7 @@ class Permutation(Printable):
         return piv
 
 
-    @property
+    @cached_property
     def trimcode(self):
         if self._perm == ():
             return []
@@ -538,7 +538,7 @@ def permtrim(perm):
 
 
 def strict_theta(u):
-    ret = [*trimcode(u)]
+    ret = [*u.trimcode]
     did_one = True
     while did_one:
         did_one = False
@@ -558,13 +558,6 @@ def theta(perm):
             if cd[j] < cd[i]:
                 cd[i] += 1
     cd.sort(reverse=True)
-    return cd
-
-
-def trimcode(perm):
-    cd = perm.code
-    while len(cd) > 0 and cd[-1] == 0:
-        cd.pop()
     return cd
 
 
