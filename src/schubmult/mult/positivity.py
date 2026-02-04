@@ -9,7 +9,6 @@ from schubmult.schub_lib.permutation import (
     Permutation,
     cycle,
     phi1,
-    theta,
     uncode,
 )
 from schubmult.schub_lib.schub_poly import schubpoly
@@ -716,7 +715,7 @@ def schubmult_generic_partial_posify(u2, v2):
 
 
 def forwardcoeff(u, v, perm, var2=None, var3=None):
-    th = theta(v)
+    th = v.theta()
     muv = uncode(th)
     vmun1 = (~v) * muv
 
@@ -742,7 +741,7 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
         # logger.debug("Recording line number")
         dpret = []
         # logger.debug("Recording line number")
-        th = theta(u)
+        th = u.theta()
         muu = uncode(th)
         umun1 = (~u) * muu
         w = perm * umun1

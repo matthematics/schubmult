@@ -3,7 +3,6 @@ from functools import cached_property
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.permutation import (
     Permutation,
-    theta,
     uncode,
 )
 from schubmult.symbolic import Add, Mul, Pow
@@ -81,7 +80,7 @@ def schubmult_py(perm_dict, v):
     v = Permutation(v)
     # print(f"{v=}")
     vn1 = ~v
-    th = theta(vn1)
+    th = vn1.theta()
     if len(th) == 0 or th[0] == 0:
         return perm_dict
     mu = uncode(th)
@@ -134,7 +133,7 @@ def schubmult_py_down(perm_dict, v):
     v = Permutation(v)
     # print(f"{v=}")
     vn1 = ~v
-    th = theta(vn1)
+    th = vn1.theta()
     if len(th) == 0 or th[0] == 0:
         return perm_dict
     mu = uncode(th)

@@ -17,13 +17,10 @@ from schubmult import (
     Permutation,
     efficient_subs,
     mult_poly_double,
-    permtrim,
     posify,
     schub_coprod_double,
     schubmult_double,
-    # schubmult_double_alt,
     schubmult_double_alt_from_elems,
-    theta,
     uncode,
 )
 
@@ -170,7 +167,7 @@ def _display_full(
         else:
             poso += [i - 1]
 
-    mu_W = uncode(theta(~perms[0]))
+    mu_W = (~perms[0]).minimal_dominant_above()
 
     the_top_perm = perms[0] * mu_W
 
@@ -212,11 +209,11 @@ def _display_full(
                     else:
                         val = 0
                 if val != 0:
-                    width2 = width - len(sstr(permtrim(firstperm))) - len(sstr(permtrim(secondperm)))
-                    raw_result_dict[(permtrim(firstperm), Permutation(secondperm))] = val
+                    width2 = width - len(sstr(Permutation(firstperm))) - len(sstr(Permutation(secondperm)))
+                    raw_result_dict[(Permutation(firstperm), Permutation(secondperm))] = val
                     if formatter:
                         _display(
-                            f"{sstr(permtrim(firstperm))}{' ':>{width2}}{sstr(Permutation(secondperm))}  {formatter(val)}",
+                            f"{sstr(Permutation(firstperm))}{' ':>{width2}}{sstr(Permutation(secondperm))}  {formatter(val)}",
                         )
     else:
         width = max([len(sstr(perm)) for perm in coeff_dict.keys()])
@@ -351,7 +348,7 @@ def main(argv=None):
             # preprocess positivity
             if display_positive and len(perms) == 2 and will_formula_work(perms[0], perms[1]) and not mult and not down and not same:
                 coeff_dict = {}
-                th = theta(perms[1])
+                th = perms[1].theta()
                 muv = uncode(th)
                 muvn1v = (~muv) * perms[1]
                 coeff_dict2 = {perms[0]: 1}

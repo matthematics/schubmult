@@ -282,7 +282,7 @@ class Permutation(Printable):
 
     @property
     def code(self):
-        return list(self._cached_code())
+        return [*self._cached_code()]
 
     @cache
     def _cached_code(self):
@@ -313,6 +313,7 @@ class Permutation(Printable):
                 if self[i] > j + 1 and (~self)[j] > i + 1:
                     diag.add((i + 1, j + 1))
         return diag
+
     @property
     def rothe_diagram(self):
         return {(i + 1, self[i]) for i in range(len(self))}
@@ -360,7 +361,6 @@ class Permutation(Printable):
             if good:
                 piv.add((i, j))
         return piv
-
 
     @cached_property
     def trimcode(self):
@@ -423,12 +423,12 @@ class Permutation(Printable):
         # Extend arrays if needed
         if len(self._perm) < max_len:
             self_arr = np.arange(1, max_len + 1, dtype=int)
-            self_arr[:len(self._perm)] = self._arr
+            self_arr[: len(self._perm)] = self._arr
         else:
             self_arr = self._arr
         if len(other._perm) < max_len:
             other_arr = np.arange(1, max_len + 1, dtype=int)
-            other_arr[:len(other._perm)] = other._arr
+            other_arr[: len(other._perm)] = other._arr
         else:
             other_arr = other._arr
         # Composition: self[other[i] - 1] but other[i] is 1-indexed, so use other_arr - 1
@@ -505,7 +505,7 @@ class Permutation(Printable):
         return ~Permutation.sorting_perm(seq)
 
     def minimal_dominant_above(self):
-        return uncode(theta(self))
+        return uncode(self.theta())
 
     @property
     def foundational_root(self):
@@ -517,6 +517,57 @@ class Permutation(Printable):
             if self[k - 1] > self[i - 1]:
                 mx = i
         return (k, mx)
+
+    @cache
+    def _cached_strict_theta(self):
+        ret = [*self.trimcode]
+        did_one = True
+        while did_one:
+            did_one = False
+            for i in range(len(ret) - 2, -1, -1):
+                if ret[i + 1] != 0 and ret[i] <= ret[i + 1]:
+                    ret[i], ret[i + 1] = ret[i + 1] + 1, ret[i]
+                    did_one = True
+                    break
+        while len(ret) > 0 and ret[-1] == 0:
+            ret.pop()
+        return tuple(ret)
+
+    def theta(self):
+        return [*self._cached_theta()]
+
+    def medium_theta(self):
+        return [*self._cached_medium_theta()]
+
+    def strict_theta(self):
+        return [*self._cached_strict_theta()]
+
+    @cache
+    def _cached_theta(self):
+        cd = list(self.code)
+        for i in range(len(cd) - 1, 0, -1):
+            for j in range(i - 1, -1, -1):
+                if cd[j] < cd[i]:
+                    cd[i] += 1
+        cd.sort(reverse=True)
+        return tuple(cd)
+
+    @cache
+    def _cached_medium_theta(self):
+        cd = list(self.code)
+        found_one = True
+        while found_one:
+            found_one = False
+            for i in range(len(cd) - 1):
+                if cd[i] < cd[i + 1]:
+                    found_one = True
+                    cd[i], cd[i + 1] = cd[i + 1] + 1, cd[i]
+                    break
+                if cd[i] == cd[i + 1] and cd[i] != 0 and i > 0 and cd[i - 1] <= cd[i] + 1:
+                    cd[i] += 1
+                    found_one = True
+                    break
+        return tuple(cd)
 
 
 def uncode(cd):
@@ -537,30 +588,6 @@ def permtrim(perm):
     return Permutation(perm)
 
 
-def strict_theta(u):
-    ret = [*u.trimcode]
-    did_one = True
-    while did_one:
-        did_one = False
-        for i in range(len(ret) - 2, -1, -1):
-            if ret[i + 1] != 0 and ret[i] <= ret[i + 1]:
-                ret[i], ret[i + 1] = ret[i + 1] + 1, ret[i]
-                did_one = True
-                break
-    while len(ret) > 0 and ret[-1] == 0:
-        ret.pop()
-    return ret
-
-def theta(perm):
-    cd = perm.code
-    for i in range(len(cd) - 1, 0, -1):
-        for j in range(i - 1, -1, -1):
-            if cd[j] < cd[i]:
-                cd[i] += 1
-    cd.sort(reverse=True)
-    return cd
-
-
 def cycle(p, q):
     # keep a thin module-level wrapper for backwards compatibility
     return Permutation.cycle(p, q)
@@ -571,49 +598,6 @@ def phi1(u):
     c_star.pop(0)
     # print(f"{uncode(c_star)=}")
     return ~(uncode(c_star))
-
-
-def _one_dominates(u, w):
-    c_star_u = (~u).code
-    c_star_w = (~w).code
-
-    a = c_star_u[0]
-    b = c_star_w[0]
-
-    for i in range(a, b):
-        if i >= len(u) - 1:
-            return True
-        if u[i] > u[i + 1]:
-            return False
-    return True
-
-
-def _dominates(u, w):
-    u2 = u
-    w2 = w
-    while u2.inv > 0 and _one_dominates(u2, w2):
-        u2 = phi1(u2)
-        w2 = phi1(w2)
-    if u2.inv == 0:
-        return True
-    return False
-
-
-def medium_theta(perm):
-    cd = perm.code
-    found_one = True
-    while found_one:
-        found_one = False
-        for i in range(len(cd) - 1):
-            if cd[i] < cd[i + 1]:
-                found_one = True
-                cd[i], cd[i + 1] = cd[i + 1] + 1, cd[i]
-                break
-            if cd[i] == cd[i + 1] and cd[i] != 0 and i > 0 and cd[i - 1] <= cd[i] + 1:
-                cd[i] += 1
-                found_one = True
-                break
-    return cd
 
 
 def split_perms(perms):
@@ -650,6 +634,32 @@ def split_perms(perms):
         if not did:
             perms2 += [perm]
     return perms2
+
+
+def _one_dominates(u, w):
+    c_star_u = (~u).code
+    c_star_w = (~w).code
+
+    a = c_star_u[0]
+    b = c_star_w[0]
+
+    for i in range(a, b):
+        if i >= len(u) - 1:
+            return True
+        if u[i] > u[i + 1]:
+            return False
+    return True
+
+
+def _dominates(u, w):
+    u2 = u
+    w2 = w
+    while u2.inv > 0 and _one_dominates(u2, w2):
+        u2 = phi1(u2)
+        w2 = phi1(w2)
+    if u2.inv == 0:
+        return True
+    return False
 
 
 bad_classical_patterns = [Permutation([1, 4, 2, 3]), Permutation([1, 4, 3, 2]), Permutation([4, 1, 3, 2]), Permutation([3, 1, 4, 2])]

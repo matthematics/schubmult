@@ -5,7 +5,6 @@ from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_func, elem_
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.permutation import (
     Permutation,
-    theta,
     uncode,
 )
 from schubmult.schub_lib.schub_poly import elem_func_func_mul
@@ -208,7 +207,7 @@ def schubmult_double(perm_dict, v, var2=None, var3=None):
     perm_dict = {Permutation(k): v for k, v in perm_dict.items()}
     v = Permutation(v)
     vn1 = ~v
-    th = theta(vn1)
+    th = vn1.theta()
     if len(th) == 0:
         return perm_dict
     if th[0] == 0:
@@ -394,7 +393,7 @@ def schubmult_double_from_elems(perm_dict, v, var2=None, var3=None, elem_func=No
     perm_dict = {Permutation(k): v for k, v in perm_dict.items()}
     v = Permutation(v)
     vn1 = ~v
-    th = theta(vn1)
+    th = vn1.theta()
     if len(th) == 0:
         return perm_dict
     if th[0] == 0:
@@ -456,7 +455,7 @@ def schubmult_double_from_elems(perm_dict, v, var2=None, var3=None, elem_func=No
 
 def schubmult_double_down(perm_dict, v, var2=None, var3=None):
     vn1 = ~v
-    th = theta(vn1)
+    th = vn1.theta()
     if len(th) == 0 or th[0] == 0:
         return perm_dict
     mu = uncode(th)

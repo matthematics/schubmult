@@ -5,7 +5,7 @@ import numpy as np
 import schubmult.mult.positivity as pos
 from schubmult.rings.poly_lib import _vars, call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet_base
-from schubmult.schub_lib.permutation import Permutation, medium_theta, strict_theta, uncode
+from schubmult.schub_lib.permutation import Permutation, uncode
 from schubmult.symbolic import Add, Mul, Pow, S, expand, sympify
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import (
@@ -105,7 +105,7 @@ def mult_poly_q_double_alt(coeff_dict, poly, var_x=None, var_y=None, q_var=_vars
 def nil_hecke(perm_dict, v, n, var2=None, var3=None):
     if v == Permutation([1, 2]):
         return perm_dict
-    th = strict_theta(~v)
+    th = (~v).strict_theta()
     mu = uncode(th)
     vmu = v * mu
 
@@ -187,7 +187,7 @@ def q_posify(u, v, w, val, var2, var3, q_var, msg):
             except Exception:
                 try:
                     # logger.debug("Line number")
-                    if (~v).code == medium_theta(~v):
+                    if (~v).code == (~v).medium_theta():
                         val2 += q_part * q_dict[q_part]
                     else:
                         q_part2 = q_part
@@ -246,7 +246,7 @@ def q_partial_posify_generic(val, u, v, w):
                 val2 += q_part * int(q_dict[q_part])
             except Exception:
                 try:
-                    if (~v).code == medium_theta(~v):
+                    if (~v).code == (~v).medium_theta():
                         val2 += q_part * q_dict[q_part]
                     else:
                         q_part2 = q_part
@@ -345,7 +345,7 @@ def elem_sym_func_q_q(k, i, u1, u2, v1, v2, udiff, vdiff, varl1, varl2, q_var=_v
 
 
 def schubpoly_quantum(v, var_x=None, var_y=None, q_var=_vars.q_var, coeff=1):
-    th = strict_theta(~v)
+    th = (~v).strict_theta()
     mu = uncode(th)
     vmu = v * mu
     if len(th) == 0:
@@ -405,7 +405,7 @@ def schubpoly_quantum(v, var_x=None, var_y=None, q_var=_vars.q_var, coeff=1):
 def schubmult_q_double(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var):
     if v == Permutation([1, 2]):
         return perm_dict
-    th = strict_theta(~v)
+    th = (~v).strict_theta()
     mu = uncode(th)
     vmu = v * mu
     inv_vmu = vmu.inv
@@ -473,7 +473,7 @@ def schubmult_q_double_dict_fast(perm_dict1, perm_dict2, var2=None, var3=None, q
 def schubmult_q_double_fast(perm_dict, v, var2=None, var3=None, q_var=_vars.q_var):
     if v == Permutation([1, 2]):
         return perm_dict
-    th = medium_theta(~v)
+    th = (~v).medium_theta()
     if len(th) == 0:
         return perm_dict
     while th[-1] == 0:

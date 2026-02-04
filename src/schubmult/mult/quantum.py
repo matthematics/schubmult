@@ -4,8 +4,6 @@ import schubmult.rings.variables as spl
 import schubmult.utils.schub_lib as sss
 from schubmult.schub_lib.permutation import (
     Permutation,
-    medium_theta,
-    strict_theta,
     uncode,
 )
 from schubmult.symbolic import Add, Mul, Pow
@@ -84,7 +82,7 @@ def mult_poly_q(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
 def schubmult_q_fast(perm_dict, v, q_var=_vars.q_var):
     if v.inv == 0:
         return perm_dict
-    th = medium_theta(~v)
+    th = (~v).medium_theta()
     if len(th) == 0:
         return perm_dict
     while th[-1] == 0:
@@ -178,7 +176,7 @@ def schubmult_q_fast(perm_dict, v, q_var=_vars.q_var):
 
 
 def schubmult_q(perm_dict, v):
-    th = strict_theta(~v)
+    th = (~v).strict_theta()
     mu = uncode(th)
     vmu = v * mu
     inv_vmu = vmu.inv

@@ -3,7 +3,6 @@ from functools import cache
 import schubmult.rings.variables as spl
 from schubmult.schub_lib.permutation import (
     Permutation,
-    theta,
     uncode,
 )
 from schubmult.symbolic import S, prod
@@ -98,7 +97,7 @@ def double_elem_sym_q(u, p1, p2, k, q_var=q_var):
 
 def will_formula_work(u, v):
     u, v = Permutation(u), Permutation(v)
-    muv = uncode(theta(v))
+    muv = uncode(v.theta())
     vn1muv = (~v) * muv
     while vn1muv.inv > 0:
         found_one = False
@@ -217,8 +216,8 @@ def try_reduce_v(u, v, w):
 
 
 def reduce_coeff(u, v, w):
-    t_mu_u_t = theta(~u)
-    t_mu_v_t = theta(~v)
+    t_mu_u_t = (~u).theta()
+    t_mu_v_t = (~v).theta()
 
     mu_u_inv = uncode(t_mu_u_t)
     mu_v_inv = uncode(t_mu_v_t)
@@ -244,7 +243,7 @@ def reduce_coeff(u, v, w):
     vmu = v * mu_v_inv
     wmu = w * mu_uv_inv
 
-    t_mu_w = theta(~wmu)
+    t_mu_w = (~wmu).theta()
 
     mu_w = uncode(t_mu_w)
 

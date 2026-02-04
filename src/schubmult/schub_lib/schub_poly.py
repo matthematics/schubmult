@@ -43,7 +43,7 @@ def schubpoly_from_elems(v, var_x=None, var_y=None, elem_func=None, mumu=None):
         th = mumu.code
         mu = mumu
     else:
-        th = pl.strict_theta(~pl.Permutation(v))
+        th = (~pl.Permutation(v)).strict_theta()
         mu = pl.uncode(th)
     vmu = pl.Permutation(v) * mu
     if len(th) == 0:
@@ -82,7 +82,7 @@ def schubpoly_from_elems(v, var_x=None, var_y=None, elem_func=None, mumu=None):
 
 def schubpoly_classical_from_elems(v, var_x=None, var_y=None, elem_func=None):
     # print(f"{v=} {var_x=} {var_y=}")
-    th = pl.theta(~pl.Permutation(v))
+    th = (~pl.Permutation(v)).theta()
     mu = pl.uncode(th)
     vmu = pl.Permutation(v) * mu  # permtrim(mulperm([*v], mu))
     if len(th) == 0:

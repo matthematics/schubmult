@@ -3,7 +3,7 @@ import sys
 from schubmult.symbolic import sstr, sympify
 from schubmult.utils.argparse import schub_argparse
 
-from schubmult import Permutation, mult_poly_py, schub_coprod_py, schubmult_py, theta, uncode
+from schubmult import Permutation, mult_poly_py, schub_coprod_py, schubmult_py, uncode
 
 
 def main(argv=None):
@@ -57,7 +57,7 @@ def main(argv=None):
                     perms[i] = Permutation(uncode(perms[i]))
             else:
                 perms = [Permutation(perm) for perm in perms]
-            perms.sort(reverse=True, key=lambda x: sum(theta(~x)) - x.inv)
+            perms.sort(reverse=True, key=lambda x: sum((~x).theta()) - x.inv)
 
             coeff_dict = {Permutation([*perms[0]]): 1}
 
