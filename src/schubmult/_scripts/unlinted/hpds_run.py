@@ -18,9 +18,15 @@ if __name__ == "__main__":
     hpd = HPD(grid, (0,1,0,0))
     print(hpd)
     
-    grid = np.array([[HPDTile.CROSS, HPDTile.BUMP, HPDTile.CROSS, HPDTile.ELBOW_NW],
-                     [HPDTile.VERT, HPDTile.ELBOW_NE, HPDTile.CROSS, HPDTile.HORIZ],
-                     [HPDTile.ELBOW_NW, HPDTile.ELBOW_SE, HPDTile.ELBOW_NW, HPDTile.BLANK],
-                     [HPDTile.BLANK, HPDTile.ELBOW_NE, HPDTile.HORIZ, HPDTile.HORIZ]])
-    hpd = HPD(grid, (0,1,0,1))
+    # grid = np.array([[HPDTile.CROSS, HPDTile.BUMP, HPDTile.BUMP, HPDTile.ELBOW_NW],
+    #                  [HPDTile.VERT, HPDTile.ELBOW_NE, HPDTile.CROSS, HPDTile.HORIZ],
+    #                  [HPDTile.ELBOW_NW, HPDTile.ELBOW_SE, HPDTile.ELBOW_NW, HPDTile.BLANK],
+    #                  [HPDTile.BLANK, HPDTile.ELBOW_NE, HPDTile.HORIZ, HPDTile.HORIZ]])
+    grid = np.array([[HPDTile.BUMP, HPDTile.BUMP, HPDTile.ELBOW_NW],
+                     [HPDTile.CROSS, HPDTile.ELBOW_NW, HPDTile.BLANK],
+                     [HPDTile.ELBOW_NE, HPDTile.HORIZ, HPDTile.HORIZ]])
+    hpd = HPD(grid, (0,0,1))
+    print(hpd)
+
+    hpd = hpd.swap_rows(2)
     print(hpd)

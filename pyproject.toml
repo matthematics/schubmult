@@ -16,7 +16,6 @@ dependencies = [
         "sympy>=1.14.0",
         "psutil",
         "cachetools",
-        "sortedcontainers",
         "setuptools"
 ]
 requires-python = ">=3.9"

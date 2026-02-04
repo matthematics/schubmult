@@ -48,7 +48,7 @@ _lazy_exports = {
     "PlacticAlgebraElement": "schubmult.rings.plactic_algebra",
     "CoxeterKnuthRing": "schubmult.rings.ck_ring",
     "FreeAlgebra": "schubmult.rings.free_algebra",
-    "NSym": "schubmult.rings.free_algebra",
+    "NSym": "schubmult.rings.nsym",
     "NilHeckeRing": "schubmult.rings.nil_hecke",
     "PolynomialAlgebra": "schubmult.rings.polynomial_algebra",
     "TensorRing": "schubmult.rings.tensor_ring",

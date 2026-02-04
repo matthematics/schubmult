@@ -284,46 +284,95 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         """
         if self._id_vector[row - 1] == self._id_vector[row]:
             raise ValueError("Cannot swap rows, they are the same type")
+        if self._id_vector[row - 1] == 1:
+            raise ValueError("Top row must be classic (_id_vector == 0) to swap")
         new_grid = self._grid.copy()
         new_id_vector = list(self._id_vector)
         # Swap the rows in the grid
         #new_grid[[row, row + 1], :] = new_grid[[row + 1, row], :]
         # Swap the id_vector entries
-        new_id_vector[row], new_id_vector[row + 1] = new_id_vector[row + 1], new_id_vector[row]
-        bpd_row, classic_row = new_grid[row - 1, :], new_grid[row, :]
-        bpd_index, classic_index = row - 1, row
-        if self._id_vector[row - 1] == 0:
-            classic_row, bpd_row = bpd_row, classic_row
-            classic_index, bpd_index = bpd_index, classic_index
+        new_id_vector[row - 1], new_id_vector[row] = new_id_vector[row], new_id_vector[row - 1]
+        # bpd_row, classic_row = new_grid[row - 1, :], new_grid[row, :]
+        # bpd_index, classic_index = row - 1, row
+        # if self._id_vector[row - 1] == 0:
+        #classic_row, bpd_row = new_grid[row - 1, :], new_grid[row, :]
+        classic_index, bpd_index = row - 1, row
         for col in range(self.cols):
             # swap the rows
             if (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.CROSS, HPDTile.CROSS):
                 # nothing to do
                 pass
             elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.CROSS, HPDTile.ELBOW_NE):
-                new_grid[bpd_index, col] = HPDTile.HORIZ
                 new_grid[classic_index, col] = HPDTile.ELBOW_NE
+                new_grid[bpd_index, col] = HPDTile.HORIZ
             elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.CROSS, HPDTile.VERT):
-                new_grid[bpd_index, col] = HPDTile.CROSS
-                new_grid[classic_index, col] = HPDTile.VERT
+                new_grid[classic_index, col] = HPDTile.CROSS
+                new_grid[bpd_index, col] = HPDTile.VERT
             elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.HORIZ, HPDTile.HORIZ):
                 # nothing to do
                 pass
             elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.HORIZ, HPDTile.ELBOW_SW):
-                new_grid[bpd_index, col] = HPDTile.CROSS
-                new_grid[classic_index, col] = HPDTile.ELBOW_SW
+                new_grid[classic_index, col] = HPDTile.CROSS
+                new_grid[bpd_index, col] = HPDTile.ELBOW_SW
             elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.HORIZ, HPDTile.BLANK):
+                new_grid[classic_index, col] = HPDTile.HORIZ
+                new_grid[bpd_index, col] = HPDTile.BLANK
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_NW, HPDTile.HORIZ) \
+                and True: # UPDATE
+                # and self.row_index_to_label(classic_index) < self.row_index_to_label(bpd_index):
+                new_grid[classic_index, col] = HPDTile.CROSS
+                new_grid[bpd_index, col] = HPDTile.ELBOW_NW
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_NW, HPDTile.HORIZ):
+                new_grid[classic_index, col] = HPDTile.ELBOW_NE
+                new_grid[bpd_index, col] = HPDTile.BLANK
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_NW, HPDTile.ELBOW_SW) \
+                and self.row_index_to_label(classic_index) < self.row_index_to_label(bpd_index):
+                new_grid[classic_index, col] = HPDTile.CROSS
+                new_grid[bpd_index, col] = HPDTile.BUMP
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_NW, HPDTile.ELBOW_SW):
+                new_grid[classic_index, col] = HPDTile.ELBOW_NE
+                new_grid[bpd_index, col] = HPDTile.ELBOW_SE
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_NW, HPDTile.BLANK):
+                new_grid[classic_index, col] = HPDTile.ELBOW_NE
                 new_grid[bpd_index, col] = HPDTile.HORIZ
-                new_grid[classic_index, col] = HPDTile.BLANK
-            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_NW, HPDTile.HORIZ):
-                new_grid[bpd_index, col] = HPDTile.CROSS
-                new_grid[classic_index, col] = HPDTile.ELBOW_NW
-            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_NW, HPDTile.HORIZ):
-                new_grid[bpd_index, col] = HPDTile.CROSS
-                new_grid[classic_index, col] = HPDTile.ELBOW_NW
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_SE, HPDTile.CROSS):
+                new_grid[classic_index, col] = HPDTile.HORIZ
+                new_grid[bpd_index, col] = HPDTile.ELBOW_SE
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_SE, HPDTile.ELBOW_NE):
+                new_grid[classic_index, col] = HPDTile.ELBOW_SW
+                new_grid[bpd_index, col] = HPDTile.ELBOW_NW
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_SE, HPDTile.VERT):
+                new_grid[classic_index, col] = HPDTile.ELBOW_SW
+                new_grid[bpd_index, col] = HPDTile.BUMP
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.BUMP, HPDTile.CROSS) \
+                and self.row_index_to_label(classic_index) < self.row_index_to_label(bpd_index):
+                new_grid[classic_index, col] = HPDTile.CROSS
+                new_grid[bpd_index, col] = HPDTile.BUMP
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.BUMP, HPDTile.CROSS):
+                new_grid[classic_index, col] = HPDTile.ELBOW_NE
+                new_grid[bpd_index, col] = HPDTile.ELBOW_SE
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.BUMP, HPDTile.ELBOW_NE):
+                new_grid[classic_index, col] = HPDTile.VERT
+                new_grid[bpd_index, col] = HPDTile.ELBOW_NW
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.BUMP, HPDTile.VERT):
+                new_grid[classic_index, col] = HPDTile.VERT
+                new_grid[bpd_index, col] = HPDTile.BUMP
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.BLANK, HPDTile.HORIZ):
+                new_grid[classic_index, col] = HPDTile.HORIZ
+                new_grid[bpd_index, col] = HPDTile.BLANK
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.BLANK, HPDTile.ELBOW_SW):
+                new_grid[classic_index, col] = HPDTile.HORIZ
+                new_grid[bpd_index, col] = HPDTile.ELBOW_SE
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.BLANK, HPDTile.BLANK):
+                new_grid[classic_index, col] = HPDTile.HORIZ
+                new_grid[bpd_index, col] = HPDTile.HORIZ
+            else:
+                raise ValueError(f"Cannot swap rows at column {col}: ({new_grid[classic_index, col]}, {new_grid[bpd_index, col]})")
+            # ROW 4
 
+        _display_grid(new_grid)
         ret = HPD(new_grid, tuple(new_id_vector))
-        ret._invalidate_cache()
+        #ret._invalidate_cache()
         return ret
     #     if self.is_classic_row(row):
     #         assert row < len(self) - 1
@@ -1213,7 +1262,8 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         #         small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
 
         # build_perm = good_cols * small_perm
-        # print(top_pop)
+        print(top_pop)
+
         self._perm = ~Permutation(top_pop)
         return self._perm
 
