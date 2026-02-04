@@ -214,6 +214,20 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     # Pre-computed based on feeds_right and entrance_from_bottom properties
     _TBD_LOOKUP = None
 
+    def delete_top_row(self):
+        the_bpd = self
+
+        while True:
+            new_bpd, (a, r) = the_bpd.pop_op()
+            if r == 1:
+                the_bpd = new_bpd
+            else:
+                new_grid = np.full((the_bpd.rows - 1, the_bpd.cols - 1), TileType.TBD, dtype=TileType)
+                new_grid = the_bpd._grid[1:, 1:]
+                ret = BPD(new_grid)
+                return ret
+
+
     def delete_row(self, row: int) -> BPD:
         new_grid = self._grid.copy()
         col = self.cols - 1
