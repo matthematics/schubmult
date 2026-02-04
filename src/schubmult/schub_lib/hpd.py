@@ -138,17 +138,20 @@ def _display_grid(grid: np.ndarray) -> str:
     rows = ["".join(str(HPDTile(grid[i, j])) for j in range(grid.shape[1])) for i in range(grid.shape[0])]
     print("\n".join(rows))
 
+
 def _classical_bottom_row(weight, length):
     row = np.array([HPDTile.BLANK] * length)
     row[:weight] = HPDTile.HORIZ
     row[weight] = HPDTile.ELBOW_NW
     return row
 
+
 def _bpd_bottom_row(weight, length):
     row = np.array([HPDTile.BLANK] * length)
     row[weight] = HPDTile.ELBOW_NE
     row[weight:] = HPDTile.HORIZ
     return row
+
 
 class HPD(SchubertMonomialGraph, DefaultPrinting):
     """
@@ -289,13 +292,13 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         new_grid = self._grid.copy()
         new_id_vector = list(self._id_vector)
         # Swap the rows in the grid
-        #new_grid[[row, row + 1], :] = new_grid[[row + 1, row], :]
+        # new_grid[[row, row + 1], :] = new_grid[[row + 1, row], :]
         # Swap the id_vector entries
         new_id_vector[row - 1], new_id_vector[row] = new_id_vector[row], new_id_vector[row - 1]
         # bpd_row, classic_row = new_grid[row - 1, :], new_grid[row, :]
         # bpd_index, classic_index = row - 1, row
         # if self._id_vector[row - 1] == 0:
-        #classic_row, bpd_row = new_grid[row - 1, :], new_grid[row, :]
+        # classic_row, bpd_row = new_grid[row - 1, :], new_grid[row, :]
         classic_index, bpd_index = row - 1, row
         for col in range(self.cols):
             # swap the rows
@@ -317,16 +320,17 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.HORIZ, HPDTile.BLANK):
                 new_grid[classic_index, col] = HPDTile.HORIZ
                 new_grid[bpd_index, col] = HPDTile.BLANK
-            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_NW, HPDTile.HORIZ) \
-                and True: # UPDATE
-                # and self.row_index_to_label(classic_index) < self.row_index_to_label(bpd_index):
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_NW, HPDTile.HORIZ) and self.perm(self.row_index_to_label(classic_index)) > self.perm(
+                self.row_index_to_label(bpd_index),
+            ):
                 new_grid[classic_index, col] = HPDTile.CROSS
                 new_grid[bpd_index, col] = HPDTile.ELBOW_NW
             elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_NW, HPDTile.HORIZ):
                 new_grid[classic_index, col] = HPDTile.ELBOW_NE
                 new_grid[bpd_index, col] = HPDTile.BLANK
-            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_NW, HPDTile.ELBOW_SW) \
-                and self.row_index_to_label(classic_index) < self.row_index_to_label(bpd_index):
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_NW, HPDTile.ELBOW_SW) and self.perm(self.row_index_to_label(classic_index)) < self.perm(
+                self.row_index_to_label(bpd_index),
+            ):
                 new_grid[classic_index, col] = HPDTile.CROSS
                 new_grid[bpd_index, col] = HPDTile.BUMP
             elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_NW, HPDTile.ELBOW_SW):
@@ -344,8 +348,9 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_SE, HPDTile.VERT):
                 new_grid[classic_index, col] = HPDTile.ELBOW_SW
                 new_grid[bpd_index, col] = HPDTile.BUMP
-            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.BUMP, HPDTile.CROSS) \
-                and self.row_index_to_label(classic_index) < self.row_index_to_label(bpd_index):
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.BUMP, HPDTile.CROSS) and self.perm(self.row_index_to_label(classic_index)) < self.perm(
+                self.row_index_to_label(bpd_index),
+            ):
                 new_grid[classic_index, col] = HPDTile.CROSS
                 new_grid[bpd_index, col] = HPDTile.BUMP
             elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.BUMP, HPDTile.CROSS):
@@ -370,30 +375,8 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
                 raise ValueError(f"Cannot swap rows at column {col}: ({new_grid[classic_index, col]}, {new_grid[bpd_index, col]})")
             # ROW 4
 
-        _display_grid(new_grid)
         ret = HPD(new_grid, tuple(new_id_vector))
-        #ret._invalidate_cache()
         return ret
-    #     if self.is_classic_row(row):
-    #         assert row < len(self) - 1
-    #         UC = HPDTile.UCROSS
-    #         WH = HPDTile.WHORIZ
-    #         WC = HPDTile.WCROSS
-    #         UH = HPDTile.UHORIZ
-    #         V = HPDTile.VERT
-    #         H = HPDTile.HORIZ
-    #         NE = HPDTile.ELBOW_NE
-    #         NW = HPDTile.ELBOW_NW
-    #         SE = HPDTile.ELBOW_SE
-    #         SW = HPDTile.ELBOW_SW
-    #         mapping = {
-    #             # Row 1: First three have WCROSS on top, last one has WHORIZ on top
-    #             (WC, UC): (UC, WC),
-    #             (WC, NE): (NE, WH),
-    #             (WC, V) : (V, WC),
-    #             (WH, UH): (UH, WH),
-    #             (WH, UH)
-    #         }
 
     def _invalidate_cache(self):
         self._perm = None
