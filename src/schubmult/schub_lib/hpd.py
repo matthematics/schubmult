@@ -165,7 +165,8 @@ def _classical_bottom_row(weight, length):
 def _bpd_bottom_row(weight, length):
     row = np.array([HPDTile.BLANK] * length)
     row[weight] = HPDTile.ELBOW_NE
-    row[weight:] = HPDTile.HORIZ
+    if weight < length - 1:
+        row[weight+1:] = HPDTile.HORIZ
     return row
 
 
@@ -345,7 +346,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
                 new_grid[bpd_index, col] = HPDTile.ELBOW_NW
             elif (classic_tile, bpd_tile) == (HPDTile.ELBOW_NW, HPDTile.HORIZ):
                 new_grid[classic_index, col] = HPDTile.CROSS
-                new_grid[bpd_index, col] = HPDTile.BUMP
+                new_grid[bpd_index, col] = HPDTile.ELBOW_NW
             elif (classic_tile, bpd_tile) == (HPDTile.ELBOW_NW, HPDTile.ELBOW_SW) and self.perm(self.row_index_to_label(classic_index)) < self.perm(
                 self.row_index_to_label(bpd_index),
             ):

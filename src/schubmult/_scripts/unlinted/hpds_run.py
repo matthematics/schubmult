@@ -35,6 +35,7 @@ if __name__ == "__main__":
     print(hpd)
     hpd = hpd.toggle_bottom_row()
     print(hpd)
+    print("swapping row 2 and 3")
     hpd = hpd.swap_rows(2)
     print(hpd)
     hpd = hpd.toggle_bottom_row()
