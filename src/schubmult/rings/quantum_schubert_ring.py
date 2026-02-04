@@ -5,7 +5,7 @@ import schubmult.mult.quantum as py
 import schubmult.mult.quantum_double as yz
 import schubmult.rings.schubert_ring as spr
 import schubmult.utils.schub_lib as schub_lib
-from schubmult.schub_lib.permutation import Permutation, longest_element, uncode
+from schubmult.schub_lib.permutation import Permutation, uncode
 from schubmult.schub_lib.schub_poly import schubpoly_from_elems
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, expand_func, sympify
 from schubmult.symmetric_polynomials import FactorialElemSym, QFactorialElemSym, coeffvars, degree, genvars, is_of_func_type, numvars
@@ -384,7 +384,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
             start = end
         self._parabolic_index = parabolic_index
         self._otherlong = Permutation(list(range(self._N[-1], 0, -1)))
-        self._longest = self._otherlong * longest_element(parabolic_index)
+        self._longest = self._otherlong * Permutation.longest_element(*parabolic_index)
         self.dtype = type("ParabolicQuantumDoubleSchubertElement", (ParabolicQuantumDoubleSchubertElement,), {"ring": self})
 
     def _coerce_mul(self, other):
@@ -558,7 +558,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
                 parabolic_index += list(range(start + 1, end))
                 start = end
             otherlong = Permutation(list(range(parabolic_index[-1] + 1, 0, -1)))
-            longpar = Permutation(longest_element(parabolic_index))
+            longpar = Permutation.longest_element(*parabolic_index)
             longest = otherlong * longpar
         else:
             longest = self._longest
@@ -575,7 +575,7 @@ class ParabolicQuantumDoubleSchubertRing(BaseSchubertRing):
                 parabolic_index += list(range(start + 1, end))
                 start = end
             otherlong = Permutation(list(range(parabolic_index[-1] + 1, 0, -1)))
-            longpar = Permutation(longest_element(parabolic_index))
+            longpar = Permutation.longest_element(*parabolic_index)
             longest = otherlong * longpar
         else:
             longest = self._longest
@@ -716,7 +716,7 @@ class ParabolicQuantumSingleSchubertRing(ParabolicQuantumDoubleSchubertRing):
                 parabolic_index += list(range(start + 1, end))
                 start = end
             otherlong = Permutation(list(range(parabolic_index[-1] + 1, 0, -1)))
-            longpar = Permutation(longest_element(parabolic_index))
+            longpar = Permutation.longest_element(*parabolic_index)
             longest = otherlong * longpar
         else:
             longest = self._longest

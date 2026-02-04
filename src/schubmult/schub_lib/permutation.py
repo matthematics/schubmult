@@ -557,20 +557,6 @@ def strict_theta(u):
         ret.pop()
     return ret
 
-
-def longest_element(indices):
-    perm = Permutation([1, 2])
-    did_one = True
-    while did_one:
-        did_one = False
-        for i in range(len(indices)):
-            j = indices[i] - 1
-            if sl.sg(j, perm) == 0:
-                perm = perm.swap(j, j + 1)
-                did_one = True
-    return perm
-
-
 def theta(perm):
     cd = perm.code
     for i in range(len(cd) - 1, 0, -1):

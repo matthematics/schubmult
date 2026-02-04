@@ -5,7 +5,7 @@ import numpy as np
 import schubmult.mult.positivity as pos
 from schubmult.rings.poly_lib import _vars, call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet_base
-from schubmult.schub_lib.permutation import Permutation, longest_element, medium_theta, strict_theta, uncode
+from schubmult.schub_lib.permutation import Permutation, medium_theta, strict_theta, uncode
 from schubmult.symbolic import Add, Mul, Pow, S, expand, sympify
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import (
@@ -282,7 +282,7 @@ def q_partial_posify_generic(val, u, v, w):
 
 def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var):
     max_len = parabolic_index[-1] + 1
-    w_P = longest_element(parabolic_index)
+    w_P = Permutation.longest_element(*parabolic_index)
     w_P_prime = Permutation([1, 2])
     coeff_dict_update = {}
     for w_1 in coeff_dict.keys():
@@ -301,7 +301,7 @@ def apply_peterson_woodward(coeff_dict, parabolic_index, q_var=_vars.q_var):
                     break
             if not good:
                 continue
-            w_P_prime = longest_element(parabolic_index2)
+            w_P_prime = Permutation.longest_element(*parabolic_index2)
             if not check_blocks(qv, parabolic_index):
                 continue
             w = (w * w_P_prime) * w_P
