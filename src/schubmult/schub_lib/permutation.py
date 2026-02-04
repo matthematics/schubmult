@@ -20,6 +20,12 @@ class Permutation(Printable):
     def act_root(self, a, b):
         return self[a - 1], self[b - 1]
 
+    def one_dominates(self, other):
+        return _one_dominates(self, other)
+
+    def dominates(self, other):
+        return _dominates(self, other)
+
     @property
     def antiperm(self):
         w0 = Permutation.w0(len(self))
@@ -93,18 +99,6 @@ class Permutation(Printable):
 
     def __new__(cls, perm):
         return Permutation.__xnew_cached__(cls, tuple(perm))
-
-    # @classmethod
-    # def _af_new(cls, p):
-    #     obj = object.__new__(cls)
-    #     p = tuple(p)
-    #     obj._args = (p,)
-    #     # obj._s_perm = tuple([i - 1 for i in p])
-    #     obj._perm = p
-    #     obj._hash_code = hash(p)
-    #     cd = old_code(p)
-    #     obj._unique_key = (len(p), sum([cd[i] * math.factorial(len(p) - 1 - i) for i in range(len(cd))]))
-    #     return obj
 
     print_as_code = False
 
@@ -586,7 +580,7 @@ def phi1(u):
     return ~(uncode(c_star))
 
 
-def one_dominates(u, w):
+def _one_dominates(u, w):
     c_star_u = (~u).code
     c_star_w = (~w).code
 
@@ -601,10 +595,10 @@ def one_dominates(u, w):
     return True
 
 
-def dominates(u, w):
+def _dominates(u, w):
     u2 = u
     w2 = w
-    while u2.inv > 0 and one_dominates(u2, w2):
+    while u2.inv > 0 and _one_dominates(u2, w2):
         u2 = phi1(u2)
         w2 = phi1(w2)
     if u2.inv == 0:

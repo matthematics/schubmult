@@ -8,8 +8,6 @@ from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_poly
 from schubmult.schub_lib.permutation import (
     Permutation,
     cycle,
-    dominates,
-    one_dominates,
     phi1,
     theta,
     uncode,
@@ -305,7 +303,7 @@ def posify(
 
     # elem_sym_poly(1, good_index + 1, , var3[cd[good_index]+1:])*posify(schubmult_double_pair(u, uncode(cd), var2, var3).get(w,S.Zero),u,uncode(cd),w,var2,var3,msg,sign_only,optimize)
 
-    if will_formula_work(v, u) or dominates(u, w):
+    if will_formula_work(v, u) or u.dominates(w):
         # logger.debug("Recording line number")
         if sign_only:
             return 0
@@ -577,7 +575,7 @@ def posify(
     c1 = (~u).code
     c2 = (~w).code
 
-    if one_dominates(u, w):
+    if u.one_dominates(w):
         if sign_only:
             return 0
         while c1[0] != c2[0]:
@@ -738,7 +736,7 @@ def dualcoeff(u, v, perm, var2=None, var3=None):
             return schubpoly(vp, var2, var3)
     dpret = []
     ret = 0
-    if dominates(u, perm):
+    if u.dominates(perm):
         dpret = dualpieri(u, v, perm)
     else:
         # logger.debug("Recording line number")

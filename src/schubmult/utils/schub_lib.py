@@ -3,7 +3,6 @@ from functools import cache
 import schubmult.rings.variables as spl
 from schubmult.schub_lib.permutation import (
     Permutation,
-    one_dominates,
     theta,
     uncode,
 )
@@ -117,7 +116,7 @@ def will_formula_work(u, v):
 
 
 def try_reduce_u(u, v, w):
-    if one_dominates(u, w):
+    if u.one_dominates(w):
         return u, v, w
     u2 = u
     v2 = v
@@ -132,7 +131,7 @@ def try_reduce_u(u, v, w):
                 # w2[i + 1], w2[i] = w2[i], w2[i + 1]
                 u2 = u2.swap(i, i + 1)
                 w2 = w2.swap(i, i + 1)
-                if one_dominates(u2, w):
+                if u2.one_dominates(w):
                     # return Permutation(u2), Permutation(v2), Permutation(w2)
                     return u2, v2, w2
                 return try_reduce_u(u2, v2, w2)
@@ -156,7 +155,7 @@ def reduce_descents(u, v, w):
     w2 = Permutation(w)
     while found_one:
         found_one = False
-        if will_formula_work(u2, v2) or will_formula_work(v2, u2) or one_dominates(u2, w2) or is_reducible(v2) or w2.inv - u2.inv == 1:
+        if will_formula_work(u2, v2) or will_formula_work(v2, u2) or u2.one_dominates(w2) or is_reducible(v2) or w2.inv - u2.inv == 1:
             break
         for i in range(len(w2) - 2, -1, -1):
             if w2[i] > w2[i + 1] and i < len(v2) - 1 and v2[i] > v2[i + 1] and (i >= len(u2) - 1 or u2[i] < u2[i + 1]):
@@ -847,7 +846,7 @@ def is_coeff_irreducible(u, v, w):
     return (
         not will_formula_work(u, v)
         and not will_formula_work(v, u)
-        and not one_dominates(u, w)
+        and not u.one_dominates(w)
         and not is_reducible(v)
         and w.inv - u.inv > 1
         and not is_split_two(u, v, w)[0]
