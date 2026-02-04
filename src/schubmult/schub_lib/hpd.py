@@ -135,7 +135,19 @@ def _invalidate_grid(grid: np.ndarray) -> None:
 
 
 def _display_grid(grid: np.ndarray) -> str:
-    rows = ["".join(str(HPDTile(grid[i, j])) for j in range(grid.shape[1])) for i in range(grid.shape[0])]
+    rows = []
+    for i in range(grid.shape[0]):
+        row_parts = []
+        for j in range(grid.shape[1]):
+            tile = HPDTile(grid[i, j])
+            tile_str = str(tile)
+            # Add horizontal extensions for HORIZ tiles
+            if tile == HPDTile.HORIZ:
+                tile_str = "─" + tile_str + "─"
+            else:
+                tile_str = " " + tile_str + " "
+            row_parts.append(tile_str)
+        rows.append("".join(row_parts))
     print("\n".join(rows))
 
 
@@ -348,7 +360,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.ELBOW_SE, HPDTile.VERT):
                 new_grid[classic_index, col] = HPDTile.ELBOW_SW
                 new_grid[bpd_index, col] = HPDTile.BUMP
-            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.BUMP, HPDTile.CROSS) and self.perm(self.row_index_to_label(classic_index)) < self.perm(
+            elif (new_grid[classic_index, col], new_grid[bpd_index, col]) == (HPDTile.BUMP, HPDTile.CROSS) and self.perm(self.row_index_to_label(classic_index)) >= self.perm(
                 self.row_index_to_label(bpd_index),
             ):
                 new_grid[classic_index, col] = HPDTile.CROSS
@@ -374,7 +386,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             else:
                 raise ValueError(f"Cannot swap rows at column {col}: ({new_grid[classic_index, col]}, {new_grid[bpd_index, col]})")
             # ROW 4
-
+        _display_grid(new_grid)
         ret = HPD(new_grid, tuple(new_id_vector))
         return ret
 
@@ -965,6 +977,8 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         else:
             weight = np.sum(np.where((self._grid[-1, :] == HPDTile.CROSS) | (self._grid[-1, :] == HPDTile.HORIZ), 1, 0))
             new_grid[-1, :] = _bpd_bottom_row(weight, self.cols)
+        print("TOGLLE")
+        _display_grid(new_grid)
         return HPD(new_grid, id_vector=new_id_vector)
 
     def _pretty(self, printer=None):
