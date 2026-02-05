@@ -78,3 +78,8 @@ if __name__ == "__main__":
     print(hpd)
     hpd = hpd.toggle_bottom_row()
     print(hpd)
+    # for row in range(hpd.rows):
+    #     for col in range(hpd.cols):
+    #         bungee = set([a for a in hpd.pipe_source_labels(row, col).values() if a is not None])
+    #         assert hpd[row, col] == HPDTile.BLANK or any(a<=len(hpd.perm.trimcode) for a in bungee) or not hpd.is_weighty_position(row, col)
+    print("pants")

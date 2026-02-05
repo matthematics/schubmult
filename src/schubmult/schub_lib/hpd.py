@@ -368,12 +368,15 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             elif (classic_tile, bpd_tile) == (HPDTile.HORIZ, HPDTile.HORIZ):
                 new_grid[classic_index, col] = HPDTile.BLANK
                 new_grid[bpd_index, col] = HPDTile.BLANK
+            elif (classic_tile, bpd_tile) == (HPDTile.HORIZ, HPDTile.ELBOW_SW)  and self.pipe_source_labels(classic_index, col)["left"] != self.pipe_source_labels(bpd_index, col)["left"]:
+                new_grid[classic_index, col] = HPDTile.ELBOW_SW
+                new_grid[bpd_index, col] = HPDTile.CROSS
             elif (classic_tile, bpd_tile) == (HPDTile.HORIZ, HPDTile.ELBOW_SW):
-                new_grid[classic_index, col] = HPDTile.CROSS
-                new_grid[bpd_index, col] = HPDTile.ELBOW_SW
+                new_grid[classic_index, col] = HPDTile.BLANK
+                new_grid[bpd_index, col] = HPDTile.ELBOW_SE
             elif (classic_tile, bpd_tile) == (HPDTile.HORIZ, HPDTile.BLANK):
-                new_grid[classic_index, col] = HPDTile.HORIZ
-                new_grid[bpd_index, col] = HPDTile.BLANK
+                new_grid[classic_index, col] = HPDTile.BLANK
+                new_grid[bpd_index, col] = HPDTile.HORIZ
             elif (classic_tile, bpd_tile) == (HPDTile.ELBOW_NW, HPDTile.HORIZ) and self.pipe_source_labels(classic_index, col)["left"] != self.pipe_source_labels(bpd_index, col)[
                 "left"
             ]:  # trace pipes
