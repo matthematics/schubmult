@@ -408,7 +408,8 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             elif (
                 (classic_tile, bpd_tile) == (HPDTile.BUMP, HPDTile.CROSS)
                 and self.pipe_source_labels(classic_index, col)["left"] != self.pipe_source_labels(classic_index, col)["right"]
-                and self.pipe_source_labels(bpd_index, col)["top"] != self.pipe_source_labels(classic_index, col)["bottom"] != self.pipe_source_labels(bpd_index, col)["left"]
+                and self.pipe_source_labels(classic_index, col)["bottom"] != self.pipe_source_labels(bpd_index, col)["left"]
+                and self.pipe_source_labels(bpd_index, col)["left"] != self.pipe_source_labels(classic_index, col)["left"]
             ):  # trace pipes
                 new_grid[classic_index, col] = HPDTile.CROSS
                 new_grid[bpd_index, col] = HPDTile.BUMP
@@ -421,15 +422,15 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             elif (classic_tile, bpd_tile) == (HPDTile.BUMP, HPDTile.VERT):
                 new_grid[classic_index, col] = HPDTile.VERT
                 new_grid[bpd_index, col] = HPDTile.BUMP
-            elif (classic_tile, bpd_tile) == (HPDTile.BUMP, HPDTile.ELBOW_SE):
-                new_grid[classic_index, col] = HPDTile.ELBOW_SW
-                new_grid[bpd_index, col] = HPDTile.VERT
-            elif (classic_tile, bpd_tile) == (HPDTile.BUMP, HPDTile.HORIZ):
-                new_grid[classic_index, col] = HPDTile.HORIZ
-                new_grid[bpd_index, col] = HPDTile.VERT
-            elif (classic_tile, bpd_tile) == (HPDTile.BUMP, HPDTile.BLANK):
-                new_grid[classic_index, col] = HPDTile.BLANK
-                new_grid[bpd_index, col] = HPDTile.HORIZ
+            # elif (classic_tile, bpd_tile) == (HPDTile.BUMP, HPDTile.ELBOW_SE):
+            #     new_grid[classic_index, col] = HPDTile.ELBOW_SW
+            #     new_grid[bpd_index, col] = HPDTile.VERT
+            # elif (classic_tile, bpd_tile) == (HPDTile.BUMP, HPDTile.HORIZ):
+            #     new_grid[classic_index, col] = HPDTile.HORIZ
+            #     new_grid[bpd_index, col] = HPDTile.VERT
+            # elif (classic_tile, bpd_tile) == (HPDTile.BUMP, HPDTile.BLANK):
+            #     new_grid[classic_index, col] = HPDTile.BLANK
+            #     new_grid[bpd_index, col] = HPDTile.HORIZ
             elif (classic_tile, bpd_tile) == (HPDTile.BLANK, HPDTile.HORIZ):
                 new_grid[classic_index, col] = HPDTile.HORIZ
                 new_grid[bpd_index, col] = HPDTile.BLANK
