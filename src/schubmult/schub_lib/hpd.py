@@ -166,7 +166,7 @@ def _bpd_bottom_row(weight, length):
     row = np.array([HPDTile.BLANK] * length)
     row[weight] = HPDTile.ELBOW_NE
     if weight < length - 1:
-        row[weight+1:] = HPDTile.HORIZ
+        row[weight + 1 :] = HPDTile.HORIZ
     return row
 
 
@@ -202,6 +202,39 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
     def is_classic_row(self, row: int) -> bool:
         """Check if row is a classic row (id_vector[row] == 0)"""
         return self._id_vector[row] == 0
+
+    @classmethod
+    def concat(cls, bpd, rc):
+        """
+        Concatenate a BPD and RCGraph into a HPD.
+
+        Args:
+            bpd: BPD instance
+            rc: RCGraph instance
+        """
+        common_size = max(len(bpd.perm), len(rc.perm))
+        hpd1 = cls.from_bpd(bpd.resize(common_size))
+        hpd2 = cls.from_rc_graph(rc.resize(common_size))
+        grid = np.full((bpd.rows + rc.rows, common_size), HPDTile.BLANK, dtype=HPDTile)
+        grid[: bpd.rows, :] = hpd1._grid[rc.rows :, :]
+        grid[bpd.rows :, :] = hpd2._grid[: rc.rows, :]
+        # there is a B C section at bpd.rows - 1, bpd.rows
+        br = bpd.rows - 1
+        cr = bpd.rows
+        for col in range(common_size):
+            if grid[br, col] == HPDTile.VERT:
+                grid[cr, col] = HPDTile.ELBOW_NW
+            elif grid[br, col] == HPDTile.ELBOW_NE:
+                grid[cr, col] = HPDTile.HORIZ
+            elif grid[br, col] == HPDTile.HORIZ:
+                grid[cr, col] = HPDTile.HORIZ
+            elif grid[br, col] == HPDTile.BLANK:
+                if grid[cr, col] != HPDTile.BLANK:
+                    grid[cr, col] = HPDTile.ELBOW_SE
+            elif grid[br, col] == HPDTile.ELBOW_SW:
+                grid[cr, col] = HPDTile.BUMP
+        ret = HPD(grid, (1,) * bpd.rows + (0,) * rc.rows)
+        return ret
 
     def is_weighty_position(self, row: int, col: int) -> bool:
         """Check if a position is in; a weighty row (id_vector[row] == 1)"""
@@ -265,7 +298,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
 
     @classmethod
     def from_bpd(cls, bpd: BPD) -> HPD:
-        bpd_grid = np.flipud(bpd.resize(len(bpd.perm))._grid)
+        bpd_grid = np.flipud(bpd.resize(max(bpd.rows, len(bpd.perm)))._grid)
         # Vectorize the conversion function to work on arrays
         vectorized_convert = np.vectorize(lambda tile: HPDTile.from_tiletype(TileType(tile)))
         grid = vectorized_convert(bpd_grid).astype(HPDTile)
@@ -280,7 +313,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         Args:
             rc: RCGraph instance
         """
-        n = len(rc.perm)
+        n = max(len(rc.perm), rc.rows)
         grid = np.full((n, n), HPDTile.BLANK, dtype=HPDTile)
         for i in range(n):
             for j in range(n - i):
@@ -339,17 +372,17 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             elif (classic_tile, bpd_tile) == (HPDTile.HORIZ, HPDTile.BLANK):
                 new_grid[classic_index, col] = HPDTile.HORIZ
                 new_grid[bpd_index, col] = HPDTile.BLANK
-            elif (classic_tile, bpd_tile) == (HPDTile.ELBOW_NW, HPDTile.HORIZ) and self.perm(self.row_index_to_label(classic_index)) > self.perm(
-                self.row_index_to_label(bpd_index),
-            ):
+            elif (classic_tile, bpd_tile) == (HPDTile.ELBOW_NW, HPDTile.HORIZ) and self.pipe_source_labels(classic_index, col)["left"] != self.pipe_source_labels(bpd_index, col)[
+                "left"
+            ]:  # trace pipes
                 new_grid[classic_index, col] = HPDTile.CROSS
                 new_grid[bpd_index, col] = HPDTile.ELBOW_NW
             elif (classic_tile, bpd_tile) == (HPDTile.ELBOW_NW, HPDTile.HORIZ):
-                new_grid[classic_index, col] = HPDTile.CROSS
-                new_grid[bpd_index, col] = HPDTile.ELBOW_NW
-            elif (classic_tile, bpd_tile) == (HPDTile.ELBOW_NW, HPDTile.ELBOW_SW) and self.perm(self.row_index_to_label(classic_index)) < self.perm(
-                self.row_index_to_label(bpd_index),
-            ):
+                new_grid[classic_index, col] = HPDTile.ELBOW_NE
+                new_grid[bpd_index, col] = HPDTile.BLANK
+            elif (classic_tile, bpd_tile) == (HPDTile.ELBOW_NW, HPDTile.ELBOW_SW) and self.pipe_source_labels(classic_index, col)["left"] != self.pipe_source_labels(bpd_index, col)[
+                "left"
+            ]:  # trace pipes
                 new_grid[classic_index, col] = HPDTile.CROSS
                 new_grid[bpd_index, col] = HPDTile.BUMP
             elif (classic_tile, bpd_tile) == (HPDTile.ELBOW_NW, HPDTile.ELBOW_SW):
@@ -367,9 +400,11 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             elif (classic_tile, bpd_tile) == (HPDTile.ELBOW_SE, HPDTile.VERT):
                 new_grid[classic_index, col] = HPDTile.ELBOW_SW
                 new_grid[bpd_index, col] = HPDTile.BUMP
-            elif (classic_tile, bpd_tile) == (HPDTile.BUMP, HPDTile.CROSS) and self.perm(self.row_index_to_label(classic_index)) >= self.perm(
-                self.row_index_to_label(bpd_index),
-            ):
+            elif (
+                (classic_tile, bpd_tile) == (HPDTile.BUMP, HPDTile.CROSS)
+                and self.pipe_source_labels(classic_index, col)["left"] != self.pipe_source_labels(classic_index, col)["right"]
+                and self.pipe_source_labels(bpd_index, col)["top"] != self.pipe_source_labels(classic_index, col)["bottom"] != self.pipe_source_labels(bpd_index, col)["left"]
+            ):  # trace pipes
                 new_grid[classic_index, col] = HPDTile.CROSS
                 new_grid[bpd_index, col] = HPDTile.BUMP
             elif (classic_tile, bpd_tile) == (HPDTile.BUMP, HPDTile.CROSS):
@@ -402,9 +437,259 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             else:
                 raise ValueError(f"Cannot swap rows at column {col}: ({classic_tile}, {bpd_tile})")
             # ROW 4
-        _display_grid(new_grid)
+        # _display_grid(new_grid)
         ret = HPD(new_grid, tuple(new_id_vector))
         return ret
+
+    def pipe_source_labels(self, row: int, col: int) -> dict[str, int | None]:
+        """
+        Determine which row label(s) the pipe(s) at position (row, col) came from.
+
+        Returns a dict with keys 'top', 'bottom', 'left', 'right' indicating which
+        row label the pipe on each side of the tile belongs to (None if no pipe on that side).
+
+        Invariants:
+        - For non-BUMP/CROSS tiles: exactly 2 non-None sides with equal values
+        - For BUMP: right == bottom, left == top
+        - For CROSS: top == bottom, left == right
+
+        Args:
+            row: Physical row index (0-based)
+            col: Physical column index (0-based)
+
+        Returns:
+            Dict with keys 'top', 'bottom', 'left', 'right' mapping to row labels or None
+        """
+
+        def trace_pipe_to_entry(start_row: int, start_col: int, entry_side: str) -> int | None:
+            """
+            Trace a pipe from a given tile side to its entry point.
+
+            entry_side: which side of the starting tile the pipe enters from ('left', 'right', 'top', 'bottom')
+            Returns: row label where pipe enters, or None if can't trace
+            """
+            # Start by moving into the tile from the entry side
+            curr_row, curr_col = start_row, start_col
+            came_from = entry_side  # Which side we entered the current tile from
+
+            visited = set()
+
+            while True:
+                # Check for infinite loop
+                if (curr_row, curr_col, came_from) in visited:
+                    return None
+                visited.add((curr_row, curr_col, came_from))
+
+                # Check if out of bounds
+                if not (0 <= curr_row < self.rows and 0 <= curr_col < self.cols):
+                    return None
+
+                tile = HPDTile(self[curr_row, curr_col])
+
+                # Determine exit side based on tile type and entry side
+                if tile == HPDTile.BLANK:
+                    return None  # No connection
+
+                if tile == HPDTile.HORIZ:
+                    if came_from == "right":
+                        exit_side = "left"
+                    elif came_from == "left":
+                        exit_side = "right"
+                    else:
+                        return None  # Inconsistent
+
+                elif tile == HPDTile.VERT:
+                    if came_from == "top":
+                        exit_side = "bottom"
+                    elif came_from == "bottom":
+                        exit_side = "top"
+                    else:
+                        return None  # Inconsistent
+
+                elif tile == HPDTile.CROSS:
+                    if came_from == "left":
+                        exit_side = "right"
+                    elif came_from == "right":
+                        exit_side = "left"
+                    elif came_from == "top":
+                        exit_side = "bottom"
+                    elif came_from == "bottom":
+                        exit_side = "top"
+                    else:
+                        return None
+
+                elif tile == HPDTile.BUMP:
+                    if came_from == "left":
+                        exit_side = "top"
+                    elif came_from == "top":
+                        exit_side = "left"
+                    elif came_from == "right":
+                        exit_side = "bottom"
+                    elif came_from == "bottom":
+                        exit_side = "right"
+                    else:
+                        return None
+
+                elif tile == HPDTile.ELBOW_NW:
+                    # Connects left and top
+                    if came_from == "left":
+                        exit_side = "top"
+                    elif came_from == "top":
+                        exit_side = "left"
+                    else:
+                        return None
+
+                elif tile == HPDTile.ELBOW_SE:
+                    # Connects bottom and right
+                    if came_from == "bottom":
+                        exit_side = "right"
+                    elif came_from == "right":
+                        exit_side = "bottom"
+                    else:
+                        return None
+
+                elif tile == HPDTile.ELBOW_NE:
+                    # Connects right and top
+                    if came_from == "right":
+                        exit_side = "top"
+                    elif came_from == "top":
+                        exit_side = "right"
+                    else:
+                        return None
+
+                elif tile == HPDTile.ELBOW_SW:
+                    # Connects bottom and left
+                    if came_from == "bottom":
+                        exit_side = "left"
+                    elif came_from == "left":
+                        exit_side = "bottom"
+                    else:
+                        return None
+
+                else:
+                    return None  # Unknown tile
+
+                # Move to next tile based on exit_side
+                next_row, next_col = curr_row, curr_col
+                # Move to next tile based on exit_side
+                next_row, next_col = curr_row, curr_col
+
+                if exit_side == "left":
+                    next_col -= 1
+                elif exit_side == "right":
+                    next_col += 1
+                elif exit_side == "top":
+                    next_row -= 1
+                elif exit_side == "bottom":
+                    next_row += 1
+
+                # Check if we've exited the grid (found entry point)
+                if next_col < 0:
+                    # Exited left edge
+                    if self._id_vector[curr_row] == 0:  # Classic row entry
+                        return self.row_index_to_label(curr_row)
+                    return None  # Not an entry point
+                if next_col >= self.cols:
+                    # Exited right edge
+                    if self._id_vector[curr_row] == 1:  # BPD row entry
+                        return self.row_index_to_label(curr_row)
+                    return None  # Not an entry point
+                if next_row < 0:
+                    # Exited top edge - shouldn't happen
+                    return None
+                if next_row >= self.rows:
+                    # Exited bottom edge - bottom entry point
+                    return self.row_index_to_label(curr_row)
+
+                # Continue to next tile
+                curr_row, curr_col = next_row, next_col
+                if exit_side == "left":
+                    came_from = "right"
+                elif exit_side == "right":
+                    came_from = "left"
+                elif exit_side == "top":
+                    came_from = "bottom"
+                elif exit_side == "bottom":
+                    came_from = "top"
+
+        tile = HPDTile(self[row, col])
+        result = {"top": None, "bottom": None, "left": None, "right": None}
+
+        # Trace each side based on tile connectivity
+        if tile == HPDTile.BLANK:
+            pass
+
+        elif tile == HPDTile.HORIZ:
+            label = trace_pipe_to_entry(row, col, "left")
+            if label is None:
+                label = trace_pipe_to_entry(row, col, "right")
+            result["left"] = label
+            result["right"] = label
+
+        elif tile == HPDTile.VERT:
+            label = trace_pipe_to_entry(row, col, "bottom")
+            if label is None:
+                label = trace_pipe_to_entry(row, col, "top")
+            result["bottom"] = label
+            result["top"] = label
+
+        elif tile == HPDTile.ELBOW_NW:
+            # Connects left and top
+            label = trace_pipe_to_entry(row, col, "left")
+            if label is None:
+                label = trace_pipe_to_entry(row, col, "top")
+            result["left"] = label
+            result["top"] = label
+
+        elif tile == HPDTile.ELBOW_SE:
+            # Connects bottom and right
+            label = trace_pipe_to_entry(row, col, "bottom")
+            if label is None:
+                label = trace_pipe_to_entry(row, col, "right")
+            result["bottom"] = label
+            result["right"] = label
+
+        elif tile == HPDTile.ELBOW_NE:
+            # Connects right and top
+            label = trace_pipe_to_entry(row, col, "right")
+            if label is None:
+                label = trace_pipe_to_entry(row, col, "top")
+            result["right"] = label
+            result["top"] = label
+
+        elif tile == HPDTile.ELBOW_SW:
+            # Connects bottom and left
+            label = trace_pipe_to_entry(row, col, "bottom")
+            if label is None:
+                label = trace_pipe_to_entry(row, col, "left")
+            result["bottom"] = label
+            result["left"] = label
+
+        elif tile == HPDTile.CROSS:
+            vert_label = trace_pipe_to_entry(row, col, "bottom")
+            if vert_label is None:
+                vert_label = trace_pipe_to_entry(row, col, "top")
+            horiz_label = trace_pipe_to_entry(row, col, "left")
+            if horiz_label is None:
+                horiz_label = trace_pipe_to_entry(row, col, "right")
+            result["bottom"] = vert_label
+            result["top"] = vert_label
+            result["left"] = horiz_label
+            result["right"] = horiz_label
+
+        elif tile == HPDTile.BUMP:
+            right_bottom_label = trace_pipe_to_entry(row, col, "right")
+            if right_bottom_label is None:
+                right_bottom_label = trace_pipe_to_entry(row, col, "bottom")
+            left_top_label = trace_pipe_to_entry(row, col, "left")
+            if left_top_label is None:
+                left_top_label = trace_pipe_to_entry(row, col, "top")
+            result["right"] = right_bottom_label
+            result["bottom"] = right_bottom_label
+            result["left"] = left_top_label
+            result["top"] = left_top_label
+
+        return result
 
     def _invalidate_cache(self):
         self._perm = None
@@ -993,8 +1278,8 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         else:
             weight = np.sum(np.where((self._grid[-1, :] == HPDTile.CROSS) | (self._grid[-1, :] == HPDTile.HORIZ), 1, 0))
             new_grid[-1, :] = _bpd_bottom_row(weight, self.cols)
-        print("TOGLLE")
-        _display_grid(new_grid)
+        # print("TOGLLE")
+        # _display_grid(new_grid)
         return HPD(new_grid, id_vector=new_id_vector)
 
     def _pretty(self, printer=None):
@@ -1008,7 +1293,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         # Calculate column widths based on labels (minimum 1 for tile)
         col_widths = []
         for j in range(self.cols):
-            label = str(printer._print((~self.perm)[j]))
+            label = str(printer._print((~self.perm)[j] if self.perm is not None else "?"))
             col_widths.append(max(1, len(label)))
 
         # Use maximum column width for all columns
@@ -1087,7 +1372,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         column_width = 1 + total_pad
 
         for j in range(self.cols):
-            label = str(printer._print((~self.perm)[j]))
+            label = str(printer._print((~self.perm)[j] if self.perm is not None else "?"))
             col_labels.append(label.center(column_width))
 
         # Add leading and trailing space to align with row labels
@@ -1219,7 +1504,8 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
                     # print("BADAAD")
                     raise ValueError("Invalid BUMP direction")
             else:
-                raise ValueError(f"Invalid tile {tile} encountered during tracing")
+                print(f"Invalid tile {tile} encountered during tracing")
+                return None, None, None, None
             return this_row, col, going_right, going_up
 
         for row, label in left_rows:
@@ -1236,6 +1522,9 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
                 # print(f"At ({this_row}, {col}) tile {tile}")
                 tile = HPDTile(self._grid[this_row, col])
                 this_row, col, going_right, going_up = _new_direction(this_row, col, tile, going_right, going_up)
+                if this_row is None:
+                    self._perm = None
+                    return self._perm
             top_pop[col] = label
 
         for row, label in right_rows:
@@ -1248,6 +1537,9 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
                 # Switch on all tile types
                 tile = HPDTile(self._grid[this_row, col])
                 this_row, col, going_right, going_up = _new_direction(this_row, col, tile, going_right, going_up)
+                if this_row is None:
+                    self._perm = None
+                    return self._perm
             top_pop[col] = label
         # print(top_pop)
         # small_perm = Permutation([])
