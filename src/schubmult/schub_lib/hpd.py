@@ -58,7 +58,7 @@ class HPDTile(IntEnum):
             HPDTile.ELBOW_NE: "┕",
             HPDTile.ELBOW_SW: "┑",
             HPDTile.VERT: "│",
-            HPDTile.BUMP: "╬",
+            HPDTile.BUMP: "◉",
             HPDTile.TBD: "?",
         }
         return symbols.get(self, "?")
@@ -67,7 +67,7 @@ class HPDTile(IntEnum):
         """Get display symbol based on whether the tile is in a weighty row"""
         if is_weighty:
             weighty_symbols = {
-                HPDTile.BLANK: "░",
+                HPDTile.BLANK: "█",
                 HPDTile.CROSS: "╋",
                 HPDTile.HORIZ: "━",
             }
