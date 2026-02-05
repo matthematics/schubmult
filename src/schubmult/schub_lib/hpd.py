@@ -361,11 +361,13 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
                 new_grid[classic_index, col] = HPDTile.ELBOW_NE
                 new_grid[bpd_index, col] = HPDTile.HORIZ
             elif (classic_tile, bpd_tile) == (HPDTile.CROSS, HPDTile.VERT):
-                new_grid[classic_index, col] = HPDTile.CROSS
-                new_grid[bpd_index, col] = HPDTile.VERT
-            elif (classic_tile, bpd_tile) == (HPDTile.HORIZ, HPDTile.HORIZ):
-                # nothing to do
+                new_grid[classic_index, col] = HPDTile.VERT
+                new_grid[bpd_index, col] = HPDTile.CROSS
+            elif (classic_tile, bpd_tile) == (HPDTile.HORIZ, HPDTile.HORIZ) and self.pipe_source_labels(classic_index, col)["left"] != self.pipe_source_labels(bpd_index, col)["left"]:
                 pass
+            elif (classic_tile, bpd_tile) == (HPDTile.HORIZ, HPDTile.HORIZ):
+                new_grid[classic_index, col] = HPDTile.BLANK
+                new_grid[bpd_index, col] = HPDTile.BLANK
             elif (classic_tile, bpd_tile) == (HPDTile.HORIZ, HPDTile.ELBOW_SW):
                 new_grid[classic_index, col] = HPDTile.CROSS
                 new_grid[bpd_index, col] = HPDTile.ELBOW_SW
