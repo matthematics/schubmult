@@ -780,7 +780,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def __getitem__(self, key) -> TileType | np.ndarray:
         """Access grid elements, casting to TileType"""
-        return self._grid[key]
+        result = self._grid[key]
+        # If it's a scalar, wrap it in TileType
+        if isinstance(result, (int, np.integer)):
+            return TileType(result)
+        return result
 
     def _sympyrepr(self, printer=None) -> str:
         """SymPy repr representation"""

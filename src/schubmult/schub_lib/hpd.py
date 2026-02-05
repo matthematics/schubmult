@@ -67,7 +67,7 @@ class HPDTile(IntEnum):
         """Get display symbol based on whether the tile is in a weighty row"""
         if is_weighty:
             weighty_symbols = {
-                HPDTile.BLANK: "█",
+                HPDTile.BLANK: "▇",
                 HPDTile.CROSS: "╋",
                 HPDTile.HORIZ: "━",
             }
@@ -87,6 +87,18 @@ class HPDTile(IntEnum):
             TileType.BUMP: HPDTile.BUMP,
         }
         return mapping[tile]
+
+    def to_tiletype(self):
+        reverse_mapping = {
+            HPDTile.BLANK: TileType.BLANK,
+            HPDTile.CROSS: TileType.CROSS,
+            HPDTile.ELBOW_SW: TileType.ELBOW_NW,
+            HPDTile.ELBOW_NE: TileType.ELBOW_SE,
+            HPDTile.VERT: TileType.VERT,
+            HPDTile.HORIZ: TileType.HORIZ,
+            HPDTile.BUMP: TileType.BUMP,
+        }
+        return reverse_mapping[self]
 
     @cached_property
     def is_crossing(self) -> bool:
@@ -204,7 +216,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         return self._id_vector[row] == 0
 
     @classmethod
-    def concat(cls, bpd, rc):
+    def concat(cls, rc, bpd):
         """
         Concatenate a BPD and RCGraph into a HPD.
 
@@ -212,28 +224,18 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             bpd: BPD instance
             rc: RCGraph instance
         """
-        common_size = max(len(bpd.perm), len(rc.perm))
-        hpd1 = cls.from_bpd(bpd.resize(common_size))
-        hpd2 = cls.from_rc_graph(rc.resize(common_size))
-        grid = np.full((bpd.rows + rc.rows, common_size), HPDTile.BLANK, dtype=HPDTile)
-        grid[: bpd.rows, :] = hpd1._grid[rc.rows :, :]
-        grid[bpd.rows :, :] = hpd2._grid[: rc.rows, :]
+        rc_perm = rc.perm
+        bpd_perm = bpd.perm.shiftup(len(rc))
+        if rc_perm.inv + bpd_perm.inv != (rc_perm * bpd_perm).inv:
+            raise ValueError("Permutations do not compose correctly for concatenation")
+        common_size = len(rc_perm * bpd_perm)
+        hpd1 = cls.from_rc_graph(rc.resize(common_size))
+        hpd2 = cls.from_bpd(bpd.resize(common_size))
+        grid = np.full((common_size, common_size), HPDTile.BLANK, dtype=HPDTile)
+        grid[: rc.rows, :] = hpd1._grid[: rc.rows, :]
+        grid[rc.rows :, :] = hpd2._grid[rc.rows:, :]
         # there is a B C section at bpd.rows - 1, bpd.rows
-        br = bpd.rows - 1
-        cr = bpd.rows
-        for col in range(common_size):
-            if grid[br, col] == HPDTile.VERT:
-                grid[cr, col] = HPDTile.ELBOW_NW
-            elif grid[br, col] == HPDTile.ELBOW_NE:
-                grid[cr, col] = HPDTile.HORIZ
-            elif grid[br, col] == HPDTile.HORIZ:
-                grid[cr, col] = HPDTile.HORIZ
-            elif grid[br, col] == HPDTile.BLANK:
-                if grid[cr, col] != HPDTile.BLANK:
-                    grid[cr, col] = HPDTile.ELBOW_SE
-            elif grid[br, col] == HPDTile.ELBOW_SW:
-                grid[cr, col] = HPDTile.BUMP
-        ret = HPD(grid, (1,) * bpd.rows + (0,) * rc.rows)
+        ret = HPD(grid, (0,) * rc.rows + (1,) * (common_size - rc.rows))
         return ret
 
     def is_weighty_position(self, row: int, col: int) -> bool:
@@ -304,6 +306,12 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         grid = vectorized_convert(bpd_grid).astype(HPDTile)
 
         return HPD(grid, (1,) * len(bpd.perm))
+
+    def to_bpd(self, row_start, row_end):
+        vectorized_convert = np.vectorize(lambda tile: HPDTile(tile).to_tiletype())
+        new_grid = np.flip(vectorized_convert(self._grid[row_start:row_end, :]), axis=0).astype(TileType)
+        return BPD(new_grid)
+
 
     @classmethod
     def from_rc_graph(cls, rc: RCGraph) -> HPD:
@@ -1573,7 +1581,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         #         small_perm = small_perm.swap(pipes_northeast - 2, pipes_northeast - 1)
 
         # build_perm = good_cols * small_perm
-        print(top_pop)
+        # print(top_pop)
 
         self._perm = ~Permutation(top_pop)
         return self._perm
