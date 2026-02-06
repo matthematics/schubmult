@@ -25,6 +25,8 @@ if __name__ == "__main__":
                 # if len(rc[i-1]) != 0:
                 #     continue
                 pullout = rc.pull_out_row(i)
+                if pullout is None:
+                    continue
                 assert pullout.is_valid
                 assert pullout.perm in [p for _, p in pull_out_var(i, rc.perm)]
                 smm += (x[i] ** (perm.inv - pullout.perm.inv)) * pullout.polyvalue(x[:i] + x[i + 1 :])

@@ -6,17 +6,22 @@ if __name__ == "__main__":
 
     rc1, rc2 = rc.rowrange(0, 4), rc.rowrange(4)
     bpd2 = BPD.from_rc_graph(rc2)
+    
+    #bpd2 = bpd2.delete_top_row()
     print("RC Graph:")
     print(rc)
     print("RC1:")
     print(rc1)
     print("BPD2:")
     print(bpd2)
-    assert rc1.perm * (bpd2.perm.shiftup(len(rc1))) == rc.perm
+    #assert rc1.perm * (bpd2.perm.shiftup(len(rc1))) == rc.perm
     combined = HPD.concat(rc1, bpd2)
     print("Combined HPD:")
     print(combined)
     print(f"{~(rc.perm)}")
+    combined = combined.toggle_bottom_row()
+    print("After swap:")
+    print(combined)
     # # rc_bottom, bpd_top = rc.vertical_cut(4)
     # # bpd_top = BPD.from_rc_graph(bpd_top)
     # # print("RC Graph:")

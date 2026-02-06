@@ -1297,6 +1297,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         return HPD(new_grid, id_vector=new_id_vector)
 
     def _pretty(self, printer=None):
+        limit_row_labels = False
         """Pretty printing with row and column labels"""
         from sympy.printing.pretty.stringpict import prettyForm
 
@@ -1317,9 +1318,12 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         rows = []
         # perm = self.perm
         # perm_values = [perm[i] for i in range(self.rows)]
-
+        actual_indexes = []
         for i in range(self.rows):
             row_parts = []
+            if limit_row_labels and self.row_index_to_label(i) > len(self.perm.trimcode):
+                continue
+            actual_indexes.append(i)
             for j in range(self.cols):
                 tile = self[i, j]
                 is_weighty = self.is_weighty_position(i, j)
@@ -1356,7 +1360,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         # Calculate max label widths for left and right sides
         max_left_label_width = 0
         max_right_label_width = 0
-        for i in range(self.rows):
+        for i in actual_indexes:
             row_label = self.row_index_to_label(i)
             row_label_len = len(str(printer._print(row_label)))
             if self._id_vector[i] == 0:
@@ -1365,9 +1369,11 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
                 max_right_label_width = max(max_right_label_width, row_label_len)
 
         # Now add labels to each row with consistent padding on both sides
-        for i in range(len(rows)):
-            row_label = str(printer._print(self.row_index_to_label(i)))
-            if self._id_vector[i] == 0:
+        actual_index = 0
+        for i, actual_index in enumerate(actual_indexes):
+
+            row_label = str(printer._print(self.row_index_to_label(actual_index)))
+            if self._id_vector[actual_index] == 0:
                 # Label on the left
                 left_part = row_label.ljust(max_left_label_width) + " "
                 right_part = " " * (max_right_label_width + 1) if max_right_label_width > 0 else ""

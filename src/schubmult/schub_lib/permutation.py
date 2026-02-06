@@ -292,6 +292,9 @@ class Permutation(Printable):
     def graph(self):
         return {(i + 1, self[i]) for i in range(len(self._perm))}
 
+    def reduced_with(self, other):
+        return (self.inv + other.inv) == (self * other).inv
+
     @property
     def shape(self):
         return tuple(sorted(self.code, reverse=True))
