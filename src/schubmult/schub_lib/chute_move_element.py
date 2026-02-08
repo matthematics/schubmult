@@ -1,10 +1,11 @@
+from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.utils._grid_print import GridPrint
 
 
 class ChuteMoveElement(GridPrint):
     def __init__(self, rc_graph, rows):
         super().__init__()
-        self._rc = rc_graph
+        self._rc = RCGraph(rc_graph)
         self._rows = set(rows)
         if len(self._rows) == 0:
             self._pair = (self._rc, self._rc)
@@ -15,7 +16,7 @@ class ChuteMoveElement(GridPrint):
 
         for r in rows:
             row = r
-            if row >= len(self._rc) - 1:
+            if row >= len(self._rc):
                 raise ValueError(f"Invalid chute move: row {row} is the last row of the RC graph")
             found = False
             for index in range(len(self._rc[row - 1])):
@@ -36,6 +37,17 @@ class ChuteMoveElement(GridPrint):
             if not found:
                 raise ValueError(f"Invalid chute move: no empty space below row {row} in any column")
         self._pair = (self._rc, new_rc)
+
+    def product(self, other):
+        if not isinstance(other, ChuteMoveElement):
+            raise ValueError("Can only multiply ChuteMoveElement by another ChuteMoveElement")
+        new_rows = set(self._rows)
+        new_rows.update(tuple([r + len(self._rc) for r in other._rows]))
+        rc_dict = self._rc.product(other._rc)
+        cm_dict = {}
+        for rc, coeff in rc_dict.items():
+            cm_dict[ChuteMoveElement(rc, new_rows)] = coeff
+        return cm_dict
 
     @property
     def chute_degree(self):
@@ -67,16 +79,6 @@ class ChuteMoveElement(GridPrint):
             def cols(inner_self) -> int:
                 return self.cols
 
-            @property
-            def grey_background_rows(inner_self) -> set:
-                """Returns set of 0-indexed row numbers that should have grey background padding."""
-                grey_rows = set()
-                for row_idx in range(self.rows):
-                    # Row is amorphous if it's not in self._rows (1-indexed) and not row below a chute move
-                    if row_idx + 1 not in self._rows and row_idx not in self._rows:
-                        grey_rows.add(row_idx)
-                return grey_rows
-
             def __getitem__(inner_self, key):
                 if isinstance(key, tuple):
                     row, col = key
@@ -87,18 +89,21 @@ class ChuteMoveElement(GridPrint):
                         if not self._rc.has_element(row + 1, col + 1):
                             return " "
                         if self._rc.has_element(row + 1, col + 1) and not self._pair[1].has_element(row + 1, col + 1):
-                            return f"\033[48;5;242m{col + row + 1}\033[0m"
+                            #return f"\033[48;5;242m{col + row + 1}\033[0m"
+                            return col + row + 1
                         return col + row + 1
                     if (row - 1) + 1 in self._rows:
                         if not self._pair[1].has_element(row + 1, col + 1):
                             return " "
                         if self._pair[1].has_element(row + 1, col + 1) and not self._rc.has_element(row + 1, col + 1):
-                            return f"\033[48;5;242m{col + row + 1}\033[0m"
+                            #return f"\033[48;5;242m{col + row + 1}\033[0m"
+                            return col + row + 1
                         return col + row + 1
                     # Amorphous rows - grey out everything
                     if self._rc.has_element(row + 1, col + 1):
-                        return f"\033[48;5;242m{row + col + 1}\033[0m"
-                    return "\033[48;5;242m \033[0m"
+                        #return f"\033[48;5;242m{row + col + 1}\033[0m"
+                        return f"!{row + col + 1}!"
+                    return "! !"
                 if isinstance(key, int):
                     return self._rc[key]
                 return "FATBACON"
