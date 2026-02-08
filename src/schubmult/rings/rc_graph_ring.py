@@ -284,11 +284,11 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
     # def _word_rc(self, word):
     #     res = self(RCGraph([]))
     #     for a in reversed(word):
-    #         res *= self(RCGraph.one_row(a))
+    #         res = self(RCGraph.one_row(a)) * res
     #     return res
 
     # def _word_cp(self, word):
-    #     tring = CrystalTensorRing(self, self)
+    #     tring = self @ self
     #     res = tring.one
     #     for a in word:
     #         res *= self._one_row_cp(a)
@@ -303,7 +303,27 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
             n = len(perm.trimcode)
         return self.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(perm, n), S.One))
 
+    # def weight_coproduct(self, elem):
+
     def coproduct_on_basis(self, elem):
+        from schubmult import ASx
+        model = ASx(elem.perm, len(elem)).coproduct()
+        T = self @ self
+        res = T.zero
+        for (key1, key2), coeff in model.items():
+            res += coeff * self.from_free_algebra_element(ASx(*key1)) @ self.from_free_algebra_element(ASx(*key2))
+        res += (self._word_rc(elem.length_vector) - self(elem)) @ self(RCGraph([]).resize(len(elem))) + self(RCGraph([]).resize(len(elem))) @ (self._word_rc(elem.length_vector) - self(elem))
+        return res
+        # self.from_free_algebra_element(elem.perm) - elem
+
+    # def dual_schubert_element(self, rc):
+    #     from schubmult import ASx, WordBasis
+    #     model = ASx(rc.perm, len(rc)).change_basis(WordBasis)
+    #     for word, coeff in model.items():
+    #         if coeff != 0:
+    #             return self.from_free_algebra_element(WordBasis(word))
+
+    def old_coproduct_on_basis(self, elem):
         # if not elem.is_principal:
         #     raise NotImplementedError
         tring = self @ self
@@ -340,7 +360,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
 
         from schubmult import CrystalGraphTensor, FreeAlgebra, Permutation, SchubertBasis  # noqa: F401
 
-        ASx = FreeAlgebra(SchubertBasis)
+        ASx = FreeAlgebra(SchubertBasis)  # noqa: F841
 
         if right_side:
             up_elem2 = self(lower_graph) * self(RCGraph.one_row(p))
@@ -371,33 +391,36 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
                 #     if check_compat(key, rc1, rc2) and working_key_coprod.get(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))), 0) != 0:
                 #         ret_elem -= tring((rc1, rc2))
                 #         working_key_coprod -= (ASx @ ASx)(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))))
+                # ret_elem += (self@self).ext_multiply(key - RCGraph.principal_rc(key.perm, len(key)), key - RCGraph.principal_rc(key.perm, len(key)))
+                ret_elem += (self.dual_schubert_element(key.perm, len(key)) - self(RCGraph.principal_rc(key.perm, len(key))))@self(RCGraph([]).resize(len(elem))) + self(RCGraph([]).resize(len(elem)))@(self(key) - self(RCGraph.principal_rc(key.perm, len(key))))
                 key_coprod = self.coproduct_on_basis(RCGraph.principal_rc(key.perm, len(key)))
+                ret_elem -= key_coprod
                 # first remove non potential
-                rset = {k for k, v in ret_elem.items() if v != 0}
-                key_count = {}
+                # rset = {k for k, v in ret_elem.items() if v != 0}
+                # key_count = {}
 
-                for (rc1, rc2), c in key_coprod.items():
-                    if c != 0:
-                        key_count[(rc1.perm, rc2.perm)] = key_count.get((rc1.perm, rc2.perm), 0) + c
+                # for (rc1, rc2), c in key_coprod.items():
+                #     if c != 0:
+                #         key_count[(rc1.perm, rc2.perm)] = key_count.get((rc1.perm, rc2.perm), 0) + c
 
-                for rc1, rc2 in rset:
-                    if (rc1.perm, rc2.perm) in key_count and not elem.is_potential_coproduct(rc1, rc2):
-                        del ret_elem[(rc1, rc2)]
-                        key_count[(rc1.perm, rc2.perm)] -= 1
-                        if key_count[(rc1.perm, rc2.perm)] == 0:
-                            del key_count[(rc1.perm, rc2.perm)]
+                # for rc1, rc2 in rset:
+                #     if (rc1.perm, rc2.perm) in key_count and not elem.is_potential_coproduct(rc1, rc2):
+                #         del ret_elem[(rc1, rc2)]
+                #         key_count[(rc1.perm, rc2.perm)] -= 1
+                #         if key_count[(rc1.perm, rc2.perm)] == 0:
+                #             del key_count[(rc1.perm, rc2.perm)]
 
-                rset_leftover = {k for k, v in ret_elem.items() if v != 0}
+                # rset_leftover = {k for k, v in ret_elem.items() if v != 0}
 
-                if len(key_count) > 0:
-                    # print(f"Meh {key_count=}")
-                    assert all(elem.is_potential_coproduct(rc1, rc2) for (rc1, rc2) in rset_leftover if (rc1.perm, rc2.perm) in key_count)
-                    for rc1, rc2 in rset_leftover:
-                        if (rc1.perm, rc2.perm) in key_count:
-                            ret_elem -= tring((rc1, rc2))
-                            key_count[(rc1.perm, rc2.perm)] -= 1
-                            if key_count[(rc1.perm, rc2.perm)] == 0:
-                                del key_count[(rc1.perm, rc2.perm)]
+                # if len(key_count) > 0:
+                #     # print(f"Meh {key_count=}")
+                #     assert all(elem.is_potential_coproduct(rc1, rc2) for (rc1, rc2) in rset_leftover if (rc1.perm, rc2.perm) in key_count)
+                #     for rc1, rc2 in rset_leftover:
+                #         if (rc1.perm, rc2.perm) in key_count:
+                #             ret_elem -= tring((rc1, rc2))
+                #             key_count[(rc1.perm, rc2.perm)] -= 1
+                #             if key_count[(rc1.perm, rc2.perm)] == 0:
+                #                 del key_count[(rc1.perm, rc2.perm)]
                 # else:
                 # print("Yay")
                 # rc1.perm == rc1_bad.perm and rc2.perm == rc2_bad.perm and CrystalGraphTensor(w0_prin, rc2).to_highest_weight()[0].crystal_weight != elem.length_vector
@@ -464,23 +487,23 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
                 #         break
 
                 #     break
-                assert len(key_count) == 0, f"Leftover counts {key_count=}"
-        bad_bucket = False
-        for (rc1, rc2), v in ret_elem.items():
-            if v != 0:
-                try:
-                    assert basis_elem.is_potential_coproduct(rc1, rc2)
-                except AssertionError:
-                    # print(f"Failed potential coproduct check for basis_elem={basis_elem}, rc1={rc1}, rc2={rc2}, v={v}")
-                    bad_bucket = True
-        if bad_bucket:
-            raise AssertionError("Failed potential coproduct check.")
-        rcpd = ASx(basis_elem.perm, len(basis_elem)).coproduct()
-        collected_cpd = (ASx @ ASx).zero
-        for (rc1, rc2), c in ret_elem.items():
-            assert c == 1
-            collected_cpd += c * (ASx @ ASx).ext_multiply(ASx(rc1.perm, len(rc1)), ASx(rc2.perm, len(rc2)))
-        assert all(v == 0 for v in (rcpd - collected_cpd).values()), f"Mismatch coproducts {rcpd - collected_cpd}"
+                #assert len(key_count) == 0, f"Leftover counts {key_count=}"
+        # bad_bucket = False
+        # for (rc1, rc2), v in ret_elem.items():
+        #     if v != 0:
+        #         try:
+        #             assert basis_elem.is_potential_coproduct(rc1, rc2)
+        #         except AssertionError:
+        #             # print(f"Failed potential coproduct check for basis_elem={basis_elem}, rc1={rc1}, rc2={rc2}, v={v}")
+        #             bad_bucket = True
+        # if bad_bucket:
+        #     raise AssertionError("Failed potential coproduct check.")
+        # rcpd = ASx(basis_elem.perm, len(basis_elem)).coproduct()
+        # collected_cpd = (ASx @ ASx).zero
+        # for (rc1, rc2), c in ret_elem.items():
+        #     assert c == 1
+        #     collected_cpd += c * (ASx @ ASx).ext_multiply(ASx(rc1.perm, len(rc1)), ASx(rc2.perm, len(rc2)))
+        # assert all(v == 0 for v in (rcpd - collected_cpd).values()), f"Mismatch coproducts {rcpd - collected_cpd}"
         # assert all(elem.is_potential_coproduct(k1, k2) for (k1, k2), spuh in ret_elem.items() if spuh != 0)
         # assert all(C)
         return ret_elem

@@ -25,6 +25,7 @@ _lazy_exports = {
     "Permutation": "schubmult.schub_lib.permutation",
     "uncode": "schubmult.schub_lib.permutation",
     "RCGraph": "schubmult.schub_lib.rc_graph",
+    "ChuteMoveElement": "schubmult.schub_lib.chute_move_element",
     "BPD": "schubmult.schub_lib.bpd",
     "TileType": "schubmult.schub_lib.bpd",
     "HPD": "schubmult.schub_lib.hpd",

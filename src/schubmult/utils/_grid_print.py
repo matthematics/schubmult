@@ -22,15 +22,19 @@ class GridPrint(Printable):
         return self._display_name + "([\n%s])" % self.table(printer, rowsep=",\n")  # noqa: UP031
 
     def table(self, printer, rowstart="|", rowend="|", rowsep="\n", colsep=" ", align="right"):
+        import re
         table: list[list[str]] = []
         # Track per-column max lengths for pretty alignment
         maxlen = [0] * self.cols
+        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
         for i in range(self.rows):
             table.append([])
             for j in range(self.cols):
                 s = printer._print(self[i, j]) if self[i, j] is not None else " "
                 table[-1].append(s)
-                maxlen[j] = max(len(s), maxlen[j])
+                # Calculate visual length by removing ANSI escape codes
+                visual_len = len(ansi_escape.sub('', s))
+                maxlen[j] = max(visual_len, maxlen[j])
         # Patch strings together
         align = {
             "left": "ljust",
@@ -40,11 +44,53 @@ class GridPrint(Printable):
             ">": "rjust",
             "^": "center",
         }[align]
+
+        # Check if this object has grey_background_rows property
+        grey_rows = getattr(self, 'grey_background_rows', None)
+        if grey_rows is None:
+            grey_rows = set()
+
         res = [""] * len(table)
         for i, row in enumerate(table):
             for j, elem in enumerate(row):
-                row[j] = getattr(elem, align)(maxlen[j])
-            res[i] = rowstart + colsep.join(row) + rowend
+                # Calculate how much padding is needed based on visual length
+                visual_len = len(ansi_escape.sub('', elem))
+                padding_needed = maxlen[j] - visual_len
+                # Check if this row should have grey background padding
+                should_grey_pad = i in grey_rows
+
+                # If this is a grey row, wrap everything in one continuous grey background
+                if should_grey_pad:
+                    # Strip any existing ANSI codes to get clean content
+                    clean_elem = ansi_escape.sub('', elem)
+                    # Apply padding first
+                    if align == "ljust":
+                        padded_content = clean_elem + " " * padding_needed
+                    elif align == "rjust":
+                        padded_content = " " * padding_needed + clean_elem
+                    else:  # center
+                        left_pad = padding_needed // 2
+                        right_pad = padding_needed - left_pad
+                        padded_content = " " * left_pad + clean_elem + " " * right_pad
+                    # Wrap entire cell in grey background
+                    row[j] = '\033[48;5;242m' + padded_content + '\033[0m'
+                else:
+                    # Normal padding without grey background
+                    if align == "ljust":
+                        row[j] = elem + " " * padding_needed
+                    elif align == "rjust":
+                        row[j] = " " * padding_needed + elem
+                    else:  # center
+                        left_pad = padding_needed // 2
+                        right_pad = padding_needed - left_pad
+                        row[j] = " " * left_pad + elem + " " * right_pad
+            # Join columns with appropriate separator
+            if i in grey_rows:
+                # For grey rows, make colsep also grey
+                grey_colsep = '\033[48;5;242m' + colsep + '\033[0m'
+                res[i] = rowstart + grey_colsep.join(row) + rowend
+            else:
+                res[i] = rowstart + colsep.join(row) + rowend
         return rowsep.join(res)
 
     def _sympystr(self, printer=None):

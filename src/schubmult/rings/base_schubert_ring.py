@@ -205,6 +205,10 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
             return elem1.almosteq(elem1.ring.one * elem2)
         return (self - self.ring.from_expr(other)).expand(deep=False) == self.ring.zero
 
+    def __matmul__(self, other):
+        return (self.ring @ self.ring).ext_multiply(self, other)
+        # return NotImplemented
+
 
 class BaseSchubertRing(Ring, CompositeDomain):
     def __str__(self):
