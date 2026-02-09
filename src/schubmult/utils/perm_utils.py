@@ -215,3 +215,43 @@ def phi_d(d):
             phi += [None] * (lv[i] - 1 - i - len(d) + 1)
         phi[lv[i] - 1 - i] = hv[i]
     return Permutation.from_partial(phi)
+
+
+def conjugate_weak_composition(comp):
+    """Compute the conjugate of a weak composition.
+
+    The conjugate of a weak composition α = (α₁, α₂, ..., αₙ) is the weak composition
+    β where βⱼ = |{i : αᵢ ≥ j}|, i.e., βⱼ counts how many parts of α are at least j.
+
+    This is equivalent to transposing the Ferrers diagram of the composition.
+
+    Args:
+        comp: A sequence (list, tuple) of non-negative integers representing a weak composition.
+
+    Returns:
+        A tuple representing the conjugate weak composition.
+
+    Examples:
+        >>> conjugate_weak_composition([3, 1, 0, 2])
+        (3, 2, 1)
+        >>> conjugate_weak_composition([4, 2, 1])
+        (3, 2, 1, 1)
+        >>> conjugate_weak_composition([])
+        ()
+        >>> conjugate_weak_composition([0, 0, 0])
+        ()
+    """
+    if not comp:
+        return ()
+
+    max_part = max(comp)
+    if max_part == 0:
+        return ()
+
+    # Count how many parts are >= j for each j from 1 to max_part
+    conjugate = []
+    for j in range(1, max_part + 1):
+        count = sum(1 for part in comp if part >= j)
+        conjugate.append(count)
+
+    return tuple(conjugate)

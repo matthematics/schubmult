@@ -106,6 +106,67 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         # return rc.little_bump_zero().resize(last_desc - 1)
 
 
+    def inversions(self):
+        return tuple([self.left_to_right_inversion(i) for i in range(self.perm.inv)])
+
+    @property
+    def vex(self):
+        if self.perm.inv == 0:
+            return self
+        prm = self.perm
+        trc = [*prm.trimcode]
+        while trc[0] == 0:
+            trc.pop(0)
+
+        newlen = len(trc)
+        oldlen = len(self.perm.trimcode)
+        selfrc = self.to_highest_weight()[0]
+        # if 2 * newlen < oldlen:
+        #     print("Why is this happening?")
+        #     print(f"{2*newlen=}, {oldlen=}, {self.perm.trimcode=} {trc=}")
+        selfrc = selfrc.shiftup(2*newlen - oldlen).normalize()
+
+        # if self.perm.is_vexillary:
+        #     return selfrc
+        vex_rc = selfrc
+        assert vex_rc.perm.inv == self.perm.inv
+        while not vex_rc.perm.is_vexillary:
+            if len(vex_rc[-1]) == 0:
+                # if len(vex_rc.perm.trimcode) < len(vex_rc):
+                #     vex_rc = RCGraph(vex_rc.shiftup(len(vex_rc) - len(vex_rc.perm.trimcode)))
+                vex_rc = vex_rc.zero_out_last_row()
+            else:
+                vex_rc = vex_rc.resize(len(vex_rc) + 1)
+                if len(vex_rc.perm.trimcode) < len(vex_rc):
+                    vex_rc = RCGraph(vex_rc.shiftup(len(vex_rc) - len(vex_rc.perm.trimcode)))
+                vex_rc = vex_rc.zero_out_last_row()
+        mindesc = min([min(row,default=1000) - row_num for row_num, row in enumerate(vex_rc)])
+        if mindesc > 1:
+            vex_rc = RCGraph(vex_rc.shiftup(1 - mindesc)).normalize()
+        return vex_rc
+
+
+    @property
+    def grass(self):
+        hw, raise_seq = self.to_highest_weight()
+        code = list(reversed(hw.length_vector))
+        perm = uncode(code)
+        top_rc = next(iter(RCGraph.all_rc_graphs(perm, len(self), weight = tuple(reversed(code)))))
+        return top_rc.reverse_raise_seq(raise_seq)
+
+    def transition(self):
+        if len(self) == 0:
+            return self
+        if len(self[-1]) == 0:
+            return self.zero_out_last_row()
+        the_rc = self.exchange_property(len(self.perm.trimcode))
+        if len(the_rc.perm.trimcode) <= len(the_rc):
+            return the_rc
+        the_rc = the_rc.normalize()
+        while len(the_rc.perm.trimcode) > len(self.perm.trimcode):
+            the_rc = the_rc.zero_out_last_row()
+        return the_rc
+
     def little_bump(self, i=None, j=None):
         if i is not None or j is not None:
             assert i is not None

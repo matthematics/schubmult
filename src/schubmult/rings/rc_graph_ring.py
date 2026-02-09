@@ -32,6 +32,21 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
     # Presentation helpers
     # ----------------------
 
+    @property
+    def vex(self):
+        ret = self.ring.zero
+        for rc, coeff in self.items():
+            ret += coeff * self.ring(rc.vex)
+        return ret
+
+    @property
+    def grass(self):
+        ret = self.ring.zero
+        for rc, coeff in self.items():
+            ret += coeff * self.ring(rc.grass)
+        return ret
+
+
     def __mod__(self, other):
         """
         Polynomial product: self % other.
@@ -167,9 +182,24 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
         - The returned `highest_weight_element` is an RCGraphRingElement.
         - raise_seq is the sequence of row indices applied (in order).
         """
-        rc_elem = self
+        rc_elem = self.ring.zero
         for rc, coeff in self.items():
             rc_elem += coeff * self.ring(rc.to_highest_weight()[0])
+        return rc_elem, None
+
+    def to_lowest_weight(self):
+        """
+        Iteratively raise the element until no further raising is possible.
+        Returns (highest_weight_element, raise_seq).
+
+        Behavior notes:
+        - This is the natural linear-extension of CrystalGraph.to_highest_weight.
+        - The returned `highest_weight_element` is an RCGraphRingElement.
+        - raise_seq is the sequence of row indices applied (in order).
+        """
+        rc_elem = self.ring.zero
+        for rc, coeff in self.items():
+            rc_elem += coeff * self.ring(rc.to_lowest_weight()[0])
         return rc_elem, None
 
     def reverse_raise_seq(self, raise_seq):

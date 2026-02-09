@@ -385,6 +385,10 @@ class Permutation(Printable):
     def is_dominant(self):
         return self.minimal_dominant_above() == self
 
+    @property
+    def is_vexillary(self):
+        return not self.has_pattern([2, 1, 4, 3])
+
     def __reduce__(self):
         return (self.__class__, (self._perm,))
 

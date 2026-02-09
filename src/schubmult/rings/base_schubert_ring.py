@@ -210,6 +210,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
         # return NotImplemented
 
 
+
 class BaseSchubertRing(Ring, CompositeDomain):
     def __str__(self):
         return self.__class__.__name__
