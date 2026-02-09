@@ -629,3 +629,66 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         # Define the "one" element for RCGraphRing
         identity_graph = RCGraph()
         return self.from_dict({identity_graph: 1})
+
+
+class GrassRCGraphRing(RCGraphRing):
+    _id = 0
+
+    def __init__(self, *_, **__):
+        self._ID = RCGraphRing._id
+        RCGraphRing._id += 1
+        self.dtype = type("RCGraphRingElement", (RCGraphRingElement,), {"ring": self})
+
+    def __hash__(self):
+        return hash(("Dinkberrtystoa", self._ID))
+
+    def monomial(self, *tup):
+        elem = self.one
+        for a in tup:
+            elem = elem * self(RCGraph.one_row(a))
+        return elem
+
+    def new(self, x):
+        return self.from_dict({x: 1})
+
+    @property
+    def zero_monom(self):
+        return RCGraph([])
+
+    def mul(self, a, b):
+        return self.from_dict(super().mul(a, b))
+
+    def rmul(self, a, b):
+        return self.from_dict(super().rmul(a, b))
+
+    def from_dict(self, dct):
+        return super().from_dict({k: v for k, v in dct.items() if len(k.perm.descents()) <= 1 and (k.perm.inv == 0 or len(k.perm.trimcode) == len(k))})
+
+    def coproduct_on_basis(self, elem):
+        if len(elem) == 0:
+            return self(elem) @ self(elem)
+        if len(elem) == 1:
+            deg = elem.perm.inv
+            res = (self@self).zero
+            for p in range(deg + 1):
+                res += self(RCGraph.one_row(p)) @ self(RCGraph.one_row(deg - p))
+            return res
+        mid = len(elem) // 2
+        left_cut, right_cut = elem.vertical_cut(mid)
+        left_cprod = self.coproduct_on_basis(left_cut)
+        right_cprod = self.coproduct_on_basis(right_cut)
+        cprod = (self@self).zero
+        candidate = left_cprod * right_cprod
+        for (rc1, rc2), coeff in candidate.items():
+            if next(iter((self(rc1) % self(rc2)).keys())) == elem:
+                cprod += self(rc1) @ self(rc2)
+        if cprod == (self@self).zero:
+            raise ValueError(f"Failed to find coproduct for {elem}")
+        return cprod
+
+
+
+    @property
+    def one(self):
+        identity_graph = RCGraph()
+        return self.from_dict({identity_graph: 1})

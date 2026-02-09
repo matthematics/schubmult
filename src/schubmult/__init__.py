@@ -41,6 +41,7 @@ _lazy_exports = {
     "SingleSchubertRing": "schubmult.rings.schubert_ring",
     "DoubleSchubertElement": "schubmult.rings.schubert_ring",
     "RCGraphRing": "schubmult.rings.rc_graph_ring",
+    "GrassRCGraphRing": "schubmult.rings.rc_graph_ring",
     "RCGraphRingElement": "schubmult.rings.rc_graph_ring",
     "BPDRing": "schubmult.rings.bpd_ring",
     "BPDRingElement": "schubmult.rings.bpd_ring",
