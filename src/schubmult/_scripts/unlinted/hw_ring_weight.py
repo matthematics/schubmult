@@ -29,17 +29,22 @@ if __name__ == "__main__":
     # sKEW DIV DIFF WEIGHT
     # is dual pieri Cauchy?
     r = RCGraphRing()
-    T = Sx @ r
+    T = ASx @ r
+    g = GrassRCGraphRing()
+    for perm in perms:
+        for rc in RCGraph.all_rc_graphs(perm):
+            t_elem = ASx(rc.perm, n - 1)@ g(rc.grass)
+            pretty_print(t_elem.coproduct())
     #Permutation.print_as_code = True
-    for perm1, perm2 in itertools.product(perms, repeat=2):
-        prd1  = Sx(perm1)* Sx(perm2)
-        hw_items = {}
-        for w, coeff in prd1.items():
-            for rc_w in RCGraph.all_hw_rcs(w, n - 1):
-                for perm, coeff in prd1.items():
-                    for rc1, rc2 in itertools.product(RCGraph.all_rc_graphs(perm1, n - 1), RCGraph.all_rc_graphs(perm2, n - 1)):
-                        squash_rc = rc1.squash_product(rc2)
-                        if squash_rc.to_highest_weight()[0].length_vector == rc_w.length_vector and squash_rc.to_lowest_weight()[0].length_vector == rc_w.to_lowest_weight()[0].length_vector:
-                            hw_items[w] = hw_items.get(w, r.zero) + coeff * r(squash_rc)
-        for w in hw_items:
-            print(f"{w}: {Sx(hw_items[w].polyvalue(Sx.genset))}")
+    # for perm1, perm2 in itertools.product(perms, repeat=2):
+    #     prd1  = Sx(perm1)* Sx(perm2)
+    #     hw_items = {}
+    #     for w, coeff in prd1.items():
+    #         for rc_w in RCGraph.all_hw_rcs(w, n - 1):
+    #             for perm, coeff in prd1.items():
+    #                 for rc1, rc2 in itertools.product(RCGraph.all_rc_graphs(perm1, n - 1), RCGraph.all_rc_graphs(perm2, n - 1)):
+    #                     squash_rc = rc1.squash_product(rc2)
+    #                     if squash_rc.to_highest_weight()[0].length_vector == rc_w.length_vector and squash_rc.to_lowest_weight()[0].length_vector == rc_w.to_lowest_weight()[0].length_vector:
+    #                         hw_items[w] = hw_items.get(w, r.zero) + coeff * r(squash_rc)
+    #     for w in hw_items:
+    #         print(f"{w}: {Sx(hw_items[w].polyvalue(Sx.genset))}")

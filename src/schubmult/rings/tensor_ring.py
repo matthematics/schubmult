@@ -3,9 +3,7 @@ from functools import cache
 from sympy import Tuple
 
 from schubmult.symbolic import Mul, S, sympy_Mul
-from schubmult.utils._mul_utils import _tensor_product_of_dicts, _tensor_product_of_dicts_first
 from schubmult.utils.logging import get_logger
-from schubmult.utils.perm_utils import add_perm_dict
 
 from .abstract_schub_poly import AbstractSchubPoly
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
@@ -22,6 +20,45 @@ class TensorRing(BaseSchubertRing):
     def args(self):
         return ()
 
+    def coproduct_on_basis(self, k):
+        """Compute coproduct of a basis element in the tensor ring.
+
+        For k = (k_1, k_2, ..., k_n) in ring_1 ⊗ ring_2 ⊗ ... ⊗ ring_n,
+        Δ(k_1 ⊗ k_2 ⊗ ... ⊗ k_n) = (⊗ Δ(k_i))
+
+        This properly interlaces the individual coproducts.
+        """
+        tring = self @ self
+        assert len(tring.rings) == len(self.rings) * 2, "Coproduct ring should have twice as many factors as original ring"
+        # Get all individual coproducts
+        coprods = [self.rings[i].coproduct_on_basis(k[i]) for i in range(len(self.rings))]
+
+        # Build result by taking all combinations
+        result_dict = {}
+
+        # For each combination of left/right factors from each coproduct
+        def recurse_coproducts(idx, left_parts, right_parts, coeff):
+            if idx == len(coprods):
+                # Base case: we've processed all factors
+                # Create flat key: (k1_L, k2_L, ..., kn_L, k1_R, k2_R, ..., kn_R)
+                key = tuple(left_parts + right_parts)
+                assert len(key) == len(tring.rings), f"Key length {len(key)} != tring.rings length {len(tring.rings)}"
+                if key in result_dict:
+                    result_dict[key] += coeff
+                else:
+                    result_dict[key] = coeff
+                return
+
+            # Process coproduct of factor idx
+            for (left_i, right_i), coeff_i in coprods[idx].items():
+                # Ring is not a TensorRing after flattening, so keys are single elements
+                left_to_add = [left_i]
+                right_to_add = [right_i]
+                recurse_coproducts(idx + 1, left_parts + left_to_add, right_parts + right_to_add, coeff * coeff_i)
+
+        recurse_coproducts(0, [], [], 1)
+        return tring.from_dict(result_dict)
+
     def from_rc_graph_tensor(self, rc_graph_tensor):
         return self.ext_multiply(self.rings[0].from_rc_graph(rc_graph_tensor[0]), self.rings[1].from_rc_graph(rc_graph_tensor[1]))
 
@@ -31,6 +68,16 @@ class TensorRing(BaseSchubertRing):
 
     def __init__(self, *rings):
         self._rings = rings
+        ring_list = [*self._rings]
+        while any(isinstance(r, TensorRing) for r in ring_list):
+            new_ring_list = []
+            for r in ring_list:
+                if isinstance(r, TensorRing):
+                    new_ring_list.extend(r.rings)
+                else:
+                    new_ring_list.append(r)
+            ring_list = new_ring_list
+        self._rings = tuple(ring_list)
         genset = set()
         for r in self._rings:
             try:
@@ -56,7 +103,7 @@ class TensorRing(BaseSchubertRing):
         return elem
 
     def __hash__(self):
-        return hash(self._rings)
+        return hash(self.rings)
 
     @property
     def rings(self):
@@ -78,25 +125,39 @@ class TensorRing(BaseSchubertRing):
         return dct
 
     def mul(self, elem1, elem2):
-        # print(f"{elem1=} {elem2=} {type(elem1)=} {type(elem2)=}")
-        try:
-            ret_dict = {}
-            for k1, v1 in elem1.items():
-                for k2, v2 in elem2.items():
-                    dct = self.rings[0].from_dict({k1[0]: v1 * v2}) * elem2.ring.rings[0].from_dict({k2[0]: S.One})
-                    for i in range(1, len(self.rings)):
-                        dct2 = self.rings[i].from_dict({k1[i]: S.One}) * elem2.ring.rings[i].from_dict({k2[i]: S.One})
-                        if i == 1:
-                            dct = _tensor_product_of_dicts_first(dct, dct2)
+        """Multiply two elements in the tensor ring.
+
+        (a1 ⊗ a2 ⊗ ... ⊗ an) * (b1 ⊗ b2 ⊗ ... ⊗ bn) = (a1*b1) ⊗ (a2*b2) ⊗ ... ⊗ (an*bn)
+        """
+        ret_dict = {}
+
+        for k1, v1 in elem1.items():
+            for k2, v2 in elem2.items():
+                # Compute products of each factor
+                factor_products = []
+                for i in range(len(self.rings)):
+                    prod_i = self.rings[i].from_dict({k1[i]: S.One}) * self.rings[i].from_dict({k2[i]: S.One})
+                    factor_products.append(prod_i)
+
+                # Now take all combinations of terms from each factor product
+                def recurse_terms(idx, current_key, current_coeff):
+                    if idx == len(factor_products):
+                        # We have a complete key
+                        key = tuple(current_key)
+                        total_coeff = v1 * v2 * current_coeff
+                        if key in ret_dict:
+                            ret_dict[key] += total_coeff
                         else:
-                            dct = _tensor_product_of_dicts(dct, dct2)
-                    ret_dict = add_perm_dict(ret_dict, dct)
-            return self.from_dict(ret_dict)
-        except Exception:
-            # import traceback
-            # traceback.print_exc()
-            raise
-            # return self.from_dict({self.zero_monom: elem2}) * elem1
+                            ret_dict[key] = total_coeff
+                        return
+
+                    # Process all terms from factor idx
+                    for key_i, coeff_i in factor_products[idx].items():
+                        recurse_terms(idx + 1, [*current_key, key_i], current_coeff * coeff_i)
+
+                recurse_terms(0, [], S.One)
+
+        return self.from_dict(ret_dict)
 
     def _coerce_add(self, x):  # noqa: ARG002
         return None
@@ -144,9 +205,19 @@ class TensorRing(BaseSchubertRing):
 
     def ext_multiply(self, elem1, elem2):
         ret = self.zero
+
         for key, val in elem1.items():
             for key2, val2 in elem2.items():
-                ret += self.from_dict({(key, key2): val * val2})
+                if isinstance(elem1.ring, TensorRing):
+                    if isinstance(elem2.ring, TensorRing):
+                        ret += self.from_dict({(*key, *key2): val * val2})
+                    else:
+                        ret += self.from_dict({(*key, key2): val * val2})
+                else:
+                    if isinstance(elem2.ring, TensorRing):
+                        ret += self.from_dict({(key, *key2): val * val2})
+                    else:
+                        ret += self.from_dict({(key, key2): val * val2})
         return ret
 
     def __call__(self, x):
@@ -167,13 +238,13 @@ class TensorBasisElement(AbstractSchubPoly):
         obj = AbstractSchubPoly.__new__(_class, k, None, None)
         obj._key = k
         obj.ring = basis
+        assert len(k) == len(basis.rings), f"Key length must match number of factors in tensor ring, got {len(k)} and {len(basis.rings)}"
         return obj
 
     def __hash__(self):
         return hash((self._key, self.ring))
 
     @staticmethod
-    @cache
     def __xnew_cached__(_class, k, basis):
         return TensorBasisElement.__xnew__(_class, k, basis)
 
@@ -190,6 +261,14 @@ class TensorBasisElement(AbstractSchubPoly):
 class TensorRingElement(BaseSchubertElement):
     def __init__(self):
         pass
+
+    def coproduct(self):
+        """Override coproduct to use the correct target ring."""
+        tring = self.ring @ self.ring
+        result = tring.zero
+        for k, v in self.items():
+            result += v * self.ring.coproduct_on_basis(k)
+        return result
 
     @property
     def free_symbols(self):
