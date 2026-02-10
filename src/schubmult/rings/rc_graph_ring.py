@@ -549,57 +549,58 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         # INSERTION WEIGHT TABLEAU
         # from symengine import S
 
-        from schubmult import CrystalGraphTensor, Plactic, RootTableau, Sx
+        # from schubmult import CrystalGraphTensor, Plactic, RootTableau, Sx
 
         # from .schubert_ring import DSx
         # from .variables import GeneratingSet
         # z = GeneratingSet("z")
-        if len(v_rc.perm.descents()) <= 1 and len(v_rc.perm.trimcode) == len(v_rc) and len(u_rc) == len(v_rc):
+        if len(v_rc.perm.descents()) <= 1 and (v_rc.perm.inv == 0 or len(v_rc.perm.trimcode) == len(v_rc)) and len(u_rc) == len(v_rc):
             return self(u_rc.squash_product(v_rc))
 
         if v_rc.perm.is_dominant:
             # dominant case
-            dom_rc = v_rc
-            tensor_hw_map = {}
-            w_hw_map = {}
-            n = len(dom_rc) + 1
-            cheat_prod = Sx(dom_rc.perm) * Sx(u_rc.perm)
-            for u_rc_crystal in u_rc.full_crystal:
-                tensor_hw_map[u_rc_crystal] = CrystalGraphTensor(dom_rc, u_rc_crystal).to_highest_weight()[0]
-                for w in cheat_prod:
-                    dp_ret = u_rc_crystal.dualpieri(dom_rc.perm, w)
-                    if len(dp_ret) > 0:
-                        for dualpieri_seq in dp_ret:
-                            if dualpieri_seq[-1].perm.inv == 0:
-                                tensor_hw = tensor_hw_map[u_rc_crystal]
-                                wt = tensor_hw.to_lowest_weight()[0].crystal_weight
-                                wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n - 1, weight=wt) if rc.is_lowest_weight]
-                                wp_rc = wp_rcs[0]
-                                if wp_rc.to_highest_weight()[0].crystal_weight == tensor_hw.crystal_weight:
-                                    w_hw_map[tensor_hw] = wp_rc.to_highest_weight()[0]
-                                break
-            tensor = tensor_hw_map[u_rc]
-            tensor0 = CrystalGraphTensor(dom_rc, u_rc)
-            _, raise_seq = tensor0.to_highest_weight()
+            # dom_rc = v_rc
+            # tensor_hw_map = {}
+            # w_hw_map = {}
+            # n = len(dom_rc) + 1
+            # cheat_prod = Sx(dom_rc.perm) * Sx(u_rc.perm)
+            # for u_rc_crystal in u_rc.full_crystal:
+            #     tensor_hw_map[u_rc_crystal] = CrystalGraphTensor(dom_rc, u_rc_crystal).to_highest_weight()[0]
+            #     for w in cheat_prod:
+            #         dp_ret = u_rc_crystal.dualpieri(dom_rc.perm, w)
+            #         if len(dp_ret) > 0:
+            #             for dualpieri_seq in dp_ret:
+            #                 if dualpieri_seq[-1].perm.inv == 0:
+            #                     tensor_hw = tensor_hw_map[u_rc_crystal]
+            #                     wt = tensor_hw.to_lowest_weight()[0].crystal_weight
+            #                     wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n - 1, weight=wt) if rc.is_lowest_weight]
+            #                     wp_rc = wp_rcs[0]
+            #                     if wp_rc.to_highest_weight()[0].crystal_weight == tensor_hw.crystal_weight:
+            #                         w_hw_map[tensor_hw] = wp_rc.to_highest_weight()[0]
+            #                     break
+            # tensor = tensor_hw_map[u_rc]
+            # tensor0 = CrystalGraphTensor(dom_rc, u_rc)
+            # _, raise_seq = tensor0.to_highest_weight()
 
-            if tensor in w_hw_map:
-                w_rc = w_hw_map[tensor]
-                return self(w_rc.reverse_raise_seq(raise_seq))
-            collected_rcs = {}
-            for w in cheat_prod:
-                for w_rc in RCGraph.all_hw_rcs(w, n - 1):
-                    if w_rc not in w_hw_map.values():
-                        collected_rcs[RootTableau.from_rc_graph(w_rc).weight_tableau] = w_rc
+            # if tensor in w_hw_map:
+            #     w_rc = w_hw_map[tensor]
+            #     return self(w_rc.reverse_raise_seq(raise_seq))
+            # collected_rcs = {}
+            # for w in cheat_prod:
+            #     for w_rc in RCGraph.all_hw_rcs(w, n - 1):
+            #         if w_rc not in w_hw_map.values():
+            #             collected_rcs[RootTableau.from_rc_graph(w_rc).weight_tableau] = w_rc
 
-            tab1 = RootTableau.from_rc_graph(dom_rc).weight_tableau
-            tab2 = RootTableau.from_rc_graph(tensor.factors[1]).weight_tableau
+            # tab1 = RootTableau.from_rc_graph(dom_rc).weight_tableau
+            # tab2 = RootTableau.from_rc_graph(tensor.factors[1]).weight_tableau
 
-            total_tab = Plactic().rs_insert(*tab1.row_word, *tab2.row_word)
-            try:
-                return self(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
-            except KeyError:
-                total_tab = Plactic().rs_insert(*tab2.row_word, *tab1.row_word)
-                return self(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
+            # total_tab = Plactic().rs_insert(*tab1.row_word, *tab2.row_word)
+            # try:
+            #     return self(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
+            # except KeyError:
+            #     total_tab = Plactic().rs_insert(*tab2.row_word, *tab1.row_word)
+            #     return self(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
+            raise NotImplementedError("Multiplication only implemented for dominant right factor or Grassmannian with large enough descent.")
         raise NotImplementedError("Multiplication only implemented for dominant right factor or Grassmannian with large enough descent.")
 
     @cache
@@ -635,21 +636,19 @@ class GrassRCGraphRing(RCGraphRing):
     _id = 0
 
     def __init__(self, *_, **__):
-        self._ID = RCGraphRing._id
-        RCGraphRing._id += 1
-        self.dtype = type("RCGraphRingElement", (RCGraphRingElement,), {"ring": self})
+        self._ID = GrassRCGraphRing._id
+        GrassRCGraphRing._id += 1
+        self.dtype = type("GrassRCGraphRingElement", (RCGraphRingElement,), {"ring": self})
 
     def __hash__(self):
-        return hash(("Dinkberrtystoa", self._ID))
-
-    def monomial(self, *tup):
-        elem = self.one
-        for a in tup:
-            elem = elem * self(RCGraph.one_row(a))
-        return elem
+        return hash(("Dinkberrtasfsfystoa", self._ID))
 
     def new(self, x):
         return self.from_dict({x: 1})
+
+    def __call__(self, x):
+        return self.new(x)
+
 
     @property
     def zero_monom(self):
@@ -662,7 +661,12 @@ class GrassRCGraphRing(RCGraphRing):
         return self.from_dict(super().rmul(a, b))
 
     def from_dict(self, dct):
-        return super().from_dict({k: v for k, v in dct.items() if len(k.perm.descents()) <= 1 and (k.perm.inv == 0 or len(k.perm.trimcode) == len(k))})
+        dct0 = {k: v for k, v in dct.items() if len(k.perm.descents()) <= 1 and (k.perm.inv == 0 or len(k.perm.trimcode) == len(k))}
+        elem = super().from_dict(dct0)
+        elem.ring = self
+        return elem
+
+
 
     def coproduct_on_basis(self, elem):
         if len(elem) == 0:
@@ -673,6 +677,8 @@ class GrassRCGraphRing(RCGraphRing):
             for p in range(deg + 1):
                 res += self(RCGraph.one_row(p)) @ self(RCGraph.one_row(deg - p))
             return res
+        if len(elem.perm.descents()) >1 or (len(elem) != len(elem.perm.trimcode) and elem.perm.inv > 0):
+            return self.zero
         mid = len(elem) // 2
         left_cut, right_cut = elem.vertical_cut(mid)
         left_cprod = self.coproduct_on_basis(left_cut)
@@ -680,13 +686,32 @@ class GrassRCGraphRing(RCGraphRing):
         cprod = (self@self).zero
         candidate = left_cprod * right_cprod
         for (rc1, rc2), coeff in candidate.items():
+            # Filter to only Grassmannian RCs
             if next(iter((self(rc1) % self(rc2)).keys())) == elem:
                 cprod += self(rc1) @ self(rc2)
         if cprod == (self@self).zero:
             raise ValueError(f"Failed to find coproduct for {elem}")
         return cprod
 
+    def add(self, a, b):
+        return self.from_dict(super().add(a, b))
 
+    def sub(self, a, b):
+        return self.from_dict(super().sub(a, b))
+
+    def radd(self, a, b):
+        return self.from_dict(super().radd(a, b))
+
+    def rsub(self, a, b):
+        return self.from_dict(super().rsub(a, b))
+
+    def neg(self, a):
+        return self.from_dict(super().neg(a))
+
+    # def rc_product(self, elem1, elem2):
+    @property
+    def zero(self):
+        return self.from_dict({})
 
     @property
     def one(self):
