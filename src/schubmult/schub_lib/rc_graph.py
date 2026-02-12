@@ -145,6 +145,44 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             vex_rc = RCGraph(vex_rc.shiftup(1 - mindesc)).normalize()
         return vex_rc
 
+    def hw_tab_rep(self):
+        from schubmult import Plactic
+        hw, raise_seq = self.to_highest_weight()
+        shape = [a for a in hw.length_vector if a != 0]
+        tab = Plactic.yamanouchi(shape)
+        return hw, tab.reverse_raise_seq(raise_seq)
+
+    def all_chute_moves(self):
+        chute_moves = set()
+        rc = self
+        for row_num in range(len(self), 0, -1):
+            for col in range(1, self.cols + 1):
+                if not rc.has_element(row_num, col):
+                    a, b = rc.right_root_at(row_num, col)
+                    if b < a:
+                        continue
+                    if rc.perm[a - 1] > rc.perm[b - 1]:
+                        end = (row_num, col)
+                        row, poncho = rc.loc_of_inversion(a, b)
+                        if row == row_num - 1:
+                            chute_moves.add(((row_num - 1, poncho), end))
+        return chute_moves
+
+    def all_inverse_chute_moves(self):
+        chute_moves = set()
+        rc = self
+        for row_num in range(1, len(self)):
+            for col in range(self.cols, 0, -1):
+                if not rc.has_element(row_num, col):
+                    a, b = rc.right_root_at(row_num, col)
+                    if a < b:
+                        continue
+                    end = (row_num, col)
+                    row, poncho = rc.loc_of_inversion(b, a)
+                    if row == row_num + 1:
+                        chute_moves.add(((row_num + 1, poncho), end))
+        return chute_moves
+
 
     @property
     def grass(self):
