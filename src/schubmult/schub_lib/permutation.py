@@ -188,6 +188,11 @@ class Permutation(Printable):
         L.sort(key=lambda i: itera[i - 1], reverse=reverse)
         return Permutation(L)
 
+    def right_act(self, lst):
+        if isinstance(lst, list):
+            return [lst[self[i] - 1] for i in range(len(lst))]
+        return tuple([lst[self[i] - 1] for i in range(len(lst))])
+
     def bruhat_leq(perm, perm2):
         if perm.inv == perm2.inv:
             return perm == perm2

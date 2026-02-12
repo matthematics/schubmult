@@ -21,21 +21,22 @@ if __name__ == "__main__":
     #             cauchy_prod += sum(r(rc) for rc in RCGraph.all_rc_graphs(, new_n))
     for perm1, perm2 in itertools.product(perms, repeat=2):
         for rc1, rc2 in itertools.product(RCGraph.all_rc_graphs(perm1, len(perm1.trimcode)), RCGraph.all_rc_graphs(perm2, len(perm2.trimcode))):
-            _, raise_seq1 = rc1.to_highest_weight()
-            _, raise_seq2 = rc2.to_highest_weight()           
-            raise_seq2 = [a + len(rc1) for a in raise_seq2]
+            # _, raise_seq1 = rc1.to_highest_weight()
+            # _, raise_seq2 = rc2.to_highest_weight()           
+            # raise_seq2 = [a + len(rc1) for a in raise_seq2]
             hw_rc1, tab1 = rc1.hw_tab_rep()
             hw_rc2, tab2 = rc2.hw_tab_rep()
-            the_prod = r(rc1)*r(rc2)
-            rat_prod = sum([coeff * (r@P)(rcc.hw_tab_rep()) for rcc, coeff in the_prod.items()])
-            all_hws = r(hw_rc1) * r(hw_rc2)
-            phanta_prod = (r@P).zero
-            for almost_hw_rc, coeff in all_hws.items():
-                hw_rc, raise_seq = almost_hw_rc.to_highest_weight()
-                high_shape = [a for a in hw_rc.length_vector if a != 0]
-                yam_tab = Plactic.yamanouchi(high_shape).reverse_raise_seq(raise_seq).reverse_raise_seq(raise_seq1).reverse_raise_seq(raise_seq2)
-                phanta_prod += coeff * (r@P)((hw_rc,yam_tab))
-            assert all(v == 0 for v in (rat_prod - phanta_prod).values()), f"Failed on {perm1} and {perm2}"
+            
+            # the_prod = r(rc1)*r(rc2)
+            # rat_prod = sum([coeff * (r@P)(rcc.hw_tab_rep()) for rcc, coeff in the_prod.items()])
+            # all_hws = r(hw_rc1) * r(hw_rc2)
+            # phanta_prod = (r@P).zero
+            # for almost_hw_rc, coeff in all_hws.items():
+            #     hw_rc, raise_seq = almost_hw_rc.to_highest_weight()
+            #     high_shape = [a for a in hw_rc.length_vector if a != 0]
+            #     yam_tab = Plactic.yamanouchi(high_shape).reverse_raise_seq(raise_seq).reverse_raise_seq(raise_seq1).reverse_raise_seq(raise_seq2)
+            #     phanta_prod += coeff * (r@P)((hw_rc,yam_tab))
+            # assert all(v == 0 for v in (rat_prod - phanta_prod).values()), f"Failed on {perm1} and {perm2}"
                 
 
     #     grass_perms = [permg for permg in perms if len(permg.descents()) == 1 and max(permg.descents()) >= len(perm.trimcode) - 1]

@@ -43,9 +43,10 @@ class CrystalGraph(Printable):
         found = True
         if length is None:
             length = self.crystal_length()
+        g = self.to_highest_weight(length=length)[0]
         while found:
             found = False
-            for row in range(1, length):
+            for row in range(length - 1, 0, -1):
                 g0 = g.lowering_operator(row)
                 if g0 is not None:
                     found = True

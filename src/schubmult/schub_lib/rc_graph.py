@@ -168,11 +168,80 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                             chute_moves.add(((row_num - 1, poncho), end))
         return chute_moves
 
+    def chute_lower(self, row_num):
+        rc = self
+        row_num = row_num + 1
+        if row_num > len(self):
+            return None
+        for col in range(len(self.perm) + len(self), 0, -1):
+            if not rc.has_element(row_num, col):
+                a, b = rc.right_root_at(row_num, col)
+                if b < a:
+                    continue
+                if rc.perm[a - 1] > rc.perm[b - 1]:
+                    end = (row_num, col)
+                    row, poncho = rc.loc_of_inversion(a, b)
+                    if row == row_num - 1:
+                        # chute_moves.add(((row_num - 1, poncho), end))
+                        ret = rc.toggle_ref_at(row_num - 1, poncho)
+                        ret = ret.toggle_ref_at(*end)
+                        return ret
+        return None
+
+    def chute_raise(self, row_num):
+        rc = self
+        if row_num >= len(self):
+            return None
+        for col in range(len(self.perm) + len(self), 0, -1):
+            if not rc.has_element(row_num, col):
+                a, b = rc.right_root_at(row_num, col)
+                if a < b:
+                    continue
+                if rc.perm[b - 1] > rc.perm[a - 1]:
+                    end = (row_num, col)
+                    row, poncho = rc.loc_of_inversion(b, a)
+                    if row == row_num + 1:
+                        # chute_moves.add(((row_num - 1, poncho), end))
+                        ret = rc.toggle_ref_at(row_num + 1, poncho)
+                        ret = ret.toggle_ref_at(*end)
+                        return ret
+        return None
+
+    def to_top_rc(self):
+        rc = self
+        found = True
+        raise_seq = []
+        while found:
+            found = False
+            for i in range(1, len(rc)):
+                new_rc = rc.chute_raise(i)
+                if new_rc is not None:
+                    rc = new_rc
+                    raise_seq.append(i)
+                    found = True
+                    break
+        return rc, tuple(raise_seq)
+
+    def to_bottom_rc(self):
+        rc = self
+        found = True
+        raise_seq = []
+        while found:
+            found = False
+            for i in range(len(rc) - 1, 0, -1):
+                new_rc = rc.chute_lower(i)
+                if new_rc is not None:
+                    rc = new_rc
+                    raise_seq.append(i)
+                    found = True
+                    break
+        return rc, tuple(raise_seq)
+
     def all_inverse_chute_moves(self):
         chute_moves = set()
         rc = self
         for row_num in range(1, len(self)):
-            for col in range(self.cols, 0, -1):
+            for col in range(len(self.perm) + len(self), 0, -1):
                 if not rc.has_element(row_num, col):
                     a, b = rc.right_root_at(row_num, col)
                     if a < b:
@@ -182,6 +251,50 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                     if row == row_num + 1:
                         chute_moves.add(((row_num + 1, poncho), end))
         return chute_moves
+
+    # @property
+    # def weight_perm(self):
+    #     lw_vector = self.to_lowest_weight()[0].length_vector
+    #     weight_perm = Permutation.sorting_perm(lw_vector, reverse=True)
+    #     assert weight_perm.right_act(lw_vector) == self.to_highest_weight()[0].length_vector, f"Failed on {self}, {lw_vector}, {weight_perm}, {weight_perm.right_act(lw_vector)}, {self.to_highest_weight()[0].length_vector}"
+    #     return weight_perm
+    #     # rc = self
+    #     # raise_seq = []
+    #     # while True:
+    #     #     if len(rc) == 0 or len(rc[-1]) == 0:
+    #     #         break
+    #     #     row_num = len(rc)
+    #     #     col = max(rc[-1])
+    #     #     a, b = rc.right_root_at(row_num, col)
+    #     #     if a < b:
+    #     #         break
+    #     #     rc = rc.toggle_ref_at(row_num, col)
+    #     #     raise_seq.append(row_num)
+    #     # return rc, raise_seq
+    def to_lowest_weight_demaz(self):
+        rc = self.to_highest_weight()[0]
+        raise_seq = []
+        is_any = True
+        while is_any:
+            # if len(rc) == 0 or len(rc[-1]) == 0:
+            #     break
+            # row_num = len(rc)
+            # col = max(rc[-1])
+            # a, b = rc.right_root_at(row_num, col)
+            # if a < b:
+            #     break
+            # rc = rc.toggle_ref_at(row_num, col)
+            # raise_seq.append(row_num)
+            is_any = False
+            #for i in sorted((~self.perm).descents(zero_indexed=False)):
+            for i in range(len(self) - 1, 0, -1):
+                rc2_new =  rc.lowering_operator(i)
+                if rc2_new is not None:
+                    rc = rc2_new
+                    raise_seq.append(i)
+                    is_any = True
+                    break
+        return rc, tuple(raise_seq)
 
 
     @property
