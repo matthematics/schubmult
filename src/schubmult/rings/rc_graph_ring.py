@@ -382,7 +382,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         for key, coeff in up_elem2.items():
             if key != elem:
                 ret_elem += (self.dual_schubert_element(key.perm, len(key)) - self(RCGraph.principal_rc(key.perm, len(key)))) @ self(RCGraph([]).resize(len(elem))) + self(
-                    RCGraph([]).resize(len(elem))
+                    RCGraph([]).resize(len(elem)),
                 ) @ (self(key) - self(RCGraph.principal_rc(key.perm, len(key))))
                 key_coprod = self.coproduct_on_basis(RCGraph.principal_rc(key.perm, len(key)))
                 ret_elem -= key_coprod
