@@ -127,12 +127,13 @@ class Permutation(Printable):
     def right_root_at(self, index, word=None):
         if word is None:
             word = [*self.code_word]
+        return Permutation._right_root_at(index, word)
+
+    @staticmethod
+    def _right_root_at(index, word):
         word_piece = word[index + 1 :]
-        # print(f"{word=}")
-        # print(f"{word_piece=}")
         apply = ~Permutation.ref_product(*word_piece)
         root = apply.act_root(word[index], word[index] + 1)
-        # print(f"{root=}")
         return root
 
     def code_index_of_index(self, index):

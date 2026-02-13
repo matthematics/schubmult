@@ -255,3 +255,50 @@ def conjugate_weak_composition(comp):
         conjugate.append(count)
 
     return tuple(conjugate)
+
+
+def find_reduced_fail(word, inserted):
+    from schubmult.schub_lib.permutation import Permutation
+
+    perm = Permutation.ref_product(*word)
+    a_start, b_start = perm.right_root_at(inserted, word=word)
+    positive = False
+    if a_start > b_start:
+        positive = True
+    for i in range(len(word)):
+        if i == inserted:
+            continue
+        a, b = perm.right_root_at(i, word=word)
+        if not positive and a > b:
+            return i
+        if positive and a == b_start and b == a_start:
+            return i
+    return None
+
+
+def is_reduced(word):
+    from schubmult.schub_lib.permutation import Permutation
+
+    return Permutation.ref_product(*word).inv == len(word)
+
+
+def little_bump(word, i, j):
+    """Perform a Little bump on a reduced word at the inversion (i, j)."""
+    from schubmult.schub_lib.permutation import Permutation
+
+    if not is_reduced(word):
+        raise ValueError(f"Word {word} is not reduced, cannot perform Little bump.")
+    word = [*word]
+    roots = {Permutation._right_root_at(index, word): index for index in range(len(word))}
+    index = roots.get((i, j), None)
+    if index is None:
+        raise ValueError(f"Word {word} does not have an inversion at ({i}, {j})")
+    while True:
+        if word[index] == 1:
+            word[index] = word[index] + 1
+        else:
+            word[index] = word[index] - 1
+        if is_reduced(word):
+            break
+        index = find_reduced_fail(word, index)
+    return tuple(word)

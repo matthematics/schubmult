@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 # from schubmult.utils.bitfield_row import BitfieldRow
 from schubmult.utils.logging import get_logger, init_logging
-from schubmult.utils.perm_utils import add_perm_dict
+from schubmult.utils.perm_utils import add_perm_dict, find_reduced_fail, is_reduced
 
 from .crystal_graph import CrystalGraph
 from .nilplactic import NilPlactic
@@ -34,32 +34,9 @@ def _is_row_root(row: int, root: tuple[int, int]) -> bool:
 FA = FreeAlgebra(WordBasis)
 
 
-def debug_print(*args: object, debug: bool = False) -> None: # pragma: no cover
+def debug_print(*args: object, debug: bool = False) -> None:  # pragma: no cover
     if debug:
         print(*args)
-
-
-def find_reduced_fail(word, inserted):
-    from schubmult.schub_lib.permutation import Permutation
-
-    perm = Permutation.ref_product(*word)
-    a_start, b_start = perm.right_root_at(inserted, word=word)
-    positive = False
-    if a_start > b_start:
-        positive = True
-    for i in range(len(word)):
-        if i == inserted:
-            continue
-        a, b = perm.right_root_at(i, word=word)
-        if not positive and a > b:
-            return i
-        if positive and a == b_start and b == a_start:
-            return i
-    return None
-
-
-def is_reduced(word):
-    return Permutation.ref_product(*word).inv == len(word)
 
 
 class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
@@ -105,7 +82,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         #     return rc.resize(last_desc - 1)
         # return rc.little_bump_zero().resize(last_desc - 1)
 
-
     def inversions(self):
         return tuple([self.left_to_right_inversion(i) for i in range(self.perm.inv)])
 
@@ -124,7 +100,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         # if 2 * newlen < oldlen:
         #     print("Why is this happening?")
         #     print(f"{2*newlen=}, {oldlen=}, {self.perm.trimcode=} {trc=}")
-        selfrc = selfrc.shiftup(2*newlen - oldlen).normalize()
+        selfrc = selfrc.shiftup(2 * newlen - oldlen).normalize()
 
         # if self.perm.is_vexillary:
         #     return selfrc
@@ -140,13 +116,14 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 if len(vex_rc.perm.trimcode) < len(vex_rc):
                     vex_rc = RCGraph(vex_rc.shiftup(len(vex_rc) - len(vex_rc.perm.trimcode)))
                 vex_rc = vex_rc.zero_out_last_row()
-        mindesc = min([min(row,default=1000) - row_num for row_num, row in enumerate(vex_rc)])
+        mindesc = min([min(row, default=1000) - row_num for row_num, row in enumerate(vex_rc)])
         if mindesc > 1:
             vex_rc = RCGraph(vex_rc.shiftup(1 - mindesc)).normalize()
         return vex_rc
 
     def hw_tab_rep(self):
         from schubmult import Plactic
+
         hw, raise_seq = self.to_highest_weight()
         shape = [a for a in hw.length_vector if a != 0]
         tab = Plactic.yamanouchi(shape)
@@ -286,9 +263,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             # rc = rc.toggle_ref_at(row_num, col)
             # raise_seq.append(row_num)
             is_any = False
-            #for i in sorted((~self.perm).descents(zero_indexed=False)):
+            # for i in sorted((~self.perm).descents(zero_indexed=False)):
             for i in range(len(self) - 1, 0, -1):
-                rc2_new =  rc.lowering_operator(i)
+                rc2_new = rc.lowering_operator(i)
                 if rc2_new is not None:
                     rc = rc2_new
                     raise_seq.append(i)
@@ -296,13 +273,12 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                     break
         return rc, tuple(raise_seq)
 
-
     @property
     def grass(self):
         hw, raise_seq = self.to_highest_weight()
         code = list(reversed(hw.length_vector))
         perm = uncode(code)
-        top_rc = next(iter(RCGraph.all_rc_graphs(perm, len(self), weight = tuple(reversed(code)))))
+        top_rc = next(iter(RCGraph.all_rc_graphs(perm, len(self), weight=tuple(reversed(code)))))
         return top_rc.reverse_raise_seq(raise_seq)
 
     def transition(self):
@@ -616,7 +592,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     _cache_by_weight: dict[tuple[Permutation, tuple[int, ...]], set[RCGraph]] = {}  # noqa: RUF012
 
     @classmethod
-    def random_rc_graph(cls, perm: Permutation, length: int = -1) -> RCGraph: # pragma: no cover
+    def random_rc_graph(cls, perm: Permutation, length: int = -1) -> RCGraph:  # pragma: no cover
         import random
 
         return random.choice(list(RCGraph.all_rc_graphs(perm, length)))
@@ -786,7 +762,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                         target_row=target_row,
                     )
         return working_rc._pieri_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row)
-
 
     # VERIFY
     def pieri_insert(self, descent, rows, return_reflections=False, backwards=True):
@@ -1168,7 +1143,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 if a < b:
                     working_rc = working_rc.toggle_ref_at(row, i)
                     for j in range(1, row):
-                        for col2 in  range(1, working_rc.cols + 10):
+                        for col2 in range(1, working_rc.cols + 10):
                             if working_rc.has_element(j, col2):
                                 a2, b2 = working_rc.right_root_at(j, col2)
                                 if a2 > b2 and b2 == a and a2 == b:
@@ -1176,7 +1151,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                                     return working_rc.monk_insert(j)
                     return working_rc
         raise ValueError("Could not find place to insert")
-
 
     def huang_bump(self, a, b):
         assert self.perm[a - 1] > self.perm[b - 1], f"{self=}, {a=}, {b=}"
@@ -1233,7 +1207,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
         return ret_module
 
-    def prod_with_rc(self, other: RCGraph) -> dict[RCGraph, int]: # pragma: no cover
+    def prod_with_rc(self, other: RCGraph) -> dict[RCGraph, int]:  # pragma: no cover
         """Deprecated: Use product() instead."""
         return self.product(other)
 
