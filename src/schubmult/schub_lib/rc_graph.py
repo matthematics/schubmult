@@ -1155,6 +1155,29 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         assert tb is not None, f"Could not reverse raise seq {raise_seq} on {w_tab=} {rc_hw=} {self=}"
         return tb
 
+    def monk_insert(self, row):
+        if row <= 0:
+            raise ValueError("Row must be positive")
+        if row > len(self):
+            working_rc = self.extend(row - len(self))
+        else:
+            working_rc = self
+        for i in range(1, working_rc.cols + 10):
+            if not working_rc.has_element(row, i):
+                a, b = working_rc.right_root_at(row, i)
+                if a < b:
+                    working_rc = working_rc.toggle_ref_at(row, i)
+                    for j in range(1, row):
+                        for col2 in  range(1, working_rc.cols + 10):
+                            if working_rc.has_element(j, col2):
+                                a2, b2 = working_rc.right_root_at(j, col2)
+                                if a2 > b2 and b2 == a and a2 == b:
+                                    working_rc = working_rc.toggle_ref_at(j, col2)
+                                    return working_rc.monk_insert(j)
+                    return working_rc
+        raise ValueError("Could not find place to insert")
+
+
     def huang_bump(self, a, b):
         assert self.perm[a - 1] > self.perm[b - 1], f"{self=}, {a=}, {b=}"
         new_rc = self

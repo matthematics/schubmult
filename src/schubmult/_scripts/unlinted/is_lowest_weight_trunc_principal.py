@@ -37,9 +37,16 @@ if __name__ == "__main__":
             #         assert working_rc.is_principal
             # if len(rc.all_inverse_chute_moves()) == 0:
             #     assert uncode(rc.to_lowest_weight()[0].length_vector).is_vexillary, f"Failed on {perm}\n{rc}\nHighest weight: {rc.to_highest_weight()[0].length_vector}\nLowest weight: {rc.to_lowest_weight()[0].length_vector}"
-            top_rc, raise_seq = rc.to_top_rc()
-            #assert top_rc.is_principal, f"Failed on {perm}\n{rc}\n{top_rc}"
-            assert len(top_rc.all_inverse_chute_moves()) == 0, f"Failed on {perm}\n{rc}\n{top_rc}"
+            # top_rc, raise_seq = rc.to_top_rc()
+            # #assert top_rc.is_principal, f"Failed on {perm}\n{rc}\n{top_rc}"
+            # assert len(top_rc.all_inverse_chute_moves()) == 0, f"Failed on {perm}\n{rc}\n{top_rc}"
+            for i in range(1, len(rc)):
+                pancakes = rc.chute_raise(i)
+                if pancakes is not None:
+                    if rc.raising_operator(i) is not None:
+                    #     assert pancakes.to_highest_weight()[0] != rc.to_highest_weight()[0], f"Failed on {perm} with chute raise at row {i}\n{rc}\n{pancakes}"
+                    # else:
+                        assert pancakes == rc.raising_operator(i), f"Failed on {perm} with chute raise at row {i}\n{rc}\n{pancakes}\n{rc.raising_operator(i)}"
                 # while not working_rc.perm.is_vexillary:
                 #     if len(working_rc[-1]) == 0:
                 #         working_rc = working_rc.zero_out_last_row()

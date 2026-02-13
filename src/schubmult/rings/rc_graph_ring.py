@@ -172,6 +172,9 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
             return 0
         return max(getattr(rc_graph, "crystal_length", lambda: len(rc_graph))() for rc_graph in self.keys())
 
+    def almosteq(self, other):
+        return all(v == 0 for v in (self - other).values())
+
     def to_highest_weight(self):
         """
         Iteratively raise the element until no further raising is possible.
@@ -544,6 +547,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
             for v_rc, coeff_v in elem2.items():
                 res += coeff_u * coeff_v * self.rc_single_product(u_rc, v_rc)
         return res
+
 
     def rc_single_product(self, u_rc, v_rc):
         # INSERTION WEIGHT TABLEAU

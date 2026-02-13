@@ -3169,24 +3169,51 @@ Is squash inserting?
 
 Yes squash product is left insertion into the highest weight-tableau representation.
 
-Define a ring $\ww(\BRC)$ and function
+Define a module $\ww(\BRC)$ and function
 $$\ww:\BRC\to \ww(\BRC)$$
 such that if
 $$R = F\hw(R)$$
 then
 $$\ww(R) = F\hw(B(\wtt(R)))$$
-$\ww(\BRC)$ also has a product defined by
-$$R_1\cdot R_2 = \sum_{R\in \ww(\BRC)}c_RR$$
-where $c_R$ is the coefficient of $R$ in the expansion of $R_1\diamond R_2$ in the basis of $\BRC$.
 
-Then 
+The function 
 $$\hw\otimes \ww\to \hw(\BRC)\otimes \ww(\BRC)$$
-is an injective homomorphism of rings. 
+is an injective homomorphism of modules. We afford $\hw(\BRC)\otimes \ww(\BRC)$ the structure of a ring as follows. Suppose
+$$\hw(R_1)\diamond \hw(R_2)=\sum_R R$$
+For each such $R$, suppose
+$$R = F_R\hw(R)$$
+Then define
+$$(\hw(R_1)\otimes \ww(R_1))\cdot (\hw(R_2)\otimes \ww(R_2)) = \sum_R \hw(R)\otimes F_{\shup^{\hr(R_1)}R_2}F_{R_1}F_R\ww(\hw(R))$$
 
 Note: $\ww:\BRC\to \ww(\BRC)$ is not a homomorphism of rings.
 \end{definition}
 
+In terms of crystals,
+$$\ww(R_2\otimes R_1) = \ww(R_1)\ww(R_2)$$
+where multiplication is in the plactic algebra. Domdom
+% \subsection{Schubert crystals}
 
+% A Schubert crystal is a set $\mathcal{B}(w)$ together with operators $e_i, f_i, c_i:\mathcal{B}(w)\to \mathcal{B}(w)\cup\{0\}$, a permutation $w$, along with weight functions $\hw$ and $\wtt$ satisfying the following:
+
+% $f_i(b)=0$ for all $i$ if and only if $\wtt(b)=\code(w)$.
+
+% If $\varepsilon_i(b)=0$ and $e_i(b)\neq 0$, then $\wtt(\hw(e_i(b))) = \mathrm{sort}(\wtt(b) + \alpha_i)$.
+% $$\varphi_i(b) = \varepsilon_i(b) + \langle \wtt(b), \alpha_i^\vee\rangle$$
+% If $e_i(b)\in\mathcal{B}$, then $\hw(e_i(b)) = \hw(b) \iff\varepsilon_i(b)>0$.
+% $$f_i(b) = b'\iff e_i(b') = b$$
+% If $e_i(b)\neq 0$, then $e_i(b)=c_i(b)$.
+% $c_i(b)\neq 0$ implies $\wtt(c_i(b)) = \wtt(b) + \alpha_i$
+% $e_i(b)\in \mathcal{B}$ implies $\varepsilon_i(e_i(b)) = \varepsilon_i(b) - 1$
+% $c_i(b)\in \mathcal{B}$ implies $\varepsilon_i'(c_i(b)) = \varepsilon_i'(b) + 1$
+% $\varepsilon'_i(b)\geq \varepsilon_i(b)$ for all $b$ and $i$.
+% $$e_i(b) = b'\iff f_i(b') = b$$
+% For each $\hw(b)$, there is a $u_{\hw(b)}$ such that there is a reduced word for which
+% $$\{\hw(b') = \hw(b)\} = \{f_{i_1}^{a_1}\cdots f_{i_k}^{a_k}\hw(b): a_1,\ldots,a_k\geq 0\}\setminus\{\emptyset\}$$
+% $$\overline{\varepsilon}_i(b)=\max\{k: e_i^k(b)\neq 0\}=\varepsilon_i(b) + \overline{\varepsilon}_i(e_i\hw_i(b))$$
+
+Schubert crystal, lowest weight is a weak composition
+
+Truncation at a lowest weight is a schub?
 
 \subsection{Relation to Little bumps}
 
