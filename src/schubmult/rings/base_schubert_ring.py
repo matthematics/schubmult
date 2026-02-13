@@ -79,7 +79,7 @@ class BaseSchubertElement(DomainElement, DefaultPrinting, dict):
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
             return [sympify(S.Zero)]
-        return [((self[k]) if k == self.ring.zero_monom else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in sorted(self.keys(), key=lambda kk: (kk.inv, tuple(kk)))]
+        return [((self[k]) if k == self.ring.zero_monom else sympy_Mul(sympify_sympy(self[k]), self.ring.printing_term(k))) for k in sorted(self.keys(), key=(lambda kk: (kk.inv, tuple(kk)) if hasattr(kk, "inv") else kk))]
 
     def __add__(self, other):
         if isinstance(other, BaseSchubertElement):

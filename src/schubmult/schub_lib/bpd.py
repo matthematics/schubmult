@@ -1779,6 +1779,18 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             new_bpd.rebuild()
         return new_bpd
 
+    def transpose(self) -> BPD:
+        self_n = self.resize(len(self.perm))
+        t_grid = self_n._grid.T
+        new_grid = t_grid.copy()
+        # new_grid[t_grid == TileType.ELBOW_SE] = TileType.ELBOW_NW
+        # new_grid[t_grid == TileType.ELBOW_NW] = TileType.ELBOW_SE
+        new_grid[t_grid == TileType.HORIZ] = TileType.VERT
+        new_grid[t_grid == TileType.VERT] = TileType.HORIZ
+        # _display_grid(new_grid)
+        new_bpd = BPD(new_grid)
+        return new_bpd
+
     @classmethod
     def from_rc_graph(cls, rc_graph) -> BPD:
         if cls.DEBUG:
