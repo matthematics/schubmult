@@ -31,6 +31,26 @@ class Permutation(Printable):
         w0 = Permutation.w0(len(self))
         return w0 * (self) * w0
 
+    def weight_coset_decomp(self, dominant_weight):
+        fixers = Permutation.fixers(dominant_weight)
+        return self.coset_decomp(*list(fixers))
+
+    def min_of_weight_coset(self, dominant_weight):
+        return self.weight_coset_decomp(dominant_weight)[0]
+
+    def max_of_weight_coset(self, dominant_weight):
+        return self.weight_coset_decomp(dominant_weight)[0] * Permutation.longest_element(*Permutation.fixers(dominant_weight))
+
+    # low_perm is sorting_perm of lowest weight, reverse=True
+    @staticmethod
+    def does_demazure_crystal_tensor_decompose(dominant_weight1, low_perm1, dominant_weight2, low_perm2):
+        # min dom weight 1 low perm 1 is in coset of max dom weight 2 low perm 2
+        min_v = low_perm1.min_of_weight_coset(dominant_weight1)
+        max_w = low_perm2.max_of_weight_coset(dominant_weight2)
+
+        left_descents = (~max_w).descents(zero_indexed=False)
+        return min_v.bruhat_leq(Permutation.longest_element(*left_descents))
+
     def coset_decomp(self, *descs):
         descs = set(descs)
         reduced_perm = self
@@ -101,6 +121,14 @@ class Permutation(Printable):
         return Permutation.__xnew_cached__(cls, tuple(perm))
 
     print_as_code = False
+
+    @staticmethod
+    def fixers(dominant_weight):
+        fixers = set()
+        for i in range(len(dominant_weight) - 1):
+            if dominant_weight[i] == dominant_weight[i + 1]:
+                fixers.add(i + 1)
+        return fixers
 
     @classmethod
     def ref_product(cls, *args):

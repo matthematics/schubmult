@@ -1339,6 +1339,11 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         cut_rc = self.shiftcut()
         return (*cut_rc.leibniz_rep(), the_perm)
 
+    def classify_demazure_crystal(self) -> tuple[tuple[int], Permutation]:
+        dominant_weight = self.to_highest_weight()[0].length_vector
+        lowest_weight = self.to_lowest_weight()[0].length_vector
+        return dominant_weight, Permutation.sorting_perm(lowest_weight, reverse=True)
+
     @classmethod
     @cache
     def all_hw_rcs(cls, perm: Permutation, length: int, weight=None) -> set[RCGraph]:
