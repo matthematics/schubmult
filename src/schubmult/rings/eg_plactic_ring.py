@@ -249,8 +249,9 @@ class EGPlacticRing(CrystalGraphRing):
 
         word_set = set()
         word = tuple(word)
+        rcc = EGPlacticRing._hw_rc_from_word(word, length)
         for perm1, _ in up_perms.keys():
-            for rc in RCGraph.all_hw_rcs(perm1, length + 1):
+            for rc in RCGraph.all_hw_rcs(perm1, length + 1, weight=(*rcc.length_vector, 0)):
                 new_word = EGPlacticRing.little_zero(rc.perm_word, length + 1)
                 if new_word == word:
                     word_set.add(rc.perm_word)

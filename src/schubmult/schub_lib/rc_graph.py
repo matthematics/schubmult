@@ -1341,9 +1341,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     @classmethod
     @cache
-    def all_hw_rcs(cls, perm: Permutation, length: int) -> set[RCGraph]:
+    def all_hw_rcs(cls, perm: Permutation, length: int, weight=None) -> set[RCGraph]:
         ret = set()
-        for rc in cls.all_rc_graphs(perm, length):
+        for rc in cls.all_rc_graphs(perm, length, weight=weight):
             rc_hw, _ = rc.to_highest_weight()
             if rc_hw not in ret:
                 ret.add(rc_hw)
@@ -1351,9 +1351,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     @classmethod
     @cache
-    def all_lw_rcs(cls, perm: Permutation, length: int) -> set[RCGraph]:
+    def all_lw_rcs(cls, perm: Permutation, length: int, weight=None) -> set[RCGraph]:
         ret = set()
-        for rc in cls.all_rc_graphs(perm, length):
+        for rc in cls.all_rc_graphs(perm, length, weight=weight):
             rc_lw, _ = rc.to_lowest_weight()
             if rc_lw not in ret:
                 ret.add(rc_lw)
