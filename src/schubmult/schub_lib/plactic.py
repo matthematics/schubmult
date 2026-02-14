@@ -12,6 +12,16 @@ class Plactic(GridPrint, CrystalGraph):
         for row in self._word:
             yield from row
 
+    def __le__(self, other):
+        if not isinstance(other, Plactic):
+            return NotImplemented
+        return self.row_word <= other.row_word
+
+    def __lt__(self, other):
+        if not isinstance(other, Plactic):
+            return NotImplemented
+        return self.row_word < other.row_word
+
     # in order of row row
     @property
     def iter_boxes(self):

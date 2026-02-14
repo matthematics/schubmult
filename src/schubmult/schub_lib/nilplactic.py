@@ -236,9 +236,9 @@ class NilPlactic(Plactic):
             last_letter = letter
         graph.append(tuple(row))
         graph = RCGraph(graph).normalize()
-        if length < len(graph):
+        if length is not None and length < len(graph):
             raise ValueError(f"Requested length {length} too small for RCGraph of size {len(graph)}")
-        if length > len(graph):
+        if length is not None and length > len(graph):
             graph = graph.resize(length)
         assert graph.perm == ~self.perm, f"{graph.perm=} {self.perm=}"
         assert graph.p_tableau == self, f"{graph.p_tableau=} {self=} {graph=}"

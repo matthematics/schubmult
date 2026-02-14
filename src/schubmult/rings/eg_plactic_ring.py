@@ -3,6 +3,7 @@ from sympy import Tuple
 from schubmult.schub_lib.plactic import Plactic
 from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.symbolic import S
+from schubmult.utils.perm_utils import little_bump
 
 from .abstract_schub_poly import AbstractSchubPoly, TypedPrintingTerm
 from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
@@ -221,8 +222,74 @@ class EGPlacticRing(CrystalGraphRing):
         identity_graph = RCGraph()
         return self.from_rc_graph(identity_graph)
 
-    def mul_pair(self, key1, key2):
-        rc_elem = key1[0] * key2[0]
+    @staticmethod
+    def little_zero(word, length):
+        from schubmult import Permutation
+        perm = Permutation.ref_product(*word)
+        if len(perm.trimcode) < length:
+            return tuple(word)
+        if len(perm.trimcode) > length:
+            raise ValueError("Word is too long for the specified length")
+        new_word = [*word]
+        while len(perm.trimcode) >= length:
+            d = len(perm.trimcode)
+            old_word = new_word
+            new_word = little_bump(new_word, d, d + 1)
+            if new_word == old_word:
+                raise ValueError(f"Word cannot be bumped further {word=} {new_word} {length=}")
+            perm = Permutation.ref_product(*new_word)
+        return tuple(new_word)
+
+
+    @staticmethod
+    def  _right_zero_act(word, length):
+        from schubmult import ASx, Permutation, uncode
+        perm = Permutation.ref_product(*word)
+        up_perms = ASx(perm, length) * ASx(uncode([0]), 1)
+
+        word_set = set()
+        word = tuple(word)
+        for perm1, _ in up_perms.keys():
+            for rc in RCGraph.all_hw_rcs(perm1, length + 1):
+                new_word = EGPlacticRing.little_zero(rc.perm_word, length + 1)
+                if new_word == word:
+                    word_set.add(rc.perm_word)
+        return word_set
+
+    def mul_pair(self, key1, key2, check=True):
+        from schubmult import RCGraphRing
+
+        amt_to_bump = max(len(key2[0]), len(key2[0].perm))
+        r = RCGraphRing()
+        rc_elem = r(key1[0])
+        self_len = len(key1[0])
+        for a in range(amt_to_bump):
+            new_rc_elem = r.zero
+            for rcc, coeff in rc_elem.items():
+                word = rcc.perm_word
+                st = EGPlacticRing._right_zero_act(word, len(rcc))
+                for tup in st:
+                    seq = []
+                    last_spot = 0
+                    last_elem = -1000
+                    for a in tup:
+                        if a > last_elem:
+                            last_elem = a
+                            last_spot += 1
+                        seq.append(last_spot)
+                        last_elem = a
+                    new_rc_elem += coeff * r(RCGraph.from_reduced_compatible(tup, seq).resize(len(rcc) + 1))
+            rc_elem = new_rc_elem
+
+        old_rc_elem = rc_elem
+        rc_elem = r.zero
+        for rc, coeff in old_rc_elem.items():
+            new_rc = RCGraph([*rc[:self_len],*key2[0].shiftup(self_len)]).resize(self_len + len(key2[0]))
+            if new_rc.is_valid and len(new_rc.perm.trimcode) <= self_len + len(key2[0]):
+                rc_elem += coeff * r(new_rc)
+        if check:
+            real_rc_elem = r(key1[0]) * r(key2[0])
+            assert real_rc_elem.almosteq(rc_elem), f"Failed on {key1} and {key2} dingbat\n{real_rc_elem}\nstinkbat\n{rc_elem}\n{real_rc_elem - rc_elem}"
         ret = self.zero
         for new_rc, coeff in rc_elem.items():
             hw_rc, raise_seq3 = new_rc.to_highest_weight()
