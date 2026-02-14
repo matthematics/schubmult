@@ -240,7 +240,7 @@ class Plactic(GridPrint, CrystalGraph):
     @classmethod
     def from_word(cls, word):
         # accept any iterable-of-rows and normalize to tuple-of-tuples
-        return cls(tuple(tuple(r) for r in word))
+        return cls().rs_insert(*word)
 
     def __hash__(self):
         return hash(self._word)

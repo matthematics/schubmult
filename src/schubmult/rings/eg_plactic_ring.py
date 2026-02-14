@@ -1,9 +1,11 @@
 from sympy import Tuple
 
+from schubmult.schub_lib.nilplactic import NilPlactic
+
+# from schubmult.schub_lib.nilplactic import NilPlactic
 from schubmult.schub_lib.plactic import Plactic
 from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.symbolic import S
-from schubmult.utils.perm_utils import little_bump
 
 from .abstract_schub_poly import AbstractSchubPoly, TypedPrintingTerm
 from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
@@ -198,14 +200,16 @@ class EGPlacticRing(CrystalGraphRing):
         return hash(("Dsdfginkberrtystoa", self._ID))
 
     def from_rc_graph(self, rc):
-        return self.from_dict({rc.hw_tab_rep(): S.One})
+        nilp, plac = rc.hw_tab_rep()
+        nilp = NilPlactic.from_word(rc.perm_word)
+        return self.from_dict({((nilp, len(rc)), plac): S.One})
 
     @property
     def zero_monom(self):
         return RCGraph([])
 
     def from_rc_graph_ring_element(self, elem):
-        return self.from_dict({rc.hw_tab_rep(): coeff for rc, coeff in elem.items() if coeff != 0})
+        return self.from_dict({((NilPlactic.from_word(rc.perm_word), len(rc)), rc.hw_rc_rep()[1]): coeff for rc, coeff in elem.items() if coeff != 0})
 
     def from_dict(self, d):
         elem = EGPlacticRingElement()
@@ -222,104 +226,41 @@ class EGPlacticRing(CrystalGraphRing):
         identity_graph = RCGraph()
         return self.from_rc_graph(identity_graph)
 
-    @staticmethod
-    def little_zero(word, length):
-        from schubmult import Permutation
-        perm = Permutation.ref_product(*word)
-        if len(perm.trimcode) < length:
-            return tuple(word)
-        if len(perm.trimcode) > length:
-            raise ValueError("Word is too long for the specified length")
-        new_word = [*word]
-        while len(perm.trimcode) >= length:
-            d = len(perm.trimcode)
-            old_word = new_word
-            new_word = little_bump(new_word, d, d + 1)
-            if new_word == old_word:
-                raise ValueError(f"Word cannot be bumped further {word=} {new_word} {length=}")
-            perm = Permutation.ref_product(*new_word)
-        return tuple(new_word)
-
-
-    @staticmethod
-    def  _right_zero_act(word, length):
-        from schubmult import ASx, Permutation, uncode
-        perm = Permutation.ref_product(*word)
-        up_perms = ASx(perm, length) * ASx(uncode([0]), 1)
-
-        word_set = set()
-        word = tuple(word)
-        rcc = EGPlacticRing._hw_rc_from_word(word, length)
-        for perm1, _ in up_perms.keys():
-            for rc in RCGraph.all_hw_rcs(perm1, length + 1, weight=(*rcc.length_vector, 0)):
-                new_word = EGPlacticRing.little_zero(rc.perm_word, length + 1)
-                if new_word == word:
-                    word_set.add(rc.perm_word)
-        return word_set
-
-    @staticmethod
-    def _hw_rc_from_word(word, length):
-        seq = []
-        last_spot = 0
-        last_elem = -1000
-        for a in word:
-            if a > last_elem:
-                last_elem = a
-                last_spot += 1
-            seq.append(last_spot)
-            last_elem = a
-        return RCGraph.from_reduced_compatible(word, seq).resize(length)
-
-    def mul_pair(self, key1, key2, check=False):
-        from schubmult import RCGraphRing
-        amt_to_bump = max(len(key2[0]), len(key2[0].perm))
-        r = RCGraphRing()
-        rc_set = {key1[0]}
-        self_len = len(key1[0])
+    def mul_pair(self, key1, key2, check=False): # noqa: ARG002
+        amt_to_bump = max(key2[0][1], len(key2[0][0].perm))
+        # r = RCGraphRing()
+        nilp_set = {key1[0][0]}
+        self_len = key1[0][1]
         for a in range(amt_to_bump):
-            new_rc_set = set()
-            for rcc in rc_set:
-                word = rcc.perm_word
-                st = EGPlacticRing._right_zero_act(word, len(rcc))
-                for tup in st:
-                    new_rc = EGPlacticRing._hw_rc_from_word(tup, len(rcc) + 1)
-                    new_rc_set.add(new_rc)
-            rc_set = new_rc_set
+            new_nilp_set = set()
+            for nilp in nilp_set:
+                st = nilp.right_zero_act(self_len + a)
+                new_nilp_set.update(st)
+            nilp_set = new_nilp_set
 
-        rc_elem = r.zero
-
-        old_rc_set = rc_set
-        rc_set = set()
-        for rc in old_rc_set:
-            new_rc = RCGraph([*rc[:self_len],*key2[0].shiftup(self_len)]).resize(self_len + len(key2[0]))
-            if new_rc.is_valid and len(new_rc.perm.trimcode) <= self_len + len(key2[0]):
-                rc_set.add(new_rc)
-
-        for rc in rc_set:
-            rc_elem += r(rc)
-
-        if check:
-            real_rc_elem = r(key1[0]) * r(key2[0])
-            assert real_rc_elem.almosteq(rc_elem), f"Failed on {key1} and {key2} dingbat\n{real_rc_elem}\nstinkbat\n{rc_elem}\n{real_rc_elem - rc_elem}"
+        #rc_elem = r.zero
         ret = self.zero
-        for new_rc, coeff in rc_elem.items():
-            hw_rc, raise_seq3 = new_rc.to_highest_weight()
-            _, raise_seq1 = key1[1].to_highest_weight(length=len(key1[0]))
-            _, raise_seq2 = key2[1].to_highest_weight(length=len(key2[0]))
-            plac_elem = Plactic.yamanouchi([a for a in hw_rc.length_vector if a != 0])
-            plac_elem = plac_elem.reverse_raise_seq(raise_seq3)
-            plac_elem = plac_elem.reverse_raise_seq(raise_seq1)
-            plac_elem = plac_elem.reverse_raise_seq([a + len(key1[0]) for a in raise_seq2])
-            ret += coeff * self(hw_rc, plac_elem)
+        for nilp in nilp_set:
+            new_nilp = NilPlactic.from_word([*nilp.column_word, *[a + self_len for a in key2[0][0].column_word]])
+            if new_nilp.perm.inv == len(new_nilp.column_word) and len(new_nilp.perm.trimcode) <= self_len + key2[0][1]:
+                _, raise_seq1 = key1[1].to_highest_weight(length=key1[0][1])
+                _, raise_seq2 = key2[1].to_highest_weight(length=key2[0][1])
+                full_rc = RCGraph([*nilp.hw_rc(self_len), *key2[0][0].hw_rc(key2[0][1]).shiftup(self_len)])
+                hw_rc, raise_seq3 = full_rc.to_highest_weight()
+                plac_elem = Plactic.yamanouchi([a for a in hw_rc.length_vector if a != 0])
+                plac_elem = plac_elem.reverse_raise_seq(raise_seq3)
+                plac_elem = plac_elem.reverse_raise_seq(raise_seq1)
+                plac_elem = plac_elem.reverse_raise_seq([a + key1[0][1] for a in raise_seq2])
+                ret += self((new_nilp, self_len + key2[0][1]), plac_elem)
         return ret
 
     def key_to_rc_graph(self, key):
-        _, raise_seq = key[1].to_highest_weight(length=len(key[0]))
-        return key[0].reverse_raise_seq(raise_seq)
+        _, raise_seq = key[1].to_highest_weight(length=key[0][1])
+        return key[0][0].hw_rc(key[0][1]).reverse_raise_seq(raise_seq)
 
     def __call__(self, rc, tab):
-        if not rc.is_highest_weight:
-            raise ValueError("rc must be highest weight")
+        # if not rc.is_highest_weight:
+        #     raise ValueError("rc must be highest weight")
         return self.from_dict({(rc, tab): S.One})
 
     def mul(self, a, b):

@@ -488,6 +488,46 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         return self.from_dict({identity_graph: 1})
 
 
+class HWRCGraphRing(RCGraphRing):
+    _id = 0
+
+    def __init__(self, *_, **__):
+        self._ID = HWRCGraphRing._id
+        HWRCGraphRing._id += 1
+        self.dtype = type("HWRCGraphRingElement", (RCGraphRingElement,), {"ring": self})
+
+    def __hash__(self):
+        return hash(("Dinkbeasfrrtasfsfystoa", self._ID))
+
+    def new(self, x):
+        return self.from_dict({x: 1})
+
+    def __call__(self, x):
+        return self.new(x)
+
+    @property
+    def zero_monom(self):
+        return RCGraph([])
+
+    def _snap_highest_weight(self, elem):
+        ret = self.zero
+        for key, coeff in elem.items():
+            ret += self.from_dict({key.to_highest_weight()[0]: coeff})
+        return ret
+
+    def mul(self, a, b):
+        return self.from_dict(self._snap_highest_weight(super().mul(a, b)))
+
+    def rmul(self, a, b):
+        return self.from_dict(self._snap_highest_weight(super().rmul(a, b)))
+
+    def from_dict(self, dct):
+        elem = super().from_dict(dct)
+        elem.ring = self
+        return elem
+
+
+
 class GrassRCGraphRing(RCGraphRing):
     _id = 0
 
@@ -509,15 +549,37 @@ class GrassRCGraphRing(RCGraphRing):
     def zero_monom(self):
         return RCGraph([])
 
+    def _snap_grass(self, elem):
+        ret = self.zero
+        for key, coeff in elem.items():
+            ret += self.from_dict({key.grass: coeff})
+        return ret
+
+    def mul_pair(self, a, b):
+        the_zero = RCGraph([]).resize(max(len(b), len(b.perm)))
+        sputnik = a * the_zero
+        ret = self.zero
+        for rc in sputnik:
+            new_rc = RCGraph([*rc[:len(a)], *b.shiftup(len(a))])
+            if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(a) + len(b):
+                gr = new_rc.grass
+                if gr not in ret:
+                    ret += self(gr)
+        return ret
+
     def mul(self, a, b):
-        return self.from_dict(super().mul(a, b))
+        result = self.zero
+        for key1, coeff1 in a.items():
+            for key2, coeff2 in b.items():
+                result += coeff1 * coeff2 * self.mul_pair(key1, key2)
+        return result
 
     def rmul(self, a, b):
-        return self.from_dict(super().rmul(a, b))
+        return self.from_dict(self._snap_grass(super().rmul(a, b)))
 
     def from_dict(self, dct):
-        dct0 = {k: v for k, v in dct.items() if len(k.perm.descents()) <= 1 and (k.perm.inv == 0 or len(k.perm.trimcode) == len(k))}
-        elem = super().from_dict(dct0)
+        #dct0 = {k: v for k, v in dct.items() if len(k.perm.descents()) <= 1}# and (k.perm.inv == 0 or len(k.perm.trimcode) == len(k))}
+        elem = super().from_dict(dct)
         elem.ring = self
         return elem
 

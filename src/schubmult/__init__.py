@@ -64,6 +64,7 @@ _lazy_exports = {
     "RootTableau": "schubmult.schub_lib.root_tableau",
     "Plactic": "schubmult.schub_lib.plactic",
     "NilPlactic": "schubmult.schub_lib.nilplactic",
+    "NilPlacticAlgebra": "schubmult.rings.plactic_algebra",
     # Free algebra bases
     "FreeAlgebraBasis": "schubmult.rings.free_algebra_basis",
     "WordBasis": "schubmult.rings.free_algebra_basis",

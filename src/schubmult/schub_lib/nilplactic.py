@@ -216,49 +216,6 @@ class NilPlactic(Plactic):
             return self.bruhat_leq(NilPlactic().ed_insert(*new_word))
         return True
 
-    def hw_rc(self, length=None):
-        """
-        Return the highest-weight RCGraph corresponding to this NilPlactic
-        tableau via Edelman–Greene insertion.
-        """
-        from schubmult.schub_lib.rc_graph import RCGraph
-
-        perm_word = list(reversed(self.row_word))
-        graph = []
-        last_letter = -1
-        row = []
-        for letter in perm_word:
-            if last_letter != -1 and letter > last_letter:
-                # need to add empty rows in between
-                graph.append(tuple(row))
-                row = []
-            row.append(letter)
-            last_letter = letter
-        graph.append(tuple(row))
-        graph = RCGraph(graph).normalize()
-        if length is not None and length < len(graph):
-            raise ValueError(f"Requested length {length} too small for RCGraph of size {len(graph)}")
-        if length is not None and length > len(graph):
-            graph = graph.resize(length)
-        assert graph.perm == ~self.perm, f"{graph.perm=} {self.perm=}"
-        assert graph.p_tableau == self, f"{graph.p_tableau=} {self=} {graph=}"
-        return graph
-
-    #
-
-    # def ring_product(self, other, length):
-    #     """
-    #     NilPlactic product: insert entries of `other` in Edelman–Greene
-    #     row-reading order (top-to-bottom, left-to-right) into a copy of self.
-    #     """
-    #     if not isinstance(other, NilPlactic):
-    #         return NotImplemented
-    #     st = (self.hw_rc()).prod_with_rc(other.hw_rc())
-    #     ret = {}
-    #     for rc, coeff in st.items():
-    #         ret[rc.p_tableau] = ret.get(rc.p_tableau, 0) + coeff
-    #     return ret
-
     @property
     def perm(self):
         return Permutation.ref_product(*self.row_word)
@@ -352,15 +309,54 @@ class NilPlactic(Plactic):
         # special case: continue bumping without changing current row
         return NilPlactic._ed_insert_rsk(word, word2, x1, letter2, i=i + 1)
 
-    # @classmethod
-    # def ed_insert_rsk(cls, letters, letters2=()):
-    #     """Edelman–Greene two-row insertion for NilPlactic tableaux."""
-    #     word = ()
-    #     word2 = ()
-    #     for idx, letter in enumerate(letters):
-    #         letter2 = letters2[idx] if idx < len(letters2) else None
-    #         word, word2 = cls._ed_insert_rsk(word, word2, int(letter), int(letter2) if letter2 is not None else None)
-    #     return cls(word), Plactic(word2)
+    def hw_rc(self, length):
+        from schubmult.schub_lib.rc_graph import RCGraph
+        seq = []
+        last_spot = 0
+        last_elem = -1000
+        for a in self.column_word:
+            if a > last_elem:
+                last_elem = a
+                last_spot += 1
+            seq.append(last_spot)
+            last_elem = a
+        return RCGraph.from_reduced_compatible(self.column_word, seq).resize(length)
+
+    @classmethod
+    def from_word(cls, word):
+        return cls().ed_insert(*word)
+
+    def right_zero_act(self, length):
+        from schubmult import ASx, RCGraph, uncode
+        from schubmult.utils.perm_utils import little_zero
+
+        up_perms = ASx(self.perm, length) * ASx(uncode([0]), 1)
+
+        word_set = set()
+        rcc = self.hw_rc(length)
+        # rcc = NilPlactic().ed_insert(*word)
+        # shp = p_trans(rcc.shape)
+
+        for perm1, _ in up_perms.keys():
+            for rc in RCGraph.all_hw_rcs(perm1, length + 1, weight=(*rcc.length_vector, 0)):
+                new_word = little_zero(rc.perm_word, length + 1)
+                if new_word == self.column_word:
+                    word_set.add(NilPlactic.from_word(rc.perm_word))
+        return word_set
+
+
+    def __mul__(self, other):
+        """
+        Plactic product: insert entries of `other` in row-reading order
+        (top-to-bottom, left-to-right) into a copy of self.
+        """
+        if not isinstance(other, Plactic):
+            return NotImplemented
+        word = [*self.row_word, *other.row_word]
+        if Permutation.ref_product(*word).inv != len(word):
+            return None
+        pl = NilPlactic()
+        return pl.ed_insert(*word)
 
     def __hash__(self):
         return hash(self._word)

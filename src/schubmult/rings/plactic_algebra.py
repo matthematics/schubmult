@@ -1,5 +1,6 @@
 from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
-from schubmult.rings.crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
+from schubmult.rings.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+from schubmult.schub_lib.nilplactic import NilPlactic
 from schubmult.schub_lib.plactic import Plactic
 from schubmult.symbolic import S, sympy_Mul
 
@@ -12,7 +13,7 @@ from schubmult.symbolic import S, sympy_Mul
 class PlacticPrintingTerm(TypedPrintingTerm):
     pass
 
-class PlacticAlgebraElement(CrystalGraphRingElement):
+class PlacticAlgebraElement(BaseSchubertElement):
     """
     PlacticAlgebra elements are linear combinations of Plactic basis elements.
     """
@@ -32,7 +33,7 @@ class PlacticAlgebraElement(CrystalGraphRingElement):
         return type(self) is type(other) and dict(self) == dict(other)
 
 
-class PlacticAlgebra(CrystalGraphRing):
+class PlacticAlgebra(BaseSchubertRing):
     _id = 0
 
     def __init__(self, *_, op=False, **__):
@@ -46,7 +47,7 @@ class PlacticAlgebra(CrystalGraphRing):
 
     @property
     def zero_monom(self):
-        return (Plactic(), 0)
+        return Plactic()
 
     def printing_term(self, key):
         return PlacticPrintingTerm(key)
@@ -88,6 +89,72 @@ class PlacticAlgebra(CrystalGraphRing):
     @property
     def one(self):
         # Define the "one" element for PlacticAlgebra
-        identity_graph = (Plactic(), 0)
+        identity_graph = Plactic()
         return self.from_dict({identity_graph: 1})
 
+
+
+class NilPlacticAlgebra(BaseSchubertRing):
+    _id = 0
+
+    def __init__(self, *_, op=False, **__):
+        self._ID = NilPlacticAlgebra._id
+        NilPlacticAlgebra._id += 1
+        self.dtype = type("NilPlacticAlgebraElement", (NilPlacticAlgebraElement,), {"ring": self})
+        self._op = op
+
+    def __hash__(self):
+        return hash(("Dinkberrtystoa", "poing", self._ID))
+
+    @property
+    def zero_monom(self):
+        return NilPlactic()
+
+    def printing_term(self, key):
+        return PlacticPrintingTerm(key)
+
+    # def dtype(self):
+    #     elem = PlacticAlgebraElement()
+    #     elem.ring = self
+    #     return elem
+
+    def from_dict(self, dct):
+        elem = self.dtype()
+        elem.update(dct)
+        return elem
+
+    def __call__(self, key):
+        return self.from_dict({key: 1})
+
+    def mul(self, a, b):
+        # a, b are PlacticAlgebraElemen
+        if isinstance(b, NilPlacticAlgebraElement):
+            result_dict = {}
+            if self._op:
+                a, b = b, a
+            for g1, c1 in a.items():
+                for g2,  c2 in b.items():
+                    # Plactic.prod_with_rc returns a dict {Plactic: coeff}
+                    g3 = g1 * g2
+                    if g3 is not None:
+                        result_dict[g3] = result_dict.get(g3, 0) + c1 * c2
+            # result_dict = {k: v * b for k, v in a.items()}
+        return self.from_dict(result_dict)
+
+    def __eq__(self, other):
+        return type(self) is type(other) and self._ID == other._ID
+
+    @property
+    def zero(self):
+        return self.dtype()
+
+    @property
+    def one(self):
+        # Define the "one" element for NilPlacticAlgebra
+        identity_graph = NilPlactic()
+        return self.from_dict({identity_graph: 1})
+
+
+
+class NilPlacticAlgebraElement(PlacticAlgebraElement):
+    pass

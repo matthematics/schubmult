@@ -302,3 +302,21 @@ def little_bump(word, i, j):
             break
         index = find_reduced_fail(word, index)
     return tuple(word)
+
+def little_zero(word, length):
+    from schubmult import Permutation
+
+    perm = Permutation.ref_product(*word)
+    if len(perm.trimcode) < length:
+        return tuple(word)
+    if len(perm.trimcode) > length:
+        raise ValueError("Word is too long for the specified length")
+    new_word = [*word]
+    while len(perm.trimcode) >= length:
+        d = len(perm.trimcode)
+        old_word = new_word
+        new_word = little_bump(new_word, d, d + 1)
+        if new_word == old_word:
+            raise ValueError(f"Word cannot be bumped further {word=} {new_word} {length=}")
+        perm = Permutation.ref_product(*new_word)
+    return tuple(new_word)

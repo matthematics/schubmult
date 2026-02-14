@@ -129,6 +129,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         tab = Plactic.yamanouchi(shape)
         return hw, tab.reverse_raise_seq(raise_seq)
 
+    def hw_grass_rep(self):
+        return self.to_highest_weight()[0], self.grass
+
     def all_chute_moves(self):
         chute_moves = set()
         rc = self
@@ -276,9 +279,12 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     @property
     def grass(self):
         hw, raise_seq = self.to_highest_weight()
-        code = list(reversed(hw.length_vector))
+        the_weight = [*hw.length_vector]
+        while len(the_weight) > len(self.perm.trimcode) and the_weight[-1] == 0:
+            the_weight.pop()
+        code = list(reversed(the_weight))
         perm = uncode(code)
-        top_rc = next(iter(RCGraph.all_rc_graphs(perm, len(self), weight=tuple(reversed(code)))))
+        top_rc = next(iter(RCGraph.all_rc_graphs(perm, len(self), weight=(*the_weight, *([0]*(len(self) - len(the_weight)))))))
         return top_rc.reverse_raise_seq(raise_seq)
 
     def transition(self):
