@@ -33,7 +33,7 @@ if __name__ == "__main__":
     #     for p in range(0, k + 1):
     #         for rc, factor_tuple in factorizations.items():
     #             rc = rc.resize(k)
-    #             spot_perm =  (~rc.perm) * Permutation.w0(k)
+    #             spot_perm =  (~(rc.perm)) * Permutation.w0(k)
     #             upwards = elem_sym_perms(spot_perm, k, k)
     #             for up_perm, diff in upwards:
     #                 if diff == 0:
@@ -41,12 +41,12 @@ if __name__ == "__main__":
     #                     new_factorizations[new_rc] = (*factor_tuple, RCGraph([]).resize(k))
     #                     continue
     #                 vec = [0] * k
-    #                 spots = [up_perm[i] for i in range(len(up_perm)) if up_perm[i] == spot_perm[i] and i < k]
+    #                 spots = [i for i in range(len(up_perm)) if up_perm[i] == spot_perm[i] and i < k]
     #                 for j in spots:
-    #                     vec[j - 1] = 1
+    #                     vec[j] = 1
     #                 elem_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (diff) + [1] * (k - diff)), k, weight=tuple(vec))))
     #                 new_rc = rc.squash_product(elem_rc)
-    #                 test_perm = new_rc.perm * Permutation.w0(k + 1)
+    #                 test_perm = (~(new_rc.perm)) * Permutation.w0(k + 1)
     #                 assert test_perm == up_perm, f"Failed on {rc}\n{k=}\n{elem_rc}\n{new_rc}\n{up_perm=}\n{test_perm=}"
     #                 new_factorizations[new_rc] = (*factor_tuple, elem_rc)
     #     factorizations = new_factorizations
