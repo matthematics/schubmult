@@ -256,37 +256,47 @@ class EGPlacticRing(CrystalGraphRing):
                     word_set.add(rc.perm_word)
         return word_set
 
-    def mul_pair(self, key1, key2, check=True):
-        from schubmult import RCGraphRing
+    @staticmethod
+    def _hw_rc_from_word(word, length):
+        seq = []
+        last_spot = 0
+        last_elem = -1000
+        for a in word:
+            if a > last_elem:
+                last_elem = a
+                last_spot += 1
+            seq.append(last_spot)
+            last_elem = a
+        return RCGraph.from_reduced_compatible(word, seq).resize(length)
 
+    def mul_pair(self, key1, key2, check=False):
+        from schubmult import RCGraphRing
         amt_to_bump = max(len(key2[0]), len(key2[0].perm))
         r = RCGraphRing()
-        rc_elem = r(key1[0])
+        rc_set = {key1[0]}
         self_len = len(key1[0])
         for a in range(amt_to_bump):
-            new_rc_elem = r.zero
-            for rcc, coeff in rc_elem.items():
+            new_rc_set = set()
+            for rcc in rc_set:
                 word = rcc.perm_word
                 st = EGPlacticRing._right_zero_act(word, len(rcc))
                 for tup in st:
-                    seq = []
-                    last_spot = 0
-                    last_elem = -1000
-                    for a in tup:
-                        if a > last_elem:
-                            last_elem = a
-                            last_spot += 1
-                        seq.append(last_spot)
-                        last_elem = a
-                    new_rc_elem += coeff * r(RCGraph.from_reduced_compatible(tup, seq).resize(len(rcc) + 1))
-            rc_elem = new_rc_elem
+                    new_rc = EGPlacticRing._hw_rc_from_word(tup, len(rcc) + 1)
+                    new_rc_set.add(new_rc)
+            rc_set = new_rc_set
 
-        old_rc_elem = rc_elem
         rc_elem = r.zero
-        for rc, coeff in old_rc_elem.items():
+
+        old_rc_set = rc_set
+        rc_set = set()
+        for rc in old_rc_set:
             new_rc = RCGraph([*rc[:self_len],*key2[0].shiftup(self_len)]).resize(self_len + len(key2[0]))
             if new_rc.is_valid and len(new_rc.perm.trimcode) <= self_len + len(key2[0]):
-                rc_elem += coeff * r(new_rc)
+                rc_set.add(new_rc)
+
+        for rc in rc_set:
+            rc_elem += r(rc)
+
         if check:
             real_rc_elem = r(key1[0]) * r(key2[0])
             assert real_rc_elem.almosteq(rc_elem), f"Failed on {key1} and {key2} dingbat\n{real_rc_elem}\nstinkbat\n{rc_elem}\n{real_rc_elem - rc_elem}"
