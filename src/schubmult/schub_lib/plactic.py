@@ -1,14 +1,88 @@
 # filepath: /home/matthematics/schubmult/src/schubmult.schub_lib.plactic.py
+import copy
+
+import numpy as np
+
 from schubmult.schub_lib.permutation import Permutation  # noqa: F401
 
 from ..utils._grid_print import GridPrint
 from .crystal_graph import CrystalGraph
 
 
+def _is_valid_outer_corner(grid, i: int, j: int) -> bool:
+    """
+    Outer-corner predicate used by up_jdt_slide.
+    Accepts hole positions that may extend the grid (i==rows or j==cols).
+    A position is valid if:
+      - there is a box above AND a box to the left, OR
+      - at least one of those exists and the hole is on/extends the outer boundary.
+    """
+    rows, cols = grid.shape
+    # treat positions outside current array as empty slots (they must be extended before sliding)
+    # if 0 <= i < rows and 0 <= j < cols and grid[i, j] is not None:
+    #     return False
+    # if i >= rows or j >= cols:
+    #     return False
+    if 0 <= i < rows and 0 <= j < cols and grid[i, j] is not None:
+        return False
+    if i >= rows or j >= cols:
+        return False
+    up = grid[i - 1, j] if i - 1 >= 0 else "bob" if i == 0 else None
+    left = grid[i, j - 1] if j - 1 >= 0 else "bing" if j == 0 else None
+    return grid[i, j] is None and (up is not None and left is not None) and not (i == 0 and j == 0)
+    # consider hole on or beyond boundary as "outer
+
+
+def _is_valid_inner_corner(grid, i: int, j: int) -> bool:
+    """
+    Inner-corner predicate used by down_jdt_slide.
+    Valid when the hole is inside the grid (must not extend grid) and there
+    is a box below or to the right with the same boundary rules mirrored.
+    """
+    rows, cols = grid.shape
+    if grid[i, j] is not None:
+        return False
+    if i < 0 or j < 0:
+        return False
+    if i >= rows or j >= cols:
+        return False
+    down = grid[i + 1, j] if i + 1 < rows else "bob" if i == rows - 1 else None
+    right = grid[i, j + 1] if j + 1 < cols else "bing" if j == cols - 1 else None
+    return grid[i, j] is None and (down is not None and right is not None) and not (i == rows - 1 and j == cols - 1)
+
+
+def _length_of_row(grid, row):
+    return len([c for c in grid[row, :] if c is not None])
+
+
+def _count_boxes(grid):
+    count = 0
+    for i in range(grid.shape[0]):
+        for j in range(grid.shape[1]):
+            cell = grid[i, j]
+            if cell is not None:
+                count += 1
+    return count
+
+
+def _root_compare(root1, root2):
+    if root1 == root2:
+        return 2
+    if root1[1] == root2[1] and root1[0] != root2[0]:
+        return 1
+    if root1[0] == root2[0] and root1[1] != root2[1]:
+        return 1
+    if root1[0] == root2[1] or root1[1] == root2[0]:
+        return -1
+    return 0
+
+
 class Plactic(GridPrint, CrystalGraph):
     def __iter__(self):
-        for row in self._word:
-            yield from row
+        for i in range(self._grid.shape[0]):
+            for j in range(self._grid.shape[1]):
+                if self._grid[i, j] is not None:
+                    yield self._grid[i, j]
 
     def __le__(self, other):
         if not isinstance(other, Plactic):
@@ -23,9 +97,9 @@ class Plactic(GridPrint, CrystalGraph):
     # in order of row row
     @property
     def iter_boxes(self):
-        for i in range(len(self._word) - 1, -1, -1):
-            for j in range(len(self._word[i])):
-                if self[i, j] is not None:
+        for i in range(self._grid.shape[0] - 1, -1, -1):
+            for j in range(self._grid.shape[1]):
+                if self._grid[i, j] is not None:
                     yield (i, j)
 
     def up_jdt_slide(self, row, col):
@@ -33,95 +107,129 @@ class Plactic(GridPrint, CrystalGraph):
         Perform an upward jeu de taquin slide starting from the given (row, col)
         position (0-indexed). Returns a new Plactic tableau.
         """
-        new_word = [list(r) for r in self._word]
+        new_grid = copy.deepcopy(self._grid)
         i, j = row, col
-        if self[i, j] != 0:
+        # Resize grid if needed
+        if self.rows <= i or self.cols <= j:
+            new_grid.resize((max(self.rows, i + 1), max(self.cols, j + 1)), refcheck=False)
+        if self[i, j] != 0 and self[i, j] is not None:
             raise ValueError(f"up_jdt_slide starting position must be empty, got {self[i, j]=}")
-        if self[i - 1, j] == 0 and self[i, j - 1] == 0:
+        if self[i - 1, j] in (0, None) and self[i, j - 1] in (0, None):
             raise ValueError("up_jdt_slide starting position has no valid moves")
-        if i == len(new_word):
-            new_word.append([0] * (j + 1))
-        if j == len(new_word[i]):
-            new_word[i].append(0)
-        while True:
-            up = new_word[i - 1][j] if i - 1 >= 0 and j < len(new_word[i - 1]) else None
-            left = new_word[i][j - 1] if j - 1 >= 0 else None
 
-            if up is None and left is None:
+        while True:
+            up = new_grid[i - 1, j] if i - 1 >= 0 else None
+            left = new_grid[i, j - 1] if j - 1 >= 0 else None
+
+            if up in (None, 0) and left in (None, 0):
                 # No more moves possible
                 break
-            if up is None:
+            if up in (None, 0):
                 # Can only move left
-                new_word[i][j] = left
+                new_grid[i, j] = left
                 j -= 1
-            elif left is None:
+            elif left in (None, 0):
                 # Can only move up
-                new_word[i][j] = up
+                new_grid[i, j] = up
                 i -= 1
             else:
                 # Both moves possible; choose the larger entry
                 if up >= left:
-                    new_word[i][j] = up
+                    new_grid[i, j] = up
                     i -= 1
                 else:
-                    new_word[i][j] = left
+                    new_grid[i, j] = left
                     j -= 1
 
-        new_word[i][j] = 0
+        new_grid[i, j] = 0
 
-        return Plactic(tuple(tuple(r) for r in new_word))
+        return Plactic._from_grid(new_grid)
 
     def down_jdt_slide(self, row, col):
         """
         Perform a jeu de taquin slide starting from the given (row, col)
         position (0-indexed). Returns a new Plactic tableau.
         """
-        new_word = [list(r) for r in self._word]
+        new_grid = copy.deepcopy(self._grid)
         i, j = row, col
-        if self[i, j] != 0:
+        if self[i, j] != 0 and self[i, j] is not None:
             raise ValueError(f"down_jdt_slide starting position must be empty, got {self[i, j]=}")
-        if self[i + 1, j] == 0 and self[i, j + 1] == 0:
+        if self[i + 1, j] in (0, None) and self[i, j + 1] in (0, None):
             raise ValueError("down_jdt_slide starting position has no valid moves")
         while True:
-            down = new_word[i + 1][j] if i + 1 < len(new_word) and j < len(new_word[i + 1]) else None
-            right = new_word[i][j + 1] if j + 1 < len(new_word[i]) else None
+            down = new_grid[i + 1, j] if i + 1 < self.rows else None
+            right = new_grid[i, j + 1] if j + 1 < self.cols else None
 
-            if down is None and right is None:
+            if down in (None, 0) and right in (None, 0):
                 # No more moves possible
                 break
-            if down is None:
+            if down in (None, 0):
                 # Can only move right
-                new_word[i][j] = right
+                new_grid[i, j] = right
                 j += 1
-            elif right is None:
+            elif right in (None, 0):
                 # Can only move down
-                new_word[i][j] = down
+                new_grid[i, j] = down
                 i += 1
             else:
                 # Both moves possible; choose the smaller entry
                 if down < right:
-                    new_word[i][j] = down
+                    new_grid[i, j] = down
                     i += 1
                 else:
-                    new_word[i][j] = right
+                    new_grid[i, j] = right
                     j += 1
 
-        # Remove the last empty cell
-        new_word[i].pop()
-        # Remove any empty rows at the bottom
-        while new_word and len(new_word[-1]) == 0:
-            new_word.pop()
+        # Mark the final position as None
+        new_grid[i, j] = None
 
-        return Plactic(tuple(tuple(r) for r in new_word))
+        return Plactic._from_grid(new_grid)
+
+    @property
+    def iter_outer_corners(self):
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if _is_valid_outer_corner(self, i, j):
+                    yield (i, j)
+
+    @property
+    def iter_inner_corners(self):
+        for i in range(self.rows):
+            for j in range(self.cols):
+                if _is_valid_inner_corner(self, i, j):
+                    yield (i, j)
 
     def __init__(self, word=()):
-        # ensure we always store a flat tuple of rows (each row a tuple of ints)
-        self._word = tuple(tuple(r) for r in word)
+        # Convert word (tuple of tuples) to np.ndarray
+        if isinstance(word, np.ndarray):
+            self._grid = word
+        elif len(word) == 0:
+            self._grid = np.empty((0, 0), dtype=object)
+        else:
+            # Find max row length
+            max_cols = max((len(r) for r in word), default=0)
+            num_rows = len(word)
+            self._grid = np.full((num_rows, max_cols), None, dtype=object)
+            for i, row in enumerate(word):
+                for j, val in enumerate(row):
+                    if val != 0:  # Don't store explicit zeros, use None for empty
+                        self._grid[i, j] = int(val)
+
+    @classmethod
+    def _from_grid(cls, grid):
+        """Create a Plactic directly from an np.ndarray grid."""
+        obj = cls.__new__(cls)
+        obj._grid = grid
+        return obj
 
     def shiftup(self, k):
         """Return a new Plactic with all entries increased by k."""
-        new_word = tuple(tuple(int(a) + k for a in row) for row in self._word)
-        return Plactic(new_word)
+        new_grid = copy.deepcopy(self._grid)
+        for i in range(new_grid.shape[0]):
+            for j in range(new_grid.shape[1]):
+                if new_grid[i, j] is not None and new_grid[i, j] != 0:
+                    new_grid[i, j] = int(new_grid[i, j]) + k
+        return Plactic._from_grid(new_grid)
 
     @classmethod
     def all_ss_tableaux(cls, shape, max_entry):
@@ -158,52 +266,58 @@ class Plactic(GridPrint, CrystalGraph):
     @property
     def row_word(self):
         """Return the row-reading word as a flat tuple."""
-        word = tuple(a for row in reversed(self._word) for a in row if a != 0 and a is not None)
-        return word
+        word = []
+        for i in range(self._grid.shape[0] - 1, -1, -1):
+            for j in range(self._grid.shape[1]):
+                val = self._grid[i, j]
+                if val is not None and val != 0:
+                    word.append(val)
+        return tuple(word)
 
     @property
     def column_word(self):
         wrd = []
-        for i in range(self.cols):
-            for j in range(self.rows - 1, -1, -1):
-                if i < len(self._word[j]):
-                    wrd.append(self._word[j][i])
+        for j in range(self.cols):
+            for i in range(self.rows - 1, -1, -1):
+                val = self._grid[i, j]
+                if val is not None and val != 0:
+                    wrd.append(val)
         return tuple(wrd)
 
     def transpose(self):
         """Return the transpose of this Plactic tableau."""
-        new_word = []
-        for i in range(self.cols):
-            new_row = []
-            for j in range(self.rows):
-                if i < len(self._word[j]):
-                    new_row.append(self._word[j][i])
-            new_word.append(tuple(new_row))
-        return Plactic(tuple(new_word))
+        if self.rows == 0 or self.cols == 0:
+            return Plactic(())
+        new_grid = np.full((self.cols, self.rows), None, dtype=object)
+        for i in range(self.rows):
+            for j in range(self.cols):
+                val = self._grid[i, j]
+                if val is not None:
+                    new_grid[j, i] = val
+        return Plactic._from_grid(new_grid)
 
     @property
     def rows(self):
-        return len(self._word)
+        return self._grid.shape[0]
 
     @property
     def cols(self):
-        if len(self._word) == 0:
-            return 0
-        return max(len(r) for r in self._word)
+        return self._grid.shape[1]
 
     def __getitem__(self, key):
         # FLIPPED FOR PRINTING
         if isinstance(key, int):
-            return self._word[key]
+            # Return row as tuple for compatibility
+            return tuple(self._grid[key, j] for j in range(self._grid.shape[1]))
         if isinstance(key, tuple):
             i, j = key
-            if len(self._word) == 0 or i >= len(self._word) or j >= len(self._word[i]):
+            if i >= self._grid.shape[0] or j >= self._grid.shape[1] or i < 0 or j < 0:
                 return None
-            return self._word[i][j]
+            return self._grid[i, j]
         is_slice = isinstance(key, slice)
 
         if is_slice:
-            return tuple(self._word[n] for n in range(len(self))[key])
+            return tuple(tuple(self._grid[n, j] for j in range(self._grid.shape[1])) for n in range(self.rows)[key])
 
         raise ValueError(f"Bad indexing {key=}")
 
@@ -218,7 +332,12 @@ class Plactic(GridPrint, CrystalGraph):
         (increasing) insertion order applies. If reverse_semistandard is True
         we negate entries (so larger original becomes smaller).
         """
-        return Plactic(Plactic._remap_word(self._word, lambda x: -int(x)))
+        new_grid = copy.deepcopy(self._grid)
+        for i in range(new_grid.shape[0]):
+            for j in range(new_grid.shape[1]):
+                if new_grid[i, j] is not None and new_grid[i, j] != 0:
+                    new_grid[i, j] = -int(new_grid[i, j])
+        return Plactic._from_grid(new_grid)
 
     def __mul__(self, other):
         """
@@ -233,7 +352,12 @@ class Plactic(GridPrint, CrystalGraph):
 
     @property
     def shape(self):
-        return tuple(len(row) for row in self._word)
+        shape_list = []
+        for i in range(self._grid.shape[0]):
+            count = sum(1 for j in range(self._grid.shape[1]) if self._grid[i, j] is not None and self._grid[i, j] != 0)
+            if count > 0:
+                shape_list.append(count)
+        return tuple(shape_list)
 
     @classmethod
     def from_word(cls, word):
@@ -241,7 +365,17 @@ class Plactic(GridPrint, CrystalGraph):
         return cls().rs_insert(*word)
 
     def __hash__(self):
-        return hash(self._word)
+        # Hash based on the actual tableau content
+        content = []
+        for i in range(self._grid.shape[0]):
+            row_vals = []
+            for j in range(self._grid.shape[1]):
+                val = self._grid[i, j]
+                if val is not None and val != 0:
+                    row_vals.append(val)
+            if row_vals:
+                content.append(tuple(row_vals))
+        return hash(tuple(content))
 
     @staticmethod
     def _rs_insert(word, letter, i=0):
@@ -267,7 +401,7 @@ class Plactic(GridPrint, CrystalGraph):
 
         # find first entry strictly greater than x to bump
         for k, val in enumerate(row):
-            if val > x:
+            if val is not None and val != 0 and val > x:
                 bumped = val
                 row[k] = x
                 new_word = (*word[:i], tuple(row), *word[i + 1 :])
@@ -286,14 +420,29 @@ class Plactic(GridPrint, CrystalGraph):
         else:
             seq = list(letters)
 
-        new_word = self._word
+        # Convert current grid to tuple-of-tuples format for insertion
+        word_tuples = []
+        for i in range(self._grid.shape[0]):
+            row_vals = []
+            for j in range(self._grid.shape[1]):
+                val = self._grid[i, j]
+                if val is not None and val != 0:
+                    row_vals.append(val)
+            if row_vals:  # Only add non-empty rows
+                word_tuples.append(tuple(row_vals))
+        new_word = tuple(word_tuples)
+
         for letter in seq:
             new_word = Plactic._rs_insert(new_word, int(letter))
         return Plactic(new_word)
 
     def __eq__(self, other):
         if isinstance(other, Plactic):
-            return self._word == other._word
+            # Compare shapes first
+            if self._grid.shape != other._grid.shape:
+                return False
+            # Compare all elements
+            return np.array_equal(self._grid, other._grid)
         return False
 
     # -- CrystalGraph API wrappers (delegate to the NilPlactic <-> RCGraph machinery) --
@@ -415,29 +564,46 @@ class Plactic(GridPrint, CrystalGraph):
         """
         Return the Yamanouchi (highest-weight) tableau of the given shape.
         """
-        new_word = []
-        for i in range(len(shape)):
-            new_word.append([0] * shape[i])
+        if not shape:
+            return cls(())
+        num_rows = len(shape)
+        max_cols = max(shape) if shape else 0
+        grid = np.full((num_rows, max_cols), None, dtype=object)
+        for i in range(num_rows):
             for j in range(shape[i]):
-                new_word[i][j] = i + 1
-        return cls(tuple(tuple(row) for row in new_word))
+                grid[i, j] = i + 1
+        return cls._from_grid(grid)
 
     def rectify(self):
-        if len(self._word) == 0:
+        if self.rows == 0:
             return self
-        if len(self._word[0]) == 0:
-            return self.__class__([self._word[0], *self.__class__(self.word[1:]).rectify()._word])
-        if self._word[0][0] != 0:
+        if self.cols == 0:
             return self
+
+        # Check if first row's first element is 0 or None
+        first_val = self._grid[0, 0]
+        if first_val is not None and first_val != 0:
+            return self
+
+        # Find first non-zero/non-None element in first row
         index = 0
-        while index < len(self._word[0]) and self._word[0][index] == 0:
+        while index < self.cols and (self._grid[0, index] in (0, None)):
             index += 1
-        if index == len(self._word[0]):
-            if len(self._word) == 1:
+
+        if index == self.cols:
+            # Entire first row is empty
+            if self.rows == 1:
                 return self
-            if self._word[1][0] == 0:
-                return self.__class__([self._word[0], *self.__class__(self._word[1:]).rectify()._word])
+            # Check if second row starts with 0/None
+            if self.rows > 1 and (self._grid[1, 0] in (0, None)):
+                # Recursively rectify remaining rows
+                remaining_grid = self._grid[1:, :]
+                remaining = Plactic._from_grid(remaining_grid).rectify()
+                # Prepend the empty first row
+                result_grid = np.vstack([self._grid[0:1, :], remaining._grid]) if remaining.rows > 0 else self._grid[0:1, :]
+                return Plactic._from_grid(result_grid)
             return self.down_jdt_slide(0, 0).rectify()
+
         index -= 1
         return self.down_jdt_slide(0, index).rectify()
 
@@ -445,23 +611,35 @@ class Plactic(GridPrint, CrystalGraph):
     def superstandard(cls, shape):
         if shape is None:
             return None
-        new_word = []
+        if not shape:
+            return cls(())
+        num_rows = len(shape)
+        max_cols = max(shape) if shape else 0
+        grid = np.full((num_rows, max_cols), None, dtype=object)
         index = 1
-        for i in range(len(shape)):
-            new_word.append([0] * shape[i])
+        for i in range(num_rows):
             for j in range(shape[i]):
-                new_word[i][j] = index
+                grid[i, j] = index
                 index += 1
-        return cls(tuple(tuple(row) for row in new_word))
+        return cls._from_grid(grid)
 
     @property
     def is_semistandard(self):
-        for i in range(len(self._word)):
-            for j in range(len(self._word[i])):
-                if j > 0 and self._word[i][j] < self._word[i][j - 1]:
-                    return False
-                if i > 0 and j < len(self._word[i - 1]) and self._word[i][j] <= self._word[i - 1][j]:
-                    return False
+        for i in range(self._grid.shape[0]):
+            for j in range(self._grid.shape[1]):
+                val = self._grid[i, j]
+                if val is None or val == 0:
+                    continue
+                # Check row condition: increasing left to right
+                if j > 0:
+                    left_val = self._grid[i, j - 1]
+                    if left_val is not None and left_val != 0 and val < left_val:
+                        return False
+                # Check column condition: strictly increasing top to bottom
+                if i > 0:
+                    above_val = self._grid[i - 1, j]
+                    if above_val is not None and above_val != 0 and val <= above_val:
+                        return False
         return True
 
     def reverse_rsk(self, recording_tableau):
@@ -471,9 +649,26 @@ class Plactic(GridPrint, CrystalGraph):
 
         Returns the original word as a list of integers (in insertion order).
         """
-        # mutable copies of P and Q rows
-        P = [list(r) for r in self._word]
-        Q = [list(r) for r in recording_tableau._word]
+        # Create mutable copies by converting grids to list of lists
+        P = []
+        for i in range(self._grid.shape[0]):
+            row = []
+            for j in range(self._grid.shape[1]):
+                val = self._grid[i, j]
+                if val is not None and val != 0:
+                    row.append(val)
+            if row:
+                P.append(row)
+
+        Q = []
+        for i in range(recording_tableau._grid.shape[0]):
+            row = []
+            for j in range(recording_tableau._grid.shape[1]):
+                val = recording_tableau._grid[i, j]
+                if val is not None and val != 0:
+                    row.append(val)
+            if row:
+                Q.append(row)
 
         total = sum(len(r) for r in Q)
         word_rev = []
@@ -622,8 +817,16 @@ class Plactic(GridPrint, CrystalGraph):
             # not required but warn if not nonincreasing
             pass
 
-        # current tableau rows (mutable lists)
-        rows = [list(r) for r in self._word]
+        # Convert grid to mutable list of lists
+        rows = []
+        for i in range(self._grid.shape[0]):
+            row = []
+            for j in range(self._grid.shape[1]):
+                val = self._grid[i, j]
+                if val is not None:
+                    row.append(val if val != 0 else 0)
+            if row or i < len(mu):  # Keep rows that might be needed
+                rows.append(row)
 
         # helper to compute occupied cells set
         def occupied_cells(rs):
@@ -679,13 +882,14 @@ class Plactic(GridPrint, CrystalGraph):
             # verify starting position is empty (should be 0)
             val = tmp[r, c]
             if val is None:
-                # if indexing returned None, ensure underlying list has that slot (it should)
-                raise RuntimeError(f"Unexpected missing cell at {(r, c)} when creating hole")
-            if val != 0:
+                # if indexing returned None, ensure underlying grid has that slot
+                # Set to 0 in the working rows
+                rows[r][c] = 0
+                val = 0
+            if val != 0 and val is not None:
                 # force the hole (overwrite); we must set it to 0 before sliding
-                tmp_rows = [list(rr) for rr in tmp._word]
-                tmp_rows[r][c] = 0
-                tmp = Plactic(tuple(tuple(rr) for rr in tmp_rows))
+                rows[r][c] = 0
+                tmp = Plactic(tuple(tuple(rr) for rr in rows))
 
             # perform upward slide from the hole
             try:
@@ -694,7 +898,16 @@ class Plactic(GridPrint, CrystalGraph):
                 raise RuntimeError(f"up_jdt_slide failed from corner {(r, c)}: {e}")
 
             # adopt new rows and recompute occupied cells
-            rows = [list(rr) for rr in new_tmp._word]
+            # Convert grid back to list of lists
+            rows = []
+            for i in range(new_tmp._grid.shape[0]):
+                row = []
+                for j in range(new_tmp._grid.shape[1]):
+                    val = new_tmp._grid[i, j]
+                    if val is not None:
+                        row.append(val if val != 0 else 0)
+                if row or i < len(mu):
+                    rows.append(row)
             cur_cells = occupied_cells(rows)
 
         # return Plactic with zeros possibly marking inner cells

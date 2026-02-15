@@ -101,10 +101,21 @@ class NilPlactic(Plactic):
 
     def up_jdt_slide(self, row, col):
         """
-        Perform an upward jeu de taquin slide starting from the given (row, col)
+        Perform an upward K-theoretic jeu de taquin slide starting from the given (row, col)
         position (0-indexed). Returns a new Plactic tableau.
         """
-        new_word = [list(r) for r in self._word]
+        # Convert grid to mutable list of lists
+        new_word = []
+        for i in range(self._grid.shape[0]):
+            row_vals = []
+            for j in range(self._grid.shape[1]):
+                val = self._grid[i, j]
+                if val is None:
+                    row_vals.append(0)
+                else:
+                    row_vals.append(val)
+            new_word.append(row_vals)
+
         i, j = row, col
         if self[i, j] != 0:
             raise ValueError(f"up_jdt_slide starting position must be empty, got {self[i, j]=}")
@@ -150,10 +161,21 @@ class NilPlactic(Plactic):
 
     def down_jdt_slide(self, row, col):
         """
-        Perform a jeu de taquin slide starting from the given (row, col)
-        position (0-indexed). Returns a new Plactic tableau.
+        Perform a K-theoretic jeu de taquin slide starting from the given (row, col)
+        position (0-indexed). Returns a new NilPlactic tableau.
         """
-        new_word = [list(r) for r in self._word]
+        # Convert grid to mutable list of lists
+        new_word = []
+        for i in range(self._grid.shape[0]):
+            row_vals = []
+            for j in range(self._grid.shape[1]):
+                val = self._grid[i, j]
+                if val is None:
+                    row_vals.append(0)
+                else:
+                    row_vals.append(val)
+            new_word.append(row_vals)
+
         i, j = row, col
         if self[i, j] != 0:
             raise ValueError(f"down_jdt_slide starting position must be empty, got {self[i, j]=}")
@@ -222,7 +244,18 @@ class NilPlactic(Plactic):
 
     def ed_insert(self, *letters):
         """Insert a letter/entry into this NilPlactic tableau and return a new Plactic."""
-        new_word = self._word
+        # Convert grid to tuple of tuples format for _ed_insert
+        word_tuples = []
+        for i in range(self._grid.shape[0]):
+            row_vals = []
+            for j in range(self._grid.shape[1]):
+                val = self._grid[i, j]
+                if val is not None and val != 0:
+                    row_vals.append(val)
+            if row_vals:  # Only add non-empty rows
+                word_tuples.append(tuple(row_vals))
+        new_word = tuple(word_tuples)
+
         for letter in letters:
             new_word = NilPlactic._ed_insert(new_word, int(letter))
         return NilPlactic(new_word)
@@ -234,6 +267,14 @@ class NilPlactic(Plactic):
         for a, b in zip(w1, w2):
             word0, word2 = cls._ed_insert_rsk(word0, word2, int(a), int(b))
         return cls(word0), Plactic(word2)
+
+    @classmethod
+    def ed_column_insert_rsk(cls, w1, w2):
+        """Insert a letter/entry into this NilPlactic tableau and return a new Plactic."""
+        word0, word2 = (), ()
+        for a, b in zip(w1, w2):
+            word0, word2 = cls._ed_insert_rsk(word0, word2, int(a), int(b))
+        return cls(word0).transpose(), Plactic(word2).transpose()
 
     @staticmethod
     def _ed_insert(word, letter, i=0):
@@ -309,6 +350,47 @@ class NilPlactic(Plactic):
         # special case: continue bumping without changing current row
         return NilPlactic._ed_insert_rsk(word, word2, x1, letter2, i=i + 1)
 
+
+    # @staticmethod
+    # def _ed_column_insert_rsk(word, word2, letter, letter2, i=0):
+    #     """
+    #     Edelman–Greene style two-row insertion.
+    #     word and word2 are tuples-of-rows; always return pair of tuple-of-rows.
+    #     """
+    #     word = tuple(tuple(r) for r in word)
+    #     word2 = tuple(tuple(r) for r in word2)
+
+    #     # determine current rows (safe when word2 shorter)
+    #     if i >= len(word):
+    #         row_i = ()
+    #     else:
+    #         row_i = word[i]
+    #     if i >= len(word2):
+    #         row2_i = ()
+    #     else:
+    #         row2_i = word2[i]
+
+    #     x0 = letter
+
+    #     # append case (no bump in this row)
+    #     if len(row_i) == 0 or x0 >= max(row_i):
+    #         new_word = (*word[:i], (*row_i, x0), *word[i + 1 :])
+    #         new_word2 = (*word2[:i], (*row2_i, letter2), *word2[i + 1 :])
+    #         return new_word, new_word2
+
+    #     # find bump
+    #     x1 = min(a for a in row_i if a > x0)
+
+    #     # normal replace + recurse into next row
+    #     if x1 != x0 + 1 or x0 not in row_i:
+    #         new_first_row = list(row_i)
+    #         new_first_row[new_first_row.index(x1)] = x0
+    #         new_word = (*word[:i], tuple(new_first_row), *word[i + 1 :])
+    #         return NilPlactic._ed_column_insert_rsk(new_word, word2, x1, letter2, i=i + 1)
+
+    #     # special case: continue bumping without changing current row
+    #     return NilPlactic._ed_column_insert_rsk(word, word2, x1, letter2, i=i + 1)
+
     def hw_rc(self, length):
         from schubmult.schub_lib.rc_graph import RCGraph
         seq = []
@@ -358,10 +440,4 @@ class NilPlactic(Plactic):
         pl = NilPlactic()
         return pl.ed_insert(*word)
 
-    def __hash__(self):
-        return hash(self._word)
-
-    def __eq__(self, other):
-        if isinstance(other, NilPlactic):
-            return self._word == other._word
-        return False
+    # Inherit __hash__ and __eq__ from Plactic since they now work with _grid
