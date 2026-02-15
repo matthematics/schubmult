@@ -97,8 +97,9 @@ class Plactic(GridPrint, CrystalGraph):
     # in order of row row
     @property
     def iter_boxes(self):
-        for i in range(self._grid.shape[0] - 1, -1, -1):
-            for j in range(self._grid.shape[1]):
+        # Iterate over non-border cells only
+        for i in range(self.rows - 1, -1, -1):
+            for j in range(self.cols):
                 if self._grid[i, j] is not None:
                     yield (i, j)
 
@@ -187,29 +188,39 @@ class Plactic(GridPrint, CrystalGraph):
 
     @property
     def iter_outer_corners(self):
-        for i in range(self.rows):
-            for j in range(self.cols):
-                if _is_valid_outer_corner(self, i, j):
-                    yield (i, j)
+        # Check border positions for outer corners
+        # Check positions at (i, self.cols) for all rows and (self.rows, j) for all cols
+        for i in range(self.rows + 1):
+            j = self.cols
+            if _is_valid_outer_corner(self._grid, i, j):
+                yield (i, j)
+        for j in range(self.cols + 1):
+            i = self.rows
+            if _is_valid_outer_corner(self._grid, i, j):
+                yield (i, j)
 
     @property
     def iter_inner_corners(self):
         for i in range(self.rows):
             for j in range(self.cols):
-                if _is_valid_inner_corner(self, i, j):
+                if _is_valid_inner_corner(self._grid, i, j):
                     yield (i, j)
 
     def __init__(self, word=()):
         # Convert word (tuple of tuples) to np.ndarray
+        # Grid always has +1 row and +1 col as empty border (ensures outer corners exist)
         if isinstance(word, np.ndarray):
+            # Assume input grid already has border if it's an ndarray
             self._grid = word
         elif len(word) == 0:
-            self._grid = np.empty((0, 0), dtype=object)
+            # Empty tableau: just 1x1 border
+            self._grid = np.full((1, 1), None, dtype=object)
         else:
             # Find max row length
             max_cols = max((len(r) for r in word), default=0)
             num_rows = len(word)
-            self._grid = np.full((num_rows, max_cols), None, dtype=object)
+            # Add +1 to both dimensions for border
+            self._grid = np.full((num_rows + 1, max_cols + 1), None, dtype=object)
             for i, row in enumerate(word):
                 for j, val in enumerate(row):
                     if val != 0:  # Don't store explicit zeros, use None for empty
@@ -217,7 +228,8 @@ class Plactic(GridPrint, CrystalGraph):
 
     @classmethod
     def _from_grid(cls, grid):
-        """Create a Plactic directly from an np.ndarray grid."""
+        """Create a Plactic directly from an np.ndarray grid.
+        Assumes grid already includes the border."""
         obj = cls.__new__(cls)
         obj._grid = grid
         return obj
@@ -225,8 +237,9 @@ class Plactic(GridPrint, CrystalGraph):
     def shiftup(self, k):
         """Return a new Plactic with all entries increased by k."""
         new_grid = copy.deepcopy(self._grid)
-        for i in range(new_grid.shape[0]):
-            for j in range(new_grid.shape[1]):
+        # Only process non-border cells
+        for i in range(self.rows):
+            for j in range(self.cols):
                 if new_grid[i, j] is not None and new_grid[i, j] != 0:
                     new_grid[i, j] = int(new_grid[i, j]) + k
         return Plactic._from_grid(new_grid)
@@ -267,8 +280,9 @@ class Plactic(GridPrint, CrystalGraph):
     def row_word(self):
         """Return the row-reading word as a flat tuple."""
         word = []
-        for i in range(self._grid.shape[0] - 1, -1, -1):
-            for j in range(self._grid.shape[1]):
+        # Read from bottom to top, excluding border row
+        for i in range(self.rows - 1, -1, -1):
+            for j in range(self.cols):
                 val = self._grid[i, j]
                 if val is not None and val != 0:
                     word.append(val)
@@ -277,6 +291,7 @@ class Plactic(GridPrint, CrystalGraph):
     @property
     def column_word(self):
         wrd = []
+        # Exclude border column
         for j in range(self.cols):
             for i in range(self.rows - 1, -1, -1):
                 val = self._grid[i, j]
@@ -288,7 +303,8 @@ class Plactic(GridPrint, CrystalGraph):
         """Return the transpose of this Plactic tableau."""
         if self.rows == 0 or self.cols == 0:
             return Plactic(())
-        new_grid = np.full((self.cols, self.rows), None, dtype=object)
+        # Create transposed grid with border (cols+1 by rows+1)
+        new_grid = np.full((self.cols + 1, self.rows + 1), None, dtype=object)
         for i in range(self.rows):
             for j in range(self.cols):
                 val = self._grid[i, j]
@@ -298,11 +314,13 @@ class Plactic(GridPrint, CrystalGraph):
 
     @property
     def rows(self):
-        return self._grid.shape[0]
+        # Exclude the border row
+        return max(0, self._grid.shape[0] - 1)
 
     @property
     def cols(self):
-        return self._grid.shape[1]
+        # Exclude the border column
+        return max(0, self._grid.shape[1] - 1)
 
     def __getitem__(self, key):
         # FLIPPED FOR PRINTING
@@ -333,8 +351,9 @@ class Plactic(GridPrint, CrystalGraph):
         we negate entries (so larger original becomes smaller).
         """
         new_grid = copy.deepcopy(self._grid)
-        for i in range(new_grid.shape[0]):
-            for j in range(new_grid.shape[1]):
+        # Only invert non-border cells
+        for i in range(self.rows):
+            for j in range(self.cols):
                 if new_grid[i, j] is not None and new_grid[i, j] != 0:
                     new_grid[i, j] = -int(new_grid[i, j])
         return Plactic._from_grid(new_grid)
@@ -353,8 +372,9 @@ class Plactic(GridPrint, CrystalGraph):
     @property
     def shape(self):
         shape_list = []
-        for i in range(self._grid.shape[0]):
-            count = sum(1 for j in range(self._grid.shape[1]) if self._grid[i, j] is not None and self._grid[i, j] != 0)
+        # Only count non-border rows
+        for i in range(self.rows):
+            count = sum(1 for j in range(self.cols) if self._grid[i, j] is not None and self._grid[i, j] != 0)
             if count > 0:
                 shape_list.append(count)
         return tuple(shape_list)
@@ -365,11 +385,11 @@ class Plactic(GridPrint, CrystalGraph):
         return cls().rs_insert(*word)
 
     def __hash__(self):
-        # Hash based on the actual tableau content
+        # Hash based on the actual tableau content (excluding border)
         content = []
-        for i in range(self._grid.shape[0]):
+        for i in range(self.rows):
             row_vals = []
-            for j in range(self._grid.shape[1]):
+            for j in range(self.cols):
                 val = self._grid[i, j]
                 if val is not None and val != 0:
                     row_vals.append(val)
@@ -420,11 +440,11 @@ class Plactic(GridPrint, CrystalGraph):
         else:
             seq = list(letters)
 
-        # Convert current grid to tuple-of-tuples format for insertion
+        # Convert current grid to tuple-of-tuples format for insertion (excluding border)
         word_tuples = []
-        for i in range(self._grid.shape[0]):
+        for i in range(self.rows):
             row_vals = []
-            for j in range(self._grid.shape[1]):
+            for j in range(self.cols):
                 val = self._grid[i, j]
                 if val is not None and val != 0:
                     row_vals.append(val)
@@ -568,7 +588,8 @@ class Plactic(GridPrint, CrystalGraph):
             return cls(())
         num_rows = len(shape)
         max_cols = max(shape) if shape else 0
-        grid = np.full((num_rows, max_cols), None, dtype=object)
+        # Create grid with border
+        grid = np.full((num_rows + 1, max_cols + 1), None, dtype=object)
         for i in range(num_rows):
             for j in range(shape[i]):
                 grid[i, j] = i + 1
@@ -615,7 +636,8 @@ class Plactic(GridPrint, CrystalGraph):
             return cls(())
         num_rows = len(shape)
         max_cols = max(shape) if shape else 0
-        grid = np.full((num_rows, max_cols), None, dtype=object)
+        # Create grid with border
+        grid = np.full((num_rows + 1, max_cols + 1), None, dtype=object)
         index = 1
         for i in range(num_rows):
             for j in range(shape[i]):
@@ -625,8 +647,9 @@ class Plactic(GridPrint, CrystalGraph):
 
     @property
     def is_semistandard(self):
-        for i in range(self._grid.shape[0]):
-            for j in range(self._grid.shape[1]):
+        # Only check non-border cells
+        for i in range(self.rows):
+            for j in range(self.cols):
                 val = self._grid[i, j]
                 if val is None or val == 0:
                     continue
@@ -649,11 +672,11 @@ class Plactic(GridPrint, CrystalGraph):
 
         Returns the original word as a list of integers (in insertion order).
         """
-        # Create mutable copies by converting grids to list of lists
+        # Create mutable copies by converting grids to list of lists (excluding border)
         P = []
-        for i in range(self._grid.shape[0]):
+        for i in range(self.rows):
             row = []
-            for j in range(self._grid.shape[1]):
+            for j in range(self.cols):
                 val = self._grid[i, j]
                 if val is not None and val != 0:
                     row.append(val)
@@ -661,9 +684,9 @@ class Plactic(GridPrint, CrystalGraph):
                 P.append(row)
 
         Q = []
-        for i in range(recording_tableau._grid.shape[0]):
+        for i in range(recording_tableau.rows):
             row = []
-            for j in range(recording_tableau._grid.shape[1]):
+            for j in range(recording_tableau.cols):
                 val = recording_tableau._grid[i, j]
                 if val is not None and val != 0:
                     row.append(val)
@@ -817,11 +840,11 @@ class Plactic(GridPrint, CrystalGraph):
             # not required but warn if not nonincreasing
             pass
 
-        # Convert grid to mutable list of lists
+        # Convert grid to mutable list of lists (excluding border)
         rows = []
-        for i in range(self._grid.shape[0]):
+        for i in range(self.rows):
             row = []
-            for j in range(self._grid.shape[1]):
+            for j in range(self.cols):
                 val = self._grid[i, j]
                 if val is not None:
                     row.append(val if val != 0 else 0)
@@ -898,11 +921,11 @@ class Plactic(GridPrint, CrystalGraph):
                 raise RuntimeError(f"up_jdt_slide failed from corner {(r, c)}: {e}")
 
             # adopt new rows and recompute occupied cells
-            # Convert grid back to list of lists
+            # Convert grid back to list of lists (excluding border)
             rows = []
-            for i in range(new_tmp._grid.shape[0]):
+            for i in range(new_tmp.rows):
                 row = []
-                for j in range(new_tmp._grid.shape[1]):
+                for j in range(new_tmp.cols):
                     val = new_tmp._grid[i, j]
                     if val is not None:
                         row.append(val if val != 0 else 0)

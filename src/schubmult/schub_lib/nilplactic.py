@@ -104,11 +104,11 @@ class NilPlactic(Plactic):
         Perform an upward K-theoretic jeu de taquin slide starting from the given (row, col)
         position (0-indexed). Returns a new Plactic tableau.
         """
-        # Convert grid to mutable list of lists
+        # Convert grid to mutable list of lists (excluding border)
         new_word = []
-        for i in range(self._grid.shape[0]):
+        for i in range(self.rows):
             row_vals = []
-            for j in range(self._grid.shape[1]):
+            for j in range(self.cols):
                 val = self._grid[i, j]
                 if val is None:
                     row_vals.append(0)
@@ -117,7 +117,7 @@ class NilPlactic(Plactic):
             new_word.append(row_vals)
 
         i, j = row, col
-        if self[i, j] != 0:
+        if self[i, j] != 0 and self[i, j] is not None:
             raise ValueError(f"up_jdt_slide starting position must be empty, got {self[i, j]=}")
         if self[i - 1, j] == 0 and self[i, j - 1] == 0:
             raise ValueError("up_jdt_slide starting position has no valid moves")
@@ -164,11 +164,11 @@ class NilPlactic(Plactic):
         Perform a K-theoretic jeu de taquin slide starting from the given (row, col)
         position (0-indexed). Returns a new NilPlactic tableau.
         """
-        # Convert grid to mutable list of lists
+        # Convert grid to mutable list of lists (excluding border)
         new_word = []
-        for i in range(self._grid.shape[0]):
+        for i in range(self.rows):
             row_vals = []
-            for j in range(self._grid.shape[1]):
+            for j in range(self.cols):
                 val = self._grid[i, j]
                 if val is None:
                     row_vals.append(0)
@@ -244,11 +244,11 @@ class NilPlactic(Plactic):
 
     def ed_insert(self, *letters):
         """Insert a letter/entry into this NilPlactic tableau and return a new Plactic."""
-        # Convert grid to tuple of tuples format for _ed_insert
+        # Convert grid to tuple of tuples format for _ed_insert (excluding border)
         word_tuples = []
-        for i in range(self._grid.shape[0]):
+        for i in range(self.rows):
             row_vals = []
-            for j in range(self._grid.shape[1]):
+            for j in range(self.cols):
                 val = self._grid[i, j]
                 if val is not None and val != 0:
                     row_vals.append(val)
