@@ -13,7 +13,8 @@ if __name__ == "__main__":
     for perm in perms:
         # pp = perm.antiperm # skew ED
         # up_perms = [up_perm for up_perm, diff in elem_sym_perms(perm, 1, len(mulperm.trimcode)) if diff == 1]
-        up_perms = [up_perm for up_perm, diff in elem_sym_perms(perm, mulperm.inv, len(mulperm.trimcode)) if diff == mulperm.inv]
+        #up_perms = [up_perm for up_perm, diff in elem_sym_perms(perm, mulperm.inv, len(mulperm.trimcode)) if diff == mulperm.inv]
+        up_perms = tuple((Sx(perm) * Sx(mulperm)).keys())
         
         result = Sx.zero
         for up_perm in up_perms:
