@@ -8,22 +8,26 @@ if __name__ == "__main__":
     n = int(sys.argv[1])
 
     perms = Permutation.all_permutations(n)
-
+    mulperm = uncode([1])
     for perm in perms:
-        pp = perm.antiperm # skew ED
-        up_perms = [up_perm for up_perm, diff in elem_sym_perms(perm, 1, 1) if diff == 1]
-        left_tensor = RCGraph.principal_rc(uncode([1]), len(perm.trimcode) + 1)
+        # pp = perm.antiperm # skew ED
+        up_perms = [up_perm for up_perm, diff in elem_sym_perms(perm, 1, len(mulperm.trimcode)) if diff == 1]
+        
         result = Sx.zero
         for up_perm in up_perms:
-            up_rc = RCGraph.principal_rc(up_perm, len(perm.trimcode) + 1).to_highest_weight()[0]
-            down_rc = up_rc.to_lowest_weight()[0]
+            graph_len = max(len(up_perm.trimcode), len(perm.trimcode) + 1) + 1
+            left_tensor = RCGraph.principal_rc(mulperm, graph_len)
+            down_rc = RCGraph.principal_rc(up_perm, graph_len)
+            up_rc = down_rc.to_highest_weight()[0]
             assert down_rc.is_principal
             
             principal_shape = NilPlactic.from_word(up_rc.perm_word).shape
             #print(principal_shape)
             tabs = NilPlactic.all_skew_ed_tableaux(principal_shape, perm, (1,))
 
-            
+            if len(tabs) == 0:
+                # print(f"No skew ED tableaux found for {perm} in tensor product with {up_perm}")
+                raise ValueError(f"No skew ED tableaux found for {perm} in tensor product with {up_perm}")
             for tab in tabs:
                 assert tab.is_increasing
                 tab2 = tab.transpose().rectify().transpose()
@@ -32,20 +36,25 @@ if __name__ == "__main__":
                 # bigot = tab2.hw_rc(len(perm.trimcode) + 1)
                 # tab3 = NilPlactic.from_word([len(tab2.perm) - a for a in tab2.row_word])
                 # assert tab3.perm == perm
-                bigot = tab2.hw_rc(len(perm.trimcode) + 1)
+                # bigot = tab2.hw_rc(len(perm.trimcode) + 1)
+                bigot = tab.hw_rc(graph_len).resize(graph_len)
                 high_weights = set()    
                 for rc in bigot.full_crystal:
-                    tensor = CrystalGraphTensor(left_tensor, rc)
+                    tensor = CrystalGraphTensor(left_tensor, rc.resize(graph_len))
                     #hw_tens = tensor.to_highest_weight()[0]
                     
                     
-                    lw_tens = tensor.to_lowest_weight()[0]
-
-                    if tensor.crystal_weight == up_rc.length_vector and lw_tens.crystal_weight == down_rc.length_vector:
+                    hw_tens = tensor.to_highest_weight()[0]
+                    the_tenst_weight = [*tensor.crystal_weight]
+                    
+                    the_hw_weight = [*hw_tens.crystal_weight]
+                    
+                    assert len(tensor.crystal_weight) == graph_len, f"Tensor crystal weight length mismatch: expected {graph_len}, got {len(tensor.crystal_weight)}, {tensor=}"
+                    if tuple(the_tenst_weight) == down_rc.length_vector and tuple(the_hw_weight) == up_rc.length_vector:
                         
                         print(f"Found match for {perm} in tensor product with {up_perm}")
-                        print("Tab2")
-                        print(tab2)
+                        # print("Tab2")
+                        # print(tab)
                         print("RC")
                         print(rc)
                         
@@ -55,7 +64,39 @@ if __name__ == "__main__":
                         high_weights.add(tensor)
                         
                         result += Sx(up_perm)
-        assert result == Sx(perm) * Sx(uncode([1])), f"Result mismatch for {perm}: got {result}, expected {Sx(perm) * Sx(uncode([1]))}"
+                    # the_tenst_weight[0] -= 1
+                    # the_tenst_weight[1] += 1
+                    # the_hw_weight[0] -= 1
+                    # the_hw_weight[1] += 1
+                    # if tuple(the_tenst_weight) == down_rc.length_vector and tuple(the_hw_weight) == up_rc.length_vector:
+                        
+                    #     print(f"Found match for {perm} in tensor product with {up_perm}")
+                    #     # print("Tab2")
+                    #     # print(tab)
+                    #     print("RC")
+                    #     print(rc)
+                        
+                    #     if tensor in high_weights:
+                    #         print(f"Already found this highest weight tensor before, skipping duplicate: {tensor}")
+                    #         continue
+                    #     high_weights.add(tensor)
+                        
+                    #     result += Sx(up_perm)
+        try:
+            assert result == Sx(perm) * Sx(mulperm), f"Result mismatch for {perm}: got {result}, expected {Sx(perm) * Sx(mulperm)}"
+        except AssertionError as e:
+            print(e)
+            print("Perm:", perm)
+            print("Up perms:", up_perms)
+            for tab in tabs:
+                print("Tab:")
+                print(tab)
+                
+                bigot = tab.hw_rc(graph_len).resize(graph_len)
+                print("Bigot:")
+                print(bigot)
+            raise
+                
                     
 
 
