@@ -6,8 +6,6 @@ from .crystal_graph import CrystalGraph
 
 
 class Plactic(GridPrint, CrystalGraph):
-
-
     def __iter__(self):
         for row in self._word:
             yield from row
@@ -344,6 +342,7 @@ class Plactic(GridPrint, CrystalGraph):
         result = Plactic().rs_insert(*word)
         assert result.shape == self.shape, f"{result.shape=} {self.shape=} {result=} {self=}"
         return result
+
     # def _bracket_positions(self, i: int):
     #     """
     #     Bracketing scan for indices i (as '+') and i+1 (as '-') on the tableau's
@@ -654,7 +653,7 @@ class Plactic(GridPrint, CrystalGraph):
 
             # find outer-corner candidates inside diff (no mu cell to right or below)
             candidates = []
-            for (r, c) in diff:
+            for r, c in diff:
                 right = (r, c + 1) in mu_cells
                 down = (r + 1, c) in mu_cells
                 if (not right) and (not down):
@@ -681,7 +680,7 @@ class Plactic(GridPrint, CrystalGraph):
             val = tmp[r, c]
             if val is None:
                 # if indexing returned None, ensure underlying list has that slot (it should)
-                raise RuntimeError(f"Unexpected missing cell at {(r,c)} when creating hole")
+                raise RuntimeError(f"Unexpected missing cell at {(r, c)} when creating hole")
             if val != 0:
                 # force the hole (overwrite); we must set it to 0 before sliding
                 tmp_rows = [list(rr) for rr in tmp._word]
@@ -692,7 +691,7 @@ class Plactic(GridPrint, CrystalGraph):
             try:
                 new_tmp = tmp.up_jdt_slide(r, c)
             except Exception as e:
-                raise RuntimeError(f"up_jdt_slide failed from corner {(r,c)}: {e}")
+                raise RuntimeError(f"up_jdt_slide failed from corner {(r, c)}: {e}")
 
             # adopt new rows and recompute occupied cells
             rows = [list(rr) for rr in new_tmp._word]
@@ -700,5 +699,3 @@ class Plactic(GridPrint, CrystalGraph):
 
         # return Plactic with zeros possibly marking inner cells
         return Plactic(tuple(tuple(r) for r in rows))
-
-

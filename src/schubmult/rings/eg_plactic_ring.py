@@ -251,6 +251,8 @@ class EGPlacticRing(CrystalGraphRing):
                 plac_elem = plac_elem.reverse_raise_seq(raise_seq3)
                 plac_elem = plac_elem.reverse_raise_seq(raise_seq1)
                 plac_elem = plac_elem.reverse_raise_seq([a + key1[0][1] for a in raise_seq2])
+                # new_nilp2, plac_elem = NilPlactic.ed_insert_rsk([*nilp.column_word, *[a + self_len for a in key2[0][0].column_word]], sorted([*key1[1].row_word] + [a + self_len for a in key2[1].row_word]))
+                # assert new_nilp2 == new_nilp, f"ED insert mismatch: {new_nilp2} vs {new_nilp}"
                 ret += self((new_nilp, self_len + key2[0][1]), plac_elem)
         return ret
 

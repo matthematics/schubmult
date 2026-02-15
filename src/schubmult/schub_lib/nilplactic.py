@@ -228,11 +228,11 @@ class NilPlactic(Plactic):
         return NilPlactic(new_word)
 
     @classmethod
-    def ed_insert_rsk(cls, *letters):
+    def ed_insert_rsk(cls, w1, w2):
         """Insert a letter/entry into this NilPlactic tableau and return a new Plactic."""
         word0, word2 = (), ()
-        for idx, letter in enumerate(letters):
-            word0, word2 = cls._ed_insert_rsk(word0, word2, int(letter), idx + 1)
+        for a, b in zip(w1, w2):
+            word0, word2 = cls._ed_insert_rsk(word0, word2, int(a), int(b))
         return cls(word0), Plactic(word2)
 
     @staticmethod
