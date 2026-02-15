@@ -14,15 +14,25 @@ if __name__ == "__main__":
             orig_nilp = nilp
             num_slides = 0
             for _ in range(max_iter):
+                # print("Current NilPlactic:")
+                # print(nilp)
+                # print("Original NilPlactic:")
+                # print(orig_nilp)
                 new_nilp = NilPlactic.from_word(nilp.row_word)
                 assert new_nilp == orig_nilp, f"NilPlactic changed after JDT slide: {nilp} -> {new_nilp}"
                 outer_corners = list(nilp.iter_outer_corners)
                 if outer_corners:
-                    nilp = nilp.up_jdt_slide(*random.choice(outer_corners))
+                    outer_corner = random.choice(outer_corners)
+                    # print("Sliding outer corner:", outer_corner, "on")
+                    # print(nilp)
+                    nilp = nilp.up_jdt_slide(*outer_corner)
                 else:
                     inner_corners = list(nilp.iter_inner_corners)
                     if inner_corners:
-                        nilp = nilp.down_jdt_slide(*random.choice(inner_corners))
+                        inner_corner = random.choice(inner_corners)
+                        # print("Sliding inner corner:", inner_corner, "on")
+                        # print(nilp)
+                        nilp = nilp.down_jdt_slide(*inner_corner)
                     else:
                         print(f"NilPlactic has no corners to slide: {nilp} only did {num_slides} slides")
                 num_slides += 1

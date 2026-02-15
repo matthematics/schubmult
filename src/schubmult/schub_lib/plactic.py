@@ -302,7 +302,7 @@ class Plactic(GridPrint, CrystalGraph):
     def transpose(self):
         """Return the transpose of this Plactic tableau."""
         if self.rows == 0 or self.cols == 0:
-            return Plactic(())
+            return self.__class__(())
         # Create transposed grid with border (cols+1 by rows+1)
         new_grid = np.full((self.cols + 1, self.rows + 1), None, dtype=object)
         for i in range(self.rows):
@@ -310,7 +310,7 @@ class Plactic(GridPrint, CrystalGraph):
                 val = self._grid[i, j]
                 if val is not None:
                     new_grid[j, i] = val
-        return Plactic._from_grid(new_grid)
+        return self.__class__._from_grid(new_grid)
 
     @property
     def rows(self):
@@ -458,11 +458,11 @@ class Plactic(GridPrint, CrystalGraph):
 
     def __eq__(self, other):
         if isinstance(other, Plactic):
-            # Compare shapes first
-            if self._grid.shape != other._grid.shape:
+            newfangled = self.__class__.from_word(self.row_word)
+            oldfangled = self.__class__.from_word(other.row_word)
+            if newfangled.row_word != oldfangled.row_word:
                 return False
-            # Compare all elements
-            return np.array_equal(self._grid, other._grid)
+            return True
         return False
 
     # -- CrystalGraph API wrappers (delegate to the NilPlactic <-> RCGraph machinery) --
@@ -595,38 +595,66 @@ class Plactic(GridPrint, CrystalGraph):
                 grid[i, j] = i + 1
         return cls._from_grid(grid)
 
+    @property
+    def is_increasing(self):
+        """Check if the tableau is strictly increasing in rows and columns."""
+        for i in range(self.rows):
+            for j in range(self.cols):
+                val = self._grid[i, j]
+                if val is None or val == 0:
+                    continue
+                # Check row condition: increasing left to right
+                if j > 0:
+                    left_val = self._grid[i, j - 1]
+                    if left_val is not None and left_val != 0 and val <= left_val:
+                        return False
+                # Check column condition: increasing top to bottom
+                if i > 0:
+                    above_val = self._grid[i - 1, j]
+                    if above_val is not None and above_val != 0 and val <= above_val:
+                        return False
+        return True
+
     def rectify(self):
-        if self.rows == 0:
-            return self
-        if self.cols == 0:
-            return self
+        # if self.rows == 0:
+        #     return self
+        # if self.cols == 0:
+        #     return self
 
-        # Check if first row's first element is 0 or None
-        first_val = self._grid[0, 0]
-        if first_val is not None and first_val != 0:
-            return self
+        # # Check if first row's first element is 0 or None
+        # first_val = self._grid[0, 0]
+        # if first_val is not None and first_val != 0:
+        #     return self
 
-        # Find first non-zero/non-None element in first row
-        index = 0
-        while index < self.cols and (self._grid[0, index] in (0, None)):
-            index += 1
+        # # Find first non-zero/non-None element in first row
+        # index = 0
+        # while index < self.cols and (self._grid[0, index] in (0, None)):
+        #     index += 1
 
-        if index == self.cols:
-            # Entire first row is empty
-            if self.rows == 1:
-                return self
-            # Check if second row starts with 0/None
-            if self.rows > 1 and (self._grid[1, 0] in (0, None)):
-                # Recursively rectify remaining rows
-                remaining_grid = self._grid[1:, :]
-                remaining = Plactic._from_grid(remaining_grid).rectify()
-                # Prepend the empty first row
-                result_grid = np.vstack([self._grid[0:1, :], remaining._grid]) if remaining.rows > 0 else self._grid[0:1, :]
-                return Plactic._from_grid(result_grid)
-            return self.down_jdt_slide(0, 0).rectify()
+        # if index == self.cols:
+        #     # Entire first row is empty
+        #     if self.rows == 1:
+        #         return self
+        #     # Check if second row starts with 0/None
+        #     if self.rows > 1 and (self._grid[1, 0] in (0, None)):
+        #         # Recursively rectify remaining rows
+        #         remaining_grid = self._grid[1:, :]
+        #         remaining = self.__class__._from_grid(remaining_grid).rectify()
+        #         # Prepend the empty first row
+        #         result_grid = np.vstack([self._grid[0:1, :], remaining._grid]) if remaining.rows > 0 else self._grid[0:1, :]
+        #         return self.__class__._from_grid(result_grid)
+        #     return self.down_jdt_slide(0, 0).rectify()
 
-        index -= 1
-        return self.down_jdt_slide(0, index).rectify()
+        # index -= 1
+        # return self.down_jdt_slide(0, index).rectify()
+        ret = self.__class__._from_grid(self._grid.copy())
+        while True:
+            try:
+                corner = next(ret.iter_inner_corners)
+                ret = ret.down_jdt_slide(*corner)
+            except StopIteration:
+                break
+        return ret
 
     @classmethod
     def superstandard(cls, shape):

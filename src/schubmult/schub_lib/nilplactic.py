@@ -71,7 +71,8 @@ class NilPlactic(Plactic):
         def backtrack(k, rows):
             if k == len(cells):
                 # finished, construct NilPlactic and test Bruhat condition
-                tableau = tuple(tuple([entry if entry is not None and entry != 0 else None for entry in rw]) for rw in rows)
+                # Keep 0s (inner cells) to preserve skew shape structure
+                tableau = tuple(tuple(rw) for rw in rows)
                 tpl = cls(tableau)
                 if tpl.perm.bruhat_leq(bruhat_perm) and tpl.perm.inv == sum(outer_shape) - sum(inner_shape) and len(tpl.row_word) == sum(outer_shape) - sum(inner_shape):
                     results.add(tpl)
@@ -104,122 +105,118 @@ class NilPlactic(Plactic):
         Perform an upward K-theoretic jeu de taquin slide starting from the given (row, col)
         position (0-indexed). Returns a new Plactic tableau.
         """
-        # Convert grid to mutable list of lists (excluding border)
-        new_word = []
-        for i in range(self.rows):
-            row_vals = []
-            for j in range(self.cols):
-                val = self._grid[i, j]
-                if val is None:
-                    row_vals.append(0)
-                else:
-                    row_vals.append(val)
-            new_word.append(row_vals)
+        import numpy as np
 
+        # Convert grid to mutable list of lists (excluding border)
         i, j = row, col
         if self[i, j] != 0 and self[i, j] is not None:
             raise ValueError(f"up_jdt_slide starting position must be empty, got {self[i, j]=}")
         if self[i - 1, j] == 0 and self[i, j - 1] == 0:
             raise ValueError("up_jdt_slide starting position has no valid moves")
-        if i == len(new_word):
-            new_word.append([0] * (j + 1))
-        if j == len(new_word[i]):
-            new_word[i].append(0)
-        while True:
-            up = new_word[i - 1][j] if i - 1 >= 0 and j < len(new_word[i - 1]) else None
-            left = new_word[i][j - 1] if j - 1 >= 0 else None
+        new_grid = self._grid.copy()
 
-            if up is None and left is None:
-                # No more moves possible
-                break
-            if up is None:
-                # Can only move left
-                new_word[i][j] = left
-                j -= 1
-            elif left is None:
-                # Can only move up
-                new_word[i][j] = up
-                i -= 1
-            else:
-                # Both moves possible; choose the larger entry
-                if up > left:
-                    new_word[i][j] = up
-                    i -= 1
-                if up < left:
-                    new_word[i][j] = left
-                    j -= 1
-                if up == left:
-                    new_word[i][j] = up
-                    new_word[i - 1][j] = new_word[i - 1][j - 1]
-                    new_word[i][j - 1] = new_word[i - 1][j - 1]
-                    i -= 1
-                    j -= 1
+        # Resize grid if needed to accommodate the starting position
+        if row >= new_grid.shape[0] or col >= new_grid.shape[1]:
+            new_rows = max(new_grid.shape[0], row + 2)  # +2 for position + border
+            new_cols = max(new_grid.shape[1], col + 2)
+            resized_grid = np.full((new_rows, new_cols), None, dtype=object)
+            resized_grid[: new_grid.shape[0], : new_grid.shape[1]] = new_grid
+            new_grid = resized_grid
 
-        new_word[i][j] = 0
+        new_grid[row, col] = -1
 
-        return NilPlactic(tuple(tuple(r) for r in new_word))
+        # Find max value in grid (excluding None)
+        max_switcher = 0
+        for i in range(self.rows):
+            for j in range(self.cols):
+                val = self._grid[i, j]
+                if val is not None and isinstance(val, (int, np.integer)):
+                    max_switcher = max(max_switcher, int(val))
+
+        switcher = max_switcher
+        while switcher > 0:
+            dot_spots = np.where(new_grid == -1)
+            for a, b in zip(dot_spots[0], dot_spots[1]):
+                i, j = a, b
+                # Check up and right neighbors
+                if i - 1 >= 0 and new_grid[i - 1, j] == switcher:
+                    # Check if we're placing value in border position - if so, expand grid
+                    if i == new_grid.shape[0] - 1 or j == new_grid.shape[1] - 1:
+                        new_rows = new_grid.shape[0] + 1 if i == new_grid.shape[0] - 1 else new_grid.shape[0]
+                        new_cols = new_grid.shape[1] + 1 if j == new_grid.shape[1] - 1 else new_grid.shape[1]
+                        resized_grid = np.full((new_rows, new_cols), None, dtype=object)
+                        resized_grid[: new_grid.shape[0], : new_grid.shape[1]] = new_grid
+                        new_grid = resized_grid
+                    new_grid[i, j] = switcher
+                    new_grid[i - 1, j] = -1
+                if j - 1 >= 0 and new_grid[i, j - 1] == switcher:
+                    # Check if we're placing value in border position - if so, expand grid
+                    if i == new_grid.shape[0] - 1 or j == new_grid.shape[1] - 1:
+                        new_rows = new_grid.shape[0] + 1 if i == new_grid.shape[0] - 1 else new_grid.shape[0]
+                        new_cols = new_grid.shape[1] + 1 if j == new_grid.shape[1] - 1 else new_grid.shape[1]
+                        resized_grid = np.full((new_rows, new_cols), None, dtype=object)
+                        resized_grid[: new_grid.shape[0], : new_grid.shape[1]] = new_grid
+                        new_grid = resized_grid
+                    new_grid[i, j] = switcher
+                    new_grid[i, j - 1] = -1
+            switcher -= 1
+        new_grid[new_grid == -1] = None
+
+        return NilPlactic._from_grid(new_grid)
 
     def down_jdt_slide(self, row, col):
         """
         Perform a K-theoretic jeu de taquin slide starting from the given (row, col)
         position (0-indexed). Returns a new NilPlactic tableau.
         """
-        # Convert grid to mutable list of lists (excluding border)
-        new_word = []
-        for i in range(self.rows):
-            row_vals = []
-            for j in range(self.cols):
-                val = self._grid[i, j]
-                if val is None:
-                    row_vals.append(0)
-                else:
-                    row_vals.append(val)
-            new_word.append(row_vals)
+        import numpy as np
 
+        # Convert grid to mutable list of lists (excluding border)
         i, j = row, col
-        if self[i, j] != 0:
+        if self[i, j] != 0 and self[i, j] is not None:
             raise ValueError(f"down_jdt_slide starting position must be empty, got {self[i, j]=}")
         if self[i + 1, j] == 0 and self[i, j + 1] == 0:
             raise ValueError("down_jdt_slide starting position has no valid moves")
-        while True:
-            down = new_word[i + 1][j] if i + 1 < len(new_word) and j < len(new_word[i + 1]) else None
-            right = new_word[i][j + 1] if j + 1 < len(new_word[i]) else None
+        new_grid = self._grid.copy()
+        new_grid[row, col] = -1
 
-            if down is None and right is None:
-                # No more moves possible
-                break
-            if down is None:
-                # Can only move right
-                new_word[i][j] = right
-                j += 1
-            elif right is None:
-                # Can only move down
-                new_word[i][j] = down
-                i += 1
-            else:
-                # Both moves possible; choose the smaller entry
-                if down < right:
-                    new_word[i][j] = down
-                    i += 1
-                if down > right:
-                    new_word[i][j] = right
-                    j += 1
-                if down == right:
-                    if down == 0:
-                        break
-                    new_word[i][j] = down
-                    new_word[i + 1][j] = new_word[i + 1][j + 1]
-                    new_word[i][j + 1] = new_word[i + 1][j + 1]
-                    i += 1
-                    j += 1
+        # Find max value in grid (excluding None)
+        max_switcher = 0
+        for i in range(self.rows):
+            for j in range(self.cols):
+                val = self._grid[i, j]
+                if val is not None and isinstance(val, (int, np.integer)):
+                    max_switcher = max(max_switcher, int(val))
 
-        # Remove the last empty cell
-        new_word[i].pop()
-        # Remove any empty rows at the bottom
-        while new_word and len(new_word[-1]) == 0:
-            new_word.pop()
-
-        return NilPlactic(tuple(tuple(r) for r in new_word))
+        switcher = 1
+        while switcher <= max_switcher:
+            dot_spots = np.where(new_grid == -1)
+            for a, b in zip(dot_spots[0], dot_spots[1]):
+                i, j = a, b
+                # Check down and right neighbors
+                if i + 1 < new_grid.shape[0] and new_grid[i + 1, j] == switcher:
+                    # Check if we're placing value in border position - if so, expand grid
+                    if i == new_grid.shape[0] - 1 or j == new_grid.shape[1] - 1:
+                        new_rows = new_grid.shape[0] + 1 if i == new_grid.shape[0] - 1 else new_grid.shape[0]
+                        new_cols = new_grid.shape[1] + 1 if j == new_grid.shape[1] - 1 else new_grid.shape[1]
+                        resized_grid = np.full((new_rows, new_cols), None, dtype=object)
+                        resized_grid[: new_grid.shape[0], : new_grid.shape[1]] = new_grid
+                        new_grid = resized_grid
+                    new_grid[i, j] = switcher
+                    new_grid[i + 1, j] = -1
+                if j + 1 < new_grid.shape[1] and new_grid[i, j + 1] == switcher:
+                    # Check if we're placing value in border position - if so, expand grid
+                    if i == new_grid.shape[0] - 1 or j == new_grid.shape[1] - 1:
+                        new_rows = new_grid.shape[0] + 1 if i == new_grid.shape[0] - 1 else new_grid.shape[0]
+                        new_cols = new_grid.shape[1] + 1 if j == new_grid.shape[1] - 1 else new_grid.shape[1]
+                        resized_grid = np.full((new_rows, new_cols), None, dtype=object)
+                        resized_grid[: new_grid.shape[0], : new_grid.shape[1]] = new_grid
+                        new_grid = resized_grid
+                    new_grid[i, j] = switcher
+                    new_grid[i, j + 1] = -1
+            switcher += 1
+        new_grid[new_grid == -1] = None
+        return NilPlactic._from_grid(new_grid)
 
     def bruhat_leq(self, other):
         if not isinstance(other, NilPlactic):
@@ -350,7 +347,6 @@ class NilPlactic(Plactic):
         # special case: continue bumping without changing current row
         return NilPlactic._ed_insert_rsk(word, word2, x1, letter2, i=i + 1)
 
-
     # @staticmethod
     # def _ed_column_insert_rsk(word, word2, letter, letter2, i=0):
     #     """
@@ -393,6 +389,7 @@ class NilPlactic(Plactic):
 
     def hw_rc(self, length):
         from schubmult.schub_lib.rc_graph import RCGraph
+
         seq = []
         last_spot = 0
         last_elem = -1000
@@ -425,7 +422,6 @@ class NilPlactic(Plactic):
                 if new_word == self.column_word:
                     word_set.add(NilPlactic.from_word(rc.perm_word))
         return word_set
-
 
     def __mul__(self, other):
         """
