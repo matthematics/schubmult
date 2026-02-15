@@ -52,11 +52,11 @@ if __name__ == "__main__":
                     assert len(tensor.crystal_weight) == graph_len, f"Tensor crystal weight length mismatch: expected {graph_len}, got {len(tensor.crystal_weight)}, {tensor=}"
                     if tuple(the_tenst_weight) == down_rc.length_vector and tuple(the_hw_weight) == up_rc.length_vector:
                         
-                        print(f"Found match for {perm} in tensor product with {up_perm}")
-                        # print("Tab2")
-                        # print(tab)
-                        print("RC")
-                        print(rc)
+                        # print(f"Found match for {perm} in tensor product with {up_perm}")
+                        # # print("Tab2")
+                        # # print(tab)
+                        # print("RC")
+                        # print(rc)
                         
                         if tensor in high_weights:
                             print(f"Already found this highest weight tensor before, skipping duplicate: {tensor}")
@@ -84,6 +84,7 @@ if __name__ == "__main__":
                     #     result += Sx(up_perm)
         try:
             assert result == Sx(perm) * Sx(mulperm), f"Result mismatch for {perm}: got {result}, expected {Sx(perm) * Sx(mulperm)}"
+            print("Success for", perm)
         except AssertionError as e:
             print(e)
             print("Perm:", perm)

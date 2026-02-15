@@ -74,6 +74,7 @@ class NilPlactic(Plactic):
                 # Keep 0s (inner cells) to preserve skew shape structure
                 tableau = tuple(tuple(rw) for rw in rows)
                 tpl = cls(tableau)
+                tpl._grid[tpl._grid == 0] = None  # Ensure inner cells are treated as 0
                 if tpl.perm.bruhat_leq(bruhat_perm) and tpl.perm.inv == sum(outer_shape) - sum(inner_shape) and len(tpl.row_word) == sum(outer_shape) - sum(inner_shape):
                     results.add(tpl)
                 return
@@ -111,7 +112,7 @@ class NilPlactic(Plactic):
         i, j = row, col
         if self[i, j] != 0 and self[i, j] is not None:
             raise ValueError(f"up_jdt_slide starting position must be empty, got {self[i, j]=}")
-        if self[i - 1, j] == 0 and self[i, j - 1] == 0:
+        if (self[i - 1, j] == 0 or self[i-1,j] is None) and (self[i, j - 1] == 0 or self[i,j-1] is None):
             raise ValueError("up_jdt_slide starting position has no valid moves")
         new_grid = self._grid.copy()
 
@@ -127,8 +128,8 @@ class NilPlactic(Plactic):
 
         # Find max value in grid (excluding None)
         max_switcher = 0
-        for i in range(self.rows):
-            for j in range(self.cols):
+        for i in range(self._grid.shape[0]):
+            for j in range(self._grid.shape[1]):
                 val = self._grid[i, j]
                 if val is not None and isinstance(val, (int, np.integer)):
                     max_switcher = max(max_switcher, int(val))
@@ -136,6 +137,8 @@ class NilPlactic(Plactic):
         switcher = max_switcher
         while switcher > 0:
             dot_spots = np.where(new_grid == -1)
+            wipeout_spots = set()
+            doit_spots = set()
             for a, b in zip(dot_spots[0], dot_spots[1]):
                 i, j = a, b
                 # Check up and right neighbors
@@ -147,8 +150,9 @@ class NilPlactic(Plactic):
                         resized_grid = np.full((new_rows, new_cols), None, dtype=object)
                         resized_grid[: new_grid.shape[0], : new_grid.shape[1]] = new_grid
                         new_grid = resized_grid
-                    new_grid[i, j] = switcher
-                    new_grid[i - 1, j] = -1
+                    # new_grid[i, j] = switcher
+                    doit_spots.add((i, j))
+                    wipeout_spots.add((i - 1, j))
                 if j - 1 >= 0 and new_grid[i, j - 1] == switcher:
                     # Check if we're placing value in border position - if so, expand grid
                     if i == new_grid.shape[0] - 1 or j == new_grid.shape[1] - 1:
@@ -157,9 +161,16 @@ class NilPlactic(Plactic):
                         resized_grid = np.full((new_rows, new_cols), None, dtype=object)
                         resized_grid[: new_grid.shape[0], : new_grid.shape[1]] = new_grid
                         new_grid = resized_grid
-                    new_grid[i, j] = switcher
-                    new_grid[i, j - 1] = -1
+                    # new_grid[i, j] = switcher
+                    doit_spots.add((i, j))
+                    wipeout_spots.add((i, j - 1))
+            # Only update if we have spots to modify
+            if wipeout_spots:
+                new_grid[tuple(zip(*wipeout_spots))] = -1
+            if doit_spots:
+                new_grid[tuple(zip(*doit_spots))] = switcher
             switcher -= 1
+
         new_grid[new_grid == -1] = None
 
         return NilPlactic._from_grid(new_grid)
@@ -191,6 +202,8 @@ class NilPlactic(Plactic):
         switcher = 1
         while switcher <= max_switcher:
             dot_spots = np.where(new_grid == -1)
+            wipeout_spots = set()
+            doit_spots = set()
             for a, b in zip(dot_spots[0], dot_spots[1]):
                 i, j = a, b
                 # Check down and right neighbors
@@ -202,8 +215,10 @@ class NilPlactic(Plactic):
                         resized_grid = np.full((new_rows, new_cols), None, dtype=object)
                         resized_grid[: new_grid.shape[0], : new_grid.shape[1]] = new_grid
                         new_grid = resized_grid
-                    new_grid[i, j] = switcher
-                    new_grid[i + 1, j] = -1
+                    # new_grid[i, j] = switcher
+                    # new_grid[i + 1, j] = -1
+                    doit_spots.add((i, j))
+                    wipeout_spots.add((i + 1, j))
                 if j + 1 < new_grid.shape[1] and new_grid[i, j + 1] == switcher:
                     # Check if we're placing value in border position - if so, expand grid
                     if i == new_grid.shape[0] - 1 or j == new_grid.shape[1] - 1:
@@ -212,8 +227,16 @@ class NilPlactic(Plactic):
                         resized_grid = np.full((new_rows, new_cols), None, dtype=object)
                         resized_grid[: new_grid.shape[0], : new_grid.shape[1]] = new_grid
                         new_grid = resized_grid
-                    new_grid[i, j] = switcher
-                    new_grid[i, j + 1] = -1
+                    # new_grid[i, j] = switcher
+                    # new_grid[i, j + 1] = -1
+                    doit_spots.add((i, j))
+                    wipeout_spots.add((i, j + 1))
+
+            # Only update if we have spots to modify
+            if wipeout_spots:
+                new_grid[tuple(zip(*wipeout_spots))] = -1
+            if doit_spots:
+                new_grid[tuple(zip(*doit_spots))] = switcher
             switcher += 1
         new_grid[new_grid == -1] = None
         return NilPlactic._from_grid(new_grid)

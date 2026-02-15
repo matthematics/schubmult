@@ -10,45 +10,72 @@ from .crystal_graph import CrystalGraph
 
 
 def _is_valid_outer_corner(grid, i: int, j: int) -> bool:
-    """
-    Outer-corner predicate used by up_jdt_slide.
-    Accepts hole positions that may extend the grid (i==rows or j==cols).
-    A position is valid if:
-      - there is a box above AND a box to the left, OR
-      - at least one of those exists and the hole is on/extends the outer boundary.
-    """
+    """Outer-corner predicate: empty position where BOTH up and left have filled cells or are at boundary.
+    Formal: position where we can place a hole, with both (i-1,j) and (i,j-1) in the shape."""
     rows, cols = grid.shape
-    # treat positions outside current array as empty slots (they must be extended before sliding)
-    # if 0 <= i < rows and 0 <= j < cols and grid[i, j] is not None:
-    #     return False
-    # if i >= rows or j >= cols:
-    #     return False
-    if 0 <= i < rows and 0 <= j < cols and grid[i, j] is not None:
+
+    # Position (0,0) is never an outer corner (no up or left neighbors)
+    if i == 0 and j == 0:
         return False
-    if i >= rows or j >= cols:
-        return False
-    up = grid[i - 1, j] if i - 1 >= 0 else "bob" if i == 0 else None
-    left = grid[i, j - 1] if j - 1 >= 0 else "bing" if j == 0 else None
-    return grid[i, j] is None and (up is not None and left is not None) and not (i == 0 and j == 0)
+
+    # Position must be empty if within grid
+    if 0 <= i < rows and 0 <= j < cols:
+        if grid[i, j] is not None:
+            return False
+
+    # BOTH up and left must have content (be in the shape)
+    # If we're at i=0 or j=0, that direction is at boundary (counts as having content)
+    up_valid = False
+    left_valid = False
+
+    if i == 0:
+        # At top boundary, up is valid
+        up_valid = True
+    elif i - 1 < rows and j < cols:
+        up_valid = grid[i - 1, j] is not None
+
+    if j == 0:
+        # At left boundary, left is valid
+        left_valid = True
+    elif i < rows and j - 1 < cols:
+        left_valid = grid[i, j - 1] is not None
+
+    return up_valid and left_valid
     # consider hole on or beyond boundary as "outer
 
 
 def _is_valid_inner_corner(grid, i: int, j: int) -> bool:
-    """
-    Inner-corner predicate used by down_jdt_slide.
-    Valid when the hole is inside the grid (must not extend grid) and there
-    is a box below or to the right with the same boundary rules mirrored.
-    """
+    """Inner-corner predicate: empty position in μ where BOTH down and right are outside μ.
+    Formal: (i,j) ∈ μ (empty) where (i+1,j) ∉ μ and (i,j+1) ∉ μ (both filled or outside)."""
     rows, cols = grid.shape
-    if grid[i, j] is not None:
+
+    # Must be within grid bounds
+    if i < 0 or j < 0 or i >= rows or j >= cols:
         return False
-    if i < 0 or j < 0:
+
+    # Position must be empty (in μ)
+    if grid[i, j] is not None and grid[i, j] != 0:
         return False
-    if i >= rows or j >= cols:
-        return False
-    down = grid[i + 1, j] if i + 1 < rows else "bob" if i == rows - 1 else None
-    right = grid[i, j + 1] if j + 1 < cols else "bing" if j == cols - 1 else None
-    return grid[i, j] is None and (down is not None and right is not None) and not (i == rows - 1 and j == cols - 1)
+
+    # BOTH down and right must be outside μ (either filled with values, or outside the grid)
+    down_outside_mu = False
+    right_outside_mu = False
+
+    if i + 1 >= rows:
+        # Beyond grid boundary - outside μ
+        down_outside_mu = True
+    elif grid[i + 1, j] is not None and grid[i + 1, j] != 0:
+        # Has a value - outside μ (in λ/μ)
+        down_outside_mu = True
+
+    if j + 1 >= cols:
+        # Beyond grid boundary - outside μ
+        right_outside_mu = True
+    elif grid[i, j + 1] is not None and grid[i, j + 1] != 0:
+        # Has a value - outside μ (in λ/μ)
+        right_outside_mu = True
+
+    return down_outside_mu and right_outside_mu
 
 
 def _length_of_row(grid, row):
@@ -190,14 +217,10 @@ class Plactic(GridPrint, CrystalGraph):
     def iter_outer_corners(self):
         # Check border positions for outer corners
         # Check positions at (i, self.cols) for all rows and (self.rows, j) for all cols
-        for i in range(self.rows + 1):
-            j = self.cols
-            if _is_valid_outer_corner(self._grid, i, j):
-                yield (i, j)
-        for j in range(self.cols + 1):
-            i = self.rows
-            if _is_valid_outer_corner(self._grid, i, j):
-                yield (i, j)
+        for i in range(self._grid.shape[0]):
+            for j in range(self._grid.shape[1]):
+                if _is_valid_outer_corner(self._grid, i, j):
+                    yield (i, j)
 
     @property
     def iter_inner_corners(self):
