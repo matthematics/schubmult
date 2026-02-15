@@ -8,26 +8,29 @@ if __name__ == "__main__":
     n = int(sys.argv[1])
 
     perms = Permutation.all_permutations(n)
-    mulperm = uncode([1])
+    mulperm = uncode([1,1,1])
+    tensperm = uncode([1,1,1])
     for perm in perms:
         # pp = perm.antiperm # skew ED
-        up_perms = [up_perm for up_perm, diff in elem_sym_perms(perm, 1, len(mulperm.trimcode)) if diff == 1]
+        # up_perms = [up_perm for up_perm, diff in elem_sym_perms(perm, 1, len(mulperm.trimcode)) if diff == 1]
+        up_perms = [up_perm for up_perm, diff in elem_sym_perms(perm, mulperm.inv, len(mulperm.trimcode)) if diff == mulperm.inv]
         
         result = Sx.zero
         for up_perm in up_perms:
             graph_len = max(len(up_perm.trimcode), len(perm.trimcode) + 1) + 1
-            left_tensor = RCGraph.principal_rc(mulperm, graph_len)
+            left_tensor = RCGraph.principal_rc(tensperm, graph_len)
             down_rc = RCGraph.principal_rc(up_perm, graph_len)
             up_rc = down_rc.to_highest_weight()[0]
             assert down_rc.is_principal
             
             principal_shape = NilPlactic.from_word(up_rc.perm_word).shape
             #print(principal_shape)
-            tabs = NilPlactic.all_skew_ed_tableaux(principal_shape, perm, (1,))
+            tabs = NilPlactic.all_skew_ed_tableaux(principal_shape, perm, tuple((~mulperm).trimcode))
 
             if len(tabs) == 0:
                 # print(f"No skew ED tableaux found for {perm} in tensor product with {up_perm}")
-                raise ValueError(f"No skew ED tableaux found for {perm} in tensor product with {up_perm}")
+                print(f"No skew ED tableaux found for {perm} in tensor product with {up_perm}")
+                continue
             for tab in tabs:
                 assert tab.is_increasing
                 tab2 = tab.transpose().rectify().transpose()
@@ -50,7 +53,7 @@ if __name__ == "__main__":
                     the_hw_weight = [*hw_tens.crystal_weight]
                     
                     assert len(tensor.crystal_weight) == graph_len, f"Tensor crystal weight length mismatch: expected {graph_len}, got {len(tensor.crystal_weight)}, {tensor=}"
-                    if tuple(the_tenst_weight) == down_rc.length_vector and tuple(the_hw_weight) == up_rc.length_vector:
+                    if tuple(the_tenst_weight) == down_rc.length_vector and tensor.is_lowest_weight and tuple(the_hw_weight) == up_rc.length_vector:
                         
                         # print(f"Found match for {perm} in tensor product with {up_perm}")
                         # # print("Tab2")
