@@ -1,0 +1,2594 @@
+%%
+%% This is LaTeX2e input.
+%%
+
+%% The following tells LaTeX that we are using the 
+%% style file amsart.cls (That is the AMS article style
+
+\documentclass{amsart}
+%\usepackage[backend=bibtex8,style=numeric,giveninits=true]{biblatex}
+%\addbibresource{formschub.bib}
+\usepackage{hyperref}
+\usepackage{fancyvrb}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{cases}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{centernot}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage[margin=1in]{geometry}
+\usepackage[makeroom]{cancel}
+%\usepackage[toc,nonumberlist,stylemods={tree}]{glossaries-extra}
+\usepackage{stmaryrd}
+% \usepackage{makeidx}
+% \makeindex
+\usepackage{stackengine}
+\def\useanchorwidth{T}
+%\usepackage{unicode-math}
+%\usepackage{nicematrix}
+
+%\usepackage{witharrows}
+
+\newtheorem{lemma}{Lemma}[subsection]
+\newtheorem{corollary}[lemma]{Corollary}
+\newtheorem{conjecture}[lemma]{Conjecture} 
+\newtheorem{proposition}[lemma]{Proposition} 
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{question}{Question}
+%%
+%% If some other type is needed, say conjectures, then it is constructed
+%% by editing and uncommenting the following.
+%%
+
+%\newtheorem{conj}[thm]{Conjecture} 
+
+
+%%% 
+%%% The following gives definition-type environments (which only differ
+%%% from theorem type environments in the choices of fonts).  The
+%%% numbering is still tied to the theorem counter.
+%%% 
+
+\theoremstyle{definition}
+%\newtheorem{definition}{Definition}[section]
+%\newtheorem{example}{Example}[section]
+\newtheorem{definition}[lemma]{Definition}
+\newtheorem{example}[lemma]{Example}
+\newtheorem*{note}{Note}
+
+%%
+%% Again, more of these can be added by uncommenting and editing the
+%% following. 
+%%
+
+%\newtheorem{note}[thm]{Note}
+
+
+%%% 
+%%% The following gives remark-type environments (which only differ
+%%% from theorem type environments in the choices of fonts).  The
+%%% numbering is still tied to the theorem counter.
+%%% 
+
+
+\theoremstyle{remark}
+
+\newtheorem*{remark}{Remark}
+
+
+%%%
+%%% The following, if uncommented, numbers equations within sections.
+%%% 
+
+%\numberwithin{equation}{section}
+\numberwithin{equation}{subsection}
+
+
+%%%
+%%% The following shows how to make a definition (also called macros or
+%%% abbreviations).  For example, to use a bold face R for use to
+%%% name the real numbers the command is $\mathbf{R}.  To save typing, we
+%%% can abbreviate as
+
+\newcommand{\R}{\mathbf{R}}  % The real numbers.
+
+%%
+%% The comment after the definition is not required, but if you are
+%% working with someone, they will likely thank you for explaining your
+%% definition.  
+%%
+%% Now add your own definitions:
+%%
+
+%%%
+%%% Mathematical operators (things like sin and cos, which are used as
+%%% functions and have slightly different spacing when typeset than
+%%% variables are defined as follows:
+%%%
+
+\DeclareMathOperator{\sch}{\mathfrak{S}}
+\newcommand{\tom}[1]{\xrightarrow{#1}}
+\newcommand{\Tom}[1]{\xRightarrow{#1}}
+\newcommand{\mot}[1]{\xleftarrow{#1}}
+\newcommand{\cperm}[1]{\llbracket #1\rrbracket}
+\newcommand{\cpcf}[5]{d^{#1,#2}_{#3}\left(#4\mid #5\right)}
+% simplified product notation
+\newcommand{\smpfu}{\mathsf{\Pi}}
+\newcommand{\smpr}[3]{\ensuremath{}\smpfu\left( #1 \mid #2_{[#3]}\right)}
+\newcommand{\smpre}[2]{\ensuremath{}\smpfu\left( #1 \mid #2\right)}
+\newcommand{\downvar}[1]{\stackrel{#1}{\searrow}}
+
+%\newcommand{\shifthom}{\operatornamewithlimits{\raisebox{1ex}{$\stackrel{\blacktriangleright}{\mathbf{\_}}$}}\limits}
+
+%\newcommand{\shifthom}{\operatornamewithlimits{\raisebox{1ex}{$\blacktriangleright$}}\limits}
+
+\newcommand{\shifthom}{\tau}
+	
+	%\operatornamewithlimits{\triangleright}\limits}
+
+
+%\newcommand{\shiftvby}[1]{\ensuremath{\resizebox{\width}{\heightoff}{$\shifthom_{#1}$}}}
+
+\newcommand{\shiftvby}[1]{\shifthom^{#1}}
+
+\makeatletter
+\newlength{\negph@wd}
+\DeclareRobustCommand{\negphantom}[1]{%
+	\ifmmode
+	\mathpalette\negph@math{#1}%
+	\else
+	\negph@do{#1}%
+	\fi
+}
+\newcommand{\negph@math}[2]{\negph@do{$\m@th#1#2$}}
+\newcommand{\negph@do}[1]{%
+	\settowidth{\negph@wd}{#1}%
+	\hspace*{-\negph@wd}%
+}
+\makeatother
+
+\makeatletter
+\newlength{\negvph@wd}
+\DeclareRobustCommand{\negvphantom}[1]{%
+	\ifmmode
+	\mathpalette\negvph@math{#1}%
+	\else
+	\negvph@do{#1}%
+	\fi
+}
+\newcommand{\negvph@math}[2]{\negvph@do{$\m@th#1#2$}}
+\newcommand{\negvph@do}[1]{%
+	\settowidth{\negvph@wd}{#1}%
+	\hspace*{-\negvph@wd}%
+}
+\makeatother
+\newcommand*\circled[1]{%
+	\tikz[baseline=(char.base)]{
+		\node[shape=circle,draw,inner sep=0.1pt] (char) {#1};
+	}%
+}
+\newcommand\mycircled[1]{\makebox[0pt]{\circled{#1}}}
+\newcommand{\tb}{\textbullet}
+\newcommand{\xr}[1]{\ensuremath{{}\xrightarrow{[#1]}{}}}
+\newcommand{\rd}[1]{\ensuremath{\mathcolor{red}{\mathbf{#1}}}}
+\newcommand{\mc}[1]{\ensuremath{\mycircled{#1}}}
+\newcommand{\desc}{\mathrm{Desc}}%
+%\newcommand{\schv}[2]{\operatornamewithlimits{\sch_{\mathit{#2}}}\limits_{\negphantom{{}_{\mathit{#2}}}\negvphantom{{}_{\mathit{#2}}}#1}}
+
+%\newcommand{\schv}[2]{\setstackgap{S}{0pt}\setstackgap{L}{0pt}\stackMath\stackunder{\sch_{#2}}{\negphantom{\scriptstyle{#2}}\!{\scriptscriptstyle{#1}}}}
+
+\newcommand{\schv}[2]{\shiftvby{#1}\!\sch_{#2}}
+
+%\newcommand{\shiftvby}[1]{\makebox[0pt]{$\triangleright$}#1}
+
+
+
+%\newglossary[slg]{symbolslist}{syi}{syg}{List of symbols}
+%\makeglossaries
+
+%\begin{itemize}
+%	\item Elements of $S_\infty$ $c{[}p,q{]}$, $d{[}p,q{]}$, $r{[}p,q{]}$, homomorphism $\sigma_p:S_\infty\to S_\infty$: Definition \ref{definition:specelem}	
+	
+%	\item  Relations between elements of $S\infty$ $\tom{k},\Tom{k}$: Definition \ref{definition:pierisymb}
+	
+%	\item Code, dual code, $\code(w)$, $\code^*(w)$, dominant permutations, the dominant approximation $\dom(v)$: Definition \ref{definition:codestuff}
+	
+%	\item Function/sets of permutations related to pulling out variables from Schubert polynomials $\varphi_{i,n}$, $\mathcal{D}_i(v)$, $Q_i(v',v)$: Definition \ref{definition:polysequence}
+	
+%	\item Flattening function $\phi_i:S_\infty\to S_\infty$, domination relation between permutations: Definition \ref{definition:domination}
+	
+%	\item Special polynomials $H_p(x;y)$, $E_p(x;y)$, $\smpr{x_1}{y}{p}$: Definition \ref{definition:hp}
+	
+%	\item Polynomial variable omission $x^{(i)}$, subscript substitution $y_A$, index shift function $\shiftvby{i}$: Definition \ref{definition:pv}
+%\end{itemize}
+
+
+
+
+%%
+%% This is the end of the preamble.
+%% 
+\title[Positive mixed variable formulas]{Positive mixed variable formulas for double Schubert polynomials}
+
+\author[1]{Matthew J. Samuel}
+\email{matthew.samuel.math@gmail.com}
+
+% \affiliation[1]{addressline={31 Cherry Blossom Drive},
+% city={Monroe Township},
+% postcode={NJ 08831},
+% country={USA (please do not display address publicly)}}
+
+
+%\newcommand{\tomm}[2]{\xrightarrow{#1}_{#2}}
+%\counterwithout{equation}{section}
+%\setcounter{section}{-1}
+\newcommand{\shuff}[2]{\mathcal{S}\mathcal{H}_{#1}^{#2}}
+\newcommand{\dom}{\mathfrak{d}}
+\newcommand{\ldom}{\dom^*}
+\newcommand{\code}{\mathfrak{c}}
+\newcommand{\ducode}{\overline{\mathfrak{c}}}
+
+% \renewcommand*{
+% \renewcommand{
+
+%\newglossary[slg]{symbolslist}{syi}{syg}{Symbolslist}
+%\GlsXtrLoadResources
+%[src={symbols},sort=use,type=main,
+%	group=specelem]
+%
+%
+
+
+
+% \newglossarystyle{supergroup}{%
+% 	\setglossarystyle{super}%
+% 	\renewcommand*{
+% 	\renewcommand{\glossentry}[2]{%
+% 		\tabularnewline
+% 		\multicolumn{2}{l}{%
+% 			\bfseries
+% 		}% 
+% 		\tabularnewline
+% 		\tabularnewline
+% 	}%
+% 	\renewcommand{\subglossentry}[3]{%
+% 		
+% 		
+% 		&
+% 		\glossentrydesc{##2}
+% 		##3\tabularnewline
+% 	}%
+% }
+
+% %\newglossary[slg]{symbol}{sot}{stn}{Symbols}
+% %\makeglossaries
+% \makenoidxglossaries 
+
+% \newglossaryentry{specelem}{
+% 	%type=symbol,
+% 	name={Definition \ref{definition:specelem}: Special permutations, shift homomorphism},
+% 	description={},
+% 	sort=a0}
+
+
+% \newglossaryentry{symb:c}{
+% 	name={$c[p,q]$},
+% 	description={Column permutation},
+% 	sort=a1, 
+% 		%type=symbolslist,
+% 		parent=specelem
+% }
+% \newglossaryentry{symb:r}{
+% 	name={$r[p,q]$},
+% 	description={Row permutation},
+% 	sort=a2, 
+% 	parent=specelem
+% 			%type=symbolslist
+% }
+% \newglossaryentry{symb:d}{
+% 	name={$d[p,q]$},
+% 	description={$c[q,p+q-1]$},
+% 	sort=a3, 
+% 	parent=specelem
+% 		%type=symbolslist
+% }
+% \newglossaryentry{symb:sigma}{
+% 	name=$\sigma_p$,
+% 	description={Shift homomorphism on {$S_\infty$}},
+% 	sort=a4, 
+% 	parent=specelem
+% 		%type=symbolslist
+% }
+% \newglossaryentry{pierisymb}{name={Definition \ref{definition:pierisymb}: Sottile's Pieri relations},description={},sort=b0}
+
+
+% \newglossaryentry{symb:pierirel}{
+% 	name={$\tom{k},\Tom{k}$},
+% 	description={Pieri relations on $S_\infty$},
+% 	parent={pierisymb},
+% 	sort=b1
+% 		%type=symbolslist
+% }
+
+% \newglossaryentry{codestuff}{name={Definition \ref{definition:codestuff}: Lehmer code and dominant permutations},description={},sort=c0}
+
+
+% \newglossaryentry{symb:code}{
+% 	name={$\mathfrak{c}(w)$},
+% 	description={Lehmer code of a permutation},
+% 	parent={codestuff},
+% 	sort=c1
+% 		%type=symbolslist
+% }
+
+% \newglossaryentry{symb:dualcode}{
+% 	name={$\mathfrak{c}^*(w)$},
+% 	description={Dual code (code of the inverse)},
+% parent={codestuff},
+% sort=c2
+% 		%type=symbolslist
+% }
+
+% \newglossaryentry{acode}{
+% 	name={$\cperm{\cdots}$},
+% 	description={Permutation represented by its code, i.e. $\cperm{\code(w)}=w$},
+% 	parent={codestuff},
+% 	sort=c1
+% 	%type=symbolslist
+% }
+
+
+% \newglossaryentry{domperm}{
+% 	name={dominant permutation},
+% 	description={Permutation $\mu$ such that $\code_i(\mu)\geq \code_{i+1}(\mu)$ for all $i\geq 1$},
+% 	parent={codestuff},
+% 	sort=c3
+% 	%type=symbolslist
+% }
+
+% \newglossaryentry{symb:dom}{
+% 	name={$\dom(v)$},
+% 	description={The dominant approximation},
+% parent={codestuff},
+% sort=c4
+% }
+
+% \newglossaryentry{polysequence}{name={Definition \ref{definition:polysequence}: Function, sets that arise in pulling out variables},description={},sort=d0}
+
+
+% \newglossaryentry{symb:varphifunc}{
+% 	name={$\varphi_{i,n}$},
+% 	description={Function on permutations related to computing variable exponents in Schubert polynomials},
+% 	parent={polysequence},
+% 	sort=d1
+% 	%type=symbolslist
+% }
+
+% \newglossaryentry{symb:pullpermoutD}{
+% 	name={$\mathcal{D}_i(v)$},
+% 	description={Set of permutations that arise for Schubert polynomials occurring as factors when pulling the variable at index $i$ out},
+% 	parent={polysequence},
+% 	sort=d2
+% 	%type=symbolslist
+% }
+
+% \newglossaryentry{symb:pullpermoutQ}{
+% 	name={$Q_i(v',v)$},
+% 	description={Set of integers arising for double Schubert polynomials when pulling the variable at index $i$ out that determine $y$ variables that occur},
+% 	parent={polysequence},
+% 	sort=d3
+% 	%type=symbolslist
+% }
+
+% \newglossaryentry{domination}{name={Definition \ref{definition:domination}: Flattening permutations and domination relation},description={}}
+
+
+% \newglossaryentry{symb:permflat}{
+% 	name={$\phi$, $\phi_m$},
+% 	description={Function that ``flattens'' permutations by shifting the dual code left, and $\phi_m$ is $m$ applications of $\phi$},
+% 	parent={domination},
+% 	sort=a6
+% 	%type=symbolslist
+% }
+
+% \newglossaryentry{onedom}{
+% 	name={$k$-dominates},
+% 	description={Relation between two permutations},	
+% 	parent={domination},
+% 	sort=a7
+% }
+
+% \newglossaryentry{dominates}{
+% 	name={dominates},
+% 	description={$u$ dominates $w$ if $u$ $k$-dominates $w$ for all $k\geq 1$},	
+% 	parent={domination},
+% 	sort=a8
+% }
+
+% \newglossaryentry{schubert}{name={Definition \ref{definition:schubert}: Schubert polynomials and divided difference operators},description={}}
+
+
+% \newglossaryentry{symb:doubschub}{
+% 	name={$\sch_u(x;y)$},
+% 	description={Double Schubert polynomial for the permutation $u$ in the two sets of variables $x$ and $y$},
+% 	parent={schubert}
+% 	%type=symbolslist
+% }
+
+% \newglossaryentry{symb:divdiff}{
+% 	name={$\partial^v$},
+% 	description={Divided difference operator indexed by the permutation $v$},
+% parent={schubert}
+% }
+
+% \newglossaryentry{symb:skewdivdiff}{
+% 	name={$\partial_v^w$},
+% 	description={Skew divided difference operator indexed by the permutations $v$ and $w$},
+% parent={schubert}
+% }
+
+% \newglossaryentry{symb:littlerich}{
+% 	name={$c_{u,v}^w(y;z)$},
+% 	description={The coefficient of $\sch_w(x;y)$ in the product $\sch_u(x;y)\sch_v(x;z)$},	
+% parent={schubert}
+% }
+ 
+% % definition: hp
+
+
+% \newglossaryentry{pv}{name={Definition \ref{definition:pv}: Polynomial variable omission, subscript substitution, and index shifting},description={}}
+
+
+% \newglossaryentry{symb:xi}{
+% 	name={$x^{(i)}$},
+% 	description={In the infinite sequence of variables $x=(x_1,x_2,\ldots,)$, delete $x_i$},
+% 	parent={pv}
+% 	%type=symbolslist
+% }
+
+% \newglossaryentry{symb:yA}{
+% 	name={$y_A$},
+% 	description={Subsequence of the variables $y=(y_1,y_2,\ldots)$ corresponding to the indexes in the set of positive integers $A$, in increasing order},	
+% 	parent={pv}
+% }
+
+% \newglossaryentry{symb:indexshift}{
+% 	name={$\shifthom$},
+% 	description={Homomorphism on the polynomial ring sending $x_{j}\mapsto x_{j+1}$, leaving the $y$ and $z$ variables invariant. Can be composed},	
+% 	parent={pv}
+% }
+
+% \newglossaryentry{hp}{name={Definition \ref{definition:hp}: Polynomials ubiquitous in formulas},description={}}
+
+
+% \newglossaryentry{symb:compsym}{
+% 	name={$H_p(x;y)$},
+% 	description={Complete homogeneous symmetric polynomial of degree $p$ in one $x$-variable and $p$ $y$-variables},		
+% 	parent={hp}
+% }
+
+% \newglossaryentry{symb:elemsym}{
+% 	name={$E_p(x;y)$},
+% 	description={Elementary symmetric polynomial of degree $p$ in $p$ $x$-variables and one $y$-variable},		
+% 	parent={hp}
+% }
+
+% \newglossaryentry{symb:smpr}{
+% 	name={$\smpre{a}{B}$},
+% 	description={Convenient notation for a polynomial such as $H_p(x;y)$ amenable to substitution, where $a$ is a polynomial (typically an indeterminate) and $B$ is a set of polynomials (typically themselves indeterminates)},		
+% 	parent={hp}
+% }
+
+% %
+
+% \newglossaryentry{rhomd}{name={Definition \ref{definition:rhom}: Reflection homomorphism $\rho_m$},description={}}
+
+% \newglossaryentry{rhom}{
+% 	name={$\rho_m$},
+% 	description={The reflection homomorphism injecting $S_\infty$ into itself, inserting $1$ at position $m+1$ and increasing the rest of the elements of the permutation by $1$},
+% 	parent={rhomd}
+% }
+
+% \newglossaryentry{ydiff}{name={Definition \ref{definition:ydiff}: Symmetric group action and divided difference on the $y$ variables},description={}}
+
+% \newglossaryentry{symb:ast}{
+% 	name={$\ast$},
+% 	description={Symbol indicating action of $S_\infty$ is on $y$ instead of $x$},	
+% 	parent={ydiff}
+% 	%type=symbolslist
+% }
+
+% \newglossaryentry{symb:nabla}{
+% 	name={$\nabla^v$},
+% 	description={Divided difference operator corresponding to the permutation $v$, with sign inverted and acting on $y$ instead of $x$},	
+% 	parent={ydiff}
+% }
+% \newglossaryentry{coprod}{name={Definition \ref{definition:coprod}: Coproduct operator and coefficients},description={}}
+% \newglossaryentry{DeltaA}{
+% 	name={$\Delta_A$},
+% 	description={Coproduct operator on the polynomial ring partitioning the variables into indexes in $A$ vs its complement},	
+% 	parent={coprod}
+% }
+
+% \newglossaryentry{dw}{
+% 	name={$\cpcf{u}{v}{w}{A}{y;z}$},
+% 	description={Coefficient of the tensor $\sch_u(x;y)\otimes\sch_v(x;z)$ in the image of $\sch_w(x;y)$ under $\Delta_A$},	
+% 	parent={coprod}
+% }
+
+% \newglossaryentry{mua}{name={Definition \ref{definition:mua}: Partitioning dominant permutations},description={}}
+
+% \newglossaryentry{muas}{
+% 	name={$\mu_A$},
+% 	description={For a dominant permutation $\mu$ and an indexing set $A$, an associated dominant permutation that picks out these indexes of the dual code. That is, treating $A$ as a function, $\code^*_i(\mu_A)=\code^*_{A(i)}(\mu)$},
+% 	parent={mua}
+% }
+
+% \newglossaryentry{leftdom}{name={Definition \ref{definition:leftdom}: Left dominant approximation associated to one or two permutations},description={}}
+
+% \newglossaryentry{ldomu}{
+% 	name={$\ldom(u)$},
+% 	description={For a permutation $u$, the left dominant approximation, essentially $\dom(u^{-1})^{-1}$},
+% 	parent={leftdom}
+% }
+
+% \newglossaryentry{ldomuv}{
+% 	name={$\ldom(u,v)$},
+% 	description={For two permutations $u$ and $v$, $\code(\ldom(u,v)) = \code(\ldom(u)) + \code(\ldom(v))$},
+% 	parent={leftdom}
+% }
+
+
+
+% \newglossaryentry{shuffdef}{name={Definition \ref{definition:shuffdef}: Shuffles},description={}}
+
+% \newglossaryentry{shuffle}{
+% 	name={shuffle},
+% 	description={A permutation with exactly one left descent},
+% 	parent={shuffdef}
+% }
+
+% \newglossaryentry{shuffna}{
+% 	name={$\shuff{N}{A}$},
+% 	description={The shuffle with left descent $N$ such that $\shuff{N}{A}(A(i))=i$ for all $1\leq i\leq N$},
+% 	parent={shuffdef}
+% }
+
+% \newglossaryentry{nprod}{
+% 	name={$u\times_N v$},
+% 	description={Notation of convenience when $u\in S_N$ and $v\in S_\infty$, representing $u\sigma_N(v)$},
+% 	parent={shuffdef}
+% }
+
+%kseparated
+
+% \newglossaryentry{lwo}{name={Definition \ref{definition:lwo}: $\eta_N$},description={}}
+
+
+% \newglossaryentry{etan}{
+% 	name={$\eta_N$},
+% 	description={Homomorphism on the polynomial ring that is a specific specialization of the $x$ variables},
+% 	parent={lwo}
+% }
+
+% \newglossaryentry{kseparated}{name={Definition \ref{definition:kseparated}: Generalization of separated descents},description={}}
+% \newglossaryentry{ksep}{
+% 	name={$k$-separated},
+% 	description={A measure of separation between the descents of two permutations $u$ and $v$},
+% 	parent={kseparated}
+% }
+
+
+\begin{document}
+\newlength{\heightoff}
+\settoheight{\heightoff}{$f$}
+%\begin{abstract}
+%In a related paper by the author, ``A Molev-Sagan type formula for double Schubert polynomials,'' Molev-Sagan type coefficients $c_{u,v}^w(y;z)$ in the expansion of a product of two double Schubert polynomials $\sch_u(x;y)\sch_v(x;z)=\sum_w c_{u,v}^w(y;z)\sch_w(x;y)$ with different sets of coefficient variables are defined and conjectured to be positive in a certain sense. A positive formula is found in certain cases, including a generalized ``Pieri case'' where $v$ is a dominant permutation, so that $\sch_v(x;z)$ is a product of factorial elementary symmetric polynomials. Conversely, in this article, we provide a positive formula for $c_{u,v}^w(y;z)$, where $u$ is a dominant permutation and $v$ and $w$ are arbitrary. More generally, we introduce a ``domination'' condition where the formula applies when $u$ dominates $w$, even if $u$ is not necessarily dominant, whereas dominant permutations dominate all other permutations. Unlike in the case where $y=z$, $c_{u,v}^w(y;z)$ has very little to do in general with $c_{v,u}^w(y;z)$, and the computation of one can be easy with the other being difficult. Using some algebra, the formula where $u$ is dominant can be leveraged to find other positive formulas for $c_{u,v}^w(y;z)$ for a wide range of pairs $u$ and $v$. In particular, while the original paper covers the separated descents case where there exists a $p$ such that $\ell(us_i)>\ell(u)$ for all $i<p$ and $\ell(vs_i)>\ell(v)$ for all $i>p$, the present paper allows us to flip that condition, completing the formula where $u$ and $v$ have separated descents in any direction. As to the additional cases, we demonstrate positivity with an algorithm for computing the coefficient in the case where $\sch_u(x;y)$ has at most two $x$ variables, or when $\sch_u(x;y)$ is a factorial elementary symmetric polynomial or a factorial complete symmetric polynomial, with $u$ not necessarily dominant (thus covering all cases in what would normally be called a Pieri formula). We then connect products of double Schubert polynomials to coproducts in the Molev-Sagan case.
+%In a related paper by the author, ``A Molev-Sagan type formula for double Schubert polynomials,'' Molev-Sagan type coefficients $c_{u,v}^w(y;z)$ in the expansion of a product of two double Schubert polynomials in different sets of coefficient variables are defined and conjectured to be positive in a certain sense, and positive formulas are found for some of these coefficients, including the case where $v$ is a dominant permutation. In this paper, we provide some additional formulas, including a ``dual Pieri formula'' for the case where $u$ is dominant, and more generally, a ``domination'' relation is defined between permutations such that the formula applies when $u$ dominates $w$, whereas dominant permutations dominate all other permutations. This allows for ``flipping'' the main result of that article, giving a formula for multiplying pairs $\sch_u(x;y)\sch_v(x;z)$ where there exists a $p$ such that $\ell(us_i)>\ell(u)$ for all $i>p$ and $\ell(vs_i)>\ell(v)$ for all $i<p$. Coproduct TODO
+%In this paper we present a positive combinatorial formula for computing Molev-Sagan type coefficients in mixed-variable products of double Schubert polynomials $\mathfrak{S}_u(x;y)\mathfrak{S}_v(x;z)$ where $u$ is dominant, as opposed to a previous article where the computation was done where $v$ was dominant. More generally, a ``domination'' relation between permutations is introduced where dominant permutations dominate all other permutations, and a positive formula is obtained for $c_{u,v}^w(y;z)$ for all $v$ in the case that $u$ dominates $w$. This allows for a positive formula for $c_{u,v}^w(y;z)$ where $u$ and $v$ have separated descents in either direction. In addition, an equivalence is demonstrated between products and coproducts of double Schubert polynomials that can be used to find products from coproducts and vice versa. In addition to theoretical interest, the product-coproduct equivalence and other formulas assist in simplifying and optimizing the computation of product and coproduct coefficients in a positive, combinatorial manner. We finally construct the bialgebra for which the coproduct induces a product on the dual.
+%\end{abstract}
+
+\begin{abstract}
+	We present new positive combinatorial formulas for Molev--Sagan--type coefficients in mixed-variable products of double Schubert polynomials, $\sch_u(x;y)\sch_v(x;z)$, in a case where $u$ is dominant. This result complements the earlier results where $v$ was assumed dominant. To generalize further, we introduce a relation on permutations that we call ``domination,'' under which dominant permutations dominate all others. When $u$ dominates $w$, we get an explicit positive formula for $c^w_{u,v}(y;z)$, which in particular yields positivity in the situation where $u$ and $v$ have separated descents (which is a directional relation for mixed variable products).
+	
+	In addition to these new positivity results, we establish a product--coproduct equivalence for double Schubert polynomials, which allows products to be obtained from coproducts and vice versa. This equivalence highlights structural symmetries and provides reduction methods for computing coefficients that are otherwise difficult to access. These results extend the range of Schubert polynomial multiplications for which positivity can be established combinatorially and yield explicit formulas that can be implemented computationally.
+
+\end{abstract}
+
+\maketitle
+
+{\bf Keywords}: Double Schubert polynomial, Schubert polynomial, structure constant, coproduct, Pieri
+
+{\bf Mathematics classification codes}: 05E05, 05A05, 05A15, 14N10
+
+{\bf Email}: matthew.samuel.math@gmail.com
+
+
+%$$w_0(n)^{(i)}=w_0(n)w_0(n+1-i)w_0(n-i)$$
+
+%\begin{theorem}
+%Let $u\in S_n$ and $1\leq i\leq n$. Then we have
+%$$\sch_u(y)=\sum_{u'w_0(n)^{(i)}\tom{n+1-i} uw_0(n)}y_i^{\ell(u',u)}\sch_{u'}(y^{(i)})$$
+%where $u'\in S_n$ satisfies $\ell(u'w_0(n)^{(i)})+\ell(u')=\ell(w_0(n)^{(i)})$.
+%\end{theorem}
+
+\newcommand{\dsch}{\ensuremath{\Xi}}
+%\newcommand{\sch}{\mathfrak{S}}
+\newcommand{\coma}{\mathcal{A}}
+\newcommand{\dcoma}{\mathcal{D}}
+
+
+\tableofcontents
+
+\section*{Introduction}
+
+\addcontentsline{toc}{section}{\protect\numberline{}Introduction}
+
+%Double Schubert polynomials $\sch_u$ are polynomials indexed by the symmetric group $S_\infty$, which each individually is in two sets of variables, that arise in the study of Schubert calculus. They form a basis for the polynomial ring $\mathbb{Z}[x,y,z]$ as a module over $\mathbb{Z}[y,z]$, so we may define coefficients $c_{u,v}^w(y;z)$, as in \cite{samuelmolev}, by
+%$$\sch_u(x;y)\sch_v(x;z)=\sum_w c_{u,v}^w(y;z)\sch_w(x;y)$$
+%These generalize the Molev-Sagan coefficients in \cite{molev1999littlewood} for multiplying factorial Schur polynomials in different sets of coefficient variables. 
+
+%We conjectured in \cite[Conjecture~1.1]{samuelmolev} that, like the original Molev-Sagan coefficients, $c_{u,v}^w(y;z)$ is a polynomial in the differences $y_i-z_j$ with nonnegative integer coefficients. This was later proved in (CITATION). Nonnegativity of $c_{u,v}^w(0;0)$ is well known, as these count points in triple intersections of Schubert varieties in the complete flag variety and are the structure constants of the cohomology ring. $c_{u,v}^w(y;y)$ are the structure constants of the torus-equivariant cohomology ring of the complete flag variety, and these have nonnegative coefficients in terms of the linear polynomials $y_{i+1}-y_i$ (the simple negative roots) \cite{graham2001positivity}. One of the primary goals in Schubert calculus is to find positive, combinatorial formulas for coefficients such as these, demonstrating with a formula whatever positivity property they may have.
+
+%As in most of the work addressing the problem of demonstrating combinatorial positivity in Schubert calculus, which overall seems to be intractable in its entirety, the strategy is to approach special cases. For nonnegativity in the separated descents case (Definition \ref{definition:sepdesc}), \cite{samuelmolev} leverages the Pieri formula proved in the same article to obtain this and more general results. \cite{fan2025bumpless} covers the same separated descents case as \cite{samuelmolev}, which is not symmetric in $u$ and $v$.
+
+
+%A Pieri formula was found in \cite[Theorem~7.1]{samuelmolev} for $c_{u,v}^w(y;z)$ in the case where $v$ is a special type of permutation. Namely, the formula applies when iterated, when $v$ is a \emph{dominant permutation}. A permutation $\mu$ is said to be dominant if its code is nonincreasing, in which case $\sch_\mu(x)$ is a monomial, and correspondingly $\sch_\mu(x;z)$ has a special form as a product of factorial elementary symmetric polynomials, justifying the nomenclature in this article as a Pieri formula. Thus the reference computes, in a positive manner, $c_{u,\mu}^w(y;z)$ for $\mu$ dominant and all $u,w$. This is related to the Pieri formula for double Schubert polynomials in the same sets of coefficient variables in \cite{robinsonpieri} (expressed solely in terms of cohomology, which is equivalent), which itself generalizes the original Pieri formula for Schubert polynomials in \cite{sottile}.
+
+%In this article, we provide a formula for $c_{\mu,v}^w(y;z)$ with $\mu$ dominant for all $v$ and $w$ (Theorem \ref{theorem:dualpieri}) demonstrating that the coefficient is nonnegative in terms of $y_i-z_j$. More generally, we introduce a ``domination'' relation where the same formula applies whenever $u$ dominates $w$, whereas dominant permutations dominate all other permutations. We leverage this to obtain dual formulas as in the reference \cite{samuelmolev}. In particular, as an additional new result, we obtain symmetry of positivity in the case where $u$ and $v$ have separated descents.
+%We also combinatorially demonstrate positivity of the coefficients $c_{r[p,k],v}^w(y;z)$ and $c_{c[p,k],v}^w(y;z)$ for Pieri cycles $r[p,k]$ and $c[p,k]$ (Theorem \ref{theorem:completepieri}), providing in the process an algorithm forpositively computing themr, and similarly for the case where $\sch_u(x;y)$ has at most two $x$ variables. %Combining all known formulas, quite a wide range of coefficients can be computed positively; all coefficients $c_{u,v}^w(y;z)$ for at least $84\%$ of the pairs $u,v\in S_5$ can be computed positively, as well as $58\%$ of the pairs $u,v\in S_6$ and $33\%$ of pairs $u,v\in S_7$. If we don't restrict to pairs where the product $\sch_u(x;y)\sch_v(x;z)$ is positively computed in its entirety, many more coefficients $c_{u,v}^w(y;z)$ for certain $w$ can be computed positively.
+
+%In general, although $c_{u,v}^w(y;y)=c_{v,u}^w(y;y)$, $c_{u,v}^w(y;z)$ in general has very little to do with $c_{v,u}^w(y;z)$ besides this, and one can be easy to compute with the other being hard. For example, in the case where $v=v_1v_2$ is a product of two permutations $v_1$ and $v_2$ such that each generator in a reduced expression for $v_1$ commutes with each generator in a reduced expression for $v_2$, being able to compute $c_{u,v_1}^w(y;z)$ positively and $c_{u,v_2}^w(y;z)$ positively for all $u$ and $w$ allows for the positive computation of $c_{u,v}^w(y;z)$ for all $u$ and $w$. There is no such result when $u=u_1u_2$ satisfying the same conditions, except in the case where $z=y$. The formula in this article reflects this asymmetry; although it gives the same result as the Pieri formula in \cite{samuelmolev} when we set $z=y$, the formula in this article bears no resemblance to the aforementioned Pieri formula. While Theorem \ref{theorem:dualpieri} is positive in terms of our conjecture, it is not visibly positive in terms of $y_{i+1}-y_i$ when we set $z=y$.
+
+%In the latter part of the article, we address an equivalence between products and coproducts of double Schubert polynomials (Theorem \ref{theorem:doublecoprodpos}). The relationship between products and coproducts is referred to as an ``equivalence'' because it is a simple and direct way to pass back and forth between product and coproduct coefficients. Such a relationship between product and coproduct coefficients was shown for ordinary Schubert polynomials in \cite[Theorem~4.6.1]{coprod}, that not the same as Theorem \ref{theorem:doublecoprodpos} even when setting $y=z=0$, but relates closely to Theorem \ref{theorem:mulleftgrass} in this paper. The relationship allows us to transform products into other products (specifically, to products with shuffle permutations) and allows us to develop a hierarchy of difficulty of ordinary Schubert polynomial multiplication problems.
+
+%We also discuss how the product-coproduct equivalence, as well as methods involved in proving the Pieri formula, are important parts of a toolbox for positively computing a large class of coefficients by successive reduction rather than by direct application of a known explicit formula. We provide copious examples of all of our formulas.
+
+%This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit sectors.
+
+%\section*{Introduction}
+Double Schubert polynomials $\sch_u(x;y)$, indexed by permutations, constitute a central basis in Schubert calculus. Their multiplication with respect to different sets of coefficient variables defines structure constants via the relation
+\begin{equation*}
+	\sch_u(x;y)\,\sch_v(x;z)\;=\;\sum_w c^w_{u,v}(y;z)\,\sch_w(x;y).
+\end{equation*}
+The central objective in this area is to obtain explicit combinatorial formulas that exhibit positivity, in analogy with the celebrated Littlewood-Richardson rule for Grassmannians/Schur polynomials. In present settings, ``Positivity'' lacks an immediate natural definition, since the coefficients are themselves polynomials and do not have nonnegative coefficients at least in the standard monomials in the $y$ and $z$ variables.
+
+Very recently, Gao and Xiong \cite{gao2025grahampositivitytripleschubert} posted to the arXiv a nonconstructive proof of our positivity conjecture for these coefficients \cite[Conjecture~1.1]{samuelmolev}\cite{gao2025grahampositivitytripleschubert}. They showed that the coefficient $c_{u,v}^w(y;z)$ can satisfy an``extended Graham positivity'': They can be expressed as polynomials in the differences $y_i-z_j$ with nonnegative integer coefficients. This does not imply Graham's original positivity theorem \cite{graham2001positivity}, but it does confirm the conjecture in full generality, marking a major theoretical advance. However, by its nonconstructive nature, it does not yield explicit combinatorial rules.
+
+In this paper, we establish combinatorial positivity results in broad new cases, thereby complementing the recent nonconstructive proof. We introduce a relation on permutations that we call ``domination,'' extending the classical notion of dominant permutation. We prove that if $u$ dominates $w$, then the coefficient $c^w_{u,v}(y;z)$ has a positive combinatorial formula. This complements the earlier case where the ``$v$'' permutation is dominant, where a positive formula in this sense was presented in \cite{samuelmolev}, and it closes the gap on positivity results in the situation where $u$ and $v$ have separated descents, regardless of their relative order.
+
+We also establish an equivalence between products and coproducts of double Schubert polynomials. This equivalence enables us to compute products from coproducts and conversely, thereby exposing structural symmetries and providing practical methods to reduce complex cases to simpler ones. The result extends earlier work of Bergeron and Sottile on ordinary Schubert polynomials and gives a framework for organizing the difficulty of multiplication problems in terms of coproduct computations.
+
+Building on this equivalence, we construct a Schubert bialgebra in which the coproduct naturally induces a dual product. This algebraic setting makes the structural significance of the product--coproduct relationship more transparent and establishes a direct connection between Schubert polynomials and the theories of symmetric and noncommutative symmetric functions. Notably, in the dual algebra, the coproduct has structure constants identical to those of Schubert polynomials, a case where no fully general combinatorial formula is yet known. Our construction, therefore, suggests a potential new path toward discovering such a formula.
+
+%Although the formulas derived here can be implemented computationally, and indeed have been incorporated into the author's software package \texttt{schubmult}, the main contribution of the paper is the demonstration of explicit combinatorial positivity in new families of Schubert polynomial products. The results expand the class of cases where positivity can be established in a transparent combinatorial manner, provide algebraic structures that explain product--coproduct interactions, and contribute to the broader program of uncovering positive rules in Schubert calculus.
+%This paper has three sections. Section \ref{section:dualpieri} is where we present and prove the dual Pieri formula and derive consequences. In addition, we provide an algorithm for deriving a positive formula for when $u$ is a general Pieri cycle that need not be dominant, both for row and column shape factorial Schur polynomials. Recurrences that are used in later sections are also derived. Section \ref{section:pieri} is where we present a Pieri formula for factorial complete symmetric polynomials as well as a Sottile formula for multiplying by factorial Schur polynomials corresponding to partitions of hook shape. These formulas are positive in terms of $y_i-z_j$, and we combinatorially prove Graham positivity of the result as well. Section \ref{section:coprod} is where we address coproducts of double Schubert polynomials. We prove a duality theorem between products and coproducts in this section, yielding, in particular, Graham positivity for coproducts of double Schubert polynomials expanded in terms of double Schubert polynomials in the same set of coefficient variables. We apply the duality result to ordinary Schubert polynomials as well to set up a hierarchy of multiplication rules that we reduce to multiplying by a special type of Schubert polynomial (corresponding to shuffles).
+
+%In Section \ref{section: further}, we outline further directions of research that are likely to yield results. When it comes to general results, even the special cases of the Grassmannian and the two-step flag variety, which have torus-equivariant cohomology rings that are represented by a subset of the double Schubert polynomials, took decades of effort to find formulas for. The general case of finding a Littlewood-Richardson rule for Schubert polynomials/double Schubert polynomials seems to be exceedingly difficult, and one might ask whether it is even possible to find such a formula. We address this question as well in Section \ref{section: further}, outlining a concrete way to express the possibility that no formula exists in the general case.
+
+\subsection*{Software used}
+
+All computation in this work was carried out using schubmult \verb|schubmult| \cite{schubmult},  a free Python package developed by the author. The package is available on PyPI and comes with command-line executables. It supports:
+\begin{itemize}
+    \item Products of ordinary Schubert polynomials
+    \item Products of double Schubert polynomials (both same-variable and mixed-variable)
+    \item Coproducts of Schubert polynomials
+    \item Products of quantum Schubert polynomials
+    \item Conjectural methods for products of quantum double Schubert polynomials (same-variable, mixed-variable, and parabolic cases).
+\end{itemize}
+% Questions, bug reports, or other inquiries about the package can be directed to  \href{mailto:schubmult@gmail.com} {}{schubmult@gmail.com}.
+
+
+
+\section{The domination formula} \label{section:dualpieri}
+
+\subsection{Statement of the formula with examples}
+
+\begin{definition}[$S_\infty$ as a Coxeter group, window notation]
+	For standard results and notation regarding Coxeter groups, we refer the reader to \cite{combcox} or \cite{humphreys1992reflection}. $S_\infty$ will refer to the infinite symmetric group of permutations $\mathbb N\to\mathbb N$ fixing all but finitely many elements, and $S_n$ is the subgroup of all $u\in S_\infty$ such that $u(i)=i$ for all $i>n$. We will use window notation, where we express a permutation $u$ as a permutation of the first $n$ positive integers (enclosed by brackets $[]$) such that if we write
+	$$u=[a_1,a_2,\ldots,a_n]$$
+	where $a_i\neq a_j$ if $i\neq j$ and $1\leq a_i\leq n$ for all $i$, then $u(i)=a_i$ for $1\leq i\leq n$, and $u(i)=i$ if $i>n$. An alternative notation, code notation will be defined in Definition \ref{definition:codestuff}.
+	
+	We use the standard notation of $s_i$ as the adjacent transposition such that right multiplication exchanges the elements at indices $i$ and $i+1$, and $t_{ij}$ is the transposition such that right multiplication exchanges the elements at indices $i$ and $j$. These are the simple reflections (resp. reflections) in a Coxeter presentation of $S_\infty$.
+\end{definition}
+
+\begin{definition}[Separated] descents] \label{definition:sepdesc}
+	Two permutations $u$ and $v$ are said to have \emph{separated descents} if there exists a positive integer $p$ such that $\ell(us_i) > \ell(u)$ for all $i < p$ and $\ell(vs_j) > \ell(v)$ for all $j>p$. It is important to note that this definition is not symmetric in $u$ and $v$. \cite{samuelmolev} and \cite{fan2025bumpless} address the separated descents case of positivity of $c_{u,v}^w(y;z)$ as defined above. Positivity of $c_{v,u}^w(y;z)$ is proved in this article.
+\end{definition}
+
+
+\begin{definition}[Special group elements the homomorphism] \label{definition:specelem}
+	For $p\geq 1$, $k>0$, define the cycle 
+	$$c[p,k]=s_{k+1-p}s_{k+2-p}\cdots s_k$$
+	and also define
+	$$r[p,k]=s_{k+p-1}s_{k+p-2}\cdots s_k$$
+	We use the same notation for these as in \cite{sottile}, and $c[p,k]$ corresponds to elementary symmetric polynomials, while $r[p,k]$ corresponds to complete symmetric polynomials. The choices of ``$c$'' refer to the word ``column'' and ``$r$'' to ``row,'' referring to the shape of the indexing partition of the corresponding Schur polynomial.
+	
+	For $q\geq 0$ define
+	$$d[p,q]=s_ps_{p+1}\cdots s_{p+q-1}$$
+	(where by convention $d[p,0]=1$) and define 
+	$$d[q]=d[1,q]$$
+	Note that $d[p,q]=c[q,p+q-1]$, so that this is merely a convenient way to re-express the $c$ permutations. If $q_1\leq q_2$, then $d[p,q_1]^{-1}d[p,q_2]=d[p+q_1,q_2-q_1]$.
+	
+	%For $n>0$ define the longest element $w_0(n)$ of $S_{n+1}$ by 
+	%$$w_0(n)(i)=\begin{cases}
+		%n+2-i&\mbox{ if }i\leq n+1\\
+		%i&\mbox{ if }i>n+1
+		%\end{cases}$$
+		%A useful fact about multiplying on the left by $w_0(n)$ is as follows: if $u\in S_{n+1}$ and $1\leq i\leq n$, then $s_i$ is a right descent of $u$ if and only if $s_i$ is not a right descent of $w_0(n)u$.
+		
+		Define a partial homomorphism $\sigma_p$ for a not necessarily positive integer $p$ by $\sigma_p(s_i)=s_{i+p}$ whenever $i+p>0$. This is defined for all $w$ such that $w=s_{i_1}\cdots s_{i_m}$ with $i_j+p>0$ for all $j$. $\sigma_1$ will be used often, so $\sigma$ with no subscript will indicate $\sigma_1$ to avoid clutter.
+	\end{definition}
+	
+	\begin{definition}[Sottile's Pieri relations] \label{definition:pierisymb}
+		Following \cite{sottile}, with slightly different notation, for permutations $u,w$ we declare that $u\tom{k} w$ if there exist transpositions $t_{a_1b_1},\ldots, t_{a_pb_p}$ for some $p$ with $0\leq p\leq k$ such that:
+		\begin{enumerate}
+			\item \label{item:it1} $a_i\leq k<b_i$ for all $i$.
+			\item \label{item:it2} $a_i\neq a_j$ if $i\neq j$.
+			\item \label{item:it3} $\ell(ut_{a_1b_1}\cdots t_{a_ib_i})=\ell(u)+i$ for all $1\leq i\leq p$.
+			\item \label{item:it4} $w=ut_{a_1b_1}\cdots t_{a_pb_p}$.
+		\end{enumerate}
+		This definition is used in Sottile's Pieri formula in the reference and is central to the development of our formula. We also define a relation $u\Tom{k} w$, also defined by Sottile, if there exist transpositions $t_{a_1b_1},\ldots,t_{a_pb_p}$ for some $p\geq 0$ such that (\ref{item:it1}), (\ref{item:it3}), and (\ref{item:it4}) hold, but instead of (\ref{item:it2}) we have that $b_i\neq b_j$ if $i\neq j$. Note that, unlike for $\tom{k}$, $p$ can be greater than $k$ with the relation still holding.
+        After introducing the Pieri relations, which explain how permutations can be changed using carefully crafted transposition sequences, we go on to the code of a permutation, another essential combinatorial tool.  This will enable us to compactly depict permutations in a manner that organically engages with the previously established relations.
+
+	\end{definition}
+	
+	
+	
+	\begin{definition}[dominant permutations, the dominant approximation] $\dom(v)$, code representation \label{definition:codestuff}
+		
+        Given $w\in S_\infty$, the \emph{code} $\code(w)$ (also known as the Lehmer code) of $w$ as follows:
+		$$\code_i(w)=\#\{j> i\mid w(i)>w(j)\}$$
+		In other words, $\code_i(w)$ is the number of inversions $(i,j)$ of $w$, with $i$ fixed. We also define the dual code
+		$$\code^*(w)=\code(w^{-1})$$
+		which is simply the code of the inverse. The concept of permutation is quite ancient, found for instance in \cite{laisant1888numeration}.
+		
+		Some useful facts about the code, which we will leave to the reader, are as follows: $u(i)<u(i+1)$ if and only if $\code_i(u)\leq\code_{i+1}(u)$, and in that case
+		$$\code_j(us_i)=\begin{cases}
+			\code_j(u)&\mbox{ if }j\notin \{i,i+1\}\\
+			\code_{i+1}(u)+1&\mbox{ if }j=i\\
+			\code_i(u)&\mbox{ if }j=i+1
+		\end{cases}$$
+		Furthermore, $\code^*_i(w)$ is equal to the number of inversions $(i,j)$ of $w^{-1}$, which is to say that $w^{-1}(i)>w^{-1}(j)$. This means that, in terms of $w$, if $q$ is the index such that $w(q)=i$, then $\code^*_i(w)$ is the number of indices $p<q$ such that $w(p)>i$. It follows easily that.
+		$$w(\code^*_1(w)+1)=1$$
+		The inverse function of the code will be denoted by $\cperm{\cdots}$, meaning $\cperm{\code(w)}=w$. For example, since
+		$$\code([1,3,5,2,4,7,6]) = (0,1,2,0,0,1)$$
+		we have
+		$$\cperm{0,1,2,0,0,1}=[1,3,5,2,4,7,6]$$
+		%It is not hard to see that this is reversible. If $u\in S_{n+1}$, then $\code_i(u)\leq n+1-i$ for $1\leq i\leq n$, $\code_i(u)=0$ if $i>n$, and $\code_i(w_0(n)u)=n+1-i-\code_i(u)$ if $1\leq i\leq n$. In particular, since
+		%$$\sum_{i=1}^\infty\code_i(u)=\ell(u)$$
+		%we have that $\ell(w_0(n)u)=\ell(w_0(n))-\ell(u)$.
+		
+		A permutation $\mu$ is said to be a if $\code(\mu)$ is a partition. Dominant permutations can also be characterized as the permutations that avoid the pattern $132$, that is to say, there are no indices $i<j<k$ such that $u(i)<u(k)<u(j)$ \cite{reif}.
+		
+		For a permutation $v$, we define a dominant permutation $\dom(v)$ following \cite{samuelmolev}, recursively as follows. If $v$ is dominant, then $\dom(v)=v$. Otherwise, let $i$ be the maximal index such that $\code_i(v)<\code_{i+1}(v)$; then set
+		$$\dom(v)=\dom(vs_i)$$
+		This recursive process always terminates at a unique dominant permutation, since at each step there is only one possible choice of index.
+	\end{definition}
+	
+	
+	
+	%The following characterization of $\dom(u)$ will be useful.
+	
+	
+	
+	\begin{definition}\label{definition:polysequence}
+		For a permutation $v'$ such that $v'\in S_{n}$, define
+		$$\varphi_{i,n}(v')(j)=\begin{cases}
+			v'(j)&\mbox{ if }j<i\\
+			n+1&\mbox{ if }j=i\\
+			v'(j-1)&\mbox{ if }i<j\leq n+1\\
+			j&\mbox{ if }j>n+1
+		\end{cases}$$
+		Now fix $v\in S_n$ and $i\geq 1$ an integer, we define a relation $\downvar{i}$ by declaring that $v\downvar{i} v'$ if 
+		$$v\Tom{i}\varphi_{i,n}(v')$$
+		Equivalently, $v\downvar{i} v'$ if whenever $v\in S_n$ and $n$ is minimal, we have that $v$ satisfies the relation $\Tom{i}$ with respect to the permutation obtained from $v'$ by inserting $n+1$ at position $i$. We note that this concept was introduced by Bergeron and Sottile in \cite{bsskew}.
+		
+		If $v\downvar{i} v'$, we define a set of integers $Q_i(v',v)$ by
+		$$Q_i(v',v)=\{v(j)\mid j>i\mbox{ and }v'(j-1)=v(j)\}$$
+		Given the fact that any element of $S_\infty$ fixes all but finitely many positive integers, it follows that $Q_i(v',v)$ is a finite set.
+		
+		We then define $\mathcal{D}_i(v)$ to be all permutations $v'\in S_\infty$ such that $v\downvar{i} v'$. The permutations $\mathcal{D}_i(v)$ arise when pulling a variable out of a Schubert polynomial and expressing the coefficients of the powers of this variable as Schubert polynomials in the remaining variables, as is done in \cite{coprod}, from which this definition essentially comes. The associated set $Q_i(v',v)$ is specific to the case of double Schubert polynomials.
+	\end{definition}
+	
+	
+	
+	\begin{example} 
+		The permutation $\mu=[5,4,6,3,1,2]$ has code $(4,3,3,2)$ and hence is dominant. We then have that $\code^*(\mu)=(4,4,3,1)$.
+		
+		Let $v=[4,3,1,5,2]$. Then $\code(v)=(3,2,0,1)$, hence $\dom(v)=vs_3=[4,3,5,1,2]$. We have that $\code(\dom(v))=(3,2,2)$ and $\code^*(\dom(v))=(3,3,1)$. We have that $v^{-1}=[3,5,2,1,4]$, $\code(v^{-1})=(2,3,1)$, hence $\dom(v^{-1})=v^{-1}s_1=[5,3,2,1,4]$. $\code(\dom(v^{-1}))=(4,2,1)$ and $\code^*(\dom(v^{-1}))=(3,2,1,1)$. We have that $v\downvar{3}[4,3,1,2]$ and $v\downvar{3}[4,3,2,1]$, and this list is exhaustive.
+		We then have that
+		$$Q_3([4,3,1,2],v)=\{2\}$$
+		and $Q_3([4,3,2,1],v)=\emptyset$.
+	\end{example}
+	
+	\begin{definition} abel{definition:domination}
+		A permutation $u$ is said to \emph{$1$-dominate} the permutation $w$ if for each index $j$ with $\code_1^*(u)<j\leq \code_1^*(w)$ we have $u(j)<u(j+1)$. Equivalently, $u$ has no descents strictly to the right of position $\code_1^*(u)$ up to position $\code_1^*(w)$. 
+		
+		For $i\geq 0$, we define a function $\phi_i:S_\infty\to S_\infty$ by declaring that
+		$$\code^*_j(\phi_i(u))=\code^*_{j+i}(u)$$
+		for all $j$, essentially ``chopping off'' the first $i$ elements of the dual code. We recursively say that $u$ $k$-\emph{dominates} $w$ for $k>1$ if $u$ $(k-1)$-dominates $w$ and $\phi_{k-1}(u)$ $1$-dominates $\phi_{k-1}(w)$. We then say that $u$ \emph{dominates} $w$ if $u$ $k$-dominates $w$ for all $k\geq 1$. For simplification of notation, we write
+		$$\phi=\phi_1$$
+	\end{definition}
+	
+	
+	\begin{example}
+		The permutation $u=[2,3,5,1,4]$ dominates the permutation $w=[2,6,3,4,7,1,5]$ but is not dominant. To see that $u$ dominates $w$, note that $\code_1^*(u)=3$, $\code_1^*(w)=5$, and $u(4)<u(5)<u(6)$, so $u$ $1$-dominates $w$. We have that $\phi(u)=[1,2,4,3]$ and $\phi(w)=[1,5,2,3,6,4]$. Clearly $\phi(u)$ $1$-dominates $\phi(w)$ since $\code_1^*(\phi(u))=\code_1^*(\phi(w))$. We have that $\phi_2(u)=[1,3,2]$ and $\phi_2(w)=[4,1,2,5,3]$. Since $\code_1^*(\phi_2(w))=1$ and $u(1)<u(2)$, we have that $u$ $3$-dominates $w$. It is indeed true that $u$ dominates $w$.
+	\end{example}
+	
+	
+	
+	\begin{definition}[Double Schubert polynomials divided difference operators] \label{definition:schubert}
+		We denote the double Schubert polynomial indexed by $u\in S_\infty$ in the variables $x$ and $y$ by $\sch_u(x;y)$. We define coefficients $c_{u,v}^w(y;z)$ by
+		$$\sch_u(x;y)\sch_v(x;z)=\sum_{w\in S_\infty} c_{u,v}^w(y;z)\sch_w(x;y)$$
+		Divided difference operators are indexed by an element of $S_\infty$ as a superscript, for example $\partial^u$. Define skew divided difference operators $\partial_v^w$ by defining for polynomials $P,Q$
+		$$\partial^w(PQ)=\sum_{v\in S_\infty}\partial^v(P)\partial_v^w(Q)$$
+		This differs from the definition of skew divided difference operators in \cite{notes}, but agrees with that in \cite{samuelleibniz}, and in our opinion is more natural. We have that
+		$$c_{u,v}^w(x;z)=\partial_u^w(\sch_v(x;z))$$
+		An explanation of this fact can be found in \cite{samuelmolev}.
+	\end{definition}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	\begin{definition}[Polynomial variable omission subscript substitution index shift function] \label{definition:pv}
+		Define
+		$$x^{(i)}=(x_1,\ldots,\widehat{x_i},\ldots)$$
+		For a sequence of multiple indices in the superscript, we omit all of them. 
+		
+		For a set of positive integers $A$ and a sequence of indeterminates such as $y = (y_i)_{i=1}^{\infty}$, we denote 
+		$$y_A = \{y_a\mid a\in A\}$$
+		While this is expressed as a set, the implication is that the possibly nonconsecutive indices occur in increasing order.
+		
+		We define a homomorphism $\shifthom:\mathbb{Z}[x,y,z]\to\mathbb{Z}[x,y,z]$ by specializing $\shifthom(x_j)=x_{j+1}$, $\shifthom(y_j)=y_j$ and $\shifthom(z_j)=z_j$. We denote the composition of $\shifthom$ with itself $i$ times by $\shiftvby{i}$.
+		
+		%For the common case of $\shiftvby{1}$ we use the shorthand $\shiftvby{}$.
+	\end{definition}
+	
+	\begin{definition} \label{definition:hp}
+		Define 
+		$$H_p(x;y)=\prod_{i=1}^p (x_1-y_i)$$
+		This is actually a double Schubert polynomial, namely
+		$$H_p(x;y)=\sch_{r[p,1]}(x;y)$$
+		Define also
+		$$E_p(x;y)=\prod_{i=1}^p (x_i-y_1)$$
+		
+		Let $\mathcal{F}$ denote the set of finite subsets of $\mathbb{Z}[x,y,z]$. We define a function 
+		$$\smpfu:\mathbb{Z}[x,y,z]\times \mathcal{F}\to\mathbb{Z}[x,y,z]$$
+		that is $H_p(x;y)$ thinly disguised by substitution, by
+		$$\smpre{a}{B} = \prod_{b\in B}(a-b)$$
+		Typically, $a$ will be a single indeterminate and $B$ will be a set or sequence of indeterminates, rather than arbitrary elements of the ring. For example,
+		$$\smpre{x_1}{y_{[p]}} = \prod_{i=1}^p(x_1-y_i) = H_p(x;y)$$
+		$$\smpre{-y_1}{(-x)_{[p]}} = \prod_{i=1}^p(x_i-y_1) = E_p(x;y)$$
+		By a mild abuse of notation, we may write such expressions as
+		$$\smpre{x_i}{y_1,y_3,y_4} = (x_i-y_1)(x_i-y_3)(x_i-y_4)$$
+		
+		%We note that the second argument to the function is a finite set or sequence.
+	\end{definition}
+	
+%$$v=v'(\mathrm{ntoiup))(pieridown)$$
+%does correspond to some reduced word factorizations and decreasing seqs
+%Sigma factorizations, related to coproduct?
+%RC GRAPH?
+%It's a graph, tableau, weakly increasing on rows (spots on the perm)
+%Row $h$-Pieri paths to some top perm
+%rcgraph.py
+%end is an rcgraph if increasing
+%action delete column of stars
+
+%act as a pair of RC graphs
+%shifts the y graph
+
+%preserve the product, Cauchy
+%combinatorial Cauchy formula
+
+%All reduced words, compatible sequences, Cauchy, RC
+%RC graph Cauchy formula
+%Can be tensored single RC graph
+%final increasing portion is definitely an RC graph
+%remaining is skew
+%Remove one variable, it is the reduced word at the end
+
+%Fomin Kirillov rep of RC graphs
+
+ We may now state our domination formula. For clarity in interpreting the notation, we refer the reader to the index at the end of the article, which cross-references the formal definitions.
+ %to Definition \ref{definition:polysequence} where most of it is defined.
+
+\begin{theorem}[The domination formula] \label{theorem:dualpieri}
+Let $u,v,w\in S_\infty$ and suppose $u$ dominates $w$. Then $c_{u,v}^w(y;z)=0$ unless $\code_j^*(w)\geq \code_j^*(u)$ for all $j$. If that condition is satisfied, let $m$ be the maximal index such that $\code_m^*(u)\neq 0$. For each $1\leq k\leq m$ define
+$$d_k=d[\code_k^*(u)+1,\code^*_k(w)-\code_k^*(u)]$$
+Then
+$$c_{u,v}^w(y;z)=\sum_{v_1,\ldots,v_m} \left(\prod_{i=1}^m\smpre{y_i}{z_{A_i}}\right)\sch_{v_m\phi_m(w)^{-1}}(\shiftvby{m}y;z)$$
+where $v_0=v$, $\ell(v_m\phi_m(w)^{-1})=\ell(v_m)-\ell(\phi_m(w))$, and $v_k$ ranges over all elements such that 
+$$v_k\downvar{\code_k^*(u)+1}v_{k-1}d_k^{-1}$$
+and
+$$\ell(v_{k-1}d_k^{-1})=\ell(v_{k-1})-\code_k^*(w)+\code_k^*(u)$$
+and we define
+$$A_k = Q_{\code_k^*(u)+1}(v_k,v_{k-1}d_k^{-1})$$
+for all $k$.
+
+In particular, this holds for all $v$ and $w$ when $u$ is dominant (see Lemma \ref{lemma:domdom}).
+%and
+%$$L_i=\ell(v_i,v_{i-1}d_i^{-1})$$
+% for all $i$.
+\end{theorem}
+
+We illustrate the terms in the sum with diagrams, which are conceptually similar to the diagrams in \cite{samuelmolev}. In this diagram, the relevant permutations are arranged column-wise. Circled entries represent elements of the $Q$ set (Definition \ref{definition:polysequence}). Visually, these correspond to numbers that don't change from column to column. 
+
+ More specifically, each diagram is a rectangles that contain the permutations $v_i$, $v_id_{i+1}^{-1}$, and $v_m\phi_m(w)^{-1}$ in sequence. If $v_i\neq v_id_{i+1}^{-1}$ then there will be an arrow from $v_i$ to $v_id_{i+1}^{-1}$ labeled with $d_{i+1}$. In between $v_{i-1}d_i^{-1}$ and $v_i$ there will be a vertical bar, and a bullet occupying position $\code_i^*(u)+1$, with the elements below displaced to the rows below, and all permutations afterwards in the sequence between $v_{i-1}d_i^{-1}$ and the next arrow will have elements displaced around previous bullets as though the row had been removed. If a number below the bullet in some column is equal to the number immediately to the left of the bar in the same row, then this number will be circled, and this contributes a factor of $y_a-z_b$, where $a$ is the region number (counting from 0 beginning at the left, increasing by $1$ as we pass each bar) and $b$ is the circled number. If $\phi_m(w)\neq 1$, there will be an arrow between $v_m$ and $v_m\phi_m(w)^{-1}$ labeled with $\phi_m(w)$, otherwise $v_m=v_m\phi_m(w)^{-1}$ will be the final permutation in the sequence. If $v_m\phi_m(w)^{-1}\neq 1$, this contributes a factor of $\sch_{v_m\phi_m(w)^{-1}}(\shiftvby{m}y;z)$, and will be written in a bold font in red in a column labeled $\sch$. We omit elements $v_i(j)$ of the permutation in the region if $v_i(j)=j$, unless this element is circled.
+
+The significance of the bullets is that they are the positions in the polynomial from which the variable is being pulled out. The relationship between $v_{i-1}d_i^{-1}$ and $v_i$ is that $v_{i-1}d_i^{-1}\downvar{\code_i^*(u)+1}v_i$, so that this is, in a sense, a path of permutations and the bullet occupies the position of $n+1$.
+
+\begin{example} \label{example:figure1}
+The permutation $u=[4,3,1,2]$ is dominant, and $\code(u)=(3,2)$. Also, $\code^*(u)=(2,2,1)$. Let $v=[3,1,4,5,2]$ and let $w=[6,3,1,4,2,5]$. Then Theorem \ref{theorem:dualpieri} lets us compute the coefficient $c_{uv}^w(y;z)$. We have that $\code^*(w)=(2,3,1,1,1)$.
+\begin{center}
+\begin{tabular}{|c|c@{}c@{}c|c|c@{}c@{}c|}
+ \multicolumn{8}{r}{$\sch$}\\
+\hline
+3&3              &\xr{1,2,4,3}&3&3        &3        &\xr{3,1,2}&\rd{1}\\
+1&1              &                              &1&1        &\tb&                              &    \\
+4&\tb      &                              &2&\tb&         &                              &    \\
+5&4              &                              & &2        &1        &                              &           \\
+2&\mc{2}  &                              & &         &2        &                              &        \\
+\hline
+\multicolumn{8}{c}{\makebox[0pt]{$y_1-z_2$}}
+%\CodeAfter
+%\tikz \node[draw=red,rounded corners,fit=(1-1)(8-8)]{};
+\end{tabular}
+%\DrawBox[thick, red]{tl1}{br1}
+\hspace{20pt}
+\begin{tabular}{|c|c@{}c@{}c|c|c@{}c@{}c|}
+\multicolumn{8}{r}{$\sch$}\\
+\hline
+3&3              &\xr{1,2,4,3}&3&3        &3            &\xr{3,1,2}&\rd{1} \\
+1&2              &                              &2&2        &\tb    &                                 & \\
+4&\tb      &                              &1&\tb&             &                                 & \\
+5&4              &                              & &1        &\mc{1}&                                 &\\
+2&1              &                              & &         &2            &                                 &\\
+\hline
+\multicolumn{8}{c}{\makebox[0pt]{$y_3-z_1$}}
+\end{tabular}
+\captionsetup{hypcap=false}
+\captionof{figure}{Diagrams for first coefficient in Example \ref{example:figure1}}
+\label{fig:figure1}
+\end{center}
+Thus $c_{uv}^w(y;z)=(y_1-z_2)+(y_3-z_1)$. If we take $w=[6,3,1,2,4,5]$ instead, then $\code^*(w)=(2,2,1,1,1)$. Thus, we have the following diagrams.
+
+\begin{center}
+\begin{tabular}{|c|c|c|c@{}c@{}c|}
+\multicolumn{6}{r}{$\sch$}\\
+\hline
+3&3              &3               &3        &\xr{3,1,2}&\rd{1} \\
+1&1              &1               &\tb&                                 & \\
+4&\tb      &                &         &                                 &    \\
+5&4              &\tb&         &                                 &           \\
+2&\mc{2}  &\mc{2}   &1        &                                 &        \\
+ &               &                &2        &                                 &\\
+\hline
+\multicolumn{6}{c}{\makebox[0pt]{$(y_1-z_2)(y_2-z_2)$}}
+\end{tabular}
+\hspace{20pt}
+\begin{tabular}{|c|c|c|c@{}c@{}c|}
+\multicolumn{6}{r}{$\sch$}\\
+\hline
+3&3              &3               &3                    &\xr{3,1,2}&\rd{1} \\
+1&1              &2               &\tb            &                                 & \\
+4&\tb      &                &                     &                                 &    \\
+5&4              &\tb        &                     &                                 &           \\
+2&\mc{2}  &1               &\mc{1}        &                                 &        \\
+ &               &                &2                    &                                 &\\
+\hline
+\multicolumn{6}{c}{\makebox[0pt]{$(y_1-z_2)(y_3-z_1)$}}
+\end{tabular}
+\hspace{20pt}
+\begin{tabular}{|c|c|c|c@{}c@{}c|}
+\multicolumn{6}{r}{$\sch$}\\
+\hline
+3&3              &3               &3                    &\xr{3,1,2}&\rd{1} \\
+1&2              &2               &\tb            &                                 & \\
+4&\tb      &                &                     &                                 &    \\
+5&4              &\tb       &                     &                                 &           \\
+2&1              &\mc{1}   &\mc{1}        &                                 &        \\
+ &               &                &2                    &                                 &\\
+\hline
+\multicolumn{6}{c}{\makebox[0pt]{$(y_2-z_1)(y_3-z_1)$}}
+\end{tabular}
+\captionsetup{hypcap=false}
+\captionof{figure}{Diagrams for second coefficient in Example \ref{example:figure1}}
+\label{fig:figure11}
+\end{center}
+
+Thus $c_{uv}^w(y;z)=(y_1-z_2)(y_2-z_2)+(y_1-z_2)(y_3-z_1)+(y_2-z_1)(y_3-z_1)$.
+
+\end{example}
+
+%\begin{example}
+%The permutation $\mu = [5,3,1,2,4]$ is dominant, and $\code(\mu)=(4,2)$. The permutation $u=[2,5,3,1,4,6]$ is not dominant, but $u$ dominates the permutation $w=[2,6,3,4,7,1,5]$, which is also not dominant.
+%\end{example}
+
+%It is known that $\sch_v(x;z)$ has nonnegative coefficients for any $v$ as a polynomial in $x_i-z_j$. This is proved, for example, in \cite{samuelmolev}, can be adapted from the formula in \cite{bbrc} and \cite{bjs}, and is proved in \cite{winkelrecurs}. We provide a relatively efficient positive formula in Theorem \ref{theorem:schubformula} below so that one need not consult another reference to do the full computation of the result in our Pieri formula.
+
+\begin{example} \label{example:figure2}
+Let $u=[4,1,2,3]$ and let $v=[1,3,5,2,4]$. We compute $c_{uv}^w(y;z)$ where $w=[4,1,5,2,3]$. We have
+$$\code^*(w)=(1,2,2)$$
+$$\code^*(u)=(1,1,1)$$
+\begin{center}
+\begin{tabular}{|c|c@{}c@{}c|c@{}c@{}c|c|}
+\multicolumn{8}{r}{$\sch$}\\
+\hline
+1&1            &\xr{1,3,2}&1&1        &\xr{1,3,2}&1&\rd{1}\\
+3&\tb    &                             &2&\tb&                             &&\rd{\bullet}\\
+5&4            &                             &4&3        &                             &&\\
+2&\mc{2}&                             &3&2        &                             &&\\
+4&3            &                             & &         &                             &&\\
+\hline
+\multicolumn{8}{c}{\makebox[0pt]{$y_1-z_2$}}
+\end{tabular}
+\hspace{20pt}
+\begin{tabular}{|c|c@{}c@{}c|c@{}c@{}c|c|}
+\multicolumn{8}{r}{$\sch$}\\
+\hline
+1&2            &\xr{1,3,2}&2&2        &\xr{1,3,2}&2&\rd{2}\\
+3&\tb    &                             &1&\tb&                             &1&\rd{\bullet}\\
+5&4            &                             &4&3        &                             &&\rd{1}\\
+2&1            &                             &3&1        &                             &&\\
+4&3            &                             & &         &                             &&\\
+\hline
+\multicolumn{8}{c}{\makebox[0pt]{$\sch_{[2,1]}(y_4;z)$}}
+\end{tabular}
+\captionsetup{hypcap=false}
+\captionof{figure}{Diagrams for Example \ref{example:figure2}}
+\label{fig:figure2}
+\end{center}
+
+Thus, the result is
+$$c_{uv}^w(y;z)=(y_1-z_2)+(y_4-z_1)$$
+\end{example}
+
+
+
+\begin{example} \label{example:figure3}
+We compute $c_{[4,2,1,3],[1,3,5,2,4]}^{[5,2,3,1,4]}(y;z)$. We have
+$$\code^*(w)=(3,1,1,1)$$
+$$\code^*(u)=(2,1,1)$$
+
+\begin{center}
+\begin{tabular}{|c@{}c@{}c|c|c|c@{}c@{}c|}
+\multicolumn{8}{r}{$\sch$}\\
+\hline
+1&\xr{1,2,4,3}&1&1            &2        &2        &\xr{2,1}&\rd{1}\\
+3&                              &3&3            &\tb&         &                              & \\
+5&                              &2&\tb    &         &         &                              &\\
+2&                              &5&2            &1        &\tb&                              &\\
+4&                              &4&\mc{4}&         &1        &                              &\\
+\hline
+\multicolumn{8}{c}{\makebox[0pt]{$y_1-z_4$}}
+\end{tabular}
+\hspace{20pt}
+\begin{tabular}{|c@{}c@{}c|c|c|c@{}c@{}c|}
+\multicolumn{8}{r}{$\sch$}\\
+\hline
+1&\xr{1,2,4,3}&1&1            &1            &2        &\xr{2,1}&\rd{1}\\
+3&                              &3&3            &\tb    &         &                              &\\
+5&                              &2&\tb    &             &         &                              &\\
+2&                              &5&4            &3            &\tb&                              &\\
+4&                              &4&2            &\mc{2}&1        &                              &\\
+\hline
+\multicolumn{8}{c}{\makebox[0pt]{$y_2-z_2$}}
+\end{tabular}
+\begin{tabular}{|c@{}c@{}c|c|c|c@{}c@{}c|}
+\multicolumn{8}{r}{$\sch$}\\
+\hline
+1&\xr{1,2,4,3}&1&1            &2        &2            &\xr{2,1}&\rd{1}\\
+3&                              &3&3            &\tb&             &                              &\\
+5&                              &2&\tb    &         &             &                              &\\
+2&                              &5&4            &3        &\tb    &                              &\\
+4&                              &4&2            &1        &\mc{1}&                              &\\
+\hline
+\multicolumn{8}{c}{\makebox[0pt]{$y_3-z_1$}}
+\end{tabular}
+\hspace{20pt}
+\begin{tabular}{|c@{}c@{}c|c|c|c@{}c@{}c|}
+\multicolumn{8}{r}{$\sch$}\\
+\hline
+1&\xr{1,2,4,3}&1&1            &2            &2        &\xr{2,1}&\rd{1}\\
+3&                              &3&4            &\tb    &         &                              &\\
+5&                              &2&\tb    &             &         &                              &\\
+2&                              &5&2            &1            &\tb&                              &\\
+4&                              &4&3            &\mc{3}&1        &                              &\\
+\hline
+\multicolumn{8}{c}{\makebox[0pt]{$y_2-z_3$}}
+\end{tabular}
+\begin{tabular}{|c@{}c@{}c|c|c|c@{}c@{}c|}
+\multicolumn{8}{r}{$\sch$}\\
+\hline
+1&\xr{1,2,4,3}&1&1            &3        &3        &\xr{2,1}&\rd{1}\\
+3&                              &3&4            &\tb&         &                              &\rd{3}\\
+5&                              &2&\tb    &         &         &                              &\rd{2}\\
+2&                              &5&2            &1        &\tb&                              &\\
+4&                              &4&3            &2        &1        &                              &\\
+ &                              & &             &         &2        &                              &\\
+\hline
+\multicolumn{8}{c}{\makebox[0pt]{$\sch_{[1,3,2]}(y_4,y_5;z)$}}
+\end{tabular}
+\captionsetup{hypcap=false}
+\captionof{figure}{Diagrams for Example \ref{example:figure3}}
+\label{fig:figure3}
+\end{center}
+
+Thus, the result is $c_{uv}^w(y;z)=y_{1} + 2 y_{2} + y_{3} + y_{4} + y_{5} - 2 z_{1} - 2 z_{2} - z_{3} - z_{4}$.
+\end{example}
+
+
+
+
+\begin{example} \label{example:figure4}
+We give an example where $u$ is not dominant. Set $u=[2, 3, 5, 1, 4]$, set $v=[2, 5, 3, 4, 7, 1, 6]$, and set $w=[2, 6, 3, 4, 7, 1, 5]$. Then
+$$\code^*(w)=(5,0,1,1,2)$$
+$$\code^*(u)=(3,0,0,1)$$
+Then $u$ dominates $w$ but is not dominant. We have the following diagrams.
+
+\begin{center}
+\begin{tabular}{|c@{}c@{}c|c|c@{}c@{}c|c|c@{}c@{}c|}
+\multicolumn{11}{r}{$\sch$}\\
+\hline
+2&\xr{1,2,3,5,6,4}&2&2        &\tb    &\xr{2,1}   &2&\tb    &         &\xr{2,3,1}&\rd{1}\\
+5&                             &5&5        &3            &                         &3&2            &2&                       &\\
+3&                             &3&3        &2            &                         &1&\mc{1}&\tb        &                       &\\
+4&                             &1&1        &\mc{1}&                         &5&4            &3        &                       &\\
+7&                             &4&\tb&             &                         &4&3            &1        &                       &\\
+1&                             &7&6        &5            &                         & &             &         &                       &\\
+6&                             &6&4        &\mc{4}&                         & &             &         &                       &\\
+\hline
+\multicolumn{11}{c}{\makebox[0pt]{$(y_2-z_1)(y_2-z_4)(y_3-z_1)$}}
+\end{tabular}
+\hspace{2pt}
+\begin{tabular}{|c@{}c@{}c|c|c@{}c@{}c|c|c@{}c@{}c|}
+\multicolumn{11}{r}{$\sch$}\\
+\hline
+2&\xr{1,2,3,5,6,4}&2&2        &\tb    &\xr{2,1}    &2&\tb    &         &\xr{2,3,1}&\rd{1}\\
+5&                             &5&5        &4            &                         &4&2            &2&                       &\\
+3&                             &3&3        &2            &                         &1&\mc{1}&\tb        &                       &\\
+4&                             &1&1        &\mc{1}&                         &5&4            &3        &                       &\\
+7&                             &4&\tb&             &                         &3&\mc{3}&1        &                       &\\
+1&                             &7&6        &5            &                         & &             &         &                       &\\
+6&                             &6&4        &3            &                         & &             &         &                       &\\
+\hline
+\multicolumn{11}{c}{\makebox[0pt]{$(y_2-z_1)(y_3-z_1)(y_3-z_3)$}}
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{|c@{}c@{}c|c|c@{}c@{}c|c|c@{}c@{}c|}
+\multicolumn{11}{r}{$\sch$}\\
+\hline
+2&\xr{1,2,3,5,6,4}&2&2        &\tb    &\xr{2,1}   &2&\tb    &         &\xr{2,3,1}&\rd{1}\\
+5&                             &5&5        &4            &                         &4&3            &3        &                       &\rd{3}\\
+3&                             &3&3        &2            &                         &1&\mc{1}&\tb&                       &\rd{2}\\
+4&                             &1&1        &\mc{1}&                         &5&4            &2        &                       &\\
+7&                             &4&\tb&             &                         &3&2            &1        &                       &\\
+1&                             &7&6        &5            &                         & &             &         &                       &\\
+6&                             &6&4        &3            &                         & &             &         &                       &\\
+\hline
+\multicolumn{11}{c}{\makebox[0pt]{$(y_2-z_1)(y_3-z_1)\sch_{[1,3,2]}(y_5,y_6;z)$}}
+\end{tabular}
+\captionsetup{hypcap=false}
+\captionof{figure}{Diagrams for Example \ref{example:figure4}}
+\label{fig:figure4}
+\end{center}
+
+Thus
+$$c_{uv}^w(y;z)=(y_2 - z_1) (y_2 - z_4) (y_3 - z_1) + (y_2 - z_1) (y_3 - z_1) (y_3 - z_3) + (y_2 - z_1) (y_3 - z_1)(y_5 + y_6 - z_1 - z_2) $$
+\end{example}
+
+
+\begin{example} \label{example:figure5}
+We now compute $c_{[5,4,3,2,1],[4,1,3,5,2]}^{[7,5,3,2,1,4,6]}(y;z)$. We have
+$$\code^*(w)=(4,3,2,2,1,1)$$
+$$\code^*(u)=(4,3,2,1)$$
+
+\begin{center}
+\begin{tabular}{|c|c|c|c@{}c@{}c|c@{}c@{}c|}
+\multicolumn{9}{r}{$\sch$}\\
+\hline
+4 & 4   & 4     & 4   & \xr{1,3,2} & 4 & 4   & \xr{3,1,2} & \rd{1} \\
+1 & 1   & 1     & 2   &            & 1 & \tb &            & \rd{2} \\
+3 & 3   & 3     & \tb &            & 2 & 1   &            & \rd{4} \\
+5 & 5   & \tb   &     &            & 3 & 2   &            & \rd{3} \\
+2 & \tb &       &     &            &   & 3   &            &        \\
+  & 2   &\mc{2} & 1   &            &   &     &            &        \\
+  &     &       & 3   &            &   &     &            &        \\
+\hline
+\multicolumn{9}{c}{$(y_2-z_2)\sch_{[1,2,4,3]}(y_5,y_6,y_7;z)$}
+\end{tabular}
+\hspace{20pt}
+\begin{tabular}{|c|c|c|c@{}c@{}c|c@{}c@{}c|}
+\multicolumn{9}{r}{$\sch$}\\
+\hline
+4& 4   & 4   & 4     & \xr{1,3,2} &4 & 4   & \xr{3,1,2} &\rd{1}\\
+1& 1   & 2   & 2     &            &1 & \tb &            &\rd{2}\\
+3& 3   & 3   & \tb   &            &2 & 1   &            &\rd{4}\\
+5& 5   & \tb &       &            &3 & 2   &            &\rd{3}\\
+2& \tb &     &       &            &  & 3   &            &\\
+ & 2   & 1   & \mc{1}&            &  &     &            &\\
+ &     &     & 3     &            &  &     &            &\\
+\hline
+\multicolumn{9}{c}{\makebox[0pt]{$(y_3-z_1)\sch_{[1,2,4,3]}(y_5,y_6,y_7;z)$}}
+\end{tabular}
+\captionsetup{hypcap=false}
+\captionof{figure}{Diagrams for Example \ref{example:figure5}}
+\label{fig:figure5}
+\end{center}
+
+Thus 
+$$c_{u,v}^w(y;z)=(y_2-z_2)(y_5+y_6+y_7-z_1-z_2-z_3)+(y_3-z_1)(y_5+y_6+y_7-z_1-z_2-z_3)$$
+\end{example}
+
+\subsection{Dominant permutations, the code, and manipulation of variables in Schubert polynomials}
+
+Here we gather some results about dominant permutations, the code, the dual code, and the function $\phi_i$ that will be useful throughout this article.
+
+
+
+
+
+
+%\begin{proposition} \label{proposition:smallestdom}
+%Let $u\in S_\infty$ be a permutation. If $\mu$ is a dominant permutation such that $u\leq_R \mu$, then $\dom(u)\leq_R\mu$.
+%\end{proposition}
+%\begin{proof}
+%%Also, a characterization of right weak order is that $u\leq_R v$ if and only if all left inversions that occur in $u$ also occur in $v$, or in other words whenever $b>a$ and $b$ precedes $a$ in $u$ in window notation, we must have that $b$ precedes $a$ in $v$.
+%As noted above, an alternative characterization of dominant permutations is that they are $132$-avoiding.  Suppose $u\leq_R\mu$ for $\mu$ dominant. If $u$ is dominant, then clearly $\ldom(u) \leq_R\mu$. Otherwise, we use induction on $\ell(u, \ldom(u)) $. Let $i$ be the maximal index such that $\code_i(u) <\code_{i+1}(u)$. By definition of the code, there exists at least one index $j$ such that $j>i+1$, $u(i)<u(j)$, and $u(i+1)>u(j)$, since $\code_{i+1}(u)$ is strictly greater than $\code_i(u)$. Thus, this index $j>i+1$, which we fix, is such that there is a $132$ pattern at $i, i+1,j$. Since $I^*(u)\subseteq I^*(\mu)$, we must have that $\mu^{-1}(u(i+1))<\mu^{-1}(u(j))$, since $u^{-1}(u(i+1))=i+1<j=u^{-1}(u(j))$. We must therefore have that $\mu^{-1}(u(i+1))<\mu^{-1}(u(i))$, meaning that $(u(i),u(i+1))\in I^*(\mu)$, for otherwise the subsequence $(u(i),u(i+1),u(j))$, which is a $132$ pattern, would occur in $\mu$. We have that
+%$$I^*(us_i)=I^*(u)\cup \{(u(i),u(i+1))\}$$
+%and it follows that $us_i\leq_R\mu$ since as deduced this inversion is in $I^*(\mu)$, so that $I^*(us_i)\subseteq I^*(\mu)$. Therefore, by the induction hypothesis
+%$$\dom(u) =\dom(us_i) \leq_R \mu$$
+%and the result follows by induction. 
+%\end{proof}
+%
+%This gives us the following interesting corollary.
+%
+%\begin{corollary} \label{corollary:dommeet}
+%Let $\mu_1$, $\mu_2$ be dominant permutations. Then $\mu_1\wedge\mu_2$ is a dominant permutation.
+%\end{corollary}
+%\begin{proof}
+%Suppose $v=\mu_1\wedge \mu_2$. Then $v\leq_R\mu_1$, hence by Proposition \ref{proposition:smallestdom} $\dom(v)\leq_R\mu_1$, and similarly $\dom(v)\leq_R\mu_2$. Since $v\leq_R\dom(v)$ and $v$ is the meet of $\mu_1$ and $\mu_2$, it follows that $\dom(v)\leq v$, hence $v=\dom(v)$. Therefore, $v$ is dominant.
+%\end{proof}
+%
+%In fact, $\dom:S_n\to S_n$ is a lattice homomorphism onto the sublattice $\dom(S_n)$, which is isomorphic to the Tamari lattice \cite{bjorner1997shellable}, and for each dominant permutation $\nu$ we have that $\dom^{-1}(\{\nu\})$ is a weak order interval. This is explored in much greater generality (for other Coxeter groups as well) in \cite{reading2007sortable}.
+%
+%
+%
+%\begin{theorem} \label{theorem:domlattice}
+%Let $M_n$ be the set of all dominant permutations in $S_n$. Then $M_n$ is a sublattice of $S_n$ under weak order isomorphic to the Tamari lattice. Furthermore, $\ mu: S_n\to M_n$ is a surjective lattice homomorphism.
+%\end{theorem}
+%\begin{proof}
+%We work in $S_\infty$. Let $u,v\in S_\infty$; we show that $\mu(u\wedge v)=\ldom(u)\wedge\ldom(v)$. We have that $\mu(u\wedge v)$ is the unique dominant permutation such that for any dominant permutation $\mu$ for which $u\wedge v\leq_R \mu$ we have that $\mu(u\wedge v)\leq_R \mu$. In particular, $\mu(u\wedge v)\leq_R \ldom(u)\wedge \ldom(v)$. For the opposite inequality, suppose $\mu$ is a dominant permutation such that $\mu(u\wedge v)\leq \mu\leq \ldom(u)\wedge \ldom(v)$.
+%\end{proof}
+
+
+%The following characterization of $\phi_i$ will be useful.
+
+%\begin{lemma}\label{lemma:phiitrans}
+%Suppose $u\in S_\infty$, let $i\geq 0$ and let $v=\phi_i(u)$. Fix an index $k$ such that $u(k)>i$. Then
+%$$v(\#\{j\leq k\mid u(j)>i\}) = u(k) - i$$
+%That is, $\phi_i(u)$ is obtained by deleting the indices $j$ at which $u(j)\leq i$ and subtracting $i$ from the values at the remaining indices.
+%\end{lemma}
+%\begin{proof}
+%Suppose $i=1$ and write $v=\phi(u)$. We recall that $\code_j^*(v)=\code_{j+1}^*(u)$ for all $j$. That is,
+%$$\#\{k\mid k>j\mbox{ and }v^{-1}(j)>v^{-1}(k)\}=\#\{k\mid k>j+1\mbox{ and }u^{-1}(j+1)>u^{-1}(k)\}$$
+%We are trying to show that $v$ is equal to the permutation $w$ such that
+%$$w^{-1}(j)=\begin{cases}
+%u^{-1}(j+1)&\mbox{ if }u^{-1}(1)>u^{-1}(j+1)\\
+%u^{-1}(j+1)-1&\mbox{ if }u^{-1}(1)<u^{-1}(j+1)
+%\end{cases}$$
+%To show this, we show equality of $\code^*(w)$ and $\code^*(v)$. Fixing $j$, if $u^{-1}(j+1)<u^{-1}(1)$ then $\code^*_j(w)$ is equal to
+%$$\#\{k\mid k>j+1\mbox{ and }u^{-1}(j+1)>u^{-1}(k)\}$$
+%so that $\code^*_j(w)=\code^*_j(v)$, and if $u^{-1}(j+1)>u^{-1}(1)$ then $\code^*_j(w)$ is equal to
+%$$\#\{k\mid k>j+1\mbox{ and }u^{-1}(j+1)-1>u^{-1}(k)-1\}$$
+%Hence $\code_j^*(w)=\code_j^*(v)$ for all $j$, so that $v=w$. Thus, the result holds for $i=1$. Since $\phi_i=\phi\circ \phi_{i-1}$, we obtain the result by a simple induction.
+%\end{proof}
+
+\begin{definition} abel{definition:rhom}
+For each $m\geq 0$, there are homomorphisms $\rho_m:S_\infty\to S_\infty$ such that
+$$\rho_m(s_i)=\begin{cases}
+	s_i&\mbox{ if }i<m\\
+	t_{m,m+2}&\mbox{ if }i=m\\
+	s_{i+1}&\mbox{ otherwise.}
+\end{cases}$$
+Essentially, $\rho_m(u)$ is the permutation $u'$ such that
+$$u'(i)=\begin{cases}
+	u(i)+1&\mbox{ if }i\leq m\\
+	u(i-1)+1&\mbox{ if }i>m+1\\
+	1&\mbox{ if }i=m+1
+\end{cases}$$
+\end{definition}
+
+\begin{lemma} \label{lemma:phitrans}
+	For $u\in S_\infty$ we have
+	$$\phi(u) = \rho_{\code^*_1(u)}^{-1}(u)$$
+\end{lemma}
+\begin{proof}
+$\code^*_1(u)$ is equal to the number of inversions $(i,j)$ of $u$ such that $u(j)=1$. By the characterization of $\code^*_1$ near the end of Definition \ref{definition:codestuff}, which is to say that $u(\code^*_1(u)+1)=1$, it follows that $\code^*(\rho_{\code^*_1(u)}(\phi(u))) = \code^*(u)$. Thus $\rho_{\code^*_1(u)}(\phi(u))=u$, and the result follows.
+\end{proof}
+
+The following follows easily.
+
+\begin{corollary} \label{corollary:subtractcode}
+	Let $u\in S_\infty$ and let $r=\code_1^*(u)+1$. If $j<r$, then
+	$$\code_j(\phi(u))=\code_j(u)-1$$
+	If $j\geq r$, then
+	$$\code_j(\phi(u))=\code_{j+1}(u)$$
+\end{corollary}
+
+
+
+%\begin{corollary} \label{corollary:domdescents}
+%Let $\mu$ be dominant. Then the set of right descents of $\mu$ is precisely the set of nonzero values of $\code^*(\mu)$.
+%\end{corollary}
+
+\begin{lemma} \label{lemma:domdom}
+A permutation $u\in S_\infty$ is dominant if and only if for all permutations $w\in S_\infty$ we have that $u$ dominates $w$.
+\end{lemma}
+\begin{proof}
+First, we prove that if $u\in S_\infty$ is dominant, then for any $w\in S_\infty$, we have that $u$ dominates $w$. Let $i$ be the index such that $u(i)=1$, which is $\code_1^*(u)+1$ by Lemma \ref{lemma:phitrans}. Then $\code_i(u)=0$. Since $u$ is dominant, we have that $\code_j(u)=0$ for all $j\geq i$ as well, so that for all $j\geq i$ we have that $u(j)<u(j+1)$. This means that for any permutation $w\in S_\infty$, we have that $u$ $1$-dominates $w$. Now, for any $m\geq 0$ we have that $\phi_m(u)$ is dominant. Thus $\phi_m(u)$ $1$-dominates $\phi_m(w)$ for all $m\geq 0$, regardless of what $w$ is, so that $u$ dominates $w$. Thus, if $u$ is dominant, then $u$ dominates all permutations $w$.
+
+Now suppose $u\in S_\infty$ dominates all permutations. Then $u(j)<u(j+1)$ for all $j>\code_1^*(u)$. This means that every index $j$ after the first index $i$ such that $\code_i(u)=0$ (by Lemma \ref{lemma:phitrans}) satisfies $\code_j(u)=0$. By definition, $\phi(u)$ dominates all permutations as well. By the induction hypothesis, $\code(\phi(u))$ is a partition, and we have that 
+$$\code_j(u)=\begin{cases}
+\code_j(\phi(u))+1&\mbox{ if }j\leq\code_1^*(u)\\
+0&\mbox{ if }j>\code_1^*(u)
+\end{cases}$$
+Thus $\code(u)$ is a partition, and the result follows.
+\end{proof}
+
+
+It will be useful to have a formula for $\code^*(\mu)$ in terms of $\code(\mu)$ for $\mu$ dominant.
+
+\begin{lemma} \label{lemma:invdom}
+	Suppose $\mu$ is a dominant permutation. Then $\mu^{-1}$ is dominant and $\code^*(\mu)$ is the conjugate partition of $\code(\mu)$, that is to say
+	$$\code^*_i(\mu)=\#\{j\mid \code_j(\mu)\geq i\}$$
+\end{lemma}
+\begin{proof}
+	By the discussion in Definition \ref{definition:codestuff}, we have that
+	$$\code^*_1(\mu)=\#\{j\mid \code_j(\mu)\geq 1\}$$
+	We prove the result by induction on $\ell(\mu)$, the base case of $\ell(\mu)=0$ being clear. We have that
+	$$\code^*_i(\phi(\mu))=\code^*_{i+1}(\mu)$$
+	for all $i$, and by Corollary \ref{corollary:subtractcode} we have that
+	$$\code_i(\phi(\mu))=\code_i(\mu)-1$$
+	for all $i$ such that $\code_i(\mu)>0$. By the induction hypothesis, for each $i\geq 1$ we have
+	$$\code^*_i(\phi(\mu))=\#\{j\mid \code_j(\mu)-1\geq i\}=\#\{j\mid \code_j(\mu)\geq i+1\}$$
+	Thus for $i>1$ we have
+	$$\code^*_i(\mu)=\code_{i-1}^*(\phi(\mu))=\#\{j\mid \code_j(\mu)\geq i\}$$
+	The result follows by induction.
+\end{proof}
+
+
+%A formula similar to the following proposition for when $i=n$, with $n$ being the last descent of $v$, can be derived from the transition formula \cite{lsschub}. From \cite{bbrc}, a similar formula can be obtained when $i=1$. From \cite{bsskew}, a similar formula for all $i$ can be derived.
+\begin{definition} abel{definition:ydiff}
+We wish now to apply divided difference operators to the $y$ variables. We thus define an action $*$ of $S_\infty$ on the polynomial ring permuting the indices of the $y$ variables, and define
+$$\nabla^{s_i}(P)=\frac1{y_i-y_{i+1}}(s_i-1) * P$$
+Note that we have flipped the sign of the divided difference operator to have the formulas
+$$\nabla^{s_i}(\sch_v(x;y))=0$$
+if $\ell(s_iv)>\ell(v)$, and
+$$\nabla^{s_i}(\sch_v(x;y))=\sch_{s_iv}(x;y)$$
+if $\ell(s_iv)<\ell(v)$.
+We define skew divided difference operators $\nabla_u^w$ similarly to
+$$\nabla^w(PQ)=\sum_u \nabla^u(P)\nabla_u^w(Q)$$
+\end{definition}
+
+The basis of our formula is the Pieri formula given in \cite{samuelmolev}, of which we quote a special case.
+
+\begin{proposition}[Special case of Pieri formula {\cite[Theorem~7.1]{samuelmolev}}] \label{proposition:pieri}
+Suppose $k\geq 1$ and $u,w\in S_\infty$. If $u\not\tom{k} w$, then
+$$\nabla_u^w\smpr{x_1}{y}{k}=0$$
+If $u\tom{k} w$, define
+$$Q = \{u(i)\mid i\leq k\mbox{ and }u(i)=w(i)\}$$
+then
+$$\nabla_u^w\smpr{x_1}{y}{k}=\smpre{x_1}{y_Q}$$
+\end{proposition}
+\begin{proof}
+	This is simply a change of variables from the original theorem.
+\end{proof}
+
+The next proposition specialize, in the case of ordinary Schubert polynomial $\sch_v(x)$, to a formular that isolate a chosen index $i$: one can express $\sch_v(x)$ as a sum of terms of the form $x_i^p\sch_{v'}(x^{(i)})$, thereby effectively extracting the variable $x_i$ and leaving Schubert polynomials in the remaining variables \cite[Theorem~5.1]{bsskew}. Proposition \ref{proposition:pullindex} is the double Schubert polynomial version of this, which, as far as we know, is new.% A more general formula is possible for arbitrary splitting into disjoint sets of indices, similar to the formula in \cite{bsskew} and using the same method of proof as Proposition \ref{proposition:pullindex} coupled with the main result of \cite{samuelleibniz}, though we will not need this here.
+
+
+\begin{proposition} \label{proposition:pullindex}
+Let $v\in S_\infty$ and let $i>0$ be an integer. Then we have
+$$\sch_v(x;y)=\sum_{v\downvar{i} v'}\smpre{x_i}{y_{Q_i(v',v)}}\sch_{v'}(x^{(i)};y)$$
+\end{proposition}
+\begin{proof}
+Suppose $v\in S_n$. We have
+$$\sch_v(x;y)=\nabla^{vw_0(n)}(\sch_{w_0(n)}(x;y))$$
+This is equal to
+$$\nabla^{vw_0(n)}(\sch_{s_{n+1-i}\cdots s_1w_0(n)}(x^{(i)};y)\smpr{x_i}{y}{n+1-i})$$
+and, applying the Leibniz formula, is also equal to
+$$\sum_{\substack{v'\in S_\infty\\\ell(v'w_0(n)s_1\cdots s_{n+1-i})=\ell(w_0(n)s_1\cdots s_{n+1-i})-\ell(v')}}\sch_{v'}(x^{(i)};y)\nabla_{v'w_0(n)s_1\cdots s_{n+1-i}}^{vw_0(n)}\smpr{x_i}{y}{n+1-i}$$
+By the restricted Pieri formula (Proposition \ref{proposition:pieri}), for this to be nonzero necessarily $v'w_0(n)s_1\cdots s_{n+1-i}\tom{n+1-i}vw_0(n)$. We note that $v'w_0(n)s_1\cdots s_{n+1-i}\tom{n+1-i}vw_0(n)$ if and only if 
+$$v\Tom{i}v'w_0(n)s_1\cdots s_{n+1-i}w_0(n)=v's_ns_{n-1}\cdots s_i$$
+We have that $v's_n\cdots s_i$ is exactly $\varphi_{i,n}(v')$ since $v'\in S_n$, so we require that
+$$v\Tom{i}\varphi_{i,n}(v')$$
+so the sum is over all $v'\in \mathcal{D}_i(v)$.
+
+Applying Proposition \ref{proposition:pieri}, we obtain that the result is equal to
+$$\sum_{v'\in \mathcal{D}_i(v)} \smpre{x_i}{y_{A(v',v)}}\sch_{v'}(x^{(i)};y)$$
+where $A(v',v)$ is the set of all $vw_0(n)(j)$ such that $1\leq j\leq n+1-i$ and $v'w_0(n)s_1\cdots s_{n+1-i}(j)=vw_0(n)(j)$. These values are the same as at the indices that comprise the set of all $1\leq j\leq n+1-i$ such that
+$$v'(n+2-s_1\cdots s_{n+1-i}(j))=v(n+2-j)$$
+Applying the $s_1\cdots s_{n+1-i}$ to $j$, since $1\leq j\leq n+1-i$ we have that 
+$$s_1\cdots s_{n+1-i}(j)=j+1$$
+Hence we need
+$$v'(n+2-(j+1))=v'(n+1-j)=v(n+2-j)$$
+Replacing $j$ with $n+2-p$, the indices are the set of all $p$ such that $i<p\leq n+1$ and
+$$v'(p-1)=v(p)$$
+Thus $A(v',v)$ is the set of all $v(p)$ such that $p>i$ and $v'(p-1)=v(p)$, which is exactly $Q_i(v',v)$, and we are done.
+\end{proof}
+
+\begin{example}
+Suppose $i=2$ and $v=[2,5,1,3,4]$. Then
+$$\mathcal{D}_i(v)=\{[2,1],[3,1,2],[4,1,2,3]\}$$
+$$Q_i([2,1],[2,5,1,3,4])=\{1,3,4\}$$
+$$Q_i([3,1,2],[2,5,1,3,4])=\{1,4\}$$
+$$Q_i([4,1,2,3],[2,5,1,3,4])=\{1\}$$
+Thus
+$$\sch_{[2,5,1,3,4]}(x;y)=\smpre{x_2}{y_1,y_3,y_4}\sch_{[2,1]}(x^{(2)};y)+\smpre{x_2}{y_1,y_4}\sch_{[3,1,2]}(x^{(2)};y)+\smpre{x_2}{y_1}\sch_{[4,1,2,3]}(x^{(2)};y)$$
+\end{example}
+
+\begin{example}
+Suppose $i=3$ and $v=[2,4,6,5,3,1]$. Then
+$$\mathcal{D}_i(v)=\{[2,4,5,3,1],[3,4,5,2,1],[2,5,4,3,1],[3,5,4,2,1]\}$$
+$$Q_i([2,4,5,3,1],[2,4,6,5,3,1])=\{1,3,5\}$$
+$$Q_i([3,4,5,2,1],[2,4,6,5,3,1])=\{1,5\}$$
+$$Q_i([2,5,4,3,1],[2,4,6,5,3,1])=\{1,3\}$$
+$$Q_i([3,5,4,2,1],[2,4,6,5,3,1])=\{1\}$$
+Thus
+\begin{align*}
+\sch_{[2,4,6,5,3,1]}(x;y)=&\smpre{x_3}{y_1,y_3,y_5}\sch_{[2,4,5,3,1]}(x^{(3)};y)+\smpre{x_3}{y_1,y_5}\sch_{[3,4,5,2,1]}(x^{(3)};y)\\
+                          &+\smpre{x_3}{y_1,y_3}\sch_{[2,5,4,3,1]}(x^{(3)};y)+\smpre{x_3}{y_1}\sch_{[3,5(x_3;y_1),4,2,1]}(x^{(3)};y)
+\end{align*}
+\end{example}
+
+
+\begin{example} \label{example:schubpolyf}
+We compute $\sch_{[1,4,3,2]}(x;y)$ with Theorem \ref{theorem:schubformula}.
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+1&$\bullet$&       &   \\
+4&3      &$\bullet$&    \\
+3&2      &\mycircled{2}      &$\bullet$\\
+2&1      &\mycircled{1}      &\mycircled{1}\\
+\hline
+\multicolumn{4}{c}{\makebox[0pt]{$(x_2-y_1)(x_2-y_2)(x_3-y_1)$}}
+\end{tabular}
+\hspace{64pt}
+\begin{tabular}{|c|c|c|c|}
+\hline
+1&$\bullet$      &        &\\
+4&2            &$\bullet$&\\
+3&\mycircled{3}&2                 &$\bullet$\\
+2&1            &\mycircled{1}      &\mycircled{1}\\
+\hline
+\multicolumn{4}{c}{\makebox[0pt]{$(x_1-y_3)(x_2-y_1)(x_3-y_1)$}}
+\end{tabular}
+\hspace{64pt}
+\begin{tabular}{|c|c|c|}
+\hline
+1&$\bullet$      &       \\
+4&3            &$\bullet$\\
+3&1            &\mycircled{1}\\
+2&\mycircled{2}&\mycircled{2}\\
+\hline
+\multicolumn{3}{c}{\makebox[0pt]{$(x_1-y_2)(x_2-y_1)(x_2-y_2)$}}
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+1&$\bullet$      &        &\\
+4&1            &$\bullet$&\\
+3&\mycircled{3}&2      &$\bullet$\\
+2&\mycircled{2}&1      &\mycircled{1}\\
+\hline
+\multicolumn{4}{c}{\makebox[0pt]{$(x_1-y_2)(x_1-y_3)(x_3-y_1)$}}
+\end{tabular}
+\hspace{64pt}
+\begin{tabular}{|c|c|c|}
+\hline
+1&$\bullet$      &       \\
+4&1            &$\bullet$\\
+3&\mycircled{3}&1      \\
+2&\mycircled{2}&\mycircled{2}\\
+\hline
+\multicolumn{3}{c}{\makebox[0pt]{$(x_1-y_2)(x_1-y_3)(x_2-y_2)$}}
+\end{tabular}
+\captionsetup{hypcap=false}
+\captionof{figure}{Diagrams for computation of double Schubert polynomial in Example \ref{example:schubpolyf}}
+\label{fig:figureschubpolyf}
+\end{center}
+
+\end{example}
+
+\subsection{Relation to pipe dreams}
+
+%We use a theorem of Bergeron and Billey to connect the $\downvar{1}$ relation to pipe dreams. 
+Proposition \ref{proposition:pullindex} leads to the following positive formula for Schubert polynomials.% We note that other combinatorial formulas for double Schubert polynomials in this form (that is, as products of differences) are known, such as those in \cite{lam2021back}, \cite{knutson2022schubert}, and \cite{samuelmolev}.
+
+\begin{theorem} \label{theorem:schubformula}
+	Let $v\in S_\infty$ with $\ell(vs_i)>\ell(v)$ for all $v>n$ for some $n>0$. Then
+	$$\sch_v(x;y) = \sum_{(v_j)_{j=0}^n}\prod_{i=1}^n \smpre{x_{i}}{y_{Q_1(v_i,v_{i-1})}}$$
+	where the sequence of $v_i$ ranges over all such that $v_0=v$ and $v_{i-1}\downvar{1}v_i$ for all $i\geq 1$.
+\end{theorem}
+
+%This is an easy consequence of Proposition \ref{proposition:pullindex} and we hence do not include the proof, leaving it to the reader. In implementing this with a program, a recursive method is best to minimize the number of operations required. Alternatively, a similar formula (in a sense, the dual formula) for double Schubert polynomials can be found in \cite[Theorem~5.1]{samuelmolev}.
+
+The significance of Theorem \ref{theorem:schubformula} lies in its ability to connect the monomials of double Schubert polynomials (products of terms of the form $x_i-y_j$) to reduced words with compatible sequences when expressed in this form.
+
+\begin{lemma}\label{lemma:factor}
+Let $v$ be a permutation. If $v\downvar{1} v'$, let $a_1,\ldots, a_k$ be the elements of $Q_1(v',v)$ in decreasing order. Then
+$$v=s_{a_1}\cdots s_{a_k}\sigma(v')$$
+\end{lemma}
+\begin{proof}
+	Suppose $v\in S_{n}$. We have by definition that there is a sequence of integers $b_1,\ldots,b_p$, all distinct and greater than $1$, such that
+	$$vt_{1,b_1}\cdots t_{1, b_p}(1) = n + 1$$
+	and
+	$$vt_{1,b_1}\cdots t_{1, b_p}(i+1) = v'(i)$$
+	for all $i<n-1$. This means that
+	$$vt_{1,b_1}\cdots t_{1, b_p} = s_ns_{n-1}\cdots s_1\sigma(v')$$
+	This is because if $v''=\sigma(v')$, then
+	$$v''(1)=1$$
+	and
+	$$v''(i) = v(i-1)+1$$
+	The cycle $s_n\cdots s_1$ sends $1\mapsto n+1$ and $i\mapsto i-1$ if $1<i\leq n+1$, hence
+	$$vt_{1,b_1}\cdots t_{1, b_p} = s_ns_{n-1}\cdots s_1\sigma(v')$$
+	In particular,
+	$$v = s_ns_{n-1}\cdots s_1\sigma(v')t_{1,b_p}\cdots t_{1, b_1}$$
+	This results in the factorization
+	$$v = s_n\cdots s_1t_{1,v'(b_p-1)+1}\cdots t_{1,v'(b_1-1)+1}\sigma(v')$$
+	The value $v'(b_j-1)$ necessarily decreases as $j$ decreases, since applying the corresponding reflection in the reverse order strictly increases the length with each application.  Consequently, multiplying $s_n\cdots s_1$ on the right by these reflections remove the simple reflections $s_{v'(b_p-1)},\ldots, s_{v'(b_1-1)}$. The indices removed are precisely the complement of the elements of $Q_1(v',v)$, hence the elements of $Q_1(v',v)$ in decreasing order are what remain, as desired.
+	%Now, $v'(b_i)$ are exactly the values in the interval $[n-1]$ that are not contained in $Q_1(v',v)$. The result follows.
+\end{proof}
+
+\begin{theorem} \label{theorem:sequencecompat}
+	Suppose $v=v_0\downvar{1} v_1\cdots \downvar{1} v_{k+1}=1$. Let $q_{i,1},\ldots q_{i,m_i}$ be the elements of $Q_1(v_i,v_{i-1})$ in decreasing order. Let the sequences $a_1,\ldots,a_m$ and $b_1,\ldots,b_m$ be the concatenation, in order of increasing $i$, of the sequences of length $m_i$
+	$$q_{i,1} + i -1,\ldots, q_{i,m_i} + i - 1$$
+	and
+	$$(i, i,\ldots, i)$$
+	respectively. Then $(a_1,\ldots,a_m)$ are the indices of the simple reflections in a reduced word for $v$, and $(b_1,\ldots,b_m)$ is a sequence of integers compatible with this reduced word.
+\end{theorem}
+
+% full coproduct is the RC graph basis
+
+\subsection{Proof of the domination formula}
+
+The idea of the proof is to pick apart the divided difference to apply it to the double Schubert polynomial variable index by variable index.
+
+\begin{lemma} \label{lemma:varshift}
+Let $u,w\in S_\infty$, let $p\in\mathbb{Z}[x]$, and let $i>0$ be an integer. Then
+$$\partial_{\sigma_i(u)}^{\sigma_i(w)}(\shiftvby{i}(p))=\shiftvby{i}(\partial_u^w(p))$$
+\end{lemma}
+\begin{proof}
+Since
+$$\partial^{s_j}=\frac{1}{x_j-x_{j+1}}(1-s_j)$$
+It suffices to show that
+$$\sigma_i(s_j)(\shiftvby{i}(x_p))=\shiftvby{i}(s_j(x_p))$$
+Writing this out, we have on the left-hand side
+$$s_{i+j}(x_{i+p})=\begin{cases}
+x_{i+p+1}&\mbox{ if }p=j\\
+x_{i+p-1}&\mbox{ if }p=j+1\\
+x_{i+p}&\mbox{ otherwise}
+\end{cases}$$
+which agrees with the right-hand side when worked out.
+\end{proof}
+
+\begin{definition}
+Let $(a_1,\ldots,a_m)$ be a reduced word. A sequence $(b_1,\ldots,b_m)$ of the same length such that $b_i\in \{1,a_i\}$ is said to be a \emph{subword} for the element $b_1\cdots b_m$. Let $(b_{i_1},\ldots,b_{i_k})$ be all of the nonunit elements of this subword, with $i_1<\cdots<i_k$. Then the subword is said to be reduced if $(b_{i_1},\ldots,b_{i_k})$ is a reduced word.
+\end{definition}
+
+
+
+The following was proved by Macdonald in \cite{notes}.
+
+\begin{proposition} \label{proposition:divcompute}
+Suppose $u,w\in S_\infty$ and let $(a_1,\ldots,a_m)$ be a fixed reduced word for $w$. Then $\partial_u^w$ is the sum over all reduced subwords $(b_1,\ldots,b_m)$ for $u$ of the elements
+$$\partial_{b_1}^{a_1}\partial_{b_2}^{a_2}\cdots\partial_{b_m}^{a_m}$$
+\end{proposition}
+\begin{proof}
+This is true if $w=1$. Otherwise, suppose $(a_1,\ldots,a_m)$ is a reduced word for $w$. Let 
+$$\eta(u,a_m)=\begin{cases}1&\mbox{ if }\ell(ua_m)<\ell(u)\\
+0&\mbox{ if }\ell(ua_m)>\ell(u)
+\end{cases}$$
+Then
+$$\partial_u^w=\partial_u^{wa_m}\partial^{a_m}+\eta(u,a_m)\partial_{ua_m}^{wa_m}a_m$$
+The set of reduced subwords $(b_1,\ldots,b_m)$ for $u$ is the union of the set of all subwords $(b_1,\ldots,b_{m-1},1)$ that are reduced subwords for $u$ plus the set of all subwords $(b_1,\ldots,b_{m-1},a_m)$ such that $(b_1,\ldots,b_{m-1})$ is a reduced subword of $(a_1,\ldots,a_{m-1})$ for $ua_m$, with this second set occurring only if $\eta(u,a_m)=1$. Let
+$$D=\partial_{b_1}^{a_1}\cdots\partial_{b_{m-1}}^{a_{m-1}}$$
+$D$ occurs in $\partial_{u}^{wa_m}$ where $(b_1,\ldots,b_{m-1})$ is a reduced subword for $u$ by the induction hypothesis, and $\partial^{a_m}=\partial_{1}^{a_m}$, so the terms in the summand $\partial_u^{wa_m}\partial^{a_m}$ correspond bijectively to subwords of the first type. For the second summand, $D$ occurs in $\partial_{ua_m}^{wa_m}$ where $(b_1,\ldots,b_{m-1})$ is a reduced subword for $ua_m$ by the induction hypothesis, and $a_m=\partial_{a_m}^{a_m}$, so the terms in the summand $\partial_{ua_m}^{wa_m}a_m$ correspond bijectively to subwords of the second type. Since this accounts for all of them, the result follows by induction.
+\end{proof}
+
+
+\begin{lemma} \label{lemma:coderesult}
+Let $w\in S_\infty$ have $\code^*(w)=(m_1,\ldots,m_q)$. Then
+$$w=d[q,m_q]\cdots d[2,m_2]d[m_1]$$
+\end{lemma}
+\begin{proof}
+%It is equivalent to show that if $\code(w)=(m_1,\ldots,m_q)$, then
+%$$w=c[m_1]^{-1}\cdots c[q,m_q]^{-1}$$
+This is true if $\ell(w)=0$. Otherwise, suppose $\ell(w)>0$ and the result holds for smaller lengths. Assume without loss of generality that $m_q>0$. Then
+$$s_qw=d[q+1,m_q-1]d[q-1,m_{q-1}]\cdots d[2,m_2]d[m_1]$$
+by the induction hypothesis, since
+$$\code^*(s_qw)=(m_1,\ldots,m_{q-1},0,m_q-1)$$
+Since $s_qd[q+1,m_q-1]=d[q,m_q]$, the result follows for $s_q(s_qw)=w$ by induction.
+\end{proof}
+
+
+\begin{definition}[The normal] form]
+The element $d[a,b]$ (for all $a\geq 1$, $b\geq 0$) has a unique reduced word. Consequently, the factorization $w=d[q,m_q]\cdots d[m_1]$ corresponds to an unambiguous reduced word for $w$. We call this reduced word the \emph{normal form} of $w$. This is simply a convenient choice of normal form for our situation. More generally, systematic procedures exist for computing normal forms of elements in Coxeter groups via parabolic subgroups; the construction above is one instance of such methods in the case of symmetric groups \cite{combcox}.
+\end{definition}
+
+\begin{lemma} \label{lemma:subword}
+Let $(a_1,\ldots,a_m)$ be the normal form for an element $w\in S_\infty$ and let $(b_1,\ldots,b_m)$ be a reduced subword for an element $u\in S_\infty$ with $\code^*(u)=(m_1',\ldots,m_p')$. Then $m_1'\leq m_1$. If $(a_j,a_{j+1},\ldots,a_m)$ is the ending portion such that $a_j\cdots a_m=d[m_1]$, then if $m_1'>0$ we have $b_i\neq 1$ for all $j\leq i<j+m_1'$.
+\end{lemma}
+\begin{proof}
+Since $d[m_1]$ and $d[m_1']$ are the minimal length left coset representatives of $w$ and $u$, respectively, with respect to the parabolic subgroup generated by $\{s_i\}_{i>1}$, it follows that $d[m_1']\leq d[m_1]$ in Bruhat order. Hence $m_1'\leq m_1$ (see \cite{combcox}). We prove the subword statement by induction on $\ell(u)$. 
+
+
+If $m_1'=0$, there is nothing to prove. 
+If $1$ is the only index $i$ such that $m_i'\neq 0$, then we can see that this is true for combinatorial reasons ($d[m_1']$ has exactly one reduced word, and the only place it fits is at the beginning of $(a_j,\ldots,a_m)$). 
+
+Suppose $p>1$ is the last index such that $m_p'>0$. Then $\ell(s_pu)<\ell(u)$, so by setting one nonunit element to $1$ in $(b_1,\ldots,b_m)$ we obtain a reduced subword for $s_pu$ (by the exchange property). By the induction hypothesis, the desired portion of $(a_j,\ldots,a_m)$ is occupied by $m_1'$ nonunit elements in this reduced subword for $s_pu$ since $\code_1^*(s_pu)=m_1'$. Replacing the element removed by multiplying on the left by $s_p$, we obtain the result.
+\end{proof}
+
+%\begin{proposition}\label{proposition:normalmu}
+%Let $w\in S_\infty$ have normal form $(a_1,\ldots,a_m)$ and let $u\in S_\infty$ dominate $w$. If $(b_1,\ldots,b_m)$ is a reduced subword for $u$, then the nonunit elements of $(b_1,\ldots,b_m)$ comprise the normal form of $u$, and this is the unique reduced subword of $(a_1,\ldots,a_m)$ for $\u$.
+%\end{proposition}
+%\begin{proof}
+%Suppose $\code^*(w)=(m_1,\ldots,m_q)$ and $\code^*(\mu)=(\lambda_1,\ldots,\lambda_p)$. If $m_1<\lambda_1$, then there is no reduced subword for $\mu$ by Lemma \ref{lemma: subword}. We prove this by induction on $m$. If $\lambda_1=m_1$, then all subwords of $(a_1,\ldots,a_m)$ for $\mu$ have the $c[m_1]$ portion occupied by nonunit elements by Lemma \ref{lemma:subword}. Suppose this begins at index $j$. Then $\sigma_{-1}(\mu c[m_1]^{-1})$ is dominant and any reduced subword of $(a_1,\ldots,a_m)$ for $\mu$ consists of a reduced subword of $(a_1,\ldots,a_{j-1})$ for $\mu c[m_1]^{-1}$ followed by $(a_{j},\ldots,a_m)$. This translates to a reduced subword of $(\sigma_{-1}(a_1),\ldots,\sigma_{-1}(a_{j-1}))$, which is in normal form, that is a reduced subword for the dominant permutation $\sigma_{-1}(\mu c[m_1]^{-1})$. By the induction hypothesis, this subword must be in normal form and unique, so the result follows by induction.
+%Suppose now that $\lambda_1<m_1$. In that case we have that $\ell(\mu s_{m_1})>\ell(\mu)$ since $\code^*(\mu)=\lambda(\mu)$, so that $m_1$ is larger than the length of the code of $\mu$ and $\mu$ cannot have $s_{m_1}$ as a descent. By the induction hypothesis, any reduced subword of $(a_1,\ldots, a_{m-1})$ for $\mu$ is in normal form and unique. Adding on $a_m$ does not change this, so the result follows by induction.
+%\end{proof}
+
+\begin{lemma} \label{lemma:divform}
+Let $u, w\in S_\infty$ and suppose $u$ $1$-dominates $w$. Then $\partial_u^w=0$ unless $\code_1^*(w)\geq\code_1^*(u)$, in which case
+$$\partial_u^w=\partial_{\sigma(\phi(u))}^{\sigma(\phi(w))}d[\code_1^*(u)]\partial^{d[\code_1^*(u)+1,\code_1^*(w)-\code_1^*(u)]}$$
+\end{lemma}
+\begin{proof}
+Let $(a_j,\ldots,a_m)$ be the consecutive ending portion of the normal form of $w$ such that $a_j=s_1$ and let $(b_1,\ldots,b_m)$ be a reduced subword for $u$. By Lemma \ref{lemma:subword}, $b_p\neq 1$ for all $j\leq p<j+\code_1^*(u)$ (whereas if $\code_1^*(w)<\code_1^*(u)$, this is not possible and there is no reduced subword for $u$). Since $u$ has no descent between $\code_1^*(u)$ and $\code_1^*(w)$, we have that $b_p=1$ for all $p\geq j+\code_1^*(u)$. It follows that
+$$\partial_u^w=\partial_{ud[\code_1^*(u)]^{-1}}^{wd[\code_1^*(w)]^{-1}}d[\code_1^*(u)]\partial^{d[\code_1^*(u)+1,\code_1^*(w)-\code_1^*(u)]}$$
+since this is true for every subword. Now, we can see by examining the normal forms of these elements that
+$$ud[\code_1^*(u)]^{-1}=\sigma(\phi(u))$$
+and
+$$wd[\code_1^*(w)]^{-1}=\sigma(\phi(u))$$
+and the result follows.
+\end{proof}
+
+\begin{proof}[Proof of Theorem \ref{theorem:dualpieri}]
+We compute this by induction on the maximal index $m$ such that $\code_m^*(u)\neq 0$, with the base case being that $u$ is the identity. If $u$ is the identity, then the result is
+$$\partial^w(\sch_v(x;z))|_{x=y}$$
+This agrees with the stated formula when we set $m=0$. For the induction step, by Lemma \ref{lemma:divform} we have
+$$\partial_u^w=\partial^{\sigma(\phi(w))}_{\sigma(\phi(u))}d[\code^*_1(u)]\partial^{d_1}$$
+We apply this to the double Schubert polynomial $\sch_v(x;z)$. Applying $\partial^{d_1}$, we obtain $\sch_{vd_1^{-1}}(x;z)$, provided $\ell(vd_1^{-1})=\ell(v)-\ell(d_1)$, or otherwise $0$. Assuming the term is nonzero, using Proposition \ref{proposition:pullindex}, we have that
+$$\sch_{vd_1^{-1}}(x;z)=\sum_{v_1\in \mathcal{D}_{\code_1^*(u)+1}(vd_1^{-1})}\smpre{x_{\code^*_1(u)+1}}{z_{A_1}}\sch_{v_1}(x^{(\code_1^*(u)+1)};z)$$
+Now applying $d[\code^*_1(u)]$, this becomes
+
+$$\sum_{v_1\in \mathcal{D}_{\code_1^*(u)+1}(vd_1^{-1})}\smpre{x_1}{z_{A_1}}\sch_{v_1}(\shifthom x;z)$$
+Now we are trying to compute $\partial^{\sigma(\phi(w))}_{\sigma(\phi(u))}$ applied to this sum. By Lemma \ref{lemma:varshift}, the application to the double Schubert polynomial $\sch_{v_1}(\shifthom x;z)=\sch_{v_1}(\shifthom x;z)$ is equal to 
+$$\shifthom\partial^{\phi(w)}_{\phi(u)}(\sch_{v_1}(x;z))$$ 
+We can apply the induction hypothesis to compute this, since $\phi(u)$ dominates $\phi(w)$ and $\code^*(\phi(u))$ is strictly shorter than  $\code^*(u)$ (in the sense of the rightmost position of nonzero elements), and theref we have the result.
+\end{proof}
+
+
+
+\subsection{Reversing Molev-Sagan separated descents}
+%
+The article \cite{samuelmolev} uses the properties of dominant permutations and the Pieri formula to compute products of the form $\sch_u(x;y)\sch_v(x;z)$ where there exists a $p$ with $\ell(us_i)>\ell(u)$ if $i<p$ and $\ell(vs_i)>\ell(v)$ if $i>p$. We apply Theorem \ref{theorem:dualpieri} to reverse the conditions in this formula.
+%
+\begin{lemma} \label{lemma:shiftup}
+Let $u,v,w\in S_\infty$ and let $s_i$ be such that none of $u,v,w$ has $s_i$ as a descent. Then
+$$c_{u,v}^w(y;z)=c_{us_i,v}^{ws_i}(y;z)$$
+and
+$$c_{u,v}^w(y;z)=c_{u,vs_i}^{ws_i}(y;z)$$
+\end{lemma}
+\begin{proof}
+The latter formula was demonstrated in \cite{samuelmolev}. For the former, we apply $\partial_{us_i}^{ws_i}$ to $\sch_v(x;z)$. We have that
+$$\partial_{us_i}^{ws_i}=\partial_{us_i}^{w}\partial^{s_i}+\partial_{u}^ws_i$$
+We have that $\partial^{s_i}(\sch_v(x;z))=0$, and $s_i(\sch_v(x;z))=\sch_v(x;z)$, so the end result is
+$$\partial_u^w(\sch_v(x;z))$$
+as desired.
+\end{proof}
+%
+The following theorem is dual to Theorem 8.1 in \cite{samuelmolev}.
+\begin{theorem} \label{theorem:appl}
+Let $u,v,w\in S_\infty$. Suppose $u^{-1}\dom(u)=s_{i_1}\cdots s_{i_k}$ with $\ell(vs_{i_j})>\ell(v)$ for all $1\leq j\leq k$. Then $c_{u,v}^w(y;z)=0$ unless $\ell(wu^{-1}\dom(u))=\ell(w)+\ell(u^{-1}\dom(u))$, in which case
+$$c_{u,v}^w(y;z)=c_{\dom(u),v}^{wu^{-1}\dom(u)}(y;z)$$
+Hence, this can be computed with Theorem \ref{theorem:dualpieri} and has nonnegative integer coefficients as a polynomial in the terms $y_i-z_j$. 
+
+In particular, this applies whenever there exists a $p$ such that $\ell(u)<\ell(us_i)$ for all $i>p$ and $\ell(v)<\ell(vs_i)$ for all $i<p$.
+\end{theorem}
+\begin{proof}
+The proof is identical to that of \cite[Proposition~4.3]{samuelmolev}, hence we cite that proof as proof of this result.
+\end{proof}
+
+Hence, citing Theorem $3.1$ of \cite{samuelmolev}, if $u$ and $v$ have separated descents, in any direction, then $c_{u,v}^w(y;z)$ has nonnegative integer coefficients as a polynomial in $y_i-z_j$.
+%
+This formula completes all of the generalizations in \cite{samuelmolev} that could only be generalized in one direction; \cite{samuelmolev} is the correct direction in which to compute the equivariant case positively, but ``commutativity'' (not literally, but rather the ability to switch the lower indices) is not present in the general Molev-Sagan case. The generalizations of formulas in \cite{grass} (multiplying factorial Schur polynomials with different numbers of $x$ variables) and \cite{kohnert1997multiplication} (multiplying a double Schubert polynomial by a factorial Schur polynomial that has at least as many $x$ variables) are made computable positively in the opposite direction with Theorem \ref{theorem:appl}, where the factorial Schur polynomial with more $x$ variables has coefficients in $z$ (whereas only coefficients in $y$ were computed previously). This also provides a third way to compute a product of two factorial Schur polynomials with the same number of $x$ variables (the first being in \cite{molev1999littlewood}, the second in \cite{samuelmolev}). Like Molev and Sagan's Littlewood-Richardson rule in this case, however, the formula is not positive when substituting $y=z$, unlike the formula in \cite{samuelmolev} that is positive in this sense.
+%
+\begin{example} \label{example:dualcomp}
+We compute a dual example to Example 8.1 in \cite{samuelmolev}, where $u=[3,1,4,2]$ and $v=[4,1,3,2]$. $u$ is not a dominant permutation, but Theorem \ref{theorem:appl} applies. We choose $w=[4,1,5,2,3]$. Then we have
+\begin{align*}
+\lambda(u)&=(2,2)\\
+\dom(u)&=[3,4,1,2]\\
+wu^{-1}\dom(u)&=[4,5,1,2,3]\\
+\code^*(wu^{-1}\dom(u))&=(2,2,2)
+\end{align*}
+
+\begin{center}
+\begin{tabular}{|c|c|c@{}c@{}c|}
+\multicolumn{5}{r}{$\sch$}\\
+\hline
+4&4        &4        &\xr{3,1,2}&\rd{1}\\
+1&2        &2        &                       &\rd{4}\\
+3&\tb&         &                       &\rd{2}\\
+2&1        &\tb&                       &\rd{3}\\
+ &3        &1        &                       &\\
+ &         &3        &                       &\\
+\hline
+\multicolumn{5}{c}{\makebox[0pt]{$\sch_{[1,4,2,3]}(y_3,y_4;z)$}}
+\end{tabular}
+\captionsetup{hypcap=false}
+\captionof{figure}{Diagram for Example \ref{example:dualcomp}}
+\label{fig:figuredualcomp}
+\end{center}
+%Then the only path contributing a nonzero term is
+%\begin{align*}
+%[4,1,3,2]\to [4,2,1,3]\to [4,2,1,3]\to [1,4,2,3]&\to (y_3-z_2)(y_3-z_3)[]+(y_3-z_3)[2,1]+[3,1,2]\\
+%                                                &\to (y_3-z_2)(y_3-z_3)+(y_3-z_3)(y_4-z_1)+(y_4-z_1)(y_4-z_2)
+%\end{align*}
+
+Thus
+$$c_{[3,1,4,2],[4,1,3,2]}^{[4,1,5,2,3]}(y;z)=(y_3-z_2)(y_3-z_3)+(y_3-z_3)(y_4-z_1)+(y_4-z_1)(y_4-z_2)$$
+\end{example}
+%
+%
+%
+%For an unrelated way to generalize Theorem \ref{theorem:dualpieri} and other formulas for $\partial_u^w$ for which we know the result is always positive,
+%\begin{theorem} \label{theorem:shiftdiv}
+%Suppose $u,w\in S_\infty$ are such that $c_{u,v}^w(y;z)$ has nonnegative integer coefficients as a polynomial in the terms $y_i-z_j$ for all $v\in S_\infty$. If $p\geq 0$, then $c_{\sigma_p(u),v}^{\sigma_p(w)}(y;z)$ has nonnegative integer coefficients as a polynomial in $y_i-z_j$ for all $v\in S_\infty$.
+%\end{theorem}
+%\begin{proof}
+%We note by Proposition \ref{proposition:pullindex} that there are $v_i\in S_\infty$, $1\leq i\leq p$, and sets $Q_i$ such that
+%$$\sch_v(x_1,\ldots,x_n;z)=\sum_{v_1,\ldots,v_p}H_{\ell(v_1,v)}(x_1;z_{Q_1})H_{\ell(v_2,v_1)}(x_2;z_{Q_2})\cdots H_{\ell(v_p,v_{p-1})}(x_p;z_{Q_p})\sch_{v_p}(x_{p+1},\ldots,x_n;z)$$
+%Namely, $v_{i+1}\in D_1(v_i)$ for all $i$, with $v_0=v$. Then applying $\partial_{\sigma_p(u)}^{\sigma_p(w)}$ to $\sch_v$ is the same as splitting up the sum in this way and applying $\partial_u^w$ to $\sch_{v_p}(x_1,\ldots,x_{n-p};z)$ by Lemma \ref{lemma:varshift}, which by assumption has nonnegative coefficients.
+%\end{proof}
+%
+%There are numerous further possible applications. For another, we need a lemma.
+%\begin{lemma} \label{lemma:flipdiv}
+%Suppose $u,w\in S_{n+1}$. Then
+%$$\partial_u^w=w_0(n)\partial_{w_0(n)w}^{w_0(n)u}$$
+%\end{lemma}
+%\begin{proof}
+%We prove this by induction on $\ell(w)$. If $\ell(w)=1$, then $\partial_u^w=0$ unless $u=1$. In that case the same is true for $\partial_{w_0(n)w}^{w_0(n)u}$, so the result follows if $u\neq 1$. If $u=1$, then 
+%$$\partial_{w_0(n)w}^{w_0(n)u}=\partial_{w_0(n)}^{w_0(n)}=w_0(n)$$
+%and
+%$$w_0(n)\partial_{w_0(n)w}^{w_0(n)u}=1=\partial_u^w$$
+% Hence, the base case of the induction is established.
+%
+%Suppose now that the result holds for lengths less than $\ell(w)$ and let $s_i$ be a right descent of $w$. If $\ell(us_i)>\ell(u)$, then
+%$$\partial_u^w=\partial_u^{ws_i}\partial^{s_i}=w_0(n)\partial_{w_0(n)ws_i}^{w_0(n)u}\partial^{s_i}$$
+%Then $s_i$ is a descent of both $w_0(n)ws_i$ and $w_0(n)u$, so
+%$$\partial_{w_0(n)ws_i}^{w_0(n)u}=\partial_{w_0(n)ws_i}^{w_0(n)us_i}\partial^{s_i}+\partial_{w_0(n)w}^{w_0(n)us_i}s_i$$
+%Multiplying on the right by $\partial^{s_i}$, we obtain
+%$$\partial_{w_0(n)w}^{w_0(n)us_i}\partial^{s_i}=\partial_{w_0(n)w}^{w_0(n)u}$$
+%and the result follows by induction.
+%
+%Suppose finally that $\ell(us_i)<\ell(u)$. Then
+%$$\partial_u^w=\partial_u^{ws_i}\partial^{s_i}+\partial_{us_i}^{ws_i}s_i$$
+%By the induction hypothesis, this is equal to
+%$$w_0(n)\partial_{w_0(n)ws_i}^{w_0(n)u}\partial^{s_i}+w_0(n)\partial_{w_0(n)ws_i}^{w_0(n)us_i}s_i$$
+%Now
+%$$\partial_{w_0(n)ws_i}^{w_0(n)us_i}=\partial_{w_0(n)ws_i}^{w_0(n)u}\partial^{s_i}+\partial_{w_0(n)w}^{w_0(n)u}s_i$$
+%So
+%$$\partial_{w_0(n)ws_i}^{w_0(n)us_i}s_i=-\partial_{w_0(n)ws_i}^{w_0(n)u}\partial^{s_i}+\partial_{w_0(n)w}^{w_0(n)u}$$
+%Thus, the result is equal to
+%$$w_0(n)\partial_{w_0(n)ws_i}^{w_0(n)u}\partial^{s_i}+w_0(n)(-\partial_{w_0(n)ws_i}^{w_0(n)u}\partial^{s_i}+\partial_{w_0(n)w}^{w_0(n)u})$$
+%With the cancellation, the result follows.
+%\end{proof}
+%
+%%\begin{lemma}
+%%Suppose $w\in S_\infty$ and $p$ are such that 
+%%\begin{enumerate}
+%%\item $\code_i(w)=0$ for all $i>p$.
+%%\item $\code_i(w)\leq \code_{i+1}(w)$ for all $1\leq i<p$.
+%%\end{enumerate}
+%%Then
+%%\end{lemma}
+%
+%\begin{proposition} \label{proposition:onegrass}
+%Suppose $u,v,w\in S_\infty$. Let $N\geq p$ be positive integers such that
+%\begin{enumerate}
+%\item $u,w\in S_{N+1}$.
+%\item If $p<N$ then $\code_i(u),\code_i(w),\code_i(v)=0$ for all $i>p$.
+%\item $\code_i(w)\leq \code_{i+1}(w)+1$ for all $1\leq i<p$.
+%\end{enumerate}
+%Then we have that the element
+%$$w_0(N)w\sigma_p(w_0(N-p))$$
+%is dominant and
+%$$c_{u,v}^w(x;z)=w_0(N)c_{w_0(N)w\sigma_p(w_0(N-p)),v}^{w_0(N)u\sigma_p(w_0(N-p))}(x;z)$$ 
+%This can be computed explicitly in a positive manner with Theorem \ref{theorem:dualpieri}, and hence has nonnegative coefficients as a polynomial in $x_i-z_j$.
+%\end{proposition}
+%\begin{proof}
+%Let $N$ be sufficiently large that $u,w\in S_N$. Then by Lemma \ref{lemma:flipdiv} we have that
+%$$\partial_u^w=w_0(N)\partial_{w_0(N)w}^{w_0(N)u}$$
+%By Lemma \ref{lemma:shiftup} applied repeatedly on descents $s_i$ for $i>p$, we have that
+%$$\partial_u^w(\sch_v(x;z))=w_0(N)\partial_{w_0(N)w\sigma_p(w_0(N-p))}^{w_0(N)u\sigma_p(w_0(N-p))}(\sch_v(x;z))$$
+%We have that
+%$$\code_i(w_0(N)w\sigma_p(w_0(N-p)))=0$$
+%for all $i>p$, and
+%$$\code_i(w_0(N)w\sigma_p(w_0(N-p)))=n+1-i-\code_i(w)$$
+%for $i\leq p$. For $i<p$ we have that
+%$$\code_i(w)\leq \code_{i+1}(w)+1$$
+%hence, subtracting both sides from $n+1-i$, we obtain
+%$$\code_i(w_0(N)w\sigma_p(w_0(N-p)))=n+1-i-\code_i(w)\geq n+1-i-1-\code_{i+1}(w)=\code_{i+1}(w_0(N)w\sigma_p(w_0(N-p)))$$
+%Thus $w_0(N)w\sigma_p(w_0(N-p))$ is dominant, so Theorem \ref{theorem:dualpieri} applies to compute
+%$$c_{w_0(N)w\sigma_p(w_0(N-p)),v}^{w_0(N)u\sigma_p(w_0(N-p))}(x;z)$$
+%resulting in a polynomial in $x_i-z_j$ with nonnegative integer coefficients. We may then apply $w_0(N)$ to obtain the result, which preserves nonnegativity.
+%\end{proof}
+%
+%\begin{definition}[$k$-Grassmannian] permutations] \label{definition:grassmannian}
+%Let $k>0$ be an integer. A permutation $u$ is said to be $k$-Grassmannian if whenever $i$ is such that $\ell(us_i)<\ell(u)$ we have that $i=k$ (this includes the vacuous case $u=1$). If $u$ is $k$-Grassmannian, then $u(i)<u(i+1)$ for all $i\neq k$. Thus $\code_i(u)\leq \code_{i+1}(u)$ for all $i<k$, and $\code_i(u)=0$ for all $i>k$. $k$-Grassmannian elements are often represented by partitions. The partition $\lambda_k(u)$ corresponding to a $k$-Grassmannian $u$ is
+%$$\lambda_k(u)=(\code_k(u),\code_{k-1}(u),\ldots,\code_1(u))$$
+%Thus $k$ and the partition together uniquely identify $u$. The significance of Grassmannian elements is that if $u$ is $k$-Grassmannian then $\sch_u(x;y)$ is a factorial Schur polynomial in $x_1,\ldots,x_k$ and $y$ (\cite[Theorem~4]{bump2011factorial}) and the set of all of these for a fixed $k$ represent Schubert classes in the torus-equivariant cohomology ring of the Grassmannian $\mathrm{Gr}_k(\mathbb{C}^\infty)$ (the union of $\mathrm{Gr}_k(\mathbb{C}^n)$ as $n\to\infty$). A positive formula for $c_{u,v}^w(y;z)$ when $u$ and $v$ are $k$-Grassmannian for the same $k$ is the main result of \cite{molev1999littlewood}. More general results, such as when $u$ is $k_1$-Grassmannian and $v$ is $k_2$-Grassmannian with $k_1\geq k_2$, are found in \cite{samuelmolev}. We provide an additional generalization presently.
+%\end{definition}
+%
+%\begin{proposition} \label{proposition:grassmannian}
+%Suppose $u,v,w\in S_\infty$ and $k>0$ are such that $\code_i(u),\code_i(v),\code_i(w)=0$ if $i>k$. If any of $u$, $v$, or $w$ is Grassmannian with descent $s_k$, then there is a positive formula for $c_{u,v}^w(y;z)$ in terms of $y_i-z_j$.
+%\end{proposition}
+%\begin{proof}
+%The main result of \cite{samuelmolev} provides a formula when $u$ is $k$-Grassmannian and $v$ is such that $\code_i(v)=0$ for all $i>k$ for $c_{u,v}^w(y;z)$ in terms of $y_i-z_j$ for all $w$. If $u$ satisfies $\code_i(u)=0$ for all $i>k$ and $v$ is $k$-Grassmannian then Theorem \ref{theorem:appl} applies to give a similar formula. To obtain the third result, if $\code_i(u),\code_i(v)$ are all $0$ for $i>k$ and $w$ is $k$-Grassmannian, Proposition \ref{proposition:onegrass} then provides a positive formula for $c_{u,v}^w(y;z)$ and we are done.
+%\end{proof}
+
+
+
+%\section{Equivalence of Molev-Sagan positivity and Kirillov positivity}
+
+%We prove that $c_{u,v}^w(y;z)$ has nonnegative coefficients as a polynomial in the terms $y_i-z_j$ if and only if $c_{u,v}^w(y;0)$ has nonnegative coefficients in terms of $y$. Let $\Phi$ be the subring of $\mathbb{Z}[y,z]$ generated by the linear terms $y_i+z_j$.
+
+%\begin{lemma}
+%For all $u,v,w\in S_\infty$ we have that $c_{u,v}^w(y;-z)\in\Phi$.
+%\end{lemma}
+
+%We note the equality
+
+%\begin{lemma}
+%Suppose $p(y;z)\in\Phi$ is homogeneous of degree $d$. Then $p(y;z)$ can be expressed with nonnegative coefficients in terms of the linear polynomials $y_i+z_j$ if and only if $p(y;z)$ has nonnegative coefficients in terms of $y$ and $z$.
+%\end{lemma}
+%\begin{proof}
+%One direction is clear. For the other, let $m$ be such that
+%$$p(y;z)=\sum_{i=1}^mc_ip_i(y;z)$$
+%where $c_i\neq $ are integers and the $p_i(y;z)$ are products of $d$ terms of the form $y_i+z_j$ in weakly increasing lexicographical order. We prove by induction on $m$ and $d$ that if $p(y;z)$ has nonnegative coefficients in terms of $y$ and $z$, then $c_i>0$ for all $i$. The result is clear if $m=1$, or if $d=1$ for all $m$ due to the lexicographical ordering. Otherwise, suppose $m>1$ and $p(y;z)$ has nonnegative coefficients in terms of $y$ and $z$. We may assume by the induction hypothesis that $c_i>0$ for all $i<m$. Let $k$ be the largest value such that $z_k$ occurs in one of the products. Write
+%$$p_i(y;z_1,\ldots,z_{k-1},0)=\sum d_{i,A}y^Ar_{i,A}(y;z)$$
+%and
+%$$(\partial^kp_i)(y;z_1,\ldots,z_k,0)=\sum e_{i,A}y^Aq_{i,A}(y;z)$$
+%We have
+%$$p(y;z)=\sum_{i=1}^mc_ip_i(y;z_1,\ldots,z_{k-1},0)+z_k\sum_{i=1}^m c_i(\partial^{s_k}p_i)(y;z_1,\ldots,z_k,0)$$
+%Fixing $A$, we obtain
+%$$p_A^1(y;z)=\sum_i c_id_{i,A}r_{i,A}(y;z)$$
+%$$p_A^2(y;z)=\sum_i c_ie_{i,A}q_{i,A}(y;z)$$
+%We have that $d_{i,A},e_{i,A}>0$ for all $i$ and $A$, $r_{i,A}$ and $q_{i,A}$ are monomials in $\Phi$, and $p_A^1(y;z)$ and $p_A^2(y;z)$ have nonnegative coefficients.
+%\end{proof}
+
+%\begin{corollary}
+%We have that $c_{u,v}^w(y;z)$ can be expressed as a polynomial in $y_i-z_j$ with nonnegative integer coefficients if and only if $c_{u,v}^w(y;0)$ has nonnegative integer coefficients for all $u,v,w\in S_\infty$.
+%\end{corollary}
+
+\subsection{Reduction of product coefficients in the case of \texorpdfstring{$1$}{1}-domination}
+
+The induction step in the proof of Theorem \ref{theorem:dualpieri} is, in itself, useful in computing other types of coefficients. The result that is of use is as follows.
+
+%\partial^{d[\code_1^*(u)+1,\code_1^*(w)-\code_1^*(u)]}
+\begin{proposition} \label{proposition:oneshift}
+	Suppose $u,w\in S_\infty$ are such that $u$ $1$-dominates $w$ and that $v\in S_\infty$. If it is not the case that $$\ell(vd[\code_1^*(u)+1,\code_1^*(w)-\code_1^*(u)]^{-1}) = \ell(v)-(\code_1^*(w) - \code_1^*(u)),$$
+then $c_{u,v}^w(y;z)=0$. Otherwise, let $p=\code_1^*(u)$ and let $d=d[\code_1^*(u)+1,\code_1^*(w)-\code_1^*(u)]$. Then
+	$$c_{u,v}^w(y;z)=\sum_{vd^{-1}\downvar{p+1}v'}\smpre{y_1}{z_{Q_{p+1}(v',vd^{-1})}}c_{\phi(u),v'}^{\phi(w)}(\shifthom y;z)$$
+\end{proposition}
+\begin{proof}
+	Applying Lemma \ref{lemma:divform}, we have
+	$$\partial_u^w=\partial_{\sigma(\phi(u))}^{\sigma(\phi(w))}s_1s_2\cdots s_p\partial^{d[\code_1^*(u)+1,\code_1^*(w)-\code_1^*(u)]}$$
+	The condition on the length of $vd[\code_1^*(u)+1,\code_1^*(w)-\code_1^*(u)]^{-1}$ then arises because otherwise applying this operator yields $0$. Assume the condition holds, then. We have that
+	$$\sch_{vd^{-1}}(x;z)=\sum_{vd^{-1}\downvar{p+1}v'}\smpre{x_{p+1}}{z_{Q_{p+1}(v',vd^{-1})}}\sch_{v'}(x^{(p+1)};z)$$
+	by Proposition \ref{proposition:pullindex}. Applying $s_1\cdots s_p$ yields
+	$$s_1\cdots s_p(\sch_{vd^{-1}}(x;z))=\sum_{vd^{-1}\downvar{p+1}v'}\smpre{x_1}{z_{Q_{p+1}(v',vd^{-1})}}\sch_{v'}(\shifthom x;z)$$
+	$\partial_{\sigma(\phi(u))}^{\sigma(\phi(w))}$ then acts on $\sch_{v'}(\shifthom x;z)$ as $\partial_{\phi(u)}^{\phi(w)}$ on $\sch_{v'}(x;z)$ by Lemma \ref{lemma:varshift}. The result follows.
+\end{proof}
+
+\begin{remark}
+	Proposition \ref{proposition:oneshift} is new even for ordinary Schubert polynomials, setting $y=z=0$.
+\end{remark}
+
+Proposition \ref{proposition:oneshift} enables us to reduce certain product coefficients incrementally and, in some cases, compute the coefficient positively. Indeed, Theorem \ref{theorem:dualpieri} illustrates this method for a wide class of coefficients where full positive computation is achieved. However, other formulas in our framework may still allow positive computation of coefficients even when domination does not apply.
+
+%\begin{example} \label{example:pieces}
+%Consider
+%$$c_{\cperm{2,2,0,2}, \cperm{3,0,2,3}}^{\cperm{4,4,0,5}}(y;z) = y_3+y_4+y_5 - z_1 - z_2 - z_3$$
+%By Proposition \ref{proposition:oneshift} and degree considerations, this is equal to
+%$$(y_1-z_6)\shiftvby{}\!c_{\cperm{1,1,2},\cperm{3,2,2}}^{\cperm{3,3,5}}(y;z)+(y_1-z_3)\shiftvby{}\!c_{\cperm{1,1,2},\cperm{3,1,3}}^{\cperm{3,3,5}}(y;z)+\shiftvby{}\!c_{\cperm{1,1,2},\cperm{3,2,3}}^{\cperm{3,3,5}}(y;z)$$
+%Since this is a case of separated descents, Theorem \ref{theorem:appl} applies. The first two terms are zero, and the third, before index shifting, is equal to $y_2+y_3+y_4-z_1-z_2-z_3$. Shifting, we have computed the coefficient.
+%\end{example}
+
+\begin{example} \label{example:pieces}
+	Here, it will be natural to represent permutations by their code using the code notation. For example, consider computing $c_{\cperm{1,0,3},\cperm{3,0,2,1}}^{\cperm{7,0,1}}(y;z)$. Since $\code_1^*(\cperm{1,0,3}) = 1=\code_1^*(\cperm{7,0,1})$, Proposition \ref{proposition:oneshift} applies, reducing the computation to coefficients of the form. $c_{\cperm{0,3},v'}^{\cperm{6,1}}(\shifthom y;z)$. At this stage, however, the prospects are not especially promising, as no special methods are currently available for coefficients of this type.
+	
+	%=(y_2 - z_1) (y_3 - z_1) + (y_2 - z_1) (y_4 - z_2) + (y_2 - z_1) (y_5 - z_3) + (y_3 + y_4 + y_5 - z_1 - z_2 - z_3) (y_1 - z_2)$$
+	
+	Computing $\mathcal{D}_2(\cperm{3,0,2,1})$, we obtain
+	$$\{\cperm{3,0,1},\cperm{3,1,1},\cperm{3,2},\cperm{3,2,1}\}$$
+	We can compute, using Lemma \ref{lemma:shiftup} on descent position $2$, that
+	$$c_{\cperm{0,3},\cperm{3,0,1}}^{\cperm{6,1}}(y;z)=c_{\cperm{0,0,2},\cperm{3,0,1}}^{\cperm{6}}(y;z)=0$$
+	since this is a separated descents product, so that \cite[Theorem~3.1]{samuelmolev} applies, and similarly
+	$$c_{\cperm{0,3},\cperm{3,1,1}}^{\cperm{6,1}}(y;z)=c_{\cperm{0,0,2},\cperm{3,1,1}}^{\cperm{6}}(y;z)=0$$	
+	%Applying the formula to the remaining terms, we obtain that the coefficient is the sum of
+	%$$(y_1-z_2)\shiftvby{}\!c_{\cperm{0,3},\cperm{3,2}}^{\cperm{6,1}}(y;z)$$
+%and
+%$$\shiftvby{}\!c_{\cperm{0,3},\cperm{3,2,1}}^{\cperm{6,1}}(y;z)$$
+	Both $\cperm{3,2}$ and $\cperm{3,2,1}$ are dominant, so these coefficients can be computed with \cite[Theorem~8.1]{samuelmolev}. We have
+	$$c_{\cperm{0,3},\cperm{3,2}}^{\cperm{6,1}}(y;z) = y_1 + y_2 - z_1 - z_2$$
+	and
+	$$c_{\cperm{0,3},\cperm{3,2,1}}^{\cperm{6,1}}(y;z)=(y_1 - z_1) (y_2 - z_1)$$
+	We have that $Q_2(\cperm{3,0,2,1},\cperm{3,2,1})$ is empty, and $Q_2(\cperm{3,0,2,1},\cperm{3,2})=\{2\}$.
+	
+	The final result is thus
+	\begin{align*}
+	c_{\cperm{1,0,3},\cperm{3,0,2,1}}^{\cperm{7,0,1}}(y;z)&=(y_1-z_2)c_{\cperm{0,3},\cperm{3,2}}^{\cperm{6,1}}(\shifthom y;z) + c_{\cperm{0,3},\cperm{3,2,1}}^{\cperm{6,1}}(\shifthom y;z)\\
+	&=(y_1-z_2)(y_2+y_3-z_1-z_2)+(y_2-z_1)(y_3-z_1)
+	\end{align*}
+	
+\end{example}
+
+The following result provides a partial solution to the Schubert-Schur problem. It is also an easy consequence of Proposition \ref{proposition:oneshift}, and it asserts that Schubert-Schur products are Schubert positive whenever the Schur polynomial is ``sufficiently fat.'' 
+
+\begin{theorem} \label{theorem:schubschurpiece}
+	Let $v\in S_\infty$, let $k>0$ be an integer, and let $\lambda$ be a partition with at most $k$ parts. Let $N$ be the maximum value of $0$ and all $\code_i(v)+i-1$ for all $i>k$ such that $\code_i(v)\neq 0$. If $\lambda_i\geq N-k$ for all $i$ with $1\leq i\leq k$, then the coefficient of $\sch_w(x;y)$ in the product
+	$$s_{\lambda}(x_1,\ldots,x_k;y)\sch_v(x;z)$$
+	is combinatorially Molev-Sagan-positive for all $w\in S_\infty$.
+\end{theorem}
+
+\begin{remark}
+	Theorem \ref{theorem:schubschurpiece} is new even for ordinary Schubert-Schur products.
+\end{remark}
+
+\begin{proof}
+	Let $u$ be the permutation such that $\sch_u(x;y)=s_\lambda(x_1,\ldots,x_k;y)$. In particular, $\code_i(u)=\lambda_{k+1-i}$ if $1\leq i\leq k$, and $\code_i(u)=0$ if $i>k$. Suppose the polynomial $\sch_w(x;y)$ occurs with a nonzero coefficient in this product. By Lemma \ref{lemma:shiftup} applied in reverse, we may assume $w$ is $k$-Grassmannian and $\sch_v(x;z)$ has at most $N$ $x$-variables. We prove this by induction on $N - k$, the result being true in the base case $N-k\leq 0$ by \cite[Theorem~3.1]{samuelmolev}, since in that case $u$ and $v$ have separated descents.
+	
+	By virtue of the fact that $c_{u,v}^w(y;z)$ is nonzero, we have that $\code_i(w)\geq \code_i(u)$ for all $1\leq i\leq k$. In particular, $\code_i^*(u)=\code_i^*(w)=k$ for all $i$ with $1\leq i\leq N-k$. Applying Proposition \ref{proposition:oneshift}, we have that
+	$$c_{u,v}^w(y;z)=\sum_{v'\in \mathcal{D}_{k+1}(v)}\smpre{y_1}{z_{Q_{k+1}(v',v)}}c_{\phi(u),v'}^{\phi(w)}(\shifthom y;z)$$
+We have that $\phi(u)$ is $k$-Grassmannian with partition $\lambda'$ such that $\lambda'_i=\lambda_i-1$ for all $i$, and $\sch_{v'}(x;z)$ has at most $N-1$ $x$-variables. We have that
+$$\lambda_i-1\geq N-1-k$$
+for all $i$ with $1\leq i\leq k$. Hence, the induction hypothesis applies to $c_{\phi(u),v'}^{\phi(w)}(y;z)$ for each $v'$ occurring in this sum. It follows that all of the terms in the sum are positive; hence, the result follows by induction.
+\end{proof}
+
+
+\section{Product-coproduct equivalence} \label{section:coprod}
+
+\subsection{The equivalence theorem}
+
+\begin{definition}[The variable partition homomorphism] \label{definition:coprod}
+Let $A$ be a set of positive integers and let $B$ be its complement. For convenience, consider these as sequences
+$$a_1<a_2<\cdots$$
+$$b_1<b_2<\cdots$$
+We define a homomorphism of $\mathbb{Z}[y,z]$-algebras
+$$\Delta_A:\mathbb{Z}[x,y,z]\to\mathbb{Z}[x,y,z]\otimes_{\mathbb{Z}[y,z]}\mathbb{Z}[x,y,z]$$
+by declaring that
+$$\Delta_A(x_i)=\begin{cases}x_{a_j}\otimes 1 & \text{if }i=a_j\\1\otimes x_{b_j} & \text{if }i=b_j\end{cases}$$
+
+We study this homomorphism in the basis of elementary tensors $\sch_u(x;y)\otimes \sch_v(x;z)$ and define structure constants $\cpcf{u}{v}{w}{A}{y;z}$ by
+$$\Delta_A(\sch_w(x;y))=\sum_{u,v}\cpcf{u}{v}{w}{A}{y;z}\sch_u(x;y)\otimes \sch_v(x;z)$$
+Equivalently, these coefficients are determined by the expansion
+$$\sch_w(x;y)=\sum_{u,v} \cpcf{u}{v}{w}{A}{y;z}\sch_u(x_A;y)\sch_v(x_B;z)$$
+
+We note that, in the case of the ordinary Schubert polynomial case ($y=z=0$), this coproduct has a geometric interpretation: it arises from the induced map on cohomology associated with the embedding $Fl(V)\times Fl(W)\hookrightarrow Fl(V\oplus W)$ \cite{coprod}. For double Schubert polynomials in the same set of variables, an analogous construction in equivariant cohomology appears in \cite{anderson2023strong}.
+\end{definition}
+
+We will express the coefficients explicitly in terms of Molev-Sagan coefficients in the following theorem. To begin,  we give a definition:
+
+
+%as a consequence, we have that if $\mu$ is a dominant permutation, then $\code^*(\mu)$ is the conjugate partition of $\code(\mu)$, i.e. $\lambda(\mu)$.
+
+\begin{definition} \label{definition:mua}
+Let $\mu$ be a dominant permutation, and let $A$ be a set of positive integers (finite or infinite). Indexing $A$ in increasing order and writing it as a function on the corresponding integer interval, we then define $\mu_A$ to be the dominant permutation such that
+$$\code_i^*(\mu_A)=\code_{A(i)}^*(\mu)$$
+where we define $\code_i^*(\mu_A)=0$ if $i>|A|$.
+\end{definition}
+
+
+
+\begin{theorem} \label{theorem:doublecoprodpos}
+Suppose $w\in S_\infty$ and let $\mu$ be a dominant permutation such that $\ell(w\mu)=\ell(\mu)-\ell(w)$. Let $A$ be a set of positive integers and let $B=\mathbb{N}\setminus A$. Then
+$$\sch_w(x;y)=\sum_{\substack{u:\ell(u\mu_A)=\ell(\mu_A)-\ell(u)\\v:\ell(v\mu_B)=\ell(\mu_B)-\ell(v)}}c_{u\mu_A,v\mu_B}^{w\mu}(-y;-z)\sch_u(x_A;y)\sch_v(x_B;z)$$
+That is to say, fixing $\mu$, we have that $\cpcf{u}{v}{w}{A}{y;z}=0$ unless $\ell(u\mu_A)=\ell(\mu_A)-\ell(u)$ and $\ell(v\mu_B)=\ell(\mu_B)-\ell(v)$, in which case
+$$\cpcf{u}{v}{w}{A}{y;z}=c_{u\mu_A,v\mu_B}^{w\mu}(-y;-z)$$
+\end{theorem}
+
+\begin{remark}
+	Theorem \ref{theorem:doublecoprodpos} is new even for ordinary Schubert polynomials.
+\end{remark}
+
+\begin{example} 
+	We provide a simple example. Set $A=\{1\}$, $B=\{2\}$. We have
+	\begin{align*}
+	\sch_{[1,4,2,3]}(x;y) &= (z_1-y_2)(z_1-y_3)+(z_1-y_3)\sch_{[2,1]}(x_2;y)+(z_1+z_2-y_2-y_3)\sch_{[2,1]}(x_1;z)\\
+	&+\sch_{[2,1]}(x_2;y)\sch_{[2,1]}(x_1;z)+\sch_{[3,1,2]}(x_2;y)+\sch_{[3,1,2]}(x_1;z)
+	\end{align*}
+	For the dominant permutation, we can choose $\mu=\cperm{2,2}$. Then $w\mu = \cperm{1,1}$. We have $\mu_A=\mu_B=\cperm{1,1}$. To find the first coefficient, we compute
+	$$c_{\cperm{1,1},\cperm{1,1}}^{\cperm{1,1}}(-y;-z)=(z_1-y_2)(z_1-y_3)$$
+	For the second, $u=[2,1]$, and $u\mu_A=\cperm{0,1}$.
+	$$c_{\cperm{0,1},\cperm{1,1}}^{\cperm{1,1}}(-y;-z)=z_1-y_3$$
+	For the third term, $v=[2,1]$, so
+	$$c_{\cperm{1,1},\cperm{0,1}}^{\cperm{1,1}}(-y;-z)=z_1+z_2-y_2-y_3$$
+	 For the fourth term, we have
+	$$c_{\cperm{0,1},\cperm{0,1}}^{\cperm{1,1}}(-y;-z)=1$$
+	For the fifth term, $u=[3,1,2]$, so $u\mu_A$ is the identity, so that the coefficient is $1$, and similarly for the last term where $v=[3,1,2]$.
+	
+	The reader might have noticed that the right-hand side has $z$ variables, but the left-hand side does not. In fact, all of the $z$ variables cancel. Nevertheless, the representation exhibits a positivity outlined below.
+\end{example}
+
+
+\begin{corollary}[Positivity of double Schubert polynomial coproducts]
+Let $w\in S_\infty$, let $A,B\subseteq \mathbb{N}$ be complementary and write
+$$\sch_w(x;y)=\sum_{u,v}\cpcf{u}{v}{w}{A}{y;y}\sch_u(x_A;y)\sch_v(x_B;y)$$
+Then the coefficient $\cpcf{u}{v}{w}{A}{y;y}$ is a polynomial in the positive roots $y_i-y_{i+1}$ with nonnegative integer coefficients.
+\end{corollary}
+\begin{proof}
+We have that
+$$\cpcf{u}{v}{w}{A}{y;y}=c_{u\mu_A,v\mu_B}^{w\mu}(-y;-y)$$
+for some $\mu$, since we can always pick some dominant permutation $\mu$ satisfying $\ell(w\mu)=\ell(\mu)-\ell(w)$. By the main result of \cite{graham2001positivity}, $c_{u\mu_A,v\mu_B}^{w\mu}(y;y)$ is a polynomial in the negative roots $y_{i+1}-y_i$ with nonnegative integer coefficients. Substitution of $-y$ into this gives the result.
+\end{proof}
+
+\begin{corollary}[Positivity of mixed variable double Schubert polynomial coproducts]
+	Let $w\in S_\infty$, let $A,B\subseteq \mathbb{N}$ be complementary and write
+	$$\sch_w(x;y)=\sum_{u,v}\cpcf{u}{v}{w}{A}{y;z}\sch_u(x_A;y)\sch_v(x_B;z)$$
+	Then the coefficient $\cpcf{u}{v}{w}{A}{y;z}$ is a polynomial in the terms $z_i-y_j$ with nonnegative integer coefficients.
+\end{corollary}
+\begin{proof}
+	See \cite[Theorem~1.1]{gao2025grahampositivitytripleschubert}.
+\end{proof}
+
+
+Surprisingly, the proof of Theorem \ref{theorem:doublecoprodpos} is essentially a simple algebraic observation derived from the Cauchy formula. The Cauchy formula for double Schubert polynomials is well-known \cite{notes}, and related analysis in the context of nil-Coxeter algebra and the generating function for Schubert polynomials can be found in \cite{fominstan}. Given the general importance of the following theorem in our proof of product-coproduct equivalence, we note that it was proved for the universal double Schubert polynomials defined by Fulton \cite{fulton1999universal} by Kirillov in \cite{kirillov2004cauchy}. The result then descends immediately to the case of double Schubert polynomials. For completeness, we provide here a direct elementary proof for double Schubert polynomials since it is all that is needed.
+
+\begin{proposition}[The generalized Cauchy formula for double Schubert polynomials]
+Let $w\in S_\infty$ be a permutation and consider an additional infinite set of variables $a=\{a_i\mid i\geq 1\}$. Then we have
+$$\sch_w(x;y)=\sum_{\substack{w_1w_2=w\\\ell(w_1)+\ell(w_2)=\ell(w)}}\sch_{w_2}(x;a)\sch_{w_1}(a;y)$$
+\end{proposition}
+\begin{proof}
+In the polynomial ring $\mathbb{Z}[x,y,a]$ we have that the expression of the polynomial $\sch_w(x;y)$ in the basis of double Schubert polynomials $\sch_u(x;a)$ as a module over $\mathbb{Z}[y,a]$ can be written as
+$$\sch_w(x;y)=\sum_{u\in S_\infty}\partial^u(\sch_w(x;y))|_{x=a}\sch_u(x;a)$$
+We have that 
+$$\partial^u(\sch_w(x;y))|_{x=a}=\begin{cases}
+\sch_{wu^{-1}}(a;y)&\mbox{ if }\ell(wu^{-1})=\ell(w)-\ell(u)\\
+0&\mbox{ otherwise.}
+\end{cases}$$
+Thus
+$$\sch_w(x;y)=\sum_{\substack{u\in S_\infty\\\ell(wu^{-1})=\ell(w)-\ell(u)}}\sch_{wu^{-1}}(a;y)\sch_u(x;a)$$
+This is clearly equivalent to the result.
+\end{proof}
+
+We will also need the following factorization property for double Schubert polynomials associated with dominant permutations.
+
+\begin{lemma} \label{lemma:domprod}
+Suppose $A$ and $B$ are complementary sets of positive integers, and let $\mu$ be dominant. Then
+$$\sch_\mu(x;y)=\sch_{\mu_A}(x;y_A)\sch_{\mu_B}(x;y_B)$$
+\end{lemma}
+\begin{proof}
+Let $A=\{a_1<a_2<\cdots\}$ and $B=\{b_1<b_2<\cdots\}$. Since $A$ and $B$ are complementary, we have that
+$$\sch_{\mu}(x;y)=\prod_{i=1}^\infty E_{\code^*_{a_i}(\mu)}(x;y_{a_i})\prod_{j=1}^\infty E_{\code^*_{b_j}(\mu)}(x;y_{b_j})$$
+By definition of $\mu_A$ and $\mu_B$, and the characterization of double Schubert polynomials corresponding to dominant permutations as products of factorial elementary symmetric polynomials in \cite[Lemma~4.5]{samuelmolev}, the result follows.
+\end{proof}
+
+
+\begin{proof}[Proof of Theorem \ref{theorem:doublecoprodpos}]
+By Lemma \ref{lemma:domprod}, we have
+$$\sch_\mu(x;y)=\sch_{\mu_A}(x;y_A)\sch_{\mu_B}(x;y_B)$$
+Let $a$ and $b$ be additional sets of variables. Combining this identity with the Cauchy formula, we obtain
+$$\sch_\mu(x;y)=\sum_{u,v}\sch_{u\mu_A}(x;a)\sch_{v\mu_B}(x;b)\sch_{u^{-1}}(a;y_A)\sch_{v^{-1}}(b;y_B)$$
+Multiplying this out, we obtain
+\begin{align*}
+\sch_\mu(x;y)&=\sum_w\sum_{u,v}\sch_{w\mu}(x;a)c_{u\mu_A,v\mu_B}^{w\mu}(a;b)\sch_{u^{-1}}(a;y_A)\sch_{v^{-1}}(b;y_B)\\
+             &=\sum_w\sum_{u,v}\sch_{w\mu}(x;a)c_{u\mu_A,v\mu_B}^{w\mu}(a;b)\sch_{u}(-y_A;-a)\sch_{v}(-y_B;-b)\\
+						 &=\sum_w\sch_{w\mu}(x;a)\sch_{w}(-y;-a)\\
+\end{align*}
+Therefore, substituting gives
+$$\sch_w(x;y)=\sum_{u,v}c_{u\mu_A,v\mu_B}^{w\mu}(-y;-z)\sch_u(x_A;y)\sch_v(x_B;z)$$
+as desired.
+\end{proof}
+
+
+
+%\begin{corollary} \label{corollary:reducecoprod}
+%Let $u,v,w$ be permutations, let $\mu$ be a dominant permutation, and let $A,B$ be complementary sets of positive integers such that $\ell(u\mu_A)=\ell(\mu_A)-\ell(u)$, $\ell(v\mu_B)=\ell(\mu_B)-\ell(v)$, and $\ell(w\mu)=\ell(\mu)-\ell(w)$. If $\mu'$ is another dominant permutation such that $\ell(w\mu')=\ell(\mu')-\ell(w)$, then $c_{u\mu_A,v\mu_B}^{w\mu}(y;z)=0$ unless $\ell(u\mu'_A)=\ell(\mu'_A)-\ell(u)$ and $\ell(v\mu'_B)=\ell(\mu'_B)-\ell(v)$. If the latter conditions are satisfied, then
+%$$c_{u\mu_A,v\mu_B}^{w\mu}(y;z)=c_{u\mu'_A,v\mu'_B}^{w\mu'}(y;z)$$
+%\end{corollary}
+
+To justify calling this an ``equivalence'' theorem, we need to show that products can be obtained from coproducts in this way.
+
+%\begin{lemma} \label{lemma:findA}
+%If $\mu$ is a dominant permutation and $\mu'$ is another dominant permutation such that 
+%$$\desc(\mu')\subseteq \desc(\mu)$$ 
+%and 
+%$$\code_i(\mu)-\code_{i+1}(\mu)\geq\code_i(\mu')-\code_{i+1}(\mu')$$
+%for all $i\in\desc(\mu')$, define
+%$$A=\bigcup_{i\in\desc(\mu')}[\code_{i+1}(\mu)+1,\code_{i+1}(\mu)+\code_{i}(\mu')-\code_{i+1}(\mu')]$$
+%Then $\mu_A=\mu'$.
+%\end{lemma}
+%\begin{proof}
+%Let $d_1<\cdots<d_n$ be the descents of $\mu'$ and define $d_0=0$. Then 
+%$$A\cap [\code_{d_n}(\mu')]=[\code_{d_n+1}(\mu)+1,\code_{d_n+1}(\mu)+\code_{d_n}(\mu')]$$
+%Thus
+%$$\code_p(\mu_A)=0$$
+%if $p>d_n$ because the entire interval $[1,\code_{d_n+1}(\mu)]$ is not contained in $A$, and
+%$$\code_{d_n}(\mu_A)=\code_{d_n}(\mu)-\code_{d_n+1}(\mu)-(\code_{d_n}(\mu)-(\code_{d_n+1}(\mu)+\code_{d_n}(\mu')))=\code_{d_n}(\mu')$$
+%Since there are no elements of $A$ in the interval $[\code_{d_n}(\mu),\code_{d_{n-1}+1}(\mu)]$, we have that $\code_i(\mu_A)=\code_i(\mu')$ for all $i>d_{n-1}$.
+%
+%Assume the (descending) induction hypothesis that $1\leq j<n$ is such that $\code_i(\mu_A)=\code_i(\mu')$ for all $i>d_j$. Then, since the number of positive integers less than or equal to $\code_{d_j+1}(\mu)$ that are not in $A$ is equal to $\code_{d_j+1}(\mu)-\code_{d_j+1}(\mu')$, we have that
+%$$\code_{d_{j}}(\mu_A)=\code_{d_j}(\mu)-(\code_{d_j+1}(\mu)-\code_{d_j+1}(\mu'))-((\code_{d_j}(\mu)-\code_{d_j+1}(\mu))-(\code_{d_j}(\mu')-\code_{d_j+1}(\mu'))=\code_{d_j}(\mu')$$
+%and since there are no elements of $A$ in the interval $[\code_{d_j}(\mu),\code_{d_{j-1}+1}(\mu)]$, we have that $\code_i(\mu_A)=\code_i(\mu')$ for all $i>d_{j-1}$, and the result follows by induction.
+%\end{proof}
+
+
+\begin{definition}[The left dominant approximation] \label{definition:leftdom}
+%We define $\desc(u)$ for a permutation $u$ to be the set of all $i$ such that $u(i)>u(i+1)$.
+To any permutation $u$ we associate a dominant permutation $\ldom(u)$, the \emph{left dominant approximation of $u$}, as follows. If $u$ is dominant, set $u=\ldom(u)$. Otherwise, if $i$ is the maximal index such that $\code_i^*(u)<\code_{i+1}^*(u)$, set $\ldom(u)=\ldom(s_iu)$. Note that we have
+$$\ldom(u)=\dom(u^{-1})^{-1}$$
+Then we define $\ldom(u,v)$ to be the dominant permutation such that
+$$\code(\ldom(u,v))=\code(\ldom(u))+\code(\ldom(v))$$
+\end{definition}
+
+\begin{lemma} \label{lemma:cansplit}
+Suppose $u,v\in S_\infty$. Then there exist complementary subsets of positive integers $A$, $B$ such that
+$$\ldom(u,v)_A=\ldom(u)$$
+and
+$$\ldom(u,v)_B=\ldom(v)$$
+\end{lemma}
+\begin{proof}
+This can be deduced from Lemma \ref{lemma:domprod} and Lemma \ref{lemma:invdom}. 
+\end{proof}
+
+\begin{theorem}[Every product coefficient occurs as a coproduct coefficient] \label{theorem:allprod}
+Suppose $u,v,w\in S_\infty$. Let $A$ and $B$ be subsets of $\mathbb{N}$ as in Lemma \ref{lemma:cansplit}. Then $c_{u,v}^w(y;z)=0$ unless $\ell(w\ldom(u,v)^{-1})=\ell(\ldom(u,v))-\ell(w)$. In that case, we have that 
+$$c_{u,v}^w(y;z)=\cpcf{u\ldom(u)^{-1}}{v\ldom(v)^{-1}}{w\ldom(u,v)^{-1}}{A}{-y;-z}$$
+\end{theorem}
+\begin{proof}
+Consider the product
+$$\sch_{\ldom(u,v)}(x;y)=\sch_{\ldom(u)}(x;y_A)\sch_{\ldom(v)}(x;y_B)$$
+Introduce new sets of variables $a,b$, and write
+$$\sch_{\ldom(u)}(x;y_A)\sch_{\ldom(v)}(x;y_B)=\sum_{u',v'}\sch_{u'}(x;a)\sch_{v'}(x;b)\sch_{u'\ldom(u)^{-1}}(-y_A;-a)\sch_{v'\ldom(v)^{-1}}(-y_B;-b)$$
+In particular, the coefficient of $\sch_{u\ldom(u)^{-1}}(-y_A;-a)\sch_{v\ldom(v)^{-1}}(-y_B;-b)$ is
+$$\sch_u(x;a)\sch_v(x;b)=\sum_{w}c_{u,v}^w(a;b)\sch_w(x;a)$$
+Considering the Cauchy formula on $\sch_{\ldom(u,v)}(x;y)$, we obtain
+$$\sum_{w':\ell(w'\ldom(u,v)^{-1})=\ell(\ldom(u,v))-\ell(w')}\sch_{w'}(x;a)\sch_{w'\ldom(u,v)^{-1}}(-y;-a)$$
+By linear independence of double Schubert polynomials, if $c_{u,v}^w(a;b)\neq 0$ then $\sch_w(x; a )$ must occur as a term in this formula. Thus, $\ell(w\ldom(u,v)^{-1})=\ell(\ldom(u,v))-\ell(w)$. By applying Theorem \ref{theorem:doublecoprodpos}, we obtain that 
+$$c_{u,v}^w(y;z)=c_{(u\ldom(u)^{-1})\ldom(u,v)_A,(v\ldom(v)^{-1})\ldom(u,v)_B}^{(w\ldom(u,v)^{-1})\ldom(u,v)}(y;z)=\cpcf{u\ldom(u)^{-1}}{v\ldom(v)^{-1}}{w\ldom(u,v)^{-1}}{A}{-y;-z}$$
+And we have the result.
+\end{proof}
+
+%\subsection{Reduction formulas}
+%
+%
+%
+%
+%\begin{example}
+%Corollary \ref{corollary:reducecoprod} and Definition \ref{definition:leftdom} lead to a uniform way to reduce computing coefficients $c_{u,v}^w(y;z)$ to an equal coefficient with smaller upper index. Note that for any $u,v,w$ we have
+%$$c_{u,v}^w(y;z)=c_{u'\ldom(u),v'\ldom(v)}^{w'\ldom(u,v)}(y;z)$$
+%where, by Theorem \ref{theorem:allprod},  $u'=u\ldom(u)^{-1}$, $v'=v\ldom(v)^{-1}$, and $w'=w\ldom(u,v)^{-1}$. Then if we let $A,B$ be complementary such that $\ldom(u,v)_A=\ldom(u)$ and $\ldom(u,v)_B=\ldom(v)$ and define
+%$$\mu=\dom((w')^{-1})$$
+%then
+%$$c_{u,v}^w(y;z)=c_{u'\mu_A,v'\mu_B}^{w'\mu}(y;z)$$
+%We then have that $\ell(w'\mu)\leq \ell(w'\ldom(u,v))$ by Proposition \ref{proposition:smallestdom}.
+%\end{example}
+
+The following result illustrates the equivalence between products and coproducts for permutations with a given number of descents.
+
+\begin{theorem}[Descent product-coproduct equivalence] \label{theorem:kstep}
+Let $K$ be a set of descents. If $w$ has descents contained in $K$, then there exists a set of descents $K'$ with $|K|=|K'|$ and a $w'\in S_\infty$ with  descents contained in $K'$ as well as $A\subseteq \mathbb{N}$ such that for all $u,v\in S_\infty$ with descents contained in $K$ there exist $u',v'\in S_\infty$ such that
+$$c_{u,v}^w(y;z)=\cpcf{u'}{v'}{w'}{A}{y;z}$$
+
+Conversely, if $K'$ is a set of descents, $w'\in S_\infty$ has descents contained in $K'$, and $A\subseteq \mathbb N$, then there exists a set of descents $K$ with $|K|\leq |K'|$ and a $w\in S_\infty$ with descents contained in $K$ such that for all $u',v'\in S_\infty$ there exist $u,v\in S_\infty$ with descents contained in $K$ such that the above equality holds.
+\end{theorem}
+\begin{proof}
+If $w\in S_n$, let $\mu_1$ be the longest element of $S_n^K$, and let $\mu$ be such that
+$$\code_i(\mu)=2\code_i(\mu_1)$$
+for all $i$. Then there exist $A, B$ such that $\mu_A=\mu_B=\mu_1$. By Theorem \ref{theorem:doublecoprodpos}, for any $u,v\in S_n^{\mathbb{N}\setminus K}$ (the set of minimal length coset representatives of the parabolic subgroup generated by $s_i$ for $i\notin K$), we have that
+$$c_{u,v}^w(y;z)=\cpcf{u\mu_1^{-1}}{v\mu_1^{-1}}{w\mu^{-1}}{A}{y;z}$$
+Let $K'$ be the descent set of $\mu^{-1}$. Then $|K'|=|K|$, and we may select $w'=w\mu^{-1}$, $u'=u\mu_1^{-1}$, and $v'=v\mu_1^{-1}$. Since $\mu^{-1}$ has descents contained in $K'$, so does $w\mu^{-1}$. This covers all $u$ and $v$ with descents contained in $K$ such that $c_{u,v}^w(y;z)\neq 0$ since such $u$ and $v$ must be contained in $S_n^K$.
+
+Conversely, suppose $w'$ has descents contained in $K'$. Let $\mu=\ldom(w)^{-1}$, and let $K$ be the descent set of $\mu$. Since $w$ has at most $|K'|$ descents, $\mu$ has at most $|K'|$ descents, so $|K|\leq |K'|$. Then for any $A$ and $B=\mathbb{N}\setminus A$, $\mu_A$ and $\mu_B$ have descents contained in $K$. For any $u',v'$ we have that
+$$\cpcf{u'}{v'}{w'}{A}{y;z}=c_{u'\mu_A,v'\mu_B}^{w'\mu}(y;z)$$
+by Theorem \ref{theorem:doublecoprodpos}. All three indices in the product coefficient have descents contained in $K$. Set $w=w'\mu$, $u=u'\mu_A$, and $v=v'\mu_B$, and the result follows.
+\end{proof}
+
+Thus, a combinatorial formula for products in $k$-step flag varieties is equivalent to a coproduct formula for Schubert polynomials indexed by permutations with $k$ descents. In fact, known results imply combinatorial positivity of coproducts of double Schubert polynomials indexed by permutations with at most two descents, and for coproducts of ordinary Schubert polynomials with at most three descents.
+
+\begin{corollary}
+The puzzle rule in \cite{buch2015mutations} computes $\cpcf{u}{v}{w}{A}{y;y}$ Graham-positively for all $u$, $v$, $w$, and $A$ such that $w$ has at most two descents.
+\end{corollary}
+
+\begin{corollary}
+The puzzle rule proved in \cite{threestep} computes $\cpcf{u}{v}{w}{A}{0;0}$ positively for all $u$, $v$, $w$, and $A$ such that $w$ has at most three descents.
+\end{corollary}
+
+\subsection{A historical missed opportunity: separated descents for ordinary Schubert polynomials}
+
+Let $k\geq 1$ be an integer, and consider the coproduct
+$$\sch_w(x)=\sum_{u,v}d_w^{u,v}(k)\sch_u(x_1,\ldots,x_k)\sch_v(x_{k+1},\ldots,x_n)$$
+The coefficients $d_w^{u,v}(k)$ were computed in $1991$ by Macdonald in \cite[(4.19)]{notes} and shown to be nonnegative. The condition of separated descents was introduced in $2019$ in \cite{kzj}. Recall that permutations $u,v$ are said to have separated descents if there exists a $p>0$ such that $\ell(us_i)>\ell(u)$ for all $i<p$ and $\ell(vs_i)>\ell(v)$ for all $i>p$. We now interpret this condition in terms of Theorem \ref{theorem:allprod}. We begin with the following proposition.
+
+\begin{proposition} \label{proposition:mudescents}
+Let $u\in S_\infty$ and suppose $j>0$ is an integer. Then $\ell(us_j)<\ell(u)$ if and only if $\ell(\ldom(u)s_j)<\ell(\ldom(u))$.
+\end{proposition}
+\begin{proof}
+We prove this by induction on $\ell(\ldom(u))-\ell(u)$, the result being clear if $u=\ldom(u)$. If $u$ is not dominant, let $i$ be the maximal index such that $\code_i^*(u)<\code_{i+1}^*(u)$. We know by definition that $\ldom(u)=\ldom(s_iu)$. If $\ell(us_j)<\ell(u)$, then $\ell(s_ius_j)<\ell(s_iu)$. By the induction hypothesis, $\ell(\ldom(u)s_j)<\ell(\ldom(u))$. 
+
+Conversively, suppose $\ell(us_j)>\ell(u)$ and assume the induction hypothesis.  We claim that $\ell(s_ius_j)>\ell(s_iu)$. If instead we assume that $\ell(s_ius_j)<\ell(s_iu)$, then in fact $s_iu=us_j$ by the exchange property. This means that $u^{-1}(i)=j$, $u^{-1}(i+1)=j+1$. However, this implies that $\code_i^*(u)=\code_{i+1}^*(u)$, contradicting the choice of $i$. Thus we can conclude that $\ell(s_ius_j)>\ell(s_iu)$, and hence by the induction hypothesis $\ell(\ldom(u)s_j)>\ell(\ldom(u))$, as desired. This completes the induction and proves the proposition.
+\end{proof}
+
+If $u$ and $v$ have separated descents, therefore, so do $\ldom(u)$ and $\ldom(v)$. We also have the following.
+
+\begin{lemma} \label{lemma:separateddom}
+Let $\mu$ be a dominant permutation, let $A=[k]$ for some $k>0$, let $B=\mathbb N\setminus [k]$, and let $p=\code^*_k(\mu)$. Then $\ell(\mu_As_i)>\ell(\mu_A)$ for all $i<p$ and $\ell(\mu_Bs_i)>\ell(\mu_B)$ for all $i>p$, or in other words $\mu_A$ and $\mu_B$ have separated descents.
+\end{lemma}
+\begin{proof}
+If $p=0$, then $\mu_B=1$, and the result follows immediately. Otherwise, observe that the elements of $\code^*(\mu_A)$ are the right descents of $\mu_A$, and similarly for $\code^*(\mu_B)$. Since $\code^*(\mu)$ is a partition, $\mu_A$ has no descents $i$ such that $i<p$ because $\code^*_j(\mu_A)\geq p$ for all $j$, and $\mu_B$ has no descents $i$ such that $i>p$ because $\code_j^*(\mu_B)\leq p$ for all $j$. This establishes the claim.
+\end{proof}
+
+Conversely, suppose $\ell(us_i)>\ell(u)$ for all $i<p$, $\ell(vs_i)>\ell(v)$ for all $i>p$, and $\ldom(u,v)_A=\ldom(u)$ and $\ldom(u,v)_B=\ldom(v)$, then $A$ and $B$ can be chosen to be intervals (one initial and finite, and the other complementary and infinite). Therefore, setting $y=z=0$, to compute $c_{u,v}^w(0;0)$ from Theorem \ref{theorem:allprod}, the coefficients we need are exactly those in Macdonald's coproduct. Thus, a formula for separated descents could already have been obtained in $1991$, $28$ years before its appearance in \cite{kzj}.
+
+We now establish positivity of this coproduct in the equivariant and Molev--Sagan settings.
+
+\begin{theorem}[Separated coproduct theorem]
+Let $k>0$ and let $A=[k]$ be an initial interval. Then the coefficients
+\[
+\cpcf{u}{v}{w}{A}{y;z}
+\]
+appearing in the expansion
+\[
+\sch_w(x;y) \;=\; \sum_{u,v} \cpcf{u}{v}{w}{A}{y;z}\,
+   \sch_u(x_{1},\ldots,x_k;y)\,
+   \sch_v(x_{k+1},\ldots,x_n;z),
+\]
+where $n$ denotes the last descent of $w$, have the following properties:
+\begin{enumerate}
+\item They are polynomials with nonnegative coefficients in the differences $z_i-y_j$.
+\item After the specialization $z=y$, they are Graham positive, meaning polynomials in the simple roots $y_i-y_{i+1}$ with nonnegative integer coefficients.  
+\item They are computed by the positive formula \cite[Theorem~3.1]{samuelmolev}.
+\end{enumerate}
+Moreover, nonnegativity as a polynomial in the differences $z_i-y_j$ also holds when $A=\mathbb{N}\setminus[k]$, which is computed by Theorem \ref{theorem:dualpieri}.
+
+\end{theorem}
+
+\begin{proof}
+
+Assume first that $A=[k]$ and set $B=\mathbb{N}\setminus [k]$. We have that $\cpcf{u}{v}{w}{A}{y;z}=c_{u\mu_A,v\mu_B}^{w\mu}(-y;-z)$ for some dominant permutation $\mu$. There exists a $p$ such that $\ell(u\mu_As_i)>\ell(u\mu_A)$ for all $i<p$ and $\ell(v\mu_Bs_i)>\ell(v\mu_B)$ for all $i>p$ by Lemma \ref{lemma:separateddom}. Hence, \cite[Theorem~3.1]{samuelmolev} allows us to compute this coefficient nonnegatively as a polynomial in $z_i-y_j$ that is manifestly Graham positive after the substitution $z=y$. For $A=\mathbb{N}\setminus [k]$, the opposite descent conditions hold, and Theorem \ref{theorem:appl} applies to provide positivity as a polynomial in $z_i-y_j$. When we set $z=y$, the coefficients become equal, but Graham positivity is directly visible (without cancellation) only when we use \cite[Theorem~3.1]{samuelmolev} to compute the coefficient.
+\end{proof}
+
+
+\subsection{Reduction formulas for product coefficients by varying the dominant permutation}
+
+Theorem \ref{theorem:doublecoprodpos} does not depend on which dominant permutation is chosen to define the coefficient in the coproduct. Suppose we wish to compute the product coefficient $c_{u,v}^w(y;z)$. Then, by Theorem \ref{theorem:allprod}, we have that
+$$c_{u,v}^w(y;z)=\cpcf{u\ldom(u)^{-1}}{v\ldom(v)^{-1}}{w\ldom(u,v)^{-1}}{A}{-y;-z}$$
+Choosing $\ldom(u,v)$ as the dominant permutation in which to transform this into a coproduct coefficient may, however, be overkill. Write
+\begin{align*}
+	\widehat{w}&=w\ldom(u,v)^{-1}\\
+	\widehat{u}&=u\ldom(u)^{-1}\\
+	\widehat{v}&=v\ldom(v)^{-1}
+\end{align*}
+We may think of $\widehat{u}$, $\widehat{v}$, and $\widehat{w}$ as the ``base indices'' of this coproduct coefficient. We have that
+$$c_{u,v}^w(y;z) = c_{\widehat{u}\ldom(u),\widehat{v}\ldom(v)}^{\widehat{w}\ldom(u,v)}(y;z)$$
+Choose
+$$\mu=\dom(\widehat{w}^{-1})$$
+and choose sets of positive integers $A$ and $B$ such that
+$$\ldom(u,v)_A=\ldom(u)$$
+and
+$$\ldom(u,v)_B=\ldom(v)$$
+Then we may transform this to obtain
+$$c_{u,v}^w(y;z)=c_{\widehat{u}\mu_A,\widehat{v}\mu_B}^{\widehat{w}\mu}(y;z)$$
+It is always the case that $\ell(\widehat{w}\mu)\leq \ell(w)$, so this transformation never increases the length of the upper index. At worst, $\dom(\widehat{w}^{-1})=\ldom(u,v)$, so the indices remain unchanged. The following example demonstrates that this method can convert a coefficient that we do not immediately know how to compute into one that we do know how to compute.
+\begin{example} \label{example:reduction}
+Let
+\begin{align*}
+	u=&\cperm{1,0,2}\\
+	v=&\cperm{0,2,1}\\
+	w=&\cperm{4,0,1}
+\end{align*}
+Then
+$$c_{u,v}^w(y;z)=y_1+y_5-z_1-z_2$$
+None of the known formulas allows a direct positive computation of this coefficient. The reduction method, however, transforms it into $c_{\cperm{0,0,2},\cperm{0,1,1}}^{\cperm{0,1,2}}(y;z)$, which the reader may verify is equal to the original coefficient. Since
+$$\sch_{\cperm{0,1,1}}(x;z)=E_{2,3}(x;z)$$
+this case can be computed using the Pieri formula \cite[Theorem 7.1]{samuelmolev}. Alternatively, one may apply the Molev--Sagan formula \cite[Theorem 3.1]{molev1999littlewood}, as the expression is a product of factorial Schur polynomials.
+\begin{align*}
+s_{(2)}(x_1,x_2,x_3;y)s_{(1,1)}(x_1,x_2,x_2;z)&=((y_1 - z_1) (y_5 - z_2) + (y_2 - z_1) (y_1 - z_1) + (y_2 - z_2) (y_5 - z_2))s_{(2)}(x_1,x_2,x_3;y) \\
+&+(y_1 + y_2 - z_1 - z_2)s_{(3)}(x_1,x_2,x_3;y)+(y_1 + y_5 - z_1 - z_2)s_{(2,1)}(x_1,x_2,x_3;y)\\
+&+s_{(3,1)}(x_1,x_2,x_3;y)+s_{(2,1,1)}(x_1,x_2,x_3;y)
+\end{align*}
+whereas the original product we were trying to compute, $\sch_{\cperm{1,0,2}}(x;y)\sch_{\cperm{0,2,1}}(x;z)$, has $25$ nonzero double Schubert polynomial terms.
+\end{example}
+
+
+
+The \verb|schubmult| Python package can display product and coproduct coefficients in positive form. For the most general algorithms applicable to arbitrary polynomials, obtaining such a presentation is computationally intractable (even in small cases) when approached directly through integer programming without problem-specific optimizations. By contrast, when the reduction formulas introduced in this paper are applied, together with other positive formulas established in prior work, the package frequently produces positive presentations for cases of reasonable size. This statement reflects empirical evidence rather than a quantified result. Notably, such optimizations were essential to render positivity testing of coefficients feasible in the case $n=6$ before the general positivity result of \cite{gao2025grahampositivitytripleschubert} was known.
+
+\section{Extension to a bialgebra structure}
+
+\subsection{Definition of the bialgebra}
+
+One would not normally call $\Delta_A$ for abitrary $A$ a ``coproduct.'' However, we may extend it to a true coproduct with some modification of the algebra structure. For convenience in this case we drop the $y$ and $z$ variables. 
+
+We define a commutative algebra $\coma$ over the integers as follows. For each $n$, define $\coma_n$ to be the polynomial ring over $\mathbb{Z}$ in the variables $x_1,\ldots,x_n$. Then define
+$$\coma =\bigoplus_{n=0}^\infty \coma_n$$
+The multiplication within $\coma_n$ is as usually defined for the polynomial ring. However, if $a\in \coma_m$ and $b\in \coma_n$ with $m\neq n$ and $m,n>0$,  then
+$$ab = 0$$
+Otherwise, the component for $n=0$ is identified with the coefficient ring. Note that the ``identity element'' for positive $n$ is not an identity element of $\coma$.
+
+Each $\coma_n$ has a basis consisting of elements $x_a^{(n)}$, where $a$ is a sequence of $n$ nonnegative integers, and the notation indicates that
+$$x_a = x_1^{a_1}\cdots x_n^{a_n}$$
+The direct sum therefore has a basis that can canonically be identified with union of these.
+
+We define a coproduct $\Delta:\coma\to\coma\otimes\coma$ on the basis $x_c^{(n)}$ by
+$$\Delta(x_c^{(n)}) = \sum_{\substack{p+q=n\\ab=c}} x_a^{(p)}\otimes x_b^{(q)}$$
+where the equation $ab=c$ indicates that $a$ concatenated with $b$ is equal to $c$. We also define a counit $\varepsilon:\coma\to \mathbb{Z}$ by $\varepsilon(x_a^{(n)})=0$ unless $n=0$.
+
+\begin{lemma}
+	With $\Delta$ and $\varepsilon$, $\coma$ is a coassociative, counital coalegebra.
+\end{lemma}
+\begin{proof}
+	We have 
+	$$\Delta(x_d^{(n)})=\sum x_a^{(p)}\otimes x_c^{(q)}$$
+	Applying $\Delta$ to either tensor factor results in
+	$$\sum x_a^{(p)}\otimes x_b^{(q)}\otimes x_c^{(r)}$$
+	The symmetry of this is exactly the coassociativity condition. Seeing that we may choose $p=n$ or $q=n$, the definition of the counit gives us the result that $\coma$ is counital as well under $\Delta$ and $\varepsilon$.
+\end{proof}
+
+\begin{lemma}
+	$\Delta:\coma\to\coma\otimes\coma$ is a homomorphism of rings.
+\end{lemma}
+\begin{proof}
+	This is where the condition that $x_a^{(p)}x_b^{(q)}=0$ unless $p=q$ when both $p,q>0$ comes in. It ensures that only monomials of the same length have nonzero products and preserves the structure of the coproduct as a homomorphism of rings.
+\end{proof}
+
+% \begin{lemma}
+% 	$\nabla:\coma\otimes \coma\to \coma$ is a homomorphism of coalgebras.
+% \end{lemma}
+% \begin{proof}
+	
+% \end{proof}
+
+% \begin{corollary}
+% 	$\coma$ is a bialgebra over $\mathbb{Z}$.
+% \end{corollary}
+
+$\coma$ is afforded a grading into finite dimensional components by observing that each $\coma_n$ itself is a graded ring with each homogeneous component being a finitely generated free module. Considering the pair $(n, d)$, where $n$ is the number of variables and $d$ is the degree, as a $\mathbb{Z}^2$ grading, we may take the graded dual module $\dcoma$, which, by virtue of the grading, is isomorphic as a free module to $\coma$. We identify the dual basis element $x_a^*$ with the sequence of nonnegative integers $a$. That is to say,
+$$\langle a, x_b\rangle = \delta_{ab}$$
+Inspection of the coproduct reveals that the product of $a$ and $b$ in $\dcoma$ is simply the concatenation $ab$. Hence $\dcoma$ is isomorphic to the free associative algebra on a countable set indexed by nonnegative integers.
+
+$\dcoma$ also has a coproduct compatible with its product, namely
+$$c\mapsto \sum_{a+b=c} a\otimes b$$
+Thus $\coma$ and $\dcoma$ are dual bialgebras. 
+
+\subsection{The Schubert basis of $\dcoma$}
+
+$\dcoma$ is actually a well-understood algebra that has been considered in various contexts. What we present is a ``new'' basis for $\dcoma$ that is dual to the Schubert basis of $\coma$. We will be able to easily provide a positive combinatorial formula for the structure constants of this basis using the previous results in this article.
+
+Specifically, with the unique pairing $\langle -,-\rangle:\dcoma\times \coma\to\mathbb{Z}$ such that
+$$\langle \alpha,x_\beta\rangle = \delta_{\alpha\beta}$$
+we define $\dsch_u^n$ to be the unique basis of $\dcoma_n$ such that
+$$\langle \dsch_u^n,\sch_v^n\rangle = \delta_{uv}$$
+We characterize it with an explicit formula.
+
+\begin{theorem}
+	For each permutation $u$ and integer $n$ with $\ell(us_i)>\ell(u)$ for all $i>n$ we have the equation
+	$$\dsch_u^{n} = \sum_{\ell(\alpha)=n} E^{\code(\mu)-\alpha,\code(\mu)}_{u\mu^{-1}}\alpha$$
+	where $\mu$ is any strict dominant permutation such that $0\neq \code_n(\mu) \geq \ell(u)$ and $\code_{n+1}(\mu)=0$.
+\end{theorem}
+\begin{proof}
+	By definition, the coefficient of $\alpha$ in $\dsch_u^n$ is the coefficient of $\sch_u^n$ in $x_\alpha$. This can be derived from the Cauchy formula for double Schubert polynomials. Note that for any permutation $\mu$ as laid out in the statement of the theorem, $\ell(u\mu^{-1})=\ell(\mu)-\ell(u)$. Thus,
+	$$\partial_y^{u\mu^{-1}}\sch_\mu(x;-y) = \sch_u(x;-y)$$
+	We have that
+	$$\sch_\mu(x;-y)=\sum_u \sch_u(x)\sch_{u\mu^{-1}}(y)$$
+	Expressing the second factor in the $e_{\alpha,\lambda}(y)$ basis, we have
+	$$\sch_\mu(x;-y)=\sum_{u,\alpha} \sch_u(x)E_{u\mu^{-1}}^{\code(\mu)-\alpha,\code(\mu)}e_{\code(\mu)-\alpha,\code(\mu)}(y)$$
+	An alternative expression for $\sch_\mu(x;-y)$ is
+	$$\sch_\mu(x;-y)=\sum_{\alpha} x_\alpha e_{\code(\mu)-\alpha,\code(\mu)}(y)$$
+	from which we see that the coefficient is correct.
+\end{proof}
+
+% By definition, the coefficient of $\alpha$ in $\dsch_u^n(y)$ is the coefficient of $\sch_u^n(x;y)$ in $x_\alpha(y)$. This can be derived from the Cauchy formula for double Schubert polynomials. Note that for any permutation $\mu$ as laid out in the statement of the theorem, $\ell(u\mu^{-1})=\ell(\mu)-\ell(u)$. Thus,
+% 	$$\partial_y^{u\mu^{-1}}\sch_\mu(x;y) = \sch_u(x;y)$$
+% 	We have that
+% 	$$\sch_\mu(x;y)=\sum_u \sch_u(x;z)\sch_{\mu u^{-1}}(z;y)$$
+% 	Expressing the second factor in the $e_{\alpha,\lambda}(y)$ basis, we have
+% 	$$\sch_\mu(x;-y)=\sum_{u,\alpha} \sch_u(x)E_{u\mu^{-1}}^{\code(\mu)-\alpha,\code(\mu)}e_{\code(\mu)-\alpha,\code(\mu)}(y)$$
+% 	An alternative expression for $\sch_\mu(x;-y)$ is
+% 	$$\sch_\mu(x;-y)=\sum_{\alpha} x_\alpha(z) e_{\code(\mu)-\alpha,\code(\mu)}(z;y)$$
+% 	from which we see that the coefficient is correct.
+
+This is not stable for fixed $u$ as $n$ increases, and this is expected.
+
+
+\begin{example}
+Suppose $w = [1,4,5,2,3]$. Then
+$$\dsch_w^3 = [022] - [013]$$
+If we chose $[1,3,5,7,2,4,6]$ instead, we have
+$$\dsch_{1357246} = [0015] - [0033] - [0114] + [0123]$$
+For $w=[4,2,7,1,3,5,6]$,
+$$\dsch_{4271356}^3 = -[026] + [035] + [125] - [134] + [206] - [215] - [305] + [314]$$
+\end{example}
+
+\newcommand{\maxd}{\mathfrak{m}}
+\newcommand{\shup}{{\uparrow}}
+
+% \begin{lemma} \label{lemma:lexperm}
+% Let $w\in S_\infty$ and let $n\geq \maxd(w)$. Then
+% $$\dsch_w^n = [\code_1(w),\ldots,\code_n(w)] + \sum_{a <_{lex} \code(w)} c_a [a]$$
+% where the sum is over sequences of nonnegative integers $a$ of length $n$ that are lexicographically less than $\code(w)$.
+% \end{lemma}
+% \begin{proof}
+% Write
+% $$\alpha = \sum c_{\alpha, w}\dsch_w^n$$
+% Then for each $w$ we have that $\alpha\geq \code(w)$ in lexicographical order, due to the fact that $x^{\code(w)}$ is the lexicographically minimal monomial in $\sch_w(x)$, with a coefficient of exactly $1$. We thus have that the word basis is lower triangular in the Schubert basis, and vice versa. Since the coefficient of $x^{\code(w)}$ in $\sch_w(x)$ is $1$, the result follows.
+% \end{proof}
+
+\begin{lemma}
+	Let $u,v\in S_\infty$ and $p,q>0$ be integers. Write
+	$$\dsch_u^p\dsch_v^q = \sum_w d_{u,v}^w(p,q)\dsch_w^{p+q}$$
+	Then for each $u,v,w$ the coefficient $d_{u,v}^w(p,q)$ is the coefficient of $\sch_u(x_1,\ldots,x_p)\sch_v(x_{p+1},\ldots,x_{p+q})$ in the expansion of $\sch_w(x_1,\ldots,x_{p+q})$ in terms of the basis of products of Schubert polynomials in $x_1,\ldots,x_p$ and Schubert polynomials in $x_{p+1}$ onward.
+\end{lemma}
+\begin{proof}
+	This is true by examination of the definition of the coproduct of $\coma$, since this is the coefficient of $\sch_u^p\otimes \sch_v^q$ in the coproduct of $\sch_w^{p+q}$.
+\end{proof}
+
+Thus the product structure of $\dcoma$ encodes splitting of the Schubert polynomial into two sets of variables. In particular,
+\begin{lemma} \label{lemma:dpieri}
+Let $a\geq 0$ be an integer and $w\in S_\infty$. Then we have
+$$[a]\cdot \dsch_{w}^{n} = \sum_{\substack{w\in\mathcal{D}_1(w')\\\ell(w,w')=a}} \dsch_{w'}^{n+1}$$
+\end{lemma}
+
+We also have
+\begin{lemma} \label{lemma:dpieriend}
+Let $a\geq 0$ be an integer and $w\in S_\infty$. Then we have
+$$\dsch_{w}^{n}\cdot [a] = \sum_{\substack{w\in\mathcal{D}_{n+1}(w')\\\ell(w,w')=a}} \dsch_{w'}^{n+1}$$
+\end{lemma}
+
+
+This is actually sufficient to get a full LR rule.
+
+\begin{lemma}
+Suppose
+$$\dsch_u^p\dsch_v^q=\sum_{w}d_{u,v}^w(p,q)\dsch_w^{p+q}$$
+Then
+$$\dsch_u^p[0]^q=\sum_{\ell(w(\shup^{p}v)^{-1})=\ell(w)-\ell(v)}d_{u,v}^w(p,q)\dsch_{w(\shup^{p}v)^{-1}}^{p+q}$$
+\end{lemma}
+
+\begin{theorem} \label{theorem:LRdual}
+Let $u,v\in S_\infty$ and $p,q>0$ be integers. Write
+$$\dsch_u^p\dsch_v^q = \sum_w d_{u,v}^w(p,q)\dsch_w^{p+q}$$
+Then $d_{u,v}^w(p,q)=0$ unless $\ell(w(\shup^{p}v)^{-1}) = \ell(w)-\ell(v)$ and $\ell(u)+\ell(v)=\ell(w)$. If these conditions are satisfied, then $d_{u,v}^w(p,q)$ is the number of sequences of permutations $(\sigma_0,\ldots,\sigma_q)$ such that $\sigma_0 = w(\shup^{p}v)^{-1}$, $\sigma_q = u$, and
+$$\sigma_0\downvar{p+q}\sigma_2\downvar{p+q-1}\cdots \downvar{p+1}\sigma_{q}$$
+\end{theorem}
+
+\begin{example} \label{example:coproduct}
+What is most interesting in this construction is the coproduct. Consider our example $w=[4,2,7,1,3,5,6]$. Using the word basis, it is a triviality to compute the coproduct $\Delta(\dsch_w^3)$:
+\begin{align*}
+&= - [000] \otimes [026] + [000] \otimes [035] + [000] \otimes [125] - [000] \otimes [134] + [000] \otimes [206] - [000] \otimes [215] \\
+&\quad - [000] \otimes [305] + [000] \otimes [314] - [001] \otimes [025] + [001] \otimes [034] + [001] \otimes [124] - [001] \otimes [133] \\
+&\quad + [001] \otimes [205] - [001] \otimes [214] - [001] \otimes [304] + [001] \otimes [313] - [002] \otimes [024] + [002] \otimes [033] \\
+&\quad + [002] \otimes [123] - [002] \otimes [132] + [002] \otimes [204] - [002] \otimes [213] - [002] \otimes [303] + [002] \otimes [312] \\
+&\quad - [003] \otimes [023] + [003] \otimes [032] + [003] \otimes [122] - [003] \otimes [131] + [003] \otimes [203] - [003] \otimes [212] \\
+&\quad - [003] \otimes [302] + [003] \otimes [311] - [004] \otimes [022] + [004] \otimes [031] + [004] \otimes [121] - [004] \otimes [130] \\
+&\quad + [004] \otimes [202] - [004] \otimes [211] - [004] \otimes [301] + [004] \otimes [310] - [005] \otimes [021] + [005] \otimes [030] \\
+&\quad + [005] \otimes [120] + [005] \otimes [201] - [005] \otimes [210] - [005] \otimes [300] - [006] \otimes [020] + [006] \otimes [200] \\
+&\quad - [010] \otimes [016] + [010] \otimes [025] + [010] \otimes [115] - [010] \otimes [124] - [010] \otimes [205] + [010] \otimes [304] \\
+&\quad - [011] \otimes [015] + [011] \otimes [024] + [011] \otimes [114] - [011] \otimes [123] - [011] \otimes [204] + [011] \otimes [303] \\
+&\quad - [012] \otimes [014] + [012] \otimes [023] + [012] \otimes [113] - [012] \otimes [122] - [012] \otimes [203] + [012] \otimes [302] \\
+&\quad - [013] \otimes [013] + [013] \otimes [022] + [013] \otimes [112] - [013] \otimes [121] - [013] \otimes [202] + [013] \otimes [301] \\
+&\quad - [014] \otimes [012] + [014] \otimes [021] + [014] \otimes [111] - [014] \otimes [120] - [014] \otimes [201] + [014] \otimes [300] \\
+&\quad - [015] \otimes [011] + [015] \otimes [020] + [015] \otimes [110] - [015] \otimes [200] - [016] \otimes [010] - [020] \otimes [006] \\
+&\quad + [020] \otimes [015] + [020] \otimes [105] - [020] \otimes [114] - [021] \otimes [005] + [021] \otimes [014] + [021] \otimes [104] \\
+&\quad - [021] \otimes [113] - [022] \otimes [004] + [022] \otimes [013] + [022] \otimes [103] - [022] \otimes [112] - [023] \otimes [003] \\
+&\quad + [023] \otimes [012] + [023] \otimes [102] - [023] \otimes [111] - [024] \otimes [002] + [024] \otimes [011] + [024] \otimes [101] \\
+&\quad - [024] \otimes [110] - [025] \otimes [001] + [025] \otimes [010] + [025] \otimes [100] - [026] \otimes [000] + [030] \otimes [005] \\
+&\quad - [030] \otimes [104] + [031] \otimes [004] - [031] \otimes [103] + [032] \otimes [003] - [032] \otimes [102] + [033] \otimes [002] \\
+&\quad - [033] \otimes [101] + [034] \otimes [001] - [034] \otimes [100] + [035] \otimes [000] + [100] \otimes [025] - [100] \otimes [034] \\
+&\quad + [100] \otimes [106] - [100] \otimes [115] - [100] \otimes [205] + [100] \otimes [214] + [101] \otimes [024] - [101] \otimes [033] \\
+&\quad + [101] \otimes [105] - [101] \otimes [114] - [101] \otimes [204] + [101] \otimes [213] + [102] \otimes [023] - [102] \otimes [032] \\
+&\quad + [102] \otimes [104] - [102] \otimes [113] - [102] \otimes [203] + [102] \otimes [212] + [103] \otimes [022] - [103] \otimes [031] \\
+&\quad + [103] \otimes [103] - [103] \otimes [112] - [103] \otimes [202] + [103] \otimes [211] + [104] \otimes [021] - [104] \otimes [030] \\
+&\quad + [104] \otimes [102] - [104] \otimes [111] - [104] \otimes [201] + [104] \otimes [210] + [105] \otimes [020] + [105] \otimes [101] \\
+&\quad - [105] \otimes [110] - [105] \otimes [200] + [106] \otimes [100] + [110] \otimes [015] - [110] \otimes [024] - [110] \otimes [105] \\
+&\quad + [110] \otimes [204] + [111] \otimes [014] - [111] \otimes [023] - [111] \otimes [104] + [111] \otimes [203] + [112] \otimes [013] \\
+&\quad - [112] \otimes [022] - [112] \otimes [103] + [112] \otimes [202] + [113] \otimes [012] - [113] \otimes [021] - [113] \otimes [102] \\
+&\quad + [113] \otimes [201] + [114] \otimes [011] - [114] \otimes [020] - [114] \otimes [101] + [114] \otimes [200] + [115] \otimes [010] \\
+&\quad - [115] \otimes [100] + [120] \otimes [005] - [120] \otimes [014] + [121] \otimes [004] - [121] \otimes [013] + [122] \otimes [003] \\
+&\quad - [122] \otimes [012] + [123] \otimes [002] - [123] \otimes [011] + [124] \otimes [001] - [124] \otimes [010] + [125] \otimes [000] \\
+&\quad - [130] \otimes [004] - [131] \otimes [003] - [132] \otimes [002] - [133] \otimes [001] - [134] \otimes [000] + [200] \otimes [006] \\
+&\quad - [200] \otimes [015] - [200] \otimes [105] + [200] \otimes [114] + [201] \otimes [005] - [201] \otimes [014] - [201] \otimes [104] \\
+&\quad + [201] \otimes [113] + [202] \otimes [004] - [202] \otimes [013] - [202] \otimes [103] + [202] \otimes [112] + [203] \otimes [003] \\
+&\quad - [203] \otimes [012] - [203] \otimes [102] + [203] \otimes [111] + [204] \otimes [002] - [204] \otimes [011] - [204] \otimes [101] \\
+&\quad + [204] \otimes [110] + [205] \otimes [001] - [205] \otimes [010] - [205] \otimes [100] + [206] \otimes [000] - [210] \otimes [005] \\
+&\quad + [210] \otimes [104] - [211] \otimes [004] + [211] \otimes [103] - [212] \otimes [003] + [212] \otimes [102] - [213] \otimes [002] \\
+&\quad + [213] \otimes [101] - [214] \otimes [001] + [214] \otimes [100] - [215] \otimes [000] - [300] \otimes [005] + [300] \otimes [014] \\
+&\quad - [301] \otimes [004] + [301] \otimes [013] - [302] \otimes [003] + [302] \otimes [012] - [303] \otimes [002] + [303] \otimes [011] \\
+&\quad - [304] \otimes [001] + [304] \otimes [010] - [305] \otimes [000] + [310] \otimes [004] + [311] \otimes [003] + [312] \otimes [002] \\
+&\quad + [313] \otimes [001] + [314] \otimes [000]
+\end{align*}
+Reexpressing this in the dual Schubert basis, e.g. with Lemma \ref{lemma:dpieri}, we have 
+\begin{align*}
+&= 1 \otimes \Xi_{4271356}^{3} + \Xi_{1243}^{3} \otimes \Xi_{3271456}^{3} + \Xi_{1243}^{3} \otimes \Xi_{4172356}^{3} + \Xi_{1243}^{3} \otimes \Xi_{426135}^{3} \\
+&\quad + \Xi_{12534}^{3} \otimes \Xi_{3172456}^{3} + \Xi_{12534}^{3} \otimes \Xi_{326145}^{3} + \Xi_{12534}^{3} \otimes \Xi_{416235}^{3} + \Xi_{12534}^{3} \otimes \Xi_{42513}^{3} \\
+&\quad + \Xi_{126345}^{3} \otimes \Xi_{316245}^{3} + \Xi_{126345}^{3} \otimes \Xi_{32514}^{3} + \Xi_{126345}^{3} \otimes \Xi_{41523}^{3} + \Xi_{126345}^{3} \otimes \Xi_{4231}^{3} \\
+&\quad + \Xi_{1273456}^{3} \otimes \Xi_{31524}^{3} + \Xi_{1273456}^{3} \otimes \Xi_{4132}^{3} + \Xi_{1273456}^{3} \otimes \Xi_{4213}^{3} + \Xi_{132}^{3} \otimes \Xi_{3271456}^{3} \\
+&\quad + \Xi_{132}^{3} \otimes \Xi_{4172356}^{3} + \Xi_{1342}^{3} \otimes \Xi_{3172456}^{3} + \Xi_{1342}^{3} \otimes \Xi_{326145}^{3} + \Xi_{1342}^{3} \otimes \Xi_{416235}^{3} \\
+&\quad + \Xi_{13524}^{3} \otimes \Xi_{2173456}^{3} + 2 \Xi_{13524}^{3} \otimes \Xi_{316245}^{3} + \Xi_{13524}^{3} \otimes \Xi_{32514}^{3} + \Xi_{13524}^{3} \otimes \Xi_{41523}^{3} \\
+&\quad + \Xi_{136245}^{3} \otimes \Xi_{216345}^{3} + 2 \Xi_{136245}^{3} \otimes \Xi_{31524}^{3} + \Xi_{136245}^{3} \otimes \Xi_{3241}^{3} + \Xi_{136245}^{3} \otimes \Xi_{4132}^{3} \\
+&\quad + \Xi_{1372456}^{3} \otimes \Xi_{21534}^{3} + \Xi_{1372456}^{3} \otimes \Xi_{3142}^{3} + \Xi_{1372456}^{3} \otimes \Xi_{321}^{3} + \Xi_{1372456}^{3} \otimes \Xi_{4123}^{3} \\
+&\quad + \Xi_{1423}^{3} \otimes \Xi_{3172456}^{3} + \Xi_{1432}^{3} \otimes \Xi_{2173456}^{3} + \Xi_{1432}^{3} \otimes \Xi_{316245}^{3} + \Xi_{14523}^{3} \otimes \Xi_{216345}^{3} \\
+&\quad + \Xi_{14523}^{3} \otimes \Xi_{31524}^{3} + \Xi_{146235}^{3} \otimes \Xi_{21534}^{3} + \Xi_{146235}^{3} \otimes \Xi_{3142}^{3} + \Xi_{1472356}^{3} \otimes \Xi_{2143}^{3} \\
+&\quad + \Xi_{1472356}^{3} \otimes \Xi_{312}^{3} + \Xi_{21}^{3} \otimes \Xi_{2471356}^{3} + \Xi_{21}^{3} \otimes \Xi_{3271456}^{3} + \Xi_{2143}^{3} \otimes \Xi_{1472356}^{3} \\
+&\quad + \Xi_{2143}^{3} \otimes \Xi_{2371456}^{3} + \Xi_{2143}^{3} \otimes \Xi_{246135}^{3} + \Xi_{2143}^{3} \otimes \Xi_{3172456}^{3} + \Xi_{2143}^{3} \otimes \Xi_{326145}^{3} \\
+&\quad + \Xi_{21534}^{3} \otimes \Xi_{1372456}^{3} + \Xi_{21534}^{3} \otimes \Xi_{146235}^{3} + \Xi_{21534}^{3} \otimes \Xi_{2173456}^{3} + \Xi_{21534}^{3} \otimes \Xi_{236145}^{3} \\
+&\quad + \Xi_{21534}^{3} \otimes \Xi_{24513}^{3} + \Xi_{21534}^{3} \otimes \Xi_{316245}^{3} + \Xi_{21534}^{3} \otimes \Xi_{32514}^{3} + \Xi_{216345}^{3} \otimes \Xi_{136245}^{3} \\
+&\quad + \Xi_{216345}^{3} \otimes \Xi_{14523}^{3} + \Xi_{216345}^{3} \otimes \Xi_{216345}^{3} + \Xi_{216345}^{3} \otimes \Xi_{23514}^{3} + \Xi_{216345}^{3} \otimes \Xi_{2431}^{3} \\
+&\quad + \Xi_{216345}^{3} \otimes \Xi_{31524}^{3} + \Xi_{216345}^{3} \otimes \Xi_{3241}^{3} + \Xi_{2173456}^{3} \otimes \Xi_{13524}^{3} + \Xi_{2173456}^{3} \otimes \Xi_{1432}^{3} \\
+&\quad + \Xi_{2173456}^{3} \otimes \Xi_{21534}^{3} + \Xi_{2173456}^{3} \otimes \Xi_{2413}^{3} + \Xi_{2173456}^{3} \otimes \Xi_{3142}^{3} + \Xi_{2173456}^{3} \otimes \Xi_{321}^{3} \\
+&\quad + \Xi_{231}^{3} \otimes \Xi_{3172456}^{3} + \Xi_{2341}^{3} \otimes \Xi_{316245}^{3} + \Xi_{23514}^{3} \otimes \Xi_{216345}^{3} + \Xi_{23514}^{3} \otimes \Xi_{31524}^{3} \\
+&\quad + \Xi_{236145}^{3} \otimes \Xi_{21534}^{3} + \Xi_{236145}^{3} \otimes \Xi_{3142}^{3} + \Xi_{2371456}^{3} \otimes \Xi_{2143}^{3} + \Xi_{2371456}^{3} \otimes \Xi_{312}^{3} \\
+&\quad + \Xi_{2413}^{3} \otimes \Xi_{2173456}^{3} + \Xi_{2431}^{3} \otimes \Xi_{216345}^{3} + \Xi_{24513}^{3} \otimes \Xi_{21534}^{3} + \Xi_{246135}^{3} \otimes \Xi_{2143}^{3} \\
+&\quad + \Xi_{2471356}^{3} \otimes \Xi_{21}^{3} + \Xi_{312}^{3} \otimes \Xi_{1472356}^{3} + \Xi_{312}^{3} \otimes \Xi_{2371456}^{3} + \Xi_{3142}^{3} \otimes \Xi_{1372456}^{3} \\
+&\quad + \Xi_{3142}^{3} \otimes \Xi_{146235}^{3} + \Xi_{3142}^{3} \otimes \Xi_{2173456}^{3} + \Xi_{3142}^{3} \otimes \Xi_{236145}^{3} + \Xi_{31524}^{3} \otimes \Xi_{1273456}^{3} \\
+&\quad + 2 \Xi_{31524}^{3} \otimes \Xi_{136245}^{3} + \Xi_{31524}^{3} \otimes \Xi_{14523}^{3} + \Xi_{31524}^{3} \otimes \Xi_{216345}^{3} + \Xi_{31524}^{3} \otimes \Xi_{23514}^{3} \\
+&\quad + \Xi_{316245}^{3} \otimes \Xi_{126345}^{3} + 2 \Xi_{316245}^{3} \otimes \Xi_{13524}^{3} + \Xi_{316245}^{3} \otimes \Xi_{1432}^{3} + \Xi_{316245}^{3} \otimes \Xi_{21534}^{3} \\
+&\quad + \Xi_{316245}^{3} \otimes \Xi_{2341}^{3} + \Xi_{3172456}^{3} \otimes \Xi_{12534}^{3} + \Xi_{3172456}^{3} \otimes \Xi_{1342}^{3} + \Xi_{3172456}^{3} \otimes \Xi_{1423}^{3} \\
+&\quad + \Xi_{3172456}^{3} \otimes \Xi_{2143}^{3} + \Xi_{3172456}^{3} \otimes \Xi_{231}^{3} + \Xi_{321}^{3} \otimes \Xi_{1372456}^{3} + \Xi_{321}^{3} \otimes \Xi_{2173456}^{3} \\
+&\quad + \Xi_{3241}^{3} \otimes \Xi_{136245}^{3} + \Xi_{3241}^{3} \otimes \Xi_{216345}^{3} + \Xi_{32514}^{3} \otimes \Xi_{126345}^{3} + \Xi_{32514}^{3} \otimes \Xi_{13524}^{3} \\
+&\quad + \Xi_{32514}^{3} \otimes \Xi_{21534}^{3} + \Xi_{326145}^{3} \otimes \Xi_{12534}^{3} + \Xi_{326145}^{3} \otimes \Xi_{1342}^{3} + \Xi_{326145}^{3} \otimes \Xi_{2143}^{3} \\
+&\quad + \Xi_{3271456}^{3} \otimes \Xi_{1243}^{3} + \Xi_{3271456}^{3} \otimes \Xi_{132}^{3} + \Xi_{3271456}^{3} \otimes \Xi_{21}^{3} + \Xi_{4123}^{3} \otimes \Xi_{1372456}^{3} \\
+&\quad + \Xi_{4132}^{3} \otimes \Xi_{1273456}^{3} + \Xi_{4132}^{3} \otimes \Xi_{136245}^{3} + \Xi_{41523}^{3} \otimes \Xi_{126345}^{3} + \Xi_{41523}^{3} \otimes \Xi_{13524}^{3} \\
+&\quad + \Xi_{416235}^{3} \otimes \Xi_{12534}^{3} + \Xi_{416235}^{3} \otimes \Xi_{1342}^{3} + \Xi_{4172356}^{3} \otimes \Xi_{1243}^{3} + \Xi_{4172356}^{3} \otimes \Xi_{132}^{3} \\
+&\quad + \Xi_{4213}^{3} \otimes \Xi_{1273456}^{3} + \Xi_{4231}^{3} \otimes \Xi_{126345}^{3} + \Xi_{42513}^{3} \otimes \Xi_{12534}^{3} + \Xi_{426135}^{3} \otimes \Xi_{1243}^{3} \\
+&\quad + \Xi_{4271356}^{3} \otimes 1
+\end{align*}
+Now we may ask: how do we interpret this?
+\end{example}
+
+\begin{remark}
+In the formula
+$$\Delta(\dsch_w^n) = \sum_{u,v} c_{u,v}^w\dsch_u^n\otimes \dsch_v^n$$
+the coefficients $c_{u,v}^w$ are the structure constants of Schubert polynomials. That is, the entire multiplicative structure of Schubert polynomials is encoded in the coproduct.
+\end{remark}
+
+\begin{example}
+Consider the term 2 $\Xi_{31524}^{3} \otimes \Xi_{136245}^{4}$ in Example \ref{example:coproduct}. This indicates that the structure constant $c_{31524,136245}^{4271356}=2$. Indeed, we have
+
+\begin{align*}
+\sch_{31524}(x)\sch_{136245}(x)&=\mathfrak{S}_{3  2  8  1  4  5  6  7}{\left(x \right)} + \mathfrak{S}_{3  4  7  1  2  5  6}{\left(x \right)} + \mathfrak{S}_{3  5  6  1  2  4}{\left(x \right)} + \mathfrak{S}_{4  1  8  2  3  5  6  7}{\left(x \right)} \\
+&+ 2 \mathfrak{S}_{4  2  7  1  3  5  6}{\left(x \right)} + \mathfrak{S}_{4  3  6  1  2  5}{\left(x \right)} + \mathfrak{S}_{5  1  7  2  3  4  6}{\left(x \right)}+ \mathfrak{S}_{5  2  6  1  3  4}{\left(x \right)}
+\end{align*}
+which confirms that this is in fact the case.
+\end{example}
+
+\addcontentsline{toc}{section}{\protect\numberline{}References}
+\bibliographystyle{acm}
+\bibliography{molev-sagan-paper}
+%\printbibliography
+% \printunsrtglossary[title={Index of terms and symbols in order of definition},style={supergroup}]
+
+\end{document}
+

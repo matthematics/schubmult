@@ -1,0 +1,19 @@
+\contentsline {section}{\tocsection {}{}{Introduction}}{1}{section*.2}%
+\contentsline {section}{\numberline {}Introduction}{1}{section*.2}%
+\contentsline {subsection}{\tocsubsection {}{}{Software used}}{2}{section*.3}%
+\contentsline {section}{\tocsection {}{1}{The domination formula}}{2}{section.1}%
+\contentsline {subsection}{\tocsubsection {}{1.1}{Statement of the formula with examples}}{2}{subsection.1.1}%
+\contentsline {subsection}{\tocsubsection {}{1.2}{Dominant permutations, the code, and manipulation of variables in Schubert polynomials}}{9}{subsection.1.2}%
+\contentsline {subsection}{\tocsubsection {}{1.3}{Relation to pipe dreams}}{12}{subsection.1.3}%
+\contentsline {subsection}{\tocsubsection {}{1.4}{Proof of the domination formula}}{13}{subsection.1.4}%
+\contentsline {subsection}{\tocsubsection {}{1.5}{Reversing Molev-Sagan separated descents}}{15}{subsection.1.5}%
+\contentsline {subsection}{\tocsubsection {}{1.6}{Reduction of product coefficients in the case of $1$-domination}}{16}{subsection.1.6}%
+\contentsline {section}{\tocsection {}{2}{Product-coproduct equivalence}}{18}{section.2}%
+\contentsline {subsection}{\tocsubsection {}{2.1}{The equivalence theorem}}{18}{subsection.2.1}%
+\contentsline {subsection}{\tocsubsection {}{2.2}{A historical missed opportunity: separated descents for ordinary Schubert polynomials}}{22}{subsection.2.2}%
+\contentsline {subsection}{\tocsubsection {}{2.3}{Reduction formulas for product coefficients by varying the dominant permutation}}{23}{subsection.2.3}%
+\contentsline {section}{\tocsection {}{3}{Extension to a bialgebra structure}}{25}{section.3}%
+\contentsline {subsection}{\tocsubsection {}{3.1}{Definition of the bialgebra}}{25}{subsection.3.1}%
+\contentsline {subsection}{\tocsubsection {}{3.2}{The Schubert basis of $\mathcal {D}$}}{26}{subsection.3.2}%
+\contentsline {section}{\numberline {}References}{30}{lemma.3.2.7}%
+\contentsline {section}{\tocsection {}{}{References}}{30}{section*.4}%

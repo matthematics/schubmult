@@ -32,10 +32,10 @@ logs/
 *.log
 
 # LaTeX auxiliary files
-schubert_bialgebra.aux
-schubert_bialgebra.bbl
-schubert_bialgebra.blg
-schubert_bialgebra.log
+*.aux
+*.bbl
+*.blg
+*.log
 schubert_bialgebra.out
 schubert_bialgebra.synctex.gz
 *.aux
