@@ -5,8 +5,8 @@ from .plactic import Plactic
 
 
 class NilPlactic(Plactic):
-    def __init__(self, word=()):
-        super().__init__(word)
+    def __init__(self, word=(), inner_shape=None):
+        super().__init__(word, inner_shape=inner_shape)
 
     @classmethod
     @cache
@@ -73,8 +73,8 @@ class NilPlactic(Plactic):
                 # finished, construct NilPlactic and test Bruhat condition
                 # Keep 0s (inner cells) to preserve skew shape structure
                 tableau = tuple(tuple(rw) for rw in rows)
-                tpl = cls(tableau)
-                tpl._grid[tpl._grid == 0] = None  # Ensure inner cells are treated as 0
+                tpl = cls(tableau, inner_shape=inner_shape)
+                tpl._grid[tpl._grid == 0] = None  # Ensure inner cells are treated as None
                 if tpl.perm.bruhat_leq(bruhat_perm) and tpl.perm.inv == sum(outer_shape) - sum(inner_shape) and len(tpl.row_word) == sum(outer_shape) - sum(inner_shape):
                     results.add(tpl)
                 return
@@ -170,10 +170,24 @@ class NilPlactic(Plactic):
             if doit_spots:
                 new_grid[tuple(zip(*doit_spots))] = switcher
             switcher -= 1
+        new_inner_shape = [*self._inner_shape] if self._inner_shape else [0] * (new_grid.shape[0] - 1)
+
+        # Find all positions where new_grid == -1 (new holes) and update inner_shape
+        hole_positions = np.where(new_grid == -1)
+        for row_idx in set(hole_positions[0]):
+            if row_idx < len(new_inner_shape):
+                # Count leading holes (including -1 markers) in this row
+                leading_holes = 0
+                for col_idx in range(new_grid.shape[1]):
+                    if new_grid[row_idx, col_idx] in (-1, None, 0):
+                        leading_holes += 1
+                    else:
+                        break
+                new_inner_shape[row_idx] = leading_holes
 
         new_grid[new_grid == -1] = None
 
-        return NilPlactic._from_grid(new_grid)
+        return NilPlactic._from_grid(new_grid, tuple(new_inner_shape) if any(new_inner_shape) else None)
 
     def down_jdt_slide(self, row, col):
         """
@@ -239,7 +253,9 @@ class NilPlactic(Plactic):
                 new_grid[tuple(zip(*doit_spots))] = switcher
             switcher += 1
         new_grid[new_grid == -1] = None
-        return NilPlactic._from_grid(new_grid)
+        new_inner_shape = [*self._inner_shape]
+        new_inner_shape[row] -= 1
+        return NilPlactic._from_grid(new_grid, new_inner_shape)
 
     def bruhat_leq(self, other):
         if not isinstance(other, NilPlactic):

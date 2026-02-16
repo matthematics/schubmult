@@ -44,38 +44,82 @@ def _is_valid_outer_corner(grid, i: int, j: int) -> bool:
     # consider hole on or beyond boundary as "outer
 
 
-def _is_valid_inner_corner(grid, i: int, j: int) -> bool:
-    """Inner-corner predicate: empty position in μ where BOTH down and right are outside μ.
-    Formal: (i,j) ∈ μ (empty) where (i+1,j) ∉ μ and (i,j+1) ∉ μ (both filled or outside)."""
+def _is_valid_inner_corner(grid, i: int, j: int, inner_shape=None) -> bool:
+    """Inner-corner predicate: a hole (position in inner_shape) where BOTH down and right are NOT holes.
+
+    An inner corner is a cell that IS in the inner shape (a hole) where you cannot slide it
+    down-right any further because both the cell below and the cell to the right are either
+    filled (have values) or outside the inner shape (but may be empty cells in outer shape).
+    """
     rows, cols = grid.shape
 
     # Must be within grid bounds
     if i < 0 or j < 0 or i >= rows or j >= cols:
         return False
 
-    # Position must be empty (in μ)
+    # If no inner_shape, use the old logic: position must be empty (None or 0)
+    if inner_shape is None:
+        if grid[i, j] is not None and grid[i, j] != 0:
+            return False
+
+        # Check down neighbor: must be outside grid OR filled
+        down_blocked = False
+        if i + 1 >= rows:
+            down_blocked = True
+        elif grid[i + 1, j] is not None and grid[i + 1, j] != 0:
+            down_blocked = True
+
+        # Check right neighbor: must be outside grid OR filled
+        right_blocked = False
+        if j + 1 >= cols:
+            right_blocked = True
+        elif grid[i, j + 1] is not None and grid[i, j + 1] != 0:
+            right_blocked = True
+
+        return down_blocked and right_blocked
+
+    # With inner_shape: position MUST be a hole (in inner_shape) AND actually empty
+    if not (i < len(inner_shape) and j < inner_shape[i]):
+        return False
+
+    # Position must actually be empty (not filled in)
     if grid[i, j] is not None and grid[i, j] != 0:
         return False
 
-    # BOTH down and right must be outside μ (either filled with values, or outside the grid)
-    down_outside_mu = False
-    right_outside_mu = False
-
+    # Check down neighbor: must NOT be a hole (either filled, empty-in-outer-shape, or outside grid)
+    down_not_hole = False
+    down_has_value = False
     if i + 1 >= rows:
-        # Beyond grid boundary - outside μ
-        down_outside_mu = True
+        # Beyond grid boundary - not a hole
+        down_not_hole = True
+    elif i + 1 >= len(inner_shape) or j >= inner_shape[i + 1]:
+        # Outside inner shape (either filled or empty cell in outer shape) - not a hole
+        down_not_hole = True
+        if grid[i + 1, j] is not None and grid[i + 1, j] != 0:
+            down_has_value = True
     elif grid[i + 1, j] is not None and grid[i + 1, j] != 0:
-        # Has a value - outside μ (in λ/μ)
-        down_outside_mu = True
+        # Inside inner_shape but has a value - not a hole anymore
+        down_not_hole = True
+        down_has_value = True
 
+    # Check right neighbor: must NOT be a hole (either filled, empty-in-outer-shape, or outside grid)
+    right_not_hole = False
+    right_has_value = False
     if j + 1 >= cols:
-        # Beyond grid boundary - outside μ
-        right_outside_mu = True
+        # Beyond grid boundary - not a hole
+        right_not_hole = True
+    elif i >= len(inner_shape) or j + 1 >= inner_shape[i]:
+        # Outside inner shape (either filled or empty cell in outer shape) - not a hole
+        right_not_hole = True
+        if grid[i, j + 1] is not None and grid[i, j + 1] != 0:
+            right_has_value = True
     elif grid[i, j + 1] is not None and grid[i, j + 1] != 0:
-        # Has a value - outside μ (in λ/μ)
-        right_outside_mu = True
+        # Inside inner_shape but has a value - not a hole anymore
+        right_not_hole = True
+        right_has_value = True
 
-    return down_outside_mu and right_outside_mu
+    # Inner corner only if BOTH directions are NOT holes AND at least one has a value
+    return down_not_hole and right_not_hole and (down_has_value or right_has_value)
 
 
 def _length_of_row(grid, row):
@@ -170,8 +214,10 @@ class Plactic(GridPrint, CrystalGraph):
                     j -= 1
 
         new_grid[i, j] = 0
+        new_inner_shape = [*self._inner_shape]
+        new_inner_shape[i] += 1
 
-        return Plactic._from_grid(new_grid)
+        return Plactic._from_grid(new_grid, tuple(new_inner_shape))
 
     def down_jdt_slide(self, row, col):
         """
@@ -201,7 +247,7 @@ class Plactic(GridPrint, CrystalGraph):
                 i += 1
             else:
                 # Both moves possible; choose the smaller entry
-                if down < right:
+                if down <= right:
                     new_grid[i, j] = down
                     i += 1
                 else:
@@ -211,7 +257,9 @@ class Plactic(GridPrint, CrystalGraph):
         # Mark the final position as None
         new_grid[i, j] = None
 
-        return Plactic._from_grid(new_grid)
+        new_inner_shape = [*self._inner_shape] # if we are doing down_jdt, inner shape had better not be None
+        new_inner_shape[row] -= 1
+        return Plactic._from_grid(new_grid, tuple(new_inner_shape))
 
     @property
     def iter_outer_corners(self):
@@ -226,18 +274,20 @@ class Plactic(GridPrint, CrystalGraph):
     def iter_inner_corners(self):
         for i in range(self.rows):
             for j in range(self.cols):
-                if _is_valid_inner_corner(self._grid, i, j):
+                if _is_valid_inner_corner(self._grid, i, j, self._inner_shape):
                     yield (i, j)
 
-    def __init__(self, word=()):
+    def __init__(self, word=(), inner_shape=None):
         # Convert word (tuple of tuples) to np.ndarray
         # Grid always has +1 row and +1 col as empty border (ensures outer corners exist)
         if isinstance(word, np.ndarray):
             # Assume input grid already has border if it's an ndarray
             self._grid = word
+            self._inner_shape = inner_shape
         elif len(word) == 0:
             # Empty tableau: just 1x1 border
             self._grid = np.full((1, 1), None, dtype=object)
+            self._inner_shape = None
         else:
             # Find max row length
             max_cols = max((len(r) for r in word), default=0)
@@ -248,13 +298,33 @@ class Plactic(GridPrint, CrystalGraph):
                 for j, val in enumerate(row):
                     if val != 0:  # Don't store explicit zeros, use None for empty
                         self._grid[i, j] = int(val)
+            # Track inner shape: infer from 0 values if not provided
+            if inner_shape is None:
+                inner_shape_list = []
+                for i, row in enumerate(word):
+                    # Count leading zeros/Nones in this row
+                    count = 0
+                    for val in row:
+                        if val == 0 or val is None:
+                            count += 1
+                        else:
+                            break
+                    inner_shape_list.append(count)
+                # Only set if there are actual holes
+                if any(c > 0 for c in inner_shape_list):
+                    self._inner_shape = tuple(inner_shape_list)
+                else:
+                    self._inner_shape = None
+            else:
+                self._inner_shape = tuple(int(x) for x in inner_shape)
 
     @classmethod
-    def _from_grid(cls, grid):
+    def _from_grid(cls, grid, inner_shape=None):
         """Create a Plactic directly from an np.ndarray grid.
         Assumes grid already includes the border."""
         obj = cls.__new__(cls)
         obj._grid = grid
+        obj._inner_shape = inner_shape
         return obj
 
     def shiftup(self, k):
@@ -265,38 +335,76 @@ class Plactic(GridPrint, CrystalGraph):
             for j in range(self.cols):
                 if new_grid[i, j] is not None and new_grid[i, j] != 0:
                     new_grid[i, j] = int(new_grid[i, j]) + k
-        return Plactic._from_grid(new_grid)
+        return Plactic._from_grid(new_grid, self._inner_shape)
 
     @classmethod
-    def all_ss_tableaux(cls, shape, max_entry):
-        """Generate all semistandard tableaux of given shape with entries <= max_entry."""
+    def all_ss_tableaux(cls, shape, max_entry, inner_shape=None):
+        """Generate all semistandard tableaux of given shape (or skew shape) with entries <= max_entry.
+
+        Args:
+            shape: Sequence of row lengths (outer shape)
+            max_entry: Maximum entry value
+            inner_shape: Optional sequence of left offsets per row (for skew shapes).
+                        If provided, positions [row][0:inner_shape[row]] are marked as 0.
+
+        Returns:
+            Set of Plactic instances representing all valid semistandard tableaux
+        """
+        # Normalize shapes
+        outer = tuple(int(x) for x in shape)
+        r = len(outer)
+        if inner_shape is None:
+            inner = (0,) * r
+        else:
+            inner = tuple(int(x) for x in inner_shape) + (0,) * (r - len(inner_shape))
+
         tableaux = set()
-        current_tableau = [[0 for _ in range(row_len)] for row_len in shape]
 
-        def _recurse(row, col):
-            if row == len(shape):
+        # Initialize tableau with 0s for inner cells
+        current_tableau = []
+        for i in range(r):
+            row = [0] * outer[i]
+            current_tableau.append(row)
+
+        # Build list of cells to fill (excluding inner cells)
+        cells = []
+        for i in range(r):
+            for j in range(inner[i], outer[i]):
+                cells.append((i, j))
+
+        def _recurse(cell_idx):
+            if cell_idx == len(cells):
                 # Base case: A complete tableau is found
-                tableaux.add(cls([tuple(r) for r in current_tableau]))
+                tabby = cls([tuple(r) for r in current_tableau], inner_shape=inner if any(inner) else None)
+                tabby._grid[tabby._grid == 0] = None  # Convert explicit zeros to None
+                tableaux.add(tabby)
                 return
 
-            if col == shape[row]:
-                # Move to the next row if current row is filled
-                _recurse(row + 1, 0)
-                return
+            row, col = cells[cell_idx]
 
             # Determine the minimum possible value for the current cell
+            # Semistandard: rows weakly increasing, columns strictly increasing
             min_val = 1
+
+            # Check left neighbor (same row) - must be >= (weakly increasing rows)
             if col > 0:
-                min_val = max(min_val, current_tableau[row][col - 1])
-            if row > 0:
-                min_val = max(min_val, current_tableau[row - 1][col] + 1)
+                left_val = current_tableau[row][col - 1]
+                if left_val != 0:  # Skip inner cells
+                    min_val = max(min_val, left_val)
+
+            # Check top neighbor (same column, previous row) - must be > (strictly increasing columns)
+            if row > 0 and col < len(current_tableau[row - 1]):
+                top_val = current_tableau[row - 1][col]
+                if top_val != 0:  # Skip inner cells
+                    min_val = max(min_val, top_val + 1)
 
             for val in range(min_val, max_entry + 1):
                 current_tableau[row][col] = val
-                _recurse(row, col + 1)
-                # Backtrack (no explicit removal needed as it's overwritten in next iteration)
+                _recurse(cell_idx + 1)
+                # Backtrack (set back to 0 for clarity)
+                current_tableau[row][col] = 0
 
-        _recurse(0, 0)
+        _recurse(0)
         return tableaux
 
     @property
@@ -333,7 +441,20 @@ class Plactic(GridPrint, CrystalGraph):
                 val = self._grid[i, j]
                 if val is not None:
                     new_grid[j, i] = val
-        return self.__class__._from_grid(new_grid)
+
+        # Transpose inner_shape: convert row offsets to column offsets
+        inner_shape = self._inner_shape
+        transposed_inner = None
+        if inner_shape is not None:
+            # Build transposed inner shape
+            transposed_inner = [0] * self.cols
+            for i in range(len(inner_shape)):
+                for j in range(inner_shape[i]):
+                    if j < len(transposed_inner):
+                        transposed_inner[j] += 1
+            transposed_inner = tuple(transposed_inner) if any(x > 0 for x in transposed_inner) else None
+
+        return self.__class__._from_grid(new_grid, transposed_inner)
 
     @property
     def rows(self):
@@ -379,7 +500,7 @@ class Plactic(GridPrint, CrystalGraph):
             for j in range(self.cols):
                 if new_grid[i, j] is not None and new_grid[i, j] != 0:
                     new_grid[i, j] = -int(new_grid[i, j])
-        return Plactic._from_grid(new_grid)
+        return Plactic._from_grid(new_grid, self._inner_shape)
 
     def __mul__(self, other):
         """
@@ -401,6 +522,25 @@ class Plactic(GridPrint, CrystalGraph):
             if count > 0:
                 shape_list.append(count)
         return tuple(shape_list)
+
+    @property
+    def skew_shape(self):
+        """Return the skew shape as a tuple of (row_length, left_offset) pairs."""
+        outer_shape = []
+        inner_shape = []
+        for i in range(self.rows):
+            row_length = 0
+            left_offset = 0
+            for j in range(self.cols):
+                if self._grid[i, j] is not None and self._grid[i, j] != 0:
+                    row_length += 1
+                elif row_length == 0:
+                    left_offset += 1
+            if row_length > 0:
+                outer_shape.append(left_offset + row_length)
+                #shape_list.append((row_length, left_offset))
+                inner_shape.append(left_offset)
+        return tuple(outer_shape), tuple(inner_shape)
 
     @classmethod
     def from_word(cls, word):
@@ -670,7 +810,7 @@ class Plactic(GridPrint, CrystalGraph):
 
         # index -= 1
         # return self.down_jdt_slide(0, index).rectify()
-        ret = self.__class__._from_grid(self._grid.copy())
+        ret = self.__class__._from_grid(self._grid.copy(), self._inner_shape)
         while True:
             try:
                 corner = next(ret.iter_inner_corners)
