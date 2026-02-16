@@ -4038,6 +4038,27 @@ The function $\Delta_G$ is a homomorphism of rings from $\BRC$ to $\BRC\otimes \
 
 Grassmannian mimic dual algebra formula.
 
+\section{Quasisymmetric functions}
+
+\newcommand{\NSym}{\mathrm{NSym}}
+\newcommand{\QSym}{\mathrm{QSym}}
+
+Consider the algebra $\dcoma$ in the word basis. There is a homomorphism of rings to the ring of noncommutative symmetric functions $\NSym[t]$ with an indeterminate adjoined given by sending the generator $[0]\mapsto t$ and the remaining generators $[i]\mapsto S_i$. Let $J_\alpha(t)$ be the image of the Schubert basis element $\dsch_w^n$ under this homomorphism, where $\alpha$ is a (strong) composition with $\ell(\alpha)=n$ and
+$$\code(w) = \alpha$$
+
+\begin{proposition}
+We have that the elements $J_\alpha(t)$ as $\alpha$ ranges over all compositions form a basis of $\NSym[t]$ over $\mathbb{Z}[t]$.
+\end{proposition}
+\begin{proof}
+The basis $\dsch_w^n$ is triangular in the word basis. Thus, the image under the homomorphism of $\NSym$ clearly generates the ring as a module over $\mathbb{Z}[t]$. The leading term of the image of $\dsch_w^n$ where $\code(w) = \alpha$ with $\ell(\alpha)=n$ is $S_\alpha$, the set of which form an additive basis for the ring, from which the claim that they form a basis follows.
+\end{proof}
+
+To compute the dual basis in $\QSym[t]$, we need to introduce a nonstandard grading. This is a $\mathbb{N}^2$-grading, where the degree of the monomial quasisymmetric function $M_\alpha$ is $(|\alpha|, \ell(\alpha))$. The indeterminate $t$, rather than contributing to the first component of the degree, contributes to the second component. Thus, the dual basis element $t^k\mathcal{J}_\alpha(t)$ is sent to a polynomial of degree $|\alpha|$ in $\coma_{k+\ell(\alpha)}$ under the homomorphism dual to the one above.
+
+\begin{proposition}
+  Under the injective homomorphism $\QSym[t]\to\coma$, the element $t^kM_\alpha$ is sent to $M_{\alpha}(x_1,\ldots,x_k)$ in $\coma_{k + \ell(\alpha)}$.
+\end{proposition}
+
 \newcommand{\SSYT}{\mathrm{SSYT}}
 \bibliographystyle{acm}
 \bibliography{schubert_bialgebra}

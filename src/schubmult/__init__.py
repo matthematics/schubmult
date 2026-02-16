@@ -40,6 +40,8 @@ _lazy_exports = {
     "DoubleSchubertRing": "schubmult.rings.schubert_ring",
     "SingleSchubertRing": "schubmult.rings.schubert_ring",
     "DoubleSchubertElement": "schubmult.rings.schubert_ring",
+    "QSym": "schubmult.rings.quasisymmetric_functions",
+    "QSymElement": "schubmult.rings.quasisymmetric_functions",
     "RCGraphRing": "schubmult.rings.rc_graph_ring",
     "GrassRCGraphRing": "schubmult.rings.rc_graph_ring",
     "RCGraphRingElement": "schubmult.rings.rc_graph_ring",

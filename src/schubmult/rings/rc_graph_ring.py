@@ -527,7 +527,6 @@ class HWRCGraphRing(RCGraphRing):
         return elem
 
 
-
 class GrassRCGraphRing(RCGraphRing):
     _id = 0
 
@@ -556,11 +555,10 @@ class GrassRCGraphRing(RCGraphRing):
         return ret
 
     def mul_pair(self, a, b):
-        the_zero = RCGraph([]).resize(max(len(b), len(b.perm)))
-        sputnik = a * the_zero
+        sputnik = a * b
         ret = self.zero
         for rc in sputnik:
-            new_rc = RCGraph([*rc[:len(a)], *b.shiftup(len(a))])
+            new_rc = RCGraph([*rc[: len(a)], *b.shiftup(len(a))])
             if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(a) + len(b):
                 gr = new_rc.grass
                 if gr not in ret:
@@ -578,7 +576,7 @@ class GrassRCGraphRing(RCGraphRing):
         return self.from_dict(self._snap_grass(super().rmul(a, b)))
 
     def from_dict(self, dct):
-        #dct0 = {k: v for k, v in dct.items() if len(k.perm.descents()) <= 1}# and (k.perm.inv == 0 or len(k.perm.trimcode) == len(k))}
+        # dct0 = {k: v for k, v in dct.items() if len(k.perm.descents()) <= 1}# and (k.perm.inv == 0 or len(k.perm.trimcode) == len(k))}
         elem = super().from_dict(dct)
         elem.ring = self
         return elem

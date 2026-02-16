@@ -275,13 +275,14 @@ class WordBasis(FreeAlgebraBasis):
     def transition_schubert(cls, key):
         return dict(WordBasis.tup_expand(key))
 
+
     @classmethod
     def transition_jbasis(cls, key):
         # return dict(WordBasis.jbasis_tup_expand(key))
         FA = fa.FreeAlgebra(WordBasis)
         JB = fa.FreeAlgebra(basis=JBasis)
         res = FA(*key)
-
+        assert all(a != 0 for a in key), "Transition from WordBasis to JBasis is only implemented for keys with no zeros."
         ret = JB.from_dict({})
         while res != FA.zero:
             tup = next(iter(sorted(res.keys())))
@@ -289,7 +290,10 @@ class WordBasis(FreeAlgebraBasis):
             val = c * JB(*tup).change_basis(WordBasis)
             res -= val
             ret += c * JB(*tup)
+
         return ret
+
+
 
     @classmethod
     def transition_jtbasis(cls, key):
@@ -395,7 +399,7 @@ class WordBasis(FreeAlgebraBasis):
             # print(f"{res=}")
 
             # print(f"{ret=}")
-        return ret
+        return dict(ret)
 
     @classmethod
     def transition_zbasis(cls, key):
@@ -411,7 +415,7 @@ class WordBasis(FreeAlgebraBasis):
             val = c * JB(*tup).change_basis(WordBasis)
             res -= val
             ret += c * JB(*tup)
-        return ret
+        return dict(ret)
 
     @classmethod
     def transition_nelementary(cls, tup):
@@ -457,19 +461,6 @@ class JBasis(FreeAlgebraBasis):
         if 0 in cd[:n]:
             return None
         return cd[:n]
-
-    @staticmethod
-    def pare_schubert(perm):
-        cd = [*perm.code]
-        while len(cd) > 0 and cd[-1] == 0:
-            cd = cd[:-1]
-        if 0 in cd:
-            return None
-        # while len(cd) > 0 and cd[0] == 0:
-        #     cd = cd[1:]
-        # if 0 in cd:
-        #     return None
-        return tuple(cd)
 
     # @classmethod
     # def product(cls, key1, key2, coeff=S.One):
@@ -523,15 +514,29 @@ class JBasis(FreeAlgebraBasis):
     #             k2 = tuple(a for a in k if a != 0)
     #             dct_out[k2] = dct_out.get(k2, S.Zero) + v
     #         return dct_out
+
+    # @classmethod
+    # def transition_schubert(cls, key):
+    #     # key = perm, n
+    #     perm, n = key
+    #     if 0 not in perm.trimcode and len(perm.trimcode) == n:
+    #         return {tuple(perm.trimcode): S.One}
+    #     return cls.transition(WordBasis).transition(SchubertBasis)
+
     @classmethod
     def transition(cls, other_basis):
+        from symengine import Symbol
         # if other_basis == SchubertBasis:
         #     return lambda x: cls.transition_schubert(x)
         # if other_basis == WordBasis:
         #     return lambda x: {x: S.One}
         # if other_basis == SchubertSchurBasis:
+
         def trans(x):
+            t = Symbol("t")
             ASx = fa.FreeAlgebra(basis=SchubertBasis)
+            if 0 in x:
+                raise ValueError("Transition from JBasis to other basis is only implemented for keys with no zeros.")
             dct = ASx(uncode(x)).change_basis(WordBasis)
             dct_out = {}
             for k, v in dct.items():
@@ -539,9 +544,12 @@ class JBasis(FreeAlgebraBasis):
                 # if 0 in k:
                 #     continue
                 # k2 = k
-                dct_out[k2] = dct_out.get(k2, S.Zero) + v
+                extra_coeff = t**(len(k) - len(k2)) if len(k) - len(k2) > 0 else S.One
+                dct_out[k2] = dct_out.get(k2, S.Zero) + v * extra_coeff
             return dct_out
 
+        # if other_basis == SchubertBasis:
+        #     return lambda x: cls.transition_schubert(x)
         if other_basis == JBasis:
             return lambda x: {x: S.One}
         if other_basis == WordBasis:
@@ -657,14 +665,14 @@ class JTBasis(FreeAlgebraBasis):
         @cache
         def trans(x2):
             # ASx = fa.FreeAlgebra(basis=SchubertBasis)
-            from schubmult.rings import ASx
+            from schubmult import ASx
 
             if len(x2) != 2:
                 raise ValueError("JTBasis transition expects a tuple of length 2, got: " + sstr(x2))
             x = x2[0]
-            n = x2[1]
+            n = x2[1] # noqa: F841
             # print(f"{x2=}")
-            return JTBasis.normalize_dct(ASx(uncode([0] * int(n) + list(x)), n + len(x)).change_basis(WordBasis))
+            return JTBasis.normalize_dct(ASx(uncode(list(x)), len(x)).change_basis(WordBasis))
             # print(f"{dct=}")
             # dct_out = {}
             # for k, v in dct.items():
@@ -823,6 +831,27 @@ class SchubertBasis(FreeAlgebraBasis):
         return dct2
 
     @classmethod
+    def transition_jbasis(cls, perm, n):
+        from symengine import Symbol
+        if len(perm.trimcode) < n:
+            return FreeAlgebraBasis.compose_transition(WordBasis.transition(JBasis), cls.transition_word(perm, n))
+        if 0 not in perm.trimcode:
+            return {tuple(perm.trimcode): S.One}
+        leading_zeros = 0
+        codecode = [*perm.trimcode]
+        for a in perm.trimcode:
+            if a == 0:
+                leading_zeros += 1
+                codecode = codecode[1:]
+            else:
+                break
+        if 0 not in codecode:
+            return {tuple(codecode): Symbol("t") ** leading_zeros}
+        if leading_zeros > 0:
+            return {k: v * Symbol("t")**leading_zeros for k, v in FreeAlgebraBasis.compose_transition(WordBasis.transition_jbasis, cls.transition_word(uncode(codecode), n - leading_zeros)).items()}
+        return FreeAlgebraBasis.compose_transition(WordBasis.transition_jbasis, cls.transition_word(perm, n))
+
+    @classmethod
     def transition(cls, other_basis):
         if other_basis == SchubertBasis:
             return lambda x: {SchubertBasis.as_key(x): S.One}
@@ -836,7 +865,9 @@ class SchubertBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_separated_descents(other_basis.k, *x)
         if other_basis == ElementaryBasis:
             return lambda x: cls.transition_elementary(*x)
-        if other_basis == ZBasis or other_basis == JBasis or other_basis == JTBasis:
+        # if other_basis == JBasis:
+        #     return lambda x: cls.transition_jbasis(*x)
+        if other_basis == ZBasis  or other_basis == JTBasis or other_basis == JBasis:
             return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition(WordBasis)(x))
         return None
 
