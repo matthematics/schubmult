@@ -79,10 +79,10 @@ if __name__ == "__main__":
                         #assert tens.crystal_length() == graph_len, f"Tensor crystal length mismatch: expected {graph_len}, got {tens.crystal_length}, {tens=}"
                         tens_crystal_weight = tuple([a + b for a, b in itertools.zip_longest(pokle.crystal_weight, left_tensor.length_vector, fillvalue=0)])
                         assert len(tens_crystal_weight) == graph_len, f"Tensor crystal weight length mismatch: expected {graph_len}, got {len(tens_crystal_weight)}, {tens=}"
-                        # if (all(left_tensor.phi(i) > pokle.epsilon(i) or elem.lowering_operator(i) is None for i in range(1, graph_len))) and tens_crystal_weight == low_weight:# and tens.to_highest_weight()[0].crystal_weight == up_rc.length_vector:
-                        if tens.crystal_weight == low_weight and tens.is_lowest_weight and tens not in used_set:# and tens.to_highest_weight()[0].crystal_weight == up_rc.length_vector:
+                        if pokle not in used_set and (all(left_tensor.phi(i) > pokle.epsilon(i) or elem.lowering_operator(i) is None for i in range(1, graph_len))) and tens_crystal_weight == low_weight:# and tens.to_highest_weight()[0].crystal_weight == up_rc.length_vector:
+                        # if tens.crystal_weight == low_weight and tens.is_lowest_weight and tens not in used_set:# and tens.to_highest_weight()[0].crystal_weight == up_rc.length_vector:
                             result += Sx(up_perm)
-                            used_set.add(tens)
+                            used_set.add(pokle)
                 # high_weights = set()    
                 # for rc in bigot.full_crystal:
                 #     tensor = CrystalGraphTensor(left_tensor, rc.resize(graph_len))

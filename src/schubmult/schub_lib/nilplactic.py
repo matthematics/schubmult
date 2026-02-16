@@ -4,6 +4,85 @@ from .permutation import Permutation
 from .plactic import Plactic
 
 
+def _compute_inner_shape_from_grid(grid):
+    """
+    Compute a valid inner_shape (partition) from a grid by counting leading holes per row.
+    Returns a tuple representing leading holes, ensuring it forms a valid partition
+    (weakly decreasing sequence from top to bottom).
+    """
+
+    if grid.size == 0:
+        return None
+
+    # Count leading holes (None or 0) in each row
+    leading_holes = []
+    for row_idx in range(grid.shape[0]):
+        count = 0
+        for col_idx in range(grid.shape[1]):
+            val = grid[row_idx, col_idx]
+            if val is None or val == 0:
+                count += 1
+            else:
+                break  # Stop at first non-hole
+        leading_holes.append(count)
+
+    # Ensure it forms a valid partition (weakly decreasing from top to bottom)
+    # Process from top row (index 0) to bottom row
+    # Each row must have at most as many leading holes as the row above it
+    for row_idx in range(1, len(leading_holes)):
+        # Current row should have <= holes than row above
+        if leading_holes[row_idx] > leading_holes[row_idx - 1]:
+            # If current row has more holes, reduce to match row above
+            leading_holes[row_idx] = leading_holes[row_idx - 1]
+
+    # Return None if all zeros (no inner shape)
+    if all(h == 0 for h in leading_holes):
+        return None
+
+    # Strip trailing zeros
+    while leading_holes and leading_holes[-1] == 0:
+        leading_holes.pop()
+
+    return tuple(leading_holes) if leading_holes else None
+
+
+def _compact_grid(grid):
+    """
+    Compact a grid by shifting values down in each column to remove gaps.
+    A gap is when there's a None/0 at position (i, j) but a value at (i-1, j).
+    Returns a compacted grid with no column gaps.
+
+    Note: Grid includes a border row/column (last row and last column), which
+    should not be modified.
+    """
+    if grid.size == 0:
+        return grid
+
+    new_grid = grid.copy()
+
+    # Grid has border at last row and last column - exclude them
+    num_data_rows = new_grid.shape[0] - 1  # Exclude border row
+    num_data_cols = new_grid.shape[1] - 1  # Exclude border column
+
+    # For each column (excluding border), collect non-None/non-0 values from top to bottom
+    for col in range(num_data_cols):
+        values = []
+        for row in range(num_data_rows):
+            val = new_grid[row, col]
+            if val is not None and val != 0:
+                values.append(val)
+
+        # Clear the column (data rows only)
+        new_grid[:num_data_rows, col] = None
+
+        # Place values from bottom up (fill from highest row index, staying below border)
+        if values:
+            for i, val in enumerate(reversed(values)):
+                new_grid[num_data_rows - 1 - i, col] = val
+
+    return new_grid
+
+
 class NilPlactic(Plactic):
     def __init__(self, word=(), inner_shape=None):
         super().__init__(word, inner_shape=inner_shape)
@@ -170,24 +249,17 @@ class NilPlactic(Plactic):
             if doit_spots:
                 new_grid[tuple(zip(*doit_spots))] = switcher
             switcher -= 1
-        new_inner_shape = [*self._inner_shape] if self._inner_shape else [0] * (new_grid.shape[0] - 1)
 
-        # Find all positions where new_grid == -1 (new holes) and update inner_shape
-        hole_positions = np.where(new_grid == -1)
-        for row_idx in set(hole_positions[0]):
-            if row_idx < len(new_inner_shape):
-                # Count leading holes (including -1 markers) in this row
-                leading_holes = 0
-                for col_idx in range(new_grid.shape[1]):
-                    if new_grid[row_idx, col_idx] in (-1, None, 0):
-                        leading_holes += 1
-                    else:
-                        break
-                new_inner_shape[row_idx] = leading_holes
-
+        # Replace -1 markers with None
         new_grid[new_grid == -1] = None
 
-        return NilPlactic._from_grid(new_grid, tuple(new_inner_shape) if any(new_inner_shape) else None)
+        # Only recompute inner_shape if tableau originally had one (is a skew tableau)
+        if self._inner_shape is not None:
+            new_inner_shape = _compute_inner_shape_from_grid(new_grid)
+        else:
+            new_inner_shape = None
+
+        return NilPlactic._from_grid(new_grid, new_inner_shape)
 
     def down_jdt_slide(self, row, col):
         """
@@ -252,9 +324,16 @@ class NilPlactic(Plactic):
             if doit_spots:
                 new_grid[tuple(zip(*doit_spots))] = switcher
             switcher += 1
+
+        # Replace -1 markers with None
         new_grid[new_grid == -1] = None
-        new_inner_shape = [*self._inner_shape]
-        new_inner_shape[row] -= 1
+
+        # Only recompute inner_shape if tableau originally had one (is a skew tableau)
+        if self._inner_shape is not None:
+            new_inner_shape = _compute_inner_shape_from_grid(new_grid)
+        else:
+            new_inner_shape = None
+
         return NilPlactic._from_grid(new_grid, new_inner_shape)
 
     def bruhat_leq(self, other):
