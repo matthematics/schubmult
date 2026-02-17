@@ -809,7 +809,7 @@ All computation in this work was carried out using schubmult \verb|schubmult| \c
 		and $Q_3([4,3,2,1],v)=\emptyset$.
 	\end{example}
 	
-	\begin{definition} abel{definition:domination}
+	\begin{definition} \label{definition:domination}
 		A permutation $u$ is said to \emph{$1$-dominate} the permutation $w$ if for each index $j$ with $\code_1^*(u)<j\leq \code_1^*(w)$ we have $u(j)<u(j+1)$. Equivalently, $u$ has no descents strictly to the right of position $\code_1^*(u)$ up to position $\code_1^*(w)$. 
 		
 		For $i\geq 0$, we define a function $\phi_i:S_\infty\to S_\infty$ by declaring that
@@ -1301,7 +1301,7 @@ Here we gather some results about dominant permutations, the code, the dual code
 %Hence $\code_j^*(w)=\code_j^*(v)$ for all $j$, so that $v=w$. Thus, the result holds for $i=1$. Since $\phi_i=\phi\circ \phi_{i-1}$, we obtain the result by a simple induction.
 %\end{proof}
 
-\begin{definition} abel{definition:rhom}
+\begin{definition} \label{definition:rhom}
 For each $m\geq 0$, there are homomorphisms $\rho_m:S_\infty\to S_\infty$ such that
 $$\rho_m(s_i)=\begin{cases}
 	s_i&\mbox{ if }i<m\\
@@ -1376,7 +1376,7 @@ It will be useful to have a formula for $\code^*(\mu)$ in terms of $\code(\mu)$ 
 
 
 %A formula similar to the following proposition for when $i=n$, with $n$ being the last descent of $v$, can be derived from the transition formula \cite{lsschub}. From \cite{bbrc}, a similar formula can be obtained when $i=1$. From \cite{bsskew}, a similar formula for all $i$ can be derived.
-\begin{definition} abel{definition:ydiff}
+\begin{definition} \label{definition:ydiff}
 We wish now to apply divided difference operators to the $y$ variables. We thus define an action $*$ of $S_\infty$ on the polynomial ring permuting the indices of the $y$ variables, and define
 $$\nabla^{s_i}(P)=\frac1{y_i-y_{i+1}}(s_i-1) * P$$
 Note that we have flipped the sign of the divided difference operator to have the formulas

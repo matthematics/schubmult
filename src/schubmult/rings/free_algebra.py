@@ -234,6 +234,19 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
     def free_symbols(self):
         return set()
 
+    def hom_nsym(self):
+        from symengine import Symbol
+        fa_elem = self.change_basis(WordBasis)
+        t = Symbol("t")
+        ret = fa_elem.ring.zero
+        for k, v in fa_elem.items():
+            k2 = tuple(a for a in k if a != 0)
+            if k2 != k:
+                ret += v * (t ** (len(k) - len(k2))) * fa_elem.ring(*k2)
+            else:
+                ret += v * fa_elem.ring(*k2)
+        return ret.change_basis(self.ring._basis)
+
     @staticmethod
     @cache
     def tup_double_expand(tup):
