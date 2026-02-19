@@ -235,9 +235,11 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         return set()
 
     def hom_nsym(self):
-        from symengine import Symbol
+        # from symengine import Symbol
+
         fa_elem = self.change_basis(WordBasis)
-        t = Symbol("t")
+        # t = Symbol("t")
+        t = 1
         ret = fa_elem.ring.zero
         for k, v in fa_elem.items():
             k2 = tuple(a for a in k if a != 0)

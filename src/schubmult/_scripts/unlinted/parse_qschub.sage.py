@@ -8,6 +8,7 @@ import sys
 
 QSym = QuasiSymmetricFunctions(ZZ)
 QS = QSym.QS()
+dI = QSym.dI()
 M = QSym.M()
 
 lines = []
@@ -18,5 +19,5 @@ with open(sys.argv[_sage_const_1 ], "r") as f:
 for line in lines:
     name, val = line.split(" = ")
     val = eval(val)
-    print(f"{name} = {QS(val)}")
+    print(f"{name} = {dI(val)}")
 

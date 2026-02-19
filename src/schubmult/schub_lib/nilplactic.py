@@ -384,6 +384,16 @@ class NilPlactic(Plactic):
         return cls(word0), Plactic(word2)
 
     @classmethod
+    def neg_ed_insert_rsk(cls, w1, w2):
+        """Insert a letter/entry into this NilPlactic tableau and return a new Plactic."""
+        word0, word2 = (), ()
+        mx = max(w1, default = 0) + 1
+        for a, b in zip(w1, w2):
+            word0, word2 = cls._ed_insert_rsk(word0, word2, mx-int(a), int(b))
+        word0 = tuple(tuple(mx-x for x in row) for row in word0)
+        return cls(word0), Plactic(word2)
+
+    @classmethod
     def ed_column_insert_rsk(cls, w1, w2):
         """Insert a letter/entry into this NilPlactic tableau and return a new Plactic."""
         word0, word2 = (), ()
@@ -553,5 +563,3 @@ class NilPlactic(Plactic):
             return None
         pl = NilPlactic()
         return pl.ed_insert(*word)
-
-    # Inherit __hash__ and __eq__ from Plactic since they now work with _grid

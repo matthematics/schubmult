@@ -3,7 +3,7 @@ from sympy import Tuple
 from schubmult.schub_lib.nilplactic import NilPlactic
 
 # from schubmult.schub_lib.nilplactic import NilPlactic
-from schubmult.schub_lib.plactic import Plactic
+# from schubmult.schub_lib.plactic import Plactic
 from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.symbolic import S
 
@@ -226,7 +226,7 @@ class EGPlacticRing(CrystalGraphRing):
         identity_graph = RCGraph()
         return self.from_rc_graph(identity_graph)
 
-    def mul_pair(self, key1, key2, check=False): # noqa: ARG002
+    def mul_pair(self, key1, key2, check=False):  # noqa: ARG002
         amt_to_bump = max(key2[0][1], len(key2[0][0].perm))
         # r = RCGraphRing()
         nilp_set = {key1[0][0]}
@@ -238,18 +238,27 @@ class EGPlacticRing(CrystalGraphRing):
                 new_nilp_set.update(st)
             nilp_set = new_nilp_set
 
-        #rc_elem = r.zero
+        # rc_elem = r.zero
         ret = self.zero
         for nilp in nilp_set:
-            new_nilp = NilPlactic.from_word([*nilp.column_word, *[a + self_len for a in key2[0][0].column_word]])
+            # new_nilp = NilPlactic.from_word([*nilp.column_word, *[a + self_len for a in key2[0][0].column_word]])
+            # negate?
+            hw_plac1, raise_seq1 = key1[1].to_highest_weight(length=key1[0][1])
+            hw_plac2, raise_seq2 = key2[1].to_highest_weight(length=key2[0][1])
+            new_nilp, plac_elem_hw_t = NilPlactic.ed_insert_rsk(
+                [*nilp.column_word, *[a + self_len for a in key2[0][0].column_word]],
+                sorted([*hw_plac1.row_word] + [a + self_len for a in hw_plac2.row_word]),
+            )
+            plac_elem_hw = plac_elem_hw_t.transpose()
             if new_nilp.perm.inv == len(new_nilp.column_word) and len(new_nilp.perm.trimcode) <= self_len + key2[0][1]:
-                _, raise_seq1 = key1[1].to_highest_weight(length=key1[0][1])
-                _, raise_seq2 = key2[1].to_highest_weight(length=key2[0][1])
-                full_rc = RCGraph([*nilp.hw_rc(self_len), *key2[0][0].hw_rc(key2[0][1]).shiftup(self_len)])
-                hw_rc, raise_seq3 = full_rc.to_highest_weight()
-                plac_elem = Plactic.yamanouchi([a for a in hw_rc.length_vector if a != 0])
-                plac_elem = plac_elem.reverse_raise_seq(raise_seq3)
-                plac_elem = plac_elem.reverse_raise_seq(raise_seq1)
+                # _, raise_seq1 = key1[1].to_highest_weight(length=key1[0][1])
+                # _, raise_seq2 = key2[1].to_highest_weight(length=key2[0][1])
+                # full_rc = RCGraph([*nilp.hw_rc(self_len), *key2[0][0].hw_rc(key2[0][1]).shiftup(self_len)])
+                # # hw_rc = new_nilp.hw_rc(self_len + key2[0][1])
+                # _, raise_seq3 = full_rc.to_highest_weight()
+                # # plac_elem = Plactic.yamanouchi([a for a in hw_rc.length_vector if a != 0])
+                # plac_elem = plac_elem_hw.reverse_raise_seq(raise_seq3)
+                plac_elem = plac_elem_hw.reverse_raise_seq(raise_seq1)
                 plac_elem = plac_elem.reverse_raise_seq([a + key1[0][1] for a in raise_seq2])
                 # new_nilp2, plac_elem = NilPlactic.ed_insert_rsk([*nilp.column_word, *[a + self_len for a in key2[0][0].column_word]], sorted([*key1[1].row_word] + [a + self_len for a in key2[1].row_word]))
                 # assert new_nilp2 == new_nilp, f"ED insert mismatch: {new_nilp2} vs {new_nilp}"
