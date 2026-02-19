@@ -1,0 +1,870 @@
+%%
+%% This is LaTeX2e input.
+%%
+
+%% The following tells LaTeX that we are using the 
+%% style file amsart.cls (That is the AMS article style
+
+\documentclass{elsarticle}
+%\usepackage[backend=bibtex8,style=numeric,giveninits=true]{biblatex}
+%\addbibresource{formschub.bib}
+\usepackage{hyperref}
+\usepackage{fancyvrb}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{cases}
+\usepackage{caption}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{centernot}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage[margin=1in]{geometry}
+\usepackage[makeroom]{cancel}
+\usepackage[toc,nonumberlist,stylemods={tree}]{glossaries-extra}
+\usepackage{stmaryrd}
+\usepackage{makeidx}
+\makeindex
+\usepackage{stackengine}
+\def\useanchorwidth{T}
+%\usepackage{unicode-math}
+%\usepackage{nicematrix}
+
+%\usepackage{witharrows}
+
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{corollary}[lemma]{Corollary}
+\newtheorem{conjecture}[lemma]{Conjecture} 
+\newtheorem{proposition}[lemma]{Proposition} 
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{question}{Question}
+%%
+%% If some other type is need, say conjectures, then it is constructed
+%% by editing and uncommenting the following.
+%%
+
+%\newtheorem{conj}[thm]{Conjecture} 
+
+
+%%% 
+%%% The following gives definition type environments (which only differ
+%%% from theorem type invironmants in the choices of fonts).  The
+%%% numbering is still tied to the theorem counter.
+%%% 
+
+\theoremstyle{definition}
+%\newtheorem{definition}{Definition}[section]
+%\newtheorem{example}{Example}[section]
+\newtheorem{definition}[lemma]{Definition}
+\newtheorem{example}[lemma]{Example}
+\newtheorem*{note}{Note}
+
+%%
+%% Again more of these can be added by uncommenting and editing the
+%% following. 
+%%
+
+%\newtheorem{note}[thm]{Note}
+
+
+%%% 
+%%% The following gives remark type environments (which only differ
+%%% from theorem type invironmants in the choices of fonts).  The
+%%% numbering is still tied to the theorem counter.
+%%% 
+
+
+\theoremstyle{remark}
+
+\newtheorem*{remark}{Remark}
+
+
+%%%
+%%% The following, if uncommented, numbers equations within sections.
+%%% 
+
+%\numberwithin{equation}{section}
+\numberwithin{equation}{subsection}
+
+
+%%%
+%%% The following show how to make definition (also called macros or
+%%% abbreviations).  For example to use get a bold face R for use to
+%%% name the real numbers the command is $\mathbf{R}.  To save typing we
+%%% can abbreviate as
+
+\newcommand{\R}{\mathbf{R}}  % The real numbers.
+
+%%
+%% The comment after the defintion is not required, but if you are
+%% working with someone they will likely thank you for explaining your
+%% definition.  
+%%
+%% Now add you own definitions:
+%%
+
+%%%
+%%% Mathematical operators (things like sin and cos which are used as
+%%% functions and have slightly different spacing when typeset than
+%%% variables are defined as follows:
+%%%
+
+\DeclareMathOperator{\sch}{\mathfrak{S}}
+\newcommand{\tom}[1]{\xrightarrow{#1}}
+\newcommand{\Tom}[1]{\xRightarrow{#1}}
+\newcommand{\mot}[1]{\xleftarrow{#1}}
+\newcommand{\cperm}[1]{\llbracket #1\rrbracket}
+\newcommand{\cpcf}[5]{d^{#1,#2}_{#3}\left(#4\mid #5\right)}
+% simplified product notation
+\newcommand{\smpfu}{\mathsf{\Pi}}
+\newcommand{\smpr}[3]{\ensuremath{}\smpfu\left( #1 \mid #2_{[#3]}\right)}
+\newcommand{\smpre}[2]{\ensuremath{}\smpfu\left( #1 \mid #2\right)}
+\newcommand{\downvar}[1]{\stackrel{#1}{\searrow}}
+
+%\newcommand{\shifthom}{\operatornamewithlimits{\raisebox{1ex}{$\stackrel{\blacktriangleright}{\mathbf{\_}}$}}\limits}
+
+%\newcommand{\shifthom}{\operatornamewithlimits{\raisebox{1ex}{$\blacktriangleright$}}\limits}
+
+\newcommand{\shifthom}{\tau}
+	
+	%\operatornamewithlimits{\triangleright}\limits}
+
+
+%\newcommand{\shiftvby}[1]{\ensuremath{\resizebox{\width}{\heightoff}{$\shifthom_{#1}$}}}
+
+\newcommand{\shiftvby}[1]{\shifthom^{#1}}
+
+\makeatletter
+\newlength{\negph@wd}
+\DeclareRobustCommand{\negphantom}[1]{%
+	\ifmmode
+	\mathpalette\negph@math{#1}%
+	\else
+	\negph@do{#1}%
+	\fi
+}
+\newcommand{\negph@math}[2]{\negph@do{$\m@th#1#2$}}
+\newcommand{\negph@do}[1]{%
+	\settowidth{\negph@wd}{#1}%
+	\hspace*{-\negph@wd}%
+}
+\makeatother
+
+\makeatletter
+\newlength{\negvph@wd}
+\DeclareRobustCommand{\negvphantom}[1]{%
+	\ifmmode
+	\mathpalette\negvph@math{#1}%
+	\else
+	\negvph@do{#1}%
+	\fi
+}
+\newcommand{\negvph@math}[2]{\negvph@do{$\m@th#1#2$}}
+\newcommand{\negvph@do}[1]{%
+	\settowidth{\negvph@wd}{#1}%
+	\hspace*{-\negvph@wd}%
+}
+\makeatother
+\newcommand*\circled[1]{%
+	\tikz[baseline=(char.base)]{
+		\node[shape=circle,draw,inner sep=0.1pt] (char) {#1};
+	}%
+}
+\newcommand\mycircled[1]{\makebox[0pt]{\circled{#1}}}
+\newcommand{\tb}{\textbullet}
+\newcommand{\xr}[1]{\ensuremath{{}\xrightarrow{[#1]}{}}}
+\newcommand{\rd}[1]{\ensuremath{\mathcolor{red}{\mathbf{#1}}}}
+\newcommand{\mc}[1]{\ensuremath{\mycircled{#1}}}
+\newcommand{\desc}{\mathrm{Desc}}%
+%\newcommand{\schv}[2]{\operatornamewithlimits{\sch_{\mathit{#2}}}\limits_{\negphantom{{}_{\mathit{#2}}}\negvphantom{{}_{\mathit{#2}}}#1}}
+
+%\newcommand{\schv}[2]{\setstackgap{S}{0pt}\setstackgap{L}{0pt}\stackMath\stackunder{\sch_{#2}}{\negphantom{\scriptstyle{#2}}\!{\scriptscriptstyle{#1}}}}
+
+\newcommand{\schv}[2]{\shiftvby{#1}\!\sch_{#2}}
+
+%\newcommand{\shiftvby}[1]{\makebox[0pt]{$\triangleright$}#1}
+
+
+
+%\newglossary[slg]{symbolslist}{syi}{syg}{List of symbols}
+%\makeglossaries
+
+%\begin{itemize}
+%	\item Elements of $S_\infty$ $c{[}p,q{]}$, $d{[}p,q{]}$, $r{[}p,q{]}$, homomorphism $\sigma_p:S_\infty\to S_\infty$: Definition \ref{definition:specelem}	
+	
+%	\item  Relations between elements of $S\infty$ $\tom{k},\Tom{k}$: Definition \ref{definition:pierisymb}
+	
+%	\item Code, dual code, $\code(w)$, $\code^*(w)$, dominant permutations, the dominant approximation $\dom(v)$: Definition \ref{definition:codestuff}
+	
+%	\item Function/sets of permutations related to pulling out variables from Schubert polynomials $\varphi_{i,n}$, $\mathcal{D}_i(v)$, $Q_i(v',v)$: Definition \ref{definition:polysequence}
+	
+%	\item Flattening function $\phi_i:S_\infty\to S_\infty$, domination relation between permutations: Definition \ref{definition:domination}
+	
+%	\item Special polynomials $H_p(x;y)$, $E_p(x;y)$, $\smpr{x_1}{y}{p}$: Definition \ref{definition:hp}
+	
+%	\item Polynomial variable omission $x^{(i)}$, subscript substitution $y_A$, index shift function $\shiftvby{i}$: Definition \ref{definition:pv}
+%\end{itemize}
+
+
+
+
+%%
+%% This is the end of the preamble.
+%% 
+\title{Combinatorial proof of positivity of Schubert polynomial multiplication, with reduction to polynomial time verification given an oracle (TBD on an upper bound on the complexity class)}
+\author[1]{Matthew J. Samuel}
+\ead{matthew.samuel.math@gmail.com}
+
+\affiliation[1]{addressline={31 Cherry Blossom Drive},
+city={Monroe Township},
+postcode={NJ 08831},
+country={USA (please do not display address publicly)}}
+
+
+%\newcommand{\tomm}[2]{\xrightarrow{#1}_{#2}}
+%\counterwithout{equation}{section}
+%\setcounter{section}{-1}
+\newcommand{\shuff}[2]{\mathcal{S}\mathcal{H}_{#1}^{#2}}
+\newcommand{\dom}{\mathfrak{d}}
+\newcommand{\ldom}{\dom^*}
+\newcommand{\code}{\mathfrak{c}}
+\newcommand{\ducode}{\overline{\mathfrak{c}}}
+
+
+%\newglossary[slg]{symbolslist}{syi}{syg}{Symbolslist}
+%XtrLoadResources
+%[src={symbols},sort=use,type=main,
+%	group=specelem]
+%addstoragekey{group}{}{\grouplabel}
+%xtrsetgrouptitle{specelem}{}
+
+
+
+
+\begin{document}
+\newlength{\heightoff}
+\settoheight{\heightoff}{$f$}
+%\begin{abstract}
+%In a related paper by the author, ``A Molev-Sagan type formula for double Schubert polynomials,'' Molev-Sagan type coefficients $c_{u,v}^w(y;z)$ in the expansion of a product of two double Schubert polynomials $\sch_u(x;y)\sch_v(x;z)=\sum_w c_{u,v}^w(y;z)\sch_w(x;y)$ with different sets of coefficient variables are defined and conjectured to be positive in a certain sense. A positive formula is found in certain cases, including a generalized ``Pieri case'' where $v$ is a dominant permutation, so that $\sch_v(x;z)$ is a product of factorial elementary symmetric polynomials. Conversely, in this article we give a positive formula for $c_{u,v}^w(y;z)$ where instead $u$ is a dominant permutation and $v$ and $w$ are arbitrary. More generally, we introduce a ``domination'' condition where the formula applies when $u$ dominates $w$, even if $u$ is not necessarily dominant, whereas dominant permutations dominate all other permutations. Unlike in the case where $y=z$, $c_{u,v}^w(y;z)$ has very little to do in general with $c_{v,u}^w(y;z)$, and the computation of one can be easy with the other being difficult. Using some algebra, the formula where $u$ is dominant can be leveraged to find other positive formulas for $c_{u,v}^w(y;z)$ for a wide range of pairs $u$ and $v$. In particular, while the original paper covers the separated descents case where there exists a $p$ such that $\ell(us_i)>\ell(u)$ for all $i<p$ and $\ell(vs_i)>\ell(v)$ for all $i>p$, the present paper allows us to flip that condition, completing the formula where $u$ and $v$ have separated descents in any direction. As to the additional cases, we demonstrate positivity with an algorithm for computing the coefficient in the case where $\sch_u(x;y)$ has at most two $x$ variables, or when $\sch_u(x;y)$ is a factorial elementary symmetric polynomial or a factorial complete symmetric polynomial, with $u$ not necessarily dominant (thus covering all cases in what would normally be called a Pieri formula). We then connect products of double Schubert polynomials to coproducts in the Molev-Sagan case.
+%In a related paper by the author, ``A Molev-Sagan type formula for double Schubert polynomials,'' Molev-Sagan type coefficients $c_{u,v}^w(y;z)$ in the expansion of a product of two double Schubert polynomials in different sets of coefficient variables are defined and conjectured to be positive in a certain sense, and positive formulas are found for some of these coefficients, including the case where $v$ is a dominant permutation. In this paper we provide some additional formulas, including a ``dual Pieri formula'' for the case where $u$ is dominant, and more generally a ``domination'' relation is defined between permutations such that the formula applies when $u$ dominates $w$, whereas dominant permutations dominate all other permutations. This allows for ``flipping'' the main result of that article, giving a formula for multiplying pairs $\sch_u(x;y)\sch_v(x;z)$ where there exists a $p$ such that $\ell(us_i)>\ell(u)$ for all $i>p$ and $\ell(vs_i)>\ell(v)$ for all $i<p$. Coproduct TODO
+%In this paper we present a positive combinatorial formula for computing Molev-Sagan type coefficients in mixed-variable products of double Schubert polynomials $\mathfrak{S}_u(x;y)\mathfrak{S}_v(x;z)$ where $u$ is dominant, as opposed to a previous article where the computation was done where $v$ was dominant. More generally, a ``domination'' relation between permutations is introduced where dominant permutations dominate all other permutations, and a positive formula is obtained for $c_{u,v}^w(y;z)$ for all $v$ in the case that $u$ dominates $w$. This allows for a positive formula for $c_{u,v}^w(y;z)$ where $u$ and $v$ have separated descents in either direction. In addition, an equivalence is demonstrated between products and coproducts of double Schubert polynomials that can be used to find products from coproducts and vice versa. In addition to theoretical interest, the product-coproduct equivalence and other formulas assist in simplifying and optimizing computation of product and coproduct coefficients in a positive, combinatorial manner. We finally construct the bialgebra for which the coproduct induces a product on the dual.
+%\end{abstract}
+
+\begin{abstract}
+	%We present a solution to the long-unsolved problem of finding a positive formula for Schubert polynomial multiplication (Littlewood-Richardson rule), proving that it is in the complexity class $\#\textrm{NP}$. The solution expresses the coefficient of a Schubert polynomial in the expansion of a product of two Schubert polynomials as the cardinality of a subset of a set of pairs of RC graphs that can be recognized in polynomial time once a specific element is identified. We provide an algorithm for identifying the element, though the algorithm does not run in polynomial time. We conjecture that the problem is not in $\#\mathrm{P}$ unless $\mathrm{P}=\mathrm{NP}$.
+	WIP
+\end{abstract}
+
+\maketitle
+
+%{\bf Keywords}: Double Schubert polynomial, Schubert polynomial, structure constant, coproduct, Pieri
+
+%{\bf Mathematics classification codes}: 05E05, 05A05, 05A15, 14N10
+
+{\bf Email}: matthew.samuel.math@gmail.com
+
+
+%$$w_0(n)^{(i)}=w_0(n)w_0(n+1-i)w_0(n-i)$$
+
+%\begin{theorem}
+%Let $u\in S_n$ and $1\leq i\leq n$. Then we have
+%$$\sch_u(y)=\sum_{u'w_0(n)^{(i)}\tom{n+1-i} uw_0(n)}y_i^{\ell(u',u)}\sch_{u'}(y^{(i)})$$
+%where $u'\in S_n$ satisfies $\ell(u'w_0(n)^{(i)})+\ell(u')=\ell(w_0(n)^{(i)})$.
+%\end{theorem}
+
+\newcommand{\dsch}{\ensuremath{\Xi}}
+%\newcommand{\sch}{\mathfrak{S}}
+\newcommand{\coma}{\mathcal{A}}
+\newcommand{\dcoma}{\mathcal{D}}
+
+
+%\tableofcontents
+
+\section{Introduction (from scratch)}
+\addcontentsline{toc}{section}{\protect\numberline{}Introduction}
+
+%Let $w$ and let $R_0(w)$ be the principal RC graph for $w$. We define an ordered pair of RC-graphs $(R_1,R_2)$ to be \emph{good} if it satisfies the following conditions
+\newcommand{\wt}{\mathrm{weight}}
+\newcommand{\RC}{\mathrm{RC}}
+\begin{definition}[Symmetric group, adjacent transpositions $s_i$]
+Let $S_\infty$ be the symmetric group of bijective functions $w:\mathbb{N}\to\mathbb{N}$ (positive integers, not including $0$) that fix all but finitely many elements. Each element of $S_\infty$ can be identified with an element of some finite $S_n$, where $n$ is large enough that $w$ fixes all positive integers that follow $n$.
+
+$S_\infty$ is generated by the adjacent transpositions $s_i$, $i\geq 1$, such that
+$$ws_i(j)=\begin{cases}
+	w(j)&\mbox{ if }j\notin \{i,i+1\}\\
+	w(i+1)&\mbox{ if }j=i\\
+	w(i)&\mbox{ if }j=i+1.
+\end{cases}$$
+
+Given a finite sequence of positive integers $\mathbf{a}=(a_1,\ldots,a_m)$, we define $w(\mathbf{a})=s_{a_1}\cdots s_{a_m}$. $w(\mathbf{a})$ is the product of the simple reflections indexed by the word $\mathbf{a}$. Some elementary facts:
+\begin{enumerate}
+	\item Every element of $S_\infty$ has a word (i.e. the simple reflections/adjacent transitions generate the group).
+	
+	\item The minimal length of any word for $w$ is equal to the number of inversions of $w$. Such a word is known as a reduced word. This is expressed as $\ell(w)$ (signifying the length).
+	
+	\item $S_\infty$ is a Coxeter group, which implies several extremely strong combinatorial results about words and reduced words that we will explain as they come up.
+	
+	\item A \emph{(right) descent} of $w$ is an integer $i$ such that $\ell(ws_i)<\ell(w)$. For all $i$, either $\ell(ws_i)=\ell(w)-1$ (if $i$ is a descent) or $\ell(ws_i) = \ell(w)+1$ (if it is not).
+\end{enumerate}
+\end{definition}
+	
+\begin{definition}[RC-graphs]
+An RC-graph $R$ with $m$ rows is defined to be a sequence $(\mathbf{r}_1,\mathbf{r}_2,\ldots,\mathbf{r}_m)$ of certain words. Specifically, the words are finite strictly decreasing sequences of zero or more integers such that for each $a\in\mathbf{r}_i$ we have $a\geq i$, and in addition if we define 
+$$w(R)= w(\mathbf{r}_1)\cdots w(\mathbf{r}_m)$$
+then we also require that $\ell(w(R))$ is the sum of the lengths of all of the sequences (so that $\mathbf{r}_1\cdots\mathbf{r}_m$ is a reduced word for the permutation $w(R)$). An RC graph must have at least as many rows as the last descent of $w(R)$, even if trailing rows are empty.
+We define the weight of $R$ to be the vector of nonnegative integers
+$$\wt(R)=(\ell(\mathbf{r}_1),\ldots,\ell(\mathbf{r}_m))$$
+The word of $R$ is 
+$$\mathrm{word}(R) = \mathbf{r_1}\cdots\mathbf{r_m}$$
+Given the restrictions, it's straightforward to prove that an RC-graph $R$ is uniquely defined by its weight and its word (where we are very particular that the length of the weight be exactly $m$; this is often seen as unimportant, however it is essential here).
+\end{definition}
+\newcommand{\tr}{\mathrm{trim}}
+
+We define an operation $\tr$ on $\RC_m$ by declaring that $\tr(R)$ for an RC graph with $m$ rows is the RC graph $R^-\in\RC_{m-1}$ obtained by removed the first row and subtracting $1$ from the elements of the remaining rows.
+
+
+%For a permutation $w$ and an integer $m$, we define $R^0_m(w)$ to be the unique RC graph $R$ (if it exists, which requires $m$ to be large enough) such that $w(R)=w$ and $\wt(R)=\code(w)$.
+	
+%Given a permutation $w$, we define $\mathrm{RC}^2_m(w)$ to be the set of ordered pairs of RC-graphs $(R_1,R_2)$ with $m$ rows such that $\mathrm{weight}(R_1)+\mathrm{weight}(R_2)=\code(w)$ and $w(R_1),w(R_2)\leq w$ in Bruhat order. 
+
+%For two permutations $w$ and $w'$, we write that $w\xrightarrow{m} w'$ if there is an RC-graph for $w'$ with $m$ rows that has the same weight as $R^0_m(w)$ and is identical to $R^0_m(w)$ except for the first row. 
+
+%Every pair is $0$-valid. An ordered pair $(R_1,R_2)\in \RC^2_m(w)$  is $i$-valid for some $i\geq 1$ if it is $i-1$-valid and the following condition is satisfied. Let $R_1'=\mathrm{suffix}_i(R_1)$ and let $R_2'=\mathrm{suffix}_i(R_2)$, and suppose $(R_1',R_2')\in \RC^2_i(u)$. Then for $u'$ such that $u\to u'$ and all  $i$-valid pairs of RC-graphs $(R_1'',R_2'')\in \RC^2_i(u')$ such that $w(R_1'')=w(R_1')$ and $w(R_2'')=w(R_2')$, we have $\wt(R_1')<\wt(R_1'')$ and $\wt(R_2')<\wt(R_2'')$. Finally, a graph with $m$-rows is valid if it is $m$-valid.
+
+%satisfies the basic validity condition with respect to $(R_1',R_2')\in \mathrm{RC}^2_m(w')$ such that $w(R_1')=w(R_1)$ and $w(R_2')=w(R_2)$ if $\wt(R_1')\leq \wt(R_1)$ and $\wt(R_2')\leq \wt(R_2)$ for all suffixes.
+%\end{definition}
+
+%\begin{definition}[Validity]
+
+%The set of \emph{valid} pairs $(R_1,R_2)\in \RC_m(w)$ is defined as follows.
+%\begin{enumerate}
+%	\item The pair $(\epsilon,\epsilon)\in\RC^2_0(\mathrm{id})$ is valid.
+%	\item $(R_1,R_2)\in \RC^2_m(w)$ for some $w$ with $\ell(w)>0$ is valid if and only if $(R_1^-, R_2^-)\in\RC_{m-1}^2(w^-)$ is valid and  $(R_1,R_2)$ satisfies the basic validity condition for all valid $(R_1',R_2')\in \RC^2_m(w')$ for all $w\xrightarrow{m} w'$ with $w(R_1)=w(R_1')$ and $w(R_2)=w(R_2')$.
+%\end{enumerate}
+
+%\end{definition}
+
+
+
+
+
+%Valid path up sink and must not be flavable
+
+%If $w$ is a sink, then any $(R_1,R_2)\in \RC^2(w)$ is considered laterally valid at level 0. $(R_1,R_2)$ is considered laterally valid at level $i>0$ if for any $w'$ with $w\to w'$ and any $(R_1',R_2')\in\RC^2(w')$ that is considered laterally valid at level $i-1$ we have that $\wt(R_1)\leq \wt(R_1')$ and $\wt(R_2)\leq \wt(R_2')$.
+%A pair $(R_1,R_2)$ is laterally valid if for all paths $w_k\leftarrow \cdots \leftarrow w_0=w$ and corresponding pairs $(R_1^{(i)}.R_2^{(i)})\in \RC^2(w_i)$ all with the same ordered pair of permutations such that $w_k$ is a sink and all steps in the path satisfy the basic validity condition with respect to all 
+%We define now the 
+
+%full validity condition. First of all, the empty pair of RC graphs is fully valid for the identity permutation. We then have that $(R_1,R_2)\in\RC^2(w)$ is fully valid for $w$ if $(R_1^-,R_2^-)$ is fully valid for $w^-$ and $(R_1,R_2)$ satisfies the basic validity condition for all directed adjacent fully valid pairs of RC graphs $(R_1',R_2')$.
+% and additionally $w$ is a lateral sink or $(R_1,R_2)$ satisfies the basic validity condition with respect to all adjacent fully valid pairs of RC graphs and there exists a lateral path
+%$$w=w_1\to w_2\to\cdots\to w_k$$
+%with a corresponding sequence $(R_1^{(i)},R_2^{(i)})\in \RC^2(w_i)$ (specifically $(R_1^{(1)},R_2^{(1)})=(R_1,R_2)$) satisfying $w(R_1^{(i)})=w(R_1)$ and 5$w(R_2^{(i)})=w(R_2)$ for all $i$ such that $w_k$ is a sink and each of $(R_1^{(i)},R_2^{(i)})$ for $i\geq 2$ is fully valid for $w_i$. 
+ 
+%If there is a chain $w=w_0\to\cdots\to w_k$ with $(R_1,R_2)\in \mathrm{RC}^2(w)$, $(R_1^{(i)},R_2^{(i)})\in \mathrm{RC}^2(w_i)$ for all $i$ that satisfy $w(R_1)=w(R_1^{(i)})$ and $w(R_2)=w(R_2^{(i)})$ for all $i$, then we must have that $\mathrm{weight}(R_1^{(i)})\leq\mathrm{weight}(R_1^{(j)})$ and $\mathrm{weight}(R_2^{(i)})\leq \mathrm{weight}(R_2^{(j)})$ for all $0\leq i\leq j\leq k$.
+
+\newcommand{\prank}{\mathrm{prank}}
+\newcommand{\vrank}{\mathrm{vrank}}
+\newcommand{\crank}{\mathrm{crank}}
+\newcommand{\PRC}{\mathrm{PRC}}
+\newcommand{\word}{\mathrm{word}}
+\newcommand{\lle}{<_{\mathrm{lex}}}
+\newcommand{\lleq}{\leq_{\mathrm{lex}}}
+\newcommand{\LR}{\mathcal{C}}
+Define a total ordering $\leq$ on $R,R'\in \RC_m$ if $\code(w(R))\lle \code(w(R'))$ or $w(R)=w(R')$ and $\wt(R)\lle \wt(R')$ or $\wt(R)=\wt(R')$ and $\word(R)\lleq \word(R')$. Define a total ordering on pairs of RC graphs where $(R_1,R_2)\leq (R_1',R_2')$ if $\code(R_1,R_2)\lle\code(R_1',R_2')$ or $\code(R_1,R_2)=\code(R_1',R_2')$ and $R_1<R_1'$ or $\code(R_1,R_2)=\code(R_1',R_2')$ and $R_1=R_1'$ and $R_2\leq R_2'$.
+
+%For $(R_1,R_2)\in \PRC^2(w)$, define $\prank(R_1,R_2)$ to be the number of pairs of RC graphs $(R_1',R_2')\in \PRC^2(w)$ with $w(R_1)=w(R_1')$ and $w(R_2)=w(R_2')$ less than or equal to $(R_1,R_2)$. If $(R_1,R_2)\in \PRC^2(w)$ and $(R_1',R_2')\in \PRC^2(\alpha)$ for some $\alpha$ such that there exists an $R\in \RC_{\alpha}(w)$ for some $\alpha\neq \code(w)$, for such an $R$ define 
+%$$\prank_R(R_1',R_2')=\begin{cases}
+%	\prank(R_1,R_2)&\mbox{ if }\prank(R_1,R_2)=\prank(R_1',R_2')\\
+%	0&\mbox{ otherwise.}
+%\end{cases}$$
+%and define
+%$$\crank_{\alpha}(u,v)=\sum_{(R_1,R_2)\in \RC_m(\alpha),w(R_1)=u,w(R_2)=v}\prank_R(R_1',R_2')$$
+%Then define $\LR_{u,v}^w$ to be the number of $(R_1,R_2)\in \PRC^2_m(w)$ such that $\crank_{\code(w)}(w(R_1),w(R_2))<\prank(R_1,R_2)$.
+\newcommand{\rank}{\mathrm{rank}}
+Order on RC graphs, total ordering $R\leq R'$ if $(\wt(R),\code(w(R)),\word(w(R)))$ is lex than $R'$. Total ordering on pairs of RC's if $Q_{u,v}=(\wt(R_1,R_2),R_1,R_2)\leq$. Define an order preserving bijection with the set
+$$(R,R_1,R_2)$$
+for $R$ any RC graph and $(R_1,R_2)\in \LR_{u,v}(w(R))$.
+
+
+Construct $\LR_{u,v}(w)$. If $R$ is principal and unique for the weight, define $LR_{u,v}(w)=\PRC^2(w,u,v)$, Bruhat leq. For permutation $w$, let $\LR_{u,v}(w)$ be the set of $(R_1,R_2)\in \PRC^2(w,u,v)$ such that 
+$$\rank_{u,v}(\code(w),R_1,R_2)>\max\{\rank_{\mathrm{new}}(R,R_1',R_2')\mid \wt(R)=\code(w),R<R_0(w),(R_1',R_2')\in \LR_{u,v}(w(R))\}$$
+
+%If $(R_1,R_2)$ has a weight sum that as a code has no co-principal pairs, define
+%$$\vrank(R_1,R_2)=\prank(R_1,R_2)$$
+%If $(R_1,R_2)$ has co-principal pairs, define a total ordering $\leq_w$ on co-principal RC's with nonzero $\vrank$ if $\code(u)<\code(v)$ or $\code(u)=\code(v)$ and $\vrank(R_1',R_2')\leq \vrank(R_1'',R_2'')$. Define $\crank_w(R_1',R_2')$ to be the number of co-principal pairs $(R_1'',R_2'')$ such that %$(R_1'',R_2'')\leq_w(R_1',R_2')$. For $w$-principal RC's, define $\vrank(R_1,R_2)=0$ if $\prank(R_1,R_2)=\crank_w(R_1',R_2')$ for some co-principal $(R_1',R_2')$, and define $\vrank(R_1,R_2)$ to be the amount $\prank(R_1,R_2)$ exceeds $\prank(R_1',R_2')$ of the maximal $(R_1',R_2')$ such that %$\vrank(R_1',R_2')=0$.
+
+
+%Then define an ordering on all of the RC's by $(R_1',R_2')\leq (R_1'',R_2'')$ if $\crank_w(R_1',R_2')\leq\crank_w(R_1'',R_2'')$ or $\crank_w(R_1(R_1,R_2)
+%define $\prank_w(R_1',R_2')$ to be the number of 
+
+
+
+\begin{theorem}[Littlewood-Richardson rule for Schubert polynomials]
+	If $u, v, w$ are permutations, then $c_{u,v}^w=\#\LR_{u,v}(w,m)$, where $m$ is at least as large as the last descent of $u$ and the last descent of $v$.
+\end{theorem}
+
+Binary search
+%\begin{theorem}[The RC-graph positivity theorem]
+%Let $A$ be a set. Suppose we have a function $\mathcal{C}:\RC_\infty\to \mathbb{Z}A$ that depends only on $w(R)$ and the number of rows of $R$ and we have a set $C$ with a function $\wt:C\to \code(S_n)$ and a function $\mathcal{A}:C\to A$ such that for each integer vector $\alpha$ we have
+%$$\sum_{R\in\RC_m(\alpha)} \mathcal{C}(w(R)) = \sum_{c\in C,\wt(c)=\alpha} \mathcal{A}(c)$$
+%Additionally, suppose $C$ has a total ordering compatible with the lexicographical order on $\wt(C)$. Then for each permutation $w\in S_\infty$ there exists a canonical subset $C_w\subseteq C$ such that $\wt(c)=\code(w)$ for all $c\in C_w$ and
+%$$\mathcal{C}(w) = \sum_{c\in C_w} \mathcal{A}(c)$$
+%\end{theorem}
+
+
+
+%We have that
+%$$\sch_u(x)\sch_v(x) = \sum \wt(R_1)\wt(R_2)$$
+%where $w(R_1)=u$, $w(R_2)=v$.
+
+%Maybe?
+
+%$$c\sch_u(x)\sch_v(x)=\sum c_{u,v}^w\wt(R_1)\wt(R_2)$$
+%Where $(R_1,R_2)$ is valid for $w$ or $(R_1',R_2')\in \RC^2(w')$ for some $w'$ with $w'\xrightarrow{m} w$ such that $\wt(R_1')\geq \wt(R_1)$ or $\wt(R_2')\geq \wt(R_2)$.
+%
+%Test
+
+%RC graph move bijections
+
+
+%A weak composition $\alpha$  is said to be of $w$-Schubert character if there is some RC-graph $R$ for $w$ such that $\mathrm{weight}(R) = \alpha$. The weight order on RC-graphs is the relation $\preceq$ such that $R_1\preceq R_2$ if and only if $w(R_1) = w(R_2)$ and $\mathrm{weight}(R_1)$ is less than or equal to $\mathrm{weight}(R_2)$ in the lexicographical order on weak compositions. We extend this to an ordering on ordered pairs of RC-graphs by the usual construct of the product order. That is, $(R_1,R_2)\preceq (R_1', R_2')$ if $R_1\preceq R_1'$ and $R_2\preceq R_2'$.
+
+%We provide the following Littlewood-Richardson rule for Schubert polynomials.
+
+%\begin{theorem}[Littlewood-Richardson rule for Schubert polynomials] \label{theorem:main}
+%	Let $u,v,w$ be permutations such that $u\leq w$ and $v\leq w$. Then the coefficient $c_{u,v}^w$ is equal to the number of ordered pairs of RC-graphs $(R_1, R_2)$ such that $\mathrm{weight}(R_1)+\mathrm{weight}(R_2)=\code(w)$ satisfying $w(R_1)=u$, $w(R_2)=v$, and $(R_1,R_2)$ is minimal in the weight order among all ordered pairs of RC-graphs $(R_1', R_2')$ such that the weak composition $\mathrm{weight}(R_1')+\mathrm{weight}(R_2')$ is of $w$-Schubert character.
+%\end{theorem}
+
+\section{RC graph product}
+
+The product of two RC graphs $R_1$ with $m$ rows and $R_2$ with $n$ rows is defined as follows. First, we define an operation on RC graphs in $\RC_m$ with an empty last row to $\RC_{m-1}$. Using the exchange property, delete the descents larger than $m-1$ in word order from the graph, and place them back in row $m$ to obtain an RC graph $\widetilde{R}_1$ for the same permutation. If $r_1\geq r_2\cdots \geq r_k$ are the rows that the descents were taken from, Kogan insert with descent $m$ into $\widetilde{R}_1$ to obtain a unique RC graph, then remove the last row to obtain $Z(R_1)$. Then the product of an RC graph $R_1$ of length $m$ and an RC graph $R_2$ of length $n$ is
+$$\sum  R_1'\sigma_m(R_2)$$
+where $R_1'\in \RC_{m+n}$ with $n$ empty rows is such that $R_1 = Z^n(R_1')$, and this is an overlap. Product is Coxeter-Knuth. $\epsilon$ is an empty row with weight $1$.
+
+The zeros are the relations, plus Coxeter-Knuth. Generated by length $1$. Generators, $K\otimes a$ where $K$ is Coxeter-Knuth and $a$ is a free algebra element compatible tableau. This is the dual of the coalgebra of dual Coxeter-Knuth and monomial tensors. Easier to describe as Coxeter-Knuth free algebra with the dual Schubert bialgebra product. This lets us get separated descents and Pieri? Recover plactic?
+
+The Schubert RC algebra has a surjective homomorphism onto the dual Schubert algebra.
+
+This combines the dominant and dual dominant Pieri formula.
+
+Dual dominant Pieri formula is simply the RC graph product propagated.
+
+This is the product of the inverses of the Schubert polynomials. Transpose product transpose?
+
+
+
+\section{The Schubert bialgebra}
+
+\subsection{Definition}
+
+We define a commutative algebra $\coma$ over the integers as follows. For each $n$, define $\coma_n$ to be the polynomial ring over $\mathbb{Z}$ in the variables $x_1,\ldots,x_n$. Then define
+$$\coma =\bigoplus_{n=0}^\infty \coma_n$$
+The multiplication within $\coma_n$ is as usually defined for the polynomial ring. However, if $a\in \coma_m$ and $b\in \coma_n$ with $m\neq n$ and $m,n>0$,  then
+$$ab = 0$$
+Otherwise, the component for $n=0$ is identified with the coefficient ring. Note that the ``identity element'' for positive $n$ is not an identity element of $\coma$ (we may sometimes refer to it as a ``fat identity''). 
+
+Each $\coma_n$ has a basis consisting of elements $x_{\alpha}$ where $\alpha$ is a weak composition of length $n$, indicating that
+$$x_a = x_1^{a_1}\cdots x_n^{a_n}$$
+and that $x_\alpha$ is in the component $\coma_n$. The direct sum therefore has a basis that can canonically be identified with union of these.
+
+We define a coproduct $\Delta:\coma\to\coma\otimes\coma$ on the basis $x_\gamma$ by
+$$\Delta(x_\gamma) = \sum_{\substack{\alpha\beta=\gamma}} x_\alpha\otimes x_\beta$$
+where the equation $ab=c$ indicates that $a$ concatenated with $b$ is equal to $c$. We also define a counit $\varepsilon:\coma\to \mathbb{Z}$ by $\varepsilon(x_\alpha)=0$ unless $\alpha$ has length $0$.
+
+
+
+\begin{lemma}
+	With $\Delta$ and $\varepsilon$, $\coma$ is a coassociative, counital coalegebra.
+\end{lemma}
+\begin{proof}
+	We have 
+	$$\Delta(x_\delta)=\sum x_\alpha\otimes x_\gamma$$
+	Applying $\Delta$ to either tensor factor results in
+	$$\sum x_\alpha\otimes x_\beta\otimes x_\gamma$$
+	The symmetry of this is exactly the coassociativity condition. Seeing that we may choose either $\alpha$ or $\gamma$ to be empty, the definition of the counit gives us the result that $\coma$ is counital as well under $\Delta$ and $\varepsilon$.
+\end{proof}
+
+%\begin{lemma}
+%	$\Delta:\coma\to\coma\otimes\coma$ is a homomorphism of rings.
+%\end{lemma}
+%\begin{proof}
+	%This is where the condition that $x_\alpha x_\beta=0$ unless $\alpha$ and $\beta$ are the same length if both $\alpha$ and $\beta$ have nonzero length comes in. This preserves the lengths in the coproduct factors, ensuring that the function is a homomorphism of rings.
+%\end{proof}
+
+%\begin{lemma}
+%	$\nabla:\coma\otimes \coma\to \coma$ is a homomorphism of coalgebras.
+%\end{lemma}
+%\begin{proof}
+%	
+%\end{proof}
+
+\begin{proposition}
+	$\coma$ is a bialgebra over $\mathbb{Z}$.
+\end{proposition}
+\begin{proof}
+
+We check compatibility of the product and coproduct. Consider composing the coproduct with the product of $x_\alpha$ and $x_\beta$. If we let $\gamma = \alpha+\beta$, then
+$$\Delta(x_\gamma) = \sum_{\gamma_1\gamma_2=\gamma}x_{\gamma_1}\otimes x_{\gamma_2}$$
+For each such $\gamma_1,\gamma_2$, say of length $p$ and $q$, the corresponding portions $\alpha_1,\alpha_2$ and $\beta_1,\beta_2$ of $\alpha$ and $\beta$ satisfy
+$$\alpha_1+\beta_1=\gamma_1$$
+$$\alpha_2+\beta_2=\gamma_2$$
+This assertion is equivalent to saying that $x_{\alpha_1}x_{\beta_!}=x_{\gamma_1}$ and $x_{\alpha_2}x_{\beta_2} = x_{\gamma_2}$, which is the statement that the product and coproduct are compatible.
+
+For compatibility of the product and counit, we are asserting that 
+$$\varepsilon(x_\alpha x_\beta) = \varepsilon(x_\alpha)\varepsilon(x_\beta)$$
+Both sides are $0$ unless both $\alpha$ and $\beta$ are of length $0$, in which case they are both equal to $1$.
+
+For compatibility of the coproduct and the unit, we note that $\Delta(1) = 1\otimes 1$, as required. It is also clear that $\varepsilon\circ \eta:K\to K$ is the identity, as required. Thus $\coma$ is a bialgebra with $\nabla$, $\Delta$, $\varepsilon$, and $\eta$.
+	
+\end{proof}
+
+!!!$\coma$ is afforded a grading into finite dimensional components by observing that each $\coma_n$ itself is a graded ring by degree with each homogeneous component being a finitely generated free module. Considering the pair $(n, d)$, where $n$ is the number of variables and $d$ is the degree, as a $\mathbb{Z}^2$ grading, we may take the graded dual module $\dcoma$, which, by virtue of the grading, is isomorphic as a free module to $\coma$. Under the natural pairing, we define a basis of $\dcoma$ that we identify with the set of weak compositions $\alpha$ by
+$$\langle \alpha, x_\beta\rangle = \delta_{\alpha\beta}$$
+Note that the length here is still paramount in defining the weak compositions.
+
+\begin{proposition}
+	The dual algebra $\dcoma$ is a free associative algebra generated by the compositions $\mathbf{i}=(i)$ for $i\geq 0$ of length $1$.
+\end{proposition}
+\begin{proof}
+	We note that
+	$$\langle \alpha\otimes \beta, \Delta(x_\gamma)\rangle = \delta_{\alpha\beta,\gamma}$$
+	Thus the product is simply the word concatenation product, where the words are in the elements $\mathbf{i}$. The unique homomorphism from the free associative algebra generated by the elements $\mathbf{i}$ is therefore an isomorphism.
+\end{proof}
+
+%!!!Inspection of the coproduct reveals that the product of $a$ and $b$ in $\dcoma$ is simply the concatenation $ab$. Hence $\dcoma$ is isomorphic to the free associative algebra on a countable set indexed by positive integers.
+
+%$\dcoma$ also has a coproduct compatible with its product, namely
+%$$c\mapsto \sum_{a+b=c} a\otimes b$$
+%Thus $\coma$ and $\dcoma$ are dual bialgebras.
+
+Calling $\coma$ the ``Schubert bialgebra'' may seem unnecessarily grandiose, however the reason will become clear below.
+
+\subsection{The Schubert basis}
+
+\newcommand{\asch}[2]{\sch_{#1}^{#2}}
+
+In $\coma$, each $\coma_n$ has a basis of Schubert polynomials $\asch{u}{n}$, where the largest right descent of $u$ is at most $n$, ensuring that $\sch_u(x)$ has at most $n$ variables. Schubert polynomials limited to a specific number of variables have well-defined structure constants $c_{u,v}^w$, independent of $n$, given by
+$$\sch_u^n\sch_v^n = \sum_{w}c_{u,v}^w\sch_w^n$$
+Theorem \ref{theorem:main} is the formula for these numbers.
+
+Schubert polynomials have nonnegative coefficients in terms of the $x_\alpha$ basis, for which many formulas are known. There is also a less well-understood unique expansion of the Schubert polynomials into sums of products of elementary symmetric polynomials with at most $n$ variables. %For a fixed positive integer $n$ define the \emph{classical elementary monomials} of rank $n$ to be products of the form
+%$$e_{i_1}^{\lambda_1}\cdots e_{i_p}^{\lambda_p}$$
+%where $\lambda$ is a conjugate of a strict partition of length exactly $n$.
+
+%\newcommand{\code}{\mathfrak{c}}
+
+\newcommand{\sdom}{\widetilde{\mu}}
+
+%For a permutation $u$ with the last descent of $u$ at most $m$, define a strict partition $\sdom_m(u)$ as follows. If $\code(u)$ is a strict partition of length exactly $m$, define $\sdom_m(u)=u$.  Otherwise, let $i<m$ be the maximal index with $\code_i(u)\leq \code_{i+1}(u)$, and define $\sdom_m(u) = \sdom_m(us_i)$. Then define
+%$$\sdom_m^*(u) = \sdom_m(u^{-1})^{-1}$$
+
+%\begin{lemma}
+%Suppose $\sch_u(x)$ has at most $p$ variables. Then for each $m\geq p$ there are unique coefficients $E_{u,a}^{\lambda_m}$ with $a_i\leq \lambda_m(u)$ for all $i$, where $\lambda_m(u)$ is the conjugate of a strict partition of length exactly $m$, such that
+%$$\sch_u^{(m)} = \sum_{a} E_{u,a}^{\lambda_m}e_a^{\lambda_m}$$
+%\end{lemma}
+
+\subsection{The dual algebra}
+
+There is a basis $\dsch_u^{n}$ dual to the Schubert basis for $\dcoma_n$. Specifically, with the unique pairing $\langle -,-\rangle:\dcoma\times \coma\to\mathbb{Z}$ such that
+$$\langle \alpha,x_\beta\rangle = \delta_{\alpha\beta}$$
+we define $\dsch_u^n$ to be the unique basis of $\dcoma_n$ such that
+$$\langle \dsch_u^n,\sch_v^n\rangle = \delta_{uv}$$
+We characterize it with an explicit formula.
+
+\begin{theorem}
+	For each permutation $u$ and integer $n$ with $\ell(us_i)>\ell(u)$ for all $i>n$ we have the equation
+	$$\dsch_u^{n} = \sum_{\ell(\alpha)=n} E^{\code(\mu)-\alpha,\code(\mu)}_{u\mu^{-1}}\alpha$$
+	where $\mu$ is any strict dominant permutation such that $0\neq \code_n(\mu) \geq \ell(u)$ and $\code_{n+1}(\mu)=0$.
+\end{theorem}
+\begin{proof}
+	By definition, the coefficient of $\alpha$ in $\dsch_u^n$ is the coefficient of $\sch_u^n$ in $x_\alpha$. This can be derived from the Cauchy formula for double Schubert polynomials. Note that for any permutation $\mu$ as laid out in the statement of the theorem, $\ell(u\mu^{-1})=\ell(\mu)-\ell(u)$. Thus,
+	$$\partial_y^{u\mu^{-1}}\sch_\mu(x;-y) = \sch_u(x;-y)$$
+	We have that
+	$$\sch_\mu(x;-y)=\sum_u \sch_u(x)\sch_{u\mu^{-1}}(y)$$
+	Expressing the second factor in the $e_{\alpha,\lambda}(y)$ basis, we have
+	$$\sch_\mu(x;-y)=\sum_{u,\alpha} \sch_u(x)E_{u\mu^{-1}}^{\code(\mu)-\alpha,\code(\mu)}e_{\code(\mu)-\alpha,\code(\mu)}(y)$$
+	An alternative expression for $\sch_\mu(x;-y)$ is
+	$$\sch_\mu(x;-y)=\sum_{\alpha} x_\alpha e_{\code(\mu)-\alpha,\code(\mu)}(y)$$
+	from which we see that the coefficient is correct.
+\end{proof}
+
+This is not stable for fixed $u$ as $n$ increases, and this is expected.
+
+
+
+
+\begin{lemma}
+	Let $u,v\in S_\infty$ and $p,q>0$ be integers. Write
+	$$\dsch_u^p\dsch_v^q = \sum_w d_{u,v}^w(p,q)\dsch_w^{p+q}$$
+	Then for each $u,v,w$ the coefficient $d_{u,v}^w(p,q)$ is the coefficient of $\sch_u(x_1,\ldots,x_p)\sch_v(x_{p+1},\ldots,x_{p+q})$ in the expansion of $\sch_w(x_1,\ldots,x_{p+q})$ in terms of the basis of products of Schubert polynomials in $x_1,\ldots,x_p$ and Schubert polynomials in $x_{p+1}$ onward.
+\end{lemma}
+\begin{proof}
+	This is true by examination of the definition of the coproduct of $\coma$, since this is the coefficient of $\sch_u^p\otimes \sch_v^q$ in the coproduct of $\sch_w^{p+q}$.
+\end{proof}
+
+
+
+Due to the fact that we have a positive formula for the coproduct of $\coma$, we have a Littlewood-Richardson rule for $\dcoma$ in the Schubert basis.
+\begin{theorem}[Littlewood-Richardson rule for $\dcoma$]
+	Given $u,v,p,q$, we have
+	$$\dsch_u^{p}\dsch_v^{q} = \sum_{P:w\cdot (1^p\times v^{-1})\to u}\dsch_w^{p+q}$$
+	where $P$ ranges over all paths such that
+	$$w\cdot (1^p\times v^{-1}) = u_0\downvar{p+1} u_1\downvar{p+2}\cdots\downvar{p+q} u_q = u$$
+	for all $w$ such that $\ell(w\cdot (1^p\times v^{-1})) = \ell(w) - \ell(v)$.
+	%\substack{\downvar{p+1}u\\\ell(u)+\ell(v)=\ell(w)}
+\end{theorem}
+
+The Pieri formula is much simpler.
+
+Define a partial order relation on permutations by the reflexive,  transitive closure of the relation $u\preceq w$ if 
+$$\phi_{-1}(u)\leq_L w$$ 
+and 
+$$u(i)\leq w(i+1)$$ 
+for all $i$.
+
+Define a relation $\preceq_p$ as follows. $u\preceq_p w$ if $u(i)\geq w(i)$ for all $i<p$, $u(i)\leq w(i+1)$ for all $i\geq p$, if $a<b<p$, then $u(a)>u(b)$ implies that $w(a)>w(b)$, and if $p\leq a<b$, then $u(a)>u(b)$ implies $w(a+1)>w(b+1)$. Furthermore, we require that 
+$$\ell(u,w)=\#\{i>p\mid u(i-1)=w(i)\}$$
+
+\begin{theorem}
+	$u\preceq_p w$ if and only if $w\downvar{p} u$.
+\end{theorem}
+\begin{proof}
+	By (CITATION), the conditions $u(i)\geq w(i)$ for all $i<p$ and $u(i)\leq w(i+1)$ for all $i\geq p$, as well as the conditions on inversions, imply that $w\leq_p \varphi(u)$. Thus there exist reflections $t_{a_1b_1},\cdots,t_{a_k,b_k}$, where $k=\ell(w,\varphi_p(u))$ with $a_i\leq p<b_i$ such that
+	$$\varphi_p(u)=wt_{a_1b_1}\cdots t_{a_kb_k}$$
+	Now, $\ell(u,w)$ is equal to $n - p - q$ by assumption, where $q$ is the number of distinct $b_i$. We also have
+	$$\ell(w,\varphi_p(u))=\ell(u) + n - p - \ell(w) = n - p - \ell(u,w)=q$$
+	Thus $q=k$, and hence $w\Tom{i} \varphi_p(u)$ because the $b_i$ are all distinct.
+\end{proof}
+
+$$\mathrm{pop}(w^{(p)},p)\leq_L u^{(p-1)}$$
+$$u_{(p-1)}^-\leq_L w_{(p-1)}^-$$
+$$u_{(p-1)}^+\leq_L w_{(p)}^+$$
+
+There is a $u'$ such that $u'\leq_L u$ and $u'_{(p-1)}=u_{(p-1)}$ and $u'$ is a subword of $w$.
+Bruhat path
+
+Label the $p$ to $n$ roots. Then what?
+
+%\begin{theorem}
+%	If $w\downvar{p} u$ for some $p$, then $u\leq w$.
+%\end{theorem}
+% NO
+
+
+% w grass <= u grass
+% delete some weak order left from u, then add left to u^{(k)}
+
+Labelings of words?
+
+Define a function $T_0^R:I(w_0(n))\to [0,n-1]$ by $T_0(\alpha)=0$ for all $\alpha$. Suppose $w\downvar{p} u$. Then for the right non-$p$ roots deleted from $w$, define $T_0^+(\alpha)^R=p$. For the right $p$ roots removed define $T_0^{(p-1)}(\beta)=-p$.
+
+Then $T_1:I(w_0(n-1))\to [0,n-2]$.
+
+Let's say we have $u$ labeled. Bump off the left end roots, pump in the spuggle and replace
+
+\begin{theorem}[Left Pieri formula for $\dcoma$]
+	Let $u$ be a permutation and let $m$ be an integer. Then
+	$$[m]\cdot\dsch_u^{p} = \sum_{\substack{u\preceq_1 u'\\\ell(u,u')=m}} \dsch_{u'}^{p+1}$$
+	
+\end{theorem}
+
+Transition order. Let $m(w)$ max d. Let $s>m(w)$ be maximal such that $w(m(w))<w(s)$. If $m(wt_{m(w),s})=m(w)$, then $wt_{m(w),s}\leq_T w$, and furthermore if $p<m(w)$ satisfies $wt_{m(w),s}\leq wt_{m(w),s}t_{p,m(w)}$, then $wt_{m(w),s}\leq_T wt_{m(w),s}t_{p,m(w)}$.
+
+$u\leq_T w$ if $w\leq_{m(w)} (u\xleftarrow[m(w)]{} n(u)+1)$
+
+$\preceq_1$ is the RC-graph order. 
+
+
+$([0]+[1]x_1+\cdots+[n])^k$
+
+%Down $n$ is a suborder of right weak order.
+
+
+$$\rho_p(w)\leq_{p-1} u$$
+
+\begin{theorem}[Right Pieri formula for $\dcoma$]
+	Let $u$ be a permutation and let $m$ be an integer. Then
+	$$\dsch_u^p\cdot [m] = \sum_{\substack{u\preceq_{p+1} u'\\\ell(u,u')=m}} \dsch_{u'}^{p+1}$$
+\end{theorem}
+
+\begin{proposition}
+	Suppose
+	$$\dsch_u^p\cdot\dsch_v^q = \sum d_{u,v}^w(p,q)\dsch_w^{p+q}$$
+	Then $d_{u,v}^w(p,q)=0$ unless $v\preceq_{[p+1,p+q]} w$ and $u\preceq_{[1,p]} w$.
+\end{proposition}
+
+Chains transfer. $u_0\preceq_{\sigma(1)}\cdots\preceq_{\sigma(n)} u_n$, $u_0$ and $u_n$ do not depend on sigma. Thus there is a bijection between the paths. Is there an action?
+
+$u\preceq_p w$ if $w\leq_p \uparrow^p u$. This means if $a<p$, then $u(a)\geq  w(a)$, if $a\geq p$, then $u(a)\leq w(a+1)$, if $a<b<p$, then $u(a)>u(b)$ only if $w(a)>w(b)$, and if $p\leq a<b$ then $u(a)>u(b)$ only if $w(a+1)>w(b+1)$.
+
+\begin{theorem}[Pieri formula for $\dcoma$]
+	Let $u$ be a permutation and let $m$ be an integer. Then
+	$$\dsch_u^{p}\cdot [m] = \sum_{\substack{u'\downvar{p+1} u\\\ell(u,u')=m}} \dsch_{u'}^{p+1}$$
+	
+\end{theorem}
+
+\subsection{The coproduct of the dual algebra}
+
+\begin{proposition}
+	We have that the structure constants in $\coma$ are shift stable, i.e.
+	$$c_{u,v}^w = c_{1^1\times u,1^1\times v}^{1^1\times w}$$
+\end{proposition}
+\begin{proof}
+	We have
+	$$\Delta(\dsch_w^n) = \sum_{u,v} c_{u,v}^w\dsch_u^n\otimes \dsch_v^n$$
+	Also,
+	$$\Delta([0])\cdot\Delta(\dsch_w^n) = \sum_{u,v} ([0]\otimes[0])\cdot (c_{u,v}^w\dsch_u^n\otimes \dsch_v^n)$$
+	which simplifies to
+	$$\Delta([0]\cdot\dsch_w^n) = \Delta(\dsch_{1^1\times w}^{n+1})=\sum_{u,v} c_{u,v}^w\dsch_{1^1\times u}^{n+1}\otimes \dsch_{1^1\times v}^{n+1}=\sum_{u',v'} c_{u',v'}^{1^1\times w}\dsch_{u'}^{n+1}\otimes \dsch_{v'}^{n+1}$$
+	Equating coefficients, we have the result.
+\end{proof}
+
+% dual RC graph module
+% coproduct
+
+% G^*(F) = delta_{GF}
+% G^*(a*F) = G^*(c_i F_i) = c_i delta_{G F_i
+	
+	$$[i]\otimes \sum y_k^jz_k^{i-j}[j]\otimes [i-j]$$
+	
+	$$\langle \dsch_u^p,\partial^s\sch_v^q\rangle = \begin{cases}
+		\delta_{u,vs}\delta_{pq}&\mbox{ if }\ell(vs)<\ell(v)\\
+		0&\mbox{ otherwise.}
+	\end{cases}$$
+	
+	$$\langle \delta^s\dsch_u^p,\sch_v^q\rangle = \begin{cases}
+		\delta_{us,v}\delta_{pq}&\mbox{ if }\ell(us)>\ell(u)\\
+		0&\mbox{ otherwise.}
+	\end{cases}$$
+	
+	
+	$$\prod_{j=0}^n\left(\sum_{i=0}^n [i]x_j^i\right)$$
+	
+	$$\langle \dsch_w^p,\partial^s(\sch_u^p\sch_v^p)\rangle = \langle \dsch_w^p,\sch_u^p\sch_{vs}^p\rangle$$
+	if $u$ not divdiffable.
+	
+	$$\langle \Delta(\delta^s\dsch_w^p),\sch_u^p\otimes \sch_v^p\rangle = \langle \Delta(\dsch_w^p),\sch_u^p\otimes\sch_{vs}^p\rangle$$
+	dual.
+	$$\langle \Delta(\dsch_{ws}^p),\sch_u^p\otimes \sch_v^p\rangle = \langle \Delta(\dsch_w^p),\sch_u^p\otimes\sch_{vs}^p\rangle$$
+	
+	$$\langle \dsch_{w'}^p,\partial^w(\sch_u^p sch_v^p)\rangle = \langle \Delta(\dsch_w^p),\sch_u^p\otimes\sch_{vs}^p\rangle$$
+	% mul with 0 at the end should be the same thing
+	The dual Littlewood-Richardson rule is one of the most prominent unsolved problems in Schubert calculus, since
+	$$\Delta(\dsch_u^n) = \sum_{u,v} c_{u,v}^w\dsch_u^n\otimes \dsch_v^n$$
+	
+	$$\langle \dsch_u^n,s(\sch_v^n)\rangle$$
+	
+	$$=\langle \dsch_u^n,\sch_v^n-\alpha_s\dsch_{vs}^n\rangle$$
+	
+	$$=\langle \dsch_u^n,\sch_v^n\rangle-\langle\dsch_u^n,\alpha_s\dsch_{vs}^n\rangle$$
+	
+	$$=\langle \dsch_u^n,\sch_v^n\rangle-\langle\alpha_s*\dsch_u^n,\dsch_{vs}^n\rangle$$
+	
+	$$=\langle \dsch_u^n,\sch_v^n\rangle-\langle\alpha_s*\dsch_u^n,\dsch_{vs}^n\rangle$$
+	
+	$$=\langle \dsch_u^n,\sch_v^n\rangle-\langle\alpha_s*\dsch_u^n,\dsch_{vs}^n\rangle$$
+	
+	What is adjoint multiplication root?
+	
+	$$\langle \dsch_u^n,x_i\sch_v^n\rangle = \langle \dsch_u^n,\sum(\sch_{v'}-\sch_{v''})\rangle$$
+	Which is $\sum(\delta_{u,v'}-\delta_{u,v''})$.
+	
+	$$\delta^s(\dsch_{w/u})$$
+	
+	%$$\langle \dsch_w^n,\partial^s(xy)\rangle = \langle \dsch_w,\partial^s(x)y+xs(y)\rangle$$
+	
+	%$$\langle \dsch_{w's}^n + s(\dsch_{w'),\partial^s(xy)\rangle = \langle \dsch_w,\partial^s(x)y+xs(y)\rangle$$
+		
+		\begin{lemma} \label{lemma:triangular}
+			Consider the monomial basis as a partially ordered basis in the lexicographic order. Then
+			$$\dsch_u^n = \code(u) + \mbox{smaller terms}$$
+			hence the Schubert basis is lower triangular in the monomial basis.
+		\end{lemma}
+		\begin{proof}
+			Note that the Schubert basis of $\coma$ is upper triangular in the lexicographic order. Expressing the dual Schubert basis transition uses the inverse transpose, which is lower triangular in the lexicographic order.
+		\end{proof}
+
+
+\subsection{The RC graph module}
+
+%\newcommand{\RC}{\mathcal{RC}}
+Let $\RC$ be the $\mathbb{Z}$-module of RC graphs, which we express as a pair $(\mathbf{a},\mathbf{b})$ where $\mathbf{b}$ is a reduced word and $\mathbf{a}$ is a compatible sequence. $\dcoma$ acts on $M$ on the left as follows. 
+
+For an integer $i$, the module element $[p]\cdot(\mathbf{a},\mathbf{b})$ with permutation $w$ is sent to the sum of the RC graphs 
+$$((1^p,\tau\mathbf{a}),\mathbf{b}'\sigma(\mathbf{b}))$$
+where $\mathbf{b}'\sigma(\mathbf{b})$ is a reduced word for some permutation $w'$, and $\mathbf{b}'$ is the sequence of reflections indexed by the integers such that $w'(i+1)=w(i)$, where $i>1$.
+
+Define $d:\RC\to\dcoma$ by mapping $A\mapsto \dsch_{w(A)}^{\ell(A)}$. Define $a:\RC\to\coma$ by mapping $R\mapsto \mathrm{wt}(R)$. 
+
+\begin{lemma}
+	For $D\in \dcoma$, we have 
+	$$d(D\cdot R)=Dd(R)$$ 
+In particular,
+$$d(D\cdot\epsilon)=D$$
+\end{lemma} 
+%$$a(w\cdot R)=\sum_{u}\langle d(w\cdot R), \sch_u^n\rangle \sch_u^n$$
+\newcommand{\rc}{\mathrm{rc}}
+
+\begin{lemma}
+	Let $\alpha\in \dcoma$ be a monomial element. Then $\alpha\cdot\epsilon$ is the sum of all RC graphs $R$ such that $\mathrm{weight}(R)=\alpha$. There is exactly one RC graph for the permutation $u$ such that $\code(u)=\alpha$ in this sum, and it is the principal RC graph for $u$. Furthermore, this graph is the smallest graph in the weight order.
+\end{lemma}
+
+\begin{lemma}
+	Let $\alpha\in \dcoma$ be a monomial element. Then $\Delta(\alpha)\cdot(\epsilon\otimes \epsilon)$ is the sum of all tensor products of RC graphs $R_1\otimes R_2$ such that $\mathrm{weight}(R_1)+\mathrm{weight}(R_2)=\alpha$.
+\end{lemma}
+
+\begin{lemma}
+	Suppose $u$ is a permutation, $n$ is an integer, and $a\geq 0$ is also an integer. Then if
+	$$[a]\cdot\dsch_u^n=\sum_{u'}\dsch_{u'}^{n+1}$$
+	then we have that $\code(u')\leq \code(u)$ in the lexicographical order.
+\end{lemma}
+
+
+
+
+
+
+For an element $S\in \coma$, $\rc(S):\coma\to\RC$ by
+$$\rc(S) = \sum_{R\in\RC}\langle d(R),S\rangle R$$
+$$\rc^*(D) = \sum_R \langle D, a(R)\rangle R$$
+
+
+
+We have
+$$\mathcal{C}=\sum_{R\in\RC} d(R)\otimes a(R) = \sum_u \dsch_u^n\otimes \sch_u^n$$
+Cauchy element.
+
+If $S$ is a Schubert polynomial, this is a sum of all Schub RC graphs. Coproduct of an RC graph has the same coefficients, with the product of the weights being equal.
+
+
+$$\rc(S_1\cdot S_2) = \sum_{\mathbf{a}} \langle \Delta(d(R)), S_1\otimes S_2\rangle R$$
+
+We consider the following sum. Let $n$ be an integer. Let $\mathcal{A}_n$ be the set of $n$-Artin sequences. We compute an element $\mathcal{LR}_n$ of the tensor product
+$$\dcoma\otimes \RC \otimes \RC\otimes \RC\otimes \dcoma\otimes \dcoma$$
+as follows.% On the tensor product $\RC^{\otimes 6}$, the sequence $\mathbf{a}$ has as its coproduct
+$$\Delta(\mathbf{a})=\sum_{\mathbf{b}+\mathbf{c}=\mathbf{a}} \mathbf{b}\otimes \mathbf{c}$$
+We consider the sum
+$$\sum_{\mathbf{a}\in \mathcal{A}_n}\sum_{\mathbf{b}+\mathbf{c}=\mathbf{a}} (\mathbf{a} \cdot \rc(1))\otimes (\mathbf{a} \cdot \rc(1))\otimes (\mathbf{b} \cdot \rc(1))\otimes (\mathbf{c} \cdot \rc(1))\otimes (\mathbf{b} \cdot \rc(1))\otimes (\mathbf{c} \cdot \rc(1))$$
+Multiply this out. We obtain a sum
+$$\sum c_{r_1,r_2,r_3,r_4,r_5,r_6} r_1\otimes r_2\otimes r_3\otimes r_4\otimes r_5 \otimes r_6$$
+Then we consider
+$$\sum c_{r_1,r_1,r_2,r_3,r_2,r_3} d(r_1)\otimes r_1\otimes r_2\otimes r_3\otimes d(r_2) \otimes d(r_3)$$
+It follows that
+$$\sch_u(x)\sch_v(x) = \sum_{w(r_2)=u,w(r_3)=v}\sum_{r_1} c_{r_1,r_1,r_2,r_3,r_2,r_3}a(r_1)$$
+
+
+\section*{Acknowledgments}
+
+
+We would like to acknowledge Kellen Meyers for his assistance in doing large computations in order to test our conjectures. Furthermore, we have had numerous discussions with Frank Sottile about our results, and his perspective with regard to our work, much of which directly generalizes his, has been invaluable.
+
+
+\addcontentsline{toc}{section}{\protect\numberline{}References}
+\bibliographystyle{acm}
+\bibliography{formschub}
+
+\end{document}
+

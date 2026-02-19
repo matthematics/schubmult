@@ -175,8 +175,6 @@ class WordBasis(FreeAlgebraBasis):
         if len(key) == 1:
             key = key[0]
             dct = {}
-            # dct[((),(key,))] = coeff
-            # dct[((key,), ())] = coeff
             for i in range(key + 1):
                 dct[((i,) if i != 0 else (), (key - i,) if key - i != 0 else ())] = coeff
             return dct
@@ -279,19 +277,26 @@ class WordBasis(FreeAlgebraBasis):
     @classmethod
     def transition_jbasis(cls, key):
         # return dict(WordBasis.jbasis_tup_expand(key))
-        FA = fa.FreeAlgebra(WordBasis)
+        # from symengine import Symbol
+        # t = Symbol("t")
+        t = S.One
         JB = fa.FreeAlgebra(basis=JBasis)
-        res = FA(*key)
+        ASx = fa.FreeAlgebra(basis=SchubertBasis)
         assert all(a != 0 for a in key), "Transition from WordBasis to JBasis is only implemented for keys with no zeros."
-        ret = JB.from_dict({})
-        while res != FA.zero:
-            tup = next(iter(sorted(res.keys())))
-            c = res[tup]
-            val = c * JB(*tup).change_basis(WordBasis)
-            res -= val
-            ret += c * JB(*tup)
+        pangea = JB()
 
-        return ret
+        for a in reversed(key):
+            new_pangea = JB.from_dict({})
+            for bucket, coeff in pangea.items():
+                the_pieri = coeff * ASx(uncode([a]))*ASx(uncode(bucket))
+                for (perm, n), v in the_pieri.items():
+                    if 0 in perm.trimcode:
+                        new_pangea += v * t * JB(*[a for a in perm.trimcode if a != 0])
+                    else:
+                        new_pangea += v * JB(*perm.trimcode)
+            pangea = new_pangea
+
+        return pangea
 
 
 
@@ -487,7 +492,9 @@ class JBasis(FreeAlgebraBasis):
     #         #dct_out[tuple(kk)] = dct_out.get(tuple(kk), S.Zero) + v
     #     return dct_out
 
-    # NDD
+    @classmethod
+    def coproduct(cls, key):
+        return cls.bcoproduct(key)
 
     zero_monom = ()
 
@@ -525,7 +532,7 @@ class JBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition(cls, other_basis):
-        from symengine import Symbol
+        # from symengine import Symbol
         # if other_basis == SchubertBasis:
         #     return lambda x: cls.transition_schubert(x)
         # if other_basis == WordBasis:
@@ -533,7 +540,8 @@ class JBasis(FreeAlgebraBasis):
         # if other_basis == SchubertSchurBasis:
 
         def trans(x):
-            t = Symbol("t")
+            # t = Symbol("t")
+            t = S.One
             ASx = fa.FreeAlgebra(basis=SchubertBasis)
             if 0 in x:
                 raise ValueError("Transition from JBasis to other basis is only implemented for keys with no zeros.")
@@ -832,7 +840,8 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_jbasis(cls, perm, n):
-        from symengine import Symbol
+        # from symengine import Symbol
+        t = S.One
         if len(perm.trimcode) < n:
             return FreeAlgebraBasis.compose_transition(WordBasis.transition(JBasis), cls.transition_word(perm, n))
         if 0 not in perm.trimcode:
@@ -846,9 +855,9 @@ class SchubertBasis(FreeAlgebraBasis):
             else:
                 break
         if 0 not in codecode:
-            return {tuple(codecode): Symbol("t") ** leading_zeros}
+            return {tuple(codecode): t ** leading_zeros}
         if leading_zeros > 0:
-            return {k: v * Symbol("t")**leading_zeros for k, v in FreeAlgebraBasis.compose_transition(WordBasis.transition_jbasis, cls.transition_word(uncode(codecode), n - leading_zeros)).items()}
+            return {k: v * t**leading_zeros for k, v in FreeAlgebraBasis.compose_transition(WordBasis.transition_jbasis, cls.transition_word(uncode(codecode), n - leading_zeros)).items()}
         return FreeAlgebraBasis.compose_transition(WordBasis.transition_jbasis, cls.transition_word(perm, n))
 
     @classmethod
