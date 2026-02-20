@@ -5,7 +5,7 @@ from schubmult.symbolic import Add, Integer, Mul, S, is_of_func_type, sympify, s
 from schubmult.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.perm_utils import add_perm_dict, mu_A
 
-from ..schubert_ring import DSx, Sx
+from ..schubert.schubert_ring import DSx, Sx
 from ..separated_descents import SeparatedDescentsRing
 from .free_algebra_basis import FreeAlgebraBasis
 
@@ -86,9 +86,8 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_elementary(cls, perm, numvars):
+        from schubmult.symbolic.poly.variables import genset_dict_from_expr
         from schubmult.utils.perm_utils import p_trans
-
-        from ..variables import genset_dict_from_expr
 
         mu = p_trans(list(range(numvars, 0, -1)))
         if len(mu) < len(perm) - 1:

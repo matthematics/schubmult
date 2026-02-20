@@ -76,7 +76,7 @@ def monomial_quasisym(comp, length, genset):
 
 if __name__ == "__main__":
     import sys
-    from schubmult.rings.variables import genset_dict_from_expr
+    from schubmult.symbolic.poly.variables import genset_dict_from_expr
     n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
 

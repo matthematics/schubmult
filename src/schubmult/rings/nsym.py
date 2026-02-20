@@ -13,9 +13,9 @@ from schubmult.symbolic import (
     sympy_Mul,
 )
 
-from .abstract_schub_poly import GenericPrintingTerm
 from .free_algebra import FreeAlgebra, FreeAlgebraElement
-from .schubert_ring import Sx
+from .printing import GenericPrintingTerm
+from .schubert.schubert_ring import Sx
 from .separated_descents import SeparatedDescentsRing
 
 splugSx = SeparatedDescentsRing(Sx([]).ring)
@@ -196,7 +196,7 @@ class NSymElement(FreeAlgebraElement):
             return other.__rmul__(self)
 
     def __rmul__(self, other):
-        from .schubert_ring import DoubleSchubertElement, SingleSchubertRing
+        from .schubert.schubert_ring import DoubleSchubertElement, SingleSchubertRing
 
         if isinstance(other, DoubleSchubertElement):
             if not isinstance(other.ring, SingleSchubertRing):

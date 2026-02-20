@@ -7,7 +7,7 @@ from schubmult.symbolic import Mul, S, sympy_Mul
 from schubmult.utils.logging import get_logger
 
 from .abstract_schub_poly import AbstractSchubPoly
-from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+from .schubert.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
 logger = get_logger(__name__)
 

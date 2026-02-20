@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from schubmult.rings.abstract_schub_poly import GenericPrintingTerm
+from schubmult.rings.printing import GenericPrintingTerm
 
 # If you use symbolic coefficients like S.One, import S from your symbolic module
 from schubmult.schub_lib.permutation import Permutation
@@ -14,7 +14,7 @@ from schubmult.utils.perm_utils import add_perm_dict
 # If transition_schubert is a method of PolynomialBasis or another class, import accordingly
 # For example, if it's a method of PolynomialBasis, you don't need to import it separately
 # If you use TensorRing in change_tensor_basis
-from .schubert_ring import Sx
+from .schubert.schubert_ring import Sx
 
 
 class PolynomialBasis:
@@ -165,7 +165,7 @@ class MonomialBasis(PolynomialBasis):
         return None
 
     def from_expr(self, expr):
-        from .variables import genset_dict_from_expr
+        from schubmult.symbolic.poly.variables import genset_dict_from_expr
 
         return self.attach_key(genset_dict_from_expr(expr, self.genset))
 
@@ -293,7 +293,7 @@ class SchubertPolyBasis(PolynomialBasis):
         return self.attach_key(self.ring.from_expr(expr))
 
     def to_monoms(self, key):
-        from .variables import genset_dict_from_expr
+        from schubmult.symbolic.poly.variables import genset_dict_from_expr
 
         def pad_tuple(tup, length):
             return (*tup, *(0,) * (length - len(tup)))
@@ -462,7 +462,7 @@ class ElemSymPolyBasis(PolynomialBasis):
         if isinstance(other_basis, SchubertPolyBasis):
             return lambda x: other_basis.attach_key(self.transition_schubert(x))
         if isinstance(other_basis, MonomialBasis):
-            from .variables import genset_dict_from_expr
+            from schubmult.symbolic.poly.variables import genset_dict_from_expr
 
             return lambda x: other_basis.attach_key(genset_dict_from_expr(self.transition_monomial(x), other_basis.genset))
         if isinstance(other_basis, ElemSymPolyBasis):

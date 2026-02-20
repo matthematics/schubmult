@@ -3,7 +3,7 @@ from functools import cache
 from schubmult.schub_lib.permutation import Permutation, uncode
 from schubmult.symbolic import Symbol, sstr
 
-from ..schubert_ring import Sx
+from ..schubert.schubert_ring import Sx
 from .free_algebra_basis import FreeAlgebraBasis
 
 
@@ -31,8 +31,9 @@ class SchubertSchurBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_schubert(cls, lambd, perm):
-        from ..schubert_ring import SingleSchubertRing
-        from ..variables import MaskedGeneratingSet
+        from schubmult.symbolic.poly.variables import MaskedGeneratingSet
+
+        from ..schubert.schubert_ring import SingleSchubertRing
 
         if lambd[-1] == 0:
             return {(perm, len(lambd)): 1}

@@ -1,4 +1,4 @@
-from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
+from schubmult.rings.printing import TypedPrintingTerm
 from schubmult.schub_lib.crystal_graph import CrystalGraphTensor
 from schubmult.schub_lib.nilplactic import NilPlactic
 from schubmult.schub_lib.plactic import Plactic

@@ -9,7 +9,7 @@ polynomials, divided differences, and crystal operations.
 from __future__ import annotations
 
 from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
-from schubmult.rings.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+from schubmult.rings.schubert.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from schubmult.symbolic import S, sympify, sympy_Mul
 
 

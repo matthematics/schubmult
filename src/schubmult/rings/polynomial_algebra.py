@@ -19,8 +19,8 @@ from schubmult.symbolic import (
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
-from .base_schubert_ring import BaseSchubertElement
 from .polynomial_basis import MonomialBasis
+from .schubert.base_schubert_ring import BaseSchubertElement
 
 # from .polynomial_basis import EXBasis
 

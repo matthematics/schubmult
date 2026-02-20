@@ -481,7 +481,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return self.perm_word
 
     def is_dom_perm_yamanouchi(self, dom_perm: Permutation, perm: Permutation) -> bool:
-        from schubmult.rings.schubert_ring import Sx
+        from schubmult.rings.schubert.schubert_ring import Sx
 
         if (Sx(self.perm) * Sx(dom_perm)).get(perm, 0) == 0:
             return False

@@ -5,7 +5,7 @@ from schubmult.schub_lib.permutation import Permutation, uncode
 from schubmult.symbolic import CoercionFailed, S, sympify, sympify_sympy, sympy_Mul
 from schubmult.utils.perm_utils import has_bruhat_descent, mu_A
 
-from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+from .schubert.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
 
 def complete_sym_positional_perms_down(orig_perm, p, *k, hack_off=None):
@@ -223,7 +223,7 @@ class SeparatedDescentsRing(BaseSchubertRing):
 
     def printing_term(self, k):
         # k is a tuple (perm, length)
-        from schubmult.rings.abstract_schub_poly import SepDescSchubPoly
+        from schubmult.rings.printing import SepDescSchubPoly
         coeff_label = None
         if self.coeff_genset is not NotImplemented and self.coeff_genset is not None:
             coeff_label = self.coeff_genset.label

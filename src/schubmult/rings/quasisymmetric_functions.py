@@ -1,6 +1,6 @@
 from schubmult import abc
-from schubmult.rings.abstract_schub_poly import GenericPrintingTerm
-from schubmult.rings.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+from schubmult.rings.printing import GenericPrintingTerm
+from schubmult.rings.schubert.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from schubmult.symbolic import S, expand_seq
 
 

@@ -1,7 +1,7 @@
 from schubmult import *
 from symengine import Symbol, S
 from sympy import pretty_print
-from schubmult.rings.variables import genset_dict_from_expr
+from schubmult.symbolic.poly.variables import genset_dict_from_expr
 from schubmult.rings.quasisymmetric_functions import monomial_quasisym
 from itertools import combinations
 

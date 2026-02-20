@@ -2,7 +2,7 @@ from schubmult.schub_lib.permutation import uncode
 from schubmult.symbolic import S
 
 from ..abstract_schub_poly import GenericPrintingTerm
-from ..schubert_ring import Sx
+from ..schubert.schubert_ring import Sx
 from .free_algebra_basis import FreeAlgebraBasis
 
 
@@ -39,8 +39,7 @@ class ElementaryBasis(FreeAlgebraBasis):
     def transition_schubert(cls, tup, numvars):
         from schubmult.abc import x
         from schubmult.symbolic import prod
-
-        from ..poly_lib import monom_sym
+        from schubmult.symbolic.poly.poly_lib import monom_sym
 
         mu = list(range(numvars, 0, -1))
         if len(mu) < len(tup):

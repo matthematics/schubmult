@@ -20,8 +20,8 @@ from schubmult.symbolic import (
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
-from ..base_schubert_ring import BaseSchubertElement
-from ..schubert_ring import DSx, Sx
+from ..schubert.base_schubert_ring import BaseSchubertElement
+from ..schubert.schubert_ring import DSx, Sx
 from ..separated_descents import SeparatedDescentsRing
 from .free_algebra_basis import SchubertBasis, WordBasis
 
@@ -60,7 +60,7 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         return self * (self ** (pw - 1))
 
     def poly_inner_product(self, poly, genset, n):
-        from schubmult.rings.variables import genset_dict_from_expr
+        from schubmult.symbolic.poly.variables import genset_dict_from_expr
 
         wordish = self.change_basis(WordBasis)
         result = 0
@@ -207,7 +207,7 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         return NotImplemented
 
     def __rmul__(self, other):
-        from ..schubert_ring import DoubleSchubertElement, SingleSchubertRing
+        from ..schubert.schubert_ring import DoubleSchubertElement, SingleSchubertRing
         from .free_algebra_basis import SchubertBasis
 
         if isinstance(other, DoubleSchubertElement):

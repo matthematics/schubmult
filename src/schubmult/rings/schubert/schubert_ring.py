@@ -3,8 +3,8 @@ from functools import cache, cached_property
 import schubmult.mult.double as yz
 import schubmult.mult.positivity as pos
 import schubmult.mult.single as py
-import schubmult.rings.abstract_schub_poly as spolymod
-import schubmult.rings.quantum_schubert_ring as qsr
+import schubmult.rings.printing as spolymod
+import schubmult.rings.schubert.quantum_schubert_ring as qsr
 import schubmult.utils.schub_lib as schub_lib
 from schubmult.schub_lib.permutation import Permutation, uncode
 from schubmult.symbolic import Add, DomainElement, Mul, Pow, S, Symbol, expand, expand_func, is_of_func_type, sympify, sympify_sympy
@@ -15,8 +15,8 @@ from schubmult.symmetric_polynomials import CompleteSym_base, ElemSym, ElemSym_b
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
+from ..tensor_ring import TensorRing
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
-from .tensor_ring import TensorRing
 
 logger = get_logger(__name__)
 

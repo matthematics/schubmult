@@ -4,8 +4,8 @@
 # from .nil_hecke import NilHeckeRing
 # from .polynomial_algebra import PA, PolynomialAlgebra, PolynomialAlgebraElement
 # from .polynomial_basis import ElemSymPolyBasis, MonomialBasis, PolynomialBasis, SchubertPolyBasis, SepDescPolyBasis
-# from .quantum_schubert_ring import QDSx, QPDSx, QPSx, QSx, QuantumDoubleSchubertElement, QuantumDoubleSchubertRing, QuantumSingleSchubertRing, make_parabolic_quantum_basis
-# from .schubert_ring import DoubleSchubertElement, DoubleSchubertRing, DSx, ElemDoubleSchubertRing, SingleSchubertRing, Sx
+# from .schubert.quantum_schubert_ring import QDSx, QPDSx, QPSx, QSx, QuantumDoubleSchubertElement, QuantumDoubleSchubertRing, QuantumSingleSchubertRing, make_parabolic_quantum_basis
+# from .schubert.schubert_ring import DoubleSchubertElement, DoubleSchubertRing, DSx, ElemDoubleSchubertRing, SingleSchubertRing, Sx
 # from .tensor_ring import TensorRing, TensorRingElement
 # from .combinatorial.bpd_ring import BPDRing, BPDRingElement
 # from .combinatorial.rc_graph_ring import RCGraphRing, RCGraphRingElement

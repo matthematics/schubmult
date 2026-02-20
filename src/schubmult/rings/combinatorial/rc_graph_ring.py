@@ -401,7 +401,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
 
         # from schubmult import CrystalGraphTensor, Plactic, RootTableau, Sx
 
-        # from .schubert_ring import DSx
+        # from .schubert.schubert_ring import DSx
         # from .variables import GeneratingSet
         # z = GeneratingSet("z")
         if len(u_rc) != len(v_rc):

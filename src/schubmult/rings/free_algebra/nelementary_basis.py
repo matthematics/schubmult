@@ -1,6 +1,6 @@
 from schubmult.symbolic import S
 
-from ..abstract_schub_poly import GenericPrintingTerm
+from ..printing import GenericPrintingTerm
 from .free_algebra_basis import FreeAlgebraBasis
 
 

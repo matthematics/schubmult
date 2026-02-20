@@ -5,8 +5,8 @@ from sympy import Tuple
 from schubmult.symbolic import Mul, S, sympy_Mul
 from schubmult.utils.logging import get_logger
 
-from .abstract_schub_poly import AbstractSchubPoly
-from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+from .printing import PrintingTerm
+from .schubert.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
 logger = get_logger(__name__)
 
@@ -226,7 +226,7 @@ class TensorRing(BaseSchubertRing):
         return self.from_expr(x)
 
 
-class TensorBasisElement(AbstractSchubPoly):
+class TensorBasisElement(PrintingTerm):
     is_commutative = False
     precedence = 50
 
@@ -235,7 +235,7 @@ class TensorBasisElement(AbstractSchubPoly):
 
     @staticmethod
     def __xnew__(_class, k, basis):
-        obj = AbstractSchubPoly.__new__(_class, k, None, None)
+        obj = PrintingTerm.__new__(_class, k, None, None)
         obj._key = k
         obj.ring = basis
         assert len(k) == len(basis.rings), f"Key length must match number of factors in tensor ring, got {len(k)} and {len(basis.rings)}"

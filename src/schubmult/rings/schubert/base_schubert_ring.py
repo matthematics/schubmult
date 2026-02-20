@@ -7,7 +7,7 @@ from schubmult.utils._mul_utils import _mul_schub_dicts
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
-from .base_ring import BaseRing, BaseRingElement
+from ..base_ring import BaseRing, BaseRingElement
 
 logger = get_logger(__name__)
 

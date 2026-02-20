@@ -3,7 +3,7 @@ from functools import cache
 
 import schubmult.mult.quantum as py
 import schubmult.mult.quantum_double as yz
-import schubmult.rings.schubert_ring as spr
+import schubmult.rings.schubert.schubert_ring as spr
 import schubmult.utils.schub_lib as schub_lib
 from schubmult.schub_lib.permutation import Permutation, uncode
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, expand_func, sympify
@@ -14,7 +14,7 @@ from schubmult.symmetric_polynomials import FactorialElemSym, QFactorialElemSym,
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import is_parabolic
 
-from .abstract_schub_poly import PQDSchubPoly, QDSchubPoly
+from ..printing import PQDSchubPoly, QDSchubPoly
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
 q_var = GeneratingSet("q")

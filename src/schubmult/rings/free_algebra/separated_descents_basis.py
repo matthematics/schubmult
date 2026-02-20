@@ -4,7 +4,7 @@ from schubmult.schub_lib.permutation import Permutation, uncode
 from schubmult.symbolic import S, Symbol, sstr
 from schubmult.utils.perm_utils import add_perm_dict
 
-from ..schubert_ring import Sx
+from ..schubert.schubert_ring import Sx
 from .free_algebra_basis import FreeAlgebraBasis
 
 
@@ -32,8 +32,9 @@ class _SeparatedDescentsBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_schubert(cls, perm0, perm1, numvars):
-        from ..schubert_ring import SingleSchubertRing
-        from ..variables import MaskedGeneratingSet
+        from schubmult.symbolic.poly.variables import MaskedGeneratingSet
+
+        from ..schubert.schubert_ring import SingleSchubertRing
 
         mu1_code = perm0.mul_dominant().trimcode
         mu2_code = list(range(cls.k - 1, 0, -1))

@@ -508,7 +508,7 @@ class AltRCGraphRing(SchubertMonomialRing, CrystalGraphRing):
 
         from schubmult import CrystalGraphTensor, Plactic, RootTableau, Sx
 
-        # from .schubert_ring import DSx
+        # from .schubert.schubert_ring import DSx
         # from .variables import GeneratingSet
         # z = GeneratingSet("z")
         if len(v_rc.perm.descents()) <= 1 and len(v_rc.perm.trimcode) == len(v_rc) and len(u_rc) == len(v_rc):

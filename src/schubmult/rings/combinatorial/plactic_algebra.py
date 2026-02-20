@@ -1,5 +1,5 @@
-from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
-from schubmult.rings.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+from schubmult.rings.printing import TypedPrintingTerm
+from schubmult.rings.schubert.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from schubmult.schub_lib.nilplactic import NilPlactic
 from schubmult.schub_lib.plactic import Plactic
 from schubmult.symbolic import S, sympy_Mul
