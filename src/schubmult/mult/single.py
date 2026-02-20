@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from schubmult.schub_lib.permutation import (
+from schubmult.combinatorial_reps.permutation import (
     Permutation,
     uncode,
 )

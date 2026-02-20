@@ -1,6 +1,6 @@
 """Noncommutative symmetric functions (NSym) ring implementation."""
 
-from schubmult.schub_lib.permutation import uncode
+from schubmult.combinatorial_reps.permutation import uncode
 from schubmult.symbolic import (
     EXRAW,
     Add,

@@ -1,7 +1,7 @@
+from schubmult.combinatorial_reps.nilplactic import NilPlactic
+from schubmult.combinatorial_reps.plactic import Plactic
 from schubmult.rings.base_ring import BaseRing, BaseRingElement
 from schubmult.rings.printing import TypedPrintingTerm
-from schubmult.schub_lib.nilplactic import NilPlactic
-from schubmult.schub_lib.plactic import Plactic
 from schubmult.symbolic import S, sympy_Mul
 
 #weight wt

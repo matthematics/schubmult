@@ -1,5 +1,5 @@
 import schubmult.rings.free_algebra as fa
-from schubmult.schub_lib.permutation import uncode
+from schubmult.combinatorial_reps.permutation import uncode
 from schubmult.symbolic import S
 
 from ..printing import GenericPrintingTerm

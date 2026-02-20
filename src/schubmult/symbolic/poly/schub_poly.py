@@ -1,4 +1,4 @@
-import schubmult.schub_lib.permutation as pl
+import schubmult.combinatorial_reps.permutation as pl
 import schubmult.utils.schub_lib as schub_lib
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, sympify
 

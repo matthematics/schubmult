@@ -1,6 +1,6 @@
 from functools import cache, cached_property
 
-import schubmult.schub_lib.permutation as pl
+import schubmult.combinatorial_reps.permutation as pl
 from schubmult.symbolic import Add, Mul, Pow, S, prod, sympify
 
 from . import variables as vv

@@ -1,7 +1,7 @@
 from bisect import bisect_left
 from functools import cache
 
-from schubmult.schub_lib.permutation import (
+from schubmult.combinatorial_reps.permutation import (
     Permutation,
     uncode,
 )

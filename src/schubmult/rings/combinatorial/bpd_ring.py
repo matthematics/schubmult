@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from schubmult.combinatorial_reps.bpd import BPD
+from schubmult.combinatorial_reps.permutation import Permutation
 from schubmult.rings.combinatorial.schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
-from schubmult.schub_lib.bpd import BPD
-from schubmult.schub_lib.permutation import Permutation
 
 if TYPE_CHECKING:
     from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing, RCGraphRingElement

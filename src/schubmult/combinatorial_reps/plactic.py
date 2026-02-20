@@ -1,9 +1,9 @@
-# filepath: /home/matthematics/schubmult/src/schubmult.schub_lib.plactic.py
+# filepath: /home/matthematics/schubmult/src/schubmult.combinatorial_reps.plactic.py
 import copy
 
 import numpy as np
 
-from schubmult.schub_lib.permutation import Permutation  # noqa: F401
+from schubmult.combinatorial_reps.permutation import Permutation  # noqa: F401
 
 from ..utils._grid_print import GridPrint
 from .crystal_graph import CrystalGraph

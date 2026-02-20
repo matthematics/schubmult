@@ -1,7 +1,7 @@
 from typing import Any, Tuple
 
+from schubmult.combinatorial_reps.crystal_graph import CrystalGraph
 from schubmult.rings.base_ring import BaseRing, BaseRingElement
-from schubmult.schub_lib.crystal_graph import CrystalGraph
 
 # Prefer the explicit BaseRing if available; fall back to TensorRing to remain safe.
 

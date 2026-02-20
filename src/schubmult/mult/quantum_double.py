@@ -3,7 +3,7 @@ from functools import cache
 import numpy as np
 
 import schubmult.mult.positivity as pos
-from schubmult.schub_lib.permutation import Permutation, uncode
+from schubmult.combinatorial_reps.permutation import Permutation, uncode
 from schubmult.symbolic import Add, Mul, Pow, S, expand, sympify
 from schubmult.symbolic.poly.poly_lib import _vars, call_zvars, elem_sym_func_q, elem_sym_poly_q, q_vector
 from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet_base

@@ -1,9 +1,8 @@
 from functools import cached_property
 
-from schubmult.rings.printing import GenericPrintingTerm
-
 # If you use symbolic coefficients like S.One, import S from your symbolic module
-from schubmult.schub_lib.permutation import Permutation
+from schubmult.combinatorial_reps.permutation import Permutation
+from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import Add, Mul, S
 
 # Utility for combining dictionaries with permutation keys
@@ -242,8 +241,8 @@ class SchubertPolyBasis(PolynomialBasis):
         return res_dict
 
     def transition_elementary(self, dct, other_basis):
+        from schubmult.combinatorial_reps.permutation import uncode
         from schubmult.rings import FA
-        from schubmult.schub_lib.permutation import uncode
 
         def elem_func(p, k, *_):
             return FA(p, k)

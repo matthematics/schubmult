@@ -466,7 +466,7 @@ class NilPlactic(Plactic):
         return NilPlactic._ed_insert_rsk(word, word2, x1, letter2, i=i + 1)
 
     def hw_rc(self, length):
-        from schubmult.schub_lib.rc_graph import RCGraph
+        from schubmult.combinatorial_reps.rc_graph import RCGraph
 
         seq = []
         last_spot = 0

@@ -1,7 +1,7 @@
 from functools import cache
 
 # import schubmult.rings.free_algebra as fa
-from schubmult.schub_lib.permutation import Permutation, uncode
+from schubmult.combinatorial_reps.permutation import Permutation, uncode
 from schubmult.symbolic import CoercionFailed, S, sympify, sympify_sympy, sympy_Mul
 from schubmult.utils.perm_utils import has_bruhat_descent, mu_A
 

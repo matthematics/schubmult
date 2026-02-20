@@ -1,6 +1,6 @@
 from functools import cache
 
-from schubmult.schub_lib.permutation import Permutation, uncode
+from schubmult.combinatorial_reps.permutation import Permutation, uncode
 from schubmult.symbolic import Symbol, sstr
 
 from ..schubert.schubert_ring import Sx

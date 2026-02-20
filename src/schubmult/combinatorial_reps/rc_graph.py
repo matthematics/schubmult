@@ -5,10 +5,10 @@ from functools import cache, cached_property
 from typing import TYPE_CHECKING
 
 import schubmult.utils.schub_lib as schub_lib
+from schubmult.combinatorial_reps.permutation import Permutation, uncode
+from schubmult.combinatorial_reps.schubert_monomial_graph import SchubertMonomialGraph
 from schubmult.rings.free_algebra import ASx, FreeAlgebra, FreeAlgebraElement, WordBasis
 from schubmult.rings.schubert.nil_hecke import NilHeckeRing
-from schubmult.schub_lib.permutation import Permutation, uncode
-from schubmult.schub_lib.schubert_monomial_graph import SchubertMonomialGraph
 from schubmult.symbolic import Expr, S, prod
 from schubmult.utils._grid_print import GridPrint
 
@@ -1494,8 +1494,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return rc.little_bump_zero().resize(last_desc - 1)
 
     def dualpieri(self, mu: Permutation, w: Permutation) -> set[tuple[tuple, RCGraph]]:
+        from schubmult.combinatorial_reps.bpd import BPD  # noqa: F401
         from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
-        from schubmult.schub_lib.bpd import BPD  # noqa: F401
         from schubmult.utils.schub_lib import pull_out_var
 
         if mu.inv == 0:

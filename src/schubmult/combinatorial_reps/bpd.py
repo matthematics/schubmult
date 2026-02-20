@@ -13,9 +13,9 @@ import numpy as np
 from sympy import pretty
 from sympy.printing.defaults import DefaultPrinting
 
-from schubmult.schub_lib.permutation import Permutation
-from schubmult.schub_lib.rc_graph import RCGraph
-from schubmult.schub_lib.schubert_monomial_graph import SchubertMonomialGraph
+from schubmult.combinatorial_reps.permutation import Permutation
+from schubmult.combinatorial_reps.rc_graph import RCGraph
+from schubmult.combinatorial_reps.schubert_monomial_graph import SchubertMonomialGraph
 from schubmult.symbolic import Expr
 from schubmult.utils.schub_lib import pull_out_var  # noqa: F401
 

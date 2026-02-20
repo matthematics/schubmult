@@ -1,6 +1,6 @@
 from functools import cache
 
-from schubmult.schub_lib.permutation import uncode
+from schubmult.combinatorial_reps.permutation import uncode
 from schubmult.symbolic import S, Symbol, sstr, sympy_Mul
 
 from ..printing import GenericPrintingTerm

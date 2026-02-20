@@ -190,7 +190,7 @@ def l_vector(q_vector):
 
 
 def tau_d(d):
-    from schubmult.schub_lib.permutation import Permutation
+    from schubmult.combinatorial_reps.permutation import Permutation
 
     lv = l_vector(d)
     hv = h_vector(d)
@@ -204,7 +204,7 @@ def tau_d(d):
 
 
 def phi_d(d):
-    from schubmult.schub_lib.permutation import Permutation
+    from schubmult.combinatorial_reps.permutation import Permutation
 
     hv = h_vector(d)
     lv = l_vector(d)
@@ -258,7 +258,7 @@ def conjugate_weak_composition(comp):
 
 
 def find_reduced_fail(word, inserted):
-    from schubmult.schub_lib.permutation import Permutation
+    from schubmult.combinatorial_reps.permutation import Permutation
 
     perm = Permutation.ref_product(*word)
     a_start, b_start = perm.right_root_at(inserted, word=word)
@@ -277,14 +277,14 @@ def find_reduced_fail(word, inserted):
 
 
 def is_reduced(word):
-    from schubmult.schub_lib.permutation import Permutation
+    from schubmult.combinatorial_reps.permutation import Permutation
 
     return Permutation.ref_product(*word).inv == len(word)
 
 
 def little_bump(word, i, j):
     """Perform a Little bump on a reduced word at the inversion (i, j)."""
-    from schubmult.schub_lib.permutation import Permutation
+    from schubmult.combinatorial_reps.permutation import Permutation
 
     if not is_reduced(word):
         raise ValueError(f"Word {word} is not reduced, cannot perform Little bump.")

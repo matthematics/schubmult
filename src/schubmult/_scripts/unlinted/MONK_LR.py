@@ -1,6 +1,6 @@
 from schubmult import *
 from schubmult.utils.schub_lib import elem_sym_perms
-from schubmult.schub_lib.crystal_graph import CrystalGraphTensor
+from schubmult.combinatorial_reps.crystal_graph import CrystalGraphTensor
 
 if __name__ == "__main__":
     import sys

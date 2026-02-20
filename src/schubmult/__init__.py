@@ -22,15 +22,15 @@ attribute is accessed for the first time.
 # Commonly exported helpers - only these are in __all__ initially
 _lazy_exports = {
     # Core Schubert structures
-    "Permutation": "schubmult.schub_lib.permutation",
-    "uncode": "schubmult.schub_lib.permutation",
-    "RCGraph": "schubmult.schub_lib.rc_graph",
-    "ChuteMoveElement": "schubmult.schub_lib.chute_move_element",
+    "Permutation": "schubmult.combinatorial_reps.permutation",
+    "uncode": "schubmult.combinatorial_reps.permutation",
+    "RCGraph": "schubmult.combinatorial_reps.rc_graph",
+    "ChuteMoveElement": "schubmult.combinatorial_reps.chute_move_element",
     "ChuteMoveRing": "schubmult.rings.combinatorial.chute_move_ring",
-    "BPD": "schubmult.schub_lib.bpd",
-    "TileType": "schubmult.schub_lib.bpd",
-    "HPD": "schubmult.schub_lib.hpd",
-    "HPDTile": "schubmult.schub_lib.hpd",
+    "BPD": "schubmult.combinatorial_reps.bpd",
+    "TileType": "schubmult.combinatorial_reps.bpd",
+    "HPD": "schubmult.combinatorial_reps.hpd",
+    "HPDTile": "schubmult.combinatorial_reps.hpd",
     # Rings
     "Sx": "schubmult.rings.schubert.schubert_ring",
     "DSx": "schubmult.rings.schubert.schubert_ring",
@@ -65,9 +65,9 @@ _lazy_exports = {
     "GeneratingSet": "schubmult.symbolic.poly.variables",
     "pull_out_var": "schubmult.utils.schub_lib",
     # Crystal structures
-    "RootTableau": "schubmult.schub_lib.root_tableau",
-    "Plactic": "schubmult.schub_lib.plactic",
-    "NilPlactic": "schubmult.schub_lib.nilplactic",
+    "RootTableau": "schubmult.combinatorial_reps.root_tableau",
+    "Plactic": "schubmult.combinatorial_reps.plactic",
+    "NilPlactic": "schubmult.combinatorial_reps.nilplactic",
     "NilPlacticAlgebra": "schubmult.rings.combinatorial.plactic_algebra",
     # Free algebra bases
     "FreeAlgebraBasis": "schubmult.rings.free_algebra",

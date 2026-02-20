@@ -1,7 +1,7 @@
 from functools import cache
 
 import schubmult.rings.free_algebra as fa
-from schubmult.schub_lib.permutation import uncode
+from schubmult.combinatorial_reps.permutation import uncode
 from schubmult.symbolic import S, Symbol
 from schubmult.utils.perm_utils import add_perm_dict
 

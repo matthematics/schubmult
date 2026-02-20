@@ -1,9 +1,9 @@
 from sympy import init_printing, pretty_print
 import sympy
 
-from schubmult.schub_lib.permutation import Permutation
-from schubmult.schub_lib.rc_graph import RCGraph
-from schubmult.schub_lib.crystal_graph import CrystalGraphTensor
+from schubmult.combinatorial_reps.permutation import Permutation
+from schubmult.combinatorial_reps.rc_graph import RCGraph
+from schubmult.combinatorial_reps.crystal_graph import CrystalGraphTensor
 from schubmult.rings.schubert.schubert_ring import Sx
 from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
 

@@ -4,7 +4,7 @@ import psutil
 from cachetools import cached
 from cachetools.keys import hashkey
 
-from schubmult.schub_lib.permutation import (
+from schubmult.combinatorial_reps.permutation import (
     Permutation,
     cycle,
     phi1,

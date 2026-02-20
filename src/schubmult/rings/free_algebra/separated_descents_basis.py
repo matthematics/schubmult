@@ -1,6 +1,6 @@
 from itertools import zip_longest
 
-from schubmult.schub_lib.permutation import Permutation, uncode
+from schubmult.combinatorial_reps.permutation import Permutation, uncode
 from schubmult.symbolic import S, Symbol, sstr
 from schubmult.utils.perm_utils import add_perm_dict
 

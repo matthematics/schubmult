@@ -1,4 +1,4 @@
-from schubmult.schub_lib.rc_graph import RCGraph
+from schubmult.combinatorial_reps.rc_graph import RCGraph
 from schubmult.utils._grid_print import GridPrint
 
 

@@ -7,8 +7,8 @@ for a given permutation, we get a free module basis over the commutative subring
 Grassmannian elements.
 """
 
-from schubmult.schub_lib.permutation import Permutation
-from schubmult.schub_lib.rc_graph import RCGraph
+from schubmult.combinatorial_reps.permutation import Permutation
+from schubmult.combinatorial_reps.rc_graph import RCGraph
 from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
 from collections import defaultdict
 from sympy import Matrix, gcd, lcm

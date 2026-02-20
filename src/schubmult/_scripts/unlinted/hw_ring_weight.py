@@ -1,10 +1,10 @@
 from sympy import init_printing, pretty_print
 from schubmult import *
 from schubmult.rings.combinatorial.plactic_algebra import PlacticAlgebra
-from schubmult.schub_lib.root_tableau import RootTableau
+from schubmult.combinatorial_reps.root_tableau import RootTableau
 
 def rc_to_grass(rc):
-    from schubmult.schub_lib.rc_graph import RCGraph
+    from schubmult.combinatorial_reps.rc_graph import RCGraph
     if isinstance(rc, RCGraphRingElement):
         ret = rc.ring.zero
         for rc0, coeff in rc.items():
