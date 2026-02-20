@@ -8,8 +8,8 @@ polynomials, divided differences, and crystal operations.
 
 from __future__ import annotations
 
-from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
-from schubmult.rings.schubert.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+from schubmult.rings.base_ring import BaseRing, BaseRingElement
+from schubmult.rings.printing import TypedPrintingTerm
 from schubmult.symbolic import S, sympify, sympy_Mul
 
 
@@ -22,7 +22,7 @@ class SchubertMonomialPrintingTerm(TypedPrintingTerm):
 
 
 
-class SchubertMonomialRingElement(BaseSchubertElement):
+class SchubertMonomialRingElement(BaseRingElement):
     """
     Base class for ring elements whose basis elements are Schubert monomials.
 
@@ -75,11 +75,11 @@ class SchubertMonomialRingElement(BaseSchubertElement):
         return ret
 
 
-class SchubertMonomialRing(BaseSchubertRing):
+class SchubertMonomialRing(BaseRing):
     """
     Base class for rings whose basis elements are Schubert monomials.
 
-    Inherits from BaseSchubertRing to provide standard ring operations (add, sub, mul, etc.)
+    Inherits from BaseRing to provide standard ring operations (add, sub, mul, etc.)
     """
 
     def printing_term(self, key):

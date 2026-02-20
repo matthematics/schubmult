@@ -1,7 +1,7 @@
 from schubmult.schub_lib.permutation import uncode
 from schubmult.symbolic import S
 
-from ..abstract_schub_poly import GenericPrintingTerm
+from ..printing import GenericPrintingTerm
 from ..schubert.schubert_ring import Sx
 from .free_algebra_basis import FreeAlgebraBasis
 

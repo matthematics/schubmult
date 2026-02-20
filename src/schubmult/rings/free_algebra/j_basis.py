@@ -2,7 +2,7 @@ import schubmult.rings.free_algebra as fa
 from schubmult.schub_lib.permutation import uncode
 from schubmult.symbolic import S
 
-from ..abstract_schub_poly import GenericPrintingTerm
+from ..printing import GenericPrintingTerm
 from .free_algebra_basis import FreeAlgebraBasis
 
 

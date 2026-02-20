@@ -6,7 +6,7 @@ from sympy import Tuple
 from schubmult.symbolic import Mul, S, sympy_Mul
 from schubmult.utils.logging import get_logger
 
-from .abstract_schub_poly import AbstractSchubPoly
+from .printing import PrintingTerm
 from .schubert.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
 logger = get_logger(__name__)
@@ -127,7 +127,7 @@ class ProductRing(BaseSchubertRing):
 
 
 
-class ProductBasisElement(AbstractSchubPoly):
+class ProductBasisElement(PrintingTerm):
     is_commutative = False
     precedence = 50
 

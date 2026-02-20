@@ -3,7 +3,7 @@ from functools import cache
 from schubmult.schub_lib.permutation import uncode
 from schubmult.symbolic import S, Symbol, sstr, sympy_Mul
 
-from ..abstract_schub_poly import GenericPrintingTerm
+from ..printing import GenericPrintingTerm
 from .free_algebra_basis import FreeAlgebraBasis
 
 

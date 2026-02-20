@@ -7,7 +7,7 @@ from schubmult.schub_lib.nilplactic import NilPlactic
 from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.symbolic import S
 
-from ..abstract_schub_poly import AbstractSchubPoly, TypedPrintingTerm
+from ..printing import PrintingTerm, TypedPrintingTerm
 from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
 from .rc_graph_ring import RCGraphRing
 
@@ -19,7 +19,7 @@ from .rc_graph_ring import RCGraphRing
 # yv highest weight
 
 
-class EGPlacticPrintingTerm(AbstractSchubPoly):
+class EGPlacticPrintingTerm(PrintingTerm):
     is_commutative = False
     precedence = 50
 
@@ -28,7 +28,7 @@ class EGPlacticPrintingTerm(AbstractSchubPoly):
 
     @staticmethod
     def __xnew__(_class, k):
-        obj = AbstractSchubPoly.__new__(_class, k, None, None)
+        obj = PrintingTerm.__new__(_class, k, None, None)
         obj._key = k
         return obj
 

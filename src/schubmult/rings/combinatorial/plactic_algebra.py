@@ -1,5 +1,5 @@
+from schubmult.rings.base_ring import BaseRing, BaseRingElement
 from schubmult.rings.printing import TypedPrintingTerm
-from schubmult.rings.schubert.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 from schubmult.schub_lib.nilplactic import NilPlactic
 from schubmult.schub_lib.plactic import Plactic
 from schubmult.symbolic import S, sympy_Mul
@@ -13,7 +13,7 @@ from schubmult.symbolic import S, sympy_Mul
 class PlacticPrintingTerm(TypedPrintingTerm):
     pass
 
-class PlacticAlgebraElement(BaseSchubertElement):
+class PlacticAlgebraElement(BaseRingElement):
     """
     PlacticAlgebra elements are linear combinations of Plactic basis elements.
     """
@@ -33,7 +33,7 @@ class PlacticAlgebraElement(BaseSchubertElement):
         return type(self) is type(other) and dict(self) == dict(other)
 
 
-class PlacticAlgebra(BaseSchubertRing):
+class PlacticAlgebra(BaseRing):
     _id = 0
 
     def __init__(self, *_, op=False, **__):
@@ -94,7 +94,7 @@ class PlacticAlgebra(BaseSchubertRing):
 
 
 
-class NilPlacticAlgebra(BaseSchubertRing):
+class NilPlacticAlgebra(BaseRing):
     _id = 0
 
     def __init__(self, *_, op=False, **__):

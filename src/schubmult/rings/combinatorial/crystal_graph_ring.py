@@ -1,12 +1,11 @@
 from typing import Any, Tuple
 
+from schubmult.rings.base_ring import BaseRing, BaseRingElement
 from schubmult.schub_lib.crystal_graph import CrystalGraph
 
-from ..schubert.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
+# Prefer the explicit BaseRing if available; fall back to TensorRing to remain safe.
 
-# Prefer the explicit BaseSchubertRing if available; fall back to TensorRing to remain safe.
-
-class CrystalGraphRing(BaseSchubertRing):
+class CrystalGraphRing(BaseRing):
     """
     Ring whose basis elements are CrystalGraph-like objects.
 
@@ -32,7 +31,7 @@ def _ensure_cg(obj: Any) -> Any:
     return obj
 
 
-class CrystalGraphRingElement(BaseSchubertElement, CrystalGraph):
+class CrystalGraphRingElement(BaseRingElement, CrystalGraph):
     """
     Element of the CrystalGraphRing.
 

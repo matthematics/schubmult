@@ -1,5 +1,6 @@
 from functools import cache
 
+from schubmult.rings.base_ring import BaseRingElement
 from schubmult.schub_lib.permutation import uncode
 from schubmult.symbolic import (
     EXRAW,
@@ -20,7 +21,6 @@ from schubmult.symbolic import (
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
-from ..schubert.base_schubert_ring import BaseSchubertElement
 from ..schubert.schubert_ring import DSx, Sx
 from ..separated_descents import SeparatedDescentsRing
 from .free_algebra_basis import SchubertBasis, WordBasis
@@ -601,7 +601,7 @@ class FreeAlgebra(Ring, CompositeDomain):
         return elem
 
     def domain_new(self, element, orig_domain=None):  # noqa: ARG002
-        if isinstance(element, FreeAlgebraElement) or isinstance(element, BaseSchubertElement):
+        if isinstance(element, FreeAlgebraElement) or isinstance(element, BaseRingElement):
             raise CoercionFailed("Not a domain element")
         return sympify(element)
 
