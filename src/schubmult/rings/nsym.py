@@ -16,7 +16,7 @@ from schubmult.symbolic import (
 from .free_algebra import FreeAlgebra, FreeAlgebraElement
 from .printing import GenericPrintingTerm
 from .schubert.schubert_ring import Sx
-from .separated_descents import SeparatedDescentsRing
+from .schubert.separated_descents import SeparatedDescentsRing
 
 splugSx = SeparatedDescentsRing(Sx([]).ring)
 

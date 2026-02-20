@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import schubmult.utils.schub_lib as schub_lib
 from schubmult.rings.free_algebra import ASx, FreeAlgebra, FreeAlgebraElement, WordBasis
-from schubmult.rings.nil_hecke import NilHeckeRing
+from schubmult.rings.schubert.nil_hecke import NilHeckeRing
 from schubmult.schub_lib.permutation import Permutation, uncode
 from schubmult.schub_lib.schubert_monomial_graph import SchubertMonomialGraph
 from schubmult.symbolic import Expr, S, prod

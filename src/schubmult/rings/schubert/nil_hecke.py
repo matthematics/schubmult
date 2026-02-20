@@ -26,8 +26,8 @@ from schubmult.symbolic.poly.variables import GeneratingSet
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
-from .schubert.base_schubert_ring import BaseSchubertElement
-from .schubert.schubert_ring import DoubleSchubertElement, SingleSchubertRing
+from .base_schubert_ring import BaseSchubertElement
+from .schubert_ring import DoubleSchubertElement, SingleSchubertRing
 
 logger = get_logger(__name__)
 

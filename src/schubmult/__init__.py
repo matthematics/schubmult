@@ -56,7 +56,7 @@ _lazy_exports = {
     "CoxeterKnuthRing": "schubmult.rings.ck_ring",
     "FreeAlgebra": "schubmult.rings.free_algebra",
     "NSym": "schubmult.rings.nsym",
-    "NilHeckeRing": "schubmult.rings.nil_hecke",
+    "NilHeckeRing": "schubmult.rings.schubert.nil_hecke",
     "PolynomialAlgebra": "schubmult.rings.polynomial_algebra",
     "TensorRing": "schubmult.rings.tensor_ring",
     "BaseRing": "schubmult.rings.base_ring",

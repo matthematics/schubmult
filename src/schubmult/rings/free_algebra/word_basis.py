@@ -6,7 +6,7 @@ from schubmult.symbolic import S, Symbol
 from schubmult.utils.perm_utils import add_perm_dict
 
 from ..schubert.schubert_ring import DSx, Sx
-from ..separated_descents import SeparatedDescentsRing
+from ..schubert.separated_descents import SeparatedDescentsRing
 from .free_algebra_basis import FreeAlgebraBasis
 
 splugSx = SeparatedDescentsRing(Sx([]).ring)
