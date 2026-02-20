@@ -5,7 +5,7 @@ from schubmult.rings.free_algebra import WordBasis
 from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.symbolic import S, sympy_Mul
 
-from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
+from .combinatorial.crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
 
 # from .crystal_graph_ring import CrystalTensorRing
 

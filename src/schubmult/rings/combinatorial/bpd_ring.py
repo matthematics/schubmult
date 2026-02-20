@@ -2,17 +2,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from schubmult.rings.schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
+from schubmult.rings.combinatorial.schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
 from schubmult.schub_lib.bpd import BPD
 from schubmult.schub_lib.permutation import Permutation
 
 if TYPE_CHECKING:
-    from schubmult.rings.rc_graph_ring import RCGraphRing, RCGraphRingElement
+    from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing, RCGraphRingElement
 
 
 class BPDRingElement(SchubertMonomialRingElement):
     def to_rc_graph_ring_element(self, rc_ring: RCGraphRing | None = None) -> RCGraphRingElement:
-        from schubmult.rings.rc_graph_ring import RCGraphRing
+        from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
 
         if rc_ring is None:
             rc_ring = RCGraphRing()
@@ -31,8 +31,8 @@ class BPDRing(SchubertMonomialRing):
     def __init__(self, genset=None, coeff_genset=None, *_, **__):
         # BPDs don't really use gensets since they're explicit graphical objects
         # But we need to initialize parent for BaseSchubertRing
-        from schubmult.rings.variables import GeneratingSet
         from schubmult.symbolic import EXRAW
+        from schubmult.symbolic.poly.variables import GeneratingSet
 
         if genset is None:
             genset = GeneratingSet("x")

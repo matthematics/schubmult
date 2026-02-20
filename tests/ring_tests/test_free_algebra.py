@@ -48,7 +48,7 @@ def test_word_to_schubert():
 
 # def test_schubert_to_sepdesc():
 #     from schubmult import ASx, uncode, Sx
-#     from schubmult.rings.free_algebra_basis import SeparatedDescentsBasis
+#     from schubmult.rings.free_algebra import SeparatedDescentsBasis
 #     from schubmult.symbolic import S
 
 #     k = 4
@@ -63,7 +63,7 @@ def test_word_to_schubert():
 
 def test_sepdesc_to_schubert():
     from schubmult import uncode, Sx, FreeAlgebra
-    from schubmult.rings.free_algebra_basis import SeparatedDescentsBasis, SchubertBasis, WordBasis
+    from schubmult.rings.free_algebra import SeparatedDescentsBasis, SchubertBasis, WordBasis
     from schubmult.symbolic import S
 
     k = 4
@@ -80,7 +80,7 @@ def test_sepdesc_to_schubert():
 
 def test_schubert_to_elementary():
     from schubmult import ASx, uncode, Sx
-    from schubmult.rings.free_algebra_basis import ElementaryBasis, WordBasis
+    from schubmult.rings.free_algebra import ElementaryBasis, WordBasis
     from schubmult.symbolic import S
     from schubmult.abc import e
 
@@ -98,7 +98,7 @@ def test_schubert_to_elementary():
 
 def test_elementary_to_schubert():
     from schubmult import Sx, FreeAlgebra
-    from schubmult.rings.free_algebra_basis import ElementaryBasis, WordBasis, SchubertBasis
+    from schubmult.rings.free_algebra import ElementaryBasis, WordBasis, SchubertBasis
 
     EE = FreeAlgebra(ElementaryBasis)
     tup = (1, 0, 1, 2, 3)

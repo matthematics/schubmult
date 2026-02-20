@@ -7,9 +7,9 @@
 # from .quantum_schubert_ring import QDSx, QPDSx, QPSx, QSx, QuantumDoubleSchubertElement, QuantumDoubleSchubertRing, QuantumSingleSchubertRing, make_parabolic_quantum_basis
 # from .schubert_ring import DoubleSchubertElement, DoubleSchubertRing, DSx, ElemDoubleSchubertRing, SingleSchubertRing, Sx
 # from .tensor_ring import TensorRing, TensorRingElement
-# from .bpd_ring import BPDRing, BPDRingElement
-# from .rc_graph_ring import RCGraphRing, RCGraphRingElement
-# from .schubert_monomial_ring import SchubertMonomialPrintingTerm, SchubertMonomialRing, SchubertMonomialRingElement
+# from .combinatorial.bpd_ring import BPDRing, BPDRingElement
+# from .combinatorial.rc_graph_ring import RCGraphRing, RCGraphRingElement
+# from .combinatorial.schubert_monomial_ring import SchubertMonomialPrintingTerm, SchubertMonomialRing, SchubertMonomialRingElement
 
 # ASx = FreeAlgebra(basis=SchubertBasis)
 # # Will do ADSx again

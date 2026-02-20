@@ -9,7 +9,7 @@ Grassmannian elements.
 
 from schubmult.schub_lib.permutation import Permutation
 from schubmult.schub_lib.rc_graph import RCGraph
-from schubmult.rings.rc_graph_ring import RCGraphRing
+from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
 from collections import defaultdict
 from sympy import Matrix, gcd, lcm
 import itertools

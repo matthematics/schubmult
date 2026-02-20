@@ -37,7 +37,7 @@ R = RCGraphRing()
 #     Returns:
 #         RCGraphRingElement: The coproduct as an RC graph ring element.
 #     """
-#     from schubmult.rings.rc_graph_ring import RCGraphRing
+#     from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
 
 #     res = S.Zero
 #     for rc, coeff in rc_elem.items():

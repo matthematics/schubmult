@@ -537,7 +537,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     def __mul__(self, other: object) -> object:
         if isinstance(other, RCGraph):
-            from schubmult.rings.rc_graph_ring import RCGraphRing
+            from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
 
             ring = RCGraphRing()
             return ring(self) * ring(other)
@@ -1494,7 +1494,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return rc.little_bump_zero().resize(last_desc - 1)
 
     def dualpieri(self, mu: Permutation, w: Permutation) -> set[tuple[tuple, RCGraph]]:
-        from schubmult.rings.rc_graph_ring import RCGraphRing
+        from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
         from schubmult.schub_lib.bpd import BPD  # noqa: F401
         from schubmult.utils.schub_lib import pull_out_var
 
@@ -1602,7 +1602,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return self.extend(1).shiftup(1)
 
     def inverse_crystal_product(self, other) -> RCGraph:
-        from schubmult.rings.rc_graph_ring import RCGraphRing
+        from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
 
         rc_ring = RCGraphRing()
         prod = rc_ring(self) * rc_ring(other)
