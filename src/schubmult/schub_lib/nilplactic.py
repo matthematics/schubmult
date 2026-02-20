@@ -384,22 +384,12 @@ class NilPlactic(Plactic):
         return cls(word0), Plactic(word2)
 
     @classmethod
-    def neg_ed_insert_rsk(cls, w1, w2):
-        """Insert a letter/entry into this NilPlactic tableau and return a new Plactic."""
-        word0, word2 = (), ()
-        mx = max(w1, default = 0) + 1
-        for a, b in zip(w1, w2):
-            word0, word2 = cls._ed_insert_rsk(word0, word2, mx-int(a), int(b))
-        word0 = tuple(tuple(mx-x for x in row) for row in word0)
-        return cls(word0), Plactic(word2)
-
-    @classmethod
     def ed_column_insert_rsk(cls, w1, w2):
         """Insert a letter/entry into this NilPlactic tableau and return a new Plactic."""
         word0, word2 = (), ()
         for a, b in zip(w1, w2):
             word0, word2 = cls._ed_insert_rsk(word0, word2, int(a), int(b))
-        return cls(word0).transpose(), Plactic(word2).transpose()
+        return cls(word0), Plactic(word2).transpose()
 
     @staticmethod
     def _ed_insert(word, letter, i=0):
@@ -474,46 +464,6 @@ class NilPlactic(Plactic):
 
         # special case: continue bumping without changing current row
         return NilPlactic._ed_insert_rsk(word, word2, x1, letter2, i=i + 1)
-
-    # @staticmethod
-    # def _ed_column_insert_rsk(word, word2, letter, letter2, i=0):
-    #     """
-    #     Edelman–Greene style two-row insertion.
-    #     word and word2 are tuples-of-rows; always return pair of tuple-of-rows.
-    #     """
-    #     word = tuple(tuple(r) for r in word)
-    #     word2 = tuple(tuple(r) for r in word2)
-
-    #     # determine current rows (safe when word2 shorter)
-    #     if i >= len(word):
-    #         row_i = ()
-    #     else:
-    #         row_i = word[i]
-    #     if i >= len(word2):
-    #         row2_i = ()
-    #     else:
-    #         row2_i = word2[i]
-
-    #     x0 = letter
-
-    #     # append case (no bump in this row)
-    #     if len(row_i) == 0 or x0 >= max(row_i):
-    #         new_word = (*word[:i], (*row_i, x0), *word[i + 1 :])
-    #         new_word2 = (*word2[:i], (*row2_i, letter2), *word2[i + 1 :])
-    #         return new_word, new_word2
-
-    #     # find bump
-    #     x1 = min(a for a in row_i if a > x0)
-
-    #     # normal replace + recurse into next row
-    #     if x1 != x0 + 1 or x0 not in row_i:
-    #         new_first_row = list(row_i)
-    #         new_first_row[new_first_row.index(x1)] = x0
-    #         new_word = (*word[:i], tuple(new_first_row), *word[i + 1 :])
-    #         return NilPlactic._ed_column_insert_rsk(new_word, word2, x1, letter2, i=i + 1)
-
-    #     # special case: continue bumping without changing current row
-    #     return NilPlactic._ed_column_insert_rsk(word, word2, x1, letter2, i=i + 1)
 
     def hw_rc(self, length):
         from schubmult.schub_lib.rc_graph import RCGraph

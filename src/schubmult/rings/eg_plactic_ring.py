@@ -197,7 +197,7 @@ class EGPlacticRing(CrystalGraphRing):
         self.dtype = type("EGPlacticRingElement", (EGPlacticRingElement,), {"ring": self})
 
     def __hash__(self):
-        return hash(("Dsdfginkberrtystoa", self._ID))
+        return hash(("Dsdfginkbeafrrtystoa", self._ID))
 
     def from_rc_graph(self, rc):
         nilp, plac = rc.hw_tab_rep()
@@ -245,23 +245,13 @@ class EGPlacticRing(CrystalGraphRing):
             # negate?
             hw_plac1, raise_seq1 = key1[1].to_highest_weight(length=key1[0][1])
             hw_plac2, raise_seq2 = key2[1].to_highest_weight(length=key2[0][1])
-            new_nilp, plac_elem_hw_t = NilPlactic.ed_insert_rsk(
+            new_nilp, plac_elem_hw = NilPlactic.ed_column_insert_rsk(
                 [*nilp.column_word, *[a + self_len for a in key2[0][0].column_word]],
                 sorted([*hw_plac1.row_word] + [a + self_len for a in hw_plac2.row_word]),
             )
-            plac_elem_hw = plac_elem_hw_t.transpose()
             if new_nilp.perm.inv == len(new_nilp.column_word) and len(new_nilp.perm.trimcode) <= self_len + key2[0][1]:
-                # _, raise_seq1 = key1[1].to_highest_weight(length=key1[0][1])
-                # _, raise_seq2 = key2[1].to_highest_weight(length=key2[0][1])
-                # full_rc = RCGraph([*nilp.hw_rc(self_len), *key2[0][0].hw_rc(key2[0][1]).shiftup(self_len)])
-                # # hw_rc = new_nilp.hw_rc(self_len + key2[0][1])
-                # _, raise_seq3 = full_rc.to_highest_weight()
-                # # plac_elem = Plactic.yamanouchi([a for a in hw_rc.length_vector if a != 0])
-                # plac_elem = plac_elem_hw.reverse_raise_seq(raise_seq3)
                 plac_elem = plac_elem_hw.reverse_raise_seq(raise_seq1)
-                plac_elem = plac_elem.reverse_raise_seq([a + key1[0][1] for a in raise_seq2])
-                # new_nilp2, plac_elem = NilPlactic.ed_insert_rsk([*nilp.column_word, *[a + self_len for a in key2[0][0].column_word]], sorted([*key1[1].row_word] + [a + self_len for a in key2[1].row_word]))
-                # assert new_nilp2 == new_nilp, f"ED insert mismatch: {new_nilp2} vs {new_nilp}"
+                plac_elem = plac_elem.reverse_raise_seq([a + self_len for a in raise_seq2])
                 ret += self((new_nilp, self_len + key2[0][1]), plac_elem)
         return ret
 
