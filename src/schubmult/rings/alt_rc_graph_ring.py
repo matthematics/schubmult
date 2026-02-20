@@ -1,6 +1,6 @@
 from functools import cache
 
-from schubmult.rings.free_algebra_basis import WordBasis
+from schubmult.rings.free_algebra import WordBasis
 from schubmult.rings.schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
 from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.symbolic import S, sympify

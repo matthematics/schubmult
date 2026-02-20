@@ -260,7 +260,7 @@ class DoubleSchubertRing(BaseSchubertRing):
 
     def rmul(self, elem, other):
         import schubmult.rings.free_algebra as fa
-        import schubmult.rings.free_algebra_basis as fb
+        import schubmult.rings.free_algebra as fb
 
         if isinstance(other, fa.FreeAlgebraElement):
             other = other.change_basis(fb.SchubertBasis)

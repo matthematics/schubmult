@@ -1,7 +1,7 @@
 from functools import cache
 
 from schubmult.rings.abstract_schub_poly import TypedPrintingTerm
-from schubmult.rings.free_algebra_basis import WordBasis
+from schubmult.rings.free_algebra import WordBasis
 from schubmult.schub_lib.rc_graph import RCGraph
 from schubmult.symbolic import S, sympy_Mul
 

@@ -59,6 +59,8 @@ _lazy_exports = {
     "NilHeckeRing": "schubmult.rings.nil_hecke",
     "PolynomialAlgebra": "schubmult.rings.polynomial_algebra",
     "TensorRing": "schubmult.rings.tensor_ring",
+    "BaseRing": "schubmult.rings.base_ring",
+    "BaseRingElement": "schubmult.rings.base_ring",
     # Variables
     "GeneratingSet": "schubmult.symbolic.poly.variables",
     "pull_out_var": "schubmult.utils.schub_lib",
@@ -68,15 +70,15 @@ _lazy_exports = {
     "NilPlactic": "schubmult.schub_lib.nilplactic",
     "NilPlacticAlgebra": "schubmult.rings.plactic_algebra",
     # Free algebra bases
-    "FreeAlgebraBasis": "schubmult.rings.free_algebra_basis",
-    "WordBasis": "schubmult.rings.free_algebra_basis",
-    "JBasis": "schubmult.rings.free_algebra_basis",
-    "JTBasis": "schubmult.rings.free_algebra_basis",
-    "SchubertBasis": "schubmult.rings.free_algebra_basis",
-    "SchubertSchurBasis": "schubmult.rings.free_algebra_basis",
-    "ElementaryBasis": "schubmult.rings.free_algebra_basis",
-    "NElementaryBasis": "schubmult.rings.free_algebra_basis",
-    "ZBasis": "schubmult.rings.free_algebra_basis",
+    "FreeAlgebraBasis": "schubmult.rings.free_algebra",
+    "WordBasis": "schubmult.rings.free_algebra",
+    "JBasis": "schubmult.rings.free_algebra",
+    "JTBasis": "schubmult.rings.free_algebra",
+    "SchubertBasis": "schubmult.rings.free_algebra",
+    "SchubertSchurBasis": "schubmult.rings.free_algebra",
+    "ElementaryBasis": "schubmult.rings.free_algebra",
+    "NElementaryBasis": "schubmult.rings.free_algebra",
+    "ZBasis": "schubmult.rings.free_algebra",
 }
 
 __all__: List[str] = list(_lazy_exports.keys())

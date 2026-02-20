@@ -67,8 +67,7 @@ class SchubertMonomialRingElement(BaseSchubertElement):
         """
         Convert to FreeAlgebra element in Schubert basis.
         """
-        from schubmult.rings.free_algebra import FreeAlgebra
-        from schubmult.rings.free_algebra_basis import SchubertBasis
+        from schubmult.rings.free_algebra import FreeAlgebra, SchubertBasis
         ASx = FreeAlgebra(SchubertBasis)
         ret = ASx.zero
         for monom, coeff in self.items():

@@ -20,10 +20,10 @@ from schubmult.symbolic import (
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
-from .base_schubert_ring import BaseSchubertElement
+from ..base_schubert_ring import BaseSchubertElement
+from ..schubert_ring import DSx, Sx
+from ..separated_descents import SeparatedDescentsRing
 from .free_algebra_basis import SchubertBasis, WordBasis
-from .schubert_ring import DSx, Sx
-from .separated_descents import SeparatedDescentsRing
 
 splugSx = SeparatedDescentsRing(Sx([]).ring)
 ADSx = SeparatedDescentsRing(DSx([]).ring)
@@ -207,8 +207,8 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         return NotImplemented
 
     def __rmul__(self, other):
+        from ..schubert_ring import DoubleSchubertElement, SingleSchubertRing
         from .free_algebra_basis import SchubertBasis
-        from .schubert_ring import DoubleSchubertElement, SingleSchubertRing
 
         if isinstance(other, DoubleSchubertElement):
             if not isinstance(other.ring, SingleSchubertRing):
@@ -487,7 +487,7 @@ class FreeAlgebra(Ring, CompositeDomain):
         return tup
 
     def __matmul__(self, other):
-        from .tensor_ring import TensorRing
+        from ..tensor_ring import TensorRing
 
         return TensorRing(self, other)
 
