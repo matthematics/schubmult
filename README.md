@@ -2,13 +2,18 @@
 
 ## Program and package for rapid computation of Littlewood-Richardson coefficients of Schubert polynomials, compliant with sympy/symengine (and hence indirectly Sage)
 
-The main purpose of this python package is for executing scripts to compute coefficients of products of 
-various types of Schubert polynomials. Coproducts can also be computed, as well as substitution of 
-commuting difference operators for quantum double Schubert polynomials. Quantum multiplication also has 
-parabolic subgroup support for equivariant/triple, computed via the Peterson-Woodward comparison theorem and generalizations as 
-per Huang/Li.
+The main purpose of this python package is for doing Schubert calculus-related calculations in python (and/or Sage). 
+
+- Kinds of things covered (not exhaustive):
+    - Permutation library
+	- Fast multiplication of single, double, mixed-variable Schubert polynomials; quantum, quantum double, quantum mixed-variable, and all parabolic versions.
+	- Noncommutative algebras such as NSym and the free algebra on words of nonnegative integers augmented with combinatorial bases.
+	- RC graphs/PDs, BPDs, HPDs, SSYT, EG tableaux, and algebraic structures derived from them (Coxeter-Knuth insertion, RSK, RC graph transition formulas, tableaux decompositions). Kashiwara/Demazure crystal raising/lowering operators
+    - Compatible with sympy and symengine, and hence Sage, probably not terribly difficult to integrate with libraries I'm not familiar with.
+
 
 [Docs to be hosted on Wiki](https://github.com/matthematics/schubmult/wiki/schubmult-home)
+
 
 ## To install dev version
 
@@ -22,6 +27,7 @@ The package implements two main combinatorial models for Schubert calculus:
 
 - **RCGraph (Reduced Compatible Graphs):** Encodes reduced words for permutations as graphs, supporting crystal operations and algebraic manipulations.
 - **BPD (Bumpless Pipe Dreams):** Represents tilings of an $n \times n$ grid with local tile rules, providing an alternative model for Schubert polynomials.
+- **HPD (Hybrid Pipe Dreams):** They exist in the library and are functional, not nearly as well developed at this time.
 
 ### Bijections and Conversions
 
@@ -37,18 +43,15 @@ RCGraph and BPD objects support:
 - Crystal operators (raising/lowering) and combinatorial mutations (currently BPDs only through the bijection)
 - Conversion to algebraic elements in the Schubert and nilHecke rings
 - Visualization and pretty-printing
+- RCGraphs have a product through RCGraphRing (similar to concatenation, not polynomial product)
 
 ### Example Usage
 
 ```python
-from schubmult.schub_lib.rc_graph import RCGraph
-from schubmult.schub_lib.bpd import BPD
-import random
+from schubmult import RCGraph, BPD, Permutation
 
-rc = random.choice(list(RCGraph.all_rc_graphs(Permutaiton([5,1,6,2,4,3]), 4)))
+rc = RCGraph.random_rc_graph(Permutation([5,1,6,2,4,3]), 5)
 bpd = BPD.from_rc_graph(rc)
 rc2 = bpd.to_rc_graph()
-assert rc2.perm == rc.perm
+assert rc2 == rc
 ```
-
-See the [Wiki](https://github.com/matthematics/schubmult/wiki/schubmult-home) for more details and examples.
