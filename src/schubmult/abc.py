@@ -1,7 +1,7 @@
 from symengine import var
 
 from schubmult.symbolic.poly.variables import GeneratingSet
-from schubmult.symmetric_polynomials import CompleteSym, E, E_q, ElemSym, FactorialCompleteSym, FactorialElemSym, H, QFactorialElemSym, e, h  # noqa: F401
+from schubmult.symbolic.symmetric_polynomials import CompleteSym, E, E_q, ElemSym, FactorialCompleteSym, FactorialElemSym, H, QFactorialElemSym, e, h  # noqa: F401
 
 var("x_(1:100)")
 var("y_(1:100)")

@@ -1,5 +1,5 @@
-from schubmult.combinatorial_reps.nilplactic import NilPlactic
-from schubmult.combinatorial_reps.plactic import Plactic
+from schubmult.combinatorics.nilplactic import NilPlactic
+from schubmult.combinatorics.plactic import Plactic
 from schubmult.rings.base_ring import BaseRing, BaseRingElement
 from schubmult.rings.printing import TypedPrintingTerm
 from schubmult.symbolic import S, sympy_Mul

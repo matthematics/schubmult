@@ -4,15 +4,14 @@ import psutil
 from cachetools import cached
 from cachetools.keys import hashkey
 
-from schubmult.combinatorial_reps.permutation import (
+from schubmult.combinatorics.permutation import (
     Permutation,
     cycle,
     phi1,
     uncode,
 )
 from schubmult.symbolic import S, expand, prod, sympify, sympify_sympy, sympy_poly
-from schubmult.symbolic.poly.poly_lib import _vars, efficient_subs, elem_sym_poly
-from schubmult.symbolic.poly.schub_poly import schubpoly
+from schubmult.symbolic.poly.schub_poly import _vars, efficient_subs, elem_sym_poly, schubpoly
 from schubmult.utils.logging import get_logger
 from schubmult.utils.schub_lib import (
     divdiffable,

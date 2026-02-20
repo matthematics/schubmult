@@ -1,8 +1,8 @@
 from functools import cache
 
-from schubmult.combinatorial_reps.permutation import Permutation, uncode
+from schubmult.combinatorics.permutation import Permutation, uncode
 from schubmult.symbolic import Add, Integer, Mul, S, is_of_func_type, sympify, sympify_sympy
-from schubmult.symmetric_polynomials import FactorialElemSym
+from schubmult.symbolic.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.perm_utils import add_perm_dict, mu_A
 
 from ..schubert.schubert_ring import DSx, Sx

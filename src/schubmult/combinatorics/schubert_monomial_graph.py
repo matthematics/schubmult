@@ -8,7 +8,7 @@ monomials in Schubert polynomials via grid-based diagrams.
 from abc import ABC, abstractmethod
 from typing import Any
 
-from schubmult.combinatorial_reps.permutation import Permutation
+from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import Expr
 
 

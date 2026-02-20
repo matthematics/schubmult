@@ -1,11 +1,11 @@
 from functools import cache
 
 from schubmult.symbolic import Add, Function, Integer, Mul, Pow, S, sympify, sympify_sympy
-from schubmult.symbolic.poly.poly_lib import complete_sym_poly
+from schubmult.symbolic.poly.schub_poly import complete_sym_poly
 from schubmult.symbolic.poly.variables import NotEnoughGeneratorsError, ZeroGeneratingSet
-from schubmult.symmetric_polynomials.elem_sym import FactorialElemSym
 from schubmult.utils.logging import get_logger
 
+from .elem_sym import FactorialElemSym
 from .functions import coeffvars, degree, genvars, is_of_func_type, numvars
 
 logger = get_logger(__name__)

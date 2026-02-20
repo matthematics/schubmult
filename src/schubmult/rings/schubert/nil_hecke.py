@@ -1,6 +1,6 @@
 from sympy import Expr
 
-from schubmult.combinatorial_reps.permutation import Permutation
+from schubmult.combinatorics.permutation import Permutation
 from schubmult.mult.double import schubmult_double_down
 from schubmult.symbolic import (
     EXRAW,

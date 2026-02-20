@@ -1,4 +1,4 @@
-from schubmult.combinatorial_reps.permutation import uncode
+from schubmult.combinatorics.permutation import uncode
 from schubmult.symbolic import S
 
 from ..printing import GenericPrintingTerm
@@ -39,7 +39,7 @@ class ElementaryBasis(FreeAlgebraBasis):
     def transition_schubert(cls, tup, numvars):
         from schubmult.abc import x
         from schubmult.symbolic import prod
-        from schubmult.symbolic.poly.poly_lib import monom_sym
+        from schubmult.symbolic.poly.schub_poly import monom_sym
 
         mu = list(range(numvars, 0, -1))
         if len(mu) < len(tup):

@@ -1,7 +1,7 @@
 from schubmult import *
 from sympy import pretty_print, S
 from schubmult.utils.schub_lib import elem_sym_perms_op, elem_sym_perms
-from schubmult.combinatorial_reps.crystal_graph import CrystalGraphTensor
+from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
 
 def the_prod(tup):
     if len(tup) == 0:

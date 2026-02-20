@@ -1,6 +1,6 @@
 from schubmult import *
 from schubmult.utils.schub_lib import elem_sym_perms
-from schubmult.combinatorial_reps.crystal_graph import CrystalGraphTensor
+from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
 from sympy import pretty_print
 
 

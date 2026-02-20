@@ -1,4 +1,4 @@
-from schubmult.combinatorial_reps.chute_move_element import ChuteMoveElement
+from schubmult.combinatorics.chute_move_element import ChuteMoveElement
 from schubmult.rings.combinatorial.schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
 
 # from .crystal_graph_ring import CrystalTensorRing

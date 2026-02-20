@@ -4,10 +4,9 @@ from functools import cache
 import schubmult.mult.quantum as py
 import schubmult.mult.quantum_double as yz
 import schubmult.rings.schubert.schubert_ring as spr
-from schubmult.combinatorial_reps.permutation import Permutation, uncode
+from schubmult.combinatorics.permutation import Permutation, uncode
 from schubmult.symbolic import Add, S, Symbol, expand, sympify
-from schubmult.symbolic.poly.poly_lib import complete_sym_poly, elem_sym_poly, xreplace_genvars
-from schubmult.symbolic.poly.schub_poly import schubpoly_from_elems
+from schubmult.symbolic.poly.schub_poly import complete_sym_poly, elem_sym_poly, schubpoly_from_elems, xreplace_genvars
 from schubmult.symbolic.poly.variables import GeneratingSet, GeneratingSet_base, genset_dict_from_expr, poly_genset
 from schubmult.utils.perm_utils import is_parabolic
 

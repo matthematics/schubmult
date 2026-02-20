@@ -4,12 +4,11 @@ import schubmult.mult.quantum as py
 import schubmult.mult.quantum_double as yz
 import schubmult.rings.schubert.schubert_ring as spr
 import schubmult.utils.schub_lib as schub_lib
-from schubmult.combinatorial_reps.permutation import Permutation, uncode
+from schubmult.combinatorics.permutation import Permutation, uncode
 from schubmult.symbolic import Add, Mul, Pow, S, Symbol, expand, expand_func, sympify
-from schubmult.symbolic.poly.poly_lib import elem_sym_poly_q, xreplace_genvars
-from schubmult.symbolic.poly.schub_poly import schubpoly_from_elems
+from schubmult.symbolic.poly.schub_poly import elem_sym_poly_q, schubpoly_from_elems, xreplace_genvars
 from schubmult.symbolic.poly.variables import GeneratingSet, GeneratingSet_base, genset_dict_from_expr, poly_genset
-from schubmult.symmetric_polynomials import FactorialElemSym, QFactorialElemSym, coeffvars, degree, genvars, is_of_func_type, numvars
+from schubmult.symbolic.symmetric_polynomials import FactorialElemSym, QFactorialElemSym, coeffvars, degree, genvars, is_of_func_type, numvars
 
 from ..printing import QDSchubPoly
 from .base_schubert_ring import BaseSchubertElement, BaseSchubertRing

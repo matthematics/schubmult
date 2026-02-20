@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from schubmult.combinatorial_reps.bpd import BPD
-from schubmult.combinatorial_reps.permutation import Permutation
+from schubmult.combinatorics.bpd import BPD
+from schubmult.combinatorics.permutation import Permutation
 from schubmult.rings.combinatorial.schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
 
 if TYPE_CHECKING:

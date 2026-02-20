@@ -1,7 +1,7 @@
 from functools import cached_property
 
 import schubmult.utils.schub_lib as sss
-from schubmult.combinatorial_reps.permutation import (
+from schubmult.combinatorics.permutation import (
     Permutation,
     uncode,
 )

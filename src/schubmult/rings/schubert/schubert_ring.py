@@ -4,11 +4,11 @@ import schubmult.mult.double as yz
 import schubmult.mult.single as py
 import schubmult.rings.schubert.quantum_schubert_ring as qsr
 import schubmult.utils.schub_lib as schub_lib
-from schubmult.combinatorial_reps.permutation import Permutation
+from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
-from schubmult.symbolic.poly.poly_lib import xreplace_genvars
+from schubmult.symbolic.poly.schub_poly import xreplace_genvars
 from schubmult.symbolic.poly.variables import GeneratingSet, GeneratingSet_base, poly_genset
-from schubmult.symmetric_polynomials import ElemSym
+from schubmult.symbolic.symmetric_polynomials import ElemSym
 
 from .double_schubert_ring import DoubleSchubertElement, DoubleSchubertRing, DSx, ElemDoubleSchubertRing
 

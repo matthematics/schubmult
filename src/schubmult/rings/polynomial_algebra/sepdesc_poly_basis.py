@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from schubmult.combinatorial_reps.permutation import Permutation
+from schubmult.combinatorics.permutation import Permutation
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import S
 from schubmult.utils.perm_utils import add_perm_dict

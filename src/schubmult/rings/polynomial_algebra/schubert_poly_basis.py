@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from schubmult.combinatorial_reps.permutation import Permutation
+from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -81,7 +81,7 @@ class SchubertPolyBasis(PolynomialBasis):
         return res_dict
 
     def transition_elementary(self, dct, other_basis):
-        from schubmult.combinatorial_reps.permutation import uncode
+        from schubmult.combinatorics.permutation import uncode
         from schubmult.rings import FA
 
         res = {}

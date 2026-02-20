@@ -1,10 +1,10 @@
 from sympy import Tuple
 
-from schubmult.combinatorial_reps.nilplactic import NilPlactic
+from schubmult.combinatorics.nilplactic import NilPlactic
 
-# from schubmult.combinatorial_reps.nilplactic import NilPlactic
-# from schubmult.combinatorial_reps.plactic import Plactic
-from schubmult.combinatorial_reps.rc_graph import RCGraph
+# from schubmult.combinatorics.nilplactic import NilPlactic
+# from schubmult.combinatorics.plactic import Plactic
+from schubmult.combinatorics.rc_graph import RCGraph
 from schubmult.symbolic import S
 
 from ..printing import PrintingTerm, TypedPrintingTerm

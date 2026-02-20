@@ -13,10 +13,10 @@ import numpy as np
 from sympy import pretty
 from sympy.printing.defaults import DefaultPrinting
 
-from schubmult.combinatorial_reps.bpd import BPD, TileType
-from schubmult.combinatorial_reps.permutation import Permutation
-from schubmult.combinatorial_reps.rc_graph import RCGraph
-from schubmult.combinatorial_reps.schubert_monomial_graph import SchubertMonomialGraph
+from schubmult.combinatorics.bpd import BPD, TileType
+from schubmult.combinatorics.permutation import Permutation
+from schubmult.combinatorics.rc_graph import RCGraph
+from schubmult.combinatorics.schubert_monomial_graph import SchubertMonomialGraph
 from schubmult.symbolic import Expr
 
 

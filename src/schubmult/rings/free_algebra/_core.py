@@ -1,6 +1,6 @@
 from functools import cache
 
-from schubmult.combinatorial_reps.permutation import uncode
+from schubmult.combinatorics.permutation import uncode
 from schubmult.rings.base_ring import BaseRingElement
 from schubmult.symbolic import (
     EXRAW,
@@ -362,7 +362,7 @@ class FreeAlgebraElement(DomainElement, DefaultPrinting, dict):
         return new_elem
 
     def __truediv__(self, other):
-        from schubmult.combinatorial_reps.permutation import Permutation
+        from schubmult.combinatorics.permutation import Permutation
 
         if isinstance(other, list | tuple | Permutation):
             other = Permutation(other)
@@ -575,7 +575,7 @@ class FreeAlgebra(Ring, CompositeDomain):
 
     @property
     def one(self):
-        from schubmult.combinatorial_reps.permutation import Permutation
+        from schubmult.combinatorics.permutation import Permutation
 
         return self.dtype({(Permutation(()), 0): S.One})
 
