@@ -1,8 +1,8 @@
 from functools import cache
 
-from schubmult.rings.poly_lib import elem_sym_poly
-from schubmult.rings.variables import NotEnoughGeneratorsError, ZeroGeneratingSet
 from schubmult.symbolic import Add, Function, Integer, S, sympify, sympify_sympy
+from schubmult.symbolic.poly.poly_lib import elem_sym_poly
+from schubmult.symbolic.poly.variables import NotEnoughGeneratorsError, ZeroGeneratingSet
 from schubmult.utils.logging import get_logger
 
 logger = get_logger(__name__)

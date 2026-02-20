@@ -1,8 +1,9 @@
 from functools import cache
 
-#from schubmult.rings.poly_lib import elem_sym_poly_q
-from schubmult.rings.variables import GeneratingSet, NotEnoughGeneratorsError
 from schubmult.symbolic import Integer, S, sympify_sympy
+
+#from schubmult.rings.poly_lib import elem_sym_poly_q
+from schubmult.symbolic.poly.variables import GeneratingSet, NotEnoughGeneratorsError
 
 from .elem_sym import ElemSym_base
 

@@ -1,11 +1,11 @@
 from functools import cached_property
 
-from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.permutation import (
     Permutation,
     uncode,
 )
 from schubmult.symbolic import Add, Mul, Pow
+from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.utils.logging import get_logger, init_logging
 from schubmult.utils.perm_utils import (
     add_perm_dict,

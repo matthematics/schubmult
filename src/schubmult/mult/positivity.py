@@ -4,15 +4,15 @@ import psutil
 from cachetools import cached
 from cachetools.keys import hashkey
 
-from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_poly
 from schubmult.schub_lib.permutation import (
     Permutation,
     cycle,
     phi1,
     uncode,
 )
-from schubmult.schub_lib.schub_poly import schubpoly
-from schubmult.symbolic import S, expand, poly, prod, sympify, sympify_sympy
+from schubmult.symbolic import S, expand, prod, sympify, sympify_sympy, sympy_poly
+from schubmult.symbolic.poly.poly_lib import _vars, efficient_subs, elem_sym_poly
+from schubmult.symbolic.poly.schub_poly import schubpoly
 from schubmult.utils.logging import get_logger
 from schubmult.utils.schub_lib import (
     divdiffable,
@@ -63,7 +63,7 @@ def compute_positive_rep(val, var2=None, var3=None, msg=False):
 
     val_expr = expand(val)
     vec0 = {k: v for k, v in val_expr.subs({var3[1]: S.Zero}).as_coefficients_dict().items() if v != S.Zero}
-    val_poly = poly(val_expr, *var22, *var33)
+    val_poly = sympy_poly(val_expr, *var22, *var33)
     # vec = opt.poly_to_vec(val)
     mn = val_poly.monoms()
     L1 = tuple([0 for i in range(n1)])

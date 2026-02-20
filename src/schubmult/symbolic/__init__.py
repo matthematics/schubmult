@@ -13,3 +13,5 @@ from sympy.polys.polyerrors import CoercionFailed
 from sympy.printing.defaults import DefaultPrinting
 
 from .functions import expand, expand_seq, is_of_func_type, symbols, sympify
+
+sympy_poly = poly

@@ -1,11 +1,11 @@
 from functools import cache
 
-import schubmult.rings.variables as spl
 from schubmult.schub_lib.permutation import (
     Permutation,
     uncode,
 )
 from schubmult.symbolic import S, prod
+from schubmult.symbolic.poly.variables import GeneratingSet
 from schubmult.utils.perm_utils import (
     count_bruhat,
     get_cycles,
@@ -17,7 +17,7 @@ from schubmult.utils.perm_utils import (
     sg,
 )
 
-q_var = spl.GeneratingSet("q")
+q_var = GeneratingSet("q")
 
 
 # def double_elem_sym_q(u, p1, p2, k, q_var=q_var):

@@ -60,7 +60,7 @@ _lazy_exports = {
     "PolynomialAlgebra": "schubmult.rings.polynomial_algebra",
     "TensorRing": "schubmult.rings.tensor_ring",
     # Variables
-    "GeneratingSet": "schubmult.rings.variables",
+    "GeneratingSet": "schubmult.symbolic.poly.variables",
     "pull_out_var": "schubmult.utils.schub_lib",
     # Crystal structures
     "RootTableau": "schubmult.schub_lib.root_tableau",

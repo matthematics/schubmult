@@ -1,12 +1,12 @@
 from functools import cached_property
 
-import schubmult.rings.variables as spl
 import schubmult.utils.schub_lib as sss
 from schubmult.schub_lib.permutation import (
     Permutation,
     uncode,
 )
 from schubmult.symbolic import Add, Mul, Pow
+from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
@@ -20,11 +20,11 @@ class _gvars:
 
     @cached_property
     def var_x(self):
-        return spl.GeneratingSet("x")
+        return GeneratingSet("x")
 
     @cached_property
     def q_var(self):
-        return spl.GeneratingSet("q")
+        return GeneratingSet("q")
 
 
 _vars = _gvars()
@@ -48,8 +48,8 @@ def single_variable(coeff_dict, varnum, var_q=_vars.q_var):
 
 
 def mult_poly_q(coeff_dict, poly, var_x=_vars.var_x, var_q=_vars.q_var):
-    if not isinstance(var_x, spl.GeneratingSet_base):
-        var_x = spl.CustomGeneratingSet(var_x)
+    if not isinstance(var_x, GeneratingSet_base):
+        var_x = CustomGeneratingSet(var_x)
     # logger.debug(f"{poly=} {type(poly)=} {list(var_x)}")
     # logger.debug(f"{[type(v) for v in var_x]}")
     if var_x.index(poly) != -1:

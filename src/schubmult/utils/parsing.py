@@ -2,7 +2,7 @@ import symengine
 from latex2sympy2_extended import latex2sympy  # noqa: F401
 from sympy.parsing.sympy_parser import parse_expr  # noqa: F401
 
-from schubmult.rings.variables import GeneratingSet
+from schubmult.symbolic.poly.variables import GeneratingSet
 
 
 def parse_coeff(coeff_str, latex=False):

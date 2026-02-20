@@ -1,14 +1,14 @@
 from bisect import bisect_left
 from functools import cache
 
-from schubmult.rings.poly_lib import _vars, efficient_subs, elem_sym_func, elem_sym_poly
-from schubmult.rings.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.schub_lib.permutation import (
     Permutation,
     uncode,
 )
-from schubmult.schub_lib.schub_poly import elem_func_func_mul
 from schubmult.symbolic import Add, Mul, Pow, S, expand, expand_func, sympify
+from schubmult.symbolic.poly.poly_lib import _vars, efficient_subs, elem_sym_func, elem_sym_poly
+from schubmult.symbolic.poly.schub_poly import elem_func_func_mul
+from schubmult.symbolic.poly.variables import CustomGeneratingSet, GeneratingSet, GeneratingSet_base
 from schubmult.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
