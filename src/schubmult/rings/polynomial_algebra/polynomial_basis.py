@@ -14,7 +14,7 @@ from schubmult.utils.perm_utils import add_perm_dict
 # If transition_schubert is a method of PolynomialBasis or another class, import accordingly
 # For example, if it's a method of PolynomialBasis, you don't need to import it separately
 # If you use TensorRing in change_tensor_basis
-from .schubert.schubert_ring import Sx
+from ..schubert.schubert_ring import Sx
 
 
 class PolynomialBasis:
@@ -52,7 +52,7 @@ class PolynomialBasis:
         return ret
 
     def change_tensor_basis(self, tensor_elem, basis1, basis2):
-        from .tensor_ring import TensorRing
+        from ..tensor_ring import TensorRing
 
         ring1 = tensor_elem.ring.rings[0]
         ring2 = tensor_elem.ring.rings[1]
@@ -81,7 +81,7 @@ class PolynomialBasis:
         return self.monomial_basis.expand(self.transition(self.monomial_basis)(dct))
 
     def coproduct(self, key):
-        from ._mul_utils import _tensor_product_of_dicts_first
+        from ...utils._mul_utils import _tensor_product_of_dicts_first
 
         monom_version = self.transition(self.monomial_basis)({key: S.One})
         ret_dict = {}

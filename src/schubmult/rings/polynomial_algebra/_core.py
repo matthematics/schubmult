@@ -19,8 +19,8 @@ from schubmult.symbolic import (
 from schubmult.utils.logging import get_logger
 from schubmult.utils.perm_utils import add_perm_dict
 
+from ..schubert.base_schubert_ring import BaseSchubertElement
 from .polynomial_basis import MonomialBasis
-from .schubert.base_schubert_ring import BaseSchubertElement
 
 # from .polynomial_basis import EXBasis
 
@@ -210,7 +210,7 @@ class PolynomialAlgebra(Ring, CompositeDomain):
         self.dtype = type("PolynomialAlgebraElement", (PolynomialAlgebraElement,), {"ring": self})
 
     def __matmul__(self, other):
-        from .tensor_ring import TensorRing
+        from ..tensor_ring import TensorRing
 
         return TensorRing(self, other)
 
