@@ -1,4 +1,4 @@
-from ._core import FA, ASx, FreeAlgebra, FreeAlgebraElement
+from ._core import FA, ADSx, ASx, FreeAlgebra, FreeAlgebraElement
 from .elementary_basis import ElementaryBasis
 from .free_algebra_basis import FreeAlgebraBasis
 from .j_basis import JBasis
@@ -12,6 +12,7 @@ from .z_basis import ZBasis
 
 __all__ = [
     "FA",
+    "ADSx",
     "ASx",
     "ElementaryBasis",
     "FreeAlgebra",

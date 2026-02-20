@@ -53,7 +53,6 @@ _lazy_exports = {
     "SchubertMonomialRingElement": "schubmult.rings.combinatorial.schubert_monomial_ring",
     "PlacticAlgebra": "schubmult.rings.combinatorial.plactic_algebra",
     "PlacticAlgebraElement": "schubmult.rings.combinatorial.plactic_algebra",
-    "CoxeterKnuthRing": "schubmult.rings.ck_ring",
     "FreeAlgebra": "schubmult.rings.free_algebra",
     "NSym": "schubmult.rings.nsym",
     "NilHeckeRing": "schubmult.rings.schubert.nil_hecke",
