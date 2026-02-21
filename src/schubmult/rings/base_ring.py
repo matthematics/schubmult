@@ -132,7 +132,7 @@ class BaseRingElement(DomainElement, DefaultPrinting, dict):
             return NotImplemented
 
     def coproduct(self):
-        result = self.ring.zero
+        result = (self.ring@self.ring).zero
         for k, v in self.items():
             result += v * self.ring.coproduct_on_basis(k)
         return result

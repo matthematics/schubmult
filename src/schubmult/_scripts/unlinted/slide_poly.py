@@ -47,3 +47,4 @@ if __name__ == "__main__":
         
         #print(f"Permutation: {perm}, Slide poly: {in_basis}")
         print(in_basis.coproduct())
+        print(in_basis**2)

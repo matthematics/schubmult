@@ -69,7 +69,7 @@ class SlidePolyBasis(PolynomialBasis):
     def transition(self, other_basis):
         from .monomial_basis import MonomialBasis
 
-        return lambda x: PolynomialBasis.compose_transitions(self.to_monoms, other_basis.transition(MonomialBasis(genset=self.genset))(x))
+        return lambda x: PolynomialBasis.compose_transition(self.to_monoms, other_basis.transition(MonomialBasis(genset=self.genset))(x))
 
     def from_expr(self, expr):
         dct = self.monomial_basis.from_expr(expr)
