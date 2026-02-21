@@ -161,10 +161,11 @@ class BaseRingElement(DomainElement, DefaultPrinting, dict):
         if isinstance(other, BaseRingElement):
             elem1 = self
             elem2 = other
-            if elem1.ring == elem2.ring:
-                return (self - other).expand(deep=False).almosteq(S.Zero)
-            return elem1.almosteq(elem1.ring.one * elem2)
-        return (self - self.ring.from_expr(other)).expand(deep=False) == self.ring.zero
+            test_elem = elem1 - elem2
+            if all(v == 0 for v in test_elem.values()):
+                return True
+            return False
+        return False
 
     def __matmul__(self, other):
         return (self.ring @ self.ring).ext_multiply(self, other)

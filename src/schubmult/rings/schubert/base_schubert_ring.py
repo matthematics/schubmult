@@ -68,6 +68,14 @@ class BaseSchubertElement(BaseRingElement):
     def as_quantum(self):
         return self.ring.in_quantum_basis(self)
 
+    def almosteq(self, other):
+        if isinstance(other, BaseSchubertElement):
+            elem1 = self
+            elem2 = other
+            if elem1.ring == elem2.ring:
+                return (self - other).expand(deep=False).almosteq(S.Zero)
+            return elem1.almosteq(elem1.ring.one * elem2)
+        return (self - self.ring.from_expr(other)).expand(deep=False) == self.ring.zero
 
 
 class BaseSchubertRing(BaseRing):
