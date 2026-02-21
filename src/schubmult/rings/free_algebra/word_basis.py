@@ -203,6 +203,28 @@ class WordBasis(FreeAlgebraBasis):
             ret += c * JB(new_tup, pw)
         return dict(ret)
 
+    # @classmethod
+    # def transition_fundamental_slide(cls, key):
+    #     raise NotImplementedError("Transition from WordBasis to FundamentalSlideBasis is not implemented yet.")
+
+    @classmethod
+    def transition_monomial_slide(cls, key):
+        stack = [key]
+        used = set()
+        ret = {}
+        while len(stack) > 0:
+            working_comp = stack.pop()
+            ret[tuple(working_comp)] = S.One
+            for i in range(len(working_comp) - 1):
+                if i > 0 and working_comp[i] != 0 and working_comp[i + 1] == 0:
+                    new_comp = [*working_comp]
+                    new_comp[i] = 0
+                    new_comp[i + 1] = working_comp[i]
+                    if tuple(new_comp) not in used:
+                        stack.append(new_comp)
+                        used.add(tuple(new_comp))
+        return ret
+
     @classmethod
     def transition_zbasis(cls, key):
         from .z_basis import ZBasis
@@ -230,8 +252,10 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition(cls, other_basis):
+        from .fundamental_slide_basis import FundamentalSlideBasis
         from .j_basis import JBasis
         from .jt_basis import JTBasis
+        from .monomial_slide_basis import MonomialSlideBasis
         from .nelementary_basis import NElementaryBasis
         from .schubert_basis import SchubertBasis
         from .z_basis import ZBasis
@@ -248,4 +272,8 @@ class WordBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_jtbasis(x)
         if other_basis == ZBasis:
             return lambda x: cls.transition_zbasis(x)
+        if other_basis == FundamentalSlideBasis:
+            return lambda x: FreeAlgebraBasis.compose_transition(MonomialSlideBasis.transition_fundamental_slide, cls.transition_monomial_slide(x))
+        if other_basis == MonomialSlideBasis:
+            return lambda x: cls.transition_monomial_slide(x)
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(x))

@@ -148,8 +148,10 @@ class SchubertBasis(FreeAlgebraBasis):
     @classmethod
     def transition(cls, other_basis):
         from .elementary_basis import ElementaryBasis
+        from .fundamental_slide_basis import FundamentalSlideBasis
         from .j_basis import JBasis
         from .jt_basis import JTBasis
+        from .monomial_slide_basis import MonomialSlideBasis
         from .schubert_schur_basis import SchubertSchurBasis
         from .word_basis import WordBasis
         from .z_basis import ZBasis
@@ -166,9 +168,11 @@ class SchubertBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_separated_descents(other_basis.k, *x)
         if other_basis == ElementaryBasis:
             return lambda x: cls.transition_elementary(*x)
-        if other_basis == ZBasis or other_basis == JTBasis or other_basis == JBasis:
+        if other_basis == ZBasis or other_basis == JTBasis or other_basis == JBasis or other_basis == MonomialSlideBasis:
             return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition(WordBasis)(x))
-        return None
+        if other_basis == FundamentalSlideBasis:
+            return lambda x: FreeAlgebraBasis.compose_transition(MonomialSlideBasis.transition(other_basis), cls.transition(MonomialSlideBasis)(x))
+        raise NotImplementedError(f"Transition from SchubertBasis to {other_basis} is not implemented.")
 
     @classmethod
     @cache

@@ -44,19 +44,19 @@ class MonomialBasis(PolynomialBasis):
     def expand(self, dct):
         return Add(*[v * self.expand_monom(k) for k, v in dct.items()])
 
-    def transition_slide(self, other_basis, dct):
+    def transition_slide(self, dct, other_basis):
         ret = {}
         for k, v in dct.items():
             ret = add_perm_dict(ret, self.transition_slide_monom(other_basis, k, coeff=v))
         return ret
 
     def transition_slide_monom(self, other_basis, monom, coeff=S.One):
-        from .slide_poly_basis import SlidePolyBasis
+        from .monomial_slide_poly_basis import MonomialSlidePolyBasis
 
         def domkey(comp):
             return tuple([sum(comp[:i]) for i in range(1, len(comp))])
 
-        if not isinstance(other_basis, SlidePolyBasis):
+        if not isinstance(other_basis, MonomialSlidePolyBasis):
             return None
 
         res = {monom: coeff}
@@ -74,23 +74,23 @@ class MonomialBasis(PolynomialBasis):
 
     def transition(self, other_basis):
         from .elem_sym_poly_basis import ElemSymPolyBasis
+        from .monomial_slide_poly_basis import MonomialSlidePolyBasis
         from .schubert_poly_basis import SchubertPolyBasis
         from .sepdesc_poly_basis import SepDescPolyBasis
-        from .slide_poly_basis import SlidePolyBasis
 
         if isinstance(other_basis, MonomialBasis):
             return lambda x: other_basis.attach_key(x)
         if isinstance(other_basis, SchubertPolyBasis):
             return lambda x: other_basis.attach_key(other_basis.ring.from_expr(Add(*[v * self.expand_monom(k) for k, v in x.items()])))
-        if isinstance(other_basis, SlidePolyBasis):
-            return lambda x: self.transition_slide(other_basis, x)
+        if isinstance(other_basis, MonomialSlidePolyBasis):
+            return lambda x: self.transition_slide(x, other_basis)
         if isinstance(other_basis, SepDescPolyBasis):
             bonky_basis = SchubertPolyBasis(ring=other_basis.ring)
             return lambda x: other_basis.attach_key(bonky_basis.transition(other_basis)(bonky_basis.attach_key(bonky_basis.ring.from_expr(Add(*[v * self.expand_monom(k) for k, v in x.items()])))))
         if isinstance(other_basis, ElemSymPolyBasis):
             spb = SchubertPolyBasis(ring=other_basis.ring)
             return lambda x: spb.transition(other_basis)(self.transition(spb)(x))
-        return None
+        raise NotImplementedError(f"Transition from {type(self)} to {type(other_basis)} not implemented")
 
     def from_expr(self, expr):
         from schubmult.symbolic.poly.variables import genset_dict_from_expr

@@ -1,8 +1,10 @@
 from ._core import FA, ADSx, ASx, FreeAlgebra, FreeAlgebraElement
 from .elementary_basis import ElementaryBasis
 from .free_algebra_basis import FreeAlgebraBasis
+from .fundamental_slide_basis import FundamentalSlideBasis
 from .j_basis import JBasis
 from .jt_basis import JTBasis
+from .monomial_slide_basis import MonomialSlideBasis
 from .nelementary_basis import NElementaryBasis
 from .schubert_basis import SchubertBasis
 from .schubert_schur_basis import SchubertSchurBasis
@@ -18,8 +20,10 @@ __all__ = [
     "FreeAlgebra",
     "FreeAlgebraBasis",
     "FreeAlgebraElement",
+    "FundamentalSlideBasis",
     "JBasis",
     "JTBasis",
+    "MonomialSlideBasis",
     "NElementaryBasis",
     "SchubertBasis",
     "SchubertSchurBasis",

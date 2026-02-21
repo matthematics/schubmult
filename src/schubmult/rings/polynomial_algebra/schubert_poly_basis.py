@@ -2,7 +2,7 @@ from functools import cached_property
 
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
-from schubmult.utils.perm_utils import add_perm_dict
+from schubmult.utils.perm_utils import add_perm_dict, add_perm_dict_with_coeff
 
 from ..schubert.schubert_ring import Sx
 from .base_polynomial_basis import PolynomialBasis
@@ -123,6 +123,28 @@ class SchubertPolyBasis(PolynomialBasis):
                 res[key] = res.get(key, S.Zero) + v
         return res
 
+    def transition_key_fundamental_slide(self, perm, n):
+        from schubmult.combinatorics.rc_graph import RCGraph
+
+        rcs = [rc for rc in RCGraph.all_rc_graphs(perm, n) if rc.is_quasi_yamanouchi]
+        ret = {}
+        for rc in rcs:
+            ret[rc.length_vector] = ret.get(rc.length_vector, S.Zero) + S.One
+        return ret
+
+
+    def transition_fundamental_slide(self, dct):
+        res = {}
+        for k, v in dct.items():
+            res = add_perm_dict_with_coeff(res, self.transition_key_fundamental_slide(k[0], k[1]), coeff=v)
+        return res
+
+    # def transition_slide(self, dct, other_basis):
+    #     from schubmult.abc import x
+    #     from schubmult.symbolic import expand_func
+
+    #     if not isinstance(other_basis, SchubertPolyBasis):
+
     @property
     def zero_monom(self):
         return (Permutation([]), 0)
@@ -141,11 +163,14 @@ class SchubertPolyBasis(PolynomialBasis):
 
     def transition(self, other_basis):
         from .elem_sym_poly_basis import ElemSymPolyBasis
+        from .fundamental_slide_poly_basis import FundamentalSlidePolyBasis
         from .monomial_basis import MonomialBasis
         from .sepdesc_poly_basis import SepDescPolyBasis
 
         if isinstance(other_basis, SchubertPolyBasis):
             return lambda x: dict(x)
+        if isinstance(other_basis, FundamentalSlidePolyBasis):
+            return lambda x: self.transition_fundamental_slide(x)
         if isinstance(other_basis, MonomialBasis):
             def sum_dct(*dcts):
                 res = {}

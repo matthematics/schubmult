@@ -50,6 +50,24 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             return NotImplemented
         return tuple(self) == tuple(other)
 
+    @property
+    def is_quasi_yamanouchi(self) -> bool:
+        if self.perm.inv == 0:
+            return True
+        group_coords_min = {}
+        group_coords_max = {}
+        for i in range(self.perm.inv):
+            a, b = self.left_to_right_inversion_coords(i)
+            if group_coords_min.get(a, 1000) > b:
+                group_coords_min[a] = b
+            if group_coords_max.get(a, -1) < b:
+                group_coords_max[a] = b
+        for a, b in group_coords_min.items():
+            if b != 1 and group_coords_max.get(a + 1, -1) < b:
+                return False
+        return True
+
+
     def loc_of_inversion(self, a, b):
         lookup = {self.left_to_right_inversion(i): self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)}
         return lookup[(a, b)]

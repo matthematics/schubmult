@@ -1,6 +1,6 @@
 from schubmult import *
 from schubmult.symbolic import S, expand_seq
-from schubmult.rings.polynomial_algebra import SlidePolyBasis, PolynomialAlgebra
+from schubmult.rings.polynomial_algebra import FundamentalSlidePolyBasis, PolynomialAlgebra
 
 
 def monomial_slide(comp, genset):
@@ -37,14 +37,14 @@ if __name__ == "__main__":
     import sys
     n = int(sys.argv[1])
     deg = int(sys.argv[2])
-    SP = PolynomialAlgebra(SlidePolyBasis(genset=Sx.genset))
+    SP = PolynomialAlgebra(FundamentalSlidePolyBasis(genset=Sx.genset))
     for comp in all_weak_comps(n, deg):
         in_basis = SP(comp)
-        print(f"Comp: {comp}, Monomial slide: {in_basis}")
+        print(f"Comp: {comp}, Fundamental slide: {in_basis}")
     # perms = Permutation.all_permutations(n)
     
     #for perm in perms:
         
         #print(f"Permutation: {perm}, Slide poly: {in_basis}")
-        print(in_basis.coproduct())
-        print(in_basis**2)
+        #print(in_basis.coproduct())
+        print(in_basis.expand())

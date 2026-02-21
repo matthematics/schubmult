@@ -41,10 +41,10 @@ class PolynomialBasis(ABC):
 
     @staticmethod
     def compose_transition(tkeyfunc, output):
-        ret = {}
-        for key, v in output.items():
-            ret = add_perm_dict(ret, {k: v * v0 for k, v0 in tkeyfunc(key).items()})
-        return ret
+        # ret = {}
+        # for key, v in output.items():
+        #     ret = add_perm_dict(ret, {k: v * v0 for k, v0 in tkeyfunc(key).items()})
+        return tkeyfunc(output)
 
     def change_tensor_basis(self, tensor_elem, basis1, basis2):
         from ..tensor_ring import TensorRing
@@ -72,7 +72,7 @@ class PolynomialBasis(ABC):
             for (mk1, mk2), v2 in this_coproduct.items():
                 ret_dict = add_perm_dict(
                     ret_dict,
-                    _tensor_product_of_dicts_first(self.monomial_basis.transition({mk1: v2}), self.monomial_basis.transition({mk2: S.One})),
+                    _tensor_product_of_dicts_first(self.monomial_basis.transition(self)({mk1: v2}), self.monomial_basis.transition(self)({mk2: S.One})),
                 )
         return ret_dict
 

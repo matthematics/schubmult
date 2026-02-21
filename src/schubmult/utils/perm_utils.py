@@ -111,6 +111,11 @@ def add_perm_dict(d1, d2):
         d_ret[k] = d_ret.get(k, 0) + v
     return d_ret
 
+def add_perm_dict_with_coeff(d1, d2, coeff):
+    d_ret = {**d1}
+    for k, v in d2.items():
+        d_ret[k] = d_ret.get(k, 0) + v * coeff
+    return d_ret
 
 def p_trans(part):
     newpart = []
