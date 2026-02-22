@@ -1,9 +1,10 @@
+from schubmult.combinatorics.indexed_forests import word_to_indexed_forest
 from schubmult.rings.free_algebra.free_algebra_basis import FreeAlgebraBasis
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import S
 
 
-class KeyBasis(FreeAlgebraBasis):
+class ForestBasis(FreeAlgebraBasis):
     @classmethod
     def is_key(cls, x):
         return isinstance(x, tuple | list)
@@ -17,15 +18,15 @@ class KeyBasis(FreeAlgebraBasis):
     #     return {rc_graph.length_vector(): 1}
 
     # @classmethod
-    # def product(cls, key1, key2, coeff=S.One):
-    #     return {(*key1, *key2): coeff}
+    # def product(cls, Forest1, Forest2, coeff=S.One):
+    #     return {(*Forest1, *Forest2): coeff}
 
     zero_monom = ()
 
 
     @classmethod
     def printing_term(cls, k):
-        return GenericPrintingTerm(k, "Key")
+        return GenericPrintingTerm(k, "Forest")
 
 
     @classmethod
@@ -34,8 +35,13 @@ class KeyBasis(FreeAlgebraBasis):
         r = RCGraphRing()
         dct = {}
         all_rcs = r.monomial(*key)
+
         for rc in all_rcs:
-            if rc.is_lowest_weight:
+            # if rc.is_lowest_weight:
+            #     dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
+            word = list(reversed(rc.perm_word))
+            indfor = word_to_indexed_forest(word)
+            if indfor.code == key:
                 dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
         return dct
 
@@ -51,5 +57,5 @@ class KeyBasis(FreeAlgebraBasis):
 if __name__ == "__main__":
     from schubmult import FreeAlgebra, SchubertBasis
 
-    Key = FreeAlgebra(KeyBasis)
-    print(Key((0, 2, 0, 1)).change_basis(SchubertBasis))
+    Forest = FreeAlgebra(ForestBasis)
+    print(Forest((0, 2, 0, 1)).change_basis(SchubertBasis))
