@@ -740,7 +740,7 @@ class Plactic(GridPrint, CrystalGraph):
 
     def crystal_length(self):
         """Return the length/number of rows used for the crystal"""
-        return 100000000000000
+        return 100
 
     @classmethod
     def yamanouchi(cls, shape):

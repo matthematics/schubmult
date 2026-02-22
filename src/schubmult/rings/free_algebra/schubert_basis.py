@@ -148,6 +148,7 @@ class SchubertBasis(FreeAlgebraBasis):
     @classmethod
     def transition(cls, other_basis):
         from .elementary_basis import ElementaryBasis
+        from .forest_basis import ForestBasis
         from .fundamental_slide_basis import FundamentalSlideBasis
         from .j_basis import JBasis
         from .jt_basis import JTBasis
@@ -168,7 +169,7 @@ class SchubertBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_separated_descents(other_basis.k, *x)
         if other_basis == ElementaryBasis:
             return lambda x: cls.transition_elementary(*x)
-        if other_basis == ZBasis or other_basis == JTBasis or other_basis == JBasis or other_basis == MonomialSlideBasis:
+        if other_basis == ZBasis or other_basis == JTBasis or other_basis == JBasis or other_basis == MonomialSlideBasis or other_basis == ForestBasis:
             return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition(WordBasis)(x))
         if other_basis == FundamentalSlideBasis:
             return lambda x: FreeAlgebraBasis.compose_transition(MonomialSlideBasis.transition(other_basis), cls.transition(MonomialSlideBasis)(x))

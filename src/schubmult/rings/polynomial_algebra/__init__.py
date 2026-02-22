@@ -1,5 +1,6 @@
 from ._core import PA, PolynomialAlgebra, PolynomialAlgebraElement
 from .forest_poly_basis import ForestPolyBasis
+from .key_poly_basis import KeyPolyBasis
 from .polynomial_basis import ElemSymPolyBasis, FundamentalSlidePolyBasis, MonomialBasis, MonomialSlidePolyBasis, PolynomialBasis, SchubertPolyBasis, SepDescPolyBasis
 
 __all__ = [
@@ -7,6 +8,7 @@ __all__ = [
     "ElemSymPolyBasis",
     "ForestPolyBasis",
     "FundamentalSlidePolyBasis",
+    "KeyPolyBasis",
     "MonomialBasis",
     "MonomialSlidePolyBasis",
     "PolynomialAlgebra",

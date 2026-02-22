@@ -128,6 +128,20 @@ class CrystalGraph(Printable):
                     stack.append(new_elem)
         return crystal
 
+    def crystal_above(self, length=None):
+        crystal = set()
+        stack = [self]
+        if length is None:
+            length = self.crystal_length()
+        while len(stack) > 0:
+            elem = stack.pop()
+            crystal.add(elem)
+            for i in range(1, length):
+                new_elem = elem.raising_operator(i)
+                if new_elem is not None:
+                    stack.append(new_elem)
+        return crystal
+
     def truncated_crystal(self, length, start=1):
         hw, _ = self.to_highest_weight(length=length)
         crystal = set()

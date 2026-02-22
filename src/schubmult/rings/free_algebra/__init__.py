@@ -18,6 +18,7 @@ __all__ = [
     "ADSx",
     "ASx",
     "ElementaryBasis",
+    "ForestBasis",
     "FreeAlgebra",
     "FreeAlgebraBasis",
     "FreeAlgebraElement",

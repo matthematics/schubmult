@@ -204,6 +204,27 @@ class WordBasis(FreeAlgebraBasis):
         return dict(ret)
 
     # @classmethod
+    # def transition_forest(cls, key):
+    #     from schubmult.combinatorics.indexed_forests import word_to_indexed_forest
+    #     from schubmult.rings.combinatorial import RCGraphRing
+        # r = RCGraphRing()
+        # dct = {}
+        # all_rcs = r.monomial(*key)
+
+        # perms_used = set()
+
+        # for rc in all_rcs:
+        #     word = list(reversed(rc.perm_word))
+        #     indfor = word_to_indexed_forest(word)
+        #     assert len(indfor.code) == len(key), f"Length of indexed forest code {indfor.code} does not match length of key {key}."
+        #     if rc.perm not in perms_used:
+        #         dct[indfor.code] = dct.get(indfor.code, S.Zero) + S.One
+        #         perms_used.add(rc.perm)
+        # return dct
+
+        # Pieri
+
+    # @classmethod
     # def transition_fundamental_slide(cls, key):
     #     raise NotImplementedError("Transition from WordBasis to FundamentalSlideBasis is not implemented yet.")
 
@@ -250,11 +271,19 @@ class WordBasis(FreeAlgebraBasis):
         piss = list(pain.finer())
         return {tuple([int(p) for p in pi]): (S.NegativeOne ** (sum(tup) - len(pi))) for pi in piss}
 
+    # @classmethod
+    # def transition_key(cls, key):
+    #     dct = {}
+
+
     @classmethod
     def transition(cls, other_basis):
+        from .forest_basis import ForestBasis
         from .fundamental_slide_basis import FundamentalSlideBasis
         from .j_basis import JBasis
         from .jt_basis import JTBasis
+
+        # from .key_basis import KeyBasis
         from .monomial_slide_basis import MonomialSlideBasis
         from .nelementary_basis import NElementaryBasis
         from .schubert_basis import SchubertBasis
@@ -274,6 +303,10 @@ class WordBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_zbasis(x)
         if other_basis == FundamentalSlideBasis:
             return lambda x: FreeAlgebraBasis.compose_transition(MonomialSlideBasis.transition_fundamental_slide, cls.transition_monomial_slide(x))
+        if other_basis == ForestBasis:
+            return lambda x: cls.transition_forest(x)
         if other_basis == MonomialSlideBasis:
             return lambda x: cls.transition_monomial_slide(x)
+        # if other_basis == KeyBasis:
+        #     return lambda x: cls.transition_key(x)
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(x))

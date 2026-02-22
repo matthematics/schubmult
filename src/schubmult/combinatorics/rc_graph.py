@@ -294,6 +294,22 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                     break
         return rc, tuple(raise_seq)
 
+    @staticmethod
+    def raise_seq_word(raise_seq):
+        last_elem = None
+        wrd = []
+        for i in raise_seq:
+            if last_elem is not None:
+                if last_elem == i:
+                    continue
+            last_elem = i
+            wrd.append(last_elem)
+        return wrd
+
+    def lowest_weight_perm(self):
+        perms = [Permutation.ref_product(*RCGraph.raise_seq_word(rc0.to_highest_weight()[1])) for rc0 in RCGraph.all_lw_rcs(self.perm, len(self))]
+        return min(perms, key=lambda p: p.inv)
+
     @property
     def grass(self):
         hw, raise_seq = self.to_highest_weight()
@@ -386,6 +402,20 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             tup = (*tup[0].vertical_cut(d), *tup[1:])
 
         return tup[:-1]
+
+    @property
+    def is_extremal(self) -> bool:
+        return self == self.demazure_extremal
+
+    @property
+    def demazure_extremal(self) -> RCGraph:
+        """Distinguished Demazure extremal element in this component."""
+        return self.to_lowest_weight_demaz()[0]
+
+    @property
+    def demazure_weight(self) -> tuple[int, ...]:
+        """Weight of the distinguished Demazure extremal element."""
+        return self.demazure_extremal.length_vector
 
     @property
     def is_rc(self) -> bool:
@@ -1365,8 +1395,12 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     def classify_demazure_crystal(self) -> tuple[tuple[int], Permutation]:
         dominant_weight = self.to_highest_weight()[0].length_vector
-        lowest_weight = self.to_lowest_weight()[0].length_vector
-        return dominant_weight, Permutation.sorting_perm(lowest_weight, reverse=True)
+        return dominant_weight, Permutation.sorting_perm(self.demazure_weight, reverse=True)
+
+    @property
+    def demazure_isomorphism_class(self) -> tuple[tuple[int], Permutation]:
+        """Alias for classify_demazure_crystal for explicit API usage."""
+        return self.classify_demazure_crystal()
 
     @classmethod
     @cache
