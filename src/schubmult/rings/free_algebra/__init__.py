@@ -4,6 +4,7 @@ from .free_algebra_basis import FreeAlgebraBasis
 from .fundamental_slide_basis import FundamentalSlideBasis
 from .j_basis import JBasis
 from .jt_basis import JTBasis
+from .key_basis import KeyBasis
 from .monomial_slide_basis import MonomialSlideBasis
 from .nelementary_basis import NElementaryBasis
 from .schubert_basis import SchubertBasis
@@ -23,6 +24,7 @@ __all__ = [
     "FundamentalSlideBasis",
     "JBasis",
     "JTBasis",
+    "KeyBasis",
     "MonomialSlideBasis",
     "NElementaryBasis",
     "SchubertBasis",

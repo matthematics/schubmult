@@ -83,12 +83,22 @@ def is_quasisymmetric(monomials, n):
             
     return True
 
+def quasification(comp):
+    comp = [*comp]
+    while len(comp) > 0 and comp[-1] == 0:
+        comp.pop()
+    while len(comp) > 0 and comp[0] == 0:
+        comp.pop(0)
+    if 0 in comp:
+        return None
+    return tuple(comp)
 
 if __name__ == "__main__":
     import sys
     import itertools
     import gc
     from sympy import init_printing
+    from schubmult.rings.polynomial_algebra import MonomialSlidePolyBasis
     init_printing(wrap_line=False)
     n = int(sys.argv[1])
     m = int(sys.argv[2]) if len(sys.argv) > 2 else n
@@ -101,22 +111,34 @@ if __name__ == "__main__":
     
     # print(f"Computing composition dictionaries for {len(connected_perms)} permutations...")
     the_comp_dict = {}
-    
+    M = PolynomialAlgebra(MonomialSlidePolyBasis(Sx.genset))
     # Compute comp_dicts one at a time
     for perm in perms:
-        if perm.inv > 0 and perm.trimcode[0] == 0:
+        if perm.inv == 0:
             continue
-        for i in range(m - len(perm.trimcode) + 1):
-            thisperm = perm.shiftup(i)
+        # if perm.inv > 0 and perm.trimcode[0] == 0:
+        #     continue
+        # for i in range(m - len(perm.trimcode) + 1):
+        # if perm.inv < len(perm.trimcode):
+        #     continue
+        # thisperm = perm.shiftup(perm.inv - len(perm.trimcode))
             # last_zero = max((idx_val for idx_val, val in enumerate(thisperm.trimcode) if val == 0), default=-1)
             # if not all(val == 0 for val in thisperm.trimcode[:last_zero + 1]):
             #     continue
             # Process RC graphs one at a time instead of storing all
-            for rc in RCGraph.all_rc_graphs(thisperm, len(thisperm.trimcode)):
-                if any(val == 0 for val in rc.length_vector):
-                    continue
-                the_comp_dict[perm] = the_comp_dict.get(perm, S.Zero) + monomial_quasisym(rc.length_vector, m, Sx.genset)
-        
+        for rc in RCGraph.all_rc_graphs(perm, len(perm.trimcode)):
+            
+            last_zero = max((idx_val for idx_val, val in enumerate(perm.trimcode) if val == 0), default=-1)
+            if not all(val == 0 for val in rc.length_vector[:last_zero + 1]) or rc.length_vector[-1] == 0:
+                continue
+            length_vector = tuple([a for a in rc.length_vector if a != 0])
+            the_comp_dict[perm] = the_comp_dict.get(perm, S.Zero) + M(length_vector)
+        if perm in the_comp_dict:
+            vable = f"QSchub{perm.trimcode} = {the_comp_dict[perm]}"
+            vable = vable.replace("(","[").replace(")","]").replace("MSlide", "M")
+            print(vable)
+    
+            
         # Only print if comp_dict is non-empty to reduce output
         # if comp_dict:
         #     quas = sum([coeff * M(*comp) for comp, coeff in comp_dict.items()]) 
@@ -127,11 +149,6 @@ if __name__ == "__main__":
         # # Periodic garbage collection
         # if (idx + 1) % 10 == 0:
         #     gc.collect()
-        if perm not in the_comp_dict:
-            print(f"No RC graphs found for {perm.trimcode}")
-            continue
-        assert is_quasisymmetric(genset_dict_from_expr(the_comp_dict[perm], Sx.genset), m), f"Failed quasisymmetry for {perm.trimcode} {the_comp_dict[perm]}"
-        if 0 in perm.trimcode:
-            print(f"{perm.trimcode}: nontrivial quasi")
+        
     
     
