@@ -56,8 +56,8 @@ class MonomialBasis(PolynomialBasis):
         def domkey(comp):
             return tuple([sum(comp[:i]) for i in range(1, len(comp))])
 
-        if not isinstance(other_basis, MonomialSlidePolyBasis):
-            return None
+        # if not isinstance(other_basis, MonomialSlidePolyBasis):
+        #     return None
 
         res = {monom: coeff}
         ret = {}

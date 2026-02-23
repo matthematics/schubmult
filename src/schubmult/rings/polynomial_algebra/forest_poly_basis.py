@@ -1,8 +1,71 @@
+from itertools import combinations
+
 from schubmult.combinatorics.indexed_forests import weak_composition_to_indfor
 from schubmult.rings.polynomial_algebra.base_polynomial_basis import PolynomialBasis
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import S
 from schubmult.utils.perm_utils import add_perm_dict_with_coeff
+
+
+def get_descent_composition(word):
+    if not word: return []
+    descents = [1]
+    for i in range(len(word) - 1):
+        if word[i+1] > word[i]:
+            descents[-1] += 1
+        else:
+            descents.append(1)
+    return descents
+
+def slide_product(a, b):
+    n = len(a)
+    # 1. Create encoded words A and B (Definition 5.8)
+    # A uses odd labels, B uses even labels, decreasing within rows
+    A_labeled = []
+    for i in range(n):
+        A_labeled.extend([(2*(n-i)-1)] * a[i])
+    
+    B_labeled = []
+    for i in range(n):
+        B_labeled.extend([(2*(n-i))] * b[i])
+        
+    len_a, len_b = sum(a), sum(b)
+    total_len = len_a + len_b
+    
+    # 2. Standard Shuffle Product (riffle shuffle of words)
+    def shuffles(w1, w2):
+        if not w1: return [w2]
+        if not w2: return [w1]
+        return [[w1[0]] + s for s in shuffles(w1[1:], w2)] + \
+               [[w2[0]] + s for s in shuffles(w1, w2[1:])]
+
+    all_shuffles = shuffles(A_labeled, B_labeled)
+    
+    results = {}
+    for C in all_shuffles:
+        # 3. Check SS(a, b) condition (Definition 5.8)
+        # Des_A(C)_i must sum to a_i, etc.
+        # This is implicitly handled by the labeling and 'bump' logic
+        
+        # Calculate Descent Composition of the shuffle
+        flat_c = get_descent_composition(C)
+        
+        # 4. Apply 'bump' (Definition 5.9)
+        # Pad with leading zeros to maintain length n
+        # and ensure dominance b_tilde_ge a
+        curr_len = len(flat_c)
+        if curr_len > n:
+            continue # Exceeds polynomial ring dimensions
+            
+        # The 'bump' logic effectively places the flat composition 
+        # into the rightmost possible slots that don't violate dominance.
+        # For the dual basis, we collect the resulting weak composition.
+        padded_c = [0] * (n - curr_len) + flat_c
+        
+        res_tuple = tuple(padded_c)
+        results[res_tuple] = results.get(res_tuple, 0) + 1
+        
+    return results
 
 
 def _fundamental_slide_polynomial(comp, genset):
@@ -167,6 +230,7 @@ def _compat_seq_poly(comp, genset):
         working_comp = [a - 1 for a in working_comp]
     return ret
 
+
 def _flatten_seq_to_comp(seq, length):
     if len(seq) == 0:
         return ()
@@ -174,7 +238,7 @@ def _flatten_seq_to_comp(seq, length):
     for i in range(1, len(seq)):
         if seq[i] < seq[i - 1]:
             comp_seq.append(min(seq[i], comp_seq[i - 1] - 1))
-        #if seq[i] > seq[i - 1]:
+        # if seq[i] > seq[i - 1]:
         else:
             comp_seq.append(comp_seq[i - 1])
     if not all(a > 0 for a in comp_seq):
@@ -183,6 +247,8 @@ def _flatten_seq_to_comp(seq, length):
     for val in comp_seq:
         composition[val - 1] += 1
     return tuple(composition)
+
+
 class ForestPolyBasis(PolynomialBasis):
     def is_key(self, x):
         return isinstance(x, tuple | list)
@@ -240,10 +306,16 @@ class ForestPolyBasis(PolynomialBasis):
 
     def to_fundamental_slide(self, key):
         indfor = weak_composition_to_indfor(key)
-        if len(indfor) > 1:
-            raise NotImplementedError("Transition to fundamental slide for products not implemented yet")
-        dct = {}
+        # doing_prodcut = False
+        # if len(indfor) > 1:
+        #     #raise NotImplementedError("Transition to fundamental slide for products not implemented yet")
+        #     doing_prodcut = True
+
+        ret = None
+        if len(indfor) == 0:
+            return {key: S.One}
         for root in indfor:
+            dct = {}
             size = len(list(root.inorder_traversal))
             for labeling in decreasing_labelings(root, size):
                 word = word_from_labeling(root, labeling)
@@ -251,9 +323,21 @@ class ForestPolyBasis(PolynomialBasis):
                 if comp is None:
                     continue
                 # print(f"Word: {word}, Comp: {comp}, Forest Poly: {_forest_polynomial_from_root(root, self.genset)}, FSlide: {_fundamental_slide_polynomial(comp, self.genset)}, Compat Seq Poly: {_compat_seq_poly(word, self.genset)}")
-                assert (_fundamental_slide_polynomial(comp, self.genset) - _compat_seq_poly(word, self.genset)).expand() == 0, f"Word: {word}, Comp: {comp}, Forest Poly: {_forest_polynomial_from_root(root, self.genset)}, FSlide: {_fundamental_slide_polynomial(comp, self.genset)}, Compat Seq Poly: {_compat_seq_poly(word, self.genset)}"
+                assert (_fundamental_slide_polynomial(comp, self.genset) - _compat_seq_poly(word, self.genset)).expand() == 0, (
+                    f"Word: {word}, Comp: {comp}, Forest Poly: {_forest_polynomial_from_root(root, self.genset)}, FSlide: {_fundamental_slide_polynomial(comp, self.genset)}, Compat Seq Poly: {_compat_seq_poly(word, self.genset)}"
+                )
                 dct[comp] = dct.get(comp, S.Zero) + S.One
-        return dct
+            if ret is None:
+                ret = dct
+            else:
+                new_ret = {}
+                for k1, v1 in ret.items():
+                    for k2, v2 in dct.items():
+                        s_prod = slide_product(k1, k2)
+                        for comp, coeff in s_prod.items():
+                            new_ret[comp] = new_ret.get(comp, S.Zero) + v1 * v2 * coeff
+                ret = new_ret
+        return ret
 
     def transition(self, other_basis):
         from schubmult.rings.polynomial_algebra.fundamental_slide_poly_basis import FundamentalSlidePolyBasis

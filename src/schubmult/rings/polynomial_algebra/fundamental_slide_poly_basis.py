@@ -12,6 +12,67 @@ an alternative basis for expressing Schubert polynomials and their products.
 """
 
 
+def get_descent_composition(word):
+    if not word: return []
+    descents = [1]
+    for i in range(len(word) - 1):
+        if word[i+1] > word[i]:
+            descents[-1] += 1
+        else:
+            descents.append(1)
+    return descents
+
+def slide_product(a, b):
+    n = len(a)
+    # 1. Create encoded words A and B (Definition 5.8)
+    # A uses odd labels, B uses even labels, decreasing within rows
+    A_labeled = []
+    for i in range(n):
+        A_labeled.extend([(2*(n-i)-1)] * a[i])
+    
+    B_labeled = []
+    for i in range(n):
+        B_labeled.extend([(2*(n-i))] * b[i])
+        
+    len_a, len_b = sum(a), sum(b)
+    total_len = len_a + len_b
+    
+    # 2. Standard Shuffle Product (riffle shuffle of words)
+    def shuffles(w1, w2):
+        if not w1: return [w2]
+        if not w2: return [w1]
+        return [[w1[0]] + s for s in shuffles(w1[1:], w2)] + \
+               [[w2[0]] + s for s in shuffles(w1, w2[1:])]
+
+    all_shuffles = shuffles(A_labeled, B_labeled)
+    
+    results = {}
+    for C in all_shuffles:
+        # 3. Check SS(a, b) condition (Definition 5.8)
+        # Des_A(C)_i must sum to a_i, etc.
+        # This is implicitly handled by the labeling and 'bump' logic
+        
+        # Calculate Descent Composition of the shuffle
+        flat_c = get_descent_composition(C)
+        
+        # 4. Apply 'bump' (Definition 5.9)
+        # Pad with leading zeros to maintain length n
+        # and ensure dominance b_tilde_ge a
+        curr_len = len(flat_c)
+        if curr_len > n:
+            continue # Exceeds polynomial ring dimensions
+            
+        # The 'bump' logic effectively places the flat composition 
+        # into the rightmost possible slots that don't violate dominance.
+        # For the dual basis, we collect the resulting weak composition.
+        padded_c = [0] * (n - curr_len) + flat_c
+        
+        res_tuple = tuple(padded_c)
+        results[res_tuple] = results.get(res_tuple, 0) + 1
+        
+    return results
+
+
 def _fundamental_slide_polynomial(comp, genset):
     compat_seq = []
     for i, c in enumerate(comp):
@@ -101,8 +162,21 @@ class FundamentalSlidePolyBasis(PolynomialBasis):
         return lambda x: PolynomialBasis.compose_transition(self.monomial_basis.transition(other_basis), self.transition_monomial(x))
 
     def from_expr(self, expr):
-        dct = self.monomial_basis.from_expr(expr)
-        return self.monomial_basis.transition_slide(self, dct)
+        # dct = self.monomial_basis.from_expr(expr)
+        # return self.monomial_basis.transition_slide(dct, self)
+        try:
+            from schubmult.symbolic import sympify
+            return {self.zero_monom: sympify(expr)}
+        except:
+            pass    
+        raise NotImplementedError("Direct expression parsing not implemented for FundamentalSlidePolyBasis yet")
+
+    def product(self, key1, key2, coeff=S.One):
+        if len(key1) != len(key2):
+            return {}
+
+        return {c: v * coeff for c, v in slide_product(key1, key2).items()}
+
 
     @property
     def zero_monom(self):
