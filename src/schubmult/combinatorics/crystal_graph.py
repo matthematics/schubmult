@@ -101,12 +101,12 @@ class CrystalGraph(Printable):
             for _ in range(e - f):
                 new_rc = new_rc.raising_operator(index)
                 if new_rc is None:
-                    return None
+                    return self
         elif f > e:
             for _ in range(f - e):
                 new_rc = new_rc.lowering_operator(index)
                 if new_rc is None:
-                    return None
+                    return self
         return new_rc
 
 

@@ -155,7 +155,7 @@ class SchubertPolyBasis(PolynomialBasis):
     def transition_key_key(self, key):
         from schubmult.combinatorics.rc_graph import RCGraph
 
-        keys = {rc for rc in RCGraph.all_lw_rcs(key[0], key[1]) if rc.is_extremal}
+        keys = [rc.extremal_weight for rc in RCGraph.all_hw_rcs(key[0], key[1])]
         res = {}
 
         # def pad_tuple(tup, length):
@@ -163,7 +163,7 @@ class SchubertPolyBasis(PolynomialBasis):
 
         for k in keys:
             # tuptup = pad_tuple(k.length_vector, key[1])
-            res[k.length_vector] = res.get(k.length_vector, S.Zero) + S.One
+            res[k] = res.get(k, S.Zero) + S.One
         return res
 
     def transition_key(self, dct):

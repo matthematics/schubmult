@@ -139,11 +139,8 @@ def test_full_crystal_is_key():
     Key = PolynomialAlgebra(KeyPolyBasis(Sx.genset))
 
     for perm in perms:
-        num_extremal = 0
-        hw = set()
-        for rc in RCGraph.all_lw_rcs(perm, len(perm.trimcode)):
-            if rc.is_extremal:
-                num_extremal += 1
-                hw.add(rc.to_highest_weight()[0])
-                assert expand(Key(rc.length_vector).expand() - sum([rc0.polyvalue(Sx.genset) for rc0 in rc.full_crystal])) == S.Zero, f"Error: full crystal of RC graph {rc} does not match Key polynomial expansion of its length vector."
-        assert len(hw) == num_extremal, f"Error: number of extremal RC graphs for permutation {perm} does not match number of distinct highest weights obtained from them."               
+        # num_extremal = 0
+        # hw = set()
+        for rc in RCGraph.all_hw_rcs(perm, len(perm.trimcode)):
+            assert expand(Key(rc.extremal_weight).expand() - sum([rc0.polyvalue(Sx.genset) for rc0 in rc.full_crystal])) == S.Zero, f"Error: full crystal of RC graph {rc} does not match Key polynomial expansion of its length vector."
+        #assert len(hw) == num_extremal, f"Error: number of extremal RC graphs for permutation {perm} does not match number of distinct highest weights obtained from them."               

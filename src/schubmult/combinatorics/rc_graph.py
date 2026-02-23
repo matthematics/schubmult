@@ -404,15 +404,25 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return tup[:-1]
 
     @property
+    def extremal_weight(self):
+        def dom_key(comp):
+            return tuple([sum(comp[:i]) for i in range(1, len(comp))])
+        return min(self.full_crystal, key=lambda rc: dom_key(rc.length_vector)).length_vector
+
+    @property
     def is_extremal(self) -> bool:
-        if not self.is_lowest_weight:
+        if sorted(self.length_vector, reverse=True) != self.to_highest_weight()[0].length_vector:
             return False
-        for rc_lw in RCGraph.all_lw_rcs(self.perm, len(self)):
+        sorting_perm_self = Permutation.sorting_perm(self.length_vector, reverse=True)
+        for rc_lw in RCGraph.all_rc_graphs(self.perm, len(self)):
             if rc_lw == self:
                 continue
             if rc_lw.to_highest_weight()[0] != self.to_highest_weight()[0]:
                 continue
-            if Permutation.sorting_perm(rc_lw.length_vector, reverse=True).inv < Permutation.sorting_perm(self.length_vector, reverse=True).inv:
+            if sorted(rc_lw.length_vector, reverse=True) != rc_lw.to_highest_weight()[0].length_vector:
+                continue
+            sorting_perm_other = Permutation.sorting_perm(rc_lw.length_vector, reverse=True)
+            if sorting_perm_self.inv < sorting_perm_other.inv:
                 return False
         return True
         # lw_perm = self.lowest_weight_perm()
