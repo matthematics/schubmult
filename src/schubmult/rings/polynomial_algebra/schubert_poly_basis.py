@@ -1,5 +1,6 @@
 from functools import cached_property
 
+from schubmult.combinatorics.indexed_forests import word_to_indexed_forest
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
 from schubmult.utils.perm_utils import add_perm_dict, add_perm_dict_with_coeff
@@ -22,7 +23,7 @@ class SchubertPolyBasis(PolynomialBasis):
 
     @property
     def genset(self):
-        return self.ring.genset
+        return self._genset
 
     def printing_term(self, k):
         return self.ring.printing_term(k)
@@ -31,18 +32,21 @@ class SchubertPolyBasis(PolynomialBasis):
         return isinstance(x, list | tuple | Permutation)
 
     def as_key(self, x):
-        return (Permutation(x), len(Permutation(x).trimcode))
+        if isinstance(x, Permutation):
+            return (x, len(x.trimcode))
+        return x
 
     def __init__(self, ring=None):
         self.ring = ring
         if self.ring is None:
             self.ring = Sx([]).ring
+        self._genset = self.ring.genset
 
     @cached_property
     def monomial_basis(self):
         from .monomial_basis import MonomialBasis
 
-        return MonomialBasis(genset=self.ring.genset)
+        return MonomialBasis(genset=self.genset)
 
     def product(self, key1, key2, coeff=S.One):
         if key1[1] != key2[1]:
@@ -161,8 +165,25 @@ class SchubertPolyBasis(PolynomialBasis):
         dct = {pad_tuple(k, key[1]): v for k, v in genset_dict_from_expr(self.ring.from_dict({key[0]: S.One}).as_polynomial(), self.genset).items()}
         return dct
 
+    def transition_forest_key(self, key):
+        from schubmult.combinatorics.rc_graph import RCGraph
+        dct = {}
+        for rc in RCGraph.all_rc_graphs(key[0], key[1]):
+            word = list(reversed(rc.perm_word))
+            indfor = word_to_indexed_forest(word)
+            if indfor.code not in dct:
+                dct[indfor.code] = S.One
+        return dct
+
+    def transition_forest(self, dct):
+        res = {}
+        for k, v in dct.items():
+            res = add_perm_dict_with_coeff(res, self.transition_forest_key(k), coeff=v)
+        return res
+
     def transition(self, other_basis):
         from .elem_sym_poly_basis import ElemSymPolyBasis
+        from .forest_poly_basis import ForestPolyBasis
         from .fundamental_slide_poly_basis import FundamentalSlidePolyBasis
         from .monomial_basis import MonomialBasis
         from .sepdesc_poly_basis import SepDescPolyBasis
@@ -186,4 +207,6 @@ class SchubertPolyBasis(PolynomialBasis):
             return lambda x: self.transition_elementary(x, other_basis)
         if isinstance(other_basis, SepDescPolyBasis):
             return lambda x: self.transition_sepdesc(x, other_basis)
+        if isinstance(other_basis, ForestPolyBasis):
+            return lambda x: self.transition_forest(x)
         return None

@@ -405,12 +405,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     @property
     def is_extremal(self) -> bool:
-        return self == self.demazure_extremal
+        return self.is_lowest_weight and len(RCGraph.raise_seq_word(self.to_highest_weight()[1])) == self.lowest_weight_perm().inv
 
-    @property
-    def demazure_extremal(self) -> RCGraph:
-        """Distinguished Demazure extremal element in this component."""
-        return self.to_lowest_weight_demaz()[0]
+    
 
     @property
     def demazure_weight(self) -> tuple[int, ...]:

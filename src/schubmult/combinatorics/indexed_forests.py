@@ -283,9 +283,56 @@ def parallel_word_to_PQ_forests(primary_word, secondary_word, val_part="primary"
 
 def weak_composition_to_indfor(c):
     """
-    Converts a weak composition c into an indexed forest.
+    Converts a weak composition c+ into an indexed forest.
     Returns a list of root nodes for the trees in the forest.
     """
+    c = tuple(int(x) for x in c)
+    if any(x < 0 for x in c):
+        raise ValueError("weak composition entries must be nonnegative")
+
+    def build_tree_from_code_block(labels, code_block):
+        if len(labels) == 0:
+            return None
+        if len(labels) != len(code_block):
+            raise ValueError("labels and code_block must have the same length")
+
+        m = len(labels)
+        if sum(code_block) != m:
+            raise ValueError(f"Invalid code block {tuple(code_block)} for labels {tuple(labels)}")
+
+        running = 0
+        root_pos = None
+        for idx, val in enumerate(code_block, start=1):
+            running += val
+            if running < idx:
+                raise ValueError(f"Invalid code block prefix at position {idx}: {tuple(code_block)}")
+            if running == idx and root_pos is None:
+                root_pos = idx
+
+        if root_pos is None:
+            raise ValueError(f"Could not determine root position from code block {tuple(code_block)}")
+
+        root_label = labels[root_pos - 1]
+        root = Node(root_label)
+
+        left_labels = labels[: root_pos - 1]
+        right_labels = labels[root_pos:]
+
+        if root_pos == 1:
+            if code_block[0] != 1:
+                raise ValueError(f"Invalid leading code entry for block {tuple(code_block)}")
+            left_code = []
+        else:
+            if code_block[0] < 1:
+                raise ValueError(f"Invalid first code entry for block {tuple(code_block)}")
+            left_code = [code_block[0] - 1, *code_block[1 : root_pos - 1]]
+
+        right_code = code_block[root_pos:]
+
+        root.left = build_tree_from_code_block(left_labels, left_code)
+        root.right = build_tree_from_code_block(right_labels, right_code)
+        return root
+
     forest_roots = []
     n = len(c)
     i = 0
@@ -296,29 +343,35 @@ def weak_composition_to_indfor(c):
         if i >= n:
             break
 
-        segment_start = i + 1
-        segment_size = 0
-        zero_run = 0
+        prefix_sum = 0
+        length = 0
+        last_valid_j = None
+        j = i
 
-        while i < n:
-            part = c[i]
-            if part == 0:
-                zero_run += 1
-                if zero_run >= 2:
-                    break
-            else:
-                zero_run = 0
-                segment_size += part
-            i += 1
+        while True:
+            val = c[j] if j < n else 0
+            prefix_sum += val
+            length += 1
 
-        if segment_size > 0:
-            tree_support = list(range(segment_start, segment_start + segment_size))
-            forest_roots.append(build_balanced_tree(tree_support))
+            if prefix_sum < length:
+                break
 
-        while i < n and c[i] == 0:
-            i += 1
+            if prefix_sum == length:
+                last_valid_j = j
 
-    return IndexedForest(tuple(forest_roots), code=tuple(c))
+            j += 1
+
+        if last_valid_j is None:
+            raise ValueError(f"Cannot parse composition block starting at index {i + 1} for {c}")
+
+        block_len = last_valid_j - i + 1
+        labels = list(range(i + 1, i + 1 + block_len))
+        code_block = [c[k] if k < n else 0 for k in range(i, i + block_len)]
+        forest_roots.append(build_tree_from_code_block(labels, code_block))
+
+        i = last_valid_j + 1
+
+    return IndexedForest(tuple(forest_roots), code=c)
 
 
 def build_balanced_tree(labels):
@@ -329,7 +382,6 @@ def build_balanced_tree(labels):
     if not labels:
         return None
 
-    # Pick the middle element to keep the tree balanced (standard for binary search trees)
     mid = len(labels) // 2
     root = Node(labels[mid])
 
@@ -337,3 +389,21 @@ def build_balanced_tree(labels):
     root.right = build_balanced_tree(labels[mid + 1 :])
 
     return root
+
+
+if __name__ == "__main__":
+    # Example usage
+    comp = (2, 0, 1)
+    indfor = weak_composition_to_indfor(comp)
+    print("composition:", comp)
+    print(indfor)
+
+    comp = (0, 2, 0, 1)
+    indfor = weak_composition_to_indfor(comp)
+    print("composition:", comp)
+    print(indfor)
+
+    comp = (0, 2, 0, 1, 0, 0, 1 ,0, 0, 0, 2)
+    indfor = weak_composition_to_indfor(comp)
+    print("composition:", comp)
+    print(indfor)

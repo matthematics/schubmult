@@ -129,3 +129,21 @@ def test_pull_out_empty_row():
 
         for perm2 in lower_perms:
             assert lower_perms[perm2] == RCGraph.all_rc_graphs(perm2, len(perm.trimcode) - 1), f"Error: missing RC graphs for permutation {perm2} from pull out of {perm} at row {i}."    
+
+def test_full_crystal_is_key():
+    from schubmult import RCGraph, Permutation, PolynomialAlgebra, Sx
+    from schubmult.rings.polynomial_algebra import KeyPolyBasis
+    from schubmult.symbolic import expand, S
+    n = 5
+    perms = Permutation.all_permutations(n)
+    Key = PolynomialAlgebra(KeyPolyBasis(Sx.genset))
+
+    for perm in perms:
+        num_extremal = 0
+        hw = set()
+        for rc in RCGraph.all_lw_rcs(perm, len(perm.trimcode)):
+            if rc.is_extremal:
+                num_extremal += 1
+                hw.add(rc.to_highest_weight()[0])
+                assert expand(Key(rc.length_vector).expand() - sum([rc0.polyvalue(Sx.genset) for rc0 in rc.full_crystal])) == S.Zero, f"Error: full crystal of RC graph {rc} does not match Key polynomial expansion of its length vector."
+        assert len(hw) == num_extremal, f"Error: number of extremal RC graphs for permutation {perm} does not match number of distinct highest weights obtained from them."               

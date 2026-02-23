@@ -35,7 +35,7 @@ class KeyBasis(FreeAlgebraBasis):
         dct = {}
         all_rcs = r.monomial(*key)
         for rc in all_rcs:
-            if rc.is_lowest_weight:
+            if rc.is_extremal:
                 dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
         return dct
 
