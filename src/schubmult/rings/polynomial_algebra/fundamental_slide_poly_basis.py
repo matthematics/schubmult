@@ -1,8 +1,7 @@
+from schubmult.rings.polynomial_algebra.base_polynomial_basis import PolynomialBasis
+from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import S
 from schubmult.utils.perm_utils import add_perm_dict_with_coeff
-
-from ..printing import GenericPrintingTerm
-from .base_polynomial_basis import PolynomialBasis
 
 """
 Fundamental slide polynomial basis for Schubert calculus.
@@ -13,7 +12,8 @@ an alternative basis for expressing Schubert polynomials and their products.
 
 
 def get_descent_composition(word):
-    if not word: return []
+    if not word:
+        return []
     descents = [1]
     for i in range(len(word) - 1):
         if word[i+1] > word[i]:
@@ -23,53 +23,125 @@ def get_descent_composition(word):
     return descents
 
 def slide_product(a, b):
-    n = len(a)
-    # 1. Create encoded words A and B (Definition 5.8)
-    # A uses odd labels, B uses even labels, decreasing within rows
-    A_labeled = []
-    for i in range(n):
-        A_labeled.extend([(2*(n-i)-1)] * a[i])
-    
-    B_labeled = []
-    for i in range(n):
-        B_labeled.extend([(2*(n-i))] * b[i])
-        
-    len_a, len_b = sum(a), sum(b)
-    total_len = len_a + len_b
-    
-    # 2. Standard Shuffle Product (riffle shuffle of words)
-    def shuffles(w1, w2):
-        if not w1: return [w2]
-        if not w2: return [w1]
-        return [[w1[0]] + s for s in shuffles(w1[1:], w2)] + \
-               [[w2[0]] + s for s in shuffles(w1, w2[1:])]
+    n = max(len(a), len(b))
+    if len(a) < n:
+        a = (*a, *(0 for _ in range(n - len(a))))
+    if len(b) < n:
+        b = (*b, *(0 for _ in range(n - len(b))))
 
-    all_shuffles = shuffles(A_labeled, B_labeled)
-    
+    def _prefix_dominates(x, y):
+        if sum(x) != sum(y):
+            return False
+        sx = 0
+        sy = 0
+        for i in range(max(len(x), len(y))):
+            sx += x[i] if i < len(x) else 0
+            sy += y[i] if i < len(y) else 0
+            if sx < sy:
+                return False
+        return True
+
+    def _run_start_indices(word_vals):
+        if not word_vals:
+            return []
+        starts = [0]
+        for i in range(1, len(word_vals)):
+            if word_vals[i - 1] > word_vals[i]:
+                starts.append(i)
+        return starts
+
+    def _run_stats(tagged_word):
+        vals = [v for v, _ in tagged_word]
+        starts = _run_start_indices(vals)
+        if not starts:
+            return (), (), ()
+        starts.append(len(tagged_word))
+        des_total = []
+        des_a = []
+        des_b = []
+        for i in range(len(starts) - 1):
+            lo = starts[i]
+            hi = starts[i + 1]
+            run = tagged_word[lo:hi]
+            des_total.append(len(run))
+            des_a.append(sum(1 for _, tag in run if tag == "A"))
+            des_b.append(sum(1 for _, tag in run if tag == "B"))
+        return tuple(des_total), tuple(des_a), tuple(des_b)
+
+    def _insert_zeros_into_comp(comp, zero_count, length):
+        if len(comp) + zero_count != length:
+            return
+        if not comp:
+            yield tuple(0 for _ in range(length)), ()
+            return
+        from itertools import combinations
+
+        for nonzero_positions in combinations(range(length), len(comp)):
+            out = [0] * length
+            for i, pos in enumerate(nonzero_positions):
+                out[pos] = comp[i]
+            yield tuple(out), tuple(nonzero_positions)
+
+    def _place_by_positions(comp, positions, length):
+        out = [0] * length
+        for i, pos in enumerate(positions):
+            out[pos] = comp[i]
+        return tuple(out)
+
+    def _shuffle_tagged_words(w1, w2):
+        if not w1:
+            yield tuple(w2)
+            return
+        if not w2:
+            yield tuple(w1)
+            return
+        for rest in _shuffle_tagged_words(w1[1:], w2):
+            yield (w1[0], *rest)
+        for rest in _shuffle_tagged_words(w1, w2[1:]):
+            yield (w2[0], *rest)
+
+    def _strictly_dominates(x, y):
+        return _prefix_dominates(x, y) and not _prefix_dominates(y, x)
+
+    def _bump(des_total, des_a, des_b):
+        zero_count = n - len(des_total)
+        if zero_count < 0:
+            return None
+
+        best = None
+        for candidate, positions in _insert_zeros_into_comp(des_total, zero_count, n):
+            candidate_a = _place_by_positions(des_a, positions, n)
+            candidate_b = _place_by_positions(des_b, positions, n)
+            if not (_prefix_dominates(candidate_a, a) and _prefix_dominates(candidate_b, b)):
+                continue
+            if best is None:
+                best = candidate
+                continue
+            if _strictly_dominates(best, candidate):
+                best = candidate
+            elif (not _prefix_dominates(candidate, best)) and (not _prefix_dominates(best, candidate)):
+                if candidate < best:
+                    best = candidate
+        return best
+
+    a_word = []
+    for i in range(n):
+        a_word.extend([(2 * (n - i) - 1, "A")] * a[i])
+
+    b_word = []
+    for i in range(n):
+        b_word.extend([(2 * (n - i), "B")] * b[i])
+
     results = {}
-    for C in all_shuffles:
-        # 3. Check SS(a, b) condition (Definition 5.8)
-        # Des_A(C)_i must sum to a_i, etc.
-        # This is implicitly handled by the labeling and 'bump' logic
-        
-        # Calculate Descent Composition of the shuffle
-        flat_c = get_descent_composition(C)
-        
-        # 4. Apply 'bump' (Definition 5.9)
-        # Pad with leading zeros to maintain length n
-        # and ensure dominance b_tilde_ge a
-        curr_len = len(flat_c)
-        if curr_len > n:
-            continue # Exceeds polynomial ring dimensions
-            
-        # The 'bump' logic effectively places the flat composition 
-        # into the rightmost possible slots that don't violate dominance.
-        # For the dual basis, we collect the resulting weak composition.
-        padded_c = [0] * (n - curr_len) + flat_c
-        
-        res_tuple = tuple(padded_c)
-        results[res_tuple] = results.get(res_tuple, 0) + 1
-        
+    for c_word in _shuffle_tagged_words(tuple(a_word), tuple(b_word)):
+        des_total, des_a, des_b = _run_stats(c_word)
+        if not (_prefix_dominates(des_a, a) and _prefix_dominates(des_b, b)):
+            continue
+        bumped = _bump(des_total, des_a, des_b)
+        if bumped is None:
+            continue
+        results[bumped] = results.get(bumped, 0) + 1
+
     return results
 
 
@@ -130,7 +202,7 @@ class FundamentalSlidePolyBasis(PolynomialBasis):
         return self._genset
 
     def __init__(self, genset):
-        from .monomial_basis import MonomialBasis
+        from schubmult.rings.polynomial_algebra.monomial_basis import MonomialBasis
 
         self._genset = genset
         self._monomial_basis = MonomialBasis(genset=self.genset)
@@ -154,7 +226,7 @@ class FundamentalSlidePolyBasis(PolynomialBasis):
         return res
 
     def transition(self, other_basis):
-        from .monomial_basis import MonomialBasis
+        from schubmult.rings.polynomial_algebra.monomial_basis import MonomialBasis
 
         if isinstance(other_basis, MonomialBasis):
             return self.transition_monomial
@@ -167,17 +239,21 @@ class FundamentalSlidePolyBasis(PolynomialBasis):
         try:
             from schubmult.symbolic import sympify
             return {self.zero_monom: sympify(expr)}
-        except:
-            pass    
+        except Exception:
+            pass
         raise NotImplementedError("Direct expression parsing not implemented for FundamentalSlidePolyBasis yet")
 
     def product(self, key1, key2, coeff=S.One):
-        if len(key1) != len(key2):
-            return {}
-
         return {c: v * coeff for c, v in slide_product(key1, key2).items()}
 
 
     @property
     def zero_monom(self):
         return self.as_key([])
+
+
+if __name__ == "__main__":
+    from schubmult import PolynomialAlgebra, Sx
+
+    FSlide = PolynomialAlgebra(FundamentalSlidePolyBasis(Sx.genset))
+    print(FSlide(0, 2, 0, 3) * FSlide(1, 0, 0, 1))

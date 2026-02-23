@@ -391,6 +391,75 @@ def build_balanced_tree(labels):
     return root
 
 
+def decreasing_labelings(root, max_val, used_vals=None):
+    def _subtree_size(node):
+        if node is None:
+            return 0
+        return 1 + _subtree_size(node.left) + _subtree_size(node.right)
+
+    ret = set()
+    used = set() if used_vals is None else set(used_vals)
+    required_size = _subtree_size(root)
+    available_labels = [val for val in range(1, max_val + 1) if val not in used]
+    if len(available_labels) < required_size:
+        return ret
+
+    if root.left is None and root.right is None:
+        return {(val,) for val in available_labels}
+
+    left_size = _subtree_size(root.left)
+    right_size = _subtree_size(root.right)
+
+    for val in available_labels:
+        remaining_smaller = sum(1 for a in available_labels if a < val)
+        if remaining_smaller < left_size + right_size:
+            continue
+
+        vals_used = used | {val}
+        if root.left is None:
+            right_labelings = decreasing_labelings(root.right, val - 1, used_vals=vals_used)
+            for right in right_labelings:
+                ret.add((val, *right))
+            continue
+
+        if root.right is None:
+            left_labelings = decreasing_labelings(root.left, val - 1, used_vals=vals_used)
+            for left in left_labelings:
+                ret.add((*left, val))
+            continue
+
+        right_labelings = decreasing_labelings(root.right, val - 1, used_vals=vals_used)
+        for right in right_labelings:
+            new_vals_used = vals_used | set(right)
+            left_labelings = decreasing_labelings(root.left, val - 1, used_vals=new_vals_used)
+            for left in left_labelings:
+                ret.add((*left, val, *right))
+    return ret
+    # right_labelings = set()
+    # left_labelings = set()
+
+    # if root.left is not None:
+    #     left_labelings.update(decreasing_labelings(root.left, val - 1))
+    # if root.right is None:
+    #     ret.update(tuple(list(left) + [val]) for left in left_labelings)
+    #     return ret
+    # if root.left is None:
+    #     ret.update(tuple([val] + list(right)) for right in right_labelings)
+    #     return ret
+    # ret.update(tuple(list(left) + [val] + list(right)) for left in left_labelings for right in right_labelings)
+    # return ret
+
+
+def word_from_labeling(root, labeling):
+    from schubmult import Permutation
+
+    trav = list(root.inorder_traversal)
+    assert len(trav) == len(labeling)
+    perm = Permutation(labeling)
+    # print(f"Labeling: {labeling}, Perm: {perm}, Rhos: {[node.rho for node in trav]}")
+    return tuple(trav[(~perm)[i] - 1].rho for i in range(len(trav)))
+
+
 if __name__ == "__main__":
     # Example usage
     comp = (2, 0, 1)

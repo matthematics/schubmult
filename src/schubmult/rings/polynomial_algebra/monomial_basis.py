@@ -51,8 +51,6 @@ class MonomialBasis(PolynomialBasis):
         return ret
 
     def transition_slide_monom(self, other_basis, monom, coeff=S.One):
-        from .monomial_slide_poly_basis import MonomialSlidePolyBasis
-
         def domkey(comp):
             return tuple([sum(comp[:i]) for i in range(1, len(comp))])
 

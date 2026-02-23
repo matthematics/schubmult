@@ -407,7 +407,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     def is_extremal(self) -> bool:
         return self.is_lowest_weight and len(RCGraph.raise_seq_word(self.to_highest_weight()[1])) == self.lowest_weight_perm().inv
 
-    
+
 
     @property
     def demazure_weight(self) -> tuple[int, ...]:

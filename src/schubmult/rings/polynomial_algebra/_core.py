@@ -86,6 +86,12 @@ class PolynomialAlgebra(BaseRing):
                 ret += self.from_dict(self._basis.product(k0, k, v * v0))
         return ret
 
+    def mul(self, elem, other):
+        try:
+            return self._mul_elements(elem, other)
+        except Exception:
+            return super().mul(elem, other)
+
     def to_domain(self):
         return self
 
