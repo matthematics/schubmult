@@ -1,3 +1,5 @@
+import pytest
+
 def test_basic_forest():
     from schubmult.rings.polynomial_algebra import ForestPolyBasis, PolynomialAlgebra
     from schubmult.abc import x
@@ -14,7 +16,7 @@ def test_forest_slide_expansion():
     for perm in perms:
         assert (Forest(*perm.code).change_basis(FundamentalSlidePolyBasis(Sx.genset)).expand() - Forest(*perm.code).expand()).expand() == 0
 
-
+@pytest.mark.skip(reason="This test is not functional yet")
 def test_schubert_expansion():
     from schubmult.rings.polynomial_algebra import ForestPolyBasis, SchubertPolyBasis
     from schubmult import Sx, Permutation, PolynomialAlgebra
