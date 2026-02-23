@@ -99,8 +99,14 @@ class KeyPolyBasis(PolynomialBasis):
         return lambda x: PolynomialBasis.compose_transition(self.monomial_basis.transition(other_basis), self.transition_monomial(x))
 
     def from_expr(self, expr):
-        dct = self.monomial_basis.from_expr(expr)
-        return self.monomial_basis.transition_key(self, dct)
+        # dct = self.monomial_basis.from_expr(expr)
+        # return self.monomial_basis.transition_slide(dct, self)
+        try:
+            from schubmult.symbolic import sympify
+            return {self.zero_monom: sympify(expr)}
+        except Exception:
+            pass
+        raise NotImplementedError("Direct expression parsing not implemented for FundamentalSlidePolyBasis yet")
 
     @property
     def zero_monom(self):

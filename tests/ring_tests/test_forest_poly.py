@@ -14,3 +14,15 @@ def test_forest_slide_expansion():
     for perm in perms:
         assert (Forest(*perm.code).change_basis(FundamentalSlidePolyBasis(Sx.genset)).expand() - Forest(*perm.code).expand()).expand() == 0
 
+
+def test_schubert_expansion():
+    from schubmult.rings.polynomial_algebra import ForestPolyBasis, SchubertPolyBasis
+    from schubmult import Sx, Permutation, PolynomialAlgebra
+    n = 5
+    perms = Permutation.all_permutations(n)
+    FBasis = ForestPolyBasis(Sx.genset)
+    Sch = PolynomialAlgebra(SchubertPolyBasis(Sx))
+    for perm in perms:
+        forestish = Sch(perm).change_basis(FBasis)
+        base_expand = Sch(perm).expand()
+        assert (forestish.expand().expand() - base_expand.expand()).expand() == 0

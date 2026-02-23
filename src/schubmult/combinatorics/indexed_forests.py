@@ -27,6 +27,14 @@ class Node:
     def __str__(self):
         return f"Node({self.label})"
 
+    def __eq__(self, other):
+        if not isinstance(other, Node):
+            return False
+        return self.label == other.label and self.left == other.left and self.right == other.right
+
+    def __hash__(self):
+        return hash((self.label, self.left, self.right))
+
 
 class IndexedForest:
     def __init__(self, roots=(), code=None):
@@ -78,6 +86,14 @@ class IndexedForest:
     def __repr__(self):
         return f"IndexedForest(roots={self._roots}, code={self._code})"
 
+    def __eq__(self, other):
+        if not isinstance(other, IndexedForest):
+            return False
+        return self._roots == other._roots
+
+    def __hash__(self):
+        return hash(self._roots)
+
 
 def _node_support(root):
     return tuple(node.label for node in root.inorder_traversal)
@@ -125,7 +141,27 @@ def _letter_val(letter, val_fn=None):
             return int(token)
     if isinstance(letter, ParallelInjLetter):
         return letter.primary
+    if isinstance(letter, tuple | list) and len(letter) == 2:
+        return int(letter[0])
     raise TypeError(f"Cannot extract val(letter) from {letter!r}")
+
+
+def _letter_order_key(letter):
+    if isinstance(letter, ParallelInjLetter):
+        return (int(letter.primary), int(letter.secondary))
+    if isinstance(letter, tuple | list) and len(letter) == 2:
+        return (int(letter[0]), int(letter[1]))
+    if isinstance(letter, int):
+        return (int(letter), 0)
+    if isinstance(letter, str):
+        token = letter.strip()
+        if token.startswith("-") and token[1:].isdigit():
+            return (int(token[1:]), 0)
+        if token.isdigit():
+            return (int(token), 0)
+    if hasattr(letter, "primary") and hasattr(letter, "secondary"):
+        return (int(letter.primary), int(letter.secondary))
+    return (_letter_val(letter), 0)
 
 
 def insert_letter_into_indexed_forest(forest_roots, letter, step=None, val_fn=None, q_label=None):
@@ -139,7 +175,7 @@ def insert_letter_into_indexed_forest(forest_roots, letter, step=None, val_fn=No
         Current forest roots.
     letter : object
         Letter to insert. `val(letter)` is interpreted as `_letter_val(letter)`.
-        Ordering comparisons use Python ordering on the raw letter values.
+        Ordering comparisons use the LBS pair-letter order key `(a, b)`.
     step : int | None
         Optional insertion index for Dec-labeling.
     val_fn : callable | None
@@ -151,14 +187,14 @@ def insert_letter_into_indexed_forest(forest_roots, letter, step=None, val_fn=No
     roots = list(forest_roots)
     intervals = _forest_intervals(roots)
     support = set()
-    for left, right, _, _ in intervals:
-        support.update(range(left, right + 1))
+    for _, _, support_set, _ in intervals:
+        support.update(support_set)
 
     i = _letter_val(letter, val_fn=val_fn)
 
     def interval_index_containing(value):
-        for idx, (left, right, _, _) in enumerate(intervals):
-            if left <= value <= right:
+        for idx, (_, _, support_set, _) in enumerate(intervals):
+            if value in support_set:
                 return idx
         return None
 
@@ -186,7 +222,7 @@ def insert_letter_into_indexed_forest(forest_roots, letter, step=None, val_fn=No
         _, _, _, root_j = intervals[j]
         root_j_label = root_j.insert_label if root_j.insert_label is not None else root_j.label
 
-        if letter > root_j_label:
+        if _letter_order_key(letter) > _letter_order_key(root_j_label):
             new_root.left = root_j
             roots_to_remove.append(root_j)
 
@@ -458,6 +494,16 @@ def word_from_labeling(root, labeling):
     perm = Permutation(labeling)
     # print(f"Labeling: {labeling}, Perm: {perm}, Rhos: {[node.rho for node in trav]}")
     return tuple(trav[(~perm)[i] - 1].rho for i in range(len(trav)))
+
+def omega_insertion(word_of_pairs):
+    if len(word_of_pairs) == 0:
+        F = ()
+        P, Q = (), ()
+        return F, P, Q
+    forest, P, Q = omega_insertion(word_of_pairs[:-1])
+    return None
+
+
 
 
 if __name__ == "__main__":

@@ -405,7 +405,32 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     @property
     def is_extremal(self) -> bool:
-        return self.is_lowest_weight and len(RCGraph.raise_seq_word(self.to_highest_weight()[1])) == self.lowest_weight_perm().inv
+        if not self.is_lowest_weight:
+            return False
+        for rc_lw in RCGraph.all_lw_rcs(self.perm, len(self)):
+            if rc_lw == self:
+                continue
+            if rc_lw.to_highest_weight()[0] != self.to_highest_weight()[0]:
+                continue
+            if Permutation.sorting_perm(rc_lw.length_vector, reverse=True).inv < Permutation.sorting_perm(self.length_vector, reverse=True).inv:
+                return False
+        return True
+        # lw_perm = self.lowest_weight_perm()
+        # word = lw_perm.code_word
+        # working_rc = self
+        # for letter in word:
+        #     found = False
+        #     last_working_rc = working_rc
+        #     working_rc = working_rc.raising_operator(letter)
+        #     while working_rc is not None:
+        #         found = True
+        #         last_working_rc = working_rc
+        #         working_rc = working_rc.raising_operator(letter)
+        #     if not found:
+        #         return False
+        #     working_rc = last_working_rc
+        # #return self.is_lowest_weight and len(RCGraph.raise_seq_word(self.to_highest_weight()[1])) == self.lowest_weight_perm().inv
+        # return True
 
 
 

@@ -136,7 +136,6 @@ class SchubertPolyBasis(PolynomialBasis):
             ret[rc.length_vector] = ret.get(rc.length_vector, S.Zero) + S.One
         return ret
 
-
     def transition_fundamental_slide(self, dct):
         res = {}
         for k, v in dct.items():
@@ -153,6 +152,26 @@ class SchubertPolyBasis(PolynomialBasis):
     def zero_monom(self):
         return (Permutation([]), 0)
 
+    def transition_key_key(self, key):
+        from schubmult.combinatorics.rc_graph import RCGraph
+
+        keys = {rc for rc in RCGraph.all_lw_rcs(key[0], key[1]) if rc.is_extremal}
+        res = {}
+
+        # def pad_tuple(tup, length):
+        #     return (*tup, *(0,) * (length - len(tup)))
+
+        for k in keys:
+            # tuptup = pad_tuple(k.length_vector, key[1])
+            res[k.length_vector] = res.get(k.length_vector, S.Zero) + S.One
+        return res
+
+    def transition_key(self, dct):
+        res = {}
+        for k, v in dct.items():
+            res = add_perm_dict_with_coeff(res, self.transition_key_key(k), coeff=v)
+        return res
+
     def from_expr(self, expr):
         return self.attach_key(self.ring.from_expr(expr))
 
@@ -167,12 +186,30 @@ class SchubertPolyBasis(PolynomialBasis):
 
     def transition_forest_key(self, key):
         from schubmult.combinatorics.rc_graph import RCGraph
+
+        def word_to_pair_labeled(word):
+            counts = {}
+            out = []
+            for a in word:
+                aa = int(a)
+                counts[aa] = counts.get(aa, 0) + 1
+                out.append((aa, counts[aa]))
+            return tuple(out)
+
         dct = {}
+        indfor_set = set()
         for rc in RCGraph.all_rc_graphs(key[0], key[1]):
-            word = list(reversed(rc.perm_word))
-            indfor = word_to_indexed_forest(word)
-            if indfor.code not in dct:
-                dct[indfor.code] = S.One
+            word = tuple(reversed(rc.perm_word))
+            pair_word = word_to_pair_labeled(word)
+            print(pair_word)
+            indfor = word_to_indexed_forest(pair_word, val_fn=lambda letter: letter[0])
+            print(indfor)
+            # if indfor.code not in dct:
+            #     dct[indfor.code] = S.One
+            indfor_set.add(indfor)
+        print(indfor_set)
+        for indfor in indfor_set:
+            dct[indfor.code] = dct.get(indfor.code, S.Zero) + S.One
         return dct
 
     def transition_forest(self, dct):
@@ -185,6 +222,7 @@ class SchubertPolyBasis(PolynomialBasis):
         from .elem_sym_poly_basis import ElemSymPolyBasis
         from .forest_poly_basis import ForestPolyBasis
         from .fundamental_slide_poly_basis import FundamentalSlidePolyBasis
+        from .key_poly_basis import KeyPolyBasis
         from .monomial_basis import MonomialBasis
         from .sepdesc_poly_basis import SepDescPolyBasis
 
@@ -193,6 +231,7 @@ class SchubertPolyBasis(PolynomialBasis):
         if isinstance(other_basis, FundamentalSlidePolyBasis):
             return lambda x: self.transition_fundamental_slide(x)
         if isinstance(other_basis, MonomialBasis):
+
             def sum_dct(*dcts):
                 res = {}
                 for dct in dcts:
@@ -209,4 +248,6 @@ class SchubertPolyBasis(PolynomialBasis):
             return lambda x: self.transition_sepdesc(x, other_basis)
         if isinstance(other_basis, ForestPolyBasis):
             return lambda x: self.transition_forest(x)
-        return None
+        if isinstance(other_basis, KeyPolyBasis):
+            return lambda x: self.transition_key(x)
+        raise NotImplementedError(f"Transition from SchubertPolyBasis to {other_basis.__class__} not implemented yet")
