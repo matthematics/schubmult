@@ -40,6 +40,26 @@ class Node:
             return False
         return self.index == other.index and self.left == other.left and self.right == other.right
 
+    def __lt__(self, other):
+        if not isinstance(other, Node):
+            return NotImplemented
+        return self.index < other.index
+
+    def __gt__(self, other):
+        if not isinstance(other, Node):
+            return NotImplemented
+        return self.index > other.index
+
+    def __le__(self, other):
+        if not isinstance(other, Node):
+            return NotImplemented
+        return self.index <= other.index
+
+    def __ge__(self, other):
+        if not isinstance(other, Node):
+            return NotImplemented
+        return self.index >= other.index
+
     def __hash__(self):
         return hash((self.index, self.left, self.right))
 
@@ -48,7 +68,7 @@ class IndexedForest:
     def __init__(self, roots=None, code=None):
         self._code = None
         if roots is not None:
-            self._roots = tuple(roots)
+            self._roots = tuple(sorted(roots))
             if code is not None and not _eq_except_trailing_zeros(tuple(code), self.code):
                 raise ValueError(f"Provided code does not match code computed from roots {tuple(code)} vs {self.code}")
         elif code is None:
@@ -753,12 +773,13 @@ def omega_insertion(word_of_pairs: tuple[letterpair, ...]) -> tuple[LBS, DecLabe
     #         node.label = next_letter
     new_P = LBS(new_forest)
 
-
+    assert new_P.is_valid, f"Internal error: P-labeling is not valid after insertion of {next_letter}"
     #q_forest = IndexedForest(roots=(new_q_root, *Q.forest))
     # for node in q_forest.inorder_traversal:
     #     if node.label is None:
     #         node.label = len(word_of_pairs)
     new_Q = DecLabeling(q_forest)
+    assert new_Q.is_valid, f"Internal error: Q-labeling is not valid after insertion of {next_letter}"
     return new_P, new_Q
 
 

@@ -201,13 +201,13 @@ class SchubertPolyBasis(PolynomialBasis):
         for rc in RCGraph.all_rc_graphs(key[0], key[1]):
             word = tuple(reversed(rc.perm_word))
             pair_word = word_to_pair_labeled(word)
-            print(pair_word)
+            # print(pair_word)
             indfor = omega_insertion(pair_word)
-            print(indfor)
+            # print(indfor)
             # if indfor.code not in dct:
             #     dct[indfor.code] = S.One
             indfor_set.add(indfor[0])
-        print(indfor_set)
+        # print(indfor_set)
         for indfor in indfor_set:
             dct[indfor.forest.code] = dct.get(indfor.forest.code, S.Zero) + S.One
         return dct
