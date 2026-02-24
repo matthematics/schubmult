@@ -1,4 +1,4 @@
-from schubmult.combinatorics.indexed_forests import word_to_indexed_forest
+from schubmult.combinatorics.indexed_forests import omega_insertion
 from schubmult.rings.free_algebra.free_algebra_basis import FreeAlgebraBasis
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import S
@@ -35,13 +35,16 @@ class ForestBasis(FreeAlgebraBasis):
         r = RCGraphRing()
         dct = {}
         all_rcs = r.monomial(*key)
-
+        seen = set()
         for rc in all_rcs:
             # if rc.is_lowest_weight:
             #     dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
             word = list(reversed(rc.perm_word))
-            indfor = word_to_indexed_forest(word)
-            if indfor.code == key:
+            indfor = omega_insertion(word)[0]
+            if indfor in seen:
+                continue
+            if indfor.forest.code == key:
+                seen.add(indfor)
                 dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
         return dct
 
