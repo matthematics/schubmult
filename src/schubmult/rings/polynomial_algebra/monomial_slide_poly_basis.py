@@ -1,6 +1,7 @@
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import Add, S, expand_seq
 from schubmult.utils.perm_utils import add_perm_dict_with_coeff
+from schubmult.utils.tuple_utils import pad_tuple
 
 from .base_polynomial_basis import PolynomialBasis
 
@@ -57,9 +58,6 @@ class MonomialSlidePolyBasis(PolynomialBasis):
 
     def to_monoms(self, key):
         from schubmult.symbolic.poly.variables import genset_dict_from_expr
-
-        def pad_tuple(tup, length):
-            return (*tup, *(0,) * (length - len(tup)))
 
         dct = {pad_tuple(k, len(key)): v for k, v in genset_dict_from_expr(_slide_polynomial(key, self.genset), self.genset).items()}
         return dct

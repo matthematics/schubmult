@@ -2,6 +2,7 @@ from schubmult.rings.polynomial_algebra.base_polynomial_basis import PolynomialB
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import S
 from schubmult.utils.perm_utils import add_perm_dict_with_coeff
+from schubmult.utils.tuple_utils import pad_tuple
 
 """
 Fundamental slide polynomial basis for Schubert calculus.
@@ -209,9 +210,6 @@ class FundamentalSlidePolyBasis(PolynomialBasis):
 
     def to_monoms(self, key):
         from schubmult.symbolic.poly.variables import genset_dict_from_expr
-
-        def pad_tuple(tup, length):
-            return (*tup, *(0,) * (length - len(tup)))
 
         dct = {pad_tuple(k, len(key)): v for k, v in genset_dict_from_expr(_fundamental_slide_polynomial(key, self.genset), self.genset).items()}
         return dct

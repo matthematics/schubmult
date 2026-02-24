@@ -4,6 +4,7 @@ from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
 from schubmult.utils.perm_utils import add_perm_dict, add_perm_dict_with_coeff
+from schubmult.utils.tuple_utils import pad_tuple
 
 from ..schubert.schubert_ring import Sx
 from .base_polynomial_basis import PolynomialBasis
@@ -178,9 +179,6 @@ class SchubertPolyBasis(PolynomialBasis):
     def to_monoms(self, key):
         from schubmult.symbolic.poly.variables import genset_dict_from_expr
 
-        def pad_tuple(tup, length):
-            return (*tup, *(0,) * (length - len(tup)))
-
         dct = {pad_tuple(k, key[1]): v for k, v in genset_dict_from_expr(self.ring.from_dict({key[0]: S.One}).as_polynomial(), self.genset).items()}
         return dct
 
@@ -209,7 +207,8 @@ class SchubertPolyBasis(PolynomialBasis):
             indfor_set.add(indfor[0])
         # print(indfor_set)
         for indfor in indfor_set:
-            dct[indfor.forest.code] = dct.get(indfor.forest.code, S.Zero) + S.One
+            keykey = pad_tuple(indfor.forest.code, key[1])
+            dct[keykey] = dct.get(keykey, S.Zero) + S.One
         return dct
 
     def transition_forest(self, dct):

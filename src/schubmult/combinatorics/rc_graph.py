@@ -410,6 +410,20 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return min(self.full_crystal, key=lambda rc: dom_key(rc.length_vector)).length_vector
 
     @property
+    def forest_invariant(self):
+        from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
+        word = list(reversed(self.perm_word))
+        def word_to_pair_labeled(word):
+            counts = {}
+            out = []
+            for a in word:
+                aa = int(a)
+                counts[aa] = counts.get(aa, 0) + 1
+                out.append(letterpair(aa, counts[aa]))
+            return tuple(out)
+        return omega_insertion(word_to_pair_labeled(word))[0]
+
+    @property
     def is_extremal(self) -> bool:
         if sorted(self.length_vector, reverse=True) != self.to_highest_weight()[0].length_vector:
             return False

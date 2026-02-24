@@ -70,6 +70,19 @@ class MonomialBasis(PolynomialBasis):
                     del res[k]
         return ret
 
+    def transition_schubert(self, dct, other_basis):
+        ret = {}
+        dct_by_length = {}
+        for k, v in dct.items():
+            dct_by_length[len(k)] = dct_by_length.get(len(k), {})
+            dct_by_length[len(k)][k] = v
+
+        for length, dctt in dct_by_length.items():
+            schub_dict = other_basis.ring.from_expr(Add(*[v * self.expand_monom(k) for k, v in dctt.items()]))
+            schub_dict_with_length = {(k, length): v for k, v in schub_dict.items()}
+            ret = add_perm_dict(ret, schub_dict_with_length)
+        return ret
+
     def transition(self, other_basis):
         from .elem_sym_poly_basis import ElemSymPolyBasis
         from .monomial_slide_poly_basis import MonomialSlidePolyBasis
@@ -79,7 +92,7 @@ class MonomialBasis(PolynomialBasis):
         if isinstance(other_basis, MonomialBasis):
             return lambda x: other_basis.attach_key(x)
         if isinstance(other_basis, SchubertPolyBasis):
-            return lambda x: other_basis.attach_key(other_basis.ring.from_expr(Add(*[v * self.expand_monom(k) for k, v in x.items()])))
+            return lambda x: self.transition_schubert(x, other_basis)
         if isinstance(other_basis, MonomialSlidePolyBasis):
             return lambda x: self.transition_slide(x, other_basis)
         if isinstance(other_basis, SepDescPolyBasis):

@@ -565,7 +565,7 @@ class letterpair:
         if not isinstance(other, letterpair | int):
             return NotImplemented
         if isinstance(other, int):
-            return (self.primary, self.secondary) <= (other, 0) # TODO: check!
+            return (self.primary, self.secondary) < (other, 0) # TODO: check!
         return (self.primary, self.secondary) <= (other.primary, other.secondary)
 
     def __gt__(self, other):
@@ -579,14 +579,12 @@ class letterpair:
         if not isinstance(other, letterpair | int):
             return NotImplemented
         if isinstance(other, int):
-            return (self.primary, self.secondary) >= (other, 0) # TODO: check!
+            return (self.primary, self.secondary) > (other, 0) # TODO: check!
         return (self.primary, self.secondary) >= (other.primary, other.secondary)
 
     def __eq__(self, other):
-        if not isinstance(other, letterpair | int):
+        if not isinstance(other, letterpair):
             return NotImplemented
-        if isinstance(other, int):
-            return (self.primary, self.secondary) == (other, 0) # TODO: check!
         return (self.primary, self.secondary) == (other.primary, other.secondary)
 
     def __hash__(self):
@@ -656,6 +654,17 @@ class LBS(LabeledForest):
             if self(node).primary not in [node0.index for node0 in node.inorder_traversal]:
                 return False
         return True
+
+    @property
+    def rootlist(self):
+        base_list = {node.label for node in self.forest._roots}
+        min_elem = min(self.forest.support)
+        max_elem = max(self.forest.support)
+        full_set = set(range(min_elem - 1, max_elem + 2))
+        for i in full_set:
+            if i not in self.forest.support and i - 1 not in self.forest.support:
+                base_list.add(letterpair(i, 0))
+        return tuple(sorted(base_list))
 
     def __eq__(self, other):
         if not isinstance(other, LBS):

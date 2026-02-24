@@ -3,6 +3,7 @@ from schubmult.rings.polynomial_algebra.base_polynomial_basis import PolynomialB
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import S
 from schubmult.utils.perm_utils import add_perm_dict_with_coeff
+from schubmult.utils.tuple_utils import pad_tuple
 
 
 def _forest_polynomial_from_indfor(indfor, genset):
@@ -84,9 +85,6 @@ class ForestPolyBasis(PolynomialBasis):
     def to_monoms(self, key):
         from schubmult.symbolic.poly.variables import genset_dict_from_expr
 
-        def pad_tuple(tup, length):
-            return (*tup, *(0,) * (length - len(tup)))
-
         dct = {pad_tuple(k, len(key)): v for k, v in genset_dict_from_expr(_forest_polynomial_from_indfor(weak_composition_to_indfor(key), self.genset), self.genset).items()}
         return dct
 
@@ -143,6 +141,23 @@ class ForestPolyBasis(PolynomialBasis):
             return self.transition_fundamental_slide
 
         return lambda x: PolynomialBasis.compose_transition(self.monomial_basis.transition(other_basis), self.transition_monomial(x))
+
+    def product(self, key1, key2, coeff=S.One):
+        from schubmult.utils.perm_utils import add_perm_dict
+
+        from ..schubert.schubert_ring import Sx
+        from .schubert_poly_basis import SchubertPolyBasis
+
+        schub = SchubertPolyBasis(Sx)
+        left = self.transition(schub)({key1: coeff})
+        right = self.transition(schub)({key2: S.One})
+
+        ret = {}
+
+        for key_schub_right, v in right.items():
+            for key_schub_left, v2 in left.items():
+                ret = add_perm_dict(ret, schub.transition(self)(schub.product(key_schub_left, key_schub_right, v * v2)))
+        return ret
 
     def from_expr(self, expr):
         try:
