@@ -1,20 +1,28 @@
 from dataclasses import dataclass
 
 
+def _eq_except_trailing_zeros(cd1, cd2):
+    i1 = len(cd1) - 1
+    while i1 >= 0 and cd1[i1] == 0:
+        i1 -= 1
+    i2 = len(cd2) - 1
+    while i2 >= 0 and cd2[i2] == 0:
+        i2 -= 1
+    return cd1[: i1 + 1] == cd2[: i2 + 1]
+
 class Node:
-    def __init__(self, label):
+    def __init__(self, index, label=None):
+        self.index = index
         self.label = label
-        self.insert_label = None
-        self.dec_label = None
         self.left = None
         self.right = None
 
     def __repr__(self):
-        return f"Node({self.label}, L:{self.left}, R:{self.right})"
+        return f"Node(index={self.index}, label={self.label}, L:{self.left}, R:{self.right})"
 
     @property
     def rho(self):
-        return self.left.rho if self.left else self.label
+        return self.left.rho if self.left else self.index
 
     @property
     def inorder_traversal(self):
@@ -25,25 +33,37 @@ class Node:
             yield from self.right.inorder_traversal
 
     def __str__(self):
-        return f"Node({self.label})"
+        return f"Node(index={self.index}, label={self.label})"
 
     def __eq__(self, other):
         if not isinstance(other, Node):
             return False
-        return self.label == other.label and self.left == other.left and self.right == other.right
+        return self.index == other.index and self.left == other.left and self.right == other.right
 
     def __hash__(self):
-        return hash((self.label, self.left, self.right))
+        return hash((self.index, self.left, self.right))
 
 
 class IndexedForest:
-    def __init__(self, roots=(), code=None):
-        self._roots = tuple(roots)
-        self._code = None if code is None else tuple(int(x) for x in code)
+    def __init__(self, roots=None, code=None):
+        self._code = None
+        if roots is not None:
+            self._roots = tuple(roots)
+            if code is not None and not _eq_except_trailing_zeros(tuple(code), self.code):
+                raise ValueError(f"Provided code does not match code computed from roots {tuple(code)} vs {self.code}")
+        elif code is None:
+            self._roots = ()
+        else:
+            self._roots = tuple(weak_composition_to_indfor(code))
 
     @property
     def roots(self):
         return self._roots
+
+    @property
+    def inorder_traversal(self):
+        for root in self._roots:
+            yield from root.inorder_traversal
 
     @property
     def code(self):
@@ -74,6 +94,20 @@ class IndexedForest:
 
         return tuple(coeffs)
 
+    def node(self, index):
+        for node in self.inorder_traversal:
+            if node.index == index:
+                return node
+        return None
+
+    @property
+    def support(self):
+        return tuple(sorted(node.index for node in self.inorder_traversal))
+
+    @property
+    def intervals(self):
+        return _forest_intervals(self._roots)
+
     def __iter__(self):
         return iter(self._roots)
 
@@ -84,7 +118,7 @@ class IndexedForest:
         return self._roots[index]
 
     def __repr__(self):
-        return f"IndexedForest(roots={self._roots}, code={self._code})"
+        return f"IndexedForest(roots={self._roots}, code={self.code})"
 
     def __eq__(self, other):
         if not isinstance(other, IndexedForest):
@@ -96,7 +130,7 @@ class IndexedForest:
 
 
 def _node_support(root):
-    return tuple(node.label for node in root.inorder_traversal)
+    return tuple(node.index for node in root.inorder_traversal)
 
 
 def _forest_intervals(forest_roots):
@@ -164,157 +198,154 @@ def _letter_order_key(letter):
     return (_letter_val(letter), 0)
 
 
-def insert_letter_into_indexed_forest(forest_roots, letter, step=None, val_fn=None, q_label=None):
-    """
-    Insert one letter into an indexed forest using the two-case insertion
-    described in Nadeau--Tewari (Section 5.1).
+# def insert_letter_into_indexed_forest(forest_roots, letter, step=None, val_fn=None, q_label=None):
+#     """
+#     Insert one letter into an indexed forest using the two-case insertion
+#     described in Nadeau--Tewari (Section 5.1).
 
-    Parameters
-    ----------
-    forest_roots : iterable[Node]
-        Current forest roots.
-    letter : object
-        Letter to insert. `val(letter)` is interpreted as `_letter_val(letter)`.
-        Ordering comparisons use the LBS pair-letter order key `(a, b)`.
-    step : int | None
-        Optional insertion index for Dec-labeling.
-    val_fn : callable | None
-        Optional map to compute val(letter). If omitted, `_letter_val` defaults
-        are used.
-    q_label : object | None
-        Optional explicit recording label for Q. If omitted, `step` is used.
-    """
-    roots = list(forest_roots)
-    intervals = _forest_intervals(roots)
-    support = set()
-    for _, _, support_set, _ in intervals:
-        support.update(support_set)
+#     Parameters
+#     ----------
+#     forest_roots : iterable[Node]
+#         Current forest roots.
+#     letter : object
+#         Letter to insert. `val(letter)` is interpreted as `_letter_val(letter)`.
+#         Ordering comparisons use the LBS pair-letter order key `(a, b)`.
+#     step : int | None
+#         Optional insertion index for Dec-labeling.
+#     val_fn : callable | None
+#         Optional map to compute val(letter). If omitted, `_letter_val` defaults
+#         are used.
+#     q_label : object | None
+#         Optional explicit recording label for Q. If omitted, `step` is used.
+#     """
+#     _ = (step, q_label)
+#     roots = list(forest_roots)
+#     intervals = _forest_intervals(roots)
+#     support = set()
+#     for _, _, support_set, _ in intervals:
+#         support.update(support_set)
 
-    i = _letter_val(letter, val_fn=val_fn)
+#     i = _letter_val(letter, val_fn=val_fn)
 
-    def interval_index_containing(value):
-        for idx, (_, _, support_set, _) in enumerate(intervals):
-            if value in support_set:
-                return idx
-        return None
+#     def interval_index_containing(value):
+#         for idx, (_, _, support_set, _) in enumerate(intervals):
+#             if value in support_set:
+#                 return idx
+#         return None
 
-    new_root = Node(i)
-    new_root.insert_label = letter
-    new_root.dec_label = step if q_label is None else q_label
+#     new_root = Node(i)
+#     new_root.label = letter
 
-    roots_to_remove = []
+#     roots_to_remove = []
 
-    if i not in support:
-        left_idx = interval_index_containing(i - 1)
-        right_idx = interval_index_containing(i + 1)
+#     if i not in support:
+#         left_idx = interval_index_containing(i - 1)
+#         right_idx = interval_index_containing(i + 1)
 
-        if left_idx is not None:
-            new_root.left = intervals[left_idx][3]
-            roots_to_remove.append(intervals[left_idx][3])
-        if right_idx is not None:
-            new_root.right = intervals[right_idx][3]
-            roots_to_remove.append(intervals[right_idx][3])
-    else:
-        j = interval_index_containing(i)
-        if j is None:
-            raise RuntimeError("Internal error: insertion value is in support but no interval found")
+#         if left_idx is not None:
+#             new_root.left = intervals[left_idx][3]
+#             roots_to_remove.append(intervals[left_idx][3])
+#         if right_idx is not None:
+#             new_root.right = intervals[right_idx][3]
+#             roots_to_remove.append(intervals[right_idx][3])
+#     else:
+#         j = interval_index_containing(i)
+#         if j is None:
+#             raise RuntimeError("Internal error: insertion value is in support but no interval found")
 
-        _, _, _, root_j = intervals[j]
-        root_j_label = root_j.insert_label if root_j.insert_label is not None else root_j.label
+#         _, _, _, root_j = intervals[j]
+#         root_j_label = root_j.label if root_j.label is not None else root_j.index
 
-        if _letter_order_key(letter) > _letter_order_key(root_j_label):
-            new_root.left = root_j
-            roots_to_remove.append(root_j)
+#         if _letter_order_key(letter) > _letter_order_key(root_j_label):
+#             new_root.left = root_j
+#             roots_to_remove.append(root_j)
 
-            right_neighbor_start = intervals[j][1] + 2
-            right_neighbor_idx = interval_index_containing(right_neighbor_start)
-            if right_neighbor_idx is not None:
-                right_root = intervals[right_neighbor_idx][3]
-                new_root.right = right_root
-                roots_to_remove.append(right_root)
-        else:
-            new_root.right = root_j
-            roots_to_remove.append(root_j)
+#             right_neighbor_start = intervals[j][1] + 2
+#             right_neighbor_idx = interval_index_containing(right_neighbor_start)
+#             if right_neighbor_idx is not None:
+#                 right_root = intervals[right_neighbor_idx][3]
+#                 new_root.right = right_root
+#                 roots_to_remove.append(right_root)
+#         else:
+#             new_root.right = root_j
+#             roots_to_remove.append(root_j)
 
-            left_neighbor_end = intervals[j][0] - 2
-            left_neighbor_idx = interval_index_containing(left_neighbor_end)
-            if left_neighbor_idx is not None:
-                left_root = intervals[left_neighbor_idx][3]
-                new_root.left = left_root
-                roots_to_remove.append(left_root)
+#             left_neighbor_end = intervals[j][0] - 2
+#             left_neighbor_idx = interval_index_containing(left_neighbor_end)
+#             if left_neighbor_idx is not None:
+#                 left_root = intervals[left_neighbor_idx][3]
+#                 new_root.left = left_root
+#                 roots_to_remove.append(left_root)
 
-    remaining = [r for r in roots if r not in roots_to_remove]
-    remaining.append(new_root)
-    return IndexedForest(remaining)
-
-
-def word_to_indexed_forest(word, val_fn=None, q_labels=None):
-    """
-    Build an indexed forest from a word via repeated insertion.
-
-    Returns
-    -------
-    IndexedForest
-        Indexed forest with roots and optional code metadata.
-    """
-    forest = IndexedForest()
-    if q_labels is None:
-        q_iter = [None] * len(word)
-    else:
-        if len(q_labels) != len(word):
-            raise ValueError("q_labels must have same length as word")
-        q_iter = q_labels
-
-    for step, (letter, q_label) in enumerate(zip(word, q_iter), start=1):
-        forest = insert_letter_into_indexed_forest(forest, letter, step=step, val_fn=val_fn, q_label=q_label)
-    return forest
+#     remaining = [r for r in roots if r not in roots_to_remove]
+#     remaining.append(new_root)
+#     return IndexedForest(remaining)
 
 
-def _clone_shape_with_labels(root, label_attr):
-    if root is None:
-        return None
-    new_root = Node(root.label)
-    chosen = getattr(root, label_attr)
-    new_root.insert_label = chosen
-    new_root.dec_label = None
-    new_root.left = _clone_shape_with_labels(root.left, label_attr)
-    new_root.right = _clone_shape_with_labels(root.right, label_attr)
-    return new_root
+# def word_to_indexed_forest(word, val_fn=None, q_labels=None):
+#     """
+#     Build an indexed forest from a word via repeated insertion.
+
+#     Returns
+#     -------
+#     IndexedForest
+#         Indexed forest with roots and optional code metadata.
+#     """
+#     forest = IndexedForest()
+#     if q_labels is None:
+#         q_iter = [None] * len(word)
+#     else:
+#         if len(q_labels) != len(word):
+#             raise ValueError("q_labels must have same length as word")
+#         q_iter = q_labels
+
+#     for step, (letter, q_label) in enumerate(zip(word, q_iter), start=1):
+#         forest = insert_letter_into_indexed_forest(forest, letter, step=step, val_fn=val_fn, q_label=q_label)
+#     return forest
 
 
-def split_PQ_labelings(forest_roots):
-    """
-    Return two forests with the same shape as `forest_roots`:
-    - P-forest: insertion labels
-    - Q-forest: recording labels
-    """
-    p_forest = IndexedForest(tuple(_clone_shape_with_labels(root, "insert_label") for root in forest_roots), code=getattr(forest_roots, "code", None))
-    q_forest = IndexedForest(tuple(_clone_shape_with_labels(root, "dec_label") for root in forest_roots), code=getattr(forest_roots, "code", None))
-    return p_forest, q_forest
+# def _clone_shape_with_labels(root, label_attr):
+#     if root is None:
+#         return None
+#     new_root = Node(root.index, label=getattr(root, label_attr, root.label))
+#     new_root.left = _clone_shape_with_labels(root.left, label_attr)
+#     new_root.right = _clone_shape_with_labels(root.right, label_attr)
+#     return new_root
 
 
-def parallel_word_to_indexed_forest(primary_word, secondary_word, val_part="primary"):
-    word = make_parallel_injective_word(primary_word, secondary_word)
-    if val_part == "primary":
-        return word_to_indexed_forest(word, val_fn=lambda x: x.primary)
-    if val_part == "secondary":
-        return word_to_indexed_forest(word, val_fn=lambda x: x.secondary)
-    raise ValueError("val_part must be 'primary' or 'secondary'")
+# def split_PQ_labelings(forest_roots):
+#     """
+#     Return two forests with the same shape as `forest_roots`:
+#     - P-forest: insertion labels
+#     - Q-forest: recording labels
+#     """
+#     p_forest = IndexedForest(tuple(_clone_shape_with_labels(root, "label") for root in forest_roots), code=getattr(forest_roots, "code", None))
+#     q_forest = IndexedForest(tuple(_clone_shape_with_labels(root, "label") for root in forest_roots), code=getattr(forest_roots, "code", None))
+#     return p_forest, q_forest
 
 
-def parallel_word_to_PQ_forests(primary_word, secondary_word, val_part="primary"):
-    """
-    Build one indexed-forest shape from a parallel injective word and return
-    its P/Q labelings as two forests with identical shape.
-    """
-    word = make_parallel_injective_word(primary_word, secondary_word)
-    if val_part == "primary":
-        shape = word_to_indexed_forest(word, val_fn=lambda x: x.primary, q_labels=tuple(secondary_word))
-    elif val_part == "secondary":
-        shape = word_to_indexed_forest(word, val_fn=lambda x: x.secondary, q_labels=tuple(secondary_word))
-    else:
-        raise ValueError("val_part must be 'primary' or 'secondary'")
-    return split_PQ_labelings(shape)
+# def parallel_word_to_indexed_forest(primary_word, secondary_word, val_part="primary"):
+#     word = make_parallel_injective_word(primary_word, secondary_word)
+#     if val_part == "primary":
+#         return word_to_indexed_forest(word, val_fn=lambda x: x.primary)
+#     if val_part == "secondary":
+#         return word_to_indexed_forest(word, val_fn=lambda x: x.secondary)
+#     raise ValueError("val_part must be 'primary' or 'secondary'")
+
+
+# def parallel_word_to_PQ_forests(primary_word, secondary_word, val_part="primary"):
+#     """
+#     Build one indexed-forest shape from a parallel injective word and return
+#     its P/Q labelings as two forests with identical shape.
+#     """
+#     word = make_parallel_injective_word(primary_word, secondary_word)
+#     if val_part == "primary":
+#         shape = word_to_indexed_forest(word, val_fn=lambda x: x.primary, q_labels=tuple(secondary_word))
+#     elif val_part == "secondary":
+#         shape = word_to_indexed_forest(word, val_fn=lambda x: x.secondary, q_labels=tuple(secondary_word))
+#     else:
+#         raise ValueError("val_part must be 'primary' or 'secondary'")
+#     return split_PQ_labelings(shape)
 
 
 def weak_composition_to_indfor(c):
@@ -495,30 +526,244 @@ def word_from_labeling(root, labeling):
     # print(f"Labeling: {labeling}, Perm: {perm}, Rhos: {[node.rho for node in trav]}")
     return tuple(trav[(~perm)[i] - 1].rho for i in range(len(trav)))
 
-def omega_insertion(word_of_pairs):
+class letterpair:
+    def __init__(self, primary, secondary):
+        self.primary = primary
+        self.secondary = secondary
+
+    def __repr__(self):
+        return f"{self.primary}[{self.secondary}]"
+
+    def __lt__(self, other):
+        if not isinstance(other, letterpair | int):
+            return NotImplemented
+        if isinstance(other, int):
+            return (self.primary, self.secondary) < (other, 0) # TODO: check!
+        return (self.primary, self.secondary) < (other.primary, other.secondary)
+
+    def __le__(self, other):
+        if not isinstance(other, letterpair | int):
+            return NotImplemented
+        if isinstance(other, int):
+            return (self.primary, self.secondary) <= (other, 0) # TODO: check!
+        return (self.primary, self.secondary) <= (other.primary, other.secondary)
+
+    def __gt__(self, other):
+        if not isinstance(other, letterpair | int):
+            return NotImplemented
+        if isinstance(other, int):
+            return (self.primary, self.secondary) > (other, 0) # TODO: check!
+        return (self.primary, self.secondary) > (other.primary, other.secondary)
+
+    def __ge__(self, other):
+        if not isinstance(other, letterpair | int):
+            return NotImplemented
+        if isinstance(other, int):
+            return (self.primary, self.secondary) >= (other, 0) # TODO: check!
+        return (self.primary, self.secondary) >= (other.primary, other.secondary)
+
+    def __eq__(self, other):
+        if not isinstance(other, letterpair | int):
+            return NotImplemented
+        if isinstance(other, int):
+            return (self.primary, self.secondary) == (other, 0) # TODO: check!
+        return (self.primary, self.secondary) == (other.primary, other.secondary)
+
+    def __hash__(self):
+        return hash((self.primary, self.secondary))
+
+class LabeledForest:
+    def __init__(self, forest):
+        self.forest = forest
+        self.mapping = {}
+        for node in self.forest.inorder_traversal:
+            self.mapping[node.index] = node.label
+
+    @property
+    def inorder_traversal(self):
+        for node in self.forest.inorder_traversal:
+            yield node, node.label
+
+    def __call__(self, node):
+        return self.mapping.get(node.index, None)
+
+    def __eq__(self, other):
+        if not isinstance(other, LabeledForest):
+            return NotImplemented
+        return self.forest == other.forest and all(self(node.index) == other(node.index) for node in self.forest.inorder_traversal)
+
+    def __repr__(self):
+        return f"LabeledForest(forest={self.forest})"
+
+    def __hash__(self):
+        return hash((self.forest, tuple(self(node) for node in self.forest.inorder_traversal)))
+
+class DecLabeling(LabeledForest):
+    def __init__(self, forest):
+        super().__init__(forest)
+
+    @property
+    def is_valid(self):
+        for node in self.forest.inorder_traversal:
+            if self(node) <= self(node.left) if node.left else False:
+                return False
+            if self(node) <= self(node.right) if node.right else False:
+                return False
+        return True
+
+    def __eq__(self, other):
+        if not isinstance(other, DecLabeling):
+            return NotImplemented
+        return self.forest == other.forest and all(self(node) == other(node) for node in self.forest.inorder_traversal)
+
+    def __repr__(self):
+        return f"DecLabeling(forest={self.forest})"
+
+    def __hash__(self):
+        return hash((self.forest, tuple(self(node) for node in self.forest.inorder_traversal)))
+
+class LBS(LabeledForest):
+    def __init__(self, forest):
+        super().__init__(forest)
+
+    @property
+    def is_valid(self):
+        for node in self.forest.inorder_traversal:
+            if self(node) <= self(node.left) if node.left else False:
+                return False
+            if self(node) >= self(node.right) if node.right else False:
+                return False
+            if self(node).primary not in [node0.index for node0 in node.inorder_traversal]:
+                return False
+        return True
+
+    def __eq__(self, other):
+        if not isinstance(other, LBS):
+            return NotImplemented
+        return self.forest == other.forest and all(self(node) == other(node) for node in self.forest.inorder_traversal)
+
+    def __repr__(self):
+        return f"LBS(forest={self.forest})"
+
+    def __hash__(self):
+        return hash((self.forest, tuple(self(node) for node in self.forest.inorder_traversal)))
+
+
+def omega_insertion(word_of_pairs: tuple[letterpair, ...]) -> tuple[LBS, DecLabeling] | None:
     if len(word_of_pairs) == 0:
-        F = ()
-        P, Q = (), ()
-        return F, P, Q
-    forest, P, Q = omega_insertion(word_of_pairs[:-1])
-    return None
+        forest = IndexedForest()
+        P, Q = LBS(forest), DecLabeling(forest)
+        return P, Q
+
+    P, Q = omega_insertion(word_of_pairs[:-1])
+    S_prime = P.forest.support
+
+    next_letter = word_of_pairs[-1]
+    intervals = P.forest.intervals
+    q_intervals = Q.forest.intervals
+
+    def interval_containing(iv_list, value):
+        return next((iv for iv in iv_list if value in iv[2]), None)
+
+    roots_to_remove = []
+    q_roots_to_remove = []
+
+    new_root = Node(index=next_letter.primary, label=next_letter)
+    new_q_root = Node(index=next_letter.primary, label=len(word_of_pairs))
+    if next_letter.primary not in S_prime:
+        if next_letter.primary - 1 in S_prime:
+            interval = interval_containing(intervals, next_letter.primary - 1)
+            q_interval = interval_containing(q_intervals, next_letter.primary - 1)
+            if q_interval is None:
+                raise RuntimeError("Internal error: could not find interval for Q insertion neighbor")
+            if interval is None:
+                raise RuntimeError("Internal error: could not find interval for insertion neighbor")
+            new_root.left = interval[3]
+            new_q_root.left = q_interval[3]
+            roots_to_remove.append(interval[3])
+            q_roots_to_remove.append(q_interval[3])
+        if next_letter.primary + 1 in S_prime:
+            interval = interval_containing(intervals, next_letter.primary + 1)
+            q_interval = interval_containing(q_intervals, next_letter.primary + 1)
+            if q_interval is None:
+                raise RuntimeError("Internal error: could not find interval for Q insertion neighbor")
+            if interval is None:
+                raise RuntimeError("Internal error: could not find interval for insertion neighbor")
+            new_root.right = interval[3]
+            new_q_root.right = q_interval[3]
+            roots_to_remove.append(interval[3])
+            q_roots_to_remove.append(q_interval[3])
+        # new_forest = IndexedForest(roots=P.forest._roots)
+        # q_forest = IndexedForest(roots=Q.forest._roots)
+    else:
+        # new_root.index = None
+        # new_q_root.index = None
+        interval = interval_containing(intervals, next_letter.primary)
+        q_interval = interval_containing(q_intervals, next_letter.primary)
+        if interval is None:
+            raise RuntimeError("Internal error: could not find interval for insertion neighbor")
+        if q_interval is None:
+            raise RuntimeError("Internal error: could not find interval for Q insertion neighbor")
+        root = interval[3]
+        q_root = q_interval[3]
+        if next_letter > root.label:
+            new_root.left = root
+            new_q_root.left = q_root
+            roots_to_remove.append(root)
+            q_roots_to_remove.append(q_root)
+            if interval[1] + 2 in S_prime: # TODO: check!
+                right_interval = interval_containing(intervals, interval[1] + 2)
+                right_q_interval = interval_containing(q_intervals, interval[1] + 2)
+                if right_interval is None:
+                    raise RuntimeError("Internal error: could not find interval for insertion neighbor")
+                new_root.right = right_interval[3]
+                if right_q_interval is None:
+                    raise RuntimeError("Internal error: could not find interval for Q insertion neighbor")
+                new_q_root.right = right_q_interval[3]
+                roots_to_remove.append(right_interval[3])
+                q_roots_to_remove.append(right_q_interval[3])
+        elif next_letter < root.label:
+            new_root.right = root
+            new_q_root.right = q_root
+            roots_to_remove.append(root)
+            q_roots_to_remove.append(q_root)
+            if interval[0] - 2 in S_prime: # TODO: check!
+                left_interval = interval_containing(intervals, interval[0] - 2)
+                left_q_interval = interval_containing(q_intervals, interval[0] - 2)
+                if left_interval is None:
+                    raise RuntimeError("Internal error: could not find interval for insertion neighbor")
+                if left_q_interval is None:
+                    raise RuntimeError("Internal error: could not find interval for Q insertion neighbor")
+                new_root.left = left_interval[3]
+                new_q_root.left = left_q_interval[3]
+                roots_to_remove.append(left_interval[3])
+                q_roots_to_remove.append(left_q_interval[3])
+        left_max = max(_node_support(new_root.left)) if new_root.left is not None else None
+        right_min = min(_node_support(new_root.right)) if new_root.right is not None else None
+        if left_max is not None and right_min is not None:
+            assert left_max + 1 == right_min - 1, f"Internal error: left max {left_max} and right min {right_min} are not adjacent for insertion of {next_letter}"
+        new_root.index = left_max + 1 if left_max is not None else right_min - 1
+        new_q_root.index = left_max + 1 if left_max is not None else right_min - 1
+    remaining_roots = [r for r in P.forest if r not in roots_to_remove]
+    q_remaining_roots = [r for r in Q.forest if r not in q_roots_to_remove]
+    new_forest = IndexedForest(roots=(*remaining_roots, new_root))
+    q_forest = IndexedForest(roots=(*q_remaining_roots, new_q_root))
+    # for node in new_forest.inorder_traversal:
+    #     if node.label is None:
+    #         node.label = next_letter
+    new_P = LBS(new_forest)
+
+
+    #q_forest = IndexedForest(roots=(new_q_root, *Q.forest))
+    # for node in q_forest.inorder_traversal:
+    #     if node.label is None:
+    #         node.label = len(word_of_pairs)
+    new_Q = DecLabeling(q_forest)
+    return new_P, new_Q
 
 
 
 
 if __name__ == "__main__":
     # Example usage
-    comp = (2, 0, 1)
-    indfor = weak_composition_to_indfor(comp)
-    print("composition:", comp)
-    print(indfor)
-
-    comp = (0, 2, 0, 1)
-    indfor = weak_composition_to_indfor(comp)
-    print("composition:", comp)
-    print(indfor)
-
-    comp = (0, 2, 0, 1, 0, 0, 1 ,0, 0, 0, 2)
-    indfor = weak_composition_to_indfor(comp)
-    print("composition:", comp)
-    print(indfor)
+    print(omega_insertion((letterpair(2, 1), letterpair(7, 1), letterpair(4, 2), letterpair(4, 1), letterpair(8, 1), letterpair(4, 3))))

@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from schubmult.combinatorics.indexed_forests import word_to_indexed_forest
+from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
 from schubmult.utils.perm_utils import add_perm_dict, add_perm_dict_with_coeff
@@ -193,7 +193,7 @@ class SchubertPolyBasis(PolynomialBasis):
             for a in word:
                 aa = int(a)
                 counts[aa] = counts.get(aa, 0) + 1
-                out.append((aa, counts[aa]))
+                out.append(letterpair(aa, counts[aa]))
             return tuple(out)
 
         dct = {}
@@ -202,14 +202,14 @@ class SchubertPolyBasis(PolynomialBasis):
             word = tuple(reversed(rc.perm_word))
             pair_word = word_to_pair_labeled(word)
             print(pair_word)
-            indfor = word_to_indexed_forest(pair_word, val_fn=lambda letter: letter[0])
+            indfor = omega_insertion(pair_word)
             print(indfor)
             # if indfor.code not in dct:
             #     dct[indfor.code] = S.One
-            indfor_set.add(indfor)
+            indfor_set.add(indfor[0])
         print(indfor_set)
         for indfor in indfor_set:
-            dct[indfor.code] = dct.get(indfor.code, S.Zero) + S.One
+            dct[indfor.forest.code] = dct.get(indfor.forest.code, S.Zero) + S.One
         return dct
 
     def transition_forest(self, dct):
