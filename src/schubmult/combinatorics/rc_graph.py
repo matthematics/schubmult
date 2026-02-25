@@ -403,11 +403,51 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
         return tup[:-1]
 
+    @classmethod
+    @cache
+    def _extremal_weight(cls, hw_rc):
+        # search_space = {rc for rc in RCGraph.all_rc_graphs(perm, len(self)) if tuple(sorted(rc.length_vector, reverse=True)) == hw_vec}
+        # return min(search_space, key=lambda rc: tuple([sum(rc.length_vector[:i]) for i in range(1, len(rc.length_vector))])).length_vector
+        min_vec = hw_rc.length_vector
+        min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
+        for rc in hw_rc.full_crystal:
+            if tuple(sorted(rc.length_vector, reverse=True)) != hw_rc.length_vector:
+                continue
+            good = True
+            for j in range(1, len(rc.length_vector)):
+                if sum(rc.length_vector[:j]) > min_vec_prefix_sums[j - 1]:
+                    good = False
+                    break
+            if good:
+                min_vec = rc.length_vector
+                min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
+        return min_vec
+
     @property
     def extremal_weight(self):
-        def dom_key(comp):
-            return tuple([sum(comp[:i]) for i in range(1, len(comp))])
-        return min(self.full_crystal, key=lambda rc: dom_key(rc.length_vector)).length_vector
+        return RCGraph._extremal_weight(self.to_highest_weight()[0])
+        # hw_vec = self.to_highest_weight()[0].length_vector
+        # # search_space = {rc for rc in self.full_crystal if tuple(sorted(rc.length_vector, reverse=True)) == hw_vec}
+        # # for rc in sea
+        # # @cache
+        # # def dom_key(comp):
+        # #     return tuple([sum(comp[:i]) for i in range(1, len(comp))])
+        # # return min(search_space, key=lambda rc: dom_key(rc.length_vector)).length_vector
+        # min_vec = self.length_vector
+        # min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
+        # for rc in self.full_crystal:
+        #     if tuple(sorted(rc.length_vector, reverse=True)) != hw_vec:
+        #         continue
+        #     good = True
+        #     for j in range(1, len(rc.length_vector)):
+        #         if sum(rc.length_vector[:j]) > min_vec_prefix_sums[j - 1]:
+        #             good = False
+        #             break
+        #     if good:
+        #         min_vec = rc.length_vector
+        #         min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
+        # return min_vec
+        #return min(RCGraph.all_lw_rcs(self.perm, len(self)), key=lambda rc: dom_key(rc.length_vector)).length_vector
 
     @property
     def forest_invariant(self):

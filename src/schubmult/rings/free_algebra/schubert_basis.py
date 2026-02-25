@@ -157,13 +157,14 @@ class SchubertBasis(FreeAlgebraBasis):
         from .fundamental_slide_basis import FundamentalSlideBasis
         from .j_basis import JBasis
         from .jt_basis import JTBasis
+        from .key_basis import KeyBasis
         from .monomial_slide_basis import MonomialSlideBasis
         from .schubert_schur_basis import SchubertSchurBasis
         from .word_basis import WordBasis
         from .z_basis import ZBasis
 
         if other_basis == SchubertBasis:
-            return lambda x: {SchubertBasis.as_key(x): S.One}
+            return lambda x: {x: S.One}
         if other_basis == ElementaryBasis:
             return lambda x: cls.transition_elementary(*x)
         if other_basis == SchubertSchurBasis:
@@ -172,12 +173,8 @@ class SchubertBasis(FreeAlgebraBasis):
             return lambda x: cls.transition_word(*x)
         if other_basis.__name__ == "_SeparatedDescentsBasis":
             return lambda x: cls.transition_separated_descents(other_basis.k, *x)
-        if other_basis == ElementaryBasis:
-            return lambda x: cls.transition_elementary(*x)
-        if other_basis == ZBasis or other_basis == JTBasis or other_basis == JBasis or other_basis == MonomialSlideBasis or other_basis == ForestBasis:
-            return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition(WordBasis)(x))
-        if other_basis == FundamentalSlideBasis:
-            return lambda x: FreeAlgebraBasis.compose_transition(MonomialSlideBasis.transition(other_basis), cls.transition(MonomialSlideBasis)(x))
+        if other_basis == ZBasis or other_basis == JTBasis or other_basis == JBasis or other_basis == MonomialSlideBasis or other_basis == ForestBasis or other_basis == KeyBasis or other_basis == FundamentalSlideBasis:
+            return lambda x: FreeAlgebraBasis.compose_transition(WordBasis.transition(other_basis), cls.transition_word(*x))
         raise NotImplementedError(f"Transition from SchubertBasis to {other_basis} is not implemented.")
 
     @classmethod

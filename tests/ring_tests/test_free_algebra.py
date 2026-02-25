@@ -1,3 +1,5 @@
+import pytest
+
 def test_schubert_mul():
     from schubmult import ASx, uncode, Sx, Permutation
 
@@ -111,3 +113,39 @@ def test_elementary_to_schubert():
         poly = res.expand()
         assert wbelem.poly_inner_product(poly, Sx.genset, n) == v
 
+
+
+from schubmult.rings.free_algebra import WordBasis, SchubertBasis, ElementaryBasis, FundamentalSlideBasis, ForestBasis, MonomialSlideBasis, FA, KeyBasis
+
+@pytest.mark.parametrize("basis", [
+    WordBasis, 
+    SchubertBasis, 
+    ElementaryBasis, 
+    #FundamentalSlideBasis, 
+    ForestBasis, 
+    #MonomialSlideBasis, 
+    KeyBasis])
+def test_word_basis_transitions(basis):
+    
+
+    word_elem = FA(0,3,0,2)
+
+    word_elem2 = word_elem.change_basis(basis).change_basis(WordBasis)
+    assert word_elem2 == word_elem
+
+
+@pytest.mark.parametrize("basis", [
+    WordBasis, 
+    SchubertBasis, 
+    ElementaryBasis, 
+    #FundamentalSlideBasis, 
+    ForestBasis, 
+    #MonomialSlideBasis, 
+    KeyBasis])
+def test_schubert_basis_transitions(basis):
+    from schubmult import ASx, uncode
+
+    schub_elem = ASx(uncode([0,3,0,2]))
+
+    schub_elem2 = schub_elem.change_basis(basis).change_basis(SchubertBasis)
+    assert schub_elem2 == schub_elem
