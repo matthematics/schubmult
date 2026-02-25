@@ -1,3 +1,5 @@
+from functools import cache
+
 from schubmult.symbolic import S
 
 from ..printing import GenericPrintingTerm
@@ -31,14 +33,32 @@ class FundamentalSlideBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_schubert(cls, key):
+        from ...combinatorics.rc_graph import RCGraph
         from ..combinatorial import RCGraphRing
         r = RCGraphRing()
         dct = {}
         all_rcs = r.monomial(*key)
         for rc in all_rcs:
-            if rc.is_quasi_yamanouchi:
+            if rc.is_quasi_yamanouchi and rc.length_vector == key:
                 dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
         return dct
+
+    # @classmethod
+    # @cache
+    # def transition_monomial_slide(cls, key):
+    #     from .monomial_slide_basis import MonomialSlideBasis
+
+    #     key = tuple(key)
+    #     ret = {key: S.One}
+    #     fs_expansion = MonomialSlideBasis.transition_fundamental_slide(key)
+    #     for f_key, coeff in fs_expansion.items():
+    #         if f_key == key or coeff == S.Zero:
+    #             continue
+    #         for ms_key, ms_coeff in cls.transition_monomial_slide(f_key).items():
+    #             ret[ms_key] = ret.get(ms_key, S.Zero) - coeff * ms_coeff
+    #             if ret[ms_key] == S.Zero:
+    #                 del ret[ms_key]
+    #     return ret
 
 
     @classmethod

@@ -68,7 +68,6 @@ class FreeAlgebraBasis:
         )
 
     @classmethod
-    @cache
     def product(cls, key1, key2, coeff=S.One):
         from .word_basis import WordBasis
 

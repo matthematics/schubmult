@@ -1,4 +1,5 @@
 from functools import cache
+from itertools import combinations
 
 import schubmult.rings.free_algebra as fa
 from schubmult.combinatorics.permutation import uncode
@@ -210,9 +211,9 @@ class WordBasis(FreeAlgebraBasis):
         r = RCGraphRing()
         dct = {}
         all_rcs = r.monomial(*key)
+        the_invar = {}
         for rc in all_rcs:
-            indfor = rc.forest_invariant
-            code_key = pad_tuple(indfor.forest.code, len(key))
+            code_key = pad_tuple(rc.forest_invariant.forest.code, len(key))
             dct[code_key] = dct.get(code_key, S.Zero) + S.One
         return dct
 
@@ -247,20 +248,37 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_monomial_slide(cls, key):
-        stack = [key]
-        used = set()
+        key = tuple(key)
+        n = len(key)
+        flat_key = tuple(a for a in key if a > 0)
+
+        if len(flat_key) == 0:
+            return {tuple([0] * n): S.One}
+
+        prefix_key = []
+        running = 0
+        for value in key:
+            running += value
+            prefix_key.append(running)
+
         ret = {}
-        while len(stack) > 0:
-            working_comp = stack.pop()
-            ret[tuple(working_comp)] = S.One
-            for i in range(len(working_comp) - 1):
-                if i > 0 and working_comp[i] != 0 and working_comp[i + 1] == 0:
-                    new_comp = [*working_comp]
-                    new_comp[i] = 0
-                    new_comp[i + 1] = working_comp[i]
-                    if tuple(new_comp) not in used:
-                        stack.append(new_comp)
-                        used.add(tuple(new_comp))
+        m = len(flat_key)
+        for positions in combinations(range(n), m):
+            candidate = [0] * n
+            for i, pos in enumerate(positions):
+                candidate[pos] = flat_key[i]
+
+            running = 0
+            valid = True
+            for i, value in enumerate(candidate):
+                running += value
+                if running > prefix_key[i]:
+                    valid = False
+                    break
+
+            if valid:
+                ret[tuple(candidate)] = S.One
+
         return ret
 
     @classmethod
@@ -288,10 +306,60 @@ class WordBasis(FreeAlgebraBasis):
         piss = list(pain.finer())
         return {tuple([int(p) for p in pi]): (S.NegativeOne ** (sum(tup) - len(pi))) for pi in piss}
 
-    # @classmethod
-    # def transition_key(cls, key):
-    #     dct = {}
+    @classmethod
+    def transition_key(cls, key):
+        from schubmult.rings.combinatorial import RCGraphRing
+        r = RCGraphRing()
+        dct = {}
+        all_rcs = r.monomial(*key)
+        perm_map = {}
+        for rc in all_rcs:
+            if rc.extremal_weight not in perm_map:
+                perm_map[rc.extremal_weight] = rc.perm
+            elif perm_map[rc.extremal_weight] != rc.perm:
+                continue
+            dct[pad_tuple(rc.extremal_weight, len(key))] = dct.get(pad_tuple(rc.extremal_weight, len(key)), S.Zero) + S.One
+        return dct
 
+    @classmethod
+    def transition_fundamental_slide(cls, key):
+        def all_words(decreasing_compatible_sequence, max_value):
+            if len(decreasing_compatible_sequence) == 0:
+                return set([()])
+            if len(decreasing_compatible_sequence) == 1:
+                return set([(i,) for i in range(decreasing_compatible_sequence[0], max_value + 1)])
+            old_words = all_words(decreasing_compatible_sequence[:-1], max_value)
+            new_words = set()
+            for word in old_words:
+                new_words.update([(*word, i) for i in range(decreasing_compatible_sequence[-1], word[-1])])
+                if decreasing_compatible_sequence[-1] == decreasing_compatible_sequence[-2]:
+                    new_words.add((*word, word[-1]))
+                else:
+                    new_words.update([(*word, i) for i in range(decreasing_compatible_sequence[-1], word[-1] + 1)])
+            return new_words
+
+        def dec_word_to_code_rep(word, length):
+            ret = [0] * length
+            for i in range(len(word)):
+                ret[word[i] - 1] += 1
+            return tuple(ret)
+
+        def key_to_sequence(key):
+            seq = []
+            for i, a in enumerate(key):
+                if a != 0:
+                    seq.extend([i + 1] * a)
+            return tuple(reversed(seq))
+
+        compat_seq = key_to_sequence(key)
+        all_compat_words = all_words(compat_seq, len(key))
+        dct = {}
+        for word in all_compat_words:
+            print(word)
+            code_rep = dec_word_to_code_rep(word, len(key))
+            print(code_rep)
+            dct[code_rep] = dct.get(code_rep, S.Zero) + S.One
+        return dct
 
     @classmethod
     def transition(cls, other_basis):
@@ -299,8 +367,7 @@ class WordBasis(FreeAlgebraBasis):
         from .fundamental_slide_basis import FundamentalSlideBasis
         from .j_basis import JBasis
         from .jt_basis import JTBasis
-
-        # from .key_basis import KeyBasis
+        from .key_basis import KeyBasis
         from .monomial_slide_basis import MonomialSlideBasis
         from .nelementary_basis import NElementaryBasis
         from .schubert_basis import SchubertBasis
@@ -319,11 +386,11 @@ class WordBasis(FreeAlgebraBasis):
         if other_basis == ZBasis:
             return lambda x: cls.transition_zbasis(x)
         if other_basis == FundamentalSlideBasis:
-            return lambda x: FreeAlgebraBasis.compose_transition(MonomialSlideBasis.transition_fundamental_slide, cls.transition_monomial_slide(x))
+            return lambda x: cls.transition_fundamental_slide(x)
         if other_basis == ForestBasis:
             return lambda x: cls.transition_forest(x)
         if other_basis == MonomialSlideBasis:
             return lambda x: cls.transition_monomial_slide(x)
-        # if other_basis == KeyBasis:
-        #     return lambda x: cls.transition_key(x)
+        if other_basis == KeyBasis:
+            return lambda x: cls.transition_key(x)
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(x))

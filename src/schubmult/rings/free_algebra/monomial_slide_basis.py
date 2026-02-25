@@ -33,7 +33,6 @@ class MonomialSlideBasis(FreeAlgebraBasis):
 
 
     @classmethod
-    @cache
     def transition_fundamental_slide(cls, key):
         key = tuple(key)
         n = len(key)
@@ -86,11 +85,14 @@ class MonomialSlideBasis(FreeAlgebraBasis):
 
         return ret
 
-
+    
     @classmethod
     def transition(cls, other_basis):
         from .fundamental_slide_basis import FundamentalSlideBasis
+        #from .word_basis import WordBasis
 
         if other_basis == FundamentalSlideBasis:
             return lambda x: cls.transition_fundamental_slide(x)
+        # if other_basis == WordBasis:
+        #     return lambda x: cls.transition_word(x)
         return lambda x: FreeAlgebraBasis.compose_transition(FundamentalSlideBasis.transition(other_basis), cls.transition_fundamental_slide(x))

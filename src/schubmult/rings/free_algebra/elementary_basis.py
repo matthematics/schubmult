@@ -33,7 +33,7 @@ class ElementaryBasis(FreeAlgebraBasis):
             return lambda x: FreeAlgebraBasis.compose_transition(lambda y: SchubertBasis.transition_word(*y), cls.transition_schubert(*x))
         if other_basis.__name__ == "_SeparatedDescentsBasis":
             return lambda x: FreeAlgebraBasis.compose_transition(lambda y: SchubertBasis.transition_separated_descents(other_basis.k, *y), cls.transition_schubert(*x))
-        return None
+        return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(*x))
 
     @classmethod
     def transition_schubert(cls, tup, numvars):

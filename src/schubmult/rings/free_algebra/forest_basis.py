@@ -40,14 +40,10 @@ class ForestBasis(FreeAlgebraBasis):
         r = RCGraphRing()
         dct = {}
         all_rcs = r.monomial(*key)
-        seen = set()
-
         for rc in all_rcs:
             # if rc.is_lowest_weight:
             #     dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
             indfor = rc.forest_invariant
-            if indfor in seen:
-                continue
             if _eq_except_trailing_zeros(indfor.forest.code, key):
                 dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
         return dct

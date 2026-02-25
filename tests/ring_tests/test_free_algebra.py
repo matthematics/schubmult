@@ -111,3 +111,23 @@ def test_elementary_to_schubert():
         poly = res.expand()
         assert wbelem.poly_inner_product(poly, Sx.genset, n) == v
 
+def test_basis_change_consistency():
+    from schubmult import FreeAlgebra, uncode
+    from schubmult.rings.free_algebra import ElementaryBasis, WordBasis, SchubertBasis, SeparatedDescentsBasis, ForestBasis, KeyBasis, FundamentalSlideBasis, MonomialSlideBasis
+
+    # bases_to_test = [ElementaryBasis, SchubertBasis, WordBasis, ForestBasis, KeyBasis, FundamentalSlideBasis]
+    bases_to_test = [WordBasis,   SchubertBasis,  ForestBasis, KeyBasis, ElementaryBasis, ]
+    test_elements = {ElementaryBasis: ((1, 0, 1, 2), 3), SchubertBasis: (uncode([2,0,1,2]), 3), WordBasis: (1,2,0,3), ForestBasis: (2,0,2,1), KeyBasis: (2,0,3)}
+
+    for basis1 in bases_to_test:
+        b1 = FreeAlgebra(basis1)
+        for basis2 in bases_to_test:
+            if basis1 == basis2:
+                continue
+            b2 = FreeAlgebra(basis2)
+            elem = test_elements[basis1]
+            result1 = b1(*elem).change_basis(basis2).change_basis(basis1)
+            result2 = b1(*elem)
+            assert result1 == result2, f"Basis change inconsistency between {basis1.__name__} and {basis2.__name__} for element {elem}"
+
+
