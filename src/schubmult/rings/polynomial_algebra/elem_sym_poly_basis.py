@@ -1,9 +1,7 @@
-from functools import cached_property
-
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import S
 
-from ..schubert.schubert_ring import Sx
+from ..schubert.schubert_ring import SingleSchubertRing
 from .base_polynomial_basis import PolynomialBasis
 
 
@@ -20,20 +18,11 @@ class ElemSymPolyBasis(PolynomialBasis):
     def __hash__(self):
         return hash((self.ring, "dangit_bobjo"))
 
-    @cached_property
-    def monomial_basis(self):
+    def __init__(self, genset):
         from .monomial_basis import MonomialBasis
-
-        return MonomialBasis(genset=self.ring.genset)
-
-    @property
-    def genset(self):
-        return self.ring.genset
-
-    def __init__(self, ring=None):
-        self.ring = ring
-        if self.ring is None:
-            self.ring = Sx([]).ring
+        self.ring = SingleSchubertRing(genset)
+        super().__init__(genset=genset)
+        self._monomial_basis = MonomialBasis(genset=genset)
 
     def transition_schubert(self, dct):
         from schubmult.abc import e

@@ -6,7 +6,7 @@ from .key_poly_basis import KeyPolyBasis
 from .polynomial_basis import ElemSymPolyBasis, FundamentalSlidePolyBasis, MonomialBasis, MonomialSlidePolyBasis, PolynomialBasis, SchubertPolyBasis, SepDescPolyBasis
 
 Forest = PolynomialAlgebra(ForestPolyBasis(x))
-Schub = PolynomialAlgebra(SchubertPolyBasis(Sx))
+Schub = PolynomialAlgebra(SchubertPolyBasis(x))
 Key = PolynomialAlgebra(KeyPolyBasis(x))
 FSlide = PolynomialAlgebra(FundamentalSlidePolyBasis(x))
 Monomial = PolynomialAlgebra(MonomialBasis(x))

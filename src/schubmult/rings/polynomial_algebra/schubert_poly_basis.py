@@ -1,12 +1,10 @@
-from functools import cached_property
-
 from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
 from schubmult.utils.perm_utils import add_perm_dict, add_perm_dict_with_coeff
 from schubmult.utils.tuple_utils import pad_tuple
 
-from ..schubert.schubert_ring import Sx
+from ..schubert.schubert_ring import SingleSchubertRing
 from .base_polynomial_basis import PolynomialBasis
 
 
@@ -22,10 +20,6 @@ class SchubertPolyBasis(PolynomialBasis):
             res = add_perm_dict(res, {((k1, len0), (k2, length - len0)): v for (k1, k2), v in cprd.items()})
         return res
 
-    @property
-    def genset(self):
-        return self._genset
-
     def printing_term(self, k):
         return self.ring.printing_term(k)
 
@@ -37,17 +31,27 @@ class SchubertPolyBasis(PolynomialBasis):
             return (x, len(x.trimcode))
         return x
 
-    def __init__(self, ring=None):
-        self.ring = ring
-        if self.ring is None:
-            self.ring = Sx([]).ring
-        self._genset = self.ring.genset
-
-    @cached_property
-    def monomial_basis(self):
+    def __init__(self, genset=None, ring=None):
         from .monomial_basis import MonomialBasis
 
-        return MonomialBasis(genset=self.genset)
+        if ring is not None:
+            self.ring = ring
+            working_genset = self.ring.genset
+        elif hasattr(genset, "from_dict") and hasattr(genset, "genset"):
+            self.ring = genset
+            working_genset = self.ring.genset
+        else:
+            if genset is None:
+                from ..schubert.schubert_ring import Sx
+
+                self.ring = Sx
+                working_genset = self.ring.genset
+            else:
+                self.ring = SingleSchubertRing(genset)
+                working_genset = genset
+
+        super().__init__(genset=working_genset)
+        self._monomial_basis = MonomialBasis(genset=self.genset)
 
     def product(self, key1, key2, coeff=S.One):
         if key1[1] != key2[1]:

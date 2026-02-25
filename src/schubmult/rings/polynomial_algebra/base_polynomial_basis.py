@@ -6,9 +6,8 @@ from schubmult.utils.perm_utils import add_perm_dict
 
 class PolynomialBasis(ABC):
     @property
-    @abstractmethod
     def genset(self):
-        raise NotImplementedError
+        return self._genset
 
     @abstractmethod
     def is_key(self, x):
@@ -27,9 +26,8 @@ class PolynomialBasis(ABC):
         raise NotImplementedError
 
     @property
-    @abstractmethod
     def monomial_basis(self):
-        raise NotImplementedError
+        return self._monomial_basis
 
     @abstractmethod
     def transition(self, other_basis):
@@ -89,6 +87,9 @@ class PolynomialBasis(ABC):
             for key_schub_left, v2 in left.items():
                 ret = add_perm_dict(ret, mnb.transition(self)(mnb.product(key_schub_left, key_schub_right, v * v2)))
         return ret
+
+    def __init__(self, genset, *args, **kwargs):  # noqa: ARG002
+        self._genset = genset
 
     @classmethod
     def dual_basis(cls): ...

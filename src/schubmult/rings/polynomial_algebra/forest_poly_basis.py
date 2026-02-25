@@ -61,25 +61,9 @@ class ForestPolyBasis(PolynomialBasis):
     def printing_term(self, k):
         return GenericPrintingTerm(f"Forest{k}", "")
 
-    # def coproduct(self, key):
-    #     result_dict = {}
-    #     key = self.as_key(key)
-    #     for i in range(len(key) + 1):
-    #         result_dict[(key[:i], key[i:])] = S.One
-    #     return result_dict
-
-    @property
-    def monomial_basis(self):
-        return self._monomial_basis
-
-    @property
-    def genset(self):
-        return self._genset
-
     def __init__(self, genset):
         from schubmult.rings.polynomial_algebra.monomial_basis import MonomialBasis
-
-        self._genset = genset
+        super().__init__(genset=genset)
         self._monomial_basis = MonomialBasis(genset=self.genset)
 
     def to_monoms(self, key):

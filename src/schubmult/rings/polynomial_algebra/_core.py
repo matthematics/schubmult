@@ -34,9 +34,15 @@ class PolynomialAlgebraElement(BaseRingElement):
     def free_symbols(self):
         return set()
 
-    def change_basis(self, other_basis):
-        new_ring = PolynomialAlgebra(basis=other_basis)
-        tfunc = self.ring._basis.transition(other_basis)
+    def change_basis(self, other_basis: type):
+        if isinstance(other_basis, type):
+            basis_obj = other_basis(self.ring.genset)
+        elif hasattr(other_basis, "transition") and hasattr(other_basis, "is_key"):
+            basis_obj = other_basis
+        else:
+            basis_obj = other_basis(self.ring.genset)
+        new_ring = PolynomialAlgebra(basis=basis_obj)
+        tfunc = self.ring._basis.transition(new_ring._basis)
         return new_ring.from_dict(tfunc(self))
 
     def __eq__(self, other):

@@ -57,14 +57,6 @@ class KeyPolyBasis(PolynomialBasis):
         from ..free_algebra.key_basis import KeyBasis
         return KeyBasis
 
-    @property
-    def monomial_basis(self):
-        return self._monomial_basis
-
-    @property
-    def genset(self):
-        return self._genset
-
     def __init__(self, genset):
         from .monomial_basis import MonomialBasis
 
