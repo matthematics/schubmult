@@ -214,6 +214,11 @@ class FundamentalSlidePolyBasis(PolynomialBasis):
         dct = {pad_tuple(k, len(key)): v for k, v in genset_dict_from_expr(_fundamental_slide_polynomial(key, self.genset), self.genset).items()}
         return dct
 
+    @classmethod
+    def dual_basis(cls):
+        from ..free_algebra.fundamental_slide_basis import FundamentalSlideBasis
+        return FundamentalSlideBasis
+
     def expand(self, dct):
         return sum([v * _fundamental_slide_polynomial(key, self.genset) for key, v in dct.items()])
 

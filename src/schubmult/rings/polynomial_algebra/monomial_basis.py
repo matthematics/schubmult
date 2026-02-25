@@ -83,6 +83,11 @@ class MonomialBasis(PolynomialBasis):
             ret = add_perm_dict(ret, schub_dict_with_length)
         return ret
 
+    @classmethod
+    def dual_basis(cls):
+        from ..free_algebra.word_basis import WordBasis
+        return WordBasis
+
     def transition(self, other_basis):
         from .elem_sym_poly_basis import ElemSymPolyBasis
         from .monomial_slide_poly_basis import MonomialSlidePolyBasis

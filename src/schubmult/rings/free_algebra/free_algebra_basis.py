@@ -29,6 +29,9 @@ class FreeAlgebraBasis:
         return ret
 
     @classmethod
+    def dual_basis(cls): ...
+
+    @classmethod
     def change_tensor_basis(cls, tensor_elem, basis1, basis2):
         from ..tensor_ring import TensorRing
 

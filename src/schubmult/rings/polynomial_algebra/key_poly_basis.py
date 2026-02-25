@@ -52,12 +52,10 @@ class KeyPolyBasis(PolynomialBasis):
     def printing_term(self, k):
         return GenericPrintingTerm(f"KeyPoly{k}", "")
 
-    # def coproduct(self, key):
-    #     result_dict = {}
-    #     key = self.as_key(key)
-    #     for i in range(len(key) + 1):
-    #         result_dict[(key[:i], key[i:])] = S.One
-    #     return result_dict
+    @classmethod
+    def dual_basis(cls):
+        from ..free_algebra.key_basis import KeyBasis
+        return KeyBasis
 
     @property
     def monomial_basis(self):

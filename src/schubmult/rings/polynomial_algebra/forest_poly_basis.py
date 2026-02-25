@@ -131,6 +131,11 @@ class ForestPolyBasis(PolynomialBasis):
                 ret = new_ret
         return ret
 
+    @classmethod
+    def dual_basis(cls):
+        from ..free_algebra.forest_basis import ForestBasis
+        return ForestBasis
+
     def transition(self, other_basis):
         from schubmult.rings.polynomial_algebra.fundamental_slide_poly_basis import FundamentalSlidePolyBasis
         from schubmult.rings.polynomial_algebra.monomial_basis import MonomialBasis

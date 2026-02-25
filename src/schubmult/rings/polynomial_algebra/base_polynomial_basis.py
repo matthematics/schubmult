@@ -89,3 +89,6 @@ class PolynomialBasis(ABC):
             for key_schub_left, v2 in left.items():
                 ret = add_perm_dict(ret, mnb.transition(self)(mnb.product(key_schub_left, key_schub_right, v * v2)))
         return ret
+
+    @classmethod
+    def dual_basis(cls): ...

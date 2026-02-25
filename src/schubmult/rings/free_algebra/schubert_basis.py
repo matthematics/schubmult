@@ -146,6 +146,11 @@ class SchubertBasis(FreeAlgebraBasis):
         return FreeAlgebraBasis.compose_transition(WordBasis.transition_jbasis, cls.transition_word(perm, n))
 
     @classmethod
+    def dual_basis(cls):
+        from ..polynomial_algebra.schubert_poly_basis import SchubertPolyBasis
+        return SchubertPolyBasis
+
+    @classmethod
     def transition(cls, other_basis):
         from .elementary_basis import ElementaryBasis
         from .forest_basis import ForestBasis

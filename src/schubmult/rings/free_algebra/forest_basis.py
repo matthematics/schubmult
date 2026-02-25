@@ -1,4 +1,3 @@
-from schubmult.combinatorics.indexed_forests import omega_insertion
 from schubmult.rings.free_algebra.free_algebra_basis import FreeAlgebraBasis
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import S
@@ -23,31 +22,35 @@ class ForestBasis(FreeAlgebraBasis):
 
     zero_monom = ()
 
-
     @classmethod
     def printing_term(cls, k):
         return GenericPrintingTerm(k, "Forest")
 
+    @classmethod
+    def dual_basis(cls):
+        from ..polynomial_algebra.forest_poly_basis import ForestPolyBasis
+
+        return ForestPolyBasis
 
     @classmethod
     def transition_schubert(cls, key):
+        from schubmult.combinatorics.indexed_forests import _eq_except_trailing_zeros
         from schubmult.rings.combinatorial import RCGraphRing
+
         r = RCGraphRing()
         dct = {}
         all_rcs = r.monomial(*key)
         seen = set()
+
         for rc in all_rcs:
             # if rc.is_lowest_weight:
             #     dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
-            word = list(reversed(rc.perm_word))
-            indfor = omega_insertion(word)[0]
+            indfor = rc.forest_invariant
             if indfor in seen:
                 continue
-            if indfor.forest.code == key:
-                seen.add(indfor)
+            if _eq_except_trailing_zeros(indfor.forest.code, key):
                 dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
         return dct
-
 
     @classmethod
     def transition(cls, other_basis):
@@ -56,6 +59,7 @@ class ForestBasis(FreeAlgebraBasis):
         if other_basis == SchubertBasis:
             return lambda x: cls.transition_schubert(x)
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(x))
+
 
 if __name__ == "__main__":
     from schubmult import FreeAlgebra, SchubertBasis

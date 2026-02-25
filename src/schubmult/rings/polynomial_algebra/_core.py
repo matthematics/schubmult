@@ -21,7 +21,6 @@ logger = get_logger(__name__)
 
 # keys are tuples of nonnegative integers
 class PolynomialAlgebraElement(BaseRingElement):
-
     def __hash__(self):
         return hash(set(self.items()))
 
@@ -50,6 +49,21 @@ class PolynomialAlgebraElement(BaseRingElement):
     def expand(self):
         return self.ring._basis.expand(self)
 
+    def apply_dual_element(self, dual_elem):
+        from ..free_algebra.word_basis import WordBasis
+        from .monomial_basis import MonomialBasis
+
+        word_elem = dual_elem.change_basis(WordBasis)
+        monom_elem = self.change_basis(MonomialBasis(self.ring.genset))
+
+        result = S.Zero
+
+        for k, v in monom_elem.items():
+            for k2, v2 in word_elem.items():
+                if k == k2:
+                    result += v * v2
+        return result
+
     def __str__(self):
         return sstr(self)
 
@@ -73,6 +87,10 @@ class PolynomialAlgebra(BaseRing):
         self._basis = basis
         self.zero_monom = self._basis.zero_monom
         self.dtype = type("PolynomialAlgebraElement", (PolynomialAlgebraElement,), {"ring": self})
+
+    @property
+    def genset(self):
+        return self._basis.genset
 
     @cache
     def coproduct_on_basis(self, key):

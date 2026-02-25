@@ -22,6 +22,10 @@ class KeyBasis(FreeAlgebraBasis):
 
     zero_monom = ()
 
+    @classmethod
+    def dual_basis(cls):
+        from ..polynomial_algebra.key_poly_basis import KeyPolyBasis
+        return KeyPolyBasis
 
     @classmethod
     def printing_term(cls, k):

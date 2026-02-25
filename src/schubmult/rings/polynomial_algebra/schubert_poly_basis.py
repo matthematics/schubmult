@@ -182,6 +182,11 @@ class SchubertPolyBasis(PolynomialBasis):
         dct = {pad_tuple(k, key[1]): v for k, v in genset_dict_from_expr(self.ring.from_dict({key[0]: S.One}).as_polynomial(), self.genset).items()}
         return dct
 
+    @classmethod
+    def dual_basis(cls):
+        from ..free_algebra.schubert_basis import SchubertBasis
+        return SchubertBasis
+
     def transition_forest_key(self, key):
         from schubmult.combinatorics.rc_graph import RCGraph
 

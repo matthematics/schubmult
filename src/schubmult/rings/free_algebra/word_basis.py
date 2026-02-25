@@ -4,6 +4,7 @@ import schubmult.rings.free_algebra as fa
 from schubmult.combinatorics.permutation import uncode
 from schubmult.symbolic import S, Symbol
 from schubmult.utils.perm_utils import add_perm_dict
+from schubmult.utils.tuple_utils import pad_tuple
 
 from ..schubert.schubert_ring import DSx, Sx
 from ..schubert.separated_descents import SeparatedDescentsRing
@@ -203,6 +204,22 @@ class WordBasis(FreeAlgebraBasis):
             ret += c * JB(new_tup, pw)
         return dict(ret)
 
+    @classmethod
+    def transition_forest(cls, key):
+        from schubmult.rings.combinatorial import RCGraphRing
+        r = RCGraphRing()
+        dct = {}
+        all_rcs = r.monomial(*key)
+        for rc in all_rcs:
+            indfor = rc.forest_invariant
+            code_key = pad_tuple(indfor.forest.code, len(key))
+            dct[code_key] = dct.get(code_key, S.Zero) + S.One
+        return dct
+
+    @classmethod
+    def dual_basis(cls):
+        from ..polynomial_algebra.monomial_basis import MonomialBasis
+        return MonomialBasis
     # @classmethod
     # def transition_forest(cls, key):
     #     from schubmult.combinatorics.indexed_forests import word_to_indexed_forest

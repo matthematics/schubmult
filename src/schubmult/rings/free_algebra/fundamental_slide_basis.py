@@ -42,6 +42,11 @@ class FundamentalSlideBasis(FreeAlgebraBasis):
 
 
     @classmethod
+    def dual_basis(cls):
+        from ..polynomial_algebra.fundamental_slide_poly_basis import FundamentalSlidePolyBasis
+        return FundamentalSlidePolyBasis
+
+    @classmethod
     def transition(cls, other_basis):
         from .schubert_basis import SchubertBasis
 
