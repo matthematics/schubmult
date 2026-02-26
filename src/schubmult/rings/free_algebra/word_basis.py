@@ -1,5 +1,4 @@
 from functools import cache
-from itertools import combinations
 
 import schubmult.rings.free_algebra as fa
 from schubmult.combinatorics.permutation import uncode
@@ -16,6 +15,19 @@ ADSx = SeparatedDescentsRing(DSx([]).ring)
 
 
 class WordBasis(FreeAlgebraBasis):
+    @staticmethod
+    def _weak_compositions(length, total):
+        if length == 0:
+            if total == 0:
+                yield ()
+            return
+        if length == 1:
+            yield (total,)
+            return
+        for i in range(total + 1):
+            for tail in WordBasis._weak_compositions(length - 1, total - i):
+                yield (i, *tail)
+
     @classmethod
     def is_key(cls, x):
         return isinstance(x, tuple | list)
@@ -253,39 +265,54 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_monomial_slide(cls, key):
+        from schubmult.abc import x
+        from schubmult.rings.polynomial_algebra.monomial_slide_poly_basis import MonomialSlidePolyBasis
+
         key = tuple(key)
-        n = len(key)
-        flat_key = tuple(a for a in key if a > 0)
-
-        if len(flat_key) == 0:
-            return {tuple([0] * n): S.One}
-
-        prefix_key = []
-        running = 0
-        for a in key:
-            running += a
-            prefix_key.append(running)
+        length = len(key)
+        total = sum(key)
+        poly_basis = MonomialSlidePolyBasis(x)
 
         ret = {}
-        m = len(flat_key)
-        for positions in combinations(range(n), m):
-            candidate = [0] * n
-            for i, pos in enumerate(positions):
-                candidate[pos] = flat_key[i]
-
-            running = 0
-            dominates = True
-            for i, a in enumerate(candidate):
-                running += a
-                if running < prefix_key[i]:
-                    dominates = False
-                    break
-
-            if dominates:
-                key_candidate = tuple(candidate)
-                ret[key_candidate] = ret.get(key_candidate, S.Zero) + S.One
-
+        for candidate in cls._weak_compositions(length, total):
+            coeff = poly_basis.to_monoms(candidate).get(key, S.Zero)
+            if coeff != S.Zero:
+                ret[candidate] = coeff
         return ret
+
+        # key = tuple(key)
+        # n = len(key)
+        # flat_key = tuple(a for a in key if a > 0)
+
+        # if len(flat_key) == 0:
+        #     return {tuple([0] * n): S.One}
+
+        # prefix_key = []
+        # running = 0
+        # for a in key:
+        #     running += a
+        #     prefix_key.append(running)
+
+        # ret = {}
+        # m = len(flat_key)
+        # for positions in combinations(range(n), m):
+        #     candidate = [0] * n
+        #     for i, pos in enumerate(positions):
+        #         candidate[pos] = flat_key[i]
+
+        #     running = 0
+        #     dominates = True
+        #     for i, a in enumerate(candidate):
+        #         running += a
+        #         if running < prefix_key[i]:
+        #             dominates = False
+        #             break
+
+        #     if dominates:
+        #         key_candidate = tuple(candidate)
+        #         ret[key_candidate] = ret.get(key_candidate, S.Zero) + S.One
+
+        # return ret
 
     @classmethod
     def transition_zbasis(cls, key):
@@ -331,21 +358,20 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_fundamental_slide(cls, key):
-        from schubmult.rings.combinatorial import RCGraphRing
-        r = RCGraphRing()
-        dct = {}
-        all_rcs = r.monomial(*key)
-        seen = {}
-        for rc in all_rcs:
-            if not rc.is_quasi_yamanouchi:
-                continue
-            code_key = rc.length_vector
-            if code_key not in seen:
-                seen[code_key] = rc.perm
-            elif seen[code_key] != rc.perm:
-                continue
-            dct[code_key] = dct.get(code_key, S.Zero) + S.One
-        return dct
+        from schubmult.abc import x
+        from schubmult.rings.polynomial_algebra.fundamental_slide_poly_basis import FundamentalSlidePolyBasis
+
+        key = tuple(key)
+        length = len(key)
+        total = sum(key)
+        poly_basis = FundamentalSlidePolyBasis(x)
+
+        ret = {}
+        for candidate in cls._weak_compositions(length, total):
+            coeff = poly_basis.to_monoms(candidate).get(key, S.Zero)
+            if coeff != S.Zero:
+                ret[candidate] = coeff
+        return ret
 
 
 

@@ -1,3 +1,5 @@
+from functools import cache
+
 from schubmult.symbolic import S
 
 from ..printing import GenericPrintingTerm
@@ -5,6 +7,19 @@ from .free_algebra_basis import FreeAlgebraBasis
 
 
 class FundamentalSlideBasis(FreeAlgebraBasis):
+    @staticmethod
+    def _weak_compositions(length, total):
+        if length == 0:
+            if total == 0:
+                yield ()
+            return
+        if length == 1:
+            yield (total,)
+            return
+        for i in range(total + 1):
+            for tail in FundamentalSlideBasis._weak_compositions(length - 1, total - i):
+                yield (i, *tail)
+
     @classmethod
     def is_key(cls, x):
         return isinstance(x, tuple | list)
@@ -31,14 +46,30 @@ class FundamentalSlideBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_schubert(cls, key):
-        from ..combinatorial import RCGraphRing
-        r = RCGraphRing()
-        dct = {}
-        all_rcs = r.monomial(*key)
-        for rc in all_rcs:
-            if rc.is_quasi_yamanouchi:
-                dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
-        return dct
+        from .word_basis import WordBasis
+
+        return FreeAlgebraBasis.compose_transition(WordBasis.transition_schubert, cls.transition_word(key))
+
+    @classmethod
+    @cache
+    def transition_word(cls, key):
+        from schubmult.abc import x
+        from schubmult.rings.polynomial_algebra.fundamental_slide_poly_basis import FundamentalSlidePolyBasis
+        from schubmult.rings.polynomial_algebra.monomial_basis import MonomialBasis
+
+        key = tuple(key)
+        length = len(key)
+        total = sum(key)
+        mon = MonomialBasis(x)
+        fslide = FundamentalSlidePolyBasis(x)
+
+        ret = {}
+        for word_key in cls._weak_compositions(length, total):
+            dct = mon.transition_slide({word_key: S.One}, fslide)
+            coeff = dct.get(key, S.Zero)
+            if coeff != S.Zero:
+                ret[word_key] = coeff
+        return ret
 
 
     @classmethod
@@ -49,7 +80,10 @@ class FundamentalSlideBasis(FreeAlgebraBasis):
     @classmethod
     def transition(cls, other_basis):
         from .schubert_basis import SchubertBasis
+        from .word_basis import WordBasis
 
         if other_basis == SchubertBasis:
             return lambda x: cls.transition_schubert(x)
+        if other_basis == WordBasis:
+            return lambda x: cls.transition_word(x)
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(x))
