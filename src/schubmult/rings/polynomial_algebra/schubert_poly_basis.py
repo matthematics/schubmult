@@ -24,12 +24,12 @@ class SchubertPolyBasis(PolynomialBasis):
         return self.ring.printing_term(k)
 
     def is_key(self, x):
-        return isinstance(x, list | tuple | Permutation)
+        return isinstance(x, Permutation) or (isinstance(x, list | tuple) and len(x) == 2 and isinstance(x[0], Permutation) and isinstance(x[1], int))
 
     def as_key(self, x):
         if isinstance(x, Permutation):
             return (x, len(x.trimcode))
-        return x
+        return tuple(x)
 
     def __init__(self, genset=None, ring=None):
         from .monomial_basis import MonomialBasis
@@ -91,7 +91,7 @@ class SchubertPolyBasis(PolynomialBasis):
 
     def transition_elementary(self, dct, other_basis):
         from schubmult.combinatorics.permutation import uncode
-        from schubmult.rings import FA
+        from schubmult.rings.free_algebra import FA
 
         res = {}
         elem = self.ring.from_dict(dct)
@@ -114,7 +114,7 @@ class SchubertPolyBasis(PolynomialBasis):
                         numvars = part[i + 1]
                         if numvars == 0:
                             continue
-                        if numvars == other_basis.numvars:
+                        if numvars == num_vars:
                             if len(funny_bacon) < numvars:
                                 funny_bacon += [0] * (numvars - len(funny_bacon))
                                 funny_bacon[numvars - 1] = degree
@@ -124,8 +124,8 @@ class SchubertPolyBasis(PolynomialBasis):
                             if len(funny_bacon) < numvars:
                                 funny_bacon += [0] * (numvars - len(funny_bacon))
                             funny_bacon[numvars - 1] += degree
-                    funny_bacon = funny_bacon[: other_basis.numvars - 1] + sorted(funny_bacon[other_basis.numvars - 1 :])
-                    key = other_basis.as_key(funny_bacon)
+                    funny_bacon = funny_bacon[: num_vars - 1] + sorted(funny_bacon[num_vars - 1 :])
+                    key = (tuple(funny_bacon), k[1])
                     res[key] = res.get(key, S.Zero) + v * v2
             else:
                 key = other_basis.zero_monom
@@ -232,14 +232,17 @@ class SchubertPolyBasis(PolynomialBasis):
         from .fundamental_slide_poly_basis import FundamentalSlidePolyBasis
         from .key_poly_basis import KeyPolyBasis
         from .monomial_basis import MonomialBasis
+        from .monomial_slide_poly_basis import MonomialSlidePolyBasis
         from .sepdesc_poly_basis import SepDescPolyBasis
 
         if isinstance(other_basis, SchubertPolyBasis):
             return lambda x: dict(x)
         if isinstance(other_basis, FundamentalSlidePolyBasis):
             return lambda x: self.transition_fundamental_slide(x)
+        if isinstance(other_basis, MonomialSlidePolyBasis):
+            bas = FundamentalSlidePolyBasis(genset=other_basis.genset)
+            return lambda x: bas.transition(other_basis)(self.transition_fundamental_slide(x))
         if isinstance(other_basis, MonomialBasis):
-
             def sum_dct(*dcts):
                 res = {}
                 for dct in dcts:

@@ -89,7 +89,6 @@ class MonomialBasis(PolynomialBasis):
         return WordBasis
 
     def transition(self, other_basis):
-        from .elem_sym_poly_basis import ElemSymPolyBasis
         from .monomial_slide_poly_basis import MonomialSlidePolyBasis
         from .schubert_poly_basis import SchubertPolyBasis
         from .sepdesc_poly_basis import SepDescPolyBasis
@@ -101,17 +100,15 @@ class MonomialBasis(PolynomialBasis):
         if isinstance(other_basis, MonomialSlidePolyBasis):
             return lambda x: self.transition_slide(x, other_basis)
         if isinstance(other_basis, SepDescPolyBasis):
-            bonky_basis = SchubertPolyBasis(ring=other_basis.ring)
+            bonky_basis = SchubertPolyBasis(genset=other_basis.genset)
             return lambda x: other_basis.attach_key(bonky_basis.transition(other_basis)(bonky_basis.attach_key(bonky_basis.ring.from_expr(Add(*[v * self.expand_monom(k) for k, v in x.items()])))))
-        if isinstance(other_basis, ElemSymPolyBasis):
-            spb = SchubertPolyBasis(ring=other_basis.ring)
-            return lambda x: spb.transition(other_basis)(self.transition(spb)(x))
-        raise NotImplementedError(f"Transition from {type(self)} to {type(other_basis)} not implemented")
+        spb = SchubertPolyBasis(genset=other_basis.genset)
+        return lambda x: spb.transition(other_basis)(self.transition(spb)(x))
 
-    def from_expr(self, expr):
+    def from_expr(self, expr, length=None):
         from schubmult.symbolic.poly.variables import genset_dict_from_expr
 
-        return genset_dict_from_expr(expr, self.genset)
+        return genset_dict_from_expr(expr, self.genset, length=length)
 
     @property
     def zero_monom(self):

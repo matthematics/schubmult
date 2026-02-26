@@ -278,12 +278,14 @@ def poly_genset(v: str):
     return GeneratingSet(str(v))
 
 
-def genset_dict_from_expr(expr, genset):
+def genset_dict_from_expr(expr, genset, length=None):
     """Transform expressions into a multinomial form given generators. """
     try:
         k = max([genset.index(a) for a in expr.free_symbols])
     except Exception:
         return {(): expr}
+    if length is not None:
+        k = length
     poly = {}
     expr = expand(expr)
     for term in Add.make_args(expr):

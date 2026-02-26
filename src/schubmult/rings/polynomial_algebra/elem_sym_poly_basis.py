@@ -27,28 +27,34 @@ class ElemSymPolyBasis(PolynomialBasis):
     def transition_schubert(self, dct):
         from schubmult.abc import e
 
-        res = self.ring.zero
+        res = {}
         for (k, n), v in dct.items():
             to_add = self.ring.one
             for i, a in enumerate(k[:n]):
+                if a == 0:
+                    continue
                 to_add = self.ring.elem_mul(to_add, e(a, i + 1, self.ring.genset[1:]))
-            for a in enumerate(k[n:]):
+            for i, a in enumerate(k[n:]):
+                if a == 0:
+                    continue
                 to_add = self.ring.elem_mul(to_add, e(a, n, self.ring.genset[1:]))
-            res += v * to_add
+            for perm, coeff in to_add.items():
+                res[(perm, n)] = res.get((perm, n), S.Zero) + v * coeff
         return res
 
     def transition_monomial(self, dct):
         from schubmult.abc import e
         from schubmult.symbolic import expand_func
+        from schubmult.utils.perm_utils import add_perm_dict_with_coeff
 
-        res = S.Zero
+        res = {}
         for (k, n), v in dct.items():
             to_add = S.One
             for i, a in enumerate(k[:n]):
                 to_add *= expand_func(e(a, i + 1, self.ring.genset[1:]))
-            for a in k[n:]:
+            for i, a in enumerate(k[n:]):
                 to_add *= expand_func(e(a, n, self.ring.genset[1:]))
-            res += v * to_add
+            res = add_perm_dict_with_coeff(res, self.monomial_basis.from_expr(res, length=n), coeff=v)
         return res
 
     def transition(self, other_basis):

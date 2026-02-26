@@ -127,3 +127,40 @@ def test_schubert_key_expansion():
     sch = PolynomialAlgebra(SchubertPolyBasis(Sx))
     for perm in perms:
         assert expand(sch(perm).change_basis(KeyPolyBasis(Sx.genset)).expand() - sch(perm).expand()) == 0
+
+from schubmult.rings.polynomial_algebra import PolynomialAlgebra, MonomialBasis, SchubertPolyBasis, ElemSymPolyBasis, FundamentalSlidePolyBasis, ForestPolyBasis, MonomialSlidePolyBasis, KeyPolyBasis
+
+@pytest.mark.parametrize("basis", [
+    MonomialBasis, 
+    SchubertPolyBasis, 
+    ElemSymPolyBasis, 
+    FundamentalSlidePolyBasis, 
+    ForestPolyBasis, 
+    MonomialSlidePolyBasis, 
+    KeyPolyBasis])
+def test_monomial_basis_transitions(basis):
+    from schubmult.abc import x
+
+    PA = PolynomialAlgebra(MonomialBasis(x))
+
+    monom_elem = PA(1, 3, 1, 2) + PA(2,2,0,3) + PA(0, 1, 4, 0)
+    monom_elem2 = monom_elem.change_basis(basis).change_basis(MonomialBasis(x))
+    assert monom_elem2.almosteq(monom_elem)
+
+@pytest.mark.parametrize("basis", [
+    MonomialBasis, 
+    SchubertPolyBasis, 
+    ElemSymPolyBasis, 
+    FundamentalSlidePolyBasis, 
+    ForestPolyBasis, 
+    MonomialSlidePolyBasis, 
+    KeyPolyBasis])
+def test_schubert_basis_transitions(basis):
+    from schubmult.abc import x
+    from schubmult import uncode
+
+    Schub = PolynomialAlgebra(SchubertPolyBasis(x))
+
+    monom_elem = Schub(uncode([2,0,1,3])) - Schub(uncode([2,0,1]), 4)
+    monom_elem2 = monom_elem.change_basis(basis).change_basis(SchubertPolyBasis)
+    assert monom_elem2.almosteq(monom_elem)
