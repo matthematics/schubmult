@@ -121,9 +121,9 @@ from schubmult.rings.free_algebra import WordBasis, SchubertBasis, ElementaryBas
     WordBasis, 
     SchubertBasis, 
     ElementaryBasis, 
-    #FundamentalSlideBasis, 
+    pytest.param(FundamentalSlideBasis, marks=pytest.mark.xfail(reason="FundamentalSlideBasis transition not implemented yet")), 
     ForestBasis, 
-    #MonomialSlideBasis, 
+    pytest.param(MonomialSlideBasis, marks=pytest.mark.xfail(reason="MonomialSlideBasis transition not implemented yet")), 
     KeyBasis])
 def test_word_basis_transitions(basis):
     
@@ -138,9 +138,9 @@ def test_word_basis_transitions(basis):
     WordBasis, 
     SchubertBasis, 
     ElementaryBasis, 
-    #FundamentalSlideBasis, 
+    pytest.param(FundamentalSlideBasis, marks=pytest.mark.xfail(reason="FundamentalSlideBasis transition not implemented yet")), 
     ForestBasis, 
-    #MonomialSlideBasis, 
+    pytest.param(MonomialSlideBasis, marks=pytest.mark.xfail(reason="MonomialSlideBasis transition not implemented yet")), 
     KeyBasis])
 def test_schubert_basis_transitions(basis):
     from schubmult import ASx, uncode

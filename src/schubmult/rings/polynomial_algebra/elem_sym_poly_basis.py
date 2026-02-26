@@ -54,7 +54,7 @@ class ElemSymPolyBasis(PolynomialBasis):
                 to_add *= expand_func(e(a, i + 1, self.ring.genset[1:]))
             for i, a in enumerate(k[n:]):
                 to_add *= expand_func(e(a, n, self.ring.genset[1:]))
-            res = add_perm_dict_with_coeff(res, self.monomial_basis.from_expr(res, length=n), coeff=v)
+            res = add_perm_dict_with_coeff(res, self.monomial_basis.from_expr(to_add, length=n), coeff=v)
         return res
 
     def transition(self, other_basis):
@@ -64,9 +64,7 @@ class ElemSymPolyBasis(PolynomialBasis):
         if isinstance(other_basis, SchubertPolyBasis):
             return lambda x: other_basis.attach_key(self.transition_schubert(x))
         if isinstance(other_basis, MonomialBasis):
-            from schubmult.symbolic.poly.variables import genset_dict_from_expr
-
-            return lambda x: other_basis.attach_key(genset_dict_from_expr(self.transition_monomial(x), other_basis.genset))
+            return lambda x: other_basis.attach_key(self.transition_monomial(x))
         if isinstance(other_basis, ElemSymPolyBasis):
             return lambda x: x
         return None
