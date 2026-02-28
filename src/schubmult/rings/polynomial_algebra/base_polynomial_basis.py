@@ -33,6 +33,15 @@ class PolynomialBasis(ABC):
     def transition(self, other_basis):
         raise NotImplementedError
 
+    def from_expr(self, expr, length=None):
+        from .monomial_basis import MonomialBasis
+
+        monomial_basis = MonomialBasis(genset=self.genset)
+        monomial_dict = monomial_basis.from_expr(expr, length=length)
+        if isinstance(self, MonomialBasis):
+            return monomial_dict
+        return monomial_basis.transition(self)(monomial_dict)
+
     @abstractmethod
     def printing_term(self, k):
         raise NotImplementedError

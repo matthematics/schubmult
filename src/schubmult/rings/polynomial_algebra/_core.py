@@ -128,10 +128,18 @@ class PolynomialAlgebra(BaseRing):
             return self.from_expr(x[0])
         if self._basis.is_key(x):
             return self.from_dict({self._basis.as_key(x): S.One})
-        return self.from_dict(self._basis.from_expr(x))
+        return self.from_expr(x)
 
     def from_expr(self, x, length=None):
-        return self.from_dict(self._basis.from_expr(x, length=length))
+        from .monomial_basis import MonomialBasis
+
+        monomial_basis = MonomialBasis(genset=self.genset)
+        monomial_dict = monomial_basis.from_expr(x, length=length)
+
+        if isinstance(self._basis, MonomialBasis):
+            return self.from_dict(monomial_dict)
+
+        return self.from_dict(monomial_basis.transition(self._basis)(monomial_dict))
 
     def printing_term(self, k):
         return self._basis.printing_term(k)

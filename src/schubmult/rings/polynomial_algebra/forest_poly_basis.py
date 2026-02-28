@@ -148,15 +148,6 @@ class ForestPolyBasis(PolynomialBasis):
                 ret = add_perm_dict(ret, schub.transition(self)(schub.product(key_schub_left, key_schub_right, v * v2)))
         return ret
 
-    def from_expr(self, expr, length=None):
-        _ = length
-        try:
-            from schubmult.symbolic import sympify
-            return {self.zero_monom: sympify(expr)}
-        except Exception:
-            pass
-        raise NotImplementedError("Direct expression parsing not implemented for FundamentalSlidePolyBasis yet")
-
     @property
     def zero_monom(self):
         return self.as_key([])
