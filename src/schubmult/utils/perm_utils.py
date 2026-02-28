@@ -97,6 +97,17 @@ def artin_sequences(n):
             ret.add((i, *seq))
     return ret
 
+def weak_compositions(length, max_degree):
+    if length == 0:
+        return {()}
+    old_seqs = weak_compositions(length - 1, max_degree)
+
+    ret = set()
+    for seq in old_seqs:
+        for i in range(max_degree + 1):
+            ret.add((i, *seq))
+    return ret
+
 
 def is_parabolic(w, parabolic_index):
     for i in parabolic_index:

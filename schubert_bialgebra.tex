@@ -4085,6 +4085,40 @@ $$\mathfrak{M}_\alpha = \sum_{\beta\geq \alpha} M_\beta$$
 where $\beta\geq \alpha$ means that $\beta$ is a composition of the same size as $\alpha$ that is greater than $\alpha$ in the dominance order.
 \end{definition}
 
+\section{Forest polynomials}
+
+\newcommand{\pf}{\mathfrak{P}}
+
+\begin{theorem}
+Let $\mathcal{C}$ be an $\Omega$-invariant of an RC graph, say for a permutation $w$, such that $\code(\mathcal{C}) = F$. Then
+$$\pf_F = \sum_{\substack{R\in\RC(w)\\\Omega(R) = \mathcal{C}}} \wtt(R)$$
+\end{theorem}
+
+\begin{theorem}
+For each permutation $u$ and each $\Omega$-class $\mathcal{C}$ of $\RC(u)$, fix a representative $R_u(\mathcal{C})$. Suppose that
+$$F=\code(\mathcal{C})$$
+for some $\mathcal{C}=\Omega(R_w(\mathcal{C}))$ for some permutation $w$. For an integer $k>0$, write
+$$\pf_F(x) = \sum_{F_L, F_R}d_{F_LF_R}^F(k)\pf_{F_L}(x_1,\ldots,x_k)\pf_{F_R}(x_{k+1},\ldots)$$
+Then $d_{F_LF_R}^F(k)$ is the number of $R\in \RC(w)$ such that $\Omega(R) = \mathcal{C}$, 
+$\clp^k(R) = R_u(\mathcal{C}_L)$ for some $\mathcal{C}_L$ with $\code(\mathcal{C}_L) = F_1$, 
+and $\trm^{k}(R) = R_v(\mathcal{C}_R)$ for some  $\mathcal{C}_R$ with $\code(\mathcal{C}_R) = F_R$.
+\end{theorem}
+
+\begin{theorem}
+Let $R\in\RC$. Let $W_R:\mathrm{word}(R)\to\overline{Z}$ be the canonical injective labeling and let $\rho_R:P(W_R)\to\mathbb{Z}$ be the associated compatible sequence labeling. Then the map $R\mapsto \rho_R$ is a bijection between RC graphs and polynomial maps on reduced-word labeled LBS with compatible labelings.
+\end{theorem}
+\begin{proof}
+Suppose we start with a reduced word $W$. Then $P(W)$ and $Q(W)$ are uniquely determined. A characterization of the equivalence class obtained by varying $Q(W)$ is all words arising from $P(W)$ by following a linear extension of the poset $F(W)$. Let $u,v \in F(W)$ be incomparable. Then we claim that $|P_W(u)-P_W(v)| > 1$. (Proof) Thus, all words in the equivalence class $P(W_R)$ are reduced words for the same permutation. 
+
+By the characterization of $P(W)$ as an LBS, the maps $\rho$ defining $\pf_{F(W_R)}$ are bounded above by $P(W)$, weakly decreasing if the letter increases, and strictly decreasing if the letter decreases.
+\end{proof}
+
+\begin{theorem}
+Let $F$ be an indexed forest and let $w$ be the permutation such that $\code(w)=\code(F)$. Then
+$$\pf_F = \sum_{\substack{R\in\RC(w)\\P(R)=P(R_0(w))}} \wtt(R)$$
+where $\delta$ is the Kronecker delta.
+\end{theorem}
+
 \bibliographystyle{acm}
 \bibliography{schubert_bialgebra}
 

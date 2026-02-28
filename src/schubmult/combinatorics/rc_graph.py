@@ -464,6 +464,11 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return omega_insertion(word_to_pair_labeled(word))[0]
 
     @property
+    def forest_weight(self):
+        from schubmult.utils.tuple_utils import pad_tuple
+        return pad_tuple(self.forest_invariant.forest.code, len(self))
+
+    @property
     def is_extremal(self) -> bool:
         if sorted(self.length_vector, reverse=True) != self.to_highest_weight()[0].length_vector:
             return False

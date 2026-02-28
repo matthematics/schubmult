@@ -121,15 +121,15 @@ class PolynomialAlgebra(BaseRing):
 
     def new(self, *x):
         if len(x) == 1:
-            if self._basis.is_key(x[0]):
-                return self.from_dict({self._basis.as_key(x[0]): S.One})
+            if isinstance(x[0], int):
+                return self.from_dict({x: S.One})
             return self.from_expr(x[0])
         if self._basis.is_key(x):
             return self.from_dict({self._basis.as_key(x): S.One})
         return self.from_dict(self._basis.from_expr(x))
 
-    def from_expr(self, x):
-        return self.from_dict(self._basis.from_expr(x))
+    def from_expr(self, x, length=None):
+        return self.from_dict(self._basis.from_expr(x, length=length))
 
     def printing_term(self, k):
         return self._basis.printing_term(k)

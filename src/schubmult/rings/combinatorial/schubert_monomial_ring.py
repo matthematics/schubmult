@@ -63,7 +63,7 @@ class SchubertMonomialRingElement(BaseRingElement):
             return [S.Zero]
         return [self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k)) for k in self.keys()]
 
-    def to_free_algebra_element(self):
+    def to_free_algebra_element(self, basis=None):
         """
         Convert to FreeAlgebra element in Schubert basis.
         """
@@ -72,6 +72,8 @@ class SchubertMonomialRingElement(BaseRingElement):
         ret = ASx.zero
         for monom, coeff in self.items():
             ret += coeff * ASx(monom.perm, len(monom))
+        if basis is not None:
+            return ret.change_basis(basis)
         return ret
 
 

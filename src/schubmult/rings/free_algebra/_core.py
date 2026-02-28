@@ -92,6 +92,15 @@ class FreeAlgebraElement(BaseRingElement):
     def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
         return self.ring.from_dict({k: expand(v, **kwargs) for k, v in self.items()})
 
+    def pairing(self, other):
+        from schubmult.rings.polynomial_algebra import MonomialBasis
+        monomo = self.change_basis(WordBasis)
+        monomo2 = other.change_basis(MonomialBasis)
+        result = 0
+        for k, v in monomo.items():
+            result += int(v * monomo2.get(k, S.Zero))
+        return result
+
     @property
     def free_symbols(self):
         return set()
