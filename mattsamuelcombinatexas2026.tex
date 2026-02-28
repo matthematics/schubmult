@@ -110,7 +110,7 @@ Think of a one-row strip of $n-1$ boxes.
 
 \begin{itemize}
   \item Label the left edge by $1$.
-  \item Label the bottom by $2,3,\dots,n$ (left to right).
+  \item Label the bottom by a permutation of the numbers $2,3,\dots,n$ (left to right).
   \item In each box, place either a \emph{cross} $\crossTile$ or a \emph{bump} $\bumpTile$.
 \end{itemize}
 
@@ -133,20 +133,20 @@ Think of a one-row strip of $n-1$ boxes.
   }
 
   % Input labels (left and bottom)
-  \node[left] at (0,0.5) {$1$};
-  \node[below] at (0.5,0) {$4$};
-  \node[below] at (1.5,0) {$2$};
-  \node[below] at (2.5,0) {$5$};
-  \node[below] at (3.5,0) {$3$};
-  \node[below] at (4.5,0) {$6$};
+  \node[left, text=blue] at (0,0.5) {$1$};
+  \node[below, text=blue] at (0.5,0) {$4$};
+  \node[below, text=blue] at (1.5,0) {$2$};
+  \node[below, text=blue] at (2.5,0) {$5$};
+  \node[below, text=blue] at (3.5,0) {$3$};
+  \node[below, text=blue] at (4.5,0) {$6$};
 
   % Output labels after tracing strands (top, then right edge)
-  \node[above] at (0.5,1) {$4$};
-  \node[above] at (1.5,1) {$1$};
-  \node[above] at (2.5,1) {$5$};
-  \node[above] at (3.5,1) {$2$};
-  \node[above] at (4.5,1) {$6$};
-  \node[right] at (5,0.5) {$3$};
+  \node[above, text=red] at (0.5,1) {$4$};
+  \node[above, text=red] at (1.5,1) {$1$};
+  \node[above, text=red] at (2.5,1) {$5$};
+  \node[above, text=red] at (3.5,1) {$2$};
+  \node[above, text=red] at (4.5,1) {$6$};
+  \node[right, text=red] at (5,0.5) {$3$};
 \end{tikzpicture}
 \end{center}
 
@@ -291,17 +291,22 @@ Then there is a unique family of polynomials with nonnegative integer coefficien
 \end{theorem}
 \end{frame}
 
-\begin{frame}{Dual product of key polynomials}
+\begin{frame}{Examples}
 
 \begin{theorem}
-For dual key elements $\kappa_\alpha$, $\kappa_\beta$, we have
-\[
-\kappa_\alpha \cdot \kappa_\beta
-=
-\sum_{\gamma} d_{\alpha,\beta}^{\gamma}\,\kappa_\gamma,
-\]
-where, fixing a highest weight pipe dream $R_\gamma$ with $\alpha(R_\gamma)=\gamma$, $d_{\alpha,\beta}^{\gamma}$ is the number of pairs of highest weight
-bounded pipe dreams $R_\alpha, R_\beta$ with $\alpha(R_\alpha)=\alpha$ and $\alpha(R_\beta) = \beta$ such that $R_\gamma$ has a coefficient of $1$ in the product $R_\alpha\star R_\beta$.
+  \begin{itemize}
+  \item Schubert polynomials: $\mathrm{perm}(W) = \mathrm{perm}(W')$.
+  \item Fundamental slide polynomials
+  \item Key polynomials: $W\equiv W'$ if $W$ and $W'$ are Coxeter-Knuth equivalent.
+  \end{itemize}
+% For dual key elements $\kappa_\alpha$, $\kappa_\beta$, we have
+% \[
+% \kappa_\alpha \cdot \kappa_\beta
+% =
+% \sum_{\gamma} d_{\alpha,\beta}^{\gamma}\,\kappa_\gamma,
+% \]
+% where, fixing a highest weight pipe dream $R_\gamma$ with $\alpha(R_\gamma)=\gamma$, $d_{\alpha,\beta}^{\gamma}$ is the number of pairs of highest weight
+% bounded pipe dreams $R_\alpha, R_\beta$ with $\alpha(R_\alpha)=\alpha$ and $\alpha(R_\beta) = \beta$ such that $R_\gamma$ has a coefficient of $1$ in the product $R_\alpha\star R_\beta$.
 \end{theorem}
 
 \end{frame}

@@ -123,6 +123,8 @@ class PolynomialAlgebra(BaseRing):
         if len(x) == 1:
             if isinstance(x[0], int):
                 return self.from_dict({x: S.One})
+            if self._basis.is_key(x[0]):
+                return self.from_dict({self._basis.as_key(x[0]): S.One})
             return self.from_expr(x[0])
         if self._basis.is_key(x):
             return self.from_dict({self._basis.as_key(x): S.One})

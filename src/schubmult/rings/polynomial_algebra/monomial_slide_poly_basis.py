@@ -61,7 +61,8 @@ class MonomialSlidePolyBasis(PolynomialBasis):
             return self.transition_monomial
         return lambda x: PolynomialBasis.compose_transition(self.monomial_basis.transition(other_basis), self.transition_monomial(x))
 
-    def from_expr(self, expr):
+    def from_expr(self, expr, length=None):
+        _ = length
         dct = self.monomial_basis.from_expr(expr)
         return self.monomial_basis.transition_slide(self, dct)
 

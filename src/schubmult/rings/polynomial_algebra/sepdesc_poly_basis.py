@@ -69,7 +69,8 @@ class SepDescPolyBasis(PolynomialBasis):
     def transition_sepdesc(x, other_basis):  # noqa: ARG002
         return {x: S.One}
 
-    def from_expr(self, expr):
+    def from_expr(self, expr, length=None):
+        _ = length
         return self.attach_key(self.ring.from_expr(expr))
 
     def transition(self, other_basis):

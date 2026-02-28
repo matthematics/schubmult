@@ -177,7 +177,11 @@ class SchubertPolyBasis(PolynomialBasis):
             res = add_perm_dict_with_coeff(res, self.transition_key_key(k), coeff=v)
         return res
 
-    def from_expr(self, expr):
+    def from_expr(self, expr, length=None):
+        if self.is_key(expr):
+            if length is not None and isinstance(expr, Permutation):
+                return {(expr, length): S.One}
+            return {self.as_key(expr): S.One}
         return self.attach_key(self.ring.from_expr(expr))
 
     def to_monoms(self, key):
