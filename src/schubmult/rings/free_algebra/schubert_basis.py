@@ -179,7 +179,7 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     @cache
-    def transition_word(cls, perm, numvars):
+    def old_transition_word(cls, perm, numvars):
         res = {}
         expr = Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis().expand()
         args = expr.args
@@ -203,6 +203,18 @@ class SchubertBasis(FreeAlgebraBasis):
             tup = tuple(tup)
             res[tup] = res.get(tup, S.Zero) + coeff
         return res
+
+    @classmethod
+    @cache
+    def transition_word(cls, perm, numvars):
+        from ._core import FreeAlgebra
+        from .word_basis import WordBasis
+
+        FA = FreeAlgebra(WordBasis)
+        def word_elem(p, k, *args):  # noqa: ARG001
+            return FA(k - p)
+        ret = {k[1:]: v for k, v in Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis(elem_func=word_elem).items()}
+        return ret
 
     @classmethod
     def printing_term(cls, k):

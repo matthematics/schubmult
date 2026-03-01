@@ -30,10 +30,12 @@ class BaseSchubertElement(BaseRingElement):
             res += v * self.ring.in_schubert_schur_basis(perm, numvars)
         return res
 
-    def in_SEM_basis(self):
+    def in_SEM_basis(self, elem_func=None):
+        if elem_func is None:
+            elem_func = self.ring.symbol_elem_func
         result = S.Zero
         for k, v in self.items():
-            result += sympify(v) * schubpoly_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=self.ring.symbol_elem_func)
+            result += sympify(v) * schubpoly_from_elems(k, self.ring.genset, self.ring.coeff_genset, elem_func=elem_func)
         return result
 
     def _sympystr(self, printer):
