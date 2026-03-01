@@ -1,4 +1,6 @@
 \documentclass[aspectratio=169]{beamer}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \usetheme{default}
 
 \usepackage{amsmath,amssymb,mathtools}
@@ -9,14 +11,28 @@
 \institute{CombinaTexas 2026}
 \date{2026}
 
-\newcommand{\coma}{\mathcal{A}}
-\newcommand{\dcoma}{\mathcal{D}}
+\newcommand{\coma}{\mathbf{S}}
+\newcommand{\dcoma}{\mathcal{DS}}
 \newcommand{\wb}[1]{\left[#1\right]}
 \newcommand{\Sch}[1]{\Xi_{#1}}
 \newcommand{\sch}{\mathfrak{S}}
 \newcommand{\Key}[1]{\kappa_{#1}}
 \newcommand{\Forest}[1]{\mathfrak{P}_{#1}}
 \newcommand{\RC}{\mathrm{Pipe}}
+\newcommand{\hr}{\mathrm{length}}
+\newcommand{\downvar}[1]{\stackrel{#1}{\searrow}}
+\newcommand{\wof}[1]{w_{#1}}
+\newcommand{\rcdd}{\mathfrak{F}}
+\newcommand{\wtt}{\mathtt{wt}}
+\newcommand{\tom}[1]{\xrightarrow{#1}}
+\newcommand{\Tom}[1]{\xRightarrow{#1}}
+\newcommand{\mot}[1]{\xleftarrow{#1}}
+\newcommand{\cperm}[1]{\llbracket #1\rrbracket}
+\newcommand{\cpcf}[5]{d^{#1,#2}_{#3}\left(#4\mid #5\right)}
+\newcommand{\xleadsto}[2][]{\overset{#2}{\leadsto}}
+
+\newcommand{\ins}[2]{{#2\xleadsto{#1}}}
+
 \newcommand{\crossTile}{%
   \tikz[baseline=-0.6ex,scale=0.22]{%
     \draw[line width=0.45pt] (0,0) rectangle (1,1);
@@ -46,16 +62,14 @@
 
 \begin{frame}{Plan}
 \begin{itemize}
-  \item Section 1: the ambient bialgebra object.
+  \item Slightly expand the polynomial ring
   \item Dual algebra and basis indexing.
   \item Schubert, key, and forest bases in one transition framework.
   \item Final point: positivity questions through structure constants.
 \end{itemize}
 \end{frame}
 
-\section{Section 1: ambient object}
-
-\begin{frame}{Ambient graded object}
+\begin{frame}{Direct sum of polynomial algebras}
 Define
 \[
 \coma = \bigoplus_{n\ge 0} \coma_n,
@@ -65,43 +79,35 @@ Define
 Multiplication in $\coma$ is componentwise:
 \begin{itemize}
   \item if $f,g\in \coma_n$, then $f\cdot g$ is the usual product in $\mathbb{Q}[x_1,\dots,x_n]$;
-  \item if $f\in \coma_m$, $g\in \coma_n$ with $m\neq n$, then $f\cdot g=0$.
+  \item if $f\in \coma_m$, $g\in \coma_n$ with $m\neq n$ and $m,n>0$, then $f\cdot g=0$.
 \end{itemize}
 
 So each graded piece is a familiar polynomial ring, and cross-component products are trivial. The coproduct is
 \[\Delta(x_c) = \sum_{ab = c} x_a \otimes x_b\]
-where $x_a$ is the monomial corresponding to the weak composition $a$.
+where $ab$ is the concatenation of weak compositions. This makes $\coma$ into a graded bialgebra.
+$$\Delta(x_1^2x_3x_5) = 1\otimes x_1^2x_3x_5 + x_1^2\otimes x_3x_5 + x_1^2x_3\otimes x_5 + x_1^2x_3x_5\otimes 1.$$
 \end{frame}
 
-\begin{frame}{Stable polynomial bases in $\coma$}
-Fix a polynomial basis family $\{B^{(n)}\}_{n\ge 0}$ with $B^{(n)}\subset \coma_n$.
+\begin{frame}{Double grading}
+In addition to the degree as a polynomial, $\coma$ is also graded by inclusion in the direct summand $\coma_n$, which we as interpret as length. 
 
-Examples used here:
-\begin{itemize}
-  \item Schubert basis,
-  \item key basis,
-  \item forest basis,
-  \item word/monomial-type basis.
-\end{itemize}
+We define the dual algebra $\dcoma$ to be the graded dual of $\coma$ with respect to this $\mathbb{N}\times\mathbb{N}$ grading. For the monomial basis, which is indexed by weak compositions, we define the dual basis $[\alpha]$ for weak compositions $\alpha$ by 
+$$\langle x_\alpha, [\beta]\rangle = \delta_{\alpha,\beta}$$
 
-Any such stable basis in $\coma$ determines a dual basis in $\dcoma$.
+Hence $\dcoma$ is also graded by length and degree, with the latter being the sum of the composition, and the product and coproduct are dual to those of $\coma$ with respect to the degree grading.
 \end{frame}
 
-\section{Dual algebra $\dcoma$}
 
 \begin{frame}{Dual indexing and product}
-The dual algebra $\dcoma$ has a basis indexed by weak compositions in one standard model:
-\[
-\{\wb{\alpha} : \alpha \text{ a weak composition}\}.
-\]
-
-Dual product is concatenation:
+We have that the dual product is concatenation:
 \[
 \wb{\alpha}\cdot \wb{\beta} = \wb{\alpha\,\beta}.
 \]
 
 Hence $\dcoma$ is a free associative algebra (tensor algebra on the generators $\wb{k}$, $k\ge 0$). The coproduct is
 \[\Delta(\wb{\gamma}) = \sum_{\alpha + \beta=\gamma} \wb{\alpha} \otimes \wb{\beta}.\]
+
+We now define and investigate a curious combinatorially defined basis of $\dcoma$ indexed by code-length bounded permutations.
 \end{frame}
 
 \begin{frame}{Crossing diagrams}
@@ -173,16 +179,31 @@ The basis satisfies
 $$\langle \mathfrak{S}_{u}(x_1,\ldots,x_n), \Xi_{v}^{n} \rangle = \delta_{u,v}$$
 where $\mathfrak{S}_{u}(x_1,\ldots,x_n)$ is the Schubert polynomial corresponding to the permutation $u$.
 
+The coefficients $c_{u,v}^{w}$ of the coproduct formula
 \[
 \Delta\,\Sch{w}^{n} = \sum_{u,v} c_{u,v}^{w}\,\Sch{u}^{n}\otimes \Sch{v}^{n}
 \]
 
-The coefficients $c_{u,v}^{w}$ are the Littlewood--Richardson type structure constants for the flag variety.
+are the Littlewood-Richardson coefficients for the complete flag variety on a complex vector space of dimension $n+1$.
 
 This is the main structural link: Schubert positivity data appears as bialgebra structure constants.
 
 (Yes, the crossing diagrams are secretly pipe dreams.)
 \end{frame}
+
+% \begin{frame}{Coefficients of the dual Schubert basis}
+%   For each $p$, define a relation on permutations
+%   $$u\xrightarrow{p} v$$
+%   If there is a $k+1$ cycle $c$ containing $p$ such that $v = uc$ and $\ell(v) = \ell(u) + k$. Define $\sigma_p(u,v)$ to be the number of elements of $c$ that are less than $p$.
+
+% Then we have the following formula for the coefficients of $\Xi_w^k$ in the word basis:
+% \begin{theorem}
+% For each $w$, there is a permutation $\mu$ such that
+% $$\Xi_w^k = \sum_{P=w^{-1}=w_0\xrightarrow{1} \cdots\xrightarrow{k}w_k=\mu} (-1)^{\sigma(P)}\wb{\mathrm{wt}(P)}$$
+% where $\mathrm{wt}(P) = (\ell(1,u_1),\ldots,\ell(u_{k-1},u_k))$.
+% \end{theorem}
+
+% \end{frame}
 
 % \begin{frame}{Theorem (placeholder): explicit LR rule in the dual Schubert basis}
 % \textbf{Theorem.} \emph{(Placeholder for final statement.)}
@@ -204,25 +225,126 @@ This is the main structural link: Schubert positivity data appears as bialgebra 
 % \end{itemize}
 % \end{frame}
 
-\begin{frame}{Bounded pipe dream ring product}
-Bounded pipe dreams are pipe dreams together with an additional length parameter.
+\begin{frame}{Bounded pipe dreams}
+Pipe dreams are well-studied objects introduced in the $1990$s by Bergeron and Billey to give a nicer combinatorial formula for Schubert polynomials equivalent to an earlier one by Billey, Jockusch, and Stanley involving reduced words/compatible sequences. Bounded pipe dreams have an additional length parameter tacked on.
+\begin{center}
+\begin{tikzpicture}[scale=0.5]
+  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (6,1);
+  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (6,2);
+  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (6,3);
+  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (6,4);
+  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (6,5);
+  \draw[lightgray, very thin, opacity=0.3] (0,6) -- (6,6);
+  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (0,6);
+  \draw[lightgray, very thin, opacity=0.3] (1,1) -- (1,6);
+  \draw[lightgray, very thin, opacity=0.3] (2,1) -- (2,6);
+  \draw[lightgray, very thin, opacity=0.3] (3,1) -- (3,6);
+  \draw[lightgray, very thin, opacity=0.3] (4,1) -- (4,6);
+  \draw[lightgray, very thin, opacity=0.3] (5,1) -- (5,6);
+  \draw[lightgray, very thin, opacity=0.3] (6,1) -- (6,6);
+  \draw[blue, line width=1.0pt, line cap=round] (0,5.5) -- (1,5.5);
+  \draw[blue, line width=1.0pt, line cap=round] (0.5,5) -- (0.5,6);
+  \draw[blue, line width=1.0pt, line cap=round] (1,5.5) -- (2,5.5);
+  \draw[blue, line width=1.0pt, line cap=round] (1.5,5) -- (1.5,6);
+  \draw[blue, line width=1.0pt] (2,5.5) .. controls (2.3,5.5) and (2.5,5.7) .. (2.5,6);
+  \draw[blue, line width=1.0pt] (2.5,5) .. controls (2.5,5.3) and (2.7,5.5) .. (3,5.5);
+  \draw[blue, line width=1.0pt] (3,5.5) .. controls (3.3,5.5) and (3.5,5.7) .. (3.5,6);
+  \draw[blue, line width=1.0pt] (3.5,5) .. controls (3.5,5.3) and (3.7,5.5) .. (4,5.5);
+  \draw[blue, line width=1.0pt] (4,5.5) .. controls (4.3,5.5) and (4.5,5.7) .. (4.5,6);
+  \draw[blue, line width=1.0pt] (4.5,5) .. controls (4.5,5.3) and (4.7,5.5) .. (5,5.5);
+  \draw[blue, line width=1.0pt] (5,5.5) .. controls (5.3,5.5) and (5.5,5.7) .. (5.5,6);
+  \draw[blue, line width=1.0pt, line cap=round] (0,4.5) -- (1,4.5);
+  \draw[blue, line width=1.0pt, line cap=round] (0.5,4) -- (0.5,5);
+  \draw[blue, line width=1.0pt] (1,4.5) .. controls (1.3,4.5) and (1.5,4.7) .. (1.5,5);
+  \draw[blue, line width=1.0pt] (1.5,4) .. controls (1.5,4.3) and (1.7,4.5) .. (2,4.5);
+  \draw[blue, line width=1.0pt] (2,4.5) .. controls (2.3,4.5) and (2.5,4.7) .. (2.5,5);
+  \draw[blue, line width=1.0pt] (2.5,4) .. controls (2.5,4.3) and (2.7,4.5) .. (3,4.5);
+  \draw[blue, line width=1.0pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
+  \draw[blue, line width=1.0pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
+  \draw[blue, line width=1.0pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
+  \draw[blue, line width=1.0pt, line cap=round] (0,3.5) -- (1,3.5);
+  \draw[blue, line width=1.0pt, line cap=round] (0.5,3) -- (0.5,4);
+  \draw[blue, line width=1.0pt] (1,3.5) .. controls (1.3,3.5) and (1.5,3.7) .. (1.5,4);
+  \draw[blue, line width=1.0pt] (1.5,3) .. controls (1.5,3.3) and (1.7,3.5) .. (2,3.5);
+  \draw[blue, line width=1.0pt, line cap=round] (2,3.5) -- (3,3.5);
+  \draw[blue, line width=1.0pt, line cap=round] (2.5,3) -- (2.5,4);
+  \draw[blue, line width=1.0pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
+  \draw[blue, line width=1.0pt] (0,2.5) .. controls (0.3,2.5) and (0.5,2.7) .. (0.5,3);
+  \draw[blue, line width=1.0pt] (0.5,2) .. controls (0.5,2.3) and (0.7,2.5) .. (1,2.5);
+  \draw[blue, line width=1.0pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
+  \draw[blue, line width=1.0pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
+  \draw[blue, line width=1.0pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
+  \draw[blue, line width=1.0pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
+  \draw[blue, line width=1.0pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
+  \draw[blue, line width=1.0pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (1.5,5.5) {2};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5,4.5) {2};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5,3.5) {3};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (0.5,5.5) {1};
+  \node[font=\Large\bfseries, text=green!60!black, fill=white, inner sep=0.5pt, circle, transform shape] at (2.5,3.5) {5};
+  \node[font=\scriptsize, text=black, anchor=south] at (0.5,6.3) {4};
+  \node[font=\scriptsize, text=black, anchor=south] at (1.5,6.3) {2};
+  \node[font=\scriptsize, text=black, anchor=south] at (2.5,6.3) {1};
+  \node[font=\scriptsize, text=black, anchor=south] at (3.5,6.3) {3};
+  \node[font=\scriptsize, text=black, anchor=south] at (4.5,6.3) {6};
+  \node[font=\scriptsize, text=black, anchor=south] at (5.5,6.3) {5};
+  \node[font=\scriptsize, text=black, anchor=east] at (-0.3,5.5) {1};
+  \node[font=\scriptsize, text=black, anchor=east] at (-0.3,4.5) {2};
+  \node[font=\scriptsize, text=black, anchor=east] at (-0.3,3.5) {3};
+  \node[font=\scriptsize, text=black, anchor=east] at (-0.3,2.5) {4};
+  \node[font=\scriptsize, text=black, anchor=east] at (-0.3,1.5) {5};
+  \draw[black, line width=1.5pt] (0,1) rectangle (6,6);
+\end{tikzpicture}
+\end{center}
 
-\vspace{0.4em}
+\begin{theorem}[Bergeron, Billey, 1993]
+The Schubert polynomial $\mathfrak{S}_w$ is equal to
+$$\sum_{R\in\RC(w)}x_{\mathrm{wt}(R)}$$
+where $\RC(w)$ is the set of pipe dreams with permutation $w$ and $\mathrm{wt}(R)$ is the weak composition whose $i$-th part is the number of crosses in row $i$ of $R$.
+\end{theorem}
 
-\begin{itemize}
-  \item There is an insertion-based reduction map from a pipe dream of length $n$ with empty row $n$ to a unique pipe dream of length $n-1$,
+
+\end{frame}
+
+\begin{frame}{Transition algorithm on bounded pipe dreams}
+  There is an algorithm that takes a bounded pipe dream of length $n$ with row $n$ empty to a unique pipe dream of length $n-1$
 in a way that matches the Schubert transition formula in a strong, weight-preserving, bijective form.
-\end{itemize}
+\begin{center}
+  {\scriptsize
+  \begin{algorithmic}
+		\State \textbf{Input:} A bounded pipe dream $R$ with $\hr(R)=n$ and row $n$ empty.
+		\State \textbf{Output:} A bounded  pipe dream $R'$ with $\hr(R')=n-1$, $|R'|=|R|$ (same number of crossing in each row), and $\wof{R}\downvar{n} \wof{R'}$.
+		
+		\If{$R$ with last row removed is a valid bounded pipe dream}
+		\State \Return $R$ with last row removed
+		\Else
+		\State Locate crossings corresponding to maximal right descents of $w(R)$ until the maximal right descent is $n-1$, say at rows $i_1 < i_2 < \cdots < i_p$ with corresponding columns $j_1, j_2, \ldots, j_p$.
+		\State $R^- \gets R \setminus \{(i_1, j_1), \ldots, (i_p, j_p)\}$.
+		\State Let $I \gets (i_1, i_2, \ldots, i_p)$.
+		\State $D \gets R^- \cup \{(n, 1), (n, 2), \ldots, (n, p)\}$.
+		\State $D' \gets \ins{n-1}{I} D$ (an insertion algorithm similar to existing ones for pipe dreams)
+		\State $R' \gets \{(i, j) \in D' \mid i < n\}$ as a bounded pipe dream with $n-1$ rows.
+		\State \Return $R'$.
+		\EndIf
+	\end{algorithmic}
+  }
+\end{center}
+\end{frame}
 
-Given bounded pipe dreams $R_1,R_2$, define $R_1\star R_2$ by:
+\begin{frame}{Bounded pipe dream ring product}
+Given bounded pipe dreams $R_1,R_2$, define $R_1\star R_2$ by taking the sum of all $R$ obtained by
 \begin{itemize}
   \item \emph{untransitioning} $R_1$ in all possible valid ways to create space while remaining a pipe dream,
   \item shifting $R_2$ upward,
   \item placing the shifted $R_2$ into the new empty region, unchanged, if doing so yields a valid pipe dream.
 \end{itemize}
-
-This gives the product structure used in the pipe dream lift.
+This allows us to lift the product of the dual algebra $\dcoma$ to a product on formal linear combinations of bounded pipe dreams.
+\begin{theorem}[S, 2026+]
+The product $\star$ is associative and gives a well-defined ring structure on the vector space $\RC$ spanned by bounded pipe dreams.
+\end{theorem}
 \end{frame}
+
+
 
 \begin{frame}{Pipe dream ring as a lift of $\dcoma$}
 There are two surjective linear maps from the pipe dream ring $\mathcal{R}$ to the dual algebra $\dcoma$:
@@ -235,7 +357,7 @@ There are two surjective linear maps from the pipe dream ring $\mathcal{R}$ to t
 \pi_{\mathrm{wt}}(G)=\wb{\mathrm{wt}(G)}.
 \]
 By virtue of the fact that $\dcoma$ is free, there is a section $\iota:\dcoma\hookrightarrow \mathcal{R}$ of $\pi_{\mathrm{wt}}$ that sends $\wb{i}$ for an integer $i$ to the unique pipe dream $r_i$ with $\mathrm{wt}(r_i)=(i)$. It turns out that these are all ring homomorphisms and $\iota$ is also a section of $\pi_{\mathrm{Sch}}$.
-\begin{theorem}
+\begin{theorem}[S, 2026+]
 We have that $\pi_{\mathrm{Sch}}$ and $\pi_{\mathrm{wt}}$ are surjective ring homomorphisms to $\dcoma$ and $\iota$ is an injective ring homomorphism from $\dcoma$ to $\mathcal{R}$ such that
 $$\pi_{\mathrm{Sch}} \circ \iota = \pi_{\mathrm{wt}} \circ \iota = \mathrm{id}_{\dcoma}.$$
 \end{theorem}
@@ -244,59 +366,74 @@ $$\pi_{\mathrm{Sch}} \circ \iota = \pi_{\mathrm{wt}} \circ \iota = \mathrm{id}_{
 %Under the basis identification in $\dcoma$, these describe the same surjective ring homomorphism (Schubert coordinates versus word coordinates).
 \end{frame}
 
-\begin{frame}{Direct sum decomposition of $\mathcal{R}$}
-Consider the two-sided ideal $I$ of $\mathcal{R}$ generated by $R_1 - R_2$, where $w(R_1) = w(R_2)$. Then $\mathcal{R} = I \oplus \iota(\dcoma)$ as a vector space, and the projection map $\pi_{\mathrm{Sch}}$ is the projection onto the second factor. In particular, $\iota(\dcoma)$ is a subalgebra of $\mathcal{R}$ isomorphic to $\dcoma$.
+% \begin{frame}{Direct sum decomposition of $\mathcal{R}$}
+% Consider the two-sided ideal $I$ of $\mathcal{R}$ generated by $R_1 - R_2$, where $w(R_1) = w(R_2)$. Then $\mathcal{R} = I \oplus \iota(\dcoma)$ as a vector space, and the projection map $\pi_{\mathrm{Sch}}$ is the projection onto the second factor. In particular, $\iota(\dcoma)$ is a subalgebra of $\mathcal{R}$ isomorphic to $\dcoma$.
 
-\begin{theorem}
-If $\{\mathfrak{A}_\alpha\}$ is a Schubert positive homogeneous basis of $\dcoma$, then there is a unique representation
-$$\iota(\mathfrak{A}_\alpha) = \sum_{w\in P_\alpha,R'\in \RC(w)}a_{\alpha}^{R'}R' + \sum_{R\in\RC\setminus I_\alpha} c_\alpha^R R$$
-where $c_\alpha^R \geq 0$ for all $R$. 
-% In this situation, choose $w$ such that $c_\alpha^R=1$ for some $R\in \RC(w)$. Then the dual basis $\{\mathcal{A}_\alpha\}$ in $\coma$ satisfies
-% $$\mathcal{A}_\alpha = \sum_{R'\in\RC(w(R))} x_{\mathrm{wt}(R')}.$$
-\end{theorem}
-% Hence pipe dreams are a bijective dictionary between the Schubert basis and the word basis that respects the algebra structure.
-%Under the basis identification in $\dcoma$, these describe the same surjective ring homomorphism (Schubert coordinates versus word coordinates).
-\end{frame}
+% \begin{theorem}
+% If $\{\mathfrak{A}_\alpha\}$ is a Schubert positive homogeneous basis of $\dcoma$, then there is a unique representation
+% $$\iota(\mathfrak{A}_\alpha) = \sum_{w\in P_\alpha,R'\in \RC(w)}a_{\alpha}^{R'}R' + \sum_{R\in\RC\setminus I_\alpha} c_\alpha^R R$$
+% where $c_\alpha^R \geq 0$ for all $R$. 
+% % In this situation, choose $w$ such that $c_\alpha^R=1$ for some $R\in \RC(w)$. Then the dual basis $\{\mathcal{A}_\alpha\}$ in $\coma$ satisfies
+% % $$\mathcal{A}_\alpha = \sum_{R'\in\RC(w(R))} x_{\mathrm{wt}(R')}.$$
+% \end{theorem}
+% % Hence pipe dreams are a bijective dictionary between the Schubert basis and the word basis that respects the algebra structure.
+% %Under the basis identification in $\dcoma$, these describe the same surjective ring homomorphism (Schubert coordinates versus word coordinates).
+% \end{frame}
 
 \begin{frame}{Immediate consequence}
 We immediately obtain a formula for the product of dual Schubert elements.
 
-\begin{theorem}
+\begin{theorem}[S, 2026+]
 For dual Schubert elements $\Sch{u}^{n_1}$, $\Sch{v}^{n_2}$, we have
 \[
 \Sch{u}^{n_1}\cdot \Sch{v}^{n_2}
 =
 \sum_{w} d_{u,v}^{w}(n_1, n_2)\,\Sch{w}^{n_1 + n_2},
 \]
-where, fixing pipe dreams $R_u$ for $u$ and $R_v$ for $v$, $d_{u,v}^{w}(n_1, n_2)$ is the number of bounded pipe dreams $R_w\in\RC(w)$ such that $R_w$ has a coefficient of $1$ in the product $R_u\star R_v$.
+where, fixing pipe dreams $R_u$ for $u$ with $\hr(R_u) = n_1$ and $R_v$ for $v$ with $\hr(R_v) = n_2$, $d_{u,v}^{w}(n_1, n_2)$ is the number of bounded pipe dreams $R_w\in\RC(w)$ such that $R_w$ has a coefficient of $1$ in the product $R_u\star R_v$.
 
 Equivalently,
 $$\sch_w(x_1,\ldots,x_{n_1+n_2}) = \sum_{u,v} d_{u,v}^{w}(n_1, n_2)\,\sch_u(x_1,\ldots,x_{n_1})\sch_v(x_{n_1+1},\ldots,x_{n_1+n_2}).$$
 \end{theorem}
 
+% Note: taking $w$ to be a Grassmannian permutation, this formula is essentially a Littlewood-Richardson rule for Schur polynomials, since their product and coproduct coincide.
 \end{frame}
 
+\begin{frame}{Little bumps}
+  Suppose $(w_1, w_2,\ldots, w_n)$ is a reduced word for a permutation $w$. A \emph{Little bump} is an operation that takes a reduced word for $w$ together with an index $1\leq i\leq n$ and produces a reduced word for a different permutation $w'$ such that $\ell(w) = \ell(w')$. The original purpose of this definition by Little was to generalize the RSK correspondence to reduced words (in a manner distinct from Edelman-Greene insertion). However, the map has interesting combinatorial properties in and of iteslf.
+
+  \begin{theorem}[Hamaker, Young 2014]
+  Little bumps preserve the Coxeter-Knuth equivalence class of a reduced word.
+  \end{theorem}
+\end{frame}
+
+\begin{frame}{Little bumps and the transition algorithm}
+  The transition algorithm on pipe dreams is equivalent to a specific sequence of Little bumps on the corresponding reduced word that preserves compatibility with the weight. In particular, we have
+
+  \begin{theorem}[S, 2026+]
+  If $R$ is a bounded pipe dream with $\hr(R)=n$ and row $n$ empty, then the transition algorithm is equivalent to applying Little bumps to the last descent of the permutation until the result has its last descent $\leq n-1$.
+  \end{theorem}
+\end{frame}
 
 \begin{frame}{Positivity theorem}
-\begin{theorem}
+\begin{theorem}[S, 2026+]
 Suppose there is an equivalence relation on reduced words $\equiv$ such that the following hold:
 
 If $W,W'$ are reduced words such that $W\equiv W'$, then
 \begin{itemize}
-\item ${\uparrow}W\equiv {\uparrow}W'$.
+\item $\uparrow W\equiv \uparrow W'$, where $\uparrow$ is the operation of adding $1$ to each letter.
 \item $\mathrm{perm}(W) = \mathrm{perm}(W')$.
 \item If $i$ is the last descent of $\mathrm{perm}(W)$, then $L_{i,i+1}(W)\equiv L_{i,i+1}(W')$.
 \end{itemize}
-Then there is a unique family of polynomials with nonnegative integer coefficients $\{\mathfrak{A}_\alpha\}$ that form a basis for $\coma$ such that $\mathfrak{A}_\alpha$ is the sum of monomials corresponding to pipe dreams with reduced words in the equivalence class $P_\alpha$ of $\equiv$. The dual basis $\{\mathcal{A}_\alpha\}$ in $\dcoma$ is then positive in the dual Schubert basis and has nonnegative structure constants.
+Then there is a unique family of polynomials with nonnegative integer coefficients that form a basis for $\coma$ that is the sum of monomials corresponding to pipe dreams with reduced words in the equivalence class. The dual basis  is then positive in the dual Schubert basis and has nonnegative structure constants.
 \end{theorem}
 \end{frame}
 
 \begin{frame}{Examples}
-
-\begin{theorem}
+This applies to the following examples of equivalence relations on reduced words:
   \begin{itemize}
   \item Schubert polynomials: $\mathrm{perm}(W) = \mathrm{perm}(W')$.
-  \item Fundamental slide polynomials
+  \item Fundamental slide polynomials ($W\equiv W'$ iff $W=W'$)
   \item Key polynomials: $W\equiv W'$ if $W$ and $W'$ are Coxeter-Knuth equivalent.
   \end{itemize}
 % For dual key elements $\kappa_\alpha$, $\kappa_\beta$, we have
@@ -307,35 +444,33 @@ Then there is a unique family of polynomials with nonnegative integer coefficien
 % \]
 % where, fixing a highest weight pipe dream $R_\gamma$ with $\alpha(R_\gamma)=\gamma$, $d_{\alpha,\beta}^{\gamma}$ is the number of pairs of highest weight
 % bounded pipe dreams $R_\alpha, R_\beta$ with $\alpha(R_\alpha)=\alpha$ and $\alpha(R_\beta) = \beta$ such that $R_\gamma$ has a coefficient of $1$ in the product $R_\alpha\star R_\beta$.
-\end{theorem}
-
 \end{frame}
 
 \begin{frame}{Forest polynomials}
-Forest polynomials $\Forest{F}$ are a more recently discovered basis of $\coma$ in which the Schubert basis also expands positively. The
-forest expansion of a Schubert polynomial is given by counting equivalence classes of reduced words for a permutation. We give a new result:
+  \newcommand{\code}{\mathfrak{c}}
+Forest polynomials $\Forest{F}$ are a more recently discovered basis of $\coma$ in which the Schubert basis also expands positively. They are indexed by objects $F$ known as ``indexed forests,'' which are canonically labeled forests of binary trees. Given a word $W$, there is an insertion algorithm that yields a labeled indexed forest denoted $\Omega(W)$.  We then say that $\Omega(R)$ has shape $F$ if the indexed forest obtained from $R$ by this insertion algorithm is $F$.
 
-\begin{theorem}
-Let $\mathcal{C}$ be an $\Omega$-invariant of a pipe dream, say for a permutation $w$, such that $\mathrm{shape}(\mathcal{C}) = F$. Then
-$$\Forest{F}= \sum_{\substack{R\in\RC(w)\\\Omega(R) = \mathcal{C}}} \mathrm{wt}(R)$$
+\begin{theorem}[S, 2026+]
+Let $F$ be an indexed forest with $\code(F) = \code(w)$ for a permutation $w$. Then
+$$\Forest{F}= \sum_{\substack{R\in\RC(w)\\\Omega(R) \text{ has shape } F}} \mathrm{wt}(R)$$
 \end{theorem}
 
 
 \end{frame}
 
 \begin{frame}{Dual product of forest polynomials}
-\begin{theorem}
-  For dual forest elements $\Forest{F}$, $\Forest{G}$, we have
+\begin{theorem}[S, 2026+]
+  For each positive integer $k$, forest polynomials with $n\geq k$ variables satisfy the formula
 \[
-\Forest{F} \cdot \Forest{G}
+\Forest{F}
 =
-\sum_{\gamma} d_{F,G}^{H}\,\Forest{H}
+\sum_{\gamma} d_{G,H}^{F}(k)\,\Forest{G}(x_1,\ldots,x_k)\Forest{H}(x_{k+1},\ldots,x_{n}), 
 \]
 
-Where, fixing a pipe dream $R_H$ with $\Omega(R_H)$ has shape $H$, $d_{F,G}^{H}$ is the number of pairs of pipe dreams $R_F, R_G$ with 
-$\mathrm{shape}(\Omega(R_F)) = F$ and $\mathrm{shape}(\Omega(R_G)) = G$ such that $R_H$ has a coefficient of $1$ in the product $R_F\star R_G$.
+Where, fixing bounded pipe dreams $R_G, R_H$ with 
+$\hr(R_G) = k$, $\hr(R_H) = n-k$, $\mathrm{shape}(\Omega(R_G)) = G$ and $\mathrm{shape}(\Omega(R_H)) = H$,  $d_{F,G}^{H}(k)$ is the number of bounded pipe dreams $R$ with $\hr(R)=n$ and $\mathrm{shape}(\Omega(R)) = F$ such that $R$ has a coefficient of $1$ in the product $R_G\star R_H$.
 
-lebeled lbs
+%lebeled lbs
 \end{theorem}
 \end{frame}
 % \section{Key and forest endpoint}
