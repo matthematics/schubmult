@@ -212,10 +212,12 @@ class BaseRing(Ring, CompositeDomain):
         except Exception:
             return self.mul_expr(elem, other)
 
-    # def mul(self, elem, other):
-    #     #try:
-    #     other = self.domain_new(other)
-    #     return self.from_dict({k: other * v for k, v in elem.items()})
+    def mul(self, elem, other):
+        try:
+            other = self.domain_new(other)
+            return self.from_dict({k: other * v for k, v in elem.items()})
+        except Exception:
+            return self.mul_expr(elem, other)
     #     #except Exception:
     #         # if isinstance(other, BaseRingElement):
     #         #     coerced = self._coerce_mul(other)
@@ -224,8 +226,8 @@ class BaseRing(Ring, CompositeDomain):
     #         #     return self.mul(elem, coerced)
     #         # return self.mul_expr(elem, other)
 
-    def mul(self, elem, other):
-        raise NotImplementedError
+    # def mul(self, elem, other):
+    #     raise NotImplementedError
 
     def to_domain(self):
         return self

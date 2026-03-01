@@ -179,7 +179,7 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     @cache
-    def old_transition_word(cls, perm, numvars):
+    def transition_word(cls, perm, numvars):
         res = {}
         expr = Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis().expand()
         args = expr.args
@@ -206,7 +206,7 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     @cache
-    def transition_word(cls, perm, numvars):
+    def bad_transition_word(cls, perm, numvars):
         from ._core import FreeAlgebra
         from .word_basis import WordBasis
 
