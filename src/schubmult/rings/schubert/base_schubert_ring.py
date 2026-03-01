@@ -92,7 +92,7 @@ class BaseSchubertRing(BaseRing):
         self.symbols = list(genset)
         self.zero_monom = Permutation([])
 
-    def _mul_elements(self, elem, other):
+    def mul(self, elem, other):
         return self.from_dict(_mul_schub_dicts(elem, other, elem.ring, other.ring))
 
     def new(self, x): ...

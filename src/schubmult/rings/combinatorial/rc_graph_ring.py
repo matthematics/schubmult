@@ -317,15 +317,23 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
     # def weight_coproduct(self, elem):
 
     def coproduct_on_basis(self, elem):
-        from schubmult import ASx
+        from schubmult import FA
 
-        model = ASx(elem.perm, len(elem)).coproduct()
-        T = self @ self
-        res = T.zero
-        for (key1, key2), coeff in model.items():
-            res += coeff * self.from_free_algebra_element(ASx(*key1)) @ self.from_free_algebra_element(ASx(*key2))
-        res += (self._word_rc(elem.length_vector) - self(elem)) @ self(RCGraph([]).resize(len(elem))) + self(RCGraph([]).resize(len(elem))) @ (self._word_rc(elem.length_vector) - self(elem))
-        return res
+        # model = ASx(elem.perm, len(elem)).coproduct()
+        # T = self @ self
+        # res = T.zero
+        # for (key1, key2), coeff in model.items():
+        #     res += coeff * self.from_free_algebra_element(ASx(*key1)) @ self.from_free_algebra_element(ASx(*key2))
+        # res += (self._word_rc(elem.length_vector) - self(elem)) @ self(RCGraph([]).resize(len(elem))) + self(RCGraph([]).resize(len(elem))) @ (self._word_rc(elem.length_vector) - self(elem))
+        # return res
+
+        flat_elem = self(elem).to_free_algebra_element().change_basis(WordBasis)
+
+        flat_coprod = flat_elem.coproduct()
+        unflat_elem = self(elem) - self.from_free_algebra_element(flat_elem)
+        id = self(RCGraph([]).resize(len(elem)))
+        ret = sum([coeff * self.from_free_algebra_element(FA(*a)) @ self.from_free_algebra_element(FA(*b)) for (a, b), coeff in flat_coprod.items()]) + (unflat_elem @ id + id @ unflat_elem)
+        return ret
         # self.from_free_algebra_element(elem.perm) - elem
 
     # def dual_schubert_element(self, rc):

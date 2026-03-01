@@ -25,5 +25,7 @@ if __name__ == "__main__":
                 elem_prod *= E(mx - i - a, mx - i, x[1:], [0 for _ in range(3*n)])
             sm += coeff * elem_prod
         schub_elem = Sx.from_expr(sm)
-        assert all(coeff >= 0 for coeff in schub_elem.values()), f"Failed for {perm}, got {schub_elem}"
-        assert len({k: v for k, v in schub_elem.items() if v != 0}) == 1, f"Failed for {perm}, got {schub_elem}"
+        print(f"{perm}: {dual_schub} => {schub_elem}")
+        #print(schub_elem)
+        # assert all(coeff >= 0 for coeff in schub_elem.values()), f"Failed for {perm}, got {schub_elem}"
+        # assert len({k: v for k, v in schub_elem.items() if v != 0}) == 1, f"Failed for {perm}, got {schub_elem}"

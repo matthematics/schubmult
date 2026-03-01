@@ -356,7 +356,7 @@ class FreeAlgebra(BaseRing):
         T = self @ self
         return T.from_dict(self._basis.bcoproduct(key))
 
-    def _mul_elements(self, elem, other):
+    def mul(self, elem, other):
         ret = self.zero
         for k0, v0 in elem.items():
             for k, v in other.items():

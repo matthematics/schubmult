@@ -212,19 +212,19 @@ class BaseRing(Ring, CompositeDomain):
         except Exception:
             return self.mul_expr(elem, other)
 
-    def mul(self, elem, other):
-        try:
-            other = self.domain_new(other)
-            return self.from_dict({k: other * v for k, v in elem.items()})
-        except Exception:
-            if isinstance(other, BaseRingElement):
-                coerced = self._coerce_mul(other)
-                if not coerced:
-                    raise CoercionFailed(f"Could not coerce {other} of type {type(other)} to {type(elem)}")
-                return self._mul_elements(elem, coerced)
-            return self.mul_expr(elem, other)
+    # def mul(self, elem, other):
+    #     #try:
+    #     other = self.domain_new(other)
+    #     return self.from_dict({k: other * v for k, v in elem.items()})
+    #     #except Exception:
+    #         # if isinstance(other, BaseRingElement):
+    #         #     coerced = self._coerce_mul(other)
+    #         #     if coerced is None:
+    #         #         raise CoercionFailed(f"Could not coerce {other} of type {type(other)} to {type(elem)}")
+    #         #     return self.mul(elem, coerced)
+    #         # return self.mul_expr(elem, other)
 
-    def _mul_elements(self, elem, other):
+    def mul(self, elem, other):
         raise NotImplementedError
 
     def to_domain(self):
@@ -239,7 +239,8 @@ class BaseRing(Ring, CompositeDomain):
 
     def coproduct_on_basis(self, k): ...
 
-    def _coerce_mul(self, other): ...
+    def _coerce_mul(self, other):  # noqa: ARG002
+        return None
 
     @property
     def one(self):
@@ -249,7 +250,8 @@ class BaseRing(Ring, CompositeDomain):
 
     def elem_mul(self, ring_elem, elem): ...
 
-    def _coerce_add(self, other): ...
+    def _coerce_add(self, other):  # noqa: ARG002
+        return None
 
     def from_dict(self, element, orig_domain=None):
         domain_new = self.domain_new
