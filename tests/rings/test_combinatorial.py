@@ -51,6 +51,24 @@ def test_rc_graph_agrees_with_free_algebra():
                     assert all(v == 0 for v in (free_algebra_elem - free_elem_test).values())
 
 
+def test_rc_graph_coproduct():
+    import itertools
+
+    from schubmult import RCGraph, RCGraphRing, ASx, Permutation, SchubertBasis
+
+    n = 4
+    perms = Permutation.all_permutations(n)
+    ring = RCGraphRing()
+
+    for perm in perms:
+        for length in range(len(perm.trimcode), n):
+            for rc in RCGraph.all_rc_graphs(perm, length):
+                rc_elem = ring(rc)
+                free_algebra_elem = ASx(rc.perm, len(rc)).coproduct()
+                rc_coprod = rc_elem.coproduct()
+                assert all([v == 0 for v in (free_algebra_elem - sum([coeff * ASx(rc1.perm, len(rc1))@ASx(rc2.perm, len(rc2)) for (rc1, rc2), coeff in rc_coprod.items()])).values()])
+
+
 def test_rc_bpd_ring_multiplication():
     import itertools
 
