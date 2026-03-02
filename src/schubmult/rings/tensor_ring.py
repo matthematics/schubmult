@@ -5,13 +5,14 @@ from sympy import Tuple
 from schubmult.symbolic import Mul, S, sympy_Mul
 from schubmult.utils.logging import get_logger
 
+#from .schubert.base_schubert_ring import BaseRingElement, BaseRing
+from .base_ring import BaseRing, BaseRingElement
 from .printing import PrintingTerm
-from .schubert.base_schubert_ring import BaseSchubertElement, BaseSchubertRing
 
 logger = get_logger(__name__)
 
 
-class TensorRing(BaseSchubertRing):
+class TensorRing(BaseRing):
     # tensor ring
     def __eq__(self, other):
         return type(self) is type(other) and self.rings == other.rings
@@ -78,22 +79,23 @@ class TensorRing(BaseSchubertRing):
                     new_ring_list.append(r)
             ring_list = new_ring_list
         self._rings = tuple(ring_list)
-        genset = set()
-        for r in self._rings:
-            try:
-                genset.update(set(r.genset))
-            except AttributeError:
-                pass
-        genset = tuple(genset)
-        coeff_genset = set()
-        for r in self._rings:
-            try:
-                if r.coeff_genset.label:
-                    coeff_genset.update(set(r.coeff_genset))
-            except AttributeError:
-                pass
-        coeff_genset = tuple(coeff_genset)
-        super().__init__(list(genset), list(coeff_genset))
+        # genset = set()
+        # for r in self._rings:
+        #     try:
+        #         genset.update(set(r.genset))
+        #     except AttributeError:
+        #         pass
+        # genset = tuple(genset)
+        # coeff_genset = set()
+        # for r in self._rings:
+        #     try:
+        #         if r.coeff_genset.label:
+        #             coeff_genset.update(set(r.coeff_genset))
+        #     except AttributeError:
+        #         pass
+        # coeff_genset = tuple(coeff_genset)
+        #super().__init__(list(genset), list(coeff_genset))
+        super().__init__()
         self.zero_monom = tuple([self.rings[i].zero_monom for i in range(len(self.rings))])
         # self.dtype = type("TensorRingElement", (TensorRingElement,), {"ring": self})
 
@@ -258,7 +260,7 @@ class TensorBasisElement(PrintingTerm):
         return printer._print_TensorProduct(Tuple(*[self.ring.rings[i].printing_term(self._key[i]) for i in range(len(self._key))]))
 
 
-class TensorRingElement(BaseSchubertElement):
+class TensorRingElement(BaseRingElement):
     def __init__(self):
         pass
 

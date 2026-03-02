@@ -268,6 +268,9 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
             res += coeff * self.ring(rc_graph.transpose(length))
         return res
 
+    def project(self):
+        return self.ring.from_free_algebra_element(self.to_free_algebra_element())
+
 
 class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
     _id = 0
@@ -316,23 +319,17 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
 
     # def weight_coproduct(self, elem):
 
+    @cache
     def coproduct_on_basis(self, elem):
-        from schubmult import FA
+        from schubmult import ASx, FreeAlgebraBasis, SchubertBasis
 
-        # model = ASx(elem.perm, len(elem)).coproduct()
-        # T = self @ self
-        # res = T.zero
-        # for (key1, key2), coeff in model.items():
-        #     res += coeff * self.from_free_algebra_element(ASx(*key1)) @ self.from_free_algebra_element(ASx(*key2))
-        # res += (self._word_rc(elem.length_vector) - self(elem)) @ self(RCGraph([]).resize(len(elem))) + self(RCGraph([]).resize(len(elem))) @ (self._word_rc(elem.length_vector) - self(elem))
-        # return res
-
-        flat_elem = self(elem).to_free_algebra_element().change_basis(WordBasis)
+        flat_elem = self(elem).to_free_algebra_element()
 
         flat_coprod = flat_elem.coproduct()
-        unflat_elem = self(elem) - self.from_free_algebra_element(flat_elem)
-        id = self(RCGraph([]).resize(len(elem)))
-        ret = sum([coeff * self.from_free_algebra_element(FA(*a)) @ self.from_free_algebra_element(FA(*b)) for (a, b), coeff in flat_coprod.items()]) + (unflat_elem @ id + id @ unflat_elem)
+
+        mixed_coprod = FreeAlgebraBasis.change_tensor_basis(flat_coprod, SchubertBasis, WordBasis)
+        # unflat_elem = self(elem) - self.from_free_algebra_element(flat_elem)
+        ret = sum([coeff * self.from_free_algebra_element(ASx(perm1, len1)) @ self.monomial(*b) for ((perm1, len1), b), coeff in mixed_coprod.items()])# + (unflat_elem @ id + id @ unflat_elem)
         return ret
         # self.from_free_algebra_element(elem.perm) - elem
 
