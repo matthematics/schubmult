@@ -357,15 +357,18 @@ class FreeAlgebra(BaseRing):
         return T.from_dict(self._basis.bcoproduct(key))
 
     def mul(self, elem, other):
-        ret = self.zero
-        for k0, v0 in elem.items():
-            for k, v in other.items():
-                ret += self.from_dict(self._basis.product(k0, k, v * v0))
-        if self._basis == WordBasis or not FreeAlgebra.CAP:
-            return ret
-        n = FreeAlgebra.CAP
-        ret = {k: v for k, v in ret.items() if len(k[0]) <= n}
-        return self.from_dict(ret)
+        try:
+            ret = self.zero
+            for k0, v0 in elem.items():
+                for k, v in other.items():
+                    ret += self.from_dict(self._basis.product(k0, k, v * v0))
+            if self._basis == WordBasis or not FreeAlgebra.CAP:
+                return ret
+            n = FreeAlgebra.CAP
+            ret = {k: v for k, v in ret.items() if len(k[0]) <= n}
+            return self.from_dict(ret)
+        except Exception:
+            return super().mul(elem, other)
 
     def from_rc_graph(self, rc_graph):
         return self.from_dict(self._basis.from_rc_graph(rc_graph))

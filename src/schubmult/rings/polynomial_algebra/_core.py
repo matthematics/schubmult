@@ -104,11 +104,14 @@ class PolynomialAlgebra(BaseRing):
         return T.from_dict(self._basis.coproduct(key))
 
     def mul(self, elem, other):
-        ret = self.zero
-        for k0, v0 in elem.items():
-            for k, v in other.items():
-                ret += self.from_dict(self._basis.product(k0, k, v * v0))
-        return ret
+        try:
+            ret = self.zero
+            for k0, v0 in elem.items():
+                for k, v in other.items():
+                    ret += self.from_dict(self._basis.product(k0, k, v * v0))
+            return ret
+        except Exception:
+            return super().mul(elem, other)
 
     def to_domain(self):
         return self
