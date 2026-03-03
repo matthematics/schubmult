@@ -464,6 +464,30 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return omega_insertion(word_to_pair_labeled(word))[0]
 
     @property
+    def omega_invariant(self):
+        from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
+        word = list(reversed(self.perm_word))
+        def word_to_pair_labeled(word):
+            counts = {}
+            out = []
+            for a in word:
+                aa = int(a)
+                counts[aa] = counts.get(aa, 0) + 1
+                out.append(letterpair(aa, counts[aa]))
+            return tuple(out)
+        return omega_insertion(word_to_pair_labeled(word))
+
+    def w0_automorphism(self, n=None):
+        if n is None:
+            n = max([max(row, default=0) for row in self], default=0)
+
+        to_flip = self.resize(n)
+        new_rows = []
+        for row in to_flip:
+            new_rows.append(tuple([n + 1 - a for a in reversed(row)]))
+        return RCGraph(reversed(new_rows)).transpose(n)
+
+    @property
     def forest_weight(self):
         from schubmult.utils.tuple_utils import pad_tuple
         return pad_tuple(self.forest_invariant.forest.code, len(self))
@@ -506,7 +530,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     @property
     def demazure_weight(self) -> tuple[int, ...]:
         """Weight of the distinguished Demazure extremal element."""
-        return self.demazure_extremal.length_vector
+        return self.extremal_weight
 
     @property
     def is_rc(self) -> bool:
@@ -961,24 +985,52 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return perm
 
     def transpose(self, length: int | None = None) -> RCGraph:
-        newrc = []
-        trimself = [list(row) for row in self]
-        i = 0
-        while len(newrc) < len(self) or any(len(row) > 0 for row in trimself):
-            new_row = []
-            for index in range(len(trimself)):
-                if len(trimself[index]) > 0 and trimself[index][-1] == index + i + 1:
-                    new_row += [index + i + 1]
-                    trimself[index].pop()
-            new_row.reverse()
-            newrc.append(tuple(new_row))
-            i += 1
-        new_rc = (type(self)(newrc)).normalize()
+        # newrc = []
 
-        assert new_rc.perm == ~self.perm
+        # the_self = self
+        # if length is not None and length < len(self):
+        #     the_self = self.resize(length)
+        # trimself = [list(row) for row in the_self]
+        # i = 0
+
+        # while len(newrc) < length or any(len(row) > 0 for row in trimself):
+        #     new_row = []
+        #     for index in range(len(trimself)):
+        #         if len(trimself[index]) > 0 and trimself[index][-1] == index + i + 1:
+        #             new_row += [index + i + 1]
+        #             trimself[index].pop()
+        #     new_row.reverse()
+        #     newrc.append(tuple(new_row))
+        #     i += 1
+        # new_rc = (type(self)(newrc)).normalize()
+        import numpy as np
+        if length is not None and len(self) < length:
+            the_self = self.resize(length)
+        else:
+            the_self = self
+
+        arr = np.array([[the_self[i, the_self.cols - j - 1] for j in range(the_self.cols)] for i in range(the_self.rows)], dtype=object).T
+        # print(arr)
+        #arr = arr.resize(self.cols, self.cols).t
+
+        new_rc = type(self).from_array(arr)
+        assert new_rc.perm == ~self.perm, f"Transpose does not preserve permutation, got {new_rc.perm=}, expected {~self.perm=}, {tuple(new_rc)=} {self=}"
         if length is not None:
             new_rc = new_rc.resize(length)
+        # print("Yay happy")
+        # print(new_rc)
         return new_rc
+
+    @classmethod
+    def from_array(cls, arr) -> RCGraph:
+        rows = []
+        for i in range(arr.shape[0]):
+            row = []
+            for j in range(arr.shape[1]):
+                if arr[i, j] is not None and arr[i, j] != 0:
+                    row.append(int(arr[i, j]))
+            rows.append(tuple(reversed(row)))
+        return cls(rows)
 
     @classmethod
     def one_row(cls, p: int) -> RCGraph:

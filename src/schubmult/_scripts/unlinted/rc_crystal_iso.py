@@ -1,3 +1,4 @@
+"""Forest crystal isomorphism multiplication"""
 from schubmult import *
 
 if __name__ == "__main__":
@@ -40,6 +41,5 @@ if __name__ == "__main__":
                 poly = PA.from_expr(rc_sum, length=n-1).change_basis(ForestPolyBasis)
                 assert all(v >= 0 for v in poly.values()), f"Error: Invariant {invariant} has negative coefficient in decomposition: {poly}, {rcs=}"
                 assert len([key for key, v in poly.items() if v > 0]) == 1, f"Error: Invariant {invariant} has more than one term in decomposition: {poly}"
-                if any(v > 1 for v in poly.values()):
-                    print("Sweesh it's notnin")
+                
             # assert len(rc_set) == 0, f"Error: Not all RC graphs for {perm} are accounted for: missing {rc_set}"

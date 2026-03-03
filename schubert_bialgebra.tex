@@ -4126,9 +4126,29 @@ generate a subalgebra of $\BRC$ that projects isomorphically onto $\dcoma$ under
 \end{theorem}
 
 %then the dual basis $F_\alpha^*$ of $\NSym$ has nonnegative coefficients in the $B_\alpha$ basis, and the elements
-Coproduct on the RC graph ring:
 
-Define $\mathrm{flat}(R)=\iota(\alpha(R))$.
+\begin{definition}
+Define a function $\iota:\dcoma\to \BRC$ by sending $[a]$ to the unique RC graph with one row and degree $a$, extending by freeness to a homomorphism of rings. Recall the homomorphism $\alpha:\BRC\to \dcoma$ sending $R$ to $\dsch_{\wof{R}}^n$ where $n=\hr(R)$.
+\end{definition}
+
+\begin{lemma}
+The function $\iota$ is a section of $\alpha$, meaning that $\alpha\circ \iota$ is the identity on $\dcoma$.
+\end{lemma}
+\begin{proof}
+By virtue of the fact that $\alpha$ is a homomorphism, for any $\Xi_w^1$ we have that $\alpha(\iota(\Xi_w^1)) = \Xi_w^1$. Since the $\Xi_w^1$ form a generating set of $\dcoma$, the claim follows.
+\end{proof}
+
+\begin{definition}
+Consider an element $D\in\dcoma$. Then $\iota(D)$ is a linear combination of RC graphs. Assume $D$ is homogeneous of length $n$. Let 
+$$D=\sum_w c_w \Xi_w^n$$
+where $c_w$ are nonnegative integers. Then
+$$\iota(D)^+ = \sum_{w} c_R R$$
+such that
+$$\sum_{R\in\RC(w)} c_R = c_w$$
+
+\end{definition}
+
+Define the forest basis as $P_F = \iota(\pf_F)^+$.
 
 $$\Delta(s) = \Delta(\mathrm{flat}(s)) + (\mathrm{flat}(s) - s)\otimes 1 + 1\otimes (\mathrm{flat}(s) - s)$$
 

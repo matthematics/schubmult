@@ -288,3 +288,7 @@ class TensorRingElement(BaseRingElement):
             self[k] if k == self.ring.zero_monom else sympy_Mul(self[k], self.ring.printing_term(k))
             for k in self.keys()  # sorted(self.keys(), key=lambda kkt: [(kk.inv, tuple(kk)) for kk in kkt])
         ]
+
+    def expand(self, deep=True, *args, **kwargs):  # noqa: ARG002
+        from schubmult.symbolic import prod
+        return sum([coeff * prod([self.ring.rings[i](key[i]).expand() for i in range(len(key))]) for key, coeff in self.items()])

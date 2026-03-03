@@ -302,10 +302,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         wordelem = elem.change_basis(WordBasis)
         result = self.zero
         for word, coeff in wordelem.items():
-            res = self(RCGraph([]))
-            for a in reversed(word):
-                res = self(RCGraph.one_row(a)) * res
-            result += coeff * res
+            result += coeff * self.monomial(*word)
         return result
 
     def schub(self, perm, n=None):
@@ -319,18 +316,54 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
 
     # def weight_coproduct(self, elem):
 
-    @cache
+    #@cache
     def coproduct_on_basis(self, elem):
-        from schubmult import ASx, FreeAlgebraBasis, SchubertBasis
+        # from schubmult import FA, ASx, FreeAlgebraBasis, SchubertBasis, WordBasis
 
-        flat_elem = self(elem).to_free_algebra_element()
+        # # 1. Get both representations
+        # flat_elem = self(elem).to_free_algebra_element()
+        # word_elem = FA(*elem.length_vector)
 
+        # # 2. Get both coproducts in the same mixed basis (Schubert ⊗ Word)
+        # flat_coprod = flat_elem.coproduct()
+        # word_coprod = word_elem.coproduct()
+
+        # mixed_flat = FreeAlgebraBasis.change_tensor_basis(flat_coprod, WordBasis, WordBasis)
+        # mixed_word = FreeAlgebraBasis.change_tensor_basis(word_coprod, WordBasis, WordBasis)
+
+        # # 3. JOINT HOMOMORPHISM LOGIC:
+        # # Only sum terms where the 'flat' structure matches the 'word' structure.
+        # # We use the keys of both to ensure we capture the intersection.
+        # common_keys = set([key for key in mixed_flat.keys() if mixed_flat[key] != 0]) & set([b for b in mixed_word.keys() if mixed_word[b] != 0])
+
+        # ret = sum([
+        #     mixed_word[key] * self.monomial(*key[0]) @ self.monomial(*key[1])
+        #     for key in common_keys
+        # ])
+
+        # return ret
+#        from schubmult import FA
+        from schubmult import FA, WordBasis
+
+        flat_elem = self(elem).to_free_algebra_element(WordBasis)
         flat_coprod = flat_elem.coproduct()
-
-        mixed_coprod = FreeAlgebraBasis.change_tensor_basis(flat_coprod, SchubertBasis, WordBasis)
-        # unflat_elem = self(elem) - self.from_free_algebra_element(flat_elem)
-        ret = sum([coeff * self.from_free_algebra_element(ASx(perm1, len1)) @ self.monomial(*b) for ((perm1, len1), b), coeff in mixed_coprod.items()])# + (unflat_elem @ id + id @ unflat_elem)
+        #unflat_elem = self(elem) - self(RCGraph.principal_rc(elem.perm, len(elem)))
+        # id = self(RCGraph([]).resize(len(elem)))
+        ret = sum([coeff * self.from_free_algebra_element(FA(*a)) @ self.from_free_algebra_element(FA(*b)) for (a, b), coeff in flat_coprod.items()])# + (unflat_elem @ id + id @ unflat_elem)
         return ret
+    # def coproduct_on_basis(self, elem):
+    #     from schubmult import FA, ASx, FreeAlgebraBasis, SchubertBasis
+
+    #     flat_elem = self.from_free_algebra_element(self(elem).to_free_algebra_element())
+    #     word_elem = self.monomial(*elem.length_vector)
+
+    #     flat_coprod = flat_elem.coproduct()
+    #     word_coprod = word_elem.coproduct()
+
+    #     mixed_coprod = FreeAlgebraBasis.change_tensor_basis(flat_coprod, SchubertBasis, WordBasis)
+    #     mixed_word_coprod = FreeAlgebraBasis.change_tensor_basis(word_coprod, SchubertBasis, WordBasis)
+    #     ret = sum([coeff * self.from_free_algebra_element(ASx(perm1, len1)) @ self.monomial(*b) for ((perm1, len1), b), coeff in mixed_coprod.items()])
+    #     return ret
         # self.from_free_algebra_element(elem.perm) - elem
 
     # def dual_schubert_element(self, rc):
@@ -404,8 +437,6 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         # INSERTION WEIGHT TABLEAU
         # from symengine import S
 
-        # from schubmult import CrystalGraphTensor, Plactic, RootTableau, Sx
-
         # from .schubert.schubert_ring import DSx
         # from .variables import GeneratingSet
         # z = GeneratingSet("z")
@@ -416,53 +447,38 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         if v_rc.perm.inv == 0:
             return self(u_rc)
         if len(v_rc.perm.descents()) <= 1 and len(v_rc.perm.trimcode) >= len(u_rc.perm.trimcode):
-            return self(u_rc.squash_product(v_rc))
+            rc2 = v_rc.normalize()
+            # rc1 = u_rc.normalize()
+            common_length = len(rc2)
+            return self(u_rc.resize(common_length).squash_product(v_rc.resize(common_length)).resize(len(u_rc)))
+            #return self(u_rc.squash_product(v_rc))
 
-        if v_rc.perm.is_dominant:
-            # dominant case
-            # dom_rc = v_rc
-            # tensor_hw_map = {}
-            # w_hw_map = {}
-            # n = len(dom_rc) + 1
-            # cheat_prod = Sx(dom_rc.perm) * Sx(u_rc.perm)
-            # for u_rc_crystal in u_rc.full_crystal:
-            #     tensor_hw_map[u_rc_crystal] = CrystalGraphTensor(dom_rc, u_rc_crystal).to_highest_weight()[0]
-            #     for w in cheat_prod:
-            #         dp_ret = u_rc_crystal.dualpieri(dom_rc.perm, w)
-            #         if len(dp_ret) > 0:
-            #             for dualpieri_seq in dp_ret:
-            #                 if dualpieri_seq[-1].perm.inv == 0:
-            #                     tensor_hw = tensor_hw_map[u_rc_crystal]
-            #                     wt = tensor_hw.to_lowest_weight()[0].crystal_weight
-            #                     wp_rcs = [rc for rc in RCGraph.all_rc_graphs(w, n - 1, weight=wt) if rc.is_lowest_weight]
-            #                     wp_rc = wp_rcs[0]
-            #                     if wp_rc.to_highest_weight()[0].crystal_weight == tensor_hw.crystal_weight:
-            #                         w_hw_map[tensor_hw] = wp_rc.to_highest_weight()[0]
-            #                     break
-            # tensor = tensor_hw_map[u_rc]
-            # tensor0 = CrystalGraphTensor(dom_rc, u_rc)
-            # _, raise_seq = tensor0.to_highest_weight()
+        # weight1, dperm1 = u_rc.classify_demazure_crystal()
+        # weight2, dperm2 = v_rc.classify_demazure_crystal()
+        # does_decompose = Permutation.does_demazure_crystal_tensor_decompose(weight1, dperm1, weight2, dperm2)
+        # if does_decompose and u_rc.perm.is_dominant:
+        #     # the_dubya = Sx(u_rc.perm) * Sx(v_rc.perm)
+        #     # rc_set = set()
+        #     # for w in the_dubya.keys():
+        #     #     rc_set.update(RCGraph.all_hw_rcs(w, len(u_rc)))
+        #     # hw_map = {}
 
-            # if tensor in w_hw_map:
-            #     w_rc = w_hw_map[tensor]
-            #     return self(w_rc.reverse_raise_seq(raise_seq))
-            # collected_rcs = {}
-            # for w in cheat_prod:
-            #     for w_rc in RCGraph.all_hw_rcs(w, n - 1):
-            #         if w_rc not in w_hw_map.values():
-            #             collected_rcs[RootTableau.from_rc_graph(w_rc).weight_tableau] = w_rc
-
-            # tab1 = RootTableau.from_rc_graph(dom_rc).weight_tableau
-            # tab2 = RootTableau.from_rc_graph(tensor.factors[1]).weight_tableau
-
-            # total_tab = Plactic().rs_insert(*tab1.row_word, *tab2.row_word)
-            # try:
-            #     return self(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
-            # except KeyError:
-            #     total_tab = Plactic().rs_insert(*tab2.row_word, *tab1.row_word)
-            #     return self(collected_rcs[total_tab].reverse_raise_seq(raise_seq))
-            raise NotImplementedError("Multiplication only implemented for dominant right factor or Grassmannian with large enough descent.")
-        raise NotImplementedError("Multiplication only implemented for dominant right factor or Grassmannian with large enough descent.")
+        #     # tensor = CrystalGraphTensor(u_rc, v_rc)
+        #     # # extremal_weight = tuple([a + b for a, b in zip(rc.extremal_weight, elem_rc.length_vector)])
+        #     # hw_tensor, raise_seq = tensor.to_highest_weight()
+        #     # # if hw_tensor not in hw_map:
+        #     # def dom_key(weight):
+        #     #     return tuple([sum(weight[:i]) for i in range(1, len(weight) + 1)])
+        #     # extremal_weight = min([tens_bag.crystal_weight for tens_bag in hw_tensor.full_crystal if tuple(hw_tensor.crystal_weight) == tuple(sorted(tens_bag.crystal_weight, reverse=True))], key=lambda x: dom_key(x))
+        #     # me_map = next(iter(min([rc2 for rc2 in rc_set if tuple(rc2.extremal_weight) == tuple(extremal_weight)])))
+        #     # rc_set.remove(me_map)
+        #     # mapped_rc = me_map.reverse_raise_seq(raise_seq)
+        #     # return mapped_rc
+        #     rc1 = u_rc.normalize()
+        #     rc2 = v_rc.normalize()
+        #     common_length = max(len(rc1), len(rc2))
+        #     return self(u_rc.resize(common_length).squash_product(v_rc.resize(common_length)).resize(len(u_rc)))
+        raise NotImplementedError("Multiplication only implemented for Grassmannian with large enough descent or if the Demazure crystal tensor product decomposes.")
 
     @cache
     def potential_products(self, left, right, length):

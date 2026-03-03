@@ -177,15 +177,14 @@ class DualRCGraphRing(SchubertMonomialRing):
                 for b, coeff_b in elem2.items():
                     if len(a) != len(b):
                         continue
-                    length_vector_sum = tuple([a1 + b1 for a1, b1 in zip(a.length_vector, b.length_vector)])
-
                     cheat_prod = Sx(a.perm) * Sx(b.perm)
                     for w in cheat_prod:
-                        for rc in RCGraph.all_rc_graphs(w, len(a), weight = length_vector_sum):
+                        for rc in RCGraph.all_rc_graphs(w, len(a), weight = tuple([a1 + b1 for a1, b1 in zip(a.length_vector, b.length_vector)])):
                             cprod = r(rc).coproduct()
                             for (rc1, rc2), coeff in cprod.items():
                                 if rc1.perm == a.perm and rc2.perm == b.perm:
                                     result += coeff_a * coeff_b * coeff * self(rc)
+
             return result
         try:
             result_dict = {k: v * elem2 for k, v in elem1.items()}

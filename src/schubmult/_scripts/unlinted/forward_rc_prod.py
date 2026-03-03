@@ -28,8 +28,10 @@ if __name__ == "__main__":
         stinkbat = {}
         #print(result)
         for rc1, rc2 in itertools.product(RCGraph.all_rc_graphs(perm1, n - 1), RCGraph.all_rc_graphs(perm2, n - 1)):
-            result += r(rc1) * r(rc2)
-            #pretty_print((rc1, rc2))
+            addbag = r(rc1) * r(rc2)
+            result += addbag
+            # pretty_print((rc1, rc2))
+            # pretty_print(addbag)
         pretty_print(result)
         # for bacon, pig in stinkbat.items():
         #     pretty_print(bacon)

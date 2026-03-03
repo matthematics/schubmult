@@ -1,4 +1,4 @@
-from schubmult.symbolic import EXRAW, Add, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Ring, S, expand, sympify, sympify_sympy, sympy_Add, sympy_Mul
+from schubmult.symbolic import EXRAW, CoercionFailed, CompositeDomain, DefaultPrinting, DomainElement, Ring, S, expand, sympify, sympify_sympy, sympy_Add, sympy_Mul
 from schubmult.utils.perm_utils import add_perm_dict
 
 
@@ -149,10 +149,10 @@ class BaseRingElement(DomainElement, DefaultPrinting, dict):
         return sympify(expand(self.as_polynomial()))
 
     def as_expr(self):
-        return Add(*self.as_terms())
+        return sympy_Add(*self.as_terms())
 
-    def as_polynomial(self):
-        return self.as_expr()
+    def as_polynomial(self): ...
+
 
     def __eq__(self, other):
         return type(self) is type(other) and self.ring == other.ring and dict.__eq__(self, other)

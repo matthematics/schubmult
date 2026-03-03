@@ -596,14 +596,15 @@ class LabeledForest:
         self.mapping = {}
         for node in self.forest.inorder_traversal:
             self.mapping[node.index] = node.label
+            self.mapping[node] = node.label
 
     @property
     def inorder_traversal(self):
         for node in self.forest.inorder_traversal:
             yield node, node.label
 
-    def __call__(self, node):
-        return self.mapping.get(node.index, None)
+    def __call__(self, index):
+        return self.mapping.get(index, None)
 
     def __eq__(self, other):
         if not isinstance(other, LabeledForest):
@@ -623,9 +624,9 @@ class DecLabeling(LabeledForest):
     @property
     def is_valid(self):
         for node in self.forest.inorder_traversal:
-            if self(node) <= self(node.left) if node.left else False:
+            if self(node.index) <= self(node.left.index) if node.left is not None else False:
                 return False
-            if self(node) <= self(node.right) if node.right else False:
+            if self(node.index) <= self(node.right.index) if node.right is not None else False:
                 return False
         return True
 
@@ -647,11 +648,11 @@ class LBS(LabeledForest):
     @property
     def is_valid(self):
         for node in self.forest.inorder_traversal:
-            if self(node) <= self(node.left) if node.left else False:
+            if self(node.index) <= self(node.left.index) if node.left is not None else False:
                 return False
-            if self(node) >= self(node.right) if node.right else False:
+            if self(node.index) >= self(node.right.index) if node.right is not None else False:
                 return False
-            if self(node).primary not in [node0.index for node0 in node.inorder_traversal]:
+            if self(node.index).primary not in [node0.index for node0 in node.inorder_traversal]:
                 return False
         return True
 
@@ -665,6 +666,13 @@ class LBS(LabeledForest):
             if i not in self.forest.support and i - 1 not in self.forest.support:
                 base_list.add(letterpair(i, 0))
         return tuple(sorted(base_list))
+
+    def hw_rc(self, length=None):
+        from schubmult import NilPlactic, Permutation
+        print(self.word)
+        if length is None:
+            length = len(Permutation.ref_product(*self.word).trimcode)
+        return NilPlactic().ed_insert(*self.word).hw_rc(length=length)
 
     def __eq__(self, other):
         if not isinstance(other, LBS):
