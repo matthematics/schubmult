@@ -1,14 +1,25 @@
-from schubmult import Permutation, elem_sym_perms, elem_sym_perms_q, q_vector, phi_d, tau_d, RCGraph, SchubertBasis, ASx, WordBasis, FA, Sx, RCGraphRing, Plactic, RootTableau
+from schubmult import *
 
 if __name__ == "__main__":
     import itertools
-    n = 6
-    perms = Permutation.all_permutations(n)
+    import sys
+    from schubmult.utils.perm_utils import weak_compositions
+    from schubmult.rings.polynomial_algebra import *
+    n = int(sys.argv[1])
+    
+    weaks = weak_compositions(n, n - 1)
 
-    mn = 10000
+    def num_descs(comp):
+        return sum(1 for i in range(len(comp) - 1) if comp[i] > comp[i + 1])
+    for comp in sorted(weaks):
+        if num_descs(comp) > 1:
+            continue
+        pinto = Sx.from_expr(Forest(*comp).expand())
+        if len(pinto) <= 1:
+            print(comp)
+            print(pinto)
+            print(uncode(comp).is_vexillary)
 
-    for perm1, perm2 in itertools.combinations_with_replacement(perms, 2):
-        if any(v > 1 for v in (Sx(perm1) * Sx(perm2)).values()) and max(len(perm1.descents()), len(perm2.descents())) > 1:
-            if max(len(perm1.trimcode),len(perm2.trimcode))*max(perm1.inv, perm2.inv) <= mn:
-                print(f"{perm1} {perm2} inv={max(len(perm1.trimcode),len(perm2.trimcode))*max(perm1.inv, perm2.inv)} Sx1*Sx2={Sx(perm1) * Sx(perm2)}")
-                mn = max(len(perm1.trimcode),len(perm2.trimcode))*max(perm1.inv, perm2.inv)
+
+
+    

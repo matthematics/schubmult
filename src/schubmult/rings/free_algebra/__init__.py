@@ -1,6 +1,6 @@
 from ._core import FA, ADSx, ASx, FreeAlgebra, FreeAlgebraElement
 from .elementary_basis import ElementaryBasis
-from .forest_basis import ForestBasis
+from .forest_basis import ForestBasis, ForestDual
 from .free_algebra_basis import FreeAlgebraBasis
 from .fundamental_slide_basis import FundamentalSlideBasis
 from .j_basis import JBasis
@@ -20,6 +20,7 @@ __all__ = [
     "ASx",
     "ElementaryBasis",
     "ForestBasis",
+    "ForestDual",
     "FreeAlgebra",
     "FreeAlgebraBasis",
     "FreeAlgebraElement",

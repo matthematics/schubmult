@@ -38,17 +38,23 @@ if __name__ == "__main__":
             print(f"Decomposes? {tryit}")
             print(f"Other direction? {Permutation.does_demazure_crystal_tensor_decompose(weight2, dperm2, weight1, dperm1)}")
             if tryit:                
-                    produc = Sx(rc1.perm) * Sx(rc2.perm)
-                    rc1_t = rc1.transpose().normalize().to_highest_weight()[0]
-                    rc2_t = rc2.transpose().normalize().to_highest_weight()[0]
-                    combinat = r(rc2_t) * r(rc1_t)
-                    gotone = False
-                    for rc, coeff in combinat.items():
-                        rc = rc.transpose(len(rc1))
+                produc = Sx(rc1.perm) * Sx(rc2.perm)
+                for w in produc:
+                    for w_rc in RCGraph.all_rc_graphs(w, n - 1):
+                        hw1, tab1 = rc1.hw_tab_rep()
+                        hw2, tab2 = rc2.hw_tab_rep()
+                        hw_w, tab_w = w_rc.hw_tab_rep()
+                        tab_w.inner
+                    # rc1_t = rc1.transpose().normalize().to_highest_weight()[0]
+                    # rc2_t = rc2.transpose().normalize().to_highest_weight()[0]
+                    # combinat = r(rc2_t) * r(rc1_t)
+                    # gotone = False
+                    # for rc, coeff in combinat.items():
+                    #     rc = rc.transpose(len(rc1))
                         
-                        if produc.get(rc.perm, 0) != 0:# and rc.length_vector == tuple([a + b for a, b in zip(rc1.length_vector, rc2.length_vector)]):
-                            gotone = True
-                            pretty_print((rc, coeff))
-                            print(f"Product of {rc1} and {rc2} has term {rc} with coefficient {coeff}, which corresponds to {Sx(rc.perm)} in the Schubert basis, which has product {produc.get(rc.perm, 0)}")
-                    if not gotone:
-                        print("WAHBOOGER")
+                    #     if produc.get(rc.perm, 0) != 0:# and rc.length_vector == tuple([a + b for a, b in zip(rc1.length_vector, rc2.length_vector)]):
+                    #         gotone = True
+                    #         pretty_print((rc, coeff))
+                    #         print(f"Product of {rc1} and {rc2} has term {rc} with coefficient {coeff}, which corresponds to {Sx(rc.perm)} in the Schubert basis, which has product {produc.get(rc.perm, 0)}")
+                    # if not gotone:
+                    #     print("WAHBOOGER")

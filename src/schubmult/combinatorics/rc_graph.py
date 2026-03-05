@@ -1618,7 +1618,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             strip.append(row)
         return working_rc, tuple(strip)
 
-    def pull_out_row(self, row: int) -> tuple[tuple, RCGraph]:
+    def pull_out_row(self, row: int, keep_size=False) -> tuple[tuple, RCGraph]:
         # if row - 1 not in self.perm.descents():
         #     raise ValueError("Row not a descent")
         # if len(self[row - 1]) != 0:
@@ -1668,6 +1668,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         assert ret.perm.inv == self.perm.inv - len(self[row - 1]), f"\n{tuple(ret)=}, \n{self=} {row=}\n{rows_by_descent=}"
         # while not ret.is_valid:
         #     ret = RCGraph([*ret.rowrange(0, row - 1).little_bump_desc(), *RCGraph(self[row:]).shiftup(-1)])
+        if keep_size:
+            ret = ret.resize(len(self))
         return ret
 
     def little_bump_zero(self):

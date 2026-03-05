@@ -1,6 +1,8 @@
 from functools import cache
+from sympy import pretty_print
 from schubmult import *
 from schubmult.rings.polynomial_algebra import *
+from schubmult.rings.free_algebra import *
 from schubmult.symbolic import *
 from schubmult.utils.perm_utils import weak_compositions
 import itertools
@@ -21,7 +23,23 @@ if __name__ == "__main__":
     rc_product = {}
 
     
-    sys.exit(0)
+    #sys.exit(0)
+    doms = []
+    for perm in perms:
+        for rc in RCGraph.all_lw_rcs(perm, n):
+            doms.append(r(rc))
+    stack = [*doms]
+    seen = set()
+    while stack:
+        rc = stack.pop()
+        if tuple(sorted(rc.keys())) in seen:
+            continue
+        seen.add(tuple(sorted(rc.keys())))
+        pretty_print(rc)
+        for cut in range(1, n):
+            result = rc.trim_operator(cut)
+            if result != r.zero:
+                stack.append(result)
     if False:
         
 
@@ -31,13 +49,19 @@ if __name__ == "__main__":
             polystink = {}
             for rc in RCGraph.all_rc_graphs(perm):
                 inv = rc.forest_invariant
-                polystink[inv] = polystink.get(inv, S.Zero) + rc.polyvalue(Sx.genset)
-            for inv in polystink:
+                polystink[inv] = polystink.get(inv, r.zero) + r(rc)
+            for inv, pol in polystink.items():
                 # print(expand(polystink[inv] - Forest(*inv.forest.code).expand()) )
                 # print(inv)
                 # print(inv.forest.code)
                 # print(Forest(*inv.forest.code).expand())
-                assert expand(polystink[inv] - Forest(*inv.forest.code, 0).expand()) == 0
+                #assert expand(polystink[inv] - Forest(*inv.forest.code, 0).expand()) == 0
+                assert len(set([rc.forest_invariant for rc, v in pol.items() if v != 0])) == 1, f"Failed for {perm}, got multiple invariants for {inv}: {[rc.forest_invariant for rc in polystink[inv]]}"
+                for i in range(1, n):
+                    trimmed = pol.trim_operator(i)
+                    assert len(set([rc.forest_weight for rc, v in trimmed.items() if v != 0])) <= 1, f"Failed for {perm} at cut {i}, got\n {trimmed}"
+                
+    sys.exit(0)
     print("ASFNIASIFNASI")
     
     
@@ -148,30 +172,69 @@ if __name__ == "__main__":
         return full_prod, ideal_part
     # print("Pinto bean exit")
     #sys.exit()
-    for comp1, comp2 in itertools.product(compositions, repeat=2):
-        forest_elem1 = ForestDual(*comp1)
-        forest_elem2 = ForestDual(*comp2)
-        prod = forest_elem1 * forest_elem2
-        rc_elem1 = canonical_rc_rep(comp1, ForestBasis)
-        rc_elem2 = canonical_rc_rep(comp2, ForestBasis)
-        rc_prod = ideal_prod(rc_elem1, rc_elem2)
-        dappy_prod = sum(rc_elem1) * sum(rc_elem2)
-        #assert all(v > 0 for v in rc_prod[0].values()), f"Failed for {comp1} and {comp2}, got {rc_prod[0]}"
-        assert rc_prod[0].to_free_algebra_element().change_basis(ForestBasis).almosteq(prod), f"Failed for {comp1} and {comp2}, got {rc_prod[0].to_free_algebra_element()}, expected {prod}"
-        assert rc_prod[0].almosteq(canonical_rc_rep_elem(prod)[0]), f"Failed for {comp1} and {comp2}, got {rc_prod[0]} expected {canonical_rc_rep_elem(prod)[0]}"
-        #(rc_elem1[0] + rc_elem1[1] #(sum([coeff * canonical_rc_rep(comp3, ForestBasis)[0] for comp3, coeff in prod.items()]), sum([coeff * canonical_rc_rep(comp3, ForestBasis)[1] for comp3, coeff in prod.items()]))
-        assert dappy_prod.almosteq(sum(rc_prod)), f"Failed for {comp1} and {comp2}, got {rc_prod[0]}, expected {dappy_prod}"
+    # for comp1, comp2 in itertools.product(compositions, repeat=2):
+    #     forest_elem1 = ForestDual(*comp1)
+    #     forest_elem2 = ForestDual(*comp2)
+    #     prod = forest_elem1 * forest_elem2
+    #     rc_elem1 = canonical_rc_rep(comp1, ForestBasis)
+    #     rc_elem2 = canonical_rc_rep(comp2, ForestBasis)
+    #     rc_prod = ideal_prod(rc_elem1, rc_elem2)
+    #     dappy_prod = sum(rc_elem1) * sum(rc_elem2)
+    #     #assert all(v > 0 for v in rc_prod[0].values()), f"Failed for {comp1} and {comp2}, got {rc_prod[0]}"
+    #     assert rc_prod[0].to_free_algebra_element().change_basis(ForestBasis).almosteq(prod), f"Failed for {comp1} and {comp2}, got {rc_prod[0].to_free_algebra_element()}, expected {prod}"
+    #     assert rc_prod[0].almosteq(canonical_rc_rep_elem(prod)[0]), f"Failed for {comp1} and {comp2}, got {rc_prod[0]} expected {canonical_rc_rep_elem(prod)[0]}"
+    #     #(rc_elem1[0] + rc_elem1[1] #(sum([coeff * canonical_rc_rep(comp3, ForestBasis)[0] for comp3, coeff in prod.items()]), sum([coeff * canonical_rc_rep(comp3, ForestBasis)[1] for comp3, coeff in prod.items()]))
+    #     assert dappy_prod.almosteq(sum(rc_prod)), f"Failed for {comp1} and {comp2}, got {rc_prod[0]}, expected {dappy_prod}"
 
-        print(f"Happy potatoes {comp1, comp2}")
-        pretty_print(rc_prod[0])
+    #     print(f"Happy potatoes {comp1, comp2}")
+    #     pretty_print(rc_prod[0])
         #assert rc_elem1.get(invariant_stinkbat[comp1], 0) == rc_elem2, f"Failed for {comp1} and {comp2}, got {rc_elem2}, expected {rc_elem1.get(invariant_stinkbat[comp1], 0)}"
+    from schubmult.utils.tuple_utils import pad_tuple
+
+    forest_elems = {}
+    for length in range(n):
+        
+        for perm in perms:
+            if len(perm.trimcode) > length:
+                continue
+            invariants_seen = set()
+            for rc in RCGraph.all_rc_graphs(perm, length): 
+                if rc.forest_invariant in invariants_seen:
+                    continue
+                forest_elems[rc.forest_weight] = forest_elems.get(rc.forest_weight, 0) + r(rc).to_free_algebra_element()
+                invariants_seen.add(rc.forest_invariant)
+
+    for comp in forest_elems:
+        assert forest_elems[comp].change_basis(ForestBasis).almosteq(ForestDual(*comp)), f"Failed for {comp}, got {forest_elems[comp].change_basis(ForestBasis)}, expected {ForestDual(*comp)}"
     # for perm1, perm2 in itertools.product(perms, repeat=2):
-    #     for length1, length2 in itertools.product(range(len(perm1.trimcode), n), range(len(perm2.trimcode), n)):
-    #         for rc1, rc2 in itertools.product(RCGraph.all_rc_graphs(perm1,length1), RCGraph.all_rc_graphs(perm2,length2)):
-    #             inv1 = rc1.forest_invariant
-    #             inv2 = rc2.forest_invariant
-    #             poly1 = rc1.polyvalue(Sx.genset)
-    #             poly2 = rc2.polyvalue(Sx.genset)
-    #             prod = poly1 * poly2
-    #             for k, v in prod.as_polynomial().items():
-    #                 assert v >= 0, f"Negative coefficient {v} for monomial {k} in product of {perm1} and {perm2} at lengths {length1} and {length2}"
+    #     for length1, length2 in itertools.product(range(max(1,len(perm1.trimcode)), n), range(max(1,len(perm2.trimcode)), n)):
+    #         invariants1 = {}
+    #         invariants2 = {}
+    #         for rc in RCGraph.all_rc_graphs(perm1, length1):
+    #             if rc.forest_invariant not in invariants1:                    
+    #                 invariants1[rc.forest_invariant] = invariants1.get(rc.forest_invariant, r.zero) + r(rc)
+    #         for rc in RCGraph.all_rc_graphs(perm2, length2):
+    #             if rc.forest_invariant not in invariants2:
+    #                 invariants2[rc.forest_invariant] = invariants2.get(rc.forest_invariant, r.zero) + r(rc)
+                
+    # #         #for rc1, rc2 in itertools.product(RCGraph.all_rc_graphs(perm1,length1), RCGraph.all_rc_graphs(perm2,length2)):
+    #         #for inv1, inv2 in itertools.product(invariants1.keys(), invariants2.keys()):
+    #             # if rc1.length_vector != rc1.forest_weight:
+    #             #     continue
+    #             # if rc2.length_vector != rc2.forest_weight:
+    #             #     continue
+    #         for inv1, inv2 in itertools.product(invariants1.keys(), invariants2.keys()):
+    #             rc1 = invariants1[inv1]
+    #             rc2 = invariants2[inv2]
+    #             for1 = ForestDual(*pad_tuple(inv1.forest.code, length1))
+    #             for2 = ForestDual(*pad_tuple(inv2.forest.code, length2))
+    #             # poly1 = rc1.polyvalue(Sx.genset)
+    #             # poly2 = rc2.polyvalue(Sx.genset)
+    #             # prod = poly1 * poly2
+    #             forprod = for1 * for2
+    #             rcprod = rc1 * rc2
+    #             rcfor = rcprod.to_free_algebra_element(ForestBasis)
+    #             assert rcfor.almosteq(forprod), f"Failed for {perm1} and {perm2} at lengths {length1} and {length2}: got {rcfor}, expected {forprod}"
+    #             print("Painted gaar")
+    #             # for k, v in prod.as_polynomial().items():
+    #             #     assert v >= 0, f"Negative coefficient {v} for monomial {k} in product of {perm1} and {perm2} at lengths {length1} and {length2}"

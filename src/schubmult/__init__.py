@@ -37,6 +37,8 @@ _lazy_exports = {
     "ASx": "schubmult.rings.free_algebra",
     "ADSx": "schubmult.rings.free_algebra",
     "FA": "schubmult.rings.free_algebra",
+    "ForestDual": "schubmult.rings.free_algebra.forest_basis",
+    "ForestBasis": "schubmult.rings.free_algebra.forest_basis",
     "DoubleSchubertRing": "schubmult.rings.schubert.schubert_ring",
     "SingleSchubertRing": "schubmult.rings.schubert.schubert_ring",
     "DoubleSchubertElement": "schubmult.rings.schubert.schubert_ring",

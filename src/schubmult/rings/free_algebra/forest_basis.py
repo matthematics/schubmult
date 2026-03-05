@@ -1,3 +1,4 @@
+from schubmult.rings.free_algebra._core import FreeAlgebra
 from schubmult.rings.free_algebra.free_algebra_basis import FreeAlgebraBasis
 from schubmult.rings.printing import GenericPrintingTerm
 from schubmult.symbolic import S
@@ -59,6 +60,8 @@ class ForestBasis(FreeAlgebraBasis):
         if other_basis == SchubertBasis:
             return lambda x: cls.transition_schubert(x)
         return lambda x: FreeAlgebraBasis.compose_transition(SchubertBasis.transition(other_basis), cls.transition_schubert(x))
+
+ForestDual = FreeAlgebra(ForestBasis)
 
 
 if __name__ == "__main__":
