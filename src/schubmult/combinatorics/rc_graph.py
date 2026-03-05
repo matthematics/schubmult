@@ -1624,6 +1624,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         # if len(self[row - 1]) != 0:
         #     raise ValueError("Row not empty")
         if row == 1:
+            if keep_size:
+                return self.rowrange(1).resize(len(self))
             return self.rowrange(1)
         bottom_cut = self.rowrange(0, row)
         # if len(bottom_cut.perm.trimcode) <= len(bottom_cut):

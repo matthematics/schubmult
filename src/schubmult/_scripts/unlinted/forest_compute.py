@@ -24,22 +24,38 @@ if __name__ == "__main__":
 
     
     #sys.exit(0)
-    doms = []
-    for perm in perms:
-        for rc in RCGraph.all_lw_rcs(perm, n):
-            doms.append(r(rc))
-    stack = [*doms]
-    seen = set()
-    while stack:
-        rc = stack.pop()
-        if tuple(sorted(rc.keys())) in seen:
-            continue
-        seen.add(tuple(sorted(rc.keys())))
-        pretty_print(rc)
-        for cut in range(1, n):
-            result = rc.trim_operator(cut)
-            if result != r.zero:
-                stack.append(result)
+    # doms = []
+    # for perm in perms:
+    #     for rc in RCGraph.all_lw_rcs(perm, n):
+    #         doms.append(r(rc))
+    # stack = [*doms]
+    # seen = set()
+    # while stack:
+    #     rc = stack.pop()
+    #     if tuple(sorted(rc.keys())) in seen:
+    #         continue
+    #     seen.add(tuple(sorted(rc.keys())))
+    #     pretty_print(rc)
+    #     for cut in range(1, n):
+    #         result = rc.trim_operator(cut)
+    #         if result != r.zero:
+    #             stack.append(result)
+    def forest_rep(code, length):
+        sputnik = r.zero
+        sputnik = sum([r(rc) for rc in RCGraph.all_rc_graphs(uncode(code), length) if tuple(rc.forest_weight[:len(code)]) == tuple(code)])
+        return sputnik
+
+    comps = weak_compositions(n, n - 1)
+
+    for comp in comps:
+        
+        panto = forest_rep(comp, n)
+        for i in range(1, n - 1):
+            trimmed = panto.trim_operator(i)
+            if trimmed != r.zero:
+                plost = min([rc.length_vector for rc in trimmed])
+                assert trimmed.almosteq(forest_rep(plost, n)), f"Failed for {comp} at cut {i}, got {trimmed}, expected {forest_rep(plost, n)}"
+        
     if False:
         
 
