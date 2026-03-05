@@ -126,9 +126,9 @@ class BaseSchubertRing(BaseRing):
                 raise CoercionFailed("Not a domain element")
             if not any(x in self.genset for x in sympify_sympy(element).free_symbols):
                 return sympify(element)
-            raise CoercionFailed(f"{element} contains an element of the set of generators")
+            raise CoercionFailed("Ring element to coerce contains an element of the set of generators")
         except Exception:
-            raise CoercionFailed(f"Could not coerce {element} of type {type(element)} to {self.__class__.__name__}")
+            raise CoercionFailed(f"Could not coerce type {type(element)} to {self.__class__.__name__}")
 
     @property
     def genset(self):

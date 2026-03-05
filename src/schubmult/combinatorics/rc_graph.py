@@ -1618,6 +1618,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             strip.append(row)
         return working_rc, tuple(strip)
 
+    @property
+    def is_forest_rc(self) -> bool:
+        return self.forest_invariant == RCGraph.principal_rc(self.perm, len(self)).forest_invariant
+
     def pull_out_row(self, row: int, keep_size=False) -> tuple[tuple, RCGraph]:
         # if row - 1 not in self.perm.descents():
         #     raise ValueError("Row not a descent")

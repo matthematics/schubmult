@@ -25,7 +25,7 @@ class ForestBasis(FreeAlgebraBasis):
 
     @classmethod
     def printing_term(cls, k):
-        return GenericPrintingTerm(k, "Forest")
+        return GenericPrintingTerm(k, "ForestDual")
 
     @classmethod
     def dual_basis(cls):
@@ -35,21 +35,14 @@ class ForestBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_schubert(cls, key):
-        from schubmult.combinatorics.indexed_forests import _eq_except_trailing_zeros
         from schubmult.rings.combinatorial import RCGraphRing
 
         r = RCGraphRing()
         dct = {}
         all_rcs = r.monomial(*key)
-        seen = set()
 
         for rc in all_rcs:
-            # if rc.is_lowest_weight:
-            #     dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
-            indfor = rc.forest_invariant
-            if indfor in seen:
-                continue
-            if _eq_except_trailing_zeros(indfor.forest.code, key):
+            if rc.forest_weight == key:
                 dct[(rc.perm, len(rc))] = dct.get((rc.perm, len(rc)), S.Zero) + S.One
         return dct
 

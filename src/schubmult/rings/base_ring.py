@@ -275,7 +275,7 @@ class BaseRing(Ring, CompositeDomain):
                 raise CoercionFailed("Not a domain element")
             return sympify(element)
         except Exception:
-            raise CoercionFailed(f"Could not coerce {element} of type {type(element)} to {self.__class__.__name__}")
+            raise CoercionFailed(f"Could not coerce type {type(element)} to {self.__class__.__name__}")
 
     def from_expr(self, x):
         return self.mul_expr(self.one, x)
