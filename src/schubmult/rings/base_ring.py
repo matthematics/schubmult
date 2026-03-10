@@ -168,7 +168,7 @@ class BaseRingElement(DomainElement, DefaultPrinting, dict):
         return False
 
     def __matmul__(self, other):
-        return (self.ring @ self.ring).ext_multiply(self, other)
+        return (self.ring @ other.ring).ext_multiply(self, other)
 
 
 class BaseRing(Ring, CompositeDomain):

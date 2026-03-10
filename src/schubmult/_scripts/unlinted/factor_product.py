@@ -2,6 +2,8 @@ from schubmult import *
 from sympy import pretty_print, S
 from schubmult.utils.schub_lib import elem_sym_perms_op, elem_sym_perms
 from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
+from schubmult.symbolic import expand_seq
+from schubmult.rings.polynomial_algebra import *
 
 def the_prod(tup):
     if len(tup) == 0:
@@ -14,60 +16,96 @@ if __name__ == "__main__":
 
     n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
-    r = RCGraphRing()
-    factorizations = {RCGraph(): ()}
+    r = DualRCGraphRing()
+    factorizations = {RCGraph(): set([((),())])}
     for k in range(1, n):
         new_factorizations = {}
         for p in range(0, k + 1):
-            for rc, factor_tuple in factorizations.items():
+            for rc, factor_set in factorizations.items():
                 rc = rc.resize(k)
                 for elem_rc in RCGraph.all_rc_graphs(uncode([0] * (k - p) + [1] * p), k):
-                    new_rc = rc.squash_product(elem_rc)
-                    new_factorizations[new_rc] = (*factor_tuple, elem_rc)
+                    for new_rc in r(rc) * r(elem_rc):
+                        new_factorizations[new_rc] = new_factorizations.get(new_rc, set())
+                        for (factor_tuple, weight) in factor_set:
+                            new_factorizations[new_rc].add(((*factor_tuple, elem_rc),(*weight, elem_rc.perm.inv)))
+                            break
         factorizations = new_factorizations
 
-    # divdiff_factorizations = {RCGraph(): {}}
+    print("TEST FK FACTORIZATON")
 
-    # for k in range(1, n):
-    #     new_factorizations = {}
-    #     for p in range(0, k + 1):
-    #         for rc, factor_tuple in factorizations.items():
-    #             rc = rc.resize(k)
-    #             spot_perm =  (~(rc.perm)) * Permutation.w0(k)
-    #             upwards = elem_sym_perms(spot_perm, k, k)
-    #             for up_perm, diff in upwards:
-    #                 if diff == 0:
-    #                     new_rc = rc
-    #                     new_factorizations[new_rc] = (*factor_tuple, RCGraph([]).resize(k))
-    #                     continue
-    #                 vec = [0] * k
-    #                 spots = [i for i in range(len(up_perm)) if up_perm[i] == spot_perm[i] and i < k]
-    #                 for j in spots:
-    #                     vec[j] = 1
-    #                 elem_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (diff) + [1] * (k - diff)), k, weight=tuple(vec))))
-    #                 new_rc = rc.squash_product(elem_rc)
-    #                 test_perm = (~(new_rc.perm)) * Permutation.w0(k + 1)
-    #                 assert test_perm == up_perm, f"Failed on {rc}\n{k=}\n{elem_rc}\n{new_rc}\n{up_perm=}\n{test_perm=}"
-    #                 new_factorizations[new_rc] = (*factor_tuple, elem_rc)
-    #     factorizations = new_factorizations
-    # success = 0
-    # for rc1, rc2 in itertools.product(factorizations.keys(), repeat=2):
-    #     factor1 = factorizations[rc1]
-    #     factor2 = factorizations[rc2]
-    #     assert the_prod(factor1) == rc1, f"Failed on {rc1} with factors {factor1}"
-    #     assert the_prod(factor2) == rc2, f"Failed on {rc2} with factors {factor2}"
-    #     product_graph = RCGraph()
-    #     edge = 0
-    #     index = 0
-    #     working_tup
-    #     while index < len(factor2):
-    #         while len(the_prod(factor1[:edge]).perm.trimcode)<=index + 1:
-    #             edge += 1
-    #     edge -= 1
-
-    #     assert product_graph.perm in Sx(rc1.perm) * Sx(rc2.perm), f"Failed on \n{rc1} and \n{rc2}\n{product_graph.perm} not in {Sx(rc1.perm) * Sx(rc2.perm)}\n{product_graph}"
-    #     success += 1
-    # print(f"Successes: {success}")
+    
+    for base_perm in perms:
+        beepy = 0
+        buildup = 1
+        for rc_b in RCGraph.all_rc_graphs(base_perm, n - 1):
+            for perm in perms:
+                def word_elem(p, k, *args):  # noqa: ARG001
+                    import numpy as np
+                    numvars = n - 1
+                    if p > k or p < 0:
+                        return PA.zero
+                    if p == 0:
+                        return PA.one
+                    vec = np.zeros(numvars, dtype=int)
+                    vec[k - 1] = p
+                    return PA.from_dict({tuple(vec.tolist()): 1})
+                        
+                
+                new_buildup = 0
+                for rc in RCGraph.all_rc_graphs(perm, n - 1):
+                    
+                    for (factor_tuple, weight) in factorizations[rc]:
+                        for (factor_tuple2, weight2) in factorizations[rc_b]:
+                            term = 1
+                            # if weight != weight2:
+                            #     continue
+                        # sem = Sx(perm).in_SEM_basis(elem_func=word_elem)
+                        # neg_coeff = sem.get(weight, 0)
+                        # * FA(*weight).change_basis(SchubertBasis).get(perm * Permutation.w0(n), n - 1)
+                        
+                        # if neg_coeff == 0:
+                        #     print(f"Pantalones park of potato {neg_coeff=} {rc.perm=} {weight=} {sem=}")
+                        #     continue
+                            #perm_dict = {(RCGraph(), Permutation([])): 1}
+                            
+                            vec_sum = ()
+                            
+                            
+                            for k, (factor, factor2) in enumerate(zip(factor_tuple,factor_tuple2), start=1):
+                                new_perm_dict = 0
+                                #the_diff = sum(factor.length_vector)
+                                
+                                    # for up_perm, diff in elem_sym_perms(p, k, k):
+                                    #     if diff != the_diff:
+                                    #         continue
+                                    #     # if len(up_perm) > k + 1:
+                                    #     #      continue
+                                    #     #test_vec = tuple([1 if up_perm[i] != p[i] else 0 for i in range(k)])
+                                    #     #crapeff = ASx(up_perm, k).change_basis(WordBasis).get(vec_sum, 0)
+                                    #     #if crapeff > 0:
+                                term *=   (r(factor) * r(factor2)) @ (Sx(factor.perm)*Sx(factor2.perm))
+                            new_buildup += buildup * term
+                            sparse_termo = set(new_buildup.keys())
+                            for (rcc, ppp) in sparse_termo:
+                                if rcc.perm != ppp:
+                                    del new_buildup[(rcc, ppp)]
+                    buildup += new_buildup
+                            #buildup += (r@Sx).from_dict(perm_dict)
+                    #buildup += (r@Sx).from_dict(perm_dict)
+                
+            try:
+                potato = Sx(base_perm) * Sx(perm)
+                #buildup = (r@Sx).from_dict(perm_dict)
+                #potato = Sx.from_dict({k: v for k, v in (Sx(base_perm) * Sx(perm)).items() if len(k) <= n})
+                potato2 = sum([coeff * Sx(up_perm) for (rc, up_perm), coeff in buildup.items() if rc.is_principal and rc.perm == up_perm])
+                assert potato2.almosteq(potato), f"Failed on {base_perm} * {perm}\n{buildup}\n{potato}"
+                print(f"Passed for {base_perm} * {perm}")
+            except AssertionError as e:
+                print(e  )
+                
+            
+    print("Potanto")
+    sys.exit(0)
     for perm in perms:
         for rc in RCGraph.all_rc_graphs(perm, n - 1):
             factor_tuple = factorizations[rc]

@@ -179,7 +179,7 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     @cache
-    def transition_word(cls, perm, numvars):
+    def old_transition_word(cls, perm, numvars):
         res = {}
         expr = Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis().expand()
         args = expr.args
@@ -206,14 +206,20 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     @cache
-    def bad_transition_word(cls, perm, numvars):
-        from ._core import FreeAlgebra
-        from .word_basis import WordBasis
+    def transition_word(cls, perm, numvars):
+        from ..polynomial_algebra._core import PA
 
-        FA = FreeAlgebra(WordBasis)
         def word_elem(p, k, *args):  # noqa: ARG001
-            return FA(k - p)
-        ret = {k[1:]: v for k, v in Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis(elem_func=word_elem).items()}
+            import numpy as np
+            if p > k or p < 0:
+                return 0
+            if p == 0:
+                return 1
+            vec = np.zeros(numvars, dtype=int)
+            vec[numvars - k + perm.inv] = k - p
+            return PA.from_dict({tuple(vec.tolist()): 1})
+        #ret = {k: v for k, v in Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis(elem_func=word_elem)#.items()}
+        ret = dict(Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis(elem_func=word_elem))
         return ret
 
     @classmethod

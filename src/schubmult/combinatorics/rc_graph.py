@@ -139,6 +139,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             vex_rc = RCGraph(vex_rc.shiftup(1 - mindesc)).normalize()
         return vex_rc
 
+
+
     def hw_tab_rep(self):
         from schubmult import Plactic
 
@@ -478,14 +480,33 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return omega_insertion(word_to_pair_labeled(word))
 
     def w0_automorphism(self, n=None):
+        # from ..rings.combinatorial.eg_plactic_ring import EGPlacticRing
         if n is None:
-            n = max([max(row, default=0) for row in self], default=0)
+            n = max(len(self),len(self.perm))
+        # assert n>=len(self.perm)
+        # r = EGPlacticRing()
+        # elem = r.from_rc_graph(self)
+        # key = next(iter(elem.keys()))
 
-        to_flip = self.resize(n)
+        # water = tuple([n + 1 - a for a in key[1].row_word])
+        # fast = max(water)
+        # trans_key = NilPlactic().ed_insert(*tuple(([n + fast - a for a in key[0][0].row_word])))
+        # trans_plac = Plactic().rs_insert(*water)
+        # new_elem = r((trans_key,key[0][1]), trans_plac)
+        # return next(iter(new_elem.to_rc_graph_ring_element())).vertical_cut(n)[0]
+        perm_word, compat_seq = self.as_reduced_compatible()
+        new_perm_word = [n - a for a in perm_word]
+        compat_seq = tuple(reversed([n - a for a in compat_seq]))
+        exceed = max([a - b for a, b in zip(compat_seq, new_perm_word)], default=0)
+        new_perm_word = [a + exceed for a in new_perm_word]
+        return RCGraph.from_reduced_compatible(new_perm_word, compat_seq).resize(n + exceed)
+
+    def antiaut(self):
+        rows = list(reversed(self))
         new_rows = []
-        for row in to_flip:
-            new_rows.append(tuple([n + 1 - a for a in reversed(row)]))
-        return RCGraph(reversed(new_rows)).transpose(n)
+        for index, row in enumerate(rows):
+            new_rows.append(tuple(reversed([len(self) - a for a in row])))
+        return RCGraph(new_rows)
 
     @property
     def forest_weight(self):
@@ -819,7 +840,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     def prepend(self, extra_rows: int) -> RCGraph:
         return type(self)([*tuple([()] * extra_rows), *self.shiftup(extra_rows)])
 
-    def _pieri_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True, reflection_rows=None, target_row=None):
+    def _pieri_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True, reflection_rows=None, target_row=None, left=False):
         working_rc = self
         if descent is not None and row > descent:
             raise ValueError("All rows must be less than or equal to descent")
@@ -828,7 +849,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         new_reflections = []  # Track reflections added in THIS call
 
         if i == -1:
-            if backwards:
+            if backwards or (not backwards and left):
                 i = 0
             elif len(self[row - 1]) == 0:
                 i = descent + 5
@@ -836,10 +857,18 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 i = max(self[row - 1]) + descent + 5
         num_done = 0
         flag = True
+        attempts_without_progress = 0
         while num_done < num_times:
-            if i <= 1 and not backwards:
+            attempts_without_progress += 1
+            max_attempts = max(50, 4 * (working_rc.cols + (descent if descent is not None else 0) + 5))
+            if attempts_without_progress > max_attempts:
+                raise ValueError(
+                    f"Pieri insertion made no progress after {max_attempts} attempts "
+                    f"({row=}, {descent=}, {num_times=}, {left=}, {backwards=})",
+                )
+            if i <= 1 and (not backwards or (backwards and left)):
                 i = working_rc.cols + descent + 5
-            if not backwards:
+            if not backwards or (backwards and left):
                 i -= 1
             else:
                 i += 1
@@ -871,19 +900,29 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                         flag = True
                 if flag:
                     num_done += 1
-                if row > 1 and not working_rc.is_valid:
-                    working_rc = working_rc._pieri_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows)  # minus one?
+                    attempts_without_progress = 0
+                if not left and row > 1 and not working_rc.is_valid:
+                    working_rc = working_rc._pieri_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, left=left)  # minus one?
+                if left and row < len(working_rc) and not working_rc.is_valid:
+                    working_rc = working_rc._pieri_rectify(row + 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, left=left)
         return working_rc, new_reflections
 
-    def _pieri_rectify(self, row_below, descent, dict_by_a, dict_by_b, backwards=True, reflection_rows=None, target_row=None):
+    def _pieri_rectify(self, row_below, descent, dict_by_a, dict_by_b, backwards=True, reflection_rows=None, target_row=None, left=False):
         working_rc = self
         if row_below == 0:
             assert working_rc.is_valid, f"{working_rc=}, {dict_by_a=}, {dict_by_b=}"
             return working_rc
+        if left and row_below > len(working_rc):
+            if working_rc.is_valid:
+                return working_rc
+            raise ValueError(f"Left pieri rectify exhausted rows without reaching validity ({row_below=}, {len(working_rc)=})")
         if working_rc.is_valid:
             return working_rc
         extra = descent if descent is not None else 0
-        for j in range(1, working_rc.cols + extra + 5):
+        the_range = range(1, working_rc.cols + extra + 5)
+        if left:
+            the_range = reversed(the_range)
+        for j in the_range:
             flag = False
             if working_rc.is_valid:
                 return working_rc
@@ -929,11 +968,14 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                         backwards=backwards,
                         reflection_rows=reflection_rows,
                         target_row=target_row,
+                        left=left,
                     )
-        return working_rc._pieri_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row)
+        if left:
+            return working_rc._pieri_rectify(row_below + 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row, left=left)
+        return working_rc._pieri_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row, left=left)
 
     # VERIFY
-    def pieri_insert(self, descent, rows, return_reflections=False, backwards=True):
+    def pieri_insert(self, descent, rows, return_reflections=False, backwards=True, left=False):
         dict_by_a = {}
         dict_by_b = {}
         reflection_rows = {}  # Track which row each reflection was added to
@@ -951,15 +993,17 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             rows_grouping[r] = rows_grouping.get(r, 0) + 1
         if max(rows) > len(working_rc):
             working_rc = working_rc.extend(max(rows) - len(working_rc))
-        rows = sorted(rows, reverse=True)
+        rows = sorted(rows, reverse=not left)
         reflections = []
-        for row in sorted(rows_grouping.keys(), reverse=True):
+        for row in sorted(rows_grouping.keys(), reverse=not left):
             num_times = rows_grouping[row]
             last_working_rc = working_rc
-            working_rc, new_reflections = working_rc._pieri_insert_row(row, descent, dict_by_a, dict_by_b, num_times, backwards=backwards, reflection_rows=reflection_rows, target_row=row)
+            working_rc, new_reflections = working_rc._pieri_insert_row(row, descent, dict_by_a, dict_by_b, num_times, backwards=backwards, reflection_rows=reflection_rows, target_row=row, left=left)
             reflections += new_reflections
-            if row > 1 and not working_rc.is_valid:
-                working_rc = working_rc._pieri_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=row)  # minus one?
+            if (not left and row > 1) and not working_rc.is_valid:
+                working_rc = working_rc._pieri_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=row, left=left)  # minus one?
+            elif (left and row < len(working_rc)) and not working_rc.is_valid:
+                working_rc = working_rc._pieri_rectify(row + 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=row, left=left)
             try:
                 assert len(working_rc[row - 1]) == len(last_working_rc[row - 1]) + num_times
             except AssertionError:
@@ -1004,17 +1048,25 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         #     i += 1
         # new_rc = (type(self)(newrc)).normalize()
         import numpy as np
+        assert self.is_valid, f"Cannot transpose invalid RC graph, got {self=}"
         if length is not None and len(self) < length:
             the_self = self.resize(length)
+        elif length is None and len(self) < len((~self.perm).trimcode):
+            the_self = self.resize(len((~self.perm).trimcode))
         else:
             the_self = self
-
-        arr = np.array([[the_self[i, the_self.cols - j - 1] for j in range(the_self.cols)] for i in range(the_self.rows)], dtype=object).T
-        # print(arr)
+        arr = np.array([[the_self[i, the_self.cols - j - 1] for j in range(the_self.cols)] for i in range(the_self.rows)], dtype=object)
+        if (length is not None and arr.shape[1] < length):
+            arr = np.hstack([arr, np.full((arr.shape[0], length - arr.shape[1]), None, dtype=object)])
+        elif (length is None and arr.shape[1] < (len((~self.perm).trimcode))):
+            arr = np.hstack([arr, np.full((arr.shape[0], len((~self.perm).trimcode) - arr.shape[1]), None, dtype=object)])
+        assert np.count_nonzero(arr is not None) == self.perm.inv
+        arr = np.transpose(arr)
+        assert np.count_nonzero(arr is not None) == self.perm.inv
         #arr = arr.resize(self.cols, self.cols).t
 
-        new_rc = type(self).from_array(arr)
-        assert new_rc.perm == ~self.perm, f"Transpose does not preserve permutation, got {new_rc.perm=}, expected {~self.perm=}, {tuple(new_rc)=} {self=}"
+        new_rc = type(self).from_array(arr, min_length=length if length is not None else len(self))
+        assert new_rc.perm == ~self.perm, f"Transpose does not preserve permutation, got {new_rc.perm=}, expected {~self.perm=}, {tuple(new_rc)=} {tuple(self)=}"
         if length is not None:
             new_rc = new_rc.resize(length)
         # print("Yay happy")
@@ -1022,13 +1074,17 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return new_rc
 
     @classmethod
-    def from_array(cls, arr) -> RCGraph:
+    def from_array(cls, arr, min_length=None) -> RCGraph:
         rows = []
-        for i in range(arr.shape[0]):
+        if min_length is None:
+            min_length = arr.shape[0]
+        min_length = max(min_length, arr.shape[0])
+        for i in range(min_length):
             row = []
-            for j in range(arr.shape[1]):
-                if arr[i, j] is not None and arr[i, j] != 0:
-                    row.append(int(arr[i, j]))
+            if i < arr.shape[0]:
+                for j in range(arr.shape[1]):
+                    if arr[i, j] is not None and arr[i, j] != 0:
+                        row.append(int(arr[i, j]))
             rows.append(tuple(reversed(row)))
         return cls(rows)
 
@@ -1107,6 +1163,35 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         interim = interim2.pieri_insert(len(self.perm.trimcode) - extend_amount, diff_rows)
 
         return interim.rowrange(0, len(self) - 1)
+
+
+    def zero_out_last_column(self, width) -> RCGraph:
+        # this is important!
+        # transition formula
+        if width < len((~self.perm).trimcode):
+            raise ValueError("Width smaller than inverse code")
+        if width > len((~self.perm).trimcode):
+            return self
+        transp = self.transpose(length=width)
+        if len(transp[width - 1]) != 0:
+            raise ValueError("Last column not empty")
+        if self.perm.inv == 0:
+            return self
+        interim = type(self)([*self])
+
+        diff_rows = []
+        descs = []
+        extend_amount = 1
+
+        while len((~interim.perm).trimcode) > len(self) - 1:
+            descs += [len((~interim.perm).trimcode)]
+            interim, row = interim.exchange_property(len((~interim.perm).trimcode), return_row=True, left=True)
+            diff_rows += [row]
+        dorpletrans = interim.transpose(length=max(interim.perm_word, default=0))
+        interim2 = type(self)([*dorpletrans[:-1], tuple(sorted(descs, reverse=True))]).transpose()
+        interim = interim2.pieri_insert(len((~self.perm).trimcode) - extend_amount, diff_rows, left=True)
+
+        return interim.transpose().resize(width - 1).transpose().resize(len(self))
 
     def zero_out_in_place(self) -> RCGraph:
         # this is important!
@@ -1261,7 +1346,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 hi = mid
         return lo
 
-    def exchange_property(self, descent: int, left: bool = False, return_row: bool = False) -> RCGraph | tuple[RCGraph, int]:
+    def exchange_property(self, descent: int, return_row: bool = False, left: bool = False) -> RCGraph | tuple[RCGraph, int]:
         for i in range(len(self.perm_word)):
             if not left:
                 a, b = self.left_to_right_inversion(i)
@@ -1274,9 +1359,17 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 return self.toggle_ref_at(row, col)
         raise ValueError("No such descent")
 
+    # def left_exchange_property(self, descent: int, return_row: bool = False) -> RCGraph | tuple[RCGraph, int]:
+    #     return self.exchange_property(descent, left=True, return_row=return_row)
+
+
     @cache
     def left_to_right_inversion(self, index: int) -> tuple[int, int]:
         return self.right_root_at(*self.left_to_right_inversion_coords(index))
+
+    @cache
+    def left_to_right_left_inversion(self, index: int) -> tuple[int, int]:
+        return self.left_root_at(*self.left_to_right_inversion_coords(index))
 
     @cache
     def left_to_right_inversion_coords(self, index: int) -> tuple[int, int]:
@@ -1407,6 +1500,14 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     def prod_with_rc(self, other: RCGraph) -> dict[RCGraph, int]:  # pragma: no cover
         """Deprecated: Use product() instead."""
         return self.product(other)
+
+    def bpd_transpose(self) -> RCGraph:
+        from .bpd import BPD
+        ret = BPD.from_rc_graph(self).transpose().to_rc_graph()
+        ret = ret.normalize()
+        if len(ret) < len(self):
+            ret = ret.extend(len(self) - len(ret))
+        return ret
 
     def is_potential_coproduct(self, rc1: RCGraph, rc2: RCGraph) -> bool:
         if len(rc1) != len(self) or len(rc2) != len(self):

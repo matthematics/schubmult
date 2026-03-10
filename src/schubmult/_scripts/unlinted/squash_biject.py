@@ -1,85 +1,210 @@
 from schubmult import *
 from sympy import pretty_print, S
+import argparse
+import itertools
+from functools import lru_cache
+import time
+
+def left_squash(rc1, rc2):
+    
+    rc1_p = _transpose_rc_cached(rc1)
+    if len(rc1_p.perm.descents()) > 1:
+        raise KeyError("rc1 must be Grassmannian")
+    rc2_p = _transpose_rc_cached(rc2)
+    the_squash = _transpose_rc_cached(rc2_p.resize(len(rc1_p)).squash_product(rc1.resize(len(rc1_p)))).resize(len(rc2))
+    return the_squash
+    # return _transpose_rc_cached(the_squash)
+    
+
+
+@lru_cache(maxsize=None)
+def _transpose_rc_cached(rc):
+    return BPD.from_rc_graph(rc.transpose()).to_rc_graph().resize(max(len(rc),len(rc.perm)))
+
+
+def grassmannian_rc_graphs_in_sn(n):
+    """Grassmannian RC graphs in S_n with descent at n-1 (zero-indexed); include identity."""
+    ret = []
+    for perm in Permutation.all_permutations(n + 2):
+        desc = perm.descents()
+        if perm.inv != 0 and desc != {n - 1}:
+            continue
+        for rc in RCGraph.all_rc_graphs(perm, n):
+            ret.append(rc.resize(n))
+    return ret
+
+
+def all_rc_graphs_in_sn(n):
+    ret = []
+    for perm in Permutation.all_permutations(n):
+        for rc in RCGraph.all_rc_graphs(perm, n):
+            ret.append(rc.resize(n))
+    return ret
+
+
+def test_grassmannian_ring_closure(n, r):
+    grasses = grassmannian_rc_graphs_in_sn(n + 2)
+    grass_set = set(grasses)
+    failures = []
+    for rc1 in grasses:
+        for rc2 in grasses:
+            prod = r(rc1) * r(rc2)
+            support = {rc for rc, coeff in prod.items() if coeff != 0}
+            if not support.issubset(grass_set):
+                failures.append((rc1, rc2, support - grass_set))
+    return grasses, failures
+
+
+def test_left_squash_reversed_order(n, r, grasses, *, debug=False, progress_every=1):
+    t0 = time.perf_counter()
+    all_rc = all_rc_graphs_in_sn(n)
+    if debug:
+        print(f"[debug] built all_rc with {len(all_rc)} graphs in {time.perf_counter() - t0:.2f}s")
+
+    t1 = time.perf_counter()
+    failures = []
+    pair_products = {(grass_rc1, grass_rc2): grass_rc2.squash_product(grass_rc1) for grass_rc1, grass_rc2 in itertools.product(grasses, repeat=2)}
+    if debug:
+        print(f"[debug] precomputed {len(pair_products)} grass pair products in {time.perf_counter() - t1:.2f}s")
+
+    total = len(all_rc) * len(grasses) * len(grasses)
+    done = 0
+    nops = 0
+    t2 = time.perf_counter()
+    for rc in all_rc:
+        for grass_rc1, grass_rc2 in itertools.product(grasses, repeat=2):
+            try:
+                #lhs = r(left_squash(pair_products[(grass_rc1, grass_rc2)], rc))
+                
+                rhs = left_squash(grass_rc1, left_squash(grass_rc2, rc)).resize(n)
+                N = max(len(grass_rc2.perm),len(grass_rc1.perm))
+                lhs = _transpose_rc_cached(rc).resize(N)
+                lhs = _transpose_rc_cached(lhs.squash_product(grass_rc2.transpose(N)).squash_product(grass_rc1.transpose(N))).resize(n)
+                #if not lhs.almosteq(rhs):
+                if lhs != rhs:
+                    failures.append((rc, grass_rc1, grass_rc2, lhs, rhs))
+                    raise AssertionError(f"Failure for rc={rc}, grass_rc1={grass_rc1}, grass_rc2={grass_rc2}\nLHS: {tuple(lhs)} \nRHS: {tuple(rhs)}")
+            except KeyError as e:
+                nops += 1
+            done += 1
+            if debug and done % progress_every == 0:
+                elapsed = time.perf_counter() - t2
+                rate = done / elapsed if elapsed > 0 else 0
+                eta = (total - done) / rate if rate > 0 else float("inf")
+                print(f"[debug] progress {done}/{total} ({100*done/total:.1f}%), rate={rate:.1f}/s, eta={eta:.1f}s, failures={len(failures)}, nops={nops}")
+    if debug:
+        print(f"[debug] main comparison loop finished in {time.perf_counter() - t2:.2f}s")
+    return all_rc, failures
+
+def all_grassmannian_rc_graphs(n: int, max_inv: int) -> list[RCGraph]:
+    """All RC graphs for Grassmannian permutations generated from partitions."""
+    graph_set = set()
+    for perm in grassmannian_perms_from_partitions(n, max_inv):
+        graph_set.update(rc.resize(n) for rc in RCGraph.all_rc_graphs(perm, n))
+    return sorted(graph_set, key=lambda rc: (rc.perm.inv, rc.length_vector, tuple(rc)))
+
+def grassmannian_perms_from_partitions(n: int, max_inv: int) -> list[Permutation]:
+    """Build Grassmannian permutations from partitions: pad to length n, reverse, then uncode."""
+    perms = []
+    seen = set()
+    for part in partitions_with_sum_at_most(max_inv, n):
+        padded = (*part, *([0] * (n - len(part))))
+        weakly_increasing_code = tuple(reversed(padded))
+        perm = uncode(list(weakly_increasing_code))
+        if perm not in seen:
+            assert perm.inv == 0 or perm.descents() == set([n - 1])
+            seen.add(perm)
+            perms.append(perm)
+    return perms
+
+def partitions_with_sum_at_most(max_sum: int, max_parts: int) -> list[tuple[int, ...]]:
+    """All partitions (weakly decreasing tuples) with at most max_parts parts and total <= max_sum."""
+
+    def rec(remaining_sum: int, max_next: int, parts_left: int):
+        yield ()
+        if parts_left == 0:
+            return
+        for first in range(1, min(remaining_sum, max_next) + 1):
+            for tail in rec(remaining_sum - first, first, parts_left - 1):
+                yield (first, *tail)
+
+    seen = set()
+    for part in rec(max_sum, max_sum, max_parts):
+        seen.add(part)
+    return sorted(seen, key=lambda p: (sum(p), len(p), p), reverse=False)
 
 if __name__ == "__main__":
-    import sys
-    import itertools
+    t_start = time.perf_counter()
+    parser = argparse.ArgumentParser(
+        description="Test Grassmannian closure and left_squash reversed-order behavior in DualRCGraphRing."
+    )
+    parser.add_argument("n", type=int, help="Work in S_n with RC graphs resized to n rows.")
+    parser.add_argument("--max-inv", type=int, default=4, help="Max inversion/partition sum used for Grassmannian generation.")
+    parser.add_argument("--debug", action="store_true", help="Enable detailed timing/progress debug output.")
+    parser.add_argument("--progress-every", type=int, default=5000, help="Emit progress line every this many inner iterations when --debug is set.")
+    # parser.add_argument(
+    #     "--show-first-failure",
+    #     action="store_true",
+    #     help="Print the first failing witness in each test.",
+    #     default
+    # )
+    args = parser.parse_args()
 
-    n = int(sys.argv[1])
-    perms = Permutation.all_permutations(n)
-    r = RCGraphRing()
-    elems = r.one @ Sx.one
-    for k in range(1, n):
-        # print("Fat")
-        # the_prod = Sx(perm1) * Sx(perm2)
-        # plactic_elem = P.zero
-        # for w, coeff in the_prod.items():
-        #     plactic_elem += sum([coeff * P(rc.hw_tab_rep()[1]) for rc in RCGraph.all_rc_graphs(w, len(w.trimcode))])
-        # plactic_elem2 = P.zero
-        # for rc1, rc2 in itertools.product(RCGraph.all_rc_graphs(perm1, n), RCGraph.all_rc_graphs(perm2, n)):
-        #     # _, raise_seq1 = rc1.to_highest_weight()
-        #     # _, raise_seq2 = rc2.to_highest_weight()
-        new_elems = r.zero @ Sx.zero
-        for p in range(0, k + 1):
-            for (rc0, perm), coeff in elems.items():
-                #r_elem = r_elem.resize(k)
-                rc0 = rc0.resize(k)
-                for elem_rc in RCGraph.all_rc_graphs(uncode([0] * (k - p) + [1] * p), k):
-                    new_rc = rc0.squash_product(elem_rc)
-                    new_elems +=  r(new_rc) @ (coeff * Sx(perm)*(Sx(Sx.genset[n - k]**(k - p))))
-                # for index_rc, coeff in index_elem.items():
-                #     assert len(index_rc) == k
-                #     if len(index_rc.perm) <= k + 1:
-                #         new_elems[index_rc] = new_elems.get(index_rc, r.zero) + coeff * new_r_elem
-        elems = new_elems
+    n = args.n
+    if n < 2:
+        raise ValueError("n must be at least 2")
 
-    #assert len(elems) == len(perms), f"Failed: {len(elems)} vs {len(perms)}"    
-    w0 = Permutation.w0(n)
-    for (rc, perm), fatness in elems.items():
-        # if len(perm) > n:
-        #     continue
-        # if perm != rc.perm * w0:
-        #     continue
-        pretty_print(perm)
-        pretty_print(rc)
-        print(fatness)
-        if fatness != 0:
-            #assert fatness == 1
-            assert perm == rc.perm * w0, f"{rc.perm * w0=}"
-    print("Banging pinky")
-        # patsy_dict[rc1.perm] == patsy_dict.get(rc1.perm, r.zero)
-        # try:
-        #     assert coeff == 1
-        #     #assert elem_set.almosteq(r.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(rc.perm*w0, n - 1),1))), f"Failed on {rc}"
-            
-        # except AssertionError as e:
-        #     pretty_print(rc)
-        #     pretty_print(elem_set)
-        #     raise
-    # elems = r.one @ r.one
-    # for k in range(1, n):
-    #     new_elems = r.zero @ r.zero
-    #     for p in range(0, k + 1):
-            
-    #         for (rc0, rc1), coeff in elems.items():
-    #             rc0_elem = r(RCGraph.one_row(p)) * r(rc0)
-    #             rc1 = rc1.resize(k)
-    #             for new_rc0, coeff0 in rc0_elem.items():
-    #                 if len(new_rc0.perm) > k + 1:
-    #                     continue
-    #                 patsy = new_rc0.rowrange(0, 1).normalize().transpose(k)
-    #                 elem_rc_weight = tuple([1 - patsy.length_vector[i] for i in range(k)])
-    #                 elem_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (p) + [1] * (k - p)), k, weight=elem_rc_weight)), None)
-    #                 new_elems += coeff * coeff0 * r(new_rc0) @ (r(rc1)%r(elem_rc))
-    #     elems = new_elems
-    
-    # for (rc, rc2), fatness in elems.items():
-    #     if len(rc.perm) > n:
-    #         continue
-    #     pretty_print(rc)
+    r = DualRCGraphRing()
+    closure_failures = []
+
+    #grasses, closure_failures = test_grassmannian_ring_closure(n, r)
+    # print(f"n={n}")
+    # print(f"Grassmannian RC graphs considered: {len(grasses)}")
+    # print(f"Closure under DualRCGraphRing product: {'PASS' if not closure_failures else 'FAIL'}")
+
+    # if closure_failures and args.show_first_failure:
+    #     rc1, rc2, bad_support = closure_failures[0]
+    #     print("First closure failure:")
+    #     pretty_print(rc1)
     #     pretty_print(rc2)
-    #     print(fatness)
-    #     if fatness != 0:
-    #         #assert fatness == 1
-    #         assert rc.perm == rc2.perm * w0, f"{rc.perm * w0=}"
-    # print("Banging gavel")
+    #     print("Support outside Grassmannian set:")
+    #     for bad in list(bad_support)[:5]:
+    #         pretty_print(bad)
+    t_grass = time.perf_counter()
+    grasses = all_grassmannian_rc_graphs(n, args.max_inv)
+    if args.debug:
+        print(f"[debug] built grass set with {len(grasses)} graphs in {time.perf_counter() - t_grass:.2f}s (max_inv={args.max_inv})")
+    all_rc, reverse_failures = test_left_squash_reversed_order(
+        n,
+        r,
+        grasses,
+        debug=args.debug,
+        progress_every=max(1, args.progress_every),
+    )
+    print(f"All RC graphs in S_n with n rows: {len(all_rc)}")
+    print(f"Grassmannian RC graphs: {len(grasses)}")
+    print(f"Total checks: {len(all_rc) * len(grasses) * len(grasses)}")
+    print(f"left_squash implements reversed product (r(grass) * r(rc)): {'PASS' if not reverse_failures else 'FAIL'}")
+
+    if reverse_failures:
+        rc, grass_rc1, grass_rc2, lhs, rhs = reverse_failures[0]
+        print("First reversed-order failure:")
+        print("rc=")
+        pretty_print(rc)
+        print("grass_rc1=")
+        pretty_print(grass_rc1)
+        print("grass_rc2=")
+        pretty_print(grass_rc2)
+        
+        print("lhs = r(left_squash(rc, grass_rc))")
+        pretty_print(lhs)
+        print("rhs = r(grass_rc) * r(rc)")
+        pretty_print(rhs)
+
+    if closure_failures or reverse_failures:
+        if args.debug:
+            print(f"[debug] total runtime: {time.perf_counter() - t_start:.2f}s")
+        raise SystemExit(1)
+    if args.debug:
+        print(f"[debug] total runtime: {time.perf_counter() - t_start:.2f}s")
+    raise SystemExit(0)

@@ -124,6 +124,11 @@ class DualRCGraphRing(SchubertMonomialRing):
 
         return self.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(uncode([0] * (descent - sum(weight)) + [1] * sum(weight)), len(weight), weight=weight), 1))
 
+    def full_elem_sym(self, degree, descent, length):
+        from schubmult import uncode
+
+        return self.from_dict(dict.fromkeys(RCGraph.all_rc_graphs(uncode([0] * (descent - degree) + [1] * degree), length), 1))
+
     @property
     def zero_monom(self):
         return RCGraph([])
@@ -165,8 +170,6 @@ class DualRCGraphRing(SchubertMonomialRing):
         return self.from_dict({identity_graph: 1})
 
     def mul(self, elem1, elem2):
-        from schubmult import Sx
-
         from .rc_graph_ring import RCGraphRing
         r = RCGraphRing()
         # Define the multiplication for DualRCGraphRing
@@ -177,13 +180,7 @@ class DualRCGraphRing(SchubertMonomialRing):
                 for b, coeff_b in elem2.items():
                     if len(a) != len(b):
                         continue
-                    cheat_prod = Sx(a.perm) * Sx(b.perm)
-                    for w in cheat_prod:
-                        for rc in RCGraph.all_rc_graphs(w, len(a), weight = tuple([a1 + b1 for a1, b1 in zip(a.length_vector, b.length_vector)])):
-                            cprod = r(rc).coproduct()
-                            for (rc1, rc2), coeff in cprod.items():
-                                if rc1.perm == a.perm and rc2.perm == b.perm:
-                                    result += coeff_a * coeff_b * coeff * self(rc)
+                    result += coeff_a * coeff_b * self.from_dict(r(a)%r(b))
 
             return result
         try:

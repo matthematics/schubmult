@@ -214,7 +214,7 @@ def schub_coprod_py(perm, indices):
                     break
             if not flag:
                 continue
-            firstperm = downperm[0:N]
+            firstperm = Permutation(downperm[0:N])
             secondperm = Permutation([downperm[i] - N for i in range(N, len(downperm))])
             ret_dict[(firstperm, secondperm)] = val
     return ret_dict
