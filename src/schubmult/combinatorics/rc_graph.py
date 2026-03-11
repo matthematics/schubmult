@@ -40,6 +40,33 @@ def debug_print(*args: object, debug: bool = False) -> None:  # pragma: no cover
 
 
 class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
+
+    def squash_decomp(self):
+        """Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass."""
+        n = len(self)
+        stack = [self]
+        seen = set()
+        while stack:
+            working_rc = stack.pop()
+            seen.add(working_rc.perm)
+            min_cos, residue = working_rc.perm.coset_decomp(*list(range(1, len(working_rc))))
+            if residue.inv == 0:
+                return RCGraph([()]).resize(n), working_rc.vertical_cut(n)[0]
+            if min_cos.inv == 0:
+                return self, RCGraph([()]).resize(n)
+            if len(residue) <= n and len(min_cos.descents()) <= 1 and min_cos * residue == residue * min_cos:
+                working_rc2 = working_rc
+                for a in reversed(residue.code_word):
+                    working_rc2 = working_rc2.exchange_property(a)
+                ret_rc = RCGraph([tuple([a for a in row if a < n]) for row in working_rc]).resize(n)
+                grass_rc = working_rc2
+                if all(a > n for row in grass_rc for a in row):
+                    grass_rc = grass_rc.vertical_cut(n)[0]
+                    return ret_rc, grass_rc
+            stack.extend([the_rc.normalize() for the_rc in working_rc.product(RCGraph([()])).keys() if the_rc.perm not in seen and len(the_rc.perm.coset_decomp(*list(range(1, len(the_rc) - 1)))[1]) <= n])
+            seen.update([the_rc.perm for the_rc in stack])
+        raise ValueError("should never get here")
+
     @property
     def args(self) -> tuple:
         """Return args for sympy compatibility - prevents traversal into tuple contents."""
@@ -851,16 +878,17 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         if i == -1:
             if backwards or (not backwards and left):
                 i = 0
-            elif len(self[row - 1]) == 0:
-                i = descent + 5
             else:
-                i = max(self[row - 1]) + descent + 5
+                i = max(self[row - 1], default=0) + descent + 5
         num_done = 0
         flag = True
         attempts_without_progress = 0
+        last_num_done = -1
+        max_attempts = 100
         while num_done < num_times:
-            attempts_without_progress += 1
-            max_attempts = max(50, 4 * (working_rc.cols + (descent if descent is not None else 0) + 5))
+            if num_done == last_num_done:
+                attempts_without_progress += 1
+            last_num_done = num_done
             if attempts_without_progress > max_attempts:
                 raise ValueError(
                     f"Pieri insertion made no progress after {max_attempts} attempts "
@@ -875,7 +903,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             flag = False
 
             if not working_rc.has_element(row, i):
-                a, b = working_rc.right_root_at(row, i)
+                if left:
+                    a, b = working_rc.left_root_at(row, i)
+                else:
+                    a, b = working_rc.right_root_at(row, i)
                 if a < b:
                     flag = False
                     if _is_row_root(descent, (a, b)) and b not in dict_by_b:
@@ -909,15 +940,15 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     def _pieri_rectify(self, row_below, descent, dict_by_a, dict_by_b, backwards=True, reflection_rows=None, target_row=None, left=False):
         working_rc = self
-        if row_below == 0:
+        if working_rc.is_valid:
+            return working_rc
+        if row_below == 0 and not left:
             assert working_rc.is_valid, f"{working_rc=}, {dict_by_a=}, {dict_by_b=}"
             return working_rc
         if left and row_below > len(working_rc):
             if working_rc.is_valid:
                 return working_rc
             raise ValueError(f"Left pieri rectify exhausted rows without reaching validity ({row_below=}, {len(working_rc)=})")
-        if working_rc.is_valid:
-            return working_rc
         extra = descent if descent is not None else 0
         the_range = range(1, working_rc.cols + extra + 5)
         if left:
@@ -928,7 +959,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 return working_rc
 
             if working_rc.has_element(row_below, j):
-                a, b = working_rc.right_root_at(row_below, j)
+                if left:
+                    a, b = working_rc.left_root_at(row_below, j)
+                else:
+                    a, b = working_rc.right_root_at(row_below, j)
 
                 top, bottom = max(a, b), min(a, b)
 
@@ -1060,9 +1094,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             arr = np.hstack([arr, np.full((arr.shape[0], length - arr.shape[1]), None, dtype=object)])
         elif (length is None and arr.shape[1] < (len((~self.perm).trimcode))):
             arr = np.hstack([arr, np.full((arr.shape[0], len((~self.perm).trimcode) - arr.shape[1]), None, dtype=object)])
-        assert np.count_nonzero(arr is not None) == self.perm.inv
+        assert np.count_nonzero(np.not_equal(arr, None)) == self.perm.inv
         arr = np.transpose(arr)
-        assert np.count_nonzero(arr is not None) == self.perm.inv
+        assert np.count_nonzero(np.not_equal(arr, None)) == self.perm.inv
         #arr = arr.resize(self.cols, self.cols).t
 
         new_rc = type(self).from_array(arr, min_length=length if length is not None else len(self))
@@ -1126,7 +1160,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     _z_cache = {}  # noqa: RUF012
 
-    def squash_product(self, rc: RCGraph) -> RCGraph:
+    def disjoint_union(self, rc: RCGraph) -> RCGraph:
         if len(self) != len(rc):
             raise ValueError("RC graphs must have the same number of rows")
         if self.perm.inv == 0:
@@ -1135,7 +1169,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         N = max(rowmax)
         shift_rc = RCGraph([tuple([a + N for a in row]) for row in rc]).resize(len(rc) + N)
         rc_self = self.resize(len(rc) + N)
-        combined_rc = type(self)([shift_rc[i] + rc_self[i] for i in range(len(rc_self))])
+        return type(self)([shift_rc[i] + rc_self[i] for i in range(len(rc_self))])
+
+    def squash_product(self, rc: RCGraph) -> RCGraph:
+        combined_rc = self.disjoint_union(rc)
         while len(combined_rc) > len(self):
             combined_rc = combined_rc.zero_out_last_row()
         return combined_rc
@@ -1172,9 +1209,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             raise ValueError("Width smaller than inverse code")
         if width > len((~self.perm).trimcode):
             return self
-        transp = self.transpose(length=width)
-        if len(transp[width - 1]) != 0:
-            raise ValueError("Last column not empty")
         if self.perm.inv == 0:
             return self
         interim = type(self)([*self])
@@ -1183,11 +1217,11 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         descs = []
         extend_amount = 1
 
-        while len((~interim.perm).trimcode) > len(self) - 1:
+        while len((~interim.perm).trimcode) > width - 1:
             descs += [len((~interim.perm).trimcode)]
             interim, row = interim.exchange_property(len((~interim.perm).trimcode), return_row=True, left=True)
             diff_rows += [row]
-        dorpletrans = interim.transpose(length=max(interim.perm_word, default=0))
+        dorpletrans = interim.transpose(length=width)
         interim2 = type(self)([*dorpletrans[:-1], tuple(sorted(descs, reverse=True))]).transpose()
         interim = interim2.pieri_insert(len((~self.perm).trimcode) - extend_amount, diff_rows, left=True)
 

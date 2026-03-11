@@ -1737,13 +1737,17 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 build_perm.append(None)
         return Permutation.from_partial(build_perm)
 
-    def resize(self, new_num_rows: int) -> BPD:
+    def resize(self, new_num_rows: int, new_num_cols: int | None = None) -> BPD:
         self._perm = None  # Invalidate cached permutation
+
+
         if new_num_rows > self.rows:
             new_bpd = self.copy()
             # if new_num_rows > self.cols:
             #     new_bpd.set_width(new_num_rows)
-            new_grid = np.pad(new_bpd._grid, ((0, new_num_rows - new_bpd.rows), (0, max(0, max(new_num_rows, len(self.perm)) - new_bpd.cols))), constant_values=TileType.TBD)
+            if new_num_cols is None:
+                new_num_cols = max(0, max(new_num_rows, len(self.perm)) - new_bpd.cols)
+            new_grid = np.pad(new_bpd._grid, ((0, new_num_rows - new_bpd.rows), (0, new_num_cols)), constant_values=TileType.TBD)
             # elif new_bpd.rows > new_num_rows:
             #     new_bpd._grid = new_bpd._grid[:new_num_rows, : max(new_num_rows, len(self.perm))]
             # bottom_portion = BPD.rothe_bpd(self.perm.min_coset_rep(*(list(range(self.rows)) + list(range(self.rows + 1, max(len(self.perm),new_num_rows)))))
