@@ -143,4 +143,33 @@ def test_full_crystal_is_key():
         # hw = set()
         for rc in RCGraph.all_hw_rcs(perm, len(perm.trimcode)):
             assert expand(Key(rc.extremal_weight).expand() - sum([rc0.polyvalue(Sx.genset) for rc0 in rc.full_crystal])) == S.Zero, f"Error: full crystal of RC graph {rc} does not match Key polynomial expansion of its length vector."
-        #assert len(hw) == num_extremal, f"Error: number of extremal RC graphs for permutation {perm} does not match number of distinct highest weights obtained from them."               
+        #assert len(hw) == num_extremal, f"Error: number of extremal RC graphs for permutation {perm} does not match number of distinct highest weights obtained from them."          
+
+    
+def test_squash_decompose():
+    """Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass."""
+    import random
+    from schubmult import uncode
+    from schubmult.combinatorics.rc_graph import RCGraph
+    seed = 250
+
+    random.seed(seed)
+    
+    perm = uncode([2,0,4,2,3])
+
+    n = 5
+
+    rcs = list(RCGraph.all_rc_graphs(perm, n))
+    
+    rc = random.choice(rcs)
+    regular, grass = rc.squash_decomp()
+
+    while len(grass.perm.descents()) == 0 or regular.perm.inv == 0:
+        rc = random.choice(rcs)
+        regular, grass = rc.squash_decomp()
+
+    assert len(regular.perm) <= n
+
+    assert grass.perm.descents() == {n - 1}
+
+    assert regular.squash_product(grass) == rc, f"Error: decomposition of {rc} into {regular} and {grass} does not satisfy the expected product relation."

@@ -17,7 +17,7 @@ from schubmult.combinatorics.permutation import Permutation
 from schubmult.combinatorics.rc_graph import RCGraph
 from schubmult.combinatorics.schubert_monomial_graph import SchubertMonomialGraph
 from schubmult.symbolic import Expr
-from schubmult.utils.schub_lib import pull_out_var  # noqa: F401
+from schubmult.utils.schub_lib import pull_out_var
 
 
 class TileType(IntEnum):
@@ -190,24 +190,57 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     def cols(self) -> int:
         return self._grid.shape[1]
 
+    _bpd_cache = {}  # noqa: RUF012
+    _cache_by_weight = {}  # noqa: RUF012
+
     @classmethod
-    @cache
-    def all_bpds(cls, w: Permutation, length: int | None = None) -> set[BPD]:
+    def all_bpds(cls, w: Permutation, length: int | None = None, weight: tuple[int] | None = None) -> set[BPD]:
+        if weight and len(weight) != length:
+            raise ValueError("Weight must have length equal to the number of rows")
+        if weight:
+            if (w, tuple(weight)) in cls._cache_by_weight:
+                return cls._cache_by_weight[(w, tuple(weight))]
+
         if length is None:
-            length = len(w)
-        pipes = set()
-        new_pipes = [BPD.rothe_bpd(w, length)]
+            if weight is not None:
+                length = len(weight)
+            else:
+                length = len(w)
 
-        while len(new_pipes) != 0:
-            pipe = new_pipes.pop(0)
-            pipes.add(pipe)
+        if length < len(w.trimcode):
+            raise ValueError("Length must be at least the length of the permutation's trimcode")
 
-            for move in pipe.droop_moves():
-                new_pipe = pipe.do_droop_move(move)
-                if new_pipe not in pipes:
-                    new_pipes.append(new_pipe)
-                    pipes.add(new_pipe)
-        return pipes
+        if not weight and (w, length) in cls._bpd_cache:
+            return set(cls._bpd_cache[(w, length)])
+
+        if w.inv == 0:
+            if weight is not None:
+                cls._cache_by_weight[(w, tuple(weight))] = {BPD.rothe_bpd(w, length)}
+                return cls._cache_by_weight[(w, tuple(weight))]
+            cls._bpd_cache[(w, length)] = {BPD.rothe_bpd(w, length)}
+            return set(cls._bpd_cache[(w, length)])
+
+        ret = set()
+        def bruhat_bpd(w):
+            bpath = []
+            w2 = w
+            stack = [(w2, bpath, len(w))]
+            while stack:
+                w3, bpath, i = stack.pop()
+                i -= 1
+                if i == 0:
+                    ret.add(BPD.from_bruhat_path((*bpath, w3 * Permutation.w0(len(w) - i).shiftup(i))).resize(length))
+                    continue
+                da_list = pull_out_var(i, w3)
+                for _, perm in da_list:
+                    stack.append((perm, [*bpath, w3 * Permutation.w0(len(w) - i).shiftup(i)], i))
+            return
+        bruhat_bpd(w)
+        if weight is not None:
+            cls._cache_by_weight[(w, tuple(weight))] = set(ret)
+        else:
+            cls._bpd_cache[(w, length)] = set(ret)
+        return ret
 
     # Static lookup table for TBD tile resolution
     # Index by (left_tile_value, up_tile_value) where None is represented as -1
@@ -226,7 +259,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 new_grid = the_bpd._grid[1:, 1:]
                 ret = BPD(new_grid)
                 return ret
-
 
     def delete_row(self, row: int) -> BPD:
         new_grid = self._grid.copy()
@@ -254,9 +286,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             elif self[current_row, col] == TileType.ELBOW_NW:
                 col -= 1
                 going_left = True
-        #new_grid = np.concatenate([new_grid[:row - 1, : self.cols - 1], new_grid[row:, : self.cols - 1]], axis=0)
-        new_grid = np.concatenate([new_grid[:row - 1, : self.cols - 1], new_grid[row:, : self.cols - 1]], axis=0)
-        #new_grid = np.delete(new_grid, row - 1, axis=0)
+        # new_grid = np.concatenate([new_grid[:row - 1, : self.cols - 1], new_grid[row:, : self.cols - 1]], axis=0)
+        new_grid = np.concatenate([new_grid[: row - 1, : self.cols - 1], new_grid[row:, : self.cols - 1]], axis=0)
+        # new_grid = np.delete(new_grid, row - 1, axis=0)
 
         ret = BPD(new_grid)
         ret.rebuild()
@@ -279,9 +311,9 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         # going_left = True
 
         # construct rop row
-        new_grid[0, :perm[0] - 1] = TileType.BLANK
+        new_grid[0, : perm[0] - 1] = TileType.BLANK
         new_grid[0, perm[0] - 1] = TileType.ELBOW_SE
-        new_grid[0, perm[0]:] = TileType.HORIZ
+        new_grid[0, perm[0] :] = TileType.HORIZ
 
         current_row = 1
         col = perm[0] - 1
@@ -291,13 +323,13 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         while current_row < the_self.rows:
             new_grid[current_row, :col] = self._grid[current_row - 1, :col]
-            new_grid[current_row, col+1:] = self._grid[current_row - 1, col:]
+            new_grid[current_row, col + 1 :] = self._grid[current_row - 1, col:]
             if col > 0:
-                if self[current_row - 1, col - 1].feeds_right:# and new_grid[current_row - 1, col].entrance_from_bottom:
-                    if (col == the_self.cols - 1 or self[current_row - 1, col].entrance_from_left):
+                if self[current_row - 1, col - 1].feeds_right:  # and new_grid[current_row - 1, col].entrance_from_bottom:
+                    if col == the_self.cols - 1 or self[current_row - 1, col].entrance_from_left:
                         new_grid[current_row, col] = TileType.CROSS
-                    #going_left=False
-                    else:# self[current_row - 1, col - 1].feeds_right and new_grid[current_row - 1, col].entrance_from_bottom and not (col == the_self.cols - 1 or self[current_row - 1, col].entrance_from_left):
+                    # going_left=False
+                    else:  # self[current_row - 1, col - 1].feeds_right and new_grid[current_row - 1, col].entrance_from_bottom and not (col == the_self.cols - 1 or self[current_row - 1, col].entrance_from_left):
                         new_grid[current_row, col] = TileType.ELBOW_NW
                         col -= 1
                 # elif new_grid[current_row - 1, col].entrance_from_bottom:
@@ -310,8 +342,8 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 # else:# self[current_row - 1, col - 1].feeds_right and new_grid[current_row - 1, col].entrance_from_bottom and not (col == the_self.cols - 1 or self[current_row - 1, col].entrance_from_left):
                 new_grid[current_row, col] = TileType.VERT
             current_row += 1
-                    #going_left=False
-                    #col -= 1
+            # going_left=False
+            # col -= 1
         #     new_grid[current_row, col] = TileType.TBD
         #     if the_self[current_row, col] == TileType.HORIZ:
         #         col -= 1
@@ -354,51 +386,51 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
     #     pathfat = tuple([cut_list[i] * Permutation.w0(n - i).shiftup(i) for i in range(n - 1, -1, -1)])
     #     print(pathfat)
     #     return BPD.from_bruhat_path(pathfat).resize(start_row + other.rows)
-        # perm = self.perm * other.perm.shiftup(start_row)
-        # solf = self.resize(len(perm))
-        # new_grid = solf._grid.copy()
+    # perm = self.perm * other.perm.shiftup(start_row)
+    # solf = self.resize(len(perm))
+    # new_grid = solf._grid.copy()
 
-        # last_tbd_col = 0
-        # first_tbd_col = -1
-        # for col in range(new_grid.shape[1]):
-        #     if TileType(new_grid[start_row - 1, col]).entrance_from_bottom:
-        #         new_grid[start_row:, col] = TileType.VERT
-        #     else:
-        #         new_grid[start_row:, col] = TileType.TBD
-        #         if first_tbd_col == -1:
-        #             first_tbd_col = col
-        #         last_tbd_col = col
-        # _display_grid(new_grid)
-        # for row in range(other.rows):
-        #     other_col = other.cols - 1
-        #     for col in range(new_grid.shape[1] - 1, first_tbd_col - 1, -1):
-        #         if col > last_tbd_col:
-        #             new_grid[row + start_row, col] = TileType.CROSS
-        #             continue
+    # last_tbd_col = 0
+    # first_tbd_col = -1
+    # for col in range(new_grid.shape[1]):
+    #     if TileType(new_grid[start_row - 1, col]).entrance_from_bottom:
+    #         new_grid[start_row:, col] = TileType.VERT
+    #     else:
+    #         new_grid[start_row:, col] = TileType.TBD
+    #         if first_tbd_col == -1:
+    #             first_tbd_col = col
+    #         last_tbd_col = col
+    # _display_grid(new_grid)
+    # for row in range(other.rows):
+    #     other_col = other.cols - 1
+    #     for col in range(new_grid.shape[1] - 1, first_tbd_col - 1, -1):
+    #         if col > last_tbd_col:
+    #             new_grid[row + start_row, col] = TileType.CROSS
+    #             continue
 
-                # if other_col >= other.cols:
-                #     if TileType(new_grid[row, col]) == TileType.TBD:
-                #         new_grid[row + self.rows, col] = TileType.HORIZ
-                #     elif TileType(new_grid[row, col]) == TileType.VERT:
-                #         new_grid[row + self.rows, col] = TileType.CROSS
-                #     continue
-                # wasafeed = False
-                # if other_col == 0:
-                #     while col < new_grid.shape[1] and TileType(new_grid[row + self.rows, col]) == TileType.TBD:
-                #         new_grid[row + self.rows, col] = TileType.HORIZ
-                #         col += 1
-                #         wasafeed = True
-                # while col < new_grid.shape[1] and TileType(new_grid[row + self.rows, col]) != TileType.TBD:
-                #     if (wasafeed and other_col == 0) or (other_col > 0 and other[row, other_col].entrance_from_left  and other[row, other_col - 1].feeds_right):
-                #         new_grid[row + start_row, col] = TileType.CROSS
-                #     col += 1
-        #         if TileType(new_grid[row + start_row, col]) == TileType.TBD:
-        #             new_grid[row + start_row, col] = other[row, other_col]
-        #             other_col -= 1
-        #         elif other[row, other_col].feeds_right:
-        #             new_grid[row + start_row, col] = TileType.CROSS
-        #         _display_grid(new_grid)
-        # return BPD(new_grid)
+    # if other_col >= other.cols:
+    #     if TileType(new_grid[row, col]) == TileType.TBD:
+    #         new_grid[row + self.rows, col] = TileType.HORIZ
+    #     elif TileType(new_grid[row, col]) == TileType.VERT:
+    #         new_grid[row + self.rows, col] = TileType.CROSS
+    #     continue
+    # wasafeed = False
+    # if other_col == 0:
+    #     while col < new_grid.shape[1] and TileType(new_grid[row + self.rows, col]) == TileType.TBD:
+    #         new_grid[row + self.rows, col] = TileType.HORIZ
+    #         col += 1
+    #         wasafeed = True
+    # while col < new_grid.shape[1] and TileType(new_grid[row + self.rows, col]) != TileType.TBD:
+    #     if (wasafeed and other_col == 0) or (other_col > 0 and other[row, other_col].entrance_from_left  and other[row, other_col - 1].feeds_right):
+    #         new_grid[row + start_row, col] = TileType.CROSS
+    #     col += 1
+    #         if TileType(new_grid[row + start_row, col]) == TileType.TBD:
+    #             new_grid[row + start_row, col] = other[row, other_col]
+    #             other_col -= 1
+    #         elif other[row, other_col].feeds_right:
+    #             new_grid[row + start_row, col] = TileType.CROSS
+    #         _display_grid(new_grid)
+    # return BPD(new_grid)
 
     def append(self, other: BPD) -> BPD:
         perm = self.perm * other.perm.shiftup(self.rows)
@@ -447,8 +479,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 _display_grid(new_grid)
         return BPD(new_grid)
 
-
-
     @classmethod
     def from_bruhat_path(cls, path: Sequence[Permutation]) -> BPD:
         """
@@ -457,7 +487,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         n = len(path)
         grid = np.full((n, n), TileType.TBD, dtype=TileType)
 
-        for row in range(len(path) -1, 0, -1):
+        for row in range(len(path) - 1, 0, -1):
             grid[n - 1 - row, :] = BPD.row_from_k_chain(path[row - 1], path[row], n - row, n)
             change_col = path[row][n - row - 1]
             if grid[n - 1 - row, change_col - 1] == TileType.ELBOW_NW:
@@ -472,13 +502,13 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             if j > change_col - 1:
                 grid[n - 1, j] = TileType.CROSS
             # change (1, w(k)) from
-                # col = permo[rcol] - 1
-                # if col <= rowand path[row][col] == path[row - 1][col]:
-                #     grid[row - 1, col] = TileType.BLANK
-                # elif col > row and path[row][col] == path[row - 1][col] and path[row][col] != Permutation.w0(n)[col]:
-                #     grid[row - 1, col] = TileType.CROSS
+            # col = permo[rcol] - 1
+            # if col <= rowand path[row][col] == path[row - 1][col]:
+            #     grid[row - 1, col] = TileType.BLANK
+            # elif col > row and path[row][col] == path[row - 1][col] and path[row][col] != Permutation.w0(n)[col]:
+            #     grid[row - 1, col] = TileType.CROSS
         ret = cls(grid)
-        #ret.rebuild()
+        # ret.rebuild()
         return ret
 
     @staticmethod
@@ -551,33 +581,11 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
                 if c not in first_k_numbers:
                     tile = TileType.BLANK  # □
                 else:
-                    # Check if chain ever swaps values a,b with a < c < b
                     swaps_bracketing = any(swaps_by_a[a] > c > a for a in swaps_by_a)
-                    # print(f"{c=}")
-                    # print(f"{swaps_by_a=}")
-                    # print(f"{swaps_bracketing=}")
-                    # bacon = u
-                    # for cyc in cycles:
-                    #     cyc = [*cyc]
-                    #     a = min(cyc)
-                    #     cyc.remove(a)
-                    #     while len(cyc) > 0:
-                    #         bindex = min(list(range(len(cyc))), key=lambda x: bacon[cyc[x] - 1])
-                    #         b = cyc.pop(bindex)
-                    #         # Check if the VALUES being swapped bracket c
-                    #         val_a = bacon[a - 1]
-                    #         val_b = bacon[b - 1]
-                    #         if val_a < c < val_b or val_b < c < val_a:
-                    #             swaps_bracketing = True
-                    #         bacon = bacon.swap(a - 1, b - 1)
-
-                    # assert bacon == w
                     if swaps_bracketing:
                         tile = TileType.CROSS  # ╬
                     else:
                         tile = TileType.VERT  # ■ (solid, represented as CROSS)
-
-            # Set the tile at column c-1 (0-indexed)
             row_tiles[c - 1] = tile
 
         return row_tiles
@@ -1042,30 +1050,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         # print(asm)
         return asm
 
-    # _graph_cache: dict[tuple[Permutation, int], set[BPD]] = {}
-
-    # @classmethod
-    # def all_bpds_bruh(cls, perm: Permutation, length: int = -1, diff=0) -> set[BPD]:
-    #     ret = set()
-    #     stack = [(len(perm), BPD.rothe_bpd(perm, num_rows=len(perm)))]
-    #     while len(stack) > 0:
-    #         current_row, current_bpd = stack.pop()
-    #         if current_row == 0:
-    #             ret.add(current_bpd)
-    #             continue
-    #         if current_row > len(current_bpd.perm.trimcode):
-    #             stack.append((current_row - 1, current_bpd))
-    #             continue
-    #         bpath = current_bpd.to_bruhat_path()
-    #         for _, new_perm in pull_out_var(current_row, bpath[current_row - 1]):
-    #             new_bpd = current_bpd.copy()
-    #             rperm = Permutation.from_partial(new_perm[:current_row])
-    #             rbpd = BPD.rothe_bpd(rperm, num_rows=current_row-1)
-    #             rbpd = rbpd.resize(len(perm))
-    #             new_bpd._grid[:current_row - 1] = rbpd._grid[:current_row - 1]
-    #             stack.append((current_row - 1, new_bpd))
-    #     return ret
-
     @classmethod
     @cache
     def rothe_bpd(cls, perm: Permutation, num_rows: int | None = None) -> BPD:
@@ -1073,33 +1057,16 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             num_rows = len(perm)
         n = max(num_rows, len(perm))
         grid = np.full((num_rows, n), fill_value=TileType.TBD, dtype=TileType)
-
-        # Set blanks from diagram
-        diagram = perm.diagram
-        if diagram:
-            diagram_arr = np.array(list(diagram), dtype=int)
-            grid[diagram_arr[:, 0] - 1, diagram_arr[:, 1] - 1] = TileType.BLANK
-
-        # Vectorize cross detection using graph coordinates
+        bpd = BPD(grid)
+        for a, b in perm.diagram:
+            bpd._grid[a - 1, b - 1] = TileType.BLANK
         graph = perm.graph
-        if graph and len(graph) > 0:
-            graph_arr = np.array(list(graph), dtype=int)
-
-            # Get mask of non-blank positions
-            non_blank_mask = grid != TileType.BLANK
-            non_blank_coords = np.argwhere(non_blank_mask)
-
-            if len(non_blank_coords) > 0:
-                # For each non-blank position, check graph conditions
-                for i, j in non_blank_coords:
-                    # Check if any graph point has row == i+1 and col < j+1
-                    has_row_below = np.any((graph_arr[:, 0] == i + 1) & (graph_arr[:, 1] - 1 < j))
-                    # Check if any graph point has row < i+1 and col == j+1
-                    has_col_left = np.any((graph_arr[:, 0] - 1 < i) & (graph_arr[:, 1] == j + 1))
-                    if has_row_below and has_col_left:
-                        grid[i, j] = TileType.CROSS
-
-        return BPD(grid)
+        for i in range(num_rows):
+            for j in range(n):
+                if bpd[i, j] != TileType.BLANK:
+                    if any(tup[0] == i + 1 and tup[1] - 1 < j for tup in graph) and any(tup[0] - 1 < i and tup[1] == j + 1 for tup in graph):
+                        bpd._grid[i, j] = TileType.CROSS
+        return bpd
 
     @property
     def weight(self) -> Tuple[int, ...]:
@@ -1739,7 +1706,6 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
     def resize(self, new_num_rows: int, new_num_cols: int | None = None) -> BPD:
         self._perm = None  # Invalidate cached permutation
-
 
         if new_num_rows > self.rows:
             new_bpd = self.copy()
