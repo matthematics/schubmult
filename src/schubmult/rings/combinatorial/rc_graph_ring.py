@@ -277,6 +277,12 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
             res += coeff * self.ring.trim_operator(i, rc_graph)
         return res
 
+    def grass_coaction(self):
+        ret = self.ring.zero @ self.ring.zero
+        for rc, coeff in self.items():
+            ret += coeff * self.ring.grass_coaction(rc)
+        return ret
+
 
 class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
     _id = 0
@@ -329,6 +335,15 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
             if len(rc0[i - 1]) != 0:
                 continue
             ret += coeff * self(rc0.pull_out_row(i, keep_size=True))
+        return ret
+
+    def grass_coaction(self, elem: RCGraph):
+        r = GrassRCGraphRing()
+        base_rc, grass_rc = elem.squash_decomp()
+        the_cprod = r.coproduct_on_basis(grass_rc)
+        ret = self.zero @ self.zero
+        for (grass_rc1, grass_rc2), coeff in the_cprod.items():
+            ret += coeff * self(base_rc.squash_product(grass_rc1)) @ self(grass_rc2)
         return ret
 
     # @cache
@@ -582,6 +597,10 @@ class HWRCGraphRing(RCGraphRing):
         return elem
 
 
+def _is_valid_grass(rc):
+    if rc.perm.inv == 0:
+        return True
+    return rc.perm.descents() == {len(rc) - 1}
 class GrassRCGraphRing(RCGraphRing):
     _id = 0
 
@@ -606,7 +625,9 @@ class GrassRCGraphRing(RCGraphRing):
     def _snap_grass(self, elem):
         ret = self.zero
         for key, coeff in elem.items():
-            ret += self.from_dict({key.grass: coeff})
+            if not _is_valid_grass(key):
+                continue
+            ret += self.from_dict({key: coeff})
         return ret
 
     def mul_pair(self, a, b):
@@ -614,8 +635,8 @@ class GrassRCGraphRing(RCGraphRing):
         ret = self.zero
         for rc in sputnik:
             new_rc = RCGraph([*rc[: len(a)], *b.shiftup(len(a))])
-            if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(a) + len(b):
-                gr = new_rc.grass
+            if new_rc.is_valid and _is_valid_grass(new_rc):
+                gr = new_rc
                 if gr not in ret:
                     ret += self(gr)
         return ret
@@ -645,7 +666,7 @@ class GrassRCGraphRing(RCGraphRing):
             for p in range(deg + 1):
                 res += self(RCGraph.one_row(p)) @ self(RCGraph.one_row(deg - p))
             return res
-        if len(elem.perm.descents()) > 1 or (len(elem) != len(elem.perm.trimcode) and elem.perm.inv > 0):
+        if not _is_valid_grass(elem):
             return self.zero
         mid = len(elem) // 2
         left_cut, right_cut = elem.vertical_cut(mid)
@@ -655,10 +676,10 @@ class GrassRCGraphRing(RCGraphRing):
         candidate = left_cprod * right_cprod
         for (rc1, rc2), coeff in candidate.items():
             # Filter to only Grassmannian RCs
+            if not _is_valid_grass(rc1) or not _is_valid_grass(rc2):
+                continue
             if next(iter((self(rc1) % self(rc2)).keys())) == elem:
                 cprod += self(rc1) @ self(rc2)
-        if cprod == (self @ self).zero:
-            raise ValueError(f"Failed to find coproduct for {elem}")
         return cprod
 
     def add(self, a, b):

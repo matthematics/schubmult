@@ -1,8 +1,11 @@
 from functools import cache
 
 from schubmult.combinatorics.rc_graph import RCGraph
+from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRingElement
 from schubmult.rings.combinatorial.schubert_monomial_ring import SchubertMonomialRing, SchubertMonomialRingElement
 from schubmult.symbolic import S
+
+from ..polynomial_algebra import PA, SchubertPolyBasis
 
 # from .crystal_graph_ring import CrystalTensorRing
 
@@ -68,9 +71,6 @@ class DualRCGraphRingElement(SchubertMonomialRingElement):
     #             res += tring.from_dict({(rc1, rc2): coeff})
     #     return res
 
-    def almosteq(self, other):
-        return all(v == 0 for v in (self - other).values())
-
     def shiftup(self, k):
         res = self.ring.zero
         for rc_graph, coeff in self.items():
@@ -107,6 +107,22 @@ class DualRCGraphRingElement(SchubertMonomialRingElement):
             res += coeff * self.ring(rc_graph.transpose(length))
         return res
 
+    def __rmul__(self, other):
+        if isinstance(other, RCGraphRingElement):
+            return self.rc_ring_left_act(other, self)
+        return super().__rmul__(other)
+
+    def __mul__(self, other):
+        if isinstance(other, RCGraphRingElement):
+            return self.rc_ring_right_act(self, other)
+        return super().__mul__(other)
+
+    def polynomial_coaction(self, left=True):
+        res = PA.zero @ self.ring.zero
+        for rc_graph, coeff in self.items():
+            res += coeff * self.ring.polynomial_coaction(rc_graph, left=left)
+        return res
+
 
 class DualRCGraphRing(SchubertMonomialRing):
     _id = 0
@@ -118,6 +134,34 @@ class DualRCGraphRing(SchubertMonomialRing):
 
     def __hash__(self):
         return hash(("Dinkberrtwtrwystoa", self._ID))
+
+    def polynomial_coaction(self, elem: RCGraph, left=True):
+        result = PA.zero @ self.zero
+        for i in range(len(elem)):
+            pair = elem.vertical_cut(i)
+            if left:
+                result += PA(*pair[0].length_vector) @ self(pair[1])
+            else:
+                result += self(pair[0]) @ PA(*pair[1].length_vector)
+        return result
+
+    def rc_ring_left_act(self, act_ring_elem: RCGraphRingElement, ring_elem: RCGraph):
+        # all chopping off of act_elem
+        ret = self.zero
+        for act_elem, coeff in act_ring_elem.items():
+            rc1, rc2 = ring_elem.vertical_cut(len(act_elem))
+            if rc1 == act_elem:
+                ret += coeff * self(rc2)
+        return ret
+
+    def rc_ring_right_act(self, ring_elem: RCGraph, act_ring_elem: RCGraphRingElement):
+        # all chopping off of act_elem
+        ret = self.zero
+        for act_elem, coeff in act_ring_elem.items():
+            rc1, rc2 = ring_elem.vertical_cut(len(act_elem))
+            if rc2 == act_elem:
+                ret += coeff * self(rc1)
+        return ret
 
     def elem_sym(self, descent, weight):
         from schubmult import uncode
@@ -133,15 +177,12 @@ class DualRCGraphRing(SchubertMonomialRing):
     def zero_monom(self):
         return RCGraph([])
 
-    # def from_free_algebra_element(self, elem):
-    #     wordelem = elem.change_basis(WordBasis)
-    #     result = self.zero
-    #     for word, coeff in wordelem.items():
-    #         res = self(RCGraph([]))
-    #         for a in reversed(word):
-    #             res = self(RCGraph.one_row(a)) * res
-    #         result += coeff * res
-    #     return result
+    def from_polynomial_algebra_element(self, elem):
+        schub_elem = elem.change_basis(SchubertPolyBasis(elem.ring.genset))
+        result = self.zero
+        for (perm, length), coeff in schub_elem.items():
+            result += coeff * self.schub(perm, length)
+        return result
 
     def schub(self, perm, n=None):
         """
@@ -171,6 +212,7 @@ class DualRCGraphRing(SchubertMonomialRing):
 
     def mul(self, elem1, elem2):
         from .rc_graph_ring import RCGraphRing
+
         r = RCGraphRing()
         # Define the multiplication for DualRCGraphRing
 
@@ -180,7 +222,7 @@ class DualRCGraphRing(SchubertMonomialRing):
                 for b, coeff_b in elem2.items():
                     if len(a) != len(b):
                         continue
-                    result += coeff_a * coeff_b * self.from_dict(r(a)%r(b))
+                    result += coeff_a * coeff_b * self.from_dict(r(a) % r(b))
 
             return result
         try:
