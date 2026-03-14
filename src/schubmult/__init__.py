@@ -25,6 +25,7 @@ _lazy_exports = {
     "Permutation": "schubmult.combinatorics.permutation",
     "uncode": "schubmult.combinatorics.permutation",
     "RCGraph": "schubmult.combinatorics.rc_graph",
+    "AntiRCGraph": "schubmult.combinatorics.anti_rc_graph",
     "ChuteMoveElement": "schubmult.combinatorics.chute_move_element",
     "ChuteMoveRing": "schubmult.rings.combinatorial.chute_move_ring",
     "BPD": "schubmult.combinatorics.bpd",

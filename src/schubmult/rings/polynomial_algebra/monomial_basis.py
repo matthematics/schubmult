@@ -44,6 +44,8 @@ class MonomialBasis(PolynomialBasis):
     def expand(self, dct):
         return Add(*[v * self.expand_monom(k) for k, v in dct.items()])
 
+    
+
     def transition_slide(self, dct, other_basis):
         ret = {}
         for k, v in dct.items():
@@ -70,6 +72,10 @@ class MonomialBasis(PolynomialBasis):
                     del res[k]
         return ret
 
+    def transition_anti_schubert(self, dct, other_basis):
+        dct_reversed = {tuple(reversed(k)): v for k, v in dct.items()}
+        return self.transition_schubert(dct_reversed, other_basis)
+
     def transition_schubert(self, dct, other_basis):
         ret = {}
         dct_by_length = {}
@@ -89,6 +95,7 @@ class MonomialBasis(PolynomialBasis):
         return WordBasis
 
     def transition(self, other_basis):
+        from .anti_schubert_poly_basis import AntiSchubertPolyBasis
         from .monomial_slide_poly_basis import MonomialSlidePolyBasis
         from .schubert_poly_basis import SchubertPolyBasis
         from .sepdesc_poly_basis import SepDescPolyBasis
@@ -102,6 +109,8 @@ class MonomialBasis(PolynomialBasis):
         if isinstance(other_basis, SepDescPolyBasis):
             bonky_basis = SchubertPolyBasis(genset=other_basis.genset)
             return lambda x: other_basis.attach_key(bonky_basis.transition(other_basis)(bonky_basis.attach_key(bonky_basis.ring.from_expr(Add(*[v * self.expand_monom(k) for k, v in x.items()])))))
+        if isinstance(other_basis, AntiSchubertPolyBasis):
+            return lambda x: self.transition_anti_schubert(x, other_basis)
         spb = SchubertPolyBasis(genset=other_basis.genset)
         return lambda x: spb.transition(other_basis)(self.transition(spb)(x))
 

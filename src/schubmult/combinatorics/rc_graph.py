@@ -529,11 +529,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return RCGraph.from_reduced_compatible(new_perm_word, compat_seq).resize(n + exceed)
 
     def antiaut(self):
-        rows = list(reversed(self))
-        new_rows = []
-        for index, row in enumerate(rows):
-            new_rows.append(tuple(reversed([len(self) - a for a in row])))
-        return RCGraph(new_rows)
+        from .anti_rc_graph import AntiRCGraph
+        return AntiRCGraph.from_rc_graph(self)
 
     @property
     def forest_weight(self):
@@ -1177,6 +1174,14 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             combined_rc = combined_rc.zero_out_last_row()
         return combined_rc
 
+    def left_squash(self, rc: RCGraph) -> RCGraph:
+        from .bpd import BPD
+        combined_rc = self.disjoint_union(rc)
+        combined_bpd = BPD.from_rc_graph(combined_rc)
+        while len(combined_bpd) > len(self):
+            combined_bpd = combined_bpd.zero_out_last_row()
+        return combined_bpd.to_rc_graph()
+
     @cache
     def zero_out_last_row(self) -> RCGraph:
         # this is important!
@@ -1395,7 +1400,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     # def left_exchange_property(self, descent: int, return_row: bool = False) -> RCGraph | tuple[RCGraph, int]:
     #     return self.exchange_property(descent, left=True, return_row=return_row)
-
 
     @cache
     def left_to_right_inversion(self, index: int) -> tuple[int, int]:
@@ -1661,7 +1665,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     @property
     def cols(self) -> int:
-        return max(1, *[self[i][0] - i if len(self[i]) > 0 else 0 for i in range(len(self))]) if len(self) > 0 else 0
+        #return max(1, *[self[i][0] - i if len(self[i]) > 0 else 0 for i in range(len(self))]) if len(self) > 0 else 0
+        return len(self.perm) - 1
 
     def leibniz_rep(self) -> tuple:
         if len(self) == 0:
@@ -1904,9 +1909,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 return tuple([self[a, j] for a in range(len(self))[i]])
             if isinstance(j, slice):
                 return tuple([self[i, b] for b in range(self.cols)[j]])
-            if not self.has_element(i + 1, self.cols - j):
+            if not self.has_element(i + 1, j + 1):
                 return None
-            return i + self.cols - j
+            return i + j + 1
         is_slice = isinstance(key, slice)
 
         if is_slice:

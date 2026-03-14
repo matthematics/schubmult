@@ -496,38 +496,10 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         if v_rc.perm.inv == 0:
             return self(u_rc)
         if len(v_rc.perm.descents()) <= 1 and len(v_rc.perm.trimcode) >= len(u_rc.perm.trimcode):
-            rc2 = v_rc.normalize()
-            # rc1 = u_rc.normalize()
-            common_length = len(rc2)
-            return self(u_rc.resize(common_length).squash_product(v_rc.resize(common_length)).resize(len(u_rc)))
-            # return self(u_rc.squash_product(v_rc))
-
-        # weight1, dperm1 = u_rc.classify_demazure_crystal()
-        # weight2, dperm2 = v_rc.classify_demazure_crystal()
-        # does_decompose = Permutation.does_demazure_crystal_tensor_decompose(weight1, dperm1, weight2, dperm2)
-        # if does_decompose and u_rc.perm.is_dominant:
-        #     # the_dubya = Sx(u_rc.perm) * Sx(v_rc.perm)
-        #     # rc_set = set()
-        #     # for w in the_dubya.keys():
-        #     #     rc_set.update(RCGraph.all_hw_rcs(w, len(u_rc)))
-        #     # hw_map = {}
-
-        #     # tensor = CrystalGraphTensor(u_rc, v_rc)
-        #     # # extremal_weight = tuple([a + b for a, b in zip(rc.extremal_weight, elem_rc.length_vector)])
-        #     # hw_tensor, raise_seq = tensor.to_highest_weight()
-        #     # # if hw_tensor not in hw_map:
-        #     # def dom_key(weight):
-        #     #     return tuple([sum(weight[:i]) for i in range(1, len(weight) + 1)])
-        #     # extremal_weight = min([tens_bag.crystal_weight for tens_bag in hw_tensor.full_crystal if tuple(hw_tensor.crystal_weight) == tuple(sorted(tens_bag.crystal_weight, reverse=True))], key=lambda x: dom_key(x))
-        #     # me_map = next(iter(min([rc2 for rc2 in rc_set if tuple(rc2.extremal_weight) == tuple(extremal_weight)])))
-        #     # rc_set.remove(me_map)
-        #     # mapped_rc = me_map.reverse_raise_seq(raise_seq)
-        #     # return mapped_rc
-        #     rc1 = u_rc.normalize()
-        #     rc2 = v_rc.normalize()
-        #     common_length = max(len(rc1), len(rc2))
-        #     return self(u_rc.resize(common_length).squash_product(v_rc.resize(common_length)).resize(len(u_rc)))
-        raise NotImplementedError("Multiplication only implemented for Grassmannian with large enough descent or if the Demazure crystal tensor product decomposes.")
+            return self(u_rc.squash_product(v_rc))
+        if len(u_rc.perm.descents()) <= 1 and len(u_rc.perm.trimcode) >= len(v_rc.perm.trimcode):
+            return self(v_rc.left_squash(u_rc))
+        raise NotImplementedError("Multiplication only implemented for one factor Grassmannian with large enough descent")
 
     @cache
     def potential_products(self, left, right, length):

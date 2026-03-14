@@ -44,6 +44,51 @@ def test_rc_graph_squash_product():
             prod = Sx(g_perm) * Sx(rc_perm)
             assert all(prod.get(rc_result.perm, 0) == c for rc_result, c in coeff.items()), f"Error: Squash product mismatch for permutations {g_perm} and {rc_perm}, {coeff=} {prod=}"
 
+def test_rc_graph_left_squash_product():
+    from schubmult import Permutation, RCGraph, RCGraphRing, Sx
+
+    n = 4
+    perms = Permutation.all_permutations(n)
+    rcs = []
+    grass_rcs = []
+    for i in range(n):
+        rcs.append(set())
+        grass_rcs.append(set())
+
+    for perm in perms:
+        k = len(perm.trimcode)
+        rc_set = RCGraph.all_rc_graphs(perm, k)
+        rcs[k].update(rc_set)
+        #if len(perm.descents()) == 1:
+        grass_rcs[k].update(rc_set)
+
+    ring = RCGraphRing()
+    
+    for max_d in range(n):
+        build_product = {}
+        bad_perm_pairs = set()
+        for g_rc in grass_rcs[max_d]:
+            for j in range(max_d + 1):
+                for rc in rcs[j]:
+                    rc2 = rc.resize(max_d)
+                    try:
+                        the_rc = ring(g_rc) % ring(rc2) 
+                    except NotImplementedError:
+                        bad_perm_pairs.add((g_rc.perm, rc2.perm))
+                        continue
+                    for spank_rc, coeff in the_rc.items():
+                        build_product[(g_rc.perm, rc2.perm)] = build_product.get((g_rc.perm, rc2.perm), ring.zero) + coeff * ring(spank_rc)
+
+        for (perm1, perm2) in bad_perm_pairs:
+            if (perm1, perm2) in build_product:
+                del build_product[(perm1, perm2)]
+
+        for (g_perm, rc_perm), coeff in build_product.items():
+            # if (g_perm, rc_perm) in bad_perm_pairs or (rc_perm, g_perm) in bad_perm_pairs:
+            #     continue
+            prod = Sx(g_perm) * Sx(rc_perm)
+            assert all(prod.get(rc_result.perm, 0) == c for rc_result, c in coeff.items()), f"Error: Squash product mismatch for permutations {g_perm} and {rc_perm}, {coeff=} {prod=}"
+
 
 def test_rc_graph_agrees_with_free_algebra():
     import itertools

@@ -411,17 +411,18 @@ def kdown_perms(perm, monoperm, p, k):
         down_perm_list = down_perm_list2
     return full_perm_list
 
+
 def rc_graph_set(perm):
     if perm.inv == 0:
-        return {((),())}
+        return {((), ())}
     ret = set()
     L = pull_out_var(1, perm)
     for index_list, new_perm in L:
         rc_set = rc_graph_set(new_perm)
         lsort = sorted(index_list, reverse=True)
         for labels, word in rc_set:
-            new_labels = tuple(([1]*len(index_list)) + [label + 1 for label in labels])
-            new_word = tuple(lsort+[word_s + 1 for word_s in word])
+            new_labels = tuple(([1] * len(index_list)) + [label + 1 for label in labels])
+            new_word = tuple(lsort + [word_s + 1 for word_s in word])
             ret.add((new_labels, new_word))
     return ret
 
@@ -724,6 +725,7 @@ def complete_sym_perms_op(orig_perm, p, k):
         total_dict = new_total_dict
     return total_dict
 
+
 def complete_sym_perms(orig_perm, p, k):
     from schubmult.utils.perm_utils import has_bruhat_ascent
 
@@ -771,6 +773,7 @@ def complete_sym_positional_perms(orig_perm, p, *k):
         up_perm_list = perm_list
     return total_list
 
+
 def complete_sym_positional_perms_down(orig_perm, p, *k, hack_off=None):
     k = {i - 1 for i in k}
     orig_perm = Permutation(orig_perm)
@@ -781,7 +784,7 @@ def complete_sym_positional_perms_down(orig_perm, p, *k, hack_off=None):
         perm_list = set()
         for up_perm, sign in up_perm_list:
             # pos_list = [i for i in range(k) if up_perm[i] < last]
-            rg = [q for q in range(len(up_perm) if hack_off is None else min(len(up_perm),hack_off)) if q not in k and up_perm[q] == orig_perm[q]]
+            rg = [q for q in range(len(up_perm) if hack_off is None else min(len(up_perm), hack_off)) if q not in k and up_perm[q] == orig_perm[q]]
             for j in rg:
                 for i in k:
                     a, b = (i, j) if i < j else (j, i)
@@ -869,3 +872,44 @@ def is_hook(cd):
     if started or done:
         return True
     return False
+
+
+def all_grassmannian_rc_graphs(n: int, max_inv: int):
+    """All RC graphs for Grassmannian permutations generated from partitions."""
+    from schubmult.combinatorics.rc_graph import RCGraph
+    graph_set = set()
+    for perm in grassmannian_perms_from_partitions(n, max_inv):
+        graph_set.update(rc for rc in RCGraph.all_rc_graphs(perm, n))
+    return sorted(graph_set, key=lambda rc: (rc.perm.inv, rc.length_vector, tuple(rc)))
+
+
+def grassmannian_perms_from_partitions(n: int, max_inv: int) -> list[Permutation]:
+    """Build Grassmannian permutations from partitions: pad to length n, reverse, then uncode."""
+    perms = []
+    seen = set()
+    for part in partitions_with_sum_at_most(max_inv, n):
+        padded = (*part, *([0] * (n - len(part))))
+        weakly_increasing_code = tuple(reversed(padded))
+        perm = uncode(list(weakly_increasing_code))
+        if perm not in seen:
+            assert perm.inv == 0 or perm.descents() == {n - 1}
+            seen.add(perm)
+            perms.append(perm)
+    return perms
+
+
+def partitions_with_sum_at_most(max_sum: int, max_parts: int) -> list[tuple[int, ...]]:
+    """All partitions (weakly decreasing tuples) with at most max_parts parts and total <= max_sum."""
+
+    def rec(remaining_sum: int, max_next: int, parts_left: int):
+        yield ()
+        if parts_left == 0:
+            return
+        for first in range(1, min(remaining_sum, max_next) + 1):
+            for tail in rec(remaining_sum - first, first, parts_left - 1):
+                yield (first, *tail)
+
+    seen = set()
+    for part in rec(max_sum, max_sum, max_parts):
+        seen.add(part)
+    return sorted(seen, key=lambda p: (sum(p), len(p), p), reverse=False)

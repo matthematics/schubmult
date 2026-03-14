@@ -63,7 +63,7 @@ def test_left_squash_reversed_order(n, r, grasses, *, debug=False, progress_ever
 
     t1 = time.perf_counter()
     failures = []
-    pair_products = {(grass_rc1, grass_rc2): grass_rc2.squash_product(grass_rc1) for grass_rc1, grass_rc2 in itertools.product(grasses, repeat=2)}
+    #pair_products = {(grass_rc1, grass_rc2): grass_rc2.squash_product(grass_rc1) for grass_rc1, grass_rc2 in itertools.product(grasses, repeat=2)}
     if debug:
         print(f"[debug] precomputed {len(pair_products)} grass pair products in {time.perf_counter() - t1:.2f}s")
 
@@ -76,10 +76,8 @@ def test_left_squash_reversed_order(n, r, grasses, *, debug=False, progress_ever
             try:
                 #lhs = r(left_squash(pair_products[(grass_rc1, grass_rc2)], rc))
                 
-                rhs = left_squash(grass_rc1, left_squash(grass_rc2, rc)).resize(n)
-                N = max(len(grass_rc2.perm),len(grass_rc1.perm))
-                lhs = _transpose_rc_cached(rc).resize(N)
-                lhs = _transpose_rc_cached(lhs.squash_product(grass_rc2.transpose(N)).squash_product(grass_rc1.transpose(N))).resize(n)
+                rhs = rc.bpd_squash(grass_rc1).bpd_squash(grass_rc2)
+                lhs = rc.bpd_squash(grass_rc2.bpd_squash(grass_rc1))
                 #if not lhs.almosteq(rhs):
                 if lhs != rhs:
                     failures.append((rc, grass_rc1, grass_rc2, lhs, rhs))

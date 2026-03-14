@@ -36,22 +36,7 @@ class EGPrintingTerm(PrintingTerm):
 
 
 class EGRingElement(BaseRingElement):
-    """
-    EGRing elements are linear combinations of RCGraph basis elements.
-
-    The product % is the polynomial product. Currently only defined when the right side
-    is a dominant RC graph.
-
-    The Leibniz rule should hold for % somehow. Claude's idea is to define the ambiguous term in the Leibniz formula instead of trying
-    to do this directly.
-
-    The product * is well defined for any pair of RC graphs and is the dual product.
-    """
-
-    # ----------------------
-    # Presentation helpers
-    # ----------------------
-
+    pass
 
 
 class EGRing(BaseRing):
@@ -93,7 +78,6 @@ class EGRing(BaseRing):
 
     def mul_pair(self, key1, key2, check=False):  # noqa: ARG002
         amt_to_bump = max(key2[1], len(key2[0].perm))
-        # r = RCGraphRing()
         nilp_set = {key1[0]}
         self_len = key1[1]
         for a in range(amt_to_bump):
@@ -105,7 +89,7 @@ class EGRing(BaseRing):
 
         ret = self.zero
         for nilp in nilp_set:
-            new_nilp, plac_elem_hw = NilPlactic.ed_insert(
+            new_nilp = NilPlactic.from_word(
                 *nilp.column_word, *[a + self_len for a in key2[0].column_word],
             )
             if new_nilp.perm.inv == len(new_nilp.column_word) and len(new_nilp.perm.trimcode) <= self_len + key2[0][1]:

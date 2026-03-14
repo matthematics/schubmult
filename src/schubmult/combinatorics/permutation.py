@@ -17,6 +17,9 @@ n = 100
 class Permutation(Printable):
     """Permutation class representing permutations of positive integers."""
 
+    def apply(self, arr):
+        return tuple([arr[self[i] - 1] for i in range(len(arr))])
+
     def act_root(self, a, b):
         return self[a - 1], self[b - 1]
 

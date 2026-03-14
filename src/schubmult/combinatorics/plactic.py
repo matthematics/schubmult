@@ -165,6 +165,9 @@ class Plactic(GridPrint, CrystalGraph):
             return NotImplemented
         return self.row_word < other.row_word
 
+    def evacuation(self, n):
+        return self.__class__.from_word([n + 1 - a for a in self.row_word])
+
     # in order of row row
     @property
     def iter_boxes(self):
