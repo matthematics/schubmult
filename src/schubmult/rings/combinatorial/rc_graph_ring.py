@@ -500,7 +500,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
             return self(u_rc)
         if len(u_rc) == 2:
             # we can fully do this
-            print(f"PRampasf {u_rc}, {v_rc}")
+            # print(f"PRampasf {u_rc}, {v_rc}")
             cd1 = u_rc.perm.code
             if len(cd1) == 1:
                 cd1 = (cd1[0], 0)
@@ -520,8 +520,8 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
                 return self(hw_rc.reverse_raise_seq(raise_seq))
             if v_rc.perm.is_dominant:
                 combined = u_rc.left_squash(v_rc)
-                print("Combined:", combined)
-                print(combined.perm)
+                # print("Combined:", combined)
+                # print(combined.perm)
                 base, grass = combined.squash_decomp()
                 if base.perm.inv == 0:
                     return self(grass)

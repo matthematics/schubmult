@@ -60,8 +60,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
         n = len(self)
 
-        hw, raise_seq = self.to_highest_weight()
-        #hw, raise_seq = self, ()
+        # hw, raise_seq = self.to_highest_weight()
+        if len(self.perm) <= n:
+            return self, RCGraph([()]).resize(n)
+        hw, raise_seq = self, ()
         stack = {hw}
         seen = set()
         while stack:
@@ -71,21 +73,34 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 continue
             if len(working_rc) > n + working_rc.inv:
                 continue
+            if len(working_rc) < n:
+                # print("What")
+                # print(working_rc)
+                # print(n)
+                raise ValueError("RC graph has too few rows to be decomposed")
             seen.add(working_rc)
-            min_cos, residue = working_rc.perm.coset_decomp(*list(range(1, len(working_rc))))
+            min_cos, residue = working_rc.perm.coset_decomp(*list(range(1, n)))
+            
             if residue.inv == 0 and len(min_cos.descents()) <= 1:
-                return RCGraph([()]).resize(n), working_rc.vertical_cut(n)[0]
+                min_cos_ret = working_rc.vertical_cut(n)[0]
+                if min_cos_ret.perm.inv == 0 or min_cos_ret.perm.descents() == {n - 1}:
+                    return RCGraph([()]).resize(n), working_rc.vertical_cut(n)[0]
             if min_cos.inv == 0 and len(residue) <= n:
                 return self, RCGraph([()]).resize(n)
-            if len(residue) <= n and len(min_cos.descents()) <= 1 and min_cos * residue == residue * min_cos:
+            if len(residue) <= n and len(min_cos.descents()) <= 1 and all(min_cos[i] == i + 1 for i in range(n)):
                 ret_rc = RCGraph([tuple([a for a in row if a < n]) for row in working_rc]).resize(n)
-                grass_rc = RCGraph([()]).resize(n)
+                grass_rc = RCGraph([()]).resize(len(working_rc))
                 for row, col in [working_rc.left_to_right_inversion_coords(i) for i in range(working_rc.perm.inv)]:
                     if not ret_rc.has_element(row, col):
                         grass_rc = grass_rc.toggle_ref_at(row, col)
-                if all(a >= n for row in grass_rc for a in row):
-                    grass_rc = grass_rc.vertical_cut(n)[0]
-                    return ret_rc, grass_rc
+                # print("The gasga")
+                # print(grass_rc)
+                grass_rc = grass_rc.vertical_cut(n)[0]
+                assert len(grass_rc.perm.trimcode) <= len(grass_rc), f"Failed to get grass RC of correct size for {self}, got {grass_rc}"
+                assert ret_rc.squash_product(grass_rc) == self, f"Failed to reconstruct {self} from {ret_rc} and {grass_rc}"
+                if grass_rc.inv == 0 or grass_rc.perm.descents() == {n - 1}:
+                    if len(ret_rc.perm) <= n:
+                        return ret_rc, grass_rc
             stack.update(working_rc.right_zero_act())
         raise ValueError(f"Failed to find squash decomposition for {self}")
 
@@ -165,8 +180,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         oldlen = len(self.perm.trimcode)
         selfrc = self.to_highest_weight()[0]
         # if 2 * newlen < oldlen:
-        #     print("Why is this happening?")
-        #     print(f"{2*newlen=}, {oldlen=}, {self.perm.trimcode=} {trc=}")
+        #     # print("Why is this happening?")
+        #     # print(f"{2*newlen=}, {oldlen=}, {self.perm.trimcode=} {trc=}")
         selfrc = selfrc.shiftup(2 * newlen - oldlen).normalize()
 
         # if self.perm.is_vexillary:
@@ -1197,10 +1212,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return combined_rc
 
 
-    @cache
     def zero_out_last_row(self) -> RCGraph:
         # this is important!
         # transition formula
+        assert len(self.perm.trimcode) <= len(self), f"Cannot zero out last row of RC graph with fewer rows than the last descent of the permutation, got {len(self)=}, {len(self.perm.trimcode)=}, {self.perm=}"
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
         if self.perm.inv == 0:
@@ -1218,8 +1233,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
         interim2 = type(self)([*interim[:-1], tuple(sorted(descs, reverse=True))])
         interim = interim2.pieri_insert(len(self.perm.trimcode) - extend_amount, diff_rows)
-
-        return interim.rowrange(0, len(self) - 1)
+        
+        ret = interim.rowrange(0, len(self) - 1)
+        assert len(ret.perm.trimcode) <= len(ret), f"Result of zeroing out last row has fewer rows than the last descent of the permutation, got {len(ret)=}, {len(ret.perm.trimcode)=}, {ret.perm=}"
+        return ret
 
 
     def zero_out_last_column(self, width) -> RCGraph:
@@ -1348,8 +1365,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             raise ValueError("Row out of range")
         if row == 0:
             return RCGraph(), self
-        if row >= len(self):
+        if row == len(self):
             return self, RCGraph()
+        if row >= len(self):
+            raise ValueError("Row out of range")
         front = type(self)([*self[:row]])
         front = front.extend(max(len(self), len(front.perm.trimcode)) - row)
         flen = len(front)
