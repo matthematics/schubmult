@@ -484,17 +484,74 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
 
     def rc_single_product(self, u_rc, v_rc):
         # INSERTION WEIGHT TABLEAU
+        from schubmult import uncode
+        from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
         # from symengine import S
 
         # from .schubert.schubert_ring import DSx
         # from .variables import GeneratingSet
         # z = GeneratingSet("z")
+
         if len(u_rc) != len(v_rc):
             raise NotImplementedError("Currently only defined for RC graphs of the same length.")
         if u_rc.perm.inv == 0:
             return self(v_rc)
         if v_rc.perm.inv == 0:
             return self(u_rc)
+        if len(u_rc) == 2:
+            # we can fully do this
+            print(f"PRampasf {u_rc}, {v_rc}")
+            cd1 = u_rc.perm.code
+            if len(cd1) == 1:
+                cd1 = (cd1[0], 0)
+            cd2 = v_rc.perm.code
+            if len(cd2) == 1:
+                cd2 = (cd2[0], 0)
+            if u_rc.perm.is_dominant and v_rc.perm.is_dominant:
+                return self(RCGraph.principal_rc(uncode([cd1[0] + cd2[0], cd1[1]+cd2[1]]), 2))
+            if u_rc.perm.is_dominant:
+                tensor = CrystalGraphTensor(u_rc, v_rc)
+                if tensor.is_highest_weight and tensor.is_lowest_weight:
+                    return self(RCGraph.principal_rc(uncode(tensor.crystal_weight), 2))
+                tensor_hw, raise_seq = tensor.to_highest_weight()
+                weight = tuple(reversed(tensor_hw.crystal_weight))
+                g_perm = uncode(weight)
+                hw_rc = next(iter(RCGraph.all_hw_rcs(g_perm, 2)))
+                return self(hw_rc.reverse_raise_seq(raise_seq))
+            if v_rc.perm.is_dominant:
+                combined = u_rc.left_squash(v_rc)
+                print("Combined:", combined)
+                print(combined.perm)
+                base, grass = combined.squash_decomp()
+                if base.perm.inv == 0:
+                    return self(grass)
+                tensor = CrystalGraphTensor(base, grass)
+                if tensor.is_highest_weight and tensor.is_lowest_weight:
+                    return self(RCGraph.principal_rc(uncode(tensor.crystal_weight), 2))
+                tensor_hw, raise_seq = tensor.to_highest_weight()
+                weight = tuple(reversed(tensor_hw.crystal_weight))
+                g_perm = uncode(weight)
+                hw_rc = next(iter(RCGraph.all_hw_rcs(g_perm, 2)))
+                return self(hw_rc.reverse_raise_seq(raise_seq))
+            return self(u_rc.squash_product(v_rc))
+            # base_u, grass_u = u_rc.squash_decomp()
+            # assert base_u.squash_product(grass_u) == u_rc, "Squash decomposition failed sanity check for u_rc in rc_single_product"
+            # middle_v = grass_u.left_squash(v_rc)
+            # base_middle, grass_middle = middle_v.squash_decomp()
+            # assert base_middle.squash_product(grass_middle) == middle_v, "Squash decomposition failed sanity check for middle_v in rc_single_product"
+
+
+            # base_u * base_v * grass_u * grass_v
+            # if base_u.perm.inv == 0:
+            #     return self(base_middle.squash_product(grass_middle))
+            # if base_middle.perm.inv == 0:
+            #     return self(base_u.squash_product(grass_middle))
+            # raise NotImplementedError("Multiplication of two non-Grassmannian bases in length 2 RC graph product not implemented")
+            # otherwise
+            #assert base_u.perm.inv == 1 and base_middle.perm.inv == 1, "Unexpected non-Grassmannian base in length 2 RC graph product"
+            # prod_of_bases = RCGraph([(2,1),()])
+            # return self(prod_of_bases.squash_product(grass_middle))
+
         if len(v_rc.perm.descents()) <= 1 and len(v_rc.perm.trimcode) >= len(u_rc.perm.trimcode):
             return self(u_rc.squash_product(v_rc))
         if len(u_rc.perm.descents()) <= 1 and len(u_rc.perm.trimcode) >= len(v_rc.perm.trimcode):

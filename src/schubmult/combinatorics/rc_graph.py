@@ -41,31 +41,53 @@ def debug_print(*args: object, debug: bool = False) -> None:  # pragma: no cover
 
 class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
+    def left_squash(self, non_grass_rc):
+        from .anti_rc_graph import AntiRCGraph
+        assert self.perm.inv == 0 or self.perm.descents() == {len(self) - 1}, "Left squash only defined for full Grassmannian RC graphs"
+        assert len(non_grass_rc) == len(self), "Left squash only defined for RC graphs of the same number of rows"
+
+        a_self = AntiRCGraph.from_rc_graph(self)
+        a_non_grass = AntiRCGraph.from_rc_graph(non_grass_rc)
+
+        anti_result = a_self.squash_product(a_non_grass)
+        result = anti_result.to_rc_graph()
+        return result
+
+
+
     def squash_decomp(self):
         """Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass."""
+        from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
         n = len(self)
-        stack = [self]
+
+        hw, raise_seq = self.to_highest_weight()
+        #hw, raise_seq = self, ()
+        stack = {hw}
         seen = set()
         while stack:
-            working_rc = stack.pop()
-            seen.add(working_rc.perm)
+            working_rc = next(iter(stack))
+            stack.remove(working_rc)
+            if working_rc in seen:
+                continue
+            if len(working_rc) > n + working_rc.inv:
+                continue
+            seen.add(working_rc)
             min_cos, residue = working_rc.perm.coset_decomp(*list(range(1, len(working_rc))))
-            if residue.inv == 0:
+            if residue.inv == 0 and len(min_cos.descents()) <= 1:
                 return RCGraph([()]).resize(n), working_rc.vertical_cut(n)[0]
-            if min_cos.inv == 0:
+            if min_cos.inv == 0 and len(residue) <= n:
                 return self, RCGraph([()]).resize(n)
             if len(residue) <= n and len(min_cos.descents()) <= 1 and min_cos * residue == residue * min_cos:
-                working_rc2 = working_rc
-                for a in reversed(residue.code_word):
-                    working_rc2 = working_rc2.exchange_property(a)
                 ret_rc = RCGraph([tuple([a for a in row if a < n]) for row in working_rc]).resize(n)
-                grass_rc = working_rc2
-                if all(a > n for row in grass_rc for a in row):
+                grass_rc = RCGraph([()]).resize(n)
+                for row, col in [working_rc.left_to_right_inversion_coords(i) for i in range(working_rc.perm.inv)]:
+                    if not ret_rc.has_element(row, col):
+                        grass_rc = grass_rc.toggle_ref_at(row, col)
+                if all(a >= n for row in grass_rc for a in row):
                     grass_rc = grass_rc.vertical_cut(n)[0]
                     return ret_rc, grass_rc
-            stack.extend([the_rc.normalize() for the_rc in working_rc.product(RCGraph([()])).keys() if the_rc.perm not in seen and len(the_rc.perm.coset_decomp(*list(range(1, len(the_rc) - 1)))[1]) <= n])
-            seen.update([the_rc.perm for the_rc in stack])
-        raise ValueError("should never get here")
+            stack.update(working_rc.right_zero_act())
+        raise ValueError(f"Failed to find squash decomposition for {self}")
 
     @property
     def args(self) -> tuple:
@@ -1174,13 +1196,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             combined_rc = combined_rc.zero_out_last_row()
         return combined_rc
 
-    def left_squash(self, rc: RCGraph) -> RCGraph:
-        from .bpd import BPD
-        combined_rc = self.disjoint_union(rc)
-        combined_bpd = BPD.from_rc_graph(combined_rc)
-        while len(combined_bpd) > len(self):
-            combined_bpd = combined_bpd.zero_out_last_row()
-        return combined_bpd.to_rc_graph()
 
     @cache
     def zero_out_last_row(self) -> RCGraph:

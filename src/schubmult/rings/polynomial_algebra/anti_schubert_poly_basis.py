@@ -162,7 +162,7 @@ class AntiSchubertPolyBasis(PolynomialBasis):
     # AN ANTI KEY IS a KEY
     def transition_key_key(self, key):
         from schubmult.combinatorics.rc_graph import RCGraph
-        
+
         #keys = [tuple((Permutation.w0(key[1])*(Permutation.sorting_perm(rc.extremal_weight, reverse=True)*Permutation.w0(key[1]))).apply(rc.extremal_weight)) for rc in RCGraph.all_hw_rcs(key[0], key[1])]
         res = {}
 
@@ -270,6 +270,6 @@ class AntiSchubertPolyBasis(PolynomialBasis):
             return lambda x: self.transition_forest(x)
         if isinstance(other_basis, KeyPolyBasis):
             return lambda x: self.transition_key(x)
-        
+
         return lambda x: self.monomial_basis.transition(other_basis)(self.transition(self.monomial_basis)(x))
         #raise NotImplementedError(f"Transition from AntiSchubertPolyBasis to {other_basis.__class__} not implemented yet")

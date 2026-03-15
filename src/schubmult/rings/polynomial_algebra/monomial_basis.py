@@ -44,7 +44,7 @@ class MonomialBasis(PolynomialBasis):
     def expand(self, dct):
         return Add(*[v * self.expand_monom(k) for k, v in dct.items()])
 
-    
+
 
     def transition_slide(self, dct, other_basis):
         ret = {}

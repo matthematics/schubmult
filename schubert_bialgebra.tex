@@ -4106,8 +4106,31 @@ and these elements are both highest weights. It follows that the corresponding c
 
 %Left action bpds?
 
-Ring of highest weights
-% Suppose $A\in \RC_n(S_n)$. Then the function $A\mapsto \phi(\phi^{-1}(A)^t)$ is an antiautomorphism of the RC graph ring under $\diamond$.
+Now, we could also define a left action of $\grass_n$ on $\BRC_n$ by defining
+$$G\boxtimes^L R = R\boxtimes G$$
+for $G\in \grass_n$ and $R\in \BRC_n$. However, this does not give the desired behavior. Instead, we proceed as follows:
+
+For any $R\in\BRC_n$, there is a unique factorization
+$$Y(R) = A\boxtimes G$$
+and for this factorization we have
+$$R = R'\boxtimes G$$
+for some $R'$ with $Y(R') = A$. We then define
+$$G_1\boxtimes^L R = R'\boxtimes G_1\boxtimes G$$ 
+
+Key positive. Symmetric group action? Div diff factorization
+%This is a well-defined left action by the associativity of $\boxtimes$. We may define a bimodule structure using these operations, because
+%$$(G_1\boxtimes^L R)\boxtimes G_2 = G_1\boxtimes^L (R\boxtimes G_2).$$
+
+%First, we raise $R\boxtimes G_2'$ to its highest weight, which is of the form $Y(R)\boxtimes G_2'$ for some $G_2'$ of the same shape as $G_2$. Then we pick the unique $R'\in\RC_n(S_n)$ and the unique $G$ such that $R'\boxtimes G = Y(R)$. Hence we can compute
+%$$G_1\boxtimes^L Y(R\boxtimes G_2)$$
+%as
+%$$G_1\boxtimes^L R'\boxtimes G\boxtimes G_2'$$
+%Now we perform the following antiautomorphism:
+%$$(G_1\boxtimes^L R'\boxtimes G\boxtimes G_2')^{\#}=(G_1\boxtimes^L R')^{\#}\boxtimes (G_2')^{\#}\boxtimes G^{\#}$$
+%The RHS is equal to 
+%$$(R')^{\#}\boxtimes G_1^{\#}\boxtimes (G_2')^{\#}\boxtimes G^{\#}=G^{\#}\boxtimes^L (G_2')^{\#}\boxtimes^L G_1^{\#}\boxtimes^L (R')^{\#}$$
+%Applying the antiautomorphism again, we get
+%$$R'\boxtimes G_1\boxtimes G_2'\boxtimes G$$
 
 % bpd transpose union bpd transpose back
 

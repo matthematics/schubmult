@@ -37,8 +37,8 @@ def grassmannian_rc_graphs_in_sn(n):
 def all_rc_graphs_in_sn(n):
     ret = []
     for perm in Permutation.all_permutations(n):
-        for rc in RCGraph.all_rc_graphs(perm, n):
-            ret.append(rc.resize(n))
+        for rc in RCGraph.all_rc_graphs(perm, n - 1):
+            ret.append(rc)
     return ret
 
 
@@ -57,15 +57,15 @@ def test_grassmannian_ring_closure(n, r):
 
 def test_left_squash_reversed_order(n, r, grasses, *, debug=False, progress_every=1):
     t0 = time.perf_counter()
-    all_rc = all_rc_graphs_in_sn(n)
+    all_rc = all_rc_graphs_in_sn(n + 1)
     if debug:
         print(f"[debug] built all_rc with {len(all_rc)} graphs in {time.perf_counter() - t0:.2f}s")
 
     t1 = time.perf_counter()
     failures = []
     #pair_products = {(grass_rc1, grass_rc2): grass_rc2.squash_product(grass_rc1) for grass_rc1, grass_rc2 in itertools.product(grasses, repeat=2)}
-    if debug:
-        print(f"[debug] precomputed {len(pair_products)} grass pair products in {time.perf_counter() - t1:.2f}s")
+    # if debug:
+    #     print(f"[debug] precomputed {len(pair_products)} grass pair products in {time.perf_counter() - t1:.2f}s")
 
     total = len(all_rc) * len(grasses) * len(grasses)
     done = 0
@@ -76,8 +76,8 @@ def test_left_squash_reversed_order(n, r, grasses, *, debug=False, progress_ever
             try:
                 #lhs = r(left_squash(pair_products[(grass_rc1, grass_rc2)], rc))
                 
-                rhs = rc.bpd_squash(grass_rc1).bpd_squash(grass_rc2)
-                lhs = rc.bpd_squash(grass_rc2.bpd_squash(grass_rc1))
+                rhs = grass_rc1.left_squash(grass_rc2).left_squash(rc)
+                lhs = (grass_rc1.left_squash(grass_rc2)).left_squash(rc)
                 #if not lhs.almosteq(rhs):
                 if lhs != rhs:
                     failures.append((rc, grass_rc1, grass_rc2, lhs, rhs))
@@ -136,10 +136,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Test Grassmannian closure and left_squash reversed-order behavior in DualRCGraphRing."
     )
-    parser.add_argument("n", type=int, help="Work in S_n with RC graphs resized to n rows.")
+    parser.add_argument("n", type=int, help="Work in S_{n+1} with RC graphs resized to n rows.")
     parser.add_argument("--max-inv", type=int, default=4, help="Max inversion/partition sum used for Grassmannian generation.")
     parser.add_argument("--debug", action="store_true", help="Enable detailed timing/progress debug output.")
-    parser.add_argument("--progress-every", type=int, default=5000, help="Emit progress line every this many inner iterations when --debug is set.")
+    parser.add_argument("--progress-every", type=int, default=5, help="Emit progress line every this many inner iterations when --debug is set.")
     # parser.add_argument(
     #     "--show-first-failure",
     #     action="store_true",

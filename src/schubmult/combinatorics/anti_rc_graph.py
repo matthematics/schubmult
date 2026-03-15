@@ -231,6 +231,9 @@ class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph):
     def right_zero_act(self) -> set[AntiRCGraph]:
         return self.left_zero_act()
 
+    def antiaut(self) -> AntiRCGraph:
+        return type(self)(self._grid[::-1, :].copy())
+
     def vertical_cut(self, row: int) -> tuple[AntiRCGraph, AntiRCGraph]:
         front_rc, back_rc = self.to_rc_graph().vertical_cut(self.rows - row)
         # Anti orientation swaps the cut factors relative to RC orientation.
@@ -253,3 +256,27 @@ class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph):
             return None
         return type(self).from_rc_graph(flipped)
 
+    @property
+    def max_reflection(self) -> int:
+        return max((entry for row in self for entry in row), default=0)
+
+    def disjoint_union(self, anti_rc: AntiRCGraph) -> AntiRCGraph:
+        if self.rows != anti_rc.rows:
+            raise ValueError("Anti RC graphs must have the same number of rows")
+        if self.perm.inv == 0:
+            return anti_rc
+        shift = self.max_reflection
+        new_rows = self.rows + shift
+        new_cols = max(self.cols, anti_rc.cols + shift)
+        new_grid = np.zeros((new_rows, new_cols), dtype=np.uint8)
+
+        # Growing the anti graph by `shift` rows corresponds to top-padding both inputs.
+        new_grid[:self.rows, : self.cols] |= self._grid
+        new_grid[:anti_rc.rows, shift : shift + anti_rc.cols] |= anti_rc._grid
+
+        return type(self)(new_grid)
+
+
+    def squash_product(self, anti_rc: AntiRCGraph) -> AntiRCGraph:
+        dju = anti_rc.to_rc_graph().disjoint_union(self.to_rc_graph())
+        return type(self).from_rc_graph(dju).vertical_cut(dju.rows - self.rows)[1]
