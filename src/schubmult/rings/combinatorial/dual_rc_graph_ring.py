@@ -210,19 +210,42 @@ class DualRCGraphRing(SchubertMonomialRing):
         identity_graph = RCGraph()
         return self.from_dict({identity_graph: 1})
 
-    def mul(self, elem1, elem2):
+    def mul_pair(self, u_rc, v_rc):
         from .rc_graph_ring import RCGraphRing
+        if len(u_rc) != len(v_rc):
+            return self.zero
+        if u_rc.perm.inv == 0:
+            return self(v_rc)
+        if v_rc.perm.inv == 0:
+            return self(u_rc)
+        if len(u_rc) == 2:
+            u_base, u_grass = u_rc.squash_decomp()
+            v_base, v_grass = v_rc.squash_decomp()
+            if u_base.perm.inv == 0 and v_base.perm.inv == 0:
+                return self(u_grass.squash_product(v_grass))
+            if u_base.perm.inv == 0:
+                return self(v_rc.left_squash(u_grass))
+            if v_base.perm.inv == 0:
+                return self(u_rc.squash_product(v_grass))
+            # if u_grass.perm.inv == 0:
+            #     return RCGraph([(2, 1), ()]).squash_product(v_grass)
 
+            middle = v_base.left_squash(u_grass)
+            middle_base, middle_grass = middle.squash_decomp()
+            if middle_base.perm.inv == 0:
+                return self(u_base.squash_product(middle_grass.squash_product(v_grass)))
+            return self(RCGraph([(2, 1), ()]).squash_product(middle_grass.squash_product(v_grass)))
         r = RCGraphRing()
-        # Define the multiplication for DualRCGraphRing
+        return self(r(u_rc) % r(v_rc))
 
+
+    def mul(self, elem1, elem2):
         if isinstance(elem2, DualRCGraphRingElement):
             result = self.zero
             for a, coeff_a in elem1.items():
                 for b, coeff_b in elem2.items():
-                    if len(a) != len(b):
-                        continue
-                    result += coeff_a * coeff_b * self.from_dict(r(a) % r(b))
+
+                    result += coeff_a * coeff_b * self.mul_pair(a, b)
 
             return result
         try:

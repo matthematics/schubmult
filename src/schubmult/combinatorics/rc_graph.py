@@ -41,15 +41,15 @@ def debug_print(*args: object, debug: bool = False) -> None:  # pragma: no cover
 
 class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
-    def left_squash(self, non_grass_rc):
+    def left_squash(self, grass_rc):
         from .anti_rc_graph import AntiRCGraph
-        assert self.perm.inv == 0 or self.perm.descents() == {len(self) - 1}, "Left squash only defined for full Grassmannian RC graphs"
-        assert len(non_grass_rc) == len(self), "Left squash only defined for RC graphs of the same number of rows"
+        assert grass_rc.perm.inv == 0 or grass_rc.perm.descents() == {len(self) - 1}, "Left squash only defined for full Grassmannian RC graphs"
+        assert len(grass_rc) == len(self), "Left squash only defined for RC graphs of the same number of rows"
 
+        a_grass = AntiRCGraph.from_rc_graph(grass_rc)
         a_self = AntiRCGraph.from_rc_graph(self)
-        a_non_grass = AntiRCGraph.from_rc_graph(non_grass_rc)
 
-        anti_result = a_self.squash_product(a_non_grass)
+        anti_result = a_grass.squash_product(a_self)
         result = anti_result.to_rc_graph()
         return result
 
@@ -63,46 +63,51 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         # hw, raise_seq = self.to_highest_weight()
         if len(self.perm) <= n:
             return self, RCGraph([()]).resize(n)
-        hw, raise_seq = self, ()
-        stack = {hw}
-        seen = set()
-        while stack:
-            working_rc = next(iter(stack))
-            stack.remove(working_rc)
-            if working_rc in seen:
-                continue
-            if len(working_rc) > n + working_rc.inv:
-                continue
-            if len(working_rc) < n:
-                # print("What")
-                # print(working_rc)
-                # print(n)
-                raise ValueError("RC graph has too few rows to be decomposed")
-            seen.add(working_rc)
-            min_cos, residue = working_rc.perm.coset_decomp(*list(range(1, n)))
-            
-            if residue.inv == 0 and len(min_cos.descents()) <= 1:
-                min_cos_ret = working_rc.vertical_cut(n)[0]
-                if min_cos_ret.perm.inv == 0 or min_cos_ret.perm.descents() == {n - 1}:
-                    return RCGraph([()]).resize(n), working_rc.vertical_cut(n)[0]
-            if min_cos.inv == 0 and len(residue) <= n:
-                return self, RCGraph([()]).resize(n)
-            if len(residue) <= n and len(min_cos.descents()) <= 1 and all(min_cos[i] == i + 1 for i in range(n)):
-                ret_rc = RCGraph([tuple([a for a in row if a < n]) for row in working_rc]).resize(n)
-                grass_rc = RCGraph([()]).resize(len(working_rc))
-                for row, col in [working_rc.left_to_right_inversion_coords(i) for i in range(working_rc.perm.inv)]:
-                    if not ret_rc.has_element(row, col):
-                        grass_rc = grass_rc.toggle_ref_at(row, col)
-                # print("The gasga")
-                # print(grass_rc)
-                grass_rc = grass_rc.vertical_cut(n)[0]
-                assert len(grass_rc.perm.trimcode) <= len(grass_rc), f"Failed to get grass RC of correct size for {self}, got {grass_rc}"
-                assert ret_rc.squash_product(grass_rc) == self, f"Failed to reconstruct {self} from {ret_rc} and {grass_rc}"
-                if grass_rc.inv == 0 or grass_rc.perm.descents() == {n - 1}:
-                    if len(ret_rc.perm) <= n:
-                        return ret_rc, grass_rc
-            stack.update(working_rc.right_zero_act())
-        raise ValueError(f"Failed to find squash decomposition for {self}")
+        hw, raise_seq = self.to_highest_weight()
+        def decomp_hw():
+            stack = {hw}
+            seen = set()
+            while stack:
+                working_rc = next(iter(stack))
+                stack.remove(working_rc)
+                if working_rc in seen:
+                    continue
+                #if len(working_rc) > n + working_rc.inv:
+                if len(working_rc) > 2 * n:
+                    continue
+                if len(working_rc) < n:
+                    # print("What")
+                    # print(working_rc)
+                    # print(n)
+                    raise ValueError("RC graph has too few rows to be decomposed")
+                seen.add(working_rc)
+                min_cos, residue = working_rc.perm.coset_decomp(*list(range(1, n)))
+
+                if residue.inv == 0 and len(min_cos.descents()) <= 1:
+                    min_cos_ret = working_rc.vertical_cut(n)[0]
+                    if min_cos_ret.perm.inv == 0 or min_cos_ret.perm.descents() == {n - 1}:
+                        return RCGraph([()]).resize(n), working_rc.vertical_cut(n)[0]
+                if min_cos.inv == 0 and len(residue) <= n:
+                    return self, RCGraph([()]).resize(n)
+                if len(residue) <= n and len(min_cos.descents()) <= 1 and all(min_cos[i] == i + 1 for i in range(n)):
+                    ret_rc = RCGraph([tuple([a for a in row if a < n]) for row in working_rc]).resize(n)
+                    grass_rc = RCGraph([()]).resize(len(working_rc))
+                    for row, col in [working_rc.left_to_right_inversion_coords(i) for i in range(working_rc.perm.inv)]:
+                        if not ret_rc.has_element(row, col):
+                            grass_rc = grass_rc.toggle_ref_at(row, col)
+                    # print("The gasga")
+                    # print(grass_rc)
+                    grass_rc = grass_rc.vertical_cut(n)[0]
+                    assert len(grass_rc.perm.trimcode) <= len(grass_rc), f"Failed to get grass RC of correct size for {self}, got {grass_rc}"
+                    assert ret_rc.squash_product(grass_rc) == hw, f"Failed to reconstruct {self} from {ret_rc} and {grass_rc}"
+                    if grass_rc.inv == 0 or grass_rc.perm.descents() == {n - 1}:
+                        if len(ret_rc.perm) <= n:
+                            return ret_rc, grass_rc
+                stack.update(working_rc.right_zero_act())
+            raise ValueError(f"Failed to find squash decomposition for {self}")
+        base_hw, grass = decomp_hw()
+        tensor = CrystalGraphTensor(base_hw, grass).reverse_raise_seq(raise_seq)
+        return tensor.factors
 
     @property
     def args(self) -> tuple:

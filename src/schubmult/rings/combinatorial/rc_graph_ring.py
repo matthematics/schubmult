@@ -499,41 +499,47 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         if v_rc.perm.inv == 0:
             return self(u_rc)
         if len(u_rc) == 2:
-            # we can fully do this
-            # print(f"PRampasf {u_rc}, {v_rc}")
-            cd1 = u_rc.perm.code
-            if len(cd1) == 1:
-                cd1 = (cd1[0], 0)
-            cd2 = v_rc.perm.code
-            if len(cd2) == 1:
-                cd2 = (cd2[0], 0)
-            if u_rc.perm.is_dominant and v_rc.perm.is_dominant:
-                return self(RCGraph.principal_rc(uncode([cd1[0] + cd2[0], cd1[1]+cd2[1]]), 2))
-            if u_rc.perm.is_dominant:
-                tensor = CrystalGraphTensor(u_rc, v_rc)
-                if tensor.is_highest_weight and tensor.is_lowest_weight:
-                    return self(RCGraph.principal_rc(uncode(tensor.crystal_weight), 2))
-                tensor_hw, raise_seq = tensor.to_highest_weight()
-                weight = tuple(reversed(tensor_hw.crystal_weight))
-                g_perm = uncode(weight)
-                hw_rc = next(iter(RCGraph.all_hw_rcs(g_perm, 2)))
-                return self(hw_rc.reverse_raise_seq(raise_seq))
-            if v_rc.perm.is_dominant:
-                combined = u_rc.left_squash(v_rc)
-                # print("Combined:", combined)
-                # print(combined.perm)
-                base, grass = combined.squash_decomp()
-                if base.perm.inv == 0:
-                    return self(grass)
-                tensor = CrystalGraphTensor(base, grass)
-                if tensor.is_highest_weight and tensor.is_lowest_weight:
-                    return self(RCGraph.principal_rc(uncode(tensor.crystal_weight), 2))
-                tensor_hw, raise_seq = tensor.to_highest_weight()
-                weight = tuple(reversed(tensor_hw.crystal_weight))
-                g_perm = uncode(weight)
-                hw_rc = next(iter(RCGraph.all_hw_rcs(g_perm, 2)))
-                return self(hw_rc.reverse_raise_seq(raise_seq))
-            return self(u_rc.squash_product(v_rc))
+            u_base, u_grass = u_rc.squash_decomp()
+            v_base, v_grass = v_rc.squash_decomp()
+            if u_base.perm.inv == 0 and v_base.perm.inv == 0:
+                return self(u_grass.squash_product(v_grass))
+            if u_base.perm.inv == 0:
+                return self(u_grass.left_squash(v_rc))
+            if v_base.perm.inv == 0:
+                return self(u_rc.squash_product(v_grass))
+            # if u_grass.perm.inv == 0:
+            #     return RCGraph([(2, 1), ()]).squash_product(v_grass)
+
+            middle = u_grass.left_squash(v_base)
+            middle_base, middle_grass = middle.squash_decomp()
+            if middle_base.perm.inv == 0:
+                return self(u_base.squash_product(middle_grass.squash_product(v_grass)))
+            return RCGraph([(2, 1), ()]).squash_product(middle_grass.squash_product(v_grass))
+            # if u_rc.perm.is_dominant:
+            #     tensor = CrystalGraphTensor(u_rc, v_rc)
+            #     if tensor.is_highest_weight and tensor.is_lowest_weight:
+            #         return self(RCGraph.principal_rc(uncode(tensor.crystal_weight), 2))
+            #     tensor_hw, raise_seq = tensor.to_highest_weight()
+            #     weight = tuple(reversed(tensor_hw.crystal_weight))
+            #     g_perm = uncode(weight)
+            #     hw_rc = next(iter(RCGraph.all_hw_rcs(g_perm, 2)))
+            #     return self(hw_rc.reverse_raise_seq(raise_seq))
+            # if v_rc.perm.is_dominant:
+            #     combined = u_rc.left_squash(v_rc)
+            #     # print("Combined:", combined)
+            #     # print(combined.perm)
+            #     base, grass = combined.squash_decomp()
+            #     if base.perm.inv == 0:
+            #         return self(grass)
+            #     tensor = CrystalGraphTensor(base, grass)
+            #     if tensor.is_highest_weight and tensor.is_lowest_weight:
+            #         return self(RCGraph.principal_rc(uncode(tensor.crystal_weight), 2))
+            #     tensor_hw, raise_seq = tensor.to_highest_weight()
+            #     weight = tuple(reversed(tensor_hw.crystal_weight))
+            #     g_perm = uncode(weight)
+            #     hw_rc = next(iter(RCGraph.all_hw_rcs(g_perm, 2)))
+            #     return self(hw_rc.reverse_raise_seq(raise_seq))
+            # return self(u_rc.squash_product(v_rc))
             # base_u, grass_u = u_rc.squash_decomp()
             # assert base_u.squash_product(grass_u) == u_rc, "Squash decomposition failed sanity check for u_rc in rc_single_product"
             # middle_v = grass_u.left_squash(v_rc)

@@ -4110,12 +4110,55 @@ Now, we could also define a left action of $\grass_n$ on $\BRC_n$ by defining
 $$G\boxtimes^L R = R\boxtimes G$$
 for $G\in \grass_n$ and $R\in \BRC_n$. However, this does not give the desired behavior. Instead, we proceed as follows:
 
-For any $R\in\BRC_n$, there is a unique factorization
-$$Y(R) = A\boxtimes G$$
-and for this factorization we have
-$$R = R'\boxtimes G$$
-for some $R'$ with $Y(R') = A$. We then define
-$$G_1\boxtimes^L R = R'\boxtimes G_1\boxtimes G$$ 
+For Kashiwara crystals, there is an isomorphism
+$$A\otimes B \simeq B^{\#}\otimes A^{\#}$$
+where $\#$ is a canonical antiautomorphism of the crystal. When $A$ is instead a Demazure crystal while $A$ remains a full crystal, we can use this to define a left action of $\grass_n$, with the caveat that $A^{\#}$ is not a Demazure crystal, but rather an opposite Demazure crystal.
+
+We need, therefore, an opposite construction of RC graphs. Let $A$ be a finite set of pairs of positive integers $(i,j)$, with some bound $1\leq i\leq n$, declaring that $\hr(A) = n$. For such a pair $(i,j)\in A$, we define 
+$$\widetilde{s}(i,j) = n  - i + j$$
+There is a clear bijection $\BRC_n\to \widetilde{\BRC}_n$ given by sending $A$ to 
+$$A^{\#} = \{(n + 1 - i, j) \mid (i,j)\in A\}$$
+This is the restriction of the same antiautomorphism of an associated ambient Kashiwara crystal. We may define
+$$\widetilde{\clp}^i(A^{\#}) = \trm^{n + 1 - i}(A)^{\#}$$
+and
+$$\widetilde{\trm}^i(A^{\#}) = \clp^{n + 1- i}(A)^{\#}$$
+Similarly defining
+$$A^{\#} \diamond B^{\#} = \sum_{R:\widetilde{\clp}^p(R) = A^{\#}, \widetilde{\trm}^p(R) = B^{\#}} R$$
+it follows that
+$$(A\diamond B)^{\#} = B^{\#}\diamond A^{\#}$$
+\begin{proposition}
+The map $\BRC_n\to \widetilde{\BRC}_n$ given by $A\mapsto A^{\#}$ is an antihomomorphism of rings.
+\end{proposition}
+
+\newcommand{\lboxtimes}{\boxtimes^{\#}}
+Similarly, for an RC graph $A$ and a Grassmannian RC graph $G$, consider
+$$(A\star G)^{\#} = G^{\#}\star A^{\#}$$
+and
+$$(A\boxtimes G)^{\#} = G^{\#}\boxtimes A^{\#}$$
+Hence we may define a left action of $\grass_n$ on $\BRC_n$ by
+$$G\lboxtimes R = (R^{\#}\boxtimes G^{\#})^{\#}$$
+
+\begin{proposition}
+  We have that $\BRC_n$ is a $(\grass_n, \grass_n)$-bimodule under the left and right actions defined by 
+$\lboxtimes$ and $\boxtimes$, respectively.
+\end{proposition}
+\begin{proof}
+  We have
+\begin{align*}
+  (G_1\lboxtimes R)\boxtimes G_2&=(R^{\#}\boxtimes G_1^{\#})^{\#}\boxtimes G_2\\
+&=(G_2^{\#}\boxtimes (R^{\#}\boxtimes G_1^{\#}))^{\#}\\
+  &=((G_2^{\#}\boxtimes R^{\#})\boxtimes G_1^{\#})^{\#}\\
+  &=G_1\lboxtimes (R\boxtimes G_2)
+\end{align*}
+\end{proof}
+
+%We define the antiautomorphism $\#$ on $\BRC_n$ by sending $R$ to $\{(i, n+1-j) \mid (i,j)\in R\}$. This is an antiautomorphism because the crystal operators are defined in terms of pairings of elements in adjacent rows, and these pairings are preserved under this transformation. The image of a Demazure crystal under this transformation is an opposite Demazure crystal, because the highest weight element is sent to the lowest weight element and the crystal operators are reversed.
+% For any $R\in\BRC_n$, there is a unique factorization
+% $$Y(R) = A\boxtimes G$$
+% and for this factorization we have
+% $$R = R'\boxtimes G$$
+% for some $R'$ with $Y(R') = A$. We then define
+% $$G_1\boxtimes^L R = R'\boxtimes G_1\boxtimes G$$ 
 
 Key positive. Symmetric group action? Div diff factorization
 %This is a well-defined left action by the associativity of $\boxtimes$. We may define a bimodule structure using these operations, because
