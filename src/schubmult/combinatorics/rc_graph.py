@@ -40,30 +40,30 @@ def debug_print(*args: object, debug: bool = False) -> None:  # pragma: no cover
 
 
 class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
-
-    def left_squash(self, grass_rc):
+    def left_squash(self, other_rc):
         from .anti_rc_graph import AntiRCGraph
-        assert grass_rc.perm.inv == 0 or grass_rc.perm.descents() == {len(self) - 1}, "Left squash only defined for full Grassmannian RC graphs"
-        assert len(grass_rc) == len(self), "Left squash only defined for RC graphs of the same number of rows"
 
-        a_grass = AntiRCGraph.from_rc_graph(grass_rc)
+        # assert grass_rc.perm.inv == 0 or grass_rc.perm.descents() == {len(self) - 1}, "Left squash only defined for full Grassmannian RC graphs"
+        assert len(other_rc) == len(self), "Left squash only defined for RC graphs of the same number of rows"
+
+        a_other = AntiRCGraph.from_rc_graph(other_rc)
         a_self = AntiRCGraph.from_rc_graph(self)
 
-        anti_result = a_grass.squash_product(a_self)
+        anti_result = a_other.squash_product(a_self)
         result = anti_result.to_rc_graph()
         return result
-
-
 
     def squash_decomp(self):
         """Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass."""
         from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
+
         n = len(self)
 
         # hw, raise_seq = self.to_highest_weight()
         if len(self.perm) <= n:
             return self, RCGraph([()]).resize(n)
         hw, raise_seq = self.to_highest_weight()
+
         def decomp_hw():
             stack = {hw}
             seen = set()
@@ -72,7 +72,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 stack.remove(working_rc)
                 if working_rc in seen:
                     continue
-                #if len(working_rc) > n + working_rc.inv:
+                # if len(working_rc) > n + working_rc.inv:
                 if len(working_rc) > 2 * n:
                     continue
                 if len(working_rc) < n:
@@ -105,9 +105,14 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                             return ret_rc, grass_rc
                 stack.update(working_rc.right_zero_act())
             raise ValueError(f"Failed to find squash decomposition for {self}")
+
         base_hw, grass = decomp_hw()
         tensor = CrystalGraphTensor(base_hw, grass).reverse_raise_seq(raise_seq)
         return tensor.factors
+
+    @property
+    def is_full_grass(self):
+        return self.perm.inv == 0 or self.perm.descents() == {len(self) - 1}
 
     @property
     def args(self) -> tuple:
@@ -135,7 +140,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             if b != 1 and group_coords_max.get(a + 1, -1) < b:
                 return False
         return True
-
 
     def loc_of_inversion(self, a, b):
         lookup = {self.left_to_right_inversion(i): self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)}
@@ -207,8 +211,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         if mindesc > 1:
             vex_rc = RCGraph(vex_rc.shiftup(1 - mindesc)).normalize()
         return vex_rc
-
-
 
     def hw_tab_rep(self):
         from schubmult import Plactic
@@ -389,7 +391,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             the_weight.pop()
         code = list(reversed(the_weight))
         perm = uncode(code)
-        top_rc = next(iter(RCGraph.all_rc_graphs(perm, len(self), weight=(*the_weight, *([0]*(len(self) - len(the_weight)))))))
+        top_rc = next(iter(RCGraph.all_rc_graphs(perm, len(self), weight=(*the_weight, *([0] * (len(self) - len(the_weight)))))))
         return top_rc.reverse_raise_seq(raise_seq)
 
     def transition(self):
@@ -518,12 +520,14 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         #         min_vec = rc.length_vector
         #         min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
         # return min_vec
-        #return min(RCGraph.all_lw_rcs(self.perm, len(self)), key=lambda rc: dom_key(rc.length_vector)).length_vector
+        # return min(RCGraph.all_lw_rcs(self.perm, len(self)), key=lambda rc: dom_key(rc.length_vector)).length_vector
 
     @property
     def forest_invariant(self):
         from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
+
         word = list(reversed(self.perm_word))
+
         def word_to_pair_labeled(word):
             counts = {}
             out = []
@@ -532,12 +536,15 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 counts[aa] = counts.get(aa, 0) + 1
                 out.append(letterpair(aa, counts[aa]))
             return tuple(out)
+
         return omega_insertion(word_to_pair_labeled(word))[0]
 
     @property
     def omega_invariant(self):
         from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
+
         word = list(reversed(self.perm_word))
+
         def word_to_pair_labeled(word):
             counts = {}
             out = []
@@ -546,12 +553,13 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 counts[aa] = counts.get(aa, 0) + 1
                 out.append(letterpair(aa, counts[aa]))
             return tuple(out)
+
         return omega_insertion(word_to_pair_labeled(word))
 
     def w0_automorphism(self, n=None):
         # from ..rings.combinatorial.eg_plactic_ring import EGPlacticRing
         if n is None:
-            n = max(len(self),len(self.perm))
+            n = max(len(self), len(self.perm))
         # assert n>=len(self.perm)
         # r = EGPlacticRing()
         # elem = r.from_rc_graph(self)
@@ -572,11 +580,13 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     def antiaut(self):
         from .anti_rc_graph import AntiRCGraph
+
         return AntiRCGraph.from_rc_graph(self)
 
     @property
     def forest_weight(self):
         from schubmult.utils.tuple_utils import pad_tuple
+
         return pad_tuple(self.forest_invariant.forest.code, len(self))
 
     @property
@@ -611,8 +621,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         #     working_rc = last_working_rc
         # #return self.is_lowest_weight and len(RCGraph.raise_seq_word(self.to_highest_weight()[1])) == self.lowest_weight_perm().inv
         # return True
-
-
 
     @property
     def demazure_weight(self) -> tuple[int, ...]:
@@ -930,8 +938,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             last_num_done = num_done
             if attempts_without_progress > max_attempts:
                 raise ValueError(
-                    f"Pieri insertion made no progress after {max_attempts} attempts "
-                    f"({row=}, {descent=}, {num_times=}, {left=}, {backwards=})",
+                    f"Pieri insertion made no progress after {max_attempts} attempts ({row=}, {descent=}, {num_times=}, {left=}, {backwards=})",
                 )
             if i <= 1 and (not backwards or (backwards and left)):
                 i = working_rc.cols + descent + 5
@@ -1121,6 +1128,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         #     i += 1
         # new_rc = (type(self)(newrc)).normalize()
         import numpy as np
+
         assert self.is_valid, f"Cannot transpose invalid RC graph, got {self=}"
         if length is not None and len(self) < length:
             the_self = self.resize(length)
@@ -1129,14 +1137,14 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         else:
             the_self = self
         arr = np.array([[the_self[i, the_self.cols - j - 1] for j in range(the_self.cols)] for i in range(the_self.rows)], dtype=object)
-        if (length is not None and arr.shape[1] < length):
+        if length is not None and arr.shape[1] < length:
             arr = np.hstack([arr, np.full((arr.shape[0], length - arr.shape[1]), None, dtype=object)])
-        elif (length is None and arr.shape[1] < (len((~self.perm).trimcode))):
+        elif length is None and arr.shape[1] < (len((~self.perm).trimcode)):
             arr = np.hstack([arr, np.full((arr.shape[0], len((~self.perm).trimcode) - arr.shape[1]), None, dtype=object)])
         assert np.count_nonzero(np.not_equal(arr, None)) == self.perm.inv
         arr = np.transpose(arr)
         assert np.count_nonzero(np.not_equal(arr, None)) == self.perm.inv
-        #arr = arr.resize(self.cols, self.cols).t
+        # arr = arr.resize(self.cols, self.cols).t
 
         new_rc = type(self).from_array(arr, min_length=length if length is not None else len(self))
         assert new_rc.perm == ~self.perm, f"Transpose does not preserve permutation, got {new_rc.perm=}, expected {~self.perm=}, {tuple(new_rc)=} {tuple(self)=}"
@@ -1200,15 +1208,15 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     _z_cache = {}  # noqa: RUF012
 
     def disjoint_union(self, rc: RCGraph) -> RCGraph:
-        if len(self) != len(rc):
-            raise ValueError("RC graphs must have the same number of rows")
+        # if len(self) < len(rc):
+        #     raise ValueError("RC graphs must at least as many rows")
         if self.perm.inv == 0:
             return rc
         rowmax = [max(self[i], default=0) for i in range(len(self))]
         N = max(rowmax)
         shift_rc = RCGraph([tuple([a + N for a in row]) for row in rc]).resize(len(rc) + N)
         rc_self = self.resize(len(rc) + N)
-        return type(self)([shift_rc[i] + rc_self[i] for i in range(len(rc_self))])
+        return type(self)([shift_rc[i] + rc_self[i] for i in range(len(rc_self))]).normalize()
 
     def squash_product(self, rc: RCGraph) -> RCGraph:
         combined_rc = self.disjoint_union(rc)
@@ -1216,11 +1224,12 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             combined_rc = combined_rc.zero_out_last_row()
         return combined_rc
 
-
     def zero_out_last_row(self) -> RCGraph:
         # this is important!
         # transition formula
-        assert len(self.perm.trimcode) <= len(self), f"Cannot zero out last row of RC graph with fewer rows than the last descent of the permutation, got {len(self)=}, {len(self.perm.trimcode)=}, {self.perm=}"
+        assert len(self.perm.trimcode) <= len(self), (
+            f"Cannot zero out last row of RC graph with fewer rows than the last descent of the permutation, got {len(self)=}, {len(self.perm.trimcode)=}, {self.perm=}"
+        )
         if len(self[-1]) != 0:
             raise ValueError("Last row not empty")
         if self.perm.inv == 0:
@@ -1238,11 +1247,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
         interim2 = type(self)([*interim[:-1], tuple(sorted(descs, reverse=True))])
         interim = interim2.pieri_insert(len(self.perm.trimcode) - extend_amount, diff_rows)
-        
+
         ret = interim.rowrange(0, len(self) - 1)
         assert len(ret.perm.trimcode) <= len(ret), f"Result of zeroing out last row has fewer rows than the last descent of the permutation, got {len(ret)=}, {len(ret.perm.trimcode)=}, {ret.perm=}"
         return ret
-
 
     def zero_out_last_column(self, width) -> RCGraph:
         # this is important!
@@ -1580,6 +1588,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     def bpd_transpose(self) -> RCGraph:
         from .bpd import BPD
+
         ret = BPD.from_rc_graph(self).transpose().to_rc_graph()
         ret = ret.normalize()
         if len(ret) < len(self):
@@ -1704,7 +1713,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     @property
     def cols(self) -> int:
-        #return max(1, *[self[i][0] - i if len(self[i]) > 0 else 0 for i in range(len(self))]) if len(self) > 0 else 0
+        # return max(1, *[self[i][0] - i if len(self[i]) > 0 else 0 for i in range(len(self))]) if len(self) > 0 else 0
         return len(self.perm) - 1
 
     def leibniz_rep(self) -> tuple:

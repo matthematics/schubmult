@@ -173,3 +173,35 @@ def test_squash_decompose():
     assert grass.perm.descents() == {n - 1}
 
     assert regular.squash_product(grass) == rc, f"Error: decomposition of {rc} into {regular} and {grass} does not satisfy the expected product relation."
+
+
+def test_left_squash_equals_squash_product_for_equal_length_full_grass():
+    """For equal-length full Grassmannian RCs, left_squash and squash_product give identical results."""
+    from schubmult import RCGraph, Permutation
+
+    # Test across several full Grassmannian RCs of various lengths
+    for n in range(2, 5):
+        perms = Permutation.all_permutations(n)
+        for perm in perms:
+            length = n - 1
+            rcs = list(RCGraph.all_rc_graphs(perm, length))
+            # Filter to full Grassmannian RCs (single descent at last position)
+            grass_rcs = [rc for rc in rcs if rc.perm.inv == 0 or rc.perm.descents() == {length - 1}]
+            
+            # Test all pairs of equal-length Grassmannian RCs
+            for rc1 in grass_rcs:
+                for rc2 in grass_rcs:
+                    if len(rc1) != len(rc2):
+                        continue
+                    
+                    # For equal-length full Grassmannian RCs, these should be the same
+                    left_result = rc1.left_squash(rc2)
+                    product_result = rc1.squash_product(rc2)
+                    
+                    assert left_result == product_result, (
+                        f"For equal-length full Grassmannian RCs:\n"
+                        f"  rc1={rc1}\n"
+                        f"  rc2={rc2}\n"
+                        f"  left_squash gives:    {left_result}\n"
+                        f"  squash_product gives: {product_result}"
+                    )

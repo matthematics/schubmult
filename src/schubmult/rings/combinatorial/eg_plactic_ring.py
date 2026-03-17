@@ -199,17 +199,20 @@ class EGPlacticRing(CrystalGraphRing):
     def __hash__(self):
         return hash(("Dsdfginkbeafrrtystoa", self._ID))
 
+    @staticmethod
+    def rc_to_key(rc):
+        nilp, plac = NilPlactic.ed_column_insert_rsk(rc.perm_word, rc.compatible_sequence)
+        return (nilp, len(rc)), plac
+
     def from_rc_graph(self, rc):
-        nilp, plac = rc.hw_tab_rep()
-        nilp = NilPlactic.from_word(rc.perm_word)
-        return self.from_dict({((nilp, len(rc)), plac): S.One})
+        return self.from_dict({self.rc_to_key(rc): S.One})
 
     @property
     def zero_monom(self):
         return RCGraph([])
 
     def from_rc_graph_ring_element(self, elem):
-        return self.from_dict({((NilPlactic.from_word(rc.perm_word), len(rc)), rc.hw_rc_rep()[1]): coeff for rc, coeff in elem.items() if coeff != 0})
+        return self.from_dict({self.rc_to_key(rc): coeff for rc, coeff in elem.items() if coeff != 0})
 
     def from_dict(self, d):
         elem = EGPlacticRingElement()

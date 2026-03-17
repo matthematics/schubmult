@@ -48,6 +48,8 @@ _lazy_exports = {
     "QSymElement": "schubmult.rings.quasisymmetric_functions",
     "RCGraphRing": "schubmult.rings.combinatorial.rc_graph_ring",
     "GrassRCGraphRing": "schubmult.rings.combinatorial.rc_graph_ring",
+    "GrassTensorAlgebra": "schubmult.rings.combinatorial.grass_tensor_algebra",
+    "GrassTensorAlgebraElement": "schubmult.rings.combinatorial.grass_tensor_algebra",
     "RCGraphRingElement": "schubmult.rings.combinatorial.rc_graph_ring",
     "EGPlacticRing": "schubmult.rings.combinatorial.eg_plactic_ring",
     "EGPlacticRingElement": "schubmult.rings.combinatorial.eg_plactic_ring",

@@ -280,3 +280,58 @@ class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph):
     def squash_product(self, anti_rc: AntiRCGraph) -> AntiRCGraph:
         dju = anti_rc.to_rc_graph().disjoint_union(self.to_rc_graph())
         return type(self).from_rc_graph(dju).vertical_cut(dju.rows - self.rows)[1]
+
+    def squash_decomp(self):
+        raise NotImplementedError("Squash decomposition not implemented for AntiRCGraph yet")
+        """Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass."""
+        from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
+        n = len(self)
+
+        # hw, raise_seq = self.to_highest_weight()
+        if len(self.perm) <= n:
+            return self, AntiRCGraph.from_rc_graph(RCGraph([()])).resize(n)
+        hw, raise_seq = self.to_highest_weight()
+        def decomp_hw():
+            stack = {hw}
+            seen = set()
+            while stack:
+                working_rc = next(iter(stack))
+                stack.remove(working_rc)
+                if working_rc in seen:
+                    continue
+                #if len(working_rc) > n + working_rc.inv:
+                if len(working_rc) > 2 * n:
+                    continue
+                if len(working_rc) < n:
+                    # print("What")
+                    # print(working_rc)
+                    # print(n)
+                    raise ValueError("RC graph has too few rows to be decomposed")
+                seen.add(working_rc)
+                min_cos, residue = working_rc.perm.coset_decomp(*list(range(1, n)))
+
+                if residue.inv == 0 and len(min_cos.descents()) <= 1:
+                    min_cos_ret = working_rc.vertical_cut(n)[0]
+                    if min_cos_ret.perm.inv == 0 or min_cos_ret.perm.descents() == {n - 1}:
+                        return AntiRCGraph.from_rc_graph(RCGraph([()])).resize(n), working_rc.vertical_cut(n)[0]
+                if min_cos.inv == 0 and len(residue) <= n:
+                    return self, AntiRCGraph.from_rc_graph(RCGraph([()])).resize(n)
+                if len(residue) <= n and len(min_cos.descents()) <= 1 and all(min_cos[i] == i + 1 for i in range(n)):
+                    ret_rc = RCGraph([tuple([a for a in row if a < n]) for row in working_rc]).resize(n)
+                    grass_rc = AntiRCGraph.from_rc_graph(RCGraph([()])).resize(len(working_rc))
+                    for row, col in [working_rc.left_to_right_inversion_coords(i) for i in range(working_rc.perm.inv)]:
+                        if not ret_rc.has_element(row, col):
+                            grass_rc = grass_rc.toggle_ref_at(row, col)
+                    # print("The gasga")
+                    # print(grass_rc)
+                    grass_rc = grass_rc.vertical_cut(n)[0]
+                    assert len(grass_rc.perm.trimcode) <= len(grass_rc), f"Failed to get grass RC of correct size for {self}, got {grass_rc}"
+                    assert ret_rc.squash_product(grass_rc) == hw, f"Failed to reconstruct {self} from {ret_rc} and {grass_rc}"
+                    if grass_rc.inv == 0 or grass_rc.perm.descents() == {n - 1}:
+                        if len(ret_rc.perm) <= n:
+                            return ret_rc, grass_rc
+                stack.update(working_rc.right_zero_act())
+            raise ValueError(f"Failed to find squash decomposition for {self}")
+        base_hw, grass = decomp_hw()
+        tensor = CrystalGraphTensor(base_hw, grass).reverse_raise_seq(raise_seq)
+        return tensor.factors

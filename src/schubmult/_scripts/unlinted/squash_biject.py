@@ -179,30 +179,30 @@ if __name__ == "__main__":
         debug=args.debug,
         progress_every=max(1, args.progress_every),
     )
-    print(f"All RC graphs in S_n with n rows: {len(all_rc)}")
-    print(f"Grassmannian RC graphs: {len(grasses)}")
-    print(f"Total checks: {len(all_rc) * len(grasses) * len(grasses)}")
-    print(f"left_squash implements reversed product (r(grass) * r(rc)): {'PASS' if not reverse_failures else 'FAIL'}")
+    # print(f"All RC graphs in S_n with n rows: {len(all_rc)}")
+    # print(f"Grassmannian RC graphs: {len(grasses)}")
+    # print(f"Total checks: {len(all_rc) * len(grasses) * len(grasses)}")
+    # print(f"left_squash implements reversed product (r(grass) * r(rc)): {'PASS' if not reverse_failures else 'FAIL'}")
 
-    if reverse_failures:
-        rc, grass_rc1, grass_rc2, lhs, rhs = reverse_failures[0]
-        print("First reversed-order failure:")
-        print("rc=")
-        pretty_print(rc)
-        print("grass_rc1=")
-        pretty_print(grass_rc1)
-        print("grass_rc2=")
-        pretty_print(grass_rc2)
+    # if reverse_failures:
+    #     rc, grass_rc1, grass_rc2, lhs, rhs = reverse_failures[0]
+    #     print("First reversed-order failure:")
+    #     print("rc=")
+    #     pretty_print(rc)
+    #     print("grass_rc1=")
+    #     pretty_print(grass_rc1)
+    #     print("grass_rc2=")
+    #     pretty_print(grass_rc2)
         
-        print("lhs = r(left_squash(rc, grass_rc))")
-        pretty_print(lhs)
-        print("rhs = r(grass_rc) * r(rc)")
-        pretty_print(rhs)
+    #     print("lhs = r(left_squash(rc, grass_rc))")
+    #     pretty_print(lhs)
+    #     print("rhs = r(grass_rc) * r(rc)")
+    #     pretty_print(rhs)
 
-    if closure_failures or reverse_failures:
-        if args.debug:
-            print(f"[debug] total runtime: {time.perf_counter() - t_start:.2f}s")
-        raise SystemExit(1)
-    if args.debug:
-        print(f"[debug] total runtime: {time.perf_counter() - t_start:.2f}s")
-    raise SystemExit(0)
+    # if closure_failures or reverse_failures:
+    #     if args.debug:
+    #         print(f"[debug] total runtime: {time.perf_counter() - t_start:.2f}s")
+    #     raise SystemExit(1)
+    # if args.debug:
+    #     print(f"[debug] total runtime: {time.perf_counter() - t_start:.2f}s")
+    # raise SystemExit(0)

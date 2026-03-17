@@ -211,32 +211,49 @@ class DualRCGraphRing(SchubertMonomialRing):
         return self.from_dict({identity_graph: 1})
 
     def mul_pair(self, u_rc, v_rc):
-        from .rc_graph_ring import RCGraphRing
-        if len(u_rc) != len(v_rc):
-            return self.zero
         if u_rc.perm.inv == 0:
             return self(v_rc)
         if v_rc.perm.inv == 0:
             return self(u_rc)
-        if len(u_rc) == 2:
-            u_base, u_grass = u_rc.squash_decomp()
-            v_base, v_grass = v_rc.squash_decomp()
-            if u_base.perm.inv == 0 and v_base.perm.inv == 0:
-                return self(u_grass.squash_product(v_grass))
-            if u_base.perm.inv == 0:
-                return self(v_rc.left_squash(u_grass))
-            if v_base.perm.inv == 0:
-                return self(u_rc.squash_product(v_grass))
-            # if u_grass.perm.inv == 0:
-            #     return RCGraph([(2, 1), ()]).squash_product(v_grass)
+        assert len(u_rc) == len(v_rc), "Multiplication only defined for RC graphs of the same number of rows"
+        if u_rc.is_full_grass and v_rc.is_full_grass:
+            return self(u_rc.squash_product(v_rc))
+        if u_rc.is_full_grass:
+            return self(v_rc.left_squash(u_rc))
+        if v_rc.is_full_grass:
+            return self(u_rc.squash_product(v_rc))
+        u_rc_base, u_rc_grass = u_rc.squash_decomp()
+        if u_rc_grass.perm.inv == 0:
+            v_rc_base, v_rc_grass = v_rc.squash_decomp()
+            return (self(u_rc_base.resize(len(u_rc_base) - 1)) * self(v_rc_base.resize(len(v_rc_base) - 1))).resize(len(u_rc)) * self(v_rc_grass)
+        right_factor = self.mul_pair(u_rc_grass, v_rc)
+        return self.mul_pair(u_rc_base, next(iter(right_factor)))
+        # from .rc_graph_ring import RCGraphRing
+        # if len(u_rc) != len(v_rc):
+        #     return self.zero
+        # if u_rc.perm.inv == 0:
+        #     return self(v_rc)
+        # if v_rc.perm.inv == 0:
+        #     return self(u_rc)
+        # if len(u_rc) == 2:
+        #     u_base, u_grass = u_rc.squash_decomp()
+        #     v_base, v_grass = v_rc.squash_decomp()
+        #     if u_base.perm.inv == 0 and v_base.perm.inv == 0:
+        #         return self(u_grass.squash_product(v_grass))
+        #     if u_base.perm.inv == 0:
+        #         return self(v_rc.left_squash(u_grass))
+        #     if v_base.perm.inv == 0:
+        #         return self(u_rc.squash_product(v_grass))
+        #     # if u_grass.perm.inv == 0:
+        #     #     return RCGraph([(2, 1), ()]).squash_product(v_grass)
 
-            middle = v_base.left_squash(u_grass)
-            middle_base, middle_grass = middle.squash_decomp()
-            if middle_base.perm.inv == 0:
-                return self(u_base.squash_product(middle_grass.squash_product(v_grass)))
-            return self(RCGraph([(2, 1), ()]).squash_product(middle_grass.squash_product(v_grass)))
-        r = RCGraphRing()
-        return self(r(u_rc) % r(v_rc))
+        #     middle = v_base.left_squash(u_grass)
+        #     middle_base, middle_grass = middle.squash_decomp()
+        #     if middle_base.perm.inv == 0:
+        #         return self(u_base.squash_product(middle_grass.squash_product(v_grass)))
+        #     return self(RCGraph([(2, 1), ()]).squash_product(middle_grass.squash_product(v_grass)))
+        # r = RCGraphRing()
+        # return self(r(u_rc) % r(v_rc))
 
 
     def mul(self, elem1, elem2):
