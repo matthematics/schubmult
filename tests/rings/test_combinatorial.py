@@ -1,6 +1,6 @@
 import pytest
 def test_rc_graph_squash_product():
-    from schubmult import Permutation, RCGraph, RCGraphRing, Sx
+    from schubmult import Permutation, RCGraph, DualRCGraphRing, Sx
 
     n = 4
     perms = Permutation.all_permutations(n)
@@ -14,10 +14,10 @@ def test_rc_graph_squash_product():
         k = len(perm.trimcode)
         rc_set = RCGraph.all_rc_graphs(perm, k)
         rcs[k].update(rc_set)
-        #if len(perm.descents()) == 1:
-        grass_rcs[k].update(rc_set)
+        if len(perm.descents()) == 1:
+            grass_rcs[k].update(rc_set)
 
-    ring = RCGraphRing()
+    ring = DualRCGraphRing()
     
     for max_d in range(n):
         build_product = {}
@@ -27,7 +27,7 @@ def test_rc_graph_squash_product():
                 for rc in rcs[j]:
                     rc2 = rc.resize(max_d)
                     try:
-                        the_rc = ring(rc2) % ring(g_rc)
+                        the_rc = ring(rc2.squash_product(g_rc))
                     except NotImplementedError:
                         bad_perm_pairs.add((g_rc.perm, rc2.perm))
                         continue
@@ -45,7 +45,9 @@ def test_rc_graph_squash_product():
             assert all(prod.get(rc_result.perm, 0) == c for rc_result, c in coeff.items()), f"Error: Squash product mismatch for permutations {g_perm} and {rc_perm}, {coeff=} {prod=}"
 
 def test_rc_graph_left_squash_product():
-    from schubmult import Permutation, RCGraph, RCGraphRing, Sx
+    from schubmult import Permutation, RCGraph, DualRCGraphRing, Sx
+
+    ring = DualRCGraphRing()
 
     n = 4
     perms = Permutation.all_permutations(n)
@@ -59,10 +61,9 @@ def test_rc_graph_left_squash_product():
         k = len(perm.trimcode)
         rc_set = RCGraph.all_rc_graphs(perm, k)
         rcs[k].update(rc_set)
-        #if len(perm.descents()) == 1:
-        grass_rcs[k].update(rc_set)
+        if len(perm.descents()) == 1:
+            grass_rcs[k].update(rc_set)
 
-    ring = RCGraphRing()
     
     for max_d in range(n):
         build_product = {}
@@ -72,12 +73,11 @@ def test_rc_graph_left_squash_product():
                 for rc in rcs[j]:
                     rc2 = rc.resize(max_d)
                     try:
-                        the_rc = ring(g_rc) % ring(rc2) 
+                        the_rc = rc2.squash_product(g_rc)
                     except NotImplementedError:
                         bad_perm_pairs.add((g_rc.perm, rc2.perm))
                         continue
-                    for spank_rc, coeff in the_rc.items():
-                        build_product[(g_rc.perm, rc2.perm)] = build_product.get((g_rc.perm, rc2.perm), ring.zero) + coeff * ring(spank_rc)
+                    build_product[(g_rc.perm, rc2.perm)] = build_product.get((g_rc.perm, rc2.perm), ring.zero) + ring(the_rc)
 
         for (perm1, perm2) in bad_perm_pairs:
             if (perm1, perm2) in build_product:

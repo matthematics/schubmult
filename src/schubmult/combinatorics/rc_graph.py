@@ -1304,15 +1304,15 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     _z_cache = {}  # noqa: RUF012
 
     def disjoint_union(self, rc: RCGraph) -> RCGraph:
-        # if len(self) < len(rc):
-        #     raise ValueError("RC graphs must at least as many rows")
+        if len(self) != len(rc):
+            raise ValueError("RC graphs must at least as many rows")
         if self.perm.inv == 0:
             return rc
         rowmax = [max(self[i], default=0) for i in range(len(self))]
         N = max(rowmax)
         shift_rc = RCGraph([tuple([a + N for a in row]) for row in rc]).resize(len(rc) + N)
         rc_self = self.resize(len(rc) + N)
-        return type(self)([shift_rc[i] + rc_self[i] for i in range(len(rc_self))]).normalize()
+        return type(self)([shift_rc[i] + rc_self[i] for i in range(len(rc_self))])
 
     def squash_product(self, rc: RCGraph) -> RCGraph:
         combined_rc = self.disjoint_union(rc)
