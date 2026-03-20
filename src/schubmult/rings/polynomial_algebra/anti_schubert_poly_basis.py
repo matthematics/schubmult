@@ -1,4 +1,3 @@
-from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
 from schubmult.combinatorics.permutation import Permutation
 from schubmult.symbolic import S
 from schubmult.utils.perm_utils import add_perm_dict, add_perm_dict_with_coeff
@@ -194,7 +193,6 @@ class AntiSchubertPolyBasis(PolynomialBasis):
 
     @classmethod
     def dual_basis(cls):
-        from ..free_algebra.schubert_basis import SchubertBasis
         raise NotImplementedError("Dual basis not implemented for anti schub")
         # return SchubertBasis
 

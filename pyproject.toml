@@ -119,7 +119,7 @@ ignore = [
     "TID252",
     "RUF001"
 ]
-unfixable = ["F401", "F841"]
+unfixable = ["F841"]
 
 [tool.ruff.lint.per-file-ignores]
 "test*.py" = ["ALL"]
@@ -187,6 +187,7 @@ schubert_formula = "schubmult._scripts.schubert_formula:main"
 schubprompt = "schubmult._scripts.schubprompt:main"
 verify_lr_rule = "schubmult._scripts.lr_verification:main"
 lr_rule_verify = "schubmult._scripts.lr_rule_verify:main"
+anti_rc_graph_showcase = "schubmult._scripts.anti_rc_graph_showcase:main"
 
 [tool.pytest.ini_options]
 addopts = [

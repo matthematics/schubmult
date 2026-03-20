@@ -1,4 +1,5 @@
 from functools import cache
+from itertools import zip_longest
 
 from schubmult.combinatorics.permutation import uncode
 from schubmult.rings.base_ring import BaseRing, BaseRingElement
@@ -24,6 +25,47 @@ logger = get_logger(__name__)
 
 # keys are tuples of nonnegative integers
 class FreeAlgebraElement(BaseRingElement):
+
+    def interleave(self, other, zero_pad=True):
+        if not isinstance(other, FreeAlgebraElement):
+            return NotImplemented
+
+        self_word = self.change_basis(WordBasis)
+        other_word = other.change_basis(WordBasis)
+
+        r = self_word.ring.zero
+        for word, coeff in self_word.items():
+            for word2, coeff2 in other_word.items():
+                interleaved = []
+                for a, b in zip_longest(word, word2, fillvalue=None):
+                    #if a is not None:
+                    if zero_pad or len(a) == len(b):
+                        interleaved.append(a if a is not None else 0)
+                        interleaved.append(b if b is not None else 0)
+                r += coeff * coeff2 * self_word.ring(*interleaved)
+
+        return r.change_basis(self.ring._basis)
+
+    def inject(self, i, other):
+        if not isinstance(other, FreeAlgebraElement):
+            return NotImplemented
+        if not isinstance(i, int):
+            raise TypeError(f"Expected integer index, got {type(i)}")
+        if i < 0:
+            raise IndexError(f"Insertion index {i} must be nonnegative")
+
+        self_word = self.change_basis(WordBasis)
+        other_word = other.change_basis(WordBasis)
+
+        result = self_word.ring.zero
+        for word, coeff in self_word.items():
+            if i > len(word):
+                raise IndexError(f"Insertion index {i} out of range for word of length {len(word)}")
+            for word2, coeff2 in other_word.items():
+                injected = (*word[:i], *word2, *word[i:])
+                result += coeff * coeff2 * self_word.ring(*injected)
+
+        return result.change_basis(self.ring._basis)
 
     def poly_inner_product(self, poly, genset, n):
         from schubmult.symbolic.poly.variables import genset_dict_from_expr

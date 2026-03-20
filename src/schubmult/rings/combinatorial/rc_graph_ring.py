@@ -484,8 +484,6 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
 
     def rc_single_product(self, u_rc, v_rc):
         # INSERTION WEIGHT TABLEAU
-        from schubmult import uncode
-        from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
         # from symengine import S
 
         # from .schubert.schubert_ring import DSx

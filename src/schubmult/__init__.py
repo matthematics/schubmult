@@ -80,6 +80,7 @@ _lazy_exports = {
     "JBasis": "schubmult.rings.free_algebra",
     "JTBasis": "schubmult.rings.free_algebra",
     "SchubertBasis": "schubmult.rings.free_algebra",
+    "CompositionSchubertBasis": "schubmult.rings.free_algebra",
     "SchubertSchurBasis": "schubmult.rings.free_algebra",
     "ElementaryBasis": "schubmult.rings.free_algebra",
     "NElementaryBasis": "schubmult.rings.free_algebra",

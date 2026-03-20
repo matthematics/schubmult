@@ -5,6 +5,7 @@ from schubmult.symbolic import Add, Integer, Mul, S, is_of_func_type, sympify, s
 from schubmult.symbolic.symmetric_polynomials import FactorialElemSym
 from schubmult.utils.perm_utils import add_perm_dict, mu_A
 
+from ..printing import SepDescSchubPoly
 from ..schubert.schubert_ring import DSx, Sx
 from ..schubert.separated_descents import SeparatedDescentsRing
 from .free_algebra_basis import FreeAlgebraBasis
@@ -152,6 +153,7 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition(cls, other_basis):
+        from .composition_schubert_basis import CompositionSchubertBasis
         from .elementary_basis import ElementaryBasis
         from .forest_basis import ForestBasis
         from .fundamental_slide_basis import FundamentalSlideBasis
@@ -165,6 +167,8 @@ class SchubertBasis(FreeAlgebraBasis):
 
         if other_basis == SchubertBasis:
             return lambda x: {x: S.One}
+        if other_basis == CompositionSchubertBasis:
+            return lambda x: {CompositionSchubertBasis.as_key(x): S.One}
         if other_basis == ElementaryBasis:
             return lambda x: cls.transition_elementary(*x)
         if other_basis == SchubertSchurBasis:
@@ -224,4 +228,4 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     def printing_term(cls, k):
-        return splugSx([]).ring.printing_term(k)
+        return SepDescSchubPoly(cls.as_key(k), None, None)

@@ -1,4 +1,5 @@
 from ._core import FA, ADSx, ASx, FreeAlgebra, FreeAlgebraElement
+from .composition_schubert_basis import CompositionSchubertBasis
 from .elementary_basis import ElementaryBasis
 from .forest_basis import ForestBasis, ForestDual
 from .free_algebra_basis import FreeAlgebraBasis
@@ -18,6 +19,7 @@ __all__ = [
     "FA",
     "ADSx",
     "ASx",
+    "CompositionSchubertBasis",
     "ElementaryBasis",
     "ForestBasis",
     "ForestDual",

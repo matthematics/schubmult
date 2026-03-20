@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     comps = weak_compositions(num_parts, max_part_size)
 
-    r = GrassTensorAlgebra()
+    r = DualRCGraphRing()
 
     
     for comp1, comp2 in itertools.product(comps, repeat=2):
@@ -26,19 +26,9 @@ if __name__ == "__main__":
             print(rc1)
             print(rc2)
             
-            elem1 = r.from_rc_graph(rc1)
-            elem2 = r.from_rc_graph(rc2)
-            factored_result = next(iter(elem1 * elem2))
+            elem1 = r(rc1)
+            elem2 = r(rc2)
+            result = next(iter(elem1 * elem2))
 
-            if not factored_result:
-                print("Empty product for comp", comp1, comp2)
-                continue
-
-            result = factored_result[0]
-
-            for factor in factored_result[1:]:
-                result = result.resize(len(factor))
-                result = result.squash_product(factor)
-
-            assert produ.get((result.perm, 3), 0) != 0, f"Failure for comp {comp1}, {comp2}, got {result.perm=}, {produ=}, {result=}, {rc1=} {rc2=},\n {factored_result=}"
+            assert produ.get((result.perm, 3), 0) != 0, f"Failure for comp {comp1}, {comp2}, got {result.perm=}, {produ=}, {result=}, {repr(rc1)=} {repr(rc2)=}, {result=}\n{elem1=}\n{elem2=}"
             print("Success for comp", comp1, comp2)

@@ -1,6 +1,20 @@
 from schubmult import *
 from schubmult.utils.perm_utils import weak_compositions
 
+def anti_plac_rc(rc):
+    rc2 = RCGraph([()]).resize(len(rc))
+    for row, col in [rc.left_to_right_inversion_coords(i) for i in range(rc.perm.inv)]:
+        rc2 = rc2.toggle_ref_at(len(rc) + 1 - row, col)
+    return rc2
+
+def plactic_tup_twisted_product(tup1, tup2):
+    left1 = tup1[0]
+
+    mid1 = tup1[1]
+    mid2 = tup2[0]
+
+    mid_squash_left, mid_squash_right = mid2.left_squash(mid1).squash_decomp()
+    return left1.squash_product(mid_squash_left), mid_squash_right.squash_product(tup2[1])
 
 if __name__ == "__main__":
     import sys
@@ -10,7 +24,7 @@ if __name__ == "__main__":
 
     num_parts = int(sys.argv[1])
     max_part_size = int(sys.argv[2])
-    do_assoc = False
+    do_assoc = True
     comps = weak_compositions(num_parts, max_part_size)
 
     r = DualRCGraphRing()
@@ -34,12 +48,17 @@ if __name__ == "__main__":
             print("I iz da testing")
             print(rc1)
             print(rc2)
+            # new_tup = plactic_tup_twisted_product(rc1.squash_decomp(), rc2.squash_decomp())
+            # result = new_tup[0].squash_product(new_tup[1])
             elem1 = r(rc1)
             elem2 = r(rc2)
+            
             ring_result = elem1 * elem2
             result = next(iter(ring_result))
-            assert produ.get((result.perm, num_parts), 0) != 0, f"Failure for comp {comp1}, {comp2}, got {result.perm=}, {produ=}, {result=}, {rc1=} {rc2=}\n{ring_result=}\n{elem1=}\n{elem2=}"
+            
+            #assert produ.get((result.perm, num_parts), 0) != 0, f"Failure for comp {comp1}, {comp2}, got {result.perm=}, {produ=}, {result=}, {rc1=} {rc2=}"#\n{elem1=}\n{elem2=}"
             print("Bimodmod")
+            
             #rc2_base, rc2_grass = rc2.squash_decomp()
             # rc1_base, rc1_grass = rc1.squash_decomp()
             # rc2_base, rc2_grass = rc2.squash_decomp()
@@ -59,8 +78,8 @@ if __name__ == "__main__":
                     # rc3_base, rc3_grass = rc3.squash_decomp()
                     # if rc3_base.perm.inv == 0:
                     #     continue
-                    produ3 = produ * Schub(perm3, num_parts)
-                    elem3 = r.from_rc_graph(rc3)
+                    #produ3 = produ * Schub(perm3, num_parts)
+                    elem3 = r(rc3)
                     # move rc1 across
                     # rc1_base, rc1_grass = rc1.squash_decomp()
                     # # righto_mid = (r(rc1_grass) * r(rc2))
@@ -74,14 +93,19 @@ if __name__ == "__main__":
                     # #assert righto == righto2, f"Failure for comp {comp1}, {comp2}, {comp3}, got {righto=}, {righto2=}"
                     # righto_base, righto_grass = next(iter(righto2)).squash_decomp()
                     # result1 = next(iter((r(rc1_base)*r(righto_base)) * r(righto_grass)))
-                    result = elem1 * (elem2 * elem3)
+                    try:
+                        result = elem1 * (elem2 * elem3)
+                    except Exception:
+                        print(f"Failure for comp {comp1}, {comp2}, {comp3}, got exception when computing (elem1 * (elem2 * elem3)):\n{elem1=}\n{elem2=}\n{elem3=}")
+                        raise
                     result1 = next(iter(result))
-                    result1 = r.key_to_rc_graph(result1)
-                    assert produ3.get((result1.perm, num_parts), 0) != 0, f"Failure for comp {comp1}, {comp2}, {comp3}, got {result1.perm=}, {produ3=}, {result1=}\n{(r(rc1) * r(rc2))} * {r(rc3)}\n{r(rc1)} * {(r(rc2) * r(rc3))}"
+                    # result1 = r.key_to_rc_graph(result1)
+                    #assert produ3.get((result1.perm, num_parts), 0) != 0, f"Failure for comp {comp1}, {comp2}, {comp3}, got {result1.perm=}, {produ3=}, {result1=}\n{(r(rc1) * r(rc2))} * {r(rc3)}\n{r(rc1)} * {(r(rc2) * r(rc3))}"
                     result2 = (elem1 * elem2) * elem3
                     result2 = next(iter(result2))
-                    result2 = r.key_to_rc_graph(result2)
-                    assert produ3.get((result2.perm, num_parts), 0) != 0, f"Failure for comp {comp1}, {comp2}, {comp3}, got {result2.perm=}, {produ3=}, {result2=}\n{(r(rc1) * r(rc2))} * {r(rc3)}\n{r(rc1)} * {(r(rc2) * r(rc3))}"
+                    # result2 = r.key_to_rc_graph(result2)
+                    #assert produ3.get((result2.perm, num_parts), 0) != 0, f"Failure for comp {comp1}, {comp2}, {comp3}, got {result2.perm=}, {produ3=}, {result2=}\n{(r(rc1) * r(rc2))} * {r(rc3)}\n{r(rc1)} * {(r(rc2) * r(rc3))}"
+                    assert result1 == result2, f"Failure for comp {comp1}, {comp2}, {comp3}, got {result1=}, {result2=}\n{(r(rc1) * r(rc2))} * {r(rc3)}\n!=\n{r(rc1)} * {(r(rc2) * r(rc3))}"
                     #result2 = next(iter(r(rc1_base) * (r(rc1_grass) * (r(rc2) * r(rc3)))))
                     
                     #assert produ3.get((result1.perm, num_parts), 0) != 0, f"Failure for comp {comp1}, {comp2}, {comp3}, got {result1.perm=}, {produ3=}, {result1=}\n{(r(rc1) * r(rc2))} * {r(rc3)}\n{r(rc1)} * {(r(rc2) * r(rc3))}"

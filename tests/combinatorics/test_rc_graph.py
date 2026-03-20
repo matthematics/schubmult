@@ -54,6 +54,15 @@ def test_loc_of_inversion():
 
     assert rc.loc_of_inversion(2,3) == expected
 
+def test_rc_sympyrepr_round_trips():
+    from schubmult import RCGraph
+
+    rc = RCGraph([(3, 1), (2,), ()])
+    rendered = rc._sympyrepr()
+
+    assert rendered == "RCGraph([(3, 1), (2,), ()])"
+    assert eval(rendered, {"RCGraph": RCGraph}) == rc
+
 def test_index_of_inversion():
     from schubmult import RCGraph
 

@@ -20,6 +20,33 @@ class Permutation(Printable):
     def apply(self, arr):
         return tuple([arr[self[i] - 1] for i in range(len(arr))])
 
+    @property
+    def is_reducible(self):
+        if self.inv == 0:
+            return False
+        for i in range(1, len(self)):
+            if self[i - 1] == i:
+                parabolic_list = list(range(1, i)) + list(range(i + 1, len(self) + 1))
+                if self.min_coset_rep(*parabolic_list).inv == 0:
+                    return True
+        return False
+
+
+    def reduce(self, start_spot = 1, strict=False):
+        if self.inv == 0:
+            return None
+        for i in range(start_spot - 1, len(self)):
+            if self[i - 1] == i:
+                parabolic_list = list(range(1, i)) + list(range(i + 1, len(self) + 1))
+                coset_rep, residue = self.coset_decomp(*parabolic_list)
+                if coset_rep.inv == 0:
+                    perm1 = Permutation(self[:i - 1])
+                    perm2 = Permutation([a - i for a in self[i:]])
+                    return perm1, perm2
+            if strict:
+                return None
+        return None
+
     def act_root(self, a, b):
         return self[a - 1], self[b - 1]
 
