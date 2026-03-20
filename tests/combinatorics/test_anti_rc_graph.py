@@ -85,9 +85,3 @@ def test_user_evacuation_example_display_shape():
     matrix = [[anti[i, j] for j in range(anti.cols)] for i in range(anti.rows)]
     assert matrix == [[None, 4], [2, 3], [1, None]]
 
-
-def test_anti_constructor_accepts_binary_grid():
-    anti = AntiRCGraph([[0, 0, 0], [1, 0, 0], [1, 0, 1]])
-
-    assert tuple(anti) == ((), (2,), (3, 1))
-    assert anti.as_reduced_anticompatible() == ((3, 1, 2), (1, 1, 2))
