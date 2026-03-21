@@ -7,6 +7,7 @@ from schubmult.utils.tuple_utils import pad_tuple
 
 
 def _forest_polynomial_from_indfor(indfor, genset):
+    """Compute the forest polynomial for an indexed forest by multiplying root contributions."""
     if len(indfor) == 0:
         return S.One
 
@@ -18,6 +19,7 @@ def _forest_polynomial_from_indfor(indfor, genset):
 
 
 def _forest_polynomial_from_root(root, genset, min_value=1):
+    """Recursively compute the polynomial contribution from a single indexed forest root."""
     if root.rho == 0:
         return S.One
     if root.left is None and root.right is None:
@@ -34,6 +36,7 @@ def _forest_polynomial_from_root(root, genset, min_value=1):
 
 
 def _flatten_seq_to_comp(seq, length):
+    """Convert a value sequence to a weak composition by run-length encoding with dominance."""
     if len(seq) == 0:
         return ()
     comp_seq = [*seq[:1]]
@@ -52,6 +55,12 @@ def _flatten_seq_to_comp(seq, length):
 
 
 class ForestPolyBasis(PolynomialBasis):
+    """Forest polynomial basis.
+
+    Keys are weak compositions encoding indexed forests. Forest polynomials
+    are computed by summing over decreasing labelings of the corresponding
+    forest structure.
+    """
     def is_key(self, x):
         return isinstance(x, tuple | list)
 
@@ -67,27 +76,32 @@ class ForestPolyBasis(PolynomialBasis):
         self._monomial_basis = MonomialBasis(genset=self.genset)
 
     def to_monoms(self, key):
+        """Expand a forest key into a dict of monomial exponent tuples."""
         from schubmult.symbolic.poly.variables import genset_dict_from_expr
 
         dct = {pad_tuple(k, len(key)): v for k, v in genset_dict_from_expr(_forest_polynomial_from_indfor(weak_composition_to_indfor(key), self.genset), self.genset).items()}
         return dct
 
     def expand(self, dct):
+        """Expand a forest basis dict into a symbolic polynomial expression."""
         return sum([v * _forest_polynomial_from_indfor(weak_composition_to_indfor(key), self.genset) for key, v in dct.items()])
 
     def transition_monomial(self, dct):
+        """Transition from forest basis to monomial basis."""
         res = {}
         for k, v in dct.items():
             res = add_perm_dict_with_coeff(res, self.to_monoms(k), coeff=v)
         return res
 
     def transition_fundamental_slide(self, dct):
+        """Transition from forest basis to fundamental slide basis."""
         res = {}
         for k, v in dct.items():
             res = add_perm_dict_with_coeff(res, self.to_fundamental_slide(k), coeff=v)
         return res
 
     def to_fundamental_slide(self, key):
+        """Express a single forest key in the fundamental slide basis."""
         from schubmult.rings.polynomial_algebra.fundamental_slide_poly_basis import slide_product
         indfor = weak_composition_to_indfor(key)
 
@@ -117,10 +131,12 @@ class ForestPolyBasis(PolynomialBasis):
 
     @classmethod
     def dual_basis(cls):
+        """Return the dual free algebra basis class (:class:`ForestBasis`)."""
         from ..free_algebra.forest_basis import ForestBasis
         return ForestBasis
 
     def transition(self, other_basis):
+        """Return a transition function from forest basis to *other_basis*."""
         from schubmult.rings.polynomial_algebra.fundamental_slide_poly_basis import FundamentalSlidePolyBasis
         from schubmult.rings.polynomial_algebra.monomial_basis import MonomialBasis
 
@@ -132,6 +148,7 @@ class ForestPolyBasis(PolynomialBasis):
         return lambda x: PolynomialBasis.compose_transition(self.monomial_basis.transition(other_basis), self.transition_monomial(x))
 
     def product(self, key1, key2, coeff=S.One):
+        """Multiply two forest keys by transitioning through the Schubert basis."""
         from schubmult.utils.perm_utils import add_perm_dict
 
         from ..schubert.schubert_ring import Sx

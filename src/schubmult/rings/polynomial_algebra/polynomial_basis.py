@@ -1,3 +1,5 @@
+"""Re-export hub for all polynomial basis classes."""
+
 from .base_polynomial_basis import PolynomialBasis
 from .elem_sym_poly_basis import ElemSymPolyBasis
 from .fundamental_slide_poly_basis import FundamentalSlidePolyBasis

@@ -6,33 +6,68 @@ from schubmult.utils.perm_utils import add_perm_dict
 
 
 class FreeAlgebraBasis:
-    @classmethod
-    def is_key(cls, x): ...
+    """Abstract base class for free algebra bases.
+
+    Subclasses define how keys are represented, how products and coproducts
+    are computed, and how to transition between bases.  Default implementations
+    delegate through the :class:`WordBasis` via ``compose_transition``.
+    """
 
     @classmethod
-    def from_rc_graph(cls, rc_graph): ...
+    def is_key(cls, x):
+        """Return True if *x* is a valid key for this basis."""
 
     @classmethod
-    def as_key(cls, x): ...
+    def from_rc_graph(cls, rc_graph):
+        """Convert an RC graph to a basis-keyed dict."""
 
     @classmethod
-    def transition(cls, other_basis): ...
+    def as_key(cls, x):
+        """Normalize *x* into a canonical key for this basis."""
 
     @classmethod
-    def printing_term(cls, key): ...
+    def transition(cls, other_basis):
+        """Return a function mapping keys of this basis to dicts in *other_basis*."""
+
+    @classmethod
+    def printing_term(cls, key):
+        """Return the display symbol for *key*."""
 
     @classmethod
     def compose_transition(cls, tkeyfunc, output):
+        """Apply a key-level transition function to each key in *output*.
+
+        For each ``(key, v)`` in *output*, expands ``tkeyfunc(key)`` and
+        accumulates the results weighted by *v*.
+
+        Args:
+            tkeyfunc: A function mapping a key to a ``{key: coeff}`` dict.
+            output: A ``{key: coeff}`` dict to transform.
+
+        Returns:
+            A merged ``{key: coeff}`` dict in the target basis.
+        """
         ret = {}
         for key, v in output.items():
             ret = add_perm_dict(ret, {k: v * v0 for k, v0 in tkeyfunc(key).items()})
         return ret
 
     @classmethod
-    def dual_basis(cls): ...
+    def dual_basis(cls):
+        """Return the dual basis class (for polynomial algebra pairing)."""
 
     @classmethod
     def change_tensor_basis(cls, tensor_elem, basis1, basis2):
+        """Change the bases of both factors of a tensor element.
+
+        Args:
+            tensor_elem: An element of a tensor product ring.
+            basis1: Target basis for the left factor.
+            basis2: Target basis for the right factor.
+
+        Returns:
+            The tensor element re-expressed in the new bases.
+        """
         from ..tensor_ring import TensorRing
 
         ring1 = tensor_elem.ring.rings[0]
@@ -48,6 +83,7 @@ class FreeAlgebraBasis:
     @classmethod
     @cache
     def coproduct(cls, key):
+        """Compute the coproduct of *key* by delegating through WordBasis."""
         from ...utils._mul_utils import _tensor_product_of_dicts_first
         from .word_basis import WordBasis
 
@@ -59,6 +95,7 @@ class FreeAlgebraBasis:
     @classmethod
     @cache
     def bcoproduct(cls, key):
+        """Compute the bar-coproduct of *key* by delegating through WordBasis."""
         from ...utils._mul_utils import _tensor_product_of_dicts_first
         from .word_basis import WordBasis
 
@@ -70,6 +107,7 @@ class FreeAlgebraBasis:
     @classmethod
     @cache
     def product(cls, key1, key2, coeff=S.One):
+        """Multiply two keys by transitioning to WordBasis and back."""
         from .word_basis import WordBasis
 
         left = cls.transition(WordBasis)(key1)
@@ -83,6 +121,7 @@ class FreeAlgebraBasis:
 
     @classmethod
     def internal_product(cls, key1, key2, coeff=S.One):
+        """Compute the internal product of two keys by delegating through WordBasis."""
         from .word_basis import WordBasis
 
         left = cls.transition(WordBasis)(key1)
@@ -92,6 +131,53 @@ class FreeAlgebraBasis:
         for key_schub_right, v in right.items():
             for key_schub_left, v2 in left.items():
                 ret = add_perm_dict(ret, FreeAlgebraBasis.compose_transition(WordBasis.transition(cls), WordBasis.internal_product(key_schub_left, key_schub_right, v * v2 * coeff)))
+        return ret
+
+    @classmethod
+    def inject(cls, key1, i, key2, coeff=S.One):
+        """Inject *key2* into *key1* at position *i* by delegating through WordBasis."""
+        from .word_basis import WordBasis
+
+        left = cls.transition(WordBasis)(key1)
+        right = cls.transition(WordBasis)(key2)
+        ret = {}
+
+        for key_word_left, v2 in left.items():
+            for key_word_right, v in right.items():
+                ret = add_perm_dict(ret, FreeAlgebraBasis.compose_transition(WordBasis.transition(cls), WordBasis.inject(key_word_left, i, key_word_right, v * v2 * coeff)))
+        return ret
+
+    @classmethod
+    def prefix(cls, key, length, coeff=S.One):
+        """Extract a prefix of *length* letters by delegating through WordBasis."""
+        from .word_basis import WordBasis
+
+        words = cls.transition(WordBasis)(key)
+        ret = {}
+        for key_word, v in words.items():
+            ret = add_perm_dict(ret, FreeAlgebraBasis.compose_transition(WordBasis.transition(cls), WordBasis.prefix(key_word, length, v * coeff)))
+        return ret
+
+    @classmethod
+    def suffix(cls, key, length, coeff=S.One):
+        """Extract a suffix of *length* letters by delegating through WordBasis."""
+        from .word_basis import WordBasis
+
+        words = cls.transition(WordBasis)(key)
+        ret = {}
+        for key_word, v in words.items():
+            ret = add_perm_dict(ret, FreeAlgebraBasis.compose_transition(WordBasis.transition(cls), WordBasis.suffix(key_word, length, v * coeff)))
+        return ret
+
+    @classmethod
+    def interval(cls, key, start, stop, coeff=S.One):
+        """Extract a subword from *start* to *stop* by delegating through WordBasis."""
+        from .word_basis import WordBasis
+
+        words = cls.transition(WordBasis)(key)
+        ret = {}
+        for key_word, v in words.items():
+            ret = add_perm_dict(ret, FreeAlgebraBasis.compose_transition(WordBasis.transition(cls), WordBasis.interval(key_word, start, stop, v * coeff)))
         return ret
 
 

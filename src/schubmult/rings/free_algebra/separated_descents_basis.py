@@ -9,16 +9,26 @@ from .free_algebra_basis import FreeAlgebraBasis
 
 
 class _SeparatedDescentsBasis(FreeAlgebraBasis):
+    """Separated descents basis of the free algebra (parameterized by level *k*).
+
+    Keys are ``(Permutation, Permutation, int)`` triples representing a
+    factorization into descents above and below a cutoff level *k*.
+    Instances are created by the :func:`SeparatedDescentsBasis` factory.
+    """
+
     @classmethod
     def is_key(cls, x):
+        """Return True if *x* is a valid separated descents key."""
         return len(x) == 3 and isinstance(x[0], Permutation | list | tuple) and isinstance(x[1], Permutation | list | tuple) and isinstance(x[2], int) and (len(x[1]) <= x[2])
 
     @classmethod
     def as_key(cls, x):
+        """Normalize *x* into a ``(Permutation, Permutation, int)`` key."""
         return (Permutation(x[0]), Permutation(x[1]), x[2])
 
     @classmethod
     def product(cls, key1, key2, coeff=S.One):
+        """Multiply two separated descents keys via the Schubert basis."""
         from .schubert_basis import SchubertBasis
 
         left = cls.transition_schubert(*key1)
@@ -32,6 +42,7 @@ class _SeparatedDescentsBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_schubert(cls, perm0, perm1, numvars):
+        """Transition a separated descents key to the Schubert basis."""
         from schubmult.symbolic.poly.variables import MaskedGeneratingSet
 
         from ..schubert.schubert_ring import SingleSchubertRing
@@ -53,6 +64,7 @@ class _SeparatedDescentsBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_word(cls, perm0, perm1, n):
+        """Transition a separated descents key to the word basis via the Schubert basis."""
         from .schubert_basis import SchubertBasis
         from .word_basis import WordBasis
 
@@ -60,6 +72,7 @@ class _SeparatedDescentsBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition(cls, other_basis):
+        """Return a transition function from this separated descents basis to *other_basis*."""
         from .schubert_basis import SchubertBasis
         from .schubert_schur_basis import SchubertSchurBasis
         from .word_basis import WordBasis
@@ -78,8 +91,10 @@ class _SeparatedDescentsBasis(FreeAlgebraBasis):
 
     @classmethod
     def printing_term(cls, k):
+        """Return a ``SepDesc<k>``-prefixed symbol for key *k*."""
         return Symbol(f"SepDesc{cls.k}{sstr(k)}")
 
 
 def SeparatedDescentsBasis(k):
+    """Factory that creates a separated descents basis class for level *k*."""
     return type("_SeparatedDescentsBasis", (_SeparatedDescentsBasis,), {"k": k, "zero_monom": (Permutation(()), Permutation([]), 0)})

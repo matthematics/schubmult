@@ -8,16 +8,25 @@ from .free_algebra_basis import FreeAlgebraBasis
 
 
 class JTBasis(FreeAlgebraBasis):
+    """JT basis of the free algebra (J basis with a parameter *t*).
+
+    Keys are ``(tuple, int)`` pairs where the tuple is a nonzero code
+    and the integer tracks a power of the parameter *t*.
+    """
+
     @classmethod
     def is_key(cls, x):
+        """Return True if *x* is a tuple or list."""
         return isinstance(x, tuple | list)
 
     @classmethod
     def as_key(cls, x):
+        """Normalize *x* to a tuple key."""
         return tuple(x)
 
     @staticmethod
     def from_perm(perm, n):
+        """Extract a JT key from *perm* if the first *n* code entries are nonzero."""
         cd = perm.code
         if len(cd) < n:
             return None
@@ -27,6 +36,7 @@ class JTBasis(FreeAlgebraBasis):
 
     @staticmethod
     def pare_schubert(perm):
+        """Extract a nonzero trimcode from *perm*, or None if it contains zeros."""
         cd = [*perm.code]
         while len(cd) > 0 and cd[-1] == 0:
             cd = cd[:-1]
@@ -36,6 +46,7 @@ class JTBasis(FreeAlgebraBasis):
 
     @staticmethod
     def normalize_dct(dct):
+        """Normalize a word dict by collecting zeros into leading positions."""
         dct_out = {}
         for k, v in dct.items():
             k2 = tuple([a for a in k if a != 0])
@@ -51,10 +62,12 @@ class JTBasis(FreeAlgebraBasis):
 
     @classmethod
     def printing_term(cls, k):
+        """Return a *t*-weighted ``JT``-labelled display object."""
         return sympy_Mul(JTBasis.t ** k[1], GenericPrintingTerm((k[0], "t"), "JT"))
 
     @classmethod
     def transition(cls, other_basis):
+        """Return a transition function from JTBasis to *other_basis*."""
         from .word_basis import WordBasis
 
         @cache

@@ -7,16 +7,26 @@ from .free_algebra_basis import FreeAlgebraBasis
 
 
 class ZBasis(FreeAlgebraBasis):
+    """Z basis of the free algebra.
+
+    Keys are tuples of positive integers (no zeros). The Z basis is
+    related to the Schubert basis by incrementing/decrementing code
+    entries by 1 and dropping zeros.
+    """
+
     @classmethod
     def is_key(cls, x):
+        """Return True if *x* is a tuple or list."""
         return isinstance(x, tuple | list)
 
     @classmethod
     def as_key(cls, x):
+        """Normalize *x* to a tuple key."""
         return tuple(x)
 
     @staticmethod
     def from_perm(perm, n):
+        """Extract a Z basis key from *perm* if the first *n* code entries are nonzero."""
         cd = perm.code
         if len(cd) < n:
             return None
@@ -26,6 +36,7 @@ class ZBasis(FreeAlgebraBasis):
 
     @staticmethod
     def pare_schubert(perm):
+        """Extract the nonzero trimcode of *perm*, or None if it contains interior zeros."""
         cd = [*perm.code]
         while len(cd) > 0 and cd[-1] == 0:
             cd = cd[:-1]
@@ -35,6 +46,7 @@ class ZBasis(FreeAlgebraBasis):
 
     @classmethod
     def product(cls, key1, key2, coeff=S.One):
+        """Multiply two Z basis keys via shifted Schubert multiplication."""
         from .schubert_basis import SchubertBasis
 
         key11 = uncode([a - 1 for a in key1])
@@ -57,10 +69,12 @@ class ZBasis(FreeAlgebraBasis):
 
     @classmethod
     def printing_term(cls, k):
+        """Return a ``Z``-labelled display object for key *k*."""
         return GenericPrintingTerm(k, "Z")
 
     @classmethod
     def transition(cls, other_basis):
+        """Return a transition function from ZBasis to *other_basis*."""
         from .word_basis import WordBasis
 
         def trans(x):

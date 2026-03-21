@@ -7,16 +7,26 @@ from .free_algebra_basis import FreeAlgebraBasis
 
 
 class JBasis(FreeAlgebraBasis):
+    """J basis of the free algebra.
+
+    Keys are tuples of positive integers (no zeros allowed in transitions).
+    The J basis indexes elements whose Schubert expansion has no zero
+    entries in the Lehmer code.
+    """
+
     @classmethod
     def is_key(cls, x):
+        """Return True if *x* is a tuple or list."""
         return isinstance(x, tuple | list)
 
     @classmethod
     def as_key(cls, x):
+        """Normalize *x* to a tuple key."""
         return tuple(x)
 
     @staticmethod
     def from_perm(perm, n):
+        """Extract a J basis key from *perm* if the first *n* code entries are nonzero."""
         cd = perm.code
         if len(cd) < n:
             return None
@@ -26,16 +36,19 @@ class JBasis(FreeAlgebraBasis):
 
     @classmethod
     def coproduct(cls, key):
+        """Coproduct for JBasis equals the bar-coproduct."""
         return cls.bcoproduct(key)
 
     zero_monom = ()
 
     @classmethod
     def printing_term(cls, k):
+        """Return a ``J``-labelled display object for key *k*."""
         return GenericPrintingTerm(k, "J")
 
     @classmethod
     def transition(cls, other_basis):
+        """Return a transition function from JBasis to *other_basis*."""
         from .schubert_basis import SchubertBasis
         from .word_basis import WordBasis
 

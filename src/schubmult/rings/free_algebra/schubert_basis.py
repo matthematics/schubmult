@@ -15,16 +15,27 @@ ADSx = SeparatedDescentsRing(DSx([]).ring)
 
 
 class SchubertBasis(FreeAlgebraBasis):
+    """Schubert basis of the free algebra.
+
+    Keys are ``(Permutation, int)`` pairs where the integer records the
+    number of variables.  Products use the separated-descents Schubert
+    ring, and transitions to the word basis go through elementary
+    symmetric function decompositions.
+    """
+
     @classmethod
     def is_key(cls, x):
+        """Return True if *x* is a valid Schubert basis key."""
         return (len(x) == 1 and isinstance(x[0], Permutation | list | tuple)) or (len(x) == 2 and isinstance(x[0], Permutation | list | tuple) and isinstance(x[1], int))
 
     @classmethod
     def from_rc_graph(cls, rc_graph):
+        """Return the Schubert key ``(perm, length)`` for the given RC graph."""
         return {(rc_graph.perm, len(rc_graph)): 1}
 
     @classmethod
     def as_key(cls, x):
+        """Normalize *x* into a ``(Permutation, numvars)`` key."""
         if len(x) == 1:
             perm = Permutation(x[0])
             return (perm, 0) if len(perm.descents()) == 0 else (perm, max(perm.descents()) + 1)
@@ -32,12 +43,14 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     def product(cls, key1, key2, coeff=S.One):
+        """Multiply two Schubert basis keys via the separated-descents ring."""
         return dict(coeff * splugSx(*cls.as_key(key1)) * splugSx(*cls.as_key(key2)))
 
     zero_monom = (Permutation([]), 0)
 
     @classmethod
     def skew_element(cls, w, u, n):
+        """Compute the skew Schubert element S_w / S_u truncated to *n* variables."""
         from schubmult.mult.single import schubmult_py_down
 
         if u.inv > 0 and max(u.descents()) >= n:
@@ -52,6 +65,7 @@ class SchubertBasis(FreeAlgebraBasis):
     @classmethod
     @cache
     def coproduct(cls, key):
+        """Compute the coproduct of a Schubert key in the tensor ring."""
         from ...utils._mul_utils import _tensor_product_of_dicts_first
         from .word_basis import WordBasis
 
@@ -68,6 +82,7 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_schubert_schur(cls, *x):
+        """Transition a Schubert key to the Schubert-Schur basis."""
         perm, numvars = x
         extra = len(perm) - numvars
 
@@ -87,6 +102,7 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_elementary(cls, perm, numvars):
+        """Transition a Schubert key to the elementary basis."""
         from schubmult.symbolic.poly.variables import genset_dict_from_expr
         from schubmult.utils.perm_utils import p_trans
 
@@ -107,6 +123,7 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_separated_descents(cls, k, *x):
+        """Transition a Schubert key to the separated descents basis of level *k*."""
         perm, numvars = x
         dom0_code = list(range(len(perm) - 1, 0, -1))
         dom = uncode(dom0_code)
@@ -124,6 +141,7 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_jbasis(cls, perm, n):
+        """Transition a Schubert key ``(perm, n)`` to the J basis."""
         from .j_basis import JBasis
         from .word_basis import WordBasis
 
@@ -148,11 +166,13 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     def dual_basis(cls):
+        """Return the SchubertPolyBasis as the dual of SchubertBasis."""
         from ..polynomial_algebra.schubert_poly_basis import SchubertPolyBasis
         return SchubertPolyBasis
 
     @classmethod
     def transition(cls, other_basis):
+        """Return a transition function from SchubertBasis to *other_basis*."""
         from .composition_schubert_basis import CompositionSchubertBasis
         from .elementary_basis import ElementaryBasis
         from .forest_basis import ForestBasis
@@ -184,6 +204,7 @@ class SchubertBasis(FreeAlgebraBasis):
     @classmethod
     @cache
     def old_transition_word(cls, perm, numvars):
+        """Transition to WordBasis via SEM basis (legacy implementation)."""
         res = {}
         expr = Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis().expand()
         args = expr.args
@@ -211,6 +232,7 @@ class SchubertBasis(FreeAlgebraBasis):
     @classmethod
     @cache
     def transition_word(cls, perm, numvars):
+        """Transition a Schubert key to the word basis via SEM factorization."""
         from ..polynomial_algebra._core import PA
 
         def word_elem(p, k, *args):  # noqa: ARG001
@@ -228,4 +250,5 @@ class SchubertBasis(FreeAlgebraBasis):
 
     @classmethod
     def printing_term(cls, k):
+        """Return a Xi-notation display object for key *k*."""
         return SepDescSchubPoly(cls.as_key(k), None, None)

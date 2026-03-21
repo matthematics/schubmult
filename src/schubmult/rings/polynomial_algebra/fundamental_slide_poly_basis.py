@@ -13,6 +13,7 @@ an alternative basis for expressing Schubert polynomials and their products.
 
 
 def get_descent_composition(word):
+    """Compute the descent composition of a word."""
     if not word:
         return []
     descents = [1]
@@ -24,6 +25,12 @@ def get_descent_composition(word):
     return descents
 
 def slide_product(a, b):
+    """Compute the structure constants for multiplying two fundamental slide polynomials.
+
+    Given weak compositions *a* and *b*, returns a dict mapping result
+    compositions to their coefficients in the fundamental slide expansion
+    of the product.
+    """
     n = max(len(a), len(b))
     if len(a) < n:
         a = (*a, *(0 for _ in range(n - len(a))))
@@ -147,6 +154,7 @@ def slide_product(a, b):
 
 
 def _fundamental_slide_polynomial(comp, genset):
+    """Compute the fundamental slide polynomial for a weak composition."""
     compat_seq = []
     for i, c in enumerate(comp):
         compat_seq.extend([i + 1] * c)
@@ -155,6 +163,7 @@ def _fundamental_slide_polynomial(comp, genset):
 
 
 def _compat_seq_poly(comp, genset):
+    """Recursively compute the compatible-sequence polynomial."""
     if len(comp) == 0:
         return S.One
 
@@ -178,6 +187,12 @@ def _compat_seq_poly(comp, genset):
 
 
 class FundamentalSlidePolyBasis(PolynomialBasis):
+    """Fundamental slide polynomial basis.
+
+    Keys are weak compositions. Fundamental slide polynomials provide a
+    basis that refines Schubert polynomials and coarsens monomials, with
+    an efficient combinatorial product rule.
+    """
     def is_key(self, x):
         return isinstance(x, tuple | list)
 
@@ -194,6 +209,7 @@ class FundamentalSlidePolyBasis(PolynomialBasis):
         self._monomial_basis = MonomialBasis(genset=self.genset)
 
     def to_monoms(self, key):
+        """Expand a slide key into a dict of monomial exponent tuples."""
         from schubmult.symbolic.poly.variables import genset_dict_from_expr
 
         dct = {pad_tuple(k, len(key)): v for k, v in genset_dict_from_expr(_fundamental_slide_polynomial(key, self.genset), self.genset).items()}
@@ -201,19 +217,23 @@ class FundamentalSlidePolyBasis(PolynomialBasis):
 
     @classmethod
     def dual_basis(cls):
+        """Return the dual free algebra basis class (:class:`FundamentalSlideBasis`)."""
         from ..free_algebra.fundamental_slide_basis import FundamentalSlideBasis
         return FundamentalSlideBasis
 
     def expand(self, dct):
+        """Expand a slide basis dict into a symbolic polynomial expression."""
         return sum([v * _fundamental_slide_polynomial(key, self.genset) for key, v in dct.items()])
 
     def transition_monomial(self, dct):
+        """Transition from fundamental slide basis to monomial basis."""
         res = {}
         for k, v in dct.items():
             res = add_perm_dict_with_coeff(res, self.to_monoms(k), coeff=v)
         return res
 
     def transition(self, other_basis):
+        """Return a transition function from fundamental slide basis to *other_basis*."""
         from schubmult.rings.polynomial_algebra.monomial_basis import MonomialBasis
 
         if isinstance(other_basis, MonomialBasis):
@@ -222,6 +242,7 @@ class FundamentalSlidePolyBasis(PolynomialBasis):
         return lambda x: PolynomialBasis.compose_transition(self.monomial_basis.transition(other_basis), self.transition_monomial(x))
 
     def product(self, key1, key2, coeff=S.One):
+        """Multiply two fundamental slide keys using the slide product rule."""
         return {c: v * coeff for c, v in slide_product(key1, key2).items()}
 
 

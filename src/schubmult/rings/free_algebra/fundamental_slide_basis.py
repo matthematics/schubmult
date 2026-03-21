@@ -7,8 +7,15 @@ from .free_algebra_basis import FreeAlgebraBasis
 
 
 class FundamentalSlideBasis(FreeAlgebraBasis):
+    """Fundamental slide basis of the free algebra.
+
+    Keys are weak composition tuples. Transitions are computed via
+    polynomial algebra slide polynomial expansions.
+    """
+
     @staticmethod
     def _weak_compositions(length, total):
+        """Yield all weak compositions of *total* into *length* nonneg parts."""
         if length == 0:
             if total == 0:
                 yield ()
@@ -22,10 +29,12 @@ class FundamentalSlideBasis(FreeAlgebraBasis):
 
     @classmethod
     def is_key(cls, x):
+        """Return True if *x* is a tuple or list."""
         return isinstance(x, tuple | list)
 
     @classmethod
     def as_key(cls, x):
+        """Normalize *x* to a tuple key."""
         return tuple(x)
 
     # @classmethod
@@ -41,11 +50,13 @@ class FundamentalSlideBasis(FreeAlgebraBasis):
 
     @classmethod
     def printing_term(cls, k):
+        """Return an ``FS``-labelled display object for key *k*."""
         return GenericPrintingTerm(k, "FS")
 
 
     @classmethod
     def transition_schubert(cls, key):
+        """Transition a fundamental slide key to the Schubert basis."""
         from .word_basis import WordBasis
 
         return FreeAlgebraBasis.compose_transition(WordBasis.transition_schubert, cls.transition_word(key))
@@ -53,6 +64,7 @@ class FundamentalSlideBasis(FreeAlgebraBasis):
     @classmethod
     @cache
     def transition_word(cls, key):
+        """Transition a fundamental slide key to the word basis."""
         from schubmult.abc import x
         from schubmult.rings.polynomial_algebra.fundamental_slide_poly_basis import FundamentalSlidePolyBasis
         from schubmult.rings.polynomial_algebra.monomial_basis import MonomialBasis
@@ -74,11 +86,13 @@ class FundamentalSlideBasis(FreeAlgebraBasis):
 
     @classmethod
     def dual_basis(cls):
+        """Return the FundamentalSlidePolyBasis as the dual."""
         from ..polynomial_algebra.fundamental_slide_poly_basis import FundamentalSlidePolyBasis
         return FundamentalSlidePolyBasis
 
     @classmethod
     def transition(cls, other_basis):
+        """Return a transition function from FundamentalSlideBasis to *other_basis*."""
         from .schubert_basis import SchubertBasis
         from .word_basis import WordBasis
 

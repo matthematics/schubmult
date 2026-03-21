@@ -7,18 +7,27 @@ from .free_algebra_basis import FreeAlgebraBasis
 
 
 class ElementaryBasis(FreeAlgebraBasis):
+    """Elementary symmetric function basis of the free algebra.
+
+    Keys are ``(tuple, int)`` pairs where the tuple encodes an elementary
+    symmetric function composition and the integer is the number of variables.
+    """
+
     @classmethod
     def is_key(cls, x):
+        """Return True if *x* is a ``(tuple/list, int)`` pair."""
         return isinstance(x, tuple | list) and len(x) == 2 and isinstance(x[0], tuple | list) and isinstance(x[1], int)
 
     @classmethod
     def as_key(cls, x):
+        """Normalize *x* into a ``(tuple, int)`` key."""
         return (x[0], x[1])
 
     zero_monom = ((), 0)
 
     @classmethod
     def transition(cls, other_basis):
+        """Return a transition function from ElementaryBasis to *other_basis*."""
         from .schubert_basis import SchubertBasis
         from .schubert_schur_basis import SchubertSchurBasis
         from .word_basis import WordBasis
@@ -37,6 +46,7 @@ class ElementaryBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_schubert(cls, tup, numvars):
+        """Transition an elementary key to the Schubert basis."""
         from schubmult.abc import x
         from schubmult.symbolic import prod
         from schubmult.symbolic.poly.schub_poly import monom_sym
@@ -62,4 +72,5 @@ class ElementaryBasis(FreeAlgebraBasis):
 
     @classmethod
     def printing_term(cls, k):
+        """Return an ``Elem``-labelled display object for key *k*."""
         return GenericPrintingTerm(k, "Elem")

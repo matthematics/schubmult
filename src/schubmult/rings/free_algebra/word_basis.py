@@ -15,8 +15,16 @@ ADSx = SeparatedDescentsRing(DSx([]).ring)
 
 
 class WordBasis(FreeAlgebraBasis):
+    """Word basis of the free algebra.
+
+    Keys are tuples of nonnegative integers representing words. This is the
+    fundamental basis through which all other bases perform their operations
+    via basis transitions.
+    """
+
     @staticmethod
     def _weak_compositions(length, total):
+        """Yield all weak compositions of *total* into *length* nonneg parts."""
         if length == 0:
             if total == 0:
                 yield ()
@@ -30,25 +38,56 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def is_key(cls, x):
+        """Return True if *x* is a tuple or list."""
         return isinstance(x, tuple | list)
 
     @classmethod
     def as_key(cls, x):
+        """Normalize *x* to a tuple key."""
         return tuple(x)
 
     @classmethod
     def from_rc_graph(cls, rc_graph):
+        """Return the length vector of the RC graph as a word key."""
         return {rc_graph.length_vector(): 1}
 
     @classmethod
     def product(cls, key1, key2, coeff=S.One):
+        """Concatenate two words."""
         return {(*key1, *key2): coeff}
+
+    @classmethod
+    def inject(cls, key1, i, key2, coeff=S.One):
+        """Insert *key2* into *key1* at position *i*."""
+        if i > len(key1):
+            raise IndexError(f"Insertion index {i} out of range for word of length {len(key1)}")
+        return {(*key1[:i], *key2, *key1[i:]): coeff}
+
+    @classmethod
+    def prefix(cls, key, length, coeff=S.One):
+        """Return the first *length* letters of *key*."""
+        return {key[:length]: coeff}
+
+    @classmethod
+    def suffix(cls, key, length, coeff=S.One):
+        """Return the last *length* letters of *key*."""
+        return {key[len(key) - length:]: coeff}
+
+    @classmethod
+    def interval(cls, key, start, stop, coeff=S.One):
+        """Return the subword ``key[start:stop]``."""
+        return {key[start:stop]: coeff}
 
     zero_monom = ()
 
     @classmethod
     @cache
     def coproduct(cls, key, coeff=S.One):
+        """Compute the additive coproduct of a word.
+
+        Decomposes each letter into all (i, key-i) splittings and combines
+        via a divide-and-conquer tensor product.
+        """
         if len(key) == 0:
             return {((), ()): coeff}
         if len(key) == 1:
@@ -69,6 +108,11 @@ class WordBasis(FreeAlgebraBasis):
     @classmethod
     @cache
     def bcoproduct(cls, key, coeff=S.One):
+        """Compute the bar-coproduct of a word.
+
+        Like :meth:`coproduct` but drops empty factors (zeros map to
+        the empty tuple).
+        """
         if len(key) == 0:
             return {((), ()): coeff}
         if len(key) == 1:
@@ -88,6 +132,10 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def try_internal_product(cls, key1, key2, coeff=S.One):
+        """Compute the internal product via integer matrices (requires SageMath).
+
+        Uses shifted keys (incremented by 1) with ``IntegerMatrices``.
+        """
         from sage.combinat.integer_matrices import IntegerMatrices
 
         bkey1 = [a + 1 for a in key1]
@@ -112,6 +160,11 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def internal_product(cls, key1, key2, coeff=S.One):
+        """Compute the internal product of two words via integer matrices (requires SageMath).
+
+        Words must not contain zeros. Returns the dict of result
+        words weighted by *coeff*.
+        """
         if 0 in key1 or 0 in key2:
             return {}
         from sage.combinat.integer_matrices import IntegerMatrices
@@ -136,6 +189,7 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def printing_term(cls, k):
+        """Return a bracket-notation symbol like ``[210]`` for the word *k*."""
         if all(a < 10 for a in k):
             return Symbol("[" + "".join([str(a) for a in k]) + "]")
         return Symbol("[" + " ".join([str(a) for a in k]) + "]")
@@ -143,6 +197,7 @@ class WordBasis(FreeAlgebraBasis):
     @staticmethod
     @cache
     def tup_expand(tup):
+        """Expand a word tuple into the single Schubert basis via divide-and-conquer."""
         res = splugSx([])
         if len(tup) == 0:
             return res
@@ -154,6 +209,7 @@ class WordBasis(FreeAlgebraBasis):
     @staticmethod
     @cache
     def jbasis_tup_expand(tup):
+        """Expand a word tuple into the Z basis."""
         from .z_basis import ZBasis
 
         JB = fa.FreeAlgebra(basis=ZBasis)
@@ -169,10 +225,12 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_schubert(cls, key):
+        """Transition a word key to the Schubert basis."""
         return dict(WordBasis.tup_expand(key))
 
     @classmethod
     def transition_jbasis(cls, key):
+        """Transition a word key to the J basis via Pieri products."""
         from .j_basis import JBasis
         from .schubert_basis import SchubertBasis
 
@@ -197,6 +255,7 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_jtbasis(cls, key):
+        """Transition a word key to the JT basis via normalization."""
         from .jt_basis import JTBasis
 
         FA = fa.FreeAlgebra(WordBasis)
@@ -219,6 +278,7 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_forest(cls, key):
+        """Transition a word key to the forest basis via RC graph enumeration."""
         from schubmult.rings.combinatorial import RCGraphRing
         r = RCGraphRing()
         dct = {}
@@ -236,6 +296,7 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def dual_basis(cls):
+        """Return the MonomialBasis as the dual of WordBasis."""
         from ..polynomial_algebra.monomial_basis import MonomialBasis
         return MonomialBasis
     # @classmethod
@@ -265,6 +326,7 @@ class WordBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_monomial_slide(cls, key):
+        """Transition a word key to the monomial slide basis."""
         from schubmult.abc import x
         from schubmult.rings.polynomial_algebra.monomial_slide_poly_basis import MonomialSlidePolyBasis
 

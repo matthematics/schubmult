@@ -9,10 +9,17 @@ from .base_polynomial_basis import PolynomialBasis
 
 
 class SchubertPolyBasis(PolynomialBasis):
+    """Schubert polynomial basis.
+
+    Keys are ``(Permutation, length)`` pairs. Schubert polynomials form
+    the canonical basis for the polynomial algebra in Schubert calculus,
+    dual to the :class:`SchubertBasis` of the free algebra.
+    """
     def __hash__(self):
         return hash(("schooboo", self.ring))
 
     def coproduct(self, key):
+        """Compute the coproduct of a Schubert key by splitting variable sets."""
         length = key[1]
         res = {}
         for len0 in range(length + 1):
@@ -54,6 +61,7 @@ class SchubertPolyBasis(PolynomialBasis):
         self._monomial_basis = MonomialBasis(genset=self.genset)
 
     def product(self, key1, key2, coeff=S.One):
+        """Multiply two Schubert keys using the Schubert ring multiplication."""
         if key1[1] != key2[1]:
             return {}
 
@@ -63,6 +71,7 @@ class SchubertPolyBasis(PolynomialBasis):
         return pair_length(self.ring.mul(self.ring.from_dict({key1[0]: coeff}), self.ring(key2[0])), key1[1])
 
     def transition_sepdesc(self, dct, other_basis):
+        """Transition from Schubert basis to separated descents basis."""
         from schubmult.abc import e
 
         from .elem_sym_poly_basis import ElemSymPolyBasis
@@ -90,6 +99,7 @@ class SchubertPolyBasis(PolynomialBasis):
         return res_dict
 
     def transition_elementary(self, dct, other_basis):
+        """Transition from Schubert basis to elementary symmetric basis."""
         from schubmult.combinatorics.permutation import uncode
         from schubmult.rings.free_algebra import FA
 
@@ -133,6 +143,7 @@ class SchubertPolyBasis(PolynomialBasis):
         return res
 
     def transition_key_fundamental_slide(self, perm, n):
+        """Decompose a Schubert polynomial into fundamental slide polynomials via quasi-Yamanouchi RC-graphs."""
         from schubmult.combinatorics.rc_graph import RCGraph
 
         rcs = [rc for rc in RCGraph.all_rc_graphs(perm, n) if rc.is_quasi_yamanouchi]
@@ -142,6 +153,7 @@ class SchubertPolyBasis(PolynomialBasis):
         return ret
 
     def transition_fundamental_slide(self, dct):
+        """Transition a Schubert dict to the fundamental slide basis."""
         res = {}
         for k, v in dct.items():
             res = add_perm_dict_with_coeff(res, self.transition_key_fundamental_slide(k[0], k[1]), coeff=v)
@@ -158,6 +170,7 @@ class SchubertPolyBasis(PolynomialBasis):
         return (Permutation([]), 0)
 
     def transition_key_key(self, key):
+        """Decompose a Schubert polynomial into key polynomials via highest-weight RC-graphs."""
         from schubmult.combinatorics.rc_graph import RCGraph
 
         keys = [rc.extremal_weight for rc in RCGraph.all_hw_rcs(key[0], key[1])]
@@ -172,12 +185,14 @@ class SchubertPolyBasis(PolynomialBasis):
         return res
 
     def transition_key(self, dct):
+        """Transition a Schubert dict to the key polynomial basis."""
         res = {}
         for k, v in dct.items():
             res = add_perm_dict_with_coeff(res, self.transition_key_key(k), coeff=v)
         return res
 
     def to_monoms(self, key):
+        """Expand a Schubert key into a dict of monomial exponent tuples."""
         from schubmult.symbolic.poly.variables import genset_dict_from_expr
 
         dct = {pad_tuple(k, key[1]): v for k, v in genset_dict_from_expr(self.ring.from_dict({key[0]: S.One}).as_polynomial(), self.genset).items()}
@@ -185,10 +200,12 @@ class SchubertPolyBasis(PolynomialBasis):
 
     @classmethod
     def dual_basis(cls):
+        """Return the dual free algebra basis class (:class:`SchubertBasis`)."""
         from ..free_algebra.schubert_basis import SchubertBasis
         return SchubertBasis
 
     def transition_forest_key(self, key):
+        """Decompose a Schubert polynomial into forest polynomials via omega insertion on RC-graphs."""
         from schubmult.combinatorics.rc_graph import RCGraph
 
         def word_to_pair_labeled(word):
@@ -218,12 +235,14 @@ class SchubertPolyBasis(PolynomialBasis):
         return dct
 
     def transition_forest(self, dct):
+        """Transition a Schubert dict to the forest polynomial basis."""
         res = {}
         for k, v in dct.items():
             res = add_perm_dict_with_coeff(res, self.transition_forest_key(k), coeff=v)
         return res
 
     def transition(self, other_basis):
+        """Return a transition function from Schubert basis to *other_basis*."""
         from .elem_sym_poly_basis import ElemSymPolyBasis
         from .forest_poly_basis import ForestPolyBasis
         from .fundamental_slide_poly_basis import FundamentalSlidePolyBasis

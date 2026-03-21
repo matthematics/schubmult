@@ -1,3 +1,21 @@
+"""Free algebra module providing multiple bases for Schubert calculus.
+
+The core classes are :class:`FreeAlgebra` (the ring) and
+:class:`FreeAlgebraElement` (its elements).  Elements can be expressed in
+any of the available bases and converted between them via ``change_basis``.
+
+Pre-built instances:
+    - ``FA``: FreeAlgebra with WordBasis (default)
+    - ``ASx``: FreeAlgebra with SchubertBasis
+    - ``ADSx``: FreeAlgebra with double Schubert basis
+
+Available bases:
+    WordBasis, SchubertBasis, CompositionSchubertBasis, ElementaryBasis,
+    ForestBasis, FundamentalSlideBasis, JBasis, JTBasis, KeyBasis,
+    MonomialSlideBasis, NElementaryBasis, SchubertSchurBasis,
+    SeparatedDescentsBasis, ZBasis.
+"""
+
 from ._core import FA, ADSx, ASx, FreeAlgebra, FreeAlgebraElement
 from .composition_schubert_basis import CompositionSchubertBasis
 from .elementary_basis import ElementaryBasis

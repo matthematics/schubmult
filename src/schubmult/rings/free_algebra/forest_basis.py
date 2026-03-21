@@ -5,12 +5,21 @@ from schubmult.symbolic import S
 
 
 class ForestBasis(FreeAlgebraBasis):
+    """Forest basis of the free algebra.
+
+    Keys are tuples representing indexed-forest weight vectors.
+    Transitions to the Schubert basis use RC graph enumeration
+    filtered by forest weight.
+    """
+
     @classmethod
     def is_key(cls, x):
+        """Return True if *x* is a tuple or list."""
         return isinstance(x, tuple | list)
 
     @classmethod
     def as_key(cls, x):
+        """Normalize *x* to a tuple key."""
         return tuple(x)
 
     # @classmethod
@@ -25,16 +34,19 @@ class ForestBasis(FreeAlgebraBasis):
 
     @classmethod
     def printing_term(cls, k):
+        """Return a ``ForestDual``-labelled display object for key *k*."""
         return GenericPrintingTerm(k, "ForestDual")
 
     @classmethod
     def dual_basis(cls):
+        """Return the ForestPolyBasis as the dual of ForestBasis."""
         from ..polynomial_algebra.forest_poly_basis import ForestPolyBasis
 
         return ForestPolyBasis
 
     @classmethod
     def transition_schubert(cls, key):
+        """Transition a forest key to the Schubert basis via RC graph enumeration."""
         from schubmult.rings.combinatorial import RCGraphRing
 
         r = RCGraphRing()
@@ -48,6 +60,7 @@ class ForestBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition(cls, other_basis):
+        """Return a transition function from ForestBasis to *other_basis*."""
         from schubmult.rings.free_algebra.schubert_basis import SchubertBasis
 
         if other_basis == SchubertBasis:

@@ -6,6 +6,13 @@ from .base_polynomial_basis import PolynomialBasis
 
 
 class MonomialBasis(PolynomialBasis):
+    """Standard monomial basis for the polynomial algebra.
+
+    Keys are tuples of nonnegative integers representing exponent vectors.
+    This is the fundamental basis through which other bases transition
+    by default, and is dual to the :class:`WordBasis` of the free algebra.
+    """
+
     def is_key(self, x):
         return isinstance(x, tuple | list)
 
@@ -16,6 +23,7 @@ class MonomialBasis(PolynomialBasis):
         return GenericPrintingTerm(str(self.expand_monom(k)), "")
 
     def coproduct(self, key):
+        """Compute the deconcatenation coproduct on a monomial key."""
         result_dict = {}
         key = self.as_key(key)
         for i in range(len(key) + 1):
@@ -34,25 +42,30 @@ class MonomialBasis(PolynomialBasis):
         self._genset = genset
 
     def product(self, key1, key2, coeff=S.One):
+        """Multiply two monomial keys by component-wise addition of exponents."""
         if len(key1) != len(key2):
             return {}
         return {tuple(a + b for a, b in zip(key1, key2)): coeff}
 
     def expand_monom(self, monom):
+        """Convert an exponent tuple to a monomial expression in the generating set."""
         return Mul(*[self.genset[i + 1] ** monom[i] for i in range(len(monom))])
 
     def expand(self, dct):
+        """Expand a dict of monomial keys into a symbolic polynomial expression."""
         return Add(*[v * self.expand_monom(k) for k, v in dct.items()])
 
 
 
     def transition_slide(self, dct, other_basis):
+        """Transition a monomial dict to a slide-type basis via triangular inversion."""
         ret = {}
         for k, v in dct.items():
             ret = add_perm_dict(ret, self.transition_slide_monom(other_basis, k, coeff=v))
         return ret
 
     def transition_slide_monom(self, other_basis, monom, coeff=S.One):
+        """Express a single monomial in a slide-type basis by dominance-order inversion."""
         def domkey(comp):
             return tuple([sum(comp[:i]) for i in range(1, len(comp))])
 
@@ -73,10 +86,12 @@ class MonomialBasis(PolynomialBasis):
         return ret
 
     def transition_anti_schubert(self, dct, other_basis):
+        """Transition monomials to the anti-Schubert basis by reversing exponents."""
         dct_reversed = {tuple(reversed(k)): v for k, v in dct.items()}
         return self.transition_schubert(dct_reversed, other_basis)
 
     def transition_schubert(self, dct, other_basis):
+        """Transition monomials to the Schubert basis by grouping by length."""
         ret = {}
         dct_by_length = {}
         for k, v in dct.items():
@@ -91,10 +106,12 @@ class MonomialBasis(PolynomialBasis):
 
     @classmethod
     def dual_basis(cls):
+        """Return the dual free algebra basis class (:class:`WordBasis`)."""
         from ..free_algebra.word_basis import WordBasis
         return WordBasis
 
     def transition(self, other_basis):
+        """Return a transition function from monomial basis to *other_basis*."""
         from .anti_schubert_poly_basis import AntiSchubertPolyBasis
         from .monomial_slide_poly_basis import MonomialSlidePolyBasis
         from .schubert_poly_basis import SchubertPolyBasis
@@ -115,6 +132,7 @@ class MonomialBasis(PolynomialBasis):
         return lambda x: spb.transition(other_basis)(self.transition(spb)(x))
 
     def from_expr(self, expr, length=None):
+        """Parse a symbolic expression into monomial-basis coefficient dict."""
         from schubmult.symbolic.poly.variables import genset_dict_from_expr
 
         return genset_dict_from_expr(expr, self.genset, length=length)

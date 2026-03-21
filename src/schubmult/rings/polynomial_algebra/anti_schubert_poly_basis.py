@@ -9,10 +9,17 @@ from .base_polynomial_basis import PolynomialBasis
 
 
 class AntiSchubertPolyBasis(PolynomialBasis):
+    """Anti-Schubert polynomial basis.
+
+    Keys are ``(Permutation, length)`` pairs. This basis reverses the
+    monomial ordering relative to the standard Schubert basis, with
+    the coproduct correspondingly reversed.
+    """
     def __hash__(self):
         return hash(("schoo99boo", self.ring))
 
     def coproduct(self, key):
+        """Compute the reversed coproduct of an anti-Schubert key."""
         # reverse coproduct from Schub
         length = key[1]
         res = {}
@@ -55,6 +62,7 @@ class AntiSchubertPolyBasis(PolynomialBasis):
         self._monomial_basis = MonomialBasis(genset=self.genset)
 
     def product(self, key1, key2, coeff=S.One):
+        """Multiply two anti-Schubert keys using the underlying Schubert ring."""
         if key1[1] != key2[1]:
             return {}
 
@@ -160,6 +168,7 @@ class AntiSchubertPolyBasis(PolynomialBasis):
 
     # AN ANTI KEY IS a KEY
     def transition_key_key(self, key):
+        """Decompose an anti-Schubert polynomial into key polynomials with reversed weights."""
         from schubmult.combinatorics.rc_graph import RCGraph
 
         #keys = [tuple((Permutation.w0(key[1])*(Permutation.sorting_perm(rc.extremal_weight, reverse=True)*Permutation.w0(key[1]))).apply(rc.extremal_weight)) for rc in RCGraph.all_hw_rcs(key[0], key[1])]
@@ -181,12 +190,14 @@ class AntiSchubertPolyBasis(PolynomialBasis):
         return res
 
     def transition_key(self, dct):
+        """Transition an anti-Schubert dict to the key polynomial basis."""
         res = {}
         for k, v in dct.items():
             res = add_perm_dict_with_coeff(res, self.transition_key_key(k), coeff=v)
         return res
 
     def to_monoms(self, key):
+        """Expand an anti-Schubert key into reversed monomial exponent tuples."""
         from schubmult.symbolic.poly.variables import genset_dict_from_expr
         dct = {tuple(reversed(pad_tuple(k, key[1]))): v for k, v in genset_dict_from_expr(self.ring.from_dict({key[0]: S.One}).as_polynomial(), self.genset).items()}
         return dct
@@ -227,12 +238,14 @@ class AntiSchubertPolyBasis(PolynomialBasis):
         # return dct
 
     def transition_forest(self, dct):
+        """Transition an anti-Schubert dict to the forest polynomial basis."""
         res = {}
         for k, v in dct.items():
             res = add_perm_dict_with_coeff(res, self.transition_forest_key(k), coeff=v)
         return res
 
     def transition(self, other_basis):
+        """Return a transition function from anti-Schubert basis to *other_basis*."""
         # from .elem_sym_poly_basis import ElemSymPolyBasis
         from .forest_poly_basis import ForestPolyBasis
 

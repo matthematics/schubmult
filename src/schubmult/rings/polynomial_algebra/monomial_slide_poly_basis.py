@@ -7,6 +7,7 @@ from .base_polynomial_basis import PolynomialBasis
 
 
 def _slide_polynomial(comp, genset):
+    """Compute the monomial slide polynomial for a weak composition."""
     if len(comp) == 0 or all(c == 0 for c in comp):
         return S.One
 
@@ -26,6 +27,12 @@ def _slide_polynomial(comp, genset):
 
 
 class MonomialSlidePolyBasis(PolynomialBasis):
+    """Monomial slide polynomial basis.
+
+    Keys are weak compositions. Monomial slide polynomials refine
+    key polynomials and are coarser than monomials, using a recursive
+    construction based on the first nonzero entry.
+    """
     def is_key(self, x):
         return isinstance(x, tuple | list)
 
@@ -42,21 +49,25 @@ class MonomialSlidePolyBasis(PolynomialBasis):
         self._monomial_basis = MonomialBasis(genset=self.genset)
 
     def to_monoms(self, key):
+        """Expand a monomial slide key into a dict of monomial exponent tuples."""
         from schubmult.symbolic.poly.variables import genset_dict_from_expr
 
         dct = {pad_tuple(k, len(key)): v for k, v in genset_dict_from_expr(_slide_polynomial(key, self.genset), self.genset).items()}
         return dct
 
     def transition_monomial(self, dct):
+        """Transition from monomial slide basis to monomial basis."""
         res = {}
         for k, v in dct.items():
             res = add_perm_dict_with_coeff(res, self.to_monoms(k), coeff=v)
         return res
 
     def expand(self, dct):
+        """Expand a monomial slide basis dict into a symbolic polynomial expression."""
         return Add(*[v * self.to_monoms(k) for k, v in dct.items()])
 
     def transition(self, other_basis):
+        """Return a transition function from monomial slide basis to *other_basis*."""
         if isinstance(other_basis, self.monomial_basis.__class__):
             return self.transition_monomial
         return lambda x: PolynomialBasis.compose_transition(self.monomial_basis.transition(other_basis), self.transition_monomial(x))

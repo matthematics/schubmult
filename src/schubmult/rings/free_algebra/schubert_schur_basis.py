@@ -8,12 +8,20 @@ from .free_algebra_basis import FreeAlgebraBasis
 
 
 class SchubertSchurBasis(FreeAlgebraBasis):
+    """Schubert-Schur basis of the free algebra.
+
+    Keys are ``(partition_tuple, Permutation)`` pairs encoding products of
+    a Grassmannian Schubert polynomial with a Schur polynomial.
+    """
+
     @classmethod
     def is_key(cls, x):
+        """Return True if *x* is a ``(list/tuple, Permutation/list/tuple)`` pair."""
         return len(x) == 2 and isinstance(x[0], list | tuple) and isinstance(x[1], Permutation | list | tuple)
 
     @classmethod
     def as_key(cls, x):
+        """Normalize *x* into a ``(tuple, Permutation)`` key."""
         return (tuple(x[0]), Permutation(x[1]))
 
     zero_monom = ((), Permutation([]))
@@ -21,6 +29,7 @@ class SchubertSchurBasis(FreeAlgebraBasis):
     @classmethod
     @cache
     def coproduct(cls, key):
+        """Compute the coproduct of a Schubert-Schur key via the Schubert basis."""
         from ...utils._mul_utils import _tensor_product_of_dicts_first
         from .schubert_basis import SchubertBasis
 
@@ -31,6 +40,7 @@ class SchubertSchurBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_schubert(cls, lambd, perm):
+        """Transition a Schubert-Schur key ``(lambda, perm)`` to the Schubert basis."""
         from schubmult.symbolic.poly.variables import MaskedGeneratingSet
 
         from ..schubert.schubert_ring import SingleSchubertRing
@@ -51,6 +61,7 @@ class SchubertSchurBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition_word(cls, lambd, perm):
+        """Transition a Schubert-Schur key to the word basis via the Schubert basis."""
         from .schubert_basis import SchubertBasis
         from .word_basis import WordBasis
 
@@ -58,6 +69,7 @@ class SchubertSchurBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition(cls, other_basis):
+        """Return a transition function from SchubertSchurBasis to *other_basis*."""
         from .schubert_basis import SchubertBasis
         from .word_basis import WordBasis
 
@@ -71,4 +83,5 @@ class SchubertSchurBasis(FreeAlgebraBasis):
 
     @classmethod
     def printing_term(cls, k):
+        """Return an ``SS``-prefixed symbol for key *k*."""
         return Symbol(f"SS{sstr(k)}")

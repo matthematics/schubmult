@@ -8,8 +8,15 @@ from .free_algebra_basis import FreeAlgebraBasis
 
 
 class MonomialSlideBasis(FreeAlgebraBasis):
+    """Monomial slide basis of the free algebra.
+
+    Keys are weak composition tuples. Transitions use monomial slide
+    polynomial expansions and coarsenings of compositions.
+    """
+
     @staticmethod
     def _weak_compositions(length, total):
+        """Yield all weak compositions of *total* into *length* nonneg parts."""
         if length == 0:
             if total == 0:
                 yield ()
@@ -23,10 +30,12 @@ class MonomialSlideBasis(FreeAlgebraBasis):
 
     @classmethod
     def is_key(cls, x):
+        """Return True if *x* is a tuple or list."""
         return isinstance(x, tuple | list)
 
     @classmethod
     def as_key(cls, x):
+        """Normalize *x* to a tuple key."""
         return tuple(x)
 
     # @classmethod
@@ -42,12 +51,14 @@ class MonomialSlideBasis(FreeAlgebraBasis):
 
     @classmethod
     def printing_term(cls, k):
+        """Return an ``MS``-labelled display object for key *k*."""
         return GenericPrintingTerm(k, "MS")
 
 
     @classmethod
     @cache
     def transition_fundamental_slide(cls, key):
+        """Transition a monomial slide key to the fundamental slide basis."""
         key = tuple(key)
         n = len(key)
         flat_key = tuple(c for c in key if c > 0)
@@ -102,6 +113,7 @@ class MonomialSlideBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition(cls, other_basis):
+        """Return a transition function from MonomialSlideBasis to *other_basis*."""
         from .fundamental_slide_basis import FundamentalSlideBasis
         from .schubert_basis import SchubertBasis
         from .word_basis import WordBasis
@@ -118,6 +130,7 @@ class MonomialSlideBasis(FreeAlgebraBasis):
     @classmethod
     @cache
     def transition_word(cls, key):
+        """Transition a monomial slide key to the word basis."""
         from schubmult.abc import x
         from schubmult.rings.polynomial_algebra.monomial_basis import MonomialBasis
         from schubmult.rings.polynomial_algebra.monomial_slide_poly_basis import MonomialSlidePolyBasis

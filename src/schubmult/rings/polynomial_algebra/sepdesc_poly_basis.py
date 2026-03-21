@@ -10,6 +10,12 @@ from .base_polynomial_basis import PolynomialBasis
 
 
 class SepDescPolyBasis(PolynomialBasis):
+    """Separated descents polynomial basis.
+
+    Keys are ``(Permutation, Permutation, k)`` triples. Elements are
+    products of pairs of Schubert polynomials, parameterized by a
+    separation level *k*.
+    """
     def __hash__(self):
         return hash((self.ring, self.k, "fatbacon"))
 
@@ -18,6 +24,7 @@ class SepDescPolyBasis(PolynomialBasis):
         return self.as_key([[], []])
 
     def product(self, key1, key2, coeff=S.One):
+        """Multiply two separated-descents keys by transitioning through Schubert."""
         from .schubert_poly_basis import SchubertPolyBasis
 
         mnb = SchubertPolyBasis(ring=self.ring)
@@ -61,6 +68,7 @@ class SepDescPolyBasis(PolynomialBasis):
         return MonomialBasis(genset=self.ring.genset)
 
     def transition_schubert(self, dct, other_basis):
+        """Transition from separated descents to Schubert basis by multiplying the pair factors."""
         out_ret = self.ring.zero
         for (k1, k2, _, __), v in dct.items():
             out_ret += self.ring.from_dict({k1: v}) * self.ring.from_dict({k2: S.One})
@@ -70,6 +78,7 @@ class SepDescPolyBasis(PolynomialBasis):
         return {x: S.One}
 
     def transition(self, other_basis):
+        """Return a transition function from separated descents to *other_basis*."""
         from .elem_sym_poly_basis import ElemSymPolyBasis
         from .monomial_basis import MonomialBasis
         from .schubert_poly_basis import SchubertPolyBasis

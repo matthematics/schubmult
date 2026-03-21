@@ -4,12 +4,20 @@ from schubmult.symbolic import S
 
 
 class KeyBasis(FreeAlgebraBasis):
+    """Key polynomial (Demazure character) basis of the free algebra.
+
+    Keys are weak composition tuples. Transitions to the Schubert basis
+    use RC graph enumeration filtered by extremal weight.
+    """
+
     @classmethod
     def is_key(cls, x):
+        """Return True if *x* is a tuple or list."""
         return isinstance(x, tuple | list)
 
     @classmethod
     def as_key(cls, x):
+        """Normalize *x* to a tuple key."""
         return tuple(x)
 
     # @classmethod
@@ -24,16 +32,19 @@ class KeyBasis(FreeAlgebraBasis):
 
     @classmethod
     def dual_basis(cls):
+        """Return the KeyPolyBasis as the dual of KeyBasis."""
         from ..polynomial_algebra.key_poly_basis import KeyPolyBasis
         return KeyPolyBasis
 
     @classmethod
     def printing_term(cls, k):
+        """Return a ``Key``-labelled display object for key *k*."""
         return GenericPrintingTerm(k, "Key")
 
 
     @classmethod
     def transition_schubert(cls, key):
+        """Transition a key composition to the Schubert basis via RC graphs."""
         from schubmult.rings.combinatorial import RCGraphRing
         r = RCGraphRing()
         dct = {}
@@ -46,6 +57,7 @@ class KeyBasis(FreeAlgebraBasis):
 
     @classmethod
     def transition(cls, other_basis):
+        """Return a transition function from KeyBasis to *other_basis*."""
         from schubmult.rings.free_algebra.schubert_basis import SchubertBasis
 
         if other_basis == SchubertBasis:

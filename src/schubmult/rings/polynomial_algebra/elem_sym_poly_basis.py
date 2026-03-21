@@ -6,6 +6,12 @@ from .base_polynomial_basis import PolynomialBasis
 
 
 class ElemSymPolyBasis(PolynomialBasis):
+    """Elementary symmetric polynomial basis.
+
+    Keys are tuples encoding products of elementary symmetric polynomials
+    e_k(x_1, ..., x_n). Each key specifies degrees and variable counts
+    for the elementary symmetric factors.
+    """
     def is_key(self, x):
         return isinstance(x, tuple | list)
 
@@ -25,6 +31,7 @@ class ElemSymPolyBasis(PolynomialBasis):
         self._monomial_basis = MonomialBasis(genset=genset)
 
     def transition_schubert(self, dct):
+        """Transition from elementary symmetric basis to Schubert basis."""
         from schubmult.abc import e
 
         res = {}
@@ -43,6 +50,7 @@ class ElemSymPolyBasis(PolynomialBasis):
         return res
 
     def transition_monomial(self, dct):
+        """Transition from elementary symmetric basis to monomial basis."""
         from schubmult.abc import e
         from schubmult.symbolic import expand_func
         from schubmult.utils.perm_utils import add_perm_dict_with_coeff
@@ -58,6 +66,7 @@ class ElemSymPolyBasis(PolynomialBasis):
         return res
 
     def transition(self, other_basis):
+        """Return a transition function from this basis to *other_basis*."""
         from .monomial_basis import MonomialBasis
         from .schubert_poly_basis import SchubertPolyBasis
 
