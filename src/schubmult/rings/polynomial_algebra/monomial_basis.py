@@ -43,6 +43,10 @@ class MonomialBasis(PolynomialBasis):
 
     def product(self, key1, key2, coeff=S.One):
         """Multiply two monomial keys by component-wise addition of exponents."""
+        if len(key1) == 0:
+            return {key2: coeff}
+        if len(key2) == 0:
+            return {key1: coeff}
         if len(key1) != len(key2):
             return {}
         return {tuple(a + b for a, b in zip(key1, key2)): coeff}
