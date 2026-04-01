@@ -64,6 +64,8 @@ _lazy_exports = {
     "NilHeckeRing": "schubmult.rings.schubert.nil_hecke",
     "PolynomialAlgebra": "schubmult.rings.polynomial_algebra",
     "TensorRing": "schubmult.rings.tensor_ring",
+    "DirectProductRing": "schubmult.rings.direct_product_ring",
+    "DirectProductRingElement": "schubmult.rings.direct_product_ring",
     "BaseRing": "schubmult.rings.base_ring",
     "BaseRingElement": "schubmult.rings.base_ring",
     # Variables

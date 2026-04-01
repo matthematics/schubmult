@@ -1204,50 +1204,108 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 perm = perm.swap(p - 1, p)
         return perm
 
+    @classmethod
+    def in_CEM_basis(cls, perm: Permutation, length: int, partition: tuple[int]) -> dict[RCGraph, dict[tuple[RCGraph], int]]:
+        import itertools
+        import math
+
+        from schubmult import Sx
+        from schubmult.rings.polynomial_algebra._core import PA
+        mu = uncode(partition)
+        # if (mu * (~perm)).inv != mu.inv - perm.inv:
+        #     raise ValueError("Permutation and partition do not have compatible lengths or inversions for CEM expansion")
+        numnums = len(partition)
+        def elem_sym_pos(p, k):
+            offset = (k * (k - 1))//2
+            return offset + p
+        def inv_elem_sym_pos(pos):
+            k = math.ceil((-1 + math.sqrt(1 + 8 * pos)) / 2)
+            p = pos - (k * (k - 1)) // 2
+            return p, k
+
+        the_length = (numnums * (numnums + 1))//2
+        def word_elem(p, k, *args):  # noqa: ARG001
+            import numpy as np
+            if p > k or p < 0:
+                return 0
+
+            vec = np.zeros(the_length, dtype=int)
+            if p > 0:
+                vec[elem_sym_pos(p, k) - 1] = 1
+            return PA.from_dict({tuple(vec.tolist()): 1})
+        the_pa = Sx(perm).cem_rep(mumu=mu, elem_func=word_elem)
+        ret = {}
+        for monom, coeff in the_pa.items():
+            pair_list = []
+            for pos, exponent in enumerate(monom, start=1):
+                if exponent > 0:
+                    p, k = inv_elem_sym_pos(pos)
+                    pair_list.extend([(p, k)] * exponent)
+            for rc_list in itertools.product(*[cls.elem_sym_rcs(p,k) for p,k in pair_list]):
+                rc_tup = tuple(rc_list)
+                rc = rc_list[0]
+                for other in rc_list[1:]:
+                    rc = rc.resize(len(other)).squash_product(other)
+                rc = rc.resize(length)
+                toadd_dict = ret.get(rc, {})
+                toadd_dict[rc_tup] = toadd_dict.get(rc_tup, 0) + coeff
+                ret[rc] = toadd_dict
+        return ret
+
+
+    @classmethod
+    def elem_sym_rcs(cls, p, k, length=None):
+        if length is None:
+            length = k
+        return cls.all_rc_graphs(uncode([0] * (k - p) + [1] * p), length=length)
+
     def transpose(self, length: int | None = None) -> RCGraph:
-        # newrc = []
+        newrc = []
 
-        # the_self = self
-        # if length is not None and length < len(self):
-        #     the_self = self.resize(length)
-        # trimself = [list(row) for row in the_self]
-        # i = 0
-
-        # while len(newrc) < length or any(len(row) > 0 for row in trimself):
-        #     new_row = []
-        #     for index in range(len(trimself)):
-        #         if len(trimself[index]) > 0 and trimself[index][-1] == index + i + 1:
-        #             new_row += [index + i + 1]
-        #             trimself[index].pop()
-        #     new_row.reverse()
-        #     newrc.append(tuple(new_row))
-        #     i += 1
-        # new_rc = (type(self)(newrc)).normalize()
-        import numpy as np
-
-        assert self.is_valid, f"Cannot transpose invalid RC graph, got {self=}"
-        if length is not None and len(self) < length:
+        the_self = self
+        if length is not None and length < len(self):
             the_self = self.resize(length)
-        elif length is None and len(self) < len((~self.perm).trimcode):
-            the_self = self.resize(len((~self.perm).trimcode))
-        else:
-            the_self = self
-        arr = np.array([[the_self[i, the_self.cols - j - 1] for j in range(the_self.cols)] for i in range(the_self.rows)], dtype=object)
-        if length is not None and arr.shape[1] < length:
-            arr = np.hstack([arr, np.full((arr.shape[0], length - arr.shape[1]), None, dtype=object)])
-        elif length is None and arr.shape[1] < (len((~self.perm).trimcode)):
-            arr = np.hstack([arr, np.full((arr.shape[0], len((~self.perm).trimcode) - arr.shape[1]), None, dtype=object)])
-        assert np.count_nonzero(np.not_equal(arr, None)) == self.perm.inv
-        arr = np.transpose(arr)
-        assert np.count_nonzero(np.not_equal(arr, None)) == self.perm.inv
-        # arr = arr.resize(self.cols, self.cols).t
+        if length is None:
+            length = len((~self.perm).trimcode)
+        trimself = [list(row) for row in the_self]
+        i = 0
 
-        new_rc = type(self).from_array(arr, min_length=length if length is not None else len(self))
-        assert new_rc.perm == ~self.perm, f"Transpose does not preserve permutation, got {new_rc.perm=}, expected {~self.perm=}, {tuple(new_rc)=} {tuple(self)=}"
-        if length is not None:
-            new_rc = new_rc.resize(length)
-        # print("Yay happy")
-        # print(new_rc)
+        while len(newrc) < length or any(len(row) > 0 for row in trimself):
+            new_row = []
+            for index in range(len(trimself)):
+                if len(trimself[index]) > 0 and trimself[index][-1] == index + i + 1:
+                    new_row += [index + i + 1]
+                    trimself[index].pop()
+            new_row.reverse()
+            newrc.append(tuple(new_row))
+            i += 1
+        new_rc = (type(self)(newrc)).normalize()
+        new_rc = new_rc.resize(length)
+        # import numpy as np
+
+        # assert self.is_valid, f"Cannot transpose invalid RC graph, got {self=}"
+        # if length is not None and len(self) < length:
+        #     the_self = self.resize(length)
+        # elif length is None and len(self) < len((~self.perm).trimcode):
+        #     the_self = self.resize(len((~self.perm).trimcode))
+        # else:
+        #     the_self = self
+        # arr = np.array([[the_self[i, the_self.cols - j - 1] for j in range(the_self.cols)] for i in range(the_self.rows)], dtype=object)
+        # if length is not None and arr.shape[1] < length:
+        #     arr = np.hstack([arr, np.full((arr.shape[0], length - arr.shape[1]), None, dtype=object)])
+        # elif length is None and arr.shape[1] < (len((~self.perm).trimcode)):
+        #     arr = np.hstack([arr, np.full((arr.shape[0], len((~self.perm).trimcode) - arr.shape[1]), None, dtype=object)])
+        # assert np.count_nonzero(np.not_equal(arr, None)) == self.perm.inv
+        # arr = np.transpose(arr)
+        # assert np.count_nonzero(np.not_equal(arr, None)) == self.perm.inv
+        # # arr = arr.resize(self.cols, self.cols).t
+
+        # new_rc = type(self).from_array(arr, min_length=length if length is not None else len(self))
+        # assert new_rc.perm == ~self.perm, f"Transpose does not preserve permutation, got {new_rc.perm=}, expected {~self.perm=}, {tuple(new_rc)=} {tuple(self)=}"
+        # if length is not None:
+        #     new_rc = new_rc.resize(length)
+        # # print("Yay happy")
+        # # print(new_rc)
         return new_rc
 
     @classmethod

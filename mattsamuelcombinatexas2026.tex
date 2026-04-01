@@ -61,16 +61,36 @@
   \titlepage
 \end{frame}
 
-\begin{frame}{Plan}
+\begin{frame}{Schubert polynomials}
 \begin{itemize}
-  \item Slightly expand the polynomial ring
-  \item Dual algebra and basis indexing.
-  \item Schubert, key, and forest bases in one transition framework.
-  \item Final point: positivity questions through structure constants.
+  \item Multivariate polynomials representing cohomology classes of Schubert varieties in the complete flag variety.
+  \item Indexed by permutations, with the Schubert polynomial $\sch_w$ corresponding to a permutation $w$.
+  \item Generalize the Schur polynomials, so their structure constants generalize the Littlewood-Richardson coefficients.
+  \item Structure constants are nonnegative integers, but no positive combinatorial formula is known for them in general.
 \end{itemize}
+$$\sch_{41523}(x_1,x_2,x_3) = x_{1}^{3} x_{2}^{2} + x_{1}^{3} x_{2} x_{3} + x_{1}^{3} x_{3}^{2}$$
 \end{frame}
 
-\begin{frame}{Direct sum of polynomial algebras}
+\begin{frame}{What is a positive formula?}
+  \begin{itemize}
+  \item Trying to find such a formula has made generations of mathematicians question their sanity
+  \item What do we mean when we say a ``positive formula?''
+  \item Canditate: complexity class $\#\mathrm{P}$. The number of ``yes'' answers to an $\mathrm{NP}$ problem.
+  
+  \end{itemize}
+  \begin{theorem}[S, 2026+]
+  Schubert polynomial multiplication is in $\#\mathrm{P}$.
+  \end{theorem}
+  %The proof will show you why this definition is unsuitable.
+\end{frame}
+
+\begin{frame}{Why is this not a positive formula?}
+  \begin{itemize}
+  \item Rearranges the problem so that the cancellation results in a $0$-$1$ valued function, without combinatorially resolving the cancellation.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{A run of the mill bialgebra}
 Define
 \[
 \coma = \bigoplus_{n\ge 0} \coma_n,
@@ -185,11 +205,8 @@ The coefficients $c_{u,v}^{w}$ of the coproduct formula
 \Delta\,\Sch{w}^{n} = \sum_{u,v} c_{u,v}^{w}\,\Sch{u}^{n}\otimes \Sch{v}^{n}
 \]
 
-are the Littlewood-Richardson coefficients for the complete flag variety on a complex vector space of dimension $n+1$.
+are the Littlewood-Richardson coefficients for Schubert polynomials!
 
-This is the main structural link: Schubert positivity data appears as bialgebra structure constants.
-
-(Yes, the crossing diagrams are secretly pipe dreams.)
 \end{frame}
 
 % \begin{frame}{Coefficients of the dual Schubert basis}
@@ -381,7 +398,7 @@ $$\pi_{\mathrm{Sch}} \circ \iota = \pi_{\mathrm{wt}} \circ \iota = \mathrm{id}_{
 % %Under the basis identification in $\dcoma$, these describe the same surjective ring homomorphism (Schubert coordinates versus word coordinates).
 % \end{frame}
 
-\begin{frame}{Immediate consequence}
+\begin{frame}{Littlewood-Richardson rule for (dual) Schubert polynomials}
 We immediately obtain a formula for the product of dual Schubert elements.
 
 \begin{theorem}[S, 2026+]
@@ -400,792 +417,43 @@ $$\sch_w(x_1,\ldots,x_{n_1+n_2}) = \sum_{u,v} d_{u,v}^{w}(n_1, n_2)\,\sch_u(x_1,
 % Note: taking $w$ to be a Grassmannian permutation, this formula is essentially a Littlewood-Richardson rule for Schur polynomials, since their product and coproduct coincide.
 \end{frame}
 
-\begin{frame}{Coproduct on the ring of pipe dreams}
-  It is not immediately clear how to lift the coproduct of $\dcoma$ to a coproduct on the ring of pipe dreams. However, there are some very special properties that make it work.
-  \begin{itemize}
-  \item The map $\phi = \iota\circ\pi_{\mathrm{Sch}}$ is an idempotent ring homomorphism from $\RC$ to itself whose kernel is the difference of pairs of pipe dreams with the same permutation.
-  
-  \item In fact, the decomposition
-  $$\phi(R) + (R - \phi(R))$$
-  is into direct summands, as $R - \phi(R)$ is also in the kernel of $\phi$.
-
-  \item Since $\phi(\RC)$ is isomorphic to $\dcoma$, we can define a coproduct on $\phi(\RC)$ by transporting the coproduct of $\dcoma$ along this isomorphism on generators. The property of $\phi$ being a ring homomorphism then allows us to extend this to a coproduct on all of $\RC$ by defining 
-  $$\Delta(R) = \Delta(\phi(R))$$
-  \end{itemize}
+\begin{frame}{Interpretation of $\pi_{\mathrm{Sch}}$ as a basis transition}
+  $\pi_{\mathrm{Sch}}$ can be interpreted as a transition from the word basis of $\dcoma$ to the Schubert basis. In particular, we have that
+  \begin{theorem}[S, 2026+]
+  Let $D\in \dcoma$ be an element such that
+  $$D=\sum_{\alpha} c_{\alpha}[\alpha]$$
+  where $\alpha$ ranges over all weak compostiions. Then
+  $$D=\sum_{R\in\RC,\wtt(R)=\alpha} c_{\alpha}\pi_{\mathrm{Sch}}(R)$$
+  \end{theorem}
 \end{frame}
 
-\begin{frame}{The dual ring of pipe dreams}
-  Hence we may define a dual $\RC^*$ of $\RC$ with a dual basis $\{R^*\}$ and a dual product $*$ such that 
-  $$\langle \Delta(P), R_1^*\otimes R_2^* \rangle = \langle P, R_1^**R_2^* \rangle.$$ 
-  The map $\iota:\dcoma\hookrightarrow \RC$ induces a surjective ring homomorphism $\iota^*:\RC^*\twoheadrightarrow \coma$.
-\begin{theorem}[S, 2026+]
-The product $*$ is associative and commutative and gives a well-defined ring structure on $\RC^*$. Moreover, $\iota^*$ is a surjective ring homomorphism from $\RC^*$ to $\coma$ such that if we define
-$$\mathcal{S}_w^n = \sum_{R\in\RC(w,n)} R^*,$$
-then $\iota^*(\mathcal{S}_w^n) = \sch_{w}^n$. Hence the dual pipe dreams model Schubert polynomial multiplication, and the elements $\mathcal{S}_w^n$ have nonnegative structure constants under the projection to $\coma$.
-\end{theorem}
-  But of course, signs pop up to thwart a Littlewood-Richardson rule.
+\begin{frame}{Homomorphism of rings into the direct product}
+  $\pi_{\mathrm{Sch}}$ can be interpreted as a transition from the word basis of $\dcoma$ to the Schubert basis. In particular, we have that
+  \begin{theorem}[S, 2026+]
+  There is a homomorphism $\Phi:\dcoma\times\dcoma$ given by
+$$\Phi(D) = (\pi_{\mathrm{Sch}}(D), \pi_{\mathrm{wt}}(D))$$
+such that if $D$ is in the subalgebra of $\RC$ generated by the single rows, then $\Phi(D) = (d,d)$ for some $d\in \dcoma$.
+  \end{theorem}
 \end{frame}
 
-\begin{frame}{Signed example}
-\[
-\vcenter{\hbox{\begin{tikzpicture}[scale=0.25, every node/.style={scale=0.7}]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=0.5pt] (0,4.5) .. controls (0.3,4.5) and (0.5,4.7) .. (0.5,5);
-  \draw[blue, line width=0.5pt] (0.5,4) .. controls (0.5,4.3) and (0.7,4.5) .. (1,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=0.5pt] (2,4.5) .. controls (2.3,4.5) and (2.5,4.7) .. (2.5,5);
-  \draw[blue, line width=0.5pt] (2.5,4) .. controls (2.5,4.3) and (2.7,4.5) .. (3,4.5);
-  \draw[blue, line width=0.5pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
-  \draw[blue, line width=0.5pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
-  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=0.5pt] (0,3.5) .. controls (0.3,3.5) and (0.5,3.7) .. (0.5,4);
-  \draw[blue, line width=0.5pt] (0.5,3) .. controls (0.5,3.3) and (0.7,3.5) .. (1,3.5);
-  \draw[blue, line width=0.5pt] (1,3.5) .. controls (1.3,3.5) and (1.5,3.7) .. (1.5,4);
-  \draw[blue, line width=0.5pt] (1.5,3) .. controls (1.5,3.3) and (1.7,3.5) .. (2,3.5);
-  \draw[blue, line width=0.5pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=0.5pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
-  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=0.5pt, line cap=round] (0,2.5) -- (1,2.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,2) -- (0.5,3);
-  \draw[blue, line width=0.5pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
-  \draw[blue, line width=0.5pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
-  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
-  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
-  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
-  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
-  \node[font=\bfseries, text=red, anchor=south] at (0.5,5.3) {1};
-  \node[font=\bfseries, text=red, anchor=south] at (1.5,5.3) {4};
-  \node[font=\bfseries, text=red, anchor=south] at (2.5,5.3) {2};
-  \node[font=\bfseries, text=red, anchor=south] at (3.5,5.3) {3};
-  \node[font=\bfseries, text=red, anchor=south] at (4.5,5.3) {5};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,0.5) {5};
-\end{tikzpicture}}}
-\;\ast\;
-\vcenter{\hbox{\begin{tikzpicture}[scale=0.25, every node/.style={scale=0.7}]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,4.5) -- (1,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,4) -- (0.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (2,4.5) -- (3,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2.5,4) -- (2.5,5);
-  \draw[blue, line width=0.5pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
-  \draw[blue, line width=0.5pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
-  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=0.5pt] (0,3.5) .. controls (0.3,3.5) and (0.5,3.7) .. (0.5,4);
-  \draw[blue, line width=0.5pt] (0.5,3) .. controls (0.5,3.3) and (0.7,3.5) .. (1,3.5);
-  \draw[blue, line width=0.5pt] (1,3.5) .. controls (1.3,3.5) and (1.5,3.7) .. (1.5,4);
-  \draw[blue, line width=0.5pt] (1.5,3) .. controls (1.5,3.3) and (1.7,3.5) .. (2,3.5);
-  \draw[blue, line width=0.5pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=0.5pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
-  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=0.5pt, line cap=round] (0,2.5) -- (1,2.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,2) -- (0.5,3);
-  \draw[blue, line width=0.5pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
-  \draw[blue, line width=0.5pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
-  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
-  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
-  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
-  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
-  \node[font=\bfseries, text=red, anchor=south] at (0.5,5.3) {2};
-  \node[font=\bfseries, text=red, anchor=south] at (1.5,5.3) {4};
-  \node[font=\bfseries, text=red, anchor=south] at (2.5,5.3) {3};
-  \node[font=\bfseries, text=red, anchor=south] at (3.5,5.3) {1};
-  \node[font=\bfseries, text=red, anchor=south] at (4.5,5.3) {5};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,0.5) {5};
-\end{tikzpicture}}}
-\;=\;
-\vcenter{\hbox{\begin{tikzpicture}[scale=0.25, every node/.style={scale=0.7}]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,4.5) -- (1,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,4) -- (0.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (2,4.5) -- (3,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2.5,4) -- (2.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (3,4.5) -- (4,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (3.5,4) -- (3.5,5);
-  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=0.5pt] (0,3.5) .. controls (0.3,3.5) and (0.5,3.7) .. (0.5,4);
-  \draw[blue, line width=0.5pt] (0.5,3) .. controls (0.5,3.3) and (0.7,3.5) .. (1,3.5);
-  \draw[blue, line width=0.5pt] (1,3.5) .. controls (1.3,3.5) and (1.5,3.7) .. (1.5,4);
-  \draw[blue, line width=0.5pt] (1.5,3) .. controls (1.5,3.3) and (1.7,3.5) .. (2,3.5);
-  \draw[blue, line width=0.5pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=0.5pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
-  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=0.5pt, line cap=round] (0,2.5) -- (1,2.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,2) -- (0.5,3);
-  \draw[blue, line width=0.5pt, line cap=round] (1,2.5) -- (2,2.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,2) -- (1.5,3);
-  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
-  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
-  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
-  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
-  \node[font=\bfseries, text=red, anchor=south] at (0.5,5.3) {2};
-  \node[font=\bfseries, text=red, anchor=south] at (1.5,5.3) {4};
-  \node[font=\bfseries, text=red, anchor=south] at (2.5,5.3) {5};
-  \node[font=\bfseries, text=red, anchor=south] at (3.5,5.3) {3};
-  \node[font=\bfseries, text=red, anchor=south] at (4.5,5.3) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,0.5) {5};
-\end{tikzpicture}}}
-\;+\;
-\vcenter{\hbox{\begin{tikzpicture}[scale=0.25, every node/.style={scale=0.7}]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,4.5) -- (1,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,4) -- (0.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (2,4.5) -- (3,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2.5,4) -- (2.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (3,4.5) -- (4,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (3.5,4) -- (3.5,5);
-  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=0.5pt] (0,3.5) .. controls (0.3,3.5) and (0.5,3.7) .. (0.5,4);
-  \draw[blue, line width=0.5pt] (0.5,3) .. controls (0.5,3.3) and (0.7,3.5) .. (1,3.5);
-  \draw[blue, line width=0.5pt] (1,3.5) .. controls (1.3,3.5) and (1.5,3.7) .. (1.5,4);
-  \draw[blue, line width=0.5pt] (1.5,3) .. controls (1.5,3.3) and (1.7,3.5) .. (2,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2,3.5) -- (3,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2.5,3) -- (2.5,4);
-  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=0.5pt, line cap=round] (0,2.5) -- (1,2.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,2) -- (0.5,3);
-  \draw[blue, line width=0.5pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
-  \draw[blue, line width=0.5pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
-  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
-  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
-  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
-  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
-  \node[font=\bfseries, text=red, anchor=south] at (0.5,5.3) {2};
-  \node[font=\bfseries, text=red, anchor=south] at (1.5,5.3) {4};
-  \node[font=\bfseries, text=red, anchor=south] at (2.5,5.3) {5};
-  \node[font=\bfseries, text=red, anchor=south] at (3.5,5.3) {3};
-  \node[font=\bfseries, text=red, anchor=south] at (4.5,5.3) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,0.5) {5};
-\end{tikzpicture}}}
-\;+\;
-\vcenter{\hbox{\begin{tikzpicture}[scale=0.25, every node/.style={scale=0.7}]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,4.5) -- (1,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,4) -- (0.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (2,4.5) -- (3,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2.5,4) -- (2.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (3,4.5) -- (4,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (3.5,4) -- (3.5,5);
-  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=0.5pt] (0,3.5) .. controls (0.3,3.5) and (0.5,3.7) .. (0.5,4);
-  \draw[blue, line width=0.5pt] (0.5,3) .. controls (0.5,3.3) and (0.7,3.5) .. (1,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,3.5) -- (2,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,3) -- (1.5,4);
-  \draw[blue, line width=0.5pt, line cap=round] (2,3.5) -- (3,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2.5,3) -- (2.5,4);
-  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=0.5pt] (0,2.5) .. controls (0.3,2.5) and (0.5,2.7) .. (0.5,3);
-  \draw[blue, line width=0.5pt] (0.5,2) .. controls (0.5,2.3) and (0.7,2.5) .. (1,2.5);
-  \draw[blue, line width=0.5pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
-  \draw[blue, line width=0.5pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
-  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
-  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
-  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
-  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
-  \node[font=\bfseries, text=red, anchor=south] at (0.5,5.3) {2};
-  \node[font=\bfseries, text=red, anchor=south] at (1.5,5.3) {4};
-  \node[font=\bfseries, text=red, anchor=south] at (2.5,5.3) {5};
-  \node[font=\bfseries, text=red, anchor=south] at (3.5,5.3) {3};
-  \node[font=\bfseries, text=red, anchor=south] at (4.5,5.3) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,0.5) {5};
-\end{tikzpicture}}}
-\;-\;
-\tikz[baseline, remember picture]{\node[inner sep=0pt] (rightTopTerm) {$\vcenter{\hbox{\begin{tikzpicture}[scale=0.25, every node/.style={scale=0.7}]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,4.5) -- (1,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,4) -- (0.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (2,4.5) -- (3,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2.5,4) -- (2.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (3,4.5) -- (4,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (3.5,4) -- (3.5,5);
-  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,3.5) -- (1,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,3) -- (0.5,4);
-  \draw[blue, line width=0.5pt] (1,3.5) .. controls (1.3,3.5) and (1.5,3.7) .. (1.5,4);
-  \draw[blue, line width=0.5pt] (1.5,3) .. controls (1.5,3.3) and (1.7,3.5) .. (2,3.5);
-  \draw[blue, line width=0.5pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=0.5pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
-  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=0.5pt, line cap=round] (0,2.5) -- (1,2.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,2) -- (0.5,3);
-  \draw[blue, line width=0.5pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
-  \draw[blue, line width=0.5pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
-  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
-  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
-  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
-  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
-  \node[font=\bfseries, text=red, anchor=south] at (0.5,5.3) {4};
-  \node[font=\bfseries, text=red, anchor=south] at (1.5,5.3) {2};
-  \node[font=\bfseries, text=red, anchor=south] at (2.5,5.3) {3};
-  \node[font=\bfseries, text=red, anchor=south] at (3.5,5.3) {5};
-  \node[font=\bfseries, text=red, anchor=south] at (4.5,5.3) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,0.5) {5};
-\end{tikzpicture}}}$};}
-\]
-\[
-\vcenter{\hbox{\begin{tikzpicture}[scale=0.25, every node/.style={scale=0.7}]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=0.5pt] (0,4.5) .. controls (0.3,4.5) and (0.5,4.7) .. (0.5,5);
-  \draw[blue, line width=0.5pt] (0.5,4) .. controls (0.5,4.3) and (0.7,4.5) .. (1,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=0.5pt] (2,4.5) .. controls (2.3,4.5) and (2.5,4.7) .. (2.5,5);
-  \draw[blue, line width=0.5pt] (2.5,4) .. controls (2.5,4.3) and (2.7,4.5) .. (3,4.5);
-  \draw[blue, line width=0.5pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
-  \draw[blue, line width=0.5pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
-  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=0.5pt] (0,3.5) .. controls (0.3,3.5) and (0.5,3.7) .. (0.5,4);
-  \draw[blue, line width=0.5pt] (0.5,3) .. controls (0.5,3.3) and (0.7,3.5) .. (1,3.5);
-  \draw[blue, line width=0.5pt] (1,3.5) .. controls (1.3,3.5) and (1.5,3.7) .. (1.5,4);
-  \draw[blue, line width=0.5pt] (1.5,3) .. controls (1.5,3.3) and (1.7,3.5) .. (2,3.5);
-  \draw[blue, line width=0.5pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=0.5pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
-  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=0.5pt, line cap=round] (0,2.5) -- (1,2.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,2) -- (0.5,3);
-  \draw[blue, line width=0.5pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
-  \draw[blue, line width=0.5pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
-  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
-  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
-  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
-  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
-  \node[font=\bfseries, text=red, anchor=south] at (0.5,5.3) {1};
-  \node[font=\bfseries, text=red, anchor=south] at (1.5,5.3) {4};
-  \node[font=\bfseries, text=red, anchor=south] at (2.5,5.3) {2};
-  \node[font=\bfseries, text=red, anchor=south] at (3.5,5.3) {3};
-  \node[font=\bfseries, text=red, anchor=south] at (4.5,5.3) {5};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,0.5) {5};
-\end{tikzpicture}}}
-\;*\;
-\vcenter{\hbox{\begin{tikzpicture}[scale=0.25, every node/.style={scale=0.7}]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,4.5) -- (1,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,4) -- (0.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (2,4.5) -- (3,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2.5,4) -- (2.5,5);
-  \draw[blue, line width=0.5pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
-  \draw[blue, line width=0.5pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
-  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=0.5pt] (0,3.5) .. controls (0.3,3.5) and (0.5,3.7) .. (0.5,4);
-  \draw[blue, line width=0.5pt] (0.5,3) .. controls (0.5,3.3) and (0.7,3.5) .. (1,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,3.5) -- (2,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,3) -- (1.5,4);
-  \draw[blue, line width=0.5pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=0.5pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
-  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=0.5pt] (0,2.5) .. controls (0.3,2.5) and (0.5,2.7) .. (0.5,3);
-  \draw[blue, line width=0.5pt] (0.5,2) .. controls (0.5,2.3) and (0.7,2.5) .. (1,2.5);
-  \draw[blue, line width=0.5pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
-  \draw[blue, line width=0.5pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
-  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
-  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
-  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
-  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
-  \node[font=\bfseries, text=red, anchor=south] at (0.5,5.3) {2};
-  \node[font=\bfseries, text=red, anchor=south] at (1.5,5.3) {4};
-  \node[font=\bfseries, text=red, anchor=south] at (2.5,5.3) {3};
-  \node[font=\bfseries, text=red, anchor=south] at (3.5,5.3) {1};
-  \node[font=\bfseries, text=red, anchor=south] at (4.5,5.3) {5};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,0.5) {5};
-\end{tikzpicture}}}
-\;=\;
-\vcenter{\hbox{\begin{tikzpicture}[scale=0.25, every node/.style={scale=0.7}]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=0.5pt] (0,4.5) .. controls (0.3,4.5) and (0.5,4.7) .. (0.5,5);
-  \draw[blue, line width=0.5pt] (0.5,4) .. controls (0.5,4.3) and (0.7,4.5) .. (1,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=0.5pt] (2,4.5) .. controls (2.3,4.5) and (2.5,4.7) .. (2.5,5);
-  \draw[blue, line width=0.5pt] (2.5,4) .. controls (2.5,4.3) and (2.7,4.5) .. (3,4.5);
-  \draw[blue, line width=0.5pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
-  \draw[blue, line width=0.5pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
-  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=0.5pt] (0,3.5) .. controls (0.3,3.5) and (0.5,3.7) .. (0.5,4);
-  \draw[blue, line width=0.5pt] (0.5,3) .. controls (0.5,3.3) and (0.7,3.5) .. (1,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,3.5) -- (2,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,3) -- (1.5,4);
-  \draw[blue, line width=0.5pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=0.5pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
-  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=0.5pt] (0,2.5) .. controls (0.3,2.5) and (0.5,2.7) .. (0.5,3);
-  \draw[blue, line width=0.5pt] (0.5,2) .. controls (0.5,2.3) and (0.7,2.5) .. (1,2.5);
-  \draw[blue, line width=0.5pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
-  \draw[blue, line width=0.5pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
-  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
-  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
-  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
-  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
-  \node[font=\bfseries, text=red, anchor=south] at (0.5,5.3) {1};
-  \node[font=\bfseries, text=red, anchor=south] at (1.5,5.3) {4};
-  \node[font=\bfseries, text=red, anchor=south] at (2.5,5.3) {2};
-  \node[font=\bfseries, text=red, anchor=south] at (3.5,5.3) {3};
-  \node[font=\bfseries, text=red, anchor=south] at (4.5,5.3) {5};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,0.5) {5};
-\end{tikzpicture}}}
-\;*\;
-\vcenter{\hbox{\begin{tikzpicture}[scale=0.25, every node/.style={scale=0.7}]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,4.5) -- (1,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,4) -- (0.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (2,4.5) -- (3,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2.5,4) -- (2.5,5);
-  \draw[blue, line width=0.5pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
-  \draw[blue, line width=0.5pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
-  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=0.5pt] (0,3.5) .. controls (0.3,3.5) and (0.5,3.7) .. (0.5,4);
-  \draw[blue, line width=0.5pt] (0.5,3) .. controls (0.5,3.3) and (0.7,3.5) .. (1,3.5);
-  \draw[blue, line width=0.5pt] (1,3.5) .. controls (1.3,3.5) and (1.5,3.7) .. (1.5,4);
-  \draw[blue, line width=0.5pt] (1.5,3) .. controls (1.5,3.3) and (1.7,3.5) .. (2,3.5);
-  \draw[blue, line width=0.5pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=0.5pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
-  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=0.5pt, line cap=round] (0,2.5) -- (1,2.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,2) -- (0.5,3);
-  \draw[blue, line width=0.5pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
-  \draw[blue, line width=0.5pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
-  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
-  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
-  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
-  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
-  \node[font=\bfseries, text=red, anchor=south] at (0.5,5.3) {2};
-  \node[font=\bfseries, text=red, anchor=south] at (1.5,5.3) {4};
-  \node[font=\bfseries, text=red, anchor=south] at (2.5,5.3) {3};
-  \node[font=\bfseries, text=red, anchor=south] at (3.5,5.3) {1};
-  \node[font=\bfseries, text=red, anchor=south] at (4.5,5.3) {5};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,0.5) {5};
-\end{tikzpicture}}}
-\;=\;
-\tikz[baseline, remember picture]{\node[inner sep=0pt] (rightBottomTerm) {$\vcenter{\hbox{\begin{tikzpicture}[scale=0.25, every node/.style={scale=0.7}]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,4.5) -- (1,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,4) -- (0.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (2,4.5) -- (3,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2.5,4) -- (2.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (3,4.5) -- (4,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (3.5,4) -- (3.5,5);
-  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,3.5) -- (1,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,3) -- (0.5,4);
-  \draw[blue, line width=0.5pt] (1,3.5) .. controls (1.3,3.5) and (1.5,3.7) .. (1.5,4);
-  \draw[blue, line width=0.5pt] (1.5,3) .. controls (1.5,3.3) and (1.7,3.5) .. (2,3.5);
-  \draw[blue, line width=0.5pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=0.5pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
-  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=0.5pt, line cap=round] (0,2.5) -- (1,2.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,2) -- (0.5,3);
-  \draw[blue, line width=0.5pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
-  \draw[blue, line width=0.5pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
-  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
-  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
-  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
-  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
-  \node[font=\bfseries, text=red, anchor=south] at (0.5,5.3) {4};
-  \node[font=\bfseries, text=red, anchor=south] at (1.5,5.3) {2};
-  \node[font=\bfseries, text=red, anchor=south] at (2.5,5.3) {3};
-  \node[font=\bfseries, text=red, anchor=south] at (3.5,5.3) {5};
-  \node[font=\bfseries, text=red, anchor=south] at (4.5,5.3) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,0.5) {5};
-\end{tikzpicture}}}$};}
-\]
-\begin{tikzpicture}[remember picture, overlay]
-  \coordinate (rightPairMid) at ($(rightTopTerm.center)!0.5!(rightBottomTerm.center)+(-0.07cm,-0.02cm)$);
-  \draw[line width=0.95pt, rotate around={-28:(rightPairMid)}]
-    (rightPairMid) ellipse [x radius=1.18cm, y radius=2.37cm];
-\end{tikzpicture}
-\[
-\vcenter{\hbox{\begin{tikzpicture}[scale=0.25, every node/.style={scale=0.7}]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=0.5pt] (0,4.5) .. controls (0.3,4.5) and (0.5,4.7) .. (0.5,5);
-  \draw[blue, line width=0.5pt] (0.5,4) .. controls (0.5,4.3) and (0.7,4.5) .. (1,4.5);
-  \draw[blue, line width=0.5pt] (1,4.5) .. controls (1.3,4.5) and (1.5,4.7) .. (1.5,5);
-  \draw[blue, line width=0.5pt] (1.5,4) .. controls (1.5,4.3) and (1.7,4.5) .. (2,4.5);
-  \draw[blue, line width=0.5pt] (2,4.5) .. controls (2.3,4.5) and (2.5,4.7) .. (2.5,5);
-  \draw[blue, line width=0.5pt] (2.5,4) .. controls (2.5,4.3) and (2.7,4.5) .. (3,4.5);
-  \draw[blue, line width=0.5pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
-  \draw[blue, line width=0.5pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
-  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,3.5) -- (1,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,3) -- (0.5,4);
-  \draw[blue, line width=0.5pt] (1,3.5) .. controls (1.3,3.5) and (1.5,3.7) .. (1.5,4);
-  \draw[blue, line width=0.5pt] (1.5,3) .. controls (1.5,3.3) and (1.7,3.5) .. (2,3.5);
-  \draw[blue, line width=0.5pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=0.5pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
-  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=0.5pt, line cap=round] (0,2.5) -- (1,2.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,2) -- (0.5,3);
-  \draw[blue, line width=0.5pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
-  \draw[blue, line width=0.5pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
-  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
-  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
-  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
-  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
-  \node[font=\bfseries, text=red, anchor=south] at (0.5,5.3) {1};
-  \node[font=\bfseries, text=red, anchor=south] at (1.5,5.3) {4};
-  \node[font=\bfseries, text=red, anchor=south] at (2.5,5.3) {2};
-  \node[font=\bfseries, text=red, anchor=south] at (3.5,5.3) {3};
-  \node[font=\bfseries, text=red, anchor=south] at (4.5,5.3) {5};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,0.5) {5};
-\end{tikzpicture}}}
-\;\ast\;
-\vcenter{\hbox{\begin{tikzpicture}[scale=0.25, every node/.style={scale=0.7}]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,4.5) -- (1,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,4) -- (0.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (2,4.5) -- (3,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2.5,4) -- (2.5,5);
-  \draw[blue, line width=0.5pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
-  \draw[blue, line width=0.5pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
-  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=0.5pt] (0,3.5) .. controls (0.3,3.5) and (0.5,3.7) .. (0.5,4);
-  \draw[blue, line width=0.5pt] (0.5,3) .. controls (0.5,3.3) and (0.7,3.5) .. (1,3.5);
-  \draw[blue, line width=0.5pt] (1,3.5) .. controls (1.3,3.5) and (1.5,3.7) .. (1.5,4);
-  \draw[blue, line width=0.5pt] (1.5,3) .. controls (1.5,3.3) and (1.7,3.5) .. (2,3.5);
-  \draw[blue, line width=0.5pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=0.5pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
-  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=0.5pt, line cap=round] (0,2.5) -- (1,2.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,2) -- (0.5,3);
-  \draw[blue, line width=0.5pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
-  \draw[blue, line width=0.5pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
-  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
-  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
-  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
-  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
-  \node[font=\bfseries, text=red, anchor=south] at (0.5,5.3) {2};
-  \node[font=\bfseries, text=red, anchor=south] at (1.5,5.3) {4};
-  \node[font=\bfseries, text=red, anchor=south] at (2.5,5.3) {3};
-  \node[font=\bfseries, text=red, anchor=south] at (3.5,5.3) {1};
-  \node[font=\bfseries, text=red, anchor=south] at (4.5,5.3) {5};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,0.5) {5};
-\end{tikzpicture}}}
-\;=\;
-\vcenter{\hbox{\begin{tikzpicture}[scale=0.25, every node/.style={scale=0.7}]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,4.5) -- (1,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,4) -- (0.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (2,4.5) -- (3,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2.5,4) -- (2.5,5);
-  \draw[blue, line width=0.5pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
-  \draw[blue, line width=0.5pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
-  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,3.5) -- (1,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,3) -- (0.5,4);
-  \draw[blue, line width=0.5pt] (1,3.5) .. controls (1.3,3.5) and (1.5,3.7) .. (1.5,4);
-  \draw[blue, line width=0.5pt] (1.5,3) .. controls (1.5,3.3) and (1.7,3.5) .. (2,3.5);
-  \draw[blue, line width=0.5pt] (2,3.5) .. controls (2.3,3.5) and (2.5,3.7) .. (2.5,4);
-  \draw[blue, line width=0.5pt] (2.5,3) .. controls (2.5,3.3) and (2.7,3.5) .. (3,3.5);
-  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=0.5pt, line cap=round] (0,2.5) -- (1,2.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,2) -- (0.5,3);
-  \draw[blue, line width=0.5pt, line cap=round] (1,2.5) -- (2,2.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,2) -- (1.5,3);
-  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
-  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
-  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
-  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
-  \node[font=\bfseries, text=red, anchor=south] at (0.5,5.3) {4};
-  \node[font=\bfseries, text=red, anchor=south] at (1.5,5.3) {2};
-  \node[font=\bfseries, text=red, anchor=south] at (2.5,5.3) {5};
-  \node[font=\bfseries, text=red, anchor=south] at (3.5,5.3) {1};
-  \node[font=\bfseries, text=red, anchor=south] at (4.5,5.3) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,0.5) {5};
-\end{tikzpicture}}}
-\;+\;
-\vcenter{\hbox{\begin{tikzpicture}[scale=0.25, every node/.style={scale=0.7}]
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (5,0);
-  \draw[lightgray, very thin, opacity=0.3] (0,0) -- (0,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,1) -- (5,1);
-  \draw[lightgray, very thin, opacity=0.3] (1,0) -- (1,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,2) -- (5,2);
-  \draw[lightgray, very thin, opacity=0.3] (2,0) -- (2,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,3) -- (5,3);
-  \draw[lightgray, very thin, opacity=0.3] (3,0) -- (3,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,4) -- (5,4);
-  \draw[lightgray, very thin, opacity=0.3] (4,0) -- (4,5);
-  \draw[lightgray, very thin, opacity=0.3] (0,5) -- (5,5);
-  \draw[lightgray, very thin, opacity=0.3] (5,0) -- (5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,4.5) -- (1,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,4) -- (0.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (1,4.5) -- (2,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (1.5,4) -- (1.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (2,4.5) -- (3,4.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2.5,4) -- (2.5,5);
-  \draw[blue, line width=0.5pt] (3,4.5) .. controls (3.3,4.5) and (3.5,4.7) .. (3.5,5);
-  \draw[blue, line width=0.5pt] (3.5,4) .. controls (3.5,4.3) and (3.7,4.5) .. (4,4.5);
-  \draw[blue, line width=0.5pt] (4,4.5) .. controls (4.3,4.5) and (4.5,4.7) .. (4.5,5);
-  \draw[blue, line width=0.5pt, line cap=round] (0,3.5) -- (1,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,3) -- (0.5,4);
-  \draw[blue, line width=0.5pt] (1,3.5) .. controls (1.3,3.5) and (1.5,3.7) .. (1.5,4);
-  \draw[blue, line width=0.5pt] (1.5,3) .. controls (1.5,3.3) and (1.7,3.5) .. (2,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2,3.5) -- (3,3.5);
-  \draw[blue, line width=0.5pt, line cap=round] (2.5,3) -- (2.5,4);
-  \draw[blue, line width=0.5pt] (3,3.5) .. controls (3.3,3.5) and (3.5,3.7) .. (3.5,4);
-  \draw[blue, line width=0.5pt, line cap=round] (0,2.5) -- (1,2.5);
-  \draw[blue, line width=0.5pt, line cap=round] (0.5,2) -- (0.5,3);
-  \draw[blue, line width=0.5pt] (1,2.5) .. controls (1.3,2.5) and (1.5,2.7) .. (1.5,3);
-  \draw[blue, line width=0.5pt] (1.5,2) .. controls (1.5,2.3) and (1.7,2.5) .. (2,2.5);
-  \draw[blue, line width=0.5pt] (2,2.5) .. controls (2.3,2.5) and (2.5,2.7) .. (2.5,3);
-  \draw[blue, line width=0.5pt] (0,1.5) .. controls (0.3,1.5) and (0.5,1.7) .. (0.5,2);
-  \draw[blue, line width=0.5pt] (0.5,1) .. controls (0.5,1.3) and (0.7,1.5) .. (1,1.5);
-  \draw[blue, line width=0.5pt] (1,1.5) .. controls (1.3,1.5) and (1.5,1.7) .. (1.5,2);
-  \draw[blue, line width=0.5pt] (0,0.5) .. controls (0.3,0.5) and (0.5,0.7) .. (0.5,1);
-  \node[font=\bfseries, text=red, anchor=south] at (0.5,5.3) {4};
-  \node[font=\bfseries, text=red, anchor=south] at (1.5,5.3) {2};
-  \node[font=\bfseries, text=red, anchor=south] at (2.5,5.3) {5};
-  \node[font=\bfseries, text=red, anchor=south] at (3.5,5.3) {1};
-  \node[font=\bfseries, text=red, anchor=south] at (4.5,5.3) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,4.5) {1};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,3.5) {2};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,2.5) {3};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,1.5) {4};
-  \node[font=\bfseries, text=blue, anchor=east] at (-0.3,0.5) {5};
-\end{tikzpicture}}}
-\]
+\newcommand{\code}{\mathfrak{c}}
+
+\begin{frame}{Positivity of Schubert polynomial multiplication (!!!)}
+  %  Suppose there is an equivalence relation on reduced words for permutations such that the following hold:
+  %   \begin{itemize}
+  %     \item If $W\equiv W'$, then $\mathrm{perm}(W) = \mathrm{perm}(W')$.
+  %     \item If $A_1,B_1,A_2,B_2\in\RC$ and $\mathrm{word}(A_1)\equiv \mathrm{word}(A_2)$ and $\mathrm{word}(B_1)\equiv \mathrm{word}(B_2)$, then if
+  %     $$A_1\star B_1=R_1+\cdots+R_m$$ 
+  %     then there exist $S_1,\ldots,S_m$ such that
+  %     $$A_2\star B_2 = S_1 + \cdots + S_m$$
+  %     and $R_i\equiv S_i$ for each $i$.
+  %   \end{itemize}
+  % We will call this a pipe-compatible equivalence relation. Then we have the following positivity result:
 \end{frame}
+
+\begin{frame}{General positivity theorem}
+\end{frame}
+
 
 \begin{frame}{Examples}
 This applies to the following examples of equivalence relations on reduced words:
@@ -1205,7 +473,6 @@ This applies to the following examples of equivalence relations on reduced words
 \end{frame}
 
 \begin{frame}{Forest polynomials}
-  \newcommand{\code}{\mathfrak{c}}
 Forest polynomials $\Forest{F}$ are a more recently discovered basis of $\coma$ in which the Schubert basis also expands positively. They are indexed by objects $F$ known as ``indexed forests,'' which are canonically labeled forests of binary trees. Given a word $W$, there is an insertion algorithm that yields a labeled indexed forest denoted $\Omega(W)$.  We then say that $\Omega(R)$ has shape $F$ if the indexed forest obtained from $R$ by this insertion algorithm is $F$.
 
 \begin{theorem}[S, 2026+]

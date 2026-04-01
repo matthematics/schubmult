@@ -16,7 +16,7 @@ class ElemSymPolyBasis(PolynomialBasis):
         return isinstance(x, tuple | list)
 
     def as_key(self, x):
-        return ((*x,),)
+        return ((*x,), len(x))
 
     def printing_term(self, k):
         return GenericPrintingTerm(k, "E")

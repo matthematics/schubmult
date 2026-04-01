@@ -282,7 +282,6 @@ class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph):
         return type(self).from_rc_graph(dju).vertical_cut(dju.rows - self.rows)[1]
 
     def squash_decomp(self):
-        raise NotImplementedError("Squash decomposition not implemented for AntiRCGraph yet")
         """Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass."""
         from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
         n = len(self)
@@ -308,28 +307,30 @@ class AntiRCGraph(SchubertMonomialGraph, GridPrint, CrystalGraph):
                     # print(n)
                     raise ValueError("RC graph has too few rows to be decomposed")
                 seen.add(working_rc)
-                min_cos, residue = working_rc.perm.coset_decomp(*list(range(1, n)))
+                min_cos, residue = (~working_rc.perm).coset_decomp(*list(range(1, n)))
 
                 if residue.inv == 0 and len(min_cos.descents()) <= 1:
-                    min_cos_ret = working_rc.vertical_cut(n)[0]
-                    if min_cos_ret.perm.inv == 0 or min_cos_ret.perm.descents() == {n - 1}:
-                        return AntiRCGraph.from_rc_graph(RCGraph([()])).resize(n), working_rc.vertical_cut(n)[0]
-                if min_cos.inv == 0 and len(residue) <= n:
-                    return self, AntiRCGraph.from_rc_graph(RCGraph([()])).resize(n)
+                    min_cos_ret = working_rc.vertical_cut(working_rc.rows - n)[1]
+                    if (~min_cos_ret.perm).inv == 0 or (~min_cos_ret.perm).descents() == {n - 1}:
+                        return AntiRCGraph.from_rc_graph(RCGraph([()])).resize(n), min_cos_ret
+                if (~min_cos.perm).inv == 0 and len(residue) <= n:
+                    return hw, AntiRCGraph.from_rc_graph(RCGraph([()])).resize(n)
                 if len(residue) <= n and len(min_cos.descents()) <= 1 and all(min_cos[i] == i + 1 for i in range(n)):
-                    ret_rc = RCGraph([tuple([a for a in row if a < n]) for row in working_rc]).resize(n)
-                    grass_rc = AntiRCGraph.from_rc_graph(RCGraph([()])).resize(len(working_rc))
-                    for row, col in [working_rc.left_to_right_inversion_coords(i) for i in range(working_rc.perm.inv)]:
+                    working_rc_rc = working_rc.to_rc_graph()
+                    ret_rc = RCGraph([tuple([a for a in row if a > n]) for row in working_rc_rc]).resize(n)
+                    grass_rc =RCGraph([()]).resize(len(working_rc_rc))
+                    for row, col in [working_rc_rc.left_to_right_inversion_coords(i) for i in range(working_rc_rc.perm.inv)]:
                         if not ret_rc.has_element(row, col):
                             grass_rc = grass_rc.toggle_ref_at(row, col)
                     # print("The gasga")
                     # print(grass_rc)
-                    grass_rc = grass_rc.vertical_cut(n)[0]
-                    assert len(grass_rc.perm.trimcode) <= len(grass_rc), f"Failed to get grass RC of correct size for {self}, got {grass_rc}"
-                    assert ret_rc.squash_product(grass_rc) == hw, f"Failed to reconstruct {self} from {ret_rc} and {grass_rc}"
-                    if grass_rc.inv == 0 or grass_rc.perm.descents() == {n - 1}:
+                    anti_grass_rc = AntiRCGraph.from_rc_graph(grass_rc).vertical_cut(grass_rc.rows - n)[1]
+                    anti_ret_rc = AntiRCGraph.from_rc_graph(ret_rc)
+                    # assert len(grass_rc.perm.trimcode) <= len(grass_rc), f"Failed to get grass RC of correct size for {self}, got {grass_rc}"
+                    assert anti_grass_rc.squash_product(anti_ret_rc) == hw, f"Failed to reconstruct {self} from {ret_rc} and {grass_rc}"
+                    if anti_grass_rc.perm.inv == 0 or grass_rc.perm.descents() == {n - 1}:
                         if len(ret_rc.perm) <= n:
-                            return ret_rc, grass_rc
+                            return anti_ret_rc, anti_grass_rc
                 stack.update(working_rc.right_zero_act())
             raise ValueError(f"Failed to find squash decomposition for {self}")
         base_hw, grass = decomp_hw()

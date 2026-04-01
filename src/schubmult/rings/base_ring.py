@@ -21,6 +21,15 @@ class BaseRingElement(DomainElement, DefaultPrinting, dict):
     def has_free(self, *args):
         return any(s in args for s in self.free_symbols)
 
+    def apply_to_keys(self, func):
+        new_elem = self.ring.zero
+        for k, v in self.items():
+            new_k = func(k)
+            if new_k is None:
+                continue
+            new_elem += v * self.ring(new_k)
+        return new_elem
+
     def eval(self, *args):
         pass
 

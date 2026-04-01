@@ -245,8 +245,12 @@ class SchubertBasis(FreeAlgebraBasis):
             vec[numvars - k + perm.inv] = k - p
             return PA.from_dict({tuple(vec.tolist()): 1})
         #ret = {k: v for k, v in Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis(elem_func=word_elem)#.items()}
-        ret = dict(Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis(elem_func=word_elem))
-        return ret
+        result = Sx(perm * ~uncode(list(range(perm.inv + numvars, perm.inv, -1)))).in_SEM_basis(elem_func=word_elem)
+        if numvars == 0:
+            if int(result) == 0:
+                return {}
+            return {(): result}
+        return dict(result)
 
     @classmethod
     def printing_term(cls, k):

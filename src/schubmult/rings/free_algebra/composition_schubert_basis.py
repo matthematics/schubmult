@@ -77,12 +77,12 @@ class CompositionSchubertBasis(FreeAlgebraBasis):
     @classmethod
     def coproduct(cls, key):
         """Compute the coproduct by delegating to SchubertBasis."""
-        return {cls.as_key(k): v for k, v in SchubertBasis.coproduct(cls.as_schubert_key(key)).items()}
+        return {tuple(cls.as_key(ki) for ki in k): v for k, v in SchubertBasis.coproduct(cls.as_schubert_key(key)).items()}
 
     @classmethod
     def bcoproduct(cls, key):
         """Compute the bar-coproduct by delegating to SchubertBasis."""
-        return {cls.as_key(k): v for k, v in SchubertBasis.bcoproduct(cls.as_schubert_key(key)).items()}
+        return {tuple(cls.as_key(ki) for ki in k): v for k, v in SchubertBasis.bcoproduct(cls.as_schubert_key(key)).items()}
 
     @classmethod
     def internal_product(cls, key1, key2, coeff=S.One):
