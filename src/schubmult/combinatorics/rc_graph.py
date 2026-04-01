@@ -1205,6 +1205,39 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return perm
 
     @classmethod
+    def multiply_reps(cls, drep1, drep2):
+        from schubmult import RCGraphRing
+        r = RCGraphRing()
+        ret = r.zero
+        for rep1, coeff1 in drep1.items():
+            for rep2, coeff2 in drep2.items():
+                rc = cls([()])
+                rep1_list = list(reversed(rep1))
+                rep2_list = list(reversed(rep2))
+                while len(rep1_list) > 0 or len(rep2_list) > 0:
+                    if len(rep1_list) == 0:
+                        to_use = rep2_list.pop()
+                        rc = rc.resize(len(to_use)).squash_product(to_use)
+                    elif len(rep2_list) == 0:
+                        to_use = rep1_list.pop()
+                        rc = rc.resize(len(to_use)).squash_product(to_use)
+                    else:
+                        if len(rep1_list[-1]) <= len(rep2_list[-1]):
+                            to_use = rep1_list.pop()
+                            rc = rc.resize(len(to_use)).squash_product(to_use)
+                        else:
+                            to_use = rep2_list.pop()
+                            rc = rc.resize(len(to_use)).squash_product(to_use)
+                ret += coeff1 * coeff2 * r(rc)
+        return ret
+
+    @cached_property
+    def cem_rep(self):
+        bas = RCGraph.in_CEM_basis(self.perm, len(self), (~(self.perm.mul_dominant())).trimcode)
+        #print(bas)
+        return bas[self]
+
+    @classmethod
     def in_CEM_basis(cls, perm: Permutation, length: int, partition: tuple[int]) -> dict[RCGraph, dict[tuple[RCGraph], int]]:
         import itertools
         import math
@@ -1246,6 +1279,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 rc = rc_list[0]
                 for other in rc_list[1:]:
                     rc = rc.resize(len(other)).squash_product(other)
+                if rc.perm != perm:
+                    continue
                 rc = rc.resize(length)
                 toadd_dict = ret.get(rc, {})
                 toadd_dict[rc_tup] = toadd_dict.get(rc_tup, 0) + coeff
