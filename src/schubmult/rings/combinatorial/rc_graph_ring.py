@@ -347,80 +347,20 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         return ret
 
     # @cache
-    def coproduct_on_basis(self, elem):
-        # from schubmult import FA, ASx, FreeAlgebraBasis, SchubertBasis, WordBasis
+    def coproduct_on_basis(self, rc):
+        import itertools
 
-        # # 1. Get both representations
-        # flat_elem = self(elem).to_free_algebra_element()
-        # word_elem = FA(*elem.length_vector)
-
-        # # 2. Get both coproducts in the same mixed basis (Schubert ⊗ Word)
-        # flat_coprod = flat_elem.coproduct()
-        # word_coprod = word_elem.coproduct()
-
-        # mixed_flat = FreeAlgebraBasis.change_tensor_basis(flat_coprod, WordBasis, WordBasis)
-        # mixed_word = FreeAlgebraBasis.change_tensor_basis(word_coprod, WordBasis, WordBasis)
-
-        # # 3. JOINT HOMOMORPHISM LOGIC:
-        # # Only sum terms where the 'flat' structure matches the 'word' structure.
-        # # We use the keys of both to ensure we capture the intersection.
-        # common_keys = set([key for key in mixed_flat.keys() if mixed_flat[key] != 0]) & set([b for b in mixed_word.keys() if mixed_word[b] != 0])
-
-        # ret = sum([
-        #     mixed_word[key] * self.monomial(*key[0]) @ self.monomial(*key[1])
-        #     for key in common_keys
-        # ])
-
-        # return ret
-        #        from schubmult import FA
-        from schubmult import FA, Sx
-
-        # flat_elem = self(elem).to_free_algebra_element(WordBasis)
-        flat_elem = FA(*elem.length_vector)
-        flat_coprod = flat_elem.coproduct()
-        # flat_coprod_schub = {((perm1, n1), (perm2, n2)): v for ((perm1, n1), (perm2, n2)), v in flat_elem.change_basis(SchubertBasis).coproduct().items() if v != 0 and (Sx(perm1) * Sx(perm2)).get(elem.perm, 0) != 0}
-        # unflat_elem = self(elem) - self(RCGraph.principal_rc(elem.perm, len(elem)))
-        # id = self(RCGraph([]).resize(len(elem)))
-        ret = (self @ self).zero
-        for (a, b), coeff in flat_coprod.items():
-            if coeff != 0:
-                rc1_elem = self.monomial(*a)
-                rc2_elem = self.monomial(*b)
-
-                for (rc1, coeff1), (rc2, coeff2) in zip(rc1_elem.items(), rc2_elem.items()):
-                    if rc1.perm.inv == 0 and rc2 != elem:
-                        continue
-                    if rc2.perm.inv == 0 and rc1 != elem:
-                        continue
-                    if (Sx(rc1.perm) * Sx(rc2.perm)).get(elem.perm, 0) != 0:
-                        ret += coeff * coeff1 * coeff2 * self(rc1) @ self(rc2)
-
-                # assert self.monomial(*a) * self.monomial(*b) == self.from_free_algebra_element(FA(*a)) * self.from_free_algebra_element(FA(*b)), f"Error: coproduct mismatch for {elem}, term {a} ⊗ {b} with coefficient {coeff}"
-        # ret = sum([coeff * self.from_free_algebra_element(FA(*a)) @ self.from_free_algebra_element(FA(*b)) for (a, b), coeff in flat_coprod.items()])# + (unflat_elem @ id + id @ unflat_elem)
-        # ret += (self(elem) @ self.one) + (self.one @ self(elem))
-        return ret
-
-    # def coproduct_on_basis(self, elem):
-    #     from schubmult import FA, ASx, FreeAlgebraBasis, SchubertBasis
-
-    #     flat_elem = self.from_free_algebra_element(self(elem).to_free_algebra_element())
-    #     word_elem = self.monomial(*elem.length_vector)
-
-    #     flat_coprod = flat_elem.coproduct()
-    #     word_coprod = word_elem.coproduct()
-
-    #     mixed_coprod = FreeAlgebraBasis.change_tensor_basis(flat_coprod, SchubertBasis, WordBasis)
-    #     mixed_word_coprod = FreeAlgebraBasis.change_tensor_basis(word_coprod, SchubertBasis, WordBasis)
-    #     ret = sum([coeff * self.from_free_algebra_element(ASx(perm1, len1)) @ self.monomial(*b) for ((perm1, len1), b), coeff in mixed_coprod.items()])
-    #     return ret
-    # self.from_free_algebra_element(elem.perm) - elem
-
-    # def dual_schubert_element(self, rc):
-    #     from schubmult import ASx, WordBasis
-    #     model = ASx(rc.perm, len(rc)).change_basis(WordBasis)
-    #     for word, coeff in model.items():
-    #         if coeff != 0:
-    #             return self.from_free_algebra_element(WordBasis(word))
+        from schubmult import ASx
+        perm = rc.perm
+        elem = ASx(perm, len(rc)).coproduct()#change_basis(WordBasis)
+        pudge = (self @ self).zero
+        for ((perm1, _), (perm2, _)), coeff in elem.items():
+            cem1 = RCGraph.full_CEM(perm1, len(rc))
+            cem2 = RCGraph.full_CEM(perm2, len(rc))
+            for rc1, rc2 in itertools.product(cem1.keys(), cem2.keys()):
+                if RCGraph.multiply_reps(cem1[rc1], cem2[rc2]).resize(len(rc)).almosteq(self(rc)):
+                    pudge += RCGraph.multiply_reps(cem1[rc1], {(): 1}).resize(len(rc))@RCGraph.multiply_reps(cem2[rc2], {(): 1}).resize(len(rc))
+        return pudge
 
     def old_coproduct_on_basis(self, elem):
         # if not elem.is_principal:

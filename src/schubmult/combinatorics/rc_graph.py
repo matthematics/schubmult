@@ -1233,21 +1233,47 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     @cached_property
     def cem_rep(self):
-        bas = RCGraph.in_CEM_basis(self.perm, len(self), (~(self.perm.mul_dominant())).trimcode)
+        if len(self) == 0:
+            return {(): 1}
+        bas = RCGraph.in_CEM_basis(self.perm, len(self), tuple((~(self.perm.mul_dominant())).trimcode))
         #print(bas)
         return bas[self]
 
+    @cache
+    def custom_cem_rep(self, partition):
+        length = max(len(partition), partition[0])
+        if length is None:
+            length = len(self.perm)
+        if len(self) == 0:
+            return {(): 1}
+        bas = RCGraph.in_CEM_basis(self.perm, length - 1, tuple(partition))
+        #print(bas)
+        return bas[self.resize(length - 1)]
+
+    @cache
+    def sem_rep(self, length=None):
+        if length is None:
+            length = len(self.perm)
+        if len(self) == 0:
+            return {(): 1}
+        bas = RCGraph.in_CEM_basis(self.perm, length - 1, tuple(Permutation.w0(length).trimcode))
+        #print(bas)
+        return bas[self.resize(length - 1)]
+
     @classmethod
-    def in_CEM_basis(cls, perm: Permutation, length: int, partition: tuple[int]) -> dict[RCGraph, dict[tuple[RCGraph], int]]:
+    @cache
+    def in_CEM_basis(cls, perm: Permutation, length: int, partition: tuple[int] | None = None) -> dict[RCGraph, dict[tuple[RCGraph], int]]:
         import itertools
         import math
 
         from schubmult import Sx
         from schubmult.rings.polynomial_algebra._core import PA
+        if perm.inv == 0:
+            return {cls([()] * length): {(): 1}}
+        if partition is None:
+            partition = (~(perm.mul_dominant())).trimcode
         mu = uncode(partition)
-        # if (mu * (~perm)).inv != mu.inv - perm.inv:
-        #     raise ValueError("Permutation and partition do not have compatible lengths or inversions for CEM expansion")
-        numnums = len(partition)
+        numnums = max(len(partition), partition[0])
         def elem_sym_pos(p, k):
             offset = (k * (k - 1))//2
             return offset + p
@@ -1281,6 +1307,59 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                     rc = rc.resize(len(other)).squash_product(other)
                 if rc.perm != perm:
                     continue
+                rc = rc.resize(length)
+                toadd_dict = ret.get(rc, {})
+                toadd_dict[rc_tup] = toadd_dict.get(rc_tup, 0) + coeff
+                ret[rc] = toadd_dict
+        return ret
+
+    @classmethod
+    @cache
+    def full_CEM(cls, perm: Permutation, length: int, partition: tuple[int] | None = None) -> dict[RCGraph, dict[tuple[RCGraph], int]]:
+        import itertools
+        import math
+
+        from schubmult import Sx
+        from schubmult.rings.polynomial_algebra._core import PA
+        if perm.inv == 0:
+            return {cls([()] * length): {(): 1}}
+        if partition is None:
+            partition = (~(perm.mul_dominant())).trimcode
+        mu = uncode(partition)
+        numnums = max(len(partition), partition[0])
+        def elem_sym_pos(p, k):
+            offset = (k * (k - 1))//2
+            return offset + p
+        def inv_elem_sym_pos(pos):
+            k = math.ceil((-1 + math.sqrt(1 + 8 * pos)) / 2)
+            p = pos - (k * (k - 1)) // 2
+            return p, k
+
+        the_length = (numnums * (numnums + 1))//2
+        def word_elem(p, k, *args):  # noqa: ARG001
+            import numpy as np
+            if p > k or p < 0:
+                return 0
+
+            vec = np.zeros(the_length, dtype=int)
+            if p > 0:
+                vec[elem_sym_pos(p, k) - 1] = 1
+            return PA.from_dict({tuple(vec.tolist()): 1})
+        the_pa = Sx(perm).cem_rep(mumu=mu, elem_func=word_elem)
+        ret = {}
+        for monom, coeff in the_pa.items():
+            pair_list = []
+            for pos, exponent in enumerate(monom, start=1):
+                if exponent > 0:
+                    p, k = inv_elem_sym_pos(pos)
+                    pair_list.extend([(p, k)] * exponent)
+            for rc_list in itertools.product(*[cls.elem_sym_rcs(p,k) for p,k in pair_list]):
+                rc_tup = tuple(rc_list)
+                rc = rc_list[0]
+                for other in rc_list[1:]:
+                    rc = rc.resize(len(other)).squash_product(other)
+                # if rc.perm != perm:
+                #     continue
                 rc = rc.resize(length)
                 toadd_dict = ret.get(rc, {})
                 toadd_dict[rc_tup] = toadd_dict.get(rc_tup, 0) + coeff
