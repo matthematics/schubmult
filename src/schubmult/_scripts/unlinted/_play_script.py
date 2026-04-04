@@ -78,139 +78,19 @@ if __name__ == "__main__":
     n = 5
     
     perms = Permutation.all_permutations(n)
-    Sy = SingleSchubertRing(y)
-    #for perm in perms:
-        # def or_cp(p):
-        #     re = 0
-        #     for d in range(p + 1):
-        #         re += r.monomial(d) @ r.monomial(p - d)
-        #     return re
-        
-        # def wr_cpd(*wrd):
-        #     if len(wrd) == 1:
-        #         return or_cp(wrd[0])
-        #     return or_cp(wrd[0]) * wr_cpd(*wrd[1:])
-        # elem = ASx(perm, n - 1).coproduct()#change_basis(WordBasis)
-        # # full_pudge = 0
-        # cem = RCGraph.full_CEM(perm, n -1)
-        # pudge = 0
-        # for rc, cem_dict in cem.items():#RCGraph.all_rc_graphs(perm, n - 1):
-        # #     pudge = RCGraph.multiply_reps(cem_dict, {(): 1})
-        # #     for rcc, coeff in pudge.items():
-        # #         full_pudge += r(rcc) @ Sy.from_expr(coeff)
-        #     for ((perm1, _), (perm2, _)), coeff in elem.items():
-        #             cem1 = RCGraph.full_CEM(perm1, n - 1)
-        #             cem2 = RCGraph.full_CEM(perm2, n -1)    
-                    
-        #             for rc1, rc2 in itertools.product(cem1.keys(), cem2.keys()):
-        #                 #lv = tuple([a + b for a, b in zip(rc1.resize(n-1).length_vector, rc2.resize(n-1).length_vector)])
-        #                 if RCGraph.multiply_reps(cem1[rc1], cem2[rc2]).resize(n-1).almosteq(r(rc)):
-        #                     pudge += RCGraph.multiply_reps(cem1[rc1], {(): 1}).resize(n-1)@RCGraph.multiply_reps(cem2[rc2], {(): 1}).resize(n-1)
-                    
-        #     if pudge != 0 and pudge != (r@r).zero:
-        #         pretty_print(rc)
-        #         pretty_print(pudge)
-        # # for rcc, coeff in pudge.items():
-        # #     print(Sy.from_expr(coeff))
-        # #pretty_print(full_pudge)
-            
+    ring = GrassTensorAlgebra()
+    
 
-    #print(Schub((uncode([0,2,1]),3)).change_basis(ElemSymPolyBasis))
-    cprd = {}
+    grass_tensor_elems = {}
+    for perm in perms:
+        grass_tensor_elems[perm] = ring.zero
+        cem = RCGraph.full_CEM(perm, n - 1)
+        for rc, cem_dict in cem.items():
+            grass_tensor_elems[perm] += ring.from_dict(cem_dict)
     for perm1, perm2 in itertools.product(perms, repeat=2):
-        # if perm1.inv == 0 or perm2.inv == 0:
-        #     continue
-        result = 0
-        
         prd = Sx(perm1) * Sx(perm2)
-        prd_rc = r.zero
-        for perm, coeff in prd.items():
-            prd_rc += coeff * r.schub(perm, n - 1)
-    #     #perms_seen = {}
-    #     seen = set()
-    #     prd = Sx(perm1) * Sx(perm2)
-    #     N = max(len(perm1), len(perm2))
-    #     hws = set()
-        cem1 = RCGraph.full_CEM(perm1, n -1)
-        cem2 = RCGraph.full_CEM(perm2, n - 1)
-        result = r.zero
-        for rc1, rc2 in itertools.product(cem1.keys(), cem2.keys()):
-            # tensor = CrystalGraphTensor(rc1_0, rc2_0).to_lowest_weight()[0]
-            # if tensor in hws:
-            #     continue
-            # hws.add(tensor)
-            # rc1, rc2 = tensor.factors   
-            rc_prod = RCGraph.multiply_reps(cem1[rc1], cem2[rc2]).resize(n-1)
-            # for rc, coeff in rc_prod.items():
-            #     result += coeff * ASx(rc.perm, len(rc)) @ PA(*rc.length_vector).change_basis(SchubertPolyBasis)
-            result += rc_prod
-            for rc, fatbat in rc_prod.items():
-                cprd[rc] = cprd.get(rc, (r@r).zero) + fatbat * r(rc1)@r(rc2)
-        # for ((perm1, _), (perm2, _)), coeff in result.items():
-        #     assert perm1 == perm2
-        #     assert prd.get(perm1, 0) == coeff, f"Failed on {perm1} * {perm2}, got {result}, expected {prd}"
-        for rc, coeff in result.items():
-            assert prd_rc.get(rc, 0) == coeff, f"Failed on {perm1} * {perm2}, got {rc.perm}: {coeff} which is not in {prd_rc}\n{prd_rc.get(rc,0)=}\n{rc=}"
-        
-
-        print(result)
-            # #result += Schub.from_dict(r.monomial(*wt).to_free_algebra_element())
-            # rc3 = convert_tensor((r(rc1) * r(rc2)).coproduct())
-            # test_rc3 = convert_tensor(r(rc1).coproduct() * r(rc2).coproduct())
-            # assert rc3.almosteq(test_rc3), f"Fail \n{rc1}\n{rc2}\ngot\n{test_rc3 - rc3}\nwrong"
-        print(f"Success {perm1}, {perm2}")
-    for rc, coeff in cprd.items():
-        if len(rc.perm) > n:
-            continue
-        print("Coproduct of ")
-        pretty_print(rc)
-        print("is")
-        pretty_print(coeff)
-    #         # assert len(rc3) == 1
-    #         # assert next(iter(rc3.values())) == 1
-    #         # assert all(v > 0 for v in rc3.values())
-    #         #rc3 = next(iter(rc3.keys()))
-            
-    #         result += rc3
-    #     # try:
-    #     for rc3, coeff in result.items():
-    #         # if coeff == 0:
-    #         #     continue
-    #         assert prd.get(rc3.perm, 0) == coeff, f"Failed on {perm1} * {perm2}, got {rc3.perm}: {coeff} which is not in {prd}"
-    #         print("hoor")
-    #     # except AssertionError as e:
-    #     #     if len(rc3.perm) > N:
-    #     #         continue
-    #     #     print(f"Failed on {perm1} * {perm2}, got {rc3.perm} which is not in {prd}")
-    #     #     raise e
-    #     print("ok")
-                
-    #                 #perms_seen[wt] = perms_seen.get(wt, 0)  + Sx(w)
-            
-    #     #assert result == prd,  f"Failed on {perm1} * {perm2}, got {result}, expected {prd}"
-    #     # if perm.inv == 0:
-    #     #     continue
-    #     # for rc in RCGraph.all_rc_graphs(perm):
-    #     #     free_schub_elem = r(rc).to_free_algebra_element().change_basis(SchubertSchurBasis)
-    #     #     accum_free = 0
-    #     #     for elem_comp, coeff in free_schub_elem.items():
-    #     #         #print(elem_comp)s
-    #     #         # elem_monoms = EP.from_dict({elem_comp: 1}).change_basis(EP._basis.monomial_basis)
-    #     #         # if elem_monoms.get(rc.length_vector, 0) != 0:
-    #     #         #     accum_free += coeff * EE(*elem_comp)
-    #     #         if in_good_algebra(elem_comp, rc.length_vector):
-    #     #             accum_free += SS(*elem_comp)
-
-    #     #     tensor_elem = accum_free @ FA(*rc.length_vector)
-    #     #     new_tensor_elem = 0
-    #     #     for (elem_comp1, monom_comp1, elem_comp2, monom_comp2), coeff in tensor_elem.coproduct().items():
-    #     #         if coeff != 0:
-    #     #             # if in_good_algebra(elem_comp1, monom_comp1) and in_good_algebra(elem_comp2, monom_comp2):
-    #     #             #     new_tensor_elem += coeff * (EE(*elem_comp1) @ FA(*monom_comp1)) * (EE(*elem_comp2) @ FA(*monom_comp2))
-
-    #     #             if sum(elem_comp1[0]) == sum(monom_comp1):
-    #     #                 assert in_good_algebra(elem_comp1, monom_comp1)
-
-    #     #             if sum(elem_comp2[0]) == sum(monom_comp2):
-    #     #                 assert in_good_algebra(elem_comp2, monom_comp2)
-    #     #     print(new_tensor_elem)
+        prd_elem = grass_tensor_elems[perm1] * grass_tensor_elems[perm2]
+        prd_rc = prd_elem.to_rc_graph_ring_element()
+        for rc, coeff in prd_rc.items():
+            assert prd.get(rc.perm, 0) == coeff, f"Failed on {perm1} * {perm2}, got {rc.perm}: {coeff} which is not in {prd}\n{prd.get(rc.perm,0)=}\n{rc.perm=}"
+        print(f"Checked {perm1} * {perm2}")

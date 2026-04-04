@@ -172,51 +172,41 @@ class GrassTensorAlgebra(BaseRing):
         # while found:
         #     found = False
         for i in range(1, len(result)):
-            if len(result[i]) <= len(result[i - 1]):
-                index = i
-                while index > 0 and len(result[index]) < len(result[index - 1]):
-                    result[index], result[index - 1] = result[index - 1], result[index]
-                    index -= 1
-                if index > 0 and len(result[index - 1]) == len(result[index]):
-                    merged = result[index - 1].squash_product(result[index])
-                    result[index - 1] = merged
-                    del result[index]
-                    index -= 1
+            if len(result[i]) == len(result[i - 1]):
+                merged = result[i - 1].squash_product(result[i])
+                result[i - 1] = merged
+                del result[i]
                 return self._normalize_key(tuple(result))
-            if i < len(result) - 1:
-                rc_left, rc_right = result[i].extend(1).squash_decomp()
-                if rc_left.perm.inv !=0 and len(rc_left.perm.descents()) == 1 and rc_right.perm.inv != 0:
-                    result[i] = rc_left.resize(_last_descent_size(rc_left))
-                    result.insert(i + 1, rc_right)
-                    return self._normalize_key(tuple(result))
-
+            if len(result[i]) < len(result[i - 1]):
+                result[i - 1], result[i] = result[i], result[i - 1]
+                return self._normalize_key(tuple(result))
         result = [rc for rc in result if rc.perm.inv != 0]  # drop identity factors
         # key should be increasing elem syms, and last can be arbitrary Grassmannian
         return tuple(result)
 
     def _mul_keys(self, left_key: tuple, right_key: tuple) -> tuple:
-        new_key = []
-        stck = list(reversed(left_key))
-        stck2 = list(reversed(right_key))
-        while len(stck) > 0 or len(stck2) > 0:
-            if len(stck) == 0:
-                new_key.append(stck2.pop())
-            elif len(stck2) == 0:
-                new_key.append(stck.pop())
-            else:
-                left_top = stck[-1]
-                right_top = stck2[-1]
-                if len(left_top) < len(right_top):
-                    new_key.append(stck.pop())
-                elif len(right_top) < len(left_top):
-                    new_key.append(stck2.pop())
-                else:
-                    merged = left_top.squash_product(right_top)
-                    stck.pop()
-                    stck2.pop()
-                    if merged.perm.inv != 0:
-                        new_key.append(merged)
-
+        # new_key = []
+        # stck = list(reversed(left_key))
+        # stck2 = list(reversed(right_key))
+        # while len(stck) > 0 or len(stck2) > 0:
+        #     if len(stck) == 0:
+        #         new_key.append(stck2.pop())
+        #     elif len(stck2) == 0:
+        #         new_key.append(stck.pop())
+        #     else:
+        #         left_top = stck[-1]
+        #         right_top = stck2[-1]
+        #         if len(left_top) < len(right_top):
+        #             new_key.append(stck.pop())
+        #         elif len(right_top) < len(left_top):
+        #             new_key.append(stck2.pop())
+        #         else:
+        #             merged = left_top.squash_product(right_top)
+        #             stck.pop()
+        #             stck2.pop()
+        #             if merged.perm.inv != 0:
+        #                 new_key.append(merged)
+        new_key = left_key + right_key
         return self._normalize_key(tuple(new_key))
 
     def from_dict(self, dct):
