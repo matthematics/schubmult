@@ -287,13 +287,27 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
 class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
     _id = 0
 
-    def __init__(self, *_, **__):
+    def __init__(self, *_, quotient_by_weight=False, **__):
         self._ID = RCGraphRing._id
         RCGraphRing._id += 1
+        self._quotient_by_weight = quotient_by_weight
         self.dtype = type("RCGraphRingElement", (RCGraphRingElement,), {"ring": self})
 
     def __hash__(self):
         return hash(("Dinkberrtystoa", self._ID))
+
+    def _weight_key(self, rc):
+        """Return the canonical RC graph for *rc*'s (perm, length_vector) class."""
+        return min(RCGraph.all_rc_graphs(rc.perm, len(rc), weight=rc.length_vector))
+
+    def from_dict(self, dct):
+        if not self._quotient_by_weight:
+            return super().from_dict(dct)
+        merged = {}
+        for rc, coeff in dct.items():
+            canon = self._weight_key(rc)
+            merged[canon] = merged.get(canon, 0) + coeff
+        return super().from_dict({k: v for k, v in merged.items() if v != 0})
 
     def monomial(self, *tup):
         elem = self.one
@@ -346,7 +360,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
             ret += coeff * self(base_rc.squash_product(grass_rc1)) @ self(grass_rc2)
         return ret
 
-    # @cache
+    @cache
     def coproduct_on_basis(self, rc):
         import itertools
 
@@ -358,8 +372,11 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
             cem1 = RCGraph.full_CEM(perm1, len(rc))
             cem2 = RCGraph.full_CEM(perm2, len(rc))
             for rc1, rc2 in itertools.product(cem1.keys(), cem2.keys()):
-                if RCGraph.multiply_reps(cem1[rc1], cem2[rc2]).resize(len(rc)).almosteq(self(rc)):
-                    pudge += RCGraph.multiply_reps(cem1[rc1], {(): 1}).resize(len(rc))@RCGraph.multiply_reps(cem2[rc2], {(): 1}).resize(len(rc))
+                coeff2 = RCGraph.multiply_reps(cem1[rc1], cem2[rc2]).resize(len(rc)).get(rc, 0)
+                if coeff2 != 0:
+                    for rcc, coeff3 in cem1[rc1].items():
+                        for rcc2, coeff4 in cem2[rc2].items():
+                            pudge += coeff * coeff2 * coeff3 * coeff4 * RCGraph.multiply_reps({rcc: 1}, {(): 1}).resize(len(rc))@RCGraph.multiply_reps({rcc2: 1}, {(): 1}).resize(len(rc))
         return pudge
 
     def old_coproduct_on_basis(self, elem):

@@ -260,30 +260,33 @@ class CrystalGraphTensor(CrystalGraph):
 
     @property
     def crystal_weight(self):
-        return tuple(a + b for a, b in zip_longest(self.factors[0].crystal_weight, self.factors[1].crystal_weight, fillvalue=0))
+        result = self.factors[0].crystal_weight
+        for factor in self.factors[1:]:
+            result = tuple(a + b for a, b in zip_longest(result, factor.crystal_weight, fillvalue=0))
+        return result
 
     def __hash__(self):
         return hash(self.factors)
 
+    def __getitem__(self, i):
+        return self.factors[i]
+
     def __eq__(self, other):
         return type(self) is type(other) and self.factors == other.factors
-
-
 
     @property
     def args(self):
         return self.factors
 
     def weight_bump(self):
-        return type(self)(self.factors[0].weight_bump(), self.factors[1].weight_bump())
+        return type(self)(*(f.weight_bump() for f in self.factors))
 
     def all_highest_weights(self):
         import itertools
-        right_full_crystal = self.factors[1].full_crystal
-        full_crystal = self.factors[0].full_crystal
+        full_crystals = [f.full_crystal for f in self.factors]
         highest_weights = set()
-        for left_element, right_element in itertools.product(full_crystal, right_full_crystal):
-            highest_weights.add(CrystalGraphTensor(left_element, right_element).to_highest_weight()[0])
+        for elements in itertools.product(*full_crystals):
+            highest_weights.add(CrystalGraphTensor(*elements).to_highest_weight()[0])
         return highest_weights
 
     def _sympystr(self, printer):
@@ -304,36 +307,57 @@ class CrystalGraphTensor(CrystalGraph):
     def crystal_length(self):
         return max(factor.crystal_length() for factor in self.factors)
 
+    def _left_folded_ep_phi(self, index):
+        """Compute (epsilon, phi) for left-folded sub-tensors T_k = (...((b_0 ⊗ b_1) ⊗ b_2) ⊗ ... ⊗ b_k)."""
+        eps = self.factors[0].epsilon(index)
+        phi = self.factors[0].phi(index)
+        result = [(eps, phi)]
+        for k in range(1, len(self.factors)):
+            eps_k = self.factors[k].epsilon(index)
+            phi_k = self.factors[k].phi(index)
+            eps, phi = eps + max(0, eps_k - phi), phi_k + max(0, phi - eps_k)
+            result.append((eps, phi))
+        return result
+
     def lowering_operator(self, index):
-        if self.factors[1].epsilon(index) < self.factors[0].phi(index):
-            tz = CrystalGraphTensor(self.factors[0].lowering_operator(index), self.factors[1])
-            if tz.factors[0] is None:
+        n = len(self.factors)
+        ep = self._left_folded_ep_phi(index)
+        for k in range(n - 1, 0, -1):
+            if self.factors[k].epsilon(index) < ep[k - 1][1]:
+                continue
+            result = self.factors[k].lowering_operator(index)
+            if result is None:
                 return None
-            return tz
-        tz = CrystalGraphTensor(self.factors[0], self.factors[1].lowering_operator(index))
-        if tz.factors[1] is None:
+            new_factors = list(self.factors)
+            new_factors[k] = result
+            return CrystalGraphTensor(*new_factors)
+        result = self.factors[0].lowering_operator(index)
+        if result is None:
             return None
-        return tz
+        new_factors = list(self.factors)
+        new_factors[0] = result
+        return CrystalGraphTensor(*new_factors)
 
     def raising_operator(self, index):
-        if self.factors[1].epsilon(index) > self.factors[0].phi(index):
-            tz = CrystalGraphTensor(self.factors[0], self.factors[1].raising_operator(index))
-            if tz.factors[1] is None:
-                return None
-            return tz
-        tz = CrystalGraphTensor(self.factors[0].raising_operator(index), self.factors[1])
-        if tz.factors[0] is None:
+        n = len(self.factors)
+        ep = self._left_folded_ep_phi(index)
+        for k in range(n - 1, 0, -1):
+            if self.factors[k].epsilon(index) > ep[k - 1][1]:
+                result = self.factors[k].raising_operator(index)
+                if result is None:
+                    return None
+                new_factors = list(self.factors)
+                new_factors[k] = result
+                return CrystalGraphTensor(*new_factors)
+        result = self.factors[0].raising_operator(index)
+        if result is None:
             return None
-        return tz
+        new_factors = list(self.factors)
+        new_factors[0] = result
+        return CrystalGraphTensor(*new_factors)
 
     def epsilon(self, i):
-        return max(self.factors[0].epsilon(i),self.factors[1].epsilon(i) - self.factors[0].crystal_weight[i - 1] + self.factors[0].crystal_weight[i])
+        return self._left_folded_ep_phi(i)[-1][0]
 
     def phi(self, i):
-        return max(self.factors[1].phi(i), self.factors[0].phi(i) + self.factors[1].crystal_weight[i - 1] - self.factors[1].crystal_weight[i])
-
-    # def phi(self, i):
-    #     return self.factors[0].phi(i) + max(0, self.factors[1].phi(i) - self.factors[0].epsilon(i))
-
-    # def epsilon(self, i):
-    #     return self.factors[1].epsilon(i) + max(0, self.factors[0].epsilon(i) - self.factors[1].phi(i))
+        return self._left_folded_ep_phi(i)[-1][1]

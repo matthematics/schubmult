@@ -1349,10 +1349,12 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         ret = {}
         for monom, coeff in the_pa.items():
             pair_list = []
+            #index_list = []
             for pos, exponent in enumerate(monom, start=1):
+                p, k = inv_elem_sym_pos(pos)
                 if exponent > 0:
-                    p, k = inv_elem_sym_pos(pos)
                     pair_list.extend([(p, k)] * exponent)
+                    #index_list.extend([pos] * exponent)
             for rc_list in itertools.product(*[cls.elem_sym_rcs(p,k) for p,k in pair_list]):
                 rc_tup = tuple(rc_list)
                 rc = rc_list[0]

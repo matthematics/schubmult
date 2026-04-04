@@ -29,6 +29,17 @@ EP = PolynomialAlgebra(ElemSymPolyBasis(Sx.genset))
 SS = FreeAlgebra(SchubertSchurBasis)
 EE = FreeAlgebra(ElementaryBasis)
 
+def convert_tensor(tensor):
+        ret = (ASx@FA@ASx@FA).zero
+        for (rc1, rc2), coeff in tensor.items():
+            ret += coeff * ASx(rc1.perm, len(rc1)) @ FA(*rc1.length_vector) @ ASx(rc2.perm, len(rc2)) @ FA(*rc2.length_vector)
+        return ret
+
+def schub_weight_equal(tensor1, tensor2):
+    
+    
+    return convert_tensor(tensor1).almosteq(convert_tensor(tensor2))
+
 
 r = RCGraphRing()
 def rc_to_ss(rc1):
@@ -47,65 +58,114 @@ def rc_to_ss(rc1):
             ret += coeff * rc_to_ss(rc)
     return ret
 
+def full_coprod(perm, weight, length):
+    cem = RCGraph.full_CEM(perm, length)
+    result = 0
+    for rc, cem_dict in cem.items():
+        if rc.length_vector != weight:
+            continue
+        for rc_tup, coeff in cem_dict.items():
+            if coeff == 0:
+                continue
+            if tuple([a + b for a, b in zip(rc_tup[0].length_vector, rc_tup[1].length_vector)]) == weight:
+                yield (rc_tup, coeff)
+
 if __name__ == "__main__":
     from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
+    from schubmult.abc import *
+    from schubmult.rings.polynomial_algebra import *
     from sympy import pretty_print
-    n = 4
+    n = 5
     
     perms = Permutation.all_permutations(n)
-    
-    for perm in perms:
-        def or_cp(p):
-            re = 0
-            for d in range(p + 1):
-                re += r.monomial(d) @ r.monomial(p - d)
-            return re
+    Sy = SingleSchubertRing(y)
+    #for perm in perms:
+        # def or_cp(p):
+        #     re = 0
+        #     for d in range(p + 1):
+        #         re += r.monomial(d) @ r.monomial(p - d)
+        #     return re
         
-        def wr_cpd(*wrd):
-            if len(wrd) == 1:
-                return or_cp(wrd[0])
-            return or_cp(wrd[0]) * wr_cpd(*wrd[1:])
-        elem = ASx(perm, n - 1).coproduct()#change_basis(WordBasis)
-        full_pudge = 0
-        for rc in RCGraph.all_rc_graphs(perm, n - 1):
-            pudge = 0
-            for ((perm1, _), (perm2, _)), coeff in elem.items():
-                cem1 = RCGraph.full_CEM(perm1, n -1)
-                cem2 = RCGraph.full_CEM(perm2, n -1)    
-                
-                for rc1, rc2 in itertools.product(cem1.keys(), cem2.keys()):
-                    #lv = tuple([a + b for a, b in zip(rc1.resize(n-1).length_vector, rc2.resize(n-1).length_vector)])
-                    if RCGraph.multiply_reps(cem1[rc1], cem2[rc2]).resize(n-1).almosteq(r(rc)):
-                        pudge += RCGraph.multiply_reps(cem1[rc1], {(): 1}).resize(n-1)@RCGraph.multiply_reps(cem2[rc2], {(): 1}).resize(n-1)
-                
-            if pudge != 0 and pudge != (r@r).zero:
-                pretty_print(rc)
-                pretty_print(pudge)
+        # def wr_cpd(*wrd):
+        #     if len(wrd) == 1:
+        #         return or_cp(wrd[0])
+        #     return or_cp(wrd[0]) * wr_cpd(*wrd[1:])
+        # elem = ASx(perm, n - 1).coproduct()#change_basis(WordBasis)
+        # # full_pudge = 0
+        # cem = RCGraph.full_CEM(perm, n -1)
+        # pudge = 0
+        # for rc, cem_dict in cem.items():#RCGraph.all_rc_graphs(perm, n - 1):
+        # #     pudge = RCGraph.multiply_reps(cem_dict, {(): 1})
+        # #     for rcc, coeff in pudge.items():
+        # #         full_pudge += r(rcc) @ Sy.from_expr(coeff)
+        #     for ((perm1, _), (perm2, _)), coeff in elem.items():
+        #             cem1 = RCGraph.full_CEM(perm1, n - 1)
+        #             cem2 = RCGraph.full_CEM(perm2, n -1)    
+                    
+        #             for rc1, rc2 in itertools.product(cem1.keys(), cem2.keys()):
+        #                 #lv = tuple([a + b for a, b in zip(rc1.resize(n-1).length_vector, rc2.resize(n-1).length_vector)])
+        #                 if RCGraph.multiply_reps(cem1[rc1], cem2[rc2]).resize(n-1).almosteq(r(rc)):
+        #                     pudge += RCGraph.multiply_reps(cem1[rc1], {(): 1}).resize(n-1)@RCGraph.multiply_reps(cem2[rc2], {(): 1}).resize(n-1)
+                    
+        #     if pudge != 0 and pudge != (r@r).zero:
+        #         pretty_print(rc)
+        #         pretty_print(pudge)
+        # # for rcc, coeff in pudge.items():
+        # #     print(Sy.from_expr(coeff))
+        # #pretty_print(full_pudge)
             
 
     #print(Schub((uncode([0,2,1]),3)).change_basis(ElemSymPolyBasis))
-    # for perm1, perm2 in itertools.product(perms, repeat=2):
-    #     if perm1.inv == 0 or perm2.inv == 0:
-    #         continue
-    #     result = 0
+    cprd = {}
+    for perm1, perm2 in itertools.product(perms, repeat=2):
+        # if perm1.inv == 0 or perm2.inv == 0:
+        #     continue
+        result = 0
         
-    #     prd = Sx(perm1) * Sx(perm2)
+        prd = Sx(perm1) * Sx(perm2)
+        prd_rc = r.zero
+        for perm, coeff in prd.items():
+            prd_rc += coeff * r.schub(perm, n - 1)
     #     #perms_seen = {}
     #     seen = set()
     #     prd = Sx(perm1) * Sx(perm2)
     #     N = max(len(perm1), len(perm2))
     #     hws = set()
-    #     cem1 = RCGraph.full_CEM(perm1, n -1)
-    #     cem2 = RCGraph.full_CEM(perm2, n - 1)
-    #     for rc1, rc2 in itertools.product(cem1.keys(), cem2.keys()):
-    #         # tensor = CrystalGraphTensor(rc1_0, rc2_0).to_lowest_weight()[0]
-    #         # if tensor in hws:
-    #         #     continue
-    #         # hws.add(tensor)
-    #         # rc1, rc2 = tensor.factors   
-            
-    #         # #result += Schub.from_dict(r.monomial(*wt).to_free_algebra_element())
-    #         rc3 = RCGraph.multiply_reps(cem1[rc1], cem2[rc2])
+        cem1 = RCGraph.full_CEM(perm1, n -1)
+        cem2 = RCGraph.full_CEM(perm2, n - 1)
+        result = r.zero
+        for rc1, rc2 in itertools.product(cem1.keys(), cem2.keys()):
+            # tensor = CrystalGraphTensor(rc1_0, rc2_0).to_lowest_weight()[0]
+            # if tensor in hws:
+            #     continue
+            # hws.add(tensor)
+            # rc1, rc2 = tensor.factors   
+            rc_prod = RCGraph.multiply_reps(cem1[rc1], cem2[rc2]).resize(n-1)
+            # for rc, coeff in rc_prod.items():
+            #     result += coeff * ASx(rc.perm, len(rc)) @ PA(*rc.length_vector).change_basis(SchubertPolyBasis)
+            result += rc_prod
+            for rc, fatbat in rc_prod.items():
+                cprd[rc] = cprd.get(rc, (r@r).zero) + fatbat * r(rc1)@r(rc2)
+        # for ((perm1, _), (perm2, _)), coeff in result.items():
+        #     assert perm1 == perm2
+        #     assert prd.get(perm1, 0) == coeff, f"Failed on {perm1} * {perm2}, got {result}, expected {prd}"
+        for rc, coeff in result.items():
+            assert prd_rc.get(rc, 0) == coeff, f"Failed on {perm1} * {perm2}, got {rc.perm}: {coeff} which is not in {prd_rc}\n{prd_rc.get(rc,0)=}\n{rc=}"
+        
+
+        print(result)
+            # #result += Schub.from_dict(r.monomial(*wt).to_free_algebra_element())
+            # rc3 = convert_tensor((r(rc1) * r(rc2)).coproduct())
+            # test_rc3 = convert_tensor(r(rc1).coproduct() * r(rc2).coproduct())
+            # assert rc3.almosteq(test_rc3), f"Fail \n{rc1}\n{rc2}\ngot\n{test_rc3 - rc3}\nwrong"
+        print(f"Success {perm1}, {perm2}")
+    for rc, coeff in cprd.items():
+        if len(rc.perm) > n:
+            continue
+        print("Coproduct of ")
+        pretty_print(rc)
+        print("is")
+        pretty_print(coeff)
     #         # assert len(rc3) == 1
     #         # assert next(iter(rc3.values())) == 1
     #         # assert all(v > 0 for v in rc3.values())
