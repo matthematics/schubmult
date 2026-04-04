@@ -168,94 +168,56 @@ class GrassTensorAlgebra(BaseRing):
         _ensure_valid_key(key)
         result: list = [*key]
         # rows increasing
-        found = True
-        while found:
-            found = False
-            for i in range(len(result) - 1):
-                if len(result[i]) > len(result[i + 1]):
-                    result[i], result[i + 1] = result[i + 1], result[i]
-                    found = True
-                    break
-        # combine factors
-        if len(result) > 1:
-            found = True
-            while found:
-                found = False
-                for i in range(len(result) - 1):
-                    if len(result[i]) == len(result[i + 1]):
-                        merged = result[i].squash_product(result[i + 1])
-                        result[i] = merged
-                        del result[i + 1]
-                        found = True
-                        break
-        # # column normal form
-        #if len(result) > 1:
-        # recurse through
-        for i in range(len(result) - 1):
-            rc = result[i].extend(1)
-            rc_left, rc_right = rc.squash_decomp()
-            if rc_left.perm.inv !=0 and len(rc_left.perm.descents()) == 1 and rc_right.perm.inv != 0:
-                result[i] = rc_left.resize(_last_descent_size(rc_left))
-                result.insert(i + 1, rc_right)
+        # found = True
+        # while found:
+        #     found = False
+        for i in range(1, len(result)):
+            if len(result[i]) <= len(result[i - 1]):
+                index = i
+                while index > 0 and len(result[index]) < len(result[index - 1]):
+                    result[index], result[index - 1] = result[index - 1], result[index]
+                    index -= 1
+                if index > 0 and len(result[index - 1]) == len(result[index]):
+                    merged = result[index - 1].squash_product(result[index])
+                    result[index - 1] = merged
+                    del result[index]
+                    index -= 1
                 return self._normalize_key(tuple(result))
+            if i < len(result) - 1:
+                rc_left, rc_right = result[i].extend(1).squash_decomp()
+                if rc_left.perm.inv !=0 and len(rc_left.perm.descents()) == 1 and rc_right.perm.inv != 0:
+                    result[i] = rc_left.resize(_last_descent_size(rc_left))
+                    result.insert(i + 1, rc_right)
+                    return self._normalize_key(tuple(result))
 
         result = [rc for rc in result if rc.perm.inv != 0]  # drop identity factors
-            # for i, rc in enumerate(result[1:], start=1):
-            #     tensor = result[0]
-            #     for prev in result[1:i + 1]:
-            #         tensor = CrystalGraphTensor(tensor, prev)
-            #     hw, raise_seq = tensor.to_highest_weight()
-            #     left_factor = result[i - 1]
-            #     upsquash_hw = left_factor.resize(len(rc)).squash_product(rc)
-            #     unmerged_left_hw, unmerged_right_hw = upsquash_hw.squash_decomp()
-            #     if unmerged_left_hw.perm.inv == 0:
-
-
-            #     # unmerged_left = unmerged_left_hw.resize(len(result[i - 1]))
-            #     # if len(unmerged_left.perm.descents()) > 1:
-            #     #     raise ValueError(f"Unexpected non-Grassmannian left factor in column normal form step: {unmerged_left}")
-            #     # if unmerged_right_hw.perm.inv == 0 or max(unmerged_right_hw.perm.descents()) != len(result[i]) - 1:
-            #     #     raise ValueError(f"Unexpected non-Grassmannian right factor in column normal form step: {unmerged_right}")
-            #     # if unmerged_left.perm.inv == 0:
-            #     #     result[i] = unmerged_right.resize(len(result[i]))
-            #     #     tensor = unmerged_right
-            #     # else:
-            #     #     result[i - 1] = unmerged_left.resize(max(result[i - 1].perm.descents()) + 1)
-            #     #     result[i] = unmerged_right.resize(len(result[i]))
-            #     #     tensor = unmerged_right
-            # # found = True
-            # # while found:
-            # #     found = False
-            #     old_result = [*result]
-                # for i in range(len(result) - 1):
-                #     if len(result[i].perm) > len(result[i]):
-                #         merged = result[i].resize(len(result[i + 1])).squash_product(result[i + 1])
-                #         merged_hw, raise_seq = merged.to_highest_weight()
-                #         unmerged_left_hw, unmerged_right_hw = merged_hw.squash_decomp()
-                #         unmerged_left_hw = unmerged_left_hw.resize(len(result[i]))
-                #         tensor = CrystalGraphTensor(unmerged_left_hw, unmerged_right_hw).reverse_raise_seq(raise_seq)
-                #         unmerged_left, unmerged_right = tensor.factors
-                #         if len(unmerged_left.perm.descents()) > 1:
-                #             raise ValueError(f"Unexpected non-Grassmannian left factor in column normal form step: {unmerged_left}")
-                #         if unmerged_right.perm.inv == 0 or max(unmerged_right.perm.descents()) != len(result[i+1]) - 1:
-                #             raise ValueError(f"Unexpected non-Grassmannian right factor in column normal form step: {unmerged_right}")
-                #         if unmerged_left.perm.inv == 0:
-                #             result[i+1] = unmerged_right.resize(len(result[i + 1]))
-                #             del result[i]
-                #         else:
-                #             result[i] = unmerged_left.resize(max(result[i].perm.descents()) + 1)
-                #             result[i + 1] = unmerged_right.resize(len(result[i + 1]))
-                #         if result != old_result:
-                #             found = True
-                #             break
-                #         else:
-                #             print("Warning: column normal form step did not change result, stopping to avoid infinite loop")
         # key should be increasing elem syms, and last can be arbitrary Grassmannian
         return tuple(result)
 
     def _mul_keys(self, left_key: tuple, right_key: tuple) -> tuple:
-        new_key = left_key + right_key
-        return self._normalize_key(new_key)
+        new_key = []
+        stck = list(reversed(left_key))
+        stck2 = list(reversed(right_key))
+        while len(stck) > 0 or len(stck2) > 0:
+            if len(stck) == 0:
+                new_key.append(stck2.pop())
+            elif len(stck2) == 0:
+                new_key.append(stck.pop())
+            else:
+                left_top = stck[-1]
+                right_top = stck2[-1]
+                if len(left_top) < len(right_top):
+                    new_key.append(stck.pop())
+                elif len(right_top) < len(left_top):
+                    new_key.append(stck2.pop())
+                else:
+                    merged = left_top.squash_product(right_top)
+                    stck.pop()
+                    stck2.pop()
+                    if merged.perm.inv != 0:
+                        new_key.append(merged)
+
+        return self._normalize_key(tuple(new_key))
 
     def from_dict(self, dct):
         accum = {}
