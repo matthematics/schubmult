@@ -19,16 +19,16 @@ class CrystalGraphRing(BaseRing):
         return elem
 
 
-def _ensure_cg(obj: Any) -> Any:
-    """
-    Ensure obj behaves like a CrystalGraph. If it's already a CrystalGraph,
-    return it. Otherwise return obj unchanged and rely on duck-typing by callers.
-    """
-    if obj is None:
-        return None
-    if isinstance(obj, CrystalGraph):
+    def _ensure_cg(self, obj: Any) -> Any:
+        """
+        Ensure obj behaves like a CrystalGraph. If it's already a CrystalGraph,
+        return it. Otherwise return obj unchanged and rely on duck-typing by callers.
+        """
+        if obj is None:
+            return None
+        if isinstance(obj, CrystalGraph):
+            return obj
         return obj
-    return obj
 
 
 class CrystalGraphRingElement(BaseRingElement, CrystalGraph):
@@ -47,7 +47,7 @@ class CrystalGraphRingElement(BaseRingElement, CrystalGraph):
         m = 0
         for key in self.keys():
             try:
-                cg = _ensure_cg(key)
+                cg = self.ring._ensure_cg(key)
                 term = cg.phi(index)
             except Exception:
                 try:
@@ -65,7 +65,7 @@ class CrystalGraphRingElement(BaseRingElement, CrystalGraph):
         m = 0
         for key in self.keys():
             try:
-                cg = _ensure_cg(key)
+                cg = self.ring._ensure_cg(key)
                 term = cg.epsilon(index)
             except Exception:
                 try:
@@ -84,7 +84,7 @@ class CrystalGraphRingElement(BaseRingElement, CrystalGraph):
         res = self.ring.zero
         for key, coeff in self.items():
             try:
-                cg = _ensure_cg(key)
+                cg = self.ring._ensure_cg(key)
                 out = cg.raising_operator(index)
                 if out is not None:
                     res += coeff * self.ring(out)
@@ -105,7 +105,7 @@ class CrystalGraphRingElement(BaseRingElement, CrystalGraph):
         res = self.ring.zero
         for key, coeff in self.items():
             try:
-                cg = _ensure_cg(key)
+                cg = self.ring._ensure_cg(key)
                 out = cg.lowering_operator(index)
                 if out is not None:
                     res += coeff * self.ring(out)
@@ -124,7 +124,7 @@ class CrystalGraphRingElement(BaseRingElement, CrystalGraph):
         m = 0
         for key in self.keys():
             try:
-                cg = _ensure_cg(key)
+                cg = self.ring._ensure_cg(key)
                 L = cg.crystal_length()
             except Exception:
                 try:

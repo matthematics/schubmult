@@ -287,10 +287,9 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
 class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
     _id = 0
 
-    def __init__(self, *_, quotient_by_weight=False, **__):
+    def __init__(self, *_, **__):
         self._ID = RCGraphRing._id
         RCGraphRing._id += 1
-        self._quotient_by_weight = quotient_by_weight
         self.dtype = type("RCGraphRingElement", (RCGraphRingElement,), {"ring": self})
 
     def __hash__(self):
@@ -301,13 +300,7 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
         return min(RCGraph.all_rc_graphs(rc.perm, len(rc), weight=rc.length_vector))
 
     def from_dict(self, dct):
-        if not self._quotient_by_weight:
-            return super().from_dict(dct)
-        merged = {}
-        for rc, coeff in dct.items():
-            canon = self._weight_key(rc)
-            merged[canon] = merged.get(canon, 0) + coeff
-        return super().from_dict({k: v for k, v in merged.items() if v != 0})
+        return super().from_dict(dct)
 
     def monomial(self, *tup):
         elem = self.one

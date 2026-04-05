@@ -271,6 +271,24 @@ class CrystalGraphTensor(CrystalGraph):
     def __getitem__(self, i):
         return self.factors[i]
 
+    def __len__(self):
+        return len(self.factors)
+
+    def __iter__(self):
+        return iter(self.factors)
+
+    def __add__(self, other):
+        if isinstance(other, CrystalGraphTensor):
+            return CrystalGraphTensor(*self.factors, *other.factors)
+        if isinstance(other, tuple):
+            return CrystalGraphTensor(*self.factors, *other)
+        return NotImplemented
+
+    def __radd__(self, other):
+        if isinstance(other, tuple):
+            return CrystalGraphTensor(*other, *self.factors)
+        return NotImplemented
+
     def __eq__(self, other):
         return type(self) is type(other) and self.factors == other.factors
 
@@ -299,10 +317,7 @@ class CrystalGraphTensor(CrystalGraph):
         return None, self.factors
 
     def __init__(self, *factors):
-        if len(factors) == 1:
-            self.factors = factors[0]
-        else:
-            self.factors = factors
+        self.factors = factors
 
     def crystal_length(self):
         return max(factor.crystal_length() for factor in self.factors)

@@ -438,6 +438,9 @@ class Permutation(Printable):
     def mul_dominant(self):
         return ~((~self).minimal_dominant_above())
 
+    def strict_mul_dominant(self):
+        return ~(uncode((~self).strict_theta()))
+
     def shiftup(self, k):
         return Permutation.from_code(k * [0] + self.code)
 
