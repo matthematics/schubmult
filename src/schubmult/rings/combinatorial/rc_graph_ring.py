@@ -355,21 +355,22 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
 
     @cache
     def coproduct_on_basis(self, rc):
-        import itertools
 
         from schubmult import ASx
+        from schubmult.rings.combinatorial.grass_tensor_algebra import GrassTensorAlgebra
+        g = GrassTensorAlgebra()
         perm = rc.perm
         elem = ASx(perm, len(rc)).coproduct()#change_basis(WordBasis)
         pudge = (self @ self).zero
         for ((perm1, _), (perm2, _)), coeff in elem.items():
             cem1 = RCGraph.full_CEM(perm1, len(rc))
             cem2 = RCGraph.full_CEM(perm2, len(rc))
-            for rc1, rc2 in itertools.product(cem1.keys(), cem2.keys()):
-                coeff2 = RCGraph.multiply_reps(cem1[rc1], cem2[rc2]).resize(len(rc)).get(rc, 0)
-                if coeff2 != 0:
-                    for rcc, coeff3 in cem1[rc1].items():
-                        for rcc2, coeff4 in cem2[rc2].items():
-                            pudge += coeff * coeff2 * coeff3 * coeff4 * RCGraph.multiply_reps({rcc: 1}, {(): 1}).resize(len(rc))@RCGraph.multiply_reps({rcc2: 1}, {(): 1}).resize(len(rc))
+            for rc1, cem_dict1 in cem1.items():
+                for rc2, cem_dict2 in cem2.items():
+                    for key1, val1 in cem_dict1.items():
+                        for key2, val2 in cem_dict2.items():
+                            if (g(key1)*g(key2)).to_rc_graph_ring_element().almosteq(self(rc)):
+                                pudge += val1 * val2 * g(key1).to_rc_graph_ring_element().resize(len(rc)) @ g(key2).to_rc_graph_ring_element().resize(len(rc))
         return pudge
 
     def old_coproduct_on_basis(self, elem):

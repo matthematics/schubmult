@@ -12,14 +12,18 @@ def transition_rc(rc):
 
 if __name__ == "__main__":
     import sys
+    import itertools
+    from sympy import pretty_print
     n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
-    for perm in perms:
-        rc_set = RCGraph.all_rc_graphs(perm, len(perm.trimcode))
-        for rc in rc_set:
-            print(f"RC Graph for permutation {list(perm)}:")
-            print(rc)
-            print("Transition:")
-            for tr in transition_rc(rc):
-                print(tr)
-            print()
+    r = RCGraphRing()
+    for perm1, perm2 in itertools.product(perms, repeat=2):
+        for rc1, rc2 in itertools.product(RCGraph.all_rc_graphs(perm1), RCGraph.all_rc_graphs(perm2)):
+            cp1 = r(rc1).coproduct()
+            cp2 = r(rc2).coproduct()
+            prd_cp = cp1 * cp2
+            cp_prd = (r(rc1) * r(rc2)).coproduct()
+            pretty_print(prd_cp)
+            pretty_print(cp_prd)
+            assert prd_cp.almosteq(cp_prd), f"Failed for {rc1}, {rc2}: {prd_cp-cp_prd}"
+            print("yay")
