@@ -100,7 +100,7 @@ class GrassTensorAlgebraElement(CrystalGraphRingElement):
             rc = self.ring.key_to_rc_graph(key)
             result += coeff * r(rc)
         return result
-    
+
     def dual_product(self, other):
         result = self.ring.zero
         for key1, coeff1 in self.items():
@@ -230,7 +230,7 @@ class GrassTensorAlgebra(CrystalGraphRing):
         #     from schubmult import uncode
         #     return rc.perm == uncode([0] * (len(rc) - rc.perm.inv) + [1] * (rc.perm.inv))
         # if len(result) > 1:
-            
+
             # for i in range(len(result) - 1):
             #     if not _is_elem_sym(result[i]):
             #         combined = result[i].resize(len(result[i + 1])).squash_product(result[i + 1])
