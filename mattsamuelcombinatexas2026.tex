@@ -550,17 +550,28 @@ $$\sch_w(x_1,\ldots,x_{n_1+n_2}) = \sum_{u,v} d_{u,v}^{w}(n_1, n_2)\,\sch_u(x_1,
 \begin{frame}{What about a coproduct?}
   \begin{itemize}
   \item What we want now is to construct a coproduct on this algebra of pipe dreams that lifts the coproduct on $\dcoma$.
+  \item I don't know how to do this. However, there is a specialized product that can be derived from the $\star$ product that does lift the coproduct on $\dcoma$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{The squash product}
+  \begin{itemize}
+  \item Given $R_1,R_2\in\RC_n$, we can define $R_1* R_2$ to be the union of $R_1$ with the pipe dream obtained from $R_2$ by shifting all columns to the right by the length of $\mathrm{perm}(R_1)$
+  
+  \item Applying the combinatorial transition to cut back to the same number of rows, we obtain a bijective product on $\RC_n$ that lifts the coproduct on $\dcoma$, \emph{provided that} $R_2$ is $n$-Grassmannian
+
+  \item This is a right module action of the (opposite) plactic algebra on $\RC_n$
   \end{itemize}
 \end{frame}
 
 
 \begin{frame}{Ghost pipe dreams}
   \begin{itemize}
-  \item There is a larger algebra which we may define as a quotient of the tensor algebra of the direct sum of plactic algebras with different numbers of rows
-  \item This algebra multiplies correctly with a certain rule, and projects surjectively onto $\RC$
-  
-  \item However, the kernel is not an ideal. We can fix this by defining $\mathrm{Ghost}_n$ to be the set of $n$-row pipe dreams that occur in a specific way in the tensor algebra
-  \item They are linear combinations of tensors that project to zero in $\RC$ but are not themselves zero in the tensor algebra
+  \item There is a larger algebra based on the squash product that is essentially a tensor product of opposite plactic algebras with increasing numbers of rows that maps onto $\RC$
+  \item It has an associative product by declaring that $n$-plactic and $m$-plactic elements commute for $n\neq m$ and that the product of an $n$-plactic element with an $n$-plactic element is given by the squash product. This is compatible with the crystal raising/lowering operators
+  \item This algebra has ``Schubert elements'' $\sch_w$ that map to the sum of all pipe dreams with permutation $w$ and have the same product structure constants as the Schubert polynomials (!!!)
+  \item However, the kernel of the map to $\RC_n$ is not an ideal
+  \item Thus there are signed ``ghost'' pipe dreams that are necessary to maintain the product structure but cancel in $\RC$
   \end{itemize}
 \end{frame}
 
@@ -568,8 +579,16 @@ $$\sch_w(x_1,\ldots,x_{n_1+n_2}) = \sum_{u,v} d_{u,v}^{w}(n_1, n_2)\,\sch_u(x_1,
 
 \begin{frame}{The representation theorem}
   \begin{theorem}
-Let $P$ be an $n$-row pipe dream. Then there is a unique way to write $P$ as a linear combination of tensor products of ghost pipe dreams such that the following hold:
+Let $P$ be an $n$-row pipe dream. Then there is a unique way to write $P$ as a product
+$$P=P_{(n)}\cdot P^{(n)}$$
+where $\mathrm{perm}(P_{(n)})\in S_n$ and $P^{(n)}$ is $n$-Grassmannian such that for every $P_1,P_2\in \mathrm{Pipe}_n$ we have
+$$(P_1\cdot P_2)_{(n)}(P_1\cdot P_2)^{(n)} = ((P_1)_{(n)}\cdot (P_2)_{(n)})(P_1^{(n)}\cdot P_2^{(n)})$$
   \end{theorem}
+  \begin{corollary}
+Every Schubert element $\sch_w$ with $n$ rows can be uniquely expressed as
+$$\sch_w = \sum_{u} c_{w,u}^{\lambda}\sch_u\cdot G_\lambda$$
+where each $u\in S_n$ and each $G_\lambda$ is an $n$-Grassmannian Schubert element, with the coefficients $c_{w,u}^\lambda$ being (possibly negative) integers.
+    \end{corollary}
 \end{frame}
 
 \begin{frame}{Positive formula}
@@ -578,8 +597,9 @@ Let $P$ be an $n$-row pipe dream. Then there is a unique way to write $P$ as a l
   \end{theorem}
 
   \begin{proof}
-  If we are allowed to precompute the products of all pairs of pipe dreams with $\mathrm{perm}(P)\in S_n$, then computing the product of two elements of $\mathrm{Pipe}_n$ yields a positive result without cancellation by applying the classical LR rule.
+  Using properties of Demazure crystals and the representation theorem, we can deduce with finite precomputation that the highest weight pipe dreams of the product of two $n$-row Schubert elements have nonnegative coefficients. This reduces the problem to the squash product, which is equivalent to the Littlewood-Richardson rule.
   \end{proof}
+  Since the precomputation is known to come to a positive result, we have essentially skirted the restriction on a positive formula by reducing the cancellation to a finite computation that applies \emph{uniformly}.
 \end{frame}
 
 \end{document}

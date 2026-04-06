@@ -320,7 +320,7 @@ class CrystalGraphTensor(CrystalGraph):
         self.factors = factors
 
     def crystal_length(self):
-        return max(factor.crystal_length() for factor in self.factors)
+        return max([factor.crystal_length() for factor in self.factors], default=0)
 
     def _left_folded_ep_phi(self, index):
         """Compute (epsilon, phi) for left-folded sub-tensors T_k = (...((b_0 ⊗ b_1) ⊗ b_2) ⊗ ... ⊗ b_k)."""
