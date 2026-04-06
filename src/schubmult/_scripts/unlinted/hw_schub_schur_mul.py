@@ -83,6 +83,66 @@ def doit(grass_elem1, n):
         picnic1 += coeff * to_add1 @ g(key[index:]).to_rc_graph_ring_element().resize(n-1)
     return picnic1
 
+def cem_schub(perm, n):
+    return sum([g.from_dict(cem_dict) for rc, cem_dict in RCGraph.full_CEM(perm, n).items()])
+
+def cem_schub_schur_decomp(perm, n):
+    from sympy import Mul, Add, expand
+    result = Sx.zero @ Sx.zero
+    cd = perm.strict_mul_dominant().trimcode
+    if any(a < n for a in cd):
+        toadd = min(n - a for a in cd if a < n)
+        cd = [a + toadd for a in cd]
+    domperm = uncode(cd)
+    reppy = expand(Sx(perm).cem_rep(mumu=~domperm, elem_func=Sx.symbol_elem_func), func=False)
+    for arg in Add.make_args(reppy):
+        coeff, schur_part = arg.as_coeff_Mul()
+        part1 = Sx.one
+        part2 = Sx.one
+        for elem_arg in Mul.make_args(schur_part):
+            if elem_arg.numvars < n:
+                part1 *= elem_arg
+            else:
+                part2 *= elem_arg
+        result += coeff * part1 @ part2
+    return result
+
+def schub_schur_decomp(perm, n):
+    result = r.schub(perm, n)
+    if len(perm) <= n:
+        return result @ r.one.resize(n)
+    factorization = (r@r).zero
+    seen = set()
+    while not result.almosteq(r.zero):
+        itemlist = list(sorted(result.items()))
+        
+        for rc, coeff in itemlist:
+            if coeff == 0:
+                continue
+            if len(rc.perm) <= n:
+                if (rc.perm, Permutation([])) in seen:
+                    continue
+                seen.add((rc.perm, Permutation([])))
+                factorization += coeff * cem_schub(rc.perm, n).to_rc_graph_ring_element().resize(n) @ r.one.resize(n)
+                result -= coeff * cem_schub(rc.perm, n).to_rc_graph_ring_element().resize(n)                
+            elif rc.perm.descents() == {n-1}:
+                if (Permutation([]), rc.perm) in seen:
+                    continue
+                seen.add((Permutation([]), rc.perm))
+                factorization += coeff * r.one.resize(n) @ cem_schub(rc.perm, n).to_rc_graph_ring_element().resize(n)
+                result -= coeff * cem_schub(rc.perm, n).to_rc_graph_ring_element().resize(n)
+            else:
+                rc_base, rc_grass = rc.resize(n).squash_decomp()
+                if (rc_base.perm, rc_grass.perm) in seen:
+                    continue
+                seen.add((rc_base.perm, rc_grass.perm))
+                blast_element = cem_schub(rc_base.perm, n) * cem_schub(rc_grass.perm, n)
+                result -= coeff * blast_element.to_rc_graph_ring_element().resize(n)
+                factorization += coeff * cem_schub(rc_base.perm, n).to_rc_graph_ring_element().resize(n) @ cem_schub(rc_grass.perm, n).to_rc_graph_ring_element().resize(n)
+                print("REsult after processing", rc.perm, "is", result)
+                pretty_print(result)
+    return factorization
+
 
 if __name__ == "__main__":
     from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
@@ -92,13 +152,31 @@ if __name__ == "__main__":
     import sys
     import itertools
     n = int(sys.argv[1])
-    extra = 1
+    extra = 2
     perms = [perm for perm in Permutation.all_permutations(n + extra) if len(perm.trimcode) <= n]
     
-
+    # for perm in perms:
+    #     if len(perm) > n:
+    #         print("Trying perm", perm)
+    #         print(cem_schub_schur_decomp(perm, n))
+    #sys.exit(0)
     for perm1, perm2 in itertools.product(perms, repeat=2):
-        cem1 = RCGraph.full_CEM(perm1, n + 1)
-        cem2 = RCGraph.full_CEM(perm2, n + 1)
+        if perm1.inv == 0 or perm2.inv == 0:
+            continue
+        # cem1 = RCGraph.full_CEM(perm1, n + 1)
+        # cem2 = RCGraph.full_CEM(perm2, n + 1)
+        cem_elem1 = cem_schub_schur_decomp(perm1, n)
+        cem_elem2 = cem_schub_schur_decomp(perm2, n)
+
+        test_elem = Sx.zero
+
+        # for (a1, a2), coeff in cem_elem1.items():
+        #     test_elem += coeff * Sx(a1) * Sx(a2)
+        # assert test_elem == Sx(perm1)
+        # test_elem2 = Sx.zero
+        # for (a1, a2), coeff in cem_elem2.items():
+        #     test_elem2 += coeff * Sx(a1) * Sx(a2)
+        # assert test_elem2 == Sx(perm2)
 
         # ghost1 = {rc: cem1[rc] for rc in cem1 if rc.perm != perm1}
         # ghost2 = {rc: cem2[rc] for rc in cem2 if rc.perm != perm2}
@@ -120,10 +198,44 @@ if __name__ == "__main__":
         #result = r.zero
         result = (r@r).zero
         prd = Sx(perm1) * Sx(perm2)
-        for rc1, cem_dict1 in cem1.items():
-            for rc2, cem_dict2 in cem2.items():
-                cem_tensor1 = doit(cem_dict1, n + 1)#sum([v * doit(k, n) for k, v in cem_dict1.items()])
-                cem_tensor2 = doit(cem_dict2, n + 1)#sum([v * doit(k, n) for k, v in cem_dict2.items()])
+        for (base_perm, grass_perm), coeff1 in cem_elem1.items():
+            for (base_perm2, grass_perm2), coeff2 in cem_elem2.items():
+                graph_base = (cem_schub(base_perm, n)*cem_schub(base_perm2, n)).to_rc_graph_ring_element().resize(n)
+                graph_grass = ((cem_schub(grass_perm, n) *cem_schub(grass_perm2, n))).to_rc_graph_ring_element().resize(n)
+                for rc, coeff3 in graph_base.items():                    
+                    if rc.is_highest_weight:
+                        #rc_base, rc_grass0 = rc.resize(n).squash_decomp()
+                        for rc_grass, coeff4 in graph_grass.items():
+                            new_elem = rc.squash_product(rc_grass)
+                            #CrystalGraphTensor(rc_base, rc_grass0.squash_product(rc_grass))
+                            if new_elem.is_highest_weight:
+                                result += coeff1 * coeff2 * coeff3 * coeff4 * (r@r)(new_elem.squash_decomp())
+                    # if rc.is_highest_weight:
+                    #     result += coeff1 * coeff2 * coeff3 * (r@r)(rc.squash_decomp())
+                # cem2 = RCGraph.full_CEM(base_perm2, n)
+                # for rc1, cem_dict1 in cem1.items():
+                #     for rc2, cem_dict2 in cem2.items():
+                #         for key1, coeff11 in cem_dict1.items():
+                #             for key2, coeff22 in cem_dict2.items():
+                #                 elem = next(iter((g(key1) * g(key2)).to_rc_graph_ring_element().resize(n)))
+                #                 #base_graph, grass1 = elem.squash_decomp()
+                #                 for grass_rc1 in RCGraph.all_rc_graphs(grass_perm, n):
+                #                     for grass_rc2 in RCGraph.all_rc_graphs(grass_perm2, n):
+                #                         new_elem = elem.squash_product(grass_rc1).squash_product(grass_rc2)
+                #                         if new_elem.is_highest_weight:
+                #                             elem0, grass_rc0 = new_elem.squash_decomp()
+                #                             result += coeff1 * coeff2 * coeff11 * coeff22 * r(elem0) @ r(grass_rc0)
+                        # for up_grass_perm, coeff3 in up_grass.items():
+                        #     grass_cem = RCGraph.full_CEM(up_grass_perm, n)
+                        #     for rcc, grass_cem_dict in grass_cem.items():
+                        #         try:
+                        #             grass_rc = next(iter(g.from_dict(grass_cem_dict).to_rc_graph_ring_element().resize(n)))
+                        #         except StopIteration:
+                        #             continue
+                        #         new_elem = elem.squash_product(grass_rc)
+                        #         if new_elem.is_highest_weight:
+                        #             elem0, grass_rc0 = new_elem.squash_decomp()
+                        #             result += coeff1 * coeff2 * coeff3 * r(elem0) @ r(grass_rc0)
                 # if (rc1.perm != perm1 or rc2.perm != perm2) and not (rc1.perm == perm1 and rc2.perm == perm2):
                 #     ghost_elem = (g.from_dict(cem_dict1) * g.from_dict(cem_dict2)).to_rc_graph_ring_element()
                 #     for rc, coeff in ghost_elem.items():
@@ -132,19 +244,19 @@ if __name__ == "__main__":
                 #         else:
                 #             ghost_negative -= -coeff * r(rc)
                 #     continue
-                for (f11, f12), v1 in cem_tensor1.items():
-                    for (f21, f22), v2 in cem_tensor2.items():
-                        # first_result = next(iter((g(f11) * g(f21)).to_rc_graph_ring_element())).resize(n)
-                        # tensor = CrystalGraphTensor(first_result.resize(n),f12.resize(n).squash_product(f22.resize(n)))
-                        # tensor_hw, raise_seq = tensor.to_highest_weight()
-                        #tensor = CrystalGraphTensor(tensor_hw, f12.resize(n).squash_product(f22.resize(n)))
-                        #result += v1 * v2 * r(tensor.factors[0]) squash_product(tensor.factors[1]).reverse_raise_seq(raise_seq))
-                        #result += v1 * v2 * r(tensor.factors[0]) @ r(tensor.factors[1]).reverse_raise_seq(raise_seq)
-                        # if tensor.is_highest_weight:
-                        #     result += v1 * v2 * r(tensor.factors[0]) @ r(tensor.factors[1])
-                        rcc = next(iter(((g(f11) * g(f21))*(g((f12,))*g((f22,)))).to_rc_graph_ring_element().resize(n)))
-                        if rcc.is_highest_weight:
-                            result += v1 * v2 * (r@r)(rcc.squash_decomp())
+                # for (f11, f12), v1 in cem_tensor1.items():
+                #     for (f21, f22), v2 in cem_tensor2.items():
+                #         # first_result = next(iter((g(f11) * g(f21)).to_rc_graph_ring_element())).resize(n)
+                #         # tensor = CrystalGraphTensor(first_result.resize(n),f12.resize(n).squash_product(f22.resize(n)))
+                #         # tensor_hw, raise_seq = tensor.to_highest_weight()
+                #         #tensor = CrystalGraphTensor(tensor_hw, f12.resize(n).squash_product(f22.resize(n)))
+                #         #result += v1 * v2 * r(tensor.factors[0]) squash_product(tensor.factors[1]).reverse_raise_seq(raise_seq))
+                #         #result += v1 * v2 * r(tensor.factors[0]) @ r(tensor.factors[1]).reverse_raise_seq(raise_seq)
+                #         # if tensor.is_highest_weight:
+                #         #     result += v1 * v2 * r(tensor.factors[0]) @ r(tensor.factors[1])
+                #         rcc = next(iter(((g(f11) * g(f21))*(g((f12,))*g((f22,)))).to_rc_graph_ring_element().resize(n)))
+                #         if rcc.is_highest_weight:
+                #             result += v1 * v2 * (r@r)(rcc.squash_decomp())
                         # the_base_elem = doit(g(f11) * g(f21), n)
                         # for (rc11, rc22), coeff2 in the_base_elem.items():
                         #     grass_rc = next(iter((g((rc22,))*g((f12,))*g((f22,))).to_rc_graph_ring_element())).resize(n-1)
