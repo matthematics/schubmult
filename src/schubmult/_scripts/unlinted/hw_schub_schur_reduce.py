@@ -152,7 +152,7 @@ if __name__ == "__main__":
     import sys
     import itertools
     n = int(sys.argv[1])
-    extra = 1
+    extra = 3
     perms = [perm for perm in Permutation.all_permutations(n + extra) if len(perm.trimcode) <= n]
     
     # for perm in perms:
@@ -165,10 +165,10 @@ if __name__ == "__main__":
             continue
         # cem1 = RCGraph.full_CEM(perm1, n + 1)
         # cem2 = RCGraph.full_CEM(perm2, n + 1)
-        cem_elem1 = cem_schub_schur_decomp(perm1, n)
-        cem_elem2 = cem_schub_schur_decomp(perm2, n)
+        # cem_elem1 = cem_schub_schur_decomp(perm1, n)
+        # cem_elem2 = cem_schub_schur_decomp(perm2, n)
 
-        test_elem = Sx.zero
+        #test_elem = Sx.zero
 
         # for (a1, a2), coeff in cem_elem1.items():
         #     test_elem += coeff * Sx(a1) * Sx(a2)
@@ -198,45 +198,50 @@ if __name__ == "__main__":
         result = r.zero
         #result = (r@r).zero
         prd = Sx(perm1) * Sx(perm2)
-        # for rc1, cem_dict in RCGraph.full_CEM(perm1, n, partition=tuple((~(perm1.mul_dominant())).trimcode)).items():
-        #     for rc2, cem_dict2 in RCGraph.full_CEM(perm2, n, partition=tuple((~(perm2.mul_dominant())).trimcode)).items():
-        #         g1 = g.from_dict(cem_dict)
-        #         g2 = g.from_dict(cem_dict2)
-        #         graph_base = (g1 * g2).to_rc_graph_ring_element().resize(n)
-        #         for rc_base, coeff in graph_base.items():
-        #             if coeff == 0:
-        #                 continue
+        for rc1, cem_dict in RCGraph.full_CEM(perm1, n, partition=tuple((~(perm1.mul_dominant())).trimcode)).items():
+            for rc2, cem_dict2 in RCGraph.full_CEM(perm2, n, partition=tuple((~(perm2.mul_dominant())).trimcode)).items():
+                g1 = g.from_dict({k[:n]: v for k,v in cem_dict.items()})
+                g2 = g.from_dict({k[:n]: v for k,v in cem_dict2.items()})
+                graph_base = (g1 * g2).to_rc_graph_ring_element().resize(n)
+                result_base = r.zero
+                for rc_base, coeff in graph_base.items():
+                    if coeff == 0:
+                        continue
 
-        #             if rc_base.is_principal:
-        #                 #assert coeff >= 0
-        #                 if coeff < 0:
-        #                     print("Negative coefficient for", rc_base, "in product of", perm1, "and", perm2, "with cem_dicts", cem_dict, cem_dict2)
-        #                 result += coeff * r(rc_base)
-        for (base_perm, grass_perm), coeff1 in cem_elem1.items():
-            for (base_perm2, grass_perm2), coeff2 in cem_elem2.items():
-                graph_base = (cem_schub(base_perm, n)*cem_schub(base_perm2, n)).to_rc_graph_ring_element().resize(n)
-                graph_grass = ((cem_schub(grass_perm, n) *cem_schub(grass_perm2, n))).to_rc_graph_ring_element().resize(n)
-                for rc_grass, coeff4 in graph_grass.items():
-                    result_base = r.zero
-                    for rc, coeff3 in graph_base.items():                    
-                    # if rc.is_highest_weight:
-                    #     #rc_base, rc_grass0 = rc.resize(n).squash_decomp()
-                            #rcc = rc.squash_product(rc_grass)
-                            if rc.is_principal:
-                                # coeff = coeff1 * coeff2 * coeff3
-                                assert coeff3 >= 0, f"Negative coefficient for {rc} in product of {perm1} and {perm2} with base perms {base_perm}, {base_perm2} and grass perms {grass_perm}, {grass_perm2}"
-                                result_base += coeff3 * r(rc.to_highest_weight()[0])
-                    for rc_base, coeff3 in graph_base.items():
-                        rcc = rc_base.squash_product(rc_grass)
-                        if rcc.is_highest_weight and rcc.extremal_weight == pad_tuple(rcc.perm.trimcode, len(rcc)): 
-                            result += coeff1 * coeff2 * coeff3 * coeff4 * r(rcc)
+                    if rc_base.is_principal:
+                        assert coeff >= 0
+                        result_base += coeff * r(rc_base.to_highest_weight()[0])
+                g1_rest = g.from_dict({k[n:]: 1 for k,v in cem_dict.items()})
+                g2_rest = g.from_dict({k[n:]: 1 for k,v in cem_dict2.items()})
+                graph_rest = (g1_rest * g2_rest).to_rc_graph_ring_element().resize(n)
+                for rc_rest, coeff in graph_rest.items():
+                    for rc_base, coeff_base in result_base.items():
+                        rcc = rc_base.squash_product(rc_rest)
+                        if rcc.is_highest_weight:
+                            assert coeff * coeff_base >= 0, f"Negative coefficient {coeff * coeff_base} for {rc_base}, {rc_rest} at {rc1.perm}, {rc2.perm}"
+                            result += coeff * coeff_base * r(rcc)
+                    #if CrystalGraphTensor()
+        # for (base_perm, grass_perm), coeff1 in cem_elem1.items():
+        #     for (base_perm2, grass_perm2), coeff2 in cem_elem2.items():
+        #         graph_base = (cem_schub(base_perm, n)*cem_schub(base_perm2, n)).to_rc_graph_ring_element().resize(n)
+        #         graph_grass = ((cem_schub(grass_perm, n) *cem_schub(grass_perm2, n))).to_rc_graph_ring_element().resize(n)
+        #         for rc, coeff3 in graph_base.items():                    
+        #             if rc.is_principal:
+        #             #     #rc_base, rc_grass0 = rc.resize(n).squash_decomp()
+        #                 for rc_grass, coeff4 in graph_grass.items():
 
-                            # new_elem = rc.squash_product(rc_grass)
-                            #CrystalGraphTensor(rc_base, rc_grass0.squash_product(rc_grass))
-                            # if new_elem.is_highest_weight:
-                            #     result += coeff1 * coeff2 * coeff3 * coeff4 * (r@r)(new_elem.squash_decomp())
-                    # if rc.is_highest_weight:
-                    #     result += coeff1 * coeff2 * coeff3 * (r@r)(rc.squash_decomp())
+        #                     rcc = rc.squash_product(rc_grass)
+        #                     #if rcc.is_highest_weight and rcc.to_lowest_weight()[0].is_principal:
+        #                     #    result += r(rcc)
+        #                     if rcc.is_principal:
+        #                         assert coeff1 * coeff2 * coeff3 * coeff4 >= 0, f"Negative coefficient {coeff1 * coeff2 * coeff3 * coeff4} for {base_perm}, {grass_perm}, {base_perm2}, {grass_perm2} at {rc}, {rc_grass}"
+        #                         result += coeff1 * coeff2 * coeff3 * coeff4 * r(rcc)
+        #                     # new_elem = rc.squash_product(rc_grass)
+        #                     #CrystalGraphTensor(rc_base, rc_grass0.squash_product(rc_grass))
+        #                     # if new_elem.is_highest_weight:
+        #                     #     result += coeff1 * coeff2 * coeff3 * coeff4 * (r@r)(new_elem.squash_decomp())
+        #                     # if rc.is_highest_weight:
+        #                     #     result += coeff1 * coeff2 * coeff3 * r(rc)
                 # cem2 = RCGraph.full_CEM(base_perm2, n)
                 # for rc1, cem_dict1 in cem1.items():
                 #     for rc2, cem_dict2 in cem2.items():

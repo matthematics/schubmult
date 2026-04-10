@@ -226,6 +226,17 @@ class GrassTensorAlgebra(CrystalGraphRing):
                 result[i - 1], result[i] = result[i], result[i - 1]
                 return self._normalize_key(CrystalGraphTensor(*result))
         result = [rc.normalize() for rc in result if rc.perm.inv != 0]  # drop identity factors
+
+        for i in range(len(result) - 1, -1, -1):
+            if not _is_full_grassmannian_rc(result[i]):
+                raise ValueError(f"Non full Grassmannian factor in normalized key: {result[i]} in key {key}")
+            if len(result[i].perm) - 1 > len(result[i]):
+                rc = result[i].resize(len(result[i].perm))
+                rc_base, rc_grass = rc.squash_decomp()
+                if rc_base.perm.inv != 0 and rc_grass.perm.inv != 0 and _is_full_grassmannian_rc(rc_base):
+                    result[i] = rc_base.normalize()
+                    result.insert(i + 1, rc_grass.normalize())
+                    return self._normalize_key(CrystalGraphTensor(*result))
         # def _is_elem_sym(rc: RCGraph) -> bool:
         #     from schubmult import uncode
         #     return rc.perm == uncode([0] * (len(rc) - rc.perm.inv) + [1] * (rc.perm.inv))
