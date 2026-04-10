@@ -57,15 +57,15 @@ def safe_load_recording(filename):
 
 
 def verify_pair(perm1, perm2, n):
-    from schubmult import GrassTensorAlgebra, RCGraph, RCGraphRing, Sx, uncode
+    from schubmult import BoundedRCFactorAlgebra, RCGraph, RCGraphRing, Sx, uncode
     from schubmult.utils.tuple_utils import pad_tuple
     from sympy import Add, Mul, expand
 
-    g = GrassTensorAlgebra(n)
+    g = BoundedRCFactorAlgebra()
     r = RCGraphRing()
 
     def cem_schub(perm, n):
-        return sum([g.from_dict(cem_dict) for rc, cem_dict in RCGraph.full_CEM(perm, n).items()])
+        return sum([g.from_tensor_dict(cem_dict, n) for rc, cem_dict in RCGraph.full_CEM(perm, n).items()])
 
     def cem_schub_schur_decomp(perm, n):
         result = Sx.zero @ Sx.zero

@@ -1,4 +1,5 @@
 from .alt_rc_graph_ring import AltRCGraphRing, AltRCGraphRingElement
+from .bounded_rc_factor_algebra import BoundedRCFactorAlgebra, BoundedRCFactorAlgebraElement
 from .bpd_ring import BPDRing, BPDRingElement
 from .chute_move_ring import ChuteMoveRing, ChuteMoveRingElement
 from .crystal_graph_ring import CrystalGraphRing, CrystalGraphRingElement
@@ -16,6 +17,8 @@ __all__ = [
     "AltRCGraphRingElement",
     "BPDRing",
     "BPDRingElement",
+    "BoundedRCFactorAlgebra",
+    "BoundedRCFactorAlgebraElement",
     "ChuteMoveRing",
     "ChuteMoveRingElement",
     "CrystalGraphRing",

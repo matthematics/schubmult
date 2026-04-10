@@ -1,11 +1,11 @@
 from schubmult import *
 from schubmult.utils.tuple_utils import pad_tuple
 
-g = GrassTensorAlgebra()
+g = BoundedRCFactorAlgebra()
 r = RCGraphRing()
 
 def cem_schub(perm, n):
-    return sum([g.from_dict(cem_dict) for rc, cem_dict in RCGraph.full_CEM(perm, n).items()])
+    return sum([g.from_tensor_dict(cem_dict, n) for rc, cem_dict in RCGraph.full_CEM(perm, n).items()])
 
 def cem_schub_schur_decomp(perm, n):
     from sympy import Mul, Add, expand
