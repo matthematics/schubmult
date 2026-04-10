@@ -121,6 +121,7 @@ class Permutation(Printable):
         return cls.from_code([n - 1 - i for i in range(n - 1)])
 
     @classmethod
+    @cache
     def all_permutations(cls, n):
         from itertools import permutations
 

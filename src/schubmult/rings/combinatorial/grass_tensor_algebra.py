@@ -118,10 +118,12 @@ class GrassTensorAlgebra(CrystalGraphRing):
     _id = 0
     zero_monom = CrystalGraphTensor()
 
-    def __init__(self, domain=None):
+    def __init__(self, bound=None, domain=None):
         super().__init__(domain=domain)
         self._ID = GrassTensorAlgebra._id
         GrassTensorAlgebra._id += 1
+
+        self._bound = bound
         self.dtype = type("GrassTensorAlgebraElement", (GrassTensorAlgebraElement,), {"ring": self})
 
     def dual_product_on_basis(self, left_key, right_key):
@@ -160,9 +162,11 @@ class GrassTensorAlgebra(CrystalGraphRing):
         return obj
 
     def __hash__(self):
-        return hash(("GrassTensorAlgebra", self._ID))
+        return hash(("GrassTensorAlgebra", self._ID, self._bound))
 
     def elem_sym(self, p, k):
+        if k > self._bound:
+            raise ValueError(f"elem_sym index k={k} exceeds bound {self._bound}")
         from schubmult import uncode
         set_of_keys = [CrystalGraphTensor(rc) for rc in RCGraph.all_rc_graphs(uncode([0] * (k - p) + [1]*p), k)]
         return self.from_dict(dict.fromkeys(set_of_keys, S.One))
@@ -208,6 +212,8 @@ class GrassTensorAlgebra(CrystalGraphRing):
 
     def _normalize_key(self, key: CrystalGraphTensor | tuple) -> CrystalGraphTensor:
         """Normalize an RCGraph tensor key to normal form."""
+        if self._bound is not None and any(len(k) > self._bound for k in key):
+            raise ValueError(f"Key factors must have length at most {self._bound} due to algebra bound, got {[len(k) for k in key]} in key {key}")
         if isinstance(key, tuple):
             key = CrystalGraphTensor(*key)
         _ensure_valid_key(key)
@@ -230,8 +236,9 @@ class GrassTensorAlgebra(CrystalGraphRing):
         for i in range(len(result) - 1, -1, -1):
             if not _is_full_grassmannian_rc(result[i]):
                 raise ValueError(f"Non full Grassmannian factor in normalized key: {result[i]} in key {key}")
-            if len(result[i].perm) - 1 > len(result[i]):
-                rc = result[i].resize(len(result[i].perm))
+            if len(result[i].perm) - 1 > len(result[i]) and (self._bound is None or len(result[i]) < self._bound):
+                max_len = len(result[i].perm) if self._bound is None else min(len(result[i].perm), self._bound)
+                rc = result[i].resize(max_len)
                 rc_base, rc_grass = rc.squash_decomp()
                 if rc_base.perm.inv != 0 and rc_grass.perm.inv != 0 and _is_full_grassmannian_rc(rc_base):
                     result[i] = rc_base.normalize()
