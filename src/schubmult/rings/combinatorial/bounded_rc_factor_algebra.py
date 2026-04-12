@@ -143,7 +143,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
     @cache
     def _schub_elem_cached(self, perm, size):
-        dct = RCGraph.full_CEM(perm, size)
+        dct = RCGraph.full_CEM(perm, size, partition=tuple((~(perm.mul_dominant())).trimcode))
         elem = sum([self.from_tensor_dict(cem_dict, size=size) for _, cem_dict in dct.items()])
         return elem
 
