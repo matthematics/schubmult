@@ -68,7 +68,8 @@ def _plactic_lowering_operator(word, i):
 def _is_valid_outer_corner(grid: np.ndarray, i: int, j: int) -> bool:
     """
     Outer-corner predicate used by up_jdt_slide.
-    Accepts hole positions that may extend the grid (i==rows or j==cols).
+    Accepts hole positions that may extend the grid (``i==rows`` or ``j==cols``).
+
     A position is valid if:
       - there is a box above AND a box to the left, OR
       - at least one of those exists and the hole is on/extends the outer boundary.
@@ -136,11 +137,13 @@ def _root_compare(root1, root2):
 def _word_from_grid(grid0, as_grid: Optional[bool] = False, as_ordering: Optional[bool] = False, with_compatible_seq: Optional[bool] = False) -> Any:
     """
     Two modes:
+
       - as_grid=True: return an object-array the same shape as grid0 where each
         occupied cell contains the recording letter (cell[1]) and empty cells
         are None.
       - as_grid=False: reconstruct the reduced word (sequence of simple-reflection
         indices) by repeatedly:
+
           * finding the occupied cell whose recording letter (cell[1]) is maximal
             and, among those, is farthest to the right (largest column index;
             break ties by largest row index),
@@ -148,6 +151,7 @@ def _word_from_grid(grid0, as_grid: Optional[bool] = False, as_ordering: Optiona
           * applying the root-shift corresponding to cell[0] to the region
             above the popped box and to the part of the same row left of the box,
           * repeating until no boxes remain.
+
         Returns a tuple(reversed(collected_letters)) to match the original reduced
         word orientation used elsewhere.
     """
@@ -1167,5 +1171,4 @@ def _rc_position_in_word(rc_graph, row_idx, element):
     """
     row = rc_graph[row_idx]
     position_in_row = len(row) - 1 - row.index(element)
-    position = position_in_row + sum(len(rc_graph[row_above]) for row_above in range(row_idx))
-    return position
+    return position_in_row + sum(len(rc_graph[row_above]) for row_above in range(row_idx))

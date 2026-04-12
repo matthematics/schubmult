@@ -15,7 +15,7 @@ class DirectProductRing(BaseRing):
 
     Parameters
     ----------
-    *rings : BaseRing
+    ``*rings`` : BaseRing
         One or more constituent rings.
 
     Examples

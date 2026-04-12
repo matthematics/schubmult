@@ -345,10 +345,11 @@ class Plactic(GridPrint, CrystalGraph):
         """Generate all semistandard tableaux of given shape (or skew shape) with entries <= max_entry.
 
         Args:
+
             shape: Sequence of row lengths (outer shape)
             max_entry: Maximum entry value
             inner_shape: Optional sequence of left offsets per row (for skew shapes).
-                        If provided, positions [row][0:inner_shape[row]] are marked as 0.
+            If provided, positions [row][0:inner_shape[row]] are marked as 0.
 
         Returns:
             Set of Plactic instances representing all valid semistandard tableaux
@@ -566,11 +567,12 @@ class Plactic(GridPrint, CrystalGraph):
     @staticmethod
     def _rs_insert(word, letter, i=0):
         """
-        Row-insertion: insert `letter` into `word` (tuple-of-tuples) starting at row i.
+        Row-insertion: insert ``letter`` into ``word`` (tuple-of-tuples) starting at row i.
         Returns a new tuple-of-tuples representing the tableau after insertion.
 
         Algorithm:
-        - If row i doesn't exist, append a new row with the letter.
+
+        - If row i does not exist, append a new row with the letter.
         - Otherwise find the first entry in row i that is > letter, replace it (bump)
           and recursively insert the bumped value into row i+1.
         - If no entry > letter, append letter to the end of row i.
@@ -1010,18 +1012,22 @@ class Plactic(GridPrint, CrystalGraph):
                      lengths (mu_0 >= mu_1 >= ...).
 
         Algorithm (deterministic):
+
         - Let mu be the set of cells (r,c) with 0 <= r < len(mu) and 0 <= c < mu[r].
         - While the current set of occupied cells (from the working tableau) is
           a strict subset of mu:
+
             * choose an outer corner cell (r,c) in mu\current_cells (no cell of mu
               to its right or below). Choose the maximal such (r,c) (deterministic).
             * create a hole at (r,c) (extend rows/cols as needed, set that cell to 0),
               then perform an upward jeu-de-taquin slide from (r,c) using
               up_jdt_slide to move the hole inward.
             * adopt the resulting tableau and continue.
+
         - Return the resulting Plactic (with zeros marking inner/removed cells).
 
         Notes:
+
         - Raises ValueError if outer_shape does not dominate the current shape
           (i.e. mu must contain the current occupied cells).
         - Raises RuntimeError if no suitable outer corner can be found or if an

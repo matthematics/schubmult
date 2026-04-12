@@ -200,7 +200,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
 
         Args:
             grid: n×n array-like of HPDTile values, integers 0-5, or list of lists
-        s"""
+        """
         if _is_copy:
             return
         self._grid = np.array(grid, dtype=HPDTile)
@@ -312,7 +312,6 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         new_grid = np.flip(vectorized_convert(self._grid[row_start:row_end, :]), axis=0).astype(TileType)
         return BPD(new_grid)
 
-
     @classmethod
     def from_rc_graph(cls, rc: RCGraph) -> HPD:
         """
@@ -376,7 +375,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
             elif (classic_tile, bpd_tile) == (HPDTile.HORIZ, HPDTile.HORIZ):
                 new_grid[classic_index, col] = HPDTile.BLANK
                 new_grid[bpd_index, col] = HPDTile.BLANK
-            elif (classic_tile, bpd_tile) == (HPDTile.HORIZ, HPDTile.ELBOW_SW)  and self.pipe_source_labels(classic_index, col)["left"] != self.pipe_source_labels(bpd_index, col)["left"]:
+            elif (classic_tile, bpd_tile) == (HPDTile.HORIZ, HPDTile.ELBOW_SW) and self.pipe_source_labels(classic_index, col)["left"] != self.pipe_source_labels(bpd_index, col)["left"]:
                 new_grid[classic_index, col] = HPDTile.ELBOW_SW
                 new_grid[bpd_index, col] = HPDTile.CROSS
             elif (classic_tile, bpd_tile) == (HPDTile.HORIZ, HPDTile.ELBOW_SW):
@@ -452,8 +451,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
                 raise ValueError(f"Cannot swap rows at column {col}: ({classic_tile}, {bpd_tile})")
             # ROW 4
         # _display_grid(new_grid)
-        ret = HPD(new_grid, tuple(new_id_vector))
-        return ret
+        return HPD(new_grid, tuple(new_id_vector))
 
     def pipe_source_labels(self, row: int, col: int) -> dict[str, int | None]:
         """
@@ -1292,7 +1290,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         else:
             weight = np.sum(np.where((self._grid[-1, :] == HPDTile.CROSS) | (self._grid[-1, :] == HPDTile.HORIZ), 1, 0))
             new_grid[-1, :] = _bpd_bottom_row(weight, self.cols)
-        # print("TOGLLE")
+        # print("TOGGLE")
         # _display_grid(new_grid)
         return HPD(new_grid, id_vector=new_id_vector)
 
@@ -2757,7 +2755,7 @@ class HPD(SchubertMonomialGraph, DefaultPrinting):
         Args:
             x: Variable or list of variables for polynomial
             y: Optional second set of variables for double Schubert polynomial
-            **_kwargs: Additional keyword arguments for polynomial computation (unused)
+            ``**_kwargs``: Additional keyword arguments for polynomial computation (unused)
         """
         from schubmult.symbolic import prod
 

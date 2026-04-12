@@ -4,7 +4,7 @@ from schubmult.rings.base_ring import BaseRing, BaseRingElement
 from schubmult.rings.printing import TypedPrintingTerm
 from schubmult.symbolic import S, sympy_Mul
 
-#weight wt
+# weight wt
 # yw highest weight
 # u # yv
 # yv highest weight
@@ -12,6 +12,7 @@ from schubmult.symbolic import S, sympy_Mul
 
 class PlacticPrintingTerm(TypedPrintingTerm):
     pass
+
 
 class PlacticAlgebraElement(BaseRingElement):
     """
@@ -72,7 +73,7 @@ class PlacticAlgebra(BaseRing):
             if self._op:
                 a, b = b, a
             for g1, c1 in a.items():
-                for g2,  c2 in b.items():
+                for g2, c2 in b.items():
                     # Plactic.prod_with_rc returns a dict {Plactic: coeff}
                     g3 = g1 * g2
                     result_dict[g3] = result_dict.get(g3, 0) + c1 * c2
@@ -91,7 +92,6 @@ class PlacticAlgebra(BaseRing):
         # Define the "one" element for PlacticAlgebra
         identity_graph = Plactic()
         return self.from_dict({identity_graph: 1})
-
 
 
 class NilPlacticAlgebra(BaseRing):
@@ -133,7 +133,7 @@ class NilPlacticAlgebra(BaseRing):
             if self._op:
                 a, b = b, a
             for g1, c1 in a.items():
-                for g2,  c2 in b.items():
+                for g2, c2 in b.items():
                     # Plactic.prod_with_rc returns a dict {Plactic: coeff}
                     g3 = g1 * g2
                     if g3 is not None:
@@ -153,7 +153,6 @@ class NilPlacticAlgebra(BaseRing):
         # Define the "one" element for NilPlacticAlgebra
         identity_graph = NilPlactic()
         return self.from_dict({identity_graph: 1})
-
 
 
 class NilPlacticAlgebraElement(PlacticAlgebraElement):

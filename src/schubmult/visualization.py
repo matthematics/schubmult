@@ -19,6 +19,7 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True
     - Empty positions: strands AVOID (make 90-degree elbow turns)
 
     Label positioning depends on flip_horizontal and top_labeled:
+
     - flip_horizontal=True, top_labeled=False (default):
       Top shows column numbers, right shows permutation output
     - flip_horizontal=True, top_labeled=True:
