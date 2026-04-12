@@ -64,60 +64,62 @@ def verify_pair(perm1, perm2, n):
     g = BoundedRCFactorAlgebra()
     r = RCGraphRing()
 
-    def cem_schub(perm, n):
-        return sum([g.from_tensor_dict(cem_dict, n) for rc, cem_dict in RCGraph.full_CEM(perm, n).items()])
+    # def cem_schub(perm, n):
+    #     return sum([g.from_tensor_dict(cem_dict, n) for rc, cem_dict in RCGraph.full_CEM(perm, n).items()])
 
-    def cem_schub_schur_decomp(perm, n):
-        result = Sx.zero @ Sx.zero
-        cd = perm.strict_mul_dominant().trimcode
-        if any(a < n for a in cd):
-            toadd = min(n - a for a in cd if a < n)
-            cd = [a + toadd for a in cd]
-        domperm = uncode(cd)
-        reppy = expand(Sx(perm).cem_rep(mumu=~domperm, elem_func=Sx.symbol_elem_func), func=False)
-        for arg in Add.make_args(reppy):
-            coeff, schur_part = arg.as_coeff_Mul()
-            part1 = Sx.one
-            part2 = Sx.one
-            for elem_arg in Mul.make_args(schur_part):
-                if elem_arg.numvars < n:
-                    part1 *= elem_arg
-                else:
-                    part2 *= elem_arg
-            result += coeff * part1 @ part2
-        return result
+    # def cem_schub_schur_decomp(perm, n):
+    #     result = Sx.zero @ Sx.zero
+    #     cd = perm.strict_mul_dominant().trimcode
+    #     if any(a < n for a in cd):
+    #         toadd = min(n - a for a in cd if a < n)
+    #         cd = [a + toadd for a in cd]
+    #     domperm = uncode(cd)
+    #     reppy = expand(Sx(perm).cem_rep(mumu=~domperm, elem_func=Sx.symbol_elem_func), func=False)
+    #     for arg in Add.make_args(reppy):
+    #         coeff, schur_part = arg.as_coeff_Mul()
+    #         part1 = Sx.one
+    #         part2 = Sx.one
+    #         for elem_arg in Mul.make_args(schur_part):
+    #             if elem_arg.numvars < n:
+    #                 part1 *= elem_arg
+    #             else:
+    #                 part2 *= elem_arg
+    #         result += coeff * part1 @ part2
+    #     return result
 
     try:
-        cem_elem1 = cem_schub_schur_decomp(perm1, n)
-        cem_elem2 = cem_schub_schur_decomp(perm2, n)
+        # cem_elem1 = cem_schub_schur_decomp(perm1, n)
+        # cem_elem2 = cem_schub_schur_decomp(perm2, n)
 
         result = r.zero
         prd = Sx(perm1) * Sx(perm2)
 
-        for (base_perm, grass_perm), coeff1 in cem_elem1.items():
-            for (base_perm2, grass_perm2), coeff2 in cem_elem2.items():
-                graph_base = (cem_schub(base_perm, n) * cem_schub(base_perm2, n)).to_rc_graph_ring_element().resize(n)
-                graph_grass = (cem_schub(grass_perm, n) * cem_schub(grass_perm2, n)).to_rc_graph_ring_element().resize(n)
-                for rc_grass, coeff4 in graph_grass.items():
-                    result_base = r.zero
-                    for rc, coeff3 in graph_base.items():
-                        if rc.is_principal:
-                            if coeff3 < 0:
-                                print(f"Negative coefficient for {rc} in product of {perm1} and {perm2} "
-                                      f"with base perms {base_perm}, {base_perm2} and grass perms {grass_perm}, {grass_perm2}")
-                                return False
-                            result_base += coeff3 * r(rc.to_highest_weight()[0])
-                    for rc_base, coeff3 in graph_base.items():
-                        rcc = rc_base.squash_product(rc_grass)
-                        if rcc.is_highest_weight and rcc.extremal_weight == pad_tuple(rcc.perm.trimcode, len(rcc)):
-                            result += coeff1 * coeff2 * coeff3 * coeff4 * r(rcc)
+        # for (base_perm, grass_perm), coeff1 in cem_elem1.items():
+        #     for (base_perm2, grass_perm2), coeff2 in cem_elem2.items():
+        #         graph_base = (cem_schub(base_perm, n) * cem_schub(base_perm2, n)).to_rc_graph_ring_element().resize(n)
+        #         graph_grass = (cem_schub(grass_perm, n) * cem_schub(grass_perm2, n)).to_rc_graph_ring_element().resize(n)
+        #         for rc_grass, coeff4 in graph_grass.items():
+        #             result_base = r.zero
+        #             for rc, coeff3 in graph_base.items():
+        #                 if rc.is_principal:
+        #                     if coeff3 < 0:
+        #                         print(f"Negative coefficient for {rc} in product of {perm1} and {perm2} "
+        #                               f"with base perms {base_perm}, {base_perm2} and grass perms {grass_perm}, {grass_perm2}")
+        #                         return False
+        #                     result_base += coeff3 * r(rc.to_highest_weight()[0])
+        #             for rc_base, coeff3 in graph_base.items():
+        #                 rcc = rc_base.squash_product(rc_grass)
+        #                 if rcc.is_highest_weight and rcc.extremal_weight == pad_tuple(rcc.perm.trimcode, len(rcc)):
+        #                     result += coeff1 * coeff2 * coeff3 * coeff4 * r(rcc)
+        result = (g.schub_elem(perm1, n) * g.schub_elem(perm2, n)).to_rc_graph_ring_element()
 
         prd2 = Sx.zero
         for rc, coeff in result.items():
             if coeff != prd.get(rc.perm, 0):
                 print(f"Coeff mismatch for {perm1}, {perm2} at {rc.perm}: got {coeff}, expected {prd.get(rc.perm, 0)}")
                 return False
-            prd2 += coeff * Sx(rc.perm)
+            if rc.is_principal:
+                prd2 += coeff * Sx(rc.perm)
 
         if prd != prd2:
             print(f"Product mismatch for {perm1}, {perm2}: expected {prd}, got {prd2}")

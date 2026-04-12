@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from functools import cache
+
 from sympy import Tuple
 
 from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
@@ -139,27 +141,40 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
         self.dtype = type("BoundedRCFactorAlgebraElement", (BoundedRCFactorAlgebraElement,), {"ring": self})
 
+    @cache
+    def _schub_elem_cached(self, perm, size):
+        dct = RCGraph.full_CEM(perm, size)
+        elem = sum([self.from_tensor_dict(cem_dict, size=size) for _, cem_dict in dct.items()])
+        return elem
+
+    def schub_elem(self, perm, size):
+        from schubmult.combinatorics.permutation import Permutation
+        return self._schub_elem_cached(Permutation(perm), size)
+
     def dual_product_on_basis(self, left_key, right_key):
         """Dual product to the coproduct_on_basis deconcatenation."""
         import itertools
 
-        from schubmult.rings.combinatorial.rc_graph_ring import GrassRCGraphRing
-        g = GrassRCGraphRing()
+        r =RCGraphRing()
         result = self.one
         rev_left_key = reversed(left_key.factors)
         rev_right_key = reversed(right_key.factors)
         for left_factor, right_factor in itertools.zip_longest(rev_left_key, rev_right_key, fillvalue=RCGraph([])):
-            result = result *self.from_dict({(k,): v for k, v in (g(left_factor) * g(right_factor)).items()})
+            result = self.from_tensor_dict({(k.normalize(),): v for k, v in (r(left_factor) * r(right_factor)).items() if _is_full_grassmannian_rc(k.normalize())}, size=left_key.size+right_key.size) * result
         return self.from_dict(result)
 
     def coproduct_on_basis(self, key):
-        if len(key) == 0:
+        if key.size == 0:
             return (self@self)((key,key))
         result = (self@self).zero
-        for i in range(len(key[-1]) + 1):
-            left_key = CrystalGraphTensor(*[key[j].vertical_cut(i)[0] for j in range(len(key)) if len(key[j]) >= i])
-            right_key = CrystalGraphTensor(*[key[j].vertical_cut(i)[1] for j in range(len(key)) if len(key[j]) >= i])
-            result += self(left_key) @ self(right_key)
+        for i in range(key.size + 1):
+            left_key = []
+            right_key = []
+            for j in range(len(key)):
+                left_factor, right_factor = key[j].resize(key.size).vertical_cut(i)
+                left_key.append(left_factor.normalize())
+                right_key.append(right_factor.normalize())
+            result += self(self.make_key(left_key, i)) @ self(self.make_key(right_key, key.size - i))
         return result
 
     # def _ensure_cg(self, obj: CrystalGraphTensor | None) -> CrystalGraphTensor | None:
@@ -230,8 +245,8 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
     def _normalize_key(self, key):
         """Normalize an RCGraph tensor key to normal form."""
-        if any(len(k) > key.size for k in key):
-            raise ValueError(f"Key factors too big in {key} with size {key.size}")
+        # if any(len(k) > key.size for k in key):
+        #     raise ValueError(f"Key factors too big in {key} with size {key.size}")
 
         key = self._ensure_valid_key(key)
         result: list = [*key]
