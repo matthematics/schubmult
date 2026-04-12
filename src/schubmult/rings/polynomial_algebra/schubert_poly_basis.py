@@ -195,8 +195,7 @@ class SchubertPolyBasis(PolynomialBasis):
         """Expand a Schubert key into a dict of monomial exponent tuples."""
         from schubmult.symbolic.poly.variables import genset_dict_from_expr
 
-        dct = {pad_tuple(k, key[1]): v for k, v in genset_dict_from_expr(self.ring.from_dict({key[0]: S.One}).as_polynomial(), self.genset).items()}
-        return dct
+        return {pad_tuple(k, key[1]): v for k, v in genset_dict_from_expr(self.ring.from_dict({key[0]: S.One}).as_polynomial(), self.genset).items()}
 
     @classmethod
     def dual_basis(cls):

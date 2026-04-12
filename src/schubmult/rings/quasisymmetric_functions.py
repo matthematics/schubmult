@@ -167,7 +167,7 @@ class QSym(BaseSchubertRing):
         expressed in the monomial basis.
 
         Args:
-            *comp: A composition (tuple or sequence of positive integers)
+            ``*comp``: A composition (tuple or sequence of positive integers)
 
         Returns:
             QSymElement representing the quasi-Schur function in monomial basis

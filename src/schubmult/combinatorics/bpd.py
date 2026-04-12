@@ -165,7 +165,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
 
         Args:
             grid: n×n array-like of TileType values, integers 0-5, or list of lists
-        s"""
+        """
         if _is_copy:
             return
         self._grid = np.array(grid, dtype=TileType)
@@ -257,8 +257,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
             else:
                 new_grid = np.full((the_bpd.rows - 1, the_bpd.cols - 1), TileType.TBD, dtype=TileType)
                 new_grid = the_bpd._grid[1:, 1:]
-                ret = BPD(new_grid)
-                return ret
+                return BPD(new_grid)
 
     def delete_row(self, row: int) -> BPD:
         new_grid = self._grid.copy()
@@ -2139,7 +2138,7 @@ class BPD(SchubertMonomialGraph, DefaultPrinting):
         Args:
             x: Variable or list of variables for polynomial
             y: Optional second set of variables for double Schubert polynomial
-            **_kwargs: Additional keyword arguments for polynomial computation (unused)
+            ``**_kwargs``: Additional keyword arguments for polynomial computation (unused)
         """
         from schubmult.symbolic import prod
 

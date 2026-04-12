@@ -95,14 +95,15 @@ class NilPlactic(Plactic):
         (represented as row lengths) that are increasing (strictly increasing rows
         left-to-right and columns top-to-bottom) and whose row-reading word (E-G
         row word: read rows bottom-to-top, left-to-right, omitting zeros) has
-        Permutation.ref_product(...) less than or equal to `bruhat_perm` in
+        Permutation.ref_product(...) less than or equal to ``bruhat_perm`` in
         Bruhat order.
 
         Representation details:
+
         - outer_shape: sequence of row lengths (one int per row).
         - inner_shape: optional sequence of left offsets per row (defaults to zeros).
         - The returned tableaux are NilPlactic instances whose rows are left-aligned
-          of length `outer_shape[r]`, with the first `inner_shape[r]` entries set
+          of length ``outer_shape[r]``, with the first ``inner_shape[r]`` entries set
           to 0 to represent the inner (removed) cells of the skew shape.
         """
         # normalize shapes
@@ -409,8 +410,7 @@ class NilPlactic(Plactic):
 
         # append case (no bump in this row)
         if len(row_i) == 0 or x0 >= max(row_i):
-            new_word = (*word[:i], (*row_i, x0), *word[i + 1 :])
-            return new_word
+            return (*word[:i], (*row_i, x0), *word[i + 1 :])
 
         # find bump
         x1 = min(a for a in row_i if a > x0)

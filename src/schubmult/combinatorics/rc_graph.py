@@ -263,8 +263,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         #     raise ValueError("Last row not empty")
         rc, row = self.exchange_property(last_desc, return_row=True)
         rc = rc.toggle_ref_at(last_desc, 1)
-        rc = rc.pieri_insert(last_desc - 1, [row]).toggle_ref_at(last_desc, 1)
-        return rc
+        return rc.pieri_insert(last_desc - 1, [row]).toggle_ref_at(last_desc, 1)
         # if max(rc.perm.descents(), default=-1) + 1 < last_desc:
         #     return rc.resize(last_desc - 1)
         # return rc.little_bump_zero().resize(last_desc - 1)
@@ -854,10 +853,9 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     @property
     def shape(self) -> tuple[int, ...]:
         P = self.edelman_greene()[0]
-        shape = tuple(len(P[i]) for i in range(len(P)))
-        return shape
+        return tuple(len(P[i]) for i in range(len(P)))
 
-    # product = demazure crystal to demazure crystal
+    # product = Demazure crystal to Demazure crystal
     # transpose is weight preserving
 
     def __invert__(self) -> RCGraph:
@@ -2024,8 +2022,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return ret
 
     def shiftcut(self) -> RCGraph:
-        cut_rc = RCGraph([tuple([a for a in row if a > i]) for i, row in enumerate(self.shiftup(-1)[:-1])])
-        return cut_rc
+        return RCGraph([tuple([a for a in row if a > i])
+                        for i, row in enumerate(self.shiftup(-1)[:-1])])
 
     def divdiff_desc(self, desc: int) -> set[RCGraph]:
         ret = set()

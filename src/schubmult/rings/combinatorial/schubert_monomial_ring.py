@@ -46,7 +46,7 @@ class SchubertMonomialRingElement(BaseRingElement):
         Args:
             x: Variable or sequence of variables for polynomial evaluation
             y: Optional second set of variables for double Schubert polynomials
-            **kwargs: Additional arguments passed to basis element polyvalue
+            ``**kwargs``: Additional arguments passed to basis element polyvalue
 
         Returns:
             Symbolic expression representing the polynomial
