@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from functools import cache
 
 from sympy import Tuple
@@ -204,15 +205,43 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
     def dual_product_on_basis(self, left_key, right_key):
         """Dual product to the coproduct_on_basis deconcatenation."""
-        import itertools
+        # import itertools
 
-        r =RCGraphRing()
-        result = self.one
-        rev_left_key = reversed(left_key.factors)
-        rev_right_key = reversed(right_key.factors)
-        for left_factor, right_factor in itertools.zip_longest(rev_left_key, rev_right_key, fillvalue=RCGraph([])):
-            result = self.from_tensor_dict({(k.normalize(),): v for k, v in (r(left_factor) * r(right_factor)).items() if _is_full_grassmannian_rc(k.normalize())}, size=left_key.size+right_key.size) * result
-        return self.from_dict(result)
+        # r =RCGraphRing()
+        # result = self.one
+        # # rev_left_key = reversed(left_key.factors)
+        # # rev_right_key = reversed(right_key.factors)
+        # index1 = 1
+        # index2 = 1
+        # the_index = 1
+        # result = self.one
+        # size = left_key.size + right_key.size
+        # while the_index <= left_key.size + right_key.size:
+        #     left_factor = left_key[index1 - 1] if (index1 <= len(left_key) and len(left_key[index1 - 1]) == the_index) else None
+        #     right_factor = right_key[index2 - 1] if (index2 <= len(right_key) and len(right_key[index2 - 1]) == the_index) else None
+        #     new_result = self.zero
+        #     if left_factor is None and right_factor is None:
+        #         the_index += 1
+        #         new_result = result
+        #     elif left_factor is None:
+        #         new_result += result * self(((left_factor,),size))
+        #         index1 += 1
+        #         the_index += 1
+        #     elif right_factor is None:
+        #         new_result += result * self(((right_factor,),size))
+        #         index2 += 1
+        #         the_index += 1
+        #     else:
+        #         product = r(left_factor) * r(right_factor)
+        #         new_result = self.zero
+        #         for rc, coeff in product.items():
+        #             if _is_full_grassmannian_rc(rc):
+        #                 new_result += result * self(((rc,), size))
+        #         index1 += 1
+        #         index2 += 1
+        #         the_index += 1
+        #     result = new_result
+        # return self.from_dict({(k, size): v for k, v in result.items()})
 
     def coproduct_on_basis(self, key):
         if key.size == 0:
@@ -288,7 +317,9 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
             if not isinstance(rc, RCGraph):
                 raise TypeError(f"Key factors must be RCGraph, got {type(rc)}")
             if len(rc) > key.size:
-                raise ValueError(f"Factor of size {len(rc)} in {key} which is bigger than {key.size}")
+                #raise ValueError(f"Factor of size {len(rc)} in {key} which is bigger than {key.size}")
+                logging.warning(f"Factor of size {len(rc)} in {key} which is bigger than {key.size}. Proceeding anyway")
+                #rc = rc.resize(key.size)
             if not _is_full_grassmannian_rc(rc):
                 raise ValueError(f"Key factors must be full Grassmannian RC graphs, got {rc}")
         return key
@@ -316,20 +347,52 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                 result[i - 1], result[i] = result[i], result[i - 1]
                 return self._normalize_key(self.make_key(result, key.size))
         result = [rc.normalize() for rc in result if rc.perm.inv != 0]  # drop identity factors
-
+        def max_grass_elem_peel(rc):
+            from schubmult import uncode
+            perm = rc.perm
+            r = RCGraphRing()
+            if len(rc.perm) - 1 <= len(rc):
+                return rc, RCGraph([])
+            the_mully = r(rc) * (r.monomial(*([0] * (len(perm)))))
+            length = len(rc) + 1
+            max_found = -1
+            the_min = None
+            the_max = None
+            for rcc in the_mully:
+                #permperm = rcc.perm
+                #descs = []
+                new_rcc = RCGraph(rcc)
+                rows = []
+                maxxy = max(new_rcc.perm.descents()) + 1
+                while True:
+                    if maxxy < 1:
+                        break
+                    if new_rcc.perm[maxxy - 1] > new_rcc.perm[maxxy]:
+                        new_rcc, row = new_rcc.exchange_property(maxxy, return_row=True)
+                        rows.append(row)
+                        maxxy -= 1
+                    else:
+                        break
+                new_rcc = new_rcc.normalize()
+                if len(new_rcc) < len(rc) and _is_full_grassmannian_rc(new_rcc):
+                    weight = [0] * length
+                    for row in rows:
+                        weight[row - 1] += 1
+                    elem_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (length - len(rows)) + [1] * len(rows)), length, weight=tuple(weight))))
+                    if new_rcc.resize(len(elem_rc)).squash_product(elem_rc).perm == perm and elem_rc.inv > max_found:
+                        the_min, the_max = new_rcc, elem_rc
+                        max_found = elem_rc.inv
+            return the_min, the_max
+        #the_max_len = max((len(rc) for rc in result), default=0)
         #the_rc = self.key_to_rc_graph(self.make_key(result, key.size))
         for i in range(len(result) - 1, -1, -1):
             if not _is_full_grassmannian_rc(result[i]):
                 raise ValueError(f"Non full Grassmannian factor in normalized key: {result[i]} in key {key}")
             if len(result[i].perm) - 1 > len(result[i]) and (len(result[i]) < key.size):
-                max_len = min(len(result[i].perm), key.size)
-                rc = result[i].resize(max_len)
-                rc_base, rc_grass = rc.squash_decomp()
-                rc_base = rc_base.normalize()
-                rc_grass = rc_grass.normalize()
-                if rc_base.perm.inv != 0 and rc_grass.perm.inv != 0 and _is_full_grassmannian_rc(rc_base):
-                    result[i] = rc_base.normalize()
-                    result.insert(i + 1, rc_grass.normalize())
+                max_rc, elem_rc = max_grass_elem_peel(result[i])
+                if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0:
+                    result[i] = max_rc
+                    result.insert(i + 1, elem_rc)
                     return self._normalize_key(self.make_key(result, key.size))
 
         return self.make_key(result, key.size)

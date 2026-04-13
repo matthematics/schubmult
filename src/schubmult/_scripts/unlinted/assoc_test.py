@@ -28,7 +28,7 @@ if __name__ == "__main__":
     perms = Permutation.all_permutations(n)
     # sKEW DIV DIFF WEIGHT
     # is dual pieri Cauchy?
-    r = RCGraphRing()
+    r = BoundedRCFactorAlgebra()
     # g = GrassRCGraphRing()
     # T = r @ g
     # for perm1, perm2 in itertools.product(perms, repeat=2):
@@ -48,3 +48,23 @@ if __name__ == "__main__":
     #     for a in cd:
     #         fat_donky *= r(RCGraph.one_row(a))
     #     pretty_print(fat_donky)
+    import random
+    perms2 = [*perms]
+    random.shuffle(perms2)
+    perms3 = [*perms]
+    random.shuffle(perms3)
+    for perm1, perm2, perm3 in itertools.product(perms, perms2, perms3):
+        if 0 in (perm1.inv, perm2.inv, perm3.inv):
+            continue
+        for (rc1, cem_dict1), (rc2, cem_dict2), (rc3, cem_dict3) in itertools.product(RCGraph.full_CEM(perm1,n).items(), RCGraph.full_CEM(perm2,n).items(), RCGraph.full_CEM(perm3,n).items()):
+            elem1, elem2, elem3 = r.from_tensor_dict(cem_dict1, n), r.from_tensor_dict(cem_dict2, n), r.from_tensor_dict(cem_dict3, n)
+            # test1 = (elem1 * elem2) * elem3
+            # test2 = elem1 * (elem2 * elem3)
+            test1 = ((elem1 * elem2) * elem3)#.to_rc_graph_ring_element()
+            test2 = (elem1 * (elem2 * elem3))#.to_rc_graph_ring_element()
+            if not test1.almosteq(test2):
+                print(f"FAIL: perm1={perm1}, perm2={perm2}, perm3={perm3}")
+                print(f"  (elem1 * elem2) * elem3: {test1}")
+                print(f"  elem1 * (elem2 * elem3): {test2}")
+                sys.exit(1)
+            print(f"PASS: perm1={perm1}, perm2={perm2}, perm3={perm3}")
