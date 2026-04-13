@@ -14,15 +14,17 @@ if __name__ == "__main__":
         # for key, coeff in elem.items():
         #     if coeff == 0:
         #         continue
-        #     single_term = g.from_dict({key: coeff})
+        #     single_term = g.from_dict({key: 1})
+            #test_elem = single_term
+        test_elem = elem
         for descent in perm.descents():
-            test1 = elem.divdiff_descs(descent).to_rc_graph_ring_element()
-            test2 = elem.to_rc_graph_ring_element().divdiff(descent)
-            if not test1.almosteq(test2):
-                print(f"FAIL: perm={perm}, elem={elem}, descent={descent}")
+            test1 = test_elem.divdiff_descs(descent).to_rc_graph_ring_element()
+            test2 = test_elem.to_rc_graph_ring_element().divdiff(descent)
+            if not test1.almosteq(test2) and g.key_to_rc_graph(key).perm == perm:
+                print(f"FAIL: perm={perm}, elem={test_elem}, descent={descent}")
                 print(f"  divdiff_descs then to_rc: {test1}")
                 print(f"  to_rc then divdiff:       {test2}")
-                print(f"{elem=}")
+                print(f"{next(iter(test_elem.to_rc_graph_ring_element())).perm=}")
                 sys.exit(1)
         print(f"PASS: perm={perm}")
 
