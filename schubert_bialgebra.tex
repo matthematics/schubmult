@@ -4036,14 +4036,14 @@ The Gao-Huang bijection $\varphi:\BPD \to \BRC$ is an isomorphism of rings.
 % $$\mathscr{C}(u) \star_n \mathscr{C}(v) = \{(R_1\star R_2, n) \mid R_1 \in \mathscr{C}(u), R_2 \in \mathscr{C}(v)\}$$
 % It is possible (almost certain, actually) that $(R_1\star R_2, n)$ is not technically a bounded RC graph, even if $n\geq \maxd(\wof{R_1}),\maxd(\wof{R_2})$. However, the crystal operators are still well-defined on this set.
 
-% \begin{theorem} \label{theorem:starproductcrystal}
-%   Suppose $(R_1,n)$ and $(R_2,n)$ are bounded RC graphs. Then we have that there is a homomorphism of crystal graphs
-%   $$\mathscr{C}(u,n)\otimes\mathscr{C}(v,n)\to \mathscr{C}(u) \star_n \mathscr{C}(v) $$
-%    given by $R_1\otimes R_2 \mapsto R_1\star R_2$. If $R_2$ is $n$-Grassmannian, then this is a weight-preserving isomorphism of crystal graphs.
-% \end{theorem}
-% \begin{proof}
-% Clearly the map is a weight preserving bijection. We need only show that it commutes with the crystal operators. Let $R_1\in \mathscr{C}(u,n)$ and $R_2\in \mathscr{C}(v,n)$, and let $R=R_1\star R_2$. Consider $f_i(R_1\otimes R_2)$. If $\varphi_i(R_1)>\varepsilon_i(R_2)$, then the unpaired elements in row $i$ in $R_1$ exhaust the unpaired elements in row $i+1$ in $R_2$. Therefore, only elements of $R_1$ are affected by $f_i$, as in the definition of the tensor product. If instead $\varphi_i(R_1)\leq \varepsilon_i(R_2)$, then all unpaired elements of $R_1$ in row $i$ are paired with elements of $R_2$ in row $i+1$, and so only elements of $R_2$ are affected by $f_i$. The same reasoning applies to $e_i$.
-% \end{proof}
+\begin{theorem} \label{theorem:starproductcrystal}
+  Suppose $(R_1,n)$ and $(R_2,n)$ are bounded RC graphs. Then we have that there is a homomorphism of crystal graphs
+  $$\mathscr{C}(u,n)\otimes\mathscr{C}(v,n)\to \mathscr{C}(u) \star_n \mathscr{C}(v) $$
+   given by $R_1\otimes R_2 \mapsto R_1\star R_2$. If $R_2$ is $n$-Grassmannian, then this is a weight-preserving isomorphism of crystal graphs.
+\end{theorem}
+\begin{proof}
+Clearly the map is a weight preserving bijection. We need only show that it commutes with the crystal operators. Let $R_1\in \mathscr{C}(u,n)$ and $R_2\in \mathscr{C}(v,n)$, and let $R=R_1\star R_2$. Consider $f_i(R_1\otimes R_2)$. If $\varphi_i(R_1)>\varepsilon_i(R_2)$, then the unpaired elements in row $i$ in $R_1$ exhaust the unpaired elements in row $i+1$ in $R_2$. Therefore, only elements of $R_1$ are affected by $f_i$, as in the definition of the tensor product. If instead $\varphi_i(R_1)\leq \varepsilon_i(R_2)$, then all unpaired elements of $R_1$ in row $i$ are paired with elements of $R_2$ in row $i+1$, and so only elements of $R_2$ are affected by $f_i$. The same reasoning applies to $e_i$.
+\end{proof}
 
 % Note that this homomorphism of crystal graphs need not be an isomorphism, because the star product may have more operators that apply.
 

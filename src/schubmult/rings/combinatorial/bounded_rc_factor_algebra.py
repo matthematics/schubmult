@@ -13,12 +13,12 @@ from schubmult.symbolic import S
 
 
 def _is_full_grassmannian_rc(rc: RCGraph) -> bool:
-    try:
-        attr = rc.is_full_grassmannian
-    except AttributeError:
-        attr = None
-    if isinstance(attr, bool):
-        return attr
+    # try:
+    #     attr = rc.is_full_grassmannian
+    # except AttributeError:
+    #     attr = None
+    # if isinstance(attr, bool):
+    #     return attr
     return rc.perm.inv == 0 or rc.perm.descents() == {len(rc) - 1}
 
 
@@ -28,7 +28,7 @@ def _descent_of_grass(rc: RCGraph) -> int:
     descs = rc.perm.descents()
     if len(descs) == 0:
         return -1
-    return max(descs)
+    return max(descs) + 1
 
 
 def _last_descent_size(rc: RCGraph) -> int:
@@ -107,6 +107,19 @@ class BoundedRCFactorAlgebraElement(CrystalGraphRingElement):
                 result += coeff1 * coeff2 * self.ring.dual_product_on_basis(key1, key2)
         return result
 
+    def divdiff_descs(self, *indexes):
+        result = self.ring.zero
+        for index in reversed(indexes):
+            for key, coeff in self.items():
+                result += coeff * self.ring.div_diff_desc_key(index, key)
+        return result
+
+    def divdiff_perm(self, perm):
+        result = self.ring.zero
+        for key, coeff in self.items():
+            result += coeff * self.ring.div_diff_perm_key(perm, key)
+        return result
+
 class BoundedRCFactorAlgebra(CrystalGraphRing):
     """Tensor-like algebra on tuples of full Grassmannian RC graphs.
 
@@ -146,6 +159,43 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         dct = RCGraph.full_CEM(perm, size, partition=tuple((~(perm.mul_dominant())).trimcode))
         elem = sum([self.from_tensor_dict(cem_dict, size=size) for _, cem_dict in dct.items()])
         return elem
+
+    def div_diff_desc_key(self, index, key):
+        r = RCGraphRing()
+        key = self._normalize_key(key)
+        if not any(_descent_of_grass(rc) == index for rc in key):
+            return self.zero
+        new_keys = []
+        for pos, rc in enumerate(key):
+            if _descent_of_grass(rc) < index:
+                continue
+            if _descent_of_grass(rc) == index:
+                for new_rc in rc.divdiff_desc(index):
+                    if not _is_full_grassmannian_rc(new_rc):
+                        raise ValueError(f"divdiff_desc produced non full Grassmannian RC graph: {new_rc} from {rc} at index {index} {key=} {key.size=}")
+                    new_keys.append(tuple(new_rc.normalize() if the_pos == pos else key[the_pos] for the_pos in range(len(key))))
+            if _descent_of_grass(rc) > index:
+                new_new_keys = []
+                for new_key in new_keys:
+                    new_new_keys.append(tuple(rc.crystal_reflection(index) if the_pos == pos else new_key[the_pos] for the_pos in range(len(key))))
+                new_keys = new_new_keys
+        return sum([self(self.make_key(new_key, key.size)) for new_key in new_keys])
+
+    def div_diff_perm_key(self, perm, key):
+        result = self(key)
+        while True:
+            descs = perm.descents()
+            if len(descs) == 0:
+                break
+            index = max(descs) + 1
+            new_result = self.zero
+            for the_key, coeff in result.items():
+                if coeff != 0:
+                    new_result += coeff * self.div_diff_desc_key(index, the_key)
+            result = new_result
+            perm = perm.swap(index - 1, index)
+        return result
+
 
     def schub_elem(self, perm, size):
         from schubmult.combinatorics.permutation import Permutation
@@ -258,24 +308,27 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
             if len(result[i]) == len(result[i - 1]):
                 merged = result[i - 1].squash_product(result[i])
                 result[i - 1] = merged
-                del result[i]
+                #del result[i]
+                result = result[:i] + result[i + 1:]
                 return self._normalize_key(self.make_key(result, key.size))
             if len(result[i]) < len(result[i - 1]):
                 result[i - 1], result[i] = result[i], result[i - 1]
                 return self._normalize_key(self.make_key(result, key.size))
         result = [rc.normalize() for rc in result if rc.perm.inv != 0]  # drop identity factors
 
-        for i in range(len(result) - 1, -1, -1):
-            if not _is_full_grassmannian_rc(result[i]):
-                raise ValueError(f"Non full Grassmannian factor in normalized key: {result[i]} in key {key}")
-            if len(result[i].perm) - 1 > len(result[i]) and (len(result[i]) < key.size):
-                max_len = min(len(result[i].perm), key.size)
-                rc = result[i].resize(max_len)
-                rc_base, rc_grass = rc.squash_decomp()
-                if rc_base.perm.inv != 0 and rc_grass.perm.inv != 0 and _is_full_grassmannian_rc(rc_base):
-                    result[i] = rc_base.normalize()
-                    result.insert(i + 1, rc_grass.normalize())
-                    return self._normalize_key(self.make_key(result, key.size))
+        # for i in range(len(result) - 1, -1, -1):
+        #     if not _is_full_grassmannian_rc(result[i]):
+        #         raise ValueError(f"Non full Grassmannian factor in normalized key: {result[i]} in key {key}")
+        #     if len(result[i].perm) - 1 > len(result[i]) and (len(result[i]) < key.size):
+        #         max_len = min(len(result[i].perm), key.size)
+        #         rc = result[i].resize(max_len)
+        #         rc_base, rc_grass = rc.squash_decomp()
+        #         # rc_base = rc_base.normalize()
+        #         # rc_grass = rc_grass.normalize()
+        #         if rc_base.perm.inv != 0 and rc_grass.perm.inv != 0 and _is_full_grassmannian_rc(rc_base):
+        #             result[i] = rc_base.normalize()
+        #             result.insert(i + 1, rc_grass.normalize())
+        #             return self._normalize_key(self.make_key(result, key.size))
 
         return self.make_key(result, key.size)
 
