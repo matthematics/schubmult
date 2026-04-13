@@ -161,7 +161,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         return elem
 
     def div_diff_desc_key(self, index, key):
-        r = RCGraphRing()
+        # r = RCGraphRing()
         key = self._normalize_key(key)
         if not any(_descent_of_grass(rc) == index for rc in key):
             return self.zero
