@@ -156,7 +156,8 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
     @cache
     def _schub_elem_cached(self, perm, size):
-        dct = RCGraph.full_CEM(perm, size, partition=tuple((~(perm.mul_dominant())).trimcode))
+        #dct = RCGraph.full_CEM(perm, size, partition=tuple((~(perm.mul_dominant())).trimcode))
+        dct = RCGraph.full_CEM(perm, size)
         elem = sum([self.from_tensor_dict(cem_dict, size=size) for _, cem_dict in dct.items()])
         return elem
 
@@ -316,19 +317,20 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                 return self._normalize_key(self.make_key(result, key.size))
         result = [rc.normalize() for rc in result if rc.perm.inv != 0]  # drop identity factors
 
-        # for i in range(len(result) - 1, -1, -1):
-        #     if not _is_full_grassmannian_rc(result[i]):
-        #         raise ValueError(f"Non full Grassmannian factor in normalized key: {result[i]} in key {key}")
-        #     if len(result[i].perm) - 1 > len(result[i]) and (len(result[i]) < key.size):
-        #         max_len = min(len(result[i].perm), key.size)
-        #         rc = result[i].resize(max_len)
-        #         rc_base, rc_grass = rc.squash_decomp()
-        #         # rc_base = rc_base.normalize()
-        #         # rc_grass = rc_grass.normalize()
-        #         if rc_base.perm.inv != 0 and rc_grass.perm.inv != 0 and _is_full_grassmannian_rc(rc_base):
-        #             result[i] = rc_base.normalize()
-        #             result.insert(i + 1, rc_grass.normalize())
-        #             return self._normalize_key(self.make_key(result, key.size))
+        #the_rc = self.key_to_rc_graph(self.make_key(result, key.size))
+        for i in range(len(result) - 1, -1, -1):
+            if not _is_full_grassmannian_rc(result[i]):
+                raise ValueError(f"Non full Grassmannian factor in normalized key: {result[i]} in key {key}")
+            if len(result[i].perm) - 1 > len(result[i]) and (len(result[i]) < key.size):
+                max_len = min(len(result[i].perm), key.size)
+                rc = result[i].resize(max_len)
+                rc_base, rc_grass = rc.squash_decomp()
+                rc_base = rc_base.normalize()
+                rc_grass = rc_grass.normalize()
+                if rc_base.perm.inv != 0 and rc_grass.perm.inv != 0 and _is_full_grassmannian_rc(rc_base):
+                    result[i] = rc_base.normalize()
+                    result.insert(i + 1, rc_grass.normalize())
+                    return self._normalize_key(self.make_key(result, key.size))
 
         return self.make_key(result, key.size)
 

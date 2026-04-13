@@ -246,6 +246,23 @@ Let $u, v \in S_\infty$ have height $n$, with $v$ being $n$-Grassmannian.  The m
 
 The squash product endows $\grass_n$ with a ring structure and $\BRC_n$ with the structure of a right $\grass_n$-module.
 
+\begin{definition}
+Define 
+$$\mathrm{Schub}_{\RC}(w, n) = \sum_{\wof{R} = w,\, \hr(R) = n} R$$ 
+to be the Schubert element corresponding to $w$ in $\BRC_n$. Also define
+$$\mathrm{DSchub}_{\RC}(w, n;y) = \sum_{uv = w, \ell(u) + \ell(v)=\ell(v)} \mathrm{Schub}_{\RC}(v, n)\sch_{u^{-1}}(y)$$ 
+Also define
+$$\mathrm{DElem}_{p,k}(n;y) = \sum_{\sch_v(x)=e_{p,k}(x)} \sch_{u^{-1}}(y)\mathrm{DSchub}_{\RC}(v, n; y)$$
+\end{definition}
+
+The following result is key to the construction of the bounded RC factor algebra.
+
+\begin{theorem}
+Let $\lambda$ be a partition, and let $\mu$ be the corresponding dominant permutation such that $\code^*(\mu)=\lambda$. Let $\overline{\lambda}=(\lambda_{\ell(\lambda)}, \lambda_{\ell(\lambda)-1},\ldots, \lambda_1)$. Then
+$$\bigotimes_{i = 1}^{\ell(\lambda)}\mathrm{DElem}_{\overline{\lambda}_{i}, \overline{\lambda}_{i}}(\overline{\lambda}_{i};y_{\ell(\lambda) + 1 - i})$$
+$$=\sum_{\ell(u\mu^{-1}) = \ell(\mu) - \ell(u)} \mathrm{Schub}_{\RC}(u, n)\sch_{u\mu^{-1}}(y)$$
+\end{theorem}
+
 \subsection{Squash decomposition}
 
 The squash decomposition reverses the squash product for a single RC graph, factoring it into an $S_n$-piece and a Grassmannian piece.
