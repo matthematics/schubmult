@@ -164,24 +164,21 @@ def test_squash_decompose():
 
     random.seed(seed)
     
-    perm = uncode([2,0,4,2,3])
+    perm = uncode([2,0,4,2])
 
-    n = 5
+    n = 4
 
-    rcs = list(RCGraph.all_rc_graphs(perm, n))
+    rcs = list(RCGraph.all_rc_graphs(perm, len(perm.trimcode)))
     
     rc = random.choice(rcs)
     regular, grass = rc.squash_decomp()
-
-    while len(grass.perm.descents()) == 0 or regular.perm.inv == 0:
-        rc = random.choice(rcs)
-        regular, grass = rc.squash_decomp()
+    assert regular.perm.inv != 0 and grass.perm.inv != 0, f"Error: one of the factors in the squash decomposition of {rc} is trivial: regular = {regular}, grass = {grass}."
 
     assert len(regular.perm) <= n
 
     assert grass.perm.descents() == {n - 1}
 
-    assert regular.squash_product(grass) == rc, f"Error: decomposition of {rc} into {regular} and {grass} does not satisfy the expected product relation."
+    assert regular.resize(len(grass)).squash_product(grass) == rc, f"Error: decomposition of {rc} into {regular} and {grass} does not satisfy the expected product relation."
 
 
 def test_left_squash_equals_squash_product_for_equal_length_full_grass():
