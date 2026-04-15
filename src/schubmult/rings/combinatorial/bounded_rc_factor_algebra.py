@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+import logging  # noqa: F401
 from functools import cache
 
 from sympy import Tuple
@@ -46,6 +46,7 @@ def _last_descent_size(rc: RCGraph) -> int:
 def _max_grass_elem_peel(rc):
     """Try to peel a wide grassmannian RC graph into a smaller piece + elementary symmetric piece."""
     from schubmult import uncode
+
     # if len(rc) == 1:
     #     # special case
     #     if rc.perm.inv <= 1:
@@ -53,7 +54,7 @@ def _max_grass_elem_peel(rc):
     #     return RCGraph([rc[0][1:]]), RCGraph([(2,),()])
     perm = rc.perm
     r = RCGraphRing()
-    #if rc.perm.inv == 1:
+    # if rc.perm.inv == 1:
     if len(rc.perm) - 1 <= len(rc):
         return rc, RCGraph([])
     the_mully = r(rc) * (r.monomial(*([0] * (len(perm)))))
@@ -83,7 +84,7 @@ def _max_grass_elem_peel(rc):
             for row in rows:
                 weight[row - 1] += 1
             elem_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (length - len(rows)) + [1] * len(rows)), length, weight=tuple(weight))))
-            #if new_rcc.resize(len(elem_rc)).squash_product(elem_rc).normalize() == rc:
+            # if new_rcc.resize(len(elem_rc)).squash_product(elem_rc).normalize() == rc:
             the_min, the_max = new_rcc, elem_rc
             max_found = elem_rc.inv
     return the_min, the_max
@@ -380,7 +381,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                 raise TypeError(f"Key factors must be RCGraph, got {type(rc)}")
             if len(rc) > key.size:
                 raise ValueError(f"Factor of size {len(rc)} in {key} which is bigger than {key.size}")
-                #logging.warning(f"Factor of size {len(rc)} in {key} which is bigger than {key.size}. Proceeding anyway")
+                # logging.warning(f"Factor of size {len(rc)} in {key} which is bigger than {key.size}. Proceeding anyway")
                 # rc = rc.resize(key.size)
             if not _is_full_grassmannian_rc(rc):
                 raise ValueError(f"Key factors must be full Grassmannian RC graphs, got {rc}")
@@ -404,7 +405,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
             for i in range(len(factors) - 1, -1, -1):
                 if not _is_full_grassmannian_rc(factors[i]):
                     raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}")
-                if (len(factors[i].perm) - 1 > len(factors[i]) and len(factors[i]) < size):
+                if len(factors[i].perm) - 1 > len(factors[i]) and len(factors[i]) < size:
                     max_rc, elem_rc = _max_grass_elem_peel(factors[i])
                     if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0:
                         factors[i] = max_rc
