@@ -145,7 +145,7 @@ if __name__ == "__main__":
     import sys
     n = int(sys.argv[1])
     extra = 0
-    perms = [perm for perm in Permutation.all_permutations(n + extra) if len(perm.descents()) == 1]
+    perms = Permutation.all_permutations(n)
 
     r = BoundedRCFactorAlgebra()
 
@@ -220,43 +220,85 @@ if __name__ == "__main__":
     # # hw_grass = {}
     r = RCGraphRing()
     for perm in perms:
-        if perm.inv <= 1:
+        if perm.inv == 0:
             continue
-        max_desc = max(perm.descents()) + 1
-        for rc in RCGraph.all_rc_graphs(perm):
+        #max_desc = max(perm.descents()) + 1
+        perm_grass, perm_base = perm.coset_decomp(*(list(range(len(perm.trimcode)))+list(range(len(perm.trimcode) + 1,len(perm)))))
+        assert perm_grass.inv > 0
+        if perm_base.inv == 0:
+            continue
+        for rc in RCGraph.all_hw_rcs(perm,len(perm.trimcode)):
+            print("Trying")
+            pretty_print(rc)
+            stack = [rc]
+            seen = set()
+            #working_set = set()
+            maxes = {rc}
+            while stack:
+                working_rc = stack.pop()
+                new_set = {rcc for rcc in working_rc.right_zero_act() if len(rcc) < len(perm) + len(perm.trimcode) and len(rcc.perm.trimcode) == len(working_rc.perm.trimcode) + 1 and perm_base.bruhat_leq(rcc.perm)}
+                working_set = new_set.difference(seen)
+                if working_set:
+                    max_code = max([len(rcc.perm.trimcode) for rcc in working_set.union(maxes)])
+                    maxes = {rcc for rcc in working_set.union(maxes) if len(rcc.perm.trimcode) == max_code}
+                stack.extend(working_set)
+                seen.update(working_set)
+            #pretty_print(seen)
+            #pretty_print(working_set)
+            min_perm_inv = 0
+            the_rc = None
+            for rc_max in maxes:
+                grass, base = rc_max.perm.coset_decomp(*(list(range(len(perm.trimcode)))+list(range(len(perm.trimcode) + 1,len(perm)))))
+                if the_rc is None:
+                    the_rc = rc_max
+                    min_perm_inv = base.inv
+                elif base.inv < min_perm_inv:
+                    the_rc = rc_max
+                    min_perm_inv = base.inv
+            pretty_print(rc_max)
+            lower_rc = RCGraph([tuple([a for a in row if a < len(perm.trimcode)]) for row in tuple(rc_max)]).normalize()
+            upper_rc = RCGraph([tuple([a for a in row if a >= len(perm.trimcode)]) for row in tuple(rc_max)]).resize(len(rc_max))
+            print("upper_rc")
+            pretty_print(upper_rc)
+            upper_rc = upper_rc.vertical_cut(len(perm.trimcode))[0]
+            print("Base")
+            pretty_print(lower_rc)
+            print("Grass")
+            pretty_print(upper_rc)
+            assert lower_rc.resize(len(perm.trimcode)).squash_product(upper_rc) == rc, f"Failure for {perm}, got {rc}, with base {lower_rc} and grass {upper_rc}"
             # if not _is_elem_sym(rc):
             #     continue
-            print("Barf")
-            pretty_print(rc)
-            the_mully = r(rc) * (r.monomial(*([0] * (len(perm)))))
-            length = len(rc) + 1
+            # print("Barf")
+            # pretty_print(rc)
+            # the_mully = r(rc) * (r.monomial(*([0] * (len(perm)))))
+            # length = len(rc) + 1
             
-            for rcc in the_mully:
-                #permperm = rcc.perm
-                #descs = []
-                new_rcc = RCGraph(rcc)
-                rows = []
-                maxxy = max(new_rcc.perm.descents()) + 1
-                while True:
-                    if maxxy < 1:
-                        break
-                    if new_rcc.perm[maxxy - 1] > new_rcc.perm[maxxy]:
-                        #descs.append(maxxy)
+            # for rcc in the_mully:
+            #     #permperm = rcc.perm
+            #     #descs = []
+            #     new_rcc = RCGraph(rcc)
+            #     rows = []
+            #     maxxy = max(new_rcc.perm.descents()) + 1
+            #     while True:
+            #         if maxxy < 1:
+            #             break
+            #         if new_rcc.perm[maxxy - 1] > new_rcc.perm[maxxy]:
+            #             #descs.append(maxxy)
                         
-                        #permperm = permperm.swap(maxxy - 1, maxxy)
-                        new_rcc, row = new_rcc.exchange_property(maxxy, return_row=True)
+            #             #permperm = permperm.swap(maxxy - 1, maxxy)
+            #             new_rcc, row = new_rcc.exchange_property(maxxy, return_row=True)
                         
                         
-                        rows.append(row)
-                        maxxy -= 1
-                    else:
-                        break
-                if len(new_rcc.perm) <= len(perm):
-                    weight = [0] * length
-                    for row in rows:
-                        weight[row - 1] += 1
-                    elem_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (length - len(rows)) + [1] * len(rows)), length, weight=tuple(weight))))
-                    if new_rcc.resize(len(elem_rc)).squash_product(elem_rc).perm == perm:
-                        print("Success!")
-                        pretty_print(CrystalGraphTensor(new_rcc.normalize(),elem_rc))
-            # grass_tensor_elems[rc] = grass_tensor_elem
+            #             rows.append(row)
+            #             maxxy -= 1
+            #         else:
+            #             break
+            #     if len(new_rcc.perm) <= len(perm):
+            #         weight = [0] * length
+            #         for row in rows:
+            #             weight[row - 1] += 1
+            #         elem_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (length - len(rows)) + [1] * len(rows)), length, weight=tuple(weight))))
+            #         if new_rcc.resize(len(elem_rc)).squash_product(elem_rc).perm == perm:
+            #             print("Success!")
+            #             pretty_print(CrystalGraphTensor(new_rcc.normalize(),elem_rc))
+            # # grass_tensor_elems[rc] = grass_tensor_elem

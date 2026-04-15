@@ -80,6 +80,7 @@ def _max_grass_elem_peel(rc):
                 break
         new_rcc = new_rcc.normalize()
         if len(rows) > max_found and _is_full_grassmannian_rc(new_rcc) and len(new_rcc) < len(rc):
+            #length = max(max(rows),min(len(rc.perm.trimcode) + 1, length))
             weight = [0] * length
             for row in rows:
                 weight[row - 1] += 1
@@ -87,6 +88,8 @@ def _max_grass_elem_peel(rc):
             # if new_rcc.resize(len(elem_rc)).squash_product(elem_rc).normalize() == rc:
             the_min, the_max = new_rcc, elem_rc
             max_found = elem_rc.inv
+    # if the_min is None:
+    #     return _max_grass_elem_peel(rc.extend(1))
     return the_min, the_max
 
 
@@ -219,7 +222,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
     @cache
     def _schub_elem_cached(self, perm, size):
-        dct = RCGraph.full_CEM(perm, size, partition=tuple((~(perm.mul_dominant())).trimcode))
+        dct = RCGraph.full_CEM(perm, size, partition=tuple((~(perm.strict_mul_dominant())).trimcode))
         # dct = RCGraph.full_CEM(perm, size)
         elem = sum([self.from_tensor_dict(cem_dict, size=size) for _, cem_dict in dct.items()])
         return elem
@@ -391,35 +394,49 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         """Normalize an RCGraph tensor key to normal form."""
         key = self._ensure_valid_key(key)
         size = key.size
+        #hw_key, raise_seq = key.to_highest_weight()
         factors = list(key)
-
+        #key_hw, raise_seq = key.to_highest_weight()
+        #factors = list(key_hw)
         while True:
             # Phase 1: sort by length and merge same-length adjacent factors
-            factors = _sort_and_merge(factors)
-
+            new_factors = _sort_and_merge(list(factors))
+            hw_key, raise_seq = self.make_key(tuple(new_factors), size).to_highest_weight()
             # Phase 2: normalize individual RCGraphs and strip identities
-            factors = [rc.normalize() for rc in factors if rc.perm.inv != 0]
+            factors = [rc.normalize() for rc in hw_key if rc.perm.inv != 0]
 
             # Phase 3: peel wide factors (perm wider than row count)
             peeled = False
-            for i in range(len(factors) - 1, -1, -1):
+            for i in range(len(factors)):
                 if not _is_full_grassmannian_rc(factors[i]):
                     raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}")
-                if len(factors[i].perm) - 1 > len(factors[i]) and len(factors[i]) < size:
-                    max_rc, elem_rc = _max_grass_elem_peel(factors[i])
-                    if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0:
-                        factors[i] = max_rc
-                        factors.insert(i + 1, elem_rc)
-                        peeled = True
-                        break
-                    # if len(set(factors[i].perm.trimcode)) > 2:
-                    #     raise ValueError(f"Factor with more than 2 distinct row lengths in normalized key: {factors[i]} in key {key}")
+                # if len(factors[i].perm) - 1 > len(factors[i]) and len(factors[i]) < size:
+                #     factor = factors[i].resize(len(factors[i]) + 1)
+                # else:
+                if len(factors[i]) == size:
+                    continue
+                factor = factors[i]
+                max_rc, elem_rc = factor.squash_decomp()#_max_grass_elem_peel(factors[i])
+                max_rc = max_rc.normalize()
+                elem_rc = elem_rc.normalize()
+                # if elem_rc.perm.inv > 0:
+                #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
+                if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
+                    factors[i] = max_rc
+                    factors.insert(i + 1, elem_rc)
+                    peeled = True
+                    break
+                # if len(set(factors[i].perm.trimcode)) > 2:
+                #     raise ValueError(f"Factor with more than 2 distinct row lengths in normalized key: {factors[i]} in key {key}")
+            factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)
             if not peeled:
                 break
+
         # for fact in factors:
-        #     if len(fact) < size and fact.perm.inv > 1:
-        #         raise ValueError(f"Factor {fact} in key {key} is not wide enough to fit its permutation")
+        #     if len(fact) < len(factors[-1]) and len(fact.perm) - 1 > len(fact):
+        #         raise ValueError(f"Factor {fact} in key {factors} is not wide enough to fit its permutation")
         return self.make_key(factors, size)
+        #return self.make_key(tensor.reverse_raise_seq(raise_seq), size)
 
     def _mul_keys(self, left_key: tuple, right_key: tuple) -> tuple:
         new_key = self.make_key((*left_key, *right_key), max(left_key.size, right_key.size))

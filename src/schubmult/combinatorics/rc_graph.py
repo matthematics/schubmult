@@ -53,6 +53,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         result = anti_result.to_rc_graph()
         return result
 
+    @cache
     def squash_decomp(self):
         """Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass."""
         # if len(self.perm.trimcode) < len(self):
@@ -62,53 +63,52 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
 
         n = len(self)
+        rc = self
+        grass_descent = n - 1
+        if grass_descent == 0 and rc.perm.inv > 1:
+            n = 2
+            grass_descent = n - 1
+            rc = self.resize(n)
 
         # hw, raise_seq = self.to_highest_weight()
-        if len(self.perm) <= n:
+        # if len(self.perm) - 1 <= n:
+        #     return self, RCGraph([()]).resize(n)
+        hw, raise_seq = rc.to_highest_weight()
+        perm = self.perm
+        perm_grass, perm_base = perm.coset_decomp(*(list(range(grass_descent))+list(range(grass_descent + 1,len(perm)))))
+        if perm_grass.inv == 0:
             return self, RCGraph([()]).resize(n)
-        hw, raise_seq = self.to_highest_weight()
-
+        if perm_base.inv == 0:
+            return self, RCGraph([()]).resize(n)
         def decomp_hw():
-            stack = {hw}
+            stack = [hw]
             seen = set()
+            maxes = {hw}
             while stack:
-                working_rc = next(iter(stack))
-                stack.remove(working_rc)
-                if working_rc in seen:
-                    continue
-                # if len(working_rc) > n + working_rc.inv:
-                if len(working_rc) > 2 * n:
-                    continue
-                if len(working_rc) < n:
-                    # print("What")
-                    # print(working_rc)
-                    # print(n)
-                    raise ValueError("RC graph has too few rows to be decomposed")
-                seen.add(working_rc)
-                min_cos, residue = working_rc.perm.coset_decomp(*list(range(1, n)))
+                working_rc = stack.pop()
+                new_set = {rcc for rcc in working_rc.right_zero_act() if len(rcc) < len(perm) + n and len(rcc.perm.trimcode) == len(working_rc.perm.trimcode) + 1 and perm_base.bruhat_leq(rcc.perm)}
+                working_set = new_set.difference(seen)
+                if working_set:
+                    max_code = max([len(rcc.perm.trimcode) for rcc in working_set.union(maxes)])
+                    maxes = {rcc for rcc in working_set.union(maxes) if len(rcc.perm.trimcode) == max_code}
+                stack.extend(working_set)
+                seen.update(working_set)
+            min_perm_inv = 0
+            the_rc = None
+            for rc_max in maxes:
+                grass, base = rc_max.perm.coset_decomp(*(list(range(n))+list(range(n + 1,len(perm)))))
+                if the_rc is None:
+                    the_rc = rc_max
+                    min_perm_inv = base.inv
+                elif base.inv < min_perm_inv:
+                    the_rc = rc_max
+                    min_perm_inv = base.inv
+            lower_rc = RCGraph([tuple([a for a in row if a < n]) for row in tuple(rc_max)]).normalize()
+            upper_rc = RCGraph([tuple([a for a in row if a >= n]) for row in tuple(rc_max)]).resize(len(rc_max))
 
-                if residue.inv == 0 and len(min_cos.descents()) <= 1:
-                    min_cos_ret = working_rc.vertical_cut(n)[0]
-                    if min_cos_ret.perm.inv == 0 or min_cos_ret.perm.descents() == {n - 1}:
-                        return RCGraph([()]).resize(n), working_rc.vertical_cut(n)[0]
-                if min_cos.inv == 0 and len(residue) <= n:
-                    return hw, RCGraph([()]).resize(n)
-                if len(residue) <= n and len(min_cos.descents()) <= 1 and all(min_cos[i] == i + 1 for i in range(n)):
-                    ret_rc = RCGraph([tuple([a for a in row if a < n]) for row in working_rc]).resize(n)
-                    grass_rc = RCGraph([()]).resize(len(working_rc))
-                    for row, col in [working_rc.left_to_right_inversion_coords(i) for i in range(working_rc.perm.inv)]:
-                        if not ret_rc.has_element(row, col):
-                            grass_rc = grass_rc.toggle_ref_at(row, col)
-                    # print("The gasga")
-                    # print(grass_rc)
-                    grass_rc = grass_rc.vertical_cut(n)[0]
-                    assert len(grass_rc.perm.trimcode) <= len(grass_rc), f"Failed to get grass RC of correct size for {self}, got {grass_rc}"
-                    assert ret_rc.squash_product(grass_rc) == hw, f"Failed to reconstruct {self} from {ret_rc} and {grass_rc}"
-                    if grass_rc.inv == 0 or grass_rc.perm.descents() == {n - 1}:
-                        if len(ret_rc.perm) <= n:
-                            return ret_rc, grass_rc
-                stack.update(working_rc.right_zero_act())
-            raise ValueError(f"Failed to find squash decomposition for {self}")
+            upper_rc = upper_rc.vertical_cut(n)[0]
+            return lower_rc, upper_rc
+
 
         base_hw, grass = decomp_hw()
         tensor = CrystalGraphTensor(base_hw, grass).reverse_raise_seq(raise_seq)
@@ -150,7 +150,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         n = len(self)
 
         # hw, raise_seq = self.to_highest_weight()
-        if len(self.perm) <= n:
+        if len(self.perm) - 1 < n:
             return self, RCGraph([()]).resize(n)
         hw, raise_seq = self.to_highest_weight()
 
@@ -163,7 +163,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 if working_rc in seen:
                     continue
                 # if len(working_rc) > n + working_rc.inv:
-                if len(working_rc) > 2 * n:
+                if len(working_rc) > n + len(self.perm) - 1:
                     continue
                 if len(working_rc) < n:
                     # print("What")
@@ -187,7 +187,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                             grass_rc = grass_rc.toggle_ref_at(row, col)
                     # print("The gasga")
                     # print(grass_rc)
-                    grass_rc = AntiRCGraph.from_rc_graph(grass_rc).vertical_cut(grass_rc.rows - n)[1].to_rc_graph()
+                    grass_rc = grass_rc.vertical_cut(n)[0]
                     assert len(grass_rc.perm.trimcode) <= len(grass_rc), f"Failed to get grass RC of correct size for {self}, got {grass_rc}"
                     assert ret_rc.left_squash(grass_rc) == hw, f"Failed to reconstruct {self} from {ret_rc} and {grass_rc}"
                     if grass_rc.inv == 0 or grass_rc.perm.descents() == {n - 1}:
@@ -1322,7 +1322,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         if perm.inv == 0:
             return {cls([()] * length): {(): 1}}
         if partition is None:
-            partition = (~(perm.mul_dominant())).trimcode
+            partition = (~(perm.strict_mul_dominant())).trimcode
         mu = uncode(partition)
         numnums = max(len(partition), partition[0])
         def elem_sym_pos(p, k):

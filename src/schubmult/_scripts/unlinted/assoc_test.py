@@ -53,11 +53,12 @@ if __name__ == "__main__":
     random.shuffle(perms2)
     perms3 = [*perms]
     random.shuffle(perms3)
+    size = n - 1
     for perm1, perm2, perm3 in itertools.product(perms, perms2, perms3):
         if 0 in (perm1.inv, perm2.inv, perm3.inv):
             continue
         for (rc1, cem_dict1), (rc2, cem_dict2), (rc3, cem_dict3) in itertools.product(RCGraph.full_CEM(perm1,n).items(), RCGraph.full_CEM(perm2,n).items(), RCGraph.full_CEM(perm3,n).items()):
-            elem1, elem2, elem3 = r.from_tensor_dict(cem_dict1, n), r.from_tensor_dict(cem_dict2, n), r.from_tensor_dict(cem_dict3, n)
+            elem1, elem2, elem3 = r.from_tensor_dict(cem_dict1, size), r.from_tensor_dict(cem_dict2, size), r.from_tensor_dict(cem_dict3, size)
             # test1 = (elem1 * elem2) * elem3
             # test2 = elem1 * (elem2 * elem3)
             test1 = ((elem1 * elem2) * elem3)#.to_rc_graph_ring_element()

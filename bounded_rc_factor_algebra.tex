@@ -438,6 +438,12 @@ Given the CEM representations of $\sch_u$ and $\sch_v$, the product $\sch_u^{\ma
 
 The hypothesis, verified computationally for permutations up to moderate length, is that this procedure yields non-negative integer coefficients, providing a combinatorial manifestation of the Littlewood--Richardson rule for Schubert calculus.
 
+\subsection{Formula for Schubert elements}
+
+Let $\mu$ be a dominant permutation with $\code^*(\mu) = (\lambda_1,\ldots,\lambda_n)$ and let $u$ be a permutation such that $\ell(u\mu) = \ell(\mu) - \ell(u)$. For a positive integer $p$, we say $u$ and $w$ are \emph{$p$-anchored} if there exists a sequence of pairwise distinct positive integers $a_1,a_2,\ldots,a_k$ with $a_i\neq p$ for any $i$ such that $w=ut_{pa_1}\cdots t_{pa_k}$ and $\ell(ut_{pa_1}\cdots t_{pa_i})=\ell(u)+i$ for all $i$. We have the following formula for Schubert elements:
+$$\mathrm{Schub}_{\RC}(u\mu, \lambda_1) = \sum (-1)^{\mathrm{sign}(P)}E_{\lambda_n-\ell(u_{n-1},u_n)}^{\lambda_n}\otimes \cdots \otimes E_{\lambda_2-\ell(u_1,u_2)}^{\lambda_2}\otimes E_{\lambda_1-\ell(u_0,u_1)}^{\lambda_1}$$
+where $P=(u_0,\ldots,u_n)$ is a sequence of permutations with $u_0=1$ and $u_n=u$ such that $u_{i-1}$ and $u_i$ are $i$-anchored for all $i$, and $\mathrm{sign}(P)$ is the sum over all $i$ of the number of $j<i$ such that $u_{i-1}(j)\neq u_i(j)$.
+
 \section*{Acknowledgments}
 
 Computational verification of the constructions described here was carried out using the Python package \texttt{schubmult}.
