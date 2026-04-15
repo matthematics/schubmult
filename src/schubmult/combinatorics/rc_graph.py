@@ -1322,7 +1322,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         if perm.inv == 0:
             return {cls([()] * length): {(): 1}}
         if partition is None:
-            partition = (~(perm.strict_mul_dominant())).trimcode
+            partition = (~(perm.mul_dominant())).trimcode
         mu = uncode(partition)
         numnums = max(len(partition), partition[0])
         def elem_sym_pos(p, k):
