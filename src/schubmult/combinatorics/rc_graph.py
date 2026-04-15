@@ -65,10 +65,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         n = len(self)
         rc = self
         grass_descent = n - 1
-        if grass_descent == 0 and rc.perm.inv > 1:
-            n = 2
-            grass_descent = n - 1
-            rc = self.resize(n)
+        # if grass_descent == 0 and rc.perm.inv > 1:
+        #     rc_ret = RCGraph([(1,)])
+        #     grass_ret = RCGraph([self[0][1:]]).normal
+        #     return rc_ret, grass_ret
 
         # hw, raise_seq = self.to_highest_weight()
         # if len(self.perm) - 1 <= n:

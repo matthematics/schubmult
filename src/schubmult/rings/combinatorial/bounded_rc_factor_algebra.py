@@ -79,7 +79,7 @@ def _max_grass_elem_peel(rc):
             else:
                 break
         new_rcc = new_rcc.normalize()
-        if len(rows) > max_found and _is_full_grassmannian_rc(new_rcc) and len(new_rcc) < len(rc):
+        if len(rows) > max_found and _is_full_grassmannian_rc(new_rcc) and len(new_rcc.inv) < len(rc):
             #length = max(max(rows),min(len(rc.perm.trimcode) + 1, length))
             weight = [0] * length
             for row in rows:
@@ -427,6 +427,17 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                         factors.insert(i + 1, elem_rc)
                         peeled = True
                         break
+                    #factor = factor.extend(1)
+                    # max_rc, elem_rc = _max_grass_elem_peel(factor)
+                    # max_rc = max_rc.normalize()
+                    # elem_rc = elem_rc.normalize()
+                    # # if elem_rc.perm.inv > 0:
+                    # #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
+                    # if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
+                    #     factors[i] = max_rc
+                    #     factors.insert(i + 1, elem_rc)
+                    #     peeled = True
+                    #     break
                 # if len(set(factors[i].perm.trimcode)) > 2:
                 #     raise ValueError(f"Factor with more than 2 distinct row lengths in normalized key: {factors[i]} in key {key}")
             factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)
@@ -440,8 +451,30 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         #return self.make_key(tensor.reverse_raise_seq(raise_seq), size)
 
     def _mul_keys(self, left_key: tuple, right_key: tuple) -> tuple:
-        new_key = self.make_key((*left_key, *right_key), max(left_key.size, right_key.size))
+        if left_key.size != right_key.size:
+            raise ValueError(f"Cannot multiply keys of different sizes: {left_key.size} vs {right_key.size}")
+        new_key = self.make_key((*left_key, *right_key), left_key.size)
         return self._normalize_key(new_key)
+
+    def _post_normalize_dict(self, accum):
+        """Expand keys whose first factor has length 1 and inv > 1 into sums via schub_elem."""
+        to_expand = {}
+        clean = {}
+        for key, coeff in accum.items():
+            if coeff == S.Zero:
+                continue
+            if key.size > 1 and len(key) > 0 and len(key[0]) == 1 and key[0].perm.inv > 1:
+                to_expand[key] = coeff
+            else:
+                clean[key] = coeff
+        if not to_expand:
+            return self.dtype({k: v for k, v in clean.items() if v != S.Zero})
+        result = self.dtype({k: v for k, v in clean.items() if v != S.Zero})
+        for key, coeff in to_expand.items():
+            new_key = self.make_key(key[1:], key.size)
+            supp_elem = self.schub_elem(key[0].perm, key.size) * self(new_key)
+            result += coeff * self.from_tensor_dict(supp_elem, key.size)
+        return result
 
     def from_dict(self, dct):
         accum = {}
@@ -450,7 +483,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                 continue
             nkey = self._normalize_key(key)
             accum[nkey] = accum.get(nkey, S.Zero) + coeff
-        return self.dtype({k: v for k, v in accum.items() if v != S.Zero})
+        return self._post_normalize_dict(accum)
 
     def from_tensor_dict(self, dct, size):
         accum = {}
@@ -459,7 +492,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                 continue
             nkey = self._normalize_key(self.make_key(key, size))
             accum[nkey] = accum.get(nkey, S.Zero) + coeff
-        return self.dtype({k: v for k, v in accum.items() if v != S.Zero})
+        return self._post_normalize_dict(accum)
 
     def __call__(self, key):
         return self.from_dict({self._normalize_key(key): S.One})
@@ -476,9 +509,9 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
     def mul(self, a, b):
         if not isinstance(b, BoundedRCFactorAlgebraElement):
             return super().mul(a, b)
-        result = {}
+        accum = {}
         for left_key, left_coeff in a.items():
             for right_key, right_coeff in b.items():
                 key = self._mul_keys(left_key, right_key)
-                result[key] = result.get(key, S.Zero) + left_coeff * right_coeff
-        return self.from_dict(result)
+                accum[key] = accum.get(key, S.Zero) + left_coeff * right_coeff
+        return self._post_normalize_dict(accum)
