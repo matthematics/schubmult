@@ -36,6 +36,10 @@ logs/
 *.bbl
 *.blg
 *.log
+*.nav
+*.snm
+*.toc
+*.vrb
 schubert_bialgebra.out
 schubert_bialgebra.synctex.gz
 *.aux

@@ -222,7 +222,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
     @cache
     def _schub_elem_cached(self, perm, size):
-        dct = RCGraph.full_CEM(perm, size, partition=tuple((~(perm.strict_mul_dominant())).trimcode))
+        dct = RCGraph.full_CEM(perm, size, partition=tuple((~(perm.strict_mul_dominant(size))).trimcode))
         # dct = RCGraph.full_CEM(perm, size)
         elem = sum([self.from_tensor_dict(cem_dict, size=size) for _, cem_dict in dct.items()])
         return elem
@@ -415,17 +415,18 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                 # else:
                 if len(factors[i]) == size:
                     continue
-                factor = factors[i]
-                max_rc, elem_rc = factor.squash_decomp()#_max_grass_elem_peel(factors[i])
-                max_rc = max_rc.normalize()
-                elem_rc = elem_rc.normalize()
-                # if elem_rc.perm.inv > 0:
-                #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
-                if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
-                    factors[i] = max_rc
-                    factors.insert(i + 1, elem_rc)
-                    peeled = True
-                    break
+                if len(factors[i].perm) - 1 > len(factors[i]):
+                    factor = factors[i]
+                    max_rc, elem_rc = factor.squash_decomp()#_max_grass_elem_peel(factors[i])
+                    max_rc = max_rc.normalize()
+                    elem_rc = elem_rc.normalize()
+                    # if elem_rc.perm.inv > 0:
+                    #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
+                    if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
+                        factors[i] = max_rc
+                        factors.insert(i + 1, elem_rc)
+                        peeled = True
+                        break
                 # if len(set(factors[i].perm.trimcode)) > 2:
                 #     raise ValueError(f"Factor with more than 2 distinct row lengths in normalized key: {factors[i]} in key {key}")
             factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)

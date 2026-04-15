@@ -111,7 +111,7 @@ def verify_pair(perm1, perm2, n):
         #                 rcc = rc_base.squash_product(rc_grass)
         #                 if rcc.is_highest_weight and rcc.extremal_weight == pad_tuple(rcc.perm.trimcode, len(rcc)):
         #                     result += coeff1 * coeff2 * coeff3 * coeff4 * r(rcc)
-        result = (g.schub_elem(perm1, n) * g.schub_elem(perm2, n)).to_rc_graph_ring_element()
+        result = (g.schub_elem(perm1, max(len(perm1.trimcode), len(perm2.trimcode))) * g.schub_elem(perm2, max(len(perm1.trimcode), len(perm2.trimcode)))).to_rc_graph_ring_element()
 
         prd2 = Sx.zero
         for rc, coeff in result.items():

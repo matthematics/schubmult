@@ -1,0 +1,2014 @@
+from __future__ import annotations
+
+from collections.abc import Sequence
+from functools import cache, cached_property
+from typing import TYPE_CHECKING
+
+import schubmult.utils.schub_lib as schub_lib
+from schubmult.combinatorics.permutation import Permutation, uncode
+from schubmult.combinatorics.schubert_monomial_graph import SchubertMonomialGraph
+from schubmult.rings.free_algebra import ASx, FreeAlgebra, FreeAlgebraElement, WordBasis
+from schubmult.rings.schubert.nil_hecke import NilHeckeRing
+from schubmult.symbolic import Expr, S, prod
+from schubmult.utils._grid_print import GridPrint
+
+if TYPE_CHECKING:
+    pass
+
+# from schubmult.utils.bitfield_row import BitfieldRow
+from schubmult.utils.logging import get_logger, init_logging
+from schubmult.utils.perm_utils import add_perm_dict, find_reduced_fail, is_reduced
+
+from .crystal_graph import CrystalGraph
+from .nilplactic import NilPlactic
+from .plactic import Plactic
+
+init_logging(debug=False)
+logger = get_logger(__name__)
+
+
+def _is_row_root(row: int, root: tuple[int, int]) -> bool:
+    return row is None or (root[0] <= row and root[1] > row)
+
+
+FA = FreeAlgebra(WordBasis)
+
+
+def debug_print(*args: object, debug: bool = False) -> None:  # pragma: no cover
+    if debug:
+        print(*args)
+
+
+class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
+
+    def left_squash(self, non_grass_rc):
+        from .anti_rc_graph import AntiRCGraph
+        assert self.perm.inv == 0 or self.perm.descents() == {len(self) - 1}, "Left squash only defined for full Grassmannian RC graphs"
+        assert len(non_grass_rc) == len(self), "Left squash only defined for RC graphs of the same number of rows"
+
+        a_self = AntiRCGraph.from_rc_graph(self)
+        a_non_grass = AntiRCGraph.from_rc_graph(non_grass_rc)
+
+        anti_result = a_self.squash_product(a_non_grass)
+        result = anti_result.to_rc_graph()
+        return result
+
+
+
+    def squash_decomp(self):
+        """Decompose an n-row RC graph into a pair of n-row RC graph in S_n and an n-grass."""
+        from schubmult.combinatorics.crystal_graph import CrystalGraphTensor
+        n = len(self)
+
+        seen = set()
+        hw, raise_seq = self.to_highest_weight()
+        #hw, raise_seq = self, ()
+        stack = {hw}
+        hw_result = None
+        while stack:
+            working_rc = next(iter(stack))
+            seen.add(working_rc.perm)
+            min_cos, residue = working_rc.perm.coset_decomp(*list(range(1, len(working_rc))))
+            if residue.inv == 0 and min_cos.descents() == {n - 1}:
+                hw_result = CrystalGraphTensor(RCGraph([()]).resize(n), working_rc.vertical_cut(n)[0])
+                break
+            if min_cos.inv == 0 and len(residue) <= n:
+                hw_result = CrystalGraphTensor(hw, RCGraph([()]).resize(n))
+                break
+            if len(residue) <= n and min_cos.descents() == {n - 1} and min_cos * residue == residue * min_cos:
+                
+                ret_rc = RCGraph([tuple([a for a in row if a < n]) for row in working_rc]).resize(n)
+                grass_rc = RCGraph([()]).resize(n)
+                for row, col in [working_rc.left_to_right_inversion_coords(i) for i in range(working_rc.perm.inv)]:
+                    if not ret_rc.has_element(row, col):
+                        grass_rc = grass_rc.toggle_ref_at(row, col)
+                grass_rc = grass_rc.vertical_cut(n)[0]
+                hw_result = CrystalGraphTensor(ret_rc.resize(n), grass_rc)
+                break
+            stack.update(working_rc.right_zero_act())
+            
+        if hw_result is None:
+            raise ValueError(f"Failed to find squash decomposition for {self}")
+        non_hw_result = hw_result.reverse_raise_seq(raise_seq)
+        assert len(non_hw_result.factors[0].perm) <= n
+        assert non_hw_result.factors[1].perm.inv == 0 or non_hw_result.factors[1].perm.descents() == {n - 1}
+        return non_hw_result.factors
+
+    @property
+    def args(self) -> tuple:
+        """Return args for sympy compatibility - prevents traversal into tuple contents."""
+        return ()
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, RCGraph):
+            return NotImplemented
+        return tuple(self) == tuple(other)
+
+    @property
+    def is_quasi_yamanouchi(self) -> bool:
+        if self.perm.inv == 0:
+            return True
+        group_coords_min = {}
+        group_coords_max = {}
+        for i in range(self.perm.inv):
+            a, b = self.left_to_right_inversion_coords(i)
+            if group_coords_min.get(a, 1000) > b:
+                group_coords_min[a] = b
+            if group_coords_max.get(a, -1) < b:
+                group_coords_max[a] = b
+        for a, b in group_coords_min.items():
+            if b != 1 and group_coords_max.get(a + 1, -1) < b:
+                return False
+        return True
+
+
+    def loc_of_inversion(self, a, b):
+        lookup = {self.left_to_right_inversion(i): self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)}
+        return lookup[(a, b)]
+
+    def index_of_inversion(self, a, b):
+        lookup = {self.left_to_right_inversion(i): i for i in range(self.perm.inv)}
+        return lookup.get((a, b), -1)
+
+    def as_reduced_compatible(self):
+        word = self.perm_word
+        seq = tuple([self.left_to_right_inversion_coords(i)[0] for i in range(self.perm.inv)])
+        return word, seq
+
+    def little_bump_desc(self):
+        if self.perm.inv == 0:
+            return self
+        last_desc = max(self.perm.descents()) + 1
+        if len(self) > last_desc:
+            return self
+        if len(self) < last_desc:
+            rc = self.normalize()
+            return rc.little_bump_desc()
+        # if len(self[last_desc - 1]) != 0:
+        #     raise ValueError("Last row not empty")
+        rc, row = self.exchange_property(last_desc, return_row=True)
+        rc = rc.toggle_ref_at(last_desc, 1)
+        rc = rc.pieri_insert(last_desc - 1, [row]).toggle_ref_at(last_desc, 1)
+        return rc
+        # if max(rc.perm.descents(), default=-1) + 1 < last_desc:
+        #     return rc.resize(last_desc - 1)
+        # return rc.little_bump_zero().resize(last_desc - 1)
+
+    def inversions(self):
+        return tuple([self.left_to_right_inversion(i) for i in range(self.perm.inv)])
+
+    @property
+    def vex(self):
+        if self.perm.inv == 0:
+            return self
+        prm = self.perm
+        trc = [*prm.trimcode]
+        while trc[0] == 0:
+            trc.pop(0)
+
+        newlen = len(trc)
+        oldlen = len(self.perm.trimcode)
+        selfrc = self.to_highest_weight()[0]
+        # if 2 * newlen < oldlen:
+        #     print("Why is this happening?")
+        #     print(f"{2*newlen=}, {oldlen=}, {self.perm.trimcode=} {trc=}")
+        selfrc = selfrc.shiftup(2 * newlen - oldlen).normalize()
+
+        # if self.perm.is_vexillary:
+        #     return selfrc
+        vex_rc = selfrc
+        assert vex_rc.perm.inv == self.perm.inv
+        while not vex_rc.perm.is_vexillary:
+            if len(vex_rc[-1]) == 0:
+                # if len(vex_rc.perm.trimcode) < len(vex_rc):
+                #     vex_rc = RCGraph(vex_rc.shiftup(len(vex_rc) - len(vex_rc.perm.trimcode)))
+                vex_rc = vex_rc.zero_out_last_row()
+            else:
+                vex_rc = vex_rc.resize(len(vex_rc) + 1)
+                if len(vex_rc.perm.trimcode) < len(vex_rc):
+                    vex_rc = RCGraph(vex_rc.shiftup(len(vex_rc) - len(vex_rc.perm.trimcode)))
+                vex_rc = vex_rc.zero_out_last_row()
+        mindesc = min([min(row, default=1000) - row_num for row_num, row in enumerate(vex_rc)])
+        if mindesc > 1:
+            vex_rc = RCGraph(vex_rc.shiftup(1 - mindesc)).normalize()
+        return vex_rc
+
+
+
+    def hw_tab_rep(self):
+        from schubmult import Plactic
+
+        hw, raise_seq = self.to_highest_weight()
+        shape = [a for a in hw.length_vector if a != 0]
+        tab = Plactic.yamanouchi(shape)
+        return hw, tab.reverse_raise_seq(raise_seq)
+
+    def hw_grass_rep(self):
+        return self.to_highest_weight()[0], self.grass
+
+    def all_chute_moves(self):
+        chute_moves = set()
+        rc = self
+        for row_num in range(len(self), 0, -1):
+            for col in range(1, self.cols + 1):
+                if not rc.has_element(row_num, col):
+                    a, b = rc.right_root_at(row_num, col)
+                    if b < a:
+                        continue
+                    if rc.perm[a - 1] > rc.perm[b - 1]:
+                        end = (row_num, col)
+                        row, poncho = rc.loc_of_inversion(a, b)
+                        if row == row_num - 1:
+                            chute_moves.add(((row_num - 1, poncho), end))
+        return chute_moves
+
+    def chute_lower(self, row_num):
+        rc = self
+        row_num = row_num + 1
+        if row_num > len(self):
+            return None
+        for col in range(len(self.perm) + len(self), 0, -1):
+            if not rc.has_element(row_num, col):
+                a, b = rc.right_root_at(row_num, col)
+                if b < a:
+                    continue
+                if rc.perm[a - 1] > rc.perm[b - 1]:
+                    end = (row_num, col)
+                    row, poncho = rc.loc_of_inversion(a, b)
+                    if row == row_num - 1:
+                        # chute_moves.add(((row_num - 1, poncho), end))
+                        ret = rc.toggle_ref_at(row_num - 1, poncho)
+                        ret = ret.toggle_ref_at(*end)
+                        return ret
+        return None
+
+    def chute_raise(self, row_num):
+        rc = self
+        if row_num >= len(self):
+            return None
+        for col in range(len(self.perm) + len(self), 0, -1):
+            if not rc.has_element(row_num, col):
+                a, b = rc.right_root_at(row_num, col)
+                if a < b:
+                    continue
+                if rc.perm[b - 1] > rc.perm[a - 1]:
+                    end = (row_num, col)
+                    row, poncho = rc.loc_of_inversion(b, a)
+                    if row == row_num + 1:
+                        # chute_moves.add(((row_num - 1, poncho), end))
+                        ret = rc.toggle_ref_at(row_num + 1, poncho)
+                        ret = ret.toggle_ref_at(*end)
+                        return ret
+        return None
+
+    def to_top_rc(self):
+        rc = self
+        found = True
+        raise_seq = []
+        while found:
+            found = False
+            for i in range(1, len(rc)):
+                new_rc = rc.chute_raise(i)
+                if new_rc is not None:
+                    rc = new_rc
+                    raise_seq.append(i)
+                    found = True
+                    break
+        return rc, tuple(raise_seq)
+
+    def to_bottom_rc(self):
+        rc = self
+        found = True
+        raise_seq = []
+        while found:
+            found = False
+            for i in range(len(rc) - 1, 0, -1):
+                new_rc = rc.chute_lower(i)
+                if new_rc is not None:
+                    rc = new_rc
+                    raise_seq.append(i)
+                    found = True
+                    break
+        return rc, tuple(raise_seq)
+
+    def all_inverse_chute_moves(self):
+        chute_moves = set()
+        rc = self
+        for row_num in range(1, len(self)):
+            for col in range(len(self.perm) + len(self), 0, -1):
+                if not rc.has_element(row_num, col):
+                    a, b = rc.right_root_at(row_num, col)
+                    if a < b:
+                        continue
+                    end = (row_num, col)
+                    row, poncho = rc.loc_of_inversion(b, a)
+                    if row == row_num + 1:
+                        chute_moves.add(((row_num + 1, poncho), end))
+        return chute_moves
+
+    # @property
+    # def weight_perm(self):
+    #     lw_vector = self.to_lowest_weight()[0].length_vector
+    #     weight_perm = Permutation.sorting_perm(lw_vector, reverse=True)
+    #     assert weight_perm.right_act(lw_vector) == self.to_highest_weight()[0].length_vector, f"Failed on {self}, {lw_vector}, {weight_perm}, {weight_perm.right_act(lw_vector)}, {self.to_highest_weight()[0].length_vector}"
+    #     return weight_perm
+    #     # rc = self
+    #     # raise_seq = []
+    #     # while True:
+    #     #     if len(rc) == 0 or len(rc[-1]) == 0:
+    #     #         break
+    #     #     row_num = len(rc)
+    #     #     col = max(rc[-1])
+    #     #     a, b = rc.right_root_at(row_num, col)
+    #     #     if a < b:
+    #     #         break
+    #     #     rc = rc.toggle_ref_at(row_num, col)
+    #     #     raise_seq.append(row_num)
+    #     # return rc, raise_seq
+    def to_lowest_weight_demaz(self):
+        rc = self.to_highest_weight()[0]
+        raise_seq = []
+        is_any = True
+        while is_any:
+            # if len(rc) == 0 or len(rc[-1]) == 0:
+            #     break
+            # row_num = len(rc)
+            # col = max(rc[-1])
+            # a, b = rc.right_root_at(row_num, col)
+            # if a < b:
+            #     break
+            # rc = rc.toggle_ref_at(row_num, col)
+            # raise_seq.append(row_num)
+            is_any = False
+            # for i in sorted((~self.perm).descents(zero_indexed=False)):
+            for i in range(len(self) - 1, 0, -1):
+                rc2_new = rc.lowering_operator(i)
+                if rc2_new is not None:
+                    rc = rc2_new
+                    raise_seq.append(i)
+                    is_any = True
+                    break
+        return rc, tuple(raise_seq)
+
+    @staticmethod
+    def raise_seq_word(raise_seq):
+        last_elem = None
+        wrd = []
+        for i in raise_seq:
+            if last_elem is not None:
+                if last_elem == i:
+                    continue
+            last_elem = i
+            wrd.append(last_elem)
+        return wrd
+
+    def lowest_weight_perm(self):
+        perms = [Permutation.ref_product(*RCGraph.raise_seq_word(rc0.to_highest_weight()[1])) for rc0 in RCGraph.all_lw_rcs(self.perm, len(self))]
+        return min(perms, key=lambda p: p.inv)
+
+    @property
+    def grass(self):
+        hw, raise_seq = self.to_highest_weight()
+        the_weight = [*hw.length_vector]
+        while len(the_weight) > len(self.perm.trimcode) and the_weight[-1] == 0:
+            the_weight.pop()
+        code = list(reversed(the_weight))
+        perm = uncode(code)
+        top_rc = next(iter(RCGraph.all_rc_graphs(perm, len(self), weight=(*the_weight, *([0]*(len(self) - len(the_weight)))))))
+        return top_rc.reverse_raise_seq(raise_seq)
+
+    def transition(self):
+        if len(self) == 0:
+            return self
+        if len(self[-1]) == 0:
+            return self.zero_out_last_row()
+        the_rc = self.exchange_property(len(self.perm.trimcode))
+        if len(the_rc.perm.trimcode) <= len(the_rc):
+            return the_rc
+        the_rc = the_rc.normalize()
+        while len(the_rc.perm.trimcode) > len(self.perm.trimcode):
+            the_rc = the_rc.zero_out_last_row()
+        return the_rc
+
+    def little_bump(self, i=None, j=None):
+        if i is not None or j is not None:
+            assert i is not None
+            assert j is not None
+        else:
+            i = len(self.perm.trimcode)
+            j = len(self.perm.trimcode) + 1
+        index_list = [ii for ii in range(len(self.perm_word)) if self.left_to_right_inversion(ii) == (i, j)]
+        if len(index_list) == 0:
+            raise ValueError("RC graph has no such inversion")
+        index = index_list[0]
+        word, seq = self.as_reduced_compatible()
+        word = [*word]
+        # m is index
+        while True:
+            word[index] = word[index] + 1
+            if is_reduced(word):
+                break
+            index = find_reduced_fail(word, index)
+        assert Permutation.ref_product(*word).inv == self.perm.inv
+        return RCGraph.from_reduced_compatible(word, seq)
+
+    def little_bump_down(self, i, j):
+        index_list = [ii for ii in range(len(self.perm_word)) if self.left_to_right_inversion(ii) == (i, j)]
+        if len(index_list) == 0:
+            raise ValueError("RC graph has no such inversion")
+        index = index_list[0]
+        word, seq = self.as_reduced_compatible()
+        word = [*word]
+        # m is index
+        while True:
+            if word[index] == 1:
+                word[index] = word[index] + 1
+            else:
+                word[index] = word[index] - 1
+            if is_reduced(word):
+                break
+            index = find_reduced_fail(word, index)
+        return RCGraph.from_reduced_compatible(word, seq)
+
+    @classmethod
+    def from_reduced_compatible(cls, word, seq, length=None):
+        rows = []
+        for elem, row in zip(word, seq):
+            while row > len(rows):
+                rows += [[]]
+            rows[-1] += [elem]
+        ret = cls([tuple(row) for row in rows])
+        if length is None:
+            return ret.normalize()
+        return ret.resize(length)
+
+    @cached_property
+    def crystal_weight(self):
+        return self.length_vector
+
+    # UNIQUE
+    def tableau_decomp(self) -> tuple[NilPlactic, Plactic]:
+        descs = self.perm.descents()
+        if len(descs) == 0:
+            return (self,)
+        dscs = sorted([d + 1 for d in descs], reverse=True)
+
+        tup = (self,)
+        for d in dscs:
+            tup = (*tup[0].vertical_cut(d), *tup[1:])
+
+        return tup[:-1]
+
+    @classmethod
+    @cache
+    def _extremal_weight(cls, hw_rc):
+        # search_space = {rc for rc in RCGraph.all_rc_graphs(perm, len(self)) if tuple(sorted(rc.length_vector, reverse=True)) == hw_vec}
+        # return min(search_space, key=lambda rc: tuple([sum(rc.length_vector[:i]) for i in range(1, len(rc.length_vector))])).length_vector
+        min_vec = hw_rc.length_vector
+        min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
+        for rc in hw_rc.full_crystal:
+            if tuple(sorted(rc.length_vector, reverse=True)) != hw_rc.length_vector:
+                continue
+            good = True
+            for j in range(1, len(rc.length_vector)):
+                if sum(rc.length_vector[:j]) > min_vec_prefix_sums[j - 1]:
+                    good = False
+                    break
+            if good:
+                min_vec = rc.length_vector
+                min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
+        return min_vec
+
+    @property
+    def extremal_weight(self):
+        return RCGraph._extremal_weight(self.to_highest_weight()[0])
+        # hw_vec = self.to_highest_weight()[0].length_vector
+        # # search_space = {rc for rc in self.full_crystal if tuple(sorted(rc.length_vector, reverse=True)) == hw_vec}
+        # # for rc in sea
+        # # @cache
+        # # def dom_key(comp):
+        # #     return tuple([sum(comp[:i]) for i in range(1, len(comp))])
+        # # return min(search_space, key=lambda rc: dom_key(rc.length_vector)).length_vector
+        # min_vec = self.length_vector
+        # min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
+        # for rc in self.full_crystal:
+        #     if tuple(sorted(rc.length_vector, reverse=True)) != hw_vec:
+        #         continue
+        #     good = True
+        #     for j in range(1, len(rc.length_vector)):
+        #         if sum(rc.length_vector[:j]) > min_vec_prefix_sums[j - 1]:
+        #             good = False
+        #             break
+        #     if good:
+        #         min_vec = rc.length_vector
+        #         min_vec_prefix_sums = [sum(min_vec[:i]) for i in range(1, len(min_vec))]
+        # return min_vec
+        #return min(RCGraph.all_lw_rcs(self.perm, len(self)), key=lambda rc: dom_key(rc.length_vector)).length_vector
+
+    @property
+    def forest_invariant(self):
+        from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
+        word = list(reversed(self.perm_word))
+        def word_to_pair_labeled(word):
+            counts = {}
+            out = []
+            for a in word:
+                aa = int(a)
+                counts[aa] = counts.get(aa, 0) + 1
+                out.append(letterpair(aa, counts[aa]))
+            return tuple(out)
+        return omega_insertion(word_to_pair_labeled(word))[0]
+
+    @property
+    def omega_invariant(self):
+        from schubmult.combinatorics.indexed_forests import letterpair, omega_insertion
+        word = list(reversed(self.perm_word))
+        def word_to_pair_labeled(word):
+            counts = {}
+            out = []
+            for a in word:
+                aa = int(a)
+                counts[aa] = counts.get(aa, 0) + 1
+                out.append(letterpair(aa, counts[aa]))
+            return tuple(out)
+        return omega_insertion(word_to_pair_labeled(word))
+
+    def w0_automorphism(self, n=None):
+        # from ..rings.combinatorial.eg_plactic_ring import EGPlacticRing
+        if n is None:
+            n = max(len(self),len(self.perm))
+        # assert n>=len(self.perm)
+        # r = EGPlacticRing()
+        # elem = r.from_rc_graph(self)
+        # key = next(iter(elem.keys()))
+
+        # water = tuple([n + 1 - a for a in key[1].row_word])
+        # fast = max(water)
+        # trans_key = NilPlactic().ed_insert(*tuple(([n + fast - a for a in key[0][0].row_word])))
+        # trans_plac = Plactic().rs_insert(*water)
+        # new_elem = r((trans_key,key[0][1]), trans_plac)
+        # return next(iter(new_elem.to_rc_graph_ring_element())).vertical_cut(n)[0]
+        perm_word, compat_seq = self.as_reduced_compatible()
+        new_perm_word = [n - a for a in perm_word]
+        compat_seq = tuple(reversed([n - a for a in compat_seq]))
+        exceed = max([a - b for a, b in zip(compat_seq, new_perm_word)], default=0)
+        new_perm_word = [a + exceed for a in new_perm_word]
+        return RCGraph.from_reduced_compatible(new_perm_word, compat_seq).resize(n + exceed)
+
+    def antiaut(self):
+        from .anti_rc_graph import AntiRCGraph
+        return AntiRCGraph.from_rc_graph(self)
+
+    @property
+    def forest_weight(self):
+        from schubmult.utils.tuple_utils import pad_tuple
+        return pad_tuple(self.forest_invariant.forest.code, len(self))
+
+    @property
+    def is_extremal(self) -> bool:
+        if sorted(self.length_vector, reverse=True) != self.to_highest_weight()[0].length_vector:
+            return False
+        sorting_perm_self = Permutation.sorting_perm(self.length_vector, reverse=True)
+        for rc_lw in RCGraph.all_rc_graphs(self.perm, len(self)):
+            if rc_lw == self:
+                continue
+            if rc_lw.to_highest_weight()[0] != self.to_highest_weight()[0]:
+                continue
+            if sorted(rc_lw.length_vector, reverse=True) != rc_lw.to_highest_weight()[0].length_vector:
+                continue
+            sorting_perm_other = Permutation.sorting_perm(rc_lw.length_vector, reverse=True)
+            if sorting_perm_self.inv < sorting_perm_other.inv:
+                return False
+        return True
+        # lw_perm = self.lowest_weight_perm()
+        # word = lw_perm.code_word
+        # working_rc = self
+        # for letter in word:
+        #     found = False
+        #     last_working_rc = working_rc
+        #     working_rc = working_rc.raising_operator(letter)
+        #     while working_rc is not None:
+        #         found = True
+        #         last_working_rc = working_rc
+        #         working_rc = working_rc.raising_operator(letter)
+        #     if not found:
+        #         return False
+        #     working_rc = last_working_rc
+        # #return self.is_lowest_weight and len(RCGraph.raise_seq_word(self.to_highest_weight()[1])) == self.lowest_weight_perm().inv
+        # return True
+
+
+
+    @property
+    def demazure_weight(self) -> tuple[int, ...]:
+        """Weight of the distinguished Demazure extremal element."""
+        return self.extremal_weight
+
+    @property
+    def is_rc(self) -> bool:
+        for i, row in enumerate(self):
+            for a in row:
+                if a < i + 1:
+                    return False
+        return True
+
+    @property
+    def is_valid(self) -> bool:
+        if self.perm.inv != len(self.perm_word):
+            return False
+        if any(r <= index for index, row in enumerate(self) for r in row):
+            return False
+
+        # if len(self.perm.trimcode) > len(self):
+        #     return False
+        return True
+
+    def shiftup(self, shift: int = 1, check_valid=True) -> RCGraph:
+        rc = self
+        # if len(self) < len(self.perm.trimcode) + shift:
+        #     rc = rc.extend(len(self.perm.trimcode) + shift - len(self))
+
+        ret = RCGraph([tuple([a + shift for a in rrow]) for rrow in rc])
+        if check_valid:
+            assert ret.is_valid
+        return ret
+
+    @cache
+    def right_root_at(self, i: int, j: int) -> tuple[int, int]:
+        if i <= 0 or j <= 0:
+            raise IndexError("i and j must be positive")
+        if len(self.perm_word) > 0:
+            index = self.bisect_left_coords_index(i, j)
+            if index < len(self.perm_word):
+                if self.left_to_right_inversion_coords(index) == (i, j):
+                    return self.perm.right_root_at(index, word=self.perm_word)
+                word_piece = list(self.perm_word[index:])
+            else:
+                word_piece = []
+            refl = ~Permutation.ref_product(*word_piece)
+            result = refl.act_root(i + j - 1, i + j)
+
+        else:
+            result = (i + j - 1, i + j)
+        return result
+
+    @cache
+    def left_root_at(self, i: int, j: int) -> tuple[int, int] | None:
+        start_root = (i + j - 1, i + j)
+        for j2 in range(j + 1, self.cols):
+            if self[i - 1, j2 - 1]:
+                start_root = Permutation.ref_product(self[i - 1, j2 - 1]).act_root(*start_root)
+        for i2 in range(i - 1, 0, -1):
+            for j2 in range(1, self.cols + 1):
+                if self[i2 - 1, j2 - 1]:
+                    start_root = Permutation.ref_product(self[i2 - 1, j2 - 1]).act_root(*start_root)
+        return start_root
+
+    @cache
+    def inversion_label(self, i: int, j: int) -> int:
+        if i >= j:
+            raise ValueError("i must be less than j")
+        if self.perm[i] < self.perm[j]:
+            raise ValueError("Not an inversion")
+        for index in range(len(self.perm_word)):
+            if self.left_to_right_inversion(index) == (i + 1, j + 1):
+                return self.left_to_right_inversion_coords(index)[0]
+        raise ValueError("Could not find inversion")
+
+    @cache
+    def lehmer_label(self, i: int, j: int) -> int:
+        value = self.inversion_label(i, j)
+        numeros = set(range(1, value + 1))
+        for ip in range(i):
+            try:
+                numeros.remove(self.inversion_label(ip, j))
+            except ValueError:
+                pass
+            except KeyError:
+                pass
+        return len(numeros)
+
+    def __new__(cls, *args):
+        new_args = tuple(tuple(arg) for arg in args)
+        return RCGraph.__xnew_cached__(cls, *new_args)
+
+    @staticmethod
+    @cache
+    def __xnew_cached__(_class, *args):
+        return RCGraph.__xnew__(_class, *args)
+
+    @staticmethod
+    def __xnew__(_class, *args):
+        return tuple.__new__(_class, *args)
+
+    def __init__(self, *args: object) -> None:
+        pass
+
+    @cached_property
+    def perm_word(self) -> tuple[int, ...]:
+        ret = []
+        for row in self:
+            ret = [*ret, *row]
+        return tuple(ret)
+
+    @property
+    def reduced_word(self) -> tuple[int, ...]:
+        return self.perm_word
+
+    def is_dom_perm_yamanouchi(self, dom_perm: Permutation, perm: Permutation) -> bool:
+        from schubmult.rings.schubert.schubert_ring import Sx
+
+        if (Sx(self.perm) * Sx(dom_perm)).get(perm, 0) == 0:
+            return False
+        length = max(len(perm.trimcode), len(dom_perm.trimcode))
+        rc = RCGraph.principal_rc(perm, length)
+        dom_rc = RCGraph.principal_rc(dom_perm, length)
+        weight = tuple([rc.length_vector[i] - dom_rc.length_vector[i] for i in range(len(rc))])
+        if self.length_vector != weight:
+            return False
+        outer_shape = rc.p_tableau.shape
+        inner_shape = dom_rc.p_tableau.shape
+        if NilPlactic.exists_ed_tableau_equiv(rc.p_tableau, inner_shape, outer_shape) and Plactic.exists_ss_tableau_equiv(rc.weight_tableau, inner_shape, outer_shape):
+            return True  # should match highest weight of tensor
+        return False
+
+    @property
+    def shape(self) -> tuple[int, ...]:
+        P = self.edelman_greene()[0]
+        shape = tuple(len(P[i]) for i in range(len(P)))
+        return shape
+
+    # product = demazure crystal to demazure crystal
+    # transpose is weight preserving
+
+    def __invert__(self) -> RCGraph:
+        new_rc = RCGraph([()] * self.cols)
+        for i in range(1, self.rows + 1):
+            for j in range(1, self.cols + 1):
+                if self.has_element(i, j):
+                    new_rc = new_rc.toggle_ref_at(j, i)
+        return new_rc
+
+    def normalize(self) -> RCGraph:
+        return self.resize(len(self.perm.trimcode))
+
+    def resize(self, new_length: int) -> RCGraph:
+        if new_length < len(self):
+            return self.rowrange(0, new_length)
+        return self.extend(new_length - len(self))
+
+    def edelman_greene(self) -> tuple[NilPlactic, Plactic]:
+        word1, word2 = (), ()
+        index = 0
+        for index, (row, col) in enumerate(list(reversed([self.left_to_right_inversion_coords(i) for i in range(self.perm.inv)]))):
+            to_insert = row + col - 1
+            word1, word2 = NilPlactic.ed_insert_rsk(word1, word2, to_insert, len(self) - row + 1)
+            index += 1
+        P = word1
+        Q = word2
+
+        # reg._rc_graph = self
+        return (NilPlactic(P), Plactic(Q))
+
+    def __mul__(self, other: object) -> object:
+        if isinstance(other, RCGraph):
+            from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
+
+            ring = RCGraphRing()
+            return ring(self) * ring(other)
+        if hasattr(other, "ring"):
+            ring = other.ring
+            return ring(self) * other
+        return NotImplemented
+
+    def asdtype(self, cls: type) -> object:
+        return cls.dtype().ring.from_rc_graph(self)
+
+    def as_nil_hecke(self, x: object, y: object | None = None) -> object:
+        R = NilHeckeRing(x)
+        return self.polyvalue(x, y) * R(self.perm)
+
+    @cache
+    def has_element(self, i: int, j: int) -> bool:
+        return i <= len(self) and i + j - 1 in self[i - 1]
+
+    @cached_property
+    def length_vector(self) -> tuple[int]:
+        return tuple([len(row) for row in self])
+
+    @cache
+    def lehmer_partial_leq(self, other: RCGraph) -> bool:
+        try:
+            for i in range(self.perm.inv):
+                a, b = self.perm.right_root_at(i)
+                if self.lehmer_label(a - 1, b - 1) > other.lehmer_label(a - 1, b - 1):
+                    return False
+        except ValueError:
+            return False
+        return True
+
+    def rowrange(self, start: int, end: int | None = None) -> RCGraph:
+        if not end:
+            end = len(self)
+        if start == end:
+            return type(self)(())
+        return type(self)([tuple([a - start for a in row]) for row in self[start:end]])
+
+    def polyvalue(self, x: Sequence[Expr], y: Sequence[Expr] | None = None, crystal: bool = False) -> Expr:
+        ret = S.One
+        if crystal:
+            ret = S.Zero
+            for rc in self.full_crystal:
+                ret += rc.polyvalue(x, y=y, crystal=False)
+            return ret
+        for i, row in enumerate(self):
+            if y is None:
+                ret *= x[i + 1] ** len(row)
+            else:
+                ret *= prod([x[i + 1] - y[row[j] - i] for j in range(len(row))])
+        return ret
+
+    _graph_cache: dict[tuple[Permutation, int], set[RCGraph]] = {}  # noqa: RUF012
+
+    _cache_by_weight: dict[tuple[Permutation, tuple[int, ...]], set[RCGraph]] = {}  # noqa: RUF012
+
+    @classmethod
+    def random_rc_graph(cls, perm: Permutation, length: int = -1) -> RCGraph:  # pragma: no cover
+        import random
+
+        return random.choice(list(RCGraph.all_rc_graphs(perm, length)))
+
+    @classmethod
+    def all_rc_graphs(cls, perm: Permutation, length: int = -1, weight: tuple[int, ...] | None = None, *, check_length=False) -> set[RCGraph]:
+        if check_length and length > 0 and length < len(perm.trimcode):
+            raise ValueError(f"Length must be at least the last descent of the permutation, permutation has {len(perm.trimcode)} rows and {perm=}, got {length=}")
+        if length < 0:
+            length = len(perm.trimcode)
+        if weight and len(weight) != length:
+            raise ValueError("Weight must have length equal to the number of rows")
+        if weight:
+            if (perm, tuple(weight)) in cls._cache_by_weight:
+                return cls._cache_by_weight[(perm, tuple(weight))]
+        elif (perm, length) in cls._graph_cache:
+            return cls._graph_cache[(perm, length)]
+        if perm.inv == 0:
+            cls._graph_cache[(perm, length)] = {cls([()] * length if length > 0 else [])}
+            return cls._graph_cache[(perm, length)]
+        ret = set()
+        pm = perm
+        L = schub_lib.pull_out_var(1, pm)
+        for _, new_perm in L:
+            if length == 1 and new_perm.inv != 0:
+                continue
+            new_row = [new_perm[i] for i in range(max(len(pm), len(new_perm))) if new_perm[i] == pm[i + 1]]
+            if weight and len(new_row) != weight[0]:
+                continue
+            new_row.sort(reverse=True)
+            if weight is not None:
+                oldset = cls.all_rc_graphs(new_perm, length=length - 1, weight=weight[1:])
+            else:
+                oldset = cls.all_rc_graphs(new_perm, length=length - 1)
+
+            for old_rc in oldset:
+                nrc = cls([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in old_rc]])
+                assert nrc.perm == perm
+                assert len(nrc) == length, f"{nrc=}, {length=}, {old_rc=}, {new_row=}"
+                try:
+                    if weight:
+                        assert nrc.length_vector == tuple(weight)
+                except AssertionError:
+                    continue
+                ret.add(nrc)
+        if weight:
+            cls._cache_by_weight[(perm, tuple(weight))] = ret
+        else:
+            cls._graph_cache[(perm, length)] = ret
+        return ret
+
+    def extend(self, extra_rows: int) -> RCGraph:
+        return type(self)([*self, *tuple([()] * extra_rows)])
+
+    def prepend(self, extra_rows: int) -> RCGraph:
+        return type(self)([*tuple([()] * extra_rows), *self.shiftup(extra_rows)])
+
+    def _pieri_insert_row(self, row, descent, dict_by_a, dict_by_b, num_times, start_index=-1, backwards=True, reflection_rows=None, target_row=None, left=False):
+        working_rc = self
+        if descent is not None and row > descent:
+            raise ValueError("All rows must be less than or equal to descent")
+
+        i = start_index
+        new_reflections = []  # Track reflections added in THIS call
+
+        if i == -1:
+            if backwards or (not backwards and left):
+                i = 0
+            else:
+                i = max(self[row - 1], default=0) + descent + 5
+        num_done = 0
+        flag = True
+        attempts_without_progress = 0
+        last_num_done = -1
+        max_attempts = 100
+        while num_done < num_times:
+            if num_done == last_num_done:
+                attempts_without_progress += 1
+            last_num_done = num_done
+            if attempts_without_progress > max_attempts:
+                raise ValueError(
+                    f"Pieri insertion made no progress after {max_attempts} attempts "
+                    f"({row=}, {descent=}, {num_times=}, {left=}, {backwards=})",
+                )
+            if i <= 1 and (not backwards or (backwards and left)):
+                i = working_rc.cols + descent + 5
+            if not backwards or (backwards and left):
+                i -= 1
+            else:
+                i += 1
+            flag = False
+
+            if not working_rc.has_element(row, i):
+                if left:
+                    a, b = working_rc.left_root_at(row, i)
+                else:
+                    a, b = working_rc.right_root_at(row, i)
+                if a < b:
+                    flag = False
+                    if _is_row_root(descent, (a, b)) and b not in dict_by_b:
+                        working_rc = working_rc.toggle_ref_at(row, i)
+                        dict_by_a[a] = dict_by_a.get(a, set())
+                        dict_by_a[a].add(b)
+                        dict_by_b[b] = a
+                        if reflection_rows is not None and target_row is not None:
+                            reflection_rows[(a, b)] = target_row
+                            new_reflections.append((a, b))
+                        flag = True
+                    elif a in dict_by_b and b > descent and b not in dict_by_b:
+                        working_rc = working_rc.toggle_ref_at(row, i)
+                        dict_by_a[dict_by_b[a]].add(b)
+                        dict_by_b[b] = dict_by_b[a]
+                        if reflection_rows is not None and target_row is not None:
+                            reflection_rows[(dict_by_b[a], b)] = target_row
+                            new_reflections.append((dict_by_b[a], b))
+                        flag = True
+                    elif descent is None:
+                        working_rc = working_rc.toggle_ref_at(row, i)
+                        flag = True
+                if flag:
+                    num_done += 1
+                    attempts_without_progress = 0
+                if not left and row > 1 and not working_rc.is_valid:
+                    working_rc = working_rc._pieri_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, left=left)  # minus one?
+                if left and row < len(working_rc) and not working_rc.is_valid:
+                    working_rc = working_rc._pieri_rectify(row + 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, left=left)
+        return working_rc, new_reflections
+
+    def _pieri_rectify(self, row_below, descent, dict_by_a, dict_by_b, backwards=True, reflection_rows=None, target_row=None, left=False):
+        working_rc = self
+        if working_rc.is_valid:
+            return working_rc
+        if row_below == 0 and not left:
+            assert working_rc.is_valid, f"{working_rc=}, {dict_by_a=}, {dict_by_b=}"
+            return working_rc
+        if left and row_below > len(working_rc):
+            if working_rc.is_valid:
+                return working_rc
+            raise ValueError(f"Left pieri rectify exhausted rows without reaching validity ({row_below=}, {len(working_rc)=})")
+        extra = descent if descent is not None else 0
+        the_range = range(1, working_rc.cols + extra + 5)
+        if left:
+            the_range = reversed(the_range)
+        for j in the_range:
+            flag = False
+            if working_rc.is_valid:
+                return working_rc
+
+            if working_rc.has_element(row_below, j):
+                if left:
+                    a, b = working_rc.left_root_at(row_below, j)
+                else:
+                    a, b = working_rc.right_root_at(row_below, j)
+
+                top, bottom = max(a, b), min(a, b)
+
+                if a < b:
+                    continue
+
+                if bottom in dict_by_a and top in dict_by_a[bottom]:
+                    new_rc = working_rc.toggle_ref_at(row_below, j)
+                    dict_by_a[bottom].remove(top)
+                    if len(dict_by_a[bottom]) == 0:
+                        del dict_by_a[bottom]
+                    del dict_by_b[top]
+                    working_rc = new_rc
+                    flag = True
+
+                elif bottom in dict_by_b and top in dict_by_b and dict_by_b[top] == dict_by_b[bottom]:
+                    new_rc = working_rc.toggle_ref_at(row_below, j)
+                    dict_by_a[dict_by_b[bottom]].remove(top)
+
+                    if len(dict_by_a[dict_by_b[top]]) == 0:
+                        del dict_by_a[dict_by_b[top]]
+                    del dict_by_b[top]
+                    flag = True
+                    working_rc = new_rc
+                elif descent is None:
+                    working_rc = working_rc.toggle_ref_at(row_below, j)
+                    flag = True
+                else:
+                    raise ValueError(f"Could not rectify at {(row_below, j)} with root {(a, b)}")
+                if flag:
+                    working_rc, _ = working_rc._pieri_insert_row(
+                        row_below,
+                        descent,
+                        dict_by_a,
+                        dict_by_b,
+                        num_times=1,
+                        backwards=backwards,
+                        reflection_rows=reflection_rows,
+                        target_row=target_row,
+                        left=left,
+                    )
+        if left:
+            return working_rc._pieri_rectify(row_below + 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row, left=left)
+        return working_rc._pieri_rectify(row_below - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=target_row, left=left)
+
+    # VERIFY
+    def pieri_insert(self, descent, rows, return_reflections=False, backwards=True, left=False):
+        dict_by_a = {}
+        dict_by_b = {}
+        reflection_rows = {}  # Track which row each reflection was added to
+        # row is descent
+        # inserting times
+
+        working_rc = type(self)([*self])
+        if len(rows) == 0:
+            if return_reflections:
+                return working_rc, ()
+            return self
+        rows_grouping = {}
+
+        for r in rows:
+            rows_grouping[r] = rows_grouping.get(r, 0) + 1
+        if max(rows) > len(working_rc):
+            working_rc = working_rc.extend(max(rows) - len(working_rc))
+        rows = sorted(rows, reverse=not left)
+        reflections = []
+        for row in sorted(rows_grouping.keys(), reverse=not left):
+            num_times = rows_grouping[row]
+            last_working_rc = working_rc
+            working_rc, new_reflections = working_rc._pieri_insert_row(row, descent, dict_by_a, dict_by_b, num_times, backwards=backwards, reflection_rows=reflection_rows, target_row=row, left=left)
+            reflections += new_reflections
+            if (not left and row > 1) and not working_rc.is_valid:
+                working_rc = working_rc._pieri_rectify(row - 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=row, left=left)  # minus one?
+            elif (left and row < len(working_rc)) and not working_rc.is_valid:
+                working_rc = working_rc._pieri_rectify(row + 1, descent, dict_by_a, dict_by_b, backwards=backwards, reflection_rows=reflection_rows, target_row=row, left=left)
+            try:
+                assert len(working_rc[row - 1]) == len(last_working_rc[row - 1]) + num_times
+            except AssertionError:
+                raise
+        if return_reflections:
+            # Build list of (row, reflection) pairs
+            return working_rc, tuple(reflections)
+        return working_rc
+
+    @property
+    def weight(self) -> tuple[int, ...]:
+        wt = []
+        for i, row in enumerate(self):
+            wt.extend([i + 1] * len(row))
+        return tuple(wt)
+
+    @property
+    def perm(self) -> Permutation:
+        perm = Permutation([])
+        for row in self:
+            for p in row:
+                perm = perm.swap(p - 1, p)
+        return perm
+
+    def transpose(self, length: int | None = None) -> RCGraph:
+        # newrc = []
+
+        # the_self = self
+        # if length is not None and length < len(self):
+        #     the_self = self.resize(length)
+        # trimself = [list(row) for row in the_self]
+        # i = 0
+
+        # while len(newrc) < length or any(len(row) > 0 for row in trimself):
+        #     new_row = []
+        #     for index in range(len(trimself)):
+        #         if len(trimself[index]) > 0 and trimself[index][-1] == index + i + 1:
+        #             new_row += [index + i + 1]
+        #             trimself[index].pop()
+        #     new_row.reverse()
+        #     newrc.append(tuple(new_row))
+        #     i += 1
+        # new_rc = (type(self)(newrc)).normalize()
+        import numpy as np
+        assert self.is_valid, f"Cannot transpose invalid RC graph, got {self=}"
+        if length is not None and len(self) < length:
+            the_self = self.resize(length)
+        elif length is None and len(self) < len((~self.perm).trimcode):
+            the_self = self.resize(len((~self.perm).trimcode))
+        else:
+            the_self = self
+        arr = np.array([[the_self[i, the_self.cols - j - 1] for j in range(the_self.cols)] for i in range(the_self.rows)], dtype=object)
+        if (length is not None and arr.shape[1] < length):
+            arr = np.hstack([arr, np.full((arr.shape[0], length - arr.shape[1]), None, dtype=object)])
+        elif (length is None and arr.shape[1] < (len((~self.perm).trimcode))):
+            arr = np.hstack([arr, np.full((arr.shape[0], len((~self.perm).trimcode) - arr.shape[1]), None, dtype=object)])
+        assert np.count_nonzero(np.not_equal(arr, None)) == self.perm.inv
+        arr = np.transpose(arr)
+        assert np.count_nonzero(np.not_equal(arr, None)) == self.perm.inv
+        #arr = arr.resize(self.cols, self.cols).t
+
+        new_rc = type(self).from_array(arr, min_length=length if length is not None else len(self))
+        assert new_rc.perm == ~self.perm, f"Transpose does not preserve permutation, got {new_rc.perm=}, expected {~self.perm=}, {tuple(new_rc)=} {tuple(self)=}"
+        if length is not None:
+            new_rc = new_rc.resize(length)
+        # print("Yay happy")
+        # print(new_rc)
+        return new_rc
+
+    @classmethod
+    def from_array(cls, arr, min_length=None) -> RCGraph:
+        rows = []
+        if min_length is None:
+            min_length = arr.shape[0]
+        min_length = max(min_length, arr.shape[0])
+        for i in range(min_length):
+            row = []
+            if i < arr.shape[0]:
+                for j in range(arr.shape[1]):
+                    if arr[i, j] is not None and arr[i, j] != 0:
+                        row.append(int(arr[i, j]))
+            rows.append(tuple(reversed(row)))
+        return cls(rows)
+
+    @classmethod
+    def one_row(cls, p: int) -> RCGraph:
+        return cls((tuple(range(p, 0, -1)),))
+
+    def weak_order_leq(self, other: RCGraph) -> bool:
+        for i in range(self.perm.inv):
+            a, b = self.perm.right_root_at(i)
+            try:
+                if self.inversion_label(a - 1, b - 1) > other.inversion_label(a - 1, b - 1):
+                    return False
+            except ValueError:
+                return False
+        return True
+
+    w_key_cache = {}  # noqa: RUF012
+    rc_cache = set()  # noqa: RUF012
+
+    def toggle_ref_at(self, i: int, j: int) -> RCGraph:
+        if i <= 0 or j <= 0:
+            raise IndexError()
+        new_row = [*self[i - 1]]
+        if i + j - 1 in new_row:
+            index = new_row.index(i + j - 1)
+            new_row = [*new_row[:index], *new_row[index + 1 :]]
+        else:
+            index = 0
+            if len(new_row) > 0:
+                while index < len(new_row) and new_row[index] > i + j - 1:
+                    index += 1
+            new_row.insert(index, i + j - 1)
+        return type(self)([*self[: i - 1], tuple(new_row), *self[i:]])
+
+    # # THIS IS KEY
+    # # EXCHANGE PROPERTY GOES TO UNIQUE PERMUTATION
+    # # KOGAN INSERT ENSURES WE GO UP PROPERLY
+
+    _z_cache = {}  # noqa: RUF012
+
+    def disjoint_union(self, rc: RCGraph) -> RCGraph:
+        if len(self) != len(rc):
+            raise ValueError("RC graphs must have the same number of rows")
+        if self.perm.inv == 0:
+            return rc
+        rowmax = [max(self[i], default=0) for i in range(len(self))]
+        N = max(rowmax)
+        shift_rc = RCGraph([tuple([a + N for a in row]) for row in rc]).resize(len(rc) + N)
+        rc_self = self.resize(len(rc) + N)
+        return type(self)([shift_rc[i] + rc_self[i] for i in range(len(rc_self))])
+
+    def squash_product(self, rc: RCGraph) -> RCGraph:
+        combined_rc = self.disjoint_union(rc)
+        while len(combined_rc) > len(self):
+            combined_rc = combined_rc.zero_out_last_row()
+        return combined_rc
+
+
+    @cache
+    def zero_out_last_row(self) -> RCGraph:
+        # this is important!
+        # transition formula
+        if len(self[-1]) != 0:
+            raise ValueError("Last row not empty")
+        if self.perm.inv == 0:
+            return self.rowrange(0, len(self) - 1)
+        interim = type(self)([*self])
+
+        diff_rows = []
+        descs = []
+        extend_amount = 1
+
+        while len(interim.perm.trimcode) > len(self) - 1:
+            descs += [len(interim.perm.trimcode)]
+            interim, row = interim.exchange_property(len(interim.perm.trimcode), return_row=True)
+            diff_rows += [row]
+
+        interim2 = type(self)([*interim[:-1], tuple(sorted(descs, reverse=True))])
+        interim = interim2.pieri_insert(len(self.perm.trimcode) - extend_amount, diff_rows)
+
+        return interim.rowrange(0, len(self) - 1)
+
+
+    def zero_out_last_column(self, width) -> RCGraph:
+        # this is important!
+        # transition formula
+        if width < len((~self.perm).trimcode):
+            raise ValueError("Width smaller than inverse code")
+        if width > len((~self.perm).trimcode):
+            return self
+        if self.perm.inv == 0:
+            return self
+        interim = type(self)([*self])
+
+        diff_rows = []
+        descs = []
+        extend_amount = 1
+
+        while len((~interim.perm).trimcode) > width - 1:
+            descs += [len((~interim.perm).trimcode)]
+            interim, row = interim.exchange_property(len((~interim.perm).trimcode), return_row=True, left=True)
+            diff_rows += [row]
+        dorpletrans = interim.transpose(length=width)
+        interim2 = type(self)([*dorpletrans[:-1], tuple(sorted(descs, reverse=True))]).transpose()
+        interim = interim2.pieri_insert(len((~self.perm).trimcode) - extend_amount, diff_rows, left=True)
+
+        return interim.transpose().resize(width - 1).transpose().resize(len(self))
+
+    def zero_out_in_place(self) -> RCGraph:
+        # this is important!
+        # transition formula
+        if len(self.perm.trimcode) <= len(self):
+            return self
+
+        norm = self.normalize()
+        return norm.zero_out_last_row().resize(len(self))
+
+    def alt_product(self, other):
+        zero_up = {self.normalize() if len(self) < len(self.perm.trimcode) else self}
+        self_len = len(self)
+        other_shifted = other.shiftup(self_len)
+        while not any(RCGraph([*rc[:self_len], *other_shifted]).is_valid for rc in zero_up):
+            new_set = set()
+            for rc in zero_up:
+                new_set.update(rc.right_zero_act())
+            zero_up = new_set
+        ret_module = {}
+        for rc in zero_up:
+            new_rc = type(rc)([*rc[:self_len], *other_shifted])
+            if new_rc.is_valid:
+                ret_module = add_perm_dict(ret_module, {new_rc: 1})
+        return ret_module
+
+    def crystal_length(self) -> int:
+        return len(self)
+
+    def lowering_operator(self, row: int) -> RCGraph | None:
+        # RF word is just the RC word backwards
+        if row >= len(self):
+            return None
+        row_i = [*self[row - 1]]
+        row_ip1 = [*self[row]]
+
+        # pair the letters
+        pairings = []
+        unpaired = []
+        unpaired_b = [*row_ip1]
+
+        for letter in row_i:
+            st = [letter2 for letter2 in unpaired_b if letter2 > letter]
+            if len(st) == 0:
+                unpaired.append(letter)
+            else:
+                pairings.append((letter, min(st)))
+                unpaired_b.remove(min(st))
+        if len(unpaired) == 0:
+            return None
+        b = min(unpaired)
+        t = min([j for j in range(b) if b - j - 1 not in row_i])
+
+        if b - t < row + 1:
+            return None
+        new_row_i = [s for s in row_i if s != b]
+        new_row_ip1 = sorted([b - t, *row_ip1], reverse=True)
+        ret_rc = type(self)([*self[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *self[row + 1 :]])
+        if ret_rc.perm != self.perm:
+            return None
+        return ret_rc
+
+    def raising_operator(self, row: int) -> RCGraph | None:
+        # RF word is just the RC word backwards
+        if row >= len(self):
+            return None
+        row_i = [*self[row - 1]]
+        row_ip1 = [*self[row]]
+
+        # pair the letters
+        pairings = []
+        unpaired = []
+        unpaired_b = [*row_ip1]
+
+        for letter in row_i:
+            st = [letter2 for letter2 in unpaired_b if letter2 > letter]
+            if len(st) == 0:
+                unpaired.append(letter)
+            else:
+                pairings.append((letter, min(st)))
+                unpaired_b.remove(min(st))
+        if len(unpaired_b) == 0:
+            return None
+        a = max(unpaired_b)
+        s = 0
+        while a + s + 1 in row_ip1:
+            s += 1
+
+        if a + s < row:
+            return None
+        new_row_ip1 = [let for let in row_ip1 if let != a]
+        new_row_i = sorted([a + s, *row_i], reverse=True)
+        ret_rc = type(self)([*self[: row - 1], tuple(new_row_i), tuple(new_row_ip1), *self[row + 1 :]])
+        if ret_rc.perm != self.perm:
+            return None
+        return ret_rc
+
+    def vertical_cut(self, row: int) -> tuple[RCGraph, RCGraph]:
+        if row < 0:
+            raise ValueError("Row out of range")
+        if row == 0:
+            return RCGraph(), self
+        if row >= len(self):
+            return self, RCGraph()
+        front = type(self)([*self[:row]])
+        front = front.extend(max(len(self), len(front.perm.trimcode)) - row)
+        flen = len(front)
+        for _ in range(flen - row):
+            front = front.zero_out_last_row()
+        if row == len(self):
+            back = type(self)()
+        else:
+            back = self.rowrange(row, len(self))
+        return (front, back)
+
+    def right_zero_act(self) -> set[RCGraph]:
+        # NOTE THAT THIS IS STILL USING THE OLD METHOD
+        if self.perm.inv == 0:
+            return {type(self)([*self, ()])}
+
+        if self in RCGraph._z_cache:
+            return RCGraph._z_cache[self]
+
+        up_perms = ASx(self.perm, len(self)) * ASx(uncode([0]), 1)
+
+        rc_set = set()
+
+        for perm, _ in up_perms.keys():
+            for rc in type(self).all_rc_graphs(perm, len(self) + 1, weight=(*self.length_vector, 0)):
+                if rc.zero_out_last_row() == self:
+                    rc_set.add(rc)
+
+        RCGraph._z_cache[self] = rc_set
+        return rc_set
+
+    def __hash__(self) -> int:
+        return hash(tuple(self))
+
+    @cache
+    def bisect_left_coords_index(self, row: int, col: int, lo: int = 0, hi: int | None = None) -> int:
+        from bisect import bisect_left, bisect_right  # noqa: F401
+
+        if hi is None:
+            hi = len(self.perm_word)
+
+        while lo < hi:
+            mid = (lo + hi) // 2
+            i, j = self.left_to_right_inversion_coords(mid)
+            if i < row or (i == row and j > col):
+                lo = mid + 1
+            else:
+                hi = mid
+        return lo
+
+    def exchange_property(self, descent: int, return_row: bool = False, left: bool = False) -> RCGraph | tuple[RCGraph, int]:
+        for i in range(len(self.perm_word)):
+            if not left:
+                a, b = self.left_to_right_inversion(i)
+            else:
+                a, b = self.left_to_right_left_inversion(i)
+            if a == descent and b == descent + 1:
+                row, col = self.left_to_right_inversion_coords(i)
+                if return_row:
+                    return self.toggle_ref_at(row, col), row
+                return self.toggle_ref_at(row, col)
+        raise ValueError("No such descent")
+
+    # def left_exchange_property(self, descent: int, return_row: bool = False) -> RCGraph | tuple[RCGraph, int]:
+    #     return self.exchange_property(descent, left=True, return_row=return_row)
+
+    @cache
+    def left_to_right_inversion(self, index: int) -> tuple[int, int]:
+        return self.right_root_at(*self.left_to_right_inversion_coords(index))
+
+    @cache
+    def left_to_right_left_inversion(self, index: int) -> tuple[int, int]:
+        return self.left_root_at(*self.left_to_right_inversion_coords(index))
+
+    @cache
+    def left_to_right_inversion_coords(self, index: int) -> tuple[int, int]:
+        if index < 0 or index >= len(self.perm_word):
+            raise ValueError(f"Index {index} out of range {self.perm.inv}")
+        index_find = 0
+        for i in range(len(self)):
+            index_find2 = index_find + len(self[i])
+            if index_find2 > index:
+                break
+            index_find = index_find2
+
+        return (i + 1, self[i][(index - index_find)] - i)
+
+    @classmethod
+    def principal_rc(cls, perm: Permutation, length: int | None = None) -> RCGraph:
+        if length is None:
+            length = len(perm.trimcode)
+        cd = perm.trimcode
+        graph = []
+        for i in range(len(cd)):
+            row = tuple(range(i + cd[i], i, -1))
+            graph.append(row)
+        graph = [*graph, *[()] * (length - len(graph))]
+        return cls(graph)
+
+    @cached_property
+    def p_tableau(self) -> NilPlactic:
+        return self.edelman_greene()[0]
+
+    @cached_property
+    def q_tableau(self) -> Plactic:
+        return self.edelman_greene()[1]
+
+    @cached_property
+    def weight_tableau(self) -> Plactic:
+        if self.is_highest_weight:
+            tb = Plactic.yamanouchi(self.p_tableau.shape)
+            trimmed_lv = list(self.length_vector)
+            while len(trimmed_lv) > 0 and trimmed_lv[-1] == 0:
+                trimmed_lv.pop()
+            trimmed_lv = tuple(trimmed_lv)
+            assert tb.shape == trimmed_lv, f"{tb.shape=}, {trimmed_lv=}"
+            return tb
+        rc_hw, raise_seq = self.to_highest_weight()
+        w_tab = rc_hw.weight_tableau
+        tb = w_tab.reverse_raise_seq(raise_seq)
+        assert tb is not None, f"Could not reverse raise seq {raise_seq} on {w_tab=} {rc_hw=} {self=}"
+        return tb
+
+    def monk_insert(self, row):
+        if row <= 0:
+            raise ValueError("Row must be positive")
+        if row > len(self):
+            working_rc = self.extend(row - len(self))
+        else:
+            working_rc = self
+        for i in range(1, working_rc.cols + 10):
+            if not working_rc.has_element(row, i):
+                a, b = working_rc.right_root_at(row, i)
+                if a < b:
+                    working_rc = working_rc.toggle_ref_at(row, i)
+                    for j in range(1, row):
+                        for col2 in range(1, working_rc.cols + 10):
+                            if working_rc.has_element(j, col2):
+                                a2, b2 = working_rc.right_root_at(j, col2)
+                                if a2 > b2 and b2 == a and a2 == b:
+                                    working_rc = working_rc.toggle_ref_at(j, col2)
+                                    return working_rc.monk_insert(j)
+                    return working_rc
+        raise ValueError("Could not find place to insert")
+
+    def huang_bump(self, a, b):
+        assert self.perm[a - 1] > self.perm[b - 1], f"{self=}, {a=}, {b=}"
+        new_rc = self
+        for i in range(self.perm.inv):
+            if new_rc.left_to_right_inversion(i) == (a, b):
+                row, col = new_rc.left_to_right_inversion_coords(i)
+                new_rc = new_rc.toggle_ref_at(row, col)
+                for j in range(col + 1, new_rc.cols + 10):
+                    if not new_rc.has_element(row, j):
+                        new_rc = new_rc.toggle_ref_at(row, j)
+                        break
+                while not new_rc.is_valid:
+                    for bad_i in range(self.perm.inv):
+                        a_bad, b_bad = new_rc.left_to_right_inversion(bad_i)
+                        if a_bad > b_bad:
+                            row_bad, col = new_rc.left_to_right_inversion_coords(bad_i)
+                            new_rc = new_rc.toggle_ref_at(row_bad, col)
+                            for j in range(col + 1, new_rc.cols + 10):
+                                if not new_rc.has_element(row_bad, j):
+                                    new_rc = new_rc.toggle_ref_at(row_bad, j)
+                                    break
+                            break
+        if len(new_rc.perm.trimcode) > len(new_rc):
+            new_rc = new_rc.normalize()
+        return new_rc
+
+    # THE ZERO MAKES SCHUB PROD
+    @cache
+    def product(self, other: RCGraph) -> dict[RCGraph, int]:
+        """Compute the product of this RC graph with another."""
+        self_len = len(self)
+        if self.perm.inv == 0:
+            return {type(self)([*self, *other.shiftup(self_len)]): 1}
+        num_zeros = max(len(other), len(other.perm))
+        assert len(self.perm.trimcode) <= self_len, f"{self=}, {self.perm=}"
+        base_rc = self
+        buildup_module = {base_rc: 1}
+
+        for _ in range(num_zeros):
+            new_buildup_module = {}
+            for rc, coeff in buildup_module.items():
+                new_buildup_module = add_perm_dict(new_buildup_module, dict.fromkeys(rc.right_zero_act(), coeff))
+            buildup_module = new_buildup_module
+        ret_module = {}
+        other_shifted = other.shiftup(self_len)
+        target_len = self_len + len(other)
+
+        for rc, coeff in buildup_module.items():
+            new_rc = type(rc)([*rc[:self_len], *other_shifted])
+            assert len(new_rc) == target_len
+            if new_rc.is_valid and len(new_rc.perm.trimcode) <= len(new_rc):
+                ret_module = add_perm_dict(ret_module, {new_rc: coeff})
+
+        return ret_module
+
+    def prod_with_rc(self, other: RCGraph) -> dict[RCGraph, int]:  # pragma: no cover
+        """Deprecated: Use product() instead."""
+        return self.product(other)
+
+    def bpd_transpose(self) -> RCGraph:
+        from .bpd import BPD
+        ret = BPD.from_rc_graph(self).transpose().to_rc_graph()
+        ret = ret.normalize()
+        if len(ret) < len(self):
+            ret = ret.extend(len(self) - len(ret))
+        return ret
+
+    def is_potential_coproduct(self, rc1: RCGraph, rc2: RCGraph) -> bool:
+        if len(rc1) != len(self) or len(rc2) != len(self):
+            return False
+        if not self.perm.descents().issubset(rc1.perm.descents().union(rc2.perm.descents())):
+            return False
+        if not rc1.perm.bruhat_leq(self.perm) or not rc2.perm.bruhat_leq(self.perm):
+            return False
+        if rc2.perm.inv == 0:
+            return rc1 == self
+        if rc1.perm.inv == 0:
+            return rc2 == self
+        if any(rc1.length_vector[i] + rc2.length_vector[i] != self.length_vector[i] for i in range(len(self))):
+            return False
+        max_desc = max(rc2.perm.descents()) + 1
+        if max_desc == len(rc2) and len(rc2.perm.descents()) == 1:
+            return self == rc1.squash_product(rc2)
+        # if len(rc2.perm.descents()) == 1:
+        #     cut_point = max_desc
+        # else:
+        #     cut_point = min(d + 1 for d in rc2.perm.descents() if d + 1 < max_desc)
+        cut_point = len(rc2) - 1
+        if cut_point == 0:
+            return True
+        return all(s.is_potential_coproduct(r1, r2) for s, r1, r2 in ((self.vertical_cut(cut_point)[0], rc1.vertical_cut(cut_point)[0], (rc2.vertical_cut(cut_point))[0]),))
+        # self.rowrange(max_desc).is_potential_coproduct(rc1.rowrange(max_desc), rc2.rowrange(max_desc))
+
+    def ring_act(self, elem: FreeAlgebraElement) -> dict[RCGraph, Expr]:
+        if isinstance(elem, FreeAlgebraElement):
+            wd_dict = elem.change_basis(WordBasis)
+            ret = {}
+            for k, v in wd_dict.items():
+                acted_element = {self: v}
+                for a in reversed(k):
+                    acted_element2 = {}
+                    for k2, v2 in acted_element.items():
+                        acted_element2 = add_perm_dict(acted_element2, dict.fromkeys(k2.act(a), v2))
+                    acted_element = acted_element2
+                ret = add_perm_dict(ret, acted_element)
+            return ret
+        raise ValueError(f"Cannot act by {type(elem)} {elem=}")
+
+    def act(self, p: int) -> set[RCGraph]:
+        pm = self.perm
+        elem = FA(pm, len(self))
+        bumpup = FA(uncode([p]), 1) * elem
+        ret = set()
+        for k, v in bumpup.items():
+            perm2 = k[0]
+            new_row = [pm[i] for i in range(max(len(pm), len(perm2))) if pm[i] == perm2[i + 1]]
+            new_row.sort(reverse=True)
+            nrc = type(self)([tuple(new_row), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])
+            assert nrc.perm == perm2
+            ret.add(nrc)
+        assert ret == self.iterative_act(p), f"{ret=}\n{self.iterative_act(p)=}"
+        return ret
+
+    def iterative_act(self, p: int, insert: bool = True) -> set[RCGraph]:
+        if p == 0:
+            if insert:
+                return {type(self)([(), *[tuple([row[i] + 1 for i in range(len(row))]) for row in self]])}
+            return {type(self)([*self])}
+        last = self.iterative_act(p - 1, insert=insert)
+        ret = set()
+        for rc in last:
+            last_desc = 0
+            old_perm = ~rc.perm
+            if len(rc[0]) > 0:
+                last_desc = rc[0][0]
+            mx = len(rc)
+            for row in rc:
+                if len(row) > 0:
+                    mx = max(mx, max(row) + 2)
+            for i in range(last_desc + 1, mx + 1):
+                if old_perm[i - 1] < old_perm[i]:
+                    new_perm = old_perm.swap(i - 1, i)
+                    if max((~new_perm).descents()) + 1 > len(rc):
+                        continue
+                    new_top_row = [i, *rc[0]]
+                    new_rc = type(rc)([tuple(new_top_row), *rc[1:]])
+                    ret.add(new_rc)
+        return ret
+
+    def __ge__(self, other: object) -> bool:
+        return not (self < other)
+
+    def __gt__(self, other: object) -> bool:
+        return not (self <= other)
+
+    @property
+    def is_principal(self) -> bool:
+        return self.perm == uncode(self.length_vector)
+
+    @property
+    def inv(self) -> int:
+        return self.perm.inv
+
+    @property
+    def rows(self) -> int:
+        return len(self)
+
+    @property
+    def width(self) -> int:
+        return self.cols
+
+    @property
+    def height(self) -> int:
+        return self.rows
+
+    @property
+    def compatible_sequence(self) -> tuple[int, ...]:
+        seq = []
+        for i in range(len(self)):
+            for _ in range(len(self[i])):
+                seq.append(i + 1)
+        return tuple(seq)
+
+    @property
+    def cols(self) -> int:
+        #return max(1, *[self[i][0] - i if len(self[i]) > 0 else 0 for i in range(len(self))]) if len(self) > 0 else 0
+        return len(self.perm) - 1
+
+    def leibniz_rep(self) -> tuple:
+        if len(self) == 0:
+            return ()
+        w0 = Permutation.w0(len(self) + 1)
+        the_perm = (~self.perm) * w0
+        cut_rc = self.shiftcut()
+        return (*cut_rc.leibniz_rep(), the_perm)
+
+    def classify_demazure_crystal(self) -> tuple[tuple[int], Permutation]:
+        dominant_weight = self.to_highest_weight()[0].length_vector
+        return dominant_weight, Permutation.sorting_perm(self.demazure_weight, reverse=True)
+
+    @property
+    def demazure_isomorphism_class(self) -> tuple[tuple[int], Permutation]:
+        """Alias for classify_demazure_crystal for explicit API usage."""
+        return self.classify_demazure_crystal()
+
+    @classmethod
+    @cache
+    def all_hw_rcs(cls, perm: Permutation, length: int, weight=None) -> set[RCGraph]:
+        ret = set()
+        for rc in cls.all_rc_graphs(perm, length, weight=weight):
+            rc_hw, _ = rc.to_highest_weight()
+            if rc_hw not in ret:
+                ret.add(rc_hw)
+        return ret
+
+    @classmethod
+    @cache
+    def all_lw_rcs(cls, perm: Permutation, length: int, weight=None) -> set[RCGraph]:
+        ret = set()
+        for rc in cls.all_rc_graphs(perm, length, weight=weight):
+            rc_lw, _ = rc.to_lowest_weight()
+            if rc_lw not in ret:
+                ret.add(rc_lw)
+        return ret
+
+    def shiftcut(self) -> RCGraph:
+        cut_rc = RCGraph([tuple([a for a in row if a > i]) for i, row in enumerate(self.shiftup(-1)[:-1])])
+        return cut_rc
+
+    def divdiff_desc(self, desc: int) -> set[RCGraph]:
+        ret = set()
+        the_rc = self
+        try:
+            rc, row = the_rc.exchange_property(desc, return_row=True)
+        except ValueError:
+            return ret
+        if row != desc:
+            return ret
+        rc = rc.normalize()
+        if rc.raising_operator(desc) is not None:
+            return ret
+        ret.add(rc)
+        while rc is not None:
+            rc = rc.lowering_operator(desc)
+            if rc is not None:
+                ret.add(rc)
+        return ret
+
+    def divdiff_perm(self, u: Permutation) -> set[RCGraph]:
+        v = self.perm
+        perm2 = v * (~u)
+        if perm2.inv != v.inv - u.inv:
+            return set()
+        # return perm2
+        ret = {self}
+        working_perm = u
+        while working_perm.inv > 0:
+            working_set = set()
+            desc = max(working_perm.descents()) + 1
+            working_perm = working_perm.swap(desc - 1, desc)
+            for the_rc in ret:
+                assert desc - 1 in the_rc.perm.descents()
+                working_set.update(the_rc.divdiff_desc(desc))
+
+            ret = working_set
+        return ret
+
+    def last_descent_strip(self) -> tuple[int, ...]:
+        if self.perm.inv == 0:
+            return ()
+        last_desc = max(self.perm.descents()) + 1
+        strip = []
+        working_rc = self
+        while working_rc.perm.inv > 0 and max(working_rc.perm.descents()) + 1 >= last_desc:
+            working_rc, row = working_rc.exchange_property(max(working_rc.perm.descents()) + 1, return_row=True)
+            strip.append(row)
+        return working_rc, tuple(strip)
+
+    @property
+    def is_forest_rc(self) -> bool:
+        return self.forest_invariant == RCGraph.principal_rc(self.perm, len(self)).forest_invariant
+
+    def pull_out_row(self, row: int, keep_size=False) -> tuple[tuple, RCGraph]:
+        # if row - 1 not in self.perm.descents():
+        #     raise ValueError("Row not a descent")
+        # if len(self[row - 1]) != 0:
+        #     raise ValueError("Row not empty")
+        if row == 1:
+            if keep_size:
+                return self.rowrange(1).resize(len(self))
+            return self.rowrange(1)
+        bottom_cut = self.rowrange(0, row)
+        # if len(bottom_cut.perm.trimcode) <= len(bottom_cut):
+        #     bottom_cut = bottom_cut.resize(row - 1).extend(1).zero_out_last_row()
+        #     ret = RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
+        #     # while not ret.is_valid:
+        #     #     ret = RCGraph([*ret.rowrange(0, row - 1).little_bump(), *RCGraph(self[row:]).shiftup(-1)])
+        #     if not ret.is_valid:
+        #         while not ret.is_valid:
+        #             for i in range(len(ret.perm_word)):
+        #                 a, b = ret.left_to_right_inversion(i)
+        #                 if a > b:
+        #                     ret = ret.little_bump_down(a, b)
+        #                     break
+        #     return ret
+
+        topd = len(bottom_cut.perm.trimcode)
+        rows_by_descent = {topd: []}
+        while topd > row or len(bottom_cut[row - 1]) != 0:
+            while len(bottom_cut.perm.trimcode) >= topd:
+                bottom_cut, the_row = bottom_cut.exchange_property(len(bottom_cut.perm.trimcode), return_row=True)
+                rows_by_descent[topd] += [the_row]
+            topd = len(bottom_cut.perm.trimcode)
+            rows_by_descent[topd] = []
+        assert topd <= row
+        bottom_cut = bottom_cut.zero_out_last_row()
+        for descent in sorted(rows_by_descent.keys()):
+            rows = rows_by_descent[descent]
+            rows = [r for r in rows if r != row]
+            if len(rows) == 0:
+                continue
+            bottom_cut = bottom_cut.pieri_insert(descent - 1, rows)
+        ret = RCGraph([*bottom_cut, *RCGraph(self[row:]).shiftup(-1)])
+        if not ret.is_valid:
+            ret = ret._pieri_rectify(row - 1, descent=None, dict_by_a={}, dict_by_b={})
+            # while not ret.is_valid:
+            #     for i in range(len(ret.perm_word)):
+            #         a, b = ret.left_to_right_inversion(i)
+            #         if a > b:
+            #             ret = ret.little_bump(a, b)
+            #             break
+        assert ret.perm.inv == self.perm.inv - len(self[row - 1]), f"\n{tuple(ret)=}, \n{self=} {row=}\n{rows_by_descent=}"
+        # while not ret.is_valid:
+        #     ret = RCGraph([*ret.rowrange(0, row - 1).little_bump_desc(), *RCGraph(self[row:]).shiftup(-1)])
+        if keep_size:
+            ret = ret.resize(len(self))
+        return ret
+
+    def little_bump_zero(self):
+        if self.perm.inv == 0:
+            return self
+        last_desc = max(self.perm.descents()) + 1
+        if len(self) > last_desc:
+            return self.resize(last_desc)
+        if len(self) < last_desc:
+            rc = self.normalize()
+            return rc.little_bump_zero()
+        if len(self[last_desc - 1]) != 0:
+            raise ValueError("Last row not empty")
+        rc, row = self.exchange_property(last_desc, return_row=True)
+        rc = rc.toggle_ref_at(last_desc, 1)
+        rc = rc.pieri_insert(last_desc - 1, [row]).toggle_ref_at(last_desc, 1)
+        if max(rc.perm.descents(), default=-1) + 1 < last_desc:
+            return rc.resize(last_desc - 1)
+        return rc.little_bump_zero().resize(last_desc - 1)
+
+    def dualpieri(self, mu: Permutation, w: Permutation) -> set[tuple[tuple, RCGraph]]:
+        from schubmult.combinatorics.bpd import BPD  # noqa: F401
+        from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
+        from schubmult.utils.schub_lib import pull_out_var
+
+        if mu.inv == 0:
+            return set({((), rc) for rc in self.divdiff_perm(w)})
+
+        cycle = Permutation.cycle
+        lm = (~mu).trimcode
+        cn1w = (~w).trimcode
+        if len(cn1w) < len(lm):
+            return set()
+        for i in range(len(lm)):
+            if lm[i] > cn1w[i]:
+                return set()
+        c = Permutation([])
+        for i in range(len(lm), len(cn1w)):
+            c = cycle(i - len(lm) + 1, cn1w[i]) * c
+
+        res = {((), self)}
+        r = RCGraphRing()
+        for i in range(len(lm)):
+            res2 = set()
+            for vlist, self_0 in res:
+                vp = self_0
+
+                vpl_list = r(vp).divdiff_perm(cycle(lm[i] + 1, cn1w[i] - lm[i]))
+
+                if len(vpl_list) == 0:
+                    continue
+                for vpl in vpl_list:
+                    vl = pull_out_var(lm[i] + 1, vpl.perm)
+                    try:
+                        vpl_new = vpl.pull_out_row(lm[i] + 1)
+                        pw = tuple(reversed(next(iter([pww for pww, pp in vl if pp == vpl_new.perm]))))
+                        res2.add(((*vlist, pw), vpl_new.normalize()))
+                    except Exception:
+                        pass
+            res = res2
+        if len(lm) == len(cn1w):
+            return res
+        res2 = set()
+        for vlist, self_0 in res:
+            vp = self_0
+            vpl_list = vp.divdiff_perm(c)
+            if len(vpl_list) == 0:
+                continue
+            for vpl in vpl_list:
+                res2.add((vlist, vpl))
+        return res2
+
+    @staticmethod
+    def divdiff_act_dict(dct, *s_list) -> dict[RCGraph, Expr]:
+        ret = {**dct}
+        for s in reversed(s_list):
+            new_ret = {}
+            for rc, coeff in ret.items():
+                act_set = rc.divdiff_action(s)
+                new_ret = add_perm_dict(new_ret, dict.fromkeys(act_set, coeff))
+            ret = new_ret
+        return ret
+
+    def __getitem__(self, key: int | tuple[int, int]) -> tuple[int, ...] | int:
+        # FLIPPED FOR PRINTING
+        if isinstance(key, int):
+            return tuple(self)[key]
+        if isinstance(key, tuple):
+            i, j = key
+            if isinstance(i, slice):
+                return tuple([self[a, j] for a in range(len(self))[i]])
+            if isinstance(j, slice):
+                return tuple([self[i, b] for b in range(self.cols)[j]])
+            if not self.has_element(i + 1, j + 1):
+                return None
+            return i + j + 1
+        is_slice = isinstance(key, slice)
+
+        if is_slice:
+            return tuple(tuple(self)[n] for n in range(len(self))[key])
+
+        raise ValueError(f"Bad indexing {key=}")
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, RCGraph):
+            return NotImplemented
+        if self.perm.trimcode < other.perm.trimcode:
+            return True
+        if self.perm.trimcode > other.perm.trimcode:
+            return False
+        for i in range(self.perm.inv):
+            a, b = self.perm.right_root_at(i)
+
+            if self.inversion_label(a - 1, b - 1) < other.inversion_label(a - 1, b - 1):
+                return True
+            if self.inversion_label(a - 1, b - 1) > other.inversion_label(a - 1, b - 1):
+                return False
+        return False
+
+    def __le__(self, other: object) -> bool:
+        if not isinstance(other, RCGraph):
+            return NotImplemented
+        return self < other or self == other
+
+    # WE CAN DO STUFF WITH THIS
+    def weight_bump(self) -> RCGraph:
+        return self.extend(1).shiftup(1)
+
+    def inverse_crystal_product(self, other) -> RCGraph:
+        from schubmult.rings.combinatorial.rc_graph_ring import RCGraphRing
+
+        rc_ring = RCGraphRing()
+        prod = rc_ring(self) * rc_ring(other)
+        res = rc_ring.zero
+        for w_rc, coeff in prod.items():
+            res += coeff * rc_ring(w_rc.to_highest_weight()[0])
+        return res
+
+    # def weight_reflection(self, i):
+    #     try:
+    #         rc = self.crystal_reflection(i)
+    #     except Exception:
+    #         rc = None
+    #     if rc is None:
+    #         rc = self.extend(1).shiftup(1).crystal_reflection(i)
+    #     return rc
+
+    @property
+    def inverse_crystal(self) -> InverseRCGraph:
+        return InverseRCGraph(self)
+
+
+class InverseRCGraph(CrystalGraph):
+    def __init__(self, base_graph: RCGraph):
+        self.base_graph = base_graph
+
+    @property
+    def crystal_weight(self) -> tuple[int, ...]:
+        return self.base_graph.transpose().crystal_weight
+
+    def lowering_operator(self, index) -> InverseRCGraph | None:
+        lowered = self.base_graph.transpose().lowering_operator(index)
+        if lowered is None:
+            return None
+        lowered = lowered.transpose(len(self.base_graph))
+        return InverseRCGraph(lowered)
+
+    def raising_operator(self, index) -> InverseRCGraph | None:
+        raised = self.base_graph.transpose().raising_operator(index)
+        if raised is None:
+            return None
+        raised = raised.transpose(len(self.base_graph))
+        return InverseRCGraph(raised)
+
+    def crystal_length(self) -> int:
+        return self.base_graph.transpose().crystal_length()
