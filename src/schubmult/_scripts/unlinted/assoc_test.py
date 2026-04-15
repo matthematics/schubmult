@@ -53,7 +53,7 @@ if __name__ == "__main__":
     random.shuffle(perms2)
     perms3 = [*perms]
     random.shuffle(perms3)
-    size = n - 1
+    size = n
     for perm1, perm2, perm3 in itertools.product(perms, perms2, perms3):
         if 0 in (perm1.inv, perm2.inv, perm3.inv):
             continue

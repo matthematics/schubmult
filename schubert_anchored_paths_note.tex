@@ -1,0 +1,37 @@
+\documentclass{amsart}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage[margin=1in]{geometry}
+
+\newtheorem{theorem}{Theorem}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+
+\DeclareMathOperator{\sch}{\mathfrak{S}}
+\newcommand{\BRC}{\mathcal{BRC}}
+\newcommand{\RC}{\mathcal{RC}}
+\newcommand{\code}{\mathfrak{c}}
+
+\title{A formula for Schubert elements via anchored paths}
+\author{Matthew J. Samuel}
+
+\begin{document}
+\maketitle
+
+\begin{definition}
+For a permutation $w$, let $\code^*(w)$ be the Lehmer code of $w^{-1}$.
+
+Let $\mu$ be a dominant permutation with $\code^*(\mu) = (\lambda_1,\ldots,\lambda_n)$ and let $u$ be a permutation such that $\ell(u\mu) = \ell(\mu) - \ell(u)$.
+
+
+For a positive integer $p$, we say that there is a \emph{$p$-anchored Bruhat path} between $u$ and $w$ if there exists a sequence of pairwise distinct positive integers $a_1,a_2,\ldots,a_k$ with $a_i\neq p$ for any $i$ such that $w=ut_{pa_1}\cdots t_{pa_k}$ and $\ell(ut_{pa_1}\cdots t_{pa_i})=\ell(u)+i$ for all $i$.
+\end{definition}
+
+We have
+$$\sch_{u\mu}(x) = \sum_{P} (-1)^{\mathrm{sign}(P)}e_{\lambda_1-\ell(u_0,u_1),\lambda_1}(x)\, e_{\lambda_2-\ell(u_1,u_2),\lambda_2}(x)\cdots e_{\lambda_n-\ell(u_{n-1},u_n),\lambda_n}(x)$$
+where the sum is over all sequences $P=(u_0,\ldots,u_n)$ of permutations with $u_0=1$ and $u_n=u$ such that there is an $i$-anchored Bruhat path between $u_{i-1}$ and $u_i$ for all $i$, and $\mathrm{sign}(P)$ is the sum over all $i$ of the number of $j<i$ such that $u_{i-1}(j)\neq u_i(j)$.
+
+\end{document}

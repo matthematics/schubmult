@@ -212,8 +212,12 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         def __hash__(self):
             return hash((self._size, self.factors))
 
-    def __init__(self, domain=None):
+        def __eq__(self, other):
+            return isinstance(other, BoundedRCFactorAlgebra._key) and self.size == other.size and self.factors == other.factors
+
+    def __init__(self, domain=None, post_normalize=False):
         super().__init__(domain=domain)
+        self.post_normalize = post_normalize
         self.zero_monom = self.make_key((), 0)
         self._ID = BoundedRCFactorAlgebra._id
         BoundedRCFactorAlgebra._id += 1
@@ -221,8 +225,8 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         self.dtype = type("BoundedRCFactorAlgebraElement", (BoundedRCFactorAlgebraElement,), {"ring": self})
 
     @cache
-    def _schub_elem_cached(self, perm, size):
-        dct = RCGraph.full_CEM(perm, size, partition=tuple((~(perm.strict_mul_dominant(size))).trimcode))
+    def _schub_elem_cached(self, perm, size, partition):
+        dct = RCGraph.full_CEM(perm, size, partition=partition)
         # dct = RCGraph.full_CEM(perm, size)
         elem = sum([self.from_tensor_dict(cem_dict, size=size) for _, cem_dict in dct.items()])
         return elem
@@ -263,10 +267,15 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
             perm = perm.swap(index - 1, index)
         return result
 
-    def schub_elem(self, perm, size):
+    def schub_elem(self, perm, size, partition=None):
         from schubmult.combinatorics.permutation import Permutation
+        if size >= len(perm) - 1 and partition is None:
+            partition = tuple(range(len(perm) - 1, 0, -1))
+        elif partition is None:
+            #partition = tuple((~(perm.strict_mul_dominant(size))).trimcode)
+            partition = tuple((~(perm.strict_mul_dominant(size))).trimcode)
 
-        return self._schub_elem_cached(Permutation(perm), size)
+        return self._schub_elem_cached(Permutation(perm), size, partition)
 
     def dual_product_on_basis(self, left_key, right_key):
         """Dual product to the coproduct_on_basis deconcatenation."""
@@ -398,55 +407,56 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         factors = list(key)
         #key_hw, raise_seq = key.to_highest_weight()
         #factors = list(key_hw)
-        while True:
-            # Phase 1: sort by length and merge same-length adjacent factors
-            new_factors = _sort_and_merge(list(factors))
-            hw_key, raise_seq = self.make_key(tuple(new_factors), size).to_highest_weight()
-            # Phase 2: normalize individual RCGraphs and strip identities
-            factors = [rc.normalize() for rc in hw_key if rc.perm.inv != 0]
+        # while True:
+        #     # Phase 1: sort by length and merge same-length adjacent factors
+        #     new_factors = _sort_and_merge(list(factors))
+        #     #hw_key, raise_seq = self.make_key(tuple(new_factors), size).to_highest_weight()
+        #     # Phase 2: normalize individual RCGraphs and strip identities
+        #     factors = [rc.normalize() for rc in ne if rc.perm.inv != 0]
 
-            # Phase 3: peel wide factors (perm wider than row count)
-            peeled = False
-            for i in range(len(factors)):
-                if not _is_full_grassmannian_rc(factors[i]):
-                    raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}")
-                # if len(factors[i].perm) - 1 > len(factors[i]) and len(factors[i]) < size:
-                #     factor = factors[i].resize(len(factors[i]) + 1)
-                # else:
-                if len(factors[i]) == size:
-                    continue
-                if len(factors[i].perm) - 1 > len(factors[i]):
-                    factor = factors[i]
-                    max_rc, elem_rc = factor.squash_decomp()#_max_grass_elem_peel(factors[i])
-                    max_rc = max_rc.normalize()
-                    elem_rc = elem_rc.normalize()
-                    # if elem_rc.perm.inv > 0:
-                    #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
-                    if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
-                        factors[i] = max_rc
-                        factors.insert(i + 1, elem_rc)
-                        peeled = True
-                        break
-                    #factor = factor.extend(1)
-                    # max_rc, elem_rc = _max_grass_elem_peel(factor)
-                    # max_rc = max_rc.normalize()
-                    # elem_rc = elem_rc.normalize()
-                    # # if elem_rc.perm.inv > 0:
-                    # #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
-                    # if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
-                    #     factors[i] = max_rc
-                    #     factors.insert(i + 1, elem_rc)
-                    #     peeled = True
-                    #     break
-                # if len(set(factors[i].perm.trimcode)) > 2:
-                #     raise ValueError(f"Factor with more than 2 distinct row lengths in normalized key: {factors[i]} in key {key}")
-            factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)
-            if not peeled:
-                break
+        #     # Phase 3: peel wide factors (perm wider than row count)
+        #     peeled = False
+        #     for i in range(len(factors) - 1, -1, -1):
+        #         if not _is_full_grassmannian_rc(factors[i]):
+        #             raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}")
+        #         # if len(factors[i].perm) - 1 > len(factors[i]) and len(factors[i]) < size:
+        #         #     factor = factors[i].resize(len(factors[i]) + 1)
+        #         # else:
+        #         if len(factors[i]) == size:
+        #             continue
+        #         if len(factors[i].perm) - 1 > len(factors[i]):
+        #             factor = factors[i]
+        #             max_rc, elem_rc = factor.squash_decomp()#_max_grass_elem_peel(factors[i])
+        #             max_rc = max_rc.normalize()
+        #             elem_rc = elem_rc.normalize()
+        #             # if elem_rc.perm.inv > 0:
+        #             #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
+        #             if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
+        #                 factors[i] = max_rc
+        #                 factors.insert(i + 1, elem_rc)
+        #                 peeled = True
+        #                 break
+        #             # factor = factor.extend(1)
+        #             # max_rc, elem_rc = _max_grass_elem_peel(factor)
+        #             # max_rc = max_rc.normalize()
+        #             # elem_rc = elem_rc.normalize()
+        #             # # if elem_rc.perm.inv > 0:
+        #             # #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
+        #             # if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
+        #             #     factors[i] = max_rc
+        #             #     factors.insert(i + 1, elem_rc)
+        #             #     peeled = True
+        #             #     break
+        #         # if len(set(factors[i].perm.trimcode)) > 2:
+        #         #     raise ValueError(f"Factor with more than 2 distinct row lengths in normalized key: {factors[i]} in key {key}")
+        #     factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)
+        #     if not peeled:
+        #         break
 
-        # for fact in factors:
-        #     if len(fact) < len(factors[-1]) and len(fact.perm) - 1 > len(fact):
-        #         raise ValueError(f"Factor {fact} in key {factors} is not wide enough to fit its permutation")
+        # # for fact in factors:
+        # #     if len(fact) < len(factors[-1]) and len(fact.perm) - 1 > len(fact):
+        # #         raise ValueError(f"Factor {fact} in key {factors} is not wide enough to fit its permutation")
+        factors = _sort_and_merge(list(factors))
         return self.make_key(factors, size)
         #return self.make_key(tensor.reverse_raise_seq(raise_seq), size)
 
@@ -456,24 +466,58 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         new_key = self.make_key((*left_key, *right_key), left_key.size)
         return self._normalize_key(new_key)
 
+    _post_normalizing = False
+
     def _post_normalize_dict(self, accum):
-        """Expand keys whose first factor has length 1 and inv > 1 into sums via schub_elem."""
-        to_expand = {}
+        """Expand keys whose factors are too wide (perm doesn't fit in row count) into sums via schub_elem.
+
+        Uses a re-entrancy guard: if we're already inside a post-normalize call,
+        just return the raw element to avoid infinite mutual recursion with
+        mul -> _post_normalize_dict -> schub_elem -> from_tensor_dict -> _post_normalize_dict.
+        """
+        if self._post_normalizing or not self.post_normalize:
+            return self.dtype({k: v for k, v in accum.items() if v != S.Zero})
+
         clean = {}
+        to_expand = {}
         for key, coeff in accum.items():
             if coeff == S.Zero:
                 continue
-            if key.size > 1 and len(key) > 0 and len(key[0]) == 1 and key[0].perm.inv > 1:
-                to_expand[key] = coeff
+            bad = [i for i, factor in enumerate(key) if len(factor.perm) - 1 > len(factor) and len(factor) < key.size]
+            if not bad:
+                clean[key] = clean.get(key, S.Zero) + coeff
             else:
-                clean[key] = coeff
+                to_expand[key] = coeff
+
         if not to_expand:
             return self.dtype({k: v for k, v in clean.items() if v != S.Zero})
-        result = self.dtype({k: v for k, v in clean.items() if v != S.Zero})
-        for key, coeff in to_expand.items():
-            new_key = self.make_key(key[1:], key.size)
-            supp_elem = self.schub_elem(key[0].perm, key.size) * self(new_key)
-            result += coeff * self.from_tensor_dict(supp_elem, key.size)
+
+        self._post_normalizing = False
+        try:
+            result = self.dtype({k: v for k, v in clean.items() if v != S.Zero})
+            for key, coeff in to_expand.items():
+                term = coeff * self.dtype({self.make_key((), key.size): S.One})
+                for i in range(len(key)):
+                    bad = len(key[i].perm) - 1 > len(key[i]) and len(key[i]) < key.size
+                    if bad:
+                        term = self.mul(term, self.schub_elem(key[i].perm, key.size))
+                    else:
+                        factor_elem = self.dtype({self.make_key((key[i],), key.size): S.One})
+                        term = self.mul(term, factor_elem)
+                for k, v in term.items():
+                    result[k] = result.get(k, S.Zero) + v
+        finally:
+            self._post_normalizing = False
+
+        # Re-check: the expansion may have produced new bad keys (one pass only)
+        still_bad = any(
+            len(factor.perm) - 1 > len(factor) and len(factor) < key.size
+            for key in result
+            for factor in key
+            if result.get(key, S.Zero) != S.Zero
+        )
+        if still_bad:
+            return self._post_normalize_dict(dict(result))
         return result
 
     def from_dict(self, dct):
