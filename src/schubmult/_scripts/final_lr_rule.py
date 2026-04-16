@@ -91,13 +91,13 @@ def verify_pair(perm1, perm2, n):
         g_result = g.zero
         result = r.zero
         prd = Sx(perm1) * Sx(perm2)
-        length = max(len(perm1.trimcode), len(perm2.trimcode))
-        partition1 = tuple((~(perm1.mul_dominant())).trimcode)
-        partition2 = tuple((~(perm2.mul_dominant())).trimcode)
-        schub1_base = g.schub_elem(perm1, len(perm1.trimcode), partition=partition1)
-        schub1 = g.from_tensor_dict(schub1_base, size=length)
-        schub2_base = g.schub_elem(perm2, len(perm2.trimcode), partition=partition2)
-        schub2 = g.from_tensor_dict(schub2_base, size=length)
+        length = max(len(perm1), len(perm2)) - 1
+        partition1 = tuple((~(perm1.strict_mul_dominant(length))).trimcode)
+        partition2 = tuple((~(perm2.strict_mul_dominant(length))).trimcode)
+        schub1 = g.schub_elem(perm1, length, partition=partition1)
+        #schub1 = g.from_tensor_dict(schub1_base, size=length)
+        schub2 = g.schub_elem(perm2, length, partition=partition2)
+        #schub2 = g.from_tensor_dict(schub2_base, size=length)
         tensor_result = r.zero @ r.zero
         for key1, coeff1 in schub1.items():
             # rc1 = next(iter(g(key1).to_rc_graph_ring_element().resize(n)))

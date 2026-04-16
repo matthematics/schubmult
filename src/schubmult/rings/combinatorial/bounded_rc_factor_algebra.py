@@ -100,7 +100,7 @@ def _sort_and_merge(factors):
         return factors
     merged = [factors[0]]
     for rc in factors[1:]:
-        if merged and len(merged[-1]) == len(rc):
+        if len(merged[-1]) == len(rc):
             m = merged[-1].squash_product(rc)
             if m.perm.inv == 0:
                 merged.pop()
@@ -390,25 +390,43 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         #factors = list(key_hw)
         while True:
             # Phase 1: sort by length and merge same-length adjacent factors
-            new_factors = _sort_and_merge(list(factors))
-            #hw_key, raise_seq = self.make_key(tuple(new_factors), size).to_highest_weight()
+            factors = _sort_and_merge(list(factors))
+            #hw_key, raise_seq = self.make_key(tuple(factors), size).to_highest_weight()
             # Phase 2: normalize individual RCGraphs and strip identities
-            factors = [rc.normalize() for rc in new_factors if rc.perm.inv != 0]
+            #factors = [rc.normalize() for rc in hw_key if rc.perm.inv != 0]
 
             peeled = False
-            for i in range(len(factors)):
+            for i in range(len(factors) - 1, -1, -1):
                 if not _is_full_grassmannian_rc(factors[i]):
                     raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}")
                 factor = factors[i]
-                if len(factor) < size:
+                if len(factor) < size and len(factor.perm) - 1 > len(factor):
                     max_rc, elem_rc = factor.resize(len(factor) + 1).squash_decomp()
                     max_rc = max_rc.normalize()
                     elem_rc = elem_rc.normalize()
-                    if max_rc.perm.inv > 0 and elem_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
-                        factors[i] = max_rc
-                        factors.insert(i + 1, elem_rc)
-                        peeled = True
-                        break
+                    if max_rc.perm.inv == 0 or elem_rc.perm.inv == 0:
+                        continue
+                    #if max_rc.perm.inv > 0 and elem_rc.perm.inv > 0 and len(elem_rc) <= size:
+                    addup_list = [elem_rc]
+                    working_rc = max_rc.normalize()
+                    while working_rc.perm.inv > 0 and (not _is_full_grassmannian_rc(working_rc)):
+                        working_rc_base, working_elem_rc = working_rc.squash_decomp()
+                        working_elem_rc = working_elem_rc.normalize()
+                        working_rc_base = working_rc_base.normalize()
+
+                        # if not _is_full_grassmannian_rc(working_elem_rc):
+                        #     raise ValueError(f"Peeling produced non full Grassmannian RC graph: {working_elem_rc} from {factor} in key {key}")
+                        addup_list = [working_elem_rc.normalize(), *addup_list]
+                        working_rc = working_rc_base.normalize()
+                    if working_rc.perm.inv > 0:
+                        if not _is_full_grassmannian_rc(working_rc):
+                            raise ValueError(f"Peeling produced non full Grassmannian RC graph: {working_rc} from {factor} in key {key}")
+                        addup_list = [working_rc.normalize(), *addup_list]
+                    #del factors[i]
+                    factors = [*factors[:i], *addup_list, *factors[i + 1:]]
+                    peeled = True
+                    break
+
         #         # if len(factors[i].perm) - 1 > len(factors[i]) and len(factors[i]) < size:
         #         #     factor = factors[i].resize(len(factors[i]) + 1)
         #         # else:
@@ -439,13 +457,13 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         #             #     break
         #         # if len(set(factors[i].perm.trimcode)) > 2:
         #         #     raise ValueError(f"Factor with more than 2 distinct row lengths in normalized key: {factors[i]} in key {key}")
-        #     factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)
+            #factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)
             if not peeled:
                 break
 
-        # # for fact in factors:
-        # #     if len(fact) < len(factors[-1]) and len(fact.perm) - 1 > len(fact):
-        # #         raise ValueError(f"Factor {fact} in key {factors} is not wide enough to fit its permutation")
+        # for fact in factors:
+        #     if len(fact) < len(factors[-1]) and len(fact.perm) - 1 > len(fact):
+        #         raise ValueError(f"Factor {fact} in key {factors} is not wide enough to fit its permutation")
         #factors = _sort_and_merge(list(factors))
         return self.make_key(factors, size)
         #return self.make_key(tensor.reverse_raise_seq(raise_seq), size)

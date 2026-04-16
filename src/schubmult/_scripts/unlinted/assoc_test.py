@@ -53,15 +53,19 @@ if __name__ == "__main__":
     random.shuffle(perms2)
     perms3 = [*perms]
     random.shuffle(perms3)
-    size = n
+    size = n - 1
     d = DualRCGraphRing()
     bad_patterns = [[4,1,3,2],[1,4,3,2],[3,1,4,2]]
     avoids_bad = lambda p: all(not p.has_pattern(pat) for pat in bad_patterns)
+    partition = tuple(range(n - 1, 0, -1))
     for perm1, perm2, perm3 in itertools.product(perms, perms2, perms3):
     #for perm1, perm2 in itertools.product(perms, perms2):
         # if 0 in (perm1.inv, perm2.inv, perm3.inv) or any(not avoids_bad(p) for p in (perm1, perm2, perm3)):
         #     continue
-        for (rc1, cem_dict1), (rc2, cem_dict2), (rc3, cem_dict3) in itertools.product(RCGraph.full_CEM(perm1,n).items(), RCGraph.full_CEM(perm2,n).items(), RCGraph.full_CEM(perm3,n).items()):
+        if 0 in (perm1.inv, perm2.inv, perm3.inv):
+            continue
+        #for (rc1, cem_dict1), (rc2, cem_dict2), (rc3, cem_dict3) in itertools.product(RCGraph.full_CEM(perm1,n, tuple(((~(perm1.strict_mul_dominant(size))).trimcode))).items(), RCGraph.full_CEM(perm2,n, tuple(((~(perm2.strict_mul_dominant(size))).trimcode))).items(), RCGraph.full_CEM(perm3,n,partition=tuple(((~(perm3.strict_mul_dominant(size))).trimcode))).items():
+        for (rc1, cem_dict1), (rc2, cem_dict2), (rc3, cem_dict3) in itertools.product(RCGraph.full_CEM(perm1,n, partition).items(), RCGraph.full_CEM(perm2,n, partition).items(), RCGraph.full_CEM(perm3,n,partition=partition).items()):
         #for (rc1, cem_dict1), (rc2, cem_dict2) in itertools.product(RCGraph.full_CEM(perm1,n).items(), RCGraph.full_CEM(perm2,n).items()):
             elem1, elem2, elem3 = r.from_tensor_dict(cem_dict1, size), r.from_tensor_dict(cem_dict2, size), r.from_tensor_dict(cem_dict3, size)
             # elem1, elem2 = r.from_tensor_dict(cem_dict1, size), r.from_tensor_dict(cem_dict2, size)

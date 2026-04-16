@@ -64,7 +64,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
         n = len(self)
         rc = self
-        grass_descent = n - 1
+        grass_descent = n
         # if grass_descent == 0 and rc.perm.inv > 1:
         #     rc_ret = RCGraph([(1,)])
         #     grass_ret = RCGraph([self[0][1:]]).normal
@@ -96,17 +96,17 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             min_perm_inv = 0
             the_rc = None
             for rc_max in maxes:
-                grass, base = rc_max.perm.coset_decomp(*(list(range(n))+list(range(n + 1,len(perm)))))
+                grass, base = rc_max.perm.coset_decomp(*(list(range(grass_descent))+list(range(grass_descent + 1,len(perm)))))
                 if the_rc is None:
                     the_rc = rc_max
                     min_perm_inv = base.inv
                 elif base.inv < min_perm_inv:
                     the_rc = rc_max
                     min_perm_inv = base.inv
-            lower_rc = RCGraph([tuple([a for a in row if a < n]) for row in tuple(rc_max)]).normalize()
-            upper_rc = RCGraph([tuple([a for a in row if a >= n]) for row in tuple(rc_max)]).resize(len(rc_max))
+            lower_rc = RCGraph([tuple([a for a in row if a < grass_descent]) for row in tuple(rc_max)]).normalize()
+            upper_rc = RCGraph([tuple([a for a in row if a >= grass_descent]) for row in tuple(rc_max)]).resize(len(rc_max))
 
-            upper_rc = upper_rc.vertical_cut(n)[0]
+            upper_rc = upper_rc.vertical_cut(grass_descent)[0]
             return lower_rc, upper_rc
 
 
