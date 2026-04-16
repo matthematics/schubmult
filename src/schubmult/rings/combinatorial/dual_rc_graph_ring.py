@@ -107,16 +107,6 @@ class DualRCGraphRingElement(SchubertMonomialRingElement):
             res += coeff * self.ring(rc_graph.transpose(length))
         return res
 
-    def __rmul__(self, other):
-        if isinstance(other, RCGraphRingElement):
-            return self.rc_ring_left_act(other, self)
-        return super().__rmul__(other)
-
-    def __mul__(self, other):
-        if isinstance(other, RCGraphRingElement):
-            return self.rc_ring_right_act(self, other)
-        return super().__mul__(other)
-
     def polynomial_coaction(self, left=True):
         res = PA.zero @ self.ring.zero
         for rc_graph, coeff in self.items():
@@ -210,53 +200,24 @@ class DualRCGraphRing(SchubertMonomialRing):
         identity_graph = RCGraph()
         return self.from_dict({identity_graph: 1})
 
+    @cache
     def mul_pair(self, u_rc, v_rc):
+        from schubmult import RCGraphRing, Sx
         if u_rc.perm.inv == 0:
-            return v_rc
+            return self(v_rc)
         if v_rc.perm.inv == 0:
-            return u_rc
-        assert len(u_rc) == len(v_rc), "Multiplication only defined for RC graphs of the same number of rows"
-        if u_rc.is_full_grass and v_rc.is_full_grass:
-            return u_rc.squash_product(v_rc)
-        if u_rc.is_full_grass:
-            return u_rc.left_squash(v_rc)
-        if v_rc.is_full_grass:
-            return u_rc.squash_product(v_rc)
-        u_rc_base, u_rc_grass = u_rc.squash_decomp()
-        if u_rc_grass.perm.inv == 0:
-            v_rc_base, v_rc_grass = v_rc.squash_decomp()
-            return self.mul_pair(u_rc_base.resize(len(u_rc_base) - 1),v_rc_base.resize(len(v_rc_base) - 1)).resize(len(u_rc)).squash_product(v_rc_grass).resize(len(u_rc))
-
-        #     # v_rc_grass, v_rc_base = v_rc.left_squash_decomp()
-        #     # left_factor = u_rc_base.squash_product(v_rc_grass)
-        right_factor = self.mul_pair(u_rc_grass, v_rc)
-        return self.mul_pair(u_rc_base, right_factor).resize(len(u_rc))
-        # from .rc_graph_ring import RCGraphRing
-        # if len(u_rc) != len(v_rc):
-        #     return self.zero
-        # if u_rc.perm.inv == 0:
-        #     return self(v_rc)
-        # if v_rc.perm.inv == 0:
-        #     return self(u_rc)
-        # if len(u_rc) == 2:
-        #     u_base, u_grass = u_rc.squash_decomp()
-        #     v_base, v_grass = v_rc.squash_decomp()
-        #     if u_base.perm.inv == 0 and v_base.perm.inv == 0:
-        #         return self(u_grass.squash_product(v_grass))
-        #     if u_base.perm.inv == 0:
-        #         return self(v_rc.left_squash(u_grass))
-        #     if v_base.perm.inv == 0:
-        #         return self(u_rc.squash_product(v_grass))
-        #     # if u_grass.perm.inv == 0:
-        #     #     return RCGraph([(2, 1), ()]).squash_product(v_grass)
-
-        #     middle = v_base.left_squash(u_grass)
-        #     middle_base, middle_grass = middle.squash_decomp()
-        #     if middle_base.perm.inv == 0:
-        #         return self(u_base.squash_product(middle_grass.squash_product(v_grass)))
-        #     return self(RCGraph([(2, 1), ()]).squash_product(middle_grass.squash_product(v_grass)))
-        # r = RCGraphRing()
-        # return self(r(u_rc) % r(v_rc))
+            return self(u_rc)
+        if len(u_rc) != len(v_rc):
+            raise ValueError("Multiplication only defined for RC graphs of the same number of rows")
+        possible_prods = Sx(u_rc.perm) * Sx(v_rc.perm)
+        result = self.zero
+        r = RCGraphRing()
+        for perm in possible_prods:
+            for candidate in RCGraph.all_rc_graphs(perm, len(u_rc)):
+                cp = r(candidate).coproduct()
+                if (u_rc, v_rc) in cp and cp[(u_rc, v_rc)] != 0:
+                    result += cp[(u_rc, v_rc)] * self(candidate)
+        return result
 
 
     def mul(self, elem1, elem2):
@@ -265,7 +226,7 @@ class DualRCGraphRing(SchubertMonomialRing):
             for a, coeff_a in elem1.items():
                 for b, coeff_b in elem2.items():
 
-                    result += coeff_a * coeff_b * self(self.mul_pair(a, b))
+                    result += coeff_a * coeff_b * self.mul_pair(a, b)
 
             return result
         try:

@@ -356,21 +356,42 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
     @cache
     def coproduct_on_basis(self, rc):
 
-        from schubmult import ASx
-        from schubmult.rings.combinatorial.grass_tensor_algebra import GrassTensorAlgebra
-        g = GrassTensorAlgebra()
+        from schubmult import ASx, BoundedRCFactorAlgebra
+        #from schubmult.rings.combinatorial.grass_tensor_algebra import
+        g = BoundedRCFactorAlgebra()
         perm = rc.perm
+        bad_patterns = [[4,1,3,2],[1,4,3,2],[3,1,4,2]]
+        def avoids_bad(p):
+            return all(not p.has_pattern(pat) for pat in bad_patterns)
+        if not avoids_bad(perm):
+            raise NotImplementedError("Coproduct currently only implemented for RC graphs avoiding 4-1-3-2, 1-4-3-2, and 3-1-4-2 patterns.")
         elem = ASx(perm, len(rc)).coproduct()#change_basis(WordBasis)
         pudge = (self @ self).zero
+
         for ((perm1, _), (perm2, _)), coeff in elem.items():
-            cem1 = RCGraph.full_CEM(perm1, len(rc))
-            cem2 = RCGraph.full_CEM(perm2, len(rc))
-            for rc1, cem_dict1 in cem1.items():
-                for rc2, cem_dict2 in cem2.items():
-                    for key1, val1 in cem_dict1.items():
-                        for key2, val2 in cem_dict2.items():
-                            if (g(key1)*g(key2)).to_rc_graph_ring_element().almosteq(self(rc)):
-                                pudge += val1 * val2 * g(key1).to_rc_graph_ring_element().resize(len(rc)) @ g(key2).to_rc_graph_ring_element().resize(len(rc))
+            # if not avoids_bad(perm1) or not avoids_bad(perm2):
+            #     continue
+            schub1_base = g.schub_elem(perm1, len(perm1.trimcode))
+            schub1 = g.from_tensor_dict(schub1_base, size=len(rc))
+            schub2_base = g.schub_elem(perm2, len(perm2.trimcode))
+            schub2 = g.from_tensor_dict(schub2_base, size=len(rc))
+            for key1, coeff1 in schub1.items():
+                for key2, coeff2 in schub2.items():
+                    if (g(key1) * g(key2)).to_rc_graph_ring_element().almosteq(self(rc)):
+                        pudge += coeff1 * coeff2 * g(key1).to_rc_graph_ring_element() @ g(key2).to_rc_graph_ring_element()
+            # for rc1, cem_dict1 in cem1.items():
+            #     g1_elem = g.from_tensor_dict(cem_dict1, size=len(rc))
+            #     if g1_elem.almosteq(g.zero):
+            #         continue
+            #     # rc11 = next(iter(g1_elem.to_rc_graph_ring_element().resize(len(rc))))
+            #     # if rc1 != rc11:
+            #     #     continue
+            #     for rc2, cem_dict2 in cem2.items():
+            #         g2_elem = g.from_tensor_dict(cem_dict2, size=len(rc))
+            #         if g2_elem.almosteq(g.zero):
+            #             continue
+            #         if (g1_elem*g2_elem).to_rc_graph_ring_element().almosteq(self(rc)):
+            #             pudge += g1_elem.to_rc_graph_ring_element() @ g2_elem.to_rc_graph_ring_element()
         return pudge
 
     def old_coproduct_on_basis(self, elem):

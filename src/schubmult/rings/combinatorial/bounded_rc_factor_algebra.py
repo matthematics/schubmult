@@ -100,7 +100,7 @@ def _sort_and_merge(factors):
         return factors
     merged = [factors[0]]
     for rc in factors[1:]:
-        if len(merged[-1]) == len(rc):
+        if merged and len(merged[-1]) == len(rc):
             m = merged[-1].squash_product(rc)
             if m.perm.inv == 0:
                 merged.pop()
@@ -279,43 +279,24 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
     def dual_product_on_basis(self, left_key, right_key):
         """Dual product to the coproduct_on_basis deconcatenation."""
-        # import itertools
-
-        # r =RCGraphRing()
-        # result = self.one
-        # # rev_left_key = reversed(left_key.factors)
-        # # rev_right_key = reversed(right_key.factors)
-        # index1 = 1
-        # index2 = 1
-        # the_index = 1
-        # result = self.one
-        # size = left_key.size + right_key.size
-        # while the_index <= left_key.size + right_key.size:
-        #     left_factor = left_key[index1 - 1] if (index1 <= len(left_key) and len(left_key[index1 - 1]) == the_index) else None
-        #     right_factor = right_key[index2 - 1] if (index2 <= len(right_key) and len(right_key[index2 - 1]) == the_index) else None
-        #     new_result = self.zero
-        #     if left_factor is None and right_factor is None:
-        #         the_index += 1
-        #         new_result = result
-        #     elif left_factor is None:
-        #         new_result += result * self(((left_factor,),size))
-        #         index1 += 1
-        #         the_index += 1
-        #     elif right_factor is None:
-        #         new_result += result * self(((right_factor,),size))
-        #         index2 += 1
-        #         the_index += 1
-        #     else:
-        #         product = r(left_factor) * r(right_factor)
-        #         new_result = self.zero
-        #         for rc, coeff in product.items():
-        #             if _is_full_grassmannian_rc(rc):
-        #                 new_result += result * self(((rc,), size))
-        #         index1 += 1
-        #         index2 += 1
-        #         the_index += 1
-        #     result = new_result
-        # return self.from_dict({(k, size): v for k, v in result.items()})
+        r = RCGraphRing()
+        total_rc = r(self.key_to_rc_graph(left_key)) * r(self.key_to_rc_graph(right_key))
+        result = self.zero
+        for big_rc, coeff in total_rc.items():
+            partition = tuple((~(big_rc.perm.strict_mul_dominant(left_key.size + right_key.size))).trimcode)
+            graphs = RCGraph.full_CEM(big_rc.perm, len(big_rc), partition=partition)
+            cem = self.from_tensor_dict(graphs.get(big_rc, {}), size=len(big_rc))
+            if cem.almosteq(self.zero):
+                continue
+            for cem_key, cem_coeff in cem.items():
+                tensor_cut = [rc.vertical_cut(min(len(rc),left_key.size)) for rc in cem_key]
+                top_cut_elem = self(self.make_key((rc1 for (rc1, rc2) in tensor_cut), size=left_key.size))
+                bottom_cut_elem = self(self.make_key((rc2 for (rc1, rc2) in tensor_cut), size=right_key.size))
+                top_cut = next(iter(top_cut_elem))
+                bottom_cut = next(iter(bottom_cut_elem))
+                if top_cut == left_key and bottom_cut == right_key:
+                    result += self(cem_key)
+        return result
 
     def coproduct_on_basis(self, key):
         if key.size == 0:
@@ -407,18 +388,27 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         factors = list(key)
         #key_hw, raise_seq = key.to_highest_weight()
         #factors = list(key_hw)
-        # while True:
-        #     # Phase 1: sort by length and merge same-length adjacent factors
-        #     new_factors = _sort_and_merge(list(factors))
-        #     #hw_key, raise_seq = self.make_key(tuple(new_factors), size).to_highest_weight()
-        #     # Phase 2: normalize individual RCGraphs and strip identities
-        #     factors = [rc.normalize() for rc in ne if rc.perm.inv != 0]
+        while True:
+            # Phase 1: sort by length and merge same-length adjacent factors
+            new_factors = _sort_and_merge(list(factors))
+            #hw_key, raise_seq = self.make_key(tuple(new_factors), size).to_highest_weight()
+            # Phase 2: normalize individual RCGraphs and strip identities
+            factors = [rc.normalize() for rc in new_factors if rc.perm.inv != 0]
 
-        #     # Phase 3: peel wide factors (perm wider than row count)
-        #     peeled = False
-        #     for i in range(len(factors) - 1, -1, -1):
-        #         if not _is_full_grassmannian_rc(factors[i]):
-        #             raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}")
+            peeled = False
+            for i in range(len(factors)):
+                if not _is_full_grassmannian_rc(factors[i]):
+                    raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}")
+                factor = factors[i]
+                if len(factor) < size:
+                    max_rc, elem_rc = factor.resize(len(factor) + 1).squash_decomp()
+                    max_rc = max_rc.normalize()
+                    elem_rc = elem_rc.normalize()
+                    if max_rc.perm.inv > 0 and elem_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
+                        factors[i] = max_rc
+                        factors.insert(i + 1, elem_rc)
+                        peeled = True
+                        break
         #         # if len(factors[i].perm) - 1 > len(factors[i]) and len(factors[i]) < size:
         #         #     factor = factors[i].resize(len(factors[i]) + 1)
         #         # else:
@@ -450,13 +440,13 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         #         # if len(set(factors[i].perm.trimcode)) > 2:
         #         #     raise ValueError(f"Factor with more than 2 distinct row lengths in normalized key: {factors[i]} in key {key}")
         #     factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)
-        #     if not peeled:
-        #         break
+            if not peeled:
+                break
 
         # # for fact in factors:
         # #     if len(fact) < len(factors[-1]) and len(fact.perm) - 1 > len(fact):
         # #         raise ValueError(f"Factor {fact} in key {factors} is not wide enough to fit its permutation")
-        factors = _sort_and_merge(list(factors))
+        #factors = _sort_and_merge(list(factors))
         return self.make_key(factors, size)
         #return self.make_key(tensor.reverse_raise_seq(raise_seq), size)
 

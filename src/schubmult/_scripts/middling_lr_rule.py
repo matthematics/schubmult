@@ -88,52 +88,40 @@ def verify_pair(perm1, perm2, n):
     #     return result
 
     try:
-        g_result = g.zero
+        # cem_elem1 = cem_schub_schur_decomp(perm1, n)
+        # cem_elem2 = cem_schub_schur_decomp(perm2, n)
+
         result = r.zero
         prd = Sx(perm1) * Sx(perm2)
-        length = max(len(perm1.trimcode), len(perm2.trimcode))
-        partition1 = tuple((~(perm1.mul_dominant())).trimcode)
-        partition2 = tuple((~(perm2.mul_dominant())).trimcode)
-        schub1_base = g.schub_elem(perm1, len(perm1.trimcode), partition=partition1)
-        schub1 = g.from_tensor_dict(schub1_base, size=length)
-        schub2_base = g.schub_elem(perm2, len(perm2.trimcode), partition=partition2)
-        schub2 = g.from_tensor_dict(schub2_base, size=length)
-        tensor_result = r.zero @ r.zero
+
+        # for (base_perm, grass_perm), coeff1 in cem_elem1.items():
+        #     for (base_perm2, grass_perm2), coeff2 in cem_elem2.items():
+        #         graph_base = (cem_schub(base_perm, n) * cem_schub(base_perm2, n)).to_rc_graph_ring_element().resize(n)
+        #         graph_grass = (cem_schub(grass_perm, n) * cem_schub(grass_perm2, n)).to_rc_graph_ring_element().resize(n)
+        #         for rc_grass, coeff4 in graph_grass.items():
+        #             result_base = r.zero
+        #             for rc, coeff3 in graph_base.items():
+        #                 if rc.is_principal:
+        #                     if coeff3 < 0:
+        #                         print(f"Negative coefficient for {rc} in product of {perm1} and {perm2} "
+        #                               f"with base perms {base_perm}, {base_perm2} and grass perms {grass_perm}, {grass_perm2}")
+        #                         return False
+        #                     result_base += coeff3 * r(rc.to_highest_weight()[0])
+        #             for rc_base, coeff3 in graph_base.items():
+        #                 rcc = rc_base.squash_product(rc_grass)
+        #                 if rcc.is_highest_weight and rcc.extremal_weight == pad_tuple(rcc.perm.trimcode, len(rcc)):
+        #                     result += coeff1 * coeff2 * coeff3 * coeff4 * r(rcc)
+
+        schub1 = g.schub_elem(perm1, max(len(perm1.trimcode), len(perm2.trimcode)))
+        schub2 = g.schub_elem(perm2, max(len(perm1.trimcode), len(perm2.trimcode)))
+
         for key1, coeff1 in schub1.items():
-            # rc1 = next(iter(g(key1).to_rc_graph_ring_element().resize(n)))
-            # if rc1.perm != perm1:
-            #     continue
-            sumup = r.zero
-            # if not key1.is_highest_weight:
-            #     continue
             for key2, coeff2 in schub2.items():
-                # rc2 = next(iter(g(key2).to_rc_graph_ring_element().resize(n)))
-                # if rc2.perm != perm2:
-                #     continue
                 graph_base = (g(key1) * g(key2))
                 for the_key, _ in graph_base.items():
                     if the_key.is_highest_weight:
-                        rc = next(iter(g(the_key).to_rc_graph_ring_element().resize(n)))
-                        # if prd.get(rc.perm, 0) != 0:
-                        #     # if coeff1 * coeff2 < 0:
-                        #     #     print(f"Negative coefficient for {rc} in product of {perm1} and {perm2} with keys {key1} and {key2}")
-                        #     #     return False
-                        #     tensor_result += coeff1 * coeff2 * g(key1).to_rc_graph_ring_element() @ g(key2).to_rc_graph_ring_element()
-                        # g_result += coeff1 * coeff2 * g(the_key)
-                        sumup += coeff1 * coeff2 * r(rc)
-            # if any(v < 0 for v in sumup.values()):
-            #     print(f"Negative coefficient in intermediate sumup for {perm1} and {perm2} at key {key1}: {sumup}")
-            #     return False
-            result += sumup
-                        
+                        result += coeff1 * coeff2 * g(the_key).to_rc_graph_ring_element().resize(n)
 
-        # if any(v < 0 for v in result.values()):
-        #     print(f"Negative coefficient in result for {perm1} and {perm2}: {result}")
-        #     return False
-        # if any(v < 0 for v in g_result.values()):
-        #     print(f"Negative coefficient in result for {perm1} and {perm2}: {g_result}")
-        #     return False
-        # result = g_result.to_rc_graph_ring_element().resize(n)
         prd2 = Sx.zero
         for rc, coeff in result.items():
             if coeff != prd.get(rc.perm, 0):
@@ -148,8 +136,7 @@ def verify_pair(perm1, perm2, n):
 
         return True
     except Exception as e:
-        import traceback
-        print(f"Exception verifying ({perm1}, {perm2}, {n}): {traceback.format_exc()}")
+        print(f"Exception verifying ({perm1}, {perm2}, {n}): {e}")
         return False
 
 
@@ -176,7 +163,7 @@ def worker(shared_recording_dict, lock, task_queue):
             shared_recording_dict[key] = good
 
         status = "Success" if good else "FAIL"
-        print(f"{status} ({perm1.trimcode}, {perm2.trimcode}, {n}) at {time.ctime()}", flush=True)
+        print(f"{status} ({perm1}, {perm2}, {n}) at {time.ctime()}", flush=True)
 
 
 def recording_saver(shared_recording_dict, lock, verification_filename, stop_event, meta=None, sleep_time=10):
@@ -214,16 +201,9 @@ def recording_saver(shared_recording_dict, lock, verification_filename, stop_eve
     safe_save_recording(recording_copy, verification_filename, meta=meta or {})
 
 
-def queue_producer(task_queue, perms, n, num_processors, skip_id, grass_left_factor, grass_right_factor, shared_recording_dict):
+def queue_producer(task_queue, perms, n, num_processors, skip_id, shared_recording_dict):
     task_count = 0
-    left_factor = perms
-    right_factor = perms
-    bad_patterns = [[4,1,3,2],[1,4,3,2],[3,1,4,2]]
-    if grass_left_factor:
-        left_factor = [p for p in perms if all(not p.has_pattern(pat) for pat in bad_patterns)]
-    if grass_right_factor:
-        right_factor = [p for p in perms if all(not p.has_pattern(pat) for pat in bad_patterns)]
-    for perm1, perm2 in itertools.product(left_factor, right_factor):
+    for perm1, perm2 in itertools.product(perms, repeat=2):
         if skip_id and (perm1.inv == 0 or perm2.inv == 0):
             continue
         key = (tuple(perm1), tuple(perm2), n)
@@ -246,8 +226,6 @@ def main():
     parser.add_argument("num_processors", type=int, help="Number of worker processes")
     parser.add_argument("filename", nargs="?", help="Base filename for verification output (json will be <filename>.verification.json)")
     parser.add_argument("--skip-id", action="store_true", default=True, help="Skip identity permutations (default: True)")
-    parser.add_argument("--grass_left_factor", action="store_true", default=False, help="Use Grassmann left factor (default: False)")
-    parser.add_argument("--grass_right_factor", action="store_true", default=False, help="Use Grassmann right factor (default: False)")
     parser.add_argument("--no-skip-id", dest="skip_id", action="store_false", help="Include identity permutations")
     parser.add_argument("--extra", type=int, default=1, help="Extra size for permutation generation (default: 1)")
 
@@ -256,8 +234,6 @@ def main():
     num_processors = args.num_processors
     extra = args.extra
     skip_id = args.skip_id
-    grass_left_factor = args.grass_left_factor
-    grass_right_factor = args.grass_right_factor
     filename = args.filename
     verification_filename = filename + ".verification" if filename else None
 
@@ -293,7 +269,7 @@ def main():
 
         producer_proc = Process(
             target=queue_producer,
-            args=(task_queue, perms, n, num_processors, skip_id, grass_left_factor, grass_right_factor, shared_recording_dict),
+            args=(task_queue, perms, n, num_processors, skip_id, shared_recording_dict),
         )
         producer_proc.start()
 
