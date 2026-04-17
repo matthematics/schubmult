@@ -13,7 +13,7 @@ Available bases:
     WordBasis, SchubertBasis, CompositionSchubertBasis, ElementaryBasis,
     ForestBasis, FundamentalSlideBasis, JBasis, JTBasis, KeyBasis,
     MonomialSlideBasis, NElementaryBasis, SchubertSchurBasis,
-    SeparatedDescentsBasis, ZBasis.
+    SchurElementaryBasis, SeparatedDescentsBasis, ZBasis.
 """
 
 from ._core import FA, ADSx, ASx, FreeAlgebra, FreeAlgebraElement
@@ -29,6 +29,7 @@ from .monomial_slide_basis import MonomialSlideBasis
 from .nelementary_basis import NElementaryBasis
 from .schubert_basis import SchubertBasis
 from .schubert_schur_basis import SchubertSchurBasis
+from .schur_elementary_basis import SchurElementaryBasis
 from .separated_descents_basis import SeparatedDescentsBasis, _SeparatedDescentsBasis
 from .word_basis import WordBasis
 from .z_basis import ZBasis
@@ -52,6 +53,7 @@ __all__ = [
     "NElementaryBasis",
     "SchubertBasis",
     "SchubertSchurBasis",
+    "SchurElementaryBasis",
     "SeparatedDescentsBasis",
     "WordBasis",
     "ZBasis",

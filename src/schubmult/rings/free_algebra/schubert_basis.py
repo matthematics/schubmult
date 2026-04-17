@@ -86,7 +86,7 @@ class SchubertBasis(FreeAlgebraBasis):
         perm, numvars = x
         extra = len(perm) - numvars
 
-        if extra == 0:
+        if extra <= 0:
             return {(tuple([0] * numvars), perm, numvars): 1}
         dom = uncode([numvars] * extra + list(range(numvars - 1, 0, -1)))
         tosplit = perm * dom
@@ -99,6 +99,56 @@ class SchubertBasis(FreeAlgebraBasis):
             lambd2 = tuple((lambd * (~w0s)).trimcode)
             dct2[(lambd2, perm1)] = v
         return {(k[0], *([0] * (numvars - len(k[0]))), k[1]): v for k, v in dct2.items()}
+
+    @classmethod
+    def transition_schur_elementary(cls, *x):
+        """Transition a Schubert key to the Schur-Elementary basis."""
+        from schubmult.utils.perm_utils import p_trans
+
+        from ..polynomial_algebra import MonomialBasis, Schub
+        perm, numvars = x
+        # extra = len(perm) - numvars
+
+        # if extra <= 0:
+        #     return cls.transition_elementary(perm, numvars)
+        # dom = uncode([numvars] * extra + list(range(numvars - 1, 0, -1)))
+        # tosplit = perm * dom
+        # dct = Sx(tosplit).coproduct(*list(range(1, extra + 1)))
+        # w0 = uncode(list(range(numvars - 1, 0, -1)))
+        # w0s = uncode([numvars] * extra)
+        # dct2 = {}
+        # for (lambd, perm0), v in dct.items():
+        #     the_words = Schub(perm0 * w0, numvars - 1).change_basis(MonomialBasis)
+        #     #elem = cls.transition_elementary(perm0 * w0, numvars - 1)
+        #     lambd2 = tuple((lambd * (~w0s)).trimcode)
+        #     if len(lambd2) < numvars:
+        #         raise ValueError(f"Unexpected lambd2 {lambd2} from lambd {lambd} and numvars {numvars}")
+        #     #     if len(lambd2)
+        #     #     lambd2 = (0,) * (numvars - len(lambd2)) + lambd2
+        #     if len(lambd2) > numvars:
+        #         raise ValueError(f"Unexpected lambd2 {lambd2} from lambd {lambd} and numvars {numvars}")
+        #     for comp, coeff in the_words.items():
+        #         print(comp)
+        #         key = (tuple(reversed([a for i, a in enumerate(comp)])), lambd2)
+        #         dct2[key] = dct2.get(key, 0) + coeff * v
+        # return dct2
+        mu = p_trans(list(range(numvars - 1, 0, -1)))
+        extra = len(perm) - 1 - len(mu)
+        if len(mu) < len(perm) - 1:
+            mu = ([numvars] * (extra)) + mu
+        muw0 = uncode(mu)
+        dct = Sx(perm * muw0).coproduct(*list(range(1, extra + 1)))#.change_basis(MonomialBasis)
+        w0s = uncode([numvars] * extra)
+        dct2 = {}
+        #w0 = uncode(list(range(numvars - 1, 0, -1)))
+        for (lambd, perm0), v in dct.items():
+            the_words = Schub(perm0, numvars - 1).change_basis(MonomialBasis)
+            lambd2 = tuple((lambd * (~w0s)).trimcode)
+            for tup, v2 in the_words.items():
+                new_tup = tuple(reversed([numvars - 1 - i - tup[i] for i in range(len(tup))]))
+                dct2[(new_tup, lambd2)] = v * v2
+                #ret[((tuple(reversed(new_tup[-numvars + 1 :])), *sorted(new_tup[: -numvars + 1])), numvars)] = v
+        return dct2
 
     @classmethod
     def transition_elementary(cls, perm, numvars):
@@ -182,11 +232,14 @@ class SchubertBasis(FreeAlgebraBasis):
         from .key_basis import KeyBasis
         from .monomial_slide_basis import MonomialSlideBasis
         from .schubert_schur_basis import SchubertSchurBasis
+        from .schur_elementary_basis import SchurElementaryBasis
         from .word_basis import WordBasis
         from .z_basis import ZBasis
 
         if other_basis == SchubertBasis:
             return lambda x: {x: S.One}
+        if other_basis == SchurElementaryBasis:
+            return lambda x: cls.transition_schur_elementary(*x)
         if other_basis == CompositionSchubertBasis:
             return lambda x: {CompositionSchubertBasis.as_key(x): S.One}
         if other_basis == ElementaryBasis:
