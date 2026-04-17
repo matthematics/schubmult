@@ -91,9 +91,10 @@ def verify_pair(perm1, perm2, n):
         g_result = g.zero
         result = r.zero
         prd = Sx(perm1) * Sx(perm2)
-        length = max(len(perm1), len(perm2)) - 1
-        partition1 = tuple((~(perm1.strict_mul_dominant(length))).trimcode)
-        partition2 = tuple((~(perm2.strict_mul_dominant(length))).trimcode)
+        #length = max(len(perm1), len(perm2)) - 1
+        length = n
+        # partition1 = tuple((~(perm1.strict_mul_dominant(length))).trimcode)
+        # partition2 = tuple((~(perm2.strict_mul_dominant(length))).trimcode)
         schub1 = g.schub_elem(perm1, length)#, partition=partition1)
         #schub1 = g.from_tensor_dict(schub1_base, size=length)
         schub2 = g.schub_elem(perm2, length)#, partition=partition2)
@@ -139,10 +140,10 @@ def verify_pair(perm1, perm2, n):
             if coeff != prd.get(rc.perm, 0):
                 print(f"Coeff mismatch for {perm1}, {perm2} at {rc.perm}: got {coeff}, expected {prd.get(rc.perm, 0)}")
                 return False
-            if rc.is_highest_weight:# and rc.extremal_weight == pad_tuple(rc.perm.trimcode, len(rc)):
-                if rc.perm not in seen:
-                    seen.add(rc.perm)
-                    prd2 += coeff * Sx(rc.perm)
+            if rc.is_highest_weight and rc.extremal_weight == pad_tuple(rc.perm.trimcode, len(rc)):
+                # if rc.perm not in seen:
+                #     seen.add(rc.perm)
+                prd2 += coeff * Sx(rc.perm)
 
         if prd != prd2:
             print(f"Product mismatch for {perm1}, {perm2}: expected {prd}, got {prd2}")
