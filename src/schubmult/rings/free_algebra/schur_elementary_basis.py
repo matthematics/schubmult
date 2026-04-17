@@ -56,7 +56,7 @@ class SchurElementaryBasis(FreeAlgebraBasis):
         dom_perm = uncode(([numvars] * extra) + list(range(numvars - 1, 0, -1)))
         #shifted_ring = SingleSchubertRing(MaskedGeneratingSet(Sx([]).ring.genset, list(range(1, extra + 1))))
         start_schub = Sx(grass_perm)
-        start_schub *= Sx.from_expr(expand_seq([numvars - 1 - i - a for i, a in enumerate(reversed(elem_tup))], Sx.genset[extra+1:]))
+        start_schub *= Sx.from_expr(expand_seq([numvars - 1 - i - a for i, a in enumerate(reversed(elem_tup))], Sx.genset[extra:]))
         return {(k * ~dom_perm, numvars): v for k, v in start_schub.items()}
 
     @classmethod
