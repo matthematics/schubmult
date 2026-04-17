@@ -257,7 +257,12 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         elem = self.zero
         for _, cem_dict in dct.items():
             for key, coeff in cem_dict.items():
-                elem += coeff * self(self.make_key(key, size))
+                new_key = self.make_key(key, size)
+                # one_key = self.make_key((), size)
+                # if not self._check_in_coprod(new_key, one_key, new_key):
+                #     print(f"Key {new_key} from CEM of {perm} at size {size} failed coproduct check. Skipping.")
+                #     continue
+                elem += coeff * self(new_key)
         return elem
 
     def div_diff_desc_key(self, index, key, reflect=False):
@@ -497,16 +502,12 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                         working_rc_base, working_elem_rc = working_rc.squash_decomp()
                         working_elem_rc = working_elem_rc.normalize()
                         working_rc_base = working_rc_base.normalize()
-
-                        # if not _is_full_grassmannian_rc(working_elem_rc):
-                        #     raise ValueError(f"Peeling produced non full Grassmannian RC graph: {working_elem_rc} from {factor} in key {key}")
                         addup_list = [working_elem_rc.normalize(), *addup_list]
                         working_rc = working_rc_base.normalize()
                     if working_rc.perm.inv > 0:
                         if not _is_full_grassmannian_rc(working_rc):
                             raise ValueError(f"Peeling produced non full Grassmannian RC graph: {working_rc} from {factor} in key {key}")
                         addup_list = [working_rc.normalize(), *addup_list]
-                    #del factors[i]
                     factors = [*factors[:i], *addup_list, *factors[i + 1:]]
                     peeled = True
                     break
@@ -552,12 +553,9 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         return self.make_key(factors, size)
         #return self.make_key(tensor.reverse_raise_seq(raise_seq), size)
 
-    def _mul_keys(self, left_key: tuple, right_key: tuple) -> tuple:
+    def _check_in_coprod(self, left_key, right_key, new_key):
         from schubmult import ASx, ElementaryBasis, FreeAlgebra, SchubertBasis  # noqa: F401
         Elem = FreeAlgebra(ElementaryBasis) # noqa: F841
-        if left_key.size != right_key.size:
-            raise ValueError(f"Cannot multiply keys of different sizes: {left_key.size} vs {right_key.size}")
-        new_key = self._normalize_key(self.make_key((*left_key, *right_key), left_key.size))
         #elem_result = Elem(_build_elem_from_key(new_key))
         rc1 = self.key_to_rc_graph(left_key) # noqa: F841
         rc2 = self.key_to_rc_graph(right_key) # noqa: F841
@@ -566,8 +564,18 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         #if ASx(rc_result.perm, len(rc_result)).coproduct().get(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))), 0) == 0:
         #if Elem(*_build_elem_from_key(new_key)).change_basis(SchubertBasis).coproduct().get(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))), 0) == 0:
             print("Eifefas")
-            return None
-        #return self._normalize_key(new_key)
+            return False
+        # if Elem(*_build_elem_from_key(new_key)).coproduct().get((_build_elem_from_key(left_key), _build_elem_from_key(right_key)), 0) == 0:
+        #     print("Eifefas2wr")
+        #     return False
+        return True
+
+    def _mul_keys(self, left_key: tuple, right_key: tuple) -> tuple:
+        if left_key.size != right_key.size:
+            raise ValueError(f"Cannot multiply keys of different sizes: {left_key.size} vs {right_key.size}")
+        new_key = self._normalize_key(self.make_key((*left_key, *right_key), left_key.size))
+        # if not self._check_in_coprod(left_key, right_key, new_key):
+        #     return None
         return new_key
 
     _post_normalizing = False
