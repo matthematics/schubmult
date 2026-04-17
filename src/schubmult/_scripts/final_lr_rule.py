@@ -115,13 +115,13 @@ def verify_pair(perm1, perm2, n):
                     if the_key.is_highest_weight:
                         rc = next(iter(g(the_key).to_rc_graph_ring_element().resize(n)))
                         # if prd.get(rc.perm, 0) != 0:
-                        #     # if coeff1 * coeff2 < 0:
-                        #     #     print(f"Negative coefficient for {rc} in product of {perm1} and {perm2} with keys {key1} and {key2}")
-                        #     #     return False
+                        #     if coeff1 * coeff2 < 0:
+                        #         print(f"Negative coefficient for {rc} in product of {perm1} and {perm2} with keys {key1} and {key2}")
+                        #         return False
                         #     tensor_result += coeff1 * coeff2 * g(key1).to_rc_graph_ring_element() @ g(key2).to_rc_graph_ring_element()
                         # g_result += coeff1 * coeff2 * g(the_key)
                         sumup += coeff1 * coeff2 * r(rc)
-            # if any(v < 0 for v in sumup.values()):
+            # if any(v < 0 for k, v in sumup.items() if k.extremal_weight == pad_tuple(k.perm.trimcode, len(k))):
             #     print(f"Negative coefficient in intermediate sumup for {perm1} and {perm2} at key {key1}: {sumup}")
             #     return False
             result += sumup

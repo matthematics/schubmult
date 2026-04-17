@@ -93,6 +93,29 @@ def _max_grass_elem_peel(rc):
     return the_min, the_max
 
 
+def _build_elem_from_key(key):
+    build_elem_key = []
+    key_index = 0
+    i = 1
+    size = key.size
+    while key_index < len(key):
+        # a = key[i - 1]
+        # if a != 0:
+        #     build_elem_key.append(self.elem_sym(a, i, size=size))
+        rc = key[key_index]
+        if len(rc) == min(i, size):
+            build_elem_key.append(rc.perm.inv)
+            key_index += 1
+        else:
+            build_elem_key.append(0)
+        i += 1
+    if key_index != len(key):
+        raise ValueError(f"Did not consume all of key {key} when building  {size} {key_index=} {len(key)=} {key=}")
+    if len(build_elem_key) < size:
+        build_elem_key.extend([0] * (size - len(build_elem_key)))
+    elem_key = (tuple(build_elem_key[:size] + sorted(build_elem_key[size:], reverse=True)), size)
+    return elem_key
+
 def _sort_and_merge(factors):
     """Sort factors by length (ascending, stable) and merge same-length adjacent via squash_product."""
     factors.sort(key=len)
@@ -173,9 +196,11 @@ class BoundedRCFactorAlgebraElement(CrystalGraphRingElement):
         return result
 
     def divdiff_descs(self, *indexes):
-        result = self.ring.zero
+        result = self
         for index in reversed(indexes):
-            for key, coeff in self.items():
+            old_result = result
+            result = self.ring.zero
+            for key, coeff in old_result.items():
                 result += coeff * self.ring.div_diff_desc_key(index, key)
         return result
 
@@ -224,33 +249,73 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
         self.dtype = type("BoundedRCFactorAlgebraElement", (BoundedRCFactorAlgebraElement,), {"ring": self})
 
+
     @cache
     def _schub_elem_cached(self, perm, size, partition):
         dct = RCGraph.full_CEM(perm, size, partition=partition)
         # dct = RCGraph.full_CEM(perm, size)
-        elem = sum([self.from_tensor_dict(cem_dict, size=size) for _, cem_dict in dct.items()])
+        elem = self.zero
+        for _, cem_dict in dct.items():
+            for key, coeff in cem_dict.items():
+                elem += coeff * self(self.make_key(key, size))
         return elem
 
-    def div_diff_desc_key(self, index, key):
+    def div_diff_desc_key(self, index, key, reflect=False):
         # r = RCGraphRing()
+        from schubmult import Permutation
         key = self._normalize_key(key)
-        if not any(_descent_of_grass(rc) == index for rc in key):
-            return self.zero
-        new_keys = []
-        for pos, rc in enumerate(key):
-            if _descent_of_grass(rc) < index:
-                continue
-            if _descent_of_grass(rc) == index:
-                for new_rc in rc.divdiff_desc(index):
+        if len(key) == 0:
+            if not reflect:
+                return self.zero
+            return self(self.make_key((), key.size))
+        # recurse
+
+        if not reflect:
+            first_rc = key[0]
+            result = self.zero
+            if len(first_rc) == index:
+                ret_set = first_rc.divdiff_desc(index)
+                tack_on = self.div_diff_desc_key(index, self.make_key(key[1:], key.size), reflect=True)
+                for new_rc in ret_set:
                     if not _is_full_grassmannian_rc(new_rc):
-                        raise ValueError(f"divdiff_desc produced non full Grassmannian RC graph: {new_rc} from {rc} at index {index} {key=} {key.size=}")
-                    new_keys.append(tuple(new_rc.normalize() if the_pos == pos else key[the_pos] for the_pos in range(len(key))))
-            if _descent_of_grass(rc) > index:
-                new_new_keys = []
-                for new_key in new_keys:
-                    new_new_keys.append(tuple(rc.crystal_reflection(index) if the_pos == pos else new_key[the_pos] for the_pos in range(len(key))))
-                new_keys = new_new_keys
-        return sum([self(self.make_key(new_key, key.size)) for new_key in new_keys])
+                        raise ValueError(f"divdiff_desc produced non full Grassmannian RC graph: {new_rc} from {first_rc} at index {index} {key=} {key.size=}")
+                    if new_rc.perm.inv > 0:
+                        result += self(self.make_key((new_rc.normalize(),), key.size))*tack_on
+                    else:
+                        result += tack_on
+                # old_result = result
+                # result = self.zero
+                #result += self(self.make_key((key[0],), key.size)) * tack_on
+                    #result += self.from_tensor_dict(mid_result @ self.div_diff_desc_key(index, self.make_key(key[1:], key.size), reflect=True), size=key.size)
+            additional_divdiff = self.div_diff_desc_key(index, self.make_key(key[1:], key.size), reflect=False)
+            # for second_key, coeff2 in additional_divdiff.items():
+            #     result += coeff2 * self(self.make_key((key[0],*second_key), key.size))
+            result += self(self.make_key((key[0],), key.size)) * additional_divdiff
+            #result += self.from_tensor_dict(self(self.make_key((first_rc,),key.size))@self.div_diff_desc_key(index, self.make_key(key[1:], key.size), reflect=False), size=key.size)
+            return result
+        # if not any(len(rc) == index for rc in key):
+        #     return self(self.make_key([rc.crystal_reflection(index) for rc in key], key.size))
+        return self(key) + (self.schub_elem(Permutation.ref_product(index + 1),key.size) - 2 *self.schub_elem(Permutation.ref_product(index),key.size) + (self.zero if index == 1 else self.schub_elem(Permutation.ref_product(index-1), key.size)))*self.div_diff_desc_key(index, key, reflect=False)
+        # new_keys = []
+        # for pos, rc in enumerate(key):
+        #     if len(rc) < index:
+        #         continue
+        #     if len(rc) == index:
+        #         for new_rc in rc.divdiff_desc(index):
+        #             if not _is_full_grassmannian_rc(new_rc):
+        #                 raise ValueError(f"divdiff_desc produced non full Grassmannian RC graph: {new_rc} from {rc} at index {index} {key=} {key.size=}")
+        #             new_keys.append(self._normalize_key(self.make_key(tuple(new_rc.normalize() if the_pos == pos else key[the_pos] for the_pos in range(len(key))), key.size)))
+        #     if len(rc) > index:
+        #         new_new_keys = []
+        #         for new_key in new_keys:
+        #             new_new_keys.append(self._normalize_key(self.make_key(tuple(rc.crystal_reflection(index) if the_pos == pos else new_key[the_pos] for the_pos in range(len(key))), key.size)))
+        #         new_keys = new_new_keys
+        # return sum([self(self.make_key(new_key, key.size)) for new_key in new_keys])
+
+    # def key_to_free_algebra_element(self, key):
+    #     from schubmult import ElementaryBasis, FreeAlgebra
+    #     Elem = FreeAlgebra(ElementaryBasis)
+    #     rc = self.key_to_rc_graph(key)
 
     def div_diff_perm_key(self, perm, key):
         result = self(key)
@@ -276,6 +341,25 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
             partition = tuple((~(perm.strict_mul_dominant(size))).trimcode)
 
         return self._schub_elem_cached(Permutation(perm), size, partition)
+
+    def schub_elem2(self, perm, size):
+        raise NotImplementedError("schub_elem2 is looping over the wrong elem syms")
+        from schubmult import ASx, ElementaryBasis, FreeAlgebra, SchubertBasis
+        representation = ASx(perm, size).change_basis(ElementaryBasis)
+        Elem = FreeAlgebra(ElementaryBasis)
+        result = self.zero
+        for key, coeff in representation.items():
+            the_term = self(self.make_key((), size=size))
+            key_tuple = key[0]
+            the_elem = Elem(*key).change_basis(SchubertBasis)
+            the_coeff = the_elem.get((perm, size), 0)
+            if the_coeff == 0:
+                continue
+            for i, a in enumerate(key_tuple, start=1):
+                if a != 0:
+                    the_term *= self.elem_sym(a, min(i, size), size=size)
+            result += the_coeff * coeff * the_term
+        return result
 
     def dual_product_on_basis(self, left_key, right_key):
         """Dual product to the coproduct_on_basis deconcatenation."""
@@ -327,10 +411,10 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
     def __hash__(self):
         return hash(("BoundedRCFactorAlgebra", self._ID))
 
-    def elem_sym(self, p, k):
+    def elem_sym(self, p, k, size=None):
         from schubmult import uncode
-
-        set_of_keys = [self.make_key((rc,), k) for rc in RCGraph.all_rc_graphs(uncode([0] * (k - p) + [1] * p), k)]
+        size = k if size is None else size
+        set_of_keys = [self.make_key((rc,), size) for rc in RCGraph.all_rc_graphs(uncode([0] * (k - p) + [1] * p), k)]
         return self.from_dict(dict.fromkeys(set_of_keys, S.One))
 
     def printing_term(self, key):
@@ -393,7 +477,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
             factors = _sort_and_merge(list(factors))
             #hw_key, raise_seq = self.make_key(tuple(factors), size).to_highest_weight()
             # Phase 2: normalize individual RCGraphs and strip identities
-            #factors = [rc.normalize() for rc in hw_key if rc.perm.inv != 0]
+            factors = [rc.normalize() for rc in factors if rc.perm.inv != 0]
 
             peeled = False
             for i in range(len(factors) - 1, -1, -1):
@@ -469,10 +553,22 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         #return self.make_key(tensor.reverse_raise_seq(raise_seq), size)
 
     def _mul_keys(self, left_key: tuple, right_key: tuple) -> tuple:
+        from schubmult import ASx, ElementaryBasis, FreeAlgebra, SchubertBasis  # noqa: F401
+        Elem = FreeAlgebra(ElementaryBasis) # noqa: F841
         if left_key.size != right_key.size:
             raise ValueError(f"Cannot multiply keys of different sizes: {left_key.size} vs {right_key.size}")
-        new_key = self.make_key((*left_key, *right_key), left_key.size)
-        return self._normalize_key(new_key)
+        new_key = self._normalize_key(self.make_key((*left_key, *right_key), left_key.size))
+        #elem_result = Elem(_build_elem_from_key(new_key))
+        rc1 = self.key_to_rc_graph(left_key) # noqa: F841
+        rc2 = self.key_to_rc_graph(right_key) # noqa: F841
+        rc_result = self.key_to_rc_graph(new_key)
+        if ASx(rc_result.perm, len(rc_result)).change_basis(ElementaryBasis).coproduct().get((_build_elem_from_key(left_key), _build_elem_from_key(right_key)), 0) == 0:
+        #if ASx(rc_result.perm, len(rc_result)).coproduct().get(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))), 0) == 0:
+        #if Elem(*_build_elem_from_key(new_key)).change_basis(SchubertBasis).coproduct().get(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))), 0) == 0:
+            print("Eifefas")
+            return None
+        #return self._normalize_key(new_key)
+        return new_key
 
     _post_normalizing = False
 
@@ -565,5 +661,6 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         for left_key, left_coeff in a.items():
             for right_key, right_coeff in b.items():
                 key = self._mul_keys(left_key, right_key)
-                accum[key] = accum.get(key, S.Zero) + left_coeff * right_coeff
+                if key is not None:
+                    accum[key] = accum.get(key, S.Zero) + left_coeff * right_coeff
         return self._post_normalize_dict(accum)

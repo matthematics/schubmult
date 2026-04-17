@@ -7,6 +7,7 @@ from .dual_rc_graph_ring import DualRCGraphRing
 from .eg_plactic_ring import EGPlacticRing, EGPlacticRingElement
 from .grass_tensor_algebra import GrassTensorAlgebra, GrassTensorAlgebraElement
 from .hw_rc_ring import HWRCGraphRing
+from .phantom_quotient_algebra import PhantomQuotientAlgebra, PhantomQuotientElement
 from .plactic_algebra import NilPlacticAlgebra, PlacticAlgebra, PlacticAlgebraElement
 from .qy_rc_graph_ring import QYRCGraphRing
 from .rc_graph_ring import GrassRCGraphRing, RCGraphRing, RCGraphRingElement
@@ -31,6 +32,8 @@ __all__ = [
     "GrassTensorAlgebraElement",
     "HWRCGraphRing",
     "NilPlacticAlgebra",
+    "PhantomQuotientAlgebra",
+    "PhantomQuotientElement",
     "PlacticAlgebra",
     "PlacticAlgebraElement",
     "QYRCGraphRing",
