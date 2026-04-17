@@ -116,6 +116,34 @@ def _build_elem_from_key(key):
     elem_key = (tuple(build_elem_key[:size] + sorted(build_elem_key[size:], reverse=True)), size)
     return elem_key
 
+def _build_schur_elem_from_key(key):
+    build_elem_key = []
+    key_index = 0
+    i = 1
+    size = key.size
+    while key_index < len(key) and i < size:
+        # a = key[i - 1]
+        # if a != 0:
+        #     build_elem_key.append(self.elem_sym(a, i, size=size))
+        rc = key[key_index]
+        if len(rc) == i:
+            build_elem_key.append(rc.perm.inv)
+            key_index += 1
+        else:
+            build_elem_key.append(0)
+        i += 1
+    # if key_index != len(key):
+    #     raise ValueError(f"Did not consume all of key {key} when building  {size} {key_index=} {len(key)=} {key=}")
+    if len(build_elem_key) < size - 1:
+        build_elem_key.extend([0] * (size - 1 - len(build_elem_key)))
+    partition = ()
+    if key_index < len(key):
+        partition = tuple(key[-1].perm.trimcode)
+    else:
+        partition = (0,) * size
+    elem_key = (tuple(build_elem_key), partition)
+    return elem_key
+
 def _sort_and_merge(factors):
     """Sort factors by length (ascending, stable) and merge same-length adjacent via squash_product."""
     factors.sort(key=len)
@@ -339,9 +367,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
     def schub_elem(self, perm, size, partition=None):
         from schubmult.combinatorics.permutation import Permutation
-        if size >= len(perm) - 1 and partition is None:
-            partition = tuple(range(len(perm) - 1, 0, -1))
-        elif partition is None:
+        if partition is None:
             #partition = tuple((~(perm.strict_mul_dominant(size))).trimcode)
             partition = tuple((~(perm.strict_mul_dominant(size))).trimcode)
 
@@ -554,16 +580,17 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         #return self.make_key(tensor.reverse_raise_seq(raise_seq), size)
 
     def _check_in_coprod(self, left_key, right_key, new_key):
-        from schubmult import ASx, ElementaryBasis, FreeAlgebra, SchubertBasis  # noqa: F401
-        Elem = FreeAlgebra(ElementaryBasis) # noqa: F841
+        from schubmult import ASx, ElementaryBasis, FreeAlgebra, SchubertBasis, SchurElementaryBasis  # noqa: F401
+        SchurElem = FreeAlgebra(SchurElementaryBasis) # noqa: F841
         #elem_result = Elem(_build_elem_from_key(new_key))
-        rc1 = self.key_to_rc_graph(left_key) # noqa: F841
-        rc2 = self.key_to_rc_graph(right_key) # noqa: F841
+        # rc1 = self.key_to_rc_graph(left_key)
+        # rc2 = self.key_to_rc_graph(right_key)
         rc_result = self.key_to_rc_graph(new_key)
-        if ASx(rc_result.perm, len(rc_result)).change_basis(ElementaryBasis).coproduct().get((_build_elem_from_key(left_key), _build_elem_from_key(right_key)), 0) == 0:
+        #result_elem = SchurElem(*_build_schur_elem_from_key(new_key)).change_basis(SchubertBasis)
+        if ASx(rc_result.perm, len(rc_result)).change_basis(SchurElementaryBasis).coproduct().get((_build_schur_elem_from_key(left_key), _build_schur_elem_from_key(right_key)), 0) == 0:
         #if ASx(rc_result.perm, len(rc_result)).coproduct().get(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))), 0) == 0:
         #if Elem(*_build_elem_from_key(new_key)).change_basis(SchubertBasis).coproduct().get(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))), 0) == 0:
-            print("Eifefas")
+            #print("Eifefas")
             return False
         # if Elem(*_build_elem_from_key(new_key)).coproduct().get((_build_elem_from_key(left_key), _build_elem_from_key(right_key)), 0) == 0:
         #     print("Eifefas2wr")
@@ -574,8 +601,8 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         if left_key.size != right_key.size:
             raise ValueError(f"Cannot multiply keys of different sizes: {left_key.size} vs {right_key.size}")
         new_key = self._normalize_key(self.make_key((*left_key, *right_key), left_key.size))
-        # if not self._check_in_coprod(left_key, right_key, new_key):
-        #     return None
+        if not self._check_in_coprod(left_key, right_key, new_key):
+            return None
         return new_key
 
     _post_normalizing = False

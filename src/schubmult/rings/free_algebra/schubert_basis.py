@@ -144,6 +144,8 @@ class SchubertBasis(FreeAlgebraBasis):
         for (lambd, perm0), v in dct.items():
             the_words = Schub(perm0, numvars - 1).change_basis(MonomialBasis)
             lambd2 = tuple((lambd * (~w0s)).trimcode)
+            if len(lambd2) == 0:
+                lambd2 = (0,) * numvars
             for tup, v2 in the_words.items():
                 new_tup = tuple(reversed([numvars - 1 - i - tup[i] for i in range(len(tup))]))
                 dct2[(new_tup, lambd2)] = v * v2
