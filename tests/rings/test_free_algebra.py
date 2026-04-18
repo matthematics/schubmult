@@ -115,7 +115,7 @@ def test_elementary_to_schubert():
 
 
 
-from schubmult.rings.free_algebra import WordBasis, SchubertBasis, ElementaryBasis, FundamentalSlideBasis, ForestBasis, MonomialSlideBasis, FA, KeyBasis
+from schubmult.rings.free_algebra import WordBasis, SchubertBasis, ElementaryBasis, FundamentalSlideBasis, ForestBasis, MonomialSlideBasis, FA, KeyBasis, SchurElementaryBasis
 
 @pytest.mark.parametrize("basis", [
     WordBasis, 
@@ -124,7 +124,8 @@ from schubmult.rings.free_algebra import WordBasis, SchubertBasis, ElementaryBas
     FundamentalSlideBasis,
     ForestBasis, 
     MonomialSlideBasis,
-    KeyBasis])
+    KeyBasis,
+    SchurElementaryBasis])
 def test_word_basis_transitions(basis):
     
 
@@ -141,7 +142,8 @@ def test_word_basis_transitions(basis):
     FundamentalSlideBasis,
     ForestBasis, 
     MonomialSlideBasis,
-    KeyBasis])
+    KeyBasis,
+    SchurElementaryBasis])
 def test_schubert_basis_transitions(basis):
     from schubmult import ASx, uncode
 
@@ -149,3 +151,85 @@ def test_schubert_basis_transitions(basis):
 
     schub_elem2 = schub_elem.change_basis(basis).change_basis(SchubertBasis)
     assert schub_elem2 == schub_elem
+
+
+# --- SchurElementaryBasis tests ---
+
+def test_schur_elementary_is_key():
+    assert SchurElementaryBasis.is_key(((1, 2), (0, 1, 3)))
+    assert SchurElementaryBasis.is_key(([1], [0, 2]))
+    assert not SchurElementaryBasis.is_key((1, 2, 3))
+    assert not SchurElementaryBasis.is_key(((1,),))
+
+
+def test_schur_elementary_as_key():
+    assert SchurElementaryBasis.as_key(([1, 2], [0, 1, 3])) == ((1, 2), (0, 1, 3))
+
+
+def test_schur_elementary_zero_monom():
+    assert SchurElementaryBasis.zero_monom == ((), ())
+
+
+def test_schur_elementary_to_schubert_trivial_partition():
+    """When lambd[-1] == 0, should delegate to ElementaryBasis."""
+    from schubmult.symbolic import S
+
+    result = SchurElementaryBasis.transition_schubert((1, 0), (0, 0, 0))
+    assert len(result) > 0
+    assert all(isinstance(k, tuple) and len(k) == 2 for k in result)
+    assert all(v != S.Zero for v in result.values())
+
+
+def test_schur_elementary_to_schubert_nontrivial():
+    """When lambd has a nonzero last entry, uses the Grassmannian product path."""
+    from schubmult.symbolic import S
+
+    result = SchurElementaryBasis.transition_schubert((1,), (0, 2))
+    assert len(result) > 0
+    assert all(v != S.Zero for v in result.values())
+
+
+def test_schur_elementary_roundtrip_via_schubert():
+    """SE -> Schubert -> SE should be the identity."""
+    from schubmult import FreeAlgebra
+
+    SE = FreeAlgebra(SchurElementaryBasis)
+    key = ((1,), (0, 2))
+    elem = SE(key)
+    roundtrip = elem.change_basis(SchubertBasis).change_basis(SchurElementaryBasis)
+    assert roundtrip == elem
+
+
+def test_schur_elementary_roundtrip_via_word():
+    """SE -> Word -> SE should be the identity."""
+    from schubmult import FreeAlgebra
+
+    SE = FreeAlgebra(SchurElementaryBasis)
+    key = ((1, 0), (0, 0, 0))
+    elem = SE(key)
+    roundtrip = elem.change_basis(WordBasis).change_basis(SchurElementaryBasis)
+    assert roundtrip == elem
+
+
+def test_schubert_to_schur_elementary():
+    """Schubert -> SE should produce valid SE keys and round-trip back."""
+    from schubmult import ASx, uncode
+
+    perm = uncode([2, 1])
+    se_elem = ASx(perm).change_basis(SchurElementaryBasis)
+    assert len(se_elem) > 0
+    # All keys should be (tuple, tuple) pairs
+    for k in se_elem:
+        assert SchurElementaryBasis.is_key(k)
+    # Round-trip back
+    schub_back = se_elem.change_basis(SchubertBasis)
+    assert schub_back == ASx(perm)
+
+
+def test_schur_elementary_printing_term():
+    """Printing term should use SE prefix."""
+    key = ((1, 2), (0, 1, 3))
+    pt = SchurElementaryBasis.printing_term(key)
+    from sympy import sstr
+    s = sstr(pt)
+    assert "SE" in s
