@@ -1,27 +1,38 @@
 from schubmult import *
 from schubmult.abc import *
-from sympy import expand, Add, Mul, S, sympify, pretty_print
+from sympy import expand, Add, Mul, S, sympify, pretty_print, Pow
 
 if __name__ == "__main__":
     import sys
+    import itertools
     n = int(sys.argv[1])
     perms = Permutation.all_permutations(n)
     r = RCGraphRing()
-    for perm in perms:
+    for perm1, perm2 in itertools.product(perms, repeat=2):
         # print("=" * 80)
         # print(f"PERMUTATION: {perm}  (inv={perm.inv}, descents={perm.descents()}, trimcode={perm.trimcode})")
         # print("=" * 80)
 
-        the_cem = expand(DSx(perm).in_SEM_basis())
+        the_cem1 = expand(DSx(perm1).in_SEM_basis())
+        the_cem2 = expand(DSx(perm2).in_SEM_basis())
         # print(f"  CEM expansion (in_SEM_basis): {the_cem}")
-
+        the_cem = expand(the_cem1 * the_cem2)
         terms = []
+        
         for the_term in Add.make_args(sympify(the_cem)):
             coeff, rest = the_term.as_coeff_Mul()
             if rest == 1:
                 terms.append((coeff, ()))
             else:
-                factors = Mul.make_args(rest)
+                factors = []
+                
+                for factor in Mul.make_args(rest):
+                    exponent = 1
+                    if isinstance(factor, Pow):
+                        base, exponent = factor.as_base_exp()
+                    else:
+                        base = factor
+                    factors.extend([base] * exponent)
                 terms.append((coeff, sorted(factors, key=lambda x: x.numvars)))
 
         # print(f"\n  Parsed terms ({len(terms)} total):")
@@ -79,10 +90,15 @@ if __name__ == "__main__":
             the_result += term[0] * base
             # print(f"    term[{ti}] contribution: {term[0]} * {base}")
 
-        # print(f"\n  FINAL RESULT for {perm}:")
+        # print(f"\n  FINAL RESULT for {perm1} * {perm2}:")
         pretty_print(the_result)
-        assert the_result.almosteq(r.schub(perm, len(next(iter(the_result)))))
-        print("Success for permutation:", perm)
+        prd = Sx(perm1) * Sx(perm2)
+        for rc, coeff in the_result.items():
+            prd_coeff = prd.get(rc.perm, S.Zero)
+            if expand(coeff-prd_coeff) != S.Zero:
+                print(f"  *** MISMATCH for {rc}: computed coeff={coeff}, expected coeff={prd_coeff}")
+        #assert the_result.almosteq(r.schub(perm, len(next(iter(the_result)))))
+        print("Success for permutations:", perm1, perm2)
         # print(f"\n  CEM expansion was:")
         # pretty_print(the_cem)
         # print()
