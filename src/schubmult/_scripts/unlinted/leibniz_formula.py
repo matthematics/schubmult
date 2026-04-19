@@ -22,9 +22,10 @@ def _kk_dd_to_rc_ring_elem(kk_dd, rc_ring):
     """
     Normalize kk_dd into an RCGraphRing element.
     Accepts:
-      - an RCGraphRing element (returned as-is),
-      - a mapping {rc_graph: coeff},
-      - an iterable of rc_graphs (treated as coefficient 1 each).
+    - an RCGraphRing element (returned as-is),
+    - a mapping {rc_graph: coeff},
+    - an iterable of rc_graphs (treated as coefficient 1 each).
+
     Returns an rc_ring element (or raises if conversion fails).
     """
     # already an rc_ring element?

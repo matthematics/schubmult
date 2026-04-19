@@ -1,14 +1,17 @@
-"""Generate TikZ code for a specific RC-graph product equation.
+r"""Generate TikZ code for a specific RC-graph product equation.
 
-Requested equation:
-  RCGraph([(2,),(),(e,)]) \star RCGraph([(3,2,1),(),(3,)])
-= RCGraph([(4,3,2,1),(),(4,3)])
-+ RCGraph([(4,3,2,1),(4,),(3,)])
-+ RCGraph([(4,3,2,1),(4,3),()])
-- RCGraph([(4,3,2,1),(2,),(3,)])
+Requested equation::
+
+    + RCGraph([(2,),(),(e,)]) * RCGraph([(3,2,1),(),(3,)])
+    = RCGraph([(4,3,2,1),(),(4,3)])
+    + RCGraph([(4,3,2,1),(4,),(3,)])
+    + RCGraph([(4,3,2,1),(4,3),()])
+    - RCGraph([(4,3,2,1),(2,),(3,)])
 
 Notes:
+
 - We render all diagrams at fixed width = 5.
+
 - Cells above the antidiagonal are explicitly filled with bumps (elbows), so
   every square has either a crossing or a bump.
 """
