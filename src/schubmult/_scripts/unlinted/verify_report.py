@@ -32,8 +32,9 @@ def json_key_load(s: str) -> Any:
 def load_verification_json(path: str) -> Tuple[Dict[Any, Any], Dict[str, Any]]:
     """
     Load verification file saved by lr_rule_verify:
-      - new format: {"meta": {...}, "records": {json_key: bool}}
-      - legacy: flat mapping {json_key: bool}
+    - new format: {"meta": {...}, "records": {json_key: bool}}
+    - legacy: flat mapping {json_key: bool}
+
     Returns (records: dict[decoded_key -> value], meta: dict)
     """
     with open(path, "r") as f:

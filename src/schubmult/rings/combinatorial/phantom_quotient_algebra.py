@@ -90,9 +90,11 @@ class PhantomQuotientElement(BaseRingElement):
         """Decompose this element into weight-surviving and weight-vanishing parts.
 
         Returns (surviving, vanishing) where:
-          surviving = reduce(self) — the part with well-defined weight
-          vanishing = self - surviving — the part that vanishes in weight,
-                      which lies in the ideal (or at least ker(weight_map))
+
+        - surviving = reduce(self) — the part with well-defined weight
+
+        - vanishing = self - surviving — the part that vanishes in weight,
+          which lies in the ideal (or at least ker(weight_map))
         """
         surviving = self.ring.reduce(self)
         vanishing = self.ring.sub(self, surviving)
@@ -111,15 +113,15 @@ class PhantomQuotientAlgebra(BaseRing):
 
     The full ideal I = BRC * {generators} * BRC is the two-sided ideal they
     generate. Elements of I have the property:
-      - They always vanish at the polynomial (weight) level.
-      - The generators themselves also vanish at the RC graph level.
-      - But general ideal elements a*g*b need NOT vanish at the RC graph level.
+    - They always vanish at the polynomial (weight) level.
+    - The generators themselves also vanish at the RC graph level.
+    - But general ideal elements a*g*b need NOT vanish at the RC graph level.
 
     This class provides:
-      - Generator computation and storage
-      - Multiplication in BRC followed by generator reduction
-      - Analysis tools comparing full vs non-phantom Schubert elements
-      - Detection of ideal membership at both generator and polynomial levels
+    - Generator computation and storage
+    - Multiplication in BRC followed by generator reduction
+    - Analysis tools comparing full vs non-phantom Schubert elements
+    - Detection of ideal membership at both generator and polynomial levels
     """
 
     _id = 0

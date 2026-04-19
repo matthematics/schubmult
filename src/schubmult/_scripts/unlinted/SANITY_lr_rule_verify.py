@@ -107,8 +107,10 @@ def json_key_rep(k):
     Serialize an arbitrary Python object `k` to a JSON-key-safe string.
 
     Strategy:
+
     - Primary: pickle the object and base64-encode the bytes, prefix with "PICKLE:".
       This preserves the original Python object on load (uses pickle.loads).
+
     - Fallback: if pickling fails, use "REPR:" + repr(k) and fall back to eval on load.
     """
     try:

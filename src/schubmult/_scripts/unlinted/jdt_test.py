@@ -101,12 +101,13 @@ used_rcs = set()
 def test_one_case(T: RootTableau, index: int, op_name: str, rc=None) -> Tuple[bool, str]:
     """
     Test commutation for one operator index:
-     left = op( Rect( UpSeq(T) ) )
-     right = Rect( UpSeq( op(T) ) )
+    - left = op( Rect( UpSeq(T) ) )
+    - right = Rect( UpSeq( op(T) ) )
+
     Returns (passed, message)
 
     Note: do not suppress exceptions from raising_operator / lowering_operator —
-    these should return None when the operator is not defined.
+    these should return ``None`` when the operator is not defined.
     """
     # apply UpSeq then rectify, then op
 
