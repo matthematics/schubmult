@@ -250,6 +250,7 @@ if __name__ == "__main__":
             prod = elem1 * elem2
             prod2 = elem2 * elem1
             assert prod2.almosteq(prod), f"Failure for {perm1} and {perm2}, got {prod}, got {prod2} from reversed product"
+            
             # for key, coeff in prod.items():
             #     if coeff == 0:
             #         continue

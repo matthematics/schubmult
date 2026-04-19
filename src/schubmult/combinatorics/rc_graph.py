@@ -75,11 +75,12 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         #     return self, RCGraph([()]).resize(n)
         hw, raise_seq = rc.to_highest_weight()
         perm = self.perm
-        perm_grass, perm_base = perm.coset_decomp(*(list(range(grass_descent))+list(range(grass_descent + 1,len(perm)))))
+        perm_grass, perm_base = perm.coset_decomp(*(list(range(grass_descent)) + list(range(grass_descent + 1, len(perm)))))
         if perm_grass.inv == 0:
             return self, RCGraph([()]).resize(n)
         if perm_base.inv == 0:
             return self, RCGraph([()]).resize(n)
+
         def decomp_hw():
             stack = [hw]
             seen = set()
@@ -96,7 +97,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             min_perm_inv = 0
             the_rc = None
             for rc_max in maxes:
-                grass, base = rc_max.perm.coset_decomp(*(list(range(grass_descent))+list(range(grass_descent + 1,len(perm)))))
+                grass, base = rc_max.perm.coset_decomp(*(list(range(grass_descent)) + list(range(grass_descent + 1, len(perm)))))
                 if the_rc is None:
                     the_rc = rc_max
                     min_perm_inv = base.inv
@@ -108,7 +109,6 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
             upper_rc = upper_rc.vertical_cut(grass_descent)[0]
             return lower_rc, upper_rc
-
 
         base_hw, grass = decomp_hw()
         tensor = CrystalGraphTensor(base_hw, grass).reverse_raise_seq(raise_seq)
@@ -172,7 +172,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                     raise ValueError("RC graph has too few rows to be decomposed")
                 seen.add(working_rc)
                 min_cos, residue = working_rc.perm.coset_decomp(*list(range(1, n)))
-                #residue = Permutation([residue[i - n] for i in range(n, len(residue))])
+                # residue = Permutation([residue[i - n] for i in range(n, len(residue))])
                 if residue.inv == 0 and len(min_cos.descents()) <= 1:
                     min_cos_ret = AntiRCGraph.from_rc_graph(working_rc).vertical_cut(working_rc.rows - n)[1].to_rc_graph()
                     if min_cos_ret.perm.inv == 0 or min_cos_ret.perm.descents() == {n - 1}:
@@ -1205,6 +1205,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
     @classmethod
     def multiply_reps(cls, drep1, drep2):
         from schubmult import RCGraphRing
+
         r = RCGraphRing()
         ret = r.zero
         for rep1, coeff1 in drep1.items():
@@ -1234,7 +1235,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         if len(self) == 0:
             return {(): 1}
         bas = RCGraph.in_CEM_basis(self.perm, len(self), tuple((~(self.perm.mul_dominant())).trimcode))
-        #print(bas)
+        # print(bas)
         return bas[self]
 
     @cache
@@ -1245,7 +1246,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         if len(self) == 0:
             return {(): 1}
         bas = RCGraph.in_CEM_basis(self.perm, length - 1, tuple(partition))
-        #print(bas)
+        # print(bas)
         return bas[self.resize(length - 1)]
 
     @cache
@@ -1255,7 +1256,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         if len(self) == 0:
             return {(): 1}
         bas = RCGraph.in_CEM_basis(self.perm, length - 1, tuple(Permutation.w0(length).trimcode))
-        #print(bas)
+        # print(bas)
         return bas[self.resize(length - 1)]
 
     @classmethod
@@ -1266,23 +1267,28 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
         from schubmult import Sx
         from schubmult.rings.polynomial_algebra._core import PA
+
         if perm.inv == 0:
             return {cls([()] * length): {(): 1}}
         if partition is None:
             partition = (~(perm.mul_dominant())).trimcode
         mu = uncode(partition)
         numnums = max(len(partition), partition[0])
+
         def elem_sym_pos(p, k):
-            offset = (k * (k - 1))//2
+            offset = (k * (k - 1)) // 2
             return offset + p
+
         def inv_elem_sym_pos(pos):
             k = math.ceil((-1 + math.sqrt(1 + 8 * pos)) / 2)
             p = pos - (k * (k - 1)) // 2
             return p, k
 
-        the_length = (numnums * (numnums + 1))//2
+        the_length = (numnums * (numnums + 1)) // 2
+
         def word_elem(p, k, *args):  # noqa: ARG001
             import numpy as np
+
             if p > k or p < 0:
                 return 0
 
@@ -1290,6 +1296,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             if p > 0:
                 vec[elem_sym_pos(p, k) - 1] = 1
             return PA.from_dict({tuple(vec.tolist()): 1})
+
         the_pa = Sx(perm).cem_rep(mumu=mu, elem_func=word_elem)
         ret = {}
         for monom, coeff in the_pa.items():
@@ -1298,7 +1305,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 if exponent > 0:
                     p, k = inv_elem_sym_pos(pos)
                     pair_list.extend([(p, k)] * exponent)
-            for rc_list in itertools.product(*[cls.elem_sym_rcs(p,k) for p,k in pair_list]):
+            for rc_list in itertools.product(*[cls.elem_sym_rcs(p, k) for p, k in pair_list]):
                 rc_tup = tuple(rc_list)
                 rc = rc_list[0]
                 for other in rc_list[1:]:
@@ -1319,23 +1326,28 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
         from schubmult import Sx
         from schubmult.rings.polynomial_algebra._core import PA
+
         if perm.inv == 0:
             return {cls([()] * length): {(): 1}}
         if partition is None:
             partition = (~(perm.strict_mul_dominant())).trimcode
         mu = uncode(partition)
         numnums = max(len(partition), partition[0])
+
         def elem_sym_pos(p, k):
-            offset = (k * (k - 1))//2
+            offset = (k * (k - 1)) // 2
             return offset + p
+
         def inv_elem_sym_pos(pos):
             k = math.ceil((-1 + math.sqrt(1 + 8 * pos)) / 2)
             p = pos - (k * (k - 1)) // 2
             return p, k
 
-        the_length = (numnums * (numnums + 1))//2
+        the_length = (numnums * (numnums + 1)) // 2
+
         def word_elem(p, k, *args):  # noqa: ARG001
             import numpy as np
+
             if p > k or p < 0:
                 return 0
 
@@ -1343,17 +1355,18 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             if p > 0:
                 vec[elem_sym_pos(p, k) - 1] = 1
             return PA.from_dict({tuple(vec.tolist()): 1})
+
         the_pa = Sx(perm).cem_rep(mumu=mu, elem_func=word_elem)
         ret = {}
         for monom, coeff in the_pa.items():
             pair_list = []
-            #index_list = []
+            # index_list = []
             for pos, exponent in enumerate(monom, start=1):
                 p, k = inv_elem_sym_pos(pos)
                 if exponent > 0:
                     pair_list.extend([(p, k)] * exponent)
-                    #index_list.extend([pos] * exponent)
-            for rc_list in itertools.product(*[cls.elem_sym_rcs(p,k) for p,k in pair_list]):
+                    # index_list.extend([pos] * exponent)
+            for rc_list in itertools.product(*[cls.elem_sym_rcs(p, k) for p, k in pair_list]):
                 rc_tup = tuple(rc_list)
                 rc = rc_list[0]
                 for other in rc_list[1:]:
@@ -1366,6 +1379,94 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 ret[rc] = toadd_dict
         return ret
 
+    def full_double_elem_sym_squash(self, p, yvars, zvars):
+        from ..rings.combinatorial.rc_graph_ring import RCGraphRing
+        r = RCGraphRing()
+        result = r.zero
+        for elem_sym_rc in RCGraph.elem_sym_rcs(p, len(self)):
+            result += self.double_elem_sym_squash(p, elem_sym_rc.length_vector, yvars, zvars)
+        return result
+
+    def double_elem_sym_squash(self, p, weight, yvars, zvars):
+        from ..rings.combinatorial.rc_graph_ring import RCGraphRing
+
+        r = RCGraphRing()
+        k = len(self)
+        if p > k or p < 0:
+            return r.zero
+        if p == 0:
+            return r(self)
+        try:
+            elem_sym_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (k - p) + [1] * p), length=len(self), weight=weight)))
+        except StopIteration:
+            return r.zero
+        top_rc = self.squash_product(elem_sym_rc)
+        result = r(top_rc)
+        for i in range(len(weight)):
+            if weight[i] > 0:
+                result += (yvars[self.perm[i] - 1] - zvars[elem_sym_rc[i][0] - 1]) * self.double_elem_sym_squash(p - 1, tuple([w - 1 if j == i else w for j, w in enumerate(weight)]), yvars, zvars)
+        return result
+
+    # @classmethod
+    # @cache
+    # def double_CEM(cls, perm: Permutation, length: int, partition: tuple[int] | None = None) -> dict[RCGraph, dict[tuple[tuple[RCGraph,tuple[int]]], int]]:
+    #     import itertools
+    #     import math
+
+    #     from schubmult import DSx
+    #     from schubmult.rings.polynomial_algebra._core import PA
+    #     if perm.inv == 0:
+    #         return {cls([()] * length): {(): 1}}
+    #     if partition is None:
+    #         partition = (~(perm.strict_mul_dominant())).trimcode
+    #     mu = uncode(partition)
+    #     numnums = max(len(partition), partition[0])
+    #     def elem_sym_pos(p, k):
+    #         offset = (k * (k - 1))//2
+    #         return offset + p
+    #     def inv_elem_sym_pos(pos):
+    #         k = math.ceil((-1 + math.sqrt(1 + 8 * pos)) / 2)
+    #         p = pos - (k * (k - 1)) // 2
+    #         return p, k
+
+    #     the_length = (numnums * (numnums + 1))//2
+    #     rng = DSx([]).ring
+    #     # yvarlen = 20
+    #     def word_elem(p, k, xvars, yvars):
+    #         import numpy as np
+    #         from sympy import prod
+    #         if p > k or p < 0:
+    #             return 0
+
+    #         vec1 = np.zeros(the_length, dtype=int)
+    #         #vec2 = np.zeros(yvarlen, dtype=int)
+    #         if p > 0:
+    #             vec1[elem_sym_pos(p, k) - 1] = prod(yvars)
+    #             # for yv in yvars:
+    #             #     vec2[rng.coeff_genset.index(yv)] = 1
+    #         return PA.from_dict({tuple(vec1.tolist()): 1}) @ PA.from_dict({tuple(vec2.tolist()): 1})
+    #     the_pa = rng(perm).cem_rep(mumu=mu, elem_func=word_elem)
+    #     ret = {}
+    #     for (monom, yvar_vec), coeff in the_pa.items():
+    #         pair_list = []
+    #         #index_list = []
+    #         for pos, exponent in enumerate(monom, start=1):
+    #             p, k = inv_elem_sym_pos(pos)
+    #             if exponent > 0:
+    #                 pair_list.extend([(p, k)] * exponent)
+    #                 #index_list.extend([pos] * exponent)
+    #         for rc_list in itertools.product(*[cls.elem_sym_rcs(p,k) for p,k in pair_list]):
+    #             rc_tup = tuple(rc_list)
+    #             rc = rc_list[0]
+    #             for other in rc_list[1:]:
+    #                 rc = rc.resize(len(other)).squash_product(other)
+    #             # if rc.perm != perm:
+    #             #     continue
+    #             rc = rc.resize(length)
+    #             toadd_dict = ret.get(rc, {})
+    #             toadd_dict[rc_tup] = toadd_dict.get(rc_tup, 0) + coeff
+    #             ret[rc] = toadd_dict
+    #     return ret
 
     @classmethod
     def elem_sym_rcs(cls, p, k, length=None):
@@ -2022,8 +2123,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return ret
 
     def shiftcut(self) -> RCGraph:
-        return RCGraph([tuple([a for a in row if a > i])
-                        for i, row in enumerate(self.shiftup(-1)[:-1])])
+        return RCGraph([tuple([a for a in row if a > i]) for i, row in enumerate(self.shiftup(-1)[:-1])])
 
     def divdiff_desc(self, desc: int) -> set[RCGraph]:
         ret = set()

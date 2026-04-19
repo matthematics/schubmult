@@ -165,7 +165,14 @@ The crystal divided difference operators satisfy the nilCoxeter relations: $(\rc
 If $i$ is a right descent of $w$, then $\rcdd^i \mathcal{S}_w(n) = \mathcal{S}_{ws_i}(n)$, where $\mathcal{S}_w(n) = \sum_{\wof{R} = w,\, \hr(R) = n} R$ is the Schubert element.  If $i$ is not a right descent, then $\rcdd^i \mathcal{S}_w(n) = 0$.
 \end{theorem}
 
-A consequence is that the \textit{principal RC graph} $R^0(w)$, defined as the unique RC graph with $(i, j) \in R^0(w)$ if and only if $1 \leq j \leq \code_i(w)$, is the only RC graph from which one can successively apply crystal divided differences along any reduced word for $w$ without obtaining zero.
+An important consequence is the following.
+
+\begin{proposition}
+Let $u\in S_n$ and suppose $(u_1,\ldots,u_m)$ is a reduced word for $u^{-1}w_0$. Then there is a bijection between the nonzero terms
+$$f_{u_1}^{p_1}\mathcal{X}^{u_1}\cdots f_{u_m}^{p_m}\mathcal{X}^{u_m}R^0(w_0)$$
+where $\mathcal{X}^i$ is the exchange-deletion operator and $p_i\geq 0$ are integers and the set $\RC(u)$. 
+\end{proposition}
+% A consequence is that the \textit{principal RC graph} $R^0(w)$, defined as the unique RC graph with $(i, j) \in R^0(w)$ if and only if $1 \leq j \leq \code_i(w)$, is the only RC graph from which one can successively apply crystal divided differences along any reduced word for $w$ without obtaining zero.
 
 
 
@@ -265,35 +272,40 @@ $$=\sum_{\ell(u\mu^{-1}) = \ell(\mu) - \ell(u)} \mathrm{Schub}_{\RC}(u, n)\sch_{
 
 \subsection{Squash decomposition}
 
-The squash decomposition reverses the squash product for a single RC graph, factoring it into an $S_n$-piece and a Grassmannian piece.
+The squash decomposition reverses the squash product for a single RC graph. The initial step factors it into an $S_n$-piece and a Grassmannian piece.
 
 \begin{lemma}
-Suppose $R \in \BRC_n$ is a bounded RC graph of height $n$ that is a highest weight element. Then for each $m$ such that there is a pair $(R_\ast, R^\ast)$ such that $\wof{R_\ast} \in S_n$ and $R^\ast \in \grass_n$ with $|R^*|=m$ satisfying
-\[
-R_\ast \boxtimes R^\ast = R.
-\]
-we have that $R_\ast$ and $R^\ast$ are unique.
+Suppose $R \in \BRC_n$ is a bounded RC graph of height $n$. Then there is a unique decomposition 
+$$R_*\boxtimes R^*=R$$
+where $\wof{R_*} \in S_n$ and $R^* \in \grass_n$ with $|R^*|$ being maximal.
+%Moreover,
+% for each $m$ such that there is a pair $(R_\ast, R^\ast)$ such that $\wof{R_\ast} \in S_n$ and $R^\ast \in \grass_n$ with $|R^*|=m$ satisfying
+% \[
+% R_\ast \boxtimes R^\ast = R.
+% \]
+% we have that $R_\ast$ and $R^\ast$ are unique.
 \end{lemma}
 
 \begin{proof}
-% It is shown in \cite{notes} that the polynomial ring $\mathbb{Z}[x_1,\ldots,x_n]$ is a free module over the ring $\Lambda_n$ of symmetric polynomials with basis given by the Schubert polynomials $\sch_w$ with $w\in S_n$.  This is equivalent to saying that the set of polynomials $\sch_w(x)s_\lambda(x)$ with $w\in S_n$ and $s_\lambda$ a Schur polynomial in $n$ variables is a $\mathbb{Z}$-basis for $\mathbb{Z}[x_1,\ldots,x_n]$.  By Theorem \ref{theorem:squash-crystal}, this theorem also holds at the level of RC graphs. Broadly, this means that the tensors
-% $$\sum_{R\in\RC_n(w)} R \otimes \sum_{T\in \RC(\lambda)} T$$
-% map to a basis of a free $\Lambda_n$-submodule of $\BRC_n$ under the squash product. 
-We proceed by induction on $m$. The base case $m=0$ is clear, as in that case $\wof{R}$ is in $S_n$. Assuming the result for $m-1$, let $R$ be such that there exists an $R^\ast$ with $|R^\ast|=m$ satisfying the equation for some $R_*$. Let $R_2$ and $R^2$ be any other choice of decomposition such that $|R^2|=m$ and $R_2\in \RC_n(S_n)$. Since $R$ is a highest weight element, $R_2$ must be a highest weight element of $\RC_n(S_n)$. By the induction hypothesis, for any RC graph $A$ with $|A| = |R|-1$ such that there exists a degree $1$ RC graph $M\in\grass_n$ for which
-$R = A \boxtimes M,$ we have that $A$ admits a unique squash decomposition $A = A_\ast \boxtimes A^\ast$ with $|A^\ast|=m-1$, since $A$ must itself be a highest weight. By invertibility of Schensted insertion, it follows that there is a bijection between the set of such $A$ and the set of degree $1$ RC graphs in $\grass_n$ that can be factored out of $R$. This implies uniqueness of $R^*$  by induction. For such an $R^*$ there is a corresponding $A_*$ such that $R = A_* \boxtimes R^*$. It follows from the fact that
-$$R=A_*\boxtimes A^*\boxtimes M$$
-and the fact that $\boxtimes$ is a right module action that $A_*=R_2$, and we are done.
+It is shown in \cite{notes} that the polynomial ring $\mathbb{Z}[x_1,\ldots,x_n]$ is a free module over the ring $\Lambda_n$ of symmetric polynomials with basis given by the Schubert polynomials $\sch_w$ with $w\in S_n$.  This is equivalent to saying that the set of polynomials $\sch_w(x)s_\lambda(x)$ with $w\in S_n$ and $s_\lambda$ a Schur polynomial in $n$ variables is a $\mathbb{Z}$-basis for $\mathbb{Z}[x_1,\ldots,x_n]$.  By Theorem \ref{theorem:squash-crystal}, this theorem also holds at the level of RC graphs. This means that the sums
+$$\mathcal{S}_u(n)=\sum_{R\in\RC_n(u),u\in S_n} R$$
+form a basis of a free right $\Lambda_n$-submodule of $\BRC_n$ under the squash product. This has a $\mathbb{Z}$-basis of the form
+$$\mathcal{S}_u\boxtimes G_\lambda$$
+for distinct $u$ and $\lambda$. Fixing a single $u\in S_n$, consider the $\mathbb{Z}$-submodule generated by
+$$A\boxtimes G$$
+for $A\in \RC_n(u)$ and $G\in \grass_n$. This subset has a well-defined crystal action and decomposes into distinct weight spaces, and hence is itself a crystal basis of the $\mathbb{Z}$-submodule. Consiering a fixed RC graph $R\in \RC(w)$ for some $w\in S_\infty$, there is a well defined integer $0\leq m\leq \ell(w)$ such that for any representation of $R$ in the form $A\boxtimes G$ with $A\in \RC_n(u)$ for some $u\in S_n$ and $G\in \grass_n$ with $|G|$ maximal, we have that $|G|=m$. Restricting to the case that $R$ is a highest weight, is follows that if we have two distinct such representations $A\boxtimes G$ and $A'\boxtimes G'$ with $|G|=|G'|=m$, then we have that $A\boxtimes G$ and $A'\boxtimes G'$ have the same weight and generate isomorphic Demazure crystals. Considering the crystal divided difference operator action, it follows that there are RC graphs $B$ and $B'$ such that $B\boxtimes G$ and $B'\boxtimes G'$ are RC graphs if to which we apply the exchange property for a common descent $i$ we have that the results are 
+$$A\boxtimes G = A'\boxtimes G'=R$$
+Raising to highest weights and applying this inductively, we reach the longest element of $S_n$, which has a unique RC graph, and we conclude that $A=A'$ and $G=G'$. After applying appropriate crystal operators, we conclude that the same holds for any $R\in \RC(w)$.
 \end{proof}
 
-\begin{proposition}\label{proposition:unique-factorization}
-Given a bounded RC graph $R$ of height $n$ and a weak composition $\alpha$ of length $n$ whose sum is $|R|$, there is at most one factorization of the form
-$$E_1\boxtimes E_2\boxtimes \cdots \boxtimes E_{n-1}\boxtimes G = R$$
-where each $E_i$ is an RC graph for an elementary symmetric polynomial in $i$ variables, $G$ is a full-rank $n$-Grassmannian RC graph, and $\wtt(E_i) = \alpha_i$ for all $i<n$.
-\end{proposition}
-\begin{proof}
+\begin{definition}[Squash factorization]
+Let $R\in \RC_n(w)$ be an RC graph. Then the following algorithm, by the lemma above, produces a unique result. Let $G_1$ be the maximal-size Grassmannian RC graph and let $R_1$ be the unique corresponding $S_n$ RC-graph such that $R_1\boxtimes G_1=R$. Resize $R_1$ to have height equal to its maximum descent. Recursively, if we have constructed $G_{i-1}$ for some $i\geq 1$ and we have a non-identity RC graph $R_{i-1}$ of full height, we construct $G_i$ to be the maximal-size Grassmannian RC graph with $\hr(R_{i-1})$ rows $R_i$ the unique $S_{\hr(R_{i-1})}$-RC grap with $R_i\boxtimes G_i=R_{i-1}$. We resize $R_i$ to have height equal to its maximum descent. We repeat this process until we reach the identity, at which point we stop. The resulting sequence of $(G_{m}, G_{m-1},\ldots,G_1)$ of full-rank Grassmannian RC graphs is called the \textit{squash factorization} of $R$. By construction, we have
+$$G_{m}\boxtimes G_{m-1}\boxtimes \cdots \boxtimes G_1=R.$$
+\end{definition}
 
-\end{proof}
-
+\begin{lemma}
+Suppose $R\in \RC_n(w)$ is an RC graph with squash factorization $(G_{m}, G_{m-1},\ldots,G_1)$. Then we have that $G_i$ is an RC graph for an elementary symmetric polynomial with $hr(G_i)$ rows for all $i>1$.
+\end{lemma}
 % Let $\RC^{\alpha}_{n-1}(S_n)$ denote the set of RC graphs $R$ of height $n-1$ such that $\wof{R}\in S_n$ and $\wtt^{\mathrm{col}}(R) = \alpha$. 
 % \begin{proposition}
 % We have that
@@ -301,37 +313,9 @@ where each $E_i$ is an RC graph for an elementary symmetric polynomial in $i$ va
 % \end{proposition}
 
 \begin{theorem}
-Fix a positive integer $n$. Let $\mu$ be a dominant permutation such that 
-$$\code^*(\mu)=(n^p, n-1, n-2, \ldots, 1)$$
-for some $p\geq 0$. Then we have
-\begin{multline*}
-\sum_{\alpha}x_1^{n + p - \alpha_1}x_2^{n + p - 1 - \alpha_2}\cdots x_{n+p-1}^{1 - \alpha_{n+p-1}}
-E_{\alpha_{n+p-1},1}\boxtimes  \cdots \boxtimes E_{\alpha_{p+1},n -1}\boxtimes E_{\alpha_p,n}\boxtimes \cdots \boxtimes E_{\alpha_1,n} \\
-= \sum_{\substack{R\in\RC(w),\, w:\\[2pt] \ell(w\mu^{-1})=\ell(\mu)-\ell(w)}}R\,\sch_{w\mu^{-1}}(x)
-\end{multline*}
-where the sum on the left is over all weak compositions $\alpha$ of length $n+p-1$ such that $\alpha_i\leq n$ for $1\leq i\leq p$ and $\alpha_i\leq n - (i-p)$ for $i>p$. 
+  Let the squash factorization of an RC graph $R$ be $G_1\boxtimes G_2\boxtimes \cdots \boxtimes G_m$. Then the iterated squash product map from $\RC(\wof{G_1})\otimes \cdots \otimes \RC(\wof{G_m})$ to $\RC(w)$ is a weight-preserving crystal isomorphism.
 \end{theorem}
 \begin{proof}
-First assume $p=0$. We prove the result by induction on $n$. For $n=1$, this is a triviality. For larger $n$, assuming the result for $n-1$, we have that
-\begin{multline*}\sum_{\alpha}x_1^{n - \alpha_1}x_2^{n - 1 - \alpha_2}\cdots x_{n-1}^{1 - \alpha_{n-1}}
-E_{\alpha_{n-1},1}\boxtimes  \cdots \boxtimes E_{\alpha_1,n} \\
-= \sum_{\alpha}x_1^{n - \alpha_1}x_2^{n - 1 - \alpha_2}\cdots x_{n-1}^{1 - \alpha_{n-1}}
-\left(\sum_{R\in \RC^{\alpha}_{n-1}(S_{n-1})}R\right)\boxtimes E_{\alpha_1,n} \\
-= \sum_{\alpha}x_1^{n - \alpha_1}x_2^{n - 1 - \alpha_2}\cdots x_{n-1}^{1 - \alpha_{n-1}}
-\left(\sum_{\substack{R\in \RC_{n-1}(w),\, w\in S_{n-1}:\\[2pt] \ell(w\mu^{-1})=\ell(\mu)-\ell(w)}}R\right)\boxtimes E_{\alpha_1,n} \\
-= \sum_{\alpha}x_1^{n - \alpha_1}x_2^{n - 1 - \alpha_2}\cdots x_{n-1}^{1 - \alpha_{n-1}}
-\left(\sum_{\substack{R\in \RC_{n-1}(w),\, w\in S_{n-1}:\\[2pt] \ell(w\mu^{-1})=\ell(\mu)-\ell(w)}}R\boxtimes E_{\alpha_1,n}\right) \\
-= \sum_{\alpha}x_1^{n - \alpha_1}x_2^{n - 1 - \alpha_2}\cdots x_{n-1}^{1 - \alpha_{n-1}}
-\left(\sum_{\substack{R\in \RC_{n-1}(w),\, w\in S_{n-1}:\\[2pt] \ell(w\mu^{-1})=\ell(\mu)-\ell(w)}}\sum_{\substack{R'\in \RC(w'),\, w':\\[2pt] \ell(w'\mu^{-1})=\ell(\mu)-\ell(w')}}R'\right) \\
-= \sum_{\substack{R\in\RC(w),\, w:\\[2pt] \ell(w\mu^{-1})=\ell(\mu)-\ell(w)}}R\,\sch_{w\mu^{-1}}(x)
-\end{multline*}
-where the third equality uses Theorem~\ref{theorem:starproductcrystal} and the fourth uses Theorem~\ref{theorem:squash-crystal}.
-
-For the case $p>0$, the factors on the left-hand side separate into two groups: those of sizes $1$ through $n-1$ (namely $E_{\alpha_{n+p-1},1}, \ldots, E_{\alpha_{p+1},n-1}$) and $p$ factors of size $n$ (namely $E_{\alpha_p,n}, \ldots, E_{\alpha_1,n}$).  By associativity of $\boxtimes$, we may write each term as
-\[
-\left(E_{\alpha_{n+p-1},1}\boxtimes \cdots \boxtimes E_{\alpha_{p+1},n-1}\right) \boxtimes \left(E_{\alpha_p,n}\boxtimes \cdots \boxtimes E_{\alpha_1,n}\right).
-\]
-The factors of sizes $1, \ldots, n-1$, summed over $(\alpha_{p+1}, \ldots, \alpha_{n+p-1})$ with the monomials $x_{p+1}^{n - \alpha_{p+1}} \cdots x_{n+p-1}^{1 - \alpha_{n+p-1}}$, constitute an instance of the $p = 0$ result (with variables shifted by $p$) applied to the dominant permutation $\mu'$ with $\code^*(\mu') = (n-1, n-2, \ldots, 1)$.  The squash product $E_{\alpha_p,n} \boxtimes \cdots \boxtimes E_{\alpha_1,n}$ yields a single $n$-Grassmannian RC graph $G$.  By Proposition~\ref{proposition:unique-factorization}, each bounded RC graph $R$ of height $n$ admits at most one factorization $E_1 \boxtimes \cdots \boxtimes E_{n-1} \boxtimes G = R$ with prescribed weights, so the identification of RC graphs between the two sides is injective considering each weight.  The result then follows from Theorems~\ref{theorem:starproductcrystal} and~\ref{theorem:squash-crystal}, which provide the surjection and the correct Schubert polynomial coefficients.
 \end{proof}
 
 \section{The bounded RC factor algebra}\label{section:algebra}
@@ -341,19 +325,21 @@ The factors of sizes $1, \ldots, n-1$, summed over $(\alpha_{p+1}, \ldots, \alph
 Having developed the squash product, the squash decomposition, and the Demazure crystal structure, we are now in a position to define the algebra.
 
 \begin{definition}\label{definition:brfa}
-A \textit{factor key} of \textit{size} $n$ is an ordered tuple $(G_1, G_2, \ldots, G_k)$ of full-rank Grassmannian RC graphs, together with a positive integer $n$ satisfying $n \geq \max_i \hr(G_i)$, where each $G_i$ is an $n_i$-Grassmannian RC graph with $\hr(G_i) = n_i$ and $n_i$ equal to the unique descent of $\wof{G_i}$ (the full-rank condition).  The \textit{bounded RC factor algebra} $\mathcal{E}$ is the free $\mathbb{Z}$-module with basis the set of all factor keys in normal form (defined below), equipped with the product given by concatenation followed by normalization.
+A \textit{factor key} of \textit{size} $n$ is an ordered tuple $(G_1, G_2, \ldots, G_k)$ of full-rank Grassmannian RC graphs, together with a positive integer $n$ satisfying $n \geq \max_i \hr(G_i)$, where each $G_i$ is an $n_i$-Grassmannian RC graph with $\hr(G_i) = n_i$ and $n_i$ equal to the unique descent of $\wof{G_i}$ (the full-rank condition).  We allow the following operations on such tensors to declare them equivalent.
+%The \textit{bounded RC factor algebra} $\mathcal{E}$ is the free $\mathbb{Z}$-module with basis the set of all factor keys in normal form (defined below), equipped with the product given by concatenation followed by normalization.
 \end{definition}
 
-\subsection{Normalization relations}
-
-The normalization of a factor key is a confluent rewriting system governed by three types of rules, applied iteratively until none applies.
+% \subsection{Normalization relations}
+% The relations in the bounded RC factor algebra allow the following operations.
 
 \begin{enumerate}
-\item \textit{Sorting.}  If two adjacent factors satisfy $\hr(G_i) > \hr(G_{i+1})$, they are transposed.  Factors of distinct size commute, and after sorting, the sizes weakly increase from left to right.
+\item \textit{Sorting.}  If two adjacent factors satisfy $\hr(G_i) > \hr(G_{i+1})$, they are transposed.
 
 \item \textit{Merging.}  If two adjacent factors $G_i$ and $G_{i+1}$ satisfy $\hr(G_i) = \hr(G_{i+1})$, they are replaced by the single RC graph $G_i \boxtimes G_{i+1}$.  This merged graph is again Grassmannian and has the same number of rows.
 
-\item \textit{Decomposition.}  If a factor $G_i$ represents a Grassmannian permutation $u$ such that $u\notin S_{\hr(G_i)}$, then $G_i$ can be resized to a larger height and decomposed via the squash decomposition into a pair $(G_i', G_i'')$ of full-rank Grassmannian factors, with $\hr(G_i')=\hr(G_i)$ and $\hr(G_i'')=\hr(G_i)+1$, such that $G_i' \boxtimes G_i'' = G_i$.  The factor key is then rewritten by replacing $G_i$ with the pair $(G_i', G_i'')$.
+\item \textit{Decomposition.}  If a factor $G_i$ represents a Grassmannian permutation $u$ such that $\hr(G_i) < n$ and $u\notin S_{\hr(G_i)}$, then $G_i$ can be resized to height $\hr(G_i)+1$ and decomposed via the squash factorization into a sequence $(G_1', G_2',\ldots, G_k')$ of full-rank Grassmannian factors, with $\hr(G_j')<\hr(G_{j+1}')$ elementary symmetric and $\hr(G_k')=\hr(G_i)+1$, such that 
+$$G_1' \boxtimes G_2' \boxtimes \cdots \boxtimes G_k' = G_i.$$  
+We can then replace $G_i$ with the sequence $(G_1', G_2',\ldots, G_k')$, maintaining the order of the tensor factors.
 \end{enumerate}
 
 In addition, any identity factor (an RC graph for the identity permutation) is dropped from the tensor.
