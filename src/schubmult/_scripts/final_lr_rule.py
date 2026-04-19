@@ -91,8 +91,8 @@ def verify_pair(perm1, perm2, n):
         g_result = g.zero
         result = r.zero
         prd = Sx(perm1) * Sx(perm2)
-        #length = max(len(perm1), len(perm2)) - 1
-        length = n
+        length = max(len(perm1), len(perm2), n)
+        #length = n
         # partition1 = tuple((~(perm1.strict_mul_dominant(length))).trimcode)
         # partition2 = tuple((~(perm2.strict_mul_dominant(length))).trimcode)
         schub1 = g.schub_elem(perm1, length)#, partition=partition1)
@@ -100,28 +100,29 @@ def verify_pair(perm1, perm2, n):
         schub2 = g.schub_elem(perm2, length)#, partition=partition2)
         #schub2 = g.from_tensor_dict(schub2_base, size=length)
         tensor_result = r.zero @ r.zero
-        for key1, coeff1 in schub1.items():
-            # rc1 = next(iter(g(key1).to_rc_graph_ring_element().resize(n)))
-            # if rc1.perm != perm1:
-            #     continue
-            sumup = r.zero
-            # if not key1.is_highest_weight:
-            #     continue
-            for key2, coeff2 in schub2.items():
-                # rc2 = next(iter(g(key2).to_rc_graph_ring_element().resize(n)))
-                # if rc2.perm != perm2:
-                #     continue
-                graph_base = (g(key1) * g(key2))
-                for the_key, _ in graph_base.items():
-                    if the_key.is_highest_weight:
-                        rc = next(iter(g(the_key).to_rc_graph_ring_element().resize(n)))
-                    #if prd.get(rc.perm, 0) != 0:
-                        #if rc.is_principal:
-                        sumup += coeff1 * coeff2 * r(rc)
-            # if any(v < 0 for k, v in sumup.items() if k.extremal_weight == pad_tuple(k.perm.trimcode, len(k))):
-            #     print(f"Negative coefficient in intermediate sumup for {perm1} and {perm2} at key {key1}: {sumup}")
-            #     return False
-            result += sumup
+        # for key1, coeff1 in schub1.items():
+        #     # rc1 = next(iter(g(key1).to_rc_graph_ring_element().resize(n)))
+        #     # if rc1.perm != perm1:
+        #     #     continue
+        #     sumup = r.zero
+        #     # if not key1.is_highest_weight:
+        #     #     continue
+        #     for key2, coeff2 in schub2.items():
+        #         # rc2 = next(iter(g(key2).to_rc_graph_ring_element().resize(n)))
+        #         # if rc2.perm != perm2:
+        #         #     continue
+        #         graph_base = (g(key1) * g(key2))
+        #         for the_key, _ in graph_base.items():
+        #             if the_key.is_highest_weight:
+        #                 rc = next(iter(g(the_key).to_rc_graph_ring_element().resize(n)))
+        #             #if prd.get(rc.perm, 0) != 0:
+        #                 #if rc.is_principal:
+        #                 sumup += coeff1 * coeff2 * r(rc)
+        #     # if any(v < 0 for k, v in sumup.items() if k.extremal_weight == pad_tuple(k.perm.trimcode, len(k))):
+        #     #     print(f"Negative coefficient in intermediate sumup for {perm1} and {perm2} at key {key1}: {sumup}")
+        #     #     return False
+        #     result += sumup
+        result = (schub1 * schub2).to_rc_graph_ring_element().resize(n)
             # if any(v < 0 for k, v in sumup.items() if k.extremal_weight == pad_tuple(k.perm.trimcode, len(k))):
             #     print(f"Negative coefficient in intermediate sumup for {perm1} and {perm2} at key {key1}: {sumup}")
             #     return False
@@ -136,11 +137,13 @@ def verify_pair(perm1, perm2, n):
         # result = g_result.to_rc_graph_ring_element().resize(n)
         prd2 = Sx.zero
         seen = set()
+        result = {k: expand(v) for k, v in result.items() if k.perm.inv == perm1.inv + perm2.inv}# and expand(v) != 0 and expand(v).is_number}
         for rc, coeff in result.items():
             if coeff != prd.get(rc.perm, 0):
                 print(f"Coeff mismatch for {perm1}, {perm2} at {rc.perm}: got {coeff}, expected {prd.get(rc.perm, 0)}")
                 return False
-            if rc.is_highest_weight and rc.extremal_weight == pad_tuple(rc.perm.trimcode, len(rc)):
+            #if rc.is_highest_weight and rc.extremal_weight == pad_tuple(rc.perm.trimcode, len(rc)):
+            if rc.is_principal:
                 # if rc.perm not in seen:
                 #     seen.add(rc.perm)
                 prd2 += coeff * Sx(rc.perm)

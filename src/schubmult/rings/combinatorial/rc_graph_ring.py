@@ -277,10 +277,10 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
             res += coeff * self.ring.trim_operator(i, rc_graph)
         return res
 
-    def double_elem_sym_squash(self, p, weight, yvars, zvars):
+    def double_elem_sym_squash(self, weight, yvars, zvars):
         res = self.ring.zero
         for rc_graph, coeff in self.items():
-            res += coeff * rc_graph.double_elem_sym_squash(p, weight, yvars, zvars)
+            res += coeff * rc_graph.double_elem_sym_squash(weight, yvars, zvars)
         return res
 
     def full_double_elem_sym_squash(self, p, yvars, zvars):

@@ -1387,24 +1387,73 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             result += self.double_elem_sym_squash(p, elem_sym_rc.length_vector, yvars, zvars)
         return result
 
-    def double_elem_sym_squash(self, p, weight, yvars, zvars):
+    def double_elem_rep(self, yvars, size):
+
+        from ..rings.combinatorial.bounded_rc_factor_algebra import BoundedRCFactorAlgebra
+        r = BoundedRCFactorAlgebra()
+        if self.perm.inv == 0:
+            return r(r.make_key((), size))
+        rc_norm = self.normalize()
+        if len(rc_norm.perm.descents()) == 1 and len(rc_norm.perm) - 1 <= len(rc_norm):
+            return r(r.make_key((rc_norm,), size))
+        the_decomp = RCGraph.full_CEM(self.perm, len(self.perm))[rc_norm.resize(len(self.perm))]
+        if len(the_decomp) > 1:
+            raise ValueError(f"RC graph {self=} does not have a unique decomposition into CEM basis elements, cannot compute double elementary rep, got {the_decomp=}")
+        key = next(iter(the_decomp))
+        base_elem = key[0]
+        for k in key[1:]:
+            base_elem = base_elem.resize(len(k)).double_elem_sym_squash(k.perm.inv, k.length_vector, yvars, yvars)
+        result_elem = r(r.make_key(key, max(size,len(self.perm))))
+        for rc, coeff in base_elem.items():
+            norm_rc = rc.normalize()
+            if norm_rc != rc_norm:
+                result_elem -= coeff * norm_rc.double_elem_rep(yvars, max(size, len(self.perm)))
+        return result_elem
+        # base, grass = self.resize(len(self.perm) - 1).squash_decomp()
+        # base = base.normalize()
+        # grass = grass.normalize()
+        # print(f"{self=}, {base=}, {grass=}")
+
+        # base_elem = r.zero
+        # if len(grass.perm.descents()) == 1 and grass.perm.inv > 0 and len(grass.perm) - 1 <= len(grass):
+        #     if len(base.perm.descents()) <= 1 and len(base.perm) - 1 <= len(base):
+        #         return r(r.make_key((base,grass), size))
+        #     the_elem = base.resize(len(grass)).double_elem_sym_squash(grass.perm.inv, grass.length_vector, yvars, yvars)
+        #     the_elem = {rc.normalize(): v for rc, v in the_elem.items() if v != 0 and rc != base.resize(len(grass)).squash_product(grass)}
+        #     base_elem += base.double_elem_rep(yvars, size) * r(r.make_key((grass,), size))
+        #     for new_rc, coeff2 in the_elem.items():
+        #         base_elem -= coeff2 * new_rc.double_elem_rep(yvars, size)
+        # #     base_elem0 = base_elem
+        # else:
+        #     raise ValueError(f"Grassmannian part of RC graph has permutation {grass.perm} which is not Grassmannian or has too long of a permutation for its number of rows, cannot compute double elementary rep for {self=}, {base=}, {grass=}")
+        # print(f"{base_elem=}")
+        # return base_elem
+
+    def double_elem_sym_squash(self, weight, yvars, zvars):
         from ..rings.combinatorial.rc_graph_ring import RCGraphRing
 
         r = RCGraphRing()
-        k = len(self)
-        if p > k or p < 0:
-            return r.zero
-        if p == 0:
-            return r(self)
+        k = len(weight)
+        p = sum(weight)
         try:
-            elem_sym_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (k - p) + [1] * p), length=len(self), weight=weight)))
+            elem_sym_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (k - p) + [1] * p), length=len(weight), weight=weight)))
         except StopIteration:
             return r.zero
-        top_rc = self.squash_product(elem_sym_rc)
+        top_rc = self.resize(len(elem_sym_rc)).squash_product(elem_sym_rc)
         result = r(top_rc)
         for i in range(len(weight)):
             if weight[i] > 0:
-                result += (yvars[self.perm[i] - 1] - zvars[elem_sym_rc[i][0] - 1]) * self.double_elem_sym_squash(p - 1, tuple([w - 1 if j == i else w for j, w in enumerate(weight)]), yvars, zvars)
+                new_weight = [*weight]
+                new_weight[i] -= 1
+                try:
+                    index = elem_sym_rc[i][0] - i + 1
+                    #result += (yvars[self.perm[i] - 1] - zvars[len(elem_sym_rc) - elem_sym_rc[i][0] + i - 1]) * self.double_elem_sym_squash(tuple(new_weight), yvars, zvars)
+                    #result += (yvars[self.perm[i] - 1] - zvars[index]) * self.double_elem_sym_squash(tuple(new_weight), yvars, zvars)
+                except IndexError:
+                    print(f"Index error in double_elem_sym_squash for {self=}, {weight=}, {yvars=}, {zvars=}, {elem_sym_rc=} {i=}")
+                    print(f"{index=}")
+                    raise
+                #break
         return result
 
     # @classmethod

@@ -80,7 +80,7 @@ def _max_grass_elem_peel(rc):
                 break
         new_rcc = new_rcc.normalize()
         if len(rows) > max_found and _is_full_grassmannian_rc(new_rcc) and len(new_rcc.inv) < len(rc):
-            #length = max(max(rows),min(len(rc.perm.trimcode) + 1, length))
+            # length = max(max(rows),min(len(rc.perm.trimcode) + 1, length))
             weight = [0] * length
             for row in rows:
                 weight[row - 1] += 1
@@ -116,6 +116,7 @@ def _build_elem_from_key(key):
     elem_key = (tuple(build_elem_key[:size] + sorted(build_elem_key[size:], reverse=True)), size)
     return elem_key
 
+
 def _build_schur_elem_from_key(key):
     build_elem_key = []
     key_index = 0
@@ -143,6 +144,7 @@ def _build_schur_elem_from_key(key):
         partition = (0,) * size
     elem_key = (tuple(build_elem_key), partition)
     return elem_key
+
 
 def _sort_and_merge(factors):
     """Sort factors by length (ascending, stable) and merge same-length adjacent via squash_product."""
@@ -200,6 +202,14 @@ class BoundedRCFactorPrintingTerm(PrintingTerm):
 
 class BoundedRCFactorAlgebraElement(CrystalGraphRingElement):
     """Element of BoundedRCFactorAlgebra: finite linear combinations of Grass tensors."""
+
+    def double_elem_sym_mul(self, p, weight, yvars, zvars):
+        result = self.ring.zero
+        for key, coeff in self.items():
+            if coeff == 0:
+                continue
+            result += coeff * self.ring.double_elem_sym_mul_key(key, p, weight, yvars, zvars)
+        return result
 
     def as_ordered_terms(self, *_, **__):
         if len(self.keys()) == 0:
@@ -277,25 +287,80 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
         self.dtype = type("BoundedRCFactorAlgebraElement", (BoundedRCFactorAlgebraElement,), {"ring": self})
 
+    def double_elem_sym_mul_key(self, key, p, weight, yvars, zvars):
+        from sympy import expand
+
+        from schubmult import uncode
+        rc = self.key_to_rc_graph(key)
+        k = len(weight)
+        if p > k or p < 0:
+            return self.zero
+        if p == 0:
+            return self(key)
+        try:
+            elem_sym_rc = next(iter(RCGraph.all_rc_graphs(uncode([0] * (k - p) + [1] * p), length=len(weight), weight=weight)))
+        except StopIteration:
+            return self.zero
+        #top_rc = rc.squash_product(elem_sym_rc)
+        result = self(key) * self(self.make_key((elem_sym_rc,), key.size))
+        for i in range(len(weight)):
+            if weight[i] > 0:
+                # print(f"{weight=}")
+                # #print(f"{yvars=}")
+                # print(f"{zvars=}")
+                # print(f"{elem_sym_rc=}")
+                # print(f"{p=}")
+                # print(f"{key=}")
+                # print(f"{i=}")
+                # print(f"{rc.perm=}")
+    #             return (
+    #     (varl1[k - 1] - varl2[k - p]) * elem_sym_poly_q(p - 1, k - 1, varl1, varl2, q_var)
+    #     + elem_sym_poly_q(p, k - 1, varl1, varl2, q_var)
+    #     + q_var[k - 1] * elem_sym_poly_q(p - 2, k - 2, varl1, varl2, q_var)
+    # )
+                result += (yvars[rc.perm[i] - 1] - zvars[len(elem_sym_rc) - elem_sym_rc[i][0] - i]) * self.double_elem_sym_mul_key(key, p - 1, tuple([w - 1 if j == i else w for j, w in enumerate(weight)]), yvars, zvars)
+        result = self.from_tensor_dict({k: v for k, v in result.items() if expand(v) != 0}, size=key.size)
+        return result
 
     @cache
-    def _schub_elem_cached(self, perm, size, partition):
-        dct = RCGraph.full_CEM(perm, size, partition=partition)
-        # dct = RCGraph.full_CEM(perm, size)
-        elem = self.zero
-        for _, cem_dict in dct.items():
-            for key, coeff in cem_dict.items():
-                new_key = self.make_key(key, size)
-                # one_key = self.make_key((), size)
-                # if not self._check_in_coprod(new_key, one_key, new_key):
-                #     print(f"Key {new_key} from CEM of {perm} at size {size} failed coproduct check. Skipping.")
-                #     continue
-                elem += coeff * self(new_key)
-        return elem
+    def _schub_elem_cached(self, perm, size, partition): # noqa: ARG002
+        from sympy import Add, Mul, expand, sympify
+
+        from schubmult import DSx, uncode
+        the_cem = expand(DSx(perm).in_SEM_basis())
+        #cem_rep(mumu=uncode(partition), elem_func=DSx([]).ring.symbol_elem_func), deep=True)
+        result = self.zero
+        #print(f"{the_cem=}")
+        for the_monom in Add.make_args(sympify(the_cem)):
+            term = self(self.make_key((), size))
+            for the_val in Mul.make_args(the_monom):
+                # if isinstance(the_val, Add):
+                #     print(f"{the_val=}")
+                if sympify(the_val).is_number:
+                    term *= the_val
+                else:
+                    for rc in RCGraph.all_rc_graphs(uncode([0] * (the_val.numvars - the_val.degree) + [1] * (the_val.degree)), the_val.numvars):
+                        term = term.double_elem_sym_mul(the_val.degree, rc.length_vector, DSx([]).ring.coeff_genset[1:], the_val.coeffvars)
+            result += term
+        return result
+        #return self.from_tensor_dict({k: v for k, v in sum([rc.double_elem_rep(y[1:], size) for rc in RCGraph.all_rc_graphs(perm).items()]).items() if sympify(v).expand() != S.Zero}, size)
+        # dct = RCGraph.full_CEM(perm, size, partition=partition)
+        # # dct = RCGraph.full_CEM(perm, size)
+        # elem = self.zero
+        # for _, cem_dict in dct.items():
+        #     for key, coeff in cem_dict.items():
+        #         new_key = self.make_key(key, size)
+        #         # one_key = self.make_key((), size)
+        #         # if not self._check_in_coprod(new_key, one_key, new_key):
+        #         #     print(f"Key {new_key} from CEM of {perm} at size {size} failed coproduct check. Skipping.")
+        #         #     continue
+        #         elem += coeff * self(new_key)
+        # return elem
 
     def div_diff_desc_key(self, index, key, reflect=False):
         # r = RCGraphRing()
         from schubmult import Permutation
+
         key = self._normalize_key(key)
         if len(key) == 0:
             if not reflect:
@@ -313,22 +378,26 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                     if not _is_full_grassmannian_rc(new_rc):
                         raise ValueError(f"divdiff_desc produced non full Grassmannian RC graph: {new_rc} from {first_rc} at index {index} {key=} {key.size=}")
                     if new_rc.perm.inv > 0:
-                        result += self(self.make_key((new_rc.normalize(),), key.size))*tack_on
+                        result += self(self.make_key((new_rc.normalize(),), key.size)) * tack_on
                     else:
                         result += tack_on
                 # old_result = result
                 # result = self.zero
-                #result += self(self.make_key((key[0],), key.size)) * tack_on
-                    #result += self.from_tensor_dict(mid_result @ self.div_diff_desc_key(index, self.make_key(key[1:], key.size), reflect=True), size=key.size)
+                # result += self(self.make_key((key[0],), key.size)) * tack_on
+                # result += self.from_tensor_dict(mid_result @ self.div_diff_desc_key(index, self.make_key(key[1:], key.size), reflect=True), size=key.size)
             additional_divdiff = self.div_diff_desc_key(index, self.make_key(key[1:], key.size), reflect=False)
             # for second_key, coeff2 in additional_divdiff.items():
             #     result += coeff2 * self(self.make_key((key[0],*second_key), key.size))
             result += self(self.make_key((key[0],), key.size)) * additional_divdiff
-            #result += self.from_tensor_dict(self(self.make_key((first_rc,),key.size))@self.div_diff_desc_key(index, self.make_key(key[1:], key.size), reflect=False), size=key.size)
+            # result += self.from_tensor_dict(self(self.make_key((first_rc,),key.size))@self.div_diff_desc_key(index, self.make_key(key[1:], key.size), reflect=False), size=key.size)
             return result
         # if not any(len(rc) == index for rc in key):
         #     return self(self.make_key([rc.crystal_reflection(index) for rc in key], key.size))
-        return self(key) + (self.schub_elem(Permutation.ref_product(index + 1),key.size) - 2 *self.schub_elem(Permutation.ref_product(index),key.size) + (self.zero if index == 1 else self.schub_elem(Permutation.ref_product(index-1), key.size)))*self.div_diff_desc_key(index, key, reflect=False)
+        return self(key) + (
+            self.schub_elem(Permutation.ref_product(index + 1), key.size)
+            - 2 * self.schub_elem(Permutation.ref_product(index), key.size)
+            + (self.zero if index == 1 else self.schub_elem(Permutation.ref_product(index - 1), key.size))
+        ) * self.div_diff_desc_key(index, key, reflect=False)
         # new_keys = []
         # for pos, rc in enumerate(key):
         #     if len(rc) < index:
@@ -367,15 +436,18 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
     def schub_elem(self, perm, size, partition=None):
         from schubmult.combinatorics.permutation import Permutation
+
         if partition is None:
+            # partition = tuple((~(perm.strict_mul_dominant(size))).trimcode)
             #partition = tuple((~(perm.strict_mul_dominant(size))).trimcode)
-            partition = tuple((~(perm.strict_mul_dominant(size))).trimcode)
+            partition = tuple(range(len(perm), 0, -1))
 
         return self._schub_elem_cached(Permutation(perm), size, partition)
 
     def schub_elem2(self, perm, size):
         raise NotImplementedError("schub_elem2 is looping over the wrong elem syms")
         from schubmult import ASx, ElementaryBasis, FreeAlgebra, SchubertBasis
+
         representation = ASx(perm, size).change_basis(ElementaryBasis)
         Elem = FreeAlgebra(ElementaryBasis)
         result = self.zero
@@ -404,7 +476,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
             if cem.almosteq(self.zero):
                 continue
             for cem_key, cem_coeff in cem.items():
-                tensor_cut = [rc.vertical_cut(min(len(rc),left_key.size)) for rc in cem_key]
+                tensor_cut = [rc.vertical_cut(min(len(rc), left_key.size)) for rc in cem_key]
                 top_cut_elem = self(self.make_key((rc1 for (rc1, rc2) in tensor_cut), size=left_key.size))
                 bottom_cut_elem = self(self.make_key((rc2 for (rc1, rc2) in tensor_cut), size=right_key.size))
                 top_cut = next(iter(top_cut_elem))
@@ -444,6 +516,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
     def elem_sym(self, p, k, size=None):
         from schubmult import uncode
+
         size = k if size is None else size
         set_of_keys = [self.make_key((rc,), size) for rc in RCGraph.all_rc_graphs(uncode([0] * (k - p) + [1] * p), k)]
         return self.from_dict(dict.fromkeys(set_of_keys, S.One))
@@ -499,21 +572,36 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         """Normalize an RCGraph tensor key to normal form."""
         key = self._ensure_valid_key(key)
         size = key.size
-        #hw_key, raise_seq = key.to_highest_weight()
+        # hw_key, raise_seq = key.to_highest_weight()
         factors = list(key)
-        #key_hw, raise_seq = key.to_highest_weight()
-        #factors = list(key_hw)
+        # key_hw, raise_seq = key.to_highest_weight()
+        # factors = list(key_hw)
         while True:
             # Phase 1: sort by length and merge same-length adjacent factors
             factors = _sort_and_merge(list(factors))
-            #hw_key, raise_seq = self.make_key(tuple(factors), size).to_highest_weight()
+            # hw_key, raise_seq = self.make_key(tuple(factors), size).to_highest_weight()
             # Phase 2: normalize individual RCGraphs and strip identities
             factors = [rc.normalize() for rc in factors if rc.perm.inv != 0]
 
             peeled = False
             for i in range(len(factors) - 1, -1, -1):
                 if not _is_full_grassmannian_rc(factors[i]):
-                    raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}")
+                    # Decompose non-Grassmannian factor (e.g. from squash_product merge)
+                    # addup_list = []
+                    # working_rc = factors[i]
+                    # while working_rc.perm.inv > 0 and not _is_full_grassmannian_rc(working_rc):
+                    #     working_rc_base, working_elem_rc = working_rc.squash_decomp()
+                    #     working_elem_rc = working_elem_rc.normalize()
+                    #     working_rc_base = working_rc_base.normalize()
+                    #     if working_elem_rc.perm.inv > 0:
+                    #         addup_list = [working_elem_rc, *addup_list]
+                    #     working_rc = working_rc_base
+                    # if working_rc.perm.inv > 0:
+                    #     addup_list = [working_rc, *addup_list]
+                    # factors = [*factors[:i], *addup_list, *factors[i + 1 :]]
+                    # peeled = True
+                    # break
+                    raise ValueError(f"Unexpected non-Grassmannian factor {factors[i]} in key {key} during normalization")
                 factor = factors[i]
                 if len(factor) < size and len(factor.perm) - 1 > len(factor):
                     max_rc, elem_rc = factor.resize(len(factor) + 1).squash_decomp()
@@ -521,7 +609,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                     elem_rc = elem_rc.normalize()
                     if max_rc.perm.inv == 0 or elem_rc.perm.inv == 0:
                         continue
-                    #if max_rc.perm.inv > 0 and elem_rc.perm.inv > 0 and len(elem_rc) <= size:
+                    # if max_rc.perm.inv > 0 and elem_rc.perm.inv > 0 and len(elem_rc) <= size:
                     addup_list = [elem_rc]
                     working_rc = max_rc.normalize()
                     while working_rc.perm.inv > 0 and (not _is_full_grassmannian_rc(working_rc)):
@@ -534,63 +622,64 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                         if not _is_full_grassmannian_rc(working_rc):
                             raise ValueError(f"Peeling produced non full Grassmannian RC graph: {working_rc} from {factor} in key {key}")
                         addup_list = [working_rc.normalize(), *addup_list]
-                    factors = [*factors[:i], *addup_list, *factors[i + 1:]]
+                    factors = [*factors[:i], *addup_list, *factors[i + 1 :]]
                     peeled = True
                     break
 
-        #         # if len(factors[i].perm) - 1 > len(factors[i]) and len(factors[i]) < size:
-        #         #     factor = factors[i].resize(len(factors[i]) + 1)
-        #         # else:
-        #         if len(factors[i]) == size:
-        #             continue
-        #         if len(factors[i].perm) - 1 > len(factors[i]):
-        #             factor = factors[i]
-        #             max_rc, elem_rc = factor.squash_decomp()#_max_grass_elem_peel(factors[i])
-        #             max_rc = max_rc.normalize()
-        #             elem_rc = elem_rc.normalize()
-        #             # if elem_rc.perm.inv > 0:
-        #             #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
-        #             if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
-        #                 factors[i] = max_rc
-        #                 factors.insert(i + 1, elem_rc)
-        #                 peeled = True
-        #                 break
-        #             # factor = factor.extend(1)
-        #             # max_rc, elem_rc = _max_grass_elem_peel(factor)
-        #             # max_rc = max_rc.normalize()
-        #             # elem_rc = elem_rc.normalize()
-        #             # # if elem_rc.perm.inv > 0:
-        #             # #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
-        #             # if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
-        #             #     factors[i] = max_rc
-        #             #     factors.insert(i + 1, elem_rc)
-        #             #     peeled = True
-        #             #     break
-        #         # if len(set(factors[i].perm.trimcode)) > 2:
-        #         #     raise ValueError(f"Factor with more than 2 distinct row lengths in normalized key: {factors[i]} in key {key}")
-            #factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)
+            #         # if len(factors[i].perm) - 1 > len(factors[i]) and len(factors[i]) < size:
+            #         #     factor = factors[i].resize(len(factors[i]) + 1)
+            #         # else:
+            #         if len(factors[i]) == size:
+            #             continue
+            #         if len(factors[i].perm) - 1 > len(factors[i]):
+            #             factor = factors[i]
+            #             max_rc, elem_rc = factor.squash_decomp()#_max_grass_elem_peel(factors[i])
+            #             max_rc = max_rc.normalize()
+            #             elem_rc = elem_rc.normalize()
+            #             # if elem_rc.perm.inv > 0:
+            #             #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
+            #             if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
+            #                 factors[i] = max_rc
+            #                 factors.insert(i + 1, elem_rc)
+            #                 peeled = True
+            #                 break
+            #             # factor = factor.extend(1)
+            #             # max_rc, elem_rc = _max_grass_elem_peel(factor)
+            #             # max_rc = max_rc.normalize()
+            #             # elem_rc = elem_rc.normalize()
+            #             # # if elem_rc.perm.inv > 0:
+            #             # #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
+            #             # if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
+            #             #     factors[i] = max_rc
+            #             #     factors.insert(i + 1, elem_rc)
+            #             #     peeled = True
+            #             #     break
+            #         # if len(set(factors[i].perm.trimcode)) > 2:
+            #         #     raise ValueError(f"Factor with more than 2 distinct row lengths in normalized key: {factors[i]} in key {key}")
+            # factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)
             if not peeled:
                 break
 
         # for fact in factors:
         #     if len(fact) < len(factors[-1]) and len(fact.perm) - 1 > len(fact):
         #         raise ValueError(f"Factor {fact} in key {factors} is not wide enough to fit its permutation")
-        #factors = _sort_and_merge(list(factors))
+        # factors = _sort_and_merge(list(factors))
         return self.make_key(factors, size)
-        #return self.make_key(tensor.reverse_raise_seq(raise_seq), size)
+        # return self.make_key(tensor.reverse_raise_seq(raise_seq), size)
 
     def _check_in_coprod(self, left_key, right_key, new_key):
         from schubmult import ASx, ElementaryBasis, FreeAlgebra, SchubertBasis, SchurElementaryBasis  # noqa: F401
-        SchurElem = FreeAlgebra(SchurElementaryBasis) # noqa: F841
-        #elem_result = Elem(_build_elem_from_key(new_key))
+
+        SchurElem = FreeAlgebra(SchurElementaryBasis)  # noqa: F841
+        # elem_result = Elem(_build_elem_from_key(new_key))
         # rc1 = self.key_to_rc_graph(left_key)
         # rc2 = self.key_to_rc_graph(right_key)
         rc_result = self.key_to_rc_graph(new_key)
-        #result_elem = SchurElem(*_build_schur_elem_from_key(new_key)).change_basis(SchubertBasis)
+        # result_elem = SchurElem(*_build_schur_elem_from_key(new_key)).change_basis(SchubertBasis)
         if ASx(rc_result.perm, len(rc_result)).change_basis(SchurElementaryBasis).coproduct().get((_build_schur_elem_from_key(left_key), _build_schur_elem_from_key(right_key)), 0) == 0:
-        #if ASx(rc_result.perm, len(rc_result)).coproduct().get(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))), 0) == 0:
-        #if Elem(*_build_elem_from_key(new_key)).change_basis(SchubertBasis).coproduct().get(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))), 0) == 0:
-            #print("Eifefas")
+            # if ASx(rc_result.perm, len(rc_result)).coproduct().get(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))), 0) == 0:
+            # if Elem(*_build_elem_from_key(new_key)).change_basis(SchubertBasis).coproduct().get(((rc1.perm, len(rc1)), (rc2.perm, len(rc2))), 0) == 0:
+            # print("Eifefas")
             return False
         # if Elem(*_build_elem_from_key(new_key)).coproduct().get((_build_elem_from_key(left_key), _build_elem_from_key(right_key)), 0) == 0:
         #     print("Eifefas2wr")
@@ -607,57 +696,52 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
     _post_normalizing = False
 
-    def _post_normalize_dict(self, accum):
-        """Expand keys whose factors are too wide (perm doesn't fit in row count) into sums via schub_elem.
+    # def _post_normalize_dict(self, accum):
+    #     """Expand keys whose factors are too wide (perm doesn't fit in row count) into sums via schub_elem.
 
-        Uses a re-entrancy guard: if we're already inside a post-normalize call,
-        just return the raw element to avoid infinite mutual recursion with
-        mul -> _post_normalize_dict -> schub_elem -> from_tensor_dict -> _post_normalize_dict.
-        """
-        if self._post_normalizing or not self.post_normalize:
-            return self.dtype({k: v for k, v in accum.items() if v != S.Zero})
+    #     Uses a re-entrancy guard: if we're already inside a post-normalize call,
+    #     just return the raw element to avoid infinite mutual recursion with
+    #     mul -> _post_normalize_dict -> schub_elem -> from_tensor_dict -> _post_normalize_dict.
+    #     """
+        # if self._post_normalizing or not self.post_normalize:
+        #     return self.dtype({k: v for k, v in accum.items() if v != S.Zero})
 
-        clean = {}
-        to_expand = {}
-        for key, coeff in accum.items():
-            if coeff == S.Zero:
-                continue
-            bad = [i for i, factor in enumerate(key) if len(factor.perm) - 1 > len(factor) and len(factor) < key.size]
-            if not bad:
-                clean[key] = clean.get(key, S.Zero) + coeff
-            else:
-                to_expand[key] = coeff
+        # clean = {}
+        # to_expand = {}
+        # for key, coeff in accum.items():
+        #     if coeff == S.Zero:
+        #         continue
+        #     bad = [i for i, factor in enumerate(key) if len(factor.perm) - 1 > len(factor) and len(factor) < key.size]
+        #     if not bad:
+        #         clean[key] = clean.get(key, S.Zero) + coeff
+        #     else:
+        #         to_expand[key] = coeff
 
-        if not to_expand:
-            return self.dtype({k: v for k, v in clean.items() if v != S.Zero})
+        # if not to_expand:
+        #     return self.dtype({k: v for k, v in clean.items() if v != S.Zero})
 
-        self._post_normalizing = False
-        try:
-            result = self.dtype({k: v for k, v in clean.items() if v != S.Zero})
-            for key, coeff in to_expand.items():
-                term = coeff * self.dtype({self.make_key((), key.size): S.One})
-                for i in range(len(key)):
-                    bad = len(key[i].perm) - 1 > len(key[i]) and len(key[i]) < key.size
-                    if bad:
-                        term = self.mul(term, self.schub_elem(key[i].perm, key.size))
-                    else:
-                        factor_elem = self.dtype({self.make_key((key[i],), key.size): S.One})
-                        term = self.mul(term, factor_elem)
-                for k, v in term.items():
-                    result[k] = result.get(k, S.Zero) + v
-        finally:
-            self._post_normalizing = False
+        # self._post_normalizing = False
+        # try:
+        #     result = self.dtype({k: v for k, v in clean.items() if v != S.Zero})
+        #     for key, coeff in to_expand.items():
+        #         term = coeff * self.dtype({self.make_key((), key.size): S.One})
+        #         for i in range(len(key)):
+        #             bad = len(key[i].perm) - 1 > len(key[i]) and len(key[i]) < key.size
+        #             if bad:
+        #                 term = self.mul(term, self.schub_elem(key[i].perm, key.size))
+        #             else:
+        #                 factor_elem = self.dtype({self.make_key((key[i],), key.size): S.One})
+        #                 term = self.mul(term, factor_elem)
+        #         for k, v in term.items():
+        #             result[k] = result.get(k, S.Zero) + v
+        # finally:
+        #     self._post_normalizing = False
 
-        # Re-check: the expansion may have produced new bad keys (one pass only)
-        still_bad = any(
-            len(factor.perm) - 1 > len(factor) and len(factor) < key.size
-            for key in result
-            for factor in key
-            if result.get(key, S.Zero) != S.Zero
-        )
-        if still_bad:
-            return self._post_normalize_dict(dict(result))
-        return result
+        # # Re-check: the expansion may have produced new bad keys (one pass only)
+        # still_bad = any(len(factor.perm) - 1 > len(factor) and len(factor) < key.size for key in result for factor in key if result.get(key, S.Zero) != S.Zero)
+        # if still_bad:
+        #     return self._post_normalize_dict(dict(result))
+        #return result
 
     def from_dict(self, dct):
         accum = {}
@@ -666,7 +750,8 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                 continue
             nkey = self._normalize_key(key)
             accum[nkey] = accum.get(nkey, S.Zero) + coeff
-        return self._post_normalize_dict(accum)
+        #return self._post_normalize_dict(accum)
+        return self.dtype({k: v for k, v in accum.items() if v != S.Zero})
 
     def from_tensor_dict(self, dct, size):
         accum = {}
@@ -675,7 +760,7 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                 continue
             nkey = self._normalize_key(self.make_key(key, size))
             accum[nkey] = accum.get(nkey, S.Zero) + coeff
-        return self._post_normalize_dict(accum)
+        return self.dtype({k: v for k, v in accum.items() if v != S.Zero})
 
     def __call__(self, key):
         return self.from_dict({self._normalize_key(key): S.One})
@@ -690,12 +775,20 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
         raise NotImplementedError("from_rc_graph is not implemented; use from_dict with explicit keys for now.")
 
     def mul(self, a, b):
-        if not isinstance(b, BoundedRCFactorAlgebraElement):
-            return super().mul(a, b)
-        accum = {}
-        for left_key, left_coeff in a.items():
-            for right_key, right_coeff in b.items():
-                key = self._mul_keys(left_key, right_key)
-                if key is not None:
-                    accum[key] = accum.get(key, S.Zero) + left_coeff * right_coeff
-        return self._post_normalize_dict(accum)
+        from symengine import sympify
+        if isinstance(b, BoundedRCFactorAlgebraElement):
+        #    return super().rmul(a, b)
+            accum = {}
+            for left_key, left_coeff in a.items():
+                for right_key, right_coeff in b.items():
+                    key = self._mul_keys(left_key, right_key)
+                    if key is not None:
+                        accum[key] = accum.get(key, S.Zero) + left_coeff * right_coeff
+            #return self._post_normalize_dict(accum)
+            return self.from_dict(accum)
+        try:
+            result_dict = {k: v * sympify(b) for k, v in a.items()}
+            return self.from_dict(result_dict)
+        except Exception:
+            raise NotImplementedError("Multiplication with fs not implemented for SchubertMonomialRingElement")
+        #return self.from_tensor_dict(accum, size=a.keys()[0].size if a.keys() else (b.keys()[0].size if b.keys() else 0))
