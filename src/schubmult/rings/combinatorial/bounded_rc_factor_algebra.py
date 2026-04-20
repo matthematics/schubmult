@@ -277,6 +277,54 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
 
         self.dtype = type("BoundedRCFactorAlgebraElement", (BoundedRCFactorAlgebraElement,), {"ring": self})
 
+    def from_CEM_rep(self, the_cem, size):
+        from sympy import Add, Mul, Pow, expand, sympify
+
+        #from schubmult import uncode
+
+        terms = []
+        the_cem = expand(sympify(the_cem))
+        for the_term in Add.make_args(the_cem):
+            coeff, rest = the_term.as_coeff_Mul()
+            if rest == 1:
+                terms.append((coeff, ()))
+            else:
+                factors = []
+                for factor in Mul.make_args(rest):
+                    exponent = 1
+                    if isinstance(factor, Pow):
+                        base, exponent = factor.as_base_exp()
+                    else:
+                        base = factor
+                    factors.extend([base] * exponent)
+                terms.append((coeff, sorted(factors, key=lambda x: (x.numvars, -x.degree))))
+
+        the_result = self.zero
+        for ti, term in enumerate(terms):
+            base = self(self.make_key((), size))
+
+            for fi, factor in enumerate(term[1]):
+                p = factor.degree
+                k = factor.numvars
+                #print(f"\n    factor[{fi}]: {factor}  (p={p}, k={k})")
+
+                #perm_for_elem = uncode([0] * (k - p) + [1] * p)
+                #all_elem_rcs = list(RCGraph.all_rc_graphs(perm_for_elem))
+                #print(f"      all_rc_graphs count: {len(all_elem_rcs)}")
+
+                #yvars = coeff_genset
+                #zvars = factor.coeffvars
+
+                # factor_result = self.zero
+                # for ri, elem_sym_rc in enumerate(all_elem_rcs):
+                #     weight = elem_sym_rc.length_vector
+                #     contribution = base.resize(k).double_elem_sym_squash(weight, yvars, zvars)
+                factor_result = self.elem_sym(p, k, size=size)
+
+                base *= factor_result
+
+            the_result += term[0] * base
+        return the_result
 
     @cache
     def _schub_elem_cached(self, perm, size, partition):
@@ -442,10 +490,35 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
     def __hash__(self):
         return hash(("BoundedRCFactorAlgebra", self._ID))
 
-    def elem_sym(self, p, k, size=None):
+    def elem_sym(self, p, k, size):
+        import itertools
+
+        from sympy import prod
+
         from schubmult import uncode
-        size = k if size is None else size
+        #size = k if size is None else size
         set_of_keys = [self.make_key((rc,), size) for rc in RCGraph.all_rc_graphs(uncode([0] * (k - p) + [1] * p), k)]
+        result = self.zero
+        # if coeffvars is not None:
+        #     for key in set_of_keys:
+        #         result += self(key)
+        #         coords = [key[0].left_to_right_inversion_coords(i) for i in range(key[0].perm.inv)]
+        #         for r in range(1, p + 1):
+        #             for spots in itertools.combinations(coords, r):
+        #                 the_rc = key[0]
+        #                 subtract = 0
+        #                 for row, col in reversed(coords):
+        #                     if (row, col) in spots:
+        #                         subtract += 1
+        #                         the_rc = the_rc.toggle_ref_at(row, col)
+        #                     else:
+        #                         if subtract > 0:
+        #                             the_rc = the_rc.toggle_ref_at(row, col)
+        #                             the_rc = the_rc.toggle_ref_at(row, col + subtract)
+        #                 prd = prod([-coeffvars[col - 1] for row, col in spots])
+        #                 if prd != 0:
+        #                     result += prd * self(self.make_key((the_rc.normalize(),), size))
+            #return result
         return self.from_dict(dict.fromkeys(set_of_keys, S.One))
 
     def printing_term(self, key):
@@ -478,6 +551,43 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
             # self._ensure_valid_rc_graph(acc, context="key_to_rc_graph squash step")
 
         return acc.resize(key.size)
+
+    # def key_to_rc_graph_with_coeff(self, key, coeff_genset) -> RCGraph:
+    #     """Evaluate a tensor key to an RCGraph using left-to-right squash_product."""
+    #     import itertools
+    #     from sympy import prod
+    #     if not isinstance(key, self.make_key):
+    #         raise TypeError(f"Expected CrystalGraphTensor or tuple key, got {type(key)}")
+    #     if len(key) == 0:
+    #         return RCGraph([]).resize(key.size)
+
+    #     # for rc in key:
+    #     #     if not isinstance(rc, RCGraph):
+    #     #         raise TypeError(f"Key factors must be RCGraph, got {type(rc)}")
+    #     #     self._ensure_valid_rc_graph(rc, context="key_to_rc_graph input factor")
+    #     acc = self(self.make_key((), key.size))
+    #     for i in range(len(key)):
+    #         coords = [key[i].left_to_right_inversion_coords(j) for j in range(key[i].perm.inv)]
+    #         result = self.zero
+    #         for r in range(1, key[i].perm.inv + 1):
+    #             for spots in itertools.combinations(coords, r):
+    #                 the_rc = key[i]
+    #                 subtract = 0
+    #                 for row, col in reversed(coords):
+    #                     if (row, col) in spots:
+    #                         subtract += 1
+    #                         the_rc = the_rc.toggle_ref_at(row, col)
+    #                     else:
+    #                         if subtract > 0:
+    #                             the_rc = the_rc.toggle_ref_at(row, col)
+    #                             the_rc = the_rc.toggle_ref_at(row, col + subtract)
+    #                 coeffvars = coeff_genset[key.size - len(key[i]):]
+    #                 prd = prod([-coeffvars[col - 1] for row, col in spots])
+    #                 if prd != 0:
+    #                     result += prd * self(self.make_key((the_rc.normalize(),), key.size))
+    #         acc *= result
+
+    #     return acc.to_rc_graph_ring_element()
 
     def _ensure_valid_key(self, key):
         if not isinstance(key, (tuple, self.make_key)):

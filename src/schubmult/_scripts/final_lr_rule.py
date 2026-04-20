@@ -57,102 +57,40 @@ def safe_load_recording(filename):
 
 
 def verify_pair(perm1, perm2, n):
-    from schubmult import BoundedRCFactorAlgebra, RCGraph, RCGraphRing, Sx, uncode
+    from schubmult import BoundedRCFactorAlgebra, RCGraph, RCGraphRing, Sx, uncode, DSx, Permutation
     from schubmult.utils.tuple_utils import pad_tuple
     from sympy import Add, Mul, expand
 
-    g = BoundedRCFactorAlgebra()
-    r = RCGraphRing()
-
-    # def cem_schub(perm, n):
-    #     return sum([g.from_tensor_dict(cem_dict, n) for rc, cem_dict in RCGraph.full_CEM(perm, n).items()])
-
-    # def cem_schub_schur_decomp(perm, n):
-    #     result = Sx.zero @ Sx.zero
-    #     cd = perm.strict_mul_dominant().trimcode
-    #     if any(a < n for a in cd):
-    #         toadd = min(n - a for a in cd if a < n)
-    #         cd = [a + toadd for a in cd]
-    #     domperm = uncode(cd)
-    #     reppy = expand(Sx(perm).cem_rep(mumu=~domperm, elem_func=Sx.symbol_elem_func), func=False)
-    #     for arg in Add.make_args(reppy):
-    #         coeff, schur_part = arg.as_coeff_Mul()
-    #         part1 = Sx.one
-    #         part2 = Sx.one
-    #         for elem_arg in Mul.make_args(schur_part):
-    #             if elem_arg.numvars < n:
-    #                 part1 *= elem_arg
-    #             else:
-    #                 part2 *= elem_arg
-    #         result += coeff * part1 @ part2
-    #     return result
+    #r = RCGraphRing()
+    r = BoundedRCFactorAlgebra()
 
     try:
-        g_result = g.zero
-        result = r.zero
-        prd = Sx(perm1) * Sx(perm2)
-        length = max(len(perm1), len(perm2), n)
+        #length = max(len(perm1) - 1, len(perm2) - 1)
+        #length = max(len(perm1) - 1, len(perm2) - 1, len(perm1.trimcode), len(perm2.trimcode))
+        length = n - 1
+        #the_perm = sorted([perm1, perm2], key=lambda p: -len(p.trimcode))[0]
         #length = n
-        # partition1 = tuple((~(perm1.strict_mul_dominant(length))).trimcode)
-        # partition2 = tuple((~(perm2.strict_mul_dominant(length))).trimcode)
-        schub1 = g.schub_elem(perm1, length)#, partition=partition1)
-        #schub1 = g.from_tensor_dict(schub1_base, size=length)
-        schub2 = g.schub_elem(perm2, length)#, partition=partition2)
-        #schub2 = g.from_tensor_dict(schub2_base, size=length)
-        tensor_result = r.zero @ r.zero
-        # for key1, coeff1 in schub1.items():
-        #     # rc1 = next(iter(g(key1).to_rc_graph_ring_element().resize(n)))
-        #     # if rc1.perm != perm1:
-        #     #     continue
-        #     sumup = r.zero
-        #     # if not key1.is_highest_weight:
-        #     #     continue
-        #     for key2, coeff2 in schub2.items():
-        #         # rc2 = next(iter(g(key2).to_rc_graph_ring_element().resize(n)))
-        #         # if rc2.perm != perm2:
-        #         #     continue
-        #         graph_base = (g(key1) * g(key2))
-        #         for the_key, _ in graph_base.items():
-        #             if the_key.is_highest_weight:
-        #                 rc = next(iter(g(the_key).to_rc_graph_ring_element().resize(n)))
-        #             #if prd.get(rc.perm, 0) != 0:
-        #                 #if rc.is_principal:
-        #                 sumup += coeff1 * coeff2 * r(rc)
-        #     # if any(v < 0 for k, v in sumup.items() if k.extremal_weight == pad_tuple(k.perm.trimcode, len(k))):
-        #     #     print(f"Negative coefficient in intermediate sumup for {perm1} and {perm2} at key {key1}: {sumup}")
-        #     #     return False
-        #     result += sumup
-        result = (schub1 * schub2).to_rc_graph_ring_element().resize(n)
-            # if any(v < 0 for k, v in sumup.items() if k.extremal_weight == pad_tuple(k.perm.trimcode, len(k))):
-            #     print(f"Negative coefficient in intermediate sumup for {perm1} and {perm2} at key {key1}: {sumup}")
-            #     return False
-                        
+        # schub1 = r.from_CEM_rep(DSx(perm1).in_SEM_basis(), length)
+        #w0 = Permutation.w0(length)
+        # schub1 = r.from_CEM_rep(DSx(perm1).cem_rep(mumu=~(~(the_perm.strict_mul_dominant(length))), elem_func=DSx([]).ring.symbol_elem_func), length)
+        # schub2 = r.from_CEM_rep(DSx(perm2).cem_rep(mumu=~(~(the_perm.strict_mul_dominant(length))), elem_func=DSx([]).ring.symbol_elem_func), length)
+        schub1 = r.schub_elem(perm1, length)
+        schub2 = r.schub_elem(perm2, length)
+        #schub2 = r.from_CEM_rep(DSx(perm2).cem_rep(mumu=~(perm2.strict_mul_dominant(length)), elem_func=DSx([]).ring.symbol_elem_func), length)
+        result = (schub1*schub2).to_rc_graph_ring_element().resize(length)
+        prd = Sx(perm1) * Sx(perm2)
 
-        # if any(v < 0 for v in result.values()):
-        #     print(f"Negative coefficient in result for {perm1} and {perm2}: {result}")
-        #     return False
-        # if any(v < 0 for v in g_result.values()):
-        #     print(f"Negative coefficient in result for {perm1} and {perm2}: {g_result}")
-        #     return False
-        # result = g_result.to_rc_graph_ring_element().resize(n)
         prd2 = Sx.zero
-        seen = set()
-        result = {k: expand(v) for k, v in result.items() if k.perm.inv == perm1.inv + perm2.inv}# and expand(v) != 0 and expand(v).is_number}
         for rc, coeff in result.items():
             if coeff != prd.get(rc.perm, 0):
                 print(f"Coeff mismatch for {perm1}, {perm2} at {rc.perm}: got {coeff}, expected {prd.get(rc.perm, 0)}")
                 return False
-            #if rc.is_highest_weight and rc.extremal_weight == pad_tuple(rc.perm.trimcode, len(rc)):
             if rc.is_principal:
-                # if rc.perm not in seen:
-                #     seen.add(rc.perm)
                 prd2 += coeff * Sx(rc.perm)
 
         if prd != prd2:
             print(f"Product mismatch for {perm1}, {perm2}: expected {prd}, got {prd2}")
             return False
-        #from sympy import pretty_print
-        #pretty_print(result)
         return True
     except Exception as e:
         import traceback

@@ -65,6 +65,15 @@ class RCGraphRingElement(CrystalGraphRingElement, SchubertMonomialRingElement):
                 res += coeff * self.ring(new_rc)
         return res
 
+    def squash_product(self, other_rc):
+        """
+        Linear extension of RCGraph.squash_product.
+        """
+        res = self.ring.zero
+        for rc_graph, coeff in self.items():
+            res += coeff * self.ring(rc_graph.squash_product(other_rc))
+        return res
+
     def divdiff(self, *seq):
         """
         Sequential divided difference operators.
@@ -310,6 +319,56 @@ class RCGraphRing(SchubertMonomialRing, CrystalGraphRing):
     def _weight_key(self, rc):
         """Return the canonical RC graph for *rc*'s (perm, length_vector) class."""
         return min(RCGraph.all_rc_graphs(rc.perm, len(rc), weight=rc.length_vector))
+
+    def from_CEM_rep(self, the_cem, coeff_genset):
+        from sympy import Add, Mul, Pow, expand, sympify
+
+        from schubmult import uncode
+
+        terms = []
+        the_cem = expand(sympify(the_cem))
+        for the_term in Add.make_args(the_cem):
+            coeff, rest = the_term.as_coeff_Mul()
+            if rest == 1:
+                terms.append((coeff, ()))
+            else:
+                factors = []
+                for factor in Mul.make_args(rest):
+                    exponent = 1
+                    if isinstance(factor, Pow):
+                        base, exponent = factor.as_base_exp()
+                    else:
+                        base = factor
+                    factors.extend([base] * exponent)
+                terms.append((coeff, sorted(factors, key=lambda x: x.numvars)))
+
+        the_result = self.zero
+        for ti, term in enumerate(terms):
+            base = self.one
+
+            for fi, factor in enumerate(term[1]):
+                p = factor.degree
+                k = factor.numvars
+                #print(f"\n    factor[{fi}]: {factor}  (p={p}, k={k})")
+
+                perm_for_elem = uncode([0] * (k - p) + [1] * p)
+                all_elem_rcs = list(RCGraph.all_rc_graphs(perm_for_elem))
+                #print(f"      all_rc_graphs count: {len(all_elem_rcs)}")
+
+                yvars = coeff_genset
+                zvars = factor.coeffvars
+
+                factor_result = self.zero
+                for ri, elem_sym_rc in enumerate(all_elem_rcs):
+                    weight = elem_sym_rc.length_vector
+                    #contribution = base.resize(k).double_elem_sym_squash(weight, yvars, zvars)
+                    contribution = base.resize(k).squash_product(elem_sym_rc)
+                    factor_result += contribution
+
+                base = factor_result
+
+            the_result += term[0] * base
+        return the_result
 
     def from_dict(self, dct):
         return super().from_dict(dct)
