@@ -32,7 +32,7 @@ The \textbf{Bounded RC Factor Algebra} of size $n$ is a $\Z$-algebra whose addit
 \section{Additive Basis}
 
 \begin{definition}[Full Grassmannian RC graph]
-An RC graph $G$ with $k$ rows is \emph{full Grassmannian} if either $\pi(G) = \id$ or $\des(\pi(G)) = \{k-1\}$ (i.e.\ the associated permutation has at most one descent, occurring at position $k-1$).
+An RC graph $G$ with $k$ rows is \emph{full Grassmannian} if either $\pi(G) = \id$ or $\des(\pi(G)) = \{k\}$ (i.e.\ the associated permutation has at most one descent, occurring at position $k$).
 \end{definition}
 
 \begin{definition}[Basis keys]
@@ -42,8 +42,8 @@ Fix an integer $n \geq 1$.  A \textbf{basis key} of size $n$ is a tensor
 \]
 where:
 \begin{itemize}
-  \item For $1 \leq i \leq n-1$, each $E_i$ is an $i$-row full Grassmannian RC graph whose permutation lies in $\Sym_{i+1}$ (equivalently, $E_i$ is an elementary symmetric RC graph: $\pi(E_i) \in \Sym_{i+1}$ with $\des(\pi(E_i)) \subseteq \{i-1\}$).
-  \item $G_n$ is an $n$-row full Grassmannian RC graph (so $\des(\pi(G_n)) \subseteq \{n-1\}$).
+  \item For $1 \leq i \leq n-1$, each $E_i$ is an $i$-row full Grassmannian RC graph whose permutation lies in $\Sym_{i+1}$ (equivalently, $E_i$ is an elementary symmetric RC graph: $\pi(E_i) \in \Sym_{i+1}$ with $\des(\pi(E_i)) \subseteq \{i\}$).
+  \item $G_n$ is an $n$-row full Grassmannian RC graph (so $\des(\pi(G_n)) \subseteq \{n\}$).
 \end{itemize}
 Any factor with $\pi = \id$ may be omitted from the tensor (the identity RC graph acts as a unit under the squash product).
 
@@ -59,7 +59,7 @@ Given RC graphs $A$ (with $m$ rows) and $B$ (with $k$ rows, $k \geq m$), the \te
   \item Form the \emph{disjoint union}: place $B$ next to $A$ by shifting its column indices into a sufficiently high range that the corresponding Schubert polynomials commute (i.e.\ the permutations act on disjoint positions).  The row counts are unchanged; the number of rows of the result increases only to accommodate the combined code length.
   \item Repeatedly \emph{zero out the last row} (applying the transition/exchange property to absorb the bottom row into the upper rows) until the result has $k$ rows.
 \end{enumerate}
-The result is a $k$-row RC graph whose permutation satisfies $\pi(A \cdot_{\mathrm{sq}} B) = \pi(A) \cdot \pi(B)$ in the appropriate sense.
+The result is a $k$-row RC graph.
 
 \subsection{Key-to-RC-graph evaluation}
 
@@ -120,44 +120,36 @@ The SEM (standard elementary monomial) representation of any polynomial in the f
 
 \section{Schubert Elements}
 
-The representation of a Schubert polynomial $\Sch_w$ in the bounded RC factor algebra depends on whether $w \in \Sym_n$ or $w$ merely has Lehmer code of length $\leq n$.
+The representation of a Schubert polynomial $\Sch_w^{(n)}$ in the bounded RC factor algebra depends on whether $w \in \Sym_n$ or $w$ merely has Lehmer code of length $\leq n$.
 
 \subsection{Case 1: $w \in \Sym_n$ (code length $\leq n-1$)}
 
 When $w \in \Sym_n$, the Schubert element has \textbf{no Grassmannian part} ($G_n = \id$).  It is defined purely via the SEM expansion:
 
 \[
-  \Sch_w = \sum_{\mathbf{a}} c_{\mathbf{a}} \, e_{a_1}^{(1)} \cdot e_{a_2}^{(2)} \cdots e_{a_{n-1}}^{(n-1)},
+  \Sch_w^{(n)} = \sum_{\mathbf{a}} c_{\mathbf{a}} \, e_{a_1}^{(1)} \cdot e_{a_2}^{(2)} \cdots e_{a_{n-1}}^{(n-1)},
 \]
 where the sum is the SEM representation of $\Sch_w$ and the $c_{\mathbf{a}}$ are integer coefficients.
 
 \subsection[Case 2: code length = n]{Case 2: code length $= n$ (not in $\Sym_n$, but code fits in $n$ rows)}
 
-When $w \notin \Sym_n$ but the Lehmer code of $w$ has length $\leq n$, the Schubert element uses the \textbf{Grassmannian part} and is computed via the full CEM factorization.
+When $w \notin \Sym_n$ but the Lehmer code of $w$ has length $\leq n$, the Schubert element uses the $\Lambda_n$-module representation, computed as follows.
 
-The key observation is that the $n$-variable polynomial ring $\Z[x_1, \ldots, x_n]$ is a free module over $\Lambda_n = \Z[e_1^{(n)}, e_2^{(n)}, \ldots, e_n^{(n)}]$ (the ring of symmetric polynomials in $n$ variables), with basis $\{\Sch_w : w \in \Sym_n\}$.  Concretely, for any $w$ with code length $\leq n$:
+The  $n$-variable polynomial ring $\Z[x_1, \ldots, x_n]$ is a free module over $\Lambda_n$ (the ring of symmetric polynomials in $n$ variables), with basis $\{\Sch_w : w \in \Sym_n\}$.  Concretely, for any $w$ with code length $\leq n$:
 
 \[
-  \Sch_w = \sum_{\substack{v \in \Sym_n \\ G \text{ Grass.}}} c_{v,G} \; \Sch_v \cdot [G],
+  \Sch_w^{(n)} = \sum_{\substack{v \in \Sym_n \\ G \text{ Grass.}}} c_{v,G} \; \Sch_v \cdot [G],
 \]
 where:
 \begin{itemize}
   \item $v$ ranges over elements of $\Sym_n$,
   \item $G$ ranges over $n$-row Grassmannian RC graphs,
-  \item each $\Sch_v$ is expanded in the $\Sym_n$ CEM basis (Case~1 above),
+  \item each $\Sch_v$ is expanded in the $\Sym_n$ SEM basis (Case~1 above),
   \item $[G]$ is the basis element for the single-factor key $(G)$ of size $n$,
-  \item the coefficients $c_{v,G}$ come from the full CEM decomposition.
+  \item the coefficients $c_{v,G}$ come from the full SEM decomposition.
 \end{itemize}
 
-Concretely, one computes the CEM representation of $\Sch_w$ and splits each monomial's factors into those with $< n$ variables (the $\Sym_n$ part) and those with $n$ variables (the Grassmannian/symmetric part).  The $\Sym_n$ part is expanded via Case~1, and the Grassmannian part is expanded using the full CEM decomposition with the appropriate partition.  The results are multiplied and summed.
-
-\section{Coproduct}
-
-The coproduct on a key $K$ of size $n$ is defined by vertical cuts:
-\[
-  \Delta(K) = \sum_{i=0}^{n} K^{\leq i} \tens K^{> i},
-\]
-where for each factor $F_j$ of $K$, we resize $F_j$ to $n$ rows and perform a vertical cut at column $i$, producing a left factor (columns $\leq i$) and a right factor (columns $> i$), each normalized.
+This can be explicitly computed.
 
 \section{Key-to-RC-Graph Correspondence}
 
@@ -167,8 +159,13 @@ The map $K \mapsto \RC(K)$ extends linearly:
 \[
   \sum_i \alpha_i K_i \;\mapsto\; \sum_i \alpha_i \, \RC(K_i).
 \]
-This allows verification: the product in the bounded RC factor algebra, when mapped to RC graphs, should reproduce the standard Schubert polynomial multiplication.
 
+\newtheorem{theorem}{Theorem}
+\begin{theorem}
+For each $u,v$ with code length $\leq n$, 
+
+$$\RC(\Sch_u^{(n)} \cdot \Sch_v^{(n)}) = \sum_{w} c_{u,v}^w \, \RC(\Sch_w^{(n)})$$
+\end{theorem}
 \bibliographystyle{plain}
 \bibliography{../molev-sagan-paper}
 

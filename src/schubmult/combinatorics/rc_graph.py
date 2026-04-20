@@ -1433,7 +1433,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         # print(f"{base_elem=}")
         # return base_elem
 
-    def double_elem_sym_squash(self, weight, yvars, zvars):
+    def double_elem_sym_squash(self, weight, _yvars, _zvars):
         from ..rings.combinatorial.rc_graph_ring import RCGraphRing
 
         r = RCGraphRing()
@@ -1444,21 +1444,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         except StopIteration:
             return r.zero
         top_rc = self.resize(len(elem_sym_rc)).squash_product(elem_sym_rc)
-        result = r(top_rc)
-        for i in range(len(weight)):
-            if weight[i] > 0:
-                new_weight = [*weight]
-                new_weight[i] -= 1
-                try:
-                    index = elem_sym_rc[i][0] - i + 1
-                    # result += (yvars[self.perm[i] - 1] - zvars[len(elem_sym_rc) - elem_sym_rc[i][0] + i - 1]) * self.double_elem_sym_squash(tuple(new_weight), yvars, zvars)
-                    # result += (yvars[self.perm[i] - 1] - zvars[index]) * self.double_elem_sym_squash(tuple(new_weight), yvars, zvars)
-                except IndexError:
-                    # print(f"Index error in double_elem_sym_squash for {self=}, {weight=}, {yvars=}, {zvars=}, {elem_sym_rc=} {i=}")
-                    # print(f"{index=}")
-                    raise
-                # break
-        return result
+        return r(top_rc)
 
     # @classmethod
     # @cache
