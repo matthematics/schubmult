@@ -67,36 +67,36 @@ def verify_pair(perm1, perm2, n):
     # def cem_schub(perm, n):
     #     return sum([g.from_tensor_dict(cem_dict, n) for rc, cem_dict in RCGraph.full_CEM(perm, n).items()])
 
-    def cem_schub_schur_decomp(perm, n):
+    # def cem_schub_schur_decomp(perm, n):
         
-        result = Sx.zero @ Sx.zero
-        cd = ((perm.strict_mul_dominant(n))).trimcode
-        if any(a < n for a in cd):
-            toadd = min(n - a for a in cd if a < n)
-            cd = [a + toadd for a in cd]
-        domperm = uncode(cd)
-        reppy = sympify(expand(Sx(perm).cem_rep(mumu=~domperm, elem_func=Sx.symbol_elem_func), func=False))
-        for arg in Add.make_args(reppy):
-            coeff, schur_part = arg.as_coeff_Mul()
-            part1 = Sx.one
-            part2 = Sx.one
-            for elem_arg in Mul.make_args(schur_part):
-                if isinstance(elem_arg, Pow):
-                    base, exp = elem_arg.as_base_exp()
-                else:
-                    base = elem_arg
-                    exp = 1
-                for _ in range(exp):
-                    if base.numvars < n:
-                        part1 *= base
-                    else:
-                        part2 *= base
-                # if elem_arg.numvars < n:
-                #     part1 *= elem_arg
-                # else:
-                #     part2 *= elem_arg
-            result += coeff * part1 @ part2
-        return result
+    #     result = Sx.zero @ Sx.zero
+    #     cd = ((perm.strict_mul_dominant(n))).trimcode
+    #     if any(a < n for a in cd):
+    #         toadd = min(n - a for a in cd if a < n)
+    #         cd = [a + toadd for a in cd]
+    #     domperm = uncode(cd)
+    #     reppy = sympify(expand(Sx(perm).cem_rep(mumu=~domperm, elem_func=Sx.symbol_elem_func), func=False))
+    #     for arg in Add.make_args(reppy):
+    #         coeff, schur_part = arg.as_coeff_Mul()
+    #         part1 = Sx.one
+    #         part2 = Sx.one
+    #         for elem_arg in Mul.make_args(schur_part):
+    #             if isinstance(elem_arg, Pow):
+    #                 base, exp = elem_arg.as_base_exp()
+    #             else:
+    #                 base = elem_arg
+    #                 exp = 1
+    #             for _ in range(exp):
+    #                 if base.numvars < n:
+    #                     part1 *= base
+    #                 else:
+    #                     part2 *= base
+    #             # if elem_arg.numvars < n:
+    #             #     part1 *= elem_arg
+    #             # else:
+    #             #     part2 *= elem_arg
+    #         result += coeff * part1 @ part2
+    #     return result
 
     try:
         # g_result = g.zero
@@ -107,14 +107,16 @@ def verify_pair(perm1, perm2, n):
         #length = n
         # partition1 = tuple((~(perm1.strict_mul_dominant(length))).trimcode)
         # partition2 = tuple((~(perm2.strict_mul_dominant(length))).trimcode)
-        decomp1 = cem_schub_schur_decomp(perm1, length)
-        schub1 = g.zero
-        for (p1, p2), coeff in decomp1.items():
-            schub1 += coeff * g.schub_elem(p1, length) * g.schub_elem(p2, length, partition=tuple((~(p2.mul_dominant())).trimcode))
-        decomp2 = cem_schub_schur_decomp(perm2, length)
-        schub2 = g.zero
-        for (p1, p2), coeff in decomp2.items():
-            schub2 += coeff * g.schub_elem(p1, length) * g.schub_elem(p2, length, partition=tuple((~(p2.mul_dominant())).trimcode))
+        # decomp1 = cem_schub_schur_decomp(perm1, length)
+        schub1 = g.full_schub_elem(perm1, length)
+        schub2 = g.full_schub_elem(perm2, length)
+        # schub1 = g.zero
+        # for (p1, p2), coeff in decomp1.items():
+        #     schub1 += coeff * g.schub_elem(p1, length) * g.schub_elem(p2, length, partition=tuple((~(p2.mul_dominant())).trimcode))
+        # decomp2 = cem_schub_schur_decomp(perm2, length)
+        # schub2 = g.zero
+        # for (p1, p2), coeff in decomp2.items():
+        #     schub2 += coeff * g.schub_elem(p1, length) * g.schub_elem(p2, length, partition=tuple((~(p2.mul_dominant())).trimcode))
         g_result = schub1 * schub2
         #schub2 = g.from_tensor_dict(schub2_base, size=length)
         # tensor_result = r.zero @ r.zero

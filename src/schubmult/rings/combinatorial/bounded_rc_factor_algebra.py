@@ -420,6 +420,45 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
             perm = perm.swap(index - 1, index)
         return result
 
+    def full_schub_elem(self, perm, size):
+        def cem_schub_schur_decomp(perm, n):
+            from sympy import Add, Mul, Pow, expand, sympify
+
+            from schubmult import Sx, uncode
+            result = Sx.zero @ Sx.zero
+            cd = (perm.strict_mul_dominant(n)).trimcode
+            if any(a < n for a in cd):
+                toadd = min(n - a for a in cd if a < n)
+                cd = [a + toadd for a in cd]
+            domperm = uncode(cd)
+            reppy = sympify(expand(Sx(perm).cem_rep(mumu=~domperm, elem_func=Sx.symbol_elem_func), func=False))
+            for arg in Add.make_args(reppy):
+                coeff, schur_part = arg.as_coeff_Mul()
+                part1 = Sx.one
+                part2 = Sx.one
+                for elem_arg in Mul.make_args(schur_part):
+                    if isinstance(elem_arg, Pow):
+                        base, exp = elem_arg.as_base_exp()
+                    else:
+                        base = elem_arg
+                        exp = 1
+                    for _ in range(exp):
+                        if base.numvars < n:
+                            part1 *= base
+                        else:
+                            part2 *= base
+                    # if elem_arg.numvars < n:
+                    #     part1 *= elem_arg
+                    # else:
+                    #     part2 *= elem_arg
+                result += coeff * part1 @ part2
+            return result
+        decomp = cem_schub_schur_decomp(perm, size)
+        schub = self.zero
+        for (p1, p2), coeff in decomp.items():
+            schub += coeff * self.schub_elem(p1, size) * self.schub_elem(p2, size, partition=tuple((~(p2.mul_dominant())).trimcode))
+        return schub
+
     def schub_elem(self, perm, size, partition=None):
         from schubmult.combinatorics.permutation import Permutation
 
