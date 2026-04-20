@@ -197,7 +197,7 @@ class TestBoundedRCFactorAlgebraElemSym:
         from schubmult.symbolic import S
 
         brc = BoundedRCFactorAlgebra()
-        e11 = brc.elem_sym(1, 1)
+        e11 = brc.elem_sym(1, 1, 1)
         rc_e11 = e11.to_rc_graph_ring_element()
         assert len(rc_e11) == 1
         for rc, coeff in rc_e11.items():

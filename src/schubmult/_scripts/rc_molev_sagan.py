@@ -13,8 +13,11 @@ if __name__ == "__main__":
         # print(f"PERMUTATION: {perm}  (inv={perm.inv}, descents={perm.descents()}, trimcode={perm.trimcode})")
         # print("=" * 80)
 
-        the_cem = expand(DSx(perm).in_CEM_basis())
-        the_result = r.from_CEM_rep(the_cem, n)
+        # the_cem = expand(DSx(perm).in_CEM_basis())
+        #the_result = r.from_CEM_rep(the_cem, n)
+        if perm.inv == 0:
+            continue
+        the_result = r.full_schub_elem(perm, len(perm.trimcode))
         # print(f"  CEM expansion (in_SEM_basis): {the_cem}")
 
         # terms = []
