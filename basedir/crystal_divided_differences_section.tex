@@ -1,0 +1,123 @@
+\subsection{Crystal divided differences and the dominant Pieri formula}
+
+Let $R$ be an RC graph and let $i>0$ be an integer. We define $\rcdd^iR$, an element of $\RC$, as follows. Define
+$$\rcdd^iR=0$$
+unless $s_i$ is a right descent of $\wof{R}$ and there exists $(i,j)\in R$ such that $\rtt_R(i, j) = (i, i+1)$. If these latter two conditions are satisfied, define 
+$$R'=R\setminus \{(i, j)\}$$
+where $\rtt_R(i,j) = (i, i+1)$. If $e_i(R')\neq \emptyset$, define $\rcdd^iR'=0$. Otherwise, define
+$$\rcdd^iR = \sum_{p=0}^{\varphi_i(R')}f_i^pR'$$
+\begin{lemma} \label{lemma:divdiffunique}
+	Let $R$ be an RC graph and let $i>0$ be an integer. If $s_i$ is not a right descent of $\wof{R}$, then there is a unique $R'$ such that the coefficient of $R$ in $\rcdd^iR'$ is $1$, and for other $R'$ the coefficient is $0$.
+\end{lemma}
+\begin{proof}
+	Suppose $s_i$ is not a right descent of $\wof{R}$. Assume without loss of generality that $e_iR = \emptyset$. If $(i+1, 1)\notin R$, then $(i,1)\notin R$ because $s_i$ is not a right descent of $\wof{R}$. In that case, let $R' = R\cup\{(i,1)\}$. Then 
+	$$\rcdd^iR' = R + \text{other terms}$$ 
+	If instead $(i+1, 1)\in R$, since $e_i(R)=\emptyset$ it follows that $(i, 1)\in R$, and if $j$ is the maximum value such that $(i+1,j')\in R$ for all $j'<j$, it follows that $(i,j')\in R$ for all $j'<j$. We must have that $(i,j+1)\notin R$, because $\rtt_R(i, j+1)=(i, i+1)$. Setting $R'=R\cup \{(i, j+1)\}$ gives us the result.
+\end{proof}
+
+\begin{theorem} \label{theorem:divdiffschubert}
+	Suppose $w\in S_\infty$ and $i >0$. If $i$ is not a right descent of $w$, then
+	$$\rcdd^i\mathcal{S}_w(n) = 0$$
+	Otherwise,
+	$$\rcdd^i\mathcal{S}_w(n) = \mathcal{S}_{ws_i}(n)$$
+\end{theorem}
+\begin{proof}
+	The result is trivial if $i$ is not a right 
+	descent of $w$. Suppose $i$ is a right descent of $w$. By Lemma \ref{lemma:divdiffunique}, for each RC graph $R$ such that $\wof{R} = ws_i$, there is a unique RC graph $R'$ such that the coefficient of $R$ in $\rcdd^iR'$ is $1$. Since $\wof{R'} = w$, the result follows.
+\end{proof}
+
+\begin{definition}
+For a permutation $w$, define the \emph{principal RC graph} $R^0(w)$ of $w$ to be
+$$R^0(w) = \{(i,j)\mid 1\leq j\leq \code^*_i(w)\}$$
+\end{definition}
+
+\begin{proposition} \label{proposition:divdiffprincipal}
+Let $R$ be an RC graph and let $w=\wof{R}$. Then for any reduced word $(s_{i_1}, s_{i_2}, \ldots, s_{i_m})$ for $w$, we have
+$$\rcdd^{i_1}\rcdd^{i_2}\cdots \rcdd^{i_m}R = \delta_{R,R^0(w)}\emptyset$$
+\end{proposition}
+
+Let $\RC^C$ be the submodule of $\RC$ consisting of formal sums of RC graphs
+$$\sum_R c_R R$$
+such that if $e_iR\neq \emptyset$, then $c_{e_iR} = c_R$, and if $f_iR\neq \emptyset$, then $c_{f_iR} = c_R$, for all $i>0$.
+
+\begin{lemma}
+The submodule $\RC^C$ is stable under the crystal divided difference operators $\rcdd^i$ for all $i>0$.
+\end{lemma}
+\begin{proof}
+
+\end{proof}
+
+\begin{theorem}
+The crystal divided difference operators satisfy the relations:
+$$\rcdd^i\rcdd^i = 0$$
+$$\rcdd^i\rcdd^j = \rcdd^j\rcdd^i\quad\mbox{for }|i-j|>1$$
+and on the submodule $\RC^C$,
+$$\rcdd^i\rcdd^{i+1}\rcdd^i = \rcdd^{i+1}\rcdd^i\rcdd^{i+1}$$
+\end{theorem}
+\begin{proof}
+By Proposition \ref{proposition:divdiffprincipal}, these identities hold when applied to any principal RC graph. Ason
+\end{proof}
+%\begin{definition}
+%	For integers $p,q$, define a permutation
+%	$$d[p,q] = s_ps_{p+1}\cdots s_{p+q-1}$$
+%	For a bounded RC graph $(R,n)$ and an integer $1\leq i\leq n$ such that row $i$ is empty, define $\zeromap_{(i)}(R, n)$ as follows. Let 
+%	$$R^-=\{(a,b)\mid (a,b)\in R\mbox{ and }a<i\}$$
+%	and
+%	$$R^+=\{(a,b)\mid (a,b)\in R\mbox{ and }a>i\}$$
+%	Then define $R'$ to be the unique RC graph such that
+%	$$(R', i-1) = Z^{n-i+1}(R^-, n)$$ 
+%	Finally, define
+%	$$R_{(i)}=R'\cup\trm(R^+)$$
+%	and
+%	$$\zeromap_{(i)}(R, n) = (R_{(i)}, n-1)$$
+%	
+%	Let $\mu$ be a dominant permutation, let $w$ be an arbitrary permutation, and let $R$ be an RC graph. We define an integer $\delta_\mu^w(R)\in\{0,1\}$ by the following algorithm. Set $R_0=R$ and begin iterating, setting $i=1$. If $\code^*_i(\mu)>\code^*_i(w)$, terminate and set $\delta_\mu^w(R)=0$. Otherwise, define
+%	$$R' = \partial^{d[\code_i^*(\mu)+1,\code^*_i(w)-\code^*_i(\mu)]}(R_{i-1})$$
+%	If row $\code_i^*(\mu)+1$ is not empty in $R'$, terminate and set $\delta_\mu^w(R) = 0$. Otherwise, let 
+%	$$R_i = \zeromap_{(\code_i^*(\mu)+1)}(R', n - i + 1)$$
+%	 Let $m$ be the length of $\code^*(\mu)$, and proceed as $i$ ranges from $1$ to $m$. After this procedure, we end with the RC graph $R_m$. If there is an index past $m$ such that $\code^*(w)$ is nonzero, proceed incrementally for each $i > m$ by applying
+%	 $$R_i = \partial^{d[i+1-m, \code^*_i(w)]}(R_{i-1})$$
+%	 then define
+%	 $$\delta_\mu^w(R) = 1$$
+%	 if $R_N=(\emptyset, 0)$ for sufficiently large $N$.
+%\end{definition}
+
+\begin{definition}
+$\widetilde{s}_i$ is the operator on bounded RC graphs defined by
+
+For an RC graph $R$ with row $k$ empty, suppose $k$ is not a  descent of $\wof{R}$. Let $m>k$ be the smallest integer such that $m$ is a descent of $\wof{R}$. Define
+$$\widetilde{R} = \widetilde{s}_{m-1}\widetilde{s}_{m-2}\cdots \widetilde{s}_k R$$
+Then define
+$$\zeromap_k(R, n) = \zeromap_m(\widetilde{R}, n)$$
+\end{definition}
+
+\begin{definition}
+	Let $(R, n)$ be a bounded RC graph. We define a $\{0,1\}$-valued function $\delta_\mu^w(R, n)$ for a dominant permutation $\mu$ and an arbitrary permutation $w$ via the following construction. For integers $p, q$, let $d[p, q] = s_p s_{p+1} \cdots s_{p+q-1}$ be a product of simple reflections.
+		
+	Let $m$ be the length of $\code^*(\mu)$. Initialize $(R_0, n_0) = (R, n)$. For each $i$ from $1$ to $m$:
+	\begin{enumerate}
+		\item If $\code^*_i(\mu) > \code^*_i(w)$, terminate and set $\delta_\mu^w(R, n) = 0$.
+		\item Otherwise, let $k = \code^*_i(w) - \code^*_i(\mu)$ and apply the crystal divided difference operator:
+		\[
+		R' = \rcdd^{d[\code_i^*(\mu)+1, \, k]}(R_{i-1})
+		\]
+		\item If row $\code_i^*(\mu)+1$ is not empty in $R'$, terminate and set $\delta_\mu^w(R, n) = 0$.
+		\item If the row is empty, define the next state:
+		\[
+		(R_i, n_i) = \zeromap_{(\code_i^*(\mu)+1)}(R', n_{i-1})
+		\]
+	\end{enumerate}
+	
+	If the loop completes, for any remaining indices $i > m$ where $\code^*_i(w) > 0$, incrementally update the graph:
+	\[
+	R_i = \rcdd^{d[i+1-m, \, \code^*_i(w)]}(R_{i-1})
+	\]
+	Finally, define $\delta_\mu^w(R, n) = 1$ if $(R_N, n_N) = (\emptyset, 0)$ for sufficiently large $N$, and $\delta_\mu^w(R, n) = 0$ otherwise.
+\end{definition}
+
+\begin{theorem}
+	Let $\mu$ be a dominant permutation and let $v,w$ be permutations such that $\ell(\mu) + \ell(v)=\ell(w)$. Then
+	$$c_{\mu,v}^w=\sum_{\wof{R}=v}\delta_\mu^w(R)$$
+\end{theorem}
+
+\section{Quantum rules}

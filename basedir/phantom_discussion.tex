@@ -1,0 +1,61 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1in]{geometry}
+
+\newcommand{\BRC}{\mathcal{BRC}}
+\newcommand{\CE}{\mathcal{E}}
+\newcommand{\CR}{\mathcal{R}}
+\newcommand{\sch}{\mathfrak{S}}
+
+\begin{document}
+
+\section*{Phantom terms, quantum annihilating pairs, and positivity}
+
+\texttt{full\_CEM} for a permutation $u$ produces a dictionary
+$\{R \mapsto \text{cem\_dict}\}$ where each $R$ is an RC graph for~$u$,
+and $\text{cem\_dict}$ is its Grassmannian factorization in~$\CE$.
+However, some tensors in the CEM dict, when squashed via~$\CR$, land on
+an RC graph for a \emph{different} permutation $u' \neq u$.  These are
+the \textbf{phantoms}---they live in
+$\ker\!\bigl(\CR - \text{(expected perm)}\bigr)$.
+
+When two CEM elements are multiplied, a phantom tensor can pair with a
+legitimate tensor and produce:
+\begin{itemize}
+  \item A \textbf{bad} RC graph (wrong permutation or wrong weight) that
+        gets killed, and simultaneously
+  \item A \textbf{good} RC graph (correct permutation, correct weight)
+        that fills a gap.
+\end{itemize}
+These come in pairs---a \textbf{quantum annihilating pair}---where the
+phantom contribution simultaneously subtracts a term that should not be
+present and adds one that should.
+
+This is why the crystal filter works despite the apparent signs: the
+phantoms are not creating cancellation in the coefficient~$c_{uv}^w$.
+Instead, they perform a \textbf{crystal-theoretic correction}, swapping
+contributions that landed in the wrong crystal component for ones in the
+right component.  The net effect on~$c_{uv}^w$ is always non-negative
+because:
+\begin{enumerate}
+  \item Without phantoms, the total count would be correct but
+        distributed incorrectly across crystal components.
+  \item The phantoms redistribute: $-1$ from a forbidden component,
+        $+1$ to a missing one.
+  \item After filtering by \texttt{is\_highest\_weight} and
+        \texttt{extremal\_weight == trimcode}, each surviving component
+        has been corrected to its true (non-negative) multiplicity.
+\end{enumerate}
+
+A proof would therefore need to show that phantom pairs always act as
+\textbf{transpositions on the set of crystal components}: each phantom
+involvement swaps exactly one bad contribution for one good one,
+preserving the total and maintaining non-negativity after the crystal
+filter.
+
+Formally, the phantoms should generate an action on the
+fiber~$\CR^{-1}(w)$ that is compatible with the crystal structure, and
+the quantum annihilating pairs are precisely the orbits of this action
+that cross crystal component boundaries.
+
+\end{document}

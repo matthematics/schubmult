@@ -76,10 +76,10 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         hw, raise_seq = rc.to_highest_weight()
         perm = self.perm
         perm_grass, perm_base = perm.coset_decomp(*(list(range(grass_descent)) + list(range(grass_descent + 1, len(perm)))))
-        if perm_grass.inv == 0:
-            return self, RCGraph([()]).resize(n)
-        if perm_base.inv == 0:
-            return self, RCGraph([()]).resize(n)
+        # if perm_grass.inv == 0:
+        #     return self, RCGraph([()]).resize(n)
+        # if perm_base.inv == 0:
+        #     return self, RCGraph([()]).resize(n)
 
         def decomp_hw():
             stack = [hw]
@@ -94,6 +94,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                     maxes = {rcc for rcc in working_set.union(maxes) if len(rcc.perm.trimcode) == max_code}
                 stack.extend(working_set)
                 seen.update(working_set)
+                # print(f"Stack size: {len(stack)}, seen size: {len(seen)}, maxes size: {len(maxes)}")
             min_perm_inv = 0
             the_rc = None
             for rc_max in maxes:
@@ -108,10 +109,12 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
             upper_rc = RCGraph([tuple([a for a in row if a >= grass_descent]) for row in tuple(rc_max)]).resize(len(rc_max))
 
             upper_rc = upper_rc.vertical_cut(grass_descent)[0]
+            # print(f"Lower RC: {lower_rc}, perm={lower_rc.perm}, inv={lower_rc.perm.inv}")
             return lower_rc, upper_rc
 
         base_hw, grass = decomp_hw()
         tensor = CrystalGraphTensor(base_hw, grass).reverse_raise_seq(raise_seq)
+        # print(f"Tensor factors: {tensor.factors}")
         return tensor.factors
         # n = len(self)
         # working_set = {self}
@@ -1381,6 +1384,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
 
     def full_double_elem_sym_squash(self, p, yvars, zvars):
         from ..rings.combinatorial.rc_graph_ring import RCGraphRing
+
         r = RCGraphRing()
         result = r.zero
         for elem_sym_rc in RCGraph.elem_sym_rcs(p, len(self)):
@@ -1388,8 +1392,8 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         return result
 
     def double_elem_rep(self, yvars, size):
-
         from ..rings.combinatorial.bounded_rc_factor_algebra import BoundedRCFactorAlgebra
+
         r = BoundedRCFactorAlgebra()
         if self.perm.inv == 0:
             return r(r.make_key((), size))
@@ -1403,7 +1407,7 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
         base_elem = key[0]
         for k in key[1:]:
             base_elem = base_elem.resize(len(k)).double_elem_sym_squash(k.perm.inv, k.length_vector, yvars, yvars)
-        result_elem = r(r.make_key(key, max(size,len(self.perm))))
+        result_elem = r(r.make_key(key, max(size, len(self.perm))))
         for rc, coeff in base_elem.items():
             norm_rc = rc.normalize()
             if norm_rc != rc_norm:
@@ -1447,13 +1451,13 @@ class RCGraph(SchubertMonomialGraph, GridPrint, tuple, CrystalGraph):
                 new_weight[i] -= 1
                 try:
                     index = elem_sym_rc[i][0] - i + 1
-                    #result += (yvars[self.perm[i] - 1] - zvars[len(elem_sym_rc) - elem_sym_rc[i][0] + i - 1]) * self.double_elem_sym_squash(tuple(new_weight), yvars, zvars)
-                    #result += (yvars[self.perm[i] - 1] - zvars[index]) * self.double_elem_sym_squash(tuple(new_weight), yvars, zvars)
+                    # result += (yvars[self.perm[i] - 1] - zvars[len(elem_sym_rc) - elem_sym_rc[i][0] + i - 1]) * self.double_elem_sym_squash(tuple(new_weight), yvars, zvars)
+                    # result += (yvars[self.perm[i] - 1] - zvars[index]) * self.double_elem_sym_squash(tuple(new_weight), yvars, zvars)
                 except IndexError:
-                    print(f"Index error in double_elem_sym_squash for {self=}, {weight=}, {yvars=}, {zvars=}, {elem_sym_rc=} {i=}")
-                    print(f"{index=}")
+                    # print(f"Index error in double_elem_sym_squash for {self=}, {weight=}, {yvars=}, {zvars=}, {elem_sym_rc=} {i=}")
+                    # print(f"{index=}")
                     raise
-                #break
+                # break
         return result
 
     # @classmethod
