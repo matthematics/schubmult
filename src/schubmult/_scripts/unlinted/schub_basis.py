@@ -14,6 +14,8 @@ if __name__ == "__main__":
     for perm1, perm2 in itertools.product(perms, repeat=2):
         if perm1.inv == 0 or perm2.inv == 0:
             continue
+        if not set(perm2.trimcode).issubset({0,1}):
+            continue
         # if len(perm1.trimcode) != len(perm2.trimcode):
         #     continue
         #length = max(len(perm1) - 1, len(perm2) - 1)

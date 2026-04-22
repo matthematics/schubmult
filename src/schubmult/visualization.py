@@ -109,7 +109,7 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True
                 else:
                     # Horizontal strand (blue, from left to right)
                     ax.plot([x_pos - 1, x_pos], [y_pos - 0.5, y_pos - 0.5], "b-", linewidth=2.5, zorder=10, solid_capstyle="round")
-                # Vertical strand (red, from bottom) - same in both orientations
+                # Vertical strand (blue, from bottom) - same in both orientations
                 ax.plot([x_pos - 0.5, x_pos - 0.5], [y_pos - 1, y_pos], "r-", linewidth=2.5, zorder=10, solid_capstyle="round")
             else:
                 # ELBOW: strands avoid each other with 90-degree curves
@@ -225,7 +225,7 @@ def draw_pipe_dream(rc, max_size=None, title=None, ax=None, flip_horizontal=True
     return fig, ax
 
 
-def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=False, show_refs=True, scale=1.0, outline_rows=None, clip_at_outline=True):
+def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=False, show_refs=False, scale=1.0, outline_rows=None, clip_at_outline=True):
     """
     Generate TikZ code for a pipe dream visualization of an RC graph.
 
@@ -322,8 +322,8 @@ def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=Fa
                 else:
                     # Horizontal strand (blue, from left to right)
                     lines.append(f"  \\draw[blue, line width={line_width}pt, line cap=round] ({x_pos},{y_pos + 0.5}) -- ({x_pos + 1},{y_pos + 0.5});")
-                # Vertical strand (red, from bottom to top)
-                lines.append(f"  \\draw[red, line width={line_width}pt, line cap=round] ({x_pos + 0.5},{y_pos}) -- ({x_pos + 0.5},{y_pos + 1});")
+                # Vertical strand (blue, from bottom to top)
+                lines.append(f"  \\draw[blue, line width={line_width}pt, line cap=round] ({x_pos + 0.5},{y_pos}) -- ({x_pos + 0.5},{y_pos + 1});")
             else:
                 # ELBOW: strands avoid each other with 90-degree curves
                 if flip_horizontal:
@@ -332,18 +332,18 @@ def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=Fa
                     lines.append(
                         f"  \\draw[blue, line width={line_width}pt] ({x_pos + 1},{y_pos + 0.5}) .. controls ({x_pos + 0.7},{y_pos + 0.5}) and ({x_pos + 0.5},{y_pos + 0.7}) .. ({x_pos + 0.5},{y_pos + 1});",
                     )
-                    # Red arc: from bottom to left (starts vertical from bottom, ends horizontal going left)
+                    # Blue arc: from bottom to left (starts vertical from bottom, ends horizontal going left)
                     if not on_diagonal:
-                        lines.append(f"  \\draw[red, line width={line_width}pt] ({x_pos + 0.5},{y_pos}) .. controls ({x_pos + 0.5},{y_pos + 0.3}) and ({x_pos + 0.3},{y_pos + 0.5}) .. ({x_pos},{y_pos + 0.5});")
+                        lines.append(f"  \\draw[blue, line width={line_width}pt] ({x_pos + 0.5},{y_pos}) .. controls ({x_pos + 0.5},{y_pos + 0.3}) and ({x_pos + 0.3},{y_pos + 0.5}) .. ({x_pos},{y_pos + 0.5});")
                 else:
                     # Blue arc: from left to up (starts horizontal from left, ends vertical going up)
                     lines.append(
                         f"  \\draw[blue, line width={line_width}pt] ({x_pos},{y_pos + 0.5}) .. controls ({x_pos + 0.3},{y_pos + 0.5}) and ({x_pos + 0.5},{y_pos + 0.7}) .. ({x_pos + 0.5},{y_pos + 1});",
                     )
-                    # Red arc: from bottom to right (starts vertical from bottom, ends horizontal going right)
+                    # Blue arc: from bottom to right (starts vertical from bottom, ends horizontal going right)
                     if not on_diagonal:
                         lines.append(
-                            f"  \\draw[red, line width={line_width}pt] ({x_pos + 0.5},{y_pos}) .. controls ({x_pos + 0.5},{y_pos + 0.3}) and ({x_pos + 0.7},{y_pos + 0.5}) .. ({x_pos + 1},{y_pos + 0.5});",
+                            f"  \\draw[blue, line width={line_width}pt] ({x_pos + 0.5},{y_pos}) .. controls ({x_pos + 0.5},{y_pos + 0.3}) and ({x_pos + 0.7},{y_pos + 0.5}) .. ({x_pos + 1},{y_pos + 0.5});",
                         )
 
     # Draw reflection numbers at crossings if requested
@@ -370,7 +370,7 @@ def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=Fa
                         break
                 if row_label:
                     x_pos = max_size - col
-                    lines.append(f"  \\node[font=\\bfseries, text=red, anchor=south] at ({x_pos + 0.5},{max_size + 0.3}) {{{row_label}}};")
+                    lines.append(f"  \\node[font=\\bfseries, text=blue, anchor=south] at ({x_pos + 0.5},{max_size + 0.3}) {{{row_label}}};")
 
             # Right shows row numbers
             row_range = range(1, outline_rows + 1) if (clip_at_outline and outline_rows is not None) else range(1, max_size + 1)
@@ -388,7 +388,7 @@ def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=Fa
             for row in row_range:
                 y_pos = max_size - row
                 output_col = perm[row - 1]
-                lines.append(f"  \\node[font=\\bfseries, text=red, anchor=west] at ({max_size + 0.3},{y_pos + 0.5}) {{{output_col}}};")
+                lines.append(f"  \\node[font=\\bfseries, text=blue, anchor=west] at ({max_size + 0.3},{y_pos + 0.5}) {{{output_col}}};")
     else:
         if top_labeled:
             # Top shows permutation output (inverse permutation)
@@ -399,7 +399,7 @@ def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=Fa
 
             for col in range(1, max_size + 1):
                 x_pos = col - 1
-                lines.append(f"  \\node[font=\\bfseries, text=red, anchor=south] at ({x_pos + 0.5},{max_size + 0.3}) {{{inverse_perm[col - 1]}}};")
+                lines.append(f"  \\node[font=\\bfseries, text=blue, anchor=south] at ({x_pos + 0.5},{max_size + 0.3}) {{{inverse_perm[col - 1]}}};")
 
             # Left shows row numbers
             row_range = range(1, outline_rows + 1) if (clip_at_outline and outline_rows is not None) else range(1, max_size + 1)
@@ -412,7 +412,7 @@ def draw_pipe_dream_tikz(rc, max_size=None, flip_horizontal=True, top_labeled=Fa
             for row in row_range:
                 y_pos = max_size - row
                 output_col = perm[row - 1]
-                lines.append(f"  \\node[font=\\bfseries, text=red, anchor=east] at ({-0.3},{y_pos + 0.5}) {{{output_col}}};")
+                lines.append(f"  \\node[font=\\bfseries, text=blue, anchor=east] at ({-0.3},{y_pos + 0.5}) {{{output_col}}};")
 
             # Top shows column numbers
             for col in range(1, max_size + 1):

@@ -146,22 +146,6 @@ def _build_schur_elem_from_key(key):
     return elem_key
 
 
-def _sort_and_merge(factors):
-    """Sort factors by length (ascending, stable) and merge same-length adjacent via squash_product."""
-    factors.sort(key=len)
-    if len(factors) <= 1:
-        return factors
-    merged = [factors[0]]
-    for rc in factors[1:]:
-        if len(merged[-1]) == len(rc):
-            m = merged[-1].squash_product(rc)
-            if m.perm.inv == 0:
-                merged.pop()
-            else:
-                merged[-1] = m
-        else:
-            merged.append(rc)
-    return merged
 
 
 class BoundedRCFactorPrintingTerm(PrintingTerm):
@@ -652,88 +636,188 @@ class BoundedRCFactorAlgebra(CrystalGraphRing):
                 raise ValueError(f"Key factors must be full Grassmannian RC graphs, got {rc}")
         return key
 
+    def _merge_elem_sym(self, normalized_key, elem_sym_rc):
+        if not _is_full_grassmannian_rc(elem_sym_rc):
+            raise ValueError(f"elem_sym_rc must be full Grassmannian, got {elem_sym_rc}")
+        size = normalized_key.size
+        if len(elem_sym_rc) == size:
+            if len(normalized_key) == 0:
+                return (elem_sym_rc,)
+            if len(normalized_key[-1]) == size:
+                return (*normalized_key[:-1], normalized_key[-1].squash_product(elem_sym_rc))
+        if not any(len(rc) == len(elem_sym_rc) for rc in normalized_key):
+            index = min([i for i, rc in enumerate(normalized_key) if len(rc) > len(elem_sym_rc)], default=len(normalized_key))
+            return [*normalized_key[:index], elem_sym_rc, *normalized_key[index:]]
+        index = next(i for i, rc in enumerate(normalized_key) if len(rc) == len(elem_sym_rc))
+        squashed_elem = normalized_key[index].squash_product(elem_sym_rc)
+        base, overflow = squashed_elem.resize(len(elem_sym_rc) + 1).squash_decomp()
+        base = base.normalize()
+        overflow = overflow.normalize()
+        if overflow.perm.inv == 0:
+            if len(base.perm) - 1 > len(base):
+                raise ValueError(f"Unexpected non-identity base from merging elem_sym: {base} from {elem_sym_rc} and {normalized_key[index]} in key of size {size}")
+            return self._merge_elem_sym(self.make_key([*normalized_key[:index], *normalized_key[index+1:]], size), base)
+        full_overflow = [overflow]
+        if not _is_full_grassmannian_rc(base):
+            #raise ValueError(f"Unexpected non full Grassmannian base from merging elem_sym: {base} from {elem_sym_rc} and {normalized_key[index]} in key of size {size}")
+            base0 = base
+            full_overflow = [overflow]
+            while base0.perm.inv > 0 and (not _is_full_grassmannian_rc(base0) or len(base0.perm) - 1 > len(base0)):
+                base0, more_overflow = base0.squash_decomp()
+                base0 = base0.normalize()
+                more_overflow = more_overflow.normalize()
+                # merge partial key
+                full_overflow = [more_overflow, *full_overflow]
+                if more_overflow.perm.inv == 0:
+                    raise ValueError(f"Unexpected identity overflow during merging elem_sym: {more_overflow} from {base} and {normalized_key[index]} in key of size {size}")
+            base = base0
+        if base.perm.inv == 0:
+            raise ValueError(f"Unexpected identity base from merging elem_sym: {base} from {elem_sym_rc} and {normalized_key[index]} in key of size {size}")
+        full_overflow = [base, *full_overflow]
+        ret_key = [*normalized_key[:index]]
+        if index < len(normalized_key) - 1:
+            overflow_index = max([i for i, rc in enumerate(full_overflow) if len(rc) == len(normalized_key[index + 1])], default=-1)
+            if overflow_index != -1:
+                full_overflow = [*full_overflow[:overflow_index+1], normalized_key[index + 1], *full_overflow[overflow_index+1:]]
+                ret_key = [*ret_key, *normalized_key[index+2:]]
+            else:
+                ret_key = [*ret_key, *normalized_key[index + 1:]]
+        #flag = True
+        while len(full_overflow) > 0:
+            overflow = full_overflow.pop(0)
+            ret_key = self._merge_elem_sym(self.make_key(ret_key, size), overflow)
+            # if index < len(normalized_key) - 1:
+            #     if len(normalized_key[index + 1]) == len(overflow):
+            #         ret_key = self.make_key([*self._merge_elem_sym(ret_key, overflow)], size)
+            #         #, size), normalized_key[index + 1]), *normalized_key[index + 2:]]
+            #     return (*normalized_key[:index], base, overflow, *normalized_key[index + 1 :])
+            # return (*normalized_key[:index], base, overflow)
+        return ret_key
+        #(*ret_key, ) if index < len(normalized_key) - 1 else ret_key
+        # elif index < len(normalized_key) - 1 and len(normalized_key[index + 1]) == len(overflow):
+        #     return [*normalized_key[:index], base, overflow, *normalized_key[index + 1:]]
+
+
+
+
+    def _sort_and_merge(self, key):
+        """Sort factors by length (ascending, stable) and merge same-length adjacent via squash_product."""
+        new_key = self.make_key((), key.size)
+        last_seen = -1
+        for index, rc in enumerate(key):
+            if len(rc) == 0 or rc.perm.inv == 0:
+                continue
+            if len(rc) > last_seen:
+                new_key = self.make_key((*new_key[:index], rc), key.size)
+            else:
+                # if  len(rc) == last_seen:
+                #     print("DEBUG: Merging elem_sym_rc of full size with existing factor in key:", rc, new_key, "last_seen=", last_seen)
+                #     new_key = self.make_key((*new_key[:index - 1], new_key[index-1].squash_product(rc)), key.size)
+                # else:
+                new_key = self.make_key(self._merge_elem_sym(new_key, rc), key.size)
+            last_seen = 0 if len(new_key) == 0 else len(new_key[-1])
+        return new_key
+        # factors = list(key)
+        # factors.sort(key=len)
+        # if len(factors) <= 1:
+        #     return factors
+        # merged = [factors[0]]
+        # for rc in factors[1:]:
+        #     if len(merged[-1]) == len(rc):
+        #         m = merged[-1].squash_product(rc)
+        #         if m.perm.inv == 0:
+        #             merged.pop()
+        #         else:
+        #             merged[-1] = m
+        #     else:
+        #         merged.append(rc)
+        # return merged
+
+
     def _normalize_key(self, key):
         """Normalize an RCGraph tensor key to normal form."""
         key = self._ensure_valid_key(key)
-        size = key.size
+        if len(key) == 0:
+            return key
+        return self._sort_and_merge(key)
         # hw_key, raise_seq = key.to_highest_weight()
-        factors = list(key)
-        # key_hw, raise_seq = key.to_highest_weight()
-        # factors = list(key_hw)
-        while True:
-            # Phase 1: sort by length and merge same-length adjacent factors
-            factors = _sort_and_merge(list(factors))
-            # hw_key, raise_seq = self.make_key(tuple(factors), size).to_highest_weight()
-            # Phase 2: normalize individual RCGraphs and strip identities
-            factors = [rc.normalize() for rc in factors if rc.perm.inv != 0]
+        # factors = list(key)
+        # # key_hw, raise_seq = key.to_highest_weight()
+        # # factors = list(key_hw)
+        # while True:
+        #     # Phase 1: sort by length and merge same-length adjacent factors
+        #     factors = _sort_and_merge(list(factors))
+        #     # hw_key, raise_seq = self.make_key(tuple(factors), size).to_highest_weight()
+        #     # Phase 2: normalize individual RCGraphs and strip identities
+        #     factors = [rc.normalize() for rc in factors if rc.perm.inv != 0]
 
-            peeled = False
-            for i in range(len(factors) - 1, -1, -1):
-                if not _is_full_grassmannian_rc(factors[i]):
-                    raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}")
-                factor = factors[i]
-                if len(factor) < size and len(factor.perm) - 1 > len(factor):
-                    max_rc, elem_rc = factor.resize(len(factor) + 1).squash_decomp()
-                    max_rc = max_rc.normalize()
-                    elem_rc = elem_rc.normalize()
-                    if max_rc.perm.inv == 0 or elem_rc.perm.inv == 0:
-                        continue
-                    # if max_rc.perm.inv > 0 and elem_rc.perm.inv > 0 and len(elem_rc) <= size:
-                    addup_list = [elem_rc]
-                    working_rc = max_rc.normalize()
-                    while working_rc.perm.inv > 0 and (not _is_full_grassmannian_rc(working_rc)):
-                        working_rc_base, working_elem_rc = working_rc.squash_decomp()
-                        working_elem_rc = working_elem_rc.normalize()
-                        working_rc_base = working_rc_base.normalize()
-                        addup_list = [working_elem_rc.normalize(), *addup_list]
-                        working_rc = working_rc_base.normalize()
-                    if working_rc.perm.inv > 0:
-                        if not _is_full_grassmannian_rc(working_rc):
-                            raise ValueError(f"Peeling produced non full Grassmannian RC graph: {working_rc} from {factor} in key {key}")
-                        addup_list = [working_rc.normalize(), *addup_list]
-                    factors = [*factors[:i], *addup_list, *factors[i + 1 :]]
-                    peeled = True
-                    break
+        #     peeled = False
+        #     for i in range(len(factors) - 1, -1, -1):
+        #         if not _is_full_grassmannian_rc(factors[i]):
+        #             raise ValueError(f"Non full Grassmannian factor in normalized key: {factors[i]} in key {key}")
+        #         factor = factors[i]
+        #         if len(factor) < size and len(factor.perm) - 1 > len(factor):
+        #             max_rc, elem_rc = factor.resize(len(factor) + 1).squash_decomp()
+        #             max_rc = max_rc.normalize()
+        #             elem_rc = elem_rc.normalize()
+        #             if max_rc.perm.inv == 0 or elem_rc.perm.inv == 0:
+        #                 continue
+        #             # if max_rc.perm.inv > 0 and elem_rc.perm.inv > 0 and len(elem_rc) <= size:
+        #             addup_list = [elem_rc]
+        #             working_rc = max_rc.normalize()
+        #             while working_rc.perm.inv > 0 and (not _is_full_grassmannian_rc(working_rc)):
+        #                 working_rc_base, working_elem_rc = working_rc.squash_decomp()
+        #                 working_elem_rc = working_elem_rc.normalize()
+        #                 working_rc_base = working_rc_base.normalize()
+        #                 addup_list = [working_elem_rc.normalize(), *addup_list]
+        #                 working_rc = working_rc_base.normalize()
+        #             if working_rc.perm.inv > 0:
+        #                 if not _is_full_grassmannian_rc(working_rc):
+        #                     raise ValueError(f"Peeling produced non full Grassmannian RC graph: {working_rc} from {factor} in key {key}")
+        #                 addup_list = [working_rc.normalize(), *addup_list]
+        #             factors = [*factors[:i], *addup_list, *factors[i + 1 :]]
+        #             peeled = True
+        #             break
 
-            #         # if len(factors[i].perm) - 1 > len(factors[i]) and len(factors[i]) < size:
-            #         #     factor = factors[i].resize(len(factors[i]) + 1)
-            #         # else:
-            #         if len(factors[i]) == size:
-            #             continue
-            #         if len(factors[i].perm) - 1 > len(factors[i]):
-            #             factor = factors[i]
-            #             max_rc, elem_rc = factor.squash_decomp()#_max_grass_elem_peel(factors[i])
-            #             max_rc = max_rc.normalize()
-            #             elem_rc = elem_rc.normalize()
-            #             # if elem_rc.perm.inv > 0:
-            #             #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
-            #             if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
-            #                 factors[i] = max_rc
-            #                 factors.insert(i + 1, elem_rc)
-            #                 peeled = True
-            #                 break
-            #             # factor = factor.extend(1)
-            #             # max_rc, elem_rc = _max_grass_elem_peel(factor)
-            #             # max_rc = max_rc.normalize()
-            #             # elem_rc = elem_rc.normalize()
-            #             # # if elem_rc.perm.inv > 0:
-            #             # #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
-            #             # if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
-            #             #     factors[i] = max_rc
-            #             #     factors.insert(i + 1, elem_rc)
-            #             #     peeled = True
-            #             #     break
-            #         # if len(set(factors[i].perm.trimcode)) > 2:
-            #         #     raise ValueError(f"Factor with more than 2 distinct row lengths in normalized key: {factors[i]} in key {key}")
-            # factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)
-            if not peeled:
-                break
+        #     #         # if len(factors[i].perm) - 1 > len(factors[i]) and len(factors[i]) < size:
+        #     #         #     factor = factors[i].resize(len(factors[i]) + 1)
+        #     #         # else:
+        #     #         if len(factors[i]) == size:
+        #     #             continue
+        #     #         if len(factors[i].perm) - 1 > len(factors[i]):
+        #     #             factor = factors[i]
+        #     #             max_rc, elem_rc = factor.squash_decomp()#_max_grass_elem_peel(factors[i])
+        #     #             max_rc = max_rc.normalize()
+        #     #             elem_rc = elem_rc.normalize()
+        #     #             # if elem_rc.perm.inv > 0:
+        #     #             #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
+        #     #             if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
+        #     #                 factors[i] = max_rc
+        #     #                 factors.insert(i + 1, elem_rc)
+        #     #                 peeled = True
+        #     #                 break
+        #     #             # factor = factor.extend(1)
+        #     #             # max_rc, elem_rc = _max_grass_elem_peel(factor)
+        #     #             # max_rc = max_rc.normalize()
+        #     #             # elem_rc = elem_rc.normalize()
+        #     #             # # if elem_rc.perm.inv > 0:
+        #     #             # #     raise ValueError(f"Peeling produced non-identity elem_rc: {elem_rc} from {factors[i]} in key {key}")
+        #     #             # if max_rc is not None and elem_rc is not None and elem_rc.perm.inv > 0 and max_rc.perm.inv > 0 and len(elem_rc) <= size and _is_full_grassmannian_rc(max_rc) and _is_full_grassmannian_rc(elem_rc):
+        #     #             #     factors[i] = max_rc
+        #     #             #     factors.insert(i + 1, elem_rc)
+        #     #             #     peeled = True
+        #     #             #     break
+        #     #         # if len(set(factors[i].perm.trimcode)) > 2:
+        #     #         #     raise ValueError(f"Factor with more than 2 distinct row lengths in normalized key: {factors[i]} in key {key}")
+        #     # factors = self.make_key(self.make_key(tuple(factors), size).reverse_raise_seq(raise_seq), size)
+        #     if not peeled:
+        #         break
 
-        # for fact in factors:
-        #     if len(fact) < len(factors[-1]) and len(fact.perm) - 1 > len(fact):
-        #         raise ValueError(f"Factor {fact} in key {factors} is not wide enough to fit its permutation")
-        # factors = _sort_and_merge(list(factors))
-        return self.make_key(factors, size)
+        # # for fact in factors:
+        # #     if len(fact) < len(factors[-1]) and len(fact.perm) - 1 > len(fact):
+        # #         raise ValueError(f"Factor {fact} in key {factors} is not wide enough to fit its permutation")
+        # # factors = _sort_and_merge(list(factors))
+        # return self.make_key(factors, size)
         # return self.make_key(tensor.reverse_raise_seq(raise_seq), size)
 
     def _check_in_coprod(self, left_key, right_key, new_key):
